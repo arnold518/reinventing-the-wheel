@@ -18,6 +18,5 @@ PYBIND11_MODULE(circuit_backend, m) {
     bindComponent(m);
     bindIOComponent(m);
     bindBasicComponent(m);
-    // bind_gate(m);
     // Add other binding function calls here...
 }
