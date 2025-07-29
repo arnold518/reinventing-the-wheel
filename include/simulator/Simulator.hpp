@@ -6,7 +6,7 @@
 #include <iostream>
 #include <map>
 #include "ForwardDeclarations.hpp"
-#include "Event.hpp"
+#include "simulator/Event.hpp"
 
 class Simulator
 {

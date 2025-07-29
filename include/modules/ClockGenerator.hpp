@@ -1,5 +1,5 @@
 #pragma once
-#include "BasicComponent.hpp"
+#include "components/BasicComponent.hpp"
 #include <iostream>
 
 class ClockGenerator : public BasicComponent

@@ -1,6 +1,6 @@
-#include "ClockGenerator.hpp"
-#include "Simulator.hpp"
-#include "Event.hpp"
+#include "modules/ClockGenerator.hpp"
+#include "simulator/Simulator.hpp"
+#include "simulator/Event.hpp"
 
 ClockGenerator::ClockGenerator(std::string name, size_t half_period) 
     : BasicComponent(std::move(name), 0), 

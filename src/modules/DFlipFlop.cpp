@@ -1,4 +1,4 @@
-#include "DFlipFlop.hpp"
+#include "modules/DFlipFlop.hpp"
 
 DFlipFlop::DFlipFlop(std::string name) : BasicComponent(std::move(name), 3),
                                current_q_state(LogicValue::UNKNOWN),

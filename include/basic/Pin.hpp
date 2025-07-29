@@ -2,7 +2,7 @@
 #include <string>
 #include <memory>
 #include "ForwardDeclarations.hpp"
-#include "LogicValue.hpp"
+#include "basic/LogicValue.hpp"
 #include <vector>
 
 enum class PinType {

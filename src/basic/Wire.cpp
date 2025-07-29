@@ -1,8 +1,8 @@
-#include "Wire.hpp"
-#include "Simulator.hpp"
-#include "Pin.hpp"
-#include "Component.hpp"
-#include "Event.hpp" 
+#include "basic/Wire.hpp"
+#include "simulator/Simulator.hpp"
+#include "basic/Pin.hpp"
+#include "components/Component.hpp"
+#include "simulator/Event.hpp" 
 #include <iostream>
 #include <algorithm>
 

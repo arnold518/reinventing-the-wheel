@@ -1,14 +1,14 @@
 #include <iostream>
 #include <memory>
-#include "Simulator.hpp"
-#include "Gate.hpp"
-#include "DFlipFlop.hpp"
-#include "ClockGenerator.hpp"
-#include "Wire.hpp"
-#include "Pin.hpp"
-#include "IOComponent.hpp"
-#include "Event.hpp"
-#include "LogicValue.hpp"
+#include "simulator/Simulator.hpp"
+#include "modules/Gate.hpp"
+#include "modules/DFlipFlop.hpp"
+#include "modules/ClockGenerator.hpp"
+#include "basic/Wire.hpp"
+#include "basic/Pin.hpp"
+#include "components/IOComponent.hpp"
+#include "simulator/Event.hpp"
+#include "basic/LogicValue.hpp"
 
 int main() {
     Simulator sim;

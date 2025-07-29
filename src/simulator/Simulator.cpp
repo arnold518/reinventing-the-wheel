@@ -1,8 +1,8 @@
-#include "Simulator.hpp"
-#include "Component.hpp"
-#include "IOComponent.hpp"
-#include "Wire.hpp"
-#include "Event.hpp"
+#include "simulator/Simulator.hpp"
+#include "components/Component.hpp"
+#include "components/IOComponent.hpp"
+#include "basic/Wire.hpp"
+#include "simulator/Event.hpp"
 
 Simulator::Simulator() : current_time(0) {}
 

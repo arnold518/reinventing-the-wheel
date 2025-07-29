@@ -3,7 +3,7 @@
 #include <memory>
 #include <vector>
 #include "ForwardDeclarations.hpp"
-#include "LogicValue.hpp"
+#include "basic/LogicValue.hpp"
 
 class Wire : public std::enable_shared_from_this<Wire> {
 private:

@@ -1,4 +1,4 @@
-#include "Component.hpp"
+#include "components/Component.hpp"
 #include <iostream>
 #include <algorithm>
 

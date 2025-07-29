@@ -1,6 +1,6 @@
-#include "Pin.hpp"
-#include "Wire.hpp"
-#include "Component.hpp"
+#include "basic/Pin.hpp"
+#include "basic/Wire.hpp"
+#include "components/Component.hpp"
 #include <iostream>
 
 Pin::Pin(std::string name, PinType type, std::shared_ptr<Component> owner_comp)

@@ -1,5 +1,5 @@
 #pragma once
-#include "IOComponent.hpp"
+#include "components/IOComponent.hpp"
 #include "ForwardDeclarations.hpp"
 
 class BasicComponent : public IOComponent

@@ -1,9 +1,9 @@
-#include "Event.hpp"
-#include "Simulator.hpp"
-#include "Component.hpp"
-#include "IOComponent.hpp"
-#include "BasicComponent.hpp"
-#include "Wire.hpp"
+#include "simulator/Event.hpp"
+#include "simulator/Simulator.hpp"
+#include "components/Component.hpp"
+#include "components/IOComponent.hpp"
+#include "components/BasicComponent.hpp"
+#include "basic/Wire.hpp"
 #include <iostream>
 
 void ComponentEvalEvent::process(Simulator& sim) {

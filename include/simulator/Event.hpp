@@ -1,7 +1,7 @@
 #pragma once
 #include <memory>
 #include "ForwardDeclarations.hpp"
-#include "LogicValue.hpp"
+#include "basic/LogicValue.hpp"
 
 class Event {
 public:

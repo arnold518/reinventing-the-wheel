@@ -1,7 +1,7 @@
 #pragma once
-#include "Component.hpp"
-#include "Pin.hpp"
-#include "LogicValue.hpp"
+#include "components/Component.hpp"
+#include "basic/Pin.hpp"
+#include "basic/LogicValue.hpp"
 #include "ForwardDeclarations.hpp"
 #include <map>
 #include <string>

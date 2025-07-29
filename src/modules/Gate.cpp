@@ -1,4 +1,4 @@
-#include "Gate.hpp"
+#include "modules/Gate.hpp"
 
 ANDGate::ANDGate(std::string name) : BasicComponent(std::move(name), 2) {}
 
