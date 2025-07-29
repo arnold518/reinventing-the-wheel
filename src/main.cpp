@@ -60,7 +60,7 @@ int main() {
     sim.scheduleEvent(std::make_shared<WireUpdateEvent>(0, wire_b, LogicValue::LOW));
     clk_gen->startClock(sim, 0);
 
-    sim.run(30);
+    sim.run(100);
 
     std::cout << "\nFinal Wire States:\n";
     std::cout << "WireA: " << wire_a->getValue() << std::endl;
@@ -73,3 +73,11 @@ int main() {
 
     return 0;
 }
+
+
+/*
+cd build
+cmake ..
+make
+./sim
+*/
