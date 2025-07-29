@@ -13,7 +13,6 @@ class Camera:
         self.screen_size = pygame.Vector2(screen_size)
 
     def handle_event(self, event):
-        # This method is now simpler. It no longer tries to guess UI locations.
         if event.type == pygame.MOUSEBUTTONDOWN:
             if event.button == 1:  # Left click starts drag
                 self.dragging = True
