@@ -11,6 +11,7 @@ private:
 
 public:
     DFlipFlop(std::string name);
+    static constexpr const char* TypeName = "DFlipFlop";
     void initPins(std::shared_ptr<IOComponent> self_ptr) override;
     void evaluate(size_t current_time, Simulator& simulator) override;
 };

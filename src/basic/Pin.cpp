@@ -26,11 +26,11 @@ void Pin::connect(std::shared_ptr<Wire> wire) {
 }
 
 LogicValue Pin::getValue() const {
-    if (type == PinType::INPUT) {
+    if (type == PinType::INPUT || type == PinType::OUTPUT) {
         if (auto wire = connected_wire.lock()) {
             return wire->getValue();
         } else {
-            std::cerr << "Warning: Input Pin '" << name << "' tried to read from a destroyed wire." << std::endl;
+            std::cerr << "Warning: Pin '" << name << "' tried to read from a destroyed wire." << std::endl;
             return LogicValue::UNKNOWN; 
         }
     }

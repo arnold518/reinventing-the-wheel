@@ -9,6 +9,7 @@ class Wire : public std::enable_shared_from_this<Wire> {
 private:
     std::string name;
     LogicValue value;
+    std::weak_ptr<Component> owner;
     std::weak_ptr<Pin> source_pin;
     std::vector<std::weak_ptr<Pin>> sink_pins;
 
@@ -19,11 +20,14 @@ public:
     LogicValue getValue() const;
     void setValue(LogicValue new_value);
 
+    void setOwner(std::shared_ptr<Component> component);
     void setSourcePin(std::shared_ptr<Pin> pin);
     void addSinkPin(std::shared_ptr<Pin> pin);
 
+    std::shared_ptr<Component> getOwner() const;
     std::shared_ptr<Pin> getSourcePin() const;
     const std::vector<std::weak_ptr<Pin>>& getSinkPins() const;
+    std::string getID() const;
 
     void propagateChange(Simulator& simulator, size_t propagation_time);
 };

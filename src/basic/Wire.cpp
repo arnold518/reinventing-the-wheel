@@ -55,3 +55,23 @@ void Wire::addSinkPin(std::shared_ptr<Pin> pin) {
 
 std::shared_ptr<Pin> Wire::getSourcePin() const { return source_pin.lock(); }
 const std::vector<std::weak_ptr<Pin>>& Wire::getSinkPins() const { return sink_pins; }
+
+void Wire::setOwner(std::shared_ptr<Component> component)
+{
+    if(component) {
+        owner = component;
+    }
+    else {
+        std::cerr << "Error: Attempted to set a null component as owner for wire '" << name << "'." << std::endl;
+    }
+}
+
+std::shared_ptr<Component> Wire::getOwner() const { return owner.lock(); }
+
+std::string Wire::getID() const {
+    if (auto owner_comp = owner.lock()) {
+        return owner_comp->getID() + " > Wire:" + name;
+    } else {
+        return "OrphanWire:" + name;
+    }
+}

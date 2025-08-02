@@ -8,14 +8,6 @@ Simulator::Simulator() : current_time(0) {}
 
 size_t Simulator::getCurrentTime() const { return current_time; }
 
-void Simulator::addComponent(std::shared_ptr<Component> comp) {
-    all_components.push_back(comp);
-}
-
-void Simulator::addWire(std::shared_ptr<Wire> wire) {
-    all_wires.push_back(wire);
-}
-
 void Simulator::scheduleEvent(std::shared_ptr<Event> event) {
     if (!event) return;
 

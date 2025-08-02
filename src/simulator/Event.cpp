@@ -20,7 +20,7 @@ void WireUpdateEvent::process(Simulator& sim) {
         LogicValue old_value = wire_to_update->getValue();
         if (old_value != new_value) {
             wire_to_update->setValue(new_value);
-            std::cout << "Time " << time << ": Wire " << wire_to_update->getName() 
+            std::cout << "Time " << time << ": Wire " << wire_to_update->getID() 
                       << " changed from " << old_value << " to " << new_value << std::endl;
             
             wire_to_update->propagateChange(sim, time);

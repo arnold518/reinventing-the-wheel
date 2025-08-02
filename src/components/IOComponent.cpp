@@ -5,6 +5,7 @@
 #include "simulator/Event.hpp"
 #include <iostream>
 #include <typeinfo>
+#include <sstream>
 
 IOComponent::IOComponent(std::string name, size_t delay_val) : Component(std::move(name)), delay(delay_val) {}
 
@@ -43,4 +44,13 @@ void IOComponent::_updateOutputWire(Simulator& simulator, const std::string& pin
             std::cerr << "Warning: Output pin '" << pin_name << "' on component '" << getID() << "' tried to write to a destroyed wire." << std::endl;
         }
     }
+}
+
+std::string IOComponent::formatPins(int lvl) const
+{
+    std::stringstream ss;
+    std::string indent(lvl * 2, ' ');
+    for (auto [pin_name, pin] : _inputPins) ss << indent << "  (InputPin) '" << pin_name << "' : " << pin->getValue() << "\n";
+    for (auto [pin_name, pin] : _outputPins) ss << indent << "  (OutputPin) '" << pin_name << "' : " << pin->getValue() << "\n";
+    return ss.str();
 }

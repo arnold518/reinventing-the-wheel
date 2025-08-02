@@ -1,6 +1,10 @@
 #include "components/Component.hpp"
+#include "components/IOComponent.hpp"
+#include "components/BasicComponent.hpp"
+#include "basic/Wire.hpp"
 #include <iostream>
 #include <algorithm>
+#include <sstream>
 
 Component::Component(std::string name) : name(std::move(name)) {}
 
@@ -8,6 +12,7 @@ std::string Component::getName() const { return name; }
 
 std::shared_ptr<Component> Component::getParent() const { return parent.lock(); }
 const std::vector<std::shared_ptr<Component>>& Component::getChildren() const { return children; }
+const std::vector<std::shared_ptr<Wire>>& Component::getWires() const { return wires; }
 
 std::string Component::getID() const
 {
@@ -35,4 +40,42 @@ void Component::addChild(const std::shared_ptr<Component>& child)
 
     children.push_back(child);
     child->parent = shared_from_this();
+}
+
+void Component::addWire(const std::shared_ptr<Wire>& wire)
+{
+    wire->setOwner(shared_from_this());
+    wires.push_back(wire);
+}
+
+std::string Component::format(int lvl, bool formatWires, bool formatPins) const
+{
+    std::stringstream ss;
+    std::string indent(lvl * 2, ' ');
+    std::string type;
+
+    if (std::dynamic_pointer_cast<const BasicComponent>(shared_from_this())) type = "BasicComponent";
+    else if (std::dynamic_pointer_cast<const IOComponent>(shared_from_this())) type = "IOComponent";
+    else type = "Component";
+
+    ss << indent << "(" << type << ") '" << getID() << "'\n";
+
+    if (formatWires)
+    {
+        for (const auto& wire : wires) if(wire)
+        {
+            ss << indent << "  (Wire) '" << wire->getName() << "' : " << wire->getValue() << "\n";
+        }
+    }
+    if (formatPins) if (auto io = std::dynamic_pointer_cast<const IOComponent>(shared_from_this()))
+    {
+        ss << io->formatPins(lvl);
+    }
+
+    for (const auto& child : children) if(child)
+    {
+        ss << child->format(lvl + 1, formatWires, formatPins);
+    }
+
+    return ss.str();
 }

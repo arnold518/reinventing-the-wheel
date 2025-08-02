@@ -21,6 +21,8 @@ protected:
 
 public:
     IOComponent(std::string name, size_t delay_val = 1);
+    virtual ~IOComponent() = default;
+    static constexpr const char* TypeName = "IOComponent";    
     
     template<typename T, typename... Args>
     static std::shared_ptr<T> create(Args&&... args) {
@@ -40,6 +42,7 @@ public:
     std::shared_ptr<Pin> getInputPin(const std::string& pin_name) const;
     std::shared_ptr<Pin> getOutputPin(const std::string& pin_name) const;
     LogicValue getInputValue(const std::string& pin_name) const;
+    std::string formatPins(int lvl) const;
 
 protected:
     void _updateOutputWire(Simulator& simulator, const std::string& pin_name, LogicValue new_value, size_t current_sim_time);
