@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.15)
 project(CircuitSim LANGUAGES CXX)
 
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
@@ -21,6 +22,7 @@ set(CORE_LOGIC_SOURCES
     src/modules/ClockGenerator.cpp
     src/simulator/Event.cpp
     src/simulator/Simulator.cpp
+    src/tests/FullCircuitTest.cpp
 )
 
 set(BINDING_SOURCES
@@ -28,6 +30,11 @@ set(BINDING_SOURCES
     src/bindings/ComponentBinding.cpp
     src/bindings/IOComponentBinding.cpp
     src/bindings/BasicComponentBinding.cpp
+    src/bindings/PinBinding.cpp
+    src/bindings/WireBinding.cpp
+    src/bindings/SimulationTestBinding.cpp
+    src/bindings/SimulatorBinding.cpp
+    src/bindings/tests/FullCircuitTestBinding.cpp
 )
 
 # ===================================================================
@@ -46,12 +53,12 @@ target_include_directories(SimulatorLib PUBLIC
 # Target 2: The Python Module (`circuit_backend`)
 # ===================================================================
 # Create the Python module using all binding sources.
-# pybind11_add_module(circuit_backend
-#     ${BINDING_SOURCES}
-# )
+pybind11_add_module(circuit_backend
+    ${BINDING_SOURCES}
+)
 
 # Link the Python module against our core logic library.
-# target_link_libraries(circuit_backend PRIVATE SimulatorLib)
+target_link_libraries(circuit_backend PRIVATE SimulatorLib)
 
 # The include directories are inherited automatically from SimulatorLib.
 

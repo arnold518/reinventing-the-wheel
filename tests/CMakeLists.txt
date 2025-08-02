@@ -3,9 +3,7 @@
 # To add a new test, simply add its .cpp file here.
 # ===================================================================
 set(TEST_SOURCES
-    Test1.cpp
-    # TestANDGate.cpp
-    # TestDFlipFlop.cpp
+    FullCircuitTest.cpp
 )
 
 # ===================================================================

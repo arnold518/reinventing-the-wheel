@@ -14,26 +14,28 @@ protected:
     std::unique_ptr<ComponentBuilder> builder;
 
 public:
-    // The constructor now ONLY creates objects that do NOT depend on the derived class.
     SimulationTest() {
         sim = std::make_unique<Simulator>();
     }
 
     virtual ~SimulationTest() = default;
 
-    bool run() {
-        try {
-            root = std::make_shared<Component>(this->getTestName());
-            builder = std::make_unique<ComponentBuilder>(root);
-        } catch (const std::exception& e) {
-            std::cerr << "[FAIL] Test setup failed during initialization: " << e.what() << std::endl;
-            return false;
-        }
+    std::shared_ptr<Component> getRoot() const { return root; }
+    Simulator* getSimulator() const { return sim.get(); }
 
+    void setupCircuit() {
+        root = std::make_shared<Component>(getTestName());
+        builder = std::make_unique<ComponentBuilder>(root);
+
+        buildCircuit();
+        setInitialState();
+    }
+
+    bool run() {
         std::cout << "--- Running Test: " << getTestName() << " ---" << std::endl;
         try {
-            buildCircuit();
-            setInitialState();
+            setupCircuit();
+
             sim->run(getRunDuration());
             verifyResults();
             std::cout << "[PASS] Test '" << getTestName() << "' completed successfully." << std::endl;

@@ -43,6 +43,9 @@ public:
     std::shared_ptr<Pin> getOutputPin(const std::string& pin_name) const;
     LogicValue getInputValue(const std::string& pin_name) const;
     std::string formatPins(int lvl) const;
+    
+    const std::map<std::string, std::shared_ptr<Pin>>& getInputPins() const { return _inputPins; }
+    const std::map<std::string, std::shared_ptr<Pin>>& getOutputPins() const { return _outputPins; }
 
 protected:
     void _updateOutputWire(Simulator& simulator, const std::string& pin_name, LogicValue new_value, size_t current_sim_time);
