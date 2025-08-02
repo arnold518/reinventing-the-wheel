@@ -37,3 +37,21 @@ std::shared_ptr<Wire> ComponentBuilder::getWire(const std::string& name) {
     }
     return it->second;
 }
+
+std::shared_ptr<Pin> ComponentBuilder::getInputPin(const std::string& pin_name) {
+    if (auto io_root = std::dynamic_pointer_cast<IOComponent>(root)) {
+        return io_root->getInputPin(pin_name);
+    }
+    
+    std::cerr << "Error: Cannot get input pin '" << pin_name << "' from root because root is not an IOComponent." << std::endl;
+    return nullptr;
+}
+
+std::shared_ptr<Pin> ComponentBuilder::getOutputPin(const std::string& pin_name) {
+    if (auto io_root = std::dynamic_pointer_cast<IOComponent>(root)) {
+        return io_root->getOutputPin(pin_name);
+    }
+
+    std::cerr << "Error: Cannot get output pin '" << pin_name << "' from root because root is not an IOComponent." << std::endl;
+    return nullptr;
+}

@@ -5,13 +5,10 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # --- Dependencies ---
-# Add pybind11 from the 'extern' subdirectory.
 add_subdirectory(extern/pybind11)
-# Find Python for the module target.
 find_package(Python3 COMPONENTS Interpreter Development REQUIRED)
 
 # --- Source File Definitions ---
-# Define a variable for the core C++ logic shared by both targets.
 set(CORE_LOGIC_SOURCES
     src/basic/Pin.cpp
     src/basic/Wire.cpp
@@ -26,44 +23,52 @@ set(CORE_LOGIC_SOURCES
     src/simulator/Simulator.cpp
 )
 
-# Define a variable for the Python binding source files.
-# set(BINDING_SOURCES
-#     src/bindings/export.cpp
-#     src/bindings/ComponentBinding.cpp
-#     src/bindings/IOComponentBinding.cpp
-#     src/bindings/BasicComponentBinding.cpp
-#     # Add other binding files here...
-# )
-
+set(BINDING_SOURCES
+    src/bindings/export.cpp
+    src/bindings/ComponentBinding.cpp
+    src/bindings/IOComponentBinding.cpp
+    src/bindings/BasicComponentBinding.cpp
+)
 
 # ===================================================================
-# Target 1: The Python Module (`circuit_backend`)
+# Target 1: The Core Logic Library (SimulatorLib)
 # ===================================================================
+# Define all core source files into a library. This is compiled once
+# and then shared by the Python module, the C++ executable, and all tests.
+add_library(SimulatorLib STATIC ${CORE_LOGIC_SOURCES})
 
-# This is the correct way to create a Python module.
-# It automatically handles naming, linking, and Python-specific compiler flags.
+# Make the include directory available to any target that links this library.
+target_include_directories(SimulatorLib PUBLIC
+    ${PROJECT_SOURCE_DIR}/include
+)
+
+# ===================================================================
+# Target 2: The Python Module (`circuit_backend`)
+# ===================================================================
+# Create the Python module using all binding sources.
 # pybind11_add_module(circuit_backend
-#     ${CORE_LOGIC_SOURCES}
 #     ${BINDING_SOURCES}
 # )
 
-# Tell the module where to find your local headers.
-# target_include_directories(circuit_backend PRIVATE
-#     ${PROJECT_SOURCE_DIR}/include
-# )
+# Link the Python module against our core logic library.
+# target_link_libraries(circuit_backend PRIVATE SimulatorLib)
 
+# The include directories are inherited automatically from SimulatorLib.
 
 # ===================================================================
-# Target 2: The C++ Executable (`sim`)
+# Target 3: The C++ Executable (`sim`)
 # ===================================================================
+# This executable is for running manual simulations from main.cpp.
+add_executable(sim src/main.cpp)
 
-# Create the standard C++ executable.
-add_executable(sim
-    ${CORE_LOGIC_SOURCES}
-    src/main.cpp
-)
+# Link the executable against our core logic library.
+target_link_libraries(sim PRIVATE SimulatorLib)
 
-# Tell the executable where to find your local headers.
-target_include_directories(sim PRIVATE
-    ${PROJECT_SOURCE_DIR}/include
-)
+# ===================================================================
+# Target 4: CTest Integration
+# ===================================================================
+# Enable the CTest framework for this project.
+enable_testing()
+
+# Add the 'tests' subdirectory, which will contain test definitions.
+add_subdirectory(tests)

@@ -36,6 +36,12 @@ public:
 
     template<typename T>
     std::shared_ptr<Pin> getOutputPin(const std::string& component_name, const std::string& pin_name);
+    
+    // get input pin from root
+    std::shared_ptr<Pin> getInputPin(const std::string& pin_name);
+
+    // get output pin from root
+    std::shared_ptr<Pin> getOutputPin(const std::string& pin_name);
 };
 
 #include "ComponentBuilder.tpp"
