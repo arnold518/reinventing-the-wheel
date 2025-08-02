@@ -24,6 +24,9 @@ void bindWire(py::module_& m) {
 
         // We bind getSinkPins, but the result will be a list of weak_ptr.
         // Python code will need to call .lock() on each element to get a shared_ptr.
-        .def("get_sink_pins", &Wire::getSinkPins, py::return_value_policy::reference_internal,
-            "Returns a list of weak references to the sink pins.");
+        // .def("get_sink_pins", &Wire::getSinkPins, py::return_value_policy::reference_internal,
+        //     "Returns a list of weak references to the sink pins.");
+            
+        .def("get_sink_pins", &Wire::getSinkPinsForPython,
+            "Returns a list of strong references to the sink pins.");
 }

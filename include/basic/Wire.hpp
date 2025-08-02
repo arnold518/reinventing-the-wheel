@@ -29,5 +29,16 @@ public:
     const std::vector<std::weak_ptr<Pin>>& getSinkPins() const;
     std::string getID() const;
 
+    std::vector<std::shared_ptr<Pin>> getSinkPinsForPython() const {
+        std::vector<std::shared_ptr<Pin>> strong_pins;
+        strong_pins.reserve(sink_pins.size());
+        for (const auto& weak_pin : sink_pins) {
+            if (auto strong_pin = weak_pin.lock()) {
+                strong_pins.push_back(strong_pin);
+            }
+        }
+        return strong_pins;
+    }
+
     void propagateChange(Simulator& simulator, size_t propagation_time);
 };
