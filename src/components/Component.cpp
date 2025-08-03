@@ -54,10 +54,6 @@ std::string Component::format(int lvl, bool formatWires, bool formatPins) const
     std::string indent(lvl * 2, ' ');
     std::string type = getTypeName();
 
-    // if (std::dynamic_pointer_cast<const BasicComponent>(shared_from_this())) type = "BasicComponent";
-    // else if (std::dynamic_pointer_cast<const IOComponent>(shared_from_this())) type = "IOComponent";
-    // else type = "Component";
-
     ss << indent << "(" << type << ") '" << getID() << "'\n";
 
     if (formatWires)
