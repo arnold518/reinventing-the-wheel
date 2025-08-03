@@ -22,7 +22,8 @@ protected:
 public:
     IOComponent(std::string name, size_t delay_val = 1);
     virtual ~IOComponent() = default;
-    static constexpr const char* TypeName = "IOComponent";    
+    static constexpr const char* TypeName = "IOComponent";
+    const char* getTypeName() const override { return TypeName; }
     
     template<typename T, typename... Args>
     static std::shared_ptr<T> create(Args&&... args) {

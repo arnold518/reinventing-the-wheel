@@ -18,6 +18,7 @@ public:
     Component(std::string name);
     virtual ~Component() = default;
     static constexpr const char* TypeName = "Component";
+    virtual const char* getTypeName() const { return TypeName; }
 
     std::string getName() const;
     std::string getID() const;
