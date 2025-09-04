@@ -4,3 +4,4 @@
 !*.*
 !extern/pybind11
 /build/
+/visualizer/__pycache__
