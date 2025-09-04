@@ -9,18 +9,23 @@ PYBIND11_MODULE(circuit_backend, m) {
     // The order is important for classes that inherit from each other.
     // Base classes must be bound before their children.
 
-    // 1. Bind fundamental enums and data types first.
-    bindLogicValue(m);
-    bindPin(m);
-    bindWire(m);
 
-    // 2. Bind the component class hierarchy.
+    // --- Component Hierarchy Bindings ---
     bindComponent(m);
     bindIOComponent(m);
     bindBasicComponent(m);
 
-    // 3. Bind the simulator and test hierarchy.
+    // --- Modules Bindings ---
+    bindLogicValue(m);
+    bindModules(m);
+
+    // --- Core Type Bindings ---
+    bindPin(m);
+    bindWire(m);
+
+    // --- Simulator and Test Bindings ---
     bindSimulator(m);
     bindSimulationTest(m);
+
     bindFullCircuitTest(m);
 }

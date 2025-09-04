@@ -20,7 +20,7 @@ public:
 
 
 void bindSimulationTest(py::module_& m) {
-    py::class_<SimulationTest, PySimulationTest, std::shared_ptr<SimulationTest>>(m, "SimulationTest", "The abstract base class for all simulation tests.")
+    py::class_<SimulationTest, PySimulationTest, std::shared_ptr<SimulationTest>>(m, "SimulationTest", "The abstract base class for all simulation tests.", py::module_local(false))
         
         .def(py::init<>()) // Bind the default constructor
 

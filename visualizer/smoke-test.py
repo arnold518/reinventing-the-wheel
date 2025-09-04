@@ -9,9 +9,14 @@ def format_circuit_structure(component, indent_level=0):
     prefix = "  " * indent_level
     
     # --- 1. Print Component Info ---
-    comp_type = component.type_name
+    comp_type = component.get_type_name()
     comp_name = component.get_name()
     print(f"{prefix}Component: '{comp_name}' (Type: {comp_type})")
+
+    # print(f"{prefix} {type(component)}")
+    # print(f"{prefix} Component?: {isinstance(component, circuit_backend.Component)}")
+    # print(f"{prefix} IOComponent?: {isinstance(component, circuit_backend.IOComponent)}")
+    # print(f"{prefix} BasicComponent?: {isinstance(component, circuit_backend.BasicComponent)}")
 
     # --- 2. Print Pin Info (if applicable) ---
     if isinstance(component, circuit_backend.IOComponent):

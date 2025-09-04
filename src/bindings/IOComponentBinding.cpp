@@ -13,9 +13,7 @@ public:
 };
 
 void bindIOComponent(py::module_& m) {
-    // The second template argument, `PyIOComponent`, is the trampoline class.
-    // The third, `Component`, is the C++ parent class.
-    py::class_<IOComponent, PyIOComponent, Component, std::shared_ptr<IOComponent>>(m, "IOComponent", "An abstract component with input and output pins.")
+    py::class_<IOComponent, PyIOComponent, Component, std::shared_ptr<IOComponent>>(m, "IOComponent", "An abstract component with input and output pins.", py::module_local(false))
         
         // --- Essential Getters for Structure and State ---
         
@@ -33,7 +31,6 @@ void bindIOComponent(py::module_& m) {
 
         // --- Type Information ---
 
-        .def_property_readonly_static("type_name", [](py::object /* self */) { 
-            return IOComponent::TypeName; 
-        }, "Returns the static type name of the class.");
+        .def("get_type_name", &IOComponent::getTypeName,
+            "Returns the dynamic type name of the component instance.");
 }

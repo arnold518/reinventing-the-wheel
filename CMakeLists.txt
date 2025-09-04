@@ -32,6 +32,7 @@ set(BINDING_SOURCES
     src/bindings/BasicComponentBinding.cpp
     src/bindings/PinBinding.cpp
     src/bindings/WireBinding.cpp
+    src/bindings/ModulesBinding.cpp
     src/bindings/SimulationTestBinding.cpp
     src/bindings/SimulatorBinding.cpp
     src/bindings/tests/FullCircuitTestBinding.cpp

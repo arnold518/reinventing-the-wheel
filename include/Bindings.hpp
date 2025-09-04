@@ -19,14 +19,17 @@ inline void bindLogicValue(py::module_& m) {
         });
 }
 
-// --- Core Type Bindings ---
-void bindPin(py::module_ &m);
-void bindWire(py::module_ &m);
-
 // --- Component Hierarchy Bindings ---
 void bindComponent(py::module_ &m);
 void bindIOComponent(py::module_ &m);
 void bindBasicComponent(py::module_ &m);
+
+// --- Modules Bindings ---
+void bindModules(py::module_ &m);
+
+// --- Core Type Bindings ---
+void bindPin(py::module_ &m);
+void bindWire(py::module_ &m);
 
 // --- Simulator and Test Bindings ---
 void bindSimulator(py::module_ &m);

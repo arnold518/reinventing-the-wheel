@@ -6,7 +6,7 @@
 
 
 void bindWire(py::module_& m) {
-    py::class_<Wire, std::shared_ptr<Wire>>(m, "Wire", "Represents a connection between a source pin and one or more sink pins.")
+    py::class_<Wire, std::shared_ptr<Wire>>(m, "Wire", "Represents a connection between a source pin and one or more sink pins.", py::module_local(false))
 
         // --- Essential Getters for Structure and State ---
 

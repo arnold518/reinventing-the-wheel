@@ -4,7 +4,7 @@
 #include "basic/Wire.hpp"
 
 void bindComponent(py::module_& m) {
-    py::class_<Component, std::shared_ptr<Component>>(m, "Component", "The base class for all circuit elements.")
+    py::class_<Component, std::shared_ptr<Component>>(m, "Component", "The base class for all circuit elements.", py::module_local(false))
         
         // --- Essential Getters for Structure Discovery ---
 
@@ -25,7 +25,6 @@ void bindComponent(py::module_& m) {
 
         // --- Type Information ---
 
-        .def_property_readonly_static("type_name", [](py::object /* self */) { 
-            return Component::TypeName; 
-        }, "Returns the static type name of the class.");
+        .def("get_type_name", &Component::getTypeName,
+            "Returns the dynamic type name of the component instance.");
 }

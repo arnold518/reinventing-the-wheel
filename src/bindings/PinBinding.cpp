@@ -15,7 +15,7 @@ void bindPin(py::module_& m) {
     // Bind the enum first so the Pin binding can use it.
     bindPinTypeEnum(m);
 
-    py::class_<Pin, std::shared_ptr<Pin>>(m, "Pin", "Represents an input or output point on a component.")
+    py::class_<Pin, std::shared_ptr<Pin>>(m, "Pin", "Represents an input or output point on a component.", py::module_local(false))
         
         // --- Essential Getters for Structure and State ---
         
