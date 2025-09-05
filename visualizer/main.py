@@ -1,17 +1,16 @@
 import pygame
 import sys
-import circuit_backend  # Import your actual, compiled C++ module
+import circuit_backend
 
+# --- NEW ---
+# We now import the more specific VisualIOComponent and the new VisualWire class
 from camera import Camera
 from ui_elements import Button, Slider
-from visual_component import VisualComponent
+from visual_component import VisualComponent, VisualIOComponent, VisualWire
 
 pygame.init()
 
-# --- Layout Definition ---
-# This dictionary provides the positions and sizes for the components
-# that will be created by your C++ FullCircuitTest scenario.
-# The keys MUST match the names you gave them in `buildCircuit()`.
+# --- Layout Definition (No Changes) ---
 COMPONENT_LAYOUTS = {
     'Full_Circuit_Test': {'pos': (50, 50),   'size': (500, 400)},
     'AND1':              {'pos': (100, 100), 'size': (120, 80), 'color': (67, 175, 255, 100)},
@@ -20,42 +19,54 @@ COMPONENT_LAYOUTS = {
     'CLK_GEN':           {'pos': (270, 70), 'size': (120, 60),  'color': (67, 255, 148, 100)},
 }
 
+# --- NEW: Updated Hierarchy Builder ---
 def build_visual_hierarchy(cpp_component, parent_vc=None, created_map=None):
     """
-    Recursively builds a tree of VisualComponents by reading the C++ hierarchy.
-    This function remains the same, as its job is still valid.
+    Recursively builds a tree of VisualComponents and collects all VisualPins.
+    Returns the root visual component and a flat list of all pins created.
     """
     if created_map is None:
         created_map = {}
-        
+    
+    all_pins_in_hierarchy = []
     name = cpp_component.get_name()
     layout = COMPONENT_LAYOUTS.get(name)
     
     if not layout:
         print(f"Warning: No layout defined for component '{name}'. Skipping visual creation.")
-        # We still need to process children even if the parent isn't drawn
         for cpp_child in cpp_component.get_children():
-            build_visual_hierarchy(cpp_child, parent_vc, created_map)
-        return None
+            _, child_pins = build_visual_hierarchy(cpp_child, parent_vc, created_map)
+            all_pins_in_hierarchy.extend(child_pins)
+        return None, all_pins_in_hierarchy
 
-    # Create the Python visual object using the C++ handle
-    visual_comp = VisualComponent(
+    # --- NEW: Type-aware component creation ---
+    # Check if the component has pins and choose the correct visual class.
+    if hasattr(cpp_component, 'get_input_pins'):
+        VisualComponentClass = VisualIOComponent
+    else:
+        VisualComponentClass = VisualComponent
+
+    visual_comp = VisualComponentClass(
         pos=layout['pos'],
         size=layout['size'],
         cpp_handle=cpp_component,
         parent=parent_vc,
         color=layout.get('color', (61, 90, 128, 100))
     )
-    # Store the component so we can get a flat list later
     created_map[name] = visual_comp
+    
+    # --- NEW: Collect pins from the created component ---
+    if isinstance(visual_comp, VisualIOComponent):
+        all_pins_in_hierarchy.extend(visual_comp.get_all_pins())
     
     # Recurse into children
     for cpp_child in cpp_component.get_children():
-        child_vc = build_visual_hierarchy(cpp_child, parent_vc=visual_comp, created_map=created_map)
+        child_vc, child_pins = build_visual_hierarchy(cpp_child, parent_vc=visual_comp, created_map=created_map)
         if child_vc:
             visual_comp.add_child(child_vc)
+            all_pins_in_hierarchy.extend(child_pins) # Add pins from children
             
-    return visual_comp
+    return visual_comp, all_pins_in_hierarchy
 
 # --- Screen and UI Setup (No Changes) ---
 SCREEN_WIDTH, SCREEN_HEIGHT = 1920, 1080
@@ -77,30 +88,39 @@ reset_button = Button(x=20, y=20, width=150, height=50, text='Reset View', on_cl
 zoom_slider = Slider(x=20, y=100, width=200, height=10, min_val=camera.min_zoom, max_val=camera.max_zoom, initial_val=camera.zoom, on_change=on_zoom_slider_change)
 ui_elements = [reset_button, zoom_slider]
 
-
 # --- HIERARCHY CREATION (NEW ARCHITECTURE) ---
-# This section is the core of the new integration.
 print("--- Initializing C++ Backend ---")
 try:
-    # 1. Instantiate the specific C++ test scenario you want to visualize.
     test_scenario = circuit_backend.FullCircuitTest()
-
-    # 2. Call the setup method to run buildCircuit() and setInitialState() in C++.
     print("Running C++ setup_circuit()...")
     test_scenario.setup_circuit()
-
-    # 3. Get the fully constructed root component from the C++ test object.
-    print("Retrieving root component from C++...")
     root_cpp_component = test_scenario.get_root()
 
     if not root_cpp_component:
         raise RuntimeError("C++ test scenario did not produce a root component!")
 
-    # 4. Build the Python visual hierarchy from the C++ data model.
+    # 1. Build the component hierarchy and collect all visual pins.
     all_components_map = {}
-    build_visual_hierarchy(root_cpp_component, created_map=all_components_map)
+    _, all_visual_pins = build_visual_hierarchy(root_cpp_component, created_map=all_components_map)
     all_components = list(all_components_map.values())
-    print("--- C++ Backend Initialized Successfully ---")
+    print(f"Created {len(all_components)} visual components and found {len(all_visual_pins)} visual pins.")
+
+    # --- NEW: Create and connect visual wires ---
+    
+    # 2. Create a mapping from C++ pin handles to Python VisualPin objects for quick lookups.
+    pin_map = {vpin.cpp_handle: vpin for vpin in all_visual_pins}
+    
+    # 3. Get all C++ wire objects from the root component.
+    cpp_wires = root_cpp_component.get_wires()
+    
+    # 4. Create a VisualWire for each C++ wire.
+    all_wires = [VisualWire(cw) for cw in cpp_wires]
+    print(f"Created {len(all_wires)} visual wires.")
+
+    # 5. Connect the visual wires to their corresponding visual pins using the map.
+    for wire in all_wires:
+        wire.connect(pin_map)
+    print("--- C++ Backend Initialized and Visualized Successfully ---")
 
 except Exception as e:
     print(f"\n[FATAL ERROR] Could not initialize the C++ backend: {e}")
@@ -108,8 +128,7 @@ except Exception as e:
     pygame.quit()
     sys.exit(1)
 
-
-# --- Main loop (No Changes) ---
+# --- Main loop ---
 running = True
 while running:
     dt = clock.tick(60)
@@ -155,7 +174,11 @@ while running:
     screen.fill((30, 30, 30))
     camera.draw_grid(screen)
     
-    # Draw top-level components (they will recursively draw their children)
+    # --- NEW: Draw all the wires first, so they appear behind the components.
+    for wire in all_wires:
+        wire.draw(screen, camera)
+    
+    # Draw top-level components (they will recursively draw their children and pins)
     for component in all_components:
         if component.parent is None:
             component.draw(screen, camera)
