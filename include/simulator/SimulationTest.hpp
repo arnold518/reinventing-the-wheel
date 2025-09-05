@@ -36,7 +36,7 @@ public:
         try {
             setupCircuit();
 
-            sim->run(getRunDuration());
+            sim->runAndRecord(getRunDuration());
             verifyResults();
             std::cout << "[PASS] Test '" << getTestName() << "' completed successfully." << std::endl;
             if (root) {

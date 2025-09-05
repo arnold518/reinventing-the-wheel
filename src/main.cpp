@@ -81,8 +81,11 @@ int main() {
     TestCircuit circuit = buildTestCircuit();
     setInitialState(sim, circuit);
 
-    sim.run(100);
+    sim.runAndRecord(100);
 
     std::cout << circuit.root->format(0, true, true) << "\n";
+
+    auto V = sim.getUniqueTimestamps();
+    std::cout << V.size() << "\n";
     return 0;
 }

@@ -43,7 +43,7 @@ void FullCircuitTest::setInitialState() {
     auto clk_gen = builder->getComponent<ClockGenerator>("CLK_GEN");
     
     sim->scheduleEvent(std::make_shared<WireUpdateEvent>(0, wire_a, LogicValue::HIGH));
-    sim->scheduleEvent(std::make_shared<WireUpdateEvent>(0, wire_b, LogicValue::LOW));
+    sim->scheduleEvent(std::make_shared<WireUpdateEvent>(0, wire_b, LogicValue::HIGH));
     clk_gen->startClock(*sim, 0);
 }
 
