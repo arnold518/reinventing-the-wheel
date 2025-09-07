@@ -1,39 +1,78 @@
 {
   "default_settings": {
     "title_bar_ratio": 0.15,
-    "font_width_ratio": 0.10,
-    "wire_stub_ratio": 0.02
+    "font_width_ratio": 0.1,
+    "wire_stub_ratio": 0.05,
+    "pin_size_ratio": 0.1
   },
-  "root_component_name": "Full_Circuit_Test",
-  "root_layout": {
-    "pos": [50, 150],
-    "size": [800, 600]
-  },
-  "component_layouts": {
-    "Full_Circuit_Test": {
-      "aspect_ratio": 0.75,
-      "color": [61, 90, 128, 100],
-      "children": {
-        "AND1":    { "rel_pos": [0.05, 0.1], "rel_width": 0.3 },
-        "DFF1":    { "rel_pos": [0.4, 0.2],  "rel_width": 0.3 },
-        "AND2":    { "rel_pos": [0.05, 0.5], "rel_width": 0.3 },
-        "CLK_GEN": { "rel_pos": [0.75, 0.1], "rel_width": 0.2 }
-      }
-    },
+  "type_layouts": {
     "ANDGate": {
       "aspect_ratio": 0.8,
-      "color": [67, 175, 255, 100],
-      "children": {}
+      "color": [
+        67,
+        175,
+        255,
+        100
+      ]
     },
     "DFlipFlop": {
       "aspect_ratio": 1.0,
-      "color": [255, 67, 148, 100],
-      "children": {}
+      "color": [
+        255,
+        67,
+        148,
+        100
+      ]
     },
     "ClockGenerator": {
       "aspect_ratio": 0.5,
-      "color": [67, 255, 148, 100],
-      "children": {}
+      "color": [
+        67,
+        255,
+        148,
+        100
+      ]
+    }
+  },
+  "instance_layouts": {
+    "Full_Circuit_Test": {
+      "aspect_ratio": 0.75,
+      "color": [
+        61,
+        90,
+        128,
+        100
+      ],
+      "children": {
+        "AND1": {
+          "rel_pos": [
+            0.0675,
+            0.265
+          ],
+          "rel_width": 0.3
+        },
+        "DFF1": {
+          "rel_pos": [
+            0.19875,
+            0.22666666666666666
+          ],
+          "rel_width": 0.3
+        },
+        "AND2": {
+          "rel_pos": [
+            0.65,
+            0.2
+          ],
+          "rel_width": 0.3
+        },
+        "CLK_GEN": {
+          "rel_pos": [
+            0.05625,
+            0.7966666666666666
+          ],
+          "rel_width": 0.2
+        }
+      }
     }
   }
 }
