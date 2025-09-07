@@ -26,8 +26,10 @@ class LayoutManager:
         else: return self.type_layouts.get(component_type, {})
 
     def update_root_position(self, new_pos):
-        """Updates the root's in-memory position."""
         self.root_layout_config['pos'] = [new_pos[0], new_pos[1]]
+
+    def update_root_width(self, new_width):
+        self.root_layout_config['width'] = new_width
 
     def update_child_position(self, parent_key, parent_type, child_name, new_rel_pos):
         is_parent_generic = parent_type in ["Component", "IOComponent", "BasicComponent"]
@@ -37,6 +39,15 @@ class LayoutManager:
             target_dict[key]['children'][child_name]['rel_pos'] = new_rel_pos
         else:
             print(f"DEBUG (LayoutManager): WARNING - Could not find key '{key}' or child '{child_name}' to update position.")
+
+    def update_child_width(self, parent_key, parent_type, child_name, new_rel_width):
+        is_parent_generic = parent_type in ["Component", "IOComponent", "BasicComponent"]
+        target_dict = self.instance_layouts if is_parent_generic else self.type_layouts
+        key = parent_key if is_parent_generic else parent_type
+        if key in target_dict and child_name in target_dict[key].get('children', {}):
+            target_dict[key]['children'][child_name]['rel_width'] = new_rel_width
+        else:
+            print(f"DEBUG (LayoutManager): WARNING - Could not find key '{key}' or child '{child_name}' to update width.")
 
     def save_layout(self):
         data = {"default_settings": self.settings, "type_layouts": self.type_layouts, "instance_layouts": self.instance_layouts}
@@ -53,14 +64,13 @@ def build_visual_hierarchy(layout_manager, cpp_root):
     root_pos = layout_manager.root_layout_config['pos']
     root_width = layout_manager.root_layout_config['width']
 
-    # Calculate height using the aspect ratio from the layout file, just like a child
-    root_aspect_ratio = root_layout.get('aspect_ratio', 1.0) # Default to 1.0 if not specified
+    root_aspect_ratio = root_layout.get('aspect_ratio', 1.0)
     root_height = root_width * root_aspect_ratio
 
     root_rect = pygame.Rect(root_pos, (root_width, root_height))
     
     RootClass = VisualIOComponent if hasattr(cpp_root, 'get_input_pins') else VisualComponent
-    root_vc = RootClass(rect=root_rect, cpp_handle=cpp_root, settings=layout_manager.settings, layout_key=root_key, rel_info={}, depth=0, color=root_layout.get('color'))
+    root_vc = RootClass(rect=root_rect, cpp_handle=cpp_root, settings=layout_manager.settings, layout_key=root_key, rel_info={}, depth=0, color=root_layout.get('color'), aspect_ratio=root_aspect_ratio)
     all_components_map[root_vc.name] = root_vc
     if isinstance(root_vc, VisualIOComponent): all_visual_pins.extend(root_vc.get_all_pins())
     for child_cpp in cpp_root.get_children():
@@ -87,7 +97,7 @@ def build_recursive_step(cpp_comp, parent_rect, parent_layout, lm, created_map, 
     abs_x, abs_y = parent_rect.x + parent_rect.width * rel_pos[0], parent_rect.y + parent_rect.height * rel_pos[1]
     my_rect = pygame.Rect(abs_x, abs_y, abs_w, abs_h)
     VC_Class = VisualIOComponent if hasattr(cpp_comp, 'get_input_pins') else VisualComponent
-    vc = VC_Class(rect=my_rect, cpp_handle=cpp_comp, settings=lm.settings, layout_key=my_key, rel_info=child_info, depth=depth, parent=parent_vc, color=my_layout.get('color'))
+    vc = VC_Class(rect=my_rect, cpp_handle=cpp_comp, settings=lm.settings, layout_key=my_key, rel_info=child_info, depth=depth, parent=parent_vc, color=my_layout.get('color'), aspect_ratio=aspect_ratio)
     created_map[my_name] = vc
     if isinstance(vc, VisualIOComponent): all_pins.extend(vc.get_all_pins())
     for child_cpp in cpp_comp.get_children():
@@ -96,7 +106,6 @@ def build_recursive_step(cpp_comp, parent_rect, parent_layout, lm, created_map, 
     return vc, all_pins
 
 pygame.init()
-# (Screen setup unchanged)
 SCREEN_WIDTH, SCREEN_HEIGHT = 1920, 1080; screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT)); pygame.display.set_caption("Circuit Simulator - C++ Backend Driven")
 clock = pygame.time.Clock(); camera = Camera((SCREEN_WIDTH, SCREEN_HEIGHT))
 
@@ -112,7 +121,6 @@ try:
 except Exception as e:
     print(f"\n[FATAL ERROR] Could not initialize: {e}"); pygame.quit(); sys.exit(1)
 
-# (UI setup unchanged)
 current_time_index, previous_time_index, is_playing, playback_timer = 0, -1, False, 0; playback_interval = 250
 def on_play_pause_click(): globals()['is_playing'] = not globals()['is_playing']; play_pause_button.set_text("Pause" if globals()['is_playing'] else "Play")
 def on_step_forward(): globals()['current_time_index'] = min(len(event_timestamps)-1, globals()['current_time_index']+1); is_playing and on_play_pause_click()
@@ -130,7 +138,6 @@ reset_button = Button(x=230, y=SCREEN_HEIGHT-65, width=150, height=50, text='Res
 save_button = Button(x=400, y=SCREEN_HEIGHT-65, width=150, height=50, text='Save Layout', on_click=lambda: layout_manager.save_layout())
 ui_elements = [time_slider, play_pause_button, step_backward_button, step_forward_button, reset_sim_button, zoom_slider, reset_button, save_button]
 
-# --- Main loop ---
 running = True
 active_interaction_component = None
 while running:
@@ -150,29 +157,36 @@ while running:
             hovered_component.is_hovered = True
             hovered_item_for_interaction = hovered_component
 
-    event_consumed, layout_changed = False, False
+    resize_border = None
+    if hovered_component and not active_interaction_component:
+        resize_border = hovered_component.get_hovered_border(camera.screen_to_world(mouse_pos), camera)
+
+    if resize_border in ['left', 'right']: pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_SIZEWE)
+    elif resize_border in ['top', 'bottom']: pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_SIZENS)
+    else: pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_ARROW)
+
+    event_consumed = False
     for event in pygame.event.get():
         if event.type == pygame.QUIT: running = False
         for e in ui_elements: e.handle_event(event)
         
         interaction_target = active_interaction_component or hovered_item_for_interaction
         if not mouse_over_ui and interaction_target:
-            consumed, changed = interaction_target.handle_event(event, camera, layout_manager)
+            consumed = interaction_target.handle_event(event, camera, layout_manager)
             if consumed: event_consumed = True
-            if changed: layout_changed = True
-            if event.type == pygame.MOUSEBUTTONDOWN and (interaction_target.is_dragging or hasattr(interaction_target, 'is_resizing') and interaction_target.is_resizing):
+            
+            if event.type == pygame.MOUSEBUTTONDOWN and (interaction_target.is_dragging or interaction_target.is_resizing):
                 active_interaction_component = interaction_target
             elif event.type == pygame.MOUSEBUTTONUP:
+                if active_interaction_component:
+                    active_interaction_component.is_dragging = False
+                    active_interaction_component.is_resizing = False
                 active_interaction_component = None
-        
-        if layout_changed:
-            all_components, all_visual_pins, all_wires, root_vc = build_visual_hierarchy(layout_manager, root_cpp)
 
         is_mouse_event = event.type in (pygame.MOUSEBUTTONDOWN, pygame.MOUSEBUTTONUP, pygame.MOUSEMOTION, pygame.MOUSEWHEEL)
         if is_mouse_event and not mouse_over_ui and not event_consumed:
              camera.handle_event(event)
 
-    # (State Update and Drawing are unchanged)
     if is_playing and pygame.time.get_ticks() - playback_timer > playback_interval:
         current_time_index = min(len(event_timestamps) - 1, current_time_index + 1); playback_timer = pygame.time.get_ticks()
         if current_time_index == len(event_timestamps) - 1: on_play_pause_click()

@@ -1,7 +1,6 @@
 import pygame
 import circuit_backend
 
-# (Constants, VisualPin, and VisualWire are unchanged)
 STATE_COLORS = {
     circuit_backend.LogicValue.HIGH: (76, 175, 80),
     circuit_backend.LogicValue.LOW: (211, 47, 47),
@@ -81,17 +80,19 @@ class VisualComponent:
             except pygame.error: VisualComponent._font_cache[size] = pygame.font.Font(None, size)
         return VisualComponent._font_cache[size]
 
-    def __init__(self, rect, cpp_handle, settings, layout_key, rel_info, depth=0, parent=None, color=(61, 90, 128, 100)):
-        """--- FIXED: Added 'layout_key' to the constructor signature ---"""
-        self.cpp_handle = cpp_handle; self.parent, self.children = parent, []; self.rect = rect
-        self.is_dragging, self._is_hovered = False, False; self.drag_offset = pygame.Vector2(0, 0); self.depth = depth
+    def __init__(self, rect, cpp_handle, settings, layout_key, rel_info, depth=0, parent=None, color=(61, 90, 128, 100), aspect_ratio=1.0):
+        self.cpp_handle = cpp_handle; self.parent, self.children = parent, []; self.rect = pygame.Rect(rect)
+        self.is_dragging, self.is_resizing = False, False
+        self._is_hovered = False; self.drag_offset = pygame.Vector2(0, 0); self.depth = depth
+        self.resize_mode = None; self.min_width = 40
         self.title_bar_ratio = settings.get('title_bar_ratio', 0.15); self.font_width_ratio = settings.get('font_width_ratio', 0.18)
         self.wire_stub_ratio = settings.get('wire_stub_ratio', 0.15); self.pin_size_ratio = settings.get('pin_size_ratio', 0.1)
         self.base_color = color; self.hover_color = self.base_color[:3] + [150]; self.border_color, self.text_color = (238, 244, 255), (240, 240, 240)
         title_rgb = [max(0, c - 20) for c in self.base_color[:3]]; self.title_bar_color = tuple(title_rgb + [self.base_color[3]])
         self._is_dirty, self._body_surface, self._title_surface = True, None, None; self._last_zoom = -1
         self.rel_info = rel_info
-        self.layout_key = layout_key # Store the key
+        self.layout_key = layout_key
+        self.aspect_ratio = aspect_ratio
 
     @property
     def name(self): return self.cpp_handle.get_name()
@@ -102,11 +103,11 @@ class VisualComponent:
         if self._is_hovered != value: self._is_hovered = value; self._is_dirty = True
 
     def _render_surfaces(self, zoom):
-        zoomed_size = (max(1, self.rect.width * zoom), max(1, self.rect.height * zoom)); zoomed_title_height = zoomed_size[0] * self.title_bar_ratio
+        zoomed_size = (max(1, int(self.rect.width * zoom)), max(1, int(self.rect.height * zoom))); zoomed_title_height = zoomed_size[0] * self.title_bar_ratio
         fill_color = self.hover_color if self.is_hovered else self.base_color
-        body_size = (zoomed_size[0], zoomed_size[1] - zoomed_title_height)
+        body_size = (zoomed_size[0], max(1, zoomed_size[1] - zoomed_title_height))
         self._body_surface = pygame.Surface(body_size, pygame.SRCALPHA); self._body_surface.fill(fill_color)
-        title_size = (zoomed_size[0], zoomed_title_height)
+        title_size = (zoomed_size[0], max(1, zoomed_title_height))
         self._title_surface = pygame.Surface(title_size, pygame.SRCALPHA); self._title_surface.fill(self.title_bar_color)
         self._is_dirty = False
         
@@ -130,42 +131,113 @@ class VisualComponent:
         return pygame.Rect(self.rect.left + stub_width, self.rect.top + title_height, self.rect.width - 2 * stub_width, self.rect.height - title_height)
     def add_child(self, child_vc): self.children.append(child_vc)
 
+    def get_hovered_border(self, world_pos, camera):
+        if not self.is_hovered: return None
+        threshold = 5 / camera.zoom
+        on_left = abs(world_pos.x - self.rect.left) < threshold
+        on_right = abs(world_pos.x - self.rect.right) < threshold
+        on_top = abs(world_pos.y - self.rect.top) < threshold
+        on_bottom = abs(world_pos.y - self.rect.bottom) < threshold
+        in_y_range = self.rect.top < world_pos.y < self.rect.bottom
+        in_x_range = self.rect.left < world_pos.x < self.rect.right
+        if on_left and in_y_range: return 'left'
+        if on_right and in_y_range: return 'right'
+        if on_top and in_x_range: return 'top'
+        if on_bottom and in_x_range: return 'bottom'
+        return None
+
     def handle_event(self, event, camera, layout_manager):
+        world_mouse_pos = camera.screen_to_world(pygame.mouse.get_pos())
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and self.is_hovered:
-            self.is_dragging = True
-            self.drag_offset = camera.screen_to_world(pygame.mouse.get_pos()) - self.rect.topleft
-            return True, False
-        if event.type == pygame.MOUSEBUTTONUP and event.button == 1 and self.is_dragging:
-            self.is_dragging = False
-            return True, False
-        if event.type == pygame.MOUSEMOTION and self.is_dragging:
-            new_pos = camera.screen_to_world(pygame.mouse.get_pos()) - self.drag_offset
-            delta = new_pos - self.rect.topleft
-            self.move(delta)
-            if self.parent:
-                new_rel_pos = [(self.rect.left - self.parent.rect.left) / self.parent.rect.width,
-                               (self.rect.top - self.parent.rect.top) / self.parent.rect.height]
-                layout_manager.update_child_position(
-                    parent_key=self.parent.layout_key,
-                    parent_type=self.parent.cpp_handle.get_type_name(),
-                    child_name=self.name,
-                    new_rel_pos=new_rel_pos
-                )
+            border = self.get_hovered_border(world_mouse_pos, camera)
+            if border:
+                self.is_resizing = True; self.is_dragging = False; self.resize_mode = border
+                return True
             else:
-                layout_manager.update_root_position(self.rect.topleft)
-                return True, True
+                self.is_dragging = True; self.is_resizing = False
+                self.drag_offset = world_mouse_pos - pygame.Vector2(self.rect.topleft)
+                return True
+        
+        if event.type == pygame.MOUSEMOTION:
+            if self.is_resizing:
+                self.resize(self.resize_mode, world_mouse_pos, layout_manager)
+                return True
+            if self.is_dragging:
+                new_pos = world_mouse_pos - self.drag_offset
+                self.move(new_pos - pygame.Vector2(self.rect.topleft), layout_manager)
+                return True
+        return False
 
-        return False, False
+    def resize(self, mode, world_mouse_pos, lm):
+        new_rect = self.rect.copy()
+        if mode in ['right', 'left']:
+            if mode == 'right': new_width = world_mouse_pos.x - self.rect.left
+            else: # left
+                new_width = self.rect.right - world_mouse_pos.x
+                new_rect.left = self.rect.right - new_width
+            new_width = max(self.min_width, new_width)
+            new_height = new_width * self.aspect_ratio
+            if mode == 'left': new_rect.top = self.rect.bottom - new_height
+            new_rect.width, new_rect.height = new_width, new_height
+        elif mode in ['bottom', 'top']:
+            if mode == 'bottom': new_height = world_mouse_pos.y - self.rect.top
+            else: # top
+                new_height = self.rect.bottom - world_mouse_pos.y
+                new_rect.top = self.rect.bottom - new_height
+            new_height = max(self.min_width * self.aspect_ratio, new_height)
+            new_width = new_height / self.aspect_ratio
+            if mode == 'top': new_rect.left = self.rect.right - new_width
+            new_rect.width, new_rect.height = new_width, new_height
 
-    def move(self, delta):
-        potential_pos = self.rect.topleft + delta
+        self.rect = new_rect
+        self.recalculate_children_layout()
+        if isinstance(self, VisualIOComponent): self._layout_pins()
+        self._is_dirty = True
+
+        if self.parent:
+            new_rel_pos = [(self.rect.left - self.parent.rect.left) / self.parent.rect.width,
+                           (self.rect.top - self.parent.rect.top) / self.parent.rect.height]
+            new_rel_width = self.rect.width / self.parent.rect.width
+            lm.update_child_position(self.parent.layout_key, self.parent.cpp_handle.get_type_name(), self.name, new_rel_pos)
+            lm.update_child_width(self.parent.layout_key, self.parent.cpp_handle.get_type_name(), self.name, new_rel_width)
+        else:
+            lm.update_root_position(self.rect.topleft)
+            lm.update_root_width(self.rect.width)
+
+    def move(self, delta, lm):
+        potential_pos = pygame.Vector2(self.rect.topleft) + delta
         if self.parent:
             p_rect = self.parent.get_content_rect()
             potential_pos.x = max(p_rect.left, min(potential_pos.x, p_rect.right - self.rect.width))
             potential_pos.y = max(p_rect.top, min(potential_pos.y, p_rect.bottom - self.rect.height))
-        actual_delta = potential_pos - self.rect.topleft
+        actual_delta = potential_pos - pygame.Vector2(self.rect.topleft)
         self.rect.topleft += actual_delta
-        for child in self.children: child.move(actual_delta)
+        
+        self.recalculate_children_layout()
+        if isinstance(self, VisualIOComponent): self._layout_pins()
+
+        if self.parent:
+            new_rel_pos = [(self.rect.left - self.parent.rect.left) / self.parent.rect.width,
+                           (self.rect.top - self.parent.rect.top) / self.parent.rect.height]
+            lm.update_child_position(self.parent.layout_key, self.parent.cpp_handle.get_type_name(), self.name, new_rel_pos)
+        else:
+            lm.update_root_position(self.rect.topleft)
+
+    def recalculate_children_layout(self):
+        for child in self.children:
+            child.rel_info['rel_pos'] # We assume rel_info is up-to-date from LayoutManager
+            child.rel_info['rel_width']
+            
+            new_width = self.rect.width * child.rel_info['rel_width']
+            new_height = new_width * child.aspect_ratio
+            new_left = self.rect.x + self.rect.width * child.rel_info['rel_pos'][0]
+            new_top = self.rect.y + self.rect.height * child.rel_info['rel_pos'][1]
+            
+            child.rect.update(new_left, new_top, new_width, new_height)
+            child._is_dirty = True
+            
+            if isinstance(child, VisualIOComponent): child._layout_pins()
+            child.recalculate_children_layout()
 
 class VisualIOComponent(VisualComponent):
     def __init__(self, *args, **kwargs):
@@ -190,7 +262,6 @@ class VisualIOComponent(VisualComponent):
                 pin.base_points = [pygame.Vector2(-w2, -h2), pygame.Vector2(w2, 0), pygame.Vector2(-w2, h2)]
                 pin.rect.center = (self.rect.right, content_rect.top + spacing * (i + 1))
     def get_all_pins(self): return self.input_pins + self.output_pins
-    def move(self, delta): super().move(delta); self._layout_pins()
     def draw(self, screen, camera):
         super().draw(screen, camera)
         for pin in self.get_all_pins(): pin.update_state(); pin.draw(screen, camera)
