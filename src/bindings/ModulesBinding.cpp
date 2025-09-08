@@ -3,9 +3,9 @@
 #include <pybind11/stl.h>
 
 // Include all necessary headers
-#include "modules/Gate.hpp"
-#include "modules/DFlipFlop.hpp"
-#include "modules/ClockGenerator.hpp"
+#include "modules/basic/Gate.hpp"
+#include "modules/basic/DFlipFlop.hpp"
+#include "modules/basic/ClockGenerator.hpp"
 #include "components/BasicComponent.hpp"
 #include "components/IOComponent.hpp"
 #include "components/Component.hpp"

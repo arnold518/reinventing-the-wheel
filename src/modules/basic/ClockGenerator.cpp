@@ -1,4 +1,4 @@
-#include "modules/ClockGenerator.hpp"
+#include "modules/basic/ClockGenerator.hpp"
 #include "simulator/Simulator.hpp"
 #include "simulator/Event.hpp"
 

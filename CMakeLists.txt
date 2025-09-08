@@ -17,9 +17,9 @@ set(CORE_LOGIC_SOURCES
     src/components/IOComponent.cpp
     src/components/BasicComponent.cpp
     src/components/ComponentBuilder.cpp
-    src/modules/Gate.cpp
-    src/modules/DFlipFlop.cpp
-    src/modules/ClockGenerator.cpp
+    src/modules/basic/Gate.cpp
+    src/modules/basic/DFlipFlop.cpp
+    src/modules/basic/ClockGenerator.cpp
     src/simulator/Event.cpp
     src/simulator/Simulator.cpp
     src/tests/FullCircuitTest.cpp

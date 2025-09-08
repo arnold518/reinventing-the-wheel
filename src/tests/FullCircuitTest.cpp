@@ -1,9 +1,9 @@
 #include "tests/FullCircuitTest.hpp"
 
 #include "components/ComponentBuilder.hpp"
-#include "modules/Gate.hpp"
-#include "modules/DFlipFlop.hpp"
-#include "modules/ClockGenerator.hpp"
+#include "modules/basic/Gate.hpp"
+#include "modules/basic/DFlipFlop.hpp"
+#include "modules/basic/ClockGenerator.hpp"
 #include "simulator/Event.hpp"
 #include "basic/Wire.hpp"
 #include <cassert>

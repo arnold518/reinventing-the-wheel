@@ -2,9 +2,9 @@
 #include <memory>
 #include <vector> // Required for std::vector
 #include "simulator/Simulator.hpp"
-#include "modules/Gate.hpp"
-#include "modules/DFlipFlop.hpp"
-#include "modules/ClockGenerator.hpp"
+#include "modules/basic/Gate.hpp"
+#include "modules/basic/DFlipFlop.hpp"
+#include "modules/basic/ClockGenerator.hpp"
 #include "components/ComponentBuilder.hpp"
 #include "simulator/Event.hpp"
 #include "basic/LogicValue.hpp"
