@@ -3,6 +3,8 @@
 #include "components/BasicComponent.hpp"
 #include "basic/Wire.hpp"
 
+#include <iostream>
+
 Event::Event(size_t event_time) : time(event_time) {}
 
 ComponentEvalEvent::ComponentEvalEvent(size_t event_time, std::shared_ptr<Component> component)

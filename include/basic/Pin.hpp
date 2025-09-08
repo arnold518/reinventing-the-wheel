@@ -3,7 +3,6 @@
 #include <memory>
 #include "ForwardDeclarations.hpp"
 #include "basic/LogicValue.hpp"
-#include <vector>
 
 enum class PinType {
     INPUT,
@@ -25,7 +24,7 @@ public:
     std::shared_ptr<Component> getOwner() const;
     std::shared_ptr<Wire> getConnectedWire() const;
 
-    void connect(std::shared_ptr<Wire> wire);
+    void connect(const std::shared_ptr<Wire>& wire);
     LogicValue getValue() const;
     std::string getID() const;
 };

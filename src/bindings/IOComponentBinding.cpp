@@ -17,9 +17,6 @@ void bindIOComponent(py::module_& m) {
         
         // --- Essential Getters for Structure and State ---
         
-        .def("get_delay", &IOComponent::getDelay,
-            "Gets the propagation delay of the component.")
-        
         .def("get_input_pins", &IOComponent::getInputPins, py::return_value_policy::reference_internal,
             "Returns a map of the component's input pins.")
             

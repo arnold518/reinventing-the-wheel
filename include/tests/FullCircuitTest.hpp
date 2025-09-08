@@ -1,9 +1,10 @@
 #pragma once
-#include "simulator/SimulationTest.hpp" // Required for the parent class
+#include "simulator/SimulationTest.hpp"
 
-// The public interface for the FullCircuitTest.
 class FullCircuitTest : public SimulationTest {
 public:
+    // We override setupCircuit to change the root component type
+    void setupCircuit() override;
     std::string getTestName() const override;
     void buildCircuit() override;
     void setInitialState() override;

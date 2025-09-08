@@ -22,6 +22,9 @@ void bindBasicComponent(py::module_& m) {
         
         // --- Type Information ---
 
+        .def("get_delay", &BasicComponent::getDelay,
+            "Gets the propagation delay of the component.")
+        
         .def("get_type_name", &BasicComponent::getTypeName,
             "Returns the dynamic type name of the component instance.");
 }

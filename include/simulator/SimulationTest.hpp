@@ -3,6 +3,7 @@
 #include <string>
 #include <stdexcept>
 #include <cassert>
+#include <iostream>
 #include "simulator/Simulator.hpp"
 #include "components/ComponentBuilder.hpp"
 #include "components/Component.hpp"
@@ -23,7 +24,7 @@ public:
     std::shared_ptr<Component> getRoot() const { return root; }
     Simulator* getSimulator() const { return sim.get(); }
 
-    void setupCircuit() {
+    virtual void setupCircuit() {
         root = std::make_shared<Component>(getTestName());
         builder = std::make_unique<ComponentBuilder>(root);
 

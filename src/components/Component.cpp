@@ -1,12 +1,16 @@
 #include "components/Component.hpp"
 #include "components/IOComponent.hpp"
-#include "components/BasicComponent.hpp"
 #include "basic/Wire.hpp"
 #include <iostream>
 #include <algorithm>
 #include <sstream>
+#include <set>
 
 Component::Component(std::string name) : name(std::move(name)) {}
+
+void Component::buildInternals(ComponentBuilder& builder) {
+    // Base implementation is empty. To be overridden by composite components.
+}
 
 std::string Component::getName() const { return name; }
 
@@ -17,13 +21,60 @@ const std::vector<std::shared_ptr<Wire>>& Component::getWires() const { return w
 std::string Component::getID() const
 {
     std::string id_path = name;
-    std::weak_ptr<Component> current_parent_weak = parent;
+    auto current_parent_weak = parent;
     while (auto current_parent = current_parent_weak.lock())
     {
-        id_path = current_parent->getName() + " > " + id_path;
+        id_path = current_parent->getName() + "." + id_path;
         current_parent_weak = current_parent->parent;
     }
     return id_path;
+}
+
+bool Component::isAncestorOf(const std::shared_ptr<const Component>& other) const {
+    if (!other) return false;
+    auto current = other->getParent();
+    while (current) {
+        if (current.get() == this) {
+            return true;
+        }
+        current = current->getParent();
+    }
+    return false;
+}
+
+std::shared_ptr<Component> Component::findLCA(const std::vector<std::shared_ptr<Component>>& components) {
+    if (components.empty()) return nullptr;
+    if (components.size() == 1) return components[0];
+
+    std::set<std::shared_ptr<const Component>> path_to_root;
+    auto current = components[0];
+    while (current) {
+        path_to_root.insert(current);
+        current = current->getParent();
+    }
+
+    std::shared_ptr<Component> lca = nullptr;
+    for (size_t i = 1; i < components.size(); ++i) {
+        lca = nullptr;
+        current = components[i];
+        while (current) {
+            if (path_to_root.count(current)) {
+                lca = std::const_pointer_cast<Component>(current);
+                break;
+            }
+            current = current->getParent();
+        }
+        if (!lca) return nullptr; // No common ancestor found for the whole set
+
+        // For the next iteration, the new path is from the current LCA to the root
+        path_to_root.clear();
+        current = lca;
+        while(current) {
+            path_to_root.insert(current);
+            current = current->getParent();
+        }
+    }
+    return lca;
 }
 
 void Component::addChild(const std::shared_ptr<Component>& child)

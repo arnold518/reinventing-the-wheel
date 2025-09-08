@@ -1,4 +1,5 @@
 #pragma once
+
 #include "components/BasicComponent.hpp"
 #include <iostream>
 
@@ -12,7 +13,6 @@ public:
     ClockGenerator(std::string name, size_t half_period);
     static constexpr const char* TypeName = "ClockGenerator";
     const char* getTypeName() const override { return TypeName; }
-    void initPins(std::shared_ptr<IOComponent> self_ptr) override;
     void evaluate(size_t current_time, Simulator& simulator) override;
     void startClock(Simulator& simulator, size_t start_time);
 };

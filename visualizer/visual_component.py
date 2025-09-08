@@ -54,7 +54,8 @@ class VisualWire:
     def draw(self, screen, camera):
         self.update_state()
         if not self.source_vpin or not self.sink_vpins: return
-        line_width = 4 if self.is_hovered else max(1, int(2 * camera.zoom))
+        line_width = max(1, int(2 * camera.zoom))
+        if self.is_hovered: line_width *= 2
         start_pos = pygame.Vector2(self.source_vpin.rect.center)
         stub_length = self.owner.rect.width * self.owner.wire_stub_ratio if self.owner else 20
         self._world_paths.clear()

@@ -19,7 +19,7 @@ def format_circuit_structure(component, indent_level=0):
     # print(f"{prefix} BasicComponent?: {isinstance(component, circuit_backend.BasicComponent)}")
 
     # --- 2. Print Pin Info (if applicable) ---
-    if isinstance(component, circuit_backend.IOComponent):
+    if isinstance(component, circuit_backend.BasicComponent):
         print(f"{prefix}  - Delay: {component.get_delay()}")
         
         # Get all input pins from the map

@@ -3,14 +3,13 @@
 #include "simulator/Event.hpp"
 
 ClockGenerator::ClockGenerator(std::string name, size_t half_period) 
-    : BasicComponent(std::move(name), 0), 
+    : BasicComponent(std::move(name), 0, 
+      [](IOComponent* self) {
+          self->addPin("CLK_OUT", PinType::OUTPUT);
+      }), 
       current_state(LogicValue::LOW), 
       period_half(half_period)
 {}
-
-void ClockGenerator::initPins(std::shared_ptr<IOComponent> self_ptr) {
-    _addPin("CLK_OUT", PinType::OUTPUT, self_ptr);
-}
 
 void ClockGenerator::evaluate(size_t current_time, Simulator& simulator) {
     current_state = (current_state == LogicValue::HIGH) ? LogicValue::LOW : LogicValue::HIGH;

@@ -1,18 +1,19 @@
 #include "modules/basic/DFlipFlop.hpp"
+#include "simulator/Simulator.hpp"
 
-DFlipFlop::DFlipFlop(std::string name) : BasicComponent(std::move(name), 3),
-                               current_q_state(LogicValue::UNKNOWN),
-                               current_q_bar_state(LogicValue::UNKNOWN),
-                               prev_clk_state(LogicValue::UNKNOWN)
+DFlipFlop::DFlipFlop(std::string name)
+    : BasicComponent(std::move(name), 3,
+        [](IOComponent* self) {
+            self->addPin("D", PinType::INPUT);
+            self->addPin("CLK", PinType::INPUT);
+            self->addPin("RST", PinType::INPUT);
+            self->addPin("Q", PinType::OUTPUT);
+            self->addPin("Q_BAR", PinType::OUTPUT);
+        }),
+        current_q_state(LogicValue::UNKNOWN),
+        current_q_bar_state(LogicValue::UNKNOWN),
+        prev_clk_state(LogicValue::UNKNOWN)
 {}
-
-void DFlipFlop::initPins(std::shared_ptr<IOComponent> self_ptr) {
-    _addPin("D", PinType::INPUT, self_ptr);
-    _addPin("CLK", PinType::INPUT, self_ptr);
-    _addPin("RST", PinType::INPUT, self_ptr);
-    _addPin("Q", PinType::OUTPUT, self_ptr);
-    _addPin("Q_BAR", PinType::OUTPUT, self_ptr);
-}
 
 void DFlipFlop::evaluate(size_t current_time, Simulator& simulator) {
     LogicValue d_input = getInputValue("D");
@@ -24,7 +25,7 @@ void DFlipFlop::evaluate(size_t current_time, Simulator& simulator) {
     if (rst_input == LogicValue::HIGH) {
         next_q_state = LogicValue::LOW;
     } 
-    else if (clk_input == LogicValue::HIGH && prev_clk_state == LogicValue::LOW) {
+    else if (clk_input == LogicValue::HIGH && prev_clk_state == LogicValue::LOW) { // Rising edge detected
          if (d_input == LogicValue::HIGH || d_input == LogicValue::LOW) {
             next_q_state = d_input;
         } else {

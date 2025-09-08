@@ -1,4 +1,5 @@
 #pragma once
+
 #include "components/BasicComponent.hpp"
 #include <iostream>
 
@@ -8,7 +9,6 @@ public:
     NOTGate(std::string name);
     static constexpr const char* TypeName = "NOTGate";
     const char* getTypeName() const override { return TypeName; }
-    void initPins(std::shared_ptr<IOComponent> self_ptr) override;
     void evaluate(size_t current_time, Simulator& simulator) override;
 };
 
@@ -18,7 +18,6 @@ public:
     ANDGate(std::string name);
     static constexpr const char* TypeName = "ANDGate";
     const char* getTypeName() const override { return TypeName; }
-    void initPins(std::shared_ptr<IOComponent> self_ptr) override;
     void evaluate(size_t current_time, Simulator& simulator) override;
 };
 
@@ -28,7 +27,6 @@ public:
     NANDGate(std::string name);
     static constexpr const char* TypeName = "NANDGate";
     const char* getTypeName() const override { return TypeName; }
-    void initPins(std::shared_ptr<IOComponent> self_ptr) override;
     void evaluate(size_t current_time, Simulator& simulator) override;
 };
 
@@ -38,7 +36,6 @@ public:
     ORGate(std::string name);
     static constexpr const char* TypeName = "ORGate";
     const char* getTypeName() const override { return TypeName; }
-    void initPins(std::shared_ptr<IOComponent> self_ptr) override;
     void evaluate(size_t current_time, Simulator& simulator) override;
 };
 
@@ -48,7 +45,6 @@ public:
     NORGate(std::string name);
     static constexpr const char* TypeName = "NORGate";
     const char* getTypeName() const override { return TypeName; }
-    void initPins(std::shared_ptr<IOComponent> self_ptr) override;
     void evaluate(size_t current_time, Simulator& simulator) override;
 };
 
@@ -58,6 +54,5 @@ public:
     XORGate(std::string name);
     static constexpr const char* TypeName = "XORGate";
     const char* getTypeName() const override { return TypeName; }
-    void initPins(std::shared_ptr<IOComponent> self_ptr) override;
     void evaluate(size_t current_time, Simulator& simulator) override;
 };
