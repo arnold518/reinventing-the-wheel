@@ -2,13 +2,13 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
-// Include all necessary headers
-#include "modules/basic/Gate.hpp"
-#include "modules/basic/DFlipFlop.hpp"
-#include "modules/basic/ClockGenerator.hpp"
 #include "components/BasicComponent.hpp"
 #include "components/IOComponent.hpp"
 #include "components/Component.hpp"
+
+#include "modules/basic/Gate.hpp"
+#include "modules/basic/DFlipFlop.hpp"
+#include "modules/basic/ClockGenerator.hpp"
 
 namespace py = pybind11;
 
