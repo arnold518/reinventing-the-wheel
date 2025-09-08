@@ -2,6 +2,16 @@
 #include "components/BasicComponent.hpp"
 #include <iostream>
 
+class NOTGate : public BasicComponent
+{
+public:
+    NOTGate(std::string name);
+    static constexpr const char* TypeName = "NOTGate";
+    const char* getTypeName() const override { return TypeName; }
+    void initPins(std::shared_ptr<IOComponent> self_ptr) override;
+    void evaluate(size_t current_time, Simulator& simulator) override;
+};
+
 class ANDGate : public BasicComponent
 {
 public:

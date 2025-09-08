@@ -1,5 +1,31 @@
 #include "modules/basic/Gate.hpp"
 
+// NOTGate
+
+NOTGate::NOTGate(std::string name) : BasicComponent(std::move(name), 1) {}
+
+void NOTGate::initPins(std::shared_ptr<IOComponent> self_ptr) {
+    _addPin("IN", PinType::INPUT, self_ptr);
+    _addPin("OUT", PinType::OUTPUT, self_ptr);
+}
+
+void NOTGate::evaluate(size_t current_time, Simulator& simulator) {
+    LogicValue input = getInputValue("IN");
+
+    LogicValue new_output_value;
+    if (input == LogicValue::LOW) {
+        new_output_value = LogicValue::HIGH;
+    }
+    else if (input == LogicValue::HIGH) {
+        new_output_value = LogicValue::LOW;
+    }
+    else {
+        new_output_value = LogicValue::UNKNOWN;
+    }
+    
+    _updateOutputWire(simulator, "OUT", new_output_value, current_time);
+}
+
 // ANDGate
 
 ANDGate::ANDGate(std::string name) : BasicComponent(std::move(name), 1) {}
