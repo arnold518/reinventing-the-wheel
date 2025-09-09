@@ -1,9 +1,10 @@
 #include "modules/basic/ClockGenerator.hpp"
 #include "simulator/Simulator.hpp"
 #include "simulator/Event.hpp"
+#include "basic/Pin.hpp"
 
 ClockGenerator::ClockGenerator(std::string name, size_t half_period) 
-    : BasicComponent(std::move(name), 0, 
+    : BasicComponent(std::move(name), 0, // A clock's logic has 0 delay; its period is separate
       [](IOComponent* self) {
           self->addPin("CLK_OUT", PinType::OUTPUT);
       }), 

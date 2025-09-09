@@ -26,8 +26,11 @@ void bindPin(py::module_& m) {
         .def("get_owner", &Pin::getOwner, 
             "Returns the Component that owns this pin.")
 
-        .def("get_connected_wire", &Pin::getConnectedWire,
-            "Returns the Wire connected to this pin, or None.")
+        .def("get_external_wire", &Pin::getExternalWire,
+            "Returns the external Wire connected to this pin, or None.")
+        
+        .def("get_internal_wire", &Pin::getInternalWire,
+            "Returns the internal Wire connected to this pin, or None.")
         
         .def("get_value", &Pin::getValue)
 

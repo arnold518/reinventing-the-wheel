@@ -1,17 +1,14 @@
 #include <iostream>
 #include <memory>
-#include "tests/FullCircuitTest.hpp" // The test class we want to run
 #include "simulator/Simulator.hpp"
-
-// Because the implementation of FullCircuitTest uses ComponentBuilder's template methods,
-// this TPP file must be included somewhere in the project's compilation.
-// Including it here is a safe way to ensure the definitions are available.
 #include "components/ComponentBuilder.tpp"
+
+#include "tests/HalfAdderTest.hpp"
 
 int main() {
     // 1. Create an instance of the test harness.
     // The constructor for SimulationTest already creates the simulator instance.
-    FullCircuitTest test;
+    HalfAdderTest test;
 
     // 2. Run the test.
     // The run() method handles everything:

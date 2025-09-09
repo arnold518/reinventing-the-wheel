@@ -2,6 +2,8 @@
 #include "simulator/Simulator.hpp"
 #include "basic/Pin.hpp"
 #include "components/Component.hpp"
+#include "components/IOComponent.hpp"
+#include "components/BasicComponent.hpp"
 #include "simulator/Event.hpp" 
 #include <iostream>
 #include <algorithm>
@@ -17,10 +19,36 @@ void Wire::propagateChange(Simulator& simulator, size_t propagation_time) {
                                    [](const std::weak_ptr<Pin>& p) { return p.expired(); }),
                     sink_pins.end());
 
-    for (auto const& sink_pin_weak_ptr : sink_pins) {
+    for (const auto& sink_pin_weak_ptr : sink_pins) {
         if (auto sink_pin = sink_pin_weak_ptr.lock()) {
-            if (auto sink_comp = sink_pin->getOwner()) {
-                simulator.scheduleEvent(std::make_shared<ComponentEvalEvent>(propagation_time, sink_comp));
+            auto sink_owner = sink_pin->getOwner();
+            if (!sink_owner) continue;
+
+            if (std::dynamic_pointer_cast<BasicComponent>(sink_owner)) {
+                // CASE 1: The sink is a pin on a BasicComponent. Schedule an evaluation.
+                if (sink_pin->getType() == PinType::OUTPUT) {
+                    std::cerr << "Error: Can not propagate to an Output port of a BasicComponent.\n";
+                    continue;
+                }
+                std::cout << "[PROPAGATE] Wire '" << this->getID() << "' schedules evaluation for component '" << sink_owner->getID() << "'." << std::endl;
+                simulator.scheduleEvent(std::make_shared<ComponentEvalEvent>(propagation_time, sink_owner));
+            
+            } else if (std::dynamic_pointer_cast<IOComponent>(sink_owner)) {
+                // CASE 2: The sink is a pin on a Composite Component. Propagate directly.
+                
+                // If the sink is an INPUT port, we propagate to its internal wire.
+                if (sink_pin->getType() == PinType::INPUT) {
+                    if (auto internal_wire = sink_pin->getInternalWire()) {
+                        std::cout << "[PROPAGATE] Wire '" << this->getID() << "' propagates value to internal wire '" << internal_wire->getID() << "'." << std::endl;
+                        simulator.scheduleEvent(std::make_shared<WireUpdateEvent>(propagation_time, internal_wire, this->value));
+                    }
+                // If the sink is an OUTPUT port, we propagate to its external wire.
+                } else if (sink_pin->getType() == PinType::OUTPUT) {
+                     if (auto external_wire = sink_pin->getExternalWire()) {
+                        std::cout << "[PROPAGATE] Wire '" << this->getID() << "' propagates value to external wire '" << external_wire->getID() << "'." << std::endl;
+                        simulator.scheduleEvent(std::make_shared<WireUpdateEvent>(propagation_time, external_wire, this->value));
+                    }
+                }
             }
         }
     }

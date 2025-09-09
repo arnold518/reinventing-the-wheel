@@ -28,4 +28,5 @@ PYBIND11_MODULE(circuit_backend, m) {
     bindSimulationTest(m);
 
     bindFullCircuitTest(m);
+    bindHalfAdderTest(m);
 }

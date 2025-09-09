@@ -10,6 +10,8 @@
 #include "modules/basic/DFlipFlop.hpp"
 #include "modules/basic/ClockGenerator.hpp"
 
+#include "modules/composite/HalfAdder.hpp"
+
 namespace py = pybind11;
 
 void bindModules(py::module_& m) {
@@ -85,4 +87,13 @@ void bindModules(py::module_& m) {
         .def("get_children", &ClockGenerator::getChildren, py::return_value_policy::reference_internal)
         .def("get_input_pins", &ClockGenerator::getInputPins, py::return_value_policy::reference_internal)
         .def("get_output_pins", &ClockGenerator::getOutputPins, py::return_value_policy::reference_internal);
+
+    // --- HalfAdder Binding ---
+    py::class_<HalfAdder, IOComponent, std::shared_ptr<HalfAdder>>(m, "HalfAdder", "A standard 2-input half-adder.", py::module_local(false))
+        .def(py::init<const std::string&>(), py::arg("name"))
+        .def("get_name", &HalfAdder::getName)
+        .def("get_parent", &HalfAdder::getParent)
+        .def("get_children", &HalfAdder::getChildren, py::return_value_policy::reference_internal)
+        .def("get_input_pins", &HalfAdder::getInputPins, py::return_value_policy::reference_internal)
+        .def("get_output_pins", &HalfAdder::getOutputPins, py::return_value_policy::reference_internal);
 }

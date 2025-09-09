@@ -27,69 +27,90 @@ std::string ComponentBuilder::getScopedName(const std::string& name) {
 }
 
 std::shared_ptr<Wire> ComponentBuilder::addNewWire(std::string name, std::shared_ptr<Pin> source_pin, const std::vector<std::shared_ptr<Pin>>& sink_pins) {
+    std::cout << "[BUILDER] Creating wire '" << getScopedName(name) << "'" << std::endl;
+    
     auto new_wire = std::make_shared<Wire>(name);
     std::vector<std::shared_ptr<Component>> all_owners;
 
-    // --- Handle the source pin if it exists ---
-    if (source_pin) {
+    // --- Handle source-less wires (GND/VCC) ---
+    if (!source_pin) {
+        std::cout << "[BUILDER] |-> Type: Source-less (GND/VCC)" << std::endl;
+        for (const auto& sink_pin : sink_pins) {
+            if (!sink_pin) continue;
+            std::cout << "[BUILDER] |   - Connecting sink: '" << sink_pin->getID() << "' (External)" << std::endl;
+            new_wire->addSinkPin(sink_pin);
+            sink_pin->connectExternal(new_wire);
+            all_owners.push_back(sink_pin->getOwner());
+        }
+    } else {
+        // --- Handle wires with a source pin ---
         auto source_owner = source_pin->getOwner();
         all_owners.push_back(source_owner);
-
         new_wire->setSourcePin(source_pin);
-        source_pin->connect(new_wire);
+        std::cout << "[BUILDER] |-> Source: '" << source_pin->getID() << "'" << std::endl;
 
-        // --- Validate each sink against the source ---
         for (const auto& sink_pin : sink_pins) {
             if (!sink_pin) continue;
             auto sink_owner = sink_pin->getOwner();
-            bool connection_valid = false;
+            std::cout << "[BUILDER] |   - Analyzing connection to sink: '" << sink_pin->getID() << "'" << std::endl;
 
-            if (source_owner == sink_owner) { // Self-connection
+            // Determine the connection type based on the source-sink relationship
+            
+            // Rule: Self-Connection
+            if (source_owner == sink_owner) {
+                std::cout << "[BUILDER] |     - Detected: Self-Connection" << std::endl;
                 if (source_pin->getType() == PinType::OUTPUT && sink_pin->getType() == PinType::INPUT) {
-                    connection_valid = true;
-                } else {
-                    std::cerr << "Error: Invalid self-connection on '" << source_owner->getName() << "'. Must be OUTPUT to INPUT." << std::endl;
+                    source_pin->connectInternal(new_wire); // CORRECTED: Self-connections are internal
+                    sink_pin->connectInternal(new_wire);   // CORRECTED: Self-connections are internal
+                    new_wire->addSinkPin(sink_pin);
+                    all_owners.push_back(sink_owner);
+                    std::cout << "[BUILDER] |     - Action: Connected source and sink internally." << std::endl;
                 }
-            } else if (source_owner->isAncestorOf(sink_owner) || sink_owner->isAncestorOf(source_owner)) { // Hierarchical
-                if (source_pin->getType() == sink_pin->getType()) {
-                    connection_valid = true;
-                } else {
-                    std::cerr << "Error: Invalid hierarchical connection between '" << source_owner->getName() << "' and '" << sink_owner->getName() << "'. Pin types must match." << std::endl;
+            // Rule: Hierarchical Downward (Parent -> Child)
+            } else if (source_owner->isAncestorOf(sink_owner)) {
+                std::cout << "[BUILDER] |     - Detected: Hierarchical Downward" << std::endl;
+                if (source_pin->getType() == PinType::INPUT && sink_pin->getType() == PinType::INPUT) {
+                    source_pin->connectInternal(new_wire);
+                    sink_pin->connectExternal(new_wire);
+                    new_wire->addSinkPin(sink_pin);
+                    all_owners.push_back(sink_owner);
+                    std::cout << "[BUILDER] |     - Action: Connected source (Internal) to sink (External)." << std::endl;
                 }
-            } else { // Peer-to-peer
+            // Rule: Hierarchical Upward (Child -> Parent)
+            } else if (sink_owner->isAncestorOf(source_owner)) {
+                std::cout << "[BUILDER] |     - Detected: Hierarchical Upward" << std::endl;
+                if (source_pin->getType() == PinType::OUTPUT && sink_pin->getType() == PinType::OUTPUT) {
+                    source_pin->connectExternal(new_wire);
+                    sink_pin->connectInternal(new_wire);
+                    new_wire->addSinkPin(sink_pin);
+                    all_owners.push_back(sink_owner);
+                    std::cout << "[BUILDER] |     - Action: Connected source (External) to sink (Internal)." << std::endl;
+                }
+            // Rule: Peer-to-Peer
+            } else {
+                std::cout << "[BUILDER] |     - Detected: Peer-to-Peer" << std::endl;
                 if (source_pin->getType() == PinType::OUTPUT && sink_pin->getType() == PinType::INPUT) {
-                    connection_valid = true;
-                } else {
-                    std::cerr << "Error: Invalid peer connection between '" << source_owner->getName() << "' and '" << sink_owner->getName() << "'. Must be OUTPUT to INPUT." << std::endl;
+                    source_pin->connectExternal(new_wire);
+                    sink_pin->connectExternal(new_wire);
+                    new_wire->addSinkPin(sink_pin);
+                    all_owners.push_back(sink_owner);
+                    std::cout << "[BUILDER] |     - Action: Connected source and sink externally." << std::endl;
                 }
             }
-
-            if (connection_valid) {
-                new_wire->addSinkPin(sink_pin);
-                sink_pin->connect(new_wire);
-                all_owners.push_back(sink_owner);
-            }
-        }
-    } else {
-        // --- Handle the source-less case (e.g., GND/VCC) ---
-        // No source validation is needed. Just connect the sinks.
-        for (const auto& sink_pin : sink_pins) {
-            if (!sink_pin) continue;
-            new_wire->addSinkPin(sink_pin);
-            sink_pin->connect(new_wire);
-            all_owners.push_back(sink_pin->getOwner());
         }
     }
 
     // --- Determine Ownership and Finalize ---
     if (all_owners.empty()) {
-        std::cerr << "Error: Wire '" << name << "' has no connections and cannot be owned. Please connect it to at least one pin." << std::endl;
-        return nullptr;
+        std::cerr << "Warning: Wire '" << name << "' has no connections." << std::endl;
+        namedWires[getScopedName(name)] = new_wire;
+        return new_wire;
     }
     
     auto wire_owner = Component::findLCA(all_owners);
     if (wire_owner) {
         wire_owner->addWire(new_wire);
+        std::cout << "[BUILDER] |-> Final Owner: '" << wire_owner->getID() << "'" << std::endl;
     } else {
         std::cerr << "Error: Could not determine a common owner for wire '" << name << "'." << std::endl;
         return nullptr;

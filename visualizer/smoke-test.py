@@ -13,24 +13,20 @@ def format_circuit_structure(component, indent_level=0):
     comp_name = component.get_name()
     print(f"{prefix}Component: '{comp_name}' (Type: {comp_type})")
 
-    # print(f"{prefix} {type(component)}")
-    # print(f"{prefix} Component?: {isinstance(component, circuit_backend.Component)}")
-    # print(f"{prefix} IOComponent?: {isinstance(component, circuit_backend.IOComponent)}")
-    # print(f"{prefix} BasicComponent?: {isinstance(component, circuit_backend.BasicComponent)}")
-
     # --- 2. Print Pin Info (if applicable) ---
-    if isinstance(component, circuit_backend.BasicComponent):
-        print(f"{prefix}  - Delay: {component.get_delay()}")
+    # NOTE: Your original code checked for BasicComponent. It's better to check for
+    # the more general IOComponent to see pins on composite components too.
+    if isinstance(component, circuit_backend.IOComponent):
+        if isinstance(component, circuit_backend.BasicComponent):
+            print(f"{prefix}  - Delay: {component.get_delay()}")
         
-        # Get all input pins from the map
         input_pins = component.get_input_pins()
         if input_pins:
             print(f"{prefix}  - Input Pins:")
             for name, pin in input_pins.items():
-                val_str = str(pin.get_value()) # Uses the __str__ we bound for LogicValue
+                val_str = str(pin.get_value())
                 print(f"{prefix}    - Pin '{name}' (Value: {val_str})")
 
-        # Get all output pins from the map
         output_pins = component.get_output_pins()
         if output_pins:
             print(f"{prefix}  - Output Pins:")
@@ -39,39 +35,35 @@ def format_circuit_structure(component, indent_level=0):
                 print(f"{prefix}    - Pin '{name}' (Value: {val_str})")
 
     # --- 3. Print Wire Info ---
-    # In your design, wires are attached to the root component.
-    # We only process them at the top level to avoid duplicates.
-    if indent_level == 0:
-        wires = component.get_wires()
-        if wires:
-            print(f"{prefix}Wires:")
-            for wire in wires:
-                source_pin = wire.get_source_pin()
-                
-                # Check if the source pin exists
-                if source_pin:
-                    source_owner = source_pin.get_owner()
-                    source_info = f"from {source_owner.get_name()}.{source_pin.get_name()}"
-                else:
-                    source_info = "from [PRIMARY INPUT]"
-                
-                # Gather all sink pins
-                sink_info_list = []
-                for sink_pin in wire.get_sink_pins():
-                    # No more weak_ptr or .lock()!
-                    sink_owner = sink_pin.get_owner()
-                    sink_info_list.append(f"{sink_owner.get_name()}.{sink_pin.get_name()}")
-                
-                sinks_str = ", ".join(sink_info_list) if sink_info_list else "[PRIMARY OUTPUT]"
-                
-                print(f"{prefix}  - Wire '{wire.get_name()}': {source_info} -> [{sinks_str}]")
+    # --- FIX: Removed the "if indent_level == 0" check ---
+    # Wires can be owned by any component in the hierarchy, so we must check every time.
+    wires = component.get_wires()
+    if wires:
+        print(f"{prefix}  - Wires:")
+        for wire in wires:
+            source_pin = wire.get_source_pin()
+            
+            if source_pin:
+                source_owner = source_pin.get_owner()
+                source_info = f"from {source_owner.get_name()}.{source_pin.get_name()}"
+            else:
+                source_info = "from [CONSTANT]" # e.g., GND/VCC
+            
+            sink_info_list = []
+            # Assuming get_sink_pins() is bound and returns a list of strong pointers
+            for sink_pin in wire.get_sink_pins(): 
+                sink_owner = sink_pin.get_owner()
+                sink_info_list.append(f"{sink_owner.get_name()}.{sink_pin.get_name()}")
+            
+            sinks_str = ", ".join(sink_info_list) if sink_info_list else "[UNCONNECTED]"
+            
+            print(f"{prefix}    - Wire '{wire.get_name()}': {source_info} -> [{sinks_str}]")
 
     # --- 4. Recurse into Children ---
     children = component.get_children()
     if children:
-        print(f"{prefix}Children:")
+        print(f"{prefix}  - Children:")
         for child in children:
-            # Recursive call
             format_circuit_structure(child, indent_level + 1)
 
 
@@ -80,11 +72,11 @@ if __name__ == "__main__":
 
     # 1. Instantiate the specific C++ test scenario.
     try:
-        test_scenario = circuit_backend.FullCircuitTest()
-        print("SUCCESS: Instantiated circuit_backend.FullCircuitTest")
+        test_scenario = circuit_backend.HalfAdderTest()
+        print("SUCCESS: Instantiated circuit_backend.HalfAdderTest")
     except AttributeError:
         print("\n[FATAL ERROR]")
-        print("Could not find 'FullCircuitTest' in the 'circuit_backend' module.")
+        print("Could not find 'HalfAdderTest' in the 'circuit_backend' module.")
         print("Please ensure you have created and compiled the binding for this class.")
         sys.exit(1)
     except Exception as e:

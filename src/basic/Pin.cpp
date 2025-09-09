@@ -1,6 +1,7 @@
 #include "basic/Pin.hpp"
 #include "basic/Wire.hpp"
 #include "components/Component.hpp"
+#include "components/BasicComponent.hpp"
 #include <iostream>
 
 Pin::Pin(std::string name, PinType type, std::shared_ptr<Component> owner_comp)
@@ -9,23 +10,46 @@ Pin::Pin(std::string name, PinType type, std::shared_ptr<Component> owner_comp)
 std::string Pin::getName() const { return name; }
 PinType Pin::getType() const { return type; }
 std::shared_ptr<Component> Pin::getOwner() const { return owner.lock(); }
-std::shared_ptr<Wire> Pin::getConnectedWire() const { return connected_wire.lock(); }
+std::shared_ptr<Wire> Pin::getExternalWire() const { return external_wire.lock(); }
+std::shared_ptr<Wire> Pin::getInternalWire() const { return internal_wire.lock(); }
 
-void Pin::connect(const std::shared_ptr<Wire>& wire) {
+void Pin::connectExternal(const std::shared_ptr<Wire>& wire) {
     if (!wire) return;
+    external_wire = wire;
+}
 
-    if (auto existing_wire = connected_wire.lock()) {
-         if (existing_wire != wire) {
-            std::cerr << "Warning: Pin '" << getID() << "' is already connected to a wire. Re-connecting." << std::endl;
-         }
-    }
-    connected_wire = wire;
+void Pin::connectInternal(const std::shared_ptr<Wire>& wire) {
+    if (!wire) return;
+    internal_wire = wire;
 }
 
 LogicValue Pin::getValue() const {
-    if (auto wire = connected_wire.lock()) {
-        return wire->getValue();
+    auto owner_ptr = owner.lock();
+    if (!owner_ptr) return LogicValue::UNKNOWN;
+
+    // Check if the owner is a primitive component.
+    bool is_primitive = (std::dynamic_pointer_cast<BasicComponent>(owner_ptr) != nullptr);
+    bool external_first = true;
+
+    if (type == PinType::OUTPUT && !is_primitive) external_first = false;
+
+    if (external_first) {
+        if (auto wire = external_wire.lock()) {
+            return wire->getValue();
+        }
+        if (auto wire = internal_wire.lock()) {
+            return wire->getValue();
+        }
     }
+    else {
+        if (auto wire = internal_wire.lock()) {
+            return wire->getValue();
+        }
+        if (auto wire = external_wire.lock()) {
+            return wire->getValue();
+        }
+    }
+    
     return LogicValue::UNKNOWN;
 }
 

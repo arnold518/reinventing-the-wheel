@@ -2,6 +2,7 @@
 #include "simulator/Simulator.hpp"
 #include "simulator/Event.hpp"
 #include "basic/Wire.hpp"
+#include "basic/Pin.hpp"
 
 BasicComponent::BasicComponent(std::string name, size_t delay_val, PinInitFunction initializer)
     : IOComponent(std::move(name), std::move(initializer)),
@@ -13,7 +14,7 @@ size_t BasicComponent::getDelay() const {
 
 void BasicComponent::_updateOutputWire(Simulator& simulator, const std::string& pin_name, LogicValue new_value, size_t current_sim_time) {
     if (auto pin = getOutputPin(pin_name)) {
-        if (auto wire = pin->getConnectedWire()) {
+        if (auto wire = pin->getExternalWire()) {
             simulator.scheduleEvent(std::make_shared<WireUpdateEvent>(current_sim_time + this->delay, wire, new_value));
         }
     }

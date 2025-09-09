@@ -9,6 +9,7 @@ STATE_COLORS = {
 }
 
 class VisualPin:
+    # ... (This class is unchanged) ...
     def __init__(self, parent_component, cpp_pin_handle, pin_type: str):
         self.parent = parent_component; self.cpp_handle = cpp_pin_handle; self.pin_type = pin_type; self.name = self.cpp_handle.get_name()
         self.rect = pygame.Rect(0, 0, 1, 1); self.color = STATE_COLORS[circuit_backend.LogicValue.UNKNOWN]; self.text_color = (220, 220, 220)
@@ -29,19 +30,33 @@ class VisualPin:
 
 class VisualWire:
     def __init__(self, cpp_wire_handle):
-        self.cpp_handle = cpp_wire_handle; self.source_vpin, self.sink_vpins = None, []; self.color = STATE_COLORS[circuit_backend.LogicValue.UNKNOWN]
-        self.owner = None; self.is_hovered = False; self._world_paths = []
+        self.cpp_handle = cpp_wire_handle
+        self.source_vpin, self.sink_vpins = None, []
+        self.color = STATE_COLORS[circuit_backend.LogicValue.UNKNOWN]
+        self.owner = None # This will now be the direct parent of the source pin
+        self.is_hovered = False
+        self._world_paths = []
+
     def connect(self, pin_map):
         source_cpp = self.cpp_handle.get_source_pin()
-        if source_cpp and (owner := source_cpp.get_owner()): key = f"{owner.get_name()}.{source_cpp.get_name()}"; self.source_vpin = pin_map.get(key)
+        if source_cpp and (owner := source_cpp.get_owner()):
+            key = f"{owner.get_id()}.{source_cpp.get_name()}"
+            self.source_vpin = pin_map.get(key)
+        
         for sink_cpp in self.cpp_handle.get_sink_pins():
-            if (owner := sink_cpp.get_owner()) and (vpin := pin_map.get(f"{owner.get_name()}.{sink_cpp.get_name()}")): self.sink_vpins.append(vpin)
+            if (owner := sink_cpp.get_owner()):
+                key = f"{owner.get_id()}.{sink_cpp.get_name()}"
+                if (vpin := pin_map.get(key)):
+                    self.sink_vpins.append(vpin)
+        
+        # --- THIS IS THE CORRECTED LOGIC ---
+        # The owner of the wire for drawing purposes is the direct parent of its source pin.
         if self.source_vpin:
-            component = self.source_vpin.parent
-            while component.parent: component = component.parent
-            self.owner = component
+            self.owner = self.source_vpin.parent
+
     def update_state(self): self.color = STATE_COLORS.get(self.cpp_handle.get_value(), STATE_COLORS[circuit_backend.LogicValue.UNKNOWN])
     def collidepoint(self, world_pos, camera):
+        # ... (This method is unchanged) ...
         threshold = 5 / camera.zoom
         for path in self._world_paths:
             for i in range(len(path) - 1):
@@ -51,23 +66,59 @@ class VisualWire:
                 t = max(0, min(1, point_vec.dot(line_vec) / line_len_sq))
                 if (world_pos - (p1 + t * line_vec)).length_squared() < threshold ** 2: return True
         return False
+        
     def draw(self, screen, camera):
         self.update_state()
-        if not self.source_vpin or not self.sink_vpins: return
-        line_width = max(1, int(2 * camera.zoom))
-        if self.is_hovered: line_width *= 2
+        if not self.source_vpin or not self.sink_vpins:
+            return
+
+        line_width = max(1, int(2 * camera.zoom)) * 2 if self.is_hovered else max(1, int(2 * camera.zoom))
         start_pos = pygame.Vector2(self.source_vpin.rect.center)
-        stub_length = self.owner.rect.width * self.owner.wire_stub_ratio if self.owner else 20
+        
         self._world_paths.clear()
+
         for sink_pin in self.sink_vpins:
             end_pos = pygame.Vector2(sink_pin.rect.center)
-            p_start_stub = pygame.Vector2(start_pos.x + stub_length, start_pos.y)
-            p_end_stub = pygame.Vector2(end_pos.x - stub_length, end_pos.y)
-            mid_x = (p_start_stub.x + p_end_stub.x) / 2
-            p_corner1, p_corner2 = pygame.Vector2(mid_x, p_start_stub.y), pygame.Vector2(mid_x, p_end_stub.y)
-            path = [start_pos, p_start_stub, p_corner1, p_corner2, p_end_stub, end_pos]
-            self._world_paths.append(path)
-            screen_points = [camera.apply(p) for p in path]
+            
+            source_owner = self.source_vpin.parent
+            sink_owner = sink_pin.parent
+
+            # Calculate stub lengths proportional to their direct parents
+            source_stub_len = source_owner.rect.width * source_owner.wire_stub_ratio
+            sink_stub_len = sink_owner.rect.width * sink_owner.wire_stub_ratio
+
+            # --- Context-Aware Stub Logic ---
+            p_start_trunk = pygame.Vector2(0,0)
+            p_end_trunk = pygame.Vector2(0,0)
+
+            # Case 1: Hierarchical Downward (Parent IN -> Child IN)
+            if source_owner.rect.contains(sink_owner.rect):
+                p_start_trunk = start_pos + pygame.Vector2(source_stub_len, 0)
+                p_end_trunk = end_pos + pygame.Vector2(sink_stub_len, 0) # Stub also goes right
+            
+            # Case 2: Hierarchical Upward (Child OUT -> Parent OUT)
+            elif sink_owner.rect.contains(source_owner.rect):
+                p_start_trunk = start_pos + pygame.Vector2(source_stub_len, 0)
+                p_end_trunk = end_pos - pygame.Vector2(sink_stub_len, 0) # Stub goes left
+            
+            # Case 3: Peer-to-Peer (or self-connection)
+            else:
+                p_start_trunk = start_pos + pygame.Vector2(source_stub_len, 0)
+                p_end_trunk = end_pos - pygame.Vector2(sink_stub_len, 0)
+
+            # --- Path Calculation (Orthogonal Routing) ---
+            mid_x = (p_start_trunk.x + p_end_trunk.x) / 2
+            path_points = [
+                start_pos,
+                p_start_trunk,
+                pygame.Vector2(mid_x, p_start_trunk.y),
+                pygame.Vector2(mid_x, p_end_trunk.y),
+                p_end_trunk,
+                end_pos
+            ]
+            
+            self._world_paths.append(path_points)
+            screen_points = [camera.apply(p) for p in path_points]
             pygame.draw.lines(screen, self.color, False, screen_points, line_width)
 
 class VisualComponent:
@@ -102,6 +153,7 @@ class VisualComponent:
     @is_hovered.setter
     def is_hovered(self, value):
         if self._is_hovered != value: self._is_hovered = value; self._is_dirty = True
+
 
     def _render_surfaces(self, zoom):
         zoomed_size = (max(1, int(self.rect.width * zoom)), max(1, int(self.rect.height * zoom))); zoomed_title_height = zoomed_size[0] * self.title_bar_ratio

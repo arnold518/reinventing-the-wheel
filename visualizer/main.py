@@ -2,6 +2,7 @@ import pygame
 import sys
 import json
 import circuit_backend
+import math
 
 from camera import Camera
 from ui_elements import Button, Slider
@@ -9,21 +10,26 @@ from visual_component import VisualComponent, VisualIOComponent, VisualWire
 
 class LayoutManager:
     def __init__(self, filepath):
-        self.filepath = filepath
-        with open(filepath, 'r') as f: data = json.load(f)
+        try:
+            with open(filepath, 'r') as f: data = json.load(f)
+        except FileNotFoundError:
+            data = {}
         self.settings = data.get("default_settings", {})
         self.type_layouts = data.get("type_layouts", {})
         self.instance_layouts = data.get("instance_layouts", {})
         
-        self.root_layout_config = {
-            "pos": [50, 150],
-            "width": 800
-        }
+        self.root_layout_config = { "pos": [50, 150], "width": 800 }
 
     def get_layout_for(self, component_type, instance_path_key):
-        is_generic = component_type in ["Component", "IOComponent", "BasicComponent"]
-        if is_generic: return self.instance_layouts.get(instance_path_key, {})
-        else: return self.type_layouts.get(component_type, {})
+        if instance_path_key in self.instance_layouts:
+            return self.instance_layouts[instance_path_key]
+        return self.type_layouts.get(component_type, {}).copy()
+
+    def _get_target_dict(self, component_type, instance_key):
+        is_instance = "." in instance_key or component_type in ["Component", "IOComponent", "HalfAdder", "FullAdder", "HalfAdderTest"]
+        if is_instance:
+            return self.instance_layouts, instance_key
+        return self.type_layouts, component_type
 
     def update_root_position(self, new_pos):
         self.root_layout_config['pos'] = [new_pos[0], new_pos[1]]
@@ -32,77 +38,97 @@ class LayoutManager:
         self.root_layout_config['width'] = new_width
 
     def update_child_position(self, parent_key, parent_type, child_name, new_rel_pos):
-        is_parent_generic = parent_type in ["Component", "IOComponent", "BasicComponent"]
-        target_dict = self.instance_layouts if is_parent_generic else self.type_layouts
-        key = parent_key if is_parent_generic else parent_type
-        if key in target_dict and child_name in target_dict[key].get('children', {}):
-            target_dict[key]['children'][child_name]['rel_pos'] = new_rel_pos
-        else:
-            print(f"DEBUG (LayoutManager): WARNING - Could not find key '{key}' or child '{child_name}' to update position.")
+        target_dict, key = self._get_target_dict(parent_type, parent_key)
+        target_dict.setdefault(key, {}).setdefault("children", {}).setdefault(child_name, {})['rel_pos'] = new_rel_pos
 
     def update_child_width(self, parent_key, parent_type, child_name, new_rel_width):
-        is_parent_generic = parent_type in ["Component", "IOComponent", "BasicComponent"]
-        target_dict = self.instance_layouts if is_parent_generic else self.type_layouts
-        key = parent_key if is_parent_generic else parent_type
-        if key in target_dict and child_name in target_dict[key].get('children', {}):
-            target_dict[key]['children'][child_name]['rel_width'] = new_rel_width
-        else:
-            print(f"DEBUG (LayoutManager): WARNING - Could not find key '{key}' or child '{child_name}' to update width.")
+        target_dict, key = self._get_target_dict(parent_type, parent_key)
+        target_dict.setdefault(key, {}).setdefault("children", {}).setdefault(child_name, {})['rel_width'] = new_rel_width
 
     def save_layout(self):
         data = {"default_settings": self.settings, "type_layouts": self.type_layouts, "instance_layouts": self.instance_layouts}
-        with open(self.filepath, 'w') as f: json.dump(data, f, indent=2)
+        with open(self.filepath, 'w') as f: json.dump(data, f, indent=4)
         print(f"Layout saved to {self.filepath}")
 
 def build_visual_hierarchy(layout_manager, cpp_root):
     all_components_map, all_visual_pins = {}, []
-    root_type, root_name = cpp_root.get_type_name(), cpp_root.get_name()
-    is_root_generic = root_type in ["Component", "IOComponent", "BasicComponent"]
-    root_key = root_name if is_root_generic else root_type
-    root_layout = layout_manager.get_layout_for(root_type, root_key)
+    root_type, root_id = cpp_root.get_type_name(), cpp_root.get_id()
+    root_layout = layout_manager.get_layout_for(root_type, root_id)
 
     root_pos = layout_manager.root_layout_config['pos']
     root_width = layout_manager.root_layout_config['width']
 
-    root_aspect_ratio = root_layout.get('aspect_ratio', 1.0)
+    default_color = (61, 90, 128, 100)
+    root_color = root_layout.get('color') or default_color
+    root_aspect_ratio = root_layout.get('aspect_ratio') or 0.75
     root_height = root_width * root_aspect_ratio
-
     root_rect = pygame.Rect(root_pos, (root_width, root_height))
     
     RootClass = VisualIOComponent if hasattr(cpp_root, 'get_input_pins') else VisualComponent
-    root_vc = RootClass(rect=root_rect, cpp_handle=cpp_root, settings=layout_manager.settings, layout_key=root_key, rel_info={}, depth=0, color=root_layout.get('color'), aspect_ratio=root_aspect_ratio)
-    all_components_map[root_vc.name] = root_vc
+    root_vc = RootClass(rect=root_rect, cpp_handle=cpp_root, settings=layout_manager.settings, layout_key=root_id, rel_info={}, depth=0, color=root_color, aspect_ratio=root_aspect_ratio)
+    
+    all_components_map[root_id] = root_vc
     if isinstance(root_vc, VisualIOComponent): all_visual_pins.extend(root_vc.get_all_pins())
-    for child_cpp in cpp_root.get_children():
-        child_vc, child_pins = build_recursive_step(child_cpp, root_rect, root_layout, layout_manager, all_components_map, root_vc, 1, root_key)
+    
+    for i, child_cpp in enumerate(cpp_root.get_children()):
+        child_vc, child_pins = build_recursive_step(child_cpp, root_rect, root_layout, layout_manager, all_components_map, root_vc, 1, root_id, i, default_color)
         if child_vc: root_vc.add_child(child_vc); all_visual_pins.extend(child_pins)
+        
     all_components = list(all_components_map.values())
-    pin_map = {f"{vpin.parent.name}.{vpin.name}": vpin for vpin in all_visual_pins}
-    all_wires = [VisualWire(cw) for cw in cpp_root.get_wires()]
+    pin_map = {vpin.parent.cpp_handle.get_id() + "." + vpin.name: vpin for vpin in all_visual_pins}
+    
+    all_wires = []
+    def collect_wires_recursively(component):
+        all_wires.extend([VisualWire(w) for w in component.get_wires()])
+        for child in component.get_children():
+            collect_wires_recursively(child)
+    collect_wires_recursively(cpp_root)
+
     for wire in all_wires: wire.connect(pin_map)
     return all_components, all_visual_pins, all_wires, root_vc
 
-def build_recursive_step(cpp_comp, parent_rect, parent_layout, lm, created_map, parent_vc, depth, parent_key):
+# --- FIX: The function DEFINITION is updated to accept 10 arguments ---
+def build_recursive_step(cpp_comp, parent_rect, parent_layout, lm, created_map, parent_vc, depth, parent_key, child_index=0, default_color=(61, 90, 128, 100)):
     all_pins = []
-    my_name, my_type = cpp_comp.get_name(), cpp_comp.get_type_name()
+    my_name, my_type, my_id = cpp_comp.get_name(), cpp_comp.get_type_name(), cpp_comp.get_id()
     child_info = parent_layout.get("children", {}).get(my_name)
-    if not child_info: return None, []
-    is_generic = my_type in ["Component", "IOComponent", "BasicComponent"]
-    my_key = f"{parent_key}.{my_name}" if is_generic else my_type
-    my_layout = lm.get_layout_for(my_type, my_key)
-    if not my_layout: return None, []
+
+    if not child_info or 'rel_pos' not in child_info or 'rel_width' not in child_info:
+        num_siblings = len(parent_vc.cpp_handle.get_children())
+        if num_siblings == 0: return None, []
+        cols = int(math.ceil(math.sqrt(num_siblings)))
+        rows = int(math.ceil(num_siblings / cols))
+        padding = 0.1
+        cell_w = (1.0 - padding * (cols + 1)) / cols if cols > 0 else 0
+        cell_h = (1.0 - padding * (rows + 1)) / rows if rows > 0 else 0
+        col, row = child_index % cols, child_index // cols
+        rel_width = cell_w
+        rel_x = padding + col * (cell_w + padding)
+        rel_y = padding + row * (cell_h + padding)
+        child_info = {"rel_pos": [rel_x, rel_y], "rel_width": rel_width}
+
+    my_layout = lm.get_layout_for(my_type, my_id)
+
     rel_pos, rel_width = child_info['rel_pos'], child_info['rel_width']
-    aspect_ratio = my_layout.get('aspect_ratio', 1.0)
+    
+    aspect_ratio = my_layout.get('aspect_ratio') or 1.0
+    color = my_layout.get('color') or default_color
+
     abs_w, abs_h = parent_rect.width * rel_width, (parent_rect.width * rel_width) * aspect_ratio
     abs_x, abs_y = parent_rect.x + parent_rect.width * rel_pos[0], parent_rect.y + parent_rect.height * rel_pos[1]
     my_rect = pygame.Rect(abs_x, abs_y, abs_w, abs_h)
+    
     VC_Class = VisualIOComponent if hasattr(cpp_comp, 'get_input_pins') else VisualComponent
-    vc = VC_Class(rect=my_rect, cpp_handle=cpp_comp, settings=lm.settings, layout_key=my_key, rel_info=child_info, depth=depth, parent=parent_vc, color=my_layout.get('color'), aspect_ratio=aspect_ratio)
-    created_map[my_name] = vc
+    vc = VC_Class(rect=my_rect, cpp_handle=cpp_comp, settings=lm.settings, layout_key=my_id, rel_info=child_info, depth=depth, parent=parent_vc, color=color, aspect_ratio=aspect_ratio)
+    
+    created_map[my_id] = vc
     if isinstance(vc, VisualIOComponent): all_pins.extend(vc.get_all_pins())
-    for child_cpp in cpp_comp.get_children():
-        child_vc, child_pins = build_recursive_step(child_cpp, my_rect, my_layout, lm, created_map, vc, depth+1, my_key)
+    
+    for i, child_cpp in enumerate(cpp_comp.get_children()):
+        # --- FIX: The recursive CALL is also updated to pass 10 arguments ---
+        child_vc, child_pins = build_recursive_step(child_cpp, my_rect, my_layout, lm, created_map, vc, depth+1, my_id, i, default_color)
         if child_vc: vc.add_child(child_vc); all_pins.extend(child_pins)
+        
     return vc, all_pins
 
 pygame.init()
@@ -111,7 +137,7 @@ clock = pygame.time.Clock(); camera = Camera((SCREEN_WIDTH, SCREEN_HEIGHT))
 
 try:
     layout_manager = LayoutManager("layout.json")
-    test_scenario = circuit_backend.FullCircuitTest()
+    test_scenario = circuit_backend.HalfAdderTest()
     test_scenario.setup_circuit()
     root_cpp = test_scenario.get_root()
     if not root_cpp: raise RuntimeError("C++ test scenario did not produce a root component!")

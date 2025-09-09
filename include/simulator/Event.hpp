@@ -5,6 +5,7 @@
 class Simulator;
 class Component;
 class Wire;
+class Pin; // Forward declaration for Pin is needed
 
 class Event {
 public:
@@ -23,6 +24,8 @@ public:
 class ComponentEvalEvent : public Event {
 public:
     std::shared_ptr<Component> component_to_evaluate;
+    std::shared_ptr<Pin> triggering_pin;
+
     ComponentEvalEvent(size_t event_time, std::shared_ptr<Component> component);
     void process(Simulator& sim) override;
 };
