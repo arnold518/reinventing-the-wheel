@@ -268,20 +268,62 @@ class VisualComponent:
         return False
 
     def resize(self, mode, world_mouse_pos, lm):
-        new_rect = self.rect.copy()
-        if mode in ['right', 'left']:
-            if mode == 'right': new_width = world_mouse_pos.x - self.rect.left
-            else: new_width = self.rect.right - world_mouse_pos.x; new_rect.left = self.rect.right - new_width
-            new_width = max(self.min_width, new_width)
-            new_rect.width, new_rect.height = new_width, new_width * self.aspect_ratio
-            if mode == 'left': new_rect.top = self.rect.bottom - new_rect.height
+        if not self.parent:
+            p_rect = None
         else:
-            if mode == 'bottom': new_height = world_mouse_pos.y - self.rect.top
-            else: new_height = self.rect.bottom - world_mouse_pos.y; new_rect.top = self.rect.bottom - new_height
-            new_height = max(self.min_width * self.aspect_ratio, new_height)
-            new_rect.width, new_rect.height = new_height / self.aspect_ratio, new_height
-            if mode == 'top': new_rect.left = self.rect.right - new_rect.width
+            p_rect = self.parent.get_content_rect()
 
+        clamped_mouse_pos = pygame.Vector2(world_mouse_pos)
+        if p_rect:
+            clamped_mouse_pos.x = max(p_rect.left, min(clamped_mouse_pos.x, p_rect.right))
+            clamped_mouse_pos.y = max(p_rect.top, min(clamped_mouse_pos.y, p_rect.bottom))
+
+        ideal_w, ideal_h = 0, 0
+        
+        if mode in ['right', 'left']:
+            if mode == 'right': ideal_w = clamped_mouse_pos.x - self.rect.left
+            else: ideal_w = self.rect.right - clamped_mouse_pos.x
+            ideal_w = max(self.min_width, ideal_w)
+            ideal_h = ideal_w * self.aspect_ratio
+        else: # top, bottom
+            if mode == 'bottom': ideal_h = clamped_mouse_pos.y - self.rect.top
+            else: ideal_h = self.rect.bottom - clamped_mouse_pos.y
+            ideal_h = max(self.min_width * self.aspect_ratio, ideal_h)
+            ideal_w = ideal_h / self.aspect_ratio
+
+        final_w, final_h = ideal_w, ideal_h
+        
+        if p_rect:
+            max_w, max_h = 0, 0
+            if mode == 'right':
+                max_w = p_rect.right - self.rect.left
+                max_h = p_rect.bottom - self.rect.top
+            elif mode == 'left':
+                max_w = self.rect.right - p_rect.left
+                max_h = p_rect.bottom - self.rect.top
+            elif mode == 'bottom':
+                max_w = p_rect.right - self.rect.left
+                max_h = p_rect.bottom - self.rect.top
+            elif mode == 'top':
+                max_w = p_rect.right - self.rect.left
+                max_h = self.rect.bottom - p_rect.top
+            
+            width_overflow = ideal_w / max_w if max_w > 0 else 1
+            height_overflow = ideal_h / max_h if max_h > 0 else 1
+            
+            scale_factor = max(1.0, width_overflow, height_overflow)
+            
+            final_w = ideal_w / scale_factor
+            final_h = ideal_h / scale_factor
+
+        new_rect = self.rect.copy()
+        new_rect.width, new_rect.height = final_w, final_h
+
+        if mode == 'left':
+            new_rect.left = self.rect.right - final_w
+        elif mode == 'top':
+            new_rect.top = self.rect.bottom - final_h
+        
         self.rect = new_rect
         self._update_geometry()
 

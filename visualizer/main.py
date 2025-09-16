@@ -207,13 +207,27 @@ class App:
         self.step_backward_button = Button(x=130, y=50, width=50, height=50, text='<', text_size=36, on_click=self.on_step_backward)
         self.step_forward_button = Button(x=190, y=50, width=50, height=50, text='>', text_size=36, on_click=self.on_step_forward)
         self.reset_sim_button = Button(x=250, y=50, width=100, height=50, text='Reset', on_click=self.on_reset_click)
-        self.zoom_slider = Slider(x=20, y=self.screen_height-30, width=200, height=10, min_val=self.camera.min_zoom, max_val=self.camera.max_zoom, initial_val=self.camera.zoom, step=0.05, on_change=lambda z: setattr(self.camera, 'zoom', z))
-        self.reset_view_button = Button(x=230, y=self.screen_height-65, width=150, height=50, text='Reset View', on_click=self.camera.reset)
-        self.save_layout_button = Button(x=400, y=self.screen_height-65, width=150, height=50, text='Save Layout', on_click=self.layout_manager.save_layout)
+        
+        self.reset_view_button = Button(x=20, y=self.screen_height-65, width=150, height=50, text='Reset View', on_click=self.on_reset_view)
+        self.zoom_out_button = Button(x=180, y=self.screen_height-65, width=50, height=50, text='-', text_size=48, on_click=self.on_zoom_out)
+        self.zoom_in_button = Button(x=240, y=self.screen_height-65, width=50, height=50, text='+', text_size=48, on_click=self.on_zoom_in)
+        self.save_layout_button = Button(x=310, y=self.screen_height-65, width=150, height=50, text='Save Layout', on_click=self.layout_manager.save_layout)
         
         self.ui_elements = [self.time_slider, self.play_pause_button, self.step_backward_button, self.step_forward_button,
-                            self.reset_sim_button, self.zoom_slider, self.reset_view_button, self.save_layout_button]
+                            self.reset_sim_button, self.reset_view_button, self.zoom_in_button, self.zoom_out_button, self.save_layout_button]
         self.time_font = VisualComponent.get_font(32)
+
+    def on_zoom_in(self):
+        screen_center = self.camera.screen_size / 2
+        self.camera._zoom_at_point(1.25, screen_center)
+
+    def on_zoom_out(self):
+        screen_center = self.camera.screen_size / 2
+        self.camera._zoom_at_point(0.8, screen_center)
+
+    def on_reset_view(self):
+        if self.root_vc:
+            self.camera.frame_target(self.root_vc.rect)
 
     def on_play_pause_click(self):
         self.is_playing = not self.is_playing
@@ -233,6 +247,20 @@ class App:
 
     def on_time_slider_change(self, index):
         self.current_time_index = int(index)
+
+    def _update_state(self):
+        if self.is_playing and pygame.time.get_ticks() - self.playback_timer > self.playback_interval:
+            self.current_time_index = min(len(self.event_timestamps) - 1, self.current_time_index + 1)
+            self.playback_timer = pygame.time.get_ticks()
+            if self.current_time_index == len(self.event_timestamps) - 1:
+                self.on_play_pause_click()
+
+        if self.current_time_index != self.previous_time_index:
+            self.simulator.set_circuit_state_at_time(self.event_timestamps[self.current_time_index])
+            if not self.time_slider.is_dragging:
+                self.time_slider.val = self.current_time_index
+                self.time_slider._update_handle_pos()
+            self.previous_time_index = self.current_time_index
 
     def _handle_input(self):
         mouse_pos = pygame.mouse.get_pos()
@@ -285,24 +313,6 @@ class App:
             is_mouse_event = event.type in (pygame.MOUSEBUTTONDOWN, pygame.MOUSEBUTTONUP, pygame.MOUSEMOTION, pygame.MOUSEWHEEL)
             if is_mouse_event and not mouse_over_ui and not event_consumed_by_component:
                 self.camera.handle_event(event)
-
-    def _update_state(self):
-        if self.is_playing and pygame.time.get_ticks() - self.playback_timer > self.playback_interval:
-            self.current_time_index = min(len(self.event_timestamps) - 1, self.current_time_index + 1)
-            self.playback_timer = pygame.time.get_ticks()
-            if self.current_time_index == len(self.event_timestamps) - 1:
-                self.on_play_pause_click()
-
-        if self.current_time_index != self.previous_time_index:
-            self.simulator.set_circuit_state_at_time(self.event_timestamps[self.current_time_index])
-            if not self.time_slider.is_dragging:
-                self.time_slider.val = self.current_time_index
-                self.time_slider._update_handle_pos()
-            self.previous_time_index = self.current_time_index
-            
-        if not self.zoom_slider.is_dragging and abs(self.zoom_slider.get_value() - self.camera.zoom) > 0.01:
-            self.zoom_slider.val = self.camera.zoom
-            self.zoom_slider._update_handle_pos()
             
     def _draw_graphics(self):
         self.screen.fill((30, 30, 30))
