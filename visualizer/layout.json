@@ -1,130 +1,90 @@
 {
-  "default_settings": {
-    "title_bar_ratio": 0.15,
-    "font_width_ratio": 0.1,
-    "wire_stub_ratio": 0.05,
-    "pin_size_ratio": 0.1
-  },
-  "type_layouts": {
-    "ANDGate": {
-      "aspect_ratio": 0.8,
-      "color": [
-        67,
-        175,
-        255,
-        100
-      ]
+    "default_settings": {
+        "title_bar_ratio": 0.15,
+        "font_width_ratio": 0.1,
+        "wire_stub_ratio": 0.05,
+        "pin_size_ratio": 0.1
     },
-    "DFlipFlop": {
-      "aspect_ratio": 1.0,
-      "color": [
-        255,
-        67,
-        148,
-        100
-      ]
-    },
-    "ClockGenerator": {
-      "aspect_ratio": 0.5,
-      "color": [
-        67,
-        255,
-        148,
-        100
-      ]
-    },
-    "XORGate": {
-      "aspect_ratio": 0.8,
-      "color": [
-        255,
-        152,
-        0,
-        100
-      ]
-    },
-    "HalfAdder": {
-      "aspect_ratio": 1.2,
-      "color": [
-        156,
-        39,
-        176,
-        100
-      ],
-      "children": {
-        "XOR1": {
-          "rel_pos": [
-            0.2475,
-            0.14166666666666666
-          ],
-          "rel_width": 0.535
+    "type_layouts": {
+        "ANDGate": {
+            "aspect_ratio": 0.8,
+            "color": [67, 175, 255, 100]
         },
-        "AND1": {
-          "rel_pos": [
-            0.245,
-            0.5645833333333333
-          ],
-          "rel_width": 0.5425
+        "DFlipFlop": {
+            "aspect_ratio": 1.0,
+            "color": [255, 67, 148, 100]
+        },
+        "ClockGenerator": {
+            "aspect_ratio": 0.5,
+            "color": [67, 255, 148, 100]
+        },
+        "XORGate": {
+            "aspect_ratio": 0.8,
+            "color": [255, 152, 0, 100]
+        },
+        "HalfAdder": {
+            "aspect_ratio": 1.2,
+            "color": [156, 39, 176, 100],
+            "children": {
+                "XOR1": {
+                    "rel_pos": [0.07111111111111111, 0.42435424354243545],
+                    "rel_width": 0.535
+                },
+                "AND1": {
+                    "rel_pos": [0.245, 0.5645833333333333],
+                    "rel_width": 0.5425
+                }
+            }
         }
-      }
+    },
+    "instance_layouts": {
+        "Full_Circuit_Test": {
+            "aspect_ratio": 0.75,
+            "color": [61, 90, 128, 100],
+            "children": {
+                "AND1": {
+                    "rel_pos": [0.205, 0.4816666666666667],
+                    "rel_width": 0.28619528619528617
+                },
+                "DFF1": {
+                    "rel_pos": [0.56875, 0.245],
+                    "rel_width": 0.24125
+                },
+                "AND2": {
+                    "rel_pos": [0.54625, 0.6533333333333333],
+                    "rel_width": 0.29375
+                },
+                "CLK_GEN": {
+                    "rel_pos": [0.09625, 0.22166666666666668],
+                    "rel_width": 0.30303030303030304
+                }
+            }
+        },
+        "HalfAdderTest": {
+            "aspect_ratio": 0.6,
+            "color": [76, 175, 80, 100],
+            "children": {
+                "HA1": {
+                    "rel_pos": [0.4313326551373347, 0.3310696095076401],
+                    "rel_width": 0.3123092573753815
+                }
+            }
+        },
+        "HalfAdderTest.HA1": {
+            "children": {
+                "XOR1": {
+                    "rel_pos": [0.40588235294117647, 0.6882352941176471],
+                    "rel_width": 0.23529411764705882
+                },
+                "AND1": {
+                    "rel_pos": [0.5470588235294118, 0.17647058823529413],
+                    "rel_width": 0.35
+                }
+            }
+        }
+    },
+    "root_layout_config": {
+        "pos": [715, -49],
+        "width": 983
     }
-  },
-  "instance_layouts": {
-    "Full_Circuit_Test": {
-      "aspect_ratio": 0.75,
-      "color": [
-        61,
-        90,
-        128,
-        100
-      ],
-      "children": {
-        "AND1": {
-          "rel_pos": [
-            0.205,
-            0.4816666666666667
-          ],
-          "rel_width": 0.28619528619528617
-        },
-        "DFF1": {
-          "rel_pos": [
-            0.56875,
-            0.245
-          ],
-          "rel_width": 0.24125
-        },
-        "AND2": {
-          "rel_pos": [
-            0.54625,
-            0.6533333333333333
-          ],
-          "rel_width": 0.29375
-        },
-        "CLK_GEN": {
-          "rel_pos": [
-            0.09625,
-            0.22166666666666668
-          ],
-          "rel_width": 0.30303030303030304
-        }
-      }
-    },
-    "HalfAdderTest": {
-      "aspect_ratio": 0.6,
-      "color": [
-        76,
-        175,
-        80,
-        100
-      ],
-      "children": {
-        "HA1": {
-          "rel_pos": [
-            0.34,
-            0.3145833333333333
-          ],
-          "rel_width": 0.2825
-        }
-      }
-    }
-  }
 }
