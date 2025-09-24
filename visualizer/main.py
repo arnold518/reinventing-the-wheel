@@ -21,23 +21,40 @@ class LayoutManager:
         self.type_layouts = data.get("type_layouts", {})
         self.instance_layouts = data.get("instance_layouts", {})
         self.root_layout_config = data.get("root_layout_config", {"pos": [50, 150], "width": 800})
+        self.is_dirty = False
 
     def get_layout_for(self, component_type, instance_key):
         if instance_key in self.instance_layouts:
             return self.instance_layouts[instance_key]
         return self.type_layouts.get(component_type, {}).copy()
 
+    def get_child_layout(self, parent_type, parent_key, child_name):
+        parent_layout = self.get_layout_for(parent_type, parent_key)
+        return parent_layout.get("children", {}).get(child_name, {})
+
     def update_root_position(self, new_pos):
         self.root_layout_config['pos'] = [new_pos[0], new_pos[1]]
+        self.is_dirty = True
 
     def update_root_width(self, new_width):
         self.root_layout_config['width'] = new_width
+        self.is_dirty = True
 
-    def update_child_position(self, parent_key, child_name, new_rel_pos):
-        self.instance_layouts.setdefault(parent_key, {}).setdefault("children", {}).setdefault(child_name, {})['rel_pos'] = new_rel_pos
+    def update_instance_child_layout(self, parent_key, child_name, rel_pos, rel_width):
+        instance_layout = self.instance_layouts.setdefault(parent_key, {})
+        children_layout = instance_layout.setdefault("children", {})
+        child_entry = children_layout.setdefault(child_name, {})
+        child_entry['rel_pos'] = rel_pos
+        child_entry['rel_width'] = rel_width
+        self.is_dirty = True
 
-    def update_child_width(self, parent_key, child_name, new_rel_width):
-        self.instance_layouts.setdefault(parent_key, {}).setdefault("children", {}).setdefault(child_name, {})['rel_width'] = new_rel_width
+    def update_type_child_layout(self, parent_type, child_name, rel_pos, rel_width):
+        type_layout = self.type_layouts.setdefault(parent_type, {})
+        children_layout = type_layout.setdefault("children", {})
+        child_entry = children_layout.setdefault(child_name, {})
+        child_entry['rel_pos'] = rel_pos
+        child_entry['rel_width'] = rel_width
+        self.is_dirty = True
 
     def save_layout(self):
         data = {
@@ -46,21 +63,13 @@ class LayoutManager:
             "instance_layouts": self.instance_layouts,
             "root_layout_config": self.root_layout_config
         }
-
         pretty_json_string = json.dumps(data, indent=4)
         def format_list_content(match):
             list_content = match.group(1)
             compact_content = re.sub(r'\s+', '', list_content)
             formatted_content = compact_content.replace(',', ', ')
             return f"[{formatted_content}]"
-
-        final_json_string = re.sub(
-            r'\[(.*?)\]',      # Regex to find everything between '[' and ']'
-            format_list_content, # The function to call for each match
-            pretty_json_string,  # The string to process
-            flags=re.DOTALL
-        )
-        
+        final_json_string = re.sub(r'\[(.*?)\]', format_list_content, pretty_json_string, flags=re.DOTALL)
         with open(self.filepath, 'w') as f:
             f.write(final_json_string)
         print(f"Layout saved to {self.filepath}")
@@ -94,13 +103,14 @@ class App:
         self.layout_manager = LayoutManager("layout.json")
 
     def initialize_circuit(self):
-        self.test_scenario = circuit_backend.HalfAdderTest()
+        self.test_scenario = circuit_backend.FullAdderTest()
         self.test_scenario.setup_circuit()
         root_cpp = self.test_scenario.get_root()
         if not root_cpp:
             raise RuntimeError("C++ test scenario did not produce a root component!")
 
         self.root_vc, self.all_components, self.all_visual_pins, self.all_wires = self._build_visual_hierarchy(root_cpp)
+        self.root_vc.update_geometry(self.layout_manager)
         
         self.simulator = self.test_scenario.get_simulator()
         self.simulator.run_and_record(self.test_scenario.get_run_duration())
@@ -125,7 +135,7 @@ class App:
         
         RootClass = VisualIOComponent if hasattr(cpp_root, 'get_input_pins') else VisualComponent
         root_vc = RootClass(rect=root_rect, cpp_handle=cpp_root, settings=self.layout_manager.settings, 
-                            layout_key=root_id, rel_info={}, depth=0, color=root_color, aspect_ratio=aspect_ratio)
+                            layout_key=root_id, depth=0, color=root_color, aspect_ratio=aspect_ratio)
 
         all_components_map[root_id] = root_vc
         if isinstance(root_vc, VisualIOComponent):
@@ -149,8 +159,6 @@ class App:
         return root_vc, all_components, all_visual_pins, all_wires
 
     def _build_recursive_step(self, parent_vc, all_components_map, all_visual_pins):
-        parent_layout = self.layout_manager.get_layout_for(parent_vc.cpp_handle.get_type_name(), parent_vc.layout_key)
-        
         children_cpp = parent_vc.cpp_handle.get_children()
         num_siblings = len(children_cpp)
         if num_siblings == 0: return
@@ -160,37 +168,32 @@ class App:
         
         for i, child_cpp in enumerate(children_cpp):
             child_name = child_cpp.get_name()
-            child_info = parent_layout.get("children", {}).get(child_name, {})
+            child_id = child_cpp.get_id()
+            child_type = child_cpp.get_type_name()
+            parent_type = parent_vc.cpp_handle.get_type_name()
 
-            if 'rel_pos' not in child_info or 'rel_width' not in child_info:
+            child_layout = self.layout_manager.get_child_layout(parent_type, parent_vc.layout_key, child_name)
+
+            if 'rel_pos' not in child_layout or 'rel_width' not in child_layout:
                 padding = 0.1
                 cell_w = (1.0 - padding * (cols + 1)) / cols if cols > 0 else 0
                 cell_h = (1.0 - padding * (rows + 1)) / rows if rows > 0 else 0
                 col, row = i % cols, i // cols
-                child_info['rel_width'] = cell_w
-                child_info['rel_pos'] = [padding + col * (cell_w + padding), padding + row * (cell_h + padding)]
+                rel_width = cell_w
+                rel_pos = [padding + col * (cell_w + padding), padding + row * (cell_h + padding)]
                 
-                self.layout_manager.update_child_position(parent_vc.layout_key, child_name, child_info['rel_pos'])
-                self.layout_manager.update_child_width(parent_vc.layout_key, child_name, child_info['rel_width'])
+                if parent_vc.depth == 0:
+                    self.layout_manager.update_instance_child_layout(parent_vc.layout_key, child_name, rel_pos, rel_width)
+                else:
+                    self.layout_manager.update_type_child_layout(parent_type, child_name, rel_pos, rel_width)
 
-
-            child_id = child_cpp.get_id()
-            my_layout = self.layout_manager.get_layout_for(child_cpp.get_type_name(), child_id)
-            
+            my_layout = self.layout_manager.get_layout_for(child_type, child_id)
             aspect_ratio = my_layout.get('aspect_ratio', 1.0)
             color = my_layout.get('color', (61, 90, 128, 100))
-            
-            rel_pos, rel_width = child_info['rel_pos'], child_info['rel_width']
-            
-            abs_w = parent_vc.rect.width * rel_width
-            abs_h = abs_w * aspect_ratio
-            abs_x = parent_vc.rect.x + parent_vc.rect.width * rel_pos[0]
-            abs_y = parent_vc.rect.y + parent_vc.rect.height * rel_pos[1]
-            child_rect = pygame.Rect(abs_x, abs_y, abs_w, abs_h)
 
             VC_Class = VisualIOComponent if hasattr(child_cpp, 'get_input_pins') else VisualComponent
-            child_vc = VC_Class(rect=child_rect, cpp_handle=child_cpp, settings=self.layout_manager.settings,
-                                layout_key=child_id, rel_info=child_info, depth=parent_vc.depth + 1, 
+            child_vc = VC_Class(rect=pygame.Rect(0,0,1,1), cpp_handle=child_cpp, settings=self.layout_manager.settings,
+                                layout_key=child_id, depth=parent_vc.depth + 1, 
                                 parent=parent_vc, color=color, aspect_ratio=aspect_ratio)
             
             parent_vc.add_child(child_vc)
@@ -249,6 +252,16 @@ class App:
         self.current_time_index = int(index)
 
     def _update_state(self):
+        if self.layout_manager.is_dirty:
+            new_pos = self.layout_manager.root_layout_config['pos']
+            new_width = self.layout_manager.root_layout_config['width']
+            new_height = new_width * self.root_vc.aspect_ratio
+            self.root_vc.rect.topleft = new_pos
+            self.root_vc.rect.size = (new_width, new_height)
+
+            self.root_vc.update_geometry(self.layout_manager)
+            self.layout_manager.is_dirty = False
+            
         if self.is_playing and pygame.time.get_ticks() - self.playback_timer > self.playback_interval:
             self.current_time_index = min(len(self.event_timestamps) - 1, self.current_time_index + 1)
             self.playback_timer = pygame.time.get_ticks()

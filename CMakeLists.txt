@@ -21,10 +21,12 @@ set(CORE_LOGIC_SOURCES
     src/modules/basic/DFlipFlop.cpp
     src/modules/basic/ClockGenerator.cpp
     src/modules/composite/HalfAdder.cpp
+    src/modules/composite/FullAdder.cpp
     src/simulator/Event.cpp
     src/simulator/Simulator.cpp
     src/tests/FullCircuitTest.cpp
     src/tests/HalfAdderTest.cpp
+    src/tests/FullAdderTest.cpp
 )
 
 set(BINDING_SOURCES

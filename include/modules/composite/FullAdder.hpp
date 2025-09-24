@@ -2,14 +2,14 @@
 
 #include "components/IOComponent.hpp"
 
-class HalfAdder : public IOComponent
+class FullAdder : public IOComponent
 {
 public:
-    static constexpr const char* TypeName = "HalfAdder";
+    static constexpr const char* TypeName = "FullAdder";
     const char* getTypeName() const override { return TypeName; }
 
     // The constructor will define the external pins.
-    HalfAdder(std::string name);
+    FullAdder(std::string name);
 
     // This method will build the internal components.
     void buildInternals(ComponentBuilder& builder) override;

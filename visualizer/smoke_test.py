@@ -72,11 +72,11 @@ if __name__ == "__main__":
 
     # 1. Instantiate the specific C++ test scenario.
     try:
-        test_scenario = circuit_backend.HalfAdderTest()
-        print("SUCCESS: Instantiated circuit_backend.HalfAdderTest")
+        test_scenario = circuit_backend.FullAdderTest()
+        print("SUCCESS: Instantiated circuit_backend.FullAdderTest")
     except AttributeError:
         print("\n[FATAL ERROR]")
-        print("Could not find 'HalfAdderTest' in the 'circuit_backend' module.")
+        print("Could not find 'FullAdderTest' in the 'circuit_backend' module.")
         print("Please ensure you have created and compiled the binding for this class.")
         sys.exit(1)
     except Exception as e:

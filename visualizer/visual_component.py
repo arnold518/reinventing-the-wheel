@@ -136,7 +136,7 @@ class VisualComponent:
                 VisualComponent._font_cache[size] = pygame.font.Font(None, size)
         return VisualComponent._font_cache[size]
 
-    def __init__(self, rect, cpp_handle, settings, layout_key, rel_info, depth=0, parent=None, color=(61, 90, 128, 100), aspect_ratio=1.0):
+    def __init__(self, rect, cpp_handle, settings, layout_key, depth=0, parent=None, color=(61, 90, 128, 100), aspect_ratio=1.0):
         self.rect = pygame.Rect(rect)
         self.cpp_handle = cpp_handle
         self.parent = parent
@@ -161,12 +161,11 @@ class VisualComponent:
         title_rgb = [max(0, c - 20) for c in self.base_color[:3]]
         self.title_bar_color = tuple(title_rgb + [self.base_color[3]])
         
-        self._is_dirty = True
+        self._render_is_dirty = True
         self._body_surface = None
         self._title_surface = None
         self._last_zoom = -1
         
-        self.rel_info = rel_info
         self.layout_key = layout_key
         self.aspect_ratio = aspect_ratio
 
@@ -178,7 +177,7 @@ class VisualComponent:
     def is_hovered(self, value):
         if self._is_hovered != value:
             self._is_hovered = value
-            self._is_dirty = True
+            self._render_is_dirty = True
 
     def _render_surfaces(self, zoom):
         zoomed_w = max(1, int(self.rect.width * zoom))
@@ -192,13 +191,13 @@ class VisualComponent:
         
         self._title_surface = pygame.Surface((zoomed_w, zoomed_title_h), pygame.SRCALPHA)
         self._title_surface.fill(self.title_bar_color)
-        self._is_dirty = False
+        self._render_is_dirty = False
         
     def draw(self, screen, camera):
         if camera.zoom != self._last_zoom:
-            self._is_dirty = True
+            self._render_is_dirty = True
             self._last_zoom = camera.zoom
-        if self._is_dirty or self._body_surface is None:
+        if self._render_is_dirty or self._body_surface is None:
             self._render_surfaces(camera.zoom)
         
         screen_pos = camera.apply(self.rect.topleft)
@@ -244,7 +243,7 @@ class VisualComponent:
         if on_bottom and in_x_range: return 'bottom'
         return None
 
-    def handle_event(self, event, camera, layout_manager):
+    def handle_event(self, event, camera, lm):
         world_mouse_pos = camera.screen_to_world(pygame.mouse.get_pos())
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and self.is_hovered:
             border = self.get_hovered_border(world_mouse_pos, camera)
@@ -258,20 +257,16 @@ class VisualComponent:
         
         if event.type == pygame.MOUSEMOTION:
             if self.is_resizing:
-                self.resize(self.resize_mode, world_mouse_pos, layout_manager)
+                self.resize(self.resize_mode, world_mouse_pos, lm)
                 return True
             if self.is_dragging:
                 new_pos = world_mouse_pos - self.drag_offset
-                delta = new_pos - pygame.Vector2(self.rect.topleft)
-                self.move(delta, layout_manager)
+                self.move(new_pos, lm)
                 return True
         return False
 
     def resize(self, mode, world_mouse_pos, lm):
-        if not self.parent:
-            p_rect = None
-        else:
-            p_rect = self.parent.get_content_rect()
+        p_rect = self.parent.get_content_rect() if self.parent else None
 
         clamped_mouse_pos = pygame.Vector2(world_mouse_pos)
         if p_rect:
@@ -285,7 +280,7 @@ class VisualComponent:
             else: ideal_w = self.rect.right - clamped_mouse_pos.x
             ideal_w = max(self.min_width, ideal_w)
             ideal_h = ideal_w * self.aspect_ratio
-        else: # top, bottom
+        else:
             if mode == 'bottom': ideal_h = clamped_mouse_pos.y - self.rect.top
             else: ideal_h = self.rect.bottom - clamped_mouse_pos.y
             ideal_h = max(self.min_width * self.aspect_ratio, ideal_h)
@@ -295,82 +290,70 @@ class VisualComponent:
         
         if p_rect:
             max_w, max_h = 0, 0
-            if mode == 'right':
-                max_w = p_rect.right - self.rect.left
-                max_h = p_rect.bottom - self.rect.top
-            elif mode == 'left':
-                max_w = self.rect.right - p_rect.left
-                max_h = p_rect.bottom - self.rect.top
-            elif mode == 'bottom':
-                max_w = p_rect.right - self.rect.left
-                max_h = p_rect.bottom - self.rect.top
-            elif mode == 'top':
-                max_w = p_rect.right - self.rect.left
-                max_h = self.rect.bottom - p_rect.top
+            if mode == 'right': max_w, max_h = p_rect.right - self.rect.left, p_rect.bottom - self.rect.top
+            elif mode == 'left': max_w, max_h = self.rect.right - p_rect.left, p_rect.bottom - self.rect.top
+            elif mode == 'bottom': max_w, max_h = p_rect.right - self.rect.left, p_rect.bottom - self.rect.top
+            elif mode == 'top': max_w, max_h = p_rect.right - self.rect.left, self.rect.bottom - p_rect.top
             
             width_overflow = ideal_w / max_w if max_w > 0 else 1
             height_overflow = ideal_h / max_h if max_h > 0 else 1
-            
             scale_factor = max(1.0, width_overflow, height_overflow)
-            
-            final_w = ideal_w / scale_factor
-            final_h = ideal_h / scale_factor
+            final_w, final_h = ideal_w / scale_factor, ideal_h / scale_factor
 
         new_rect = self.rect.copy()
         new_rect.width, new_rect.height = final_w, final_h
 
-        if mode == 'left':
-            new_rect.left = self.rect.right - final_w
-        elif mode == 'top':
-            new_rect.top = self.rect.bottom - final_h
+        if mode == 'left': new_rect.left = self.rect.right - final_w
+        elif mode == 'top': new_rect.top = self.rect.bottom - final_h
         
-        self.rect = new_rect
-        self._update_geometry()
-
         if self.parent:
-            new_rel_pos = [(self.rect.left - self.parent.rect.left) / self.parent.rect.width, (self.rect.top - self.parent.rect.top) / self.parent.rect.height]
-            new_rel_width = self.rect.width / self.parent.rect.width
-            self.rel_info['rel_pos'] = new_rel_pos
-            self.rel_info['rel_width'] = new_rel_width
-            lm.update_child_position(self.parent.layout_key, self.name, new_rel_pos)
-            lm.update_child_width(self.parent.layout_key, self.name, new_rel_width)
+            new_rel_pos = [(new_rect.left - self.parent.rect.left) / self.parent.rect.width, (new_rect.top - self.parent.rect.top) / self.parent.rect.height]
+            new_rel_width = new_rect.width / self.parent.rect.width
+            if self.depth == 1:
+                lm.update_instance_child_layout(self.parent.layout_key, self.name, new_rel_pos, new_rel_width)
+            else:
+                lm.update_type_child_layout(self.parent.cpp_handle.get_type_name(), self.name, new_rel_pos, new_rel_width)
         else:
-            lm.update_root_position(self.rect.topleft)
-            lm.update_root_width(self.rect.width)
+            lm.update_root_position(new_rect.topleft)
+            lm.update_root_width(new_rect.width)
 
-    def move(self, delta, lm):
-        potential_pos = pygame.Vector2(self.rect.topleft) + delta
+    def move(self, new_abs_pos, lm):
+        potential_pos = pygame.Vector2(new_abs_pos)
         if self.parent:
             p_rect = self.parent.get_content_rect()
             potential_pos.x = max(p_rect.left, min(potential_pos.x, p_rect.right - self.rect.width))
             potential_pos.y = max(p_rect.top, min(potential_pos.y, p_rect.bottom - self.rect.height))
-        
-        self.rect.topleft = potential_pos
-        self._update_geometry()
-
-        if self.parent:
-            new_rel_pos = [(self.rect.left - self.parent.rect.left) / self.parent.rect.width, (self.rect.top - self.parent.rect.top) / self.parent.rect.height]
-            self.rel_info['rel_pos'] = new_rel_pos
-            lm.update_child_position(self.parent.layout_key, self.name, new_rel_pos)
+            
+            new_rel_pos = [(potential_pos.x - self.parent.rect.left) / self.parent.rect.width, (potential_pos.y - self.parent.rect.top) / self.parent.rect.height]
+            rel_width = self.rect.width / self.parent.rect.width
+            if self.depth == 1:
+                lm.update_instance_child_layout(self.parent.layout_key, self.name, new_rel_pos, rel_width)
+            else:
+                lm.update_type_child_layout(self.parent.cpp_handle.get_type_name(), self.name, new_rel_pos, rel_width)
         else:
-            lm.update_root_position(self.rect.topleft)
+            lm.update_root_position(potential_pos)
 
-    def _update_geometry(self):
-        self.recalculate_children_layout()
-        if isinstance(self, VisualIOComponent): self._layout_pins()
-        self._is_dirty = True
-
-    def recalculate_children_layout(self):
+    def update_geometry(self, lm):
+        self._render_is_dirty = True
+        
+        parent_type = self.cpp_handle.get_type_name()
+        parent_key = self.layout_key
+        
         for child in self.children:
-            rel_pos, rel_width = child.rel_info['rel_pos'], child.rel_info['rel_width']
+            child_layout = lm.get_child_layout(parent_type, parent_key, child.name)
             
-            new_width = self.rect.width * rel_width
-            new_height = new_width * child.aspect_ratio
-            new_left = self.rect.x + self.rect.width * rel_pos[0]
-            new_top = self.rect.y + self.rect.height * rel_pos[1]
+            rel_pos = child_layout.get('rel_pos', [0, 0])
+            rel_width = child_layout.get('rel_width', 0.5)
             
-            child.rect.update(new_left, new_top, new_width, new_height)
-            child._update_geometry()
+            child.rect.width = self.rect.width * rel_width
+            child.rect.height = child.rect.width * child.aspect_ratio
+            child.rect.left = self.rect.x + self.rect.width * rel_pos[0]
+            child.rect.top = self.rect.y + self.rect.height * rel_pos[1]
+            
+            child.update_geometry(lm)
+
+        if isinstance(self, VisualIOComponent):
+            self._layout_pins()
 
 class VisualIOComponent(VisualComponent):
     def __init__(self, *args, **kwargs):

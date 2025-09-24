@@ -54,9 +54,6 @@ void Simulator::runAndRecord(size_t max_time) {
             if(eval_event->component_to_evaluate) {
                 std::cout << "[SIM] |   - Target: " << eval_event->component_to_evaluate->getID() << std::endl;
             }
-            if(eval_event->triggering_pin) {
-                std::cout << "[SIM] |   - Caused by Pin: " << eval_event->triggering_pin->getName() << std::endl;
-            }
         } else if (auto wire_event = std::dynamic_pointer_cast<WireUpdateEvent>(next_event_ptr)) {
             std::cout << "[SIM] |-> Type: WireUpdateEvent" << std::endl;
             if(wire_event->wire_to_update) {

@@ -86,8 +86,10 @@ class Camera:
         x_end = x_start + world_view_width + grid_spacing
         y_end = y_start + world_view_height + grid_spacing
         
+        step = max(1, int(grid_spacing))
+
         num = 0
-        for x in range(int(x_start), int(x_end), int(grid_spacing)):
+        for x in range(int(x_start), int(x_end), step):
             start = self.apply((x, y_start))
             end = self.apply((x, y_end))
             color = bold_line_color if num % 10 == 0 else line_color

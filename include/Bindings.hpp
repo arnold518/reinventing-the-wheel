@@ -35,5 +35,4 @@ void bindModules(py::module_ &m);
 void bindSimulator(py::module_ &m);
 void bindSimulationTest(py::module_ &m);
 
-void bindFullCircuitTest(py::module_ &m);
-void bindHalfAdderTest(py::module_ &m);
+void bindTests(py::module_ &m);

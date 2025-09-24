@@ -11,6 +11,7 @@
 #include "modules/basic/ClockGenerator.hpp"
 
 #include "modules/composite/HalfAdder.hpp"
+#include "modules/composite/FullAdder.hpp"
 
 namespace py = pybind11;
 
@@ -96,4 +97,13 @@ void bindModules(py::module_& m) {
         .def("get_children", &HalfAdder::getChildren, py::return_value_policy::reference_internal)
         .def("get_input_pins", &HalfAdder::getInputPins, py::return_value_policy::reference_internal)
         .def("get_output_pins", &HalfAdder::getOutputPins, py::return_value_policy::reference_internal);
+    
+    // --- FullAdder Binding ---
+    py::class_<FullAdder, IOComponent, std::shared_ptr<FullAdder>>(m, "FullAdder", "A standard full-adder.", py::module_local(false))
+        .def(py::init<const std::string&>(), py::arg("name"))
+        .def("get_name", &FullAdder::getName)
+        .def("get_parent", &FullAdder::getParent)
+        .def("get_children", &FullAdder::getChildren, py::return_value_policy::reference_internal)
+        .def("get_input_pins", &FullAdder::getInputPins, py::return_value_policy::reference_internal)
+        .def("get_output_pins", &FullAdder::getOutputPins, py::return_value_policy::reference_internal);
 }

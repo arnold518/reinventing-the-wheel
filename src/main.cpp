@@ -3,12 +3,12 @@
 #include "simulator/Simulator.hpp"
 #include "components/ComponentBuilder.tpp"
 
-#include "tests/HalfAdderTest.hpp"
+#include "tests/FullAdderTest.hpp"
 
 int main() {
     // 1. Create an instance of the test harness.
     // The constructor for SimulationTest already creates the simulator instance.
-    HalfAdderTest test;
+    FullAdderTest test;
 
     // 2. Run the test.
     // The run() method handles everything:

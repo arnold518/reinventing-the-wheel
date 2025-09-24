@@ -12,6 +12,8 @@ std::string HalfAdderTest::getTestName() const {
     return "HalfAdderTest";
 }
 
+/*
+
 // Override the base setupCircuit to create a root of type IOComponent
 void HalfAdderTest::setupCircuit() {
     // Create the root using the on-the-fly pin definition feature.
@@ -88,6 +90,65 @@ void HalfAdderTest::verifyResults() {
     std::cout << "Verification: Checking final state of HalfAdder..." << std::endl;
     assert(wire_sum->getValue() == LogicValue::LOW && "Sum output was expected to be LOW.");
     assert(wire_carry->getValue() == LogicValue::HIGH && "Carry output was expected to be HIGH.");
+}
+
+*/
+
+// Override setupCircuit to make the HalfAdder itself the root.
+void HalfAdderTest::setupCircuit() {
+    // 1. Create a HalfAdder instance as the top-level component for this test.
+    root = Component::create<HalfAdder>("HA_ROOT");
+    
+    // 2. Initialize the builder with this HalfAdder as the root context.
+    builder = std::make_unique<ComponentBuilder>(root);
+
+    // 3. Proceed with the standard setup flow.
+    buildCircuit();
+    setInitialState();
+}
+
+void HalfAdderTest::buildCircuit() {
+    // The HalfAdder root builds its own internal components (XOR, AND) via its
+    // buildInternals method, which is called automatically by Component::create.
+    // Therefore, this method is intentionally left empty.
+}
+
+void HalfAdderTest::setInitialState() {
+    // Create source-less wires to act as the test inputs.
+    // The builder connects them directly to the root HalfAdder's input pins.
+    auto wire_a = builder->addNewWire("INPUT_A", nullptr, { builder->getInputPin("A") });
+    auto wire_b = builder->addNewWire("INPUT_B", nullptr, { builder->getInputPin("B") });
+
+    // Schedule events to test all 4 cases of the half adder's truth table.
+    sim->scheduleEvent(std::make_shared<WireUpdateEvent>(0, wire_a, LogicValue::LOW));
+    sim->scheduleEvent(std::make_shared<WireUpdateEvent>(0, wire_b, LogicValue::LOW));
+    
+    sim->scheduleEvent(std::make_shared<WireUpdateEvent>(10, wire_b, LogicValue::HIGH));
+    
+    sim->scheduleEvent(std::make_shared<WireUpdateEvent>(20, wire_a, LogicValue::HIGH));
+    sim->scheduleEvent(std::make_shared<WireUpdateEvent>(20, wire_b, LogicValue::LOW));
+    
+    sim->scheduleEvent(std::make_shared<WireUpdateEvent>(30, wire_b, LogicValue::HIGH));
+}
+
+void HalfAdderTest::verifyResults() {
+    // At the end of the simulation, the inputs will be A=1, B=1.
+    // We expect Sum=0 and Carry=1.
+
+    // To check the results, we get the HalfAdder's output pins...
+    auto pin_sum = builder->getOutputPin("Sum");
+    auto pin_carry = builder->getOutputPin("Carry");
+
+    // ...and then get the external wires connected to them.
+    auto wire_sum = pin_sum->getExternalWire();
+    auto wire_carry = pin_carry->getExternalWire();
+
+    // The builder does not create these output wires, so we just check the pin values.
+    // NOTE: A robust test might create external "probe" wires. Checking the pin is sufficient.
+    
+    std::cout << "Verification: Checking final state of HalfAdder..." << std::endl;
+    assert(pin_sum->getValue() == LogicValue::LOW && "Sum output was expected to be LOW.");
+    assert(pin_carry->getValue() == LogicValue::HIGH && "Carry output was expected to be HIGH.");
 }
 
 size_t HalfAdderTest::getRunDuration() const {
