@@ -1,14 +1,13 @@
 #include "modules/basic/Gate.hpp"
+#include "components/PinMacros.hpp"
 #include "simulator/Simulator.hpp"
 
-// NOTGate
-NOTGate::NOTGate(std::string name)
-    : BasicComponent(std::move(name), 1,
-        [](IOComponent* self) {
-            self->addPin("IN", PinType::INPUT);
-            self->addPin("OUT", PinType::OUTPUT);
-        })
-{}
+// ========== NOTGate ==========
+
+BEGIN_BASIC_PINS(NOTGate, 1)
+    INPUT_PIN("IN")
+    OUTPUT_PIN("OUT")
+END_BASIC_PINS()
 
 void NOTGate::evaluate(size_t current_time, Simulator& simulator) {
     LogicValue input = getInputValue("IN");
@@ -17,15 +16,13 @@ void NOTGate::evaluate(size_t current_time, Simulator& simulator) {
     _updateOutputWire(simulator, "OUT", new_output_value, current_time);
 }
 
-// ANDGate
-ANDGate::ANDGate(std::string name)
-    : BasicComponent(std::move(name), 1,
-        [](IOComponent* self) {
-            self->addPin("A", PinType::INPUT);
-            self->addPin("B", PinType::INPUT);
-            self->addPin("OUT", PinType::OUTPUT);
-        })
-{}
+// ========== ANDGate ==========
+
+BEGIN_BASIC_PINS(ANDGate, 1)
+    INPUT_PIN("A")
+    INPUT_PIN("B")
+    OUTPUT_PIN("OUT")
+END_BASIC_PINS()
 
 void ANDGate::evaluate(size_t current_time, Simulator& simulator) {
     LogicValue input_A = getInputValue("A");
@@ -40,15 +37,13 @@ void ANDGate::evaluate(size_t current_time, Simulator& simulator) {
     _updateOutputWire(simulator, "OUT", new_output_value, current_time);
 }
 
-// NANDGate
-NANDGate::NANDGate(std::string name)
-    : BasicComponent(std::move(name), 1,
-        [](IOComponent* self) {
-            self->addPin("A", PinType::INPUT);
-            self->addPin("B", PinType::INPUT);
-            self->addPin("OUT", PinType::OUTPUT);
-        })
-{}
+// ========== NANDGate ==========
+
+BEGIN_BASIC_PINS(NANDGate, 1)
+    INPUT_PIN("A")
+    INPUT_PIN("B")
+    OUTPUT_PIN("OUT")
+END_BASIC_PINS()
 
 void NANDGate::evaluate(size_t current_time, Simulator& simulator) {
     LogicValue input_A = getInputValue("A");
@@ -63,15 +58,13 @@ void NANDGate::evaluate(size_t current_time, Simulator& simulator) {
     _updateOutputWire(simulator, "OUT", new_output_value, current_time);
 }
 
-// ORGate
-ORGate::ORGate(std::string name)
-    : BasicComponent(std::move(name), 1,
-        [](IOComponent* self) {
-            self->addPin("A", PinType::INPUT);
-            self->addPin("B", PinType::INPUT);
-            self->addPin("OUT", PinType::OUTPUT);
-        })
-{}
+// ========== ORGate ==========
+
+BEGIN_BASIC_PINS(ORGate, 1)
+    INPUT_PIN("A")
+    INPUT_PIN("B")
+    OUTPUT_PIN("OUT")
+END_BASIC_PINS()
 
 void ORGate::evaluate(size_t current_time, Simulator& simulator) {
     LogicValue input_A = getInputValue("A");
@@ -86,15 +79,13 @@ void ORGate::evaluate(size_t current_time, Simulator& simulator) {
     _updateOutputWire(simulator, "OUT", new_output_value, current_time);
 }
 
-// NORGate
-NORGate::NORGate(std::string name)
-    : BasicComponent(std::move(name), 1,
-        [](IOComponent* self) {
-            self->addPin("A", PinType::INPUT);
-            self->addPin("B", PinType::INPUT);
-            self->addPin("OUT", PinType::OUTPUT);
-        })
-{}
+// ========== NORGate ==========
+
+BEGIN_BASIC_PINS(NORGate, 1)
+    INPUT_PIN("A")
+    INPUT_PIN("B")
+    OUTPUT_PIN("OUT")
+END_BASIC_PINS()
 
 void NORGate::evaluate(size_t current_time, Simulator& simulator) {
     LogicValue input_A = getInputValue("A");
@@ -109,22 +100,20 @@ void NORGate::evaluate(size_t current_time, Simulator& simulator) {
     _updateOutputWire(simulator, "OUT", new_output_value, current_time);
 }
 
-// XORGate
-XORGate::XORGate(std::string name)
-    : BasicComponent(std::move(name), 1,
-        [](IOComponent* self) {
-            self->addPin("A", PinType::INPUT);
-            self->addPin("B", PinType::INPUT);
-            self->addPin("OUT", PinType::OUTPUT);
-        })
-{}
+// ========== XORGate ==========
+
+BEGIN_BASIC_PINS(XORGate, 1)
+    INPUT_PIN("A")
+    INPUT_PIN("B")
+    OUTPUT_PIN("OUT")
+END_BASIC_PINS()
 
 void XORGate::evaluate(size_t current_time, Simulator& simulator) {
     LogicValue input_A = getInputValue("A");
     LogicValue input_B = getInputValue("B");
     LogicValue new_output_value = LogicValue::UNKNOWN;
-    
-    if (input_A == LogicValue::UNKNOWN || input_A == LogicValue::HIGH_Z || 
+
+    if (input_A == LogicValue::UNKNOWN || input_A == LogicValue::HIGH_Z ||
         input_B == LogicValue::UNKNOWN || input_B == LogicValue::HIGH_Z) {
         new_output_value = LogicValue::UNKNOWN;
     } else {

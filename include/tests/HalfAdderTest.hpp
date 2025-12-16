@@ -1,13 +1,12 @@
 #pragma once
-#include "simulator/SimulationTest.hpp"
+#include "simulator/TruthTableTest.hpp"
 
-class HalfAdderTest : public SimulationTest {
+class HalfAdderTest : public TruthTableTest {
 public:
-    // We override setupCircuit to change the root component type
     void setupCircuit() override;
     std::string getTestName() const override;
-    void buildCircuit() override;
-    void setInitialState() override;
-    void verifyResults() override;
-    size_t getRunDuration() const override;
+
+protected:
+    // Provide the truth table for the HalfAdder
+    std::vector<TruthRow> getTruthTable() const override;
 };

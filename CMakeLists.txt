@@ -17,6 +17,7 @@ set(CORE_LOGIC_SOURCES
     src/components/IOComponent.cpp
     src/components/BasicComponent.cpp
     src/components/ComponentBuilder.cpp
+    src/components/WireBuilder.cpp
     src/modules/basic/Gate.cpp
     src/modules/basic/DFlipFlop.cpp
     src/modules/basic/ClockGenerator.cpp
@@ -24,6 +25,7 @@ set(CORE_LOGIC_SOURCES
     src/modules/composite/FullAdder.cpp
     src/simulator/Event.cpp
     src/simulator/Simulator.cpp
+    src/simulator/TruthTableTest.cpp
     src/tests/FullCircuitTest.cpp
     src/tests/HalfAdderTest.cpp
     src/tests/FullAdderTest.cpp
@@ -66,6 +68,18 @@ pybind11_add_module(circuit_backend
 target_link_libraries(circuit_backend PRIVATE SimulatorLib)
 
 # The include directories are inherited automatically from SimulatorLib.
+
+# ===================================================================
+# Automatic Python Module Deployment to Visualizer
+# ===================================================================
+# After building the Python module, automatically copy it to the visualizer
+# directory so it can be imported without manual copying.
+add_custom_command(TARGET circuit_backend POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy
+        $<TARGET_FILE:circuit_backend>
+        ${PROJECT_SOURCE_DIR}/visualizer/$<TARGET_FILE_NAME:circuit_backend>
+    COMMENT "Copying circuit_backend module to visualizer directory..."
+)
 
 # ===================================================================
 # Target 3: The C++ Executable (`sim`)

@@ -6,6 +6,9 @@
 #include <vector>
 #include "ForwardDeclarations.hpp"
 
+// Forward declaration for WireBuilder
+class WireBuilder;
+
 class ComponentBuilder
 {
 private:
@@ -37,6 +40,9 @@ public:
     std::shared_ptr<Wire> getWire(const std::string& name);
     std::shared_ptr<Pin> getInputPin(const std::string& pin_name);
     std::shared_ptr<Pin> getOutputPin(const std::string& pin_name);
+
+    // Wire Builder API (fluent interface)
+    WireBuilder wire(std::string name);
 };
 
 // DO NOT INCLUDE THE .tpp FILE HERE. THIS BREAKS THE CYCLE.

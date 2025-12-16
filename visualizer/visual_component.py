@@ -1,5 +1,6 @@
 import pygame
 import circuit_backend
+import math
 
 STATE_COLORS = {
     circuit_backend.LogicValue.HIGH: (76, 175, 80),
@@ -14,10 +15,19 @@ class VisualPin:
         self.cpp_handle = cpp_pin_handle
         self.pin_type = pin_type
         self.name = self.cpp_handle.get_name()
-        self.rect = pygame.Rect(0, 0, 1, 1)
+        
+        # Geometry & Hitbox
+        self.rect = pygame.Rect(0, 0, 1, 1) # Integer rect for events
+        self.pos = pygame.Vector2(0, 0)     # Float center position
+        
+        # Stub Geometries: Tuples of (PointOnPin, PointOnBoundary)
+        self.outer_stub = (pygame.Vector2(0,0), pygame.Vector2(0,0))
+        self.inner_stub = (pygame.Vector2(0,0), pygame.Vector2(0,0))
+        
+        # Appearance
         self.color = STATE_COLORS[circuit_backend.LogicValue.UNKNOWN]
         self.text_color = (220, 220, 220)
-        self.base_points = []
+        self.rel_points = []
         self._text_surf = None
         self._last_font_size = -1
         self.is_hovered = False
@@ -26,8 +36,10 @@ class VisualPin:
         self.color = STATE_COLORS.get(self.cpp_handle.get_value(), STATE_COLORS[circuit_backend.LogicValue.UNKNOWN])
 
     def draw(self, screen, camera):
-        screen_center = camera.apply(self.rect.center)
-        zoomed_points = [screen_center + p * camera.zoom for p in self.base_points]
+        # Draw only the Triangle and Text. Wires/Stubs are drawn by VisualWire.
+        screen_center = camera.apply(self.pos)
+        zoomed_points = [screen_center + p * camera.zoom for p in self.rel_points]
+        
         pygame.draw.polygon(screen, self.color, zoomed_points)
         if self.is_hovered:
             pygame.draw.polygon(screen, (255, 255, 0), zoomed_points, width=2)
@@ -40,9 +52,13 @@ class VisualPin:
                 self._last_font_size = font_size
             if self._text_surf:
                 if self.pin_type == 'input':
-                    text_rect = self._text_surf.get_rect(midleft=(screen_center.x + (self.rect.width/2 * camera.zoom) + 5, screen_center.y))
+                    # Text inside body (Right of left-edge pin)
+                    text_pos = screen_center + pygame.Vector2((self.rect.width * 0.8 * camera.zoom), 0)
+                    text_rect = self._text_surf.get_rect(midleft=text_pos)
                 else:
-                    text_rect = self._text_surf.get_rect(midright=(screen_center.x - (self.rect.width/2 * camera.zoom) - 5, screen_center.y))
+                    # Text inside body (Left of right-edge pin)
+                    text_pos = screen_center - pygame.Vector2((self.rect.width * 0.8 * camera.zoom), 0)
+                    text_rect = self._text_surf.get_rect(midright=text_pos)
                 screen.blit(self._text_surf, text_rect)
 
 class VisualWire:
@@ -85,6 +101,22 @@ class VisualWire:
                 if (world_pos - projection).length_squared() < threshold_sq:
                     return True
         return False
+
+    def _get_active_stub(self, pin, is_source):
+        # LOGIC:
+        # Source (Input Pin) -> Parent Passthrough -> Use INNER
+        # Source (Output Pin) -> Child Output -> Use OUTER
+        # Sink (Input Pin) -> Child Input -> Use OUTER
+        # Sink (Output Pin) -> Parent Passthrough -> Use INNER
+        
+        is_input = (pin.pin_type == 'input')
+        
+        if is_source:
+            if is_input: return pin.inner_stub 
+            else:        return pin.outer_stub
+        else: # is sink
+            if is_input: return pin.outer_stub
+            else:        return pin.inner_stub
         
     def draw(self, screen, camera):
         self.update_state()
@@ -95,29 +127,29 @@ class VisualWire:
         if self.is_hovered:
             line_width *= 2
 
-        start_pos = pygame.Vector2(self.source_vpin.rect.center)
         self._world_paths.clear()
 
+        # 1. Determine Source Geometry
+        src_pin_pt, src_bound_pt = self._get_active_stub(self.source_vpin, is_source=True)
+
+        # Draw Source Stub (Pin <-> Boundary)
+        self._world_paths.append([src_pin_pt, src_bound_pt])
+        pygame.draw.line(screen, self.color, camera.apply(src_pin_pt), camera.apply(src_bound_pt), line_width)
+
+        # 2. Route to Sinks
         for sink_pin in self.sink_vpins:
-            end_pos = pygame.Vector2(sink_pin.rect.center)
-            source_owner = self.source_vpin.parent
-            sink_owner = sink_pin.parent
-
-            source_stub_len = source_owner.rect.width * source_owner.wire_stub_ratio
-            sink_stub_len = sink_owner.rect.width * sink_owner.wire_stub_ratio
-
-            p_start_trunk = start_pos + pygame.Vector2(source_stub_len, 0)
-
-            if source_owner.rect.contains(sink_owner.rect):
-                p_end_trunk = end_pos + pygame.Vector2(sink_stub_len, 0)
-            elif sink_owner.rect.contains(source_owner.rect):
-                p_end_trunk = end_pos - pygame.Vector2(sink_stub_len, 0)
-            else:
-                p_end_trunk = end_pos - pygame.Vector2(sink_stub_len, 0)
-
-            mid_x = (p_start_trunk.x + p_end_trunk.x) / 2
-            path_points = [start_pos, p_start_trunk, pygame.Vector2(mid_x, p_start_trunk.y),
-                           pygame.Vector2(mid_x, p_end_trunk.y), p_end_trunk, end_pos]
+            dst_pin_pt, dst_bound_pt = self._get_active_stub(sink_pin, is_source=False)
+            
+            # Draw Sink Stub (Boundary <-> Pin)
+            self._world_paths.append([dst_bound_pt, dst_pin_pt])
+            pygame.draw.line(screen, self.color, camera.apply(dst_bound_pt), camera.apply(dst_pin_pt), line_width)
+            
+            # Draw Main Wire (Source Boundary <-> Sink Boundary)
+            # Simple Orthogonal Routing
+            mid_x = (src_bound_pt.x + dst_bound_pt.x) / 2
+            
+            path_points = [src_bound_pt, pygame.Vector2(mid_x, src_bound_pt.y),
+                           pygame.Vector2(mid_x, dst_bound_pt.y), dst_bound_pt]
             
             self._world_paths.append(path_points)
             screen_points = [camera.apply(p) for p in path_points]
@@ -147,12 +179,12 @@ class VisualComponent:
         self.drag_offset = pygame.Vector2(0, 0)
         self.depth = depth
         self.resize_mode = None
-        self.min_width = 40
+        self.min_width = 60
         
         self.title_bar_ratio = settings.get('title_bar_ratio', 0.15)
         self.font_width_ratio = settings.get('font_width_ratio', 0.18)
-        self.wire_stub_ratio = settings.get('wire_stub_ratio', 0.15)
-        self.pin_size_ratio = settings.get('pin_size_ratio', 0.1)
+        self.p_ratio = settings.get('boundary_area_ratio', 0.15)
+        self.pin_size_ratio = settings.get('pin_size_ratio', 0.10)
 
         self.base_color = tuple(color)
         self.hover_color = self.base_color[:3] + (150,)
@@ -217,12 +249,27 @@ class VisualComponent:
             
         for child in self.children:
             child.draw(screen, camera)
-    
+            
+        # if self.is_hovered:
+        #     p_width = self.rect.width * self.p_ratio
+        #     left_zone = pygame.Rect(self.rect.left - p_width, self.rect.top, 2*p_width, self.rect.height)
+        #     right_zone = pygame.Rect(self.rect.right - p_width, self.rect.top, 2*p_width, self.rect.height)
+        #     l_scr = camera.apply(left_zone.topleft)
+        #     l_sz = (left_zone.width * camera.zoom, left_zone.height * camera.zoom)
+        #     pygame.draw.rect(screen, (255, 50, 50), (l_scr, l_sz), 1)
+        #     r_scr = camera.apply(right_zone.topleft)
+        #     r_sz = (right_zone.width * camera.zoom, right_zone.height * camera.zoom)
+        #     pygame.draw.rect(screen, (255, 50, 50), (r_scr, r_sz), 1)
+
     def get_content_rect(self):
         title_height = self.rect.width * self.title_bar_ratio
-        stub_width = self.rect.width * self.wire_stub_ratio
-        return pygame.Rect(self.rect.left + stub_width, self.rect.top + title_height, 
-                           self.rect.width - 2 * stub_width, self.rect.height - title_height)
+        margin_x = self.rect.width * self.p_ratio
+        return pygame.Rect(
+            self.rect.left + margin_x, 
+            self.rect.top + title_height, 
+            self.rect.width - (2 * margin_x), 
+            self.rect.height - title_height
+        )
 
     def add_child(self, child_vc):
         self.children.append(child_vc)
@@ -266,66 +313,86 @@ class VisualComponent:
         return False
 
     def resize(self, mode, world_mouse_pos, lm):
-        p_rect = self.parent.get_content_rect() if self.parent else None
+        if not self.parent: return
 
-        clamped_mouse_pos = pygame.Vector2(world_mouse_pos)
-        if p_rect:
-            clamped_mouse_pos.x = max(p_rect.left, min(clamped_mouse_pos.x, p_rect.right))
-            clamped_mouse_pos.y = max(p_rect.top, min(clamped_mouse_pos.y, p_rect.bottom))
+        p_safe = self.parent.get_content_rect()
+        q = self.p_ratio 
 
-        ideal_w, ideal_h = 0, 0
+        ideal_rect = self.rect.copy()
         
-        if mode in ['right', 'left']:
-            if mode == 'right': ideal_w = clamped_mouse_pos.x - self.rect.left
-            else: ideal_w = self.rect.right - clamped_mouse_pos.x
-            ideal_w = max(self.min_width, ideal_w)
-            ideal_h = ideal_w * self.aspect_ratio
+        if mode == 'right':
+            ideal_rect.width = max(self.min_width, world_mouse_pos.x - self.rect.left)
+            ideal_rect.height = ideal_rect.width * self.aspect_ratio
+        elif mode == 'left':
+            new_w = max(self.min_width, self.rect.right - world_mouse_pos.x)
+            ideal_rect.left = self.rect.right - new_w
+            ideal_rect.width = new_w
+            ideal_rect.height = new_w * self.aspect_ratio
+        elif mode == 'bottom':
+            ideal_rect.height = max(self.min_width * self.aspect_ratio, world_mouse_pos.y - self.rect.top)
+            ideal_rect.width = ideal_rect.height / self.aspect_ratio
+        elif mode == 'top':
+            new_h = max(self.min_width * self.aspect_ratio, self.rect.bottom - world_mouse_pos.y)
+            ideal_rect.top = self.rect.bottom - new_h
+            ideal_rect.height = new_h
+            ideal_rect.width = new_h / self.aspect_ratio
+
+        max_w_from_left = (p_safe.right - ideal_rect.left) / (1 + q)
+        max_w_from_right = (ideal_rect.right - p_safe.left) / (1 + q)
+        
+        final_w, final_h = ideal_rect.width, ideal_rect.height
+
+        if mode == 'right':
+            limit_w = max_w_from_left
+            final_w = min(ideal_rect.width, limit_w)
+            final_h = final_w * self.aspect_ratio
+            if self.rect.top + final_h > p_safe.bottom:
+                final_h = p_safe.bottom - self.rect.top
+                final_w = final_h / self.aspect_ratio
+
+        elif mode == 'left':
+            limit_w = max_w_from_right
+            final_w = min(ideal_rect.width, limit_w)
+            final_h = final_w * self.aspect_ratio
+            ideal_rect.left = self.rect.right - final_w 
+            if self.rect.top + final_h > p_safe.bottom:
+                final_h = p_safe.bottom - self.rect.top
+                final_w = final_h / self.aspect_ratio
+                ideal_rect.left = self.rect.right - final_w
+
+        self.rect.width = final_w
+        self.rect.height = final_h
+        if mode == 'left': self.rect.left = ideal_rect.left
+        
+        new_rel_pos = [(self.rect.left - self.parent.rect.left) / self.parent.rect.width, 
+                       (self.rect.top - self.parent.rect.top) / self.parent.rect.height]
+        new_rel_width = self.rect.width / self.parent.rect.width
+        
+        if self.depth == 1:
+            lm.update_instance_child_layout(self.parent.layout_key, self.name, new_rel_pos, new_rel_width)
         else:
-            if mode == 'bottom': ideal_h = clamped_mouse_pos.y - self.rect.top
-            else: ideal_h = self.rect.bottom - clamped_mouse_pos.y
-            ideal_h = max(self.min_width * self.aspect_ratio, ideal_h)
-            ideal_w = ideal_h / self.aspect_ratio
-
-        final_w, final_h = ideal_w, ideal_h
-        
-        if p_rect:
-            max_w, max_h = 0, 0
-            if mode == 'right': max_w, max_h = p_rect.right - self.rect.left, p_rect.bottom - self.rect.top
-            elif mode == 'left': max_w, max_h = self.rect.right - p_rect.left, p_rect.bottom - self.rect.top
-            elif mode == 'bottom': max_w, max_h = p_rect.right - self.rect.left, p_rect.bottom - self.rect.top
-            elif mode == 'top': max_w, max_h = p_rect.right - self.rect.left, self.rect.bottom - p_rect.top
-            
-            width_overflow = ideal_w / max_w if max_w > 0 else 1
-            height_overflow = ideal_h / max_h if max_h > 0 else 1
-            scale_factor = max(1.0, width_overflow, height_overflow)
-            final_w, final_h = ideal_w / scale_factor, ideal_h / scale_factor
-
-        new_rect = self.rect.copy()
-        new_rect.width, new_rect.height = final_w, final_h
-
-        if mode == 'left': new_rect.left = self.rect.right - final_w
-        elif mode == 'top': new_rect.top = self.rect.bottom - final_h
-        
-        if self.parent:
-            new_rel_pos = [(new_rect.left - self.parent.rect.left) / self.parent.rect.width, (new_rect.top - self.parent.rect.top) / self.parent.rect.height]
-            new_rel_width = new_rect.width / self.parent.rect.width
-            if self.depth == 1:
-                lm.update_instance_child_layout(self.parent.layout_key, self.name, new_rel_pos, new_rel_width)
-            else:
-                lm.update_type_child_layout(self.parent.cpp_handle.get_type_name(), self.name, new_rel_pos, new_rel_width)
-        else:
-            lm.update_root_position(new_rect.topleft)
-            lm.update_root_width(new_rect.width)
+            lm.update_type_child_layout(self.parent.cpp_handle.get_type_name(), self.name, new_rel_pos, new_rel_width)
 
     def move(self, new_abs_pos, lm):
         potential_pos = pygame.Vector2(new_abs_pos)
+        
         if self.parent:
-            p_rect = self.parent.get_content_rect()
-            potential_pos.x = max(p_rect.left, min(potential_pos.x, p_rect.right - self.rect.width))
-            potential_pos.y = max(p_rect.top, min(potential_pos.y, p_rect.bottom - self.rect.height))
+            p_safe = self.parent.get_content_rect()
+            q_margin = self.rect.width * self.p_ratio
             
-            new_rel_pos = [(potential_pos.x - self.parent.rect.left) / self.parent.rect.width, (potential_pos.y - self.parent.rect.top) / self.parent.rect.height]
+            min_x = p_safe.left + q_margin
+            max_x = p_safe.right - self.rect.width - q_margin
+            min_y = p_safe.top
+            max_y = p_safe.bottom - self.rect.height
+            
+            if min_x > max_x: potential_pos.x = (min_x + max_x) / 2 
+            else: potential_pos.x = max(min_x, min(potential_pos.x, max_x))
+            potential_pos.y = max(min_y, min(potential_pos.y, max_y))
+            
+            new_rel_pos = [(potential_pos.x - self.parent.rect.left) / self.parent.rect.width, 
+                           (potential_pos.y - self.parent.rect.top) / self.parent.rect.height]
             rel_width = self.rect.width / self.parent.rect.width
+            
             if self.depth == 1:
                 lm.update_instance_child_layout(self.parent.layout_key, self.name, new_rel_pos, rel_width)
             else:
@@ -335,13 +402,11 @@ class VisualComponent:
 
     def update_geometry(self, lm):
         self._render_is_dirty = True
-        
         parent_type = self.cpp_handle.get_type_name()
         parent_key = self.layout_key
         
         for child in self.children:
             child_layout = lm.get_child_layout(parent_type, parent_key, child.name)
-            
             rel_pos = child_layout.get('rel_pos', [0, 0])
             rel_width = child_layout.get('rel_width', 0.5)
             
@@ -349,7 +414,6 @@ class VisualComponent:
             child.rect.height = child.rect.width * child.aspect_ratio
             child.rect.left = self.rect.x + self.rect.width * rel_pos[0]
             child.rect.top = self.rect.y + self.rect.height * rel_pos[1]
-            
             child.update_geometry(lm)
 
         if isinstance(self, VisualIOComponent):
@@ -370,24 +434,61 @@ class VisualIOComponent(VisualComponent):
 
     def _layout_pins(self):
         content_rect = self.get_content_rect()
-        pin_height = content_rect.width * self.pin_size_ratio
-        pin_width = pin_height
+        
+        p_width = self.rect.width * self.p_ratio
+        pin_w = self.rect.width * self.pin_size_ratio
+        pin_h = pin_w 
+        w2 = pin_w / 2
+        h2 = pin_h / 2
+        
+        def setup_pin(pin, y_center, is_input):
+            pin.rect.size = (int(pin_w), int(pin_h))
+            
+            if is_input:
+                # INPUT (Left Edge, x=0)
+                # Pin spans [-w/2, w/2] centered at Left Edge
+                pin.pos = pygame.Vector2(self.rect.left, y_center)
+                pin.rect.center = (int(self.rect.left), int(y_center))
+                pin.rel_points = [pygame.Vector2(w2, 0), pygame.Vector2(-w2, -h2), pygame.Vector2(-w2, h2)]
+                
+                # Outer Stub: [-p, -w2]
+                outer_pt = pygame.Vector2(self.rect.left - p_width, y_center)
+                pin_edge_outer = pygame.Vector2(self.rect.left - w2, y_center)
+                pin.outer_stub = (pin_edge_outer, outer_pt)
+                
+                # Inner Stub: [w2, p]
+                inner_pt = pygame.Vector2(self.rect.left + p_width, y_center)
+                pin_edge_inner = pygame.Vector2(self.rect.left + w2, y_center)
+                pin.inner_stub = (pin_edge_inner, inner_pt)
+                
+            else:
+                # OUTPUT (Right Edge, x=W)
+                # Pin spans [W-w/2, W+w/2] centered at Right Edge
+                pin.pos = pygame.Vector2(self.rect.right, y_center)
+                pin.rect.center = (int(self.rect.right), int(y_center))
+                pin.rel_points = [pygame.Vector2(w2, 0), pygame.Vector2(-w2, -h2), pygame.Vector2(-w2, h2)]
+                
+                # Inner Stub: [1-p, 1-w2]
+                inner_pt = pygame.Vector2(self.rect.right - p_width, y_center)
+                pin_edge_inner = pygame.Vector2(self.rect.right - w2, y_center)
+                pin.inner_stub = (pin_edge_inner, inner_pt)
+                
+                # Outer Stub: [1+w2, 1+p]
+                outer_pt = pygame.Vector2(self.rect.right + p_width, y_center)
+                pin_edge_outer = pygame.Vector2(self.rect.right + w2, y_center)
+                pin.outer_stub = (pin_edge_outer, outer_pt)
 
         if self.input_pins:
             spacing = content_rect.height / (len(self.input_pins) + 1)
             for i, pin in enumerate(self.input_pins):
-                pin.rect.size = (pin_width, pin_height)
-                w2, h2 = pin.rect.width/2, pin.rect.height/2
-                pin.base_points = [pygame.Vector2(-w2, -h2), pygame.Vector2(w2, 0), pygame.Vector2(-w2, h2)]
-                pin.rect.center = (self.rect.left, content_rect.top + spacing * (i + 1))
+                y = content_rect.top + spacing * (i + 1)
+                setup_pin(pin, y, True)
         
         if self.output_pins:
             spacing = content_rect.height / (len(self.output_pins) + 1)
             for i, pin in enumerate(self.output_pins):
-                pin.rect.size = (pin_width, pin_height)
-                w2, h2 = pin.rect.width/2, pin.rect.height/2
-                pin.base_points = [pygame.Vector2(-w2, -h2), pygame.Vector2(w2, 0), pygame.Vector2(-w2, h2)]
-                pin.rect.center = (self.rect.right, content_rect.top + spacing * (i + 1))
+                y = content_rect.top + spacing * (i + 1)
+                setup_pin(pin, y, False)
 
     def get_all_pins(self):
         return self.input_pins + self.output_pins

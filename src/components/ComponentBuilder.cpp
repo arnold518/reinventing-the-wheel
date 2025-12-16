@@ -1,6 +1,7 @@
 #include "components/ComponentBuilder.hpp"
 #include "components/Component.hpp"
 #include "components/IOComponent.hpp"
+#include "components/WireBuilder.hpp"
 #include "basic/Wire.hpp"
 #include <utility>
 #include <iostream>
@@ -141,4 +142,8 @@ std::shared_ptr<Pin> ComponentBuilder::getOutputPin(const std::string& pin_name)
         return io_root->getOutputPin(pin_name);
     }
     return nullptr;
+}
+
+WireBuilder ComponentBuilder::wire(std::string name) {
+    return WireBuilder(this, std::move(name));
 }
