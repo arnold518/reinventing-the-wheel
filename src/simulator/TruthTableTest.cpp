@@ -1,122 +1,102 @@
 #include "simulator/TruthTableTest.hpp"
+#include "basic/PinBase.hpp"
+#include "basic/WireBase.hpp"
 #include "components/ComponentBuilder.hpp"
 #include "components/IOComponent.hpp"
-#include "basic/Wire.hpp"
-#include "basic/Pin.hpp"
 #include "simulator/Event.hpp"
 #include "simulator/Simulator.hpp"
-#include <iostream>
 #include <cassert>
+#include <iostream>
+
+namespace {
+std::shared_ptr<Event> makeWireUpdateEvent(size_t time, const std::shared_ptr<WireBase>& wire, const PinValue& value) {
+    if (!wire) {
+        return nullptr;
+    }
+
+    auto numeric_value = value.isMultiBit() ? value.asUInt64() : static_cast<uint64_t>(value.asLogicValue() == LogicValue::HIGH);
+    switch (wire->getWidth()) {
+        case 1:
+            if (value.isMultiBit()) {
+                return std::make_shared<WireUpdateEvent<1>>(time, std::dynamic_pointer_cast<Wire<1>>(wire), numeric_value);
+            }
+            return std::make_shared<WireUpdateEvent<1>>(time, std::dynamic_pointer_cast<Wire<1>>(wire), value.asLogicValue());
+        case 2:
+            return std::make_shared<WireUpdateEvent<2>>(time, std::dynamic_pointer_cast<Wire<2>>(wire), numeric_value);
+        case 3:
+            return std::make_shared<WireUpdateEvent<3>>(time, std::dynamic_pointer_cast<Wire<3>>(wire), numeric_value);
+        case 4:
+            return std::make_shared<WireUpdateEvent<4>>(time, std::dynamic_pointer_cast<Wire<4>>(wire), numeric_value);
+        case 8:
+            return std::make_shared<WireUpdateEvent<8>>(time, std::dynamic_pointer_cast<Wire<8>>(wire), numeric_value);
+        case 16:
+            return std::make_shared<WireUpdateEvent<16>>(time, std::dynamic_pointer_cast<Wire<16>>(wire), numeric_value);
+        default:
+            return nullptr;
+    }
+}
+}
 
 void TruthTableTest::setInitialState() {
-    // Verify that root is an IOComponent
     auto io_root = std::dynamic_pointer_cast<IOComponent>(root);
-    if (!io_root) {
-        std::cerr << "[TruthTableTest] ERROR: Root component must be an IOComponent!" << std::endl;
-        std::cerr << "                 TruthTableTest requires direct access to input/output pins." << std::endl;
-        assert(false && "TruthTableTest requires IOComponent as root");
-        return;
-    }
+    assert(io_root && "TruthTableTest requires IOComponent as root");
 
-    // Get the truth table from the subclass
     truth_table_ = getTruthTable();
-
     if (truth_table_.empty()) {
-        std::cerr << "[TruthTableTest] Warning: Truth table is empty!" << std::endl;
         return;
     }
 
-    // Create input wires for all unique input pins in the truth table
-    // We collect all input pin names from the first row
-    std::map<std::string, std::shared_ptr<Wire>> input_wires;
+    std::map<std::string, std::shared_ptr<WireBase>> input_wires;
+    for (const auto& [pin_name, _] : truth_table_[0].inputs) {
+        auto pin = io_root->getInputPinDynamic(pin_name);
+        assert(pin && "Truth table references a missing input pin");
 
-    if (!truth_table_.empty()) {
-        for (const auto& [pin_name, _] : truth_table_[0].inputs) {
-            auto wire = builder->addNewWire(
-                "INPUT_" + pin_name,
-                nullptr,  // Source-less wire
-                { builder->getInputPin(pin_name) }
-            );
-            input_wires[pin_name] = wire;
-        }
+        input_wires[pin_name] = builder->addNewWireDynamic(
+            "INPUT_" + pin_name,
+            pin->getWidth(),
+            nullptr,
+            {pin});
     }
 
-    // Schedule events for each truth table row
-    for (size_t i = 0; i < truth_table_.size(); i++) {
+    for (size_t i = 0; i < truth_table_.size(); ++i) {
         size_t time = i * time_step_;
-
-        std::cout << "[TruthTableTest] Scheduling test case " << i << " at t=" << time << ": ";
-
         for (const auto& [pin_name, value] : truth_table_[i].inputs) {
-            std::cout << pin_name << "=" << (int)value << " ";
-
             auto wire_it = input_wires.find(pin_name);
-            if (wire_it == input_wires.end()) {
-                std::cerr << "Error: No wire found for input pin '" << pin_name << "'" << std::endl;
-                continue;
-            }
-
-            sim->scheduleEvent(std::make_shared<WireUpdateEvent>(
-                time,
-                wire_it->second,
-                value
-            ));
+            assert(wire_it != input_wires.end() && "Missing input wire");
+            sim->scheduleEvent(makeWireUpdateEvent(time, wire_it->second, value));
         }
-
-        std::cout << "→ Expected: ";
-        for (const auto& [pin_name, value] : truth_table_[i].outputs) {
-            std::cout << pin_name << "=" << (int)value << " ";
-        }
-        std::cout << std::endl;
     }
 }
 
 void TruthTableTest::verifyResults() {
-    if (truth_table_.empty()) {
-        std::cerr << "Error: Cannot verify results - truth table is empty!" << std::endl;
-        return;
-    }
+    assert(!truth_table_.empty() && "Cannot verify an empty truth table");
+    auto io_root = std::dynamic_pointer_cast<IOComponent>(root);
+    assert(io_root && "TruthTableTest requires IOComponent as root");
 
-    // Verify the final state matches the last row of the truth table
     const auto& last_row = truth_table_.back();
+    for (const auto& [pin_name, expected] : last_row.outputs) {
+        auto pin = io_root->getOutputPinDynamic(pin_name);
+        assert(pin && "Truth table references a missing output pin");
 
-    std::cout << "[TruthTableTest] Verifying final state:" << std::endl;
-
-    bool all_passed = true;
-
-    for (const auto& [pin_name, expected_value] : last_row.outputs) {
-        auto pin = builder->getOutputPin(pin_name);
-        if (!pin) {
-            std::cerr << "  ✗ Output pin '" << pin_name << "' not found!" << std::endl;
-            all_passed = false;
-            continue;
-        }
-
-        LogicValue actual_value = pin->getValue();
-
-        if (actual_value != expected_value) {
-            std::cerr << "  ✗ " << pin_name << " = " << (int)actual_value
-                      << ", expected " << (int)expected_value << std::endl;
-            all_passed = false;
+        if (expected.isMultiBit() || pin->getWidth() > 1) {
+            auto actual = pin->getValueAsUInt64();
+            if (actual != expected.asUInt64()) {
+                std::cerr << pin_name << " = " << actual << ", expected " << expected.asUInt64() << std::endl;
+                assert(false && "Truth table multi-bit output mismatch");
+            }
         } else {
-            std::cout << "  ✓ " << pin_name << " = " << (int)actual_value << std::endl;
+            auto actual = pin->getValue();
+            if (actual != expected.asLogicValue()) {
+                std::cerr << pin_name << " = " << actual << ", expected " << expected.asLogicValue() << std::endl;
+                assert(false && "Truth table output mismatch");
+            }
         }
-    }
-
-    if (all_passed) {
-        std::cout << "[TruthTableTest] All outputs match truth table ✓" << std::endl;
-    } else {
-        std::cerr << "[TruthTableTest] Some outputs do NOT match truth table ✗" << std::endl;
-        assert(false && "Truth table verification failed");
     }
 }
 
 size_t TruthTableTest::getRunDuration() const {
     if (truth_table_.empty()) {
-        return 100;  // Default fallback
+        return 100;
     }
-
-    // Run duration = (number of test cases) * time_step + buffer for propagation
-    // Buffer is 2x time_step to allow for deep circuits
     return truth_table_.size() * time_step_ + (2 * time_step_);
 }

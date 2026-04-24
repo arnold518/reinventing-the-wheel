@@ -1,13 +1,17 @@
 #pragma once
 
+#include <cstddef>
+
 class Simulator;
-class Wire;
-class Pin;
 class Component;
 class IOComponent;
 class BasicComponent;
 class ComponentBuilder;
+class PinBase;
+class WireBase;
+template<size_t WIDTH = 1> class Pin;
+template<size_t WIDTH = 1> class Wire;
 
 class Event;
 class ComponentEvalEvent;
-class WireUpdateEvent;
+template<size_t WIDTH = 1> class WireUpdateEvent;

@@ -1,100 +1,116 @@
+#include "basic/WireBase.hpp"
+#include "basic/PinBase.hpp"
 #include "basic/Wire.hpp"
-#include "simulator/Simulator.hpp"
-#include "basic/Pin.hpp"
+#include "components/BasicComponent.hpp"
 #include "components/Component.hpp"
 #include "components/IOComponent.hpp"
-#include "components/BasicComponent.hpp"
-#include "simulator/Event.hpp" 
-#include <iostream>
+#include "simulator/Event.hpp"
+#include "simulator/Simulator.hpp"
 #include <algorithm>
+#include <utility>
 
-Wire::Wire(std::string name) : name(std::move(name)), value(LogicValue::UNKNOWN) {}
+namespace {
+std::shared_ptr<Event> makeDynamicWireUpdate(size_t time, const std::shared_ptr<WireBase>& wire, const std::vector<LogicValue>& values) {
+    if (!wire) {
+        return nullptr;
+    }
 
-std::string Wire::getName() const { return name; }
-LogicValue Wire::getValue() const { return value; }
-void Wire::setValue(LogicValue new_value) { this->value = new_value; }
+    switch (wire->getWidth()) {
+        case 1: return std::make_shared<WireUpdateEvent<1>>(time, std::dynamic_pointer_cast<Wire<1>>(wire), values);
+        case 2: return std::make_shared<WireUpdateEvent<2>>(time, std::dynamic_pointer_cast<Wire<2>>(wire), values);
+        case 3: return std::make_shared<WireUpdateEvent<3>>(time, std::dynamic_pointer_cast<Wire<3>>(wire), values);
+        case 4: return std::make_shared<WireUpdateEvent<4>>(time, std::dynamic_pointer_cast<Wire<4>>(wire), values);
+        case 8: return std::make_shared<WireUpdateEvent<8>>(time, std::dynamic_pointer_cast<Wire<8>>(wire), values);
+        case 16: return std::make_shared<WireUpdateEvent<16>>(time, std::dynamic_pointer_cast<Wire<16>>(wire), values);
+        default: return nullptr;
+    }
+}
+}
 
-void Wire::propagateChange(Simulator& simulator, size_t propagation_time) {
-    sink_pins.erase(std::remove_if(sink_pins.begin(), sink_pins.end(),
-                                   [](const std::weak_ptr<Pin>& p) { return p.expired(); }),
-                    sink_pins.end());
+WireBase::WireBase(std::string wire_name)
+    : name(std::move(wire_name)) {}
 
-    for (const auto& sink_pin_weak_ptr : sink_pins) {
-        if (auto sink_pin = sink_pin_weak_ptr.lock()) {
-            auto sink_owner = sink_pin->getOwner();
-            if (!sink_owner) continue;
+std::string WireBase::getName() const { return name; }
 
-            if (std::dynamic_pointer_cast<BasicComponent>(sink_owner)) {
-                // CASE 1: The sink is a pin on a BasicComponent. Schedule an evaluation.
-                if (sink_pin->getType() == PinType::OUTPUT) {
-                    std::cerr << "Error: Can not propagate to an Output port of a BasicComponent.\n";
-                    continue;
-                }
-                std::cout << "[PROPAGATE] Wire '" << this->getID() << "' schedules evaluation for component '" << sink_owner->getID() << "'." << std::endl;
-                simulator.scheduleEvent(std::make_shared<ComponentEvalEvent>(propagation_time, sink_owner));
-            
-            } else if (std::dynamic_pointer_cast<IOComponent>(sink_owner)) {
-                // CASE 2: The sink is a pin on a Composite Component. Propagate directly.
-                
-                // If the sink is an INPUT port, we propagate to its internal wire.
-                if (sink_pin->getType() == PinType::INPUT) {
-                    if (auto internal_wire = sink_pin->getInternalWire()) {
-                        std::cout << "[PROPAGATE] Wire '" << this->getID() << "' propagates value to internal wire '" << internal_wire->getID() << "'." << std::endl;
-                        simulator.scheduleEvent(std::make_shared<WireUpdateEvent>(propagation_time, internal_wire, this->value));
-                    }
-                // If the sink is an OUTPUT port, we propagate to its external wire.
-                } else if (sink_pin->getType() == PinType::OUTPUT) {
-                     if (auto external_wire = sink_pin->getExternalWire()) {
-                        std::cout << "[PROPAGATE] Wire '" << this->getID() << "' propagates value to external wire '" << external_wire->getID() << "'." << std::endl;
-                        simulator.scheduleEvent(std::make_shared<WireUpdateEvent>(propagation_time, external_wire, this->value));
-                    }
-                }
-            }
+void WireBase::setOwner(std::shared_ptr<Component> component) {
+    owner = std::move(component);
+}
+
+std::shared_ptr<Component> WireBase::getOwner() const {
+    return owner.lock();
+}
+
+void WireBase::setSourcePinBase(std::shared_ptr<PinBase> pin) {
+    source_pin = std::move(pin);
+}
+
+void WireBase::addSinkPinBase(std::shared_ptr<PinBase> pin) {
+    if (pin) {
+        sink_pins.push_back(std::move(pin));
+    }
+}
+
+std::shared_ptr<PinBase> WireBase::getSourcePinBase() const {
+    return source_pin.lock();
+}
+
+const std::vector<std::weak_ptr<PinBase>>& WireBase::getSinkPinsBase() const {
+    return sink_pins;
+}
+
+std::vector<std::shared_ptr<PinBase>> WireBase::getSinkPinsBaseForPython() const {
+    std::vector<std::shared_ptr<PinBase>> pins;
+    pins.reserve(sink_pins.size());
+    for (const auto& weak_pin : sink_pins) {
+        if (auto pin = weak_pin.lock()) {
+            pins.push_back(pin);
         }
     }
+    return pins;
 }
 
-void Wire::setSourcePin(std::shared_ptr<Pin> pin) {
-    if (!pin) {
-        std::cerr << "Error: Attempted to set a null pin as source for wire '" << name << "'." << std::endl;
-        return;
-    }
-    // This is the critical safety check to prevent short circuits.
-    if (auto existing_source = source_pin.lock()) {
-        std::cerr << "Error: Wire '" << name << "' already has a source pin ('" << existing_source->getID() 
-                  << "'). Cannot set new source ('" << pin->getID() << "')." << std::endl;
-        return;
-    }
-    source_pin = pin;
-}
-
-void Wire::addSinkPin(std::shared_ptr<Pin> pin) {
-    if (!pin) {
-        std::cerr << "Error: Attempted to add a null pin as sink for wire '" << name << "'." << std::endl;
-        return;
-    }
-    // The wire no longer validates pin type; it simply accepts the connection.
-    // The ComponentBuilder is responsible for ensuring only valid pins are passed.
-    sink_pins.push_back(pin);
-}
-
-std::shared_ptr<Pin> Wire::getSourcePin() const { return source_pin.lock(); }
-const std::vector<std::weak_ptr<Pin>>& Wire::getSinkPins() const { return sink_pins; }
-
-void Wire::setOwner(std::shared_ptr<Component> component) {
-    if(component) {
-        owner = component;
-    } else {
-        std::cerr << "Error: Attempted to set a null component as owner for wire '" << name << "'." << std::endl;
-    }
-}
-
-std::shared_ptr<Component> Wire::getOwner() const { return owner.lock(); }
-
-std::string Wire::getID() const {
+std::string WireBase::getID() const {
     if (auto owner_comp = owner.lock()) {
         return owner_comp->getID() + "." + name;
-    } else {
-        return "OrphanWire:" + name;
+    }
+    return "OrphanWire:" + name;
+}
+
+void propagateWireChange(WireBase& wire, Simulator& simulator, size_t propagation_time) {
+    auto& sinks = const_cast<std::vector<std::weak_ptr<PinBase>>&>(wire.getSinkPinsBase());
+    sinks.erase(std::remove_if(sinks.begin(), sinks.end(),
+                               [](const std::weak_ptr<PinBase>& pin) { return pin.expired(); }),
+                sinks.end());
+
+    const auto values = wire.getValueVector();
+    for (const auto& weak_pin : sinks) {
+        auto sink_pin = weak_pin.lock();
+        if (!sink_pin) {
+            continue;
+        }
+
+        sink_pin->setValueFromVector(values);
+        auto sink_owner = sink_pin->getOwner();
+        if (!sink_owner) {
+            continue;
+        }
+
+        if (auto basic = std::dynamic_pointer_cast<BasicComponent>(sink_owner)) {
+            if (sink_pin->getType() == PinType::INPUT) {
+                simulator.scheduleEvent(std::make_shared<ComponentEvalEvent>(propagation_time, basic));
+            }
+            continue;
+        }
+
+        if (!std::dynamic_pointer_cast<IOComponent>(sink_owner)) {
+            continue;
+        }
+
+        auto target_wire = sink_pin->getType() == PinType::INPUT
+            ? sink_pin->getInternalWireBase()
+            : sink_pin->getExternalWireBase();
+        if (target_wire && target_wire.get() != &wire) {
+            simulator.scheduleEvent(makeDynamicWireUpdate(propagation_time, target_wire, values));
+        }
     }
 }

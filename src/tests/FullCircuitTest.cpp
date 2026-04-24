@@ -72,8 +72,8 @@ void FullCircuitTest::setInitialState() {
     auto wire_b = builder->getWire("WireB");
     auto clk_gen = builder->getComponent<ClockGenerator>("CLK_GEN");
     
-    sim->scheduleEvent(std::make_shared<WireUpdateEvent>(0, wire_a, LogicValue::HIGH));
-    sim->scheduleEvent(std::make_shared<WireUpdateEvent>(0, wire_b, LogicValue::LOW));
+    sim->scheduleEvent(std::make_shared<WireUpdateEvent<>>(0, wire_a, LogicValue::HIGH));
+    sim->scheduleEvent(std::make_shared<WireUpdateEvent<>>(0, wire_b, LogicValue::LOW));
     clk_gen->startClock(*sim, 0);
 }
 
@@ -82,7 +82,7 @@ void FullCircuitTest::verifyResults() {
     auto dff_q_wire = builder->getWire("WireDFF1_Q");
     
     std::cout << "Verification: Checking final value of DFF1:Q..." << std::endl;
-    assert(dff_q_wire->getValue() == LogicValue::LOW && "DFF output 'Q' was expected to be LOW but was HIGH.");
+    assert(dff_q_wire->getSingleValue() == LogicValue::LOW && "DFF output 'Q' was expected to be LOW but was HIGH.");
 }
 
 size_t FullCircuitTest::getRunDuration() const {

@@ -1,16 +1,13 @@
 #pragma once
 
-#include "components/IOComponent.hpp"
+#include "components/BasicComponent.hpp"
 
-class HalfAdder : public IOComponent
+class HalfAdder : public BasicComponent
 {
 public:
     static constexpr const char* TypeName = "HalfAdder";
     const char* getTypeName() const override { return TypeName; }
 
-    // The constructor will define the external pins.
     HalfAdder(std::string name);
-
-    // This method will build the internal components.
-    void buildInternals(ComponentBuilder& builder) override;
+    void evaluate(size_t current_time, Simulator& simulator) override;
 };

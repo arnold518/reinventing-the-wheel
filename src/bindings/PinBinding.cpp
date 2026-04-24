@@ -15,24 +15,24 @@ void bindPin(py::module_& m) {
     // Bind the enum first so the Pin binding can use it.
     bindPinTypeEnum(m);
 
-    py::class_<Pin, std::shared_ptr<Pin>>(m, "Pin", "Represents an input or output point on a component.", py::module_local(false))
+    py::class_<Pin<>, std::shared_ptr<Pin<>>>(m, "Pin", "Represents an input or output point on a component.", py::module_local(false))
         
         // --- Essential Getters for Structure and State ---
         
-        .def("get_name", &Pin::getName)
+        .def("get_name", &Pin<>::getName)
         
-        .def("get_type", &Pin::getType)
+        .def("get_type", &Pin<>::getType)
 
-        .def("get_owner", &Pin::getOwner, 
+        .def("get_owner", &Pin<>::getOwner,
             "Returns the Component that owns this pin.")
 
-        .def("get_external_wire", &Pin::getExternalWire,
+        .def("get_external_wire", &Pin<>::getExternalWire,
             "Returns the external Wire connected to this pin, or None.")
         
-        .def("get_internal_wire", &Pin::getInternalWire,
+        .def("get_internal_wire", &Pin<>::getInternalWire,
             "Returns the internal Wire connected to this pin, or None.")
         
-        .def("get_value", &Pin::getValue)
+        .def("get_value", &Pin<>::getValue)
 
-        .def("get_id", &Pin::getID);
+        .def("get_id", &Pin<>::getID);
 }

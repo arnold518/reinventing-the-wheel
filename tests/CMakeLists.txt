@@ -5,6 +5,15 @@
 set(TEST_SOURCES
     FullCircuitTest.cpp
     FullAdderTest.cpp
+    WireTemplateTest.cpp
+    Adder8Test.cpp
+    Logic8Test.cpp
+    MuxTest.cpp
+    Arithmetic8Test.cpp
+    Comparator8Test.cpp
+    Shifter8Test.cpp
+    ZeroDetect8Test.cpp
+    ALU8Test.cpp
 )
 
 # ===================================================================

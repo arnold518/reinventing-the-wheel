@@ -2,9 +2,12 @@
 #include "components/Component.hpp"
 #include "components/IOComponent.hpp"
 #include "components/WireBuilder.hpp"
+#include "basic/Pin.hpp"
+#include "basic/PinBase.hpp"
 #include "basic/Wire.hpp"
+#include "basic/WireBase.hpp"
 #include <utility>
-#include <iostream>
+#include "components/ComponentBuilder.tpp"
 
 ComponentBuilder::ComponentBuilder(std::shared_ptr<Component> ptr) {
     if (ptr) {
@@ -21,123 +24,67 @@ std::shared_ptr<Component> ComponentBuilder::getCurrentRoot() {
 
 std::string ComponentBuilder::getScopedName(const std::string& name) {
     auto root = getCurrentRoot();
-    if (!root || root->getParent() == nullptr) { // At the top-level
+    if (!root || root->getParent() == nullptr) {
         return name;
     }
     return root->getName() + "." + name;
 }
 
-std::shared_ptr<Wire> ComponentBuilder::addNewWire(std::string name, std::shared_ptr<Pin> source_pin, const std::vector<std::shared_ptr<Pin>>& sink_pins) {
-    std::cout << "[BUILDER] Creating wire '" << getScopedName(name) << "'" << std::endl;
-    
-    auto new_wire = std::make_shared<Wire>(name);
-    std::vector<std::shared_ptr<Component>> all_owners;
-
-    // --- Handle source-less wires (GND/VCC) ---
-    if (!source_pin) {
-        std::cout << "[BUILDER] |-> Type: Source-less (GND/VCC)" << std::endl;
-        for (const auto& sink_pin : sink_pins) {
-            if (!sink_pin) continue;
-            std::cout << "[BUILDER] |   - Connecting sink: '" << sink_pin->getID() << "' (External)" << std::endl;
-            new_wire->addSinkPin(sink_pin);
-            sink_pin->connectExternal(new_wire);
-            all_owners.push_back(sink_pin->getOwner());
-        }
-    } else {
-        // --- Handle wires with a source pin ---
-        auto source_owner = source_pin->getOwner();
-        all_owners.push_back(source_owner);
-        new_wire->setSourcePin(source_pin);
-        std::cout << "[BUILDER] |-> Source: '" << source_pin->getID() << "'" << std::endl;
-
-        for (const auto& sink_pin : sink_pins) {
-            if (!sink_pin) continue;
-            auto sink_owner = sink_pin->getOwner();
-            std::cout << "[BUILDER] |   - Analyzing connection to sink: '" << sink_pin->getID() << "'" << std::endl;
-
-            // Determine the connection type based on the source-sink relationship
-            
-            // Rule: Self-Connection
-            if (source_owner == sink_owner) {
-                std::cout << "[BUILDER] |     - Detected: Self-Connection" << std::endl;
-                if (source_pin->getType() == PinType::OUTPUT && sink_pin->getType() == PinType::INPUT) {
-                    source_pin->connectInternal(new_wire); // CORRECTED: Self-connections are internal
-                    sink_pin->connectInternal(new_wire);   // CORRECTED: Self-connections are internal
-                    new_wire->addSinkPin(sink_pin);
-                    all_owners.push_back(sink_owner);
-                    std::cout << "[BUILDER] |     - Action: Connected source and sink internally." << std::endl;
-                }
-            // Rule: Hierarchical Downward (Parent -> Child)
-            } else if (source_owner->isAncestorOf(sink_owner)) {
-                std::cout << "[BUILDER] |     - Detected: Hierarchical Downward" << std::endl;
-                if (source_pin->getType() == PinType::INPUT && sink_pin->getType() == PinType::INPUT) {
-                    source_pin->connectInternal(new_wire);
-                    sink_pin->connectExternal(new_wire);
-                    new_wire->addSinkPin(sink_pin);
-                    all_owners.push_back(sink_owner);
-                    std::cout << "[BUILDER] |     - Action: Connected source (Internal) to sink (External)." << std::endl;
-                }
-            // Rule: Hierarchical Upward (Child -> Parent)
-            } else if (sink_owner->isAncestorOf(source_owner)) {
-                std::cout << "[BUILDER] |     - Detected: Hierarchical Upward" << std::endl;
-                if (source_pin->getType() == PinType::OUTPUT && sink_pin->getType() == PinType::OUTPUT) {
-                    source_pin->connectExternal(new_wire);
-                    sink_pin->connectInternal(new_wire);
-                    new_wire->addSinkPin(sink_pin);
-                    all_owners.push_back(sink_owner);
-                    std::cout << "[BUILDER] |     - Action: Connected source (External) to sink (Internal)." << std::endl;
-                }
-            // Rule: Peer-to-Peer
-            } else {
-                std::cout << "[BUILDER] |     - Detected: Peer-to-Peer" << std::endl;
-                if (source_pin->getType() == PinType::OUTPUT && sink_pin->getType() == PinType::INPUT) {
-                    source_pin->connectExternal(new_wire);
-                    sink_pin->connectExternal(new_wire);
-                    new_wire->addSinkPin(sink_pin);
-                    all_owners.push_back(sink_owner);
-                    std::cout << "[BUILDER] |     - Action: Connected source and sink externally." << std::endl;
-                }
-            }
-        }
-    }
-
-    // --- Determine Ownership and Finalize ---
-    if (all_owners.empty()) {
-        std::cerr << "Warning: Wire '" << name << "' has no connections." << std::endl;
-        namedWires[getScopedName(name)] = new_wire;
-        return new_wire;
-    }
-    
-    auto wire_owner = Component::findLCA(all_owners);
-    if (wire_owner) {
-        wire_owner->addWire(new_wire);
-        std::cout << "[BUILDER] |-> Final Owner: '" << wire_owner->getID() << "'" << std::endl;
-    } else {
-        std::cerr << "Error: Could not determine a common owner for wire '" << name << "'." << std::endl;
-        return nullptr;
-    }
-    
-    namedWires[getScopedName(name)] = new_wire;
-    return new_wire;
+std::shared_ptr<Wire<>> ComponentBuilder::addNewWire(
+    std::string name,
+    std::shared_ptr<Pin<>> source_pin,
+    const std::vector<std::shared_ptr<Pin<>>>& sink_pins) {
+    return addNewWire<1>(std::move(name), std::move(source_pin), sink_pins);
 }
 
-std::shared_ptr<Wire> ComponentBuilder::getWire(const std::string& name) {
-    std::string scopedName = getScopedName(name);
-    auto it = namedWires.find(scopedName);
+std::shared_ptr<WireBase> ComponentBuilder::addNewWireDynamic(
+    std::string name,
+    size_t width,
+    std::shared_ptr<PinBase> source_pin,
+    const std::vector<std::shared_ptr<PinBase>>& sink_pins) {
+    auto build = [&]<size_t WIDTH>() -> std::shared_ptr<WireBase> {
+        std::vector<std::shared_ptr<Pin<WIDTH>>> typed_sinks;
+        typed_sinks.reserve(sink_pins.size());
+        for (const auto& sink : sink_pins) {
+            typed_sinks.push_back(std::dynamic_pointer_cast<Pin<WIDTH>>(sink));
+        }
+        return addNewWire<WIDTH>(
+            std::move(name),
+            std::dynamic_pointer_cast<Pin<WIDTH>>(source_pin),
+            typed_sinks);
+    };
+
+    switch (width) {
+        case 1: return build.operator()<1>();
+        case 2: return build.operator()<2>();
+        case 3: return build.operator()<3>();
+        case 4: return build.operator()<4>();
+        case 8: return build.operator()<8>();
+        case 16: return build.operator()<16>();
+        default: return nullptr;
+    }
+}
+
+std::shared_ptr<Wire<>> ComponentBuilder::getWire(const std::string& name) {
+    return std::dynamic_pointer_cast<Wire<>>(getWireDynamic(name));
+}
+
+std::shared_ptr<WireBase> ComponentBuilder::getWireDynamic(const std::string& name) {
+    auto it = namedWires.find(getScopedName(name));
     if (it == namedWires.end()) {
         return nullptr;
     }
     return it->second;
 }
 
-std::shared_ptr<Pin> ComponentBuilder::getInputPin(const std::string& pin_name) {
+std::shared_ptr<Pin<>> ComponentBuilder::getInputPin(const std::string& pin_name) {
     if (auto io_root = std::dynamic_pointer_cast<IOComponent>(getCurrentRoot())) {
         return io_root->getInputPin(pin_name);
     }
     return nullptr;
 }
 
-std::shared_ptr<Pin> ComponentBuilder::getOutputPin(const std::string& pin_name) {
+std::shared_ptr<Pin<>> ComponentBuilder::getOutputPin(const std::string& pin_name) {
     if (auto io_root = std::dynamic_pointer_cast<IOComponent>(getCurrentRoot())) {
         return io_root->getOutputPin(pin_name);
     }

@@ -56,12 +56,18 @@
 #define INPUT_PIN(name) \
             self->addPin(name, PinType::INPUT);
 
+#define INPUT_PIN_WIDTH(name, width) \
+            self->addPin<width>(name, PinType::INPUT);
+
 /**
  * @brief Declare an output pin with the given name.
  * @param name The pin name (string literal)
  */
 #define OUTPUT_PIN(name) \
             self->addPin(name, PinType::OUTPUT);
+
+#define OUTPUT_PIN_WIDTH(name, width) \
+            self->addPin<width>(name, PinType::OUTPUT);
 
 /**
  * @brief End pin specification.

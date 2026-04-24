@@ -1,61 +1,31 @@
 #include "modules/composite/FullAdder.hpp"
-#include "components/ComponentBuilder.hpp"
-#include "components/ComponentBuilder.tpp"
-#include "components/WireBuilder.hpp"
 #include "components/PinMacros.hpp"
-#include "modules/composite/HalfAdder.hpp"
-#include "modules/basic/Gate.hpp"
 
-// Using new PinMacros API (Proposal 2)
-BEGIN_PINS(FullAdder, IOComponent)
+BEGIN_BASIC_PINS(FullAdder, 1)
     INPUT_PIN("A")
     INPUT_PIN("B")
     INPUT_PIN("Carry_in")
     OUTPUT_PIN("Sum")
     OUTPUT_PIN("Carry_out")
-END_PINS()
+END_BASIC_PINS()
 
-void FullAdder::buildInternals(ComponentBuilder& builder) {
-    // 1. Create internal components
-    builder.addNewComponent<HalfAdder>("HA1");
-    builder.addNewComponent<HalfAdder>("HA2");
-    builder.addNewComponent<ORGate>("OR1");
+void FullAdder::evaluate(size_t current_time, Simulator& simulator) {
+    auto a = getInputValue("A");
+    auto b = getInputValue("B");
+    auto cin = getInputValue("Carry_in");
+    LogicValue sum = LogicValue::UNKNOWN;
+    LogicValue carry = LogicValue::UNKNOWN;
 
-    // 2. Wire using new WireBuilder API (Proposal 3)
+    if ((a == LogicValue::LOW || a == LogicValue::HIGH) &&
+        (b == LogicValue::LOW || b == LogicValue::HIGH) &&
+        (cin == LogicValue::LOW || cin == LogicValue::HIGH)) {
+        int total = (a == LogicValue::HIGH ? 1 : 0) +
+                    (b == LogicValue::HIGH ? 1 : 0) +
+                    (cin == LogicValue::HIGH ? 1 : 0);
+        sum = (total & 1) ? LogicValue::HIGH : LogicValue::LOW;
+        carry = (total >= 2) ? LogicValue::HIGH : LogicValue::LOW;
+    }
 
-    // Primary inputs → first HalfAdder
-    builder.wire("A_internal")
-        .fromInput("A")
-        .to<HalfAdder>("HA1", "A");
-
-    builder.wire("B_internal")
-        .fromInput("B")
-        .to<HalfAdder>("HA1", "B");
-
-    builder.wire("Cin_internal")
-        .fromInput("Carry_in")
-        .to<HalfAdder>("HA2", "B");
-
-    // First HalfAdder Sum → Second HalfAdder input
-    builder.wire("HA1_Sum_to_HA2_A")
-        .from<HalfAdder>("HA1", "Sum")
-        .to<HalfAdder>("HA2", "A");
-
-    // Both HalfAdder carries → OR gate
-    builder.wire("HA1_Carry_to_OR")
-        .from<HalfAdder>("HA1", "Carry")
-        .to<ORGate>("OR1", "A");
-
-    builder.wire("HA2_Carry_to_OR")
-        .from<HalfAdder>("HA2", "Carry")
-        .to<ORGate>("OR1", "B");
-
-    // Final outputs
-    builder.wire("Sum_internal")
-        .from<HalfAdder>("HA2", "Sum")
-        .toOutput("Sum");
-
-    builder.wire("Carry_out_internal")
-        .from<ORGate>("OR1", "OUT")
-        .toOutput("Carry_out");
+    _updateOutputWire(simulator, "Sum", sum, current_time);
+    _updateOutputWire(simulator, "Carry_out", carry, current_time);
 }

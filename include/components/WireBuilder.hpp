@@ -3,11 +3,10 @@
 #include <string>
 #include <vector>
 #include <memory>
+#include "ForwardDeclarations.hpp"
 
 // Forward declarations
 class ComponentBuilder;
-class Pin;
-class Wire;
 
 /**
  * @brief Fluent API for building wires with a chainable interface.
@@ -25,8 +24,8 @@ class WireBuilder {
 private:
     ComponentBuilder* builder_;
     std::string wire_name_;
-    std::shared_ptr<Pin> source_pin_;
-    std::vector<std::shared_ptr<Pin>> sink_pins_;
+    std::shared_ptr<Pin<>> source_pin_;
+    std::vector<std::shared_ptr<Pin<>>> sink_pins_;
     bool built_ = false;
 
 public:
@@ -56,7 +55,7 @@ public:
      * @brief Set source to a specific pin
      * @param pin The source pin
      */
-    WireBuilder& from(std::shared_ptr<Pin> pin);
+    WireBuilder& from(std::shared_ptr<Pin<>> pin);
 
     /**
      * @brief Set source to a child component's output pin
@@ -85,7 +84,7 @@ public:
      * @brief Add a sink pin
      * @param pin The sink pin
      */
-    WireBuilder& to(std::shared_ptr<Pin> pin);
+    WireBuilder& to(std::shared_ptr<Pin<>> pin);
 
     /**
      * @brief Add a child component's input pin as a sink
@@ -114,7 +113,7 @@ public:
      * @brief Explicitly build the wire and return it
      * @return The created wire
      */
-    std::shared_ptr<Wire> build();
+    std::shared_ptr<Wire<>> build();
 };
 
 // Template implementations must be in header or separate .tpp

@@ -13,16 +13,25 @@ find_package(Python3 COMPONENTS Interpreter Development REQUIRED)
 set(CORE_LOGIC_SOURCES
     src/basic/Pin.cpp
     src/basic/Wire.cpp
+    src/basic/TemplateInstantiations.cpp
     src/components/Component.cpp
     src/components/IOComponent.cpp
     src/components/BasicComponent.cpp
     src/components/ComponentBuilder.cpp
     src/components/WireBuilder.cpp
     src/modules/basic/Gate.cpp
+    src/modules/basic/Logic8.cpp
+    src/modules/basic/Mux.cpp
     src/modules/basic/DFlipFlop.cpp
     src/modules/basic/ClockGenerator.cpp
     src/modules/composite/HalfAdder.cpp
     src/modules/composite/FullAdder.cpp
+    src/modules/composite/Adder8.cpp
+    src/modules/composite/Arithmetic8.cpp
+    src/modules/composite/Comparator8.cpp
+    src/modules/composite/Shifter8.cpp
+    src/modules/composite/ZeroDetect8.cpp
+    src/modules/composite/ALU8.cpp
     src/simulator/Event.cpp
     src/simulator/Simulator.cpp
     src/simulator/TruthTableTest.cpp

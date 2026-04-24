@@ -38,7 +38,7 @@ WireBuilder::~WireBuilder() {
     }
 }
 
-WireBuilder& WireBuilder::from(std::shared_ptr<Pin> pin) {
+WireBuilder& WireBuilder::from(std::shared_ptr<Pin<>> pin) {
     source_pin_ = pin;
     return *this;
 }
@@ -53,7 +53,7 @@ WireBuilder& WireBuilder::fromOutput(const std::string& pin_name) {
     return *this;
 }
 
-WireBuilder& WireBuilder::to(std::shared_ptr<Pin> pin) {
+WireBuilder& WireBuilder::to(std::shared_ptr<Pin<>> pin) {
     sink_pins_.push_back(pin);
     return *this;
 }
@@ -68,7 +68,7 @@ WireBuilder& WireBuilder::toInput(const std::string& pin_name) {
     return *this;
 }
 
-std::shared_ptr<Wire> WireBuilder::build() {
+std::shared_ptr<Wire<>> WireBuilder::build() {
     if (built_) {
         throw std::runtime_error("WireBuilder::build() called twice on the same builder");
     }

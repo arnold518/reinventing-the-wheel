@@ -1,44 +1,38 @@
 #pragma once
-#include <string>
+#include "basic/WireBase.hpp"
+#include "basic/PinBase.hpp"
+#include "ForwardDeclarations.hpp"
+#include <array>
 #include <memory>
 #include <vector>
-#include "ForwardDeclarations.hpp"
-#include "basic/LogicValue.hpp"
 
-class Wire : public std::enable_shared_from_this<Wire> {
+template<size_t WIDTH>
+class Wire : public WireBase, public std::enable_shared_from_this<Wire<WIDTH>> {
 private:
-    std::string name;
-    LogicValue value;
-    std::weak_ptr<Component> owner;
-    std::weak_ptr<Pin> source_pin;
-    std::vector<std::weak_ptr<Pin>> sink_pins;
+    std::array<LogicValue, WIDTH> value;
 
 public:
     Wire(std::string name);
 
-    std::string getName() const;
-    LogicValue getValue() const;
+    void setSourcePin(std::shared_ptr<Pin<WIDTH>> pin);
+    void addSinkPin(std::shared_ptr<Pin<WIDTH>> pin);
+
+    std::shared_ptr<Pin<WIDTH>> getSourcePin() const;
+    std::vector<std::weak_ptr<Pin<WIDTH>>> getSinkPins() const;
+    std::vector<std::shared_ptr<Pin<WIDTH>>> getSinkPinsForPython() const;
+
+    size_t getWidth() const override;
+    LogicValue getBit(size_t index) const override;
+    void setBit(size_t index, LogicValue bit_value) override;
+    uint64_t getValue() const override;
+    std::vector<LogicValue> getValueVector() const override;
+    void setValue(uint64_t new_value) override;
     void setValue(LogicValue new_value);
-
-    void setOwner(std::shared_ptr<Component> component);
-    void setSourcePin(std::shared_ptr<Pin> pin);
-    void addSinkPin(std::shared_ptr<Pin> pin);
-
-    std::shared_ptr<Component> getOwner() const;
-    std::shared_ptr<Pin> getSourcePin() const;
-    const std::vector<std::weak_ptr<Pin>>& getSinkPins() const;
-    std::string getID() const;
-
-    std::vector<std::shared_ptr<Pin>> getSinkPinsForPython() const {
-        std::vector<std::shared_ptr<Pin>> strong_pins;
-        strong_pins.reserve(sink_pins.size());
-        for (const auto& weak_pin : sink_pins) {
-            if (auto strong_pin = weak_pin.lock()) {
-                strong_pins.push_back(strong_pin);
-            }
-        }
-        return strong_pins;
-    }
+    void setValueVector(const std::vector<LogicValue>& values) override;
+    LogicValue getSingleValue() const override;
+    void setSingleValue(LogicValue new_value) override;
 
     void propagateChange(Simulator& simulator, size_t propagation_time);
 };
+
+#include "basic/Wire.tpp"

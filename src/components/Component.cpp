@@ -1,6 +1,7 @@
 #include "components/Component.hpp"
 #include "components/IOComponent.hpp"
 #include "basic/Wire.hpp"
+#include "basic/WireBase.hpp"
 #include <iostream>
 #include <algorithm>
 #include <sstream>
@@ -16,7 +17,8 @@ std::string Component::getName() const { return name; }
 
 std::shared_ptr<Component> Component::getParent() const { return parent.lock(); }
 const std::vector<std::shared_ptr<Component>>& Component::getChildren() const { return children; }
-const std::vector<std::shared_ptr<Wire>>& Component::getWires() const { return wires; }
+const std::vector<std::shared_ptr<Wire<>>>& Component::getWires() const { return wires; }
+const std::vector<std::shared_ptr<WireBase>>& Component::getAllWires() const { return all_wires; }
 
 std::string Component::getID() const
 {
@@ -93,10 +95,14 @@ void Component::addChild(const std::shared_ptr<Component>& child)
     child->parent = shared_from_this();
 }
 
-void Component::addWire(const std::shared_ptr<Wire>& wire)
+void Component::addWire(const std::shared_ptr<WireBase>& wire)
 {
+    if (!wire) return;
     wire->setOwner(shared_from_this());
-    wires.push_back(wire);
+    all_wires.push_back(wire);
+    if (auto single_bit = std::dynamic_pointer_cast<Wire<>>(wire)) {
+        wires.push_back(single_bit);
+    }
 }
 
 std::string Component::format(int lvl, bool formatWires, bool formatPins) const
@@ -109,7 +115,7 @@ std::string Component::format(int lvl, bool formatWires, bool formatPins) const
 
     if (formatWires)
     {
-        for (const auto& wire : wires) if(wire)
+        for (const auto& wire : all_wires) if(wire)
         {
             ss << indent << "  (Wire) '" << wire->getName() << "' : " << wire->getValue() << "\n";
         }

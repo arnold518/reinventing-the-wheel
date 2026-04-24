@@ -13,7 +13,8 @@ protected:
     std::string name;
     std::weak_ptr<Component> parent;
     std::vector<std::shared_ptr<Component>> children;
-    std::vector<std::shared_ptr<Wire>> wires;
+    std::vector<std::shared_ptr<Wire<>>> wires;
+    std::vector<std::shared_ptr<WireBase>> all_wires;
 
 public:
     Component(std::string name);
@@ -30,13 +31,14 @@ public:
     std::string getID() const;
     std::shared_ptr<Component> getParent() const;
     const std::vector<std::shared_ptr<Component>>& getChildren() const;
-    const std::vector<std::shared_ptr<Wire>>& getWires() const;
+    const std::vector<std::shared_ptr<Wire<>>>& getWires() const;
+    const std::vector<std::shared_ptr<WireBase>>& getAllWires() const;
     
     bool isAncestorOf(const std::shared_ptr<const Component>& other) const;
     static std::shared_ptr<Component> findLCA(const std::vector<std::shared_ptr<Component>>& components);
 
     void addChild(const std::shared_ptr<Component>& child);
-    void addWire(const std::shared_ptr<Wire>& wire);
+    void addWire(const std::shared_ptr<WireBase>& wire);
 
     std::string format(int lvl, bool formatWires, bool formatPins) const;
 };
