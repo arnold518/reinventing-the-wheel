@@ -3,6 +3,7 @@ import sys
 import json
 import circuit_backend
 import math
+import os
 import re
 from camera import Camera
 from ui_elements import Button, Slider
@@ -102,8 +103,29 @@ class App:
 
         self.layout_manager = LayoutManager("layout.json")
 
+    def _create_test_scenario(self):
+        scenario_name = sys.argv[1] if len(sys.argv) > 1 else os.environ.get("CIRCUIT_SCENARIO", "adder8")
+        scenario_key = scenario_name.strip().lower().replace("_", "-")
+        scenarios = {
+            "full-adder": circuit_backend.FullAdderTest,
+            "fulladder": circuit_backend.FullAdderTest,
+            "half-adder": circuit_backend.HalfAdderTest,
+            "halfadder": circuit_backend.HalfAdderTest,
+            "full-circuit": circuit_backend.FullCircuitTest,
+            "fullcircuit": circuit_backend.FullCircuitTest,
+            "adder8": circuit_backend.Adder8Test,
+            "8-bit-adder": circuit_backend.Adder8Test,
+            "zero-detect8": circuit_backend.ZeroDetect8Test,
+            "alu8": circuit_backend.ALU8Test,
+        }
+        if scenario_key not in scenarios:
+            valid = ", ".join(sorted(scenarios.keys()))
+            raise ValueError(f"Unknown scenario '{scenario_name}'. Valid scenarios: {valid}")
+        print(f"Loading scenario: {scenario_key}")
+        return scenarios[scenario_key]()
+
     def initialize_circuit(self):
-        self.test_scenario = circuit_backend.FullAdderTest()
+        self.test_scenario = self._create_test_scenario()
         self.test_scenario.setup_circuit()
         root_cpp = self.test_scenario.get_root()
         if not root_cpp:

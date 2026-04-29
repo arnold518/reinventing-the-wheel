@@ -61,6 +61,7 @@ std::shared_ptr<WireBase> ComponentBuilder::addNewWireDynamic(
         case 4: return build.operator()<4>();
         case 8: return build.operator()<8>();
         case 16: return build.operator()<16>();
+        case 32: return build.operator()<32>();
         default: return nullptr;
     }
 }

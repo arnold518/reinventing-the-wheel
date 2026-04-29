@@ -7,6 +7,7 @@
 #include "simulator/Simulator.hpp"
 #include <cassert>
 #include <iostream>
+#include <stdexcept>
 
 namespace {
 std::shared_ptr<Event> makeWireUpdateEvent(size_t time, const std::shared_ptr<WireBase>& wire, const PinValue& value) {
@@ -31,8 +32,10 @@ std::shared_ptr<Event> makeWireUpdateEvent(size_t time, const std::shared_ptr<Wi
             return std::make_shared<WireUpdateEvent<8>>(time, std::dynamic_pointer_cast<Wire<8>>(wire), numeric_value);
         case 16:
             return std::make_shared<WireUpdateEvent<16>>(time, std::dynamic_pointer_cast<Wire<16>>(wire), numeric_value);
+        case 32:
+            return std::make_shared<WireUpdateEvent<32>>(time, std::dynamic_pointer_cast<Wire<32>>(wire), numeric_value);
         default:
-            return nullptr;
+            throw std::invalid_argument("Unsupported truth table wire width");
     }
 }
 }
@@ -73,22 +76,30 @@ void TruthTableTest::verifyResults() {
     auto io_root = std::dynamic_pointer_cast<IOComponent>(root);
     assert(io_root && "TruthTableTest requires IOComponent as root");
 
-    const auto& last_row = truth_table_.back();
-    for (const auto& [pin_name, expected] : last_row.outputs) {
-        auto pin = io_root->getOutputPinDynamic(pin_name);
-        assert(pin && "Truth table references a missing output pin");
+    for (size_t row_index = 0; row_index < truth_table_.size(); ++row_index) {
+        const auto settle_time = ((row_index + 1) * time_step_) - 1;
+        sim->setCircuitStateAtTime(settle_time);
 
-        if (expected.isMultiBit() || pin->getWidth() > 1) {
-            auto actual = pin->getValueAsUInt64();
-            if (actual != expected.asUInt64()) {
-                std::cerr << pin_name << " = " << actual << ", expected " << expected.asUInt64() << std::endl;
-                assert(false && "Truth table multi-bit output mismatch");
-            }
-        } else {
-            auto actual = pin->getValue();
-            if (actual != expected.asLogicValue()) {
-                std::cerr << pin_name << " = " << actual << ", expected " << expected.asLogicValue() << std::endl;
-                assert(false && "Truth table output mismatch");
+        for (const auto& [pin_name, expected] : truth_table_[row_index].outputs) {
+            auto pin = io_root->getOutputPinDynamic(pin_name);
+            assert(pin && "Truth table references a missing output pin");
+
+            if (expected.isMultiBit() || pin->getWidth() > 1) {
+                auto actual = pin->getValueAsUInt64();
+                if (actual != expected.asUInt64()) {
+                    std::cerr << "Row " << row_index << " at t=" << settle_time
+                              << ": " << pin_name << " = " << actual
+                              << ", expected " << expected.asUInt64() << std::endl;
+                    assert(false && "Truth table multi-bit output mismatch");
+                }
+            } else {
+                auto actual = pin->getValue();
+                if (actual != expected.asLogicValue()) {
+                    std::cerr << "Row " << row_index << " at t=" << settle_time
+                              << ": " << pin_name << " = " << actual
+                              << ", expected " << expected.asLogicValue() << std::endl;
+                    assert(false && "Truth table output mismatch");
+                }
             }
         }
     }

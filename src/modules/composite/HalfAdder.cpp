@@ -1,25 +1,36 @@
 #include "modules/composite/HalfAdder.hpp"
+#include "components/ComponentBuilder.hpp"
+#include "components/ComponentBuilder.tpp"
 #include "components/PinMacros.hpp"
+#include "components/WireBuilder.hpp"
+#include "modules/basic/Gate.hpp"
 
-BEGIN_BASIC_PINS(HalfAdder, 1)
+BEGIN_PINS(HalfAdder, IOComponent)
     INPUT_PIN("A")
     INPUT_PIN("B")
     OUTPUT_PIN("Sum")
     OUTPUT_PIN("Carry")
-END_BASIC_PINS()
+END_PINS()
 
-void HalfAdder::evaluate(size_t current_time, Simulator& simulator) {
-    auto a = getInputValue("A");
-    auto b = getInputValue("B");
-    LogicValue sum = LogicValue::UNKNOWN;
-    LogicValue carry = LogicValue::UNKNOWN;
+void HalfAdder::buildInternals(ComponentBuilder& builder) {
+    builder.addNewComponent<XORGate>("XOR1");
+    builder.addNewComponent<ANDGate>("AND1");
 
-    if ((a == LogicValue::LOW || a == LogicValue::HIGH) &&
-        (b == LogicValue::LOW || b == LogicValue::HIGH)) {
-        sum = (a != b) ? LogicValue::HIGH : LogicValue::LOW;
-        carry = (a == LogicValue::HIGH && b == LogicValue::HIGH) ? LogicValue::HIGH : LogicValue::LOW;
-    }
+    builder.wire("A_internal")
+        .fromInput("A")
+        .to<XORGate>("XOR1", "A")
+        .to<ANDGate>("AND1", "A");
 
-    _updateOutputWire(simulator, "Sum", sum, current_time);
-    _updateOutputWire(simulator, "Carry", carry, current_time);
+    builder.wire("B_internal")
+        .fromInput("B")
+        .to<XORGate>("XOR1", "B")
+        .to<ANDGate>("AND1", "B");
+
+    builder.wire("Sum_internal")
+        .from<XORGate>("XOR1", "OUT")
+        .toOutput("Sum");
+
+    builder.wire("Carry_internal")
+        .from<ANDGate>("AND1", "OUT")
+        .toOutput("Carry");
 }

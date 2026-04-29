@@ -1,6 +1,5 @@
 import pygame
 import circuit_backend
-import math
 
 STATE_COLORS = {
     circuit_backend.LogicValue.HIGH: (76, 175, 80),
@@ -9,12 +8,96 @@ STATE_COLORS = {
     circuit_backend.LogicValue.HIGH_Z: (3, 155, 229)
 }
 
+BUS_MIXED_COLOR = (255, 193, 7)
+BADGE_BG_COLOR = (18, 24, 32, 220)
+BADGE_BORDER_COLOR = (220, 230, 240)
+BADGE_TEXT_COLOR = (245, 245, 245)
+
+def _logic_token(value):
+    if value == circuit_backend.LogicValue.HIGH:
+        return "1"
+    if value == circuit_backend.LogicValue.LOW:
+        return "0"
+    if value == circuit_backend.LogicValue.HIGH_Z:
+        return "Z"
+    return "X"
+
+def _signal_width(cpp_handle):
+    try:
+        return max(1, int(cpp_handle.get_width()))
+    except (AttributeError, TypeError, ValueError):
+        return 1
+
+def _signal_bits(cpp_handle):
+    width = _signal_width(cpp_handle)
+    bits = []
+    for index in range(width):
+        try:
+            bits.append(cpp_handle.get_bit(index))
+        except (AttributeError, IndexError, RuntimeError):
+            if index == 0:
+                bits.append(cpp_handle.get_value())
+            else:
+                bits.append(circuit_backend.LogicValue.UNKNOWN)
+    return bits
+
+def _format_signal_value(cpp_handle):
+    width = _signal_width(cpp_handle)
+    bits = _signal_bits(cpp_handle)
+
+    if width == 1:
+        return _logic_token(bits[0])
+
+    return "".join(_logic_token(bit) for bit in reversed(bits))
+
+def _aggregate_signal_color(cpp_handle):
+    bits = _signal_bits(cpp_handle)
+    if not bits:
+        return STATE_COLORS[circuit_backend.LogicValue.UNKNOWN]
+
+    first = bits[0]
+    if all(bit == first for bit in bits):
+        return STATE_COLORS.get(first, STATE_COLORS[circuit_backend.LogicValue.UNKNOWN])
+
+    if any(bit == circuit_backend.LogicValue.UNKNOWN for bit in bits):
+        return STATE_COLORS[circuit_backend.LogicValue.UNKNOWN]
+    if any(bit == circuit_backend.LogicValue.HIGH_Z for bit in bits):
+        return STATE_COLORS[circuit_backend.LogicValue.HIGH_Z]
+    return BUS_MIXED_COLOR
+
+def _draw_text_badge(screen, text, screen_pos, font_size, padding=4):
+    font = VisualComponent.get_font(max(8, int(font_size)))
+    text_surf = font.render(text, True, BADGE_TEXT_COLOR)
+    rect = text_surf.get_rect(center=(int(screen_pos.x), int(screen_pos.y)))
+    rect.inflate_ip(padding * 2, padding)
+
+    badge = pygame.Surface(rect.size, pygame.SRCALPHA)
+    badge.fill(BADGE_BG_COLOR)
+    screen.blit(badge, rect)
+    pygame.draw.rect(screen, BADGE_BORDER_COLOR, rect, 1, border_radius=3)
+    screen.blit(text_surf, text_surf.get_rect(center=rect.center))
+
+def _draw_text_box(screen, text, screen_pos, font_size, anchor="midleft", padding=6):
+    font = VisualComponent.get_font(max(8, int(font_size)))
+    text_surf = font.render(text, True, BADGE_TEXT_COLOR)
+    rect = text_surf.get_rect()
+    setattr(rect, anchor, (int(screen_pos.x), int(screen_pos.y)))
+    rect.inflate_ip(padding * 2, padding)
+    rect.clamp_ip(screen.get_rect().inflate(-4, -4))
+
+    box = pygame.Surface(rect.size, pygame.SRCALPHA)
+    box.fill(BADGE_BG_COLOR)
+    screen.blit(box, rect)
+    pygame.draw.rect(screen, BADGE_BORDER_COLOR, rect, 1, border_radius=4)
+    screen.blit(text_surf, text_surf.get_rect(center=rect.center))
+
 class VisualPin:
     def __init__(self, parent_component, cpp_pin_handle, pin_type: str):
         self.parent = parent_component
         self.cpp_handle = cpp_pin_handle
         self.pin_type = pin_type
         self.name = self.cpp_handle.get_name()
+        self.width = _signal_width(self.cpp_handle)
         
         # Geometry & Hitbox
         self.rect = pygame.Rect(0, 0, 1, 1) # Integer rect for events
@@ -30,10 +113,36 @@ class VisualPin:
         self.rel_points = []
         self._text_surf = None
         self._last_font_size = -1
+        self._last_label_text = None
         self.is_hovered = False
 
     def update_state(self):
-        self.color = STATE_COLORS.get(self.cpp_handle.get_value(), STATE_COLORS[circuit_backend.LogicValue.UNKNOWN])
+        self.color = _aggregate_signal_color(self.cpp_handle)
+
+    def _display_name(self):
+        if self.width == 1:
+            return self.name
+        return f"{self.name}[{self.width}]"
+
+    def _label_text(self):
+        return self._display_name()
+
+    def _tooltip_text(self):
+        return f"{self._display_name()} = {_format_signal_value(self.cpp_handle)}"
+
+    def _draw_hover_tooltip(self, screen, camera, screen_center):
+        if not self.is_hovered:
+            return
+
+        offset = max(12, int(self.rect.width * camera.zoom * 0.75))
+        if self.pin_type == 'input':
+            tooltip_pos = screen_center + pygame.Vector2(offset, -18)
+            anchor = "midleft"
+        else:
+            tooltip_pos = screen_center + pygame.Vector2(-offset, -18)
+            anchor = "midright"
+
+        _draw_text_box(screen, self._tooltip_text(), tooltip_pos, 14, anchor=anchor)
 
     def draw(self, screen, camera):
         # Draw only the Triangle and Text. Wires/Stubs are drawn by VisualWire.
@@ -46,10 +155,12 @@ class VisualPin:
         
         font_size = int(self.parent.rect.width * (self.parent.font_width_ratio * 0.7) * camera.zoom)
         if font_size >= 8:
-            if font_size != self._last_font_size:
+            label_text = self._label_text()
+            if font_size != self._last_font_size or label_text != self._last_label_text:
                 font = VisualComponent.get_font(font_size)
-                self._text_surf = font.render(self.name, True, self.text_color)
+                self._text_surf = font.render(label_text, True, self.text_color)
                 self._last_font_size = font_size
+                self._last_label_text = label_text
             if self._text_surf:
                 if self.pin_type == 'input':
                     # Text inside body (Right of left-edge pin)
@@ -61,11 +172,14 @@ class VisualPin:
                     text_rect = self._text_surf.get_rect(midright=text_pos)
                 screen.blit(self._text_surf, text_rect)
 
+        self._draw_hover_tooltip(screen, camera, screen_center)
+
 class VisualWire:
     def __init__(self, cpp_wire_handle):
         self.cpp_handle = cpp_wire_handle
         self.source_vpin = None
         self.sink_vpins = []
+        self.width = _signal_width(self.cpp_handle)
         self.color = STATE_COLORS[circuit_backend.LogicValue.UNKNOWN]
         self.is_hovered = False
         self._world_paths = []
@@ -83,10 +197,62 @@ class VisualWire:
                     self.sink_vpins.append(vpin)
 
     def update_state(self):
-        self.color = STATE_COLORS.get(self.cpp_handle.get_value(), STATE_COLORS[circuit_backend.LogicValue.UNKNOWN])
+        self.color = _aggregate_signal_color(self.cpp_handle)
+
+    def _base_line_width(self):
+        return 2
+
+    def _point_at_fraction(self, path, fraction):
+        if not path:
+            return pygame.Vector2(0, 0)
+
+        segment_lengths = []
+        total_length = 0
+        for start, end in zip(path, path[1:]):
+            length = (end - start).length()
+            segment_lengths.append(length)
+            total_length += length
+
+        if total_length <= 0:
+            return pygame.Vector2(path[0])
+
+        target = total_length * fraction
+        traversed = 0
+        for index, length in enumerate(segment_lengths):
+            if traversed + length >= target:
+                local_t = (target - traversed) / length if length else 0
+                return path[index].lerp(path[index + 1], local_t)
+            traversed += length
+        return pygame.Vector2(path[-1])
+
+    def _draw_bus_slash(self, screen, camera, world_pos):
+        center = camera.apply(world_pos)
+        length = max(6, int(10 * camera.zoom))
+        half = length / 2
+        start = center + pygame.Vector2(-half, half)
+        end = center + pygame.Vector2(half, -half)
+        pygame.draw.line(screen, BADGE_TEXT_COLOR, start, end, max(1, int(2 * camera.zoom)))
+
+    def _draw_bus_annotations(self, screen, camera, path_points):
+        if self.width <= 1:
+            return
+
+        self._draw_bus_slash(screen, camera, self._point_at_fraction(path_points, 0.33))
+        self._draw_bus_slash(screen, camera, self._point_at_fraction(path_points, 0.66))
+
+        if camera.zoom < 0.25 and not self.is_hovered:
+            return
+
+        width_pos = camera.apply(self._point_at_fraction(path_points, 0.40)) + pygame.Vector2(0, -14 * camera.zoom)
+        _draw_text_badge(screen, str(self.width), width_pos, 12 * camera.zoom)
+
+        if camera.zoom >= 0.45 or self.is_hovered:
+            value_text = _format_signal_value(self.cpp_handle)
+            value_pos = camera.apply(self._point_at_fraction(path_points, 0.55)) + pygame.Vector2(0, 14 * camera.zoom)
+            _draw_text_badge(screen, value_text, value_pos, 12 * camera.zoom)
 
     def collidepoint(self, world_pos, camera):
-        threshold_sq = (5 / camera.zoom) ** 2
+        threshold_sq = (max(5, self._base_line_width() * 2) / camera.zoom) ** 2
         for path in self._world_paths:
             for i in range(len(path) - 1):
                 p1, p2 = path[i], path[i+1]
@@ -187,7 +353,7 @@ class VisualWire:
         if not self.source_vpin or not self.sink_vpins:
             return
 
-        line_width = max(1, int(2 * camera.zoom))
+        line_width = max(1, int(self._base_line_width() * camera.zoom))
         if self.is_hovered:
             line_width *= 2
 
@@ -208,7 +374,6 @@ class VisualWire:
             self._world_paths.append([dst_bound_pt, dst_pin_pt])
             pygame.draw.line(screen, self.color, camera.apply(dst_bound_pt), camera.apply(dst_pin_pt), line_width)
             
-            # Draw Main Wire (Source Boundary <-> Sink Boundary)
             path_points = self._add_rounded_corners(
                 self._route_adaptive_2segment(src_bound_pt, dst_bound_pt)
             )
@@ -218,6 +383,7 @@ class VisualWire:
                 pygame.draw.line(screen, self.color, screen_points[0], screen_points[1], line_width)
             else:
                 pygame.draw.lines(screen, self.color, False, screen_points, line_width)
+            self._draw_bus_annotations(screen, camera, path_points)
 
 class VisualComponent:
     _font_cache = {}

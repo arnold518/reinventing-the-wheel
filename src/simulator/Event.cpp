@@ -19,6 +19,9 @@ void processWireUpdateEvent(size_t time, const std::shared_ptr<WireBase>& wire,
     if (!wire) {
         return;
     }
+    if (wire->getValueVector() == values) {
+        return;
+    }
     wire->setValueVector(values);
     sim.recordChange(time, wire, values);
     wire->propagateChange(sim, time);

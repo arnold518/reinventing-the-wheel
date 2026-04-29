@@ -8,6 +8,7 @@ template class Pin<3>;
 template class Pin<4>;
 template class Pin<8>;
 template class Pin<16>;
+template class Pin<32>;
 
 template class Wire<1>;
 template class Wire<2>;
@@ -15,6 +16,7 @@ template class Wire<3>;
 template class Wire<4>;
 template class Wire<8>;
 template class Wire<16>;
+template class Wire<32>;
 
 template class WireUpdateEvent<1>;
 template class WireUpdateEvent<2>;
@@ -22,3 +24,4 @@ template class WireUpdateEvent<3>;
 template class WireUpdateEvent<4>;
 template class WireUpdateEvent<8>;
 template class WireUpdateEvent<16>;
+template class WireUpdateEvent<32>;

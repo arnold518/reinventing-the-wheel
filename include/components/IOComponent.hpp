@@ -38,6 +38,8 @@ public:
     template<size_t WIDTH = 1>
     std::shared_ptr<Pin<WIDTH>> addPin(const std::string& pin_name, PinType type);
 
+    std::shared_ptr<PinBase> addPinDynamic(const std::string& pin_name, PinType type, size_t width);
+
     template<size_t WIDTH = 1>
     std::shared_ptr<Pin<WIDTH>> getInputPin(const std::string& pin_name) const;
 

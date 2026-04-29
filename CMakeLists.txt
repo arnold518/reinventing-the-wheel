@@ -32,12 +32,17 @@ set(CORE_LOGIC_SOURCES
     src/modules/composite/Shifter8.cpp
     src/modules/composite/ZeroDetect8.cpp
     src/modules/composite/ALU8.cpp
+    src/modules/utility/Rewire.cpp
+    src/modules/utility/BitAdapter.cpp
+    src/modules/utility/Constant.cpp
     src/simulator/Event.cpp
     src/simulator/Simulator.cpp
     src/simulator/TruthTableTest.cpp
     src/tests/FullCircuitTest.cpp
-    src/tests/HalfAdderTest.cpp
-    src/tests/FullAdderTest.cpp
+    src/tests/CorePrimitiveTests.cpp
+    src/tests/UtilityComponentTests.cpp
+    src/tests/ArithmeticLogicTests.cpp
+    src/tests/TestRegistry.cpp
 )
 
 set(BINDING_SOURCES

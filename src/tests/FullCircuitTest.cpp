@@ -9,6 +9,26 @@
 #include "simulator/Event.hpp"
 #include "basic/Wire.hpp"
 #include <cassert>
+#include <iostream>
+
+namespace {
+void expectWireAt(Simulator& sim,
+                  const std::shared_ptr<Wire<>>& wire,
+                  size_t time,
+                  LogicValue expected,
+                  const char* wire_name) {
+    assert(wire && "Missing wire for timestamp verification");
+    sim.setCircuitStateAtTime(time);
+    auto actual = wire->getSingleValue();
+    if (actual != expected) {
+        std::cerr << "Verification failed at t=" << time
+                  << " for " << wire_name
+                  << ": expected " << expected
+                  << ", got " << actual << std::endl;
+        assert(false && "Timestamp wire value mismatch");
+    }
+}
+}
 
 std::string FullCircuitTest::getTestName() const {
     return "Full_Circuit_Test";
@@ -78,11 +98,32 @@ void FullCircuitTest::setInitialState() {
 }
 
 void FullCircuitTest::verifyResults() {
-    // Verification logic remains the same. We check an internal wire's state.
+    auto wire_a = builder->getWire("WireA");
+    auto wire_b = builder->getWire("WireB");
+    auto and1_out = builder->getWire("WireAND1_OUT");
+    auto clock = builder->getWire("WireCLK");
     auto dff_q_wire = builder->getWire("WireDFF1_Q");
-    
-    std::cout << "Verification: Checking final value of DFF1:Q..." << std::endl;
-    assert(dff_q_wire->getSingleValue() == LogicValue::LOW && "DFF output 'Q' was expected to be LOW but was HIGH.");
+    auto z_wire = builder->getWire("WireAND2_OUT");
+
+    std::cout << "Verification: Checking FullCircuitTest signal history..." << std::endl;
+
+    // Primary inputs and first combinational stage settle immediately after t=0.
+    expectWireAt(*sim, wire_a, 0, LogicValue::HIGH, "WireA");
+    expectWireAt(*sim, wire_b, 0, LogicValue::LOW, "WireB");
+    expectWireAt(*sim, and1_out, 0, LogicValue::UNKNOWN, "WireAND1_OUT");
+    expectWireAt(*sim, and1_out, 1, LogicValue::LOW, "WireAND1_OUT");
+    expectWireAt(*sim, z_wire, 1, LogicValue::LOW, "WireAND2_OUT");
+
+    // ClockGenerator toggles every 5 time units after it starts at t=0.
+    expectWireAt(*sim, clock, 0, LogicValue::HIGH, "WireCLK");
+    expectWireAt(*sim, clock, 5, LogicValue::LOW, "WireCLK");
+    expectWireAt(*sim, clock, 10, LogicValue::HIGH, "WireCLK");
+    expectWireAt(*sim, clock, 15, LogicValue::LOW, "WireCLK");
+
+    // DFF captures LOW on the rising edge at t=10 and publishes Q after its delay of 3.
+    expectWireAt(*sim, dff_q_wire, 12, LogicValue::UNKNOWN, "WireDFF1_Q");
+    expectWireAt(*sim, dff_q_wire, 13, LogicValue::LOW, "WireDFF1_Q");
+    expectWireAt(*sim, dff_q_wire, 100, LogicValue::LOW, "WireDFF1_Q");
 }
 
 size_t FullCircuitTest::getRunDuration() const {

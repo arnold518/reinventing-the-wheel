@@ -1,9 +1,28 @@
 #include "simulator/Simulator.hpp"
+#include "basic/PinBase.hpp"
 #include "basic/Wire.hpp"
 #include "components/Component.hpp"
 #include "simulator/Event.hpp"
 #include <algorithm>
 #include <set>
+
+namespace {
+void restorePinsFromWire(const std::shared_ptr<WireBase>& wire, const std::vector<LogicValue>& values) {
+    if (!wire) {
+        return;
+    }
+
+    if (auto source = wire->getSourcePinBase()) {
+        source->setValueFromVector(values);
+    }
+
+    for (const auto& weak_sink : wire->getSinkPinsBase()) {
+        if (auto sink = weak_sink.lock()) {
+            sink->setValueFromVector(values);
+        }
+    }
+}
+}
 
 Simulator::Simulator() : current_time(0) {}
 
@@ -12,16 +31,6 @@ size_t Simulator::getCurrentTime() const { return current_time; }
 void Simulator::scheduleEvent(std::shared_ptr<Event> event) {
     if (!event) {
         return;
-    }
-
-    if (event->time == current_time) {
-        if (auto eval = std::dynamic_pointer_cast<ComponentEvalEvent>(event)) {
-            void* key = eval->component_to_evaluate.get();
-            if (scheduled_for_current_time_eval.find(key) != scheduled_for_current_time_eval.end()) {
-                return;
-            }
-            scheduled_for_current_time_eval[key] = true;
-        }
     }
     event_queue.push(std::move(event));
 }
@@ -58,8 +67,11 @@ void Simulator::setCircuitStateAtTime(size_t target_time) {
         if (it == history.begin()) {
             std::vector<LogicValue> unknowns(wire->getWidth(), LogicValue::UNKNOWN);
             wire->setValueVector(unknowns);
+            restorePinsFromWire(wire, unknowns);
         } else {
-            wire->setValueVector(std::prev(it)->second);
+            const auto& values = std::prev(it)->second;
+            wire->setValueVector(values);
+            restorePinsFromWire(wire, values);
         }
     }
     current_time = target_time;

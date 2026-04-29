@@ -1,22 +1,49 @@
 #include "modules/composite/ALU8.hpp"
+#include "components/BasicComponent.hpp"
+#include "components/ComponentBuilder.hpp"
+#include "components/ComponentBuilder.tpp"
+#include "modules/basic/Logic8.hpp"
+#include "modules/basic/Mux.hpp"
+#include "modules/composite/Adder8.hpp"
+#include "modules/composite/Arithmetic8.hpp"
+#include "modules/composite/Shifter8.hpp"
+#include "modules/composite/ZeroDetect8.hpp"
+#include "modules/utility/BitAdapter.hpp"
+#include "modules/utility/Constant.hpp"
 #include <cstdint>
+#include <memory>
+#include <string>
+#include <utility>
+#include <vector>
 
 namespace {
-LogicValue flag(bool value) {
-    return value ? LogicValue::HIGH : LogicValue::LOW;
-}
+class AddOverflowDetector8 : public BasicComponent {
+public:
+    explicit AddOverflowDetector8(std::string name)
+        : BasicComponent(std::move(name), 1, [](IOComponent* self) {
+              self->addPin<8>("A", PinType::INPUT);
+              self->addPin<8>("B", PinType::INPUT);
+              self->addPin<8>("Result", PinType::INPUT);
+              self->addPin("Overflow", PinType::OUTPUT);
+          }) {}
 
-bool addOverflow(uint8_t a, uint8_t b, uint8_t result) {
-    return ((~(a ^ b) & (a ^ result) & 0x80U) != 0);
-}
+    void evaluate(size_t current_time, Simulator& simulator) override {
+        auto a = static_cast<uint8_t>(getInputValueAsUInt64("A") & 0xFFU);
+        auto b = static_cast<uint8_t>(getInputValueAsUInt64("B") & 0xFFU);
+        auto result = static_cast<uint8_t>(getInputValueAsUInt64("Result") & 0xFFU);
+        const bool overflow = (~(a ^ b) & (a ^ result) & 0x80U) != 0;
+        _updateOutputWire(simulator, "Overflow", overflow ? LogicValue::HIGH : LogicValue::LOW, current_time);
+    }
+};
 
-bool subOverflow(uint8_t a, uint8_t b, uint8_t result) {
-    return (((a ^ b) & (a ^ result) & 0x80U) != 0);
+void addLowSink(std::vector<std::shared_ptr<Pin<>>>& sinks, ComponentBuilder& builder,
+                const std::string& mux_name, size_t input_index) {
+    sinks.push_back(builder.getInputPin<Mux16to1>(mux_name, "IN" + std::to_string(input_index)));
 }
 }
 
 ALU8::ALU8(std::string name)
-    : BasicComponent(std::move(name), 1, [](IOComponent* self) {
+    : IOComponent(std::move(name), [](IOComponent* self) {
         self->addPin<8>("A", PinType::INPUT);
         self->addPin<8>("B", PinType::INPUT);
         self->addPin<4>("OP", PinType::INPUT);
@@ -27,81 +54,217 @@ ALU8::ALU8(std::string name)
         self->addPin("NEGATIVE", PinType::OUTPUT);
     }) {}
 
-void ALU8::evaluate(size_t current_time, Simulator& simulator) {
-    auto a = static_cast<uint8_t>(getInputValueAsUInt64("A") & 0xFFU);
-    auto b = static_cast<uint8_t>(getInputValueAsUInt64("B") & 0xFFU);
-    auto op = static_cast<uint8_t>(getInputValueAsUInt64("OP") & 0x0FU);
+void ALU8::buildInternals(ComponentBuilder& builder) {
+    builder.addNewComponent<Adder8>("ADD");
+    builder.addNewComponent<Subtractor8>("SUB");
+    builder.addNewComponent<AND8>("AND");
+    builder.addNewComponent<OR8>("OR");
+    builder.addNewComponent<XOR8>("XOR");
+    builder.addNewComponent<NOT8>("NOT_A");
+    builder.addNewComponent<ShiftLeftLogical8>("SLL");
+    builder.addNewComponent<ShiftRightLogical8>("SRL");
+    builder.addNewComponent<ShiftRightArithmetic8>("SRA");
+    builder.addNewComponent<Incrementer8>("INC");
+    builder.addNewComponent<Decrementer8>("DEC");
+    builder.addNewComponent<TwosComplement8>("TWOS");
+    builder.addNewComponent<AddOverflowDetector8>("ADD_OVERFLOW");
 
-    uint8_t result = 0;
-    bool carry = false;
-    bool overflow = false;
+    builder.addNewComponent<Mux16to1_8bit>("RESULT_MUX");
+    builder.addNewComponent<Mux16to1>("CARRY_MUX");
+    builder.addNewComponent<Mux16to1>("OVERFLOW_MUX");
+    builder.addNewComponent<ZeroDetect8>("ZERO_DETECT");
+    builder.addNewComponent<BitSplitter<8>>("RESULT_SPLIT");
+    builder.addNewComponent<ConstantValue<1, 8>>("CONST_LOW", 0);
+    builder.addNewComponent<ConstantValue<8, 8>>("CONST_ZERO8", 0x00);
 
-    switch (op) {
-        case 0x0: {
-            uint16_t sum = static_cast<uint16_t>(a) + static_cast<uint16_t>(b);
-            result = static_cast<uint8_t>(sum & 0xFFU);
-            carry = sum > 0xFFU;
-            overflow = addOverflow(a, b, result);
-            break;
-        }
-        case 0x1: {
-            uint16_t sum = static_cast<uint16_t>(a) + static_cast<uint16_t>(~b & 0xFFU) + 1U;
-            result = static_cast<uint8_t>(sum & 0xFFU);
-            carry = sum > 0xFFU;
-            overflow = subOverflow(a, b, result);
-            break;
-        }
-        case 0x2: result = a & b; break;
-        case 0x3: result = a | b; break;
-        case 0x4: result = a ^ b; break;
-        case 0x5: result = static_cast<uint8_t>(~a); break;
-        case 0x6:
-            result = static_cast<uint8_t>((a << 1U) & 0xFFU);
-            carry = (a & 0x80U) != 0;
-            break;
-        case 0x7:
-            result = static_cast<uint8_t>(a >> 1U);
-            carry = (a & 0x01U) != 0;
-            break;
-        case 0x8:
-            result = static_cast<uint8_t>((a >> 1U) | (a & 0x80U));
-            carry = (a & 0x01U) != 0;
-            break;
-        case 0x9: {
-            uint16_t sum = static_cast<uint16_t>(a) + 1U;
-            result = static_cast<uint8_t>(sum & 0xFFU);
-            carry = sum > 0xFFU;
-            overflow = addOverflow(a, 1U, result);
-            break;
-        }
-        case 0xA:
-            result = static_cast<uint8_t>((a - 1U) & 0xFFU);
-            carry = a != 0;
-            overflow = a == 0x80U;
-            break;
-        case 0xB:
-            result = static_cast<uint8_t>((~a + 1U) & 0xFFU);
-            carry = a != 0;
-            overflow = a == 0x80U;
-            break;
-        case 0xC: result = a; break;
-        case 0xD: result = b; break;
-        case 0xE: {
-            uint16_t sum = static_cast<uint16_t>(a) + static_cast<uint16_t>(~b & 0xFFU) + 1U;
-            result = static_cast<uint8_t>(sum & 0xFFU);
-            carry = sum > 0xFFU;
-            overflow = subOverflow(a, b, result);
-            break;
-        }
-        case 0xF:
-        default:
-            result = 0;
-            break;
+    builder.addNewWire<8>(
+        "A_bus_internal",
+        getInputPin<8>("A"),
+        {builder.getInputPin<Adder8, 8>("ADD", "A"),
+         builder.getInputPin<Subtractor8, 8>("SUB", "A"),
+         builder.getInputPin<AND8, 8>("AND", "A"),
+         builder.getInputPin<OR8, 8>("OR", "A"),
+         builder.getInputPin<XOR8, 8>("XOR", "A"),
+         builder.getInputPin<NOT8, 8>("NOT_A", "A"),
+         builder.getInputPin<ShiftLeftLogical8, 8>("SLL", "A"),
+         builder.getInputPin<ShiftRightLogical8, 8>("SRL", "A"),
+         builder.getInputPin<ShiftRightArithmetic8, 8>("SRA", "A"),
+         builder.getInputPin<Incrementer8, 8>("INC", "A"),
+         builder.getInputPin<Decrementer8, 8>("DEC", "A"),
+         builder.getInputPin<TwosComplement8, 8>("TWOS", "A"),
+         builder.getInputPin<AddOverflowDetector8, 8>("ADD_OVERFLOW", "A"),
+         builder.getInputPin<Mux16to1_8bit, 8>("RESULT_MUX", "IN12"),
+         builder.getInputPin<ConstantValue<1, 8>, 8>("CONST_LOW", "TRIGGER"),
+         builder.getInputPin<ConstantValue<8, 8>, 8>("CONST_ZERO8", "TRIGGER")});
+
+    builder.addNewWire<8>(
+        "B_bus_internal",
+        getInputPin<8>("B"),
+        {builder.getInputPin<Adder8, 8>("ADD", "B"),
+         builder.getInputPin<Subtractor8, 8>("SUB", "B"),
+         builder.getInputPin<AND8, 8>("AND", "B"),
+         builder.getInputPin<OR8, 8>("OR", "B"),
+         builder.getInputPin<XOR8, 8>("XOR", "B"),
+         builder.getInputPin<AddOverflowDetector8, 8>("ADD_OVERFLOW", "B"),
+         builder.getInputPin<Mux16to1_8bit, 8>("RESULT_MUX", "IN13")});
+
+    builder.addNewWire<4>(
+        "OP_bus_internal",
+        getInputPin<4>("OP"),
+        {builder.getInputPin<Mux16to1_8bit, 4>("RESULT_MUX", "SEL"),
+         builder.getInputPin<Mux16to1, 4>("CARRY_MUX", "SEL"),
+         builder.getInputPin<Mux16to1, 4>("OVERFLOW_MUX", "SEL")});
+
+    std::vector<std::shared_ptr<Pin<>>> low_sinks{
+        builder.getInputPin<Adder8>("ADD", "Cin"),
+    };
+    for (const auto input_index : {2U, 3U, 4U, 5U, 12U, 13U, 15U}) {
+        addLowSink(low_sinks, builder, "CARRY_MUX", input_index);
     }
+    for (const auto input_index : {2U, 3U, 4U, 5U, 6U, 7U, 8U, 12U, 13U, 15U}) {
+        addLowSink(low_sinks, builder, "OVERFLOW_MUX", input_index);
+    }
+    builder.addNewWire(
+        "CONST_LOW_to_flags",
+        builder.getOutputPin<ConstantValue<1, 8>>("CONST_LOW", "OUT"),
+        low_sinks);
 
-    _updateOutputWire<8>(simulator, "OUT", result, current_time);
-    _updateOutputWire(simulator, "ZERO", flag(result == 0), current_time);
-    _updateOutputWire(simulator, "CARRY", flag(carry), current_time);
-    _updateOutputWire(simulator, "OVERFLOW", flag(overflow), current_time);
-    _updateOutputWire(simulator, "NEGATIVE", flag((result & 0x80U) != 0), current_time);
+    builder.addNewWire<8>(
+        "ADD_result_fanout",
+        builder.getOutputPin<Adder8, 8>("ADD", "Sum"),
+        {builder.getInputPin<Mux16to1_8bit, 8>("RESULT_MUX", "IN0"),
+         builder.getInputPin<AddOverflowDetector8, 8>("ADD_OVERFLOW", "Result")});
+    builder.addNewWire(
+        "ADD_Cout_to_CARRY_MUX",
+        builder.getOutputPin<Adder8>("ADD", "Cout"),
+        {builder.getInputPin<Mux16to1>("CARRY_MUX", "IN0")});
+    builder.addNewWire(
+        "ADD_Overflow_to_OVERFLOW_MUX",
+        builder.getOutputPin<AddOverflowDetector8>("ADD_OVERFLOW", "Overflow"),
+        {builder.getInputPin<Mux16to1>("OVERFLOW_MUX", "IN0")});
+
+    builder.addNewWire<8>(
+        "SUB_result_fanout",
+        builder.getOutputPin<Subtractor8, 8>("SUB", "Result"),
+        {builder.getInputPin<Mux16to1_8bit, 8>("RESULT_MUX", "IN1"),
+         builder.getInputPin<Mux16to1_8bit, 8>("RESULT_MUX", "IN14")});
+    builder.addNewWire(
+        "SUB_Cout_fanout",
+        builder.getOutputPin<Subtractor8>("SUB", "Cout"),
+        {builder.getInputPin<Mux16to1>("CARRY_MUX", "IN1"),
+         builder.getInputPin<Mux16to1>("CARRY_MUX", "IN14")});
+    builder.addNewWire(
+        "SUB_Overflow_fanout",
+        builder.getOutputPin<Subtractor8>("SUB", "Overflow"),
+        {builder.getInputPin<Mux16to1>("OVERFLOW_MUX", "IN1"),
+         builder.getInputPin<Mux16to1>("OVERFLOW_MUX", "IN14")});
+
+    builder.addNewWire<8>(
+        "AND_to_RESULT_MUX",
+        builder.getOutputPin<AND8, 8>("AND", "OUT"),
+        {builder.getInputPin<Mux16to1_8bit, 8>("RESULT_MUX", "IN2")});
+    builder.addNewWire<8>(
+        "OR_to_RESULT_MUX",
+        builder.getOutputPin<OR8, 8>("OR", "OUT"),
+        {builder.getInputPin<Mux16to1_8bit, 8>("RESULT_MUX", "IN3")});
+    builder.addNewWire<8>(
+        "XOR_to_RESULT_MUX",
+        builder.getOutputPin<XOR8, 8>("XOR", "OUT"),
+        {builder.getInputPin<Mux16to1_8bit, 8>("RESULT_MUX", "IN4")});
+    builder.addNewWire<8>(
+        "NOT_to_RESULT_MUX",
+        builder.getOutputPin<NOT8, 8>("NOT_A", "OUT"),
+        {builder.getInputPin<Mux16to1_8bit, 8>("RESULT_MUX", "IN5")});
+
+    builder.addNewWire<8>(
+        "SLL_result_to_RESULT_MUX",
+        builder.getOutputPin<ShiftLeftLogical8, 8>("SLL", "Result"),
+        {builder.getInputPin<Mux16to1_8bit, 8>("RESULT_MUX", "IN6")});
+    builder.addNewWire(
+        "SLL_Carry_to_CARRY_MUX",
+        builder.getOutputPin<ShiftLeftLogical8>("SLL", "Carry"),
+        {builder.getInputPin<Mux16to1>("CARRY_MUX", "IN6")});
+    builder.addNewWire<8>(
+        "SRL_result_to_RESULT_MUX",
+        builder.getOutputPin<ShiftRightLogical8, 8>("SRL", "Result"),
+        {builder.getInputPin<Mux16to1_8bit, 8>("RESULT_MUX", "IN7")});
+    builder.addNewWire(
+        "SRL_Carry_to_CARRY_MUX",
+        builder.getOutputPin<ShiftRightLogical8>("SRL", "Carry"),
+        {builder.getInputPin<Mux16to1>("CARRY_MUX", "IN7")});
+    builder.addNewWire<8>(
+        "SRA_result_to_RESULT_MUX",
+        builder.getOutputPin<ShiftRightArithmetic8, 8>("SRA", "Result"),
+        {builder.getInputPin<Mux16to1_8bit, 8>("RESULT_MUX", "IN8")});
+    builder.addNewWire(
+        "SRA_Carry_to_CARRY_MUX",
+        builder.getOutputPin<ShiftRightArithmetic8>("SRA", "Carry"),
+        {builder.getInputPin<Mux16to1>("CARRY_MUX", "IN8")});
+
+    builder.addNewWire<8>(
+        "INC_result_to_RESULT_MUX",
+        builder.getOutputPin<Incrementer8, 8>("INC", "Result"),
+        {builder.getInputPin<Mux16to1_8bit, 8>("RESULT_MUX", "IN9")});
+    builder.addNewWire(
+        "INC_Cout_to_CARRY_MUX",
+        builder.getOutputPin<Incrementer8>("INC", "Cout"),
+        {builder.getInputPin<Mux16to1>("CARRY_MUX", "IN9")});
+    builder.addNewWire(
+        "INC_Overflow_to_OVERFLOW_MUX",
+        builder.getOutputPin<Incrementer8>("INC", "Overflow"),
+        {builder.getInputPin<Mux16to1>("OVERFLOW_MUX", "IN9")});
+
+    builder.addNewWire<8>(
+        "DEC_result_to_RESULT_MUX",
+        builder.getOutputPin<Decrementer8, 8>("DEC", "Result"),
+        {builder.getInputPin<Mux16to1_8bit, 8>("RESULT_MUX", "IN10")});
+    builder.addNewWire(
+        "DEC_Bout_to_CARRY_MUX",
+        builder.getOutputPin<Decrementer8>("DEC", "Bout"),
+        {builder.getInputPin<Mux16to1>("CARRY_MUX", "IN10")});
+    builder.addNewWire(
+        "DEC_Overflow_to_OVERFLOW_MUX",
+        builder.getOutputPin<Decrementer8>("DEC", "Overflow"),
+        {builder.getInputPin<Mux16to1>("OVERFLOW_MUX", "IN10")});
+
+    builder.addNewWire<8>(
+        "TWOS_result_to_RESULT_MUX",
+        builder.getOutputPin<TwosComplement8, 8>("TWOS", "Result"),
+        {builder.getInputPin<Mux16to1_8bit, 8>("RESULT_MUX", "IN11")});
+    builder.addNewWire(
+        "TWOS_Cout_to_CARRY_MUX",
+        builder.getOutputPin<TwosComplement8>("TWOS", "Cout"),
+        {builder.getInputPin<Mux16to1>("CARRY_MUX", "IN11")});
+    builder.addNewWire(
+        "TWOS_Overflow_to_OVERFLOW_MUX",
+        builder.getOutputPin<TwosComplement8>("TWOS", "Overflow"),
+        {builder.getInputPin<Mux16to1>("OVERFLOW_MUX", "IN11")});
+
+    builder.addNewWire<8>(
+        "CONST_ZERO8_to_RESULT_MUX",
+        builder.getOutputPin<ConstantValue<8, 8>, 8>("CONST_ZERO8", "OUT"),
+        {builder.getInputPin<Mux16to1_8bit, 8>("RESULT_MUX", "IN15")});
+
+    builder.addNewWire<8>(
+        "RESULT_bus_internal",
+        builder.getOutputPin<Mux16to1_8bit, 8>("RESULT_MUX", "OUT"),
+        {getOutputPin<8>("OUT"),
+         builder.getInputPin<ZeroDetect8, 8>("ZERO_DETECT", "A"),
+         builder.getInputPin<BitSplitter<8>, 8>("RESULT_SPLIT", "IN")});
+    builder.addNewWire(
+        "ZERO_DETECT_to_ZERO",
+        builder.getOutputPin<ZeroDetect8>("ZERO_DETECT", "ZERO"),
+        {getOutputPin("ZERO")});
+    builder.addNewWire(
+        "RESULT_sign_to_NEGATIVE",
+        builder.getOutputPin<BitSplitter<8>>("RESULT_SPLIT", "OUT_7"),
+        {getOutputPin("NEGATIVE")});
+    builder.addNewWire(
+        "CARRY_MUX_to_CARRY",
+        builder.getOutputPin<Mux16to1>("CARRY_MUX", "OUT"),
+        {getOutputPin("CARRY")});
+    builder.addNewWire(
+        "OVERFLOW_MUX_to_OVERFLOW",
+        builder.getOutputPin<Mux16to1>("OVERFLOW_MUX", "OUT"),
+        {getOutputPin("OVERFLOW")});
 }

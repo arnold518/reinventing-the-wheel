@@ -17,11 +17,17 @@ void bindIOComponent(py::module_& m) {
         
         // --- Essential Getters for Structure and State ---
         
-        .def("get_input_pins", &IOComponent::getInputPins, py::return_value_policy::reference_internal,
+        .def("get_input_pins", &IOComponent::getAllInputPins, py::return_value_policy::reference_internal,
             "Returns a map of the component's input pins.")
             
-        .def("get_output_pins", &IOComponent::getOutputPins, py::return_value_policy::reference_internal,
+        .def("get_output_pins", &IOComponent::getAllOutputPins, py::return_value_policy::reference_internal,
             "Returns a map of the component's output pins.")
+
+        .def("get_all_input_pins", &IOComponent::getAllInputPins, py::return_value_policy::reference_internal,
+            "Returns a map of all input pins, including multi-bit pins.")
+
+        .def("get_all_output_pins", &IOComponent::getAllOutputPins, py::return_value_policy::reference_internal,
+            "Returns a map of all output pins, including multi-bit pins.")
             
         .def("get_input_value", &IOComponent::getInputValue, py::arg("pin_name"),
             "Gets the current logic value of a specific input pin.")

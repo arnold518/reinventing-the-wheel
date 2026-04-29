@@ -67,9 +67,12 @@ std::shared_ptr<Wire<WIDTH>> ComponentBuilder::addNewWire(
 
     if (source_pin) {
         new_wire->setSourcePin(source_pin);
-        source_pin->connectExternal(new_wire);
         if (auto owner = source_pin->getOwner()) {
             all_owners.push_back(owner);
+        }
+
+        if (sink_pins.empty() && source_pin->getType() == PinType::OUTPUT) {
+            source_pin->connectExternal(new_wire);
         }
     }
 
@@ -78,10 +81,46 @@ std::shared_ptr<Wire<WIDTH>> ComponentBuilder::addNewWire(
             continue;
         }
 
-        new_wire->addSinkPin(sink_pin);
-        sink_pin->connectExternal(new_wire);
-        if (auto owner = sink_pin->getOwner()) {
-            all_owners.push_back(owner);
+        auto sink_owner = sink_pin->getOwner();
+        if (sink_owner) {
+            all_owners.push_back(sink_owner);
+        }
+
+        if (!source_pin) {
+            sink_pin->connectExternal(new_wire);
+            new_wire->addSinkPin(sink_pin);
+            continue;
+        }
+
+        auto source_owner = source_pin->getOwner();
+        if (!source_owner || !sink_owner) {
+            continue;
+        }
+
+        if (source_owner == sink_owner) {
+            if (source_pin->getType() == PinType::OUTPUT && sink_pin->getType() == PinType::INPUT) {
+                source_pin->connectInternal(new_wire);
+                sink_pin->connectInternal(new_wire);
+                new_wire->addSinkPin(sink_pin);
+            }
+        } else if (source_owner->isAncestorOf(sink_owner)) {
+            if (source_pin->getType() == PinType::INPUT && sink_pin->getType() == PinType::INPUT) {
+                source_pin->connectInternal(new_wire);
+                sink_pin->connectExternal(new_wire);
+                new_wire->addSinkPin(sink_pin);
+            }
+        } else if (sink_owner->isAncestorOf(source_owner)) {
+            if (source_pin->getType() == PinType::OUTPUT && sink_pin->getType() == PinType::OUTPUT) {
+                source_pin->connectExternal(new_wire);
+                sink_pin->connectInternal(new_wire);
+                new_wire->addSinkPin(sink_pin);
+            }
+        } else {
+            if (source_pin->getType() == PinType::OUTPUT && sink_pin->getType() == PinType::INPUT) {
+                source_pin->connectExternal(new_wire);
+                sink_pin->connectExternal(new_wire);
+                new_wire->addSinkPin(sink_pin);
+            }
         }
     }
 

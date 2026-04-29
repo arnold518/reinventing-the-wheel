@@ -6,6 +6,7 @@
 #include "components/ComponentBuilder.hpp"
 #include "components/IOComponent.hpp"
 #include "simulator/Event.hpp"
+#include "simulator/SimulationTest.hpp"
 #include "simulator/Simulator.hpp"
 #include <cassert>
 #include <cstdint>
@@ -30,6 +31,24 @@ struct TestRow {
     std::map<std::string, TestValue> outputs;
 };
 
+class StandaloneVerificationTest : public SimulationTest {
+public:
+    void setupCircuit() override {
+        root = Component::create<Component>(getTestName());
+        builder = std::make_unique<ComponentBuilder>(root);
+        buildCircuit();
+        setInitialState();
+    }
+
+    size_t getRunDuration() const override {
+        return 0;
+    }
+
+protected:
+    void buildCircuit() override {}
+    void setInitialState() override {}
+};
+
 inline std::shared_ptr<Event> makeTestWireUpdate(size_t time, const std::shared_ptr<WireBase>& wire, const TestValue& value) {
     uint64_t numeric = value.multi ? value.numeric : static_cast<uint64_t>(value.logic == LogicValue::HIGH);
     switch (wire->getWidth()) {
@@ -41,6 +60,7 @@ inline std::shared_ptr<Event> makeTestWireUpdate(size_t time, const std::shared_
         case 4: return std::make_shared<WireUpdateEvent<4>>(time, std::dynamic_pointer_cast<Wire<4>>(wire), numeric);
         case 8: return std::make_shared<WireUpdateEvent<8>>(time, std::dynamic_pointer_cast<Wire<8>>(wire), numeric);
         case 16: return std::make_shared<WireUpdateEvent<16>>(time, std::dynamic_pointer_cast<Wire<16>>(wire), numeric);
+        case 32: return std::make_shared<WireUpdateEvent<32>>(time, std::dynamic_pointer_cast<Wire<32>>(wire), numeric);
         default: return nullptr;
     }
 }
@@ -61,7 +81,7 @@ bool runRows(const std::vector<TestRow>& rows, Args&&... args) {
             sim.scheduleEvent(makeTestWireUpdate(0, wire, value));
         }
 
-        sim.runAndRecord(20);
+        sim.runAndRecord(1000);
 
         for (const auto& [pin_name, expected] : row.outputs) {
             auto pin = io->getOutputPinDynamic(pin_name);

@@ -3,7 +3,7 @@
 #include "simulator/Simulator.hpp"
 #include "components/ComponentBuilder.tpp"
 
-#include "tests/FullAdderTest.hpp"
+#include "tests/ArithmeticLogicTests.hpp"
 
 int main() {
     // 1. Create an instance of the test harness.
