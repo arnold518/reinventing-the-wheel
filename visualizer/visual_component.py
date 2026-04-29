@@ -117,6 +117,70 @@ class VisualWire:
         else: # is sink
             if is_input: return pin.outer_stub
             else:        return pin.inner_stub
+
+    def _dedupe_path(self, path):
+        deduped = []
+        for point in path:
+            point = pygame.Vector2(point)
+            if not deduped or (point - deduped[-1]).length_squared() > 0.01:
+                deduped.append(point)
+        return deduped
+
+    def _route_adaptive_2segment(self, start_pos, end_pos):
+        start = pygame.Vector2(start_pos)
+        end = pygame.Vector2(end_pos)
+        dx = end.x - start.x
+
+        if dx > 10:
+            path = [start, pygame.Vector2(end.x, start.y), end]
+        else:
+            mid_x = (start.x + end.x) / 2
+            path = [start, pygame.Vector2(mid_x, start.y), pygame.Vector2(mid_x, end.y), end]
+
+        return self._dedupe_path(path)
+
+    def _add_rounded_corners(self, path, radius=5):
+        path = self._dedupe_path(path)
+        if len(path) < 3:
+            return path
+
+        rounded = [path[0]]
+        for index in range(1, len(path) - 1):
+            prev_point = pygame.Vector2(path[index - 1])
+            corner = pygame.Vector2(path[index])
+            next_point = pygame.Vector2(path[index + 1])
+
+            incoming = corner - prev_point
+            outgoing = next_point - corner
+            incoming_len = incoming.length()
+            outgoing_len = outgoing.length()
+
+            if incoming_len < radius * 2 or outgoing_len < radius * 2:
+                rounded.append(corner)
+                continue
+
+            incoming_dir = incoming.normalize()
+            outgoing_dir = outgoing.normalize()
+            if abs(incoming_dir.dot(outgoing_dir)) > 0.999:
+                rounded.append(corner)
+                continue
+
+            corner_radius = min(radius, incoming_len / 2, outgoing_len / 2)
+            arc_start = corner - incoming_dir * corner_radius
+            arc_end = corner + outgoing_dir * corner_radius
+            rounded.append(arc_start)
+
+            for step in range(1, 4):
+                t = step / 4
+                point = ((1 - t) ** 2 * arc_start
+                         + 2 * (1 - t) * t * corner
+                         + t ** 2 * arc_end)
+                rounded.append(point)
+
+            rounded.append(arc_end)
+
+        rounded.append(path[-1])
+        return self._dedupe_path(rounded)
         
     def draw(self, screen, camera):
         self.update_state()
@@ -145,15 +209,15 @@ class VisualWire:
             pygame.draw.line(screen, self.color, camera.apply(dst_bound_pt), camera.apply(dst_pin_pt), line_width)
             
             # Draw Main Wire (Source Boundary <-> Sink Boundary)
-            # Simple Orthogonal Routing
-            mid_x = (src_bound_pt.x + dst_bound_pt.x) / 2
-            
-            path_points = [src_bound_pt, pygame.Vector2(mid_x, src_bound_pt.y),
-                           pygame.Vector2(mid_x, dst_bound_pt.y), dst_bound_pt]
-            
+            path_points = self._add_rounded_corners(
+                self._route_adaptive_2segment(src_bound_pt, dst_bound_pt)
+            )
             self._world_paths.append(path_points)
             screen_points = [camera.apply(p) for p in path_points]
-            pygame.draw.lines(screen, self.color, False, screen_points, line_width)
+            if len(screen_points) == 2:
+                pygame.draw.line(screen, self.color, screen_points[0], screen_points[1], line_width)
+            else:
+                pygame.draw.lines(screen, self.color, False, screen_points, line_width)
 
 class VisualComponent:
     _font_cache = {}

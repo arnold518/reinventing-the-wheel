@@ -26,7 +26,9 @@ namespace py = pybind11;
 template<typename T>
 void bindBasicModule(py::module_& m, const char* name, const char* description) {
     py::class_<T, BasicComponent, std::shared_ptr<T>>(m, name, description, py::module_local(false))
-        .def(py::init<const std::string&>(), py::arg("name"))
+        .def(py::init([](const std::string& instance_name) {
+            return Component::create<T>(instance_name);
+        }), py::arg("name"))
         .def("get_name", &T::getName)
         .def("get_parent", &T::getParent)
         .def("get_children", &T::getChildren, py::return_value_policy::reference_internal)
@@ -37,8 +39,10 @@ void bindBasicModule(py::module_& m, const char* name, const char* description) 
 void bindModules(py::module_& m) {
 
     // --- NOTGate Binding ---
-    py::class_<NOTGate, BasicComponent, std::shared_ptr<NOTGate>>(m, "NOTGate", "A standard 1-input AND gate.", py::module_local(false))
-        .def(py::init<const std::string&>(), py::arg("name"))
+    py::class_<NOTGate, BasicComponent, std::shared_ptr<NOTGate>>(m, "NOTGate", "A standard 1-input NOT gate.", py::module_local(false))
+        .def(py::init([](const std::string& instance_name) {
+            return Component::create<NOTGate>(instance_name);
+        }), py::arg("name"))
         .def("get_name", &NOTGate::getName)
         .def("get_parent", &NOTGate::getParent)
         .def("get_children", &NOTGate::getChildren, py::return_value_policy::reference_internal)
@@ -47,7 +51,9 @@ void bindModules(py::module_& m) {
 
     // --- ANDGate Binding ---
     py::class_<ANDGate, BasicComponent, std::shared_ptr<ANDGate>>(m, "ANDGate", "A standard 2-input AND gate.", py::module_local(false))
-        .def(py::init<const std::string&>(), py::arg("name"))
+        .def(py::init([](const std::string& instance_name) {
+            return Component::create<ANDGate>(instance_name);
+        }), py::arg("name"))
         .def("get_name", &ANDGate::getName)
         .def("get_parent", &ANDGate::getParent)
         .def("get_children", &ANDGate::getChildren, py::return_value_policy::reference_internal)
@@ -56,7 +62,9 @@ void bindModules(py::module_& m) {
 
     // --- NANDGate Binding ---
     py::class_<NANDGate, BasicComponent, std::shared_ptr<NANDGate>>(m, "NANDGate", "A standard 2-input NAND gate.", py::module_local(false))
-        .def(py::init<const std::string&>(), py::arg("name"))
+        .def(py::init([](const std::string& instance_name) {
+            return Component::create<NANDGate>(instance_name);
+        }), py::arg("name"))
         .def("get_name", &NANDGate::getName)
         .def("get_parent", &NANDGate::getParent)
         .def("get_children", &NANDGate::getChildren, py::return_value_policy::reference_internal)
@@ -64,8 +72,10 @@ void bindModules(py::module_& m) {
         .def("get_output_pins", &NANDGate::getOutputPins, py::return_value_policy::reference_internal);
 
     // --- ORGate Binding ---
-    py::class_<ORGate, BasicComponent, std::shared_ptr<ORGate>>(m, "ORGate", "A standard 2-input NAND gate.", py::module_local(false))
-        .def(py::init<const std::string&>(), py::arg("name"))
+    py::class_<ORGate, BasicComponent, std::shared_ptr<ORGate>>(m, "ORGate", "A standard 2-input OR gate.", py::module_local(false))
+        .def(py::init([](const std::string& instance_name) {
+            return Component::create<ORGate>(instance_name);
+        }), py::arg("name"))
         .def("get_name", &ORGate::getName)
         .def("get_parent", &ORGate::getParent)
         .def("get_children", &ORGate::getChildren, py::return_value_policy::reference_internal)
@@ -73,8 +83,10 @@ void bindModules(py::module_& m) {
         .def("get_output_pins", &ORGate::getOutputPins, py::return_value_policy::reference_internal);
 
     // --- NORGate Binding ---
-    py::class_<NORGate, BasicComponent, std::shared_ptr<NORGate>>(m, "NORGate", "A standard 2-input NAND gate.", py::module_local(false))
-        .def(py::init<const std::string&>(), py::arg("name"))
+    py::class_<NORGate, BasicComponent, std::shared_ptr<NORGate>>(m, "NORGate", "A standard 2-input NOR gate.", py::module_local(false))
+        .def(py::init([](const std::string& instance_name) {
+            return Component::create<NORGate>(instance_name);
+        }), py::arg("name"))
         .def("get_name", &NORGate::getName)
         .def("get_parent", &NORGate::getParent)
         .def("get_children", &NORGate::getChildren, py::return_value_policy::reference_internal)
@@ -82,8 +94,10 @@ void bindModules(py::module_& m) {
         .def("get_output_pins", &NORGate::getOutputPins, py::return_value_policy::reference_internal);
 
     // --- XORGate Binding ---
-    py::class_<XORGate, BasicComponent, std::shared_ptr<XORGate>>(m, "XORGate", "A standard 2-input NAND gate.", py::module_local(false))
-        .def(py::init<const std::string&>(), py::arg("name"))
+    py::class_<XORGate, BasicComponent, std::shared_ptr<XORGate>>(m, "XORGate", "A standard 2-input XOR gate.", py::module_local(false))
+        .def(py::init([](const std::string& instance_name) {
+            return Component::create<XORGate>(instance_name);
+        }), py::arg("name"))
         .def("get_name", &XORGate::getName)
         .def("get_parent", &XORGate::getParent)
         .def("get_children", &XORGate::getChildren, py::return_value_policy::reference_internal)
@@ -92,7 +106,9 @@ void bindModules(py::module_& m) {
 
     // --- DFlipFlop Binding ---
     py::class_<DFlipFlop, BasicComponent, std::shared_ptr<DFlipFlop>>(m, "DFlipFlop", "A rising-edge triggered D-type Flip-Flop.", py::module_local(false))
-        .def(py::init<const std::string&>(), py::arg("name"))
+        .def(py::init([](const std::string& instance_name) {
+            return Component::create<DFlipFlop>(instance_name);
+        }), py::arg("name"))
         .def("get_name", &DFlipFlop::getName)
         .def("get_parent", &DFlipFlop::getParent)
         .def("get_children", &DFlipFlop::getChildren, py::return_value_policy::reference_internal)
@@ -101,7 +117,9 @@ void bindModules(py::module_& m) {
 
     // --- ClockGenerator Binding ---
     py::class_<ClockGenerator, BasicComponent, std::shared_ptr<ClockGenerator>>(m, "ClockGenerator", "Generates a periodic clock signal.", py::module_local(false))
-        .def(py::init<const std::string&, size_t>(), py::arg("name"), py::arg("half_period"))
+        .def(py::init([](const std::string& instance_name, size_t half_period) {
+            return Component::create<ClockGenerator>(instance_name, half_period);
+        }), py::arg("name"), py::arg("half_period"))
         .def("get_name", &ClockGenerator::getName)
         .def("get_parent", &ClockGenerator::getParent)
         .def("get_children", &ClockGenerator::getChildren, py::return_value_policy::reference_internal)
@@ -110,7 +128,9 @@ void bindModules(py::module_& m) {
 
     // --- HalfAdder Binding ---
     py::class_<HalfAdder, BasicComponent, std::shared_ptr<HalfAdder>>(m, "HalfAdder", "A standard 2-input half-adder.", py::module_local(false))
-        .def(py::init<const std::string&>(), py::arg("name"))
+        .def(py::init([](const std::string& instance_name) {
+            return Component::create<HalfAdder>(instance_name);
+        }), py::arg("name"))
         .def("get_name", &HalfAdder::getName)
         .def("get_parent", &HalfAdder::getParent)
         .def("get_children", &HalfAdder::getChildren, py::return_value_policy::reference_internal)
@@ -119,7 +139,9 @@ void bindModules(py::module_& m) {
     
     // --- FullAdder Binding ---
     py::class_<FullAdder, BasicComponent, std::shared_ptr<FullAdder>>(m, "FullAdder", "A standard full-adder.", py::module_local(false))
-        .def(py::init<const std::string&>(), py::arg("name"))
+        .def(py::init([](const std::string& instance_name) {
+            return Component::create<FullAdder>(instance_name);
+        }), py::arg("name"))
         .def("get_name", &FullAdder::getName)
         .def("get_parent", &FullAdder::getParent)
         .def("get_children", &FullAdder::getChildren, py::return_value_policy::reference_internal)
