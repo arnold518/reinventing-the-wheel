@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CircuitSim Visualizer V2</title>
+  <link rel="stylesheet" href="styles.css?v=2">
+</head>
+<body>
+  <canvas id="circuit-canvas"></canvas>
+
+  <div id="topbar" class="toolbar">
+    <label class="scenario-label" for="scenario-select">Scenario</label>
+    <select id="scenario-select"></select>
+    <input id="time-slider" type="range" min="0" max="0" value="0">
+    <button id="play-pause">Play</button>
+    <button id="step-back" title="Step backward">&lt;</button>
+    <button id="step-forward" title="Step forward">&gt;</button>
+    <button id="reset-sim">Reset</button>
+    <span id="time-label">Time: 0</span>
+    <span id="stats-label"></span>
+  </div>
+
+  <div id="viewbar" class="toolbar">
+    <button id="reset-view">Reset View</button>
+    <button id="zoom-out">-</button>
+    <button id="zoom-in">+</button>
+    <button id="save-layout">Save Layout</button>
+    <span id="save-status"></span>
+  </div>
+
+  <div id="tooltip" role="tooltip"></div>
+  <div id="loading">Loading circuit...</div>
+  <script src="app.js?v=2"></script>
+</body>
+</html>

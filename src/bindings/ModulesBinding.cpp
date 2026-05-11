@@ -1,6 +1,7 @@
 #include "Bindings.hpp"
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
+#include <cstdint>
 #include <utility>
 
 #include "components/BasicComponent.hpp"
@@ -23,6 +24,7 @@
 #include "modules/composite/ALU8.hpp"
 #include "modules/utility/Rewire.hpp"
 #include "modules/utility/BitAdapter.hpp"
+#include "modules/utility/Constant.hpp"
 
 namespace py = pybind11;
 
@@ -32,6 +34,19 @@ void bindBasicModule(py::module_& m, const char* name, const char* description) 
         .def(py::init([](const std::string& instance_name) {
             return Component::create<T>(instance_name);
         }), py::arg("name"))
+        .def("get_name", &T::getName)
+        .def("get_parent", &T::getParent)
+        .def("get_children", &T::getChildren, py::return_value_policy::reference_internal)
+        .def("get_input_pins", &T::getAllInputPins, py::return_value_policy::reference_internal)
+        .def("get_output_pins", &T::getAllOutputPins, py::return_value_policy::reference_internal);
+}
+
+template<typename T>
+void bindConstantModule(py::module_& m, const char* name, const char* description) {
+    py::class_<T, BasicComponent, std::shared_ptr<T>>(m, name, description, py::module_local(false))
+        .def(py::init([](const std::string& instance_name, uint64_t constant_value) {
+            return Component::create<T>(instance_name, constant_value);
+        }), py::arg("name"), py::arg("constant_value"))
         .def("get_name", &T::getName)
         .def("get_parent", &T::getParent)
         .def("get_children", &T::getChildren, py::return_value_policy::reference_internal)
@@ -252,4 +267,7 @@ void bindModules(py::module_& m) {
     bindBasicModule<BitJoiner<16>>(m, "BitJoiner16", "Join sixteen single-bit inputs into one 16-bit output.");
     bindBasicModule<BitSplitter<32>>(m, "BitSplitter32", "Split one 32-bit input into thirty-two single-bit outputs.");
     bindBasicModule<BitJoiner<32>>(m, "BitJoiner32", "Join thirty-two single-bit inputs into one 32-bit output.");
+    bindConstantModule<ConstantValue<1, 1>>(m, "ConstantValue1High", "Single-bit constant with a single-bit trigger.");
+    bindConstantModule<ConstantValue<1, 8>>(m, "ConstantValue1From8Trigger", "Single-bit constant with an 8-bit trigger.");
+    bindConstantModule<ConstantValue<8, 8>>(m, "ConstantValue8", "8-bit constant with an 8-bit trigger.");
 }

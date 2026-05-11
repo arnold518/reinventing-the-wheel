@@ -123,127 +123,142 @@ std::vector<TruthRow> FullAdderTest::getTruthTable() const {
     };
 }
 
-std::string Logic8Test::getTestName() const {
-    return "Logic8Test";
-}
-
-void Logic8Test::verifyResults() {
-    expect(runRows<AND8>({
+AND8Test::AND8Test()
+    : ComponentRowsTest<AND8>("AND8Test", "AND8_ROOT", {
         {{{"A", bits(0xF0)}, {"B", bits(0x3C)}}, {{"OUT", bits(0x30)}}},
         {{{"A", bits(0xFF)}, {"B", bits(0x00)}}, {{"OUT", bits(0x00)}}},
-    }), "Logic8Test AND8");
-    expect(runRows<OR8>({
+    }) {}
+
+OR8Test::OR8Test()
+    : ComponentRowsTest<OR8>("OR8Test", "OR8_ROOT", {
         {{{"A", bits(0xF0)}, {"B", bits(0x0F)}}, {{"OUT", bits(0xFF)}}},
         {{{"A", bits(0x00)}, {"B", bits(0x00)}}, {{"OUT", bits(0x00)}}},
-    }), "Logic8Test OR8");
-    expect(runRows<XOR8>({
+    }) {}
+
+XOR8Test::XOR8Test()
+    : ComponentRowsTest<XOR8>("XOR8Test", "XOR8_ROOT", {
         {{{"A", bits(0xAA)}, {"B", bits(0x55)}}, {{"OUT", bits(0xFF)}}},
         {{{"A", bits(0xFF)}, {"B", bits(0xFF)}}, {{"OUT", bits(0x00)}}},
-    }), "Logic8Test XOR8");
-    expect(runRows<NOT8>({
+    }) {}
+
+NOT8Test::NOT8Test()
+    : ComponentRowsTest<NOT8>("NOT8Test", "NOT8_ROOT", {
         {{{"A", bits(0x00)}}, {{"OUT", bits(0xFF)}}},
         {{{"A", bits(0xA5)}}, {{"OUT", bits(0x5A)}}},
-    }), "Logic8Test NOT8");
-    expect(runRows<NAND8>({
+    }) {}
+
+NAND8Test::NAND8Test()
+    : ComponentRowsTest<NAND8>("NAND8Test", "NAND8_ROOT", {
         {{{"A", bits(0xFF)}, {"B", bits(0x0F)}}, {{"OUT", bits(0xF0)}}},
         {{{"A", bits(0xFF)}, {"B", bits(0xFF)}}, {{"OUT", bits(0x00)}}},
-    }), "Logic8Test NAND8");
-    expect(runRows<NOR8>({
+    }) {}
+
+NOR8Test::NOR8Test()
+    : ComponentRowsTest<NOR8>("NOR8Test", "NOR8_ROOT", {
         {{{"A", bits(0xF0)}, {"B", bits(0x0F)}}, {{"OUT", bits(0x00)}}},
         {{{"A", bits(0x00)}, {"B", bits(0x00)}}, {{"OUT", bits(0xFF)}}},
-    }), "Logic8Test NOR8");
-}
+    }) {}
 
-std::string MuxTest::getTestName() const {
-    return "MuxTest";
-}
+Mux2to1Test::Mux2to1Test()
+    : ComponentRowsTest<Mux2to1>("Mux2to1Test", "MUX2TO1_ROOT", oneBitMuxRows(2)) {}
 
-void MuxTest::verifyResults() {
-    expect(runRows<Mux2to1>(oneBitMuxRows(2)), "MuxTest Mux2to1");
-    expect(runRows<Mux4to1>(oneBitMuxRows(4)), "MuxTest Mux4to1");
-    expect(runRows<Mux8to1>(oneBitMuxRows(8)), "MuxTest Mux8to1");
-    expect(runRows<Mux16to1>(oneBitMuxRows(16)), "MuxTest Mux16to1");
-    expect(runRows<Mux2to1_8bit>(busMuxRows(2)), "MuxTest Mux2to1_8bit");
-    expect(runRows<Mux4to1_8bit>(busMuxRows(4)), "MuxTest Mux4to1_8bit");
-    expect(runRows<Mux8to1_8bit>(busMuxRows(8)), "MuxTest Mux8to1_8bit");
-    expect(runRows<Mux16to1_8bit>(busMuxRows(16)), "MuxTest Mux16to1_8bit");
-}
+Mux4to1Test::Mux4to1Test()
+    : ComponentRowsTest<Mux4to1>("Mux4to1Test", "MUX4TO1_ROOT", oneBitMuxRows(4)) {}
 
-std::string Arithmetic8Test::getTestName() const {
-    return "Arithmetic8Test";
-}
+Mux8to1Test::Mux8to1Test()
+    : ComponentRowsTest<Mux8to1>("Mux8to1Test", "MUX8TO1_ROOT", oneBitMuxRows(8)) {}
 
-void Arithmetic8Test::verifyResults() {
-    expect(runRows<TwosComplement8>({
+Mux16to1Test::Mux16to1Test()
+    : ComponentRowsTest<Mux16to1>("Mux16to1Test", "MUX16TO1_ROOT", oneBitMuxRows(16)) {}
+
+Mux2to1_8bitTest::Mux2to1_8bitTest()
+    : ComponentRowsTest<Mux2to1_8bit>("Mux2to1_8bitTest", "MUX2TO1_8BIT_ROOT", busMuxRows(2)) {}
+
+Mux4to1_8bitTest::Mux4to1_8bitTest()
+    : ComponentRowsTest<Mux4to1_8bit>("Mux4to1_8bitTest", "MUX4TO1_8BIT_ROOT", busMuxRows(4)) {}
+
+Mux8to1_8bitTest::Mux8to1_8bitTest()
+    : ComponentRowsTest<Mux8to1_8bit>("Mux8to1_8bitTest", "MUX8TO1_8BIT_ROOT", busMuxRows(8)) {}
+
+Mux16to1_8bitTest::Mux16to1_8bitTest()
+    : ComponentRowsTest<Mux16to1_8bit>("Mux16to1_8bitTest", "MUX16TO1_8BIT_ROOT", busMuxRows(16)) {}
+
+TwosComplement8Test::TwosComplement8Test()
+    : ComponentRowsTest<TwosComplement8>("TwosComplement8Test", "TWOS_COMPLEMENT8_ROOT", {
         {{{"A", bits(0x00)}}, {{"Result", bits(0x00)}, {"Cout", bit(false)}, {"Overflow", bit(false)}}},
         {{{"A", bits(0x01)}}, {{"Result", bits(0xFF)}, {"Cout", bit(true)}, {"Overflow", bit(false)}}},
         {{{"A", bits(0x7F)}}, {{"Result", bits(0x81)}, {"Cout", bit(true)}, {"Overflow", bit(false)}}},
         {{{"A", bits(0x80)}}, {{"Result", bits(0x80)}, {"Cout", bit(true)}, {"Overflow", bit(true)}}},
-    }), "Arithmetic8Test TwosComplement8");
-    expect(runRows<Subtractor8>({
+    }) {}
+
+Subtractor8Test::Subtractor8Test()
+    : ComponentRowsTest<Subtractor8>("Subtractor8Test", "SUBTRACTOR8_ROOT", {
         {{{"A", bits(0x05)}, {"B", bits(0x03)}}, {{"Result", bits(0x02)}, {"Cout", bit(true)}, {"Overflow", bit(false)}}},
         {{{"A", bits(0x00)}, {"B", bits(0x01)}}, {{"Result", bits(0xFF)}, {"Cout", bit(false)}, {"Overflow", bit(false)}}},
         {{{"A", bits(0x80)}, {"B", bits(0x01)}}, {{"Result", bits(0x7F)}, {"Cout", bit(true)}, {"Overflow", bit(true)}}},
         {{{"A", bits(0x7F)}, {"B", bits(0xFF)}}, {{"Result", bits(0x80)}, {"Cout", bit(false)}, {"Overflow", bit(true)}}},
-    }), "Arithmetic8Test Subtractor8");
-    expect(runRows<SubtractorWithBorrow8>({
+    }) {}
+
+SubtractorWithBorrow8Test::SubtractorWithBorrow8Test()
+    : ComponentRowsTest<SubtractorWithBorrow8>("SubtractorWithBorrow8Test", "SUBTRACTOR_WITH_BORROW8_ROOT", {
         {{{"A", bits(0x05)}, {"B", bits(0x03)}, {"Bin", bit(false)}}, {{"Result", bits(0x02)}, {"Bout", bit(true)}, {"Overflow", bit(false)}}},
         {{{"A", bits(0x05)}, {"B", bits(0x03)}, {"Bin", bit(true)}}, {{"Result", bits(0x01)}, {"Bout", bit(true)}, {"Overflow", bit(false)}}},
         {{{"A", bits(0x00)}, {"B", bits(0x00)}, {"Bin", bit(true)}}, {{"Result", bits(0xFF)}, {"Bout", bit(false)}, {"Overflow", bit(false)}}},
         {{{"A", bits(0x80)}, {"B", bits(0x00)}, {"Bin", bit(true)}}, {{"Result", bits(0x7F)}, {"Bout", bit(true)}, {"Overflow", bit(true)}}},
-    }), "Arithmetic8Test SubtractorWithBorrow8");
-    expect(runRows<Incrementer8>({
+    }) {}
+
+Incrementer8Test::Incrementer8Test()
+    : ComponentRowsTest<Incrementer8>("Incrementer8Test", "INCREMENTER8_ROOT", {
         {{{"A", bits(0x00)}}, {{"Result", bits(0x01)}, {"Cout", bit(false)}, {"Overflow", bit(false)}}},
         {{{"A", bits(0x7F)}}, {{"Result", bits(0x80)}, {"Cout", bit(false)}, {"Overflow", bit(true)}}},
         {{{"A", bits(0xFF)}}, {{"Result", bits(0x00)}, {"Cout", bit(true)}, {"Overflow", bit(false)}}},
-    }), "Arithmetic8Test Incrementer8");
-    expect(runRows<Decrementer8>({
+    }) {}
+
+Decrementer8Test::Decrementer8Test()
+    : ComponentRowsTest<Decrementer8>("Decrementer8Test", "DECREMENTER8_ROOT", {
         {{{"A", bits(0x00)}}, {{"Result", bits(0xFF)}, {"Bout", bit(false)}, {"Overflow", bit(false)}}},
         {{{"A", bits(0x01)}}, {{"Result", bits(0x00)}, {"Bout", bit(true)}, {"Overflow", bit(false)}}},
         {{{"A", bits(0x80)}}, {{"Result", bits(0x7F)}, {"Bout", bit(true)}, {"Overflow", bit(true)}}},
-    }), "Arithmetic8Test Decrementer8");
-}
+    }) {}
 
-std::string Comparator8Test::getTestName() const {
-    return "Comparator8Test";
-}
-
-void Comparator8Test::verifyResults() {
-    expect(runRows<EqualityChecker8>({
+EqualityChecker8Test::EqualityChecker8Test()
+    : ComponentRowsTest<EqualityChecker8>("EqualityChecker8Test", "EQUALITY_CHECKER8_ROOT", {
         {{{"A", bits(0x42)}, {"B", bits(0x42)}}, {{"EQ", bit(true)}}},
         {{{"A", bits(0x42)}, {"B", bits(0x43)}}, {{"EQ", bit(false)}}},
-    }), "Comparator8Test EqualityChecker8");
-    expect(runRows<Comparator8>({
+    }) {}
+
+Comparator8Test::Comparator8Test()
+    : ComponentRowsTest<Comparator8>("Comparator8Test", "COMPARATOR8_ROOT", {
         {{{"A", bits(0x01)}, {"B", bits(0x02)}}, {{"LT", bit(true)}, {"GT", bit(false)}, {"EQ", bit(false)}}},
         {{{"A", bits(0x42)}, {"B", bits(0x42)}}, {{"LT", bit(false)}, {"GT", bit(false)}, {"EQ", bit(true)}}},
         {{{"A", bits(0xFF)}, {"B", bits(0x02)}}, {{"LT", bit(false)}, {"GT", bit(true)}, {"EQ", bit(false)}}},
-    }), "Comparator8Test Comparator8");
-    expect(runRows<SignedComparator8>({
+    }) {}
+
+SignedComparator8Test::SignedComparator8Test()
+    : ComponentRowsTest<SignedComparator8>("SignedComparator8Test", "SIGNED_COMPARATOR8_ROOT", {
         {{{"A", bits(0xFF)}, {"B", bits(0x01)}}, {{"SLT", bit(true)}, {"SGT", bit(false)}, {"SEQ", bit(false)}}},
         {{{"A", bits(0x7F)}, {"B", bits(0x80)}}, {{"SLT", bit(false)}, {"SGT", bit(true)}, {"SEQ", bit(false)}}},
         {{{"A", bits(0x80)}, {"B", bits(0x80)}}, {{"SLT", bit(false)}, {"SGT", bit(false)}, {"SEQ", bit(true)}}},
-    }), "Comparator8Test SignedComparator8");
-}
+    }) {}
 
-std::string Shifter8Test::getTestName() const {
-    return "Shifter8Test";
-}
-
-void Shifter8Test::verifyResults() {
-    expect(runRows<ShiftLeftLogical8>({
+ShiftLeftLogical8Test::ShiftLeftLogical8Test()
+    : ComponentRowsTest<ShiftLeftLogical8>("ShiftLeftLogical8Test", "SHIFT_LEFT_LOGICAL8_ROOT", {
         {{{"A", bits(0x01)}}, {{"Result", bits(0x02)}, {"Carry", bit(false)}}},
         {{{"A", bits(0x80)}}, {{"Result", bits(0x00)}, {"Carry", bit(true)}}},
-    }), "Shifter8Test ShiftLeftLogical8");
-    expect(runRows<ShiftRightLogical8>({
+    }) {}
+
+ShiftRightLogical8Test::ShiftRightLogical8Test()
+    : ComponentRowsTest<ShiftRightLogical8>("ShiftRightLogical8Test", "SHIFT_RIGHT_LOGICAL8_ROOT", {
         {{{"A", bits(0x81)}}, {{"Result", bits(0x40)}, {"Carry", bit(true)}}},
         {{{"A", bits(0x02)}}, {{"Result", bits(0x01)}, {"Carry", bit(false)}}},
-    }), "Shifter8Test ShiftRightLogical8");
-    expect(runRows<ShiftRightArithmetic8>({
+    }) {}
+
+ShiftRightArithmetic8Test::ShiftRightArithmetic8Test()
+    : ComponentRowsTest<ShiftRightArithmetic8>("ShiftRightArithmetic8Test", "SHIFT_RIGHT_ARITHMETIC8_ROOT", {
         {{{"A", bits(0x81)}}, {{"Result", bits(0xC0)}, {"Carry", bit(true)}}},
         {{{"A", bits(0x80)}}, {{"Result", bits(0xC0)}, {"Carry", bit(false)}}},
         {{{"A", bits(0x02)}}, {{"Result", bits(0x01)}, {"Carry", bit(false)}}},
-    }), "Shifter8Test ShiftRightArithmetic8");
-}
+    }) {}
 
 Adder8Test::Adder8Test()
     : ComponentTruthTableTest<Adder8>("Adder8Test", "ADDER8_ROOT") {

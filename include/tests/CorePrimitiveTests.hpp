@@ -1,5 +1,7 @@
 #pragma once
 
+#include "modules/basic/Gate.hpp"
+#include "tests/ComponentRowsTest.hpp"
 #include "simulator/SimulationTest.hpp"
 #include "tests/TestHelpers.hpp"
 #include <string>
@@ -12,12 +14,34 @@ protected:
     void verifyResults() override;
 };
 
-class GateTest : public StandaloneVerificationTest {
+class NOTGateTest : public ComponentRowsTest<NOTGate> {
 public:
-    std::string getTestName() const override;
+    NOTGateTest();
+};
 
-protected:
-    void verifyResults() override;
+class ANDGateTest : public ComponentRowsTest<ANDGate> {
+public:
+    ANDGateTest();
+};
+
+class ORGateTest : public ComponentRowsTest<ORGate> {
+public:
+    ORGateTest();
+};
+
+class XORGateTest : public ComponentRowsTest<XORGate> {
+public:
+    XORGateTest();
+};
+
+class NANDGateTest : public ComponentRowsTest<NANDGate> {
+public:
+    NANDGateTest();
+};
+
+class NORGateTest : public ComponentRowsTest<NORGate> {
+public:
+    NORGateTest();
 };
 
 class DFlipFlopTest : public SimulationTest {

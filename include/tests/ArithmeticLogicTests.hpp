@@ -1,12 +1,17 @@
 #pragma once
 
+#include "modules/basic/Logic8.hpp"
+#include "modules/basic/Mux.hpp"
 #include "modules/composite/ALU8.hpp"
 #include "modules/composite/Adder8.hpp"
+#include "modules/composite/Arithmetic8.hpp"
+#include "modules/composite/Comparator8.hpp"
 #include "modules/composite/FullAdder.hpp"
 #include "modules/composite/HalfAdder.hpp"
+#include "modules/composite/Shifter8.hpp"
 #include "modules/composite/ZeroDetect8.hpp"
+#include "tests/ComponentRowsTest.hpp"
 #include "tests/ComponentTruthTableTest.hpp"
-#include "tests/TestHelpers.hpp"
 #include <string>
 #include <vector>
 
@@ -26,44 +31,74 @@ protected:
     std::vector<TruthRow> getTruthTable() const override;
 };
 
-class Logic8Test : public StandaloneVerificationTest {
+class AND8Test : public ComponentRowsTest<AND8> {
 public:
-    std::string getTestName() const override;
-
-protected:
-    void verifyResults() override;
+    AND8Test();
 };
 
-class MuxTest : public StandaloneVerificationTest {
+class OR8Test : public ComponentRowsTest<OR8> {
 public:
-    std::string getTestName() const override;
-
-protected:
-    void verifyResults() override;
+    OR8Test();
 };
 
-class Arithmetic8Test : public StandaloneVerificationTest {
+class XOR8Test : public ComponentRowsTest<XOR8> {
 public:
-    std::string getTestName() const override;
-
-protected:
-    void verifyResults() override;
+    XOR8Test();
 };
 
-class Comparator8Test : public StandaloneVerificationTest {
+class NOT8Test : public ComponentRowsTest<NOT8> {
 public:
-    std::string getTestName() const override;
-
-protected:
-    void verifyResults() override;
+    NOT8Test();
 };
 
-class Shifter8Test : public StandaloneVerificationTest {
+class NAND8Test : public ComponentRowsTest<NAND8> {
 public:
-    std::string getTestName() const override;
+    NAND8Test();
+};
 
-protected:
-    void verifyResults() override;
+class NOR8Test : public ComponentRowsTest<NOR8> {
+public:
+    NOR8Test();
+};
+
+class Mux2to1Test : public ComponentRowsTest<Mux2to1> {
+public:
+    Mux2to1Test();
+};
+
+class Mux4to1Test : public ComponentRowsTest<Mux4to1> {
+public:
+    Mux4to1Test();
+};
+
+class Mux8to1Test : public ComponentRowsTest<Mux8to1> {
+public:
+    Mux8to1Test();
+};
+
+class Mux16to1Test : public ComponentRowsTest<Mux16to1> {
+public:
+    Mux16to1Test();
+};
+
+class Mux2to1_8bitTest : public ComponentRowsTest<Mux2to1_8bit> {
+public:
+    Mux2to1_8bitTest();
+};
+
+class Mux4to1_8bitTest : public ComponentRowsTest<Mux4to1_8bit> {
+public:
+    Mux4to1_8bitTest();
+};
+
+class Mux8to1_8bitTest : public ComponentRowsTest<Mux8to1_8bit> {
+public:
+    Mux8to1_8bitTest();
+};
+
+class Mux16to1_8bitTest : public ComponentRowsTest<Mux16to1_8bit> {
+public:
+    Mux16to1_8bitTest();
 };
 
 class Adder8Test : public ComponentTruthTableTest<Adder8> {
@@ -72,6 +107,61 @@ public:
 
 protected:
     std::vector<TruthRow> getTruthTable() const override;
+};
+
+class TwosComplement8Test : public ComponentRowsTest<TwosComplement8> {
+public:
+    TwosComplement8Test();
+};
+
+class Subtractor8Test : public ComponentRowsTest<Subtractor8> {
+public:
+    Subtractor8Test();
+};
+
+class SubtractorWithBorrow8Test : public ComponentRowsTest<SubtractorWithBorrow8> {
+public:
+    SubtractorWithBorrow8Test();
+};
+
+class Incrementer8Test : public ComponentRowsTest<Incrementer8> {
+public:
+    Incrementer8Test();
+};
+
+class Decrementer8Test : public ComponentRowsTest<Decrementer8> {
+public:
+    Decrementer8Test();
+};
+
+class EqualityChecker8Test : public ComponentRowsTest<EqualityChecker8> {
+public:
+    EqualityChecker8Test();
+};
+
+class Comparator8Test : public ComponentRowsTest<Comparator8> {
+public:
+    Comparator8Test();
+};
+
+class SignedComparator8Test : public ComponentRowsTest<SignedComparator8> {
+public:
+    SignedComparator8Test();
+};
+
+class ShiftLeftLogical8Test : public ComponentRowsTest<ShiftLeftLogical8> {
+public:
+    ShiftLeftLogical8Test();
+};
+
+class ShiftRightLogical8Test : public ComponentRowsTest<ShiftRightLogical8> {
+public:
+    ShiftRightLogical8Test();
+};
+
+class ShiftRightArithmetic8Test : public ComponentRowsTest<ShiftRightArithmetic8> {
+public:
+    ShiftRightArithmetic8Test();
 };
 
 class ZeroDetect8Test : public ComponentTruthTableTest<ZeroDetect8> {

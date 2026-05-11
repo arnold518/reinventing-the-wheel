@@ -61,18 +61,16 @@ void WireTemplateTest::verifyResults() {
     expect(pin.getBit(2) == LogicValue::HIGH, "WireTemplateTest pin bit 2");
 }
 
-std::string GateTest::getTestName() const {
-    return "GateTest";
-}
-
-void GateTest::verifyResults() {
-    expect(runRows<NOTGate>({
+NOTGateTest::NOTGateTest()
+    : ComponentRowsTest<NOTGate>("NOTGateTest", "NOT_GATE_ROOT", {
         {{{"IN", bit(false)}}, {{"OUT", bit(true)}}},
         {{{"IN", bit(true)}}, {{"OUT", bit(false)}}},
         {{{"IN", logic(LogicValue::UNKNOWN)}}, {{"OUT", logic(LogicValue::UNKNOWN)}}},
         {{{"IN", logic(LogicValue::HIGH_Z)}}, {{"OUT", logic(LogicValue::UNKNOWN)}}},
-    }), "GateTest NOTGate");
-    expect(runRows<ANDGate>({
+    }) {}
+
+ANDGateTest::ANDGateTest()
+    : ComponentRowsTest<ANDGate>("ANDGateTest", "AND_GATE_ROOT", {
         {{{"A", bit(false)}, {"B", bit(false)}}, {{"OUT", bit(false)}}},
         {{{"A", bit(false)}, {"B", bit(true)}}, {{"OUT", bit(false)}}},
         {{{"A", bit(true)}, {"B", bit(false)}}, {{"OUT", bit(false)}}},
@@ -80,8 +78,10 @@ void GateTest::verifyResults() {
         {{{"A", bit(false)}, {"B", logic(LogicValue::UNKNOWN)}}, {{"OUT", bit(false)}}},
         {{{"A", bit(true)}, {"B", logic(LogicValue::UNKNOWN)}}, {{"OUT", logic(LogicValue::UNKNOWN)}}},
         {{{"A", logic(LogicValue::HIGH_Z)}, {"B", bit(true)}}, {{"OUT", logic(LogicValue::UNKNOWN)}}},
-    }), "GateTest ANDGate");
-    expect(runRows<ORGate>({
+    }) {}
+
+ORGateTest::ORGateTest()
+    : ComponentRowsTest<ORGate>("ORGateTest", "OR_GATE_ROOT", {
         {{{"A", bit(false)}, {"B", bit(false)}}, {{"OUT", bit(false)}}},
         {{{"A", bit(false)}, {"B", bit(true)}}, {{"OUT", bit(true)}}},
         {{{"A", bit(true)}, {"B", bit(false)}}, {{"OUT", bit(true)}}},
@@ -89,32 +89,37 @@ void GateTest::verifyResults() {
         {{{"A", bit(true)}, {"B", logic(LogicValue::UNKNOWN)}}, {{"OUT", bit(true)}}},
         {{{"A", bit(false)}, {"B", logic(LogicValue::UNKNOWN)}}, {{"OUT", logic(LogicValue::UNKNOWN)}}},
         {{{"A", logic(LogicValue::HIGH_Z)}, {"B", bit(false)}}, {{"OUT", logic(LogicValue::UNKNOWN)}}},
-    }), "GateTest ORGate");
-    expect(runRows<XORGate>({
+    }) {}
+
+XORGateTest::XORGateTest()
+    : ComponentRowsTest<XORGate>("XORGateTest", "XOR_GATE_ROOT", {
         {{{"A", bit(false)}, {"B", bit(false)}}, {{"OUT", bit(false)}}},
         {{{"A", bit(false)}, {"B", bit(true)}}, {{"OUT", bit(true)}}},
         {{{"A", bit(true)}, {"B", bit(false)}}, {{"OUT", bit(true)}}},
         {{{"A", bit(true)}, {"B", bit(true)}}, {{"OUT", bit(false)}}},
         {{{"A", bit(true)}, {"B", logic(LogicValue::UNKNOWN)}}, {{"OUT", logic(LogicValue::UNKNOWN)}}},
         {{{"A", logic(LogicValue::HIGH_Z)}, {"B", bit(false)}}, {{"OUT", logic(LogicValue::UNKNOWN)}}},
-    }), "GateTest XORGate");
-    expect(runRows<NANDGate>({
+    }) {}
+
+NANDGateTest::NANDGateTest()
+    : ComponentRowsTest<NANDGate>("NANDGateTest", "NAND_GATE_ROOT", {
         {{{"A", bit(false)}, {"B", bit(false)}}, {{"OUT", bit(true)}}},
         {{{"A", bit(false)}, {"B", bit(true)}}, {{"OUT", bit(true)}}},
         {{{"A", bit(true)}, {"B", bit(false)}}, {{"OUT", bit(true)}}},
         {{{"A", bit(true)}, {"B", bit(true)}}, {{"OUT", bit(false)}}},
         {{{"A", bit(false)}, {"B", logic(LogicValue::UNKNOWN)}}, {{"OUT", bit(true)}}},
         {{{"A", bit(true)}, {"B", logic(LogicValue::UNKNOWN)}}, {{"OUT", logic(LogicValue::UNKNOWN)}}},
-    }), "GateTest NANDGate");
-    expect(runRows<NORGate>({
+    }) {}
+
+NORGateTest::NORGateTest()
+    : ComponentRowsTest<NORGate>("NORGateTest", "NOR_GATE_ROOT", {
         {{{"A", bit(false)}, {"B", bit(false)}}, {{"OUT", bit(true)}}},
         {{{"A", bit(false)}, {"B", bit(true)}}, {{"OUT", bit(false)}}},
         {{{"A", bit(true)}, {"B", bit(false)}}, {{"OUT", bit(false)}}},
         {{{"A", bit(true)}, {"B", bit(true)}}, {{"OUT", bit(false)}}},
         {{{"A", bit(true)}, {"B", logic(LogicValue::UNKNOWN)}}, {{"OUT", bit(false)}}},
         {{{"A", bit(false)}, {"B", logic(LogicValue::UNKNOWN)}}, {{"OUT", logic(LogicValue::UNKNOWN)}}},
-    }), "GateTest NORGate");
-}
+    }) {}
 
 std::string DFlipFlopTest::getTestName() const {
     return "DFlipFlopTest";
