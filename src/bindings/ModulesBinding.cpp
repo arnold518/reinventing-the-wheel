@@ -17,6 +17,12 @@
 #include "modules/composite/HalfAdder.hpp"
 #include "modules/composite/FullAdder.hpp"
 #include "modules/composite/Adder8.hpp"
+#include "modules/composite/AddSub32.hpp"
+#include "modules/composite/Logic32.hpp"
+#include "modules/composite/ZeroDetect32.hpp"
+#include "modules/composite/Comparator32.hpp"
+#include "modules/composite/Shifter32.hpp"
+#include "modules/composite/ALU32.hpp"
 #include "modules/composite/Arithmetic8.hpp"
 #include "modules/composite/Comparator8.hpp"
 #include "modules/composite/Shifter8.hpp"
@@ -209,6 +215,12 @@ void bindModules(py::module_& m) {
     bindIOModule<ShiftRightArithmetic8>(m, "ShiftRightArithmetic8", "8-bit arithmetic shift right.");
     bindIOModule<ZeroDetect8>(m, "ZeroDetect8", "8-bit zero detector.");
     bindIOModule<ALU8>(m, "ALU8", "8-bit arithmetic logic unit.");
+    bindIOModule<AddSub32>(m, "AddSub32", "Structural 32-bit add/subtract unit.");
+    bindIOModule<Logic32>(m, "Logic32", "Structural 32-bit bitwise logic unit.");
+    bindIOModule<ZeroDetect32>(m, "ZeroDetect32", "Structural 32-bit zero detector.");
+    bindIOModule<Comparator32>(m, "Comparator32", "Structural 32-bit comparator.");
+    bindIOModule<Shifter32>(m, "Shifter32", "Structural 32-bit barrel shifter.");
+    bindIOModule<ALU32>(m, "ALU32", "Structural RV32I-oriented 32-bit ALU.");
 
     py::enum_<Rewire::UnmappedBitValue>(m, "UnmappedBitValue")
         .value("UNKNOWN", Rewire::UnmappedBitValue::UNKNOWN)
@@ -271,6 +283,8 @@ void bindModules(py::module_& m) {
     bindBasicModule<BitJoiner<4>>(m, "BitJoiner4", "Join four single-bit inputs into one 4-bit output.");
     bindBasicModule<BitSplitter<8>>(m, "BitSplitter8", "Split one 8-bit input into eight single-bit outputs.");
     bindBasicModule<BitJoiner<8>>(m, "BitJoiner8", "Join eight single-bit inputs into one 8-bit output.");
+    bindBasicModule<BitSplitter<5>>(m, "BitSplitter5", "Split one 5-bit input into five single-bit outputs.");
+    bindBasicModule<BitJoiner<5>>(m, "BitJoiner5", "Join five single-bit inputs into one 5-bit output.");
     bindBasicModule<BitSplitter<16>>(m, "BitSplitter16", "Split one 16-bit input into sixteen single-bit outputs.");
     bindBasicModule<BitJoiner<16>>(m, "BitJoiner16", "Join sixteen single-bit inputs into one 16-bit output.");
     bindBasicModule<BitSplitter<32>>(m, "BitSplitter32", "Split one 32-bit input into thirty-two single-bit outputs.");

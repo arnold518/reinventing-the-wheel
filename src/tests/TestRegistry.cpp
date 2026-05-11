@@ -3,6 +3,7 @@
 #include "tests/ArithmeticLogicTests.hpp"
 #include "tests/CorePrimitiveTests.hpp"
 #include "tests/FullCircuitTest.hpp"
+#include "tests/RV32IALU32Tests.hpp"
 #include "tests/UtilityComponentTests.hpp"
 #include <algorithm>
 
@@ -31,6 +32,7 @@ const std::vector<TestRegistryEntry>& getTestRegistry() {
         entry<RewireZeroExtendTest>("RewireZeroExtendTest"),
         entry<RewireSignExtendTest>("RewireSignExtendTest"),
         entry<RewireUnmappedHighTest>("RewireUnmappedHighTest"),
+        entry<RewireWidth5Test>("RewireWidth5Test"),
         entry<RewireUnmappedUnknownTest>("RewireUnmappedUnknownTest"),
         entry<RewireValidationTest>("RewireValidationTest"),
         entry<BitSplitter8Test>("BitSplitter8Test"),
@@ -71,6 +73,7 @@ const std::vector<TestRegistryEntry>& getTestRegistry() {
         entry<ShiftRightArithmetic8Test>("ShiftRightArithmetic8Test"),
         entry<ZeroDetect8Test>("ZeroDetect8Test"),
         entry<ALU8Test>("ALU8Test"),
+        entry<RV32IALU32Test>("RV32IALU32Test"),
     };
     return registry;
 }

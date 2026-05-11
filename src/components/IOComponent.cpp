@@ -23,6 +23,7 @@ std::shared_ptr<PinBase> IOComponent::addPinDynamic(const std::string& pin_name,
         case 2: return addPin<2>(pin_name, type);
         case 3: return addPin<3>(pin_name, type);
         case 4: return addPin<4>(pin_name, type);
+        case 5: return addPin<5>(pin_name, type);
         case 8: return addPin<8>(pin_name, type);
         case 16: return addPin<16>(pin_name, type);
         case 32: return addPin<32>(pin_name, type);

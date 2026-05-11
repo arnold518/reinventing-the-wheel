@@ -8,6 +8,17 @@ CircuitSim is a digital logic circuit simulator with event-driven simulation eng
 
 **Core Architecture**: Event-driven simulation with priority queue processing WireUpdateEvents and ComponentEvalEvents. Components are composed hierarchically (composite pattern) where complex circuits are built from simpler gates.
 
+## Architectural Rule: Lower-Level First
+
+This project prioritizes learning hardware by building lower-level structures before hiding them behind behavioral code.
+
+- Implement gates, slices, and composite components first whenever feasible.
+- Add behavioral modules only when the equivalent lower-level implementation would be too large, too slow, or too visually noisy to use everywhere.
+- A behavioral module must be treated as an abstraction of an existing lower-level component or representative lower-level slice, not as the original source of truth.
+- Before adding a product-facing behavioral module, add tests for the lower-level implementation and equivalence tests proving the behavioral module matches the same external contract.
+- If a full lower-level implementation is impractical, build a representative slice first, such as a 1-bit ALU cell, 4-bit ALU slice, one register cell, one register word, or tiny memory array.
+- Temporary functional or behavioral code may be used as a reference oracle or bring-up tool, but it must be clearly named and must not replace the lower-level design path.
+
 ## Build System
 
 ### Initial Build
@@ -312,7 +323,7 @@ class MyTest : public SimulationTest {
 **Option B (Hybrid)**: Mix gate-level + behavioral components
 - Goal: Educational CPU simulator with visualization
 - Keep: Gates for ALU, registers, control logic (visible in UI)
-- Behavioral: Multipliers, caches, memory (black boxes)
+- Behavioral: Multipliers, caches, memory only after lower-level contracts or representative slices are tested
 - Timeline: Months 1-18
 - Target: 32-bit RISC-V single-cycle → pipelined CPU
 
@@ -327,7 +338,7 @@ class MyTest : public SimulationTest {
 
 ## OPTION B: Hybrid CPU Simulator (Months 1-18)
 
-**Philosophy**: "Mix gate-level (for learning) with behavioral models (for scale)"
+**Philosophy**: "Build lower-level first, then use behavioral models only as tested abstractions for scale"
 
 ### Component Architecture Strategy
 
@@ -337,13 +348,13 @@ class MyTest : public SimulationTest {
 | **Register file** | Gate-level D-FlipFlops | Visualize state storage |
 | **Instruction decoder** | Gate-level ROM + logic | Understand control flow |
 | **Program counter** | Gate-level register + adder | Visualize sequencing |
-| **32-bit Multiplier** | Behavioral (3-cycle latency) | Too many gates (~1024) |
-| **Caches (L1/L2)** | Behavioral + stats overlay | Complex state machine |
-| **Memory** | Behavioral (std::vector) | Impractical at gate-level |
+| **32-bit Multiplier** | Behavioral abstraction after lower-level slice tests | Too many gates (~1024) |
+| **Caches (L1/L2)** | Behavioral abstraction + stats overlay after contract tests | Complex state machine |
+| **Memory** | Behavioral abstraction after tiny memory/slice tests | Impractical at full gate-level |
 
 **Rule of Thumb**:
 - Gate-level: <200 gates, educational value, fits in visualizer
-- Behavioral: >1000 gates, performance critical, complex algorithms
+- Behavioral: >1000 gates, performance critical, complex algorithms, and backed by lower-level slice/equivalence tests
 
 ### Critical Infrastructure: Multi-Bit Buses (Required First!)
 
@@ -378,7 +389,7 @@ class RegisterFile : public IOComponent {
 
 ### Behavioral Component Pattern
 
-Behavioral components skip gate-level logic but maintain cycle-accurate timing:
+Behavioral components are allowed only after the lower-level behavior is already captured by gates, slices, composite modules, or representative-slice tests. They keep the same external contract while compressing implementation detail for scale:
 
 ```cpp
 class Multiplier32 : public BasicComponent {
@@ -386,7 +397,7 @@ class Multiplier32 : public BasicComponent {
     static constexpr size_t LATENCY = 3;
 
     void evaluate(size_t time, Simulator& sim) override {
-        // Direct computation (no gates)
+        // Direct computation, validated against lower-level slice tests
         if (start_signal) {
             uint32_t a = getInputBus<32>("A");
             uint32_t b = getInputBus<32>("B");
@@ -552,11 +563,12 @@ reinventing-the-wheel/
 ### Key Architectural Principles
 
 1. **Multi-bit buses first** - Single-bit wires cannot scale to CPU
-2. **Behavioral ≠ cheating** - Necessary for scale, still cycle-accurate
-3. **Gate-level where educational** - ALU slices, registers, control logic
-4. **Start simple** - Single-cycle before pipeline, pipeline before OOO
-5. **Validate constantly** - Test every phase before moving forward
-6. **Timeline is realistic** - 3 years from gates to GPU is achievable
+2. **Lower-level first** - Gates, slices, and composites come before behavioral shortcuts
+3. **Behavioral must be proven** - Necessary for scale, but only as tested abstraction of lower-level behavior
+4. **Gate-level where educational** - ALU slices, registers, control logic
+5. **Start simple** - Single-cycle before pipeline, pipeline before OOO
+6. **Validate constantly** - Test every phase before moving forward
+7. **Timeline is realistic** - 3 years from gates to GPU is achievable
 
 ---
 

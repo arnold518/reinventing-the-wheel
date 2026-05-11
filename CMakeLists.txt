@@ -27,6 +27,12 @@ set(CORE_LOGIC_SOURCES
     src/modules/composite/HalfAdder.cpp
     src/modules/composite/FullAdder.cpp
     src/modules/composite/Adder8.cpp
+    src/modules/composite/AddSub32.cpp
+    src/modules/composite/Logic32.cpp
+    src/modules/composite/ZeroDetect32.cpp
+    src/modules/composite/Comparator32.cpp
+    src/modules/composite/Shifter32.cpp
+    src/modules/composite/ALU32.cpp
     src/modules/composite/Arithmetic8.cpp
     src/modules/composite/Comparator8.cpp
     src/modules/composite/Shifter8.cpp
@@ -42,6 +48,7 @@ set(CORE_LOGIC_SOURCES
     src/tests/CorePrimitiveTests.cpp
     src/tests/UtilityComponentTests.cpp
     src/tests/ArithmeticLogicTests.cpp
+    src/tests/RV32IALU32Tests.cpp
     src/tests/TestRegistry.cpp
 )
 

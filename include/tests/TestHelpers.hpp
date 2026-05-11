@@ -101,6 +101,7 @@ inline std::shared_ptr<Event> makeTestWireUpdate(size_t time, const std::shared_
         case 2: return std::make_shared<WireUpdateEvent<2>>(time, std::dynamic_pointer_cast<Wire<2>>(wire), numeric);
         case 3: return std::make_shared<WireUpdateEvent<3>>(time, std::dynamic_pointer_cast<Wire<3>>(wire), numeric);
         case 4: return std::make_shared<WireUpdateEvent<4>>(time, std::dynamic_pointer_cast<Wire<4>>(wire), numeric);
+        case 5: return std::make_shared<WireUpdateEvent<5>>(time, std::dynamic_pointer_cast<Wire<5>>(wire), numeric);
         case 8: return std::make_shared<WireUpdateEvent<8>>(time, std::dynamic_pointer_cast<Wire<8>>(wire), numeric);
         case 16: return std::make_shared<WireUpdateEvent<16>>(time, std::dynamic_pointer_cast<Wire<16>>(wire), numeric);
         case 32: return std::make_shared<WireUpdateEvent<32>>(time, std::dynamic_pointer_cast<Wire<32>>(wire), numeric);
@@ -267,6 +268,13 @@ bool runRowsWithOptions(const std::vector<TestRow>& rows, const RunRowsOptions& 
         }
     }
     return true;
+}
+
+template<typename ComponentT, typename... Args>
+bool runRowsBatched(const std::vector<TestRow>& rows, size_t time_step, Args&&... args) {
+    RunRowsOptions options;
+    options.time_step = time_step;
+    return runRowsWithOptions<ComponentT>(rows, options, std::forward<Args>(args)...);
 }
 
 template<typename ComponentT, typename... Args>

@@ -59,6 +59,14 @@ public:
     RewireUnmappedHighTest();
 };
 
+class RewireWidth5Test : public ComponentRowsTest<Rewire,
+                                                   std::vector<Rewire::WireSpec>,
+                                                   std::vector<Rewire::WireSpec>,
+                                                   std::vector<Rewire::BitMap>> {
+public:
+    RewireWidth5Test();
+};
+
 class RewireUnmappedUnknownTest : public SimulationTest {
 public:
     void setupCircuit() override;

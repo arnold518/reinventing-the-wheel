@@ -18,6 +18,7 @@ bool isSupportedWidth(size_t width) {
         case 2:
         case 3:
         case 4:
+        case 5:
         case 8:
         case 16:
         case 32:
@@ -38,6 +39,7 @@ std::shared_ptr<Event> makeWireUpdate(size_t time, const std::shared_ptr<WireBas
         case 2: return std::make_shared<WireUpdateEvent<2>>(time, std::dynamic_pointer_cast<Wire<2>>(wire), values);
         case 3: return std::make_shared<WireUpdateEvent<3>>(time, std::dynamic_pointer_cast<Wire<3>>(wire), values);
         case 4: return std::make_shared<WireUpdateEvent<4>>(time, std::dynamic_pointer_cast<Wire<4>>(wire), values);
+        case 5: return std::make_shared<WireUpdateEvent<5>>(time, std::dynamic_pointer_cast<Wire<5>>(wire), values);
         case 8: return std::make_shared<WireUpdateEvent<8>>(time, std::dynamic_pointer_cast<Wire<8>>(wire), values);
         case 16: return std::make_shared<WireUpdateEvent<16>>(time, std::dynamic_pointer_cast<Wire<16>>(wire), values);
         case 32: return std::make_shared<WireUpdateEvent<32>>(time, std::dynamic_pointer_cast<Wire<32>>(wire), values);

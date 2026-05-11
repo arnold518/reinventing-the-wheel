@@ -56,6 +56,8 @@ std::shared_ptr<Event> makeWireUpdateEvent(size_t time, const std::shared_ptr<Wi
             return std::make_shared<WireUpdateEvent<3>>(time, std::dynamic_pointer_cast<Wire<3>>(wire), numeric_value);
         case 4:
             return std::make_shared<WireUpdateEvent<4>>(time, std::dynamic_pointer_cast<Wire<4>>(wire), numeric_value);
+        case 5:
+            return std::make_shared<WireUpdateEvent<5>>(time, std::dynamic_pointer_cast<Wire<5>>(wire), numeric_value);
         case 8:
             return std::make_shared<WireUpdateEvent<8>>(time, std::dynamic_pointer_cast<Wire<8>>(wire), numeric_value);
         case 16:

@@ -18,6 +18,7 @@ set(SIMULATION_TESTS
     RewireZeroExtendTest
     RewireSignExtendTest
     RewireUnmappedHighTest
+    RewireWidth5Test
     RewireUnmappedUnknownTest
     RewireValidationTest
     BitSplitter8Test
@@ -58,6 +59,7 @@ set(SIMULATION_TESTS
     ShiftRightArithmetic8Test
     ZeroDetect8Test
     ALU8Test
+    RV32IALU32Test
 )
 
 foreach(test_name ${SIMULATION_TESTS})

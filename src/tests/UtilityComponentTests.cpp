@@ -154,6 +154,22 @@ RewireUnmappedHighTest::RewireUnmappedHighTest()
           identity_mapping("NIBBLE", 0, 4, "BYTE", 0),
           Rewire::UnmappedBitValue::HIGH) {}
 
+RewireWidth5Test::RewireWidth5Test()
+    : ComponentRowsTest<Rewire,
+                        std::vector<Rewire::WireSpec>,
+                        std::vector<Rewire::WireSpec>,
+                        std::vector<Rewire::BitMap>>(
+          "RewireWidth5Test",
+          "REWIRE_WIDTH5_ROOT",
+          {
+              {{{"OP", bits(0x15)}}, {{"COPY", bits(0x15)}}},
+              {{{"OP", bits(0x00)}}, {{"COPY", bits(0x00)}}},
+              {{{"OP", bits(0x1F)}}, {{"COPY", bits(0x1F)}}},
+          },
+          std::vector<Rewire::WireSpec>{{"OP", 5}},
+          std::vector<Rewire::WireSpec>{{"COPY", 5}},
+          identity_mapping("OP", 0, 5, "COPY", 0)) {}
+
 std::string RewireUnmappedUnknownTest::getTestName() const {
     return "RewireUnmappedUnknownTest";
 }
@@ -225,7 +241,7 @@ void RewireValidationTest::verifyResults() {
         [] {
             auto invalid = Component::create<Rewire>(
                 "ROOT",
-                std::vector<Rewire::WireSpec>{{"A", 5}},
+                std::vector<Rewire::WireSpec>{{"A", 7}},
                 std::vector<Rewire::WireSpec>{{"B", 4}},
                 std::vector<Rewire::BitMap>{{"A", 0, "B", 0}});
             (void)invalid;
