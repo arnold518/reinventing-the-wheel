@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <map>
 #include <memory>
+#include <set>
 #include <stdexcept>
 #include <utility>
 
@@ -83,18 +84,27 @@ Rewire::Rewire(std::string name,
 }
 
 bool Rewire::validateMappings() const {
+    std::set<std::string> input_names;
     for (const auto& spec : inputs) {
-        if (spec.width == 0 || !isSupportedWidth(spec.width)) {
+        if (spec.name.empty()
+            || !input_names.insert(spec.name).second
+            || spec.width == 0
+            || !isSupportedWidth(spec.width)) {
             return false;
         }
     }
 
+    std::set<std::string> output_names;
     for (const auto& spec : outputs) {
-        if (spec.width == 0 || !isSupportedWidth(spec.width)) {
+        if (spec.name.empty()
+            || !output_names.insert(spec.name).second
+            || spec.width == 0
+            || !isSupportedWidth(spec.width)) {
             return false;
         }
     }
 
+    std::set<std::pair<std::string, size_t>> destination_bits;
     for (const auto& mapping : bit_mappings) {
         const auto* source = findWireSpec(inputs, mapping.src_wire);
         const auto* destination = findWireSpec(outputs, mapping.dst_wire);
@@ -102,6 +112,9 @@ bool Rewire::validateMappings() const {
             return false;
         }
         if (mapping.src_bit >= source->width || mapping.dst_bit >= destination->width) {
+            return false;
+        }
+        if (!destination_bits.insert({mapping.dst_wire, mapping.dst_bit}).second) {
             return false;
         }
     }

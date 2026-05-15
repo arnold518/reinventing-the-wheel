@@ -7,9 +7,37 @@
 #include "simulator/Simulator.hpp"
 #include <cassert>
 #include <iostream>
+#include <sstream>
 #include <stdexcept>
 
 namespace {
+std::string pinValueToString(const PinValue& value) {
+    std::ostringstream out;
+    if (value.isMultiBit()) {
+        out << "0x" << std::hex << std::uppercase << value.asUInt64();
+    } else {
+        out << value.asLogicValue();
+    }
+    return out.str();
+}
+
+std::string pinValuesToString(const std::map<std::string, PinValue>& values) {
+    std::ostringstream out;
+    bool first = true;
+    for (const auto& [pin_name, value] : values) {
+        if (!first) {
+            out << ", ";
+        }
+        first = false;
+        out << pin_name << "=" << pinValueToString(value);
+    }
+    return out.str();
+}
+
+std::string truthRowCheckpointDetail(const TruthRow& row) {
+    return pinValuesToString(row.inputs) + " -> " + pinValuesToString(row.outputs);
+}
+
 std::shared_ptr<Event> makeWireUpdateEvent(size_t time, const std::shared_ptr<WireBase>& wire, const PinValue& value) {
     if (!wire) {
         return nullptr;
@@ -110,4 +138,18 @@ size_t TruthTableTest::getRunDuration() const {
         return 100;
     }
     return truth_table_.size() * time_step_ + (2 * time_step_);
+}
+
+std::vector<SimulationTest::SimulationCheckpoint> TruthTableTest::getCheckpoints() const {
+    std::vector<SimulationTest::SimulationCheckpoint> checkpoints;
+    checkpoints.reserve(truth_table_.size());
+    for (size_t row_index = 0; row_index < truth_table_.size(); ++row_index) {
+        checkpoints.push_back({
+            ((row_index + 1) * time_step_) - 1,
+            "Row " + std::to_string(row_index),
+            truthRowCheckpointDetail(truth_table_[row_index]),
+            row_index,
+        });
+    }
+    return checkpoints;
 }

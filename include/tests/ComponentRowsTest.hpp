@@ -65,6 +65,23 @@ public:
         return run_duration_;
     }
 
+    std::vector<SimulationTest::SimulationCheckpoint> getCheckpoints() const override {
+        std::vector<SimulationTest::SimulationCheckpoint> checkpoints;
+        if (time_step_ == 0) {
+            return checkpoints;
+        }
+        checkpoints.reserve(rows_.size());
+        for (size_t row_index = 0; row_index < rows_.size(); ++row_index) {
+            checkpoints.push_back({
+                ((row_index + 1) * time_step_) - 1,
+                "Row " + std::to_string(row_index),
+                testRowCheckpointDetail(rows_[row_index]),
+                row_index,
+            });
+        }
+        return checkpoints;
+    }
+
 protected:
     void buildCircuit() override {}
 

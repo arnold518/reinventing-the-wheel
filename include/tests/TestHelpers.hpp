@@ -15,6 +15,7 @@
 #include <map>
 #include <memory>
 #include <optional>
+#include <sstream>
 #include <string>
 #include <type_traits>
 #include <vector>
@@ -33,6 +34,33 @@ struct TestRow {
     std::map<std::string, TestValue> inputs;
     std::map<std::string, TestValue> outputs;
 };
+
+inline std::string testValueToString(const TestValue& value) {
+    std::ostringstream out;
+    if (value.multi) {
+        out << "0x" << std::hex << std::uppercase << value.numeric;
+    } else {
+        out << value.logic;
+    }
+    return out.str();
+}
+
+inline std::string testValuesToString(const std::map<std::string, TestValue>& values) {
+    std::ostringstream out;
+    bool first = true;
+    for (const auto& [pin_name, value] : values) {
+        if (!first) {
+            out << ", ";
+        }
+        first = false;
+        out << pin_name << "=" << testValueToString(value);
+    }
+    return out.str();
+}
+
+inline std::string testRowCheckpointDetail(const TestRow& row) {
+    return testValuesToString(row.inputs) + " -> " + testValuesToString(row.outputs);
+}
 
 struct RunRowsOptions {
     std::optional<size_t> time_step = std::nullopt;

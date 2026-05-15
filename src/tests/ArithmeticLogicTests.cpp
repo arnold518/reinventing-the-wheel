@@ -101,6 +101,9 @@ std::vector<TruthRow> HalfAdderTest::getTruthTable() const {
         TruthRow({{"A", pinLogic(L)}, {"B", pinLogic(H)}}, {{"Sum", pinLogic(H)}, {"Carry", pinLogic(L)}}),
         TruthRow({{"A", pinLogic(H)}, {"B", pinLogic(L)}}, {{"Sum", pinLogic(H)}, {"Carry", pinLogic(L)}}),
         TruthRow({{"A", pinLogic(H)}, {"B", pinLogic(H)}}, {{"Sum", pinLogic(L)}, {"Carry", pinLogic(H)}}),
+        TruthRow({{"A", pinLogic(LogicValue::UNKNOWN)}, {"B", pinLogic(L)}}, {{"Sum", pinLogic(LogicValue::UNKNOWN)}, {"Carry", pinLogic(L)}}),
+        TruthRow({{"A", pinLogic(LogicValue::UNKNOWN)}, {"B", pinLogic(H)}}, {{"Sum", pinLogic(LogicValue::UNKNOWN)}, {"Carry", pinLogic(LogicValue::UNKNOWN)}}),
+        TruthRow({{"A", pinLogic(LogicValue::HIGH_Z)}, {"B", pinLogic(L)}}, {{"Sum", pinLogic(LogicValue::UNKNOWN)}, {"Carry", pinLogic(L)}}),
     };
 }
 
@@ -120,6 +123,9 @@ std::vector<TruthRow> FullAdderTest::getTruthTable() const {
         TruthRow({{"A", pinLogic(H)}, {"B", pinLogic(L)}, {"Carry_in", pinLogic(H)}}, {{"Sum", pinLogic(L)}, {"Carry_out", pinLogic(H)}}),
         TruthRow({{"A", pinLogic(H)}, {"B", pinLogic(H)}, {"Carry_in", pinLogic(L)}}, {{"Sum", pinLogic(L)}, {"Carry_out", pinLogic(H)}}),
         TruthRow({{"A", pinLogic(H)}, {"B", pinLogic(H)}, {"Carry_in", pinLogic(H)}}, {{"Sum", pinLogic(H)}, {"Carry_out", pinLogic(H)}}),
+        TruthRow({{"A", pinLogic(LogicValue::UNKNOWN)}, {"B", pinLogic(L)}, {"Carry_in", pinLogic(L)}}, {{"Sum", pinLogic(LogicValue::UNKNOWN)}, {"Carry_out", pinLogic(L)}}),
+        TruthRow({{"A", pinLogic(LogicValue::UNKNOWN)}, {"B", pinLogic(H)}, {"Carry_in", pinLogic(L)}}, {{"Sum", pinLogic(LogicValue::UNKNOWN)}, {"Carry_out", pinLogic(LogicValue::UNKNOWN)}}),
+        TruthRow({{"A", pinLogic(H)}, {"B", pinLogic(H)}, {"Carry_in", pinLogic(LogicValue::UNKNOWN)}}, {{"Sum", pinLogic(LogicValue::UNKNOWN)}, {"Carry_out", pinLogic(H)}}),
     };
 }
 
@@ -127,36 +133,48 @@ AND8Test::AND8Test()
     : ComponentRowsTest<AND8>("AND8Test", "AND8_ROOT", {
         {{{"A", bits(0xF0)}, {"B", bits(0x3C)}}, {{"OUT", bits(0x30)}}},
         {{{"A", bits(0xFF)}, {"B", bits(0x00)}}, {{"OUT", bits(0x00)}}},
+        {{{"A", bits(0xA5)}, {"B", bits(0x5A)}}, {{"OUT", bits(0x00)}}},
+        {{{"A", bits(0x81)}, {"B", bits(0xC3)}}, {{"OUT", bits(0x81)}}},
     }) {}
 
 OR8Test::OR8Test()
     : ComponentRowsTest<OR8>("OR8Test", "OR8_ROOT", {
         {{{"A", bits(0xF0)}, {"B", bits(0x0F)}}, {{"OUT", bits(0xFF)}}},
         {{{"A", bits(0x00)}, {"B", bits(0x00)}}, {{"OUT", bits(0x00)}}},
+        {{{"A", bits(0xA5)}, {"B", bits(0x5A)}}, {{"OUT", bits(0xFF)}}},
+        {{{"A", bits(0x81)}, {"B", bits(0x42)}}, {{"OUT", bits(0xC3)}}},
     }) {}
 
 XOR8Test::XOR8Test()
     : ComponentRowsTest<XOR8>("XOR8Test", "XOR8_ROOT", {
         {{{"A", bits(0xAA)}, {"B", bits(0x55)}}, {{"OUT", bits(0xFF)}}},
         {{{"A", bits(0xFF)}, {"B", bits(0xFF)}}, {{"OUT", bits(0x00)}}},
+        {{{"A", bits(0xF0)}, {"B", bits(0x3C)}}, {{"OUT", bits(0xCC)}}},
+        {{{"A", bits(0x81)}, {"B", bits(0x42)}}, {{"OUT", bits(0xC3)}}},
     }) {}
 
 NOT8Test::NOT8Test()
     : ComponentRowsTest<NOT8>("NOT8Test", "NOT8_ROOT", {
         {{{"A", bits(0x00)}}, {{"OUT", bits(0xFF)}}},
         {{{"A", bits(0xA5)}}, {{"OUT", bits(0x5A)}}},
+        {{{"A", bits(0xFF)}}, {{"OUT", bits(0x00)}}},
+        {{{"A", bits(0x81)}}, {{"OUT", bits(0x7E)}}},
     }) {}
 
 NAND8Test::NAND8Test()
     : ComponentRowsTest<NAND8>("NAND8Test", "NAND8_ROOT", {
         {{{"A", bits(0xFF)}, {"B", bits(0x0F)}}, {{"OUT", bits(0xF0)}}},
         {{{"A", bits(0xFF)}, {"B", bits(0xFF)}}, {{"OUT", bits(0x00)}}},
+        {{{"A", bits(0x00)}, {"B", bits(0xFF)}}, {{"OUT", bits(0xFF)}}},
+        {{{"A", bits(0x81)}, {"B", bits(0xC3)}}, {{"OUT", bits(0x7E)}}},
     }) {}
 
 NOR8Test::NOR8Test()
     : ComponentRowsTest<NOR8>("NOR8Test", "NOR8_ROOT", {
         {{{"A", bits(0xF0)}, {"B", bits(0x0F)}}, {{"OUT", bits(0x00)}}},
         {{{"A", bits(0x00)}, {"B", bits(0x00)}}, {{"OUT", bits(0xFF)}}},
+        {{{"A", bits(0xA5)}, {"B", bits(0x5A)}}, {{"OUT", bits(0x00)}}},
+        {{{"A", bits(0x81)}, {"B", bits(0x42)}}, {{"OUT", bits(0x3C)}}},
     }) {}
 
 Mux2to1Test::Mux2to1Test()
@@ -189,6 +207,8 @@ TwosComplement8Test::TwosComplement8Test()
         {{{"A", bits(0x01)}}, {{"Result", bits(0xFF)}, {"Cout", bit(true)}, {"Overflow", bit(false)}}},
         {{{"A", bits(0x7F)}}, {{"Result", bits(0x81)}, {"Cout", bit(true)}, {"Overflow", bit(false)}}},
         {{{"A", bits(0x80)}}, {{"Result", bits(0x80)}, {"Cout", bit(true)}, {"Overflow", bit(true)}}},
+        {{{"A", bits(0xFF)}}, {{"Result", bits(0x01)}, {"Cout", bit(true)}, {"Overflow", bit(false)}}},
+        {{{"A", bits(0x55)}}, {{"Result", bits(0xAB)}, {"Cout", bit(true)}, {"Overflow", bit(false)}}},
     }) {}
 
 Subtractor8Test::Subtractor8Test()
@@ -197,6 +217,10 @@ Subtractor8Test::Subtractor8Test()
         {{{"A", bits(0x00)}, {"B", bits(0x01)}}, {{"Result", bits(0xFF)}, {"Cout", bit(false)}, {"Overflow", bit(false)}}},
         {{{"A", bits(0x80)}, {"B", bits(0x01)}}, {{"Result", bits(0x7F)}, {"Cout", bit(true)}, {"Overflow", bit(true)}}},
         {{{"A", bits(0x7F)}, {"B", bits(0xFF)}}, {{"Result", bits(0x80)}, {"Cout", bit(false)}, {"Overflow", bit(true)}}},
+        {{{"A", bits(0x10)}, {"B", bits(0x10)}}, {{"Result", bits(0x00)}, {"Cout", bit(true)}, {"Overflow", bit(false)}}},
+        {{{"A", bits(0xFF)}, {"B", bits(0x01)}}, {{"Result", bits(0xFE)}, {"Cout", bit(true)}, {"Overflow", bit(false)}}},
+        {{{"A", bits(0x00)}, {"B", bits(0x80)}}, {{"Result", bits(0x80)}, {"Cout", bit(false)}, {"Overflow", bit(true)}}},
+        {{{"A", bits(0x80)}, {"B", bits(0x7F)}}, {{"Result", bits(0x01)}, {"Cout", bit(true)}, {"Overflow", bit(true)}}},
     }) {}
 
 SubtractorWithBorrow8Test::SubtractorWithBorrow8Test()
@@ -205,12 +229,17 @@ SubtractorWithBorrow8Test::SubtractorWithBorrow8Test()
         {{{"A", bits(0x05)}, {"B", bits(0x03)}, {"Bin", bit(true)}}, {{"Result", bits(0x01)}, {"Bout", bit(true)}, {"Overflow", bit(false)}}},
         {{{"A", bits(0x00)}, {"B", bits(0x00)}, {"Bin", bit(true)}}, {{"Result", bits(0xFF)}, {"Bout", bit(false)}, {"Overflow", bit(false)}}},
         {{{"A", bits(0x80)}, {"B", bits(0x00)}, {"Bin", bit(true)}}, {{"Result", bits(0x7F)}, {"Bout", bit(true)}, {"Overflow", bit(true)}}},
+        {{{"A", bits(0x00)}, {"B", bits(0x01)}, {"Bin", bit(true)}}, {{"Result", bits(0xFE)}, {"Bout", bit(false)}, {"Overflow", bit(false)}}},
+        {{{"A", bits(0x7F)}, {"B", bits(0xFF)}, {"Bin", bit(true)}}, {{"Result", bits(0x7F)}, {"Bout", bit(false)}, {"Overflow", bit(false)}}},
+        {{{"A", bits(0x80)}, {"B", bits(0x7F)}, {"Bin", bit(true)}}, {{"Result", bits(0x00)}, {"Bout", bit(true)}, {"Overflow", bit(true)}}},
     }) {}
 
 Incrementer8Test::Incrementer8Test()
     : ComponentRowsTest<Incrementer8>("Incrementer8Test", "INCREMENTER8_ROOT", {
         {{{"A", bits(0x00)}}, {{"Result", bits(0x01)}, {"Cout", bit(false)}, {"Overflow", bit(false)}}},
         {{{"A", bits(0x7F)}}, {{"Result", bits(0x80)}, {"Cout", bit(false)}, {"Overflow", bit(true)}}},
+        {{{"A", bits(0x80)}}, {{"Result", bits(0x81)}, {"Cout", bit(false)}, {"Overflow", bit(false)}}},
+        {{{"A", bits(0xFE)}}, {{"Result", bits(0xFF)}, {"Cout", bit(false)}, {"Overflow", bit(false)}}},
         {{{"A", bits(0xFF)}}, {{"Result", bits(0x00)}, {"Cout", bit(true)}, {"Overflow", bit(false)}}},
     }) {}
 
@@ -218,13 +247,19 @@ Decrementer8Test::Decrementer8Test()
     : ComponentRowsTest<Decrementer8>("Decrementer8Test", "DECREMENTER8_ROOT", {
         {{{"A", bits(0x00)}}, {{"Result", bits(0xFF)}, {"Bout", bit(false)}, {"Overflow", bit(false)}}},
         {{{"A", bits(0x01)}}, {{"Result", bits(0x00)}, {"Bout", bit(true)}, {"Overflow", bit(false)}}},
+        {{{"A", bits(0x7F)}}, {{"Result", bits(0x7E)}, {"Bout", bit(true)}, {"Overflow", bit(false)}}},
         {{{"A", bits(0x80)}}, {{"Result", bits(0x7F)}, {"Bout", bit(true)}, {"Overflow", bit(true)}}},
+        {{{"A", bits(0x81)}}, {{"Result", bits(0x80)}, {"Bout", bit(true)}, {"Overflow", bit(false)}}},
+        {{{"A", bits(0xFF)}}, {{"Result", bits(0xFE)}, {"Bout", bit(true)}, {"Overflow", bit(false)}}},
     }) {}
 
 EqualityChecker8Test::EqualityChecker8Test()
     : ComponentRowsTest<EqualityChecker8>("EqualityChecker8Test", "EQUALITY_CHECKER8_ROOT", {
         {{{"A", bits(0x42)}, {"B", bits(0x42)}}, {{"EQ", bit(true)}}},
         {{{"A", bits(0x42)}, {"B", bits(0x43)}}, {{"EQ", bit(false)}}},
+        {{{"A", bits(0x00)}, {"B", bits(0x00)}}, {{"EQ", bit(true)}}},
+        {{{"A", bits(0xFF)}, {"B", bits(0x00)}}, {{"EQ", bit(false)}}},
+        {{{"A", bits(0x80)}, {"B", bits(0x00)}}, {{"EQ", bit(false)}}},
     }) {}
 
 Comparator8Test::Comparator8Test()
@@ -232,6 +267,10 @@ Comparator8Test::Comparator8Test()
         {{{"A", bits(0x01)}, {"B", bits(0x02)}}, {{"LT", bit(true)}, {"GT", bit(false)}, {"EQ", bit(false)}}},
         {{{"A", bits(0x42)}, {"B", bits(0x42)}}, {{"LT", bit(false)}, {"GT", bit(false)}, {"EQ", bit(true)}}},
         {{{"A", bits(0xFF)}, {"B", bits(0x02)}}, {{"LT", bit(false)}, {"GT", bit(true)}, {"EQ", bit(false)}}},
+        {{{"A", bits(0x00)}, {"B", bits(0xFF)}}, {{"LT", bit(true)}, {"GT", bit(false)}, {"EQ", bit(false)}}},
+        {{{"A", bits(0xFF)}, {"B", bits(0x00)}}, {{"LT", bit(false)}, {"GT", bit(true)}, {"EQ", bit(false)}}},
+        {{{"A", bits(0x00)}, {"B", bits(0x00)}}, {{"LT", bit(false)}, {"GT", bit(false)}, {"EQ", bit(true)}}},
+        {{{"A", bits(0x80)}, {"B", bits(0x7F)}}, {{"LT", bit(false)}, {"GT", bit(true)}, {"EQ", bit(false)}}},
     }) {}
 
 SignedComparator8Test::SignedComparator8Test()
@@ -239,25 +278,40 @@ SignedComparator8Test::SignedComparator8Test()
         {{{"A", bits(0xFF)}, {"B", bits(0x01)}}, {{"SLT", bit(true)}, {"SGT", bit(false)}, {"SEQ", bit(false)}}},
         {{{"A", bits(0x7F)}, {"B", bits(0x80)}}, {{"SLT", bit(false)}, {"SGT", bit(true)}, {"SEQ", bit(false)}}},
         {{{"A", bits(0x80)}, {"B", bits(0x80)}}, {{"SLT", bit(false)}, {"SGT", bit(false)}, {"SEQ", bit(true)}}},
+        {{{"A", bits(0x80)}, {"B", bits(0xFF)}}, {{"SLT", bit(true)}, {"SGT", bit(false)}, {"SEQ", bit(false)}}},
+        {{{"A", bits(0xFF)}, {"B", bits(0x80)}}, {{"SLT", bit(false)}, {"SGT", bit(true)}, {"SEQ", bit(false)}}},
+        {{{"A", bits(0x00)}, {"B", bits(0xFF)}}, {{"SLT", bit(false)}, {"SGT", bit(true)}, {"SEQ", bit(false)}}},
+        {{{"A", bits(0x7F)}, {"B", bits(0x01)}}, {{"SLT", bit(false)}, {"SGT", bit(true)}, {"SEQ", bit(false)}}},
+        {{{"A", bits(0x00)}, {"B", bits(0x00)}}, {{"SLT", bit(false)}, {"SGT", bit(false)}, {"SEQ", bit(true)}}},
     }) {}
 
 ShiftLeftLogical8Test::ShiftLeftLogical8Test()
     : ComponentRowsTest<ShiftLeftLogical8>("ShiftLeftLogical8Test", "SHIFT_LEFT_LOGICAL8_ROOT", {
+        {{{"A", bits(0x00)}}, {{"Result", bits(0x00)}, {"Carry", bit(false)}}},
         {{{"A", bits(0x01)}}, {{"Result", bits(0x02)}, {"Carry", bit(false)}}},
+        {{{"A", bits(0x7F)}}, {{"Result", bits(0xFE)}, {"Carry", bit(false)}}},
         {{{"A", bits(0x80)}}, {{"Result", bits(0x00)}, {"Carry", bit(true)}}},
+        {{{"A", bits(0xFF)}}, {{"Result", bits(0xFE)}, {"Carry", bit(true)}}},
     }) {}
 
 ShiftRightLogical8Test::ShiftRightLogical8Test()
     : ComponentRowsTest<ShiftRightLogical8>("ShiftRightLogical8Test", "SHIFT_RIGHT_LOGICAL8_ROOT", {
+        {{{"A", bits(0x00)}}, {{"Result", bits(0x00)}, {"Carry", bit(false)}}},
         {{{"A", bits(0x81)}}, {{"Result", bits(0x40)}, {"Carry", bit(true)}}},
         {{{"A", bits(0x02)}}, {{"Result", bits(0x01)}, {"Carry", bit(false)}}},
+        {{{"A", bits(0x80)}}, {{"Result", bits(0x40)}, {"Carry", bit(false)}}},
+        {{{"A", bits(0xFF)}}, {{"Result", bits(0x7F)}, {"Carry", bit(true)}}},
     }) {}
 
 ShiftRightArithmetic8Test::ShiftRightArithmetic8Test()
     : ComponentRowsTest<ShiftRightArithmetic8>("ShiftRightArithmetic8Test", "SHIFT_RIGHT_ARITHMETIC8_ROOT", {
+        {{{"A", bits(0x00)}}, {{"Result", bits(0x00)}, {"Carry", bit(false)}}},
         {{{"A", bits(0x81)}}, {{"Result", bits(0xC0)}, {"Carry", bit(true)}}},
         {{{"A", bits(0x80)}}, {{"Result", bits(0xC0)}, {"Carry", bit(false)}}},
         {{{"A", bits(0x02)}}, {{"Result", bits(0x01)}, {"Carry", bit(false)}}},
+        {{{"A", bits(0x01)}}, {{"Result", bits(0x00)}, {"Carry", bit(true)}}},
+        {{{"A", bits(0x7F)}}, {{"Result", bits(0x3F)}, {"Carry", bit(true)}}},
+        {{{"A", bits(0xFF)}}, {{"Result", bits(0xFF)}, {"Carry", bit(true)}}},
     }) {}
 
 Adder8Test::Adder8Test()
@@ -275,6 +329,10 @@ std::vector<TruthRow> Adder8Test::getTruthTable() const {
         adderRow(0x7F, 0x00, true, 0x80, false),
         adderRow(0x80, 0x80, false, 0x00, true),
         adderRow(0xAA, 0x55, true, 0x00, true),
+        adderRow(0x00, 0x00, true, 0x01, false),
+        adderRow(0xFF, 0xFF, false, 0xFE, true),
+        adderRow(0x80, 0x7F, true, 0x00, true),
+        adderRow(0x55, 0xAA, false, 0xFF, false),
     };
 }
 
@@ -287,7 +345,9 @@ std::vector<TruthRow> ZeroDetect8Test::getTruthTable() const {
     return {
         TruthRow({{"A", pinBits(0x00)}}, {{"ZERO", pinBit(true)}}),
         TruthRow({{"A", pinBits(0x01)}}, {{"ZERO", pinBit(false)}}),
+        TruthRow({{"A", pinBits(0x02)}}, {{"ZERO", pinBit(false)}}),
         TruthRow({{"A", pinBits(0x10)}}, {{"ZERO", pinBit(false)}}),
+        TruthRow({{"A", pinBits(0x7F)}}, {{"ZERO", pinBit(false)}}),
         TruthRow({{"A", pinBits(0x80)}}, {{"ZERO", pinBit(false)}}),
         TruthRow({{"A", pinBits(0xFF)}}, {{"ZERO", pinBit(false)}}),
     };
@@ -303,23 +363,31 @@ std::vector<TruthRow> ALU8Test::getTruthTable() const {
         aluRow(0x00, 0x00, 0x0, 0x00, true, false, false, false),
         aluRow(0xFF, 0x01, 0x0, 0x00, true, true, false, false),
         aluRow(0x7F, 0x01, 0x0, 0x80, false, false, true, true),
+        aluRow(0x80, 0x80, 0x0, 0x00, true, true, true, false),
         aluRow(0x05, 0x03, 0x1, 0x02, false, true, false, false),
         aluRow(0x00, 0x01, 0x1, 0xFF, false, false, false, true),
+        aluRow(0x42, 0x42, 0x1, 0x00, true, true, false, false),
         aluRow(0xFF, 0x0F, 0x2, 0x0F, false, false, false, false),
+        aluRow(0xF0, 0x0F, 0x2, 0x00, true, false, false, false),
         aluRow(0xF0, 0x0F, 0x3, 0xFF, false, false, false, true),
         aluRow(0xAA, 0x55, 0x4, 0xFF, false, false, false, true),
+        aluRow(0x5A, 0x5A, 0x4, 0x00, true, false, false, false),
         aluRow(0x00, 0x00, 0x5, 0xFF, false, false, false, true),
         aluRow(0x80, 0x00, 0x6, 0x00, true, true, false, false),
         aluRow(0x01, 0x00, 0x6, 0x02, false, false, false, false),
+        aluRow(0xFF, 0x00, 0x6, 0xFE, false, true, false, true),
         aluRow(0x01, 0x00, 0x7, 0x00, true, true, false, false),
         aluRow(0x02, 0x00, 0x7, 0x01, false, false, false, false),
+        aluRow(0xFF, 0x00, 0x7, 0x7F, false, true, false, false),
         aluRow(0x80, 0x00, 0x8, 0xC0, false, false, false, true),
+        aluRow(0x7F, 0x00, 0x8, 0x3F, false, true, false, false),
         aluRow(0xFF, 0x00, 0x9, 0x00, true, true, false, false),
         aluRow(0x7F, 0x00, 0x9, 0x80, false, false, true, true),
         aluRow(0x00, 0x00, 0xA, 0xFF, false, false, false, true),
         aluRow(0x80, 0x00, 0xA, 0x7F, false, true, true, false),
         aluRow(0x01, 0x00, 0xB, 0xFF, false, true, false, true),
         aluRow(0x80, 0x00, 0xB, 0x80, false, true, true, true),
+        aluRow(0xFF, 0x00, 0xB, 0x01, false, true, false, false),
         aluRow(0x42, 0xFF, 0xC, 0x42, false, false, false, false),
         aluRow(0xFF, 0x42, 0xD, 0x42, false, false, false, false),
         aluRow(0x05, 0x03, 0xE, 0x02, false, true, false, false),

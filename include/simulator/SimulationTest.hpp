@@ -1,6 +1,7 @@
 #pragma once
 #include <memory>
 #include <string>
+#include <vector>
 #include <stdexcept>
 #include <cassert>
 #include <iostream>
@@ -23,6 +24,15 @@ public:
 
     std::shared_ptr<Component> getRoot() const { return root; }
     Simulator* getSimulator() const { return sim.get(); }
+
+    struct SimulationCheckpoint {
+        size_t time = 0;
+        std::string label;
+        std::string detail;
+        size_t row_index = 0;
+    };
+
+    virtual std::vector<SimulationCheckpoint> getCheckpoints() const { return {}; }
 
     virtual void setupCircuit() {
         root = std::make_shared<Component>(getTestName());

@@ -1,5 +1,6 @@
 #include "Bindings.hpp"
 #include "simulator/SimulationTest.hpp"
+#include <pybind11/stl.h>
 
 // A trampoline class is REQUIRED for pybind11 to handle abstract classes.
 // It allows Python-derived classes to correctly override C++ virtual methods.
@@ -16,10 +17,19 @@ public:
     
     // Use PYBIND11_OVERRIDE for non-pure virtual methods if you want them to be overridable in Python.
     size_t getRunDuration() const override { PYBIND11_OVERRIDE(size_t, SimulationTest, getRunDuration); }
+    std::vector<SimulationTest::SimulationCheckpoint> getCheckpoints() const override {
+        PYBIND11_OVERRIDE(std::vector<SimulationTest::SimulationCheckpoint>, SimulationTest, getCheckpoints);
+    }
 };
 
 
 void bindSimulationTest(py::module_& m) {
+    py::class_<SimulationTest::SimulationCheckpoint>(m, "SimulationCheckpoint")
+        .def_readonly("time", &SimulationTest::SimulationCheckpoint::time)
+        .def_readonly("label", &SimulationTest::SimulationCheckpoint::label)
+        .def_readonly("detail", &SimulationTest::SimulationCheckpoint::detail)
+        .def_readonly("row_index", &SimulationTest::SimulationCheckpoint::row_index);
+
     py::class_<SimulationTest, PySimulationTest, std::shared_ptr<SimulationTest>>(m, "SimulationTest", "The abstract base class for all simulation tests.", py::module_local(false))
         
         .def(py::init<>()) // Bind the default constructor
@@ -36,5 +46,8 @@ void bindSimulationTest(py::module_& m) {
             // This policy is crucial: it tells Python it does not own the Simulator object,
             // preventing Python from trying to delete it when the pointer goes out of scope.
             py::return_value_policy::reference,
-            "Returns a non-owning handle to the simulator instance.");
+            "Returns a non-owning handle to the simulator instance.")
+
+        .def("get_checkpoints", &SimulationTest::getCheckpoints,
+            "Returns semantic timestamps such as settled truth-table rows.");
 }

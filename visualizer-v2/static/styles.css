@@ -43,7 +43,8 @@ body {
 }
 
 button,
-select {
+select,
+input {
   height: 36px;
   border: 1px solid #4f6f93;
   background: #3d5a80;
@@ -54,12 +55,26 @@ select {
 }
 
 button:hover,
-select:hover {
+select:hover,
+input:hover {
   background: #4f739f;
 }
 
 button:active {
   background: #293241;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+input[type="color"] {
+  padding: 2px;
+}
+
+input[type="range"] {
+  padding: 0;
 }
 
 #time-slider {
@@ -68,8 +83,12 @@ button:active {
 }
 
 #time-label {
-  min-width: 130px;
+  min-width: 150px;
+  max-width: 260px;
   color: #dddddd;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 #stats-label,
@@ -92,6 +111,165 @@ button:active {
   font-size: 13px;
   pointer-events: none;
   white-space: nowrap;
+}
+
+.inspector {
+  position: fixed;
+  z-index: 12;
+  top: 64px;
+  right: 12px;
+  width: 280px;
+  max-height: calc(100vh - 88px);
+  overflow: auto;
+  padding: 12px;
+  border: 1px solid #4f6f93;
+  background: rgba(22, 27, 34, 0.94);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.35);
+}
+
+.inspector-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.inspector-title {
+  color: #f5f5f5;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.inspector-subtitle,
+.inspector-value {
+  color: #b9c6d3;
+  font-size: 12px;
+}
+
+.inspector-path {
+  max-width: 226px;
+  margin-top: 6px;
+  color: #dce6f0;
+  font-family: Consolas, "Liberation Mono", monospace;
+  font-size: 11px;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.inspector-section {
+  display: grid;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.inspector-section-title {
+  color: #dce6f0;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.inspector-field {
+  display: grid;
+  grid-template-columns: 82px 1fr;
+  align-items: center;
+  gap: 8px;
+  color: #b9c6d3;
+  font-size: 13px;
+}
+
+.inspector-field input {
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.inspector-table {
+  display: grid;
+  grid-template-columns: 78px minmax(0, 1fr);
+  gap: 6px 8px;
+  color: #b9c6d3;
+  font-size: 12px;
+}
+
+.inspector-key {
+  color: #8fa7bf;
+}
+
+.inspector-data {
+  min-width: 0;
+  color: #e8eef5;
+  font-family: Consolas, "Liberation Mono", monospace;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.pin-list {
+  display: grid;
+  gap: 10px;
+}
+
+.pin-group {
+  display: grid;
+  gap: 5px;
+}
+
+.pin-group-title {
+  color: #8fa7bf;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.pin-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  height: auto;
+  min-height: 26px;
+  padding: 4px 8px;
+  border-color: rgba(79, 111, 147, 0.8);
+  background: rgba(61, 90, 128, 0.42);
+  text-align: left;
+}
+
+.pin-row-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pin-row-value {
+  max-width: 96px;
+  overflow: hidden;
+  color: #ffffff;
+  font-family: Consolas, "Liberation Mono", monospace;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.color-control {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.color-control input[type="color"] {
+  width: 42px;
+  padding: 2px;
+}
+
+.color-code-input {
+  font-family: Consolas, "Liberation Mono", monospace;
+  text-transform: lowercase;
+}
+
+.color-code-input.invalid {
+  border-color: #ff6b6b;
+  background: #4a2630;
 }
 
 #loading {

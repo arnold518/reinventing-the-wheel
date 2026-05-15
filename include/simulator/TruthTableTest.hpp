@@ -43,4 +43,5 @@ protected:
 public:
     void buildCircuit() override {}
     size_t getRunDuration() const override;
+    std::vector<SimulationCheckpoint> getCheckpoints() const override;
 };

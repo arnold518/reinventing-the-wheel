@@ -10,6 +10,7 @@
 #include "simulator/Event.hpp"
 #include <cassert>
 #include <iostream>
+#include <stdexcept>
 
 namespace {
 void expect(bool condition, const char* test_name) {
@@ -21,6 +22,17 @@ void expect(bool condition, const char* test_name) {
 
 TestValue logic(LogicValue value) {
     return TestValue(value);
+}
+
+template <typename Fn>
+void expectOutOfRange(Fn&& fn, const char* test_name) {
+    try {
+        fn();
+    } catch (const std::out_of_range&) {
+        return;
+    }
+    std::cerr << test_name << " failed: expected std::out_of_range" << std::endl;
+    assert(false && "Expected std::out_of_range");
 }
 
 void expectWireAt(Simulator& sim,
@@ -53,12 +65,31 @@ void WireTemplateTest::verifyResults() {
     expect(bus.getBit(1) == LogicValue::LOW, "WireTemplateTest bus bit 1");
     expect(bus.getBit(7) == LogicValue::HIGH, "WireTemplateTest bus bit 7");
 
+    bus.setValueVector({LogicValue::LOW, LogicValue::HIGH, LogicValue::UNKNOWN});
+    expect(bus.getBit(0) == LogicValue::LOW, "WireTemplateTest vector bit 0");
+    expect(bus.getBit(1) == LogicValue::HIGH, "WireTemplateTest vector bit 1");
+    expect(bus.getBit(2) == LogicValue::UNKNOWN, "WireTemplateTest vector bit 2");
+    expect(bus.getBit(3) == LogicValue::UNKNOWN, "WireTemplateTest vector short fill");
+    bus.setBit(7, LogicValue::HIGH);
+    expect(bus.getBit(7) == LogicValue::HIGH, "WireTemplateTest setBit high bit");
+    expect(bus.getValue() == 0x82, "WireTemplateTest integer ignores unknown bits");
+    expectOutOfRange([&]() { (void)bus.getBit(8); }, "WireTemplateTest getBit bounds");
+    expectOutOfRange([&]() { bus.setBit(8, LogicValue::LOW); }, "WireTemplateTest setBit bounds");
+
     auto owner = std::make_shared<Component>("OWNER");
     Pin<8> pin("P", PinType::INPUT, owner);
     pin.setValueFromUInt64(0x3C);
     expect(pin.getWidth() == 8, "WireTemplateTest pin width");
     expect(pin.getValueAsUInt64() == 0x3C, "WireTemplateTest pin value");
     expect(pin.getBit(2) == LogicValue::HIGH, "WireTemplateTest pin bit 2");
+    pin.setValueFromVector({LogicValue::HIGH, LogicValue::UNKNOWN, LogicValue::LOW, LogicValue::HIGH});
+    expect(pin.getBit(0) == LogicValue::HIGH, "WireTemplateTest pin vector bit 0");
+    expect(pin.getBit(1) == LogicValue::UNKNOWN, "WireTemplateTest pin vector bit 1");
+    expect(pin.getBit(2) == LogicValue::LOW, "WireTemplateTest pin vector bit 2");
+    expect(pin.getBit(3) == LogicValue::HIGH, "WireTemplateTest pin vector bit 3");
+    expect(pin.getBit(4) == LogicValue::UNKNOWN, "WireTemplateTest pin vector short fill");
+    expectOutOfRange([&]() { (void)pin.getBit(8); }, "WireTemplateTest pin getBit bounds");
+    expectOutOfRange([&]() { pin.setBit(8, LogicValue::LOW); }, "WireTemplateTest pin setBit bounds");
 }
 
 NOTGateTest::NOTGateTest()
@@ -76,8 +107,12 @@ ANDGateTest::ANDGateTest()
         {{{"A", bit(true)}, {"B", bit(false)}}, {{"OUT", bit(false)}}},
         {{{"A", bit(true)}, {"B", bit(true)}}, {{"OUT", bit(true)}}},
         {{{"A", bit(false)}, {"B", logic(LogicValue::UNKNOWN)}}, {{"OUT", bit(false)}}},
+        {{{"A", logic(LogicValue::UNKNOWN)}, {"B", bit(false)}}, {{"OUT", bit(false)}}},
         {{{"A", bit(true)}, {"B", logic(LogicValue::UNKNOWN)}}, {{"OUT", logic(LogicValue::UNKNOWN)}}},
+        {{{"A", logic(LogicValue::UNKNOWN)}, {"B", bit(true)}}, {{"OUT", logic(LogicValue::UNKNOWN)}}},
+        {{{"A", logic(LogicValue::UNKNOWN)}, {"B", logic(LogicValue::UNKNOWN)}}, {{"OUT", logic(LogicValue::UNKNOWN)}}},
         {{{"A", logic(LogicValue::HIGH_Z)}, {"B", bit(true)}}, {{"OUT", logic(LogicValue::UNKNOWN)}}},
+        {{{"A", bit(true)}, {"B", logic(LogicValue::HIGH_Z)}}, {{"OUT", logic(LogicValue::UNKNOWN)}}},
     }) {}
 
 ORGateTest::ORGateTest()
@@ -87,8 +122,12 @@ ORGateTest::ORGateTest()
         {{{"A", bit(true)}, {"B", bit(false)}}, {{"OUT", bit(true)}}},
         {{{"A", bit(true)}, {"B", bit(true)}}, {{"OUT", bit(true)}}},
         {{{"A", bit(true)}, {"B", logic(LogicValue::UNKNOWN)}}, {{"OUT", bit(true)}}},
+        {{{"A", logic(LogicValue::UNKNOWN)}, {"B", bit(true)}}, {{"OUT", bit(true)}}},
         {{{"A", bit(false)}, {"B", logic(LogicValue::UNKNOWN)}}, {{"OUT", logic(LogicValue::UNKNOWN)}}},
+        {{{"A", logic(LogicValue::UNKNOWN)}, {"B", bit(false)}}, {{"OUT", logic(LogicValue::UNKNOWN)}}},
+        {{{"A", logic(LogicValue::UNKNOWN)}, {"B", logic(LogicValue::UNKNOWN)}}, {{"OUT", logic(LogicValue::UNKNOWN)}}},
         {{{"A", logic(LogicValue::HIGH_Z)}, {"B", bit(false)}}, {{"OUT", logic(LogicValue::UNKNOWN)}}},
+        {{{"A", bit(false)}, {"B", logic(LogicValue::HIGH_Z)}}, {{"OUT", logic(LogicValue::UNKNOWN)}}},
     }) {}
 
 XORGateTest::XORGateTest()
@@ -97,8 +136,13 @@ XORGateTest::XORGateTest()
         {{{"A", bit(false)}, {"B", bit(true)}}, {{"OUT", bit(true)}}},
         {{{"A", bit(true)}, {"B", bit(false)}}, {{"OUT", bit(true)}}},
         {{{"A", bit(true)}, {"B", bit(true)}}, {{"OUT", bit(false)}}},
+        {{{"A", bit(false)}, {"B", logic(LogicValue::UNKNOWN)}}, {{"OUT", logic(LogicValue::UNKNOWN)}}},
         {{{"A", bit(true)}, {"B", logic(LogicValue::UNKNOWN)}}, {{"OUT", logic(LogicValue::UNKNOWN)}}},
+        {{{"A", logic(LogicValue::UNKNOWN)}, {"B", bit(false)}}, {{"OUT", logic(LogicValue::UNKNOWN)}}},
+        {{{"A", logic(LogicValue::UNKNOWN)}, {"B", bit(true)}}, {{"OUT", logic(LogicValue::UNKNOWN)}}},
+        {{{"A", logic(LogicValue::UNKNOWN)}, {"B", logic(LogicValue::UNKNOWN)}}, {{"OUT", logic(LogicValue::UNKNOWN)}}},
         {{{"A", logic(LogicValue::HIGH_Z)}, {"B", bit(false)}}, {{"OUT", logic(LogicValue::UNKNOWN)}}},
+        {{{"A", bit(true)}, {"B", logic(LogicValue::HIGH_Z)}}, {{"OUT", logic(LogicValue::UNKNOWN)}}},
     }) {}
 
 NANDGateTest::NANDGateTest()
@@ -108,7 +152,11 @@ NANDGateTest::NANDGateTest()
         {{{"A", bit(true)}, {"B", bit(false)}}, {{"OUT", bit(true)}}},
         {{{"A", bit(true)}, {"B", bit(true)}}, {{"OUT", bit(false)}}},
         {{{"A", bit(false)}, {"B", logic(LogicValue::UNKNOWN)}}, {{"OUT", bit(true)}}},
+        {{{"A", logic(LogicValue::UNKNOWN)}, {"B", bit(false)}}, {{"OUT", bit(true)}}},
         {{{"A", bit(true)}, {"B", logic(LogicValue::UNKNOWN)}}, {{"OUT", logic(LogicValue::UNKNOWN)}}},
+        {{{"A", logic(LogicValue::UNKNOWN)}, {"B", bit(true)}}, {{"OUT", logic(LogicValue::UNKNOWN)}}},
+        {{{"A", logic(LogicValue::UNKNOWN)}, {"B", logic(LogicValue::UNKNOWN)}}, {{"OUT", logic(LogicValue::UNKNOWN)}}},
+        {{{"A", logic(LogicValue::HIGH_Z)}, {"B", bit(true)}}, {{"OUT", logic(LogicValue::UNKNOWN)}}},
     }) {}
 
 NORGateTest::NORGateTest()
@@ -118,7 +166,11 @@ NORGateTest::NORGateTest()
         {{{"A", bit(true)}, {"B", bit(false)}}, {{"OUT", bit(false)}}},
         {{{"A", bit(true)}, {"B", bit(true)}}, {{"OUT", bit(false)}}},
         {{{"A", bit(true)}, {"B", logic(LogicValue::UNKNOWN)}}, {{"OUT", bit(false)}}},
+        {{{"A", logic(LogicValue::UNKNOWN)}, {"B", bit(true)}}, {{"OUT", bit(false)}}},
         {{{"A", bit(false)}, {"B", logic(LogicValue::UNKNOWN)}}, {{"OUT", logic(LogicValue::UNKNOWN)}}},
+        {{{"A", logic(LogicValue::UNKNOWN)}, {"B", bit(false)}}, {{"OUT", logic(LogicValue::UNKNOWN)}}},
+        {{{"A", logic(LogicValue::UNKNOWN)}, {"B", logic(LogicValue::UNKNOWN)}}, {{"OUT", logic(LogicValue::UNKNOWN)}}},
+        {{{"A", logic(LogicValue::HIGH_Z)}, {"B", bit(false)}}, {{"OUT", logic(LogicValue::UNKNOWN)}}},
     }) {}
 
 std::string DFlipFlopTest::getTestName() const {
@@ -149,6 +201,12 @@ void DFlipFlopTest::setInitialState() {
     sim->scheduleEvent(std::make_shared<WireUpdateEvent<>>(10, clk_wire, LogicValue::LOW));
     sim->scheduleEvent(std::make_shared<WireUpdateEvent<>>(10, d_wire, LogicValue::LOW));
     sim->scheduleEvent(std::make_shared<WireUpdateEvent<>>(12, rst_wire, LogicValue::HIGH));
+    sim->scheduleEvent(std::make_shared<WireUpdateEvent<>>(16, rst_wire, LogicValue::LOW));
+    sim->scheduleEvent(std::make_shared<WireUpdateEvent<>>(16, d_wire, LogicValue::HIGH));
+    sim->scheduleEvent(std::make_shared<WireUpdateEvent<>>(20, clk_wire, LogicValue::HIGH));
+    sim->scheduleEvent(std::make_shared<WireUpdateEvent<>>(24, d_wire, LogicValue::UNKNOWN));
+    sim->scheduleEvent(std::make_shared<WireUpdateEvent<>>(25, clk_wire, LogicValue::LOW));
+    sim->scheduleEvent(std::make_shared<WireUpdateEvent<>>(30, clk_wire, LogicValue::HIGH));
 }
 
 void DFlipFlopTest::verifyResults() {
@@ -161,10 +219,16 @@ void DFlipFlopTest::verifyResults() {
     expectWireAt(*sim, q_wire, 11, LogicValue::HIGH, "Q_OUT");
     expectWireAt(*sim, q_wire, 15, LogicValue::LOW, "Q_OUT");
     expectWireAt(*sim, q_bar_wire, 15, LogicValue::HIGH, "Q_BAR_OUT");
+    expectWireAt(*sim, q_wire, 19, LogicValue::LOW, "Q_OUT");
+    expectWireAt(*sim, q_wire, 23, LogicValue::HIGH, "Q_OUT");
+    expectWireAt(*sim, q_bar_wire, 23, LogicValue::LOW, "Q_BAR_OUT");
+    expectWireAt(*sim, q_wire, 29, LogicValue::HIGH, "Q_OUT");
+    expectWireAt(*sim, q_wire, 33, LogicValue::UNKNOWN, "Q_OUT");
+    expectWireAt(*sim, q_bar_wire, 33, LogicValue::UNKNOWN, "Q_BAR_OUT");
 }
 
 size_t DFlipFlopTest::getRunDuration() const {
-    return 30;
+    return 40;
 }
 
 std::string ClockGeneratorTest::getTestName() const {

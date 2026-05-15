@@ -6,7 +6,9 @@
 #include "tests/TestHelpers.hpp"
 #include <cassert>
 #include <iostream>
+#include <map>
 #include <stdexcept>
+#include <string>
 #include <vector>
 
 namespace {
@@ -27,6 +29,27 @@ void expectInvalidArgument(Fn&& fn, const char* test_name) {
     }
     expect(rejected, test_name);
 }
+
+std::vector<std::string> indexedNames(const std::string& prefix, size_t width) {
+    std::vector<std::string> names;
+    names.reserve(width);
+    for (size_t i = 0; i < width; ++i) {
+        names.push_back(prefix + std::to_string(i));
+    }
+    return names;
+}
+
+std::map<std::string, TestValue> namedBits(const std::vector<std::string>& names, uint64_t value) {
+    std::map<std::string, TestValue> result;
+    for (size_t i = 0; i < names.size(); ++i) {
+        result[names[i]] = bit(((value >> i) & 1U) != 0);
+    }
+    return result;
+}
+
+std::map<std::string, TestValue> indexedBits(const std::string& prefix, size_t width, uint64_t value) {
+    return namedBits(indexedNames(prefix, width), value);
+}
 }
 
 RewireUnpackTest::RewireUnpackTest()
@@ -37,9 +60,9 @@ RewireUnpackTest::RewireUnpackTest()
           "RewireUnpackTest",
           "REWIRE_UNPACK_ROOT",
           {
-              {{{"BUS", bits(0xA5)}},
-               {{"B0", bit(true)}, {"B1", bit(false)}, {"B2", bit(true)}, {"B3", bit(false)},
-                {"B4", bit(false)}, {"B5", bit(true)}, {"B6", bit(false)}, {"B7", bit(true)}}},
+              {{{"BUS", bits(0xA5)}}, namedBits(indexedNames("B", 8), 0xA5)},
+              {{{"BUS", bits(0x00)}}, namedBits(indexedNames("B", 8), 0x00)},
+              {{{"BUS", bits(0xFF)}}, namedBits(indexedNames("B", 8), 0xFF)},
           },
           std::vector<Rewire::WireSpec>{{"BUS", 8}},
           std::vector<Rewire::WireSpec>{{"B0"}, {"B1"}, {"B2"}, {"B3"}, {"B4"}, {"B5"}, {"B6"}, {"B7"}},
@@ -53,9 +76,9 @@ RewirePackTest::RewirePackTest()
           "RewirePackTest",
           "REWIRE_PACK_ROOT",
           {
-              {{{"B0", bit(true)}, {"B1", bit(false)}, {"B2", bit(true)}, {"B3", bit(false)},
-                {"B4", bit(false)}, {"B5", bit(true)}, {"B6", bit(false)}, {"B7", bit(true)}},
-               {{"BUS", bits(0xA5)}}},
+              {namedBits(indexedNames("B", 8), 0xA5), {{"BUS", bits(0xA5)}}},
+              {namedBits(indexedNames("B", 8), 0x00), {{"BUS", bits(0x00)}}},
+              {namedBits(indexedNames("B", 8), 0xFF), {{"BUS", bits(0xFF)}}},
           },
           std::vector<Rewire::WireSpec>{{"B0"}, {"B1"}, {"B2"}, {"B3"}, {"B4"}, {"B5"}, {"B6"}, {"B7"}},
           std::vector<Rewire::WireSpec>{{"BUS", 8}},
@@ -70,6 +93,9 @@ RewireSliceTest::RewireSliceTest()
           "REWIRE_SLICE_ROOT",
           {
               {{{"DATA", bits(0xABCD)}}, {{"BYTE", bits(0xBC)}}},
+              {{{"DATA", bits(0x0000)}}, {{"BYTE", bits(0x00)}}},
+              {{{"DATA", bits(0xFFFF)}}, {{"BYTE", bits(0xFF)}}},
+              {{{"DATA", bits(0x1234)}}, {{"BYTE", bits(0x23)}}},
           },
           std::vector<Rewire::WireSpec>{{"DATA", 16}},
           std::vector<Rewire::WireSpec>{{"BYTE", 8}},
@@ -85,6 +111,8 @@ RewireZeroExtendTest::RewireZeroExtendTest()
           "REWIRE_ZERO_EXTEND_ROOT",
           {
               {{{"BYTE", bits(0xF2)}}, {{"WORD", bits(0x000000F2)}}},
+              {{{"BYTE", bits(0x00)}}, {{"WORD", bits(0x00000000)}}},
+              {{{"BYTE", bits(0xFF)}}, {{"WORD", bits(0x000000FF)}}},
           },
           std::vector<Rewire::WireSpec>{{"BYTE", 8}},
           std::vector<Rewire::WireSpec>{{"WORD", 32}},
@@ -101,6 +129,8 @@ RewireSignExtendTest::RewireSignExtendTest()
           {
               {{{"BYTE", bits(0x80)}}, {{"WORD", bits(0xFF80)}}},
               {{{"BYTE", bits(0x7F)}}, {{"WORD", bits(0x007F)}}},
+              {{{"BYTE", bits(0x00)}}, {{"WORD", bits(0x0000)}}},
+              {{{"BYTE", bits(0xFF)}}, {{"WORD", bits(0xFFFF)}}},
           },
           std::vector<Rewire::WireSpec>{{"BYTE", 8}},
           std::vector<Rewire::WireSpec>{{"WORD", 16}},
@@ -116,6 +146,8 @@ RewireUnmappedHighTest::RewireUnmappedHighTest()
           "REWIRE_UNMAPPED_HIGH_ROOT",
           {
               {{{"NIBBLE", bits(0x0A)}}, {{"BYTE", bits(0xFA)}}},
+              {{{"NIBBLE", bits(0x00)}}, {{"BYTE", bits(0xF0)}}},
+              {{{"NIBBLE", bits(0x0F)}}, {{"BYTE", bits(0xFF)}}},
           },
           std::vector<Rewire::WireSpec>{{"NIBBLE", 4}},
           std::vector<Rewire::WireSpec>{{"BYTE", 8}},
@@ -211,6 +243,56 @@ void RewireValidationTest::verifyResults() {
         "RewireValidationTest invalid source name");
     expectInvalidArgument(
         [] {
+            auto invalid = Component::create<Rewire>(
+                "ROOT",
+                std::vector<Rewire::WireSpec>{{"A", 4}},
+                std::vector<Rewire::WireSpec>{{"B", 4}},
+                std::vector<Rewire::BitMap>{{"A", 0, "MISSING", 0}});
+            (void)invalid;
+        },
+        "RewireValidationTest invalid destination name");
+    expectInvalidArgument(
+        [] {
+            auto invalid = Component::create<Rewire>(
+                "ROOT",
+                std::vector<Rewire::WireSpec>{{"A", 0}},
+                std::vector<Rewire::WireSpec>{{"B", 4}},
+                std::vector<Rewire::BitMap>{});
+            (void)invalid;
+        },
+        "RewireValidationTest zero input width");
+    expectInvalidArgument(
+        [] {
+            auto invalid = Component::create<Rewire>(
+                "ROOT",
+                std::vector<Rewire::WireSpec>{{"A", 4}},
+                std::vector<Rewire::WireSpec>{{"B", 0}},
+                std::vector<Rewire::BitMap>{});
+            (void)invalid;
+        },
+        "RewireValidationTest zero output width");
+    expectInvalidArgument(
+        [] {
+            auto invalid = Component::create<Rewire>(
+                "ROOT",
+                std::vector<Rewire::WireSpec>{{"A", 4}},
+                std::vector<Rewire::WireSpec>{{"B", 64}},
+                std::vector<Rewire::BitMap>{{"A", 0, "B", 0}});
+            (void)invalid;
+        },
+        "RewireValidationTest unsupported output width");
+    expectInvalidArgument(
+        [] {
+            auto invalid = Component::create<Rewire>(
+                "ROOT",
+                std::vector<Rewire::WireSpec>{{"A", 4}},
+                std::vector<Rewire::WireSpec>{{"B", 4}},
+                std::vector<Rewire::BitMap>{{"A", 0, "B", 0}, {"A", 1, "B", 0}});
+            (void)invalid;
+        },
+        "RewireValidationTest duplicate destination bit");
+    expectInvalidArgument(
+        [] {
             (void)unpack_mapping("BUS", 4, {"B0", "B1"});
         },
         "RewireValidationTest invalid unpack helper");
@@ -223,29 +305,32 @@ void RewireValidationTest::verifyResults() {
 
 BitSplitter8Test::BitSplitter8Test()
     : ComponentRowsTest<BitSplitter<8>>("BitSplitter8Test", "BIT_SPLITTER8_ROOT", {
-          {{{"IN", bits(0xA5)}},
-           {{"OUT_0", bit(true)}, {"OUT_1", bit(false)}, {"OUT_2", bit(true)}, {"OUT_3", bit(false)},
-            {"OUT_4", bit(false)}, {"OUT_5", bit(true)}, {"OUT_6", bit(false)}, {"OUT_7", bit(true)}}},
+          {{{"IN", bits(0xA5)}}, indexedBits("OUT_", 8, 0xA5)},
+          {{{"IN", bits(0x00)}}, indexedBits("OUT_", 8, 0x00)},
+          {{{"IN", bits(0xFF)}}, indexedBits("OUT_", 8, 0xFF)},
+          {{{"IN", bits(0x5A)}}, indexedBits("OUT_", 8, 0x5A)},
       }) {}
 
 BitJoiner8Test::BitJoiner8Test()
     : ComponentRowsTest<BitJoiner<8>>("BitJoiner8Test", "BIT_JOINER8_ROOT", {
-          {{{"IN_0", bit(true)}, {"IN_1", bit(false)}, {"IN_2", bit(true)}, {"IN_3", bit(false)},
-            {"IN_4", bit(false)}, {"IN_5", bit(true)}, {"IN_6", bit(false)}, {"IN_7", bit(true)}},
-           {{"OUT", bits(0xA5)}}},
+          {indexedBits("IN_", 8, 0xA5), {{"OUT", bits(0xA5)}}},
+          {indexedBits("IN_", 8, 0x00), {{"OUT", bits(0x00)}}},
+          {indexedBits("IN_", 8, 0xFF), {{"OUT", bits(0xFF)}}},
+          {indexedBits("IN_", 8, 0x5A), {{"OUT", bits(0x5A)}}},
       }) {}
 
 BitSplitter16Test::BitSplitter16Test()
     : ComponentRowsTest<BitSplitter<16>>("BitSplitter16Test", "BIT_SPLITTER16_ROOT", {
-          {{{"IN", bits(0xA55A)}},
-           {{"OUT_0", bit(false)}, {"OUT_1", bit(true)}, {"OUT_2", bit(false)}, {"OUT_3", bit(true)},
-            {"OUT_8", bit(true)}, {"OUT_14", bit(false)}, {"OUT_15", bit(true)}}},
+          {{{"IN", bits(0xA55A)}}, indexedBits("OUT_", 16, 0xA55A)},
+          {{{"IN", bits(0x0000)}}, indexedBits("OUT_", 16, 0x0000)},
+          {{{"IN", bits(0xFFFF)}}, indexedBits("OUT_", 16, 0xFFFF)},
       }) {}
 
 BitJoiner32Test::BitJoiner32Test()
     : ComponentRowsTest<BitJoiner<32>>("BitJoiner32Test", "BIT_JOINER32_ROOT", {
-          {{{"IN_0", bit(true)}, {"IN_8", bit(true)}, {"IN_16", bit(true)}, {"IN_31", bit(true)}},
-           {{"OUT", bits(0x80010101)}}},
+          {indexedBits("IN_", 32, 0x80010101), {{"OUT", bits(0x80010101)}}},
+          {indexedBits("IN_", 32, 0x00000000), {{"OUT", bits(0x00000000)}}},
+          {indexedBits("IN_", 32, 0xFFFFFFFF), {{"OUT", bits(0xFFFFFFFF)}}},
       }) {}
 
 std::string BitJoiner8UnknownTest::getTestName() const {

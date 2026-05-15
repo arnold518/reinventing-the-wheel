@@ -84,15 +84,15 @@ target_link_libraries(circuit_backend PRIVATE SimulatorLib)
 # The include directories are inherited automatically from SimulatorLib.
 
 # ===================================================================
-# Automatic Python Module Deployment to Visualizer
+# Automatic Python Module Deployment to Visualizer V2
 # ===================================================================
-# After building the Python module, automatically copy it to the visualizer
+# After building the Python module, automatically copy it to the visualizer-v2
 # directory so it can be imported without manual copying.
 add_custom_command(TARGET circuit_backend POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy
         $<TARGET_FILE:circuit_backend>
-        ${PROJECT_SOURCE_DIR}/visualizer/$<TARGET_FILE_NAME:circuit_backend>
-    COMMENT "Copying circuit_backend module to visualizer directory..."
+        ${PROJECT_SOURCE_DIR}/visualizer-v2/$<TARGET_FILE_NAME:circuit_backend>
+    COMMENT "Copying circuit_backend module to visualizer-v2 directory..."
 )
 
 # ===================================================================
