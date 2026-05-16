@@ -81,6 +81,17 @@ PREFERRED_SCENARIO_ALIASES = {
     "Adder8Test": ["adder8", "8-bit-adder"],
     "ZeroDetect8Test": ["zero-detect8"],
     "ALU8Test": ["alu8"],
+    "Mux32to1Test": ["mux32to1"],
+    "Mux32to1_32bitTest": ["mux32to1-32bit"],
+    "RewireWidth5Test": ["rewire-width5"],
+    "Adder32Test": ["adder32"],
+    "AddSub32Test": ["addsub32", "add-sub32"],
+    "Logic32Test": ["logic32"],
+    "ZeroDetect32Test": ["zero-detect32"],
+    "Comparator32Test": ["comparator32"],
+    "Shifter32Test": ["shifter32"],
+    "ALU32Test": ["alu32"],
+    "RV32IALU32Test": ["rv32i-alu32"],
 }
 
 

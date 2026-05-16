@@ -41,10 +41,12 @@ set(SIMULATION_TESTS
     Mux4to1Test
     Mux8to1Test
     Mux16to1Test
+    Mux32to1Test
     Mux2to1_8bitTest
     Mux4to1_8bitTest
     Mux8to1_8bitTest
     Mux16to1_8bitTest
+    Mux32to1_32bitTest
     Adder8Test
     TwosComplement8Test
     Subtractor8Test
@@ -59,6 +61,13 @@ set(SIMULATION_TESTS
     ShiftRightArithmetic8Test
     ZeroDetect8Test
     ALU8Test
+    Adder32Test
+    AddSub32Test
+    Logic32Test
+    ZeroDetect32Test
+    Comparator32Test
+    Shifter32Test
+    ALU32Test
     RV32IALU32Test
 )
 

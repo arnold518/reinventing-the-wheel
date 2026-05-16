@@ -1,11 +1,52 @@
 #pragma once
 
-#include "tests/TestHelpers.hpp"
-#include <string>
+#include "modules/composite/AddSub32.hpp"
+#include "modules/composite/Adder32.hpp"
+#include "modules/composite/ALU32.hpp"
+#include "modules/composite/Comparator32.hpp"
+#include "modules/composite/Logic32.hpp"
+#include "modules/composite/Shifter32.hpp"
+#include "modules/composite/ZeroDetect32.hpp"
+#include "tests/ComponentRowsTest.hpp"
 
-class RV32IALU32Test : public StandaloneVerificationTest {
+class Adder32Test : public ComponentRowsTest<Adder32> {
 public:
-    std::string getTestName() const override;
+    Adder32Test();
+};
+
+class AddSub32Test : public ComponentRowsTest<AddSub32> {
+public:
+    AddSub32Test();
+};
+
+class Logic32Test : public ComponentRowsTest<Logic32> {
+public:
+    Logic32Test();
+};
+
+class ZeroDetect32Test : public ComponentRowsTest<ZeroDetect32> {
+public:
+    ZeroDetect32Test();
+};
+
+class Comparator32Test : public ComponentRowsTest<Comparator32> {
+public:
+    Comparator32Test();
+};
+
+class Shifter32Test : public ComponentRowsTest<Shifter32> {
+public:
+    Shifter32Test();
+};
+
+class ALU32Test : public ComponentRowsTest<ALU32> {
+public:
+    ALU32Test();
+};
+
+class RV32IALU32Test : public ComponentRowsTest<ALU32> {
+public:
+    RV32IALU32Test();
 
 protected:
     void verifyResults() override;

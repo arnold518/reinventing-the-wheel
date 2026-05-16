@@ -58,11 +58,12 @@ Already useful:
 - Basic logic gates.
 - `DFlipFlop` and `ClockGenerator`.
 - 8-bit arithmetic, logic, mux, shifter, comparator, zero-detect, and `ALU8` modules.
+- Structural 32-bit `Mux32to1`, `Mux32to1_32bit`, `Adder32`, `AddSub32`, `Logic32`, `ZeroDetect32`, `Comparator32`, `Shifter32`, and `ALU32` modules.
+- Per-component 32-bit tests plus `RV32IALU32Test` coverage for the structural ALU32 milestone.
 - Python visualizer for hierarchical circuits and simulation history.
 
 Missing:
 
-- 32-bit ALU operations.
 - Register file.
 - Program counter.
 - Instruction memory.
@@ -74,7 +75,7 @@ Missing:
 - CPU top-level component.
 - Program loader.
 - Assembly build workflow.
-- RV32I correctness tests.
+- RV32I decoder, state, executor, program, and CPU-level correctness tests.
 
 ## Official References
 
@@ -291,13 +292,13 @@ Recommended files:
 
 - `include/modules/composite/Adder32.hpp`
 - `include/modules/composite/AddSub32.hpp`
-- `include/modules/basic/Logic32.hpp`
+- `include/modules/composite/Logic32.hpp`
 - `include/modules/composite/ZeroDetect32.hpp`
 - `include/modules/composite/Comparator32.hpp`
 - `include/modules/composite/Shifter32.hpp`
 - `include/modules/composite/ALU32.hpp`
 - Matching `.cpp` files.
-- `tests/RV32IALU32Test.cpp`.
+- `src/tests/RV32IALU32Tests.cpp`.
 
 Build order:
 
@@ -367,6 +368,10 @@ Done when:
 - RV32I edge cases above pass.
 - Flags match the stated contract.
 - No product-facing behavioral ALU exists without equivalence tests.
+
+Status:
+
+- Milestone 1 is implemented. Keep `docs/rv32i-milestone-1-report.md` updated as tests, performance, or design decisions change.
 
 ## Milestone 2: RV32I Decode Library
 
@@ -1036,13 +1041,15 @@ Mitigation:
 
 ## Near-Term Next Steps
 
-1. Add structural `Adder32` and `AddSub32` headers and sources.
-2. Add `Logic32`, `ZeroDetect32`, and `Comparator32`.
-3. Add structural `Shifter32` as a 5-stage barrel shifter.
-4. Add top-level structural `ALU32`.
-5. Add `tests/RV32IALU32Test.cpp`.
-6. Wire the new ALU files and test into CMake.
-7. Test every defined `ALU32` operation and flag.
-8. Only after ALU32 passes, add the RV32I decoder library.
+Milestone 1 is complete:
 
-After that, move to register primitives, memory contracts, and the reference executor.
+- Structural `Mux32to1`, `Mux32to1_32bit`, `Adder32`, `AddSub32`, `Logic32`, `ZeroDetect32`, `Comparator32`, `Shifter32`, and `ALU32` exist.
+- The ALU stack is wired into CMake, bindings, and CTest.
+- `Mux32to1Test`, `Mux32to1_32bitTest`, `Adder32Test`, `AddSub32Test`, `Logic32Test`, `ZeroDetect32Test`, `Comparator32Test`, `Shifter32Test`, `ALU32Test`, and `RV32IALU32Test` cover the ALU stack and expose visualizer scenarios.
+- Shift tests cover all shift amounts `0..31` and shift amount masking.
+
+Next:
+
+1. Add the RV32I decoder library.
+2. Add decoder tests for every RV32I instruction group.
+3. Move to register primitives, memory contracts, and the reference executor after the decoder is stable.

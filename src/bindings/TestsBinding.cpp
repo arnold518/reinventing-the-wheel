@@ -4,6 +4,7 @@
 #include "tests/ArithmeticLogicTests.hpp"
 #include "tests/CorePrimitiveTests.hpp"
 #include "tests/FullCircuitTest.hpp"
+#include "tests/RV32IALU32Tests.hpp"
 #include "tests/TestRegistry.hpp"
 #include "tests/UtilityComponentTests.hpp"
 #include <pybind11/stl.h>
@@ -36,6 +37,7 @@ void bindTests(py::module_& m) {
     bindSimulationScenario<RewireZeroExtendTest>(m, "RewireZeroExtendTest", "Rewire zero-extension regression scenario.");
     bindSimulationScenario<RewireSignExtendTest>(m, "RewireSignExtendTest", "Rewire sign-extension regression scenario.");
     bindSimulationScenario<RewireUnmappedHighTest>(m, "RewireUnmappedHighTest", "Rewire unmapped-high regression scenario.");
+    bindSimulationScenario<RewireWidth5Test>(m, "RewireWidth5Test", "5-bit rewire regression scenario.");
     bindSimulationScenario<RewireUnmappedUnknownTest>(m, "RewireUnmappedUnknownTest", "Rewire unmapped-unknown regression scenario.");
     bindSimulationScenario<RewireValidationTest>(m, "RewireValidationTest", "Rewire validation regression scenario.");
     bindSimulationScenario<BitSplitter8Test>(m, "BitSplitter8Test", "8-bit splitter regression scenario.");
@@ -58,10 +60,12 @@ void bindTests(py::module_& m) {
     bindSimulationScenario<Mux4to1Test>(m, "Mux4to1Test", "4:1 one-bit mux regression scenario.");
     bindSimulationScenario<Mux8to1Test>(m, "Mux8to1Test", "8:1 one-bit mux regression scenario.");
     bindSimulationScenario<Mux16to1Test>(m, "Mux16to1Test", "16:1 one-bit mux regression scenario.");
+    bindSimulationScenario<Mux32to1Test>(m, "Mux32to1Test", "32:1 one-bit mux regression scenario.");
     bindSimulationScenario<Mux2to1_8bitTest>(m, "Mux2to1_8bitTest", "2:1 8-bit mux regression scenario.");
     bindSimulationScenario<Mux4to1_8bitTest>(m, "Mux4to1_8bitTest", "4:1 8-bit mux regression scenario.");
     bindSimulationScenario<Mux8to1_8bitTest>(m, "Mux8to1_8bitTest", "8:1 8-bit mux regression scenario.");
     bindSimulationScenario<Mux16to1_8bitTest>(m, "Mux16to1_8bitTest", "16:1 8-bit mux regression scenario.");
+    bindSimulationScenario<Mux32to1_32bitTest>(m, "Mux32to1_32bitTest", "32:1 32-bit mux regression scenario.");
     bindSimulationScenario<Adder8Test>(m, "Adder8Test", "8-bit adder truth-table scenario.");
     bindSimulationScenario<TwosComplement8Test>(m, "TwosComplement8Test", "8-bit two's-complement regression scenario.");
     bindSimulationScenario<Subtractor8Test>(m, "Subtractor8Test", "8-bit subtractor regression scenario.");
@@ -76,6 +80,14 @@ void bindTests(py::module_& m) {
     bindSimulationScenario<ShiftRightArithmetic8Test>(m, "ShiftRightArithmetic8Test", "8-bit arithmetic-right shifter regression scenario.");
     bindSimulationScenario<ZeroDetect8Test>(m, "ZeroDetect8Test", "8-bit zero detector truth-table scenario.");
     bindSimulationScenario<ALU8Test>(m, "ALU8Test", "8-bit ALU truth-table scenario.");
+    bindSimulationScenario<Adder32Test>(m, "Adder32Test", "Structural 32-bit adder regression scenario.");
+    bindSimulationScenario<AddSub32Test>(m, "AddSub32Test", "Structural 32-bit add/subtract regression scenario.");
+    bindSimulationScenario<Logic32Test>(m, "Logic32Test", "Structural 32-bit bitwise logic regression scenario.");
+    bindSimulationScenario<ZeroDetect32Test>(m, "ZeroDetect32Test", "Structural 32-bit zero-detector regression scenario.");
+    bindSimulationScenario<Comparator32Test>(m, "Comparator32Test", "Structural 32-bit comparator regression scenario.");
+    bindSimulationScenario<Shifter32Test>(m, "Shifter32Test", "Structural 32-bit barrel-shifter regression scenario.");
+    bindSimulationScenario<ALU32Test>(m, "ALU32Test", "Structural 32-bit ALU regression scenario.");
+    bindSimulationScenario<RV32IALU32Test>(m, "RV32IALU32Test", "Structural RV32I ALU32 milestone regression scenario.");
 
     m.def("get_registered_test_names", &getRegisteredTestNames, "Returns test names available through the C++ test registry.");
 }

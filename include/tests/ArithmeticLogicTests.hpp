@@ -81,6 +81,11 @@ public:
     Mux16to1Test();
 };
 
+class Mux32to1Test : public ComponentRowsTest<Mux32to1> {
+public:
+    Mux32to1Test();
+};
+
 class Mux2to1_8bitTest : public ComponentRowsTest<Mux2to1_8bit> {
 public:
     Mux2to1_8bitTest();
@@ -99,6 +104,11 @@ public:
 class Mux16to1_8bitTest : public ComponentRowsTest<Mux16to1_8bit> {
 public:
     Mux16to1_8bitTest();
+};
+
+class Mux32to1_32bitTest : public ComponentRowsTest<Mux32to1_32bit> {
+public:
+    Mux32to1_32bitTest();
 };
 
 class Adder8Test : public ComponentTruthTableTest<Adder8> {

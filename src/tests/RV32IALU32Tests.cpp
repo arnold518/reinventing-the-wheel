@@ -1,19 +1,118 @@
 #include "tests/RV32IALU32Tests.hpp"
 
+#include "components/ComponentBuilder.hpp"
+#include "components/ComponentBuilder.tpp"
+#include "modules/basic/Gate.hpp"
 #include "modules/composite/ALU32.hpp"
 #include "modules/composite/AddSub32.hpp"
+#include "modules/composite/Adder32.hpp"
 #include "modules/composite/Comparator32.hpp"
+#include "modules/composite/FullAdder.hpp"
 #include "modules/composite/Logic32.hpp"
 #include "modules/composite/Shifter32.hpp"
 #include "modules/composite/ZeroDetect32.hpp"
+#include "modules/utility/BitAdapter.hpp"
 #include <cassert>
 #include <cstdint>
 #include <iostream>
+#include <memory>
+#include <string>
 #include <vector>
 
 namespace {
 constexpr uint64_t MASK32 = 0xffffffffULL;
-constexpr size_t SETTLE_TIME = 1000;
+
+class AddSub4Slice : public IOComponent {
+public:
+    explicit AddSub4Slice(std::string name)
+        : IOComponent(std::move(name), [](IOComponent* self) {
+              self->addPin<4>("A", PinType::INPUT);
+              self->addPin<4>("B", PinType::INPUT);
+              self->addPin("SUB", PinType::INPUT);
+              self->addPin<4>("OUT", PinType::OUTPUT);
+              self->addPin("CARRY_OUT", PinType::OUTPUT);
+              self->addPin("OVERFLOW", PinType::OUTPUT);
+          }) {}
+
+    static constexpr const char* TypeName = "AddSub4Slice";
+    const char* getTypeName() const override { return TypeName; }
+
+    void buildInternals(ComponentBuilder& builder) override {
+        builder.addNewComponent<BitSplitter<4>>("A_SPLIT");
+        builder.addNewComponent<BitSplitter<4>>("B_SPLIT");
+        builder.addNewComponent<BitJoiner<4>>("OUT_JOIN");
+        builder.addNewComponent<XORGate>("OVERFLOW_XOR");
+
+        builder.addNewWire<4>(
+            "A_bus_internal",
+            getInputPin<4>("A"),
+            {builder.getInputPin<BitSplitter<4>, 4>("A_SPLIT", "IN")});
+        builder.addNewWire<4>(
+            "B_bus_internal",
+            getInputPin<4>("B"),
+            {builder.getInputPin<BitSplitter<4>, 4>("B_SPLIT", "IN")});
+
+        std::vector<std::shared_ptr<Pin<>>> sub_sinks;
+        sub_sinks.reserve(5);
+        for (size_t i = 0; i < 4; ++i) {
+            const auto bit = std::to_string(i);
+            const auto xor_name = "B_XOR_SUB_" + bit;
+            const auto adder_name = "FA" + bit;
+
+            builder.addNewComponent<XORGate>(xor_name);
+            builder.addNewComponent<FullAdder>(adder_name);
+            sub_sinks.push_back(builder.getInputPin<XORGate>(xor_name, "B"));
+
+            builder.addNewWire(
+                "A_bit_" + bit,
+                builder.getOutputPin<BitSplitter<4>>("A_SPLIT", "OUT_" + bit),
+                {builder.getInputPin<FullAdder>(adder_name, "A")});
+            builder.addNewWire(
+                "B_bit_" + bit,
+                builder.getOutputPin<BitSplitter<4>>("B_SPLIT", "OUT_" + bit),
+                {builder.getInputPin<XORGate>(xor_name, "A")});
+            builder.addNewWire(
+                "B_xor_SUB_" + bit + "_to_FA",
+                builder.getOutputPin<XORGate>(xor_name, "OUT"),
+                {builder.getInputPin<FullAdder>(adder_name, "B")});
+            builder.addNewWire(
+                "SUM_bit_" + bit,
+                builder.getOutputPin<FullAdder>(adder_name, "Sum"),
+                {builder.getInputPin<BitJoiner<4>>("OUT_JOIN", "IN_" + bit)});
+        }
+
+        sub_sinks.push_back(builder.getInputPin<FullAdder>("FA0", "Carry_in"));
+        builder.addNewWire("SUB_control", getInputPin("SUB"), sub_sinks);
+
+        for (size_t i = 0; i < 3; ++i) {
+            const auto from = std::to_string(i);
+            const auto to = std::to_string(i + 1);
+            std::vector<std::shared_ptr<Pin<>>> sinks{
+                builder.getInputPin<FullAdder>("FA" + to, "Carry_in")};
+            if (i == 2) {
+                sinks.push_back(builder.getInputPin<XORGate>("OVERFLOW_XOR", "A"));
+            }
+            builder.addNewWire(
+                "carry_" + from + "_to_" + to,
+                builder.getOutputPin<FullAdder>("FA" + from, "Carry_out"),
+                sinks);
+        }
+
+        builder.addNewWire(
+            "carry_out_fanout",
+            builder.getOutputPin<FullAdder>("FA3", "Carry_out"),
+            {getOutputPin("CARRY_OUT"),
+             builder.getInputPin<XORGate>("OVERFLOW_XOR", "B")});
+        builder.addNewWire(
+            "overflow_to_output",
+            builder.getOutputPin<XORGate>("OVERFLOW_XOR", "OUT"),
+            {getOutputPin("OVERFLOW")});
+        builder.addNewWire<4>(
+            "out_bus_internal",
+            builder.getOutputPin<BitJoiner<4>, 4>("OUT_JOIN", "OUT"),
+            {getOutputPin<4>("OUT")});
+    }
+};
 
 void expect(bool condition, const char* test_name) {
     if (!condition) {
@@ -38,6 +137,22 @@ bool subOverflow(uint32_t a, uint32_t b, uint32_t result) {
     return ((a ^ b) & (a ^ result) & 0x80000000U) != 0;
 }
 
+bool addCarry4(uint32_t a, uint32_t b) {
+    return (a + b) > 0xFU;
+}
+
+bool addOverflow4(uint32_t a, uint32_t b, uint32_t result) {
+    return (~(a ^ b) & (a ^ result) & 0x8U) != 0;
+}
+
+bool subCarry4(uint32_t a, uint32_t b) {
+    return a >= b;
+}
+
+bool subOverflow4(uint32_t a, uint32_t b, uint32_t result) {
+    return ((a ^ b) & (a ^ result) & 0x8U) != 0;
+}
+
 uint32_t sra(uint32_t value, uint32_t amount) {
     amount &= 0x1fU;
     return static_cast<uint32_t>(static_cast<int32_t>(value) >> amount);
@@ -49,6 +164,20 @@ TestRow addSubRow(uint32_t a, uint32_t b, bool sub) {
             {{"OUT", bits(result)},
              {"CARRY_OUT", bit(sub ? subCarry(a, b) : addCarry(a, b))},
              {"OVERFLOW", bit(sub ? subOverflow(a, b, result) : addOverflow(a, b, result))}}};
+}
+
+TestRow adder32Row(uint32_t a, uint32_t b, bool cin) {
+    const uint64_t wide = static_cast<uint64_t>(a) + static_cast<uint64_t>(b) + (cin ? 1ULL : 0ULL);
+    return {{{"A", bits(a)}, {"B", bits(b)}, {"Cin", bit(cin)}},
+            {{"Sum", bits(static_cast<uint32_t>(wide))}, {"Cout", bit(wide > MASK32)}}};
+}
+
+TestRow addSub4Row(uint32_t a, uint32_t b, bool sub) {
+    const uint32_t result = (sub ? (a - b) : (a + b)) & 0xFU;
+    return {{{"A", bits(a)}, {"B", bits(b)}, {"SUB", bit(sub)}},
+            {{"OUT", bits(result)},
+             {"CARRY_OUT", bit(sub ? subCarry4(a, b) : addCarry4(a, b))},
+             {"OVERFLOW", bit(sub ? subOverflow4(a, b, result) : addOverflow4(a, b, result))}}};
 }
 
 TestRow comparatorRow(uint32_t a, uint32_t b) {
@@ -115,14 +244,33 @@ TestRow aluAutoRow(uint32_t a, uint32_t b, uint8_t op) {
     }
     return aluRow(a, b, op, out, carry, overflow);
 }
+
+std::vector<TestRow> adder32Rows() {
+    return {
+        adder32Row(0x00000000U, 0x00000000U, false),
+        adder32Row(0x00000000U, 0x00000000U, true),
+        adder32Row(0x00000001U, 0x00000002U, false),
+        adder32Row(0xffffffffU, 0x00000001U, false),
+        adder32Row(0xffffffffU, 0x00000000U, true),
+        adder32Row(0x7fffffffU, 0x00000001U, false),
+        adder32Row(0x80000000U, 0x80000000U, false),
+    };
 }
 
-std::string RV32IALU32Test::getTestName() const {
-    return "RV32IALU32Test";
+std::vector<TestRow> addSub4Rows() {
+    std::vector<TestRow> rows;
+    rows.reserve(16 * 16 * 2);
+    for (uint32_t a = 0; a < 16; ++a) {
+        for (uint32_t b = 0; b < 16; ++b) {
+            rows.push_back(addSub4Row(a, b, false));
+            rows.push_back(addSub4Row(a, b, true));
+        }
+    }
+    return rows;
 }
 
-void RV32IALU32Test::verifyResults() {
-    expect(runRowsBatched<AddSub32>({
+std::vector<TestRow> addSub32Rows() {
+    return {
         addSubRow(0x00000000U, 0x00000000U, false),
         addSubRow(0x00000001U, 0x00000002U, false),
         addSubRow(0xffffffffU, 0x00000001U, false),
@@ -135,9 +283,11 @@ void RV32IALU32Test::verifyResults() {
         addSubRow(0x7fffffffU, 0xffffffffU, true),
         addSubRow(0x80000000U, 0x7fffffffU, true),
         addSubRow(0xffffffffU, 0xffffffffU, true),
-    }, SETTLE_TIME), "RV32IALU32Test AddSub32");
+    };
+}
 
-    expect(runRowsBatched<Logic32>({
+std::vector<TestRow> logic32Rows() {
+    return {
         {{{"A", bits(0xf0f0f0f0U)}, {"B", bits(0x0ff00ff0U)}},
          {{"AND_OUT", bits(0x00f000f0U)}, {"OR_OUT", bits(0xfff0fff0U)}, {"XOR_OUT", bits(0xff00ff00U)}}},
         {{{"A", bits(0xffffffffU)}, {"B", bits(0x00000000U)}},
@@ -146,16 +296,20 @@ void RV32IALU32Test::verifyResults() {
          {{"AND_OUT", bits(0x00000000U)}, {"OR_OUT", bits(0xffffffffU)}, {"XOR_OUT", bits(0xffffffffU)}}},
         {{{"A", bits(0x80000000U)}, {"B", bits(0x7fffffffU)}},
          {{"AND_OUT", bits(0x00000000U)}, {"OR_OUT", bits(0xffffffffU)}, {"XOR_OUT", bits(0xffffffffU)}}},
-    }, SETTLE_TIME), "RV32IALU32Test Logic32");
+    };
+}
 
-    expect(runRowsBatched<ZeroDetect32>({
+std::vector<TestRow> zeroDetect32Rows() {
+    return {
         {{{"A", bits(0x00000000U)}}, {{"ZERO", bit(true)}}},
         {{{"A", bits(0x00000001U)}}, {{"ZERO", bit(false)}}},
         {{{"A", bits(0x80000000U)}}, {{"ZERO", bit(false)}}},
         {{{"A", bits(0xffffffffU)}}, {{"ZERO", bit(false)}}},
-    }, SETTLE_TIME), "RV32IALU32Test ZeroDetect32");
+    };
+}
 
-    expect(runRowsBatched<Comparator32>({
+std::vector<TestRow> comparator32Rows() {
+    return {
         comparatorRow(0x00000000U, 0x00000000U),
         comparatorRow(0x00000001U, 0x00000002U),
         comparatorRow(0xffffffffU, 0x00000001U),
@@ -164,18 +318,29 @@ void RV32IALU32Test::verifyResults() {
         comparatorRow(0x80000000U, 0x7fffffffU),
         comparatorRow(0x00000000U, 0xffffffffU),
         comparatorRow(0xffffffffU, 0xffffffffU),
-    }, SETTLE_TIME), "RV32IALU32Test Comparator32");
+    };
+}
 
-    std::vector<TestRow> shifter_rows;
-    for (uint32_t amount : {0U, 1U, 4U, 8U, 16U, 31U, 32U, 33U, 63U, 0xffffffffU}) {
-        shifter_rows.push_back(shifterRow(0x80000001U, amount));
-        shifter_rows.push_back(shifterRow(0x7fffffffU, amount));
-        shifter_rows.push_back(shifterRow(0xffffffffU, amount));
-        shifter_rows.push_back(shifterRow(0x00000001U, amount));
+std::vector<TestRow> shifter32Rows() {
+    std::vector<TestRow> rows;
+    rows.reserve((32 + 4) * 4);
+    for (uint32_t amount = 0; amount < 32; ++amount) {
+        rows.push_back(shifterRow(0x80000001U, amount));
+        rows.push_back(shifterRow(0x7fffffffU, amount));
+        rows.push_back(shifterRow(0xffffffffU, amount));
+        rows.push_back(shifterRow(0x00000001U, amount));
     }
-    expect(runRowsBatched<Shifter32>(shifter_rows, SETTLE_TIME), "RV32IALU32Test Shifter32");
+    for (uint32_t amount : {32U, 33U, 63U, 0xffffffffU}) {
+        rows.push_back(shifterRow(0x80000001U, amount));
+        rows.push_back(shifterRow(0x7fffffffU, amount));
+        rows.push_back(shifterRow(0xffffffffU, amount));
+        rows.push_back(shifterRow(0x00000001U, amount));
+    }
+    return rows;
+}
 
-    std::vector<TestRow> alu_rows{
+std::vector<TestRow> alu32Rows() {
+    return {
         aluAutoRow(0x00000001U, 0x00000002U, ALU32Op::ADD),
         aluAutoRow(0xffffffffU, 0x00000001U, ALU32Op::ADD),
         aluAutoRow(0x7fffffffU, 0x00000001U, ALU32Op::ADD),
@@ -201,5 +366,35 @@ void RV32IALU32Test::verifyResults() {
         aluAutoRow(0x12345678U, 0x9abcdef0U, ALU32Op::ZERO),
         aluAutoRow(0x12345678U, 0x9abcdef0U, 0x1f),
     };
-    expect(runRowsBatched<ALU32>(alu_rows, SETTLE_TIME), "RV32IALU32Test ALU32");
+}
+}
+
+Adder32Test::Adder32Test()
+    : ComponentRowsTest<Adder32>("Adder32Test", "ADDER32_ROOT", adder32Rows()) {}
+
+AddSub32Test::AddSub32Test()
+    : ComponentRowsTest<AddSub32>("AddSub32Test", "ADDSUB32_ROOT", addSub32Rows()) {}
+
+Logic32Test::Logic32Test()
+    : ComponentRowsTest<Logic32>("Logic32Test", "LOGIC32_ROOT", logic32Rows()) {}
+
+ZeroDetect32Test::ZeroDetect32Test()
+    : ComponentRowsTest<ZeroDetect32>("ZeroDetect32Test", "ZERO_DETECT32_ROOT", zeroDetect32Rows()) {}
+
+Comparator32Test::Comparator32Test()
+    : ComponentRowsTest<Comparator32>("Comparator32Test", "COMPARATOR32_ROOT", comparator32Rows()) {}
+
+Shifter32Test::Shifter32Test()
+    : ComponentRowsTest<Shifter32>("Shifter32Test", "SHIFTER32_ROOT", shifter32Rows()) {}
+
+ALU32Test::ALU32Test()
+    : ComponentRowsTest<ALU32>("ALU32Test", "ALU32_ROOT", alu32Rows()) {}
+
+RV32IALU32Test::RV32IALU32Test()
+    : ComponentRowsTest<ALU32>("RV32IALU32Test", "RV32I_ALU32_ROOT", alu32Rows()) {}
+
+void RV32IALU32Test::verifyResults() {
+    ComponentRowsTest<ALU32>::verifyResults();
+
+    expect(runRowsBatched<AddSub4Slice>(addSub4Rows(), 100), "RV32IALU32Test AddSub4Slice exhaustive");
 }

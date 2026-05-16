@@ -17,6 +17,7 @@
 #include "modules/composite/HalfAdder.hpp"
 #include "modules/composite/FullAdder.hpp"
 #include "modules/composite/Adder8.hpp"
+#include "modules/composite/Adder32.hpp"
 #include "modules/composite/AddSub32.hpp"
 #include "modules/composite/Logic32.hpp"
 #include "modules/composite/ZeroDetect32.hpp"
@@ -196,10 +197,12 @@ void bindModules(py::module_& m) {
     bindIOModule<Mux4to1>(m, "Mux4to1", "4:1 one-bit multiplexer.");
     bindIOModule<Mux8to1>(m, "Mux8to1", "8:1 one-bit multiplexer.");
     bindIOModule<Mux16to1>(m, "Mux16to1", "16:1 one-bit multiplexer.");
+    bindIOModule<Mux32to1>(m, "Mux32to1", "32:1 one-bit multiplexer.");
     bindIOModule<Mux2to1_8bit>(m, "Mux2to1_8bit", "2:1 8-bit multiplexer.");
     bindIOModule<Mux4to1_8bit>(m, "Mux4to1_8bit", "4:1 8-bit multiplexer.");
     bindIOModule<Mux8to1_8bit>(m, "Mux8to1_8bit", "8:1 8-bit multiplexer.");
     bindIOModule<Mux16to1_8bit>(m, "Mux16to1_8bit", "16:1 8-bit multiplexer.");
+    bindIOModule<Mux32to1_32bit>(m, "Mux32to1_32bit", "32:1 32-bit multiplexer.");
 
     bindIOModule<Adder8>(m, "Adder8", "8-bit adder.");
     bindIOModule<TwosComplement8>(m, "TwosComplement8", "8-bit two's complement.");
@@ -215,6 +218,7 @@ void bindModules(py::module_& m) {
     bindIOModule<ShiftRightArithmetic8>(m, "ShiftRightArithmetic8", "8-bit arithmetic shift right.");
     bindIOModule<ZeroDetect8>(m, "ZeroDetect8", "8-bit zero detector.");
     bindIOModule<ALU8>(m, "ALU8", "8-bit arithmetic logic unit.");
+    bindIOModule<Adder32>(m, "Adder32", "Structural 32-bit adder.");
     bindIOModule<AddSub32>(m, "AddSub32", "Structural 32-bit add/subtract unit.");
     bindIOModule<Logic32>(m, "Logic32", "Structural 32-bit bitwise logic unit.");
     bindIOModule<ZeroDetect32>(m, "ZeroDetect32", "Structural 32-bit zero detector.");

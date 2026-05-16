@@ -27,6 +27,7 @@ set(CORE_LOGIC_SOURCES
     src/modules/composite/HalfAdder.cpp
     src/modules/composite/FullAdder.cpp
     src/modules/composite/Adder8.cpp
+    src/modules/composite/Adder32.cpp
     src/modules/composite/AddSub32.cpp
     src/modules/composite/Logic32.cpp
     src/modules/composite/ZeroDetect32.cpp
