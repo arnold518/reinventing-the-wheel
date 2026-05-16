@@ -28,7 +28,9 @@ set(SIMULATION_TESTS
     BitJoiner8UnknownTest
     ConstantValue1HighTest
     ConstantValue1Low8TriggerTest
+    ConstantValue1From32TriggerTest
     ConstantValue8Test
+    ConstantValue32Test
     HalfAdderTest
     FullAdderTest
     AND8Test

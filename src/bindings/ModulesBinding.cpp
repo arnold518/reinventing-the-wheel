@@ -295,5 +295,7 @@ void bindModules(py::module_& m) {
     bindBasicModule<BitJoiner<32>>(m, "BitJoiner32", "Join thirty-two single-bit inputs into one 32-bit output.");
     bindConstantModule<ConstantValue<1, 1>>(m, "ConstantValue1High", "Single-bit constant with a single-bit trigger.");
     bindConstantModule<ConstantValue<1, 8>>(m, "ConstantValue1From8Trigger", "Single-bit constant with an 8-bit trigger.");
+    bindConstantModule<ConstantValue<1, 32>>(m, "ConstantValue1From32Trigger", "Single-bit constant with a 32-bit trigger.");
     bindConstantModule<ConstantValue<8, 8>>(m, "ConstantValue8", "8-bit constant with an 8-bit trigger.");
+    bindConstantModule<ConstantValue<32, 32>>(m, "ConstantValue32", "32-bit constant with a 32-bit trigger.");
 }

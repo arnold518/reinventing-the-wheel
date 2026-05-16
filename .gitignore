@@ -5,3 +5,5 @@
 !extern/pybind11
 /build/
 /visualizer/__pycache__
+/visualizer-v2/__pycache__/
+/visualizer-v2/circuit_backend*.so

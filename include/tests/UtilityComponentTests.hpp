@@ -129,7 +129,17 @@ public:
     ConstantValue1Low8TriggerTest();
 };
 
+class ConstantValue1From32TriggerTest : public ComponentRowsTest<ConstantValue<1, 32>, uint64_t> {
+public:
+    ConstantValue1From32TriggerTest();
+};
+
 class ConstantValue8Test : public ComponentRowsTest<ConstantValue<8, 8>, uint64_t> {
 public:
     ConstantValue8Test();
+};
+
+class ConstantValue32Test : public ComponentRowsTest<ConstantValue<32, 32>, uint64_t> {
+public:
+    ConstantValue32Test();
 };

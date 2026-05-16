@@ -78,6 +78,8 @@ PREFERRED_SCENARIO_ALIASES = {
     "FullCircuitTest": ["full-circuit", "fullcircuit"],
     "DFlipFlopTest": ["dff", "d-flip-flop"],
     "ClockGeneratorTest": ["clock"],
+    "ConstantValue1From32TriggerTest": ["constant1-from32"],
+    "ConstantValue32Test": ["constant32"],
     "Adder8Test": ["adder8", "8-bit-adder"],
     "ZeroDetect8Test": ["zero-detect8"],
     "ALU8Test": ["alu8"],

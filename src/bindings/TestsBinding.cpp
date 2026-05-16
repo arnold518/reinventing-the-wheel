@@ -47,7 +47,9 @@ void bindTests(py::module_& m) {
     bindSimulationScenario<BitJoiner8UnknownTest>(m, "BitJoiner8UnknownTest", "8-bit joiner unknown-preservation scenario.");
     bindSimulationScenario<ConstantValue1HighTest>(m, "ConstantValue1HighTest", "Single-bit high constant scenario.");
     bindSimulationScenario<ConstantValue1Low8TriggerTest>(m, "ConstantValue1Low8TriggerTest", "Single-bit low constant with 8-bit trigger scenario.");
+    bindSimulationScenario<ConstantValue1From32TriggerTest>(m, "ConstantValue1From32TriggerTest", "Single-bit constant with 32-bit trigger scenario.");
     bindSimulationScenario<ConstantValue8Test>(m, "ConstantValue8Test", "8-bit constant scenario.");
+    bindSimulationScenario<ConstantValue32Test>(m, "ConstantValue32Test", "32-bit constant scenario.");
     bindSimulationScenario<HalfAdderTest>(m, "HalfAdderTest", "Half-adder truth-table scenario.");
     bindSimulationScenario<FullAdderTest>(m, "FullAdderTest", "Full-adder truth-table scenario.");
     bindSimulationScenario<AND8Test>(m, "AND8Test", "8-bit AND regression scenario.");

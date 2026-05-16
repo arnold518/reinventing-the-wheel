@@ -410,6 +410,16 @@ ConstantValue1Low8TriggerTest::ConstantValue1Low8TriggerTest()
           },
           uint64_t{0}) {}
 
+ConstantValue1From32TriggerTest::ConstantValue1From32TriggerTest()
+    : ComponentRowsTest<ConstantValue<1, 32>, uint64_t>(
+          "ConstantValue1From32TriggerTest",
+          "CONSTANT_VALUE1_FROM_32_TRIGGER_ROOT",
+          {
+              {{{"TRIGGER", bits(0x00000000U)}}, {{"OUT", bit(true)}}},
+              {{{"TRIGGER", bits(0xffffffffU)}}, {{"OUT", bit(true)}}},
+          },
+          uint64_t{1}) {}
+
 ConstantValue8Test::ConstantValue8Test()
     : ComponentRowsTest<ConstantValue<8, 8>, uint64_t>(
           "ConstantValue8Test",
@@ -419,3 +429,13 @@ ConstantValue8Test::ConstantValue8Test()
               {{{"TRIGGER", bits(0xFF)}}, {{"OUT", bits(0xA5)}}},
           },
           uint64_t{0xA5}) {}
+
+ConstantValue32Test::ConstantValue32Test()
+    : ComponentRowsTest<ConstantValue<32, 32>, uint64_t>(
+          "ConstantValue32Test",
+          "CONSTANT_VALUE32_ROOT",
+          {
+              {{{"TRIGGER", bits(0x00000000U)}}, {{"OUT", bits(0xdeadbeefU)}}},
+              {{{"TRIGGER", bits(0xffffffffU)}}, {{"OUT", bits(0xdeadbeefU)}}},
+          },
+          uint64_t{0xdeadbeefU}) {}

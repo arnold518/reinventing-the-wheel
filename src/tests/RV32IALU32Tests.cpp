@@ -246,15 +246,25 @@ TestRow aluAutoRow(uint32_t a, uint32_t b, uint8_t op) {
 }
 
 std::vector<TestRow> adder32Rows() {
-    return {
+    std::vector<TestRow> rows{
         adder32Row(0x00000000U, 0x00000000U, false),
         adder32Row(0x00000000U, 0x00000000U, true),
         adder32Row(0x00000001U, 0x00000002U, false),
         adder32Row(0xffffffffU, 0x00000001U, false),
         adder32Row(0xffffffffU, 0x00000000U, true),
+        adder32Row(0xffffffffU, 0xffffffffU, false),
+        adder32Row(0xffffffffU, 0xffffffffU, true),
+        adder32Row(0x55555555U, 0xaaaaaaaaU, false),
+        adder32Row(0x55555555U, 0xaaaaaaaaU, true),
         adder32Row(0x7fffffffU, 0x00000001U, false),
         adder32Row(0x80000000U, 0x80000000U, false),
     };
+
+    for (uint32_t width = 1; width < 32; ++width) {
+        const uint32_t carry_chain = static_cast<uint32_t>((1ULL << width) - 1ULL);
+        rows.push_back(adder32Row(carry_chain, 0x00000001U, false));
+    }
+    return rows;
 }
 
 std::vector<TestRow> addSub4Rows() {
@@ -270,10 +280,13 @@ std::vector<TestRow> addSub4Rows() {
 }
 
 std::vector<TestRow> addSub32Rows() {
-    return {
+    std::vector<TestRow> rows{
         addSubRow(0x00000000U, 0x00000000U, false),
         addSubRow(0x00000001U, 0x00000002U, false),
         addSubRow(0xffffffffU, 0x00000001U, false),
+        addSubRow(0xffffffffU, 0xffffffffU, false),
+        addSubRow(0x55555555U, 0xaaaaaaaaU, false),
+        addSubRow(0x55555555U, 0xaaaaaaaaU, true),
         addSubRow(0x7fffffffU, 0x00000001U, false),
         addSubRow(0x80000000U, 0x80000000U, false),
         addSubRow(0x7fffffffU, 0xffffffffU, false),
@@ -284,10 +297,18 @@ std::vector<TestRow> addSub32Rows() {
         addSubRow(0x80000000U, 0x7fffffffU, true),
         addSubRow(0xffffffffU, 0xffffffffU, true),
     };
+
+    for (uint32_t width = 1; width < 32; ++width) {
+        const uint32_t carry_chain = static_cast<uint32_t>((1ULL << width) - 1ULL);
+        const uint32_t borrow_chain = static_cast<uint32_t>(1ULL << width);
+        rows.push_back(addSubRow(carry_chain, 0x00000001U, false));
+        rows.push_back(addSubRow(borrow_chain, 0x00000001U, true));
+    }
+    return rows;
 }
 
 std::vector<TestRow> logic32Rows() {
-    return {
+    std::vector<TestRow> rows{
         {{{"A", bits(0xf0f0f0f0U)}, {"B", bits(0x0ff00ff0U)}},
          {{"AND_OUT", bits(0x00f000f0U)}, {"OR_OUT", bits(0xfff0fff0U)}, {"XOR_OUT", bits(0xff00ff00U)}}},
         {{{"A", bits(0xffffffffU)}, {"B", bits(0x00000000U)}},
@@ -297,28 +318,47 @@ std::vector<TestRow> logic32Rows() {
         {{{"A", bits(0x80000000U)}, {"B", bits(0x7fffffffU)}},
          {{"AND_OUT", bits(0x00000000U)}, {"OR_OUT", bits(0xffffffffU)}, {"XOR_OUT", bits(0xffffffffU)}}},
     };
+
+    for (uint32_t bit_index = 0; bit_index < 32; ++bit_index) {
+        const uint32_t mask = uint32_t{1} << bit_index;
+        rows.push_back({{{"A", bits(mask)}, {"B", bits(0x00000000U)}},
+                        {{"AND_OUT", bits(0x00000000U)}, {"OR_OUT", bits(mask)}, {"XOR_OUT", bits(mask)}}});
+        rows.push_back({{{"A", bits(mask)}, {"B", bits(mask)}},
+                        {{"AND_OUT", bits(mask)}, {"OR_OUT", bits(mask)}, {"XOR_OUT", bits(0x00000000U)}}});
+    }
+    return rows;
 }
 
 std::vector<TestRow> zeroDetect32Rows() {
-    return {
+    std::vector<TestRow> rows{
         {{{"A", bits(0x00000000U)}}, {{"ZERO", bit(true)}}},
         {{{"A", bits(0x00000001U)}}, {{"ZERO", bit(false)}}},
         {{{"A", bits(0x80000000U)}}, {{"ZERO", bit(false)}}},
         {{{"A", bits(0xffffffffU)}}, {{"ZERO", bit(false)}}},
     };
+
+    for (uint32_t bit_index = 0; bit_index < 32; ++bit_index) {
+        rows.push_back({{{"A", bits(uint32_t{1} << bit_index)}}, {{"ZERO", bit(false)}}});
+    }
+    return rows;
 }
 
 std::vector<TestRow> comparator32Rows() {
-    return {
-        comparatorRow(0x00000000U, 0x00000000U),
-        comparatorRow(0x00000001U, 0x00000002U),
-        comparatorRow(0xffffffffU, 0x00000001U),
-        comparatorRow(0x80000000U, 0x00000000U),
-        comparatorRow(0x7fffffffU, 0x80000000U),
-        comparatorRow(0x80000000U, 0x7fffffffU),
-        comparatorRow(0x00000000U, 0xffffffffU),
-        comparatorRow(0xffffffffU, 0xffffffffU),
+    std::vector<TestRow> rows;
+    constexpr uint32_t values[] = {
+        0x00000000U,
+        0x00000001U,
+        0x00000002U,
+        0x7fffffffU,
+        0x80000000U,
+        0xffffffffU,
     };
+    for (uint32_t a : values) {
+        for (uint32_t b : values) {
+            rows.push_back(comparatorRow(a, b));
+        }
+    }
+    return rows;
 }
 
 std::vector<TestRow> shifter32Rows() {
@@ -340,14 +380,16 @@ std::vector<TestRow> shifter32Rows() {
 }
 
 std::vector<TestRow> alu32Rows() {
-    return {
+    std::vector<TestRow> rows{
         aluAutoRow(0x00000001U, 0x00000002U, ALU32Op::ADD),
         aluAutoRow(0xffffffffU, 0x00000001U, ALU32Op::ADD),
+        aluAutoRow(0xffffffffU, 0xffffffffU, ALU32Op::ADD),
         aluAutoRow(0x7fffffffU, 0x00000001U, ALU32Op::ADD),
         aluAutoRow(0x80000000U, 0x80000000U, ALU32Op::ADD),
         aluAutoRow(0x00000005U, 0x00000005U, ALU32Op::SUB),
         aluAutoRow(0x00000000U, 0x00000001U, ALU32Op::SUB),
         aluAutoRow(0x80000000U, 0x7fffffffU, ALU32Op::SUB),
+        aluAutoRow(0x7fffffffU, 0xffffffffU, ALU32Op::SUB),
         aluAutoRow(0xf0f0f0f0U, 0x0ff00ff0U, ALU32Op::AND),
         aluAutoRow(0xf0f0f0f0U, 0x0ff00ff0U, ALU32Op::OR),
         aluAutoRow(0xf0f0f0f0U, 0x0ff00ff0U, ALU32Op::XOR),
@@ -359,13 +401,19 @@ std::vector<TestRow> alu32Rows() {
         aluAutoRow(0x80000000U, 0x00000021U, ALU32Op::SRA),
         aluAutoRow(0xffffffffU, 0x00000001U, ALU32Op::SLT),
         aluAutoRow(0x80000000U, 0x00000000U, ALU32Op::SLT),
+        aluAutoRow(0x7fffffffU, 0x80000000U, ALU32Op::SLT),
         aluAutoRow(0xffffffffU, 0x00000001U, ALU32Op::SLTU),
         aluAutoRow(0x00000000U, 0xffffffffU, ALU32Op::SLTU),
+        aluAutoRow(0x7fffffffU, 0x80000000U, ALU32Op::SLTU),
         aluAutoRow(0x12345678U, 0x9abcdef0U, ALU32Op::PASS_A),
         aluAutoRow(0x12345678U, 0x9abcdef0U, ALU32Op::PASS_B),
         aluAutoRow(0x12345678U, 0x9abcdef0U, ALU32Op::ZERO),
-        aluAutoRow(0x12345678U, 0x9abcdef0U, 0x1f),
     };
+
+    for (uint8_t op = 0x0d; op <= 0x1f; ++op) {
+        rows.push_back(aluAutoRow(0x12345678U, 0x9abcdef0U, op));
+    }
+    return rows;
 }
 }
 
