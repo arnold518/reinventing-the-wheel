@@ -10,12 +10,16 @@ const STATE_COLORS = {
 
 const DEFAULT_COLOR = [61, 90, 128, 190];
 const WIRE_STROKE_PIN_RATIO = 0.18;
-const WIRE_STROKE_MIN_PX = 1;
 const WIRE_STROKE_MAX_PX = 4;
 const WIRE_HOVER_STROKE_MULTIPLIER = 1.7;
 const WIRE_HOVER_STROKE_MIN_PX = 2;
 const WIRE_HOVER_STROKE_MAX_PX = 7;
+const WIRE_HIGHLIGHT_HALO_MIN_PX = 5;
+const WIRE_HIGHLIGHT_HALO_EXTRA_PX = 3;
+const WIRE_HIGHLIGHT_HALO_COLOR = "rgba(255, 255, 255, 0.55)";
 const WIRE_HIT_PADDING_PX = 5;
+const BUS_SLASH_LENGTH_STROKE_RATIO = 4;
+const BUS_SLASH_MAX_ROUTE_RATIO = 0.2;
 const SCREEN_CLIP_MARGIN_PX = 64;
 const MAX_DIRECT_CANVAS_SIZE_PX = 100000;
 const MAX_COMPONENT_FONT_PX = 96;
@@ -665,28 +669,33 @@ function activeStub(pin, isSource) {
 }
 
 function pinWireStrokeWorld(pin) {
-  if (!pin || !pin.rect) return 1;
-  return Math.max(0.25, Math.min(pin.rect.w, pin.rect.h) * WIRE_STROKE_PIN_RATIO);
+  if (!pin || !pin.rect) return 0;
+  return Math.max(0, Math.min(pin.rect.w, pin.rect.h) * WIRE_STROKE_PIN_RATIO);
 }
 
 function connectedWireStrokeWorld(source, sinks) {
   const endpointStrokes = [source, ...sinks].map(pinWireStrokeWorld).filter((width) => Number.isFinite(width));
-  if (endpointStrokes.length === 0) return 1;
+  if (endpointStrokes.length === 0) return 0;
   return Math.min(...endpointStrokes);
 }
 
 function wireStrokePx(segment, hovered) {
-  const basePx = Math.max(0, segment.strokeWorld || 1) * app.camera.zoom;
+  const strokeWorld = Number(segment.strokeWorld);
+  const basePx = Math.max(0, Number.isFinite(strokeWorld) ? strokeWorld : 0) * app.camera.zoom;
   const scaledPx = hovered ? basePx * WIRE_HOVER_STROKE_MULTIPLIER : basePx;
-  const minPx = hovered ? WIRE_HOVER_STROKE_MIN_PX : WIRE_STROKE_MIN_PX;
   const maxPx = hovered ? WIRE_HOVER_STROKE_MAX_PX : WIRE_STROKE_MAX_PX;
-  return Math.round(clamp(scaledPx, minPx, maxPx) * 2) / 2;
+  const cappedPx = Math.min(scaledPx, maxPx);
+  return hovered ? Math.max(WIRE_HOVER_STROKE_MIN_PX, cappedPx) : cappedPx;
+}
+
+function samePathPoint(a, b) {
+  return a.x === b.x && a.y === b.y;
 }
 
 function dedupePath(path) {
   const result = [];
   for (const point of path) {
-    if (result.length === 0 || distSq(point, result[result.length - 1]) > 0.01) {
+    if (result.length === 0 || !samePathPoint(point, result[result.length - 1])) {
       result.push({ x: point.x, y: point.y });
     }
   }
@@ -702,6 +711,7 @@ function routeAdaptive(start, end) {
 
 function buildWirePaths(wire) {
   wire.paths = [];
+  wire.branches = [];
   wire.bbox = null;
   const source = wire.sourcePinId ? app.pins.get(wire.sourcePinId) : null;
   const sinks = wire.sinkPins.filter((sink) => sink && sink.rect);
@@ -724,6 +734,9 @@ function buildWirePaths(wire) {
     const routeBBox = pointsBBox(route);
     wire.paths.push({ kind: "route", points: route, bbox: routeBBox, strokeWorld });
     wire.bbox = unionRect(wire.bbox, routeBBox);
+
+    const branch = dedupePath([...sourceStub, ...route.slice(1), ...sinkStub.slice(1)]);
+    wire.branches.push({ points: branch, routePoints: route, bbox: pointsBBox(branch), strokeWorld });
   }
 }
 
@@ -832,12 +845,12 @@ function drawComponentGrid(component, vr) {
 }
 
 function strokePolyline(points, color, lineWidth) {
-  if (points.length < 2) return;
+  if (points.length < 2 || lineWidth <= 0) return;
   const screenPoints = points.map(worldToScreen);
   const margin = Math.max(SCREEN_CLIP_MARGIN_PX, lineWidth * 2);
   ctx.strokeStyle = color;
   ctx.lineWidth = lineWidth;
-  ctx.lineCap = "butt";
+  ctx.lineCap = "square";
   ctx.lineJoin = "miter";
 
   let hasVisibleSegment = false;
@@ -850,6 +863,14 @@ function strokePolyline(points, color, lineWidth) {
     hasVisibleSegment = true;
   }
   if (hasVisibleSegment) ctx.stroke();
+}
+
+function strokeWirePolyline(points, color, lineWidth, highlighted) {
+  if (highlighted) {
+    const haloWidth = Math.max(WIRE_HIGHLIGHT_HALO_MIN_PX, lineWidth + WIRE_HIGHLIGHT_HALO_EXTRA_PX);
+    strokePolyline(points, WIRE_HIGHLIGHT_HALO_COLOR, haloWidth);
+  }
+  strokePolyline(points, color, lineWidth);
 }
 
 function clipScreenLine(start, end, margin = SCREEN_CLIP_MARGIN_PX) {
@@ -938,26 +959,34 @@ function pointAtFraction(path, fraction) {
   return { ...path[path.length - 1] };
 }
 
-function drawBusSlash(worldPoint, color, lineWidth) {
-  const center = worldToScreen(worldPoint);
-  const bounds = screenClipBounds(SCREEN_CLIP_MARGIN_PX);
-  if (center.x < bounds.minX || center.x > bounds.maxX || center.y < bounds.minY || center.y > bounds.maxY) return;
-  const length = clamp(lineWidth * 4, 6, 28);
-  const half = length / 2;
-  ctx.strokeStyle = color;
-  ctx.lineWidth = lineWidth;
-  ctx.lineCap = "butt";
-  ctx.lineJoin = "miter";
-  ctx.beginPath();
-  ctx.moveTo(center.x - half, center.y + half);
-  ctx.lineTo(center.x + half, center.y - half);
-  ctx.stroke();
+function pathLengthWorld(path) {
+  let total = 0;
+  for (let i = 0; i < path.length - 1; i += 1) {
+    total += Math.hypot(path[i + 1].x - path[i].x, path[i + 1].y - path[i].y);
+  }
+  return total;
 }
 
-function drawBusAnnotations(wire, path, color, lineWidth) {
+function busSlashLengthWorld(strokeWorld, routeLength) {
+  const targetLength = Math.max(0, strokeWorld || 0) * BUS_SLASH_LENGTH_STROKE_RATIO;
+  const routeCap = Math.max(0, routeLength || 0) * BUS_SLASH_MAX_ROUTE_RATIO;
+  return routeCap > 0 ? Math.min(targetLength, routeCap) : 0;
+}
+
+function drawBusSlash(worldPoint, color, lineWidth, slashLength, highlighted) {
+  if (slashLength <= 0) return;
+  const half = slashLength / 2;
+  strokeWirePolyline([
+    { x: worldPoint.x - half, y: worldPoint.y + half },
+    { x: worldPoint.x + half, y: worldPoint.y - half },
+  ], color, lineWidth, highlighted);
+}
+
+function drawBusAnnotations(wire, path, color, lineWidth, strokeWorld, highlighted) {
   if (wire.width <= 1) return;
-  drawBusSlash(pointAtFraction(path, 0.33), color, lineWidth);
-  drawBusSlash(pointAtFraction(path, 0.66), color, lineWidth);
+  const slashLength = busSlashLengthWorld(strokeWorld, pathLengthWorld(path));
+  drawBusSlash(pointAtFraction(path, 0.33), color, lineWidth, slashLength, highlighted);
+  drawBusSlash(pointAtFraction(path, 0.66), color, lineWidth, slashLength, highlighted);
 }
 
 function isHovered(type, id) {
@@ -982,12 +1011,14 @@ function drawWire(wire, vr, forceHighlight = false) {
   const highlighted = forceHighlight || isHovered("wire", wire.id) || isSelectedWire(wire.id);
   const wireCullMargin = (WIRE_HOVER_STROKE_MAX_PX + SCREEN_CLIP_MARGIN_PX) / app.camera.zoom;
   if (!rectIntersects(padRect(wire.bbox, wireCullMargin), vr)) return;
-  for (const segment of wire.paths) {
+  const drawSegments = wire.branches && wire.branches.length ? wire.branches : wire.paths;
+  for (const segment of drawSegments) {
     const lineWidth = wireStrokePx(segment, highlighted);
     const segmentCullMargin = (lineWidth / 2 + SCREEN_CLIP_MARGIN_PX) / app.camera.zoom;
     if (!rectIntersects(padRect(segment.bbox, segmentCullMargin), vr)) continue;
-    strokePolyline(segment.points, color, lineWidth);
-    if (segment.kind === "route") drawBusAnnotations(wire, segment.points, color, lineWidth);
+    strokeWirePolyline(segment.points, color, lineWidth, highlighted);
+    if (segment.routePoints) drawBusAnnotations(wire, segment.routePoints, color, lineWidth, segment.strokeWorld, highlighted);
+    else if (segment.kind === "route") drawBusAnnotations(wire, segment.points, color, lineWidth, segment.strokeWorld, highlighted);
   }
 }
 
@@ -1379,7 +1410,7 @@ function distanceToPathSq(world, path) {
 
 function wireHit(wire, world) {
   if (!wire.paths) return false;
-  const maxStrokePx = wire.paths.reduce((maxWidth, segment) => Math.max(maxWidth, wireStrokePx(segment, false)), WIRE_STROKE_MIN_PX);
+  const maxStrokePx = wire.paths.reduce((maxWidth, segment) => Math.max(maxWidth, wireStrokePx(segment, false)), 0);
   const thresholdSq = (Math.max(7, maxStrokePx + WIRE_HIT_PADDING_PX) / app.camera.zoom) ** 2;
   return wire.paths.some((path) => distanceToPathSq(world, path.points) < thresholdSq);
 }
