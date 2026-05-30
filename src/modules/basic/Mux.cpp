@@ -221,6 +221,17 @@ void Mux4to1_8bit::buildInternals(ComponentBuilder& builder) {
     buildBusMux<Mux4to1, 4, 2, 8>(*this, builder);
 }
 
+Mux4to1_32bit::Mux4to1_32bit(std::string name)
+    : IOComponent(std::move(name), [](IOComponent* self) {
+        for (int i = 0; i < 4; ++i) self->addPin<32>("IN" + std::to_string(i), PinType::INPUT);
+        self->addPin<2>("SEL", PinType::INPUT);
+        self->addPin<32>("OUT", PinType::OUTPUT);
+    }) {}
+
+void Mux4to1_32bit::buildInternals(ComponentBuilder& builder) {
+    buildBusMux<Mux4to1, 4, 2, 32>(*this, builder);
+}
+
 Mux8to1_8bit::Mux8to1_8bit(std::string name)
     : IOComponent(std::move(name), [](IOComponent* self) {
         for (int i = 0; i < 8; ++i) self->addPin<8>("IN" + std::to_string(i), PinType::INPUT);

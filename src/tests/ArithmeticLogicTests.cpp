@@ -1,5 +1,6 @@
 #include "tests/ArithmeticLogicTests.hpp"
 
+#include "modules/basic/Decoder.hpp"
 #include "modules/basic/Logic8.hpp"
 #include "modules/basic/Mux.hpp"
 #include "modules/composite/Arithmetic8.hpp"
@@ -101,6 +102,31 @@ std::vector<TestRow> busMux32Rows(size_t input_count) {
         }
         inputs["SEL"] = bits(selected);
         rows.push_back({inputs, {{"OUT", bits(mux32BusValue(selected))}}});
+    }
+    return rows;
+}
+
+std::map<std::string, TestValue> decoderOutputs(size_t output_count, size_t selected, bool enable) {
+    std::map<std::string, TestValue> outputs;
+    for (size_t i = 0; i < output_count; ++i) {
+        outputs["OUT" + std::to_string(i)] = bit(enable && i == selected);
+    }
+    return outputs;
+}
+
+std::vector<TestRow> decoderRows(size_t output_count) {
+    std::vector<TestRow> rows;
+    for (size_t selected = 0; selected < output_count; ++selected) {
+        rows.push_back({
+            {{"ADDR", bits(selected)}, {"ENABLE", bit(true)}},
+            decoderOutputs(output_count, selected, true),
+        });
+    }
+    for (size_t selected : {size_t{0}, output_count / 2, output_count - 1}) {
+        rows.push_back({
+            {{"ADDR", bits(selected)}, {"ENABLE", bit(false)}},
+            decoderOutputs(output_count, selected, false),
+        });
     }
     return rows;
 }
@@ -215,6 +241,9 @@ Mux2to1_8bitTest::Mux2to1_8bitTest()
 Mux4to1_8bitTest::Mux4to1_8bitTest()
     : ComponentRowsTest<Mux4to1_8bit>("Mux4to1_8bitTest", "MUX4TO1_8BIT_ROOT", busMuxRows(4)) {}
 
+Mux4to1_32bitTest::Mux4to1_32bitTest()
+    : ComponentRowsTest<Mux4to1_32bit>("Mux4to1_32bitTest", "MUX4TO1_32BIT_ROOT", busMux32Rows(4)) {}
+
 Mux8to1_8bitTest::Mux8to1_8bitTest()
     : ComponentRowsTest<Mux8to1_8bit>("Mux8to1_8bitTest", "MUX8TO1_8BIT_ROOT", busMuxRows(8)) {}
 
@@ -223,6 +252,12 @@ Mux16to1_8bitTest::Mux16to1_8bitTest()
 
 Mux32to1_32bitTest::Mux32to1_32bitTest()
     : ComponentRowsTest<Mux32to1_32bit>("Mux32to1_32bitTest", "MUX32TO1_32BIT_ROOT", busMux32Rows(32)) {}
+
+Decoder2to4Test::Decoder2to4Test()
+    : ComponentRowsTest<Decoder2to4>("Decoder2to4Test", "DECODER2TO4_ROOT", decoderRows(4)) {}
+
+Decoder5to32Test::Decoder5to32Test()
+    : ComponentRowsTest<Decoder5to32>("Decoder5to32Test", "DECODER5TO32_ROOT", decoderRows(32)) {}
 
 TwosComplement8Test::TwosComplement8Test()
     : ComponentRowsTest<TwosComplement8>("TwosComplement8Test", "TWOS_COMPLEMENT8_ROOT", {

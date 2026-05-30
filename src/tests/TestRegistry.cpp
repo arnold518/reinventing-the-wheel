@@ -3,6 +3,7 @@
 #include "tests/ArithmeticLogicTests.hpp"
 #include "tests/CorePrimitiveTests.hpp"
 #include "tests/FullCircuitTest.hpp"
+#include "tests/MemoryComponentTests.hpp"
 #include "tests/RV32IALU32Tests.hpp"
 #include "tests/UtilityComponentTests.hpp"
 #include <algorithm>
@@ -24,8 +25,20 @@ const std::vector<TestRegistryEntry>& getTestRegistry() {
         entry<XORGateTest>("XORGateTest"),
         entry<NANDGateTest>("NANDGateTest"),
         entry<NORGateTest>("NORGateTest"),
+        entry<SRLatchTest>("SRLatchTest"),
+        entry<GatedDLatchTest>("GatedDLatchTest"),
         entry<DFlipFlopTest>("DFlipFlopTest"),
         entry<ClockGeneratorTest>("ClockGeneratorTest"),
+        entry<BehavioralMemoryBitTest>("BehavioralMemoryBitTest"),
+        entry<BehavioralMemory64Kx32Test>("BehavioralMemory64Kx32Test"),
+        entry<MemoryBitTest>("MemoryBitTest"),
+        entry<Register32Test>("Register32Test"),
+        entry<RegisterFile4x32Test>("RegisterFile4x32Test"),
+        entry<RegisterFile32x32Test>("RegisterFile32x32Test"),
+        entry<BehavioralRegisterFile32x32Test>("BehavioralRegisterFile32x32Test"),
+        entry<BehavioralRegisterFile32x32UnknownTest>("BehavioralRegisterFile32x32UnknownTest"),
+        entry<Memory4x32Test>("Memory4x32Test"),
+        entry<Memory32x32Test>("Memory32x32Test"),
         entry<RewireUnpackTest>("RewireUnpackTest"),
         entry<RewirePackTest>("RewirePackTest"),
         entry<RewireSliceTest>("RewireSliceTest"),
@@ -60,9 +73,12 @@ const std::vector<TestRegistryEntry>& getTestRegistry() {
         entry<Mux32to1Test>("Mux32to1Test"),
         entry<Mux2to1_8bitTest>("Mux2to1_8bitTest"),
         entry<Mux4to1_8bitTest>("Mux4to1_8bitTest"),
+        entry<Mux4to1_32bitTest>("Mux4to1_32bitTest"),
         entry<Mux8to1_8bitTest>("Mux8to1_8bitTest"),
         entry<Mux16to1_8bitTest>("Mux16to1_8bitTest"),
         entry<Mux32to1_32bitTest>("Mux32to1_32bitTest"),
+        entry<Decoder2to4Test>("Decoder2to4Test"),
+        entry<Decoder5to32Test>("Decoder5to32Test"),
         entry<Adder8Test>("Adder8Test"),
         entry<TwosComplement8Test>("TwosComplement8Test"),
         entry<Subtractor8Test>("Subtractor8Test"),

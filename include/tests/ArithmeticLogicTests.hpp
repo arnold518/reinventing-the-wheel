@@ -1,5 +1,6 @@
 #pragma once
 
+#include "modules/basic/Decoder.hpp"
 #include "modules/basic/Logic8.hpp"
 #include "modules/basic/Mux.hpp"
 #include "modules/composite/ALU8.hpp"
@@ -96,6 +97,11 @@ public:
     Mux4to1_8bitTest();
 };
 
+class Mux4to1_32bitTest : public ComponentRowsTest<Mux4to1_32bit> {
+public:
+    Mux4to1_32bitTest();
+};
+
 class Mux8to1_8bitTest : public ComponentRowsTest<Mux8to1_8bit> {
 public:
     Mux8to1_8bitTest();
@@ -109,6 +115,16 @@ public:
 class Mux32to1_32bitTest : public ComponentRowsTest<Mux32to1_32bit> {
 public:
     Mux32to1_32bitTest();
+};
+
+class Decoder2to4Test : public ComponentRowsTest<Decoder2to4> {
+public:
+    Decoder2to4Test();
+};
+
+class Decoder5to32Test : public ComponentRowsTest<Decoder5to32> {
+public:
+    Decoder5to32Test();
 };
 
 class Adder8Test : public ComponentTruthTableTest<Adder8> {

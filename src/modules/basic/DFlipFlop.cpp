@@ -1,49 +1,52 @@
 #include "modules/basic/DFlipFlop.hpp"
-#include "simulator/Simulator.hpp"
 
-DFlipFlop::DFlipFlop(std::string name)
-    : BasicComponent(std::move(name), 3,
-        [](IOComponent* self) {
-            self->addPin("D", PinType::INPUT);
-            self->addPin("CLK", PinType::INPUT);
-            self->addPin("RST", PinType::INPUT);
-            self->addPin("Q", PinType::OUTPUT);
-            self->addPin("Q_BAR", PinType::OUTPUT);
-        }),
-        current_q_state(LogicValue::UNKNOWN),
-        current_q_bar_state(LogicValue::UNKNOWN),
-        prev_clk_state(LogicValue::UNKNOWN)
-{}
+#include "components/ComponentBuilder.hpp"
+#include "components/ComponentBuilder.tpp"
+#include "components/PinMacros.hpp"
+#include "components/WireBuilder.hpp"
+#include "modules/basic/Gate.hpp"
+#include "modules/basic/Latch.hpp"
 
-void DFlipFlop::evaluate(size_t current_time, Simulator& simulator) {
-    LogicValue d_input = getInputValue("D");
-    LogicValue clk_input = getInputValue("CLK");
-    LogicValue rst_input = getInputValue("RST");
+BEGIN_PINS(DFlipFlop, IOComponent)
+    INPUT_PIN("D")
+    INPUT_PIN("CLK")
+    INPUT_PIN("RST")
+    OUTPUT_PIN("Q")
+    OUTPUT_PIN("Q_BAR")
+END_PINS()
 
-    LogicValue next_q_state = current_q_state;
+void DFlipFlop::buildInternals(ComponentBuilder& builder) {
+    builder.addNewComponent<NOTGate>("NOT_CLK");
+    builder.addNewComponent<GatedDLatch>("MASTER");
+    builder.addNewComponent<GatedDLatch>("SLAVE");
 
-    if (rst_input == LogicValue::HIGH) {
-        next_q_state = LogicValue::LOW;
-    } 
-    else if (clk_input == LogicValue::HIGH && prev_clk_state == LogicValue::LOW) { // Rising edge detected
-         if (d_input == LogicValue::HIGH || d_input == LogicValue::LOW) {
-            next_q_state = d_input;
-        } else {
-            next_q_state = LogicValue::UNKNOWN;
-        }
-    }
-    
-    LogicValue next_q_bar_state = (next_q_state == LogicValue::HIGH) ? LogicValue::LOW : 
-                                  ((next_q_state == LogicValue::LOW) ? LogicValue::HIGH : LogicValue::UNKNOWN);
+    builder.wire("D_to_master")
+        .fromInput("D")
+        .to<GatedDLatch>("MASTER", "D");
 
-    if (next_q_state != current_q_state) {
-        current_q_state = next_q_state;
-        _updateOutputWire(simulator, "Q", current_q_state, current_time);
-    }
-    if (next_q_bar_state != current_q_bar_state) {
-        current_q_bar_state = next_q_bar_state;
-        _updateOutputWire(simulator, "Q_BAR", current_q_bar_state, current_time);
-    }
-    
-    prev_clk_state = clk_input;
+    builder.wire("CLK_internal")
+        .fromInput("CLK")
+        .to<NOTGate>("NOT_CLK", "IN")
+        .to<GatedDLatch>("SLAVE", "EN");
+
+    builder.wire("not_clk_to_master_en")
+        .from<NOTGate>("NOT_CLK", "OUT")
+        .to<GatedDLatch>("MASTER", "EN");
+
+    builder.wire("RST_to_latches")
+        .fromInput("RST")
+        .to<GatedDLatch>("MASTER", "RST")
+        .to<GatedDLatch>("SLAVE", "RST");
+
+    builder.wire("master_q_to_slave")
+        .from<GatedDLatch>("MASTER", "Q")
+        .to<GatedDLatch>("SLAVE", "D");
+
+    builder.wire("slave_q_to_output")
+        .from<GatedDLatch>("SLAVE", "Q")
+        .toOutput("Q");
+
+    builder.wire("slave_q_bar_to_output")
+        .from<GatedDLatch>("SLAVE", "Q_BAR")
+        .toOutput("Q_BAR");
 }

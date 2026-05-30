@@ -4,6 +4,7 @@
 #include "tests/ArithmeticLogicTests.hpp"
 #include "tests/CorePrimitiveTests.hpp"
 #include "tests/FullCircuitTest.hpp"
+#include "tests/MemoryComponentTests.hpp"
 #include "tests/RV32IALU32Tests.hpp"
 #include "tests/TestRegistry.hpp"
 #include "tests/UtilityComponentTests.hpp"
@@ -29,8 +30,23 @@ void bindTests(py::module_& m) {
     bindSimulationScenario<XORGateTest>(m, "XORGateTest", "XOR gate regression scenario.");
     bindSimulationScenario<NANDGateTest>(m, "NANDGateTest", "NAND gate regression scenario.");
     bindSimulationScenario<NORGateTest>(m, "NORGateTest", "NOR gate regression scenario.");
-    bindSimulationScenario<DFlipFlopTest>(m, "DFlipFlopTest", "D flip-flop timing regression scenario.");
+    bindSimulationScenario<SRLatchTest>(m, "SRLatchTest", "Structural active-low SR latch regression scenario.");
+    bindSimulationScenario<GatedDLatchTest>(m, "GatedDLatchTest", "Structural gated D latch regression scenario.");
+    bindSimulationScenario<DFlipFlopTest>(m, "DFlipFlopTest", "Structural master-slave D flip-flop regression scenario.");
     bindSimulationScenario<ClockGeneratorTest>(m, "ClockGeneratorTest", "Clock generator timing regression scenario.");
+    bindSimulationScenario<BehavioralMemoryBitTest>(m, "BehavioralMemoryBitTest", "Behavioral memory-bit timing and write-enable scenario.");
+    bindSimulationScenario<BehavioralMemory64Kx32Test>(m, "BehavioralMemory64Kx32Test", "Behavioral 64K-word RV32I memory scenario.");
+    bindSimulationScenario<MemoryBitTest>(m, "MemoryBitTest", "Structural memory-bit timing and write-enable scenario.");
+    bindSimulationScenario<Register32Test>(m, "Register32Test", "Structural 32-bit register timing and write-enable scenario.");
+    bindSimulationScenario<RegisterFile4x32Test>(m, "RegisterFile4x32Test", "Four-entry register file scenario using behavioral memory bits.");
+    bindSimulationScenario<RegisterFile32x32Test>(m, "RegisterFile32x32Test", "32-entry register file scenario using behavioral memory bits.");
+    bindSimulationScenario<BehavioralRegisterFile32x32Test>(m, "BehavioralRegisterFile32x32Test", "Compact behavioral 32-entry register file scenario.");
+    bindSimulationScenario<BehavioralRegisterFile32x32UnknownTest>(
+        m,
+        "BehavioralRegisterFile32x32UnknownTest",
+        "Behavioral 32-entry register file unknown-state scenario.");
+    bindSimulationScenario<Memory4x32Test>(m, "Memory4x32Test", "Four-word memory slice scenario.");
+    bindSimulationScenario<Memory32x32Test>(m, "Memory32x32Test", "Thirty-two-word memory slice scenario.");
     bindSimulationScenario<RewireUnpackTest>(m, "RewireUnpackTest", "Rewire unpack regression scenario.");
     bindSimulationScenario<RewirePackTest>(m, "RewirePackTest", "Rewire pack regression scenario.");
     bindSimulationScenario<RewireSliceTest>(m, "RewireSliceTest", "Rewire slice regression scenario.");
@@ -65,9 +81,12 @@ void bindTests(py::module_& m) {
     bindSimulationScenario<Mux32to1Test>(m, "Mux32to1Test", "32:1 one-bit mux regression scenario.");
     bindSimulationScenario<Mux2to1_8bitTest>(m, "Mux2to1_8bitTest", "2:1 8-bit mux regression scenario.");
     bindSimulationScenario<Mux4to1_8bitTest>(m, "Mux4to1_8bitTest", "4:1 8-bit mux regression scenario.");
+    bindSimulationScenario<Mux4to1_32bitTest>(m, "Mux4to1_32bitTest", "4:1 32-bit mux regression scenario.");
     bindSimulationScenario<Mux8to1_8bitTest>(m, "Mux8to1_8bitTest", "8:1 8-bit mux regression scenario.");
     bindSimulationScenario<Mux16to1_8bitTest>(m, "Mux16to1_8bitTest", "16:1 8-bit mux regression scenario.");
     bindSimulationScenario<Mux32to1_32bitTest>(m, "Mux32to1_32bitTest", "32:1 32-bit mux regression scenario.");
+    bindSimulationScenario<Decoder2to4Test>(m, "Decoder2to4Test", "2-bit enabled one-hot decoder regression scenario.");
+    bindSimulationScenario<Decoder5to32Test>(m, "Decoder5to32Test", "5-bit enabled one-hot decoder regression scenario.");
     bindSimulationScenario<Adder8Test>(m, "Adder8Test", "8-bit adder truth-table scenario.");
     bindSimulationScenario<TwosComplement8Test>(m, "TwosComplement8Test", "8-bit two's-complement regression scenario.");
     bindSimulationScenario<Subtractor8Test>(m, "Subtractor8Test", "8-bit subtractor regression scenario.");

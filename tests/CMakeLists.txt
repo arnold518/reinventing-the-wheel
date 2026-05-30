@@ -10,8 +10,20 @@ set(SIMULATION_TESTS
     XORGateTest
     NANDGateTest
     NORGateTest
+    SRLatchTest
+    GatedDLatchTest
     DFlipFlopTest
     ClockGeneratorTest
+    BehavioralMemoryBitTest
+    BehavioralMemory64Kx32Test
+    MemoryBitTest
+    Register32Test
+    RegisterFile4x32Test
+    RegisterFile32x32Test
+    BehavioralRegisterFile32x32Test
+    BehavioralRegisterFile32x32UnknownTest
+    Memory4x32Test
+    Memory32x32Test
     RewireUnpackTest
     RewirePackTest
     RewireSliceTest
@@ -46,9 +58,12 @@ set(SIMULATION_TESTS
     Mux32to1Test
     Mux2to1_8bitTest
     Mux4to1_8bitTest
+    Mux4to1_32bitTest
     Mux8to1_8bitTest
     Mux16to1_8bitTest
     Mux32to1_32bitTest
+    Decoder2to4Test
+    Decoder5to32Test
     Adder8Test
     TwosComplement8Test
     Subtractor8Test

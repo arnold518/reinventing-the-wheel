@@ -76,15 +76,30 @@ PREFERRED_SCENARIO_ALIASES = {
     "FullAdderTest": ["full-adder", "fulladder"],
     "HalfAdderTest": ["half-adder", "halfadder"],
     "FullCircuitTest": ["full-circuit", "fullcircuit"],
+    "SRLatchTest": ["sr-latch", "srlatch"],
+    "GatedDLatchTest": ["gated-d-latch", "gateddlatch", "d-latch"],
     "DFlipFlopTest": ["dff", "d-flip-flop"],
     "ClockGeneratorTest": ["clock"],
+    "BehavioralMemoryBitTest": ["behavioral-memory-bit", "behavioral-memorybit", "bmem-bit"],
+    "BehavioralMemory64Kx32Test": ["behavioral-memory64kx32", "behavioral-memory-64kx32", "bmem64kx32"],
+    "MemoryBitTest": ["memory-bit", "memorybit"],
+    "Register32Test": ["register32", "register-32"],
+    "RegisterFile4x32Test": ["register-file4x32", "register-file-4x32", "registerfile4x32", "rf4x32"],
+    "RegisterFile32x32Test": ["register-file32x32", "register-file-32x32", "registerfile32x32", "rf32x32"],
+    "BehavioralRegisterFile32x32Test": ["behavioral-register-file32x32", "behavioral-register-file-32x32", "behavioral-rf32x32", "brf32x32"],
+    "BehavioralRegisterFile32x32UnknownTest": ["behavioral-register-file32x32-unknown", "behavioral-rf32x32-unknown", "brf32x32-unknown"],
+    "Memory4x32Test": ["memory4x32", "memory-4x32", "mem4x32"],
+    "Memory32x32Test": ["memory32x32", "memory-32x32", "mem32x32"],
     "ConstantValue1From32TriggerTest": ["constant1-from32"],
     "ConstantValue32Test": ["constant32"],
     "Adder8Test": ["adder8", "8-bit-adder"],
     "ZeroDetect8Test": ["zero-detect8"],
     "ALU8Test": ["alu8"],
     "Mux32to1Test": ["mux32to1"],
+    "Mux4to1_32bitTest": ["mux4to1-32bit"],
     "Mux32to1_32bitTest": ["mux32to1-32bit"],
+    "Decoder2to4Test": ["decoder2to4", "decoder-2to4", "decoder-2-4"],
+    "Decoder5to32Test": ["decoder5to32", "decoder-5to32", "decoder-5-32"],
     "RewireWidth5Test": ["rewire-width5"],
     "Adder32Test": ["adder32"],
     "AddSub32Test": ["addsub32", "add-sub32"],
@@ -143,6 +158,34 @@ def _component_type(component: Any) -> str:
         return component.get_type_name()
     except AttributeError:
         return "Component"
+
+
+def _pin_width_by_name(component: Any, getter_name: str, pin_name: str) -> int | None:
+    try:
+        pins = getattr(component, getter_name)()
+    except (AttributeError, RuntimeError):
+        return None
+    try:
+        pin = pins.get(pin_name)
+    except AttributeError:
+        pin = None
+    return _signal_width(pin) if pin else None
+
+
+def _component_layout_type(component: Any) -> str:
+    component_type = _component_type(component)
+    if component_type == "BitSplitter":
+        width = _pin_width_by_name(component, "get_input_pins", "IN")
+        return f"BitSplitter<{width}>" if width else component_type
+    if component_type == "BitJoiner":
+        width = _pin_width_by_name(component, "get_output_pins", "OUT")
+        return f"BitJoiner<{width}>" if width else component_type
+    if component_type == "ConstantValue":
+        out_width = _pin_width_by_name(component, "get_output_pins", "OUT")
+        trigger_width = _pin_width_by_name(component, "get_input_pins", "TRIGGER")
+        if out_width and trigger_width:
+            return f"ConstantValue<{out_width},{trigger_width}>"
+    return component_type
 
 
 def _pin_name(pin: Any) -> str:
@@ -554,19 +597,36 @@ class LayoutManager:
         except FileNotFoundError:
             return None
 
+    @staticmethod
+    def _merge_layouts(base: dict[str, Any], override: dict[str, Any]) -> dict[str, Any]:
+        merged = _clone(base)
+        merged.update(_clone(override))
+        merged["children"] = {
+            **_clone(base.get("children", {})),
+            **_clone(override.get("children", {})),
+        }
+        return merged
+
     def get_layout_for(self, component_type: str) -> dict[str, Any]:
         return _clone(self.type_layouts.get(component_type, {}))
+
+    def get_layout_for_component(self, component: Any) -> dict[str, Any]:
+        component_type = _component_type(component)
+        component_layout_type = _component_layout_type(component)
+        layout = self.get_layout_for(component_type)
+        if component_layout_type != component_type:
+            layout = self._merge_layouts(layout, self.get_layout_for(component_layout_type))
+        return layout
 
     def get_root_layout_for(self, scenario_key: str, root_type: str) -> dict[str, Any]:
         type_layout = self.type_layouts.get(root_type, {})
         root_layout = self.root_layouts.get(scenario_key, {})
-        merged = _clone(type_layout)
-        merged.update(_clone(root_layout))
-        merged["children"] = {
-            **_clone(type_layout.get("children", {})),
-            **_clone(root_layout.get("children", {})),
-        }
-        return merged
+        return self._merge_layouts(type_layout, root_layout)
+
+    def get_root_layout_for_component(self, scenario_key: str, component: Any) -> dict[str, Any]:
+        type_layout = self.get_layout_for_component(component)
+        root_layout = self.root_layouts.get(scenario_key, {})
+        return self._merge_layouts(type_layout, root_layout)
 
     def get_child_layout(
         self, parent_type: str, child_name: str, *, scenario_key: str | None = None, is_root: bool = False
@@ -591,11 +651,7 @@ class LayoutManager:
         self, component: Any, *, scenario_key: str | None = None, is_root: bool = False
     ) -> float:
         instance_minimum = self.minimum_aspect_for_component(component)
-        layout = (
-            self.get_root_layout_for(scenario_key, component.get_type_name())
-            if is_root and scenario_key
-            else self.get_layout_for(component.get_type_name())
-        )
+        layout = self.get_root_layout_for_component(scenario_key, component) if is_root and scenario_key else self.get_layout_for_component(component)
         return round(max(instance_minimum, _float_value(layout.get("min_aspect_ratio"), instance_minimum)), 3)
 
     def aspect_for_component(self, component: Any, *, scenario_key: str | None = None, is_root: bool = False) -> float:
@@ -605,17 +661,13 @@ class LayoutManager:
             scenario_key=scenario_key,
             is_root=is_root,
         )
-        layout = (
-            self.get_root_layout_for(scenario_key, component.get_type_name())
-            if is_root and scenario_key
-            else self.get_layout_for(component.get_type_name())
-        )
+        layout = self.get_root_layout_for_component(scenario_key, component) if is_root and scenario_key else self.get_layout_for_component(component)
         return self._coerced_aspect(layout, fallback, minimum)
 
     def ensure_component_layout_defaults(
         self, component: Any, *, scenario_key: str | None = None, is_root: bool = False
     ) -> None:
-        component_type = component.get_type_name()
+        component_type = _component_layout_type(component)
         if scenario_key and self.should_use_root_layout_for_defaults(scenario_key, component_type, is_root):
             layout = self.root_layouts.setdefault(scenario_key, {})
             fallback = 0.75
@@ -837,15 +889,16 @@ class CircuitSession:
             is_root=is_root,
         )
         if is_root:
-            layout = self.layout_manager.get_root_layout_for(self.scenario_key, component.get_type_name())
+            layout = self.layout_manager.get_root_layout_for_component(self.scenario_key, component)
         else:
-            layout = self.layout_manager.get_layout_for(component.get_type_name())
+            layout = self.layout_manager.get_layout_for_component(component)
         return aspect_ratio, layout.get("color", DEFAULT_COLOR)
 
     def _build_topology(self) -> None:
         def walk(component: Any, parent_id: str | None, depth: int) -> None:
             component_id = component.get_id()
             component_type = component.get_type_name()
+            component_layout_type = _component_layout_type(component)
             children = list(component.get_children())
             self.layout_manager.ensure_component_layout_defaults(
                 component,
@@ -861,6 +914,7 @@ class CircuitSession:
                     "id": component_id,
                     "name": component.get_name(),
                     "type": component_type,
+                    "layoutType": component_layout_type,
                     "parentId": parent_id,
                     "depth": depth,
                     "childIds": [child.get_id() for child in children],
@@ -954,7 +1008,7 @@ class CircuitSession:
         if count == 0:
             return
 
-        parent_type = component.get_type_name()
+        parent_type = _component_layout_type(component)
         is_root = depth == 0
         missing_children = [
             child
@@ -1025,6 +1079,7 @@ class CircuitSession:
             "scenario": self.scenario_key,
             "parentId": parent_id,
             "parentType": parent.get_type_name(),
+            "parentLayoutType": _component_layout_type(parent),
             "isRoot": depth == 0,
             "placements": placements,
         }

@@ -60,14 +60,13 @@ Already useful:
 - 8-bit arithmetic, logic, mux, shifter, comparator, zero-detect, and `ALU8` modules.
 - Structural 32-bit `Mux32to1`, `Mux32to1_32bit`, `Adder32`, `AddSub32`, `Logic32`, `ZeroDetect32`, `Comparator32`, `Shifter32`, and `ALU32` modules.
 - Per-component 32-bit tests plus `RV32IALU32Test` coverage for the structural ALU32 milestone.
+- Structural memory slices and practical behavioral memory components: `RegisterFile32x32`, `BehavioralRegisterFile32x32`, `Memory4x32`, `Memory32x32`, and `BehavioralMemory64Kx32`.
 - Python visualizer for hierarchical circuits and simulation history.
 
 Missing:
 
-- Register file.
 - Program counter.
-- Instruction memory.
-- Data memory.
+- Instruction/data memory integration.
 - RV32I instruction decoder.
 - Control unit.
 - Load/store unit.

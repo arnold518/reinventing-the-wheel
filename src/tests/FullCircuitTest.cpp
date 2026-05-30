@@ -58,7 +58,7 @@ void FullCircuitTest::buildCircuit() {
     builder->addNewComponent<ANDGate>("AND1");
     builder->addNewComponent<DFlipFlop>("DFF1");
     builder->addNewComponent<ANDGate>("AND2");
-    auto clk_gen = builder->addNewComponent<ClockGenerator>("CLK_GEN", 5);
+    auto clk_gen = builder->addNewComponent<ClockGenerator>("CLK_GEN", 50);
 
     // --- Connect internal components to the root's pins ---
     // The source of the wire is now the root's "A" pin.
@@ -71,10 +71,10 @@ void FullCircuitTest::buildCircuit() {
         builder->getInputPin<ANDGate>("AND2", "B")
     });
     
-    auto wire_gnd = builder->addNewWire("GND", nullptr, {
+    auto wire_rst = builder->addNewWire("RST_IN", nullptr, {
         builder->getInputPin<DFlipFlop>("DFF1", "RST")
     });
-    wire_gnd->setValue(LogicValue::LOW);
+    wire_rst->setValue(LogicValue::LOW);
 
     builder->addNewWire("WireAND1_OUT", builder->getOutputPin<ANDGate>("AND1", "OUT"), { builder->getInputPin<DFlipFlop>("DFF1", "D") });
     builder->addNewWire("WireCLK", builder->getOutputPin<ClockGenerator>("CLK_GEN", "CLK_OUT"), { builder->getInputPin<DFlipFlop>("DFF1", "CLK") });
@@ -90,14 +90,15 @@ void FullCircuitTest::setInitialState() {
     // Get the wires connected to the root's input pins to set their initial state.
     auto wire_a = builder->getWire("WireA");
     auto wire_b = builder->getWire("WireB");
-    auto wire_gnd = builder->getWire("GND");
+    auto wire_rst = builder->getWire("RST_IN");
     auto clk_gen = builder->getComponent<ClockGenerator>("CLK_GEN");
     
-    sim->scheduleEvent(std::make_shared<WireUpdateEvent<>>(0, wire_gnd, LogicValue::LOW));
+    sim->scheduleEvent(std::make_shared<WireUpdateEvent<>>(0, wire_rst, LogicValue::HIGH));
+    sim->scheduleEvent(std::make_shared<WireUpdateEvent<>>(30, wire_rst, LogicValue::LOW));
     sim->scheduleEvent(std::make_shared<WireUpdateEvent<>>(0, wire_a, LogicValue::HIGH));
     sim->scheduleEvent(std::make_shared<WireUpdateEvent<>>(0, wire_b, LogicValue::LOW));
-    sim->scheduleEvent(std::make_shared<WireUpdateEvent<>>(2, wire_b, LogicValue::HIGH));
-    sim->scheduleEvent(std::make_shared<WireUpdateEvent<>>(16, wire_a, LogicValue::LOW));
+    sim->scheduleEvent(std::make_shared<WireUpdateEvent<>>(20, wire_b, LogicValue::HIGH));
+    sim->scheduleEvent(std::make_shared<WireUpdateEvent<>>(160, wire_a, LogicValue::LOW));
     clk_gen->startClock(*sim, 0);
 }
 
@@ -118,32 +119,27 @@ void FullCircuitTest::verifyResults() {
     expectWireAt(*sim, and1_out, 0, LogicValue::UNKNOWN, "WireAND1_OUT");
     expectWireAt(*sim, and1_out, 1, LogicValue::LOW, "WireAND1_OUT");
     expectWireAt(*sim, z_wire, 1, LogicValue::LOW, "WireAND2_OUT");
-    expectWireAt(*sim, wire_b, 2, LogicValue::HIGH, "WireB");
-    expectWireAt(*sim, and1_out, 3, LogicValue::HIGH, "WireAND1_OUT");
-    expectWireAt(*sim, z_wire, 3, LogicValue::UNKNOWN, "WireAND2_OUT");
+    expectWireAt(*sim, wire_b, 20, LogicValue::HIGH, "WireB");
+    expectWireAt(*sim, and1_out, 30, LogicValue::HIGH, "WireAND1_OUT");
 
-    // ClockGenerator toggles every 5 time units after it starts at t=0.
-    expectWireAt(*sim, clock, 0, LogicValue::HIGH, "WireCLK");
-    expectWireAt(*sim, clock, 5, LogicValue::LOW, "WireCLK");
-    expectWireAt(*sim, clock, 10, LogicValue::HIGH, "WireCLK");
-    expectWireAt(*sim, clock, 15, LogicValue::LOW, "WireCLK");
-    expectWireAt(*sim, clock, 20, LogicValue::HIGH, "WireCLK");
+    expectWireAt(*sim, clock, 100, LogicValue::HIGH, "WireCLK");
+    expectWireAt(*sim, clock, 150, LogicValue::LOW, "WireCLK");
+    expectWireAt(*sim, clock, 200, LogicValue::HIGH, "WireCLK");
 
-    // DFF captures the combinational D value only on rising edges and publishes Q after its delay of 3.
-    expectWireAt(*sim, dff_q_wire, 12, LogicValue::UNKNOWN, "WireDFF1_Q");
-    expectWireAt(*sim, dff_q_wire, 13, LogicValue::HIGH, "WireDFF1_Q");
-    expectWireAt(*sim, dff_q_bar_wire, 13, LogicValue::LOW, "DFF1_Q_BAR_Wire");
-    expectWireAt(*sim, z_wire, 14, LogicValue::HIGH, "WireAND2_OUT");
+    // The structural DFF needs internal gate settle time after each rising edge.
+    expectWireAt(*sim, dff_q_wire, 90, LogicValue::LOW, "WireDFF1_Q after reset");
+    expectWireAt(*sim, dff_q_wire, 140, LogicValue::HIGH, "WireDFF1_Q captures high");
+    expectWireAt(*sim, dff_q_bar_wire, 140, LogicValue::LOW, "DFF1_Q_BAR_Wire captures high");
+    expectWireAt(*sim, z_wire, 145, LogicValue::HIGH, "WireAND2_OUT after first capture");
 
-    expectWireAt(*sim, wire_a, 16, LogicValue::LOW, "WireA");
-    expectWireAt(*sim, and1_out, 17, LogicValue::LOW, "WireAND1_OUT");
-    expectWireAt(*sim, dff_q_wire, 22, LogicValue::HIGH, "WireDFF1_Q");
-    expectWireAt(*sim, dff_q_wire, 23, LogicValue::LOW, "WireDFF1_Q");
-    expectWireAt(*sim, dff_q_bar_wire, 23, LogicValue::HIGH, "DFF1_Q_BAR_Wire");
-    expectWireAt(*sim, z_wire, 24, LogicValue::LOW, "WireAND2_OUT");
-    expectWireAt(*sim, dff_q_wire, 100, LogicValue::LOW, "WireDFF1_Q");
+    expectWireAt(*sim, wire_a, 160, LogicValue::LOW, "WireA");
+    expectWireAt(*sim, and1_out, 170, LogicValue::LOW, "WireAND1_OUT");
+    expectWireAt(*sim, dff_q_wire, 190, LogicValue::HIGH, "WireDFF1_Q holds before second rising edge");
+    expectWireAt(*sim, dff_q_wire, 240, LogicValue::LOW, "WireDFF1_Q captures low");
+    expectWireAt(*sim, dff_q_bar_wire, 240, LogicValue::HIGH, "DFF1_Q_BAR_Wire captures low");
+    expectWireAt(*sim, z_wire, 245, LogicValue::LOW, "WireAND2_OUT after second capture");
 }
 
 size_t FullCircuitTest::getRunDuration() const {
-    return 100;
+    return 260;
 }

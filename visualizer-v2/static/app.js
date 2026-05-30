@@ -322,11 +322,23 @@ function viewRect() {
   };
 }
 
+function componentLayoutKey(component) {
+  return component.layoutType || component.type;
+}
+
+function getTypeLayoutFor(component) {
+  const typeLayouts = app.layout.type_layouts || {};
+  const baseLayout = typeLayouts[component.type] || {};
+  const layoutKey = componentLayoutKey(component);
+  if (layoutKey === component.type) return baseLayout;
+  return mergeLayout(baseLayout, typeLayouts[layoutKey] || {});
+}
+
 function getLayoutFor(component) {
   if (component.depth === 0) {
     return getRootLayoutFor(component);
   }
-  return (app.layout.type_layouts && app.layout.type_layouts[component.type]) || {};
+  return getTypeLayoutFor(component);
 }
 
 function mergeLayout(base, override) {
@@ -341,7 +353,7 @@ function mergeLayout(base, override) {
 }
 
 function getRootLayoutFor(component) {
-  const typeLayout = (app.layout.type_layouts && app.layout.type_layouts[component.type]) || {};
+  const typeLayout = getTypeLayoutFor(component);
   const rootLayout = (app.layout.root_layouts && app.layout.root_layouts[app.scenario]) || {};
   return mergeLayout(typeLayout, rootLayout);
 }
@@ -528,8 +540,9 @@ function childEntryFor(parent, child) {
     return parentLayout.children[child.name];
   }
 
-  if (!app.layout.type_layouts[parent.type]) app.layout.type_layouts[parent.type] = {};
-  const parentLayout = app.layout.type_layouts[parent.type];
+  const parentLayoutKey = componentLayoutKey(parent);
+  if (!app.layout.type_layouts[parentLayoutKey]) app.layout.type_layouts[parentLayoutKey] = {};
+  const parentLayout = app.layout.type_layouts[parentLayoutKey];
   if (!parentLayout.children) parentLayout.children = {};
   if (!parentLayout.children[child.name]) parentLayout.children[child.name] = {};
   return parentLayout.children[child.name];
@@ -556,7 +569,7 @@ function requireChildLayout(parent, child) {
     && Number.isFinite(Number(relPos[1]));
   const validRelWidth = relWidth != null && Number.isFinite(Number(relWidth));
   if (!validRelPos || !validRelWidth) {
-    const scope = parent.depth === 0 ? `root_layouts.${app.scenario}` : `type_layouts.${parent.type}`;
+    const scope = parent.depth === 0 ? `root_layouts.${app.scenario}` : `type_layouts.${componentLayoutKey(parent)}`;
     throw new Error(`Missing layout for ${scope}.children.${child.name}; reload to let the server regenerate layout.json.`);
   }
   return layout;
@@ -1649,14 +1662,17 @@ function renderComponentPins(component) {
 }
 
 function showComponentInspector(component) {
-  const typeLayout = (app.layout.type_layouts && app.layout.type_layouts[component.type]) || {};
+  const layoutKey = componentLayoutKey(component);
+  const typeLayout = getLayoutFor(component);
   const color = typeLayout.color || component.baseColor || component.color || DEFAULT_COLOR;
   const minAspect = minAspectFor(component);
   const aspect = aspectFor(component, typeLayout.aspect_ratio ?? component.baseAspectRatio ?? component.aspectRatio, 1);
   const path = componentPath(component);
 
   ui.inspectorTitle.textContent = component.name;
-  ui.inspectorSubtitle.textContent = `${component.type} | depth ${component.depth}`;
+  ui.inspectorSubtitle.textContent = layoutKey === component.type
+    ? `${component.type} | depth ${component.depth}`
+    : `${component.type} | layout ${layoutKey} | depth ${component.depth}`;
   ui.inspectorPath.textContent = path;
   ui.inspectorPath.title = path;
   setSectionVisible(ui.selectionInfoSection, false);
@@ -1749,9 +1765,10 @@ function applyAspectFromInspector() {
   if (!component) return;
   const value = Math.max(minAspectFor(component), Number(ui.componentAspect.value));
   if (!Number.isFinite(value) || value <= 0) return;
-  const entry = typeLayoutEntryFor(component.type);
+  const layoutKey = componentLayoutKey(component);
+  const entry = typeLayoutEntryFor(layoutKey);
   if (Number(entry.aspect_ratio) === value) return;
-  beginLayoutTransaction(`type-style:${component.type}`);
+  beginLayoutTransaction(`type-style:${layoutKey}`);
   entry.aspect_ratio = value;
   ui.componentAspect.value = String(value);
   ui.componentAspectValue.textContent = `Aspect: ${value.toFixed(2)} min ${minAspectFor(component).toFixed(2)}`;
@@ -1764,12 +1781,13 @@ function applyColorValue(hex) {
   const normalizedHex = normalizeHexColor(hex);
   const rgb = hexToRgb(normalizedHex);
   if (!rgb) return;
-  const entry = typeLayoutEntryFor(component.type);
+  const layoutKey = componentLayoutKey(component);
+  const entry = typeLayoutEntryFor(layoutKey);
   const previousColor = entry.color || component.baseColor || component.color || DEFAULT_COLOR;
   const alpha = clamp(Math.round(Number(previousColor[3] ?? DEFAULT_COLOR[3] ?? 255)), 0, 255);
   const nextColor = [...rgb, alpha];
   if (layoutEquals(entry.color, nextColor)) return;
-  beginLayoutTransaction(`type-style:${component.type}`);
+  beginLayoutTransaction(`type-style:${layoutKey}`);
   entry.color = nextColor;
   updateColorInputs(colorToHex(entry.color));
   markStyleChanged();
@@ -1840,8 +1858,9 @@ function restoreSelectedTypeStyle() {
   const component = selectedComponent();
   if (!component || !app.savedLayout) return;
   recordLayoutChange("Type style restored", () => {
-    const current = typeLayoutEntryFor(component.type);
-    const saved = (app.savedLayout.type_layouts && app.savedLayout.type_layouts[component.type]) || {};
+    const layoutKey = componentLayoutKey(component);
+    const current = typeLayoutEntryFor(layoutKey);
+    const saved = (app.savedLayout.type_layouts && app.savedLayout.type_layouts[layoutKey]) || {};
     if ("aspect_ratio" in saved) current.aspect_ratio = aspectFor(component, saved.aspect_ratio, 1);
     else current.aspect_ratio = aspectFor(component, component.baseAspectRatio ?? component.aspectRatio, 1);
     if ("color" in saved) current.color = cloneJson(saved.color);

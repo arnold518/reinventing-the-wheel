@@ -8,11 +8,23 @@
 #include "components/IOComponent.hpp"
 #include "components/Component.hpp"
 
+#include "modules/basic/Decoder.hpp"
 #include "modules/basic/Gate.hpp"
 #include "modules/basic/Logic8.hpp"
 #include "modules/basic/Mux.hpp"
+#include "modules/basic/Latch.hpp"
 #include "modules/basic/DFlipFlop.hpp"
 #include "modules/basic/ClockGenerator.hpp"
+#include "modules/memory/BehavioralMemory64Kx32.hpp"
+#include "modules/memory/BehavioralMemoryBit.hpp"
+#include "modules/memory/BehavioralRegister32.hpp"
+#include "modules/memory/BehavioralRegisterFile32x32.hpp"
+#include "modules/memory/Memory4x32.hpp"
+#include "modules/memory/Memory32x32.hpp"
+#include "modules/memory/MemoryBit.hpp"
+#include "modules/memory/Register32.hpp"
+#include "modules/memory/RegisterFile4x32.hpp"
+#include "modules/memory/RegisterFile32x32.hpp"
 
 #include "modules/composite/HalfAdder.hpp"
 #include "modules/composite/FullAdder.hpp"
@@ -142,16 +154,9 @@ void bindModules(py::module_& m) {
         .def("get_input_pins", &XORGate::getAllInputPins, py::return_value_policy::reference_internal)
         .def("get_output_pins", &XORGate::getAllOutputPins, py::return_value_policy::reference_internal);
 
-    // --- DFlipFlop Binding ---
-    py::class_<DFlipFlop, BasicComponent, std::shared_ptr<DFlipFlop>>(m, "DFlipFlop", "A rising-edge triggered D-type Flip-Flop.", py::module_local(false))
-        .def(py::init([](const std::string& instance_name) {
-            return Component::create<DFlipFlop>(instance_name);
-        }), py::arg("name"))
-        .def("get_name", &DFlipFlop::getName)
-        .def("get_parent", &DFlipFlop::getParent)
-        .def("get_children", &DFlipFlop::getChildren, py::return_value_policy::reference_internal)
-        .def("get_input_pins", &DFlipFlop::getAllInputPins, py::return_value_policy::reference_internal)
-        .def("get_output_pins", &DFlipFlop::getAllOutputPins, py::return_value_policy::reference_internal);
+    bindIOModule<SRLatch>(m, "SRLatch", "Structural active-low SR latch built from cross-coupled NAND gates.");
+    bindIOModule<GatedDLatch>(m, "GatedDLatch", "Structural gated D latch with reset.");
+    bindIOModule<DFlipFlop>(m, "DFlipFlop", "Structural rising-edge master-slave D flip-flop.");
 
     // --- ClockGenerator Binding ---
     py::class_<ClockGenerator, BasicComponent, std::shared_ptr<ClockGenerator>>(m, "ClockGenerator", "Generates a periodic clock signal.", py::module_local(false))
@@ -200,9 +205,23 @@ void bindModules(py::module_& m) {
     bindIOModule<Mux32to1>(m, "Mux32to1", "32:1 one-bit multiplexer.");
     bindIOModule<Mux2to1_8bit>(m, "Mux2to1_8bit", "2:1 8-bit multiplexer.");
     bindIOModule<Mux4to1_8bit>(m, "Mux4to1_8bit", "4:1 8-bit multiplexer.");
+    bindIOModule<Mux4to1_32bit>(m, "Mux4to1_32bit", "4:1 32-bit multiplexer.");
     bindIOModule<Mux8to1_8bit>(m, "Mux8to1_8bit", "8:1 8-bit multiplexer.");
     bindIOModule<Mux16to1_8bit>(m, "Mux16to1_8bit", "16:1 8-bit multiplexer.");
     bindIOModule<Mux32to1_32bit>(m, "Mux32to1_32bit", "32:1 32-bit multiplexer.");
+    bindIOModule<Decoder2to4>(m, "Decoder2to4", "2-bit enabled one-hot decoder.");
+    bindIOModule<Decoder5to32>(m, "Decoder5to32", "5-bit enabled one-hot decoder.");
+
+    bindBasicModule<BehavioralMemoryBit>(m, "BehavioralMemoryBit", "Behavioral one-bit storage cell with write enable and reset.");
+    bindBasicModule<BehavioralMemory64Kx32>(m, "BehavioralMemory64Kx32", "Behavioral 64K-word 32-bit byte-addressed RV32I memory.");
+    bindIOModule<BehavioralRegister32>(m, "BehavioralRegister32", "32-bit register built from behavioral memory bits.");
+    bindBasicModule<BehavioralRegisterFile32x32>(m, "BehavioralRegisterFile32x32", "Compact behavioral 32-entry RV32I register file.");
+    bindIOModule<MemoryBit>(m, "MemoryBit", "Structural one-bit storage cell with write enable and reset.");
+    bindIOModule<Register32>(m, "Register32", "Structural 32-bit register built from MemoryBit cells.");
+    bindIOModule<RegisterFile4x32>(m, "RegisterFile4x32", "Four-entry 32-bit register file built from behavioral register cells.");
+    bindIOModule<RegisterFile32x32>(m, "RegisterFile32x32", "32-entry 32-bit register file built from behavioral register cells.");
+    bindIOModule<Memory4x32>(m, "Memory4x32", "Four-word 32-bit memory slice with CPU-facing memory pins.");
+    bindIOModule<Memory32x32>(m, "Memory32x32", "Thirty-two-word 32-bit memory slice with CPU-facing memory pins.");
 
     bindIOModule<Adder8>(m, "Adder8", "8-bit adder.");
     bindIOModule<TwosComplement8>(m, "TwosComplement8", "8-bit two's complement.");

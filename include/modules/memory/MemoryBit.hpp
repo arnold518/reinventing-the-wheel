@@ -2,10 +2,10 @@
 
 #include "components/IOComponent.hpp"
 
-class DFlipFlop : public IOComponent {
+class MemoryBit : public IOComponent {
 public:
-    DFlipFlop(std::string name);
-    static constexpr const char* TypeName = "DFlipFlop";
+    MemoryBit(std::string name);
+    static constexpr const char* TypeName = "MemoryBit";
     const char* getTypeName() const override { return TypeName; }
     void buildInternals(ComponentBuilder& builder) override;
 };

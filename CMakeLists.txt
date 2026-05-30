@@ -22,8 +22,20 @@ set(CORE_LOGIC_SOURCES
     src/modules/basic/Gate.cpp
     src/modules/basic/Logic8.cpp
     src/modules/basic/Mux.cpp
+    src/modules/basic/Decoder.cpp
+    src/modules/basic/Latch.cpp
     src/modules/basic/DFlipFlop.cpp
     src/modules/basic/ClockGenerator.cpp
+    src/modules/memory/BehavioralMemoryBit.cpp
+    src/modules/memory/BehavioralMemory64Kx32.cpp
+    src/modules/memory/BehavioralRegister32.cpp
+    src/modules/memory/BehavioralRegisterFile32x32.cpp
+    src/modules/memory/MemoryBit.cpp
+    src/modules/memory/Register32.cpp
+    src/modules/memory/RegisterFile4x32.cpp
+    src/modules/memory/RegisterFile32x32.cpp
+    src/modules/memory/Memory4x32.cpp
+    src/modules/memory/Memory32x32.cpp
     src/modules/composite/HalfAdder.cpp
     src/modules/composite/FullAdder.cpp
     src/modules/composite/Adder8.cpp
@@ -50,6 +62,7 @@ set(CORE_LOGIC_SOURCES
     src/tests/UtilityComponentTests.cpp
     src/tests/ArithmeticLogicTests.cpp
     src/tests/RV32IALU32Tests.cpp
+    src/tests/MemoryComponentTests.cpp
     src/tests/TestRegistry.cpp
 )
 
