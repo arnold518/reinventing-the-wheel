@@ -4,6 +4,7 @@ target_link_libraries(SimulationTestRunner PRIVATE SimulatorLib)
 set(SIMULATION_TESTS
     FullCircuitTest
     WireTemplateTest
+    SimulatorAdvanceAndRecordTest
     NOTGateTest
     ANDGateTest
     ORGateTest
@@ -86,6 +87,27 @@ set(SIMULATION_TESTS
     Shifter32Test
     ALU32Test
     RV32IALU32Test
+    RV32IDecoderTest
+    RV32IControlTest
+    RV32IProgramLoaderTest
+    RV32IInstructionOracleTest
+    RV32IInstructionLockstepHarnessTest
+    BehavioralRV32ISystemProgram1Test
+    BehavioralRV32ISystemProgram2Test
+    BehavioralRV32ISystemProgram3Test
+    BehavioralRV32ISystemProgram4Test
+    BehavioralRV32ISystemProgram5Test
+    BehavioralRV32ISystemProgram6Test
+    BehavioralRV32ISystemProgram7Test
+    BehavioralRV32ISystemProgram8Test
+    BehavioralRV32ISystemProgram9Test
+    BehavioralRV32ISystemProgram10Test
+    BehavioralRV32ISystemProgram11Test
+    BehavioralRV32ISystemProgram12Test
+    BehavioralRV32ISystemProgram13Test
+    BehavioralRV32ISystemProgram14Test
+    BehavioralRV32ISystemProgram15Test
+    BehavioralRV32ISystemProgram16Test
 )
 
 foreach(test_name ${SIMULATION_TESTS})

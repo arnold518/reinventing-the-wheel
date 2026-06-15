@@ -5,6 +5,12 @@
 #include "tests/FullCircuitTest.hpp"
 #include "tests/MemoryComponentTests.hpp"
 #include "tests/RV32IALU32Tests.hpp"
+#include "tests/RV32IControlTests.hpp"
+#include "tests/RV32IDecoderTests.hpp"
+#include "tests/RV32IInstructionLockstepTests.hpp"
+#include "tests/RV32IInstructionOracleTests.hpp"
+#include "tests/RV32IProgramTests.hpp"
+#include "tests/RV32ISystemTests.hpp"
 #include "tests/UtilityComponentTests.hpp"
 #include <algorithm>
 
@@ -19,6 +25,7 @@ const std::vector<TestRegistryEntry>& getTestRegistry() {
     static const std::vector<TestRegistryEntry> registry{
         entry<FullCircuitTest>("FullCircuitTest"),
         entry<WireTemplateTest>("WireTemplateTest"),
+        entry<SimulatorAdvanceAndRecordTest>("SimulatorAdvanceAndRecordTest"),
         entry<NOTGateTest>("NOTGateTest"),
         entry<ANDGateTest>("ANDGateTest"),
         entry<ORGateTest>("ORGateTest"),
@@ -101,6 +108,27 @@ const std::vector<TestRegistryEntry>& getTestRegistry() {
         entry<Shifter32Test>("Shifter32Test"),
         entry<ALU32Test>("ALU32Test"),
         entry<RV32IALU32Test>("RV32IALU32Test"),
+        entry<RV32IDecoderTest>("RV32IDecoderTest"),
+        entry<RV32IControlTest>("RV32IControlTest"),
+        entry<RV32IProgramLoaderTest>("RV32IProgramLoaderTest"),
+        entry<RV32IInstructionOracleTest>("RV32IInstructionOracleTest"),
+        entry<RV32IInstructionLockstepHarnessTest>("RV32IInstructionLockstepHarnessTest"),
+        entry<BehavioralRV32ISystemProgram1Test>("BehavioralRV32ISystemProgram1Test"),
+        entry<BehavioralRV32ISystemProgram2Test>("BehavioralRV32ISystemProgram2Test"),
+        entry<BehavioralRV32ISystemProgram3Test>("BehavioralRV32ISystemProgram3Test"),
+        entry<BehavioralRV32ISystemProgram4Test>("BehavioralRV32ISystemProgram4Test"),
+        entry<BehavioralRV32ISystemProgram5Test>("BehavioralRV32ISystemProgram5Test"),
+        entry<BehavioralRV32ISystemProgram6Test>("BehavioralRV32ISystemProgram6Test"),
+        entry<BehavioralRV32ISystemProgram7Test>("BehavioralRV32ISystemProgram7Test"),
+        entry<BehavioralRV32ISystemProgram8Test>("BehavioralRV32ISystemProgram8Test"),
+        entry<BehavioralRV32ISystemProgram9Test>("BehavioralRV32ISystemProgram9Test"),
+        entry<BehavioralRV32ISystemProgram10Test>("BehavioralRV32ISystemProgram10Test"),
+        entry<BehavioralRV32ISystemProgram11Test>("BehavioralRV32ISystemProgram11Test"),
+        entry<BehavioralRV32ISystemProgram12Test>("BehavioralRV32ISystemProgram12Test"),
+        entry<BehavioralRV32ISystemProgram13Test>("BehavioralRV32ISystemProgram13Test"),
+        entry<BehavioralRV32ISystemProgram14Test>("BehavioralRV32ISystemProgram14Test"),
+        entry<BehavioralRV32ISystemProgram15Test>("BehavioralRV32ISystemProgram15Test"),
+        entry<BehavioralRV32ISystemProgram16Test>("BehavioralRV32ISystemProgram16Test"),
     };
     return registry;
 }

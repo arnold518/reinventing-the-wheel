@@ -35,18 +35,15 @@ void Simulator::scheduleEvent(std::shared_ptr<Event> event) {
     event_queue.push(std::move(event));
 }
 
-void Simulator::runAndRecord(size_t max_time) {
-    _log.clear();
-    current_time = 0;
-    scheduled_for_current_time_eval.clear();
-
+void Simulator::advanceAndRecord(size_t target_time) {
     while (!event_queue.empty()) {
         auto event = event_queue.top();
-        event_queue.pop();
 
-        if (event->time > max_time) {
+        if (event->time > target_time) {
             break;
         }
+
+        event_queue.pop();
 
         if (event->time > current_time) {
             current_time = event->time;
@@ -55,6 +52,13 @@ void Simulator::runAndRecord(size_t max_time) {
 
         event->process(*this);
     }
+}
+
+void Simulator::runAndRecord(size_t max_time) {
+    _log.clear();
+    current_time = 0;
+    scheduled_for_current_time_eval.clear();
+    advanceAndRecord(max_time);
 }
 
 void Simulator::setCircuitStateAtTime(size_t target_time) {

@@ -6,6 +6,8 @@
 #include "tests/FullCircuitTest.hpp"
 #include "tests/MemoryComponentTests.hpp"
 #include "tests/RV32IALU32Tests.hpp"
+#include "tests/RV32IProgramTests.hpp"
+#include "tests/RV32ISystemTests.hpp"
 #include "tests/TestRegistry.hpp"
 #include "tests/UtilityComponentTests.hpp"
 #include <pybind11/stl.h>
@@ -47,6 +49,70 @@ void bindTests(py::module_& m) {
         "Behavioral 32-entry register file unknown-state scenario.");
     bindSimulationScenario<Memory4x32Test>(m, "Memory4x32Test", "Four-word memory slice scenario.");
     bindSimulationScenario<Memory32x32Test>(m, "Memory32x32Test", "Thirty-two-word memory slice scenario.");
+    bindSimulationScenario<BehavioralRV32ISystemProgram1Test>(
+        m,
+        "BehavioralRV32ISystemProgram1Test",
+        "Behavioral RV32I system program 1 lockstep scenario with visible instruction and data memories.");
+    bindSimulationScenario<BehavioralRV32ISystemProgram2Test>(
+        m,
+        "BehavioralRV32ISystemProgram2Test",
+        "Behavioral RV32I system program 2 lockstep scenario with visible instruction and data memories.");
+    bindSimulationScenario<BehavioralRV32ISystemProgram3Test>(
+        m,
+        "BehavioralRV32ISystemProgram3Test",
+        "Behavioral RV32I system program 3 lockstep scenario with visible instruction and data memories.");
+    bindSimulationScenario<BehavioralRV32ISystemProgram4Test>(
+        m,
+        "BehavioralRV32ISystemProgram4Test",
+        "Behavioral RV32I system program 4 lockstep scenario with visible instruction and data memories.");
+    bindSimulationScenario<BehavioralRV32ISystemProgram5Test>(
+        m,
+        "BehavioralRV32ISystemProgram5Test",
+        "Behavioral RV32I system program 5 lockstep scenario with visible instruction and data memories.");
+    bindSimulationScenario<BehavioralRV32ISystemProgram6Test>(
+        m,
+        "BehavioralRV32ISystemProgram6Test",
+        "Behavioral RV32I system program 6 lockstep scenario with visible instruction and data memories.");
+    bindSimulationScenario<BehavioralRV32ISystemProgram7Test>(
+        m,
+        "BehavioralRV32ISystemProgram7Test",
+        "Behavioral RV32I system program 7 lockstep scenario with visible instruction and data memories.");
+    bindSimulationScenario<BehavioralRV32ISystemProgram8Test>(
+        m,
+        "BehavioralRV32ISystemProgram8Test",
+        "Behavioral RV32I system program 8 lockstep scenario with visible instruction and data memories.");
+    bindSimulationScenario<BehavioralRV32ISystemProgram9Test>(
+        m,
+        "BehavioralRV32ISystemProgram9Test",
+        "Behavioral RV32I system program 9 lockstep scenario with visible instruction and data memories.");
+    bindSimulationScenario<BehavioralRV32ISystemProgram10Test>(
+        m,
+        "BehavioralRV32ISystemProgram10Test",
+        "Behavioral RV32I system program 10 lockstep scenario with visible instruction and data memories.");
+    bindSimulationScenario<BehavioralRV32ISystemProgram11Test>(
+        m,
+        "BehavioralRV32ISystemProgram11Test",
+        "Behavioral RV32I system program 11 lockstep scenario with visible instruction and data memories.");
+    bindSimulationScenario<BehavioralRV32ISystemProgram12Test>(
+        m,
+        "BehavioralRV32ISystemProgram12Test",
+        "Behavioral RV32I system program 12 lockstep scenario with visible instruction and data memories.");
+    bindSimulationScenario<BehavioralRV32ISystemProgram13Test>(
+        m,
+        "BehavioralRV32ISystemProgram13Test",
+        "Behavioral RV32I system program 13 lockstep scenario with visible instruction and data memories.");
+    bindSimulationScenario<BehavioralRV32ISystemProgram14Test>(
+        m,
+        "BehavioralRV32ISystemProgram14Test",
+        "Behavioral RV32I system program 14 lockstep scenario with visible instruction and data memories.");
+    bindSimulationScenario<BehavioralRV32ISystemProgram15Test>(
+        m,
+        "BehavioralRV32ISystemProgram15Test",
+        "Behavioral RV32I system program 15 lockstep scenario with visible instruction and data memories.");
+    bindSimulationScenario<BehavioralRV32ISystemProgram16Test>(
+        m,
+        "BehavioralRV32ISystemProgram16Test",
+        "Behavioral RV32I system program 16 lockstep scenario with visible instruction and data memories.");
     bindSimulationScenario<RewireUnpackTest>(m, "RewireUnpackTest", "Rewire unpack regression scenario.");
     bindSimulationScenario<RewirePackTest>(m, "RewirePackTest", "Rewire pack regression scenario.");
     bindSimulationScenario<RewireSliceTest>(m, "RewireSliceTest", "Rewire slice regression scenario.");
@@ -109,6 +175,10 @@ void bindTests(py::module_& m) {
     bindSimulationScenario<Shifter32Test>(m, "Shifter32Test", "Structural 32-bit barrel-shifter regression scenario.");
     bindSimulationScenario<ALU32Test>(m, "ALU32Test", "Structural 32-bit ALU regression scenario.");
     bindSimulationScenario<RV32IALU32Test>(m, "RV32IALU32Test", "Structural RV32I ALU32 milestone regression scenario.");
+    bindSimulationScenario<RV32IProgramLoaderTest>(
+        m,
+        "RV32IProgramLoaderTest",
+        "RV32I program-loader fixture with preloaded behavioral memory.");
 
     m.def("get_registered_test_names", &getRegisteredTestNames, "Returns test names available through the C++ test registry.");
 }

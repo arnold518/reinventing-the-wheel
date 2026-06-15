@@ -25,6 +25,8 @@
 #include "modules/memory/Register32.hpp"
 #include "modules/memory/RegisterFile4x32.hpp"
 #include "modules/memory/RegisterFile32x32.hpp"
+#include "modules/rv32i/BehavioralRV32ICore.hpp"
+#include "modules/rv32i/RV32ISystem.hpp"
 
 #include "modules/composite/HalfAdder.hpp"
 #include "modules/composite/FullAdder.hpp"
@@ -222,6 +224,8 @@ void bindModules(py::module_& m) {
     bindIOModule<RegisterFile32x32>(m, "RegisterFile32x32", "32-entry 32-bit register file built from behavioral register cells.");
     bindIOModule<Memory4x32>(m, "Memory4x32", "Four-word 32-bit memory slice with CPU-facing memory pins.");
     bindIOModule<Memory32x32>(m, "Memory32x32", "Thirty-two-word 32-bit memory slice with CPU-facing memory pins.");
+    bindBasicModule<BehavioralRV32ICore>(m, "BehavioralRV32ICore", "Behavioral RV32I core with visible instruction/data memory bus pins.");
+    bindIOModule<RV32ISystem>(m, "RV32ISystem", "RV32I system wrapper containing a behavioral core plus instruction/data memories.");
 
     bindIOModule<Adder8>(m, "Adder8", "8-bit adder.");
     bindIOModule<TwosComplement8>(m, "TwosComplement8", "8-bit two's complement.");

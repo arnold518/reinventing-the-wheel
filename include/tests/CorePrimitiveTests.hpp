@@ -14,6 +14,14 @@ protected:
     void verifyResults() override;
 };
 
+class SimulatorAdvanceAndRecordTest : public StandaloneVerificationTest {
+public:
+    std::string getTestName() const override;
+
+protected:
+    void verifyResults() override;
+};
+
 class NOTGateTest : public ComponentRowsTest<NOTGate> {
 public:
     NOTGateTest();

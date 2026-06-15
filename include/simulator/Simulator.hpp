@@ -19,6 +19,7 @@ public:
     size_t getCurrentTime() const;
     void scheduleEvent(std::shared_ptr<Event> event);
 
+    void advanceAndRecord(size_t target_time);
     void runAndRecord(size_t max_time);
     void setCircuitStateAtTime(size_t target_time);
     std::vector<size_t> getUniqueTimestamps() const;

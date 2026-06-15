@@ -47,7 +47,7 @@ public:
         try {
             setupCircuit();
 
-            sim->runAndRecord(getRunDuration());
+            runSimulation();
             verifyResults();
             std::cout << "[PASS] Test '" << getTestName() << "' completed successfully." << std::endl;
             if (root) {
@@ -70,6 +70,7 @@ protected:
     virtual std::string getTestName() const = 0;
     virtual void buildCircuit() = 0;
     virtual void setInitialState() = 0;
+    virtual void runSimulation() { sim->runAndRecord(getRunDuration()); }
     virtual void verifyResults() = 0;
     virtual size_t getRunDuration() const { return 100; }
 };

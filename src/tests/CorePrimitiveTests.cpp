@@ -101,6 +101,30 @@ void WireTemplateTest::verifyResults() {
     expectOutOfRange([&]() { pin.setBit(8, LogicValue::LOW); }, "WireTemplateTest pin setBit bounds");
 }
 
+std::string SimulatorAdvanceAndRecordTest::getTestName() const {
+    return "SimulatorAdvanceAndRecordTest";
+}
+
+void SimulatorAdvanceAndRecordTest::verifyResults() {
+    auto not_gate = Component::create<NOTGate>("NOT_ADVANCE_ROOT");
+    ComponentBuilder local_builder(not_gate);
+    auto io_root = std::dynamic_pointer_cast<IOComponent>(not_gate);
+    assert(io_root);
+
+    auto input_wire = local_builder.addNewWire("IN_WIRE", nullptr, {io_root->getInputPin("IN")});
+    auto output_wire = local_builder.addNewWire("OUT_WIRE", io_root->getOutputPin("OUT"), {});
+
+    Simulator local_sim;
+    drive(local_sim, 0, input_wire, false);
+    drive(local_sim, 10, input_wire, true);
+
+    local_sim.advanceAndRecord(1);
+    expectWireAt(local_sim, output_wire, 1, LogicValue::HIGH, "SimulatorAdvanceAndRecordTest first output");
+
+    local_sim.advanceAndRecord(11);
+    expectWireAt(local_sim, output_wire, 11, LogicValue::LOW, "SimulatorAdvanceAndRecordTest future output");
+}
+
 NOTGateTest::NOTGateTest()
     : ComponentRowsTest<NOTGate>("NOTGateTest", "NOT_GATE_ROOT", {
         {{{"IN", bit(false)}}, {{"OUT", bit(true)}}},

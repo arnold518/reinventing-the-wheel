@@ -9,6 +9,9 @@ void bindSimulator(py::module_& m) {
         
         .def("run_and_record", &Simulator::runAndRecord, py::arg("max_time"),
             "Runs the simulation and records the full history of wire changes.")
+
+        .def("advance_and_record", &Simulator::advanceAndRecord, py::arg("target_time"),
+            "Continues the simulation up to an absolute target time without clearing future events.")
             
         .def("set_circuit_state_at_time", &Simulator::setCircuitStateAtTime, py::arg("target_time"),
             "Sets the state of all wires to match the recorded state at a specific time.")

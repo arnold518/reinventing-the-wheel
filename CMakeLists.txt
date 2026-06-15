@@ -36,6 +36,8 @@ set(CORE_LOGIC_SOURCES
     src/modules/memory/RegisterFile32x32.cpp
     src/modules/memory/Memory4x32.cpp
     src/modules/memory/Memory32x32.cpp
+    src/modules/rv32i/BehavioralRV32ICore.cpp
+    src/modules/rv32i/RV32ISystem.cpp
     src/modules/composite/HalfAdder.cpp
     src/modules/composite/FullAdder.cpp
     src/modules/composite/Adder8.cpp
@@ -54,6 +56,11 @@ set(CORE_LOGIC_SOURCES
     src/modules/utility/Rewire.cpp
     src/modules/utility/BitAdapter.cpp
     src/modules/utility/Constant.cpp
+    src/rv32i/RV32IDecoder.cpp
+    src/rv32i/RV32IControl.cpp
+    src/rv32i/RV32IProgram.cpp
+    src/rv32i/RV32IFunctionalMemory.cpp
+    src/rv32i/RV32IInstructionOracle.cpp
     src/simulator/Event.cpp
     src/simulator/Simulator.cpp
     src/simulator/TruthTableTest.cpp
@@ -62,6 +69,12 @@ set(CORE_LOGIC_SOURCES
     src/tests/UtilityComponentTests.cpp
     src/tests/ArithmeticLogicTests.cpp
     src/tests/RV32IALU32Tests.cpp
+    src/tests/RV32IDecoderTests.cpp
+    src/tests/RV32IControlTests.cpp
+    src/tests/RV32IProgramTests.cpp
+    src/tests/RV32IInstructionOracleTests.cpp
+    src/tests/RV32IInstructionLockstepTests.cpp
+    src/tests/RV32ISystemTests.cpp
     src/tests/MemoryComponentTests.cpp
     src/tests/TestRegistry.cpp
 )

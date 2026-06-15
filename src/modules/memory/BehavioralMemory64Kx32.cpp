@@ -5,6 +5,7 @@
 #include "simulator/Event.hpp"
 #include "simulator/Simulator.hpp"
 #include <cstdint>
+#include <stdexcept>
 #include <memory>
 #include <utility>
 
@@ -180,6 +181,32 @@ void updateOutputWord(
         simulator.scheduleEvent(std::make_shared<WireUpdateEvent<WordWidth>>(event_time, wire, values));
     }
 }
+
+std::array<LogicValue, 8> byteFromUInt8(uint8_t value) {
+    std::array<LogicValue, 8> result{};
+    for (size_t bit = 0; bit < 8; ++bit) {
+        result[bit] = ((value >> bit) & 0x1U) ? LogicValue::HIGH : LogicValue::LOW;
+    }
+    return result;
+}
+
+uint8_t byteToUInt8(const std::array<LogicValue, 8>& value) {
+    uint8_t result = 0;
+    for (size_t bit = 0; bit < 8; ++bit) {
+        if (value[bit] == LogicValue::HIGH) {
+            result |= static_cast<uint8_t>(uint8_t{1} << bit);
+        } else if (value[bit] != LogicValue::LOW) {
+            throw std::logic_error("Cannot read unknown memory byte as uint8_t");
+        }
+    }
+    return result;
+}
+
+void requireRange(uint32_t base_address, size_t count, size_t byte_count) {
+    if (count > byte_count || base_address > byte_count - count) {
+        throw std::out_of_range("BehavioralMemory64Kx32 address range is outside memory capacity");
+    }
+}
 }
 
 BehavioralMemory64Kx32::BehavioralMemory64Kx32(std::string name)
@@ -198,6 +225,105 @@ BehavioralMemory64Kx32::BehavioralMemory64Kx32(std::string name)
       }),
       bytes(ByteCount, zeroByte()),
       previous_clk(LogicValue::UNKNOWN) {}
+
+bool BehavioralMemory64Kx32::canAccess(uint32_t address, size_t count) const {
+    return count <= ByteCount && address <= ByteCount - count;
+}
+
+void BehavioralMemory64Kx32::clearContents() {
+    const auto zero = zeroByte();
+    for (auto& byte : bytes) {
+        byte = zero;
+    }
+}
+
+void BehavioralMemory64Kx32::loadBytes(uint32_t base_address, const std::vector<uint8_t>& data) {
+    requireRange(base_address, data.size(), ByteCount);
+    for (size_t index = 0; index < data.size(); ++index) {
+        bytes[static_cast<size_t>(base_address) + index] = byteFromUInt8(data[index]);
+    }
+}
+
+void BehavioralMemory64Kx32::loadWords(uint32_t base_address, const std::vector<uint32_t>& words) {
+    if ((base_address & 0x3U) != 0) {
+        throw std::invalid_argument("BehavioralMemory64Kx32 word load address must be 4-byte aligned");
+    }
+
+    requireRange(base_address, words.size() * BytesPerWord, ByteCount);
+    std::vector<uint8_t> data;
+    data.reserve(words.size() * BytesPerWord);
+    for (const auto word : words) {
+        data.push_back(static_cast<uint8_t>(word & 0xFFU));
+        data.push_back(static_cast<uint8_t>((word >> 8) & 0xFFU));
+        data.push_back(static_cast<uint8_t>((word >> 16) & 0xFFU));
+        data.push_back(static_cast<uint8_t>((word >> 24) & 0xFFU));
+    }
+    loadBytes(base_address, data);
+}
+
+std::vector<uint8_t> BehavioralMemory64Kx32::readBytes(uint32_t base_address, size_t count) const {
+    requireRange(base_address, count, ByteCount);
+    std::vector<uint8_t> result;
+    result.reserve(count);
+    for (size_t index = 0; index < count; ++index) {
+        result.push_back(byteToUInt8(bytes[static_cast<size_t>(base_address) + index]));
+    }
+    return result;
+}
+
+uint8_t BehavioralMemory64Kx32::readByte(uint32_t address) const {
+    requireRange(address, 1, ByteCount);
+    return byteToUInt8(bytes[static_cast<size_t>(address)]);
+}
+
+uint32_t BehavioralMemory64Kx32::readWord(uint32_t address) const {
+    if ((address & 0x3U) != 0) {
+        throw std::invalid_argument("BehavioralMemory64Kx32 word read address must be 4-byte aligned");
+    }
+
+    const auto data = readBytes(address, BytesPerWord);
+    return static_cast<uint32_t>(data[0])
+         | (static_cast<uint32_t>(data[1]) << 8)
+         | (static_cast<uint32_t>(data[2]) << 16)
+         | (static_cast<uint32_t>(data[3]) << 24);
+}
+
+uint8_t BehavioralMemory64Kx32::readU8(uint32_t address) const {
+    return readByte(address);
+}
+
+uint16_t BehavioralMemory64Kx32::readU16(uint32_t address) const {
+    const auto data = readBytes(address, 2);
+    return static_cast<uint16_t>(data[0])
+         | static_cast<uint16_t>(static_cast<uint16_t>(data[1]) << 8);
+}
+
+uint32_t BehavioralMemory64Kx32::readU32(uint32_t address) const {
+    return readWord(address);
+}
+
+void BehavioralMemory64Kx32::writeU8(uint32_t address, uint8_t value) {
+    requireRange(address, 1, ByteCount);
+    bytes[static_cast<size_t>(address)] = byteFromUInt8(value);
+}
+
+void BehavioralMemory64Kx32::writeU16(uint32_t address, uint16_t value) {
+    requireRange(address, 2, ByteCount);
+    bytes[static_cast<size_t>(address)] = byteFromUInt8(static_cast<uint8_t>(value & 0xFFU));
+    bytes[static_cast<size_t>(address) + 1] = byteFromUInt8(static_cast<uint8_t>((value >> 8) & 0xFFU));
+}
+
+void BehavioralMemory64Kx32::writeU32(uint32_t address, uint32_t value) {
+    if ((address & 0x3U) != 0) {
+        throw std::invalid_argument("BehavioralMemory64Kx32 word write address must be 4-byte aligned");
+    }
+
+    requireRange(address, BytesPerWord, ByteCount);
+    bytes[static_cast<size_t>(address)] = byteFromUInt8(static_cast<uint8_t>(value & 0xFFU));
+    bytes[static_cast<size_t>(address) + 1] = byteFromUInt8(static_cast<uint8_t>((value >> 8) & 0xFFU));
+    bytes[static_cast<size_t>(address) + 2] = byteFromUInt8(static_cast<uint8_t>((value >> 16) & 0xFFU));
+    bytes[static_cast<size_t>(address) + 3] = byteFromUInt8(static_cast<uint8_t>((value >> 24) & 0xFFU));
+}
 
 void BehavioralMemory64Kx32::evaluate(size_t current_time, Simulator& simulator) {
     const auto write_data = inputWord(getInputPin<WordWidth>("WRITE_DATA"));
