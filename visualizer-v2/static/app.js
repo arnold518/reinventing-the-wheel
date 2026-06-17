@@ -1276,17 +1276,25 @@ function componentDrawParts(component) {
   };
 }
 
-function drawComponentBackground(component, vr) {
-  if (!component.rect || !rectIntersects(component.rect, vr)) return false;
-  const parts = componentDrawParts(component);
-  drawRoundedRect(parts.bodyRect, parts.fillColor, null, 0);
-  drawRoundedRect(parts.titleRect, parts.titleFillColor, null, 0);
-  return true;
+const BASIC_LOGIC_GATE_VISUALS = {
+  ANDGate: "and",
+  NANDGate: "nand",
+  ORGate: "or",
+  NORGate: "nor",
+  XORGate: "xor",
+  NOTGate: "not",
+};
+
+function basicLogicGateKind(component) {
+  return BASIC_LOGIC_GATE_VISUALS[component.type] || null;
 }
 
-function drawComponentForeground(component, vr) {
-  if (!component.rect || !rectIntersects(component.rect, vr)) return;
-  const parts = componentDrawParts(component);
+function drawDefaultComponentBackground(parts) {
+  drawRoundedRect(parts.bodyRect, parts.fillColor, null, 0);
+  drawRoundedRect(parts.titleRect, parts.titleFillColor, null, 0);
+}
+
+function drawDefaultComponentForeground(component, parts) {
   drawRoundedRect(parts.fullRect, null, parts.strokeStyle, parts.strokeWidth);
   drawWorldHorizontalLine(
     parts.titleRect.x,
@@ -1300,6 +1308,225 @@ function drawComponentForeground(component, vr) {
   if (fontSize >= COMPONENT_TITLE_MIN_FONT_PX) {
     clippedRectText(component.name, rectToScreenRect(parts.titleRect), fontSize, "rgb(240, 240, 240)");
   }
+}
+
+function drawScreenGatePath(fillStyle, strokeStyle, lineWidth, buildPath) {
+  ctx.save();
+  ctx.fillStyle = fillStyle;
+  ctx.strokeStyle = strokeStyle;
+  ctx.lineWidth = lineWidth;
+  ctx.lineJoin = "round";
+  ctx.lineCap = "round";
+  ctx.beginPath();
+  buildPath();
+  ctx.fill();
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawGateTerminalLine(pin, from, to) {
+  if (!pin || !from || !to) return;
+  const strokeWorld = pinWireStrokeWorld(pin);
+  const highlighted = isHovered("pin", pin.id) || isSelectedPin(pin.id);
+  const lineWidth = wireStrokePx({ strokeWorld }, highlighted);
+  const color = `rgb(${valueColor(app.state.pins[pin.id] || "X").join(",")})`;
+  strokeWirePolyline([from, to], color, lineWidth, highlighted);
+}
+
+function pinInnerContactPoint(pin) {
+  return pin.innerStub && pin.innerStub.length ? pin.innerStub[0] : pin.pos;
+}
+
+function cubicBezierPoint(p0, p1, p2, p3, t) {
+  const u = 1 - t;
+  const uu = u * u;
+  const tt = t * t;
+  return {
+    x: uu * u * p0.x + 3 * uu * t * p1.x + 3 * u * tt * p2.x + tt * t * p3.x,
+    y: uu * u * p0.y + 3 * uu * t * p1.y + 3 * u * tt * p2.y + tt * t * p3.y,
+  };
+}
+
+function cubicBezierXAtY(p0, p1, p2, p3, targetY) {
+  const minY = Math.min(p0.y, p3.y);
+  const maxY = Math.max(p0.y, p3.y);
+  const clampedY = clamp(targetY, minY, maxY);
+  const ascending = p3.y > p0.y;
+  let lo = 0;
+  let hi = 1;
+  for (let i = 0; i < 28; i += 1) {
+    const mid = (lo + hi) / 2;
+    const point = cubicBezierPoint(p0, p1, p2, p3, mid);
+    if (ascending ? point.y < clampedY : point.y > clampedY) lo = mid;
+    else hi = mid;
+  }
+  return cubicBezierPoint(p0, p1, p2, p3, (lo + hi) / 2).x;
+}
+
+function drawLogicGateSymbol(component, parts, kind) {
+  const screenRect = rectToScreenRect(parts.bodyRect);
+  const clipped = clipScreenRect(screenRect);
+  if (!clipped || screenRect.w < 16 || screenRect.h < 12) return;
+
+  const padX = Math.max(3, Math.abs(screenRect.w) * 0.16);
+  const padY = Math.max(3, Math.abs(screenRect.h) * 0.15);
+  const innerLeft = screenRect.x + padX;
+  const innerRight = screenRect.x + screenRect.w - padX;
+  const aspectRatio = Number(component.aspectRatio);
+  const symbolWidthScale = Number.isFinite(aspectRatio) && aspectRatio > 0 ? Math.min(1, aspectRatio) : 1;
+  const innerWidth = Math.max(1, innerRight - innerLeft);
+  const symbolWidth = Math.max(1, innerWidth * symbolWidthScale);
+  const symbolCenterX = (innerLeft + innerRight) / 2;
+  const left = symbolCenterX - symbolWidth / 2;
+  const right = symbolCenterX + symbolWidth / 2;
+  const top = screenRect.y + padY;
+  const bottom = screenRect.y + screenRect.h - padY;
+  const midY = (top + bottom) / 2;
+  const width = Math.max(1, right - left);
+  const height = Math.max(1, bottom - top);
+  const bubbleRadius = clamp(Math.min(width, height) * 0.075, 2.5, 8);
+  const strokeStyle = parts.strokeStyle || "rgba(238, 244, 255, 0.72)";
+  const lineWidth = Math.max(1.25, parts.strokeWidth || 1.25);
+  const symbolFill = "rgba(10, 18, 30, 0.92)";
+
+  const inputPins = component.inputPins || [];
+  const outputPins = component.outputPins || [];
+  const symbolLayers = [];
+  let inputEndpointX = () => left;
+  let outputEndpointX = () => right;
+  const pinScreenY = (pin) => worldToScreen(pin.pos).y;
+  const terminalPoint = (x, pin) => screenToWorld({ x, y: pinScreenY(pin) });
+
+  if (kind === "not") {
+    const triRight = right - bubbleRadius * 2.4;
+    inputEndpointX = () => left;
+    outputEndpointX = () => triRight + bubbleRadius * 2;
+    symbolLayers.push(() => {
+      drawScreenGatePath(symbolFill, strokeStyle, lineWidth, () => {
+        ctx.moveTo(left, top);
+        ctx.lineTo(left, bottom);
+        ctx.lineTo(triRight, midY);
+        ctx.closePath();
+      });
+    });
+    symbolLayers.push(() => {
+      ctx.save();
+      ctx.strokeStyle = strokeStyle;
+      ctx.lineWidth = lineWidth;
+      ctx.beginPath();
+      ctx.arc(triRight + bubbleRadius, midY, bubbleRadius, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
+    });
+  } else {
+    const hasBubble = kind === "nand" || kind === "nor";
+    const shapeRight = hasBubble ? right - bubbleRadius * 2.4 : right;
+    const gateKind = kind === "nand" ? "and" : kind === "nor" ? "or" : kind;
+    let bubbleCenterX = shapeRight + bubbleRadius;
+
+    if (gateKind === "and") {
+      const shoulder = left + width * 0.42;
+      const roundEndCenterX = shoulder * 0.25 + shapeRight * 0.75;
+      symbolLayers.push(() => {
+        drawScreenGatePath(symbolFill, strokeStyle, lineWidth, () => {
+          ctx.moveTo(left, top);
+          ctx.lineTo(shoulder, top);
+          ctx.bezierCurveTo(shapeRight, top, shapeRight, bottom, shoulder, bottom);
+          ctx.lineTo(left, bottom);
+          ctx.closePath();
+        });
+      });
+      inputEndpointX = () => left;
+      outputEndpointX = () => roundEndCenterX;
+      bubbleCenterX = roundEndCenterX + bubbleRadius;
+    } else if (gateKind === "or" || gateKind === "xor") {
+      const inputTerminalX = left + width * 0.18;
+      const inputCurve = [
+        { x: inputTerminalX, y: bottom },
+        { x: left + width * 0.42, y: bottom - height * 0.26 },
+        { x: left + width * 0.42, y: top + height * 0.26 },
+        { x: inputTerminalX, y: top },
+      ];
+      symbolLayers.push(() => {
+        drawScreenGatePath(symbolFill, strokeStyle, lineWidth, () => {
+          ctx.moveTo(inputTerminalX, top);
+          ctx.bezierCurveTo(left + width * 0.72, top, shapeRight, top + height * 0.12, shapeRight, midY);
+          ctx.bezierCurveTo(shapeRight, bottom - height * 0.12, left + width * 0.72, bottom, inputTerminalX, bottom);
+          ctx.bezierCurveTo(inputCurve[1].x, inputCurve[1].y, inputCurve[2].x, inputCurve[2].y, inputCurve[3].x, inputCurve[3].y);
+          ctx.closePath();
+        });
+      });
+      if (gateKind === "xor") {
+        const xorCurve = [
+          { x: left, y: bottom - height * 0.04 },
+          { x: left + width * 0.28, y: bottom - height * 0.29 },
+          { x: left + width * 0.28, y: top + height * 0.29 },
+          { x: left, y: top + height * 0.04 },
+        ];
+        inputEndpointX = (pin) => cubicBezierXAtY(xorCurve[0], xorCurve[1], xorCurve[2], xorCurve[3], pinScreenY(pin));
+        symbolLayers.push(() => {
+          ctx.save();
+          ctx.strokeStyle = strokeStyle;
+          ctx.lineWidth = lineWidth * 0.85;
+          ctx.lineCap = "round";
+          ctx.beginPath();
+          ctx.moveTo(xorCurve[0].x, xorCurve[0].y);
+          ctx.bezierCurveTo(xorCurve[1].x, xorCurve[1].y, xorCurve[2].x, xorCurve[2].y, xorCurve[3].x, xorCurve[3].y);
+          ctx.stroke();
+          ctx.restore();
+        });
+      } else {
+        inputEndpointX = (pin) => cubicBezierXAtY(inputCurve[0], inputCurve[1], inputCurve[2], inputCurve[3], pinScreenY(pin));
+      }
+      outputEndpointX = () => shapeRight;
+    }
+
+    if (hasBubble) {
+      symbolLayers.push(() => {
+        ctx.save();
+        ctx.strokeStyle = strokeStyle;
+        ctx.lineWidth = lineWidth;
+        ctx.beginPath();
+        ctx.arc(bubbleCenterX, midY, bubbleRadius, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+      });
+    }
+    if (hasBubble) outputEndpointX = () => bubbleCenterX + bubbleRadius;
+  }
+
+  for (const pin of inputPins) {
+    if (!pin.pos) continue;
+    drawGateTerminalLine(
+      pin,
+      pinInnerContactPoint(pin),
+      terminalPoint(inputEndpointX(pin), pin),
+    );
+  }
+  for (const pin of outputPins) {
+    if (!pin.pos) continue;
+    drawGateTerminalLine(
+      pin,
+      terminalPoint(outputEndpointX(pin), pin),
+      pinInnerContactPoint(pin),
+    );
+  }
+  for (const drawSymbolLayer of symbolLayers) drawSymbolLayer();
+}
+
+function drawComponentBackground(component, vr) {
+  if (!component.rect || !rectIntersects(component.rect, vr)) return false;
+  const parts = componentDrawParts(component);
+  drawDefaultComponentBackground(parts);
+  return true;
+}
+
+function drawComponentForeground(component, vr) {
+  if (!component.rect || !rectIntersects(component.rect, vr)) return;
+  const parts = componentDrawParts(component);
+  drawDefaultComponentForeground(component, parts);
+  const gateKind = basicLogicGateKind(component);
+  if (gateKind) drawLogicGateSymbol(component, parts, gateKind);
 
   for (const pin of [...component.inputPins, ...component.outputPins]) drawPin(pin);
 }
