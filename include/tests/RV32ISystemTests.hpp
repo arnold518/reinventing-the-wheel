@@ -18,6 +18,7 @@ protected:
     rv32i::RV32IState snapshotComponentState() const override;
     rv32i::RV32IMemoryTrace lastDataMemoryAccess() const override;
     std::map<uint32_t, uint8_t> lastDataMemoryWrites() const override;
+    std::shared_ptr<BehavioralMemory64Kx32> dataMemoryForTest() const;
 
 private:
     std::shared_ptr<RV32ISystem> system_{};
@@ -35,6 +36,7 @@ protected:
 class BehavioralRV32ISystemProgram2Test : public BehavioralRV32ISystemProgramTestBase {
 protected:
     RV32ISystemProgramCase getCase() const override;
+    void verifyResults() override;
 };
 
 class BehavioralRV32ISystemProgram3Test : public BehavioralRV32ISystemProgramTestBase {
@@ -50,6 +52,7 @@ protected:
 class BehavioralRV32ISystemProgram5Test : public BehavioralRV32ISystemProgramTestBase {
 protected:
     RV32ISystemProgramCase getCase() const override;
+    void verifyResults() override;
 };
 
 class BehavioralRV32ISystemProgram6Test : public BehavioralRV32ISystemProgramTestBase {

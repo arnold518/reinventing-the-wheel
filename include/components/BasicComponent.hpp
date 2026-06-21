@@ -19,6 +19,8 @@ protected:
             if (auto wire = pin->getExternalWire()) {
                 simulator.scheduleEvent(std::make_shared<WireUpdateEvent<WIDTH>>(
                     current_sim_time + delay, wire, new_value));
+            } else {
+                simulator.recordPinChange(current_sim_time + delay, pin, pin->getValueAsVector());
             }
         }
     }
@@ -29,5 +31,6 @@ public:
     const char* getTypeName() const override { return TypeName; }
 
     size_t getDelay() const;
+    virtual void scheduleInitialEvents(Simulator& simulator, size_t current_time);
     virtual void evaluate(size_t current_time, Simulator& simulator) = 0;
 };

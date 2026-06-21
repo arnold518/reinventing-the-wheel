@@ -8,6 +8,7 @@
 #include "modules/basic/DFlipFlop.hpp"
 #include "modules/basic/Gate.hpp"
 #include "modules/basic/Latch.hpp"
+#include "modules/utility/BitAdapter.hpp"
 #include "simulator/Event.hpp"
 #include <cassert>
 #include <iostream>
@@ -59,6 +60,28 @@ void drive(Simulator& sim, size_t time, const std::shared_ptr<Wire<>>& wire, Log
 
 void drive(Simulator& sim, size_t time, const std::shared_ptr<Wire<>>& wire, bool value) {
     drive(sim, time, wire, value ? LogicValue::HIGH : LogicValue::LOW);
+}
+
+void expectSplitterOutputs(const std::shared_ptr<IOComponent>& io_root,
+                           uint64_t expected,
+                           const char* test_name) {
+    assert(io_root && "Missing splitter root");
+    for (size_t i = 0; i < 8; ++i) {
+        const auto pin_name = "OUT_" + std::to_string(i);
+        auto pin = io_root->getOutputPin(pin_name);
+        assert(pin && "Missing splitter output pin");
+
+        const auto expected_value = ((expected >> i) & 1U) != 0
+            ? LogicValue::HIGH
+            : LogicValue::LOW;
+        const auto actual = pin->getValue();
+        if (actual != expected_value) {
+            std::cerr << test_name << " failed for " << pin_name
+                      << ": expected " << expected_value
+                      << ", got " << actual << std::endl;
+            assert(false && "Splitter output mismatch");
+        }
+    }
 }
 }
 
@@ -123,6 +146,39 @@ void SimulatorAdvanceAndRecordTest::verifyResults() {
 
     local_sim.advanceAndRecord(11);
     expectWireAt(local_sim, output_wire, 11, LogicValue::LOW, "SimulatorAdvanceAndRecordTest future output");
+}
+
+std::string SimulatorUnwiredOutputPinHistoryTest::getTestName() const {
+    return "SimulatorUnwiredOutputPinHistoryTest";
+}
+
+void SimulatorUnwiredOutputPinHistoryTest::verifyResults() {
+    auto splitter = Component::create<BitSplitter<8>>("SPLITTER_HISTORY_ROOT");
+    ComponentBuilder local_builder(splitter);
+    auto io_root = std::dynamic_pointer_cast<IOComponent>(splitter);
+    assert(io_root);
+
+    auto input_wire = local_builder.addNewWireDynamic(
+        "IN_WIRE",
+        8,
+        nullptr,
+        {io_root->getInputPinDynamic("IN")});
+
+    // Keep one output connected and leave the others unwired. This reproduces
+    // structural debug nodes such as overflow sign-bit splitters.
+    auto out7 = io_root->getOutputPinDynamic("OUT_7");
+    local_builder.addNewWireDynamic("OUT_7_WIRE", out7->getWidth(), out7, {});
+
+    Simulator local_sim;
+    local_sim.scheduleEvent(makeTestWireUpdate(0, input_wire, bits(0xff)));
+    local_sim.scheduleEvent(makeTestWireUpdate(10, input_wire, bits(0x01)));
+    local_sim.runAndRecord(20);
+
+    local_sim.setCircuitStateAtTime(11);
+    expectSplitterOutputs(io_root, 0x01, "SimulatorUnwiredOutputPinHistoryTest latest state");
+
+    local_sim.setCircuitStateAtTime(1);
+    expectSplitterOutputs(io_root, 0xff, "SimulatorUnwiredOutputPinHistoryTest restored state");
 }
 
 NOTGateTest::NOTGateTest()

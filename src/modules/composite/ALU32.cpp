@@ -65,10 +65,7 @@ void ALU32::buildInternals(ComponentBuilder& builder) {
          builder.getInputPin<Logic32, 32>("LOGIC", "A"),
          builder.getInputPin<Shifter32, 32>("SHIFT", "A"),
          builder.getInputPin<Comparator32, 32>("CMP", "A"),
-         builder.getInputPin<Mux32to1_32bit, 32>("RESULT_MUX", "IN" + std::to_string(ALU32Op::PASS_A)),
-         builder.getInputPin<ConstantValue<1, 32>, 32>("CONST_LOW", "TRIGGER"),
-         builder.getInputPin<ConstantValue<1, 32>, 32>("CONST_HIGH", "TRIGGER"),
-         builder.getInputPin<ConstantValue<32, 32>, 32>("CONST_ZERO32", "TRIGGER")});
+         builder.getInputPin<Mux32to1_32bit, 32>("RESULT_MUX", "IN" + std::to_string(ALU32Op::PASS_A))});
     builder.addNewWire<32>(
         "B_bus_internal",
         getInputPin<32>("B"),

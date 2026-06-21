@@ -201,8 +201,7 @@ void Memory32x32::buildInternals(ComponentBuilder& builder) {
     builder.addNewWire(
         "READ_EN_internal",
         getInputPin("READ_EN"),
-        {builder.getInputPin<ORGate>("ACCESS_GATE", "A"),
-         builder.getInputPin<ConstantValue<1, 1>>("READY_ONE", "TRIGGER")});
+        {builder.getInputPin<ORGate>("ACCESS_GATE", "A")});
 
     builder.addNewWire(
         "WRITE_EN_internal",

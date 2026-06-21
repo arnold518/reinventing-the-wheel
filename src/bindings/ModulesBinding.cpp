@@ -46,6 +46,7 @@
 #include "modules/utility/Rewire.hpp"
 #include "modules/utility/BitAdapter.hpp"
 #include "modules/utility/Constant.hpp"
+#include "rv32i/RV32IDecoder.hpp"
 
 namespace py = pybind11;
 
@@ -72,7 +73,8 @@ void bindConstantModule(py::module_& m, const char* name, const char* descriptio
         .def("get_parent", &T::getParent)
         .def("get_children", &T::getChildren, py::return_value_policy::reference_internal)
         .def("get_input_pins", &T::getAllInputPins, py::return_value_policy::reference_internal)
-        .def("get_output_pins", &T::getAllOutputPins, py::return_value_policy::reference_internal);
+        .def("get_output_pins", &T::getAllOutputPins, py::return_value_policy::reference_internal)
+        .def("get_constant_value", &T::getConstantValue);
 }
 
 template<typename T>
@@ -89,6 +91,12 @@ void bindIOModule(py::module_& m, const char* name, const char* description) {
 }
 
 void bindModules(py::module_& m) {
+    m.def(
+        "disassemble_rv32i_instruction",
+        &rv32i::RV32IDecoder::disassemble,
+        py::arg("raw"),
+        py::arg("pc") = 0,
+        "Returns a compact RV32I assembly string for a 32-bit instruction word.");
 
     // --- NOTGate Binding ---
     py::class_<NOTGate, BasicComponent, std::shared_ptr<NOTGate>>(m, "NOTGate", "A standard 1-input NOT gate.", py::module_local(false))
@@ -215,9 +223,69 @@ void bindModules(py::module_& m) {
     bindIOModule<Decoder5to32>(m, "Decoder5to32", "5-bit enabled one-hot decoder.");
 
     bindBasicModule<BehavioralMemoryBit>(m, "BehavioralMemoryBit", "Behavioral one-bit storage cell with write enable and reset.");
-    bindBasicModule<BehavioralMemory64Kx32>(m, "BehavioralMemory64Kx32", "Behavioral 64K-word 32-bit byte-addressed RV32I memory.");
+    py::class_<BehavioralMemory64Kx32, BasicComponent, std::shared_ptr<BehavioralMemory64Kx32>>(
+        m,
+        "BehavioralMemory64Kx32",
+        "Behavioral 64K-word 32-bit byte-addressed RV32I memory.",
+        py::module_local(false))
+        .def(py::init([](const std::string& instance_name) {
+            return Component::create<BehavioralMemory64Kx32>(instance_name);
+        }), py::arg("name"))
+        .def("get_name", &BehavioralMemory64Kx32::getName)
+        .def("get_parent", &BehavioralMemory64Kx32::getParent)
+        .def("get_children", &BehavioralMemory64Kx32::getChildren, py::return_value_policy::reference_internal)
+        .def("get_input_pins", &BehavioralMemory64Kx32::getAllInputPins, py::return_value_policy::reference_internal)
+        .def("get_output_pins", &BehavioralMemory64Kx32::getAllOutputPins, py::return_value_policy::reference_internal)
+        .def_static("capacity_bytes", &BehavioralMemory64Kx32::capacityBytes)
+        .def_static("capacity_words", &BehavioralMemory64Kx32::capacityWords)
+        .def(
+            "get_touched_words_at_time",
+            &BehavioralMemory64Kx32::getTouchedWordsAtTime,
+            py::arg("time"),
+            py::arg("max_words") = 64,
+            "Returns 32-bit words touched since the effective reset at the requested simulation time.")
+        .def(
+            "get_touched_word_count_at_time",
+            &BehavioralMemory64Kx32::getTouchedWordCountAtTime,
+            py::arg("time"),
+            "Counts words touched since the effective reset at the requested simulation time.")
+        .def(
+            "get_occupied_words_at_time",
+            &BehavioralMemory64Kx32::getOccupiedWordsAtTime,
+            py::arg("time"),
+            py::arg("max_words") = 64,
+            "Deprecated alias for get_touched_words_at_time.")
+        .def(
+            "get_occupied_word_count_at_time",
+            &BehavioralMemory64Kx32::getOccupiedWordCountAtTime,
+            py::arg("time"),
+            "Deprecated alias for get_touched_word_count_at_time.")
+        .def(
+            "get_words_at_time",
+            &BehavioralMemory64Kx32::getWordsAtTime,
+            py::arg("time"),
+            py::arg("base_address"),
+            py::arg("word_count"),
+            "Returns a word-aligned memory window at the requested simulation time.");
     bindIOModule<BehavioralRegister32>(m, "BehavioralRegister32", "32-bit register built from behavioral memory bits.");
-    bindBasicModule<BehavioralRegisterFile32x32>(m, "BehavioralRegisterFile32x32", "Compact behavioral 32-entry RV32I register file.");
+    py::class_<BehavioralRegisterFile32x32, BasicComponent, std::shared_ptr<BehavioralRegisterFile32x32>>(
+        m,
+        "BehavioralRegisterFile32x32",
+        "Compact behavioral 32-entry RV32I register file.",
+        py::module_local(false))
+        .def(py::init([](const std::string& instance_name) {
+            return Component::create<BehavioralRegisterFile32x32>(instance_name);
+        }), py::arg("name"))
+        .def("get_name", &BehavioralRegisterFile32x32::getName)
+        .def("get_parent", &BehavioralRegisterFile32x32::getParent)
+        .def("get_children", &BehavioralRegisterFile32x32::getChildren, py::return_value_policy::reference_internal)
+        .def("get_input_pins", &BehavioralRegisterFile32x32::getAllInputPins, py::return_value_policy::reference_internal)
+        .def("get_output_pins", &BehavioralRegisterFile32x32::getAllOutputPins, py::return_value_policy::reference_internal)
+        .def(
+            "get_register_state_at_time",
+            &BehavioralRegisterFile32x32::getRegisterStateAtTime,
+            py::arg("time"),
+            "Returns 32 registers as little-endian LogicValue vectors at the requested simulation time.");
     bindIOModule<MemoryBit>(m, "MemoryBit", "Structural one-bit storage cell with write enable and reset.");
     bindIOModule<Register32>(m, "Register32", "Structural 32-bit register built from MemoryBit cells.");
     bindIOModule<RegisterFile4x32>(m, "RegisterFile4x32", "Four-entry 32-bit register file built from behavioral register cells.");
@@ -289,7 +357,11 @@ void bindModules(py::module_& m) {
         .def("get_output_pins", &Rewire::getAllOutputPins, py::return_value_policy::reference_internal)
         .def("validate_mappings", &Rewire::validateMappings)
         .def("get_total_input_bits", &Rewire::getTotalInputBits)
-        .def("get_total_output_bits", &Rewire::getTotalOutputBits);
+        .def("get_total_output_bits", &Rewire::getTotalOutputBits)
+        .def("get_input_specs", &Rewire::getInputSpecs)
+        .def("get_output_specs", &Rewire::getOutputSpecs)
+        .def("get_bit_mappings", &Rewire::getBitMappings)
+        .def("get_unmapped_default", &Rewire::getUnmappedDefault);
 
     m.def("identity_mapping", &identity_mapping, py::arg("src_wire"), py::arg("src_offset"),
           py::arg("count"), py::arg("dst_wire"), py::arg("dst_offset") = 0);
@@ -316,9 +388,9 @@ void bindModules(py::module_& m) {
     bindBasicModule<BitJoiner<16>>(m, "BitJoiner16", "Join sixteen single-bit inputs into one 16-bit output.");
     bindBasicModule<BitSplitter<32>>(m, "BitSplitter32", "Split one 32-bit input into thirty-two single-bit outputs.");
     bindBasicModule<BitJoiner<32>>(m, "BitJoiner32", "Join thirty-two single-bit inputs into one 32-bit output.");
-    bindConstantModule<ConstantValue<1, 1>>(m, "ConstantValue1High", "Single-bit constant with a single-bit trigger.");
-    bindConstantModule<ConstantValue<1, 8>>(m, "ConstantValue1From8Trigger", "Single-bit constant with an 8-bit trigger.");
-    bindConstantModule<ConstantValue<1, 32>>(m, "ConstantValue1From32Trigger", "Single-bit constant with a 32-bit trigger.");
-    bindConstantModule<ConstantValue<8, 8>>(m, "ConstantValue8", "8-bit constant with an 8-bit trigger.");
-    bindConstantModule<ConstantValue<32, 32>>(m, "ConstantValue32", "32-bit constant with a 32-bit trigger.");
+    bindConstantModule<ConstantValue<1, 1>>(m, "ConstantValue1High", "Single-bit constant source.");
+    bindConstantModule<ConstantValue<1, 8>>(m, "ConstantValue1From8Trigger", "Single-bit constant source.");
+    bindConstantModule<ConstantValue<1, 32>>(m, "ConstantValue1From32Trigger", "Single-bit constant source.");
+    bindConstantModule<ConstantValue<8, 8>>(m, "ConstantValue8", "8-bit constant source.");
+    bindConstantModule<ConstantValue<32, 32>>(m, "ConstantValue32", "32-bit constant source.");
 }

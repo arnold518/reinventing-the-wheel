@@ -37,8 +37,7 @@ void RegisterFile4x32::buildInternals(ComponentBuilder& builder) {
     builder.addNewWire<32>(
         "WRITE_DATA_internal",
         getInputPin<32>("WRITE_DATA"),
-        {builder.getInputPin<ConstantValue<32, 32>, 32>("X0_ZERO", "TRIGGER"),
-         builder.getInputPin<BehavioralRegister32, 32>("X1", "D"),
+        {builder.getInputPin<BehavioralRegister32, 32>("X1", "D"),
          builder.getInputPin<BehavioralRegister32, 32>("X2", "D"),
          builder.getInputPin<BehavioralRegister32, 32>("X3", "D")});
 

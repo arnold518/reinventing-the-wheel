@@ -395,8 +395,8 @@ ConstantValue1HighTest::ConstantValue1HighTest()
           "ConstantValue1HighTest",
           "CONSTANT_VALUE1_HIGH_ROOT",
           {
-              {{{"TRIGGER", bit(false)}}, {{"OUT", bit(true)}}},
-              {{{"TRIGGER", bit(true)}}, {{"OUT", bit(true)}}},
+              {{}, {{"OUT", bit(true)}}},
+              {{}, {{"OUT", bit(true)}}},
           },
           uint64_t{1}) {}
 
@@ -405,8 +405,8 @@ ConstantValue1Low8TriggerTest::ConstantValue1Low8TriggerTest()
           "ConstantValue1Low8TriggerTest",
           "CONSTANT_VALUE1_LOW_8_TRIGGER_ROOT",
           {
-              {{{"TRIGGER", bits(0x00)}}, {{"OUT", bit(false)}}},
-              {{{"TRIGGER", bits(0xFF)}}, {{"OUT", bit(false)}}},
+              {{}, {{"OUT", bit(false)}}},
+              {{}, {{"OUT", bit(false)}}},
           },
           uint64_t{0}) {}
 
@@ -415,8 +415,8 @@ ConstantValue1From32TriggerTest::ConstantValue1From32TriggerTest()
           "ConstantValue1From32TriggerTest",
           "CONSTANT_VALUE1_FROM_32_TRIGGER_ROOT",
           {
-              {{{"TRIGGER", bits(0x00000000U)}}, {{"OUT", bit(true)}}},
-              {{{"TRIGGER", bits(0xffffffffU)}}, {{"OUT", bit(true)}}},
+              {{}, {{"OUT", bit(true)}}},
+              {{}, {{"OUT", bit(true)}}},
           },
           uint64_t{1}) {}
 
@@ -425,8 +425,8 @@ ConstantValue8Test::ConstantValue8Test()
           "ConstantValue8Test",
           "CONSTANT_VALUE8_ROOT",
           {
-              {{{"TRIGGER", bits(0x00)}}, {{"OUT", bits(0xA5)}}},
-              {{{"TRIGGER", bits(0xFF)}}, {{"OUT", bits(0xA5)}}},
+              {{}, {{"OUT", bits(0xA5)}}},
+              {{}, {{"OUT", bits(0xA5)}}},
           },
           uint64_t{0xA5}) {}
 
@@ -435,7 +435,7 @@ ConstantValue32Test::ConstantValue32Test()
           "ConstantValue32Test",
           "CONSTANT_VALUE32_ROOT",
           {
-              {{{"TRIGGER", bits(0x00000000U)}}, {{"OUT", bits(0xdeadbeefU)}}},
-              {{{"TRIGGER", bits(0xffffffffU)}}, {{"OUT", bits(0xdeadbeefU)}}},
+              {{}, {{"OUT", bits(0xdeadbeefU)}}},
+              {{}, {{"OUT", bits(0xdeadbeefU)}}},
           },
           uint64_t{0xdeadbeefU}) {}

@@ -6,6 +6,7 @@
 #include <cassert>
 #include <iostream>
 #include "simulator/Simulator.hpp"
+#include "components/BasicComponent.hpp"
 #include "components/ComponentBuilder.hpp"
 #include "components/Component.hpp"
 
@@ -34,6 +35,22 @@ public:
 
     virtual std::vector<SimulationCheckpoint> getCheckpoints() const { return {}; }
 
+    static void scheduleInitialEventsForTree(const std::shared_ptr<Component>& component, Simulator& simulator, size_t time = 0) {
+        if (!component) {
+            return;
+        }
+        if (auto basic = std::dynamic_pointer_cast<BasicComponent>(component)) {
+            basic->scheduleInitialEvents(simulator, time);
+        }
+        for (const auto& child : component->getChildren()) {
+            scheduleInitialEventsForTree(child, simulator, time);
+        }
+    }
+
+    void scheduleInitialEvents(size_t time = 0) {
+        scheduleInitialEventsForTree(root, *sim, time);
+    }
+
     virtual void setupCircuit() {
         root = std::make_shared<Component>(getTestName());
         builder = std::make_unique<ComponentBuilder>(root);
@@ -46,6 +63,7 @@ public:
         std::cout << "--- Running Test: " << getTestName() << " ---" << std::endl;
         try {
             setupCircuit();
+            scheduleInitialEvents();
 
             runSimulation();
             verifyResults();

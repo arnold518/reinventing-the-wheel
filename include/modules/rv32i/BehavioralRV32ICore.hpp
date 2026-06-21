@@ -37,5 +37,5 @@ private:
     bool last_instruction_read_ = false;
     LogicValue previous_clk_ = LogicValue::UNKNOWN;
 
-    void publishOutputs(Simulator& simulator, size_t current_time);
+    void publishOutputs(Simulator& simulator, size_t current_time, bool active_core_step);
 };

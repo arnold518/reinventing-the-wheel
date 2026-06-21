@@ -158,6 +158,44 @@ def _signal_value(cpp_handle: Any) -> str:
     return bits[0] if width == 1 else "".join(reversed(bits))
 
 
+def _logic_vector_value(values: Any) -> str:
+    bits = [_logic_token(value) for value in values]
+    if not bits:
+        return ""
+    return bits[0] if len(bits) == 1 else "".join(reversed(bits))
+
+
+def _binary_value_to_hex(value: str) -> str | None:
+    if not value or any(bit not in {"0", "1"} for bit in value):
+        return None
+    width = max(1, (len(value) + 3) // 4)
+    return f"0x{int(value, 2):0{width}x}"
+
+
+def _binary_value_to_int(value: str | None) -> int | None:
+    if not value or any(bit not in {"0", "1"} for bit in value):
+        return None
+    return int(value, 2)
+
+
+def _memory_word_entry(address: int, word: Any, decode_instruction: bool = False) -> dict[str, Any]:
+    bits = _logic_vector_value(word)
+    hex_value = _binary_value_to_hex(bits)
+    entry = {
+        "address": int(address),
+        "addressHex": f"0x{int(address):08x}",
+        "bits": bits,
+        "hex": hex_value,
+        "known": hex_value is not None,
+    }
+    if decode_instruction and hex_value is not None:
+        try:
+            entry["instructionText"] = circuit_backend.disassemble_rv32i_instruction(int(bits, 2), int(address))
+        except (AttributeError, RuntimeError, TypeError, ValueError):
+            entry["instructionText"] = None
+    return entry
+
+
 def _natural_key(value: str) -> list[Any]:
     return [int(part) if part.isdigit() else part.lower() for part in re.split(r"(\d+)", value)]
 
@@ -199,9 +237,8 @@ def _component_layout_type(component: Any) -> str:
         return f"BitJoiner<{width}>" if width else component_type
     if component_type == "ConstantValue":
         out_width = _pin_width_by_name(component, "get_output_pins", "OUT")
-        trigger_width = _pin_width_by_name(component, "get_input_pins", "TRIGGER")
-        if out_width and trigger_width:
-            return f"ConstantValue<{out_width},{trigger_width}>"
+        if out_width:
+            return f"ConstantValue<{out_width}>"
     return component_type
 
 
@@ -844,6 +881,7 @@ class CircuitSession:
             raise RuntimeError("C++ test scenario did not produce a root component")
 
         self.simulator = self.test_scenario.get_simulator()
+        self.test_scenario.schedule_initial_events(0)
         self.simulator.run_and_record(self.test_scenario.get_run_duration())
         checkpoint_metadata = self._checkpoint_metadata()
         checkpoint_times = [checkpoint["time"] for checkpoint in checkpoint_metadata]
@@ -926,24 +964,53 @@ class CircuitSession:
             self.component_handles[component_id] = component
             self.component_depths[component_id] = depth
 
-            self.components.append(
-                {
-                    "id": component_id,
-                    "name": component.get_name(),
-                    "type": component_type,
-                    "layoutType": component_layout_type,
-                    "parentId": parent_id,
-                    "depth": depth,
-                    "childIds": [child.get_id() for child in children],
-                    "aspectRatio": aspect_ratio,
-                    "minAspectRatio": self.layout_manager.effective_minimum_aspect_for_component(
-                        component,
-                        scenario_key=self.scenario_key,
-                        is_root=depth == 0,
-                    ),
-                    "color": color,
-                }
-            )
+            component_data = {
+                "id": component_id,
+                "name": component.get_name(),
+                "type": component_type,
+                "layoutType": component_layout_type,
+                "parentId": parent_id,
+                "depth": depth,
+                "childIds": [child.get_id() for child in children],
+                "aspectRatio": aspect_ratio,
+                "minAspectRatio": self.layout_manager.effective_minimum_aspect_for_component(
+                    component,
+                    scenario_key=self.scenario_key,
+                    is_root=depth == 0,
+                ),
+                "color": color,
+            }
+            if component_type == "ConstantValue":
+                try:
+                    component_data["constantValue"] = int(component.get_constant_value())
+                except (AttributeError, RuntimeError, TypeError, ValueError):
+                    pass
+            if component_type == "Rewire":
+                try:
+                    unmapped_default = str(component.get_unmapped_default()).split(".")[-1].upper()
+                    component_data["rewire"] = {
+                        "inputs": [
+                            {"name": str(spec.name), "width": int(spec.width)}
+                            for spec in component.get_input_specs()
+                        ],
+                        "outputs": [
+                            {"name": str(spec.name), "width": int(spec.width)}
+                            for spec in component.get_output_specs()
+                        ],
+                        "mappings": [
+                            {
+                                "srcWire": str(mapping.src_wire),
+                                "srcBit": int(mapping.src_bit),
+                                "dstWire": str(mapping.dst_wire),
+                                "dstBit": int(mapping.dst_bit),
+                            }
+                            for mapping in component.get_bit_mappings()
+                        ],
+                        "unmappedDefault": unmapped_default,
+                    }
+                except (AttributeError, RuntimeError, TypeError, ValueError):
+                    pass
+            self.components.append(component_data)
 
             if hasattr(component, "get_input_pins"):
                 for pin_name, pin in component.get_input_pins().items():
@@ -1130,6 +1197,143 @@ class CircuitSession:
             wires = {wire_id: _signal_value(wire) for wire_id, wire in self.wire_handles.items()}
             return {"index": index, "time": timestamp, "pins": pins, "wires": wires}
 
+    def _component_pin_value(self, component_id: str, pin_name: str) -> str | None:
+        for pin in self.pins:
+            if pin["componentId"] != component_id or pin["name"] != pin_name:
+                continue
+            handle = self.pin_handles.get(pin["id"])
+            return _signal_value(handle) if handle else None
+        return None
+
+    def _component_ports(self, component_id: str, pin_names: tuple[str, ...]) -> dict[str, dict[str, Any]]:
+        ports: dict[str, dict[str, Any]] = {}
+        for pin_name in pin_names:
+            value = self._component_pin_value(component_id, pin_name)
+            if value is None:
+                continue
+            ports[pin_name] = {
+                "value": value,
+                "hex": _binary_value_to_hex(value),
+            }
+        return ports
+
+    def _register_file_state(self, component: Any, component_id: str, index: int, timestamp: int) -> dict[str, Any]:
+        register_words = component.get_register_state_at_time(timestamp)
+        registers: list[dict[str, Any]] = []
+        for register_index, word in enumerate(register_words):
+            bits = _logic_vector_value(word)
+            hex_value = _binary_value_to_hex(bits)
+            registers.append(
+                {
+                    "index": register_index,
+                    "name": f"x{register_index}",
+                    "bits": bits,
+                    "hex": hex_value,
+                    "known": hex_value is not None,
+                }
+            )
+
+        ports = self._component_ports(
+            component_id,
+            (
+                "RS1_ADDR",
+                "RS2_ADDR",
+                "RD_ADDR",
+                "WRITE_DATA",
+                "REG_WRITE",
+                "CLK",
+                "RST",
+                "RS1_DATA",
+                "RS2_DATA",
+            ),
+        )
+        return {
+            "index": index,
+            "time": timestamp,
+            "componentId": component_id,
+            "type": "BehavioralRegisterFile32x32",
+            "supported": True,
+            "registers": registers,
+            "ports": ports,
+        }
+
+    def _memory64kx32_state(self, component: Any, component_id: str, index: int, timestamp: int) -> dict[str, Any]:
+        ports = self._component_ports(
+            component_id,
+            (
+                "ADDR",
+                "WRITE_DATA",
+                "READ_EN",
+                "WRITE_EN",
+                "SIZE",
+                "SIGN_EXTEND",
+                "CLK",
+                "RST",
+                "READ_DATA",
+                "READY",
+                "FAULT",
+            ),
+        )
+        active_address = _binary_value_to_int(ports.get("ADDR", {}).get("value"))
+        active_base = active_address & ~0x3 if active_address is not None else None
+        read_active = ports.get("READ_EN", {}).get("value") == "1"
+        write_active = ports.get("WRITE_EN", {}).get("value") == "1"
+        memory_role = "data" if component_id.endswith(".DATA_MEMORY") or component_id.endswith("DATA_MEMORY") else "generic"
+        if component_id.endswith(".INSTRUCTION_MEMORY") or component_id.endswith("INSTRUCTION_MEMORY"):
+            memory_role = "instruction"
+        window_active = active_base is not None and (read_active or write_active)
+        if window_active:
+            window_words = component.get_words_at_time(timestamp, active_base, 1)
+        else:
+            window_words = []
+        touched_words = component.get_touched_words_at_time(timestamp, 64 * 1024)
+
+        return {
+            "index": index,
+            "time": timestamp,
+            "componentId": component_id,
+            "type": "BehavioralMemory64Kx32",
+            "supported": True,
+            "capacityBytes": 64 * 1024 * 4,
+            "capacityWords": 64 * 1024,
+            "memoryRole": memory_role,
+            "windowActive": window_active,
+            "activeAddress": active_address,
+            "activeBaseAddress": active_base,
+            "touchedWordCount": len(touched_words),
+            "touchedWords": [
+                _memory_word_entry(address, word, decode_instruction=memory_role == "instruction")
+                for address, word in touched_words
+            ],
+            "windowWords": [
+                _memory_word_entry(address, word, decode_instruction=memory_role == "instruction")
+                for address, word in window_words
+            ],
+            "ports": ports,
+        }
+
+    def component_state_at_index(self, index: int, component_id: str) -> dict[str, Any]:
+        with self.lock:
+            component = self.component_handles.get(component_id)
+            if component is None:
+                raise ValueError(f"Unknown component id '{component_id}'")
+
+            index = max(0, min(index, len(self.timestamps) - 1))
+            timestamp = int(self.timestamps[index])
+            self.simulator.set_circuit_state_at_time(timestamp)
+            component_type = _component_type(component)
+            if component_type == "BehavioralRegisterFile32x32":
+                return self._register_file_state(component, component_id, index, timestamp)
+            if component_type == "BehavioralMemory64Kx32":
+                return self._memory64kx32_state(component, component_id, index, timestamp)
+            return {
+                "index": index,
+                "time": timestamp,
+                "componentId": component_id,
+                "type": component_type,
+                "supported": False,
+            }
+
 
 class SessionStore:
     def __init__(self) -> None:
@@ -1240,6 +1444,13 @@ class VisualizerHandler(SimpleHTTPRequestHandler):
                 scenario = query.get("scenario", [DEFAULT_SCENARIO])[0]
                 index = int(query.get("index", [0])[0])
                 json_response(self, STORE.get(scenario).state_at_index(index))
+            elif path == "/api/component-state":
+                scenario = query.get("scenario", [DEFAULT_SCENARIO])[0]
+                index = int(query.get("index", [0])[0])
+                component_id = query.get("componentId", [""])[0]
+                if not component_id:
+                    raise ValueError("GET /api/component-state requires componentId")
+                json_response(self, STORE.get(scenario).component_state_at_index(index, component_id))
             else:
                 self._serve_static(path, raw_path)
         except Exception as exc:

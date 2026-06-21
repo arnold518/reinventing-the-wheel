@@ -116,8 +116,7 @@ void Shifter32::buildInternals(ComponentBuilder& builder) {
     builder.addNewWire<32>(
         "A_bus_internal",
         getInputPin<32>("A"),
-        {builder.getInputPin<BitSplitter<32>, 32>("A_SPLIT", "IN"),
-         builder.getInputPin<ConstantValue<1, 32>, 32>("CONST_LOW", "TRIGGER")});
+        {builder.getInputPin<BitSplitter<32>, 32>("A_SPLIT", "IN")});
     builder.addNewWire<32>(
         "B_bus_internal",
         getInputPin<32>("B"),

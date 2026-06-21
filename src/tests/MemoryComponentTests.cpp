@@ -138,6 +138,69 @@ void expectRegisterVectorAt(Simulator& sim,
     }
 }
 
+void expectBehavioralRegisterStateAt(const BehavioralRegisterFile32x32& register_file,
+                                     size_t time,
+                                     size_t register_index,
+                                     const std::vector<LogicValue>& expected,
+                                     const char* label,
+                                     const char* test_name) {
+    assert(register_index < 32 && "Behavioral register index must be in x0..x31");
+    assert(expected.size() == 32 && "Behavioral register expected vector must be 32 bits");
+    const auto state = register_file.getRegisterStateAtTime(time);
+    assert(state.size() == 32 && "Behavioral register API must return 32 words");
+    assert(state[register_index].size() == 32 && "Behavioral register API word must be 32 bits");
+    for (size_t bit_index = 0; bit_index < 32; ++bit_index) {
+        if (state[register_index][bit_index] != expected[bit_index]) {
+            std::cerr << test_name << " API failed at t=" << time
+                      << " (" << label << "), x" << register_index
+                      << " bit " << bit_index
+                      << ": expected " << expected[bit_index]
+                      << ", got " << state[register_index][bit_index] << std::endl;
+            assert(false && "Behavioral register API state mismatch");
+        }
+    }
+}
+
+void expectBehavioralRegisterStateAt(const BehavioralRegisterFile32x32& register_file,
+                                     size_t time,
+                                     size_t register_index,
+                                     uint32_t expected,
+                                     const char* label,
+                                     const char* test_name) {
+    expectBehavioralRegisterStateAt(register_file, time, register_index, bits32(expected), label, test_name);
+}
+
+void expectBehavioralMemoryWordAt(const BehavioralMemory64Kx32& memory,
+                                  size_t time,
+                                  uint32_t address,
+                                  const std::vector<LogicValue>& expected,
+                                  const char* label,
+                                  const char* test_name) {
+    assert(expected.size() == 32 && "Behavioral memory expected word must be 32 bits");
+    const auto words = memory.getWordsAtTime(time, address, 1);
+    assert(words.size() == 1 && "Behavioral memory API must return the requested word");
+    assert(words[0].first == (address & ~uint32_t{0x3}) && "Behavioral memory API must return aligned word address");
+    for (size_t bit_index = 0; bit_index < 32; ++bit_index) {
+        if (words[0].second[bit_index] != expected[bit_index]) {
+            std::cerr << test_name << " API failed at t=" << time
+                      << " (" << label << "), address 0x" << std::hex << address << std::dec
+                      << " bit " << bit_index
+                      << ": expected " << expected[bit_index]
+                      << ", got " << words[0].second[bit_index] << std::endl;
+            assert(false && "Behavioral memory API word mismatch");
+        }
+    }
+}
+
+void expectBehavioralMemoryWordAt(const BehavioralMemory64Kx32& memory,
+                                  size_t time,
+                                  uint32_t address,
+                                  uint32_t expected,
+                                  const char* label,
+                                  const char* test_name) {
+    expectBehavioralMemoryWordAt(memory, time, address, bits32(expected), label, test_name);
+}
+
 uint32_t registerFilePattern(uint32_t reg_index) {
     return 0x10000000U | (reg_index * 0x01010101U);
 }
@@ -454,6 +517,14 @@ void BehavioralMemory64Kx32Test::setInitialState() {
     drive32(*sim, 1960, addr_wire, 0U);
     drive2(*sim, 1960, size_wire, 2);
 
+    drive32(*sim, 2100, addr_wire, 8U);
+    drive32(*sim, 2100, write_data_wire, 0x00000000U);
+    drive2(*sim, 2100, size_wire, 2);
+    drive(*sim, 2100, write_en_wire, true);
+    drive(*sim, 2140, clk_wire, true);
+    drive(*sim, 2160, clk_wire, false);
+    drive(*sim, 2180, write_en_wire, false);
+
     drive32(*sim, 2200, addr_wire, 2U);
     drive2(*sim, 2200, size_wire, 0);
     drive(*sim, 2200, sign_extend_wire, false);
@@ -534,6 +605,68 @@ void BehavioralMemory64Kx32Test::verifyResults() {
 
     for (const auto& expected : expected_faults) {
         expectWireAt(*sim, fault_wire, expected, "BehavioralMemory64Kx32Test");
+    }
+
+    if (auto memory = std::dynamic_pointer_cast<BehavioralMemory64Kx32>(root)) {
+        expectBehavioralMemoryWordAt(
+            *memory,
+            430,
+            0x00000000U,
+            0x12345678U,
+            "API exposes word store at base",
+            "BehavioralMemory64Kx32Test");
+        expectBehavioralMemoryWordAt(
+            *memory,
+            760,
+            0x0003fffcU,
+            0x89abcdefU,
+            "API exposes word store at memory limit",
+            "BehavioralMemory64Kx32Test");
+        expectBehavioralMemoryWordAt(
+            *memory,
+            2060,
+            0x00000000U,
+            0xbeefaa78U,
+            "API exposes byte and halfword stores inside word 0",
+            "BehavioralMemory64Kx32Test");
+        expectBehavioralMemoryWordAt(
+            *memory,
+            2190,
+            0x00000008U,
+            0x00000000U,
+            "API exposes zero store as a touched word",
+            "BehavioralMemory64Kx32Test");
+        expectBehavioralMemoryWordAt(
+            *memory,
+            4200,
+            0x0003fffcU,
+            0x00000000U,
+            "API exposes reset-cleared final word",
+            "BehavioralMemory64Kx32Test");
+        const auto all_touched = memory->getTouchedWordsAtTime(2190, BehavioralMemory64Kx32::capacityWords());
+        assert(all_touched.size() == 4 && "Behavioral memory API should return all touched words when uncapped");
+        assert(all_touched[0].first == 0x00000000U && "Behavioral memory touched words should be sorted by address");
+        assert(all_touched[1].first == 0x00000004U && "Behavioral memory touched words should include word 1");
+        assert(all_touched[2].first == 0x00000008U && "Behavioral memory touched words should include zero writes");
+        assert(all_touched[3].first == 0x0003fffcU && "Behavioral memory touched words should include the final word");
+        assert(memory->getTouchedWordCountAtTime(2060) == 3 && "Behavioral memory API should count three touched words");
+        assert(memory->getTouchedWordCountAtTime(2190) == 4 && "Behavioral memory API should count zero writes as touched");
+        assert(memory->getTouchedWordCountAtTime(4200) == 0 && "Behavioral memory API should count no touched words after reset");
+        assert(memory->getTouchedWordsAtTime(4200, BehavioralMemory64Kx32::capacityWords()).empty()
+               && "Behavioral memory API should return no touched words after reset");
+
+        memory->writeU32AtTime(5000, 0x00000120U, 0x0000002bU);
+        assert(memory->getTouchedWordCountAtTime(4999) == 0 && "Future direct writes must not appear before their simulation time");
+        const auto direct_write_touched = memory->getTouchedWordsAtTime(5000, BehavioralMemory64Kx32::capacityWords());
+        assert(direct_write_touched.size() == 1 && "Timed direct write should touch one word after reset");
+        assert(direct_write_touched[0].first == 0x00000120U && "Timed direct write should report its word address");
+        expectBehavioralMemoryWordAt(
+            *memory,
+            5000,
+            0x00000120U,
+            0x0000002bU,
+            "API exposes timed direct write at its simulation time",
+            "BehavioralMemory64Kx32Test");
     }
 }
 
@@ -1011,6 +1144,30 @@ void RegisterFile32x32Test::verifyResults() {
 
     expectRegisterAt(*sim, rs1_wire, {9960, 0x00000000U, "reset clears x13"}, test_name_c);
     expectRegisterAt(*sim, rs2_wire, {9960, 0x00000000U, "reset clears x31"}, test_name_c);
+
+    if (auto behavioral = std::dynamic_pointer_cast<BehavioralRegisterFile32x32>(root)) {
+        expectBehavioralRegisterStateAt(
+            *behavioral,
+            850,
+            1,
+            registerFilePattern(1),
+            "API exposes x1 after first write",
+            test_name_c);
+        expectBehavioralRegisterStateAt(
+            *behavioral,
+            9760,
+            13,
+            expected_unknown_x13,
+            "API preserves x13 unknown lane",
+            test_name_c);
+        expectBehavioralRegisterStateAt(
+            *behavioral,
+            9960,
+            31,
+            0x00000000U,
+            "API exposes reset-cleared x31",
+            test_name_c);
+    }
 }
 
 size_t RegisterFile32x32Test::getRunDuration() const {

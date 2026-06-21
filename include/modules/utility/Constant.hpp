@@ -5,12 +5,14 @@
 #include <cstdint>
 #include <string>
 
-template<size_t OUT_WIDTH, size_t TRIGGER_WIDTH = 8>
+template<size_t OUT_WIDTH, size_t LEGACY_WIDTH = 8>
 class ConstantValue : public BasicComponent {
 public:
     ConstantValue(std::string name, uint64_t constant_value);
     static constexpr const char* TypeName = "ConstantValue";
     const char* getTypeName() const override { return TypeName; }
+    uint64_t getConstantValue() const { return value; }
+    void scheduleInitialEvents(Simulator& simulator, size_t current_time) override;
     void evaluate(size_t current_time, Simulator& simulator) override;
 
 private:

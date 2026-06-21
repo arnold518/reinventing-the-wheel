@@ -30,8 +30,7 @@ void Comparator32::buildInternals(ComponentBuilder& builder) {
     builder.addNewWire<32>(
         "A_bus_internal",
         getInputPin<32>("A"),
-        {builder.getInputPin<AddSub32, 32>("SUB", "A"),
-         builder.getInputPin<ConstantValue<1, 32>, 32>("CONST_HIGH", "TRIGGER")});
+        {builder.getInputPin<AddSub32, 32>("SUB", "A")});
     builder.addNewWire<32>(
         "B_bus_internal",
         getInputPin<32>("B"),

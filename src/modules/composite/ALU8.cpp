@@ -1,7 +1,7 @@
 #include "modules/composite/ALU8.hpp"
-#include "components/BasicComponent.hpp"
 #include "components/ComponentBuilder.hpp"
 #include "components/ComponentBuilder.tpp"
+#include "modules/basic/Gate.hpp"
 #include "modules/basic/Logic8.hpp"
 #include "modules/basic/Mux.hpp"
 #include "modules/composite/Adder8.hpp"
@@ -17,25 +17,6 @@
 #include <vector>
 
 namespace {
-class AddOverflowDetector8 : public BasicComponent {
-public:
-    explicit AddOverflowDetector8(std::string name)
-        : BasicComponent(std::move(name), 1, [](IOComponent* self) {
-              self->addPin<8>("A", PinType::INPUT);
-              self->addPin<8>("B", PinType::INPUT);
-              self->addPin<8>("Result", PinType::INPUT);
-              self->addPin("Overflow", PinType::OUTPUT);
-          }) {}
-
-    void evaluate(size_t current_time, Simulator& simulator) override {
-        auto a = static_cast<uint8_t>(getInputValueAsUInt64("A") & 0xFFU);
-        auto b = static_cast<uint8_t>(getInputValueAsUInt64("B") & 0xFFU);
-        auto result = static_cast<uint8_t>(getInputValueAsUInt64("Result") & 0xFFU);
-        const bool overflow = (~(a ^ b) & (a ^ result) & 0x80U) != 0;
-        _updateOutputWire(simulator, "Overflow", overflow ? LogicValue::HIGH : LogicValue::LOW, current_time);
-    }
-};
-
 void addLowSink(std::vector<std::shared_ptr<Pin<>>>& sinks, ComponentBuilder& builder,
                 const std::string& mux_name, size_t input_index) {
     sinks.push_back(builder.getInputPin<Mux16to1>(mux_name, "IN" + std::to_string(input_index)));
@@ -67,7 +48,13 @@ void ALU8::buildInternals(ComponentBuilder& builder) {
     builder.addNewComponent<Incrementer8>("INC");
     builder.addNewComponent<Decrementer8>("DEC");
     builder.addNewComponent<TwosComplement8>("TWOS");
-    builder.addNewComponent<AddOverflowDetector8>("ADD_OVERFLOW");
+    builder.addNewComponent<BitSplitter<8>>("ADD_OVERFLOW_A_SPLIT");
+    builder.addNewComponent<BitSplitter<8>>("ADD_OVERFLOW_B_SPLIT");
+    builder.addNewComponent<BitSplitter<8>>("ADD_OVERFLOW_RESULT_SPLIT");
+    builder.addNewComponent<XORGate>("ADD_OVERFLOW_A_XOR_B");
+    builder.addNewComponent<NOTGate>("ADD_OVERFLOW_SAME_SIGN");
+    builder.addNewComponent<XORGate>("ADD_OVERFLOW_A_XOR_RESULT");
+    builder.addNewComponent<ANDGate>("ADD_OVERFLOW_AND");
 
     builder.addNewComponent<Mux16to1_8bit>("RESULT_MUX");
     builder.addNewComponent<Mux16to1>("CARRY_MUX");
@@ -92,10 +79,8 @@ void ALU8::buildInternals(ComponentBuilder& builder) {
          builder.getInputPin<Incrementer8, 8>("INC", "A"),
          builder.getInputPin<Decrementer8, 8>("DEC", "A"),
          builder.getInputPin<TwosComplement8, 8>("TWOS", "A"),
-         builder.getInputPin<AddOverflowDetector8, 8>("ADD_OVERFLOW", "A"),
-         builder.getInputPin<Mux16to1_8bit, 8>("RESULT_MUX", "IN12"),
-         builder.getInputPin<ConstantValue<1, 8>, 8>("CONST_LOW", "TRIGGER"),
-         builder.getInputPin<ConstantValue<8, 8>, 8>("CONST_ZERO8", "TRIGGER")});
+         builder.getInputPin<BitSplitter<8>, 8>("ADD_OVERFLOW_A_SPLIT", "IN"),
+         builder.getInputPin<Mux16to1_8bit, 8>("RESULT_MUX", "IN12")});
 
     builder.addNewWire<8>(
         "B_bus_internal",
@@ -105,7 +90,7 @@ void ALU8::buildInternals(ComponentBuilder& builder) {
          builder.getInputPin<AND8, 8>("AND", "B"),
          builder.getInputPin<OR8, 8>("OR", "B"),
          builder.getInputPin<XOR8, 8>("XOR", "B"),
-         builder.getInputPin<AddOverflowDetector8, 8>("ADD_OVERFLOW", "B"),
+         builder.getInputPin<BitSplitter<8>, 8>("ADD_OVERFLOW_B_SPLIT", "IN"),
          builder.getInputPin<Mux16to1_8bit, 8>("RESULT_MUX", "IN13")});
 
     builder.addNewWire<4>(
@@ -133,15 +118,40 @@ void ALU8::buildInternals(ComponentBuilder& builder) {
         "ADD_result_fanout",
         builder.getOutputPin<Adder8, 8>("ADD", "Sum"),
         {builder.getInputPin<Mux16to1_8bit, 8>("RESULT_MUX", "IN0"),
-         builder.getInputPin<AddOverflowDetector8, 8>("ADD_OVERFLOW", "Result")});
+         builder.getInputPin<BitSplitter<8>, 8>("ADD_OVERFLOW_RESULT_SPLIT", "IN")});
     builder.addNewWire(
         "ADD_Cout_to_CARRY_MUX",
         builder.getOutputPin<Adder8>("ADD", "Cout"),
         {builder.getInputPin<Mux16to1>("CARRY_MUX", "IN0")});
     builder.addNewWire(
         "ADD_Overflow_to_OVERFLOW_MUX",
-        builder.getOutputPin<AddOverflowDetector8>("ADD_OVERFLOW", "Overflow"),
+        builder.getOutputPin<ANDGate>("ADD_OVERFLOW_AND", "OUT"),
         {builder.getInputPin<Mux16to1>("OVERFLOW_MUX", "IN0")});
+    builder.addNewWire(
+        "ADD_overflow_A7_to_A_XOR_B",
+        builder.getOutputPin<BitSplitter<8>>("ADD_OVERFLOW_A_SPLIT", "OUT_7"),
+        {builder.getInputPin<XORGate>("ADD_OVERFLOW_A_XOR_B", "A"),
+         builder.getInputPin<XORGate>("ADD_OVERFLOW_A_XOR_RESULT", "A")});
+    builder.addNewWire(
+        "ADD_overflow_B7_to_A_XOR_B",
+        builder.getOutputPin<BitSplitter<8>>("ADD_OVERFLOW_B_SPLIT", "OUT_7"),
+        {builder.getInputPin<XORGate>("ADD_OVERFLOW_A_XOR_B", "B")});
+    builder.addNewWire(
+        "ADD_overflow_result7_to_A_XOR_RESULT",
+        builder.getOutputPin<BitSplitter<8>>("ADD_OVERFLOW_RESULT_SPLIT", "OUT_7"),
+        {builder.getInputPin<XORGate>("ADD_OVERFLOW_A_XOR_RESULT", "B")});
+    builder.addNewWire(
+        "ADD_overflow_A_XOR_B_to_NOT",
+        builder.getOutputPin<XORGate>("ADD_OVERFLOW_A_XOR_B", "OUT"),
+        {builder.getInputPin<NOTGate>("ADD_OVERFLOW_SAME_SIGN", "IN")});
+    builder.addNewWire(
+        "ADD_overflow_same_sign_to_AND",
+        builder.getOutputPin<NOTGate>("ADD_OVERFLOW_SAME_SIGN", "OUT"),
+        {builder.getInputPin<ANDGate>("ADD_OVERFLOW_AND", "A")});
+    builder.addNewWire(
+        "ADD_overflow_A_XOR_RESULT_to_AND",
+        builder.getOutputPin<XORGate>("ADD_OVERFLOW_A_XOR_RESULT", "OUT"),
+        {builder.getInputPin<ANDGate>("ADD_OVERFLOW_AND", "B")});
 
     builder.addNewWire<8>(
         "SUB_result_fanout",

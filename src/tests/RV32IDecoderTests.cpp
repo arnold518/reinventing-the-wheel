@@ -127,6 +127,11 @@ void expectInvalid(uint32_t raw, RV32IDecodeStatus status, const std::string& la
     expect(decoded.status == status, label + " status");
 }
 
+void expectDisassembly(uint32_t raw, uint32_t pc, const std::string& expected, const std::string& label) {
+    const auto actual = RV32IDecoder::disassemble(raw, pc);
+    expect(actual == expected, label + " disassembly expected '" + expected + "', got '" + actual + "'");
+}
+
 void testFieldExtraction() {
     const uint32_t raw = encodeR(0x20, 12, 11, 0x0, 10);
     expect(RV32IDecoder::opcode(raw) == 0x33, "opcode extraction");
@@ -251,6 +256,14 @@ void testInvalidInstructions() {
     expectInvalid(0x00101073U, RV32IDecodeStatus::UnsupportedExtension, "CSR instruction is outside RV32I base");
     expectInvalid(0x00200073U, RV32IDecodeStatus::UnsupportedSystem, "unsupported SYSTEM funct12");
 }
+
+void testDisassembly() {
+    expectDisassembly(encodeI(0x120, 0, 0x0, 1, 0x13), 0x00, "addi x1, x0, 288", "ADDI");
+    expectDisassembly(encodeJ(12, 5), 0x04, "jal x5, 0x00000010", "JAL target");
+    expectDisassembly(encodeS(0, 10, 1, 0x2), 0x08, "sw x10, 0(x1)", "SW");
+    expectDisassembly(encodeShiftI(0x20, 31, 5, 0x5, 6), 0x20, "srai x6, x5, 31", "SRAI shamt");
+    expectDisassembly(0x00000000U, 0x00, "invalid InvalidInstructionLength", "invalid low bits");
+}
 }
 
 std::string RV32IDecoderTest::getTestName() const {
@@ -262,4 +275,5 @@ void RV32IDecoderTest::verifyResults() {
     testSignExtensionAndImmediateHelpers();
     testValidInstructions();
     testInvalidInstructions();
+    testDisassembly();
 }

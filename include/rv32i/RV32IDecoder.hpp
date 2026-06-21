@@ -2,6 +2,7 @@
 
 #include "rv32i/RV32IInstruction.hpp"
 #include <cstdint>
+#include <string>
 
 namespace rv32i {
 
@@ -24,6 +25,7 @@ public:
     static int32_t immediateB(uint32_t raw);
     static int32_t immediateU(uint32_t raw);
     static int32_t immediateJ(uint32_t raw);
+    static std::string disassemble(uint32_t raw, uint32_t pc = 0);
 };
 
 }

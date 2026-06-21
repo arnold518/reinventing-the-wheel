@@ -125,10 +125,13 @@ void BehavioralRV32ICore::evaluate(size_t current_time, Simulator& simulator) {
     const auto clk = sanitizeBit(getInputValue("CLK"));
     const auto rst = sanitizeBit(getInputValue("RST"));
     const auto enable = sanitizeBit(getInputValue("ENABLE"));
+    const bool active_core_step = previous_clk_ == LogicValue::LOW
+                               && clk == LogicValue::HIGH
+                               && enable == LogicValue::HIGH;
 
     if (rst == LogicValue::HIGH) {
         resetCore();
-    } else if (previous_clk_ == LogicValue::LOW && clk == LogicValue::HIGH && enable == LogicValue::HIGH) {
+    } else if (active_core_step) {
         auto instruction_memory = instruction_memory_.lock();
         auto data_memory = data_memory_.lock();
         if (instruction_memory && data_memory) {
@@ -136,7 +139,10 @@ void BehavioralRV32ICore::evaluate(size_t current_time, Simulator& simulator) {
             last_instruction_address_ = state_.pc;
             last_instruction_read_ = will_fetch;
 
-            const auto trace = rv32i::RV32IInstructionOracle::step(state_, *instruction_memory, *data_memory);
+            const auto trace = rv32i::RV32IInstructionOracle::stepWithoutDataMemoryWrite(
+                state_,
+                *instruction_memory,
+                *data_memory);
             last_data_memory_access_ = trace.memory;
             last_data_memory_writes_ = expandDataMemoryWrites(trace.memory);
         } else {
@@ -146,17 +152,17 @@ void BehavioralRV32ICore::evaluate(size_t current_time, Simulator& simulator) {
     }
 
     previous_clk_ = clk;
-    publishOutputs(simulator, current_time);
+    publishOutputs(simulator, current_time, active_core_step);
 }
 
-void BehavioralRV32ICore::publishOutputs(Simulator& simulator, size_t current_time) {
+void BehavioralRV32ICore::publishOutputs(Simulator& simulator, size_t current_time, bool active_core_step) {
     _updateOutputWire<32>(simulator, "PC", state_.pc, current_time);
     _updateOutputWire(simulator, "HALTED", state_.halted ? LogicValue::HIGH : LogicValue::LOW, current_time);
     _updateOutputWire(simulator, "TRAPPED", state_.trapped ? LogicValue::HIGH : LogicValue::LOW, current_time);
 
     _updateOutputWire<32>(simulator, "IMEM_ADDR", last_instruction_address_, current_time);
     _updateOutputWire<32>(simulator, "IMEM_WRITE_DATA", 0, current_time);
-    _updateOutputWire(simulator, "IMEM_READ_EN", last_instruction_read_ ? LogicValue::HIGH : LogicValue::LOW, current_time);
+    _updateOutputWire(simulator, "IMEM_READ_EN", active_core_step && last_instruction_read_ ? LogicValue::HIGH : LogicValue::LOW, current_time);
     _updateOutputWire(simulator, "IMEM_WRITE_EN", LogicValue::LOW, current_time);
     _updateOutputWire<2>(simulator, "IMEM_SIZE", encodeMemorySize(rv32i::RV32IMemorySize::Word), current_time);
     _updateOutputWire(simulator, "IMEM_SIGN_EXTEND", LogicValue::LOW, current_time);
@@ -164,14 +170,14 @@ void BehavioralRV32ICore::publishOutputs(Simulator& simulator, size_t current_ti
     _updateOutputWire(simulator, "IMEM_RST", LogicValue::LOW, current_time);
 
     const auto& memory = last_data_memory_access_;
-    const bool data_read = memory.kind == rv32i::RV32IMemoryAccessKind::Read;
-    const bool data_write = memory.kind == rv32i::RV32IMemoryAccessKind::Write;
+    const bool data_read = active_core_step && memory.kind == rv32i::RV32IMemoryAccessKind::Read;
+    const bool data_write = active_core_step && memory.kind == rv32i::RV32IMemoryAccessKind::Write;
     _updateOutputWire<32>(simulator, "DMEM_ADDR", data_read || data_write ? memory.address : 0, current_time);
     _updateOutputWire<32>(simulator, "DMEM_WRITE_DATA", data_write ? memory.write_data : 0, current_time);
     _updateOutputWire(simulator, "DMEM_READ_EN", data_read ? LogicValue::HIGH : LogicValue::LOW, current_time);
     _updateOutputWire(simulator, "DMEM_WRITE_EN", data_write ? LogicValue::HIGH : LogicValue::LOW, current_time);
     _updateOutputWire<2>(simulator, "DMEM_SIZE", encodeMemorySize(memory.size), current_time);
     _updateOutputWire(simulator, "DMEM_SIGN_EXTEND", memory.sign_extend ? LogicValue::HIGH : LogicValue::LOW, current_time);
-    _updateOutputWire(simulator, "DMEM_CLK", LogicValue::LOW, current_time);
+    _updateOutputWire(simulator, "DMEM_CLK", data_write ? LogicValue::HIGH : LogicValue::LOW, current_time);
     _updateOutputWire(simulator, "DMEM_RST", LogicValue::LOW, current_time);
 }

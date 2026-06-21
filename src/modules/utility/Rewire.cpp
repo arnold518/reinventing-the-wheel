@@ -167,6 +167,8 @@ void Rewire::evaluate(size_t current_time, Simulator& simulator) {
             if (auto event = makeWireUpdate(current_time + getDelay(), wire, values)) {
                 simulator.scheduleEvent(event);
             }
+        } else {
+            simulator.recordPinChange(current_time + getDelay(), output_pin, values);
         }
     }
 }

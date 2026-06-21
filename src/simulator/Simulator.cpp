@@ -56,6 +56,7 @@ void Simulator::advanceAndRecord(size_t target_time) {
 
 void Simulator::runAndRecord(size_t max_time) {
     _log.clear();
+    _pin_log.clear();
     current_time = 0;
     scheduled_for_current_time_eval.clear();
     advanceAndRecord(max_time);
@@ -78,6 +79,18 @@ void Simulator::setCircuitStateAtTime(size_t target_time) {
             restorePinsFromWire(wire, values);
         }
     }
+    for (const auto& [pin, history] : _pin_log) {
+        auto it = std::upper_bound(history.begin(), history.end(), target_time,
+            [](size_t time, const auto& pair) {
+                return time < pair.first;
+            });
+
+        if (it == history.begin()) {
+            pin->setValueFromVector(std::vector<LogicValue>(pin->getWidth(), LogicValue::UNKNOWN));
+        } else {
+            pin->setValueFromVector(std::prev(it)->second);
+        }
+    }
     current_time = target_time;
 }
 
@@ -85,6 +98,12 @@ std::vector<size_t> Simulator::getUniqueTimestamps() const {
     std::set<size_t> timestamps;
     timestamps.insert(0);
     for (const auto& [_, history] : _log) {
+        for (const auto& [time, value] : history) {
+            (void)value;
+            timestamps.insert(time);
+        }
+    }
+    for (const auto& [_, history] : _pin_log) {
         for (const auto& [time, value] : history) {
             (void)value;
             timestamps.insert(time);
@@ -108,11 +127,23 @@ void Simulator::recordChange(size_t time, std::shared_ptr<Wire<>> wire, LogicVal
     recordChange(time, std::static_pointer_cast<WireBase>(std::move(wire)), std::vector<LogicValue>{value});
 }
 
+void Simulator::recordPinChange(size_t time, std::shared_ptr<PinBase> pin, const std::vector<LogicValue>& value) {
+    if (!pin) {
+        return;
+    }
+
+    auto& history = _pin_log[std::move(pin)];
+    if (history.empty() || history.back().second != value) {
+        history.push_back({time, value});
+    }
+}
+
 void Simulator::clear() {
     while (!event_queue.empty()) {
         event_queue.pop();
     }
     _log.clear();
+    _pin_log.clear();
     current_time = 0;
     scheduled_for_current_time_eval.clear();
 }

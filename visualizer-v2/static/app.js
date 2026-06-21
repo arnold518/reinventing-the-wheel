@@ -41,6 +41,9 @@ const GRID_BACKGROUND_MAJOR = "rgb(86, 96, 108)";
 const GRID_COMPONENT_MINOR = "rgba(255, 255, 255, 0.08)";
 const GRID_COMPONENT_MAJOR = "rgba(255, 255, 255, 0.16)";
 const GRID_COMPONENT_MIN_SCREEN_SIZE = 36;
+const REGISTER_GRID_COLS = 4;
+const REGISTER_GRID_ROWS = 8;
+const MEMORY_WORD_WINDOW_ROWS = 8;
 const ROOT_RECT = { x: 50, y: 150, width: 800 };
 
 const canvas = document.getElementById("circuit-canvas");
@@ -103,6 +106,7 @@ const app = {
   components: new Map(),
   pins: new Map(),
   wires: new Map(),
+  componentStates: new Map(),
   componentOrder: [],
   pinOrder: [],
   wireOrder: [],
@@ -120,6 +124,8 @@ const app = {
   selection: null,
   selectedComponentId: null,
   interaction: null,
+  memoryScrollOffsets: new Map(),
+  memoryScrollControls: [],
   geometryDirty: false,
   layoutDirty: false,
   layoutHistory: {
@@ -1289,6 +1295,64 @@ function basicLogicGateKind(component) {
   return BASIC_LOGIC_GATE_VISUALS[component.type] || null;
 }
 
+function pinByName(pins, name) {
+  return (pins || []).find((pin) => pin.name === name) || null;
+}
+
+function parseKnownBinary(value) {
+  return typeof value === "string" && /^[01]+$/.test(value) ? Number.parseInt(value, 2) : null;
+}
+
+function registerWordDisplay(register) {
+  if (!register) return "--";
+  if (register.hex) return register.hex.replace(/^0x/i, "").toUpperCase().padStart(8, "0");
+  const bits = register.bits || "";
+  if (!bits) return "--";
+  if ([...bits].every((bit) => bit === "X")) return "XXXXXXXX";
+  if ([...bits].every((bit) => bit === "Z")) return "ZZZZZZZZ";
+  return "MIXED";
+}
+
+function signalDisplay(value) {
+  if (!value) return "X";
+  if (/^[01]+$/.test(value)) {
+    if (value.length <= 4) return value;
+    const width = Math.max(1, Math.ceil(value.length / 4));
+    return `0x${Number.parseInt(value, 2).toString(16).toUpperCase().padStart(width, "0")}`;
+  }
+  if ([...value].every((bit) => bit === "X")) return value.length <= 4 ? "X" : "UNKNOWN";
+  if ([...value].every((bit) => bit === "Z")) return value.length <= 4 ? "Z" : "HIGH-Z";
+  return "MIXED";
+}
+
+function constantSignalValue(component, outPin) {
+  if (component.constantValue == null || !Number.isFinite(Number(component.constantValue))) {
+    return outPin ? app.state.pins[outPin.id] || "X" : "X";
+  }
+  const width = Math.max(1, Math.min(64, Number(outPin && outPin.width ? outPin.width : 1)));
+  let value = BigInt(Math.trunc(Number(component.constantValue)));
+  const bits = [];
+  for (let bit = width - 1; bit >= 0; bit -= 1) {
+    bits.push(((value >> BigInt(bit)) & 1n) === 1n ? "1" : "0");
+  }
+  return bits.join("");
+}
+
+function drawScreenRoundedRect(rect, fillStyle, strokeStyle = null, lineWidth = 0, radius = 4) {
+  ctx.beginPath();
+  if (ctx.roundRect) ctx.roundRect(rect.x, rect.y, rect.w, rect.h, radius);
+  else ctx.rect(rect.x, rect.y, rect.w, rect.h);
+  if (fillStyle) {
+    ctx.fillStyle = fillStyle;
+    ctx.fill();
+  }
+  if (strokeStyle && lineWidth > 0) {
+    ctx.strokeStyle = strokeStyle;
+    ctx.lineWidth = lineWidth;
+    ctx.stroke();
+  }
+}
+
 function drawDefaultComponentBackground(parts) {
   drawRoundedRect(parts.bodyRect, parts.fillColor, null, 0);
   drawRoundedRect(parts.titleRect, parts.titleFillColor, null, 0);
@@ -1514,6 +1578,729 @@ function drawLogicGateSymbol(component, parts, kind) {
   for (const drawSymbolLayer of symbolLayers) drawSymbolLayer();
 }
 
+function adapterPinSignal(pin) {
+  return pin ? app.state.pins[pin.id] || "X" : "X";
+}
+
+function signalBitAt(value, bitIndex) {
+  if (!value || bitIndex == null || bitIndex < 0) return "X";
+  if (value.length === 1) return bitIndex === 0 ? value[0] : "X";
+  const charIndex = value.length - 1 - bitIndex;
+  return charIndex >= 0 && charIndex < value.length ? value[charIndex] : "X";
+}
+
+function indexedPinNumber(pin, prefix) {
+  const match = new RegExp(`^${prefix}_(\\d+)$`).exec(pin.name || "");
+  return match ? Number.parseInt(match[1], 10) : null;
+}
+
+function sortedIndexedPins(pins, prefix) {
+  return [...(pins || [])]
+    .map((pin) => ({ pin, index: indexedPinNumber(pin, prefix) }))
+    .filter((entry) => Number.isFinite(entry.index))
+    .sort((a, b) => a.index - b.index)
+    .map((entry) => entry.pin);
+}
+
+function pinMapByName(pins) {
+  const result = new Map();
+  (pins || []).forEach((pin) => result.set(pin.name, pin));
+  return result;
+}
+
+function adapterStrokeWorld(component, pins) {
+  const pinStrokes = (pins || [])
+    .map(pinWireStrokeWorld)
+    .filter((stroke) => Number.isFinite(stroke) && stroke > 0);
+  if (pinStrokes.length) return Math.max(Math.min(...pinStrokes), Math.min(component.rect.w, component.rect.h) * 0.006);
+  return Math.min(component.rect.w, component.rect.h) * 0.012;
+}
+
+function adapterPinsHighlighted(pins) {
+  return (pins || []).some((pin) => pin && (isHovered("pin", pin.id) || isSelectedPin(pin.id)));
+}
+
+function drawAdapterPolyline(component, path, value, pins, width = 1) {
+  if (!path || path.length < 2) return;
+  const strokeWorld = adapterStrokeWorld(component, pins);
+  const highlighted = adapterPinsHighlighted(pins);
+  const lineWidth = Math.max(1, wireStrokePx({ strokeWorld }, highlighted));
+  const color = `rgb(${valueColor(value).join(",")})`;
+  strokeWirePolyline(path, color, lineWidth, highlighted);
+  if (width > 1) drawBusAnnotations({ width }, path, color, lineWidth, strokeWorld, highlighted);
+}
+
+function drawAdapterJunction(component, point, value, pins) {
+  const screen = worldToScreen(point);
+  if (!Number.isFinite(screen.x) || !Number.isFinite(screen.y)) return;
+  const radius = Math.max(1.6, Math.min(4.5, adapterStrokeWorld(component, pins) * app.camera.zoom * 0.9));
+  ctx.beginPath();
+  ctx.arc(screen.x, screen.y, radius, 0, Math.PI * 2);
+  ctx.fillStyle = `rgb(${valueColor(value).join(",")})`;
+  ctx.fill();
+}
+
+function drawAdapterPanel(worldRect, strokeStyle) {
+  const screenRect = rectToScreenRect(worldRect);
+  const clipped = clipScreenRect(screenRect, 0);
+  if (!clipped || screenRect.w < 3 || screenRect.h < 3) return;
+  drawScreenRoundedRect(
+    screenRect,
+    "rgba(8, 12, 18, 0.32)",
+    strokeStyle || "rgba(238, 244, 255, 0.16)",
+    Math.max(0.6, Math.min(1.4, Math.min(screenRect.w, screenRect.h) * 0.015)),
+    Math.max(2, Math.min(5, Math.min(screenRect.w, screenRect.h) * 0.06)),
+  );
+}
+
+function withComponentBodyClip(parts, minWidth, minHeight, draw) {
+  const screenRect = rectToScreenRect(parts.bodyRect);
+  const clipped = clipScreenRect(screenRect, 0);
+  if (!clipped || screenRect.w < minWidth || screenRect.h < minHeight) return;
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(clipped.x, clipped.y, clipped.w, clipped.h);
+  ctx.clip();
+  draw(screenRect);
+  ctx.restore();
+}
+
+function drawBitSplitterContents(component, parts) {
+  const inputPin = pinByName(component.inputPins, "IN") || component.inputPins[0];
+  const outputPins = sortedIndexedPins(component.outputPins, "OUT");
+  if (!inputPin || !outputPins.length) return;
+
+  withComponentBodyClip(parts, 34, 24, () => {
+    const body = parts.bodyRect;
+    const spineX = body.x + body.w * 0.47;
+    const inputValue = adapterPinSignal(inputPin);
+    const inputY = inputPin.pos.y;
+    const laneYs = outputPins.map((pin) => pin.pos.y);
+    const topY = Math.min(inputY, ...laneYs);
+    const bottomY = Math.max(inputY, ...laneYs);
+    const panelPad = Math.min(body.w, body.h) * 0.035;
+
+    drawAdapterPanel(
+      {
+        x: spineX - panelPad * 1.4,
+        y: topY - panelPad * 1.2,
+        w: panelPad * 2.8,
+        h: Math.max(panelPad * 2.4, bottomY - topY + panelPad * 2.4),
+      },
+      "rgba(124, 197, 255, 0.22)",
+    );
+
+    drawAdapterPolyline(
+      component,
+      [pinInnerContactPoint(inputPin), { x: spineX, y: inputY }],
+      inputValue,
+      [inputPin],
+      inputPin.width || 1,
+    );
+    if (outputPins.length > 1 || Math.abs(bottomY - topY) > 0.001) {
+      drawAdapterPolyline(component, [{ x: spineX, y: topY }, { x: spineX, y: bottomY }], inputValue, [inputPin], inputPin.width || outputPins.length);
+    }
+    drawAdapterJunction(component, { x: spineX, y: inputY }, inputValue, [inputPin]);
+
+    outputPins.forEach((pin) => {
+      const index = indexedPinNumber(pin, "OUT");
+      const laneValue = adapterPinSignal(pin) || signalBitAt(inputValue, index);
+      const junction = { x: spineX, y: pin.pos.y };
+      drawAdapterPolyline(component, [junction, pinInnerContactPoint(pin)], laneValue, [pin], 1);
+      drawAdapterJunction(component, junction, laneValue, [pin]);
+    });
+  });
+}
+
+function drawBitJoinerContents(component, parts) {
+  const inputPins = sortedIndexedPins(component.inputPins, "IN");
+  const outputPin = pinByName(component.outputPins, "OUT") || component.outputPins[0];
+  if (!inputPins.length || !outputPin) return;
+
+  withComponentBodyClip(parts, 34, 24, () => {
+    const body = parts.bodyRect;
+    const spineX = body.x + body.w * 0.53;
+    const outputValue = adapterPinSignal(outputPin);
+    const outputY = outputPin.pos.y;
+    const laneYs = inputPins.map((pin) => pin.pos.y);
+    const topY = Math.min(outputY, ...laneYs);
+    const bottomY = Math.max(outputY, ...laneYs);
+    const panelPad = Math.min(body.w, body.h) * 0.035;
+
+    drawAdapterPanel(
+      {
+        x: spineX - panelPad * 1.4,
+        y: topY - panelPad * 1.2,
+        w: panelPad * 2.8,
+        h: Math.max(panelPad * 2.4, bottomY - topY + panelPad * 2.4),
+      },
+      "rgba(124, 197, 255, 0.22)",
+    );
+
+    inputPins.forEach((pin) => {
+      const laneValue = adapterPinSignal(pin);
+      const junction = { x: spineX, y: pin.pos.y };
+      drawAdapterPolyline(component, [pinInnerContactPoint(pin), junction], laneValue, [pin], 1);
+      drawAdapterJunction(component, junction, laneValue, [pin]);
+    });
+    if (inputPins.length > 1 || Math.abs(bottomY - topY) > 0.001) {
+      drawAdapterPolyline(component, [{ x: spineX, y: topY }, { x: spineX, y: bottomY }], outputValue, [outputPin], outputPin.width || inputPins.length);
+    }
+    drawAdapterPolyline(
+      component,
+      [{ x: spineX, y: outputY }, pinInnerContactPoint(outputPin)],
+      outputValue,
+      [outputPin],
+      outputPin.width || 1,
+    );
+    drawAdapterJunction(component, { x: spineX, y: outputY }, outputValue, [outputPin]);
+  });
+}
+
+function rewireRouteValue(sourcePin, mappings) {
+  const sourceValue = adapterPinSignal(sourcePin);
+  if (!mappings || mappings.length === 0) return sourceValue;
+  return [...mappings]
+    .sort((a, b) => {
+      if (a.dstBit !== b.dstBit) return a.dstBit - b.dstBit;
+      return a.srcBit - b.srcBit;
+    })
+    .map((mapping) => signalBitAt(sourceValue, mapping.srcBit))
+    .join("");
+}
+
+function groupedRewireMappings(component) {
+  const mappings = component.rewire && Array.isArray(component.rewire.mappings) ? component.rewire.mappings : [];
+  if (!mappings.length) {
+    const inputs = component.inputPins || [];
+    const outputs = component.outputPins || [];
+    const count = Math.min(inputs.length, outputs.length);
+    return Array.from({ length: count }, (_, index) => ({
+      srcWire: inputs[index].name,
+      dstWire: outputs[index].name,
+      mappings: [],
+    }));
+  }
+
+  const groups = new Map();
+  mappings.forEach((mapping) => {
+    const key = `${mapping.srcWire}\u0000${mapping.dstWire}`;
+    if (!groups.has(key)) {
+      groups.set(key, { srcWire: mapping.srcWire, dstWire: mapping.dstWire, mappings: [] });
+    }
+    groups.get(key).mappings.push(mapping);
+  });
+  return [...groups.values()].sort((a, b) => {
+    if (a.srcWire !== b.srcWire) return a.srcWire.localeCompare(b.srcWire);
+    return a.dstWire.localeCompare(b.dstWire);
+  });
+}
+
+function drawRewireContents(component, parts) {
+  const inputPins = pinMapByName(component.inputPins);
+  const outputPins = pinMapByName(component.outputPins);
+  const groups = groupedRewireMappings(component)
+    .map((group) => ({
+      ...group,
+      sourcePin: inputPins.get(group.srcWire),
+      outputPin: outputPins.get(group.dstWire),
+    }))
+    .filter((group) => group.sourcePin && group.outputPin);
+  if (!groups.length) return;
+
+  withComponentBodyClip(parts, 38, 24, () => {
+    const body = parts.bodyRect;
+    const leftX = body.x + body.w * 0.42;
+    const rightX = body.x + body.w * 0.58;
+    const allYs = groups.flatMap((group) => [group.sourcePin.pos.y, group.outputPin.pos.y]);
+    const topY = Math.min(...allYs);
+    const bottomY = Math.max(...allYs);
+    const panelPad = Math.min(body.w, body.h) * 0.04;
+
+    drawAdapterPanel(
+      {
+        x: leftX - panelPad,
+        y: topY - panelPad * 1.2,
+        w: Math.max(panelPad * 2, rightX - leftX + panelPad * 2),
+        h: Math.max(panelPad * 2.4, bottomY - topY + panelPad * 2.4),
+      },
+      "rgba(255, 184, 77, 0.24)",
+    );
+
+    const sourcePins = new Map();
+    const outputPinsByName = new Map();
+    groups.forEach((group) => {
+      sourcePins.set(group.sourcePin.name, group.sourcePin);
+      outputPinsByName.set(group.outputPin.name, group.outputPin);
+    });
+
+    sourcePins.forEach((pin) => {
+      const value = adapterPinSignal(pin);
+      const junction = { x: leftX, y: pin.pos.y };
+      drawAdapterPolyline(component, [pinInnerContactPoint(pin), junction], value, [pin], pin.width || 1);
+      drawAdapterJunction(component, junction, value, [pin]);
+    });
+
+    groups.forEach((group, index) => {
+      const sourceY = group.sourcePin.pos.y;
+      const outputY = group.outputPin.pos.y;
+      const bendX = (leftX + rightX) / 2 + (groups.length > 1 ? ((index % 3) - 1) * Math.min(body.w * 0.018, 4 / app.camera.zoom) : 0);
+      const route = [
+        { x: leftX, y: sourceY },
+        { x: bendX, y: sourceY },
+        { x: bendX, y: outputY },
+        { x: rightX, y: outputY },
+      ];
+      const value = rewireRouteValue(group.sourcePin, group.mappings);
+      const routeWidth = group.mappings.length || Math.min(group.sourcePin.width || 1, group.outputPin.width || 1);
+      drawAdapterPolyline(component, route, value, [group.sourcePin, group.outputPin], routeWidth);
+      drawAdapterJunction(component, { x: bendX, y: outputY }, value, [group.outputPin]);
+    });
+
+    outputPinsByName.forEach((pin) => {
+      const value = adapterPinSignal(pin);
+      const junction = { x: rightX, y: pin.pos.y };
+      drawAdapterPolyline(component, [junction, pinInnerContactPoint(pin)], value, [pin], pin.width || 1);
+      drawAdapterJunction(component, junction, value, [pin]);
+    });
+  });
+}
+
+function drawBehavioralMemoryBitValue(component, parts) {
+  const qPin = pinByName(component.outputPins, "Q");
+  const value = qPin ? app.state.pins[qPin.id] || "X" : "X";
+  const screenRect = rectToScreenRect(parts.bodyRect);
+  const clipped = clipScreenRect(screenRect, 0);
+  if (!clipped || screenRect.w < 16 || screenRect.h < 12) return;
+
+  const fontSize = Math.floor(Math.min(screenRect.h * 0.62, screenRect.w * 0.42, 220));
+  if (fontSize < 8) return;
+
+  const color = valueColor(value);
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(clipped.x, clipped.y, clipped.w, clipped.h);
+  ctx.clip();
+  ctx.font = `700 ${fontSize}px Arial, Helvetica, sans-serif`;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.lineJoin = "round";
+  ctx.strokeStyle = "rgba(8, 12, 18, 0.78)";
+  ctx.lineWidth = Math.max(3, fontSize * 0.08);
+  ctx.strokeText(value[0] || "X", screenRect.x + screenRect.w / 2, screenRect.y + screenRect.h / 2);
+  ctx.fillStyle = `rgb(${color.join(",")})`;
+  ctx.fillText(value[0] || "X", screenRect.x + screenRect.w / 2, screenRect.y + screenRect.h / 2);
+  ctx.restore();
+}
+
+function drawConstantValueContents(component, parts) {
+  const outPin = pinByName(component.outputPins, "OUT");
+  const value = constantSignalValue(component, outPin);
+  const screenRect = rectToScreenRect(parts.bodyRect);
+  const clipped = clipScreenRect(screenRect, 0);
+  if (!clipped || screenRect.w < 32 || screenRect.h < 18) return;
+
+  const display = signalDisplay(value);
+  const fontSize = Math.floor(Math.min(screenRect.h * 0.48, screenRect.w * 0.14, 72));
+  if (fontSize < 7) return;
+
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(clipped.x, clipped.y, clipped.w, clipped.h);
+  ctx.clip();
+  ctx.font = `800 ${fontSize}px ui-monospace, SFMono-Regular, Consolas, monospace`;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.lineJoin = "round";
+  ctx.strokeStyle = "rgba(8, 12, 18, 0.82)";
+  ctx.lineWidth = Math.max(2, fontSize * 0.08);
+  ctx.strokeText(display, screenRect.x + screenRect.w / 2, screenRect.y + screenRect.h / 2);
+  ctx.fillStyle = `rgb(${valueColor(value).join(",")})`;
+  ctx.fillText(display, screenRect.x + screenRect.w / 2, screenRect.y + screenRect.h / 2);
+  ctx.restore();
+}
+
+function drawClockGeneratorContents(component, parts) {
+  const clkPin = pinByName(component.outputPins, "CLK_OUT");
+  const value = clkPin ? app.state.pins[clkPin.id] || "X" : "X";
+  const screenRect = rectToScreenRect(parts.bodyRect);
+  const clipped = clipScreenRect(screenRect, 0);
+  if (!clipped || screenRect.w < 42 || screenRect.h < 24) return;
+
+  const padX = Math.max(7, screenRect.w * 0.12);
+  const padY = Math.max(5, screenRect.h * 0.18);
+  const left = screenRect.x + padX;
+  const right = screenRect.x + screenRect.w - padX;
+  const top = screenRect.y + padY;
+  const bottom = screenRect.y + screenRect.h - padY;
+  const highY = top;
+  const lowY = bottom;
+  const color = `rgb(${valueColor(value).join(",")})`;
+  const segments = 8;
+  const step = (right - left) / segments;
+
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(clipped.x, clipped.y, clipped.w, clipped.h);
+  ctx.clip();
+  ctx.strokeStyle = color;
+  ctx.lineWidth = Math.max(1.5, Math.min(4, Math.min(screenRect.w, screenRect.h) * 0.045));
+  ctx.lineJoin = "round";
+  ctx.lineCap = "round";
+  ctx.beginPath();
+  let previousY = value === "1" ? highY : lowY;
+  for (let segment = 0; segment < segments; segment += 1) {
+    const fromRight = segments - 1 - segment;
+    const high = value === "1" ? fromRight % 2 === 0 : fromRight % 2 !== 0;
+    const y = high ? highY : lowY;
+    const x0 = left + segment * step;
+    const x1 = x0 + step;
+    if (segment === 0) ctx.moveTo(x0, y);
+    else {
+      ctx.lineTo(x0, previousY);
+      ctx.lineTo(x0, y);
+    }
+    ctx.lineTo(x1, y);
+    previousY = y;
+  }
+  ctx.stroke();
+
+  const badgeSize = clamp(Math.min(screenRect.w, screenRect.h) * 0.28, 12, 34);
+  const badge = {
+    x: screenRect.x + screenRect.w / 2 - badgeSize / 2,
+    y: screenRect.y + screenRect.h / 2 - badgeSize / 2,
+    w: badgeSize,
+    h: badgeSize,
+  };
+  drawScreenRoundedRect(badge, "rgba(8, 12, 18, 0.78)", color, Math.max(1, badgeSize * 0.08), badgeSize * 0.18);
+  ctx.font = `800 ${Math.floor(badgeSize * 0.58)}px Arial, Helvetica, sans-serif`;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillStyle = color;
+  ctx.fillText(value[0] || "X", badge.x + badge.w / 2, badge.y + badge.h / 2);
+  ctx.restore();
+}
+
+function drawBehavioralRegisterFileContents(component, parts) {
+  const state = app.componentStates.get(component.id);
+  if (!state || !Array.isArray(state.registers)) return;
+
+  const screenRect = rectToScreenRect(parts.bodyRect);
+  const clipped = clipScreenRect(screenRect, 0);
+  if (!clipped || screenRect.w < 96 || screenRect.h < 72) return;
+
+  const sideInset = Math.min(
+    screenRect.w * 0.18,
+    Math.max(8, component.rect.w * component.boundaryRatio * app.camera.zoom * 0.72),
+  );
+  const padY = screenRect.h * 0.055;
+  const gridRect = {
+    x: screenRect.x + sideInset,
+    y: screenRect.y + padY,
+    w: screenRect.w - sideInset * 2,
+    h: screenRect.h - padY * 2,
+  };
+  if (gridRect.w < 72 || gridRect.h < 54) return;
+
+  const gap = Math.min(gridRect.w, gridRect.h) * 0.008;
+  const cellW = (gridRect.w - gap * (REGISTER_GRID_COLS - 1)) / REGISTER_GRID_COLS;
+  const cellH = (gridRect.h - gap * (REGISTER_GRID_ROWS - 1)) / REGISTER_GRID_ROWS;
+  if (cellW < 16 || cellH < 9) return;
+
+  const ports = state.ports || {};
+  const rs1 = parseKnownBinary(ports.RS1_ADDR && ports.RS1_ADDR.value);
+  const rs2 = parseKnownBinary(ports.RS2_ADDR && ports.RS2_ADDR.value);
+  const rd = parseKnownBinary(ports.RD_ADDR && ports.RD_ADDR.value);
+  const writeActive = ports.REG_WRITE && ports.REG_WRITE.value === "1";
+  const highlightByRegister = new Map();
+  if (rs1 != null) highlightByRegister.set(rs1, [...(highlightByRegister.get(rs1) || []), "rgb(64, 156, 255)"]);
+  if (rs2 != null) highlightByRegister.set(rs2, [...(highlightByRegister.get(rs2) || []), "rgb(89, 214, 141)"]);
+  if (writeActive && rd != null && rd !== 0) highlightByRegister.set(rd, [...(highlightByRegister.get(rd) || []), "rgb(255, 184, 77)"]);
+
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(clipped.x, clipped.y, clipped.w, clipped.h);
+  ctx.clip();
+
+  const labelFont = clamp(Math.min(cellW * 0.18, cellH * 0.32), 5, 12);
+  const valueFont = clamp(Math.min(cellW * 0.18, cellH * 0.38), 5, 13);
+  const radius = Math.min(4, cellW * 0.12, cellH * 0.25);
+
+  for (let index = 0; index < 32; index += 1) {
+    const col = index % REGISTER_GRID_COLS;
+    const row = Math.floor(index / REGISTER_GRID_COLS);
+    const cell = {
+      x: gridRect.x + col * (cellW + gap),
+      y: gridRect.y + row * (cellH + gap),
+      w: cellW,
+      h: cellH,
+    };
+    const register = state.registers[index];
+    const value = registerWordDisplay(register);
+    const valueRgb = valueColor(register && register.bits ? register.bits : "X");
+    const highlights = highlightByRegister.get(index) || [];
+
+    drawScreenRoundedRect(
+      cell,
+      index === 0 ? "rgba(8, 12, 18, 0.66)" : "rgba(8, 12, 18, 0.48)",
+      highlights.length ? highlights[0] : "rgba(238, 244, 255, 0.16)",
+      highlights.length ? Math.max(1.2, Math.min(2.5, cellH * 0.08)) : 0.7,
+      radius,
+    );
+
+    if (highlights.length > 1) {
+      const barHeight = Math.max(1, Math.min(3, cellH * 0.08));
+      highlights.slice(1).forEach((color, highlightIndex) => {
+        ctx.fillStyle = color;
+        ctx.fillRect(cell.x + 2, cell.y + 2 + highlightIndex * (barHeight + 1), cell.w - 4, barHeight);
+      });
+    }
+
+    ctx.font = `600 ${Math.floor(labelFont)}px Arial, Helvetica, sans-serif`;
+    ctx.fillStyle = index === 0 ? "rgba(238, 244, 255, 0.58)" : "rgba(238, 244, 255, 0.74)";
+    ctx.textAlign = "left";
+    ctx.textBaseline = "top";
+    ctx.fillText(`x${index}`, cell.x + Math.max(3, cell.w * 0.06), cell.y + Math.max(2, cell.h * 0.08));
+
+    ctx.font = `700 ${Math.floor(valueFont)}px ui-monospace, SFMono-Regular, Consolas, monospace`;
+    ctx.fillStyle = `rgb(${valueRgb.join(",")})`;
+    ctx.textAlign = "right";
+    ctx.textBaseline = "bottom";
+    const fittedValue = ellipsizeText(value, Math.max(0, cell.w - 6));
+    if (fittedValue) ctx.fillText(fittedValue, cell.x + cell.w - Math.max(3, cell.w * 0.06), cell.y + cell.h - Math.max(2, cell.h * 0.08));
+  }
+
+  ctx.restore();
+}
+
+function memoryRowsForDisplay(state) {
+  const rows = [];
+  const seen = new Set();
+  const append = (row, source) => {
+    if (!row || seen.has(row.address)) return;
+    seen.add(row.address);
+    rows.push({ ...row, source });
+  };
+  (state.touchedWords || []).forEach((row) => append(row, "touched"));
+  (state.windowWords || []).forEach((row) => append(row, "window"));
+  rows.sort((a, b) => a.address - b.address);
+  return rows;
+}
+
+function memoryScrollOffset(componentId, maxOffset) {
+  const raw = Math.floor(Number(app.memoryScrollOffsets.get(componentId)) || 0);
+  const offset = clamp(raw, 0, maxOffset);
+  if (offset !== raw) app.memoryScrollOffsets.set(componentId, offset);
+  return offset;
+}
+
+function setMemoryScrollOffset(componentId, offset, maxOffset) {
+  app.memoryScrollOffsets.set(componentId, clamp(Math.floor(Number(offset) || 0), 0, maxOffset));
+}
+
+function hitMemoryScrollControl(screenPoint) {
+  for (let index = app.memoryScrollControls.length - 1; index >= 0; index -= 1) {
+    const control = app.memoryScrollControls[index];
+    if (pointInRect(screenPoint, control.rect)) return control;
+  }
+  return null;
+}
+
+function applyMemoryScrollControl(control) {
+  if (!control || !control.enabled) return;
+  const current = memoryScrollOffset(control.componentId, control.maxOffset);
+  const delta = control.direction === "up" ? -control.step : control.step;
+  setMemoryScrollOffset(control.componentId, current + delta, control.maxOffset);
+}
+
+function drawMemoryScrollTriangle(rect, direction, enabled) {
+  drawScreenRoundedRect(
+    rect,
+    enabled ? "rgba(8, 12, 18, 0.58)" : "rgba(8, 12, 18, 0.40)",
+    enabled ? "rgba(238, 244, 255, 0.22)" : "rgba(238, 244, 255, 0.16)",
+    0.8,
+    3,
+  );
+
+  const cx = rect.x + rect.w / 2;
+  const cy = rect.y + rect.h / 2;
+  const halfW = rect.w * 0.24;
+  const halfH = rect.h * 0.22;
+  ctx.beginPath();
+  if (direction === "up") {
+    ctx.moveTo(cx, cy - halfH);
+    ctx.lineTo(cx - halfW, cy + halfH);
+    ctx.lineTo(cx + halfW, cy + halfH);
+  } else {
+    ctx.moveTo(cx, cy + halfH);
+    ctx.lineTo(cx - halfW, cy - halfH);
+    ctx.lineTo(cx + halfW, cy - halfH);
+  }
+  ctx.closePath();
+  ctx.fillStyle = enabled ? "rgba(238, 244, 255, 0.88)" : "rgba(238, 244, 255, 0.42)";
+  ctx.fill();
+}
+
+function drawMemoryScrollControls(componentId, controlRect, offset, maxOffset, step) {
+  const buttonSize = Math.min(controlRect.h * 0.78, controlRect.w * 0.075);
+  if (buttonSize < 4) return;
+  const gap = buttonSize * 0.38;
+  const y = controlRect.y + (controlRect.h - buttonSize) / 2;
+  const upRect = {
+    x: controlRect.x + controlRect.w / 2 - buttonSize - gap / 2,
+    y,
+    w: buttonSize,
+    h: buttonSize,
+  };
+  const downRect = {
+    x: controlRect.x + controlRect.w / 2 + gap / 2,
+    y,
+    w: buttonSize,
+    h: buttonSize,
+  };
+  const upEnabled = offset > 0;
+  const downEnabled = offset < maxOffset;
+
+  drawMemoryScrollTriangle(upRect, "up", upEnabled);
+  drawMemoryScrollTriangle(downRect, "down", downEnabled);
+  app.memoryScrollControls.push({ componentId, direction: "up", rect: upRect, enabled: upEnabled, maxOffset, step });
+  app.memoryScrollControls.push({ componentId, direction: "down", rect: downRect, enabled: downEnabled, maxOffset, step });
+}
+
+function drawBehavioralMemory64Kx32Contents(component, parts) {
+  const state = app.componentStates.get(component.id);
+  if (!state || !state.supported) return;
+
+  const screenRect = rectToScreenRect(parts.bodyRect);
+  const clipped = clipScreenRect(screenRect, 0);
+  if (!clipped || screenRect.w < 140 || screenRect.h < 86) return;
+
+  const sideInset = Math.min(
+    screenRect.w * 0.24,
+    Math.max(screenRect.w * 0.13, component.rect.w * component.boundaryRatio * app.camera.zoom),
+  );
+  const padY = screenRect.h * 0.055;
+  const rect = {
+    x: screenRect.x + sideInset,
+    y: screenRect.y + padY,
+    w: screenRect.w - sideInset * 2,
+    h: screenRect.h - padY * 2,
+  };
+  if (rect.w < 100 || rect.h < 62) return;
+
+  const ports = state.ports || {};
+  const fault = ports.FAULT && ports.FAULT.value;
+  const readActive = ports.READ_EN && ports.READ_EN.value === "1";
+  const writeActive = ports.WRITE_EN && ports.WRITE_EN.value === "1";
+  const accessMode = writeActive && readActive ? "WRITE+READ" : writeActive ? "WRITE" : readActive ? "READ" : "IDLE";
+  const mode = fault === "1" ? (accessMode === "IDLE" ? "FAULT" : `FAULT ${accessMode}`) : accessMode;
+  const modeColor = fault === "1"
+    ? "rgb(211, 47, 47)"
+    : writeActive && readActive
+      ? "rgb(124, 197, 255)"
+      : writeActive
+      ? "rgb(255, 184, 77)"
+      : readActive
+        ? "rgb(89, 214, 141)"
+        : "rgba(238, 244, 255, 0.65)";
+  const activeHex = state.activeAddress == null ? "ADDR XXXXXXXX" : `ADDR ${state.activeAddress.toString(16).toUpperCase().padStart(8, "0")}`;
+  const showingInstructions = state.memoryRole === "instruction";
+  const headerH = rect.h * 0.18;
+  const headerGap = rect.h * 0.01;
+  const tableY = rect.y + headerH + headerGap;
+  const tableH = Math.max(0, rect.h - headerH - headerGap);
+  const rows = memoryRowsForDisplay(state);
+  const visibleRowCount = Math.min(rows.length, MEMORY_WORD_WINDOW_ROWS);
+  const showScrollControls = rows.length >= MEMORY_WORD_WINDOW_ROWS;
+  const scrollable = rows.length > visibleRowCount;
+  const scrollControlH = showScrollControls ? tableH * 0.16 : 0;
+  const scrollControlGap = showScrollControls ? tableH * 0.015 : 0;
+  const rowsAreaH = Math.max(0, tableH - scrollControlH - scrollControlGap);
+  const maxOffset = Math.max(0, rows.length - visibleRowCount);
+  const offset = memoryScrollOffset(component.id, maxOffset);
+  const shownRows = rows.slice(offset, offset + visibleRowCount);
+  const rowH = visibleRowCount ? rowsAreaH / visibleRowCount : rowsAreaH;
+  const rowGap = rowH * 0.12;
+  const activeBase = state.activeBaseAddress;
+
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(clipped.x, clipped.y, clipped.w, clipped.h);
+  ctx.clip();
+
+  drawScreenRoundedRect(
+    { x: rect.x, y: rect.y, w: rect.w, h: headerH },
+    "rgba(8, 12, 18, 0.54)",
+    fault === "1" ? "rgba(211, 47, 47, 0.9)" : "rgba(238, 244, 255, 0.18)",
+    1,
+    4,
+  );
+  const headerFont = Math.min(Math.min(headerH * 0.42, rect.w * 0.045), MAX_COMPONENT_FONT_PX);
+  ctx.font = `700 ${Math.floor(headerFont)}px ui-monospace, SFMono-Regular, Consolas, monospace`;
+  ctx.textBaseline = "middle";
+  ctx.textAlign = "left";
+  ctx.fillStyle = "rgba(238, 244, 255, 0.84)";
+  ctx.fillText(activeHex, rect.x + 7, rect.y + headerH / 2);
+  ctx.textAlign = "right";
+  ctx.fillStyle = modeColor;
+  ctx.fillText(mode, rect.x + rect.w - 7, rect.y + headerH / 2);
+
+  const addressW = showingInstructions ? rect.w * 0.33 : rect.w * 0.43;
+  const valueW = rect.w - addressW;
+  const rowFont = Math.min(Math.min(rowH * 0.46, rect.w * 0.04), MAX_COMPONENT_FONT_PX);
+
+  shownRows.forEach((row, index) => {
+    const rowRect = {
+      x: rect.x,
+      y: tableY + index * rowH,
+      w: rect.w,
+      h: Math.max(0, rowH - rowGap),
+    };
+    const active = activeBase != null && row.address === activeBase;
+    const value = showingInstructions && row.instructionText ? row.instructionText : registerWordDisplay(row);
+    const valueRgb = valueColor(row.bits || "X");
+    drawScreenRoundedRect(
+      rowRect,
+      active ? "rgba(21, 42, 64, 0.78)" : "rgba(8, 12, 18, 0.42)",
+      active ? modeColor : "rgba(238, 244, 255, 0.13)",
+      active ? 1.5 : 0.7,
+      3,
+    );
+    ctx.font = `700 ${Math.floor(rowFont)}px ui-monospace, SFMono-Regular, Consolas, monospace`;
+    ctx.textBaseline = "middle";
+    ctx.textAlign = "left";
+    ctx.fillStyle = row.source === "touched" ? "rgba(238, 244, 255, 0.82)" : "rgba(238, 244, 255, 0.62)";
+    ctx.fillText((row.addressHex || "0x????????").replace(/^0x/i, ""), rowRect.x + 7, rowRect.y + rowRect.h / 2);
+    ctx.textAlign = showingInstructions ? "left" : "right";
+    ctx.fillStyle = `rgb(${valueRgb.join(",")})`;
+    const fitted = ellipsizeText(value, Math.max(0, valueW - 12));
+    if (fitted) {
+      const valueX = showingInstructions ? rowRect.x + addressW + 6 : rowRect.x + rowRect.w - 7;
+      ctx.fillText(fitted, valueX, rowRect.y + rowRect.h / 2);
+    }
+  });
+
+  if (!rows.length) {
+    ctx.font = `700 ${Math.floor(Math.min(rect.h * 0.12, MAX_COMPONENT_FONT_PX))}px Arial, Helvetica, sans-serif`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillStyle = "rgba(238, 244, 255, 0.58)";
+    ctx.fillText("0 touched words", rect.x + rect.w / 2, tableY + rowsAreaH / 2);
+  }
+
+  if (showScrollControls) {
+    drawMemoryScrollControls(
+      component.id,
+      { x: rect.x, y: tableY + rowsAreaH + scrollControlGap, w: rect.w, h: scrollControlH },
+      offset,
+      maxOffset,
+      1,
+    );
+  }
+
+  ctx.restore();
+}
+
 function drawComponentBackground(component, vr) {
   if (!component.rect || !rectIntersects(component.rect, vr)) return false;
   const parts = componentDrawParts(component);
@@ -1527,6 +2314,14 @@ function drawComponentForeground(component, vr) {
   drawDefaultComponentForeground(component, parts);
   const gateKind = basicLogicGateKind(component);
   if (gateKind) drawLogicGateSymbol(component, parts, gateKind);
+  if (component.type === "BehavioralMemoryBit") drawBehavioralMemoryBitValue(component, parts);
+  if (component.type === "BehavioralRegisterFile32x32") drawBehavioralRegisterFileContents(component, parts);
+  if (component.type === "ClockGenerator") drawClockGeneratorContents(component, parts);
+  if (component.type === "ConstantValue") drawConstantValueContents(component, parts);
+  if (component.type === "BehavioralMemory64Kx32") drawBehavioralMemory64Kx32Contents(component, parts);
+  if (component.type === "BitSplitter") drawBitSplitterContents(component, parts);
+  if (component.type === "BitJoiner") drawBitJoinerContents(component, parts);
+  if (component.type === "Rewire") drawRewireContents(component, parts);
 
   for (const pin of [...component.inputPins, ...component.outputPins]) drawPin(pin);
 }
@@ -1615,6 +2410,7 @@ function render() {
 
   const vr = viewRect();
   const root = app.components.get(app.rootId);
+  app.memoryScrollControls = [];
   if (root) drawComponent(root, vr);
   drawWireOverlay(vr);
 
@@ -1674,6 +2470,10 @@ function hoveredBorder(component, world) {
 
 function updateCursor(world) {
   if (app.interaction) return;
+  if (app.hover && app.hover.type === "memory-scroll") {
+    canvas.style.cursor = app.hover.enabled ? "pointer" : "default";
+    return;
+  }
   if (app.hover && app.hover.type === "component") {
     const border = hoveredBorder(app.components.get(app.hover.id), world);
     if (border === "left" || border === "right") {
@@ -1693,14 +2493,19 @@ function updateCursor(world) {
 function updateHover(screenPoint) {
   if (app.interaction || !app.pinIndex) return;
   const world = screenToWorld(screenPoint);
-  let hover = null;
+  const scrollControl = hitMemoryScrollControl(screenPoint);
+  let hover = scrollControl
+    ? { type: "memory-scroll", id: scrollControl.componentId, direction: scrollControl.direction, enabled: scrollControl.enabled }
+    : null;
 
-  const pinCandidates = app.pinIndex.queryPoint(world).sort((a, b) => b.z - a.z);
-  for (const candidate of pinCandidates) {
-    const pin = app.pins.get(candidate.id);
-    if (pin && pointInRect(world, pin.rect, 4 / app.camera.zoom)) {
-      hover = { type: "pin", id: pin.id };
-      break;
+  if (!hover) {
+    const pinCandidates = app.pinIndex.queryPoint(world).sort((a, b) => b.z - a.z);
+    for (const candidate of pinCandidates) {
+      const pin = app.pins.get(candidate.id);
+      if (pin && pointInRect(world, pin.rect, 4 / app.camera.zoom)) {
+        hover = { type: "pin", id: pin.id };
+        break;
+      }
     }
   }
 
@@ -1745,6 +2550,11 @@ function updateTooltip(screenPoint) {
   } else if (app.hover.type === "wire") {
     const wire = app.wires.get(app.hover.id);
     text = `${wire.name}[${wire.width}]=${app.state.wires[wire.id] || "X"}`;
+  } else if (app.hover.type === "memory-scroll") {
+    const component = app.components.get(app.hover.id);
+    const direction = app.hover.direction === "up" ? "previous" : "next";
+    const prefix = app.hover.enabled ? direction : `no ${direction}`;
+    text = component ? `${component.name}: ${prefix} memory rows` : `${prefix} memory rows`;
   } else {
     const component = app.components.get(app.hover.id);
     text = `${component.name} (${component.type})`;
@@ -2169,6 +2979,13 @@ canvas.addEventListener("pointerdown", (event) => {
   canvas.setPointerCapture(event.pointerId);
   const screen = pointerPosition(event);
   updateHover(screen);
+  const scrollControl = hitMemoryScrollControl(screen);
+  if (scrollControl) {
+    event.preventDefault();
+    applyMemoryScrollControl(scrollControl);
+    updateHover(screen);
+    return;
+  }
   const world = screenToWorld(screen);
 
   if (app.hover && app.hover.type === "component") {
@@ -2293,6 +3110,38 @@ function setTimeLabel(state) {
   }
 }
 
+function statefulOverlayComponents() {
+  return app.componentOrder.filter((component) => (
+    component.type === "BehavioralRegisterFile32x32"
+    || component.type === "BehavioralMemory64Kx32"
+  ));
+}
+
+async function refreshComponentStates(index, requestId = null) {
+  const components = statefulOverlayComponents();
+  if (!components.length) {
+    app.componentStates.clear();
+    return;
+  }
+
+  const states = await Promise.all(components.map(async (component) => {
+    const response = await fetch(apiUrl(
+      `api/component-state?scenario=${encodeURIComponent(app.scenario)}&index=${index}&componentId=${encodeURIComponent(component.id)}`,
+    ));
+    if (!response.ok) throw new Error(await response.text());
+    return [component.id, await response.json()];
+  }));
+
+  if (requestId != null && requestId !== app.stateRequestId) return;
+  const activeIds = new Set(components.map((component) => component.id));
+  for (const componentId of [...app.componentStates.keys()]) {
+    if (activeIds.has(componentId)) app.componentStates.delete(componentId);
+  }
+  for (const [componentId, state] of states) {
+    app.componentStates.set(componentId, state);
+  }
+}
+
 async function setStateIndex(index) {
   index = Math.max(0, Math.min(index, app.timestamps.length - 1));
   app.requestedIndex = index;
@@ -2311,6 +3160,8 @@ async function setStateIndex(index) {
     ui.slider.value = String(state.index);
     setTimeLabel(state);
     updateCheckpointControls();
+    await refreshComponentStates(state.index, requestId);
+    if (requestId !== app.stateRequestId) return;
     updateInspector();
   } finally {
     if (requestId === app.stateRequestId) app.stateRequestInFlight = false;
@@ -2385,6 +3236,9 @@ function buildLocalModel(payload) {
   app.components = new Map();
   app.pins = new Map();
   app.wires = new Map();
+  app.componentStates = new Map();
+  app.memoryScrollOffsets = new Map();
+  app.memoryScrollControls = [];
   app.componentOrder = [];
   app.pinOrder = [];
   app.wireOrder = [];
@@ -2477,6 +3331,7 @@ async function loadCircuit(scenario) {
   const response = await fetch(apiUrl(`api/circuit?scenario=${encodeURIComponent(scenario)}`));
   if (!response.ok) throw new Error(await response.text());
   buildLocalModel(await response.json());
+  await refreshComponentStates(app.currentIndex, app.stateRequestId);
   loading.classList.add("hidden");
   ui.saveStatus.textContent = "";
 }

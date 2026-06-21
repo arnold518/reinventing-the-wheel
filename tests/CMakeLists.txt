@@ -5,6 +5,7 @@ set(SIMULATION_TESTS
     FullCircuitTest
     WireTemplateTest
     SimulatorAdvanceAndRecordTest
+    SimulatorUnwiredOutputPinHistoryTest
     NOTGateTest
     ANDGateTest
     ORGateTest

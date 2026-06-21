@@ -48,7 +48,6 @@ void RegisterFile32x32::buildInternals(ComponentBuilder& builder) {
     write_data_sinks.reserve(RegisterCount);
     clk_sinks.reserve(RegisterCount - 1);
     rst_sinks.reserve(RegisterCount - 1);
-    write_data_sinks.push_back(builder.getInputPin<ConstantValue<32, 32>, 32>("X0_ZERO", "TRIGGER"));
 
     for (size_t reg = 1; reg < RegisterCount; ++reg) {
         const auto name = regName(reg);

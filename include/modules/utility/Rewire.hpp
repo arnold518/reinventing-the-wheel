@@ -37,9 +37,15 @@ public:
            std::vector<BitMap> mappings,
            UnmappedBitValue unmapped = UnmappedBitValue::UNKNOWN);
 
+    static constexpr const char* TypeName = "Rewire";
+    const char* getTypeName() const override { return TypeName; }
     bool validateMappings() const;
     size_t getTotalInputBits() const;
     size_t getTotalOutputBits() const;
+    const std::vector<WireSpec>& getInputSpecs() const { return inputs; }
+    const std::vector<WireSpec>& getOutputSpecs() const { return outputs; }
+    const std::vector<BitMap>& getBitMappings() const { return bit_mappings; }
+    UnmappedBitValue getUnmappedDefault() const { return unmapped_default; }
     void evaluate(size_t current_time, Simulator& simulator) override;
 
 private:

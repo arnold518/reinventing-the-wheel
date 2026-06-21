@@ -26,6 +26,7 @@ const std::vector<TestRegistryEntry>& getTestRegistry() {
         entry<FullCircuitTest>("FullCircuitTest"),
         entry<WireTemplateTest>("WireTemplateTest"),
         entry<SimulatorAdvanceAndRecordTest>("SimulatorAdvanceAndRecordTest"),
+        entry<SimulatorUnwiredOutputPinHistoryTest>("SimulatorUnwiredOutputPinHistoryTest"),
         entry<NOTGateTest>("NOTGateTest"),
         entry<ANDGateTest>("ANDGateTest"),
         entry<ORGateTest>("ORGateTest"),

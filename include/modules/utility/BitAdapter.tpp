@@ -53,5 +53,7 @@ void BitJoiner<WIDTH>::evaluate(size_t current_time, Simulator& simulator) {
     output->setValueFromVector(values);
     if (auto wire = output->getExternalWire()) {
         simulator.scheduleEvent(std::make_shared<WireUpdateEvent<WIDTH>>(current_time + getDelay(), wire, values));
+    } else {
+        simulator.recordPinChange(current_time + getDelay(), output, values);
     }
 }

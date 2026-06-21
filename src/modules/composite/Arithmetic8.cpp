@@ -11,25 +11,6 @@
 #include <cstdint>
 
 namespace {
-class SubOverflowDetector8 : public BasicComponent {
-public:
-    explicit SubOverflowDetector8(std::string name)
-        : BasicComponent(std::move(name), 1, [](IOComponent* self) {
-              self->addPin<8>("A", PinType::INPUT);
-              self->addPin<8>("B", PinType::INPUT);
-              self->addPin<8>("Result", PinType::INPUT);
-              self->addPin("Overflow", PinType::OUTPUT);
-          }) {}
-
-    void evaluate(size_t current_time, Simulator& simulator) override {
-        auto a = static_cast<uint8_t>(getInputValueAsUInt64("A") & 0xFFU);
-        auto b = static_cast<uint8_t>(getInputValueAsUInt64("B") & 0xFFU);
-        auto result = static_cast<uint8_t>(getInputValueAsUInt64("Result") & 0xFFU);
-        const bool overflow = ((a ^ b) & (a ^ result) & 0x80U) != 0;
-        _updateOutputWire(simulator, "Overflow", overflow ? LogicValue::HIGH : LogicValue::LOW, current_time);
-    }
-};
-
 void connectAdderResult(ComponentBuilder& builder, IOComponent& component, const std::string& adder_name,
                         const std::string& result_pin) {
     builder.addNewWire<8>(
@@ -55,16 +36,43 @@ void buildEqualityFlag(ComponentBuilder& builder, IOComponent& component, uint64
 
 void buildSubOverflow(ComponentBuilder& builder, IOComponent& component,
                       const std::string& result_source_name) {
-    builder.addNewComponent<SubOverflowDetector8>("SUB_OVERFLOW");
+    builder.addNewComponent<BitSplitter<8>>("SUB_OVERFLOW_A_SPLIT");
+    builder.addNewComponent<BitSplitter<8>>("SUB_OVERFLOW_B_SPLIT");
+    builder.addNewComponent<BitSplitter<8>>("SUB_OVERFLOW_RESULT_SPLIT");
+    builder.addNewComponent<XORGate>("SUB_OVERFLOW_A_XOR_B");
+    builder.addNewComponent<XORGate>("SUB_OVERFLOW_A_XOR_RESULT");
+    builder.addNewComponent<ANDGate>("SUB_OVERFLOW_AND");
 
     builder.addNewWire<8>(
         result_source_name + "_to_Result",
         builder.getOutputPin<Adder8, 8>(result_source_name, "Sum"),
-        {component.getOutputPin<8>("Result"), builder.getInputPin<SubOverflowDetector8, 8>("SUB_OVERFLOW", "Result")});
+        {component.getOutputPin<8>("Result"),
+         builder.getInputPin<BitSplitter<8>, 8>("SUB_OVERFLOW_RESULT_SPLIT", "IN")});
     builder.addNewWire(
         "SUB_OVERFLOW_to_Overflow",
-        builder.getOutputPin<SubOverflowDetector8>("SUB_OVERFLOW", "Overflow"),
+        builder.getOutputPin<ANDGate>("SUB_OVERFLOW_AND", "OUT"),
         {component.getOutputPin("Overflow")});
+    builder.addNewWire(
+        "SUB_OVERFLOW_A7_to_XORs",
+        builder.getOutputPin<BitSplitter<8>>("SUB_OVERFLOW_A_SPLIT", "OUT_7"),
+        {builder.getInputPin<XORGate>("SUB_OVERFLOW_A_XOR_B", "A"),
+         builder.getInputPin<XORGate>("SUB_OVERFLOW_A_XOR_RESULT", "A")});
+    builder.addNewWire(
+        "SUB_OVERFLOW_B7_to_A_XOR_B",
+        builder.getOutputPin<BitSplitter<8>>("SUB_OVERFLOW_B_SPLIT", "OUT_7"),
+        {builder.getInputPin<XORGate>("SUB_OVERFLOW_A_XOR_B", "B")});
+    builder.addNewWire(
+        "SUB_OVERFLOW_RESULT7_to_A_XOR_RESULT",
+        builder.getOutputPin<BitSplitter<8>>("SUB_OVERFLOW_RESULT_SPLIT", "OUT_7"),
+        {builder.getInputPin<XORGate>("SUB_OVERFLOW_A_XOR_RESULT", "B")});
+    builder.addNewWire(
+        "SUB_OVERFLOW_A_XOR_B_to_AND",
+        builder.getOutputPin<XORGate>("SUB_OVERFLOW_A_XOR_B", "OUT"),
+        {builder.getInputPin<ANDGate>("SUB_OVERFLOW_AND", "A")});
+    builder.addNewWire(
+        "SUB_OVERFLOW_A_XOR_RESULT_to_AND",
+        builder.getOutputPin<XORGate>("SUB_OVERFLOW_A_XOR_RESULT", "OUT"),
+        {builder.getInputPin<ANDGate>("SUB_OVERFLOW_AND", "B")});
 }
 }
 
@@ -90,10 +98,7 @@ void TwosComplement8::buildInternals(ComponentBuilder& builder) {
         getInputPin<8>("A"),
         {builder.getInputPin<NOT8, 8>("NOT_A", "A"),
          builder.getInputPin<ZeroDetect8, 8>("ZERO_DETECT", "A"),
-         builder.getInputPin<EqualityChecker8, 8>("EQ_80", "A"),
-         builder.getInputPin<ConstantValue<8, 8>, 8>("CONST_ONE", "TRIGGER"),
-         builder.getInputPin<ConstantValue<1, 8>, 8>("CONST_LOW", "TRIGGER"),
-         builder.getInputPin<ConstantValue<8, 8>, 8>("CONST_80", "TRIGGER")});
+         builder.getInputPin<EqualityChecker8, 8>("EQ_80", "A")});
     builder.addNewWire<8>(
         "NOT_A_to_ADD",
         builder.getOutputPin<NOT8, 8>("NOT_A", "OUT"),
@@ -136,13 +141,12 @@ void Subtractor8::buildInternals(ComponentBuilder& builder) {
         "A_bus_internal",
         getInputPin<8>("A"),
         {builder.getInputPin<Adder8, 8>("ADD", "A"),
-         builder.getInputPin<SubOverflowDetector8, 8>("SUB_OVERFLOW", "A"),
-         builder.getInputPin<ConstantValue<1, 8>, 8>("CONST_HIGH", "TRIGGER")});
+         builder.getInputPin<BitSplitter<8>, 8>("SUB_OVERFLOW_A_SPLIT", "IN")});
     builder.addNewWire<8>(
         "B_bus_internal",
         getInputPin<8>("B"),
         {builder.getInputPin<NOT8, 8>("NOT_B", "A"),
-         builder.getInputPin<SubOverflowDetector8, 8>("SUB_OVERFLOW", "B")});
+         builder.getInputPin<BitSplitter<8>, 8>("SUB_OVERFLOW_B_SPLIT", "IN")});
     builder.addNewWire<8>(
         "NOT_B_to_ADD",
         builder.getOutputPin<NOT8, 8>("NOT_B", "OUT"),
@@ -177,12 +181,12 @@ void SubtractorWithBorrow8::buildInternals(ComponentBuilder& builder) {
         "A_bus_internal",
         getInputPin<8>("A"),
         {builder.getInputPin<Adder8, 8>("ADD", "A"),
-         builder.getInputPin<SubOverflowDetector8, 8>("SUB_OVERFLOW", "A")});
+         builder.getInputPin<BitSplitter<8>, 8>("SUB_OVERFLOW_A_SPLIT", "IN")});
     builder.addNewWire<8>(
         "B_bus_internal",
         getInputPin<8>("B"),
         {builder.getInputPin<NOT8, 8>("NOT_B", "A"),
-         builder.getInputPin<SubOverflowDetector8, 8>("SUB_OVERFLOW", "B")});
+         builder.getInputPin<BitSplitter<8>, 8>("SUB_OVERFLOW_B_SPLIT", "IN")});
     builder.addNewWire(
         "Bin_to_NOT",
         getInputPin("Bin"),
@@ -219,10 +223,7 @@ void Incrementer8::buildInternals(ComponentBuilder& builder) {
         "A_bus_internal",
         getInputPin<8>("A"),
         {builder.getInputPin<Adder8, 8>("ADD", "A"),
-         builder.getInputPin<EqualityChecker8, 8>("EQ_7F", "A"),
-         builder.getInputPin<ConstantValue<8, 8>, 8>("CONST_ZERO", "TRIGGER"),
-         builder.getInputPin<ConstantValue<1, 8>, 8>("CONST_HIGH", "TRIGGER"),
-         builder.getInputPin<ConstantValue<8, 8>, 8>("CONST_7F", "TRIGGER")});
+         builder.getInputPin<EqualityChecker8, 8>("EQ_7F", "A")});
     builder.addNewWire<8>(
         "CONST_ZERO_to_ADD",
         builder.getOutputPin<ConstantValue<8, 8>, 8>("CONST_ZERO", "OUT"),
@@ -256,10 +257,7 @@ void Decrementer8::buildInternals(ComponentBuilder& builder) {
         "A_bus_internal",
         getInputPin<8>("A"),
         {builder.getInputPin<Adder8, 8>("ADD", "A"),
-         builder.getInputPin<EqualityChecker8, 8>("EQ_80", "A"),
-         builder.getInputPin<ConstantValue<8, 8>, 8>("CONST_FF", "TRIGGER"),
-         builder.getInputPin<ConstantValue<1, 8>, 8>("CONST_LOW", "TRIGGER"),
-         builder.getInputPin<ConstantValue<8, 8>, 8>("CONST_80", "TRIGGER")});
+         builder.getInputPin<EqualityChecker8, 8>("EQ_80", "A")});
     builder.addNewWire<8>(
         "CONST_FF_to_ADD",
         builder.getOutputPin<ConstantValue<8, 8>, 8>("CONST_FF", "OUT"),

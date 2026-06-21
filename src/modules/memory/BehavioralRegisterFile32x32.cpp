@@ -3,6 +3,7 @@
 #include "basic/Wire.hpp"
 #include "simulator/Event.hpp"
 #include "simulator/Simulator.hpp"
+#include <algorithm>
 #include <memory>
 #include <utility>
 
@@ -119,6 +120,8 @@ void updateOutputWord(
     pin->setValueFromVector(values);
     if (auto wire = pin->getExternalWire()) {
         simulator.scheduleEvent(std::make_shared<WireUpdateEvent<WordWidth>>(event_time, wire, values));
+    } else {
+        simulator.recordPinChange(event_time, pin, values);
     }
 }
 }
@@ -140,6 +143,7 @@ BehavioralRegisterFile32x32::BehavioralRegisterFile32x32(std::string name)
         word = unknownWord();
     }
     registers[0] = zeroWord();
+    recordRegisterHistory(0);
 }
 
 void BehavioralRegisterFile32x32::evaluate(size_t current_time, Simulator& simulator) {
@@ -150,6 +154,7 @@ void BehavioralRegisterFile32x32::evaluate(size_t current_time, Simulator& simul
     const auto reg_write = sanitizeBit(getInputValue("REG_WRITE"));
     const auto clk = sanitizeBit(getInputValue("CLK"));
     const auto rst = sanitizeBit(getInputValue("RST"));
+    const auto before_registers = registers;
 
     if (rst == LogicValue::HIGH) {
         for (size_t reg = 1; reg < RegisterCount; ++reg) {
@@ -171,8 +176,54 @@ void BehavioralRegisterFile32x32::evaluate(size_t current_time, Simulator& simul
     }
 
     registers[0] = zeroWord();
+    if (registers != before_registers) {
+        recordRegisterHistory(current_time);
+    }
+
     previous_clk = clk;
 
     updateOutputWord(*this, simulator, "RS1_DATA", readSelectedWord(registers, rs1_addr), current_time + delay);
     updateOutputWord(*this, simulator, "RS2_DATA", readSelectedWord(registers, rs2_addr), current_time + delay);
+}
+
+std::vector<std::vector<LogicValue>> BehavioralRegisterFile32x32::getRegisterStateAtTime(size_t target_time) const {
+    const RegisterSnapshot* snapshot = &registers;
+    if (!register_history.empty()) {
+        auto upper = std::upper_bound(
+            register_history.begin(),
+            register_history.end(),
+            target_time,
+            [](size_t time, const auto& entry) {
+                return time < entry.first;
+            });
+        if (upper == register_history.begin()) {
+            snapshot = &register_history.front().second;
+        } else {
+            snapshot = &(--upper)->second;
+        }
+    }
+
+    std::vector<std::vector<LogicValue>> result;
+    result.reserve(RegisterCount);
+    for (const auto& word : *snapshot) {
+        result.push_back(word);
+    }
+    return result;
+}
+
+void BehavioralRegisterFile32x32::recordRegisterHistory(size_t time) {
+    if (!register_history.empty() && time < register_history.back().first) {
+        register_history.clear();
+    }
+
+    if (!register_history.empty() && register_history.back().first == time) {
+        register_history.back().second = registers;
+        return;
+    }
+
+    if (!register_history.empty() && register_history.back().second == registers) {
+        return;
+    }
+
+    register_history.emplace_back(time, registers);
 }

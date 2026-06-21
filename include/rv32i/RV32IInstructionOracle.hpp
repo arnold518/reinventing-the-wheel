@@ -22,9 +22,9 @@ public:
     static RV32IInstructionTrace step(RV32IState& state,
                                       RV32IFunctionalMemory& instruction_memory,
                                       RV32IFunctionalMemory& data_memory);
-    static RV32IInstructionTrace step(RV32IState& state,
-                                      BehavioralMemory64Kx32& instruction_memory,
-                                      BehavioralMemory64Kx32& data_memory);
+    static RV32IInstructionTrace stepWithoutDataMemoryWrite(RV32IState& state,
+                                                            BehavioralMemory64Kx32& instruction_memory,
+                                                            BehavioralMemory64Kx32& data_memory);
     static RV32IInstructionRunResult run(RV32IState& state, RV32IFunctionalMemory& memory, size_t max_instructions);
 };
 

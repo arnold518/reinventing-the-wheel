@@ -181,6 +181,38 @@ uint32_t writebackValue(const RV32IControlSignals& control,
     return 0;
 }
 
+class NonMutatingBehavioralMemory64Kx32 {
+public:
+    explicit NonMutatingBehavioralMemory64Kx32(BehavioralMemory64Kx32& memory)
+        : memory_(memory) {}
+
+    bool canAccess(uint32_t address, size_t count) const {
+        return memory_.canAccess(address, count);
+    }
+
+    uint8_t readU8(uint32_t address) const { return memory_.readU8(address); }
+    uint16_t readU16(uint32_t address) const { return memory_.readU16(address); }
+    uint32_t readU32(uint32_t address) const { return memory_.readU32(address); }
+
+    void writeU8(uint32_t address, uint8_t value) {
+        (void)address;
+        (void)value;
+    }
+
+    void writeU16(uint32_t address, uint16_t value) {
+        (void)address;
+        (void)value;
+    }
+
+    void writeU32(uint32_t address, uint32_t value) {
+        (void)address;
+        (void)value;
+    }
+
+private:
+    BehavioralMemory64Kx32& memory_;
+};
+
 template<typename InstructionMemoryT, typename DataMemoryT>
 RV32IInstructionTrace stepImpl(RV32IState& state,
                                InstructionMemoryT& instruction_memory,
@@ -326,10 +358,13 @@ RV32IInstructionTrace RV32IInstructionOracle::step(RV32IState& state,
     return stepImpl(state, instruction_memory, data_memory);
 }
 
-RV32IInstructionTrace RV32IInstructionOracle::step(RV32IState& state,
-                                                   BehavioralMemory64Kx32& instruction_memory,
-                                                   BehavioralMemory64Kx32& data_memory) {
-    return stepImpl(state, instruction_memory, data_memory);
+RV32IInstructionTrace RV32IInstructionOracle::stepWithoutDataMemoryWrite(
+    RV32IState& state,
+    BehavioralMemory64Kx32& instruction_memory,
+    BehavioralMemory64Kx32& data_memory
+) {
+    NonMutatingBehavioralMemory64Kx32 non_mutating_data_memory(data_memory);
+    return stepImpl(state, instruction_memory, non_mutating_data_memory);
 }
 
 RV32IInstructionRunResult RV32IInstructionOracle::run(RV32IState& state, RV32IFunctionalMemory& memory, size_t max_instructions) {

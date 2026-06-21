@@ -178,6 +178,7 @@ RunRowsProbeResult probeIsolatedRows(const std::vector<TestRow>& rows, const Run
             builder.addNewWireDynamic("OUT_" + pin_name, pin->getWidth(), pin, {});
         }
 
+        SimulationTest::scheduleInitialEventsForTree(root, sim, 0);
         sim.runAndRecord(options.probe_time_limit);
         const auto timestamps = sim.getUniqueTimestamps();
         const size_t row_delay = timestamps.empty() ? 0 : timestamps.back();
@@ -257,6 +258,7 @@ bool runRowsWithOptions(const std::vector<TestRow>& rows, const RunRowsOptions& 
         }
     }
 
+    SimulationTest::scheduleInitialEventsForTree(root, sim, 0);
     sim.runAndRecord(rows.size() * time_step);
 
     for (size_t row_index = 0; row_index < rows.size(); ++row_index) {

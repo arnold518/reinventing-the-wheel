@@ -1,5 +1,10 @@
 #include "rv32i/RV32IDecoder.hpp"
 
+#include <iomanip>
+#include <sstream>
+#include <string>
+#include <string_view>
+
 namespace rv32i {
 namespace {
 constexpr uint8_t OPCODE_LOAD = 0x03;
@@ -149,6 +154,30 @@ RV32IDecodedInstruction decodeSystem(uint32_t raw) {
     }
     return invalid(raw, RV32IDecodeStatus::UnsupportedSystem);
 }
+
+std::string reg(uint8_t index) {
+    return "x" + std::to_string(index);
+}
+
+std::string lower(std::string_view value) {
+    std::string result(value);
+    for (auto& ch : result) {
+        if (ch >= 'A' && ch <= 'Z') {
+            ch = static_cast<char>(ch - 'A' + 'a');
+        }
+    }
+    return result;
+}
+
+std::string hex32(uint32_t value) {
+    std::ostringstream out;
+    out << "0x" << std::hex << std::setfill('0') << std::setw(8) << value;
+    return out.str();
+}
+
+std::string imm(int32_t value) {
+    return std::to_string(value);
+}
 }
 
 RV32IDecodedInstruction RV32IDecoder::decode(uint32_t raw) {
@@ -252,6 +281,82 @@ int32_t RV32IDecoder::immediateJ(uint32_t raw) {
                          | (bits(raw, 20, 20) << 11)
                          | (bits(raw, 30, 21) << 1);
     return signExtend(value, 21);
+}
+
+std::string RV32IDecoder::disassemble(uint32_t raw, uint32_t pc) {
+    const auto decoded = decode(raw);
+    if (!decoded.legal) {
+        return "invalid " + std::string(toString(decoded.status));
+    }
+
+    const auto op = lower(toString(decoded.instruction));
+    switch (decoded.instruction) {
+        case RV32IInstruction::ADD:
+        case RV32IInstruction::SUB:
+        case RV32IInstruction::SLL:
+        case RV32IInstruction::SLT:
+        case RV32IInstruction::SLTU:
+        case RV32IInstruction::XOR:
+        case RV32IInstruction::SRL:
+        case RV32IInstruction::SRA:
+        case RV32IInstruction::OR:
+        case RV32IInstruction::AND:
+            return op + " " + reg(decoded.rd) + ", " + reg(decoded.rs1) + ", " + reg(decoded.rs2);
+
+        case RV32IInstruction::SLLI:
+        case RV32IInstruction::SRLI:
+        case RV32IInstruction::SRAI:
+            return op + " " + reg(decoded.rd) + ", " + reg(decoded.rs1) + ", " + std::to_string(decoded.shamt);
+
+        case RV32IInstruction::ADDI:
+        case RV32IInstruction::SLTI:
+        case RV32IInstruction::SLTIU:
+        case RV32IInstruction::XORI:
+        case RV32IInstruction::ORI:
+        case RV32IInstruction::ANDI:
+            return op + " " + reg(decoded.rd) + ", " + reg(decoded.rs1) + ", " + imm(decoded.immediate);
+
+        case RV32IInstruction::LB:
+        case RV32IInstruction::LH:
+        case RV32IInstruction::LW:
+        case RV32IInstruction::LBU:
+        case RV32IInstruction::LHU:
+            return op + " " + reg(decoded.rd) + ", " + imm(decoded.immediate) + "(" + reg(decoded.rs1) + ")";
+
+        case RV32IInstruction::SB:
+        case RV32IInstruction::SH:
+        case RV32IInstruction::SW:
+            return op + " " + reg(decoded.rs2) + ", " + imm(decoded.immediate) + "(" + reg(decoded.rs1) + ")";
+
+        case RV32IInstruction::BEQ:
+        case RV32IInstruction::BNE:
+        case RV32IInstruction::BLT:
+        case RV32IInstruction::BGE:
+        case RV32IInstruction::BLTU:
+        case RV32IInstruction::BGEU:
+            return op + " " + reg(decoded.rs1) + ", " + reg(decoded.rs2) + ", "
+                 + hex32(pc + static_cast<uint32_t>(decoded.immediate));
+
+        case RV32IInstruction::JAL:
+            return op + " " + reg(decoded.rd) + ", " + hex32(pc + static_cast<uint32_t>(decoded.immediate));
+
+        case RV32IInstruction::JALR:
+            return op + " " + reg(decoded.rd) + ", " + imm(decoded.immediate) + "(" + reg(decoded.rs1) + ")";
+
+        case RV32IInstruction::LUI:
+        case RV32IInstruction::AUIPC:
+            return op + " " + reg(decoded.rd) + ", " + hex32(static_cast<uint32_t>(decoded.immediate));
+
+        case RV32IInstruction::FENCE:
+            return "fence";
+        case RV32IInstruction::ECALL:
+            return "ecall";
+        case RV32IInstruction::EBREAK:
+            return "ebreak";
+        case RV32IInstruction::INVALID:
+            break;
+    }
+    return "invalid";
 }
 
 std::string_view toString(RV32IFormat format) {

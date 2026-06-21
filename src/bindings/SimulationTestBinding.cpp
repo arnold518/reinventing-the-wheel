@@ -38,6 +38,10 @@ void bindSimulationTest(py::module_& m) {
 
         .def("setup_circuit", &SimulationTest::setupCircuit,
             "Builds the circuit and sets its initial state.")
+
+        .def("schedule_initial_events", &SimulationTest::scheduleInitialEvents,
+            py::arg("time") = 0,
+            "Schedules startup events for source-like components.")
         
         .def("get_root", &SimulationTest::getRoot,
             "Returns the root component of the built circuit.")

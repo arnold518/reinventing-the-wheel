@@ -135,6 +135,19 @@ RV32ISystemProgramCase makeProgramCase(const std::string& name,
     test_case.cycle_time_step = 10;
     return test_case;
 }
+
+uint32_t logicWordToUInt32(const std::vector<LogicValue>& word) {
+    assert(word.size() == 32 && "RV32I memory word should contain 32 logic values");
+    uint32_t result = 0;
+    for (size_t bit = 0; bit < word.size(); ++bit) {
+        assert((word[bit] == LogicValue::HIGH || word[bit] == LogicValue::LOW)
+               && "RV32I memory word should be known for this check");
+        if (word[bit] == LogicValue::HIGH) {
+            result |= uint32_t{1} << bit;
+        }
+    }
+    return result;
+}
 }
 
 void BehavioralRV32ISystemProgramTestBase::setupCircuit() {
@@ -315,6 +328,44 @@ RV32ISystemProgramCase BehavioralRV32ISystemProgram2Test::getCase() const {
         encodeS(52, 17, 20, 0x2),             // sw x17, 52(x20)
         kEBreak,                              // ebreak
     }, 48);
+}
+
+void BehavioralRV32ISystemProgram2Test::verifyResults() {
+    RV32IInstructionLockstepTest::verifyResults();
+
+    auto memory = dataMemoryForTest();
+    assert(memory && "BehavioralRV32ISystemProgram2Test requires data memory");
+
+    constexpr uint32_t base_address = 0x00000200U;
+    const uint32_t expected_values[] = {
+        0x00000064U,
+        0x00000046U,
+        0x00000005U,
+        0x0000005fU,
+        0x0000005aU,
+        0x000000f0U,
+        0x0000003cU,
+        0xfffffffcU,
+        0x00000001U,
+        0x00000000U,
+        0x00000166U,
+        0x00000015U,
+        0x00000001U,
+        0x00000000U,
+    };
+    constexpr size_t expected_count = sizeof(expected_values) / sizeof(expected_values[0]);
+
+    const auto touched = memory->getTouchedWordsAtTime(1000, BehavioralMemory64Kx32::capacityWords());
+    assert(touched.size() == expected_count
+           && "Program 2 data memory should record every consecutive store as a touched word");
+
+    for (size_t index = 0; index < expected_count; ++index) {
+        const auto expected_address = static_cast<uint32_t>(base_address + index * 4);
+        assert(touched[index].first == expected_address
+               && "Program 2 touched word address should match consecutive store address");
+        assert(logicWordToUInt32(touched[index].second) == expected_values[index]
+               && "Program 2 touched word value should match stored register value");
+    }
 }
 
 RV32ISystemProgramCase BehavioralRV32ISystemProgram3Test::getCase() const {
@@ -505,6 +556,23 @@ RV32ISystemProgramCase BehavioralRV32ISystemProgram5Test::getCase() const {
         encodeJALR(0, 6, 0),             // jalr x0, 0(x6)
         kEBreak,                         // done: ebreak
     }, 20);
+}
+
+void BehavioralRV32ISystemProgram5Test::verifyResults() {
+    RV32IInstructionLockstepTest::verifyResults();
+
+    auto memory = dataMemoryForTest();
+    assert(memory && "BehavioralRV32ISystemProgram5Test requires data memory");
+
+    const auto before_visible_write = memory->getTouchedWordsAtTime(81, BehavioralMemory64Kx32::capacityWords());
+    assert(before_visible_write.empty()
+           && "Program 5 data memory write must not appear before the delayed write bus is visible");
+
+    const auto at_visible_write = memory->getTouchedWordsAtTime(82, BehavioralMemory64Kx32::capacityWords());
+    assert(at_visible_write.size() == 1 && "Program 5 data memory should have one touched word at visible write time");
+    assert(at_visible_write[0].first == 0x00000120U && "Program 5 data memory should touch address 0x120");
+    assert(logicWordToUInt32(at_visible_write[0].second) == 0x0000002bU
+           && "Program 5 data memory should store helper result 43");
 }
 
 RV32ISystemProgramCase BehavioralRV32ISystemProgram6Test::getCase() const {
@@ -822,4 +890,9 @@ rv32i::RV32IMemoryTrace BehavioralRV32ISystemProgramTestBase::lastDataMemoryAcce
 std::map<uint32_t, uint8_t> BehavioralRV32ISystemProgramTestBase::lastDataMemoryWrites() const {
     assert(system_ && "behavioral RV32I system program test system is not initialized");
     return system_->lastDataMemoryWrites();
+}
+
+std::shared_ptr<BehavioralMemory64Kx32> BehavioralRV32ISystemProgramTestBase::dataMemoryForTest() const {
+    assert(system_ && "behavioral RV32I system program test system is not initialized");
+    return system_->dataMemory();
 }
