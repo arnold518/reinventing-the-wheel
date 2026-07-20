@@ -5,6 +5,7 @@
 #include "ForwardDeclarations.hpp"
 #include "simulator/Event.hpp"
 #include "simulator/Simulator.hpp"
+#include <vector>
 
 class BasicComponent : public IOComponent
 {
@@ -16,6 +17,22 @@ protected:
     void _updateOutputWire(Simulator& simulator, const std::string& pin_name, uint64_t new_value, size_t current_sim_time) {
         if (auto pin = getOutputPin<WIDTH>(pin_name)) {
             pin->setValueFromUInt64(new_value);
+            if (auto wire = pin->getExternalWire()) {
+                simulator.scheduleEvent(std::make_shared<WireUpdateEvent<WIDTH>>(
+                    current_sim_time + delay, wire, new_value));
+            } else {
+                simulator.recordPinChange(current_sim_time + delay, pin, pin->getValueAsVector());
+            }
+        }
+    }
+
+    template<size_t WIDTH>
+    void _updateOutputWire(Simulator& simulator,
+                           const std::string& pin_name,
+                           const std::vector<LogicValue>& new_value,
+                           size_t current_sim_time) {
+        if (auto pin = getOutputPin<WIDTH>(pin_name)) {
+            pin->setValueFromVector(new_value);
             if (auto wire = pin->getExternalWire()) {
                 simulator.scheduleEvent(std::make_shared<WireUpdateEvent<WIDTH>>(
                     current_sim_time + delay, wire, new_value));

@@ -1,10 +1,10 @@
 #include "tests/RV32IDecoderTests.hpp"
 
 #include "rv32i/RV32IDecoder.hpp"
-#include <cassert>
 #include <cstdint>
 #include <iostream>
 #include <sstream>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -84,8 +84,7 @@ uint32_t encodeJ(int32_t imm, uint8_t rd) {
 }
 
 void fail(const std::string& message) {
-    std::cerr << "RV32IDecoderTest failed: " << message << std::endl;
-    assert(false && "RV32I decoder test failed");
+    throw std::runtime_error("RV32IDecoderTest failed: " + message);
 }
 
 void expect(bool condition, const std::string& message) {

@@ -4,6 +4,7 @@
 #include "components/ComponentBuilder.tpp"
 #include "modules/basic/Gate.hpp"
 #include "modules/composite/ALU32.hpp"
+#include "modules/composite/BehavioralALU32.hpp"
 #include "modules/composite/AddSub32.hpp"
 #include "modules/composite/Adder32.hpp"
 #include "modules/composite/Comparator32.hpp"
@@ -12,10 +13,10 @@
 #include "modules/composite/Shifter32.hpp"
 #include "modules/composite/ZeroDetect32.hpp"
 #include "modules/utility/BitAdapter.hpp"
-#include <cassert>
 #include <cstdint>
 #include <iostream>
 #include <memory>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -116,8 +117,7 @@ public:
 
 void expect(bool condition, const char* test_name) {
     if (!condition) {
-        std::cerr << test_name << " failed" << std::endl;
-        assert(false && "RV32I ALU32 test failed");
+        throw std::runtime_error(std::string(test_name) + " failed");
     }
 }
 
@@ -437,6 +437,10 @@ Shifter32Test::Shifter32Test()
 
 ALU32Test::ALU32Test()
     : ComponentRowsTest<ALU32>("ALU32Test", "ALU32_ROOT", alu32Rows()) {}
+
+BehavioralALU32Test::BehavioralALU32Test()
+    : ComponentRowsTest<BehavioralALU32>(
+          "BehavioralALU32Test", "BEHAVIORAL_ALU32_ROOT", alu32Rows()) {}
 
 RV32IALU32Test::RV32IALU32Test()
     : ComponentRowsTest<ALU32>("RV32IALU32Test", "RV32I_ALU32_ROOT", alu32Rows()) {}

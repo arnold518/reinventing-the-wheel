@@ -1,6 +1,6 @@
 # RV32I Components Report
 
-Last updated: 2026-06-02
+Last updated: 2026-07-19
 
 ## Status
 
@@ -9,16 +9,16 @@ This report tracks the components built on the path toward the first RV32I CPU r
 The project does not have a complete RV32I CPU yet. The current `rv32i` branch has the two major foundations needed before CPU wiring starts:
 
 - A structural 32-bit ALU stack, centered on `ALU32`.
-- A storage stack, centered on `BehavioralRegisterFile32x32` and `BehavioralMemory64Kx32` for CPU-scale use.
+- A paired register-file stack (`RegisterFile32x32` and `BehavioralRegisterFile32x32`) plus `BehavioralMemory64Kx32` for CPU-scale memory.
 - RV32I decode/control rule libraries, a raw program preload utility, and a functional instruction oracle for CPU bring-up tests.
 
-For the first practical RV32I runner, use:
+For the educational structural RV32I runner, use:
 
 - `ALU32` as the execution ALU.
-- `BehavioralRegisterFile32x32` as the architectural register file.
+- `RegisterFile32x32` as the architectural register file.
 - Two `BehavioralMemory64Kx32` instances: one instruction memory and one data memory.
 
-The lower-level structural versions remain important. They are the learning path and the correctness target for behavioral abstractions, even when the first CPU runner uses compact behavioral components for scale.
+Each of the five major core-block contracts will have structural and behavioral implementations with identical pins. The structural members form the educational core; the behavioral members are compact component references and possible fast substitutes. CPU-scale memory remains behavioral because smaller structural memories already provide the practical lower-level teaching path.
 
 ## Component Evolution Order
 
@@ -752,20 +752,18 @@ Detailed plan:
 
 - `docs/rv32i-milestone-7-plan.md`
 
-### Program Counter
+### Control-Flow Pair
 
 Purpose:
 
-Stores the current instruction address.
+Store the current instruction address and compute sequential, branch, `JAL`, and `JALR` control flow.
 
-Expected first implementation:
+Implemented pair:
 
-- 32-bit register-like component.
-- `PC_OUT`.
-- `NEXT_PC` input.
-- Clock and reset.
+- Structural `RV32IControlFlowUnit` using `Register32`, `Adder32`, muxes, rewires, and branch-decision gates.
+- Compact `BehavioralRV32IControlFlowUnit` with identical pins.
 
-Can initially use behavioral 32-bit storage. A structural PC can be added later as a visible teaching component.
+`RV32IControlFlowUnitPairTest` drives both with the same clock/input waveform and passes. The structural core will use the structural member. See `docs/rv32i-control-flow-pair-report.md`.
 
 ### Instruction Decoder
 
@@ -781,7 +779,9 @@ Current state:
 
 - `RV32IDecoder` exists as a pure C++ library and is tested.
 - `RV32IControl` exists as a pure C++ library and is tested.
-- A future `BehavioralRV32IControl` component should wrap those rules and expose pins for the CPU datapath.
+- Structural `RV32IDecodeControlUnit` exposes field, immediate, masked instruction recognition, and raw-control logic.
+- `BehavioralRV32IDecodeControlUnit` exposes the same pins as a compact reference and is not hidden inside the structural component.
+- `RV32IDecodeControlUnitPairTest` passes all 40 supported instruction forms, representative illegal encodings, and 64 deterministic pseudo-random raw words. See `docs/rv32i-decode-control-pair-report.md`.
 
 ### Immediate Generator
 
@@ -827,19 +827,20 @@ Expected inputs:
 - Immediate.
 - `RS1` for `JALR`.
 
-### Load/Store Unit
+### Execution Control/Status And Direct Memory Wiring
 
 Purpose:
 
-Map RV32I load/store instructions onto `BehavioralMemory64Kx32` pins.
+Control precise instruction completion, halt/trap state, and permission for direct RV32I memory connections.
 
 Responsibilities:
 
-- Generate `SIZE`.
-- Generate `SIGN_EXTEND`.
-- Route store data.
-- Route loaded data to writeback.
-- Surface or handle memory `FAULT`.
+- Structural `RV32IExecutionControlStatusUnit` classifies address alignment, prioritizes faults, latches status/cause, and gates PC/register/memory permissions.
+- `BehavioralRV32IExecutionControlStatusUnit` provides the same stateful pin contract for fast reference and equivalence testing.
+- ALU output wires directly to memory address, `rs2` directly to store data, decoded size/sign controls directly to memory, and read data directly to writeback.
+- There is no separate load/store forwarding module in the current five-block plan.
+
+`RV32IExecutionControlStatusUnitPairTest` passes 30 labeled checkpoints covering reset, enable and memory waits, request persistence, every supported halt/trap cause, priority collisions, latched-state suppression, and reset recovery. See `docs/rv32i-execution-status-pair-report.md`.
 
 ### Writeback Mux
 
@@ -890,13 +891,9 @@ ctest --test-dir build --output-on-failure -R "RV32IInstructionOracleTest|RV32IP
 ctest --test-dir build --output-on-failure
 ```
 
-Results:
+Most recent result after the structural core/system and separated scenarios landed:
 
-- Focused RV32I/memory tests passed: 8/8 in 73.45 seconds.
-- Focused control/decoder/ALU/memory tests passed: 6/6 in 168.65 seconds.
-- Focused program-loader/decode/control/memory tests passed: 4/4 in 0.39 seconds.
-- Focused instruction-oracle/program/decode/control tests passed: 4/4 in 0.05 seconds.
-- Full regression passed: 90/90 in 1095.44 seconds.
+- Full regression passed: 142/142 in 525.19 seconds in the final serial verification run.
 
 ## Visualizer Coverage
 
@@ -918,12 +915,22 @@ The current visualizer exposes scenarios for the major foundation components:
 - `memory32x32`
 - `behavioral-memory64kx32`
 - `rv32i-program-loader`
+- `rv32i-control-flow-structural`
+- `rv32i-control-flow-behavioral`
+- `rv32i-decode-structural`
+- `rv32i-decode-behavioral`
+- `rv32i-register-file-structural`
+- `rv32i-register-file-behavioral`
+- `rv32i-alu-structural`
+- `rv32i-alu-behavioral`
+- `rv32i-status-structural`
+- `rv32i-status-behavioral`
+- `rv32i-core-structural-smoke`
+- `rv32i-system-structural`
+- `rv32i-system-structural-program1` through `rv32i-system-structural-program16`
+
+Each visual scenario now contains exactly one device under test, matching the repository's other component scenarios. Structural scenarios expose the expandable circuit hierarchy; behavioral scenarios show the compact answer-sheet boundary. The pair tests remain non-visual regression tests because their job is specifically to drive both implementations with one waveform and prove equivalence.
 
 ## Practical Next Step
 
-The next implementation milestone should broaden the reusable RV32I system tests:
-
-1. Add more numbered behavioral RV32I system program tests, starting after `BehavioralRV32ISystemProgram1Test`.
-2. Cover branch, jump, load/store size, trap, and reset behavior.
-3. Keep instruction-lockstep comparison against `RV32IInstructionOracle`.
-4. Preserve the `RV32ISystem` boundary for the future structural core replacement.
+The structural single-cycle core/system milestone is complete: it instantiates the structural member of all five pairs, uses generic operand/writeback muxes, connects separate instruction/data memories directly, and passes all 16 reused lockstep programs. The next step is external answer-sheet validation and performance/visualizer hardening. See `docs/rv32i-structural-core-report.md`.

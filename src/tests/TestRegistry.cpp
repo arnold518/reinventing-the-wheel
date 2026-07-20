@@ -5,11 +5,14 @@
 #include "tests/FullCircuitTest.hpp"
 #include "tests/MemoryComponentTests.hpp"
 #include "tests/RV32IALU32Tests.hpp"
+#include "tests/RV32IBlockStandaloneTests.hpp"
+#include "tests/RV32IBlockPairTests.hpp"
 #include "tests/RV32IControlTests.hpp"
 #include "tests/RV32IDecoderTests.hpp"
 #include "tests/RV32IInstructionLockstepTests.hpp"
 #include "tests/RV32IInstructionOracleTests.hpp"
 #include "tests/RV32IProgramTests.hpp"
+#include "tests/RV32ISingleCycleTests.hpp"
 #include "tests/RV32ISystemTests.hpp"
 #include "tests/UtilityComponentTests.hpp"
 #include <algorithm>
@@ -80,9 +83,12 @@ const std::vector<TestRegistryEntry>& getTestRegistry() {
         entry<Mux16to1Test>("Mux16to1Test"),
         entry<Mux32to1Test>("Mux32to1Test"),
         entry<Mux2to1_8bitTest>("Mux2to1_8bitTest"),
+        entry<Mux2to1_4bitTest>("Mux2to1_4bitTest"),
+        entry<Mux2to1_32bitTest>("Mux2to1_32bitTest"),
         entry<Mux4to1_8bitTest>("Mux4to1_8bitTest"),
         entry<Mux4to1_32bitTest>("Mux4to1_32bitTest"),
         entry<Mux8to1_8bitTest>("Mux8to1_8bitTest"),
+        entry<Mux8to1_32bitTest>("Mux8to1_32bitTest"),
         entry<Mux16to1_8bitTest>("Mux16to1_8bitTest"),
         entry<Mux32to1_32bitTest>("Mux32to1_32bitTest"),
         entry<Decoder2to4Test>("Decoder2to4Test"),
@@ -108,12 +114,44 @@ const std::vector<TestRegistryEntry>& getTestRegistry() {
         entry<Comparator32Test>("Comparator32Test"),
         entry<Shifter32Test>("Shifter32Test"),
         entry<ALU32Test>("ALU32Test"),
+        entry<BehavioralALU32Test>("BehavioralALU32Test"),
         entry<RV32IALU32Test>("RV32IALU32Test"),
+        entry<RV32IControlFlowUnitTest>("RV32IControlFlowUnitTest"),
+        entry<BehavioralRV32IControlFlowUnitTest>("BehavioralRV32IControlFlowUnitTest"),
+        entry<RV32IDecodeControlUnitTest>("RV32IDecodeControlUnitTest"),
+        entry<BehavioralRV32IDecodeControlUnitTest>("BehavioralRV32IDecodeControlUnitTest"),
+        entry<RV32IExecutionControlStatusUnitTest>("RV32IExecutionControlStatusUnitTest"),
+        entry<BehavioralRV32IExecutionControlStatusUnitTest>("BehavioralRV32IExecutionControlStatusUnitTest"),
+        entry<RV32IControlFlowUnitPairTest>("RV32IControlFlowUnitPairTest"),
+        entry<RV32IDecodeControlUnitPairTest>("RV32IDecodeControlUnitPairTest"),
+        entry<RV32IRegisterFilePairTest>("RV32IRegisterFilePairTest"),
+        entry<BehavioralALU32PairTest>("BehavioralALU32PairTest"),
+        entry<RV32IExecutionControlStatusUnitPairTest>("RV32IExecutionControlStatusUnitPairTest"),
         entry<RV32IDecoderTest>("RV32IDecoderTest"),
         entry<RV32IControlTest>("RV32IControlTest"),
         entry<RV32IProgramLoaderTest>("RV32IProgramLoaderTest"),
         entry<RV32IInstructionOracleTest>("RV32IInstructionOracleTest"),
         entry<RV32IInstructionLockstepHarnessTest>("RV32IInstructionLockstepHarnessTest"),
+        entry<RV32IInstructionLockstepMismatchDetectionTest>("RV32IInstructionLockstepMismatchDetectionTest"),
+        entry<RV32ISingleCycleCoreSmokeTest>("RV32ISingleCycleCoreSmokeTest"),
+        entry<RV32ISingleCycleSystemContractTest>("RV32ISingleCycleSystemContractTest"),
+        entry<RV32ISingleCycleSystemProgram1Test>("RV32ISingleCycleSystemProgram1Test"),
+        entry<RV32ISingleCycleSystemProgram2Test>("RV32ISingleCycleSystemProgram2Test"),
+        entry<RV32ISingleCycleSystemProgram3Test>("RV32ISingleCycleSystemProgram3Test"),
+        entry<RV32ISingleCycleSystemProgram4Test>("RV32ISingleCycleSystemProgram4Test"),
+        entry<RV32ISingleCycleSystemProgram5Test>("RV32ISingleCycleSystemProgram5Test"),
+        entry<RV32ISingleCycleSystemProgram6Test>("RV32ISingleCycleSystemProgram6Test"),
+        entry<RV32ISingleCycleSystemProgram7Test>("RV32ISingleCycleSystemProgram7Test"),
+        entry<RV32ISingleCycleSystemProgram8Test>("RV32ISingleCycleSystemProgram8Test"),
+        entry<RV32ISingleCycleSystemProgram9Test>("RV32ISingleCycleSystemProgram9Test"),
+        entry<RV32ISingleCycleSystemProgram10Test>("RV32ISingleCycleSystemProgram10Test"),
+        entry<RV32ISingleCycleSystemProgram11Test>("RV32ISingleCycleSystemProgram11Test"),
+        entry<RV32ISingleCycleSystemProgram12Test>("RV32ISingleCycleSystemProgram12Test"),
+        entry<RV32ISingleCycleSystemProgram13Test>("RV32ISingleCycleSystemProgram13Test"),
+        entry<RV32ISingleCycleSystemProgram14Test>("RV32ISingleCycleSystemProgram14Test"),
+        entry<RV32ISingleCycleSystemProgram15Test>("RV32ISingleCycleSystemProgram15Test"),
+        entry<RV32ISingleCycleSystemProgram16Test>("RV32ISingleCycleSystemProgram16Test"),
+        entry<BehavioralRV32ISystemContractTest>("BehavioralRV32ISystemContractTest"),
         entry<BehavioralRV32ISystemProgram1Test>("BehavioralRV32ISystemProgram1Test"),
         entry<BehavioralRV32ISystemProgram2Test>("BehavioralRV32ISystemProgram2Test"),
         entry<BehavioralRV32ISystemProgram3Test>("BehavioralRV32ISystemProgram3Test"),

@@ -3,7 +3,6 @@
 #include "components/Component.hpp"
 #include "modules/memory/BehavioralMemory64Kx32.hpp"
 #include "rv32i/RV32IProgram.hpp"
-#include <cassert>
 #include <cstdint>
 #include <exception>
 #include <iostream>
@@ -24,8 +23,7 @@ std::string hex32(uint32_t value) {
 }
 
 void fail(const std::string& message) {
-    std::cerr << "RV32IProgramLoaderTest failed: " << message << std::endl;
-    assert(false && "RV32I program loader test failed");
+    throw std::runtime_error("RV32IProgramLoaderTest failed: " + message);
 }
 
 template <typename ActualT, typename ExpectedT>
@@ -163,7 +161,9 @@ void RV32IProgramLoaderTest::setupCircuit() {
     builder = std::make_unique<ComponentBuilder>(root);
 
     auto memory = std::dynamic_pointer_cast<BehavioralMemory64Kx32>(root);
-    assert(memory && "RV32IProgramLoaderTest root must be BehavioralMemory64Kx32");
+    if (!memory) {
+        throw std::runtime_error("RV32IProgramLoaderTest root must be BehavioralMemory64Kx32");
+    }
     const auto program = RV32IProgram::fromWords({
         0x00100093U,
         0x00208113U,

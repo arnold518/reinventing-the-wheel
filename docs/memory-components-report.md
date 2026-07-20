@@ -1,12 +1,12 @@
 # Memory Components Report
 
-Last updated: 2026-05-30
+Last updated: 2026-07-19
 
 ## Status
 
 The memory-cell foundation is complete on the `memory-components` branch. The branch contains both lower-level visualizable storage components and behavioral storage components used when full structural expansion becomes too large.
 
-For the first practical RV32I runner, the project should use `BehavioralRegisterFile32x32` as the architectural register file and `BehavioralMemory64Kx32` as the reusable memory component. Instruction memory and data memory should be separate instances of `BehavioralMemory64Kx32` in the first runner, not separate storage designs.
+For compact CPU tests, `BehavioralRegisterFile32x32` remains the fast register-file option. The educational structural RV32I core now plans to use the same-contract `RegisterFile32x32`, with a direct equivalence test between the two. Instruction and data memory should still be separate `BehavioralMemory64Kx32` instances because the existing smaller structural memories provide the lower-level proof while a fully expanded 256 KiB memory would be impractical.
 
 The component order below follows the implementation/evolution path:
 
@@ -530,7 +530,8 @@ Important behavior:
 - Read ports are combinational from the current stored state.
 - Unknown read-address bits merge every possible matching register bitwise; an output lane remains known only when all possible selected registers agree.
 - Unknown write selection is conservative: any writable register that may be selected is marked unknown.
-- This is the scalable register-file component to use inside a CPU runner when the full structural shape is too large for routine execution.
+- This is the scalable register-file component for compact tests and future fast CPU configurations when the structural shape is too large for routine execution.
+- The educational structural core uses `RegisterFile32x32`; a direct pairwise equivalence suite must prove that both contracts agree.
 
 Tests and visualizer:
 

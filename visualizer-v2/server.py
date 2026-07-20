@@ -10,8 +10,9 @@ layout persistence.
 from __future__ import annotations
 
 import argparse
-from collections import defaultdict, deque
+from collections import OrderedDict, defaultdict, deque
 import copy
+import gzip
 import json
 import mimetypes
 import os
@@ -67,11 +68,20 @@ LAYERED_PADDING_Y = 0.055
 LAYERED_HORIZONTAL_FILL_RATIO = 0.88
 LAYERED_VERTICAL_FILL_RATIO = 0.9
 LAYERED_DENSE_ROW_WIDTH_CAP = 0.1
+MIN_RELATIVE_CHILD_WIDTH = 1e-6
 GENERIC_ROOT_TYPES = {"Component", "IOComponent", "BasicComponent"}
 SEQUENTIAL_TYPES = {"DFlipFlop"}
 CLOCK_PIN_NAMES = {"CLK", "CLOCK"}
 SEQUENTIAL_INPUT_PIN_NAMES = {"D", "RST", "RESET", "SET", "CLR", "CLEAR", "EN", "ENABLE", "LOAD"}
-NON_VISUALIZABLE_TESTS = {"WireTemplateTest", "RewireValidationTest"}
+NON_VISUALIZABLE_TESTS = {
+    "WireTemplateTest",
+    "RewireValidationTest",
+    "RV32IControlFlowUnitPairTest",
+    "RV32IDecodeControlUnitPairTest",
+    "RV32IRegisterFilePairTest",
+    "BehavioralALU32PairTest",
+    "RV32IExecutionControlStatusUnitPairTest",
+}
 PREFERRED_SCENARIO_ALIASES = {
     "FullAdderTest": ["full-adder", "fulladder"],
     "HalfAdderTest": ["half-adder", "halfadder"],
@@ -85,8 +95,8 @@ PREFERRED_SCENARIO_ALIASES = {
     "MemoryBitTest": ["memory-bit", "memorybit"],
     "Register32Test": ["register32", "register-32"],
     "RegisterFile4x32Test": ["register-file4x32", "register-file-4x32", "registerfile4x32", "rf4x32"],
-    "RegisterFile32x32Test": ["register-file32x32", "register-file-32x32", "registerfile32x32", "rf32x32"],
-    "BehavioralRegisterFile32x32Test": ["behavioral-register-file32x32", "behavioral-register-file-32x32", "behavioral-rf32x32", "brf32x32"],
+    "RegisterFile32x32Test": ["rv32i-register-file-structural", "register-file32x32", "register-file-32x32", "registerfile32x32", "rf32x32"],
+    "BehavioralRegisterFile32x32Test": ["rv32i-register-file-behavioral", "behavioral-register-file32x32", "behavioral-register-file-32x32", "behavioral-rf32x32", "brf32x32"],
     "BehavioralRegisterFile32x32UnknownTest": ["behavioral-register-file32x32-unknown", "behavioral-rf32x32-unknown", "brf32x32-unknown"],
     "Memory4x32Test": ["memory4x32", "memory-4x32", "mem4x32"],
     "Memory32x32Test": ["memory32x32", "memory-32x32", "mem32x32"],
@@ -106,6 +116,24 @@ PREFERRED_SCENARIO_ALIASES = {
     "BehavioralRV32ISystemProgram14Test": ["behavioral-rv32i-system-program14", "behavioral-rv32i-system-program-14", "rv32i-behavioral-system-program14", "rv32i-system-program14"],
     "BehavioralRV32ISystemProgram15Test": ["behavioral-rv32i-system-program15", "behavioral-rv32i-system-program-15", "rv32i-behavioral-system-program15", "rv32i-system-program15"],
     "BehavioralRV32ISystemProgram16Test": ["behavioral-rv32i-system-program16", "behavioral-rv32i-system-program-16", "rv32i-behavioral-system-program16", "rv32i-system-program16"],
+    "RV32ISingleCycleCoreSmokeTest": ["rv32i-core-structural-smoke"],
+    "RV32ISingleCycleSystemContractTest": ["rv32i-system-structural"],
+    "RV32ISingleCycleSystemProgram1Test": ["rv32i-system-structural-program1"],
+    "RV32ISingleCycleSystemProgram2Test": ["rv32i-system-structural-program2"],
+    "RV32ISingleCycleSystemProgram3Test": ["rv32i-system-structural-program3"],
+    "RV32ISingleCycleSystemProgram4Test": ["rv32i-system-structural-program4"],
+    "RV32ISingleCycleSystemProgram5Test": ["rv32i-system-structural-program5"],
+    "RV32ISingleCycleSystemProgram6Test": ["rv32i-system-structural-program6"],
+    "RV32ISingleCycleSystemProgram7Test": ["rv32i-system-structural-program7"],
+    "RV32ISingleCycleSystemProgram8Test": ["rv32i-system-structural-program8"],
+    "RV32ISingleCycleSystemProgram9Test": ["rv32i-system-structural-program9"],
+    "RV32ISingleCycleSystemProgram10Test": ["rv32i-system-structural-program10"],
+    "RV32ISingleCycleSystemProgram11Test": ["rv32i-system-structural-program11"],
+    "RV32ISingleCycleSystemProgram12Test": ["rv32i-system-structural-program12"],
+    "RV32ISingleCycleSystemProgram13Test": ["rv32i-system-structural-program13"],
+    "RV32ISingleCycleSystemProgram14Test": ["rv32i-system-structural-program14"],
+    "RV32ISingleCycleSystemProgram15Test": ["rv32i-system-structural-program15"],
+    "RV32ISingleCycleSystemProgram16Test": ["rv32i-system-structural-program16"],
     "ConstantValue1From32TriggerTest": ["constant1-from32"],
     "ConstantValue32Test": ["constant32"],
     "Adder8Test": ["adder8", "8-bit-adder"],
@@ -124,7 +152,14 @@ PREFERRED_SCENARIO_ALIASES = {
     "Comparator32Test": ["comparator32"],
     "Shifter32Test": ["shifter32"],
     "ALU32Test": ["alu32"],
-    "RV32IALU32Test": ["rv32i-alu32"],
+    "RV32IALU32Test": ["rv32i-alu-structural", "rv32i-alu32"],
+    "BehavioralALU32Test": ["rv32i-alu-behavioral", "behavioral-alu32"],
+    "RV32IControlFlowUnitTest": ["rv32i-control-flow-structural"],
+    "BehavioralRV32IControlFlowUnitTest": ["rv32i-control-flow-behavioral"],
+    "RV32IDecodeControlUnitTest": ["rv32i-decode-structural"],
+    "BehavioralRV32IDecodeControlUnitTest": ["rv32i-decode-behavioral"],
+    "RV32IExecutionControlStatusUnitTest": ["rv32i-status-structural"],
+    "BehavioralRV32IExecutionControlStatusUnitTest": ["rv32i-status-behavioral"],
     "RV32IProgramLoaderTest": ["rv32i-program-loader", "rv32i-program", "program-loader"],
 }
 
@@ -239,6 +274,13 @@ def _component_layout_type(component: Any) -> str:
         out_width = _pin_width_by_name(component, "get_output_pins", "OUT")
         if out_width:
             return f"ConstantValue<{out_width}>"
+    if component_type == "RV32IBitPatternMatcher":
+        try:
+            mask = int(component.mask)
+            value = int(component.value)
+        except (AttributeError, RuntimeError, TypeError, ValueError):
+            return component_type
+        return f"RV32IBitPatternMatcher<mask=0x{mask:08x},value=0x{value:08x}>"
     return component_type
 
 
@@ -383,7 +425,10 @@ def _balanced_grid_layout(
         col = index % cols
         row = index // cols
         width_from_height = cell_h * usable_y_fraction * parent_aspect / max(child_aspects[child.get_id()], 0.01)
-        rel_width = max(0.05, min(cell_w, width_from_height * GRID_CHILD_FILL_RATIO, max_rel_width))
+        rel_width = max(
+            MIN_RELATIVE_CHILD_WIDTH,
+            min(cell_w, width_from_height * GRID_CHILD_FILL_RATIO, max_rel_width),
+        )
         rel_x, rel_width = _constrain_child_horizontal(
             padding + col * (cell_w + padding) + max(0, cell_w - rel_width) / 2,
             rel_width,
@@ -593,7 +638,10 @@ def _layered_graph_layout(
             (inner_height / max(1, len(nodes))) * parent_aspect / max(max_aspect, 0.01) * LAYERED_VERTICAL_FILL_RATIO,
         )
 
-    rel_width = max(0.045, min(0.8, rel_width))
+    # Preserve the vertical and horizontal fit calculated above. A visible-size
+    # floor can make tall children overlap in dense columns; the client already
+    # handles sub-pixel components conservatively and reveals them on zoom.
+    rel_width = max(MIN_RELATIVE_CHILD_WIDTH, min(0.8, rel_width))
     if max_rows >= 10:
         rel_width = min(rel_width, LAYERED_DENSE_ROW_WIDTH_CAP)
     stub_ratio = _stub_margin_ratio(boundary_fraction, pin_size_fraction)
@@ -906,7 +954,15 @@ class CircuitSession:
         self.component_depths: dict[str, int] = {}
         self.pin_handles: dict[str, Any] = {}
         self.wire_handles: dict[str, Any] = {}
+        self.pin_handles_by_index: list[Any] = []
+        self.wire_handles_by_index: list[Any] = []
+        self.pin_handles_by_component_name: dict[tuple[str, str], Any] = {}
         self._build_topology()
+        self._validate_topology_endpoints()
+        self.signal_snapshot = circuit_backend.VisualSignalSnapshot(
+            self.pin_handles_by_index,
+            self.wire_handles_by_index,
+        )
         self.layout_manager.save_if_dirty()
         if len(self.components) == 1 and not self.pins and not self.wires:
             raise RuntimeError(
@@ -1025,12 +1081,34 @@ class CircuitSession:
 
         walk(self.root, None, 0)
 
+    def _validate_topology_endpoints(self) -> None:
+        missing: list[str] = []
+        for wire in self.wires:
+            source_pin_id = wire["sourcePinId"]
+            if source_pin_id is not None and source_pin_id not in self.pin_handles:
+                missing.append(f'{wire["id"]}: source {source_pin_id}')
+            for sink_pin_id in wire["sinkPinIds"]:
+                if sink_pin_id not in self.pin_handles:
+                    missing.append(f'{wire["id"]}: sink {sink_pin_id}')
+
+        if missing:
+            preview = "; ".join(missing[:5])
+            remainder = len(missing) - 5
+            suffix = f"; and {remainder} more" if remainder > 0 else ""
+            raise RuntimeError(
+                "Visualizer topology contains wire endpoints whose component types are not "
+                f"fully exposed to Python ({preview}{suffix})."
+            )
+
     def _add_pin(self, component_id: str, pin_name: str, pin: Any, pin_type: str) -> None:
         try:
             pin_id = pin.get_id()
         except AttributeError:
             pin_id = f"{component_id}.{pin_name}"
+        state_index = len(self.pin_handles_by_index)
         self.pin_handles[pin_id] = pin
+        self.pin_handles_by_index.append(pin)
+        self.pin_handles_by_component_name[(component_id, pin_name)] = pin
         self.pins.append(
             {
                 "id": pin_id,
@@ -1038,13 +1116,16 @@ class CircuitSession:
                 "name": pin_name,
                 "type": pin_type,
                 "width": _signal_width(pin),
+                "stateIndex": state_index,
             }
         )
 
     def _add_wires(self, component: Any) -> None:
         for wire in component.get_wires():
             wire_id = wire.get_id()
+            state_index = len(self.wire_handles_by_index)
             self.wire_handles[wire_id] = wire
+            self.wire_handles_by_index.append(wire)
             source_pin = wire.get_source_pin()
             source_pin_id = source_pin.get_id() if source_pin else None
             sink_pin_ids = [pin.get_id() for pin in wire.get_sink_pins()]
@@ -1056,6 +1137,7 @@ class CircuitSession:
                     "sourcePinId": source_pin_id,
                     "sinkPinIds": sink_pin_ids,
                     "width": _signal_width(wire),
+                    "stateIndex": state_index,
                 }
             )
 
@@ -1180,6 +1262,7 @@ class CircuitSession:
             "checkpoints": self.checkpoints,
             "layout": self.layout_manager.to_jsonable(),
             "state": self.state_at_index(0),
+            "stateEncoding": "indexed-v1",
             "stats": {
                 "componentCount": len(self.components),
                 "pinCount": len(self.pins),
@@ -1193,17 +1276,18 @@ class CircuitSession:
             index = max(0, min(index, len(self.timestamps) - 1))
             timestamp = int(self.timestamps[index])
             self.simulator.set_circuit_state_at_time(timestamp)
-            pins = {pin_id: _signal_value(pin) for pin_id, pin in self.pin_handles.items()}
-            wires = {wire_id: _signal_value(wire) for wire_id, wire in self.wire_handles.items()}
-            return {"index": index, "time": timestamp, "pins": pins, "wires": wires}
+            pins, wires = self.signal_snapshot.get_values()
+            return {
+                "encoding": "indexed-v1",
+                "index": index,
+                "time": timestamp,
+                "pins": pins,
+                "wires": wires,
+            }
 
     def _component_pin_value(self, component_id: str, pin_name: str) -> str | None:
-        for pin in self.pins:
-            if pin["componentId"] != component_id or pin["name"] != pin_name:
-                continue
-            handle = self.pin_handles.get(pin["id"])
-            return _signal_value(handle) if handle else None
-        return None
+        handle = self.pin_handles_by_component_name.get((component_id, pin_name))
+        return _signal_value(handle) if handle else None
 
     def _component_ports(self, component_id: str, pin_names: tuple[str, ...]) -> dict[str, dict[str, Any]]:
         ports: dict[str, dict[str, Any]] = {}
@@ -1338,7 +1422,12 @@ class CircuitSession:
 class SessionStore:
     def __init__(self) -> None:
         self.layout_manager = LayoutManager(LAYOUT_PATH)
-        self.sessions: dict[str, CircuitSession] = {}
+        try:
+            configured_limit = int(os.environ.get("VISUALIZER_V2_MAX_SESSIONS", "2"))
+        except ValueError:
+            configured_limit = 2
+        self.max_sessions = max(1, configured_limit)
+        self.sessions: OrderedDict[str, CircuitSession] = OrderedDict()
         self.lock = threading.Lock()
 
     def _reload_layout_if_changed(self) -> None:
@@ -1353,6 +1442,10 @@ class SessionStore:
             self._reload_layout_if_changed()
             if scenario_key not in self.sessions:
                 self.sessions[scenario_key] = CircuitSession(scenario_key, self.layout_manager)
+                while len(self.sessions) > self.max_sessions:
+                    self.sessions.popitem(last=False)
+            else:
+                self.sessions.move_to_end(scenario_key)
             return self.sessions[scenario_key]
 
     def replace_layout(self, layout: dict[str, Any]) -> None:
@@ -1373,6 +1466,10 @@ class SessionStore:
             self._reload_layout_if_changed()
             if scenario_key not in self.sessions:
                 self.sessions[scenario_key] = CircuitSession(scenario_key, self.layout_manager)
+                while len(self.sessions) > self.max_sessions:
+                    self.sessions.popitem(last=False)
+            else:
+                self.sessions.move_to_end(scenario_key)
             return self.sessions[scenario_key].default_child_layouts(parent_id, child_name, layout)
 
 
@@ -1389,10 +1486,20 @@ def normalize_scenario(scenario: str | None) -> str:
 
 def json_response(handler: SimpleHTTPRequestHandler, payload: Any, status: int = 200) -> None:
     encoded = json.dumps(payload, separators=(",", ":")).encode("utf-8")
+    content_encoding: str | None = None
+    accepted_encodings = handler.headers.get("Accept-Encoding", "").lower()
+    if len(encoded) >= 1024 and "gzip" in accepted_encodings:
+        compressed = gzip.compress(encoded, compresslevel=1)
+        if len(compressed) < len(encoded):
+            encoded = compressed
+            content_encoding = "gzip"
     handler.send_response(status)
     handler.send_header("Content-Type", "application/json; charset=utf-8")
     handler.send_header("Content-Length", str(len(encoded)))
     handler.send_header("Cache-Control", "no-store")
+    handler.send_header("Vary", "Accept-Encoding")
+    if content_encoding:
+        handler.send_header("Content-Encoding", content_encoding)
     handler.end_headers()
     handler.wfile.write(encoded)
 

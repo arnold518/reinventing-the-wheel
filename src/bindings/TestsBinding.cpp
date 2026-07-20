@@ -6,7 +6,10 @@
 #include "tests/FullCircuitTest.hpp"
 #include "tests/MemoryComponentTests.hpp"
 #include "tests/RV32IALU32Tests.hpp"
+#include "tests/RV32IBlockStandaloneTests.hpp"
+#include "tests/RV32IBlockPairTests.hpp"
 #include "tests/RV32IProgramTests.hpp"
+#include "tests/RV32ISingleCycleTests.hpp"
 #include "tests/RV32ISystemTests.hpp"
 #include "tests/TestRegistry.hpp"
 #include "tests/UtilityComponentTests.hpp"
@@ -154,9 +157,12 @@ void bindTests(py::module_& m) {
     bindSimulationScenario<Mux16to1Test>(m, "Mux16to1Test", "16:1 one-bit mux regression scenario.");
     bindSimulationScenario<Mux32to1Test>(m, "Mux32to1Test", "32:1 one-bit mux regression scenario.");
     bindSimulationScenario<Mux2to1_8bitTest>(m, "Mux2to1_8bitTest", "2:1 8-bit mux regression scenario.");
+    bindSimulationScenario<Mux2to1_4bitTest>(m, "Mux2to1_4bitTest", "2:1 4-bit mux regression scenario.");
+    bindSimulationScenario<Mux2to1_32bitTest>(m, "Mux2to1_32bitTest", "2:1 32-bit mux regression scenario.");
     bindSimulationScenario<Mux4to1_8bitTest>(m, "Mux4to1_8bitTest", "4:1 8-bit mux regression scenario.");
     bindSimulationScenario<Mux4to1_32bitTest>(m, "Mux4to1_32bitTest", "4:1 32-bit mux regression scenario.");
     bindSimulationScenario<Mux8to1_8bitTest>(m, "Mux8to1_8bitTest", "8:1 8-bit mux regression scenario.");
+    bindSimulationScenario<Mux8to1_32bitTest>(m, "Mux8to1_32bitTest", "8:1 32-bit mux regression scenario.");
     bindSimulationScenario<Mux16to1_8bitTest>(m, "Mux16to1_8bitTest", "16:1 8-bit mux regression scenario.");
     bindSimulationScenario<Mux32to1_32bitTest>(m, "Mux32to1_32bitTest", "32:1 32-bit mux regression scenario.");
     bindSimulationScenario<Decoder2to4Test>(m, "Decoder2to4Test", "2-bit enabled one-hot decoder regression scenario.");
@@ -182,11 +188,53 @@ void bindTests(py::module_& m) {
     bindSimulationScenario<Comparator32Test>(m, "Comparator32Test", "Structural 32-bit comparator regression scenario.");
     bindSimulationScenario<Shifter32Test>(m, "Shifter32Test", "Structural 32-bit barrel-shifter regression scenario.");
     bindSimulationScenario<ALU32Test>(m, "ALU32Test", "Structural 32-bit ALU regression scenario.");
+    bindSimulationScenario<BehavioralALU32Test>(m, "BehavioralALU32Test", "Behavioral 32-bit ALU regression scenario.");
     bindSimulationScenario<RV32IALU32Test>(m, "RV32IALU32Test", "Structural RV32I ALU32 milestone regression scenario.");
+    bindSimulationScenario<RV32IControlFlowUnitTest>(m, "RV32IControlFlowUnitTest", "Standalone structural RV32I control-flow scenario.");
+    bindSimulationScenario<BehavioralRV32IControlFlowUnitTest>(m, "BehavioralRV32IControlFlowUnitTest", "Standalone behavioral RV32I control-flow scenario.");
+    bindSimulationScenario<RV32IDecodeControlUnitTest>(m, "RV32IDecodeControlUnitTest", "Standalone structural RV32I decode/control scenario.");
+    bindSimulationScenario<BehavioralRV32IDecodeControlUnitTest>(m, "BehavioralRV32IDecodeControlUnitTest", "Standalone behavioral RV32I decode/control scenario.");
+    bindSimulationScenario<RV32IExecutionControlStatusUnitTest>(m, "RV32IExecutionControlStatusUnitTest", "Standalone structural RV32I execution/status scenario.");
+    bindSimulationScenario<BehavioralRV32IExecutionControlStatusUnitTest>(m, "BehavioralRV32IExecutionControlStatusUnitTest", "Standalone behavioral RV32I execution/status scenario.");
+    bindSimulationScenario<RV32IControlFlowUnitPairTest>(m, "RV32IControlFlowUnitPairTest", "Structural/behavioral RV32I control-flow equivalence scenario.");
+    bindSimulationScenario<RV32IDecodeControlUnitPairTest>(m, "RV32IDecodeControlUnitPairTest", "Structural/behavioral RV32I decode-control equivalence scenario.");
+    bindSimulationScenario<RV32IRegisterFilePairTest>(m, "RV32IRegisterFilePairTest", "Composed/behavioral RV32I register-file equivalence scenario.");
+    bindSimulationScenario<BehavioralALU32PairTest>(m, "BehavioralALU32PairTest", "Structural/behavioral ALU32 equivalence scenario.");
+    bindSimulationScenario<RV32IExecutionControlStatusUnitPairTest>(m, "RV32IExecutionControlStatusUnitPairTest", "Structural/behavioral RV32I execution, memory-handshake, trap, and halt equivalence scenario.");
     bindSimulationScenario<RV32IProgramLoaderTest>(
         m,
         "RV32IProgramLoaderTest",
         "RV32I program-loader fixture with preloaded behavioral memory.");
+    bindSimulationScenario<RV32ISingleCycleCoreSmokeTest>(
+        m,
+        "RV32ISingleCycleCoreSmokeTest",
+        "Structural RV32I single-cycle core ADDI/EBREAK smoke scenario.");
+    bindSimulationScenario<RV32ISingleCycleSystemContractTest>(
+        m,
+        "RV32ISingleCycleSystemContractTest",
+        "Structural RV32I reset, enable, halt, hold, and recovery scenario.");
+#define BIND_STRUCTURAL_RV32I_PROGRAM(NUMBER) \
+    bindSimulationScenario<RV32ISingleCycleSystemProgram##NUMBER##Test>( \
+        m, \
+        "RV32ISingleCycleSystemProgram" #NUMBER "Test", \
+        "Structural RV32I system program " #NUMBER " lockstep scenario.");
+    BIND_STRUCTURAL_RV32I_PROGRAM(1)
+    BIND_STRUCTURAL_RV32I_PROGRAM(2)
+    BIND_STRUCTURAL_RV32I_PROGRAM(3)
+    BIND_STRUCTURAL_RV32I_PROGRAM(4)
+    BIND_STRUCTURAL_RV32I_PROGRAM(5)
+    BIND_STRUCTURAL_RV32I_PROGRAM(6)
+    BIND_STRUCTURAL_RV32I_PROGRAM(7)
+    BIND_STRUCTURAL_RV32I_PROGRAM(8)
+    BIND_STRUCTURAL_RV32I_PROGRAM(9)
+    BIND_STRUCTURAL_RV32I_PROGRAM(10)
+    BIND_STRUCTURAL_RV32I_PROGRAM(11)
+    BIND_STRUCTURAL_RV32I_PROGRAM(12)
+    BIND_STRUCTURAL_RV32I_PROGRAM(13)
+    BIND_STRUCTURAL_RV32I_PROGRAM(14)
+    BIND_STRUCTURAL_RV32I_PROGRAM(15)
+    BIND_STRUCTURAL_RV32I_PROGRAM(16)
+#undef BIND_STRUCTURAL_RV32I_PROGRAM
 
     m.def("get_registered_test_names", &getRegisteredTestNames, "Returns test names available through the C++ test registry.");
 }

@@ -1021,13 +1021,13 @@ Focus:
 
 - instruction address misalignment
 - `JALR` target masking behavior
-- trap happens on the attempted fetch after PC is changed
+- trap is reported by the `JALR` before the target or link-register write is committed
 
 C intent:
 
 ```c
 void program15_misaligned_fetch(void) {
-    /* Intent: jump to byte address 2 and trap on the next fetch. */
+    /* Intent: attempt to jump to byte address 2; JALR itself traps. */
     ((void (*)(void))2)();
 }
 ```
@@ -1036,14 +1036,15 @@ Assembly:
 
 ```asm
     addi x1, x0, 2
-    jalr x0, 0(x1)         # next PC = 0x00000002
+    jalr x0, 0(x1)         # target 0x00000002 is not 4-byte aligned
 ```
 
 Expected key result:
 
 ```text
-first committed instruction is JALR
-next attempted fetch traps
+ADDI commits normally
+JALR raises the trap at PC 0x00000004
+PC remains 0x00000004; address 0x00000002 is never fetched
 trap_cause = InstructionAddressMisaligned
 halted = false
 ```
@@ -1087,8 +1088,9 @@ Assembly:
 Expected key result:
 
 ```text
-first committed instruction is JALR
-next attempted fetch traps
+LUI and JALR commit normally
+PC becomes 0x00040000
+the next attempted fetch traps
 trap_cause = InstructionAccessFault
 halted = false
 ```
@@ -1105,8 +1107,8 @@ These programs cover the implemented RV32I base instruction groups:
 | loads | Programs 1, 3, 8, 11, 13 |
 | stores | Programs 1, 3, 7, 8, 12, 14 |
 | branches | Programs 1, 4, 7, 8 |
-| jumps | Programs 5, 15 |
-| `LUI` | Programs 6, 13, 14, 15 |
+| jumps | Programs 4, 5, 15, 16 |
+| `LUI` | Programs 6, 13, 14, 16 |
 | `AUIPC` | Program 6 |
 | `FENCE` | Program 6 |
 | `ECALL` | Program 10 |

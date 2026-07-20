@@ -257,6 +257,7 @@ void BehavioralMemory64Kx32::clearContents() {
         history.clear();
     }
     reset_history.clear();
+    bus_write_history.clear();
     tracked_word_indices.clear();
     std::fill(tracked_words.begin(), tracked_words.end(), 0);
     history_order = 0;
@@ -413,6 +414,11 @@ void BehavioralMemory64Kx32::evaluate(size_t current_time, Simulator& simulator)
             if (fault == LogicValue::LOW && address_known && size_known && width > 0) {
                 for (size_t byte = 0; byte < width; ++byte) {
                     copyWriteByte(bytes, address, byte, write_data);
+                    bus_write_history.push_back({
+                        current_time,
+                        static_cast<uint32_t>(address + byte),
+                        bytes[static_cast<size_t>(address) + byte],
+                    });
                 }
                 recordRangeHistory(current_time, static_cast<size_t>(address), width);
             }
@@ -505,6 +511,24 @@ std::vector<BehavioralMemory64Kx32::MemoryWordState> BehavioralMemory64Kx32::get
         result.emplace_back(address, wordAtTime(target_time, address));
     }
     return result;
+}
+
+std::map<uint32_t, uint8_t> BehavioralMemory64Kx32::getByteWritesInTimeRange(
+    size_t start_time_exclusive,
+    size_t end_time_inclusive
+) const {
+    if (end_time_inclusive < start_time_exclusive) {
+        throw std::invalid_argument("BehavioralMemory64Kx32 write-history range runs backward");
+    }
+
+    std::map<uint32_t, uint8_t> writes;
+    for (const auto& entry : bus_write_history) {
+        if (entry.time <= start_time_exclusive || entry.time > end_time_inclusive) {
+            continue;
+        }
+        writes[entry.address] = byteToUInt8(entry.value);
+    }
+    return writes;
 }
 
 void BehavioralMemory64Kx32::recordByteHistory(size_t time, size_t address) {

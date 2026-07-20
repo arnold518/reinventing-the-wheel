@@ -7,8 +7,11 @@
 #include "rv32i/RV32IInstructionOracle.hpp"
 #include "rv32i/RV32IProgram.hpp"
 #include "simulator/Event.hpp"
-#include <cassert>
+#include <initializer_list>
+#include <map>
+#include <stdexcept>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace {
@@ -16,6 +19,12 @@ constexpr uint32_t kFence = 0x0000000FU;
 constexpr uint32_t kECall = 0x00000073U;
 constexpr uint32_t kEBreak = 0x00100073U;
 constexpr uint32_t kIllegalInstruction = 0xFFFFFFFFU;
+
+void require(bool condition, const std::string& message) {
+    if (!condition) {
+        throw std::runtime_error(message);
+    }
+}
 
 uint32_t maskSigned(int32_t value, unsigned bits) {
     return static_cast<uint32_t>(value) & ((uint32_t{1} << bits) - 1);
@@ -110,15 +119,16 @@ size_t expectedInstructionCount(const RV32ISystemProgramCase& test_case) {
     }
     state.forceX0();
 
-    rv32i::RV32IFunctionalMemory memory(test_case.memory_size_bytes);
-    memory.loadProgram(test_case.program, test_case.program_base);
+    rv32i::RV32IFunctionalMemory instruction_memory(test_case.memory_size_bytes);
+    instruction_memory.loadProgram(test_case.program, test_case.program_base);
+    rv32i::RV32IFunctionalMemory data_memory(test_case.memory_size_bytes);
     for (const auto& data : test_case.initial_data) {
-        memory.loadBytes(data.address, data.bytes);
+        data_memory.loadBytes(data.address, data.bytes);
     }
 
     size_t instruction_count = 0;
     while (!state.halted && !state.trapped && instruction_count < test_case.max_instructions) {
-        rv32i::RV32IInstructionOracle::step(state, memory);
+        rv32i::RV32IInstructionOracle::step(state, instruction_memory, data_memory);
         ++instruction_count;
     }
     return instruction_count;
@@ -136,12 +146,58 @@ RV32ISystemProgramCase makeProgramCase(const std::string& name,
     return test_case;
 }
 
+void setExpectedResult(
+    RV32ISystemProgramCase& test_case,
+    uint32_t pc,
+    uint64_t instruction_count,
+    bool halted,
+    bool trapped,
+    rv32i::RV32IExecutionTrapCause trap_cause,
+    std::initializer_list<RV32IExpectedRegisterValue> registers,
+    std::map<uint32_t, uint8_t> bus_writes
+) {
+    auto& expected = test_case.expected_result;
+    expected.defined = true;
+    expected.pc = pc;
+    expected.instruction_count = instruction_count;
+    expected.halted = halted;
+    expected.trapped = trapped;
+    expected.trap_cause = trap_cause;
+    expected.registers.assign(registers.begin(), registers.end());
+    expected.bus_writes = std::move(bus_writes);
+}
+
+void appendExpectedWrite(
+    std::map<uint32_t, uint8_t>& writes,
+    uint32_t address,
+    uint32_t value,
+    size_t byte_count
+) {
+    for (size_t byte = 0; byte < byte_count; ++byte) {
+        writes[static_cast<uint32_t>(address + byte)] =
+            static_cast<uint8_t>((value >> (byte * 8)) & 0xffU);
+    }
+}
+
+std::map<uint32_t, uint8_t> expectedWordWrites(
+    uint32_t base_address,
+    std::initializer_list<uint32_t> words
+) {
+    std::map<uint32_t, uint8_t> writes;
+    size_t index = 0;
+    for (const auto word : words) {
+        appendExpectedWrite(writes, static_cast<uint32_t>(base_address + index * 4), word, 4);
+        ++index;
+    }
+    return writes;
+}
+
 uint32_t logicWordToUInt32(const std::vector<LogicValue>& word) {
-    assert(word.size() == 32 && "RV32I memory word should contain 32 logic values");
+    require(word.size() == 32, "RV32I memory word should contain 32 logic values");
     uint32_t result = 0;
     for (size_t bit = 0; bit < word.size(); ++bit) {
-        assert((word[bit] == LogicValue::HIGH || word[bit] == LogicValue::LOW)
-               && "RV32I memory word should be known for this check");
+        require(word[bit] == LogicValue::HIGH || word[bit] == LogicValue::LOW,
+                "RV32I memory word should be known for this check");
         if (word[bit] == LogicValue::HIGH) {
             result |= uint32_t{1} << bit;
         }
@@ -163,10 +219,10 @@ size_t BehavioralRV32ISystemProgramTestBase::getRunDuration() const {
 
 void BehavioralRV32ISystemProgramTestBase::buildCircuit() {
     system_ = std::dynamic_pointer_cast<RV32ISystem>(root);
-    assert(system_ && "behavioral RV32I system program test requires RV32ISystem root");
+    require(system_ != nullptr, "behavioral RV32I system program test requires RV32ISystem root");
 
     auto io_root = std::dynamic_pointer_cast<IOComponent>(root);
-    assert(io_root && "behavioral RV32I system program test requires IOComponent root");
+    require(io_root != nullptr, "behavioral RV32I system program test requires IOComponent root");
 
     clk_wire_ = builder->addNewWire("CLK_IN", nullptr, {io_root->getInputPin("CLK")});
     rst_wire_ = builder->addNewWire("RST_IN", nullptr, {io_root->getInputPin("RST")});
@@ -229,6 +285,18 @@ RV32ISystemProgramCase BehavioralRV32ISystemProgram1Test::getCase() const {
             0x0b, 0x00, 0x00, 0x00,
         },
     });
+    auto expected_writes = expectedWordWrites(0x120, {0x0000001aU});
+    appendExpectedWrite(expected_writes, 0x124, 0x1a, 1);
+    appendExpectedWrite(expected_writes, 0x126, 0x4e, 2);
+    setExpectedResult(
+        test_case,
+        0x34,
+        29,
+        true,
+        false,
+        rv32i::RV32IExecutionTrapCause::None,
+        {{1, 0x110}, {2, 0}, {3, 26}, {5, 0x120}, {6, 78}},
+        std::move(expected_writes));
     return test_case;
 }
 
@@ -291,7 +359,7 @@ RV32ISystemProgramCase BehavioralRV32ISystemProgram2Test::getCase() const {
      *   sw   x17, 52(x20)
      *   ebreak
      */
-    return makeProgramCase("BehavioralRV32ISystemProgram2Test", {
+    auto test_case = makeProgramCase("BehavioralRV32ISystemProgram2Test", {
         encodeI(0x55, 0, 0x0, 1),             // addi x1, x0, 0x55
         encodeI(0x0f, 0, 0x0, 2),             // addi x2, x0, 0x0f
         encodeI(-8, 0, 0x0, 10),              // addi x10, x0, -8
@@ -328,13 +396,30 @@ RV32ISystemProgramCase BehavioralRV32ISystemProgram2Test::getCase() const {
         encodeS(52, 17, 20, 0x2),             // sw x17, 52(x20)
         kEBreak,                              // ebreak
     }, 48);
+    setExpectedResult(
+        test_case,
+        0x88,
+        35,
+        true,
+        false,
+        rv32i::RV32IExecutionTrapCause::None,
+        {{0, 0}, {3, 0x64}, {4, 0x46}, {8, 0xf0}, {9, 0x3c},
+         {11, 0xfffffffcU}, {12, 1}, {13, 0}, {14, 0x166}, {15, 0x15},
+         {16, 1}, {17, 0}},
+        expectedWordWrites(0x200, {
+            0x00000064U, 0x00000046U, 0x00000005U, 0x0000005fU,
+            0x0000005aU, 0x000000f0U, 0x0000003cU, 0xfffffffcU,
+            0x00000001U, 0x00000000U, 0x00000166U, 0x00000015U,
+            0x00000001U, 0x00000000U,
+        }));
+    return test_case;
 }
 
 void BehavioralRV32ISystemProgram2Test::verifyResults() {
-    RV32IInstructionLockstepTest::verifyResults();
+    BehavioralRV32ISystemProgramTestBase::verifyResults();
 
     auto memory = dataMemoryForTest();
-    assert(memory && "BehavioralRV32ISystemProgram2Test requires data memory");
+    require(memory != nullptr, "BehavioralRV32ISystemProgram2Test requires data memory");
 
     constexpr uint32_t base_address = 0x00000200U;
     const uint32_t expected_values[] = {
@@ -356,15 +441,15 @@ void BehavioralRV32ISystemProgram2Test::verifyResults() {
     constexpr size_t expected_count = sizeof(expected_values) / sizeof(expected_values[0]);
 
     const auto touched = memory->getTouchedWordsAtTime(1000, BehavioralMemory64Kx32::capacityWords());
-    assert(touched.size() == expected_count
-           && "Program 2 data memory should record every consecutive store as a touched word");
+    require(touched.size() == expected_count,
+            "Program 2 data memory should record every consecutive store as a touched word");
 
     for (size_t index = 0; index < expected_count; ++index) {
         const auto expected_address = static_cast<uint32_t>(base_address + index * 4);
-        assert(touched[index].first == expected_address
-               && "Program 2 touched word address should match consecutive store address");
-        assert(logicWordToUInt32(touched[index].second) == expected_values[index]
-               && "Program 2 touched word value should match stored register value");
+        require(touched[index].first == expected_address,
+                "Program 2 touched word address should match consecutive store address");
+        require(logicWordToUInt32(touched[index].second) == expected_values[index],
+                "Program 2 touched word value should match stored register value");
     }
 }
 
@@ -428,6 +513,26 @@ RV32ISystemProgramCase BehavioralRV32ISystemProgram3Test::getCase() const {
         0x100,
         {0x80, 0x7f, 0x00, 0x00, 0x80, 0xff, 0x00, 0x00, 0x21, 0x43, 0x65, 0x87},
     });
+    auto expected_writes = expectedWordWrites(0x120, {
+        0xffffff80U,
+        0x00000080U,
+        0x0000007fU,
+        0xffffff80U,
+        0x0000ff80U,
+        0x87654321U,
+    });
+    appendExpectedWrite(expected_writes, 0x138, 0x80, 1);
+    appendExpectedWrite(expected_writes, 0x13a, 0xff80, 2);
+    setExpectedResult(
+        test_case,
+        0x40,
+        17,
+        true,
+        false,
+        rv32i::RV32IExecutionTrapCause::None,
+        {{2, 0xffffff80U}, {3, 0x80}, {4, 0x7f}, {5, 0xffffff80U},
+         {6, 0xff80}, {7, 0x87654321U}},
+        std::move(expected_writes));
     return test_case;
 }
 
@@ -485,7 +590,7 @@ RV32ISystemProgramCase BehavioralRV32ISystemProgram4Test::getCase() const {
      *   sw   x10, 0(x11)
      *   ebreak
      */
-    return makeProgramCase("BehavioralRV32ISystemProgram4Test", {
+    auto test_case = makeProgramCase("BehavioralRV32ISystemProgram4Test", {
         encodeI(0, 0, 0x0, 10),          // addi x10, x0, 0
         encodeI(5, 0, 0x0, 1),           // addi x1, x0, 5
         encodeI(5, 0, 0x0, 2),           // addi x2, x0, 5
@@ -518,6 +623,16 @@ RV32ISystemProgramCase BehavioralRV32ISystemProgram4Test::getCase() const {
         encodeS(0, 10, 11, 0x2),         // sw x10, 0(x11)
         kEBreak,                         // ebreak
     }, 40);
+    setExpectedResult(
+        test_case,
+        0x78,
+        24,
+        true,
+        false,
+        rv32i::RV32IExecutionTrapCause::None,
+        {{10, 7}, {11, 0x120}},
+        expectedWordWrites(0x120, {7}));
+    return test_case;
 }
 
 RV32ISystemProgramCase BehavioralRV32ISystemProgram5Test::getCase() const {
@@ -543,7 +658,7 @@ RV32ISystemProgramCase BehavioralRV32ISystemProgram5Test::getCase() const {
      * done:
      *   ebreak
      */
-    return makeProgramCase("BehavioralRV32ISystemProgram5Test", {
+    auto test_case = makeProgramCase("BehavioralRV32ISystemProgram5Test", {
         encodeI(0x120, 0, 0x0, 1),       // addi x1, x0, 0x120
         encodeJ(12, 5),                  // jal x5, helper_a
         encodeS(0, 10, 1, 0x2),          // sw x10, 0(x1)
@@ -556,23 +671,35 @@ RV32ISystemProgramCase BehavioralRV32ISystemProgram5Test::getCase() const {
         encodeJALR(0, 6, 0),             // jalr x0, 0(x6)
         kEBreak,                         // done: ebreak
     }, 20);
+    setExpectedResult(
+        test_case,
+        0x28,
+        11,
+        true,
+        false,
+        rv32i::RV32IExecutionTrapCause::None,
+        {{5, 0x08}, {6, 0x18}, {10, 43}},
+        expectedWordWrites(0x120, {43}));
+    return test_case;
 }
 
 void BehavioralRV32ISystemProgram5Test::verifyResults() {
-    RV32IInstructionLockstepTest::verifyResults();
+    BehavioralRV32ISystemProgramTestBase::verifyResults();
 
     auto memory = dataMemoryForTest();
-    assert(memory && "BehavioralRV32ISystemProgram5Test requires data memory");
+    require(memory != nullptr, "BehavioralRV32ISystemProgram5Test requires data memory");
 
     const auto before_visible_write = memory->getTouchedWordsAtTime(81, BehavioralMemory64Kx32::capacityWords());
-    assert(before_visible_write.empty()
-           && "Program 5 data memory write must not appear before the delayed write bus is visible");
+    require(before_visible_write.empty(),
+            "Program 5 data memory write must not appear before the delayed write bus is visible");
 
     const auto at_visible_write = memory->getTouchedWordsAtTime(82, BehavioralMemory64Kx32::capacityWords());
-    assert(at_visible_write.size() == 1 && "Program 5 data memory should have one touched word at visible write time");
-    assert(at_visible_write[0].first == 0x00000120U && "Program 5 data memory should touch address 0x120");
-    assert(logicWordToUInt32(at_visible_write[0].second) == 0x0000002bU
-           && "Program 5 data memory should store helper result 43");
+    require(at_visible_write.size() == 1,
+            "Program 5 data memory should have one touched word at visible write time");
+    require(at_visible_write[0].first == 0x00000120U,
+            "Program 5 data memory should touch address 0x120");
+    require(logicWordToUInt32(at_visible_write[0].second) == 0x0000002bU,
+            "Program 5 data memory should store helper result 43");
 }
 
 RV32ISystemProgramCase BehavioralRV32ISystemProgram6Test::getCase() const {
@@ -597,7 +724,7 @@ RV32ISystemProgramCase BehavioralRV32ISystemProgram6Test::getCase() const {
      *   sw   x3, 8(x4)
      *   ebreak
      */
-    return makeProgramCase("BehavioralRV32ISystemProgram6Test", {
+    auto test_case = makeProgramCase("BehavioralRV32ISystemProgram6Test", {
         encodeLUI(0x12345000, 1),        // lui x1, 0x12345
         encodeI(0x678, 1, 0x0, 1),       // addi x1, x1, 0x678
         encodeAUIPC(0, 2),               // auipc x2, 0
@@ -609,6 +736,16 @@ RV32ISystemProgramCase BehavioralRV32ISystemProgram6Test::getCase() const {
         encodeS(8, 3, 4, 0x2),           // sw x3, 8(x4)
         kEBreak,                         // ebreak
     }, 16);
+    setExpectedResult(
+        test_case,
+        0x24,
+        10,
+        true,
+        false,
+        rv32i::RV32IExecutionTrapCause::None,
+        {{1, 0x12345678U}, {2, 0x08}, {3, 0x100c}},
+        expectedWordWrites(0x120, {0x12345678U, 0x08, 0x100c}));
+    return test_case;
 }
 
 RV32ISystemProgramCase BehavioralRV32ISystemProgram7Test::getCase() const {
@@ -637,7 +774,7 @@ RV32ISystemProgramCase BehavioralRV32ISystemProgram7Test::getCase() const {
      *   bne  x2, x0, fib_loop
      *   ebreak
      */
-    return makeProgramCase("BehavioralRV32ISystemProgram7Test", {
+    auto test_case = makeProgramCase("BehavioralRV32ISystemProgram7Test", {
         encodeI(0x120, 0, 0x0, 1),       // addi x1, x0, 0x120
         encodeI(8, 0, 0x0, 2),           // addi x2, x0, 8
         encodeI(0, 0, 0x0, 3),           // addi x3, x0, 0
@@ -651,6 +788,16 @@ RV32ISystemProgramCase BehavioralRV32ISystemProgram7Test::getCase() const {
         encodeB(-24, 0, 2, 0x1),         // bne x2, x0, fib_loop
         kEBreak,                         // ebreak
     }, 80);
+    setExpectedResult(
+        test_case,
+        0x2c,
+        61,
+        true,
+        false,
+        rv32i::RV32IExecutionTrapCause::None,
+        {{1, 0x140}, {2, 0}, {3, 21}, {4, 34}},
+        expectedWordWrites(0x120, {0, 1, 1, 2, 3, 5, 8, 13}));
+    return test_case;
 }
 
 RV32ISystemProgramCase BehavioralRV32ISystemProgram8Test::getCase() const {
@@ -698,6 +845,23 @@ RV32ISystemProgramCase BehavioralRV32ISystemProgram8Test::getCase() const {
         kEBreak,                         // ebreak
     }, 60);
     test_case.initial_data.push_back({0x100, {0x01, 0x02, 0x03, 0x04, 0xff}});
+    std::map<uint32_t, uint8_t> expected_writes{
+        {0x140, 0x01},
+        {0x141, 0x02},
+        {0x142, 0x03},
+        {0x143, 0x04},
+        {0x144, 0xff},
+    };
+    appendExpectedWrite(expected_writes, 0x160, 0x109, 4);
+    setExpectedResult(
+        test_case,
+        0x34,
+        42,
+        true,
+        false,
+        rv32i::RV32IExecutionTrapCause::None,
+        {{1, 0x105}, {2, 0x145}, {3, 0}, {4, 0x109}},
+        std::move(expected_writes));
     return test_case;
 }
 
@@ -713,11 +877,21 @@ RV32ISystemProgramCase BehavioralRV32ISystemProgram9Test::getCase() const {
      *   .word 0xffffffff
      *   addi x2, x0, 2
      */
-    return makeProgramCase("BehavioralRV32ISystemProgram9Test", {
+    auto test_case = makeProgramCase("BehavioralRV32ISystemProgram9Test", {
         encodeI(1, 0, 0x0, 1),           // addi x1, x0, 1
         kIllegalInstruction,             // illegal instruction
         encodeI(2, 0, 0x0, 2),           // addi x2, x0, 2
     }, 4);
+    setExpectedResult(
+        test_case,
+        0x04,
+        2,
+        false,
+        true,
+        rv32i::RV32IExecutionTrapCause::IllegalInstruction,
+        {{1, 1}, {2, 0}},
+        {});
+    return test_case;
 }
 
 RV32ISystemProgramCase BehavioralRV32ISystemProgram10Test::getCase() const {
@@ -732,11 +906,21 @@ RV32ISystemProgramCase BehavioralRV32ISystemProgram10Test::getCase() const {
      *   ecall
      *   addi x2, x0, 2
      */
-    return makeProgramCase("BehavioralRV32ISystemProgram10Test", {
+    auto test_case = makeProgramCase("BehavioralRV32ISystemProgram10Test", {
         encodeI(1, 0, 0x0, 1),           // addi x1, x0, 1
         kECall,                          // ecall
         encodeI(2, 0, 0x0, 2),           // addi x2, x0, 2
     }, 4);
+    setExpectedResult(
+        test_case,
+        0x04,
+        2,
+        false,
+        true,
+        rv32i::RV32IExecutionTrapCause::EnvironmentCall,
+        {{1, 1}, {2, 0}},
+        {});
+    return test_case;
 }
 
 RV32ISystemProgramCase BehavioralRV32ISystemProgram11Test::getCase() const {
@@ -750,11 +934,21 @@ RV32ISystemProgramCase BehavioralRV32ISystemProgram11Test::getCase() const {
      *   lw   x2, 0(x1)
      *   ebreak
      */
-    return makeProgramCase("BehavioralRV32ISystemProgram11Test", {
+    auto test_case = makeProgramCase("BehavioralRV32ISystemProgram11Test", {
         encodeI(0x101, 0, 0x0, 1),       // addi x1, x0, 0x101
         encodeI(0, 1, 0x2, 2, 0x03),     // lw x2, 0(x1)
         kEBreak,                         // ebreak; must not execute
     }, 4);
+    setExpectedResult(
+        test_case,
+        0x04,
+        2,
+        false,
+        true,
+        rv32i::RV32IExecutionTrapCause::LoadAddressMisaligned,
+        {{1, 0x101}, {2, 0}},
+        {});
+    return test_case;
 }
 
 RV32ISystemProgramCase BehavioralRV32ISystemProgram12Test::getCase() const {
@@ -769,12 +963,22 @@ RV32ISystemProgramCase BehavioralRV32ISystemProgram12Test::getCase() const {
      *   sh   x2, 0(x1)
      *   ebreak
      */
-    return makeProgramCase("BehavioralRV32ISystemProgram12Test", {
+    auto test_case = makeProgramCase("BehavioralRV32ISystemProgram12Test", {
         encodeI(0x101, 0, 0x0, 1),       // addi x1, x0, 0x101
         encodeI(0x123, 0, 0x0, 2),       // addi x2, x0, 0x123
         encodeS(0, 2, 1, 0x1),           // sh x2, 0(x1)
         kEBreak,                         // ebreak; must not execute
     }, 5);
+    setExpectedResult(
+        test_case,
+        0x08,
+        3,
+        false,
+        true,
+        rv32i::RV32IExecutionTrapCause::StoreAddressMisaligned,
+        {{1, 0x101}, {2, 0x123}},
+        {});
+    return test_case;
 }
 
 RV32ISystemProgramCase BehavioralRV32ISystemProgram13Test::getCase() const {
@@ -788,11 +992,21 @@ RV32ISystemProgramCase BehavioralRV32ISystemProgram13Test::getCase() const {
      *   lw   x2, 0(x1)
      *   ebreak
      */
-    return makeProgramCase("BehavioralRV32ISystemProgram13Test", {
+    auto test_case = makeProgramCase("BehavioralRV32ISystemProgram13Test", {
         encodeLUI(0x00040000, 1),        // lui x1, 0x40
         encodeI(0, 1, 0x2, 2, 0x03),     // lw x2, 0(x1)
         kEBreak,                         // ebreak; must not execute
     }, 4);
+    setExpectedResult(
+        test_case,
+        0x04,
+        2,
+        false,
+        true,
+        rv32i::RV32IExecutionTrapCause::LoadAccessFault,
+        {{1, 0x00040000}, {2, 0}},
+        {});
+    return test_case;
 }
 
 RV32ISystemProgramCase BehavioralRV32ISystemProgram14Test::getCase() const {
@@ -807,28 +1021,49 @@ RV32ISystemProgramCase BehavioralRV32ISystemProgram14Test::getCase() const {
      *   sw   x2, 0(x1)
      *   ebreak
      */
-    return makeProgramCase("BehavioralRV32ISystemProgram14Test", {
+    auto test_case = makeProgramCase("BehavioralRV32ISystemProgram14Test", {
         encodeLUI(0x00040000, 1),        // lui x1, 0x40
         encodeI(0x7b, 0, 0x0, 2),        // addi x2, x0, 0x7b
         encodeS(0, 2, 1, 0x2),           // sw x2, 0(x1)
         kEBreak,                         // ebreak; must not execute
     }, 5);
+    setExpectedResult(
+        test_case,
+        0x08,
+        3,
+        false,
+        true,
+        rv32i::RV32IExecutionTrapCause::StoreAccessFault,
+        {{1, 0x00040000}, {2, 0x7b}},
+        {});
+    return test_case;
 }
 
 RV32ISystemProgramCase BehavioralRV32ISystemProgram15Test::getCase() const {
     /*
      * C code:
      *   ((void (*)(void))2)();
-     *   Jump to byte address 2; the next attempted fetch traps because PC is not word-aligned.
+     *   Attempt to jump to byte address 2. RV32I reports the instruction-address-
+     *   misaligned exception on JALR itself, so the target is never committed.
      *
      * Assembly:
      *   addi x1, x0, 2
      *   jalr x0, 0(x1)
      */
-    return makeProgramCase("BehavioralRV32ISystemProgram15Test", {
+    auto test_case = makeProgramCase("BehavioralRV32ISystemProgram15Test", {
         encodeI(2, 0, 0x0, 1),           // addi x1, x0, 2
         encodeJALR(0, 1, 0),             // jalr x0, 0(x1)
     }, 4);
+    setExpectedResult(
+        test_case,
+        0x04,
+        2,
+        false,
+        true,
+        rv32i::RV32IExecutionTrapCause::InstructionAddressMisaligned,
+        {{1, 2}},
+        {});
+    return test_case;
 }
 
 RV32ISystemProgramCase BehavioralRV32ISystemProgram16Test::getCase() const {
@@ -841,14 +1076,73 @@ RV32ISystemProgramCase BehavioralRV32ISystemProgram16Test::getCase() const {
      *   lui  x1, 0x40
      *   jalr x0, 0(x1)
      */
-    return makeProgramCase("BehavioralRV32ISystemProgram16Test", {
+    auto test_case = makeProgramCase("BehavioralRV32ISystemProgram16Test", {
         encodeLUI(0x00040000, 1),        // lui x1, 0x40
         encodeJALR(0, 1, 0),             // jalr x0, 0(x1)
     }, 4);
+    setExpectedResult(
+        test_case,
+        0x00040000,
+        3,
+        false,
+        true,
+        rv32i::RV32IExecutionTrapCause::InstructionAccessFault,
+        {{1, 0x00040000}},
+        {});
+    return test_case;
+}
+
+RV32ISystemProgramCase rv32iSystemProgramCase(size_t program_number) {
+    switch (program_number) {
+        case 1: return BehavioralRV32ISystemProgram1Test{}.getCase();
+        case 2: return BehavioralRV32ISystemProgram2Test{}.getCase();
+        case 3: return BehavioralRV32ISystemProgram3Test{}.getCase();
+        case 4: return BehavioralRV32ISystemProgram4Test{}.getCase();
+        case 5: return BehavioralRV32ISystemProgram5Test{}.getCase();
+        case 6: return BehavioralRV32ISystemProgram6Test{}.getCase();
+        case 7: return BehavioralRV32ISystemProgram7Test{}.getCase();
+        case 8: return BehavioralRV32ISystemProgram8Test{}.getCase();
+        case 9: return BehavioralRV32ISystemProgram9Test{}.getCase();
+        case 10: return BehavioralRV32ISystemProgram10Test{}.getCase();
+        case 11: return BehavioralRV32ISystemProgram11Test{}.getCase();
+        case 12: return BehavioralRV32ISystemProgram12Test{}.getCase();
+        case 13: return BehavioralRV32ISystemProgram13Test{}.getCase();
+        case 14: return BehavioralRV32ISystemProgram14Test{}.getCase();
+        case 15: return BehavioralRV32ISystemProgram15Test{}.getCase();
+        case 16: return BehavioralRV32ISystemProgram16Test{}.getCase();
+        default: throw std::out_of_range("RV32I program number must be in [1, 16]");
+    }
+}
+
+void verifyRV32ISystemExpectedResult(
+    const RV32ISystemProgramCase& test_case,
+    const rv32i::RV32IState& state,
+    const BehavioralMemory64Kx32& data_memory,
+    size_t current_time,
+    const std::string& test_name
+) {
+    const auto& expected = test_case.expected_result;
+    require(expected.defined, test_name + " requires independent final expectations");
+    require(state.pc == expected.pc, test_name + " final PC does not match hard-coded expectation");
+    require(state.instruction_count == expected.instruction_count,
+            test_name + " instruction count does not match hard-coded expectation");
+    require(state.halted == expected.halted,
+            test_name + " halt state does not match hard-coded expectation");
+    require(state.trapped == expected.trapped,
+            test_name + " trap state does not match hard-coded expectation");
+    require(state.trap_cause == expected.trap_cause,
+            test_name + " trap cause does not match hard-coded expectation");
+    for (const auto& reg : expected.registers) {
+        require(state.readRegister(reg.index) == reg.value,
+                test_name + " x" + std::to_string(reg.index)
+                    + " does not match hard-coded expectation");
+    }
+    require(data_memory.getByteWritesInTimeRange(0, current_time) == expected.bus_writes,
+            test_name + " aggregate bus writes do not match hard-coded expectation");
 }
 
 void BehavioralRV32ISystemProgramTestBase::initializeComponentForLockstep(const RV32ISystemProgramCase& test_case) {
-    assert(system_ && "behavioral RV32I system program test system is not initialized");
+    require(system_ != nullptr, "behavioral RV32I system program test system is not initialized");
 
     system_->clearInstructionMemory();
     system_->clearDataMemory();
@@ -860,6 +1154,7 @@ void BehavioralRV32ISystemProgramTestBase::initializeComponentForLockstep(const 
     for (const auto& data : test_case.initial_data) {
         system_->loadDataBytes(data.address, data.bytes);
     }
+    last_observed_memory_time_ = sim->getCurrentTime();
 
     drive(*sim, 0, clk_wire_, false);
     drive(*sim, 0, rst_wire_, false);
@@ -878,21 +1173,140 @@ void BehavioralRV32ISystemProgramTestBase::clockComponentOneCycle(size_t cycle_i
 }
 
 rv32i::RV32IState BehavioralRV32ISystemProgramTestBase::snapshotComponentState() const {
-    assert(system_ && "behavioral RV32I system program test system is not initialized");
+    require(system_ != nullptr, "behavioral RV32I system program test system is not initialized");
     return system_->snapshotState();
 }
 
 rv32i::RV32IMemoryTrace BehavioralRV32ISystemProgramTestBase::lastDataMemoryAccess() const {
-    assert(system_ && "behavioral RV32I system program test system is not initialized");
+    require(system_ != nullptr, "behavioral RV32I system program test system is not initialized");
     return system_->lastDataMemoryAccess();
 }
 
 std::map<uint32_t, uint8_t> BehavioralRV32ISystemProgramTestBase::lastDataMemoryWrites() const {
-    assert(system_ && "behavioral RV32I system program test system is not initialized");
-    return system_->lastDataMemoryWrites();
+    require(system_ != nullptr, "behavioral RV32I system program test system is not initialized");
+    const auto memory = system_->dataMemory();
+    require(memory != nullptr, "behavioral RV32I system program test requires data memory");
+
+    const auto current_time = sim->getCurrentTime();
+    const auto writes = memory->getByteWritesInTimeRange(last_observed_memory_time_, current_time);
+    last_observed_memory_time_ = current_time;
+    return writes;
 }
 
 std::shared_ptr<BehavioralMemory64Kx32> BehavioralRV32ISystemProgramTestBase::dataMemoryForTest() const {
-    assert(system_ && "behavioral RV32I system program test system is not initialized");
+    require(system_ != nullptr, "behavioral RV32I system program test system is not initialized");
     return system_->dataMemory();
+}
+
+void BehavioralRV32ISystemProgramTestBase::verifyResults() {
+    RV32IInstructionLockstepTest::verifyResults();
+    const auto memory = dataMemoryForTest();
+    require(memory != nullptr, getTestName() + " requires data memory for final write verification");
+    verifyRV32ISystemExpectedResult(
+        getCase(), snapshotComponentState(), *memory, sim->getCurrentTime(), getTestName());
+}
+
+void BehavioralRV32ISystemContractTest::setupCircuit() {
+    root = Component::create<RV32ISystem>("RV32I_SYSTEM_CONTRACT_ROOT");
+    builder = std::make_unique<ComponentBuilder>(root);
+    buildCircuit();
+    setInitialState();
+}
+
+std::string BehavioralRV32ISystemContractTest::getTestName() const {
+    return "BehavioralRV32ISystemContractTest";
+}
+
+void BehavioralRV32ISystemContractTest::buildCircuit() {
+    system_ = std::dynamic_pointer_cast<RV32ISystem>(root);
+    require(system_ != nullptr, "behavioral RV32I contract test requires RV32ISystem root");
+
+    auto io_root = std::dynamic_pointer_cast<IOComponent>(root);
+    require(io_root != nullptr, "behavioral RV32I contract test requires IOComponent root");
+    clk_wire_ = builder->addNewWire("CLK_IN", nullptr, {io_root->getInputPin("CLK")});
+    rst_wire_ = builder->addNewWire("RST_IN", nullptr, {io_root->getInputPin("RST")});
+    enable_wire_ = builder->addNewWire("ENABLE_IN", nullptr, {io_root->getInputPin("ENABLE")});
+    pc_wire_ = builder->addNewWire<32>("PC_OUT", io_root->getOutputPin<32>("PC"), {});
+    halted_wire_ = builder->addNewWire("HALTED_OUT", io_root->getOutputPin("HALTED"), {});
+    trapped_wire_ = builder->addNewWire("TRAPPED_OUT", io_root->getOutputPin("TRAPPED"), {});
+}
+
+void BehavioralRV32ISystemContractTest::setInitialState() {
+    require(system_ != nullptr, "behavioral RV32I contract test system is not initialized");
+    system_->clearInstructionMemory();
+    system_->clearDataMemory();
+    system_->loadProgram(rv32i::RV32IProgram::fromWords({
+        encodeI(0, 0, 0x2, 1, 0x03), // lw x1, 0(x0)
+        kEBreak,
+    }));
+    // The data deliberately overlaps the instruction address. The Harvard
+    // system must read this value from DMEM, not instruction bytes from IMEM.
+    system_->loadDataBytes(0, {0x44, 0x33, 0x22, 0x11});
+    system_->setRegister(5, 0xfeedfaceU);
+
+    drive(*sim, 0, clk_wire_, false);
+    drive(*sim, 0, rst_wire_, true);
+    drive(*sim, 0, enable_wire_, false);
+}
+
+void BehavioralRV32ISystemContractTest::runSimulation() {
+    sim->advanceAndRecord(5);
+    auto state = system_->snapshotState();
+    require(state.pc == 0 && state.instruction_count == 0, "reset must restore pc and instruction count");
+    require(state.readRegister(5) == 0, "reset must clear architectural registers");
+    require(pc_wire_->getValue() == 0, "public PC pin must show reset PC");
+    require(halted_wire_->getSingleValue() == LogicValue::LOW, "HALTED must be low after reset");
+    require(trapped_wire_->getSingleValue() == LogicValue::LOW, "TRAPPED must be low after reset");
+
+    drive(*sim, 6, rst_wire_, false);
+    sim->advanceAndRecord(9);
+
+    scheduleClockCycle(*sim, 10, clk_wire_);
+    sim->advanceAndRecord(19);
+    state = system_->snapshotState();
+    require(state.instruction_count == 0 && state.pc == 0, "ENABLE=LOW must hold the core");
+
+    drive(*sim, 20, enable_wire_, true);
+    scheduleClockCycle(*sim, 20, clk_wire_);
+    sim->advanceAndRecord(29);
+    state = system_->snapshotState();
+    require(state.instruction_count == 1, "enabled rising edge must commit one instruction");
+    require(state.pc == 4, "LW must advance PC to 4");
+    require(state.readRegister(1) == 0x11223344U,
+            "load must read overlapping address from separate data memory");
+    require(pc_wire_->getValue() == 4, "public PC pin must follow committed state");
+
+    drive(*sim, 30, enable_wire_, false);
+    scheduleClockCycle(*sim, 30, clk_wire_);
+    sim->advanceAndRecord(39);
+    state = system_->snapshotState();
+    require(state.instruction_count == 1 && state.pc == 4, "disabled cycle must preserve state");
+
+    drive(*sim, 40, enable_wire_, true);
+    scheduleClockCycle(*sim, 40, clk_wire_);
+    sim->advanceAndRecord(49);
+    state = system_->snapshotState();
+    require(state.instruction_count == 2 && state.halted, "EBREAK must commit the halted state");
+    require(state.pc == 4, "EBREAK must keep its faulting/stopping PC");
+    require(halted_wire_->getSingleValue() == LogicValue::HIGH, "public HALTED pin must assert");
+    require(trapped_wire_->getSingleValue() == LogicValue::LOW, "EBREAK must not assert TRAPPED");
+
+    scheduleClockCycle(*sim, 50, clk_wire_);
+    sim->advanceAndRecord(59);
+    state = system_->snapshotState();
+    require(state.instruction_count == 2 && state.pc == 4, "halted core must ignore later clocks");
+
+    drive(*sim, 60, rst_wire_, true);
+    sim->advanceAndRecord(65);
+    state = system_->snapshotState();
+    require(state.instruction_count == 0 && state.pc == 0, "reset must recover a halted core");
+    require(!state.halted && !state.trapped, "reset must clear halt and trap status");
+    require(pc_wire_->getValue() == 0, "public PC pin must return to reset PC");
+    require(halted_wire_->getSingleValue() == LogicValue::LOW, "public HALTED pin must clear on reset");
+    require(trapped_wire_->getSingleValue() == LogicValue::LOW, "public TRAPPED pin must clear on reset");
+    verified_ = true;
+}
+
+void BehavioralRV32ISystemContractTest::verifyResults() {
+    require(verified_, "behavioral RV32I contract test did not complete all checks");
 }

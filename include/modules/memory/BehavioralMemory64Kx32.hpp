@@ -4,6 +4,7 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
+#include <map>
 #include <utility>
 #include <vector>
 
@@ -35,6 +36,9 @@ public:
     std::vector<MemoryWordState> getOccupiedWordsAtTime(size_t target_time, size_t max_words) const;
     size_t getOccupiedWordCountAtTime(size_t target_time) const;
     std::vector<MemoryWordState> getWordsAtTime(size_t target_time, uint32_t base_address, size_t word_count) const;
+    std::map<uint32_t, uint8_t> getByteWritesInTimeRange(
+        size_t start_time_exclusive,
+        size_t end_time_inclusive) const;
     void writeU8(uint32_t address, uint8_t value);
     void writeU16(uint32_t address, uint16_t value);
     void writeU32(uint32_t address, uint32_t value);
@@ -58,6 +62,11 @@ private:
         size_t order;
         ByteValue value;
     };
+    struct BusWriteHistoryEntry {
+        size_t time;
+        uint32_t address;
+        ByteValue value;
+    };
 
     void recordByteHistory(size_t time, size_t address);
     void recordRangeHistory(size_t time, size_t base_address, size_t count);
@@ -72,6 +81,7 @@ private:
     std::vector<std::array<LogicValue, 8>> bytes;
     std::vector<std::vector<ByteHistoryEntry>> byte_history;
     std::vector<ResetHistoryEntry> reset_history;
+    std::vector<BusWriteHistoryEntry> bus_write_history;
     std::vector<uint32_t> tracked_word_indices;
     std::vector<uint8_t> tracked_words;
     size_t history_order;

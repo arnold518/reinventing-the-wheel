@@ -92,6 +92,16 @@ public:
     Mux2to1_8bitTest();
 };
 
+class Mux2to1_4bitTest : public ComponentRowsTest<Mux2to1_4bit> {
+public:
+    Mux2to1_4bitTest();
+};
+
+class Mux2to1_32bitTest : public ComponentRowsTest<Mux2to1_32bit> {
+public:
+    Mux2to1_32bitTest();
+};
+
 class Mux4to1_8bitTest : public ComponentRowsTest<Mux4to1_8bit> {
 public:
     Mux4to1_8bitTest();
@@ -105,6 +115,11 @@ public:
 class Mux8to1_8bitTest : public ComponentRowsTest<Mux8to1_8bit> {
 public:
     Mux8to1_8bitTest();
+};
+
+class Mux8to1_32bitTest : public ComponentRowsTest<Mux8to1_32bit> {
+public:
+    Mux8to1_32bitTest();
 };
 
 class Mux16to1_8bitTest : public ComponentRowsTest<Mux16to1_8bit> {

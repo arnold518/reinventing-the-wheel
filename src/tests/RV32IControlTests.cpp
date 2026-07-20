@@ -2,9 +2,9 @@
 
 #include "modules/composite/ALU32.hpp"
 #include "rv32i/RV32IControl.hpp"
-#include <cassert>
 #include <cstdint>
 #include <iostream>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -112,8 +112,7 @@ struct Expected {
 };
 
 void fail(const std::string& label, const std::string& field) {
-    std::cerr << "RV32IControlTest failed for " << label << ": " << field << std::endl;
-    assert(false && "RV32I control test failed");
+    throw std::runtime_error("RV32IControlTest failed for " + label + ": " + field);
 }
 
 template <typename T>

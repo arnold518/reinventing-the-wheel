@@ -3,6 +3,7 @@
 #include "modules/composite/AddSub32.hpp"
 #include "modules/composite/Adder32.hpp"
 #include "modules/composite/ALU32.hpp"
+#include "modules/composite/BehavioralALU32.hpp"
 #include "modules/composite/Comparator32.hpp"
 #include "modules/composite/Logic32.hpp"
 #include "modules/composite/Shifter32.hpp"
@@ -42,6 +43,11 @@ public:
 class ALU32Test : public ComponentRowsTest<ALU32> {
 public:
     ALU32Test();
+};
+
+class BehavioralALU32Test : public ComponentRowsTest<BehavioralALU32> {
+public:
+    BehavioralALU32Test();
 };
 
 class RV32IALU32Test : public ComponentRowsTest<ALU32> {

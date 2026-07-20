@@ -2,7 +2,6 @@
 
 #include "components/Component.hpp"
 #include "components/ComponentBuilder.hpp"
-#include <cassert>
 #include <iomanip>
 #include <sstream>
 #include <stdexcept>
@@ -161,9 +160,14 @@ rv32i::RV32IState initialOracleState(const RV32ISystemProgramCase& test_case) {
     return state;
 }
 
-rv32i::RV32IFunctionalMemory initialOracleMemory(const RV32ISystemProgramCase& test_case) {
+rv32i::RV32IFunctionalMemory initialOracleInstructionMemory(const RV32ISystemProgramCase& test_case) {
     rv32i::RV32IFunctionalMemory memory(test_case.memory_size_bytes);
     memory.loadProgram(test_case.program, test_case.program_base);
+    return memory;
+}
+
+rv32i::RV32IFunctionalMemory initialOracleDataMemory(const RV32ISystemProgramCase& test_case) {
+    rv32i::RV32IFunctionalMemory memory(test_case.memory_size_bytes);
     for (const auto& data : test_case.initial_data) {
         memory.loadBytes(data.address, data.bytes);
     }
@@ -178,11 +182,12 @@ std::vector<SimulationTest::SimulationCheckpoint> singleCycleOracleCheckpoints(
     }
 
     auto state = initialOracleState(test_case);
-    auto memory = initialOracleMemory(test_case);
+    auto instruction_memory = initialOracleInstructionMemory(test_case);
+    auto data_memory = initialOracleDataMemory(test_case);
     checkpoints.reserve(test_case.max_instructions);
 
     while (!state.halted && !state.trapped && checkpoints.size() < test_case.max_instructions) {
-        const auto trace = rv32i::RV32IInstructionOracle::step(state, memory);
+        const auto trace = rv32i::RV32IInstructionOracle::step(state, instruction_memory, data_memory);
         const size_t checkpoint_time = (checkpoints.size() + 1) * test_case.cycle_time_step;
         checkpoints.push_back(instructionCheckpoint(trace, checkpoint_time));
     }
@@ -214,6 +219,52 @@ std::map<uint32_t, uint8_t> expandDataMemoryWrites(const rv32i::RV32IMemoryTrace
     return writes;
 }
 
+class IntentionallyWrongRV32ILockstepProbe : public RV32IInstructionLockstepTest {
+protected:
+    void buildCircuit() override {}
+
+    RV32ISystemProgramCase getCase() const override {
+        RV32ISystemProgramCase test_case;
+        test_case.name = "IntentionallyWrongRV32ILockstepProbe";
+        test_case.program = rv32i::RV32IProgram::fromWords({
+            encodeI(1, 0, 0x0, 1),
+            0x00100073U,
+        });
+        test_case.max_instructions = 2;
+        test_case.max_cycles_per_instruction = 1;
+        return test_case;
+    }
+
+    void initializeComponentForLockstep(const RV32ISystemProgramCase& test_case) override {
+        state_ = rv32i::RV32IState{};
+        instruction_memory_ = rv32i::RV32IFunctionalMemory(test_case.memory_size_bytes);
+        instruction_memory_.loadProgram(test_case.program, test_case.program_base);
+        data_memory_ = rv32i::RV32IFunctionalMemory(test_case.memory_size_bytes);
+        last_access_ = {};
+        last_writes_.clear();
+    }
+
+    void clockComponentOneCycle(size_t cycle_index, size_t cycle_start_time) override {
+        (void)cycle_index;
+        (void)cycle_start_time;
+        const auto trace = rv32i::RV32IInstructionOracle::step(state_, instruction_memory_, data_memory_);
+        last_access_ = trace.memory;
+        last_writes_ = expandDataMemoryWrites(trace.memory);
+        state_.writeRegister(31, state_.readRegister(31) ^ 1U);
+    }
+
+    rv32i::RV32IState snapshotComponentState() const override { return state_; }
+    rv32i::RV32IMemoryTrace lastDataMemoryAccess() const override { return last_access_; }
+    std::map<uint32_t, uint8_t> lastDataMemoryWrites() const override { return last_writes_; }
+
+private:
+    rv32i::RV32IState state_{};
+    rv32i::RV32IFunctionalMemory instruction_memory_{};
+    rv32i::RV32IFunctionalMemory data_memory_{};
+    rv32i::RV32IMemoryTrace last_access_{};
+    std::map<uint32_t, uint8_t> last_writes_{};
+};
+
 }
 
 std::string RV32IInstructionLockstepTest::getTestName() const {
@@ -221,7 +272,7 @@ std::string RV32IInstructionLockstepTest::getTestName() const {
 }
 
 size_t RV32IInstructionLockstepTest::getRunDuration() const {
-    return total_cycles_ * test_case_.cycle_time_step;
+    return time_origin_ + total_cycles_ * test_case_.cycle_time_step;
 }
 
 std::vector<SimulationTest::SimulationCheckpoint> RV32IInstructionLockstepTest::getCheckpoints() const {
@@ -252,11 +303,13 @@ void RV32IInstructionLockstepTest::setInitialState() {
     }
 
     total_cycles_ = 0;
+    time_origin_ = 0;
     completed_ = false;
     checkpoints_.clear();
 
     setupOracle();
     initializeComponentForLockstep(test_case_);
+    time_origin_ = sim->getCurrentTime();
 
     const auto initial_state = snapshotComponentState();
     last_committed_instruction_count_ = initial_state.instruction_count;
@@ -272,10 +325,11 @@ void RV32IInstructionLockstepTest::setupOracle() {
     }
     oracle_state_.forceX0();
 
-    oracle_memory_ = rv32i::RV32IFunctionalMemory(test_case_.memory_size_bytes);
-    oracle_memory_.loadProgram(test_case_.program, test_case_.program_base);
+    oracle_instruction_memory_ = rv32i::RV32IFunctionalMemory(test_case_.memory_size_bytes);
+    oracle_instruction_memory_.loadProgram(test_case_.program, test_case_.program_base);
+    oracle_data_memory_ = rv32i::RV32IFunctionalMemory(test_case_.memory_size_bytes);
     for (const auto& data : test_case_.initial_data) {
-        oracle_memory_.loadBytes(data.address, data.bytes);
+        oracle_data_memory_.loadBytes(data.address, data.bytes);
     }
 }
 
@@ -288,10 +342,10 @@ void RV32IInstructionLockstepTest::runSimulation() {
         bool committed = false;
 
         for (size_t cycle = 0; cycle < test_case_.max_cycles_per_instruction; ++cycle) {
-            const size_t cycle_start_time = total_cycles_ * test_case_.cycle_time_step;
+            const size_t cycle_start_time = time_origin_ + total_cycles_ * test_case_.cycle_time_step;
             clockComponentOneCycle(total_cycles_, cycle_start_time);
             ++total_cycles_;
-            sim->advanceAndRecord(total_cycles_ * test_case_.cycle_time_step);
+            sim->advanceAndRecord(time_origin_ + total_cycles_ * test_case_.cycle_time_step);
 
             auto state = snapshotComponentState();
             if (state.instruction_count == previous_commit_count) {
@@ -309,8 +363,9 @@ void RV32IInstructionLockstepTest::runSimulation() {
             fail("component did not commit an instruction within max_cycles_per_instruction");
         }
 
-        const auto expected_trace = rv32i::RV32IInstructionOracle::step(oracle_state_, oracle_memory_);
-        const size_t commit_time = total_cycles_ * test_case_.cycle_time_step;
+        const auto expected_trace = rv32i::RV32IInstructionOracle::step(
+            oracle_state_, oracle_instruction_memory_, oracle_data_memory_);
+        const size_t commit_time = time_origin_ + total_cycles_ * test_case_.cycle_time_step;
         compareState(committed_state, "instruction " + std::to_string(expected_trace.instruction_index));
         compareMemoryEffects(expected_trace.memory, "instruction " + std::to_string(expected_trace.instruction_index));
         checkpoints_.push_back(instructionCheckpoint(expected_trace, commit_time));
@@ -429,10 +484,11 @@ void RV32IInstructionLockstepHarnessTest::initializeComponentForLockstep(const R
     }
     component_state_.forceX0();
 
-    component_memory_ = rv32i::RV32IFunctionalMemory(test_case.memory_size_bytes);
-    component_memory_.loadProgram(test_case.program, test_case.program_base);
+    component_instruction_memory_ = rv32i::RV32IFunctionalMemory(test_case.memory_size_bytes);
+    component_instruction_memory_.loadProgram(test_case.program, test_case.program_base);
+    component_data_memory_ = rv32i::RV32IFunctionalMemory(test_case.memory_size_bytes);
     for (const auto& data : test_case.initial_data) {
-        component_memory_.loadBytes(data.address, data.bytes);
+        component_data_memory_.loadBytes(data.address, data.bytes);
     }
 
     last_data_memory_access_ = rv32i::RV32IMemoryTrace{};
@@ -445,7 +501,8 @@ void RV32IInstructionLockstepHarnessTest::clockComponentOneCycle(size_t cycle_in
     if (component_state_.halted || component_state_.trapped) {
         return;
     }
-    const auto trace = rv32i::RV32IInstructionOracle::step(component_state_, component_memory_);
+    const auto trace = rv32i::RV32IInstructionOracle::step(
+        component_state_, component_instruction_memory_, component_data_memory_);
     last_data_memory_access_ = trace.memory;
     last_data_memory_writes_ = expandDataMemoryWrites(trace.memory);
 }
@@ -460,4 +517,15 @@ rv32i::RV32IMemoryTrace RV32IInstructionLockstepHarnessTest::lastDataMemoryAcces
 
 std::map<uint32_t, uint8_t> RV32IInstructionLockstepHarnessTest::lastDataMemoryWrites() const {
     return last_data_memory_writes_;
+}
+
+std::string RV32IInstructionLockstepMismatchDetectionTest::getTestName() const {
+    return "RV32IInstructionLockstepMismatchDetectionTest";
+}
+
+void RV32IInstructionLockstepMismatchDetectionTest::verifyResults() {
+    IntentionallyWrongRV32ILockstepProbe probe;
+    if (probe.run()) {
+        throw std::runtime_error("instruction lockstep accepted an intentionally corrupted register state");
+    }
 }

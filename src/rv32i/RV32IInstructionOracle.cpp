@@ -302,24 +302,37 @@ RV32IInstructionTrace stepImpl(RV32IState& state,
         writeMemoryValue(data_memory, trace.memory.size, trace.memory.address, trace.rs2_value);
     }
 
+    uint32_t next_pc = state.pc + 4;
+    bool control_transfer_taken = false;
+    if (trace.control.branch != RV32IBranchType::None) {
+        trace.branch_taken = branchTaken(trace.control.branch, trace.rs1_value, trace.rs2_value);
+        if (trace.branch_taken) {
+            next_pc = state.pc + asUInt(trace.immediate);
+            control_transfer_taken = true;
+        }
+    } else if (trace.control.jump == RV32IJumpType::JAL) {
+        next_pc = state.pc + asUInt(trace.immediate);
+        control_transfer_taken = true;
+    } else if (trace.control.jump == RV32IJumpType::JALR) {
+        next_pc = (trace.rs1_value + asUInt(trace.immediate)) & ~uint32_t{1};
+        control_transfer_taken = true;
+    }
+
+    // RV32I has IALIGN=32. A taken branch or jump to a non-word-aligned
+    // target raises the exception on the control-flow instruction itself.
+    // In particular, JAL/JALR must not write their link register on fault.
+    if (control_transfer_taken && (next_pc & 0x3U) != 0) {
+        trap(state, trace, RV32IExecutionTrapCause::InstructionAddressMisaligned);
+        ++state.instruction_count;
+        return trace;
+    }
+
     if (trace.control.reg_write) {
         trace.writeback.enabled = true;
         trace.writeback.rd = trace.rd;
         trace.writeback.value = writebackValue(trace.control, trace, memory_value);
         trace.writeback.ignored_x0 = trace.rd == 0;
         state.writeRegister(trace.rd, trace.writeback.value);
-    }
-
-    uint32_t next_pc = state.pc + 4;
-    if (trace.control.branch != RV32IBranchType::None) {
-        trace.branch_taken = branchTaken(trace.control.branch, trace.rs1_value, trace.rs2_value);
-        if (trace.branch_taken) {
-            next_pc = state.pc + asUInt(trace.immediate);
-        }
-    } else if (trace.control.jump == RV32IJumpType::JAL) {
-        next_pc = state.pc + asUInt(trace.immediate);
-    } else if (trace.control.jump == RV32IJumpType::JALR) {
-        next_pc = (trace.rs1_value + asUInt(trace.immediate)) & ~uint32_t{1};
     }
 
     state.pc = next_pc;

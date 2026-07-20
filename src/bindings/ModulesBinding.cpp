@@ -26,6 +26,15 @@
 #include "modules/memory/RegisterFile4x32.hpp"
 #include "modules/memory/RegisterFile32x32.hpp"
 #include "modules/rv32i/BehavioralRV32ICore.hpp"
+#include "modules/rv32i/BehavioralRV32IControlFlowUnit.hpp"
+#include "modules/rv32i/BehavioralRV32IDecodeControlUnit.hpp"
+#include "modules/rv32i/BehavioralRV32IExecutionControlStatusUnit.hpp"
+#include "modules/rv32i/RV32IControlFlowUnit.hpp"
+#include "modules/rv32i/RV32IDecodeControlUnit.hpp"
+#include "modules/rv32i/RV32IExecutionControlStatusUnit.hpp"
+#include "modules/rv32i/RV32IBitPatternMatcher.hpp"
+#include "modules/rv32i/RV32ISingleCycleCore.hpp"
+#include "modules/rv32i/RV32ISingleCycleSystem.hpp"
 #include "modules/rv32i/RV32ISystem.hpp"
 
 #include "modules/composite/HalfAdder.hpp"
@@ -38,6 +47,7 @@
 #include "modules/composite/Comparator32.hpp"
 #include "modules/composite/Shifter32.hpp"
 #include "modules/composite/ALU32.hpp"
+#include "modules/composite/BehavioralALU32.hpp"
 #include "modules/composite/Arithmetic8.hpp"
 #include "modules/composite/Comparator8.hpp"
 #include "modules/composite/Shifter8.hpp"
@@ -214,9 +224,12 @@ void bindModules(py::module_& m) {
     bindIOModule<Mux16to1>(m, "Mux16to1", "16:1 one-bit multiplexer.");
     bindIOModule<Mux32to1>(m, "Mux32to1", "32:1 one-bit multiplexer.");
     bindIOModule<Mux2to1_8bit>(m, "Mux2to1_8bit", "2:1 8-bit multiplexer.");
+    bindIOModule<Mux2to1_4bit>(m, "Mux2to1_4bit", "2:1 4-bit multiplexer.");
+    bindIOModule<Mux2to1_32bit>(m, "Mux2to1_32bit", "2:1 32-bit multiplexer.");
     bindIOModule<Mux4to1_8bit>(m, "Mux4to1_8bit", "4:1 8-bit multiplexer.");
     bindIOModule<Mux4to1_32bit>(m, "Mux4to1_32bit", "4:1 32-bit multiplexer.");
     bindIOModule<Mux8to1_8bit>(m, "Mux8to1_8bit", "8:1 8-bit multiplexer.");
+    bindIOModule<Mux8to1_32bit>(m, "Mux8to1_32bit", "8:1 32-bit multiplexer.");
     bindIOModule<Mux16to1_8bit>(m, "Mux16to1_8bit", "16:1 8-bit multiplexer.");
     bindIOModule<Mux32to1_32bit>(m, "Mux32to1_32bit", "32:1 32-bit multiplexer.");
     bindIOModule<Decoder2to4>(m, "Decoder2to4", "2-bit enabled one-hot decoder.");
@@ -293,6 +306,29 @@ void bindModules(py::module_& m) {
     bindIOModule<Memory4x32>(m, "Memory4x32", "Four-word 32-bit memory slice with CPU-facing memory pins.");
     bindIOModule<Memory32x32>(m, "Memory32x32", "Thirty-two-word 32-bit memory slice with CPU-facing memory pins.");
     bindBasicModule<BehavioralRV32ICore>(m, "BehavioralRV32ICore", "Behavioral RV32I core with visible instruction/data memory bus pins.");
+    bindIOModule<RV32IControlFlowUnit>(m, "RV32IControlFlowUnit", "Structural RV32I PC, branch, and jump block.");
+    bindBasicModule<BehavioralRV32IControlFlowUnit>(m, "BehavioralRV32IControlFlowUnit", "Compact RV32I control-flow reference block.");
+    bindIOModule<RV32IDecodeControlUnit>(m, "RV32IDecodeControlUnit", "Structural RV32I field, immediate, and control decoder.");
+    bindBasicModule<BehavioralRV32IDecodeControlUnit>(m, "BehavioralRV32IDecodeControlUnit", "Compact RV32I decode/control reference block.");
+    bindIOModule<RV32IExecutionControlStatusUnit>(m, "RV32IExecutionControlStatusUnit", "Structural RV32I commit permission, memory handshake, halt, and trap-state block.");
+    bindBasicModule<BehavioralRV32IExecutionControlStatusUnit>(m, "BehavioralRV32IExecutionControlStatusUnit", "Compact same-contract reference for the structural RV32I execution/status block.");
+    py::class_<RV32IBitPatternMatcher, IOComponent, std::shared_ptr<RV32IBitPatternMatcher>>(
+        m,
+        "RV32IBitPatternMatcher",
+        "Structural masked RV32I instruction-pattern matcher.",
+        py::module_local(false))
+        .def(py::init([](const std::string& instance_name, uint32_t mask, uint32_t value) {
+            return Component::create<RV32IBitPatternMatcher>(instance_name, mask, value);
+        }), py::arg("name"), py::arg("mask"), py::arg("value"))
+        .def("get_name", &RV32IBitPatternMatcher::getName)
+        .def("get_parent", &RV32IBitPatternMatcher::getParent)
+        .def("get_children", &RV32IBitPatternMatcher::getChildren, py::return_value_policy::reference_internal)
+        .def("get_input_pins", &RV32IBitPatternMatcher::getAllInputPins, py::return_value_policy::reference_internal)
+        .def("get_output_pins", &RV32IBitPatternMatcher::getAllOutputPins, py::return_value_policy::reference_internal)
+        .def_property_readonly("mask", &RV32IBitPatternMatcher::mask)
+        .def_property_readonly("value", &RV32IBitPatternMatcher::value);
+    bindIOModule<RV32ISingleCycleCore>(m, "RV32ISingleCycleCore", "Structural single-cycle RV32I core composed from the five educational blocks.");
+    bindIOModule<RV32ISingleCycleSystem>(m, "RV32ISingleCycleSystem", "Structural RV32I core with separate behavioral instruction and data memories.");
     bindIOModule<RV32ISystem>(m, "RV32ISystem", "RV32I system wrapper containing a behavioral core plus instruction/data memories.");
 
     bindIOModule<Adder8>(m, "Adder8", "8-bit adder.");
@@ -316,6 +352,7 @@ void bindModules(py::module_& m) {
     bindIOModule<Comparator32>(m, "Comparator32", "Structural 32-bit comparator.");
     bindIOModule<Shifter32>(m, "Shifter32", "Structural 32-bit barrel shifter.");
     bindIOModule<ALU32>(m, "ALU32", "Structural RV32I-oriented 32-bit ALU.");
+    bindBasicModule<BehavioralALU32>(m, "BehavioralALU32", "Compact same-contract reference for the structural ALU32.");
 
     py::enum_<Rewire::UnmappedBitValue>(m, "UnmappedBitValue")
         .value("UNKNOWN", Rewire::UnmappedBitValue::UNKNOWN)
@@ -391,6 +428,8 @@ void bindModules(py::module_& m) {
     bindConstantModule<ConstantValue<1, 1>>(m, "ConstantValue1High", "Single-bit constant source.");
     bindConstantModule<ConstantValue<1, 8>>(m, "ConstantValue1From8Trigger", "Single-bit constant source.");
     bindConstantModule<ConstantValue<1, 32>>(m, "ConstantValue1From32Trigger", "Single-bit constant source.");
+    bindConstantModule<ConstantValue<2, 2>>(m, "ConstantValue2", "2-bit constant source.");
+    bindConstantModule<ConstantValue<4, 4>>(m, "ConstantValue4", "4-bit constant source.");
     bindConstantModule<ConstantValue<8, 8>>(m, "ConstantValue8", "8-bit constant source.");
     bindConstantModule<ConstantValue<32, 32>>(m, "ConstantValue32", "32-bit constant source.");
 }

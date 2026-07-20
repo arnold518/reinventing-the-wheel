@@ -93,6 +93,19 @@ std::vector<TestRow> busMuxRows(size_t input_count) {
     return rows;
 }
 
+std::vector<TestRow> busMux4Rows(size_t input_count) {
+    std::vector<TestRow> rows;
+    for (size_t selected = 0; selected < input_count; ++selected) {
+        std::map<std::string, TestValue> inputs;
+        for (size_t i = 0; i < input_count; ++i) {
+            inputs[muxInputName(input_count, i)] = bits((i * 0x5U + 0x3U) & 0xFU);
+        }
+        inputs["SEL"] = bits(selected);
+        rows.push_back({inputs, {{"OUT", bits((selected * 0x5U + 0x3U) & 0xFU)}}});
+    }
+    return rows;
+}
+
 std::vector<TestRow> busMux32Rows(size_t input_count) {
     std::vector<TestRow> rows;
     for (size_t selected = 0; selected < input_count; ++selected) {
@@ -238,6 +251,12 @@ Mux32to1Test::Mux32to1Test()
 Mux2to1_8bitTest::Mux2to1_8bitTest()
     : ComponentRowsTest<Mux2to1_8bit>("Mux2to1_8bitTest", "MUX2TO1_8BIT_ROOT", busMuxRows(2)) {}
 
+Mux2to1_4bitTest::Mux2to1_4bitTest()
+    : ComponentRowsTest<Mux2to1_4bit>("Mux2to1_4bitTest", "MUX2TO1_4BIT_ROOT", busMux4Rows(2)) {}
+
+Mux2to1_32bitTest::Mux2to1_32bitTest()
+    : ComponentRowsTest<Mux2to1_32bit>("Mux2to1_32bitTest", "MUX2TO1_32BIT_ROOT", busMux32Rows(2)) {}
+
 Mux4to1_8bitTest::Mux4to1_8bitTest()
     : ComponentRowsTest<Mux4to1_8bit>("Mux4to1_8bitTest", "MUX4TO1_8BIT_ROOT", busMuxRows(4)) {}
 
@@ -246,6 +265,9 @@ Mux4to1_32bitTest::Mux4to1_32bitTest()
 
 Mux8to1_8bitTest::Mux8to1_8bitTest()
     : ComponentRowsTest<Mux8to1_8bit>("Mux8to1_8bitTest", "MUX8TO1_8BIT_ROOT", busMuxRows(8)) {}
+
+Mux8to1_32bitTest::Mux8to1_32bitTest()
+    : ComponentRowsTest<Mux8to1_32bit>("Mux8to1_32bitTest", "MUX8TO1_32BIT_ROOT", busMux32Rows(8)) {}
 
 Mux16to1_8bitTest::Mux16to1_8bitTest()
     : ComponentRowsTest<Mux16to1_8bit>("Mux16to1_8bitTest", "MUX16TO1_8BIT_ROOT", busMuxRows(16)) {}

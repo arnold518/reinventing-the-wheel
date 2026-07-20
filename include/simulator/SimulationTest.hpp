@@ -15,6 +15,7 @@ protected:
     std::unique_ptr<Simulator> sim;
     std::shared_ptr<Component> root;
     std::unique_ptr<ComponentBuilder> builder;
+    bool initial_events_scheduled_ = false;
 
 public:
     SimulationTest() {
@@ -48,7 +49,11 @@ public:
     }
 
     void scheduleInitialEvents(size_t time = 0) {
+        if (initial_events_scheduled_) {
+            return;
+        }
         scheduleInitialEventsForTree(root, *sim, time);
+        initial_events_scheduled_ = true;
     }
 
     virtual void setupCircuit() {

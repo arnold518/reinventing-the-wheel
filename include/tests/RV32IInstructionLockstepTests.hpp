@@ -18,6 +18,22 @@ struct RV32IMemoryInit {
     std::vector<uint8_t> bytes;
 };
 
+struct RV32IExpectedRegisterValue {
+    uint8_t index = 0;
+    uint32_t value = 0;
+};
+
+struct RV32ISystemExpectedResult {
+    bool defined = false;
+    uint32_t pc = 0;
+    uint64_t instruction_count = 0;
+    bool halted = false;
+    bool trapped = false;
+    rv32i::RV32IExecutionTrapCause trap_cause = rv32i::RV32IExecutionTrapCause::None;
+    std::vector<RV32IExpectedRegisterValue> registers;
+    std::map<uint32_t, uint8_t> bus_writes;
+};
+
 struct RV32ISystemProgramCase {
     std::string name;
     rv32i::RV32IProgram program;
@@ -29,6 +45,7 @@ struct RV32ISystemProgramCase {
     size_t max_cycles_per_instruction = 16;
     size_t cycle_time_step = 10;
     size_t memory_size_bytes = rv32i::RV32IFunctionalMemory::DefaultCapacityBytes;
+    RV32ISystemExpectedResult expected_result{};
 };
 
 class RV32IInstructionLockstepTest : public SimulationTest {
@@ -52,9 +69,11 @@ protected:
 private:
     RV32ISystemProgramCase test_case_{};
     rv32i::RV32IState oracle_state_{};
-    rv32i::RV32IFunctionalMemory oracle_memory_{};
+    rv32i::RV32IFunctionalMemory oracle_instruction_memory_{};
+    rv32i::RV32IFunctionalMemory oracle_data_memory_{};
     uint64_t last_committed_instruction_count_ = 0;
     size_t total_cycles_ = 0;
+    size_t time_origin_ = 0;
     bool completed_ = false;
     std::vector<SimulationCheckpoint> checkpoints_{};
 
@@ -76,7 +95,16 @@ protected:
 
 private:
     rv32i::RV32IState component_state_{};
-    rv32i::RV32IFunctionalMemory component_memory_{};
+    rv32i::RV32IFunctionalMemory component_instruction_memory_{};
+    rv32i::RV32IFunctionalMemory component_data_memory_{};
     rv32i::RV32IMemoryTrace last_data_memory_access_{};
     std::map<uint32_t, uint8_t> last_data_memory_writes_{};
+};
+
+class RV32IInstructionLockstepMismatchDetectionTest : public SimulationTest {
+protected:
+    std::string getTestName() const override;
+    void buildCircuit() override {}
+    void setInitialState() override {}
+    void verifyResults() override;
 };

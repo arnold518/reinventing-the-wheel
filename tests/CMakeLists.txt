@@ -59,9 +59,12 @@ set(SIMULATION_TESTS
     Mux16to1Test
     Mux32to1Test
     Mux2to1_8bitTest
+    Mux2to1_4bitTest
+    Mux2to1_32bitTest
     Mux4to1_8bitTest
     Mux4to1_32bitTest
     Mux8to1_8bitTest
+    Mux8to1_32bitTest
     Mux16to1_8bitTest
     Mux32to1_32bitTest
     Decoder2to4Test
@@ -87,12 +90,44 @@ set(SIMULATION_TESTS
     Comparator32Test
     Shifter32Test
     ALU32Test
+    BehavioralALU32Test
     RV32IALU32Test
+    RV32IControlFlowUnitTest
+    BehavioralRV32IControlFlowUnitTest
+    RV32IDecodeControlUnitTest
+    BehavioralRV32IDecodeControlUnitTest
+    RV32IExecutionControlStatusUnitTest
+    BehavioralRV32IExecutionControlStatusUnitTest
+    RV32IControlFlowUnitPairTest
+    RV32IDecodeControlUnitPairTest
+    RV32IRegisterFilePairTest
+    BehavioralALU32PairTest
+    RV32IExecutionControlStatusUnitPairTest
     RV32IDecoderTest
     RV32IControlTest
     RV32IProgramLoaderTest
     RV32IInstructionOracleTest
     RV32IInstructionLockstepHarnessTest
+    RV32IInstructionLockstepMismatchDetectionTest
+    RV32ISingleCycleCoreSmokeTest
+    RV32ISingleCycleSystemContractTest
+    RV32ISingleCycleSystemProgram1Test
+    RV32ISingleCycleSystemProgram2Test
+    RV32ISingleCycleSystemProgram3Test
+    RV32ISingleCycleSystemProgram4Test
+    RV32ISingleCycleSystemProgram5Test
+    RV32ISingleCycleSystemProgram6Test
+    RV32ISingleCycleSystemProgram7Test
+    RV32ISingleCycleSystemProgram8Test
+    RV32ISingleCycleSystemProgram9Test
+    RV32ISingleCycleSystemProgram10Test
+    RV32ISingleCycleSystemProgram11Test
+    RV32ISingleCycleSystemProgram12Test
+    RV32ISingleCycleSystemProgram13Test
+    RV32ISingleCycleSystemProgram14Test
+    RV32ISingleCycleSystemProgram15Test
+    RV32ISingleCycleSystemProgram16Test
+    BehavioralRV32ISystemContractTest
     BehavioralRV32ISystemProgram1Test
     BehavioralRV32ISystemProgram2Test
     BehavioralRV32ISystemProgram3Test
@@ -114,3 +149,12 @@ set(SIMULATION_TESTS
 foreach(test_name ${SIMULATION_TESTS})
     add_test(NAME ${test_name} COMMAND SimulationTestRunner ${test_name})
 endforeach()
+
+add_test(
+    NAME VisualizerModuleBindingsTest
+    COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/VisualizerModuleBindingsTest.py
+)
+set_tests_properties(
+    VisualizerModuleBindingsTest
+    PROPERTIES ENVIRONMENT "PYTHONPATH=${PROJECT_SOURCE_DIR}/visualizer-v2"
+)

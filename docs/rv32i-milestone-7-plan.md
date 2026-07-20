@@ -1,10 +1,10 @@
 # RV32I Milestone 7 Plan: Behavioral RV32I System Component
 
-Last updated: 2026-06-05
+Last updated: 2026-07-19
 
 ## Status
 
-Milestone 7A is implemented. Milestone 7B has a composite system wrapper with a behavioral core and visible instruction/data memory children. Milestone 7C is being implemented as a numbered program-suite expansion.
+Milestones 7A, 7B, and 7C are implemented: the reusable lockstep harness, composite behavioral system, and numbered program suite now form the behavioral answer-sheet baseline.
 
 Implemented:
 
@@ -24,19 +24,29 @@ Implemented:
 - `BehavioralRV32ISystemProgram1Test`
 - `BehavioralRV32ISystemProgram2Test` through `BehavioralRV32ISystemProgram16Test`
 - visualizer scenario aliases `behavioral-rv32i-system-program1` through `behavioral-rv32i-system-program16`
+- separate oracle instruction and data memories matching the system's Harvard organization
+- real simulated byte-write transaction comparison, including unchanged zero-byte writes
+- `RV32IInstructionLockstepMismatchDetectionTest`
+- `BehavioralRV32ISystemContractTest` for reset, enable, public pins, Harvard separation, halt, and recovery
+- precise taken branch/JAL/JALR instruction-address-misalignment behavior
+- specification-derived oracle edge vectors
+- hard-coded final PC/count/register/trap/write outcomes for all 16 numbered programs
+- release-safe semantic test checks that do not disappear with `NDEBUG`
+- the complete beginner guide at `docs/behavioral-rv32i-beginners-guide.md`
 
 The Milestone 7C program suite is listed in `docs/rv32i-milestone-7c-program-tests.md`.
 
 Latest focused 7A/7B/7C verification:
 
 ```bash
-ctest --test-dir build --output-on-failure -R "BehavioralRV32ISystemProgram|RV32IInstructionLockstepHarnessTest|RV32IInstructionOracleTest|SimulatorAdvanceAndRecordTest"
+ctest --test-dir build --output-on-failure -R "BehavioralMemory64Kx32Test|RV32IInstructionOracleTest|RV32IInstructionLockstep|BehavioralRV32ISystem"
 ```
 
 Results:
 
-- Focused 7A/7B/7C tests passed: 19/19 in 0.79 seconds.
-- Previous full regression before the 7C expansion passed: 90/90 in 1095.44 seconds.
+- Current hardened answer-sheet focus passed: 21/21 in 1.52 seconds.
+- Release RV32I-related suite passed: 25/25 in 6.64 seconds.
+- Current full repository regression passed: 109/109 in 62.02 seconds with four parallel test jobs.
 
 The target is a reusable behavioral RV32I system component:
 
@@ -57,6 +67,18 @@ RV32ISystem
 ```
 
 The system is the first circuit-simulator component that should run real RV32I programs. It is also the component shape we want to preserve when a structural core is built later.
+
+## Role In Structural RV32I Work
+
+Milestone 7 intentionally produced the executable answer sheet for the structural RV32I, not the final implementation architecture.
+
+- `RV32IInstructionOracle` supplies expected one-instruction architectural transitions.
+- `BehavioralRV32ICore` and `RV32ISystem` expose those answers through the simulator-facing clock and memory contract.
+- The numbered program cases, state adapter, and lockstep harness provide shared inputs and observable checkpoints for grading the structural system.
+- The structural core must execute independently through visible datapath components; it must not call the oracle or behavioral core to obtain its results.
+- The behavioral system stays available as a regression reference until the structural system passes the same program suite.
+
+This preserves what the behavioral milestone was designed to provide: an answer sheet and stable boundary, without turning its hidden whole-instruction execution into the source of the structural design.
 
 ## Decisions
 
@@ -196,7 +218,7 @@ Those are available through getters and internal inspection.
 
 ## Core Internal Pins
 
-`BehavioralRV32ICore` is internal to the system, but its pin contract should be stable because the future structural core should match it.
+`BehavioralRV32ICore` is internal to the system. Its logical address, data, request, fault, and status contract should guide the future structural core, while implementation-specific behavioral timing signals must not be copied automatically.
 
 Inputs:
 
@@ -357,7 +379,7 @@ First implementation policy:
 
 ## Relationship To Milestone 6
 
-Milestone 6 remains the source of truth.
+Milestone 6 remains the source of expected architectural outcomes.
 
 Milestone 7 tests should compare against `RV32IInstructionOracle` in instruction lockstep:
 
@@ -513,7 +535,7 @@ HALTED
 TRAPPED
 ```
 
-The future structural core should preserve the same internal memory-interface pins:
+The future structural core should preserve the same logical memory-interface pins:
 
 ```text
 IMEM_ADDR
@@ -532,6 +554,8 @@ DMEM_FAULT
 System getters should also remain available. In the behavioral system, getters read private state. In the structural system, getters can read internal register-file components, memory components, and sampled wires.
 
 This keeps tests and visualizer expectations stable while implementation detail changes.
+
+Only the logical transaction contract is normative. The behavioral core's internal `IMEM_CLK` and `DMEM_CLK` pulse workaround is not a structural template; the structural system should use the system clock and allow its visible combinational datapath to settle before the active edge.
 
 ## Tests
 
@@ -608,9 +632,11 @@ Milestone 7 is complete when:
 
 This milestone does not implement:
 
-- structural PC/branch/next-PC components
-- structural instruction decoder/control
-- structural load/store unit
+- paired structural/behavioral control-flow components
+- paired structural/behavioral instruction decoder/control components
+- paired structural/behavioral execution-control/status components
+- `BehavioralALU32` and explicit ALU/register-file pairwise equivalence tests
+- the structural core's direct data-memory wiring
 - cycle oracle
 - cycle-by-cycle internal timing comparator
 - ELF loading

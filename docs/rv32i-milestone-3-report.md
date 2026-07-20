@@ -1,6 +1,6 @@
 # RV32I Milestones 3 and 4 Report: Decode And Control
 
-Last updated: 2026-06-02
+Last updated: 2026-07-19
 
 ## Status
 
@@ -27,7 +27,7 @@ Example:
   -> ALU A=rs1, ALU B=imm, ALU_OP=ADD, write rd from ALU
 ```
 
-This is the semantic foundation for the later behavioral decoder/control component, functional instruction oracle, and single-cycle CPU.
+This is the semantic foundation for the later paired structural/behavioral decoder-control components, functional instruction oracle, and single-cycle CPU.
 
 ## Why This Is Not A Component Yet
 
@@ -49,12 +49,17 @@ Later layering should be:
 RV32IDecoder + RV32IControl libraries
   pure C++ rule source
 
-BehavioralRV32IControl component
-  wraps the libraries and exposes pins
+RV32IDecodeControlUnit
+  complete structural field/immediate/control component
 
-Structural decoder/control slices
-  visual teaching components checked against the libraries
+BehavioralRV32IDecodeControlUnit
+  same-pin reference added after structural slice tests
+
+pairwise equivalence + independent expected rows
+  prove both circuit implementations against the contract
 ```
+
+The behavioral component stays separate; it must not be placed inside the structural decoder as a hidden bridge.
 
 ## References
 

@@ -2,10 +2,9 @@
 
 #include "rv32i/RV32IInstructionOracle.hpp"
 #include "rv32i/RV32IProgram.hpp"
-#include <cassert>
 #include <cstdint>
-#include <iostream>
 #include <sstream>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -94,8 +93,7 @@ std::string hex32(uint32_t value) {
 }
 
 void fail(const std::string& message) {
-    std::cerr << "RV32IInstructionOracleTest failed: " << message << std::endl;
-    assert(false && "RV32I instruction oracle test failed");
+    throw std::runtime_error("RV32IInstructionOracleTest failed: " + message);
 }
 
 void expect(bool condition, const std::string& label) {
@@ -329,9 +327,45 @@ void testBranchesAndJumps() {
 
     RV32IState jalr_state;
     jalr_state.writeRegister(1, 0x21);
-    auto jalr_trace = stepRaw(encodeI(2, 1, 0x0, 5, 0x67), jalr_state);
+    auto jalr_trace = stepRaw(encodeI(4, 1, 0x0, 5, 0x67), jalr_state);
     expectWriteback(jalr_trace, 5, 4, "JALR return address");
-    expectWord(jalr_state.pc, 0x22, "JALR clears bit 0");
+    expectWord(jalr_state.pc, 0x24, "JALR clears bit 0");
+
+    RV32IState misaligned_branch_state;
+    misaligned_branch_state.writeRegister(1, 7);
+    misaligned_branch_state.writeRegister(2, 7);
+    const auto misaligned_branch_trace = stepRaw(encodeB(2, 2, 1, 0x0), misaligned_branch_state);
+    expect(misaligned_branch_trace.branch_taken, "misaligned taken branch records taken decision");
+    expect(misaligned_branch_trace.trapped, "misaligned taken branch traps on the branch");
+    expectEq(misaligned_branch_state.trap_cause,
+             RV32IExecutionTrapCause::InstructionAddressMisaligned,
+             "misaligned taken branch trap cause");
+    expectWord(misaligned_branch_state.pc, 0, "misaligned taken branch keeps faulting pc");
+
+    RV32IState misaligned_not_taken_state;
+    misaligned_not_taken_state.writeRegister(1, 7);
+    misaligned_not_taken_state.writeRegister(2, 8);
+    const auto misaligned_not_taken_trace = stepRaw(encodeB(2, 2, 1, 0x0), misaligned_not_taken_state);
+    expect(!misaligned_not_taken_trace.branch_taken, "misaligned branch target is harmless when not taken");
+    expect(!misaligned_not_taken_trace.trapped, "not-taken branch does not raise target-alignment trap");
+    expectWord(misaligned_not_taken_state.pc, 4, "not-taken branch advances normally");
+
+    RV32IState misaligned_jal_state;
+    misaligned_jal_state.writeRegister(5, 0xdeadbeefU);
+    const auto misaligned_jal_trace = stepRaw(encodeJ(2, 5), misaligned_jal_state);
+    expect(misaligned_jal_trace.trapped, "misaligned JAL traps on JAL");
+    expect(!misaligned_jal_trace.writeback.enabled, "misaligned JAL suppresses link writeback");
+    expectWord(misaligned_jal_state.readRegister(5), 0xdeadbeefU, "misaligned JAL preserves rd");
+    expectWord(misaligned_jal_state.pc, 0, "misaligned JAL keeps faulting pc");
+
+    RV32IState misaligned_jalr_state;
+    misaligned_jalr_state.writeRegister(1, 2);
+    misaligned_jalr_state.writeRegister(5, 0xcafebabeU);
+    const auto misaligned_jalr_trace = stepRaw(encodeI(0, 1, 0x0, 5, 0x67), misaligned_jalr_state);
+    expect(misaligned_jalr_trace.trapped, "misaligned JALR traps on JALR");
+    expect(!misaligned_jalr_trace.writeback.enabled, "misaligned JALR suppresses link writeback");
+    expectWord(misaligned_jalr_state.readRegister(5), 0xcafebabeU, "misaligned JALR preserves rd");
+    expectWord(misaligned_jalr_state.pc, 0, "misaligned JALR keeps faulting pc");
 }
 
 void testUpperSystemAndTrapBehavior() {
@@ -367,6 +401,56 @@ void testUpperSystemAndTrapBehavior() {
     auto illegal_trace = stepRaw(0xffffffffU, illegal_state);
     expect(illegal_trace.trapped, "illegal instruction traps");
     expectEq(illegal_state.trap_cause, RV32IExecutionTrapCause::IllegalInstruction, "illegal trap cause");
+}
+
+void testSpecificationEdgeCases() {
+    RV32IState add_wrap_state;
+    add_wrap_state.writeRegister(1, 0xffffffffU);
+    add_wrap_state.writeRegister(2, 1);
+    const auto add_wrap = stepRaw(encodeR(0x00, 2, 1, 0x0, 3), add_wrap_state);
+    expectWriteback(add_wrap, 3, 0, "ADD wraps modulo 2^32");
+
+    RV32IState shift_mask_state;
+    shift_mask_state.writeRegister(1, 1);
+    shift_mask_state.writeRegister(2, 32);
+    const auto shift_mask = stepRaw(encodeR(0x00, 2, 1, 0x1, 3), shift_mask_state);
+    expectWriteback(shift_mask, 3, 1, "register shift uses low five bits of rs2");
+
+    RV32IState immediate_boundary_state;
+    const auto immediate_boundary = stepRaw(encodeI(-2048, 0, 0x0, 3), immediate_boundary_state);
+    expectWriteback(immediate_boundary, 3, 0xfffff800U, "ADDI sign-extends minimum I immediate");
+
+    RV32IState sltiu_state;
+    sltiu_state.writeRegister(1, 0xfffffffeU);
+    const auto sltiu = stepRaw(encodeI(-1, 1, 0x3, 3), sltiu_state);
+    expectWriteback(sltiu, 3, 1, "SLTIU compares against sign-extended immediate as unsigned");
+
+    RV32IState jalr_dependency_state;
+    jalr_dependency_state.writeRegister(1, 0x20);
+    const auto jalr_dependency = stepRaw(encodeI(4, 1, 0x0, 1, 0x67), jalr_dependency_state);
+    expectWriteback(jalr_dependency, 1, 4, "JALR rd=rs1 link value");
+    expectWord(jalr_dependency_state.pc, 0x24, "JALR rd=rs1 target uses old rs1 value");
+
+    RV32IState load_x0_fault_state;
+    RV32IFunctionalMemory load_x0_fault_memory;
+    load_x0_fault_state.writeRegister(1, 1);
+    const auto load_x0_fault = stepRaw(
+        encodeI(0, 1, 0x2, 0, 0x03), load_x0_fault_state, load_x0_fault_memory);
+    expect(load_x0_fault.trapped, "load to x0 still performs alignment checks");
+    expectEq(load_x0_fault_state.trap_cause,
+             RV32IExecutionTrapCause::LoadAddressMisaligned,
+             "load to x0 alignment trap cause");
+    expectWord(load_x0_fault_state.readRegister(0), 0, "faulting load preserves x0");
+
+    RV32IState backward_branch_state;
+    RV32IFunctionalMemory backward_branch_memory;
+    backward_branch_state.pc = 8;
+    backward_branch_state.writeRegister(1, 9);
+    backward_branch_state.writeRegister(2, 9);
+    const auto backward_branch = stepRaw(
+        encodeB(-4, 2, 1, 0x0), backward_branch_state, backward_branch_memory);
+    expect(backward_branch.branch_taken, "negative branch offset taken");
+    expectWord(backward_branch_state.pc, 4, "negative branch offset target");
 }
 
 void testMemoryFaultsAndInstructionLimit() {
@@ -427,5 +511,6 @@ void RV32IInstructionOracleTest::verifyResults() {
     testStores();
     testBranchesAndJumps();
     testUpperSystemAndTrapBehavior();
+    testSpecificationEdgeCases();
     testMemoryFaultsAndInstructionLimit();
 }

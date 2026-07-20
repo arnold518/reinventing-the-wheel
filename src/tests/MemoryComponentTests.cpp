@@ -17,10 +17,17 @@
 #include <cstdint>
 #include <iostream>
 #include <memory>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
 namespace {
+void requireMemory(bool condition, const std::string& message) {
+    if (!condition) {
+        throw std::runtime_error(message);
+    }
+}
+
 struct ExpectedValue {
     size_t time;
     LogicValue value;
@@ -654,6 +661,23 @@ void BehavioralMemory64Kx32Test::verifyResults() {
         assert(memory->getTouchedWordCountAtTime(4200) == 0 && "Behavioral memory API should count no touched words after reset");
         assert(memory->getTouchedWordsAtTime(4200, BehavioralMemory64Kx32::capacityWords()).empty()
                && "Behavioral memory API should return no touched words after reset");
+
+        const auto first_bus_write = memory->getByteWritesInTimeRange(200, 400);
+        requireMemory(first_bus_write.size() == 4,
+                      "word bus write history should include all four byte lanes");
+        requireMemory(first_bus_write.at(0) == 0x78 && first_bus_write.at(1) == 0x56
+                          && first_bus_write.at(2) == 0x34 && first_bus_write.at(3) == 0x12,
+                      "word bus write history should preserve little-endian byte values");
+
+        const auto zero_bus_write = memory->getByteWritesInTimeRange(2100, 2190);
+        requireMemory(zero_bus_write.size() == 4,
+                      "zero-valued word store must still record four physical byte writes");
+        requireMemory(zero_bus_write.at(8) == 0 && zero_bus_write.at(9) == 0
+                          && zero_bus_write.at(10) == 0 && zero_bus_write.at(11) == 0,
+                      "zero-valued word bus write history should preserve all zero bytes");
+
+        requireMemory(memory->getByteWritesInTimeRange(3650, 3840).empty(),
+                      "faulted bus write must not appear in successful write history");
 
         memory->writeU32AtTime(5000, 0x00000120U, 0x0000002bU);
         assert(memory->getTouchedWordCountAtTime(4999) == 0 && "Future direct writes must not appear before their simulation time");

@@ -35,6 +35,9 @@ const COMPONENT_STROKE_MAX_ALPHA = 0.78;
 const COMPONENT_STROKE_FADE_START_PX = 6;
 const COMPONENT_STROKE_FULL_SIZE_PX = 96;
 const COMPONENT_TITLE_SEPARATOR_START_PX = 42;
+// Descendants narrower than one physical pixel cannot add resolvable detail.
+// Keep their parent shell visible and reveal the exact internals again on zoom.
+const COMPONENT_DESCEND_MIN_DEVICE_PX = 1;
 const GRID_TARGET_PIXELS = 100;
 const GRID_BACKGROUND_MINOR = "rgb(58, 64, 72)";
 const GRID_BACKGROUND_MAJOR = "rgb(86, 96, 108)";
@@ -122,11 +125,13 @@ const app = {
   lastPlaybackTick: 0,
   hover: null,
   selection: null,
+  selectionPath: new Set(),
   selectedComponentId: null,
   interaction: null,
   memoryScrollOffsets: new Map(),
   memoryScrollControls: [],
   geometryDirty: false,
+  renderScheduled: false,
   layoutDirty: false,
   layoutHistory: {
     undo: [],
@@ -317,6 +322,7 @@ function zoomAtPoint(factor, screenPoint) {
   const after = screenToWorld(screenPoint);
   app.camera.offset.x += before.x - after.x;
   app.camera.offset.y += before.y - after.y;
+  requestRender();
 }
 
 function viewRect() {
@@ -450,6 +456,7 @@ function applyLayoutSnapshot(snapshot, statusText) {
   app.interaction = null;
   syncLayoutDirty(statusText);
   updateInspector();
+  requestRender();
 }
 
 function undoLayoutChange() {
@@ -1026,7 +1033,7 @@ function isSelectedWire(id) {
 
 function drawWire(wire, vr, forceHighlight = false) {
   if (!wire.paths || !wire.bbox) return;
-  const color = `rgb(${valueColor(app.state.wires[wire.id] || "X").join(",")})`;
+  const color = `rgb(${valueColor(wireValue(wire)).join(",")})`;
   const highlighted = forceHighlight || isHovered("wire", wire.id) || isSelectedWire(wire.id);
   const wireCullMargin = (WIRE_HOVER_STROKE_MAX_PX + SCREEN_CLIP_MARGIN_PX) / app.camera.zoom;
   if (!rectIntersects(padRect(wire.bbox, wireCullMargin), vr)) return;
@@ -1047,8 +1054,12 @@ function drawOwnedWires(ownerId, vr) {
 }
 
 function drawWireOverlay(vr) {
-  for (const wire of app.wireOrder) {
-    if (isHovered("wire", wire.id) || isSelectedWire(wire.id)) drawWire(wire, vr, true);
+  const overlayIds = new Set();
+  if (app.hover && app.hover.type === "wire") overlayIds.add(app.hover.id);
+  if (app.selection && app.selection.type === "wire") overlayIds.add(app.selection.id);
+  for (const wireId of overlayIds) {
+    const wire = app.wires.get(wireId);
+    if (wire) drawWire(wire, vr, true);
   }
 }
 
@@ -1327,7 +1338,7 @@ function signalDisplay(value) {
 
 function constantSignalValue(component, outPin) {
   if (component.constantValue == null || !Number.isFinite(Number(component.constantValue))) {
-    return outPin ? app.state.pins[outPin.id] || "X" : "X";
+    return outPin ? pinValue(outPin) : "X";
   }
   const width = Math.max(1, Math.min(64, Number(outPin && outPin.width ? outPin.width : 1)));
   let value = BigInt(Math.trunc(Number(component.constantValue)));
@@ -1393,7 +1404,7 @@ function drawGateTerminalLine(pin, from, to) {
   const strokeWorld = pinWireStrokeWorld(pin);
   const highlighted = isHovered("pin", pin.id) || isSelectedPin(pin.id);
   const lineWidth = wireStrokePx({ strokeWorld }, highlighted);
-  const color = `rgb(${valueColor(app.state.pins[pin.id] || "X").join(",")})`;
+  const color = `rgb(${valueColor(pinValue(pin)).join(",")})`;
   strokeWirePolyline([from, to], color, lineWidth, highlighted);
 }
 
@@ -1579,7 +1590,7 @@ function drawLogicGateSymbol(component, parts, kind) {
 }
 
 function adapterPinSignal(pin) {
-  return pin ? app.state.pins[pin.id] || "X" : "X";
+  return pin ? pinValue(pin) : "X";
 }
 
 function signalBitAt(value, bitIndex) {
@@ -1868,7 +1879,7 @@ function drawRewireContents(component, parts) {
 
 function drawBehavioralMemoryBitValue(component, parts) {
   const qPin = pinByName(component.outputPins, "Q");
-  const value = qPin ? app.state.pins[qPin.id] || "X" : "X";
+  const value = qPin ? pinValue(qPin) : "X";
   const screenRect = rectToScreenRect(parts.bodyRect);
   const clipped = clipScreenRect(screenRect, 0);
   if (!clipped || screenRect.w < 16 || screenRect.h < 12) return;
@@ -1922,7 +1933,7 @@ function drawConstantValueContents(component, parts) {
 
 function drawClockGeneratorContents(component, parts) {
   const clkPin = pinByName(component.outputPins, "CLK_OUT");
-  const value = clkPin ? app.state.pins[clkPin.id] || "X" : "X";
+  const value = clkPin ? pinValue(clkPin) : "X";
   const screenRect = rectToScreenRect(parts.bodyRect);
   const clipped = clipScreenRect(screenRect, 0);
   if (!clipped || screenRect.w < 42 || screenRect.h < 24) return;
@@ -2096,6 +2107,7 @@ function memoryScrollOffset(componentId, maxOffset) {
 
 function setMemoryScrollOffset(componentId, offset, maxOffset) {
   app.memoryScrollOffsets.set(componentId, clamp(Math.floor(Number(offset) || 0), 0, maxOffset));
+  requestRender();
 }
 
 function hitMemoryScrollControl(screenPoint) {
@@ -2328,6 +2340,8 @@ function drawComponentForeground(component, vr) {
 
 function drawComponent(component, vr) {
   if (!drawComponentBackground(component, vr)) return;
+  const projectedWidth = Math.abs(component.rect.w * app.camera.zoom * app.dpr);
+  if (projectedWidth < COMPONENT_DESCEND_MIN_DEVICE_PX && !app.selectionPath.has(component.id)) return;
   drawComponentGrid(component, vr);
   drawOwnedWires(component.id, vr);
 
@@ -2364,9 +2378,9 @@ function drawPin(pin) {
   const clippedPinRect = clipScreenRect(pinScreenRect);
   if (!clippedPinRect) return;
 
-  const color = `rgb(${valueColor(app.state.pins[pin.id] || "X").join(",")})`;
+  const color = `rgb(${valueColor(pinValue(pin)).join(",")})`;
   ctx.fillStyle = color;
-  const stateColor = valueColor(app.state.pins[pin.id] || "X");
+  const stateColor = valueColor(pinValue(pin));
   if (pinScreenRect.w > MAX_DIRECT_CANVAS_SIZE_PX || pinScreenRect.h > MAX_DIRECT_CANVAS_SIZE_PX) {
     ctx.fillRect(clippedPinRect.x, clippedPinRect.y, clippedPinRect.w, clippedPinRect.h);
   } else {
@@ -2401,6 +2415,7 @@ function drawPin(pin) {
 }
 
 function render() {
+  app.renderScheduled = false;
   resizeCanvas();
   if (app.geometryDirty) computeGeometry();
 
@@ -2425,6 +2440,12 @@ function render() {
     }
   }
 
+  if (app.playing) requestRender();
+}
+
+function requestRender() {
+  if (app.renderScheduled) return;
+  app.renderScheduled = true;
   requestAnimationFrame(render);
 }
 
@@ -2534,6 +2555,7 @@ function updateHover(screenPoint) {
   app.hover = hover;
   updateCursor(world);
   updateTooltip(screenPoint);
+  requestRender();
 }
 
 function updateTooltip(screenPoint) {
@@ -2546,10 +2568,10 @@ function updateTooltip(screenPoint) {
   if (app.hover.type === "pin") {
     const pin = app.pins.get(app.hover.id);
     const label = pin.width === 1 ? pin.name : `${pin.name}[${pin.width}]`;
-    text = `${label} = ${app.state.pins[pin.id] || "X"}`;
+    text = `${label} = ${pinValue(pin)}`;
   } else if (app.hover.type === "wire") {
     const wire = app.wires.get(app.hover.id);
-    text = `${wire.name}[${wire.width}]=${app.state.wires[wire.id] || "X"}`;
+    text = `${wire.name}[${wire.width}]=${wireValue(wire)}`;
   } else if (app.hover.type === "memory-scroll") {
     const component = app.components.get(app.hover.id);
     const direction = app.hover.direction === "up" ? "previous" : "next";
@@ -2586,7 +2608,30 @@ function setSelection(type, id) {
   }
   app.selection = type && id ? { type, id } : null;
   app.selectedComponentId = type === "component" ? id : null;
+  rebuildSelectionPath();
   updateInspector();
+  requestRender();
+}
+
+function rebuildSelectionPath() {
+  app.selectionPath = new Set();
+  if (!app.selection) return;
+
+  let component = null;
+  if (app.selection.type === "component") component = app.components.get(app.selection.id);
+  if (app.selection.type === "pin") {
+    const pin = app.pins.get(app.selection.id);
+    component = pin ? app.components.get(pin.componentId) : null;
+  }
+  if (app.selection.type === "wire") {
+    const wire = app.wires.get(app.selection.id);
+    component = wire ? app.components.get(wire.ownerId) : null;
+  }
+
+  while (component && !app.selectionPath.has(component.id)) {
+    app.selectionPath.add(component.id);
+    component = component.parentId ? app.components.get(component.parentId) : null;
+  }
 }
 
 function setSelectedComponent(componentId) {
@@ -2610,11 +2655,15 @@ function pinLabel(pin) {
 }
 
 function pinValue(pin) {
-  return app.state.pins[pin.id] || "X";
+  const values = app.state && app.state.pins;
+  if (Array.isArray(values)) return values[pin.stateIndex] || "X";
+  return (values && values[pin.id]) || "X";
 }
 
 function wireValue(wire) {
-  return app.state.wires[wire.id] || "X";
+  const values = app.state && app.state.wires;
+  if (Array.isArray(values)) return values[wire.stateIndex] || "X";
+  return (values && values[wire.id]) || "X";
 }
 
 function pinPath(pin) {
@@ -2786,6 +2835,7 @@ function updateInspector() {
   else if (wire) showWireInspector(wire);
   else {
     app.selection = null;
+    rebuildSelectionPath();
     ui.inspector.classList.add("hidden");
     return;
   }
@@ -2912,6 +2962,7 @@ function markLayoutDirty() {
   app.layoutDirty = true;
   ui.saveStatus.textContent = "Unsaved layout";
   updateLayoutControls();
+  requestRender();
 }
 
 function moveComponent(component, worldPos) {
@@ -3026,6 +3077,7 @@ canvas.addEventListener("pointermove", (event) => {
     app.camera.offset.x -= delta.x / app.camera.zoom;
     app.camera.offset.y -= delta.y / app.camera.zoom;
     app.interaction.last = screen;
+    requestRender();
   } else if (app.interaction.type === "drag") {
     const component = app.components.get(app.interaction.componentId);
     moveComponent(component, { x: world.x - app.interaction.offset.x, y: world.y - app.interaction.offset.y });
@@ -3068,12 +3120,14 @@ function frameRoot() {
   const worldCenter = { x: root.rect.x + root.rect.w / 2, y: root.rect.y + root.rect.h / 2 };
   app.camera.offset.x = worldCenter.x - screenCenter.x / app.camera.zoom;
   app.camera.offset.y = worldCenter.y - screenCenter.y / app.camera.zoom;
+  requestRender();
 }
 
 function setPlaying(value) {
   app.playing = value;
   ui.playPause.textContent = value ? "Pause" : "Play";
   app.lastPlaybackTick = performance.now();
+  requestRender();
 }
 
 function checkpointForIndex(index) {
@@ -3140,6 +3194,7 @@ async function refreshComponentStates(index, requestId = null) {
   for (const [componentId, state] of states) {
     app.componentStates.set(componentId, state);
   }
+  requestRender();
 }
 
 async function setStateIndex(index) {
@@ -3160,6 +3215,7 @@ async function setStateIndex(index) {
     ui.slider.value = String(state.index);
     setTimeLabel(state);
     updateCheckpointControls();
+    requestRender();
     await refreshComponentStates(state.index, requestId);
     if (requestId !== app.stateRequestId) return;
     updateInspector();
@@ -3207,6 +3263,7 @@ function resetLayout() {
     updateInspector();
   });
   ui.saveStatus.textContent = "Layout reset";
+  requestRender();
 }
 
 function showError(error) {
@@ -3232,6 +3289,7 @@ function buildLocalModel(payload) {
   app.stateRequestInFlight = false;
   app.layoutDirty = false;
   app.selection = null;
+  app.selectionPath = new Set();
   app.selectedComponentId = null;
   app.components = new Map();
   app.pins = new Map();
@@ -3259,9 +3317,10 @@ function buildLocalModel(payload) {
     app.componentOrder.push(component);
   }
 
-  for (const data of payload.pins) {
+  for (const [stateIndex, data] of payload.pins.entries()) {
     const pin = {
       ...data,
+      stateIndex: data.stateIndex ?? stateIndex,
       rect: null,
       pos: null,
       relPoints: [],
@@ -3279,9 +3338,10 @@ function buildLocalModel(payload) {
     }
   }
 
-  for (const data of payload.wires) {
+  for (const [stateIndex, data] of payload.wires.entries()) {
     const wire = {
       ...data,
+      stateIndex: data.stateIndex ?? stateIndex,
       sourcePin: data.sourcePinId ? app.pins.get(data.sourcePinId) : null,
       sinkPins: (data.sinkPinIds || []).map((id) => app.pins.get(id)).filter(Boolean),
       paths: [],
@@ -3305,6 +3365,7 @@ function buildLocalModel(payload) {
   computeGeometry();
   frameRoot();
   updateInspector();
+  requestRender();
 }
 
 async function loadScenarios() {
@@ -3399,14 +3460,17 @@ document.addEventListener("keydown", (event) => {
   }
 });
 
-window.addEventListener("resize", resizeCanvas);
+window.addEventListener("resize", () => {
+  resizeCanvas();
+  requestRender();
+});
 
 (async function init() {
   try {
     resizeCanvas();
     const selected = await loadScenarios();
     await loadCircuit(selected);
-    requestAnimationFrame(render);
+    requestRender();
   } catch (error) {
     showError(error);
   }

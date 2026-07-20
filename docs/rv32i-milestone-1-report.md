@@ -40,7 +40,7 @@ The branch does not implement an RV32I CPU yet. It implements the lower-level 32
   - `shifter32`
   - `alu32`
   - `rv32i-alu32`
-- Kept the implementation structural; no product-facing behavioral `ALU32Fast` exists.
+- Kept the implementation structural; no behavioral `BehavioralALU32` counterpart exists yet.
 
 ## Implemented Files
 
@@ -185,7 +185,7 @@ Results:
 - No register file, program counter, instruction memory, data memory, load/store unit, branch/jump unit, or CPU top-level exists yet.
 - No assembly programs or binary fixtures exist yet.
 - Full structural `ALU32` visualization is large: the expanded topology currently contains 8,840 components, 17,074 wires, and 29,847 pins. Use the per-component scenarios for readable debugging, then use `alu32` or `rv32i-alu32` for end-to-end inspection.
-- The structural ALU path is slow enough that a future behavioral `ALU32Fast` may be useful, but only after equivalence tests against this structural implementation exist.
+- The paired-block plan now calls the future reference `BehavioralALU32`. It may be useful for fast tests, but only after independent expected-value tests and direct equivalence against this structural implementation exist.
 
 ## Follow-Up Work
 
