@@ -11,7 +11,7 @@ This milestone is not a new CPU hardware block. It is bring-up infrastructure fo
 ```text
 raw RV32I program words or bytes
   -> RV32IProgram
-  -> preload into BehavioralMemory64Kx32 before simulation
+  -> preload into Memory64Kx32 before simulation
   -> read memory back in tests after simulation
 ```
 
@@ -19,7 +19,7 @@ The CPU still needs a program counter, instruction oracle, datapath components, 
 
 Visualizer note:
 
-The `rv32i-program-loader` scenario exposes a preloaded `BehavioralMemory64Kx32` root so the new test is available from the visualizer. The visualizer shows the memory component boundary and pins; byte contents are still inspected through C++ tests/debug helpers.
+The `rv32i-program-loader` scenario exposes a preloaded `Memory64Kx32` root so the new test is available from the visualizer. The visualizer shows the memory component boundary and pins; byte contents are still inspected through C++ tests/debug helpers.
 
 ## Implemented Files
 
@@ -30,8 +30,8 @@ Program loader:
 
 Memory preload/readback API:
 
-- `include/modules/memory/BehavioralMemory64Kx32.hpp`
-- `src/modules/memory/BehavioralMemory64Kx32.cpp`
+- `include/modules/memory/Memory64Kx32.hpp`
+- `src/modules/memory/Memory64Kx32.cpp`
 
 Tests:
 
@@ -48,14 +48,14 @@ Build and registry:
 
 ## Why This Milestone Exists
 
-The first RV32I CPU will fetch instructions from `BehavioralMemory64Kx32`.
+The first RV32I CPU will fetch instructions from `Memory64Kx32`.
 
 Without preload helpers, a test would need to drive memory pins and clocks once per byte, halfword, or word before it can run the actual CPU. That would make program tests slow, noisy, and hard to read.
 
 Milestone 5 gives tests a direct setup path:
 
 ```cpp
-auto memory = Component::create<BehavioralMemory64Kx32>("IMEM");
+auto memory = Component::create<Memory64Kx32>("IMEM");
 auto program = rv32i::RV32IProgram::fromWords({
     0x00100093U, // addi x1, x0, 1
     0x00208113U, // addi x2, x1, 2
@@ -105,13 +105,13 @@ Public behavior:
 | `empty()` | Reports whether the program has no bytes. |
 | `byteAt(index)` | Returns one byte, or throws `std::out_of_range`. |
 | `wordAt(word_index)` | Reads one complete little-endian 32-bit word, or throws `std::out_of_range`. |
-| `loadInto(memory, base_address)` | Calls `BehavioralMemory64Kx32::loadBytes`. |
+| `loadInto(memory, base_address)` | Calls `Memory64Kx32::loadBytes`. |
 
 Important rule:
 
 `wordAt()` only accepts complete words. If a program has five bytes, `wordAt(0)` is valid and `wordAt(1)` is rejected because only one byte remains.
 
-## `BehavioralMemory64Kx32` Setup API
+## `Memory64Kx32` Setup API
 
 The existing memory component now has direct setup/readback helpers:
 
@@ -218,7 +218,7 @@ Covered behavior:
 Focused verification command:
 
 ```bash
-ctest --test-dir build --output-on-failure -R "RV32IProgramLoaderTest|RV32IControlTest|RV32IDecoderTest|BehavioralMemory64Kx32Test"
+ctest --test-dir build --output-on-failure -R "RV32IProgramLoaderTest|RV32IControlTest|RV32IDecoderTest|Memory64Kx32Test"
 ```
 
 Result:

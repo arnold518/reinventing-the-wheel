@@ -19,11 +19,11 @@ The answer sheet has three layers:
 RV32IInstructionOracle
     Pure one-instruction architectural semantics
 
-BehavioralRV32ICore
+RV32IReferenceCore
     Clocked simulator component that applies the oracle
     and publishes instruction/data-memory transactions
 
-RV32ISystem
+RV32IReferenceSystem
     Top-level component containing the core plus separate
     instruction and data memories
 ```
@@ -31,8 +31,8 @@ RV32ISystem
 The main implementation files are:
 
 - `src/rv32i/RV32IInstructionOracle.cpp`
-- `src/modules/rv32i/BehavioralRV32ICore.cpp`
-- `src/modules/rv32i/RV32ISystem.cpp`
+- `src/modules/rv32i/RV32IReferenceCore.cpp`
+- `src/modules/rv32i/RV32IReferenceSystem.cpp`
 - `src/tests/RV32IInstructionOracleTests.cpp`
 - `src/tests/RV32IInstructionLockstepTests.cpp`
 - `src/tests/RV32ISystemTests.cpp`
@@ -61,21 +61,21 @@ Other forms have narrower uses:
 
 ## 2. The Complete System at a Glance
 
-`RV32ISystem` is a composite circuit:
+`RV32IReferenceSystem` is a composite circuit:
 
 ```text
-                         RV32ISystem
+                         RV32IReferenceSystem
 
        CLK ────────────────┐
        RST ────────────────┤
     ENABLE ────────────────┤
                            v
-                    BehavioralRV32ICore
+                    RV32IReferenceCore
                     │                 │
           instruction bus             data bus
                     │                 │
                     v                 v
-       BehavioralMemory64Kx32   BehavioralMemory64Kx32
+       Memory64Kx32   Memory64Kx32
           INSTRUCTION_MEMORY        DATA_MEMORY
 
        PC <────────────────── core architectural PC
@@ -100,7 +100,7 @@ address  0x100  0x101  0x102  0x103
 byte       21     43     65     87
 ```
 
-## 3. Public `RV32ISystem` Inputs and Outputs
+## 3. Public `RV32IReferenceSystem` Inputs and Outputs
 
 The public interface is intentionally small so that a testbench or visualizer sees a CPU-shaped component rather than every internal debug value.
 
@@ -188,7 +188,7 @@ One enabled rising edge represents one architectural instruction attempt:
 
 This is a **single-step architectural model**, not a pipelined processor. Fetch, decode, execute, memory, and writeback are useful logical stages, but the behavioral core does not contain separate stage registers or take five clock cycles.
 
-The implementation deliberately uses `stepWithoutDataMemoryWrite()`: the oracle calculates the store transaction but does not secretly modify the component memory. The real `BehavioralMemory64Kx32` receives the core's address, data, size, enable, and clock outputs and performs the write. Tests inspect that real bus-write history.
+The implementation deliberately uses `stepWithoutDataMemoryWrite()`: the oracle calculates the store transaction but does not secretly modify the component memory. The real `Memory64Kx32` receives the core's address, data, size, enable, and clock outputs and performs the write. Tests inspect that real bus-write history.
 
 ## 7. Internal Core Pins
 
@@ -245,7 +245,7 @@ This is acceptable for the answer-sheet adapter, but it is **not** how the struc
 
 ## 8. Memory Component Inputs and Outputs
 
-Both internal memories use the same `BehavioralMemory64Kx32` contract.
+Both internal memories use the same `Memory64Kx32` contract.
 
 | Pin | Direction | Width | Meaning |
 | --- | --- | ---: | --- |
@@ -452,8 +452,8 @@ The lockstep harness runs two independent executions from the same program and i
 
 ```text
 functional oracle                  component under test
-separate instruction memory        RV32ISystem instruction memory
-separate data memory               RV32ISystem data memory
+separate instruction memory        RV32IReferenceSystem instruction memory
+separate data memory               RV32IReferenceSystem data memory
           │                                  │
           └──────── compare after each instruction ────────┘
 ```
@@ -704,14 +704,14 @@ Run the answer-sheet and memory checks:
 
 ```bash
 ctest --test-dir build --output-on-failure \
-  -R "BehavioralMemory64Kx32Test|RV32IInstructionOracleTest|RV32IInstructionLockstep|BehavioralRV32ISystem"
+  -R "Memory64Kx32Test|RV32IInstructionOracleTest|RV32IInstructionLockstep|RV32IReferenceSystem"
 ```
 
 Run a single numbered program:
 
 ```bash
 ctest --test-dir build --output-on-failure \
-  -R "BehavioralRV32ISystemProgram5Test"
+  -R "RV32IReferenceSystemProgram5Test"
 ```
 
 Run all tests:
@@ -723,9 +723,9 @@ ctest --test-dir build --output-on-failure
 The visualizer test registry also provides scenario aliases:
 
 ```text
-behavioral-rv32i-system-program1
+rv32i-reference-program1
 ...
-behavioral-rv32i-system-program16
+rv32i-reference-program16
 ```
 
 ## 16. How to Debug a Failure as a Beginner

@@ -19,6 +19,13 @@ set(CORE_LOGIC_SOURCES
     src/components/BasicComponent.cpp
     src/components/ComponentBuilder.cpp
     src/components/WireBuilder.cpp
+    src/components/selection/SelectionTypes.cpp
+    src/components/selection/BuildManifest.cpp
+    src/components/selection/BuildProfile.cpp
+    src/components/selection/ProfileGenerator.cpp
+    src/components/selection/BuildContext.cpp
+    src/components/selection/ComponentCatalog.cpp
+    src/components/selection/BuiltinComponentCatalog.cpp
     src/modules/basic/Gate.cpp
     src/modules/basic/Logic8.cpp
     src/modules/basic/Mux.cpp
@@ -26,27 +33,29 @@ set(CORE_LOGIC_SOURCES
     src/modules/basic/Latch.cpp
     src/modules/basic/DFlipFlop.cpp
     src/modules/basic/ClockGenerator.cpp
-    src/modules/memory/BehavioralMemoryBit.cpp
-    src/modules/memory/BehavioralMemory64Kx32.cpp
-    src/modules/memory/BehavioralRegister32.cpp
-    src/modules/memory/BehavioralRegisterFile32x32.cpp
+    src/modules/memory/MemoryBitDirect.cpp
+    src/modules/memory/Memory64Kx32.cpp
+    src/modules/memory/Register32BitCellArray.cpp
+    src/modules/memory/Register32Direct.cpp
+    src/modules/memory/RegisterFile32x32Direct.cpp
     src/modules/memory/MemoryBit.cpp
     src/modules/memory/Register32.cpp
     src/modules/memory/RegisterFile4x32.cpp
     src/modules/memory/RegisterFile32x32.cpp
     src/modules/memory/Memory4x32.cpp
     src/modules/memory/Memory32x32.cpp
-    src/modules/rv32i/BehavioralRV32ICore.cpp
-    src/modules/rv32i/BehavioralRV32IControlFlowUnit.cpp
-    src/modules/rv32i/BehavioralRV32IDecodeControlUnit.cpp
-    src/modules/rv32i/BehavioralRV32IExecutionControlStatusUnit.cpp
+    src/modules/rv32i/RV32IReferenceCore.cpp
+    src/modules/rv32i/RV32IControlFlowDirect.cpp
+    src/modules/rv32i/RV32IDecodeControlDirect.cpp
+    src/modules/rv32i/RV32IExecutionStatusDirect.cpp
     src/modules/rv32i/RV32IBitPatternMatcher.cpp
     src/modules/rv32i/RV32IControlFlowUnit.cpp
     src/modules/rv32i/RV32IDecodeControlUnit.cpp
     src/modules/rv32i/RV32IExecutionControlStatusUnit.cpp
+    src/modules/rv32i/RV32IBuildProfiles.cpp
     src/modules/rv32i/RV32ISingleCycleCore.cpp
     src/modules/rv32i/RV32ISingleCycleSystem.cpp
-    src/modules/rv32i/RV32ISystem.cpp
+    src/modules/rv32i/RV32IReferenceSystem.cpp
     src/modules/composite/HalfAdder.cpp
     src/modules/composite/FullAdder.cpp
     src/modules/composite/Adder8.cpp
@@ -57,7 +66,7 @@ set(CORE_LOGIC_SOURCES
     src/modules/composite/Comparator32.cpp
     src/modules/composite/Shifter32.cpp
     src/modules/composite/ALU32.cpp
-    src/modules/composite/BehavioralALU32.cpp
+    src/modules/composite/ALU32Direct.cpp
     src/modules/composite/Arithmetic8.cpp
     src/modules/composite/Comparator8.cpp
     src/modules/composite/Shifter8.cpp
@@ -76,18 +85,19 @@ set(CORE_LOGIC_SOURCES
     src/simulator/TruthTableTest.cpp
     src/tests/FullCircuitTest.cpp
     src/tests/CorePrimitiveTests.cpp
+    src/tests/ComponentSelectionTests.cpp
     src/tests/UtilityComponentTests.cpp
     src/tests/ArithmeticLogicTests.cpp
-    src/tests/RV32IALU32Tests.cpp
+    src/tests/ALU32LowerLevelSliceTests.cpp
     src/tests/RV32IBlockStandaloneTests.cpp
-    src/tests/RV32IBlockPairTests.cpp
+    src/tests/RV32IBlockEquivalenceTests.cpp
     src/tests/RV32IDecoderTests.cpp
     src/tests/RV32IControlTests.cpp
     src/tests/RV32IProgramTests.cpp
     src/tests/RV32IInstructionOracleTests.cpp
     src/tests/RV32IInstructionLockstepTests.cpp
     src/tests/RV32ISingleCycleTests.cpp
-    src/tests/RV32ISystemTests.cpp
+    src/tests/RV32IReferenceSystemTests.cpp
     src/tests/MemoryComponentTests.cpp
     src/tests/TestRegistry.cpp
 )
@@ -115,6 +125,12 @@ add_library(SimulatorLib STATIC ${CORE_LOGIC_SOURCES})
 # Make the include directory available to any target that links this library.
 target_include_directories(SimulatorLib PUBLIC
     ${PROJECT_SOURCE_DIR}/include
+)
+
+# Test implementations are compiled into SimulatorLib. Keep their assertions
+# active even when the surrounding build type defines NDEBUG.
+target_compile_options(SimulatorLib PRIVATE
+    $<$<CXX_COMPILER_ID:GNU,Clang>:-UNDEBUG>
 )
 
 # ===================================================================

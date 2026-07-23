@@ -9,8 +9,8 @@ ComponentEvalEvent::ComponentEvalEvent(size_t event_time, std::shared_ptr<Compon
     : Event(event_time), component_to_evaluate(std::move(component)) {}
 
 void ComponentEvalEvent::process(Simulator& sim) {
-    if (auto basic = std::dynamic_pointer_cast<BasicComponent>(component_to_evaluate)) {
-        basic->evaluate(time, sim);
+    if (auto evaluated = std::dynamic_pointer_cast<BasicComponent>(component_to_evaluate)) {
+        evaluated->evaluate(time, sim);
     }
 }
 

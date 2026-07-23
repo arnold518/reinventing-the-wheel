@@ -6,7 +6,8 @@
 #include "components/WireBuilder.hpp"
 #include "modules/basic/Decoder.hpp"
 #include "modules/basic/Mux.hpp"
-#include "modules/memory/BehavioralRegister32.hpp"
+#include "modules/memory/Register32BitCellArray.hpp"
+#include "modules/memory/Register32.hpp"
 #include "modules/utility/BitAdapter.hpp"
 #include "modules/utility/Constant.hpp"
 #include <memory>
@@ -26,10 +27,10 @@ BEGIN_PINS(RegisterFile4x32, IOComponent)
 END_PINS()
 
 void RegisterFile4x32::buildInternals(ComponentBuilder& builder) {
-    builder.addNewComponent<ConstantValue<32, 32>>("X0_ZERO", 0);
-    builder.addNewComponent<BehavioralRegister32>("X1");
-    builder.addNewComponent<BehavioralRegister32>("X2");
-    builder.addNewComponent<BehavioralRegister32>("X3");
+    builder.addNewComponent<ConstantValue<32>>("X0_ZERO", 0);
+    builder.add(circuit::families::Register32, "X1");
+    builder.add(circuit::families::Register32, "X2");
+    builder.add(circuit::families::Register32, "X3");
     builder.addNewComponent<Mux4to1_32bit>("RS1_MUX");
     builder.addNewComponent<Mux4to1_32bit>("RS2_MUX");
     builder.addNewComponent<Decoder2to4>("RD_DECODER");
@@ -37,9 +38,9 @@ void RegisterFile4x32::buildInternals(ComponentBuilder& builder) {
     builder.addNewWire<32>(
         "WRITE_DATA_internal",
         getInputPin<32>("WRITE_DATA"),
-        {builder.getInputPin<BehavioralRegister32, 32>("X1", "D"),
-         builder.getInputPin<BehavioralRegister32, 32>("X2", "D"),
-         builder.getInputPin<BehavioralRegister32, 32>("X3", "D")});
+        {builder.getInputPin<IOComponent, 32>("X1", "D"),
+         builder.getInputPin<IOComponent, 32>("X2", "D"),
+         builder.getInputPin<IOComponent, 32>("X3", "D")});
 
     builder.addNewWire<2>(
         "RD_ADDR_internal",
@@ -54,31 +55,31 @@ void RegisterFile4x32::buildInternals(ComponentBuilder& builder) {
     builder.addNewWire(
         "X1_WE_internal",
         builder.getOutputPin<Decoder2to4>("RD_DECODER", "OUT1"),
-        {builder.getInputPin<BehavioralRegister32>("X1", "WE")});
+        {builder.getInputPin<IOComponent>("X1", "WE")});
 
     builder.addNewWire(
         "X2_WE_internal",
         builder.getOutputPin<Decoder2to4>("RD_DECODER", "OUT2"),
-        {builder.getInputPin<BehavioralRegister32>("X2", "WE")});
+        {builder.getInputPin<IOComponent>("X2", "WE")});
 
     builder.addNewWire(
         "X3_WE_internal",
         builder.getOutputPin<Decoder2to4>("RD_DECODER", "OUT3"),
-        {builder.getInputPin<BehavioralRegister32>("X3", "WE")});
+        {builder.getInputPin<IOComponent>("X3", "WE")});
 
     builder.addNewWire(
         "CLK_internal",
         getInputPin("CLK"),
-        {builder.getInputPin<BehavioralRegister32>("X1", "CLK"),
-         builder.getInputPin<BehavioralRegister32>("X2", "CLK"),
-         builder.getInputPin<BehavioralRegister32>("X3", "CLK")});
+        {builder.getInputPin<IOComponent>("X1", "CLK"),
+         builder.getInputPin<IOComponent>("X2", "CLK"),
+         builder.getInputPin<IOComponent>("X3", "CLK")});
 
     builder.addNewWire(
         "RST_internal",
         getInputPin("RST"),
-        {builder.getInputPin<BehavioralRegister32>("X1", "RST"),
-         builder.getInputPin<BehavioralRegister32>("X2", "RST"),
-         builder.getInputPin<BehavioralRegister32>("X3", "RST")});
+        {builder.getInputPin<IOComponent>("X1", "RST"),
+         builder.getInputPin<IOComponent>("X2", "RST"),
+         builder.getInputPin<IOComponent>("X3", "RST")});
 
     builder.addNewWire<2>(
         "RS1_ADDR_internal",
@@ -92,7 +93,7 @@ void RegisterFile4x32::buildInternals(ComponentBuilder& builder) {
 
     builder.addNewWire<32>(
         "X0_to_read_muxes",
-        builder.getOutputPin<ConstantValue<32, 32>, 32>("X0_ZERO", "OUT"),
+        builder.getOutputPin<ConstantValue<32>, 32>("X0_ZERO", "OUT"),
         {builder.getInputPin<Mux4to1_32bit, 32>("RS1_MUX", "IN0"),
          builder.getInputPin<Mux4to1_32bit, 32>("RS2_MUX", "IN0")});
 
@@ -101,7 +102,7 @@ void RegisterFile4x32::buildInternals(ComponentBuilder& builder) {
         const auto input_name = "IN" + std::to_string(index);
         builder.addNewWire<32>(
             reg_name + "_to_read_muxes",
-            builder.getOutputPin<BehavioralRegister32, 32>(reg_name, "Q"),
+            builder.getOutputPin<IOComponent, 32>(reg_name, "Q"),
             {builder.getInputPin<Mux4to1_32bit, 32>("RS1_MUX", input_name),
              builder.getInputPin<Mux4to1_32bit, 32>("RS2_MUX", input_name)});
     }

@@ -23,10 +23,10 @@ void buildEqualityFlag(ComponentBuilder& builder, IOComponent& component, uint64
                        const std::string& eq_name, const std::string& constant_name,
                        const std::string& output_pin) {
     builder.addNewComponent<EqualityChecker8>(eq_name);
-    builder.addNewComponent<ConstantValue<8, 8>>(constant_name, value);
+    builder.addNewComponent<ConstantValue<8>>(constant_name, value);
     builder.addNewWire<8>(
         constant_name + "_to_" + eq_name,
-        builder.getOutputPin<ConstantValue<8, 8>, 8>(constant_name, "OUT"),
+        builder.getOutputPin<ConstantValue<8>, 8>(constant_name, "OUT"),
         {builder.getInputPin<EqualityChecker8, 8>(eq_name, "B")});
     builder.addNewWire(
         eq_name + "_to_" + output_pin,
@@ -89,8 +89,8 @@ void TwosComplement8::buildInternals(ComponentBuilder& builder) {
     builder.addNewComponent<Adder8>("ADD_ONE");
     builder.addNewComponent<ZeroDetect8>("ZERO_DETECT");
     builder.addNewComponent<NOTGate>("NOT_ZERO");
-    builder.addNewComponent<ConstantValue<8, 8>>("CONST_ONE", 0x01);
-    builder.addNewComponent<ConstantValue<1, 8>>("CONST_LOW", 0);
+    builder.addNewComponent<ConstantValue<8>>("CONST_ONE", 0x01);
+    builder.addNewComponent<ConstantValue<1>>("CONST_LOW", 0);
     buildEqualityFlag(builder, *this, 0x80, "EQ_80", "CONST_80", "Overflow");
 
     builder.addNewWire<8>(
@@ -105,11 +105,11 @@ void TwosComplement8::buildInternals(ComponentBuilder& builder) {
         {builder.getInputPin<Adder8, 8>("ADD_ONE", "A")});
     builder.addNewWire<8>(
         "CONST_ONE_to_ADD",
-        builder.getOutputPin<ConstantValue<8, 8>, 8>("CONST_ONE", "OUT"),
+        builder.getOutputPin<ConstantValue<8>, 8>("CONST_ONE", "OUT"),
         {builder.getInputPin<Adder8, 8>("ADD_ONE", "B")});
     builder.addNewWire(
         "CONST_LOW_to_Cin",
-        builder.getOutputPin<ConstantValue<1, 8>>("CONST_LOW", "OUT"),
+        builder.getOutputPin<ConstantValue<1>>("CONST_LOW", "OUT"),
         {builder.getInputPin<Adder8>("ADD_ONE", "Cin")});
     connectAdderResult(builder, *this, "ADD_ONE", "Result");
     builder.addNewWire(
@@ -134,7 +134,7 @@ Subtractor8::Subtractor8(std::string name)
 void Subtractor8::buildInternals(ComponentBuilder& builder) {
     builder.addNewComponent<NOT8>("NOT_B");
     builder.addNewComponent<Adder8>("ADD");
-    builder.addNewComponent<ConstantValue<1, 8>>("CONST_HIGH", 1);
+    builder.addNewComponent<ConstantValue<1>>("CONST_HIGH", 1);
     buildSubOverflow(builder, *this, "ADD");
 
     builder.addNewWire<8>(
@@ -153,7 +153,7 @@ void Subtractor8::buildInternals(ComponentBuilder& builder) {
         {builder.getInputPin<Adder8, 8>("ADD", "B")});
     builder.addNewWire(
         "CONST_HIGH_to_Cin",
-        builder.getOutputPin<ConstantValue<1, 8>>("CONST_HIGH", "OUT"),
+        builder.getOutputPin<ConstantValue<1>>("CONST_HIGH", "OUT"),
         {builder.getInputPin<Adder8>("ADD", "Cin")});
     builder.addNewWire(
         "ADD_Cout_to_Cout",
@@ -215,8 +215,8 @@ Incrementer8::Incrementer8(std::string name)
 
 void Incrementer8::buildInternals(ComponentBuilder& builder) {
     builder.addNewComponent<Adder8>("ADD");
-    builder.addNewComponent<ConstantValue<8, 8>>("CONST_ZERO", 0x00);
-    builder.addNewComponent<ConstantValue<1, 8>>("CONST_HIGH", 1);
+    builder.addNewComponent<ConstantValue<8>>("CONST_ZERO", 0x00);
+    builder.addNewComponent<ConstantValue<1>>("CONST_HIGH", 1);
     buildEqualityFlag(builder, *this, 0x7F, "EQ_7F", "CONST_7F", "Overflow");
 
     builder.addNewWire<8>(
@@ -226,11 +226,11 @@ void Incrementer8::buildInternals(ComponentBuilder& builder) {
          builder.getInputPin<EqualityChecker8, 8>("EQ_7F", "A")});
     builder.addNewWire<8>(
         "CONST_ZERO_to_ADD",
-        builder.getOutputPin<ConstantValue<8, 8>, 8>("CONST_ZERO", "OUT"),
+        builder.getOutputPin<ConstantValue<8>, 8>("CONST_ZERO", "OUT"),
         {builder.getInputPin<Adder8, 8>("ADD", "B")});
     builder.addNewWire(
         "CONST_HIGH_to_Cin",
-        builder.getOutputPin<ConstantValue<1, 8>>("CONST_HIGH", "OUT"),
+        builder.getOutputPin<ConstantValue<1>>("CONST_HIGH", "OUT"),
         {builder.getInputPin<Adder8>("ADD", "Cin")});
     connectAdderResult(builder, *this, "ADD", "Result");
     builder.addNewWire(
@@ -249,8 +249,8 @@ Decrementer8::Decrementer8(std::string name)
 
 void Decrementer8::buildInternals(ComponentBuilder& builder) {
     builder.addNewComponent<Adder8>("ADD");
-    builder.addNewComponent<ConstantValue<8, 8>>("CONST_FF", 0xFF);
-    builder.addNewComponent<ConstantValue<1, 8>>("CONST_LOW", 0);
+    builder.addNewComponent<ConstantValue<8>>("CONST_FF", 0xFF);
+    builder.addNewComponent<ConstantValue<1>>("CONST_LOW", 0);
     buildEqualityFlag(builder, *this, 0x80, "EQ_80", "CONST_80", "Overflow");
 
     builder.addNewWire<8>(
@@ -260,11 +260,11 @@ void Decrementer8::buildInternals(ComponentBuilder& builder) {
          builder.getInputPin<EqualityChecker8, 8>("EQ_80", "A")});
     builder.addNewWire<8>(
         "CONST_FF_to_ADD",
-        builder.getOutputPin<ConstantValue<8, 8>, 8>("CONST_FF", "OUT"),
+        builder.getOutputPin<ConstantValue<8>, 8>("CONST_FF", "OUT"),
         {builder.getInputPin<Adder8, 8>("ADD", "B")});
     builder.addNewWire(
         "CONST_LOW_to_Cin",
-        builder.getOutputPin<ConstantValue<1, 8>>("CONST_LOW", "OUT"),
+        builder.getOutputPin<ConstantValue<1>>("CONST_LOW", "OUT"),
         {builder.getInputPin<Adder8>("ADD", "Cin")});
     connectAdderResult(builder, *this, "ADD", "Result");
     builder.addNewWire(

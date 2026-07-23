@@ -2,11 +2,13 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 #include <cstdint>
+#include <stdexcept>
 #include <utility>
 
 #include "components/BasicComponent.hpp"
-#include "components/IOComponent.hpp"
+#include "components/capabilities/RegisterStateView.hpp"
 #include "components/Component.hpp"
+#include "components/IOComponent.hpp"
 
 #include "modules/basic/Decoder.hpp"
 #include "modules/basic/Gate.hpp"
@@ -15,27 +17,22 @@
 #include "modules/basic/Latch.hpp"
 #include "modules/basic/DFlipFlop.hpp"
 #include "modules/basic/ClockGenerator.hpp"
-#include "modules/memory/BehavioralMemory64Kx32.hpp"
-#include "modules/memory/BehavioralMemoryBit.hpp"
-#include "modules/memory/BehavioralRegister32.hpp"
-#include "modules/memory/BehavioralRegisterFile32x32.hpp"
+#include "modules/memory/Memory64Kx32.hpp"
+#include "modules/memory/Register32BitCellArray.hpp"
 #include "modules/memory/Memory4x32.hpp"
 #include "modules/memory/Memory32x32.hpp"
 #include "modules/memory/MemoryBit.hpp"
 #include "modules/memory/Register32.hpp"
 #include "modules/memory/RegisterFile4x32.hpp"
 #include "modules/memory/RegisterFile32x32.hpp"
-#include "modules/rv32i/BehavioralRV32ICore.hpp"
-#include "modules/rv32i/BehavioralRV32IControlFlowUnit.hpp"
-#include "modules/rv32i/BehavioralRV32IDecodeControlUnit.hpp"
-#include "modules/rv32i/BehavioralRV32IExecutionControlStatusUnit.hpp"
+#include "modules/rv32i/RV32IReferenceCore.hpp"
 #include "modules/rv32i/RV32IControlFlowUnit.hpp"
 #include "modules/rv32i/RV32IDecodeControlUnit.hpp"
 #include "modules/rv32i/RV32IExecutionControlStatusUnit.hpp"
 #include "modules/rv32i/RV32IBitPatternMatcher.hpp"
 #include "modules/rv32i/RV32ISingleCycleCore.hpp"
 #include "modules/rv32i/RV32ISingleCycleSystem.hpp"
-#include "modules/rv32i/RV32ISystem.hpp"
+#include "modules/rv32i/RV32IReferenceSystem.hpp"
 
 #include "modules/composite/HalfAdder.hpp"
 #include "modules/composite/FullAdder.hpp"
@@ -47,7 +44,6 @@
 #include "modules/composite/Comparator32.hpp"
 #include "modules/composite/Shifter32.hpp"
 #include "modules/composite/ALU32.hpp"
-#include "modules/composite/BehavioralALU32.hpp"
 #include "modules/composite/Arithmetic8.hpp"
 #include "modules/composite/Comparator8.hpp"
 #include "modules/composite/Shifter8.hpp"
@@ -60,9 +56,9 @@
 
 namespace py = pybind11;
 
-template<typename T>
-void bindBasicModule(py::module_& m, const char* name, const char* description) {
-    py::class_<T, BasicComponent, std::shared_ptr<T>>(m, name, description, py::module_local(false))
+template<typename T, typename Base>
+void bindModule(py::module_& m, const char* name, const char* description) {
+    py::class_<T, Base, std::shared_ptr<T>>(m, name, description, py::module_local(false))
         .def(py::init([](const std::string& instance_name) {
             return Component::create<T>(instance_name);
         }), py::arg("name"))
@@ -71,6 +67,11 @@ void bindBasicModule(py::module_& m, const char* name, const char* description) 
         .def("get_children", &T::getChildren, py::return_value_policy::reference_internal)
         .def("get_input_pins", &T::getAllInputPins, py::return_value_policy::reference_internal)
         .def("get_output_pins", &T::getAllOutputPins, py::return_value_policy::reference_internal);
+}
+
+template<typename T>
+void bindBasicModule(py::module_& m, const char* name, const char* description) {
+    bindModule<T, BasicComponent>(m, name, description);
 }
 
 template<typename T>
@@ -88,7 +89,7 @@ void bindConstantModule(py::module_& m, const char* name, const char* descriptio
 }
 
 template<typename T>
-void bindIOModule(py::module_& m, const char* name, const char* description) {
+void bindCompositeModule(py::module_& m, const char* name, const char* description) {
     py::class_<T, IOComponent, std::shared_ptr<T>>(m, name, description, py::module_local(false))
         .def(py::init([](const std::string& instance_name) {
             return Component::create<T>(instance_name);
@@ -107,6 +108,19 @@ void bindModules(py::module_& m) {
         py::arg("raw"),
         py::arg("pc") = 0,
         "Returns a compact RV32I assembly string for a 32-bit instruction word.");
+    m.def(
+        "get_register_state_at_time",
+        [](const std::shared_ptr<Component>& component, size_t target_time) {
+            auto view = std::dynamic_pointer_cast<RegisterStateView>(component);
+            if (!view) {
+                throw std::invalid_argument(
+                    "Component does not provide the register-state-view capability");
+            }
+            return view->getRegisterStateAtTime(target_time);
+        },
+        py::arg("component"),
+        py::arg("time"),
+        "Returns register state through the shared register-state-view capability.");
 
     // --- NOTGate Binding ---
     py::class_<NOTGate, BasicComponent, std::shared_ptr<NOTGate>>(m, "NOTGate", "A standard 1-input NOT gate.", py::module_local(false))
@@ -174,9 +188,9 @@ void bindModules(py::module_& m) {
         .def("get_input_pins", &XORGate::getAllInputPins, py::return_value_policy::reference_internal)
         .def("get_output_pins", &XORGate::getAllOutputPins, py::return_value_policy::reference_internal);
 
-    bindIOModule<SRLatch>(m, "SRLatch", "Structural active-low SR latch built from cross-coupled NAND gates.");
-    bindIOModule<GatedDLatch>(m, "GatedDLatch", "Structural gated D latch with reset.");
-    bindIOModule<DFlipFlop>(m, "DFlipFlop", "Structural rising-edge master-slave D flip-flop.");
+    bindCompositeModule<SRLatch>(m, "SRLatch", "Structural active-low SR latch built from cross-coupled NAND gates.");
+    bindCompositeModule<GatedDLatch>(m, "GatedDLatch", "Structural gated D latch with reset.");
+    bindCompositeModule<DFlipFlop>(m, "DFlipFlop", "Structural rising-edge master-slave D flip-flop.");
 
     // --- ClockGenerator Binding ---
     py::class_<ClockGenerator, BasicComponent, std::shared_ptr<ClockGenerator>>(m, "ClockGenerator", "Generates a periodic clock signal.", py::module_local(false))
@@ -211,107 +225,85 @@ void bindModules(py::module_& m) {
         .def("get_input_pins", &FullAdder::getInputPins, py::return_value_policy::reference_internal)
         .def("get_output_pins", &FullAdder::getOutputPins, py::return_value_policy::reference_internal);
 
-    bindIOModule<AND8>(m, "AND8", "8-bit bitwise AND.");
-    bindIOModule<OR8>(m, "OR8", "8-bit bitwise OR.");
-    bindIOModule<XOR8>(m, "XOR8", "8-bit bitwise XOR.");
-    bindIOModule<NOT8>(m, "NOT8", "8-bit bitwise NOT.");
-    bindIOModule<NAND8>(m, "NAND8", "8-bit bitwise NAND.");
-    bindIOModule<NOR8>(m, "NOR8", "8-bit bitwise NOR.");
+    bindCompositeModule<AND8>(m, "AND8", "8-bit bitwise AND.");
+    bindCompositeModule<OR8>(m, "OR8", "8-bit bitwise OR.");
+    bindCompositeModule<XOR8>(m, "XOR8", "8-bit bitwise XOR.");
+    bindCompositeModule<NOT8>(m, "NOT8", "8-bit bitwise NOT.");
+    bindCompositeModule<NAND8>(m, "NAND8", "8-bit bitwise NAND.");
+    bindCompositeModule<NOR8>(m, "NOR8", "8-bit bitwise NOR.");
 
-    bindIOModule<Mux2to1>(m, "Mux2to1", "2:1 one-bit multiplexer.");
-    bindIOModule<Mux4to1>(m, "Mux4to1", "4:1 one-bit multiplexer.");
-    bindIOModule<Mux8to1>(m, "Mux8to1", "8:1 one-bit multiplexer.");
-    bindIOModule<Mux16to1>(m, "Mux16to1", "16:1 one-bit multiplexer.");
-    bindIOModule<Mux32to1>(m, "Mux32to1", "32:1 one-bit multiplexer.");
-    bindIOModule<Mux2to1_8bit>(m, "Mux2to1_8bit", "2:1 8-bit multiplexer.");
-    bindIOModule<Mux2to1_4bit>(m, "Mux2to1_4bit", "2:1 4-bit multiplexer.");
-    bindIOModule<Mux2to1_32bit>(m, "Mux2to1_32bit", "2:1 32-bit multiplexer.");
-    bindIOModule<Mux4to1_8bit>(m, "Mux4to1_8bit", "4:1 8-bit multiplexer.");
-    bindIOModule<Mux4to1_32bit>(m, "Mux4to1_32bit", "4:1 32-bit multiplexer.");
-    bindIOModule<Mux8to1_8bit>(m, "Mux8to1_8bit", "8:1 8-bit multiplexer.");
-    bindIOModule<Mux8to1_32bit>(m, "Mux8to1_32bit", "8:1 32-bit multiplexer.");
-    bindIOModule<Mux16to1_8bit>(m, "Mux16to1_8bit", "16:1 8-bit multiplexer.");
-    bindIOModule<Mux32to1_32bit>(m, "Mux32to1_32bit", "32:1 32-bit multiplexer.");
-    bindIOModule<Decoder2to4>(m, "Decoder2to4", "2-bit enabled one-hot decoder.");
-    bindIOModule<Decoder5to32>(m, "Decoder5to32", "5-bit enabled one-hot decoder.");
+    bindCompositeModule<Mux2to1>(m, "Mux2to1", "2:1 one-bit multiplexer.");
+    bindCompositeModule<Mux4to1>(m, "Mux4to1", "4:1 one-bit multiplexer.");
+    bindCompositeModule<Mux8to1>(m, "Mux8to1", "8:1 one-bit multiplexer.");
+    bindCompositeModule<Mux16to1>(m, "Mux16to1", "16:1 one-bit multiplexer.");
+    bindCompositeModule<Mux32to1>(m, "Mux32to1", "32:1 one-bit multiplexer.");
+    bindCompositeModule<Mux2to1_8bit>(m, "Mux2to1_8bit", "2:1 8-bit multiplexer.");
+    bindCompositeModule<Mux2to1_4bit>(m, "Mux2to1_4bit", "2:1 4-bit multiplexer.");
+    bindCompositeModule<Mux2to1_32bit>(m, "Mux2to1_32bit", "2:1 32-bit multiplexer.");
+    bindCompositeModule<Mux4to1_8bit>(m, "Mux4to1_8bit", "4:1 8-bit multiplexer.");
+    bindCompositeModule<Mux4to1_32bit>(m, "Mux4to1_32bit", "4:1 32-bit multiplexer.");
+    bindCompositeModule<Mux8to1_8bit>(m, "Mux8to1_8bit", "8:1 8-bit multiplexer.");
+    bindCompositeModule<Mux8to1_32bit>(m, "Mux8to1_32bit", "8:1 32-bit multiplexer.");
+    bindCompositeModule<Mux16to1_8bit>(m, "Mux16to1_8bit", "16:1 8-bit multiplexer.");
+    bindCompositeModule<Mux32to1_32bit>(m, "Mux32to1_32bit", "32:1 32-bit multiplexer.");
+    bindCompositeModule<Decoder2to4>(m, "Decoder2to4", "2-bit enabled one-hot decoder.");
+    bindCompositeModule<Decoder5to32>(m, "Decoder5to32", "5-bit enabled one-hot decoder.");
 
-    bindBasicModule<BehavioralMemoryBit>(m, "BehavioralMemoryBit", "Behavioral one-bit storage cell with write enable and reset.");
-    py::class_<BehavioralMemory64Kx32, BasicComponent, std::shared_ptr<BehavioralMemory64Kx32>>(
+    py::class_<Memory64Kx32, BasicComponent, std::shared_ptr<Memory64Kx32>>(
         m,
-        "BehavioralMemory64Kx32",
+        "Memory64Kx32",
         "Behavioral 64K-word 32-bit byte-addressed RV32I memory.",
         py::module_local(false))
         .def(py::init([](const std::string& instance_name) {
-            return Component::create<BehavioralMemory64Kx32>(instance_name);
+            return Component::create<Memory64Kx32>(instance_name);
         }), py::arg("name"))
-        .def("get_name", &BehavioralMemory64Kx32::getName)
-        .def("get_parent", &BehavioralMemory64Kx32::getParent)
-        .def("get_children", &BehavioralMemory64Kx32::getChildren, py::return_value_policy::reference_internal)
-        .def("get_input_pins", &BehavioralMemory64Kx32::getAllInputPins, py::return_value_policy::reference_internal)
-        .def("get_output_pins", &BehavioralMemory64Kx32::getAllOutputPins, py::return_value_policy::reference_internal)
-        .def_static("capacity_bytes", &BehavioralMemory64Kx32::capacityBytes)
-        .def_static("capacity_words", &BehavioralMemory64Kx32::capacityWords)
+        .def("get_name", &Memory64Kx32::getName)
+        .def("get_parent", &Memory64Kx32::getParent)
+        .def("get_children", &Memory64Kx32::getChildren, py::return_value_policy::reference_internal)
+        .def("get_input_pins", &Memory64Kx32::getAllInputPins, py::return_value_policy::reference_internal)
+        .def("get_output_pins", &Memory64Kx32::getAllOutputPins, py::return_value_policy::reference_internal)
+        .def_static("capacity_bytes", &Memory64Kx32::capacityBytes)
+        .def_static("capacity_words", &Memory64Kx32::capacityWords)
         .def(
             "get_touched_words_at_time",
-            &BehavioralMemory64Kx32::getTouchedWordsAtTime,
+            &Memory64Kx32::getTouchedWordsAtTime,
             py::arg("time"),
             py::arg("max_words") = 64,
             "Returns 32-bit words touched since the effective reset at the requested simulation time.")
         .def(
             "get_touched_word_count_at_time",
-            &BehavioralMemory64Kx32::getTouchedWordCountAtTime,
+            &Memory64Kx32::getTouchedWordCountAtTime,
             py::arg("time"),
             "Counts words touched since the effective reset at the requested simulation time.")
         .def(
             "get_occupied_words_at_time",
-            &BehavioralMemory64Kx32::getOccupiedWordsAtTime,
+            &Memory64Kx32::getOccupiedWordsAtTime,
             py::arg("time"),
             py::arg("max_words") = 64,
             "Deprecated alias for get_touched_words_at_time.")
         .def(
             "get_occupied_word_count_at_time",
-            &BehavioralMemory64Kx32::getOccupiedWordCountAtTime,
+            &Memory64Kx32::getOccupiedWordCountAtTime,
             py::arg("time"),
             "Deprecated alias for get_touched_word_count_at_time.")
         .def(
             "get_words_at_time",
-            &BehavioralMemory64Kx32::getWordsAtTime,
+            &Memory64Kx32::getWordsAtTime,
             py::arg("time"),
             py::arg("base_address"),
             py::arg("word_count"),
             "Returns a word-aligned memory window at the requested simulation time.");
-    bindIOModule<BehavioralRegister32>(m, "BehavioralRegister32", "32-bit register built from behavioral memory bits.");
-    py::class_<BehavioralRegisterFile32x32, BasicComponent, std::shared_ptr<BehavioralRegisterFile32x32>>(
-        m,
-        "BehavioralRegisterFile32x32",
-        "Compact behavioral 32-entry RV32I register file.",
-        py::module_local(false))
-        .def(py::init([](const std::string& instance_name) {
-            return Component::create<BehavioralRegisterFile32x32>(instance_name);
-        }), py::arg("name"))
-        .def("get_name", &BehavioralRegisterFile32x32::getName)
-        .def("get_parent", &BehavioralRegisterFile32x32::getParent)
-        .def("get_children", &BehavioralRegisterFile32x32::getChildren, py::return_value_policy::reference_internal)
-        .def("get_input_pins", &BehavioralRegisterFile32x32::getAllInputPins, py::return_value_policy::reference_internal)
-        .def("get_output_pins", &BehavioralRegisterFile32x32::getAllOutputPins, py::return_value_policy::reference_internal)
-        .def(
-            "get_register_state_at_time",
-            &BehavioralRegisterFile32x32::getRegisterStateAtTime,
-            py::arg("time"),
-            "Returns 32 registers as little-endian LogicValue vectors at the requested simulation time.");
-    bindIOModule<MemoryBit>(m, "MemoryBit", "Structural one-bit storage cell with write enable and reset.");
-    bindIOModule<Register32>(m, "Register32", "Structural 32-bit register built from MemoryBit cells.");
-    bindIOModule<RegisterFile4x32>(m, "RegisterFile4x32", "Four-entry 32-bit register file built from behavioral register cells.");
-    bindIOModule<RegisterFile32x32>(m, "RegisterFile32x32", "32-entry 32-bit register file built from behavioral register cells.");
-    bindIOModule<Memory4x32>(m, "Memory4x32", "Four-word 32-bit memory slice with CPU-facing memory pins.");
-    bindIOModule<Memory32x32>(m, "Memory32x32", "Thirty-two-word 32-bit memory slice with CPU-facing memory pins.");
-    bindBasicModule<BehavioralRV32ICore>(m, "BehavioralRV32ICore", "Behavioral RV32I core with visible instruction/data memory bus pins.");
-    bindIOModule<RV32IControlFlowUnit>(m, "RV32IControlFlowUnit", "Structural RV32I PC, branch, and jump block.");
-    bindBasicModule<BehavioralRV32IControlFlowUnit>(m, "BehavioralRV32IControlFlowUnit", "Compact RV32I control-flow reference block.");
-    bindIOModule<RV32IDecodeControlUnit>(m, "RV32IDecodeControlUnit", "Structural RV32I field, immediate, and control decoder.");
-    bindBasicModule<BehavioralRV32IDecodeControlUnit>(m, "BehavioralRV32IDecodeControlUnit", "Compact RV32I decode/control reference block.");
-    bindIOModule<RV32IExecutionControlStatusUnit>(m, "RV32IExecutionControlStatusUnit", "Structural RV32I commit permission, memory handshake, halt, and trap-state block.");
-    bindBasicModule<BehavioralRV32IExecutionControlStatusUnit>(m, "BehavioralRV32IExecutionControlStatusUnit", "Compact same-contract reference for the structural RV32I execution/status block.");
+    bindCompositeModule<Register32BitCellArray>(m, "Register32BitCellArray", "Structural 32-bit register assembled from bit cells.");
+    bindCompositeModule<MemoryBit>(m, "MemoryBit", "Structural one-bit storage cell with write enable and reset.");
+    bindCompositeModule<Register32>(m, "Register32", "Structural 32-bit register built from MemoryBit cells.");
+    bindCompositeModule<RegisterFile4x32>(m, "RegisterFile4x32", "Four-entry 32-bit register file built from behavioral register cells.");
+    bindCompositeModule<RegisterFile32x32>(m, "RegisterFile32x32", "32-entry 32-bit register file built from behavioral register cells.");
+    bindCompositeModule<Memory4x32>(m, "Memory4x32", "Four-word 32-bit memory slice with CPU-facing memory pins.");
+    bindCompositeModule<Memory32x32>(m, "Memory32x32", "Thirty-two-word 32-bit memory slice with CPU-facing memory pins.");
+    bindBasicModule<RV32IReferenceCore>(m, "RV32IReferenceCore", "Oracle-backed RV32I answer-sheet core with visible instruction/data memory bus pins.");
+    bindCompositeModule<RV32IControlFlowUnit>(m, "RV32IControlFlowUnit", "Structural RV32I PC, branch, and jump block.");
+    bindCompositeModule<RV32IDecodeControlUnit>(m, "RV32IDecodeControlUnit", "Structural RV32I field, immediate, and control decoder.");
+    bindCompositeModule<RV32IExecutionControlStatusUnit>(m, "RV32IExecutionControlStatusUnit", "Structural RV32I commit permission, memory handshake, halt, and trap-state block.");
     py::class_<RV32IBitPatternMatcher, IOComponent, std::shared_ptr<RV32IBitPatternMatcher>>(
         m,
         "RV32IBitPatternMatcher",
@@ -327,32 +319,31 @@ void bindModules(py::module_& m) {
         .def("get_output_pins", &RV32IBitPatternMatcher::getAllOutputPins, py::return_value_policy::reference_internal)
         .def_property_readonly("mask", &RV32IBitPatternMatcher::mask)
         .def_property_readonly("value", &RV32IBitPatternMatcher::value);
-    bindIOModule<RV32ISingleCycleCore>(m, "RV32ISingleCycleCore", "Structural single-cycle RV32I core composed from the five educational blocks.");
-    bindIOModule<RV32ISingleCycleSystem>(m, "RV32ISingleCycleSystem", "Structural RV32I core with separate behavioral instruction and data memories.");
-    bindIOModule<RV32ISystem>(m, "RV32ISystem", "RV32I system wrapper containing a behavioral core plus instruction/data memories.");
+    bindCompositeModule<RV32ISingleCycleCore>(m, "RV32ISingleCycleCore", "Structural single-cycle RV32I core composed from the five educational blocks.");
+    bindCompositeModule<RV32ISingleCycleSystem>(m, "RV32ISingleCycleSystem", "Structural RV32I core with separate behavioral instruction and data memories.");
+    bindCompositeModule<RV32IReferenceSystem>(m, "RV32IReferenceSystem", "RV32I answer-sheet system containing the reference core and instruction/data memories.");
 
-    bindIOModule<Adder8>(m, "Adder8", "8-bit adder.");
-    bindIOModule<TwosComplement8>(m, "TwosComplement8", "8-bit two's complement.");
-    bindIOModule<Subtractor8>(m, "Subtractor8", "8-bit subtractor.");
-    bindIOModule<SubtractorWithBorrow8>(m, "SubtractorWithBorrow8", "8-bit subtractor with borrow.");
-    bindIOModule<Incrementer8>(m, "Incrementer8", "8-bit incrementer.");
-    bindIOModule<Decrementer8>(m, "Decrementer8", "8-bit decrementer.");
-    bindIOModule<EqualityChecker8>(m, "EqualityChecker8", "8-bit equality checker.");
-    bindIOModule<Comparator8>(m, "Comparator8", "8-bit unsigned comparator.");
-    bindIOModule<SignedComparator8>(m, "SignedComparator8", "8-bit signed comparator.");
-    bindIOModule<ShiftLeftLogical8>(m, "ShiftLeftLogical8", "8-bit logical shift left.");
-    bindIOModule<ShiftRightLogical8>(m, "ShiftRightLogical8", "8-bit logical shift right.");
-    bindIOModule<ShiftRightArithmetic8>(m, "ShiftRightArithmetic8", "8-bit arithmetic shift right.");
-    bindIOModule<ZeroDetect8>(m, "ZeroDetect8", "8-bit zero detector.");
-    bindIOModule<ALU8>(m, "ALU8", "8-bit arithmetic logic unit.");
-    bindIOModule<Adder32>(m, "Adder32", "Structural 32-bit adder.");
-    bindIOModule<AddSub32>(m, "AddSub32", "Structural 32-bit add/subtract unit.");
-    bindIOModule<Logic32>(m, "Logic32", "Structural 32-bit bitwise logic unit.");
-    bindIOModule<ZeroDetect32>(m, "ZeroDetect32", "Structural 32-bit zero detector.");
-    bindIOModule<Comparator32>(m, "Comparator32", "Structural 32-bit comparator.");
-    bindIOModule<Shifter32>(m, "Shifter32", "Structural 32-bit barrel shifter.");
-    bindIOModule<ALU32>(m, "ALU32", "Structural RV32I-oriented 32-bit ALU.");
-    bindBasicModule<BehavioralALU32>(m, "BehavioralALU32", "Compact same-contract reference for the structural ALU32.");
+    bindCompositeModule<Adder8>(m, "Adder8", "8-bit adder.");
+    bindCompositeModule<TwosComplement8>(m, "TwosComplement8", "8-bit two's complement.");
+    bindCompositeModule<Subtractor8>(m, "Subtractor8", "8-bit subtractor.");
+    bindCompositeModule<SubtractorWithBorrow8>(m, "SubtractorWithBorrow8", "8-bit subtractor with borrow.");
+    bindCompositeModule<Incrementer8>(m, "Incrementer8", "8-bit incrementer.");
+    bindCompositeModule<Decrementer8>(m, "Decrementer8", "8-bit decrementer.");
+    bindCompositeModule<EqualityChecker8>(m, "EqualityChecker8", "8-bit equality checker.");
+    bindCompositeModule<Comparator8>(m, "Comparator8", "8-bit unsigned comparator.");
+    bindCompositeModule<SignedComparator8>(m, "SignedComparator8", "8-bit signed comparator.");
+    bindCompositeModule<ShiftLeftLogical8>(m, "ShiftLeftLogical8", "8-bit logical shift left.");
+    bindCompositeModule<ShiftRightLogical8>(m, "ShiftRightLogical8", "8-bit logical shift right.");
+    bindCompositeModule<ShiftRightArithmetic8>(m, "ShiftRightArithmetic8", "8-bit arithmetic shift right.");
+    bindCompositeModule<ZeroDetect8>(m, "ZeroDetect8", "8-bit zero detector.");
+    bindCompositeModule<ALU8>(m, "ALU8", "8-bit arithmetic logic unit.");
+    bindCompositeModule<Adder32>(m, "Adder32", "Structural 32-bit adder.");
+    bindCompositeModule<AddSub32>(m, "AddSub32", "Structural 32-bit add/subtract unit.");
+    bindCompositeModule<Logic32>(m, "Logic32", "Structural 32-bit bitwise logic unit.");
+    bindCompositeModule<ZeroDetect32>(m, "ZeroDetect32", "Structural 32-bit zero detector.");
+    bindCompositeModule<Comparator32>(m, "Comparator32", "Structural 32-bit comparator.");
+    bindCompositeModule<Shifter32>(m, "Shifter32", "Structural 32-bit barrel shifter.");
+    bindCompositeModule<ALU32>(m, "ALU32", "Structural RV32I-oriented 32-bit ALU.");
 
     py::enum_<Rewire::UnmappedBitValue>(m, "UnmappedBitValue")
         .value("UNKNOWN", Rewire::UnmappedBitValue::UNKNOWN)
@@ -425,11 +416,9 @@ void bindModules(py::module_& m) {
     bindBasicModule<BitJoiner<16>>(m, "BitJoiner16", "Join sixteen single-bit inputs into one 16-bit output.");
     bindBasicModule<BitSplitter<32>>(m, "BitSplitter32", "Split one 32-bit input into thirty-two single-bit outputs.");
     bindBasicModule<BitJoiner<32>>(m, "BitJoiner32", "Join thirty-two single-bit inputs into one 32-bit output.");
-    bindConstantModule<ConstantValue<1, 1>>(m, "ConstantValue1High", "Single-bit constant source.");
-    bindConstantModule<ConstantValue<1, 8>>(m, "ConstantValue1From8Trigger", "Single-bit constant source.");
-    bindConstantModule<ConstantValue<1, 32>>(m, "ConstantValue1From32Trigger", "Single-bit constant source.");
-    bindConstantModule<ConstantValue<2, 2>>(m, "ConstantValue2", "2-bit constant source.");
-    bindConstantModule<ConstantValue<4, 4>>(m, "ConstantValue4", "4-bit constant source.");
-    bindConstantModule<ConstantValue<8, 8>>(m, "ConstantValue8", "8-bit constant source.");
-    bindConstantModule<ConstantValue<32, 32>>(m, "ConstantValue32", "32-bit constant source.");
+    bindConstantModule<ConstantValue<1>>(m, "ConstantValue1", "Single-bit constant source.");
+    bindConstantModule<ConstantValue<2>>(m, "ConstantValue2", "2-bit constant source.");
+    bindConstantModule<ConstantValue<4>>(m, "ConstantValue4", "4-bit constant source.");
+    bindConstantModule<ConstantValue<8>>(m, "ConstantValue8", "8-bit constant source.");
+    bindConstantModule<ConstantValue<32>>(m, "ConstantValue32", "32-bit constant source.");
 }

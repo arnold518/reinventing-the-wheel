@@ -9,14 +9,14 @@ This report tracks the components built on the path toward the first RV32I CPU r
 The project does not have a complete RV32I CPU yet. The current `rv32i` branch has the two major foundations needed before CPU wiring starts:
 
 - A structural 32-bit ALU stack, centered on `ALU32`.
-- A paired register-file stack (`RegisterFile32x32` and `BehavioralRegisterFile32x32`) plus `BehavioralMemory64Kx32` for CPU-scale memory.
+- A paired register-file stack (`RegisterFile32x32` and the behavioral fidelity of `RegisterFile32x32`) plus `Memory64Kx32` for CPU-scale memory.
 - RV32I decode/control rule libraries, a raw program preload utility, and a functional instruction oracle for CPU bring-up tests.
 
 For the educational structural RV32I runner, use:
 
 - `ALU32` as the execution ALU.
 - `RegisterFile32x32` as the architectural register file.
-- Two `BehavioralMemory64Kx32` instances: one instruction memory and one data memory.
+- Two `Memory64Kx32` instances: one instruction memory and one data memory.
 
 Each of the five major core-block contracts will have structural and behavioral implementations with identical pins. The structural members form the educational core; the behavioral members are compact component references and possible fast substitutes. CPU-scale memory remains behavioral because smaller structural memories already provide the practical lower-level teaching path.
 
@@ -35,7 +35,7 @@ The component stack has evolved in this order:
 9. RV32I decode and control libraries.
 10. Raw program loader and memory preload/readback helpers.
 11. Functional RV32I instruction oracle and per-instruction trace.
-12. `RV32ISystem`, a reusable system wrapper with a behavioral core and two visible memory components.
+12. `RV32IReferenceSystem`, a reusable system wrapper with a behavioral core and two visible memory components.
 
 ## Components
 
@@ -355,7 +355,7 @@ RV32I role:
 Status:
 
 - Implemented structurally.
-- Tested through per-component tests and `RV32IALU32Test`.
+- Tested through per-component tests and `ALU32StructuralContractTest`.
 - Exposed to the visualizer as `alu32` and `rv32i-alu32`.
 
 Detailed report:
@@ -414,11 +414,11 @@ Status:
 - Tested.
 - Exposed to the visualizer.
 
-### `BehavioralMemoryBit`
+### the behavioral fidelity of `MemoryBit`
 
 Purpose:
 
-`BehavioralMemoryBit` is the compact one-bit storage abstraction.
+the behavioral fidelity of `MemoryBit` is the compact one-bit storage abstraction.
 
 RV32I role:
 
@@ -430,7 +430,7 @@ Status:
 - Tested against the memory-bit contract.
 - Exposed to the visualizer.
 
-### `Register32` and `BehavioralRegister32`
+### `Register32` and the behavioral fidelity of `Register32`
 
 Purpose:
 
@@ -443,7 +443,7 @@ They are one register word, not the full RV32I register file. They establish the
 Important distinction:
 
 - `Register32` is a 32-bit storage word made from structural `MemoryBit` cells.
-- `BehavioralRegister32` is a 32-bit storage word made from behavioral memory bits.
+- the behavioral fidelity of `Register32` is a 32-bit storage word made from behavioral memory bits.
 - Neither one means all 32 RV32I architectural registers.
 
 Status:
@@ -503,11 +503,11 @@ Status:
 - Tested.
 - Exposed to the visualizer.
 
-### `BehavioralRegisterFile32x32`
+### the behavioral fidelity of `RegisterFile32x32`
 
 Purpose:
 
-`BehavioralRegisterFile32x32` is the compact CPU-scale RV32I register file.
+the behavioral fidelity of `RegisterFile32x32` is the compact CPU-scale RV32I register file.
 
 RV32I role:
 
@@ -559,11 +559,11 @@ Status:
 - Tested.
 - Exposed to the visualizer.
 
-### `BehavioralMemory64Kx32`
+### `Memory64Kx32`
 
 Purpose:
 
-`BehavioralMemory64Kx32` is the practical RV32I memory component.
+`Memory64Kx32` is the practical RV32I memory component.
 
 Capacity:
 
@@ -639,14 +639,14 @@ Purpose:
 
 RV32I role:
 
-It lets tests load real instruction words into `BehavioralMemory64Kx32` without simulating setup writes through memory pins.
+It lets tests load real instruction words into `Memory64Kx32` without simulating setup writes through memory pins.
 
 Behavior:
 
 - `fromBytes()` preserves the given byte vector.
 - `fromWords()` converts each 32-bit instruction word to little-endian bytes.
 - `wordAt()` reads complete 32-bit little-endian words.
-- `loadInto()` preloads a `BehavioralMemory64Kx32` instance at a chosen byte address.
+- `loadInto()` preloads a `Memory64Kx32` instance at a chosen byte address.
 
 Status:
 
@@ -708,7 +708,7 @@ Detailed report:
 
 The pure RV32I decode/control libraries now feed the first CPU-facing system component.
 
-### `BehavioralRV32ICore`
+### `RV32IReferenceCore`
 
 Purpose:
 
@@ -728,7 +728,7 @@ Important boundary:
 
 The core should not own memory. It should be reusable inside a system wrapper.
 
-### `RV32ISystem`
+### `RV32IReferenceSystem`
 
 Purpose:
 
@@ -737,9 +737,9 @@ Provide the first reusable RV32I machine component.
 Implementation:
 
 - Composite `IOComponent`.
-- Contains one `BehavioralRV32ICore`.
-- Contains one `BehavioralMemory64Kx32` instruction memory.
-- Contains one `BehavioralMemory64Kx32` data memory.
+- Contains one `RV32IReferenceCore`.
+- Contains one `Memory64Kx32` instruction memory.
+- Contains one `Memory64Kx32` data memory.
 - Exposes external `CLK`, `RST`, `ENABLE`, `PC`, `HALTED`, and `TRAPPED`.
 - Does not expose top-level memory or trace/debug pins.
 - Provides helper methods for program preload and data-memory/register readback.
@@ -752,18 +752,18 @@ Detailed plan:
 
 - `docs/rv32i-milestone-7-plan.md`
 
-### Control-Flow Pair
+### Control-Flow Implementations
 
 Purpose:
 
 Store the current instruction address and compute sequential, branch, `JAL`, and `JALR` control flow.
 
-Implemented pair:
+Implemented forms:
 
 - Structural `RV32IControlFlowUnit` using `Register32`, `Adder32`, muxes, rewires, and branch-decision gates.
-- Compact `BehavioralRV32IControlFlowUnit` with identical pins.
+- Compact the behavioral fidelity of `RV32IControlFlowUnit` with identical pins.
 
-`RV32IControlFlowUnitPairTest` drives both with the same clock/input waveform and passes. The structural core will use the structural member. See `docs/rv32i-control-flow-pair-report.md`.
+`RV32IControlFlowUnitEquivalenceTest` runs the same clock/input sequence in isolated simulators and checks both traces against independent expectations. The structural core uses the structural implementation. See `docs/rv32i-control-flow-equivalence-report.md`.
 
 ### Instruction Decoder
 
@@ -780,8 +780,8 @@ Current state:
 - `RV32IDecoder` exists as a pure C++ library and is tested.
 - `RV32IControl` exists as a pure C++ library and is tested.
 - Structural `RV32IDecodeControlUnit` exposes field, immediate, masked instruction recognition, and raw-control logic.
-- `BehavioralRV32IDecodeControlUnit` exposes the same pins as a compact reference and is not hidden inside the structural component.
-- `RV32IDecodeControlUnitPairTest` passes all 40 supported instruction forms, representative illegal encodings, and 64 deterministic pseudo-random raw words. See `docs/rv32i-decode-control-pair-report.md`.
+- the behavioral fidelity of `RV32IDecodeControlUnit` exposes the same pins as a compact reference and is not hidden inside the structural component.
+- `RV32IDecodeControlUnitEquivalenceTest` passes all 40 supported instruction forms, representative illegal encodings, and 64 deterministic pseudo-random raw words. See `docs/rv32i-decode-control-equivalence-report.md`.
 
 ### Immediate Generator
 
@@ -836,11 +836,11 @@ Control precise instruction completion, halt/trap state, and permission for dire
 Responsibilities:
 
 - Structural `RV32IExecutionControlStatusUnit` classifies address alignment, prioritizes faults, latches status/cause, and gates PC/register/memory permissions.
-- `BehavioralRV32IExecutionControlStatusUnit` provides the same stateful pin contract for fast reference and equivalence testing.
+- the behavioral fidelity of `RV32IExecutionControlStatusUnit` provides the same stateful pin contract for fast reference and equivalence testing.
 - ALU output wires directly to memory address, `rs2` directly to store data, decoded size/sign controls directly to memory, and read data directly to writeback.
 - There is no separate load/store forwarding module in the current five-block plan.
 
-`RV32IExecutionControlStatusUnitPairTest` passes 30 labeled checkpoints covering reset, enable and memory waits, request persistence, every supported halt/trap cause, priority collisions, latched-state suppression, and reset recovery. See `docs/rv32i-execution-status-pair-report.md`.
+`RV32IExecutionControlStatusUnitEquivalenceTest` passes 30 labeled checkpoints covering reset, enable and memory waits, request persistence, every supported halt/trap cause, priority collisions, latched-state suppression, and reset recovery. See `docs/rv32i-execution-status-equivalence-report.md`.
 
 ### Writeback Mux
 
@@ -872,8 +872,8 @@ Purpose:
 Instantiate:
 
 - One CPU core.
-- One `BehavioralMemory64Kx32` instruction memory.
-- One `BehavioralMemory64Kx32` data memory.
+- One `Memory64Kx32` instruction memory.
+- One `Memory64Kx32` data memory.
 - Clock/reset/test harness wiring.
 
 This is where the first real assembly programs should run.
@@ -884,9 +884,9 @@ The merged `rv32i` branch has passed:
 
 ```bash
 cmake --build build -j 8
-ctest --test-dir build --output-on-failure -R "BehavioralMemory64Kx32Test|Memory32x32Test|Memory4x32Test|BehavioralRegisterFile32x32Test|BehavioralRegisterFile32x32UnknownTest|RegisterFile32x32Test|RV32IALU32Test|ALU32Test"
-ctest --test-dir build --output-on-failure -R "RV32IControlTest|RV32IDecoderTest|RV32IALU32Test|ALU32Test|BehavioralMemory64Kx32Test|BehavioralRegisterFile32x32Test"
-ctest --test-dir build --output-on-failure -R "RV32IProgramLoaderTest|RV32IControlTest|RV32IDecoderTest|BehavioralMemory64Kx32Test"
+ctest --test-dir build --output-on-failure -R "Memory64Kx32Test|Memory32x32Test|Memory4x32Test|RegisterFile32x32BehavioralContractTest|RegisterFile32x32BehavioralUnknownPolicyTest|RegisterFile32x32StructuralContractTest|ALU32StructuralContractTest|ALU32BehavioralContractTest"
+ctest --test-dir build --output-on-failure -R "RV32IControlTest|RV32IDecoderTest|ALU32StructuralContractTest|ALU32BehavioralContractTest|Memory64Kx32Test|RegisterFile32x32BehavioralContractTest"
+ctest --test-dir build --output-on-failure -R "RV32IProgramLoaderTest|RV32IControlTest|RV32IDecoderTest|Memory64Kx32Test"
 ctest --test-dir build --output-on-failure -R "RV32IInstructionOracleTest|RV32IProgramLoaderTest|RV32IControlTest|RV32IDecoderTest"
 ctest --test-dir build --output-on-failure
 ```
@@ -925,12 +925,14 @@ The current visualizer exposes scenarios for the major foundation components:
 - `rv32i-alu-behavioral`
 - `rv32i-status-structural`
 - `rv32i-status-behavioral`
-- `rv32i-core-structural-smoke`
-- `rv32i-system-structural`
-- `rv32i-system-structural-program1` through `rv32i-system-structural-program16`
+- `rv32i-structural-smoke`
+- `rv32i-structural-contract`
+- `rv32i-structural-program1` through `rv32i-structural-program16`
+- `rv32i-balanced-program1` through `rv32i-balanced-program16`
+- `rv32i-reference-program1` through `rv32i-reference-program16`
 
-Each visual scenario now contains exactly one device under test, matching the repository's other component scenarios. Structural scenarios expose the expandable circuit hierarchy; behavioral scenarios show the compact answer-sheet boundary. The pair tests remain non-visual regression tests because their job is specifically to drive both implementations with one waveform and prove equivalence.
+Each visual scenario contains exactly one device under test. Structural scenarios expose the expandable circuit hierarchy; behavioral scenarios show the compact answer-sheet boundary. Equivalence tests remain non-visual regressions and run the implementations in separate simulator instances so one event queue cannot couple the two results.
 
 ## Practical Next Step
 
-The structural single-cycle core/system milestone is complete: it instantiates the structural member of all five pairs, uses generic operand/writeback muxes, connects separate instruction/data memories directly, and passes all 16 reused lockstep programs. The next step is external answer-sheet validation and performance/visualizer hardening. See `docs/rv32i-structural-core-report.md`.
+The structural single-cycle core/system milestone is complete: it instantiates the structural implementation of all five major contracts, uses generic operand/writeback muxes, connects separate instruction/data memories directly, and passes all 16 reused lockstep programs. The next step is external answer-sheet validation and performance/visualizer hardening. See `docs/rv32i-structural-core-report.md`.

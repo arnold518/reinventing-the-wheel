@@ -6,6 +6,17 @@
 #include <stdexcept>
 #include <utility>
 
+namespace circuit::families {
+const ComponentFamily RV32ISingleCycleSystem{
+    "rv32i.system.educational-single-cycle",
+    "RV32ISingleCycleSystem",
+    nullptr,
+    [](const std::string& name, const std::shared_ptr<BuildContext>& context) {
+        return Component::createWithContext<::RV32ISingleCycleSystem>(
+            context, name);
+    }};
+}
+
 RV32ISingleCycleSystem::RV32ISingleCycleSystem(std::string name)
     : IOComponent(std::move(name), [](IOComponent* self) {
           self->addPin("CLK", PinType::INPUT);
@@ -17,19 +28,22 @@ RV32ISingleCycleSystem::RV32ISingleCycleSystem(std::string name)
       }) {}
 
 void RV32ISingleCycleSystem::buildInternals(ComponentBuilder& builder) {
-    core_ = builder.addNewComponent<RV32ISingleCycleCore>("CORE");
-    instruction_memory_ = builder.addNewComponent<BehavioralMemory64Kx32>("INSTRUCTION_MEMORY");
-    data_memory_ = builder.addNewComponent<BehavioralMemory64Kx32>("DATA_MEMORY");
-    builder.addNewComponent<ConstantValue<1, 32>>("CONST_LOW", 0);
-    builder.addNewComponent<ConstantValue<2, 2>>("CONST_WORD_SIZE", 2);
-    builder.addNewComponent<ConstantValue<32, 32>>("CONST_ZERO32", 0);
+    core_ = std::dynamic_pointer_cast<RV32ISingleCycleCore>(
+        builder.add(circuit::families::RV32ISingleCycleCore, "CORE"));
+    instruction_memory_ = std::dynamic_pointer_cast<Memory64Kx32>(
+        builder.add(circuit::families::Memory64Kx32, "INSTRUCTION_MEMORY"));
+    data_memory_ = std::dynamic_pointer_cast<Memory64Kx32>(
+        builder.add(circuit::families::Memory64Kx32, "DATA_MEMORY"));
+    builder.addNewComponent<ConstantValue<1>>("CONST_LOW", 0);
+    builder.addNewComponent<ConstantValue<2>>("CONST_WORD_SIZE", 2);
+    builder.addNewComponent<ConstantValue<32>>("CONST_ZERO32", 0);
 
     builder.addNewWire(
         "CLK_fanout",
         getInputPin("CLK"),
         {builder.getInputPin<RV32ISingleCycleCore>("CORE", "CLK"),
-         builder.getInputPin<BehavioralMemory64Kx32>("INSTRUCTION_MEMORY", "CLK"),
-         builder.getInputPin<BehavioralMemory64Kx32>("DATA_MEMORY", "CLK")});
+         builder.getInputPin<Memory64Kx32>("INSTRUCTION_MEMORY", "CLK"),
+         builder.getInputPin<Memory64Kx32>("DATA_MEMORY", "CLK")});
     builder.addNewWire(
         "RST_to_core",
         getInputPin("RST"),
@@ -55,76 +69,76 @@ void RV32ISingleCycleSystem::buildInternals(ComponentBuilder& builder) {
     builder.addNewWire<32>(
         "IMEM_ADDR",
         builder.getOutputPin<RV32ISingleCycleCore, 32>("CORE", "IMEM_ADDR"),
-        {builder.getInputPin<BehavioralMemory64Kx32, 32>("INSTRUCTION_MEMORY", "ADDR")});
+        {builder.getInputPin<Memory64Kx32, 32>("INSTRUCTION_MEMORY", "ADDR")});
     builder.addNewWire(
         "IMEM_READ_EN",
         builder.getOutputPin<RV32ISingleCycleCore>("CORE", "IMEM_READ_EN"),
-        {builder.getInputPin<BehavioralMemory64Kx32>("INSTRUCTION_MEMORY", "READ_EN")});
+        {builder.getInputPin<Memory64Kx32>("INSTRUCTION_MEMORY", "READ_EN")});
     builder.addNewWire<32>(
         "IMEM_READ_DATA",
-        builder.getOutputPin<BehavioralMemory64Kx32, 32>("INSTRUCTION_MEMORY", "READ_DATA"),
+        builder.getOutputPin<Memory64Kx32, 32>("INSTRUCTION_MEMORY", "READ_DATA"),
         {builder.getInputPin<RV32ISingleCycleCore, 32>("CORE", "IMEM_READ_DATA")});
     builder.addNewWire(
         "IMEM_READY",
-        builder.getOutputPin<BehavioralMemory64Kx32>("INSTRUCTION_MEMORY", "READY"),
+        builder.getOutputPin<Memory64Kx32>("INSTRUCTION_MEMORY", "READY"),
         {builder.getInputPin<RV32ISingleCycleCore>("CORE", "IMEM_READY")});
     builder.addNewWire(
         "IMEM_FAULT",
-        builder.getOutputPin<BehavioralMemory64Kx32>("INSTRUCTION_MEMORY", "FAULT"),
+        builder.getOutputPin<Memory64Kx32>("INSTRUCTION_MEMORY", "FAULT"),
         {builder.getInputPin<RV32ISingleCycleCore>("CORE", "IMEM_FAULT")});
 
     builder.addNewWire<32>(
         "DMEM_ADDR",
         builder.getOutputPin<RV32ISingleCycleCore, 32>("CORE", "DMEM_ADDR"),
-        {builder.getInputPin<BehavioralMemory64Kx32, 32>("DATA_MEMORY", "ADDR")});
+        {builder.getInputPin<Memory64Kx32, 32>("DATA_MEMORY", "ADDR")});
     builder.addNewWire<32>(
         "DMEM_WRITE_DATA",
         builder.getOutputPin<RV32ISingleCycleCore, 32>("CORE", "DMEM_WRITE_DATA"),
-        {builder.getInputPin<BehavioralMemory64Kx32, 32>("DATA_MEMORY", "WRITE_DATA")});
+        {builder.getInputPin<Memory64Kx32, 32>("DATA_MEMORY", "WRITE_DATA")});
     builder.addNewWire(
         "DMEM_READ_EN",
         builder.getOutputPin<RV32ISingleCycleCore>("CORE", "DMEM_READ_EN"),
-        {builder.getInputPin<BehavioralMemory64Kx32>("DATA_MEMORY", "READ_EN")});
+        {builder.getInputPin<Memory64Kx32>("DATA_MEMORY", "READ_EN")});
     builder.addNewWire(
         "DMEM_WRITE_EN",
         builder.getOutputPin<RV32ISingleCycleCore>("CORE", "DMEM_WRITE_EN"),
-        {builder.getInputPin<BehavioralMemory64Kx32>("DATA_MEMORY", "WRITE_EN")});
+        {builder.getInputPin<Memory64Kx32>("DATA_MEMORY", "WRITE_EN")});
     builder.addNewWire<2>(
         "DMEM_SIZE",
         builder.getOutputPin<RV32ISingleCycleCore, 2>("CORE", "DMEM_SIZE"),
-        {builder.getInputPin<BehavioralMemory64Kx32, 2>("DATA_MEMORY", "SIZE")});
+        {builder.getInputPin<Memory64Kx32, 2>("DATA_MEMORY", "SIZE")});
     builder.addNewWire(
         "DMEM_SIGN_EXTEND",
         builder.getOutputPin<RV32ISingleCycleCore>("CORE", "DMEM_SIGN_EXTEND"),
-        {builder.getInputPin<BehavioralMemory64Kx32>("DATA_MEMORY", "SIGN_EXTEND")});
+        {builder.getInputPin<Memory64Kx32>("DATA_MEMORY", "SIGN_EXTEND")});
     builder.addNewWire<32>(
         "DMEM_READ_DATA",
-        builder.getOutputPin<BehavioralMemory64Kx32, 32>("DATA_MEMORY", "READ_DATA"),
+        builder.getOutputPin<Memory64Kx32, 32>("DATA_MEMORY", "READ_DATA"),
         {builder.getInputPin<RV32ISingleCycleCore, 32>("CORE", "DMEM_READ_DATA")});
     builder.addNewWire(
         "DMEM_READY",
-        builder.getOutputPin<BehavioralMemory64Kx32>("DATA_MEMORY", "READY"),
+        builder.getOutputPin<Memory64Kx32>("DATA_MEMORY", "READY"),
         {builder.getInputPin<RV32ISingleCycleCore>("CORE", "DMEM_READY")});
     builder.addNewWire(
         "DMEM_FAULT",
-        builder.getOutputPin<BehavioralMemory64Kx32>("DATA_MEMORY", "FAULT"),
+        builder.getOutputPin<Memory64Kx32>("DATA_MEMORY", "FAULT"),
         {builder.getInputPin<RV32ISingleCycleCore>("CORE", "DMEM_FAULT")});
 
     builder.addNewWire(
         "CONST_LOW_fanout",
-        builder.getOutputPin<ConstantValue<1, 32>>("CONST_LOW", "OUT"),
-        {builder.getInputPin<BehavioralMemory64Kx32>("INSTRUCTION_MEMORY", "WRITE_EN"),
-         builder.getInputPin<BehavioralMemory64Kx32>("INSTRUCTION_MEMORY", "SIGN_EXTEND"),
-         builder.getInputPin<BehavioralMemory64Kx32>("INSTRUCTION_MEMORY", "RST"),
-         builder.getInputPin<BehavioralMemory64Kx32>("DATA_MEMORY", "RST")});
+        builder.getOutputPin<ConstantValue<1>>("CONST_LOW", "OUT"),
+        {builder.getInputPin<Memory64Kx32>("INSTRUCTION_MEMORY", "WRITE_EN"),
+         builder.getInputPin<Memory64Kx32>("INSTRUCTION_MEMORY", "SIGN_EXTEND"),
+         builder.getInputPin<Memory64Kx32>("INSTRUCTION_MEMORY", "RST"),
+         builder.getInputPin<Memory64Kx32>("DATA_MEMORY", "RST")});
     builder.addNewWire<2>(
         "CONST_WORD_SIZE_to_imem",
-        builder.getOutputPin<ConstantValue<2, 2>, 2>("CONST_WORD_SIZE", "OUT"),
-        {builder.getInputPin<BehavioralMemory64Kx32, 2>("INSTRUCTION_MEMORY", "SIZE")});
+        builder.getOutputPin<ConstantValue<2>, 2>("CONST_WORD_SIZE", "OUT"),
+        {builder.getInputPin<Memory64Kx32, 2>("INSTRUCTION_MEMORY", "SIZE")});
     builder.addNewWire<32>(
         "CONST_ZERO32_to_imem",
-        builder.getOutputPin<ConstantValue<32, 32>, 32>("CONST_ZERO32", "OUT"),
-        {builder.getInputPin<BehavioralMemory64Kx32, 32>("INSTRUCTION_MEMORY", "WRITE_DATA")});
+        builder.getOutputPin<ConstantValue<32>, 32>("CONST_ZERO32", "OUT"),
+        {builder.getInputPin<Memory64Kx32, 32>("INSTRUCTION_MEMORY", "WRITE_DATA")});
 }
 
 void RV32ISingleCycleSystem::clearInstructionMemory() {

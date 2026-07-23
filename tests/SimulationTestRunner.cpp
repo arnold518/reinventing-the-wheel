@@ -20,6 +20,12 @@ int main(int argc, char** argv) {
     }
 
     std::string test_name = argv[1];
+    if (test_name == "--list") {
+        for (const auto& name : getRegisteredTestNames()) {
+            std::cout << name << '\n';
+        }
+        return 0;
+    }
     auto test = createTestByName(test_name);
     if (!test) {
         std::cerr << "Unknown test: " << test_name << "\n";

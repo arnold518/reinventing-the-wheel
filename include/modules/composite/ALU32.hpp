@@ -1,7 +1,12 @@
 #pragma once
 
 #include "components/IOComponent.hpp"
+#include "components/selection/ComponentFamily.hpp"
 #include <cstdint>
+
+namespace circuit::families {
+extern const ComponentFamily ALU32;
+}
 
 namespace ALU32Op {
 constexpr uint8_t ADD = 0x00;

@@ -40,8 +40,8 @@ public:
         if (!component) {
             return;
         }
-        if (auto basic = std::dynamic_pointer_cast<BasicComponent>(component)) {
-            basic->scheduleInitialEvents(simulator, time);
+        if (auto evaluated = std::dynamic_pointer_cast<BasicComponent>(component)) {
+            evaluated->scheduleInitialEvents(simulator, time);
         }
         for (const auto& child : component->getChildren()) {
             scheduleInitialEventsForTree(child, simulator, time);

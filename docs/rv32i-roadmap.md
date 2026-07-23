@@ -1,12 +1,12 @@
 # RV32I CPU Roadmap
 
-Last updated: 2026-07-19
+Last updated: 2026-07-24
 
 This roadmap replans the RV32I work after completing the component foundations and the behavioral answer sheet:
 
 - Structural `ALU32`.
-- Register and memory components, including `BehavioralRegisterFile32x32` and `BehavioralMemory64Kx32`.
-- Behavioral `RV32ISystem`, its instruction oracle, and instruction-lockstep program suite.
+- Register and memory components, including the behavioral fidelity of `RegisterFile32x32` and `Memory64Kx32`.
+- Behavioral `RV32IReferenceSystem`, its instruction oracle, and instruction-lockstep program suite.
 
 The next goal is to build the structural single-cycle RV32I system and grade it against that answer sheet.
 
@@ -71,14 +71,14 @@ Completed:
 - Register-file and memory components:
   - `RegisterFile4x32`
   - `RegisterFile32x32`
-  - `BehavioralRegisterFile32x32`
+  - the behavioral fidelity of `RegisterFile32x32`
   - `Memory4x32`
   - `Memory32x32`
-  - `BehavioralMemory64Kx32`
+  - `Memory64Kx32`
 - RV32I decode/control libraries and tests.
 - Program preload and memory readback helpers for RV32I test fixtures.
 - Functional RV32I instruction oracle and per-instruction trace.
-- Behavioral `RV32ISystem` answer-sheet implementation with 16 numbered program cases.
+- Behavioral `RV32IReferenceSystem` answer-sheet implementation with 16 numbered program cases.
 - Per-commit instruction lockstep checks for PC, registers, halt/trap state, logical memory access, and byte writes.
 - Tests and visualizer scenarios for the ALU and memory foundations.
 
@@ -92,11 +92,11 @@ Detailed status reports:
 - `docs/rv32i-milestone-7-plan.md`
 - `docs/behavioral-rv32i-beginners-guide.md`
 - `docs/rv32i-structural-implementation-plan.md`
-- `docs/rv32i-control-flow-pair-report.md`
-- `docs/rv32i-decode-control-pair-report.md`
-- `docs/rv32i-register-file-pair-report.md`
-- `docs/rv32i-alu-pair-report.md`
-- `docs/rv32i-execution-status-pair-report.md`
+- `docs/rv32i-control-flow-equivalence-report.md`
+- `docs/rv32i-decode-control-equivalence-report.md`
+- `docs/rv32i-register-file-equivalence-report.md`
+- `docs/rv32i-alu-equivalence-report.md`
+- `docs/rv32i-execution-status-equivalence-report.md`
 - `docs/memory-components-report.md`
 - `docs/structural-dff-report.md`
 
@@ -114,27 +114,29 @@ Most recent full-regression result:
 
 ## Architecture Direction
 
-The first structural RV32I design should be a single-cycle system whose five major core-block contracts each have an educational structural implementation and a compact, clearly named behavioral reference/bring-up counterpart.
+The first structural RV32I design should be a single-cycle system whose five
+major core-block families each have an educational structural fidelity and a
+compact behavioral reference/bring-up fidelity behind one public identity.
 
 Use these components in the structural CPU-scale runner:
 
 - `ALU32`: structural execution ALU.
-- `RegisterFile32x32`: structural/hierarchical architectural register file. Its compact pair is `BehavioralRegisterFile32x32`.
-- Two `BehavioralMemory64Kx32` instances:
+- `RegisterFile32x32`: structural/hierarchical architectural register file. Its compact same-contract implementation is the behavioral fidelity of `RegisterFile32x32`.
+- Two `Memory64Kx32` instances:
   - instruction memory
   - data memory
 
 Organize the core around five major peer-block contracts:
 
-| Contract | Structural implementation used by the structural core | Behavioral counterpart |
+| Family contract | Structural fidelity used by the structural core | Behavioral fidelity |
 | --- | --- | --- |
-| Control flow | `RV32IControlFlowUnit` | `BehavioralRV32IControlFlowUnit` |
-| Decode/control | `RV32IDecodeControlUnit` | `BehavioralRV32IDecodeControlUnit` |
-| Register file | `RegisterFile32x32` | `BehavioralRegisterFile32x32` |
-| ALU | `ALU32` | `BehavioralALU32` |
-| Execution control/status | `RV32IExecutionControlStatusUnit` | `BehavioralRV32IExecutionControlStatusUnit` |
+| Control flow | `RV32IControlFlowUnit` | the behavioral fidelity of `RV32IControlFlowUnit` |
+| Decode/control | `RV32IDecodeControlUnit` | the behavioral fidelity of `RV32IDecodeControlUnit` |
+| Register file | `RegisterFile32x32` | the behavioral fidelity of `RegisterFile32x32` |
+| ALU | `ALU32` | the behavioral fidelity of `ALU32` |
+| Execution control/status | `RV32IExecutionControlStatusUnit` | the behavioral fidelity of `RV32IExecutionControlStatusUnit` |
 
-All five pairs now exist and have direct pair tests, including stateful execution-control/status priority, memory-wait, halt/trap, and reset-recovery coverage. Known binary CPU inputs are the interchangeability contract; conservative partial-unknown boundaries are documented in the per-block reports. The next step is structural core integration.
+All five structural/behavioral implementation families now have isolated equivalence tests, including stateful execution-control/status priority, memory-wait, halt/trap, and reset-recovery coverage. Known binary CPU inputs are the interchangeability contract; conservative partial-unknown boundaries are documented in the per-block reports.
 
 Generic operand/writeback muxes and direct data-memory connections wire these blocks. The current memory already handles widths, sign extension, range/alignment fault reporting, and faulting-store rejection, so a separate load/store forwarding box is unnecessary. `RV32ISingleCycleCore` and `RV32ISingleCycleSystem` are hierarchy containers rather than additional execution units.
 
@@ -150,21 +152,31 @@ The lower-level structural components remain the educational source of truth:
 
 - `MemoryBit`, `Register32`, `RegisterFile32x32`, `Memory4x32`, and `Memory32x32` explain storage behavior.
 - `RegisterFile32x32` keeps the selection/routing hierarchy visible but uses compact behavioral register words internally; the fully structural `Register32` is its representative storage-word proof.
-- `BehavioralRegisterFile32x32` is the compact same-contract register-file counterpart.
-- `BehavioralMemory64Kx32` remains the CPU-scale memory abstraction because a fully expanded 256 KiB memory is impractical; smaller structural memories establish the lower-level contract.
+- the behavioral fidelity of `RegisterFile32x32` is the compact same-contract
+  register-file selection.
+- `Memory64Kx32` remains the CPU-scale memory abstraction because a fully expanded 256 KiB memory is impractical; smaller structural memories establish the lower-level contract.
 
-The component pairs follow one rule: freeze identical pins, build/test the structural implementation or representative lower-level slice first, then add the behavioral version and drive both with the same vectors or clock waveform. Compare settled functional outputs and matching sequential observation points, not necessarily every internal propagation timestamp. The behavioral member is not automatically product-facing; it is promoted to a fast configuration only when measured structural cost justifies it after equivalence is proven.
+Multi-fidelity families follow one rule: freeze one shared pin contract,
+build/test the structural implementation or representative lower-level slice
+first, then register behavioral fidelity and drive each selection in an
+isolated simulator with the same vectors or clock waveform. Compare settled
+functional outputs and matching sequential observation points, not necessarily
+every internal propagation timestamp. Behavioral fidelity is promoted to a
+fast profile only when measured structural cost justifies it after equivalence
+is proven.
 
 ## Behavioral Answer Sheet And Structural Independence
 
-`RV32IInstructionOracle`, `BehavioralRV32ICore`, and `RV32ISystem` form the executable answer sheet for structural RV32I development. They provide expected architectural results and a simulator-facing reference system while the structural datapath is built.
+`RV32IInstructionOracle`, `RV32IReferenceCore`, and `RV32IReferenceSystem` form the executable answer sheet for structural RV32I development. They provide expected architectural results and a simulator-facing reference system while the structural datapath is built.
 
 The structural RV32I must be an independent implementation:
 
 - It may reuse instruction encodings, decoded-control contracts, program fixtures, and expected checkpoint data.
 - Its tests execute the answer sheet and structural system independently from the same fixtures and compare their observable contracts. Pairwise component equivalence remains a non-visual regression concern.
 - Its production execution path must not call the instruction oracle, instantiate the behavioral core, or copy hidden whole-instruction state transitions behind a structural shell.
-- The component-level behavioral counterparts remain outside the structural execution path; they are references and optional fast substitutes, not hidden children of structural shells.
+- Component-level behavioral fidelities remain outside the structural
+  execution path; they are references and optional fast-profile substitutes,
+  not hidden children of structural implementations.
 - CPU-scale behavioral memory remains an allowed storage abstraction because instruction semantics are still produced by the visible datapath.
 
 The answer sheet is a correctness reference, not the product destination or structural blueprint. A disagreement is investigated against the ISA and regression tests rather than automatically treating either implementation as infallible.
@@ -201,7 +213,10 @@ Keep the project's lower-level-first rule:
 For the next RV32I work, this means:
 
 - Instruction fields and immediates should be visible structural wiring.
-- Decode/control starts with a representative lower-level opcode/instruction-family slice and grows into a complete structural decoder. Its behavioral counterpart stays separate rather than becoming an internal bridge.
+- Decode/control starts with a representative lower-level
+  opcode/instruction-family slice and grows into a complete structural decoder.
+  Its behavioral evaluator stays separate behind the same family rather than
+  becoming an internal bridge.
 - PC and next-PC logic should be visible components because they are central to CPU learning.
 - Every major block gets independent expected-value tests plus a direct structural/behavioral equivalence test. Direct equivalence alone is insufficient because both sides could share the same incorrect encoding assumption.
 - Memory preload/readback helpers are test infrastructure, not CPU hardware.
@@ -230,8 +245,8 @@ Implemented components:
 Verification:
 
 - Per-component 32-bit tests.
-- `ALU32Test`.
-- `RV32IALU32Test`.
+- `ALU32StructuralContractTest`.
+- `ALU32StructuralContractTest`.
 
 Report:
 
@@ -251,28 +266,28 @@ Implemented components:
 - `GatedDLatch`
 - structural `DFlipFlop`
 - `MemoryBit`
-- `BehavioralMemoryBit`
+- the behavioral fidelity of `MemoryBit`
 - `Register32`
-- `BehavioralRegister32`
+- the behavioral fidelity of `Register32`
 - `Decoder2to4`
 - `Decoder5to32`
 - `RegisterFile4x32`
 - `RegisterFile32x32`
-- `BehavioralRegisterFile32x32`
+- the behavioral fidelity of `RegisterFile32x32`
 - `Memory4x32`
 - `Memory32x32`
-- `BehavioralMemory64Kx32`
+- `Memory64Kx32`
 
 CPU-scale decision:
 
-- Use `RegisterFile32x32` in the structural educational core and keep `BehavioralRegisterFile32x32` for compact tests and future fast configurations.
-- Use two `BehavioralMemory64Kx32` instances for instruction and data memory.
+- Use `RegisterFile32x32` in the structural educational core and keep the behavioral fidelity of `RegisterFile32x32` for compact tests and future fast configurations.
+- Use two `Memory64Kx32` instances for instruction and data memory.
 
 Verification:
 
 - Full memory/register stack tests.
 - Behavioral register-file unknown-state tests.
-- Explicit `RegisterFile32x32` versus `BehavioralRegisterFile32x32` pairwise equivalence remains to be added before structural CPU completion.
+- Explicit `RegisterFile32x32` versus the behavioral fidelity of `RegisterFile32x32` pairwise equivalence remains to be added before structural CPU completion.
 - Byte/halfword/word memory load-store tests.
 - Fault and alignment tests.
 
@@ -407,7 +422,7 @@ Implemented files:
 Deliverables:
 
 - Raw binary loader.
-- Helper to write program bytes into `BehavioralMemory64Kx32` before simulation.
+- Helper to write program bytes into `Memory64Kx32` before simulation.
 - Debug/test readback helpers for memory contents.
 - Small hand-authored binary fixtures.
 - Focused tests for endian behavior, bounds checks, alignment checks, and memory clearing.
@@ -486,11 +501,11 @@ Build the simulator-facing behavioral answer sheet that runs raw programs, stabi
 Chosen shape:
 
 ```text
-RV32ISystem
+RV32IReferenceSystem
   contains:
-    BehavioralRV32ICore
-    BehavioralMemory64Kx32 instruction memory
-    BehavioralMemory64Kx32 data memory
+    RV32IReferenceCore
+    Memory64Kx32 instruction memory
+    Memory64Kx32 data memory
 
   exposes:
     CLK
@@ -503,17 +518,17 @@ RV32ISystem
 
 Recommended files:
 
-- `include/modules/rv32i/BehavioralRV32ICore.hpp`
-- `src/modules/rv32i/BehavioralRV32ICore.cpp`
-- `include/modules/rv32i/RV32ISystem.hpp`
-- `src/modules/rv32i/RV32ISystem.cpp`
+- `include/modules/rv32i/RV32IReferenceCore.hpp`
+- `src/modules/rv32i/RV32IReferenceCore.cpp`
+- `include/modules/rv32i/RV32IReferenceSystem.hpp`
+- `src/modules/rv32i/RV32IReferenceSystem.cpp`
 - `include/tests/RV32ISystemTests.hpp`
 - `src/tests/RV32ISystemTests.cpp`
 
 Expected behavior:
 
-- `BehavioralRV32ICore` is a clocked `BasicComponent`.
-- `RV32ISystem` is a reusable composite containing the core and two memories.
+- `RV32IReferenceCore` is a clocked `BasicComponent`.
+- `RV32IReferenceSystem` is a reusable composite containing the core and two memories.
 - `CLK`, `RST`, and `ENABLE` are external pins supplied by a testbench or visualizer.
 - `RST` resets the core, not the preloaded instruction memory.
 - instruction memory can be preloaded with `RV32IProgram`.
@@ -537,7 +552,7 @@ Verification strategy:
 
 Done when:
 
-- `RV32ISystem` runs the 16 numbered raw RV32I program cases.
+- `RV32IReferenceSystem` runs the 16 numbered raw RV32I program cases.
 - tests cover arithmetic, load/store sizes, branches, jumps, loops, reset, halt, and traps.
 - system commit checkpoints match the Milestone 6 instruction oracle.
 - visualizer exposes scenario aliases for the numbered behavioral programs.
@@ -558,27 +573,28 @@ Implemented deliverables:
 
 - reusable `RV32IInstructionLockstepTest`
 - incremental simulator advancement with stable instruction checkpoints
-- `RV32ISystem` state adapter
+- `RV32IReferenceSystem` state adapter
 - logical memory-access and actual byte-write comparison
 
 Done when:
 
-- tests can run the same program independently through `RV32IInstructionOracle` and `RV32ISystem`.
+- tests can run the same program independently through `RV32IInstructionOracle` and `RV32IReferenceSystem`.
 - checkpoints compare PC, registers, memory effects, halt, and trap state.
 - comparisons are checkpoint-based, not every simulator event timestamp.
 
-### Milestone 9: Paired Control-Flow Unit
+### Milestone 9: Control-Flow Implementations
 
-Status: implemented and directly pair-tested with directed cases plus 64 deterministic randomized control combinations. See `docs/rv32i-control-flow-pair-report.md`.
+Status: implemented and directly equivalence-tested with directed cases plus 64 deterministic randomized control combinations. See `docs/rv32i-control-flow-equivalence-report.md`.
 
 Purpose:
 
-Build the visible control-flow path and its compact same-contract counterpart after the behavioral system is stable.
+Build the visible control-flow path and its compact same-contract behavioral
+fidelity after the reference system is stable.
 
 Recommended components:
 
 - `RV32IControlFlowUnit`, an expandable composite built from the existing `Register32`, `Adder32`, muxes, bit adapters, and small branch-decision gates.
-- `BehavioralRV32IControlFlowUnit`, a separate `BasicComponent` added only after the structural contract tests pass.
+- the behavioral fidelity of `RV32IControlFlowUnit`, a separate `BasicComponent` added only after the structural contract tests pass.
 
 Expected behavior:
 
@@ -598,9 +614,9 @@ Done when:
 - each implementation passes independent expected-value tests.
 - identical directed and randomized clock/input waveforms produce equivalent sampled state and outputs after settling.
 
-### Milestone 10: Paired Decode-Control Unit
+### Milestone 10: Decode-Control Implementations
 
-Status: implemented and directly pair-tested for all 40 supported instructions, representative illegal encodings, and 64 deterministic pseudo-random raw words. See `docs/rv32i-decode-control-pair-report.md`.
+Status: implemented and directly equivalence-tested for all 40 supported instructions, representative illegal encodings, and 64 deterministic pseudo-random raw words. See `docs/rv32i-decode-control-equivalence-report.md`.
 
 Purpose:
 
@@ -609,7 +625,7 @@ Turn instruction bits into visible fields, immediates, and raw control intent, w
 Recommended components:
 
 - `RV32IDecodeControlUnit`: structural field wiring, immediate formation, instruction-recognition terms, and output-control gates.
-- `BehavioralRV32IDecodeControlUnit`: direct mapping through the existing pure `RV32IDecoder` and `RV32IControl` rules for known instructions plus the same documented unknown-input policy.
+- the behavioral fidelity of `RV32IDecodeControlUnit`: direct mapping through the existing pure `RV32IDecoder` and `RV32IControl` rules for known instructions plus the same documented unknown-input policy.
 
 Responsibilities:
 
@@ -626,23 +642,23 @@ Done when:
 - Structural and behavioral components agree on supported forms, constrained-random raw words, and the documented unknown-bit cases.
 - The structural component does not instantiate or call the behavioral component.
 
-### Milestone 11: Finish Existing Pairs And Pair Execution Status
+### Milestone 11: Complete Equivalent Implementations And Execution Status
 
-Status: complete. See `docs/rv32i-alu-pair-report.md`, `docs/rv32i-register-file-pair-report.md`, and `docs/rv32i-execution-status-pair-report.md`.
+Status: complete. See `docs/rv32i-alu-equivalence-report.md`, `docs/rv32i-register-file-equivalence-report.md`, and `docs/rv32i-execution-status-equivalence-report.md`.
 
 Purpose:
 
-Complete the ALU/register-file pair coverage, then build the stateful pair that handles precise halt, trap, memory-fault, and architectural-write policy.
+Complete ALU/register-file equivalence coverage, then build the stateful structural and behavioral implementations that handle precise halt, trap, memory-fault, and architectural-write policy.
 
-Pair-completion work:
+Equivalence-completion work:
 
-- Add `BehavioralALU32` with the exact `ALU32` pins and operation encoding, then compare all operations, flags, boundaries, randomized inputs, and explicit unknown cases.
-- Add a direct `RegisterFile32x32` versus `BehavioralRegisterFile32x32` equivalence test over reset, all addresses, writes, holds, `x0`, and unknown-policy cases.
+- Add the behavioral fidelity of `ALU32` with the exact `ALU32` pins and operation encoding, then compare all operations, flags, boundaries, randomized inputs, and explicit unknown cases.
+- Add a direct `RegisterFile32x32` versus the behavioral fidelity of `RegisterFile32x32` equivalence test over reset, all addresses, writes, holds, `x0`, and unknown-policy cases.
 
 Recommended status components:
 
 - `RV32IExecutionControlStatusUnit`: structural alignment gates, priority logic, permission gates, and status storage.
-- `BehavioralRV32IExecutionControlStatusUnit`: direct state/priority implementation with identical pins.
+- the behavioral fidelity of `RV32IExecutionControlStatusUnit`: direct state/priority implementation with identical pins.
 
 Data-memory wiring stays outside a load/store module:
 
@@ -655,7 +671,7 @@ Data-memory wiring stays outside a load/store module:
 Done when:
 
 - Every one of the five block contracts now has both implementations.
-- All five direct pairwise equivalence suites pass as well as independent expected-value suites.
+- All five isolated equivalence suites pass against independent expected-value contracts.
 - Misalignment, out-of-range faults, priority, halt/trap latching, reset recovery, and faulting-store rejection are tested.
 
 ### Milestone 12: Structural Single-Cycle CPU Core
@@ -664,7 +680,7 @@ Status: complete. See `docs/rv32i-structural-core-report.md`.
 
 Purpose:
 
-Wire the first CPU core from the structural member of all five pairs plus generic muxes and direct memory-interface wiring.
+Wire the first CPU core from the structural implementation of all five major contracts plus generic muxes and direct memory-interface wiring.
 
 Implemented files:
 
@@ -687,7 +703,8 @@ Done when:
 - The core executes short arithmetic, memory, branch, and jump sequences.
 - Register writeback works and `x0` remains zero.
 - Illegal, halt, and fault paths suppress the correct side effects.
-- A dependency guard proves no structural block invokes its behavioral counterpart, the oracle, or `BehavioralRV32ICore`.
+- A dependency guard proves no structural block invokes the behavioral
+  evaluator of its family, the oracle, or `RV32IReferenceCore`.
 
 ### Milestone 13: Single-Cycle RV32I System
 
@@ -707,8 +724,8 @@ Implemented files:
 System blocks:
 
 - One `RV32ISingleCycleCore`.
-- One `BehavioralMemory64Kx32` instruction memory.
-- One `BehavioralMemory64Kx32` data memory.
+- One `Memory64Kx32` instruction memory.
+- One `Memory64Kx32` data memory.
 - Clock/reset wiring and program preload/test support.
 
 Done when:
@@ -719,7 +736,9 @@ Done when:
 
 ### Milestone 14: Visualizer Integration
 
-Status: complete for the first single-cycle system. Standalone block scenarios are separated, the structural core/system hierarchy has committed layouts, and the browser loads the 27,265-component contract scenario.
+Status: complete for the first single-cycle system. Standalone block scenarios
+are separated, the structural core/system hierarchy has committed layouts, and
+the browser loads the unified 54,049-component fully structural scenario.
 
 Purpose:
 
@@ -768,7 +787,7 @@ Required test categories:
 - Decoder tests.
 - Immediate generation tests.
 - Control signal tests.
-- Independent expected-value tests for both members of each major block pair.
+- Independent expected-value tests for both implementations of each major block contract.
 - Direct structural/behavioral equivalence tests for all five major block contracts.
 - Functional instruction oracle tests.
 - PC and next-PC tests.
@@ -848,10 +867,11 @@ Mitigation:
 
 Mitigation:
 
-- Use the structural member of every major pair in the structural core.
-- Keep behavioral counterparts separate and clearly named as references/fast substitutes.
+- Use the structural implementation of every major contract in the structural core.
+- Keep behavioral evaluators internal to their public families and select them
+  only through explicit reference/fast profiles.
 - Treat behavioral memory as a tested scale abstraction backed by smaller structural memory components.
-- Require direct pairwise equivalence and independent expected-value tests.
+- Require isolated equivalence and independent expected-value tests.
 - Add program-level equivalence checks against the functional instruction oracle.
 
 ### Risk: Tautological Answer-Sheet Comparison
@@ -859,7 +879,7 @@ Mitigation:
 Mitigation:
 
 - Execute the answer sheet and structural device under test independently.
-- Keep `RV32IInstructionOracle` and `BehavioralRV32ICore` out of production structural dependencies.
+- Keep `RV32IInstructionOracle` and `RV32IReferenceCore` out of production structural dependencies.
 - Reuse shared inputs and observable contracts, not hidden whole-instruction execution logic.
 
 ### Risk: Visualizer Clutter
@@ -882,6 +902,8 @@ Mitigation:
 The first structural single-cycle milestone is complete. Immediate next steps are:
 
 1. Differentially validate the answer sheet with Spike, Sail, or the official architecture tests.
-2. Continue the 27,000-component browser work after the completed lossless indexed-state, event-driven-rendering, compression, and sub-pixel-only culling pass.
+2. Continue the 54,000-component browser work after the completed lossless
+   indexed-state, event-driven-rendering, compression, and sub-pixel-only
+   culling pass.
 3. Decide deliberately whether to add a configurable nonzero reset vector.
 4. Begin pipeline planning only after the single-cycle external-validation boundary is understood.

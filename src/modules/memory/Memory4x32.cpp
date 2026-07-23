@@ -7,7 +7,8 @@
 #include "modules/basic/Decoder.hpp"
 #include "modules/basic/Gate.hpp"
 #include "modules/basic/Mux.hpp"
-#include "modules/memory/BehavioralRegister32.hpp"
+#include "modules/memory/Register32BitCellArray.hpp"
+#include "modules/memory/Register32.hpp"
 #include "modules/utility/BitAdapter.hpp"
 #include "modules/utility/Constant.hpp"
 #include <array>
@@ -40,11 +41,11 @@ void Memory4x32::buildInternals(ComponentBuilder& builder) {
     builder.addNewComponent<BitSplitter<2>>("SIZE_SPLIT");
     builder.addNewComponent<BitJoiner<2>>("WORD_SEL_JOIN");
     builder.addNewComponent<Mux4to1_32bit>("READ_MUX");
-    builder.addNewComponent<ConstantValue<1, 1>>("READY_ONE", 1);
+    builder.addNewComponent<ConstantValue<1>>("READY_ONE", 1);
     builder.addNewComponent<Decoder2to4>("WRITE_DECODER");
 
     for (size_t word = 0; word < 4; ++word) {
-        builder.addNewComponent<BehavioralRegister32>(wordName(word));
+        builder.add(circuit::families::Register32, wordName(word));
     }
 
     builder.addNewComponent<NOTGate>("NOT_ADDR0");
@@ -217,7 +218,7 @@ void Memory4x32::buildInternals(ComponentBuilder& builder) {
 
     builder.addNewWire(
         "READY_internal",
-        builder.getOutputPin<ConstantValue<1, 1>>("READY_ONE", "OUT"),
+        builder.getOutputPin<ConstantValue<1>>("READY_ONE", "OUT"),
         {getOutputPin("READY")});
 
     builder.addNewWire(
@@ -249,18 +250,18 @@ void Memory4x32::buildInternals(ComponentBuilder& builder) {
 
     for (size_t word = 0; word < 4; ++word) {
         const auto name = wordName(word);
-        write_data_sinks.push_back(builder.getInputPin<BehavioralRegister32, 32>(name, "D"));
-        clk_sinks.push_back(builder.getInputPin<BehavioralRegister32>(name, "CLK"));
-        rst_sinks.push_back(builder.getInputPin<BehavioralRegister32>(name, "RST"));
+        write_data_sinks.push_back(builder.getInputPin<IOComponent, 32>(name, "D"));
+        clk_sinks.push_back(builder.getInputPin<IOComponent>(name, "CLK"));
+        rst_sinks.push_back(builder.getInputPin<IOComponent>(name, "RST"));
 
         builder.addNewWire(
             "WORD" + std::to_string(word) + "_WE_internal",
             builder.getOutputPin<Decoder2to4>("WRITE_DECODER", "OUT" + std::to_string(word)),
-            {builder.getInputPin<BehavioralRegister32>(name, "WE")});
+            {builder.getInputPin<IOComponent>(name, "WE")});
 
         builder.addNewWire<32>(
             name + "_to_READ_MUX",
-            builder.getOutputPin<BehavioralRegister32, 32>(name, "Q"),
+            builder.getOutputPin<IOComponent, 32>(name, "Q"),
             {builder.getInputPin<Mux4to1_32bit, 32>("READ_MUX", "IN" + std::to_string(word))});
     }
 

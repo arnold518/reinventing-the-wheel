@@ -3,10 +3,13 @@
 #include "basic/Wire.hpp"
 #include "components/Component.hpp"
 #include "components/ComponentBuilder.hpp"
+#include "components/selection/BuildManifest.hpp"
+#include "components/selection/BuiltinComponentCatalog.hpp"
+#include "modules/rv32i/RV32IBuildProfiles.hpp"
 #include "modules/rv32i/RV32ISingleCycleSystem.hpp"
 #include "rv32i/RV32IProgram.hpp"
 #include "simulator/Event.hpp"
-#include "tests/RV32ISystemTests.hpp"
+#include "tests/RV32IProgramCases.hpp"
 #include <algorithm>
 #include <array>
 #include <stdexcept>
@@ -31,30 +34,68 @@ rv32i::RV32IMemorySize memorySize(uint64_t encoded) {
 }
 
 RV32ISystemProgramCase structuralProgramCase(size_t number) {
-    auto test_case = rv32iSystemProgramCase(number);
+    auto test_case = rv32iProgramCase(number);
     test_case.name = "RV32ISingleCycleSystemProgram" + std::to_string(number) + "Test";
     test_case.max_cycles_per_instruction = 1;
     test_case.cycle_time_step = 4000;
     return test_case;
 }
+
+void verifyBalancedBuild(const circuit::BuildResult& build) {
+    require(build.root != nullptr, "balanced profile did not build a root");
+    require(build.profile != nullptr && build.profile->name() == "rv32i-balanced",
+            "balanced profile identity is incorrect");
+    require(build.root->getSelectedFidelity() == "structural",
+            "balanced system root must be structural");
+    require(build.root->getProfileFingerprint() == build.profile->fingerprint(),
+            "balanced system root fingerprint does not match its profile");
+
+    const std::map<std::string, circuit::Fidelity> expected{
+        {"RV32I_SINGLE_CYCLE_SYSTEM_ROOT", circuit::Fidelity::Structural},
+        {"RV32I_SINGLE_CYCLE_SYSTEM_ROOT.CORE", circuit::Fidelity::Structural},
+        {"RV32I_SINGLE_CYCLE_SYSTEM_ROOT.INSTRUCTION_MEMORY", circuit::Fidelity::Behavioral},
+        {"RV32I_SINGLE_CYCLE_SYSTEM_ROOT.DATA_MEMORY", circuit::Fidelity::Behavioral},
+        {"RV32I_SINGLE_CYCLE_SYSTEM_ROOT.CORE.CONTROL_FLOW", circuit::Fidelity::Structural},
+        {"RV32I_SINGLE_CYCLE_SYSTEM_ROOT.CORE.DECODE_CONTROL", circuit::Fidelity::Structural},
+        {"RV32I_SINGLE_CYCLE_SYSTEM_ROOT.CORE.REGISTER_FILE", circuit::Fidelity::Behavioral},
+        {"RV32I_SINGLE_CYCLE_SYSTEM_ROOT.CORE.ALU", circuit::Fidelity::Structural},
+        {"RV32I_SINGLE_CYCLE_SYSTEM_ROOT.CORE.EXECUTION_STATUS", circuit::Fidelity::Structural},
+    };
+
+    std::map<std::string, circuit::BuildManifestEntry> entries;
+    for (const auto& entry : build.manifest->entries()) {
+        entries.emplace(entry.path, entry);
+        require(!entry.selection.used_unavailable_exception,
+                "balanced profile used an unplanned fallback at " + entry.path);
+    }
+    for (const auto& [path, fidelity] : expected) {
+        const auto found = entries.find(path);
+        require(found != entries.end(), "balanced manifest omitted " + path);
+        require(found->second.selection.fidelity == fidelity,
+                "balanced profile selected the wrong fidelity at " + path);
+    }
+    require(entries.at("RV32I_SINGLE_CYCLE_SYSTEM_ROOT").effective_fidelity
+                == circuit::EffectiveFidelity::Mixed,
+            "balanced system manifest must report a mixed subtree");
+}
 }
 
-void RV32ISingleCycleCoreSmokeTest::setupCircuit() {
+void RV32ISingleCycleSystemSmokeTest::setupCircuit() {
     root = Component::create<RV32ISingleCycleSystem>("RV32I_SINGLE_CYCLE_SYSTEM_ROOT");
     builder = std::make_unique<ComponentBuilder>(root);
     buildCircuit();
     setInitialState();
 }
 
-std::string RV32ISingleCycleCoreSmokeTest::getTestName() const {
-    return "RV32ISingleCycleCoreSmokeTest";
+std::string RV32ISingleCycleSystemSmokeTest::getTestName() const {
+    return "RV32ISingleCycleSystemSmokeTest";
 }
 
-size_t RV32ISingleCycleCoreSmokeTest::getRunDuration() const {
+size_t RV32ISingleCycleSystemSmokeTest::getRunDuration() const {
     return 14000;
 }
 
-std::vector<SimulationTest::SimulationCheckpoint> RV32ISingleCycleCoreSmokeTest::getCheckpoints() const {
+std::vector<SimulationTest::SimulationCheckpoint> RV32ISingleCycleSystemSmokeTest::getCheckpoints() const {
     return {
         {1900, "reset", "PC, registers, halt, and trap state are cleared", 0},
         {5900, "ADDI settled", "structural decode, register read, ALU, and permissions are ready", 1},
@@ -64,7 +105,7 @@ std::vector<SimulationTest::SimulationCheckpoint> RV32ISingleCycleCoreSmokeTest:
     };
 }
 
-void RV32ISingleCycleCoreSmokeTest::buildCircuit() {
+void RV32ISingleCycleSystemSmokeTest::buildCircuit() {
     system_ = std::dynamic_pointer_cast<RV32ISingleCycleSystem>(root);
     require(system_ != nullptr, "RV32I single-cycle smoke root type");
 
@@ -76,7 +117,7 @@ void RV32ISingleCycleCoreSmokeTest::buildCircuit() {
     builder->addNewWire("TRAPPED_OUT", system_->getOutputPin("TRAPPED"), {});
 }
 
-void RV32ISingleCycleCoreSmokeTest::setInitialState() {
+void RV32ISingleCycleSystemSmokeTest::setInitialState() {
     system_->clearInstructionMemory();
     system_->clearDataMemory();
     system_->loadProgram(rv32i::RV32IProgram::fromWords({
@@ -94,7 +135,7 @@ void RV32ISingleCycleCoreSmokeTest::setInitialState() {
     drive(*sim, 12500, clk_wire_, false);
 }
 
-void RV32ISingleCycleCoreSmokeTest::verifyResults() {
+void RV32ISingleCycleSystemSmokeTest::verifyResults() {
     const auto state = system_->snapshotState(2);
     require(state.pc == 4, "structural smoke PC should remain on EBREAK");
     require(state.readRegister(0) == 0, "structural smoke x0 must remain zero");
@@ -187,7 +228,17 @@ void RV32ISingleCycleSystemContractTest::verifyResults() {
 }
 
 void RV32ISingleCycleSystemProgramTestBase::setupCircuit() {
-    root = Component::create<RV32ISingleCycleSystem>("RV32I_SINGLE_CYCLE_SYSTEM_ROOT");
+    if (useBalancedProfile()) {
+        const auto catalog = circuit::createBuiltinComponentCatalog();
+        auto request = rv32i::educationalSystemRequest(
+            "RV32I_SINGLE_CYCLE_SYSTEM_ROOT");
+        auto profile = rv32i::balancedSystemProfile(*catalog, request);
+        auto build = catalog->createRoot(request, std::move(profile));
+        verifyBalancedBuild(build);
+        root = std::move(build.root);
+    } else {
+        root = Component::create<RV32ISingleCycleSystem>("RV32I_SINGLE_CYCLE_SYSTEM_ROOT");
+    }
     builder = std::make_unique<ComponentBuilder>(root);
     buildCircuit();
     setInitialState();
@@ -313,7 +364,7 @@ std::map<uint32_t, uint8_t> RV32ISingleCycleSystemProgramTestBase::lastDataMemor
 
 void RV32ISingleCycleSystemProgramTestBase::verifyResults() {
     RV32IInstructionLockstepTest::verifyResults();
-    verifyRV32ISystemExpectedResult(
+    verifyRV32IProgramExpectedResult(
         getCase(),
         snapshotComponentState(),
         *system_->dataMemory(),
@@ -344,3 +395,29 @@ DEFINE_STRUCTURAL_RV32I_PROGRAM_CASE(15)
 DEFINE_STRUCTURAL_RV32I_PROGRAM_CASE(16)
 
 #undef DEFINE_STRUCTURAL_RV32I_PROGRAM_CASE
+
+#define DEFINE_BALANCED_RV32I_PROGRAM_CASE(NUMBER) \
+RV32ISystemProgramCase RV32IBalancedSystemProgram##NUMBER##Test::getCase() const { \
+    auto test_case = structuralProgramCase(NUMBER); \
+    test_case.name = "RV32IBalancedSystemProgram" #NUMBER "Test"; \
+    return test_case; \
+}
+
+DEFINE_BALANCED_RV32I_PROGRAM_CASE(1)
+DEFINE_BALANCED_RV32I_PROGRAM_CASE(2)
+DEFINE_BALANCED_RV32I_PROGRAM_CASE(3)
+DEFINE_BALANCED_RV32I_PROGRAM_CASE(4)
+DEFINE_BALANCED_RV32I_PROGRAM_CASE(5)
+DEFINE_BALANCED_RV32I_PROGRAM_CASE(6)
+DEFINE_BALANCED_RV32I_PROGRAM_CASE(7)
+DEFINE_BALANCED_RV32I_PROGRAM_CASE(8)
+DEFINE_BALANCED_RV32I_PROGRAM_CASE(9)
+DEFINE_BALANCED_RV32I_PROGRAM_CASE(10)
+DEFINE_BALANCED_RV32I_PROGRAM_CASE(11)
+DEFINE_BALANCED_RV32I_PROGRAM_CASE(12)
+DEFINE_BALANCED_RV32I_PROGRAM_CASE(13)
+DEFINE_BALANCED_RV32I_PROGRAM_CASE(14)
+DEFINE_BALANCED_RV32I_PROGRAM_CASE(15)
+DEFINE_BALANCED_RV32I_PROGRAM_CASE(16)
+
+#undef DEFINE_BALANCED_RV32I_PROGRAM_CASE

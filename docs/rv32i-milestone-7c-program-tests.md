@@ -8,14 +8,14 @@ Milestone 7C broadens the behavioral RV32I system tests.
 
 Status: the 16 numbered program tests are implemented as CTest cases, exposed through Python bindings, exposed as visualizer scenarios, and documented below.
 
-Milestone 7A created the instruction-lockstep harness. Milestone 7B created `RV32ISystem` with a behavioral core and visible instruction/data memories. Milestone 7C should prove that the system runs more than one demo program.
+Milestone 7A created the instruction-lockstep harness. Milestone 7B created `RV32IReferenceSystem` with a behavioral core and visible instruction/data memories. Milestone 7C should prove that the system runs more than one demo program.
 
 Every test in this document:
 
 - inherit from `RV32IInstructionLockstepTest`
-- run on `RV32ISystem`
-- use `BehavioralRV32ICore`
-- use `BehavioralMemory64Kx32` instruction and data memories
+- run on `RV32IReferenceSystem`
+- use `RV32IReferenceCore`
+- use `Memory64Kx32` instruction and data memories
 - compare every committed instruction against `RV32IInstructionOracle`
 - expose a visualizer scenario named from the test number
 
@@ -24,22 +24,22 @@ Every test in this document:
 Use numbered behavioral system program tests:
 
 ```text
-BehavioralRV32ISystemProgram1Test
-BehavioralRV32ISystemProgram2Test
-BehavioralRV32ISystemProgram3Test
+RV32IReferenceSystemProgram1Test
+RV32IReferenceSystemProgram2Test
+RV32IReferenceSystemProgram3Test
 ...
 ```
 
 Visualizer scenarios should match:
 
 ```text
-behavioral-rv32i-system-program1
-behavioral-rv32i-system-program2
-behavioral-rv32i-system-program3
+rv32i-reference-program1
+rv32i-reference-program2
+rv32i-reference-program3
 ...
 ```
 
-`rv32i-system` is kept only as a legacy alias for program 1.
+The visualizer exposes these cases as `rv32i-reference-program1` through `rv32i-reference-program16`.
 
 The C snippets below describe the intent of each program. The assembly snippets are the RV32I behavior that the test should encode.
 
@@ -47,35 +47,35 @@ The C snippets below describe the intent of each program. The assembly snippets 
 
 | # | Test Name | Scenario | Main Focus |
 | ---: | --- | --- | --- |
-| 1 | `BehavioralRV32ISystemProgram1Test` | `behavioral-rv32i-system-program1` | Existing loop, word loads, arithmetic, branch loop, word/byte/halfword stores. |
-| 2 | `BehavioralRV32ISystemProgram2Test` | `behavioral-rv32i-system-program2` | ALU R-type and I-type operations, shifts, signed/unsigned comparisons, x0 write ignore. |
-| 3 | `BehavioralRV32ISystemProgram3Test` | `behavioral-rv32i-system-program3` | Load/store widths, sign extension, zero extension, little-endian memory behavior. |
-| 4 | `BehavioralRV32ISystemProgram4Test` | `behavioral-rv32i-system-program4` | All branch predicates, both taken and not-taken paths. |
-| 5 | `BehavioralRV32ISystemProgram5Test` | `behavioral-rv32i-system-program5` | `JAL`, `JALR`, link-register writes, function-call shape. |
-| 6 | `BehavioralRV32ISystemProgram6Test` | `behavioral-rv32i-system-program6` | `LUI`, `AUIPC`, `FENCE`, PC-relative values. |
-| 7 | `BehavioralRV32ISystemProgram7Test` | `behavioral-rv32i-system-program7` | Fibonacci loop with repeated stores and register dependencies. |
-| 8 | `BehavioralRV32ISystemProgram8Test` | `behavioral-rv32i-system-program8` | Byte copy and checksum with `LBU`, `SB`, pointer increments. |
-| 9 | `BehavioralRV32ISystemProgram9Test` | `behavioral-rv32i-system-program9` | Illegal instruction trap. |
-| 10 | `BehavioralRV32ISystemProgram10Test` | `behavioral-rv32i-system-program10` | `ECALL` trap, separate from `EBREAK` halt. |
-| 11 | `BehavioralRV32ISystemProgram11Test` | `behavioral-rv32i-system-program11` | Misaligned load trap. |
-| 12 | `BehavioralRV32ISystemProgram12Test` | `behavioral-rv32i-system-program12` | Misaligned store trap. |
-| 13 | `BehavioralRV32ISystemProgram13Test` | `behavioral-rv32i-system-program13` | Out-of-range load access fault. |
-| 14 | `BehavioralRV32ISystemProgram14Test` | `behavioral-rv32i-system-program14` | Out-of-range store access fault. |
-| 15 | `BehavioralRV32ISystemProgram15Test` | `behavioral-rv32i-system-program15` | Misaligned instruction address trap after `JALR`. |
-| 16 | `BehavioralRV32ISystemProgram16Test` | `behavioral-rv32i-system-program16` | Out-of-range instruction fetch access fault after `JALR`. |
+| 1 | `RV32IReferenceSystemProgram1Test` | `rv32i-reference-program1` | Existing loop, word loads, arithmetic, branch loop, word/byte/halfword stores. |
+| 2 | `RV32IReferenceSystemProgram2Test` | `rv32i-reference-program2` | ALU R-type and I-type operations, shifts, signed/unsigned comparisons, x0 write ignore. |
+| 3 | `RV32IReferenceSystemProgram3Test` | `rv32i-reference-program3` | Load/store widths, sign extension, zero extension, little-endian memory behavior. |
+| 4 | `RV32IReferenceSystemProgram4Test` | `rv32i-reference-program4` | All branch predicates, both taken and not-taken paths. |
+| 5 | `RV32IReferenceSystemProgram5Test` | `rv32i-reference-program5` | `JAL`, `JALR`, link-register writes, function-call shape. |
+| 6 | `RV32IReferenceSystemProgram6Test` | `rv32i-reference-program6` | `LUI`, `AUIPC`, `FENCE`, PC-relative values. |
+| 7 | `RV32IReferenceSystemProgram7Test` | `rv32i-reference-program7` | Fibonacci loop with repeated stores and register dependencies. |
+| 8 | `RV32IReferenceSystemProgram8Test` | `rv32i-reference-program8` | Byte copy and checksum with `LBU`, `SB`, pointer increments. |
+| 9 | `RV32IReferenceSystemProgram9Test` | `rv32i-reference-program9` | Illegal instruction trap. |
+| 10 | `RV32IReferenceSystemProgram10Test` | `rv32i-reference-program10` | `ECALL` trap, separate from `EBREAK` halt. |
+| 11 | `RV32IReferenceSystemProgram11Test` | `rv32i-reference-program11` | Misaligned load trap. |
+| 12 | `RV32IReferenceSystemProgram12Test` | `rv32i-reference-program12` | Misaligned store trap. |
+| 13 | `RV32IReferenceSystemProgram13Test` | `rv32i-reference-program13` | Out-of-range load access fault. |
+| 14 | `RV32IReferenceSystemProgram14Test` | `rv32i-reference-program14` | Out-of-range store access fault. |
+| 15 | `RV32IReferenceSystemProgram15Test` | `rv32i-reference-program15` | Misaligned instruction address trap after `JALR`. |
+| 16 | `RV32IReferenceSystemProgram16Test` | `rv32i-reference-program16` | Out-of-range instruction fetch access fault after `JALR`. |
 
 ## Program 1: Sum Loop And Mixed Stores
 
 Test name:
 
 ```text
-BehavioralRV32ISystemProgram1Test
+RV32IReferenceSystemProgram1Test
 ```
 
 Scenario:
 
 ```text
-behavioral-rv32i-system-program1
+rv32i-reference-program1
 ```
 
 Focus:
@@ -150,13 +150,13 @@ halted = true
 Test name:
 
 ```text
-BehavioralRV32ISystemProgram2Test
+RV32IReferenceSystemProgram2Test
 ```
 
 Scenario:
 
 ```text
-behavioral-rv32i-system-program2
+rv32i-reference-program2
 ```
 
 Focus:
@@ -256,13 +256,13 @@ halted = true
 Test name:
 
 ```text
-BehavioralRV32ISystemProgram3Test
+RV32IReferenceSystemProgram3Test
 ```
 
 Scenario:
 
 ```text
-behavioral-rv32i-system-program3
+rv32i-reference-program3
 ```
 
 Focus:
@@ -341,13 +341,13 @@ halted = true
 Test name:
 
 ```text
-BehavioralRV32ISystemProgram4Test
+RV32IReferenceSystemProgram4Test
 ```
 
 Scenario:
 
 ```text
-behavioral-rv32i-system-program4
+rv32i-reference-program4
 ```
 
 Focus:
@@ -447,13 +447,13 @@ halted = true
 Test name:
 
 ```text
-BehavioralRV32ISystemProgram5Test
+RV32IReferenceSystemProgram5Test
 ```
 
 Scenario:
 
 ```text
-behavioral-rv32i-system-program5
+rv32i-reference-program5
 ```
 
 Focus:
@@ -519,13 +519,13 @@ halted = true
 Test name:
 
 ```text
-BehavioralRV32ISystemProgram6Test
+RV32IReferenceSystemProgram6Test
 ```
 
 Scenario:
 
 ```text
-behavioral-rv32i-system-program6
+rv32i-reference-program6
 ```
 
 Focus:
@@ -582,13 +582,13 @@ halted = true
 Test name:
 
 ```text
-BehavioralRV32ISystemProgram7Test
+RV32IReferenceSystemProgram7Test
 ```
 
 Scenario:
 
 ```text
-behavioral-rv32i-system-program7
+rv32i-reference-program7
 ```
 
 Focus:
@@ -647,13 +647,13 @@ halted = true
 Test name:
 
 ```text
-BehavioralRV32ISystemProgram8Test
+RV32IReferenceSystemProgram8Test
 ```
 
 Scenario:
 
 ```text
-behavioral-rv32i-system-program8
+rv32i-reference-program8
 ```
 
 Focus:
@@ -723,13 +723,13 @@ halted = true
 Test name:
 
 ```text
-BehavioralRV32ISystemProgram9Test
+RV32IReferenceSystemProgram9Test
 ```
 
 Scenario:
 
 ```text
-behavioral-rv32i-system-program9
+rv32i-reference-program9
 ```
 
 Focus:
@@ -770,13 +770,13 @@ halted = false
 Test name:
 
 ```text
-BehavioralRV32ISystemProgram10Test
+RV32IReferenceSystemProgram10Test
 ```
 
 Scenario:
 
 ```text
-behavioral-rv32i-system-program10
+rv32i-reference-program10
 ```
 
 Focus:
@@ -817,13 +817,13 @@ x2 = 0
 Test name:
 
 ```text
-BehavioralRV32ISystemProgram11Test
+RV32IReferenceSystemProgram11Test
 ```
 
 Scenario:
 
 ```text
-behavioral-rv32i-system-program11
+rv32i-reference-program11
 ```
 
 Focus:
@@ -865,13 +865,13 @@ halted = false
 Test name:
 
 ```text
-BehavioralRV32ISystemProgram12Test
+RV32IReferenceSystemProgram12Test
 ```
 
 Scenario:
 
 ```text
-behavioral-rv32i-system-program12
+rv32i-reference-program12
 ```
 
 Focus:
@@ -913,13 +913,13 @@ halted = false
 Test name:
 
 ```text
-BehavioralRV32ISystemProgram13Test
+RV32IReferenceSystemProgram13Test
 ```
 
 Scenario:
 
 ```text
-behavioral-rv32i-system-program13
+rv32i-reference-program13
 ```
 
 Focus:
@@ -961,13 +961,13 @@ halted = false
 Test name:
 
 ```text
-BehavioralRV32ISystemProgram14Test
+RV32IReferenceSystemProgram14Test
 ```
 
 Scenario:
 
 ```text
-behavioral-rv32i-system-program14
+rv32i-reference-program14
 ```
 
 Focus:
@@ -1008,13 +1008,13 @@ halted = false
 Test name:
 
 ```text
-BehavioralRV32ISystemProgram15Test
+RV32IReferenceSystemProgram15Test
 ```
 
 Scenario:
 
 ```text
-behavioral-rv32i-system-program15
+rv32i-reference-program15
 ```
 
 Focus:
@@ -1054,13 +1054,13 @@ halted = false
 Test name:
 
 ```text
-BehavioralRV32ISystemProgram16Test
+RV32IReferenceSystemProgram16Test
 ```
 
 Scenario:
 
 ```text
-behavioral-rv32i-system-program16
+rv32i-reference-program16
 ```
 
 Focus:

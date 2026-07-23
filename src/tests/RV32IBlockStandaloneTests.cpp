@@ -4,10 +4,10 @@
 #include "components/Component.hpp"
 #include "components/ComponentBuilder.hpp"
 #include "components/IOComponent.hpp"
+#include "components/selection/BuildProfile.hpp"
+#include "components/selection/BuiltinComponentCatalog.hpp"
+#include "components/selection/ComponentFamily.hpp"
 #include "modules/composite/ALU32.hpp"
-#include "modules/rv32i/BehavioralRV32IControlFlowUnit.hpp"
-#include "modules/rv32i/BehavioralRV32IDecodeControlUnit.hpp"
-#include "modules/rv32i/BehavioralRV32IExecutionControlStatusUnit.hpp"
 #include "modules/rv32i/RV32IComponentEncoding.hpp"
 #include "modules/rv32i/RV32IControlFlowUnit.hpp"
 #include "modules/rv32i/RV32IDecodeControlUnit.hpp"
@@ -25,6 +25,22 @@
 #include <vector>
 
 namespace {
+std::shared_ptr<Component> createFamilyRoot(
+    const circuit::ComponentFamily& family,
+    circuit::Fidelity fidelity,
+    const std::string& name) {
+    auto profile = circuit::BuildProfileBuilder(
+        "contract-test-" + circuit::toString(fidelity))
+        .addRule(circuit::preferFidelity(
+            fidelity,
+            circuit::ProfileSelector::exactPath(name),
+            "contract test selects the requested fidelity"))
+        .build();
+    return circuit::builtinComponentCatalog()
+        .createRoot(family.request(name), std::move(profile))
+        .root;
+}
+
 template<size_t Width>
 void drive(Simulator& simulator,
            size_t time,
@@ -329,18 +345,24 @@ RV32IControlFlowUnitStandaloneTestBase::getCheckpoints() const {
     return checkpoints;
 }
 
-RV32IControlFlowUnitTest::RV32IControlFlowUnitTest()
-    : RV32IControlFlowUnitStandaloneTestBase("RV32IControlFlowUnitTest") {}
+RV32IControlFlowStructuralContractTest::RV32IControlFlowStructuralContractTest()
+    : RV32IControlFlowUnitStandaloneTestBase("RV32IControlFlowStructuralContractTest") {}
 
-std::shared_ptr<Component> RV32IControlFlowUnitTest::createRootComponent() const {
-    return Component::create<RV32IControlFlowUnit>("RV32I_CONTROL_FLOW_ROOT");
+std::shared_ptr<Component> RV32IControlFlowStructuralContractTest::createRootComponent() const {
+    return createFamilyRoot(
+        circuit::families::RV32IControlFlow,
+        circuit::Fidelity::Structural,
+        "RV32I_CONTROL_FLOW_ROOT");
 }
 
-BehavioralRV32IControlFlowUnitTest::BehavioralRV32IControlFlowUnitTest()
-    : RV32IControlFlowUnitStandaloneTestBase("BehavioralRV32IControlFlowUnitTest") {}
+RV32IControlFlowBehavioralContractTest::RV32IControlFlowBehavioralContractTest()
+    : RV32IControlFlowUnitStandaloneTestBase("RV32IControlFlowBehavioralContractTest") {}
 
-std::shared_ptr<Component> BehavioralRV32IControlFlowUnitTest::createRootComponent() const {
-    return Component::create<BehavioralRV32IControlFlowUnit>("BEHAVIORAL_RV32I_CONTROL_FLOW_ROOT");
+std::shared_ptr<Component> RV32IControlFlowBehavioralContractTest::createRootComponent() const {
+    return createFamilyRoot(
+        circuit::families::RV32IControlFlow,
+        circuit::Fidelity::Behavioral,
+        "RV32I_CONTROL_FLOW_ROOT");
 }
 
 RV32IDecodeControlUnitStandaloneTestBase::RV32IDecodeControlUnitStandaloneTestBase(
@@ -407,19 +429,24 @@ RV32IDecodeControlUnitStandaloneTestBase::getCheckpoints() const {
     return checkpoints;
 }
 
-RV32IDecodeControlUnitTest::RV32IDecodeControlUnitTest()
-    : RV32IDecodeControlUnitStandaloneTestBase("RV32IDecodeControlUnitTest") {}
+RV32IDecodeControlStructuralContractTest::RV32IDecodeControlStructuralContractTest()
+    : RV32IDecodeControlUnitStandaloneTestBase("RV32IDecodeControlStructuralContractTest") {}
 
-std::shared_ptr<Component> RV32IDecodeControlUnitTest::createRootComponent() const {
-    return Component::create<RV32IDecodeControlUnit>("RV32I_DECODE_CONTROL_ROOT");
+std::shared_ptr<Component> RV32IDecodeControlStructuralContractTest::createRootComponent() const {
+    return createFamilyRoot(
+        circuit::families::RV32IDecodeControl,
+        circuit::Fidelity::Structural,
+        "RV32I_DECODE_CONTROL_ROOT");
 }
 
-BehavioralRV32IDecodeControlUnitTest::BehavioralRV32IDecodeControlUnitTest()
-    : RV32IDecodeControlUnitStandaloneTestBase("BehavioralRV32IDecodeControlUnitTest") {}
+RV32IDecodeControlBehavioralContractTest::RV32IDecodeControlBehavioralContractTest()
+    : RV32IDecodeControlUnitStandaloneTestBase("RV32IDecodeControlBehavioralContractTest") {}
 
-std::shared_ptr<Component> BehavioralRV32IDecodeControlUnitTest::createRootComponent() const {
-    return Component::create<BehavioralRV32IDecodeControlUnit>(
-        "BEHAVIORAL_RV32I_DECODE_CONTROL_ROOT");
+std::shared_ptr<Component> RV32IDecodeControlBehavioralContractTest::createRootComponent() const {
+    return createFamilyRoot(
+        circuit::families::RV32IDecodeControl,
+        circuit::Fidelity::Behavioral,
+        "RV32I_DECODE_CONTROL_ROOT");
 }
 
 RV32IExecutionControlStatusUnitStandaloneTestBase::
@@ -550,23 +577,27 @@ RV32IExecutionControlStatusUnitStandaloneTestBase::getCheckpoints() const {
     return checkpoints;
 }
 
-RV32IExecutionControlStatusUnitTest::RV32IExecutionControlStatusUnitTest()
+RV32IExecutionStatusStructuralContractTest::RV32IExecutionStatusStructuralContractTest()
     : RV32IExecutionControlStatusUnitStandaloneTestBase(
-          "RV32IExecutionControlStatusUnitTest") {}
+          "RV32IExecutionStatusStructuralContractTest") {}
 
 std::shared_ptr<Component>
-RV32IExecutionControlStatusUnitTest::createRootComponent() const {
-    return Component::create<RV32IExecutionControlStatusUnit>(
+RV32IExecutionStatusStructuralContractTest::createRootComponent() const {
+    return createFamilyRoot(
+        circuit::families::RV32IExecutionStatus,
+        circuit::Fidelity::Structural,
         "RV32I_EXECUTION_CONTROL_STATUS_ROOT");
 }
 
-BehavioralRV32IExecutionControlStatusUnitTest::
-BehavioralRV32IExecutionControlStatusUnitTest()
+RV32IExecutionStatusBehavioralContractTest::
+RV32IExecutionStatusBehavioralContractTest()
     : RV32IExecutionControlStatusUnitStandaloneTestBase(
-          "BehavioralRV32IExecutionControlStatusUnitTest") {}
+          "RV32IExecutionStatusBehavioralContractTest") {}
 
 std::shared_ptr<Component>
-BehavioralRV32IExecutionControlStatusUnitTest::createRootComponent() const {
-    return Component::create<BehavioralRV32IExecutionControlStatusUnit>(
-        "BEHAVIORAL_RV32I_EXECUTION_CONTROL_STATUS_ROOT");
+RV32IExecutionStatusBehavioralContractTest::createRootComponent() const {
+    return createFamilyRoot(
+        circuit::families::RV32IExecutionStatus,
+        circuit::Fidelity::Behavioral,
+        "RV32I_EXECUTION_CONTROL_STATUS_ROOT");
 }

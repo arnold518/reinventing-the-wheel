@@ -18,16 +18,16 @@ Implemented:
 - `SimulationTest::runSimulation()` hook for custom test loops
 - `SimulatorAdvanceAndRecordTest`
 - `RV32IInstructionLockstepHarnessTest`
-- `BehavioralRV32ICore`
-- `RV32ISystem`
+- `RV32IReferenceCore`
+- `RV32IReferenceSystem`
 - two-memory `RV32IInstructionOracle::step` overload
-- `BehavioralRV32ISystemProgram1Test`
-- `BehavioralRV32ISystemProgram2Test` through `BehavioralRV32ISystemProgram16Test`
-- visualizer scenario aliases `behavioral-rv32i-system-program1` through `behavioral-rv32i-system-program16`
+- `RV32IReferenceSystemProgram1Test`
+- `RV32IReferenceSystemProgram2Test` through `RV32IReferenceSystemProgram16Test`
+- visualizer scenario aliases `rv32i-reference-program1` through `rv32i-reference-program16`
 - separate oracle instruction and data memories matching the system's Harvard organization
 - real simulated byte-write transaction comparison, including unchanged zero-byte writes
 - `RV32IInstructionLockstepMismatchDetectionTest`
-- `BehavioralRV32ISystemContractTest` for reset, enable, public pins, Harvard separation, halt, and recovery
+- `RV32IReferenceSystemContractTest` for reset, enable, public pins, Harvard separation, halt, and recovery
 - precise taken branch/JAL/JALR instruction-address-misalignment behavior
 - specification-derived oracle edge vectors
 - hard-coded final PC/count/register/trap/write outcomes for all 16 numbered programs
@@ -39,7 +39,7 @@ The Milestone 7C program suite is listed in `docs/rv32i-milestone-7c-program-tes
 Latest focused 7A/7B/7C verification:
 
 ```bash
-ctest --test-dir build --output-on-failure -R "BehavioralMemory64Kx32Test|RV32IInstructionOracleTest|RV32IInstructionLockstep|BehavioralRV32ISystem"
+ctest --test-dir build --output-on-failure -R "Memory64Kx32Test|RV32IInstructionOracleTest|RV32IInstructionLockstep|RV32IReferenceSystem"
 ```
 
 Results:
@@ -51,11 +51,11 @@ Results:
 The target is a reusable behavioral RV32I system component:
 
 ```text
-RV32ISystem
+RV32IReferenceSystem
   contains:
-    BehavioralRV32ICore
-    BehavioralMemory64Kx32 instruction memory
-    BehavioralMemory64Kx32 data memory
+    RV32IReferenceCore
+    Memory64Kx32 instruction memory
+    Memory64Kx32 data memory
 
   public pins:
     CLK
@@ -73,7 +73,7 @@ The system is the first circuit-simulator component that should run real RV32I p
 Milestone 7 intentionally produced the executable answer sheet for the structural RV32I, not the final implementation architecture.
 
 - `RV32IInstructionOracle` supplies expected one-instruction architectural transitions.
-- `BehavioralRV32ICore` and `RV32ISystem` expose those answers through the simulator-facing clock and memory contract.
+- `RV32IReferenceCore` and `RV32IReferenceSystem` expose those answers through the simulator-facing clock and memory contract.
 - The numbered program cases, state adapter, and lockstep harness provide shared inputs and observable checkpoints for grading the structural system.
 - The structural core must execute independently through visible datapath components; it must not call the oracle or behavioral core to obtain its results.
 - The behavioral system stays available as a regression reference until the structural system passes the same program suite.
@@ -84,7 +84,7 @@ This preserves what the behavioral milestone was designed to provide: an answer 
 
 ### Decision 1: The System Owns Memory
 
-`RV32ISystem` owns:
+`RV32IReferenceSystem` owns:
 
 - one behavioral core
 - one instruction memory
@@ -122,7 +122,7 @@ Reset policy:
 
 ### Decision 3: The Core Owns PC
 
-`BehavioralRV32ICore` owns:
+`RV32IReferenceCore` owns:
 
 - `pc`
 - `x[32]`
@@ -192,7 +192,7 @@ For a future structural system, the same getters can be implemented by reading i
 
 ## System Public Pins
 
-`RV32ISystem` public appearance:
+`RV32IReferenceSystem` public appearance:
 
 | Pin | Direction | Width | Meaning |
 | --- | --- | ---: | --- |
@@ -218,7 +218,7 @@ Those are available through getters and internal inspection.
 
 ## Core Internal Pins
 
-`BehavioralRV32ICore` is internal to the system. Its logical address, data, request, fault, and status contract should guide the future structural core, while implementation-specific behavioral timing signals must not be copied automatically.
+`RV32IReferenceCore` is internal to the system. Its logical address, data, request, fault, and status contract should guide the future structural core, while implementation-specific behavioral timing signals must not be copied automatically.
 
 Inputs:
 
@@ -302,9 +302,9 @@ These getters are test/debug instrumentation, not circuit pins.
 ### System Getters
 
 ```cpp
-std::shared_ptr<BehavioralRV32ICore> getCore() const;
-std::shared_ptr<BehavioralMemory64Kx32> getInstructionMemory() const;
-std::shared_ptr<BehavioralMemory64Kx32> getDataMemory() const;
+std::shared_ptr<RV32IReferenceCore> getCore() const;
+std::shared_ptr<Memory64Kx32> getInstructionMemory() const;
+std::shared_ptr<Memory64Kx32> getDataMemory() const;
 
 void loadProgram(const rv32i::RV32IProgram& program, uint32_t base_address = 0);
 void clearDataMemory();
@@ -386,7 +386,7 @@ Milestone 7 tests should compare against `RV32IInstructionOracle` in instruction
 ```text
 same RV32IProgram
 same initial pc/register/data memory setup
-  -> clock RV32ISystem until snapshotState().instruction_count advances
+  -> clock RV32IReferenceSystem until snapshotState().instruction_count advances
   -> call RV32IInstructionOracle::step once
   -> compare architectural state
   -> compare logical data-memory access
@@ -579,7 +579,7 @@ Recommended Milestone 7 tests:
 
 Test style:
 
-- create `RV32ISystem`
+- create `RV32IReferenceSystem`
 - preload instruction memory through `loadProgram`
 - optionally initialize data memory through helper methods
 - drive external `CLK`, `RST`, and `ENABLE`
@@ -594,7 +594,7 @@ Test style:
 Expose one scenario:
 
 ```text
-behavioral-rv32i-system-program1
+rv32i-reference-program1
 ```
 
 Default visual structure:
@@ -617,15 +617,15 @@ Visualizer policy:
 
 Milestone 7 is complete when:
 
-- `BehavioralRV32ICore` is implemented.
-- `RV32ISystem` is implemented.
+- `RV32IReferenceCore` is implemented.
+- `RV32IReferenceSystem` is implemented.
 - the system owns instruction and data memory.
 - public system pins are limited to `CLK`, `RST`, `ENABLE`, `PC`, `HALTED`, and `TRAPPED`.
 - instruction memory can be preloaded without being reset away.
 - reusable `RV32IInstructionLockstepTest` exists.
 - tests execute multiple raw RV32I programs through the system component.
 - instruction-lockstep tests match `RV32IInstructionOracle` after every committed instruction.
-- visualizer exposes `behavioral-rv32i-system-program1` with `rv32i-system` kept as a legacy alias.
+- visualizer exposes the complete `rv32i-reference-program1` through `rv32i-reference-program16` family.
 - docs are updated with behavior, timing, and known limits.
 
 ## Known Limits
@@ -635,7 +635,7 @@ This milestone does not implement:
 - paired structural/behavioral control-flow components
 - paired structural/behavioral instruction decoder/control components
 - paired structural/behavioral execution-control/status components
-- `BehavioralALU32` and explicit ALU/register-file pairwise equivalence tests
+- behavioral fidelity for `ALU32` and explicit ALU/register-file equivalence tests
 - the structural core's direct data-memory wiring
 - cycle oracle
 - cycle-by-cycle internal timing comparator

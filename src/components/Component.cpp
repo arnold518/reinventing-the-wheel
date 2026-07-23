@@ -1,5 +1,6 @@
 #include "components/Component.hpp"
 #include "components/IOComponent.hpp"
+#include "components/BasicComponent.hpp"
 #include "basic/Wire.hpp"
 #include "basic/WireBase.hpp"
 #include <iostream>
@@ -19,6 +20,52 @@ std::shared_ptr<Component> Component::getParent() const { return parent.lock(); 
 const std::vector<std::shared_ptr<Component>>& Component::getChildren() const { return children; }
 const std::vector<std::shared_ptr<Wire<>>>& Component::getWires() const { return wires; }
 const std::vector<std::shared_ptr<WireBase>>& Component::getAllWires() const { return all_wires; }
+
+void Component::setInstanceMetadata(circuit::ComponentInstanceMetadata metadata) {
+    instance_metadata_ = std::move(metadata);
+}
+
+const std::optional<circuit::ComponentInstanceMetadata>& Component::getInstanceMetadata() const {
+    return instance_metadata_;
+}
+
+std::string Component::getContractId() const {
+    return instance_metadata_ ? instance_metadata_->contract_id
+                              : "explicit." + std::string(getTypeName());
+}
+
+uint32_t Component::getContractVersion() const {
+    return instance_metadata_ ? instance_metadata_->contract_version : 0;
+}
+
+std::string Component::getImplementationId() const {
+    return instance_metadata_ ? instance_metadata_->implementation_id
+                              : "explicit.construction." + std::string(getTypeName());
+}
+
+std::string Component::getSelectedFidelity() const {
+    if (instance_metadata_) {
+        return circuit::toString(instance_metadata_->fidelity);
+    }
+    return "unspecified";
+}
+
+bool Component::isTerminalPrimitive() const {
+    return instance_metadata_ && instance_metadata_->terminal_primitive;
+}
+
+bool Component::isReferenceOnly() const {
+    return instance_metadata_ && instance_metadata_->reference_only;
+}
+
+std::string Component::getSelectionReason() const {
+    return instance_metadata_ ? instance_metadata_->selection_reason
+                              : "explicit construction";
+}
+
+std::string Component::getProfileFingerprint() const {
+    return instance_metadata_ ? instance_metadata_->profile_fingerprint : "explicit";
+}
 
 std::string Component::getID() const
 {

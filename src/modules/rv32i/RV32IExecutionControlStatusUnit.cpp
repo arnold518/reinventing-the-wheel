@@ -1,4 +1,5 @@
 #include "modules/rv32i/RV32IExecutionControlStatusUnit.hpp"
+#include "modules/rv32i/RV32IExecutionStatusDirect.hpp"
 
 #include "components/ComponentBuilder.hpp"
 #include "components/ComponentBuilder.tpp"
@@ -97,58 +98,78 @@ uint8_t cause(rv32i::RV32IExecutionTrapCause value) {
     return rv32i::component_encoding::executionTrapCause(value);
 }
 }
-RV32IExecutionControlStatusUnit::RV32IExecutionControlStatusUnit(std::string name)
-    : IOComponent(std::move(name), [](IOComponent* self) {
-          self->addPin("CLK", PinType::INPUT);
-          self->addPin("RST", PinType::INPUT);
-          self->addPin("ENABLE", PinType::INPUT);
-          self->addPin("LEGAL", PinType::INPUT);
-          self->addPin("REG_WRITE", PinType::INPUT);
-          self->addPin("MEM_READ", PinType::INPUT);
-          self->addPin("MEM_WRITE", PinType::INPUT);
-          self->addPin("HALT_REQUEST", PinType::INPUT);
-          self->addPin("TRAP_REQUEST", PinType::INPUT);
-          self->addPin<4>("DECODE_TRAP_CAUSE", PinType::INPUT);
-          self->addPin<32>("ALU_ADDRESS", PinType::INPUT);
-          self->addPin<2>("MEM_SIZE", PinType::INPUT);
-          self->addPin("PC_MISALIGNED", PinType::INPUT);
-          self->addPin("TARGET_MISALIGNED", PinType::INPUT);
-          self->addPin("IMEM_READY", PinType::INPUT);
-          self->addPin("IMEM_FAULT", PinType::INPUT);
-          self->addPin("DMEM_READY", PinType::INPUT);
-          self->addPin("DMEM_FAULT", PinType::INPUT);
+namespace {
+void defineExecutionStatusPins(IOComponent* self) {
+    self->addPin("CLK", PinType::INPUT);
+    self->addPin("RST", PinType::INPUT);
+    self->addPin("ENABLE", PinType::INPUT);
+    self->addPin("LEGAL", PinType::INPUT);
+    self->addPin("REG_WRITE", PinType::INPUT);
+    self->addPin("MEM_READ", PinType::INPUT);
+    self->addPin("MEM_WRITE", PinType::INPUT);
+    self->addPin("HALT_REQUEST", PinType::INPUT);
+    self->addPin("TRAP_REQUEST", PinType::INPUT);
+    self->addPin<4>("DECODE_TRAP_CAUSE", PinType::INPUT);
+    self->addPin<32>("ALU_ADDRESS", PinType::INPUT);
+    self->addPin<2>("MEM_SIZE", PinType::INPUT);
+    self->addPin("PC_MISALIGNED", PinType::INPUT);
+    self->addPin("TARGET_MISALIGNED", PinType::INPUT);
+    self->addPin("IMEM_READY", PinType::INPUT);
+    self->addPin("IMEM_FAULT", PinType::INPUT);
+    self->addPin("DMEM_READY", PinType::INPUT);
+    self->addPin("DMEM_FAULT", PinType::INPUT);
+    self->addPin("PC_WRITE", PinType::OUTPUT);
+    self->addPin("REGISTER_WRITE", PinType::OUTPUT);
+    self->addPin("MEMORY_REQUEST_ACTIVE", PinType::OUTPUT);
+    self->addPin("HALTED", PinType::OUTPUT);
+    self->addPin("TRAPPED", PinType::OUTPUT);
+    self->addPin<4>("TRAP_CAUSE", PinType::OUTPUT);
+    self->addPin("DATA_ADDRESS_MISALIGNED", PinType::OUTPUT);
+    self->addPin("INSTRUCTION_ATTEMPT", PinType::OUTPUT);
+}
+}
 
-          self->addPin("PC_WRITE", PinType::OUTPUT);
-          self->addPin("REGISTER_WRITE", PinType::OUTPUT);
-          self->addPin("MEMORY_REQUEST_ACTIVE", PinType::OUTPUT);
-          self->addPin("HALTED", PinType::OUTPUT);
-          self->addPin("TRAPPED", PinType::OUTPUT);
-          self->addPin<4>("TRAP_CAUSE", PinType::OUTPUT);
-          self->addPin("DATA_ADDRESS_MISALIGNED", PinType::OUTPUT);
-          self->addPin("INSTRUCTION_ATTEMPT", PinType::OUTPUT);
-      }) {}
+namespace circuit::families {
+const ComponentFamily RV32IExecutionStatus{
+    "rv32i.execution-status",
+    "RV32IExecutionControlStatusUnit",
+    defineExecutionStatusPins,
+    [](const std::string& name, const std::shared_ptr<BuildContext>& context) {
+        return Component::createWithContext<
+            ::RV32IExecutionControlStatusUnit>(context, name);
+    },
+    [](const std::string& name, const std::shared_ptr<BuildContext>& context) {
+        return Component::createWithContext<
+            ::RV32IExecutionStatusDirect>(context, name);
+    }};
+}
+
+RV32IExecutionControlStatusUnit::RV32IExecutionControlStatusUnit(std::string name)
+    : IOComponent(std::move(name),
+                  circuit::families::RV32IExecutionStatus.pinInitializer()) {}
 
 void RV32IExecutionControlStatusUnit::buildInternals(ComponentBuilder& builder) {
-    builder.addNewComponent<MemoryBit>("HALTED_STATE");
-    builder.addNewComponent<MemoryBit>("TRAPPED_STATE");
+    builder.add(circuit::families::MemoryBit, "HALTED_STATE");
+    builder.add(circuit::families::MemoryBit, "TRAPPED_STATE");
     builder.addNewComponent<BitSplitter<32>>("ADDRESS_SPLIT");
     builder.addNewComponent<BitSplitter<2>>("SIZE_SPLIT");
     builder.addNewComponent<BitSplitter<4>>("CAUSE_D_SPLIT");
     builder.addNewComponent<BitJoiner<4>>("CAUSE_Q_JOIN");
-    builder.addNewComponent<ConstantValue<1, 32>>("CONST_HIGH", 1);
+    builder.addNewComponent<ConstantValue<1>>("CONST_HIGH", 1);
 
     for (size_t bit = 0; bit < 4; ++bit) {
-        builder.addNewComponent<MemoryBit>("TRAP_CAUSE_BIT_" + std::to_string(bit));
+        const auto name = "TRAP_CAUSE_BIT_" + std::to_string(bit);
+        builder.add(circuit::families::MemoryBit, name);
     }
 
-    builder.addNewComponent<ConstantValue<4, 4>>("CAUSE_NONE", cause(rv32i::RV32IExecutionTrapCause::None));
-    builder.addNewComponent<ConstantValue<4, 4>>("CAUSE_ILLEGAL", cause(rv32i::RV32IExecutionTrapCause::IllegalInstruction));
-    builder.addNewComponent<ConstantValue<4, 4>>("CAUSE_INSTRUCTION_MISALIGNED", cause(rv32i::RV32IExecutionTrapCause::InstructionAddressMisaligned));
-    builder.addNewComponent<ConstantValue<4, 4>>("CAUSE_INSTRUCTION_ACCESS", cause(rv32i::RV32IExecutionTrapCause::InstructionAccessFault));
-    builder.addNewComponent<ConstantValue<4, 4>>("CAUSE_LOAD_MISALIGNED", cause(rv32i::RV32IExecutionTrapCause::LoadAddressMisaligned));
-    builder.addNewComponent<ConstantValue<4, 4>>("CAUSE_LOAD_ACCESS", cause(rv32i::RV32IExecutionTrapCause::LoadAccessFault));
-    builder.addNewComponent<ConstantValue<4, 4>>("CAUSE_STORE_MISALIGNED", cause(rv32i::RV32IExecutionTrapCause::StoreAddressMisaligned));
-    builder.addNewComponent<ConstantValue<4, 4>>("CAUSE_STORE_ACCESS", cause(rv32i::RV32IExecutionTrapCause::StoreAccessFault));
+    builder.addNewComponent<ConstantValue<4>>("CAUSE_NONE", cause(rv32i::RV32IExecutionTrapCause::None));
+    builder.addNewComponent<ConstantValue<4>>("CAUSE_ILLEGAL", cause(rv32i::RV32IExecutionTrapCause::IllegalInstruction));
+    builder.addNewComponent<ConstantValue<4>>("CAUSE_INSTRUCTION_MISALIGNED", cause(rv32i::RV32IExecutionTrapCause::InstructionAddressMisaligned));
+    builder.addNewComponent<ConstantValue<4>>("CAUSE_INSTRUCTION_ACCESS", cause(rv32i::RV32IExecutionTrapCause::InstructionAccessFault));
+    builder.addNewComponent<ConstantValue<4>>("CAUSE_LOAD_MISALIGNED", cause(rv32i::RV32IExecutionTrapCause::LoadAddressMisaligned));
+    builder.addNewComponent<ConstantValue<4>>("CAUSE_LOAD_ACCESS", cause(rv32i::RV32IExecutionTrapCause::LoadAccessFault));
+    builder.addNewComponent<ConstantValue<4>>("CAUSE_STORE_MISALIGNED", cause(rv32i::RV32IExecutionTrapCause::StoreAddressMisaligned));
+    builder.addNewComponent<ConstantValue<4>>("CAUSE_STORE_ACCESS", cause(rv32i::RV32IExecutionTrapCause::StoreAccessFault));
 
     builder.addNewComponent<Mux2to1_4bit>("DECODE_CAUSE_MUX");
     builder.addNewComponent<Mux2to1_4bit>("DATA_MISALIGNED_CAUSE_MUX");
@@ -193,32 +214,32 @@ void RV32IExecutionControlStatusUnit::buildInternals(ComponentBuilder& builder) 
     const auto size_bit1 = logic.source(
         "SIZE_BIT_1", builder.getOutputPin<BitSplitter<2>>("SIZE_SPLIT", "OUT_1"));
     const auto high = logic.source(
-        "CONST_HIGH_fanout", builder.getOutputPin<ConstantValue<1, 32>>("CONST_HIGH", "OUT"));
+        "CONST_HIGH_fanout", builder.getOutputPin<ConstantValue<1>>("CONST_HIGH", "OUT"));
     const auto halted = logic.source(
-        "HALTED_STATE_Q", builder.getOutputPin<MemoryBit>("HALTED_STATE", "Q"));
+        "HALTED_STATE_Q", builder.getOutputPin<IOComponent>("HALTED_STATE", "Q"));
     const auto trapped = logic.source(
-        "TRAPPED_STATE_Q", builder.getOutputPin<MemoryBit>("TRAPPED_STATE", "Q"));
+        "TRAPPED_STATE_Q", builder.getOutputPin<IOComponent>("TRAPPED_STATE", "Q"));
 
-    logic.sink(clk, builder.getInputPin<MemoryBit>("HALTED_STATE", "CLK"));
-    logic.sink(clk, builder.getInputPin<MemoryBit>("TRAPPED_STATE", "CLK"));
-    logic.sink(rst, builder.getInputPin<MemoryBit>("HALTED_STATE", "RST"));
-    logic.sink(rst, builder.getInputPin<MemoryBit>("TRAPPED_STATE", "RST"));
-    logic.sink(high, builder.getInputPin<MemoryBit>("HALTED_STATE", "D"));
-    logic.sink(high, builder.getInputPin<MemoryBit>("TRAPPED_STATE", "D"));
+    logic.sink(clk, builder.getInputPin<IOComponent>("HALTED_STATE", "CLK"));
+    logic.sink(clk, builder.getInputPin<IOComponent>("TRAPPED_STATE", "CLK"));
+    logic.sink(rst, builder.getInputPin<IOComponent>("HALTED_STATE", "RST"));
+    logic.sink(rst, builder.getInputPin<IOComponent>("TRAPPED_STATE", "RST"));
+    logic.sink(high, builder.getInputPin<IOComponent>("HALTED_STATE", "D"));
+    logic.sink(high, builder.getInputPin<IOComponent>("TRAPPED_STATE", "D"));
     logic.sink(halted, getOutputPin("HALTED"));
     logic.sink(trapped, getOutputPin("TRAPPED"));
 
     for (size_t bit = 0; bit < 4; ++bit) {
         const auto cell = "TRAP_CAUSE_BIT_" + std::to_string(bit);
-        logic.sink(clk, builder.getInputPin<MemoryBit>(cell, "CLK"));
-        logic.sink(rst, builder.getInputPin<MemoryBit>(cell, "RST"));
+        logic.sink(clk, builder.getInputPin<IOComponent>(cell, "CLK"));
+        logic.sink(rst, builder.getInputPin<IOComponent>(cell, "RST"));
         builder.addNewWire(
             "CAUSE_D_bit_" + std::to_string(bit),
             builder.getOutputPin<BitSplitter<4>>("CAUSE_D_SPLIT", "OUT_" + std::to_string(bit)),
-            {builder.getInputPin<MemoryBit>(cell, "D")});
+            {builder.getInputPin<IOComponent>(cell, "D")});
         builder.addNewWire(
             "CAUSE_Q_bit_" + std::to_string(bit),
-            builder.getOutputPin<MemoryBit>(cell, "Q"),
+            builder.getOutputPin<IOComponent>(cell, "Q"),
             {builder.getInputPin<BitJoiner<4>>("CAUSE_Q_JOIN", "IN_" + std::to_string(bit))});
     }
     builder.addNewWire<4>(
@@ -297,10 +318,10 @@ void RV32IExecutionControlStatusUnit::buildInternals(ComponentBuilder& builder) 
         "TRAP_EVENT",
         {pc_event, imem_event, decode_event, data_misaligned_event,
          data_fault_event, target_event});
-    logic.sink(trap_event, builder.getInputPin<MemoryBit>("TRAPPED_STATE", "WE"));
-    logic.sink(halt_event, builder.getInputPin<MemoryBit>("HALTED_STATE", "WE"));
+    logic.sink(trap_event, builder.getInputPin<IOComponent>("TRAPPED_STATE", "WE"));
+    logic.sink(halt_event, builder.getInputPin<IOComponent>("HALTED_STATE", "WE"));
     for (size_t bit = 0; bit < 4; ++bit) {
-        logic.sink(trap_event, builder.getInputPin<MemoryBit>(
+        logic.sink(trap_event, builder.getInputPin<IOComponent>(
             "TRAP_CAUSE_BIT_" + std::to_string(bit), "WE"));
     }
 
@@ -317,7 +338,7 @@ void RV32IExecutionControlStatusUnit::buildInternals(ComponentBuilder& builder) 
 
     builder.addNewWire<4>(
         "CAUSE_ILLEGAL_to_decode_mux",
-        builder.getOutputPin<ConstantValue<4, 4>, 4>("CAUSE_ILLEGAL", "OUT"),
+        builder.getOutputPin<ConstantValue<4>, 4>("CAUSE_ILLEGAL", "OUT"),
         {builder.getInputPin<Mux2to1_4bit, 4>("DECODE_CAUSE_MUX", "A")});
     builder.addNewWire<4>(
         "DECODE_CAUSE_to_mux",
@@ -325,28 +346,28 @@ void RV32IExecutionControlStatusUnit::buildInternals(ComponentBuilder& builder) 
         {builder.getInputPin<Mux2to1_4bit, 4>("DECODE_CAUSE_MUX", "B")});
     builder.addNewWire<4>(
         "LOAD_MISALIGNED_to_data_mux",
-        builder.getOutputPin<ConstantValue<4, 4>, 4>("CAUSE_LOAD_MISALIGNED", "OUT"),
+        builder.getOutputPin<ConstantValue<4>, 4>("CAUSE_LOAD_MISALIGNED", "OUT"),
         {builder.getInputPin<Mux2to1_4bit, 4>("DATA_MISALIGNED_CAUSE_MUX", "A")});
     builder.addNewWire<4>(
         "STORE_MISALIGNED_to_data_mux",
-        builder.getOutputPin<ConstantValue<4, 4>, 4>("CAUSE_STORE_MISALIGNED", "OUT"),
+        builder.getOutputPin<ConstantValue<4>, 4>("CAUSE_STORE_MISALIGNED", "OUT"),
         {builder.getInputPin<Mux2to1_4bit, 4>("DATA_MISALIGNED_CAUSE_MUX", "B")});
     builder.addNewWire<4>(
         "LOAD_ACCESS_to_data_mux",
-        builder.getOutputPin<ConstantValue<4, 4>, 4>("CAUSE_LOAD_ACCESS", "OUT"),
+        builder.getOutputPin<ConstantValue<4>, 4>("CAUSE_LOAD_ACCESS", "OUT"),
         {builder.getInputPin<Mux2to1_4bit, 4>("DATA_ACCESS_CAUSE_MUX", "A")});
     builder.addNewWire<4>(
         "STORE_ACCESS_to_data_mux",
-        builder.getOutputPin<ConstantValue<4, 4>, 4>("CAUSE_STORE_ACCESS", "OUT"),
+        builder.getOutputPin<ConstantValue<4>, 4>("CAUSE_STORE_ACCESS", "OUT"),
         {builder.getInputPin<Mux2to1_4bit, 4>("DATA_ACCESS_CAUSE_MUX", "B")});
 
     builder.addNewWire<4>(
         "CAUSE_NONE_to_control_mux",
-        builder.getOutputPin<ConstantValue<4, 4>, 4>("CAUSE_NONE", "OUT"),
+        builder.getOutputPin<ConstantValue<4>, 4>("CAUSE_NONE", "OUT"),
         {builder.getInputPin<Mux2to1_4bit, 4>("CAUSE_CONTROL_MUX", "A")});
     builder.addNewWire<4>(
         "CAUSE_CONTROL_to_control_mux",
-        builder.getOutputPin<ConstantValue<4, 4>, 4>("CAUSE_INSTRUCTION_MISALIGNED", "OUT"),
+        builder.getOutputPin<ConstantValue<4>, 4>("CAUSE_INSTRUCTION_MISALIGNED", "OUT"),
         {builder.getInputPin<Mux2to1_4bit, 4>("CAUSE_CONTROL_MUX", "B")});
     builder.addNewWire<4>(
         "control_cause_to_imem_mux",
@@ -354,7 +375,7 @@ void RV32IExecutionControlStatusUnit::buildInternals(ComponentBuilder& builder) 
         {builder.getInputPin<Mux2to1_4bit, 4>("CAUSE_IMEM_MUX", "A")});
     builder.addNewWire<4>(
         "CAUSE_IMEM_to_imem_mux",
-        builder.getOutputPin<ConstantValue<4, 4>, 4>("CAUSE_INSTRUCTION_ACCESS", "OUT"),
+        builder.getOutputPin<ConstantValue<4>, 4>("CAUSE_INSTRUCTION_ACCESS", "OUT"),
         {builder.getInputPin<Mux2to1_4bit, 4>("CAUSE_IMEM_MUX", "B")});
     builder.addNewWire<4>(
         "imem_cause_to_decode_mux",

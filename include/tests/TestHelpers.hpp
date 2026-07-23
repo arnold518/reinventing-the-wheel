@@ -11,6 +11,7 @@
 #include <algorithm>
 #include <cassert>
 #include <cstdint>
+#include <functional>
 #include <iostream>
 #include <map>
 #include <memory>
@@ -142,6 +143,9 @@ struct RunRowsProbeResult {
     size_t max_delay = 0;
 };
 
+using TestComponentFactory =
+    std::function<std::shared_ptr<Component>(const std::string&)>;
+
 inline size_t secondSmallestPowerOfTenGreaterThan(size_t value) {
     size_t result = 1;
     while (result <= value) {
@@ -152,13 +156,15 @@ inline size_t secondSmallestPowerOfTenGreaterThan(size_t value) {
     return result * 10;
 }
 
-template<typename ComponentT, typename... Args>
-RunRowsProbeResult probeIsolatedRows(const std::vector<TestRow>& rows, const RunRowsOptions& options, Args&&... args) {
+inline RunRowsProbeResult probeIsolatedRowsWithFactory(
+    const std::vector<TestRow>& rows,
+    const RunRowsOptions& options,
+    const TestComponentFactory& factory) {
     assert(options.probe_time_limit > 0 && "runRows requires a positive probe_time_limit");
     RunRowsProbeResult result;
     for (size_t row_index = 0; row_index < rows.size(); ++row_index) {
         Simulator sim;
-        auto root = Component::create<ComponentT>("ROOT", args...);
+        auto root = factory("ROOT");
         auto io = std::dynamic_pointer_cast<IOComponent>(root);
         assert(io);
         ComponentBuilder builder(root);
@@ -199,6 +205,19 @@ RunRowsProbeResult probeIsolatedRows(const std::vector<TestRow>& rows, const Run
         }
     }
     return result;
+}
+
+template<typename ComponentT, typename... Args>
+RunRowsProbeResult probeIsolatedRows(
+    const std::vector<TestRow>& rows,
+    const RunRowsOptions& options,
+    Args&&... args) {
+    return probeIsolatedRowsWithFactory(
+        rows,
+        options,
+        [&](const std::string& name) {
+            return Component::create<ComponentT>(name, args...);
+        });
 }
 
 template<typename ComponentT, typename... Args>

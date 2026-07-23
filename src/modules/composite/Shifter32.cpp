@@ -108,7 +108,7 @@ Shifter32::Shifter32(std::string name)
 void Shifter32::buildInternals(ComponentBuilder& builder) {
     builder.addNewComponent<BitSplitter<32>>("A_SPLIT");
     builder.addNewComponent<BitSplitter<32>>("B_SPLIT");
-    builder.addNewComponent<ConstantValue<1, 32>>("CONST_LOW", 0);
+    builder.addNewComponent<ConstantValue<1>>("CONST_LOW", 0);
     builder.addNewComponent<BitJoiner<32>>("SLL_JOIN");
     builder.addNewComponent<BitJoiner<32>>("SRL_JOIN");
     builder.addNewComponent<BitJoiner<32>>("SRA_JOIN");
@@ -146,7 +146,7 @@ void Shifter32::buildInternals(ComponentBuilder& builder) {
 
     builder.addNewWire(
         "CONST_LOW_to_zero_fill",
-        builder.getOutputPin<ConstantValue<1, 32>>("CONST_LOW", "OUT"),
+        builder.getOutputPin<ConstantValue<1>>("CONST_LOW", "OUT"),
         zero_sinks);
 
     builder.addNewWire<32>(

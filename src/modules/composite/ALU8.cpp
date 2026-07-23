@@ -61,8 +61,8 @@ void ALU8::buildInternals(ComponentBuilder& builder) {
     builder.addNewComponent<Mux16to1>("OVERFLOW_MUX");
     builder.addNewComponent<ZeroDetect8>("ZERO_DETECT");
     builder.addNewComponent<BitSplitter<8>>("RESULT_SPLIT");
-    builder.addNewComponent<ConstantValue<1, 8>>("CONST_LOW", 0);
-    builder.addNewComponent<ConstantValue<8, 8>>("CONST_ZERO8", 0x00);
+    builder.addNewComponent<ConstantValue<1>>("CONST_LOW", 0);
+    builder.addNewComponent<ConstantValue<8>>("CONST_ZERO8", 0x00);
 
     builder.addNewWire<8>(
         "A_bus_internal",
@@ -111,7 +111,7 @@ void ALU8::buildInternals(ComponentBuilder& builder) {
     }
     builder.addNewWire(
         "CONST_LOW_to_flags",
-        builder.getOutputPin<ConstantValue<1, 8>>("CONST_LOW", "OUT"),
+        builder.getOutputPin<ConstantValue<1>>("CONST_LOW", "OUT"),
         low_sinks);
 
     builder.addNewWire<8>(
@@ -252,7 +252,7 @@ void ALU8::buildInternals(ComponentBuilder& builder) {
 
     builder.addNewWire<8>(
         "CONST_ZERO8_to_RESULT_MUX",
-        builder.getOutputPin<ConstantValue<8, 8>, 8>("CONST_ZERO8", "OUT"),
+        builder.getOutputPin<ConstantValue<8>, 8>("CONST_ZERO8", "OUT"),
         {builder.getInputPin<Mux16to1_8bit, 8>("RESULT_MUX", "IN15")});
 
     builder.addNewWire<8>(

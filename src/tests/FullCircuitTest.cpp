@@ -31,7 +31,7 @@ void expectWireAt(Simulator& sim,
 }
 
 std::string FullCircuitTest::getTestName() const {
-    return "Full_Circuit_Test";
+    return "FullCircuitTest";
 }
 
 // Override the base setupCircuit to create a root of type IOComponent

@@ -52,8 +52,8 @@ RV32IDecoder + RV32IControl libraries
 RV32IDecodeControlUnit
   complete structural field/immediate/control component
 
-BehavioralRV32IDecodeControlUnit
-  same-pin reference added after structural slice tests
+RV32IDecodeControlUnit, behavioral fidelity
+  same-contract reference added after structural slice tests
 
 pairwise equivalence + independent expected rows
   prove both circuit implementations against the contract
@@ -1077,7 +1077,7 @@ Commands run:
 cmake --build build -j 8
 ctest --test-dir build --output-on-failure -R "RV32IDecoderTest"
 ctest --test-dir build --output-on-failure -R "RV32IControlTest|RV32IDecoderTest"
-ctest --test-dir build --output-on-failure -R "RV32IControlTest|RV32IDecoderTest|RV32IALU32Test|ALU32Test|BehavioralMemory64Kx32Test|BehavioralRegisterFile32x32Test"
+ctest --test-dir build --output-on-failure -R "RV32IControlTest|RV32IDecoderTest|ALU32StructuralContractTest|ALU32BehavioralContractTest|Memory64Kx32Test|RegisterFile32x32BehavioralContractTest"
 ctest --test-dir build --output-on-failure
 ```
 
@@ -1109,7 +1109,7 @@ Those belong to later milestones.
 
 Next recommended work:
 
-1. Add program preload/readback helpers for `BehavioralMemory64Kx32`.
+1. Add program preload/readback helpers for `Memory64Kx32`.
 2. Add raw binary fixtures.
 3. Add a small functional RV32I instruction oracle as the program-level oracle.
 4. Build PC, branch-decision, and next-PC components.

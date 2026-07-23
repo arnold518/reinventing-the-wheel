@@ -33,11 +33,12 @@ public:
         assert(!rows_.empty() && "ComponentRowsTest requires at least one row");
 
         const RunRowsOptions options;
-        const auto probe = std::apply(
-            [&](const auto&... args) {
-                return probeIsolatedRows<ComponentT>(rows_, options, args...);
-            },
-            args_);
+        const auto probe = probeIsolatedRowsWithFactory(
+            rows_,
+            options,
+            [this](const std::string& name) {
+                return createTestComponent(name);
+            });
         assert(probe.passed && "ComponentRowsTest isolated row probe failed");
 
         time_step_ = options.time_step.value_or(secondSmallestPowerOfTenGreaterThan(probe.max_delay));
@@ -51,11 +52,7 @@ public:
                && "ComponentRowsTest duration overflow");
         run_duration_ = rows_.size() * time_step_;
 
-        root = std::apply(
-            [&](const auto&... args) {
-                return Component::create<ComponentT>(root_name_, args...);
-            },
-            args_);
+        root = createTestComponent(root_name_);
         builder = std::make_unique<ComponentBuilder>(root);
         buildCircuit();
         setInitialState();
@@ -83,6 +80,15 @@ public:
     }
 
 protected:
+    virtual std::shared_ptr<Component> createTestComponent(
+        const std::string& name) const {
+        return std::apply(
+            [&](const auto&... args) -> std::shared_ptr<Component> {
+                return Component::create<ComponentT>(name, args...);
+            },
+            args_);
+    }
+
     void buildCircuit() override {}
 
     void setInitialState() override {

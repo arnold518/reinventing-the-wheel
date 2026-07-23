@@ -1,4 +1,5 @@
 #include "modules/rv32i/RV32IDecodeControlUnit.hpp"
+#include "modules/rv32i/RV32IDecodeControlDirect.hpp"
 
 #include "components/ComponentBuilder.hpp"
 #include "components/ComponentBuilder.tpp"
@@ -239,29 +240,49 @@ std::vector<Rewire::BitMap> decodeMappings() {
 }
 }
 
+namespace {
+void defineDecodeControlPins(IOComponent* self) {
+    self->addPin<32>("INSTRUCTION", PinType::INPUT);
+    self->addPin<5>("RS1_ADDR", PinType::OUTPUT);
+    self->addPin<5>("RS2_ADDR", PinType::OUTPUT);
+    self->addPin<5>("RD_ADDR", PinType::OUTPUT);
+    self->addPin<32>("IMM", PinType::OUTPUT);
+    self->addPin<5>("ALU_OP", PinType::OUTPUT);
+    self->addPin<2>("ALU_A_SEL", PinType::OUTPUT);
+    self->addPin<2>("ALU_B_SEL", PinType::OUTPUT);
+    self->addPin("LEGAL", PinType::OUTPUT);
+    self->addPin("REG_WRITE", PinType::OUTPUT);
+    self->addPin("MEM_READ", PinType::OUTPUT);
+    self->addPin("MEM_WRITE", PinType::OUTPUT);
+    self->addPin<2>("WRITEBACK_SEL", PinType::OUTPUT);
+    self->addPin<2>("MEM_SIZE", PinType::OUTPUT);
+    self->addPin("LOAD_SIGN_EXTEND", PinType::OUTPUT);
+    self->addPin<3>("BRANCH_TYPE", PinType::OUTPUT);
+    self->addPin<2>("JUMP_TYPE", PinType::OUTPUT);
+    self->addPin("HALT_REQUEST", PinType::OUTPUT);
+    self->addPin("TRAP_REQUEST", PinType::OUTPUT);
+    self->addPin<4>("DECODE_TRAP_CAUSE", PinType::OUTPUT);
+}
+}
+
+namespace circuit::families {
+const ComponentFamily RV32IDecodeControl{
+    "rv32i.decode-control",
+    "RV32IDecodeControlUnit",
+    defineDecodeControlPins,
+    [](const std::string& name, const std::shared_ptr<BuildContext>& context) {
+        return Component::createWithContext<::RV32IDecodeControlUnit>(
+            context, name);
+    },
+    [](const std::string& name, const std::shared_ptr<BuildContext>& context) {
+        return Component::createWithContext<
+            ::RV32IDecodeControlDirect>(context, name);
+    }};
+}
+
 RV32IDecodeControlUnit::RV32IDecodeControlUnit(std::string name)
-    : IOComponent(std::move(name), [](IOComponent* self) {
-          self->addPin<32>("INSTRUCTION", PinType::INPUT);
-          self->addPin<5>("RS1_ADDR", PinType::OUTPUT);
-          self->addPin<5>("RS2_ADDR", PinType::OUTPUT);
-          self->addPin<5>("RD_ADDR", PinType::OUTPUT);
-          self->addPin<32>("IMM", PinType::OUTPUT);
-          self->addPin<5>("ALU_OP", PinType::OUTPUT);
-          self->addPin<2>("ALU_A_SEL", PinType::OUTPUT);
-          self->addPin<2>("ALU_B_SEL", PinType::OUTPUT);
-          self->addPin("LEGAL", PinType::OUTPUT);
-          self->addPin("REG_WRITE", PinType::OUTPUT);
-          self->addPin("MEM_READ", PinType::OUTPUT);
-          self->addPin("MEM_WRITE", PinType::OUTPUT);
-          self->addPin<2>("WRITEBACK_SEL", PinType::OUTPUT);
-          self->addPin<2>("MEM_SIZE", PinType::OUTPUT);
-          self->addPin("LOAD_SIGN_EXTEND", PinType::OUTPUT);
-          self->addPin<3>("BRANCH_TYPE", PinType::OUTPUT);
-          self->addPin<2>("JUMP_TYPE", PinType::OUTPUT);
-          self->addPin("HALT_REQUEST", PinType::OUTPUT);
-          self->addPin("TRAP_REQUEST", PinType::OUTPUT);
-          self->addPin<4>("DECODE_TRAP_CAUSE", PinType::OUTPUT);
-      }) {}
+    : IOComponent(std::move(name),
+                  circuit::families::RV32IDecodeControl.pinInitializer()) {}
 
 void RV32IDecodeControlUnit::buildInternals(ComponentBuilder& builder) {
     builder.addNewComponent<Rewire>(
@@ -274,9 +295,9 @@ void RV32IDecodeControlUnit::buildInternals(ComponentBuilder& builder) {
         Rewire::UnmappedBitValue::LOW);
     builder.addNewComponent<Mux8to1_32bit>("IMMEDIATE_MUX");
     builder.addNewComponent<BitJoiner<3>>("IMMEDIATE_SELECT_JOIN");
-    builder.addNewComponent<ConstantValue<1, 32>>("CONST_LOW", 0);
-    builder.addNewComponent<ConstantValue<1, 32>>("CONST_HIGH", 1);
-    builder.addNewComponent<ConstantValue<32, 32>>("CONST_ZERO32", 0);
+    builder.addNewComponent<ConstantValue<1>>("CONST_LOW", 0);
+    builder.addNewComponent<ConstantValue<1>>("CONST_HIGH", 1);
+    builder.addNewComponent<ConstantValue<32>>("CONST_ZERO32", 0);
 
     const auto& instruction_patterns = patterns();
     std::vector<std::vector<std::shared_ptr<Pin<>>>> match_sinks(instruction_patterns.size());
@@ -305,7 +326,7 @@ void RV32IDecodeControlUnit::buildInternals(ComponentBuilder& builder) {
     }
     builder.addNewWire<32>(
         "ZERO_to_immediate_mux",
-        builder.getOutputPin<ConstantValue<32, 32>, 32>("CONST_ZERO32", "OUT"),
+        builder.getOutputPin<ConstantValue<32>, 32>("CONST_ZERO32", "OUT"),
         {builder.getInputPin<Mux8to1_32bit, 32>("IMMEDIATE_MUX", "IN0"),
          builder.getInputPin<Mux8to1_32bit, 32>("IMMEDIATE_MUX", "IN6"),
          builder.getInputPin<Mux8to1_32bit, 32>("IMMEDIATE_MUX", "IN7")});
@@ -439,10 +460,10 @@ void RV32IDecodeControlUnit::buildInternals(ComponentBuilder& builder) {
     }
     builder.addNewWire(
         "CONST_LOW_fanout",
-        builder.getOutputPin<ConstantValue<1, 32>>("CONST_LOW", "OUT"),
+        builder.getOutputPin<ConstantValue<1>>("CONST_LOW", "OUT"),
         low_sinks);
     builder.addNewWire(
         "CONST_HIGH_fanout",
-        builder.getOutputPin<ConstantValue<1, 32>>("CONST_HIGH", "OUT"),
+        builder.getOutputPin<ConstantValue<1>>("CONST_HIGH", "OUT"),
         high_sinks);
 }

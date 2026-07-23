@@ -9,7 +9,7 @@
 class RV32ISingleCycleSystem;
 template<size_t WIDTH> class Wire;
 
-class RV32ISingleCycleCoreSmokeTest : public SimulationTest {
+class RV32ISingleCycleSystemSmokeTest : public SimulationTest {
 public:
     void setupCircuit() override;
     std::string getTestName() const override;
@@ -55,6 +55,7 @@ public:
 
 protected:
     void buildCircuit() override;
+    virtual bool useBalancedProfile() const { return false; }
     void initializeComponentForLockstep(const RV32ISystemProgramCase& test_case) override;
     void clockComponentOneCycle(size_t cycle_index, size_t cycle_start_time) override;
     rv32i::RV32IState snapshotComponentState() const override;
@@ -98,3 +99,29 @@ DECLARE_STRUCTURAL_RV32I_PROGRAM_TEST(15)
 DECLARE_STRUCTURAL_RV32I_PROGRAM_TEST(16)
 
 #undef DECLARE_STRUCTURAL_RV32I_PROGRAM_TEST
+
+#define DECLARE_BALANCED_RV32I_PROGRAM_TEST(NUMBER) \
+class RV32IBalancedSystemProgram##NUMBER##Test : public RV32ISingleCycleSystemProgramTestBase { \
+protected: \
+    RV32ISystemProgramCase getCase() const override; \
+    bool useBalancedProfile() const override { return true; } \
+};
+
+DECLARE_BALANCED_RV32I_PROGRAM_TEST(1)
+DECLARE_BALANCED_RV32I_PROGRAM_TEST(2)
+DECLARE_BALANCED_RV32I_PROGRAM_TEST(3)
+DECLARE_BALANCED_RV32I_PROGRAM_TEST(4)
+DECLARE_BALANCED_RV32I_PROGRAM_TEST(5)
+DECLARE_BALANCED_RV32I_PROGRAM_TEST(6)
+DECLARE_BALANCED_RV32I_PROGRAM_TEST(7)
+DECLARE_BALANCED_RV32I_PROGRAM_TEST(8)
+DECLARE_BALANCED_RV32I_PROGRAM_TEST(9)
+DECLARE_BALANCED_RV32I_PROGRAM_TEST(10)
+DECLARE_BALANCED_RV32I_PROGRAM_TEST(11)
+DECLARE_BALANCED_RV32I_PROGRAM_TEST(12)
+DECLARE_BALANCED_RV32I_PROGRAM_TEST(13)
+DECLARE_BALANCED_RV32I_PROGRAM_TEST(14)
+DECLARE_BALANCED_RV32I_PROGRAM_TEST(15)
+DECLARE_BALANCED_RV32I_PROGRAM_TEST(16)
+
+#undef DECLARE_BALANCED_RV32I_PROGRAM_TEST

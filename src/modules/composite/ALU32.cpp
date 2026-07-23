@@ -3,6 +3,7 @@
 #include "components/ComponentBuilder.tpp"
 #include "modules/basic/Mux.hpp"
 #include "modules/composite/AddSub32.hpp"
+#include "modules/composite/ALU32Direct.hpp"
 #include "modules/composite/Comparator32.hpp"
 #include "modules/composite/Logic32.hpp"
 #include "modules/composite/Shifter32.hpp"
@@ -14,6 +15,20 @@
 #include <vector>
 
 namespace {
+void defineALU32Pins(IOComponent* self) {
+    self->addPin<32>("A", PinType::INPUT);
+    self->addPin<32>("B", PinType::INPUT);
+    self->addPin<5>("OP", PinType::INPUT);
+    self->addPin<32>("OUT", PinType::OUTPUT);
+    self->addPin("ZERO", PinType::OUTPUT);
+    self->addPin("EQ", PinType::OUTPUT);
+    self->addPin("LT_SIGNED", PinType::OUTPUT);
+    self->addPin("LT_UNSIGNED", PinType::OUTPUT);
+    self->addPin("NEGATIVE", PinType::OUTPUT);
+    self->addPin("CARRY_OUT", PinType::OUTPUT);
+    self->addPin("OVERFLOW", PinType::OUTPUT);
+}
+
 void addLowFlagInputs(std::vector<std::shared_ptr<Pin<>>>& sinks, ComponentBuilder& builder, const std::string& mux_name) {
     for (size_t input = 0; input < 32; ++input) {
         if (input == ALU32Op::ADD || input == ALU32Op::SUB ||
@@ -25,20 +40,22 @@ void addLowFlagInputs(std::vector<std::shared_ptr<Pin<>>>& sinks, ComponentBuild
 }
 }
 
+namespace circuit::families {
+const ComponentFamily ALU32{
+    "rv32i.alu32",
+    "ALU32",
+    defineALU32Pins,
+    [](const std::string& name, const std::shared_ptr<BuildContext>& context) {
+        return Component::createWithContext<::ALU32>(context, name);
+    },
+    [](const std::string& name, const std::shared_ptr<BuildContext>& context) {
+        return Component::createWithContext<::ALU32Direct>(context, name);
+    }};
+}
+
 ALU32::ALU32(std::string name)
-    : IOComponent(std::move(name), [](IOComponent* self) {
-          self->addPin<32>("A", PinType::INPUT);
-          self->addPin<32>("B", PinType::INPUT);
-          self->addPin<5>("OP", PinType::INPUT);
-          self->addPin<32>("OUT", PinType::OUTPUT);
-          self->addPin("ZERO", PinType::OUTPUT);
-          self->addPin("EQ", PinType::OUTPUT);
-          self->addPin("LT_SIGNED", PinType::OUTPUT);
-          self->addPin("LT_UNSIGNED", PinType::OUTPUT);
-          self->addPin("NEGATIVE", PinType::OUTPUT);
-          self->addPin("CARRY_OUT", PinType::OUTPUT);
-          self->addPin("OVERFLOW", PinType::OUTPUT);
-      }) {}
+    : IOComponent(std::move(name),
+                  circuit::families::ALU32.pinInitializer()) {}
 
 void ALU32::buildInternals(ComponentBuilder& builder) {
     builder.addNewComponent<AddSub32>("ADD");
@@ -50,9 +67,9 @@ void ALU32::buildInternals(ComponentBuilder& builder) {
     builder.addNewComponent<BitSplitter<32>>("RESULT_SPLIT");
     builder.addNewComponent<BitJoiner<32>>("SLT_JOIN");
     builder.addNewComponent<BitJoiner<32>>("SLTU_JOIN");
-    builder.addNewComponent<ConstantValue<1, 32>>("CONST_LOW", 0);
-    builder.addNewComponent<ConstantValue<1, 32>>("CONST_HIGH", 1);
-    builder.addNewComponent<ConstantValue<32, 32>>("CONST_ZERO32", 0);
+    builder.addNewComponent<ConstantValue<1>>("CONST_LOW", 0);
+    builder.addNewComponent<ConstantValue<1>>("CONST_HIGH", 1);
+    builder.addNewComponent<ConstantValue<32>>("CONST_ZERO32", 0);
     builder.addNewComponent<Mux32to1_32bit>("RESULT_MUX");
     builder.addNewComponent<Mux32to1>("CARRY_MUX");
     builder.addNewComponent<Mux32to1>("OVERFLOW_MUX");
@@ -93,11 +110,11 @@ void ALU32::buildInternals(ComponentBuilder& builder) {
     addLowFlagInputs(low_sinks, builder, "OVERFLOW_MUX");
     builder.addNewWire(
         "CONST_LOW_fanout",
-        builder.getOutputPin<ConstantValue<1, 32>>("CONST_LOW", "OUT"),
+        builder.getOutputPin<ConstantValue<1>>("CONST_LOW", "OUT"),
         low_sinks);
     builder.addNewWire(
         "CONST_HIGH_to_SUB",
-        builder.getOutputPin<ConstantValue<1, 32>>("CONST_HIGH", "OUT"),
+        builder.getOutputPin<ConstantValue<1>>("CONST_HIGH", "OUT"),
         {builder.getInputPin<AddSub32>("SUB", "SUB")});
 
     builder.addNewWire<32>(
@@ -162,7 +179,7 @@ void ALU32::buildInternals(ComponentBuilder& builder) {
     }
     builder.addNewWire<32>(
         "CONST_ZERO32_to_mux",
-        builder.getOutputPin<ConstantValue<32, 32>, 32>("CONST_ZERO32", "OUT"),
+        builder.getOutputPin<ConstantValue<32>, 32>("CONST_ZERO32", "OUT"),
         zero32_sinks);
 
     builder.addNewWire(

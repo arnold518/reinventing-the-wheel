@@ -143,7 +143,7 @@ Added/updated structural sequential tests:
 - `SRLatchTest`
 - `GatedDLatchTest`
 - `DFlipFlopTest`
-- `MemoryBitTest`
+- `MemoryBitStructuralContractTest`
 - `FullCircuitTest`
 
 Coverage includes:
@@ -161,7 +161,7 @@ Registered scenarios:
 - `sr-latch` -> `SRLatchTest`
 - `gated-d-latch` -> `GatedDLatchTest`
 - `dff` -> `DFlipFlopTest`
-- `memory-bit` -> `MemoryBitTest`
+- `memory-bit` -> `MemoryBitStructuralContractTest`
 
 Hosted visualizer verification after restart:
 
@@ -178,7 +178,7 @@ Commands run:
 
 ```bash
 cmake --build build -j 4
-ctest --test-dir build --output-on-failure -R "SRLatchTest|GatedDLatchTest|DFlipFlopTest|MemoryBitTest|FullCircuitTest|ClockGeneratorTest"
+ctest --test-dir build --output-on-failure -R "SRLatchTest|GatedDLatchTest|DFlipFlopTest|MemoryBitStructuralContractTest|FullCircuitTest|ClockGeneratorTest"
 ctest --test-dir build --output-on-failure
 ```
 

@@ -5,7 +5,7 @@
 #include <cstdint>
 #include <string>
 
-template<size_t OUT_WIDTH, size_t LEGACY_WIDTH = 8>
+template<size_t OUT_WIDTH>
 class ConstantValue : public BasicComponent {
 public:
     ConstantValue(std::string name, uint64_t constant_value);

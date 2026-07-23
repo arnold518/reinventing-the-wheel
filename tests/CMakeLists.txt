@@ -6,6 +6,12 @@ set(SIMULATION_TESTS
     WireTemplateTest
     SimulatorAdvanceAndRecordTest
     SimulatorUnwiredOutputPinHistoryTest
+    BuildProfileTest
+    ComponentCatalogSelectionTest
+    BuiltinComponentCatalogInventoryTest
+    RecursiveBuildProfileTest
+    MemoryBitEquivalenceTest
+    Register32EquivalenceTest
     NOTGateTest
     ANDGateTest
     ORGateTest
@@ -16,14 +22,16 @@ set(SIMULATION_TESTS
     GatedDLatchTest
     DFlipFlopTest
     ClockGeneratorTest
-    BehavioralMemoryBitTest
-    BehavioralMemory64Kx32Test
-    MemoryBitTest
-    Register32Test
+    MemoryBitBehavioralContractTest
+    Memory64Kx32Test
+    MemoryBitStructuralContractTest
+    Register32StructuralContractTest
+    Register32CellArrayContractTest
+    Register32BehavioralContractTest
     RegisterFile4x32Test
-    RegisterFile32x32Test
-    BehavioralRegisterFile32x32Test
-    BehavioralRegisterFile32x32UnknownTest
+    RegisterFile32x32StructuralContractTest
+    RegisterFile32x32BehavioralContractTest
+    RegisterFile32x32BehavioralUnknownPolicyTest
     Memory4x32Test
     Memory32x32Test
     RewireUnpackTest
@@ -41,8 +49,7 @@ set(SIMULATION_TESTS
     BitJoiner32Test
     BitJoiner8UnknownTest
     ConstantValue1HighTest
-    ConstantValue1Low8TriggerTest
-    ConstantValue1From32TriggerTest
+    ConstantValue1LowTest
     ConstantValue8Test
     ConstantValue32Test
     HalfAdderTest
@@ -89,27 +96,28 @@ set(SIMULATION_TESTS
     ZeroDetect32Test
     Comparator32Test
     Shifter32Test
-    ALU32Test
-    BehavioralALU32Test
-    RV32IALU32Test
-    RV32IControlFlowUnitTest
-    BehavioralRV32IControlFlowUnitTest
-    RV32IDecodeControlUnitTest
-    BehavioralRV32IDecodeControlUnitTest
-    RV32IExecutionControlStatusUnitTest
-    BehavioralRV32IExecutionControlStatusUnitTest
-    RV32IControlFlowUnitPairTest
-    RV32IDecodeControlUnitPairTest
-    RV32IRegisterFilePairTest
-    BehavioralALU32PairTest
-    RV32IExecutionControlStatusUnitPairTest
+    ALU32StructuralContractTest
+    ALU32BehavioralContractTest
+    ALU32LowerLevelSliceTest
+    RV32IControlFlowStructuralContractTest
+    RV32IControlFlowBehavioralContractTest
+    RV32IDecodeControlStructuralContractTest
+    RV32IDecodeControlBehavioralContractTest
+    RV32IExecutionStatusStructuralContractTest
+    RV32IExecutionStatusBehavioralContractTest
+    RV32IControlFlowUnitEquivalenceTest
+    RV32IDecodeControlUnitEquivalenceTest
+    RV32IRegisterFileEquivalenceTest
+    ALU32EquivalenceTest
+    RV32IExecutionControlStatusUnitEquivalenceTest
+    RV32IBitPatternMatcherTest
     RV32IDecoderTest
     RV32IControlTest
     RV32IProgramLoaderTest
     RV32IInstructionOracleTest
     RV32IInstructionLockstepHarnessTest
     RV32IInstructionLockstepMismatchDetectionTest
-    RV32ISingleCycleCoreSmokeTest
+    RV32ISingleCycleSystemSmokeTest
     RV32ISingleCycleSystemContractTest
     RV32ISingleCycleSystemProgram1Test
     RV32ISingleCycleSystemProgram2Test
@@ -127,27 +135,76 @@ set(SIMULATION_TESTS
     RV32ISingleCycleSystemProgram14Test
     RV32ISingleCycleSystemProgram15Test
     RV32ISingleCycleSystemProgram16Test
-    BehavioralRV32ISystemContractTest
-    BehavioralRV32ISystemProgram1Test
-    BehavioralRV32ISystemProgram2Test
-    BehavioralRV32ISystemProgram3Test
-    BehavioralRV32ISystemProgram4Test
-    BehavioralRV32ISystemProgram5Test
-    BehavioralRV32ISystemProgram6Test
-    BehavioralRV32ISystemProgram7Test
-    BehavioralRV32ISystemProgram8Test
-    BehavioralRV32ISystemProgram9Test
-    BehavioralRV32ISystemProgram10Test
-    BehavioralRV32ISystemProgram11Test
-    BehavioralRV32ISystemProgram12Test
-    BehavioralRV32ISystemProgram13Test
-    BehavioralRV32ISystemProgram14Test
-    BehavioralRV32ISystemProgram15Test
-    BehavioralRV32ISystemProgram16Test
+    RV32IBalancedSystemProgram1Test
+    RV32IBalancedSystemProgram2Test
+    RV32IBalancedSystemProgram3Test
+    RV32IBalancedSystemProgram4Test
+    RV32IBalancedSystemProgram5Test
+    RV32IBalancedSystemProgram6Test
+    RV32IBalancedSystemProgram7Test
+    RV32IBalancedSystemProgram8Test
+    RV32IBalancedSystemProgram9Test
+    RV32IBalancedSystemProgram10Test
+    RV32IBalancedSystemProgram11Test
+    RV32IBalancedSystemProgram12Test
+    RV32IBalancedSystemProgram13Test
+    RV32IBalancedSystemProgram14Test
+    RV32IBalancedSystemProgram15Test
+    RV32IBalancedSystemProgram16Test
+    RV32IReferenceSystemContractTest
+    RV32IReferenceSystemProgram1Test
+    RV32IReferenceSystemProgram2Test
+    RV32IReferenceSystemProgram3Test
+    RV32IReferenceSystemProgram4Test
+    RV32IReferenceSystemProgram5Test
+    RV32IReferenceSystemProgram6Test
+    RV32IReferenceSystemProgram7Test
+    RV32IReferenceSystemProgram8Test
+    RV32IReferenceSystemProgram9Test
+    RV32IReferenceSystemProgram10Test
+    RV32IReferenceSystemProgram11Test
+    RV32IReferenceSystemProgram12Test
+    RV32IReferenceSystemProgram13Test
+    RV32IReferenceSystemProgram14Test
+    RV32IReferenceSystemProgram15Test
+    RV32IReferenceSystemProgram16Test
 )
 
 foreach(test_name ${SIMULATION_TESTS})
     add_test(NAME ${test_name} COMMAND SimulationTestRunner ${test_name})
+
+    set(test_labels simulation)
+    if(test_name MATCHES "Profile|Catalog|Balanced")
+        list(APPEND test_labels profile)
+    endif()
+    if(test_name MATCHES "Equivalence")
+        list(APPEND test_labels equivalence structural behavioral)
+    endif()
+    if(test_name MATCHES "Behavioral")
+        list(APPEND test_labels behavioral)
+    elseif(test_name MATCHES "Reference")
+        list(APPEND test_labels reference)
+    elseif(test_name MATCHES "Structural|CellArray|LowerLevel")
+        list(APPEND test_labels structural)
+    else()
+        list(APPEND test_labels contract)
+    endif()
+    if(test_name MATCHES "RV32I|ALU32")
+        list(APPEND test_labels rv32i)
+    endif()
+    if(test_name MATCHES "Balanced")
+        list(APPEND test_labels mixed)
+    endif()
+    if(test_name MATCHES "System")
+        list(APPEND test_labels system)
+    endif()
+    if(test_name MATCHES "WireTemplate|Simulator|BuildProfile|ComponentCatalog|Inventory|RecursiveBuild")
+        list(APPEND test_labels framework)
+    endif()
+    if(test_name MATCHES "RV32I(SingleCycle|Balanced)SystemProgram|ALU32Equivalence")
+        list(APPEND test_labels slow)
+    endif()
+    set_tests_properties(${test_name} PROPERTIES LABELS "${test_labels}")
 endforeach()
 
 add_test(
@@ -156,5 +213,20 @@ add_test(
 )
 set_tests_properties(
     VisualizerModuleBindingsTest
-    PROPERTIES ENVIRONMENT "PYTHONPATH=${PROJECT_SOURCE_DIR}/visualizer-v2"
+    PROPERTIES
+        ENVIRONMENT "PYTHONPATH=${PROJECT_SOURCE_DIR}/visualizer-v2"
+        LABELS "visualizer;system"
+)
+
+add_test(
+    NAME TestRegistryCoverageTest
+    COMMAND
+        ${Python3_EXECUTABLE}
+        ${CMAKE_CURRENT_SOURCE_DIR}/TestRegistryCoverageTest.py
+        $<TARGET_FILE:SimulationTestRunner>
+        ${SIMULATION_TESTS}
+)
+set_tests_properties(
+    TestRegistryCoverageTest
+    PROPERTIES LABELS "framework"
 )

@@ -1,7 +1,7 @@
 #include "rv32i/RV32IInstructionOracle.hpp"
 
 #include "modules/composite/ALU32.hpp"
-#include "modules/memory/BehavioralMemory64Kx32.hpp"
+#include "modules/memory/Memory64Kx32.hpp"
 #include "rv32i/RV32IDecoder.hpp"
 #include <cstdint>
 
@@ -181,9 +181,9 @@ uint32_t writebackValue(const RV32IControlSignals& control,
     return 0;
 }
 
-class NonMutatingBehavioralMemory64Kx32 {
+class NonMutatingMemory64Kx32 {
 public:
-    explicit NonMutatingBehavioralMemory64Kx32(BehavioralMemory64Kx32& memory)
+    explicit NonMutatingMemory64Kx32(Memory64Kx32& memory)
         : memory_(memory) {}
 
     bool canAccess(uint32_t address, size_t count) const {
@@ -210,7 +210,7 @@ public:
     }
 
 private:
-    BehavioralMemory64Kx32& memory_;
+    Memory64Kx32& memory_;
 };
 
 template<typename InstructionMemoryT, typename DataMemoryT>
@@ -373,10 +373,10 @@ RV32IInstructionTrace RV32IInstructionOracle::step(RV32IState& state,
 
 RV32IInstructionTrace RV32IInstructionOracle::stepWithoutDataMemoryWrite(
     RV32IState& state,
-    BehavioralMemory64Kx32& instruction_memory,
-    BehavioralMemory64Kx32& data_memory
+    Memory64Kx32& instruction_memory,
+    Memory64Kx32& data_memory
 ) {
-    NonMutatingBehavioralMemory64Kx32 non_mutating_data_memory(data_memory);
+    NonMutatingMemory64Kx32 non_mutating_data_memory(data_memory);
     return stepImpl(state, instruction_memory, non_mutating_data_memory);
 }
 

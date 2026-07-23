@@ -1,7 +1,7 @@
 #include "tests/RV32IProgramTests.hpp"
 
 #include "components/Component.hpp"
-#include "modules/memory/BehavioralMemory64Kx32.hpp"
+#include "modules/memory/Memory64Kx32.hpp"
 #include "rv32i/RV32IProgram.hpp"
 #include <cstdint>
 #include <exception>
@@ -105,9 +105,9 @@ void testProgramWordPacking() {
 }
 
 void testMemoryPreloadReadback() {
-    auto memory = Component::create<BehavioralMemory64Kx32>("PROGRAM_MEMORY");
-    expectEq(BehavioralMemory64Kx32::capacityWords(), static_cast<size_t>(64 * 1024), "memory word capacity");
-    expectEq(BehavioralMemory64Kx32::capacityBytes(), static_cast<size_t>(64 * 1024 * 4), "memory byte capacity");
+    auto memory = Component::create<Memory64Kx32>("PROGRAM_MEMORY");
+    expectEq(Memory64Kx32::capacityWords(), static_cast<size_t>(64 * 1024), "memory word capacity");
+    expectEq(Memory64Kx32::capacityBytes(), static_cast<size_t>(64 * 1024 * 4), "memory byte capacity");
 
     expectWord(memory->readWord(0), 0x00000000U, "memory initializes to zero");
 
@@ -135,15 +135,15 @@ void testMemoryPreloadReadback() {
     expectWord(memory->readWord(0x104), 0x00208113U, "program load word 1");
     expectWord(memory->readWord(0x108), 0x00100073U, "program load ebreak");
 
-    const auto last_two = static_cast<uint32_t>(BehavioralMemory64Kx32::capacityBytes() - 2);
+    const auto last_two = static_cast<uint32_t>(Memory64Kx32::capacityBytes() - 2);
     memory->loadBytes(last_two, {0x12, 0x34});
     expectBytes(memory->readBytes(last_two, 2), {0x12, 0x34}, "loadBytes accepts final valid byte range");
 
     expectThrows<std::out_of_range>(
-        [&] { memory->loadBytes(static_cast<uint32_t>(BehavioralMemory64Kx32::capacityBytes() - 1), {0x12, 0x34}); },
+        [&] { memory->loadBytes(static_cast<uint32_t>(Memory64Kx32::capacityBytes() - 1), {0x12, 0x34}); },
         "loadBytes rejects range crossing memory end");
     expectThrows<std::out_of_range>(
-        [&] { memory->readBytes(static_cast<uint32_t>(BehavioralMemory64Kx32::capacityBytes() - 1), 2); },
+        [&] { memory->readBytes(static_cast<uint32_t>(Memory64Kx32::capacityBytes() - 1), 2); },
         "readBytes rejects range crossing memory end");
     expectThrows<std::invalid_argument>([&] { memory->loadWords(2, {0x12345678U}); },
                                         "loadWords requires aligned base");
@@ -157,12 +157,12 @@ void testMemoryPreloadReadback() {
 }
 
 void RV32IProgramLoaderTest::setupCircuit() {
-    root = Component::create<BehavioralMemory64Kx32>("RV32I_PROGRAM_LOADER_ROOT");
+    root = Component::create<Memory64Kx32>("RV32I_PROGRAM_LOADER_ROOT");
     builder = std::make_unique<ComponentBuilder>(root);
 
-    auto memory = std::dynamic_pointer_cast<BehavioralMemory64Kx32>(root);
+    auto memory = std::dynamic_pointer_cast<Memory64Kx32>(root);
     if (!memory) {
-        throw std::runtime_error("RV32IProgramLoaderTest root must be BehavioralMemory64Kx32");
+        throw std::runtime_error("RV32IProgramLoaderTest root must be Memory64Kx32");
     }
     const auto program = RV32IProgram::fromWords({
         0x00100093U,

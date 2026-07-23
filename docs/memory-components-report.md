@@ -6,21 +6,21 @@ Last updated: 2026-07-19
 
 The memory-cell foundation is complete on the `memory-components` branch. The branch contains both lower-level visualizable storage components and behavioral storage components used when full structural expansion becomes too large.
 
-For compact CPU tests, `BehavioralRegisterFile32x32` remains the fast register-file option. The educational structural RV32I core now plans to use the same-contract `RegisterFile32x32`, with a direct equivalence test between the two. Instruction and data memory should still be separate `BehavioralMemory64Kx32` instances because the existing smaller structural memories provide the lower-level proof while a fully expanded 256 KiB memory would be impractical.
+For compact CPU tests, the behavioral fidelity of `RegisterFile32x32` remains the fast register-file option. The educational structural RV32I core now plans to use the same-contract `RegisterFile32x32`, with a direct equivalence test between the two. Instruction and data memory should still be separate `Memory64Kx32` instances because the existing smaller structural memories provide the lower-level proof while a fully expanded 256 KiB memory would be impractical.
 
 The component order below follows the implementation/evolution path:
 
 1. `MemoryBit`
-2. `BehavioralMemoryBit`
+2. the behavioral fidelity of `MemoryBit`
 3. `Register32`
-4. `BehavioralRegister32`
+4. the behavioral fidelity of `Register32`
 5. `Decoder2to4` and `Decoder5to32`
 6. `RegisterFile4x32`
 7. `RegisterFile32x32`
-8. `BehavioralRegisterFile32x32`
+8. the behavioral fidelity of `RegisterFile32x32`
 9. `Memory4x32`
 10. `Memory32x32`
-11. `BehavioralMemory64Kx32`
+11. `Memory64Kx32`
 
 The structural storage path uses the structural `DFlipFlop` implementation documented in `docs/structural-dff-report.md`. The behavioral path stores state directly in compact `BasicComponent` state, but keeps the same external contracts where possible.
 
@@ -98,21 +98,21 @@ Rising-edge table:
 
 Tests and visualizer:
 
-- Test: `MemoryBitTest`
+- Test: `MemoryBitStructuralContractTest`
 - Visualizer scenario: `memory-bit`
 - Checkpoints: reset, hold, write one, no level capture, write zero, hold zero, unknown data, reset clear, unknown write enable.
 - Hosted visualizer stats: 28 components, 89 pins, 55 wires, 129 timestamps.
 
-### `BehavioralMemoryBit`
+### the behavioral fidelity of `MemoryBit`
 
 Purpose:
 
-`BehavioralMemoryBit` is the compact counterpart to `MemoryBit`. It exists so wider registers and register files can be built without expanding every bit into muxes, latches, and gates.
+the behavioral fidelity of `MemoryBit` is the compact counterpart to `MemoryBit`. It exists so wider registers and register files can be built without expanding every bit into muxes, latches, and gates.
 
 Files:
 
-- `include/modules/memory/BehavioralMemoryBit.hpp`
-- `src/modules/memory/BehavioralMemoryBit.cpp`
+- `include/modules/memory/MemoryBitDirect.hpp`
+- `src/modules/memory/MemoryBitDirect.cpp`
 
 Pins:
 
@@ -158,7 +158,7 @@ Important timing behavior:
 
 Tests and visualizer:
 
-- Test: `BehavioralMemoryBitTest`
+- Test: `MemoryBitBehavioralContractTest`
 - Visualizer scenario: `behavioral-memory-bit`
 - Checkpoints: reset, hold, write one, no level capture, write zero, hold zero, unknown data, reset clear, unknown write enable.
 - Hosted visualizer stats: 1 component, 5 pins, 5 wires, 39 timestamps.
@@ -221,21 +221,21 @@ Q[n]_next = WE ? D[n] : Q[n]
 
 Tests and visualizer:
 
-- Test: `Register32Test`
+- Test: `Register32StructuralContractTest`
 - Visualizer scenario: `register32`
 - Checkpoints: reset, hold, full-word writes, all 32 walking-bit writes, unknown-lane capture, final reset.
 - Hosted visualizer stats: 899 components, 2919 pins, 1674 wires, 790 timestamps.
 
-### `BehavioralRegister32`
+### the behavioral fidelity of `Register32`
 
 Purpose:
 
-`BehavioralRegister32` is one compact 32-bit storage word made from 32 `BehavioralMemoryBit` cells. It is the scalable counterpart to structural `Register32`.
+the behavioral fidelity of `Register32` is one compact 32-bit storage word made from 32 the behavioral fidelity of `MemoryBit` cells. It is the scalable counterpart to structural `Register32`.
 
 Files:
 
-- `include/modules/memory/BehavioralRegister32.hpp`
-- `src/modules/memory/BehavioralRegister32.cpp`
+- `include/modules/memory/Register32Direct.hpp`
+- `src/modules/memory/Register32Direct.cpp`
 
 Pins:
 
@@ -250,7 +250,7 @@ Pins:
 Implementation:
 
 - One `BitSplitter<32>` named `D_SPLIT`
-- Thirty-two `BehavioralMemoryBit` cells named `BIT_0` through `BIT_31`
+- Thirty-two the behavioral fidelity of `MemoryBit` cells named `BIT_0` through `BIT_31`
 - One `BitJoiner<32>` named `Q_JOIN`
 
 Behavior:
@@ -269,7 +269,7 @@ Each bit lane is independent, so an unknown data bit only contaminates the match
 
 Tests and visualizer:
 
-- Covered indirectly by `RegisterFile4x32Test`, `RegisterFile32x32Test`, and `Memory4x32Test`.
+- Covered indirectly by `RegisterFile4x32Test`, `RegisterFile32x32StructuralContractTest`, and `Memory4x32Test`.
 - Bound as a visualizable module for hierarchy inspection.
 
 ### `Decoder2to4` and `Decoder5to32`
@@ -353,7 +353,7 @@ Pins:
 Implementation:
 
 - One `ConstantValue<32, 32>` named `X0_ZERO`
-- Three writable `BehavioralRegister32` words named `X1`, `X2`, and `X3`
+- Three writable the behavioral fidelity of `Register32` words named `X1`, `X2`, and `X3`
 - Two `Mux4to1_32bit` read muxes named `RS1_MUX` and `RS2_MUX`
 - One `Decoder2to4` named `RD_DECODER` for write-address decode
 
@@ -437,7 +437,7 @@ Pins:
 Implementation:
 
 - One `ConstantValue<32, 32>` named `X0_ZERO`
-- Thirty-one `BehavioralRegister32` words named `X1` through `X31`
+- Thirty-one the behavioral fidelity of `Register32` words named `X1` through `X31`
 - Two `Mux32to1_32bit` read muxes named `RS1_MUX` and `RS2_MUX`
 - One `Decoder5to32` named `RD_DECODER` for write-address decode
 
@@ -459,28 +459,28 @@ Important behavior:
 
 - `x0` always reads as `0x00000000`.
 - Writes to `RD_ADDR=0` are ignored.
-- `x1..x31` are independent `BehavioralRegister32` instances.
+- `x1..x31` are independent the behavioral fidelity of `Register32` instances.
 - `RS1_ADDR` and `RS2_ADDR` can read any two registers independently.
 - `REG_WRITE=0` blocks writes even if `CLK` rises.
 - Unknown data lanes remain lane-local inside the selected destination register.
 
 Tests and visualizer:
 
-- Test: `RegisterFile32x32Test`
+- Test: `RegisterFile32x32StructuralContractTest`
 - Visualizer scenario: `register-file32x32`
 - Checkpoints: reset, x0 write ignore, all `x1..x31` writes, disabled write hold, second x0 ignore, unknown-lane capture, final reset.
 - Hosted visualizer stats: 11370 components, 42268 pins, 22876 wires, 985 timestamps.
 
-### `BehavioralRegisterFile32x32`
+### the behavioral fidelity of `RegisterFile32x32`
 
 Purpose:
 
-`BehavioralRegisterFile32x32` is the compact behavioral version of the full RV32I register file. It keeps the same external contract as `RegisterFile32x32`, but stores all 32 architectural words inside one `BasicComponent` instead of expanding into decoders, muxes, and per-word storage components.
+the behavioral fidelity of `RegisterFile32x32` is the compact behavioral version of the full RV32I register file. It keeps the same external contract as `RegisterFile32x32`, but stores all 32 architectural words inside one `BasicComponent` instead of expanding into decoders, muxes, and per-word storage components.
 
 Files:
 
-- `include/modules/memory/BehavioralRegisterFile32x32.hpp`
-- `src/modules/memory/BehavioralRegisterFile32x32.cpp`
+- `include/modules/memory/RegisterFile32x32Direct.hpp`
+- `src/modules/memory/RegisterFile32x32Direct.cpp`
 
 Pins:
 
@@ -531,16 +531,16 @@ Important behavior:
 - Unknown read-address bits merge every possible matching register bitwise; an output lane remains known only when all possible selected registers agree.
 - Unknown write selection is conservative: any writable register that may be selected is marked unknown.
 - This is the scalable register-file component for compact tests and future fast CPU configurations when the structural shape is too large for routine execution.
-- The educational structural core uses `RegisterFile32x32`; a direct pairwise equivalence suite must prove that both contracts agree.
+- The educational structural core uses `RegisterFile32x32`; `RV32IRegisterFileEquivalenceTest` proves the structural and behavioral contracts independently against the same expected traces.
 
 Tests and visualizer:
 
-- Test: `BehavioralRegisterFile32x32Test`
-- X-state test: `BehavioralRegisterFile32x32UnknownTest`
+- Test: `RegisterFile32x32BehavioralContractTest`
+- X-state test: `RegisterFile32x32BehavioralUnknownPolicyTest`
 - Visualizer scenario: `behavioral-register-file32x32`
 - X-state visualizer scenario: `behavioral-register-file32x32-unknown`
 - Alias: `brf32x32`
-- Checkpoints: inherits the full `RegisterFile32x32Test` sequence: reset, x0 write ignore, all `x1..x31` writes, disabled write hold, second x0 ignore, unknown-lane capture, final reset.
+- Checkpoints: inherits the full `RegisterFile32x32StructuralContractTest` sequence: reset, x0 write ignore, all `x1..x31` writes, disabled write hold, second x0 ignore, unknown-lane capture, final reset.
 - X-state checkpoints: ambiguous read with agreeing values, ambiguous read with disagreeing values, ambiguous write contamination, unknown `REG_WRITE`, unknown reset, and `x0` preservation.
 - Hosted visualizer stats: 1 component, 9 pins, 9 wires, 217 timestamps.
 - X-state visualizer stats: 1 component, 9 pins, 9 wires, 39 timestamps.
@@ -574,7 +574,7 @@ Pins:
 
 Implementation:
 
-- Four `BehavioralRegister32` words named `WORD_0` through `WORD_3`
+- Four the behavioral fidelity of `Register32` words named `WORD_0` through `WORD_3`
 - One `Mux4to1_32bit` named `READ_MUX`
 - One `BitSplitter<32>` for address bits
 - One `BitJoiner<2>` for read mux selection
@@ -663,7 +663,7 @@ Pins:
 
 Implementation:
 
-- Thirty-two `BehavioralRegister32` words named `WORD_0` through `WORD_31`
+- Thirty-two the behavioral fidelity of `Register32` words named `WORD_0` through `WORD_31`
 - One `Mux32to1_32bit` named `READ_MUX`
 - One `Decoder5to32` named `WRITE_DECODER` for selected word write enable
 - One `BitJoiner<5>` for `ADDR[6:2]` word selection
@@ -715,16 +715,16 @@ Tests and visualizer:
 - Checkpoints: reset read, writes and readbacks for all `WORD_0..WORD_31`, disabled write hold, unsupported size faults, misalignment fault, out-of-range fault, no-access fault suppression, blocked faulted write, final reset.
 - Hosted visualizer stats: 6391 components, 25378 pins, 12783 wires, 1209 timestamps.
 
-### `BehavioralMemory64Kx32`
+### `Memory64Kx32`
 
 Purpose:
 
-`BehavioralMemory64Kx32` is the practical RV32I memory component. It stores 64K 32-bit words, or 256 KiB total, behind the same CPU-facing memory pins used by `Memory4x32` and `Memory32x32`.
+`Memory64Kx32` is the practical RV32I memory component. It stores 64K 32-bit words, or 256 KiB total, behind the same CPU-facing memory pins used by `Memory4x32` and `Memory32x32`.
 
 Files:
 
-- `include/modules/memory/BehavioralMemory64Kx32.hpp`
-- `src/modules/memory/BehavioralMemory64Kx32.cpp`
+- `include/modules/memory/Memory64Kx32.hpp`
+- `src/modules/memory/Memory64Kx32.cpp`
 
 Pins:
 
@@ -794,7 +794,7 @@ Important behavior:
 
 Tests and visualizer:
 
-- Test: `BehavioralMemory64Kx32Test`
+- Test: `Memory64Kx32Test`
 - Visualizer scenario: `behavioral-memory64kx32`
 - Checkpoints: reset read, word store/load at base and final word, disabled write hold, byte store, halfword store, LBU/LB/LHU/LH extension behavior, invalid-size fault, misalignment faults, out-of-range fault, no-access fault suppression, blocked faulted write, final reset.
 - Hosted visualizer stats: 1 component, 11 pins, 11 wires, 83 timestamps.
@@ -819,14 +819,14 @@ Registered scenarios:
 
 - `decoder2to4` -> `Decoder2to4Test`
 - `decoder5to32` -> `Decoder5to32Test`
-- `memory-bit` -> `MemoryBitTest`
-- `behavioral-memory-bit` -> `BehavioralMemoryBitTest`
-- `behavioral-memory64kx32` -> `BehavioralMemory64Kx32Test`
-- `register32` -> `Register32Test`
+- `memory-bit` -> `MemoryBitStructuralContractTest`
+- `behavioral-memory-bit` -> `MemoryBitBehavioralContractTest`
+- `behavioral-memory64kx32` -> `Memory64Kx32Test`
+- `register32` -> `Register32StructuralContractTest`
 - `register-file4x32` -> `RegisterFile4x32Test`
-- `register-file32x32` -> `RegisterFile32x32Test`
-- `behavioral-register-file32x32` -> `BehavioralRegisterFile32x32Test`
-- `behavioral-register-file32x32-unknown` -> `BehavioralRegisterFile32x32UnknownTest`
+- `register-file32x32` -> `RegisterFile32x32StructuralContractTest`
+- `behavioral-register-file32x32` -> `RegisterFile32x32BehavioralContractTest`
+- `behavioral-register-file32x32-unknown` -> `RegisterFile32x32BehavioralUnknownPolicyTest`
 - `memory4x32` -> `Memory4x32Test`
 - `memory32x32` -> `Memory32x32Test`
 
@@ -839,11 +839,11 @@ Commands run:
 ```bash
 cmake -S . -B build
 cmake --build build -j 8
-ctest --test-dir build --output-on-failure -R "Decoder2to4Test|Decoder5to32Test|RegisterFile4x32Test|RegisterFile32x32Test|Memory4x32Test"
-ctest --test-dir build --output-on-failure -R "BehavioralRegisterFile32x32Test|BehavioralRegisterFile32x32UnknownTest|RegisterFile32x32Test"
-ctest --test-dir build --output-on-failure -R "BehavioralMemoryBitTest|MemoryBitTest|Register32Test|RegisterFile4x32Test|RegisterFile32x32Test|BehavioralRegisterFile32x32Test|BehavioralRegisterFile32x32UnknownTest|Memory4x32Test|Decoder2to4Test|Decoder5to32Test"
+ctest --test-dir build --output-on-failure -R "Decoder2to4Test|Decoder5to32Test|RegisterFile4x32Test|RegisterFile32x32StructuralContractTest|Memory4x32Test"
+ctest --test-dir build --output-on-failure -R "RegisterFile32x32BehavioralContractTest|RegisterFile32x32BehavioralUnknownPolicyTest|RegisterFile32x32StructuralContractTest"
+ctest --test-dir build --output-on-failure -R "MemoryBitBehavioralContractTest|MemoryBitStructuralContractTest|Register32StructuralContractTest|RegisterFile4x32Test|RegisterFile32x32StructuralContractTest|RegisterFile32x32BehavioralContractTest|RegisterFile32x32BehavioralUnknownPolicyTest|Memory4x32Test|Decoder2to4Test|Decoder5to32Test"
 ctest --test-dir build --output-on-failure -R "Memory4x32Test|Memory32x32Test|Decoder2to4Test|Decoder5to32Test|Mux4to1_32bitTest|Mux32to1_32bitTest"
-ctest --test-dir build --output-on-failure -R "BehavioralMemory64Kx32Test|Memory32x32Test|Memory4x32Test"
+ctest --test-dir build --output-on-failure -R "Memory64Kx32Test|Memory32x32Test|Memory4x32Test"
 ctest --test-dir build -N
 ctest --test-dir build --output-on-failure
 curl -fsSL http://127.0.0.1:8765/api/health
@@ -855,14 +855,14 @@ Results:
 - Build passed.
 - `Decoder2to4Test` passed.
 - `Decoder5to32Test` passed.
-- `MemoryBitTest` passed.
-- `BehavioralMemoryBitTest` passed.
-- `BehavioralMemory64Kx32Test` passed.
-- `Register32Test` passed.
+- `MemoryBitStructuralContractTest` passed.
+- `MemoryBitBehavioralContractTest` passed.
+- `Memory64Kx32Test` passed.
+- `Register32StructuralContractTest` passed.
 - `RegisterFile4x32Test` passed.
-- `RegisterFile32x32Test` passed.
-- `BehavioralRegisterFile32x32Test` passed.
-- `BehavioralRegisterFile32x32UnknownTest` passed.
+- `RegisterFile32x32StructuralContractTest` passed.
+- `RegisterFile32x32BehavioralContractTest` passed.
+- `RegisterFile32x32BehavioralUnknownPolicyTest` passed.
 - `Memory4x32Test` passed.
 - `Memory32x32Test` passed.
 - Focused decoder/register/memory subset passed: 5/5 in 48.99 seconds.
@@ -878,7 +878,7 @@ Results:
 - Hosted visualizer exposes `behavioral-register-file32x32-unknown`.
 - Hosted visualizer exposes `memory4x32`.
 - Hosted visualizer exposes `memory32x32`.
-- Previous full branch regression, before adding `BehavioralRegisterFile32x32Test`, passed: 80/80 in 1646.85 seconds.
+- Previous full branch regression, before adding `RegisterFile32x32BehavioralContractTest`, passed: 80/80 in 1646.85 seconds.
 
 ## Branch Closeout
 
@@ -887,11 +887,11 @@ Memory component work is complete for this branch:
 - Structural teaching components exist for one-bit storage, one-word storage, small register files, and small memories.
 - Behavioral CPU-scale components exist for the 32-entry RV32I register file and 64K-word memory.
 - Tests and visualizer scenarios are registered for the new memory components.
-- The first RV32I runner should instantiate two `BehavioralMemory64Kx32` components: one instruction memory and one data memory.
+- The first RV32I runner should instantiate two `Memory64Kx32` components: one instruction memory and one data memory.
 
 Deferred to the RV32I integration branch:
 
-- Optional program/data preload API for `BehavioralMemory64Kx32`, used by test loaders before simulation starts.
+- Optional program/data preload API for `Memory64Kx32`, used by test loaders before simulation starts.
 - Optional debug readback helpers for memory contents, used by tests after simulation ends.
 - CPU/system wiring that connects instruction memory and data memory instances to the RV32I datapath.
 
@@ -910,7 +910,7 @@ Scale and visualization notes:
 - `Register32` is one 32-bit storage word, not the 32-entry RV32I register file.
 - `RegisterFile4x32` is a four-entry teaching prototype, not the full 32-entry RV32I register file.
 - `RegisterFile32x32` is the full RV32I register-file shape, but its storage cells are behavioral.
-- `BehavioralRegisterFile32x32` is the same external register-file contract compressed into one behavioral component for CPU-scale use.
+- the behavioral fidelity of `RegisterFile32x32` is the same external register-file contract compressed into one behavioral component for CPU-scale use.
 - `Memory4x32` is addressable RAM, but only a 16-byte teaching slice.
 - `Memory32x32` is addressable RAM with 32 words / 128 bytes, still too small for real program execution.
-- `BehavioralMemory64Kx32` is the practical 256 KiB memory for actual RV32I program execution.
+- `Memory64Kx32` is the practical 256 KiB memory for actual RV32I program execution.

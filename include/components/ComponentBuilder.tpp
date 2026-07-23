@@ -5,6 +5,7 @@
 #include "components/IOComponent.hpp"
 #include "basic/Pin.hpp"
 #include "basic/Wire.hpp"
+#include "components/selection/BuildContext.hpp"
 #include <utility>
 
 template<typename T, typename... Args>
@@ -16,7 +17,11 @@ std::shared_ptr<T> ComponentBuilder::addNewComponent(std::string name, Args&&...
     }
 
     // Use the universal Component::create factory. It handles buildInternals and initPins.
-    auto new_component = Component::create<T>(name, std::forward<Args>(args)...);
+    auto child_context = build_context_
+        ? build_context_->child(name, std::nullopt)
+        : nullptr;
+    auto new_component = Component::createWithContext<T>(
+        child_context, name, std::forward<Args>(args)...);
 
     if (new_component) {
         namedComponents[scopedName] = new_component;

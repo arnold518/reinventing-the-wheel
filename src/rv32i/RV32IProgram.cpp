@@ -1,6 +1,6 @@
 #include "rv32i/RV32IProgram.hpp"
 
-#include "modules/memory/BehavioralMemory64Kx32.hpp"
+#include "modules/memory/Memory64Kx32.hpp"
 #include <stdexcept>
 #include <utility>
 
@@ -43,7 +43,7 @@ uint32_t RV32IProgram::wordAt(size_t word_index) const {
          | (static_cast<uint32_t>(program_bytes[byte_index + 3]) << 24);
 }
 
-void RV32IProgram::loadInto(BehavioralMemory64Kx32& memory, uint32_t base_address) const {
+void RV32IProgram::loadInto(Memory64Kx32& memory, uint32_t base_address) const {
     memory.loadBytes(base_address, program_bytes);
 }
 

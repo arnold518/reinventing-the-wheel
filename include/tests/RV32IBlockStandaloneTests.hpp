@@ -22,17 +22,17 @@ private:
     std::string test_name_;
 };
 
-class RV32IControlFlowUnitTest : public RV32IControlFlowUnitStandaloneTestBase {
+class RV32IControlFlowStructuralContractTest : public RV32IControlFlowUnitStandaloneTestBase {
 public:
-    RV32IControlFlowUnitTest();
+    RV32IControlFlowStructuralContractTest();
 
 protected:
     std::shared_ptr<Component> createRootComponent() const override;
 };
 
-class BehavioralRV32IControlFlowUnitTest : public RV32IControlFlowUnitStandaloneTestBase {
+class RV32IControlFlowBehavioralContractTest : public RV32IControlFlowUnitStandaloneTestBase {
 public:
-    BehavioralRV32IControlFlowUnitTest();
+    RV32IControlFlowBehavioralContractTest();
 
 protected:
     std::shared_ptr<Component> createRootComponent() const override;
@@ -56,17 +56,17 @@ private:
     std::string test_name_;
 };
 
-class RV32IDecodeControlUnitTest : public RV32IDecodeControlUnitStandaloneTestBase {
+class RV32IDecodeControlStructuralContractTest : public RV32IDecodeControlUnitStandaloneTestBase {
 public:
-    RV32IDecodeControlUnitTest();
+    RV32IDecodeControlStructuralContractTest();
 
 protected:
     std::shared_ptr<Component> createRootComponent() const override;
 };
 
-class BehavioralRV32IDecodeControlUnitTest : public RV32IDecodeControlUnitStandaloneTestBase {
+class RV32IDecodeControlBehavioralContractTest : public RV32IDecodeControlUnitStandaloneTestBase {
 public:
-    BehavioralRV32IDecodeControlUnitTest();
+    RV32IDecodeControlBehavioralContractTest();
 
 protected:
     std::shared_ptr<Component> createRootComponent() const override;
@@ -90,19 +90,19 @@ private:
     std::string test_name_;
 };
 
-class RV32IExecutionControlStatusUnitTest
+class RV32IExecutionStatusStructuralContractTest
     : public RV32IExecutionControlStatusUnitStandaloneTestBase {
 public:
-    RV32IExecutionControlStatusUnitTest();
+    RV32IExecutionStatusStructuralContractTest();
 
 protected:
     std::shared_ptr<Component> createRootComponent() const override;
 };
 
-class BehavioralRV32IExecutionControlStatusUnitTest
+class RV32IExecutionStatusBehavioralContractTest
     : public RV32IExecutionControlStatusUnitStandaloneTestBase {
 public:
-    BehavioralRV32IExecutionControlStatusUnitTest();
+    RV32IExecutionStatusBehavioralContractTest();
 
 protected:
     std::shared_ptr<Component> createRootComponent() const override;

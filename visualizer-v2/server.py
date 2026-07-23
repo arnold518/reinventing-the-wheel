@@ -52,6 +52,7 @@ STATE_TOKENS = {
 }
 
 DEFAULT_COLOR = [61, 90, 128, 190]
+LAYOUT_SCHEMA_VERSION = 2
 DEFAULT_SETTINGS = {
     "title_bar_ratio": 0.15,
     "font_width_ratio": 0.1,
@@ -69,18 +70,17 @@ LAYERED_HORIZONTAL_FILL_RATIO = 0.88
 LAYERED_VERTICAL_FILL_RATIO = 0.9
 LAYERED_DENSE_ROW_WIDTH_CAP = 0.1
 MIN_RELATIVE_CHILD_WIDTH = 1e-6
-GENERIC_ROOT_TYPES = {"Component", "IOComponent", "BasicComponent"}
 SEQUENTIAL_TYPES = {"DFlipFlop"}
 CLOCK_PIN_NAMES = {"CLK", "CLOCK"}
 SEQUENTIAL_INPUT_PIN_NAMES = {"D", "RST", "RESET", "SET", "CLR", "CLEAR", "EN", "ENABLE", "LOAD"}
 NON_VISUALIZABLE_TESTS = {
     "WireTemplateTest",
     "RewireValidationTest",
-    "RV32IControlFlowUnitPairTest",
-    "RV32IDecodeControlUnitPairTest",
-    "RV32IRegisterFilePairTest",
-    "BehavioralALU32PairTest",
-    "RV32IExecutionControlStatusUnitPairTest",
+    "RV32IControlFlowUnitEquivalenceTest",
+    "RV32IDecodeControlUnitEquivalenceTest",
+    "RV32IRegisterFileEquivalenceTest",
+    "ALU32EquivalenceTest",
+    "RV32IExecutionControlStatusUnitEquivalenceTest",
 }
 PREFERRED_SCENARIO_ALIASES = {
     "FullAdderTest": ["full-adder", "fulladder"],
@@ -90,51 +90,22 @@ PREFERRED_SCENARIO_ALIASES = {
     "GatedDLatchTest": ["gated-d-latch", "gateddlatch", "d-latch"],
     "DFlipFlopTest": ["dff", "d-flip-flop"],
     "ClockGeneratorTest": ["clock"],
-    "BehavioralMemoryBitTest": ["behavioral-memory-bit", "behavioral-memorybit", "bmem-bit"],
-    "BehavioralMemory64Kx32Test": ["behavioral-memory64kx32", "behavioral-memory-64kx32", "bmem64kx32"],
-    "MemoryBitTest": ["memory-bit", "memorybit"],
-    "Register32Test": ["register32", "register-32"],
+    "MemoryBitBehavioralContractTest": ["behavioral-memory-bit", "behavioral-memorybit", "bmem-bit"],
+    "Memory64Kx32Test": ["behavioral-memory64kx32", "behavioral-memory-64kx32", "bmem64kx32"],
+    "MemoryBitStructuralContractTest": ["memory-bit", "memorybit"],
+    "Register32StructuralContractTest": ["register32", "register-32"],
+    "Register32CellArrayContractTest": ["register32-bit-cell-array"],
+    "Register32BehavioralContractTest": ["register32-behavioral"],
     "RegisterFile4x32Test": ["register-file4x32", "register-file-4x32", "registerfile4x32", "rf4x32"],
-    "RegisterFile32x32Test": ["rv32i-register-file-structural", "register-file32x32", "register-file-32x32", "registerfile32x32", "rf32x32"],
-    "BehavioralRegisterFile32x32Test": ["rv32i-register-file-behavioral", "behavioral-register-file32x32", "behavioral-register-file-32x32", "behavioral-rf32x32", "brf32x32"],
-    "BehavioralRegisterFile32x32UnknownTest": ["behavioral-register-file32x32-unknown", "behavioral-rf32x32-unknown", "brf32x32-unknown"],
+    "RegisterFile32x32StructuralContractTest": ["rv32i-register-file-structural", "register-file32x32", "register-file-32x32", "registerfile32x32", "rf32x32"],
+    "RegisterFile32x32BehavioralContractTest": ["rv32i-register-file-behavioral", "behavioral-register-file32x32", "behavioral-register-file-32x32", "behavioral-rf32x32", "brf32x32"],
+    "RegisterFile32x32BehavioralUnknownPolicyTest": ["behavioral-register-file32x32-unknown", "behavioral-rf32x32-unknown", "brf32x32-unknown"],
     "Memory4x32Test": ["memory4x32", "memory-4x32", "mem4x32"],
     "Memory32x32Test": ["memory32x32", "memory-32x32", "mem32x32"],
-    "BehavioralRV32ISystemProgram1Test": ["behavioral-rv32i-system-program1", "behavioral-rv32i-system-program-1", "rv32i-behavioral-system-program1", "rv32i-system-program1", "rv32i-system-program", "rv32i-system"],
-    "BehavioralRV32ISystemProgram2Test": ["behavioral-rv32i-system-program2", "behavioral-rv32i-system-program-2", "rv32i-behavioral-system-program2", "rv32i-system-program2"],
-    "BehavioralRV32ISystemProgram3Test": ["behavioral-rv32i-system-program3", "behavioral-rv32i-system-program-3", "rv32i-behavioral-system-program3", "rv32i-system-program3"],
-    "BehavioralRV32ISystemProgram4Test": ["behavioral-rv32i-system-program4", "behavioral-rv32i-system-program-4", "rv32i-behavioral-system-program4", "rv32i-system-program4"],
-    "BehavioralRV32ISystemProgram5Test": ["behavioral-rv32i-system-program5", "behavioral-rv32i-system-program-5", "rv32i-behavioral-system-program5", "rv32i-system-program5"],
-    "BehavioralRV32ISystemProgram6Test": ["behavioral-rv32i-system-program6", "behavioral-rv32i-system-program-6", "rv32i-behavioral-system-program6", "rv32i-system-program6"],
-    "BehavioralRV32ISystemProgram7Test": ["behavioral-rv32i-system-program7", "behavioral-rv32i-system-program-7", "rv32i-behavioral-system-program7", "rv32i-system-program7"],
-    "BehavioralRV32ISystemProgram8Test": ["behavioral-rv32i-system-program8", "behavioral-rv32i-system-program-8", "rv32i-behavioral-system-program8", "rv32i-system-program8"],
-    "BehavioralRV32ISystemProgram9Test": ["behavioral-rv32i-system-program9", "behavioral-rv32i-system-program-9", "rv32i-behavioral-system-program9", "rv32i-system-program9"],
-    "BehavioralRV32ISystemProgram10Test": ["behavioral-rv32i-system-program10", "behavioral-rv32i-system-program-10", "rv32i-behavioral-system-program10", "rv32i-system-program10"],
-    "BehavioralRV32ISystemProgram11Test": ["behavioral-rv32i-system-program11", "behavioral-rv32i-system-program-11", "rv32i-behavioral-system-program11", "rv32i-system-program11"],
-    "BehavioralRV32ISystemProgram12Test": ["behavioral-rv32i-system-program12", "behavioral-rv32i-system-program-12", "rv32i-behavioral-system-program12", "rv32i-system-program12"],
-    "BehavioralRV32ISystemProgram13Test": ["behavioral-rv32i-system-program13", "behavioral-rv32i-system-program-13", "rv32i-behavioral-system-program13", "rv32i-system-program13"],
-    "BehavioralRV32ISystemProgram14Test": ["behavioral-rv32i-system-program14", "behavioral-rv32i-system-program-14", "rv32i-behavioral-system-program14", "rv32i-system-program14"],
-    "BehavioralRV32ISystemProgram15Test": ["behavioral-rv32i-system-program15", "behavioral-rv32i-system-program-15", "rv32i-behavioral-system-program15", "rv32i-system-program15"],
-    "BehavioralRV32ISystemProgram16Test": ["behavioral-rv32i-system-program16", "behavioral-rv32i-system-program-16", "rv32i-behavioral-system-program16", "rv32i-system-program16"],
-    "RV32ISingleCycleCoreSmokeTest": ["rv32i-core-structural-smoke"],
-    "RV32ISingleCycleSystemContractTest": ["rv32i-system-structural"],
-    "RV32ISingleCycleSystemProgram1Test": ["rv32i-system-structural-program1"],
-    "RV32ISingleCycleSystemProgram2Test": ["rv32i-system-structural-program2"],
-    "RV32ISingleCycleSystemProgram3Test": ["rv32i-system-structural-program3"],
-    "RV32ISingleCycleSystemProgram4Test": ["rv32i-system-structural-program4"],
-    "RV32ISingleCycleSystemProgram5Test": ["rv32i-system-structural-program5"],
-    "RV32ISingleCycleSystemProgram6Test": ["rv32i-system-structural-program6"],
-    "RV32ISingleCycleSystemProgram7Test": ["rv32i-system-structural-program7"],
-    "RV32ISingleCycleSystemProgram8Test": ["rv32i-system-structural-program8"],
-    "RV32ISingleCycleSystemProgram9Test": ["rv32i-system-structural-program9"],
-    "RV32ISingleCycleSystemProgram10Test": ["rv32i-system-structural-program10"],
-    "RV32ISingleCycleSystemProgram11Test": ["rv32i-system-structural-program11"],
-    "RV32ISingleCycleSystemProgram12Test": ["rv32i-system-structural-program12"],
-    "RV32ISingleCycleSystemProgram13Test": ["rv32i-system-structural-program13"],
-    "RV32ISingleCycleSystemProgram14Test": ["rv32i-system-structural-program14"],
-    "RV32ISingleCycleSystemProgram15Test": ["rv32i-system-structural-program15"],
-    "RV32ISingleCycleSystemProgram16Test": ["rv32i-system-structural-program16"],
-    "ConstantValue1From32TriggerTest": ["constant1-from32"],
+    "RV32ISingleCycleSystemSmokeTest": ["rv32i-structural-smoke"],
+    "RV32ISingleCycleSystemContractTest": ["rv32i-structural-contract"],
+    "ConstantValue1HighTest": ["constant1-high"],
+    "ConstantValue1LowTest": ["constant1-low"],
     "ConstantValue32Test": ["constant32"],
     "Adder8Test": ["adder8", "8-bit-adder"],
     "ZeroDetect8Test": ["zero-detect8"],
@@ -151,17 +122,28 @@ PREFERRED_SCENARIO_ALIASES = {
     "ZeroDetect32Test": ["zero-detect32"],
     "Comparator32Test": ["comparator32"],
     "Shifter32Test": ["shifter32"],
-    "ALU32Test": ["alu32"],
-    "RV32IALU32Test": ["rv32i-alu-structural", "rv32i-alu32"],
-    "BehavioralALU32Test": ["rv32i-alu-behavioral", "behavioral-alu32"],
-    "RV32IControlFlowUnitTest": ["rv32i-control-flow-structural"],
-    "BehavioralRV32IControlFlowUnitTest": ["rv32i-control-flow-behavioral"],
-    "RV32IDecodeControlUnitTest": ["rv32i-decode-structural"],
-    "BehavioralRV32IDecodeControlUnitTest": ["rv32i-decode-behavioral"],
-    "RV32IExecutionControlStatusUnitTest": ["rv32i-status-structural"],
-    "BehavioralRV32IExecutionControlStatusUnitTest": ["rv32i-status-behavioral"],
+    "ALU32StructuralContractTest": ["alu32"],
+    "ALU32LowerLevelSliceTest": ["rv32i-alu-structural", "rv32i-alu32"],
+    "ALU32BehavioralContractTest": ["rv32i-alu-behavioral", "behavioral-alu32"],
+    "RV32IControlFlowStructuralContractTest": ["rv32i-control-flow-structural"],
+    "RV32IControlFlowBehavioralContractTest": ["rv32i-control-flow-behavioral"],
+    "RV32IDecodeControlStructuralContractTest": ["rv32i-decode-structural"],
+    "RV32IDecodeControlBehavioralContractTest": ["rv32i-decode-behavioral"],
+    "RV32IExecutionStatusStructuralContractTest": ["rv32i-status-structural"],
+    "RV32IExecutionStatusBehavioralContractTest": ["rv32i-status-behavioral"],
     "RV32IProgramLoaderTest": ["rv32i-program-loader", "rv32i-program", "program-loader"],
 }
+
+for _program_number in range(1, 17):
+    PREFERRED_SCENARIO_ALIASES[
+        f"RV32ISingleCycleSystemProgram{_program_number}Test"
+    ] = [f"rv32i-structural-program{_program_number}"]
+    PREFERRED_SCENARIO_ALIASES[
+        f"RV32IBalancedSystemProgram{_program_number}Test"
+    ] = [f"rv32i-balanced-program{_program_number}"]
+    PREFERRED_SCENARIO_ALIASES[
+        f"RV32IReferenceSystemProgram{_program_number}Test"
+    ] = [f"rv32i-reference-program{_program_number}"]
 
 
 def _clone(value: Any) -> Any:
@@ -248,6 +230,14 @@ def _component_type(component: Any) -> str:
         return component.get_type_name()
     except AttributeError:
         return "Component"
+
+
+def _component_profile_fingerprint(component: Any) -> str:
+    try:
+        fingerprint = str(component.get_profile_fingerprint())
+    except (AttributeError, RuntimeError, TypeError, ValueError):
+        return "explicit"
+    return fingerprint or "explicit"
 
 
 def _pin_width_by_name(component: Any, getter_name: str, pin_name: str) -> int | None:
@@ -505,8 +495,25 @@ def _layered_graph_layout(
     for edge in edges:
         src, dst, sink_name = edge
         same_cycle = src in cyclic_group_by_node and cyclic_group_by_node.get(src) == cyclic_group_by_node.get(dst)
+        src_type = _component_type(child_by_id[src])
         dst_type = _component_type(child_by_id[dst])
         if same_cycle and dst_type in SEQUENTIAL_TYPES and sink_name in SEQUENTIAL_INPUT_PIN_NAMES:
+            continue
+        # A child that drives a parent output is the output-facing end of this
+        # hierarchy.  When it also participates in a feedback cycle, orient
+        # the diagram toward that child by treating its edges back into the
+        # cycle as return paths.  Without this rule, a CPU core and its
+        # bidirectional memories collapse into one narrow vertical column even
+        # though memory responses naturally flow toward the output-facing
+        # core.  This affects placement only; every circuit wire is still
+        # rendered and simulated.
+        if (
+            same_cycle
+            and src_type not in SEQUENTIAL_TYPES
+            and dst_type not in SEQUENTIAL_TYPES
+            and src in output_drivers
+            and dst not in output_drivers
+        ):
             continue
         active_edges.append(edge)
 
@@ -687,8 +694,10 @@ class LayoutManager:
         except FileNotFoundError:
             data = {}
 
+        self.schema_version = int(data.get("schema_version", 1))
         self.settings = data.get("default_settings", _clone(DEFAULT_SETTINGS))
         self.type_layouts = data.get("type_layouts", {})
+        self.profile_layouts = data.get("profile_layouts", {})
         self.root_layouts = data.get("root_layouts", {})
         self.loaded_mtime = self._current_mtime()
         self.is_dirty = False
@@ -718,6 +727,10 @@ class LayoutManager:
         layout = self.get_layout_for(component_type)
         if component_layout_type != component_type:
             layout = self._merge_layouts(layout, self.get_layout_for(component_layout_type))
+        profile_fingerprint = _component_profile_fingerprint(component)
+        if profile_fingerprint != "explicit":
+            profile_layout = self.profile_layouts.get(profile_fingerprint, {}).get(component_layout_type, {})
+            layout = self._merge_layouts(layout, profile_layout)
         return layout
 
     def get_root_layout_for(self, scenario_key: str, root_type: str) -> dict[str, Any]:
@@ -730,13 +743,13 @@ class LayoutManager:
         root_layout = self.root_layouts.get(scenario_key, {})
         return self._merge_layouts(type_layout, root_layout)
 
-    def get_child_layout(
-        self, parent_type: str, child_name: str, *, scenario_key: str | None = None, is_root: bool = False
+    def get_child_layout_for_component(
+        self, component: Any, child_name: str, *, scenario_key: str | None = None, is_root: bool = False
     ) -> dict[str, Any]:
         parent_layout = (
-            self.get_root_layout_for(scenario_key, parent_type)
+            self.get_root_layout_for_component(scenario_key, component)
             if is_root and scenario_key
-            else self.get_layout_for(parent_type)
+            else self.get_layout_for_component(component)
         )
         return _clone(parent_layout.get("children", {}).get(child_name, {}))
 
@@ -769,13 +782,10 @@ class LayoutManager:
     def ensure_component_layout_defaults(
         self, component: Any, *, scenario_key: str | None = None, is_root: bool = False
     ) -> None:
+        del scenario_key, is_root
         component_type = _component_layout_type(component)
-        if scenario_key and self.should_use_root_layout_for_defaults(scenario_key, component_type, is_root):
-            layout = self.root_layouts.setdefault(scenario_key, {})
-            fallback = 0.75
-        else:
-            layout = self.type_layouts.setdefault(component_type, {})
-            fallback = 1.0
+        layout = self.type_layouts.setdefault(component_type, {})
+        fallback = 1.0
 
         instance_minimum = self.minimum_aspect_for_component(component)
         minimum = round(max(instance_minimum, _float_value(layout.get("min_aspect_ratio"), instance_minimum)), 3)
@@ -809,35 +819,63 @@ class LayoutManager:
         child_entry["rel_width"] = rel_width
         self.is_dirty = True
 
-    def should_use_root_layout_for_defaults(self, scenario_key: str, parent_type: str, is_root: bool) -> bool:
-        return is_root and (parent_type in GENERIC_ROOT_TYPES or scenario_key in self.root_layouts)
+    def update_profile_child_layout(
+        self,
+        profile_fingerprint: str,
+        parent_type: str,
+        child_name: str,
+        rel_pos: list[float],
+        rel_width: float,
+    ) -> None:
+        profile = self.profile_layouts.setdefault(profile_fingerprint, {})
+        type_layout = profile.setdefault(parent_type, {})
+        child_entry = type_layout.setdefault("children", {}).setdefault(child_name, {})
+        if child_entry.get("rel_pos") == rel_pos and child_entry.get("rel_width") == rel_width:
+            return
+        child_entry["rel_pos"] = rel_pos
+        child_entry["rel_width"] = rel_width
+        self.is_dirty = True
 
     def set_child_layouts(
         self,
-        parent_type: str,
+        component: Any,
         placements: dict[str, dict[str, Any]],
         *,
         scenario_key: str | None = None,
         is_root: bool = False,
     ) -> None:
+        parent_type = _component_layout_type(component)
+        profile_fingerprint = _component_profile_fingerprint(component)
         for child_name, placement in placements.items():
             rel_pos = placement["rel_pos"]
             rel_width = placement["rel_width"]
-            if scenario_key and self.should_use_root_layout_for_defaults(scenario_key, parent_type, is_root):
+            if scenario_key and is_root:
                 self.update_root_child_layout(scenario_key, child_name, rel_pos, rel_width)
+            elif profile_fingerprint != "explicit":
+                self.update_profile_child_layout(
+                    profile_fingerprint,
+                    parent_type,
+                    child_name,
+                    rel_pos,
+                    rel_width,
+                )
             else:
                 self.update_type_child_layout(parent_type, child_name, rel_pos, rel_width)
 
     def to_jsonable(self) -> dict[str, Any]:
         return {
+            "schema_version": LAYOUT_SCHEMA_VERSION,
             "default_settings": self.settings,
             "type_layouts": self.type_layouts,
+            "profile_layouts": self.profile_layouts,
             "root_layouts": self.root_layouts,
         }
 
     def replace_from_client(self, layout: dict[str, Any]) -> None:
+        self.schema_version = int(layout.get("schema_version", LAYOUT_SCHEMA_VERSION))
         self.settings = _clone(layout.get("default_settings", {}))
         self.type_layouts = _clone(layout.get("type_layouts", {}))
+        self.profile_layouts = _clone(layout.get("profile_layouts", {}))
         self.root_layouts = _clone(layout.get("root_layouts", {}))
         self.is_dirty = True
 
@@ -869,6 +907,13 @@ def scenario_default_alias(class_name: str) -> str:
 
 def scenario_canonical_alias(class_name: str) -> str:
     return PREFERRED_SCENARIO_ALIASES.get(class_name, [scenario_default_alias(class_name)])[0]
+
+
+def scenario_layout_key(scenario_key: str, root: Any) -> str:
+    profile_fingerprint = _component_profile_fingerprint(root)
+    if profile_fingerprint == "explicit":
+        return scenario_key
+    return f"{scenario_key}@{profile_fingerprint}"
 
 
 def visualizable_test_names() -> list[str]:
@@ -927,6 +972,8 @@ class CircuitSession:
         self.root = self.test_scenario.get_root()
         if not self.root:
             raise RuntimeError("C++ test scenario did not produce a root component")
+        self.profile_fingerprint = _component_profile_fingerprint(self.root)
+        self.layout_key = scenario_layout_key(self.scenario_key, self.root)
 
         self.simulator = self.test_scenario.get_simulator()
         self.test_scenario.schedule_initial_events(0)
@@ -996,11 +1043,11 @@ class CircuitSession:
         is_root = component.get_id() == self.root.get_id()
         aspect_ratio = self.layout_manager.aspect_for_component(
             component,
-            scenario_key=self.scenario_key,
+            scenario_key=self.layout_key,
             is_root=is_root,
         )
         if is_root:
-            layout = self.layout_manager.get_root_layout_for_component(self.scenario_key, component)
+            layout = self.layout_manager.get_root_layout_for_component(self.layout_key, component)
         else:
             layout = self.layout_manager.get_layout_for_component(component)
         return aspect_ratio, layout.get("color", DEFAULT_COLOR)
@@ -1013,7 +1060,7 @@ class CircuitSession:
             children = list(component.get_children())
             self.layout_manager.ensure_component_layout_defaults(
                 component,
-                scenario_key=self.scenario_key,
+                scenario_key=self.layout_key,
                 is_root=depth == 0,
             )
             aspect_ratio, color = self._component_layout_meta(component)
@@ -1031,10 +1078,18 @@ class CircuitSession:
                 "aspectRatio": aspect_ratio,
                 "minAspectRatio": self.layout_manager.effective_minimum_aspect_for_component(
                     component,
-                    scenario_key=self.scenario_key,
+                    scenario_key=self.layout_key,
                     is_root=depth == 0,
                 ),
                 "color": color,
+                "contractId": component.get_contract_id(),
+                "contractVersion": component.get_contract_version(),
+                "implementationId": component.get_implementation_id(),
+                "fidelity": component.get_selected_fidelity(),
+                "terminalPrimitive": component.is_terminal_primitive(),
+                "referenceOnly": component.is_reference_only(),
+                "selectionReason": component.get_selection_reason(),
+                "profileFingerprint": component.get_profile_fingerprint(),
             }
             if component_type == "ConstantValue":
                 try:
@@ -1150,7 +1205,7 @@ class CircuitSession:
     ) -> dict[str, dict[str, Any]]:
         manager = layout_manager or self.layout_manager
         is_root = depth == 0
-        parent_aspect = manager.aspect_for_component(component, scenario_key=self.scenario_key, is_root=is_root)
+        parent_aspect = manager.aspect_for_component(component, scenario_key=self.layout_key, is_root=is_root)
         title_ratio = float(manager.settings.get("title_bar_ratio", 0.15))
         title_fraction = min(0.7, title_ratio / max(parent_aspect, 0.01))
         boundary_fraction = float(manager.settings.get("boundary_area_ratio", DEFAULT_SETTINGS["boundary_area_ratio"]))
@@ -1180,16 +1235,16 @@ class CircuitSession:
             child
             for child in children
             if not (
-                "rel_pos" in self.layout_manager.get_child_layout(
-                    parent_type,
+                "rel_pos" in self.layout_manager.get_child_layout_for_component(
+                    component,
                     child.get_name(),
-                    scenario_key=self.scenario_key,
+                    scenario_key=self.layout_key,
                     is_root=is_root,
                 )
-                and "rel_width" in self.layout_manager.get_child_layout(
-                    parent_type,
+                and "rel_width" in self.layout_manager.get_child_layout_for_component(
+                    component,
                     child.get_name(),
-                    scenario_key=self.scenario_key,
+                    scenario_key=self.layout_key,
                     is_root=is_root,
                 )
             )
@@ -1204,17 +1259,17 @@ class CircuitSession:
             if child.get_name() in placements
         }
         self.layout_manager.set_child_layouts(
-            parent_type,
+            component,
             missing_placements,
-            scenario_key=self.scenario_key,
+            scenario_key=self.layout_key,
             is_root=is_root,
         )
 
         for child in children:
-            child_layout = self.layout_manager.get_child_layout(
-                parent_type,
+            child_layout = self.layout_manager.get_child_layout_for_component(
+                component,
                 child.get_name(),
-                scenario_key=self.scenario_key,
+                scenario_key=self.layout_key,
                 is_root=is_root,
             )
             if "rel_pos" not in child_layout or "rel_width" not in child_layout:
@@ -1243,6 +1298,7 @@ class CircuitSession:
             placements = {child_name: placements[child_name]}
         return {
             "scenario": self.scenario_key,
+            "layoutKey": self.layout_key,
             "parentId": parent_id,
             "parentType": parent.get_type_name(),
             "parentLayoutType": _component_layout_type(parent),
@@ -1253,6 +1309,8 @@ class CircuitSession:
     def topology_response(self) -> dict[str, Any]:
         return {
             "scenario": self.scenario_key,
+            "layoutKey": self.layout_key,
+            "profileFingerprint": self.profile_fingerprint,
             "rootId": self.root.get_id(),
             "rootType": self.root.get_type_name(),
             "components": self.components,
@@ -1302,7 +1360,10 @@ class CircuitSession:
         return ports
 
     def _register_file_state(self, component: Any, component_id: str, index: int, timestamp: int) -> dict[str, Any]:
-        register_words = component.get_register_state_at_time(timestamp)
+        register_words = circuit_backend.get_register_state_at_time(
+            component,
+            timestamp,
+        )
         registers: list[dict[str, Any]] = []
         for register_index, word in enumerate(register_words):
             bits = _logic_vector_value(word)
@@ -1335,7 +1396,7 @@ class CircuitSession:
             "index": index,
             "time": timestamp,
             "componentId": component_id,
-            "type": "BehavioralRegisterFile32x32",
+            "type": "RegisterFile32x32",
             "supported": True,
             "registers": registers,
             "ports": ports,
@@ -1376,7 +1437,7 @@ class CircuitSession:
             "index": index,
             "time": timestamp,
             "componentId": component_id,
-            "type": "BehavioralMemory64Kx32",
+            "type": "Memory64Kx32",
             "supported": True,
             "capacityBytes": 64 * 1024 * 4,
             "capacityWords": 64 * 1024,
@@ -1406,9 +1467,9 @@ class CircuitSession:
             timestamp = int(self.timestamps[index])
             self.simulator.set_circuit_state_at_time(timestamp)
             component_type = _component_type(component)
-            if component_type == "BehavioralRegisterFile32x32":
+            if component_type == "RegisterFile32x32":
                 return self._register_file_state(component, component_id, index, timestamp)
-            if component_type == "BehavioralMemory64Kx32":
+            if component_type == "Memory64Kx32":
                 return self._memory64kx32_state(component, component_id, index, timestamp)
             return {
                 "index": index,

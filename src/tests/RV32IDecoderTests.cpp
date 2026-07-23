@@ -1,5 +1,6 @@
 #include "tests/RV32IDecoderTests.hpp"
 
+#include "modules/rv32i/RV32IBitPatternMatcher.hpp"
 #include "rv32i/RV32IDecoder.hpp"
 #include <cstdint>
 #include <iostream>
@@ -263,6 +264,50 @@ void testDisassembly() {
     expectDisassembly(encodeShiftI(0x20, 31, 5, 0x5, 6), 0x20, "srai x6, x5, 31", "SRAI shamt");
     expectDisassembly(0x00000000U, 0x00, "invalid InvalidInstructionLength", "invalid low bits");
 }
+}
+
+std::string RV32IBitPatternMatcherTest::getTestName() const {
+    return "RV32IBitPatternMatcherTest";
+}
+
+void RV32IBitPatternMatcherTest::verifyResults() {
+    const std::vector<TestRow> load_word_rows{
+        {{{"INPUT", bits(0x00002003U)}}, {{"MATCH", bit(true)}}},
+        {{{"INPUT", bits(0xfff32283U)}}, {{"MATCH", bit(true)}}},
+        {{{"INPUT", bits(0x00001003U)}}, {{"MATCH", bit(false)}}},
+        {{{"INPUT", bits(0x00002023U)}}, {{"MATCH", bit(false)}}},
+    };
+    if (!runRows<RV32IBitPatternMatcher>(
+            load_word_rows, uint32_t{0x0000707fU}, uint32_t{0x00002003U})) {
+        throw std::runtime_error("load-word pattern matching failed");
+    }
+
+    const std::vector<TestRow> ecall_rows{
+        {{{"INPUT", bits(0x00000073U)}}, {{"MATCH", bit(true)}}},
+        {{{"INPUT", bits(0x00100073U)}}, {{"MATCH", bit(false)}}},
+        {{{"INPUT", bits(0x00000013U)}}, {{"MATCH", bit(false)}}},
+    };
+    if (!runRows<RV32IBitPatternMatcher>(
+            ecall_rows, uint32_t{0xffffffffU}, uint32_t{0x00000073U})) {
+        throw std::runtime_error("full-word ECALL pattern matching failed");
+    }
+
+    const std::vector<TestRow> single_bit_rows{
+        {{{"INPUT", bits(0x80000000U)}}, {{"MATCH", bit(true)}}},
+        {{{"INPUT", bits(0x7fffffffU)}}, {{"MATCH", bit(false)}}},
+    };
+    if (!runRows<RV32IBitPatternMatcher>(
+            single_bit_rows, uint32_t{0x80000000U}, uint32_t{0x80000000U})) {
+        throw std::runtime_error("single-bit pattern matching failed");
+    }
+
+    try {
+        (void)Component::create<RV32IBitPatternMatcher>(
+            "INVALID", uint32_t{0}, uint32_t{0});
+    } catch (const std::invalid_argument&) {
+        return;
+    }
+    throw std::runtime_error("zero-mask pattern must be rejected");
 }
 
 std::string RV32IDecoderTest::getTestName() const {

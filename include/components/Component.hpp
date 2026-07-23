@@ -3,7 +3,9 @@
 #include <string>
 #include <vector>
 #include <memory>
+#include <optional>
 #include "ForwardDeclarations.hpp"
+#include "components/selection/SelectionTypes.hpp"
 
 class ComponentBuilder;
 
@@ -15,6 +17,7 @@ protected:
     std::vector<std::shared_ptr<Component>> children;
     std::vector<std::shared_ptr<Wire<>>> wires;
     std::vector<std::shared_ptr<WireBase>> all_wires;
+    std::optional<circuit::ComponentInstanceMetadata> instance_metadata_;
 
 public:
     Component(std::string name);
@@ -25,6 +28,11 @@ public:
     template<typename T, typename... Args>
     static std::shared_ptr<T> create(Args&&... args);
 
+    template<typename T, typename... Args>
+    static std::shared_ptr<T> createWithContext(
+        const std::shared_ptr<circuit::BuildContext>& context,
+        Args&&... args);
+
     virtual void buildInternals(ComponentBuilder& builder);
 
     std::string getName() const;
@@ -33,6 +41,17 @@ public:
     const std::vector<std::shared_ptr<Component>>& getChildren() const;
     const std::vector<std::shared_ptr<Wire<>>>& getWires() const;
     const std::vector<std::shared_ptr<WireBase>>& getAllWires() const;
+
+    void setInstanceMetadata(circuit::ComponentInstanceMetadata metadata);
+    const std::optional<circuit::ComponentInstanceMetadata>& getInstanceMetadata() const;
+    std::string getContractId() const;
+    uint32_t getContractVersion() const;
+    std::string getImplementationId() const;
+    std::string getSelectedFidelity() const;
+    bool isTerminalPrimitive() const;
+    bool isReferenceOnly() const;
+    std::string getSelectionReason() const;
+    std::string getProfileFingerprint() const;
     
     bool isAncestorOf(const std::shared_ptr<const Component>& other) const;
     static std::shared_ptr<Component> findLCA(const std::vector<std::shared_ptr<Component>>& components);

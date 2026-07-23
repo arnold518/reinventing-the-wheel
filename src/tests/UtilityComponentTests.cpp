@@ -391,7 +391,7 @@ size_t BitJoiner8UnknownTest::getRunDuration() const {
 }
 
 ConstantValue1HighTest::ConstantValue1HighTest()
-    : ComponentRowsTest<ConstantValue<1, 1>, uint64_t>(
+    : ComponentRowsTest<ConstantValue<1>, uint64_t>(
           "ConstantValue1HighTest",
           "CONSTANT_VALUE1_HIGH_ROOT",
           {
@@ -400,28 +400,18 @@ ConstantValue1HighTest::ConstantValue1HighTest()
           },
           uint64_t{1}) {}
 
-ConstantValue1Low8TriggerTest::ConstantValue1Low8TriggerTest()
-    : ComponentRowsTest<ConstantValue<1, 8>, uint64_t>(
-          "ConstantValue1Low8TriggerTest",
-          "CONSTANT_VALUE1_LOW_8_TRIGGER_ROOT",
+ConstantValue1LowTest::ConstantValue1LowTest()
+    : ComponentRowsTest<ConstantValue<1>, uint64_t>(
+          "ConstantValue1LowTest",
+          "CONSTANT_VALUE1_LOW_ROOT",
           {
               {{}, {{"OUT", bit(false)}}},
               {{}, {{"OUT", bit(false)}}},
           },
           uint64_t{0}) {}
 
-ConstantValue1From32TriggerTest::ConstantValue1From32TriggerTest()
-    : ComponentRowsTest<ConstantValue<1, 32>, uint64_t>(
-          "ConstantValue1From32TriggerTest",
-          "CONSTANT_VALUE1_FROM_32_TRIGGER_ROOT",
-          {
-              {{}, {{"OUT", bit(true)}}},
-              {{}, {{"OUT", bit(true)}}},
-          },
-          uint64_t{1}) {}
-
 ConstantValue8Test::ConstantValue8Test()
-    : ComponentRowsTest<ConstantValue<8, 8>, uint64_t>(
+    : ComponentRowsTest<ConstantValue<8>, uint64_t>(
           "ConstantValue8Test",
           "CONSTANT_VALUE8_ROOT",
           {
@@ -431,7 +421,7 @@ ConstantValue8Test::ConstantValue8Test()
           uint64_t{0xA5}) {}
 
 ConstantValue32Test::ConstantValue32Test()
-    : ComponentRowsTest<ConstantValue<32, 32>, uint64_t>(
+    : ComponentRowsTest<ConstantValue<32>, uint64_t>(
           "ConstantValue32Test",
           "CONSTANT_VALUE32_ROOT",
           {

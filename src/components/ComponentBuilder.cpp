@@ -6,13 +6,81 @@
 #include "basic/PinBase.hpp"
 #include "basic/Wire.hpp"
 #include "basic/WireBase.hpp"
+#include "components/selection/BuildContext.hpp"
+#include "components/selection/ComponentCatalog.hpp"
+#include <stdexcept>
 #include <utility>
 #include "components/ComponentBuilder.tpp"
 
-ComponentBuilder::ComponentBuilder(std::shared_ptr<Component> ptr) {
+ComponentBuilder::ComponentBuilder(
+    std::shared_ptr<Component> ptr,
+    std::shared_ptr<circuit::BuildContext> build_context)
+    : build_context_(std::move(build_context)) {
     if (ptr) {
         contextStack.push_back(std::move(ptr));
     }
+}
+
+std::shared_ptr<IOComponent> ComponentBuilder::addByContract(
+    circuit::ComponentBuildRequest request) {
+    if (!build_context_) {
+        throw std::runtime_error("Contract-based construction requires a BuildContext");
+    }
+    if (request.instance_name.empty()) {
+        throw std::invalid_argument("Contract build request requires an instance name");
+    }
+    const std::string scoped_name = getScopedName(request.instance_name);
+    if (namedComponents.count(scoped_name)) {
+        return std::dynamic_pointer_cast<IOComponent>(namedComponents[scoped_name]);
+    }
+
+    auto component = build_context_->catalog().createChild(request, build_context_);
+    auto io_component = std::dynamic_pointer_cast<IOComponent>(component);
+    if (!io_component) {
+        throw std::runtime_error("Contract implementation did not create an IOComponent");
+    }
+    namedComponents[scoped_name] = component;
+    if (auto root = getCurrentRoot()) {
+        root->addChild(component);
+    }
+    return io_component;
+}
+
+std::shared_ptr<IOComponent> ComponentBuilder::add(
+    const circuit::ComponentFamily& family,
+    std::string instance_name,
+    circuit::ParameterMap parameters,
+    std::vector<std::string> required_capabilities,
+    std::string semantic_domain,
+    std::string observation) {
+    if (!build_context_) {
+        const std::string scoped_name = getScopedName(instance_name);
+        if (namedComponents.count(scoped_name)) {
+            return std::dynamic_pointer_cast<IOComponent>(
+                namedComponents[scoped_name]);
+        }
+        auto component = family.createDefault(instance_name, nullptr);
+        auto io_component = std::dynamic_pointer_cast<IOComponent>(component);
+        if (!io_component) {
+            throw std::runtime_error(
+                "Component family default did not create an IOComponent");
+        }
+        namedComponents[scoped_name] = component;
+        if (auto root = getCurrentRoot()) {
+            root->addChild(component);
+        }
+        return io_component;
+    }
+    return addByContract(family.request(
+        std::move(instance_name),
+        std::move(parameters),
+        std::move(required_capabilities),
+        std::move(semantic_domain),
+        std::move(observation)));
+}
+
+const std::shared_ptr<circuit::BuildContext>& ComponentBuilder::getBuildContext() const {
+    return build_context_;
 }
 
 std::shared_ptr<Component> ComponentBuilder::getCurrentRoot() {

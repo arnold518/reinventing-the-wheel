@@ -2,7 +2,7 @@
 
 #include "simulator/SimulationTest.hpp"
 
-class MemoryBitTest : public SimulationTest {
+class MemoryBitStructuralContractTest : public SimulationTest {
 public:
     void setupCircuit() override;
     std::string getTestName() const override;
@@ -15,7 +15,7 @@ protected:
     void verifyResults() override;
 };
 
-class BehavioralMemoryBitTest : public SimulationTest {
+class MemoryBitBehavioralContractTest : public SimulationTest {
 public:
     void setupCircuit() override;
     std::string getTestName() const override;
@@ -28,7 +28,7 @@ protected:
     void verifyResults() override;
 };
 
-class BehavioralMemory64Kx32Test : public SimulationTest {
+class Memory64Kx32Test : public SimulationTest {
 public:
     void setupCircuit() override;
     std::string getTestName() const override;
@@ -41,7 +41,7 @@ protected:
     void verifyResults() override;
 };
 
-class Register32Test : public SimulationTest {
+class Register32StructuralContractTest : public SimulationTest {
 public:
     void setupCircuit() override;
     std::string getTestName() const override;
@@ -52,6 +52,18 @@ protected:
     void buildCircuit() override {}
     void setInitialState() override;
     void verifyResults() override;
+};
+
+class Register32CellArrayContractTest : public Register32StructuralContractTest {
+public:
+    void setupCircuit() override;
+    std::string getTestName() const override;
+};
+
+class Register32BehavioralContractTest : public Register32StructuralContractTest {
+public:
+    void setupCircuit() override;
+    std::string getTestName() const override;
 };
 
 class RegisterFile4x32Test : public SimulationTest {
@@ -67,7 +79,7 @@ protected:
     void verifyResults() override;
 };
 
-class RegisterFile32x32Test : public SimulationTest {
+class RegisterFile32x32StructuralContractTest : public SimulationTest {
 public:
     void setupCircuit() override;
     std::string getTestName() const override;
@@ -80,13 +92,13 @@ protected:
     void verifyResults() override;
 };
 
-class BehavioralRegisterFile32x32Test : public RegisterFile32x32Test {
+class RegisterFile32x32BehavioralContractTest : public RegisterFile32x32StructuralContractTest {
 public:
     void setupCircuit() override;
     std::string getTestName() const override;
 };
 
-class BehavioralRegisterFile32x32UnknownTest : public SimulationTest {
+class RegisterFile32x32BehavioralUnknownPolicyTest : public SimulationTest {
 public:
     void setupCircuit() override;
     std::string getTestName() const override;

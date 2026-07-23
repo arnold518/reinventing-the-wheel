@@ -99,6 +99,7 @@ const app = {
   width: 1,
   height: 1,
   scenario: null,
+  layoutKey: null,
   rootId: null,
   timestamps: [0],
   checkpoints: [],
@@ -342,8 +343,13 @@ function getTypeLayoutFor(component) {
   const typeLayouts = app.layout.type_layouts || {};
   const baseLayout = typeLayouts[component.type] || {};
   const layoutKey = componentLayoutKey(component);
-  if (layoutKey === component.type) return baseLayout;
-  return mergeLayout(baseLayout, typeLayouts[layoutKey] || {});
+  const specializedLayout = layoutKey === component.type
+    ? baseLayout
+    : mergeLayout(baseLayout, typeLayouts[layoutKey] || {});
+  const fingerprint = component.profileFingerprint;
+  if (!fingerprint || fingerprint === "explicit") return specializedLayout;
+  const profileLayout = (((app.layout.profile_layouts || {})[fingerprint] || {})[layoutKey]) || {};
+  return mergeLayout(specializedLayout, profileLayout);
 }
 
 function getLayoutFor(component) {
@@ -366,7 +372,7 @@ function mergeLayout(base, override) {
 
 function getRootLayoutFor(component) {
   const typeLayout = getTypeLayoutFor(component);
-  const rootLayout = (app.layout.root_layouts && app.layout.root_layouts[app.scenario]) || {};
+  const rootLayout = (app.layout.root_layouts && app.layout.root_layouts[app.layoutKey]) || {};
   return mergeLayout(typeLayout, rootLayout);
 }
 
@@ -497,15 +503,22 @@ function redoLayoutChange() {
   updateLayoutControls();
 }
 
-function migrateLegacyLayoutPayload(payload) {
+function normalizeLayoutPayload(payload) {
+  app.layout.schema_version = Number(app.layout.schema_version || 2);
   app.layout.type_layouts = app.layout.type_layouts || {};
+  app.layout.profile_layouts = app.layout.profile_layouts || {};
   app.layout.root_layouts = app.layout.root_layouts || {};
 
-  const legacyRootLayout = payload.rootId
+  const instanceRootLayout = payload.rootId
     && app.layout.instance_layouts
     && app.layout.instance_layouts[payload.rootId];
-  if (legacyRootLayout && !app.layout.root_layouts[payload.scenario]) {
-    app.layout.root_layouts[payload.scenario] = cloneJson(legacyRootLayout);
+  if (instanceRootLayout && !app.layout.root_layouts[app.layoutKey]) {
+    app.layout.root_layouts[app.layoutKey] = cloneJson(instanceRootLayout);
+  }
+
+  const scenarioRootLayout = app.layout.root_layouts[payload.scenario];
+  if (app.layoutKey !== payload.scenario && scenarioRootLayout && !app.layout.root_layouts[app.layoutKey]) {
+    app.layout.root_layouts[app.layoutKey] = cloneJson(scenarioRootLayout);
   }
 }
 
@@ -513,6 +526,17 @@ function typeLayoutEntryFor(componentType) {
   if (!app.layout.type_layouts) app.layout.type_layouts = {};
   if (!app.layout.type_layouts[componentType]) app.layout.type_layouts[componentType] = {};
   return app.layout.type_layouts[componentType];
+}
+
+function profileLayoutEntryFor(component) {
+  const fingerprint = component.profileFingerprint;
+  if (!fingerprint || fingerprint === "explicit") return null;
+  if (!app.layout.profile_layouts) app.layout.profile_layouts = {};
+  if (!app.layout.profile_layouts[fingerprint]) app.layout.profile_layouts[fingerprint] = {};
+  const profile = app.layout.profile_layouts[fingerprint];
+  const layoutKey = componentLayoutKey(component);
+  if (!profile[layoutKey]) profile[layoutKey] = {};
+  return profile[layoutKey];
 }
 
 function colorToHex(color) {
@@ -546,11 +570,18 @@ function getChildLayout(parent, child) {
 function childEntryFor(parent, child) {
   if (parent.depth === 0) {
     if (!app.layout.root_layouts) app.layout.root_layouts = {};
-    if (!app.layout.root_layouts[app.scenario]) app.layout.root_layouts[app.scenario] = {};
-    const parentLayout = app.layout.root_layouts[app.scenario];
+    if (!app.layout.root_layouts[app.layoutKey]) app.layout.root_layouts[app.layoutKey] = {};
+    const parentLayout = app.layout.root_layouts[app.layoutKey];
     if (!parentLayout.children) parentLayout.children = {};
     if (!parentLayout.children[child.name]) parentLayout.children[child.name] = {};
     return parentLayout.children[child.name];
+  }
+
+  const profileLayout = profileLayoutEntryFor(parent);
+  if (profileLayout) {
+    if (!profileLayout.children) profileLayout.children = {};
+    if (!profileLayout.children[child.name]) profileLayout.children[child.name] = {};
+    return profileLayout.children[child.name];
   }
 
   const parentLayoutKey = componentLayoutKey(parent);
@@ -582,7 +613,12 @@ function requireChildLayout(parent, child) {
     && Number.isFinite(Number(relPos[1]));
   const validRelWidth = relWidth != null && Number.isFinite(Number(relWidth));
   if (!validRelPos || !validRelWidth) {
-    const scope = parent.depth === 0 ? `root_layouts.${app.scenario}` : `type_layouts.${componentLayoutKey(parent)}`;
+    const fingerprint = parent.profileFingerprint;
+    const scope = parent.depth === 0
+      ? `root_layouts.${app.layoutKey}`
+      : fingerprint && fingerprint !== "explicit"
+        ? `profile_layouts.${fingerprint}.${componentLayoutKey(parent)}`
+        : `type_layouts.${componentLayoutKey(parent)}`;
     throw new Error(`Missing layout for ${scope}.children.${child.name}; reload to let the server regenerate layout.json.`);
   }
   return layout;
@@ -1877,7 +1913,7 @@ function drawRewireContents(component, parts) {
   });
 }
 
-function drawBehavioralMemoryBitValue(component, parts) {
+function drawMemoryBitValue(component, parts) {
   const qPin = pinByName(component.outputPins, "Q");
   const value = qPin ? pinValue(qPin) : "X";
   const screenRect = rectToScreenRect(parts.bodyRect);
@@ -1992,7 +2028,7 @@ function drawClockGeneratorContents(component, parts) {
   ctx.restore();
 }
 
-function drawBehavioralRegisterFileContents(component, parts) {
+function drawRegisterFileContents(component, parts) {
   const state = app.componentStates.get(component.id);
   if (!state || !Array.isArray(state.registers)) return;
 
@@ -2179,7 +2215,7 @@ function drawMemoryScrollControls(componentId, controlRect, offset, maxOffset, s
   app.memoryScrollControls.push({ componentId, direction: "down", rect: downRect, enabled: downEnabled, maxOffset, step });
 }
 
-function drawBehavioralMemory64Kx32Contents(component, parts) {
+function drawMemory64Kx32Contents(component, parts) {
   const state = app.componentStates.get(component.id);
   if (!state || !state.supported) return;
 
@@ -2326,11 +2362,11 @@ function drawComponentForeground(component, vr) {
   drawDefaultComponentForeground(component, parts);
   const gateKind = basicLogicGateKind(component);
   if (gateKind) drawLogicGateSymbol(component, parts, gateKind);
-  if (component.type === "BehavioralMemoryBit") drawBehavioralMemoryBitValue(component, parts);
-  if (component.type === "BehavioralRegisterFile32x32") drawBehavioralRegisterFileContents(component, parts);
+  if (component.type === "MemoryBit") drawMemoryBitValue(component, parts);
+  if (component.type === "RegisterFile32x32") drawRegisterFileContents(component, parts);
   if (component.type === "ClockGenerator") drawClockGeneratorContents(component, parts);
   if (component.type === "ConstantValue") drawConstantValueContents(component, parts);
-  if (component.type === "BehavioralMemory64Kx32") drawBehavioralMemory64Kx32Contents(component, parts);
+  if (component.type === "Memory64Kx32") drawMemory64Kx32Contents(component, parts);
   if (component.type === "BitSplitter") drawBitSplitterContents(component, parts);
   if (component.type === "BitJoiner") drawBitJoinerContents(component, parts);
   if (component.type === "Rewire") drawRewireContents(component, parts);
@@ -2756,9 +2792,13 @@ function showComponentInspector(component) {
   const path = componentPath(component);
 
   ui.inspectorTitle.textContent = component.name;
-  ui.inspectorSubtitle.textContent = layoutKey === component.type
+  const baseSubtitle = layoutKey === component.type
     ? `${component.type} | depth ${component.depth}`
     : `${component.type} | layout ${layoutKey} | depth ${component.depth}`;
+  const selectionSubtitle = component.fidelity
+    ? ` | ${component.fidelity} | ${component.implementationId}`
+    : "";
+  ui.inspectorSubtitle.textContent = `${baseSubtitle}${selectionSubtitle}`;
   ui.inspectorPath.textContent = path;
   ui.inspectorPath.title = path;
   setSectionVisible(ui.selectionInfoSection, false);
@@ -3166,8 +3206,8 @@ function setTimeLabel(state) {
 
 function statefulOverlayComponents() {
   return app.componentOrder.filter((component) => (
-    component.type === "BehavioralRegisterFile32x32"
-    || component.type === "BehavioralMemory64Kx32"
+    component.type === "RegisterFile32x32"
+    || component.type === "Memory64Kx32"
   ));
 }
 
@@ -3274,11 +3314,12 @@ function showError(error) {
 
 function buildLocalModel(payload) {
   app.scenario = payload.scenario;
+  app.layoutKey = payload.layoutKey || payload.scenario;
   app.rootId = payload.rootId;
   app.timestamps = payload.timestamps && payload.timestamps.length ? payload.timestamps : [0];
   app.checkpoints = (payload.checkpoints || []).filter((checkpoint) => Number.isFinite(Number(checkpoint.index)));
   app.layout = payload.layout;
-  migrateLegacyLayoutPayload(payload);
+  normalizeLayoutPayload(payload);
   app.savedLayout = cloneJson(app.layout);
   resetLayoutHistory();
   app.settings = app.layout.default_settings || {};

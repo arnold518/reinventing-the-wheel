@@ -34,7 +34,7 @@ constexpr uint8_t writeback(RV32IWritebackSource source) {
     return 0;
 }
 
-// This encoding is the external BehavioralMemory64Kx32 SIZE contract.
+// This encoding is the external Memory64Kx32 SIZE contract.
 constexpr uint8_t memorySize(RV32IMemorySize size) {
     switch (size) {
         case RV32IMemorySize::Byte: return 0;

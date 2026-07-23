@@ -1,6 +1,11 @@
 #pragma once
 
 #include "components/IOComponent.hpp"
+#include "components/selection/ComponentFamily.hpp"
+
+namespace circuit::families {
+extern const ComponentFamily MemoryBit;
+}
 
 class MemoryBit : public IOComponent {
 public:

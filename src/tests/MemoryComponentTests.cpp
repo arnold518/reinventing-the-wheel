@@ -3,13 +3,16 @@
 #include "basic/Wire.hpp"
 #include "components/Component.hpp"
 #include "components/ComponentBuilder.hpp"
-#include "modules/memory/BehavioralMemory64Kx32.hpp"
-#include "modules/memory/BehavioralRegisterFile32x32.hpp"
-#include "modules/memory/BehavioralMemoryBit.hpp"
+#include "components/capabilities/RegisterStateView.hpp"
+#include "components/selection/BuildProfile.hpp"
+#include "components/selection/BuiltinComponentCatalog.hpp"
+#include "components/selection/ComponentFamily.hpp"
+#include "modules/memory/Memory64Kx32.hpp"
 #include "modules/memory/Memory4x32.hpp"
 #include "modules/memory/Memory32x32.hpp"
 #include "modules/memory/MemoryBit.hpp"
 #include "modules/memory/Register32.hpp"
+#include "modules/memory/Register32BitCellArray.hpp"
 #include "modules/memory/RegisterFile32x32.hpp"
 #include "modules/memory/RegisterFile4x32.hpp"
 #include "simulator/Event.hpp"
@@ -22,6 +25,22 @@
 #include <vector>
 
 namespace {
+std::shared_ptr<Component> createFamilyRoot(
+    const circuit::ComponentFamily& family,
+    circuit::Fidelity fidelity,
+    const std::string& name) {
+    auto profile = circuit::BuildProfileBuilder(
+        "contract-test-" + circuit::toString(fidelity))
+        .addRule(circuit::preferFidelity(
+            fidelity,
+            circuit::ProfileSelector::exactPath(name),
+            "contract test selects the requested fidelity"))
+        .build();
+    return circuit::builtinComponentCatalog()
+        .createRoot(family.request(name), std::move(profile))
+        .root;
+}
+
 void requireMemory(bool condition, const std::string& message) {
     if (!condition) {
         throw std::runtime_error(message);
@@ -99,7 +118,7 @@ std::vector<LogicValue> unknownWord32() {
 void expectWireAt(Simulator& sim,
                   const std::shared_ptr<Wire<>>& wire,
                   const ExpectedValue& expected,
-                  const char* test_name = "MemoryBitTest") {
+                  const char* test_name = "MemoryBitStructuralContractTest") {
     assert(wire && "Missing wire for MemoryBit timestamp verification");
     sim.setCircuitStateAtTime(expected.time);
     const auto actual = wire->getSingleValue();
@@ -114,7 +133,7 @@ void expectWireAt(Simulator& sim,
 void expectRegisterAt(Simulator& sim,
                       const std::shared_ptr<Wire<32>>& wire,
                       const ExpectedWord& expected,
-                      const char* test_name = "Register32Test") {
+                      const char* test_name = "Register32StructuralContractTest") {
     assert(wire && "Missing Register32 output wire");
     sim.setCircuitStateAtTime(expected.time);
     const auto actual = static_cast<uint32_t>(wire->getValue());
@@ -129,7 +148,7 @@ void expectRegisterAt(Simulator& sim,
 void expectRegisterVectorAt(Simulator& sim,
                             const std::shared_ptr<Wire<32>>& wire,
                             const ExpectedRegisterVector& expected,
-                            const char* test_name = "Register32Test") {
+                            const char* test_name = "Register32StructuralContractTest") {
     assert(wire && "Missing Register32 output wire");
     assert(expected.values.size() == 32 && "Register32 expected vector must be 32 bits");
     sim.setCircuitStateAtTime(expected.time);
@@ -145,17 +164,19 @@ void expectRegisterVectorAt(Simulator& sim,
     }
 }
 
-void expectBehavioralRegisterStateAt(const BehavioralRegisterFile32x32& register_file,
-                                     size_t time,
-                                     size_t register_index,
-                                     const std::vector<LogicValue>& expected,
-                                     const char* label,
-                                     const char* test_name) {
-    assert(register_index < 32 && "Behavioral register index must be in x0..x31");
-    assert(expected.size() == 32 && "Behavioral register expected vector must be 32 bits");
+void expectRegisterStateAt(Simulator& simulator,
+                           const RegisterStateView& register_file,
+                           size_t time,
+                           size_t register_index,
+                           const std::vector<LogicValue>& expected,
+                           const char* label,
+                           const char* test_name) {
+    assert(register_index < 32 && "Register index must be in x0..x31");
+    assert(expected.size() == 32 && "Register expected vector must be 32 bits");
+    simulator.setCircuitStateAtTime(time);
     const auto state = register_file.getRegisterStateAtTime(time);
-    assert(state.size() == 32 && "Behavioral register API must return 32 words");
-    assert(state[register_index].size() == 32 && "Behavioral register API word must be 32 bits");
+    assert(state.size() == 32 && "Register-state capability must return 32 words");
+    assert(state[register_index].size() == 32 && "Register-state capability word must be 32 bits");
     for (size_t bit_index = 0; bit_index < 32; ++bit_index) {
         if (state[register_index][bit_index] != expected[bit_index]) {
             std::cerr << test_name << " API failed at t=" << time
@@ -163,30 +184,33 @@ void expectBehavioralRegisterStateAt(const BehavioralRegisterFile32x32& register
                       << " bit " << bit_index
                       << ": expected " << expected[bit_index]
                       << ", got " << state[register_index][bit_index] << std::endl;
-            assert(false && "Behavioral register API state mismatch");
+            assert(false && "Register-state capability mismatch");
         }
     }
 }
 
-void expectBehavioralRegisterStateAt(const BehavioralRegisterFile32x32& register_file,
-                                     size_t time,
-                                     size_t register_index,
-                                     uint32_t expected,
-                                     const char* label,
-                                     const char* test_name) {
-    expectBehavioralRegisterStateAt(register_file, time, register_index, bits32(expected), label, test_name);
+void expectRegisterStateAt(Simulator& simulator,
+                           const RegisterStateView& register_file,
+                           size_t time,
+                           size_t register_index,
+                           uint32_t expected,
+                           const char* label,
+                           const char* test_name) {
+    expectRegisterStateAt(
+        simulator, register_file, time, register_index, bits32(expected), label,
+        test_name);
 }
 
-void expectBehavioralMemoryWordAt(const BehavioralMemory64Kx32& memory,
-                                  size_t time,
-                                  uint32_t address,
-                                  const std::vector<LogicValue>& expected,
-                                  const char* label,
-                                  const char* test_name) {
-    assert(expected.size() == 32 && "Behavioral memory expected word must be 32 bits");
+void expectMemoryWordAt(const Memory64Kx32& memory,
+                        size_t time,
+                        uint32_t address,
+                        const std::vector<LogicValue>& expected,
+                        const char* label,
+                        const char* test_name) {
+    assert(expected.size() == 32 && "Memory expected word must be 32 bits");
     const auto words = memory.getWordsAtTime(time, address, 1);
-    assert(words.size() == 1 && "Behavioral memory API must return the requested word");
-    assert(words[0].first == (address & ~uint32_t{0x3}) && "Behavioral memory API must return aligned word address");
+    assert(words.size() == 1 && "Memory API must return the requested word");
+    assert(words[0].first == (address & ~uint32_t{0x3}) && "Memory API must return aligned word address");
     for (size_t bit_index = 0; bit_index < 32; ++bit_index) {
         if (words[0].second[bit_index] != expected[bit_index]) {
             std::cerr << test_name << " API failed at t=" << time
@@ -194,18 +218,18 @@ void expectBehavioralMemoryWordAt(const BehavioralMemory64Kx32& memory,
                       << " bit " << bit_index
                       << ": expected " << expected[bit_index]
                       << ", got " << words[0].second[bit_index] << std::endl;
-            assert(false && "Behavioral memory API word mismatch");
+            assert(false && "Memory API word mismatch");
         }
     }
 }
 
-void expectBehavioralMemoryWordAt(const BehavioralMemory64Kx32& memory,
-                                  size_t time,
-                                  uint32_t address,
-                                  uint32_t expected,
-                                  const char* label,
-                                  const char* test_name) {
-    expectBehavioralMemoryWordAt(memory, time, address, bits32(expected), label, test_name);
+void expectMemoryWordAt(const Memory64Kx32& memory,
+                        size_t time,
+                        uint32_t address,
+                        uint32_t expected,
+                        const char* label,
+                        const char* test_name) {
+    expectMemoryWordAt(memory, time, address, bits32(expected), label, test_name);
 }
 
 uint32_t registerFilePattern(uint32_t reg_index) {
@@ -217,20 +241,23 @@ uint32_t memoryWordPattern(uint32_t word_index) {
 }
 }
 
-std::string MemoryBitTest::getTestName() const {
-    return "MemoryBitTest";
+std::string MemoryBitStructuralContractTest::getTestName() const {
+    return "MemoryBitStructuralContractTest";
 }
 
-void MemoryBitTest::setupCircuit() {
-    root = Component::create<MemoryBit>("MEMORY_BIT_ROOT");
+void MemoryBitStructuralContractTest::setupCircuit() {
+    root = createFamilyRoot(
+        circuit::families::MemoryBit,
+        circuit::Fidelity::Structural,
+        "MEMORY_BIT_ROOT");
     builder = std::make_unique<ComponentBuilder>(root);
     buildCircuit();
     setInitialState();
 }
 
-void MemoryBitTest::setInitialState() {
+void MemoryBitStructuralContractTest::setInitialState() {
     auto io_root = std::dynamic_pointer_cast<IOComponent>(root);
-    assert(io_root && "MemoryBitTest requires IOComponent root");
+    assert(io_root && "MemoryBitStructuralContractTest requires IOComponent root");
 
     auto d_wire = builder->addNewWire("D_IN", nullptr, {io_root->getInputPin("D")});
     auto we_wire = builder->addNewWire("WE_IN", nullptr, {io_root->getInputPin("WE")});
@@ -284,7 +311,7 @@ void MemoryBitTest::setInitialState() {
     drive(*sim, 610, clk_wire, true);
 }
 
-void MemoryBitTest::verifyResults() {
+void MemoryBitStructuralContractTest::verifyResults() {
     auto q_wire = builder->getWire("Q_OUT");
     const ExpectedValue expected[] = {
         {20, LogicValue::LOW, "reset drives Q low"},
@@ -304,11 +331,11 @@ void MemoryBitTest::verifyResults() {
     }
 }
 
-size_t MemoryBitTest::getRunDuration() const {
+size_t MemoryBitStructuralContractTest::getRunDuration() const {
     return 660;
 }
 
-std::vector<SimulationTest::SimulationCheckpoint> MemoryBitTest::getCheckpoints() const {
+std::vector<SimulationTest::SimulationCheckpoint> MemoryBitStructuralContractTest::getCheckpoints() const {
     return {
         {20, "Reset clear", "RST=1 initializes Q=0", 0},
         {95, "Hold while disabled", "D=1, WE=0, rising CLK -> Q remains 0", 1},
@@ -322,20 +349,23 @@ std::vector<SimulationTest::SimulationCheckpoint> MemoryBitTest::getCheckpoints(
     };
 }
 
-std::string BehavioralMemoryBitTest::getTestName() const {
-    return "BehavioralMemoryBitTest";
+std::string MemoryBitBehavioralContractTest::getTestName() const {
+    return "MemoryBitBehavioralContractTest";
 }
 
-void BehavioralMemoryBitTest::setupCircuit() {
-    root = Component::create<BehavioralMemoryBit>("BEHAVIORAL_MEMORY_BIT_ROOT");
+void MemoryBitBehavioralContractTest::setupCircuit() {
+    root = createFamilyRoot(
+        circuit::families::MemoryBit,
+        circuit::Fidelity::Behavioral,
+        "MEMORY_BIT_ROOT");
     builder = std::make_unique<ComponentBuilder>(root);
     buildCircuit();
     setInitialState();
 }
 
-void BehavioralMemoryBitTest::setInitialState() {
+void MemoryBitBehavioralContractTest::setInitialState() {
     auto io_root = std::dynamic_pointer_cast<IOComponent>(root);
-    assert(io_root && "BehavioralMemoryBitTest requires IOComponent root");
+    assert(io_root && "MemoryBitBehavioralContractTest requires IOComponent root");
 
     auto d_wire = builder->addNewWire("D_IN", nullptr, {io_root->getInputPin("D")});
     auto we_wire = builder->addNewWire("WE_IN", nullptr, {io_root->getInputPin("WE")});
@@ -389,7 +419,7 @@ void BehavioralMemoryBitTest::setInitialState() {
     drive(*sim, 610, clk_wire, true);
 }
 
-void BehavioralMemoryBitTest::verifyResults() {
+void MemoryBitBehavioralContractTest::verifyResults() {
     auto q_wire = builder->getWire("Q_OUT");
     const ExpectedValue expected[] = {
         {5, LogicValue::LOW, "reset drives Q low"},
@@ -405,15 +435,15 @@ void BehavioralMemoryBitTest::verifyResults() {
     };
 
     for (const auto& value : expected) {
-        expectWireAt(*sim, q_wire, value, "BehavioralMemoryBitTest");
+        expectWireAt(*sim, q_wire, value, "MemoryBitBehavioralContractTest");
     }
 }
 
-size_t BehavioralMemoryBitTest::getRunDuration() const {
+size_t MemoryBitBehavioralContractTest::getRunDuration() const {
     return 630;
 }
 
-std::vector<SimulationTest::SimulationCheckpoint> BehavioralMemoryBitTest::getCheckpoints() const {
+std::vector<SimulationTest::SimulationCheckpoint> MemoryBitBehavioralContractTest::getCheckpoints() const {
     return {
         {5, "Reset clear", "RST=1 initializes Q=0", 0},
         {65, "Hold while disabled", "D=1, WE=0, rising CLK -> Q remains 0", 1},
@@ -427,20 +457,23 @@ std::vector<SimulationTest::SimulationCheckpoint> BehavioralMemoryBitTest::getCh
     };
 }
 
-std::string BehavioralMemory64Kx32Test::getTestName() const {
-    return "BehavioralMemory64Kx32Test";
+std::string Memory64Kx32Test::getTestName() const {
+    return "Memory64Kx32Test";
 }
 
-void BehavioralMemory64Kx32Test::setupCircuit() {
-    root = Component::create<BehavioralMemory64Kx32>("BEHAVIORAL_MEMORY64KX32_ROOT");
+void Memory64Kx32Test::setupCircuit() {
+    root = createFamilyRoot(
+        circuit::families::Memory64Kx32,
+        circuit::Fidelity::Behavioral,
+        "MEMORY64KX32_ROOT");
     builder = std::make_unique<ComponentBuilder>(root);
     buildCircuit();
     setInitialState();
 }
 
-void BehavioralMemory64Kx32Test::setInitialState() {
+void Memory64Kx32Test::setInitialState() {
     auto io_root = std::dynamic_pointer_cast<IOComponent>(root);
-    assert(io_root && "BehavioralMemory64Kx32Test requires IOComponent root");
+    assert(io_root && "Memory64Kx32Test requires IOComponent root");
 
     auto addr_wire = builder->addNewWire<32>("ADDR_IN", nullptr, {io_root->getInputPin<32>("ADDR")});
     auto write_data_wire = builder->addNewWire<32>("WRITE_DATA_IN", nullptr, {io_root->getInputPin<32>("WRITE_DATA")});
@@ -576,29 +609,29 @@ void BehavioralMemory64Kx32Test::setInitialState() {
     drive2(*sim, 4120, size_wire, 2);
 }
 
-void BehavioralMemory64Kx32Test::verifyResults() {
+void Memory64Kx32Test::verifyResults() {
     auto read_data_wire = std::dynamic_pointer_cast<Wire<32>>(builder->getWireDynamic("READ_DATA_OUT"));
     auto ready_wire = builder->getWire("READY_OUT");
     auto fault_wire = builder->getWire("FAULT_OUT");
-    assert(read_data_wire && "BehavioralMemory64Kx32Test requires 32-bit READ_DATA_OUT wire");
-    assert(ready_wire && "BehavioralMemory64Kx32Test requires READY_OUT wire");
-    assert(fault_wire && "BehavioralMemory64Kx32Test requires FAULT_OUT wire");
+    assert(read_data_wire && "Memory64Kx32Test requires 32-bit READ_DATA_OUT wire");
+    assert(ready_wire && "Memory64Kx32Test requires READY_OUT wire");
+    assert(fault_wire && "Memory64Kx32Test requires FAULT_OUT wire");
 
-    expectWireAt(*sim, ready_wire, {120, LogicValue::HIGH, "READY is asserted"}, "BehavioralMemory64Kx32Test");
-    expectWireAt(*sim, fault_wire, {120, LogicValue::LOW, "valid reset read has no fault"}, "BehavioralMemory64Kx32Test");
-    expectRegisterAt(*sim, read_data_wire, {120, 0x00000000U, "reset clears word 0"}, "BehavioralMemory64Kx32Test");
-    expectRegisterAt(*sim, read_data_wire, {430, 0x12345678U, "word store and load at base"}, "BehavioralMemory64Kx32Test");
-    expectRegisterAt(*sim, read_data_wire, {760, 0x89abcdefU, "word store and load at final word"}, "BehavioralMemory64Kx32Test");
-    expectRegisterAt(*sim, read_data_wire, {1040, 0x01020304U, "word 1 store"}, "BehavioralMemory64Kx32Test");
-    expectRegisterAt(*sim, read_data_wire, {1320, 0x01020304U, "WRITE_EN=0 preserves word 1"}, "BehavioralMemory64Kx32Test");
-    expectRegisterAt(*sim, read_data_wire, {1660, 0x1234aa78U, "byte store updates one byte lane"}, "BehavioralMemory64Kx32Test");
-    expectRegisterAt(*sim, read_data_wire, {2060, 0xbeefaa78U, "halfword store updates two byte lanes"}, "BehavioralMemory64Kx32Test");
-    expectRegisterAt(*sim, read_data_wire, {2300, 0x000000efU, "LBU-style byte read"}, "BehavioralMemory64Kx32Test");
-    expectRegisterAt(*sim, read_data_wire, {2450, 0xffffffefU, "LB-style sign-extended byte read"}, "BehavioralMemory64Kx32Test");
-    expectRegisterAt(*sim, read_data_wire, {2600, 0x0000beefU, "LHU-style halfword read"}, "BehavioralMemory64Kx32Test");
-    expectRegisterAt(*sim, read_data_wire, {2750, 0xffffbeefU, "LH-style sign-extended halfword read"}, "BehavioralMemory64Kx32Test");
-    expectRegisterAt(*sim, read_data_wire, {3940, 0xbeefaa78U, "faulted write does not alter word 0"}, "BehavioralMemory64Kx32Test");
-    expectRegisterAt(*sim, read_data_wire, {4200, 0x00000000U, "reset clears final word"}, "BehavioralMemory64Kx32Test");
+    expectWireAt(*sim, ready_wire, {120, LogicValue::HIGH, "READY is asserted"}, "Memory64Kx32Test");
+    expectWireAt(*sim, fault_wire, {120, LogicValue::LOW, "valid reset read has no fault"}, "Memory64Kx32Test");
+    expectRegisterAt(*sim, read_data_wire, {120, 0x00000000U, "reset clears word 0"}, "Memory64Kx32Test");
+    expectRegisterAt(*sim, read_data_wire, {430, 0x12345678U, "word store and load at base"}, "Memory64Kx32Test");
+    expectRegisterAt(*sim, read_data_wire, {760, 0x89abcdefU, "word store and load at final word"}, "Memory64Kx32Test");
+    expectRegisterAt(*sim, read_data_wire, {1040, 0x01020304U, "word 1 store"}, "Memory64Kx32Test");
+    expectRegisterAt(*sim, read_data_wire, {1320, 0x01020304U, "WRITE_EN=0 preserves word 1"}, "Memory64Kx32Test");
+    expectRegisterAt(*sim, read_data_wire, {1660, 0x1234aa78U, "byte store updates one byte lane"}, "Memory64Kx32Test");
+    expectRegisterAt(*sim, read_data_wire, {2060, 0xbeefaa78U, "halfword store updates two byte lanes"}, "Memory64Kx32Test");
+    expectRegisterAt(*sim, read_data_wire, {2300, 0x000000efU, "LBU-style byte read"}, "Memory64Kx32Test");
+    expectRegisterAt(*sim, read_data_wire, {2450, 0xffffffefU, "LB-style sign-extended byte read"}, "Memory64Kx32Test");
+    expectRegisterAt(*sim, read_data_wire, {2600, 0x0000beefU, "LHU-style halfword read"}, "Memory64Kx32Test");
+    expectRegisterAt(*sim, read_data_wire, {2750, 0xffffbeefU, "LH-style sign-extended halfword read"}, "Memory64Kx32Test");
+    expectRegisterAt(*sim, read_data_wire, {3940, 0xbeefaa78U, "faulted write does not alter word 0"}, "Memory64Kx32Test");
+    expectRegisterAt(*sim, read_data_wire, {4200, 0x00000000U, "reset clears final word"}, "Memory64Kx32Test");
 
     const ExpectedValue expected_faults[] = {
         {3000, LogicValue::HIGH, "SIZE=11 faults"},
@@ -611,56 +644,56 @@ void BehavioralMemory64Kx32Test::verifyResults() {
     };
 
     for (const auto& expected : expected_faults) {
-        expectWireAt(*sim, fault_wire, expected, "BehavioralMemory64Kx32Test");
+        expectWireAt(*sim, fault_wire, expected, "Memory64Kx32Test");
     }
 
-    if (auto memory = std::dynamic_pointer_cast<BehavioralMemory64Kx32>(root)) {
-        expectBehavioralMemoryWordAt(
+    if (auto memory = std::dynamic_pointer_cast<Memory64Kx32>(root)) {
+        expectMemoryWordAt(
             *memory,
             430,
             0x00000000U,
             0x12345678U,
             "API exposes word store at base",
-            "BehavioralMemory64Kx32Test");
-        expectBehavioralMemoryWordAt(
+            "Memory64Kx32Test");
+        expectMemoryWordAt(
             *memory,
             760,
             0x0003fffcU,
             0x89abcdefU,
             "API exposes word store at memory limit",
-            "BehavioralMemory64Kx32Test");
-        expectBehavioralMemoryWordAt(
+            "Memory64Kx32Test");
+        expectMemoryWordAt(
             *memory,
             2060,
             0x00000000U,
             0xbeefaa78U,
             "API exposes byte and halfword stores inside word 0",
-            "BehavioralMemory64Kx32Test");
-        expectBehavioralMemoryWordAt(
+            "Memory64Kx32Test");
+        expectMemoryWordAt(
             *memory,
             2190,
             0x00000008U,
             0x00000000U,
             "API exposes zero store as a touched word",
-            "BehavioralMemory64Kx32Test");
-        expectBehavioralMemoryWordAt(
+            "Memory64Kx32Test");
+        expectMemoryWordAt(
             *memory,
             4200,
             0x0003fffcU,
             0x00000000U,
             "API exposes reset-cleared final word",
-            "BehavioralMemory64Kx32Test");
-        const auto all_touched = memory->getTouchedWordsAtTime(2190, BehavioralMemory64Kx32::capacityWords());
-        assert(all_touched.size() == 4 && "Behavioral memory API should return all touched words when uncapped");
-        assert(all_touched[0].first == 0x00000000U && "Behavioral memory touched words should be sorted by address");
-        assert(all_touched[1].first == 0x00000004U && "Behavioral memory touched words should include word 1");
-        assert(all_touched[2].first == 0x00000008U && "Behavioral memory touched words should include zero writes");
-        assert(all_touched[3].first == 0x0003fffcU && "Behavioral memory touched words should include the final word");
-        assert(memory->getTouchedWordCountAtTime(2060) == 3 && "Behavioral memory API should count three touched words");
-        assert(memory->getTouchedWordCountAtTime(2190) == 4 && "Behavioral memory API should count zero writes as touched");
-        assert(memory->getTouchedWordCountAtTime(4200) == 0 && "Behavioral memory API should count no touched words after reset");
-        assert(memory->getTouchedWordsAtTime(4200, BehavioralMemory64Kx32::capacityWords()).empty()
-               && "Behavioral memory API should return no touched words after reset");
+            "Memory64Kx32Test");
+        const auto all_touched = memory->getTouchedWordsAtTime(2190, Memory64Kx32::capacityWords());
+        assert(all_touched.size() == 4 && "Memory API should return all touched words when uncapped");
+        assert(all_touched[0].first == 0x00000000U && "Memory touched words should be sorted by address");
+        assert(all_touched[1].first == 0x00000004U && "Memory touched words should include word 1");
+        assert(all_touched[2].first == 0x00000008U && "Memory touched words should include zero writes");
+        assert(all_touched[3].first == 0x0003fffcU && "Memory touched words should include the final word");
+        assert(memory->getTouchedWordCountAtTime(2060) == 3 && "Memory API should count three touched words");
+        assert(memory->getTouchedWordCountAtTime(2190) == 4 && "Memory API should count zero writes as touched");
+        assert(memory->getTouchedWordCountAtTime(4200) == 0 && "Memory API should count no touched words after reset");
+        assert(memory->getTouchedWordsAtTime(4200, Memory64Kx32::capacityWords()).empty()
+               && "Memory API should return no touched words after reset");
 
         const auto first_bus_write = memory->getByteWritesInTimeRange(200, 400);
         requireMemory(first_bus_write.size() == 4,
@@ -681,24 +714,24 @@ void BehavioralMemory64Kx32Test::verifyResults() {
 
         memory->writeU32AtTime(5000, 0x00000120U, 0x0000002bU);
         assert(memory->getTouchedWordCountAtTime(4999) == 0 && "Future direct writes must not appear before their simulation time");
-        const auto direct_write_touched = memory->getTouchedWordsAtTime(5000, BehavioralMemory64Kx32::capacityWords());
+        const auto direct_write_touched = memory->getTouchedWordsAtTime(5000, Memory64Kx32::capacityWords());
         assert(direct_write_touched.size() == 1 && "Timed direct write should touch one word after reset");
         assert(direct_write_touched[0].first == 0x00000120U && "Timed direct write should report its word address");
-        expectBehavioralMemoryWordAt(
+        expectMemoryWordAt(
             *memory,
             5000,
             0x00000120U,
             0x0000002bU,
             "API exposes timed direct write at its simulation time",
-            "BehavioralMemory64Kx32Test");
+            "Memory64Kx32Test");
     }
 }
 
-size_t BehavioralMemory64Kx32Test::getRunDuration() const {
+size_t Memory64Kx32Test::getRunDuration() const {
     return 4300;
 }
 
-std::vector<SimulationTest::SimulationCheckpoint> BehavioralMemory64Kx32Test::getCheckpoints() const {
+std::vector<SimulationTest::SimulationCheckpoint> Memory64Kx32Test::getCheckpoints() const {
     return {
         {120, "Reset read", "Word 0 reads as 0x00000000 and FAULT=0", 0},
         {430, "SW/LW base", "Word store/load at address 0x00000000", 1},
@@ -720,20 +753,23 @@ std::vector<SimulationTest::SimulationCheckpoint> BehavioralMemory64Kx32Test::ge
     };
 }
 
-std::string Register32Test::getTestName() const {
-    return "Register32Test";
+std::string Register32StructuralContractTest::getTestName() const {
+    return "Register32StructuralContractTest";
 }
 
-void Register32Test::setupCircuit() {
-    root = Component::create<Register32>("REGISTER32_ROOT");
+void Register32StructuralContractTest::setupCircuit() {
+    root = createFamilyRoot(
+        circuit::families::Register32,
+        circuit::Fidelity::Structural,
+        "REGISTER32_ROOT");
     builder = std::make_unique<ComponentBuilder>(root);
     buildCircuit();
     setInitialState();
 }
 
-void Register32Test::setInitialState() {
+void Register32StructuralContractTest::setInitialState() {
     auto io_root = std::dynamic_pointer_cast<IOComponent>(root);
-    assert(io_root && "Register32Test requires IOComponent root");
+    assert(io_root && "Register32StructuralContractTest requires IOComponent root");
 
     auto d_wire = builder->addNewWire<32>("D_IN", nullptr, {io_root->getInputPin<32>("D")});
     auto we_wire = builder->addNewWire("WE_IN", nullptr, {io_root->getInputPin("WE")});
@@ -796,9 +832,9 @@ void Register32Test::setInitialState() {
     drive(*sim, 4220, rst_wire, true);
 }
 
-void Register32Test::verifyResults() {
+void Register32StructuralContractTest::verifyResults() {
     auto q_wire = std::dynamic_pointer_cast<Wire<32>>(builder->getWireDynamic("Q_OUT"));
-    assert(q_wire && "Register32Test requires 32-bit Q_OUT wire");
+    assert(q_wire && "Register32StructuralContractTest requires 32-bit Q_OUT wire");
 
     const ExpectedWord expected_words[] = {
         {90, 0x00000000U, "reset clears all bits"},
@@ -828,11 +864,11 @@ void Register32Test::verifyResults() {
     expectRegisterVectorAt(*sim, q_wire, {4170, expected_unknown, "captures one unknown data lane"});
 }
 
-size_t Register32Test::getRunDuration() const {
+size_t Register32StructuralContractTest::getRunDuration() const {
     return 4280;
 }
 
-std::vector<SimulationTest::SimulationCheckpoint> Register32Test::getCheckpoints() const {
+std::vector<SimulationTest::SimulationCheckpoint> Register32StructuralContractTest::getCheckpoints() const {
     std::vector<SimulationCheckpoint> checkpoints{
         {90, "Reset clear", "RST=1 clears Q to 0x00000000", 0},
         {170, "Hold disabled", "WE=0 blocks write of 0xffffffff", 1},
@@ -856,6 +892,31 @@ std::vector<SimulationTest::SimulationCheckpoint> Register32Test::getCheckpoints
     checkpoints.push_back({4170, "Capture unknown bit", "Only bit 13 is unknown in Q", 39});
     checkpoints.push_back({4260, "Reset clear", "RST=1 clears all 32 bits", 40});
     return checkpoints;
+}
+
+std::string Register32CellArrayContractTest::getTestName() const {
+    return "Register32CellArrayContractTest";
+}
+
+void Register32CellArrayContractTest::setupCircuit() {
+    root = Component::create<Register32BitCellArray>("REGISTER32_BIT_CELL_ARRAY_ROOT");
+    builder = std::make_unique<ComponentBuilder>(root);
+    buildCircuit();
+    setInitialState();
+}
+
+std::string Register32BehavioralContractTest::getTestName() const {
+    return "Register32BehavioralContractTest";
+}
+
+void Register32BehavioralContractTest::setupCircuit() {
+    root = createFamilyRoot(
+        circuit::families::Register32,
+        circuit::Fidelity::Behavioral,
+        "REGISTER32_ROOT");
+    builder = std::make_unique<ComponentBuilder>(root);
+    buildCircuit();
+    setInitialState();
 }
 
 std::string RegisterFile4x32Test::getTestName() const {
@@ -1037,20 +1098,23 @@ std::vector<SimulationTest::SimulationCheckpoint> RegisterFile4x32Test::getCheck
     };
 }
 
-std::string RegisterFile32x32Test::getTestName() const {
-    return "RegisterFile32x32Test";
+std::string RegisterFile32x32StructuralContractTest::getTestName() const {
+    return "RegisterFile32x32StructuralContractTest";
 }
 
-void RegisterFile32x32Test::setupCircuit() {
-    root = Component::create<RegisterFile32x32>("REGISTER_FILE32X32_ROOT");
+void RegisterFile32x32StructuralContractTest::setupCircuit() {
+    root = createFamilyRoot(
+        circuit::families::RegisterFile32x32,
+        circuit::Fidelity::Structural,
+        "REGISTER_FILE32X32_ROOT");
     builder = std::make_unique<ComponentBuilder>(root);
     buildCircuit();
     setInitialState();
 }
 
-void RegisterFile32x32Test::setInitialState() {
+void RegisterFile32x32StructuralContractTest::setInitialState() {
     auto io_root = std::dynamic_pointer_cast<IOComponent>(root);
-    assert(io_root && "RegisterFile32x32Test requires IOComponent root");
+    assert(io_root && "RegisterFile32x32StructuralContractTest requires IOComponent root");
 
     auto rs1_addr_wire = builder->addNewWire<5>("RS1_ADDR_IN", nullptr, {io_root->getInputPin<5>("RS1_ADDR")});
     auto rs2_addr_wire = builder->addNewWire<5>("RS2_ADDR_IN", nullptr, {io_root->getInputPin<5>("RS2_ADDR")});
@@ -1125,11 +1189,11 @@ void RegisterFile32x32Test::setInitialState() {
     drive5(*sim, 9820, rs2_addr_wire, 31);
 }
 
-void RegisterFile32x32Test::verifyResults() {
+void RegisterFile32x32StructuralContractTest::verifyResults() {
     auto rs1_wire = std::dynamic_pointer_cast<Wire<32>>(builder->getWireDynamic("RS1_DATA_OUT"));
     auto rs2_wire = std::dynamic_pointer_cast<Wire<32>>(builder->getWireDynamic("RS2_DATA_OUT"));
-    assert(rs1_wire && "RegisterFile32x32Test requires 32-bit RS1_DATA_OUT wire");
-    assert(rs2_wire && "RegisterFile32x32Test requires 32-bit RS2_DATA_OUT wire");
+    assert(rs1_wire && "RegisterFile32x32StructuralContractTest requires 32-bit RS1_DATA_OUT wire");
+    assert(rs2_wire && "RegisterFile32x32StructuralContractTest requires 32-bit RS2_DATA_OUT wire");
     const auto test_name = getTestName();
     const auto* test_name_c = test_name.c_str();
 
@@ -1169,36 +1233,41 @@ void RegisterFile32x32Test::verifyResults() {
     expectRegisterAt(*sim, rs1_wire, {9960, 0x00000000U, "reset clears x13"}, test_name_c);
     expectRegisterAt(*sim, rs2_wire, {9960, 0x00000000U, "reset clears x31"}, test_name_c);
 
-    if (auto behavioral = std::dynamic_pointer_cast<BehavioralRegisterFile32x32>(root)) {
-        expectBehavioralRegisterStateAt(
-            *behavioral,
+    if (auto register_view = std::dynamic_pointer_cast<RegisterStateView>(root)) {
+        expectRegisterStateAt(
+            *sim,
+            *register_view,
             850,
             1,
             registerFilePattern(1),
             "API exposes x1 after first write",
             test_name_c);
-        expectBehavioralRegisterStateAt(
-            *behavioral,
+        expectRegisterStateAt(
+            *sim,
+            *register_view,
             9760,
             13,
             expected_unknown_x13,
             "API preserves x13 unknown lane",
             test_name_c);
-        expectBehavioralRegisterStateAt(
-            *behavioral,
+        expectRegisterStateAt(
+            *sim,
+            *register_view,
             9960,
             31,
             0x00000000U,
             "API exposes reset-cleared x31",
             test_name_c);
+    } else {
+        assert(false && "Register-file family must provide register-state-view");
     }
 }
 
-size_t RegisterFile32x32Test::getRunDuration() const {
+size_t RegisterFile32x32StructuralContractTest::getRunDuration() const {
     return 10000;
 }
 
-std::vector<SimulationTest::SimulationCheckpoint> RegisterFile32x32Test::getCheckpoints() const {
+std::vector<SimulationTest::SimulationCheckpoint> RegisterFile32x32StructuralContractTest::getCheckpoints() const {
     std::vector<SimulationCheckpoint> checkpoints{
         {180, "Reset reads", "x0 and x1 both read as 0x00000000", 0},
         {520, "Ignore x0 write", "RD=0 does not store 0xffffffff", 1},
@@ -1221,31 +1290,37 @@ std::vector<SimulationTest::SimulationCheckpoint> RegisterFile32x32Test::getChec
     return checkpoints;
 }
 
-std::string BehavioralRegisterFile32x32Test::getTestName() const {
-    return "BehavioralRegisterFile32x32Test";
+std::string RegisterFile32x32BehavioralContractTest::getTestName() const {
+    return "RegisterFile32x32BehavioralContractTest";
 }
 
-void BehavioralRegisterFile32x32Test::setupCircuit() {
-    root = Component::create<BehavioralRegisterFile32x32>("BEHAVIORAL_REGISTER_FILE32X32_ROOT");
+void RegisterFile32x32BehavioralContractTest::setupCircuit() {
+    root = createFamilyRoot(
+        circuit::families::RegisterFile32x32,
+        circuit::Fidelity::Behavioral,
+        "REGISTER_FILE32X32_ROOT");
     builder = std::make_unique<ComponentBuilder>(root);
     buildCircuit();
     setInitialState();
 }
 
-std::string BehavioralRegisterFile32x32UnknownTest::getTestName() const {
-    return "BehavioralRegisterFile32x32UnknownTest";
+std::string RegisterFile32x32BehavioralUnknownPolicyTest::getTestName() const {
+    return "RegisterFile32x32BehavioralUnknownPolicyTest";
 }
 
-void BehavioralRegisterFile32x32UnknownTest::setupCircuit() {
-    root = Component::create<BehavioralRegisterFile32x32>("BEHAVIORAL_REGISTER_FILE32X32_UNKNOWN_ROOT");
+void RegisterFile32x32BehavioralUnknownPolicyTest::setupCircuit() {
+    root = createFamilyRoot(
+        circuit::families::RegisterFile32x32,
+        circuit::Fidelity::Behavioral,
+        "REGISTER_FILE32X32_UNKNOWN_ROOT");
     builder = std::make_unique<ComponentBuilder>(root);
     buildCircuit();
     setInitialState();
 }
 
-void BehavioralRegisterFile32x32UnknownTest::setInitialState() {
+void RegisterFile32x32BehavioralUnknownPolicyTest::setInitialState() {
     auto io_root = std::dynamic_pointer_cast<IOComponent>(root);
-    assert(io_root && "BehavioralRegisterFile32x32UnknownTest requires IOComponent root");
+    assert(io_root && "RegisterFile32x32BehavioralUnknownPolicyTest requires IOComponent root");
 
     auto rs1_addr_wire = builder->addNewWire<5>("RS1_ADDR_IN", nullptr, {io_root->getInputPin<5>("RS1_ADDR")});
     auto rs2_addr_wire = builder->addNewWire<5>("RS2_ADDR_IN", nullptr, {io_root->getInputPin<5>("RS2_ADDR")});
@@ -1318,51 +1393,51 @@ void BehavioralRegisterFile32x32UnknownTest::setInitialState() {
     drive5(*sim, 1200, rs2_addr_wire, 0);
 }
 
-void BehavioralRegisterFile32x32UnknownTest::verifyResults() {
+void RegisterFile32x32BehavioralUnknownPolicyTest::verifyResults() {
     auto rs1_wire = std::dynamic_pointer_cast<Wire<32>>(builder->getWireDynamic("RS1_DATA_OUT"));
     auto rs2_wire = std::dynamic_pointer_cast<Wire<32>>(builder->getWireDynamic("RS2_DATA_OUT"));
-    assert(rs1_wire && "BehavioralRegisterFile32x32UnknownTest requires 32-bit RS1_DATA_OUT wire");
-    assert(rs2_wire && "BehavioralRegisterFile32x32UnknownTest requires 32-bit RS2_DATA_OUT wire");
+    assert(rs1_wire && "RegisterFile32x32BehavioralUnknownPolicyTest requires 32-bit RS1_DATA_OUT wire");
+    assert(rs2_wire && "RegisterFile32x32BehavioralUnknownPolicyTest requires 32-bit RS2_DATA_OUT wire");
 
-    expectRegisterAt(*sim, rs1_wire, {80, 0x00000000U, "unknown-free reset reads zero"}, "BehavioralRegisterFile32x32UnknownTest");
-    expectRegisterAt(*sim, rs1_wire, {230, 0xaaaaaaaaU, "x3 stores first pattern"}, "BehavioralRegisterFile32x32UnknownTest");
-    expectRegisterAt(*sim, rs1_wire, {390, 0xaaaaaaaaU, "ambiguous x3/x7 read agrees bitwise"}, "BehavioralRegisterFile32x32UnknownTest");
+    expectRegisterAt(*sim, rs1_wire, {80, 0x00000000U, "unknown-free reset reads zero"}, "RegisterFile32x32BehavioralUnknownPolicyTest");
+    expectRegisterAt(*sim, rs1_wire, {230, 0xaaaaaaaaU, "x3 stores first pattern"}, "RegisterFile32x32BehavioralUnknownPolicyTest");
+    expectRegisterAt(*sim, rs1_wire, {390, 0xaaaaaaaaU, "ambiguous x3/x7 read agrees bitwise"}, "RegisterFile32x32BehavioralUnknownPolicyTest");
     expectRegisterVectorAt(
         *sim,
         rs1_wire,
         {590, unknownWord32(), "ambiguous x3/x7 read disagrees bitwise"},
-        "BehavioralRegisterFile32x32UnknownTest");
+        "RegisterFile32x32BehavioralUnknownPolicyTest");
     expectRegisterVectorAt(
         *sim,
         rs1_wire,
         {790, unknownWord32(), "ambiguous write contaminates x3"},
-        "BehavioralRegisterFile32x32UnknownTest");
+        "RegisterFile32x32BehavioralUnknownPolicyTest");
     expectRegisterVectorAt(
         *sim,
         rs2_wire,
         {790, unknownWord32(), "ambiguous write contaminates x7"},
-        "BehavioralRegisterFile32x32UnknownTest");
-    expectRegisterAt(*sim, rs1_wire, {940, 0x00000000U, "reset clears x3"}, "BehavioralRegisterFile32x32UnknownTest");
-    expectRegisterAt(*sim, rs2_wire, {940, 0x00000000U, "reset clears x7"}, "BehavioralRegisterFile32x32UnknownTest");
+        "RegisterFile32x32BehavioralUnknownPolicyTest");
+    expectRegisterAt(*sim, rs1_wire, {940, 0x00000000U, "reset clears x3"}, "RegisterFile32x32BehavioralUnknownPolicyTest");
+    expectRegisterAt(*sim, rs2_wire, {940, 0x00000000U, "reset clears x7"}, "RegisterFile32x32BehavioralUnknownPolicyTest");
     expectRegisterVectorAt(
         *sim,
         rs1_wire,
         {1120, unknownWord32(), "unknown REG_WRITE contaminates selected x9"},
-        "BehavioralRegisterFile32x32UnknownTest");
-    expectRegisterAt(*sim, rs2_wire, {1120, 0x00000000U, "x0 remains zero after unknown REG_WRITE"}, "BehavioralRegisterFile32x32UnknownTest");
+        "RegisterFile32x32BehavioralUnknownPolicyTest");
+    expectRegisterAt(*sim, rs2_wire, {1120, 0x00000000U, "x0 remains zero after unknown REG_WRITE"}, "RegisterFile32x32BehavioralUnknownPolicyTest");
     expectRegisterVectorAt(
         *sim,
         rs1_wire,
         {1240, unknownWord32(), "unknown reset contaminates writable x1"},
-        "BehavioralRegisterFile32x32UnknownTest");
-    expectRegisterAt(*sim, rs2_wire, {1240, 0x00000000U, "x0 remains zero after unknown reset"}, "BehavioralRegisterFile32x32UnknownTest");
+        "RegisterFile32x32BehavioralUnknownPolicyTest");
+    expectRegisterAt(*sim, rs2_wire, {1240, 0x00000000U, "x0 remains zero after unknown reset"}, "RegisterFile32x32BehavioralUnknownPolicyTest");
 }
 
-size_t BehavioralRegisterFile32x32UnknownTest::getRunDuration() const {
+size_t RegisterFile32x32BehavioralUnknownPolicyTest::getRunDuration() const {
     return 1260;
 }
 
-std::vector<SimulationTest::SimulationCheckpoint> BehavioralRegisterFile32x32UnknownTest::getCheckpoints() const {
+std::vector<SimulationTest::SimulationCheckpoint> RegisterFile32x32BehavioralUnknownPolicyTest::getCheckpoints() const {
     return {
         {80, "Reset", "x0 reads as zero after reset", 0},
         {230, "Write x3", "x3 stores 0xaaaaaaaa", 1},

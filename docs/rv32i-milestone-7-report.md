@@ -11,8 +11,8 @@ Implemented:
 - Milestone 7A instruction-lockstep test harness
 - incremental forward simulation support for instruction-boundary testing
 - final test contract for comparing RV32I components against `RV32IInstructionOracle`
-- `BehavioralRV32ICore`
-- `RV32ISystem`
+- `RV32IReferenceCore`
+- `RV32IReferenceSystem`
 - two-memory `RV32IInstructionOracle::step` overload for separate instruction/data memories
 - real RV32I assembly program lockstep test
 - visualizer scenario alias for the RV32I system program
@@ -30,11 +30,11 @@ Earlier milestones can decode, control, load, and execute RV32I instructions in 
 The target component shape is:
 
 ```text
-RV32ISystem
+RV32IReferenceSystem
   contains:
-    BehavioralRV32ICore CORE
-    BehavioralMemory64Kx32 INSTRUCTION_MEMORY
-    BehavioralMemory64Kx32 DATA_MEMORY
+    RV32IReferenceCore CORE
+    Memory64Kx32 INSTRUCTION_MEMORY
+    Memory64Kx32 DATA_MEMORY
 
   public pins:
     CLK
@@ -56,10 +56,10 @@ Milestone 7A harness:
 
 Milestone 7B system and core:
 
-- `include/modules/rv32i/BehavioralRV32ICore.hpp`
-- `src/modules/rv32i/BehavioralRV32ICore.cpp`
-- `include/modules/rv32i/RV32ISystem.hpp`
-- `src/modules/rv32i/RV32ISystem.cpp`
+- `include/modules/rv32i/RV32IReferenceCore.hpp`
+- `src/modules/rv32i/RV32IReferenceCore.cpp`
+- `include/modules/rv32i/RV32IReferenceSystem.hpp`
+- `src/modules/rv32i/RV32IReferenceSystem.cpp`
 - `include/tests/RV32ISystemTests.hpp`
 - `src/tests/RV32ISystemTests.cpp`
 
@@ -116,24 +116,24 @@ This is instruction-lockstep testing. It is not final-state-only testing and it 
 
 ## 7B Result
 
-Milestone 7B adds `RV32ISystem`, the first simulator system component that can execute an RV32I program while exposing the system shape in the visualizer.
+Milestone 7B adds `RV32IReferenceSystem`, the first simulator system component that can execute an RV32I program while exposing the system shape in the visualizer.
 
 Current implementation shape:
 
 ```text
-RV32ISystem : IOComponent
+RV32IReferenceSystem : IOComponent
   children:
-    CORE : BehavioralRV32ICore
-    INSTRUCTION_MEMORY : BehavioralMemory64Kx32
-    DATA_MEMORY : BehavioralMemory64Kx32
+    CORE : RV32IReferenceCore
+    INSTRUCTION_MEMORY : Memory64Kx32
+    DATA_MEMORY : Memory64Kx32
 
-BehavioralRV32ICore : BasicComponent
+RV32IReferenceCore : BasicComponent
   private architectural state:
     RV32IState state
     RV32IMemoryTrace last_data_memory_access
     map<uint32_t, uint8_t> last_data_memory_writes
 
-RV32ISystem public pins:
+RV32IReferenceSystem public pins:
     CLK
     RST
     ENABLE
@@ -150,12 +150,12 @@ Execution behavior:
 - If the core is halted or trapped, additional clocks do not commit more instructions.
 - `PC`, `HALTED`, and `TRAPPED` are published as normal output pins.
 - The system exposes `snapshotState()`, `lastDataMemoryAccess()`, and `lastDataMemoryWrites()` for the 7A harness.
-- The top-level visualizer root is `RV32ISystem`, not a behavioral black box.
+- The top-level visualizer root is `RV32IReferenceSystem`, not a behavioral black box.
 - The visualizer shows `CORE`, `INSTRUCTION_MEMORY`, and `DATA_MEMORY` as child components.
 - Program loading writes into the visible instruction memory component.
 - Data initialization and stores write into the visible data memory component.
 
-The core executes against attached `BehavioralMemory64Kx32` memory components. To keep the instruction oracle as the behavior source, `RV32IInstructionOracle` now has two-memory overloads:
+The core executes against attached `Memory64Kx32` memory components. To keep the instruction oracle as the behavior source, `RV32IInstructionOracle` now has two-memory overloads:
 
 ```cpp
 RV32IInstructionTrace step(
@@ -166,8 +166,8 @@ RV32IInstructionTrace step(
 
 RV32IInstructionTrace step(
     RV32IState& state,
-    BehavioralMemory64Kx32& instruction_memory,
-    BehavioralMemory64Kx32& data_memory
+    Memory64Kx32& instruction_memory,
+    Memory64Kx32& data_memory
 );
 ```
 
@@ -175,7 +175,7 @@ The original one-memory API remains and delegates to this overload by passing th
 
 ## 7B Assembly Test Program
 
-`BehavioralRV32ISystemProgram1Test` runs a real RV32I instruction stream through `RV32ISystem` and compares every committed instruction against `RV32IInstructionOracle`.
+`RV32IReferenceSystemProgram1Test` runs a real RV32I instruction stream through `RV32IReferenceSystem` and compares every committed instruction against `RV32IInstructionOracle`.
 
 Initial data memory at `0x100`:
 
@@ -437,7 +437,7 @@ Result:
 Focused 7A/7B tests:
 
 ```bash
-ctest --test-dir build --output-on-failure -R "BehavioralRV32ISystemProgram1Test|RV32IInstructionLockstepHarnessTest|RV32IInstructionOracleTest|SimulatorAdvanceAndRecordTest"
+ctest --test-dir build --output-on-failure -R "RV32IReferenceSystemProgram1Test|RV32IInstructionLockstepHarnessTest|RV32IInstructionOracleTest|SimulatorAdvanceAndRecordTest"
 ```
 
 Result:
@@ -448,7 +448,7 @@ Result:
 Visualizer backend discovery:
 
 ```bash
-python3 -c "import circuit_backend as cb; print('BehavioralRV32ISystemProgram1Test' in cb.get_registered_test_names())"
+python3 -c "import circuit_backend as cb; print('RV32IReferenceSystemProgram1Test' in cb.get_registered_test_names())"
 ```
 
 Result:
@@ -458,12 +458,12 @@ Result:
 Live visualizer check:
 
 ```bash
-curl -fsSL http://127.0.0.1:8765/api/circuit?scenario=behavioral-rv32i-system-program1
+curl -fsSL http://127.0.0.1:8765/api/circuit?scenario=rv32i-reference-program1
 ```
 
 Result:
 
-- `rootType` is `RV32ISystem`.
+- `rootType` is `RV32IReferenceSystem`.
 - children are `CORE`, `INSTRUCTION_MEMORY`, and `DATA_MEMORY`.
 - stats report 4 components, 56 pins, and 34 wires.
 

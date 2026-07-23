@@ -23,7 +23,7 @@ void Comparator32::buildInternals(ComponentBuilder& builder) {
     builder.addNewComponent<AddSub32>("SUB");
     builder.addNewComponent<ZeroDetect32>("ZERO_DETECT");
     builder.addNewComponent<BitSplitter<32>>("DIFF_SPLIT");
-    builder.addNewComponent<ConstantValue<1, 32>>("CONST_HIGH", 1);
+    builder.addNewComponent<ConstantValue<1>>("CONST_HIGH", 1);
     builder.addNewComponent<NOTGate>("NOT_CARRY");
     builder.addNewComponent<XORGate>("SIGNED_LT_XOR");
 
@@ -37,7 +37,7 @@ void Comparator32::buildInternals(ComponentBuilder& builder) {
         {builder.getInputPin<AddSub32, 32>("SUB", "B")});
     builder.addNewWire(
         "CONST_HIGH_to_SUB",
-        builder.getOutputPin<ConstantValue<1, 32>>("CONST_HIGH", "OUT"),
+        builder.getOutputPin<ConstantValue<1>>("CONST_HIGH", "OUT"),
         {builder.getInputPin<AddSub32>("SUB", "SUB")});
 
     builder.addNewWire<32>(

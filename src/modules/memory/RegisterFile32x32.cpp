@@ -2,10 +2,11 @@
 
 #include "components/ComponentBuilder.hpp"
 #include "components/ComponentBuilder.tpp"
-#include "components/PinMacros.hpp"
 #include "modules/basic/Decoder.hpp"
 #include "modules/basic/Mux.hpp"
-#include "modules/memory/BehavioralRegister32.hpp"
+#include "modules/memory/Register32BitCellArray.hpp"
+#include "modules/memory/Register32.hpp"
+#include "modules/memory/RegisterFile32x32Direct.hpp"
 #include "modules/utility/Constant.hpp"
 #include <memory>
 #include <string>
@@ -18,28 +19,46 @@ constexpr size_t AddressWidth = 5;
 std::string regName(size_t index) {
     return "X" + std::to_string(index);
 }
+
+void defineRegisterFile32x32Pins(IOComponent* self) {
+    self->addPin<5>("RS1_ADDR", PinType::INPUT);
+    self->addPin<5>("RS2_ADDR", PinType::INPUT);
+    self->addPin<5>("RD_ADDR", PinType::INPUT);
+    self->addPin<32>("WRITE_DATA", PinType::INPUT);
+    self->addPin("REG_WRITE", PinType::INPUT);
+    self->addPin("CLK", PinType::INPUT);
+    self->addPin("RST", PinType::INPUT);
+    self->addPin<32>("RS1_DATA", PinType::OUTPUT);
+    self->addPin<32>("RS2_DATA", PinType::OUTPUT);
+}
 }
 
-BEGIN_PINS(RegisterFile32x32, IOComponent)
-    INPUT_PIN_WIDTH("RS1_ADDR", 5)
-    INPUT_PIN_WIDTH("RS2_ADDR", 5)
-    INPUT_PIN_WIDTH("RD_ADDR", 5)
-    INPUT_PIN_WIDTH("WRITE_DATA", 32)
-    INPUT_PIN("REG_WRITE")
-    INPUT_PIN("CLK")
-    INPUT_PIN("RST")
-    OUTPUT_PIN_WIDTH("RS1_DATA", 32)
-    OUTPUT_PIN_WIDTH("RS2_DATA", 32)
-END_PINS()
+namespace circuit::families {
+const ComponentFamily RegisterFile32x32{
+    "rv32i.register-file",
+    "RegisterFile32x32",
+    defineRegisterFile32x32Pins,
+    [](const std::string& name, const std::shared_ptr<BuildContext>& context) {
+        return Component::createWithContext<::RegisterFile32x32>(context, name);
+    },
+    [](const std::string& name, const std::shared_ptr<BuildContext>& context) {
+        return Component::createWithContext<::RegisterFile32x32Direct>(
+            context, name);
+    }};
+}
+
+RegisterFile32x32::RegisterFile32x32(std::string name)
+    : IOComponent(std::move(name),
+                  circuit::families::RegisterFile32x32.pinInitializer()) {}
 
 void RegisterFile32x32::buildInternals(ComponentBuilder& builder) {
-    builder.addNewComponent<ConstantValue<32, 32>>("X0_ZERO", 0);
+    builder.addNewComponent<ConstantValue<32>>("X0_ZERO", 0);
     builder.addNewComponent<Mux32to1_32bit>("RS1_MUX");
     builder.addNewComponent<Mux32to1_32bit>("RS2_MUX");
     builder.addNewComponent<Decoder5to32>("RD_DECODER");
 
     for (size_t reg = 1; reg < RegisterCount; ++reg) {
-        builder.addNewComponent<BehavioralRegister32>(regName(reg));
+        builder.add(circuit::families::Register32, regName(reg));
     }
 
     std::vector<std::shared_ptr<Pin<32>>> write_data_sinks;
@@ -51,9 +70,9 @@ void RegisterFile32x32::buildInternals(ComponentBuilder& builder) {
 
     for (size_t reg = 1; reg < RegisterCount; ++reg) {
         const auto name = regName(reg);
-        write_data_sinks.push_back(builder.getInputPin<BehavioralRegister32, 32>(name, "D"));
-        clk_sinks.push_back(builder.getInputPin<BehavioralRegister32>(name, "CLK"));
-        rst_sinks.push_back(builder.getInputPin<BehavioralRegister32>(name, "RST"));
+        write_data_sinks.push_back(builder.getInputPin<IOComponent, 32>(name, "D"));
+        clk_sinks.push_back(builder.getInputPin<IOComponent>(name, "CLK"));
+        rst_sinks.push_back(builder.getInputPin<IOComponent>(name, "RST"));
     }
 
     builder.addNewWire<32>("WRITE_DATA_internal", getInputPin<32>("WRITE_DATA"), write_data_sinks);
@@ -74,7 +93,7 @@ void RegisterFile32x32::buildInternals(ComponentBuilder& builder) {
         builder.addNewWire(
             regName(reg) + "_WE_internal",
             builder.getOutputPin<Decoder5to32>("RD_DECODER", "OUT" + std::to_string(reg)),
-            {builder.getInputPin<BehavioralRegister32>(regName(reg), "WE")});
+            {builder.getInputPin<IOComponent>(regName(reg), "WE")});
     }
 
     builder.addNewWire<AddressWidth>(
@@ -89,7 +108,7 @@ void RegisterFile32x32::buildInternals(ComponentBuilder& builder) {
 
     builder.addNewWire<32>(
         "X0_to_read_muxes",
-        builder.getOutputPin<ConstantValue<32, 32>, 32>("X0_ZERO", "OUT"),
+        builder.getOutputPin<ConstantValue<32>, 32>("X0_ZERO", "OUT"),
         {builder.getInputPin<Mux32to1_32bit, 32>("RS1_MUX", "IN0"),
          builder.getInputPin<Mux32to1_32bit, 32>("RS2_MUX", "IN0")});
 
@@ -98,7 +117,7 @@ void RegisterFile32x32::buildInternals(ComponentBuilder& builder) {
         const auto input_name = "IN" + std::to_string(reg);
         builder.addNewWire<32>(
             name + "_to_read_muxes",
-            builder.getOutputPin<BehavioralRegister32, 32>(name, "Q"),
+            builder.getOutputPin<IOComponent, 32>(name, "Q"),
             {builder.getInputPin<Mux32to1_32bit, 32>("RS1_MUX", input_name),
              builder.getInputPin<Mux32to1_32bit, 32>("RS2_MUX", input_name)});
     }
@@ -112,4 +131,20 @@ void RegisterFile32x32::buildInternals(ComponentBuilder& builder) {
         "RS2_DATA_internal",
         builder.getOutputPin<Mux32to1_32bit, 32>("RS2_MUX", "OUT"),
         {getOutputPin<32>("RS2_DATA")});
+}
+
+std::vector<std::vector<LogicValue>> RegisterFile32x32::getRegisterStateAtTime(
+    size_t target_time) const {
+    (void)target_time;
+    std::vector<std::vector<LogicValue>> result(
+        RegisterCount, std::vector<LogicValue>(32, LogicValue::LOW));
+    for (const auto& child : getChildren()) {
+        const auto& name = child->getName();
+        if (name.size() < 2 || name.front() != 'X') continue;
+        const auto index = static_cast<size_t>(std::stoul(name.substr(1)));
+        if (index == 0 || index >= result.size()) continue;
+        const auto word = std::dynamic_pointer_cast<IOComponent>(child);
+        if (word) result[index] = word->getOutputPin<32>("Q")->getValueAsVector();
+    }
+    return result;
 }

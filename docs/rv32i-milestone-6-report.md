@@ -105,7 +105,7 @@ Register rule:
 Default capacity:
 
 - 256 KiB
-- same byte capacity as `BehavioralMemory64Kx32`
+- same byte capacity as `Memory64Kx32`
 
 Supported setup/debug API:
 
@@ -314,8 +314,8 @@ Milestone 6 does not implement:
 
 The next practical step is to build a reusable behavioral RV32I system component:
 
-- `BehavioralRV32ICore`
-- `RV32ISystem`
+- `RV32IReferenceCore`
+- `RV32IReferenceSystem`
 - owned instruction and data memories
 - external `CLK`, `RST`, and `ENABLE`
 

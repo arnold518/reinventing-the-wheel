@@ -4,7 +4,7 @@
 #include <cstdint>
 #include <vector>
 
-class BehavioralMemory64Kx32;
+class Memory64Kx32;
 
 namespace rv32i {
 
@@ -22,7 +22,7 @@ public:
 
     uint8_t byteAt(size_t index) const;
     uint32_t wordAt(size_t word_index) const;
-    void loadInto(BehavioralMemory64Kx32& memory, uint32_t base_address = 0) const;
+    void loadInto(Memory64Kx32& memory, uint32_t base_address = 0) const;
 
 private:
     std::vector<uint8_t> program_bytes;

@@ -66,9 +66,112 @@ def assert_default_children_do_not_overlap(component):
 
 
 def main():
+    registered = set(circuit_backend.get_registered_test_names())
+    for program_number in range(1, 17):
+        scenario_families = (
+            (
+                f"RV32ISingleCycleSystemProgram{program_number}Test",
+                f"rv32i-structural-program{program_number}",
+            ),
+            (
+                f"RV32IBalancedSystemProgram{program_number}Test",
+                f"rv32i-balanced-program{program_number}",
+            ),
+            (
+                f"RV32IReferenceSystemProgram{program_number}Test",
+                f"rv32i-reference-program{program_number}",
+            ),
+        )
+        for test_name, expected_alias in scenario_families:
+            assert test_name in registered
+            assert hasattr(circuit_backend, test_name)
+            assert server.scenario_canonical_alias(test_name) == expected_alias
+
+    for test_name in (
+        "RV32IControlFlowUnitEquivalenceTest",
+        "RV32IDecodeControlUnitEquivalenceTest",
+        "RV32IRegisterFileEquivalenceTest",
+        "ALU32EquivalenceTest",
+        "RV32IExecutionControlStatusUnitEquivalenceTest",
+    ):
+        assert test_name in registered
+        assert test_name in server.NON_VISUALIZABLE_TESTS
+        assert not hasattr(circuit_backend, test_name)
+
+    balanced = circuit_backend.RV32IBalancedSystemProgram9Test()
+    balanced.setup_circuit()
+    system = balanced.get_root()
+    assert system.get_type_name() == "RV32ISingleCycleSystem"
+    assert system.get_selected_fidelity() == "structural"
+    assert system.get_profile_fingerprint() != "explicit"
+    system_children = {child.get_name(): child for child in system.get_children()}
+    assert system_children["INSTRUCTION_MEMORY"].get_selected_fidelity() == "behavioral"
+    assert system_children["DATA_MEMORY"].get_selected_fidelity() == "behavioral"
+    core = system_children["CORE"]
+    assert core.get_selected_fidelity() == "structural"
+    core_children = {child.get_name(): child for child in core.get_children()}
+    expected_core_fidelities = {
+        "CONTROL_FLOW": "structural",
+        "DECODE_CONTROL": "structural",
+        "REGISTER_FILE": "behavioral",
+        "ALU": "structural",
+        "EXECUTION_STATUS": "structural",
+    }
+    for child_name, expected_fidelity in expected_core_fidelities.items():
+        assert core_children[child_name].get_selected_fidelity() == expected_fidelity
+
+    _, _, system_placements, _ = default_placements(system)
+    assert (
+        system_placements["INSTRUCTION_MEMORY"]["rel_pos"][0]
+        < system_placements["CORE"]["rel_pos"][0]
+    )
+    assert (
+        system_placements["DATA_MEMORY"]["rel_pos"][0]
+        < system_placements["CORE"]["rel_pos"][0]
+    )
+    assert_default_children_do_not_overlap(system)
+
+    profile_fingerprint = system.get_profile_fingerprint()
+    balanced_layout_key = server.scenario_layout_key("rv32i-balanced-program9", system)
+    assert balanced_layout_key == f"rv32i-balanced-program9@{profile_fingerprint}"
+
+    layout_manager = server.LayoutManager(server.LAYOUT_PATH)
+    assert layout_manager.schema_version == server.LAYOUT_SCHEMA_VERSION == 2
+    assert isinstance(layout_manager.profile_layouts, dict)
+    assert balanced_layout_key in layout_manager.root_layouts
+    for program_number in range(1, 17):
+        assert f"rv32i-structural-program{program_number}" in layout_manager.root_layouts
+        assert (
+            f"rv32i-balanced-program{program_number}@{profile_fingerprint}"
+            in layout_manager.root_layouts
+        )
+        assert f"rv32i-reference-program{program_number}" in layout_manager.root_layouts
+
+    base_core_children = layout_manager.type_layouts["RV32ISingleCycleCore"]["children"]
+    assert set(expected_core_fidelities).issubset(base_core_children)
+    original_register_file_position = base_core_children["REGISTER_FILE"]["rel_pos"]
+    layout_manager.update_profile_child_layout(
+        profile_fingerprint,
+        "RV32ISingleCycleCore",
+        "REGISTER_FILE",
+        [0.123, 0.456],
+        0.078,
+    )
+    profile_core_layout = layout_manager.get_layout_for_component(core)
+    assert profile_core_layout["children"]["REGISTER_FILE"]["rel_pos"] == [0.123, 0.456]
+    assert (
+        layout_manager.type_layouts["RV32ISingleCycleCore"]["children"]["REGISTER_FILE"]["rel_pos"]
+        == original_register_file_position
+    )
+
     word_size = circuit_backend.ConstantValue2("CONST_WORD_SIZE", 2)
     assert pin_shape(word_size) == ({}, {"OUT": 2})
     assert word_size.get_constant_value() == 2
+    assert word_size.get_contract_id() == "explicit.ConstantValue"
+    assert word_size.get_implementation_id() == "explicit.construction.ConstantValue"
+    assert word_size.get_selected_fidelity() == "unspecified"
+    assert not word_size.is_terminal_primitive()
+    assert word_size.get_profile_fingerprint() == "explicit"
 
     trap_cause = circuit_backend.ConstantValue4("CAUSE_ILLEGAL", 2)
     assert pin_shape(trap_cause) == ({}, {"OUT": 4})

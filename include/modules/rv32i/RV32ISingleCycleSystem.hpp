@@ -1,13 +1,18 @@
 #pragma once
 
 #include "components/IOComponent.hpp"
-#include "modules/memory/BehavioralMemory64Kx32.hpp"
+#include "components/selection/ComponentFamily.hpp"
+#include "modules/memory/Memory64Kx32.hpp"
 #include "modules/rv32i/RV32ISingleCycleCore.hpp"
 #include "rv32i/RV32IProgram.hpp"
 #include "rv32i/RV32IState.hpp"
 #include <cstdint>
 #include <memory>
 #include <vector>
+
+namespace circuit::families {
+extern const ComponentFamily RV32ISingleCycleSystem;
+}
 
 class RV32ISingleCycleSystem : public IOComponent {
 public:
@@ -17,8 +22,8 @@ public:
     void buildInternals(ComponentBuilder& builder) override;
 
     std::shared_ptr<RV32ISingleCycleCore> core() const { return core_; }
-    std::shared_ptr<BehavioralMemory64Kx32> instructionMemory() const { return instruction_memory_; }
-    std::shared_ptr<BehavioralMemory64Kx32> dataMemory() const { return data_memory_; }
+    std::shared_ptr<Memory64Kx32> instructionMemory() const { return instruction_memory_; }
+    std::shared_ptr<Memory64Kx32> dataMemory() const { return data_memory_; }
 
     void clearInstructionMemory();
     void clearDataMemory();
@@ -31,6 +36,6 @@ public:
 
 private:
     std::shared_ptr<RV32ISingleCycleCore> core_{};
-    std::shared_ptr<BehavioralMemory64Kx32> instruction_memory_{};
-    std::shared_ptr<BehavioralMemory64Kx32> data_memory_{};
+    std::shared_ptr<Memory64Kx32> instruction_memory_{};
+    std::shared_ptr<Memory64Kx32> data_memory_{};
 };

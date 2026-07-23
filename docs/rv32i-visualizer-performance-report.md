@@ -75,7 +75,13 @@ The new indexed response was compared against pre-optimization dictionary respon
 - index 114, after the ADDI checkpoint;
 - index 140, after the illegal-instruction trap.
 
-All 96,738 pins exposed at the time and all 53,761 wires matched at all three points: zero mismatches. The later binding-completeness repair exposed 89 previously omitted boundary pins without changing the C++ circuit or its simulation; the current pin count is 96,827.
+All 96,738 pins exposed at the time and all 53,761 wires matched at all three
+points: zero mismatches. The later binding-completeness repair exposed 89
+previously omitted boundary pins without changing the C++ circuit or its
+simulation, bringing that topology to 96,827 pins. After the unified profile
+migration expanded the structural register hierarchy, the live Program 9
+topology contains 54,049 components, 180,155 pins, and 103,361 wires; it uses
+the same lossless indexed snapshot path.
 
 Additional verification:
 

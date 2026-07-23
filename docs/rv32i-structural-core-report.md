@@ -2,7 +2,7 @@
 
 ## Outcome
 
-`RV32ISingleCycleCore` and `RV32ISingleCycleSystem` now execute the complete 16-program RV32I teaching suite through the structural datapath. The structural production path does not invoke `RV32IInstructionOracle`, `BehavioralRV32ICore`, or any of the compact behavioral block counterparts.
+`RV32ISingleCycleCore` and `RV32ISingleCycleSystem` now execute the complete 16-program RV32I teaching suite through the structural datapath. The structural production path does not invoke `RV32IInstructionOracle`, `RV32IReferenceCore`, or any of the compact behavioral block counterparts.
 
 The behavioral implementation remains the answer sheet. Both systems run the same program cases independently and are graded after every committed instruction against the specification-oriented oracle and again against hard-coded final outcomes.
 
@@ -42,7 +42,7 @@ Instruction memory is always read as a 32-bit word. Data memory receives the dec
 
 ## Structural System
 
-`RV32ISingleCycleSystem` contains one structural core and separate `BehavioralMemory64Kx32` instruction and data memories. Full-size memory remains a deliberate scale abstraction backed by the smaller structural memory slices and their tests.
+`RV32ISingleCycleSystem` contains one structural core and separate `Memory64Kx32` instruction and data memories. Full-size memory remains a deliberate scale abstraction backed by the smaller structural memory slices and their tests.
 
 The public system interface remains small:
 
@@ -94,21 +94,29 @@ Every structural program passed both comparison layers:
 1. The complete architectural state and memory transaction are compared after every instruction.
 2. Final PC, instruction count, selected registers, halt/trap state and cause, and aggregate byte writes are compared with independent hard-coded outcomes.
 
-The final repository-wide serial regression passed 142/142 tests in 525.19 seconds.
+The final repository-wide regression passed 168/168 tests in 217.32 seconds with four parallel CTest workers.
 
 ## Timeline And Visualization Fixes
 
-Structural and behavioral block scenarios are separate, one-device tests. The five dual-DUT pair tests remain CTest-only equivalence regressions and are excluded from the browser selector.
+Structural and behavioral block scenarios are separate, one-device tests. The five equivalence meta-tests run each implementation in an isolated simulator, remain CTest-only regressions, and are excluded from the browser selector.
 
-The old control-flow pair test had randomized activity through time 44,500 but its last label stopped at 12,400. Its 64 deterministic random vectors now have checkpoints, so the last checkpoint is 44,400 and no recorded timestamp appears after it.
+The control-flow equivalence test still covers the directed sequence plus 64 deterministic random vectors, but it is no longer a visual timeline. Each implementation is simulated and sampled independently, eliminating the stale-label and post-checkpoint visualization problem entirely.
 
 The browser exposes:
 
-- `rv32i-system-structural`: the structural reset/enable/halt contract waveform.
-- `rv32i-core-structural-smoke`: the short ADDI/EBREAK waveform.
-- `rv32i-system-structural-program1` through `rv32i-system-structural-program16`.
+- `rv32i-structural-contract`: the structural reset/enable/halt contract waveform.
+- `rv32i-structural-smoke`: the short ADDI/EBREAK waveform.
+- `rv32i-structural-program1` through `rv32i-structural-program16`.
+- `rv32i-balanced-program1` through `rv32i-balanced-program16`.
+- `rv32i-reference-program1` through `rv32i-reference-program16`.
 
-The committed top-level layouts show the system as core plus two memories and show the core as the five major blocks plus its generic mux/gate wiring. The structural contract topology contains 27,265 components and 53,761 wires and ends exactly at its final 33,000 checkpoint.
+The committed top-level layouts show the system as core plus two memories and
+show the core as the five major blocks plus its generic mux/gate wiring. At
+this milestone the structural contract topology contained 27,265 components
+and 53,761 wires and ended exactly at its final 33,000 checkpoint. After the
+unified profile migration expanded the structural register hierarchy, the live
+Program 9 topology contains 54,049 components, 180,155 pins, and 103,361
+wires.
 
 The lossless browser performance pass is recorded in `docs/rv32i-visualizer-performance-report.md`. It keeps every structural signal exact while replacing repeated hierarchical state keys with indexed snapshots, rendering only after changes, compressing responses, bounding cached sessions, and stopping hierarchy descent only below one physical pixel.
 

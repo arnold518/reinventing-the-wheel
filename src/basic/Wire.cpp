@@ -97,9 +97,9 @@ void propagateWireChange(WireBase& wire, Simulator& simulator, size_t propagatio
             continue;
         }
 
-        if (auto basic = std::dynamic_pointer_cast<BasicComponent>(sink_owner)) {
+        if (auto evaluated = std::dynamic_pointer_cast<BasicComponent>(sink_owner)) {
             if (sink_pin->getType() == PinType::INPUT) {
-                simulator.scheduleEvent(std::make_shared<ComponentEvalEvent>(propagation_time, basic));
+                simulator.scheduleEvent(std::make_shared<ComponentEvalEvent>(propagation_time, evaluated));
             }
             continue;
         }

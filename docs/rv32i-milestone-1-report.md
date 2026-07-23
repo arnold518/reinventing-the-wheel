@@ -16,8 +16,8 @@ The branch does not implement an RV32I CPU yet. It implements the lower-level 32
 - Promoted the ALU result/flag mux helpers to bound public modules:
   - `Mux32to1`
   - `Mux32to1_32bit`
-- Bound and tested the 32-bit-trigger constant instantiations used inside `ALU32`:
-  - `ConstantValue1From32Trigger`
+- Bound and tested the width-specific constant sources used inside `ALU32`:
+  - `ConstantValue1`
   - `ConstantValue32`
 - Added a top-level structural `ALU32` with the documented external contract:
   - `A<32>`, `B<32>`, `OP<5>`
@@ -28,7 +28,7 @@ The branch does not implement an RV32I CPU yet. It implements the lower-level 32
 - Registered per-component 32-bit CTest scenarios plus the RV32I ALU integration test.
 - Exposed all new test scenarios through visualizer-v2 discovery:
   - `rewire-width5`
-  - `constant1-from32`
+  - `constant1-high`
   - `constant32`
   - `mux32to1`
   - `mux32to1-32bit`
@@ -40,7 +40,8 @@ The branch does not implement an RV32I CPU yet. It implements the lower-level 32
   - `shifter32`
   - `alu32`
   - `rv32i-alu32`
-- Kept the implementation structural; no behavioral `BehavioralALU32` counterpart exists yet.
+- Kept the implementation structural; the behavioral fidelity of the `ALU32`
+  family did not exist yet.
 
 ## Implemented Files
 
@@ -64,8 +65,8 @@ The branch does not implement an RV32I CPU yet. It implements the lower-level 32
 - `src/tests/ArithmeticLogicTests.cpp`
 - `include/tests/UtilityComponentTests.hpp`
 - `src/tests/UtilityComponentTests.cpp`
-- `include/tests/RV32IALU32Tests.hpp`
-- `src/tests/RV32IALU32Tests.cpp`
+- `include/tests/ALU32LowerLevelSliceTests.hpp`
+- `src/tests/ALU32LowerLevelSliceTests.cpp`
 - `src/tests/TestRegistry.cpp`
 - `tests/CMakeLists.txt`
 - `src/bindings/ModulesBinding.cpp`
@@ -142,8 +143,8 @@ Intended RV32I mapping:
 Per-component tests now cover:
 
 - `Adder32Test`: carry-in, carry-out, all-ones/alternating operands, signed edge cases, and carry propagation across every bit boundary.
-- `ConstantValue1From32TriggerTest`: single-bit constants with 32-bit trigger inputs.
-- `ConstantValue32Test`: 32-bit constants with 32-bit trigger inputs.
+- `ConstantValue1HighTest` and `ConstantValue1LowTest`: width-1 high and low constant sources.
+- `ConstantValue32Test`: 32-bit constant source behavior.
 - `Mux32to1Test`: one-bit 32:1 mux selection and unselected-input rejection.
 - `Mux32to1_32bitTest`: 32-bit 32:1 result mux selection.
 - `AddSub32Test`: 32-bit add/subtract edge cases, carry, signed overflow, carry propagation across every bit boundary, and borrow propagation across every bit boundary.
@@ -151,8 +152,8 @@ Per-component tests now cover:
 - `ZeroDetect32Test`: zero, all-ones, sign-bit-only, and every single-bit non-zero input.
 - `Comparator32Test`: equality, signed less-than, unsigned less-than, diff, carry, and overflow across a matrix of `0`, `1`, `2`, `INT_MAX`, `INT_MIN`, and `UINT_MAX`.
 - `Shifter32Test`: SLL, SRL, and SRA for all shift amounts `0..31`, plus shift amount masking beyond 31.
-- `ALU32Test`: every defined `ALU32Op`, every reserved `OP` from `0x0d` to `0x1f`, shift masking, and selected flag behavior.
-- `RV32IALU32Test`: full structural ALU32 scenario plus exhaustive 4-bit add/sub slice coverage over every `A`, `B`, and `SUB` combination.
+- `ALU32StructuralContractTest`: every defined `ALU32Op`, every reserved `OP` from `0x0d` to `0x1f`, shift masking, and selected flag behavior.
+- `ALU32LowerLevelSliceTest`: full structural ALU32 scenario plus exhaustive 4-bit add/sub slice coverage over every `A`, `B`, and `SUB` combination.
 
 ## Verification Results
 
@@ -161,9 +162,9 @@ Commands run:
 ```bash
 cmake -S . -B build
 cmake --build build -j 4
-ctest --test-dir build --output-on-failure -R "ConstantValue1HighTest|ConstantValue1Low8TriggerTest|ConstantValue1From32TriggerTest|ConstantValue8Test|ConstantValue32Test|ALU32Test|RV32IALU32Test"
-ctest --test-dir build --output-on-failure -R "Mux32to1Test|Mux32to1_32bitTest|Adder32Test|AddSub32Test|Logic32Test|ZeroDetect32Test|Comparator32Test|Shifter32Test|ALU32Test|RV32IALU32Test|RewireWidth5Test"
-ctest --test-dir build --output-on-failure -R "Adder32Test|AddSub32Test|Logic32Test|ZeroDetect32Test|Comparator32Test|Shifter32Test|ALU32Test|RV32IALU32Test"
+ctest --test-dir build --output-on-failure -R "ConstantValue1HighTest|ConstantValue1LowTest|ConstantValue8Test|ConstantValue32Test|ALU32StructuralContractTest|ALU32LowerLevelSliceTest"
+ctest --test-dir build --output-on-failure -R "Mux32to1Test|Mux32to1_32bitTest|Adder32Test|AddSub32Test|Logic32Test|ZeroDetect32Test|Comparator32Test|Shifter32Test|ALU32StructuralContractTest|ALU32LowerLevelSliceTest|RewireWidth5Test"
+ctest --test-dir build --output-on-failure -R "Adder32Test|AddSub32Test|Logic32Test|ZeroDetect32Test|Comparator32Test|Shifter32Test|ALU32StructuralContractTest|ALU32LowerLevelSliceTest"
 ctest --test-dir build --output-on-failure
 ```
 
@@ -185,7 +186,9 @@ Results:
 - No register file, program counter, instruction memory, data memory, load/store unit, branch/jump unit, or CPU top-level exists yet.
 - No assembly programs or binary fixtures exist yet.
 - Full structural `ALU32` visualization is large: the expanded topology currently contains 8,840 components, 17,074 wires, and 29,847 pins. Use the per-component scenarios for readable debugging, then use `alu32` or `rv32i-alu32` for end-to-end inspection.
-- The paired-block plan now calls the future reference `BehavioralALU32`. It may be useful for fast tests, but only after independent expected-value tests and direct equivalence against this structural implementation exist.
+- The plan calls for a future behavioral fidelity of the same `ALU32` family.
+  It may be useful for fast tests, but only after independent expected-value
+  tests and direct equivalence against this structural implementation exist.
 
 ## Follow-Up Work
 

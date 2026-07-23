@@ -1,4 +1,5 @@
 #include "modules/rv32i/RV32IControlFlowUnit.hpp"
+#include "modules/rv32i/RV32IControlFlowDirect.hpp"
 
 #include "components/ComponentBuilder.hpp"
 #include "components/ComponentBuilder.tpp"
@@ -10,29 +11,48 @@
 #include "modules/utility/Constant.hpp"
 #include "modules/utility/Rewire.hpp"
 
-RV32IControlFlowUnit::RV32IControlFlowUnit(std::string name)
-    : IOComponent(std::move(name), [](IOComponent* self) {
-          self->addPin("CLK", PinType::INPUT);
-          self->addPin("RST", PinType::INPUT);
-          self->addPin("PC_WRITE", PinType::INPUT);
-          self->addPin<32>("RS1_VALUE", PinType::INPUT);
-          self->addPin<32>("IMM", PinType::INPUT);
-          self->addPin<3>("BRANCH_TYPE", PinType::INPUT);
-          self->addPin<2>("JUMP_TYPE", PinType::INPUT);
-          self->addPin("EQ", PinType::INPUT);
-          self->addPin("LT_SIGNED", PinType::INPUT);
-          self->addPin("LT_UNSIGNED", PinType::INPUT);
+namespace {
+void defineControlFlowPins(IOComponent* self) {
+    self->addPin("CLK", PinType::INPUT);
+    self->addPin("RST", PinType::INPUT);
+    self->addPin("PC_WRITE", PinType::INPUT);
+    self->addPin<32>("RS1_VALUE", PinType::INPUT);
+    self->addPin<32>("IMM", PinType::INPUT);
+    self->addPin<3>("BRANCH_TYPE", PinType::INPUT);
+    self->addPin<2>("JUMP_TYPE", PinType::INPUT);
+    self->addPin("EQ", PinType::INPUT);
+    self->addPin("LT_SIGNED", PinType::INPUT);
+    self->addPin("LT_UNSIGNED", PinType::INPUT);
+    self->addPin<32>("PC", PinType::OUTPUT);
+    self->addPin<32>("PC_PLUS_4", PinType::OUTPUT);
+    self->addPin<32>("NEXT_PC_CANDIDATE", PinType::OUTPUT);
+    self->addPin("BRANCH_TAKEN", PinType::OUTPUT);
+    self->addPin("PC_MISALIGNED", PinType::OUTPUT);
+    self->addPin("TARGET_MISALIGNED", PinType::OUTPUT);
+}
+}
 
-          self->addPin<32>("PC", PinType::OUTPUT);
-          self->addPin<32>("PC_PLUS_4", PinType::OUTPUT);
-          self->addPin<32>("NEXT_PC_CANDIDATE", PinType::OUTPUT);
-          self->addPin("BRANCH_TAKEN", PinType::OUTPUT);
-          self->addPin("PC_MISALIGNED", PinType::OUTPUT);
-          self->addPin("TARGET_MISALIGNED", PinType::OUTPUT);
-      }) {}
+namespace circuit::families {
+const ComponentFamily RV32IControlFlow{
+    "rv32i.control-flow",
+    "RV32IControlFlowUnit",
+    defineControlFlowPins,
+    [](const std::string& name, const std::shared_ptr<BuildContext>& context) {
+        return Component::createWithContext<::RV32IControlFlowUnit>(
+            context, name);
+    },
+    [](const std::string& name, const std::shared_ptr<BuildContext>& context) {
+        return Component::createWithContext<
+            ::RV32IControlFlowDirect>(context, name);
+    }};
+}
+
+RV32IControlFlowUnit::RV32IControlFlowUnit(std::string name)
+    : IOComponent(std::move(name),
+                  circuit::families::RV32IControlFlow.pinInitializer()) {}
 
 void RV32IControlFlowUnit::buildInternals(ComponentBuilder& builder) {
-    builder.addNewComponent<Register32>("PC_STATE");
+    builder.add(circuit::families::Register32, "PC_STATE");
     builder.addNewComponent<Adder32>("PC_PLUS_4_ADD");
     builder.addNewComponent<Adder32>("PC_IMM_ADD");
     builder.addNewComponent<Adder32>("RS1_IMM_ADD");
@@ -59,26 +79,26 @@ void RV32IControlFlowUnit::buildInternals(ComponentBuilder& builder) {
     builder.addNewComponent<ORGate>("CONTROL_TRANSFER_OR");
     builder.addNewComponent<ANDGate>("TARGET_MISALIGNED_AND");
 
-    builder.addNewComponent<ConstantValue<1, 32>>("CONST_LOW", 0);
-    builder.addNewComponent<ConstantValue<32, 32>>("CONST_FOUR", 4);
-    builder.addNewComponent<ConstantValue<32, 32>>("CONST_ZERO32", 0);
+    builder.addNewComponent<ConstantValue<1>>("CONST_LOW", 0);
+    builder.addNewComponent<ConstantValue<32>>("CONST_FOUR", 4);
+    builder.addNewComponent<ConstantValue<32>>("CONST_ZERO32", 0);
 
     builder.addNewWire(
         "CLK_to_PC",
         getInputPin("CLK"),
-        {builder.getInputPin<Register32>("PC_STATE", "CLK")});
+        {builder.getInputPin<IOComponent>("PC_STATE", "CLK")});
     builder.addNewWire(
         "RST_to_PC",
         getInputPin("RST"),
-        {builder.getInputPin<Register32>("PC_STATE", "RST")});
+        {builder.getInputPin<IOComponent>("PC_STATE", "RST")});
     builder.addNewWire(
         "PC_WRITE_to_PC",
         getInputPin("PC_WRITE"),
-        {builder.getInputPin<Register32>("PC_STATE", "WE")});
+        {builder.getInputPin<IOComponent>("PC_STATE", "WE")});
 
     builder.addNewWire<32>(
         "PC_fanout",
-        builder.getOutputPin<Register32, 32>("PC_STATE", "Q"),
+        builder.getOutputPin<IOComponent, 32>("PC_STATE", "Q"),
         {getOutputPin<32>("PC"),
          builder.getInputPin<Adder32, 32>("PC_PLUS_4_ADD", "A"),
          builder.getInputPin<Adder32, 32>("PC_IMM_ADD", "A"),
@@ -94,12 +114,12 @@ void RV32IControlFlowUnit::buildInternals(ComponentBuilder& builder) {
         {builder.getInputPin<Adder32, 32>("RS1_IMM_ADD", "A")});
     builder.addNewWire<32>(
         "CONST_FOUR_to_ADD",
-        builder.getOutputPin<ConstantValue<32, 32>, 32>("CONST_FOUR", "OUT"),
+        builder.getOutputPin<ConstantValue<32>, 32>("CONST_FOUR", "OUT"),
         {builder.getInputPin<Adder32, 32>("PC_PLUS_4_ADD", "B")});
 
     builder.addNewWire(
         "CONST_LOW_fanout",
-        builder.getOutputPin<ConstantValue<1, 32>>("CONST_LOW", "OUT"),
+        builder.getOutputPin<ConstantValue<1>>("CONST_LOW", "OUT"),
         {builder.getInputPin<Adder32>("PC_PLUS_4_ADD", "Cin"),
          builder.getInputPin<Adder32>("PC_IMM_ADD", "Cin"),
          builder.getInputPin<Adder32>("RS1_IMM_ADD", "Cin"),
@@ -126,7 +146,7 @@ void RV32IControlFlowUnit::buildInternals(ComponentBuilder& builder) {
         {builder.getInputPin<Mux4to1_32bit, 32>("JUMP_NEXT_MUX", "IN2")});
     builder.addNewWire<32>(
         "CONST_ZERO_to_JUMP_MUX",
-        builder.getOutputPin<ConstantValue<32, 32>, 32>("CONST_ZERO32", "OUT"),
+        builder.getOutputPin<ConstantValue<32>, 32>("CONST_ZERO32", "OUT"),
         {builder.getInputPin<Mux4to1_32bit, 32>("JUMP_NEXT_MUX", "IN3")});
 
     builder.addNewWire("EQ_fanout", getInputPin("EQ"),
@@ -168,7 +188,7 @@ void RV32IControlFlowUnit::buildInternals(ComponentBuilder& builder) {
         "NEXT_PC_fanout",
         builder.getOutputPin<Mux4to1_32bit, 32>("JUMP_NEXT_MUX", "OUT"),
         {getOutputPin<32>("NEXT_PC_CANDIDATE"),
-         builder.getInputPin<Register32, 32>("PC_STATE", "D"),
+         builder.getInputPin<IOComponent, 32>("PC_STATE", "D"),
          builder.getInputPin<BitSplitter<32>, 32>("TARGET_SPLIT", "IN")});
 
     builder.addNewWire("PC_bit0_to_align", builder.getOutputPin<BitSplitter<32>>("PC_SPLIT", "OUT_0"),

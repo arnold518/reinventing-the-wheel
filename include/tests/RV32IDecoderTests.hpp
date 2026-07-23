@@ -10,3 +10,11 @@ public:
 protected:
     void verifyResults() override;
 };
+
+class RV32IBitPatternMatcherTest : public StandaloneVerificationTest {
+public:
+    std::string getTestName() const override;
+
+protected:
+    void verifyResults() override;
+};

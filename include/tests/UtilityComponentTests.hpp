@@ -119,27 +119,22 @@ protected:
     void verifyResults() override;
 };
 
-class ConstantValue1HighTest : public ComponentRowsTest<ConstantValue<1, 1>, uint64_t> {
+class ConstantValue1HighTest : public ComponentRowsTest<ConstantValue<1>, uint64_t> {
 public:
     ConstantValue1HighTest();
 };
 
-class ConstantValue1Low8TriggerTest : public ComponentRowsTest<ConstantValue<1, 8>, uint64_t> {
+class ConstantValue1LowTest : public ComponentRowsTest<ConstantValue<1>, uint64_t> {
 public:
-    ConstantValue1Low8TriggerTest();
+    ConstantValue1LowTest();
 };
 
-class ConstantValue1From32TriggerTest : public ComponentRowsTest<ConstantValue<1, 32>, uint64_t> {
-public:
-    ConstantValue1From32TriggerTest();
-};
-
-class ConstantValue8Test : public ComponentRowsTest<ConstantValue<8, 8>, uint64_t> {
+class ConstantValue8Test : public ComponentRowsTest<ConstantValue<8>, uint64_t> {
 public:
     ConstantValue8Test();
 };
 
-class ConstantValue32Test : public ComponentRowsTest<ConstantValue<32, 32>, uint64_t> {
+class ConstantValue32Test : public ComponentRowsTest<ConstantValue<32>, uint64_t> {
 public:
     ConstantValue32Test();
 };
