@@ -52,8 +52,12 @@ void bindComponent(py::module_& m) {
         .def("get_contract_version", &Component::getContractVersion)
         .def("get_implementation_id", &Component::getImplementationId)
         .def("get_selected_fidelity", &Component::getSelectedFidelity)
+        .def("get_available_fidelities", &Component::getAvailableFidelities)
+        .def("is_profile_selectable", &Component::isProfileSelectable)
         .def("is_terminal_primitive", &Component::isTerminalPrimitive)
-        .def("is_reference_only", &Component::isReferenceOnly)
+        .def(
+            "used_unavailable_fidelity_exception",
+            &Component::usedUnavailableFidelityException)
         .def("get_selection_reason", &Component::getSelectionReason)
         .def("get_profile_fingerprint", &Component::getProfileFingerprint);
 }

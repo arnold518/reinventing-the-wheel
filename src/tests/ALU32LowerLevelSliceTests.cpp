@@ -415,47 +415,51 @@ std::vector<TestRow> alu32Rows() {
     }
     return rows;
 }
+
+circuit::test::ComponentTestSpec alu32TestSpec() {
+    circuit::test::ComponentTestSpec spec{
+        "ALU32Test",
+        std::string(circuit::families::ALU32.id()),
+        "ALU32_ROOT",
+        {},
+        {},
+    };
+    spec.scenarios.push_back(circuit::test::actionScenarioFromRows(
+        "truth-table",
+        spec.contract_id,
+        alu32Rows(),
+        {100'000, 2'000'000}));
+    return spec;
+}
 }
 
 Adder32Test::Adder32Test()
-    : ComponentRowsTest<Adder32>("Adder32Test", "ADDER32_ROOT", adder32Rows()) {}
+    : TruthTableComponentTest<Adder32>("Adder32Test", "ADDER32_ROOT", adder32Rows()) {}
 
 AddSub32Test::AddSub32Test()
-    : ComponentRowsTest<AddSub32>("AddSub32Test", "ADDSUB32_ROOT", addSub32Rows()) {}
+    : TruthTableComponentTest<AddSub32>("AddSub32Test", "ADDSUB32_ROOT", addSub32Rows()) {}
 
 Logic32Test::Logic32Test()
-    : ComponentRowsTest<Logic32>("Logic32Test", "LOGIC32_ROOT", logic32Rows()) {}
+    : TruthTableComponentTest<Logic32>("Logic32Test", "LOGIC32_ROOT", logic32Rows()) {}
 
 ZeroDetect32Test::ZeroDetect32Test()
-    : ComponentRowsTest<ZeroDetect32>("ZeroDetect32Test", "ZERO_DETECT32_ROOT", zeroDetect32Rows()) {}
+    : TruthTableComponentTest<ZeroDetect32>("ZeroDetect32Test", "ZERO_DETECT32_ROOT", zeroDetect32Rows()) {}
 
 Comparator32Test::Comparator32Test()
-    : ComponentRowsTest<Comparator32>("Comparator32Test", "COMPARATOR32_ROOT", comparator32Rows()) {}
+    : TruthTableComponentTest<Comparator32>("Comparator32Test", "COMPARATOR32_ROOT", comparator32Rows()) {}
 
 Shifter32Test::Shifter32Test()
-    : ComponentRowsTest<Shifter32>("Shifter32Test", "SHIFTER32_ROOT", shifter32Rows()) {}
+    : TruthTableComponentTest<Shifter32>("Shifter32Test", "SHIFTER32_ROOT", shifter32Rows()) {}
 
-ALU32StructuralContractTest::ALU32StructuralContractTest()
-    : ComponentFamilyRowsTest(
-          "ALU32StructuralContractTest",
-          "ALU32_ROOT",
-          alu32Rows(),
-          circuit::families::ALU32,
-          circuit::Fidelity::Structural) {}
+ALU32Test::ALU32Test()
+    : ComponentScenarioTest(alu32TestSpec(), "truth-table") {}
 
-ALU32BehavioralContractTest::ALU32BehavioralContractTest()
-    : ComponentFamilyRowsTest(
-          "ALU32BehavioralContractTest",
-          "ALU32_ROOT",
-          alu32Rows(),
-          circuit::families::ALU32,
-          circuit::Fidelity::Behavioral) {}
+std::string ALU32RepresentativeSliceTest::getTestName() const {
+    return "ALU32RepresentativeSliceTest";
+}
 
-ALU32LowerLevelSliceTest::ALU32LowerLevelSliceTest()
-    : ComponentRowsTest<ALU32>("ALU32LowerLevelSliceTest", "RV32I_ALU32_ROOT", alu32Rows()) {}
-
-void ALU32LowerLevelSliceTest::verifyResults() {
-    ComponentRowsTest<ALU32>::verifyResults();
-
-    expect(runRowsBatched<AddSub4Slice>(addSub4Rows(), 100), "ALU32LowerLevelSliceTest AddSub4Slice exhaustive");
+void ALU32RepresentativeSliceTest::verifyResults() {
+    expect(
+        runRowsBatched<AddSub4Slice>(addSub4Rows(), 100),
+        "ALU32RepresentativeSliceTest AddSub4Slice exhaustive");
 }

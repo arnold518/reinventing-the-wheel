@@ -62,6 +62,54 @@ void Simulator::runAndRecord(size_t max_time) {
     advanceAndRecord(max_time);
 }
 
+DrainResult Simulator::drainUntilIdle(size_t deadline, size_t max_events) {
+    size_t processed_events = 0;
+
+    while (!event_queue.empty()) {
+        const auto& event = event_queue.top();
+        if (event->time > deadline) {
+            return {
+                DrainStatus::DeadlineReached,
+                current_time,
+                processed_events,
+            };
+        }
+        if (processed_events >= max_events) {
+            return {
+                DrainStatus::EventLimitReached,
+                current_time,
+                processed_events,
+            };
+        }
+
+        auto next = event;
+        event_queue.pop();
+        if (next->time > current_time) {
+            current_time = next->time;
+            scheduled_for_current_time_eval.clear();
+        }
+        next->process(*this);
+        ++processed_events;
+    }
+
+    return {
+        DrainStatus::Idle,
+        current_time,
+        processed_events,
+    };
+}
+
+bool Simulator::hasPendingEvents() const noexcept {
+    return !event_queue.empty();
+}
+
+std::optional<size_t> Simulator::nextEventTime() const {
+    if (event_queue.empty()) {
+        return std::nullopt;
+    }
+    return event_queue.top()->time;
+}
+
 void Simulator::setCircuitStateAtTime(size_t target_time) {
     for (const auto& [wire, history] : _log) {
         auto it = std::upper_bound(history.begin(), history.end(), target_time,

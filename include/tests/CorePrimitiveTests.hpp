@@ -1,7 +1,7 @@
 #pragma once
 
 #include "modules/basic/Gate.hpp"
-#include "tests/ComponentRowsTest.hpp"
+#include "tests/TruthTableComponentTest.hpp"
 #include "simulator/SimulationTest.hpp"
 #include "tests/TestHelpers.hpp"
 #include <string>
@@ -30,73 +30,57 @@ protected:
     void verifyResults() override;
 };
 
-class NOTGateTest : public ComponentRowsTest<NOTGate> {
+class SimulatorDrainUntilIdleTest : public StandaloneVerificationTest {
+public:
+    std::string getTestName() const override;
+
+protected:
+    void verifyResults() override;
+};
+
+class NOTGateTest : public TruthTableComponentTest<NOTGate> {
 public:
     NOTGateTest();
 };
 
-class ANDGateTest : public ComponentRowsTest<ANDGate> {
+class ANDGateTest : public TruthTableComponentTest<ANDGate> {
 public:
     ANDGateTest();
 };
 
-class ORGateTest : public ComponentRowsTest<ORGate> {
+class ORGateTest : public TruthTableComponentTest<ORGate> {
 public:
     ORGateTest();
 };
 
-class XORGateTest : public ComponentRowsTest<XORGate> {
+class XORGateTest : public TruthTableComponentTest<XORGate> {
 public:
     XORGateTest();
 };
 
-class NANDGateTest : public ComponentRowsTest<NANDGate> {
+class NANDGateTest : public TruthTableComponentTest<NANDGate> {
 public:
     NANDGateTest();
 };
 
-class NORGateTest : public ComponentRowsTest<NORGate> {
+class NORGateTest : public TruthTableComponentTest<NORGate> {
 public:
     NORGateTest();
 };
 
-class SRLatchTest : public SimulationTest {
+class SRLatchTest : public circuit::test::ComponentScenarioTest {
 public:
-    void setupCircuit() override;
-    std::string getTestName() const override;
-    size_t getRunDuration() const override;
-    std::vector<SimulationCheckpoint> getCheckpoints() const override;
-
-protected:
-    void buildCircuit() override {}
-    void setInitialState() override;
-    void verifyResults() override;
+    SRLatchTest();
 };
 
-class GatedDLatchTest : public SimulationTest {
+class GatedDLatchTest : public circuit::test::ComponentScenarioTest {
 public:
-    void setupCircuit() override;
-    std::string getTestName() const override;
-    size_t getRunDuration() const override;
-    std::vector<SimulationCheckpoint> getCheckpoints() const override;
-
-protected:
-    void buildCircuit() override {}
-    void setInitialState() override;
-    void verifyResults() override;
+    GatedDLatchTest();
 };
 
-class DFlipFlopTest : public SimulationTest {
+class DFlipFlopTest : public circuit::test::ComponentScenarioTest {
 public:
-    void setupCircuit() override;
-    std::string getTestName() const override;
-    size_t getRunDuration() const override;
-    std::vector<SimulationCheckpoint> getCheckpoints() const override;
-
-protected:
-    void buildCircuit() override {}
-    void setInitialState() override;
-    void verifyResults() override;
+    DFlipFlopTest();
 };
 
 class ClockGeneratorTest : public SimulationTest {
@@ -104,6 +88,7 @@ public:
     void setupCircuit() override;
     std::string getTestName() const override;
     size_t getRunDuration() const override;
+    std::vector<SimulationCheckpoint> getCheckpoints() const override;
 
 protected:
     void buildCircuit() override {}

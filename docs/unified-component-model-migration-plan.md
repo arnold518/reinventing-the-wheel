@@ -1,28 +1,29 @@
-# Unified Component Model Migration Plan
+# Unified Component Model Migration
 
 Status: implemented and verified
 
 Branch: `unified-component-migration`
 
-Last updated: 2026-07-24
+Last updated: 2026-07-25
 
-## 1. Goal
+## Goal
 
-Give every circuit one public identity while allowing a build profile to choose
-structural or behavioral fidelity independently at every selectable node.
+Every replaceable component has one public family and one external contract.
+One recursively propagated profile chooses structural or behavioral fidelity
+at the root and at every selectable descendant.
 
-The model must preserve the project's lower-level-first rule:
+The model preserves the lower-level-first rule:
 
 - build and test lower-level circuits first;
-- admit a behavioral implementation only after equivalent lower-level behavior
-  or a representative slice exists;
-- keep behavioral implementations behind the same external contract;
-- let the profile choose fidelity, never a C++ class name;
-- keep the exact child-and-wire blueprint in the structural implementation.
+- add behavioral scale abstractions only after structural or representative
+  lower-level evidence exists;
+- keep both implementations behind the same pins and observation contract;
+- let profiles choose fidelity, never C++ class names; and
+- keep wiring blueprints in structural component implementations.
 
-## 2. Final Model
+## Final architecture
 
-There are only three foundational component classes:
+### Foundational component classes
 
 ```text
 Component
@@ -30,301 +31,207 @@ Component
     └── BasicComponent
 ```
 
-- `Component` owns hierarchy, wires, identity, and optional selection metadata.
-- `IOComponent` adds typed input and output pins.
-- `BasicComponent` is a directly evaluated leaf with delay and `evaluate()`.
+No fidelity-specific base classes exist.
 
-There is no `StructuralComponent`, `BehavioralComponent`,
-`PrimitiveComponent`, or `EvaluatedComponent` inheritance layer.
+- `Component` owns hierarchy, wires, identity, and selection metadata.
+- `IOComponent` adds pins.
+- `BasicComponent` adds delay and direct `evaluate()`.
+- A normal structural composite inherits `IOComponent`.
+- A behavioral implementation inherits `BasicComponent`.
+- A directly evaluated gate remains a terminal structural primitive.
 
-Structural and behavioral are selection metadata:
+### One public family
 
-```cpp
-enum class Fidelity {
-    Structural,
-    Behavioral,
-};
-```
+`ComponentFamily` owns the identity shared by all implementations:
 
-A structural implementation is normally an `IOComponent` that builds child
-components and wires. A behavioral implementation is a `BasicComponent` that
-evaluates the same public contract directly. A gate is also a
-`BasicComponent`, but when it terminates a structural circuit it is recorded as
-a structural terminal leaf. Therefore C++ inheritance does not claim fidelity.
+- contract ID;
+- public/visual type name;
+- one pin initializer;
+- structural factory when present;
+- behavioral factory when present.
 
-`mixed` remains useful only as a derived manifest result for a subtree that
-contains both selected fidelities. It is not a selectable fidelity.
-
-## 3. Public Component Family
-
-A replaceable component is represented by one `ComponentFamily`.
-
-The family owns:
-
-- stable contract ID;
-- stable visual/public type name;
-- one shared pin initializer;
-- structural factory, when available;
-- behavioral factory, when available;
-- default fidelity for explicit construction without a profile.
-
-The implementation classes are mechanics behind the family. Parents, profiles,
-contract tests, bindings, and the visualizer do not name them.
-
-Example public declaration:
-
-```cpp
-namespace circuit::families {
-extern const ComponentFamily ALU32;
-}
-```
-
-Example family definition in `ALU32.cpp`:
-
-```cpp
-namespace {
-void defineALU32Pins(IOComponent* self) {
-    self->addPin<32>("A", PinType::INPUT);
-    self->addPin<32>("B", PinType::INPUT);
-    self->addPin<5>("OP", PinType::INPUT);
-    self->addPin<32>("OUT", PinType::OUTPUT);
-    // flags...
-}
-}
-
-namespace circuit::families {
-const ComponentFamily ALU32{
-    "rv32i.alu32",
-    "ALU32",
-    defineALU32Pins,
-    structuralFactory,
-    behavioralFactory,
-};
-}
-```
-
-The pin definition belongs beside the component implementation. It is not kept
-in a central pin-schema file. Both implementation constructors reuse
-`families::ALU32.pinInitializer()`, so the interface is written once.
-
-## 4. Construction
-
-A parent asks for a family:
+Parents request a family:
 
 ```cpp
 builder.add(circuit::families::ALU32, "ALU");
 ```
 
-It does not write:
+They never choose a concrete implementation class.
+
+The shared pin initializer is defined beside the component, normally in its
+main `.cpp` file. Both factories reuse it, so the interface is written once.
+Internal evaluator classes are construction mechanics and are not bound to
+Python or named by profiles and tests.
+
+### One recursive profile
+
+The only root API is:
 
 ```cpp
-builder.addNewComponent<ALU32Direct>("ALU");
+catalog.createRoot(request, profile);
 ```
 
-When a `BuildContext` exists, `ComponentBuilder::add()` sends a contract request
-to the catalog. The profile selects fidelity at the full instance path, the
-catalog chooses the verified implementation for that fidelity, and the manifest
-records the result.
+`BuildContext` carries that exact profile recursively. There is no:
 
-Without a build context, the family constructs its declared default. This keeps
-small explicit teaching circuits convenient, although reproducible experiments
-should use a profile.
+- `createRootExact`;
+- root-fidelity side argument;
+- descendant/child profile;
+- effective fidelity;
+- reference-only selection category;
+- polymorphic profile-generator hierarchy; or
+- string lookup that maps a preset name to an implementation.
 
-## 5. Profiles
+A rule chooses only `Fidelity::Structural` or
+`Fidelity::Behavioral`. Rules are ordered; the last matching rule wins.
 
-A profile rule contains:
+Selectors support exact path, subtree, contract, depth, and parameters. A
+broad rule followed by a narrow rule is an explicit override.
 
-- a selector by exact path, subtree, family/contract, depth, or parameters;
-- only `Fidelity::Structural` or `Fidelity::Behavioral`;
-- priority and a human-readable reason.
-
-It contains no concrete implementation ID and no class name.
-
-Handwritten profiles remain supported:
+Standard helper functions return ordinary `BuildProfile` values:
 
 ```cpp
-auto profile = circuit::BuildProfileBuilder("inspect-alu")
-    .addRule(circuit::preferFidelity(
-        circuit::Fidelity::Behavioral))
-    .addRule(circuit::preferFidelity(
-        circuit::Fidelity::Structural,
-        circuit::ProfileSelector::contract(circuit::families::ALU32)))
-    .build();
+strictAllStructural()
+maximallyStructural()
+strictAllBehavioral()
+structuralThroughDepth(k, policy)
 ```
 
-Profile generators remove repetitive rules:
+`withProfileOverrides()` and `withExactFidelity()` also return ordinary
+profiles.
 
-- `strictAllStructural()`;
-- `maximallyStructural()`;
-- `strictAllBehavioral()`;
-- `structuralThroughDepth(k, policy)`;
-- named presets;
-- generated profile plus handwritten overrides.
+### Catalog and evidence
 
-The generator chooses visibility policy. The structural component still owns
-its exact topology.
+The frozen catalog records:
 
-## 6. Catalog and Verification
-
-The catalog records:
-
-- external contract and semantic observation boundary;
-- structural or behavioral fidelity;
-- capabilities;
-- deterministic priority;
+- contract pins and observation semantics;
+- available fidelity;
+- optional capabilities;
 - lower-level evidence;
 - contract tests;
-- equivalence or representative-slice tests;
-- factory supplied by the component family.
+- equivalence or representative-slice evidence; and
+- the family-backed factory.
 
-A behavioral implementation cannot enter the frozen built-in catalog without:
+It enforces one implementation per `(contract, fidelity)`. A behavioral
+implementation cannot enter the built-in catalog without lower-level evidence,
+a contract test, and equivalence or representative evidence.
 
-1. lower-level evidence;
-2. its own contract test;
-3. an equivalence test or representative-slice evidence.
+Construction validation requires:
 
-Registration validates that:
+- a behavioral implementation to be a childless `BasicComponent`;
+- a nonterminal structural implementation to be a composite;
+- a terminal structural primitive to be marked explicitly; and
+- every implementation to match its contract pins.
 
-- behavioral selections create a childless `BasicComponent`;
-- nonterminal structural selections create a composite rather than a direct
-  evaluator;
-- structural terminal leaves are explicitly marked;
-- all implementations match the family pin schema;
-- named evidence tests exist in the test registry.
+### Capabilities instead of concrete casts
 
-## 7. Capabilities
+Consumers that need more than pins depend on capability interfaces:
 
-Consumers must not recover implementation classes with casts or type strings.
-Optional APIs use capability interfaces.
+- `RegisterStateView`
+- `RV32IStateView`
 
-Current example:
+This was especially important for the RV32I system. Its structural wrapper can
+now contain either selected core fidelity and observe it through
+`RV32IStateView`.
 
-```cpp
-class RegisterStateView {
-public:
-    virtual ~RegisterStateView() = default;
-    virtual std::vector<std::vector<LogicValue>>
-        getRegisterStateAtTime(size_t time) const = 0;
-};
-```
+Future cache statistics, pipeline state, memory images, and GPU inspection
+should use the same pattern.
 
-Both structural and behavioral register-file implementations provide this
-capability. The RV32I core and Python visualizer query `RegisterStateView`
-instead of checking a behavioral class name.
+## Component-test model
 
-Future memory images, cache statistics, pipeline inspection, and GPU state
-views should follow the same pattern.
+Each public component contract owns one logical test. A scenario owns inputs,
+checkpoint meanings, and independent expected observations.
 
-## 8. Tests
+`ComponentTestRunner::runAll()`:
 
-The test layers are deliberately different:
+1. finds the available DUT fidelities;
+2. starts from one caller-supplied base profile;
+3. appends an exact DUT rule for each run;
+4. builds independent trees and simulators;
+5. drives the same scenario;
+6. observes every public output pin;
+7. checks expected outputs; and
+8. compares fidelity snapshots.
 
-1. Lower-level tests prove gates, slices, and composites.
-2. A structural contract test runs the family with structural fidelity.
-3. A behavioral contract test runs the same scenario logic with behavioral
-   fidelity.
-4. An equivalence test runs each fidelity in an independent simulator and
-   compares only the declared observation boundary.
-5. Profile tests verify recursive selection and manifest metadata.
-6. System tests compare the structural/balanced systems with the independent
-   RV32I answer sheet.
+The DUT rule and all subtree choices are therefore part of one complete
+profile. Tests do not carry a second configuration object.
 
-Separate CTest entries for the two fidelity contract runs are retained so a
-failure identifies the selected fidelity immediately. They do not own separate
-expected behavior. Shared bases and `ComponentFamilyRowsTest` reuse the same
-waveform or row table.
+Program scenarios use the behavioral RV32I system as the executable answer
+sheet and compare independent commit traces and hard-coded final outcomes.
 
-Current naming is purpose based:
+CTest names describe logical components or program scenarios, not
+implementation mechanics. Parameterized programs remain:
 
 ```text
-ALU32StructuralContractTest
-ALU32BehavioralContractTest
-ALU32EquivalenceTest
-ALU32LowerLevelSliceTest
+RV32ISingleCycleSystemTest/program-01
+...
+RV32ISingleCycleSystemTest/program-16
 ```
 
-Implementation-mechanism names such as `DirectTest` are not part of the test
-surface.
+## Registry and visualizer
 
-## 9. Python and Visualizer
+The C++ registry owns scenario metadata and factories. Python exposes only:
 
-Python exports the foundational bases and public teaching components. It does
-not export internal direct-evaluator implementation classes.
+- `get_registered_test_names()`;
+- `get_registered_test_descriptors()`; and
+- `create_test_by_name()`.
 
-All returned components still expose the common IO discovery surface through
-the base binding. Optional state is accessed through capability functions, such
-as `get_register_state_at_time(component, time)`.
+The visualizer constructs every scenario through that registry. It no longer
+depends on a manually duplicated Python class binding for each test.
 
-The browser uses:
+Component inspection shows public type, contract, selected fidelity,
+selection reason, and profile fingerprint. It does not branch on internal
+behavioral class names.
 
-- public type name for reusable layout and drawing;
-- contract ID and selected fidelity for the inspector;
-- profile fingerprint for reproducibility;
-- capabilities for specialized overlays.
+Layout schema version 2 stores reusable type defaults, sparse profile
+overrides, and scenario roots. Profile fingerprints ignore human names and
+reasons, preventing layout duplication when only prose changes.
 
-It does not branch on a concrete behavioral class name.
+## Migrated selectable families
 
-Layout schema version 2 stores:
+- `MemoryBit`
+- `Register32`
+- `RegisterFile32x32`
+- `AddSub32`
+- `Logic32`
+- `Shifter32`
+- `Comparator32`
+- `ZeroDetect32`
+- `ALU32`
+- `RV32IControlFlow`
+- `RV32IDecodeControl`
+- `RV32IExecutionStatus`
+- `RV32ISingleCycleCore`
+- `RV32ISingleCycleSystem`
 
-- reusable `type_layouts`;
-- sparse `profile_layouts` when one profile genuinely needs different geometry;
-- `root_layouts` keyed by `scenario@profile-fingerprint` for profiled roots.
+`Memory64Kx32` remains behavioral-only, backed by structural `Memory4x32` and
+`Memory32x32` representative slices. One-form components remain cataloged but
+do not need a second factory.
 
-## 10. Migrated Families
+## Completion checklist
 
-The current selectable families are:
+- [x] Keep only the three foundational component classes.
+- [x] Give selectable components one family identity and shared pins.
+- [x] Select only the two fidelities through profile metadata.
+- [x] Propagate one profile from root through the complete tree.
+- [x] Remove forced-root and descendant-profile APIs.
+- [x] Replace generator objects with plain profile helper functions.
+- [x] Remove reference-only and priority/specificity selection layers.
+- [x] Make profile rule precedence ordered and explicit.
+- [x] Make the RV32I core and system complete two-fidelity families.
+- [x] Add fidelity-independent RV32I state observation.
+- [x] Migrate component tests to one base profile and one logical scenario.
+- [x] Route visualizer scenario creation through the test registry.
+- [x] Regenerate all default layouts for the final profile fingerprints.
+- [x] Pass all 125 CTest entries on the final source state.
+- [x] Record final measured verification in the migration report.
 
-- `MemoryBit`;
-- `Register32`;
-- `RegisterFile32x32`;
-- `ALU32`;
-- `RV32IControlFlow`;
-- `RV32IDecodeControl`;
-- `RV32IExecutionStatus`.
-
-Behavioral-only scale/reference families include:
-
-- `Memory64Kx32`;
-- `RV32IReferenceCore`.
-
-The structural system and core are also families so parents can build them
-through stable contracts:
-
-- `RV32ISingleCycleCore`;
-- `RV32ISingleCycleSystem`;
-- `RV32IReferenceSystem`.
-
-Simple gates and one-form composites remain normal components. They are
-cataloged for inventory and evidence, but do not need a two-factory family when
-there is no fidelity choice.
-
-## 11. Migration Checklist
-
-- [x] Preserve the pre-migration RV32I checkpoint and create a migration branch.
-- [x] Collapse the component hierarchy to the three foundational classes.
-- [x] Add family-local shared pin contracts and factories.
-- [x] Remove concrete implementation selection from profiles.
-- [x] Migrate recursive parent construction to `builder.add(family, name)`.
-- [x] Migrate the built-in catalog and verification policy.
-- [x] Migrate register-state consumers to a capability.
-- [x] Normalize component type names across fidelities.
-- [x] Normalize tests to structural contract, behavioral contract, and
-  equivalence purposes.
-- [x] Remove direct implementation classes from Python's public surface.
-- [x] Make visualizer overlays use public type/capability information.
-- [x] Regenerate schema-v2 layouts with overlap validation.
-- [x] Run the complete 168-test regression on the final source state.
-- [x] Restart and probe the port-8765 systemd visualizer.
-- [x] Commit the completed migration.
-
-## 12. Non-Goals
+## Non-goals
 
 This migration does not:
 
-- make structural and behavioral timing identical outside each documented
-  observation boundary;
-- require every one-form component to have a behavioral counterpart;
-- turn profiles into topology blueprints;
-- replace the independent RV32I instruction oracle;
-- hide lower-level circuits behind behavioral code before lower-level evidence
-  exists.
+- require every component to have both fidelities;
+- make propagation delays equal between fidelities;
+- turn a profile into a wiring blueprint;
+- make behavioral code the structural source of truth;
+- replace the independent RV32I instruction oracle; or
+- implement interactive profile editing in the visualizer.

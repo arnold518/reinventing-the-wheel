@@ -676,7 +676,7 @@ Landed integration tests:
 - the shared hard-coded final validator through `verifyRV32ISystemExpectedResult`
 - direct memory-interface coverage for all RV32I load/store widths in the 16 program suite
 - `RV32ISingleCycleCoreSmokeTest`
-- `RV32ISingleCycleSystemContractTest`
+- `RV32ISingleCycleCoreTest`
 - `RV32ISingleCycleSystemProgram1Test` through `RV32ISingleCycleSystemProgram16Test`
 
 Program-level tests should continue to compare against `RV32IInstructionOracle`.

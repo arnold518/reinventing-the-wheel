@@ -181,8 +181,53 @@ void SimulatorUnwiredOutputPinHistoryTest::verifyResults() {
     expectSplitterOutputs(io_root, 0xff, "SimulatorUnwiredOutputPinHistoryTest restored state");
 }
 
+std::string SimulatorDrainUntilIdleTest::getTestName() const {
+    return "SimulatorDrainUntilIdleTest";
+}
+
+void SimulatorDrainUntilIdleTest::verifyResults() {
+    auto not_gate = Component::create<NOTGate>("NOT_DRAIN_ROOT");
+    ComponentBuilder local_builder(not_gate);
+    auto io_root = std::dynamic_pointer_cast<IOComponent>(not_gate);
+    assert(io_root);
+
+    auto input_wire = local_builder.addNewWire(
+        "IN_WIRE", nullptr, {io_root->getInputPin("IN")});
+    auto output_wire = local_builder.addNewWire(
+        "OUT_WIRE", io_root->getOutputPin("OUT"), {});
+
+    Simulator local_sim;
+    drive(local_sim, 10, input_wire, false);
+
+    auto deadline = local_sim.drainUntilIdle(9, 100);
+    expect(deadline.status == DrainStatus::DeadlineReached,
+           "SimulatorDrainUntilIdleTest deadline status");
+    expect(deadline.processed_events == 0,
+           "SimulatorDrainUntilIdleTest deadline event count");
+    expect(local_sim.hasPendingEvents(),
+           "SimulatorDrainUntilIdleTest pending after deadline");
+    expect(local_sim.nextEventTime() == std::optional<size_t>{10},
+           "SimulatorDrainUntilIdleTest next event time");
+
+    auto limited = local_sim.drainUntilIdle(100, 1);
+    expect(limited.status == DrainStatus::EventLimitReached,
+           "SimulatorDrainUntilIdleTest event limit status");
+    expect(limited.processed_events == 1,
+           "SimulatorDrainUntilIdleTest event limit count");
+    expect(local_sim.hasPendingEvents(),
+           "SimulatorDrainUntilIdleTest pending after event limit");
+
+    auto drained = local_sim.drainUntilIdle(100, 100);
+    expect(drained.status == DrainStatus::Idle,
+           "SimulatorDrainUntilIdleTest idle status");
+    expect(!local_sim.hasPendingEvents(),
+           "SimulatorDrainUntilIdleTest empty after drain");
+    expect(output_wire->getSingleValue() == LogicValue::HIGH,
+           "SimulatorDrainUntilIdleTest settled output");
+}
+
 NOTGateTest::NOTGateTest()
-    : ComponentRowsTest<NOTGate>("NOTGateTest", "NOT_GATE_ROOT", {
+    : TruthTableComponentTest<NOTGate>("NOTGateTest", "NOT_GATE_ROOT", {
         {{{"IN", bit(false)}}, {{"OUT", bit(true)}}},
         {{{"IN", bit(true)}}, {{"OUT", bit(false)}}},
         {{{"IN", logic(LogicValue::UNKNOWN)}}, {{"OUT", logic(LogicValue::UNKNOWN)}}},
@@ -190,7 +235,7 @@ NOTGateTest::NOTGateTest()
     }) {}
 
 ANDGateTest::ANDGateTest()
-    : ComponentRowsTest<ANDGate>("ANDGateTest", "AND_GATE_ROOT", {
+    : TruthTableComponentTest<ANDGate>("ANDGateTest", "AND_GATE_ROOT", {
         {{{"A", bit(false)}, {"B", bit(false)}}, {{"OUT", bit(false)}}},
         {{{"A", bit(false)}, {"B", bit(true)}}, {{"OUT", bit(false)}}},
         {{{"A", bit(true)}, {"B", bit(false)}}, {{"OUT", bit(false)}}},
@@ -205,7 +250,7 @@ ANDGateTest::ANDGateTest()
     }) {}
 
 ORGateTest::ORGateTest()
-    : ComponentRowsTest<ORGate>("ORGateTest", "OR_GATE_ROOT", {
+    : TruthTableComponentTest<ORGate>("ORGateTest", "OR_GATE_ROOT", {
         {{{"A", bit(false)}, {"B", bit(false)}}, {{"OUT", bit(false)}}},
         {{{"A", bit(false)}, {"B", bit(true)}}, {{"OUT", bit(true)}}},
         {{{"A", bit(true)}, {"B", bit(false)}}, {{"OUT", bit(true)}}},
@@ -220,7 +265,7 @@ ORGateTest::ORGateTest()
     }) {}
 
 XORGateTest::XORGateTest()
-    : ComponentRowsTest<XORGate>("XORGateTest", "XOR_GATE_ROOT", {
+    : TruthTableComponentTest<XORGate>("XORGateTest", "XOR_GATE_ROOT", {
         {{{"A", bit(false)}, {"B", bit(false)}}, {{"OUT", bit(false)}}},
         {{{"A", bit(false)}, {"B", bit(true)}}, {{"OUT", bit(true)}}},
         {{{"A", bit(true)}, {"B", bit(false)}}, {{"OUT", bit(true)}}},
@@ -235,7 +280,7 @@ XORGateTest::XORGateTest()
     }) {}
 
 NANDGateTest::NANDGateTest()
-    : ComponentRowsTest<NANDGate>("NANDGateTest", "NAND_GATE_ROOT", {
+    : TruthTableComponentTest<NANDGate>("NANDGateTest", "NAND_GATE_ROOT", {
         {{{"A", bit(false)}, {"B", bit(false)}}, {{"OUT", bit(true)}}},
         {{{"A", bit(false)}, {"B", bit(true)}}, {{"OUT", bit(true)}}},
         {{{"A", bit(true)}, {"B", bit(false)}}, {{"OUT", bit(true)}}},
@@ -249,7 +294,7 @@ NANDGateTest::NANDGateTest()
     }) {}
 
 NORGateTest::NORGateTest()
-    : ComponentRowsTest<NORGate>("NORGateTest", "NOR_GATE_ROOT", {
+    : TruthTableComponentTest<NORGate>("NORGateTest", "NOR_GATE_ROOT", {
         {{{"A", bit(false)}, {"B", bit(false)}}, {{"OUT", bit(true)}}},
         {{{"A", bit(false)}, {"B", bit(true)}}, {{"OUT", bit(false)}}},
         {{{"A", bit(true)}, {"B", bit(false)}}, {{"OUT", bit(false)}}},
@@ -262,220 +307,241 @@ NORGateTest::NORGateTest()
         {{{"A", logic(LogicValue::HIGH_Z)}, {"B", bit(false)}}, {{"OUT", logic(LogicValue::UNKNOWN)}}},
     }) {}
 
-std::string SRLatchTest::getTestName() const {
-    return "SRLatchTest";
-}
+namespace {
+using circuit::test::ActionScenario;
+using circuit::test::CheckpointKind;
+using circuit::test::ComponentTestSpec;
+using circuit::test::NamedValues;
+using circuit::test::ScenarioAction;
+using circuit::test::logicBit;
 
-void SRLatchTest::setupCircuit() {
-    root = Component::create<SRLatch>("SR_LATCH_ROOT");
-    builder = std::make_unique<ComponentBuilder>(root);
-    buildCircuit();
-    setInitialState();
-}
-
-void SRLatchTest::setInitialState() {
-    auto io_root = std::dynamic_pointer_cast<IOComponent>(root);
-    assert(io_root && "SRLatchTest requires IOComponent root");
-
-    auto s_bar_wire = builder->addNewWire("S_BAR_IN", nullptr, {io_root->getInputPin("S_BAR")});
-    auto r_bar_wire = builder->addNewWire("R_BAR_IN", nullptr, {io_root->getInputPin("R_BAR")});
-    builder->addNewWire("Q_OUT", io_root->getOutputPin("Q"), {});
-    builder->addNewWire("Q_BAR_OUT", io_root->getOutputPin("Q_BAR"), {});
-
-    drive(*sim, 0, s_bar_wire, true);
-    drive(*sim, 0, r_bar_wire, false);
-    drive(*sim, 20, r_bar_wire, true);
-    drive(*sim, 40, s_bar_wire, false);
-    drive(*sim, 60, s_bar_wire, true);
-    drive(*sim, 80, s_bar_wire, false);
-    drive(*sim, 80, r_bar_wire, false);
-    drive(*sim, 100, s_bar_wire, true);
-    drive(*sim, 100, r_bar_wire, false);
-}
-
-void SRLatchTest::verifyResults() {
-    auto q_wire = builder->getWire("Q_OUT");
-    auto q_bar_wire = builder->getWire("Q_BAR_OUT");
-
-    expectWireAt(*sim, q_wire, 10, LogicValue::LOW, "Q_OUT reset");
-    expectWireAt(*sim, q_bar_wire, 10, LogicValue::HIGH, "Q_BAR_OUT reset");
-    expectWireAt(*sim, q_wire, 30, LogicValue::LOW, "Q_OUT hold reset");
-    expectWireAt(*sim, q_bar_wire, 30, LogicValue::HIGH, "Q_BAR_OUT hold reset");
-    expectWireAt(*sim, q_wire, 50, LogicValue::HIGH, "Q_OUT set");
-    expectWireAt(*sim, q_bar_wire, 50, LogicValue::LOW, "Q_BAR_OUT set");
-    expectWireAt(*sim, q_wire, 70, LogicValue::HIGH, "Q_OUT hold set");
-    expectWireAt(*sim, q_bar_wire, 70, LogicValue::LOW, "Q_BAR_OUT hold set");
-    expectWireAt(*sim, q_wire, 90, LogicValue::HIGH, "Q_OUT invalid active-low inputs");
-    expectWireAt(*sim, q_bar_wire, 90, LogicValue::HIGH, "Q_BAR_OUT invalid active-low inputs");
-    expectWireAt(*sim, q_wire, 110, LogicValue::LOW, "Q_OUT reset after invalid");
-    expectWireAt(*sim, q_bar_wire, 110, LogicValue::HIGH, "Q_BAR_OUT reset after invalid");
-}
-
-size_t SRLatchTest::getRunDuration() const {
-    return 120;
-}
-
-std::vector<SimulationTest::SimulationCheckpoint> SRLatchTest::getCheckpoints() const {
+ScenarioAction sequentialAction(
+    std::string id,
+    NamedValues inputs,
+    NamedValues outputs,
+    CheckpointKind kind = CheckpointKind::Settled,
+    std::string detail = {}) {
     return {
-        {10, "Reset", "S_BAR=1, R_BAR=0 -> Q=0", 0},
-        {30, "Hold reset", "S_BAR=1, R_BAR=1 -> Q holds 0", 1},
-        {50, "Set", "S_BAR=0, R_BAR=1 -> Q=1", 2},
-        {70, "Hold set", "S_BAR=1, R_BAR=1 -> Q holds 1", 3},
-        {90, "Invalid", "S_BAR=0, R_BAR=0 -> both NAND outputs high", 4},
-        {110, "Reset again", "R_BAR=0 recovers Q=0", 5},
+        std::move(id),
+        kind,
+        std::move(inputs),
+        std::move(outputs),
+        true,
+        std::move(detail),
     };
 }
 
-std::string GatedDLatchTest::getTestName() const {
-    return "GatedDLatchTest";
-}
-
-void GatedDLatchTest::setupCircuit() {
-    root = Component::create<GatedDLatch>("GATED_D_LATCH_ROOT");
-    builder = std::make_unique<ComponentBuilder>(root);
-    buildCircuit();
-    setInitialState();
-}
-
-void GatedDLatchTest::setInitialState() {
-    auto io_root = std::dynamic_pointer_cast<IOComponent>(root);
-    assert(io_root && "GatedDLatchTest requires IOComponent root");
-
-    auto d_wire = builder->addNewWire("D_IN", nullptr, {io_root->getInputPin("D")});
-    auto en_wire = builder->addNewWire("EN_IN", nullptr, {io_root->getInputPin("EN")});
-    auto rst_wire = builder->addNewWire("RST_IN", nullptr, {io_root->getInputPin("RST")});
-    builder->addNewWire("Q_OUT", io_root->getOutputPin("Q"), {});
-    builder->addNewWire("Q_BAR_OUT", io_root->getOutputPin("Q_BAR"), {});
-
-    drive(*sim, 0, d_wire, false);
-    drive(*sim, 0, en_wire, false);
-    drive(*sim, 0, rst_wire, true);
-    drive(*sim, 20, rst_wire, false);
-    drive(*sim, 30, d_wire, true);
-    drive(*sim, 50, en_wire, true);
-    drive(*sim, 80, d_wire, false);
-    drive(*sim, 110, en_wire, false);
-    drive(*sim, 120, d_wire, true);
-    drive(*sim, 150, en_wire, true);
-    drive(*sim, 180, d_wire, LogicValue::UNKNOWN);
-    drive(*sim, 220, rst_wire, true);
-}
-
-void GatedDLatchTest::verifyResults() {
-    auto q_wire = builder->getWire("Q_OUT");
-    auto q_bar_wire = builder->getWire("Q_BAR_OUT");
-
-    expectWireAt(*sim, q_wire, 10, LogicValue::LOW, "Q_OUT reset");
-    expectWireAt(*sim, q_bar_wire, 10, LogicValue::HIGH, "Q_BAR_OUT reset");
-    expectWireAt(*sim, q_wire, 45, LogicValue::LOW, "Q_OUT disabled hold");
-    expectWireAt(*sim, q_wire, 70, LogicValue::HIGH, "Q_OUT enabled set");
-    expectWireAt(*sim, q_bar_wire, 70, LogicValue::LOW, "Q_BAR_OUT enabled set");
-    expectWireAt(*sim, q_wire, 100, LogicValue::LOW, "Q_OUT transparent low");
-    expectWireAt(*sim, q_bar_wire, 100, LogicValue::HIGH, "Q_BAR_OUT transparent low");
-    expectWireAt(*sim, q_wire, 140, LogicValue::LOW, "Q_OUT disabled hold low");
-    expectWireAt(*sim, q_wire, 170, LogicValue::HIGH, "Q_OUT re-enabled high");
-    expectWireAt(*sim, q_wire, 205, LogicValue::UNKNOWN, "Q_OUT transparent unknown");
-    expectWireAt(*sim, q_bar_wire, 205, LogicValue::UNKNOWN, "Q_BAR_OUT transparent unknown");
-    expectWireAt(*sim, q_wire, 240, LogicValue::LOW, "Q_OUT reset clears unknown");
-    expectWireAt(*sim, q_bar_wire, 240, LogicValue::HIGH, "Q_BAR_OUT reset clears unknown");
-}
-
-size_t GatedDLatchTest::getRunDuration() const {
-    return 250;
-}
-
-std::vector<SimulationTest::SimulationCheckpoint> GatedDLatchTest::getCheckpoints() const {
+ComponentTestSpec srLatchSpec() {
+    ActionScenario scenario{
+        "state-sequence",
+        {},
+        {
+            sequentialAction(
+                "reset",
+                {{"S_BAR", logicBit(true)}, {"R_BAR", logicBit(false)}},
+                {{"Q", logicBit(false)}, {"Q_BAR", logicBit(true)}}),
+            sequentialAction(
+                "hold-reset",
+                {{"R_BAR", logicBit(true)}},
+                {{"Q", logicBit(false)}, {"Q_BAR", logicBit(true)}}),
+            sequentialAction(
+                "set",
+                {{"S_BAR", logicBit(false)}},
+                {{"Q", logicBit(true)}, {"Q_BAR", logicBit(false)}}),
+            sequentialAction(
+                "hold-set",
+                {{"S_BAR", logicBit(true)}},
+                {{"Q", logicBit(true)}, {"Q_BAR", logicBit(false)}}),
+            sequentialAction(
+                "invalid",
+                {{"S_BAR", logicBit(false)}, {"R_BAR", logicBit(false)}},
+                {{"Q", logicBit(true)}, {"Q_BAR", logicBit(true)}}),
+            sequentialAction(
+                "recover-reset",
+                {{"S_BAR", logicBit(true)}},
+                {{"Q", logicBit(false)}, {"Q_BAR", logicBit(true)}}),
+        },
+        {100'000, 1'000'000},
+    };
     return {
-        {10, "Reset", "RST=1 clears Q", 0},
-        {45, "Disabled hold", "EN=0, D=1 -> Q holds 0", 1},
-        {70, "Transparent high", "EN=1, D=1 -> Q=1", 2},
-        {100, "Transparent low", "EN=1, D=0 -> Q=0", 3},
-        {140, "Hold low", "EN=0, D=1 -> Q holds 0", 4},
-        {170, "Re-enabled high", "EN=1, D=1 -> Q=1", 5},
-        {205, "Transparent unknown", "EN=1, D=X -> Q=X", 6},
-        {240, "Reset unknown", "RST=1 clears Q from X to 0", 7},
+        "SRLatchTest",
+        "sequential.sr-latch",
+        "SR_LATCH_ROOT",
+        {},
+        {std::move(scenario)},
     };
 }
 
-std::string DFlipFlopTest::getTestName() const {
-    return "DFlipFlopTest";
-}
-
-void DFlipFlopTest::setupCircuit() {
-    root = Component::create<DFlipFlop>("DFF_ROOT");
-    builder = std::make_unique<ComponentBuilder>(root);
-    buildCircuit();
-    setInitialState();
-}
-
-void DFlipFlopTest::setInitialState() {
-    auto io_root = std::dynamic_pointer_cast<IOComponent>(root);
-    assert(io_root && "DFlipFlopTest requires IOComponent root");
-
-    auto d_wire = builder->addNewWire("D_IN", nullptr, {io_root->getInputPin("D")});
-    auto clk_wire = builder->addNewWire("CLK_IN", nullptr, {io_root->getInputPin("CLK")});
-    auto rst_wire = builder->addNewWire("RST_IN", nullptr, {io_root->getInputPin("RST")});
-    builder->addNewWire("Q_OUT", io_root->getOutputPin("Q"), {});
-    builder->addNewWire("Q_BAR_OUT", io_root->getOutputPin("Q_BAR"), {});
-
-    drive(*sim, 0, rst_wire, true);
-    drive(*sim, 0, d_wire, false);
-    drive(*sim, 0, clk_wire, false);
-    drive(*sim, 30, rst_wire, false);
-    drive(*sim, 40, d_wire, true);
-    drive(*sim, 70, clk_wire, true);
-    drive(*sim, 100, d_wire, false);
-    drive(*sim, 130, clk_wire, false);
-    drive(*sim, 170, clk_wire, true);
-    drive(*sim, 210, d_wire, LogicValue::UNKNOWN);
-    drive(*sim, 240, clk_wire, false);
-    drive(*sim, 270, clk_wire, true);
-    drive(*sim, 320, rst_wire, true);
-}
-
-void DFlipFlopTest::verifyResults() {
-    auto q_wire = builder->getWire("Q_OUT");
-    auto q_bar_wire = builder->getWire("Q_BAR_OUT");
-
-    expectWireAt(*sim, q_wire, 20, LogicValue::LOW, "Q_OUT reset");
-    expectWireAt(*sim, q_bar_wire, 20, LogicValue::HIGH, "Q_BAR_OUT reset");
-    expectWireAt(*sim, q_wire, 60, LogicValue::LOW, "Q_OUT low before first rising edge");
-    expectWireAt(*sim, q_wire, 95, LogicValue::HIGH, "Q_OUT captures D=1 on rising edge");
-    expectWireAt(*sim, q_bar_wire, 95, LogicValue::LOW, "Q_BAR_OUT captures D=1 on rising edge");
-    expectWireAt(*sim, q_wire, 120, LogicValue::HIGH, "Q_OUT ignores D change while CLK high");
-    expectWireAt(*sim, q_wire, 155, LogicValue::HIGH, "Q_OUT ignores falling edge");
-    expectWireAt(*sim, q_wire, 200, LogicValue::LOW, "Q_OUT captures D=0 on next rising edge");
-    expectWireAt(*sim, q_bar_wire, 200, LogicValue::HIGH, "Q_BAR_OUT captures D=0 on next rising edge");
-    expectWireAt(*sim, q_wire, 260, LogicValue::LOW, "Q_OUT holds while master samples unknown");
-    expectWireAt(*sim, q_wire, 300, LogicValue::UNKNOWN, "Q_OUT captures unknown D on rising edge");
-    expectWireAt(*sim, q_bar_wire, 300, LogicValue::UNKNOWN, "Q_BAR_OUT captures unknown D on rising edge");
-    expectWireAt(*sim, q_wire, 345, LogicValue::LOW, "Q_OUT reset clears unknown");
-    expectWireAt(*sim, q_bar_wire, 345, LogicValue::HIGH, "Q_BAR_OUT reset clears unknown");
-}
-
-size_t DFlipFlopTest::getRunDuration() const {
-    return 360;
-}
-
-std::vector<SimulationTest::SimulationCheckpoint> DFlipFlopTest::getCheckpoints() const {
+ComponentTestSpec gatedDLatchSpec() {
+    ActionScenario scenario{
+        "state-sequence",
+        {},
+        {
+            sequentialAction(
+                "reset",
+                {
+                    {"D", logicBit(false)},
+                    {"EN", logicBit(false)},
+                    {"RST", logicBit(true)},
+                },
+                {{"Q", logicBit(false)}, {"Q_BAR", logicBit(true)}}),
+            sequentialAction(
+                "release-reset",
+                {{"RST", logicBit(false)}},
+                {{"Q", logicBit(false)}, {"Q_BAR", logicBit(true)}}),
+            sequentialAction(
+                "disabled-hold",
+                {{"D", logicBit(true)}},
+                {{"Q", logicBit(false)}, {"Q_BAR", logicBit(true)}}),
+            sequentialAction(
+                "transparent-high",
+                {{"EN", logicBit(true)}},
+                {{"Q", logicBit(true)}, {"Q_BAR", logicBit(false)}}),
+            sequentialAction(
+                "transparent-low",
+                {{"D", logicBit(false)}},
+                {{"Q", logicBit(false)}, {"Q_BAR", logicBit(true)}}),
+            sequentialAction(
+                "disable",
+                {{"EN", logicBit(false)}},
+                {{"Q", logicBit(false)}, {"Q_BAR", logicBit(true)}}),
+            sequentialAction(
+                "hold-low",
+                {{"D", logicBit(true)}},
+                {{"Q", logicBit(false)}, {"Q_BAR", logicBit(true)}}),
+            sequentialAction(
+                "re-enable",
+                {{"EN", logicBit(true)}},
+                {{"Q", logicBit(true)}, {"Q_BAR", logicBit(false)}}),
+            sequentialAction(
+                "transparent-unknown",
+                {{"D", logicBit(LogicValue::UNKNOWN)}},
+                {
+                    {"Q", logicBit(LogicValue::UNKNOWN)},
+                    {"Q_BAR", logicBit(LogicValue::UNKNOWN)},
+                }),
+            sequentialAction(
+                "reset-unknown",
+                {{"RST", logicBit(true)}},
+                {{"Q", logicBit(false)}, {"Q_BAR", logicBit(true)}}),
+        },
+        {100'000, 2'000'000},
+    };
     return {
-        {20, "Reset", "RST=1 clears Q", 0},
-        {60, "Pre-edge hold", "D=1 while CLK=0 updates master only; Q remains 0", 1},
-        {95, "Rising capture one", "CLK rises and slave publishes D=1", 2},
-        {120, "No high-level capture", "D changes while CLK is already high; Q remains 1", 3},
-        {155, "No falling capture", "CLK falls; Q remains 1", 4},
-        {200, "Rising capture zero", "Next rising edge publishes D=0", 5},
-        {300, "Capture unknown", "Unknown D sampled by master and published on next rising edge", 6},
-        {345, "Reset unknown", "RST=1 clears Q from X to 0", 7},
+        "GatedDLatchTest",
+        "sequential.gated-d-latch",
+        "GATED_D_LATCH_ROOT",
+        {},
+        {std::move(scenario)},
     };
 }
+
+ComponentTestSpec dFlipFlopSpec() {
+    ActionScenario scenario{
+        "edge-sequence",
+        {},
+        {
+            sequentialAction(
+                "reset",
+                {
+                    {"D", logicBit(false)},
+                    {"CLK", logicBit(false)},
+                    {"RST", logicBit(true)},
+                },
+                {{"Q", logicBit(false)}, {"Q_BAR", logicBit(true)}},
+                CheckpointKind::AfterEdge),
+            sequentialAction(
+                "release-reset",
+                {{"RST", logicBit(false)}},
+                {{"Q", logicBit(false)}, {"Q_BAR", logicBit(true)}}),
+            sequentialAction(
+                "prepare-one",
+                {{"D", logicBit(true)}},
+                {{"Q", logicBit(false)}, {"Q_BAR", logicBit(true)}}),
+            sequentialAction(
+                "capture-one",
+                {{"CLK", logicBit(true)}},
+                {{"Q", logicBit(true)}, {"Q_BAR", logicBit(false)}},
+                CheckpointKind::AfterEdge),
+            sequentialAction(
+                "ignore-high-data-change",
+                {{"D", logicBit(false)}},
+                {{"Q", logicBit(true)}, {"Q_BAR", logicBit(false)}}),
+            sequentialAction(
+                "falling-edge",
+                {{"CLK", logicBit(false)}},
+                {{"Q", logicBit(true)}, {"Q_BAR", logicBit(false)}},
+                CheckpointKind::AfterEdge),
+            sequentialAction(
+                "capture-zero",
+                {{"CLK", logicBit(true)}},
+                {{"Q", logicBit(false)}, {"Q_BAR", logicBit(true)}},
+                CheckpointKind::AfterEdge),
+            sequentialAction(
+                "open-master",
+                {{"CLK", logicBit(false)}},
+                {{"Q", logicBit(false)}, {"Q_BAR", logicBit(true)}},
+                CheckpointKind::AfterEdge),
+            sequentialAction(
+                "prepare-unknown",
+                {{"D", logicBit(LogicValue::UNKNOWN)}},
+                {{"Q", logicBit(false)}, {"Q_BAR", logicBit(true)}}),
+            sequentialAction(
+                "capture-unknown",
+                {{"CLK", logicBit(true)}},
+                {
+                    {"Q", logicBit(LogicValue::UNKNOWN)},
+                    {"Q_BAR", logicBit(LogicValue::UNKNOWN)},
+                },
+                CheckpointKind::AfterEdge),
+            sequentialAction(
+                "reset-unknown",
+                {{"RST", logicBit(true)}},
+                {{"Q", logicBit(false)}, {"Q_BAR", logicBit(true)}},
+                CheckpointKind::AfterEdge),
+        },
+        {100'000, 2'000'000},
+    };
+    return {
+        "DFlipFlopTest",
+        "sequential.d-flip-flop",
+        "DFF_ROOT",
+        {},
+        {std::move(scenario)},
+    };
+}
+} // namespace
+
+SRLatchTest::SRLatchTest()
+    : ComponentScenarioTest(srLatchSpec()) {}
+
+GatedDLatchTest::GatedDLatchTest()
+    : ComponentScenarioTest(gatedDLatchSpec()) {}
+
+DFlipFlopTest::DFlipFlopTest()
+    : ComponentScenarioTest(dFlipFlopSpec()) {}
 
 std::string ClockGeneratorTest::getTestName() const {
     return "ClockGeneratorTest";
 }
 
 void ClockGeneratorTest::setupCircuit() {
-    root = Component::create<ClockGenerator>("CLK_ROOT", 5);
+    auto profile = circuit::withExactFidelity(
+        circuit::canonicalDefaultProfile(),
+        "CLK_ROOT",
+        circuit::Fidelity::Structural,
+        "clock-generator-test");
+    auto build = circuit::builtinComponentCatalog().createRoot(
+        {
+            "timing.clock",
+            "CLK_ROOT",
+            {{"half_period", "5"}},
+            {},
+            {},
+            {},
+        },
+        std::move(profile));
+    root = std::move(build.root);
     builder = std::make_unique<ComponentBuilder>(root);
     buildCircuit();
     setInitialState();
@@ -502,4 +568,15 @@ void ClockGeneratorTest::verifyResults() {
 
 size_t ClockGeneratorTest::getRunDuration() const {
     return 20;
+}
+
+std::vector<SimulationTest::SimulationCheckpoint>
+ClockGeneratorTest::getCheckpoints() const {
+    return {
+        {0, "transition-0", "CLK_OUT=1", 0},
+        {5, "transition-1", "CLK_OUT=0", 1},
+        {10, "transition-2", "CLK_OUT=1", 2},
+        {15, "transition-3", "CLK_OUT=0", 3},
+        {20, "transition-4", "CLK_OUT=1", 4},
+    };
 }

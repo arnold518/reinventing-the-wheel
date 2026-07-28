@@ -73,8 +73,8 @@ void BuildContext::applyMetadata(Component& component) const {
         selection_->contract_version,
         selection_->implementation_id,
         selection_->fidelity,
+        selection_->available_fidelities,
         selection_->terminal_primitive,
-        selection_->reference_only,
         selection_->used_unavailable_exception,
         selection_->selection_reason,
         profile_->fingerprint(),
@@ -103,7 +103,7 @@ void BuildContext::recordCreated(const Component& component) const {
     }
 
     manifest_->record(BuildManifestEntry{
-        path_, depth_, parameters_, std::move(recorded), EffectiveFidelity::Unspecified,
+        path_, depth_, parameters_, std::move(recorded),
     });
 }
 

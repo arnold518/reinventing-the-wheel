@@ -1,4 +1,5 @@
 #include "tests/ComponentSelectionTests.hpp"
+#include "tests/ComponentTestModel.hpp"
 
 #include "components/BasicComponent.hpp"
 #include "components/Component.hpp"
@@ -6,10 +7,12 @@
 #include "components/selection/BuildProfile.hpp"
 #include "components/selection/BuiltinComponentCatalog.hpp"
 #include "components/selection/ComponentCatalog.hpp"
-#include "components/selection/ProfileGenerator.hpp"
-#include "modules/memory/Register32BitCellArray.hpp"
+#include "components/selection/StandardProfiles.hpp"
+#include "modules/composite/ALU32.hpp"
+#include "modules/composite/HalfAdder.hpp"
 #include "modules/memory/MemoryBit.hpp"
 #include "modules/memory/Register32.hpp"
+#include "modules/rv32i/RV32ISingleCycleSystem.hpp"
 #include "basic/Wire.hpp"
 #include "simulator/Event.hpp"
 #include "simulator/Simulator.hpp"
@@ -49,7 +52,7 @@ circuit::VerificationEvidence structuralEvidence() {
     return {
         circuit::VerificationStatus::Verified,
         {"gate-level implementation"},
-        {"MemoryBitStructuralContractTest"},
+        {"MemoryBitTest"},
         {},
         {},
         "four-state",
@@ -61,8 +64,8 @@ circuit::VerificationEvidence behavioralEvidence() {
     return {
         circuit::VerificationStatus::Verified,
         {"MemoryBit mux and DFF structure"},
-        {"MemoryBitBehavioralContractTest"},
-        {"MemoryBitEquivalenceTest"},
+        {"MemoryBitTest"},
+        {"MemoryBitTest"},
         {},
         "four-state",
         "clock-boundary",
@@ -74,7 +77,6 @@ circuit::ImplementationDescriptor structuralMemoryBit() {
     descriptor.id = "memory.write-enabled-bit.structural.mux-dff";
     descriptor.contract_id = "memory.write-enabled-bit";
     descriptor.fidelity = circuit::Fidelity::Structural;
-    descriptor.default_priority = 100;
     descriptor.concrete_type_name = MemoryBit::TypeName;
     descriptor.evidence = structuralEvidence();
     descriptor.factory = [](
@@ -91,7 +93,6 @@ circuit::ImplementationDescriptor behavioralMemoryBit() {
     descriptor.id = "memory.write-enabled-bit.behavioral.direct";
     descriptor.contract_id = "memory.write-enabled-bit";
     descriptor.fidelity = circuit::Fidelity::Behavioral;
-    descriptor.default_priority = 10;
     descriptor.concrete_type_name =
         std::string(circuit::families::MemoryBit.typeName());
     descriptor.evidence = behavioralEvidence();
@@ -276,14 +277,14 @@ void BuildProfileTest::verifyResults() {
     const circuit::ComponentBuildRequest root{
         "memory.write-enabled-bit", "memory", {}, {}, "four-state", "clock-boundary"};
 
-    auto strict_a = circuit::strictAllStructural()->generate(catalog, root);
-    auto strict_b = circuit::strictAllStructural()->generate(catalog, root);
+    auto strict_a = circuit::strictAllStructural();
+    auto strict_b = circuit::strictAllStructural();
     require(strict_a.serialize() == strict_b.serialize(),
             "Strict structural generator must be deterministic");
     require(strict_a.fingerprint() == strict_b.fingerprint(),
             "Equivalent generated profiles must have equal fingerprints");
 
-    auto depth = circuit::structuralThroughDepth(2)->generate(catalog, root);
+    auto depth = circuit::structuralThroughDepth(2);
     require(depth.decide("system", 0, root.contract_id, {}).fidelity
                 == circuit::Fidelity::Structural,
             "Depth profile root must be structural");
@@ -294,13 +295,39 @@ void BuildProfileTest::verifyResults() {
                 == circuit::Fidelity::Behavioral,
             "Depth profile must become behavioral below boundary");
 
+    auto subtree =
+        circuit::BuildProfileBuilder("subtree")
+            .addRule(circuit::preferFidelity(
+                circuit::Fidelity::Behavioral,
+                circuit::ProfileSelector::subtree("system.core.alu"),
+                "behavioral ALU subtree"))
+            .addRule(circuit::preferFidelity(
+                circuit::Fidelity::Structural,
+                circuit::ProfileSelector::exactPath("system.core.alu"),
+                "keep ALU root structural"))
+            .build();
+    require(
+        subtree.decide(
+            "system.core.alu", 2, root.contract_id, {}).fidelity
+                == circuit::Fidelity::Structural,
+        "Later exact rule must keep the subtree root structural");
+    require(
+        subtree.decide(
+            "system.core.alu.add", 3, root.contract_id, {}).fidelity
+                == circuit::Fidelity::Behavioral,
+        "Subtree rule did not match a direct child");
+    require(
+        subtree.decide(
+            "system.core.alu.add.fa0", 4, root.contract_id, {}).fidelity
+                == circuit::Fidelity::Behavioral,
+        "Subtree rule did not match a deeper child");
+
     auto override_rule = circuit::preferFidelity(
         circuit::Fidelity::Behavioral,
         circuit::ProfileSelector::exactPath("system.core.alu"),
         "focused behavioral experiment");
-    auto overridden = circuit::withOverrides(
-        circuit::strictAllStructural(), {override_rule}, "manual-override")
-        ->generate(catalog, root);
+    auto overridden = circuit::withProfileOverrides(
+        circuit::strictAllStructural(), {override_rule}, "manual-override");
     require(overridden.decide("system.core.alu", 2, root.contract_id, {}).fidelity
                 == circuit::Fidelity::Behavioral,
             "Exact override must beat general generator rule");
@@ -321,8 +348,8 @@ void BuildProfileTest::verifyResults() {
     require(handwritten.decide("system.data_memory", 1, root.contract_id, {}).fidelity
                 == circuit::Fidelity::Behavioral,
             "Handwritten exact override failed");
-    require(handwritten.generatorDescriptor() == "handwritten",
-            "Handwritten profile must preserve its origin descriptor");
+    require(handwritten.name() == "handwritten",
+            "Handwritten profile must preserve its name");
 }
 
 std::string ComponentCatalogSelectionTest::getTestName() const {
@@ -334,7 +361,7 @@ void ComponentCatalogSelectionTest::verifyResults() {
     const circuit::ComponentBuildRequest root{
         "memory.write-enabled-bit", "memory", {}, {}, "four-state", "clock-boundary"};
 
-    auto structural_profile = circuit::strictAllStructural()->generate(catalog, root);
+    auto structural_profile = circuit::strictAllStructural();
     auto structural = catalog.createRoot(root, structural_profile);
     require(std::dynamic_pointer_cast<MemoryBit>(structural.root) != nullptr,
             "Structural profile did not select MemoryBit");
@@ -348,7 +375,7 @@ void ComponentCatalogSelectionTest::verifyResults() {
     require(structural_manifest.find("memory.WRITE_MUX") != std::string::npos,
             "Structural manifest omitted explicit child topology");
 
-    auto behavioral_profile = circuit::strictAllBehavioral()->generate(catalog, root);
+    auto behavioral_profile = circuit::strictAllBehavioral();
     auto behavioral = catalog.createRoot(root, behavioral_profile);
     require(behavioral.root->getTypeName()
                 == std::string(circuit::families::MemoryBit.typeName()),
@@ -372,13 +399,11 @@ void ComponentCatalogSelectionTest::verifyResults() {
     const circuit::ComponentBuildRequest only_request{
         "memory.behavioral-only", "only", {}, {}, "four-state", "clock-boundary"};
     requireThrows<std::runtime_error>([&] {
-        auto profile = circuit::strictAllStructural()->generate(
-            behavioral_only, only_request);
+        auto profile = circuit::strictAllStructural();
         (void)behavioral_only.createRoot(only_request, profile);
     }, "Strict structural profile must fail when structural fidelity is unavailable");
 
-    auto maximum = circuit::maximallyStructural()->generate(
-        behavioral_only, only_request);
+    auto maximum = circuit::maximallyStructural();
     auto fallback = behavioral_only.createRoot(only_request, maximum);
     require(fallback.root->getSelectedFidelity() == "behavioral",
             "Maximally structural profile did not use the only available implementation");
@@ -398,14 +423,14 @@ void ComponentCatalogSelectionTest::verifyResults() {
         const std::string& name,
         const circuit::ParameterMap&,
         const std::shared_ptr<circuit::BuildContext>& context) {
-        return Component::createWithContext<Register32BitCellArray>(context, name);
+        return Component::createWithContext<HalfAdder>(context, name);
     };
     invalid.registerImplementation(std::move(invalid_descriptor));
     invalid.freeze();
     const circuit::ComponentBuildRequest invalid_request{
         "register.invalid-behavioral", "invalid", {}, {}, {}, {}};
     requireThrows<std::runtime_error>([&] {
-        auto profile = circuit::strictAllBehavioral()->generate(invalid, invalid_request);
+        auto profile = circuit::strictAllBehavioral();
         (void)invalid.createRoot(invalid_request, profile);
     }, "Catalog must reject a composed class registered as behavioral fidelity");
 }
@@ -422,6 +447,21 @@ void BuiltinComponentCatalogInventoryTest::verifyResults() {
     const auto registered_test_names = getRegisteredTestNames();
     const std::set<std::string> registered_tests(
         registered_test_names.begin(), registered_test_names.end());
+    std::map<std::string, std::set<std::string>>
+        logical_tests_by_contract;
+    for (const auto& test : getTestRegistry()) {
+        require(
+            !test.logical_test_id.empty(),
+            "Registered test lacks a logical test ID: "
+                + test.name);
+        require(
+            !test.labels.empty(),
+            "Registered test lacks labels: " + test.name);
+        for (const auto& contract_id : test.contract_ids) {
+            logical_tests_by_contract[contract_id].insert(
+                test.logical_test_id);
+        }
+    }
     size_t implementation_count = 0;
     for (const auto& contract : catalog->contracts()) {
         const auto implementations = catalog->implementationsFor(contract.id);
@@ -450,19 +490,41 @@ void BuiltinComponentCatalogInventoryTest::verifyResults() {
             requireRegisteredEvidence(implementation.evidence.representative_tests,
                                       "representative test");
 
-            if (implementation.fidelity == circuit::Fidelity::Behavioral
-                && !implementation.reference_only) {
+            if (implementation.fidelity == circuit::Fidelity::Behavioral) {
                 require(!implementation.evidence.equivalence_tests.empty()
                             || !implementation.evidence.representative_tests.empty(),
                         "Behavioral implementation lacks equivalence or representative evidence: "
                             + implementation.id);
             }
         }
+
+        const auto owners =
+            logical_tests_by_contract.find(contract.id);
+        require(
+            owners != logical_tests_by_contract.end(),
+            "Built-in contract lacks a logical component test: "
+                + contract.id);
+        require(
+            owners->second.size() == 1,
+            "Built-in contract has multiple logical component tests: "
+                + contract.id);
+    }
+
+    for (const auto& [contract_id, owners] :
+         logical_tests_by_contract) {
+        require(
+            catalog->hasContract(contract_id),
+            "Test registry names an unknown component contract: "
+                + contract_id);
+        require(
+            owners.size() == 1,
+            "Component contract has ambiguous logical ownership: "
+                + contract_id);
     }
 
     const std::set<std::string> expected_types{
         "ALU32", "ALU8", "AND8", "ANDGate", "AddSub32", "Adder32",
-        "Adder8", "Memory64Kx32", "RV32IReferenceCore",
+        "Adder8", "Memory64Kx32",
         "Register32", "RegisterFile32x32",
         "BitJoiner", "BitSplitter",
         "ClockGenerator", "Comparator32", "Comparator8", "ConstantValue",
@@ -477,7 +539,7 @@ void BuiltinComponentCatalogInventoryTest::verifyResults() {
         "NOTGate", "OR8", "ORGate", "RV32IBitPatternMatcher",
         "RV32IControlFlowUnit", "RV32IDecodeControlUnit",
         "RV32IExecutionControlStatusUnit", "RV32ISingleCycleCore",
-        "RV32ISingleCycleSystem", "RV32IReferenceSystem",
+        "RV32ISingleCycleSystem",
         "RegisterFile4x32", "Rewire", "SRLatch",
         "ShiftLeftLogical8", "ShiftRightArithmetic8", "ShiftRightLogical8",
         "Shifter32", "SignedComparator8", "Subtractor8",
@@ -500,8 +562,7 @@ void RecursiveBuildProfileTest::verifyResults() {
     const circuit::ComponentBuildRequest request{
         "rv32i.core.educational-single-cycle", "core", {}, {}, {}, {}};
     auto profile = circuit::structuralThroughDepth(
-        0, circuit::UnavailableFidelityPolicy::UseOnlyAvailableAndRecordException)
-        ->generate(*catalog, request);
+        0, circuit::UnavailableFidelityPolicy::UseOnlyAvailableAndRecordException);
     const auto result = catalog->createRoot(request, std::move(profile));
 
     require(result.root->getSelectedFidelity() == "structural",
@@ -531,10 +592,8 @@ void RecursiveBuildProfileTest::verifyResults() {
     const auto root_entry = std::find_if(entries.begin(), entries.end(),
         [](const auto& entry) { return entry.path == "core"; });
     require(root_entry != entries.end(), "Build manifest omitted RV32I root");
-    require(root_entry->effective_fidelity == circuit::EffectiveFidelity::Mixed,
-            "RV32I root manifest must report its mixed effective fidelity");
 
-    auto strict_profile = circuit::strictAllStructural()->generate(*catalog, request);
+    auto strict_profile = circuit::strictAllStructural();
     const auto strict = catalog->createRoot(request, std::move(strict_profile));
     std::vector<std::shared_ptr<Component>> pending{strict.root};
     size_t visited = 0;
@@ -553,63 +612,200 @@ void RecursiveBuildProfileTest::verifyResults() {
     const auto strict_entries = strict.manifest->entries();
     const auto strict_root = std::find_if(strict_entries.begin(), strict_entries.end(),
         [](const auto& entry) { return entry.path == "core"; });
-    require(strict_root != strict_entries.end()
-                && strict_root->effective_fidelity
-                    == circuit::EffectiveFidelity::Structural,
-            "Strict structural RV32I manifest must report a structural root subtree");
+    require(strict_root != strict_entries.end(),
+            "Strict structural RV32I manifest omitted the root");
+
+    auto mixed_profile =
+        circuit::BuildProfileBuilder("behavioral-below-alu")
+            .addRule(circuit::preferFidelity(
+                circuit::Fidelity::Behavioral,
+                circuit::ProfileSelector::subtree("alu"),
+                "make the ALU subtree behavioral"))
+            .addRule(circuit::preferFidelity(
+                circuit::Fidelity::Structural,
+                circuit::ProfileSelector::exactPath("alu"),
+                "keep the ALU itself structural"))
+            .unavailablePolicy(
+                circuit::UnavailableFidelityPolicy::
+                    UseOnlyAvailableAndRecordException)
+            .build();
+    const auto mixed_alu = catalog->createRoot(
+        circuit::families::ALU32.request("alu"),
+        std::move(mixed_profile));
+    require(
+        mixed_alu.root->getSelectedFidelity() == "structural",
+        "Exact ALU root selection was overridden by its descendant profile");
+    const std::set<std::string> selectable_alu_children{
+        "ADD", "SUB", "LOGIC", "SHIFT", "CMP", "RESULT_ZERO"};
+    size_t selected_children = 0;
+    for (const auto& child : mixed_alu.root->getChildren()) {
+        if (selectable_alu_children.count(child->getName()) == 0) {
+            continue;
+        }
+        ++selected_children;
+        require(
+            child->getSelectedFidelity() == "behavioral",
+            "ALU descendant profile did not select behavioral "
+                + child->getName());
+        require(
+            child->getChildren().empty(),
+            "Behavioral ALU descendant must remain a black box: "
+                + child->getName());
+    }
+    require(
+        selected_children == selectable_alu_children.size(),
+        "Structural ALU omitted a profile-selectable child block");
+
+    auto mixed_system_profile =
+        circuit::BuildProfileBuilder("behavioral-core")
+            .addRule(circuit::preferFidelity(
+                circuit::Fidelity::Behavioral,
+                circuit::ProfileSelector::subtree("system"),
+                "compact system subtree"))
+            .addRule(circuit::preferFidelity(
+                circuit::Fidelity::Structural,
+                circuit::ProfileSelector::exactPath("system"),
+                "visible system wrapper"))
+            .unavailablePolicy(
+                circuit::UnavailableFidelityPolicy::
+                    UseOnlyAvailableAndRecordException)
+            .build();
+    const auto mixed_system = catalog->createRoot(
+        circuit::families::RV32ISingleCycleSystem.request("system"),
+        std::move(mixed_system_profile));
+    const auto structural_system =
+        std::dynamic_pointer_cast<RV32ISingleCycleSystem>(
+            mixed_system.root);
+    require(
+        structural_system != nullptr,
+        "Profile did not keep the system wrapper structural");
+    require(
+        structural_system->core() != nullptr
+            && structural_system->core()->getSelectedFidelity()
+                == "behavioral",
+        "One recursive profile did not select the nested core");
+    require(
+        structural_system->snapshotArchitecturalState()
+                .toKnownState().pc == 0,
+        "Structural system could not observe its selected core through "
+        "the fidelity-independent state capability");
 }
 
-std::string MemoryBitEquivalenceTest::getTestName() const {
-    return "MemoryBitEquivalenceTest";
+std::string ComponentTestModelTest::getTestName() const {
+    return "ComponentTestModelTest";
 }
 
-void MemoryBitEquivalenceTest::verifyResults() {
-    const auto structural =
-        runMemoryBitTrace(circuit::Fidelity::Structural);
-    const auto behavioral =
-        runMemoryBitTrace(circuit::Fidelity::Behavioral);
-    const std::vector<LogicValue> expected{
-        LogicValue::LOW,
-        LogicValue::LOW,
-        LogicValue::HIGH,
-        LogicValue::HIGH,
-        LogicValue::LOW,
-        LogicValue::LOW,
-        LogicValue::UNKNOWN,
-        LogicValue::LOW,
-        LogicValue::UNKNOWN,
+void ComponentTestModelTest::verifyResults() {
+    using namespace circuit::test;
+
+    ComponentTestSpec spec{
+        "MemoryBitTest",
+        std::string(circuit::families::MemoryBit.id()),
+        "MEMORY_BIT_ROOT",
+        {},
+        {},
     };
-    require(structural == expected,
-            "Structural MemoryBit trace does not satisfy the independent contract");
-    require(behavioral == expected,
-            "Behavioral MemoryBit trace does not satisfy the independent contract");
-    require(structural == behavioral,
-            "MemoryBit implementations differ at stable contract observations");
-}
-
-std::string Register32EquivalenceTest::getTestName() const {
-    return "Register32EquivalenceTest";
-}
-
-void Register32EquivalenceTest::verifyResults() {
-    const auto structural =
-        runRegisterTrace(circuit::Fidelity::Structural);
-    const auto behavioral =
-        runRegisterTrace(circuit::Fidelity::Behavioral);
-    auto unknown = bits32(0x12345678U);
-    unknown[13] = LogicValue::UNKNOWN;
-    const std::vector<std::vector<LogicValue>> expected{
-        bits32(0x00000000U),
-        bits32(0x00000000U),
-        bits32(0xffffffffU),
-        bits32(0xaaaaaaaaU),
-        unknown,
-        bits32(0x00000000U),
+    ActionScenario scenario{
+        "contract",
+        {},
+        {
+            {
+                "reset",
+                CheckpointKind::AfterEdge,
+                {
+                    {"D", logicBit(false)},
+                    {"WE", logicBit(false)},
+                    {"CLK", logicBit(false)},
+                    {"RST", logicBit(true)},
+                },
+                {{"Q", logicBit(false)}},
+            },
+            {
+                "armed",
+                CheckpointKind::Settled,
+                {
+                    {"D", logicBit(true)},
+                    {"WE", logicBit(true)},
+                    {"RST", logicBit(false)},
+                },
+                {{"Q", logicBit(false)}},
+            },
+            {
+                "write-one",
+                CheckpointKind::AfterEdge,
+                {{"CLK", logicBit(true)}},
+                {{"Q", logicBit(true)}},
+            },
+            {
+                "falling-edge",
+                CheckpointKind::AfterEdge,
+                {{"CLK", logicBit(false)}},
+                {{"Q", logicBit(true)}},
+            },
+            {
+                "prepare-unknown",
+                CheckpointKind::Settled,
+                {{"D", logicBit(LogicValue::UNKNOWN)}},
+                {{"Q", logicBit(true)}},
+            },
+            {
+                "write-unknown",
+                CheckpointKind::AfterEdge,
+                {{"CLK", logicBit(true)}},
+                {{"Q", logicBit(LogicValue::UNKNOWN)}},
+            },
+        },
+        {10'000, 100'000},
     };
-    require(structural == expected,
-            "Structural Register32 trace does not satisfy the independent contract");
-    require(behavioral == expected,
-            "Behavioral Register32 trace does not satisfy the independent contract");
-    require(structural == behavioral,
-            "Register32 implementations differ at stable contract observations");
+    spec.scenarios.push_back(scenario);
+
+    ComponentTestRunner runner;
+    auto runs = runner.runAll(spec, spec.scenarios.front());
+    require(runs.targets.size() == 2,
+            "Unified component test must run both MemoryBit fidelities");
+    require(runs.targets[0].root != runs.targets[1].root,
+            "Fidelity runs must use independent component trees");
+    require(runs.targets[0].simulator != runs.targets[1].simulator,
+            "Fidelity runs must use independent simulators");
+    for (const auto& target : runs.targets) {
+        require(target.completed, "Run artifact must be immutable-ready");
+        require(target.checkpoints.size() == scenario.actions.size(),
+                "Run artifact omitted checkpoints");
+        for (size_t index = 1; index < target.checkpoints.size(); ++index) {
+            require(
+                target.checkpoints[index].actual_time
+                    > target.checkpoints[index - 1].actual_time,
+                "Checkpoint times must be strictly increasing");
+        }
+        require(
+            target.profile != nullptr
+                && target.profile->name().starts_with(
+                    "canonical-default-"),
+            "Component test did not preserve its recursive base profile");
+        require(target.manifest != nullptr
+                    && !target.manifest->entries().empty(),
+                "Run artifact omitted its build manifest");
+    }
+
+    auto corrupted = runs.targets.back();
+    corrupted.checkpoints.back().pins.outputs.at("Q") =
+        logicBit(LogicValue::LOW);
+    requireThrows<std::runtime_error>(
+        [&] { ComponentTestRunner::compare(runs.targets.front(), corrupted); },
+        "Automatic public-pin comparison failed to detect corruption");
+
+    auto named_profile =
+        circuit::BuildProfileBuilder("explicit-profile").build();
+    auto configured = runner.run(
+        spec,
+        spec.scenarios.front(),
+        std::move(named_profile));
+    require(
+        configured.root_fidelity == circuit::Fidelity::Structural,
+        "Explicit run configuration did not preserve the forced DUT fidelity");
+    require(
+        configured.profile
+            && configured.profile->name()
+                == "explicit-profile",
+        "Explicit run did not preserve the recursive profile");
 }

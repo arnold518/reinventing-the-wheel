@@ -1,15 +1,26 @@
 #include "modules/composite/Shifter32.hpp"
+#include "components/BasicComponent.hpp"
 #include "components/ComponentBuilder.hpp"
 #include "components/ComponentBuilder.tpp"
 #include "modules/basic/Mux.hpp"
 #include "modules/utility/BitAdapter.hpp"
 #include "modules/utility/Constant.hpp"
+#include "simulator/Simulator.hpp"
 #include <array>
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace {
+void defineShifter32Pins(IOComponent* self) {
+    self->addPin<32>("A", PinType::INPUT);
+    self->addPin<32>("B", PinType::INPUT);
+    self->addPin<32>("SLL_OUT", PinType::OUTPUT);
+    self->addPin<32>("SRL_OUT", PinType::OUTPUT);
+    self->addPin<32>("SRA_OUT", PinType::OUTPUT);
+}
+
 enum class ShiftMode {
     Left,
     RightLogical,
@@ -94,16 +105,82 @@ void buildShiftNetwork(
             {builder.getInputPin<BitJoiner<32>>(output_joiner, "IN_" + std::to_string(bit))});
     }
 }
+
+class Shifter32Direct final : public BasicComponent {
+public:
+    explicit Shifter32Direct(std::string name)
+        : BasicComponent(
+              std::move(name),
+              1,
+              circuit::families::Shifter32.pinInitializer()) {}
+
+    static constexpr const char* TypeName = "Shifter32";
+    const char* getTypeName() const override { return TypeName; }
+
+    void evaluate(size_t current_time, Simulator& simulator) override {
+        const auto a = getInputPin<32>("A")->getValueAsVector();
+        const auto b = getInputPin<32>("B")->getValueAsVector();
+        size_t amount = 0;
+        for (size_t bit = 0; bit < 5; ++bit) {
+            if (b[bit] != LogicValue::LOW
+                && b[bit] != LogicValue::HIGH) {
+                const auto unknown =
+                    std::vector<LogicValue>(32, LogicValue::UNKNOWN);
+                _updateOutputWire<32>(
+                    simulator, "SLL_OUT", unknown, current_time);
+                _updateOutputWire<32>(
+                    simulator, "SRL_OUT", unknown, current_time);
+                _updateOutputWire<32>(
+                    simulator, "SRA_OUT", unknown, current_time);
+                return;
+            }
+            if (b[bit] == LogicValue::HIGH) {
+                amount |= size_t{1} << bit;
+            }
+        }
+
+        std::vector<LogicValue> left(32, LogicValue::LOW);
+        std::vector<LogicValue> logical_right(32, LogicValue::LOW);
+        std::vector<LogicValue> arithmetic_right(32, a[31]);
+        for (size_t bit = 0; bit < 32; ++bit) {
+            if (bit >= amount) {
+                left[bit] = a[bit - amount];
+            }
+            if (bit + amount < 32) {
+                logical_right[bit] = a[bit + amount];
+                arithmetic_right[bit] = a[bit + amount];
+            }
+        }
+
+        _updateOutputWire<32>(
+            simulator, "SLL_OUT", left, current_time);
+        _updateOutputWire<32>(
+            simulator, "SRL_OUT", logical_right, current_time);
+        _updateOutputWire<32>(
+            simulator, "SRA_OUT", arithmetic_right, current_time);
+    }
+};
+}
+
+namespace circuit::families {
+const ComponentFamily Shifter32{
+    "shift.barrel.width32",
+    "Shifter32",
+    defineShifter32Pins,
+    [](const std::string& name,
+       const std::shared_ptr<BuildContext>& context) {
+        return Component::createWithContext<::Shifter32>(context, name);
+    },
+    [](const std::string& name,
+       const std::shared_ptr<BuildContext>& context) {
+        return Component::createWithContext<Shifter32Direct>(context, name);
+    }};
 }
 
 Shifter32::Shifter32(std::string name)
-    : IOComponent(std::move(name), [](IOComponent* self) {
-          self->addPin<32>("A", PinType::INPUT);
-          self->addPin<32>("B", PinType::INPUT);
-          self->addPin<32>("SLL_OUT", PinType::OUTPUT);
-          self->addPin<32>("SRL_OUT", PinType::OUTPUT);
-          self->addPin<32>("SRA_OUT", PinType::OUTPUT);
-      }) {}
+    : IOComponent(
+          std::move(name),
+          circuit::families::Shifter32.pinInitializer()) {}
 
 void Shifter32::buildInternals(ComponentBuilder& builder) {
     builder.addNewComponent<BitSplitter<32>>("A_SPLIT");

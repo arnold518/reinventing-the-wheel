@@ -1,4 +1,5 @@
 #pragma once
+// Private factory implementation; callers use families::MemoryBit.
 
 #include "components/BasicComponent.hpp"
 

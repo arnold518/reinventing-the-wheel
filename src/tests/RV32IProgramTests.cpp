@@ -1,6 +1,7 @@
 #include "tests/RV32IProgramTests.hpp"
 
 #include "components/Component.hpp"
+#include "components/selection/BuiltinComponentCatalog.hpp"
 #include "modules/memory/Memory64Kx32.hpp"
 #include "rv32i/RV32IProgram.hpp"
 #include <cstdint>
@@ -157,7 +158,16 @@ void testMemoryPreloadReadback() {
 }
 
 void RV32IProgramLoaderTest::setupCircuit() {
-    root = Component::create<Memory64Kx32>("RV32I_PROGRAM_LOADER_ROOT");
+    auto profile = circuit::withExactFidelity(
+        circuit::canonicalDefaultProfile(),
+        "RV32I_PROGRAM_LOADER_ROOT",
+        circuit::Fidelity::Behavioral,
+        "rv32i-program-loader");
+    auto build = circuit::builtinComponentCatalog().createRoot(
+        circuit::families::Memory64Kx32.request(
+            "RV32I_PROGRAM_LOADER_ROOT"),
+        std::move(profile));
+    root = std::move(build.root);
     builder = std::make_unique<ComponentBuilder>(root);
 
     auto memory = std::dynamic_pointer_cast<Memory64Kx32>(root);
@@ -174,6 +184,16 @@ void RV32IProgramLoaderTest::setupCircuit() {
 
 std::string RV32IProgramLoaderTest::getTestName() const {
     return "RV32IProgramLoaderTest";
+}
+
+std::vector<SimulationTest::SimulationCheckpoint>
+RV32IProgramLoaderTest::getCheckpoints() const {
+    return {{
+        0,
+        "program-loaded",
+        "Three RV32I instructions are preloaded at addresses 0x0, 0x4, and 0x8.",
+        0,
+    }};
 }
 
 void RV32IProgramLoaderTest::verifyResults() {

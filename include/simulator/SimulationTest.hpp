@@ -9,17 +9,18 @@
 #include "components/BasicComponent.hpp"
 #include "components/ComponentBuilder.hpp"
 #include "components/Component.hpp"
+#include "components/selection/BuildProfile.hpp"
 
 class SimulationTest {
 protected:
-    std::unique_ptr<Simulator> sim;
+    std::shared_ptr<Simulator> sim;
     std::shared_ptr<Component> root;
     std::unique_ptr<ComponentBuilder> builder;
     bool initial_events_scheduled_ = false;
 
 public:
     SimulationTest() {
-        sim = std::make_unique<Simulator>();
+        sim = std::make_shared<Simulator>();
     }
 
     virtual ~SimulationTest() = default;
@@ -35,6 +36,15 @@ public:
     };
 
     virtual std::vector<SimulationCheckpoint> getCheckpoints() const { return {}; }
+    virtual bool isSimulationPrecomputed() const { return false; }
+    virtual size_t getRunDuration() const { return 100; }
+    virtual bool supportsBuildProfile() const { return false; }
+    virtual circuit::BuildProfile getBuildProfile() const {
+        throw std::logic_error("This simulation scenario does not accept a build profile");
+    }
+    virtual void setBuildProfile(circuit::BuildProfile) {
+        throw std::logic_error("This simulation scenario does not accept a build profile");
+    }
 
     static void scheduleInitialEventsForTree(const std::shared_ptr<Component>& component, Simulator& simulator, size_t time = 0) {
         if (!component) {
@@ -64,7 +74,7 @@ public:
         setInitialState();
     }
 
-    bool run() {
+    virtual bool run() {
         std::cout << "--- Running Test: " << getTestName() << " ---" << std::endl;
         try {
             setupCircuit();
@@ -73,10 +83,6 @@ public:
             runSimulation();
             verifyResults();
             std::cout << "[PASS] Test '" << getTestName() << "' completed successfully." << std::endl;
-            if (root) {
-                std::cerr << "--- Circuit State on Success ---" << std::endl;
-                std::cerr << root->format(0, true, true) << std::endl;
-            }
             return true;
         } catch (const std::exception& e) {
             std::cerr << "[FAIL] Test '" << getTestName() << "' threw an exception: " << e.what() << std::endl;
@@ -95,5 +101,4 @@ protected:
     virtual void setInitialState() = 0;
     virtual void runSimulation() { sim->runAndRecord(getRunDuration()); }
     virtual void verifyResults() = 0;
-    virtual size_t getRunDuration() const { return 100; }
 };

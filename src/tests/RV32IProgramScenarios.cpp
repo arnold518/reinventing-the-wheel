@@ -1,10 +1,13 @@
-#include "tests/RV32IReferenceSystemTests.hpp"
+#include "tests/RV32ISystemAnswerSheetRun.hpp"
 #include "tests/RV32IProgramCases.hpp"
 
 #include "basic/Wire.hpp"
 #include "components/Component.hpp"
 #include "components/ComponentBuilder.hpp"
 #include "components/IOComponent.hpp"
+#include "components/selection/BuiltinComponentCatalog.hpp"
+#include "modules/rv32i/RV32IReferenceSystem.hpp"
+#include "modules/rv32i/RV32ISingleCycleSystem.hpp"
 #include "rv32i/RV32IInstructionOracle.hpp"
 #include "rv32i/RV32IProgram.hpp"
 #include "simulator/Event.hpp"
@@ -207,23 +210,38 @@ uint32_t logicWordToUInt32(const std::vector<LogicValue>& word) {
 }
 }
 
-void RV32IReferenceSystemProgramTestBase::setupCircuit() {
-    root = Component::create<RV32IReferenceSystem>("RV32I_SYSTEM_ROOT");
+RV32ISystemAnswerSheetRun::RV32ISystemAnswerSheetRun(
+    size_t program_number)
+    : program_number_(program_number) {
+    (void)rv32iProgramScenarioName(program_number_);
+}
+
+void RV32ISystemAnswerSheetRun::setupCircuit() {
+    auto profile = circuit::withExactFidelity(
+        circuit::canonicalDefaultProfile(),
+        "RV32I_SYSTEM_ROOT",
+        circuit::Fidelity::Behavioral,
+        "rv32i-answer-sheet");
+    auto build = circuit::builtinComponentCatalog().createRoot(
+        circuit::families::RV32ISingleCycleSystem.request(
+            "RV32I_SYSTEM_ROOT"),
+        std::move(profile));
+    root = std::move(build.root);
     builder = std::make_unique<ComponentBuilder>(root);
     buildCircuit();
     setInitialState();
 }
 
-size_t RV32IReferenceSystemProgramTestBase::getRunDuration() const {
+size_t RV32ISystemAnswerSheetRun::getRunDuration() const {
     return visual_run_duration_;
 }
 
-void RV32IReferenceSystemProgramTestBase::buildCircuit() {
+void RV32ISystemAnswerSheetRun::buildCircuit() {
     system_ = std::dynamic_pointer_cast<RV32IReferenceSystem>(root);
-    require(system_ != nullptr, "behavioral RV32I system program test requires RV32IReferenceSystem root");
+    require(system_ != nullptr, "RV32I answer-sheet run requires the evaluated system implementation");
 
     auto io_root = std::dynamic_pointer_cast<IOComponent>(root);
-    require(io_root != nullptr, "behavioral RV32I system program test requires IOComponent root");
+    require(io_root != nullptr, "RV32I answer-sheet run requires an IOComponent root");
 
     clk_wire_ = builder->addNewWire("CLK_IN", nullptr, {io_root->getInputPin("CLK")});
     rst_wire_ = builder->addNewWire("RST_IN", nullptr, {io_root->getInputPin("RST")});
@@ -416,11 +434,9 @@ static RV32ISystemProgramCase programCase2() {
     return test_case;
 }
 
-void RV32IReferenceSystemProgram2Test::verifyResults() {
-    RV32IReferenceSystemProgramTestBase::verifyResults();
-
-    auto memory = dataMemoryForTest();
-    require(memory != nullptr, "RV32IReferenceSystemProgram2Test requires data memory");
+static void verifyProgram2Memory(
+    const std::shared_ptr<Memory64Kx32>& memory) {
+    require(memory != nullptr, "RV32I program 2 requires data memory");
 
     constexpr uint32_t base_address = 0x00000200U;
     const uint32_t expected_values[] = {
@@ -682,25 +698,6 @@ static RV32ISystemProgramCase programCase5() {
         {{5, 0x08}, {6, 0x18}, {10, 43}},
         expectedWordWrites(0x120, {43}));
     return test_case;
-}
-
-void RV32IReferenceSystemProgram5Test::verifyResults() {
-    RV32IReferenceSystemProgramTestBase::verifyResults();
-
-    auto memory = dataMemoryForTest();
-    require(memory != nullptr, "RV32IReferenceSystemProgram5Test requires data memory");
-
-    const auto before_visible_write = memory->getTouchedWordsAtTime(81, Memory64Kx32::capacityWords());
-    require(before_visible_write.empty(),
-            "Program 5 data memory write must not appear before the delayed write bus is visible");
-
-    const auto at_visible_write = memory->getTouchedWordsAtTime(82, Memory64Kx32::capacityWords());
-    require(at_visible_write.size() == 1,
-            "Program 5 data memory should have one touched word at visible write time");
-    require(at_visible_write[0].first == 0x00000120U,
-            "Program 5 data memory should touch address 0x120");
-    require(logicWordToUInt32(at_visible_write[0].second) == 0x0000002bU,
-            "Program 5 data memory should store helper result 43");
 }
 
 static RV32ISystemProgramCase programCase6() {
@@ -1115,37 +1112,20 @@ RV32ISystemProgramCase rv32iProgramCase(size_t program_number) {
     }
 }
 
-#define DEFINE_REFERENCE_PROGRAM_CASE(NUMBER) \
-RV32ISystemProgramCase RV32IReferenceSystemProgram##NUMBER##Test::getCase() const { \
-    auto test_case = rv32iProgramCase(NUMBER); \
-    test_case.name = "RV32IReferenceSystemProgram" #NUMBER "Test"; \
-    return test_case; \
+std::string rv32iProgramScenarioName(size_t program_number) {
+    if (program_number < 1 || program_number > 16) {
+        throw std::out_of_range(
+            "RV32I program number must be in [1, 16]");
+    }
+    return "RV32ISingleCycleSystemTest/program-"
+        + std::string(program_number < 10 ? "0" : "")
+        + std::to_string(program_number);
 }
-
-DEFINE_REFERENCE_PROGRAM_CASE(1)
-DEFINE_REFERENCE_PROGRAM_CASE(2)
-DEFINE_REFERENCE_PROGRAM_CASE(3)
-DEFINE_REFERENCE_PROGRAM_CASE(4)
-DEFINE_REFERENCE_PROGRAM_CASE(5)
-DEFINE_REFERENCE_PROGRAM_CASE(6)
-DEFINE_REFERENCE_PROGRAM_CASE(7)
-DEFINE_REFERENCE_PROGRAM_CASE(8)
-DEFINE_REFERENCE_PROGRAM_CASE(9)
-DEFINE_REFERENCE_PROGRAM_CASE(10)
-DEFINE_REFERENCE_PROGRAM_CASE(11)
-DEFINE_REFERENCE_PROGRAM_CASE(12)
-DEFINE_REFERENCE_PROGRAM_CASE(13)
-DEFINE_REFERENCE_PROGRAM_CASE(14)
-DEFINE_REFERENCE_PROGRAM_CASE(15)
-DEFINE_REFERENCE_PROGRAM_CASE(16)
-
-#undef DEFINE_REFERENCE_PROGRAM_CASE
 
 void verifyRV32IProgramExpectedResult(
     const RV32ISystemProgramCase& test_case,
     const rv32i::RV32IState& state,
-    const Memory64Kx32& data_memory,
-    size_t current_time,
+    const std::map<uint32_t, uint8_t>& bus_writes,
     const std::string& test_name
 ) {
     const auto& expected = test_case.expected_result;
@@ -1164,12 +1144,18 @@ void verifyRV32IProgramExpectedResult(
                 test_name + " x" + std::to_string(reg.index)
                     + " does not match hard-coded expectation");
     }
-    require(data_memory.getByteWritesInTimeRange(0, current_time) == expected.bus_writes,
+    require(bus_writes == expected.bus_writes,
             test_name + " aggregate bus writes do not match hard-coded expectation");
 }
 
-void RV32IReferenceSystemProgramTestBase::initializeComponentForLockstep(const RV32ISystemProgramCase& test_case) {
-    require(system_ != nullptr, "behavioral RV32I system program test system is not initialized");
+RV32ISystemProgramCase RV32ISystemAnswerSheetRun::getCase() const {
+    auto test_case = rv32iProgramCase(program_number_);
+    test_case.name = rv32iProgramScenarioName(program_number_);
+    return test_case;
+}
+
+void RV32ISystemAnswerSheetRun::initializeComponentForLockstep(const RV32ISystemProgramCase& test_case) {
+    require(system_ != nullptr, "RV32I answer-sheet system is not initialized");
 
     system_->clearInstructionMemory();
     system_->clearDataMemory();
@@ -1181,7 +1167,8 @@ void RV32IReferenceSystemProgramTestBase::initializeComponentForLockstep(const R
     for (const auto& data : test_case.initial_data) {
         system_->loadDataBytes(data.address, data.bytes);
     }
-    last_observed_memory_time_ = sim->getCurrentTime();
+    committed_instruction_count_ = 0;
+    observed_bus_writes_.clear();
 
     drive(*sim, 0, clk_wire_, false);
     drive(*sim, 0, rst_wire_, false);
@@ -1194,146 +1181,46 @@ void RV32IReferenceSystemProgramTestBase::initializeComponentForLockstep(const R
     }
 }
 
-void RV32IReferenceSystemProgramTestBase::clockComponentOneCycle(size_t cycle_index, size_t cycle_start_time) {
+void RV32ISystemAnswerSheetRun::clockComponentOneCycle(size_t cycle_index, size_t cycle_start_time) {
     (void)cycle_index;
     (void)cycle_start_time;
+    ++committed_instruction_count_;
 }
 
-rv32i::RV32IState RV32IReferenceSystemProgramTestBase::snapshotComponentState() const {
-    require(system_ != nullptr, "behavioral RV32I system program test system is not initialized");
-    return system_->snapshotState();
+rv32i::RV32IState RV32ISystemAnswerSheetRun::snapshotComponentState() const {
+    require(system_ != nullptr, "RV32I answer-sheet system is not initialized");
+    auto state =
+        system_->snapshotArchitecturalState().toKnownState();
+    state.instruction_count = committed_instruction_count_;
+    return state;
 }
 
-rv32i::RV32IMemoryTrace RV32IReferenceSystemProgramTestBase::lastDataMemoryAccess() const {
-    require(system_ != nullptr, "behavioral RV32I system program test system is not initialized");
+rv32i::RV32IMemoryTrace RV32ISystemAnswerSheetRun::lastDataMemoryAccess() const {
+    require(system_ != nullptr, "RV32I answer-sheet system is not initialized");
     return system_->lastDataMemoryAccess();
 }
 
-std::map<uint32_t, uint8_t> RV32IReferenceSystemProgramTestBase::lastDataMemoryWrites() const {
-    require(system_ != nullptr, "behavioral RV32I system program test system is not initialized");
-    const auto memory = system_->dataMemory();
-    require(memory != nullptr, "behavioral RV32I system program test requires data memory");
-
-    const auto current_time = sim->getCurrentTime();
-    const auto writes = memory->getByteWritesInTimeRange(last_observed_memory_time_, current_time);
-    last_observed_memory_time_ = current_time;
+std::map<uint32_t, uint8_t> RV32ISystemAnswerSheetRun::lastDataMemoryWrites() const {
+    require(system_ != nullptr, "RV32I answer-sheet system is not initialized");
+    const auto writes = system_->lastDataMemoryWrites();
+    for (const auto& [address, value] : writes) {
+        observed_bus_writes_[address] = value;
+    }
     return writes;
 }
 
-std::shared_ptr<Memory64Kx32> RV32IReferenceSystemProgramTestBase::dataMemoryForTest() const {
-    require(system_ != nullptr, "behavioral RV32I system program test system is not initialized");
-    return system_->dataMemory();
-}
-
-void RV32IReferenceSystemProgramTestBase::verifyResults() {
+void RV32ISystemAnswerSheetRun::verifyResults() {
     RV32IInstructionLockstepTest::verifyResults();
-    const auto memory = dataMemoryForTest();
+    require(system_ != nullptr, "RV32I answer-sheet system is not initialized");
+    const auto memory = system_->dataMemory();
     require(memory != nullptr, getTestName() + " requires data memory for final write verification");
     verifyRV32IProgramExpectedResult(
-        getCase(), snapshotComponentState(), *memory, sim->getCurrentTime(), getTestName());
-}
-
-void RV32IReferenceSystemContractTest::setupCircuit() {
-    root = Component::create<RV32IReferenceSystem>("RV32I_SYSTEM_CONTRACT_ROOT");
-    builder = std::make_unique<ComponentBuilder>(root);
-    buildCircuit();
-    setInitialState();
-}
-
-std::string RV32IReferenceSystemContractTest::getTestName() const {
-    return "RV32IReferenceSystemContractTest";
-}
-
-void RV32IReferenceSystemContractTest::buildCircuit() {
-    system_ = std::dynamic_pointer_cast<RV32IReferenceSystem>(root);
-    require(system_ != nullptr, "behavioral RV32I contract test requires RV32IReferenceSystem root");
-
-    auto io_root = std::dynamic_pointer_cast<IOComponent>(root);
-    require(io_root != nullptr, "behavioral RV32I contract test requires IOComponent root");
-    clk_wire_ = builder->addNewWire("CLK_IN", nullptr, {io_root->getInputPin("CLK")});
-    rst_wire_ = builder->addNewWire("RST_IN", nullptr, {io_root->getInputPin("RST")});
-    enable_wire_ = builder->addNewWire("ENABLE_IN", nullptr, {io_root->getInputPin("ENABLE")});
-    pc_wire_ = builder->addNewWire<32>("PC_OUT", io_root->getOutputPin<32>("PC"), {});
-    halted_wire_ = builder->addNewWire("HALTED_OUT", io_root->getOutputPin("HALTED"), {});
-    trapped_wire_ = builder->addNewWire("TRAPPED_OUT", io_root->getOutputPin("TRAPPED"), {});
-}
-
-void RV32IReferenceSystemContractTest::setInitialState() {
-    require(system_ != nullptr, "behavioral RV32I contract test system is not initialized");
-    system_->clearInstructionMemory();
-    system_->clearDataMemory();
-    system_->loadProgram(rv32i::RV32IProgram::fromWords({
-        encodeI(0, 0, 0x2, 1, 0x03), // lw x1, 0(x0)
-        kEBreak,
-    }));
-    // The data deliberately overlaps the instruction address. The Harvard
-    // system must read this value from DMEM, not instruction bytes from IMEM.
-    system_->loadDataBytes(0, {0x44, 0x33, 0x22, 0x11});
-    system_->setRegister(5, 0xfeedfaceU);
-
-    drive(*sim, 0, clk_wire_, false);
-    drive(*sim, 0, rst_wire_, true);
-    drive(*sim, 0, enable_wire_, false);
-}
-
-void RV32IReferenceSystemContractTest::runSimulation() {
-    sim->advanceAndRecord(5);
-    auto state = system_->snapshotState();
-    require(state.pc == 0 && state.instruction_count == 0, "reset must restore pc and instruction count");
-    require(state.readRegister(5) == 0, "reset must clear architectural registers");
-    require(pc_wire_->getValue() == 0, "public PC pin must show reset PC");
-    require(halted_wire_->getSingleValue() == LogicValue::LOW, "HALTED must be low after reset");
-    require(trapped_wire_->getSingleValue() == LogicValue::LOW, "TRAPPED must be low after reset");
-
-    drive(*sim, 6, rst_wire_, false);
-    sim->advanceAndRecord(9);
-
-    scheduleClockCycle(*sim, 10, clk_wire_);
-    sim->advanceAndRecord(19);
-    state = system_->snapshotState();
-    require(state.instruction_count == 0 && state.pc == 0, "ENABLE=LOW must hold the core");
-
-    drive(*sim, 20, enable_wire_, true);
-    scheduleClockCycle(*sim, 20, clk_wire_);
-    sim->advanceAndRecord(29);
-    state = system_->snapshotState();
-    require(state.instruction_count == 1, "enabled rising edge must commit one instruction");
-    require(state.pc == 4, "LW must advance PC to 4");
-    require(state.readRegister(1) == 0x11223344U,
-            "load must read overlapping address from separate data memory");
-    require(pc_wire_->getValue() == 4, "public PC pin must follow committed state");
-
-    drive(*sim, 30, enable_wire_, false);
-    scheduleClockCycle(*sim, 30, clk_wire_);
-    sim->advanceAndRecord(39);
-    state = system_->snapshotState();
-    require(state.instruction_count == 1 && state.pc == 4, "disabled cycle must preserve state");
-
-    drive(*sim, 40, enable_wire_, true);
-    scheduleClockCycle(*sim, 40, clk_wire_);
-    sim->advanceAndRecord(49);
-    state = system_->snapshotState();
-    require(state.instruction_count == 2 && state.halted, "EBREAK must commit the halted state");
-    require(state.pc == 4, "EBREAK must keep its faulting/stopping PC");
-    require(halted_wire_->getSingleValue() == LogicValue::HIGH, "public HALTED pin must assert");
-    require(trapped_wire_->getSingleValue() == LogicValue::LOW, "EBREAK must not assert TRAPPED");
-
-    scheduleClockCycle(*sim, 50, clk_wire_);
-    sim->advanceAndRecord(59);
-    state = system_->snapshotState();
-    require(state.instruction_count == 2 && state.pc == 4, "halted core must ignore later clocks");
-
-    drive(*sim, 60, rst_wire_, true);
-    sim->advanceAndRecord(65);
-    state = system_->snapshotState();
-    require(state.instruction_count == 0 && state.pc == 0, "reset must recover a halted core");
-    require(!state.halted && !state.trapped, "reset must clear halt and trap status");
-    require(pc_wire_->getValue() == 0, "public PC pin must return to reset PC");
-    require(halted_wire_->getSingleValue() == LogicValue::LOW, "public HALTED pin must clear on reset");
-    require(trapped_wire_->getSingleValue() == LogicValue::LOW, "public TRAPPED pin must clear on reset");
-    verified_ = true;
-}
-
-void RV32IReferenceSystemContractTest::verifyResults() {
-    require(verified_, "behavioral RV32I contract test did not complete all checks");
+        getCase(),
+        snapshotComponentState(),
+        observed_bus_writes_,
+        getTestName());
+    const auto name = getCase().name;
+    if (name.ends_with("program-02")) {
+        verifyProgram2Memory(memory);
+    }
 }

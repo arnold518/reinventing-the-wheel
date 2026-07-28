@@ -18,21 +18,18 @@
 #include "modules/basic/DFlipFlop.hpp"
 #include "modules/basic/ClockGenerator.hpp"
 #include "modules/memory/Memory64Kx32.hpp"
-#include "modules/memory/Register32BitCellArray.hpp"
 #include "modules/memory/Memory4x32.hpp"
 #include "modules/memory/Memory32x32.hpp"
 #include "modules/memory/MemoryBit.hpp"
 #include "modules/memory/Register32.hpp"
 #include "modules/memory/RegisterFile4x32.hpp"
 #include "modules/memory/RegisterFile32x32.hpp"
-#include "modules/rv32i/RV32IReferenceCore.hpp"
 #include "modules/rv32i/RV32IControlFlowUnit.hpp"
 #include "modules/rv32i/RV32IDecodeControlUnit.hpp"
 #include "modules/rv32i/RV32IExecutionControlStatusUnit.hpp"
 #include "modules/rv32i/RV32IBitPatternMatcher.hpp"
 #include "modules/rv32i/RV32ISingleCycleCore.hpp"
 #include "modules/rv32i/RV32ISingleCycleSystem.hpp"
-#include "modules/rv32i/RV32IReferenceSystem.hpp"
 
 #include "modules/composite/HalfAdder.hpp"
 #include "modules/composite/FullAdder.hpp"
@@ -293,14 +290,12 @@ void bindModules(py::module_& m) {
             py::arg("base_address"),
             py::arg("word_count"),
             "Returns a word-aligned memory window at the requested simulation time.");
-    bindCompositeModule<Register32BitCellArray>(m, "Register32BitCellArray", "Structural 32-bit register assembled from bit cells.");
     bindCompositeModule<MemoryBit>(m, "MemoryBit", "Structural one-bit storage cell with write enable and reset.");
     bindCompositeModule<Register32>(m, "Register32", "Structural 32-bit register built from MemoryBit cells.");
     bindCompositeModule<RegisterFile4x32>(m, "RegisterFile4x32", "Four-entry 32-bit register file built from behavioral register cells.");
     bindCompositeModule<RegisterFile32x32>(m, "RegisterFile32x32", "32-entry 32-bit register file built from behavioral register cells.");
     bindCompositeModule<Memory4x32>(m, "Memory4x32", "Four-word 32-bit memory slice with CPU-facing memory pins.");
     bindCompositeModule<Memory32x32>(m, "Memory32x32", "Thirty-two-word 32-bit memory slice with CPU-facing memory pins.");
-    bindBasicModule<RV32IReferenceCore>(m, "RV32IReferenceCore", "Oracle-backed RV32I answer-sheet core with visible instruction/data memory bus pins.");
     bindCompositeModule<RV32IControlFlowUnit>(m, "RV32IControlFlowUnit", "Structural RV32I PC, branch, and jump block.");
     bindCompositeModule<RV32IDecodeControlUnit>(m, "RV32IDecodeControlUnit", "Structural RV32I field, immediate, and control decoder.");
     bindCompositeModule<RV32IExecutionControlStatusUnit>(m, "RV32IExecutionControlStatusUnit", "Structural RV32I commit permission, memory handshake, halt, and trap-state block.");
@@ -321,7 +316,6 @@ void bindModules(py::module_& m) {
         .def_property_readonly("value", &RV32IBitPatternMatcher::value);
     bindCompositeModule<RV32ISingleCycleCore>(m, "RV32ISingleCycleCore", "Structural single-cycle RV32I core composed from the five educational blocks.");
     bindCompositeModule<RV32ISingleCycleSystem>(m, "RV32ISingleCycleSystem", "Structural RV32I core with separate behavioral instruction and data memories.");
-    bindCompositeModule<RV32IReferenceSystem>(m, "RV32IReferenceSystem", "RV32I answer-sheet system containing the reference core and instruction/data memories.");
 
     bindCompositeModule<Adder8>(m, "Adder8", "8-bit adder.");
     bindCompositeModule<TwosComplement8>(m, "TwosComplement8", "8-bit two's complement.");

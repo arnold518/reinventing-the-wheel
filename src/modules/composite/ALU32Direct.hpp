@@ -1,4 +1,5 @@
 #pragma once
+// Private factory implementation; callers use families::ALU32.
 
 #include "components/BasicComponent.hpp"
 

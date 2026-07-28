@@ -1,4 +1,5 @@
 #pragma once
+// Private factory implementation; callers use families::RV32IControlFlow.
 
 #include "components/BasicComponent.hpp"
 #include <vector>

@@ -2,7 +2,7 @@
 #include "components/selection/ComponentFamily.hpp"
 #include <algorithm>
 #include <iomanip>
-#include <limits>
+#include <iterator>
 #include <sstream>
 #include <stdexcept>
 
@@ -50,16 +50,6 @@ bool ProfileSelector::matches(const std::string& path, size_t depth,
         }
     }
     return true;
-}
-
-size_t ProfileSelector::specificity() const {
-    size_t score = 0;
-    if (exact_path) score += 1'000'000 + exact_path->size();
-    if (subtree_path) score += 100'000 + subtree_path->size();
-    if (contract_id) score += 10'000;
-    score += parameters.size() * 1'000;
-    if (minimum_depth || maximum_depth) score += 100;
-    return score;
 }
 
 std::string ProfileSelector::serialize() const {
@@ -111,20 +101,15 @@ std::string ProfileRule::serialize() const {
     std::ostringstream out;
     out << selector.serialize()
         << "|fidelity=" << toString(fidelity)
-        << "|priority=" << priority
         << "|reason=" << reason;
     return out.str();
 }
 
 BuildProfile::BuildProfile(std::string name, std::vector<ProfileRule> rules,
-                           UnavailableFidelityPolicy unavailable_policy,
-                           bool allow_reference,
-                           std::string generator_descriptor)
+                           UnavailableFidelityPolicy unavailable_policy)
     : name_(std::move(name)),
       rules_(std::move(rules)),
-      unavailable_policy_(unavailable_policy),
-      allow_reference_(allow_reference),
-      generator_descriptor_(std::move(generator_descriptor)) {
+      unavailable_policy_(unavailable_policy) {
     if (name_.empty()) {
         throw std::invalid_argument("BuildProfile name must not be empty");
     }
@@ -132,27 +117,17 @@ BuildProfile::BuildProfile(std::string name, std::vector<ProfileRule> rules,
 
 ProfileDecision BuildProfile::decide(const std::string& path, size_t depth,
                                      const std::string& contract_id,
-                                     const ParameterMap& parameters) const {
+    const ParameterMap& parameters) const {
     const ProfileRule* winner = nullptr;
-    size_t winning_specificity = 0;
-    int winning_priority = std::numeric_limits<int>::min();
 
     for (const auto& rule : rules_) {
         if (!rule.selector.matches(path, depth, contract_id, parameters)) {
             continue;
         }
-        const size_t specificity = rule.selector.specificity();
-        if (!winner || specificity > winning_specificity
-            || (specificity == winning_specificity && rule.priority > winning_priority)) {
-            winner = &rule;
-            winning_specificity = specificity;
-            winning_priority = rule.priority;
-            continue;
-        }
-        if (specificity == winning_specificity && rule.priority == winning_priority
-            && rule.fidelity != winner->fidelity) {
-            throw std::runtime_error("Conflicting profile rules for path '" + path + "'");
-        }
+        // Profiles are ordered policies. Later matching rules are explicit
+        // overrides of earlier defaults, so there is no hidden specificity or
+        // priority contest.
+        winner = &rule;
     }
 
     if (!winner) {
@@ -168,15 +143,11 @@ ProfileDecision BuildProfile::decide(const std::string& path, size_t depth,
 const std::string& BuildProfile::name() const { return name_; }
 const std::vector<ProfileRule>& BuildProfile::rules() const { return rules_; }
 UnavailableFidelityPolicy BuildProfile::unavailablePolicy() const { return unavailable_policy_; }
-bool BuildProfile::allowReference() const { return allow_reference_; }
-const std::string& BuildProfile::generatorDescriptor() const { return generator_descriptor_; }
 
 std::string BuildProfile::serialize() const {
     std::ostringstream out;
     out << "name=" << name_ << '\n'
-        << "unavailable=" << toString(unavailable_policy_) << '\n'
-        << "allow_reference=" << (allow_reference_ ? "true" : "false") << '\n'
-        << "generator=" << generator_descriptor_ << '\n';
+        << "unavailable=" << toString(unavailable_policy_) << '\n';
     for (const auto& rule : rules_) {
         out << "rule=" << rule.serialize() << '\n';
     }
@@ -184,8 +155,18 @@ std::string BuildProfile::serialize() const {
 }
 
 std::string BuildProfile::fingerprint() const {
+    // Human-facing profile names and reasons do not change the selected
+    // topology. Keep them in serialize(), but exclude them from the layout and
+    // build-selection identity.
+    std::ostringstream canonical;
+    canonical << "unavailable=" << toString(unavailable_policy_) << '\n';
+    for (const auto& rule : rules_) {
+        canonical << "rule=" << rule.selector.serialize()
+                  << "|fidelity=" << toString(rule.fidelity) << '\n';
+    }
     std::ostringstream out;
-    out << std::hex << std::setfill('0') << std::setw(16) << fnv1a64(serialize());
+    out << std::hex << std::setfill('0') << std::setw(16)
+        << fnv1a64(canonical.str());
     return out.str();
 }
 
@@ -203,23 +184,48 @@ BuildProfileBuilder& BuildProfileBuilder::unavailablePolicy(
     return *this;
 }
 
-BuildProfileBuilder& BuildProfileBuilder::allowReference(bool allow) {
-    allow_reference_ = allow;
-    return *this;
-}
-
-BuildProfileBuilder& BuildProfileBuilder::descriptor(std::string descriptor) {
-    descriptor_ = std::move(descriptor);
-    return *this;
-}
-
 BuildProfile BuildProfileBuilder::build() const {
-    return BuildProfile(name_, rules_, unavailable_policy_, allow_reference_, descriptor_);
+    return BuildProfile(name_, rules_, unavailable_policy_);
 }
 
 ProfileRule preferFidelity(Fidelity fidelity, ProfileSelector selector,
                            std::string reason) {
-    return {std::move(selector), fidelity, 0, std::move(reason)};
+    return {std::move(selector), fidelity, std::move(reason)};
+}
+
+BuildProfile withProfileOverrides(
+    BuildProfile base,
+    std::vector<ProfileRule> overrides,
+    std::string profile_name) {
+    auto rules = base.rules();
+    rules.insert(
+        rules.end(),
+        std::make_move_iterator(overrides.begin()),
+        std::make_move_iterator(overrides.end()));
+    return BuildProfile(
+        profile_name.empty() ? base.name() + "+overrides" : profile_name,
+        std::move(rules),
+        base.unavailablePolicy());
+}
+
+BuildProfile withExactFidelity(
+    BuildProfile base,
+    std::string path,
+    Fidelity fidelity,
+    std::string profile_name) {
+    return withProfileOverrides(
+        std::move(base),
+        {preferFidelity(
+            fidelity,
+            ProfileSelector::exactPath(std::move(path)),
+            "exact profile selection")},
+        std::move(profile_name));
+}
+
+BuildProfile canonicalDefaultProfile() {
+    return BuildProfileBuilder("canonical-default")
+        .unavailablePolicy(UnavailableFidelityPolicy::Error)
+        .build();
 }
 
 } // namespace circuit

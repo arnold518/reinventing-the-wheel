@@ -4,7 +4,6 @@
 #include "components/ComponentBuilder.tpp"
 #include "modules/basic/Decoder.hpp"
 #include "modules/basic/Mux.hpp"
-#include "modules/memory/Register32BitCellArray.hpp"
 #include "modules/memory/Register32.hpp"
 #include "modules/memory/RegisterFile32x32Direct.hpp"
 #include "modules/utility/Constant.hpp"

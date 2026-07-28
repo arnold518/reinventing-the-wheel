@@ -21,24 +21,24 @@ void expect(bool condition, const char* test_name) {
     }
 }
 
-PinValue pinBits(uint64_t value) {
-    return PinValue(value);
+TestValue pinBits(uint64_t value) {
+    return bits(value);
 }
 
-PinValue pinBit(bool value) {
-    return PinValue(value ? LogicValue::HIGH : LogicValue::LOW);
+TestValue pinBit(bool value) {
+    return bit(value);
 }
 
-PinValue pinLogic(LogicValue value) {
-    return PinValue(value);
+TestValue pinLogic(LogicValue value) {
+    return TestValue(value);
 }
 
-TruthRow adderRow(uint64_t a, uint64_t b, bool cin, uint64_t sum, bool cout) {
+TestRow adderRow(uint64_t a, uint64_t b, bool cin, uint64_t sum, bool cout) {
     return {{{"A", pinBits(a)}, {"B", pinBits(b)}, {"Cin", pinBit(cin)}},
             {{"Sum", pinBits(sum)}, {"Cout", pinBit(cout)}}};
 }
 
-TruthRow aluRow(uint64_t a, uint64_t b, uint64_t op, uint64_t out, bool zero, bool carry, bool overflow, bool negative) {
+TestRow aluRow(uint64_t a, uint64_t b, uint64_t op, uint64_t out, bool zero, bool carry, bool overflow, bool negative) {
     return {{{"A", pinBits(a)}, {"B", pinBits(b)}, {"OP", pinBits(op)}},
             {{"OUT", pinBits(out)}, {"ZERO", pinBit(zero)}, {"CARRY", pinBit(carry)}, {"OVERFLOW", pinBit(overflow)}, {"NEGATIVE", pinBit(negative)}}};
 }
@@ -145,48 +145,56 @@ std::vector<TestRow> decoderRows(size_t output_count) {
 }
 }
 
-HalfAdderTest::HalfAdderTest()
-    : ComponentTruthTableTest<HalfAdder>("HalfAdderTest", "HA_ROOT") {}
+std::vector<TestRow> halfAdderRows();
+std::vector<TestRow> fullAdderRows();
+std::vector<TestRow> adder8Rows();
+std::vector<TestRow> zeroDetect8Rows();
+std::vector<TestRow> alu8Rows();
 
-std::vector<TruthRow> HalfAdderTest::getTruthTable() const {
+HalfAdderTest::HalfAdderTest()
+    : TruthTableComponentTest<HalfAdder>(
+          "HalfAdderTest", "HA_ROOT", halfAdderRows()) {}
+
+std::vector<TestRow> halfAdderRows() {
     constexpr auto L = LogicValue::LOW;
     constexpr auto H = LogicValue::HIGH;
 
     return {
-        TruthRow({{"A", pinLogic(L)}, {"B", pinLogic(L)}}, {{"Sum", pinLogic(L)}, {"Carry", pinLogic(L)}}),
-        TruthRow({{"A", pinLogic(L)}, {"B", pinLogic(H)}}, {{"Sum", pinLogic(H)}, {"Carry", pinLogic(L)}}),
-        TruthRow({{"A", pinLogic(H)}, {"B", pinLogic(L)}}, {{"Sum", pinLogic(H)}, {"Carry", pinLogic(L)}}),
-        TruthRow({{"A", pinLogic(H)}, {"B", pinLogic(H)}}, {{"Sum", pinLogic(L)}, {"Carry", pinLogic(H)}}),
-        TruthRow({{"A", pinLogic(LogicValue::UNKNOWN)}, {"B", pinLogic(L)}}, {{"Sum", pinLogic(LogicValue::UNKNOWN)}, {"Carry", pinLogic(L)}}),
-        TruthRow({{"A", pinLogic(LogicValue::UNKNOWN)}, {"B", pinLogic(H)}}, {{"Sum", pinLogic(LogicValue::UNKNOWN)}, {"Carry", pinLogic(LogicValue::UNKNOWN)}}),
-        TruthRow({{"A", pinLogic(LogicValue::HIGH_Z)}, {"B", pinLogic(L)}}, {{"Sum", pinLogic(LogicValue::UNKNOWN)}, {"Carry", pinLogic(L)}}),
+        TestRow({{"A", pinLogic(L)}, {"B", pinLogic(L)}}, {{"Sum", pinLogic(L)}, {"Carry", pinLogic(L)}}),
+        TestRow({{"A", pinLogic(L)}, {"B", pinLogic(H)}}, {{"Sum", pinLogic(H)}, {"Carry", pinLogic(L)}}),
+        TestRow({{"A", pinLogic(H)}, {"B", pinLogic(L)}}, {{"Sum", pinLogic(H)}, {"Carry", pinLogic(L)}}),
+        TestRow({{"A", pinLogic(H)}, {"B", pinLogic(H)}}, {{"Sum", pinLogic(L)}, {"Carry", pinLogic(H)}}),
+        TestRow({{"A", pinLogic(LogicValue::UNKNOWN)}, {"B", pinLogic(L)}}, {{"Sum", pinLogic(LogicValue::UNKNOWN)}, {"Carry", pinLogic(L)}}),
+        TestRow({{"A", pinLogic(LogicValue::UNKNOWN)}, {"B", pinLogic(H)}}, {{"Sum", pinLogic(LogicValue::UNKNOWN)}, {"Carry", pinLogic(LogicValue::UNKNOWN)}}),
+        TestRow({{"A", pinLogic(LogicValue::HIGH_Z)}, {"B", pinLogic(L)}}, {{"Sum", pinLogic(LogicValue::UNKNOWN)}, {"Carry", pinLogic(L)}}),
     };
 }
 
 FullAdderTest::FullAdderTest()
-    : ComponentTruthTableTest<FullAdder>("FullAdderTest", "FA_ROOT") {}
+    : TruthTableComponentTest<FullAdder>(
+          "FullAdderTest", "FA_ROOT", fullAdderRows()) {}
 
-std::vector<TruthRow> FullAdderTest::getTruthTable() const {
+std::vector<TestRow> fullAdderRows() {
     constexpr auto L = LogicValue::LOW;
     constexpr auto H = LogicValue::HIGH;
 
     return {
-        TruthRow({{"A", pinLogic(L)}, {"B", pinLogic(L)}, {"Carry_in", pinLogic(L)}}, {{"Sum", pinLogic(L)}, {"Carry_out", pinLogic(L)}}),
-        TruthRow({{"A", pinLogic(L)}, {"B", pinLogic(L)}, {"Carry_in", pinLogic(H)}}, {{"Sum", pinLogic(H)}, {"Carry_out", pinLogic(L)}}),
-        TruthRow({{"A", pinLogic(L)}, {"B", pinLogic(H)}, {"Carry_in", pinLogic(L)}}, {{"Sum", pinLogic(H)}, {"Carry_out", pinLogic(L)}}),
-        TruthRow({{"A", pinLogic(L)}, {"B", pinLogic(H)}, {"Carry_in", pinLogic(H)}}, {{"Sum", pinLogic(L)}, {"Carry_out", pinLogic(H)}}),
-        TruthRow({{"A", pinLogic(H)}, {"B", pinLogic(L)}, {"Carry_in", pinLogic(L)}}, {{"Sum", pinLogic(H)}, {"Carry_out", pinLogic(L)}}),
-        TruthRow({{"A", pinLogic(H)}, {"B", pinLogic(L)}, {"Carry_in", pinLogic(H)}}, {{"Sum", pinLogic(L)}, {"Carry_out", pinLogic(H)}}),
-        TruthRow({{"A", pinLogic(H)}, {"B", pinLogic(H)}, {"Carry_in", pinLogic(L)}}, {{"Sum", pinLogic(L)}, {"Carry_out", pinLogic(H)}}),
-        TruthRow({{"A", pinLogic(H)}, {"B", pinLogic(H)}, {"Carry_in", pinLogic(H)}}, {{"Sum", pinLogic(H)}, {"Carry_out", pinLogic(H)}}),
-        TruthRow({{"A", pinLogic(LogicValue::UNKNOWN)}, {"B", pinLogic(L)}, {"Carry_in", pinLogic(L)}}, {{"Sum", pinLogic(LogicValue::UNKNOWN)}, {"Carry_out", pinLogic(L)}}),
-        TruthRow({{"A", pinLogic(LogicValue::UNKNOWN)}, {"B", pinLogic(H)}, {"Carry_in", pinLogic(L)}}, {{"Sum", pinLogic(LogicValue::UNKNOWN)}, {"Carry_out", pinLogic(LogicValue::UNKNOWN)}}),
-        TruthRow({{"A", pinLogic(H)}, {"B", pinLogic(H)}, {"Carry_in", pinLogic(LogicValue::UNKNOWN)}}, {{"Sum", pinLogic(LogicValue::UNKNOWN)}, {"Carry_out", pinLogic(H)}}),
+        TestRow({{"A", pinLogic(L)}, {"B", pinLogic(L)}, {"Carry_in", pinLogic(L)}}, {{"Sum", pinLogic(L)}, {"Carry_out", pinLogic(L)}}),
+        TestRow({{"A", pinLogic(L)}, {"B", pinLogic(L)}, {"Carry_in", pinLogic(H)}}, {{"Sum", pinLogic(H)}, {"Carry_out", pinLogic(L)}}),
+        TestRow({{"A", pinLogic(L)}, {"B", pinLogic(H)}, {"Carry_in", pinLogic(L)}}, {{"Sum", pinLogic(H)}, {"Carry_out", pinLogic(L)}}),
+        TestRow({{"A", pinLogic(L)}, {"B", pinLogic(H)}, {"Carry_in", pinLogic(H)}}, {{"Sum", pinLogic(L)}, {"Carry_out", pinLogic(H)}}),
+        TestRow({{"A", pinLogic(H)}, {"B", pinLogic(L)}, {"Carry_in", pinLogic(L)}}, {{"Sum", pinLogic(H)}, {"Carry_out", pinLogic(L)}}),
+        TestRow({{"A", pinLogic(H)}, {"B", pinLogic(L)}, {"Carry_in", pinLogic(H)}}, {{"Sum", pinLogic(L)}, {"Carry_out", pinLogic(H)}}),
+        TestRow({{"A", pinLogic(H)}, {"B", pinLogic(H)}, {"Carry_in", pinLogic(L)}}, {{"Sum", pinLogic(L)}, {"Carry_out", pinLogic(H)}}),
+        TestRow({{"A", pinLogic(H)}, {"B", pinLogic(H)}, {"Carry_in", pinLogic(H)}}, {{"Sum", pinLogic(H)}, {"Carry_out", pinLogic(H)}}),
+        TestRow({{"A", pinLogic(LogicValue::UNKNOWN)}, {"B", pinLogic(L)}, {"Carry_in", pinLogic(L)}}, {{"Sum", pinLogic(LogicValue::UNKNOWN)}, {"Carry_out", pinLogic(L)}}),
+        TestRow({{"A", pinLogic(LogicValue::UNKNOWN)}, {"B", pinLogic(H)}, {"Carry_in", pinLogic(L)}}, {{"Sum", pinLogic(LogicValue::UNKNOWN)}, {"Carry_out", pinLogic(LogicValue::UNKNOWN)}}),
+        TestRow({{"A", pinLogic(H)}, {"B", pinLogic(H)}, {"Carry_in", pinLogic(LogicValue::UNKNOWN)}}, {{"Sum", pinLogic(LogicValue::UNKNOWN)}, {"Carry_out", pinLogic(H)}}),
     };
 }
 
 AND8Test::AND8Test()
-    : ComponentRowsTest<AND8>("AND8Test", "AND8_ROOT", {
+    : TruthTableComponentTest<AND8>("AND8Test", "AND8_ROOT", {
         {{{"A", bits(0xF0)}, {"B", bits(0x3C)}}, {{"OUT", bits(0x30)}}},
         {{{"A", bits(0xFF)}, {"B", bits(0x00)}}, {{"OUT", bits(0x00)}}},
         {{{"A", bits(0xA5)}, {"B", bits(0x5A)}}, {{"OUT", bits(0x00)}}},
@@ -194,7 +202,7 @@ AND8Test::AND8Test()
     }) {}
 
 OR8Test::OR8Test()
-    : ComponentRowsTest<OR8>("OR8Test", "OR8_ROOT", {
+    : TruthTableComponentTest<OR8>("OR8Test", "OR8_ROOT", {
         {{{"A", bits(0xF0)}, {"B", bits(0x0F)}}, {{"OUT", bits(0xFF)}}},
         {{{"A", bits(0x00)}, {"B", bits(0x00)}}, {{"OUT", bits(0x00)}}},
         {{{"A", bits(0xA5)}, {"B", bits(0x5A)}}, {{"OUT", bits(0xFF)}}},
@@ -202,7 +210,7 @@ OR8Test::OR8Test()
     }) {}
 
 XOR8Test::XOR8Test()
-    : ComponentRowsTest<XOR8>("XOR8Test", "XOR8_ROOT", {
+    : TruthTableComponentTest<XOR8>("XOR8Test", "XOR8_ROOT", {
         {{{"A", bits(0xAA)}, {"B", bits(0x55)}}, {{"OUT", bits(0xFF)}}},
         {{{"A", bits(0xFF)}, {"B", bits(0xFF)}}, {{"OUT", bits(0x00)}}},
         {{{"A", bits(0xF0)}, {"B", bits(0x3C)}}, {{"OUT", bits(0xCC)}}},
@@ -210,7 +218,7 @@ XOR8Test::XOR8Test()
     }) {}
 
 NOT8Test::NOT8Test()
-    : ComponentRowsTest<NOT8>("NOT8Test", "NOT8_ROOT", {
+    : TruthTableComponentTest<NOT8>("NOT8Test", "NOT8_ROOT", {
         {{{"A", bits(0x00)}}, {{"OUT", bits(0xFF)}}},
         {{{"A", bits(0xA5)}}, {{"OUT", bits(0x5A)}}},
         {{{"A", bits(0xFF)}}, {{"OUT", bits(0x00)}}},
@@ -218,7 +226,7 @@ NOT8Test::NOT8Test()
     }) {}
 
 NAND8Test::NAND8Test()
-    : ComponentRowsTest<NAND8>("NAND8Test", "NAND8_ROOT", {
+    : TruthTableComponentTest<NAND8>("NAND8Test", "NAND8_ROOT", {
         {{{"A", bits(0xFF)}, {"B", bits(0x0F)}}, {{"OUT", bits(0xF0)}}},
         {{{"A", bits(0xFF)}, {"B", bits(0xFF)}}, {{"OUT", bits(0x00)}}},
         {{{"A", bits(0x00)}, {"B", bits(0xFF)}}, {{"OUT", bits(0xFF)}}},
@@ -226,7 +234,7 @@ NAND8Test::NAND8Test()
     }) {}
 
 NOR8Test::NOR8Test()
-    : ComponentRowsTest<NOR8>("NOR8Test", "NOR8_ROOT", {
+    : TruthTableComponentTest<NOR8>("NOR8Test", "NOR8_ROOT", {
         {{{"A", bits(0xF0)}, {"B", bits(0x0F)}}, {{"OUT", bits(0x00)}}},
         {{{"A", bits(0x00)}, {"B", bits(0x00)}}, {{"OUT", bits(0xFF)}}},
         {{{"A", bits(0xA5)}, {"B", bits(0x5A)}}, {{"OUT", bits(0x00)}}},
@@ -234,55 +242,55 @@ NOR8Test::NOR8Test()
     }) {}
 
 Mux2to1Test::Mux2to1Test()
-    : ComponentRowsTest<Mux2to1>("Mux2to1Test", "MUX2TO1_ROOT", oneBitMuxRows(2)) {}
+    : TruthTableComponentTest<Mux2to1>("Mux2to1Test", "MUX2TO1_ROOT", oneBitMuxRows(2)) {}
 
 Mux4to1Test::Mux4to1Test()
-    : ComponentRowsTest<Mux4to1>("Mux4to1Test", "MUX4TO1_ROOT", oneBitMuxRows(4)) {}
+    : TruthTableComponentTest<Mux4to1>("Mux4to1Test", "MUX4TO1_ROOT", oneBitMuxRows(4)) {}
 
 Mux8to1Test::Mux8to1Test()
-    : ComponentRowsTest<Mux8to1>("Mux8to1Test", "MUX8TO1_ROOT", oneBitMuxRows(8)) {}
+    : TruthTableComponentTest<Mux8to1>("Mux8to1Test", "MUX8TO1_ROOT", oneBitMuxRows(8)) {}
 
 Mux16to1Test::Mux16to1Test()
-    : ComponentRowsTest<Mux16to1>("Mux16to1Test", "MUX16TO1_ROOT", oneBitMuxRows(16)) {}
+    : TruthTableComponentTest<Mux16to1>("Mux16to1Test", "MUX16TO1_ROOT", oneBitMuxRows(16)) {}
 
 Mux32to1Test::Mux32to1Test()
-    : ComponentRowsTest<Mux32to1>("Mux32to1Test", "MUX32TO1_ROOT", oneBitMuxRows(32)) {}
+    : TruthTableComponentTest<Mux32to1>("Mux32to1Test", "MUX32TO1_ROOT", oneBitMuxRows(32)) {}
 
 Mux2to1_8bitTest::Mux2to1_8bitTest()
-    : ComponentRowsTest<Mux2to1_8bit>("Mux2to1_8bitTest", "MUX2TO1_8BIT_ROOT", busMuxRows(2)) {}
+    : TruthTableComponentTest<Mux2to1_8bit>("Mux2to1_8bitTest", "MUX2TO1_8BIT_ROOT", busMuxRows(2)) {}
 
 Mux2to1_4bitTest::Mux2to1_4bitTest()
-    : ComponentRowsTest<Mux2to1_4bit>("Mux2to1_4bitTest", "MUX2TO1_4BIT_ROOT", busMux4Rows(2)) {}
+    : TruthTableComponentTest<Mux2to1_4bit>("Mux2to1_4bitTest", "MUX2TO1_4BIT_ROOT", busMux4Rows(2)) {}
 
 Mux2to1_32bitTest::Mux2to1_32bitTest()
-    : ComponentRowsTest<Mux2to1_32bit>("Mux2to1_32bitTest", "MUX2TO1_32BIT_ROOT", busMux32Rows(2)) {}
+    : TruthTableComponentTest<Mux2to1_32bit>("Mux2to1_32bitTest", "MUX2TO1_32BIT_ROOT", busMux32Rows(2)) {}
 
 Mux4to1_8bitTest::Mux4to1_8bitTest()
-    : ComponentRowsTest<Mux4to1_8bit>("Mux4to1_8bitTest", "MUX4TO1_8BIT_ROOT", busMuxRows(4)) {}
+    : TruthTableComponentTest<Mux4to1_8bit>("Mux4to1_8bitTest", "MUX4TO1_8BIT_ROOT", busMuxRows(4)) {}
 
 Mux4to1_32bitTest::Mux4to1_32bitTest()
-    : ComponentRowsTest<Mux4to1_32bit>("Mux4to1_32bitTest", "MUX4TO1_32BIT_ROOT", busMux32Rows(4)) {}
+    : TruthTableComponentTest<Mux4to1_32bit>("Mux4to1_32bitTest", "MUX4TO1_32BIT_ROOT", busMux32Rows(4)) {}
 
 Mux8to1_8bitTest::Mux8to1_8bitTest()
-    : ComponentRowsTest<Mux8to1_8bit>("Mux8to1_8bitTest", "MUX8TO1_8BIT_ROOT", busMuxRows(8)) {}
+    : TruthTableComponentTest<Mux8to1_8bit>("Mux8to1_8bitTest", "MUX8TO1_8BIT_ROOT", busMuxRows(8)) {}
 
 Mux8to1_32bitTest::Mux8to1_32bitTest()
-    : ComponentRowsTest<Mux8to1_32bit>("Mux8to1_32bitTest", "MUX8TO1_32BIT_ROOT", busMux32Rows(8)) {}
+    : TruthTableComponentTest<Mux8to1_32bit>("Mux8to1_32bitTest", "MUX8TO1_32BIT_ROOT", busMux32Rows(8)) {}
 
 Mux16to1_8bitTest::Mux16to1_8bitTest()
-    : ComponentRowsTest<Mux16to1_8bit>("Mux16to1_8bitTest", "MUX16TO1_8BIT_ROOT", busMuxRows(16)) {}
+    : TruthTableComponentTest<Mux16to1_8bit>("Mux16to1_8bitTest", "MUX16TO1_8BIT_ROOT", busMuxRows(16)) {}
 
 Mux32to1_32bitTest::Mux32to1_32bitTest()
-    : ComponentRowsTest<Mux32to1_32bit>("Mux32to1_32bitTest", "MUX32TO1_32BIT_ROOT", busMux32Rows(32)) {}
+    : TruthTableComponentTest<Mux32to1_32bit>("Mux32to1_32bitTest", "MUX32TO1_32BIT_ROOT", busMux32Rows(32)) {}
 
 Decoder2to4Test::Decoder2to4Test()
-    : ComponentRowsTest<Decoder2to4>("Decoder2to4Test", "DECODER2TO4_ROOT", decoderRows(4)) {}
+    : TruthTableComponentTest<Decoder2to4>("Decoder2to4Test", "DECODER2TO4_ROOT", decoderRows(4)) {}
 
 Decoder5to32Test::Decoder5to32Test()
-    : ComponentRowsTest<Decoder5to32>("Decoder5to32Test", "DECODER5TO32_ROOT", decoderRows(32)) {}
+    : TruthTableComponentTest<Decoder5to32>("Decoder5to32Test", "DECODER5TO32_ROOT", decoderRows(32)) {}
 
 TwosComplement8Test::TwosComplement8Test()
-    : ComponentRowsTest<TwosComplement8>("TwosComplement8Test", "TWOS_COMPLEMENT8_ROOT", {
+    : TruthTableComponentTest<TwosComplement8>("TwosComplement8Test", "TWOS_COMPLEMENT8_ROOT", {
         {{{"A", bits(0x00)}}, {{"Result", bits(0x00)}, {"Cout", bit(false)}, {"Overflow", bit(false)}}},
         {{{"A", bits(0x01)}}, {{"Result", bits(0xFF)}, {"Cout", bit(true)}, {"Overflow", bit(false)}}},
         {{{"A", bits(0x7F)}}, {{"Result", bits(0x81)}, {"Cout", bit(true)}, {"Overflow", bit(false)}}},
@@ -292,7 +300,7 @@ TwosComplement8Test::TwosComplement8Test()
     }) {}
 
 Subtractor8Test::Subtractor8Test()
-    : ComponentRowsTest<Subtractor8>("Subtractor8Test", "SUBTRACTOR8_ROOT", {
+    : TruthTableComponentTest<Subtractor8>("Subtractor8Test", "SUBTRACTOR8_ROOT", {
         {{{"A", bits(0x05)}, {"B", bits(0x03)}}, {{"Result", bits(0x02)}, {"Cout", bit(true)}, {"Overflow", bit(false)}}},
         {{{"A", bits(0x00)}, {"B", bits(0x01)}}, {{"Result", bits(0xFF)}, {"Cout", bit(false)}, {"Overflow", bit(false)}}},
         {{{"A", bits(0x80)}, {"B", bits(0x01)}}, {{"Result", bits(0x7F)}, {"Cout", bit(true)}, {"Overflow", bit(true)}}},
@@ -304,7 +312,7 @@ Subtractor8Test::Subtractor8Test()
     }) {}
 
 SubtractorWithBorrow8Test::SubtractorWithBorrow8Test()
-    : ComponentRowsTest<SubtractorWithBorrow8>("SubtractorWithBorrow8Test", "SUBTRACTOR_WITH_BORROW8_ROOT", {
+    : TruthTableComponentTest<SubtractorWithBorrow8>("SubtractorWithBorrow8Test", "SUBTRACTOR_WITH_BORROW8_ROOT", {
         {{{"A", bits(0x05)}, {"B", bits(0x03)}, {"Bin", bit(false)}}, {{"Result", bits(0x02)}, {"Bout", bit(true)}, {"Overflow", bit(false)}}},
         {{{"A", bits(0x05)}, {"B", bits(0x03)}, {"Bin", bit(true)}}, {{"Result", bits(0x01)}, {"Bout", bit(true)}, {"Overflow", bit(false)}}},
         {{{"A", bits(0x00)}, {"B", bits(0x00)}, {"Bin", bit(true)}}, {{"Result", bits(0xFF)}, {"Bout", bit(false)}, {"Overflow", bit(false)}}},
@@ -315,7 +323,7 @@ SubtractorWithBorrow8Test::SubtractorWithBorrow8Test()
     }) {}
 
 Incrementer8Test::Incrementer8Test()
-    : ComponentRowsTest<Incrementer8>("Incrementer8Test", "INCREMENTER8_ROOT", {
+    : TruthTableComponentTest<Incrementer8>("Incrementer8Test", "INCREMENTER8_ROOT", {
         {{{"A", bits(0x00)}}, {{"Result", bits(0x01)}, {"Cout", bit(false)}, {"Overflow", bit(false)}}},
         {{{"A", bits(0x7F)}}, {{"Result", bits(0x80)}, {"Cout", bit(false)}, {"Overflow", bit(true)}}},
         {{{"A", bits(0x80)}}, {{"Result", bits(0x81)}, {"Cout", bit(false)}, {"Overflow", bit(false)}}},
@@ -324,7 +332,7 @@ Incrementer8Test::Incrementer8Test()
     }) {}
 
 Decrementer8Test::Decrementer8Test()
-    : ComponentRowsTest<Decrementer8>("Decrementer8Test", "DECREMENTER8_ROOT", {
+    : TruthTableComponentTest<Decrementer8>("Decrementer8Test", "DECREMENTER8_ROOT", {
         {{{"A", bits(0x00)}}, {{"Result", bits(0xFF)}, {"Bout", bit(false)}, {"Overflow", bit(false)}}},
         {{{"A", bits(0x01)}}, {{"Result", bits(0x00)}, {"Bout", bit(true)}, {"Overflow", bit(false)}}},
         {{{"A", bits(0x7F)}}, {{"Result", bits(0x7E)}, {"Bout", bit(true)}, {"Overflow", bit(false)}}},
@@ -334,7 +342,7 @@ Decrementer8Test::Decrementer8Test()
     }) {}
 
 EqualityChecker8Test::EqualityChecker8Test()
-    : ComponentRowsTest<EqualityChecker8>("EqualityChecker8Test", "EQUALITY_CHECKER8_ROOT", {
+    : TruthTableComponentTest<EqualityChecker8>("EqualityChecker8Test", "EQUALITY_CHECKER8_ROOT", {
         {{{"A", bits(0x42)}, {"B", bits(0x42)}}, {{"EQ", bit(true)}}},
         {{{"A", bits(0x42)}, {"B", bits(0x43)}}, {{"EQ", bit(false)}}},
         {{{"A", bits(0x00)}, {"B", bits(0x00)}}, {{"EQ", bit(true)}}},
@@ -343,7 +351,7 @@ EqualityChecker8Test::EqualityChecker8Test()
     }) {}
 
 Comparator8Test::Comparator8Test()
-    : ComponentRowsTest<Comparator8>("Comparator8Test", "COMPARATOR8_ROOT", {
+    : TruthTableComponentTest<Comparator8>("Comparator8Test", "COMPARATOR8_ROOT", {
         {{{"A", bits(0x01)}, {"B", bits(0x02)}}, {{"LT", bit(true)}, {"GT", bit(false)}, {"EQ", bit(false)}}},
         {{{"A", bits(0x42)}, {"B", bits(0x42)}}, {{"LT", bit(false)}, {"GT", bit(false)}, {"EQ", bit(true)}}},
         {{{"A", bits(0xFF)}, {"B", bits(0x02)}}, {{"LT", bit(false)}, {"GT", bit(true)}, {"EQ", bit(false)}}},
@@ -354,7 +362,7 @@ Comparator8Test::Comparator8Test()
     }) {}
 
 SignedComparator8Test::SignedComparator8Test()
-    : ComponentRowsTest<SignedComparator8>("SignedComparator8Test", "SIGNED_COMPARATOR8_ROOT", {
+    : TruthTableComponentTest<SignedComparator8>("SignedComparator8Test", "SIGNED_COMPARATOR8_ROOT", {
         {{{"A", bits(0xFF)}, {"B", bits(0x01)}}, {{"SLT", bit(true)}, {"SGT", bit(false)}, {"SEQ", bit(false)}}},
         {{{"A", bits(0x7F)}, {"B", bits(0x80)}}, {{"SLT", bit(false)}, {"SGT", bit(true)}, {"SEQ", bit(false)}}},
         {{{"A", bits(0x80)}, {"B", bits(0x80)}}, {{"SLT", bit(false)}, {"SGT", bit(false)}, {"SEQ", bit(true)}}},
@@ -366,7 +374,7 @@ SignedComparator8Test::SignedComparator8Test()
     }) {}
 
 ShiftLeftLogical8Test::ShiftLeftLogical8Test()
-    : ComponentRowsTest<ShiftLeftLogical8>("ShiftLeftLogical8Test", "SHIFT_LEFT_LOGICAL8_ROOT", {
+    : TruthTableComponentTest<ShiftLeftLogical8>("ShiftLeftLogical8Test", "SHIFT_LEFT_LOGICAL8_ROOT", {
         {{{"A", bits(0x00)}}, {{"Result", bits(0x00)}, {"Carry", bit(false)}}},
         {{{"A", bits(0x01)}}, {{"Result", bits(0x02)}, {"Carry", bit(false)}}},
         {{{"A", bits(0x7F)}}, {{"Result", bits(0xFE)}, {"Carry", bit(false)}}},
@@ -375,7 +383,7 @@ ShiftLeftLogical8Test::ShiftLeftLogical8Test()
     }) {}
 
 ShiftRightLogical8Test::ShiftRightLogical8Test()
-    : ComponentRowsTest<ShiftRightLogical8>("ShiftRightLogical8Test", "SHIFT_RIGHT_LOGICAL8_ROOT", {
+    : TruthTableComponentTest<ShiftRightLogical8>("ShiftRightLogical8Test", "SHIFT_RIGHT_LOGICAL8_ROOT", {
         {{{"A", bits(0x00)}}, {{"Result", bits(0x00)}, {"Carry", bit(false)}}},
         {{{"A", bits(0x81)}}, {{"Result", bits(0x40)}, {"Carry", bit(true)}}},
         {{{"A", bits(0x02)}}, {{"Result", bits(0x01)}, {"Carry", bit(false)}}},
@@ -384,7 +392,7 @@ ShiftRightLogical8Test::ShiftRightLogical8Test()
     }) {}
 
 ShiftRightArithmetic8Test::ShiftRightArithmetic8Test()
-    : ComponentRowsTest<ShiftRightArithmetic8>("ShiftRightArithmetic8Test", "SHIFT_RIGHT_ARITHMETIC8_ROOT", {
+    : TruthTableComponentTest<ShiftRightArithmetic8>("ShiftRightArithmetic8Test", "SHIFT_RIGHT_ARITHMETIC8_ROOT", {
         {{{"A", bits(0x00)}}, {{"Result", bits(0x00)}, {"Carry", bit(false)}}},
         {{{"A", bits(0x81)}}, {{"Result", bits(0xC0)}, {"Carry", bit(true)}}},
         {{{"A", bits(0x80)}}, {{"Result", bits(0xC0)}, {"Carry", bit(false)}}},
@@ -395,11 +403,10 @@ ShiftRightArithmetic8Test::ShiftRightArithmetic8Test()
     }) {}
 
 Adder8Test::Adder8Test()
-    : ComponentTruthTableTest<Adder8>("Adder8Test", "ADDER8_ROOT") {
-    time_step_ = 50;
-}
+    : TruthTableComponentTest<Adder8>(
+          "Adder8Test", "ADDER8_ROOT", adder8Rows()) {}
 
-std::vector<TruthRow> Adder8Test::getTruthTable() const {
+std::vector<TestRow> adder8Rows() {
     return {
         adderRow(0x00, 0x00, false, 0x00, false),
         adderRow(0x01, 0x02, false, 0x03, false),
@@ -417,28 +424,26 @@ std::vector<TruthRow> Adder8Test::getTruthTable() const {
 }
 
 ZeroDetect8Test::ZeroDetect8Test()
-    : ComponentTruthTableTest<ZeroDetect8>("ZeroDetect8Test", "ZERO_DETECT8_ROOT") {
-    time_step_ = 20;
-}
+    : TruthTableComponentTest<ZeroDetect8>(
+          "ZeroDetect8Test", "ZERO_DETECT8_ROOT", zeroDetect8Rows()) {}
 
-std::vector<TruthRow> ZeroDetect8Test::getTruthTable() const {
+std::vector<TestRow> zeroDetect8Rows() {
     return {
-        TruthRow({{"A", pinBits(0x00)}}, {{"ZERO", pinBit(true)}}),
-        TruthRow({{"A", pinBits(0x01)}}, {{"ZERO", pinBit(false)}}),
-        TruthRow({{"A", pinBits(0x02)}}, {{"ZERO", pinBit(false)}}),
-        TruthRow({{"A", pinBits(0x10)}}, {{"ZERO", pinBit(false)}}),
-        TruthRow({{"A", pinBits(0x7F)}}, {{"ZERO", pinBit(false)}}),
-        TruthRow({{"A", pinBits(0x80)}}, {{"ZERO", pinBit(false)}}),
-        TruthRow({{"A", pinBits(0xFF)}}, {{"ZERO", pinBit(false)}}),
+        TestRow({{"A", pinBits(0x00)}}, {{"ZERO", pinBit(true)}}),
+        TestRow({{"A", pinBits(0x01)}}, {{"ZERO", pinBit(false)}}),
+        TestRow({{"A", pinBits(0x02)}}, {{"ZERO", pinBit(false)}}),
+        TestRow({{"A", pinBits(0x10)}}, {{"ZERO", pinBit(false)}}),
+        TestRow({{"A", pinBits(0x7F)}}, {{"ZERO", pinBit(false)}}),
+        TestRow({{"A", pinBits(0x80)}}, {{"ZERO", pinBit(false)}}),
+        TestRow({{"A", pinBits(0xFF)}}, {{"ZERO", pinBit(false)}}),
     };
 }
 
 ALU8Test::ALU8Test()
-    : ComponentTruthTableTest<ALU8>("ALU8Test", "ALU8_ROOT") {
-    time_step_ = 1000;
-}
+    : TruthTableComponentTest<ALU8>(
+          "ALU8Test", "ALU8_ROOT", alu8Rows()) {}
 
-std::vector<TruthRow> ALU8Test::getTruthTable() const {
+std::vector<TestRow> alu8Rows() {
     return {
         aluRow(0x00, 0x00, 0x0, 0x00, true, false, false, false),
         aluRow(0xFF, 0x01, 0x0, 0x00, true, true, false, false),

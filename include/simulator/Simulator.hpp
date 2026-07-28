@@ -6,9 +6,24 @@
 #include "simulator/Event.hpp"
 #include <map>
 #include <memory>
+#include <optional>
 #include <queue>
 #include <utility>
 #include <vector>
+
+enum class DrainStatus {
+    Idle,
+    DeadlineReached,
+    EventLimitReached,
+};
+
+struct DrainResult {
+    DrainStatus status = DrainStatus::Idle;
+    size_t final_time = 0;
+    size_t processed_events = 0;
+
+    bool idle() const noexcept { return status == DrainStatus::Idle; }
+};
 
 class Simulator {
 public:
@@ -24,6 +39,9 @@ public:
 
     void advanceAndRecord(size_t target_time);
     void runAndRecord(size_t max_time);
+    DrainResult drainUntilIdle(size_t deadline, size_t max_events);
+    bool hasPendingEvents() const noexcept;
+    std::optional<size_t> nextEventTime() const;
     void setCircuitStateAtTime(size_t target_time);
     std::vector<size_t> getUniqueTimestamps() const;
     void recordChange(size_t time, std::shared_ptr<WireBase> wire, const std::vector<LogicValue>& value);

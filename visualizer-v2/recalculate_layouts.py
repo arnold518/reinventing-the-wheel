@@ -14,21 +14,15 @@ from typing import Any, Iterator
 import server
 
 
-PROGRAM_FAMILY = re.compile(
-    r"^(RV32I(?:SingleCycle|Balanced|Reference)SystemProgram)[0-9]+(Test)$"
+PROGRAM_SCENARIO = re.compile(
+    r"^RV32ISingleCycleSystemTest/program-[0-9]{2}$"
 )
 
 
 def _scenario_group(class_name: str) -> str:
-    match = PROGRAM_FAMILY.match(class_name)
-    if class_name in {
-        "RV32ISingleCycleSystemSmokeTest",
-        "RV32ISingleCycleSystemContractTest",
-    } or (match and match.group(1) == "RV32ISingleCycleSystemProgram"):
-        return "RV32IStructuralSystemTopology"
-    if not match:
-        return class_name
-    return f"{match.group(1)}N{match.group(2)}"
+    if PROGRAM_SCENARIO.match(class_name):
+        return "RV32ISingleCycleSystemTest"
+    return class_name
 
 
 def _walk(component: Any, depth: int = 0) -> Iterator[tuple[Any, int]]:
@@ -200,6 +194,9 @@ def recalculate(layout_path: Path) -> dict[str, int]:
 
     component_count = 0
     parent_topology_count = 0
+    calculated_parent_topologies: set[
+        tuple[str, str, tuple[str, ...]]
+    ] = set()
     for group_index, entries in enumerate(groups.items(), start=1):
         _, scenarios = entries
         representative_alias, representative_class = scenarios[0]
@@ -238,6 +235,15 @@ def recalculate(layout_path: Path) -> dict[str, int]:
             children = list(component.get_children())
             if not children:
                 continue
+            topology_key = (
+                server._component_layout_type(component),
+                server._component_profile_fingerprint(component),
+                tuple(sorted(
+                    child.get_name() for child in children
+                )),
+            )
+            if depth != 0 and topology_key in calculated_parent_topologies:
+                continue
             placements = _default_child_layouts(
                 manager,
                 component,
@@ -260,6 +266,8 @@ def recalculate(layout_path: Path) -> dict[str, int]:
                 depth,
                 root_layout_key,
             )
+            if depth != 0:
+                calculated_parent_topologies.add(topology_key)
             parent_topology_count += 1
 
         representative_root_layout = copy.deepcopy(manager.root_layouts[root_layout_key])

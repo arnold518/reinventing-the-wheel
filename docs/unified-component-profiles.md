@@ -1,124 +1,233 @@
-# Unified Structural/Behavioral Component Profiles
+# Component Fidelity Profiles
 
-## The idea in plain words
+## The simple model
 
-A component contract says what a block looks like from the outside: its pins, signal widths, timing observation point, and optional capabilities. An implementation says how that block works inside.
+A component family is one public kind of hardware. For example, the public
+family is `ALU32`, whether its selected implementation is:
 
-For example, `rv32i.alu32` has two implementations:
+- structural: visible children and wires; or
+- behavioral: one compact evaluated black box.
 
-- structural: the ALU is assembled from add/subtract, logic, compare, shift, and selection circuits;
-- behavioral: one evaluated black box directly computes the same documented outputs.
-
-The parent asks for an `rv32i.alu32`; it does not name either C++ implementation. A frozen build profile makes the choice at that instance path. Structural implementations still own their exact child-and-wire blueprints. A profile selects implementations recursively; it does not describe the wiring.
-
-Only two fidelities are selectable: `structural` and `behavioral`. A primitive gate evaluates directly because recursion must stop somewhere, but it is recorded as a terminal structural leaf rather than a third fidelity. `mixed` is a report about a completed subtree, not a selectable fidelity.
-
-## Main pieces
-
-| Piece | Purpose |
-|---|---|
-| `ContractDescriptor` | Stable outside interface and semantic/timing promise |
-| `ImplementationDescriptor` | Concrete structural or behavioral implementation plus evidence |
-| `ComponentCatalog` | Frozen registry and deterministic resolver |
-| `BuildProfile` | Immutable selection rules, available handwritten or generated |
-| `ProfileGenerator` | Convenience for repeatable families of profiles |
-| `BuildContext` | Carries the profile while structural recipes recursively build children |
-| `BuildManifest` | Records every resolved and explicit node and its effective subtree fidelity |
-
-## Built-in profile generators
-
-- `strictAllStructural()`: requires structural fidelity everywhere requested by contract; it fails if any request has no structural implementation.
-- `maximallyStructural()`: prefers structural fidelity and records every necessary behavioral fallback.
-- `strictAllBehavioral()`: requires behavioral fidelity at every contract request.
-- `structuralThroughDepth(k, policy)`: keeps requested nodes at depths `0..k` structural and requests behavioral implementations below that boundary.
-- `presetProfile("education" | "balanced" | "fast" | "reference")`: named convenience policies.
-- `withOverrides(base, rules)`: adds exact path, subtree, contract, depth, or parameter overrides to a generated base.
-
-Handwritten profiles remain supported through `BuildProfileBuilder`. Equal profiles serialize identically and have the same fingerprint. Conflicting equally specific rules fail instead of depending on insertion order.
-
-## C++ example
-
-```cpp
-auto catalog = circuit::createBuiltinComponentCatalog();
-auto request =
-    circuit::families::RV32ISingleCycleSystem.request("SYSTEM");
-
-auto generator = circuit::structuralThroughDepth(
-    1,
-    circuit::UnavailableFidelityPolicy::UseOnlyAvailableAndRecordException);
-auto profile = generator->generate(*catalog, request);
-auto build = catalog->createRoot(request, std::move(profile));
-
-auto system = std::dynamic_pointer_cast<RV32ISingleCycleSystem>(build.root);
-const std::string reproducible_record = build.manifest->serialize();
-```
-
-For this raw depth request, the system and core are structural while requested descendants prefer behavioral implementations. A release profile may add subtree overrides when only stable-value rather than transport-delay equivalence has been proven. The resolved manifest records the actual mixture instead of hiding that distinction.
-
-## Choosing a profile
-
-Use structural fidelity when the internal signal flow is the experiment: carry propagation, decode logic, storage construction, routing, or a new lower-level implementation.
-
-Use behavioral fidelity after the lower-level implementation or a representative slice exists and equivalence evidence defines the safe observation boundary. It is useful when the hidden structure is visually noisy, too large, or not the subject of the current experiment.
-
-For cache, pipeline, and eventual GPU experiments, make the component under study structural and keep unrelated large storage or already-proven blocks behavioral. Save the profile serialization and build manifest with results; a vague label is not reproducible enough.
-
-## Tests and the visualizer
-
-Structural, behavioral, reference, and profile-built scenarios remain separate. Equivalence tests are non-visual checks that run each implementation in an independent simulator. All 16 RV32I programs also have balanced scenarios named:
-
-```text
-RV32IBalancedSystemProgram1Test
-...
-RV32IBalancedSystemProgram16Test
-```
-
-The browser aliases are `rv32i-balanced-program1` through `rv32i-balanced-program16`. These release scenarios keep the system, core, and timing-critical control/decode/ALU/status subtrees structural while selecting the register file and large memories behaviorally. Selecting a component shows its fidelity and implementation ID. Profile-built root layouts use `scenario@profile-fingerprint`, so two topologies from the same scenario cannot silently overwrite each other's root layout.
-
-### Layout storage
-
-`visualizer-v2/layout.json` uses schema version 2 and separates three concerns:
-
-- `type_layouts` stores reusable defaults and styling for a concrete visual type plus topology-affecting parameters such as bus width or matcher mask/value.
-- `profile_layouts` is a sparse map from profile fingerprint to per-type child-placement overrides. It is used only when a profile genuinely needs different geometry or the user intentionally edits that profile's composite layout.
-- `root_layouts` stores scenario roots by the API-provided layout key. Explicit builds use the scenario alias; profile builds use `scenario@profile-fingerprint`.
-
-The browser must use the server's `layoutKey`, not reconstruct it from the selected scenario. This keeps root edits isolated while avoiding thousands of duplicate leaf layouts. Because selectable implementations have the same contract pins, their generated parent placements are normally identical; the profile override layer therefore remains empty until a real difference exists.
-
-Recalculate every default after topology or layout-algorithm changes with:
-
-```bash
-python3 -u visualizer-v2/recalculate_layouts.py
-```
-
-The command builds every visualizable topology without running simulation timelines, collapses the 16 identical program topologies in each system family, checks every generated parent for overlapping child rectangles, removes stale layout types/aliases, preserves type colors, and replaces the layout file only after the full pass succeeds.
-
-The required testing layers are:
-
-1. lower-level gate, slice, and composite tests;
-2. structural and behavioral family contract tests using shared scenarios;
-3. independent structural/behavioral equivalence tests at the declared observation point;
-4. profile resolution and manifest tests;
-5. full-system lockstep tests for every release profile.
-
-The current inventory test also requires every production module `TypeName` to appear in the built-in catalog. Adding a new module without catalog registration therefore fails CI.
-
-## Explicit construction
-
-`Component::create<T>()` remains available for one-form components and small
-teaching circuits. It has no profile, so its selected fidelity is reported as
-`unspecified`.
-
-Selectable parent blueprints use:
+A parent asks for the family, not for an implementation class:
 
 ```cpp
 builder.add(circuit::families::ALU32, "ALU");
 ```
 
-Without a build context, `builder.add()` creates the family's declared default.
-With a build context, it resolves the family recursively through the profile.
+One immutable `BuildProfile` is handed to the root. The same profile travels
+through `BuildContext` to every selectable descendant. There is no second root
+fidelity argument, descendant profile, effective fidelity, or mixed fidelity.
 
-The only component bases are `Component`, `IOComponent`, and `BasicComponent`.
-New directly evaluated leaves inherit `BasicComponent`; new composites inherit
-`IOComponent`. Fidelity comes from catalog/profile metadata rather than the
-base class.
+Only these two selections exist:
+
+```cpp
+enum class Fidelity {
+    Structural,
+    Behavioral,
+};
+```
+
+A primitive gate may evaluate directly, but it is still the terminal leaf of a
+structural design. “Mixed” is only a description of a manifest containing both
+fidelities; it is not a third selectable value.
+
+## What each object does
+
+| Object | Responsibility |
+|---|---|
+| `ComponentFamily` | Public contract identity, shared pins, and implementation factories |
+| `ComponentCatalog` | Contracts, available fidelities, evidence, validation, and construction |
+| `BuildProfile` | Ordered rules that choose fidelity by path, subtree, contract, depth, or parameters |
+| `BuildContext` | Carries the one profile during recursive construction |
+| `BuildManifest` | Records what was actually selected at every created node |
+
+The profile selects implementations. It does not describe internal wiring.
+Each structural component still owns its exact child-and-wire blueprint in
+`buildInternals()`.
+
+## Rule behavior
+
+Rules are read in order. The last matching rule wins. This is intentionally
+simple: write a broad default first and a narrow override afterward.
+
+```cpp
+auto profile = circuit::BuildProfileBuilder("inspect-alu")
+    .addRule(circuit::preferFidelity(
+        circuit::Fidelity::Behavioral,
+        circuit::ProfileSelector::any(),
+        "compact default"))
+    .addRule(circuit::preferFidelity(
+        circuit::Fidelity::Structural,
+        circuit::ProfileSelector::subtree("SYSTEM.CORE.ALU"),
+        "show the ALU subtree"))
+    .build();
+```
+
+That profile asks for behavioral components generally and structural
+components at `SYSTEM.CORE.ALU` and below.
+
+To keep a parent structural while making eligible descendants behavioral, use
+a subtree rule followed by an exact-path override:
+
+```cpp
+auto profile = circuit::BuildProfileBuilder("visible-alu-shell")
+    .addRule(circuit::preferFidelity(
+        circuit::Fidelity::Behavioral,
+        circuit::ProfileSelector::subtree("ALU")))
+    .addRule(circuit::preferFidelity(
+        circuit::Fidelity::Structural,
+        circuit::ProfileSelector::exactPath("ALU")))
+    .unavailablePolicy(
+        circuit::UnavailableFidelityPolicy::
+            UseOnlyAvailableAndRecordException)
+    .build();
+```
+
+No special “descendants-only” selector is needed.
+
+## Standard profile factories
+
+`components/selection/StandardProfiles.hpp` provides functions returning normal
+`BuildProfile` values:
+
+- `strictAllStructural()`
+- `maximallyStructural()`
+- `strictAllBehavioral()`
+- `structuralThroughDepth(k, policy)`
+
+They are helpers, not a second profile system. Handwritten profiles and helper
+profiles behave identically. `withProfileOverrides()` appends ordinary rules,
+and `withExactFidelity()` appends one exact-path rule.
+
+## Root construction
+
+There is one catalog entry point:
+
+```cpp
+auto catalog = circuit::createBuiltinComponentCatalog();
+auto request =
+    circuit::families::RV32ISingleCycleSystem.request("SYSTEM");
+auto profile = rv32i::balancedSystemProfile(*catalog, request);
+auto build = catalog->createRoot(request, std::move(profile));
+```
+
+The root is selected by the same profile as its descendants. Code that needs a
+particular root fidelity adds an exact-path rule to that profile:
+
+```cpp
+profile = circuit::withExactFidelity(
+    std::move(profile),
+    "SYSTEM",
+    circuit::Fidelity::Structural);
+```
+
+This is important for experiments: one serialized policy completely explains
+the build.
+
+## Defaults and unavailable implementations
+
+The canonical profile contains no forced rule. Resolution chooses structural
+when available and behavioral otherwise.
+
+There is no per-component hidden default. A strict profile reports an error
+when its requested fidelity is unavailable. A permissive profile may use the
+only available implementation, but the manifest records that exception.
+
+## Capabilities
+
+Consumers must not assume which concrete implementation was selected.
+Implementation-independent optional APIs use capability interfaces:
+
+- `RegisterStateView` observes register-file state.
+- `RV32IStateView` observes architectural CPU state.
+
+For example, the structural RV32I system holds its selected core as an
+`IOComponent` and queries `RV32IStateView`. Therefore the same structural
+system wrapper works with a structural or behavioral nested core.
+
+Future memory images, cache statistics, pipeline state, and GPU inspection
+should follow the same pattern.
+
+## Tests
+
+Each public contract owns one logical component test. Its scenario supplies
+inputs and expected observations. `ComponentTestRunner`:
+
+1. finds the fidelities available for the DUT contract;
+2. derives one complete profile for each run by appending an exact DUT rule;
+3. builds each run in an independent tree and simulator;
+4. observes all public output pins at logical checkpoints;
+5. checks independent expected outputs; and
+6. compares snapshots across available fidelities.
+
+The same base profile controls all descendants in both runs. There is no
+`ComponentRunConfiguration` and no separate child profile.
+
+Program tests are different: the behavioral RV32I system is the executable
+answer sheet, so the program scenario compares independently executed
+structural/profiled systems against the answer-sheet commit trace and
+hard-coded program outcomes.
+
+## Python and the visualizer
+
+Python exposes the common component surface plus a registry:
+
+```python
+names = circuit_backend.get_registered_test_names()
+test = circuit_backend.create_test_by_name(names[0])
+```
+
+Test classes are not individually bound. The visualizer uses the same registry
+factory for ordinary and parameterized scenarios.
+
+The HTML visualizer also exposes the recursive profile directly:
+
+- the left explorer is the component tree;
+- an expanded selectable row requests structural fidelity;
+- a collapsed selectable row requests behavioral fidelity;
+- fixed rows have only one implementation and cannot be toggled;
+- `Apply & Run` saves the sparse exact-path overrides, creates a fresh
+  simulation session, and returns the topology produced by that profile;
+- clicking a row smoothly moves the camera to that component; and
+- search and row virtualization keep the explorer usable for very large trees.
+
+The explorer does not save a second copy of the component hierarchy. The
+server stores only exact overrides in `visualizer-v2/profiles.json`; the C++
+catalog rebuilds the real tree from the scenario's base profile plus those
+overrides. Profile writes are revision-checked and atomic, and the existing
+simulation remains active if validation or rebuilding fails.
+
+`visualizer-v2/layout.json` uses:
+
+- `type_layouts` for reusable type defaults;
+- `profile_layouts` for sparse profile-specific overrides; and
+- `root_layouts` for scenario roots keyed by
+  `scenario@profile-fingerprint`.
+
+The fingerprint describes topology-affecting policy. Human-facing profile
+names and rule reasons are excluded, so renaming a profile does not duplicate
+layouts.
+
+Regenerate layouts after topology, profile, or layout-algorithm changes:
+
+```bash
+python3 -u visualizer-v2/recalculate_layouts.py
+```
+
+## Foundational classes
+
+There are only three component bases:
+
+```text
+Component
+└── IOComponent
+    └── BasicComponent
+```
+
+- composites normally inherit `IOComponent` and implement
+  `buildInternals()`;
+- directly evaluated leaves inherit `BasicComponent` and implement
+  `evaluate()`.
+
+There is no `StructuralComponent` or `BehavioralComponent` base. Fidelity is a
+catalog/profile choice, not a C++ inheritance category.

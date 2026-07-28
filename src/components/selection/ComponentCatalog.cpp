@@ -84,6 +84,16 @@ void ComponentCatalog::registerImplementation(ImplementationDescriptor descripto
     if (!descriptor.supports) {
         descriptor.supports = [](const ParameterMap&) { return true; };
     }
+    for (const auto& [id, registered] : implementations_) {
+        (void)id;
+        if (registered.contract_id == descriptor.contract_id
+            && registered.fidelity == descriptor.fidelity) {
+            throw std::invalid_argument(
+                "Duplicate implementation fidelity for contract '"
+                + descriptor.contract_id + "': "
+                + toString(descriptor.fidelity));
+        }
+    }
     if (!implementations_.emplace(descriptor.id, std::move(descriptor)).second) {
         throw std::invalid_argument("Duplicate implementation ID");
     }
@@ -107,8 +117,7 @@ void ComponentCatalog::freeze() {
         }
     }
     for (const auto& [id, implementation] : implementations_) {
-        if (implementation.fidelity == Fidelity::Behavioral
-            && !implementation.reference_only) {
+        if (implementation.fidelity == Fidelity::Behavioral) {
             if (implementation.evidence.status == VerificationStatus::Unverified
                 || implementation.evidence.lower_level_evidence.empty()
                 || implementation.evidence.contract_tests.empty()
@@ -167,6 +176,23 @@ std::vector<ImplementationDescriptor> ComponentCatalog::implementationsFor(
     return result;
 }
 
+std::vector<const ImplementationDescriptor*> ComponentCatalog::candidatesFor(
+    const ComponentBuildRequest& request) const {
+    std::vector<const ImplementationDescriptor*> candidates;
+    for (const auto& [id, descriptor] : implementations_) {
+        (void)id;
+        if (descriptor.contract_id != request.contract_id) continue;
+        if (!descriptor.supports(request.parameters)) continue;
+        if (!containsAll(descriptor.capabilities, request.required_capabilities)) continue;
+        if (!request.semantic_domain.empty()
+            && descriptor.evidence.semantic_domain != request.semantic_domain) continue;
+        if (!request.observation.empty()
+            && descriptor.evidence.observation != request.observation) continue;
+        candidates.push_back(&descriptor);
+    }
+    return candidates;
+}
+
 ResolvedSelection ComponentCatalog::resolve(
     const ComponentBuildRequest& request,
     const std::string& path,
@@ -179,19 +205,7 @@ ResolvedSelection ComponentCatalog::resolve(
     const auto decision = profile.decide(path, depth, request.contract_id,
                                          request.parameters);
 
-    std::vector<const ImplementationDescriptor*> candidates;
-    for (const auto& [id, descriptor] : implementations_) {
-        (void)id;
-        if (descriptor.contract_id != request.contract_id) continue;
-        if (descriptor.reference_only && !profile.allowReference()) continue;
-        if (!descriptor.supports(request.parameters)) continue;
-        if (!containsAll(descriptor.capabilities, request.required_capabilities)) continue;
-        if (!request.semantic_domain.empty()
-            && descriptor.evidence.semantic_domain != request.semantic_domain) continue;
-        if (!request.observation.empty()
-            && descriptor.evidence.observation != request.observation) continue;
-        candidates.push_back(&descriptor);
-    }
+    const auto candidates = candidatesFor(request);
     if (candidates.empty()) {
         throw std::runtime_error("No implementation supports contract request '"
                                  + request.contract_id + "' at '" + path + "'");
@@ -199,16 +213,26 @@ ResolvedSelection ComponentCatalog::resolve(
 
     const ImplementationDescriptor* selected = nullptr;
     bool exception = false;
+    std::vector<Fidelity> available_fidelities;
+    for (const auto fidelity :
+         {Fidelity::Structural, Fidelity::Behavioral}) {
+        const auto found = std::find_if(
+            candidates.begin(), candidates.end(),
+            [fidelity](const auto* candidate) {
+                return candidate->fidelity == fidelity;
+            });
+        if (found != candidates.end()) {
+            available_fidelities.push_back(fidelity);
+        }
+    }
 
     if (decision.fidelity) {
-        for (const auto* candidate : candidates) {
-            if (candidate->fidelity != *decision.fidelity) continue;
-            if (!selected || candidate->default_priority > selected->default_priority
-                || (candidate->default_priority == selected->default_priority
-                    && candidate->id < selected->id)) {
-                selected = candidate;
-            }
-        }
+        const auto found = std::find_if(
+            candidates.begin(), candidates.end(),
+            [&](const auto* candidate) {
+                return candidate->fidelity == *decision.fidelity;
+            });
+        selected = found == candidates.end() ? nullptr : *found;
         if (!selected) {
             if (profile.unavailablePolicy() == UnavailableFidelityPolicy::Error) {
                 throw std::runtime_error("Requested " + toString(*decision.fidelity)
@@ -220,18 +244,22 @@ ResolvedSelection ComponentCatalog::resolve(
     }
 
     if (!selected) {
-        for (const auto* candidate : candidates) {
-            if (!selected || candidate->default_priority > selected->default_priority
-                || (candidate->default_priority == selected->default_priority
-                    && candidate->id < selected->id)) {
-                selected = candidate;
+        for (const auto fidelity : {Fidelity::Structural, Fidelity::Behavioral}) {
+            const auto found = std::find_if(
+                candidates.begin(), candidates.end(),
+                [fidelity](const auto* candidate) {
+                    return candidate->fidelity == fidelity;
+                });
+            if (found != candidates.end()) {
+                selected = *found;
+                break;
             }
         }
     }
 
     std::string reason = decision.matched_rule
         ? decision.reason
-        : "contract baseline by deterministic priority";
+        : "canonical fallback: structural when available, otherwise behavioral";
     if (exception) {
         reason += "; unavailable fidelity exception recorded";
     }
@@ -241,8 +269,8 @@ ResolvedSelection ComponentCatalog::resolve(
         requested_contract.version,
         selected->id,
         selected->fidelity,
+        std::move(available_fidelities),
         selected->terminal_primitive,
-        selected->reference_only,
         exception,
         std::move(reason),
     };
@@ -281,7 +309,6 @@ BuildResult ComponentCatalog::createRoot(ComponentBuildRequest request,
         shared_profile->name(), shared_profile->fingerprint());
     auto scope = BuildContext::rootScope(*this, shared_profile, manifest);
     auto root = createChild(request, scope);
-    manifest->finalizeEffectiveFidelities();
     return {std::move(root), std::move(shared_profile), std::move(manifest)};
 }
 

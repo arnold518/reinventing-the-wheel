@@ -10,52 +10,59 @@
 #include "modules/rv32i/RV32IControlFlowUnit.hpp"
 #include "modules/rv32i/RV32IDecodeControlUnit.hpp"
 #include "modules/rv32i/RV32IExecutionControlStatusUnit.hpp"
+#include "modules/rv32i/RV32IReferenceCore.hpp"
 #include "modules/utility/Constant.hpp"
 #include <stdexcept>
 #include <string>
 #include <utility>
 #include <limits>
 
+namespace {
+void initializeCorePins(IOComponent* self) {
+    self->addPin("CLK", PinType::INPUT);
+    self->addPin("RST", PinType::INPUT);
+    self->addPin("ENABLE", PinType::INPUT);
+    self->addPin<32>("IMEM_READ_DATA", PinType::INPUT);
+    self->addPin("IMEM_READY", PinType::INPUT);
+    self->addPin("IMEM_FAULT", PinType::INPUT);
+    self->addPin<32>("DMEM_READ_DATA", PinType::INPUT);
+    self->addPin("DMEM_READY", PinType::INPUT);
+    self->addPin("DMEM_FAULT", PinType::INPUT);
+    self->addPin<32>("PC", PinType::OUTPUT);
+    self->addPin("HALTED", PinType::OUTPUT);
+    self->addPin("TRAPPED", PinType::OUTPUT);
+    self->addPin<4>("TRAP_CAUSE", PinType::OUTPUT);
+    self->addPin("INSTRUCTION_ATTEMPT", PinType::OUTPUT);
+    self->addPin<32>("IMEM_ADDR", PinType::OUTPUT);
+    self->addPin("IMEM_READ_EN", PinType::OUTPUT);
+    self->addPin<32>("DMEM_ADDR", PinType::OUTPUT);
+    self->addPin<32>("DMEM_WRITE_DATA", PinType::OUTPUT);
+    self->addPin("DMEM_READ_EN", PinType::OUTPUT);
+    self->addPin("DMEM_WRITE_EN", PinType::OUTPUT);
+    self->addPin<2>("DMEM_SIZE", PinType::OUTPUT);
+    self->addPin("DMEM_SIGN_EXTEND", PinType::OUTPUT);
+}
+} // namespace
+
 namespace circuit::families {
 const ComponentFamily RV32ISingleCycleCore{
     "rv32i.core.educational-single-cycle",
     "RV32ISingleCycleCore",
-    nullptr,
+    initializeCorePins,
     [](const std::string& name, const std::shared_ptr<BuildContext>& context) {
         return Component::createWithContext<::RV32ISingleCycleCore>(
+            context, name);
+    },
+    [](const std::string& name, const std::shared_ptr<BuildContext>& context) {
+        return Component::createWithContext<::RV32IReferenceCore>(
             context, name);
     }};
 }
 
 RV32ISingleCycleCore::RV32ISingleCycleCore(std::string name)
-    : IOComponent(std::move(name), [](IOComponent* self) {
-          self->addPin("CLK", PinType::INPUT);
-          self->addPin("RST", PinType::INPUT);
-          self->addPin("ENABLE", PinType::INPUT);
-
-          self->addPin<32>("IMEM_READ_DATA", PinType::INPUT);
-          self->addPin("IMEM_READY", PinType::INPUT);
-          self->addPin("IMEM_FAULT", PinType::INPUT);
-          self->addPin<32>("DMEM_READ_DATA", PinType::INPUT);
-          self->addPin("DMEM_READY", PinType::INPUT);
-          self->addPin("DMEM_FAULT", PinType::INPUT);
-
-          self->addPin<32>("PC", PinType::OUTPUT);
-          self->addPin("HALTED", PinType::OUTPUT);
-          self->addPin("TRAPPED", PinType::OUTPUT);
-          self->addPin<4>("TRAP_CAUSE", PinType::OUTPUT);
-          self->addPin("INSTRUCTION_ATTEMPT", PinType::OUTPUT);
-
-          self->addPin<32>("IMEM_ADDR", PinType::OUTPUT);
-          self->addPin("IMEM_READ_EN", PinType::OUTPUT);
-
-          self->addPin<32>("DMEM_ADDR", PinType::OUTPUT);
-          self->addPin<32>("DMEM_WRITE_DATA", PinType::OUTPUT);
-          self->addPin("DMEM_READ_EN", PinType::OUTPUT);
-          self->addPin("DMEM_WRITE_EN", PinType::OUTPUT);
-          self->addPin<2>("DMEM_SIZE", PinType::OUTPUT);
-          self->addPin("DMEM_SIGN_EXTEND", PinType::OUTPUT);
-      }) {}
+    : IOComponent(
+          std::move(name),
+          circuit::families::RV32ISingleCycleCore.pinInitializer()) {}
 
 void RV32ISingleCycleCore::buildInternals(ComponentBuilder& builder) {
     control_flow_ = builder.add(
@@ -315,31 +322,32 @@ void RV32ISingleCycleCore::buildInternals(ComponentBuilder& builder) {
         {getOutputPin("DMEM_WRITE_EN")});
 }
 
-rv32i::RV32IState RV32ISingleCycleCore::snapshotState(uint64_t instruction_count) const {
+rv32i::RV32IArchitecturalState
+RV32ISingleCycleCore::snapshotArchitecturalState() const {
     if (!control_flow_ || !register_file_ || !execution_status_) {
         throw std::logic_error("RV32ISingleCycleCore is not built");
     }
 
-    rv32i::RV32IState state;
-    state.pc = static_cast<uint32_t>(control_flow_->getOutputPin<32>("PC")->getValueAsUInt64());
+    rv32i::RV32IArchitecturalState state;
+    state.pc =
+        control_flow_->getOutputPin<32>("PC")->getValueAsVector();
     const auto register_view = std::dynamic_pointer_cast<RegisterStateView>(register_file_);
     if (!register_view) {
         throw std::logic_error("Selected register file lacks register-state-view capability");
     }
     const auto registers = register_view->getRegisterStateAtTime(
         std::numeric_limits<size_t>::max());
-    for (size_t index = 1; index < state.x.size() && index < registers.size(); ++index) {
-        uint32_t value = 0;
-        for (size_t bit = 0; bit < 32 && bit < registers[index].size(); ++bit) {
-            if (registers[index][bit] == LogicValue::HIGH) value |= uint32_t{1} << bit;
-        }
-        state.x[index] = value;
+    for (size_t index = 0;
+         index < state.x.size() && index < registers.size();
+         ++index) {
+        state.x[index] = registers[index];
     }
-    state.forceX0();
-    state.halted = execution_status_->getOutputPin("HALTED")->getValue() == LogicValue::HIGH;
-    state.trapped = execution_status_->getOutputPin("TRAPPED")->getValue() == LogicValue::HIGH;
-    state.trap_cause = static_cast<rv32i::RV32IExecutionTrapCause>(
-        execution_status_->getOutputPin<4>("TRAP_CAUSE")->getValueAsUInt64());
-    state.instruction_count = instruction_count;
+    state.halted =
+        execution_status_->getOutputPin("HALTED")->getValue();
+    state.trapped =
+        execution_status_->getOutputPin("TRAPPED")->getValue();
+    state.trap_cause =
+        execution_status_->getOutputPin<4>(
+            "TRAP_CAUSE")->getValueAsVector();
     return state;
 }

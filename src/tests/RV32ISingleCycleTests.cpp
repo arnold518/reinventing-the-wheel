@@ -5,13 +5,29 @@
 #include "components/ComponentBuilder.hpp"
 #include "components/selection/BuildManifest.hpp"
 #include "components/selection/BuiltinComponentCatalog.hpp"
+#include "modules/composite/ALU32.hpp"
+#include "modules/composite/AddSub32.hpp"
+#include "modules/composite/Comparator32.hpp"
+#include "modules/composite/Logic32.hpp"
+#include "modules/composite/Shifter32.hpp"
+#include "modules/composite/ZeroDetect32.hpp"
+#include "modules/memory/MemoryBit.hpp"
+#include "modules/memory/Register32.hpp"
+#include "modules/memory/RegisterFile32x32.hpp"
 #include "modules/rv32i/RV32IBuildProfiles.hpp"
+#include "modules/rv32i/RV32IControlFlowUnit.hpp"
+#include "modules/rv32i/RV32IDecodeControlUnit.hpp"
+#include "modules/rv32i/RV32IExecutionControlStatusUnit.hpp"
+#include "modules/rv32i/RV32ISingleCycleCore.hpp"
 #include "modules/rv32i/RV32ISingleCycleSystem.hpp"
 #include "rv32i/RV32IProgram.hpp"
 #include "simulator/Event.hpp"
 #include "tests/RV32IProgramCases.hpp"
+#include "tests/RV32ISystemAnswerSheetRun.hpp"
 #include <algorithm>
 #include <array>
+#include <iostream>
+#include <set>
 #include <stdexcept>
 
 namespace {
@@ -33,9 +49,9 @@ rv32i::RV32IMemorySize memorySize(uint64_t encoded) {
     }
 }
 
-RV32ISystemProgramCase structuralProgramCase(size_t number) {
+RV32ISystemProgramCase singleCycleProgramCase(size_t number) {
     auto test_case = rv32iProgramCase(number);
-    test_case.name = "RV32ISingleCycleSystemProgram" + std::to_string(number) + "Test";
+    test_case.name = rv32iProgramScenarioName(number);
     test_case.max_cycles_per_instruction = 1;
     test_case.cycle_time_step = 4000;
     return test_case;
@@ -74,161 +90,241 @@ void verifyBalancedBuild(const circuit::BuildResult& build) {
         require(found->second.selection.fidelity == fidelity,
                 "balanced profile selected the wrong fidelity at " + path);
     }
-    require(entries.at("RV32I_SINGLE_CYCLE_SYSTEM_ROOT").effective_fidelity
-                == circuit::EffectiveFidelity::Mixed,
-            "balanced system manifest must report a mixed subtree");
-}
 }
 
-void RV32ISingleCycleSystemSmokeTest::setupCircuit() {
-    root = Component::create<RV32ISingleCycleSystem>("RV32I_SINGLE_CYCLE_SYSTEM_ROOT");
-    builder = std::make_unique<ComponentBuilder>(root);
-    buildCircuit();
-    setInitialState();
+void compareProgramCheckpoints(
+    const std::vector<SimulationTest::SimulationCheckpoint>& expected,
+    const std::vector<SimulationTest::SimulationCheckpoint>& actual,
+    const std::string& label) {
+    require(
+        expected.size() == actual.size(),
+        label + ": instruction checkpoint count differs");
+    for (size_t index = 0; index < expected.size(); ++index) {
+        require(
+            expected[index].row_index == actual[index].row_index,
+            label + ": commit ordinal differs at checkpoint "
+                + std::to_string(index));
+        require(
+            expected[index].label == actual[index].label,
+            label + ": instruction identity differs at checkpoint "
+                + std::to_string(index));
+        require(
+            expected[index].detail == actual[index].detail,
+            label + ": architectural trace differs at checkpoint "
+                + std::to_string(index));
+    }
 }
 
-std::string RV32ISingleCycleSystemSmokeTest::getTestName() const {
-    return "RV32ISingleCycleSystemSmokeTest";
+uint32_t encodeI(
+    int32_t immediate,
+    uint8_t rs1,
+    uint8_t funct3,
+    uint8_t rd,
+    uint8_t opcode = 0x13) {
+    return ((static_cast<uint32_t>(immediate) & 0xfffU) << 20)
+        | (static_cast<uint32_t>(rs1) << 15)
+        | (static_cast<uint32_t>(funct3) << 12)
+        | (static_cast<uint32_t>(rd) << 7)
+        | opcode;
 }
 
-size_t RV32ISingleCycleSystemSmokeTest::getRunDuration() const {
-    return 14000;
-}
-
-std::vector<SimulationTest::SimulationCheckpoint> RV32ISingleCycleSystemSmokeTest::getCheckpoints() const {
+circuit::test::NamedValues coreStatusOutputs(
+    uint32_t pc,
+    bool halted,
+    bool instruction_attempt) {
+    using namespace circuit::test;
     return {
-        {1900, "reset", "PC, registers, halt, and trap state are cleared", 0},
-        {5900, "ADDI settled", "structural decode, register read, ALU, and permissions are ready", 1},
-        {7000, "ADDI committed", "x1 receives 7 and PC advances to 4", 2},
-        {11900, "EBREAK settled", "halt request is ready with normal writes suppressed", 3},
-        {14000, "halt committed", "HALTED is latched and PC remains on EBREAK", 4},
+        {"PC", logicBits(32, pc)},
+        {"HALTED", logicBit(halted)},
+        {"TRAPPED", logicBit(false)},
+        {"TRAP_CAUSE", logicBits(4, 0)},
+        {"INSTRUCTION_ATTEMPT",
+         logicBit(instruction_attempt)},
+        {"IMEM_ADDR", logicBits(32, pc)},
+        {"IMEM_READ_EN", logicBit(true)},
+        {"DMEM_READ_EN", logicBit(false)},
+        {"DMEM_WRITE_EN", logicBit(false)},
     };
 }
 
-void RV32ISingleCycleSystemSmokeTest::buildCircuit() {
-    system_ = std::dynamic_pointer_cast<RV32ISingleCycleSystem>(root);
-    require(system_ != nullptr, "RV32I single-cycle smoke root type");
+circuit::test::ComponentTestSpec singleCycleCoreSpec() {
+    using namespace circuit::test;
+    const auto addi_x1 = encodeI(5, 0, 0, 1);
+    const auto addi_x2 = encodeI(7, 1, 0, 2);
+    constexpr uint32_t EBreak = 0x00100073U;
 
-    clk_wire_ = builder->addNewWire("CLK_IN", nullptr, {system_->getInputPin("CLK")});
-    rst_wire_ = builder->addNewWire("RST_IN", nullptr, {system_->getInputPin("RST")});
-    enable_wire_ = builder->addNewWire("ENABLE_IN", nullptr, {system_->getInputPin("ENABLE")});
-    builder->addNewWire<32>("PC_OUT", system_->getOutputPin<32>("PC"), {});
-    builder->addNewWire("HALTED_OUT", system_->getOutputPin("HALTED"), {});
-    builder->addNewWire("TRAPPED_OUT", system_->getOutputPin("TRAPPED"), {});
-}
+    ActionScenario scenario{
+        "instruction-sequence",
+        {},
+        {},
+        {500'000, 10'000'000},
+    };
+    scenario.actions = {
+        {
+            "reset",
+            CheckpointKind::Settled,
+            {
+                {"CLK", logicBit(false)},
+                {"RST", logicBit(true)},
+                {"ENABLE", logicBit(true)},
+                {"IMEM_READ_DATA",
+                 LogicVector(32, LogicValue::UNKNOWN)},
+                {"IMEM_READY", logicBit(true)},
+                {"IMEM_FAULT", logicBit(false)},
+                {"DMEM_READ_DATA", logicBits(32, 0)},
+                {"DMEM_READY", logicBit(true)},
+                {"DMEM_FAULT", logicBit(false)},
+            },
+            coreStatusOutputs(0, false, false),
+        },
+        {
+            {},
+            CheckpointKind::Settled,
+            {
+                {"RST", logicBit(false)},
+                {"IMEM_READY", logicBit(false)},
+            },
+            {},
+            false,
+        },
+        {
+            "wait-for-instruction-memory",
+            CheckpointKind::AfterEdge,
+            {{"CLK", logicBit(true)}},
+            coreStatusOutputs(0, false, false),
+        },
+        {
+            {},
+            CheckpointKind::Settled,
+            {{"CLK", logicBit(false)}},
+            {},
+            false,
+        },
+        {
+            {},
+            CheckpointKind::Settled,
+            {
+                {"IMEM_READY", logicBit(true)},
+                {"ENABLE", logicBit(false)},
+                {"IMEM_READ_DATA", logicBits(32, addi_x1)},
+            },
+            {},
+            false,
+        },
+        {
+            "disabled-hold",
+            CheckpointKind::AfterEdge,
+            {{"CLK", logicBit(true)}},
+            coreStatusOutputs(0, false, false),
+        },
+        {
+            {},
+            CheckpointKind::Settled,
+            {{"CLK", logicBit(false)}},
+            {},
+            false,
+        },
+        {
+            {},
+            CheckpointKind::Settled,
+            {{"ENABLE", logicBit(true)}},
+            {},
+            false,
+        },
+        {
+            "commit-addi-x1",
+            CheckpointKind::InstructionCommit,
+            {{"CLK", logicBit(true)}},
+            coreStatusOutputs(4, false, true),
+        },
+        {
+            {},
+            CheckpointKind::Settled,
+            {
+                {"CLK", logicBit(false)},
+                {"IMEM_READ_DATA", logicBits(32, addi_x2)},
+            },
+            {},
+            false,
+        },
+        {
+            "commit-addi-x2",
+            CheckpointKind::InstructionCommit,
+            {{"CLK", logicBit(true)}},
+            coreStatusOutputs(8, false, true),
+        },
+        {
+            {},
+            CheckpointKind::Settled,
+            {
+                {"CLK", logicBit(false)},
+                {"IMEM_READ_DATA", logicBits(32, EBreak)},
+            },
+            {},
+            false,
+        },
+        {
+            "halt",
+            CheckpointKind::InstructionCommit,
+            {{"CLK", logicBit(true)}},
+            coreStatusOutputs(8, true, false),
+        },
+    };
 
-void RV32ISingleCycleSystemSmokeTest::setInitialState() {
-    system_->clearInstructionMemory();
-    system_->clearDataMemory();
-    system_->loadProgram(rv32i::RV32IProgram::fromWords({
-        0x00700093U, // addi x1, x0, 7
-        0x00100073U, // ebreak
-    }));
-
-    drive(*sim, 0, clk_wire_, false);
-    drive(*sim, 0, rst_wire_, true);
-    drive(*sim, 0, enable_wire_, true);
-    drive(*sim, 2000, rst_wire_, false);
-    drive(*sim, 6000, clk_wire_, true);
-    drive(*sim, 6500, clk_wire_, false);
-    drive(*sim, 12000, clk_wire_, true);
-    drive(*sim, 12500, clk_wire_, false);
-}
-
-void RV32ISingleCycleSystemSmokeTest::verifyResults() {
-    const auto state = system_->snapshotState(2);
-    require(state.pc == 4, "structural smoke PC should remain on EBREAK");
-    require(state.readRegister(0) == 0, "structural smoke x0 must remain zero");
-    require(state.readRegister(1) == 7, "structural smoke ADDI should write x1=7");
-    require(state.halted, "structural smoke EBREAK should latch HALTED");
-    require(!state.trapped, "structural smoke should not trap");
-    require(state.trap_cause == rv32i::RV32IExecutionTrapCause::None,
-            "structural smoke trap cause should remain None");
-}
-
-void RV32ISingleCycleSystemContractTest::setupCircuit() {
-    root = Component::create<RV32ISingleCycleSystem>("RV32I_SINGLE_CYCLE_CONTRACT_ROOT");
-    builder = std::make_unique<ComponentBuilder>(root);
-    buildCircuit();
-    setInitialState();
-}
-
-std::string RV32ISingleCycleSystemContractTest::getTestName() const {
-    return "RV32ISingleCycleSystemContractTest";
-}
-
-size_t RV32ISingleCycleSystemContractTest::getRunDuration() const {
-    return 33000;
-}
-
-std::vector<SimulationTest::SimulationCheckpoint> RV32ISingleCycleSystemContractTest::getCheckpoints() const {
     return {
-        {1900, "reset", "architectural state is zero", 0},
-        {8000, "disabled edge", "ENABLE=0 holds PC and registers", 1},
-        {14000, "enabled ADDI", "ENABLE=1 commits x1=1 and PC=4", 2},
-        {20000, "EBREAK", "halt is latched without advancing PC", 3},
-        {26000, "post-halt edge", "halted state suppresses later writes", 4},
-        {33000, "reset recovery", "reset clears PC, register, halt, and trap state", 5},
+        "RV32ISingleCycleCoreTest",
+        std::string(
+            circuit::families::RV32ISingleCycleCore.id()),
+        "RV32I_SINGLE_CYCLE_CORE_ROOT",
+        {},
+        {std::move(scenario)},
     };
 }
-
-void RV32ISingleCycleSystemContractTest::buildCircuit() {
-    system_ = std::dynamic_pointer_cast<RV32ISingleCycleSystem>(root);
-    require(system_ != nullptr, "structural RV32I contract root type");
-    clk_wire_ = builder->addNewWire("CLK_IN", nullptr, {system_->getInputPin("CLK")});
-    rst_wire_ = builder->addNewWire("RST_IN", nullptr, {system_->getInputPin("RST")});
-    enable_wire_ = builder->addNewWire("ENABLE_IN", nullptr, {system_->getInputPin("ENABLE")});
-    builder->addNewWire<32>("PC_OUT", system_->getOutputPin<32>("PC"), {});
-    builder->addNewWire("HALTED_OUT", system_->getOutputPin("HALTED"), {});
-    builder->addNewWire("TRAPPED_OUT", system_->getOutputPin("TRAPPED"), {});
 }
 
-void RV32ISingleCycleSystemContractTest::setInitialState() {
-    system_->clearInstructionMemory();
-    system_->clearDataMemory();
-    system_->loadProgram(rv32i::RV32IProgram::fromWords({
-        0x00100093U, // addi x1, x0, 1
-        0x00100073U, // ebreak
-    }));
-    drive(*sim, 0, clk_wire_, false);
-    drive(*sim, 0, rst_wire_, true);
-    drive(*sim, 0, enable_wire_, false);
-    drive(*sim, 2000, rst_wire_, false);
-    drive(*sim, 6000, clk_wire_, true);
-    drive(*sim, 6500, clk_wire_, false);
-    drive(*sim, 9000, enable_wire_, true);
-    drive(*sim, 12000, clk_wire_, true);
-    drive(*sim, 12500, clk_wire_, false);
-    drive(*sim, 18000, clk_wire_, true);
-    drive(*sim, 18500, clk_wire_, false);
-    drive(*sim, 24000, clk_wire_, true);
-    drive(*sim, 24500, clk_wire_, false);
-    drive(*sim, 28000, rst_wire_, true);
-    drive(*sim, 31000, rst_wire_, false);
-    drive(*sim, 31000, enable_wire_, false);
+RV32ISingleCycleCoreTest::RV32ISingleCycleCoreTest()
+    : circuit::test::ComponentScenarioTest(
+          singleCycleCoreSpec(), "instruction-sequence") {}
+
+bool RV32ISingleCycleCoreTest::run() {
+    if (!circuit::test::ComponentScenarioTest::run()) {
+        return false;
+    }
+    try {
+        const auto& artifacts = getRunArtifacts();
+        require(
+            artifacts.size() == 2,
+            "RV32I core test must run both fidelities");
+        for (const auto& artifact : artifacts) {
+            const auto state_view =
+                std::dynamic_pointer_cast<RV32IStateView>(
+                    artifact.root);
+            require(
+                state_view != nullptr,
+                "RV32I core artifact lacks its state-view capability");
+            const auto observed =
+                state_view->snapshotArchitecturalState();
+            const auto known = observed.toKnownState();
+            require(
+                known.pc == 8
+                    && known.x[1] == 5
+                    && known.x[2] == 12
+                    && known.halted
+                    && !known.trapped,
+                "RV32I core architectural state is incorrect");
+        }
+        return true;
+    } catch (const std::exception& error) {
+        std::cerr
+            << "[FAIL] Test 'RV32ISingleCycleCoreTest' "
+            << "architectural observation: "
+            << error.what() << std::endl;
+        return false;
+    }
 }
 
-void RV32ISingleCycleSystemContractTest::verifyResults() {
-    const auto check = [&](size_t time, uint32_t pc, uint32_t x1, bool halted) {
-        sim->setCircuitStateAtTime(time);
-        const auto state = system_->snapshotState();
-        require(state.pc == pc, "structural contract PC at time " + std::to_string(time));
-        require(state.readRegister(1) == x1,
-                "structural contract x1 at time " + std::to_string(time));
-        require(state.halted == halted,
-                "structural contract HALTED at time " + std::to_string(time));
-        require(!state.trapped,
-                "structural contract TRAPPED at time " + std::to_string(time));
-    };
-    check(8000, 0, 0, false);
-    check(14000, 4, 1, false);
-    check(20000, 4, 1, true);
-    check(26000, 4, 1, true);
-    check(33000, 0, 0, false);
-}
-
-void RV32ISingleCycleSystemProgramTestBase::setupCircuit() {
-    if (useBalancedProfile()) {
+void RV32ISystemProfileRun::setupCircuit() {
+    if (useRepresentativeProfile()) {
         const auto catalog = circuit::createBuiltinComponentCatalog();
         auto request = rv32i::educationalSystemRequest(
             "RV32I_SINGLE_CYCLE_SYSTEM_ROOT");
@@ -237,19 +333,35 @@ void RV32ISingleCycleSystemProgramTestBase::setupCircuit() {
         verifyBalancedBuild(build);
         root = std::move(build.root);
     } else {
-        root = Component::create<RV32ISingleCycleSystem>("RV32I_SINGLE_CYCLE_SYSTEM_ROOT");
+        auto build = circuit::builtinComponentCatalog().createRoot(
+            rv32i::educationalSystemRequest(
+                "RV32I_SINGLE_CYCLE_SYSTEM_ROOT"),
+            profile_);
+        root = std::move(build.root);
     }
     builder = std::make_unique<ComponentBuilder>(root);
     buildCircuit();
     setInitialState();
 }
 
-size_t RV32ISingleCycleSystemProgramTestBase::getRunDuration() const {
+void RV32ISystemProfileRun::setBuildProfile(
+    circuit::BuildProfile profile) {
+    profile_ = std::move(profile);
+    root.reset();
+    sim = std::make_shared<Simulator>();
+    builder.reset();
+    initial_events_scheduled_ = false;
+    system_.reset();
+    program_access_.reset();
+    structural_system_.reset();
+}
+
+size_t RV32ISystemProfileRun::getRunDuration() const {
     return std::max(visual_run_duration_, RV32IInstructionLockstepTest::getRunDuration());
 }
 
 std::vector<SimulationTest::SimulationCheckpoint>
-RV32ISingleCycleSystemProgramTestBase::getCheckpoints() const {
+RV32ISystemProfileRun::getCheckpoints() const {
     auto checkpoints = RV32IInstructionLockstepTest::getCheckpoints();
     if (committed_instruction_count_ == 0) {
         for (auto& checkpoint : checkpoints) {
@@ -259,9 +371,16 @@ RV32ISingleCycleSystemProgramTestBase::getCheckpoints() const {
     return checkpoints;
 }
 
-void RV32ISingleCycleSystemProgramTestBase::buildCircuit() {
-    system_ = std::dynamic_pointer_cast<RV32ISingleCycleSystem>(root);
-    require(system_ != nullptr, "structural RV32I program root type");
+void RV32ISystemProfileRun::buildCircuit() {
+    system_ = std::dynamic_pointer_cast<IOComponent>(root);
+    program_access_ =
+        std::dynamic_pointer_cast<RV32ISystemProgramAccess>(root);
+    structural_system_ =
+        std::dynamic_pointer_cast<RV32ISingleCycleSystem>(root);
+    require(system_ != nullptr, "RV32I program root IO contract");
+    require(
+        program_access_ != nullptr,
+        "RV32I program root lacks program-access capability");
     clk_wire_ = builder->addNewWire("CLK_IN", nullptr, {system_->getInputPin("CLK")});
     rst_wire_ = builder->addNewWire("RST_IN", nullptr, {system_->getInputPin("RST")});
     enable_wire_ = builder->addNewWire("ENABLE_IN", nullptr, {system_->getInputPin("ENABLE")});
@@ -270,21 +389,25 @@ void RV32ISingleCycleSystemProgramTestBase::buildCircuit() {
     builder->addNewWire("TRAPPED_OUT", system_->getOutputPin("TRAPPED"), {});
 }
 
-void RV32ISingleCycleSystemProgramTestBase::initializeComponentForLockstep(
+void RV32ISystemProfileRun::initializeComponentForLockstep(
     const RV32ISystemProgramCase& test_case
 ) {
-    require(system_ != nullptr, "structural RV32I system is not initialized");
+    require(
+        program_access_ != nullptr,
+        "RV32I system program access is not initialized");
     require(test_case.initial_pc == 0, "first structural core supports reset PC zero");
     for (size_t index = 0; index < test_case.initial_registers.size(); ++index) {
         require(test_case.initial_registers[index] == 0,
                 "first structural core program fixtures require zero initial registers");
     }
 
-    system_->clearInstructionMemory();
-    system_->clearDataMemory();
-    system_->loadProgram(test_case.program, test_case.program_base);
+    program_access_->clearInstructionMemory();
+    program_access_->clearDataMemory();
+    program_access_->loadProgram(
+        test_case.program, test_case.program_base);
     for (const auto& data : test_case.initial_data) {
-        system_->loadDataBytes(data.address, data.bytes);
+        program_access_->loadDataBytes(
+            data.address, data.bytes);
     }
 
     committed_instruction_count_ = 0;
@@ -307,35 +430,59 @@ void RV32ISingleCycleSystemProgramTestBase::initializeComponentForLockstep(
     last_observed_memory_time_ = sim->getCurrentTime();
 }
 
-void RV32ISingleCycleSystemProgramTestBase::clockComponentOneCycle(
+void RV32ISystemProfileRun::clockComponentOneCycle(
     size_t cycle_index,
     size_t cycle_start_time
 ) {
     (void)cycle_index;
-    const auto core = system_->core();
-    require(core != nullptr, "structural RV32I core is not initialized");
-    require(core->getOutputPin("INSTRUCTION_ATTEMPT")->getValue() == LogicValue::HIGH,
-            getTestName() + ": instruction did not settle before its active edge");
-
     last_access_ = {};
-    const bool read = core->getOutputPin("DMEM_READ_EN")->getValue() == LogicValue::HIGH;
-    const bool write = core->getOutputPin("DMEM_WRITE_EN")->getValue() == LogicValue::HIGH;
-    if (read || write) {
-        last_access_.kind = read
-            ? rv32i::RV32IMemoryAccessKind::Read
-            : rv32i::RV32IMemoryAccessKind::Write;
-        last_access_.size = memorySize(core->getOutputPin<2>("DMEM_SIZE")->getValueAsUInt64());
-        last_access_.sign_extend = read
-            && core->getOutputPin("DMEM_SIGN_EXTEND")->getValue() == LogicValue::HIGH;
-        last_access_.address = static_cast<uint32_t>(
-            core->getOutputPin<32>("DMEM_ADDR")->getValueAsUInt64());
-        last_access_.write_data = write
-            ? static_cast<uint32_t>(core->getOutputPin<32>("DMEM_WRITE_DATA")->getValueAsUInt64())
-            : 0;
-        last_access_.fault = system_->dataMemory()->getOutputPin("FAULT")->getValue() == LogicValue::HIGH;
-        if (read && !last_access_.fault) {
-            last_access_.read_data = static_cast<uint32_t>(
-                system_->dataMemory()->getOutputPin<32>("READ_DATA")->getValueAsUInt64());
+    if (structural_system_) {
+        const auto core = structural_system_->core();
+        require(
+            core != nullptr,
+            "structural RV32I core is not initialized");
+        require(
+            core->getOutputPin("INSTRUCTION_ATTEMPT")->getValue()
+                == LogicValue::HIGH,
+            getTestName()
+                + ": instruction did not settle before its active edge");
+
+        const bool read =
+            core->getOutputPin("DMEM_READ_EN")->getValue()
+            == LogicValue::HIGH;
+        const bool write =
+            core->getOutputPin("DMEM_WRITE_EN")->getValue()
+            == LogicValue::HIGH;
+        if (read || write) {
+            last_access_.kind = read
+                ? rv32i::RV32IMemoryAccessKind::Read
+                : rv32i::RV32IMemoryAccessKind::Write;
+            last_access_.size = memorySize(
+                core->getOutputPin<2>("DMEM_SIZE")
+                    ->getValueAsUInt64());
+            last_access_.sign_extend =
+                read
+                && core->getOutputPin("DMEM_SIGN_EXTEND")
+                       ->getValue()
+                    == LogicValue::HIGH;
+            last_access_.address = static_cast<uint32_t>(
+                core->getOutputPin<32>("DMEM_ADDR")
+                    ->getValueAsUInt64());
+            last_access_.write_data = write
+                ? static_cast<uint32_t>(
+                    core->getOutputPin<32>("DMEM_WRITE_DATA")
+                        ->getValueAsUInt64())
+                : 0;
+            const auto memory = structural_system_->dataMemory();
+            last_access_.fault =
+                memory->getOutputPin("FAULT")->getValue()
+                == LogicValue::HIGH;
+            if (read && !last_access_.fault) {
+                last_access_.read_data =
+                    static_cast<uint32_t>(
+                        memory->getOutputPin<32>("READ_DATA")
+                            ->getValueAsUInt64());
+            }
         }
     }
 
@@ -343,81 +490,341 @@ void RV32ISingleCycleSystemProgramTestBase::clockComponentOneCycle(
     ++committed_instruction_count_;
 }
 
-rv32i::RV32IState RV32ISingleCycleSystemProgramTestBase::snapshotComponentState() const {
-    require(system_ != nullptr, "structural RV32I system is not initialized");
-    return system_->snapshotState(committed_instruction_count_);
+rv32i::RV32IState RV32ISystemProfileRun::snapshotComponentState() const {
+    require(
+        program_access_ != nullptr,
+        "RV32I system is not initialized");
+    auto state =
+        program_access_->snapshotArchitecturalState().toKnownState();
+    state.instruction_count = committed_instruction_count_;
+    return state;
 }
 
-rv32i::RV32IMemoryTrace RV32ISingleCycleSystemProgramTestBase::lastDataMemoryAccess() const {
-    return last_access_;
+rv32i::RV32IMemoryTrace RV32ISystemProfileRun::lastDataMemoryAccess() const {
+    return structural_system_
+        ? last_access_
+        : program_access_->lastCommittedDataMemoryAccess();
 }
 
-std::map<uint32_t, uint8_t> RV32ISingleCycleSystemProgramTestBase::lastDataMemoryWrites() const {
-    require(system_ != nullptr && system_->dataMemory() != nullptr,
-            "structural RV32I data memory is not initialized");
+std::map<uint32_t, uint8_t> RV32ISystemProfileRun::lastDataMemoryWrites() const {
+    require(
+        program_access_ != nullptr,
+        "RV32I data memory is not initialized");
     const auto current_time = sim->getCurrentTime();
-    const auto writes = system_->dataMemory()->getByteWritesInTimeRange(
+    const auto writes =
+        program_access_->dataMemoryWritesInTimeRange(
         last_observed_memory_time_, current_time);
     last_observed_memory_time_ = current_time;
     return writes;
 }
 
-void RV32ISingleCycleSystemProgramTestBase::verifyResults() {
+void RV32ISystemProfileRun::verifyResults() {
     RV32IInstructionLockstepTest::verifyResults();
     verifyRV32IProgramExpectedResult(
         getCase(),
         snapshotComponentState(),
-        *system_->dataMemory(),
-        sim->getCurrentTime(),
+        program_access_->dataMemoryWritesInTimeRange(
+            0, sim->getCurrentTime()),
         getTestName());
 }
 
-#define DEFINE_STRUCTURAL_RV32I_PROGRAM_CASE(NUMBER) \
-RV32ISystemProgramCase RV32ISingleCycleSystemProgram##NUMBER##Test::getCase() const { \
-    return structuralProgramCase(NUMBER); \
+namespace {
+class RV32IProgramProfileRun final
+    : public RV32ISystemProfileRun {
+public:
+    RV32IProgramProfileRun(
+        size_t program_number,
+        bool balanced_profile)
+        : program_number_(program_number),
+          balanced_profile_(balanced_profile) {}
+
+protected:
+    RV32ISystemProgramCase getCase() const override {
+        return singleCycleProgramCase(program_number_);
+    }
+
+    bool useRepresentativeProfile() const override {
+        return balanced_profile_;
+    }
+
+private:
+    size_t program_number_;
+    bool balanced_profile_;
+};
+
+class RV32IProfileToggleRun final
+    : public RV32ISystemProfileRun {
+public:
+    RV32IProfileToggleRun(
+        size_t program_number,
+        std::string label,
+        circuit::BuildProfile profile)
+        : program_number_(program_number),
+          label_(std::move(label)) {
+        setBuildProfile(std::move(profile));
+    }
+
+    std::string getTestName() const override {
+        return label_;
+    }
+
+    bool execute() {
+        return SimulationTest::run();
+    }
+
+protected:
+    RV32ISystemProgramCase getCase() const override {
+        return singleCycleProgramCase(program_number_);
+    }
+
+private:
+    size_t program_number_;
+    std::string label_;
+};
+
+struct ProfileToggleAuditCase {
+    const circuit::ComponentFamily* family;
+    size_t program_number;
+    std::string context;
+};
+
+const std::vector<ProfileToggleAuditCase>&
+profileToggleAuditCases() {
+    static const std::vector<ProfileToggleAuditCase> cases{
+        {&circuit::families::RV32ISingleCycleSystem, 1,
+         "whole system"},
+        {&circuit::families::RV32ISingleCycleCore, 1,
+         "core inside structural system"},
+        {&circuit::families::RV32IControlFlow, 5,
+         "jump and link control flow"},
+        {&circuit::families::RV32IDecodeControl, 2,
+         "R-type and I-type decode"},
+        {&circuit::families::RV32IExecutionStatus, 9,
+         "illegal-instruction trap state"},
+        {&circuit::families::RegisterFile32x32, 7,
+         "Fibonacci register dependencies"},
+        {&circuit::families::Register32, 7,
+         "all register words and program counter"},
+        {&circuit::families::MemoryBit, 7,
+         "register and program-counter bit cells"},
+        {&circuit::families::MemoryBit, 9,
+         "halt and trap-status bit cells"},
+        {&circuit::families::ALU32, 2,
+         "complete ALU operation coverage"},
+        {&circuit::families::AddSub32, 2,
+         "addition and subtraction"},
+        {&circuit::families::Logic32, 2,
+         "bitwise logic"},
+        {&circuit::families::Shifter32, 2,
+         "logical and arithmetic shifts"},
+        {&circuit::families::Comparator32, 4,
+         "taken and not-taken branch comparisons"},
+        {&circuit::families::ZeroDetect32, 4,
+         "branch equality and result-zero detection"},
+    };
+    return cases;
 }
 
-DEFINE_STRUCTURAL_RV32I_PROGRAM_CASE(1)
-DEFINE_STRUCTURAL_RV32I_PROGRAM_CASE(2)
-DEFINE_STRUCTURAL_RV32I_PROGRAM_CASE(3)
-DEFINE_STRUCTURAL_RV32I_PROGRAM_CASE(4)
-DEFINE_STRUCTURAL_RV32I_PROGRAM_CASE(5)
-DEFINE_STRUCTURAL_RV32I_PROGRAM_CASE(6)
-DEFINE_STRUCTURAL_RV32I_PROGRAM_CASE(7)
-DEFINE_STRUCTURAL_RV32I_PROGRAM_CASE(8)
-DEFINE_STRUCTURAL_RV32I_PROGRAM_CASE(9)
-DEFINE_STRUCTURAL_RV32I_PROGRAM_CASE(10)
-DEFINE_STRUCTURAL_RV32I_PROGRAM_CASE(11)
-DEFINE_STRUCTURAL_RV32I_PROGRAM_CASE(12)
-DEFINE_STRUCTURAL_RV32I_PROGRAM_CASE(13)
-DEFINE_STRUCTURAL_RV32I_PROGRAM_CASE(14)
-DEFINE_STRUCTURAL_RV32I_PROGRAM_CASE(15)
-DEFINE_STRUCTURAL_RV32I_PROGRAM_CASE(16)
-
-#undef DEFINE_STRUCTURAL_RV32I_PROGRAM_CASE
-
-#define DEFINE_BALANCED_RV32I_PROGRAM_CASE(NUMBER) \
-RV32ISystemProgramCase RV32IBalancedSystemProgram##NUMBER##Test::getCase() const { \
-    auto test_case = structuralProgramCase(NUMBER); \
-    test_case.name = "RV32IBalancedSystemProgram" #NUMBER "Test"; \
-    return test_case; \
+void visitComponents(
+    const std::shared_ptr<Component>& component,
+    const std::function<void(const std::shared_ptr<Component>&)>&
+        visitor) {
+    if (!component) {
+        return;
+    }
+    visitor(component);
+    for (const auto& child : component->getChildren()) {
+        visitComponents(child, visitor);
+    }
 }
 
-DEFINE_BALANCED_RV32I_PROGRAM_CASE(1)
-DEFINE_BALANCED_RV32I_PROGRAM_CASE(2)
-DEFINE_BALANCED_RV32I_PROGRAM_CASE(3)
-DEFINE_BALANCED_RV32I_PROGRAM_CASE(4)
-DEFINE_BALANCED_RV32I_PROGRAM_CASE(5)
-DEFINE_BALANCED_RV32I_PROGRAM_CASE(6)
-DEFINE_BALANCED_RV32I_PROGRAM_CASE(7)
-DEFINE_BALANCED_RV32I_PROGRAM_CASE(8)
-DEFINE_BALANCED_RV32I_PROGRAM_CASE(9)
-DEFINE_BALANCED_RV32I_PROGRAM_CASE(10)
-DEFINE_BALANCED_RV32I_PROGRAM_CASE(11)
-DEFINE_BALANCED_RV32I_PROGRAM_CASE(12)
-DEFINE_BALANCED_RV32I_PROGRAM_CASE(13)
-DEFINE_BALANCED_RV32I_PROGRAM_CASE(14)
-DEFINE_BALANCED_RV32I_PROGRAM_CASE(15)
-DEFINE_BALANCED_RV32I_PROGRAM_CASE(16)
+std::map<std::string, size_t>
+selectableContractInventory() {
+    auto profile = circuit::withExactFidelity(
+        circuit::canonicalDefaultProfile(),
+        "RV32I_SINGLE_CYCLE_SYSTEM_ROOT",
+        circuit::Fidelity::Structural,
+        "rv32i-profile-toggle-inventory");
+    auto build = circuit::builtinComponentCatalog().createRoot(
+        rv32i::educationalSystemRequest(
+            "RV32I_SINGLE_CYCLE_SYSTEM_ROOT"),
+        std::move(profile));
+    std::map<std::string, size_t> inventory;
+    visitComponents(
+        build.root,
+        [&](const auto& component) {
+            if (component->isProfileSelectable()) {
+                ++inventory[component->getContractId()];
+            }
+        });
+    return inventory;
+}
 
-#undef DEFINE_BALANCED_RV32I_PROGRAM_CASE
+std::string joinContracts(
+    const std::set<std::string>& contracts) {
+    std::string result;
+    for (const auto& contract : contracts) {
+        if (!result.empty()) {
+            result += ", ";
+        }
+        result += contract;
+    }
+    return result;
+}
+}
+
+RV32ISingleCycleSystemTest::RV32ISingleCycleSystemTest(
+    size_t program_number)
+    : program_number_(program_number) {
+    (void)rv32iProgramScenarioName(program_number_);
+}
+
+RV32ISystemProgramCase RV32ISingleCycleSystemTest::getCase() const {
+    return singleCycleProgramCase(program_number_);
+}
+
+bool RV32ISingleCycleSystemTest::run() {
+    try {
+        RV32ISystemAnswerSheetRun answer_sheet(program_number_);
+        if (!answer_sheet.run()) {
+            return false;
+        }
+
+        RV32IProgramProfileRun representative_profile(
+            program_number_, true);
+        if (!representative_profile.run()) {
+            return false;
+        }
+        compareProgramCheckpoints(
+            answer_sheet.getCheckpoints(),
+            representative_profile.getCheckpoints(),
+            getCase().name + " representative profile");
+
+        if (!SimulationTest::run()) {
+            return false;
+        }
+        compareProgramCheckpoints(
+            answer_sheet.getCheckpoints(),
+            getCheckpoints(),
+            getCase().name + " canonical profile");
+        return true;
+    } catch (const std::exception& error) {
+        std::cerr << "[FAIL] Test '" << getTestName()
+                  << "' comparison threw an exception: "
+                  << error.what() << std::endl;
+        return false;
+    }
+}
+
+std::string RV32IProfileToggleSweepTest::getTestName() const {
+    return "RV32IProfileToggleSweepTest";
+}
+
+void RV32IProfileToggleSweepTest::verifyResults() {
+    const auto inventory = selectableContractInventory();
+    require(
+        !inventory.empty(),
+        "RV32I profile-toggle inventory is empty");
+
+    std::set<std::string> covered_contracts;
+    size_t selectable_instances = 0;
+    for (const auto& [contract, count] : inventory) {
+        (void)contract;
+        selectable_instances += count;
+    }
+
+    for (const auto& audit : profileToggleAuditCases()) {
+        const auto contract =
+            std::string(audit.family->id());
+        const auto expected = inventory.find(contract);
+        require(
+            expected != inventory.end(),
+            "Profile-toggle audit names a contract outside the "
+            "canonical RV32I tree: " + contract);
+        covered_contracts.insert(contract);
+
+        auto profile = circuit::withExactFidelity(
+            circuit::canonicalDefaultProfile(),
+            "RV32I_SINGLE_CYCLE_SYSTEM_ROOT",
+            circuit::Fidelity::Structural,
+            "rv32i-profile-toggle-base");
+        profile = circuit::withProfileOverrides(
+            std::move(profile),
+            {circuit::preferFidelity(
+                circuit::Fidelity::Behavioral,
+                circuit::ProfileSelector::contract(contract),
+                "mixed-fidelity audit for " + contract)},
+            "rv32i-profile-toggle-" + contract);
+
+        const auto label =
+            "RV32IProfileToggleSweepTest/"
+            + contract + "/program-"
+            + (audit.program_number < 10 ? "0" : "")
+            + std::to_string(audit.program_number);
+        RV32IProfileToggleRun run(
+            audit.program_number,
+            label,
+            std::move(profile));
+        require(
+            run.execute(),
+            label + " failed in " + audit.context);
+
+        size_t selected_count = 0;
+        visitComponents(
+            run.getRoot(),
+            [&](const auto& component) {
+                if (component->getContractId() != contract) {
+                    return;
+                }
+                ++selected_count;
+                require(
+                    component->isProfileSelectable(),
+                    label + " reached a non-selectable target at "
+                        + component->getID());
+                require(
+                    component->getSelectedFidelity()
+                        == "behavioral",
+                    label + " did not select behavioral fidelity at "
+                        + component->getID());
+                require(
+                    !component
+                         ->usedUnavailableFidelityException(),
+                    label + " used an unavailable-fidelity fallback at "
+                        + component->getID());
+            });
+        require(
+            selected_count == expected->second,
+            label + " selected "
+                + std::to_string(selected_count)
+                + " of " + std::to_string(expected->second)
+                + " canonical instances");
+        std::cout
+            << "[AUDIT] " << contract
+            << ": " << selected_count
+            << " instance(s) behavioral; "
+            << audit.context << std::endl;
+    }
+
+    std::set<std::string> inventory_contracts;
+    for (const auto& [contract, count] : inventory) {
+        (void)count;
+        inventory_contracts.insert(contract);
+    }
+    std::set<std::string> missing;
+    std::set_difference(
+        inventory_contracts.begin(),
+        inventory_contracts.end(),
+        covered_contracts.begin(),
+        covered_contracts.end(),
+        std::inserter(missing, missing.end()));
+    require(
+        missing.empty(),
+        "RV32I profile-toggle audit omitted selectable contracts: "
+            + joinContracts(missing));
+    std::cout
+        << "[AUDIT] Covered all "
+        << inventory_contracts.size()
+        << " selectable contracts and "
+        << selectable_instances
+        << " canonical instances." << std::endl;
+}

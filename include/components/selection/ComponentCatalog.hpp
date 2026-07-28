@@ -25,8 +25,6 @@ struct ImplementationDescriptor {
     std::string contract_id;
     Fidelity fidelity = Fidelity::Structural;
     bool terminal_primitive = false;
-    bool reference_only = false;
-    int default_priority = 0;
     std::string concrete_type_name;
     std::vector<std::string> capabilities;
     VerificationEvidence evidence;
@@ -67,6 +65,8 @@ public:
                            BuildProfile profile) const;
 
 private:
+    std::vector<const ImplementationDescriptor*> candidatesFor(
+        const ComponentBuildRequest& request) const;
     const ImplementationDescriptor& descriptorForSelection(
         const ResolvedSelection& selection) const;
     void validateInstance(const ContractDescriptor& contract,

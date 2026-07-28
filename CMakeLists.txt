@@ -22,7 +22,7 @@ set(CORE_LOGIC_SOURCES
     src/components/selection/SelectionTypes.cpp
     src/components/selection/BuildManifest.cpp
     src/components/selection/BuildProfile.cpp
-    src/components/selection/ProfileGenerator.cpp
+    src/components/selection/StandardProfiles.cpp
     src/components/selection/BuildContext.cpp
     src/components/selection/ComponentCatalog.cpp
     src/components/selection/BuiltinComponentCatalog.cpp
@@ -35,7 +35,6 @@ set(CORE_LOGIC_SOURCES
     src/modules/basic/ClockGenerator.cpp
     src/modules/memory/MemoryBitDirect.cpp
     src/modules/memory/Memory64Kx32.cpp
-    src/modules/memory/Register32BitCellArray.cpp
     src/modules/memory/Register32Direct.cpp
     src/modules/memory/RegisterFile32x32Direct.cpp
     src/modules/memory/MemoryBit.cpp
@@ -82,22 +81,21 @@ set(CORE_LOGIC_SOURCES
     src/rv32i/RV32IInstructionOracle.cpp
     src/simulator/Event.cpp
     src/simulator/Simulator.cpp
-    src/simulator/TruthTableTest.cpp
     src/tests/FullCircuitTest.cpp
+    src/tests/ComponentTestModel.cpp
     src/tests/CorePrimitiveTests.cpp
     src/tests/ComponentSelectionTests.cpp
     src/tests/UtilityComponentTests.cpp
     src/tests/ArithmeticLogicTests.cpp
     src/tests/ALU32LowerLevelSliceTests.cpp
     src/tests/RV32IBlockStandaloneTests.cpp
-    src/tests/RV32IBlockEquivalenceTests.cpp
     src/tests/RV32IDecoderTests.cpp
     src/tests/RV32IControlTests.cpp
     src/tests/RV32IProgramTests.cpp
     src/tests/RV32IInstructionOracleTests.cpp
     src/tests/RV32IInstructionLockstepTests.cpp
     src/tests/RV32ISingleCycleTests.cpp
-    src/tests/RV32IReferenceSystemTests.cpp
+    src/tests/RV32IProgramScenarios.cpp
     src/tests/MemoryComponentTests.cpp
     src/tests/TestRegistry.cpp
 )
@@ -125,6 +123,9 @@ add_library(SimulatorLib STATIC ${CORE_LOGIC_SOURCES})
 # Make the include directory available to any target that links this library.
 target_include_directories(SimulatorLib PUBLIC
     ${PROJECT_SOURCE_DIR}/include
+)
+target_include_directories(SimulatorLib PRIVATE
+    ${PROJECT_SOURCE_DIR}/src
 )
 
 # Test implementations are compiled into SimulatorLib. Keep their assertions

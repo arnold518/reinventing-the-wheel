@@ -1,82 +1,12 @@
 #pragma once
 
-#include "modules/utility/BitAdapter.hpp"
-#include "modules/utility/Constant.hpp"
-#include "modules/utility/Rewire.hpp"
-#include "simulator/SimulationTest.hpp"
-#include "tests/ComponentRowsTest.hpp"
+#include "tests/ComponentTestModel.hpp"
 #include "tests/TestHelpers.hpp"
 #include <string>
-#include <vector>
 
-class RewireUnpackTest : public ComponentRowsTest<Rewire,
-                                                   std::vector<Rewire::WireSpec>,
-                                                   std::vector<Rewire::WireSpec>,
-                                                   std::vector<Rewire::BitMap>> {
+class RewireTest : public circuit::test::ComponentScenarioTest {
 public:
-    RewireUnpackTest();
-};
-
-class RewirePackTest : public ComponentRowsTest<Rewire,
-                                                 std::vector<Rewire::WireSpec>,
-                                                 std::vector<Rewire::WireSpec>,
-                                                 std::vector<Rewire::BitMap>> {
-public:
-    RewirePackTest();
-};
-
-class RewireSliceTest : public ComponentRowsTest<Rewire,
-                                                  std::vector<Rewire::WireSpec>,
-                                                  std::vector<Rewire::WireSpec>,
-                                                  std::vector<Rewire::BitMap>> {
-public:
-    RewireSliceTest();
-};
-
-class RewireZeroExtendTest : public ComponentRowsTest<Rewire,
-                                                       std::vector<Rewire::WireSpec>,
-                                                       std::vector<Rewire::WireSpec>,
-                                                       std::vector<Rewire::BitMap>,
-                                                       Rewire::UnmappedBitValue> {
-public:
-    RewireZeroExtendTest();
-};
-
-class RewireSignExtendTest : public ComponentRowsTest<Rewire,
-                                                       std::vector<Rewire::WireSpec>,
-                                                       std::vector<Rewire::WireSpec>,
-                                                       std::vector<Rewire::BitMap>> {
-public:
-    RewireSignExtendTest();
-};
-
-class RewireUnmappedHighTest : public ComponentRowsTest<Rewire,
-                                                         std::vector<Rewire::WireSpec>,
-                                                         std::vector<Rewire::WireSpec>,
-                                                         std::vector<Rewire::BitMap>,
-                                                         Rewire::UnmappedBitValue> {
-public:
-    RewireUnmappedHighTest();
-};
-
-class RewireWidth5Test : public ComponentRowsTest<Rewire,
-                                                   std::vector<Rewire::WireSpec>,
-                                                   std::vector<Rewire::WireSpec>,
-                                                   std::vector<Rewire::BitMap>> {
-public:
-    RewireWidth5Test();
-};
-
-class RewireUnmappedUnknownTest : public SimulationTest {
-public:
-    void setupCircuit() override;
-    std::string getTestName() const override;
-    size_t getRunDuration() const override;
-
-protected:
-    void buildCircuit() override {}
-    void setInitialState() override;
-    void verifyResults() override;
+    RewireTest();
 };
 
 class RewireValidationTest : public StandaloneVerificationTest {
@@ -87,54 +17,34 @@ protected:
     void verifyResults() override;
 };
 
-class BitSplitter8Test : public ComponentRowsTest<BitSplitter<8>> {
-public:
-    BitSplitter8Test();
-};
+#define DECLARE_UTILITY_COMPONENT_TEST(NAME) \
+    class NAME : public circuit::test::ComponentScenarioTest { \
+    public: \
+        NAME(); \
+    };
 
-class BitJoiner8Test : public ComponentRowsTest<BitJoiner<8>> {
-public:
-    BitJoiner8Test();
-};
+DECLARE_UTILITY_COMPONENT_TEST(BitSplitter1Test)
+DECLARE_UTILITY_COMPONENT_TEST(BitSplitter2Test)
+DECLARE_UTILITY_COMPONENT_TEST(BitSplitter3Test)
+DECLARE_UTILITY_COMPONENT_TEST(BitSplitter4Test)
+DECLARE_UTILITY_COMPONENT_TEST(BitSplitter5Test)
+DECLARE_UTILITY_COMPONENT_TEST(BitSplitter8Test)
+DECLARE_UTILITY_COMPONENT_TEST(BitSplitter16Test)
+DECLARE_UTILITY_COMPONENT_TEST(BitSplitter32Test)
 
-class BitSplitter16Test : public ComponentRowsTest<BitSplitter<16>> {
-public:
-    BitSplitter16Test();
-};
+DECLARE_UTILITY_COMPONENT_TEST(BitJoiner1Test)
+DECLARE_UTILITY_COMPONENT_TEST(BitJoiner2Test)
+DECLARE_UTILITY_COMPONENT_TEST(BitJoiner3Test)
+DECLARE_UTILITY_COMPONENT_TEST(BitJoiner4Test)
+DECLARE_UTILITY_COMPONENT_TEST(BitJoiner5Test)
+DECLARE_UTILITY_COMPONENT_TEST(BitJoiner8Test)
+DECLARE_UTILITY_COMPONENT_TEST(BitJoiner16Test)
+DECLARE_UTILITY_COMPONENT_TEST(BitJoiner32Test)
 
-class BitJoiner32Test : public ComponentRowsTest<BitJoiner<32>> {
-public:
-    BitJoiner32Test();
-};
+DECLARE_UTILITY_COMPONENT_TEST(ConstantValue1Test)
+DECLARE_UTILITY_COMPONENT_TEST(ConstantValue2Test)
+DECLARE_UTILITY_COMPONENT_TEST(ConstantValue4Test)
+DECLARE_UTILITY_COMPONENT_TEST(ConstantValue8Test)
+DECLARE_UTILITY_COMPONENT_TEST(ConstantValue32Test)
 
-class BitJoiner8UnknownTest : public SimulationTest {
-public:
-    void setupCircuit() override;
-    std::string getTestName() const override;
-    size_t getRunDuration() const override;
-
-protected:
-    void buildCircuit() override {}
-    void setInitialState() override;
-    void verifyResults() override;
-};
-
-class ConstantValue1HighTest : public ComponentRowsTest<ConstantValue<1>, uint64_t> {
-public:
-    ConstantValue1HighTest();
-};
-
-class ConstantValue1LowTest : public ComponentRowsTest<ConstantValue<1>, uint64_t> {
-public:
-    ConstantValue1LowTest();
-};
-
-class ConstantValue8Test : public ComponentRowsTest<ConstantValue<8>, uint64_t> {
-public:
-    ConstantValue8Test();
-};
-
-class ConstantValue32Test : public ComponentRowsTest<ConstantValue<32>, uint64_t> {
-public:
-    ConstantValue32Test();
-};
+#undef DECLARE_UTILITY_COMPONENT_TEST

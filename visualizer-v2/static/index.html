@@ -4,7 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>CircuitSim Visualizer V2</title>
-  <link rel="stylesheet" href="styles.css?v=22">
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="styles.css?v=24">
 </head>
 <body>
   <canvas id="circuit-canvas"></canvas>
@@ -25,6 +26,7 @@
   </div>
 
   <div id="viewbar" class="toolbar">
+    <button id="toggle-explorer" aria-pressed="true">Explorer</button>
     <button id="reset-view">Reset View</button>
     <button id="zoom-out">-</button>
     <button id="zoom-in">+</button>
@@ -34,6 +36,38 @@
     <button id="save-layout">Save Layout</button>
     <span id="save-status"></span>
   </div>
+
+  <aside id="component-explorer" aria-label="Component fidelity explorer">
+    <div class="explorer-header">
+      <div>
+        <div class="explorer-title">Components</div>
+        <div class="explorer-subtitle">
+          Expand structural blocks. Collapse behavioral blocks.
+        </div>
+      </div>
+    </div>
+    <div class="explorer-search-wrap">
+      <input
+        id="explorer-search"
+        type="search"
+        placeholder="Find component"
+        autocomplete="off"
+        spellcheck="false"
+        aria-label="Find component">
+    </div>
+    <div id="explorer-viewport" role="tree" aria-label="Circuit components">
+      <div id="explorer-spacer"></div>
+      <div id="explorer-rows"></div>
+    </div>
+    <div class="explorer-footer">
+      <div id="explorer-status" aria-live="polite"></div>
+      <div class="explorer-actions">
+        <button id="revert-profile" disabled>Revert</button>
+        <button id="apply-profile" class="primary" disabled>Apply &amp; Run</button>
+      </div>
+    </div>
+    <div id="explorer-resizer" aria-hidden="true"></div>
+  </aside>
 
   <div id="tooltip" role="tooltip"></div>
   <aside id="inspector" class="inspector hidden" aria-label="Selection inspector">
@@ -76,6 +110,7 @@
     </div>
   </aside>
   <div id="loading">Loading circuit...</div>
-  <script src="app.js?v=41"></script>
+  <script src="explorer.js?v=2"></script>
+  <script src="app.js?v=52"></script>
 </body>
 </html>

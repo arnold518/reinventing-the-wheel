@@ -2,34 +2,44 @@
 
 #include "components/ComponentBuilder.hpp"
 #include "components/ComponentBuilder.tpp"
+#include "modules/rv32i/RV32IReferenceSystem.hpp"
 #include "modules/utility/Constant.hpp"
 #include <stdexcept>
 #include <utility>
+
+namespace {
+void initializeSystemPins(IOComponent* self) {
+    self->addPin("CLK", PinType::INPUT);
+    self->addPin("RST", PinType::INPUT);
+    self->addPin("ENABLE", PinType::INPUT);
+    self->addPin<32>("PC", PinType::OUTPUT);
+    self->addPin("HALTED", PinType::OUTPUT);
+    self->addPin("TRAPPED", PinType::OUTPUT);
+}
+} // namespace
 
 namespace circuit::families {
 const ComponentFamily RV32ISingleCycleSystem{
     "rv32i.system.educational-single-cycle",
     "RV32ISingleCycleSystem",
-    nullptr,
+    initializeSystemPins,
     [](const std::string& name, const std::shared_ptr<BuildContext>& context) {
         return Component::createWithContext<::RV32ISingleCycleSystem>(
+            context, name);
+    },
+    [](const std::string& name, const std::shared_ptr<BuildContext>& context) {
+        return Component::createWithContext<::RV32IReferenceSystem>(
             context, name);
     }};
 }
 
 RV32ISingleCycleSystem::RV32ISingleCycleSystem(std::string name)
-    : IOComponent(std::move(name), [](IOComponent* self) {
-          self->addPin("CLK", PinType::INPUT);
-          self->addPin("RST", PinType::INPUT);
-          self->addPin("ENABLE", PinType::INPUT);
-          self->addPin<32>("PC", PinType::OUTPUT);
-          self->addPin("HALTED", PinType::OUTPUT);
-          self->addPin("TRAPPED", PinType::OUTPUT);
-      }) {}
+    : IOComponent(
+          std::move(name),
+          circuit::families::RV32ISingleCycleSystem.pinInitializer()) {}
 
 void RV32ISingleCycleSystem::buildInternals(ComponentBuilder& builder) {
-    core_ = std::dynamic_pointer_cast<RV32ISingleCycleCore>(
-        builder.add(circuit::families::RV32ISingleCycleCore, "CORE"));
+    core_ = builder.add(circuit::families::RV32ISingleCycleCore, "CORE");
     instruction_memory_ = std::dynamic_pointer_cast<Memory64Kx32>(
         builder.add(circuit::families::Memory64Kx32, "INSTRUCTION_MEMORY"));
     data_memory_ = std::dynamic_pointer_cast<Memory64Kx32>(
@@ -171,7 +181,32 @@ void RV32ISingleCycleSystem::loadDataWords(uint32_t base_address, const std::vec
     data_memory_->loadWords(base_address, words);
 }
 
-rv32i::RV32IState RV32ISingleCycleSystem::snapshotState(uint64_t instruction_count) const {
+rv32i::RV32IArchitecturalState
+RV32ISingleCycleSystem::snapshotArchitecturalState() const {
     if (!core_) throw std::logic_error("RV32ISingleCycleSystem is not built");
-    return core_->snapshotState(instruction_count);
+    const auto state_view = std::dynamic_pointer_cast<RV32IStateView>(core_);
+    if (!state_view) {
+        throw std::logic_error(
+            "Selected RV32I core lacks architectural-state observation");
+    }
+    return state_view->snapshotArchitecturalState();
+}
+
+rv32i::RV32IMemoryTrace
+RV32ISingleCycleSystem::lastCommittedDataMemoryAccess() const {
+    // The structural program harness captures bus intent immediately before
+    // the active edge. It is the authoritative observation for this fidelity.
+    return {};
+}
+
+std::map<uint32_t, uint8_t>
+RV32ISingleCycleSystem::dataMemoryWritesInTimeRange(
+    size_t start_time,
+    size_t end_time) const {
+    if (!data_memory_) {
+        throw std::logic_error(
+            "RV32ISingleCycleSystem is not built");
+    }
+    return data_memory_->getByteWritesInTimeRange(
+        start_time, end_time);
 }

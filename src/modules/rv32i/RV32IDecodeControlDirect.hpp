@@ -1,4 +1,5 @@
 #pragma once
+// Private factory implementation; callers use families::RV32IDecodeControl.
 
 #include "components/BasicComponent.hpp"
 

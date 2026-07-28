@@ -1,4 +1,5 @@
 #pragma once
+// Private factory implementation; callers use families::Register32.
 
 #include "components/BasicComponent.hpp"
 #include <string>

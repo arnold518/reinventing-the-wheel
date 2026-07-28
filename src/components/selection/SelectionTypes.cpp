@@ -11,22 +11,11 @@ std::string toString(Fidelity value) {
     return "unknown";
 }
 
-std::string toString(EffectiveFidelity value) {
-    switch (value) {
-        case EffectiveFidelity::Unspecified: return "unspecified";
-        case EffectiveFidelity::Structural: return "structural";
-        case EffectiveFidelity::Behavioral: return "behavioral";
-        case EffectiveFidelity::Mixed: return "mixed";
-    }
-    return "unspecified";
-}
-
 std::string toString(VerificationStatus value) {
     switch (value) {
         case VerificationStatus::Unverified: return "unverified";
         case VerificationStatus::Characterized: return "characterized";
         case VerificationStatus::Verified: return "verified";
-        case VerificationStatus::ReferenceOnly: return "reference-only";
     }
     return "unverified";
 }

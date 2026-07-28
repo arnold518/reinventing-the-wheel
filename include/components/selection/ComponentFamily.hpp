@@ -25,7 +25,7 @@ using FamilyFactory = std::function<std::shared_ptr<Component>(
  * A family is deliberately not a Component base class. It owns the shared
  * public identity, pin contract, and internal factories, while builders,
  * profiles, tests, bindings, and visualizers refer only to the family. The
- * catalog adds verification evidence and selection priority without exposing
+ * catalog adds verification evidence without exposing
  * implementation class names to callers.
  */
 class ComponentFamily {
@@ -34,25 +34,17 @@ public:
                     std::string_view type_name,
                     PinInitializer pin_initializer = nullptr,
                     FamilyFactory structural_factory = nullptr,
-                    FamilyFactory behavioral_factory = nullptr,
-                    Fidelity default_fidelity = Fidelity::Structural)
+                    FamilyFactory behavioral_factory = nullptr)
         : contract_id_(contract_id),
           type_name_(type_name),
           pin_initializer_(std::move(pin_initializer)),
           structural_factory_(std::move(structural_factory)),
-          behavioral_factory_(std::move(behavioral_factory)),
-          default_fidelity_(default_fidelity) {}
+          behavioral_factory_(std::move(behavioral_factory)) {}
 
     std::string_view id() const { return contract_id_; }
     std::string_view typeName() const { return type_name_; }
     const PinInitializer& pinInitializer() const {
         return pin_initializer_;
-    }
-
-    std::shared_ptr<Component> createDefault(
-        const std::string& instance_name,
-        const std::shared_ptr<BuildContext>& context) const {
-        return create(default_fidelity_, instance_name, context);
     }
 
     bool supports(Fidelity fidelity) const {
@@ -98,7 +90,6 @@ private:
     PinInitializer pin_initializer_;
     FamilyFactory structural_factory_;
     FamilyFactory behavioral_factory_;
-    Fidelity default_fidelity_;
 };
 
 } // namespace circuit

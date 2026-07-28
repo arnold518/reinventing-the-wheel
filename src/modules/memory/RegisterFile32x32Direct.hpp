@@ -1,4 +1,5 @@
 #pragma once
+// Private factory implementation; callers use families::RegisterFile32x32.
 
 #include "components/BasicComponent.hpp"
 #include "components/capabilities/RegisterStateView.hpp"

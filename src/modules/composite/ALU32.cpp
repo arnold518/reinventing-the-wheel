@@ -58,12 +58,12 @@ ALU32::ALU32(std::string name)
                   circuit::families::ALU32.pinInitializer()) {}
 
 void ALU32::buildInternals(ComponentBuilder& builder) {
-    builder.addNewComponent<AddSub32>("ADD");
-    builder.addNewComponent<AddSub32>("SUB");
-    builder.addNewComponent<Logic32>("LOGIC");
-    builder.addNewComponent<Shifter32>("SHIFT");
-    builder.addNewComponent<Comparator32>("CMP");
-    builder.addNewComponent<ZeroDetect32>("RESULT_ZERO");
+    builder.add(circuit::families::AddSub32, "ADD");
+    builder.add(circuit::families::AddSub32, "SUB");
+    builder.add(circuit::families::Logic32, "LOGIC");
+    builder.add(circuit::families::Shifter32, "SHIFT");
+    builder.add(circuit::families::Comparator32, "CMP");
+    builder.add(circuit::families::ZeroDetect32, "RESULT_ZERO");
     builder.addNewComponent<BitSplitter<32>>("RESULT_SPLIT");
     builder.addNewComponent<BitJoiner<32>>("SLT_JOIN");
     builder.addNewComponent<BitJoiner<32>>("SLTU_JOIN");

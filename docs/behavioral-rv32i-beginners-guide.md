@@ -711,7 +711,7 @@ Run a single numbered program:
 
 ```bash
 ctest --test-dir build --output-on-failure \
-  -R "RV32IReferenceSystemProgram5Test"
+  -R "RV32ISingleCycleSystemTest/program-05"
 ```
 
 Run all tests:
@@ -723,9 +723,9 @@ ctest --test-dir build --output-on-failure
 The visualizer test registry also provides scenario aliases:
 
 ```text
-rv32i-reference-program1
+rv32i-program1
 ...
-rv32i-reference-program16
+rv32i-program16
 ```
 
 ## 16. How to Debug a Failure as a Beginner

@@ -31,6 +31,37 @@ The renderer stops descending only when a component is narrower than one physica
 
 This cutoff does not change simulation state and does not hide detail that the display can physically resolve.
 
+### Progressive exact topology loading
+
+The full structural RV32I topology grew to 54,049 components, 180,155 pins,
+and 103,361 wires after the unified component migration. Sending every pin and
+wire descriptor before drawing the root view produced a 128.8 MB JSON response
+and made the browser construct geometry and spatial-index entries for details
+far below one physical pixel.
+
+The initial response now contains:
+
+- the complete, compact component tree required by the explorer;
+- the complete indexed simulation state for the initial timestamp, while the
+  server session retains the complete time-travel history;
+- root and immediate-child pins;
+- root-owned wires; and
+- the full component/pin/wire counts.
+
+The browser requests additional exact signal scopes from `POST /api/topology`
+in batches when a component becomes resolvable on screen or lies on the path
+to a selected component. A scope contains the owner's wires and every owner or
+immediate-child pin needed by those wires. The server validates component IDs,
+deduplicates requests, and rejects batches larger than 512 owners.
+
+No simulated component, signal value, or time-travel history is removed.
+Unloaded data is drawing metadata only. Zooming or focusing a deep component
+fetches its real pins and wires before showing the detail.
+
+Spatial indexes are likewise built only for the currently resolvable
+hierarchy. Previously loaded scopes remain available, so returning to a
+component does not discard work.
+
 ### Transport compression and session bounds
 
 Large JSON responses use gzip level 1 when the client advertises support. The scenario cache is an LRU with a default maximum of two full sessions, configurable through `VISUALIZER_V2_MAX_SESSIONS`.
@@ -67,6 +98,36 @@ Measurements were taken through the systemd visualizer on port 8765.
 
 Cold construction of the full structural Program 9 session still takes about 62.5 seconds. That cost is dominated by constructing and simulating the complete gate-level hierarchy, not by the now-optimized state transport. Future cold-start work should cache or share immutable structural topology metadata without replacing the structural simulation.
 
+## Progressive Loading Measurements
+
+Measurements on the current 54,049-component Program 1 topology:
+
+| Measurement | Eager topology | Progressive topology |
+|---|---:|---:|
+| Initial uncompressed JSON | 128,808,325 bytes | 17,853,122 bytes |
+| Initial browser gzip transfer | several MB | 765,414 bytes |
+| Pins in initial drawing scope | 180,155 | 53 |
+| Wires in initial drawing scope | 103,361 | 29 |
+| Python JSON parse | 4.28 s / 444 MB peak | 0.35 s / 79 MB peak |
+| Clean local headless-browser overview | 14.7 s | 2.8 s |
+
+The progressive payload is 7.2 times smaller before compression and roughly
+168 times smaller over gzip than the former uncompressed response. A deep
+depth-8 NAND gate focus loaded its missing ancestor/detail scopes, showed all
+two inputs and one output, and completed without a browser error. A temporary
+profile-store browser test also completed:
+
+```text
+MemoryBit structural: 28 components, 89 pins, 55 wires
+MemoryBit behavioral: 1 component, 5 pins, 5 wires
+MemoryBit restored:   28 components, 89 pins, 55 wires
+```
+
+Cold CPU construction and simulation remain intentionally exact and took
+97.7 seconds in the isolated measurement process. The loading overlay now
+distinguishes that phase from circuit-index decoding and overview preparation,
+and it animates while the request is pending.
+
 ## Exactness Verification
 
 The new indexed response was compared against pre-optimization dictionary responses at:
@@ -93,6 +154,12 @@ Additional verification:
 - a dedicated `VisualizerModuleBindingsTest` regression for 2-bit constants, 4-bit constants, and the RV32I pattern matcher;
 - default-layout collision regression for a full-width ECALL matcher and `Mux8to1_32bit`, including pin/stub clearance;
 - 143/143 CTest targets passing.
+
+After the unified component, test, profile-explorer, and progressive-topology
+migrations were combined, the final repository regression passed 127/127
+logical tests in 535.15 seconds. The smaller logical-test count reflects
+consolidated fidelity-independent scenarios rather than reduced contract
+coverage.
 
 ## Remaining Conservative Opportunities
 

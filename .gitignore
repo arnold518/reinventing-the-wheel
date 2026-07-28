@@ -8,3 +8,4 @@
 /visualizer-v2/__pycache__/
 /tests/__pycache__/
 /visualizer-v2/circuit_backend*.so
+/visualizer-v2/profiles.json

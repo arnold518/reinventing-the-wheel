@@ -71,8 +71,10 @@ Initial component events are now scheduled idempotently. This lets structural te
 Focused verification includes:
 
 - `RV32ISingleCycleCoreSmokeTest`: structural ADDI followed by EBREAK.
-- `RV32ISingleCycleSystemContractTest`: reset, disabled hold, enabled execution, halt, post-halt suppression, and reset recovery.
-- `RV32ISingleCycleSystemProgram1Test` through `RV32ISingleCycleSystemProgram16Test`: all 16 shared program cases in per-instruction lockstep.
+- `RV32ISingleCycleCoreTest`: reset, disabled hold, enabled execution, halt, post-halt suppression, and reset recovery.
+- `RV32ISingleCycleSystemTest/program-01` through
+  `RV32ISingleCycleSystemTest/program-16`: all 16 shared program cases in
+  per-instruction lockstep.
 
 The 16 programs cover:
 
@@ -94,7 +96,11 @@ Every structural program passed both comparison layers:
 1. The complete architectural state and memory transaction are compared after every instruction.
 2. Final PC, instruction count, selected registers, halt/trap state and cause, and aggregate byte writes are compared with independent hard-coded outcomes.
 
-The final repository-wide regression passed 168/168 tests in 217.32 seconds with four parallel CTest workers.
+At the original structural-core milestone, the repository-wide regression
+passed 168/168 tests in 217.32 seconds with four parallel CTest workers. The
+unified component migration later consolidated those wrappers into logical
+contract scenarios; its current regression result is recorded in
+`docs/unified-component-migration-report.md`.
 
 ## Timeline And Visualization Fixes
 
@@ -102,13 +108,10 @@ Structural and behavioral block scenarios are separate, one-device tests. The fi
 
 The control-flow equivalence test still covers the directed sequence plus 64 deterministic random vectors, but it is no longer a visual timeline. Each implementation is simulated and sampled independently, eliminating the stale-label and post-checkpoint visualization problem entirely.
 
-The browser exposes:
-
-- `rv32i-structural-contract`: the structural reset/enable/halt contract waveform.
-- `rv32i-structural-smoke`: the short ADDI/EBREAK waveform.
-- `rv32i-structural-program1` through `rv32i-structural-program16`.
-- `rv32i-balanced-program1` through `rv32i-balanced-program16`.
-- `rv32i-reference-program1` through `rv32i-reference-program16`.
+The browser now exposes `rv32i-program1` through `rv32i-program16`. One
+recursive profile selects structural or behavioral fidelity at any selectable
+component path, so separate structural, balanced, and reference scenario names
+are no longer needed.
 
 The committed top-level layouts show the system as core plus two memories and
 show the core as the five major blocks plus its generic mux/gate wiring. At

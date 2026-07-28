@@ -248,8 +248,7 @@ const ComponentFamily Memory64Kx32{
     [](const std::string& name, const std::shared_ptr<BuildContext>& context) {
         return Component::createWithContext<::Memory64Kx32>(
             context, name);
-    },
-    Fidelity::Behavioral};
+    }};
 }
 
 Memory64Kx32::Memory64Kx32(std::string name)

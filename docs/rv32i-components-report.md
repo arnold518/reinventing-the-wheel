@@ -908,31 +908,29 @@ The current visualizer exposes scenarios for the major foundation components:
 - `memory-bit`
 - `register32`
 - `register-file4x32`
-- `register-file32x32`
-- `behavioral-register-file32x32`
-- `behavioral-register-file32x32-unknown`
+- `rv32i-register-file`
 - `memory4x32`
 - `memory32x32`
-- `behavioral-memory64kx32`
+- `memory64kx32`
 - `rv32i-program-loader`
-- `rv32i-control-flow-structural`
-- `rv32i-control-flow-behavioral`
-- `rv32i-decode-structural`
-- `rv32i-decode-behavioral`
-- `rv32i-register-file-structural`
-- `rv32i-register-file-behavioral`
-- `rv32i-alu-structural`
-- `rv32i-alu-behavioral`
-- `rv32i-status-structural`
-- `rv32i-status-behavioral`
-- `rv32i-structural-smoke`
-- `rv32i-structural-contract`
-- `rv32i-structural-program1` through `rv32i-structural-program16`
-- `rv32i-balanced-program1` through `rv32i-balanced-program16`
-- `rv32i-reference-program1` through `rv32i-reference-program16`
+- `rv32i-control-flow`
+- `rv32i-decode-control`
+- `rv32i-execution-status`
+- `rv32i-core`
+- `rv32i-program1` through `rv32i-program16`
 
-Each visual scenario contains exactly one device under test. Structural scenarios expose the expandable circuit hierarchy; behavioral scenarios show the compact answer-sheet boundary. Equivalence tests remain non-visual regressions and run the implementations in separate simulator instances so one event queue cannot couple the two results.
+Each visual scenario contains one logical device under test. The component
+explorer uses the scenario's recursive profile: expanded rows request
+structural fidelity, collapsed rows request behavioral fidelity, and
+`Apply & Run` rebuilds the same scenario. Separate fidelity-specific scenario
+names and tests are no longer used.
 
 ## Practical Next Step
 
-The structural single-cycle core/system milestone is complete: it instantiates the structural implementation of all five major contracts, uses generic operand/writeback muxes, connects separate instruction/data memories directly, and passes all 16 reused lockstep programs. The next step is external answer-sheet validation and performance/visualizer hardening. See `docs/rv32i-structural-core-report.md`.
+The structural single-cycle core/system milestone is complete: it instantiates
+the structural implementation of all five major contracts, uses generic
+operand/writeback muxes, connects separate instruction/data memories directly,
+and passes all 16 reused lockstep programs. Progressive exact topology loading
+now keeps the 54,049-component system usable in the browser. The next RV32I
+hardening step is external answer-sheet validation against Spike, Sail, or the
+official architecture tests. See `docs/rv32i-structural-core-report.md`.

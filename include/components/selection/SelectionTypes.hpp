@@ -15,18 +15,10 @@ enum class Fidelity {
     Behavioral,
 };
 
-enum class EffectiveFidelity {
-    Unspecified,
-    Structural,
-    Behavioral,
-    Mixed,
-};
-
 enum class VerificationStatus {
     Unverified,
     Characterized,
     Verified,
-    ReferenceOnly,
 };
 
 enum class UnavailableFidelityPolicy {
@@ -78,8 +70,8 @@ struct ResolvedSelection {
     uint32_t contract_version = 1;
     std::string implementation_id;
     Fidelity fidelity = Fidelity::Structural;
+    std::vector<Fidelity> available_fidelities;
     bool terminal_primitive = false;
-    bool reference_only = false;
     bool used_unavailable_exception = false;
     std::string selection_reason;
 };
@@ -89,15 +81,14 @@ struct ComponentInstanceMetadata {
     uint32_t contract_version = 1;
     std::string implementation_id;
     Fidelity fidelity = Fidelity::Structural;
+    std::vector<Fidelity> available_fidelities;
     bool terminal_primitive = false;
-    bool reference_only = false;
     bool used_unavailable_exception = false;
     std::string selection_reason;
     std::string profile_fingerprint;
 };
 
 std::string toString(Fidelity value);
-std::string toString(EffectiveFidelity value);
 std::string toString(VerificationStatus value);
 std::string toString(UnavailableFidelityPolicy value);
 std::string canonicalizeParameters(const ParameterMap& parameters);

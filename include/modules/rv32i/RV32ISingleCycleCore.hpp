@@ -1,8 +1,9 @@
 #pragma once
 
 #include "components/IOComponent.hpp"
+#include "components/capabilities/RV32IStateView.hpp"
 #include "components/selection/ComponentFamily.hpp"
-#include "rv32i/RV32IState.hpp"
+#include "rv32i/RV32IArchitecturalState.hpp"
 #include <cstdint>
 #include <memory>
 
@@ -10,14 +11,15 @@ namespace circuit::families {
 extern const ComponentFamily RV32ISingleCycleCore;
 }
 
-class RV32ISingleCycleCore : public IOComponent {
+class RV32ISingleCycleCore : public IOComponent, public RV32IStateView {
 public:
     explicit RV32ISingleCycleCore(std::string name);
     static constexpr const char* TypeName = "RV32ISingleCycleCore";
     const char* getTypeName() const override { return TypeName; }
     void buildInternals(ComponentBuilder& builder) override;
 
-    rv32i::RV32IState snapshotState(uint64_t instruction_count = 0) const;
+    rv32i::RV32IArchitecturalState
+    snapshotArchitecturalState() const override;
 
     std::shared_ptr<IOComponent> controlFlow() const { return control_flow_; }
     std::shared_ptr<IOComponent> decodeControl() const { return decode_control_; }

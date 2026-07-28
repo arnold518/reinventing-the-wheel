@@ -21,9 +21,9 @@ Implemented:
 - `RV32IReferenceCore`
 - `RV32IReferenceSystem`
 - two-memory `RV32IInstructionOracle::step` overload
-- `RV32IReferenceSystemProgram1Test`
-- `RV32IReferenceSystemProgram2Test` through `RV32IReferenceSystemProgram16Test`
-- visualizer scenario aliases `rv32i-reference-program1` through `rv32i-reference-program16`
+- `RV32ISingleCycleSystemTest/program-01`
+- `RV32ISingleCycleSystemTest/program-02` through `RV32ISingleCycleSystemTest/program-16`
+- visualizer scenario aliases `rv32i-program1` through `rv32i-program16`
 - separate oracle instruction and data memories matching the system's Harvard organization
 - real simulated byte-write transaction comparison, including unchanged zero-byte writes
 - `RV32IInstructionLockstepMismatchDetectionTest`
@@ -594,7 +594,7 @@ Test style:
 Expose one scenario:
 
 ```text
-rv32i-reference-program1
+rv32i-program1
 ```
 
 Default visual structure:
@@ -625,7 +625,7 @@ Milestone 7 is complete when:
 - reusable `RV32IInstructionLockstepTest` exists.
 - tests execute multiple raw RV32I programs through the system component.
 - instruction-lockstep tests match `RV32IInstructionOracle` after every committed instruction.
-- visualizer exposes the complete `rv32i-reference-program1` through `rv32i-reference-program16` family.
+- visualizer exposes the complete `rv32i-program1` through `rv32i-program16` family.
 - docs are updated with behavior, timing, and known limits.
 
 ## Known Limits

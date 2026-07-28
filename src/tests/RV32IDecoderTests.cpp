@@ -266,48 +266,80 @@ void testDisassembly() {
 }
 }
 
-std::string RV32IBitPatternMatcherTest::getTestName() const {
-    return "RV32IBitPatternMatcherTest";
+namespace {
+circuit::test::ComponentTestSpec bitPatternMatcherSpec() {
+    using circuit::ParameterMap;
+    using circuit::test::ActionScenario;
+    using circuit::test::actionScenarioFromRows;
+    std::vector<ActionScenario> scenarios;
+    const auto add = [&](std::string id,
+                         uint32_t mask,
+                         uint32_t value,
+                         std::vector<TestRow> rows) {
+        const ParameterMap parameters{
+            {"mask", std::to_string(mask)},
+            {"value", std::to_string(value)},
+        };
+        scenarios.push_back(actionScenarioFromRows(
+            std::move(id),
+            "rv32i.pattern-matcher",
+            rows,
+            {100'000, 1'000'000},
+            parameters));
+    };
+    add(
+        "load-word",
+        0x0000707fU,
+        0x00002003U,
+        {
+            {{{"INPUT", bits(0x00002003U)}}, {{"MATCH", bit(true)}}},
+            {{{"INPUT", bits(0xfff32283U)}}, {{"MATCH", bit(true)}}},
+            {{{"INPUT", bits(0x00001003U)}}, {{"MATCH", bit(false)}}},
+            {{{"INPUT", bits(0x00002023U)}}, {{"MATCH", bit(false)}}},
+        });
+    add(
+        "ecall",
+        0xffffffffU,
+        0x00000073U,
+        {
+            {{{"INPUT", bits(0x00000073U)}}, {{"MATCH", bit(true)}}},
+            {{{"INPUT", bits(0x00100073U)}}, {{"MATCH", bit(false)}}},
+            {{{"INPUT", bits(0x00000013U)}}, {{"MATCH", bit(false)}}},
+        });
+    add(
+        "sign-bit",
+        0x80000000U,
+        0x80000000U,
+        {
+            {{{"INPUT", bits(0x80000000U)}}, {{"MATCH", bit(true)}}},
+            {{{"INPUT", bits(0x7fffffffU)}}, {{"MATCH", bit(false)}}},
+        });
+    return {
+        "RV32IBitPatternMatcherTest",
+        "rv32i.pattern-matcher",
+        "RV32I_PATTERN_MATCHER_ROOT",
+        {},
+        std::move(scenarios),
+    };
 }
+} // namespace
 
-void RV32IBitPatternMatcherTest::verifyResults() {
-    const std::vector<TestRow> load_word_rows{
-        {{{"INPUT", bits(0x00002003U)}}, {{"MATCH", bit(true)}}},
-        {{{"INPUT", bits(0xfff32283U)}}, {{"MATCH", bit(true)}}},
-        {{{"INPUT", bits(0x00001003U)}}, {{"MATCH", bit(false)}}},
-        {{{"INPUT", bits(0x00002023U)}}, {{"MATCH", bit(false)}}},
-    };
-    if (!runRows<RV32IBitPatternMatcher>(
-            load_word_rows, uint32_t{0x0000707fU}, uint32_t{0x00002003U})) {
-        throw std::runtime_error("load-word pattern matching failed");
+RV32IBitPatternMatcherTest::RV32IBitPatternMatcherTest()
+    : ComponentScenarioTest(bitPatternMatcherSpec()) {}
+
+bool RV32IBitPatternMatcherTest::run() {
+    if (!ComponentScenarioTest::run()) {
+        return false;
     }
-
-    const std::vector<TestRow> ecall_rows{
-        {{{"INPUT", bits(0x00000073U)}}, {{"MATCH", bit(true)}}},
-        {{{"INPUT", bits(0x00100073U)}}, {{"MATCH", bit(false)}}},
-        {{{"INPUT", bits(0x00000013U)}}, {{"MATCH", bit(false)}}},
-    };
-    if (!runRows<RV32IBitPatternMatcher>(
-            ecall_rows, uint32_t{0xffffffffU}, uint32_t{0x00000073U})) {
-        throw std::runtime_error("full-word ECALL pattern matching failed");
-    }
-
-    const std::vector<TestRow> single_bit_rows{
-        {{{"INPUT", bits(0x80000000U)}}, {{"MATCH", bit(true)}}},
-        {{{"INPUT", bits(0x7fffffffU)}}, {{"MATCH", bit(false)}}},
-    };
-    if (!runRows<RV32IBitPatternMatcher>(
-            single_bit_rows, uint32_t{0x80000000U}, uint32_t{0x80000000U})) {
-        throw std::runtime_error("single-bit pattern matching failed");
-    }
-
     try {
         (void)Component::create<RV32IBitPatternMatcher>(
             "INVALID", uint32_t{0}, uint32_t{0});
     } catch (const std::invalid_argument&) {
-        return;
+        return true;
     }
-    throw std::runtime_error("zero-mask pattern must be rejected");
+    std::cerr << "[FAIL] RV32IBitPatternMatcherTest accepted a zero mask"
+              << std::endl;
+    return false;
 }
 
 std::string RV32IDecoderTest::getTestName() const {

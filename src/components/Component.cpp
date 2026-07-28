@@ -50,12 +50,30 @@ std::string Component::getSelectedFidelity() const {
     return "unspecified";
 }
 
+std::vector<std::string> Component::getAvailableFidelities() const {
+    std::vector<std::string> result;
+    if (!instance_metadata_) {
+        return result;
+    }
+    result.reserve(instance_metadata_->available_fidelities.size());
+    for (const auto fidelity : instance_metadata_->available_fidelities) {
+        result.push_back(circuit::toString(fidelity));
+    }
+    return result;
+}
+
+bool Component::isProfileSelectable() const {
+    return instance_metadata_
+        && instance_metadata_->available_fidelities.size() > 1;
+}
+
 bool Component::isTerminalPrimitive() const {
     return instance_metadata_ && instance_metadata_->terminal_primitive;
 }
 
-bool Component::isReferenceOnly() const {
-    return instance_metadata_ && instance_metadata_->reference_only;
+bool Component::usedUnavailableFidelityException() const {
+    return instance_metadata_
+        && instance_metadata_->used_unavailable_exception;
 }
 
 std::string Component::getSelectionReason() const {

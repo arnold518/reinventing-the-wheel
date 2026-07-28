@@ -2,60 +2,36 @@
 
 #include "rv32i/RV32IInstructionTrace.hpp"
 #include "tests/RV32IInstructionLockstepTests.hpp"
+#include "tests/ComponentTestModel.hpp"
 #include "simulator/SimulationTest.hpp"
+#include "components/capabilities/RV32ISystemProgramAccess.hpp"
 #include <map>
 #include <memory>
 
 class RV32ISingleCycleSystem;
 template<size_t WIDTH> class Wire;
 
-class RV32ISingleCycleSystemSmokeTest : public SimulationTest {
+class RV32ISingleCycleCoreTest
+    : public circuit::test::ComponentScenarioTest {
 public:
-    void setupCircuit() override;
-    std::string getTestName() const override;
-    size_t getRunDuration() const override;
-    std::vector<SimulationCheckpoint> getCheckpoints() const override;
-
-protected:
-    void buildCircuit() override;
-    void setInitialState() override;
-    void verifyResults() override;
-
-private:
-    std::shared_ptr<RV32ISingleCycleSystem> system_{};
-    std::shared_ptr<Wire<1>> clk_wire_{};
-    std::shared_ptr<Wire<1>> rst_wire_{};
-    std::shared_ptr<Wire<1>> enable_wire_{};
+    RV32ISingleCycleCoreTest();
+    bool run() override;
 };
 
-class RV32ISingleCycleSystemContractTest : public SimulationTest {
-public:
-    void setupCircuit() override;
-    std::string getTestName() const override;
-    size_t getRunDuration() const override;
-    std::vector<SimulationCheckpoint> getCheckpoints() const override;
-
-protected:
-    void buildCircuit() override;
-    void setInitialState() override;
-    void verifyResults() override;
-
-private:
-    std::shared_ptr<RV32ISingleCycleSystem> system_{};
-    std::shared_ptr<Wire<1>> clk_wire_{};
-    std::shared_ptr<Wire<1>> rst_wire_{};
-    std::shared_ptr<Wire<1>> enable_wire_{};
-};
-
-class RV32ISingleCycleSystemProgramTestBase : public RV32IInstructionLockstepTest {
+class RV32ISystemProfileRun : public RV32IInstructionLockstepTest {
 public:
     void setupCircuit() override;
     size_t getRunDuration() const override;
     std::vector<SimulationCheckpoint> getCheckpoints() const override;
+    bool supportsBuildProfile() const override { return true; }
+    circuit::BuildProfile getBuildProfile() const override {
+        return profile_;
+    }
+    void setBuildProfile(circuit::BuildProfile profile) override;
 
 protected:
     void buildCircuit() override;
-    virtual bool useBalancedProfile() const { return false; }
+    virtual bool useRepresentativeProfile() const { return false; }
     void initializeComponentForLockstep(const RV32ISystemProgramCase& test_case) override;
     void clockComponentOneCycle(size_t cycle_index, size_t cycle_start_time) override;
     rv32i::RV32IState snapshotComponentState() const override;
@@ -64,7 +40,9 @@ protected:
     void verifyResults() override;
 
 private:
-    std::shared_ptr<RV32ISingleCycleSystem> system_{};
+    std::shared_ptr<IOComponent> system_{};
+    std::shared_ptr<RV32ISystemProgramAccess> program_access_{};
+    std::shared_ptr<RV32ISingleCycleSystem> structural_system_{};
     std::shared_ptr<Wire<1>> clk_wire_{};
     std::shared_ptr<Wire<1>> rst_wire_{};
     std::shared_ptr<Wire<1>> enable_wire_{};
@@ -73,55 +51,30 @@ private:
     size_t visual_run_duration_ = 0;
     size_t visual_time_origin_ = 0;
     mutable size_t last_observed_memory_time_ = 0;
+    circuit::BuildProfile profile_ =
+        circuit::withExactFidelity(
+            circuit::canonicalDefaultProfile(),
+            "RV32I_SINGLE_CYCLE_SYSTEM_ROOT",
+            circuit::Fidelity::Structural,
+            "rv32i-structural-system-test");
 };
 
-#define DECLARE_STRUCTURAL_RV32I_PROGRAM_TEST(NUMBER) \
-class RV32ISingleCycleSystemProgram##NUMBER##Test : public RV32ISingleCycleSystemProgramTestBase { \
-protected: \
-    RV32ISystemProgramCase getCase() const override; \
+class RV32ISingleCycleSystemTest
+    : public RV32ISystemProfileRun {
+public:
+    explicit RV32ISingleCycleSystemTest(size_t program_number = 9);
+    bool run() override;
+
+protected:
+    RV32ISystemProgramCase getCase() const override;
+
+private:
+    size_t program_number_;
 };
 
-DECLARE_STRUCTURAL_RV32I_PROGRAM_TEST(1)
-DECLARE_STRUCTURAL_RV32I_PROGRAM_TEST(2)
-DECLARE_STRUCTURAL_RV32I_PROGRAM_TEST(3)
-DECLARE_STRUCTURAL_RV32I_PROGRAM_TEST(4)
-DECLARE_STRUCTURAL_RV32I_PROGRAM_TEST(5)
-DECLARE_STRUCTURAL_RV32I_PROGRAM_TEST(6)
-DECLARE_STRUCTURAL_RV32I_PROGRAM_TEST(7)
-DECLARE_STRUCTURAL_RV32I_PROGRAM_TEST(8)
-DECLARE_STRUCTURAL_RV32I_PROGRAM_TEST(9)
-DECLARE_STRUCTURAL_RV32I_PROGRAM_TEST(10)
-DECLARE_STRUCTURAL_RV32I_PROGRAM_TEST(11)
-DECLARE_STRUCTURAL_RV32I_PROGRAM_TEST(12)
-DECLARE_STRUCTURAL_RV32I_PROGRAM_TEST(13)
-DECLARE_STRUCTURAL_RV32I_PROGRAM_TEST(14)
-DECLARE_STRUCTURAL_RV32I_PROGRAM_TEST(15)
-DECLARE_STRUCTURAL_RV32I_PROGRAM_TEST(16)
-
-#undef DECLARE_STRUCTURAL_RV32I_PROGRAM_TEST
-
-#define DECLARE_BALANCED_RV32I_PROGRAM_TEST(NUMBER) \
-class RV32IBalancedSystemProgram##NUMBER##Test : public RV32ISingleCycleSystemProgramTestBase { \
-protected: \
-    RV32ISystemProgramCase getCase() const override; \
-    bool useBalancedProfile() const override { return true; } \
+class RV32IProfileToggleSweepTest
+    : public StandaloneVerificationTest {
+protected:
+    std::string getTestName() const override;
+    void verifyResults() override;
 };
-
-DECLARE_BALANCED_RV32I_PROGRAM_TEST(1)
-DECLARE_BALANCED_RV32I_PROGRAM_TEST(2)
-DECLARE_BALANCED_RV32I_PROGRAM_TEST(3)
-DECLARE_BALANCED_RV32I_PROGRAM_TEST(4)
-DECLARE_BALANCED_RV32I_PROGRAM_TEST(5)
-DECLARE_BALANCED_RV32I_PROGRAM_TEST(6)
-DECLARE_BALANCED_RV32I_PROGRAM_TEST(7)
-DECLARE_BALANCED_RV32I_PROGRAM_TEST(8)
-DECLARE_BALANCED_RV32I_PROGRAM_TEST(9)
-DECLARE_BALANCED_RV32I_PROGRAM_TEST(10)
-DECLARE_BALANCED_RV32I_PROGRAM_TEST(11)
-DECLARE_BALANCED_RV32I_PROGRAM_TEST(12)
-DECLARE_BALANCED_RV32I_PROGRAM_TEST(13)
-DECLARE_BALANCED_RV32I_PROGRAM_TEST(14)
-DECLARE_BALANCED_RV32I_PROGRAM_TEST(15)
-DECLARE_BALANCED_RV32I_PROGRAM_TEST(16)
-
-#undef DECLARE_BALANCED_RV32I_PROGRAM_TEST

@@ -48,8 +48,10 @@ public:
     uint32_t getContractVersion() const;
     std::string getImplementationId() const;
     std::string getSelectedFidelity() const;
+    std::vector<std::string> getAvailableFidelities() const;
+    bool isProfileSelectable() const;
     bool isTerminalPrimitive() const;
-    bool isReferenceOnly() const;
+    bool usedUnavailableFidelityException() const;
     std::string getSelectionReason() const;
     std::string getProfileFingerprint() const;
     

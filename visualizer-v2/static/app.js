@@ -35,6 +35,9 @@ const COMPONENT_STROKE_MAX_ALPHA = 0.78;
 const COMPONENT_STROKE_FADE_START_PX = 6;
 const COMPONENT_STROKE_FULL_SIZE_PX = 96;
 const COMPONENT_TITLE_SEPARATOR_START_PX = 42;
+const FOCUS_PADDING_PX = 28;
+const FOCUS_ANIMATION_MIN_MS = 320;
+const FOCUS_ANIMATION_MAX_MS = 700;
 // Descendants narrower than one physical pixel cannot add resolvable detail.
 // Keep their parent shell visible and reveal the exact internals again on zoom.
 const COMPONENT_DESCEND_MIN_DEVICE_PX = 1;
@@ -74,6 +77,18 @@ const ui = {
   resetLayout: document.getElementById("reset-layout"),
   saveLayout: document.getElementById("save-layout"),
   saveStatus: document.getElementById("save-status"),
+  topbar: document.getElementById("topbar"),
+  viewbar: document.getElementById("viewbar"),
+  explorerToggle: document.getElementById("toggle-explorer"),
+  explorerPanel: document.getElementById("component-explorer"),
+  explorerViewport: document.getElementById("explorer-viewport"),
+  explorerSpacer: document.getElementById("explorer-spacer"),
+  explorerRows: document.getElementById("explorer-rows"),
+  explorerSearch: document.getElementById("explorer-search"),
+  explorerApply: document.getElementById("apply-profile"),
+  explorerRevert: document.getElementById("revert-profile"),
+  explorerStatus: document.getElementById("explorer-status"),
+  explorerResizer: document.getElementById("explorer-resizer"),
   inspector: document.getElementById("inspector"),
   inspectorTitle: document.getElementById("inspector-title"),
   inspectorSubtitle: document.getElementById("inspector-subtitle"),
@@ -99,6 +114,8 @@ const app = {
   width: 1,
   height: 1,
   scenario: null,
+  sessionId: null,
+  profile: null,
   layoutKey: null,
   rootId: null,
   timestamps: [0],
@@ -115,12 +132,17 @@ const app = {
   pinOrder: [],
   wireOrder: [],
   wiresByOwner: new Map(),
+  topologyEncoding: "complete-v1",
+  loadedScopeIds: new Set(),
+  pendingScopeIds: new Set(),
+  topologyRequestInFlight: false,
   state: { pins: {}, wires: {}, index: 0, time: 0 },
   currentIndex: 0,
   requestedIndex: 0,
   stateRequestId: 0,
   stateRequestInFlight: false,
   camera: { offset: { x: 0, y: 0 }, zoom: 1 },
+  cameraAnimation: null,
   playing: false,
   playbackInterval: 250,
   lastPlaybackTick: 0,
@@ -144,6 +166,7 @@ const app = {
   componentIndex: null,
   pinIndex: null,
   wireIndex: null,
+  explorer: null,
 };
 
 function apiUrl(path) {
@@ -316,6 +339,7 @@ function clipScreenRect(rect, margin = SCREEN_CLIP_MARGIN_PX) {
 }
 
 function zoomAtPoint(factor, screenPoint) {
+  app.cameraAnimation = null;
   const before = screenToWorld(screenPoint);
   const nextZoom = app.camera.zoom * factor;
   if (!Number.isFinite(nextZoom) || nextZoom <= 0) return;
@@ -802,12 +826,45 @@ function buildWirePaths(wire) {
   }
 }
 
+function componentCanDescend(component) {
+  if (!component || !component.rect) return false;
+  const projectedWidth = Math.abs(
+    component.rect.w * app.camera.zoom * app.dpr,
+  );
+  return projectedWidth >= COMPONENT_DESCEND_MIN_DEVICE_PX
+    || app.selectionPath.has(component.id);
+}
+
+function visibleGeometryComponents() {
+  const root = app.components.get(app.rootId);
+  if (!root || !root.rect) return [];
+  const visible = [];
+  const viewport = viewRect();
+
+  const walk = (component) => {
+    if (!component || !component.rect) return;
+    if (
+      !rectIntersects(component.rect, viewport)
+      && !app.selectionPath.has(component.id)
+    ) {
+      return;
+    }
+    visible.push(component);
+    if (!componentCanDescend(component)) return;
+    for (const childId of component.childIds) {
+      walk(app.components.get(childId));
+    }
+  };
+  walk(root);
+  return visible;
+}
+
 function rebuildSpatialIndexes() {
   app.componentIndex = new SpatialHash(260);
   app.pinIndex = new SpatialHash(180);
   app.wireIndex = new SpatialHash(260);
 
-  app.componentOrder.forEach((component, index) => {
+  visibleGeometryComponents().forEach((component, index) => {
     if (component.rect) app.componentIndex.insert({ id: component.id, z: index }, component.rect);
   });
   app.pinOrder.forEach((pin, index) => {
@@ -821,8 +878,9 @@ function rebuildSpatialIndexes() {
 }
 
 function resizeCanvas() {
-  const nextWidth = window.innerWidth;
-  const nextHeight = window.innerHeight;
+  const bounds = canvas.getBoundingClientRect();
+  const nextWidth = Math.max(1, Math.round(bounds.width));
+  const nextHeight = Math.max(1, Math.round(bounds.height));
   const nextDpr = Math.max(1, window.devicePixelRatio || 1);
   if (nextWidth === app.width && nextHeight === app.height && nextDpr === app.dpr) return;
 
@@ -831,8 +889,6 @@ function resizeCanvas() {
   app.dpr = nextDpr;
   canvas.width = Math.floor(nextWidth * nextDpr);
   canvas.height = Math.floor(nextHeight * nextDpr);
-  canvas.style.width = `${nextWidth}px`;
-  canvas.style.height = `${nextHeight}px`;
   ctx.setTransform(nextDpr, 0, 0, nextDpr, 0, 0);
 }
 
@@ -1918,25 +1974,123 @@ function drawMemoryBitValue(component, parts) {
   const value = qPin ? pinValue(qPin) : "X";
   const screenRect = rectToScreenRect(parts.bodyRect);
   const clipped = clipScreenRect(screenRect, 0);
-  if (!clipped || screenRect.w < 16 || screenRect.h < 12) return;
-
-  const fontSize = Math.floor(Math.min(screenRect.h * 0.62, screenRect.w * 0.42, 220));
-  if (fontSize < 8) return;
+  if (
+    !clipped
+    || screenRect.w < 120
+    || screenRect.h < 84
+  ) {
+    return;
+  }
 
   const color = valueColor(value);
+  const panelWidth = screenRect.w * 0.46;
+  const panelHeight = screenRect.h * 0.5;
+  if (panelWidth < 72 || panelHeight < 52) return;
+
+  const panel = {
+    x: screenRect.x + (screenRect.w - panelWidth) / 2,
+    y: screenRect.y + (screenRect.h - panelHeight) / 2,
+    w: panelWidth,
+    h: panelHeight,
+  };
   ctx.save();
   ctx.beginPath();
   ctx.rect(clipped.x, clipped.y, clipped.w, clipped.h);
   ctx.clip();
-  ctx.font = `700 ${fontSize}px Arial, Helvetica, sans-serif`;
+  drawScreenRoundedRect(
+    panel,
+    `rgba(${color.join(",")}, 0.12)`,
+    `rgb(${color.join(",")})`,
+    Math.max(1.5, Math.min(panelWidth, panelHeight) * 0.012),
+    Math.min(panelWidth, panelHeight) * 0.07,
+  );
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
-  ctx.lineJoin = "round";
-  ctx.strokeStyle = "rgba(8, 12, 18, 0.78)";
-  ctx.lineWidth = Math.max(3, fontSize * 0.08);
-  ctx.strokeText(value[0] || "X", screenRect.x + screenRect.w / 2, screenRect.y + screenRect.h / 2);
+  ctx.font = `700 ${Math.floor(panelHeight * 0.13)}px Arial, Helvetica, sans-serif`;
+  ctx.fillStyle = "rgba(238, 244, 255, 0.72)";
+  ctx.fillText(
+    "STORED BIT",
+    panel.x + panel.w / 2,
+    panel.y + panel.h * 0.24,
+  );
+  ctx.font = `800 ${Math.floor(
+    Math.min(panelHeight * 0.52, panelWidth * 0.28)
+  )}px ui-monospace, SFMono-Regular, Consolas, monospace`;
   ctx.fillStyle = `rgb(${color.join(",")})`;
-  ctx.fillText(value[0] || "X", screenRect.x + screenRect.w / 2, screenRect.y + screenRect.h / 2);
+  ctx.fillText(
+    value[0] || "X",
+    panel.x + panel.w / 2,
+    panel.y + panel.h * 0.65,
+  );
+  ctx.restore();
+}
+
+function drawRegister32Value(component, parts) {
+  const qPin = pinByName(component.outputPins, "Q");
+  const value = qPin ? pinValue(qPin) : "X";
+  const screenRect = rectToScreenRect(parts.bodyRect);
+  const clipped = clipScreenRect(screenRect, 0);
+  if (
+    !clipped
+    || screenRect.w < 180
+    || screenRect.h < 110
+  ) {
+    return;
+  }
+
+  const color = valueColor(value);
+  const panelWidth = screenRect.w * 0.7;
+  const panelHeight = screenRect.h * 0.56;
+  if (panelWidth < 126 || panelHeight < 62) return;
+
+  const panel = {
+    x: screenRect.x + (screenRect.w - panelWidth) / 2,
+    y: screenRect.y + (screenRect.h - panelHeight) / 2,
+    w: panelWidth,
+    h: panelHeight,
+  };
+  const groupedBits = typeof value === "string" && value.length > 1
+    ? (value.match(/.{1,8}/g) || [value]).join(" ")
+    : value || "X";
+
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(clipped.x, clipped.y, clipped.w, clipped.h);
+  ctx.clip();
+  drawScreenRoundedRect(
+    panel,
+    `rgba(${color.join(",")}, 0.12)`,
+    `rgb(${color.join(",")})`,
+    Math.max(1.5, Math.min(panelWidth, panelHeight) * 0.012),
+    Math.min(panelWidth, panelHeight) * 0.07,
+  );
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.font = `700 ${Math.floor(panelHeight * 0.11)}px Arial, Helvetica, sans-serif`;
+  ctx.fillStyle = "rgba(238, 244, 255, 0.72)";
+  ctx.fillText(
+    "STORED WORD",
+    panel.x + panel.w / 2,
+    panel.y + panel.h * 0.2,
+  );
+  ctx.font = `800 ${Math.floor(
+    Math.min(panelHeight * 0.31, panelWidth * 0.12)
+  )}px ui-monospace, SFMono-Regular, Consolas, monospace`;
+  ctx.fillStyle = `rgb(${color.join(",")})`;
+  ctx.fillText(
+    signalDisplay(value),
+    panel.x + panel.w / 2,
+    panel.y + panel.h * 0.51,
+  );
+  ctx.font = `600 ${Math.floor(
+    Math.min(panelHeight * 0.12, panelWidth * 0.036)
+  )}px ui-monospace, SFMono-Regular, Consolas, monospace`;
+  ctx.fillStyle = "rgba(238, 244, 255, 0.68)";
+  ctx.fillText(
+    groupedBits,
+    panel.x + panel.w / 2,
+    panel.y + panel.h * 0.79,
+  );
   ctx.restore();
 }
 
@@ -2362,22 +2516,32 @@ function drawComponentForeground(component, vr) {
   drawDefaultComponentForeground(component, parts);
   const gateKind = basicLogicGateKind(component);
   if (gateKind) drawLogicGateSymbol(component, parts, gateKind);
-  if (component.type === "MemoryBit") drawMemoryBitValue(component, parts);
-  if (component.type === "RegisterFile32x32") drawRegisterFileContents(component, parts);
   if (component.type === "ClockGenerator") drawClockGeneratorContents(component, parts);
   if (component.type === "ConstantValue") drawConstantValueContents(component, parts);
-  if (component.type === "Memory64Kx32") drawMemory64Kx32Contents(component, parts);
   if (component.type === "BitSplitter") drawBitSplitterContents(component, parts);
   if (component.type === "BitJoiner") drawBitJoinerContents(component, parts);
   if (component.type === "Rewire") drawRewireContents(component, parts);
+  if (component.fidelity === "behavioral") {
+    if (component.type === "MemoryBit") {
+      drawMemoryBitValue(component, parts);
+    }
+    if (component.type === "Register32") {
+      drawRegister32Value(component, parts);
+    }
+    if (component.type === "RegisterFile32x32") {
+      drawRegisterFileContents(component, parts);
+    }
+    if (component.type === "Memory64Kx32") {
+      drawMemory64Kx32Contents(component, parts);
+    }
+  }
 
   for (const pin of [...component.inputPins, ...component.outputPins]) drawPin(pin);
 }
 
 function drawComponent(component, vr) {
   if (!drawComponentBackground(component, vr)) return;
-  const projectedWidth = Math.abs(component.rect.w * app.camera.zoom * app.dpr);
-  if (projectedWidth < COMPONENT_DESCEND_MIN_DEVICE_PX && !app.selectionPath.has(component.id)) return;
+  if (!componentCanDescend(component)) return;
   drawComponentGrid(component, vr);
   drawOwnedWires(component.id, vr);
 
@@ -2453,7 +2617,9 @@ function drawPin(pin) {
 function render() {
   app.renderScheduled = false;
   resizeCanvas();
+  updateCameraAnimation(performance.now());
   if (app.geometryDirty) computeGeometry();
+  scheduleVisibleTopology();
 
   ctx.fillStyle = "rgb(30, 30, 30)";
   ctx.fillRect(0, 0, app.width, app.height);
@@ -2476,7 +2642,7 @@ function render() {
     }
   }
 
-  if (app.playing) requestRender();
+  if (app.playing || app.cameraAnimation) requestRender();
 }
 
 function requestRender() {
@@ -2620,8 +2786,13 @@ function updateTooltip(screenPoint) {
 
   tooltip.textContent = text;
   tooltip.style.display = "block";
-  const x = Math.min(window.innerWidth - tooltip.offsetWidth - 6, screenPoint.x + 14);
-  const y = Math.min(window.innerHeight - tooltip.offsetHeight - 6, screenPoint.y + 14);
+  const canvasRect = canvas.getBoundingClientRect();
+  const pagePoint = {
+    x: canvasRect.left + screenPoint.x,
+    y: canvasRect.top + screenPoint.y,
+  };
+  const x = Math.min(window.innerWidth - tooltip.offsetWidth - 6, pagePoint.x + 14);
+  const y = Math.min(window.innerHeight - tooltip.offsetHeight - 6, pagePoint.y + 14);
   tooltip.style.left = `${Math.max(4, x)}px`;
   tooltip.style.top = `${Math.max(4, y)}px`;
 }
@@ -2645,6 +2816,11 @@ function setSelection(type, id) {
   app.selection = type && id ? { type, id } : null;
   app.selectedComponentId = type === "component" ? id : null;
   rebuildSelectionPath();
+  if (app.explorer) {
+    app.explorer.setSelected(
+      type === "component" ? id : null,
+    );
+  }
   updateInspector();
   requestRender();
 }
@@ -3067,6 +3243,7 @@ function pointerPosition(event) {
 }
 
 canvas.addEventListener("pointerdown", (event) => {
+  app.cameraAnimation = null;
   canvas.setPointerCapture(event.pointerId);
   const screen = pointerPosition(event);
   updateHover(screen);
@@ -3149,17 +3326,282 @@ canvas.addEventListener("wheel", (event) => {
 }, { passive: false });
 
 function frameRoot() {
+  app.cameraAnimation = null;
   const root = app.components.get(app.rootId);
   if (!root || !root.rect) return;
-  const padding = 0.1;
-  const paddedW = app.width * (1 - padding);
-  const paddedH = app.height * (1 - padding);
-  app.camera.zoom = Math.min(paddedW / root.rect.w, paddedH / root.rect.h);
+  const viewport = cameraSafeViewport();
+  const screenCenter = focusScreenCenter(viewport);
+  const fittingViewport = centeredFittingViewport(
+    viewport,
+    screenCenter,
+  );
+  app.camera.zoom = fitZoomForRect(root.rect, fittingViewport);
   if (!Number.isFinite(app.camera.zoom) || app.camera.zoom <= 0) app.camera.zoom = 1;
-  const screenCenter = { x: app.width / 2, y: app.height / 2 };
   const worldCenter = { x: root.rect.x + root.rect.w / 2, y: root.rect.y + root.rect.h / 2 };
   app.camera.offset.x = worldCenter.x - screenCenter.x / app.camera.zoom;
   app.camera.offset.y = worldCenter.y - screenCenter.y / app.camera.zoom;
+  requestRender();
+}
+
+function elementRectInCanvas(element, canvasRect) {
+  if (!element || element.classList.contains("hidden")) return null;
+  const rect = element.getBoundingClientRect();
+  return {
+    left: rect.left - canvasRect.left,
+    top: rect.top - canvasRect.top,
+    right: rect.right - canvasRect.left,
+    bottom: rect.bottom - canvasRect.top,
+  };
+}
+
+function rangesOverlap(startA, endA, startB, endB) {
+  return endA > startB && endB > startA;
+}
+
+function cameraViewport(avoidInspector) {
+  const canvasRect = canvas.getBoundingClientRect();
+  let left = 0;
+  let top = 0;
+  let right = app.width;
+  let bottom = app.height;
+
+  const topbar = elementRectInCanvas(ui.topbar, canvasRect);
+  if (
+    topbar
+    && rangesOverlap(topbar.left, topbar.right, left, right)
+    && topbar.top <= top
+  ) {
+    top = Math.max(top, topbar.bottom);
+  }
+
+  const viewbar = elementRectInCanvas(ui.viewbar, canvasRect);
+  if (
+    viewbar
+    && rangesOverlap(viewbar.left, viewbar.right, left, right)
+    && viewbar.top > (top + bottom) / 2
+    && viewbar.top < bottom
+  ) {
+    bottom = Math.min(bottom, viewbar.top);
+  }
+
+  const explorer = document.body.classList.contains("explorer-open")
+    ? elementRectInCanvas(ui.explorerPanel, canvasRect)
+    : null;
+  if (
+    explorer
+    && rangesOverlap(explorer.top, explorer.bottom, top, bottom)
+    && explorer.left <= left
+    && explorer.right > left
+  ) {
+    left = Math.min(right, explorer.right);
+  }
+
+  if (avoidInspector) {
+    const inspector = elementRectInCanvas(ui.inspector, canvasRect);
+    if (
+      inspector
+      && rangesOverlap(inspector.top, inspector.bottom, top, bottom)
+      && inspector.right > right - 80
+      && inspector.left < right
+    ) {
+      right = Math.max(left, inspector.left);
+    }
+  }
+
+  const availableWidth = Math.max(1, right - left);
+  const availableHeight = Math.max(1, bottom - top);
+  const padding = Math.min(
+    FOCUS_PADDING_PX,
+    Math.max(0, (availableWidth - 1) / 4),
+    Math.max(0, (availableHeight - 1) / 4),
+  );
+  return {
+    x: left + padding,
+    y: top + padding,
+    w: Math.max(1, availableWidth - padding * 2),
+    h: Math.max(1, availableHeight - padding * 2),
+  };
+}
+
+function cameraSafeViewport() {
+  return cameraViewport(true);
+}
+
+function cameraNavigationViewport() {
+  return cameraViewport(false);
+}
+
+function viewportCenter(viewport) {
+  return {
+    x: viewport.x + viewport.w / 2,
+    y: viewport.y + viewport.h / 2,
+  };
+}
+
+function focusScreenCenter(containmentViewport) {
+  const preferred = viewportCenter(cameraNavigationViewport());
+  const fallback = viewportCenter(containmentViewport);
+  const right =
+    containmentViewport.x + containmentViewport.w;
+  const bottom =
+    containmentViewport.y + containmentViewport.h;
+  return {
+    x:
+      preferred.x >= containmentViewport.x
+      && preferred.x <= right
+        ? preferred.x
+        : fallback.x,
+    y:
+      preferred.y >= containmentViewport.y
+      && preferred.y <= bottom
+        ? preferred.y
+        : fallback.y,
+  };
+}
+
+function centeredFittingViewport(viewport, center) {
+  const right = viewport.x + viewport.w;
+  const bottom = viewport.y + viewport.h;
+  const halfWidth = Math.max(
+    0.5,
+    Math.min(center.x - viewport.x, right - center.x),
+  );
+  const halfHeight = Math.max(
+    0.5,
+    Math.min(center.y - viewport.y, bottom - center.y),
+  );
+  return {
+    x: center.x - halfWidth,
+    y: center.y - halfHeight,
+    w: halfWidth * 2,
+    h: halfHeight * 2,
+  };
+}
+
+function fitZoomForRect(rect, viewport) {
+  const width = Math.abs(Number(rect.w));
+  const height = Math.abs(Number(rect.h));
+  if (
+    !Number.isFinite(width)
+    || !Number.isFinite(height)
+    || width <= 0
+    || height <= 0
+  ) {
+    return 1;
+  }
+  const zoom = Math.min(
+    viewport.w / width,
+    viewport.h / height,
+  );
+  return Number.isFinite(zoom) && zoom > 0
+    ? Math.max(0.02, zoom)
+    : 1;
+}
+
+function componentFocusRect(component) {
+  let bounds = { ...component.rect };
+  for (const pin of [
+    ...component.inputPins,
+    ...component.outputPins,
+  ]) {
+    if (pin.rect) bounds = unionRect(bounds, pin.rect);
+    if (pin.outerStub && pin.outerStub.length) {
+      bounds = unionRect(bounds, pointsBBox(pin.outerStub));
+    }
+  }
+  return bounds;
+}
+
+function easeInOutCubic(value) {
+  return value < 0.5
+    ? 4 * value * value * value
+    : 1 - ((-2 * value + 2) ** 3) / 2;
+}
+
+function updateCameraAnimation(now) {
+  const animation = app.cameraAnimation;
+  if (!animation) return;
+  const progress = clamp(
+    (now - animation.startedAt) / animation.duration,
+    0,
+    1,
+  );
+  const eased = easeInOutCubic(progress);
+  const logZoom =
+    animation.from.logZoom
+    + (animation.to.logZoom - animation.from.logZoom) * eased;
+  const worldCenter = {
+    x:
+      animation.from.worldX
+      + (animation.to.worldX - animation.from.worldX) * eased,
+    y:
+      animation.from.worldY
+      + (animation.to.worldY - animation.from.worldY) * eased,
+  };
+  app.camera.zoom = Math.exp(logZoom);
+  app.camera.offset.x =
+    worldCenter.x - animation.screenCenter.x / app.camera.zoom;
+  app.camera.offset.y =
+    worldCenter.y - animation.screenCenter.y / app.camera.zoom;
+  if (progress >= 1) app.cameraAnimation = null;
+}
+
+function closestExistingComponent(componentId) {
+  let path = componentId;
+  while (path) {
+    const component = app.components.get(path);
+    if (component) return component;
+    const separator = path.lastIndexOf(".");
+    path = separator >= 0 ? path.slice(0, separator) : "";
+  }
+  return null;
+}
+
+function smoothlyFocusComponent(componentId) {
+  const component = closestExistingComponent(componentId);
+  if (!component || !component.rect) return;
+  setSelectedComponent(component.id);
+  const viewport = cameraSafeViewport();
+  const focusRect = componentFocusRect(component);
+  const targetScreenCenter = focusScreenCenter(viewport);
+  const fittingViewport = centeredFittingViewport(
+    viewport,
+    targetScreenCenter,
+  );
+  const targetZoom = fitZoomForRect(focusRect, fittingViewport);
+  const center = {
+    x: focusRect.x + focusRect.w / 2,
+    y: focusRect.y + focusRect.h / 2,
+  };
+  const fromScreen = worldToScreen(center);
+  const fromWorldCenter = screenToWorld(targetScreenCenter);
+  const travel = Math.hypot(
+    targetScreenCenter.x - fromScreen.x,
+    targetScreenCenter.y - fromScreen.y,
+  );
+  const zoomStops = Math.abs(
+    Math.log2(targetZoom / Math.max(0.0001, app.camera.zoom)),
+  );
+  const duration = clamp(
+    280 + travel * 0.12 + zoomStops * 70,
+    FOCUS_ANIMATION_MIN_MS,
+    FOCUS_ANIMATION_MAX_MS,
+  );
+  app.cameraAnimation = {
+    startedAt: performance.now(),
+    duration,
+    screenCenter: targetScreenCenter,
+    from: {
+      worldX: fromWorldCenter.x,
+      worldY: fromWorldCenter.y,
+      logZoom: Math.log(Math.max(0.0001, app.camera.zoom)),
+    },
+    to: {
+      worldX: center.x,
+      worldY: center.y,
+      logZoom: Math.log(targetZoom),
+    },
+  };
   requestRender();
 }
 
@@ -3206,8 +3648,11 @@ function setTimeLabel(state) {
 
 function statefulOverlayComponents() {
   return app.componentOrder.filter((component) => (
-    component.type === "RegisterFile32x32"
-    || component.type === "Memory64Kx32"
+    component.fidelity === "behavioral"
+    && (
+      component.type === "RegisterFile32x32"
+      || component.type === "Memory64Kx32"
+    )
   ));
 }
 
@@ -3220,7 +3665,7 @@ async function refreshComponentStates(index, requestId = null) {
 
   const states = await Promise.all(components.map(async (component) => {
     const response = await fetch(apiUrl(
-      `api/component-state?scenario=${encodeURIComponent(app.scenario)}&index=${index}&componentId=${encodeURIComponent(component.id)}`,
+      `api/component-state?session=${encodeURIComponent(app.sessionId)}&index=${index}&componentId=${encodeURIComponent(component.id)}`,
     ));
     if (!response.ok) throw new Error(await response.text());
     return [component.id, await response.json()];
@@ -3245,7 +3690,9 @@ async function setStateIndex(index) {
   const requestId = ++app.stateRequestId;
   app.stateRequestInFlight = true;
   try {
-    const response = await fetch(apiUrl(`api/state?scenario=${encodeURIComponent(app.scenario)}&index=${index}`));
+    const response = await fetch(apiUrl(
+      `api/state?session=${encodeURIComponent(app.sessionId)}&index=${index}`,
+    ));
     if (!response.ok) throw new Error(await response.text());
     const state = await response.json();
     if (requestId !== app.stateRequestId) return;
@@ -3312,8 +3759,171 @@ function showError(error) {
   loading.classList.remove("hidden");
 }
 
+function nextPaint() {
+  return new Promise((resolve) => {
+    requestAnimationFrame(() => requestAnimationFrame(resolve));
+  });
+}
+
+function baseStatsText() {
+  if (!app.stats) return "";
+  return `${app.stats.componentCount} comps | ${app.stats.wireCount} wires | ${app.stats.pinCount} pins`;
+}
+
+function updateTopologyProgress() {
+  const base = baseStatsText();
+  if (
+    app.topologyEncoding !== "progressive-v1"
+    || (
+      !app.topologyRequestInFlight
+      && app.pendingScopeIds.size === 0
+    )
+  ) {
+    ui.statsLabel.textContent = base;
+    return;
+  }
+  ui.statsLabel.textContent = `${base} | preparing visible detail`;
+}
+
+function mergeTopologyRecords(payload) {
+  const touchedComponents = new Set();
+  const addedWires = [];
+
+  for (const [stateIndex, data] of (payload.pins || []).entries()) {
+    if (app.pins.has(data.id)) continue;
+    const pin = {
+      ...data,
+      stateIndex: data.stateIndex ?? stateIndex,
+      rect: null,
+      pos: null,
+      relPoints: [],
+      outerStub: [],
+      innerStub: [],
+      sourceWireIds: [],
+      sinkWireIds: [],
+    };
+    app.pins.set(pin.id, pin);
+    app.pinOrder.push(pin);
+    const component = app.components.get(pin.componentId);
+    if (component) {
+      if (pin.type === "input") component.inputPins.push(pin);
+      else component.outputPins.push(pin);
+      touchedComponents.add(component);
+    }
+  }
+
+  for (const [stateIndex, data] of (payload.wires || []).entries()) {
+    if (app.wires.has(data.id)) continue;
+    const wire = {
+      ...data,
+      stateIndex: data.stateIndex ?? stateIndex,
+      sourcePin: data.sourcePinId
+        ? app.pins.get(data.sourcePinId)
+        : null,
+      sinkPins: (data.sinkPinIds || [])
+        .map((id) => app.pins.get(id))
+        .filter(Boolean),
+      paths: [],
+      branches: [],
+      bbox: null,
+    };
+    app.wires.set(wire.id, wire);
+    app.wireOrder.push(wire);
+    addedWires.push(wire);
+    if (!app.wiresByOwner.has(wire.ownerId)) {
+      app.wiresByOwner.set(wire.ownerId, []);
+    }
+    app.wiresByOwner.get(wire.ownerId).push(wire);
+    if (wire.sourcePin) {
+      wire.sourcePin.sourceWireIds.push(wire.id);
+    }
+    wire.sinkPins.forEach(
+      (pin) => pin.sinkWireIds.push(wire.id),
+    );
+  }
+
+  if ([...touchedComponents].some((component) => component.rect)) {
+    touchedComponents.forEach((component) => {
+      if (component.rect) layoutPins(component);
+    });
+    addedWires.forEach(buildWirePaths);
+    rebuildSpatialIndexes();
+    if (app.selection) updateInspector();
+  }
+}
+
+function visibleMissingScopeIds() {
+  if (app.topologyEncoding !== "progressive-v1") return [];
+  return visibleGeometryComponents()
+    .filter((component) => (
+      componentCanDescend(component)
+      && !app.loadedScopeIds.has(component.id)
+      && !app.pendingScopeIds.has(component.id)
+    ))
+    .map((component) => component.id);
+}
+
+async function loadVisibleTopologyScopes(ownerIds) {
+  const sessionId = app.sessionId;
+  app.topologyRequestInFlight = true;
+  ownerIds.forEach((id) => app.pendingScopeIds.add(id));
+  updateTopologyProgress();
+  try {
+    const response = await fetch(apiUrl("api/topology"), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        session: sessionId,
+        ownerIds,
+      }),
+    });
+    if (!response.ok) throw new Error(await response.text());
+    const payload = await response.json();
+    if (
+      payload.sessionId !== sessionId
+      || app.sessionId !== sessionId
+    ) {
+      return;
+    }
+    mergeTopologyRecords(payload);
+    for (const scopeId of payload.scopeIds || ownerIds) {
+      app.loadedScopeIds.add(scopeId);
+    }
+  } finally {
+    if (app.sessionId === sessionId) {
+      ownerIds.forEach((id) => app.pendingScopeIds.delete(id));
+      app.topologyRequestInFlight = false;
+      updateTopologyProgress();
+    }
+  }
+  if (app.sessionId !== sessionId) return;
+  requestRender();
+  scheduleVisibleTopology();
+}
+
+function scheduleVisibleTopology() {
+  if (
+    app.topologyEncoding !== "progressive-v1"
+    || app.topologyRequestInFlight
+    || !app.sessionId
+  ) {
+    return;
+  }
+  const ownerIds = visibleMissingScopeIds().slice(0, 512);
+  if (!ownerIds.length) return;
+  setTimeout(() => {
+    loadVisibleTopologyScopes(ownerIds).catch(showError);
+  }, 0);
+}
+
 function buildLocalModel(payload) {
   app.scenario = payload.scenario;
+  app.sessionId = payload.sessionId;
+  app.profile = payload.profile || {
+    editable: false,
+    revision: 0,
+    exactOverrides: {},
+  };
   app.layoutKey = payload.layoutKey || payload.scenario;
   app.rootId = payload.rootId;
   app.timestamps = payload.timestamps && payload.timestamps.length ? payload.timestamps : [0];
@@ -3342,11 +3952,27 @@ function buildLocalModel(payload) {
   app.pinOrder = [];
   app.wireOrder = [];
   app.wiresByOwner = new Map();
+  app.topologyEncoding =
+    payload.topologyEncoding || "complete-v1";
+  app.loadedScopeIds = new Set(payload.loadedScopeIds || []);
+  app.pendingScopeIds = new Set();
+  app.topologyRequestInFlight = false;
 
   for (const data of payload.components) {
+    const parentFromIndex = Number.isInteger(data.parentIndex)
+      && data.parentIndex >= 0
+      ? payload.components[data.parentIndex]
+      : null;
     const component = {
       ...data,
-      childIds: data.childIds || [],
+      layoutType: data.layoutType || data.type,
+      parentId: data.parentId
+        || (parentFromIndex ? parentFromIndex.id : null),
+      childIds: [],
+      fidelity: data.fidelity || "unspecified",
+      availableFidelities: data.availableFidelities || [],
+      profileSelectable: Boolean(data.profileSelectable),
+      profileFingerprint: data.profileFingerprint || "explicit",
       inputPins: [],
       outputPins: [],
       rect: null,
@@ -3358,55 +3984,34 @@ function buildLocalModel(payload) {
     app.componentOrder.push(component);
   }
 
-  for (const [stateIndex, data] of payload.pins.entries()) {
-    const pin = {
-      ...data,
-      stateIndex: data.stateIndex ?? stateIndex,
-      rect: null,
-      pos: null,
-      relPoints: [],
-      outerStub: [],
-      innerStub: [],
-      sourceWireIds: [],
-      sinkWireIds: [],
-    };
-    app.pins.set(pin.id, pin);
-    app.pinOrder.push(pin);
-    const component = app.components.get(pin.componentId);
-    if (component) {
-      if (pin.type === "input") component.inputPins.push(pin);
-      else component.outputPins.push(pin);
-    }
+  for (const component of app.componentOrder) {
+    if (!component.parentId) continue;
+    const parent = app.components.get(component.parentId);
+    if (parent) parent.childIds.push(component.id);
   }
 
-  for (const [stateIndex, data] of payload.wires.entries()) {
-    const wire = {
-      ...data,
-      stateIndex: data.stateIndex ?? stateIndex,
-      sourcePin: data.sourcePinId ? app.pins.get(data.sourcePinId) : null,
-      sinkPins: (data.sinkPinIds || []).map((id) => app.pins.get(id)).filter(Boolean),
-      paths: [],
-      bbox: null,
-    };
-    app.wires.set(wire.id, wire);
-    app.wireOrder.push(wire);
-    if (!app.wiresByOwner.has(wire.ownerId)) app.wiresByOwner.set(wire.ownerId, []);
-    app.wiresByOwner.get(wire.ownerId).push(wire);
-    if (wire.sourcePin) wire.sourcePin.sourceWireIds.push(wire.id);
-    wire.sinkPins.forEach((pin) => pin.sinkWireIds.push(wire.id));
-  }
+  mergeTopologyRecords(payload);
 
   ui.slider.min = "0";
   ui.slider.max = String(Math.max(0, app.timestamps.length - 1));
   ui.slider.value = "0";
   renderCheckpointMarks();
   setTimeLabel(app.state);
-  ui.statsLabel.textContent = `${payload.stats.componentCount} comps | ${payload.stats.wireCount} wires | ${payload.stats.pinCount} pins`;
+  updateTopologyProgress();
   app.geometryDirty = true;
   computeGeometry();
   frameRoot();
+  rebuildSpatialIndexes();
+  if (app.explorer) {
+    app.explorer.setModel(
+      app.components,
+      app.rootId,
+      app.profile,
+    );
+  }
   updateInspector();
   requestRender();
+  scheduleVisibleTopology();
 }
 
 async function loadScenarios() {
@@ -3427,16 +4032,97 @@ async function loadScenarios() {
 }
 
 async function loadCircuit(scenario) {
-  loading.textContent = "Loading circuit...";
+  loading.textContent = "Building and simulating circuit…";
   loading.classList.remove("hidden");
   setPlaying(false);
+  await nextPaint();
   const response = await fetch(apiUrl(`api/circuit?scenario=${encodeURIComponent(scenario)}`));
   if (!response.ok) throw new Error(await response.text());
-  buildLocalModel(await response.json());
+  loading.textContent = "Decoding circuit index…";
+  await nextPaint();
+  const payload = await response.json();
+  loading.textContent = "Preparing circuit overview…";
+  await nextPaint();
+  buildLocalModel(payload);
+  await nextPaint();
   await refreshComponentStates(app.currentIndex, app.stateRequestId);
   loading.classList.add("hidden");
   ui.saveStatus.textContent = "";
 }
+
+async function applyExplorerProfile(request) {
+  if (app.layoutDirty) {
+    app.explorer.updateStatus(
+      "Save or reset the layout before applying fidelity changes",
+      true,
+    );
+    return;
+  }
+  app.explorer.setApplying();
+  loading.textContent = "Building and simulating selected circuit…";
+  loading.classList.remove("hidden");
+  setPlaying(false);
+  try {
+    await nextPaint();
+    const response = await fetch(apiUrl("api/circuit/apply"), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        scenario: app.scenario,
+        revision: request.revision,
+        exactOverrides: request.exactOverrides,
+      }),
+    });
+    if (!response.ok) throw new Error(await response.text());
+    loading.textContent = "Decoding selected circuit index…";
+    await nextPaint();
+    const payload = await response.json();
+    loading.textContent = "Preparing selected circuit overview…";
+    await nextPaint();
+    buildLocalModel(payload);
+    await nextPaint();
+    await refreshComponentStates(
+      app.currentIndex,
+      app.stateRequestId,
+    );
+    loading.classList.add("hidden");
+    app.explorer.updateStatus("Profile applied and simulation complete");
+    if (request.pendingFocusId) {
+      smoothlyFocusComponent(request.pendingFocusId);
+    }
+  } catch (error) {
+    loading.classList.add("hidden");
+    app.explorer.updateStatus(
+      String(error.message || error),
+      true,
+    );
+  }
+}
+
+app.explorer = new window.CircuitExplorer({
+  panel: ui.explorerPanel,
+  viewport: ui.explorerViewport,
+  spacer: ui.explorerSpacer,
+  rowsLayer: ui.explorerRows,
+  search: ui.explorerSearch,
+  applyButton: ui.explorerApply,
+  revertButton: ui.explorerRevert,
+  status: ui.explorerStatus,
+  toggleButton: ui.explorerToggle,
+  resizer: ui.explorerResizer,
+  onFocus: smoothlyFocusComponent,
+  onApply: (request) => {
+    applyExplorerProfile(request).catch(showError);
+  },
+  onViewportChanged: () => {
+    resizeCanvas();
+    requestRender();
+    setTimeout(() => {
+      resizeCanvas();
+      requestRender();
+    }, 180);
+  },
+});
 
 ui.scenario.addEventListener("change", () => {
   const url = new URL(window.location);

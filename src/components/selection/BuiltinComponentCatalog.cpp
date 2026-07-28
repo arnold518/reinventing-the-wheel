@@ -26,21 +26,18 @@
 #include "modules/composite/ZeroDetect32.hpp"
 #include "modules/composite/ZeroDetect8.hpp"
 #include "modules/memory/Memory64Kx32.hpp"
-#include "modules/memory/Register32BitCellArray.hpp"
 #include "modules/memory/Memory32x32.hpp"
 #include "modules/memory/Memory4x32.hpp"
 #include "modules/memory/MemoryBit.hpp"
 #include "modules/memory/Register32.hpp"
 #include "modules/memory/RegisterFile32x32.hpp"
 #include "modules/memory/RegisterFile4x32.hpp"
-#include "modules/rv32i/RV32IReferenceCore.hpp"
 #include "modules/rv32i/RV32IBitPatternMatcher.hpp"
 #include "modules/rv32i/RV32IControlFlowUnit.hpp"
 #include "modules/rv32i/RV32IDecodeControlUnit.hpp"
 #include "modules/rv32i/RV32IExecutionControlStatusUnit.hpp"
 #include "modules/rv32i/RV32ISingleCycleCore.hpp"
 #include "modules/rv32i/RV32ISingleCycleSystem.hpp"
-#include "modules/rv32i/RV32IReferenceSystem.hpp"
 #include "modules/utility/BitAdapter.hpp"
 #include "modules/utility/Constant.hpp"
 #include "modules/utility/Rewire.hpp"
@@ -157,12 +154,14 @@ VerificationEvidence verifiedBehavioralFromSlices(
     };
 }
 
-VerificationEvidence referenceEvidence(std::vector<std::string> tests) {
+VerificationEvidence verifiedBehavioralAgainstStructure(
+    std::string lower_level,
+    std::vector<std::string> tests) {
     return {
-        VerificationStatus::ReferenceOnly,
-        {"independent RV32I semantic oracle"},
+        VerificationStatus::Verified,
+        {std::move(lower_level)},
+        tests,
         std::move(tests),
-        {},
         {},
         "known-binary",
         "clock-boundary",
@@ -190,8 +189,6 @@ void addSingle(ComponentCatalog& catalog,
                Fidelity fidelity,
                VerificationEvidence evidence,
                bool terminal_primitive,
-               bool reference_only,
-               int priority,
                Args... args) {
     catalog.registerContract({
         contract_id,
@@ -207,8 +204,6 @@ void addSingle(ComponentCatalog& catalog,
     implementation.contract_id = std::move(contract_id);
     implementation.fidelity = fidelity;
     implementation.terminal_primitive = terminal_primitive;
-    implementation.reference_only = reference_only;
-    implementation.default_priority = priority;
     implementation.concrete_type_name = T::TypeName;
     implementation.evidence = std::move(evidence);
     implementation.supports = [](const ParameterMap& parameters) {
@@ -225,7 +220,7 @@ void addStructural(ComponentCatalog& catalog,
                    const std::string& display_name,
                    const std::string& tests) {
     addSingle<T>(catalog, contract_id, implementation_id, display_name,
-                 Fidelity::Structural, verifiedStructural(tests), false, false, 100);
+                 Fidelity::Structural, verifiedStructural(tests), false);
 }
 
 template<typename T>
@@ -235,7 +230,7 @@ void addPrimitive(ComponentCatalog& catalog,
                   const std::string& display_name,
                   const std::string& tests) {
     addSingle<T>(catalog, contract_id, implementation_id, display_name,
-                 Fidelity::Structural, verifiedPrimitive(tests), true, false, 100);
+                 Fidelity::Structural, verifiedPrimitive(tests), true);
 }
 
 template<typename T>
@@ -243,15 +238,11 @@ ImplementationDescriptor implementationFor(
     std::string id,
     std::string contract_id,
     Fidelity fidelity,
-    VerificationEvidence evidence,
-    int priority,
-    bool reference_only = false) {
+    VerificationEvidence evidence) {
     ImplementationDescriptor implementation;
     implementation.id = std::move(id);
     implementation.contract_id = std::move(contract_id);
     implementation.fidelity = fidelity;
-    implementation.reference_only = reference_only;
-    implementation.default_priority = priority;
     implementation.concrete_type_name = T::TypeName;
     implementation.evidence = std::move(evidence);
     implementation.supports = [](const ParameterMap& parameters) {
@@ -265,9 +256,7 @@ ImplementationDescriptor implementationFor(
     const ComponentFamily& family,
     std::string id,
     Fidelity fidelity,
-    VerificationEvidence evidence,
-    int priority,
-    bool reference_only = false) {
+    VerificationEvidence evidence) {
     if (!family.supports(fidelity)) {
         throw std::invalid_argument(
             "Family does not provide the registered implementation fidelity");
@@ -276,8 +265,6 @@ ImplementationDescriptor implementationFor(
     implementation.id = std::move(id);
     implementation.contract_id = std::string(family.id());
     implementation.fidelity = fidelity;
-    implementation.reference_only = reference_only;
-    implementation.default_priority = priority;
     implementation.concrete_type_name = std::string(family.typeName());
     implementation.evidence = std::move(evidence);
     implementation.supports = [](const ParameterMap& parameters) {
@@ -290,6 +277,40 @@ ImplementationDescriptor implementationFor(
         return family.create(fidelity, name, context);
     };
     return implementation;
+}
+
+void addSelectableFamily(
+    ComponentCatalog& catalog,
+    const ComponentFamily& family,
+    const std::string& implementation_prefix,
+    const std::string& display_name,
+    const std::string& contract_test,
+    const std::string& lower_level_description) {
+    const auto contract_id = std::string(family.id());
+    catalog.registerContract({
+        contract_id,
+        1,
+        display_name,
+        schemaFor(family),
+        {},
+        "four-state",
+        "stable-after-settle",
+    });
+    catalog.registerImplementation(implementationFor(
+        family,
+        implementation_prefix + ".structural",
+        Fidelity::Structural,
+        verifiedStructural(contract_test)));
+    catalog.registerImplementation(implementationFor(
+        family,
+        implementation_prefix + ".behavioral.direct",
+        Fidelity::Behavioral,
+        verifiedBehavioral(
+            lower_level_description,
+            contract_test,
+            contract_test,
+            "four-state",
+            "stable-after-settle")));
 }
 
 uint64_t parseUnsigned(const std::string& text) {
@@ -363,7 +384,7 @@ void addSplitter(ComponentCatalog& catalog) {
         "utility.bit-splitter.width" + std::to_string(WIDTH),
         "utility.bit-splitter.width" + std::to_string(WIDTH) + ".primitive",
         "Bit splitter " + std::to_string(WIDTH),
-        "BitSplitter8Test");
+        "BitSplitter" + std::to_string(WIDTH) + "Test");
 }
 
 template<size_t WIDTH>
@@ -373,7 +394,7 @@ void addJoiner(ComponentCatalog& catalog) {
         "utility.bit-joiner.width" + std::to_string(WIDTH),
         "utility.bit-joiner.width" + std::to_string(WIDTH) + ".primitive",
         "Bit joiner " + std::to_string(WIDTH),
-        "BitJoiner8Test");
+        "BitJoiner" + std::to_string(WIDTH) + "Test");
 }
 
 template<size_t WIDTH>
@@ -387,9 +408,9 @@ void addConstant(ComponentCatalog& catalog) {
     implementation.contract_id = contract_id;
     implementation.fidelity = Fidelity::Structural;
     implementation.terminal_primitive = true;
-    implementation.default_priority = 100;
     implementation.concrete_type_name = ConstantValue<WIDTH>::TypeName;
-    implementation.evidence = verifiedPrimitive("ConstantValue8Test");
+    implementation.evidence = verifiedPrimitive(
+        "ConstantValue" + std::to_string(WIDTH) + "Test");
     implementation.supports = [](const ParameterMap& parameters) {
         return parameters.size() == 1 && parameters.count("value") == 1;
     };
@@ -434,9 +455,8 @@ void registerPrimitives(ComponentCatalog& catalog) {
     rewire.contract_id = "utility.rewire";
     rewire.fidelity = Fidelity::Structural;
     rewire.terminal_primitive = true;
-    rewire.default_priority = 100;
     rewire.concrete_type_name = Rewire::TypeName;
-    rewire.evidence = verifiedPrimitive("RewireValidationTest");
+    rewire.evidence = verifiedPrimitive("RewireTest");
     rewire.supports = [](const ParameterMap& parameters) {
         return parameters.count("inputs") && parameters.count("outputs")
             && parameters.count("mappings") && parameters.count("unmapped");
@@ -463,7 +483,6 @@ void registerPrimitives(ComponentCatalog& catalog) {
     clock.contract_id = "timing.clock";
     clock.fidelity = Fidelity::Structural;
     clock.terminal_primitive = true;
-    clock.default_priority = 100;
     clock.concrete_type_name = ClockGenerator::TypeName;
     clock.evidence = verifiedPrimitive("ClockGeneratorTest");
     clock.supports = [](const ParameterMap& parameters) {
@@ -512,7 +531,13 @@ void registerStructuralFamilies(ComponentCatalog& catalog) {
     addStructural<FullAdder>(catalog, "arithmetic.full-adder", "arithmetic.full-adder.structural", "Full adder", "FullAdderTest");
     addStructural<Adder8>(catalog, "arithmetic.adder.width8", "arithmetic.adder.width8.structural", "8-bit adder", "Adder8Test");
     addStructural<Adder32>(catalog, "arithmetic.adder.width32", "arithmetic.adder.width32.structural", "32-bit adder", "Adder32Test");
-    addStructural<AddSub32>(catalog, "arithmetic.add-sub.width32", "arithmetic.add-sub.width32.structural", "32-bit add/sub", "AddSub32Test");
+    addSelectableFamily(
+        catalog,
+        families::AddSub32,
+        "arithmetic.add-sub.width32",
+        "32-bit add/sub",
+        "AddSub32Test",
+        "AddSub32 structural full-adder chain");
     addStructural<TwosComplement8>(catalog, "arithmetic.twos-complement.width8", "arithmetic.twos-complement.width8.structural", "8-bit two's complement", "TwosComplement8Test");
     addStructural<Subtractor8>(catalog, "arithmetic.subtractor.width8", "arithmetic.subtractor.width8.structural", "8-bit subtractor", "Subtractor8Test");
     addStructural<SubtractorWithBorrow8>(catalog, "arithmetic.subtractor-borrow.width8", "arithmetic.subtractor-borrow.width8.structural", "8-bit subtractor with borrow", "SubtractorWithBorrow8Test");
@@ -521,14 +546,38 @@ void registerStructuralFamilies(ComponentCatalog& catalog) {
     addStructural<EqualityChecker8>(catalog, "compare.equal.width8", "compare.equal.width8.structural", "8-bit equality", "EqualityChecker8Test");
     addStructural<Comparator8>(catalog, "compare.unsigned.width8", "compare.unsigned.width8.structural", "8-bit comparator", "Comparator8Test");
     addStructural<SignedComparator8>(catalog, "compare.signed.width8", "compare.signed.width8.structural", "8-bit signed comparator", "SignedComparator8Test");
-    addStructural<Comparator32>(catalog, "compare.width32", "compare.width32.structural", "32-bit comparator", "Comparator32Test");
+    addSelectableFamily(
+        catalog,
+        families::Comparator32,
+        "compare.width32",
+        "32-bit comparator",
+        "Comparator32Test",
+        "Comparator32 structural subtract-and-detect network");
     addStructural<ZeroDetect8>(catalog, "compare.zero.width8", "compare.zero.width8.structural", "8-bit zero detect", "ZeroDetect8Test");
-    addStructural<ZeroDetect32>(catalog, "compare.zero.width32", "compare.zero.width32.structural", "32-bit zero detect", "ZeroDetect32Test");
-    addStructural<Logic32>(catalog, "logic.combined.width32", "logic.combined.width32.structural", "32-bit logic", "Logic32Test");
+    addSelectableFamily(
+        catalog,
+        families::ZeroDetect32,
+        "compare.zero.width32",
+        "32-bit zero detect",
+        "ZeroDetect32Test",
+        "ZeroDetect32 structural OR-reduction tree");
+    addSelectableFamily(
+        catalog,
+        families::Logic32,
+        "logic.combined.width32",
+        "32-bit logic",
+        "Logic32Test",
+        "Logic32 structural per-bit gate array");
     addStructural<ShiftLeftLogical8>(catalog, "shift.left-logical.width8", "shift.left-logical.width8.structural", "8-bit shift left", "ShiftLeftLogical8Test");
     addStructural<ShiftRightLogical8>(catalog, "shift.right-logical.width8", "shift.right-logical.width8.structural", "8-bit shift right", "ShiftRightLogical8Test");
     addStructural<ShiftRightArithmetic8>(catalog, "shift.right-arithmetic.width8", "shift.right-arithmetic.width8.structural", "8-bit arithmetic shift", "ShiftRightArithmetic8Test");
-    addStructural<Shifter32>(catalog, "shift.barrel.width32", "shift.barrel.width32.structural", "32-bit shifter", "Shifter32Test");
+    addSelectableFamily(
+        catalog,
+        families::Shifter32,
+        "shift.barrel.width32",
+        "32-bit shifter",
+        "Shifter32Test",
+        "Shifter32 structural mux network");
     addStructural<ALU8>(catalog, "alu.width8", "alu.width8.structural", "8-bit ALU", "ALU8Test");
 }
 
@@ -540,14 +589,13 @@ void registerStorage(ComponentCatalog& catalog) {
     catalog.registerImplementation(implementationFor(
         families::MemoryBit,
         "memory.write-enabled-bit.structural.mux-dff",
-        Fidelity::Structural, verifiedStructural("MemoryBitStructuralContractTest"), 100));
+        Fidelity::Structural, verifiedStructural("MemoryBitTest")));
     catalog.registerImplementation(implementationFor(
         families::MemoryBit,
         "memory.write-enabled-bit.behavioral.direct",
         Fidelity::Behavioral,
-        verifiedBehavioral("MemoryBit structural mux/DFF", "MemoryBitBehavioralContractTest",
-                           "MemoryBitEquivalenceTest", "four-state", "clock-boundary"),
-        10));
+        verifiedBehavioral("MemoryBit structural mux/DFF", "MemoryBitTest",
+                           "MemoryBitTest", "four-state", "clock-boundary")));
 
     const auto register32 = std::string(families::Register32.id());
     catalog.registerContract({
@@ -556,17 +604,13 @@ void registerStorage(ComponentCatalog& catalog) {
     catalog.registerImplementation(implementationFor(
         families::Register32,
         "memory.register.width32.structural.bits",
-        Fidelity::Structural, verifiedStructural("Register32StructuralContractTest"), 100));
-    catalog.registerImplementation(implementationFor<Register32BitCellArray>(
-        "memory.register.width32.structural.bit-cell-array", register32,
-        Fidelity::Structural, verifiedStructural("Register32CellArrayContractTest"), 50));
+        Fidelity::Structural, verifiedStructural("Register32Test")));
     catalog.registerImplementation(implementationFor(
         families::Register32,
         "memory.register.width32.behavioral.direct",
         Fidelity::Behavioral,
-        verifiedBehavioral("Register32 structural bit cells", "Register32BehavioralContractTest",
-                           "Register32EquivalenceTest", "four-state", "clock-boundary"),
-        10));
+        verifiedBehavioral("Register32 structural bit cells", "Register32Test",
+                           "Register32Test", "four-state", "clock-boundary")));
 
     addStructural<RegisterFile4x32>(catalog, "memory.register-file.4x32", "memory.register-file.4x32.structural", "4x32 register file", "RegisterFile4x32Test");
 
@@ -579,7 +623,7 @@ void registerStorage(ComponentCatalog& catalog) {
     auto structural = implementationFor(
         families::RegisterFile32x32,
         "rv32i.register-file.structural.decoder-mux",
-        Fidelity::Structural, verifiedStructural("RegisterFile32x32StructuralContractTest"), 100);
+        Fidelity::Structural, verifiedStructural("RegisterFile32x32Test"));
     structural.capabilities = {"register-state-view"};
     catalog.registerImplementation(std::move(structural));
     auto behavioral = implementationFor(
@@ -587,9 +631,8 @@ void registerStorage(ComponentCatalog& catalog) {
         "rv32i.register-file.behavioral.direct",
         Fidelity::Behavioral,
         verifiedBehavioral("RegisterFile32x32 structural organization",
-                           "RegisterFile32x32BehavioralContractTest",
-                           "RV32IRegisterFileEquivalenceTest", "known-binary", "clock-boundary"),
-        10);
+                           "RegisterFile32x32Test",
+                           "RegisterFile32x32Test", "four-state", "clock-boundary"));
     behavioral.capabilities = {"register-state-view"};
     catalog.registerImplementation(std::move(behavioral));
 
@@ -609,7 +652,7 @@ void registerStorage(ComponentCatalog& catalog) {
     catalog.registerImplementation(implementationFor(
         families::Memory64Kx32,
         "rv32i.memory.64k-x32.behavioral.direct",
-        Fidelity::Behavioral, memory64_evidence, 100));
+        Fidelity::Behavioral, memory64_evidence));
 }
 
 void registerRV32I(ComponentCatalog& catalog) {
@@ -620,13 +663,13 @@ void registerRV32I(ComponentCatalog& catalog) {
     catalog.registerImplementation(implementationFor(
         families::ALU32,
         "rv32i.alu32.structural", Fidelity::Structural,
-        verifiedStructural("ALU32StructuralContractTest"), 100));
+        verifiedStructural("ALU32Test")));
     catalog.registerImplementation(implementationFor(
         families::ALU32,
         "rv32i.alu32.behavioral.direct", Fidelity::Behavioral,
-        verifiedBehavioral("ALU32 structural implementation", "ALU32BehavioralContractTest",
-                           "ALU32EquivalenceTest", "known-binary",
-                           "stable-after-settle"), 10));
+        verifiedBehavioral("ALU32 structural implementation", "ALU32Test",
+                           "ALU32Test", "known-binary",
+                           "stable-after-settle")));
 
     const auto control_flow = std::string(families::RV32IControlFlow.id());
     catalog.registerContract({
@@ -635,15 +678,15 @@ void registerRV32I(ComponentCatalog& catalog) {
     catalog.registerImplementation(implementationFor(
         families::RV32IControlFlow,
         "rv32i.control-flow.structural", Fidelity::Structural,
-        verifiedStructural("RV32IControlFlowStructuralContractTest"), 100));
+        verifiedStructural("RV32IControlFlowUnitTest")));
     catalog.registerImplementation(implementationFor(
         families::RV32IControlFlow,
         "rv32i.control-flow.behavioral.direct",
         Fidelity::Behavioral,
         verifiedBehavioral("RV32IControlFlowUnit structure",
-                           "RV32IControlFlowBehavioralContractTest",
-                           "RV32IControlFlowUnitEquivalenceTest", "known-binary",
-                           "clock-boundary"), 10));
+                           "RV32IControlFlowUnitTest",
+                           "RV32IControlFlowUnitTest", "known-binary",
+                           "clock-boundary")));
 
     const auto decode_control =
         std::string(families::RV32IDecodeControl.id());
@@ -654,15 +697,15 @@ void registerRV32I(ComponentCatalog& catalog) {
     catalog.registerImplementation(implementationFor(
         families::RV32IDecodeControl,
         "rv32i.decode-control.structural",
-        Fidelity::Structural, verifiedStructural("RV32IDecodeControlStructuralContractTest"), 100));
+        Fidelity::Structural, verifiedStructural("RV32IDecodeControlUnitTest")));
     catalog.registerImplementation(implementationFor(
         families::RV32IDecodeControl,
         "rv32i.decode-control.behavioral.direct",
         Fidelity::Behavioral,
         verifiedBehavioral("RV32IDecodeControlUnit structure",
-                           "RV32IDecodeControlBehavioralContractTest",
-                           "RV32IDecodeControlUnitEquivalenceTest", "known-binary",
-                           "stable-after-settle"), 10));
+                           "RV32IDecodeControlUnitTest",
+                           "RV32IDecodeControlUnitTest", "known-binary",
+                           "stable-after-settle")));
 
     const auto execution_status =
         std::string(families::RV32IExecutionStatus.id());
@@ -674,15 +717,15 @@ void registerRV32I(ComponentCatalog& catalog) {
         families::RV32IExecutionStatus,
         "rv32i.execution-status.structural",
         Fidelity::Structural,
-        verifiedStructural("RV32IExecutionStatusStructuralContractTest"), 100));
+        verifiedStructural("RV32IExecutionControlStatusUnitTest")));
     catalog.registerImplementation(implementationFor(
         families::RV32IExecutionStatus,
         "rv32i.execution-status.behavioral.direct",
         Fidelity::Behavioral,
         verifiedBehavioral("RV32IExecutionControlStatusUnit structure",
-                           "RV32IExecutionStatusBehavioralContractTest",
-                           "RV32IExecutionControlStatusUnitEquivalenceTest", "known-binary",
-                           "clock-boundary"), 10));
+                           "RV32IExecutionControlStatusUnitTest",
+                           "RV32IExecutionControlStatusUnitTest", "known-binary",
+                           "clock-boundary")));
 
     catalog.registerContract({
         "rv32i.pattern-matcher", 1, "RV32I pattern matcher",
@@ -692,7 +735,6 @@ void registerRV32I(ComponentCatalog& catalog) {
     matcher.id = "rv32i.pattern-matcher.structural";
     matcher.contract_id = "rv32i.pattern-matcher";
     matcher.fidelity = Fidelity::Structural;
-    matcher.default_priority = 100;
     matcher.concrete_type_name = RV32IBitPatternMatcher::TypeName;
     matcher.evidence = verifiedStructural("RV32IBitPatternMatcherTest");
     matcher.supports = [](const ParameterMap& parameters) {
@@ -710,38 +752,63 @@ void registerRV32I(ComponentCatalog& catalog) {
     };
     catalog.registerImplementation(std::move(matcher));
 
-    addStructural<RV32ISingleCycleCore>(
-        catalog,
-        std::string(families::RV32ISingleCycleCore.id()),
+    const auto core =
+        std::string(families::RV32ISingleCycleCore.id());
+    catalog.registerContract({
+        core, 1, "Educational RV32I single-cycle core",
+        schemaFor(families::RV32ISingleCycleCore),
+        {"rv32i-architectural-state-view"},
+        "known-binary", "clock-boundary"});
+    auto structural_core = implementationFor(
+        families::RV32ISingleCycleCore,
         "rv32i.core.educational-single-cycle.structural",
-        "Educational RV32I single-cycle core",
-        "RV32ISingleCycleSystemSmokeTest");
-    auto educational_system_tests = numberedTestIds(
-        "RV32ISingleCycleSystemProgram", "Test", 1, 16);
-    educational_system_tests.push_back("RV32ISingleCycleSystemContractTest");
-    addSingle<RV32ISingleCycleSystem>(
-        catalog,
-        std::string(families::RV32ISingleCycleSystem.id()),
-        "rv32i.system.educational-single-cycle.structural",
-        "Educational RV32I single-cycle system",
         Fidelity::Structural,
-        verifiedStructural(std::move(educational_system_tests)),
-        false, false, 100);
-
-    auto reference_core_tests = numberedTestIds(
-        "RV32IReferenceSystemProgram", "Test", 1, 16);
-    addSingle<RV32IReferenceCore>(
-        catalog, std::string(families::RV32IReferenceCore.id()),
-        "rv32i.core.oracle-backed-reference.behavioral", "Oracle-backed RV32I core",
-        Fidelity::Behavioral, referenceEvidence(reference_core_tests),
-        false, true, 100);
-    auto reference_system_tests = std::move(reference_core_tests);
-    reference_system_tests.push_back("RV32IReferenceSystemContractTest");
-    addSingle<RV32IReferenceSystem>(
-        catalog, std::string(families::RV32IReferenceSystem.id()),
-        "rv32i.system.oracle-backed-reference.structural", "Oracle-backed RV32I system",
-        Fidelity::Structural, referenceEvidence(std::move(reference_system_tests)),
-        false, true, 100);
+        verifiedStructural("RV32ISingleCycleCoreTest"));
+    structural_core.capabilities = {
+        "rv32i-architectural-state-view"};
+    catalog.registerImplementation(std::move(structural_core));
+    auto behavioral_core = implementationFor(
+        families::RV32ISingleCycleCore,
+        "rv32i.core.educational-single-cycle.behavioral",
+        Fidelity::Behavioral,
+        verifiedBehavioralAgainstStructure(
+            "RV32ISingleCycleCore structural data path",
+            {"RV32ISingleCycleCoreTest"}));
+    behavioral_core.capabilities = {
+        "rv32i-architectural-state-view"};
+    catalog.registerImplementation(std::move(behavioral_core));
+    std::vector<std::string> educational_system_tests;
+    for (size_t program = 1; program <= 16; ++program) {
+        educational_system_tests.push_back(
+            "RV32ISingleCycleSystemTest/program-"
+            + std::string(program < 10 ? "0" : "")
+            + std::to_string(program));
+    }
+    const auto system =
+        std::string(families::RV32ISingleCycleSystem.id());
+    catalog.registerContract({
+        system, 1, "Educational RV32I single-cycle system",
+        schemaFor(families::RV32ISingleCycleSystem),
+        {"rv32i-architectural-state-view"},
+        "known-binary", "clock-boundary"});
+    auto structural_system = implementationFor(
+        families::RV32ISingleCycleSystem,
+        "rv32i.system.educational-single-cycle.structural",
+        Fidelity::Structural,
+        verifiedStructural(educational_system_tests));
+    structural_system.capabilities = {
+        "rv32i-architectural-state-view"};
+    catalog.registerImplementation(std::move(structural_system));
+    auto behavioral_system = implementationFor(
+        families::RV32ISingleCycleSystem,
+        "rv32i.system.educational-single-cycle.behavioral",
+        Fidelity::Behavioral,
+        verifiedBehavioralAgainstStructure(
+            "RV32ISingleCycleSystem structural core and memory system",
+            std::move(educational_system_tests)));
+    behavioral_system.capabilities = {
+        "rv32i-architectural-state-view"};
+    catalog.registerImplementation(std::move(behavioral_system));
 }
 
 } // namespace

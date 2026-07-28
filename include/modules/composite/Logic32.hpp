@@ -1,6 +1,11 @@
 #pragma once
 
 #include "components/IOComponent.hpp"
+#include "components/selection/ComponentFamily.hpp"
+
+namespace circuit::families {
+extern const ComponentFamily Logic32;
+}
 
 class Logic32 : public IOComponent {
 public:

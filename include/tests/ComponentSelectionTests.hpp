@@ -34,15 +34,7 @@ protected:
     void verifyResults() override;
 };
 
-class MemoryBitEquivalenceTest : public StandaloneVerificationTest {
-public:
-    std::string getTestName() const override;
-
-protected:
-    void verifyResults() override;
-};
-
-class Register32EquivalenceTest : public StandaloneVerificationTest {
+class ComponentTestModelTest : public StandaloneVerificationTest {
 public:
     std::string getTestName() const override;
 

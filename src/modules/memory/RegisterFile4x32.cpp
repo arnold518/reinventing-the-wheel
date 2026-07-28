@@ -6,7 +6,6 @@
 #include "components/WireBuilder.hpp"
 #include "modules/basic/Decoder.hpp"
 #include "modules/basic/Mux.hpp"
-#include "modules/memory/Register32BitCellArray.hpp"
 #include "modules/memory/Register32.hpp"
 #include "modules/utility/BitAdapter.hpp"
 #include "modules/utility/Constant.hpp"

@@ -36,6 +36,35 @@ LogicValue andValue(LogicValue left, LogicValue right) {
     return LogicValue::UNKNOWN;
 }
 
+LogicValue orValue(LogicValue left, LogicValue right) {
+    if (left == LogicValue::HIGH || right == LogicValue::HIGH) {
+        return LogicValue::HIGH;
+    }
+    if (left == LogicValue::LOW && right == LogicValue::LOW) {
+        return LogicValue::LOW;
+    }
+    return LogicValue::UNKNOWN;
+}
+
+LogicValue notValue(LogicValue value) {
+    if (value == LogicValue::LOW) {
+        return LogicValue::HIGH;
+    }
+    if (value == LogicValue::HIGH) {
+        return LogicValue::LOW;
+    }
+    return LogicValue::UNKNOWN;
+}
+
+LogicValue muxGateValue(
+    LogicValue low_input,
+    LogicValue high_input,
+    LogicValue select) {
+    return orValue(
+        andValue(low_input, notValue(select)),
+        andValue(high_input, select));
+}
+
 std::vector<LogicValue> inputWord(const std::shared_ptr<Pin<WordWidth>>& pin) {
     std::vector<LogicValue> values(WordWidth, LogicValue::UNKNOWN);
     if (!pin) {
@@ -82,30 +111,28 @@ std::vector<LogicValue> readSelectedWord(
     const std::array<std::vector<LogicValue>, RegisterCount>& registers,
     const std::array<LogicValue, AddressWidth>& address
 ) {
-    for (size_t index = 0; index < RegisterCount; ++index) {
-        if (addressMatch(address, index) == LogicValue::HIGH) {
-            return registers[index];
-        }
-    }
-
-    std::vector<LogicValue> result(WordWidth, LogicValue::UNKNOWN);
-    bool first_possible = true;
-    for (size_t index = 0; index < RegisterCount; ++index) {
-        if (!addressMayMatch(address, index)) {
-            continue;
-        }
-        if (first_possible) {
-            result = registers[index];
-            first_possible = false;
-            continue;
-        }
-        for (size_t bit = 0; bit < WordWidth; ++bit) {
-            if (result[bit] != registers[index][bit]) {
-                result[bit] = LogicValue::UNKNOWN;
+    // Match the structural Mux32to1 exactly: five layers of gate-built
+    // two-input muxes, one layer for each address bit.
+    std::vector<std::vector<LogicValue>> level(
+        registers.begin(), registers.end());
+    for (size_t address_bit = 0;
+         address_bit < AddressWidth;
+         ++address_bit) {
+        std::vector<std::vector<LogicValue>> next;
+        next.reserve(level.size() / 2);
+        for (size_t pair = 0; pair < level.size(); pair += 2) {
+            std::vector<LogicValue> word(WordWidth, LogicValue::UNKNOWN);
+            for (size_t bit = 0; bit < WordWidth; ++bit) {
+                word[bit] = muxGateValue(
+                    level[pair][bit],
+                    level[pair + 1][bit],
+                    address[address_bit]);
             }
+            next.push_back(std::move(word));
         }
+        level = std::move(next);
     }
-    return first_possible ? unknownWord() : result;
+    return level.front();
 }
 
 void updateOutputWord(
@@ -155,7 +182,11 @@ void RegisterFile32x32Direct::evaluate(size_t current_time, Simulator& simulator
         }
     } else if (rst != LogicValue::LOW) {
         for (size_t reg = 1; reg < RegisterCount; ++reg) {
-            registers[reg] = unknownWord();
+            for (auto& value : registers[reg]) {
+                value = value == LogicValue::LOW
+                    ? LogicValue::LOW
+                    : LogicValue::UNKNOWN;
+            }
         }
     } else if (previous_clk == LogicValue::LOW && clk == LogicValue::HIGH) {
         for (size_t reg = 1; reg < RegisterCount; ++reg) {
@@ -163,7 +194,12 @@ void RegisterFile32x32Direct::evaluate(size_t current_time, Simulator& simulator
             if (local_write_enable == LogicValue::HIGH) {
                 registers[reg] = write_data;
             } else if (local_write_enable == LogicValue::UNKNOWN) {
-                registers[reg] = unknownWord();
+                for (size_t bit = 0; bit < WordWidth; ++bit) {
+                    registers[reg][bit] = muxGateValue(
+                        registers[reg][bit],
+                        write_data[bit],
+                        local_write_enable);
+                }
             }
         }
     }

@@ -1,4 +1,5 @@
 #pragma once
+// Private factory implementation; callers use families::RV32IExecutionStatus.
 
 #include "components/BasicComponent.hpp"
 #include <vector>

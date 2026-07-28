@@ -1,10 +1,13 @@
 # RV32I Milestone 7 Report: System Harness And Behavioral System Preparation
 
-Last updated: 2026-06-04
+Last updated: 2026-07-29
 
 ## Status
 
-Milestone 7A is complete, and Milestone 7B now has the corrected component split: a composite RV32I system containing a behavioral core plus visible instruction/data memory blocks.
+Milestone 7A and 7B are complete. This is a historical bring-up report; the
+later unified structural/behavioral system and complete 16-program suite are
+documented in `docs/rv32i-structural-core-report.md` and
+`docs/unified-component-migration-report.md`.
 
 Implemented:
 
@@ -17,9 +20,9 @@ Implemented:
 - real RV32I assembly program lockstep test
 - visualizer scenario alias for the RV32I system program
 
-Still planned:
-
-- broader RV32I system test suite
+The broader RV32I system suite that was still planned when this report was
+first written is now implemented as
+`RV32ISingleCycleSystemTest/program-01` through `program-16`.
 
 ## Objective
 
@@ -175,7 +178,7 @@ The original one-memory API remains and delegates to this overload by passing th
 
 ## 7B Assembly Test Program
 
-`RV32IReferenceSystemProgram1Test` runs a real RV32I instruction stream through `RV32IReferenceSystem` and compares every committed instruction against `RV32IInstructionOracle`.
+`RV32ISingleCycleSystemTest/program-01` runs a real RV32I instruction stream through `RV32IReferenceSystem` and compares every committed instruction against `RV32IInstructionOracle`.
 
 Initial data memory at `0x100`:
 
@@ -437,7 +440,7 @@ Result:
 Focused 7A/7B tests:
 
 ```bash
-ctest --test-dir build --output-on-failure -R "RV32IReferenceSystemProgram1Test|RV32IInstructionLockstepHarnessTest|RV32IInstructionOracleTest|SimulatorAdvanceAndRecordTest"
+ctest --test-dir build --output-on-failure -R "RV32ISingleCycleSystemTest/program-01|RV32IInstructionLockstepHarnessTest|RV32IInstructionOracleTest|SimulatorAdvanceAndRecordTest"
 ```
 
 Result:
@@ -448,7 +451,7 @@ Result:
 Visualizer backend discovery:
 
 ```bash
-python3 -c "import circuit_backend as cb; print('RV32IReferenceSystemProgram1Test' in cb.get_registered_test_names())"
+python3 -c "import circuit_backend as cb; print('RV32ISingleCycleSystemTest/program-01' in cb.get_registered_test_names())"
 ```
 
 Result:
@@ -458,7 +461,7 @@ Result:
 Live visualizer check:
 
 ```bash
-curl -fsSL http://127.0.0.1:8765/api/circuit?scenario=rv32i-reference-program1
+curl -fsSL http://127.0.0.1:8765/api/circuit?scenario=rv32i-program1
 ```
 
 Result:

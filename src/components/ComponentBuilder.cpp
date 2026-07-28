@@ -59,7 +59,10 @@ std::shared_ptr<IOComponent> ComponentBuilder::add(
             return std::dynamic_pointer_cast<IOComponent>(
                 namedComponents[scoped_name]);
         }
-        auto component = family.createDefault(instance_name, nullptr);
+        const auto fidelity = family.supports(circuit::Fidelity::Structural)
+            ? circuit::Fidelity::Structural
+            : circuit::Fidelity::Behavioral;
+        auto component = family.create(fidelity, instance_name, nullptr);
         auto io_component = std::dynamic_pointer_cast<IOComponent>(component);
         if (!io_component) {
             throw std::runtime_error(

@@ -24,22 +24,22 @@ Every test in this document:
 Use numbered behavioral system program tests:
 
 ```text
-RV32IReferenceSystemProgram1Test
-RV32IReferenceSystemProgram2Test
-RV32IReferenceSystemProgram3Test
+RV32ISingleCycleSystemTest/program-01
+RV32ISingleCycleSystemTest/program-02
+RV32ISingleCycleSystemTest/program-03
 ...
 ```
 
 Visualizer scenarios should match:
 
 ```text
-rv32i-reference-program1
-rv32i-reference-program2
-rv32i-reference-program3
+rv32i-program1
+rv32i-program2
+rv32i-program3
 ...
 ```
 
-The visualizer exposes these cases as `rv32i-reference-program1` through `rv32i-reference-program16`.
+The visualizer exposes these cases as `rv32i-program1` through `rv32i-program16`.
 
 The C snippets below describe the intent of each program. The assembly snippets are the RV32I behavior that the test should encode.
 
@@ -47,35 +47,35 @@ The C snippets below describe the intent of each program. The assembly snippets 
 
 | # | Test Name | Scenario | Main Focus |
 | ---: | --- | --- | --- |
-| 1 | `RV32IReferenceSystemProgram1Test` | `rv32i-reference-program1` | Existing loop, word loads, arithmetic, branch loop, word/byte/halfword stores. |
-| 2 | `RV32IReferenceSystemProgram2Test` | `rv32i-reference-program2` | ALU R-type and I-type operations, shifts, signed/unsigned comparisons, x0 write ignore. |
-| 3 | `RV32IReferenceSystemProgram3Test` | `rv32i-reference-program3` | Load/store widths, sign extension, zero extension, little-endian memory behavior. |
-| 4 | `RV32IReferenceSystemProgram4Test` | `rv32i-reference-program4` | All branch predicates, both taken and not-taken paths. |
-| 5 | `RV32IReferenceSystemProgram5Test` | `rv32i-reference-program5` | `JAL`, `JALR`, link-register writes, function-call shape. |
-| 6 | `RV32IReferenceSystemProgram6Test` | `rv32i-reference-program6` | `LUI`, `AUIPC`, `FENCE`, PC-relative values. |
-| 7 | `RV32IReferenceSystemProgram7Test` | `rv32i-reference-program7` | Fibonacci loop with repeated stores and register dependencies. |
-| 8 | `RV32IReferenceSystemProgram8Test` | `rv32i-reference-program8` | Byte copy and checksum with `LBU`, `SB`, pointer increments. |
-| 9 | `RV32IReferenceSystemProgram9Test` | `rv32i-reference-program9` | Illegal instruction trap. |
-| 10 | `RV32IReferenceSystemProgram10Test` | `rv32i-reference-program10` | `ECALL` trap, separate from `EBREAK` halt. |
-| 11 | `RV32IReferenceSystemProgram11Test` | `rv32i-reference-program11` | Misaligned load trap. |
-| 12 | `RV32IReferenceSystemProgram12Test` | `rv32i-reference-program12` | Misaligned store trap. |
-| 13 | `RV32IReferenceSystemProgram13Test` | `rv32i-reference-program13` | Out-of-range load access fault. |
-| 14 | `RV32IReferenceSystemProgram14Test` | `rv32i-reference-program14` | Out-of-range store access fault. |
-| 15 | `RV32IReferenceSystemProgram15Test` | `rv32i-reference-program15` | Misaligned instruction address trap after `JALR`. |
-| 16 | `RV32IReferenceSystemProgram16Test` | `rv32i-reference-program16` | Out-of-range instruction fetch access fault after `JALR`. |
+| 1 | `RV32ISingleCycleSystemTest/program-01` | `rv32i-program1` | Existing loop, word loads, arithmetic, branch loop, word/byte/halfword stores. |
+| 2 | `RV32ISingleCycleSystemTest/program-02` | `rv32i-program2` | ALU R-type and I-type operations, shifts, signed/unsigned comparisons, x0 write ignore. |
+| 3 | `RV32ISingleCycleSystemTest/program-03` | `rv32i-program3` | Load/store widths, sign extension, zero extension, little-endian memory behavior. |
+| 4 | `RV32ISingleCycleSystemTest/program-04` | `rv32i-program4` | All branch predicates, both taken and not-taken paths. |
+| 5 | `RV32ISingleCycleSystemTest/program-05` | `rv32i-program5` | `JAL`, `JALR`, link-register writes, function-call shape. |
+| 6 | `RV32ISingleCycleSystemTest/program-06` | `rv32i-program6` | `LUI`, `AUIPC`, `FENCE`, PC-relative values. |
+| 7 | `RV32ISingleCycleSystemTest/program-07` | `rv32i-program7` | Fibonacci loop with repeated stores and register dependencies. |
+| 8 | `RV32ISingleCycleSystemTest/program-08` | `rv32i-program8` | Byte copy and checksum with `LBU`, `SB`, pointer increments. |
+| 9 | `RV32ISingleCycleSystemTest/program-09` | `rv32i-program9` | Illegal instruction trap. |
+| 10 | `RV32ISingleCycleSystemTest/program-10` | `rv32i-program10` | `ECALL` trap, separate from `EBREAK` halt. |
+| 11 | `RV32ISingleCycleSystemTest/program-11` | `rv32i-program11` | Misaligned load trap. |
+| 12 | `RV32ISingleCycleSystemTest/program-12` | `rv32i-program12` | Misaligned store trap. |
+| 13 | `RV32ISingleCycleSystemTest/program-13` | `rv32i-program13` | Out-of-range load access fault. |
+| 14 | `RV32ISingleCycleSystemTest/program-14` | `rv32i-program14` | Out-of-range store access fault. |
+| 15 | `RV32ISingleCycleSystemTest/program-15` | `rv32i-program15` | Misaligned instruction address trap after `JALR`. |
+| 16 | `RV32ISingleCycleSystemTest/program-16` | `rv32i-program16` | Out-of-range instruction fetch access fault after `JALR`. |
 
 ## Program 1: Sum Loop And Mixed Stores
 
 Test name:
 
 ```text
-RV32IReferenceSystemProgram1Test
+RV32ISingleCycleSystemTest/program-01
 ```
 
 Scenario:
 
 ```text
-rv32i-reference-program1
+rv32i-program1
 ```
 
 Focus:
@@ -150,13 +150,13 @@ halted = true
 Test name:
 
 ```text
-RV32IReferenceSystemProgram2Test
+RV32ISingleCycleSystemTest/program-02
 ```
 
 Scenario:
 
 ```text
-rv32i-reference-program2
+rv32i-program2
 ```
 
 Focus:
@@ -256,13 +256,13 @@ halted = true
 Test name:
 
 ```text
-RV32IReferenceSystemProgram3Test
+RV32ISingleCycleSystemTest/program-03
 ```
 
 Scenario:
 
 ```text
-rv32i-reference-program3
+rv32i-program3
 ```
 
 Focus:
@@ -341,13 +341,13 @@ halted = true
 Test name:
 
 ```text
-RV32IReferenceSystemProgram4Test
+RV32ISingleCycleSystemTest/program-04
 ```
 
 Scenario:
 
 ```text
-rv32i-reference-program4
+rv32i-program4
 ```
 
 Focus:
@@ -447,13 +447,13 @@ halted = true
 Test name:
 
 ```text
-RV32IReferenceSystemProgram5Test
+RV32ISingleCycleSystemTest/program-05
 ```
 
 Scenario:
 
 ```text
-rv32i-reference-program5
+rv32i-program5
 ```
 
 Focus:
@@ -519,13 +519,13 @@ halted = true
 Test name:
 
 ```text
-RV32IReferenceSystemProgram6Test
+RV32ISingleCycleSystemTest/program-06
 ```
 
 Scenario:
 
 ```text
-rv32i-reference-program6
+rv32i-program6
 ```
 
 Focus:
@@ -582,13 +582,13 @@ halted = true
 Test name:
 
 ```text
-RV32IReferenceSystemProgram7Test
+RV32ISingleCycleSystemTest/program-07
 ```
 
 Scenario:
 
 ```text
-rv32i-reference-program7
+rv32i-program7
 ```
 
 Focus:
@@ -647,13 +647,13 @@ halted = true
 Test name:
 
 ```text
-RV32IReferenceSystemProgram8Test
+RV32ISingleCycleSystemTest/program-08
 ```
 
 Scenario:
 
 ```text
-rv32i-reference-program8
+rv32i-program8
 ```
 
 Focus:
@@ -723,13 +723,13 @@ halted = true
 Test name:
 
 ```text
-RV32IReferenceSystemProgram9Test
+RV32ISingleCycleSystemTest/program-09
 ```
 
 Scenario:
 
 ```text
-rv32i-reference-program9
+rv32i-program9
 ```
 
 Focus:
@@ -770,13 +770,13 @@ halted = false
 Test name:
 
 ```text
-RV32IReferenceSystemProgram10Test
+RV32ISingleCycleSystemTest/program-10
 ```
 
 Scenario:
 
 ```text
-rv32i-reference-program10
+rv32i-program10
 ```
 
 Focus:
@@ -817,13 +817,13 @@ x2 = 0
 Test name:
 
 ```text
-RV32IReferenceSystemProgram11Test
+RV32ISingleCycleSystemTest/program-11
 ```
 
 Scenario:
 
 ```text
-rv32i-reference-program11
+rv32i-program11
 ```
 
 Focus:
@@ -865,13 +865,13 @@ halted = false
 Test name:
 
 ```text
-RV32IReferenceSystemProgram12Test
+RV32ISingleCycleSystemTest/program-12
 ```
 
 Scenario:
 
 ```text
-rv32i-reference-program12
+rv32i-program12
 ```
 
 Focus:
@@ -913,13 +913,13 @@ halted = false
 Test name:
 
 ```text
-RV32IReferenceSystemProgram13Test
+RV32ISingleCycleSystemTest/program-13
 ```
 
 Scenario:
 
 ```text
-rv32i-reference-program13
+rv32i-program13
 ```
 
 Focus:
@@ -961,13 +961,13 @@ halted = false
 Test name:
 
 ```text
-RV32IReferenceSystemProgram14Test
+RV32ISingleCycleSystemTest/program-14
 ```
 
 Scenario:
 
 ```text
-rv32i-reference-program14
+rv32i-program14
 ```
 
 Focus:
@@ -1008,13 +1008,13 @@ halted = false
 Test name:
 
 ```text
-RV32IReferenceSystemProgram15Test
+RV32ISingleCycleSystemTest/program-15
 ```
 
 Scenario:
 
 ```text
-rv32i-reference-program15
+rv32i-program15
 ```
 
 Focus:
@@ -1054,13 +1054,13 @@ halted = false
 Test name:
 
 ```text
-RV32IReferenceSystemProgram16Test
+RV32ISingleCycleSystemTest/program-16
 ```
 
 Scenario:
 
 ```text
-rv32i-reference-program16
+rv32i-program16
 ```
 
 Focus:

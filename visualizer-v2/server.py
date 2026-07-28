@@ -21,15 +21,19 @@ import re
 import socket
 import sys
 import threading
+import uuid
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from typing import Any
 from urllib.parse import parse_qs, unquote, urlparse
+
+from profile_store import ProfileStore, validate_overrides
 
 
 ROOT_DIR = Path(__file__).resolve().parents[1]
 APP_DIR = Path(__file__).resolve().parent
 STATIC_DIR = APP_DIR / "static"
 LAYOUT_PATH = APP_DIR / "layout.json"
+PROFILE_PATH = APP_DIR / "profiles.json"
 BACKEND_DIR = APP_DIR
 
 if str(BACKEND_DIR) not in sys.path:
@@ -76,11 +80,6 @@ SEQUENTIAL_INPUT_PIN_NAMES = {"D", "RST", "RESET", "SET", "CLR", "CLEAR", "EN", 
 NON_VISUALIZABLE_TESTS = {
     "WireTemplateTest",
     "RewireValidationTest",
-    "RV32IControlFlowUnitEquivalenceTest",
-    "RV32IDecodeControlUnitEquivalenceTest",
-    "RV32IRegisterFileEquivalenceTest",
-    "ALU32EquivalenceTest",
-    "RV32IExecutionControlStatusUnitEquivalenceTest",
 }
 PREFERRED_SCENARIO_ALIASES = {
     "FullAdderTest": ["full-adder", "fulladder"],
@@ -90,22 +89,16 @@ PREFERRED_SCENARIO_ALIASES = {
     "GatedDLatchTest": ["gated-d-latch", "gateddlatch", "d-latch"],
     "DFlipFlopTest": ["dff", "d-flip-flop"],
     "ClockGeneratorTest": ["clock"],
-    "MemoryBitBehavioralContractTest": ["behavioral-memory-bit", "behavioral-memorybit", "bmem-bit"],
-    "Memory64Kx32Test": ["behavioral-memory64kx32", "behavioral-memory-64kx32", "bmem64kx32"],
-    "MemoryBitStructuralContractTest": ["memory-bit", "memorybit"],
-    "Register32StructuralContractTest": ["register32", "register-32"],
-    "Register32CellArrayContractTest": ["register32-bit-cell-array"],
-    "Register32BehavioralContractTest": ["register32-behavioral"],
+    "MemoryBitTest": ["memory-bit", "memorybit"],
+    "Memory64Kx32Test": ["memory64kx32", "memory-64kx32"],
+    "Register32Test": ["register32", "register-32"],
     "RegisterFile4x32Test": ["register-file4x32", "register-file-4x32", "registerfile4x32", "rf4x32"],
-    "RegisterFile32x32StructuralContractTest": ["rv32i-register-file-structural", "register-file32x32", "register-file-32x32", "registerfile32x32", "rf32x32"],
-    "RegisterFile32x32BehavioralContractTest": ["rv32i-register-file-behavioral", "behavioral-register-file32x32", "behavioral-register-file-32x32", "behavioral-rf32x32", "brf32x32"],
-    "RegisterFile32x32BehavioralUnknownPolicyTest": ["behavioral-register-file32x32-unknown", "behavioral-rf32x32-unknown", "brf32x32-unknown"],
+    "RegisterFile32x32Test": ["rv32i-register-file", "register-file32x32", "register-file-32x32", "registerfile32x32", "rf32x32"],
     "Memory4x32Test": ["memory4x32", "memory-4x32", "mem4x32"],
     "Memory32x32Test": ["memory32x32", "memory-32x32", "mem32x32"],
-    "RV32ISingleCycleSystemSmokeTest": ["rv32i-structural-smoke"],
-    "RV32ISingleCycleSystemContractTest": ["rv32i-structural-contract"],
-    "ConstantValue1HighTest": ["constant1-high"],
-    "ConstantValue1LowTest": ["constant1-low"],
+    "ConstantValue1Test": ["constant1"],
+    "ConstantValue2Test": ["constant2"],
+    "ConstantValue4Test": ["constant4"],
     "ConstantValue32Test": ["constant32"],
     "Adder8Test": ["adder8", "8-bit-adder"],
     "ZeroDetect8Test": ["zero-detect8"],
@@ -115,35 +108,26 @@ PREFERRED_SCENARIO_ALIASES = {
     "Mux32to1_32bitTest": ["mux32to1-32bit"],
     "Decoder2to4Test": ["decoder2to4", "decoder-2to4", "decoder-2-4"],
     "Decoder5to32Test": ["decoder5to32", "decoder-5to32", "decoder-5-32"],
-    "RewireWidth5Test": ["rewire-width5"],
+    "RewireTest": ["rewire"],
     "Adder32Test": ["adder32"],
     "AddSub32Test": ["addsub32", "add-sub32"],
     "Logic32Test": ["logic32"],
     "ZeroDetect32Test": ["zero-detect32"],
     "Comparator32Test": ["comparator32"],
     "Shifter32Test": ["shifter32"],
-    "ALU32StructuralContractTest": ["alu32"],
-    "ALU32LowerLevelSliceTest": ["rv32i-alu-structural", "rv32i-alu32"],
-    "ALU32BehavioralContractTest": ["rv32i-alu-behavioral", "behavioral-alu32"],
-    "RV32IControlFlowStructuralContractTest": ["rv32i-control-flow-structural"],
-    "RV32IControlFlowBehavioralContractTest": ["rv32i-control-flow-behavioral"],
-    "RV32IDecodeControlStructuralContractTest": ["rv32i-decode-structural"],
-    "RV32IDecodeControlBehavioralContractTest": ["rv32i-decode-behavioral"],
-    "RV32IExecutionStatusStructuralContractTest": ["rv32i-status-structural"],
-    "RV32IExecutionStatusBehavioralContractTest": ["rv32i-status-behavioral"],
+    "ALU32Test": ["alu32", "rv32i-alu32"],
+    "ALU32RepresentativeSliceTest": ["alu32-slice"],
+    "RV32ISingleCycleCoreTest": ["rv32i-core"],
+    "RV32IControlFlowUnitTest": ["rv32i-control-flow"],
+    "RV32IDecodeControlUnitTest": ["rv32i-decode-control", "rv32i-decode"],
+    "RV32IExecutionControlStatusUnitTest": ["rv32i-execution-status", "rv32i-status"],
     "RV32IProgramLoaderTest": ["rv32i-program-loader", "rv32i-program", "program-loader"],
 }
 
 for _program_number in range(1, 17):
     PREFERRED_SCENARIO_ALIASES[
-        f"RV32ISingleCycleSystemProgram{_program_number}Test"
-    ] = [f"rv32i-structural-program{_program_number}"]
-    PREFERRED_SCENARIO_ALIASES[
-        f"RV32IBalancedSystemProgram{_program_number}Test"
-    ] = [f"rv32i-balanced-program{_program_number}"]
-    PREFERRED_SCENARIO_ALIASES[
-        f"RV32IReferenceSystemProgram{_program_number}Test"
-    ] = [f"rv32i-reference-program{_program_number}"]
+        f"RV32ISingleCycleSystemTest/program-{_program_number:02d}"
+    ] = [f"rv32i-program{_program_number}"]
 
 
 def _clone(value: Any) -> Any:
@@ -630,43 +614,108 @@ def _layered_graph_layout(
     inner_top = content_top + content_height * padding_y
     inner_height = content_height * (1 - 2 * padding_y)
     visual_column_count = len(visual_columns)
-    max_rows = max((len(nodes) for nodes in visual_columns), default=1)
-
-    if len(children) == 1:
-        rel_width = 0.8
-    else:
-        horizontal_cell = (1 - 2 * padding_x) / max(1, visual_column_count)
-        rel_width = horizontal_cell * LAYERED_HORIZONTAL_FILL_RATIO
-
+    horizontal_cell = (
+        (1 - 2 * padding_x) / max(1, visual_column_count)
+    )
+    nominal_width = (
+        0.8
+        if len(children) == 1
+        else horizontal_cell * LAYERED_HORIZONTAL_FILL_RATIO
+    )
+    column_widths: list[float] = []
     for nodes in visual_columns:
-        max_aspect = max(child_aspects[node] for node in nodes)
-        rel_width = min(
-            rel_width,
-            (inner_height / max(1, len(nodes))) * parent_aspect / max(max_aspect, 0.01) * LAYERED_VERTICAL_FILL_RATIO,
+        maximum_height_per_width = max(
+            child_aspects[node] / max(parent_aspect, 0.01)
+            + pin_size_fraction
+            for node in nodes
         )
+        rel_width = min(
+            nominal_width,
+            (inner_height / max(1, len(nodes)))
+            * LAYERED_VERTICAL_FILL_RATIO
+            / max(maximum_height_per_width, 0.01),
+        )
+        # Preserve the vertical and horizontal fit calculated above. A
+        # visible-size floor can make tall children overlap in dense columns;
+        # the client already handles sub-pixel components conservatively and
+        # reveals them on zoom.
+        rel_width = max(
+            MIN_RELATIVE_CHILD_WIDTH,
+            min(0.8, rel_width),
+        )
+        if len(nodes) >= 10:
+            rel_width = min(
+                rel_width,
+                LAYERED_DENSE_ROW_WIDTH_CAP,
+            )
+        column_widths.append(rel_width)
 
-    # Preserve the vertical and horizontal fit calculated above. A visible-size
-    # floor can make tall children overlap in dense columns; the client already
-    # handles sub-pixel components conservatively and reveals them on zoom.
-    rel_width = max(MIN_RELATIVE_CHILD_WIDTH, min(0.8, rel_width))
-    if max_rows >= 10:
-        rel_width = min(rel_width, LAYERED_DENSE_ROW_WIDTH_CAP)
     stub_ratio = _stub_margin_ratio(boundary_fraction, pin_size_fraction)
-    rel_width = min(
-        rel_width,
-        _max_width_with_stubs(boundary_fraction, stub_ratio),
-        _max_column_width_with_stubs(visual_column_count, boundary_fraction, stub_ratio),
+    maximum_width = _max_width_with_stubs(
+        boundary_fraction,
+        stub_ratio,
+    )
+    column_widths = [
+        min(width, maximum_width)
+        for width in column_widths
+    ]
+
+    available_width = max(0.0, 1 - 2 * boundary_fraction)
+    outer_width_factor = 1 + 2 * stub_ratio
+    if visual_column_count > 1:
+        # Keep a predictable portion of the parent available as wire gutters.
+        # If the preferred heterogeneous column widths do not fit, scale them
+        # together while retaining their useful relative sizes.
+        minimum_total_gutter = (
+            available_width
+            * max(0.0, 1 - LAYERED_HORIZONTAL_FILL_RATIO)
+        )
+        body_budget = max(
+            0.0,
+            available_width - minimum_total_gutter,
+        ) / max(outer_width_factor, 0.01)
+        preferred_body_width = sum(column_widths)
+        if preferred_body_width > body_budget:
+            scale = body_budget / max(
+                preferred_body_width,
+                MIN_RELATIVE_CHILD_WIDTH,
+            )
+            column_widths = [
+                max(MIN_RELATIVE_CHILD_WIDTH, width * scale)
+                for width in column_widths
+            ]
+
+    total_outer_width = sum(
+        width * outer_width_factor
+        for width in column_widths
+    )
+    inter_column_gap = (
+        max(0.0, available_width - total_outer_width)
+        / max(1, visual_column_count - 1)
+        if visual_column_count > 1
+        else 0.0
     )
 
-    left_center = boundary_fraction + stub_ratio * rel_width + rel_width / 2
-    right_center = 1 - boundary_fraction - stub_ratio * rel_width - rel_width / 2
-    denominator = max(1, visual_column_count - 1)
+    column_centers: list[float] = []
+    if visual_column_count == 1:
+        column_centers.append(0.5)
+    else:
+        outer_cursor = boundary_fraction
+        for rel_width in column_widths:
+            column_centers.append(
+                outer_cursor
+                + stub_ratio * rel_width
+                + rel_width / 2
+            )
+            outer_cursor += (
+                rel_width * outer_width_factor
+                + inter_column_gap
+            )
+
     result: dict[str, dict[str, Any]] = {}
     for column_index, nodes in enumerate(visual_columns):
-        if visual_column_count == 1:
-            x_center = 0.5
-        else:
-            x_center = left_center + (right_center - left_center) * (column_index / denominator)
+        rel_width = column_widths[column_index]
+        x_center = column_centers[column_index]
         for row, node in enumerate(nodes):
             child_aspect = child_aspects[node]
             child_height_fraction = rel_width * child_aspect / max(parent_aspect, 0.01)
@@ -918,23 +967,31 @@ def scenario_layout_key(scenario_key: str, root: Any) -> str:
 
 def visualizable_test_names() -> list[str]:
     return [
-        class_name
-        for class_name in circuit_backend.get_registered_test_names()
-        if class_name not in NON_VISUALIZABLE_TESTS and hasattr(circuit_backend, class_name)
+        descriptor["name"]
+        for descriptor
+        in circuit_backend.get_registered_test_descriptors()
+        if descriptor["visualizable"]
+        and descriptor["name"] not in NON_VISUALIZABLE_TESTS
     ]
 
 
-def _scenario_classes() -> dict[str, type]:
+def _scenario_classes() -> dict[str, Any]:
     # Expose registry tests that build a reusable topology during setup_circuit().
     # The excluded tests intentionally verify API/validation behavior without a
     # meaningful visual root.
 
-    scenarios: dict[str, type] = {}
+    scenarios: dict[str, Any] = {}
     for class_name in visualizable_test_names():
-        scenario_class = getattr(circuit_backend, class_name)
+        def scenario_factory(
+            registered_name: str = class_name,
+        ) -> Any:
+            return circuit_backend.create_test_by_name(
+                registered_name
+            )
+
         aliases = {scenario_default_alias(class_name), class_name.lower(), *PREFERRED_SCENARIO_ALIASES.get(class_name, [])}
         for alias in aliases:
-            scenarios[alias] = scenario_class
+            scenarios[alias] = scenario_factory
     return scenarios
 
 
@@ -962,12 +1019,40 @@ DEFAULT_SCENARIO = "adder8" if "adder8" in SCENARIOS else SCENARIO_OPTIONS[0]["k
 
 
 class CircuitSession:
-    def __init__(self, scenario_key: str, layout_manager: LayoutManager):
+    def __init__(
+        self,
+        scenario_key: str,
+        layout_manager: LayoutManager,
+        *,
+        profile_revision: int = 0,
+        profile_overrides: dict[str, str] | None = None,
+    ):
         self.scenario_key = normalize_scenario(scenario_key)
         self.layout_manager = layout_manager
-        self.lock = threading.Lock()
+        self.lock = threading.RLock()
+        self.session_id = uuid.uuid4().hex
+        self.profile_revision = profile_revision
+        self.profile_overrides = validate_overrides(
+            profile_overrides or {}
+        )
 
         self.test_scenario = SCENARIOS[self.scenario_key]()
+        self.profile_editable = bool(
+            self.test_scenario.supports_build_profile()
+        )
+        if self.profile_overrides:
+            if not self.profile_editable:
+                raise ValueError(
+                    f"Scenario '{self.scenario_key}' does not accept "
+                    "component fidelity changes"
+                )
+            base_profile = self.test_scenario.get_build_profile()
+            profile = circuit_backend.profile_with_exact_overrides(
+                base_profile,
+                self.profile_overrides,
+                f"visualizer-{self.scenario_key}",
+            )
+            self.test_scenario.set_build_profile(profile)
         self.test_scenario.setup_circuit()
         self.root = self.test_scenario.get_root()
         if not self.root:
@@ -976,8 +1061,9 @@ class CircuitSession:
         self.layout_key = scenario_layout_key(self.scenario_key, self.root)
 
         self.simulator = self.test_scenario.get_simulator()
-        self.test_scenario.schedule_initial_events(0)
-        self.simulator.run_and_record(self.test_scenario.get_run_duration())
+        if not self.test_scenario.is_simulation_precomputed():
+            self.test_scenario.schedule_initial_events(0)
+            self.simulator.run_and_record(self.test_scenario.get_run_duration())
         checkpoint_metadata = self._checkpoint_metadata()
         checkpoint_times = [checkpoint["time"] for checkpoint in checkpoint_metadata]
         self.timestamps = sorted({int(time) for time in self.simulator.get_unique_timestamps()} | set(checkpoint_times))
@@ -997,6 +1083,12 @@ class CircuitSession:
         self.components: list[dict[str, Any]] = []
         self.pins: list[dict[str, Any]] = []
         self.wires: list[dict[str, Any]] = []
+        self.pin_records_by_component: dict[
+            str, list[dict[str, Any]]
+        ] = defaultdict(list)
+        self.wire_records_by_owner: dict[
+            str, list[dict[str, Any]]
+        ] = defaultdict(list)
         self.component_handles: dict[str, Any] = {}
         self.component_depths: dict[str, int] = {}
         self.pin_handles: dict[str, Any] = {}
@@ -1053,7 +1145,11 @@ class CircuitSession:
         return aspect_ratio, layout.get("color", DEFAULT_COLOR)
 
     def _build_topology(self) -> None:
-        def walk(component: Any, parent_id: str | None, depth: int) -> None:
+        def walk(
+            component: Any,
+            parent_index: int | None,
+            depth: int,
+        ) -> None:
             component_id = component.get_id()
             component_type = component.get_type_name()
             component_layout_type = _component_layout_type(component)
@@ -1071,10 +1167,8 @@ class CircuitSession:
                 "id": component_id,
                 "name": component.get_name(),
                 "type": component_type,
-                "layoutType": component_layout_type,
-                "parentId": parent_id,
+                "parentIndex": parent_index,
                 "depth": depth,
-                "childIds": [child.get_id() for child in children],
                 "aspectRatio": aspect_ratio,
                 "minAspectRatio": self.layout_manager.effective_minimum_aspect_for_component(
                     component,
@@ -1082,15 +1176,23 @@ class CircuitSession:
                     is_root=depth == 0,
                 ),
                 "color": color,
-                "contractId": component.get_contract_id(),
-                "contractVersion": component.get_contract_version(),
                 "implementationId": component.get_implementation_id(),
                 "fidelity": component.get_selected_fidelity(),
-                "terminalPrimitive": component.is_terminal_primitive(),
-                "referenceOnly": component.is_reference_only(),
-                "selectionReason": component.get_selection_reason(),
-                "profileFingerprint": component.get_profile_fingerprint(),
             }
+            if component_layout_type != component_type:
+                component_data["layoutType"] = component_layout_type
+            available_fidelities = component.get_available_fidelities()
+            if available_fidelities:
+                component_data["availableFidelities"] = (
+                    available_fidelities
+                )
+            if component.is_profile_selectable():
+                component_data["profileSelectable"] = True
+            profile_fingerprint = component.get_profile_fingerprint()
+            if profile_fingerprint != "explicit":
+                component_data["profileFingerprint"] = (
+                    profile_fingerprint
+                )
             if component_type == "ConstantValue":
                 try:
                     component_data["constantValue"] = int(component.get_constant_value())
@@ -1121,18 +1223,27 @@ class CircuitSession:
                     }
                 except (AttributeError, RuntimeError, TypeError, ValueError):
                     pass
+            component_index = len(self.components)
             self.components.append(component_data)
 
             if hasattr(component, "get_input_pins"):
-                for pin_name, pin in component.get_input_pins().items():
+                input_pins = sorted(
+                    component.get_input_pins().items(),
+                    key=lambda item: _natural_key(item[0]),
+                )
+                output_pins = sorted(
+                    component.get_output_pins().items(),
+                    key=lambda item: _natural_key(item[0]),
+                )
+                for pin_name, pin in input_pins:
                     self._add_pin(component_id, pin_name, pin, "input")
-                for pin_name, pin in component.get_output_pins().items():
+                for pin_name, pin in output_pins:
                     self._add_pin(component_id, pin_name, pin, "output")
 
             self._add_wires(component)
             self._ensure_child_defaults(component, children, depth)
             for child in children:
-                walk(child, component_id, depth + 1)
+                walk(child, component_index, depth + 1)
 
         walk(self.root, None, 0)
 
@@ -1164,16 +1275,16 @@ class CircuitSession:
         self.pin_handles[pin_id] = pin
         self.pin_handles_by_index.append(pin)
         self.pin_handles_by_component_name[(component_id, pin_name)] = pin
-        self.pins.append(
-            {
-                "id": pin_id,
-                "componentId": component_id,
-                "name": pin_name,
-                "type": pin_type,
-                "width": _signal_width(pin),
-                "stateIndex": state_index,
-            }
-        )
+        record = {
+            "id": pin_id,
+            "componentId": component_id,
+            "name": pin_name,
+            "type": pin_type,
+            "width": _signal_width(pin),
+            "stateIndex": state_index,
+        }
+        self.pins.append(record)
+        self.pin_records_by_component[component_id].append(record)
 
     def _add_wires(self, component: Any) -> None:
         for wire in component.get_wires():
@@ -1184,17 +1295,74 @@ class CircuitSession:
             source_pin = wire.get_source_pin()
             source_pin_id = source_pin.get_id() if source_pin else None
             sink_pin_ids = [pin.get_id() for pin in wire.get_sink_pins()]
-            self.wires.append(
-                {
-                    "id": wire_id,
-                    "name": wire.get_name(),
-                    "ownerId": component.get_id(),
-                    "sourcePinId": source_pin_id,
-                    "sinkPinIds": sink_pin_ids,
-                    "width": _signal_width(wire),
-                    "stateIndex": state_index,
-                }
+            record = {
+                "id": wire_id,
+                "name": wire.get_name(),
+                "ownerId": component.get_id(),
+                "sourcePinId": source_pin_id,
+                "sinkPinIds": sink_pin_ids,
+                "width": _signal_width(wire),
+                "stateIndex": state_index,
+            }
+            self.wires.append(record)
+            self.wire_records_by_owner[
+                component.get_id()
+            ].append(record)
+
+    def topology_slice(
+        self,
+        owner_ids: list[str],
+    ) -> dict[str, Any]:
+        if not isinstance(owner_ids, list) or not owner_ids:
+            raise ValueError(
+                "Topology scope request requires at least one owner id"
             )
+        if len(owner_ids) > 512:
+            raise ValueError(
+                "Topology scope request may contain at most 512 owners"
+            )
+
+        scope_ids: list[str] = []
+        pin_component_ids: set[str] = set()
+        seen_scopes: set[str] = set()
+        for owner_id in owner_ids:
+            if not isinstance(owner_id, str):
+                raise ValueError(
+                    "Topology scope owner ids must be strings"
+                )
+            if owner_id in seen_scopes:
+                continue
+            owner = self.component_handles.get(owner_id)
+            if owner is None:
+                raise ValueError(
+                    f"Unknown topology scope owner '{owner_id}'"
+                )
+            seen_scopes.add(owner_id)
+            scope_ids.append(owner_id)
+            pin_component_ids.add(owner_id)
+            pin_component_ids.update(
+                child.get_id()
+                for child in owner.get_children()
+            )
+
+        pins = [
+            record
+            for component_id in pin_component_ids
+            for record in self.pin_records_by_component.get(
+                component_id, ()
+            )
+        ]
+        wires = [
+            record
+            for owner_id in scope_ids
+            for record in self.wire_records_by_owner.get(owner_id, ())
+        ]
+        return {
+            "sessionId": self.session_id,
+            "scopeIds": scope_ids,
+            "pins": pins,
+            "wires": wires,
+        }
 
     def _default_child_layouts(
         self,
@@ -1307,20 +1475,32 @@ class CircuitSession:
         }
 
     def topology_response(self) -> dict[str, Any]:
+        initial_topology = self.topology_slice(
+            [self.root.get_id()]
+        )
         return {
+            "sessionId": self.session_id,
             "scenario": self.scenario_key,
             "layoutKey": self.layout_key,
             "profileFingerprint": self.profile_fingerprint,
             "rootId": self.root.get_id(),
             "rootType": self.root.get_type_name(),
+            "topologyEncoding": "progressive-v1",
             "components": self.components,
-            "pins": self.pins,
-            "wires": self.wires,
+            "pins": initial_topology["pins"],
+            "wires": initial_topology["wires"],
+            "loadedScopeIds": initial_topology["scopeIds"],
             "timestamps": self.timestamps,
             "checkpoints": self.checkpoints,
             "layout": self.layout_manager.to_jsonable(),
             "state": self.state_at_index(0),
             "stateEncoding": "indexed-v1",
+            "profile": {
+                "editable": self.profile_editable,
+                "revision": self.profile_revision,
+                "exactOverrides": self.profile_overrides,
+                "fingerprint": self.profile_fingerprint,
+            },
             "stats": {
                 "componentCount": len(self.components),
                 "pinCount": len(self.pins),
@@ -1424,7 +1604,11 @@ class CircuitSession:
         read_active = ports.get("READ_EN", {}).get("value") == "1"
         write_active = ports.get("WRITE_EN", {}).get("value") == "1"
         memory_role = "data" if component_id.endswith(".DATA_MEMORY") or component_id.endswith("DATA_MEMORY") else "generic"
-        if component_id.endswith(".INSTRUCTION_MEMORY") or component_id.endswith("INSTRUCTION_MEMORY"):
+        if (
+            self.scenario_key == "rv32i-program-loader"
+            or component_id.endswith(".INSTRUCTION_MEMORY")
+            or component_id.endswith("INSTRUCTION_MEMORY")
+        ):
             memory_role = "instruction"
         window_active = active_base is not None and (read_active or write_active)
         if window_active:
@@ -1483,37 +1667,133 @@ class CircuitSession:
 class SessionStore:
     def __init__(self) -> None:
         self.layout_manager = LayoutManager(LAYOUT_PATH)
+        self.profile_store = ProfileStore(PROFILE_PATH)
         try:
             configured_limit = int(os.environ.get("VISUALIZER_V2_MAX_SESSIONS", "2"))
         except ValueError:
             configured_limit = 2
         self.max_sessions = max(1, configured_limit)
         self.sessions: OrderedDict[str, CircuitSession] = OrderedDict()
-        self.lock = threading.Lock()
+        self.active_sessions: dict[str, str] = {}
+        self.lock = threading.RLock()
 
     def _reload_layout_if_changed(self) -> None:
         current_mtime = self.layout_manager._current_mtime()
         if current_mtime != self.layout_manager.loaded_mtime:
             self.layout_manager = LayoutManager(LAYOUT_PATH)
             self.sessions.clear()
+            self.active_sessions.clear()
+
+    def _remember(self, session: CircuitSession) -> CircuitSession:
+        self.sessions[session.session_id] = session
+        self.active_sessions[session.scenario_key] = session.session_id
+        self.sessions.move_to_end(session.session_id)
+        while len(self.sessions) > self.max_sessions:
+            expired_id, _ = self.sessions.popitem(last=False)
+            for scenario, session_id in list(
+                self.active_sessions.items()
+            ):
+                if session_id == expired_id:
+                    del self.active_sessions[scenario]
+        return session
+
+    def _new_for_saved_profile(
+        self,
+        scenario_key: str,
+    ) -> CircuitSession:
+        revision, overrides = self.profile_store.get(scenario_key)
+        return self._remember(CircuitSession(
+            scenario_key,
+            self.layout_manager,
+            profile_revision=revision,
+            profile_overrides=overrides,
+        ))
 
     def get(self, scenario: str) -> CircuitSession:
         scenario_key = normalize_scenario(scenario)
         with self.lock:
             self._reload_layout_if_changed()
-            if scenario_key not in self.sessions:
-                self.sessions[scenario_key] = CircuitSession(scenario_key, self.layout_manager)
-                while len(self.sessions) > self.max_sessions:
-                    self.sessions.popitem(last=False)
-            else:
-                self.sessions.move_to_end(scenario_key)
-            return self.sessions[scenario_key]
+            session_id = self.active_sessions.get(scenario_key)
+            session = self.sessions.get(session_id or "")
+            revision, overrides = self.profile_store.get(scenario_key)
+            if (
+                session is None
+                or session.profile_revision != revision
+                or session.profile_overrides != overrides
+            ):
+                return self._new_for_saved_profile(scenario_key)
+            self.sessions.move_to_end(session.session_id)
+            return session
+
+    def get_by_id(self, session_id: str) -> CircuitSession:
+        with self.lock:
+            session = self.sessions.get(session_id)
+            if session is None:
+                raise ValueError(
+                    "Simulation session expired; apply or reload the scenario"
+                )
+            self.sessions.move_to_end(session_id)
+            return session
+
+    def apply_profile(
+        self,
+        scenario: str,
+        expected_revision: int,
+        overrides: dict[str, str],
+    ) -> CircuitSession:
+        scenario_key = normalize_scenario(scenario)
+        normalized = validate_overrides(overrides)
+        with self.lock:
+            self._reload_layout_if_changed()
+            current = self.get(scenario_key)
+            current_revision, saved = self.profile_store.get(
+                scenario_key
+            )
+            if expected_revision != current_revision:
+                raise ValueError(
+                    "Profile changed since it was loaded; reload the "
+                    "scenario before applying again"
+                )
+            if not current.profile_editable:
+                raise ValueError(
+                    f"Scenario '{scenario_key}' does not accept "
+                    "component fidelity changes"
+                )
+
+            for path, fidelity in normalized.items():
+                if saved.get(path) == fidelity:
+                    continue
+                component = current.component_handles.get(path)
+                if component is None:
+                    raise ValueError(
+                        f"Cannot add an override for unknown component "
+                        f"'{path}'"
+                    )
+                available = component.get_available_fidelities()
+                if fidelity not in available:
+                    raise ValueError(
+                        f"Component '{path}' does not provide "
+                        f"{fidelity} fidelity"
+                    )
+
+            candidate = CircuitSession(
+                scenario_key,
+                self.layout_manager,
+                profile_revision=current_revision + 1,
+                profile_overrides=normalized,
+            )
+            next_revision = self.profile_store.replace(
+                scenario_key,
+                current_revision,
+                normalized,
+            )
+            candidate.profile_revision = next_revision
+            return self._remember(candidate)
 
     def replace_layout(self, layout: dict[str, Any]) -> None:
         with self.lock:
             self.layout_manager.replace_from_client(layout)
             self.layout_manager.save()
-            self.sessions.clear()
 
     def default_child_layouts(
         self,
@@ -1525,13 +1805,9 @@ class SessionStore:
         scenario_key = normalize_scenario(scenario)
         with self.lock:
             self._reload_layout_if_changed()
-            if scenario_key not in self.sessions:
-                self.sessions[scenario_key] = CircuitSession(scenario_key, self.layout_manager)
-                while len(self.sessions) > self.max_sessions:
-                    self.sessions.popitem(last=False)
-            else:
-                self.sessions.move_to_end(scenario_key)
-            return self.sessions[scenario_key].default_child_layouts(parent_id, child_name, layout)
+            session = self.get(scenario_key)
+            return session.default_child_layouts(
+                parent_id, child_name, layout)
 
 
 STORE = SessionStore()
@@ -1562,7 +1838,13 @@ def json_response(handler: SimpleHTTPRequestHandler, payload: Any, status: int =
     if content_encoding:
         handler.send_header("Content-Encoding", content_encoding)
     handler.end_headers()
-    handler.wfile.write(encoded)
+    try:
+        handler.wfile.write(encoded)
+    except (BrokenPipeError, ConnectionResetError):
+        # Browsers commonly cancel an obsolete large-circuit request when
+        # navigating to another scenario. The session remains valid and there
+        # is no useful error response to send after the peer has disconnected.
+        return
 
 
 def error_response(handler: SimpleHTTPRequestHandler, message: str, status: int = 400) -> None:
@@ -1609,16 +1891,37 @@ class VisualizerHandler(SimpleHTTPRequestHandler):
                 scenario = query.get("scenario", [DEFAULT_SCENARIO])[0]
                 json_response(self, STORE.get(scenario).topology_response())
             elif path == "/api/state":
-                scenario = query.get("scenario", [DEFAULT_SCENARIO])[0]
                 index = int(query.get("index", [0])[0])
-                json_response(self, STORE.get(scenario).state_at_index(index))
+                session_id = query.get("session", [""])[0]
+                session = (
+                    STORE.get_by_id(session_id)
+                    if session_id
+                    else STORE.get(
+                        query.get(
+                            "scenario",
+                            [DEFAULT_SCENARIO],
+                        )[0])
+                )
+                json_response(self, session.state_at_index(index))
             elif path == "/api/component-state":
-                scenario = query.get("scenario", [DEFAULT_SCENARIO])[0]
                 index = int(query.get("index", [0])[0])
                 component_id = query.get("componentId", [""])[0]
                 if not component_id:
                     raise ValueError("GET /api/component-state requires componentId")
-                json_response(self, STORE.get(scenario).component_state_at_index(index, component_id))
+                session_id = query.get("session", [""])[0]
+                session = (
+                    STORE.get_by_id(session_id)
+                    if session_id
+                    else STORE.get(
+                        query.get(
+                            "scenario",
+                            [DEFAULT_SCENARIO],
+                        )[0])
+                )
+                json_response(
+                    self,
+                    session.component_state_at_index(
+                        index, component_id))
             else:
                 self._serve_static(path, raw_path)
         except Exception as exc:
@@ -1627,7 +1930,12 @@ class VisualizerHandler(SimpleHTTPRequestHandler):
     def do_POST(self) -> None:  # noqa: N802 - http.server API
         parsed = urlparse(self.path)
         path = self._normalize_path(parsed.path)
-        if path not in {"/api/layout", "/api/layout/defaults"}:
+        if path not in {
+            "/api/layout",
+            "/api/layout/defaults",
+            "/api/circuit/apply",
+            "/api/topology",
+        }:
             error_response(self, "Unknown POST endpoint", 404)
             return
 
@@ -1635,6 +1943,44 @@ class VisualizerHandler(SimpleHTTPRequestHandler):
             length = int(self.headers.get("Content-Length", "0"))
             body = self.rfile.read(length).decode("utf-8")
             payload = json.loads(body or "{}")
+            if path == "/api/topology":
+                session_id = payload.get("session")
+                owner_ids = payload.get("ownerIds")
+                if not isinstance(session_id, str) or not session_id:
+                    raise ValueError(
+                        "POST /api/topology requires a session id"
+                    )
+                if not isinstance(owner_ids, list):
+                    raise ValueError(
+                        "POST /api/topology requires an ownerIds array"
+                    )
+                json_response(
+                    self,
+                    STORE.get_by_id(session_id).topology_slice(
+                        owner_ids
+                    ),
+                )
+                return
+            if path == "/api/circuit/apply":
+                scenario = payload.get("scenario")
+                revision = payload.get("revision")
+                overrides = payload.get("exactOverrides")
+                if not isinstance(scenario, str):
+                    raise ValueError(
+                        "POST /api/circuit/apply requires scenario")
+                if not isinstance(revision, int) or revision < 0:
+                    raise ValueError(
+                        "POST /api/circuit/apply requires a "
+                        "non-negative revision")
+                session = STORE.apply_profile(
+                    scenario,
+                    revision,
+                    validate_overrides(overrides),
+                )
+                json_response(
+                    self,
+                    session.topology_response())
+                return
             if path == "/api/layout":
                 layout = payload.get("layout")
                 if not isinstance(layout, dict):
@@ -1723,6 +2069,7 @@ def main() -> None:
     server = ThreadingHTTPServer((args.host, port), VisualizerHandler)
     print(f"CircuitSim visualizer v2 running at http://{args.host}:{port}/")
     print(f"Layout file: {LAYOUT_PATH}")
+    print(f"Profile file: {PROFILE_PATH}")
     server.serve_forever()
 
 

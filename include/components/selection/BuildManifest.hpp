@@ -13,7 +13,6 @@ struct BuildManifestEntry {
     size_t depth = 0;
     ParameterMap parameters;
     ResolvedSelection selection;
-    EffectiveFidelity effective_fidelity = EffectiveFidelity::Unspecified;
 };
 
 class BuildManifest {
@@ -21,7 +20,6 @@ public:
     BuildManifest(std::string profile_name, std::string profile_fingerprint);
 
     void record(BuildManifestEntry entry);
-    void finalizeEffectiveFidelities();
 
     std::vector<BuildManifestEntry> entries() const;
     const std::string& profileName() const;

@@ -21,7 +21,6 @@ struct ProfileSelector {
     bool matches(const std::string& path, size_t depth,
                  const std::string& requested_contract,
                  const ParameterMap& requested_parameters) const;
-    size_t specificity() const;
     std::string serialize() const;
 
     static ProfileSelector any();
@@ -36,7 +35,6 @@ struct ProfileSelector {
 struct ProfileRule {
     ProfileSelector selector;
     Fidelity fidelity = Fidelity::Structural;
-    int priority = 0;
     std::string reason;
 
     std::string serialize() const;
@@ -51,9 +49,7 @@ struct ProfileDecision {
 class BuildProfile {
 public:
     BuildProfile(std::string name, std::vector<ProfileRule> rules,
-                 UnavailableFidelityPolicy unavailable_policy,
-                 bool allow_reference = false,
-                 std::string generator_descriptor = "handwritten");
+                 UnavailableFidelityPolicy unavailable_policy);
 
     ProfileDecision decide(const std::string& path, size_t depth,
                            const std::string& contract_id,
@@ -62,8 +58,6 @@ public:
     const std::string& name() const;
     const std::vector<ProfileRule>& rules() const;
     UnavailableFidelityPolicy unavailablePolicy() const;
-    bool allowReference() const;
-    const std::string& generatorDescriptor() const;
     std::string serialize() const;
     std::string fingerprint() const;
 
@@ -71,8 +65,6 @@ private:
     std::string name_;
     std::vector<ProfileRule> rules_;
     UnavailableFidelityPolicy unavailable_policy_;
-    bool allow_reference_ = false;
-    std::string generator_descriptor_;
 };
 
 class BuildProfileBuilder {
@@ -81,20 +73,26 @@ public:
 
     BuildProfileBuilder& addRule(ProfileRule rule);
     BuildProfileBuilder& unavailablePolicy(UnavailableFidelityPolicy policy);
-    BuildProfileBuilder& allowReference(bool allow = true);
-    BuildProfileBuilder& descriptor(std::string descriptor);
     BuildProfile build() const;
 
 private:
     std::string name_;
     std::vector<ProfileRule> rules_;
     UnavailableFidelityPolicy unavailable_policy_ = UnavailableFidelityPolicy::Error;
-    bool allow_reference_ = false;
-    std::string descriptor_ = "handwritten";
 };
 
 ProfileRule preferFidelity(Fidelity fidelity,
                            ProfileSelector selector = ProfileSelector::any(),
                            std::string reason = {});
+BuildProfile withProfileOverrides(
+    BuildProfile base,
+    std::vector<ProfileRule> overrides,
+    std::string profile_name = {});
+BuildProfile withExactFidelity(
+    BuildProfile base,
+    std::string path,
+    Fidelity fidelity,
+    std::string profile_name = {});
+BuildProfile canonicalDefaultProfile();
 
 } // namespace circuit
