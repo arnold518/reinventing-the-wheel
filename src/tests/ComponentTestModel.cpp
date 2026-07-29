@@ -208,6 +208,13 @@ ActionScenario actionScenarioFromRows(
         return pin->getWidth();
     };
     const auto convert = [](const TestValue& value, size_t width) {
+        if (value.hasLogicVector()) {
+            if (value.values.size() != width) {
+                throw std::runtime_error(
+                    "Logic-vector TestValue width does not match pin width");
+            }
+            return value.values;
+        }
         if (value.multi) {
             return logicBits(width, value.numeric);
         }

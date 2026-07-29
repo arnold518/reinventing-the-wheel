@@ -60,6 +60,21 @@ std::map<std::string, TestValue> indexedBits(
     return result;
 }
 
+LogicVector fourStatePattern(size_t width, size_t offset) {
+    constexpr std::array<LogicValue, 4> Values{
+        LogicValue::LOW,
+        LogicValue::HIGH,
+        LogicValue::UNKNOWN,
+        LogicValue::HIGH_Z,
+    };
+    LogicVector result;
+    result.reserve(width);
+    for (size_t index = 0; index < width; ++index) {
+        result.push_back(Values[(index + offset) % Values.size()]);
+    }
+    return result;
+}
+
 ParameterMap rewireParameters(
     const std::vector<Rewire::WireSpec>& inputs,
     const std::vector<Rewire::WireSpec>& outputs,
@@ -190,6 +205,22 @@ ComponentTestSpec rewireSpec() {
             {{{"OP", bits(0x15)}}, {{"COPY", bits(0x15)}}},
             {{{"OP", bits(0x1f)}}, {{"COPY", bits(0x1f)}}},
         }));
+    scenarios.push_back(rowScenario(
+        "four-state-copy",
+        rewireParameters(
+            {{"SOURCE", 4}},
+            {{"COPY", 4}},
+            identity_mapping("SOURCE", 0, 4, "COPY", 0)),
+        {
+            {
+                {{"SOURCE", TestValue(fourStatePattern(4, 0))}},
+                {{"COPY", TestValue(fourStatePattern(4, 0))}},
+            },
+            {
+                {{"SOURCE", TestValue(fourStatePattern(4, 2))}},
+                {{"COPY", TestValue(fourStatePattern(4, 2))}},
+            },
+        }));
 
     auto unknown_parameters = rewireParameters(
         {{"NIBBLE", 4}},
@@ -252,6 +283,23 @@ ComponentTestSpec splitterSpec(
             "Split every input bit onto its indexed output.",
         });
     }
+    for (const auto offset : {size_t{2}, size_t{3}}) {
+        const auto input = fourStatePattern(width, offset);
+        circuit::test::NamedValues outputs;
+        for (size_t bit_index = 0; bit_index < width; ++bit_index) {
+            outputs.emplace(
+                "OUT_" + std::to_string(bit_index),
+                logicBit(input[bit_index]));
+        }
+        scenario.actions.push_back({
+            offset == 2 ? "four-state-unknown" : "four-state-high-z",
+            CheckpointKind::Settled,
+            {{"IN", input}},
+            std::move(outputs),
+            true,
+            "Splitting preserves LOW, HIGH, UNKNOWN, and HIGH_Z exactly.",
+        });
+    }
     return {
         std::move(test_id),
         std::move(contract_id),
@@ -297,6 +345,23 @@ ComponentTestSpec joinerSpec(
             {{"OUT", logicBits(width, value)}},
             true,
             "Join every indexed input into the output bus.",
+        });
+    }
+    for (const auto offset : {size_t{2}, size_t{3}}) {
+        const auto expected = fourStatePattern(width, offset);
+        circuit::test::NamedValues inputs;
+        for (size_t bit_index = 0; bit_index < width; ++bit_index) {
+            inputs.emplace(
+                "IN_" + std::to_string(bit_index),
+                logicBit(expected[bit_index]));
+        }
+        scenario.actions.push_back({
+            offset == 2 ? "four-state-unknown" : "four-state-high-z",
+            CheckpointKind::Settled,
+            std::move(inputs),
+            {{"OUT", expected}},
+            true,
+            "Joining preserves LOW, HIGH, UNKNOWN, and HIGH_Z exactly.",
         });
     }
     return {

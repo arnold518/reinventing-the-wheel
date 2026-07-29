@@ -619,7 +619,7 @@ void registerStorage(ComponentCatalog& catalog) {
     catalog.registerContract({
         register_file, 1, "RV32I 32x32 register file",
         schemaFor(families::RegisterFile32x32), {"register-state-view"},
-        "known-binary", "clock-boundary"});
+        "four-state", "clock-boundary"});
     auto structural = implementationFor(
         families::RegisterFile32x32,
         "rv32i.register-file.structural.decoder-mux",

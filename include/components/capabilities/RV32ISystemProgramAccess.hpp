@@ -23,6 +23,9 @@ public:
     virtual void loadProgram(
         const rv32i::RV32IProgram& program,
         uint32_t base_address = 0) = 0;
+    virtual void loadInstructionBytes(
+        uint32_t base_address,
+        const std::vector<uint8_t>& data) = 0;
     virtual void loadDataBytes(
         uint32_t base_address,
         const std::vector<uint8_t>& data) = 0;

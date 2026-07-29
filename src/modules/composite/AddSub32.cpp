@@ -21,17 +21,46 @@ void defineAddSub32Pins(IOComponent* self) {
     self->addPin("OVERFLOW", PinType::OUTPUT);
 }
 
-bool allKnown(const std::vector<LogicValue>& values) {
-    for (const auto value : values) {
-        if (value != LogicValue::LOW && value != LogicValue::HIGH) {
-            return false;
-        }
-    }
-    return true;
+bool known(LogicValue value) {
+    return value == LogicValue::LOW || value == LogicValue::HIGH;
 }
 
-LogicValue logic(bool value) {
-    return value ? LogicValue::HIGH : LogicValue::LOW;
+LogicValue logicAnd(LogicValue left, LogicValue right) {
+    if (left == LogicValue::LOW || right == LogicValue::LOW) {
+        return LogicValue::LOW;
+    }
+    if (left == LogicValue::HIGH && right == LogicValue::HIGH) {
+        return LogicValue::HIGH;
+    }
+    return LogicValue::UNKNOWN;
+}
+
+LogicValue logicOr(LogicValue left, LogicValue right) {
+    if (left == LogicValue::HIGH || right == LogicValue::HIGH) {
+        return LogicValue::HIGH;
+    }
+    if (left == LogicValue::LOW && right == LogicValue::LOW) {
+        return LogicValue::LOW;
+    }
+    return LogicValue::UNKNOWN;
+}
+
+LogicValue logicXor(LogicValue left, LogicValue right) {
+    if (!known(left) || !known(right)) {
+        return LogicValue::UNKNOWN;
+    }
+    return left == right ? LogicValue::LOW : LogicValue::HIGH;
+}
+
+std::pair<LogicValue, LogicValue> fullAdder(
+    LogicValue left,
+    LogicValue right,
+    LogicValue carry_in) {
+    const auto first_sum = logicXor(left, right);
+    const auto first_carry = logicAnd(left, right);
+    const auto sum = logicXor(first_sum, carry_in);
+    const auto second_carry = logicAnd(first_sum, carry_in);
+    return {sum, logicOr(first_carry, second_carry)};
 }
 
 class AddSub32Direct final : public BasicComponent {
@@ -49,41 +78,31 @@ public:
         const auto a_bits = getInputPin<32>("A")->getValueAsVector();
         const auto b_bits = getInputPin<32>("B")->getValueAsVector();
         const auto sub_value = getInputPin("SUB")->getValue();
-        if (!allKnown(a_bits) || !allKnown(b_bits)
-            || (sub_value != LogicValue::LOW
-                && sub_value != LogicValue::HIGH)) {
-            _updateOutputWire<32>(
-                simulator,
-                "OUT",
-                std::vector<LogicValue>(32, LogicValue::UNKNOWN),
-                current_time);
-            _updateOutputWire(
-                simulator, "CARRY_OUT", LogicValue::UNKNOWN, current_time);
-            _updateOutputWire(
-                simulator, "OVERFLOW", LogicValue::UNKNOWN, current_time);
-            return;
+        std::vector<LogicValue> result;
+        result.reserve(32);
+        auto carry = sub_value;
+        auto carry_into_sign = LogicValue::UNKNOWN;
+        for (size_t bit_index = 0; bit_index < 32; ++bit_index) {
+            if (bit_index == 31) {
+                carry_into_sign = carry;
+            }
+            const auto effective_b =
+                logicXor(b_bits[bit_index], sub_value);
+            const auto [sum, next_carry] =
+                fullAdder(a_bits[bit_index], effective_b, carry);
+            result.push_back(sum);
+            carry = next_carry;
         }
 
-        const auto a = static_cast<uint32_t>(
-            getInputPin<32>("A")->getValueAsUInt64());
-        const auto b = static_cast<uint32_t>(
-            getInputPin<32>("B")->getValueAsUInt64());
-        const bool subtract = sub_value == LogicValue::HIGH;
-        const uint32_t result = subtract ? a - b : a + b;
-
-        const bool carry = subtract
-            ? a >= b
-            : (static_cast<uint64_t>(a) + static_cast<uint64_t>(b))
-                > 0xffffffffULL;
-        const bool overflow = subtract
-            ? ((a ^ b) & (a ^ result) & 0x80000000U) != 0
-            : (~(a ^ b) & (a ^ result) & 0x80000000U) != 0;
-
-        _updateOutputWire<32>(simulator, "OUT", result, current_time);
+        _updateOutputWire<32>(
+            simulator, "OUT", result, current_time);
         _updateOutputWire(
-            simulator, "CARRY_OUT", logic(carry), current_time);
+            simulator, "CARRY_OUT", carry, current_time);
         _updateOutputWire(
-            simulator, "OVERFLOW", logic(overflow), current_time);
+            simulator,
+            "OVERFLOW",
+            logicXor(carry_into_sign, carry),
+            current_time);
     }
 };
 }

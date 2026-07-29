@@ -1,6 +1,6 @@
 # RV32I CPU Roadmap
 
-Last updated: 2026-07-24
+Last updated: 2026-07-29
 
 This roadmap replans the RV32I work after completing the component foundations and the behavioral answer sheet:
 
@@ -97,6 +97,7 @@ Detailed status reports:
 - `docs/rv32i-register-file-equivalence-report.md`
 - `docs/rv32i-alu-equivalence-report.md`
 - `docs/rv32i-execution-status-equivalence-report.md`
+- `docs/rv32i-external-validation-report.md`
 - `docs/memory-components-report.md`
 - `docs/structural-dff-report.md`
 
@@ -109,8 +110,11 @@ ctest --test-dir build --output-on-failure
 
 Most recent full-regression result:
 
-- Full regression passed: 142/142 in 525.19 seconds in the final serial verification run.
-- All 16 structural and all 16 behavioral program tests passed their shared lockstep and hard-coded outcome checks.
+- Full regression passed: 129/129 in 637.57 seconds in the final serial
+  verification run after the unified test migration and external-validation
+  additions.
+- All 16 numbered program tests passed their answer-sheet,
+  representative-profile, structural lockstep, and hard-coded outcome checks.
 
 ## Architecture Direction
 
@@ -616,7 +620,10 @@ Done when:
 
 ### Milestone 10: Decode-Control Implementations
 
-Status: implemented and directly equivalence-tested for all 40 supported instructions, representative illegal encodings, and 64 deterministic pseudo-random raw words. See `docs/rv32i-decode-control-equivalence-report.md`.
+Status: implemented and tested through the unified component contract for all
+40 supported instructions, 12 directed illegal encodings, and 64 deterministic
+pseudo-random raw words. See
+`docs/rv32i-decode-control-equivalence-report.md`.
 
 Purpose:
 
@@ -758,7 +765,13 @@ Done when:
 
 ### Milestone 15: Assembly Workflow And External Validation
 
-Status: planned.
+Status: in progress. The strict ELF boundary, committed self-checking smoke
+fixture, shared structural/behavioral runner, independent Sail 0.13 smoke
+result, and pinned ACT4 generation configuration are complete. The generated
+39-test ACT4 `I` suite passes Sail and behavioral CircuitSim. One fully
+structural ACT4 test passes; the remaining structural sweep needs a safe
+low-history execution path because the current measured estimate is about
+25 serial hours.
 
 Purpose:
 
@@ -766,17 +779,29 @@ Make program creation repeatable and validate behavior against known references 
 
 Deliverables:
 
-- `programs/rv32i/` assembly sources.
-- `tests/fixtures/rv32i/` raw binaries.
-- Script to build raw binaries from assembly when a RISC-V toolchain is installed.
-- Documentation for rebuilding fixtures.
-- Optional comparison against Spike or another RV32I reference.
+- Strict bare-metal RV32 ELF32 loading.
+- `tests/fixtures/rv32i/` assembly, linker, ELF, checksum, and metadata.
+- Script to rebuild committed fixtures without making the toolchain a CTest
+  dependency.
+- One logical external fixture test that runs both system fidelities against
+  the same self-checking verdict.
+- Generic `rv32i_validate_elf` runner for additional generated fixtures.
+- Independent Sail smoke execution.
+- Pinned official ACT4 `I`-suite configuration and generation workflow.
+- Documentation of the validation boundary and fixture provenance.
 
 Done when:
 
-- Fixtures are reproducible.
-- Tests do not require the external toolchain unless explicitly rebuilding fixtures.
-- At least five assembly programs run to completion.
+- Committed fixtures are reproducible and checksum recorded.
+- Tests do not require the external toolchain unless explicitly rebuilding
+  fixtures.
+- The committed external smoke ELF passes Sail, behavioral CircuitSim, and
+  structural CircuitSim.
+- The complete pinned ACT4 `I` set is generated, reviewed, and run.
+
+Implementation report:
+
+- `docs/rv32i-external-validation-report.md`
 
 ## Testing Plan
 
@@ -901,7 +926,9 @@ Mitigation:
 
 The first structural single-cycle milestone is complete. Immediate next steps are:
 
-1. Differentially validate the answer sheet with Spike, Sail, or the official architecture tests.
+1. Add and validate a headless/low-history mode for the external runner, then
+   use it for the remaining fully structural ACT4 `I` sweep. All 39 tests
+   already pass Sail and behavioral CircuitSim.
 2. Continue the 54,000-component browser work after the completed lossless
    indexed-state, event-driven-rendering, compression, and sub-pixel-only
    culling pass.

@@ -34,7 +34,9 @@ public:
     void loadProgram(
         const rv32i::RV32IProgram& program,
         uint32_t base_address = 0) override;
-    void loadInstructionBytes(uint32_t base_address, const std::vector<uint8_t>& data);
+    void loadInstructionBytes(
+        uint32_t base_address,
+        const std::vector<uint8_t>& data) override;
     void loadDataBytes(
         uint32_t base_address,
         const std::vector<uint8_t>& data) override;

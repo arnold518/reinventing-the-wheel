@@ -10,6 +10,7 @@
 #include "modules/basic/Latch.hpp"
 #include "modules/utility/BitAdapter.hpp"
 #include "simulator/Event.hpp"
+#include <array>
 #include <cassert>
 #include <iostream>
 #include <stdexcept>
@@ -24,6 +25,90 @@ void expect(bool condition, const char* test_name) {
 
 TestValue logic(LogicValue value) {
     return TestValue(value);
+}
+
+enum class BinaryGateOperation {
+    And,
+    Or,
+    Xor,
+    Nand,
+    Nor,
+};
+
+LogicValue invertKnown(LogicValue value) {
+    if (value == LogicValue::LOW) {
+        return LogicValue::HIGH;
+    }
+    if (value == LogicValue::HIGH) {
+        return LogicValue::LOW;
+    }
+    return LogicValue::UNKNOWN;
+}
+
+LogicValue binaryGateExpected(
+    BinaryGateOperation operation,
+    LogicValue left,
+    LogicValue right) {
+    LogicValue result = LogicValue::UNKNOWN;
+    switch (operation) {
+        case BinaryGateOperation::And:
+        case BinaryGateOperation::Nand:
+            if (left == LogicValue::LOW || right == LogicValue::LOW) {
+                result = LogicValue::LOW;
+            } else if (
+                left == LogicValue::HIGH
+                && right == LogicValue::HIGH) {
+                result = LogicValue::HIGH;
+            }
+            if (operation == BinaryGateOperation::Nand) {
+                result = invertKnown(result);
+            }
+            return result;
+        case BinaryGateOperation::Or:
+        case BinaryGateOperation::Nor:
+            if (left == LogicValue::HIGH || right == LogicValue::HIGH) {
+                result = LogicValue::HIGH;
+            } else if (
+                left == LogicValue::LOW
+                && right == LogicValue::LOW) {
+                result = LogicValue::LOW;
+            }
+            if (operation == BinaryGateOperation::Nor) {
+                result = invertKnown(result);
+            }
+            return result;
+        case BinaryGateOperation::Xor:
+            if ((left == LogicValue::LOW || left == LogicValue::HIGH)
+                && (right == LogicValue::LOW
+                    || right == LogicValue::HIGH)) {
+                return left == right
+                    ? LogicValue::LOW
+                    : LogicValue::HIGH;
+            }
+            return LogicValue::UNKNOWN;
+    }
+    return LogicValue::UNKNOWN;
+}
+
+std::vector<TestRow> binaryGateRows(BinaryGateOperation operation) {
+    constexpr std::array<LogicValue, 4> Values{
+        LogicValue::LOW,
+        LogicValue::HIGH,
+        LogicValue::UNKNOWN,
+        LogicValue::HIGH_Z,
+    };
+    std::vector<TestRow> rows;
+    rows.reserve(Values.size() * Values.size());
+    for (const auto left : Values) {
+        for (const auto right : Values) {
+            rows.push_back({
+                {{"A", logic(left)}, {"B", logic(right)}},
+                {{"OUT", logic(binaryGateExpected(
+                    operation, left, right))}},
+            });
+        }
+    }
+    return rows;
 }
 
 template <typename Fn>
@@ -235,77 +320,34 @@ NOTGateTest::NOTGateTest()
     }) {}
 
 ANDGateTest::ANDGateTest()
-    : TruthTableComponentTest<ANDGate>("ANDGateTest", "AND_GATE_ROOT", {
-        {{{"A", bit(false)}, {"B", bit(false)}}, {{"OUT", bit(false)}}},
-        {{{"A", bit(false)}, {"B", bit(true)}}, {{"OUT", bit(false)}}},
-        {{{"A", bit(true)}, {"B", bit(false)}}, {{"OUT", bit(false)}}},
-        {{{"A", bit(true)}, {"B", bit(true)}}, {{"OUT", bit(true)}}},
-        {{{"A", bit(false)}, {"B", logic(LogicValue::UNKNOWN)}}, {{"OUT", bit(false)}}},
-        {{{"A", logic(LogicValue::UNKNOWN)}, {"B", bit(false)}}, {{"OUT", bit(false)}}},
-        {{{"A", bit(true)}, {"B", logic(LogicValue::UNKNOWN)}}, {{"OUT", logic(LogicValue::UNKNOWN)}}},
-        {{{"A", logic(LogicValue::UNKNOWN)}, {"B", bit(true)}}, {{"OUT", logic(LogicValue::UNKNOWN)}}},
-        {{{"A", logic(LogicValue::UNKNOWN)}, {"B", logic(LogicValue::UNKNOWN)}}, {{"OUT", logic(LogicValue::UNKNOWN)}}},
-        {{{"A", logic(LogicValue::HIGH_Z)}, {"B", bit(true)}}, {{"OUT", logic(LogicValue::UNKNOWN)}}},
-        {{{"A", bit(true)}, {"B", logic(LogicValue::HIGH_Z)}}, {{"OUT", logic(LogicValue::UNKNOWN)}}},
-    }) {}
+    : TruthTableComponentTest<ANDGate>(
+          "ANDGateTest",
+          "AND_GATE_ROOT",
+          binaryGateRows(BinaryGateOperation::And)) {}
 
 ORGateTest::ORGateTest()
-    : TruthTableComponentTest<ORGate>("ORGateTest", "OR_GATE_ROOT", {
-        {{{"A", bit(false)}, {"B", bit(false)}}, {{"OUT", bit(false)}}},
-        {{{"A", bit(false)}, {"B", bit(true)}}, {{"OUT", bit(true)}}},
-        {{{"A", bit(true)}, {"B", bit(false)}}, {{"OUT", bit(true)}}},
-        {{{"A", bit(true)}, {"B", bit(true)}}, {{"OUT", bit(true)}}},
-        {{{"A", bit(true)}, {"B", logic(LogicValue::UNKNOWN)}}, {{"OUT", bit(true)}}},
-        {{{"A", logic(LogicValue::UNKNOWN)}, {"B", bit(true)}}, {{"OUT", bit(true)}}},
-        {{{"A", bit(false)}, {"B", logic(LogicValue::UNKNOWN)}}, {{"OUT", logic(LogicValue::UNKNOWN)}}},
-        {{{"A", logic(LogicValue::UNKNOWN)}, {"B", bit(false)}}, {{"OUT", logic(LogicValue::UNKNOWN)}}},
-        {{{"A", logic(LogicValue::UNKNOWN)}, {"B", logic(LogicValue::UNKNOWN)}}, {{"OUT", logic(LogicValue::UNKNOWN)}}},
-        {{{"A", logic(LogicValue::HIGH_Z)}, {"B", bit(false)}}, {{"OUT", logic(LogicValue::UNKNOWN)}}},
-        {{{"A", bit(false)}, {"B", logic(LogicValue::HIGH_Z)}}, {{"OUT", logic(LogicValue::UNKNOWN)}}},
-    }) {}
+    : TruthTableComponentTest<ORGate>(
+          "ORGateTest",
+          "OR_GATE_ROOT",
+          binaryGateRows(BinaryGateOperation::Or)) {}
 
 XORGateTest::XORGateTest()
-    : TruthTableComponentTest<XORGate>("XORGateTest", "XOR_GATE_ROOT", {
-        {{{"A", bit(false)}, {"B", bit(false)}}, {{"OUT", bit(false)}}},
-        {{{"A", bit(false)}, {"B", bit(true)}}, {{"OUT", bit(true)}}},
-        {{{"A", bit(true)}, {"B", bit(false)}}, {{"OUT", bit(true)}}},
-        {{{"A", bit(true)}, {"B", bit(true)}}, {{"OUT", bit(false)}}},
-        {{{"A", bit(false)}, {"B", logic(LogicValue::UNKNOWN)}}, {{"OUT", logic(LogicValue::UNKNOWN)}}},
-        {{{"A", bit(true)}, {"B", logic(LogicValue::UNKNOWN)}}, {{"OUT", logic(LogicValue::UNKNOWN)}}},
-        {{{"A", logic(LogicValue::UNKNOWN)}, {"B", bit(false)}}, {{"OUT", logic(LogicValue::UNKNOWN)}}},
-        {{{"A", logic(LogicValue::UNKNOWN)}, {"B", bit(true)}}, {{"OUT", logic(LogicValue::UNKNOWN)}}},
-        {{{"A", logic(LogicValue::UNKNOWN)}, {"B", logic(LogicValue::UNKNOWN)}}, {{"OUT", logic(LogicValue::UNKNOWN)}}},
-        {{{"A", logic(LogicValue::HIGH_Z)}, {"B", bit(false)}}, {{"OUT", logic(LogicValue::UNKNOWN)}}},
-        {{{"A", bit(true)}, {"B", logic(LogicValue::HIGH_Z)}}, {{"OUT", logic(LogicValue::UNKNOWN)}}},
-    }) {}
+    : TruthTableComponentTest<XORGate>(
+          "XORGateTest",
+          "XOR_GATE_ROOT",
+          binaryGateRows(BinaryGateOperation::Xor)) {}
 
 NANDGateTest::NANDGateTest()
-    : TruthTableComponentTest<NANDGate>("NANDGateTest", "NAND_GATE_ROOT", {
-        {{{"A", bit(false)}, {"B", bit(false)}}, {{"OUT", bit(true)}}},
-        {{{"A", bit(false)}, {"B", bit(true)}}, {{"OUT", bit(true)}}},
-        {{{"A", bit(true)}, {"B", bit(false)}}, {{"OUT", bit(true)}}},
-        {{{"A", bit(true)}, {"B", bit(true)}}, {{"OUT", bit(false)}}},
-        {{{"A", bit(false)}, {"B", logic(LogicValue::UNKNOWN)}}, {{"OUT", bit(true)}}},
-        {{{"A", logic(LogicValue::UNKNOWN)}, {"B", bit(false)}}, {{"OUT", bit(true)}}},
-        {{{"A", bit(true)}, {"B", logic(LogicValue::UNKNOWN)}}, {{"OUT", logic(LogicValue::UNKNOWN)}}},
-        {{{"A", logic(LogicValue::UNKNOWN)}, {"B", bit(true)}}, {{"OUT", logic(LogicValue::UNKNOWN)}}},
-        {{{"A", logic(LogicValue::UNKNOWN)}, {"B", logic(LogicValue::UNKNOWN)}}, {{"OUT", logic(LogicValue::UNKNOWN)}}},
-        {{{"A", logic(LogicValue::HIGH_Z)}, {"B", bit(true)}}, {{"OUT", logic(LogicValue::UNKNOWN)}}},
-    }) {}
+    : TruthTableComponentTest<NANDGate>(
+          "NANDGateTest",
+          "NAND_GATE_ROOT",
+          binaryGateRows(BinaryGateOperation::Nand)) {}
 
 NORGateTest::NORGateTest()
-    : TruthTableComponentTest<NORGate>("NORGateTest", "NOR_GATE_ROOT", {
-        {{{"A", bit(false)}, {"B", bit(false)}}, {{"OUT", bit(true)}}},
-        {{{"A", bit(false)}, {"B", bit(true)}}, {{"OUT", bit(false)}}},
-        {{{"A", bit(true)}, {"B", bit(false)}}, {{"OUT", bit(false)}}},
-        {{{"A", bit(true)}, {"B", bit(true)}}, {{"OUT", bit(false)}}},
-        {{{"A", bit(true)}, {"B", logic(LogicValue::UNKNOWN)}}, {{"OUT", bit(false)}}},
-        {{{"A", logic(LogicValue::UNKNOWN)}, {"B", bit(true)}}, {{"OUT", bit(false)}}},
-        {{{"A", bit(false)}, {"B", logic(LogicValue::UNKNOWN)}}, {{"OUT", logic(LogicValue::UNKNOWN)}}},
-        {{{"A", logic(LogicValue::UNKNOWN)}, {"B", bit(false)}}, {{"OUT", logic(LogicValue::UNKNOWN)}}},
-        {{{"A", logic(LogicValue::UNKNOWN)}, {"B", logic(LogicValue::UNKNOWN)}}, {{"OUT", logic(LogicValue::UNKNOWN)}}},
-        {{{"A", logic(LogicValue::HIGH_Z)}, {"B", bit(false)}}, {{"OUT", logic(LogicValue::UNKNOWN)}}},
-    }) {}
+    : TruthTableComponentTest<NORGate>(
+          "NORGateTest",
+          "NOR_GATE_ROOT",
+          binaryGateRows(BinaryGateOperation::Nor)) {}
 
 namespace {
 using circuit::test::ActionScenario;
@@ -359,6 +401,23 @@ ComponentTestSpec srLatchSpec() {
             sequentialAction(
                 "recover-reset",
                 {{"S_BAR", logicBit(true)}},
+                {{"Q", logicBit(false)}, {"Q_BAR", logicBit(true)}}),
+            sequentialAction(
+                "high-z-set-input",
+                {
+                    {"S_BAR", logicBit(LogicValue::HIGH_Z)},
+                    {"R_BAR", logicBit(true)},
+                },
+                {
+                    {"Q", logicBit(LogicValue::UNKNOWN)},
+                    {"Q_BAR", logicBit(LogicValue::UNKNOWN)},
+                }),
+            sequentialAction(
+                "recover-from-high-z",
+                {
+                    {"S_BAR", logicBit(true)},
+                    {"R_BAR", logicBit(false)},
+                },
                 {{"Q", logicBit(false)}, {"Q_BAR", logicBit(true)}}),
         },
         {100'000, 1'000'000},
@@ -422,6 +481,20 @@ ComponentTestSpec gatedDLatchSpec() {
                 }),
             sequentialAction(
                 "reset-unknown",
+                {{"RST", logicBit(true)}},
+                {{"Q", logicBit(false)}, {"Q_BAR", logicBit(true)}}),
+            sequentialAction(
+                "transparent-high-z",
+                {
+                    {"RST", logicBit(false)},
+                    {"D", logicBit(LogicValue::HIGH_Z)},
+                },
+                {
+                    {"Q", logicBit(LogicValue::UNKNOWN)},
+                    {"Q_BAR", logicBit(LogicValue::UNKNOWN)},
+                }),
+            sequentialAction(
+                "reset-high-z",
                 {{"RST", logicBit(true)}},
                 {{"Q", logicBit(false)}, {"Q_BAR", logicBit(true)}}),
         },
@@ -496,6 +569,27 @@ ComponentTestSpec dFlipFlopSpec() {
                 CheckpointKind::AfterEdge),
             sequentialAction(
                 "reset-unknown",
+                {{"RST", logicBit(true)}},
+                {{"Q", logicBit(false)}, {"Q_BAR", logicBit(true)}},
+                CheckpointKind::AfterEdge),
+            sequentialAction(
+                "prepare-high-z",
+                {
+                    {"RST", logicBit(false)},
+                    {"CLK", logicBit(false)},
+                    {"D", logicBit(LogicValue::HIGH_Z)},
+                },
+                {{"Q", logicBit(false)}, {"Q_BAR", logicBit(true)}}),
+            sequentialAction(
+                "capture-high-z",
+                {{"CLK", logicBit(true)}},
+                {
+                    {"Q", logicBit(LogicValue::UNKNOWN)},
+                    {"Q_BAR", logicBit(LogicValue::UNKNOWN)},
+                },
+                CheckpointKind::AfterEdge),
+            sequentialAction(
+                "reset-high-z",
                 {{"RST", logicBit(true)}},
                 {{"Q", logicBit(false)}, {"Q_BAR", logicBit(true)}},
                 CheckpointKind::AfterEdge),

@@ -82,7 +82,12 @@ The live Program 9 topology now contains the width-2 `CONST_WORD_SIZE.OUT`, eigh
 
 The layered layout calculation also no longer forces a child width larger than the vertical or horizontal fit it already calculated. This matters for the eight tall 32-bit input splitters inside `IMMEDIATE_MUX`; their corrected default relative width is approximately `0.0292` rather than the overlapping `0.045`.
 
-Defaults were regenerated for all 40 matcher configurations and `Mux8to1_32bit`. A recursive live audit of the 2,514 components under `CORE.DECODE_CONTROL` reports zero component-body overlaps, zero pin/stub overlaps, zero missing placements, and zero parent-boundary violations.
+The original decoder used 40 independent full-instruction matcher
+configurations and contained 2,514 components. Its factored replacement uses
+22 shared opcode/function/exact predicates and contains 1,964 components.
+Defaults were regenerated for the new predicates, recognition terms, and
+`Mux8to1_32bit`. The deterministic layout overlap audit passes for the updated
+decoder hierarchy.
 
 ## Program 9 Measurements
 

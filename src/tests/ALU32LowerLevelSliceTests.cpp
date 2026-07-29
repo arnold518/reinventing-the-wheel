@@ -13,6 +13,7 @@
 #include "modules/composite/Shifter32.hpp"
 #include "modules/composite/ZeroDetect32.hpp"
 #include "modules/utility/BitAdapter.hpp"
+#include <array>
 #include <cstdint>
 #include <iostream>
 #include <memory>
@@ -22,6 +23,169 @@
 
 namespace {
 constexpr uint64_t MASK32 = 0xffffffffULL;
+using LogicVector = std::vector<LogicValue>;
+
+bool known(LogicValue value) {
+    return value == LogicValue::LOW || value == LogicValue::HIGH;
+}
+
+LogicValue logicNot(LogicValue value) {
+    if (value == LogicValue::LOW) {
+        return LogicValue::HIGH;
+    }
+    if (value == LogicValue::HIGH) {
+        return LogicValue::LOW;
+    }
+    return LogicValue::UNKNOWN;
+}
+
+LogicValue logicAnd(LogicValue left, LogicValue right) {
+    if (left == LogicValue::LOW || right == LogicValue::LOW) {
+        return LogicValue::LOW;
+    }
+    if (left == LogicValue::HIGH && right == LogicValue::HIGH) {
+        return LogicValue::HIGH;
+    }
+    return LogicValue::UNKNOWN;
+}
+
+LogicValue logicOr(LogicValue left, LogicValue right) {
+    if (left == LogicValue::HIGH || right == LogicValue::HIGH) {
+        return LogicValue::HIGH;
+    }
+    if (left == LogicValue::LOW && right == LogicValue::LOW) {
+        return LogicValue::LOW;
+    }
+    return LogicValue::UNKNOWN;
+}
+
+LogicValue logicXor(LogicValue left, LogicValue right) {
+    if (!known(left) || !known(right)) {
+        return LogicValue::UNKNOWN;
+    }
+    return left == right ? LogicValue::LOW : LogicValue::HIGH;
+}
+
+LogicValue muxGate(
+    LogicValue when_low,
+    LogicValue when_high,
+    LogicValue select) {
+    return logicOr(
+        logicAnd(when_low, logicNot(select)),
+        logicAnd(when_high, select));
+}
+
+std::pair<LogicValue, LogicValue> fullAdderExpected(
+    LogicValue left,
+    LogicValue right,
+    LogicValue carry_in) {
+    const auto first_sum = logicXor(left, right);
+    const auto first_carry = logicAnd(left, right);
+    const auto sum = logicXor(first_sum, carry_in);
+    const auto second_carry = logicAnd(first_sum, carry_in);
+    return {sum, logicOr(first_carry, second_carry)};
+}
+
+struct AddExpected {
+    LogicVector out;
+    LogicValue carry_out = LogicValue::UNKNOWN;
+    LogicValue overflow = LogicValue::UNKNOWN;
+};
+
+AddExpected addExpected(
+    const LogicVector& left,
+    const LogicVector& right,
+    LogicValue carry_in,
+    bool xor_right_with_carry) {
+    assert(left.size() == right.size());
+    AddExpected result;
+    result.out.reserve(left.size());
+    auto carry = carry_in;
+    auto carry_into_sign = LogicValue::UNKNOWN;
+    for (size_t bit_index = 0; bit_index < left.size(); ++bit_index) {
+        if (bit_index + 1 == left.size()) {
+            carry_into_sign = carry;
+        }
+        const auto effective_right = xor_right_with_carry
+            ? logicXor(right[bit_index], carry_in)
+            : right[bit_index];
+        const auto [sum, next_carry] = fullAdderExpected(
+            left[bit_index], effective_right, carry);
+        result.out.push_back(sum);
+        carry = next_carry;
+    }
+    result.carry_out = carry;
+    result.overflow = logicXor(carry_into_sign, carry);
+    return result;
+}
+
+LogicValue zeroExpected(const LogicVector& values) {
+    bool has_unknown = false;
+    for (const auto value : values) {
+        if (value == LogicValue::HIGH) {
+            return LogicValue::LOW;
+        }
+        if (value != LogicValue::LOW) {
+            has_unknown = true;
+        }
+    }
+    return has_unknown ? LogicValue::UNKNOWN : LogicValue::HIGH;
+}
+
+std::array<LogicVector, 3> shiftExpected(
+    const LogicVector& input,
+    const LogicVector& amount) {
+    assert(input.size() == 32);
+    assert(amount.size() >= 5);
+    LogicVector left = input;
+    LogicVector right = input;
+    LogicVector arithmetic = input;
+    for (size_t stage = 0; stage < 5; ++stage) {
+        const size_t distance = size_t{1} << stage;
+        LogicVector next_left(32, LogicValue::LOW);
+        LogicVector next_right(32, LogicValue::LOW);
+        LogicVector next_arithmetic(32, input[31]);
+        for (size_t bit = 0; bit < 32; ++bit) {
+            const auto shifted_left = bit >= distance
+                ? left[bit - distance]
+                : LogicValue::LOW;
+            const auto shifted_right = bit + distance < 32
+                ? right[bit + distance]
+                : LogicValue::LOW;
+            const auto shifted_arithmetic = bit + distance < 32
+                ? arithmetic[bit + distance]
+                : input[31];
+            next_left[bit] =
+                muxGate(left[bit], shifted_left, amount[stage]);
+            next_right[bit] =
+                muxGate(right[bit], shifted_right, amount[stage]);
+            next_arithmetic[bit] =
+                muxGate(
+                    arithmetic[bit],
+                    shifted_arithmetic,
+                    amount[stage]);
+        }
+        left = std::move(next_left);
+        right = std::move(next_right);
+        arithmetic = std::move(next_arithmetic);
+    }
+    return {left, right, arithmetic};
+}
+
+LogicVector fourStateWord(size_t offset = 0) {
+    constexpr std::array<LogicValue, 4> Values{
+        LogicValue::LOW,
+        LogicValue::HIGH,
+        LogicValue::UNKNOWN,
+        LogicValue::HIGH_Z,
+    };
+    LogicVector result;
+    result.reserve(32);
+    for (size_t bit_index = 0; bit_index < 32; ++bit_index) {
+        result.push_back(Values[(bit_index + offset) % Values.size()]);
+    }
+    return result;
+}
 
 class AddSub4Slice : public IOComponent {
 public:
@@ -264,6 +428,25 @@ std::vector<TestRow> adder32Rows() {
         const uint32_t carry_chain = static_cast<uint32_t>((1ULL << width) - 1ULL);
         rows.push_back(adder32Row(carry_chain, 0x00000001U, false));
     }
+    for (const auto unknown_value :
+         {LogicValue::UNKNOWN, LogicValue::HIGH_Z}) {
+        auto left = circuit::test::logicBits(32, 0);
+        left[5] = unknown_value;
+        const auto right = circuit::test::logicBits(32, 0);
+        const auto expected =
+            addExpected(left, right, LogicValue::LOW, false);
+        rows.push_back({
+            {
+                {"A", TestValue(left)},
+                {"B", TestValue(right)},
+                {"Cin", bit(false)},
+            },
+            {
+                {"Sum", TestValue(expected.out)},
+                {"Cout", TestValue(expected.carry_out)},
+            },
+        });
+    }
     return rows;
 }
 
@@ -304,6 +487,43 @@ std::vector<TestRow> addSub32Rows() {
         rows.push_back(addSubRow(carry_chain, 0x00000001U, false));
         rows.push_back(addSubRow(borrow_chain, 0x00000001U, true));
     }
+    for (const auto unknown_value :
+         {LogicValue::UNKNOWN, LogicValue::HIGH_Z}) {
+        auto left = circuit::test::logicBits(32, 0);
+        left[5] = unknown_value;
+        const auto right = circuit::test::logicBits(32, 0);
+        const auto expected =
+            addExpected(left, right, LogicValue::LOW, true);
+        rows.push_back({
+            {
+                {"A", TestValue(left)},
+                {"B", TestValue(right)},
+                {"SUB", bit(false)},
+            },
+            {
+                {"OUT", TestValue(expected.out)},
+                {"CARRY_OUT", TestValue(expected.carry_out)},
+                {"OVERFLOW", TestValue(expected.overflow)},
+            },
+        });
+    }
+    const auto zero = circuit::test::logicBits(32, 0);
+    const auto unknown_sub_expected =
+        addExpected(zero, zero, LogicValue::UNKNOWN, true);
+    rows.push_back({
+        {
+            {"A", TestValue(zero)},
+            {"B", TestValue(zero)},
+            {"SUB", TestValue(LogicValue::UNKNOWN)},
+        },
+        {
+            {"OUT", TestValue(unknown_sub_expected.out)},
+            {"CARRY_OUT", TestValue(
+                unknown_sub_expected.carry_out)},
+            {"OVERFLOW", TestValue(
+                unknown_sub_expected.overflow)},
+        },
+    });
     return rows;
 }
 
@@ -326,6 +546,24 @@ std::vector<TestRow> logic32Rows() {
         rows.push_back({{{"A", bits(mask)}, {"B", bits(mask)}},
                         {{"AND_OUT", bits(mask)}, {"OR_OUT", bits(mask)}, {"XOR_OUT", bits(0x00000000U)}}});
     }
+    const auto left = fourStateWord(0);
+    const auto right = fourStateWord(2);
+    LogicVector and_result;
+    LogicVector or_result;
+    LogicVector xor_result;
+    for (size_t bit_index = 0; bit_index < 32; ++bit_index) {
+        and_result.push_back(logicAnd(left[bit_index], right[bit_index]));
+        or_result.push_back(logicOr(left[bit_index], right[bit_index]));
+        xor_result.push_back(logicXor(left[bit_index], right[bit_index]));
+    }
+    rows.push_back({
+        {{"A", TestValue(left)}, {"B", TestValue(right)}},
+        {
+            {"AND_OUT", TestValue(and_result)},
+            {"OR_OUT", TestValue(or_result)},
+            {"XOR_OUT", TestValue(xor_result)},
+        },
+    });
     return rows;
 }
 
@@ -339,6 +577,22 @@ std::vector<TestRow> zeroDetect32Rows() {
 
     for (uint32_t bit_index = 0; bit_index < 32; ++bit_index) {
         rows.push_back({{{"A", bits(uint32_t{1} << bit_index)}}, {{"ZERO", bit(false)}}});
+    }
+    for (const auto unknown_value :
+         {LogicValue::UNKNOWN, LogicValue::HIGH_Z}) {
+        auto only_unknown = circuit::test::logicBits(32, 0);
+        only_unknown[13] = unknown_value;
+        rows.push_back({
+            {{"A", TestValue(only_unknown)}},
+            {{"ZERO", TestValue(LogicValue::UNKNOWN)}},
+        });
+
+        auto high_dominates = only_unknown;
+        high_dominates[31] = LogicValue::HIGH;
+        rows.push_back({
+            {{"A", TestValue(high_dominates)}},
+            {{"ZERO", bit(false)}},
+        });
     }
     return rows;
 }
@@ -358,6 +612,28 @@ std::vector<TestRow> comparator32Rows() {
             rows.push_back(comparatorRow(a, b));
         }
     }
+    for (const auto unknown_value :
+         {LogicValue::UNKNOWN, LogicValue::HIGH_Z}) {
+        auto left = circuit::test::logicBits(32, 0x80000000U);
+        left[5] = unknown_value;
+        const auto right = circuit::test::logicBits(32, 0);
+        const auto subtraction =
+            addExpected(left, right, LogicValue::HIGH, true);
+        rows.push_back({
+            {{"A", TestValue(left)}, {"B", TestValue(right)}},
+            {
+                {"EQ", TestValue(zeroExpected(subtraction.out))},
+                {"LT_SIGNED", TestValue(logicXor(
+                    subtraction.out[31], subtraction.overflow))},
+                {"LT_UNSIGNED", TestValue(logicNot(
+                    subtraction.carry_out))},
+                {"DIFF", TestValue(subtraction.out)},
+                {"CARRY_OUT", TestValue(
+                    subtraction.carry_out)},
+                {"OVERFLOW", TestValue(subtraction.overflow)},
+            },
+        });
+    }
     return rows;
 }
 
@@ -374,7 +650,43 @@ std::vector<TestRow> shifter32Rows() {
         rows.push_back(shifterRow(0x80000001U, amount));
         rows.push_back(shifterRow(0x7fffffffU, amount));
         rows.push_back(shifterRow(0xffffffffU, amount));
-        rows.push_back(shifterRow(0x00000001U, amount));
+            rows.push_back(shifterRow(0x00000001U, amount));
+    }
+    for (const auto amount_value :
+         {uint32_t{0}, uint32_t{5}, uint32_t{31}}) {
+        const auto input = fourStateWord(amount_value % 4);
+        const auto amount =
+            circuit::test::logicBits(32, amount_value);
+        const auto expected = shiftExpected(input, amount);
+        rows.push_back({
+            {
+                {"A", TestValue(input)},
+                {"B", TestValue(amount)},
+            },
+            {
+                {"SLL_OUT", TestValue(expected[0])},
+                {"SRL_OUT", TestValue(expected[1])},
+                {"SRA_OUT", TestValue(expected[2])},
+            },
+        });
+    }
+    for (const auto unknown_value :
+         {LogicValue::UNKNOWN, LogicValue::HIGH_Z}) {
+        const auto input = circuit::test::logicBits(32, 0);
+        auto amount = circuit::test::logicBits(32, 0);
+        amount[2] = unknown_value;
+        const auto expected = shiftExpected(input, amount);
+        rows.push_back({
+            {
+                {"A", TestValue(input)},
+                {"B", TestValue(amount)},
+            },
+            {
+                {"SLL_OUT", TestValue(expected[0])},
+                {"SRL_OUT", TestValue(expected[1])},
+                {"SRA_OUT", TestValue(expected[2])},
+            },
+        });
     }
     return rows;
 }

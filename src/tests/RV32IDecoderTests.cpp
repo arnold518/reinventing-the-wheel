@@ -287,6 +287,14 @@ circuit::test::ComponentTestSpec bitPatternMatcherSpec() {
             {100'000, 1'000'000},
             parameters));
     };
+    const auto withLogicBit = [](
+        uint32_t value,
+        size_t bit_index,
+        LogicValue logic_value) {
+        auto result = circuit::test::logicBits(32, value);
+        result.at(bit_index) = logic_value;
+        return TestValue(std::move(result));
+    };
     add(
         "load-word",
         0x0000707fU,
@@ -296,6 +304,26 @@ circuit::test::ComponentTestSpec bitPatternMatcherSpec() {
             {{{"INPUT", bits(0xfff32283U)}}, {{"MATCH", bit(true)}}},
             {{{"INPUT", bits(0x00001003U)}}, {{"MATCH", bit(false)}}},
             {{{"INPUT", bits(0x00002023U)}}, {{"MATCH", bit(false)}}},
+            {
+                {{"INPUT", withLogicBit(
+                    0x00002003U, 31, LogicValue::UNKNOWN)}},
+                {{"MATCH", bit(true)}},
+            },
+            {
+                {{"INPUT", withLogicBit(
+                    0x00002003U, 31, LogicValue::HIGH_Z)}},
+                {{"MATCH", bit(true)}},
+            },
+            {
+                {{"INPUT", withLogicBit(
+                    0x00002003U, 12, LogicValue::UNKNOWN)}},
+                {{"MATCH", TestValue(LogicValue::UNKNOWN)}},
+            },
+            {
+                {{"INPUT", withLogicBit(
+                    0x00006003U, 12, LogicValue::UNKNOWN)}},
+                {{"MATCH", bit(false)}},
+            },
         });
     add(
         "ecall",
@@ -305,6 +333,16 @@ circuit::test::ComponentTestSpec bitPatternMatcherSpec() {
             {{{"INPUT", bits(0x00000073U)}}, {{"MATCH", bit(true)}}},
             {{{"INPUT", bits(0x00100073U)}}, {{"MATCH", bit(false)}}},
             {{{"INPUT", bits(0x00000013U)}}, {{"MATCH", bit(false)}}},
+            {
+                {{"INPUT", withLogicBit(
+                    0x00000073U, 0, LogicValue::UNKNOWN)}},
+                {{"MATCH", TestValue(LogicValue::UNKNOWN)}},
+            },
+            {
+                {{"INPUT", withLogicBit(
+                    0x00000072U, 1, LogicValue::HIGH_Z)}},
+                {{"MATCH", bit(false)}},
+            },
         });
     add(
         "sign-bit",
@@ -313,6 +351,16 @@ circuit::test::ComponentTestSpec bitPatternMatcherSpec() {
         {
             {{{"INPUT", bits(0x80000000U)}}, {{"MATCH", bit(true)}}},
             {{{"INPUT", bits(0x7fffffffU)}}, {{"MATCH", bit(false)}}},
+            {
+                {{"INPUT", withLogicBit(
+                    0, 31, LogicValue::UNKNOWN)}},
+                {{"MATCH", TestValue(LogicValue::UNKNOWN)}},
+            },
+            {
+                {{"INPUT", withLogicBit(
+                    0, 31, LogicValue::HIGH_Z)}},
+                {{"MATCH", TestValue(LogicValue::HIGH_Z)}},
+            },
         });
     return {
         "RV32IBitPatternMatcherTest",

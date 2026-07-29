@@ -25,10 +25,20 @@ struct TestValue {
     bool multi = false;
     LogicValue logic = LogicValue::UNKNOWN;
     uint64_t numeric = 0;
+    std::vector<LogicValue> values;
 
     TestValue() = default;
     TestValue(LogicValue value) : multi(false), logic(value), numeric(0) {}
     TestValue(uint64_t value) : multi(true), logic(LogicValue::UNKNOWN), numeric(value) {}
+    TestValue(std::vector<LogicValue> value)
+        : multi(true),
+          logic(LogicValue::UNKNOWN),
+          numeric(0),
+          values(std::move(value)) {}
+
+    bool hasLogicVector() const {
+        return !values.empty();
+    }
 };
 
 struct TestRow {
@@ -38,7 +48,16 @@ struct TestRow {
 
 inline std::string testValueToString(const TestValue& value) {
     std::ostringstream out;
-    if (value.multi) {
+    if (value.hasLogicVector()) {
+        out << '[';
+        for (size_t index = 0; index < value.values.size(); ++index) {
+            if (index != 0) {
+                out << ',';
+            }
+            out << value.values[index];
+        }
+        out << ']';
+    } else if (value.multi) {
         out << "0x" << std::hex << std::uppercase << value.numeric;
     } else {
         out << value.logic;
@@ -94,6 +113,28 @@ protected:
 };
 
 inline std::shared_ptr<Event> makeTestWireUpdate(size_t time, const std::shared_ptr<WireBase>& wire, const TestValue& value) {
+    if (value.hasLogicVector()) {
+        if (value.values.size() != wire->getWidth()) {
+            return nullptr;
+        }
+        auto create = [&]<size_t Width>() -> std::shared_ptr<Event> {
+            return std::make_shared<WireUpdateEvent<Width>>(
+                time,
+                std::dynamic_pointer_cast<Wire<Width>>(wire),
+                value.values);
+        };
+        switch (wire->getWidth()) {
+            case 1: return create.operator()<1>();
+            case 2: return create.operator()<2>();
+            case 3: return create.operator()<3>();
+            case 4: return create.operator()<4>();
+            case 5: return create.operator()<5>();
+            case 8: return create.operator()<8>();
+            case 16: return create.operator()<16>();
+            case 32: return create.operator()<32>();
+            default: return nullptr;
+        }
+    }
     uint64_t numeric = value.multi ? value.numeric : static_cast<uint64_t>(value.logic == LogicValue::HIGH);
     switch (wire->getWidth()) {
         case 1:
@@ -117,7 +158,22 @@ inline bool checkExpectedOutputs(const std::shared_ptr<IOComponent>& io,
     for (const auto& [pin_name, expected] : row.outputs) {
         auto pin = io->getOutputPinDynamic(pin_name);
         assert(pin && "Missing output pin");
-        if (expected.multi || pin->getWidth() > 1) {
+        if (expected.hasLogicVector()) {
+            const auto actual = pin->getValueAsVector();
+            if (actual != expected.values) {
+                std::cerr << mode << " row " << row_index << ": "
+                          << pin_name << " = [";
+                for (const auto value : actual) {
+                    std::cerr << value;
+                }
+                std::cerr << "], expected [";
+                for (const auto value : expected.values) {
+                    std::cerr << value;
+                }
+                std::cerr << "]" << std::endl;
+                return false;
+            }
+        } else if (expected.multi || pin->getWidth() > 1) {
             auto actual = pin->getValueAsUInt64();
             if (actual != expected.numeric) {
                 std::cerr << mode << " row " << row_index << ": "

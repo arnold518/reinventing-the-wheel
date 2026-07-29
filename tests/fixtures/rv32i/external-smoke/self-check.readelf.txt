@@ -1,0 +1,46 @@
+ELF Header:
+  Magic:   7f 45 4c 46 01 01 01 00 00 00 00 00 00 00 00 00
+  Class:                             ELF32
+  Data:                              2's complement, little endian
+  Version:                           1 (current)
+  OS/ABI:                            UNIX - System V
+  ABI Version:                       0
+  Type:                              EXEC (Executable file)
+  Machine:                           RISC-V
+  Version:                           0x1
+  Entry point address:               0x0
+  Start of program headers:          52 (bytes into file)
+  Start of section headers:          8480 (bytes into file)
+  Flags:                             0x0
+  Size of this header:               52 (bytes)
+  Size of program headers:           32 (bytes)
+  Number of program headers:         2
+  Size of section headers:           40 (bytes)
+  Number of section headers:         6
+  Section header string table index: 5
+
+Program Headers:
+  Type           Offset   VirtAddr   PhysAddr   FileSiz MemSiz  Flg Align
+  LOAD           0x001000 0x00000000 0x00000000 0x0006c 0x0006c R E 0x1000
+  LOAD           0x001fc0 0x0003ffc0 0x0003ffc0 0x00010 0x00010 RW  0x1000
+
+ Section to Segment mapping:
+  Segment Sections...
+   00     .text
+   01     .tohost
+
+Symbol table '.symtab' contains 13 entries:
+   Num:    Value  Size Type    Bind   Vis      Ndx Name
+     0: 00000000     0 NOTYPE  LOCAL  DEFAULT  UND
+     1: 00000000     0 SECTION LOCAL  DEFAULT    1 .text
+     2: 0003ffc0     0 SECTION LOCAL  DEFAULT    2 .tohost
+     3: 00000000     0 FILE    LOCAL  DEFAULT  ABS ccSPgiCv.o
+     4: 00000000     0 NOTYPE  LOCAL  DEFAULT    1 $xrv32i2p1
+     5: 00000054     0 NOTYPE  LOCAL  DEFAULT    1 fail
+     6: 00000034     0 NOTYPE  LOCAL  DEFAULT    1 subroutine
+     7: 0000003c     0 NOTYPE  LOCAL  DEFAULT    1 pass
+     8: 00000050     0 NOTYPE  LOCAL  DEFAULT    1 pass_loop
+     9: 00000068     0 NOTYPE  LOCAL  DEFAULT    1 fail_loop
+    10: 00000000   108 FUNC    GLOBAL DEFAULT    1 _start
+    11: 0003ffc8     0 NOTYPE  GLOBAL DEFAULT    2 fromhost
+    12: 0003ffc0     0 NOTYPE  GLOBAL DEFAULT    2 tohost

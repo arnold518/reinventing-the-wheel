@@ -781,7 +781,9 @@ Current state:
 - `RV32IControl` exists as a pure C++ library and is tested.
 - Structural `RV32IDecodeControlUnit` exposes field, immediate, masked instruction recognition, and raw-control logic.
 - the behavioral fidelity of `RV32IDecodeControlUnit` exposes the same pins as a compact reference and is not hidden inside the structural component.
-- `RV32IDecodeControlUnitEquivalenceTest` passes all 40 supported instruction forms, representative illegal encodings, and 64 deterministic pseudo-random raw words. See `docs/rv32i-decode-control-equivalence-report.md`.
+- `RV32IDecodeControlUnitTest` passes all 40 supported instruction forms, 12
+  directed illegal encodings, and 64 deterministic pseudo-random raw words in
+  both fidelities. See `docs/rv32i-decode-control-equivalence-report.md`.
 
 ### Immediate Generator
 

@@ -24,17 +24,69 @@ void defineComparator32Pins(IOComponent* self) {
     self->addPin("OVERFLOW", PinType::OUTPUT);
 }
 
-bool allKnown(const std::vector<LogicValue>& values) {
-    for (const auto value : values) {
-        if (value != LogicValue::LOW && value != LogicValue::HIGH) {
-            return false;
-        }
-    }
-    return true;
+bool known(LogicValue value) {
+    return value == LogicValue::LOW || value == LogicValue::HIGH;
 }
 
-LogicValue logic(bool value) {
-    return value ? LogicValue::HIGH : LogicValue::LOW;
+LogicValue logicNot(LogicValue value) {
+    if (value == LogicValue::LOW) {
+        return LogicValue::HIGH;
+    }
+    if (value == LogicValue::HIGH) {
+        return LogicValue::LOW;
+    }
+    return LogicValue::UNKNOWN;
+}
+
+LogicValue logicAnd(LogicValue left, LogicValue right) {
+    if (left == LogicValue::LOW || right == LogicValue::LOW) {
+        return LogicValue::LOW;
+    }
+    if (left == LogicValue::HIGH && right == LogicValue::HIGH) {
+        return LogicValue::HIGH;
+    }
+    return LogicValue::UNKNOWN;
+}
+
+LogicValue logicOr(LogicValue left, LogicValue right) {
+    if (left == LogicValue::HIGH || right == LogicValue::HIGH) {
+        return LogicValue::HIGH;
+    }
+    if (left == LogicValue::LOW && right == LogicValue::LOW) {
+        return LogicValue::LOW;
+    }
+    return LogicValue::UNKNOWN;
+}
+
+LogicValue logicXor(LogicValue left, LogicValue right) {
+    if (!known(left) || !known(right)) {
+        return LogicValue::UNKNOWN;
+    }
+    return left == right ? LogicValue::LOW : LogicValue::HIGH;
+}
+
+std::pair<LogicValue, LogicValue> fullAdder(
+    LogicValue left,
+    LogicValue right,
+    LogicValue carry_in) {
+    const auto first_sum = logicXor(left, right);
+    const auto first_carry = logicAnd(left, right);
+    const auto sum = logicXor(first_sum, carry_in);
+    const auto second_carry = logicAnd(first_sum, carry_in);
+    return {sum, logicOr(first_carry, second_carry)};
+}
+
+LogicValue zeroDetect(const std::vector<LogicValue>& values) {
+    bool has_unknown = false;
+    for (const auto value : values) {
+        if (value == LogicValue::HIGH) {
+            return LogicValue::LOW;
+        }
+        if (value != LogicValue::LOW) {
+            has_unknown = true;
+        }
+    }
+    return has_unknown ? LogicValue::UNKNOWN : LogicValue::HIGH;
 }
 
 class Comparator32Direct final : public BasicComponent {
@@ -51,44 +103,41 @@ public:
     void evaluate(size_t current_time, Simulator& simulator) override {
         const auto a_bits = getInputPin<32>("A")->getValueAsVector();
         const auto b_bits = getInputPin<32>("B")->getValueAsVector();
-        if (!allKnown(a_bits) || !allKnown(b_bits)) {
-            _updateOutputWire<32>(
-                simulator,
-                "DIFF",
-                std::vector<LogicValue>(32, LogicValue::UNKNOWN),
-                current_time);
-            for (const char* pin :
-                 {"EQ", "LT_SIGNED", "LT_UNSIGNED",
-                  "CARRY_OUT", "OVERFLOW"}) {
-                _updateOutputWire(
-                    simulator, pin, LogicValue::UNKNOWN, current_time);
+        std::vector<LogicValue> difference;
+        difference.reserve(32);
+        auto carry = LogicValue::HIGH;
+        auto carry_into_sign = LogicValue::UNKNOWN;
+        for (size_t bit_index = 0; bit_index < 32; ++bit_index) {
+            if (bit_index == 31) {
+                carry_into_sign = carry;
             }
-            return;
+            const auto effective_b =
+                logicXor(b_bits[bit_index], LogicValue::HIGH);
+            const auto [sum, next_carry] =
+                fullAdder(a_bits[bit_index], effective_b, carry);
+            difference.push_back(sum);
+            carry = next_carry;
         }
-
-        const auto a = static_cast<uint32_t>(
-            getInputPin<32>("A")->getValueAsUInt64());
-        const auto b = static_cast<uint32_t>(
-            getInputPin<32>("B")->getValueAsUInt64());
-        const uint32_t difference = a - b;
-        const bool overflow =
-            ((a ^ b) & (a ^ difference) & 0x80000000U) != 0;
+        const auto overflow = logicXor(carry_into_sign, carry);
 
         _updateOutputWire<32>(
             simulator, "DIFF", difference, current_time);
         _updateOutputWire(
-            simulator, "EQ", logic(a == b), current_time);
+            simulator, "EQ", zeroDetect(difference), current_time);
         _updateOutputWire(
             simulator,
             "LT_SIGNED",
-            logic(static_cast<int32_t>(a) < static_cast<int32_t>(b)),
+            logicXor(difference[31], overflow),
             current_time);
         _updateOutputWire(
-            simulator, "LT_UNSIGNED", logic(a < b), current_time);
+            simulator,
+            "LT_UNSIGNED",
+            logicNot(carry),
+            current_time);
         _updateOutputWire(
-            simulator, "CARRY_OUT", logic(a >= b), current_time);
+            simulator, "CARRY_OUT", carry, current_time);
         _updateOutputWire(
-            simulator, "OVERFLOW", logic(overflow), current_time);
+            simulator, "OVERFLOW", overflow, current_time);
     }
 };
 }

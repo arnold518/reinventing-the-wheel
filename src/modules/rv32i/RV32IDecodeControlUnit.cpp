@@ -12,7 +12,11 @@
 #include "modules/utility/Rewire.hpp"
 #include <cstdint>
 #include <functional>
+#include <iomanip>
+#include <map>
 #include <memory>
+#include <sstream>
+#include <stdexcept>
 #include <string>
 #include <utility>
 #include <vector>
@@ -210,6 +214,13 @@ void appendMappings(std::vector<Rewire::BitMap>& destination, std::vector<Rewire
     destination.insert(destination.end(), source.begin(), source.end());
 }
 
+std::string hexText(uint32_t value, size_t width) {
+    std::ostringstream out;
+    out << std::uppercase << std::hex << std::setfill('0')
+        << std::setw(static_cast<int>(width)) << value;
+    return out.str();
+}
+
 std::vector<Rewire::BitMap> decodeMappings() {
     std::vector<Rewire::BitMap> mappings;
     appendMappings(mappings, identity_mapping("INSTRUCTION", 15, 5, "RS1"));
@@ -304,14 +315,118 @@ void RV32IDecodeControlUnit::buildInternals(ComponentBuilder& builder) {
     std::vector<std::shared_ptr<Pin<32>>> instruction_sinks{
         builder.getInputPin<Rewire, 32>("FIELDS_AND_IMMEDIATES", "INSTRUCTION")};
 
+    struct SharedPredicate {
+        std::string name;
+        uint32_t mask;
+        uint32_t value;
+        std::vector<std::shared_ptr<Pin<>>> sinks;
+    };
+    std::vector<SharedPredicate> predicates;
+    std::map<std::pair<uint32_t, uint32_t>, size_t> predicate_indexes;
+
+    auto addPredicate = [&](uint32_t mask,
+                            uint32_t value,
+                            std::string name) {
+        const auto key = std::make_pair(mask, value & mask);
+        if (const auto found = predicate_indexes.find(key);
+            found != predicate_indexes.end()) {
+            return found->second;
+        }
+
+        const size_t index = predicates.size();
+        predicates.push_back(
+            {std::move(name), mask, value & mask, {}});
+        predicate_indexes.emplace(key, index);
+        const auto& predicate = predicates.back();
+        builder.addNewComponent<RV32IBitPatternMatcher>(
+            predicate.name, predicate.mask, predicate.value);
+        instruction_sinks.push_back(
+            builder.getInputPin<RV32IBitPatternMatcher, 32>(
+                predicate.name, "INPUT"));
+        return index;
+    };
+
+    constexpr uint32_t OpcodeMask = 0x0000007FU;
+    constexpr uint32_t Funct3Mask = 0x00007000U;
+    constexpr uint32_t Funct7Mask = 0xFE000000U;
+    constexpr size_t NoPredicate = static_cast<size_t>(-1);
+    std::vector<size_t> direct_predicates(
+        instruction_patterns.size(), NoPredicate);
+    std::vector<std::shared_ptr<Pin<>>> recognition_outputs(
+        instruction_patterns.size());
+
     for (size_t index = 0; index < instruction_patterns.size(); ++index) {
         const auto& pattern = instruction_patterns[index];
-        builder.addNewComponent<RV32IBitPatternMatcher>(
-            "MATCH_" + pattern.name, pattern.mask, pattern.value);
-        instruction_sinks.push_back(
-            builder.getInputPin<RV32IBitPatternMatcher, 32>("MATCH_" + pattern.name, "INPUT"));
+        std::vector<size_t> terms;
+        if (pattern.mask == 0xFFFFFFFFU) {
+            terms.push_back(addPredicate(
+                pattern.mask,
+                pattern.value,
+                "PREDECODE_EXACT_" + pattern.name));
+        } else {
+            uint32_t factored_mask = OpcodeMask;
+            terms.push_back(addPredicate(
+                OpcodeMask,
+                pattern.value,
+                "PREDECODE_OPCODE_"
+                    + hexText(pattern.value & OpcodeMask, 2)));
+            if ((pattern.mask & Funct3Mask) != 0) {
+                factored_mask |= Funct3Mask;
+                terms.push_back(addPredicate(
+                    Funct3Mask,
+                    pattern.value,
+                    "PREDECODE_FUNCT3_"
+                        + hexText(
+                            (pattern.value & Funct3Mask) >> 12U, 1)));
+            }
+            if ((pattern.mask & Funct7Mask) != 0) {
+                factored_mask |= Funct7Mask;
+                terms.push_back(addPredicate(
+                    Funct7Mask,
+                    pattern.value,
+                    "PREDECODE_FUNCT7_"
+                        + hexText(
+                            (pattern.value & Funct7Mask) >> 25U, 2)));
+            }
+            if (factored_mask != pattern.mask) {
+                throw std::logic_error(
+                    "RV32I decode pattern cannot be factored into "
+                    "opcode/funct3/funct7 predicates: " + pattern.name);
+            }
+        }
+
+        if (terms.size() == 1) {
+            direct_predicates[index] = terms.front();
+            continue;
+        }
+
+        std::string previous_gate;
+        for (size_t term = 1; term < terms.size(); ++term) {
+            const auto gate =
+                "RECOGNIZE_" + pattern.name + "_AND_"
+                + std::to_string(term);
+            builder.addNewComponent<ANDGate>(gate);
+            if (term == 1) {
+                predicates[terms[0]].sinks.push_back(
+                    builder.getInputPin<ANDGate>(gate, "A"));
+            } else {
+                builder.addNewWire(
+                    previous_gate + "_to_" + gate,
+                    builder.getOutputPin<ANDGate>(
+                        previous_gate, "OUT"),
+                    {builder.getInputPin<ANDGate>(gate, "A")});
+            }
+            predicates[terms[term]].sinks.push_back(
+                builder.getInputPin<ANDGate>(gate, "B"));
+            previous_gate = gate;
+        }
+        recognition_outputs[index] =
+            builder.getOutputPin<ANDGate>(previous_gate, "OUT");
     }
-    builder.addNewWire<32>("INSTRUCTION_fanout", getInputPin<32>("INSTRUCTION"), instruction_sinks);
+    builder.addNewWire<32>(
+        "INSTRUCTION_fanout",
+        getInputPin<32>("INSTRUCTION"),
+        instruction_sinks);
 
     builder.addNewWire<5>("RS1_to_output", builder.getOutputPin<Rewire, 5>("FIELDS_AND_IMMEDIATES", "RS1"), {getOutputPin<5>("RS1_ADDR")});
     builder.addNewWire<5>("RS2_to_output", builder.getOutputPin<Rewire, 5>("FIELDS_AND_IMMEDIATES", "RS2"), {getOutputPin<5>("RS2_ADDR")});
@@ -453,10 +568,25 @@ void RV32IDecodeControlUnit::buildInternals(ComponentBuilder& builder) {
     }
 
     for (size_t index = 0; index < instruction_patterns.size(); ++index) {
+        if (direct_predicates[index] != NoPredicate) {
+            auto& sinks = predicates[direct_predicates[index]].sinks;
+            sinks.insert(
+                sinks.end(),
+                match_sinks[index].begin(),
+                match_sinks[index].end());
+            continue;
+        }
         builder.addNewWire(
             "MATCH_" + instruction_patterns[index].name + "_fanout",
-            builder.getOutputPin<RV32IBitPatternMatcher>("MATCH_" + instruction_patterns[index].name, "MATCH"),
+            recognition_outputs[index],
             match_sinks[index]);
+    }
+    for (const auto& predicate : predicates) {
+        builder.addNewWire(
+            predicate.name + "_fanout",
+            builder.getOutputPin<RV32IBitPatternMatcher>(
+                predicate.name, "MATCH"),
+            predicate.sinks);
     }
     builder.addNewWire(
         "CONST_LOW_fanout",

@@ -78,7 +78,8 @@ Verified baseline before structural implementation begins:
 
 Current verification after structural core/system and visualizer integration landed:
 
-- full repository regression: 142/142 passed in 525.19 seconds
+- current unified-suite regression, including ELF/external validation:
+  129/129 passed in 637.57 seconds
 - `RV32IExecutionControlStatusUnitEquivalenceTest`: 30 labeled state/priority checkpoints passed
 - all 16 structural, all 16 balanced-profile, and all 16 reference-system
   program tests pass their shared lockstep and hard-coded final outcomes
@@ -89,8 +90,17 @@ Current verification after structural core/system and visualizer integration lan
 
 Known validation boundary:
 
-- The answer sheet has specification-derived edge vectors and hard-coded program outcomes, but it has not yet been run differentially against Spike, Sail, or the official RISC-V architectural test suite.
-- This does not block structural bring-up. When a structural result, answer-sheet result, and ISA reading disagree, the ratified RV32I specification remains the deciding source.
+- A strict ELF32 loader and external `tohost` runner are implemented. One
+  externally assembled smoke ELF has passed Sail 0.13 and both CircuitSim
+  system fidelities without using the internal instruction oracle.
+- The pinned official ACT4 `I` workflow generated 39 self-checking ELFs. All
+  39 pass Sail 0.13 and the behavioral CircuitSim system. A fully structural
+  sample passes, but the full structural sweep remains resource-bound at a
+  measured estimate of about 25 serial hours and roughly 1.1 GiB for the
+  smallest test. See `docs/rv32i-external-validation-report.md`.
+- This does not change the deciding rule: when a structural result,
+  answer-sheet result, external model, and ISA reading disagree, the ratified
+  RV32I specification remains the source to investigate against.
 
 ## Current Phase Status
 
@@ -98,22 +108,23 @@ Known validation boundary:
 | --- | --- | --- |
 | Answer sheet and generic test infrastructure | Complete | The oracle, behavioral system, Harvard lockstep, real write observation, public contract, mismatch detector, and 16 independent outcomes are ready. |
 | Phase 1: control-flow family | Complete | Structural and behavioral fidelities share one contract and pass `RV32IControlFlowUnitEquivalenceTest`. |
-| Phase 2: decode/control family | Complete | The gate/composite decoder and direct answer-sheet evaluator agree for all 40 supported instructions, representative illegal encodings, and 64 deterministic raw words. |
+| Phase 2: decode/control family | Complete | The gate/composite decoder and direct answer-sheet evaluator agree for all 40 supported instructions, 12 directed illegal encodings, and 64 deterministic raw words. |
 | Phase 3A: register-file and ALU equivalence | Complete for known binary CPU inputs | The isolated register-file equivalence test and 128-row ALU equivalence test pass; conservative partial-unknown behavioral boundaries are documented. |
 | Phase 3B: execution control/status family | Complete | Structural gates/muxes/storage and the same-contract direct evaluator pass isolated runs of the same stateful waveform. |
 | Phases 4-5: structural core and system | Complete | The five blocks, mux layer, and separate memory interfaces execute all 16 shared program cases in per-instruction lockstep and against hard-coded final outcomes. |
 | Phase 6A: block visualizer | Complete | Ten browser scenarios exercise the two fidelities separately. Structural roots are expandable; behavioral roots show the compact answer-sheet boundary. |
 | Phase 6B: core/system visualizer | Complete | The structural system and core have committed hierarchy layouts; the unified fully structural topology contains 54,049 components. |
 | Phase 6C: lossless visualizer performance | Complete | Indexed bulk snapshots preserve every pin/wire value, gzip reduces transport, idle redraw stops, session caching is bounded, and hierarchy descent stops only below one physical pixel. See `docs/rv32i-visualizer-performance-report.md`. |
+| External RV32I validation boundary | In progress | Strict ELF loading and the smoke fixture pass both fidelities. The complete 39-test ACT4 `I` set passes Sail and behavioral CircuitSim; a full structural run awaits a safe low-history execution path. |
 
 ## Immediate Next Deliverable
 
 The first structural single-cycle CPU milestone and its first lossless
-browser-performance pass are implemented. The next work is hardening rather
-than missing core wiring: external Spike/Sail or architectural-suite
-differential validation, an optional deliberate nonzero reset-vector contract,
-and conservative cold-start/topology-sharing improvements for the
-54,000-component hierarchy.
+browser-performance pass are implemented. External validation now has a
+Sail-proven smoke fixture and a complete 39-test ACT4 Sail/behavioral pass.
+The remaining hardening is a safe low-history full-structural ACT4 run, an
+optional deliberate nonzero reset-vector contract, and conservative
+cold-start/topology-sharing improvements for the 54,000-component hierarchy.
 
 `RV32IExecutionControlStatusUnit` now centralizes the decisions that the first four blocks deliberately do not own: whether the current instruction may update PC or a register, whether a memory request stays active while waiting, which halt/trap state latches, and which fault wins when several requests are present together. Its detailed implementation and verification record is in `docs/rv32i-execution-status-equivalence-report.md`.
 
@@ -189,7 +200,7 @@ Each family provides two independent fidelities behind one public contract:
 | Block family | Structural fidelity | Behavioral fidelity | Current state |
 | --- | --- | --- | --- |
 | Control flow | `RV32IControlFlowUnit`: `Register32`, `PC+4`/target adders, JALR mask, branch gates, next-PC mux, alignment check | the behavioral fidelity of `RV32IControlFlowUnit`: direct PC/target/branch calculation with the same clocked contract | Complete; focused equivalence test passes |
-| Decode/control | `RV32IDecodeControlUnit`: field rewires, I/S/B/U/J immediate wiring, instruction-recognition gates, and control-output gates | the behavioral fidelity of `RV32IDecodeControlUnit`: maps known instructions through `RV32IDecoder`/`RV32IControl` | Complete for known 32-bit instructions, including 64 deterministic raw words; partial-unknown boundary documented |
+| Decode/control | `RV32IDecodeControlUnit`: field rewires, I/S/B/U/J immediate wiring, shared opcode/function predicates, instruction-recognition gates, and control-output gates | the behavioral fidelity of `RV32IDecodeControlUnit`: maps known instructions through `RV32IDecoder`/`RV32IControl` | Complete for all 40 legal forms, 12 directed illegal encodings, and 64 deterministic raw words; partial-unknown boundary documented |
 | Register file | `RegisterFile32x32`: visible decoder/read muxes/register-word hierarchy | the behavioral fidelity of `RegisterFile32x32`: compact direct state | Complete; isolated equivalence exercises x0 and every x1-x31 entry |
 | ALU | `ALU32`: existing add/subtract, logic, shifter, comparator, and zero-detect composites | the behavioral fidelity of `ALU32`: direct operation/flag calculation using the identical pins and op encoding | Complete for known binary inputs; conservative partial-unknown boundary documented |
 | Execution control/status | `RV32IExecutionControlStatusUnit`: alignment gates, status storage, trap-priority muxing, and permission gates | the behavioral fidelity of `RV32IExecutionControlStatusUnit`: direct state machine and priority calculation with the same pins | Complete; stateful priority/handshake equivalence test passes |
@@ -665,7 +676,7 @@ Each phase should land with focused tests before wiring the next layer.
 Landed block equivalence tests:
 
 - `RV32IControlFlowUnitEquivalenceTest`
-- `RV32IDecodeControlUnitEquivalenceTest`
+- `RV32IDecodeControlUnitTest`
 - `RV32IRegisterFileEquivalenceTest`
 - `ALU32EquivalenceTest`
 - `RV32IExecutionControlStatusUnitEquivalenceTest`

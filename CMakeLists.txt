@@ -76,6 +76,7 @@ set(CORE_LOGIC_SOURCES
     src/modules/utility/Constant.cpp
     src/rv32i/RV32IDecoder.cpp
     src/rv32i/RV32IControl.cpp
+    src/rv32i/RV32IElfImage.cpp
     src/rv32i/RV32IProgram.cpp
     src/rv32i/RV32IFunctionalMemory.cpp
     src/rv32i/RV32IInstructionOracle.cpp
@@ -91,6 +92,8 @@ set(CORE_LOGIC_SOURCES
     src/tests/RV32IBlockStandaloneTests.cpp
     src/tests/RV32IDecoderTests.cpp
     src/tests/RV32IControlTests.cpp
+    src/tests/RV32IElfTests.cpp
+    src/tests/RV32IExternalValidationTests.cpp
     src/tests/RV32IProgramTests.cpp
     src/tests/RV32IInstructionOracleTests.cpp
     src/tests/RV32IInstructionLockstepTests.cpp
@@ -133,6 +136,9 @@ target_include_directories(SimulatorLib PRIVATE
 target_compile_options(SimulatorLib PRIVATE
     $<$<CXX_COMPILER_ID:GNU,Clang>:-UNDEBUG>
 )
+target_compile_definitions(SimulatorLib PRIVATE
+    CIRCUITSIM_SOURCE_DIR="${PROJECT_SOURCE_DIR}"
+)
 
 # ===================================================================
 # Target 2: The Python Module (`circuit_backend`)
@@ -167,6 +173,14 @@ add_executable(sim src/main.cpp)
 
 # Link the executable against our core logic library.
 target_link_libraries(sim PRIVATE SimulatorLib)
+
+# Generic runner for committed smoke fixtures and explicitly generated ACT4
+# ELF files. It is not registered as a separate test per fidelity.
+add_executable(
+    rv32i_validate_elf
+    tools/rv32i-validation/RV32IElfValidationRunner.cpp
+)
+target_link_libraries(rv32i_validate_elf PRIVATE SimulatorLib)
 
 # ===================================================================
 # Target 4: CTest Integration

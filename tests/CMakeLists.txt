@@ -104,6 +104,8 @@ set(SIMULATION_TESTS
     RV32IBitPatternMatcherTest
     RV32IDecoderTest
     RV32IControlTest
+    RV32IElfLoaderTest
+    RV32IExternalValidationSmokeTest
     RV32IProgramLoaderTest
     RV32IInstructionOracleTest
     RV32IInstructionLockstepHarnessTest
@@ -129,6 +131,7 @@ set(SEMANTIC_TESTS
     RewireValidationTest
     RV32IDecoderTest
     RV32IControlTest
+    RV32IElfLoaderTest
     RV32IProgramLoaderTest
     RV32IInstructionOracleTest
     RV32IInstructionLockstepMismatchDetectionTest
@@ -137,6 +140,7 @@ set(SEMANTIC_TESTS
 set(INTEGRATION_TESTS
     FullCircuitTest
     RV32IInstructionLockstepHarnessTest
+    RV32IExternalValidationSmokeTest
     RV32IProfileToggleSweepTest
 )
 
@@ -145,6 +149,7 @@ set(SLOW_SIMULATION_TESTS
     Memory32x32Test
     RegisterFile32x32Test
     RV32ISingleCycleCoreTest
+    RV32IExternalValidationSmokeTest
     RV32IProfileToggleSweepTest
 )
 

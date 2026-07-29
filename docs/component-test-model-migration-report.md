@@ -120,6 +120,70 @@ Default layouts were regenerated after the fingerprint and registry changes:
 All generated parents passed overlap validation. The sixteen RV32I program
 scenarios received root layouts using the final profile fingerprint.
 
+## Coverage hardening follow-up
+
+Date: 2026-07-29
+
+The post-migration audit checked the complete built-in component catalog
+against the test registry. Every registered component contract still has one
+logical test; the weakness was the depth of several scenarios, not missing
+test registration.
+
+The shared truth-table adapter now accepts exact vectors of `LOW`, `HIGH`,
+`UNKNOWN`, and `HIGH_Z`. This lets an ordinary component scenario drive and
+check four-state buses without a private test harness.
+
+Coverage added by the audit:
+
+- binary gates now exhaust all 16 pairs of four-state inputs;
+- the half adder and full adder exhaust 16 and 64 four-state rows
+  respectively;
+- every splitter, joiner, mux family, decoder, 8-bit arithmetic block, and
+  32-bit ALU sub-block has representative unknown/high-impedance propagation
+  and controlling-value cases;
+- latches, flip-flops, registers, register files, and memory arrays check
+  high-impedance capture, ambiguous control/address behavior, reset recovery,
+  and exact four-state words;
+- `RV32IBitPatternMatcher` checks unknown/high-impedance bits in both masked
+  and significant positions;
+- `RV32IControlFlowUnitTest` covers every branch decision, JAL, JALR,
+  alignment, hold, reset, and 32-bit PC wraparound;
+- `RV32IDecodeControlUnitTest` uses 40 legal instructions, 12 deliberately
+  illegal encodings, and 64 deterministic raw words;
+- `RV32IExecutionControlStatusUnitTest` covers all four encoded sizes at all
+  four low-address offsets, every trap/halt source, stalls, fault-response
+  gating, sticky state, priority, and reset recovery; and
+- the instruction oracle, lockstep harness, sixteen program scenarios, and
+  recursive profile-toggle sweep were reviewed and retained as the
+  higher-level coverage layer. They already compare every committed
+  architectural state and memory effect rather than sampling only final pins.
+
+The new cases exposed three real cross-fidelity defects. The behavioral
+`AddSub32`, `Comparator32`, and `Shifter32` implementations previously
+collapsed partially knowable results to all-unknown, or preserved
+high-impedance where their structural gate networks produced unknown. Their
+behavioral evaluators now model the same four-state ripple/mux semantics as
+the tested structural contracts.
+
+The audit also corrected the `RegisterFile32x32` catalog semantic domain from
+`known-binary` to `four-state`, matching its implementations and test
+contract.
+
+Follow-up verification:
+
+```text
+cmake --build build -j2
+Result: passed
+
+ctest --test-dir build --output-on-failure -j2
+Result: 127/127 passed
+Wall time: 346.08 seconds
+```
+
+This regression includes all sixteen
+`RV32ISingleCycleSystemTest/program-XX` scenarios and the complete
+`RV32IProfileToggleSweepTest`.
+
 ## Verification
 
 Build:

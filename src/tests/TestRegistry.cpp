@@ -9,6 +9,8 @@
 #include "tests/RV32IBlockStandaloneTests.hpp"
 #include "tests/RV32IControlTests.hpp"
 #include "tests/RV32IDecoderTests.hpp"
+#include "tests/RV32IElfTests.hpp"
+#include "tests/RV32IExternalValidationTests.hpp"
 #include "tests/RV32IInstructionLockstepTests.hpp"
 #include "tests/RV32IInstructionOracleTests.hpp"
 #include "tests/RV32IProgramCases.hpp"
@@ -127,6 +129,7 @@ void attachNonComponentMetadata(
         {
             "FullCircuitTest",
             "RV32IInstructionLockstepHarnessTest",
+            "RV32IExternalValidationSmokeTest",
             "RV32IProfileToggleSweepTest",
         },
         RegisteredTestKind::Integration);
@@ -137,6 +140,7 @@ void attachNonComponentMetadata(
             "RewireValidationTest",
             "RV32IDecoderTest",
             "RV32IControlTest",
+            "RV32IElfLoaderTest",
             "RV32IProgramLoaderTest",
             "RV32IInstructionOracleTest",
             "RV32IInstructionLockstepMismatchDetectionTest",
@@ -294,6 +298,9 @@ const std::vector<TestRegistryEntry>& getTestRegistry() {
         entry<RV32IBitPatternMatcherTest>("RV32IBitPatternMatcherTest"),
         entry<RV32IDecoderTest>("RV32IDecoderTest"),
         entry<RV32IControlTest>("RV32IControlTest"),
+        entry<RV32IElfLoaderTest>("RV32IElfLoaderTest"),
+        entry<RV32IExternalValidationSmokeTest>(
+            "RV32IExternalValidationSmokeTest"),
         entry<RV32IProgramLoaderTest>("RV32IProgramLoaderTest"),
         entry<RV32IInstructionOracleTest>("RV32IInstructionOracleTest"),
         entry<RV32IInstructionLockstepHarnessTest>("RV32IInstructionLockstepHarnessTest"),

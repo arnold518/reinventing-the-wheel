@@ -30,6 +30,45 @@ enum class ShiftMode {
 using OneBitPin = std::shared_ptr<Pin<>>;
 using SinkList = std::vector<OneBitPin>;
 
+LogicValue logicNot(LogicValue value) {
+    if (value == LogicValue::LOW) {
+        return LogicValue::HIGH;
+    }
+    if (value == LogicValue::HIGH) {
+        return LogicValue::LOW;
+    }
+    return LogicValue::UNKNOWN;
+}
+
+LogicValue logicAnd(LogicValue left, LogicValue right) {
+    if (left == LogicValue::LOW || right == LogicValue::LOW) {
+        return LogicValue::LOW;
+    }
+    if (left == LogicValue::HIGH && right == LogicValue::HIGH) {
+        return LogicValue::HIGH;
+    }
+    return LogicValue::UNKNOWN;
+}
+
+LogicValue logicOr(LogicValue left, LogicValue right) {
+    if (left == LogicValue::HIGH || right == LogicValue::HIGH) {
+        return LogicValue::HIGH;
+    }
+    if (left == LogicValue::LOW && right == LogicValue::LOW) {
+        return LogicValue::LOW;
+    }
+    return LogicValue::UNKNOWN;
+}
+
+LogicValue muxValue(
+    LogicValue when_low,
+    LogicValue when_high,
+    LogicValue select) {
+    return logicOr(
+        logicAnd(when_low, logicNot(select)),
+        logicAnd(when_high, select));
+}
+
 void buildShiftNetwork(
     ComponentBuilder& builder,
     const std::string& prefix,
@@ -120,36 +159,39 @@ public:
     void evaluate(size_t current_time, Simulator& simulator) override {
         const auto a = getInputPin<32>("A")->getValueAsVector();
         const auto b = getInputPin<32>("B")->getValueAsVector();
-        size_t amount = 0;
-        for (size_t bit = 0; bit < 5; ++bit) {
-            if (b[bit] != LogicValue::LOW
-                && b[bit] != LogicValue::HIGH) {
-                const auto unknown =
-                    std::vector<LogicValue>(32, LogicValue::UNKNOWN);
-                _updateOutputWire<32>(
-                    simulator, "SLL_OUT", unknown, current_time);
-                _updateOutputWire<32>(
-                    simulator, "SRL_OUT", unknown, current_time);
-                _updateOutputWire<32>(
-                    simulator, "SRA_OUT", unknown, current_time);
-                return;
+        auto left = a;
+        auto logical_right = a;
+        auto arithmetic_right = a;
+        for (size_t stage = 0; stage < 5; ++stage) {
+            const size_t amount = size_t{1} << stage;
+            std::vector<LogicValue> next_left(32, LogicValue::LOW);
+            std::vector<LogicValue> next_logical_right(
+                32, LogicValue::LOW);
+            std::vector<LogicValue> next_arithmetic_right(32, a[31]);
+            for (size_t bit = 0; bit < 32; ++bit) {
+                const auto shifted_left = bit >= amount
+                    ? left[bit - amount]
+                    : LogicValue::LOW;
+                const auto shifted_logical = bit + amount < 32
+                    ? logical_right[bit + amount]
+                    : LogicValue::LOW;
+                const auto shifted_arithmetic = bit + amount < 32
+                    ? arithmetic_right[bit + amount]
+                    : a[31];
+                next_left[bit] =
+                    muxValue(left[bit], shifted_left, b[stage]);
+                next_logical_right[bit] = muxValue(
+                    logical_right[bit],
+                    shifted_logical,
+                    b[stage]);
+                next_arithmetic_right[bit] = muxValue(
+                    arithmetic_right[bit],
+                    shifted_arithmetic,
+                    b[stage]);
             }
-            if (b[bit] == LogicValue::HIGH) {
-                amount |= size_t{1} << bit;
-            }
-        }
-
-        std::vector<LogicValue> left(32, LogicValue::LOW);
-        std::vector<LogicValue> logical_right(32, LogicValue::LOW);
-        std::vector<LogicValue> arithmetic_right(32, a[31]);
-        for (size_t bit = 0; bit < 32; ++bit) {
-            if (bit >= amount) {
-                left[bit] = a[bit - amount];
-            }
-            if (bit + amount < 32) {
-                logical_right[bit] = a[bit + amount];
-                arithmetic_right[bit] = a[bit + amount];
-            }
+            left = std::move(next_left);
+            logical_right = std::move(next_logical_right);
+            arithmetic_right = std::move(next_arithmetic_right);
         }
 
         _updateOutputWire<32>(

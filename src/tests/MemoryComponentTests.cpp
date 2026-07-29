@@ -189,6 +189,22 @@ circuit::test::ComponentTestSpec memoryBitSpec() {
             {{"Q", logicBit(LogicValue::UNKNOWN)}},
             CheckpointKind::AfterEdge,
             "An ambiguous write attempt produces unknown state."),
+        driveAction({{"CLK", logicBit(false)}}),
+        checkpointAction(
+            "reset-before-high-z",
+            {{"RST", logicBit(true)}},
+            {{"Q", logicBit(false)}}),
+        driveAction({
+            {"RST", logicBit(false)},
+            {"WE", logicBit(true)},
+            {"D", logicBit(LogicValue::HIGH_Z)},
+        }),
+        checkpointAction(
+            "capture-high-z-as-unknown",
+            {{"CLK", logicBit(true)}},
+            {{"Q", logicBit(LogicValue::UNKNOWN)}},
+            CheckpointKind::AfterEdge,
+            "A stored high-impedance input becomes unknown state."),
     };
     return {
         "MemoryBitTest",
@@ -316,6 +332,27 @@ circuit::test::ComponentTestSpec register32Spec() {
         {{"Q", logicBits(32, 0)}},
         CheckpointKind::AfterEdge,
         "An uncertain write preserves bits where hold and write agree."));
+    scenario.actions.push_back(
+        driveAction({{"CLK", logicBit(false)}}));
+    scenario.actions.push_back(checkpointAction(
+        "reset-before-high-z",
+        {{"RST", logicBit(true)}},
+        {{"Q", logicBits(32, 0)}}));
+    auto high_z_pattern = logicBits(32, 0x12345678U);
+    high_z_pattern[17] = LogicValue::HIGH_Z;
+    auto normalized_high_z = high_z_pattern;
+    normalized_high_z[17] = LogicValue::UNKNOWN;
+    scenario.actions.push_back(driveAction({
+        {"RST", logicBit(false)},
+        {"WE", logicBit(true)},
+        {"D", high_z_pattern},
+    }));
+    scenario.actions.push_back(checkpointAction(
+        "capture-high-z-as-unknown",
+        {{"CLK", logicBit(true)}},
+        {{"Q", normalized_high_z}},
+        CheckpointKind::AfterEdge,
+        "Each high-impedance data lane is stored as unknown."));
 
     return {
         "Register32Test",
@@ -339,6 +376,13 @@ circuit::test::ComponentTestSpec registerFile32x32Spec() {
         LogicValue::HIGH,
         LogicValue::HIGH,
         LogicValue::UNKNOWN,
+        LogicValue::LOW,
+        LogicValue::LOW,
+    };
+    const LogicVector maybe_x3_or_x7_high_z{
+        LogicValue::HIGH,
+        LogicValue::HIGH,
+        LogicValue::HIGH_Z,
         LogicValue::LOW,
         LogicValue::LOW,
     };
@@ -469,6 +513,29 @@ circuit::test::ComponentTestSpec registerFile32x32Spec() {
             {"RS2_DATA", logicBits(32, registerFilePattern(12))},
         }));
 
+    auto high_z_x14_input = logicBits(32, 0x13579bdfU);
+    high_z_x14_input[9] = LogicValue::HIGH_Z;
+    auto high_z_x14_expected = high_z_x14_input;
+    high_z_x14_expected[9] = LogicValue::UNKNOWN;
+    scenario.actions.push_back(driveAction({
+        {"WRITE_DATA", high_z_x14_input},
+        {"RD_ADDR", logicBits(5, 14)},
+    }));
+    scenario.actions.push_back(
+        driveAction({{"CLK", logicBit(true)}}));
+    scenario.actions.push_back(
+        driveAction({{"CLK", logicBit(false)}}));
+    scenario.actions.push_back(checkpointAction(
+        "high-z-data-lane-normalizes-to-unknown",
+        {
+            {"RS1_ADDR", logicBits(5, 14)},
+            {"RS2_ADDR", logicBits(5, 0)},
+        },
+        {
+            {"RS1_DATA", high_z_x14_expected},
+            {"RS2_DATA", zero},
+        }));
+
     // Reset gives the unknown-address policy a clean, known starting point.
     scenario.actions.push_back(checkpointAction(
         "reset-before-unknown-policy",
@@ -504,6 +571,10 @@ circuit::test::ComponentTestSpec registerFile32x32Spec() {
     scenario.actions.push_back(checkpointAction(
         "ambiguous-read-agrees",
         {{"RS1_ADDR", maybe_x3_or_x7}},
+        {{"RS1_DATA", gateUnknownSelect(alternating_high)}}));
+    scenario.actions.push_back(checkpointAction(
+        "high-z-read-address-matches-unknown-policy",
+        {{"RS1_ADDR", maybe_x3_or_x7_high_z}},
         {{"RS1_DATA", gateUnknownSelect(alternating_high)}}));
     appendWrite(logicBits(5, 7), logicBits(32, 0x55555555U));
     scenario.actions.push_back(checkpointAction(
@@ -562,6 +633,13 @@ circuit::test::ComponentTestSpec registerFile32x32Spec() {
             {"RS1_DATA", zero},
             {"RS2_DATA", zero},
         }));
+    scenario.actions.push_back(checkpointAction(
+        "high-z-reset-matches-unknown-policy",
+        {{"RST", logicBit(LogicValue::HIGH_Z)}},
+        {
+            {"RS1_DATA", zero},
+            {"RS2_DATA", zero},
+        }));
 
     return {
         "RegisterFile32x32Test",
@@ -597,12 +675,12 @@ circuit::test::NamedValues memoryOutputs(
 void appendMemoryWrite(
     circuit::test::ActionScenario& scenario,
     uint32_t address,
-    uint32_t value,
+    circuit::test::LogicVector value,
     uint32_t size) {
     using namespace circuit::test;
     scenario.actions.push_back(driveAction({
         {"ADDR", logicBits(32, address)},
-        {"WRITE_DATA", logicBits(32, value)},
+        {"WRITE_DATA", std::move(value)},
         {"READ_EN", logicBit(false)},
         {"WRITE_EN", logicBit(true)},
         {"SIZE", logicBits(2, size)},
@@ -614,6 +692,18 @@ void appendMemoryWrite(
         driveAction({{"CLK", logicBit(false)}}));
     scenario.actions.push_back(
         driveAction({{"WRITE_EN", logicBit(false)}}));
+}
+
+void appendMemoryWrite(
+    circuit::test::ActionScenario& scenario,
+    uint32_t address,
+    uint32_t value,
+    uint32_t size) {
+    appendMemoryWrite(
+        scenario,
+        address,
+        circuit::test::logicBits(32, value),
+        size);
 }
 
 circuit::test::ComponentTestSpec registerFile4x32Spec() {
@@ -645,9 +735,11 @@ circuit::test::ComponentTestSpec registerFile4x32Spec() {
         driveAction({{"RST", logicBit(false)}}),
     };
 
-    const auto appendWrite = [&](uint32_t address, LogicVector value) {
+    const auto appendWriteAddress = [&](
+        LogicVector address,
+        LogicVector value) {
         scenario.actions.push_back(driveAction({
-            {"RD_ADDR", logicBits(2, address)},
+            {"RD_ADDR", std::move(address)},
             {"WRITE_DATA", std::move(value)},
             {"REG_WRITE", logicBit(true)},
         }));
@@ -655,6 +747,13 @@ circuit::test::ComponentTestSpec registerFile4x32Spec() {
             driveAction({{"CLK", logicBit(true)}}));
         scenario.actions.push_back(
             driveAction({{"CLK", logicBit(false)}}));
+    };
+    const auto appendWrite = [&](
+        uint32_t address,
+        LogicVector value) {
+        appendWriteAddress(
+            logicBits(2, address),
+            std::move(value));
     };
 
     appendWrite(0, logicBits(32, 0xffffffffU));
@@ -752,6 +851,56 @@ circuit::test::ComponentTestSpec registerFile4x32Spec() {
         },
         {
             {"RS1_DATA", zero},
+            {"RS2_DATA", zero},
+        }));
+
+    scenario.actions.push_back(driveAction({{"RST", logicBit(false)}}));
+    appendWrite(1, logicBits(32, 0xaaaaaaaaU));
+    appendWrite(3, logicBits(32, 0xaaaaaaaaU));
+    const LogicVector maybe_x1_or_x3_high_z{
+        LogicValue::HIGH,
+        LogicValue::HIGH_Z,
+    };
+    scenario.actions.push_back(checkpointAction(
+        "high-z-read-address",
+        {
+            {"RS1_ADDR", maybe_x1_or_x3_high_z},
+            {"RS2_ADDR", logicBits(2, 0)},
+        },
+        {
+            {"RS1_DATA", gateUnknownSelect(
+                logicBits(32, 0xaaaaaaaaU))},
+            {"RS2_DATA", zero},
+        }));
+
+    const auto ambiguous_data = logicBits(32, 0x12345678U);
+    appendWriteAddress(maybe_x1_or_x3_high_z, ambiguous_data);
+    const auto ambiguous_result = gateUnknownWrite(
+        logicBits(32, 0xaaaaaaaaU), ambiguous_data);
+    scenario.actions.push_back(checkpointAction(
+        "high-z-write-address",
+        {
+            {"RS1_ADDR", logicBits(2, 1)},
+            {"RS2_ADDR", logicBits(2, 3)},
+        },
+        {
+            {"RS1_DATA", ambiguous_result},
+            {"RS2_DATA", ambiguous_result},
+        }));
+
+    auto high_z_x2_input = logicBits(32, 0x13579bdfU);
+    high_z_x2_input[9] = LogicValue::HIGH_Z;
+    auto high_z_x2_expected = high_z_x2_input;
+    high_z_x2_expected[9] = LogicValue::UNKNOWN;
+    appendWrite(2, high_z_x2_input);
+    scenario.actions.push_back(checkpointAction(
+        "high-z-data-lane-normalizes-to-unknown",
+        {
+            {"RS1_ADDR", logicBits(2, 2)},
+            {"RS2_ADDR", logicBits(2, 0)},
+        },
+        {
+            {"RS1_DATA", high_z_x2_expected},
             {"RS2_DATA", zero},
         }));
 
@@ -878,6 +1027,22 @@ circuit::test::ComponentTestSpec memorySliceSpec(
         memoryOutputs(memoryWordPattern(0), false),
         CheckpointKind::TransactionComplete,
         "A misaligned write never changes storage."));
+
+    auto four_state_word = logicBits(32, 0x12345678U);
+    four_state_word[5] = LogicValue::UNKNOWN;
+    four_state_word[17] = LogicValue::HIGH_Z;
+    auto normalized_four_state_word = four_state_word;
+    normalized_four_state_word[17] = LogicValue::UNKNOWN;
+    appendMemoryWrite(scenario, 0, four_state_word, 2);
+    scenario.actions.push_back(checkpointAction(
+        "four-state-word",
+        {
+            {"ADDR", logicBits(32, 0)},
+            {"READ_EN", logicBit(true)},
+        },
+        memoryOutputs(normalized_four_state_word, false),
+        CheckpointKind::TransactionComplete,
+        "Stored HIGH_Z data is normalized to UNKNOWN while known lanes remain intact."));
 
     scenario.actions.push_back(checkpointAction(
         "reset-clear",
@@ -1029,10 +1194,51 @@ circuit::test::ComponentTestSpec memory64Kx32Spec() {
         {{"SIGN_EXTEND", logicBit(true)}},
         memoryOutputs(0xffffbeefU, false)));
 
+    auto four_state_word = logicBits(32, 0x12345678U);
+    four_state_word[5] = LogicValue::UNKNOWN;
+    four_state_word[17] = LogicValue::HIGH_Z;
+    auto normalized_four_state_word = four_state_word;
+    normalized_four_state_word[17] = LogicValue::UNKNOWN;
+    appendMemoryWrite(scenario, 8, four_state_word, 2);
+    scenario.actions.push_back(checkpointAction(
+        "four-state-word",
+        {
+            {"ADDR", logicBits(32, 8)},
+            {"READ_EN", logicBit(true)},
+        },
+        memoryOutputs(normalized_four_state_word, false),
+        CheckpointKind::TransactionComplete));
+
+    auto unknown_address = logicBits(32, 0);
+    unknown_address[3] = LogicValue::UNKNOWN;
+    scenario.actions.push_back(checkpointAction(
+        "unknown-address",
+        {
+            {"ADDR", unknown_address},
+            {"SIZE", logicBits(2, 2)},
+        },
+        {
+            {"READ_DATA", LogicVector(32, LogicValue::UNKNOWN)},
+            {"READY", logicBit(true)},
+            {"FAULT", logicBit(LogicValue::UNKNOWN)},
+        }));
+    scenario.actions.push_back(checkpointAction(
+        "unknown-read-enable",
+        {
+            {"ADDR", logicBits(32, 8)},
+            {"READ_EN", logicBit(LogicValue::UNKNOWN)},
+        },
+        {
+            {"READ_DATA", normalized_four_state_word},
+            {"READY", logicBit(true)},
+            {"FAULT", logicBit(LogicValue::UNKNOWN)},
+        }));
+
     scenario.actions.push_back(checkpointAction(
         "invalid-size",
         {
             {"ADDR", logicBits(32, 0)},
+            {"READ_EN", logicBit(true)},
             {"SIZE", logicBits(2, 3)},
             {"SIGN_EXTEND", logicBit(false)},
         },

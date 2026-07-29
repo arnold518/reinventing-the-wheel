@@ -45,7 +45,7 @@ public:
         uint32_t base_address = 0) override;
     void loadInstructionBytes(
         uint32_t base_address,
-        const std::vector<uint8_t>& data);
+        const std::vector<uint8_t>& data) override;
     void loadDataBytes(
         uint32_t base_address,
         const std::vector<uint8_t>& data) override;
