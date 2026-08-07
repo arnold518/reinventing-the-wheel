@@ -63,6 +63,18 @@ private:
 } // namespace
 
 void bindSimulator(py::module_& m) {
+    py::class_<SimulatorPerformanceCounters>(m, "SimulatorPerformanceCounters",
+        "Non-intrusive counts of work performed by the event simulator.")
+        .def_readonly("scheduled_events", &SimulatorPerformanceCounters::scheduled_events)
+        .def_readonly("scheduled_wire_updates", &SimulatorPerformanceCounters::scheduled_wire_updates)
+        .def_readonly("scheduled_component_evaluations", &SimulatorPerformanceCounters::scheduled_component_evaluations)
+        .def_readonly("processed_events", &SimulatorPerformanceCounters::processed_events)
+        .def_readonly("processed_wire_updates", &SimulatorPerformanceCounters::processed_wire_updates)
+        .def_readonly("processed_component_evaluations", &SimulatorPerformanceCounters::processed_component_evaluations)
+        .def_readonly("effective_wire_changes", &SimulatorPerformanceCounters::effective_wire_changes)
+        .def_readonly("effective_pin_changes", &SimulatorPerformanceCounters::effective_pin_changes)
+        .def_readonly("maximum_event_queue_depth", &SimulatorPerformanceCounters::maximum_event_queue_depth);
+
     py::class_<VisualSignalSnapshot>(m, "VisualSignalSnapshot",
         "Collects pin and wire values in stable visualizer index order using one C++ call.")
         .def(py::init<
@@ -89,6 +101,13 @@ void bindSimulator(py::module_& m) {
             
         .def("clear", &Simulator::clear,
             "Clears the event queue and the recorded history.")
+
+        .def("get_performance_counters", &Simulator::getPerformanceCounters,
+            py::return_value_policy::reference_internal,
+            "Returns cumulative event-engine performance counters.")
+
+        .def("reset_performance_counters", &Simulator::resetPerformanceCounters,
+            "Resets performance counters without changing circuit state or queued events.")
             
         .def("get_current_time", &Simulator::getCurrentTime,
             "Returns the current simulation time as set by set_circuit_state_at_time.");

@@ -2,6 +2,7 @@
 
 #include "components/selection/ComponentFamily.hpp"
 #include "modules/rv32i/RV32IComponentEncoding.hpp"
+#include "modules/rv32i/RV32IBuildProfiles.hpp"
 #include "modules/rv32i/RV32IControlFlowUnit.hpp"
 #include "modules/rv32i/RV32IDecodeControlUnit.hpp"
 #include "modules/rv32i/RV32IExecutionControlStatusUnit.hpp"
@@ -378,6 +379,8 @@ NamedValues decodeOutputs(uint32_t instruction) {
         {"MEM_SIZE", logicBits(
             2, rv32i::component_encoding::memorySize(control.mem_size))},
         {"LOAD_SIGN_EXTEND", logicBit(control.load_sign_extend)},
+        {"USES_RS1", logicBit(control.uses_rs1)},
+        {"USES_RS2", logicBit(control.uses_rs2)},
         {"BRANCH_TYPE", logicBits(
             3, rv32i::component_encoding::branch(control.branch))},
         {"JUMP_TYPE", logicBits(
@@ -867,12 +870,23 @@ ComponentTestSpec executionStatusSpec() {
 }
 
 RV32IControlFlowUnitTest::RV32IControlFlowUnitTest()
-    : ComponentScenarioTest(controlFlowSpec(), "contract") {}
+    : ComponentScenarioTest(
+          controlFlowSpec(),
+          "contract",
+          rv32i::withBehavioralMemoryParts(
+              circuit::canonicalDefaultProfile())) {}
 
 RV32IDecodeControlUnitTest::RV32IDecodeControlUnitTest()
     : ComponentScenarioTest(
-          decodeControlSpec(), "instruction-contract") {}
+          decodeControlSpec(),
+          "instruction-contract",
+          rv32i::withBehavioralMemoryParts(
+              circuit::canonicalDefaultProfile())) {}
 
 RV32IExecutionControlStatusUnitTest::
 RV32IExecutionControlStatusUnitTest()
-    : ComponentScenarioTest(executionStatusSpec(), "contract") {}
+    : ComponentScenarioTest(
+          executionStatusSpec(),
+          "contract",
+          rv32i::withBehavioralMemoryParts(
+              circuit::canonicalDefaultProfile())) {}

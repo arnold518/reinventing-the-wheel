@@ -1,6 +1,7 @@
 #pragma once
 
 #include "rv32i/RV32IInstructionTrace.hpp"
+#include "modules/rv32i/RV32IBuildProfiles.hpp"
 #include "tests/RV32IInstructionLockstepTests.hpp"
 #include "tests/ComponentTestModel.hpp"
 #include "simulator/SimulationTest.hpp"
@@ -23,6 +24,7 @@ public:
     void setupCircuit() override;
     size_t getRunDuration() const override;
     std::vector<SimulationCheckpoint> getCheckpoints() const override;
+    std::vector<PerformanceMetric> getPerformanceMetrics() const override;
     bool supportsBuildProfile() const override { return true; }
     circuit::BuildProfile getBuildProfile() const override {
         return profile_;
@@ -52,11 +54,12 @@ private:
     size_t visual_time_origin_ = 0;
     mutable size_t last_observed_memory_time_ = 0;
     circuit::BuildProfile profile_ =
-        circuit::withExactFidelity(
-            circuit::canonicalDefaultProfile(),
-            "RV32I_SINGLE_CYCLE_SYSTEM_ROOT",
-            circuit::Fidelity::Structural,
-            "rv32i-structural-system-test");
+        rv32i::withBehavioralMemoryParts(
+            circuit::withExactFidelity(
+                circuit::canonicalDefaultProfile(),
+                "RV32I_SINGLE_CYCLE_SYSTEM_ROOT",
+                circuit::Fidelity::Structural,
+                "rv32i-structural-system-test"));
 };
 
 class RV32ISingleCycleSystemTest

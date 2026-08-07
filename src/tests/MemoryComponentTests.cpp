@@ -1423,6 +1423,25 @@ bool Memory64Kx32Test::run() {
             memory->getTouchedWordCountAtTime(
                 timeOf("reset-clear")) == 0,
             "Reset did not clear the historical touched-word view");
+
+        memory->setHistoryRecordingEnabled(false);
+        memory->writeU32AtTime(
+            timeOf("reset-clear") + 1,
+            0,
+            0x13579bdfU);
+        requireMemory(
+            memory->readWord(0) == 0x13579bdfU,
+            "Headless memory mode changed functional storage");
+        bool rejected_history_query = false;
+        try {
+            (void)memory->getByteWritesInTimeRange(
+                0, timeOf("reset-clear") + 1);
+        } catch (const std::logic_error&) {
+            rejected_history_query = true;
+        }
+        requireMemory(
+            rejected_history_query,
+            "Headless memory mode silently returned incomplete history");
         return true;
     } catch (const std::exception& error) {
         std::cerr

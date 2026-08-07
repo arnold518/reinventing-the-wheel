@@ -74,6 +74,23 @@ LAYERED_HORIZONTAL_FILL_RATIO = 0.88
 LAYERED_VERTICAL_FILL_RATIO = 0.9
 LAYERED_DENSE_ROW_WIDTH_CAP = 0.1
 MIN_RELATIVE_CHILD_WIDTH = 1e-6
+COMPONENT_LAYOUT_DEFAULTS = {
+    # The five-stage core has 35 logical output pins. Its pipeline is
+    # horizontal, so use smaller edge markers and a shorter title bar instead
+    # of making the whole component four times taller than it is wide.
+    "RV32IFiveStageCore": {
+        "aspect_ratio": 0.6,
+        "title_bar_ratio": 0.05,
+        "pin_size_ratio": 0.012,
+    },
+    # The coordinator is a horizontal control rail beneath the five data
+    # stages, not a tall standalone box in this context.
+    "RV32IPipelineCoordinator": {
+        "aspect_ratio": 0.35,
+        "title_bar_ratio": 0.04,
+        "pin_size_ratio": 0.01,
+    },
+}
 SEQUENTIAL_TYPES = {"DFlipFlop"}
 CLOCK_PIN_NAMES = {"CLK", "CLOCK"}
 SEQUENTIAL_INPUT_PIN_NAMES = {"D", "RST", "RESET", "SET", "CLR", "CLEAR", "EN", "ENABLE", "LOAD"}
@@ -118,16 +135,31 @@ PREFERRED_SCENARIO_ALIASES = {
     "ALU32Test": ["alu32", "rv32i-alu32"],
     "ALU32RepresentativeSliceTest": ["alu32-slice"],
     "RV32ISingleCycleCoreTest": ["rv32i-core"],
+    "RV32IFiveStageCoreTest": ["rv32i-five-stage-core", "rv32i-pipeline-core"],
     "RV32IControlFlowUnitTest": ["rv32i-control-flow"],
     "RV32IDecodeControlUnitTest": ["rv32i-decode-control", "rv32i-decode"],
     "RV32IExecutionControlStatusUnitTest": ["rv32i-execution-status", "rv32i-status"],
     "RV32IProgramLoaderTest": ["rv32i-program-loader", "rv32i-program", "program-loader"],
 }
 
-for _program_number in range(1, 17):
-    PREFERRED_SCENARIO_ALIASES[
-        f"RV32ISingleCycleSystemTest/program-{_program_number:02d}"
-    ] = [f"rv32i-program{_program_number}"]
+_PROGRAM_TEST_NAME = re.compile(
+    r"^(RV32ISingleCycleSystemTest|RV32IFiveStageCoreProgramTest)"
+    r"/program-([0-9]+)$"
+)
+for _test_name in circuit_backend.get_registered_test_names():
+    _program_match = _PROGRAM_TEST_NAME.fullmatch(_test_name)
+    if not _program_match:
+        continue
+    _architecture, _number_text = _program_match.groups()
+    _program_number = int(_number_text)
+    _alias_prefix = (
+        "rv32i-program"
+        if _architecture == "RV32ISingleCycleSystemTest"
+        else "rv32i-five-stage-program"
+    )
+    PREFERRED_SCENARIO_ALIASES[_test_name] = [
+        f"{_alias_prefix}{_program_number}"
+    ]
 
 
 def _clone(value: Any) -> Any:
@@ -284,9 +316,32 @@ def _component_pin_count(component: Any, getter_name: str) -> int:
         return 0
 
 
-def _minimum_aspect_ratio_for_pins(component: Any, settings: dict[str, Any]) -> float:
-    title_ratio = max(0.0, _float_value(settings.get("title_bar_ratio"), DEFAULT_SETTINGS["title_bar_ratio"]))
-    pin_size_ratio = max(0.0, _float_value(settings.get("pin_size_ratio"), DEFAULT_SETTINGS["pin_size_ratio"]))
+def _minimum_aspect_ratio_for_pins(
+    component: Any,
+    settings: dict[str, Any],
+    layout: dict[str, Any] | None = None,
+) -> float:
+    layout = layout or {}
+    title_ratio = max(
+        0.0,
+        _float_value(
+            layout.get("title_bar_ratio"),
+            _float_value(
+                settings.get("title_bar_ratio"),
+                DEFAULT_SETTINGS["title_bar_ratio"],
+            ),
+        ),
+    )
+    pin_size_ratio = max(
+        0.0,
+        _float_value(
+            layout.get("pin_size_ratio"),
+            _float_value(
+                settings.get("pin_size_ratio"),
+                DEFAULT_SETTINGS["pin_size_ratio"],
+            ),
+        ),
+    )
     pin_count = max(
         _component_pin_count(component, "get_input_pins"),
         _component_pin_count(component, "get_output_pins"),
@@ -417,6 +472,133 @@ def _balanced_grid_layout(
     return result
 
 
+FIVE_STAGE_PIPELINE_CHILD_ORDER = (
+    "FETCH",
+    "IF_ID",
+    "DECODE",
+    "ID_EX",
+    "EXECUTE",
+    "EX_MEM",
+    "MEMORY",
+    "MEM_WB",
+    "WRITEBACK",
+)
+
+
+def _five_stage_pipeline_layout(
+    children: list[Any],
+    parent_aspect: float,
+    title_fraction: float,
+    child_aspects: dict[str, float],
+    boundary_fraction: float,
+    pin_size_fraction: float,
+) -> dict[str, dict[str, Any]] | None:
+    """Place the CPU as a readable left-to-right pipeline plus control rail."""
+    child_by_name = {
+        child.get_name(): child
+        for child in children
+    }
+    required_names = {
+        *FIVE_STAGE_PIPELINE_CHILD_ORDER,
+        "COORDINATOR",
+    }
+    if set(child_by_name) != required_names:
+        return None
+
+    content_top = title_fraction
+    content_height = max(0.1, 1.0 - content_top)
+    pipeline_top = content_top + content_height * 0.04
+    pipeline_height = content_height * 0.60
+    coordinator_top = content_top + content_height * 0.72
+    coordinator_height = content_height * 0.22
+    stub_ratio = _stub_margin_ratio(
+        boundary_fraction, pin_size_fraction
+    )
+    outer_width_factor = 1 + 2 * stub_ratio
+    available_width = max(
+        0.1, 1 - 2 * boundary_fraction
+    )
+
+    weights = {
+        name: (
+            0.42
+            if name in {"IF_ID", "ID_EX", "EX_MEM", "MEM_WB"}
+            else 1.0
+        )
+        for name in FIVE_STAGE_PIPELINE_CHILD_ORDER
+    }
+    body_budget = available_width * 0.88 / outer_width_factor
+    weight_total = sum(weights.values())
+    widths: dict[str, float] = {}
+    for name in FIVE_STAGE_PIPELINE_CHILD_ORDER:
+        child = child_by_name[name]
+        height_limited_width = (
+            pipeline_height
+            * 0.86
+            * parent_aspect
+            / max(child_aspects[child.get_id()], 0.01)
+        )
+        widths[name] = min(
+            body_budget * weights[name] / weight_total,
+            height_limited_width,
+        )
+
+    used_outer_width = sum(
+        width * outer_width_factor
+        for width in widths.values()
+    )
+    gap = max(
+        0.0,
+        (available_width - used_outer_width)
+        / (len(FIVE_STAGE_PIPELINE_CHILD_ORDER) - 1),
+    )
+    cursor = boundary_fraction
+    placements: dict[str, dict[str, Any]] = {}
+    pipeline_center_y = pipeline_top + pipeline_height / 2
+    for name in FIVE_STAGE_PIPELINE_CHILD_ORDER:
+        child = child_by_name[name]
+        width = widths[name]
+        child_height = (
+            width
+            * child_aspects[child.get_id()]
+            / max(parent_aspect, 0.01)
+        )
+        left = cursor + stub_ratio * width
+        placements[name] = {
+            "rel_pos": [
+                left,
+                pipeline_center_y - child_height / 2,
+            ],
+            "rel_width": width,
+        }
+        cursor += width * outer_width_factor + gap
+
+    coordinator = child_by_name["COORDINATOR"]
+    coordinator_width = min(
+        available_width * 0.72 / outer_width_factor,
+        coordinator_height
+        * parent_aspect
+        / max(child_aspects[coordinator.get_id()], 0.01),
+    )
+    coordinator_height_fraction = (
+        coordinator_width
+        * child_aspects[coordinator.get_id()]
+        / max(parent_aspect, 0.01)
+    )
+    placements["COORDINATOR"] = {
+        "rel_pos": [
+            0.5 - coordinator_width / 2,
+            coordinator_top
+            + max(
+                0.0,
+                (coordinator_height - coordinator_height_fraction) / 2,
+            ),
+        ],
+        "rel_width": coordinator_width,
+    }
+    return placements
+
+
 def _layered_graph_layout(
     parent: Any,
     children: list[Any],
@@ -428,6 +610,18 @@ def _layered_graph_layout(
 ) -> dict[str, dict[str, Any]]:
     if not children:
         return {}
+
+    if _component_type(parent) == "RV32IFiveStageCore":
+        pipeline_layout = _five_stage_pipeline_layout(
+            children,
+            parent_aspect,
+            title_fraction,
+            child_aspects,
+            boundary_fraction,
+            pin_size_fraction,
+        )
+        if pipeline_layout is not None:
+            return pipeline_layout
 
     child_by_id = {child.get_id(): child for child in children}
     child_ids = list(child_by_id)
@@ -475,10 +669,47 @@ def _layered_graph_layout(
             for node in group:
                 cyclic_group_by_node[node] = index
 
+    # Some test-fixture roots do not expose output pins, so output_drivers
+    # cannot identify the natural right-facing end of a feedback group. For a
+    # group of at least three children, a unique node connected to more peers
+    # is a conservative fallback hub (for example, one CPU core connected to
+    # separate instruction and data memories). Treat hub-to-peer edges as
+    # return paths so the peers and hub occupy separate columns. Two-node
+    # latches and rings are intentionally left unchanged.
+    cyclic_neighbors: dict[int, dict[str, set[str]]] = defaultdict(
+        lambda: defaultdict(set)
+    )
+    for src, dst, _sink_name in edges:
+        group = cyclic_group_by_node.get(src)
+        if group is None or group != cyclic_group_by_node.get(dst):
+            continue
+        cyclic_neighbors[group][src].add(dst)
+        cyclic_neighbors[group][dst].add(src)
+
+    fallback_hub_by_group: dict[int, str] = {}
+    for group_index, group in enumerate(full_sccs):
+        if len(group) < 3 or any(node in output_drivers for node in group):
+            continue
+        degrees = {
+            node: len(cyclic_neighbors[group_index].get(node, set()))
+            for node in group
+        }
+        maximum_degree = max(degrees.values(), default=0)
+        candidates = [
+            node for node, degree in degrees.items()
+            if degree == maximum_degree
+        ]
+        if maximum_degree >= 2 and len(candidates) == 1:
+            fallback_hub_by_group[group_index] = candidates[0]
+
     active_edges: list[tuple[str, str, str]] = []
     for edge in edges:
         src, dst, sink_name = edge
-        same_cycle = src in cyclic_group_by_node and cyclic_group_by_node.get(src) == cyclic_group_by_node.get(dst)
+        cycle_group = cyclic_group_by_node.get(src)
+        same_cycle = (
+            cycle_group is not None
+            and cycle_group == cyclic_group_by_node.get(dst)
+        )
         src_type = _component_type(child_by_id[src])
         dst_type = _component_type(child_by_id[dst])
         if same_cycle and dst_type in SEQUENTIAL_TYPES and sink_name in SEQUENTIAL_INPUT_PIN_NAMES:
@@ -497,6 +728,14 @@ def _layered_graph_layout(
             and dst_type not in SEQUENTIAL_TYPES
             and src in output_drivers
             and dst not in output_drivers
+        ):
+            continue
+        if (
+            same_cycle
+            and src_type not in SEQUENTIAL_TYPES
+            and dst_type not in SEQUENTIAL_TYPES
+            and fallback_hub_by_group.get(cycle_group) == src
+            and fallback_hub_by_group.get(cycle_group) != dst
         ):
             continue
         active_edges.append(edge)
@@ -803,7 +1042,37 @@ class LayoutManager:
         return _clone(parent_layout.get("children", {}).get(child_name, {}))
 
     def minimum_aspect_for_component(self, component: Any) -> float:
-        return _minimum_aspect_ratio_for_pins(component, self.settings)
+        return _minimum_aspect_ratio_for_pins(
+            component,
+            self.settings,
+            self.get_layout_for_component(component),
+        )
+
+    def visual_ratio_for_component(
+        self,
+        component: Any,
+        setting_name: str,
+        *,
+        scenario_key: str | None = None,
+        is_root: bool = False,
+    ) -> float:
+        layout = (
+            self.get_root_layout_for_component(
+                scenario_key, component
+            )
+            if is_root and scenario_key
+            else self.get_layout_for_component(component)
+        )
+        return max(
+            0.0,
+            _float_value(
+                layout.get(setting_name),
+                _float_value(
+                    self.settings.get(setting_name),
+                    DEFAULT_SETTINGS[setting_name],
+                ),
+            ),
+        )
 
     @staticmethod
     def _coerced_aspect(layout: dict[str, Any], fallback: float, minimum: float) -> float:
@@ -831,9 +1100,14 @@ class LayoutManager:
     def ensure_component_layout_defaults(
         self, component: Any, *, scenario_key: str | None = None, is_root: bool = False
     ) -> None:
-        del scenario_key, is_root
         component_type = _component_layout_type(component)
         layout = self.type_layouts.setdefault(component_type, {})
+        for key, value in COMPONENT_LAYOUT_DEFAULTS.get(
+            component_type, {}
+        ).items():
+            if key not in layout:
+                layout[key] = value
+                self.is_dirty = True
         fallback = 1.0
 
         instance_minimum = self.minimum_aspect_for_component(component)
@@ -844,6 +1118,53 @@ class LayoutManager:
             self.is_dirty = True
         if layout.get("aspect_ratio") != aspect:
             layout["aspect_ratio"] = aspect
+            self.is_dirty = True
+
+        if (
+            not is_root
+            or not scenario_key
+            or _component_type(component) != "Component"
+        ):
+            return
+
+        children = list(component.get_children())
+        if not children:
+            return
+        tallest_child = max(
+            self.minimum_aspect_for_component(child)
+            for child in children
+        )
+        # A generic test wrapper has no pins of its own, so its normal minimum
+        # aspect says nothing about a tall child such as a pipeline core.
+        # Reserve roughly 28% of the root width and 78% of its height for that
+        # child. This raises only the scenario-root aspect and does not alter
+        # reusable component type layouts.
+        child_driven_minimum = min(
+            2.5,
+            tallest_child * (0.28 / 0.78),
+        )
+        root_layout = self.root_layouts.setdefault(
+            scenario_key, {}
+        )
+        root_minimum = round(
+            max(
+                instance_minimum,
+                child_driven_minimum,
+                _float_value(
+                    root_layout.get("min_aspect_ratio"),
+                    instance_minimum,
+                ),
+            ),
+            3,
+        )
+        root_aspect = self._coerced_aspect(
+            root_layout, 0.75, root_minimum
+        )
+        if root_layout.get("min_aspect_ratio") != root_minimum:
+            root_layout["min_aspect_ratio"] = root_minimum
+            self.is_dirty = True
+        if root_layout.get("aspect_ratio") != root_aspect:
+            root_layout["aspect_ratio"] = root_aspect
             self.is_dirty = True
 
     def update_root_child_layout(
@@ -1077,6 +1398,15 @@ class CircuitSession:
             }
             for checkpoint in checkpoint_metadata
             if checkpoint["time"] in timestamp_index
+        ]
+        self.performance_metrics = [
+            {
+                "name": metric.name,
+                "value": metric.value,
+                "unit": metric.unit,
+                "description": metric.description,
+            }
+            for metric in self.test_scenario.get_performance_metrics()
         ]
         self.simulator.set_circuit_state_at_time(self.timestamps[0])
 
@@ -1374,10 +1704,25 @@ class CircuitSession:
         manager = layout_manager or self.layout_manager
         is_root = depth == 0
         parent_aspect = manager.aspect_for_component(component, scenario_key=self.layout_key, is_root=is_root)
-        title_ratio = float(manager.settings.get("title_bar_ratio", 0.15))
+        title_ratio = manager.visual_ratio_for_component(
+            component,
+            "title_bar_ratio",
+            scenario_key=self.layout_key,
+            is_root=is_root,
+        )
         title_fraction = min(0.7, title_ratio / max(parent_aspect, 0.01))
-        boundary_fraction = float(manager.settings.get("boundary_area_ratio", DEFAULT_SETTINGS["boundary_area_ratio"]))
-        pin_size_fraction = float(manager.settings.get("pin_size_ratio", DEFAULT_SETTINGS["pin_size_ratio"]))
+        boundary_fraction = manager.visual_ratio_for_component(
+            component,
+            "boundary_area_ratio",
+            scenario_key=self.layout_key,
+            is_root=is_root,
+        )
+        pin_size_fraction = manager.visual_ratio_for_component(
+            component,
+            "pin_size_ratio",
+            scenario_key=self.layout_key,
+            is_root=is_root,
+        )
         child_aspects: dict[str, float] = {}
         for child in children:
             child_aspects[child.get_id()] = manager.aspect_for_component(child)
@@ -1492,6 +1837,7 @@ class CircuitSession:
             "loadedScopeIds": initial_topology["scopeIds"],
             "timestamps": self.timestamps,
             "checkpoints": self.checkpoints,
+            "performanceMetrics": self.performance_metrics,
             "layout": self.layout_manager.to_jsonable(),
             "state": self.state_at_index(0),
             "stateEncoding": "indexed-v1",

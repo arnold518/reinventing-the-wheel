@@ -11,6 +11,7 @@ find_package(Python3 COMPONENTS Interpreter Development REQUIRED)
 
 # --- Source File Definitions ---
 set(CORE_LOGIC_SOURCES
+    src/analysis/CircuitTimingAnalyzer.cpp
     src/basic/Pin.cpp
     src/basic/Wire.cpp
     src/basic/TemplateInstantiations.cpp
@@ -51,6 +52,11 @@ set(CORE_LOGIC_SOURCES
     src/modules/rv32i/RV32IControlFlowUnit.cpp
     src/modules/rv32i/RV32IDecodeControlUnit.cpp
     src/modules/rv32i/RV32IExecutionControlStatusUnit.cpp
+    src/modules/rv32i/RV32IPipelineRegisters.cpp
+    src/modules/rv32i/RV32IPipelineControl.cpp
+    src/modules/rv32i/RV32IPipelineStages.cpp
+    src/modules/rv32i/RV32IFiveStageCoreDirect.cpp
+    src/modules/rv32i/RV32IFiveStageCore.cpp
     src/modules/rv32i/RV32IBuildProfiles.cpp
     src/modules/rv32i/RV32ISingleCycleCore.cpp
     src/modules/rv32i/RV32ISingleCycleSystem.cpp
@@ -97,6 +103,8 @@ set(CORE_LOGIC_SOURCES
     src/tests/RV32IProgramTests.cpp
     src/tests/RV32IInstructionOracleTests.cpp
     src/tests/RV32IInstructionLockstepTests.cpp
+    src/tests/RV32IFiveStageTests.cpp
+    src/tests/RV32IPipelineBlockTests.cpp
     src/tests/RV32ISingleCycleTests.cpp
     src/tests/RV32IProgramScenarios.cpp
     src/tests/MemoryComponentTests.cpp
@@ -181,6 +189,18 @@ add_executable(
     tools/rv32i-validation/RV32IElfValidationRunner.cpp
 )
 target_link_libraries(rv32i_validate_elf PRIVATE SimulatorLib)
+
+add_executable(
+    rv32i_benchmark_elf
+    tools/rv32i-benchmarks/RV32IBenchmarkRunner.cpp
+)
+target_link_libraries(rv32i_benchmark_elf PRIVATE SimulatorLib)
+
+add_executable(
+    rv32i_performance
+    tools/rv32i-performance/RV32IPerformanceRunner.cpp
+)
+target_link_libraries(rv32i_performance PRIVATE SimulatorLib)
 
 # ===================================================================
 # Target 4: CTest Integration

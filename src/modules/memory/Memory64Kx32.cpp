@@ -347,6 +347,25 @@ uint32_t Memory64Kx32::readU32(uint32_t address) const {
     return readWord(address);
 }
 
+void Memory64Kx32::setHistoryRecordingEnabled(bool enabled) {
+    if (history_recording_enabled_ == enabled) {
+        return;
+    }
+    for (auto& history : byte_history) {
+        history.clear();
+    }
+    reset_history.clear();
+    bus_write_history.clear();
+    tracked_word_indices.clear();
+    std::fill(tracked_words.begin(), tracked_words.end(), 0);
+    history_order = 0;
+    history_recording_enabled_ = enabled;
+}
+
+bool Memory64Kx32::isHistoryRecordingEnabled() const noexcept {
+    return history_recording_enabled_;
+}
+
 void Memory64Kx32::writeU8(uint32_t address, uint8_t value) {
     writeU8AtTime(0, address, value);
 }
@@ -430,11 +449,13 @@ void Memory64Kx32::evaluate(size_t current_time, Simulator& simulator) {
             if (fault == LogicValue::LOW && address_known && size_known && width > 0) {
                 for (size_t byte = 0; byte < width; ++byte) {
                     copyWriteByte(bytes, address, byte, write_data);
-                    bus_write_history.push_back({
-                        current_time,
-                        static_cast<uint32_t>(address + byte),
-                        bytes[static_cast<size_t>(address) + byte],
-                    });
+                    if (history_recording_enabled_) {
+                        bus_write_history.push_back({
+                            current_time,
+                            static_cast<uint32_t>(address + byte),
+                            bytes[static_cast<size_t>(address) + byte],
+                        });
+                    }
                 }
                 recordRangeHistory(current_time, static_cast<size_t>(address), width);
             }
@@ -533,6 +554,10 @@ std::map<uint32_t, uint8_t> Memory64Kx32::getByteWritesInTimeRange(
     size_t start_time_exclusive,
     size_t end_time_inclusive
 ) const {
+    if (!history_recording_enabled_) {
+        throw std::logic_error(
+            "Memory64Kx32 time history is disabled");
+    }
     if (end_time_inclusive < start_time_exclusive) {
         throw std::invalid_argument("Memory64Kx32 write-history range runs backward");
     }
@@ -548,6 +573,9 @@ std::map<uint32_t, uint8_t> Memory64Kx32::getByteWritesInTimeRange(
 }
 
 void Memory64Kx32::recordByteHistory(size_t time, size_t address) {
+    if (!history_recording_enabled_) {
+        return;
+    }
     if (address >= ByteCount) {
         return;
     }
@@ -575,6 +603,9 @@ void Memory64Kx32::recordRangeHistory(size_t time, size_t base_address, size_t c
 }
 
 void Memory64Kx32::recordResetHistory(size_t time, const ByteValue& value) {
+    if (!history_recording_enabled_) {
+        return;
+    }
     if (!reset_history.empty() && time < reset_history.back().time) {
         reset_history.clear();
     }
@@ -589,6 +620,10 @@ void Memory64Kx32::recordResetHistory(size_t time, const ByteValue& value) {
 }
 
 Memory64Kx32::ResetHistoryEntry Memory64Kx32::resetAtTime(size_t target_time) const {
+    if (!history_recording_enabled_) {
+        throw std::logic_error(
+            "Memory64Kx32 time history is disabled");
+    }
     if (reset_history.empty()) {
         return {0, 0, zeroByte()};
     }

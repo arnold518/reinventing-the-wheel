@@ -11,13 +11,16 @@
 #include "tests/RV32IDecoderTests.hpp"
 #include "tests/RV32IElfTests.hpp"
 #include "tests/RV32IExternalValidationTests.hpp"
+#include "tests/RV32IFiveStageTests.hpp"
 #include "tests/RV32IInstructionLockstepTests.hpp"
 #include "tests/RV32IInstructionOracleTests.hpp"
+#include "tests/RV32IPipelineBlockTests.hpp"
 #include "tests/RV32IProgramCases.hpp"
 #include "tests/RV32IProgramTests.hpp"
 #include "tests/RV32ISingleCycleTests.hpp"
 #include "tests/UtilityComponentTests.hpp"
 #include "components/selection/BuiltinComponentCatalog.hpp"
+#include "modules/rv32i/RV32IFiveStageCore.hpp"
 #include <algorithm>
 #include <set>
 
@@ -46,6 +49,10 @@ RegisteredTestKind componentKind(
         "memory.register.width32",
         "rv32i.control-flow",
         "rv32i.execution-status",
+        "rv32i.pipeline-register.if-id",
+        "rv32i.pipeline-register.id-ex",
+        "rv32i.pipeline-register.ex-mem",
+        "rv32i.pipeline-register.mem-wb",
     };
     static const std::set<std::string> memory{
         "memory.register-file.4x32",
@@ -56,6 +63,7 @@ RegisteredTestKind componentKind(
     };
     static const std::set<std::string> program{
         "rv32i.core.educational-single-cycle",
+        "rv32i.core.educational-five-stage",
         "rv32i.system.educational-single-cycle",
     };
     if (sequential.count(contract_id) != 0) {
@@ -166,7 +174,8 @@ void markVisualizable(
     };
     for (auto& entry : entries) {
         entry.visualizable =
-            !entry.contract_ids.empty()
+            entry.visualizable
+            || !entry.contract_ids.empty()
             || additional.count(entry.name) != 0;
     }
 }
@@ -200,6 +209,7 @@ const std::vector<TestRegistryEntry>& getTestRegistry() {
         entry<SimulatorAdvanceAndRecordTest>("SimulatorAdvanceAndRecordTest"),
         entry<SimulatorUnwiredOutputPinHistoryTest>("SimulatorUnwiredOutputPinHistoryTest"),
         entry<SimulatorDrainUntilIdleTest>("SimulatorDrainUntilIdleTest"),
+        entry<CircuitTimingAnalyzerTest>("CircuitTimingAnalyzerTest"),
         entry<BuildProfileTest>("BuildProfileTest"),
         entry<ComponentCatalogSelectionTest>("ComponentCatalogSelectionTest"),
         entry<BuiltinComponentCatalogInventoryTest>("BuiltinComponentCatalogInventoryTest"),
@@ -295,6 +305,38 @@ const std::vector<TestRegistryEntry>& getTestRegistry() {
         entry<RV32IDecodeControlUnitTest>("RV32IDecodeControlUnitTest"),
         entry<RV32IExecutionControlStatusUnitTest>(
             "RV32IExecutionControlStatusUnitTest"),
+        entry<RV32IIFIDPipelineRegisterTest>(
+            "RV32IIFIDPipelineRegisterTest"),
+        entry<RV32IIDEXPipelineRegisterTest>(
+            "RV32IIDEXPipelineRegisterTest"),
+        entry<RV32IEXMEMPipelineRegisterTest>(
+            "RV32IEXMEMPipelineRegisterTest"),
+        entry<RV32IMEMWBPipelineRegisterTest>(
+            "RV32IMEMWBPipelineRegisterTest"),
+        entry<RV32IForwardingUnitTest>(
+            "RV32IForwardingUnitTest"),
+        entry<RV32IHazardDetectionUnitTest>(
+            "RV32IHazardDetectionUnitTest"),
+        entry<RV32IPipelineControlFlowUnitTest>(
+            "RV32IPipelineControlFlowUnitTest"),
+        entry<RV32IMemoryAlignmentUnitTest>(
+            "RV32IMemoryAlignmentUnitTest"),
+        entry<RV32IPipelineRetirementUnitTest>(
+            "RV32IPipelineRetirementUnitTest"),
+        entry<RV32IPipelineCoordinatorTest>(
+            "RV32IPipelineCoordinatorTest"),
+        entry<RV32IFetchStageTest>(
+            "RV32IFetchStageTest"),
+        entry<RV32IDecodeStageTest>(
+            "RV32IDecodeStageTest"),
+        entry<RV32IExecuteStageTest>(
+            "RV32IExecuteStageTest"),
+        entry<RV32IMemoryStageTest>(
+            "RV32IMemoryStageTest"),
+        entry<RV32IWritebackStageTest>(
+            "RV32IWritebackStageTest"),
+        entry<RV32IFiveStageCoreTest>(
+            "RV32IFiveStageCoreTest"),
         entry<RV32IBitPatternMatcherTest>("RV32IBitPatternMatcherTest"),
         entry<RV32IDecoderTest>("RV32IDecoderTest"),
         entry<RV32IControlTest>("RV32IControlTest"),
@@ -310,10 +352,16 @@ const std::vector<TestRegistryEntry>& getTestRegistry() {
             "RV32IProfileToggleSweepTest"),
         };
         for (size_t program_number = 1;
-             program_number <= 16;
+             program_number <= RV32IProgramCaseCount;
              ++program_number) {
             const auto name =
                 rv32iProgramScenarioName(program_number);
+            std::vector<std::string> labels{
+                "simulation", "contract", "program", "rv32i",
+                "system", "slow"};
+            if (rv32iProgramCaseIsPerformance(program_number)) {
+                labels.push_back("performance");
+            }
             entries.push_back({
                 name,
                 "RV32ISingleCycleSystemTest",
@@ -322,12 +370,42 @@ const std::vector<TestRegistryEntry>& getTestRegistry() {
                 "program-"
                     + std::string(program_number < 10 ? "0" : "")
                     + std::to_string(program_number),
-                {"simulation", "contract", "program", "rv32i", "system", "slow"},
+                std::move(labels),
                 [program_number] {
                     return std::make_unique<
                         RV32ISingleCycleSystemTest>(
                             program_number);
                 },
+            });
+        }
+        for (size_t program_number = 1;
+             program_number <= RV32IProgramCaseCount;
+             ++program_number) {
+            const auto name =
+                rv32iFiveStageProgramScenarioName(
+                    program_number);
+            std::vector<std::string> labels{
+                "simulation", "integration", "program", "rv32i",
+                "pipeline", "slow"};
+            if (rv32iProgramCaseIsPerformance(program_number)) {
+                labels.push_back("performance");
+            }
+            entries.push_back({
+                name,
+                "RV32IFiveStageCoreProgramTest",
+                RegisteredTestKind::Program,
+                {},
+                "program-"
+                    + std::string(
+                        program_number < 10 ? "0" : "")
+                    + std::to_string(program_number),
+                std::move(labels),
+                [program_number] {
+                    return std::make_unique<
+                        RV32IFiveStageCoreProgramTest>(
+                            program_number);
+                },
+                true,
             });
         }
         attachComponentMetadata(entries);

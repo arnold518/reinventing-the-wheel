@@ -5,6 +5,7 @@
 #include "simulator/Event.hpp"
 #include <algorithm>
 #include <set>
+#include <stdexcept>
 
 namespace {
 void restorePinsFromWire(const std::shared_ptr<WireBase>& wire, const std::vector<LogicValue>& values) {
@@ -32,7 +33,29 @@ void Simulator::scheduleEvent(std::shared_ptr<Event> event) {
     if (!event) {
         return;
     }
+    ++performance_counters_.scheduled_events;
+    if (event->getPriority() == EventPriority::WIRE_UPDATE) {
+        ++performance_counters_.scheduled_wire_updates;
+    } else if (event->getPriority() == EventPriority::COMPONENT_EVAL) {
+        ++performance_counters_.scheduled_component_evaluations;
+    }
+    event->scheduling_order = next_scheduling_order++;
     event_queue.push(std::move(event));
+    performance_counters_.maximum_event_queue_depth = std::max(
+        performance_counters_.maximum_event_queue_depth,
+        event_queue.size());
+}
+
+void Simulator::recordProcessedEvent(const std::shared_ptr<Event>& event) noexcept {
+    if (!event) {
+        return;
+    }
+    ++performance_counters_.processed_events;
+    if (event->getPriority() == EventPriority::WIRE_UPDATE) {
+        ++performance_counters_.processed_wire_updates;
+    } else if (event->getPriority() == EventPriority::COMPONENT_EVAL) {
+        ++performance_counters_.processed_component_evaluations;
+    }
 }
 
 void Simulator::advanceAndRecord(size_t target_time) {
@@ -50,6 +73,7 @@ void Simulator::advanceAndRecord(size_t target_time) {
             scheduled_for_current_time_eval.clear();
         }
 
+        recordProcessedEvent(event);
         event->process(*this);
     }
 }
@@ -88,6 +112,7 @@ DrainResult Simulator::drainUntilIdle(size_t deadline, size_t max_events) {
             current_time = next->time;
             scheduled_for_current_time_eval.clear();
         }
+        recordProcessedEvent(next);
         next->process(*this);
         ++processed_events;
     }
@@ -111,6 +136,10 @@ std::optional<size_t> Simulator::nextEventTime() const {
 }
 
 void Simulator::setCircuitStateAtTime(size_t target_time) {
+    if (!history_recording_enabled_) {
+        throw std::logic_error(
+            "Cannot time-travel while simulator history recording is disabled");
+    }
     for (const auto& [wire, history] : _log) {
         auto it = std::upper_bound(history.begin(), history.end(), target_time,
             [](size_t time, const auto& pair) {
@@ -165,6 +194,13 @@ void Simulator::recordChange(size_t time, std::shared_ptr<WireBase> wire, const 
         return;
     }
 
+    // WireUpdateEvent calls recordChange only after observing an actual value
+    // transition, so this counter does not depend on retaining the timeline.
+    ++performance_counters_.effective_wire_changes;
+    if (!history_recording_enabled_) {
+        return;
+    }
+
     auto& history = _log[std::move(wire)];
     if (history.empty() || history.back().second != value) {
         history.push_back({time, value});
@@ -180,10 +216,44 @@ void Simulator::recordPinChange(size_t time, std::shared_ptr<PinBase> pin, const
         return;
     }
 
+    if (!history_recording_enabled_) {
+        auto& state = _headless_pin_state[std::move(pin)];
+        if (state.empty() || state.back().second != value) {
+            state.clear();
+            state.push_back({time, value});
+            ++performance_counters_.effective_pin_changes;
+        }
+        return;
+    }
+
     auto& history = _pin_log[std::move(pin)];
     if (history.empty() || history.back().second != value) {
         history.push_back({time, value});
+        ++performance_counters_.effective_pin_changes;
     }
+}
+
+void Simulator::setHistoryRecordingEnabled(bool enabled) {
+    if (history_recording_enabled_ == enabled) {
+        return;
+    }
+    _log.clear();
+    _pin_log.clear();
+    _headless_pin_state.clear();
+    history_recording_enabled_ = enabled;
+}
+
+bool Simulator::isHistoryRecordingEnabled() const noexcept {
+    return history_recording_enabled_;
+}
+
+const SimulatorPerformanceCounters& Simulator::getPerformanceCounters() const noexcept {
+    return performance_counters_;
+}
+
+void Simulator::resetPerformanceCounters() noexcept {
+    performance_counters_ = {};
+    performance_counters_.maximum_event_queue_depth = event_queue.size();
 }
 
 void Simulator::clear() {
@@ -192,6 +262,9 @@ void Simulator::clear() {
     }
     _log.clear();
     _pin_log.clear();
+    _headless_pin_state.clear();
     current_time = 0;
+    next_scheduling_order = 0;
     scheduled_for_current_time_eval.clear();
+    resetPerformanceCounters();
 }

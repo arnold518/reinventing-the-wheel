@@ -36,6 +36,8 @@ public:
     uint8_t readU8(uint32_t address) const;
     uint16_t readU16(uint32_t address) const;
     uint32_t readU32(uint32_t address) const;
+    void setHistoryRecordingEnabled(bool enabled);
+    bool isHistoryRecordingEnabled() const noexcept;
     std::vector<MemoryWordState> getTouchedWordsAtTime(size_t target_time, size_t max_words) const;
     size_t getTouchedWordCountAtTime(size_t target_time) const;
     std::vector<MemoryWordState> getOccupiedWordsAtTime(size_t target_time, size_t max_words) const;
@@ -90,5 +92,6 @@ private:
     std::vector<uint32_t> tracked_word_indices;
     std::vector<uint8_t> tracked_words;
     size_t history_order;
+    bool history_recording_enabled_ = true;
     LogicValue previous_clk;
 };

@@ -102,9 +102,26 @@ void ALU32Direct::evaluate(size_t current_time, Simulator& simulator) {
 
     _updateOutputWire<32>(simulator, "OUT", result, current_time);
     _updateOutputWire(simulator, "ZERO", logic(result == 0), current_time);
-    _updateOutputWire(simulator, "EQ", logic(a == b), current_time);
-    _updateOutputWire(simulator, "LT_SIGNED", logic(static_cast<int32_t>(a) < static_cast<int32_t>(b)), current_time);
-    _updateOutputWire(simulator, "LT_UNSIGNED", logic(a < b), current_time);
+    const bool comparison_valid =
+        op == ALU32Op::SUB || op == ALU32Op::SLT
+        || op == ALU32Op::SLTU;
+    _updateOutputWire(
+        simulator,
+        "EQ",
+        logic(comparison_valid && a == b),
+        current_time);
+    _updateOutputWire(
+        simulator,
+        "LT_SIGNED",
+        logic(
+            comparison_valid
+            && static_cast<int32_t>(a) < static_cast<int32_t>(b)),
+        current_time);
+    _updateOutputWire(
+        simulator,
+        "LT_UNSIGNED",
+        logic(comparison_valid && a < b),
+        current_time);
     _updateOutputWire(simulator, "NEGATIVE", logic((result & 0x80000000U) != 0), current_time);
     _updateOutputWire(simulator, "CARRY_OUT", logic(carry), current_time);
     _updateOutputWire(simulator, "OVERFLOW", logic(overflow), current_time);

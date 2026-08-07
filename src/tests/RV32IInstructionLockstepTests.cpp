@@ -284,6 +284,28 @@ std::vector<SimulationTest::SimulationCheckpoint> RV32IInstructionLockstepTest::
     return singleCycleOracleCheckpoints(test_case);
 }
 
+std::vector<SimulationTest::PerformanceMetric>
+RV32IInstructionLockstepTest::getPerformanceMetrics() const {
+    auto metrics = SimulationTest::getPerformanceMetrics();
+    const auto instructions = retiredInstructions();
+    const auto cycles = totalCycles();
+    const double cpi = instructions == 0
+        ? 0.0
+        : static_cast<double>(cycles)
+            / static_cast<double>(instructions);
+    const double ipc = cycles == 0
+        ? 0.0
+        : static_cast<double>(instructions)
+            / static_cast<double>(cycles);
+    metrics.insert(metrics.begin(), {
+        {"cpu.hardware_cycles", static_cast<double>(cycles), "cycles", "Clock cycles in the measured program window."},
+        {"cpu.retired_instructions", static_cast<double>(instructions), "instructions", "Architecturally retired instructions, including the terminal instruction."},
+        {"cpu.cpi", cpi, "cycles/instruction", "Hardware cycles divided by retired instructions."},
+        {"cpu.ipc", ipc, "instructions/cycle", "Retired instructions divided by hardware cycles."},
+    });
+    return metrics;
+}
+
 void RV32IInstructionLockstepTest::setInitialState() {
     test_case_ = getCase();
     if (test_case_.name.empty()) {
@@ -315,6 +337,8 @@ void RV32IInstructionLockstepTest::setInitialState() {
     last_committed_instruction_count_ = initial_state.instruction_count;
     compareState(initial_state, "initial state");
     compareMemoryEffects(rv32i::RV32IMemoryTrace{}, "initial state");
+    // Initialization and reset are not part of the measured program window.
+    sim->resetPerformanceCounters();
 }
 
 void RV32IInstructionLockstepTest::setupOracle() {
@@ -343,6 +367,7 @@ void RV32IInstructionLockstepTest::runSimulation() {
 
         for (size_t cycle = 0; cycle < test_case_.max_cycles_per_instruction; ++cycle) {
             const size_t cycle_start_time = time_origin_ + total_cycles_ * test_case_.cycle_time_step;
+            observePerformanceCycle();
             clockComponentOneCycle(total_cycles_, cycle_start_time);
             ++total_cycles_;
             sim->advanceAndRecord(time_origin_ + total_cycles_ * test_case_.cycle_time_step);

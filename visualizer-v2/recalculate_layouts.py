@@ -15,13 +15,15 @@ import server
 
 
 PROGRAM_SCENARIO = re.compile(
-    r"^RV32ISingleCycleSystemTest/program-[0-9]{2}$"
+    r"^(RV32ISingleCycleSystemTest|RV32IFiveStageCoreProgramTest)"
+    r"/program-[0-9]{2}$"
 )
 
 
 def _scenario_group(class_name: str) -> str:
-    if PROGRAM_SCENARIO.match(class_name):
-        return "RV32ISingleCycleSystemTest"
+    match = PROGRAM_SCENARIO.match(class_name)
+    if match:
+        return match.group(1)
     return class_name
 
 
@@ -59,13 +61,24 @@ def _default_child_layouts(
         scenario_key=root_layout_key,
         is_root=is_root,
     )
-    title_ratio = float(manager.settings.get("title_bar_ratio", 0.15))
-    title_fraction = min(0.7, title_ratio / max(parent_aspect, 0.01))
-    boundary_fraction = float(
-        manager.settings.get("boundary_area_ratio", server.DEFAULT_SETTINGS["boundary_area_ratio"])
+    title_ratio = manager.visual_ratio_for_component(
+        component,
+        "title_bar_ratio",
+        scenario_key=root_layout_key,
+        is_root=is_root,
     )
-    pin_size_fraction = float(
-        manager.settings.get("pin_size_ratio", server.DEFAULT_SETTINGS["pin_size_ratio"])
+    title_fraction = min(0.7, title_ratio / max(parent_aspect, 0.01))
+    boundary_fraction = manager.visual_ratio_for_component(
+        component,
+        "boundary_area_ratio",
+        scenario_key=root_layout_key,
+        is_root=is_root,
+    )
+    pin_size_fraction = manager.visual_ratio_for_component(
+        component,
+        "pin_size_ratio",
+        scenario_key=root_layout_key,
+        is_root=is_root,
     )
     child_aspects = {
         child.get_id(): manager.aspect_for_component(child)
@@ -95,8 +108,18 @@ def _assert_no_child_overlap(
         scenario_key=root_layout_key,
         is_root=depth == 0,
     )
-    boundary = float(manager.settings.get("boundary_area_ratio", 0.07))
-    pin_size = float(manager.settings.get("pin_size_ratio", 0.1))
+    boundary = manager.visual_ratio_for_component(
+        component,
+        "boundary_area_ratio",
+        scenario_key=root_layout_key,
+        is_root=depth == 0,
+    )
+    pin_size = manager.visual_ratio_for_component(
+        component,
+        "pin_size_ratio",
+        scenario_key=root_layout_key,
+        is_root=depth == 0,
+    )
     rectangles: list[tuple[str, float, float, float, float]] = []
     for child in children:
         placement = placements[child.get_name()]
@@ -215,8 +238,14 @@ def recalculate(layout_path: Path) -> dict[str, int]:
         components = list(_walk(root))
         component_count += len(components)
 
-        for component, _ in components:
-            manager.ensure_component_layout_defaults(component)
+        for component, depth in components:
+            manager.ensure_component_layout_defaults(
+                component,
+                scenario_key=(
+                    root_layout_key if depth == 0 else None
+                ),
+                is_root=depth == 0,
+            )
             type_entry = manager.type_layouts[server._component_layout_type(component)]
             _preserve_color(component, type_entry, previous.type_layouts)
 

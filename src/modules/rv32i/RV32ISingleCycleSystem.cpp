@@ -176,6 +176,24 @@ void RV32ISingleCycleSystem::loadDataBytes(uint32_t base_address, const std::vec
     data_memory_->loadBytes(base_address, data);
 }
 
+std::vector<uint8_t> RV32ISingleCycleSystem::readDataBytes(
+    uint32_t base_address,
+    size_t count) const {
+    if (!data_memory_) {
+        throw std::logic_error("RV32ISingleCycleSystem is not built");
+    }
+    return data_memory_->readBytes(base_address, count);
+}
+
+void RV32ISingleCycleSystem::setProgramMemoryHistoryRecordingEnabled(
+    bool enabled) {
+    if (!instruction_memory_ || !data_memory_) {
+        throw std::logic_error("RV32ISingleCycleSystem is not built");
+    }
+    instruction_memory_->setHistoryRecordingEnabled(enabled);
+    data_memory_->setHistoryRecordingEnabled(enabled);
+}
+
 void RV32ISingleCycleSystem::loadDataWords(uint32_t base_address, const std::vector<uint32_t>& words) {
     if (!data_memory_) throw std::logic_error("RV32ISingleCycleSystem is not built");
     data_memory_->loadWords(base_address, words);

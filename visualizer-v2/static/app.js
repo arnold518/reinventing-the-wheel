@@ -124,6 +124,7 @@ const app = {
   savedLayout: null,
   settings: {},
   stats: null,
+  performanceMetrics: [],
   components: new Map(),
   pins: new Map(),
   wires: new Map(),
@@ -649,10 +650,11 @@ function requireChildLayout(parent, child) {
 }
 
 function componentSettings(component) {
-  component.titleBarRatio = Number(app.settings.title_bar_ratio ?? 0.15);
-  component.fontWidthRatio = Number(app.settings.font_width_ratio ?? 0.18);
-  component.boundaryRatio = Number(app.settings.boundary_area_ratio ?? 0.15);
-  component.pinSizeRatio = Number(app.settings.pin_size_ratio ?? 0.10);
+  const layout = getLayoutFor(component);
+  component.titleBarRatio = Number(layout.title_bar_ratio ?? app.settings.title_bar_ratio ?? 0.15);
+  component.fontWidthRatio = Number(layout.font_width_ratio ?? app.settings.font_width_ratio ?? 0.18);
+  component.boundaryRatio = Number(layout.boundary_area_ratio ?? app.settings.boundary_area_ratio ?? 0.15);
+  component.pinSizeRatio = Number(layout.pin_size_ratio ?? app.settings.pin_size_ratio ?? 0.10);
 }
 
 function minAspectFor(component) {
@@ -1471,9 +1473,14 @@ function drawDefaultComponentForeground(component, parts) {
     parts.titleSeparatorWidth,
   );
 
-  const fontSize = Math.min(component.rect.w * component.fontWidthRatio * app.camera.zoom, MAX_COMPONENT_FONT_PX);
+  const titleScreenRect = rectToScreenRect(parts.titleRect);
+  const fontSize = Math.min(
+    component.rect.w * component.fontWidthRatio * app.camera.zoom,
+    titleScreenRect.h * 0.68,
+    MAX_COMPONENT_FONT_PX,
+  );
   if (fontSize >= COMPONENT_TITLE_MIN_FONT_PX) {
-    clippedRectText(component.name, rectToScreenRect(parts.titleRect), fontSize, "rgb(240, 240, 240)");
+    clippedRectText(component.name, titleScreenRect, fontSize, "rgb(240, 240, 240)");
   }
 }
 
@@ -3767,11 +3774,29 @@ function nextPaint() {
 
 function baseStatsText() {
   if (!app.stats) return "";
-  return `${app.stats.componentCount} comps | ${app.stats.wireCount} wires | ${app.stats.pinCount} pins`;
+  const topology = `${app.stats.componentCount} comps | ${app.stats.wireCount} wires | ${app.stats.pinCount} pins`;
+  const metric = (name) => app.performanceMetrics.find(
+    (candidate) => candidate.name === name,
+  );
+  const cycles = metric("cpu.hardware_cycles");
+  const cpi = metric("cpu.cpi");
+  if (!cycles || !cpi) return topology;
+  return `${topology} | ${Number(cycles.value).toLocaleString()} cyc | CPI ${Number(cpi.value).toFixed(3)}`;
+}
+
+function performanceMetricsTitle() {
+  return app.performanceMetrics.map((metric) => {
+    const value = Number(metric.value);
+    const formatted = Number.isInteger(value)
+      ? value.toLocaleString()
+      : value.toFixed(4);
+    return `${metric.name}: ${formatted} ${metric.unit}`;
+  }).join("\n");
 }
 
 function updateTopologyProgress() {
   const base = baseStatsText();
+  ui.statsLabel.title = performanceMetricsTitle();
   if (
     app.topologyEncoding !== "progressive-v1"
     || (
@@ -3934,6 +3959,7 @@ function buildLocalModel(payload) {
   resetLayoutHistory();
   app.settings = app.layout.default_settings || {};
   app.stats = payload.stats;
+  app.performanceMetrics = payload.performanceMetrics || [];
   app.state = payload.state;
   app.currentIndex = 0;
   app.requestedIndex = 0;

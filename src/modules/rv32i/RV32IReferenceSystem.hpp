@@ -49,6 +49,11 @@ public:
     void loadDataBytes(
         uint32_t base_address,
         const std::vector<uint8_t>& data) override;
+    std::vector<uint8_t> readDataBytes(
+        uint32_t base_address,
+        size_t count) const override;
+    void setProgramMemoryHistoryRecordingEnabled(
+        bool enabled) override;
     void loadDataWords(
         uint32_t base_address,
         const std::vector<uint32_t>& words);

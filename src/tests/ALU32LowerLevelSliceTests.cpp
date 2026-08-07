@@ -355,21 +355,33 @@ TestRow comparatorRow(uint32_t a, uint32_t b) {
              {"OVERFLOW", bit(subOverflow(a, b, diff))}}};
 }
 
-TestRow shifterRow(uint32_t a, uint32_t amount) {
+TestRow shifterRow(
+    uint32_t a,
+    uint32_t amount,
+    bool left,
+    bool arithmetic) {
     const uint32_t shamt = amount & 0x1fU;
-    return {{{"A", bits(a)}, {"B", bits(amount)}},
-            {{"SLL_OUT", bits(a << shamt)},
-             {"SRL_OUT", bits(a >> shamt)},
-             {"SRA_OUT", bits(sra(a, amount))}}};
+    const uint32_t out = left
+        ? a << shamt
+        : arithmetic ? sra(a, amount) : a >> shamt;
+    return {
+        {{"A", bits(a)},
+         {"B", bits(amount)},
+         {"LEFT", bit(left)},
+         {"ARITHMETIC", bit(arithmetic)}},
+        {{"OUT", bits(out)}}};
 }
 
 TestRow aluRow(uint32_t a, uint32_t b, uint8_t op, uint32_t out, bool carry = false, bool overflow = false) {
+    const bool comparison_valid =
+        op == ALU32Op::SUB || op == ALU32Op::SLT
+        || op == ALU32Op::SLTU;
     return {{{"A", bits(a)}, {"B", bits(b)}, {"OP", bits(op)}},
             {{"OUT", bits(out)},
              {"ZERO", bit(out == 0)},
-             {"EQ", bit(a == b)},
-             {"LT_SIGNED", bit(static_cast<int32_t>(a) < static_cast<int32_t>(b))},
-             {"LT_UNSIGNED", bit(a < b)},
+             {"EQ", bit(comparison_valid && a == b)},
+             {"LT_SIGNED", bit(comparison_valid && static_cast<int32_t>(a) < static_cast<int32_t>(b))},
+             {"LT_UNSIGNED", bit(comparison_valid && a < b)},
              {"NEGATIVE", bit((out & 0x80000000U) != 0)},
              {"CARRY_OUT", bit(carry)},
              {"OVERFLOW", bit(overflow)}}};
@@ -639,18 +651,24 @@ std::vector<TestRow> comparator32Rows() {
 
 std::vector<TestRow> shifter32Rows() {
     std::vector<TestRow> rows;
-    rows.reserve((32 + 4) * 4);
+    rows.reserve((32 + 4) * 12);
     for (uint32_t amount = 0; amount < 32; ++amount) {
-        rows.push_back(shifterRow(0x80000001U, amount));
-        rows.push_back(shifterRow(0x7fffffffU, amount));
-        rows.push_back(shifterRow(0xffffffffU, amount));
-        rows.push_back(shifterRow(0x00000001U, amount));
+        for (uint32_t value : {
+                 0x80000001U, 0x7fffffffU,
+                 0xffffffffU, 0x00000001U}) {
+            rows.push_back(shifterRow(value, amount, true, false));
+            rows.push_back(shifterRow(value, amount, false, false));
+            rows.push_back(shifterRow(value, amount, false, true));
+        }
     }
     for (uint32_t amount : {32U, 33U, 63U, 0xffffffffU}) {
-        rows.push_back(shifterRow(0x80000001U, amount));
-        rows.push_back(shifterRow(0x7fffffffU, amount));
-        rows.push_back(shifterRow(0xffffffffU, amount));
-            rows.push_back(shifterRow(0x00000001U, amount));
+        for (uint32_t value : {
+                 0x80000001U, 0x7fffffffU,
+                 0xffffffffU, 0x00000001U}) {
+            rows.push_back(shifterRow(value, amount, true, false));
+            rows.push_back(shifterRow(value, amount, false, false));
+            rows.push_back(shifterRow(value, amount, false, true));
+        }
     }
     for (const auto amount_value :
          {uint32_t{0}, uint32_t{5}, uint32_t{31}}) {
@@ -658,17 +676,17 @@ std::vector<TestRow> shifter32Rows() {
         const auto amount =
             circuit::test::logicBits(32, amount_value);
         const auto expected = shiftExpected(input, amount);
-        rows.push_back({
-            {
-                {"A", TestValue(input)},
-                {"B", TestValue(amount)},
-            },
-            {
-                {"SLL_OUT", TestValue(expected[0])},
-                {"SRL_OUT", TestValue(expected[1])},
-                {"SRA_OUT", TestValue(expected[2])},
-            },
-        });
+        for (size_t mode = 0; mode < 3; ++mode) {
+            rows.push_back({
+                {
+                    {"A", TestValue(input)},
+                    {"B", TestValue(amount)},
+                    {"LEFT", TestValue(bit(mode == 0))},
+                    {"ARITHMETIC", TestValue(bit(mode == 2))},
+                },
+                {{"OUT", TestValue(expected[mode])}},
+            });
+        }
     }
     for (const auto unknown_value :
          {LogicValue::UNKNOWN, LogicValue::HIGH_Z}) {
@@ -676,17 +694,17 @@ std::vector<TestRow> shifter32Rows() {
         auto amount = circuit::test::logicBits(32, 0);
         amount[2] = unknown_value;
         const auto expected = shiftExpected(input, amount);
-        rows.push_back({
-            {
-                {"A", TestValue(input)},
-                {"B", TestValue(amount)},
-            },
-            {
-                {"SLL_OUT", TestValue(expected[0])},
-                {"SRL_OUT", TestValue(expected[1])},
-                {"SRA_OUT", TestValue(expected[2])},
-            },
-        });
+        for (size_t mode = 0; mode < 3; ++mode) {
+            rows.push_back({
+                {
+                    {"A", TestValue(input)},
+                    {"B", TestValue(amount)},
+                    {"LEFT", TestValue(bit(mode == 0))},
+                    {"ARITHMETIC", TestValue(bit(mode == 2))},
+                },
+                {{"OUT", TestValue(expected[mode])}},
+            });
+        }
     }
     return rows;
 }

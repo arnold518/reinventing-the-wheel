@@ -1,14 +1,17 @@
 # RV32I CPU Roadmap
 
-Last updated: 2026-07-29
+Last updated: 2026-08-05
 
-This roadmap replans the RV32I work after completing the component foundations and the behavioral answer sheet:
+This roadmap records the RV32I work after completing the component
+foundations, behavioral answer sheet, structural single-cycle CPU, and first
+five-stage pipeline:
 
 - Structural `ALU32`.
 - Register and memory components, including the behavioral fidelity of `RegisterFile32x32` and `Memory64Kx32`.
 - Behavioral `RV32IReferenceSystem`, its instruction oracle, and instruction-lockstep program suite.
 
-The next goal is to build the structural single-cycle RV32I system and grade it against that answer sheet.
+The current goal is to validate and visualize the five-stage pipeline while
+preserving the single-cycle CPU as a stable comparison point.
 
 ## Target
 
@@ -78,7 +81,12 @@ Completed:
 - RV32I decode/control libraries and tests.
 - Program preload and memory readback helpers for RV32I test fixtures.
 - Functional RV32I instruction oracle and per-instruction trace.
-- Behavioral `RV32IReferenceSystem` answer-sheet implementation with 16 numbered program cases.
+- Behavioral `RV32IReferenceSystem` answer-sheet implementation with 22
+  numbered program cases.
+- Structural `RV32ISingleCycleCore` and `RV32ISingleCycleSystem`.
+- Structural/behavioral `RV32IFiveStageCore` family with explicit pipeline
+  registers, forwarding, load-use stalls, redirects, precise retirement, and
+  the same 22 program fixtures.
 - Per-commit instruction lockstep checks for PC, registers, halt/trap state, logical memory access, and byte writes.
 - Tests and visualizer scenarios for the ALU and memory foundations.
 
@@ -110,11 +118,19 @@ ctest --test-dir build --output-on-failure
 
 Most recent full-regression result:
 
-- Full regression passed: 129/129 in 637.57 seconds in the final serial
-  verification run after the unified test migration and external-validation
-  additions.
-- All 16 numbered program tests passed their answer-sheet,
-  representative-profile, structural lockstep, and hard-coded outcome checks.
+- Full regression passed: 175/175 after the 2026-08-05 resource-sharing
+  cleanup. The complete run took 365.18 seconds with two test workers; its one
+  stale recursive-profile expectation was corrected and rerun successfully.
+- Both sets of 22 numbered programs passed: the preserved single-cycle system
+  and the five-stage core, including answer-sheet, selected-profile,
+  instruction-oracle lockstep, and hard-coded outcome checks.
+- The five-stage structural overview now has five semantic stage families,
+  four pipeline-register families, and one coordinator as its ten direct
+  children. Each family remains recursively selectable by profile.
+- RV32I visualizer scenarios keep non-storage datapath/control components
+  structural while selecting behavioral `Memory64Kx32`,
+  `RegisterFile32x32`, `Register32`, and `MemoryBit` so the compact storage
+  overrides are used.
 
 ## Architecture Direction
 
@@ -803,6 +819,39 @@ Implementation report:
 
 - `docs/rv32i-external-validation-report.md`
 
+### Milestone 16: Five-Stage RV32I Core
+
+Status: complete. See
+`docs/rv32i-five-stage-core-plan.md` and
+`docs/rv32i-five-stage-core-report.md`.
+
+Purpose:
+
+Add an educational single-issue, in-order IF/ID/EX/MEM/WB core while leaving
+the working single-cycle CPU intact.
+
+Delivered:
+
+- four stage-specific structural/behavioral pipeline-register families;
+- forwarding and WB-to-ID bypass;
+- exact load-use hazard detection, stalls, and bubbles;
+- EX-stage branch/jump resolution and younger-instruction flushing;
+- memory alignment and ready/fault handling;
+- MEM-stage stores with precise suppression, plus ordered register, halt, and
+  trap retirement;
+- structural and compact behavioral core implementations behind one family;
+- stage/commit/stall outputs for time travel and visualization;
+- dedicated reusable tests for every new block and the parent core;
+- instruction-oracle and cross-fidelity execution of all 16 original
+  correctness programs plus six focused performance programs;
+- measured CPI workloads for independent ALU operations, adjacent ALU
+  dependencies, load-use hazards, and branch-heavy control flow;
+- Python backend and HTML visualizer scenario discovery.
+
+The core remains separate from memory. The shared program fixture supplies
+instruction and data memories, so this milestone does not add a duplicate
+five-stage system wrapper.
+
 ## Testing Plan
 
 Every milestone must add tests before it is considered complete.
@@ -870,11 +919,11 @@ After first-pass RV32I works, consider extensions in this order:
 2. Add ELF loading.
 3. Add `M` multiply/divide extension.
 4. Add simple multi-cycle memory or unified-memory arbitration.
-5. Add a pipelined CPU.
-6. Add hazard detection and forwarding.
-7. Add branch prediction.
-8. Add cache models.
-9. Add privileged mode and interrupts.
+5. Measure and visualize pipeline CPI, stalls, and flush penalties against the
+   single-cycle comparison point.
+6. Add branch prediction.
+7. Add cache models.
+8. Add privileged mode and interrupts.
 
 Do not start these before the single-cycle RV32I system passes program-level tests.
 
@@ -924,13 +973,16 @@ Mitigation:
 
 ## Near-Term Plan
 
-The first structural single-cycle milestone is complete. Immediate next steps are:
+The first five-stage core and its timing/performance measurement milestone are
+complete. See `rv32i-timing-performance-report.md`. Immediate next steps are:
 
-1. Add and validate a headless/low-history mode for the external runner, then
-   use it for the remaining fully structural ACT4 `I` sweep. All 39 tests
-   already pass Sail and behavioral CircuitSim.
-2. Continue the 54,000-component browser work after the completed lossless
+1. Add configurable memory latency and a small tested cache contract, using
+   the existing memory-stall and simulator-work counters for comparison.
+2. Use the now-validated headless/low-history external runner for additional
+   Embench programs and the remaining fully structural ACT4 `I` sweep. All 39
+   ACT4 tests already pass Sail and behavioral CircuitSim; Embench 1.0 CRC32
+   now passes both behavioral cores.
+3. Continue the 54,000-component browser work after the completed lossless
    indexed-state, event-driven-rendering, compression, and sub-pixel-only
    culling pass.
-3. Decide deliberately whether to add a configurable nonzero reset vector.
-4. Begin pipeline planning only after the single-cycle external-validation boundary is understood.
+4. Decide deliberately whether to add a configurable nonzero reset vector.

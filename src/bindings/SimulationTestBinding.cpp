@@ -22,6 +22,9 @@ public:
     std::vector<SimulationTest::SimulationCheckpoint> getCheckpoints() const override {
         PYBIND11_OVERRIDE(std::vector<SimulationTest::SimulationCheckpoint>, SimulationTest, getCheckpoints);
     }
+    std::vector<SimulationTest::PerformanceMetric> getPerformanceMetrics() const override {
+        PYBIND11_OVERRIDE(std::vector<SimulationTest::PerformanceMetric>, SimulationTest, getPerformanceMetrics);
+    }
     bool isSimulationPrecomputed() const override {
         PYBIND11_OVERRIDE(bool, SimulationTest, isSimulationPrecomputed);
     }
@@ -103,6 +106,12 @@ void bindSimulationTest(py::module_& m) {
         .def_readonly("detail", &SimulationTest::SimulationCheckpoint::detail)
         .def_readonly("row_index", &SimulationTest::SimulationCheckpoint::row_index);
 
+    py::class_<SimulationTest::PerformanceMetric>(m, "PerformanceMetric")
+        .def_readonly("name", &SimulationTest::PerformanceMetric::name)
+        .def_readonly("value", &SimulationTest::PerformanceMetric::value)
+        .def_readonly("unit", &SimulationTest::PerformanceMetric::unit)
+        .def_readonly("description", &SimulationTest::PerformanceMetric::description);
+
     py::class_<SimulationTest, PySimulationTest, std::shared_ptr<SimulationTest>>(m, "SimulationTest", "The abstract base class for all simulation tests.", py::module_local(false))
         
         .def(py::init<>()) // Bind the default constructor
@@ -130,6 +139,9 @@ void bindSimulationTest(py::module_& m) {
 
         .def("get_checkpoints", &SimulationTest::getCheckpoints,
             "Returns semantic timestamps such as settled truth-table rows.")
+
+        .def("get_performance_metrics", &SimulationTest::getPerformanceMetrics,
+            "Returns scenario and event-engine performance measurements.")
 
         .def("is_simulation_precomputed", &SimulationTest::isSimulationPrecomputed,
             "Returns true when setup already produced the complete history.")

@@ -10,8 +10,11 @@
 #include "components/selection/StandardProfiles.hpp"
 #include "modules/composite/ALU32.hpp"
 #include "modules/composite/HalfAdder.hpp"
+#include "modules/memory/Memory64Kx32.hpp"
 #include "modules/memory/MemoryBit.hpp"
 #include "modules/memory/Register32.hpp"
+#include "modules/memory/RegisterFile32x32.hpp"
+#include "modules/rv32i/RV32IBuildProfiles.hpp"
 #include "modules/rv32i/RV32ISingleCycleSystem.hpp"
 #include "basic/Wire.hpp"
 #include "simulator/Event.hpp"
@@ -539,7 +542,14 @@ void BuiltinComponentCatalogInventoryTest::verifyResults() {
         "NOTGate", "OR8", "ORGate", "RV32IBitPatternMatcher",
         "RV32IControlFlowUnit", "RV32IDecodeControlUnit",
         "RV32IExecutionControlStatusUnit", "RV32ISingleCycleCore",
-        "RV32ISingleCycleSystem",
+        "RV32ISingleCycleSystem", "RV32IFiveStageCore",
+        "RV32IIFIDPipelineRegister", "RV32IIDEXPipelineRegister",
+        "RV32IEXMEMPipelineRegister", "RV32IMEMWBPipelineRegister",
+        "RV32IForwardingUnit", "RV32IHazardDetectionUnit",
+        "RV32IPipelineControlFlowUnit", "RV32IMemoryAlignmentUnit",
+        "RV32IPipelineRetirementUnit", "RV32IPipelineCoordinator",
+        "RV32IFetchStage", "RV32IDecodeStage", "RV32IExecuteStage",
+        "RV32IMemoryStage", "RV32IWritebackStage",
         "RegisterFile4x32", "Rewire", "SRLatch",
         "ShiftLeftLogical8", "ShiftRightArithmetic8", "ShiftRightLogical8",
         "Shifter32", "SignedComparator8", "Subtractor8",
@@ -559,6 +569,50 @@ std::string RecursiveBuildProfileTest::getTestName() const {
 
 void RecursiveBuildProfileTest::verifyResults() {
     const auto catalog = circuit::createBuiltinComponentCatalog();
+    const auto architecture_profile =
+        rv32i::architectureStructuralProfile(
+            *catalog, "rv32i-architecture-profile-test");
+    const std::set<std::string> behavioral_memory_contracts{
+        std::string(circuit::families::Memory64Kx32.id()),
+        std::string(circuit::families::RegisterFile32x32.id()),
+        std::string(circuit::families::Register32.id()),
+        std::string(circuit::families::MemoryBit.id()),
+    };
+    size_t rv32i_contracts = 0;
+    size_t reusable_contracts = 0;
+    for (const auto& contract : catalog->contracts()) {
+        const auto decision = architecture_profile.decide(
+            "probe", 0, contract.id, {});
+        require(
+            decision.fidelity.has_value(),
+            "RV32I architecture profile left a contract undecided: "
+                + contract.id);
+        if (behavioral_memory_contracts.contains(contract.id)) {
+            require(
+                *decision.fidelity
+                    == circuit::Fidelity::Behavioral,
+                "RV32I architecture profile did not compact memory "
+                "contract " + contract.id);
+        } else if (contract.id.starts_with("rv32i.")) {
+            ++rv32i_contracts;
+            require(
+                *decision.fidelity
+                    == circuit::Fidelity::Structural,
+                "RV32I architecture profile did not preserve "
+                "structural contract " + contract.id);
+        } else {
+            ++reusable_contracts;
+            require(
+                *decision.fidelity
+                    == circuit::Fidelity::Behavioral,
+                "RV32I architecture profile did not compact reusable "
+                "contract " + contract.id);
+        }
+    }
+    require(
+        rv32i_contracts > 0 && reusable_contracts > 0,
+        "RV32I architecture profile audit lacked both contract groups");
+
     const circuit::ComponentBuildRequest request{
         "rv32i.core.educational-single-cycle", "core", {}, {}, {}, {}};
     auto profile = circuit::structuralThroughDepth(
@@ -636,7 +690,8 @@ void RecursiveBuildProfileTest::verifyResults() {
         mixed_alu.root->getSelectedFidelity() == "structural",
         "Exact ALU root selection was overridden by its descendant profile");
     const std::set<std::string> selectable_alu_children{
-        "ADD", "SUB", "LOGIC", "SHIFT", "CMP", "RESULT_ZERO"};
+        "ARITHMETIC", "LOGIC", "SHIFT",
+        "ARITHMETIC_ZERO", "RESULT_ZERO"};
     size_t selected_children = 0;
     for (const auto& child : mixed_alu.root->getChildren()) {
         if (selectable_alu_children.count(child->getName()) == 0) {

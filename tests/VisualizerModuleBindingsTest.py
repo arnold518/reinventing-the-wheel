@@ -4,6 +4,22 @@ import circuit_backend
 import server
 
 
+BEHAVIORAL_MEMORY_CONTRACTS = {
+    "rv32i.memory.64k-x32",
+    "rv32i.register-file",
+    "memory.register.width32",
+    "memory.write-enabled-bit",
+}
+
+
+def walk_components(root):
+    pending = [root]
+    while pending:
+        component = pending.pop()
+        yield component
+        pending.extend(component.get_children())
+
+
 def pin_shape(component):
     inputs = {
         name: pin.get_width()
@@ -19,27 +35,64 @@ def pin_shape(component):
 def default_placements(component):
     children = list(component.get_children())
     settings = server.DEFAULT_SETTINGS
-    parent_aspect = server._minimum_aspect_ratio_for_pins(component, settings)
-    title_fraction = min(0.7, settings["title_bar_ratio"] / parent_aspect)
+    parent_layout = server.COMPONENT_LAYOUT_DEFAULTS.get(
+        server._component_layout_type(component), {}
+    )
+    parent_aspect = max(
+        parent_layout.get("aspect_ratio", 0),
+        server._minimum_aspect_ratio_for_pins(
+            component, settings, parent_layout
+        ),
+    )
+    title_ratio = parent_layout.get(
+        "title_bar_ratio", settings["title_bar_ratio"]
+    )
+    title_fraction = min(0.7, title_ratio / parent_aspect)
     child_aspects = {
-        child.get_id(): server._minimum_aspect_ratio_for_pins(child, settings)
+        child.get_id(): max(
+            server.COMPONENT_LAYOUT_DEFAULTS.get(
+                server._component_layout_type(child), {}
+            ).get("aspect_ratio", 0),
+            server._minimum_aspect_ratio_for_pins(
+                child,
+                settings,
+                server.COMPONENT_LAYOUT_DEFAULTS.get(
+                    server._component_layout_type(child), {}
+                ),
+            ),
+        )
         for child in children
     }
+    boundary = parent_layout.get(
+        "boundary_area_ratio", settings["boundary_area_ratio"]
+    )
+    pin_size = parent_layout.get(
+        "pin_size_ratio", settings["pin_size_ratio"]
+    )
     return children, parent_aspect, server._layered_graph_layout(
         component,
         children,
         parent_aspect,
         title_fraction,
         child_aspects,
-        settings["boundary_area_ratio"],
-        settings["pin_size_ratio"],
+        boundary,
+        pin_size,
     ), child_aspects
 
 
 def assert_default_children_do_not_overlap(component):
     children, parent_aspect, placements, child_aspects = default_placements(component)
-    boundary = server.DEFAULT_SETTINGS["boundary_area_ratio"]
-    pin_size = server.DEFAULT_SETTINGS["pin_size_ratio"]
+    parent_layout = server.COMPONENT_LAYOUT_DEFAULTS.get(
+        server._component_layout_type(component), {}
+    )
+    boundary = parent_layout.get(
+        "boundary_area_ratio",
+        server.DEFAULT_SETTINGS["boundary_area_ratio"],
+    )
+    pin_size = parent_layout.get(
+        "pin_size_ratio",
+        server.DEFAULT_SETTINGS["pin_size_ratio"],
+    )
     rects = []
     for child in children:
         placement = placements[child.get_name()]
@@ -72,7 +125,7 @@ def main():
         for descriptor in circuit_backend.get_registered_test_descriptors()
     }
     assert set(descriptors) == registered
-    for program_number in range(1, 17):
+    for program_number in range(1, 23):
         test_name = (
             f"RV32ISingleCycleSystemTest/program-{program_number:02d}"
         )
@@ -90,6 +143,37 @@ def main():
         assert descriptor["contract_ids"] == [
             "rv32i.system.educational-single-cycle"
         ]
+        assert ("performance" in descriptor["labels"]) == (
+            program_number >= 17
+        )
+        pipeline_test_name = (
+            "RV32IFiveStageCoreProgramTest/"
+            f"program-{program_number:02d}"
+        )
+        assert pipeline_test_name in registered
+        assert (
+            server.scenario_canonical_alias(pipeline_test_name)
+            == f"rv32i-five-stage-program{program_number}"
+        )
+        assert (
+            f"rv32i-five-stage-program{program_number}"
+            in server.SCENARIOS
+        )
+        pipeline_descriptor = descriptors[pipeline_test_name]
+        assert pipeline_descriptor["visualizable"]
+        assert (
+            pipeline_descriptor["logical_test_id"]
+            == "RV32IFiveStageCoreProgramTest"
+        )
+        assert pipeline_descriptor["kind"] == "program"
+        assert (
+            pipeline_descriptor["scenario_id"]
+            == f"program-{program_number:02d}"
+        )
+        assert pipeline_descriptor["contract_ids"] == []
+        assert ("performance" in pipeline_descriptor["labels"]) == (
+            program_number >= 17
+        )
 
     forbidden_test_fragments = (
         "Structural",
@@ -118,6 +202,12 @@ def main():
     assert program.supports_build_profile()
     program.setup_circuit()
     assert program.get_run_duration() > 0
+    program_metrics = {
+        metric.name: metric.value
+        for metric in program.get_performance_metrics()
+    }
+    assert program_metrics["cpu.cpi"] == 1.0
+    assert program_metrics["cpu.hardware_cycles"] > 0
     system = program.get_root()
     assert system.get_type_name() == "RV32ISingleCycleSystem"
     assert system.get_selected_fidelity() == "structural"
@@ -131,18 +221,55 @@ def main():
     expected_core_fidelities = {
         "CONTROL_FLOW": "structural",
         "DECODE_CONTROL": "structural",
-        "REGISTER_FILE": "structural",
+        "REGISTER_FILE": "behavioral",
         "ALU": "structural",
         "EXECUTION_STATUS": "structural",
     }
     for child_name, expected_fidelity in expected_core_fidelities.items():
         assert core_children[child_name].get_selected_fidelity() == expected_fidelity
+    single_cycle_memory = [
+        component
+        for component in walk_components(system)
+        if component.get_contract_id() in BEHAVIORAL_MEMORY_CONTRACTS
+    ]
+    assert single_cycle_memory
+    assert all(
+        component.get_selected_fidelity() == "behavioral"
+        for component in single_cycle_memory
+    )
     assert system.get_available_fidelities() == [
         "structural",
         "behavioral",
     ]
     assert system.is_profile_selectable()
     assert not system.used_unavailable_fidelity_exception()
+
+    expanded_register_program = circuit_backend.create_test_by_name(
+        "RV32ISingleCycleSystemTest/program-09"
+    )
+    expanded_register_program.set_build_profile(
+        circuit_backend.profile_with_exact_overrides(
+            expanded_register_program.get_build_profile(),
+            {
+                (
+                    "RV32I_SINGLE_CYCLE_SYSTEM_ROOT"
+                    ".CORE.REGISTER_FILE"
+                ): "structural",
+            },
+            "visualizer-storage-expanded",
+        )
+    )
+    expanded_register_program.setup_circuit()
+    expanded_register_core = {
+        child.get_name(): child
+        for child in expanded_register_program.get_root().get_children()
+    }["CORE"]
+    expanded_register_file = {
+        child.get_name(): child
+        for child in expanded_register_core.get_children()
+    }["REGISTER_FILE"]
+    assert expanded_register_file.get_selected_fidelity() == "structural"
+    assert list(expanded_register_file.get_children())
 
     behavioral_program = circuit_backend.create_test_by_name(
         "RV32ISingleCycleSystemTest/program-09"
@@ -185,6 +312,199 @@ def main():
     assert layout_manager.schema_version == server.LAYOUT_SCHEMA_VERSION == 2
     assert isinstance(layout_manager.profile_layouts, dict)
     assert program_layout_key in layout_manager.root_layouts
+
+    pipeline_program = circuit_backend.create_test_by_name(
+        "RV32IFiveStageCoreProgramTest/program-01"
+    )
+    pipeline_program.setup_circuit()
+    assert pipeline_program.is_simulation_precomputed()
+    pipeline_checkpoints = list(
+        pipeline_program.get_checkpoints()
+    )
+    pipeline_timestamps = list(
+        pipeline_program.get_simulator().get_unique_timestamps()
+    )
+    assert pipeline_checkpoints
+    assert (
+        pipeline_program.get_run_duration()
+        == pipeline_checkpoints[-1].time
+    )
+    assert max(pipeline_timestamps) <= pipeline_checkpoints[-1].time
+    pipeline_root = pipeline_program.get_root()
+    pipeline_children = {
+        child.get_name(): child
+        for child in pipeline_root.get_children()
+    }
+    assert (
+        pipeline_children["CORE"].get_selected_fidelity()
+        == "structural"
+    )
+    pipeline_core = pipeline_children["CORE"]
+    pipeline_core_children = {
+        child.get_name(): child
+        for child in pipeline_core.get_children()
+    }
+    assert list(pipeline_core_children) == [
+        "FETCH",
+        "IF_ID",
+        "DECODE",
+        "ID_EX",
+        "EXECUTE",
+        "EX_MEM",
+        "MEMORY",
+        "MEM_WB",
+        "WRITEBACK",
+        "COORDINATOR",
+    ]
+    assert all(
+        child.get_selected_fidelity() == "structural"
+        for child in pipeline_core_children.values()
+    )
+    pipeline_components = list(walk_components(pipeline_root))
+    pipeline_memory = [
+        component
+        for component in pipeline_components
+        if component.get_contract_id() in BEHAVIORAL_MEMORY_CONTRACTS
+    ]
+    assert pipeline_memory
+    assert all(
+        component.get_selected_fidelity() == "behavioral"
+        for component in pipeline_memory
+    )
+    rv32i_components = [
+        component
+        for component in walk_components(pipeline_core)
+        if component.get_contract_id().startswith("rv32i.")
+        and component.get_contract_id() not in BEHAVIORAL_MEMORY_CONTRACTS
+    ]
+    assert len(rv32i_components) > len(pipeline_core_children)
+    assert all(
+        component.get_selected_fidelity() == "structural"
+        for component in rv32i_components
+    )
+
+    pipeline_register_test = circuit_backend.create_test_by_name(
+        "RV32IIFIDPipelineRegisterTest"
+    )
+    pipeline_register_test.setup_circuit()
+    pipeline_register_memory = [
+        component
+        for component in walk_components(pipeline_register_test.get_root())
+        if component.get_contract_id() in BEHAVIORAL_MEMORY_CONTRACTS
+    ]
+    assert pipeline_register_memory
+    assert all(
+        component.get_selected_fidelity() == "behavioral"
+        for component in pipeline_register_memory
+    )
+    assert_default_children_do_not_overlap(pipeline_core)
+    _, core_aspect, core_stage_placements, _ = default_placements(
+        pipeline_core
+    )
+    assert core_aspect < 1.0
+    pipeline_x_positions = [
+        core_stage_placements[name]["rel_pos"][0]
+        for name in server.FIVE_STAGE_PIPELINE_CHILD_ORDER
+    ]
+    assert pipeline_x_positions == sorted(pipeline_x_positions)
+    assert (
+        core_stage_placements["COORDINATOR"]["rel_pos"][1]
+        > max(
+            core_stage_placements[name]["rel_pos"][1]
+            for name in server.FIVE_STAGE_PIPELINE_CHILD_ORDER
+        )
+    )
+
+    fetch_expanded_program = circuit_backend.create_test_by_name(
+        "RV32IFiveStageCoreProgramTest/program-01"
+    )
+    fetch_expanded_program.set_build_profile(
+        circuit_backend.profile_with_exact_overrides(
+            fetch_expanded_program.get_build_profile(),
+            {
+                (
+                    "RV32I_FIVE_STAGE_PROGRAM_ROOT"
+                    ".CORE.FETCH"
+                ): "structural",
+            },
+            "visualizer-five-stage-fetch-expanded",
+        )
+    )
+    fetch_expanded_program.setup_circuit()
+    expanded_root = fetch_expanded_program.get_root()
+    expanded_core = {
+        child.get_name(): child
+        for child in expanded_root.get_children()
+    }["CORE"]
+    expanded_fetch = {
+        child.get_name(): child
+        for child in expanded_core.get_children()
+    }["FETCH"]
+    assert expanded_fetch.get_selected_fidelity() == "structural"
+    assert list(expanded_fetch.get_children())
+    assert list(fetch_expanded_program.get_checkpoints())
+
+    pipeline_layout_key = server.scenario_layout_key(
+        "rv32i-five-stage-program1", pipeline_root
+    )
+    layout_manager.ensure_component_layout_defaults(
+        pipeline_root,
+        scenario_key=pipeline_layout_key,
+        is_root=True,
+    )
+    pipeline_parent_aspect = layout_manager.aspect_for_component(
+        pipeline_root,
+        scenario_key=pipeline_layout_key,
+        is_root=True,
+    )
+    pipeline_title_ratio = (
+        layout_manager.visual_ratio_for_component(
+            pipeline_root,
+            "title_bar_ratio",
+            scenario_key=pipeline_layout_key,
+            is_root=True,
+        )
+    )
+    pipeline_title_fraction = min(
+        0.7,
+        pipeline_title_ratio / pipeline_parent_aspect,
+    )
+    pipeline_child_list = list(pipeline_root.get_children())
+    pipeline_child_aspects = {
+        child.get_id(): layout_manager.aspect_for_component(child)
+        for child in pipeline_child_list
+    }
+    pipeline_boundary = layout_manager.visual_ratio_for_component(
+        pipeline_root,
+        "boundary_area_ratio",
+        scenario_key=pipeline_layout_key,
+        is_root=True,
+    )
+    pipeline_pin_size = layout_manager.visual_ratio_for_component(
+        pipeline_root,
+        "pin_size_ratio",
+        scenario_key=pipeline_layout_key,
+        is_root=True,
+    )
+    pipeline_placements = server._layered_graph_layout(
+        pipeline_root,
+        pipeline_child_list,
+        pipeline_parent_aspect,
+        pipeline_title_fraction,
+        pipeline_child_aspects,
+        pipeline_boundary,
+        pipeline_pin_size,
+    )
+    assert 0.35 <= pipeline_parent_aspect < 1.0
+    assert pipeline_placements["CORE"]["rel_width"] > 0.15
+    assert (
+        pipeline_placements["INSTRUCTION_MEMORY"]["rel_pos"][0]
+        < pipeline_placements["CORE"]["rel_pos"][0]
+    )
+    assert (
+        pipeline_placements["DATA_MEMORY"]["rel_pos"][0]
+        < pipeline_placements["CORE"]["rel_pos"][0]
+    )
 
     loader_session = server.CircuitSession(
         "rv32i-program-loader",
@@ -328,9 +648,13 @@ def main():
         f"IN_{index}" for index in range(32)
     ]
 
-    for program_number in range(1, 17):
+    for program_number in range(1, 23):
         assert (
             f"rv32i-program{program_number}@{profile_fingerprint}"
+            in layout_manager.root_layouts
+        )
+        assert (
+            f"rv32i-five-stage-program{program_number}"
             in layout_manager.root_layouts
         )
     for layout_key in layout_manager.root_layouts:

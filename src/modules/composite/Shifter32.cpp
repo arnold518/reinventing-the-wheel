@@ -2,6 +2,7 @@
 #include "components/BasicComponent.hpp"
 #include "components/ComponentBuilder.hpp"
 #include "components/ComponentBuilder.tpp"
+#include "modules/basic/Gate.hpp"
 #include "modules/basic/Mux.hpp"
 #include "modules/utility/BitAdapter.hpp"
 #include "modules/utility/Constant.hpp"
@@ -16,27 +17,17 @@ namespace {
 void defineShifter32Pins(IOComponent* self) {
     self->addPin<32>("A", PinType::INPUT);
     self->addPin<32>("B", PinType::INPUT);
-    self->addPin<32>("SLL_OUT", PinType::OUTPUT);
-    self->addPin<32>("SRL_OUT", PinType::OUTPUT);
-    self->addPin<32>("SRA_OUT", PinType::OUTPUT);
+    self->addPin("LEFT", PinType::INPUT);
+    self->addPin("ARITHMETIC", PinType::INPUT);
+    self->addPin<32>("OUT", PinType::OUTPUT);
 }
-
-enum class ShiftMode {
-    Left,
-    RightLogical,
-    RightArithmetic,
-};
 
 using OneBitPin = std::shared_ptr<Pin<>>;
 using SinkList = std::vector<OneBitPin>;
 
 LogicValue logicNot(LogicValue value) {
-    if (value == LogicValue::LOW) {
-        return LogicValue::HIGH;
-    }
-    if (value == LogicValue::HIGH) {
-        return LogicValue::LOW;
-    }
+    if (value == LogicValue::LOW) return LogicValue::HIGH;
+    if (value == LogicValue::HIGH) return LogicValue::LOW;
     return LogicValue::UNKNOWN;
 }
 
@@ -69,82 +60,6 @@ LogicValue muxValue(
         logicAnd(when_high, select));
 }
 
-void buildShiftNetwork(
-    ComponentBuilder& builder,
-    const std::string& prefix,
-    ShiftMode mode,
-    const std::string& output_joiner,
-    std::array<SinkList, 32>& a_sinks,
-    std::array<SinkList, 5>& select_sinks,
-    SinkList& zero_sinks) {
-
-    std::vector<OneBitPin> current_sources;
-    current_sources.reserve(32);
-    bool current_is_input_a = true;
-
-    for (size_t stage = 0; stage < 5; ++stage) {
-        const size_t amount = size_t{1} << stage;
-        std::array<SinkList, 32> current_sinks;
-        std::vector<OneBitPin> next_sources;
-        next_sources.reserve(32);
-
-        auto addCurrentSink = [&](size_t bit, OneBitPin sink) {
-            if (current_is_input_a) {
-                a_sinks[bit].push_back(std::move(sink));
-            } else {
-                current_sinks[bit].push_back(std::move(sink));
-            }
-        };
-
-        for (size_t bit = 0; bit < 32; ++bit) {
-            const auto bit_text = std::to_string(bit);
-            const auto mux_name = prefix + "_S" + std::to_string(stage) + "_B" + bit_text;
-            builder.addNewComponent<Mux2to1>(mux_name);
-
-            select_sinks[stage].push_back(builder.getInputPin<Mux2to1>(mux_name, "SEL"));
-            addCurrentSink(bit, builder.getInputPin<Mux2to1>(mux_name, "A"));
-
-            if (mode == ShiftMode::Left) {
-                if (bit >= amount) {
-                    addCurrentSink(bit - amount, builder.getInputPin<Mux2to1>(mux_name, "B"));
-                } else {
-                    zero_sinks.push_back(builder.getInputPin<Mux2to1>(mux_name, "B"));
-                }
-            } else {
-                const size_t source_bit = bit + amount;
-                if (source_bit < 32) {
-                    addCurrentSink(source_bit, builder.getInputPin<Mux2to1>(mux_name, "B"));
-                } else if (mode == ShiftMode::RightArithmetic) {
-                    a_sinks[31].push_back(builder.getInputPin<Mux2to1>(mux_name, "B"));
-                } else {
-                    zero_sinks.push_back(builder.getInputPin<Mux2to1>(mux_name, "B"));
-                }
-            }
-
-            next_sources.push_back(builder.getOutputPin<Mux2to1>(mux_name, "OUT"));
-        }
-
-        if (!current_is_input_a) {
-            for (size_t bit = 0; bit < 32; ++bit) {
-                builder.addNewWire(
-                    prefix + "_S" + std::to_string(stage) + "_SRC_" + std::to_string(bit),
-                    current_sources[bit],
-                    current_sinks[bit]);
-            }
-        }
-
-        current_sources = std::move(next_sources);
-        current_is_input_a = false;
-    }
-
-    for (size_t bit = 0; bit < 32; ++bit) {
-        builder.addNewWire(
-            prefix + "_OUT_" + std::to_string(bit),
-            current_sources[bit],
-            {builder.getInputPin<BitJoiner<32>>(output_joiner, "IN_" + std::to_string(bit))});
-    }
-}
-
 class Shifter32Direct final : public BasicComponent {
 public:
     explicit Shifter32Direct(std::string name)
@@ -159,50 +74,39 @@ public:
     void evaluate(size_t current_time, Simulator& simulator) override {
         const auto a = getInputPin<32>("A")->getValueAsVector();
         const auto b = getInputPin<32>("B")->getValueAsVector();
-        auto left = a;
-        auto logical_right = a;
-        auto arithmetic_right = a;
+        const auto left = getInputValue("LEFT");
+        const auto arithmetic = getInputValue("ARITHMETIC");
+
+        // A left shift is implemented by reversing the word before and after
+        // one shared right-shift network. LEFT also disables sign fill.
+        std::vector<LogicValue> shifted(32, LogicValue::UNKNOWN);
+        for (size_t bit = 0; bit < 32; ++bit) {
+            shifted[bit] = muxValue(a[bit], a[31 - bit], left);
+        }
+        const auto fill = logicAnd(
+            logicAnd(a[31], arithmetic), logicNot(left));
         for (size_t stage = 0; stage < 5; ++stage) {
             const size_t amount = size_t{1} << stage;
-            std::vector<LogicValue> next_left(32, LogicValue::LOW);
-            std::vector<LogicValue> next_logical_right(
-                32, LogicValue::LOW);
-            std::vector<LogicValue> next_arithmetic_right(32, a[31]);
+            auto next = shifted;
             for (size_t bit = 0; bit < 32; ++bit) {
-                const auto shifted_left = bit >= amount
-                    ? left[bit - amount]
-                    : LogicValue::LOW;
-                const auto shifted_logical = bit + amount < 32
-                    ? logical_right[bit + amount]
-                    : LogicValue::LOW;
-                const auto shifted_arithmetic = bit + amount < 32
-                    ? arithmetic_right[bit + amount]
-                    : a[31];
-                next_left[bit] =
-                    muxValue(left[bit], shifted_left, b[stage]);
-                next_logical_right[bit] = muxValue(
-                    logical_right[bit],
-                    shifted_logical,
-                    b[stage]);
-                next_arithmetic_right[bit] = muxValue(
-                    arithmetic_right[bit],
-                    shifted_arithmetic,
-                    b[stage]);
+                const auto moved = bit + amount < 32
+                    ? shifted[bit + amount]
+                    : fill;
+                next[bit] = muxValue(shifted[bit], moved, b[stage]);
             }
-            left = std::move(next_left);
-            logical_right = std::move(next_logical_right);
-            arithmetic_right = std::move(next_arithmetic_right);
+            shifted = std::move(next);
         }
 
+        std::vector<LogicValue> result(32, LogicValue::UNKNOWN);
+        for (size_t bit = 0; bit < 32; ++bit) {
+            result[bit] = muxValue(
+                shifted[bit], shifted[31 - bit], left);
+        }
         _updateOutputWire<32>(
-            simulator, "SLL_OUT", left, current_time);
-        _updateOutputWire<32>(
-            simulator, "SRL_OUT", logical_right, current_time);
-        _updateOutputWire<32>(
-            simulator, "SRA_OUT", arithmetic_right, current_time);
+            simulator, "OUT", result, current_time);
     }
 };
-}
+} // namespace
 
 namespace circuit::families {
 const ComponentFamily Shifter32{
@@ -227,10 +131,10 @@ Shifter32::Shifter32(std::string name)
 void Shifter32::buildInternals(ComponentBuilder& builder) {
     builder.addNewComponent<BitSplitter<32>>("A_SPLIT");
     builder.addNewComponent<BitSplitter<32>>("B_SPLIT");
-    builder.addNewComponent<ConstantValue<1>>("CONST_LOW", 0);
-    builder.addNewComponent<BitJoiner<32>>("SLL_JOIN");
-    builder.addNewComponent<BitJoiner<32>>("SRL_JOIN");
-    builder.addNewComponent<BitJoiner<32>>("SRA_JOIN");
+    builder.addNewComponent<BitJoiner<32>>("OUT_JOIN");
+    builder.addNewComponent<NOTGate>("NOT_LEFT");
+    builder.addNewComponent<ANDGate>("ARITHMETIC_SIGN");
+    builder.addNewComponent<ANDGate>("FILL_ENABLE");
 
     builder.addNewWire<32>(
         "A_bus_internal",
@@ -240,44 +144,123 @@ void Shifter32::buildInternals(ComponentBuilder& builder) {
         "B_bus_internal",
         getInputPin<32>("B"),
         {builder.getInputPin<BitSplitter<32>, 32>("B_SPLIT", "IN")});
+    builder.addNewWire(
+        "ARITHMETIC_to_fill",
+        getInputPin("ARITHMETIC"),
+        {builder.getInputPin<ANDGate>("ARITHMETIC_SIGN", "B")});
+    builder.addNewWire(
+        "ARITHMETIC_SIGN_to_enable",
+        builder.getOutputPin<ANDGate>("ARITHMETIC_SIGN", "OUT"),
+        {builder.getInputPin<ANDGate>("FILL_ENABLE", "A")});
+    builder.addNewWire(
+        "NOT_LEFT_to_fill",
+        builder.getOutputPin<NOTGate>("NOT_LEFT", "OUT"),
+        {builder.getInputPin<ANDGate>("FILL_ENABLE", "B")});
 
+    // Reverse the input for SLL, feed one five-stage right barrel shifter,
+    // then reverse the result back. This is the shared hardware resource.
     std::array<SinkList, 32> a_sinks;
-    std::array<SinkList, 5> select_sinks;
-    SinkList zero_sinks;
+    a_sinks[31].push_back(
+        builder.getInputPin<ANDGate>("ARITHMETIC_SIGN", "A"));
+    std::vector<OneBitPin> current_sources;
+    current_sources.reserve(32);
+    std::vector<OneBitPin> left_select_sinks;
+    left_select_sinks.reserve(64);
+    left_select_sinks.push_back(
+        builder.getInputPin<NOTGate>("NOT_LEFT", "IN"));
+    for (size_t bit = 0; bit < 32; ++bit) {
+        const auto mux = "INPUT_REVERSE_" + std::to_string(bit);
+        builder.addNewComponent<Mux2to1>(mux);
+        a_sinks[bit].push_back(
+            builder.getInputPin<Mux2to1>(mux, "A"));
+        a_sinks[31 - bit].push_back(
+            builder.getInputPin<Mux2to1>(mux, "B"));
+        left_select_sinks.push_back(
+            builder.getInputPin<Mux2to1>(mux, "SEL"));
+        current_sources.push_back(
+            builder.getOutputPin<Mux2to1>(mux, "OUT"));
+    }
 
-    buildShiftNetwork(builder, "SLL", ShiftMode::Left, "SLL_JOIN", a_sinks, select_sinks, zero_sinks);
-    buildShiftNetwork(builder, "SRL", ShiftMode::RightLogical, "SRL_JOIN", a_sinks, select_sinks, zero_sinks);
-    buildShiftNetwork(builder, "SRA", ShiftMode::RightArithmetic, "SRA_JOIN", a_sinks, select_sinks, zero_sinks);
+    std::array<SinkList, 5> amount_select_sinks;
+    SinkList fill_sinks;
+    for (size_t stage = 0; stage < 5; ++stage) {
+        const size_t amount = size_t{1} << stage;
+        std::array<SinkList, 32> current_sinks;
+        std::vector<OneBitPin> next_sources;
+        next_sources.reserve(32);
+        for (size_t bit = 0; bit < 32; ++bit) {
+            const auto mux = "SHIFT_S" + std::to_string(stage)
+                + "_B" + std::to_string(bit);
+            builder.addNewComponent<Mux2to1>(mux);
+            current_sinks[bit].push_back(
+                builder.getInputPin<Mux2to1>(mux, "A"));
+            if (bit + amount < 32) {
+                current_sinks[bit + amount].push_back(
+                    builder.getInputPin<Mux2to1>(mux, "B"));
+            } else {
+                fill_sinks.push_back(
+                    builder.getInputPin<Mux2to1>(mux, "B"));
+            }
+            amount_select_sinks[stage].push_back(
+                builder.getInputPin<Mux2to1>(mux, "SEL"));
+            next_sources.push_back(
+                builder.getOutputPin<Mux2to1>(mux, "OUT"));
+        }
+        for (size_t bit = 0; bit < 32; ++bit) {
+            builder.addNewWire(
+                "SHIFT_S" + std::to_string(stage)
+                    + "_SRC_" + std::to_string(bit),
+                current_sources[bit],
+                current_sinks[bit]);
+        }
+        current_sources = std::move(next_sources);
+    }
+
+    std::array<SinkList, 32> output_sinks;
+    for (size_t bit = 0; bit < 32; ++bit) {
+        const auto mux = "OUTPUT_REVERSE_" + std::to_string(bit);
+        builder.addNewComponent<Mux2to1>(mux);
+        output_sinks[bit].push_back(
+            builder.getInputPin<Mux2to1>(mux, "A"));
+        output_sinks[31 - bit].push_back(
+            builder.getInputPin<Mux2to1>(mux, "B"));
+        left_select_sinks.push_back(
+            builder.getInputPin<Mux2to1>(mux, "SEL"));
+        builder.addNewWire(
+            "SHIFT_RESULT_" + std::to_string(bit),
+            builder.getOutputPin<Mux2to1>(mux, "OUT"),
+            {builder.getInputPin<BitJoiner<32>>(
+                "OUT_JOIN", "IN_" + std::to_string(bit))});
+    }
+    for (size_t bit = 0; bit < 32; ++bit) {
+        builder.addNewWire(
+            "SHIFT_OUT_SOURCE_" + std::to_string(bit),
+            current_sources[bit],
+            output_sinks[bit]);
+    }
 
     for (size_t bit = 0; bit < 32; ++bit) {
         builder.addNewWire(
             "A_bit_" + std::to_string(bit),
-            builder.getOutputPin<BitSplitter<32>>("A_SPLIT", "OUT_" + std::to_string(bit)),
+            builder.getOutputPin<BitSplitter<32>>(
+                "A_SPLIT", "OUT_" + std::to_string(bit)),
             a_sinks[bit]);
     }
-
     for (size_t bit = 0; bit < 5; ++bit) {
         builder.addNewWire(
             "B_shift_bit_" + std::to_string(bit),
-            builder.getOutputPin<BitSplitter<32>>("B_SPLIT", "OUT_" + std::to_string(bit)),
-            select_sinks[bit]);
+            builder.getOutputPin<BitSplitter<32>>(
+                "B_SPLIT", "OUT_" + std::to_string(bit)),
+            amount_select_sinks[bit]);
     }
-
     builder.addNewWire(
-        "CONST_LOW_to_zero_fill",
-        builder.getOutputPin<ConstantValue<1>>("CONST_LOW", "OUT"),
-        zero_sinks);
-
+        "LEFT_fanout", getInputPin("LEFT"), left_select_sinks);
+    builder.addNewWire(
+        "FILL_fanout",
+        builder.getOutputPin<ANDGate>("FILL_ENABLE", "OUT"),
+        fill_sinks);
     builder.addNewWire<32>(
-        "SLL_bus_internal",
-        builder.getOutputPin<BitJoiner<32>, 32>("SLL_JOIN", "OUT"),
-        {getOutputPin<32>("SLL_OUT")});
-    builder.addNewWire<32>(
-        "SRL_bus_internal",
-        builder.getOutputPin<BitJoiner<32>, 32>("SRL_JOIN", "OUT"),
-        {getOutputPin<32>("SRL_OUT")});
-    builder.addNewWire<32>(
-        "SRA_bus_internal",
-        builder.getOutputPin<BitJoiner<32>, 32>("SRA_JOIN", "OUT"),
-        {getOutputPin<32>("SRA_OUT")});
+        "OUT_bus_internal",
+        builder.getOutputPin<BitJoiner<32>, 32>("OUT_JOIN", "OUT"),
+        {getOutputPin<32>("OUT")});
 }

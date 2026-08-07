@@ -1,12 +1,27 @@
 add_executable(SimulationTestRunner SimulationTestRunner.cpp)
 target_link_libraries(SimulationTestRunner PRIVATE SimulatorLib)
 
+add_test(
+    NAME RV32IExternalBenchmarkRunnerSmoke
+    COMMAND
+        $<TARGET_FILE:rv32i_benchmark_elf>
+        ${PROJECT_SOURCE_DIR}/tests/fixtures/rv32i/external-smoke/self-check.elf
+        0x3ffc0
+        100
+        both
+)
+set_tests_properties(
+    RV32IExternalBenchmarkRunnerSmoke
+    PROPERTIES LABELS "simulation;integration;rv32i;benchmark"
+)
+
 set(SIMULATION_TESTS
     FullCircuitTest
     WireTemplateTest
     SimulatorAdvanceAndRecordTest
     SimulatorUnwiredOutputPinHistoryTest
     SimulatorDrainUntilIdleTest
+    CircuitTimingAnalyzerTest
     BuildProfileTest
     ComponentCatalogSelectionTest
     BuiltinComponentCatalogInventoryTest
@@ -101,6 +116,22 @@ set(SIMULATION_TESTS
     RV32IControlFlowUnitTest
     RV32IDecodeControlUnitTest
     RV32IExecutionControlStatusUnitTest
+    RV32IIFIDPipelineRegisterTest
+    RV32IIDEXPipelineRegisterTest
+    RV32IEXMEMPipelineRegisterTest
+    RV32IMEMWBPipelineRegisterTest
+    RV32IForwardingUnitTest
+    RV32IHazardDetectionUnitTest
+    RV32IPipelineControlFlowUnitTest
+    RV32IMemoryAlignmentUnitTest
+    RV32IPipelineRetirementUnitTest
+    RV32IPipelineCoordinatorTest
+    RV32IFetchStageTest
+    RV32IDecodeStageTest
+    RV32IExecuteStageTest
+    RV32IMemoryStageTest
+    RV32IWritebackStageTest
+    RV32IFiveStageCoreTest
     RV32IBitPatternMatcherTest
     RV32IDecoderTest
     RV32IControlTest
@@ -119,6 +150,7 @@ set(INFRASTRUCTURE_TESTS
     SimulatorAdvanceAndRecordTest
     SimulatorUnwiredOutputPinHistoryTest
     SimulatorDrainUntilIdleTest
+    CircuitTimingAnalyzerTest
     BuildProfileTest
     ComponentCatalogSelectionTest
     BuiltinComponentCatalogInventoryTest
@@ -178,7 +210,10 @@ foreach(test_name ${SIMULATION_TESTS})
     set_tests_properties(${test_name} PROPERTIES LABELS "${test_labels}")
 endforeach()
 
-foreach(program_number RANGE 1 16)
+set(RV32I_CORRECTNESS_PROGRAM_CASE_COUNT 16)
+set(RV32I_PROGRAM_CASE_COUNT 22)
+
+foreach(program_number RANGE 1 ${RV32I_PROGRAM_CASE_COUNT})
     if(program_number LESS 10)
         set(program_suffix "0${program_number}")
     else()
@@ -190,9 +225,37 @@ foreach(program_number RANGE 1 16)
         NAME "${program_test_name}"
         COMMAND SimulationTestRunner "${program_test_name}"
     )
+    set(program_test_labels simulation contract program rv32i system slow)
+    if(program_number GREATER ${RV32I_CORRECTNESS_PROGRAM_CASE_COUNT})
+        list(APPEND program_test_labels performance)
+    endif()
     set_tests_properties(
         "${program_test_name}"
-        PROPERTIES LABELS "simulation;contract;rv32i;system;slow"
+        PROPERTIES LABELS "${program_test_labels}"
+    )
+    list(APPEND SIMULATION_TESTS "${program_test_name}")
+endforeach()
+
+foreach(program_number RANGE 1 ${RV32I_PROGRAM_CASE_COUNT})
+    if(program_number LESS 10)
+        set(program_suffix "0${program_number}")
+    else()
+        set(program_suffix "${program_number}")
+    endif()
+    set(program_test_name
+        "RV32IFiveStageCoreProgramTest/program-${program_suffix}")
+    add_test(
+        NAME "${program_test_name}"
+        COMMAND SimulationTestRunner "${program_test_name}"
+    )
+    set(program_test_labels
+        simulation integration program rv32i pipeline slow)
+    if(program_number GREATER ${RV32I_CORRECTNESS_PROGRAM_CASE_COUNT})
+        list(APPEND program_test_labels performance)
+    endif()
+    set_tests_properties(
+        "${program_test_name}"
+        PROPERTIES LABELS "${program_test_labels}"
     )
     list(APPEND SIMULATION_TESTS "${program_test_name}")
 endforeach()

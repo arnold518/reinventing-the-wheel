@@ -51,6 +51,8 @@ void RV32IDecodeControlDirect::evaluate(size_t current_time, Simulator& simulato
         _updateOutputWire<2>(simulator, "WRITEBACK_SEL", unknown2, current_time);
         _updateOutputWire<2>(simulator, "MEM_SIZE", unknown2, current_time);
         _updateOutputWire(simulator, "LOAD_SIGN_EXTEND", LogicValue::UNKNOWN, current_time);
+        _updateOutputWire(simulator, "USES_RS1", LogicValue::UNKNOWN, current_time);
+        _updateOutputWire(simulator, "USES_RS2", LogicValue::UNKNOWN, current_time);
         _updateOutputWire<3>(simulator, "BRANCH_TYPE", unknown3, current_time);
         _updateOutputWire<2>(simulator, "JUMP_TYPE", unknown2, current_time);
         _updateOutputWire(simulator, "HALT_REQUEST", LogicValue::UNKNOWN, current_time);
@@ -77,6 +79,8 @@ void RV32IDecodeControlDirect::evaluate(size_t current_time, Simulator& simulato
     _updateOutputWire<2>(simulator, "WRITEBACK_SEL", rv32i::component_encoding::writeback(control.writeback), current_time);
     _updateOutputWire<2>(simulator, "MEM_SIZE", rv32i::component_encoding::memorySize(control.mem_size), current_time);
     _updateOutputWire(simulator, "LOAD_SIGN_EXTEND", logic(control.load_sign_extend), current_time);
+    _updateOutputWire(simulator, "USES_RS1", logic(control.uses_rs1), current_time);
+    _updateOutputWire(simulator, "USES_RS2", logic(control.uses_rs2), current_time);
     _updateOutputWire<3>(simulator, "BRANCH_TYPE", rv32i::component_encoding::branch(control.branch), current_time);
     _updateOutputWire<2>(simulator, "JUMP_TYPE", rv32i::component_encoding::jump(control.jump), current_time);
     _updateOutputWire(simulator, "HALT_REQUEST", logic(control.halt), current_time);

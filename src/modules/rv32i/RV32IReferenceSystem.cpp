@@ -82,6 +82,21 @@ void RV32IReferenceSystem::loadDataBytes(
     data_memory_->loadBytes(base_address, data);
 }
 
+std::vector<uint8_t> RV32IReferenceSystem::readDataBytes(
+    uint32_t base_address,
+    size_t count) const {
+    return data_memory_->readBytes(base_address, count);
+}
+
+void RV32IReferenceSystem::setProgramMemoryHistoryRecordingEnabled(
+    bool enabled) {
+    instruction_memory_->setHistoryRecordingEnabled(enabled);
+    data_memory_->setHistoryRecordingEnabled(enabled);
+    if (!enabled) {
+        data_memory_write_history_.clear();
+    }
+}
+
 void RV32IReferenceSystem::loadDataWords(
     uint32_t base_address,
     const std::vector<uint32_t>& words) {
@@ -92,6 +107,10 @@ std::map<uint32_t, uint8_t>
 RV32IReferenceSystem::dataMemoryWritesInTimeRange(
     size_t start_time,
     size_t end_time) const {
+    if (!data_memory_->isHistoryRecordingEnabled()) {
+        throw std::logic_error(
+            "RV32I behavioral-system memory history is disabled");
+    }
     if (end_time < start_time) {
         throw std::invalid_argument(
             "RV32I behavioral-system write-history range runs backward");
@@ -125,11 +144,13 @@ void RV32IReferenceSystem::applyDataMemoryWrite(
             address,
             value);
         last_data_memory_writes_[address] = value;
-        data_memory_write_history_.push_back({
-            current_time,
-            address,
-            value,
-        });
+        if (data_memory_->isHistoryRecordingEnabled()) {
+            data_memory_write_history_.push_back({
+                current_time,
+                address,
+                value,
+            });
+        }
     }
 }
 

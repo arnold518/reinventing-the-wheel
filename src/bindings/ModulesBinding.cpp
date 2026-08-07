@@ -28,6 +28,10 @@
 #include "modules/rv32i/RV32IDecodeControlUnit.hpp"
 #include "modules/rv32i/RV32IExecutionControlStatusUnit.hpp"
 #include "modules/rv32i/RV32IBitPatternMatcher.hpp"
+#include "modules/rv32i/RV32IFiveStageCore.hpp"
+#include "modules/rv32i/RV32IPipelineControl.hpp"
+#include "modules/rv32i/RV32IPipelineRegisters.hpp"
+#include "modules/rv32i/RV32IPipelineStages.hpp"
 #include "modules/rv32i/RV32ISingleCycleCore.hpp"
 #include "modules/rv32i/RV32ISingleCycleSystem.hpp"
 
@@ -299,6 +303,22 @@ void bindModules(py::module_& m) {
     bindCompositeModule<RV32IControlFlowUnit>(m, "RV32IControlFlowUnit", "Structural RV32I PC, branch, and jump block.");
     bindCompositeModule<RV32IDecodeControlUnit>(m, "RV32IDecodeControlUnit", "Structural RV32I field, immediate, and control decoder.");
     bindCompositeModule<RV32IExecutionControlStatusUnit>(m, "RV32IExecutionControlStatusUnit", "Structural RV32I commit permission, memory handshake, halt, and trap-state block.");
+    bindCompositeModule<RV32IIFIDPipelineRegister>(m, "RV32IIFIDPipelineRegister", "RV32I IF/ID pipeline state.");
+    bindCompositeModule<RV32IIDEXPipelineRegister>(m, "RV32IIDEXPipelineRegister", "RV32I ID/EX pipeline state.");
+    bindCompositeModule<RV32IEXMEMPipelineRegister>(m, "RV32IEXMEMPipelineRegister", "RV32I EX/MEM pipeline state.");
+    bindCompositeModule<RV32IMEMWBPipelineRegister>(m, "RV32IMEMWBPipelineRegister", "RV32I MEM/WB pipeline state.");
+    bindCompositeModule<RV32IForwardingUnit>(m, "RV32IForwardingUnit", "RV32I EX/MEM and MEM/WB forwarding selector.");
+    bindCompositeModule<RV32IHazardDetectionUnit>(m, "RV32IHazardDetectionUnit", "RV32I load-use hazard detector.");
+    bindCompositeModule<RV32IPipelineControlFlowUnit>(m, "RV32IPipelineControlFlowUnit", "RV32I pipeline branch, jump, and redirect unit.");
+    bindCompositeModule<RV32IMemoryAlignmentUnit>(m, "RV32IMemoryAlignmentUnit", "RV32I byte, halfword, and word alignment checker.");
+    bindCompositeModule<RV32IPipelineRetirementUnit>(m, "RV32IPipelineRetirementUnit", "RV32I precise retirement and trap-priority unit.");
+    bindCompositeModule<RV32IPipelineCoordinator>(m, "RV32IPipelineCoordinator", "RV32I pipeline stall, bubble, flush, and stage-write coordinator.");
+    bindCompositeModule<RV32IFetchStage>(m, "RV32IFetchStage", "RV32I instruction-fetch stage.");
+    bindCompositeModule<RV32IDecodeStage>(m, "RV32IDecodeStage", "RV32I decode and register-read stage.");
+    bindCompositeModule<RV32IExecuteStage>(m, "RV32IExecuteStage", "RV32I forwarding, ALU, and control-flow stage.");
+    bindCompositeModule<RV32IMemoryStage>(m, "RV32IMemoryStage", "RV32I data-memory and alignment stage.");
+    bindCompositeModule<RV32IWritebackStage>(m, "RV32IWritebackStage", "RV32I retirement and architectural-state stage.");
+    bindCompositeModule<RV32IFiveStageCore>(m, "RV32IFiveStageCore", "Educational RV32I five-stage pipelined core.");
     py::class_<RV32IBitPatternMatcher, IOComponent, std::shared_ptr<RV32IBitPatternMatcher>>(
         m,
         "RV32IBitPatternMatcher",

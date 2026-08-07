@@ -17,4 +17,12 @@ circuit::BuildProfile balancedSystemProfile(
     const circuit::ComponentCatalog& catalog,
     const circuit::ComponentBuildRequest& root);
 
+circuit::BuildProfile architectureStructuralProfile(
+    const circuit::ComponentCatalog& catalog,
+    std::string profile_name = "rv32i-architecture-structural");
+
+circuit::BuildProfile withBehavioralMemoryParts(
+    circuit::BuildProfile base,
+    std::string profile_name = {});
+
 } // namespace rv32i

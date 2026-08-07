@@ -29,6 +29,11 @@ public:
     virtual void loadDataBytes(
         uint32_t base_address,
         const std::vector<uint8_t>& data) = 0;
+    virtual std::vector<uint8_t> readDataBytes(
+        uint32_t base_address,
+        size_t count) const = 0;
+    virtual void setProgramMemoryHistoryRecordingEnabled(
+        bool enabled) = 0;
 
     virtual rv32i::RV32IMemoryTrace
     lastCommittedDataMemoryAccess() const = 0;

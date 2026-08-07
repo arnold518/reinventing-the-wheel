@@ -1090,6 +1090,260 @@ static RV32ISystemProgramCase programCase16() {
     return test_case;
 }
 
+static RV32ISystemProgramCase programCase17() {
+    /*
+     * Performance focus: independent ALU throughput.
+     *
+     * Eight accumulator chains are interleaved. Consecutive instructions do
+     * not consume one another's result, so this workload exposes pipeline
+     * fill/drain cost without load-use or control hazards.
+     *
+     * Assembly shape:
+     *   addi x1, x0, 1
+     *   ...
+     *   addi x8, x0, 8
+     *   # Repeat 8 times:
+     *   addi x1, x1, 1
+     *   addi x2, x2, 2
+     *   ...
+     *   addi x8, x8, 8
+     *   ebreak
+     */
+    std::vector<uint32_t> words;
+    for (uint8_t reg = 1; reg <= 8; ++reg) {
+        words.push_back(encodeI(reg, 0, 0x0, reg));
+    }
+    for (size_t round = 0; round < 8; ++round) {
+        for (uint8_t reg = 1; reg <= 8; ++reg) {
+            words.push_back(encodeI(reg, reg, 0x0, reg));
+        }
+    }
+    words.push_back(kEBreak);
+
+    auto test_case = makeProgramCase(
+        "RV32IPerformanceIndependentALU", words, 96);
+    setExpectedResult(
+        test_case,
+        0x120,
+        73,
+        true,
+        false,
+        rv32i::RV32IExecutionTrapCause::None,
+        {{1, 9}, {2, 18}, {3, 27}, {4, 36},
+         {5, 45}, {6, 54}, {7, 63}, {8, 72}},
+        {});
+    test_case.expected_five_stage = {true, 77, 0, 0, 0, 1};
+    return test_case;
+}
+
+static RV32ISystemProgramCase programCase18() {
+    /*
+     * Performance focus: adjacent ALU read-after-write dependencies.
+     *
+     * Every ADDI consumes the result immediately before it. A correctly
+     * forwarded pipeline should sustain the chain without inserting bubbles.
+     *
+     * Assembly shape:
+     *   addi x1, x0, 1
+     *   # Repeat 64 times:
+     *   addi x1, x1, 1
+     *   ebreak
+     */
+    std::vector<uint32_t> words{
+        encodeI(1, 0, 0x0, 1),
+    };
+    for (size_t operation = 0; operation < 64; ++operation) {
+        words.push_back(encodeI(1, 1, 0x0, 1));
+    }
+    words.push_back(kEBreak);
+
+    auto test_case = makeProgramCase(
+        "RV32IPerformanceDependentALU", words, 80);
+    setExpectedResult(
+        test_case,
+        0x104,
+        66,
+        true,
+        false,
+        rv32i::RV32IExecutionTrapCause::None,
+        {{1, 65}},
+        {});
+    test_case.expected_five_stage = {true, 70, 0, 0, 0, 1};
+    return test_case;
+}
+
+static RV32ISystemProgramCase programCase19() {
+    /*
+     * Performance focus: repeated load-use hazards without branches.
+     *
+     * Each ADD immediately consumes the value loaded by the preceding LW.
+     * The sequence is deliberately unrolled so branch redirects do not hide
+     * the cost of the load-use interlock.
+     *
+     * Assembly shape:
+     *   addi x1, x0, 0x100
+     *   addi x3, x0, 0
+     *   # Repeat 32 times:
+     *   lw   x2, 0(x1)
+     *   add  x3, x3, x2
+     *   ebreak
+     */
+    std::vector<uint32_t> words{
+        encodeI(0x100, 0, 0x0, 1),
+        encodeI(0, 0, 0x0, 3),
+    };
+    for (size_t operation = 0; operation < 32; ++operation) {
+        words.push_back(encodeI(0, 1, 0x2, 2, 0x03));
+        words.push_back(encodeR(0x00, 2, 3, 0x0, 3));
+    }
+    words.push_back(kEBreak);
+
+    auto test_case = makeProgramCase(
+        "RV32IPerformanceLoadUse", words, 80);
+    test_case.initial_data.push_back({0x100, {0x07, 0x00, 0x00, 0x00}});
+    setExpectedResult(
+        test_case,
+        0x108,
+        67,
+        true,
+        false,
+        rv32i::RV32IExecutionTrapCause::None,
+        {{1, 0x100}, {2, 7}, {3, 224}},
+        {});
+    test_case.expected_five_stage = {true, 103, 32, 0, 0, 1};
+    return test_case;
+}
+
+static RV32ISystemProgramCase programCase20() {
+    /*
+     * Performance focus: frequent taken branches.
+     *
+     * The small loop executes one conditional branch for every two ALU
+     * instructions. It isolates redirect/flush cost better than the mixed
+     * functional programs in the original correctness suite.
+     *
+     * Assembly:
+     *   addi x1, x0, 16
+     *   addi x2, x0, 0
+     * loop:
+     *   addi x2, x2, 1
+     *   addi x1, x1, -1
+     *   bne  x1, x0, loop
+     *   ebreak
+     */
+    auto test_case = makeProgramCase("RV32IPerformanceBranchHeavy", {
+        encodeI(16, 0, 0x0, 1),
+        encodeI(0, 0, 0x0, 2),
+        encodeI(1, 2, 0x0, 2),
+        encodeI(-1, 1, 0x0, 1),
+        encodeB(-8, 0, 1, 0x1),
+        kEBreak,
+    }, 64);
+    setExpectedResult(
+        test_case,
+        0x14,
+        51,
+        true,
+        false,
+        rv32i::RV32IExecutionTrapCause::None,
+        {{1, 0}, {2, 16}},
+        {});
+    test_case.expected_five_stage = {true, 85, 0, 0, 0, 16};
+    return test_case;
+}
+
+static RV32ISystemProgramCase programCase21() {
+    /*
+     * Application kernel: sum a 16-word array.
+     *
+     * This combines address generation, a dependent load/add pair, a loop
+     * counter, and a taken branch. It is deliberately longer and more like a
+     * compiler-generated scalar loop than the single-hazard microbenchmarks.
+     *
+     *   x1 = &array[0]; x2 = 16; x3 = 0;
+     * loop:
+     *   x4 = *x1; x3 += x4; x1 += 4; --x2;
+     *   if (x2 != 0) goto loop;
+     */
+    auto test_case = makeProgramCase("RV32IPerformanceArraySum", {
+        encodeI(0x100, 0, 0x0, 1),
+        encodeI(16, 0, 0x0, 2),
+        encodeI(0, 0, 0x0, 3),
+        encodeI(0, 1, 0x2, 4, 0x03),
+        encodeR(0x00, 4, 3, 0x0, 3),
+        encodeI(4, 1, 0x0, 1),
+        encodeI(-1, 2, 0x0, 2),
+        encodeB(-16, 0, 2, 0x1),
+        kEBreak,
+    }, 112);
+    std::vector<uint8_t> data;
+    for (uint32_t word = 1; word <= 16; ++word) {
+        for (size_t byte = 0; byte < 4; ++byte) {
+            data.push_back(static_cast<uint8_t>(
+                (word >> (byte * 8)) & 0xffU));
+        }
+    }
+    test_case.initial_data.push_back({0x100, std::move(data)});
+    setExpectedResult(
+        test_case,
+        0x20,
+        84,
+        true,
+        false,
+        rv32i::RV32IExecutionTrapCause::None,
+        {{1, 0x140}, {2, 0}, {3, 136}, {4, 16}},
+        {});
+    test_case.expected_five_stage = {true, 134, 16, 0, 0, 16};
+    return test_case;
+}
+
+static RV32ISystemProgramCase programCase22() {
+    /*
+     * Application kernel: copy eight words while computing a checksum.
+     *
+     * The loop mixes loads, stores, dependencies, pointer updates, and a
+     * branch. It is useful for observing load-use bubbles, branch flushes,
+     * data-port pressure, and real memory side effects in one program.
+     */
+    auto test_case = makeProgramCase("RV32IPerformanceCopyChecksum", {
+        encodeI(0x100, 0, 0x0, 1),
+        encodeI(0x180, 0, 0x0, 2),
+        encodeI(8, 0, 0x0, 3),
+        encodeI(0, 0, 0x0, 4),
+        encodeI(0, 1, 0x2, 5, 0x03),
+        encodeS(0, 5, 2, 0x2),
+        encodeR(0x00, 5, 4, 0x0, 4),
+        encodeI(4, 1, 0x0, 1),
+        encodeI(4, 2, 0x0, 2),
+        encodeI(-1, 3, 0x0, 3),
+        encodeB(-24, 0, 3, 0x1),
+        kEBreak,
+    }, 96);
+    std::vector<uint8_t> data;
+    for (uint32_t word = 0x10; word <= 0x17; ++word) {
+        for (size_t byte = 0; byte < 4; ++byte) {
+            data.push_back(static_cast<uint8_t>(
+                (word >> (byte * 8)) & 0xffU));
+        }
+    }
+    test_case.initial_data.push_back({0x100, std::move(data)});
+    setExpectedResult(
+        test_case,
+        0x2c,
+        61,
+        true,
+        false,
+        rv32i::RV32IExecutionTrapCause::None,
+        {{1, 0x120}, {2, 0x1a0}, {3, 0},
+         {4, 0x9c}, {5, 0x17}},
+        expectedWordWrites(
+            0x180,
+            {0x10, 0x11, 0x12, 0x13,
+             0x14, 0x15, 0x16, 0x17}));
+    test_case.expected_five_stage = {true, 87, 8, 0, 0, 8};
+    return test_case;
+}
+
 RV32ISystemProgramCase rv32iProgramCase(size_t program_number) {
     switch (program_number) {
         case 1: return programCase1();
@@ -1108,18 +1362,37 @@ RV32ISystemProgramCase rv32iProgramCase(size_t program_number) {
         case 14: return programCase14();
         case 15: return programCase15();
         case 16: return programCase16();
-        default: throw std::out_of_range("RV32I program number must be in [1, 16]");
+        case 17: return programCase17();
+        case 18: return programCase18();
+        case 19: return programCase19();
+        case 20: return programCase20();
+        case 21: return programCase21();
+        case 22: return programCase22();
+        default:
+            throw std::out_of_range(
+                "RV32I program number must be in [1, "
+                + std::to_string(RV32IProgramCaseCount) + "]");
     }
 }
 
 std::string rv32iProgramScenarioName(size_t program_number) {
-    if (program_number < 1 || program_number > 16) {
+    if (program_number < 1 || program_number > RV32IProgramCaseCount) {
         throw std::out_of_range(
-            "RV32I program number must be in [1, 16]");
+            "RV32I program number must be in [1, "
+            + std::to_string(RV32IProgramCaseCount) + "]");
     }
     return "RV32ISingleCycleSystemTest/program-"
         + std::string(program_number < 10 ? "0" : "")
         + std::to_string(program_number);
+}
+
+bool rv32iProgramCaseIsPerformance(size_t program_number) {
+    if (program_number < 1 || program_number > RV32IProgramCaseCount) {
+        throw std::out_of_range(
+            "RV32I program number must be in [1, "
+            + std::to_string(RV32IProgramCaseCount) + "]");
+    }
+    return program_number >= RV32IPerformanceProgramCaseFirst;
 }
 
 void verifyRV32IProgramExpectedResult(

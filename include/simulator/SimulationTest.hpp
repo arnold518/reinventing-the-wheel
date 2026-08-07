@@ -35,7 +35,28 @@ public:
         size_t row_index = 0;
     };
 
+    struct PerformanceMetric {
+        std::string name;
+        double value = 0.0;
+        std::string unit;
+        std::string description;
+    };
+
     virtual std::vector<SimulationCheckpoint> getCheckpoints() const { return {}; }
+    virtual std::vector<PerformanceMetric> getPerformanceMetrics() const {
+        if (!sim) {
+            return {};
+        }
+        const auto& counters = sim->getPerformanceCounters();
+        return {
+            {"simulator.processed_events", static_cast<double>(counters.processed_events), "events", "Events processed by the simulator."},
+            {"simulator.wire_updates", static_cast<double>(counters.processed_wire_updates), "events", "Wire-update events processed by the simulator."},
+            {"simulator.component_evaluations", static_cast<double>(counters.processed_component_evaluations), "evaluations", "Behavioral component evaluations processed by the simulator."},
+            {"simulator.effective_wire_changes", static_cast<double>(counters.effective_wire_changes), "changes", "Wire values that actually changed."},
+            {"simulator.effective_pin_changes", static_cast<double>(counters.effective_pin_changes), "changes", "Unwired output-pin values that actually changed."},
+            {"simulator.maximum_queue_depth", static_cast<double>(counters.maximum_event_queue_depth), "events", "Largest number of pending events observed."},
+        };
+    }
     virtual bool isSimulationPrecomputed() const { return false; }
     virtual size_t getRunDuration() const { return 100; }
     virtual bool supportsBuildProfile() const { return false; }

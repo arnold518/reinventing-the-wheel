@@ -78,11 +78,13 @@ public:
         std::filesystem::path elf_path,
         circuit::Fidelity fidelity,
         uint32_t tohost_address,
-        size_t maximum_instructions)
+        size_t maximum_instructions,
+        bool record_history)
         : elf_path_(std::move(elf_path)),
           fidelity_(fidelity),
           tohost_address_(tohost_address),
-          maximum_instructions_(maximum_instructions) {
+          maximum_instructions_(maximum_instructions),
+          record_history_(record_history) {
         require(
             maximum_instructions_ > 0,
             "External RV32I instruction limit must be positive");
@@ -92,6 +94,7 @@ public:
     }
 
     void setupCircuit() override {
+        sim->setHistoryRecordingEnabled(record_history_);
         const auto profile = circuit::withExactFidelity(
             circuit::canonicalDefaultProfile(),
             RootName,
@@ -123,9 +126,13 @@ public:
         return checkpoints_;
     }
 
-    const rv32i::test::ExternalFixtureRunResult&
+    rv32i::test::ExternalFixtureRunResult
     result() const {
-        return result_;
+        auto result = result_;
+        result.hardware_cycles = result.instruction_count;
+        result.simulator_counters =
+            sim->getPerformanceCounters();
+        return result;
     }
 
 protected:
@@ -170,6 +177,8 @@ protected:
     }
 
     void setInitialState() override {
+        program_access_->setProgramMemoryHistoryRecordingEnabled(
+            record_history_);
         const auto image =
             rv32i::RV32IElfImage::fromFile(elf_path_);
         image.requireFitsMemory(
@@ -226,36 +235,51 @@ protected:
             sim->advanceAndRecord(
                 start_time + CycleTimeStep);
 
-            const auto writes =
-                program_access_
-                    ->dataMemoryWritesInTimeRange(
-                        last_observation_time,
-                        sim->getCurrentTime());
-            for (const auto& [address, value] : writes) {
-                observed_writes[address] = value;
+            if (record_history_) {
+                const auto writes =
+                    program_access_
+                        ->dataMemoryWritesInTimeRange(
+                            last_observation_time,
+                            sim->getCurrentTime());
+                for (const auto& [address, value] : writes) {
+                    observed_writes[address] = value;
+                }
+                result_.tohost = observedWord(
+                    observed_writes,
+                    tohost_address_);
+            } else {
+                const auto access =
+                    program_access_->lastCommittedDataMemoryAccess();
+                if (access.kind
+                        == rv32i::RV32IMemoryAccessKind::Write
+                    && access.address <= tohost_address_
+                    && access.address + 4 > tohost_address_) {
+                    const auto bytes = program_access_->readDataBytes(
+                        tohost_address_, 4);
+                    result_.tohost = static_cast<uint32_t>(bytes[0])
+                        | (static_cast<uint32_t>(bytes[1]) << 8)
+                        | (static_cast<uint32_t>(bytes[2]) << 16)
+                        | (static_cast<uint32_t>(bytes[3]) << 24);
+                }
             }
             last_observation_time =
                 sim->getCurrentTime();
 
-            const auto state =
-                program_access_
-                    ->snapshotArchitecturalState()
-                    .toKnownState();
-            result_.pc = state.pc;
+            result_.pc = static_cast<uint32_t>(
+                system_->getOutputPin<32>("PC")
+                    ->getValueAsUInt64());
             result_.instruction_count =
                 instruction + 1;
-            result_.tohost =
-                observedWord(
-                    observed_writes,
-                    tohost_address_);
-            checkpoints_.push_back({
-                sim->getCurrentTime(),
-                "I" + std::to_string(instruction + 1),
-                "PC=" + hex32(result_.pc)
-                    + ", tohost="
-                    + hex32(result_.tohost),
-                instruction + 1,
-            });
+            if (record_history_) {
+                checkpoints_.push_back({
+                    sim->getCurrentTime(),
+                    "I" + std::to_string(instruction + 1),
+                    "PC=" + hex32(result_.pc)
+                        + ", tohost="
+                        + hex32(result_.tohost),
+                    instruction + 1,
+                });
+            }
 
             if (result_.tohost == 1
                 || result_.tohost == 3) {
@@ -264,11 +288,13 @@ protected:
                 return;
             }
             require(
-                !state.halted,
+                system_->getOutputPin("HALTED")->getValue()
+                    != LogicValue::HIGH,
                 getTestName()
                     + ": CPU halted before writing tohost");
             require(
-                !state.trapped,
+                system_->getOutputPin("TRAPPED")->getValue()
+                    != LogicValue::HIGH,
                 getTestName()
                     + ": CPU trapped before writing tohost");
         }
@@ -292,6 +318,7 @@ private:
     circuit::Fidelity fidelity_;
     uint32_t tohost_address_;
     size_t maximum_instructions_;
+    bool record_history_ = true;
     std::shared_ptr<IOComponent> system_{};
     std::shared_ptr<RV32ISystemProgramAccess>
         program_access_{};
@@ -346,7 +373,8 @@ rv32i::test::runExternalFixture(
     const std::filesystem::path& elf_path,
     circuit::Fidelity fidelity,
     uint32_t tohost_address,
-    size_t maximum_instructions) {
+    size_t maximum_instructions,
+    bool record_history) {
     require(
         std::filesystem::is_regular_file(elf_path),
         "External RV32I fixture is missing: "
@@ -356,7 +384,8 @@ rv32i::test::runExternalFixture(
         elf_path,
         fidelity,
         tohost_address,
-        maximum_instructions);
+        maximum_instructions,
+        record_history);
     require(
         run.run(),
         circuit::toString(fidelity)
@@ -380,4 +409,15 @@ void RV32IExternalValidationSmokeTest::verifyResults() {
         result.behavioral.tohost == 1
             && result.structural.tohost == 1,
         "External RV32I smoke fixture did not pass");
+    const auto headless = rv32i::test::runExternalFixture(
+        fixture,
+        circuit::Fidelity::Behavioral,
+        TohostAddress,
+        MaximumInstructions,
+        false);
+    require(
+        headless.tohost == 1
+            && headless.instruction_count
+                == result.behavioral.instruction_count,
+        "Headless external execution changed the RV32I result");
 }

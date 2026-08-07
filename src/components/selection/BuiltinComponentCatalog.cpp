@@ -36,11 +36,16 @@
 #include "modules/rv32i/RV32IControlFlowUnit.hpp"
 #include "modules/rv32i/RV32IDecodeControlUnit.hpp"
 #include "modules/rv32i/RV32IExecutionControlStatusUnit.hpp"
+#include "modules/rv32i/RV32IPipelineControl.hpp"
+#include "modules/rv32i/RV32IPipelineRegisters.hpp"
+#include "modules/rv32i/RV32IPipelineStages.hpp"
+#include "modules/rv32i/RV32IFiveStageCore.hpp"
 #include "modules/rv32i/RV32ISingleCycleCore.hpp"
 #include "modules/rv32i/RV32ISingleCycleSystem.hpp"
 #include "modules/utility/BitAdapter.hpp"
 #include "modules/utility/Constant.hpp"
 #include "modules/utility/Rewire.hpp"
+#include "rv32i/RV32IValidationConfig.hpp"
 #include <algorithm>
 #include <charconv>
 #include <stdexcept>
@@ -752,6 +757,177 @@ void registerRV32I(ComponentCatalog& catalog) {
     };
     catalog.registerImplementation(std::move(matcher));
 
+    const auto add_pipeline_register = [&](
+        const ComponentFamily& family,
+        const std::string& display_name,
+        const std::string& test_name) {
+        const auto contract_id = std::string(family.id());
+        catalog.registerContract({
+            contract_id,
+            1,
+            display_name,
+            schemaFor(family),
+            {},
+            "known-binary",
+            "clock-boundary",
+        });
+        catalog.registerImplementation(implementationFor(
+            family,
+            contract_id + ".structural.register32-bank",
+            Fidelity::Structural,
+            verifiedStructural(test_name)));
+        catalog.registerImplementation(implementationFor(
+            family,
+            contract_id + ".behavioral.direct",
+            Fidelity::Behavioral,
+            verifiedBehavioral(
+                display_name + " structural Register32 bank",
+                test_name,
+                test_name,
+                "known-binary",
+                "clock-boundary")));
+    };
+
+    add_pipeline_register(
+        families::RV32IIFIDPipelineRegister,
+        "RV32I IF/ID pipeline register",
+        "RV32IIFIDPipelineRegisterTest");
+    add_pipeline_register(
+        families::RV32IIDEXPipelineRegister,
+        "RV32I ID/EX pipeline register",
+        "RV32IIDEXPipelineRegisterTest");
+    add_pipeline_register(
+        families::RV32IEXMEMPipelineRegister,
+        "RV32I EX/MEM pipeline register",
+        "RV32IEXMEMPipelineRegisterTest");
+    add_pipeline_register(
+        families::RV32IMEMWBPipelineRegister,
+        "RV32I MEM/WB pipeline register",
+        "RV32IMEMWBPipelineRegisterTest");
+
+    const auto add_pipeline_control = [&](
+        const ComponentFamily& family,
+        const std::string& display_name,
+        const std::string& test_name) {
+        const auto contract_id = std::string(family.id());
+        catalog.registerContract({
+            contract_id,
+            1,
+            display_name,
+            schemaFor(family),
+            {},
+            "known-binary",
+            "stable-after-settle",
+        });
+        catalog.registerImplementation(implementationFor(
+            family,
+            contract_id + ".structural.gates",
+            Fidelity::Structural,
+            verifiedStructural(test_name)));
+        catalog.registerImplementation(implementationFor(
+            family,
+            contract_id + ".behavioral.direct",
+            Fidelity::Behavioral,
+            verifiedBehavioral(
+                display_name + " structural gate network",
+                test_name,
+                test_name,
+                "known-binary",
+                "stable-after-settle")));
+    };
+
+    add_pipeline_control(
+        families::RV32IForwardingUnit,
+        "RV32I pipeline forwarding unit",
+        "RV32IForwardingUnitTest");
+    add_pipeline_control(
+        families::RV32IHazardDetectionUnit,
+        "RV32I pipeline load-use hazard detector",
+        "RV32IHazardDetectionUnitTest");
+    add_pipeline_control(
+        families::RV32IPipelineControlFlowUnit,
+        "RV32I pipeline control-flow unit",
+        "RV32IPipelineControlFlowUnitTest");
+    add_pipeline_control(
+        families::RV32IMemoryAlignmentUnit,
+        "RV32I memory-alignment checker",
+        "RV32IMemoryAlignmentUnitTest");
+    add_pipeline_control(
+        families::RV32IPipelineRetirementUnit,
+        "RV32I pipeline retirement unit",
+        "RV32IPipelineRetirementUnitTest");
+    add_pipeline_control(
+        families::RV32IPipelineCoordinator,
+        "RV32I pipeline coordinator",
+        "RV32IPipelineCoordinatorTest");
+    add_pipeline_control(
+        families::RV32IFetchStage,
+        "RV32I pipeline fetch stage",
+        "RV32IFetchStageTest");
+    add_pipeline_control(
+        families::RV32IDecodeStage,
+        "RV32I pipeline decode stage",
+        "RV32IDecodeStageTest");
+    add_pipeline_control(
+        families::RV32IExecuteStage,
+        "RV32I pipeline execute stage",
+        "RV32IExecuteStageTest");
+    add_pipeline_control(
+        families::RV32IMemoryStage,
+        "RV32I pipeline memory stage",
+        "RV32IMemoryStageTest");
+    add_pipeline_control(
+        families::RV32IWritebackStage,
+        "RV32I pipeline writeback stage",
+        "RV32IWritebackStageTest");
+
+    const auto five_stage_core =
+        std::string(families::RV32IFiveStageCore.id());
+    catalog.registerContract({
+        five_stage_core,
+        1,
+        "Educational RV32I five-stage core",
+        schemaFor(families::RV32IFiveStageCore),
+        {"rv32i-architectural-state-view"},
+        "known-binary",
+        "clock-boundary",
+    });
+    auto five_stage_structural = implementationFor(
+        families::RV32IFiveStageCore,
+        "rv32i.core.educational-five-stage.structural",
+        Fidelity::Structural,
+        verifiedStructural("RV32IFiveStageCoreTest"));
+    five_stage_structural.capabilities = {
+        "rv32i-architectural-state-view"};
+    catalog.registerImplementation(
+        std::move(five_stage_structural));
+    auto five_stage_behavioral = implementationFor(
+        families::RV32IFiveStageCore,
+        "rv32i.core.educational-five-stage.behavioral",
+        Fidelity::Behavioral,
+        verifiedBehavioralFromSlices(
+            "Structural pipeline registers, forwarding, hazard detection, "
+            "and control-flow slices",
+            "RV32IFiveStageCoreTest",
+            {
+                "RV32IIFIDPipelineRegisterTest",
+                "RV32IIDEXPipelineRegisterTest",
+                "RV32IEXMEMPipelineRegisterTest",
+                "RV32IMEMWBPipelineRegisterTest",
+                "RV32IForwardingUnitTest",
+                "RV32IHazardDetectionUnitTest",
+                "RV32IPipelineControlFlowUnitTest",
+                "RV32IMemoryAlignmentUnitTest",
+                "RV32IPipelineRetirementUnitTest",
+                "RV32IPipelineCoordinatorTest",
+            },
+            "known-binary",
+            "clock-boundary"));
+    five_stage_behavioral.capabilities = {
+        "rv32i-architectural-state-view"};
+    catalog.registerImplementation(
+        std::move(five_stage_behavioral));
+
     const auto core =
         std::string(families::RV32ISingleCycleCore.id());
     catalog.registerContract({
@@ -778,7 +954,11 @@ void registerRV32I(ComponentCatalog& catalog) {
         "rv32i-architectural-state-view"};
     catalog.registerImplementation(std::move(behavioral_core));
     std::vector<std::string> educational_system_tests;
-    for (size_t program = 1; program <= 16; ++program) {
+    // All committed correctness and performance programs prove the same
+    // system contract and are therefore visualizable through one registry.
+    for (size_t program = 1;
+         program <= rv32i::validation::ProgramCount;
+         ++program) {
         educational_system_tests.push_back(
             "RV32ISingleCycleSystemTest/program-"
             + std::string(program < 10 ? "0" : "")

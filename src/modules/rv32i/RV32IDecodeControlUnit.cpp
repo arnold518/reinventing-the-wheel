@@ -58,6 +58,8 @@ struct ControlWord {
     uint8_t writeback = WB_NONE;
     uint8_t mem_size = MEM_WORD;
     bool load_sign_extend = false;
+    bool uses_rs1 = false;
+    bool uses_rs2 = false;
     uint8_t branch = 0;
     uint8_t jump = 0;
     bool halt = false;
@@ -81,6 +83,8 @@ ControlWord regAlu(uint8_t op, uint8_t source_a, uint8_t source_b, uint8_t immed
     control.reg_write = true;
     control.writeback = WB_ALU;
     control.immediate = immediate;
+    control.uses_rs1 = source_a == ALU_A_RS1;
+    control.uses_rs2 = source_b == ALU_B_RS2;
     return control;
 }
 
@@ -122,6 +126,8 @@ InstructionPattern store(const char* name, uint8_t funct3, uint8_t size) {
     control.mem_write = true;
     control.mem_size = size;
     control.immediate = IMM_S;
+    control.uses_rs1 = true;
+    control.uses_rs2 = true;
     return {name, 0x0000707FU, (static_cast<uint32_t>(funct3) << 12U) | 0x23U, control};
 }
 
@@ -132,6 +138,8 @@ InstructionPattern branch(const char* name, uint8_t funct3, uint8_t branch_type)
     control.alu_b = ALU_B_RS2;
     control.branch = branch_type;
     control.immediate = IMM_B;
+    control.uses_rs1 = true;
+    control.uses_rs2 = true;
     return {name, 0x0000707FU, (static_cast<uint32_t>(funct3) << 12U) | 0x63U, control};
 }
 
@@ -268,6 +276,8 @@ void defineDecodeControlPins(IOComponent* self) {
     self->addPin<2>("WRITEBACK_SEL", PinType::OUTPUT);
     self->addPin<2>("MEM_SIZE", PinType::OUTPUT);
     self->addPin("LOAD_SIGN_EXTEND", PinType::OUTPUT);
+    self->addPin("USES_RS1", PinType::OUTPUT);
+    self->addPin("USES_RS2", PinType::OUTPUT);
     self->addPin<3>("BRANCH_TYPE", PinType::OUTPUT);
     self->addPin<2>("JUMP_TYPE", PinType::OUTPUT);
     self->addPin("HALT_REQUEST", PinType::OUTPUT);
@@ -547,6 +557,8 @@ void RV32IDecodeControlUnit::buildInternals(ComponentBuilder& builder) {
     connectSingle("MEM_READ", false, [](const ControlWord& c) { return c.mem_read; }, getOutputPin("MEM_READ"));
     connectSingle("MEM_WRITE", false, [](const ControlWord& c) { return c.mem_write; }, getOutputPin("MEM_WRITE"));
     connectSingle("LOAD_SIGN_EXTEND", false, [](const ControlWord& c) { return c.load_sign_extend; }, getOutputPin("LOAD_SIGN_EXTEND"));
+    connectSingle("USES_RS1", false, [](const ControlWord& c) { return c.uses_rs1; }, getOutputPin("USES_RS1"));
+    connectSingle("USES_RS2", false, [](const ControlWord& c) { return c.uses_rs2; }, getOutputPin("USES_RS2"));
     connectSingle("HALT_REQUEST", false, [](const ControlWord& c) { return c.halt; }, getOutputPin("HALT_REQUEST"));
     connectSingle("TRAP_REQUEST", true, [](const ControlWord& c) { return c.trap; }, getOutputPin("TRAP_REQUEST"));
 

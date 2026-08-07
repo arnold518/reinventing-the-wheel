@@ -81,20 +81,22 @@ void requireExpected(
     const RunArtifact& artifact,
     const RunCheckpoint& checkpoint,
     const NamedValues& expected) {
+    std::string differences;
     for (const auto& [name, expected_value] : expected) {
         const auto found = checkpoint.pins.outputs.find(name);
         if (found == checkpoint.pins.outputs.end()) {
-            throw std::runtime_error(
-                checkpointDescription(artifact, checkpoint)
-                + ": expected output pin '" + name + "' does not exist");
-        }
-        if (found->second != expected_value) {
-            throw std::runtime_error(
-                checkpointDescription(artifact, checkpoint)
-                + ": output '" + name + "' is "
+            differences += "\n  " + name
+                + ": expected output pin does not exist";
+        } else if (found->second != expected_value) {
+            differences += "\n  " + name + ": "
                 + formatLogicVector(found->second) + ", expected "
-                + formatLogicVector(expected_value));
+                + formatLogicVector(expected_value);
         }
+    }
+    if (!differences.empty()) {
+        throw std::runtime_error(
+            checkpointDescription(artifact, checkpoint)
+            + ": expected output mismatch" + differences);
     }
 }
 
@@ -472,12 +474,31 @@ void ComponentTestRunner::compare(
                 + std::to_string(index));
         }
         if (left.pins != right.pins) {
+            std::string differences;
+            for (const auto& [name, expected_value] : left.pins.outputs) {
+                const auto found = right.pins.outputs.find(name);
+                if (found == right.pins.outputs.end()) {
+                    differences += "\n  " + name + ": missing from "
+                        + toString(actual.root_fidelity);
+                } else if (expected_value != found->second) {
+                    differences += "\n  " + name + ": "
+                        + formatLogicVector(expected_value) + " vs "
+                        + formatLogicVector(found->second);
+                }
+            }
+            for (const auto& [name, actual_value] : right.pins.outputs) {
+                if (!left.pins.outputs.contains(name)) {
+                    differences += "\n  " + name + ": missing from "
+                        + toString(expected.root_fidelity) + " (actual "
+                        + formatLogicVector(actual_value) + ")";
+                }
+            }
             throw std::runtime_error(
                 expected.test_id + "/" + expected.scenario_id + "/"
                 + left.id
                 + ": public output snapshots differ between "
                 + toString(expected.root_fidelity) + " and "
-                + toString(actual.root_fidelity));
+                + toString(actual.root_fidelity) + differences);
         }
     }
 }

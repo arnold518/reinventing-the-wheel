@@ -34,6 +34,15 @@ struct RV32ISystemExpectedResult {
     std::map<uint32_t, uint8_t> bus_writes;
 };
 
+struct RV32IFiveStageExpectedPerformance {
+    bool defined = false;
+    size_t cycles = 0;
+    size_t load_use_stall_cycles = 0;
+    size_t memory_stall_cycles = 0;
+    size_t data_port_stall_cycles = 0;
+    size_t pipeline_flushes = 0;
+};
+
 struct RV32ISystemProgramCase {
     std::string name;
     rv32i::RV32IProgram program;
@@ -46,6 +55,7 @@ struct RV32ISystemProgramCase {
     size_t cycle_time_step = 10;
     size_t memory_size_bytes = rv32i::RV32IFunctionalMemory::DefaultCapacityBytes;
     RV32ISystemExpectedResult expected_result{};
+    RV32IFiveStageExpectedPerformance expected_five_stage{};
 };
 
 class RV32IInstructionLockstepTest : public SimulationTest {
@@ -53,6 +63,7 @@ public:
     std::string getTestName() const override;
     size_t getRunDuration() const override;
     std::vector<SimulationCheckpoint> getCheckpoints() const override;
+    std::vector<PerformanceMetric> getPerformanceMetrics() const override;
 
 protected:
     virtual RV32ISystemProgramCase getCase() const = 0;
@@ -61,6 +72,12 @@ protected:
     virtual rv32i::RV32IState snapshotComponentState() const = 0;
     virtual rv32i::RV32IMemoryTrace lastDataMemoryAccess() const = 0;
     virtual std::map<uint32_t, uint8_t> lastDataMemoryWrites() const = 0;
+    virtual void observePerformanceCycle() {}
+
+    size_t totalCycles() const noexcept { return total_cycles_; }
+    uint64_t retiredInstructions() const noexcept {
+        return last_committed_instruction_count_;
+    }
 
     void setInitialState() override;
     void runSimulation() override;

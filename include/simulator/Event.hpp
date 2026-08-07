@@ -16,6 +16,7 @@ enum class EventPriority {
 class Event {
 public:
     const size_t time;
+    uint64_t scheduling_order = 0;
 
     explicit Event(size_t event_time);
     virtual ~Event() = default;
@@ -27,7 +28,10 @@ public:
             if (a->time != b->time) {
                 return a->time > b->time;
             }
-            return a->getPriority() > b->getPriority();
+            if (a->getPriority() != b->getPriority()) {
+                return a->getPriority() > b->getPriority();
+            }
+            return a->scheduling_order > b->scheduling_order;
         }
     };
 };

@@ -1,4 +1,5 @@
 #include "tests/CorePrimitiveTests.hpp"
+#include "analysis/CircuitTimingAnalyzer.hpp"
 
 #include "basic/Pin.hpp"
 #include "basic/Wire.hpp"
@@ -8,6 +9,8 @@
 #include "modules/basic/DFlipFlop.hpp"
 #include "modules/basic/Gate.hpp"
 #include "modules/basic/Latch.hpp"
+#include "modules/composite/FullAdder.hpp"
+#include "modules/composite/HalfAdder.hpp"
 #include "modules/utility/BitAdapter.hpp"
 #include "simulator/Event.hpp"
 #include <array>
@@ -309,6 +312,102 @@ void SimulatorDrainUntilIdleTest::verifyResults() {
            "SimulatorDrainUntilIdleTest empty after drain");
     expect(output_wire->getSingleValue() == LogicValue::HIGH,
            "SimulatorDrainUntilIdleTest settled output");
+
+    auto same_time_high = std::make_shared<Wire<>>(
+        "SAME_TIME_HIGH");
+    local_sim.scheduleEvent(std::make_shared<WireUpdateEvent<>>(
+        200, same_time_high, LogicValue::LOW));
+    local_sim.scheduleEvent(std::make_shared<WireUpdateEvent<>>(
+        200, same_time_high, LogicValue::HIGH));
+    auto same_time_low = std::make_shared<Wire<>>(
+        "SAME_TIME_LOW");
+    local_sim.scheduleEvent(std::make_shared<WireUpdateEvent<>>(
+        200, same_time_low, LogicValue::HIGH));
+    local_sim.scheduleEvent(std::make_shared<WireUpdateEvent<>>(
+        200, same_time_low, LogicValue::LOW));
+    const auto same_time_drained =
+        local_sim.drainUntilIdle(200, 100);
+    expect(same_time_drained.status == DrainStatus::Idle,
+           "SimulatorDrainUntilIdleTest same-time drain");
+    expect(
+        same_time_high->getSingleValue() == LogicValue::HIGH
+            && same_time_low->getSingleValue() == LogicValue::LOW,
+        "SimulatorDrainUntilIdleTest same-time FIFO order");
+
+    const auto& counters = local_sim.getPerformanceCounters();
+    expect(counters.scheduled_events == counters.processed_events,
+           "SimulatorDrainUntilIdleTest all scheduled events processed");
+    expect(counters.processed_wire_updates > 0,
+           "SimulatorDrainUntilIdleTest wire event counter");
+    expect(counters.processed_component_evaluations > 0,
+           "SimulatorDrainUntilIdleTest component event counter");
+    expect(counters.effective_wire_changes > 0,
+           "SimulatorDrainUntilIdleTest effective wire changes");
+    expect(counters.maximum_event_queue_depth >= 2,
+           "SimulatorDrainUntilIdleTest queue depth counter");
+
+    local_sim.resetPerformanceCounters();
+    const auto& reset = local_sim.getPerformanceCounters();
+    expect(reset.processed_events == 0 && reset.effective_wire_changes == 0,
+           "SimulatorDrainUntilIdleTest counter reset");
+
+    Simulator headless_sim;
+    auto headless_wire = std::make_shared<Wire<>>("HEADLESS_WIRE");
+    headless_sim.setHistoryRecordingEnabled(false);
+    expect(!headless_sim.isHistoryRecordingEnabled(),
+           "SimulatorDrainUntilIdleTest headless mode enabled");
+    drive(headless_sim, 1, headless_wire, false);
+    drive(headless_sim, 2, headless_wire, true);
+    headless_sim.advanceAndRecord(2);
+    expect(headless_wire->getSingleValue() == LogicValue::HIGH,
+           "SimulatorDrainUntilIdleTest headless final state");
+    expect(headless_sim.getPerformanceCounters().effective_wire_changes == 2,
+           "SimulatorDrainUntilIdleTest headless counters");
+    expect(headless_sim.getUniqueTimestamps() == std::vector<size_t>{0},
+           "SimulatorDrainUntilIdleTest headless timeline omitted");
+    bool rejected_time_travel = false;
+    try {
+        headless_sim.setCircuitStateAtTime(1);
+    } catch (const std::logic_error&) {
+        rejected_time_travel = true;
+    }
+    expect(rejected_time_travel,
+           "SimulatorDrainUntilIdleTest headless time travel rejected");
+}
+
+std::string CircuitTimingAnalyzerTest::getTestName() const {
+    return "CircuitTimingAnalyzerTest";
+}
+
+void CircuitTimingAnalyzerTest::verifyResults() {
+    const auto half_adder = Component::create<HalfAdder>("HALF");
+    const auto half_report =
+        circuit::analysis::CircuitTimingAnalyzer::analyze(half_adder);
+    expect(half_report.valid,
+           "CircuitTimingAnalyzerTest half-adder valid");
+    expect(half_report.critical_path_delay == 1,
+           "CircuitTimingAnalyzerTest half-adder delay");
+    expect(half_report.combinational_component_count == 2,
+           "CircuitTimingAnalyzerTest half-adder component count");
+
+    const auto full_adder = Component::create<FullAdder>("FULL");
+    const auto full_report =
+        circuit::analysis::CircuitTimingAnalyzer::analyze(full_adder);
+    expect(full_report.valid,
+           "CircuitTimingAnalyzerTest full-adder valid");
+    // A/B -> first XOR -> second-half carry AND -> carry OR.
+    expect(full_report.critical_path_delay == 3,
+           "CircuitTimingAnalyzerTest full-adder delay");
+    expect(!full_report.critical_path.empty(),
+           "CircuitTimingAnalyzerTest full-adder path");
+
+    const auto flip_flop = Component::create<DFlipFlop>("DFF");
+    const auto sequential_report =
+        circuit::analysis::CircuitTimingAnalyzer::analyze(flip_flop);
+    expect(sequential_report.valid,
+           "CircuitTimingAnalyzerTest dff valid");
+    expect(sequential_report.sequential_boundary_count == 1,
+           "CircuitTimingAnalyzerTest dff boundary");
 }
 
 NOTGateTest::NOTGateTest()

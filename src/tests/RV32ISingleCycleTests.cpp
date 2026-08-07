@@ -284,7 +284,10 @@ circuit::test::ComponentTestSpec singleCycleCoreSpec() {
 
 RV32ISingleCycleCoreTest::RV32ISingleCycleCoreTest()
     : circuit::test::ComponentScenarioTest(
-          singleCycleCoreSpec(), "instruction-sequence") {}
+          singleCycleCoreSpec(),
+          "instruction-sequence",
+          rv32i::withBehavioralMemoryParts(
+              circuit::canonicalDefaultProfile())) {}
 
 bool RV32ISingleCycleCoreTest::run() {
     if (!circuit::test::ComponentScenarioTest::run()) {
@@ -369,6 +372,23 @@ RV32ISystemProfileRun::getCheckpoints() const {
         }
     }
     return checkpoints;
+}
+
+std::vector<SimulationTest::PerformanceMetric>
+RV32ISystemProfileRun::getPerformanceMetrics() const {
+    if (totalCycles() != 0) {
+        return RV32IInstructionLockstepTest::getPerformanceMetrics();
+    }
+    auto metrics = SimulationTest::getPerformanceMetrics();
+    const auto instructions =
+        getCase().expected_result.instruction_count;
+    metrics.insert(metrics.begin(), {
+        {"cpu.hardware_cycles", static_cast<double>(instructions), "cycles", "Single-cycle instructions in the visualized program window."},
+        {"cpu.retired_instructions", static_cast<double>(instructions), "instructions", "Architecturally retired instructions, including the terminal instruction."},
+        {"cpu.cpi", instructions == 0 ? 0.0 : 1.0, "cycles/instruction", "A single-cycle core completes each instruction in one hardware cycle."},
+        {"cpu.ipc", instructions == 0 ? 0.0 : 1.0, "instructions/cycle", "A single-cycle core completes one instruction per hardware cycle."},
+    });
+    return metrics;
 }
 
 void RV32ISystemProfileRun::buildCircuit() {
@@ -617,8 +637,6 @@ profileToggleAuditCases() {
          "bitwise logic"},
         {&circuit::families::Shifter32, 2,
          "logical and arithmetic shifts"},
-        {&circuit::families::Comparator32, 4,
-         "taken and not-taken branch comparisons"},
         {&circuit::families::ZeroDetect32, 4,
          "branch equality and result-zero detection"},
     };
