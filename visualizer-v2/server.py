@@ -75,6 +75,14 @@ LAYERED_VERTICAL_FILL_RATIO = 0.9
 LAYERED_DENSE_ROW_WIDTH_CAP = 0.1
 MIN_RELATIVE_CHILD_WIDTH = 1e-6
 COMPONENT_LAYOUT_DEFAULTS = {
+    # Program scenarios use a fixed, shallow testbench container around the
+    # selectable CPU and memory implementations.  Keep the outside wide like
+    # a system block diagram for both CPU families.
+    "RV32IProgramRoot": {
+        "aspect_ratio": 0.65,
+        "title_bar_ratio": 0.055,
+        "pin_size_ratio": 0.025,
+    },
     # The five-stage core has 35 logical output pins. Its pipeline is
     # horizontal, so use smaller edge markers and a shorter title bar instead
     # of making the whole component four times taller than it is wide.
@@ -599,6 +607,100 @@ def _five_stage_pipeline_layout(
     return placements
 
 
+def _rv32i_program_root_layout(
+    children: list[Any],
+    parent_aspect: float,
+    title_fraction: float,
+    child_aspects: dict[str, float],
+    boundary_fraction: float,
+    pin_size_fraction: float,
+) -> dict[str, dict[str, Any]] | None:
+    """Lay out the common RV32I testbench as memory - CPU - memory.
+
+    CLOCK occupies the lower-left service area.  The placement is computed
+    from each child's aspect ratio, so the tall single-cycle core and wide
+    five-stage core share the same outside organization without distortion.
+    """
+    child_by_name = {child.get_name(): child for child in children}
+    required = {
+        "CLOCK",
+        "CORE",
+        "INSTRUCTION_MEMORY",
+        "DATA_MEMORY",
+    }
+    if set(child_by_name) != required:
+        return None
+
+    content_top = title_fraction
+    content_height = max(0.1, 1.0 - content_top)
+
+    def fitted_width(name: str, preferred: float, height_budget: float) -> float:
+        child = child_by_name[name]
+        return min(
+            preferred,
+            height_budget
+            * parent_aspect
+            / max(child_aspects[child.get_id()], 0.01),
+        )
+
+    widths = {
+        "INSTRUCTION_MEMORY": fitted_width(
+            "INSTRUCTION_MEMORY", 0.17, content_height * 0.48
+        ),
+        "CORE": fitted_width("CORE", 0.40, content_height * 0.78),
+        "DATA_MEMORY": fitted_width(
+            "DATA_MEMORY", 0.17, content_height * 0.48
+        ),
+        "CLOCK": fitted_width("CLOCK", 0.13, content_height * 0.16),
+    }
+    preferred_lefts = {
+        "INSTRUCTION_MEMORY": 0.075,
+        "CORE": 0.5 - widths["CORE"] / 2,
+        "DATA_MEMORY": 0.925 - widths["DATA_MEMORY"],
+        "CLOCK": 0.105,
+    }
+    center_y = content_top + content_height * 0.43
+    placements: dict[str, dict[str, Any]] = {}
+    for name in ("INSTRUCTION_MEMORY", "CORE", "DATA_MEMORY"):
+        child = child_by_name[name]
+        rel_x, rel_width = _constrain_child_horizontal(
+            preferred_lefts[name],
+            widths[name],
+            boundary_fraction,
+            pin_size_fraction,
+        )
+        height = (
+            rel_width
+            * child_aspects[child.get_id()]
+            / max(parent_aspect, 0.01)
+        )
+        placements[name] = {
+            "rel_pos": [rel_x, center_y - height / 2],
+            "rel_width": rel_width,
+        }
+
+    clock = child_by_name["CLOCK"]
+    clock_x, clock_width = _constrain_child_horizontal(
+        preferred_lefts["CLOCK"],
+        widths["CLOCK"],
+        boundary_fraction,
+        pin_size_fraction,
+    )
+    clock_height = (
+        clock_width
+        * child_aspects[clock.get_id()]
+        / max(parent_aspect, 0.01)
+    )
+    placements["CLOCK"] = {
+        "rel_pos": [
+            clock_x,
+            content_top + content_height * 0.80 - clock_height / 2,
+        ],
+        "rel_width": clock_width,
+    }
+    return placements
+
+
 def _layered_graph_layout(
     parent: Any,
     children: list[Any],
@@ -610,6 +712,18 @@ def _layered_graph_layout(
 ) -> dict[str, dict[str, Any]]:
     if not children:
         return {}
+
+    if _component_type(parent) == "RV32IProgramRoot":
+        program_layout = _rv32i_program_root_layout(
+            children,
+            parent_aspect,
+            title_fraction,
+            child_aspects,
+            boundary_fraction,
+            pin_size_fraction,
+        )
+        if program_layout is not None:
+            return program_layout
 
     if _component_type(parent) == "RV32IFiveStageCore":
         pipeline_layout = _five_stage_pipeline_layout(

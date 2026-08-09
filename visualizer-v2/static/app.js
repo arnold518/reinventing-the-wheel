@@ -1,5 +1,8 @@
 "use strict";
 
+const wireGeometry = window.CircuitWireGeometry;
+if (!wireGeometry) throw new Error("Circuit wire geometry helpers failed to load");
+
 const STATE_COLORS = {
   "1": [76, 175, 80],
   "0": [211, 47, 47],
@@ -776,27 +779,6 @@ function wireStrokePx(segment, hovered) {
   return hovered ? Math.max(WIRE_HOVER_STROKE_MIN_PX, cappedPx) : cappedPx;
 }
 
-function samePathPoint(a, b) {
-  return a.x === b.x && a.y === b.y;
-}
-
-function dedupePath(path) {
-  const result = [];
-  for (const point of path) {
-    if (result.length === 0 || !samePathPoint(point, result[result.length - 1])) {
-      result.push({ x: point.x, y: point.y });
-    }
-  }
-  return result;
-}
-
-function routeAdaptive(start, end) {
-  const dx = end.x - start.x;
-  if (dx > 10) return dedupePath([start, { x: end.x, y: start.y }, end]);
-  const midX = (start.x + end.x) / 2;
-  return dedupePath([start, { x: midX, y: start.y }, { x: midX, y: end.y }, end]);
-}
-
 function buildWirePaths(wire) {
   wire.paths = [];
   wire.branches = [];
@@ -818,12 +800,19 @@ function buildWirePaths(wire) {
     wire.paths.push({ kind: "stub", points: sinkStub, bbox: sinkBBox, strokeWorld });
     wire.bbox = unionRect(wire.bbox, sinkBBox);
 
-    const route = routeAdaptive(srcBoundaryPoint, dstBoundaryPoint);
+    const owner = app.components.get(wire.ownerId);
+    const route = wireGeometry.routeBetweenHorizontalStubs({
+      sourcePinPoint: srcPinPoint,
+      sourceBoundaryPoint: srcBoundaryPoint,
+      sinkPinPoint: dstPinPoint,
+      sinkBoundaryPoint: dstBoundaryPoint,
+      bounds: owner ? contentRect(owner) : null,
+    });
     const routeBBox = pointsBBox(route);
     wire.paths.push({ kind: "route", points: route, bbox: routeBBox, strokeWorld });
     wire.bbox = unionRect(wire.bbox, routeBBox);
 
-    const branch = dedupePath([...sourceStub, ...route.slice(1), ...sinkStub.slice(1)]);
+    const branch = wireGeometry.dedupePath([...sourceStub, ...route.slice(1), ...sinkStub.slice(1)]);
     wire.branches.push({ points: branch, routePoints: route, bbox: pointsBBox(branch), strokeWorld });
   }
 }

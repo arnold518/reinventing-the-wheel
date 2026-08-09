@@ -58,7 +58,7 @@ only a sparse map such as:
     "rv32i-program9": {
       "revision": 1,
       "exact_overrides": {
-        "RV32I_SINGLE_CYCLE_SYSTEM_ROOT.CORE.ALU": "behavioral"
+        "RV32I_PROGRAM_ROOT.CORE.ALU": "behavioral"
       }
     }
   }
@@ -67,6 +67,13 @@ only a sparse map such as:
 
 The real navigation tree always comes from the circuit that C++ actually
 built. This prevents a stale JSON tree from disagreeing with the simulator.
+
+The single-cycle and five-stage program scenarios deliberately use the same
+fixed `RV32I_PROGRAM_ROOT`. Its four direct children are `CLOCK`, `CORE`,
+`INSTRUCTION_MEMORY`, and `DATA_MEMORY`. The root and clock show as fixed;
+expanding or collapsing starts at `CORE` and at any descendant family that
+actually supplies both fidelities. Saved profiles that used either older
+program-root prefix are translated when they are loaded.
 
 ## Apply safety
 

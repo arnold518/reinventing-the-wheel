@@ -1,6 +1,6 @@
 # RV32I CPU Roadmap
 
-Last updated: 2026-08-05
+Last updated: 2026-08-09
 
 This roadmap records the RV32I work after completing the component
 foundations, behavioral answer sheet, structural single-cycle CPU, and first
@@ -89,6 +89,9 @@ Completed:
   the same 22 program fixtures.
 - Per-commit instruction lockstep checks for PC, registers, halt/trap state, logical memory access, and byte writes.
 - Tests and visualizer scenarios for the ALU and memory foundations.
+- One common fixed visual program testbench, `RV32IProgramRoot`, for both CPU
+  families. It exposes `CLOCK`, `CORE`, `INSTRUCTION_MEMORY`, and
+  `DATA_MEMORY` as four direct peers; the CPU family is the only difference.
 
 Detailed status reports:
 
@@ -106,6 +109,7 @@ Detailed status reports:
 - `docs/rv32i-alu-equivalence-report.md`
 - `docs/rv32i-execution-status-equivalence-report.md`
 - `docs/rv32i-external-validation-report.md`
+- `docs/rv32i-program-root-exposure-report.md`
 - `docs/memory-components-report.md`
 - `docs/structural-dff-report.md`
 
@@ -118,9 +122,8 @@ ctest --test-dir build --output-on-failure
 
 Most recent full-regression result:
 
-- Full regression passed: 175/175 after the 2026-08-05 resource-sharing
-  cleanup. The complete run took 365.18 seconds with two test workers; its one
-  stale recursive-profile expectation was corrected and rerun successfully.
+- Full regression passed: 175/175 on 2026-08-09 after the common program-root
+  exposure update. The complete run took 597.40 seconds with two test workers.
 - Both sets of 22 numbered programs passed: the preserved single-cycle system
   and the five-stage core, including answer-sheet, selected-profile,
   instruction-oracle lockstep, and hard-coded outcome checks.
@@ -131,6 +134,9 @@ Most recent full-regression result:
   structural while selecting behavioral `Memory64Kx32`,
   `RegisterFile32x32`, `Register32`, and `MemoryBit` so the compact storage
   overrides are used.
+- Single-cycle and five-stage program scenarios now have the same outside
+  shape and a real visible `ClockGenerator`; no source-less clock pin or extra
+  `MACHINE` wrapper remains in those scenarios.
 
 ## Architecture Direction
 

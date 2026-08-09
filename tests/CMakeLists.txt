@@ -269,6 +269,17 @@ add_test(
     NAME VisualizerProfileStoreTest
     COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/VisualizerProfileStoreTest.py
 )
+find_program(CIRCUITSIM_NODE_EXECUTABLE NAMES node nodejs)
+if(CIRCUITSIM_NODE_EXECUTABLE)
+    add_test(
+        NAME VisualizerWireGeometryTest
+        COMMAND ${CIRCUITSIM_NODE_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/VisualizerWireGeometryTest.js
+    )
+    set_tests_properties(
+        VisualizerWireGeometryTest
+        PROPERTIES LABELS "visualizer;unit"
+    )
+endif()
 set_tests_properties(
     VisualizerProfileStoreTest
     PROPERTIES

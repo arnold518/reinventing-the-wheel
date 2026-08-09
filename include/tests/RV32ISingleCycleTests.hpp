@@ -5,11 +5,13 @@
 #include "tests/RV32IInstructionLockstepTests.hpp"
 #include "tests/ComponentTestModel.hpp"
 #include "simulator/SimulationTest.hpp"
-#include "components/capabilities/RV32ISystemProgramAccess.hpp"
 #include <map>
 #include <memory>
 
-class RV32ISingleCycleSystem;
+class IOComponent;
+class Memory64Kx32;
+class RV32IProgramRoot;
+class RV32IStateView;
 template<size_t WIDTH> class Wire;
 
 class RV32ISingleCycleCoreTest
@@ -33,7 +35,6 @@ public:
 
 protected:
     void buildCircuit() override;
-    virtual bool useRepresentativeProfile() const { return false; }
     void initializeComponentForLockstep(const RV32ISystemProgramCase& test_case) override;
     void clockComponentOneCycle(size_t cycle_index, size_t cycle_start_time) override;
     rv32i::RV32IState snapshotComponentState() const override;
@@ -42,10 +43,11 @@ protected:
     void verifyResults() override;
 
 private:
-    std::shared_ptr<IOComponent> system_{};
-    std::shared_ptr<RV32ISystemProgramAccess> program_access_{};
-    std::shared_ptr<RV32ISingleCycleSystem> structural_system_{};
-    std::shared_ptr<Wire<1>> clk_wire_{};
+    std::shared_ptr<RV32IProgramRoot> program_root_{};
+    std::shared_ptr<IOComponent> core_{};
+    std::shared_ptr<RV32IStateView> state_view_{};
+    std::shared_ptr<Memory64Kx32> instruction_memory_{};
+    std::shared_ptr<Memory64Kx32> data_memory_{};
     std::shared_ptr<Wire<1>> rst_wire_{};
     std::shared_ptr<Wire<1>> enable_wire_{};
     rv32i::RV32IMemoryTrace last_access_{};
@@ -55,11 +57,8 @@ private:
     mutable size_t last_observed_memory_time_ = 0;
     circuit::BuildProfile profile_ =
         rv32i::withBehavioralMemoryParts(
-            circuit::withExactFidelity(
-                circuit::canonicalDefaultProfile(),
-                "RV32I_SINGLE_CYCLE_SYSTEM_ROOT",
-                circuit::Fidelity::Structural,
-                "rv32i-structural-system-test"));
+            circuit::canonicalDefaultProfile(),
+            "rv32i-single-cycle-program-default");
 };
 
 class RV32ISingleCycleSystemTest

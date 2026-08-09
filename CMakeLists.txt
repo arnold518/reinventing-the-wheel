@@ -103,6 +103,7 @@ set(CORE_LOGIC_SOURCES
     src/tests/RV32IProgramTests.cpp
     src/tests/RV32IInstructionOracleTests.cpp
     src/tests/RV32IInstructionLockstepTests.cpp
+    src/tests/RV32IProgramRoot.cpp
     src/tests/RV32IFiveStageTests.cpp
     src/tests/RV32IPipelineBlockTests.cpp
     src/tests/RV32ISingleCycleTests.cpp

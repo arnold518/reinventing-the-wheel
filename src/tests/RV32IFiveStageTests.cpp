@@ -13,16 +13,13 @@
 #include "modules/memory/Memory64Kx32.hpp"
 #include "modules/rv32i/RV32IBuildProfiles.hpp"
 #include "modules/rv32i/RV32IFiveStageCore.hpp"
-#include "modules/utility/Constant.hpp"
 #include "simulator/Event.hpp"
 #include "tests/RV32IProgramCases.hpp"
+#include "tests/RV32IProgramRoot.hpp"
 #include <stdexcept>
 #include <utility>
 
 namespace {
-constexpr const char* RootName =
-    "RV32I_FIVE_STAGE_PROGRAM_ROOT";
-
 void require(bool condition, const std::string& message) {
     if (!condition) {
         throw std::runtime_error(message);
@@ -140,9 +137,13 @@ void RV32IFiveStageCoreProgramTest::setupCircuit() {
         shared_profile,
         manifest);
     auto root_context = scope->child(
-        RootName, std::nullopt);
-    root = Component::createWithContext<Component>(
-        root_context, RootName);
+        RV32IProgramRoot::RootName, std::nullopt);
+    program_root_ = Component::createWithContext<RV32IProgramRoot>(
+        root_context,
+        RV32IProgramRoot::RootName,
+        circuit::families::RV32IFiveStageCore,
+        50);
+    root = program_root_;
     builder = std::make_unique<ComponentBuilder>(
         root, root_context);
     buildCircuit();
@@ -161,7 +162,7 @@ void RV32IFiveStageCoreProgramTest::setBuildProfile(
     state_view_.reset();
     instruction_memory_.reset();
     data_memory_.reset();
-    clk_wire_.reset();
+    program_root_.reset();
     rst_wire_.reset();
     enable_wire_.reset();
     simulation_precomputed_ = false;
@@ -173,20 +174,11 @@ RV32IFiveStageCoreProgramTest::getCase() const {
 }
 
 void RV32IFiveStageCoreProgramTest::buildCircuit() {
-    core_ = builder->add(
-        circuit::families::RV32IFiveStageCore, "CORE");
-    state_view_ =
-        std::dynamic_pointer_cast<RV32IStateView>(core_);
-    instruction_memory_ =
-        std::dynamic_pointer_cast<Memory64Kx32>(
-            builder->add(
-                circuit::families::Memory64Kx32,
-                "INSTRUCTION_MEMORY"));
-    data_memory_ =
-        std::dynamic_pointer_cast<Memory64Kx32>(
-            builder->add(
-                circuit::families::Memory64Kx32,
-                "DATA_MEMORY"));
+    require(program_root_ != nullptr, "five-stage program root was not built");
+    core_ = program_root_->core();
+    state_view_ = program_root_->stateView();
+    instruction_memory_ = program_root_->instructionMemory();
+    data_memory_ = program_root_->dataMemory();
     require(core_ != nullptr, "five-stage core was not built");
     require(
         state_view_ != nullptr,
@@ -196,107 +188,21 @@ void RV32IFiveStageCoreProgramTest::buildCircuit() {
             && data_memory_ != nullptr,
         "five-stage program memories were not built");
 
-    builder->addNewComponent<ConstantValue<1>>(
-        "CONST_LOW", 0);
-    builder->addNewComponent<ConstantValue<2>>(
-        "CONST_WORD_SIZE", 2);
-    builder->addNewComponent<ConstantValue<32>>(
-        "CONST_ZERO32", 0);
-
-    clk_wire_ = builder->addNewWire(
-        "CLK_IN",
-        nullptr,
-        {core_->getInputPin("CLK"),
-         instruction_memory_->getInputPin("CLK"),
-         data_memory_->getInputPin("CLK")});
     rst_wire_ = builder->addNewWire(
-        "RST_IN", nullptr, {core_->getInputPin("RST")});
+        "RST_IN", nullptr, {program_root_->getInputPin("RST")});
     enable_wire_ = builder->addNewWire(
         "ENABLE_IN",
         nullptr,
-        {core_->getInputPin("ENABLE")});
-
+        {program_root_->getInputPin("ENABLE")});
     builder->addNewWire<32>(
-        "IMEM_ADDR",
-        core_->getOutputPin<32>("IMEM_ADDR"),
-        {instruction_memory_->getInputPin<32>("ADDR")});
+        "PC_OUT", program_root_->getOutputPin<32>("PC"), {});
     builder->addNewWire(
-        "IMEM_READ_EN",
-        core_->getOutputPin("IMEM_READ_EN"),
-        {instruction_memory_->getInputPin("READ_EN")});
-    builder->addNewWire<32>(
-        "IMEM_READ_DATA",
-        instruction_memory_->getOutputPin<32>("READ_DATA"),
-        {core_->getInputPin<32>("IMEM_READ_DATA")});
+        "HALTED_OUT", program_root_->getOutputPin("HALTED"), {});
     builder->addNewWire(
-        "IMEM_READY",
-        instruction_memory_->getOutputPin("READY"),
-        {core_->getInputPin("IMEM_READY")});
-    builder->addNewWire(
-        "IMEM_FAULT",
-        instruction_memory_->getOutputPin("FAULT"),
-        {core_->getInputPin("IMEM_FAULT")});
-
-    builder->addNewWire<32>(
-        "DMEM_ADDR",
-        core_->getOutputPin<32>("DMEM_ADDR"),
-        {data_memory_->getInputPin<32>("ADDR")});
-    builder->addNewWire<32>(
-        "DMEM_WRITE_DATA",
-        core_->getOutputPin<32>("DMEM_WRITE_DATA"),
-        {data_memory_->getInputPin<32>("WRITE_DATA")});
-    builder->addNewWire(
-        "DMEM_READ_EN",
-        core_->getOutputPin("DMEM_READ_EN"),
-        {data_memory_->getInputPin("READ_EN")});
-    builder->addNewWire(
-        "DMEM_WRITE_EN",
-        core_->getOutputPin("DMEM_WRITE_EN"),
-        {data_memory_->getInputPin("WRITE_EN")});
-    builder->addNewWire<2>(
-        "DMEM_SIZE",
-        core_->getOutputPin<2>("DMEM_SIZE"),
-        {data_memory_->getInputPin<2>("SIZE")});
-    builder->addNewWire(
-        "DMEM_SIGN_EXTEND",
-        core_->getOutputPin("DMEM_SIGN_EXTEND"),
-        {data_memory_->getInputPin("SIGN_EXTEND")});
-    builder->addNewWire<32>(
-        "DMEM_READ_DATA",
-        data_memory_->getOutputPin<32>("READ_DATA"),
-        {core_->getInputPin<32>("DMEM_READ_DATA")});
-    builder->addNewWire(
-        "DMEM_READY",
-        data_memory_->getOutputPin("READY"),
-        {core_->getInputPin("DMEM_READY")});
-    builder->addNewWire(
-        "DMEM_FAULT",
-        data_memory_->getOutputPin("FAULT"),
-        {core_->getInputPin("DMEM_FAULT")});
-
-    auto constant_low =
-        builder->getComponent<ConstantValue<1>>("CONST_LOW");
-    auto constant_word =
-        builder->getComponent<ConstantValue<2>>(
-            "CONST_WORD_SIZE");
-    auto constant_zero =
-        builder->getComponent<ConstantValue<32>>(
-            "CONST_ZERO32");
-    builder->addNewWire(
-        "CONST_LOW_fanout",
-        constant_low->getOutputPin("OUT"),
-        {instruction_memory_->getInputPin("WRITE_EN"),
-         instruction_memory_->getInputPin("SIGN_EXTEND"),
-         instruction_memory_->getInputPin("RST"),
-         data_memory_->getInputPin("RST")});
-    builder->addNewWire<2>(
-        "CONST_WORD_SIZE_to_imem",
-        constant_word->getOutputPin<2>("OUT"),
-        {instruction_memory_->getInputPin<2>("SIZE")});
-    builder->addNewWire<32>(
-        "CONST_ZERO32_to_imem",
-        constant_zero->getOutputPin<32>("OUT"),
-        {instruction_memory_->getInputPin<32>("WRITE_DATA")});
+        "TRAPPED_OUT", program_root_->getOutputPin("TRAPPED"), {});
+    builder->addNewWire<4>(
+        "TRAP_CAUSE_OUT",
+        program_root_->getOutputPin<4>("TRAP_CAUSE"), {});
 }
 
 void RV32IFiveStageCoreProgramTest::runSimulation() {
@@ -347,12 +253,13 @@ initializeComponentForLockstep(
     }
 
     scheduleInitialEvents(0);
-    drive(*sim, 0, clk_wire_, false);
+    program_root_->initializeFixedInputs(*sim, 0);
     drive(*sim, 0, rst_wire_, true);
     drive(*sim, 0, enable_wire_, true);
-    sim->advanceAndRecord(20);
-    drive(*sim, 20, rst_wire_, false);
-    sim->advanceAndRecord(40);
+    program_root_->startClock(*sim, 20);
+    sim->advanceAndRecord(70);
+    drive(*sim, 70, rst_wire_, false);
+    sim->advanceAndRecord(100);
     load_use_stall_cycles_ = 0;
     memory_stall_cycles_ = 0;
     data_port_stall_cycles_ = 0;
@@ -380,8 +287,7 @@ void RV32IFiveStageCoreProgramTest::clockComponentOneCycle(
     size_t cycle_index,
     size_t cycle_start_time) {
     (void)cycle_index;
-    drive(*sim, cycle_start_time + 20, clk_wire_, true);
-    drive(*sim, cycle_start_time + 40, clk_wire_, false);
+    (void)cycle_start_time;
 }
 
 rv32i::RV32IState

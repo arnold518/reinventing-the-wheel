@@ -9,6 +9,7 @@
 
 class IOComponent;
 class Memory64Kx32;
+class RV32IProgramRoot;
 class RV32IStateView;
 template<size_t WIDTH> class Wire;
 
@@ -62,11 +63,11 @@ private:
     size_t program_number_;
     circuit::BuildProfile profile_ =
         circuit::canonicalDefaultProfile();
+    std::shared_ptr<RV32IProgramRoot> program_root_{};
     std::shared_ptr<IOComponent> core_{};
     std::shared_ptr<RV32IStateView> state_view_{};
     std::shared_ptr<Memory64Kx32> instruction_memory_{};
     std::shared_ptr<Memory64Kx32> data_memory_{};
-    std::shared_ptr<Wire<1>> clk_wire_{};
     std::shared_ptr<Wire<1>> rst_wire_{};
     std::shared_ptr<Wire<1>> enable_wire_{};
     bool simulation_precomputed_ = false;

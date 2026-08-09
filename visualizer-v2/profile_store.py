@@ -18,6 +18,15 @@ from typing import Any
 PROFILE_SCHEMA_VERSION = 1
 _PATH_PATTERN = re.compile(r"^[A-Za-z0-9_][A-Za-z0-9_.\-\[\]]*$")
 _FIDELITIES = {"structural", "behavioral"}
+_COMPONENT_PATH_PREFIX_MIGRATIONS = {
+    "RV32I_SINGLE_CYCLE_SYSTEM_ROOT": "RV32I_PROGRAM_ROOT",
+    "RV32I_FIVE_STAGE_PROGRAM_ROOT": "RV32I_PROGRAM_ROOT",
+}
+_ROOT_FIDELITY_MIGRATIONS = {
+    old_root: f"{new_root}.CORE"
+    for old_root, new_root
+    in _COMPONENT_PATH_PREFIX_MIGRATIONS.items()
+}
 
 
 def validate_overrides(value: Any) -> dict[str, str]:
@@ -33,6 +42,39 @@ def validate_overrides(value: Any) -> dict[str, str]:
             )
         result[raw_path] = str(raw_fidelity)
     return dict(sorted(result.items()))
+
+
+def migrate_component_paths(overrides: dict[str, str]) -> dict[str, str]:
+    """Translate saved paths from superseded visual testbench roots.
+
+    Profiles describe selectable implementation nodes, not the testbench
+    container itself.  Both RV32I program families now share one fixed root,
+    so old CORE subtree choices remain meaningful after a prefix rewrite.
+    Canonical paths win if a file happens to contain both forms.
+    """
+    migrated: dict[str, str] = {}
+    for path, fidelity in overrides.items():
+        if path in _ROOT_FIDELITY_MIGRATIONS:
+            migrated.setdefault(
+                _ROOT_FIDELITY_MIGRATIONS[path], fidelity
+            )
+            continue
+        for old_prefix, new_prefix in _COMPONENT_PATH_PREFIX_MIGRATIONS.items():
+            if path.startswith(f"{old_prefix}."):
+                migrated.setdefault(
+                    f"{new_prefix}{path[len(old_prefix):]}",
+                    fidelity,
+                )
+                break
+        else:
+            migrated[path] = fidelity
+    for path, fidelity in overrides.items():
+        if any(
+            path == new_prefix or path.startswith(f"{new_prefix}.")
+            for new_prefix in _COMPONENT_PATH_PREFIX_MIGRATIONS.values()
+        ):
+            migrated[path] = fidelity
+    return dict(sorted(migrated.items()))
 
 
 class ProfileStore:
@@ -72,8 +114,8 @@ class ProfileStore:
                 raise ValueError(f"Invalid profile revision for '{scenario}'")
             normalized["scenarios"][scenario] = {
                 "revision": revision,
-                "exact_overrides": validate_overrides(
-                    entry.get("exact_overrides", {})
+                "exact_overrides": migrate_component_paths(
+                    validate_overrides(entry.get("exact_overrides", {}))
                 ),
             }
         return normalized

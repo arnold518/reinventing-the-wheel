@@ -10687,10 +10687,11 @@
                 }
             }
         },
-        "RV32ISingleCycleSystem": {
-            "min_aspect_ratio": 0.61,
-            "aspect_ratio": 0.61,
-            "color": [30, 64, 175, 190]
+        "RV32IProgramRoot": {
+            "aspect_ratio": 0.65,
+            "title_bar_ratio": 0.055,
+            "pin_size_ratio": 0.025,
+            "min_aspect_ratio": 0.35
         }
     },
     "profile_layouts": {},
@@ -21344,1323 +21345,1003 @@
                 }
             }
         },
-        "rv32i-program1@2a958f73fc9d36f0": {
-            "min_aspect_ratio": 0.61,
-            "aspect_ratio": 0.61,
+        "rv32i-program1": {
+            "min_aspect_ratio": 0.35,
+            "aspect_ratio": 0.65,
             "children": {
-                "CONST_LOW": {
-                    "rel_pos": [0.08848, 0.3170054644808743],
-                    "rel_width": 0.264
-                },
-                "CONST_WORD_SIZE": {
-                    "rel_pos": [0.08848, 0.5407213114754099],
-                    "rel_width": 0.264
-                },
-                "CONST_ZERO32": {
-                    "rel_pos": [0.08848, 0.7644371584699454],
-                    "rel_width": 0.264
-                },
-                "DATA_MEMORY": {
-                    "rel_pos": [0.46121798540833137, 0.31154859484777514],
-                    "rel_width": 0.14785714285714285
-                },
                 "INSTRUCTION_MEMORY": {
-                    "rel_pos": [0.46121798540833137, 0.6471223653395783],
-                    "rel_width": 0.14785714285714285
+                    "rel_pos": [0.08190000000000001, 0.3232692307692307],
+                    "rel_width": 0.17
                 },
                 "CORE": {
-                    "rel_pos": [0.7134968698517298, 0.33105139492802554],
-                    "rel_width": 0.20233937397034593
+                    "rel_pos": [0.3681534090909091, 0.12123076923076925],
+                    "rel_width": 0.2636931818181818
+                },
+                "DATA_MEMORY": {
+                    "rel_pos": [0.7480999999999999, 0.3232692307692307],
+                    "rel_width": 0.17
+                },
+                "CLOCK": {
+                    "rel_pos": [0.105, 0.7789230769230769],
+                    "rel_width": 0.13
                 }
             }
         },
-        "rv32i-program2@2a958f73fc9d36f0": {
-            "min_aspect_ratio": 0.61,
-            "aspect_ratio": 0.61,
+        "rv32i-program2": {
+            "min_aspect_ratio": 0.35,
+            "aspect_ratio": 0.65,
             "children": {
-                "CONST_LOW": {
-                    "rel_pos": [0.08848, 0.3170054644808743],
-                    "rel_width": 0.264
-                },
-                "CONST_WORD_SIZE": {
-                    "rel_pos": [0.08848, 0.5407213114754099],
-                    "rel_width": 0.264
-                },
-                "CONST_ZERO32": {
-                    "rel_pos": [0.08848, 0.7644371584699454],
-                    "rel_width": 0.264
-                },
-                "DATA_MEMORY": {
-                    "rel_pos": [0.46121798540833137, 0.31154859484777514],
-                    "rel_width": 0.14785714285714285
-                },
                 "INSTRUCTION_MEMORY": {
-                    "rel_pos": [0.46121798540833137, 0.6471223653395783],
-                    "rel_width": 0.14785714285714285
+                    "rel_pos": [0.08190000000000001, 0.3232692307692307],
+                    "rel_width": 0.17
                 },
                 "CORE": {
-                    "rel_pos": [0.7134968698517298, 0.33105139492802554],
-                    "rel_width": 0.20233937397034593
+                    "rel_pos": [0.3681534090909091, 0.12123076923076925],
+                    "rel_width": 0.2636931818181818
+                },
+                "DATA_MEMORY": {
+                    "rel_pos": [0.7480999999999999, 0.3232692307692307],
+                    "rel_width": 0.17
+                },
+                "CLOCK": {
+                    "rel_pos": [0.105, 0.7789230769230769],
+                    "rel_width": 0.13
                 }
             }
         },
-        "rv32i-program3@2a958f73fc9d36f0": {
-            "min_aspect_ratio": 0.61,
-            "aspect_ratio": 0.61,
+        "rv32i-program3": {
+            "min_aspect_ratio": 0.35,
+            "aspect_ratio": 0.65,
             "children": {
-                "CONST_LOW": {
-                    "rel_pos": [0.08848, 0.3170054644808743],
-                    "rel_width": 0.264
-                },
-                "CONST_WORD_SIZE": {
-                    "rel_pos": [0.08848, 0.5407213114754099],
-                    "rel_width": 0.264
-                },
-                "CONST_ZERO32": {
-                    "rel_pos": [0.08848, 0.7644371584699454],
-                    "rel_width": 0.264
-                },
-                "DATA_MEMORY": {
-                    "rel_pos": [0.46121798540833137, 0.31154859484777514],
-                    "rel_width": 0.14785714285714285
-                },
                 "INSTRUCTION_MEMORY": {
-                    "rel_pos": [0.46121798540833137, 0.6471223653395783],
-                    "rel_width": 0.14785714285714285
+                    "rel_pos": [0.08190000000000001, 0.3232692307692307],
+                    "rel_width": 0.17
                 },
                 "CORE": {
-                    "rel_pos": [0.7134968698517298, 0.33105139492802554],
-                    "rel_width": 0.20233937397034593
+                    "rel_pos": [0.3681534090909091, 0.12123076923076925],
+                    "rel_width": 0.2636931818181818
+                },
+                "DATA_MEMORY": {
+                    "rel_pos": [0.7480999999999999, 0.3232692307692307],
+                    "rel_width": 0.17
+                },
+                "CLOCK": {
+                    "rel_pos": [0.105, 0.7789230769230769],
+                    "rel_width": 0.13
                 }
             }
         },
-        "rv32i-program4@2a958f73fc9d36f0": {
-            "min_aspect_ratio": 0.61,
-            "aspect_ratio": 0.61,
+        "rv32i-program4": {
+            "min_aspect_ratio": 0.35,
+            "aspect_ratio": 0.65,
             "children": {
-                "CONST_LOW": {
-                    "rel_pos": [0.08848, 0.3170054644808743],
-                    "rel_width": 0.264
-                },
-                "CONST_WORD_SIZE": {
-                    "rel_pos": [0.08848, 0.5407213114754099],
-                    "rel_width": 0.264
-                },
-                "CONST_ZERO32": {
-                    "rel_pos": [0.08848, 0.7644371584699454],
-                    "rel_width": 0.264
-                },
-                "DATA_MEMORY": {
-                    "rel_pos": [0.46121798540833137, 0.31154859484777514],
-                    "rel_width": 0.14785714285714285
-                },
                 "INSTRUCTION_MEMORY": {
-                    "rel_pos": [0.46121798540833137, 0.6471223653395783],
-                    "rel_width": 0.14785714285714285
+                    "rel_pos": [0.08190000000000001, 0.3232692307692307],
+                    "rel_width": 0.17
                 },
                 "CORE": {
-                    "rel_pos": [0.7134968698517298, 0.33105139492802554],
-                    "rel_width": 0.20233937397034593
+                    "rel_pos": [0.3681534090909091, 0.12123076923076925],
+                    "rel_width": 0.2636931818181818
+                },
+                "DATA_MEMORY": {
+                    "rel_pos": [0.7480999999999999, 0.3232692307692307],
+                    "rel_width": 0.17
+                },
+                "CLOCK": {
+                    "rel_pos": [0.105, 0.7789230769230769],
+                    "rel_width": 0.13
                 }
             }
         },
-        "rv32i-program5@2a958f73fc9d36f0": {
-            "min_aspect_ratio": 0.61,
-            "aspect_ratio": 0.61,
+        "rv32i-program5": {
+            "min_aspect_ratio": 0.35,
+            "aspect_ratio": 0.65,
             "children": {
-                "CONST_LOW": {
-                    "rel_pos": [0.08848, 0.3170054644808743],
-                    "rel_width": 0.264
-                },
-                "CONST_WORD_SIZE": {
-                    "rel_pos": [0.08848, 0.5407213114754099],
-                    "rel_width": 0.264
-                },
-                "CONST_ZERO32": {
-                    "rel_pos": [0.08848, 0.7644371584699454],
-                    "rel_width": 0.264
-                },
-                "DATA_MEMORY": {
-                    "rel_pos": [0.46121798540833137, 0.31154859484777514],
-                    "rel_width": 0.14785714285714285
-                },
                 "INSTRUCTION_MEMORY": {
-                    "rel_pos": [0.46121798540833137, 0.6471223653395783],
-                    "rel_width": 0.14785714285714285
+                    "rel_pos": [0.08190000000000001, 0.3232692307692307],
+                    "rel_width": 0.17
                 },
                 "CORE": {
-                    "rel_pos": [0.7134968698517298, 0.33105139492802554],
-                    "rel_width": 0.20233937397034593
+                    "rel_pos": [0.3681534090909091, 0.12123076923076925],
+                    "rel_width": 0.2636931818181818
+                },
+                "DATA_MEMORY": {
+                    "rel_pos": [0.7480999999999999, 0.3232692307692307],
+                    "rel_width": 0.17
+                },
+                "CLOCK": {
+                    "rel_pos": [0.105, 0.7789230769230769],
+                    "rel_width": 0.13
                 }
             }
         },
-        "rv32i-program6@2a958f73fc9d36f0": {
-            "min_aspect_ratio": 0.61,
-            "aspect_ratio": 0.61,
+        "rv32i-program6": {
+            "min_aspect_ratio": 0.35,
+            "aspect_ratio": 0.65,
             "children": {
-                "CONST_LOW": {
-                    "rel_pos": [0.08848, 0.3170054644808743],
-                    "rel_width": 0.264
-                },
-                "CONST_WORD_SIZE": {
-                    "rel_pos": [0.08848, 0.5407213114754099],
-                    "rel_width": 0.264
-                },
-                "CONST_ZERO32": {
-                    "rel_pos": [0.08848, 0.7644371584699454],
-                    "rel_width": 0.264
-                },
-                "DATA_MEMORY": {
-                    "rel_pos": [0.46121798540833137, 0.31154859484777514],
-                    "rel_width": 0.14785714285714285
-                },
                 "INSTRUCTION_MEMORY": {
-                    "rel_pos": [0.46121798540833137, 0.6471223653395783],
-                    "rel_width": 0.14785714285714285
+                    "rel_pos": [0.08190000000000001, 0.3232692307692307],
+                    "rel_width": 0.17
                 },
                 "CORE": {
-                    "rel_pos": [0.7134968698517298, 0.33105139492802554],
-                    "rel_width": 0.20233937397034593
+                    "rel_pos": [0.3681534090909091, 0.12123076923076925],
+                    "rel_width": 0.2636931818181818
+                },
+                "DATA_MEMORY": {
+                    "rel_pos": [0.7480999999999999, 0.3232692307692307],
+                    "rel_width": 0.17
+                },
+                "CLOCK": {
+                    "rel_pos": [0.105, 0.7789230769230769],
+                    "rel_width": 0.13
                 }
             }
         },
-        "rv32i-program7@2a958f73fc9d36f0": {
-            "min_aspect_ratio": 0.61,
-            "aspect_ratio": 0.61,
+        "rv32i-program7": {
+            "min_aspect_ratio": 0.35,
+            "aspect_ratio": 0.65,
             "children": {
-                "CONST_LOW": {
-                    "rel_pos": [0.08848, 0.3170054644808743],
-                    "rel_width": 0.264
-                },
-                "CONST_WORD_SIZE": {
-                    "rel_pos": [0.08848, 0.5407213114754099],
-                    "rel_width": 0.264
-                },
-                "CONST_ZERO32": {
-                    "rel_pos": [0.08848, 0.7644371584699454],
-                    "rel_width": 0.264
-                },
-                "DATA_MEMORY": {
-                    "rel_pos": [0.46121798540833137, 0.31154859484777514],
-                    "rel_width": 0.14785714285714285
-                },
                 "INSTRUCTION_MEMORY": {
-                    "rel_pos": [0.46121798540833137, 0.6471223653395783],
-                    "rel_width": 0.14785714285714285
+                    "rel_pos": [0.08190000000000001, 0.3232692307692307],
+                    "rel_width": 0.17
                 },
                 "CORE": {
-                    "rel_pos": [0.7134968698517298, 0.33105139492802554],
-                    "rel_width": 0.20233937397034593
+                    "rel_pos": [0.3681534090909091, 0.12123076923076925],
+                    "rel_width": 0.2636931818181818
+                },
+                "DATA_MEMORY": {
+                    "rel_pos": [0.7480999999999999, 0.3232692307692307],
+                    "rel_width": 0.17
+                },
+                "CLOCK": {
+                    "rel_pos": [0.105, 0.7789230769230769],
+                    "rel_width": 0.13
                 }
             }
         },
-        "rv32i-program8@2a958f73fc9d36f0": {
-            "min_aspect_ratio": 0.61,
-            "aspect_ratio": 0.61,
+        "rv32i-program8": {
+            "min_aspect_ratio": 0.35,
+            "aspect_ratio": 0.65,
             "children": {
-                "CONST_LOW": {
-                    "rel_pos": [0.08848, 0.3170054644808743],
-                    "rel_width": 0.264
-                },
-                "CONST_WORD_SIZE": {
-                    "rel_pos": [0.08848, 0.5407213114754099],
-                    "rel_width": 0.264
-                },
-                "CONST_ZERO32": {
-                    "rel_pos": [0.08848, 0.7644371584699454],
-                    "rel_width": 0.264
-                },
-                "DATA_MEMORY": {
-                    "rel_pos": [0.46121798540833137, 0.31154859484777514],
-                    "rel_width": 0.14785714285714285
-                },
                 "INSTRUCTION_MEMORY": {
-                    "rel_pos": [0.46121798540833137, 0.6471223653395783],
-                    "rel_width": 0.14785714285714285
+                    "rel_pos": [0.08190000000000001, 0.3232692307692307],
+                    "rel_width": 0.17
                 },
                 "CORE": {
-                    "rel_pos": [0.7134968698517298, 0.33105139492802554],
-                    "rel_width": 0.20233937397034593
+                    "rel_pos": [0.3681534090909091, 0.12123076923076925],
+                    "rel_width": 0.2636931818181818
+                },
+                "DATA_MEMORY": {
+                    "rel_pos": [0.7480999999999999, 0.3232692307692307],
+                    "rel_width": 0.17
+                },
+                "CLOCK": {
+                    "rel_pos": [0.105, 0.7789230769230769],
+                    "rel_width": 0.13
                 }
             }
         },
-        "rv32i-program9@2a958f73fc9d36f0": {
-            "min_aspect_ratio": 0.61,
-            "aspect_ratio": 0.61,
+        "rv32i-program9": {
+            "min_aspect_ratio": 0.35,
+            "aspect_ratio": 0.65,
             "children": {
-                "CONST_LOW": {
-                    "rel_pos": [0.08848, 0.3170054644808743],
-                    "rel_width": 0.264
-                },
-                "CONST_WORD_SIZE": {
-                    "rel_pos": [0.08848, 0.5407213114754099],
-                    "rel_width": 0.264
-                },
-                "CONST_ZERO32": {
-                    "rel_pos": [0.08848, 0.7644371584699454],
-                    "rel_width": 0.264
-                },
-                "DATA_MEMORY": {
-                    "rel_pos": [0.46121798540833137, 0.31154859484777514],
-                    "rel_width": 0.14785714285714285
-                },
                 "INSTRUCTION_MEMORY": {
-                    "rel_pos": [0.46121798540833137, 0.6471223653395783],
-                    "rel_width": 0.14785714285714285
+                    "rel_pos": [0.08190000000000001, 0.3232692307692307],
+                    "rel_width": 0.17
                 },
                 "CORE": {
-                    "rel_pos": [0.7134968698517298, 0.33105139492802554],
-                    "rel_width": 0.20233937397034593
+                    "rel_pos": [0.3681534090909091, 0.12123076923076925],
+                    "rel_width": 0.2636931818181818
+                },
+                "DATA_MEMORY": {
+                    "rel_pos": [0.7480999999999999, 0.3232692307692307],
+                    "rel_width": 0.17
+                },
+                "CLOCK": {
+                    "rel_pos": [0.105, 0.7789230769230769],
+                    "rel_width": 0.13
                 }
             }
         },
-        "rv32i-program10@2a958f73fc9d36f0": {
-            "min_aspect_ratio": 0.61,
-            "aspect_ratio": 0.61,
+        "rv32i-program10": {
+            "min_aspect_ratio": 0.35,
+            "aspect_ratio": 0.65,
             "children": {
-                "CONST_LOW": {
-                    "rel_pos": [0.08848, 0.3170054644808743],
-                    "rel_width": 0.264
-                },
-                "CONST_WORD_SIZE": {
-                    "rel_pos": [0.08848, 0.5407213114754099],
-                    "rel_width": 0.264
-                },
-                "CONST_ZERO32": {
-                    "rel_pos": [0.08848, 0.7644371584699454],
-                    "rel_width": 0.264
-                },
-                "DATA_MEMORY": {
-                    "rel_pos": [0.46121798540833137, 0.31154859484777514],
-                    "rel_width": 0.14785714285714285
-                },
                 "INSTRUCTION_MEMORY": {
-                    "rel_pos": [0.46121798540833137, 0.6471223653395783],
-                    "rel_width": 0.14785714285714285
+                    "rel_pos": [0.08190000000000001, 0.3232692307692307],
+                    "rel_width": 0.17
                 },
                 "CORE": {
-                    "rel_pos": [0.7134968698517298, 0.33105139492802554],
-                    "rel_width": 0.20233937397034593
+                    "rel_pos": [0.3681534090909091, 0.12123076923076925],
+                    "rel_width": 0.2636931818181818
+                },
+                "DATA_MEMORY": {
+                    "rel_pos": [0.7480999999999999, 0.3232692307692307],
+                    "rel_width": 0.17
+                },
+                "CLOCK": {
+                    "rel_pos": [0.105, 0.7789230769230769],
+                    "rel_width": 0.13
                 }
             }
         },
-        "rv32i-program11@2a958f73fc9d36f0": {
-            "min_aspect_ratio": 0.61,
-            "aspect_ratio": 0.61,
+        "rv32i-program11": {
+            "min_aspect_ratio": 0.35,
+            "aspect_ratio": 0.65,
             "children": {
-                "CONST_LOW": {
-                    "rel_pos": [0.08848, 0.3170054644808743],
-                    "rel_width": 0.264
-                },
-                "CONST_WORD_SIZE": {
-                    "rel_pos": [0.08848, 0.5407213114754099],
-                    "rel_width": 0.264
-                },
-                "CONST_ZERO32": {
-                    "rel_pos": [0.08848, 0.7644371584699454],
-                    "rel_width": 0.264
-                },
-                "DATA_MEMORY": {
-                    "rel_pos": [0.46121798540833137, 0.31154859484777514],
-                    "rel_width": 0.14785714285714285
-                },
                 "INSTRUCTION_MEMORY": {
-                    "rel_pos": [0.46121798540833137, 0.6471223653395783],
-                    "rel_width": 0.14785714285714285
+                    "rel_pos": [0.08190000000000001, 0.3232692307692307],
+                    "rel_width": 0.17
                 },
                 "CORE": {
-                    "rel_pos": [0.7134968698517298, 0.33105139492802554],
-                    "rel_width": 0.20233937397034593
+                    "rel_pos": [0.3681534090909091, 0.12123076923076925],
+                    "rel_width": 0.2636931818181818
+                },
+                "DATA_MEMORY": {
+                    "rel_pos": [0.7480999999999999, 0.3232692307692307],
+                    "rel_width": 0.17
+                },
+                "CLOCK": {
+                    "rel_pos": [0.105, 0.7789230769230769],
+                    "rel_width": 0.13
                 }
             }
         },
-        "rv32i-program12@2a958f73fc9d36f0": {
-            "min_aspect_ratio": 0.61,
-            "aspect_ratio": 0.61,
+        "rv32i-program12": {
+            "min_aspect_ratio": 0.35,
+            "aspect_ratio": 0.65,
             "children": {
-                "CONST_LOW": {
-                    "rel_pos": [0.08848, 0.3170054644808743],
-                    "rel_width": 0.264
-                },
-                "CONST_WORD_SIZE": {
-                    "rel_pos": [0.08848, 0.5407213114754099],
-                    "rel_width": 0.264
-                },
-                "CONST_ZERO32": {
-                    "rel_pos": [0.08848, 0.7644371584699454],
-                    "rel_width": 0.264
-                },
-                "DATA_MEMORY": {
-                    "rel_pos": [0.46121798540833137, 0.31154859484777514],
-                    "rel_width": 0.14785714285714285
-                },
                 "INSTRUCTION_MEMORY": {
-                    "rel_pos": [0.46121798540833137, 0.6471223653395783],
-                    "rel_width": 0.14785714285714285
+                    "rel_pos": [0.08190000000000001, 0.3232692307692307],
+                    "rel_width": 0.17
                 },
                 "CORE": {
-                    "rel_pos": [0.7134968698517298, 0.33105139492802554],
-                    "rel_width": 0.20233937397034593
+                    "rel_pos": [0.3681534090909091, 0.12123076923076925],
+                    "rel_width": 0.2636931818181818
+                },
+                "DATA_MEMORY": {
+                    "rel_pos": [0.7480999999999999, 0.3232692307692307],
+                    "rel_width": 0.17
+                },
+                "CLOCK": {
+                    "rel_pos": [0.105, 0.7789230769230769],
+                    "rel_width": 0.13
                 }
             }
         },
-        "rv32i-program13@2a958f73fc9d36f0": {
-            "min_aspect_ratio": 0.61,
-            "aspect_ratio": 0.61,
+        "rv32i-program13": {
+            "min_aspect_ratio": 0.35,
+            "aspect_ratio": 0.65,
             "children": {
-                "CONST_LOW": {
-                    "rel_pos": [0.08848, 0.3170054644808743],
-                    "rel_width": 0.264
-                },
-                "CONST_WORD_SIZE": {
-                    "rel_pos": [0.08848, 0.5407213114754099],
-                    "rel_width": 0.264
-                },
-                "CONST_ZERO32": {
-                    "rel_pos": [0.08848, 0.7644371584699454],
-                    "rel_width": 0.264
-                },
-                "DATA_MEMORY": {
-                    "rel_pos": [0.46121798540833137, 0.31154859484777514],
-                    "rel_width": 0.14785714285714285
-                },
                 "INSTRUCTION_MEMORY": {
-                    "rel_pos": [0.46121798540833137, 0.6471223653395783],
-                    "rel_width": 0.14785714285714285
+                    "rel_pos": [0.08190000000000001, 0.3232692307692307],
+                    "rel_width": 0.17
                 },
                 "CORE": {
-                    "rel_pos": [0.7134968698517298, 0.33105139492802554],
-                    "rel_width": 0.20233937397034593
+                    "rel_pos": [0.3681534090909091, 0.12123076923076925],
+                    "rel_width": 0.2636931818181818
+                },
+                "DATA_MEMORY": {
+                    "rel_pos": [0.7480999999999999, 0.3232692307692307],
+                    "rel_width": 0.17
+                },
+                "CLOCK": {
+                    "rel_pos": [0.105, 0.7789230769230769],
+                    "rel_width": 0.13
                 }
             }
         },
-        "rv32i-program14@2a958f73fc9d36f0": {
-            "min_aspect_ratio": 0.61,
-            "aspect_ratio": 0.61,
+        "rv32i-program14": {
+            "min_aspect_ratio": 0.35,
+            "aspect_ratio": 0.65,
             "children": {
-                "CONST_LOW": {
-                    "rel_pos": [0.08848, 0.3170054644808743],
-                    "rel_width": 0.264
-                },
-                "CONST_WORD_SIZE": {
-                    "rel_pos": [0.08848, 0.5407213114754099],
-                    "rel_width": 0.264
-                },
-                "CONST_ZERO32": {
-                    "rel_pos": [0.08848, 0.7644371584699454],
-                    "rel_width": 0.264
-                },
-                "DATA_MEMORY": {
-                    "rel_pos": [0.46121798540833137, 0.31154859484777514],
-                    "rel_width": 0.14785714285714285
-                },
                 "INSTRUCTION_MEMORY": {
-                    "rel_pos": [0.46121798540833137, 0.6471223653395783],
-                    "rel_width": 0.14785714285714285
+                    "rel_pos": [0.08190000000000001, 0.3232692307692307],
+                    "rel_width": 0.17
                 },
                 "CORE": {
-                    "rel_pos": [0.7134968698517298, 0.33105139492802554],
-                    "rel_width": 0.20233937397034593
+                    "rel_pos": [0.3681534090909091, 0.12123076923076925],
+                    "rel_width": 0.2636931818181818
+                },
+                "DATA_MEMORY": {
+                    "rel_pos": [0.7480999999999999, 0.3232692307692307],
+                    "rel_width": 0.17
+                },
+                "CLOCK": {
+                    "rel_pos": [0.105, 0.7789230769230769],
+                    "rel_width": 0.13
                 }
             }
         },
-        "rv32i-program15@2a958f73fc9d36f0": {
-            "min_aspect_ratio": 0.61,
-            "aspect_ratio": 0.61,
+        "rv32i-program15": {
+            "min_aspect_ratio": 0.35,
+            "aspect_ratio": 0.65,
             "children": {
-                "CONST_LOW": {
-                    "rel_pos": [0.08848, 0.3170054644808743],
-                    "rel_width": 0.264
-                },
-                "CONST_WORD_SIZE": {
-                    "rel_pos": [0.08848, 0.5407213114754099],
-                    "rel_width": 0.264
-                },
-                "CONST_ZERO32": {
-                    "rel_pos": [0.08848, 0.7644371584699454],
-                    "rel_width": 0.264
-                },
-                "DATA_MEMORY": {
-                    "rel_pos": [0.46121798540833137, 0.31154859484777514],
-                    "rel_width": 0.14785714285714285
-                },
                 "INSTRUCTION_MEMORY": {
-                    "rel_pos": [0.46121798540833137, 0.6471223653395783],
-                    "rel_width": 0.14785714285714285
+                    "rel_pos": [0.08190000000000001, 0.3232692307692307],
+                    "rel_width": 0.17
                 },
                 "CORE": {
-                    "rel_pos": [0.7134968698517298, 0.33105139492802554],
-                    "rel_width": 0.20233937397034593
+                    "rel_pos": [0.3681534090909091, 0.12123076923076925],
+                    "rel_width": 0.2636931818181818
+                },
+                "DATA_MEMORY": {
+                    "rel_pos": [0.7480999999999999, 0.3232692307692307],
+                    "rel_width": 0.17
+                },
+                "CLOCK": {
+                    "rel_pos": [0.105, 0.7789230769230769],
+                    "rel_width": 0.13
                 }
             }
         },
-        "rv32i-program16@2a958f73fc9d36f0": {
-            "min_aspect_ratio": 0.61,
-            "aspect_ratio": 0.61,
+        "rv32i-program16": {
+            "min_aspect_ratio": 0.35,
+            "aspect_ratio": 0.65,
             "children": {
-                "CONST_LOW": {
-                    "rel_pos": [0.08848, 0.3170054644808743],
-                    "rel_width": 0.264
-                },
-                "CONST_WORD_SIZE": {
-                    "rel_pos": [0.08848, 0.5407213114754099],
-                    "rel_width": 0.264
-                },
-                "CONST_ZERO32": {
-                    "rel_pos": [0.08848, 0.7644371584699454],
-                    "rel_width": 0.264
-                },
-                "DATA_MEMORY": {
-                    "rel_pos": [0.46121798540833137, 0.31154859484777514],
-                    "rel_width": 0.14785714285714285
-                },
                 "INSTRUCTION_MEMORY": {
-                    "rel_pos": [0.46121798540833137, 0.6471223653395783],
-                    "rel_width": 0.14785714285714285
+                    "rel_pos": [0.08190000000000001, 0.3232692307692307],
+                    "rel_width": 0.17
                 },
                 "CORE": {
-                    "rel_pos": [0.7134968698517298, 0.33105139492802554],
-                    "rel_width": 0.20233937397034593
+                    "rel_pos": [0.3681534090909091, 0.12123076923076925],
+                    "rel_width": 0.2636931818181818
+                },
+                "DATA_MEMORY": {
+                    "rel_pos": [0.7480999999999999, 0.3232692307692307],
+                    "rel_width": 0.17
+                },
+                "CLOCK": {
+                    "rel_pos": [0.105, 0.7789230769230769],
+                    "rel_width": 0.13
                 }
             }
         },
-        "rv32i-program17@2a958f73fc9d36f0": {
-            "min_aspect_ratio": 0.61,
-            "aspect_ratio": 0.61,
+        "rv32i-program17": {
+            "min_aspect_ratio": 0.35,
+            "aspect_ratio": 0.65,
             "children": {
-                "CONST_LOW": {
-                    "rel_pos": [0.08848, 0.3170054644808743],
-                    "rel_width": 0.264
-                },
-                "CONST_WORD_SIZE": {
-                    "rel_pos": [0.08848, 0.5407213114754099],
-                    "rel_width": 0.264
-                },
-                "CONST_ZERO32": {
-                    "rel_pos": [0.08848, 0.7644371584699454],
-                    "rel_width": 0.264
-                },
-                "DATA_MEMORY": {
-                    "rel_pos": [0.46121798540833137, 0.31154859484777514],
-                    "rel_width": 0.14785714285714285
-                },
                 "INSTRUCTION_MEMORY": {
-                    "rel_pos": [0.46121798540833137, 0.6471223653395783],
-                    "rel_width": 0.14785714285714285
+                    "rel_pos": [0.08190000000000001, 0.3232692307692307],
+                    "rel_width": 0.17
                 },
                 "CORE": {
-                    "rel_pos": [0.7134968698517298, 0.33105139492802554],
-                    "rel_width": 0.20233937397034593
+                    "rel_pos": [0.3681534090909091, 0.12123076923076925],
+                    "rel_width": 0.2636931818181818
+                },
+                "DATA_MEMORY": {
+                    "rel_pos": [0.7480999999999999, 0.3232692307692307],
+                    "rel_width": 0.17
+                },
+                "CLOCK": {
+                    "rel_pos": [0.105, 0.7789230769230769],
+                    "rel_width": 0.13
                 }
             }
         },
-        "rv32i-program18@2a958f73fc9d36f0": {
-            "min_aspect_ratio": 0.61,
-            "aspect_ratio": 0.61,
+        "rv32i-program18": {
+            "min_aspect_ratio": 0.35,
+            "aspect_ratio": 0.65,
             "children": {
-                "CONST_LOW": {
-                    "rel_pos": [0.08848, 0.3170054644808743],
-                    "rel_width": 0.264
-                },
-                "CONST_WORD_SIZE": {
-                    "rel_pos": [0.08848, 0.5407213114754099],
-                    "rel_width": 0.264
-                },
-                "CONST_ZERO32": {
-                    "rel_pos": [0.08848, 0.7644371584699454],
-                    "rel_width": 0.264
-                },
-                "DATA_MEMORY": {
-                    "rel_pos": [0.46121798540833137, 0.31154859484777514],
-                    "rel_width": 0.14785714285714285
-                },
                 "INSTRUCTION_MEMORY": {
-                    "rel_pos": [0.46121798540833137, 0.6471223653395783],
-                    "rel_width": 0.14785714285714285
+                    "rel_pos": [0.08190000000000001, 0.3232692307692307],
+                    "rel_width": 0.17
                 },
                 "CORE": {
-                    "rel_pos": [0.7134968698517298, 0.33105139492802554],
-                    "rel_width": 0.20233937397034593
+                    "rel_pos": [0.3681534090909091, 0.12123076923076925],
+                    "rel_width": 0.2636931818181818
+                },
+                "DATA_MEMORY": {
+                    "rel_pos": [0.7480999999999999, 0.3232692307692307],
+                    "rel_width": 0.17
+                },
+                "CLOCK": {
+                    "rel_pos": [0.105, 0.7789230769230769],
+                    "rel_width": 0.13
                 }
             }
         },
-        "rv32i-program19@2a958f73fc9d36f0": {
-            "min_aspect_ratio": 0.61,
-            "aspect_ratio": 0.61,
+        "rv32i-program19": {
+            "min_aspect_ratio": 0.35,
+            "aspect_ratio": 0.65,
             "children": {
-                "CONST_LOW": {
-                    "rel_pos": [0.08848, 0.3170054644808743],
-                    "rel_width": 0.264
-                },
-                "CONST_WORD_SIZE": {
-                    "rel_pos": [0.08848, 0.5407213114754099],
-                    "rel_width": 0.264
-                },
-                "CONST_ZERO32": {
-                    "rel_pos": [0.08848, 0.7644371584699454],
-                    "rel_width": 0.264
-                },
-                "DATA_MEMORY": {
-                    "rel_pos": [0.46121798540833137, 0.31154859484777514],
-                    "rel_width": 0.14785714285714285
-                },
                 "INSTRUCTION_MEMORY": {
-                    "rel_pos": [0.46121798540833137, 0.6471223653395783],
-                    "rel_width": 0.14785714285714285
+                    "rel_pos": [0.08190000000000001, 0.3232692307692307],
+                    "rel_width": 0.17
                 },
                 "CORE": {
-                    "rel_pos": [0.7134968698517298, 0.33105139492802554],
-                    "rel_width": 0.20233937397034593
+                    "rel_pos": [0.3681534090909091, 0.12123076923076925],
+                    "rel_width": 0.2636931818181818
+                },
+                "DATA_MEMORY": {
+                    "rel_pos": [0.7480999999999999, 0.3232692307692307],
+                    "rel_width": 0.17
+                },
+                "CLOCK": {
+                    "rel_pos": [0.105, 0.7789230769230769],
+                    "rel_width": 0.13
                 }
             }
         },
-        "rv32i-program20@2a958f73fc9d36f0": {
-            "min_aspect_ratio": 0.61,
-            "aspect_ratio": 0.61,
+        "rv32i-program20": {
+            "min_aspect_ratio": 0.35,
+            "aspect_ratio": 0.65,
             "children": {
-                "CONST_LOW": {
-                    "rel_pos": [0.08848, 0.3170054644808743],
-                    "rel_width": 0.264
-                },
-                "CONST_WORD_SIZE": {
-                    "rel_pos": [0.08848, 0.5407213114754099],
-                    "rel_width": 0.264
-                },
-                "CONST_ZERO32": {
-                    "rel_pos": [0.08848, 0.7644371584699454],
-                    "rel_width": 0.264
-                },
-                "DATA_MEMORY": {
-                    "rel_pos": [0.46121798540833137, 0.31154859484777514],
-                    "rel_width": 0.14785714285714285
-                },
                 "INSTRUCTION_MEMORY": {
-                    "rel_pos": [0.46121798540833137, 0.6471223653395783],
-                    "rel_width": 0.14785714285714285
+                    "rel_pos": [0.08190000000000001, 0.3232692307692307],
+                    "rel_width": 0.17
                 },
                 "CORE": {
-                    "rel_pos": [0.7134968698517298, 0.33105139492802554],
-                    "rel_width": 0.20233937397034593
+                    "rel_pos": [0.3681534090909091, 0.12123076923076925],
+                    "rel_width": 0.2636931818181818
+                },
+                "DATA_MEMORY": {
+                    "rel_pos": [0.7480999999999999, 0.3232692307692307],
+                    "rel_width": 0.17
+                },
+                "CLOCK": {
+                    "rel_pos": [0.105, 0.7789230769230769],
+                    "rel_width": 0.13
                 }
             }
         },
-        "rv32i-program21@2a958f73fc9d36f0": {
-            "min_aspect_ratio": 0.61,
-            "aspect_ratio": 0.61,
+        "rv32i-program21": {
+            "min_aspect_ratio": 0.35,
+            "aspect_ratio": 0.65,
             "children": {
-                "CONST_LOW": {
-                    "rel_pos": [0.08848, 0.3170054644808743],
-                    "rel_width": 0.264
-                },
-                "CONST_WORD_SIZE": {
-                    "rel_pos": [0.08848, 0.5407213114754099],
-                    "rel_width": 0.264
-                },
-                "CONST_ZERO32": {
-                    "rel_pos": [0.08848, 0.7644371584699454],
-                    "rel_width": 0.264
-                },
-                "DATA_MEMORY": {
-                    "rel_pos": [0.46121798540833137, 0.31154859484777514],
-                    "rel_width": 0.14785714285714285
-                },
                 "INSTRUCTION_MEMORY": {
-                    "rel_pos": [0.46121798540833137, 0.6471223653395783],
-                    "rel_width": 0.14785714285714285
+                    "rel_pos": [0.08190000000000001, 0.3232692307692307],
+                    "rel_width": 0.17
                 },
                 "CORE": {
-                    "rel_pos": [0.7134968698517298, 0.33105139492802554],
-                    "rel_width": 0.20233937397034593
+                    "rel_pos": [0.3681534090909091, 0.12123076923076925],
+                    "rel_width": 0.2636931818181818
+                },
+                "DATA_MEMORY": {
+                    "rel_pos": [0.7480999999999999, 0.3232692307692307],
+                    "rel_width": 0.17
+                },
+                "CLOCK": {
+                    "rel_pos": [0.105, 0.7789230769230769],
+                    "rel_width": 0.13
                 }
             }
         },
-        "rv32i-program22@2a958f73fc9d36f0": {
-            "min_aspect_ratio": 0.61,
-            "aspect_ratio": 0.61,
+        "rv32i-program22": {
+            "min_aspect_ratio": 0.35,
+            "aspect_ratio": 0.65,
             "children": {
-                "CONST_LOW": {
-                    "rel_pos": [0.08848, 0.3170054644808743],
-                    "rel_width": 0.264
-                },
-                "CONST_WORD_SIZE": {
-                    "rel_pos": [0.08848, 0.5407213114754099],
-                    "rel_width": 0.264
-                },
-                "CONST_ZERO32": {
-                    "rel_pos": [0.08848, 0.7644371584699454],
-                    "rel_width": 0.264
-                },
-                "DATA_MEMORY": {
-                    "rel_pos": [0.46121798540833137, 0.31154859484777514],
-                    "rel_width": 0.14785714285714285
-                },
                 "INSTRUCTION_MEMORY": {
-                    "rel_pos": [0.46121798540833137, 0.6471223653395783],
-                    "rel_width": 0.14785714285714285
+                    "rel_pos": [0.08190000000000001, 0.3232692307692307],
+                    "rel_width": 0.17
                 },
                 "CORE": {
-                    "rel_pos": [0.7134968698517298, 0.33105139492802554],
-                    "rel_width": 0.20233937397034593
+                    "rel_pos": [0.3681534090909091, 0.12123076923076925],
+                    "rel_width": 0.2636931818181818
+                },
+                "DATA_MEMORY": {
+                    "rel_pos": [0.7480999999999999, 0.3232692307692307],
+                    "rel_width": 0.17
+                },
+                "CLOCK": {
+                    "rel_pos": [0.105, 0.7789230769230769],
+                    "rel_width": 0.13
                 }
             }
         },
         "rv32i-five-stage-program1": {
-            "min_aspect_ratio": 0.425,
-            "aspect_ratio": 0.425,
+            "min_aspect_ratio": 0.35,
+            "aspect_ratio": 0.65,
             "children": {
-                "CONST_LOW": {
-                    "rel_pos": [0.08216508875739646, 0.4068168000928182],
-                    "rel_width": 0.17378698224852066
-                },
-                "CONST_WORD_SIZE": {
-                    "rel_pos": [0.08216508875739646, 0.5987775844065437],
-                    "rel_width": 0.17378698224852066
-                },
-                "CONST_ZERO32": {
-                    "rel_pos": [0.08216508875739646, 0.7907383687202691],
-                    "rel_width": 0.17378698224852066
-                },
-                "DATA_MEMORY": {
-                    "rel_pos": [0.4037160544234083, 0.40741272313406013],
-                    "rel_width": 0.08972505091649692
-                },
                 "INSTRUCTION_MEMORY": {
-                    "rel_pos": [0.4037160544234083, 0.6953538996046484],
-                    "rel_width": 0.08972505091649692
+                    "rel_pos": [0.08190000000000001, 0.3232692307692307],
+                    "rel_width": 0.17
                 },
                 "CORE": {
-                    "rel_pos": [0.6475199999999999, 0.4894964705882353],
-                    "rel_width": 0.264
+                    "rel_pos": [0.3, 0.2929999999999999],
+                    "rel_width": 0.4
+                },
+                "DATA_MEMORY": {
+                    "rel_pos": [0.7480999999999999, 0.3232692307692307],
+                    "rel_width": 0.17
+                },
+                "CLOCK": {
+                    "rel_pos": [0.105, 0.7789230769230769],
+                    "rel_width": 0.13
                 }
             }
         },
         "rv32i-five-stage-program2": {
-            "min_aspect_ratio": 0.425,
-            "aspect_ratio": 0.425,
+            "min_aspect_ratio": 0.35,
+            "aspect_ratio": 0.65,
             "children": {
-                "CONST_LOW": {
-                    "rel_pos": [0.08216508875739646, 0.4068168000928182],
-                    "rel_width": 0.17378698224852066
-                },
-                "CONST_WORD_SIZE": {
-                    "rel_pos": [0.08216508875739646, 0.5987775844065437],
-                    "rel_width": 0.17378698224852066
-                },
-                "CONST_ZERO32": {
-                    "rel_pos": [0.08216508875739646, 0.7907383687202691],
-                    "rel_width": 0.17378698224852066
-                },
-                "DATA_MEMORY": {
-                    "rel_pos": [0.4037160544234083, 0.40741272313406013],
-                    "rel_width": 0.08972505091649692
-                },
                 "INSTRUCTION_MEMORY": {
-                    "rel_pos": [0.4037160544234083, 0.6953538996046484],
-                    "rel_width": 0.08972505091649692
+                    "rel_pos": [0.08190000000000001, 0.3232692307692307],
+                    "rel_width": 0.17
                 },
                 "CORE": {
-                    "rel_pos": [0.6475199999999999, 0.4894964705882353],
-                    "rel_width": 0.264
+                    "rel_pos": [0.3, 0.2929999999999999],
+                    "rel_width": 0.4
+                },
+                "DATA_MEMORY": {
+                    "rel_pos": [0.7480999999999999, 0.3232692307692307],
+                    "rel_width": 0.17
+                },
+                "CLOCK": {
+                    "rel_pos": [0.105, 0.7789230769230769],
+                    "rel_width": 0.13
                 }
             }
         },
         "rv32i-five-stage-program3": {
-            "min_aspect_ratio": 0.425,
-            "aspect_ratio": 0.425,
+            "min_aspect_ratio": 0.35,
+            "aspect_ratio": 0.65,
             "children": {
-                "CONST_LOW": {
-                    "rel_pos": [0.08216508875739646, 0.4068168000928182],
-                    "rel_width": 0.17378698224852066
-                },
-                "CONST_WORD_SIZE": {
-                    "rel_pos": [0.08216508875739646, 0.5987775844065437],
-                    "rel_width": 0.17378698224852066
-                },
-                "CONST_ZERO32": {
-                    "rel_pos": [0.08216508875739646, 0.7907383687202691],
-                    "rel_width": 0.17378698224852066
-                },
-                "DATA_MEMORY": {
-                    "rel_pos": [0.4037160544234083, 0.40741272313406013],
-                    "rel_width": 0.08972505091649692
-                },
                 "INSTRUCTION_MEMORY": {
-                    "rel_pos": [0.4037160544234083, 0.6953538996046484],
-                    "rel_width": 0.08972505091649692
+                    "rel_pos": [0.08190000000000001, 0.3232692307692307],
+                    "rel_width": 0.17
                 },
                 "CORE": {
-                    "rel_pos": [0.6475199999999999, 0.4894964705882353],
-                    "rel_width": 0.264
+                    "rel_pos": [0.3, 0.2929999999999999],
+                    "rel_width": 0.4
+                },
+                "DATA_MEMORY": {
+                    "rel_pos": [0.7480999999999999, 0.3232692307692307],
+                    "rel_width": 0.17
+                },
+                "CLOCK": {
+                    "rel_pos": [0.105, 0.7789230769230769],
+                    "rel_width": 0.13
                 }
             }
         },
         "rv32i-five-stage-program4": {
-            "min_aspect_ratio": 0.425,
-            "aspect_ratio": 0.425,
+            "min_aspect_ratio": 0.35,
+            "aspect_ratio": 0.65,
             "children": {
-                "CONST_LOW": {
-                    "rel_pos": [0.08216508875739646, 0.4068168000928182],
-                    "rel_width": 0.17378698224852066
-                },
-                "CONST_WORD_SIZE": {
-                    "rel_pos": [0.08216508875739646, 0.5987775844065437],
-                    "rel_width": 0.17378698224852066
-                },
-                "CONST_ZERO32": {
-                    "rel_pos": [0.08216508875739646, 0.7907383687202691],
-                    "rel_width": 0.17378698224852066
-                },
-                "DATA_MEMORY": {
-                    "rel_pos": [0.4037160544234083, 0.40741272313406013],
-                    "rel_width": 0.08972505091649692
-                },
                 "INSTRUCTION_MEMORY": {
-                    "rel_pos": [0.4037160544234083, 0.6953538996046484],
-                    "rel_width": 0.08972505091649692
+                    "rel_pos": [0.08190000000000001, 0.3232692307692307],
+                    "rel_width": 0.17
                 },
                 "CORE": {
-                    "rel_pos": [0.6475199999999999, 0.4894964705882353],
-                    "rel_width": 0.264
+                    "rel_pos": [0.3, 0.2929999999999999],
+                    "rel_width": 0.4
+                },
+                "DATA_MEMORY": {
+                    "rel_pos": [0.7480999999999999, 0.3232692307692307],
+                    "rel_width": 0.17
+                },
+                "CLOCK": {
+                    "rel_pos": [0.105, 0.7789230769230769],
+                    "rel_width": 0.13
                 }
             }
         },
         "rv32i-five-stage-program5": {
-            "min_aspect_ratio": 0.425,
-            "aspect_ratio": 0.425,
+            "min_aspect_ratio": 0.35,
+            "aspect_ratio": 0.65,
             "children": {
-                "CONST_LOW": {
-                    "rel_pos": [0.08216508875739646, 0.4068168000928182],
-                    "rel_width": 0.17378698224852066
-                },
-                "CONST_WORD_SIZE": {
-                    "rel_pos": [0.08216508875739646, 0.5987775844065437],
-                    "rel_width": 0.17378698224852066
-                },
-                "CONST_ZERO32": {
-                    "rel_pos": [0.08216508875739646, 0.7907383687202691],
-                    "rel_width": 0.17378698224852066
-                },
-                "DATA_MEMORY": {
-                    "rel_pos": [0.4037160544234083, 0.40741272313406013],
-                    "rel_width": 0.08972505091649692
-                },
                 "INSTRUCTION_MEMORY": {
-                    "rel_pos": [0.4037160544234083, 0.6953538996046484],
-                    "rel_width": 0.08972505091649692
+                    "rel_pos": [0.08190000000000001, 0.3232692307692307],
+                    "rel_width": 0.17
                 },
                 "CORE": {
-                    "rel_pos": [0.6475199999999999, 0.4894964705882353],
-                    "rel_width": 0.264
+                    "rel_pos": [0.3, 0.2929999999999999],
+                    "rel_width": 0.4
+                },
+                "DATA_MEMORY": {
+                    "rel_pos": [0.7480999999999999, 0.3232692307692307],
+                    "rel_width": 0.17
+                },
+                "CLOCK": {
+                    "rel_pos": [0.105, 0.7789230769230769],
+                    "rel_width": 0.13
                 }
             }
         },
         "rv32i-five-stage-program6": {
-            "min_aspect_ratio": 0.425,
-            "aspect_ratio": 0.425,
+            "min_aspect_ratio": 0.35,
+            "aspect_ratio": 0.65,
             "children": {
-                "CONST_LOW": {
-                    "rel_pos": [0.08216508875739646, 0.4068168000928182],
-                    "rel_width": 0.17378698224852066
-                },
-                "CONST_WORD_SIZE": {
-                    "rel_pos": [0.08216508875739646, 0.5987775844065437],
-                    "rel_width": 0.17378698224852066
-                },
-                "CONST_ZERO32": {
-                    "rel_pos": [0.08216508875739646, 0.7907383687202691],
-                    "rel_width": 0.17378698224852066
-                },
-                "DATA_MEMORY": {
-                    "rel_pos": [0.4037160544234083, 0.40741272313406013],
-                    "rel_width": 0.08972505091649692
-                },
                 "INSTRUCTION_MEMORY": {
-                    "rel_pos": [0.4037160544234083, 0.6953538996046484],
-                    "rel_width": 0.08972505091649692
+                    "rel_pos": [0.08190000000000001, 0.3232692307692307],
+                    "rel_width": 0.17
                 },
                 "CORE": {
-                    "rel_pos": [0.6475199999999999, 0.4894964705882353],
-                    "rel_width": 0.264
+                    "rel_pos": [0.3, 0.2929999999999999],
+                    "rel_width": 0.4
+                },
+                "DATA_MEMORY": {
+                    "rel_pos": [0.7480999999999999, 0.3232692307692307],
+                    "rel_width": 0.17
+                },
+                "CLOCK": {
+                    "rel_pos": [0.105, 0.7789230769230769],
+                    "rel_width": 0.13
                 }
             }
         },
         "rv32i-five-stage-program7": {
-            "min_aspect_ratio": 0.425,
-            "aspect_ratio": 0.425,
+            "min_aspect_ratio": 0.35,
+            "aspect_ratio": 0.65,
             "children": {
-                "CONST_LOW": {
-                    "rel_pos": [0.08216508875739646, 0.4068168000928182],
-                    "rel_width": 0.17378698224852066
-                },
-                "CONST_WORD_SIZE": {
-                    "rel_pos": [0.08216508875739646, 0.5987775844065437],
-                    "rel_width": 0.17378698224852066
-                },
-                "CONST_ZERO32": {
-                    "rel_pos": [0.08216508875739646, 0.7907383687202691],
-                    "rel_width": 0.17378698224852066
-                },
-                "DATA_MEMORY": {
-                    "rel_pos": [0.4037160544234083, 0.40741272313406013],
-                    "rel_width": 0.08972505091649692
-                },
                 "INSTRUCTION_MEMORY": {
-                    "rel_pos": [0.4037160544234083, 0.6953538996046484],
-                    "rel_width": 0.08972505091649692
+                    "rel_pos": [0.08190000000000001, 0.3232692307692307],
+                    "rel_width": 0.17
                 },
                 "CORE": {
-                    "rel_pos": [0.6475199999999999, 0.4894964705882353],
-                    "rel_width": 0.264
+                    "rel_pos": [0.3, 0.2929999999999999],
+                    "rel_width": 0.4
+                },
+                "DATA_MEMORY": {
+                    "rel_pos": [0.7480999999999999, 0.3232692307692307],
+                    "rel_width": 0.17
+                },
+                "CLOCK": {
+                    "rel_pos": [0.105, 0.7789230769230769],
+                    "rel_width": 0.13
                 }
             }
         },
         "rv32i-five-stage-program8": {
-            "min_aspect_ratio": 0.425,
-            "aspect_ratio": 0.425,
+            "min_aspect_ratio": 0.35,
+            "aspect_ratio": 0.65,
             "children": {
-                "CONST_LOW": {
-                    "rel_pos": [0.08216508875739646, 0.4068168000928182],
-                    "rel_width": 0.17378698224852066
-                },
-                "CONST_WORD_SIZE": {
-                    "rel_pos": [0.08216508875739646, 0.5987775844065437],
-                    "rel_width": 0.17378698224852066
-                },
-                "CONST_ZERO32": {
-                    "rel_pos": [0.08216508875739646, 0.7907383687202691],
-                    "rel_width": 0.17378698224852066
-                },
-                "DATA_MEMORY": {
-                    "rel_pos": [0.4037160544234083, 0.40741272313406013],
-                    "rel_width": 0.08972505091649692
-                },
                 "INSTRUCTION_MEMORY": {
-                    "rel_pos": [0.4037160544234083, 0.6953538996046484],
-                    "rel_width": 0.08972505091649692
+                    "rel_pos": [0.08190000000000001, 0.3232692307692307],
+                    "rel_width": 0.17
                 },
                 "CORE": {
-                    "rel_pos": [0.6475199999999999, 0.4894964705882353],
-                    "rel_width": 0.264
+                    "rel_pos": [0.3, 0.2929999999999999],
+                    "rel_width": 0.4
+                },
+                "DATA_MEMORY": {
+                    "rel_pos": [0.7480999999999999, 0.3232692307692307],
+                    "rel_width": 0.17
+                },
+                "CLOCK": {
+                    "rel_pos": [0.105, 0.7789230769230769],
+                    "rel_width": 0.13
                 }
             }
         },
         "rv32i-five-stage-program9": {
-            "min_aspect_ratio": 0.425,
-            "aspect_ratio": 0.425,
+            "min_aspect_ratio": 0.35,
+            "aspect_ratio": 0.65,
             "children": {
-                "CONST_LOW": {
-                    "rel_pos": [0.08216508875739646, 0.4068168000928182],
-                    "rel_width": 0.17378698224852066
-                },
-                "CONST_WORD_SIZE": {
-                    "rel_pos": [0.08216508875739646, 0.5987775844065437],
-                    "rel_width": 0.17378698224852066
-                },
-                "CONST_ZERO32": {
-                    "rel_pos": [0.08216508875739646, 0.7907383687202691],
-                    "rel_width": 0.17378698224852066
-                },
-                "DATA_MEMORY": {
-                    "rel_pos": [0.4037160544234083, 0.40741272313406013],
-                    "rel_width": 0.08972505091649692
-                },
                 "INSTRUCTION_MEMORY": {
-                    "rel_pos": [0.4037160544234083, 0.6953538996046484],
-                    "rel_width": 0.08972505091649692
+                    "rel_pos": [0.08190000000000001, 0.3232692307692307],
+                    "rel_width": 0.17
                 },
                 "CORE": {
-                    "rel_pos": [0.6475199999999999, 0.4894964705882353],
-                    "rel_width": 0.264
+                    "rel_pos": [0.3, 0.2929999999999999],
+                    "rel_width": 0.4
+                },
+                "DATA_MEMORY": {
+                    "rel_pos": [0.7480999999999999, 0.3232692307692307],
+                    "rel_width": 0.17
+                },
+                "CLOCK": {
+                    "rel_pos": [0.105, 0.7789230769230769],
+                    "rel_width": 0.13
                 }
             }
         },
         "rv32i-five-stage-program10": {
-            "min_aspect_ratio": 0.425,
-            "aspect_ratio": 0.425,
+            "min_aspect_ratio": 0.35,
+            "aspect_ratio": 0.65,
             "children": {
-                "CONST_LOW": {
-                    "rel_pos": [0.08216508875739646, 0.4068168000928182],
-                    "rel_width": 0.17378698224852066
-                },
-                "CONST_WORD_SIZE": {
-                    "rel_pos": [0.08216508875739646, 0.5987775844065437],
-                    "rel_width": 0.17378698224852066
-                },
-                "CONST_ZERO32": {
-                    "rel_pos": [0.08216508875739646, 0.7907383687202691],
-                    "rel_width": 0.17378698224852066
-                },
-                "DATA_MEMORY": {
-                    "rel_pos": [0.4037160544234083, 0.40741272313406013],
-                    "rel_width": 0.08972505091649692
-                },
                 "INSTRUCTION_MEMORY": {
-                    "rel_pos": [0.4037160544234083, 0.6953538996046484],
-                    "rel_width": 0.08972505091649692
+                    "rel_pos": [0.08190000000000001, 0.3232692307692307],
+                    "rel_width": 0.17
                 },
                 "CORE": {
-                    "rel_pos": [0.6475199999999999, 0.4894964705882353],
-                    "rel_width": 0.264
+                    "rel_pos": [0.3, 0.2929999999999999],
+                    "rel_width": 0.4
+                },
+                "DATA_MEMORY": {
+                    "rel_pos": [0.7480999999999999, 0.3232692307692307],
+                    "rel_width": 0.17
+                },
+                "CLOCK": {
+                    "rel_pos": [0.105, 0.7789230769230769],
+                    "rel_width": 0.13
                 }
             }
         },
         "rv32i-five-stage-program11": {
-            "min_aspect_ratio": 0.425,
-            "aspect_ratio": 0.425,
+            "min_aspect_ratio": 0.35,
+            "aspect_ratio": 0.65,
             "children": {
-                "CONST_LOW": {
-                    "rel_pos": [0.08216508875739646, 0.4068168000928182],
-                    "rel_width": 0.17378698224852066
-                },
-                "CONST_WORD_SIZE": {
-                    "rel_pos": [0.08216508875739646, 0.5987775844065437],
-                    "rel_width": 0.17378698224852066
-                },
-                "CONST_ZERO32": {
-                    "rel_pos": [0.08216508875739646, 0.7907383687202691],
-                    "rel_width": 0.17378698224852066
-                },
-                "DATA_MEMORY": {
-                    "rel_pos": [0.4037160544234083, 0.40741272313406013],
-                    "rel_width": 0.08972505091649692
-                },
                 "INSTRUCTION_MEMORY": {
-                    "rel_pos": [0.4037160544234083, 0.6953538996046484],
-                    "rel_width": 0.08972505091649692
+                    "rel_pos": [0.08190000000000001, 0.3232692307692307],
+                    "rel_width": 0.17
                 },
                 "CORE": {
-                    "rel_pos": [0.6475199999999999, 0.4894964705882353],
-                    "rel_width": 0.264
+                    "rel_pos": [0.3, 0.2929999999999999],
+                    "rel_width": 0.4
+                },
+                "DATA_MEMORY": {
+                    "rel_pos": [0.7480999999999999, 0.3232692307692307],
+                    "rel_width": 0.17
+                },
+                "CLOCK": {
+                    "rel_pos": [0.105, 0.7789230769230769],
+                    "rel_width": 0.13
                 }
             }
         },
         "rv32i-five-stage-program12": {
-            "min_aspect_ratio": 0.425,
-            "aspect_ratio": 0.425,
+            "min_aspect_ratio": 0.35,
+            "aspect_ratio": 0.65,
             "children": {
-                "CONST_LOW": {
-                    "rel_pos": [0.08216508875739646, 0.4068168000928182],
-                    "rel_width": 0.17378698224852066
-                },
-                "CONST_WORD_SIZE": {
-                    "rel_pos": [0.08216508875739646, 0.5987775844065437],
-                    "rel_width": 0.17378698224852066
-                },
-                "CONST_ZERO32": {
-                    "rel_pos": [0.08216508875739646, 0.7907383687202691],
-                    "rel_width": 0.17378698224852066
-                },
-                "DATA_MEMORY": {
-                    "rel_pos": [0.4037160544234083, 0.40741272313406013],
-                    "rel_width": 0.08972505091649692
-                },
                 "INSTRUCTION_MEMORY": {
-                    "rel_pos": [0.4037160544234083, 0.6953538996046484],
-                    "rel_width": 0.08972505091649692
+                    "rel_pos": [0.08190000000000001, 0.3232692307692307],
+                    "rel_width": 0.17
                 },
                 "CORE": {
-                    "rel_pos": [0.6475199999999999, 0.4894964705882353],
-                    "rel_width": 0.264
+                    "rel_pos": [0.3, 0.2929999999999999],
+                    "rel_width": 0.4
+                },
+                "DATA_MEMORY": {
+                    "rel_pos": [0.7480999999999999, 0.3232692307692307],
+                    "rel_width": 0.17
+                },
+                "CLOCK": {
+                    "rel_pos": [0.105, 0.7789230769230769],
+                    "rel_width": 0.13
                 }
             }
         },
         "rv32i-five-stage-program13": {
-            "min_aspect_ratio": 0.425,
-            "aspect_ratio": 0.425,
+            "min_aspect_ratio": 0.35,
+            "aspect_ratio": 0.65,
             "children": {
-                "CONST_LOW": {
-                    "rel_pos": [0.08216508875739646, 0.4068168000928182],
-                    "rel_width": 0.17378698224852066
-                },
-                "CONST_WORD_SIZE": {
-                    "rel_pos": [0.08216508875739646, 0.5987775844065437],
-                    "rel_width": 0.17378698224852066
-                },
-                "CONST_ZERO32": {
-                    "rel_pos": [0.08216508875739646, 0.7907383687202691],
-                    "rel_width": 0.17378698224852066
-                },
-                "DATA_MEMORY": {
-                    "rel_pos": [0.4037160544234083, 0.40741272313406013],
-                    "rel_width": 0.08972505091649692
-                },
                 "INSTRUCTION_MEMORY": {
-                    "rel_pos": [0.4037160544234083, 0.6953538996046484],
-                    "rel_width": 0.08972505091649692
+                    "rel_pos": [0.08190000000000001, 0.3232692307692307],
+                    "rel_width": 0.17
                 },
                 "CORE": {
-                    "rel_pos": [0.6475199999999999, 0.4894964705882353],
-                    "rel_width": 0.264
+                    "rel_pos": [0.3, 0.2929999999999999],
+                    "rel_width": 0.4
+                },
+                "DATA_MEMORY": {
+                    "rel_pos": [0.7480999999999999, 0.3232692307692307],
+                    "rel_width": 0.17
+                },
+                "CLOCK": {
+                    "rel_pos": [0.105, 0.7789230769230769],
+                    "rel_width": 0.13
                 }
             }
         },
         "rv32i-five-stage-program14": {
-            "min_aspect_ratio": 0.425,
-            "aspect_ratio": 0.425,
+            "min_aspect_ratio": 0.35,
+            "aspect_ratio": 0.65,
             "children": {
-                "CONST_LOW": {
-                    "rel_pos": [0.08216508875739646, 0.4068168000928182],
-                    "rel_width": 0.17378698224852066
-                },
-                "CONST_WORD_SIZE": {
-                    "rel_pos": [0.08216508875739646, 0.5987775844065437],
-                    "rel_width": 0.17378698224852066
-                },
-                "CONST_ZERO32": {
-                    "rel_pos": [0.08216508875739646, 0.7907383687202691],
-                    "rel_width": 0.17378698224852066
-                },
-                "DATA_MEMORY": {
-                    "rel_pos": [0.4037160544234083, 0.40741272313406013],
-                    "rel_width": 0.08972505091649692
-                },
                 "INSTRUCTION_MEMORY": {
-                    "rel_pos": [0.4037160544234083, 0.6953538996046484],
-                    "rel_width": 0.08972505091649692
+                    "rel_pos": [0.08190000000000001, 0.3232692307692307],
+                    "rel_width": 0.17
                 },
                 "CORE": {
-                    "rel_pos": [0.6475199999999999, 0.4894964705882353],
-                    "rel_width": 0.264
+                    "rel_pos": [0.3, 0.2929999999999999],
+                    "rel_width": 0.4
+                },
+                "DATA_MEMORY": {
+                    "rel_pos": [0.7480999999999999, 0.3232692307692307],
+                    "rel_width": 0.17
+                },
+                "CLOCK": {
+                    "rel_pos": [0.105, 0.7789230769230769],
+                    "rel_width": 0.13
                 }
             }
         },
         "rv32i-five-stage-program15": {
-            "min_aspect_ratio": 0.425,
-            "aspect_ratio": 0.425,
+            "min_aspect_ratio": 0.35,
+            "aspect_ratio": 0.65,
             "children": {
-                "CONST_LOW": {
-                    "rel_pos": [0.08216508875739646, 0.4068168000928182],
-                    "rel_width": 0.17378698224852066
-                },
-                "CONST_WORD_SIZE": {
-                    "rel_pos": [0.08216508875739646, 0.5987775844065437],
-                    "rel_width": 0.17378698224852066
-                },
-                "CONST_ZERO32": {
-                    "rel_pos": [0.08216508875739646, 0.7907383687202691],
-                    "rel_width": 0.17378698224852066
-                },
-                "DATA_MEMORY": {
-                    "rel_pos": [0.4037160544234083, 0.40741272313406013],
-                    "rel_width": 0.08972505091649692
-                },
                 "INSTRUCTION_MEMORY": {
-                    "rel_pos": [0.4037160544234083, 0.6953538996046484],
-                    "rel_width": 0.08972505091649692
+                    "rel_pos": [0.08190000000000001, 0.3232692307692307],
+                    "rel_width": 0.17
                 },
                 "CORE": {
-                    "rel_pos": [0.6475199999999999, 0.4894964705882353],
-                    "rel_width": 0.264
+                    "rel_pos": [0.3, 0.2929999999999999],
+                    "rel_width": 0.4
+                },
+                "DATA_MEMORY": {
+                    "rel_pos": [0.7480999999999999, 0.3232692307692307],
+                    "rel_width": 0.17
+                },
+                "CLOCK": {
+                    "rel_pos": [0.105, 0.7789230769230769],
+                    "rel_width": 0.13
                 }
             }
         },
         "rv32i-five-stage-program16": {
-            "min_aspect_ratio": 0.425,
-            "aspect_ratio": 0.425,
+            "min_aspect_ratio": 0.35,
+            "aspect_ratio": 0.65,
             "children": {
-                "CONST_LOW": {
-                    "rel_pos": [0.08216508875739646, 0.4068168000928182],
-                    "rel_width": 0.17378698224852066
-                },
-                "CONST_WORD_SIZE": {
-                    "rel_pos": [0.08216508875739646, 0.5987775844065437],
-                    "rel_width": 0.17378698224852066
-                },
-                "CONST_ZERO32": {
-                    "rel_pos": [0.08216508875739646, 0.7907383687202691],
-                    "rel_width": 0.17378698224852066
-                },
-                "DATA_MEMORY": {
-                    "rel_pos": [0.4037160544234083, 0.40741272313406013],
-                    "rel_width": 0.08972505091649692
-                },
                 "INSTRUCTION_MEMORY": {
-                    "rel_pos": [0.4037160544234083, 0.6953538996046484],
-                    "rel_width": 0.08972505091649692
+                    "rel_pos": [0.08190000000000001, 0.3232692307692307],
+                    "rel_width": 0.17
                 },
                 "CORE": {
-                    "rel_pos": [0.6475199999999999, 0.4894964705882353],
-                    "rel_width": 0.264
+                    "rel_pos": [0.3, 0.2929999999999999],
+                    "rel_width": 0.4
+                },
+                "DATA_MEMORY": {
+                    "rel_pos": [0.7480999999999999, 0.3232692307692307],
+                    "rel_width": 0.17
+                },
+                "CLOCK": {
+                    "rel_pos": [0.105, 0.7789230769230769],
+                    "rel_width": 0.13
                 }
             }
         },
         "rv32i-five-stage-program17": {
-            "min_aspect_ratio": 0.425,
-            "aspect_ratio": 0.425,
+            "min_aspect_ratio": 0.35,
+            "aspect_ratio": 0.65,
             "children": {
-                "CONST_LOW": {
-                    "rel_pos": [0.08216508875739646, 0.4068168000928182],
-                    "rel_width": 0.17378698224852066
-                },
-                "CONST_WORD_SIZE": {
-                    "rel_pos": [0.08216508875739646, 0.5987775844065437],
-                    "rel_width": 0.17378698224852066
-                },
-                "CONST_ZERO32": {
-                    "rel_pos": [0.08216508875739646, 0.7907383687202691],
-                    "rel_width": 0.17378698224852066
-                },
-                "DATA_MEMORY": {
-                    "rel_pos": [0.4037160544234083, 0.40741272313406013],
-                    "rel_width": 0.08972505091649692
-                },
                 "INSTRUCTION_MEMORY": {
-                    "rel_pos": [0.4037160544234083, 0.6953538996046484],
-                    "rel_width": 0.08972505091649692
+                    "rel_pos": [0.08190000000000001, 0.3232692307692307],
+                    "rel_width": 0.17
                 },
                 "CORE": {
-                    "rel_pos": [0.6475199999999999, 0.4894964705882353],
-                    "rel_width": 0.264
+                    "rel_pos": [0.3, 0.2929999999999999],
+                    "rel_width": 0.4
+                },
+                "DATA_MEMORY": {
+                    "rel_pos": [0.7480999999999999, 0.3232692307692307],
+                    "rel_width": 0.17
+                },
+                "CLOCK": {
+                    "rel_pos": [0.105, 0.7789230769230769],
+                    "rel_width": 0.13
                 }
             }
         },
         "rv32i-five-stage-program18": {
-            "min_aspect_ratio": 0.425,
-            "aspect_ratio": 0.425,
+            "min_aspect_ratio": 0.35,
+            "aspect_ratio": 0.65,
             "children": {
-                "CONST_LOW": {
-                    "rel_pos": [0.08216508875739646, 0.4068168000928182],
-                    "rel_width": 0.17378698224852066
-                },
-                "CONST_WORD_SIZE": {
-                    "rel_pos": [0.08216508875739646, 0.5987775844065437],
-                    "rel_width": 0.17378698224852066
-                },
-                "CONST_ZERO32": {
-                    "rel_pos": [0.08216508875739646, 0.7907383687202691],
-                    "rel_width": 0.17378698224852066
-                },
-                "DATA_MEMORY": {
-                    "rel_pos": [0.4037160544234083, 0.40741272313406013],
-                    "rel_width": 0.08972505091649692
-                },
                 "INSTRUCTION_MEMORY": {
-                    "rel_pos": [0.4037160544234083, 0.6953538996046484],
-                    "rel_width": 0.08972505091649692
+                    "rel_pos": [0.08190000000000001, 0.3232692307692307],
+                    "rel_width": 0.17
                 },
                 "CORE": {
-                    "rel_pos": [0.6475199999999999, 0.4894964705882353],
-                    "rel_width": 0.264
+                    "rel_pos": [0.3, 0.2929999999999999],
+                    "rel_width": 0.4
+                },
+                "DATA_MEMORY": {
+                    "rel_pos": [0.7480999999999999, 0.3232692307692307],
+                    "rel_width": 0.17
+                },
+                "CLOCK": {
+                    "rel_pos": [0.105, 0.7789230769230769],
+                    "rel_width": 0.13
                 }
             }
         },
         "rv32i-five-stage-program19": {
-            "min_aspect_ratio": 0.425,
-            "aspect_ratio": 0.425,
+            "min_aspect_ratio": 0.35,
+            "aspect_ratio": 0.65,
             "children": {
-                "CONST_LOW": {
-                    "rel_pos": [0.08216508875739646, 0.4068168000928182],
-                    "rel_width": 0.17378698224852066
-                },
-                "CONST_WORD_SIZE": {
-                    "rel_pos": [0.08216508875739646, 0.5987775844065437],
-                    "rel_width": 0.17378698224852066
-                },
-                "CONST_ZERO32": {
-                    "rel_pos": [0.08216508875739646, 0.7907383687202691],
-                    "rel_width": 0.17378698224852066
-                },
-                "DATA_MEMORY": {
-                    "rel_pos": [0.4037160544234083, 0.40741272313406013],
-                    "rel_width": 0.08972505091649692
-                },
                 "INSTRUCTION_MEMORY": {
-                    "rel_pos": [0.4037160544234083, 0.6953538996046484],
-                    "rel_width": 0.08972505091649692
+                    "rel_pos": [0.08190000000000001, 0.3232692307692307],
+                    "rel_width": 0.17
                 },
                 "CORE": {
-                    "rel_pos": [0.6475199999999999, 0.4894964705882353],
-                    "rel_width": 0.264
+                    "rel_pos": [0.3, 0.2929999999999999],
+                    "rel_width": 0.4
+                },
+                "DATA_MEMORY": {
+                    "rel_pos": [0.7480999999999999, 0.3232692307692307],
+                    "rel_width": 0.17
+                },
+                "CLOCK": {
+                    "rel_pos": [0.105, 0.7789230769230769],
+                    "rel_width": 0.13
                 }
             }
         },
         "rv32i-five-stage-program20": {
-            "min_aspect_ratio": 0.425,
-            "aspect_ratio": 0.425,
+            "min_aspect_ratio": 0.35,
+            "aspect_ratio": 0.65,
             "children": {
-                "CONST_LOW": {
-                    "rel_pos": [0.08216508875739646, 0.4068168000928182],
-                    "rel_width": 0.17378698224852066
-                },
-                "CONST_WORD_SIZE": {
-                    "rel_pos": [0.08216508875739646, 0.5987775844065437],
-                    "rel_width": 0.17378698224852066
-                },
-                "CONST_ZERO32": {
-                    "rel_pos": [0.08216508875739646, 0.7907383687202691],
-                    "rel_width": 0.17378698224852066
-                },
-                "DATA_MEMORY": {
-                    "rel_pos": [0.4037160544234083, 0.40741272313406013],
-                    "rel_width": 0.08972505091649692
-                },
                 "INSTRUCTION_MEMORY": {
-                    "rel_pos": [0.4037160544234083, 0.6953538996046484],
-                    "rel_width": 0.08972505091649692
+                    "rel_pos": [0.08190000000000001, 0.3232692307692307],
+                    "rel_width": 0.17
                 },
                 "CORE": {
-                    "rel_pos": [0.6475199999999999, 0.4894964705882353],
-                    "rel_width": 0.264
+                    "rel_pos": [0.3, 0.2929999999999999],
+                    "rel_width": 0.4
+                },
+                "DATA_MEMORY": {
+                    "rel_pos": [0.7480999999999999, 0.3232692307692307],
+                    "rel_width": 0.17
+                },
+                "CLOCK": {
+                    "rel_pos": [0.105, 0.7789230769230769],
+                    "rel_width": 0.13
                 }
             }
         },
         "rv32i-five-stage-program21": {
-            "min_aspect_ratio": 0.425,
-            "aspect_ratio": 0.425,
+            "min_aspect_ratio": 0.35,
+            "aspect_ratio": 0.65,
             "children": {
-                "CONST_LOW": {
-                    "rel_pos": [0.08216508875739646, 0.4068168000928182],
-                    "rel_width": 0.17378698224852066
-                },
-                "CONST_WORD_SIZE": {
-                    "rel_pos": [0.08216508875739646, 0.5987775844065437],
-                    "rel_width": 0.17378698224852066
-                },
-                "CONST_ZERO32": {
-                    "rel_pos": [0.08216508875739646, 0.7907383687202691],
-                    "rel_width": 0.17378698224852066
-                },
-                "DATA_MEMORY": {
-                    "rel_pos": [0.4037160544234083, 0.40741272313406013],
-                    "rel_width": 0.08972505091649692
-                },
                 "INSTRUCTION_MEMORY": {
-                    "rel_pos": [0.4037160544234083, 0.6953538996046484],
-                    "rel_width": 0.08972505091649692
+                    "rel_pos": [0.08190000000000001, 0.3232692307692307],
+                    "rel_width": 0.17
                 },
                 "CORE": {
-                    "rel_pos": [0.6475199999999999, 0.4894964705882353],
-                    "rel_width": 0.264
+                    "rel_pos": [0.3, 0.2929999999999999],
+                    "rel_width": 0.4
+                },
+                "DATA_MEMORY": {
+                    "rel_pos": [0.7480999999999999, 0.3232692307692307],
+                    "rel_width": 0.17
+                },
+                "CLOCK": {
+                    "rel_pos": [0.105, 0.7789230769230769],
+                    "rel_width": 0.13
                 }
             }
         },
         "rv32i-five-stage-program22": {
-            "min_aspect_ratio": 0.425,
-            "aspect_ratio": 0.425,
+            "min_aspect_ratio": 0.35,
+            "aspect_ratio": 0.65,
             "children": {
-                "CONST_LOW": {
-                    "rel_pos": [0.08216508875739646, 0.4068168000928182],
-                    "rel_width": 0.17378698224852066
-                },
-                "CONST_WORD_SIZE": {
-                    "rel_pos": [0.08216508875739646, 0.5987775844065437],
-                    "rel_width": 0.17378698224852066
-                },
-                "CONST_ZERO32": {
-                    "rel_pos": [0.08216508875739646, 0.7907383687202691],
-                    "rel_width": 0.17378698224852066
-                },
-                "DATA_MEMORY": {
-                    "rel_pos": [0.4037160544234083, 0.40741272313406013],
-                    "rel_width": 0.08972505091649692
-                },
                 "INSTRUCTION_MEMORY": {
-                    "rel_pos": [0.4037160544234083, 0.6953538996046484],
-                    "rel_width": 0.08972505091649692
+                    "rel_pos": [0.08190000000000001, 0.3232692307692307],
+                    "rel_width": 0.17
                 },
                 "CORE": {
-                    "rel_pos": [0.6475199999999999, 0.4894964705882353],
-                    "rel_width": 0.264
+                    "rel_pos": [0.3, 0.2929999999999999],
+                    "rel_width": 0.4
+                },
+                "DATA_MEMORY": {
+                    "rel_pos": [0.7480999999999999, 0.3232692307692307],
+                    "rel_width": 0.17
+                },
+                "CLOCK": {
+                    "rel_pos": [0.105, 0.7789230769230769],
+                    "rel_width": 0.13
+                }
+            }
+        },
+        "register-file4x32@94e680a5eef71bc5": {
+            "children": {
+                "X0_ZERO": {
+                    "rel_pos": [0.08161754385964913, 0.5406230529595015],
+                    "rel_width": 0.16596491228070173
+                },
+                "X1": {
+                    "rel_pos": [0.5288175438596491, 0.2587891457616002],
+                    "rel_width": 0.16596491228070173
+                },
+                "X2": {
+                    "rel_pos": [0.5288175438596491, 0.5138670273815379],
+                    "rel_width": 0.16596491228070173
+                },
+                "X3": {
+                    "rel_pos": [0.5288175438596491, 0.7689449090014756],
+                    "rel_width": 0.16596491228070173
+                },
+                "RS1_MUX": {
+                    "rel_pos": [0.7524175438596491, 0.31363994097393016],
+                    "rel_width": 0.16596491228070173
+                },
+                "RS2_MUX": {
+                    "rel_pos": [0.7524175438596491, 0.6962567634038366],
+                    "rel_width": 0.16596491228070173
+                },
+                "RD_DECODER": {
+                    "rel_pos": [0.3052175438596491, 0.5138670273815379],
+                    "rel_width": 0.16596491228070173
                 }
             }
         }

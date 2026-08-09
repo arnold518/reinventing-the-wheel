@@ -3,8 +3,10 @@
 #include "basic/Wire.hpp"
 #include "components/Component.hpp"
 #include "components/ComponentBuilder.hpp"
+#include "components/selection/BuildContext.hpp"
 #include "components/selection/BuildManifest.hpp"
 #include "components/selection/BuiltinComponentCatalog.hpp"
+#include "components/selection/StandardProfiles.hpp"
 #include "modules/composite/ALU32.hpp"
 #include "modules/composite/AddSub32.hpp"
 #include "modules/composite/Comparator32.hpp"
@@ -19,10 +21,12 @@
 #include "modules/rv32i/RV32IDecodeControlUnit.hpp"
 #include "modules/rv32i/RV32IExecutionControlStatusUnit.hpp"
 #include "modules/rv32i/RV32ISingleCycleCore.hpp"
-#include "modules/rv32i/RV32ISingleCycleSystem.hpp"
+#include "modules/rv32i/RV32IReferenceCore.hpp"
+#include "modules/memory/Memory64Kx32.hpp"
 #include "rv32i/RV32IProgram.hpp"
 #include "simulator/Event.hpp"
 #include "tests/RV32IProgramCases.hpp"
+#include "tests/RV32IProgramRoot.hpp"
 #include "tests/RV32ISystemAnswerSheetRun.hpp"
 #include <algorithm>
 #include <array>
@@ -55,41 +59,6 @@ RV32ISystemProgramCase singleCycleProgramCase(size_t number) {
     test_case.max_cycles_per_instruction = 1;
     test_case.cycle_time_step = 4000;
     return test_case;
-}
-
-void verifyBalancedBuild(const circuit::BuildResult& build) {
-    require(build.root != nullptr, "balanced profile did not build a root");
-    require(build.profile != nullptr && build.profile->name() == "rv32i-balanced",
-            "balanced profile identity is incorrect");
-    require(build.root->getSelectedFidelity() == "structural",
-            "balanced system root must be structural");
-    require(build.root->getProfileFingerprint() == build.profile->fingerprint(),
-            "balanced system root fingerprint does not match its profile");
-
-    const std::map<std::string, circuit::Fidelity> expected{
-        {"RV32I_SINGLE_CYCLE_SYSTEM_ROOT", circuit::Fidelity::Structural},
-        {"RV32I_SINGLE_CYCLE_SYSTEM_ROOT.CORE", circuit::Fidelity::Structural},
-        {"RV32I_SINGLE_CYCLE_SYSTEM_ROOT.INSTRUCTION_MEMORY", circuit::Fidelity::Behavioral},
-        {"RV32I_SINGLE_CYCLE_SYSTEM_ROOT.DATA_MEMORY", circuit::Fidelity::Behavioral},
-        {"RV32I_SINGLE_CYCLE_SYSTEM_ROOT.CORE.CONTROL_FLOW", circuit::Fidelity::Structural},
-        {"RV32I_SINGLE_CYCLE_SYSTEM_ROOT.CORE.DECODE_CONTROL", circuit::Fidelity::Structural},
-        {"RV32I_SINGLE_CYCLE_SYSTEM_ROOT.CORE.REGISTER_FILE", circuit::Fidelity::Behavioral},
-        {"RV32I_SINGLE_CYCLE_SYSTEM_ROOT.CORE.ALU", circuit::Fidelity::Structural},
-        {"RV32I_SINGLE_CYCLE_SYSTEM_ROOT.CORE.EXECUTION_STATUS", circuit::Fidelity::Structural},
-    };
-
-    std::map<std::string, circuit::BuildManifestEntry> entries;
-    for (const auto& entry : build.manifest->entries()) {
-        entries.emplace(entry.path, entry);
-        require(!entry.selection.used_unavailable_exception,
-                "balanced profile used an unplanned fallback at " + entry.path);
-    }
-    for (const auto& [path, fidelity] : expected) {
-        const auto found = entries.find(path);
-        require(found != entries.end(), "balanced manifest omitted " + path);
-        require(found->second.selection.fidelity == fidelity,
-                "balanced profile selected the wrong fidelity at " + path);
-    }
 }
 
 void compareProgramCheckpoints(
@@ -327,22 +296,24 @@ bool RV32ISingleCycleCoreTest::run() {
 }
 
 void RV32ISystemProfileRun::setupCircuit() {
-    if (useRepresentativeProfile()) {
-        const auto catalog = circuit::createBuiltinComponentCatalog();
-        auto request = rv32i::educationalSystemRequest(
-            "RV32I_SINGLE_CYCLE_SYSTEM_ROOT");
-        auto profile = rv32i::balancedSystemProfile(*catalog, request);
-        auto build = catalog->createRoot(request, std::move(profile));
-        verifyBalancedBuild(build);
-        root = std::move(build.root);
-    } else {
-        auto build = circuit::builtinComponentCatalog().createRoot(
-            rv32i::educationalSystemRequest(
-                "RV32I_SINGLE_CYCLE_SYSTEM_ROOT"),
-            profile_);
-        root = std::move(build.root);
-    }
-    builder = std::make_unique<ComponentBuilder>(root);
+    const auto shared_profile =
+        std::make_shared<const circuit::BuildProfile>(profile_);
+    auto manifest = std::make_shared<circuit::BuildManifest>(
+        shared_profile->name(), shared_profile->fingerprint());
+    auto scope = circuit::BuildContext::rootScope(
+        circuit::builtinComponentCatalog(),
+        shared_profile,
+        manifest);
+    auto root_context = scope->child(
+        RV32IProgramRoot::RootName, std::nullopt);
+    program_root_ = Component::createWithContext<RV32IProgramRoot>(
+        root_context,
+        RV32IProgramRoot::RootName,
+        circuit::families::RV32ISingleCycleCore,
+        2000);
+    root = program_root_;
+    builder = std::make_unique<ComponentBuilder>(
+        root, root_context);
     buildCircuit();
     setInitialState();
 }
@@ -354,9 +325,13 @@ void RV32ISystemProfileRun::setBuildProfile(
     sim = std::make_shared<Simulator>();
     builder.reset();
     initial_events_scheduled_ = false;
-    system_.reset();
-    program_access_.reset();
-    structural_system_.reset();
+    program_root_.reset();
+    core_.reset();
+    state_view_.reset();
+    instruction_memory_.reset();
+    data_memory_.reset();
+    rst_wire_.reset();
+    enable_wire_.reset();
 }
 
 size_t RV32ISystemProfileRun::getRunDuration() const {
@@ -392,61 +367,65 @@ RV32ISystemProfileRun::getPerformanceMetrics() const {
 }
 
 void RV32ISystemProfileRun::buildCircuit() {
-    system_ = std::dynamic_pointer_cast<IOComponent>(root);
-    program_access_ =
-        std::dynamic_pointer_cast<RV32ISystemProgramAccess>(root);
-    structural_system_ =
-        std::dynamic_pointer_cast<RV32ISingleCycleSystem>(root);
-    require(system_ != nullptr, "RV32I program root IO contract");
+    require(program_root_ != nullptr, "RV32I program root IO contract");
+    core_ = program_root_->core();
+    state_view_ = program_root_->stateView();
+    instruction_memory_ = program_root_->instructionMemory();
+    data_memory_ = program_root_->dataMemory();
+    require(core_ != nullptr, "RV32I program root core");
+    require(state_view_ != nullptr, "RV32I program root state view");
     require(
-        program_access_ != nullptr,
-        "RV32I program root lacks program-access capability");
-    clk_wire_ = builder->addNewWire("CLK_IN", nullptr, {system_->getInputPin("CLK")});
-    rst_wire_ = builder->addNewWire("RST_IN", nullptr, {system_->getInputPin("RST")});
-    enable_wire_ = builder->addNewWire("ENABLE_IN", nullptr, {system_->getInputPin("ENABLE")});
-    builder->addNewWire<32>("PC_OUT", system_->getOutputPin<32>("PC"), {});
-    builder->addNewWire("HALTED_OUT", system_->getOutputPin("HALTED"), {});
-    builder->addNewWire("TRAPPED_OUT", system_->getOutputPin("TRAPPED"), {});
+        instruction_memory_ != nullptr && data_memory_ != nullptr,
+        "RV32I program root memories");
+    rst_wire_ = builder->addNewWire(
+        "RST_IN", nullptr, {program_root_->getInputPin("RST")});
+    enable_wire_ = builder->addNewWire(
+        "ENABLE_IN", nullptr, {program_root_->getInputPin("ENABLE")});
+    builder->addNewWire<32>(
+        "PC_OUT", program_root_->getOutputPin<32>("PC"), {});
+    builder->addNewWire(
+        "HALTED_OUT", program_root_->getOutputPin("HALTED"), {});
+    builder->addNewWire(
+        "TRAPPED_OUT", program_root_->getOutputPin("TRAPPED"), {});
+    builder->addNewWire<4>(
+        "TRAP_CAUSE_OUT",
+        program_root_->getOutputPin<4>("TRAP_CAUSE"), {});
 }
 
 void RV32ISystemProfileRun::initializeComponentForLockstep(
     const RV32ISystemProgramCase& test_case
 ) {
     require(
-        program_access_ != nullptr,
-        "RV32I system program access is not initialized");
+        program_root_ != nullptr,
+        "RV32I program root is not initialized");
     require(test_case.initial_pc == 0, "first structural core supports reset PC zero");
     for (size_t index = 0; index < test_case.initial_registers.size(); ++index) {
         require(test_case.initial_registers[index] == 0,
                 "first structural core program fixtures require zero initial registers");
     }
 
-    program_access_->clearInstructionMemory();
-    program_access_->clearDataMemory();
-    program_access_->loadProgram(
+    program_root_->clearInstructionMemory();
+    program_root_->clearDataMemory();
+    program_root_->loadProgram(
         test_case.program, test_case.program_base);
     for (const auto& data : test_case.initial_data) {
-        program_access_->loadDataBytes(
+        program_root_->loadDataBytes(
             data.address, data.bytes);
     }
 
     committed_instruction_count_ = 0;
     last_access_ = {};
     scheduleInitialEvents(0);
-    drive(*sim, 0, clk_wire_, false);
+    program_root_->initializeFixedInputs(*sim, 0);
     drive(*sim, 0, rst_wire_, true);
     drive(*sim, 0, enable_wire_, true);
-    sim->advanceAndRecord(1000);
-    drive(*sim, 1000, rst_wire_, false);
-    sim->advanceAndRecord(5000);
+    program_root_->startClock(*sim, 1000);
+    sim->advanceAndRecord(3000);
+    drive(*sim, 3000, rst_wire_, false);
+    sim->advanceAndRecord(4000);
     visual_time_origin_ = sim->getCurrentTime();
     visual_run_duration_ = visual_time_origin_
                          + test_case.expected_result.instruction_count * test_case.cycle_time_step;
-    for (size_t cycle = 0; cycle < test_case.expected_result.instruction_count; ++cycle) {
-        const size_t cycle_start = visual_time_origin_ + cycle * test_case.cycle_time_step;
-        drive(*sim, cycle_start + 1000, clk_wire_, true);
-        drive(*sim, cycle_start + 1500, clk_wire_, false);
-    }
     last_observed_memory_time_ = sim->getCurrentTime();
 }
 
@@ -456,8 +435,10 @@ void RV32ISystemProfileRun::clockComponentOneCycle(
 ) {
     (void)cycle_index;
     last_access_ = {};
-    if (structural_system_) {
-        const auto core = structural_system_->core();
+    const auto reference_core =
+        std::dynamic_pointer_cast<RV32IReferenceCore>(core_);
+    if (!reference_core) {
+        const auto core = core_;
         require(
             core != nullptr,
             "structural RV32I core is not initialized");
@@ -493,7 +474,7 @@ void RV32ISystemProfileRun::clockComponentOneCycle(
                     core->getOutputPin<32>("DMEM_WRITE_DATA")
                         ->getValueAsUInt64())
                 : 0;
-            const auto memory = structural_system_->dataMemory();
+            const auto memory = data_memory_;
             last_access_.fault =
                 memory->getOutputPin("FAULT")->getValue()
                 == LogicValue::HIGH;
@@ -512,27 +493,29 @@ void RV32ISystemProfileRun::clockComponentOneCycle(
 
 rv32i::RV32IState RV32ISystemProfileRun::snapshotComponentState() const {
     require(
-        program_access_ != nullptr,
-        "RV32I system is not initialized");
+        program_root_ != nullptr,
+        "RV32I program root is not initialized");
     auto state =
-        program_access_->snapshotArchitecturalState().toKnownState();
+        program_root_->snapshotArchitecturalState().toKnownState();
     state.instruction_count = committed_instruction_count_;
     return state;
 }
 
 rv32i::RV32IMemoryTrace RV32ISystemProfileRun::lastDataMemoryAccess() const {
-    return structural_system_
-        ? last_access_
-        : program_access_->lastCommittedDataMemoryAccess();
+    if (const auto reference =
+            std::dynamic_pointer_cast<RV32IReferenceCore>(core_)) {
+        return reference->lastDataMemoryAccess();
+    }
+    return last_access_;
 }
 
 std::map<uint32_t, uint8_t> RV32ISystemProfileRun::lastDataMemoryWrites() const {
     require(
-        program_access_ != nullptr,
+        program_root_ != nullptr,
         "RV32I data memory is not initialized");
     const auto current_time = sim->getCurrentTime();
     const auto writes =
-        program_access_->dataMemoryWritesInTimeRange(
+        program_root_->dataMemoryWritesInTimeRange(
         last_observed_memory_time_, current_time);
     last_observed_memory_time_ = current_time;
     return writes;
@@ -543,35 +526,12 @@ void RV32ISystemProfileRun::verifyResults() {
     verifyRV32IProgramExpectedResult(
         getCase(),
         snapshotComponentState(),
-        program_access_->dataMemoryWritesInTimeRange(
+        program_root_->dataMemoryWritesInTimeRange(
             0, sim->getCurrentTime()),
         getTestName());
 }
 
 namespace {
-class RV32IProgramProfileRun final
-    : public RV32ISystemProfileRun {
-public:
-    RV32IProgramProfileRun(
-        size_t program_number,
-        bool balanced_profile)
-        : program_number_(program_number),
-          balanced_profile_(balanced_profile) {}
-
-protected:
-    RV32ISystemProgramCase getCase() const override {
-        return singleCycleProgramCase(program_number_);
-    }
-
-    bool useRepresentativeProfile() const override {
-        return balanced_profile_;
-    }
-
-private:
-    size_t program_number_;
-    bool balanced_profile_;
-};
-
 class RV32IProfileToggleRun final
     : public RV32ISystemProfileRun {
 public:
@@ -611,10 +571,8 @@ struct ProfileToggleAuditCase {
 const std::vector<ProfileToggleAuditCase>&
 profileToggleAuditCases() {
     static const std::vector<ProfileToggleAuditCase> cases{
-        {&circuit::families::RV32ISingleCycleSystem, 1,
-         "whole system"},
         {&circuit::families::RV32ISingleCycleCore, 1,
-         "core inside structural system"},
+         "single-cycle core"},
         {&circuit::families::RV32IControlFlow, 5,
          "jump and link control flow"},
         {&circuit::families::RV32IDecodeControl, 2,
@@ -658,18 +616,22 @@ void visitComponents(
 
 std::map<std::string, size_t>
 selectableContractInventory() {
-    auto profile = circuit::withExactFidelity(
-        circuit::canonicalDefaultProfile(),
-        "RV32I_SINGLE_CYCLE_SYSTEM_ROOT",
-        circuit::Fidelity::Structural,
-        "rv32i-profile-toggle-inventory");
-    auto build = circuit::builtinComponentCatalog().createRoot(
-        rv32i::educationalSystemRequest(
-            "RV32I_SINGLE_CYCLE_SYSTEM_ROOT"),
-        std::move(profile));
+    const auto profile = std::make_shared<const circuit::BuildProfile>(
+        circuit::canonicalDefaultProfile());
+    auto manifest = std::make_shared<circuit::BuildManifest>(
+        profile->name(), profile->fingerprint());
+    auto scope = circuit::BuildContext::rootScope(
+        circuit::builtinComponentCatalog(), profile, manifest);
+    auto root_context = scope->child(
+        RV32IProgramRoot::RootName, std::nullopt);
+    auto program_root = Component::createWithContext<RV32IProgramRoot>(
+        root_context,
+        RV32IProgramRoot::RootName,
+        circuit::families::RV32ISingleCycleCore,
+        2000);
     std::map<std::string, size_t> inventory;
     visitComponents(
-        build.root,
+        program_root,
         [&](const auto& component) {
             if (component->isProfileSelectable()) {
                 ++inventory[component->getContractId()];
@@ -708,15 +670,17 @@ bool RV32ISingleCycleSystemTest::run() {
             return false;
         }
 
-        RV32IProgramProfileRun representative_profile(
-            program_number_, true);
-        if (!representative_profile.run()) {
+        RV32IProfileToggleRun behavioral_profile(
+            program_number_,
+            getCase().name + "/behavioral-core",
+            circuit::strictAllBehavioral());
+        if (!behavioral_profile.execute()) {
             return false;
         }
         compareProgramCheckpoints(
             answer_sheet.getCheckpoints(),
-            representative_profile.getCheckpoints(),
-            getCase().name + " representative profile");
+            behavioral_profile.getCheckpoints(),
+            getCase().name + " behavioral profile");
 
         if (!SimulationTest::run()) {
             return false;
@@ -761,11 +725,7 @@ void RV32IProfileToggleSweepTest::verifyResults() {
             "canonical RV32I tree: " + contract);
         covered_contracts.insert(contract);
 
-        auto profile = circuit::withExactFidelity(
-            circuit::canonicalDefaultProfile(),
-            "RV32I_SINGLE_CYCLE_SYSTEM_ROOT",
-            circuit::Fidelity::Structural,
-            "rv32i-profile-toggle-base");
+        auto profile = circuit::canonicalDefaultProfile();
         profile = circuit::withProfileOverrides(
             std::move(profile),
             {circuit::preferFidelity(

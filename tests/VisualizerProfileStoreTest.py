@@ -1,6 +1,7 @@
 """Profile persistence and profile-aware visualizer session checks."""
 
 from pathlib import Path
+import json
 import tempfile
 
 import server
@@ -44,6 +45,43 @@ def main():
         assert ProfileStore(path).get("memory-bit") == (
             1,
             {"MEMORY_BIT_ROOT": "behavioral"},
+        )
+
+        legacy_path = Path(directory) / "legacy-rv32i-profiles.json"
+        legacy_path.write_text(
+            json.dumps(
+                {
+                    "schema_version": 1,
+                    "scenarios": {
+                        "rv32i-program9": {
+                            "revision": 4,
+                            "exact_overrides": {
+                                "RV32I_SINGLE_CYCLE_SYSTEM_ROOT": "behavioral",
+                                "RV32I_SINGLE_CYCLE_SYSTEM_ROOT.CORE.ALU": "behavioral",
+                            },
+                        },
+                        "rv32i-five-stage-program1": {
+                            "revision": 2,
+                            "exact_overrides": {
+                                "RV32I_FIVE_STAGE_PROGRAM_ROOT.CORE.FETCH": "structural",
+                            },
+                        },
+                    },
+                }
+            ),
+            encoding="utf-8",
+        )
+        migrated = ProfileStore(legacy_path)
+        assert migrated.get("rv32i-program9") == (
+            4,
+            {
+                "RV32I_PROGRAM_ROOT.CORE": "behavioral",
+                "RV32I_PROGRAM_ROOT.CORE.ALU": "behavioral",
+            },
+        )
+        assert migrated.get("rv32i-five-stage-program1") == (
+            2,
+            {"RV32I_PROGRAM_ROOT.CORE.FETCH": "structural"},
         )
         expect_value_error(
             lambda: profiles.replace("memory-bit", 0, {}),

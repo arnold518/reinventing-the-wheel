@@ -209,14 +209,32 @@ def main():
     assert program_metrics["cpu.cpi"] == 1.0
     assert program_metrics["cpu.hardware_cycles"] > 0
     system = program.get_root()
-    assert system.get_type_name() == "RV32ISingleCycleSystem"
-    assert system.get_selected_fidelity() == "structural"
-    assert system.get_profile_fingerprint() != "explicit"
+    assert system.get_name() == "RV32I_PROGRAM_ROOT"
+    assert system.get_type_name() == "RV32IProgramRoot"
+    assert system.get_selected_fidelity() == "unspecified"
+    assert system.get_profile_fingerprint() == "explicit"
     system_children = {child.get_name(): child for child in system.get_children()}
+    assert list(system_children) == [
+        "CLOCK",
+        "CORE",
+        "INSTRUCTION_MEMORY",
+        "DATA_MEMORY",
+    ]
+    assert system_children["CLOCK"].get_type_name() == "ClockGenerator"
+    clock_wire = next(
+        wire for wire in system.get_wires()
+        if wire.get_name() == "CLK"
+    )
+    assert clock_wire.get_source_pin().get_owner().get_name() == "CLOCK"
+    assert {
+        pin.get_owner().get_name()
+        for pin in clock_wire.get_sink_pins()
+    } == {"CORE", "INSTRUCTION_MEMORY", "DATA_MEMORY"}
     assert system_children["INSTRUCTION_MEMORY"].get_selected_fidelity() == "behavioral"
     assert system_children["DATA_MEMORY"].get_selected_fidelity() == "behavioral"
     core = system_children["CORE"]
     assert core.get_selected_fidelity() == "structural"
+    profile_fingerprint = core.get_profile_fingerprint()
     core_children = {child.get_name(): child for child in core.get_children()}
     expected_core_fidelities = {
         "CONTROL_FLOW": "structural",
@@ -237,11 +255,8 @@ def main():
         component.get_selected_fidelity() == "behavioral"
         for component in single_cycle_memory
     )
-    assert system.get_available_fidelities() == [
-        "structural",
-        "behavioral",
-    ]
-    assert system.is_profile_selectable()
+    assert system.get_available_fidelities() == []
+    assert not system.is_profile_selectable()
     assert not system.used_unavailable_fidelity_exception()
 
     expanded_register_program = circuit_backend.create_test_by_name(
@@ -252,7 +267,7 @@ def main():
             expanded_register_program.get_build_profile(),
             {
                 (
-                    "RV32I_SINGLE_CYCLE_SYSTEM_ROOT"
+                    "RV32I_PROGRAM_ROOT"
                     ".CORE.REGISTER_FILE"
                 ): "structural",
             },
@@ -278,15 +293,25 @@ def main():
         circuit_backend.profile_with_exact_overrides(
             behavioral_program.get_build_profile(),
             {
-                "RV32I_SINGLE_CYCLE_SYSTEM_ROOT": "behavioral",
+                "RV32I_PROGRAM_ROOT.CORE": "behavioral",
             },
             "visualizer-binding-probe",
         )
     )
     behavioral_program.setup_circuit()
     behavioral_system = behavioral_program.get_root()
-    assert behavioral_system.get_selected_fidelity() == "behavioral"
-    assert list(behavioral_system.get_children()) == []
+    behavioral_children = {
+        child.get_name(): child
+        for child in behavioral_system.get_children()
+    }
+    assert list(behavioral_children) == [
+        "CLOCK",
+        "CORE",
+        "INSTRUCTION_MEMORY",
+        "DATA_MEMORY",
+    ]
+    assert behavioral_children["CORE"].get_selected_fidelity() == "behavioral"
+    assert list(behavioral_children["CORE"].get_children()) == []
 
     _, _, system_placements, _ = default_placements(system)
     assert (
@@ -295,18 +320,14 @@ def main():
     )
     assert (
         system_placements["DATA_MEMORY"]["rel_pos"][0]
-        < system_placements["CORE"]["rel_pos"][0]
+        > system_placements["CORE"]["rel_pos"][0]
     )
     assert_default_children_do_not_overlap(system)
 
-    profile_fingerprint = system.get_profile_fingerprint()
     program_layout_key = server.scenario_layout_key(
         "rv32i-program9", system
     )
-    assert (
-        program_layout_key
-        == f"rv32i-program9@{profile_fingerprint}"
-    )
+    assert program_layout_key == "rv32i-program9"
 
     layout_manager = server.LayoutManager(server.LAYOUT_PATH)
     assert layout_manager.schema_version == server.LAYOUT_SCHEMA_VERSION == 2
@@ -335,6 +356,12 @@ def main():
         child.get_name(): child
         for child in pipeline_root.get_children()
     }
+    assert list(pipeline_children) == [
+        "CLOCK",
+        "CORE",
+        "INSTRUCTION_MEMORY",
+        "DATA_MEMORY",
+    ]
     assert (
         pipeline_children["CORE"].get_selected_fidelity()
         == "structural"
@@ -423,7 +450,7 @@ def main():
             fetch_expanded_program.get_build_profile(),
             {
                 (
-                    "RV32I_FIVE_STAGE_PROGRAM_ROOT"
+                    "RV32I_PROGRAM_ROOT"
                     ".CORE.FETCH"
                 ): "structural",
             },
@@ -503,7 +530,7 @@ def main():
     )
     assert (
         pipeline_placements["DATA_MEMORY"]["rel_pos"][0]
-        < pipeline_placements["CORE"]["rel_pos"][0]
+        > pipeline_placements["CORE"]["rel_pos"][0]
     )
 
     loader_session = server.CircuitSession(
@@ -650,7 +677,7 @@ def main():
 
     for program_number in range(1, 23):
         assert (
-            f"rv32i-program{program_number}@{profile_fingerprint}"
+            f"rv32i-program{program_number}"
             in layout_manager.root_layouts
         )
         assert (

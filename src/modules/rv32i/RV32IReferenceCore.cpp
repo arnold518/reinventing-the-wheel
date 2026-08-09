@@ -110,6 +110,7 @@ CorePreview previewCore(
     LogicValue rst,
     LogicValue enable,
     LogicValue imem_ready,
+    LogicValue imem_fault,
     LogicValue dmem_ready) {
     CorePreview result;
     result.active =
@@ -117,7 +118,19 @@ CorePreview previewCore(
         && enable == LogicValue::HIGH
         && !state.halted
         && !state.trapped;
+    const bool faulting_instruction_response =
+        imem_fault == LogicValue::HIGH;
+    if (!raw && !faulting_instruction_response) {
+        return result;
+    }
+
+    // A fetch access fault intentionally has no valid instruction word.  It
+    // is still a completed instruction attempt and must be consumed on the
+    // rising edge so the architectural state can latch the trap.
     if (!raw) {
+        result.attempt =
+            result.active
+            && imem_ready == LogicValue::HIGH;
         return result;
     }
 
@@ -219,7 +232,9 @@ void RV32IReferenceCore::evaluate(size_t current_time, Simulator& simulator) {
         getInputPin<32>("IMEM_READ_DATA")
             ->getValueAsVector());
     const auto preview = previewCore(
-        state_, raw, rst, enable, imem_ready, dmem_ready);
+        state_, raw, rst, enable, imem_ready,
+        sanitizeBit(getInputValue("IMEM_FAULT")),
+        dmem_ready);
     const bool rising_edge =
         previous_clk_ == LogicValue::LOW
         && clk == LogicValue::HIGH;
@@ -294,7 +309,9 @@ void RV32IReferenceCore::publishOutputs(
         getInputPin<32>("IMEM_READ_DATA")
             ->getValueAsVector());
     const auto preview = previewCore(
-        state_, raw, rst, enable, imem_ready, dmem_ready);
+        state_, raw, rst, enable, imem_ready,
+        sanitizeBit(getInputValue("IMEM_FAULT")),
+        dmem_ready);
 
     _updateOutputWire<32>(simulator, "PC", state_.pc, current_time);
     _updateOutputWire(simulator, "HALTED", state_.halted ? LogicValue::HIGH : LogicValue::LOW, current_time);
