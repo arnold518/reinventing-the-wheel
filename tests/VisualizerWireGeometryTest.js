@@ -88,6 +88,16 @@ function main() {
     "right-side sink must be approached from farther right",
   );
 
+  const shortStubTurnaround = branch(
+    { x: 80, y: 40 }, { x: 80.5, y: 40 },
+    { x: 20, y: 60 }, { x: 19.5, y: 60 },
+  );
+  assertNoImmediateReversal(shortStubTurnaround);
+  assert.ok(
+    shortStubTurnaround[2].x > shortStubTurnaround[1].x,
+    "a short leftward stub must still escape right first",
+  );
+
   const levelTurnaround = branch(
     { x: 80, y: 50 }, { x: 85, y: 50 },
     { x: 20, y: 50 }, { x: 15, y: 50 },

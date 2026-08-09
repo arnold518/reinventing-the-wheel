@@ -119,6 +119,13 @@ def assert_default_children_do_not_overlap(component):
 
 
 def main():
+    # Horizontal stubs must remain non-zero so turnaround routing can infer
+    # whether each pin points left or right.
+    assert (
+        server.DEFAULT_SETTINGS["boundary_area_ratio"]
+        > server.DEFAULT_SETTINGS["pin_size_ratio"] / 2
+    )
+
     registered = set(circuit_backend.get_registered_test_names())
     descriptors = {
         descriptor["name"]: descriptor
@@ -333,6 +340,14 @@ def main():
     assert layout_manager.schema_version == server.LAYOUT_SCHEMA_VERSION == 2
     assert isinstance(layout_manager.profile_layouts, dict)
     assert program_layout_key in layout_manager.root_layouts
+    assert (
+        layout_manager.settings["boundary_area_ratio"]
+        == server.DEFAULT_SETTINGS["boundary_area_ratio"]
+    )
+    assert (
+        layout_manager.settings["boundary_area_ratio"]
+        > layout_manager.settings["pin_size_ratio"] / 2
+    )
 
     pipeline_program = circuit_backend.create_test_by_name(
         "RV32IFiveStageCoreProgramTest/program-01"

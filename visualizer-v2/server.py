@@ -26,6 +26,7 @@ from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from typing import Any
 from urllib.parse import parse_qs, unquote, urlparse
 
+from palette import color_for_layout_type
 from profile_store import ProfileStore, validate_overrides
 
 
@@ -60,7 +61,7 @@ LAYOUT_SCHEMA_VERSION = 2
 DEFAULT_SETTINGS = {
     "title_bar_ratio": 0.15,
     "font_width_ratio": 0.1,
-    "boundary_area_ratio": 0.07,
+    "boundary_area_ratio": 0.055,
     "pin_size_ratio": 0.1,
 }
 MIN_VISIBLE_ASPECT_RATIO = 0.35
@@ -1586,7 +1587,10 @@ class CircuitSession:
             layout = self.layout_manager.get_root_layout_for_component(self.layout_key, component)
         else:
             layout = self.layout_manager.get_layout_for_component(component)
-        return aspect_ratio, layout.get("color", DEFAULT_COLOR)
+        fallback_color = color_for_layout_type(
+            _component_layout_type(component)
+        )
+        return aspect_ratio, layout.get("color", fallback_color)
 
     def _build_topology(self) -> None:
         def walk(

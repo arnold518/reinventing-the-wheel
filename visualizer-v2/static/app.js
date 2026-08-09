@@ -93,6 +93,7 @@ const ui = {
   explorerStatus: document.getElementById("explorer-status"),
   explorerResizer: document.getElementById("explorer-resizer"),
   inspector: document.getElementById("inspector"),
+  inspectorBody: document.querySelector("#inspector .inspector-body"),
   inspectorTitle: document.getElementById("inspector-title"),
   inspectorSubtitle: document.getElementById("inspector-subtitle"),
   inspectorPath: document.getElementById("inspector-path"),
@@ -656,7 +657,7 @@ function componentSettings(component) {
   const layout = getLayoutFor(component);
   component.titleBarRatio = Number(layout.title_bar_ratio ?? app.settings.title_bar_ratio ?? 0.15);
   component.fontWidthRatio = Number(layout.font_width_ratio ?? app.settings.font_width_ratio ?? 0.18);
-  component.boundaryRatio = Number(layout.boundary_area_ratio ?? app.settings.boundary_area_ratio ?? 0.15);
+  component.boundaryRatio = Number(layout.boundary_area_ratio ?? app.settings.boundary_area_ratio ?? 0.055);
   component.pinSizeRatio = Number(layout.pin_size_ratio ?? app.settings.pin_size_ratio ?? 0.10);
 }
 
@@ -2806,7 +2807,10 @@ function selectedWire() {
 }
 
 function setSelection(type, id) {
-  if (app.selection && (app.selection.type !== type || app.selection.id !== id)) {
+  const selectionChanged = !app.selection
+    ? Boolean(type && id)
+    : app.selection.type !== type || app.selection.id !== id;
+  if (app.selection && selectionChanged) {
     commitLayoutTransaction();
   }
   app.selection = type && id ? { type, id } : null;
@@ -2818,6 +2822,11 @@ function setSelection(type, id) {
     );
   }
   updateInspector();
+  if (selectionChanged) {
+    ui.inspectorBody.scrollTop = 0;
+    ui.inspectorPath.scrollTop = 0;
+    ui.inspectorPath.scrollLeft = 0;
+  }
   requestRender();
 }
 
@@ -2955,6 +2964,15 @@ function renderComponentPins(component) {
   );
 }
 
+function setInspectorHeader(title, subtitle, path) {
+  ui.inspectorTitle.textContent = title;
+  ui.inspectorTitle.title = title;
+  ui.inspectorSubtitle.textContent = subtitle;
+  ui.inspectorSubtitle.title = subtitle;
+  ui.inspectorPath.textContent = path;
+  ui.inspectorPath.title = path;
+}
+
 function showComponentInspector(component) {
   const layoutKey = componentLayoutKey(component);
   const typeLayout = getLayoutFor(component);
@@ -2963,16 +2981,17 @@ function showComponentInspector(component) {
   const aspect = aspectFor(component, typeLayout.aspect_ratio ?? component.baseAspectRatio ?? component.aspectRatio, 1);
   const path = componentPath(component);
 
-  ui.inspectorTitle.textContent = component.name;
   const baseSubtitle = layoutKey === component.type
     ? `${component.type} | depth ${component.depth}`
     : `${component.type} | layout ${layoutKey} | depth ${component.depth}`;
   const selectionSubtitle = component.fidelity
     ? ` | ${component.fidelity} | ${component.implementationId}`
     : "";
-  ui.inspectorSubtitle.textContent = `${baseSubtitle}${selectionSubtitle}`;
-  ui.inspectorPath.textContent = path;
-  ui.inspectorPath.title = path;
+  setInspectorHeader(
+    component.name,
+    `${baseSubtitle}${selectionSubtitle}`,
+    path,
+  );
   setSectionVisible(ui.selectionInfoSection, false);
   setSectionVisible(ui.componentPinsSection, true);
   setSectionVisible(ui.typeStyleSection, true);
@@ -2994,10 +3013,11 @@ function showPinInspector(pin) {
   const sourceWires = pin.sourceWireIds || [];
   const sinkWires = pin.sinkWireIds || [];
 
-  ui.inspectorTitle.textContent = pinLabel(pin);
-  ui.inspectorSubtitle.textContent = `${pin.type} pin | value ${pinValue(pin)}`;
-  ui.inspectorPath.textContent = pinPath(pin);
-  ui.inspectorPath.title = pinPath(pin);
+  setInspectorHeader(
+    pinLabel(pin),
+    `${pin.type} pin | value ${pinValue(pin)}`,
+    pinPath(pin),
+  );
   setSectionVisible(ui.selectionInfoSection, true);
   setSectionVisible(ui.componentPinsSection, false);
   setSectionVisible(ui.typeStyleSection, false);
@@ -3016,10 +3036,11 @@ function showWireInspector(wire) {
   const endpoints = wireEndpointSummary(wire);
   const owner = app.components.get(wire.ownerId);
 
-  ui.inspectorTitle.textContent = wire.name;
-  ui.inspectorSubtitle.textContent = `wire | value ${wireValue(wire)}`;
-  ui.inspectorPath.textContent = wirePath(wire);
-  ui.inspectorPath.title = wirePath(wire);
+  setInspectorHeader(
+    wire.name,
+    `wire | value ${wireValue(wire)}`,
+    wirePath(wire),
+  );
   setSectionVisible(ui.selectionInfoSection, true);
   setSectionVisible(ui.componentPinsSection, false);
   setSectionVisible(ui.typeStyleSection, false);
@@ -3785,7 +3806,8 @@ function performanceMetricsTitle() {
 
 function updateTopologyProgress() {
   const base = baseStatsText();
-  ui.statsLabel.title = performanceMetricsTitle();
+  const metricsTitle = performanceMetricsTitle();
+  ui.statsLabel.title = metricsTitle ? `${base}\n${metricsTitle}` : base;
   if (
     app.topologyEncoding !== "progressive-v1"
     || (

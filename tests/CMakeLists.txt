@@ -269,6 +269,16 @@ add_test(
     NAME VisualizerProfileStoreTest
     COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/VisualizerProfileStoreTest.py
 )
+add_test(
+    NAME VisualizerColorPaletteTest
+    COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/VisualizerColorPaletteTest.py
+)
+set_tests_properties(
+    VisualizerColorPaletteTest
+    PROPERTIES
+        ENVIRONMENT "PYTHONPATH=${PROJECT_SOURCE_DIR}/visualizer-v2"
+        LABELS "visualizer;unit"
+)
 find_program(CIRCUITSIM_NODE_EXECUTABLE NAMES node nodejs)
 if(CIRCUITSIM_NODE_EXECUTABLE)
     add_test(

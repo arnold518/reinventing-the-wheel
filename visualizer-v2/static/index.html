@@ -5,24 +5,32 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>CircuitSim Visualizer V2</title>
   <link rel="icon" href="data:,">
-  <link rel="stylesheet" href="styles.css?v=24">
+  <link rel="stylesheet" href="styles.css?v=27">
 </head>
 <body>
   <canvas id="circuit-canvas"></canvas>
 
   <div id="topbar" class="toolbar">
-    <label class="scenario-label" for="scenario-select">Scenario</label>
-    <select id="scenario-select"></select>
-    <input id="time-slider" type="range" min="0" max="0" value="0" list="checkpoint-marks">
-    <datalist id="checkpoint-marks"></datalist>
-    <button id="play-pause">Play</button>
-    <button id="checkpoint-back" title="Previous checkpoint">&lt;&lt;</button>
-    <button id="step-back" title="Step backward">&lt;</button>
-    <button id="step-forward" title="Step forward">&gt;</button>
-    <button id="checkpoint-forward" title="Next checkpoint">&gt;&gt;</button>
-    <button id="reset-sim">Reset</button>
-    <span id="time-label">Time: 0</span>
-    <span id="stats-label"></span>
+    <div class="scenario-control">
+      <label class="scenario-label" for="scenario-select">Scenario</label>
+      <select id="scenario-select"></select>
+    </div>
+    <div class="timeline-track">
+      <input id="time-slider" type="range" min="0" max="0" value="0" list="checkpoint-marks" aria-label="Simulation timeline">
+      <datalist id="checkpoint-marks"></datalist>
+    </div>
+    <div class="timeline-controls" aria-label="Simulation controls">
+      <button id="play-pause">Play</button>
+      <button id="checkpoint-back" title="Previous checkpoint">&lt;&lt;</button>
+      <button id="step-back" title="Step backward">&lt;</button>
+      <button id="step-forward" title="Step forward">&gt;</button>
+      <button id="checkpoint-forward" title="Next checkpoint">&gt;&gt;</button>
+      <button id="reset-sim">Reset</button>
+    </div>
+    <div class="timeline-readouts" aria-live="polite">
+      <span id="time-label">Time: 0</span>
+      <span id="stats-label"></span>
+    </div>
   </div>
 
   <div id="viewbar" class="toolbar">
@@ -72,46 +80,51 @@
   <div id="tooltip" role="tooltip"></div>
   <aside id="inspector" class="inspector hidden" aria-label="Selection inspector">
     <div class="inspector-header">
-      <div>
+      <div class="inspector-heading">
+        <div class="inspector-eyebrow">Inspector</div>
         <div id="inspector-title" class="inspector-title"></div>
         <div id="inspector-subtitle" class="inspector-subtitle"></div>
         <div id="inspector-path" class="inspector-path"></div>
       </div>
-      <button id="inspector-close" title="Close inspector">x</button>
+      <button id="inspector-close" class="inspector-close" title="Close inspector" aria-label="Close inspector">&times;</button>
     </div>
-    <div id="selection-info-section" class="inspector-section hidden">
-      <div class="inspector-section-title">Details</div>
-      <div id="selection-info" class="inspector-table"></div>
-    </div>
-    <div id="component-pins-section" class="inspector-section hidden">
-      <div class="inspector-section-title">Pins</div>
-      <div id="component-pins" class="pin-list"></div>
-    </div>
-    <div id="type-style-section" class="inspector-section">
-      <div class="inspector-section-title">Type Style</div>
-      <label class="inspector-field">
-        <span>Aspect</span>
-        <input id="component-aspect" type="range" min="0.1" max="3" step="0.05">
-      </label>
-      <div id="component-aspect-value" class="inspector-value"></div>
-      <div class="inspector-field">
-        <span>Color</span>
-        <div class="color-control">
-          <input id="component-color" type="color" aria-label="Component color picker">
-          <input id="component-color-code" class="color-code-input" type="text" maxlength="7" placeholder="#43afff" spellcheck="false" aria-label="Component color hex code">
+    <div class="inspector-body">
+      <div id="selection-info-section" class="inspector-section hidden">
+        <div class="inspector-section-title">Details</div>
+        <div id="selection-info" class="inspector-table"></div>
+      </div>
+      <div id="component-pins-section" class="inspector-section hidden">
+        <div class="inspector-section-title">Pins</div>
+        <div id="component-pins" class="pin-list"></div>
+      </div>
+      <div id="type-style-section" class="inspector-section">
+        <div class="inspector-section-title">Type style</div>
+        <label class="inspector-field">
+          <span>Aspect ratio</span>
+          <input id="component-aspect" type="range" min="0.1" max="3" step="0.05">
+        </label>
+        <div id="component-aspect-value" class="inspector-value"></div>
+        <div class="inspector-field">
+          <span>Color</span>
+          <div class="color-control">
+            <input id="component-color" type="color" aria-label="Component color picker">
+            <input id="component-color-code" class="color-code-input" type="text" maxlength="7" placeholder="#43afff" spellcheck="false" aria-label="Component color hex code">
+          </div>
+        </div>
+        <button id="restore-type-style">Restore Type Style</button>
+      </div>
+      <div id="layout-section" class="inspector-section">
+        <div class="inspector-section-title">Default layout</div>
+        <div class="inspector-actions">
+          <button id="restore-placement">Restore Placement</button>
+          <button id="restore-children-layout">Restore Children</button>
         </div>
       </div>
-      <button id="restore-type-style">Restore Type Style</button>
-    </div>
-    <div id="layout-section" class="inspector-section">
-      <div class="inspector-section-title">Default Layout</div>
-      <button id="restore-placement">Restore Placement</button>
-      <button id="restore-children-layout">Restore Children</button>
     </div>
   </aside>
   <div id="loading">Loading circuit...</div>
   <script src="explorer.js?v=2"></script>
   <script src="wire_geometry.js?v=1"></script>
-  <script src="app.js?v=55"></script>
+  <script src="app.js?v=57"></script>
 </body>
 </html>
