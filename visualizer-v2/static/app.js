@@ -3134,7 +3134,7 @@ async function fetchDefaultPlacements(parent, childName = null) {
     layout: app.layout,
   };
   if (childName) body.childName = childName;
-  const response = await fetch(apiUrl("api/layout/defaults"), {
+  const response = await visualizerRequest(apiUrl("api/layout/defaults"), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
@@ -3681,7 +3681,7 @@ async function refreshComponentStates(index, requestId = null) {
   }
 
   const states = await Promise.all(components.map(async (component) => {
-    const response = await fetch(apiUrl(
+    const response = await visualizerRequest(apiUrl(
       `api/component-state?session=${encodeURIComponent(app.sessionId)}&index=${index}&componentId=${encodeURIComponent(component.id)}`,
     ));
     if (!response.ok) throw new Error(await response.text());
@@ -3707,7 +3707,7 @@ async function setStateIndex(index) {
   const requestId = ++app.stateRequestId;
   app.stateRequestInFlight = true;
   try {
-    const response = await fetch(apiUrl(
+    const response = await visualizerRequest(apiUrl(
       `api/state?session=${encodeURIComponent(app.sessionId)}&index=${index}`,
     ));
     if (!response.ok) throw new Error(await response.text());
@@ -3745,7 +3745,7 @@ function stepCheckpoint(delta) {
 async function saveLayout() {
   commitLayoutTransaction();
   ui.saveStatus.textContent = "Saving...";
-  const response = await fetch(apiUrl("api/layout"), {
+  const response = await visualizerRequest(apiUrl("api/layout"), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ layout: app.layout }),
@@ -3772,6 +3772,8 @@ function resetLayout() {
 
 function showError(error) {
   console.error(error);
+  document.body.dataset.circuitsimStatus = "error";
+  document.body.dataset.circuitsimError = String(error.message || error);
   loading.textContent = String(error.message || error);
   loading.classList.remove("hidden");
 }
@@ -3905,7 +3907,7 @@ async function loadVisibleTopologyScopes(ownerIds) {
   ownerIds.forEach((id) => app.pendingScopeIds.add(id));
   updateTopologyProgress();
   try {
-    const response = await fetch(apiUrl("api/topology"), {
+    const response = await visualizerRequest(apiUrl("api/topology"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -4052,7 +4054,7 @@ function buildLocalModel(payload) {
 }
 
 async function loadScenarios() {
-  const response = await fetch(apiUrl("api/scenarios"));
+  const response = await visualizerRequest(apiUrl("api/scenarios"));
   if (!response.ok) throw new Error(await response.text());
   const payload = await response.json();
   const params = new URLSearchParams(window.location.search);
@@ -4073,7 +4075,7 @@ async function loadCircuit(scenario) {
   loading.classList.remove("hidden");
   setPlaying(false);
   await nextPaint();
-  const response = await fetch(apiUrl(`api/circuit?scenario=${encodeURIComponent(scenario)}`));
+  const response = await visualizerRequest(apiUrl(`api/circuit?scenario=${encodeURIComponent(scenario)}`));
   if (!response.ok) throw new Error(await response.text());
   loading.textContent = "Decoding circuit index…";
   await nextPaint();
@@ -4101,7 +4103,7 @@ async function applyExplorerProfile(request) {
   setPlaying(false);
   try {
     await nextPaint();
-    const response = await fetch(apiUrl("api/circuit/apply"), {
+    const response = await visualizerRequest(apiUrl("api/circuit/apply"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -4231,10 +4233,15 @@ window.addEventListener("resize", () => {
 
 (async function init() {
   try {
+    document.body.dataset.circuitsimStatus = "loading";
     resizeCanvas();
     const selected = await loadScenarios();
     await loadCircuit(selected);
     requestRender();
+    document.body.dataset.circuitsimStatus = "ready";
+    document.body.dataset.circuitsimRuntime = (
+      window.CIRCUITSIM_RUNTIME || {}
+    ).mode || "http";
   } catch (error) {
     showError(error);
   }

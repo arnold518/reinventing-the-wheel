@@ -4,6 +4,7 @@
 !*.*
 !extern/pybind11
 /build/
+/build-wasm/
 /build-benchmark-release/
 /visualizer/__pycache__
 /visualizer-v2/__pycache__/

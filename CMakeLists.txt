@@ -5,9 +5,21 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+option(CIRCUITSIM_BUILD_PYTHON "Build the native pybind11 visualizer backend" ON)
+option(CIRCUITSIM_BUILD_TESTS "Build the native CTest suite" ON)
+
+if(EMSCRIPTEN)
+    set(CIRCUITSIM_BUILD_PYTHON OFF CACHE BOOL "" FORCE)
+    set(CIRCUITSIM_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+endif()
+
 # --- Dependencies ---
-add_subdirectory(extern/pybind11)
-find_package(Python3 COMPONENTS Interpreter Development REQUIRED)
+if(CIRCUITSIM_BUILD_PYTHON)
+    add_subdirectory(extern/pybind11)
+    find_package(Python3 COMPONENTS Interpreter Development REQUIRED)
+elseif(CIRCUITSIM_BUILD_TESTS)
+    find_package(Python3 COMPONENTS Interpreter REQUIRED)
+endif()
 
 # --- Source File Definitions ---
 set(CORE_LOGIC_SOURCES
@@ -88,6 +100,7 @@ set(CORE_LOGIC_SOURCES
     src/rv32i/RV32IInstructionOracle.cpp
     src/simulator/Event.cpp
     src/simulator/Simulator.cpp
+    src/visualizer/VisualizerSession.cpp
     src/tests/FullCircuitTest.cpp
     src/tests/ComponentTestModel.cpp
     src/tests/CorePrimitiveTests.cpp
@@ -153,26 +166,77 @@ target_compile_definitions(SimulatorLib PRIVATE
 # Target 2: The Python Module (`circuit_backend`)
 # ===================================================================
 # Create the Python module using all binding sources.
-pybind11_add_module(circuit_backend
-    ${BINDING_SOURCES}
-)
+if(CIRCUITSIM_BUILD_PYTHON)
+    pybind11_add_module(circuit_backend
+        ${BINDING_SOURCES}
+    )
 
-# Link the Python module against our core logic library.
-target_link_libraries(circuit_backend PRIVATE SimulatorLib)
+    # Link the Python module against our core logic library.
+    target_link_libraries(circuit_backend PRIVATE SimulatorLib)
 
-# The include directories are inherited automatically from SimulatorLib.
+    # The include directories are inherited automatically from SimulatorLib.
+
+    # After building the Python module, automatically copy it to visualizer-v2.
+    add_custom_command(TARGET circuit_backend POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy
+            $<TARGET_FILE:circuit_backend>
+            ${PROJECT_SOURCE_DIR}/visualizer-v2/$<TARGET_FILE_NAME:circuit_backend>
+        COMMENT "Copying circuit_backend module to visualizer-v2 directory..."
+    )
+endif()
 
 # ===================================================================
-# Automatic Python Module Deployment to Visualizer V2
+# Target 2b: Browser WebAssembly adapter
 # ===================================================================
-# After building the Python module, automatically copy it to the visualizer-v2
-# directory so it can be imported without manual copying.
-add_custom_command(TARGET circuit_backend POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy
-        $<TARGET_FILE:circuit_backend>
-        ${PROJECT_SOURCE_DIR}/visualizer-v2/$<TARGET_FILE_NAME:circuit_backend>
-    COMMENT "Copying circuit_backend module to visualizer-v2 directory..."
-)
+if(EMSCRIPTEN)
+    add_executable(circuitsim_wasm src/wasm/WasmBindings.cpp)
+    target_link_libraries(circuitsim_wasm PRIVATE SimulatorLib)
+    target_compile_options(SimulatorLib PRIVATE -fexceptions)
+    target_compile_options(circuitsim_wasm PRIVATE -O3 -fexceptions)
+    target_link_options(circuitsim_wasm PRIVATE
+        --bind
+        -O3
+        -fexceptions
+        -sMODULARIZE=1
+        -sEXPORT_ES6=1
+        -sEXPORT_NAME=createCircuitSimModule
+        -sENVIRONMENT=web,worker,node
+        -sALLOW_MEMORY_GROWTH=1
+        -sINITIAL_MEMORY=268435456
+        -sMAXIMUM_MEMORY=2147483648
+        -sSTACK_SIZE=8388608
+        -sDISABLE_EXCEPTION_CATCHING=0
+        -sNO_EXIT_RUNTIME=1
+        -sFILESYSTEM=0
+    )
+    set_target_properties(circuitsim_wasm PROPERTIES SUFFIX ".js")
+
+    set(CIRCUITSIM_PAGES_DIR "${CMAKE_BINARY_DIR}/pages")
+    set(CIRCUITSIM_PAGES_SIMULATOR_DIR "${CIRCUITSIM_PAGES_DIR}/simulator")
+    add_custom_command(TARGET circuitsim_wasm POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E rm -rf "${CIRCUITSIM_PAGES_SIMULATOR_DIR}"
+        COMMAND ${CMAKE_COMMAND} -E make_directory "${CIRCUITSIM_PAGES_SIMULATOR_DIR}"
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+            "${PROJECT_SOURCE_DIR}/visualizer-v2/static"
+            "${CIRCUITSIM_PAGES_SIMULATOR_DIR}"
+        COMMAND ${CMAKE_COMMAND} -E copy
+            "${PROJECT_SOURCE_DIR}/visualizer-v2/layout.json"
+            "${CIRCUITSIM_PAGES_SIMULATOR_DIR}/layout.json"
+        COMMAND ${CMAKE_COMMAND} -E copy
+            "${PROJECT_SOURCE_DIR}/visualizer-v2/static/runtime-config.pages.js"
+            "${CIRCUITSIM_PAGES_SIMULATOR_DIR}/runtime-config.js"
+        COMMAND ${CMAKE_COMMAND} -E copy
+            "$<TARGET_FILE:circuitsim_wasm>"
+            "${CIRCUITSIM_PAGES_SIMULATOR_DIR}/circuitsim_wasm.js"
+        COMMAND ${CMAKE_COMMAND} -E copy
+            "$<TARGET_FILE_DIR:circuitsim_wasm>/circuitsim_wasm.wasm"
+            "${CIRCUITSIM_PAGES_SIMULATOR_DIR}/circuitsim_wasm.wasm"
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+            "${PROJECT_SOURCE_DIR}/pages"
+            "${CIRCUITSIM_PAGES_DIR}"
+        COMMENT "Packaging the static GitHub Pages visualizer..."
+    )
+endif()
 
 # ===================================================================
 # Target 3: The C++ Executable (`sim`)
@@ -207,7 +271,9 @@ target_link_libraries(rv32i_performance PRIVATE SimulatorLib)
 # Target 4: CTest Integration
 # ===================================================================
 # Enable the CTest framework for this project.
-enable_testing()
+if(CIRCUITSIM_BUILD_TESTS)
+    enable_testing()
 
-# Add the 'tests' subdirectory, which will contain test definitions.
-add_subdirectory(tests)
+    # Add the 'tests' subdirectory, which will contain test definitions.
+    add_subdirectory(tests)
+endif()

@@ -1,0 +1,88 @@
+name: Deploy WebAssembly visualizer to GitHub Pages
+
+on:
+  push:
+    branches:
+      - github-pages
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Cache Emscripten SDK
+        uses: actions/cache@v4
+        with:
+          path: ${{ runner.tool_cache }}/emsdk
+          key: emsdk-6.0.7-${{ runner.os }}
+
+      - name: Install Emscripten 6.0.7
+        shell: bash
+        run: |
+          EMSDK_DIR="${{ runner.tool_cache }}/emsdk"
+          if [ ! -d "$EMSDK_DIR/.git" ]; then
+            git clone --depth 1 https://github.com/emscripten-core/emsdk.git "$EMSDK_DIR"
+          fi
+          "$EMSDK_DIR/emsdk" install 6.0.7
+          "$EMSDK_DIR/emsdk" activate 6.0.7
+
+      - name: Build static WebAssembly site
+        shell: bash
+        run: |
+          source "${{ runner.tool_cache }}/emsdk/emsdk_env.sh"
+          emcmake cmake -S . -B build-wasm -DCMAKE_BUILD_TYPE=Release
+          cmake --build build-wasm --target circuitsim_wasm --parallel 2
+
+      - name: Test generated WebAssembly module
+        run: >-
+          node tests/VisualizerWasmRuntimeTest.mjs
+          build-wasm/circuitsim_wasm.js
+          build-wasm/circuitsim_wasm.wasm
+
+      - name: Install browser-test client
+        run: python3 -m pip install playwright==1.60.0
+
+      - name: Test generated site in Chrome
+        shell: bash
+        run: |
+          python3 -m http.server 8877 --bind 127.0.0.1 --directory build-wasm/pages &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID"' EXIT
+          for attempt in {1..20}; do
+            if curl --fail --silent http://127.0.0.1:8877/simulator/ >/dev/null; then
+              break
+            fi
+            sleep 0.25
+          done
+          python3 tests/VisualizerWasmBrowserTest.py http://127.0.0.1:8877/simulator/
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: build-wasm/pages
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy Pages artifact
+        id: deployment
+        uses: actions/deploy-pages@v4

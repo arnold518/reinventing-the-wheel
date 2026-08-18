@@ -1,6 +1,12 @@
 add_executable(SimulationTestRunner SimulationTestRunner.cpp)
 target_link_libraries(SimulationTestRunner PRIVATE SimulatorLib)
 
+add_executable(
+    VisualizerSessionProbe
+    VisualizerSessionProbe.cpp
+)
+target_link_libraries(VisualizerSessionProbe PRIVATE SimulatorLib)
+
 add_test(
     NAME RV32IExternalBenchmarkRunnerSmoke
     COMMAND
@@ -263,6 +269,20 @@ endforeach()
 add_test(
     NAME VisualizerModuleBindingsTest
     COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/VisualizerModuleBindingsTest.py
+)
+
+add_test(
+    NAME VisualizerSessionContractTest
+    COMMAND
+        ${Python3_EXECUTABLE}
+        ${CMAKE_CURRENT_SOURCE_DIR}/VisualizerSessionContractTest.py
+        $<TARGET_FILE:VisualizerSessionProbe>
+)
+set_tests_properties(
+    VisualizerSessionContractTest
+    PROPERTIES
+        ENVIRONMENT "PYTHONPATH=${PROJECT_SOURCE_DIR}/visualizer-v2"
+        LABELS "visualizer;system;wasm"
 )
 
 add_test(
