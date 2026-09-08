@@ -89,9 +89,40 @@ body.explorer-open #circuit-canvas {
 }
 
 #viewbar {
+  z-index: 16;
   left: 12px;
+  right: 12px;
   bottom: 12px;
+  height: 60px;
+  padding: 8px;
+  box-sizing: border-box;
   transition: left 160ms ease;
+}
+
+.panel-toggles,
+.view-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.panel-toggles,
+#viewbar button {
+  flex: 0 0 auto;
+}
+
+.view-actions {
+  flex: 1;
+  min-width: 0;
+  height: 44px;
+  overflow-x: auto;
+  scrollbar-width: thin;
+  white-space: nowrap;
+}
+
+#viewbar button[aria-pressed="true"] {
+  background: #256aa7;
+  border-color: #7cc5ff;
 }
 
 body.explorer-open #viewbar {
@@ -213,7 +244,19 @@ body.explorer-open #component-explorer {
 }
 
 .explorer-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
   padding: 14px 14px 10px;
+}
+
+.panel-close {
+  flex: 0 0 auto;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  font-size: 22px;
 }
 
 .explorer-title {
@@ -401,7 +444,7 @@ body:not(.explorer-open) #explorer-resizer {
   z-index: 12;
   top: calc(var(--topbar-height) + 8px);
   right: 12px;
-  bottom: 12px;
+  bottom: 84px;
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
   width: min(var(--inspector-width), calc(100vw - 24px));
@@ -709,20 +752,6 @@ body.explorer-open #loading {
   margin-left: calc(var(--explorer-width) / 2);
 }
 
-@media (max-width: 760px) {
-  body.explorer-open #circuit-canvas {
-    width: 100vw;
-  }
-
-  body.explorer-open #viewbar {
-    left: 12px;
-  }
-
-  #component-explorer {
-    max-width: calc(100vw - 36px);
-  }
-}
-
 @media (max-width: 1180px) {
   #topbar {
     grid-template-columns: 200px minmax(120px, 1fr) auto 280px;
@@ -745,6 +774,50 @@ body.explorer-open #loading {
     padding: 0 8px;
   }
 }
+
+/* An iframe or a narrow standalone window is a circuit-first view. Panels
+   open on demand above the canvas, never over the persistent panel controls. */
+body.compact-view {
+  --topbar-height: 128px;
+}
+
+body.compact-view #topbar {
+  grid-template-columns: minmax(32px, 1fr) auto;
+  grid-template-rows: 32px 32px minmax(0, 1fr);
+  grid-template-areas: "scenario scenario" "timeline controls" "readouts readouts";
+  gap: 6px;
+  padding: 8px;
+}
+
+body.compact-view .scenario-control {
+  grid-area: scenario;
+  grid-template-columns: minmax(0, 1fr);
+}
+body.compact-view .scenario-label { display: none; }
+body.compact-view .timeline-track { grid-area: timeline; }
+body.compact-view .timeline-controls { grid-area: controls; gap: 4px; }
+body.compact-view .timeline-readouts { grid-area: readouts; height: auto; }
+body.compact-view #topbar button,
+body.compact-view #topbar select,
+body.compact-view #topbar input {
+  height: 32px;
+  font-size: 12px;
+}
+body.compact-view .timeline-controls button { padding: 0 6px; }
+body.compact-view #time-label,
+body.compact-view #stats-label { font-size: 10px; }
+
+body.compact-view.explorer-open #circuit-canvas { width: 100vw; }
+body.compact-view.explorer-open #viewbar { left: 12px; }
+body.compact-view #component-explorer {
+  max-width: min(320px, calc(100vw - 24px));
+  bottom: 84px;
+}
+body.compact-view #explorer-resizer { display: none; }
+body.compact-view .inspector {
+  width: min(320px, calc(100vw - 24px));
+}
+body.compact-view.explorer-open #loading { margin-left: 0; }
 
 .hidden {
   display: none !important;

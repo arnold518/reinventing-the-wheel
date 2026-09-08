@@ -6,13 +6,7 @@
 #include "modules/utility/BitAdapter.hpp"
 
 Adder8::Adder8(std::string name)
-    : IOComponent(std::move(name), [](IOComponent* self) {
-        self->addPin<8>("A", PinType::INPUT);
-        self->addPin<8>("B", PinType::INPUT);
-        self->addPin("Cin", PinType::INPUT);
-        self->addPin<8>("Sum", PinType::OUTPUT);
-        self->addPin("Cout", PinType::OUTPUT);
-    }) {}
+    : IOComponent(std::move(name), circuit::families::Adder8.pinInitializer()) {}
 
 void Adder8::buildInternals(ComponentBuilder& builder) {
     builder.addNewComponent<BitSplitter<8>>("A_SPLIT");

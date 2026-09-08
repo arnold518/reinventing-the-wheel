@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>CircuitSim Visualizer V2</title>
   <link rel="icon" href="data:,">
-  <link rel="stylesheet" href="styles.css?v=27">
+  <link rel="stylesheet" href="styles.css?v=28">
 </head>
 <body>
   <canvas id="circuit-canvas"></canvas>
@@ -34,15 +34,20 @@
   </div>
 
   <div id="viewbar" class="toolbar">
-    <button id="toggle-explorer" aria-pressed="true">Explorer</button>
-    <button id="reset-view">Reset View</button>
-    <button id="zoom-out">-</button>
-    <button id="zoom-in">+</button>
-    <button id="undo-layout" title="Undo layout change" disabled>Undo</button>
-    <button id="redo-layout" title="Redo layout change" disabled>Redo</button>
-    <button id="reset-layout">Reset Layout</button>
-    <button id="save-layout">Save Layout</button>
-    <span id="save-status"></span>
+    <div class="panel-toggles">
+      <button id="toggle-explorer" aria-pressed="true" aria-expanded="true" aria-controls="component-explorer">Explorer</button>
+      <button id="toggle-inspector" aria-pressed="false" aria-expanded="false" aria-controls="inspector">Info</button>
+    </div>
+    <div class="view-actions">
+      <button id="reset-view">Reset View</button>
+      <button id="zoom-out">-</button>
+      <button id="zoom-in">+</button>
+      <button id="undo-layout" title="Undo layout change" disabled>Undo</button>
+      <button id="redo-layout" title="Redo layout change" disabled>Redo</button>
+      <button id="reset-layout">Reset Layout</button>
+      <button id="save-layout">Save Layout</button>
+      <span id="save-status"></span>
+    </div>
   </div>
 
   <aside id="component-explorer" aria-label="Component fidelity explorer">
@@ -53,6 +58,7 @@
           Expand structural blocks. Collapse behavioral blocks.
         </div>
       </div>
+      <button id="explorer-close" class="panel-close" title="Close explorer" aria-label="Close explorer">&times;</button>
     </div>
     <div class="explorer-search-wrap">
       <input
@@ -124,9 +130,10 @@
   </aside>
   <div id="loading">Loading circuit...</div>
   <script src="runtime-config.js?v=1"></script>
-  <script src="transport.js?v=1"></script>
-  <script src="explorer.js?v=2"></script>
+  <script src="transport.js?v=3"></script>
+  <script src="explorer.js?v=3"></script>
   <script src="wire_geometry.js?v=1"></script>
-  <script src="app.js?v=58"></script>
+  <script src="rewire_geometry.js?v=1"></script>
+  <script src="app.js?v=62"></script>
 </body>
 </html>

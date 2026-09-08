@@ -196,6 +196,50 @@ def main():
             for fragment in forbidden_test_fragments
         )
 
+    alu_test = circuit_backend.create_test_by_name("ALU8Test")
+    alu_test.setup_circuit()
+    alu = alu_test.get_root()
+    assert alu.get_type_name() == "ALU8"
+    assert alu.get_contract_id() == "alu.width8"
+    assert alu.get_contract_version() == 2
+    assert pin_shape(alu) == (
+        {"A": 8, "B": 8, "OP": 5, "C_IN": 1},
+        {"OUT": 8, "ZERO": 1, "NEGATIVE": 1, "CARRY": 1,
+         "OVERFLOW": 1, "INVALID_OP": 1},
+    )
+    assert set(alu.get_available_fidelities()) == {"structural", "behavioral"}
+    for component_type in (
+        "Adder8", "AddSub8", "ArithmeticUnit8", "LogicUnit8", "BarrelShifter8",
+        "ZeroDetect8", "CompareSelect8", "ALU8FlagUnit", "ALU8ControlDecoder",
+        "ALU8ResultSelector", "ALU8",
+    ):
+        test = circuit_backend.create_test_by_name(component_type + "Test")
+        test.setup_circuit()
+        structural = test.get_root()
+        expected_pins = pin_shape(structural)
+        assert set(structural.get_available_fidelities()) == {"structural", "behavioral"}
+        test.set_build_profile(circuit_backend.profile_with_exact_overrides(
+            test.get_build_profile(), {structural.get_name(): "behavioral"}, "chapter2-binding-test"))
+        test.setup_circuit()
+        direct = test.get_root()
+        assert direct.get_type_name() == component_type
+        assert direct.get_selected_fidelity() == "behavioral"
+        assert not list(direct.get_children())
+        assert pin_shape(direct) == expected_pins
+    for component_type in (
+        "AddSub8", "ArithmeticUnit8", "LogicUnit8", "BarrelShifter8",
+        "CompareSelect8", "ALU8FlagUnit",
+        "ALU8ControlDecoder",
+        "ALU8ResultSelector",
+        "ALU32ControlDecoder",
+        "ALU32CompareUnit",
+        "ALU32ResultSelector",
+        "ALU32FlagUnit",
+    ):
+        component = getattr(circuit_backend, component_type)(component_type)
+        assert component.get_type_name() == component_type
+        assert list(component.get_children())
+
     assert "RV32ISingleCycleCoreTest" in registered
     assert not hasattr(circuit_backend, "RV32ISingleCycleCoreTest")
     assert descriptors["RV32ISingleCycleCoreTest"]["visualizable"]

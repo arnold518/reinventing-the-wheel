@@ -12,6 +12,18 @@
 #include "modules/basic/Mux.hpp"
 #include "modules/composite/ALU32.hpp"
 #include "modules/composite/ALU8.hpp"
+#include "modules/composite/ALU8ControlDecoder.hpp"
+#include "modules/composite/ALU8ResultSelector.hpp"
+#include "modules/composite/ALU32ControlDecoder.hpp"
+#include "modules/composite/ALU32CompareUnit.hpp"
+#include "modules/composite/ALU32ResultSelector.hpp"
+#include "modules/composite/ALU32FlagUnit.hpp"
+#include "modules/composite/AddSub8.hpp"
+#include "modules/composite/ArithmeticUnit8.hpp"
+#include "modules/composite/LogicUnit8.hpp"
+#include "modules/composite/BarrelShifter8.hpp"
+#include "modules/composite/CompareSelect8.hpp"
+#include "modules/composite/ALU8FlagUnit.hpp"
 #include "modules/composite/AddSub32.hpp"
 #include "modules/composite/Adder32.hpp"
 #include "modules/composite/Adder8.hpp"
@@ -197,7 +209,7 @@ void addSingle(ComponentCatalog& catalog,
                Args... args) {
     catalog.registerContract({
         contract_id,
-        1,
+        std::is_same_v<T, ALU8> ? 2u : 1u,
         std::move(display_name),
         schemaFor<T>(args...),
         {},
@@ -290,11 +302,13 @@ void addSelectableFamily(
     const std::string& implementation_prefix,
     const std::string& display_name,
     const std::string& contract_test,
-    const std::string& lower_level_description) {
+    const std::string& lower_level_description,
+    uint32_t contract_version = 1,
+    const std::string& extra_equivalence_test = {}) {
     const auto contract_id = std::string(family.id());
     catalog.registerContract({
         contract_id,
-        1,
+        contract_version,
         display_name,
         schemaFor(family),
         {},
@@ -306,16 +320,15 @@ void addSelectableFamily(
         implementation_prefix + ".structural",
         Fidelity::Structural,
         verifiedStructural(contract_test)));
-    catalog.registerImplementation(implementationFor(
-        family,
-        implementation_prefix + ".behavioral.direct",
-        Fidelity::Behavioral,
-        verifiedBehavioral(
+    auto evidence = verifiedBehavioral(
             lower_level_description,
             contract_test,
             contract_test,
             "four-state",
-            "stable-after-settle")));
+            "stable-after-settle");
+    if (!extra_equivalence_test.empty()) evidence.equivalence_tests.push_back(extra_equivalence_test);
+    catalog.registerImplementation(implementationFor(
+        family, implementation_prefix + ".behavioral.direct", Fidelity::Behavioral, std::move(evidence)));
 }
 
 uint64_t parseUnsigned(const std::string& text) {
@@ -534,7 +547,7 @@ void registerStructuralFamilies(ComponentCatalog& catalog) {
 
     addStructural<HalfAdder>(catalog, "arithmetic.half-adder", "arithmetic.half-adder.structural", "Half adder", "HalfAdderTest");
     addStructural<FullAdder>(catalog, "arithmetic.full-adder", "arithmetic.full-adder.structural", "Full adder", "FullAdderTest");
-    addStructural<Adder8>(catalog, "arithmetic.adder.width8", "arithmetic.adder.width8.structural", "8-bit adder", "Adder8Test");
+    addSelectableFamily(catalog, families::Adder8, "arithmetic.adder.width8", "8-bit adder", "Adder8Test", "Adder8 structural circuit", 1, "ALU8FidelityContractTest");
     addStructural<Adder32>(catalog, "arithmetic.adder.width32", "arithmetic.adder.width32.structural", "32-bit adder", "Adder32Test");
     addSelectableFamily(
         catalog,
@@ -558,7 +571,7 @@ void registerStructuralFamilies(ComponentCatalog& catalog) {
         "32-bit comparator",
         "Comparator32Test",
         "Comparator32 structural subtract-and-detect network");
-    addStructural<ZeroDetect8>(catalog, "compare.zero.width8", "compare.zero.width8.structural", "8-bit zero detect", "ZeroDetect8Test");
+    addSelectableFamily(catalog, families::ZeroDetect8, "compare.zero.width8", "8-bit zero detect", "ZeroDetect8Test", "ZeroDetect8 structural circuit", 1, "ALU8FidelityContractTest");
     addSelectableFamily(
         catalog,
         families::ZeroDetect32,
@@ -583,7 +596,19 @@ void registerStructuralFamilies(ComponentCatalog& catalog) {
         "32-bit shifter",
         "Shifter32Test",
         "Shifter32 structural mux network");
-    addStructural<ALU8>(catalog, "alu.width8", "alu.width8.structural", "8-bit ALU", "ALU8Test");
+    addSelectableFamily(catalog, families::ALU8, "alu.width8", "8-bit ALU", "ALU8Test", "ALU8 structural circuit", 2, "ALU8FidelityContractTest");
+    addSelectableFamily(catalog, families::AddSub8, "arithmetic.add-sub.width8", "8-bit add/sub with carry", "AddSub8Test", "AddSub8 structural circuit", 1, "ALU8FidelityContractTest");
+    addSelectableFamily(catalog, families::ArithmeticUnit8, "arithmetic.unit.width8", "8-bit arithmetic unit", "ArithmeticUnit8Test", "ArithmeticUnit8 structural circuit", 1, "ALU8FidelityContractTest");
+    addSelectableFamily(catalog, families::LogicUnit8, "logic.unit.width8", "8-bit logic unit", "LogicUnit8Test", "LogicUnit8 structural circuit", 1, "ALU8FidelityContractTest");
+    addSelectableFamily(catalog, families::BarrelShifter8, "shift.barrel.width8", "8-bit barrel shifter", "BarrelShifter8Test", "BarrelShifter8 structural circuit", 1, "ALU8FidelityContractTest");
+    addSelectableFamily(catalog, families::CompareSelect8, "compare.select.width8", "8-bit comparison result selector", "CompareSelect8Test", "CompareSelect8 structural circuit", 1, "ALU8FidelityContractTest");
+    addSelectableFamily(catalog, families::ALU8FlagUnit, "alu.flags.width8", "8-bit ALU flags", "ALU8FlagUnitTest", "ALU8FlagUnit structural circuit", 1, "ALU8FidelityContractTest");
+    addSelectableFamily(catalog, families::ALU8ControlDecoder, "alu.control.width8", "ALU8ControlDecoder", "ALU8ControlDecoderTest", "ALU8ControlDecoder structural circuit", 1, "ALU8FidelityContractTest");
+    addSelectableFamily(catalog, families::ALU8ResultSelector, "alu.result-selector.width8", "ALU8ResultSelector", "ALU8ResultSelectorTest", "ALU8ResultSelector structural circuit", 1, "ALU8FidelityContractTest");
+    addStructural<ALU32ControlDecoder>(catalog, "alu.control.width32", "alu.control.width32.structural", "ALU32ControlDecoder", "ALU32ControlDecoderTest");
+    addStructural<ALU32CompareUnit>(catalog, "alu.compare.width32", "alu.compare.width32.structural", "ALU32CompareUnit", "ALU32CompareUnitTest");
+    addStructural<ALU32ResultSelector>(catalog, "alu.result-selector.width32", "alu.result-selector.width32.structural", "ALU32ResultSelector", "ALU32ResultSelectorTest");
+    addStructural<ALU32FlagUnit>(catalog, "alu.flags.width32", "alu.flags.width32.structural", "ALU32FlagUnit", "ALU32FlagUnitTest");
 }
 
 void registerStorage(ComponentCatalog& catalog) {

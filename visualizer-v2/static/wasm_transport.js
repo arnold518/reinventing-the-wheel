@@ -15,7 +15,7 @@ class WasmResponse {
 }
 
 export function createWasmTransport() {
-  const workerUrl = new URL("./wasm_worker.js", import.meta.url);
+  const workerUrl = new URL("./wasm_worker.js?v=3", import.meta.url);
   const worker = new Worker(workerUrl, { type: "module", name: "circuitsim-wasm" });
   const pending = new Map();
   let nextRequestId = 1;

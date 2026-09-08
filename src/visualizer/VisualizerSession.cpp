@@ -15,6 +15,7 @@
 #include "simulator/SimulationTest.hpp"
 #include "simulator/Simulator.hpp"
 #include "tests/TestRegistry.hpp"
+#include "tests/ComponentTestModel.hpp"
 
 #include <algorithm>
 #include <atomic>
@@ -419,6 +420,85 @@ VisualizerSession::VisualizerSession(
 }
 
 VisualizerSession::~VisualizerSession() = default;
+
+std::string VisualizerSession::exampleRowsJson() const {
+    const auto* test = dynamic_cast<const circuit::test::ComponentScenarioTest*>(test_.get());
+    if (!test || test->getRunArtifacts().size() != 1)
+        throw std::invalid_argument("Example tables require one recorded component scenario");
+    const auto& artifact = test->getRunArtifacts().front();
+    const auto& scenarios = test->getSpec().scenarios;
+    const auto scenario = std::find_if(scenarios.begin(), scenarios.end(), [&](const auto& item) {
+        return item.id == artifact.scenario_id;
+    });
+    if (!artifact.completed || scenario == scenarios.end()
+        || scenario->actions.size() != artifact.checkpoints.size())
+        throw std::runtime_error("Example table requires a completed run with one checkpoint per action");
+    auto root = std::dynamic_pointer_cast<IOComponent>(root_);
+    if (!root) throw std::runtime_error("Example table requires an IO component");
+    const auto schema = [](const auto& pins) {
+        std::vector<std::shared_ptr<PinBase>> ordered;
+        for (const auto& [name, pin] : pins) ordered.push_back(pin);
+        return arrayJson(ordered, [](const auto& pin) {
+            std::string result;
+            JsonObject item(result);
+            item.string("name", pin->getName());
+            item.number("width", pin->getWidth());
+            item.end();
+            return result;
+        });
+    };
+    const auto namedValues = [](const circuit::test::NamedValues& values) {
+        std::string result;
+        JsonObject object(result);
+        for (const auto& [name, bits] : values) object.string(name, logicVectorValue(bits));
+        object.end();
+        return result;
+    };
+    size_t row_index = 0;
+    auto rows = arrayJson(scenario->actions, [&](const auto& action) {
+        const auto index = row_index++;
+        const auto& checkpoint = artifact.checkpoints.at(index);
+        if (!action.emit_checkpoint || action.checkpoint_kind != circuit::test::CheckpointKind::Settled
+            || action.checkpoint_id != checkpoint.id)
+            throw std::runtime_error("Example tables support settled row scenarios only");
+        // Do not silently turn retained/undriven inputs or unchecked outputs
+        // into documented test expectations.
+        if (action.inputs.size() != root->getAllInputPins().size())
+            throw std::runtime_error("Example row must explicitly drive every input pin");
+        for (const auto& [name, expected] : action.expected_outputs) {
+            const auto actual = checkpoint.pins.outputs.find(name);
+            if (actual == checkpoint.pins.outputs.end() || actual->second != expected)
+                throw std::runtime_error("Cannot export a failing example row: " + checkpoint.id);
+        }
+        const auto time = std::lower_bound(timestamps_.begin(), timestamps_.end(), checkpoint.actual_time);
+        if (time == timestamps_.end() || *time != checkpoint.actual_time)
+            throw std::runtime_error("Example checkpoint is missing from the visualizer timeline");
+        std::string result;
+        JsonObject item(result);
+        item.string("checkpoint", checkpoint.id);
+        item.number("rowIndex", index);
+        item.number("time", checkpoint.actual_time);
+        item.number("timelineIndex", static_cast<size_t>(std::distance(timestamps_.begin(), time)));
+        item.raw("inputs", namedValues(action.inputs));
+        item.raw("expectedOutputs", namedValues(action.expected_outputs));
+        item.end();
+        return result;
+    });
+    std::string result;
+    JsonObject object(result);
+    object.number("schemaVersion", 1);
+    object.string("scenario", scenario_key_);
+    object.string("registeredTest", registered_test_name_);
+    object.string("rootType", root_->getTypeName());
+    object.string("profileFingerprint", normalizedProfileFingerprint(root_));
+    object.string("profileName", artifact.profile->name());
+    object.string("fidelity", root_->getSelectedFidelity());
+    object.raw("inputs", schema(root->getAllInputPins()));
+    object.raw("outputs", schema(root->getAllOutputPins()));
+    object.raw("rows", rows);
+    object.end();
+    return result;
+}
 
 std::string VisualizerSession::visualizableTestsJson() {
     std::vector<const TestRegistryEntry*> entries;

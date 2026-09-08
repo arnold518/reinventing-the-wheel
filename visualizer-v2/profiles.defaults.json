@@ -1,0 +1,44 @@
+{
+  "scenarios": {
+    "memory-bit": {
+      "exact_overrides": {
+        "MEMORY_BIT_ROOT": "structural"
+      },
+      "revision": 6
+    },
+    "register-file4x32": {
+      "exact_overrides": {
+        "REGISTER_FILE4X32_ROOT.X1": "structural"
+      },
+      "revision": 2
+    },
+    "rv32i-core": {
+      "exact_overrides": {
+        "RV32I_SINGLE_CYCLE_CORE_ROOT.DECODE_CONTROL": "structural"
+      },
+      "revision": 2
+    },
+    "rv32i-five-stage-program1": {
+      "exact_overrides": {
+        "RV32I_FIVE_STAGE_PROGRAM_ROOT.CORE.COORDINATOR": "structural",
+        "RV32I_FIVE_STAGE_PROGRAM_ROOT.CORE.DECODE": "structural",
+        "RV32I_FIVE_STAGE_PROGRAM_ROOT.CORE.EXECUTE": "structural",
+        "RV32I_FIVE_STAGE_PROGRAM_ROOT.CORE.EX_MEM": "structural",
+        "RV32I_FIVE_STAGE_PROGRAM_ROOT.CORE.FETCH": "structural",
+        "RV32I_FIVE_STAGE_PROGRAM_ROOT.CORE.ID_EX": "structural",
+        "RV32I_FIVE_STAGE_PROGRAM_ROOT.CORE.IF_ID": "structural",
+        "RV32I_FIVE_STAGE_PROGRAM_ROOT.CORE.MEMORY": "structural",
+        "RV32I_FIVE_STAGE_PROGRAM_ROOT.CORE.MEM_WB": "structural",
+        "RV32I_FIVE_STAGE_PROGRAM_ROOT.CORE.WRITEBACK": "structural"
+      },
+      "revision": 3
+    },
+    "rv32i-register-file": {
+      "exact_overrides": {
+        "REGISTER_FILE32X32_ROOT.X1": "structural"
+      },
+      "revision": 2
+    }
+  },
+  "schema_version": 1
+}

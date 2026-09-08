@@ -38,10 +38,12 @@
       this.revertButton = options.revertButton;
       this.status = options.status;
       this.toggleButton = options.toggleButton;
+      this.closeButton = options.closeButton;
       this.resizer = options.resizer;
       this.onFocus = options.onFocus;
       this.onApply = options.onApply;
       this.onViewportChanged = options.onViewportChanged;
+      this.onOpenChanged = options.onOpenChanged;
 
       this.components = new Map();
       this.rootId = null;
@@ -72,9 +74,26 @@
         "--explorer-width",
         `${width}px`,
       );
-      const open = localStorage.getItem(OPEN_STORAGE_KEY) !== "false";
+      // Embedded/narrow views start unobstructed, without changing the saved
+      // desktop preference shared by same-origin iframes.
+      const open = !document.body.classList.contains("compact-view")
+        && localStorage.getItem(OPEN_STORAGE_KEY) !== "false";
+      this.setOpen(open, { persist: false, notify: false });
+    }
+
+    setOpen(open, { persist = true, notify = true } = {}) {
       document.body.classList.toggle("explorer-open", open);
       this.toggleButton.setAttribute("aria-pressed", String(open));
+      this.toggleButton.setAttribute("aria-expanded", String(open));
+      this.panel.inert = !open;
+      if (persist && !document.body.classList.contains("compact-view")) {
+        localStorage.setItem(OPEN_STORAGE_KEY, String(open));
+      }
+      if (notify) {
+        if (this.onOpenChanged) this.onOpenChanged(open);
+        this.onViewportChanged();
+      }
+      this.scheduleRender();
     }
 
     bindEvents() {
@@ -102,11 +121,9 @@
       });
       this.toggleButton.addEventListener("click", () => {
         const next = !document.body.classList.contains("explorer-open");
-        document.body.classList.toggle("explorer-open", next);
-        localStorage.setItem(OPEN_STORAGE_KEY, String(next));
-        this.toggleButton.setAttribute("aria-pressed", String(next));
-        this.onViewportChanged();
+        this.setOpen(next);
       });
+      this.closeButton.addEventListener("click", () => this.setOpen(false));
 
       this.resizer.addEventListener("pointerdown", (event) => {
         event.preventDefault();

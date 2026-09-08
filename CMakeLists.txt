@@ -89,6 +89,19 @@ set(CORE_LOGIC_SOURCES
     src/modules/composite/Shifter8.cpp
     src/modules/composite/ZeroDetect8.cpp
     src/modules/composite/ALU8.cpp
+    src/modules/composite/ALU8Behavioral.cpp
+    src/modules/composite/ALU8ControlDecoder.cpp
+    src/modules/composite/ALU8ResultSelector.cpp
+    src/modules/composite/ALU32ControlDecoder.cpp
+    src/modules/composite/ALU32CompareUnit.cpp
+    src/modules/composite/ALU32ResultSelector.cpp
+    src/modules/composite/ALU32FlagUnit.cpp
+    src/modules/composite/AddSub8.cpp
+    src/modules/composite/ArithmeticUnit8.cpp
+    src/modules/composite/LogicUnit8.cpp
+    src/modules/composite/BarrelShifter8.cpp
+    src/modules/composite/CompareSelect8.cpp
+    src/modules/composite/ALU8FlagUnit.cpp
     src/modules/utility/Rewire.cpp
     src/modules/utility/BitAdapter.cpp
     src/modules/utility/Constant.cpp
@@ -107,6 +120,9 @@ set(CORE_LOGIC_SOURCES
     src/tests/ComponentSelectionTests.cpp
     src/tests/UtilityComponentTests.cpp
     src/tests/ArithmeticLogicTests.cpp
+    src/tests/ALU8Tests.cpp
+    src/tests/ALU8BehavioralTests.cpp
+    src/tests/ALUIntegrationTests.cpp
     src/tests/ALU32LowerLevelSliceTests.cpp
     src/tests/RV32IBlockStandaloneTests.cpp
     src/tests/RV32IDecoderTests.cpp
@@ -223,6 +239,12 @@ if(EMSCRIPTEN)
             "${PROJECT_SOURCE_DIR}/visualizer-v2/layout.json"
             "${CIRCUITSIM_PAGES_SIMULATOR_DIR}/layout.json"
         COMMAND ${CMAKE_COMMAND} -E copy
+            "${PROJECT_SOURCE_DIR}/visualizer-v2/profiles.defaults.json"
+            "${CIRCUITSIM_PAGES_SIMULATOR_DIR}/profiles.json"
+        COMMAND ${CMAKE_COMMAND} -E copy
+            "${PROJECT_SOURCE_DIR}/visualizer-v2/palette.json"
+            "${CIRCUITSIM_PAGES_SIMULATOR_DIR}/palette.json"
+        COMMAND ${CMAKE_COMMAND} -E copy
             "${PROJECT_SOURCE_DIR}/visualizer-v2/static/runtime-config.pages.js"
             "${CIRCUITSIM_PAGES_SIMULATOR_DIR}/runtime-config.js"
         COMMAND ${CMAKE_COMMAND} -E copy
@@ -231,10 +253,7 @@ if(EMSCRIPTEN)
         COMMAND ${CMAKE_COMMAND} -E copy
             "$<TARGET_FILE_DIR:circuitsim_wasm>/circuitsim_wasm.wasm"
             "${CIRCUITSIM_PAGES_SIMULATOR_DIR}/circuitsim_wasm.wasm"
-        COMMAND ${CMAKE_COMMAND} -E copy_directory
-            "${PROJECT_SOURCE_DIR}/pages"
-            "${CIRCUITSIM_PAGES_DIR}"
-        COMMENT "Packaging the static GitHub Pages visualizer..."
+        COMMENT "Packaging the static WebAssembly visualizer..."
     )
 endif()
 

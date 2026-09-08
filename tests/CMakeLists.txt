@@ -111,6 +111,21 @@ set(SIMULATION_TESTS
     ShiftRightArithmetic8Test
     ZeroDetect8Test
     ALU8Test
+    AddSub8Test
+    ArithmeticUnit8Test
+    LogicUnit8Test
+    BarrelShifter8Test
+    CompareSelect8Test
+    ALU8FlagUnitTest
+    ALU8ContractTest
+    ALU8FidelityContractTest
+    ALU8ControlDecoderTest
+    ALU8ResultSelectorTest
+    ALU32ControlDecoderTest
+    ALU32CompareUnitTest
+    ALU32ResultSelectorTest
+    ALU32FlagUnitTest
+    ALUHierarchyTest
     Adder32Test
     AddSub32Test
     Logic32Test
@@ -278,6 +293,12 @@ add_test(
         ${CMAKE_CURRENT_SOURCE_DIR}/VisualizerSessionContractTest.py
         $<TARGET_FILE:VisualizerSessionProbe>
 )
+add_test(
+    NAME DocumentationExamplesTest
+    COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/DocumentationExamplesTest.py
+        $<TARGET_FILE:VisualizerSessionProbe>
+)
+set_tests_properties(DocumentationExamplesTest PROPERTIES LABELS "documentation;visualizer")
 set_tests_properties(
     VisualizerSessionContractTest
     PROPERTIES
@@ -302,11 +323,27 @@ set_tests_properties(
 find_program(CIRCUITSIM_NODE_EXECUTABLE NAMES node nodejs)
 if(CIRCUITSIM_NODE_EXECUTABLE)
     add_test(
+        NAME VisualizerCameraAnimationTest
+        COMMAND ${CIRCUITSIM_NODE_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/VisualizerCameraAnimationTest.js
+    )
+    set_tests_properties(
+        VisualizerCameraAnimationTest
+        PROPERTIES LABELS "visualizer;unit"
+    )
+    add_test(
         NAME VisualizerWireGeometryTest
         COMMAND ${CIRCUITSIM_NODE_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/VisualizerWireGeometryTest.js
     )
     set_tests_properties(
         VisualizerWireGeometryTest
+        PROPERTIES LABELS "visualizer;unit"
+    )
+    add_test(
+        NAME VisualizerRewireGeometryTest
+        COMMAND ${CIRCUITSIM_NODE_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/VisualizerRewireGeometryTest.js
+    )
+    set_tests_properties(
+        VisualizerRewireGeometryTest
         PROPERTIES LABELS "visualizer;unit"
     )
 endif()

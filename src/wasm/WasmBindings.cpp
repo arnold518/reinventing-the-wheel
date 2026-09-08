@@ -44,6 +44,7 @@ public:
     std::string stateJson(size_t index) {
         return session().stateJson(index);
     }
+    std::string exampleRowsJson() const { return session().exampleRowsJson(); }
 
     std::string componentStateJson(
         size_t index,
@@ -87,6 +88,7 @@ EMSCRIPTEN_BINDINGS(circuitsim_visualizer) {
         .function("setProfileOverride", &WasmVisualizer::setProfileOverride)
         .function("loadScenario", &WasmVisualizer::loadScenario)
         .function("stateJson", &WasmVisualizer::stateJson)
+        .function("exampleRowsJson", &WasmVisualizer::exampleRowsJson)
         .function("componentStateJson", &WasmVisualizer::componentStateJson)
         .function("topologySliceJson", &WasmVisualizer::topologySliceJson);
 }

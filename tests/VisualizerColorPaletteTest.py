@@ -4,7 +4,7 @@ from colorsys import rgb_to_hsv
 import json
 from pathlib import Path
 
-from palette import DEFAULT_COMPONENT_COLOR, color_for_layout_type
+from palette import DEFAULT_COMPONENT_COLOR, PREFIX_COLORS, TYPE_COLORS, color_for_layout_type
 
 
 LAYOUT_PATH = Path(__file__).resolve().parents[1] / "visualizer-v2" / "layout.json"
@@ -28,6 +28,10 @@ def circular_hue_distance(left: list[int], right: list[int]) -> float:
 
 
 def main() -> None:
+    # Native Python and the static WASM worker consume this same palette data.
+    assert TYPE_COLORS["Rewire"] == (100, 116, 139, 190)
+    assert PREFIX_COLORS["BitSplitter<"] == (124, 58, 237, 190)
+
     # Related components keep a nearby hue.
     assert circular_hue_distance(
         color_for_layout_type("Mux2to1"),

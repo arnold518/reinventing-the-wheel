@@ -1,15 +1,15 @@
+#include "modules/composite/ALU32ControlDecoder.hpp"
+#include "modules/composite/ALU32CompareUnit.hpp"
+#include "modules/composite/ALU32ResultSelector.hpp"
+#include "modules/composite/ALU32FlagUnit.hpp"
+#include "modules/composite/Structural8Builder.hpp"
 #include "modules/composite/ALU32.hpp"
 #include "components/ComponentBuilder.hpp"
 #include "components/ComponentBuilder.tpp"
-#include "modules/basic/Gate.hpp"
-#include "modules/basic/Mux.hpp"
 #include "modules/composite/AddSub32.hpp"
 #include "modules/composite/ALU32Direct.hpp"
 #include "modules/composite/Logic32.hpp"
 #include "modules/composite/Shifter32.hpp"
-#include "modules/composite/ZeroDetect32.hpp"
-#include "modules/utility/BitAdapter.hpp"
-#include "modules/utility/Constant.hpp"
 #include <memory>
 #include <string>
 #include <vector>
@@ -48,263 +48,45 @@ ALU32::ALU32(std::string name)
                   circuit::families::ALU32.pinInitializer()) {}
 
 void ALU32::buildInternals(ComponentBuilder& builder) {
-    // One arithmetic carry chain serves ADD, SUB, SLT, SLTU, and the branch
-    // comparison flags. The operation decoder selects subtraction only when
-    // those comparison results are meaningful.
-    builder.add(circuit::families::AddSub32, "ARITHMETIC");
-    builder.add(circuit::families::Logic32, "LOGIC");
-    builder.add(circuit::families::Shifter32, "SHIFT");
-    builder.add(circuit::families::ZeroDetect32, "ARITHMETIC_ZERO");
-    builder.add(circuit::families::ZeroDetect32, "RESULT_ZERO");
-    builder.addNewComponent<BitSplitter<5>>("OP_SPLIT");
-    builder.addNewComponent<BitSplitter<32>>("ARITHMETIC_SPLIT");
-    builder.addNewComponent<BitSplitter<32>>("RESULT_SPLIT");
-    builder.addNewComponent<BitJoiner<3>>("OP_LOW_JOIN");
-    builder.addNewComponent<BitJoiner<32>>("SLT_JOIN");
-    builder.addNewComponent<BitJoiner<32>>("SLTU_JOIN");
-    builder.addNewComponent<ConstantValue<1>>("CONST_LOW", 0);
-    builder.addNewComponent<ConstantValue<32>>("CONST_ZERO32", 0);
-
-    // Two 8-way banks plus range selection replace the old 32-way result
-    // selector. OP[4] clamps the architecturally unused half to zero.
-    builder.addNewComponent<Mux8to1_32bit>("RESULT_LOW_MUX");
-    builder.addNewComponent<Mux8to1_32bit>("RESULT_HIGH_MUX");
-    builder.addNewComponent<Mux2to1_32bit>("RESULT_HALF_MUX");
-    builder.addNewComponent<Mux2to1_32bit>("RESULT_RANGE_MUX");
-
-    builder.addNewComponent<NOTGate>("NOT_OP4");
-    builder.addNewComponent<NOTGate>("NOT_OP2");
-    builder.addNewComponent<NOTGate>("NOT_OP1");
-    builder.addNewComponent<ORGate>("SUB_SELECTOR_OR");
-    builder.addNewComponent<ANDGate>("ARITHMETIC_VALID_1");
-    builder.addNewComponent<ANDGate>("ARITHMETIC_VALID_2");
-    builder.addNewComponent<ANDGate>("SUB_CONTROL");
-    builder.addNewComponent<NOTGate>("NOT_CARRY");
-    builder.addNewComponent<XORGate>("SIGNED_LT_RAW");
-    builder.addNewComponent<ANDGate>("EQ_VALID");
-    builder.addNewComponent<ANDGate>("SIGNED_LT_VALID");
-    builder.addNewComponent<ANDGate>("UNSIGNED_LT_VALID");
-    builder.addNewComponent<ANDGate>("CARRY_VALID");
-    builder.addNewComponent<ANDGate>("OVERFLOW_VALID");
-
-    builder.addNewWire<32>(
-        "A_bus_internal",
-        getInputPin<32>("A"),
-        {builder.getInputPin<AddSub32, 32>("ARITHMETIC", "A"),
-         builder.getInputPin<Logic32, 32>("LOGIC", "A"),
-         builder.getInputPin<Shifter32, 32>("SHIFT", "A"),
-         builder.getInputPin<Mux8to1_32bit, 32>("RESULT_HIGH_MUX", "IN2")});
-    builder.addNewWire<32>(
-        "B_bus_internal",
-        getInputPin<32>("B"),
-        {builder.getInputPin<AddSub32, 32>("ARITHMETIC", "B"),
-         builder.getInputPin<Logic32, 32>("LOGIC", "B"),
-         builder.getInputPin<Shifter32, 32>("SHIFT", "B"),
-         builder.getInputPin<Mux8to1_32bit, 32>("RESULT_HIGH_MUX", "IN3")});
-    builder.addNewWire<5>(
-        "OP_bus_internal",
-        getInputPin<5>("OP"),
-        {builder.getInputPin<BitSplitter<5>, 5>("OP_SPLIT", "IN")});
-
-    // OP values 0,1,8,9 are the four arithmetic operations. Values 1,8,9
-    // use subtraction. This small decoder is shared by result and flags.
-    builder.addNewWire(
-        "OP0_fanout",
-        builder.getOutputPin<BitSplitter<5>>("OP_SPLIT", "OUT_0"),
-        {builder.getInputPin<BitJoiner<3>>("OP_LOW_JOIN", "IN_0"),
-         builder.getInputPin<ORGate>("SUB_SELECTOR_OR", "B"),
-         builder.getInputPin<Shifter32>("SHIFT", "ARITHMETIC")});
-    builder.addNewWire(
-        "OP1_fanout",
-        builder.getOutputPin<BitSplitter<5>>("OP_SPLIT", "OUT_1"),
-        {builder.getInputPin<BitJoiner<3>>("OP_LOW_JOIN", "IN_1"),
-         builder.getInputPin<NOTGate>("NOT_OP1", "IN")});
-    builder.addNewWire(
-        "OP2_fanout",
-        builder.getOutputPin<BitSplitter<5>>("OP_SPLIT", "OUT_2"),
-        {builder.getInputPin<BitJoiner<3>>("OP_LOW_JOIN", "IN_2"),
-         builder.getInputPin<NOTGate>("NOT_OP2", "IN")});
-    builder.addNewWire(
-        "OP3_fanout",
-        builder.getOutputPin<BitSplitter<5>>("OP_SPLIT", "OUT_3"),
-        {builder.getInputPin<ORGate>("SUB_SELECTOR_OR", "A"),
-         builder.getInputPin<Mux2to1_32bit>("RESULT_HALF_MUX", "SEL")});
-    builder.addNewWire(
-        "OP4_fanout",
-        builder.getOutputPin<BitSplitter<5>>("OP_SPLIT", "OUT_4"),
-        {builder.getInputPin<NOTGate>("NOT_OP4", "IN"),
-         builder.getInputPin<Mux2to1_32bit>("RESULT_RANGE_MUX", "SEL")});
-    builder.addNewWire(
-        "NOT_OP4_to_arithmetic_valid",
-        builder.getOutputPin<NOTGate>("NOT_OP4", "OUT"),
-        {builder.getInputPin<ANDGate>("ARITHMETIC_VALID_1", "A")});
-    builder.addNewWire(
-        "NOT_OP2_to_arithmetic_valid",
-        builder.getOutputPin<NOTGate>("NOT_OP2", "OUT"),
-        {builder.getInputPin<ANDGate>("ARITHMETIC_VALID_1", "B")});
-    builder.addNewWire(
-        "ARITHMETIC_VALID_1_to_2",
-        builder.getOutputPin<ANDGate>("ARITHMETIC_VALID_1", "OUT"),
-        {builder.getInputPin<ANDGate>("ARITHMETIC_VALID_2", "A")});
-    builder.addNewWire(
-        "NOT_OP1_fanout",
-        builder.getOutputPin<NOTGate>("NOT_OP1", "OUT"),
-        {builder.getInputPin<ANDGate>("ARITHMETIC_VALID_2", "B"),
-         builder.getInputPin<Shifter32>("SHIFT", "LEFT")});
-    builder.addNewWire(
-        "SUB_SELECTOR_to_control",
-        builder.getOutputPin<ORGate>("SUB_SELECTOR_OR", "OUT"),
-        {builder.getInputPin<ANDGate>("SUB_CONTROL", "B")});
-    builder.addNewWire(
-        "ARITHMETIC_VALID_fanout",
-        builder.getOutputPin<ANDGate>("ARITHMETIC_VALID_2", "OUT"),
-        {builder.getInputPin<ANDGate>("SUB_CONTROL", "A"),
-         builder.getInputPin<ANDGate>("CARRY_VALID", "B"),
-         builder.getInputPin<ANDGate>("OVERFLOW_VALID", "B")});
-    builder.addNewWire(
-        "SUB_CONTROL_fanout",
-        builder.getOutputPin<ANDGate>("SUB_CONTROL", "OUT"),
-        {builder.getInputPin<AddSub32>("ARITHMETIC", "SUB"),
-         builder.getInputPin<ANDGate>("EQ_VALID", "B"),
-         builder.getInputPin<ANDGate>("SIGNED_LT_VALID", "B"),
-         builder.getInputPin<ANDGate>("UNSIGNED_LT_VALID", "B")});
-
-    builder.addNewWire<3>(
-        "OP_LOW_selector",
-        builder.getOutputPin<BitJoiner<3>, 3>("OP_LOW_JOIN", "OUT"),
-        {builder.getInputPin<Mux8to1_32bit, 3>("RESULT_LOW_MUX", "SEL"),
-         builder.getInputPin<Mux8to1_32bit, 3>("RESULT_HIGH_MUX", "SEL")});
-
-    builder.addNewWire<32>(
-        "ARITHMETIC_result_fanout",
-        builder.getOutputPin<AddSub32, 32>("ARITHMETIC", "OUT"),
-        {builder.getInputPin<Mux8to1_32bit, 32>("RESULT_LOW_MUX", "IN0"),
-         builder.getInputPin<Mux8to1_32bit, 32>("RESULT_LOW_MUX", "IN1"),
-         builder.getInputPin<ZeroDetect32, 32>("ARITHMETIC_ZERO", "A"),
-         builder.getInputPin<BitSplitter<32>, 32>("ARITHMETIC_SPLIT", "IN")});
-    builder.addNewWire<32>(
-        "AND_result_to_mux",
-        builder.getOutputPin<Logic32, 32>("LOGIC", "AND_OUT"),
-        {builder.getInputPin<Mux8to1_32bit, 32>("RESULT_LOW_MUX", "IN2")});
-    builder.addNewWire<32>(
-        "OR_result_to_mux",
-        builder.getOutputPin<Logic32, 32>("LOGIC", "OR_OUT"),
-        {builder.getInputPin<Mux8to1_32bit, 32>("RESULT_LOW_MUX", "IN3")});
-    builder.addNewWire<32>(
-        "XOR_result_to_mux",
-        builder.getOutputPin<Logic32, 32>("LOGIC", "XOR_OUT"),
-        {builder.getInputPin<Mux8to1_32bit, 32>("RESULT_LOW_MUX", "IN4")});
-    builder.addNewWire<32>(
-        "SHIFT_result_to_mux",
-        builder.getOutputPin<Shifter32, 32>("SHIFT", "OUT"),
-        {builder.getInputPin<Mux8to1_32bit, 32>("RESULT_LOW_MUX", "IN5"),
-         builder.getInputPin<Mux8to1_32bit, 32>("RESULT_LOW_MUX", "IN6"),
-         builder.getInputPin<Mux8to1_32bit, 32>("RESULT_LOW_MUX", "IN7")});
-
-    builder.addNewWire(
-        "ARITHMETIC_ZERO_to_eq",
-        builder.getOutputPin<ZeroDetect32>("ARITHMETIC_ZERO", "ZERO"),
-        {builder.getInputPin<ANDGate>("EQ_VALID", "A")});
-    builder.addNewWire(
-        "ARITHMETIC_sign_to_signed_lt",
-        builder.getOutputPin<BitSplitter<32>>(
-            "ARITHMETIC_SPLIT", "OUT_31"),
-        {builder.getInputPin<XORGate>("SIGNED_LT_RAW", "A")});
-    builder.addNewWire(
-        "ARITHMETIC_carry_fanout",
-        builder.getOutputPin<AddSub32>("ARITHMETIC", "CARRY_OUT"),
-        {builder.getInputPin<NOTGate>("NOT_CARRY", "IN"),
-         builder.getInputPin<ANDGate>("CARRY_VALID", "A")});
-    builder.addNewWire(
-        "ARITHMETIC_overflow_fanout",
-        builder.getOutputPin<AddSub32>("ARITHMETIC", "OVERFLOW"),
-        {builder.getInputPin<XORGate>("SIGNED_LT_RAW", "B"),
-         builder.getInputPin<ANDGate>("OVERFLOW_VALID", "A")});
-    builder.addNewWire(
-        "SIGNED_LT_RAW_to_valid",
-        builder.getOutputPin<XORGate>("SIGNED_LT_RAW", "OUT"),
-        {builder.getInputPin<ANDGate>("SIGNED_LT_VALID", "A")});
-    builder.addNewWire(
-        "UNSIGNED_LT_RAW_to_valid",
-        builder.getOutputPin<NOTGate>("NOT_CARRY", "OUT"),
-        {builder.getInputPin<ANDGate>("UNSIGNED_LT_VALID", "A")});
-
-    builder.addNewWire(
-        "EQ_compare_result",
-        builder.getOutputPin<ANDGate>("EQ_VALID", "OUT"),
-        {getOutputPin("EQ")});
-    builder.addNewWire(
-        "SIGNED_LT_compare_result",
-        builder.getOutputPin<ANDGate>("SIGNED_LT_VALID", "OUT"),
-        {getOutputPin("LT_SIGNED"),
-         builder.getInputPin<BitJoiner<32>>("SLT_JOIN", "IN_0")});
-    builder.addNewWire(
-        "UNSIGNED_LT_compare_result",
-        builder.getOutputPin<ANDGate>("UNSIGNED_LT_VALID", "OUT"),
-        {getOutputPin("LT_UNSIGNED"),
-         builder.getInputPin<BitJoiner<32>>("SLTU_JOIN", "IN_0")});
-    builder.addNewWire(
-        "CARRY_compare_result",
-        builder.getOutputPin<ANDGate>("CARRY_VALID", "OUT"),
-        {getOutputPin("CARRY_OUT")});
-    builder.addNewWire(
-        "OVERFLOW_compare_result",
-        builder.getOutputPin<ANDGate>("OVERFLOW_VALID", "OUT"),
-        {getOutputPin("OVERFLOW")});
-
-    std::vector<std::shared_ptr<Pin<>>> low_sinks;
-    low_sinks.reserve(62);
-    for (size_t bit = 1; bit < 32; ++bit) {
-        low_sinks.push_back(builder.getInputPin<BitJoiner<32>>(
-            "SLT_JOIN", "IN_" + std::to_string(bit)));
-        low_sinks.push_back(builder.getInputPin<BitJoiner<32>>(
-            "SLTU_JOIN", "IN_" + std::to_string(bit)));
+    circuit::detail::StructuralBuilder n(*this, builder);
+    auto control = n.add<ALU32ControlDecoder>("CONTROL");
+    // Keep these established paths and fidelity-selectable families intact.
+    auto arith = builder.add(circuit::families::AddSub32, "ARITHMETIC");
+    auto logic = builder.add(circuit::families::Logic32, "LOGIC");
+    auto shift = builder.add(circuit::families::Shifter32, "SHIFT");
+    auto compare = n.add<ALU32CompareUnit>("COMPARE");
+    auto result = n.add<ALU32ResultSelector>("RESULT_SELECT");
+    auto flags = n.add<ALU32FlagUnit>("FLAGS");
+    n.connect(n.input("OP"), control->getInputPin<5>("OP"));
+    for (const auto& unit : std::vector<std::shared_ptr<IOComponent>>{arith, logic, shift, result}) {
+        n.connect(n.input("A"), unit->getInputPin<32>("A"));
+        n.connect(n.input("B"), unit->getInputPin<32>("B"));
     }
-    builder.addNewWire(
-        "CONST_LOW_to_compare_words",
-        builder.getOutputPin<ConstantValue<1>>("CONST_LOW", "OUT"),
-        low_sinks);
-    builder.addNewWire<32>(
-        "SLT_word_to_mux",
-        builder.getOutputPin<BitJoiner<32>, 32>("SLT_JOIN", "OUT"),
-        {builder.getInputPin<Mux8to1_32bit, 32>("RESULT_HIGH_MUX", "IN0")});
-    builder.addNewWire<32>(
-        "SLTU_word_to_mux",
-        builder.getOutputPin<BitJoiner<32>, 32>("SLTU_JOIN", "OUT"),
-        {builder.getInputPin<Mux8to1_32bit, 32>("RESULT_HIGH_MUX", "IN1")});
-
-    builder.addNewWire<32>(
-        "CONST_ZERO32_fanout",
-        builder.getOutputPin<ConstantValue<32>, 32>("CONST_ZERO32", "OUT"),
-        {builder.getInputPin<Mux8to1_32bit, 32>("RESULT_HIGH_MUX", "IN4"),
-         builder.getInputPin<Mux8to1_32bit, 32>("RESULT_HIGH_MUX", "IN5"),
-         builder.getInputPin<Mux8to1_32bit, 32>("RESULT_HIGH_MUX", "IN6"),
-         builder.getInputPin<Mux8to1_32bit, 32>("RESULT_HIGH_MUX", "IN7"),
-         builder.getInputPin<Mux2to1_32bit, 32>("RESULT_RANGE_MUX", "B")});
-    builder.addNewWire<32>(
-        "RESULT_LOW_to_half",
-        builder.getOutputPin<Mux8to1_32bit, 32>("RESULT_LOW_MUX", "OUT"),
-        {builder.getInputPin<Mux2to1_32bit, 32>("RESULT_HALF_MUX", "A")});
-    builder.addNewWire<32>(
-        "RESULT_HIGH_to_half",
-        builder.getOutputPin<Mux8to1_32bit, 32>("RESULT_HIGH_MUX", "OUT"),
-        {builder.getInputPin<Mux2to1_32bit, 32>("RESULT_HALF_MUX", "B")});
-    builder.addNewWire<32>(
-        "RESULT_HALF_to_range",
-        builder.getOutputPin<Mux2to1_32bit, 32>("RESULT_HALF_MUX", "OUT"),
-        {builder.getInputPin<Mux2to1_32bit, 32>("RESULT_RANGE_MUX", "A")});
-    builder.addNewWire<32>(
-        "RESULT_bus_internal",
-        builder.getOutputPin<Mux2to1_32bit, 32>("RESULT_RANGE_MUX", "OUT"),
-        {getOutputPin<32>("OUT"),
-         builder.getInputPin<ZeroDetect32, 32>("RESULT_ZERO", "A"),
-         builder.getInputPin<BitSplitter<32>, 32>("RESULT_SPLIT", "IN")});
-    builder.addNewWire(
-        "RESULT_ZERO_to_ZERO",
-        builder.getOutputPin<ZeroDetect32>("RESULT_ZERO", "ZERO"),
-        {getOutputPin("ZERO")});
-    builder.addNewWire(
-        "RESULT_sign_to_NEGATIVE",
-        builder.getOutputPin<BitSplitter<32>>("RESULT_SPLIT", "OUT_31"),
-        {getOutputPin("NEGATIVE")});
+    n.connect(control->getOutputPin("SUB"), arith->getInputPin("SUB"));
+    n.connect(control->getOutputPin("SUB"), compare->getInputPin("ENABLE"));
+    n.connect(control->getOutputPin("SHIFT_LEFT"), shift->getInputPin("LEFT"));
+    n.connect(control->getOutputPin("SHIFT_ARITHMETIC"), shift->getInputPin("ARITHMETIC"));
+    n.connect(control->getOutputPin<3>("LOCAL_OP"), result->getInputPin<3>("LOCAL_OP"));
+    n.connect(control->getOutputPin("HIGH_HALF"), result->getInputPin("HIGH_HALF"));
+    n.connect(control->getOutputPin("OUT_OF_RANGE"), result->getInputPin("OUT_OF_RANGE"));
+    n.connect(arith->getOutputPin<32>("OUT"), compare->getInputPin<32>("DIFF"));
+    n.connect(arith->getOutputPin("CARRY_OUT"), compare->getInputPin("CARRY_IN"));
+    n.connect(arith->getOutputPin("OVERFLOW"), compare->getInputPin("OVERFLOW_IN"));
+    n.connect(arith->getOutputPin<32>("OUT"), result->getInputPin<32>("ARITHMETIC_RESULT"));
+    for (const auto* operation : {"AND", "OR", "XOR"})
+        n.connect(logic->getOutputPin<32>(std::string(operation) + "_OUT"),
+                  result->getInputPin<32>(std::string(operation) + "_RESULT"));
+    n.connect(shift->getOutputPin<32>("OUT"), result->getInputPin<32>("SHIFT_RESULT"));
+    n.connect(compare->getOutputPin<32>("SLT_RESULT"), result->getInputPin<32>("SLT_RESULT"));
+    n.connect(compare->getOutputPin<32>("SLTU_RESULT"), result->getInputPin<32>("SLTU_RESULT"));
+    for (const auto* name : {"EQ", "LT_SIGNED", "LT_UNSIGNED"})
+        n.connect(compare->getOutputPin(name), n.output(name));
+    n.connect(result->getOutputPin<32>("OUT"), n.output("OUT"));
+    n.connect(result->getOutputPin<32>("OUT"), flags->getInputPin<32>("RESULT"));
+    n.connect(control->getOutputPin("ARITHMETIC_ENABLE"), flags->getInputPin("ARITHMETIC_ENABLE"));
+    n.connect(arith->getOutputPin("CARRY_OUT"), flags->getInputPin("ARITH_CARRY"));
+    n.connect(arith->getOutputPin("OVERFLOW"), flags->getInputPin("ARITH_OVERFLOW"));
+    for (const auto* name : {"ZERO", "NEGATIVE", "CARRY_OUT", "OVERFLOW"})
+        n.connect(flags->getOutputPin(name), n.output(name));
+    n.finish();
 }

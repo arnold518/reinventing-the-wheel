@@ -7,3 +7,36 @@ The native visualizer remains available through `visualizer-v2/server.py`. The
 same visualizer can also run entirely in a browser through WebAssembly for
 static hosting under `/simulator/`; see
 [`docs/webassembly-github-pages-report.md`](docs/webassembly-github-pages-report.md).
+
+## Documentation site
+
+The public Material for MkDocs source is isolated in `site-docs/`; the existing
+`docs/` directory remains an internal collection of implementation reports.
+Install the pinned documentation dependency with:
+
+```bash
+python3 -m pip install -r requirements-docs.txt
+```
+
+To build the complete GitHub Pages artifact, including the WebAssembly
+visualizer at `/simulator/`, activate Emscripten and run:
+
+```bash
+tools/build-pages.sh
+python3 -m http.server 8877 --directory build-wasm/site
+```
+
+The deployable site is written to `build-wasm/site/`. The documentation occupies
+the root and the unchanged browser visualizer occupies `/simulator/`.
+
+After the first combined build, use `python3 -m mkdocs serve --config-file
+mkdocs.preview.yml` for a live documentation preview with the built simulator.
+Rebuild with `tools/build-pages.sh` after changing C++ circuits or test rows.
+
+Chapter 2 example tables are generated from the recorded C++ scenarios, not
+hand-maintained Markdown rows. Each `<!-- simulator-examples: SCENARIO TEST -->`
+marker expands during MkDocs rendering. The Pages build exports declared inputs,
+expected outputs, checkpoint labels, and settled times from the compiled WASM
+engine to `build-wasm/pages/simulator/example-rows.json`, verifying every row
+against recorded pin history. The preview reads that same generated data; no
+native Python binding or backend server is needed for the published tables.

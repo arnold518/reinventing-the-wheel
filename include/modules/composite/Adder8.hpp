@@ -1,4 +1,5 @@
 #pragma once
+#include "modules/composite/ALU8Families.hpp"
 
 #include "components/IOComponent.hpp"
 

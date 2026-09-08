@@ -527,7 +527,8 @@ void BuiltinComponentCatalogInventoryTest::verifyResults() {
 
     const std::set<std::string> expected_types{
         "ALU32", "ALU8", "AND8", "ANDGate", "AddSub32", "Adder32",
-        "Adder8", "Memory64Kx32",
+        "Adder8", "Memory64Kx32", "AddSub8", "ArithmeticUnit8", "LogicUnit8",
+        "BarrelShifter8", "CompareSelect8", "ALU8FlagUnit",
         "Register32", "RegisterFile32x32",
         "BitJoiner", "BitSplitter",
         "ClockGenerator", "Comparator32", "Comparator8", "ConstantValue",
@@ -554,7 +555,9 @@ void BuiltinComponentCatalogInventoryTest::verifyResults() {
         "ShiftLeftLogical8", "ShiftRightArithmetic8", "ShiftRightLogical8",
         "Shifter32", "SignedComparator8", "Subtractor8",
         "SubtractorWithBorrow8", "TwosComplement8", "XOR8", "XORGate",
-        "ZeroDetect32", "ZeroDetect8"
+        "ZeroDetect32", "ZeroDetect8",
+        "ALU8ControlDecoder", "ALU8ResultSelector", "ALU32ControlDecoder",
+        "ALU32CompareUnit", "ALU32ResultSelector", "ALU32FlagUnit"
     };
 
     require(registered_types == expected_types,
@@ -693,7 +696,13 @@ void RecursiveBuildProfileTest::verifyResults() {
         "ARITHMETIC", "LOGIC", "SHIFT",
         "ARITHMETIC_ZERO", "RESULT_ZERO"};
     size_t selected_children = 0;
-    for (const auto& child : mixed_alu.root->getChildren()) {
+    // The zero detectors now live inside COMPARE and FLAGS. The same subtree
+    // profile must continue to select all five lower-level families.
+    std::vector<std::shared_ptr<Component>> pending_alu{mixed_alu.root};
+    while (!pending_alu.empty()) {
+        auto child = pending_alu.back();
+        pending_alu.pop_back();
+        pending_alu.insert(pending_alu.end(), child->getChildren().begin(), child->getChildren().end());
         if (selectable_alu_children.count(child->getName()) == 0) {
             continue;
         }
@@ -709,7 +718,7 @@ void RecursiveBuildProfileTest::verifyResults() {
     }
     require(
         selected_children == selectable_alu_children.size(),
-        "Structural ALU omitted a profile-selectable child block");
+        "Structural ALU omitted a profile-selectable descendant block");
 
     auto mixed_system_profile =
         circuit::BuildProfileBuilder("behavioral-core")

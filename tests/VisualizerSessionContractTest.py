@@ -100,6 +100,9 @@ def main() -> None:
         layout_path = Path(directory) / "layout.json"
         shutil.copy2(SOURCE_LAYOUT, layout_path)
         compare_topology("Adder8Test", "adder8", layout_path)
+        compare_topology("ALU8Test", "alu8", layout_path)
+        compare_topology("AddSub8Test", "addsub8", layout_path)
+        compare_topology("ArithmeticUnit8Test", "arithmetic8", layout_path)
 
         native = native_session("memory64kx32", layout_path)
         expected = native.topology_response()

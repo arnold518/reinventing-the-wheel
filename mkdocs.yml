@@ -1,0 +1,117 @@
+site_name: CircuitSim Notes
+site_description: Documentation and lecture notes for the CircuitSim project
+site_url: https://arnold518.github.io/reinventing-the-wheel/
+
+repo_name: arnold518/reinventing-the-wheel
+repo_url: https://github.com/arnold518/reinventing-the-wheel
+
+docs_dir: site-docs
+site_dir: site
+strict: true
+
+hooks:
+  - tools/mkdocs_examples.py
+
+theme:
+  name: material
+  language: en
+  font:
+    text: Noto Sans
+    code: Ubuntu Mono
+  icon:
+    repo: fontawesome/brands/github
+  features:
+    - content.code.copy
+    - header.autohide
+    - navigation.indexes
+    - navigation.instant
+    - navigation.tabs
+    - navigation.top
+    - navigation.tracking
+    - search.highlight
+    - search.share
+    - search.suggest
+    - toc.follow
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/weather-night
+        name: Switch to light mode
+
+plugins:
+  - search:
+      separator: '[\s\-,:!=\[\]()"`/]+|\.(?!\d)|&[lg]t;|(?!\b)(?=[A-Z][a-z])'
+  - blog:
+      blog_dir: blog
+      post_dir: "{blog}/posts"
+      archive: true
+      categories: true
+      pagination: true
+  - tags
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - def_list
+  - footnotes
+  - md_in_html
+  - tables
+  - pymdownx.arithmatex:
+      generic: true
+  - pymdownx.blocks.caption
+  - pymdownx.details
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - toc:
+      permalink: true
+
+extra_javascript:
+  - assets/javascripts/mathjax.js
+  - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js
+
+extra_css:
+  - assets/stylesheets/extra.css
+
+extra:
+  generator: false
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/arnold518
+
+copyright: Copyright &copy; 2026 Jaemin Park
+
+nav:
+  - Home: index.md
+  - ALU8:
+      - 2.1. Arithmetic Components: alu8/2.1.md
+      - 2.2. Logic Operations: alu8/2.2.md
+      - 2.3. Shifts and Rotations: alu8/2.3.md
+      - 2.4. Comparison and Selection: alu8/2.4.md
+      - 2.5. Flags: alu8/2.5.md
+      - 2.6. Complete ALU8: alu8/2.6.md
+  - Blog:
+      - blog/index.md
+  - Simulator: visualizer.md

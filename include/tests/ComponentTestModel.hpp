@@ -142,6 +142,8 @@ public:
     const std::vector<RunArtifact>& getRunArtifacts() const {
         return artifacts_;
     }
+    // Read-only source of declared inputs/expectations for documentation export.
+    const ComponentTestSpec& getSpec() const { return spec_; }
     bool supportsBuildProfile() const override { return true; }
     BuildProfile getBuildProfile() const override { return profile_; }
     void setBuildProfile(BuildProfile profile) override;

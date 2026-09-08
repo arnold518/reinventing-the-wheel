@@ -24,7 +24,7 @@ void usage() {
     std::cerr
         << "Usage:\n"
         << "  VisualizerSessionProbe --list\n"
-        << "  VisualizerSessionProbe <topology|state|component|slice> "
+        << "  VisualizerSessionProbe <topology|state|component|slice|examples> "
            "<registered-test> <scenario> [command arguments] "
            "[--revision N] [--override PATH FID]...\n";
 }
@@ -67,7 +67,7 @@ int main(int argc, char** argv) {
                 owner_ids.emplace_back(argv[cursor++]);
             }
             if (owner_ids.empty()) throw std::invalid_argument("slice requires at least one owner id");
-        } else if (command != "topology") {
+        } else if (command != "topology" && command != "examples") {
             throw std::invalid_argument("Unknown command: " + command);
         }
 
@@ -98,6 +98,8 @@ int main(int argc, char** argv) {
             revision);
         if (command == "topology") {
             std::cout << session.topologyResponseJson();
+        } else if (command == "examples") {
+            std::cout << session.exampleRowsJson();
         } else if (command == "state") {
             std::cout << session.stateJson(state_index);
         } else if (command == "component") {

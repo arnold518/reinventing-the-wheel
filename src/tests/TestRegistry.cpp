@@ -1,6 +1,8 @@
 #include "tests/TestRegistry.hpp"
 
 #include "tests/ArithmeticLogicTests.hpp"
+#include "tests/ALU8Tests.hpp"
+#include "tests/ALUIntegrationTests.hpp"
 #include "tests/CorePrimitiveTests.hpp"
 #include "tests/ComponentSelectionTests.hpp"
 #include "tests/FullCircuitTest.hpp"
@@ -293,6 +295,21 @@ const std::vector<TestRegistryEntry>& getTestRegistry() {
         entry<ShiftRightArithmetic8Test>("ShiftRightArithmetic8Test"),
         entry<ZeroDetect8Test>("ZeroDetect8Test"),
         entry<ALU8Test>("ALU8Test"),
+        entry<AddSub8Test>("AddSub8Test"),
+        entry<ArithmeticUnit8Test>("ArithmeticUnit8Test"),
+        entry<LogicUnit8Test>("LogicUnit8Test"),
+        entry<BarrelShifter8Test>("BarrelShifter8Test"),
+        entry<CompareSelect8Test>("CompareSelect8Test"),
+        entry<ALU8FlagUnitTest>("ALU8FlagUnitTest"),
+        entry<ALU8ContractTest>("ALU8ContractTest"),
+        entry<ALU8FidelityContractTest>("ALU8FidelityContractTest"),
+        entry<ALU8ControlDecoderTest>("ALU8ControlDecoderTest"),
+        entry<ALU8ResultSelectorTest>("ALU8ResultSelectorTest"),
+        entry<ALU32ControlDecoderTest>("ALU32ControlDecoderTest"),
+        entry<ALU32CompareUnitTest>("ALU32CompareUnitTest"),
+        entry<ALU32ResultSelectorTest>("ALU32ResultSelectorTest"),
+        entry<ALU32FlagUnitTest>("ALU32FlagUnitTest"),
+        entry<ALUHierarchyTest>("ALUHierarchyTest"),
         entry<Adder32Test>("Adder32Test"),
         entry<AddSub32Test>("AddSub32Test"),
         entry<Logic32Test>("Logic32Test"),

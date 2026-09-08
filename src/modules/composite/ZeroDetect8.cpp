@@ -6,10 +6,7 @@
 #include <string>
 
 ZeroDetect8::ZeroDetect8(std::string name)
-    : IOComponent(std::move(name), [](IOComponent* self) {
-        self->addPin<8>("A", PinType::INPUT);
-        self->addPin("ZERO", PinType::OUTPUT);
-    }) {}
+    : IOComponent(std::move(name), circuit::families::ZeroDetect8.pinInitializer()) {}
 
 void ZeroDetect8::buildInternals(ComponentBuilder& builder) {
     builder.addNewComponent<BitSplitter<8>>("A_SPLIT");

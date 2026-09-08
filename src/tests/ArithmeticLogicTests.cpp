@@ -195,11 +195,6 @@ TestRow adderRow(uint64_t a, uint64_t b, bool cin, uint64_t sum, bool cout) {
             {{"Sum", pinBits(sum)}, {"Cout", pinBit(cout)}}};
 }
 
-TestRow aluRow(uint64_t a, uint64_t b, uint64_t op, uint64_t out, bool zero, bool carry, bool overflow, bool negative) {
-    return {{{"A", pinBits(a)}, {"B", pinBits(b)}, {"OP", pinBits(op)}},
-            {{"OUT", pinBits(out)}, {"ZERO", pinBit(zero)}, {"CARRY", pinBit(carry)}, {"OVERFLOW", pinBit(overflow)}, {"NEGATIVE", pinBit(negative)}}};
-}
-
 std::string muxInputName(size_t input_count, size_t index) {
     if (input_count == 2) {
         return index == 0 ? "A" : "B";
@@ -623,7 +618,6 @@ std::vector<TestRow> halfAdderRows();
 std::vector<TestRow> fullAdderRows();
 std::vector<TestRow> adder8Rows();
 std::vector<TestRow> zeroDetect8Rows();
-std::vector<TestRow> alu8Rows();
 
 HalfAdderTest::HalfAdderTest()
     : TruthTableComponentTest<HalfAdder>(
@@ -980,81 +974,5 @@ std::vector<TestRow> zeroDetect8Rows() {
             {{"ZERO", bit(false)}},
         });
     }
-    return rows;
-}
-
-ALU8Test::ALU8Test()
-    : TruthTableComponentTest<ALU8>(
-          "ALU8Test", "ALU8_ROOT", alu8Rows()) {}
-
-std::vector<TestRow> alu8Rows() {
-    std::vector<TestRow> rows{
-        aluRow(0x00, 0x00, 0x0, 0x00, true, false, false, false),
-        aluRow(0xFF, 0x01, 0x0, 0x00, true, true, false, false),
-        aluRow(0x7F, 0x01, 0x0, 0x80, false, false, true, true),
-        aluRow(0x80, 0x80, 0x0, 0x00, true, true, true, false),
-        aluRow(0x05, 0x03, 0x1, 0x02, false, true, false, false),
-        aluRow(0x00, 0x01, 0x1, 0xFF, false, false, false, true),
-        aluRow(0x42, 0x42, 0x1, 0x00, true, true, false, false),
-        aluRow(0xFF, 0x0F, 0x2, 0x0F, false, false, false, false),
-        aluRow(0xF0, 0x0F, 0x2, 0x00, true, false, false, false),
-        aluRow(0xF0, 0x0F, 0x3, 0xFF, false, false, false, true),
-        aluRow(0xAA, 0x55, 0x4, 0xFF, false, false, false, true),
-        aluRow(0x5A, 0x5A, 0x4, 0x00, true, false, false, false),
-        aluRow(0x00, 0x00, 0x5, 0xFF, false, false, false, true),
-        aluRow(0x80, 0x00, 0x6, 0x00, true, true, false, false),
-        aluRow(0x01, 0x00, 0x6, 0x02, false, false, false, false),
-        aluRow(0xFF, 0x00, 0x6, 0xFE, false, true, false, true),
-        aluRow(0x01, 0x00, 0x7, 0x00, true, true, false, false),
-        aluRow(0x02, 0x00, 0x7, 0x01, false, false, false, false),
-        aluRow(0xFF, 0x00, 0x7, 0x7F, false, true, false, false),
-        aluRow(0x80, 0x00, 0x8, 0xC0, false, false, false, true),
-        aluRow(0x7F, 0x00, 0x8, 0x3F, false, true, false, false),
-        aluRow(0xFF, 0x00, 0x9, 0x00, true, true, false, false),
-        aluRow(0x7F, 0x00, 0x9, 0x80, false, false, true, true),
-        aluRow(0x00, 0x00, 0xA, 0xFF, false, false, false, true),
-        aluRow(0x80, 0x00, 0xA, 0x7F, false, true, true, false),
-        aluRow(0x01, 0x00, 0xB, 0xFF, false, true, false, true),
-        aluRow(0x80, 0x00, 0xB, 0x80, false, true, true, true),
-        aluRow(0xFF, 0x00, 0xB, 0x01, false, true, false, false),
-        aluRow(0x42, 0xFF, 0xC, 0x42, false, false, false, false),
-        aluRow(0xFF, 0x42, 0xD, 0x42, false, false, false, false),
-        aluRow(0x05, 0x03, 0xE, 0x02, false, true, false, false),
-        aluRow(0xFF, 0xFF, 0xF, 0x00, true, false, false, false),
-    };
-    const auto xor_input = bus8With(0, LogicValue::UNKNOWN);
-    auto xor_output = circuit::test::logicBits(8, 0);
-    xor_output[0] = LogicValue::UNKNOWN;
-    rows.push_back({
-        {
-            {"A", pinVector(xor_input)},
-            {"B", bits(0)},
-            {"OP", bits(0x4)},
-        },
-        {
-            {"OUT", pinVector(xor_output)},
-            {"ZERO", pinLogic(LogicValue::UNKNOWN)},
-            {"CARRY", bit(false)},
-            {"OVERFLOW", bit(false)},
-            {"NEGATIVE", bit(false)},
-        },
-    });
-    const auto pass_input = bus8With(7, LogicValue::HIGH_Z);
-    auto pass_output = circuit::test::logicBits(8, 0);
-    pass_output[7] = LogicValue::UNKNOWN;
-    rows.push_back({
-        {
-            {"A", pinVector(pass_input)},
-            {"B", bits(0)},
-            {"OP", bits(0xC)},
-        },
-        {
-            {"OUT", pinVector(pass_output)},
-            {"ZERO", pinLogic(LogicValue::UNKNOWN)},
-            {"CARRY", bit(false)},
-            {"OVERFLOW", bit(false)},
-            {"NEGATIVE", pinLogic(LogicValue::UNKNOWN)},
-        },
-    });
     return rows;
 }

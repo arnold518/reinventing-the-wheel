@@ -1,0 +1,28 @@
+#include "modules/composite/ALU32FlagUnit.hpp"
+#include "modules/composite/ZeroDetect32.hpp"
+#include "modules/composite/Structural8Builder.hpp"
+#include "components/PinMacros.hpp"
+
+BEGIN_PINS(ALU32FlagUnit, IOComponent)
+    INPUT_PIN_WIDTH("RESULT", 32)
+    INPUT_PIN("ARITHMETIC_ENABLE")
+    INPUT_PIN("ARITH_CARRY")
+    INPUT_PIN("ARITH_OVERFLOW")
+    OUTPUT_PIN("ZERO")
+    OUTPUT_PIN("NEGATIVE")
+    OUTPUT_PIN("CARRY_OUT")
+    OUTPUT_PIN("OVERFLOW")
+END_PINS()
+
+void ALU32FlagUnit::buildInternals(ComponentBuilder& builder) {
+    circuit::detail::StructuralBuilder n(*this, builder);
+    auto zero = builder.add(circuit::families::ZeroDetect32, "RESULT_ZERO");
+    n.connect(n.input("RESULT"), zero->getInputPin<32>("A"));
+    n.connect(zero->getOutputPin("ZERO"), n.output("ZERO"));
+    auto result = n.split<32>("RESULT_SPLIT", n.input("RESULT"));
+    // Preserve ALU32's direct sign-bit forwarding, including four-state values.
+    n.connect(result[31], n.output("NEGATIVE"));
+    n.connect(n.binary<ANDGate>("CARRY_VALID", n.input("ARITH_CARRY"), n.input("ARITHMETIC_ENABLE")), n.output("CARRY_OUT"));
+    n.connect(n.binary<ANDGate>("OVERFLOW_VALID", n.input("ARITH_OVERFLOW"), n.input("ARITHMETIC_ENABLE")), n.output("OVERFLOW"));
+    n.finish();
+}

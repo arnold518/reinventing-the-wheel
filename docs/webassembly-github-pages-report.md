@@ -98,18 +98,20 @@ required.
 Install and activate Emscripten 6.0.7, then run:
 
 ```bash
-emcmake cmake -S . -B build-wasm -DCMAKE_BUILD_TYPE=Release
-cmake --build build-wasm --target circuitsim_wasm --parallel 2
-python3 -m http.server 8877 --directory build-wasm/pages
+python3 -m pip install -r requirements-docs.txt
+tools/build-pages.sh
+python3 -m http.server 8877 --directory build-wasm/site
 ```
 
 Open `http://127.0.0.1:8877/simulator/`. The build produces one deployable
 tree:
 
 ```text
-build-wasm/pages/
+build-wasm/site/
 ├── .nojekyll
 ├── index.html
+├── blog/
+├── visualizer/
 └── simulator/
     ├── index.html
     ├── circuitsim_wasm.js
@@ -118,14 +120,15 @@ build-wasm/pages/
     └── existing visualizer JavaScript and CSS
 ```
 
-The root redirect is deliberately small. A future MkDocs build can occupy the
-Pages root while this artifact remains at `/simulator/`.
+Material for MkDocs occupies the Pages root. The same artifact embeds and links
+to the WebAssembly visualizer, which remains isolated under `/simulator/`.
 
 ## GitHub Pages Deployment
 
 `.github/workflows/github-pages.yml` builds on pushes to `github-pages` and on
 manual dispatch. It pins Emscripten 6.0.7, tests the generated module, runs the
-packaged site in headless Chrome, uploads `build-wasm/pages`, and deploys it
+strict MkDocs build and packaged site in headless Chrome, uploads
+`build-wasm/site`, and deploys it
 with the official Pages actions.
 
 The repository's Pages source must be configured to **GitHub Actions**. One
@@ -145,6 +148,8 @@ The implementation includes three new boundaries:
 - `VisualizerWasmBrowserTest.py` loads the packaged site in Chrome and verifies
   rendering startup, scenario inventory, IndexedDB layout saving, fidelity
   profile saving, stale-revision rejection, and progressive topology requests.
+  It also verifies that the simulator reaches its ready state inside the MkDocs
+  iframe.
 
 ## Measured Performance
 

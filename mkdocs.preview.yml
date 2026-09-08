@@ -1,0 +1,12 @@
+INHERIT: mkdocs.yml
+
+# Keep the local development site at the port root. The production config
+# retains the GitHub Pages project path in its canonical site URL.
+site_url: http://127.0.0.1:8893/
+
+hooks:
+  - tools/mkdocs_examples.py
+  - tools/mkdocs_preview.py
+
+watch:
+  - build-wasm/pages/simulator

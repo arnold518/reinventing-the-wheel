@@ -36,6 +36,8 @@ public:
     std::string topologySliceJson(const std::vector<std::string>& owner_ids) const;
     std::string stateJson(size_t index);
     std::string componentStateJson(size_t index, const std::string& component_id);
+    // Verified settled scenario rows, not inferred expectations from pin history.
+    std::string exampleRowsJson() const;
 
     const std::string& scenarioKey() const noexcept { return scenario_key_; }
     const std::string& sessionId() const noexcept { return session_id_; }

@@ -337,7 +337,48 @@ def main() -> None:
         default=server.LAYOUT_PATH,
         help="layout JSON to replace (default: visualizer-v2/layout.json)",
     )
+    parser.add_argument(
+        "--fill-missing", nargs="+", metavar="SCENARIO",
+        help="only add missing defaults for these scenarios, preserving saved placements",
+    )
+    parser.add_argument(
+        "--reflow-types", nargs="+", default=[], metavar="TYPE",
+        help="with --fill-missing, also replace child placements of only these component types",
+    )
     args = parser.parse_args()
+    if args.reflow_types and not args.fill_missing:
+        parser.error("--reflow-types requires --fill-missing")
+    if args.fill_missing:
+        manager = server.LayoutManager(args.layout.resolve())
+        for scenario in args.fill_missing:
+            if scenario not in server.SCENARIOS:
+                parser.error(f"Unknown scenario: {scenario}")
+        for scenario in args.fill_missing:
+            session = server.CircuitSession(scenario, manager)
+            root_key = server.scenario_layout_key(scenario, session.root)
+            for component, depth in _walk(session.root):
+                if server._component_type(component) not in args.reflow_types:
+                    continue
+                children = list(component.get_children())
+                if not children:
+                    continue
+                placements = _default_child_layouts(manager, component, children, depth, root_key)
+                _assert_no_child_overlap(manager, component, children, placements, depth, root_key)
+                layout_type = server._component_layout_type(component)
+                # The child topology is the same in nested/profile-selected ALUs.
+                # Preserve unrelated types and the ALU's placement in its parent.
+                manager.type_layouts[layout_type]["children"] = copy.deepcopy(placements)
+                for profile in manager.profile_layouts.values():
+                    if layout_type in profile:
+                        profile[layout_type]["children"] = copy.deepcopy(placements)
+                if depth == 0:
+                    manager.root_layouts[root_key]["children"] = copy.deepcopy(placements)
+                manager.is_dirty = True
+            manager.save()
+            print(f"Filled missing layouts for {scenario}: {len(session.components)} components", flush=True)
+            del session
+            gc.collect()
+        return
     summary = recalculate(args.layout.resolve())
     print("Layout regeneration complete:")
     for key, value in summary.items():

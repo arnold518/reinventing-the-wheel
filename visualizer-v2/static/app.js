@@ -59,6 +59,9 @@ const canvas = document.getElementById("circuit-canvas");
 const ctx = canvas.getContext("2d", { alpha: false });
 const tooltip = document.getElementById("tooltip");
 const loading = document.getElementById("loading");
+const embeddedView = window.self !== window.top;
+const compactViewport = window.matchMedia("(max-width: 960px)");
+document.body.classList.toggle("compact-view", embeddedView || compactViewport.matches);
 
 const ui = {
   scenario: document.getElementById("scenario-select"),
@@ -83,6 +86,8 @@ const ui = {
   topbar: document.getElementById("topbar"),
   viewbar: document.getElementById("viewbar"),
   explorerToggle: document.getElementById("toggle-explorer"),
+  explorerClose: document.getElementById("explorer-close"),
+  inspectorToggle: document.getElementById("toggle-inspector"),
   explorerPanel: document.getElementById("component-explorer"),
   explorerViewport: document.getElementById("explorer-viewport"),
   explorerSpacer: document.getElementById("explorer-spacer"),
@@ -114,6 +119,8 @@ const ui = {
 };
 
 const app = {
+  compactView: embeddedView || compactViewport.matches,
+  inspectorOpen: false,
   dpr: 1,
   width: 1,
   height: 1,
@@ -344,15 +351,16 @@ function clipScreenRect(rect, margin = SCREEN_CLIP_MARGIN_PX) {
 }
 
 function zoomAtPoint(factor, screenPoint) {
-  app.cameraAnimation = null;
-  const before = screenToWorld(screenPoint);
-  const nextZoom = app.camera.zoom * factor;
+  if (!Number.isFinite(factor) || factor <= 0) return;
+  updateCameraAnimation(performance.now());
+  // Accumulate quick clicks/wheel events against the pending destination,
+  // but start each transition at the current pose, including a moved cursor.
+  const baseZoom = app.cameraAnimation?.kind === "zoom"
+    ? Math.exp(app.cameraAnimation.to.logZoom)
+    : app.camera.zoom;
+  const nextZoom = baseZoom * factor;
   if (!Number.isFinite(nextZoom) || nextZoom <= 0) return;
-  app.camera.zoom = nextZoom;
-  const after = screenToWorld(screenPoint);
-  app.camera.offset.x += before.x - after.x;
-  app.camera.offset.y += before.y - after.y;
-  requestRender();
+  animateCameraTo(nextZoom, screenToWorld(screenPoint), screenPoint, "zoom");
 }
 
 function viewRect() {
@@ -1720,14 +1728,16 @@ function adapterPinsHighlighted(pins) {
   return (pins || []).some((pin) => pin && (isHovered("pin", pin.id) || isSelectedPin(pin.id)));
 }
 
-function drawAdapterPolyline(component, path, value, pins, width = 1) {
+function drawAdapterPolyline(component, path, value, pins, width = 1, annotateBus = true) {
   if (!path || path.length < 2) return;
   const strokeWorld = adapterStrokeWorld(component, pins);
   const highlighted = adapterPinsHighlighted(pins);
   const lineWidth = Math.max(1, wireStrokePx({ strokeWorld }, highlighted));
   const color = `rgb(${valueColor(value).join(",")})`;
   strokeWirePolyline(path, color, lineWidth, highlighted);
-  if (width > 1) drawBusAnnotations({ width }, path, color, lineWidth, strokeWorld, highlighted);
+  if (annotateBus && width > 1) {
+    drawBusAnnotations({ width }, path, color, lineWidth, strokeWorld, highlighted);
+  }
 }
 
 function drawAdapterJunction(component, point, value, pins) {
@@ -1896,6 +1906,82 @@ function groupedRewireMappings(component) {
   });
 }
 
+function drawPackedRewireContents(component, parts, groups, model) {
+  withComponentBodyClip(parts, 54, 40, () => {
+    const body = parts.bodyRect;
+    const outputPin = groups[0].outputPin;
+    const packLeftX = body.x + body.w * 0.50;
+    const packRightX = body.x + body.w * 0.76;
+    const sourceYs = groups.map((group) => group.sourcePin.pos.y);
+    const topY = Math.min(...sourceYs);
+    const bottomY = Math.max(...sourceYs);
+    const panelPad = Math.min(body.w, body.h) * 0.035;
+
+    drawAdapterPanel(
+      {
+        x: packLeftX - panelPad,
+        y: topY - panelPad * 1.2,
+        w: packRightX - packLeftX + panelPad * 2,
+        h: Math.max(panelPad * 2.4, bottomY - topY + panelPad * 2.4),
+      },
+      "rgba(148, 163, 184, 0.34)",
+    );
+
+    const modelGroups = new Map(
+      model.groups.map((group) => [`${group.srcWire}\u0000${group.dstWire}`, group]),
+    );
+    const sortedYs = sourceYs.slice().sort((left, right) => left - right);
+    const rowGapWorld = sortedYs.length > 1
+      ? Math.min(...sortedYs.slice(1).map((y, index) => y - sortedYs[index]))
+      : body.h;
+    const labelFont = Math.max(7, Math.min(11, rowGapWorld * app.camera.zoom * 0.42));
+    const labelWidth = Math.max(0, (packRightX - packLeftX) * app.camera.zoom - 6);
+
+    groups.forEach((group) => {
+      const value = rewireRouteValue(group.sourcePin, group.mappings);
+      const contact = pinInnerContactPoint(group.sourcePin);
+      const junction = { x: packLeftX, y: group.sourcePin.pos.y };
+      drawAdapterPolyline(
+        component,
+        [contact, junction],
+        value,
+        [group.sourcePin],
+        group.mappings.length || group.sourcePin.width || 1,
+        false,
+      );
+      drawAdapterJunction(component, junction, value, [group.sourcePin]);
+
+      const modeled = modelGroups.get(`${group.srcWire}\u0000${group.dstWire}`);
+      const label = modeled && modeled.range ? modeled.range.label : "";
+      if (label && labelWidth >= 16 && labelFont >= 7) {
+        const center = worldToScreen({
+          x: (packLeftX + packRightX) / 2,
+          y: group.sourcePin.pos.y,
+        });
+        ctx.save();
+        ctx.font = `700 ${Math.floor(labelFont)}px ui-monospace, SFMono-Regular, Consolas, monospace`;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillStyle = "rgba(238, 244, 255, 0.76)";
+        const fitted = ellipsizeText(label, labelWidth);
+        if (fitted) ctx.fillText(fitted, center.x, center.y);
+        ctx.restore();
+      }
+    });
+
+    const outputValue = adapterPinSignal(outputPin);
+    const outputJunction = { x: packRightX, y: outputPin.pos.y };
+    drawAdapterPolyline(
+      component,
+      [outputJunction, pinInnerContactPoint(outputPin)],
+      outputValue,
+      [outputPin],
+      outputPin.width || model.width,
+    );
+    drawAdapterJunction(component, outputJunction, outputValue, [outputPin]);
+  });
+}
+
 function drawRewireContents(component, parts) {
   const inputPins = pinMapByName(component.inputPins);
   const outputPins = pinMapByName(component.outputPins);
@@ -1907,6 +1993,14 @@ function drawRewireContents(component, parts) {
     }))
     .filter((group) => group.sourcePin && group.outputPin);
   if (!groups.length) return;
+
+  const packedModel = window.CircuitRewireGeometry
+    ? window.CircuitRewireGeometry.packedBusModel(component.rewire)
+    : null;
+  if (packedModel) {
+    drawPackedRewireContents(component, parts, groups, packedModel);
+    return;
+  }
 
   withComponentBodyClip(parts, 38, 24, () => {
     const body = parts.bodyRect;
@@ -2814,6 +2908,7 @@ function setSelection(type, id) {
     commitLayoutTransaction();
   }
   app.selection = type && id ? { type, id } : null;
+  if (app.selection && !app.compactView) app.inspectorOpen = true;
   app.selectedComponentId = type === "component" ? id : null;
   rebuildSelectionPath();
   if (app.explorer) {
@@ -3054,9 +3149,16 @@ function showWireInspector(wire) {
   ]);
 }
 
+function setInspectorVisible(visible) {
+  ui.inspector.classList.toggle("hidden", !visible);
+  ui.inspectorToggle.setAttribute("aria-pressed", String(visible));
+  ui.inspectorToggle.setAttribute("aria-expanded", String(visible));
+}
+
 function updateInspector() {
-  if (!app.selection) {
-    ui.inspector.classList.add("hidden");
+  ui.inspectorToggle.disabled = !app.rootId;
+  if (!app.selection || !app.inspectorOpen) {
+    setInspectorVisible(false);
     return;
   }
 
@@ -3069,10 +3171,10 @@ function updateInspector() {
   else {
     app.selection = null;
     rebuildSelectionPath();
-    ui.inspector.classList.add("hidden");
+    setInspectorVisible(false);
     return;
   }
-  ui.inspector.classList.remove("hidden");
+  setInspectorVisible(true);
 }
 
 function markStyleChanged() {
@@ -3342,19 +3444,22 @@ canvas.addEventListener("wheel", (event) => {
   zoomAtPoint(event.deltaY < 0 ? 1.1 : 0.9, pointerPosition(event));
 }, { passive: false });
 
-function frameRoot() {
-  app.cameraAnimation = null;
+function frameRoot({ animate = false } = {}) {
+  if (!animate) app.cameraAnimation = null;
+  resizeCanvas();
+  if (app.geometryDirty) computeGeometry();
   const root = app.components.get(app.rootId);
   if (!root || !root.rect) return;
   const viewport = cameraSafeViewport();
-  const screenCenter = focusScreenCenter(viewport);
-  const fittingViewport = centeredFittingViewport(
-    viewport,
-    screenCenter,
-  );
-  app.camera.zoom = fitZoomForRect(root.rect, fittingViewport);
-  if (!Number.isFinite(app.camera.zoom) || app.camera.zoom <= 0) app.camera.zoom = 1;
-  const worldCenter = { x: root.rect.x + root.rect.w / 2, y: root.rect.y + root.rect.h / 2 };
+  const screenCenter = viewportCenter(viewport);
+  const focusRect = componentFocusRect(root);
+  const targetZoom = fitZoomForRect(focusRect, viewport);
+  const worldCenter = viewportCenter(focusRect);
+  if (animate) {
+    animateCameraTo(targetZoom, worldCenter, screenCenter);
+    return;
+  }
+  app.camera.zoom = targetZoom;
   app.camera.offset.x = worldCenter.x - screenCenter.x / app.camera.zoom;
   app.camera.offset.y = worldCenter.y - screenCenter.y / app.camera.zoom;
   requestRender();
@@ -3375,7 +3480,7 @@ function rangesOverlap(startA, endA, startB, endB) {
   return endA > startB && endB > startA;
 }
 
-function cameraViewport(avoidInspector) {
+function cameraSafeViewport() {
   const canvasRect = canvas.getBoundingClientRect();
   let left = 0;
   let top = 0;
@@ -3413,16 +3518,14 @@ function cameraViewport(avoidInspector) {
     left = Math.min(right, explorer.right);
   }
 
-  if (avoidInspector) {
-    const inspector = elementRectInCanvas(ui.inspector, canvasRect);
-    if (
-      inspector
-      && rangesOverlap(inspector.top, inspector.bottom, top, bottom)
-      && inspector.right > right - 80
-      && inspector.left < right
-    ) {
-      right = Math.max(left, inspector.left);
-    }
+  const inspector = elementRectInCanvas(ui.inspector, canvasRect);
+  if (
+    inspector
+    && rangesOverlap(inspector.top, inspector.bottom, top, bottom)
+    && inspector.right > right - 80
+    && inspector.left < right
+  ) {
+    right = Math.max(left, inspector.left);
   }
 
   const availableWidth = Math.max(1, right - left);
@@ -3440,58 +3543,10 @@ function cameraViewport(avoidInspector) {
   };
 }
 
-function cameraSafeViewport() {
-  return cameraViewport(true);
-}
-
-function cameraNavigationViewport() {
-  return cameraViewport(false);
-}
-
 function viewportCenter(viewport) {
   return {
     x: viewport.x + viewport.w / 2,
     y: viewport.y + viewport.h / 2,
-  };
-}
-
-function focusScreenCenter(containmentViewport) {
-  const preferred = viewportCenter(cameraNavigationViewport());
-  const fallback = viewportCenter(containmentViewport);
-  const right =
-    containmentViewport.x + containmentViewport.w;
-  const bottom =
-    containmentViewport.y + containmentViewport.h;
-  return {
-    x:
-      preferred.x >= containmentViewport.x
-      && preferred.x <= right
-        ? preferred.x
-        : fallback.x,
-    y:
-      preferred.y >= containmentViewport.y
-      && preferred.y <= bottom
-        ? preferred.y
-        : fallback.y,
-  };
-}
-
-function centeredFittingViewport(viewport, center) {
-  const right = viewport.x + viewport.w;
-  const bottom = viewport.y + viewport.h;
-  const halfWidth = Math.max(
-    0.5,
-    Math.min(center.x - viewport.x, right - center.x),
-  );
-  const halfHeight = Math.max(
-    0.5,
-    Math.min(center.y - viewport.y, bottom - center.y),
-  );
-  return {
-    x: center.x - halfWidth,
-    y: center.y - halfHeight,
-    w: halfWidth * 2,
-    h: halfHeight * 2,
   };
 }
 
@@ -3511,16 +3566,27 @@ function fitZoomForRect(rect, viewport) {
     viewport.h / height,
   );
   return Number.isFinite(zoom) && zoom > 0
-    ? Math.max(0.02, zoom)
+    ? zoom
     : 1;
 }
 
 function componentFocusRect(component) {
   let bounds = { ...component.rect };
-  for (const pin of [
-    ...component.inputPins,
-    ...component.outputPins,
-  ]) {
+  let pinComponent = component;
+  const inputCount = Math.max(component.inputPinCount || 0, component.inputPins.length);
+  const outputCount = Math.max(component.outputPinCount || 0, component.outputPins.length);
+  if (inputCount > component.inputPins.length || outputCount > component.outputPins.length) {
+    // Progressive topology can reveal pins after focusing a deep component.
+    // Fit their final geometry now using the same layout routine, without
+    // adding placeholder pins to the simulation or visual component model.
+    pinComponent = {
+      ...component,
+      inputPins: Array.from({ length: inputCount }, () => ({})),
+      outputPins: Array.from({ length: outputCount }, () => ({})),
+    };
+    layoutPins(pinComponent);
+  }
+  for (const pin of [...pinComponent.inputPins, ...pinComponent.outputPins]) {
     if (pin.rect) bounds = unionRect(bounds, pin.rect);
     if (pin.outerStub && pin.outerStub.length) {
       bounds = unionRect(bounds, pointsBBox(pin.outerStub));
@@ -3543,7 +3609,11 @@ function updateCameraAnimation(now) {
     0,
     1,
   );
-  const eased = easeInOutCubic(progress);
+  // Ease-out keeps continuous wheel input responsive when it retargets the
+  // animation; focus/reset retain the existing ease-in/out movement.
+  const eased = animation.kind === "zoom"
+    ? 1 - (1 - progress) ** 3
+    : easeInOutCubic(progress);
   const logZoom =
     animation.from.logZoom
     + (animation.to.logZoom - animation.from.logZoom) * eased;
@@ -3563,6 +3633,41 @@ function updateCameraAnimation(now) {
   if (progress >= 1) app.cameraAnimation = null;
 }
 
+function animateCameraTo(targetZoom, center, targetScreenCenter, kind = "focus") {
+  const now = performance.now();
+  const fromScreen = worldToScreen(center);
+  const fromWorldCenter = screenToWorld(targetScreenCenter);
+  const travel = Math.hypot(
+    targetScreenCenter.x - fromScreen.x,
+    targetScreenCenter.y - fromScreen.y,
+  );
+  const zoomStops = Math.abs(
+    Math.log2(targetZoom / app.camera.zoom),
+  );
+  const duration = kind === "zoom" ? 180 : clamp(
+    280 + travel * 0.12 + zoomStops * 70,
+    FOCUS_ANIMATION_MIN_MS,
+    FOCUS_ANIMATION_MAX_MS,
+  );
+  app.cameraAnimation = {
+    startedAt: now,
+    kind,
+    duration,
+    screenCenter: targetScreenCenter,
+    from: {
+      worldX: fromWorldCenter.x,
+      worldY: fromWorldCenter.y,
+      logZoom: Math.log(app.camera.zoom),
+    },
+    to: {
+      worldX: center.x,
+      worldY: center.y,
+      logZoom: Math.log(targetZoom),
+    },
+  };
+  requestRender();
+}
+
 function closestExistingComponent(componentId) {
   let path = componentId;
   while (path) {
@@ -3575,51 +3680,16 @@ function closestExistingComponent(componentId) {
 }
 
 function smoothlyFocusComponent(componentId) {
+  resizeCanvas();
+  if (app.geometryDirty) computeGeometry();
   const component = closestExistingComponent(componentId);
   if (!component || !component.rect) return;
   setSelectedComponent(component.id);
   const viewport = cameraSafeViewport();
   const focusRect = componentFocusRect(component);
-  const targetScreenCenter = focusScreenCenter(viewport);
-  const fittingViewport = centeredFittingViewport(
-    viewport,
-    targetScreenCenter,
-  );
-  const targetZoom = fitZoomForRect(focusRect, fittingViewport);
-  const center = {
-    x: focusRect.x + focusRect.w / 2,
-    y: focusRect.y + focusRect.h / 2,
-  };
-  const fromScreen = worldToScreen(center);
-  const fromWorldCenter = screenToWorld(targetScreenCenter);
-  const travel = Math.hypot(
-    targetScreenCenter.x - fromScreen.x,
-    targetScreenCenter.y - fromScreen.y,
-  );
-  const zoomStops = Math.abs(
-    Math.log2(targetZoom / Math.max(0.0001, app.camera.zoom)),
-  );
-  const duration = clamp(
-    280 + travel * 0.12 + zoomStops * 70,
-    FOCUS_ANIMATION_MIN_MS,
-    FOCUS_ANIMATION_MAX_MS,
-  );
-  app.cameraAnimation = {
-    startedAt: performance.now(),
-    duration,
-    screenCenter: targetScreenCenter,
-    from: {
-      worldX: fromWorldCenter.x,
-      worldY: fromWorldCenter.y,
-      logZoom: Math.log(Math.max(0.0001, app.camera.zoom)),
-    },
-    to: {
-      worldX: center.x,
-      worldY: center.y,
-      logZoom: Math.log(targetZoom),
-    },
-  };
-  requestRender();
+  // Both the center and zoom must use the same unobstructed rectangle.
+  animateCameraTo(fitZoomForRect(focusRect, viewport),
+    viewportCenter(focusRect), viewportCenter(viewport));
 }
 
 function setPlaying(value) {
@@ -3979,6 +4049,7 @@ function buildLocalModel(payload) {
   app.stateRequestInFlight = false;
   app.layoutDirty = false;
   app.selection = null;
+  app.inspectorOpen = false;
   app.selectionPath = new Set();
   app.selectedComponentId = null;
   app.components = new Map();
@@ -4039,6 +4110,9 @@ function buildLocalModel(payload) {
   updateTopologyProgress();
   app.geometryDirty = true;
   computeGeometry();
+  // A scenario switch clears the selection; hide its old inspector before
+  // measuring the space available to frame the new root.
+  updateInspector();
   frameRoot();
   rebuildSpatialIndexes();
   if (app.explorer) {
@@ -4048,7 +4122,6 @@ function buildLocalModel(payload) {
       app.profile,
     );
   }
-  updateInspector();
   requestRender();
   scheduleVisibleTopology();
 }
@@ -4148,8 +4221,18 @@ app.explorer = new window.CircuitExplorer({
   revertButton: ui.explorerRevert,
   status: ui.explorerStatus,
   toggleButton: ui.explorerToggle,
+  closeButton: ui.explorerClose,
   resizer: ui.explorerResizer,
-  onFocus: smoothlyFocusComponent,
+  onFocus: (componentId) => {
+    if (app.compactView) app.explorer.setOpen(false, { persist: false });
+    smoothlyFocusComponent(componentId);
+  },
+  onOpenChanged: (open) => {
+    if (open && app.compactView) {
+      app.inspectorOpen = false;
+      updateInspector();
+    }
+  },
   onApply: (request) => {
     applyExplorerProfile(request).catch(showError);
   },
@@ -4161,6 +4244,19 @@ app.explorer = new window.CircuitExplorer({
       requestRender();
     }, 180);
   },
+});
+
+compactViewport.addEventListener("change", () => {
+  const compact = embeddedView || compactViewport.matches;
+  if (compact === app.compactView) return;
+  app.compactView = compact;
+  document.body.classList.toggle("compact-view", compact);
+  app.inspectorOpen = false;
+  app.explorer.restorePanelState();
+  updateInspector();
+  resizeCanvas();
+  frameRoot();
+  requestRender();
 });
 
 ui.scenario.addEventListener("change", () => {
@@ -4182,14 +4278,28 @@ ui.slider.addEventListener("input", () => {
   if (app.playing) setPlaying(false);
   setStateIndex(Number(ui.slider.value)).catch(showError);
 });
-ui.resetView.addEventListener("click", frameRoot);
-ui.zoomOut.addEventListener("click", () => zoomAtPoint(0.8, { x: app.width / 2, y: app.height / 2 }));
-ui.zoomIn.addEventListener("click", () => zoomAtPoint(1.25, { x: app.width / 2, y: app.height / 2 }));
+ui.resetView.addEventListener("click", () => frameRoot({ animate: true }));
+ui.zoomOut.addEventListener("click", () => zoomAtPoint(0.8, viewportCenter(cameraSafeViewport())));
+ui.zoomIn.addEventListener("click", () => zoomAtPoint(1.25, viewportCenter(cameraSafeViewport())));
 ui.undoLayout.addEventListener("click", undoLayoutChange);
 ui.redoLayout.addEventListener("click", redoLayoutChange);
 ui.resetLayout.addEventListener("click", resetLayout);
 ui.saveLayout.addEventListener("click", () => saveLayout().catch(showError));
-ui.inspectorClose.addEventListener("click", () => setSelectedComponent(null));
+ui.inspectorToggle.addEventListener("click", () => {
+  app.inspectorOpen = ui.inspector.classList.contains("hidden");
+  if (app.inspectorOpen) {
+    if (app.compactView) app.explorer.setOpen(false, { persist: false });
+    if (!app.selection && app.rootId) setSelectedComponent(app.rootId);
+  }
+  updateInspector();
+  requestRender();
+});
+ui.inspectorClose.addEventListener("click", () => {
+  app.inspectorOpen = false;
+  if (!app.compactView) setSelectedComponent(null);
+  updateInspector();
+  requestRender();
+});
 ui.componentAspect.addEventListener("input", applyAspectFromInspector);
 ui.componentAspect.addEventListener("change", () => commitLayoutTransaction());
 ui.componentColor.addEventListener("input", applyColorFromInspector);
