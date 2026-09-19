@@ -74,7 +74,50 @@ def migrate_component_paths(overrides: dict[str, str]) -> dict[str, str]:
             for new_prefix in _COMPONENT_PATH_PREFIX_MIGRATIONS.values()
         ):
             migrated[path] = fidelity
-    return dict(sorted(migrated.items()))
+    def ff_path(path):
+        match = re.search(r"(^|\.)(REGISTER_FILE|REGISTER_FILE32X32_ROOT)\.X([1-9]|[12][0-9]|3[01])(?=\.|$)", path)
+        if not match:
+            return path
+        tail = path[match.end():]
+        tail = re.sub(r"^\.BIT_(\d+)(?=\.|$)", r".CELL_\1", tail)
+        tail = re.sub(r"^\.D_SPLIT(?=\.|$)", ".DATA", tail)
+        tail = re.sub(r"^\.Q_JOIN(?=\.|$)", ".OUTPUT", tail)
+        return path[:match.start()] + match[1] + match[2] + ".STORAGE.WORD_" + str(int(match[3])-1) + tail
+
+    def stage_path(path):
+        moves = {
+            "CONTROL_FLOW.PC_IMM_ADD": "EXECUTE.BRANCH_TARGET_ADD",
+            "CONTROL_FLOW.RS1_IMM_ADD": "EXECUTE.ALU.ARITHMETIC",
+            "CONTROL_FLOW.JALR_MASK": "EXECUTE.JALR_MASK",
+            "CONTROL_FLOW": "FETCH", "DECODE_CONTROL": "DECODE.CONTROL",
+            "REGISTER_FILE": "DECODE.REGISTER_FILE", "ALU_A_MUX": "EXECUTE.OPERAND_A",
+            "ALU_B_MUX": "EXECUTE.OPERAND_B", "ALU": "EXECUTE.ALU",
+            "WRITEBACK_MUX": "WRITEBACK.RESULT_SELECT", "FETCH_REQUEST": "FETCH.REQUEST",
+            "DATA_REQUEST": "MEMORY.REQUEST", "LOAD_STORE": "MEMORY.LANES",
+        }
+        match = re.match(r"^(.*\.CORE\.|RV32I_SINGLE_CYCLE_CORE_ROOT\.)(.*)$", path)
+        if match:
+            for old, new in moves.items():
+                if match[2] == old or match[2].startswith(old + "."):
+                    return match[1] + new + match[2][len(old):]
+        return path
+
+    def current_path(path):
+        path = stage_path(ff_path(path))
+        # Register32 now contains one FFWord. Limit name-based compatibility
+        # to its registered root and RV32I state words; unrelated BIT_n helpers
+        # (especially MemoryPayloadRegister) must not be rewritten.
+        def register_child(match):
+            old = match[2]
+            child = "CELL_" + match[3] if match[3] is not None else {"D_SPLIT": "DATA", "Q_JOIN": "OUTPUT"}[old]
+            return match[1] + ".STORAGE." + child
+        return re.sub(r"^(REGISTER32_ROOT|RV32I[^.]*\.(?:[A-Za-z0-9_]+\.)*[A-Za-z0-9_]+_STATE)\.(BIT_([0-9]|[12][0-9]|3[01])|D_SPLIT|Q_JOIN)(?=\.|$)",
+                      register_child, path)
+
+    result = {current_path(path): fidelity for path, fidelity in migrated.items()}
+    # Explicit choices already using the new hierarchy take precedence.
+    result.update({path: fidelity for path, fidelity in migrated.items() if current_path(path) == path})
+    return dict(sorted(result.items()))
 
 
 class ProfileStore:

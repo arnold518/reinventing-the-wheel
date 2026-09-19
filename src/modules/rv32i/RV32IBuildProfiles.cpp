@@ -3,7 +3,7 @@
 #include "components/selection/ComponentCatalog.hpp"
 #include "components/selection/StandardProfiles.hpp"
 #include "modules/memory/Memory64Kx32.hpp"
-#include "modules/memory/MemoryBit.hpp"
+#include "modules/memory/FlipFlopCell.hpp"
 #include "modules/memory/Register32.hpp"
 #include "modules/memory/RegisterFile32x32.hpp"
 #include "modules/rv32i/RV32ISingleCycleSystem.hpp"
@@ -33,11 +33,11 @@ circuit::BuildProfile balancedSystemProfile(
             "use the verified large-memory abstraction"),
         circuit::preferFidelity(
             circuit::Fidelity::Behavioral,
-            circuit::ProfileSelector::exactPath(core_path + "REGISTER_FILE"),
+            circuit::ProfileSelector::exactPath(core_path + "DECODE.REGISTER_FILE"),
             "use the verified register-file abstraction"),
     };
     for (const auto* child : {
-             "CONTROL_FLOW", "DECODE_CONTROL", "ALU", "EXECUTION_STATUS"}) {
+             "FETCH", "DECODE", "EXECUTE", "MEMORY", "WRITEBACK", "NEXT_PC", "EXECUTION_STATUS"}) {
         overrides.push_back(circuit::preferFidelity(
             circuit::Fidelity::Structural,
             circuit::ProfileSelector::subtree(core_path + child),
@@ -97,7 +97,7 @@ circuit::BuildProfile withBehavioralMemoryParts(
              &circuit::families::Memory64Kx32,
              &circuit::families::RegisterFile32x32,
              &circuit::families::Register32,
-             &circuit::families::MemoryBit,
+             &circuit::families::FlipFlopCell,
          }) {
         overrides.push_back(circuit::preferFidelity(
             circuit::Fidelity::Behavioral,

@@ -7,11 +7,15 @@ import argparse
 from collections import OrderedDict
 import copy
 import gc
+import hashlib
+import json
 from pathlib import Path
 import re
 from typing import Any, Iterator
 
 import server
+
+AUTOMATIC_REVISION = "automatic-stub-clearance-v1"
 
 
 PROGRAM_SCENARIO = re.compile(
@@ -31,6 +35,150 @@ def _walk(component: Any, depth: int = 0) -> Iterator[tuple[Any, int]]:
     yield component, depth
     for child in component.get_children():
         yield from _walk(child, depth + 1)
+
+
+class ProfileLayoutView(server.LayoutManager):
+    """A read-only style view over the same stores, including child overrides."""
+    def __init__(self, manager: server.LayoutManager, fingerprint: str):
+        self.__dict__.update(manager.__dict__)
+        self.fingerprint = fingerprint
+
+    def get_layout_for_component(self, component: Any) -> dict[str, Any]:
+        return self.layout_for_component_profile(component, self.fingerprint)
+
+
+def layout_arguments(manager, component, children, root_key=None):
+    aspect = manager.aspect_for_component(component, scenario_key=root_key, is_root=root_key is not None)
+    def ratio(key):
+        return manager.visual_ratio_for_component(component, key, scenario_key=root_key, is_root=root_key is not None)
+    return (component, children, aspect, min(.7, ratio("title_bar_ratio") / max(aspect, .01)),
+            {child.get_id(): manager.aspect_for_component(child) for child in children},
+            ratio("boundary_area_ratio"), ratio("pin_size_ratio"), manager.child_stub_ratios(children))
+
+
+def refresh_entry(entry, placements):
+    """Replace geometry only, preserving styles, metadata and migration history."""
+    old = copy.deepcopy(entry.get("children", {}))
+    digest = hashlib.sha256(json.dumps(placements, sort_keys=True).encode()).hexdigest()[:12]
+    revision = f"{AUTOMATIC_REVISION}:{digest}"
+    if entry.get("automatic_layout_revision") != revision:
+        entry.setdefault("automatic_layout_history", []).append({
+            "revision": entry.get("automatic_layout_revision"), "children": old,
+        })
+    for name, placement in placements.items():
+        entry.setdefault("children", {}).setdefault(name, {}).update(copy.deepcopy(placement))
+    entry["automatic_layout_revision"] = revision
+    entry["layout_mode"] = "automatic"
+    return old != entry["children"]
+
+
+def refresh_automatic(layout_path: Path, scenarios: list[str] | None = None, *, dry_run=False):
+    """Preserve floorplans/styles; refresh only known, matching automatic scopes.
+
+    No CircuitSession or simulation/history run. One representative test topology
+    is kept alive at a time. Unknown/retired saved topologies are reported, not
+    guessed from a different component's children.
+    """
+    manager = server.LayoutManager(layout_path)
+    original = copy.deepcopy(manager.to_jsonable())
+    groups = OrderedDict()
+    selected = {server.SCENARIO_ALIASES_TO_CANONICAL[s] for s in scenarios} if scenarios else None
+    for option in server.SCENARIO_OPTIONS:
+        if selected is None or option["key"] in selected:
+            groups.setdefault(_scenario_group(option["className"]), []).append(option)
+    report = {"automatic": [], "changed": [], "preserved_custom": [], "preserved_manual": [],
+              "unmatched": [], "representatives": len(groups), "component_count": 0}
+    visited, considered = set(), set()
+
+    def update(scope, entry, component, children, fingerprint, root_key=None):
+        considered.add(scope)
+        if scope in visited:
+            return
+        view = ProfileLayoutView(manager, fingerprint)
+        effective = (view.get_root_layout_for_component(root_key, component) if root_key
+                     else view.get_layout_for_component(component))
+        if entry.get("layout_mode") == "manual" or effective.get("layout_mode") == "manual":
+            visited.add(scope)
+            report["preserved_manual"].append(scope)
+            return
+        # A profile's old/retired topology must not be silently replaced using
+        # another profile's representative. Wait for a matching topology.
+        names = {child.get_name() for child in children}
+        if set(entry.get("children", {})) - names:
+            return
+        arguments = layout_arguments(view, component, children, root_key)
+        if server._custom_child_layout(*arguments) is not None:
+            visited.add(scope)
+            report["preserved_custom"].append(scope)
+            return
+        generated = server._layered_graph_layout(*arguments)
+        _assert_no_child_overlap(view, component, children, generated, 0 if root_key else 1, root_key or "")
+        _assert_child_bounds(view, component, children, generated, root_key)
+        visited.add(scope)
+        if refresh_entry(entry, generated):
+            report["changed"].append(scope)
+        report["automatic"].append(scope)
+
+    for group_index, options in enumerate(groups.values(), 1):
+        option = options[0]
+        print(f"[{group_index}/{len(groups)}] topology only: {option['className']}", flush=True)
+        root = server.circuit_backend.create_layout_topology(option["className"])
+        if root is None:
+            raise RuntimeError(f"No topology for {option['className']}")
+        components = list(_walk(root))
+        report["component_count"] += len(components)
+        # Children first. Existing proportions are never reset or re-derived.
+        for component, depth in reversed(components):
+            kind = server._component_layout_type(component)
+            if kind not in manager.type_layouts:
+                manager.ensure_component_layout_defaults(component)
+            children = list(component.get_children())
+            if not children:
+                continue
+            if kind != "Component":  # Generic test wrappers are scenario-specific.
+                update(f"type/{kind}", manager.type_layouts[kind], component, children, "explicit")
+                for fingerprint, entries in manager.profile_layouts.items():
+                    if kind in entries and entries[kind].get("children"):
+                        update(f"profile/{fingerprint}/{kind}", entries[kind], component, children, fingerprint)
+            if depth == 0:
+                canonical = {item["key"] for item in options}
+                root_keys = [key for key in manager.root_layouts
+                    if server.SCENARIO_ALIASES_TO_CANONICAL.get(key.split("@")[0], key.split("@")[0]) in canonical]
+                for key in root_keys:
+                    entry = manager.root_layouts[key]
+                    if entry.get("children"):
+                        fingerprint = key.split("@", 1)[1] if "@" in key else server._component_profile_fingerprint(root)
+                        update(f"root/{key}", entry, root, children, fingerprint, key)
+        del component, children, components, root
+        gc.collect()
+
+    report["unmatched"] = sorted(considered - visited)
+    stored_scopes = {f"type/{kind}" for kind, entry in original["type_layouts"].items() if entry.get("children")}
+    stored_scopes.update(f"root/{key}" for key, entry in original["root_layouts"].items() if entry.get("children"))
+    stored_scopes.update(f"profile/{fingerprint}/{kind}"
+        for fingerprint, entries in original["profile_layouts"].items()
+        for kind, entry in entries.items() if entry.get("children"))
+    report["unvisited"] = sorted(stored_scopes - considered)
+    for key in ("automatic", "changed", "preserved_custom", "preserved_manual"):
+        report[key].sort()
+    if not dry_run and manager.to_jsonable() != original:
+        manager.save()
+    return report
+
+
+def _assert_child_bounds(manager, component, children, placements, root_key=None):
+    _, _, aspect, title, _, boundary, pin_size, stubs = layout_arguments(manager, component, children, root_key)
+    margin = server._stub_margin_ratio(boundary, pin_size)
+    for child in children:
+        placement = placements[child.get_name()]
+        x, y = placement["rel_pos"]
+        width = placement["rel_width"]
+        height = width * manager.aspect_for_component(child) / max(aspect, .01)
+        stub = width * stubs[child.get_id()]
+        pin_half_height = width * manager.visual_ratio_for_component(child, "pin_size_ratio") / (2 * max(aspect, .01))
+        if not (width > 0 and x-stub >= margin-1e-9 and x+width+stub <= 1-margin+1e-9
+                and y-pin_half_height >= title-1e-9 and y+height+pin_half_height <= 1+1e-9):
+            raise RuntimeError(f"Child outside parent/stub bounds: {component.get_type_name()}.{child.get_name()}")
 
 
 def _preserve_color(
@@ -92,6 +240,7 @@ def _default_child_layouts(
         child_aspects,
         boundary_fraction,
         pin_size_fraction,
+        manager.child_stub_ratios(children),
     )
 
 
@@ -108,20 +257,11 @@ def _assert_no_child_overlap(
         scenario_key=root_layout_key,
         is_root=depth == 0,
     )
-    boundary = manager.visual_ratio_for_component(
-        component,
-        "boundary_area_ratio",
-        scenario_key=root_layout_key,
-        is_root=depth == 0,
-    )
-    pin_size = manager.visual_ratio_for_component(
-        component,
-        "pin_size_ratio",
-        scenario_key=root_layout_key,
-        is_root=depth == 0,
-    )
     rectangles: list[tuple[str, float, float, float, float]] = []
     for child in children:
+        child_boundary = manager.visual_ratio_for_component(child, "boundary_area_ratio")
+        child_pin_size = manager.visual_ratio_for_component(child, "pin_size_ratio")
+        child_stub = server._stub_margin_ratio(child_boundary, child_pin_size)
         placement = placements[child.get_name()]
         x, y = placement["rel_pos"]
         width = placement["rel_width"]
@@ -130,10 +270,10 @@ def _assert_no_child_overlap(
         rectangles.append(
             (
                 child.get_name(),
-                x - width * boundary,
-                y - width * pin_size / 2,
-                width * (1 + 2 * boundary),
-                height + width * pin_size,
+                x - width * child_stub,
+                y - width * child_pin_size / (2 * max(parent_aspect, .01)),
+                width * (1 + 2 * child_stub),
+                height + width * child_pin_size / max(parent_aspect, .01),
             )
         )
 
@@ -345,7 +485,25 @@ def main() -> None:
         "--reflow-types", nargs="+", default=[], metavar="TYPE",
         help="with --fill-missing, also replace child placements of only these component types",
     )
+    parser.add_argument("--automatic-only", action="store_true",
+                        help="Refresh automatic geometry while preserving floorplans, styles and manual entries")
+    parser.add_argument("--scenarios", nargs="+", help="Limit --automatic-only to these scenario aliases")
+    parser.add_argument("--dry-run", action="store_true", help="Validate and report without saving (--automatic-only)")
+    parser.add_argument("--report", type=Path, help="Write the selective refresh inventory as JSON")
     args = parser.parse_args()
+    if args.automatic_only:
+        if args.fill_missing or args.reflow_types:
+            parser.error("--automatic-only cannot be combined with legacy reset/fill modes")
+        if args.scenarios and any(s not in server.SCENARIOS for s in args.scenarios):
+            parser.error("Unknown scenario alias")
+        report = refresh_automatic(args.layout.resolve(), args.scenarios, dry_run=args.dry_run)
+        if args.report:
+            args.report.write_text(json.dumps(report, indent=2) + "\n")
+        for key, value in report.items():
+            print(f"{key}: {len(value) if isinstance(value, list) else value}")
+        return
+    if args.scenarios or args.dry_run or args.report:
+        parser.error("--scenarios, --dry-run and --report require --automatic-only")
     if args.reflow_types and not args.fill_missing:
         parser.error("--reflow-types requires --fill-missing")
     if args.fill_missing:

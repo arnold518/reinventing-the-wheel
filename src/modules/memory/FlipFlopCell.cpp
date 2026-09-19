@@ -1,14 +1,14 @@
-#include "modules/memory/MemoryBit.hpp"
+#include "modules/memory/FlipFlopCell.hpp"
 
 #include "components/ComponentBuilder.hpp"
 #include "components/ComponentBuilder.tpp"
 #include "components/WireBuilder.hpp"
 #include "modules/basic/DFlipFlop.hpp"
 #include "modules/basic/Mux.hpp"
-#include "modules/memory/MemoryBitDirect.hpp"
+#include "modules/memory/FlipFlopCellDirect.hpp"
 
 namespace {
-void defineMemoryBitPins(IOComponent* self) {
+void defineFlipFlopCellPins(IOComponent* self) {
     self->addPin("D", PinType::INPUT);
     self->addPin("WE", PinType::INPUT);
     self->addPin("CLK", PinType::INPUT);
@@ -18,24 +18,24 @@ void defineMemoryBitPins(IOComponent* self) {
 }
 
 namespace circuit::families {
-const ComponentFamily MemoryBit{
+const ComponentFamily FlipFlopCell{
     "memory.write-enabled-bit",
-    "MemoryBit",
-    defineMemoryBitPins,
+    "FlipFlopCell",
+    defineFlipFlopCellPins,
     [](const std::string& name, const std::shared_ptr<BuildContext>& context) {
-        return Component::createWithContext<::MemoryBit>(context, name);
+        return Component::createWithContext<::FlipFlopCell>(context, name);
     },
     [](const std::string& name, const std::shared_ptr<BuildContext>& context) {
-        return Component::createWithContext<::MemoryBitDirect>(
+        return Component::createWithContext<::FlipFlopCellDirect>(
             context, name);
     }};
 }
 
-MemoryBit::MemoryBit(std::string name)
+FlipFlopCell::FlipFlopCell(std::string name)
     : IOComponent(std::move(name),
-                  circuit::families::MemoryBit.pinInitializer()) {}
+                  circuit::families::FlipFlopCell.pinInitializer()) {}
 
-void MemoryBit::buildInternals(ComponentBuilder& builder) {
+void FlipFlopCell::buildInternals(ComponentBuilder& builder) {
     builder.addNewComponent<Mux2to1>("WRITE_MUX");
     builder.addNewComponent<DFlipFlop>("STATE");
 

@@ -420,6 +420,20 @@ std::string RewireValidationTest::getTestName() const {
 }
 
 void RewireValidationTest::verifyResults() {
+    // A shared label is legal across directions, but never a shared identity.
+    const auto same_names = Component::create<Rewire>(
+        "ROOT", std::vector<Rewire::WireSpec>{{"LOAD", 32}, {"STORE", 32}},
+        std::vector<Rewire::WireSpec>{{"LOAD", 32}, {"STORE", 32}},
+        identity_mapping("LOAD", 0, 32, "LOAD"));
+    for (const auto* name : {"LOAD", "STORE"}) {
+        const auto input = same_names->getInputPin<32>(name);
+        const auto output = same_names->getOutputPin<32>(name);
+        if (input == output || input->getName() != output->getName()
+            || input->getID() != std::string("ROOT.input.") + name
+            || output->getID() != std::string("ROOT.output.") + name) {
+            throw std::runtime_error("Same-named Rewire input/output pins must have distinct identities");
+        }
+    }
     expectInvalidArgument(
         [] {
             (void)Component::create<Rewire>(

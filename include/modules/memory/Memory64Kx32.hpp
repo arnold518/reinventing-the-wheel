@@ -1,6 +1,7 @@
 #pragma once
 
 #include "components/BasicComponent.hpp"
+#include "components/capabilities/MemoryStateView.hpp"
 #include "components/selection/ComponentFamily.hpp"
 #include <array>
 #include <cstddef>
@@ -13,7 +14,7 @@ namespace circuit::families {
 extern const ComponentFamily Memory64Kx32;
 }
 
-class Memory64Kx32 : public BasicComponent {
+class Memory64Kx32 : public BasicComponent, public MemoryStateView {
 public:
     using MemoryWordState = std::pair<uint32_t, std::vector<LogicValue>>;
 
@@ -53,45 +54,16 @@ public:
     void writeU16AtTime(size_t time, uint32_t address, uint16_t value);
     void writeU32AtTime(size_t time, uint32_t address, uint32_t value);
 
+    const MemoryStorage& memoryStorage() const override { return storage_; }
+    void loadMemoryBytes(uint32_t address, const std::vector<uint8_t>& data) override {
+        loadBytes(address, data);
+    }
+
 private:
     static constexpr size_t WordCount = 64 * 1024;
     static constexpr size_t BytesPerWord = 4;
     static constexpr size_t ByteCount = WordCount * BytesPerWord;
 
-    using ByteValue = std::array<LogicValue, 8>;
-    struct ByteHistoryEntry {
-        size_t time;
-        size_t order;
-        ByteValue value;
-    };
-    struct ResetHistoryEntry {
-        size_t time;
-        size_t order;
-        ByteValue value;
-    };
-    struct BusWriteHistoryEntry {
-        size_t time;
-        uint32_t address;
-        ByteValue value;
-    };
-
-    void recordByteHistory(size_t time, size_t address);
-    void recordRangeHistory(size_t time, size_t base_address, size_t count);
-    void recordResetHistory(size_t time, const ByteValue& value);
-    ResetHistoryEntry resetAtTime(size_t target_time) const;
-    bool byteTouchedAtTime(size_t target_time, size_t address, const ResetHistoryEntry& reset) const;
-    bool wordTouchedAtTime(size_t target_time, uint32_t word_index, const ResetHistoryEntry& reset) const;
-    ByteValue byteAtTime(size_t target_time, size_t address) const;
-    std::vector<LogicValue> wordAtTime(size_t target_time, uint32_t address) const;
-    void markTrackedWord(size_t byte_address);
-
-    std::vector<std::array<LogicValue, 8>> bytes;
-    std::vector<std::vector<ByteHistoryEntry>> byte_history;
-    std::vector<ResetHistoryEntry> reset_history;
-    std::vector<BusWriteHistoryEntry> bus_write_history;
-    std::vector<uint32_t> tracked_word_indices;
-    std::vector<uint8_t> tracked_words;
-    size_t history_order;
-    bool history_recording_enabled_ = true;
+    MemoryStorage storage_;
     LogicValue previous_clk;
 };

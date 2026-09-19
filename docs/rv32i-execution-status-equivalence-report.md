@@ -6,7 +6,7 @@ Date: 2026-07-19
 
 Block 5 has independent structural and behavioral implementations:
 
-- `RV32IExecutionControlStatusUnit` is the educational implementation. Its decisions are built from visible gates, 4-bit muxes, bit adapters, constants, and `MemoryBit` state cells.
+- `RV32IExecutionControlStatusUnit` is the educational implementation. Its decisions are built from visible gates, 4-bit muxes, bit adapters, constants, and `FlipFlopCell` state cells.
 - the behavioral fidelity of `RV32IExecutionControlStatusUnit` is the compact answer sheet. It calculates the same contract directly and stores only its own halt/trap state.
 - `RV32IExecutionControlStatusUnitEquivalenceTest` runs the same waveform in two isolated simulators and checks each trace against independent expected values at 30 labeled checkpoints.
 
@@ -112,8 +112,8 @@ Trap-cause values are the ordinal `RV32IExecutionTrapCause` contract:
 
 The structural implementation contains:
 
-- two `MemoryBit` cells for halted/trapped state
-- four `MemoryBit` cells for the 4-bit trap cause
+- two `FlipFlopCell` cells for halted/trapped state
+- four `FlipFlopCell` cells for the 4-bit trap cause
 - address/size splitters and a cause joiner/splitter
 - visible byte/halfword/word alignment gates
 - an active/request/readiness gate chain

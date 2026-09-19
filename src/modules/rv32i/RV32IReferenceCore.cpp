@@ -225,27 +225,35 @@ void RV32IReferenceCore::evaluate(size_t current_time, Simulator& simulator) {
     const auto rst = sanitizeBit(getInputValue("RST"));
     const auto enable = sanitizeBit(getInputValue("ENABLE"));
     const auto imem_ready =
-        sanitizeBit(getInputValue("IMEM_READY"));
+        (instruction_request_.done(*this,"IMEM_",state_.pc) ? LogicValue::HIGH : LogicValue::LOW);
     const auto dmem_ready =
-        sanitizeBit(getInputValue("DMEM_READY"));
+        (data_request_.sent && !data_request_.abandoned && getInputValue("DMEM_RSP_VALID")==LogicValue::HIGH ? LogicValue::HIGH : LogicValue::LOW);
     const auto raw = knownUIntIfPossible(
-        getInputPin<32>("IMEM_READ_DATA")
+        getInputPin<32>("IMEM_RSP_READ_DATA")
             ->getValueAsVector());
     const auto preview = previewCore(
         state_, raw, rst, enable, imem_ready,
-        sanitizeBit(getInputValue("IMEM_FAULT")),
+        (getInputPin<3>("IMEM_RSP_STATUS")->getValueAsUInt64()!=0 ? LogicValue::HIGH : LogicValue::LOW),
         dmem_ready);
     const bool rising_edge =
         previous_clk_ == LogicValue::LOW
         && clk == LogicValue::HIGH;
 
+    const auto size=unsigned(encodeMemorySize(preview.control.mem_size));
+    const bool data_issue=preview.active && imem_ready==LogicValue::HIGH && preview.control.legal && preview.memory_intent;
+    instruction_request_.tick(*this,"IMEM_",rst==LogicValue::HIGH,rising_edge,
+        preview.active,preview.attempt,state_.pc,0,state_.pc,0,15);
+    data_request_.tick(*this,"DMEM_",rst==LogicValue::HIGH,rising_edge,
+        data_issue,preview.attempt,preview.alu_result,preview.control.mem_write?1:0,
+        rv32i::memoryWordAddress(preview.alu_result,size),
+        preview.rs2 << ((preview.alu_result&3)*8),rv32i::memoryWriteMask(preview.alu_result,size));
     if (rst == LogicValue::HIGH) {
         resetCore();
     } else if (rising_edge && preview.attempt) {
         const bool imem_fault =
-            getInputValue("IMEM_FAULT") == LogicValue::HIGH;
+            getInputPin<3>("IMEM_RSP_STATUS")->getValueAsUInt64()!=0;
         const bool dmem_fault =
-            getInputValue("DMEM_FAULT") == LogicValue::HIGH;
+            getInputPin<3>("DMEM_RSP_STATUS")->getValueAsUInt64()!=0;
 
         rv32i::RV32IFunctionalMemory instruction_memory(
             imem_fault ? 0
@@ -261,10 +269,17 @@ void RV32IReferenceCore::evaluate(size_t current_time, Simulator& simulator) {
                 : rv32i::RV32IFunctionalMemory::
                       DefaultCapacityBytes);
         if (!dmem_fault && preview.control.mem_read) {
-            const auto read_data = requireKnownUInt(
-                getInputPin<32>("DMEM_READ_DATA")
-                    ->getValueAsVector(),
-                "DMEM_READ_DATA");
+            auto read_bits = getInputPin<32>("DMEM_RSP_READ_DATA")->getValueAsVector();
+            const auto first_bit = (preview.alu_result & 3U) * 8U;
+            const auto bit_count = memorySizeBytes(preview.control.mem_size) * 8U;
+            // The endpoint returns a whole word, but LB/LH do not depend on
+            // untouched neighboring SRAM bytes. Check only the selected lanes.
+            for (size_t bit = 0; bit < read_bits.size(); ++bit) {
+                if (bit < first_bit || bit >= first_bit + bit_count)
+                    read_bits[bit] = LogicValue::LOW;
+            }
+            const auto read_data = rv32i::memoryLoadData(requireKnownUInt(read_bits, "selected load lanes"),
+                preview.alu_result, encodeMemorySize(preview.control.mem_size), preview.control.load_sign_extend);
             switch (preview.control.mem_size) {
                 case rv32i::RV32IMemorySize::Byte:
                     data_memory.writeU8(
@@ -302,15 +317,15 @@ void RV32IReferenceCore::publishOutputs(
     const auto rst = sanitizeBit(getInputValue("RST"));
     const auto enable = sanitizeBit(getInputValue("ENABLE"));
     const auto imem_ready =
-        sanitizeBit(getInputValue("IMEM_READY"));
+        (instruction_request_.done(*this,"IMEM_",state_.pc) ? LogicValue::HIGH : LogicValue::LOW);
     const auto dmem_ready =
-        sanitizeBit(getInputValue("DMEM_READY"));
+        (data_request_.sent && !data_request_.abandoned && getInputValue("DMEM_RSP_VALID")==LogicValue::HIGH ? LogicValue::HIGH : LogicValue::LOW);
     const auto raw = knownUIntIfPossible(
-        getInputPin<32>("IMEM_READ_DATA")
+        getInputPin<32>("IMEM_RSP_READ_DATA")
             ->getValueAsVector());
     const auto preview = previewCore(
         state_, raw, rst, enable, imem_ready,
-        sanitizeBit(getInputValue("IMEM_FAULT")),
+        (getInputPin<3>("IMEM_RSP_STATUS")->getValueAsUInt64()!=0 ? LogicValue::HIGH : LogicValue::LOW),
         dmem_ready);
 
     _updateOutputWire<32>(simulator, "PC", state_.pc, current_time);
@@ -330,61 +345,8 @@ void RV32IReferenceCore::publishOutputs(
             : LogicValue::LOW,
         current_time);
 
-    _updateOutputWire<32>(
-        simulator, "IMEM_ADDR", state_.pc, current_time);
-    _updateOutputWire(
-        simulator, "IMEM_READ_EN",
-        LogicValue::HIGH, current_time);
-
-    const bool data_request =
-        preview.active
-        && imem_ready == LogicValue::HIGH
-        && preview.control.legal
-        && preview.memory_intent;
-    if (raw) {
-        _updateOutputWire<32>(
-            simulator, "DMEM_ADDR",
-            preview.alu_result, current_time);
-    } else {
-        _updateOutputWire<32>(
-            simulator,
-            "DMEM_ADDR",
-            std::vector<LogicValue>(
-                32, LogicValue::UNKNOWN),
-            current_time);
-    }
-    _updateOutputWire<32>(
-        simulator, "DMEM_WRITE_DATA",
-        preview.rs2, current_time);
-    _updateOutputWire(
-        simulator, "DMEM_READ_EN",
-        data_request && preview.control.mem_read
-            ? LogicValue::HIGH : LogicValue::LOW,
-        current_time);
-    _updateOutputWire(
-        simulator, "DMEM_WRITE_EN",
-        data_request && preview.control.mem_write
-            ? LogicValue::HIGH : LogicValue::LOW,
-        current_time);
-    if (raw) {
-        _updateOutputWire<2>(
-            simulator, "DMEM_SIZE",
-            encodeMemorySize(preview.control.mem_size),
-            current_time);
-    } else {
-        _updateOutputWire<2>(
-            simulator,
-            "DMEM_SIZE",
-            std::vector<LogicValue>(
-                2, LogicValue::UNKNOWN),
-            current_time);
-    }
-    _updateOutputWire(
-        simulator, "DMEM_SIGN_EXTEND",
-        raw
-            ? (preview.control.load_sign_extend
-                ? LogicValue::HIGH
-                : LogicValue::LOW)
-            : LogicValue::UNKNOWN,
-        current_time);
+    rv32i::publishMemoryRequest(instruction_request_,rst!=LogicValue::LOW,preview.attempt,state_.pc,
+        [&]<size_t W>(const char* pin,uint64_t value){ _updateOutputWire<W>(simulator,std::string("IMEM_")+pin,value,current_time); });
+    rv32i::publishMemoryRequest(data_request_,rst!=LogicValue::LOW,preview.attempt,preview.alu_result,
+        [&]<size_t W>(const char* pin,uint64_t value){ _updateOutputWire<W>(simulator,std::string("DMEM_")+pin,value,current_time); });
 }

@@ -36,15 +36,15 @@ def main():
     with tempfile.TemporaryDirectory() as directory:
         path = Path(directory) / "profiles.json"
         profiles = ProfileStore(path)
-        assert profiles.get("memory-bit") == (0, {})
+        assert profiles.get("flip-flop-cell") == (0, {})
         assert profiles.replace(
-            "memory-bit",
+            "flip-flop-cell",
             0,
-            {"MEMORY_BIT_ROOT": "behavioral"},
+            {"FLIP_FLOP_CELL_ROOT": "behavioral"},
         ) == 1
-        assert ProfileStore(path).get("memory-bit") == (
+        assert ProfileStore(path).get("flip-flop-cell") == (
             1,
-            {"MEMORY_BIT_ROOT": "behavioral"},
+            {"FLIP_FLOP_CELL_ROOT": "behavioral"},
         )
 
         legacy_path = Path(directory) / "legacy-rv32i-profiles.json"
@@ -76,7 +76,7 @@ def main():
             4,
             {
                 "RV32I_PROGRAM_ROOT.CORE": "behavioral",
-                "RV32I_PROGRAM_ROOT.CORE.ALU": "behavioral",
+                "RV32I_PROGRAM_ROOT.CORE.EXECUTE.ALU": "behavioral",
             },
         )
         assert migrated.get("rv32i-five-stage-program1") == (
@@ -84,39 +84,39 @@ def main():
             {"RV32I_PROGRAM_ROOT.CORE.FETCH": "structural"},
         )
         expect_value_error(
-            lambda: profiles.replace("memory-bit", 0, {}),
+            lambda: profiles.replace("flip-flop-cell", 0, {}),
             "expected revision 0, current revision 1",
         )
-        assert ProfileStore(path).get("memory-bit") == (
+        assert ProfileStore(path).get("flip-flop-cell") == (
             1,
-            {"MEMORY_BIT_ROOT": "behavioral"},
+            {"FLIP_FLOP_CELL_ROOT": "behavioral"},
         )
 
         store = server.SessionStore()
         store.profile_store = ProfileStore(
             Path(directory) / "session-profiles.json"
         )
-        initial = store.get("memory-bit")
+        initial = store.get("flip-flop-cell")
         assert initial.root.get_selected_fidelity() == "structural"
         assert initial.profile_revision == 0
 
         expect_value_error(
             lambda: store.apply_profile(
-                "memory-bit",
+                "flip-flop-cell",
                 0,
                 {
-                    "MEMORY_BIT_ROOT.WRITE_MUX.NOT_SEL": "behavioral",
+                    "FLIP_FLOP_CELL_ROOT.WRITE_MUX.NOT_SEL": "behavioral",
                 },
             ),
             "does not provide behavioral fidelity",
         )
-        assert store.profile_store.get("memory-bit") == (0, {})
-        assert store.get("memory-bit") is initial
+        assert store.profile_store.get("flip-flop-cell") == (0, {})
+        assert store.get("flip-flop-cell") is initial
 
         changed = store.apply_profile(
-            "memory-bit",
+            "flip-flop-cell",
             0,
-            {"MEMORY_BIT_ROOT": "behavioral"},
+            {"FLIP_FLOP_CELL_ROOT": "behavioral"},
         )
         payload = changed.topology_response()
         assert payload["sessionId"] == changed.session_id
@@ -124,7 +124,7 @@ def main():
             "editable": True,
             "revision": 1,
             "exactOverrides": {
-                "MEMORY_BIT_ROOT": "behavioral",
+                "FLIP_FLOP_CELL_ROOT": "behavioral",
             },
             "fingerprint": changed.profile_fingerprint,
         }
@@ -138,34 +138,54 @@ def main():
 
         expect_value_error(
             lambda: store.apply_profile(
-                "memory-bit",
+                "flip-flop-cell",
                 1,
                 {
-                    "MEMORY_BIT_ROOT": "behavioral",
-                    "MEMORY_BIT_ROOT.UNKNOWN": "structural",
+                    "FLIP_FLOP_CELL_ROOT": "behavioral",
+                    "FLIP_FLOP_CELL_ROOT.UNKNOWN": "structural",
                 },
             ),
             "unknown component",
         )
-        assert store.profile_store.get("memory-bit") == (
+        assert store.profile_store.get("flip-flop-cell") == (
             1,
-            {"MEMORY_BIT_ROOT": "behavioral"},
+            {"FLIP_FLOP_CELL_ROOT": "behavioral"},
         )
-        assert store.get("memory-bit") is changed
+        assert store.get("flip-flop-cell") is changed
 
         expect_value_error(
             lambda: store.apply_profile(
-                "memory-bit",
+                "flip-flop-cell",
                 0,
-                {"MEMORY_BIT_ROOT": "structural"},
+                {"FLIP_FLOP_CELL_ROOT": "structural"},
             ),
             "Profile changed since it was loaded",
         )
-        assert store.profile_store.get("memory-bit") == (
+        assert store.profile_store.get("flip-flop-cell") == (
             1,
-            {"MEMORY_BIT_ROOT": "behavioral"},
+            {"FLIP_FLOP_CELL_ROOT": "behavioral"},
         )
+
+
+def test_transient_reference_profile():
+    with tempfile.TemporaryDirectory() as directory:
+        store = server.SessionStore()
+        store.profile_store = ProfileStore(Path(directory) / "profiles.json")
+        scenario = "rv32i-program9"
+        reference = store.get(scenario, "behavioral")
+        payload = reference.topology_response()
+        core = next(c for c in payload["components"] if c["id"] == "RV32I_PROGRAM_ROOT.CORE")
+        assert core["fidelity"] == "behavioral"
+        assert store.profile_store.get(scenario) == (0, {})
+        assert store.get(scenario, "behavioral") is reference
+        assert store.get_by_id(reference.session_id) is reference
+        normal = store.get(scenario)
+        assert normal.profile_overrides == {}
+        assert normal is not reference
+        expect_value_error(lambda: store.get("flip-flop-cell", "behavioral"), "core_fidelity")
+        expect_value_error(lambda: store.get(scenario, "automatic"), "core_fidelity")
 
 
 if __name__ == "__main__":
     main()
+    test_transient_reference_profile()

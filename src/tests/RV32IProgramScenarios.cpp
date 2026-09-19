@@ -1132,7 +1132,8 @@ static RV32ISystemProgramCase programCase17() {
         {{1, 9}, {2, 18}, {3, 27}, {4, 36},
          {5, 45}, {6, 54}, {7, 63}, {8, 72}},
         {});
-    test_case.expected_five_stage = {true, 77, 0, 0, 0, 1};
+    // Serialized universal SRAM transactions, 100 ticks per pipeline cycle.
+    test_case.expected_five_stage = {true, 588, 0, 0, 0, 1};
     return test_case;
 }
 
@@ -1168,7 +1169,7 @@ static RV32ISystemProgramCase programCase18() {
         rv32i::RV32IExecutionTrapCause::None,
         {{1, 65}},
         {});
-    test_case.expected_five_stage = {true, 70, 0, 0, 0, 1};
+    test_case.expected_five_stage = {true, 532, 0, 0, 0, 1};
     return test_case;
 }
 
@@ -1210,7 +1211,7 @@ static RV32ISystemProgramCase programCase19() {
         rv32i::RV32IExecutionTrapCause::None,
         {{1, 0x100}, {2, 7}, {3, 224}},
         {});
-    test_case.expected_five_stage = {true, 103, 32, 0, 0, 1};
+    test_case.expected_five_stage = {true, 604, 0, 224, 0, 1};
     return test_case;
 }
 
@@ -1248,7 +1249,7 @@ static RV32ISystemProgramCase programCase20() {
         rv32i::RV32IExecutionTrapCause::None,
         {{1, 0}, {2, 16}},
         {});
-    test_case.expected_five_stage = {true, 85, 0, 0, 0, 16};
+    test_case.expected_five_stage = {true, 532, 0, 0, 0, 16};
     return test_case;
 }
 
@@ -1293,7 +1294,7 @@ static RV32ISystemProgramCase programCase21() {
         rv32i::RV32IExecutionTrapCause::None,
         {{1, 0x140}, {2, 0}, {3, 136}, {4, 16}},
         {});
-    test_case.expected_five_stage = {true, 134, 16, 0, 0, 16};
+    test_case.expected_five_stage = {true, 828, 0, 112, 0, 16};
     return test_case;
 }
 
@@ -1340,7 +1341,7 @@ static RV32ISystemProgramCase programCase22() {
             0x180,
             {0x10, 0x11, 0x12, 0x13,
              0x14, 0x15, 0x16, 0x17}));
-    test_case.expected_five_stage = {true, 87, 8, 0, 0, 8};
+    test_case.expected_five_stage = {true, 580, 0, 112, 0, 8};
     return test_case;
 }
 

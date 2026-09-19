@@ -182,7 +182,7 @@ warm local browser overview: 2.8 seconds
 explorer records: 54,049; rendered DOM rows: 44
 timeline step: time 0 -> 2,020
 depth-8 gate focus: exact 2-input/1-output scope loaded
-MemoryBit live Apply & Run: 28 structural components -> 1 behavioral
+FlipFlopCell live Apply & Run: 28 structural components -> 1 behavioral
 component -> 28 structural components
 ```
 

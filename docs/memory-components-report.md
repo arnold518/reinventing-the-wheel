@@ -1,6 +1,21 @@
 # Memory Components Report
 
-Last updated: 2026-07-19
+Legacy inventory: 2026-07-19. FF architecture addendum: 2026-09-17.
+
+## FF architecture addendum
+
+The configurable FF path is now `FlipFlopCell` → `FFWord<W>` →
+`FFStorageBank<W>` → `FFMemory<W>`, with `MemoryBusAdapter32` as a separate
+controller. Cells, words, and complete devices offer structural and behavioral
+implementations; the bank is structural grouping. The device's behavioral
+implementation reuses `MemoryContainer<W, FlipFlopArrayModel>` and its shared
+`MemoryStorage`, not a new competing backing store.
+
+`MemoryArray<W, FlipFlopCell>` and `MemoryWord<W, FlipFlopCell>` remain C++
+compatibility entry points. FF display names change, while existing device IDs,
+instance paths, and layout keys remain compatible. The legacy components below
+and their RV32I consumers are not retired. See [the current device contract](general-memory-container.md)
+for ports, capacity, fidelity selection, limits, and tests.
 
 ## Status
 
@@ -10,8 +25,8 @@ For compact CPU tests, the behavioral fidelity of `RegisterFile32x32` remains th
 
 The component order below follows the implementation/evolution path:
 
-1. `MemoryBit`
-2. the behavioral fidelity of `MemoryBit`
+1. `FlipFlopCell`
+2. the behavioral fidelity of `FlipFlopCell`
 3. `Register32`
 4. the behavioral fidelity of `Register32`
 5. `Decoder2to4` and `Decoder5to32`
@@ -26,16 +41,16 @@ The structural storage path uses the structural `DFlipFlop` implementation docum
 
 ## Components
 
-### `MemoryBit`
+### `FlipFlopCell`
 
 Purpose:
 
-`MemoryBit` is the visualizable one-bit storage cell. It is the first memory component in the branch and the structural teaching version of a write-enabled storage bit.
+`FlipFlopCell` is the visualizable one-bit storage cell. It is the first memory component in the branch and the structural teaching version of a write-enabled storage bit.
 
 Files:
 
-- `include/modules/memory/MemoryBit.hpp`
-- `src/modules/memory/MemoryBit.cpp`
+- `include/modules/memory/FlipFlopCell.hpp`
+- `src/modules/memory/FlipFlopCell.cpp`
 
 Pins:
 
@@ -98,21 +113,21 @@ Rising-edge table:
 
 Tests and visualizer:
 
-- Test: `MemoryBitStructuralContractTest`
-- Visualizer scenario: `memory-bit`
+- Test: `FlipFlopCellStructuralContractTest`
+- Visualizer scenario: `flip-flop-cell`
 - Checkpoints: reset, hold, write one, no level capture, write zero, hold zero, unknown data, reset clear, unknown write enable.
 - Hosted visualizer stats: 28 components, 89 pins, 55 wires, 129 timestamps.
 
-### the behavioral fidelity of `MemoryBit`
+### the behavioral fidelity of `FlipFlopCell`
 
 Purpose:
 
-the behavioral fidelity of `MemoryBit` is the compact counterpart to `MemoryBit`. It exists so wider registers and register files can be built without expanding every bit into muxes, latches, and gates.
+the behavioral fidelity of `FlipFlopCell` is the compact counterpart to `FlipFlopCell`. It exists so wider registers and register files can be built without expanding every bit into muxes, latches, and gates.
 
 Files:
 
-- `include/modules/memory/MemoryBitDirect.hpp`
-- `src/modules/memory/MemoryBitDirect.cpp`
+- `include/modules/memory/FlipFlopCellDirect.hpp`
+- `src/modules/memory/FlipFlopCellDirect.cpp`
 
 Pins:
 
@@ -158,8 +173,8 @@ Important timing behavior:
 
 Tests and visualizer:
 
-- Test: `MemoryBitBehavioralContractTest`
-- Visualizer scenario: `behavioral-memory-bit`
+- Test: `FlipFlopCellBehavioralContractTest`
+- Visualizer scenario: `behavioral-flip-flop-cell`
 - Checkpoints: reset, hold, write one, no level capture, write zero, hold zero, unknown data, reset clear, unknown write enable.
 - Hosted visualizer stats: 1 component, 5 pins, 5 wires, 39 timestamps.
 
@@ -167,7 +182,7 @@ Tests and visualizer:
 
 Purpose:
 
-`Register32` is one 32-bit storage word made from 32 structural `MemoryBit` cells. It is not the RV32I register file.
+`Register32` is one 32-bit storage word made from 32 structural `FlipFlopCell` cells. It is not the RV32I register file.
 
 Files:
 
@@ -187,7 +202,7 @@ Pins:
 Implementation:
 
 - One `BitSplitter<32>` named `D_SPLIT`
-- Thirty-two structural `MemoryBit` cells named `BIT_0` through `BIT_31`
+- Thirty-two structural `FlipFlopCell` cells named `BIT_0` through `BIT_31`
 - One `BitJoiner<32>` named `Q_JOIN`
 - Shared fanout wires for `WE`, `CLK`, and `RST`
 
@@ -213,7 +228,7 @@ else on rising CLK:
         Q[31:0] keeps its previous value
 ```
 
-Every bit lane behaves like an independent `MemoryBit`:
+Every bit lane behaves like an independent `FlipFlopCell`:
 
 ```text
 Q[n]_next = WE ? D[n] : Q[n]
@@ -230,7 +245,7 @@ Tests and visualizer:
 
 Purpose:
 
-the behavioral fidelity of `Register32` is one compact 32-bit storage word made from 32 the behavioral fidelity of `MemoryBit` cells. It is the scalable counterpart to structural `Register32`.
+the behavioral fidelity of `Register32` is one compact 32-bit storage word made from 32 the behavioral fidelity of `FlipFlopCell` cells. It is the scalable counterpart to structural `Register32`.
 
 Files:
 
@@ -250,7 +265,7 @@ Pins:
 Implementation:
 
 - One `BitSplitter<32>` named `D_SPLIT`
-- Thirty-two the behavioral fidelity of `MemoryBit` cells named `BIT_0` through `BIT_31`
+- Thirty-two the behavioral fidelity of `FlipFlopCell` cells named `BIT_0` through `BIT_31`
 - One `BitJoiner<32>` named `Q_JOIN`
 
 Behavior:
@@ -819,8 +834,8 @@ Registered scenarios:
 
 - `decoder2to4` -> `Decoder2to4Test`
 - `decoder5to32` -> `Decoder5to32Test`
-- `memory-bit` -> `MemoryBitStructuralContractTest`
-- `behavioral-memory-bit` -> `MemoryBitBehavioralContractTest`
+- `flip-flop-cell` -> `FlipFlopCellStructuralContractTest`
+- `behavioral-flip-flop-cell` -> `FlipFlopCellBehavioralContractTest`
 - `behavioral-memory64kx32` -> `Memory64Kx32Test`
 - `register32` -> `Register32StructuralContractTest`
 - `register-file4x32` -> `RegisterFile4x32Test`
@@ -841,7 +856,7 @@ cmake -S . -B build
 cmake --build build -j 8
 ctest --test-dir build --output-on-failure -R "Decoder2to4Test|Decoder5to32Test|RegisterFile4x32Test|RegisterFile32x32StructuralContractTest|Memory4x32Test"
 ctest --test-dir build --output-on-failure -R "RegisterFile32x32BehavioralContractTest|RegisterFile32x32BehavioralUnknownPolicyTest|RegisterFile32x32StructuralContractTest"
-ctest --test-dir build --output-on-failure -R "MemoryBitBehavioralContractTest|MemoryBitStructuralContractTest|Register32StructuralContractTest|RegisterFile4x32Test|RegisterFile32x32StructuralContractTest|RegisterFile32x32BehavioralContractTest|RegisterFile32x32BehavioralUnknownPolicyTest|Memory4x32Test|Decoder2to4Test|Decoder5to32Test"
+ctest --test-dir build --output-on-failure -R "FlipFlopCellBehavioralContractTest|FlipFlopCellStructuralContractTest|Register32StructuralContractTest|RegisterFile4x32Test|RegisterFile32x32StructuralContractTest|RegisterFile32x32BehavioralContractTest|RegisterFile32x32BehavioralUnknownPolicyTest|Memory4x32Test|Decoder2to4Test|Decoder5to32Test"
 ctest --test-dir build --output-on-failure -R "Memory4x32Test|Memory32x32Test|Decoder2to4Test|Decoder5to32Test|Mux4to1_32bitTest|Mux32to1_32bitTest"
 ctest --test-dir build --output-on-failure -R "Memory64Kx32Test|Memory32x32Test|Memory4x32Test"
 ctest --test-dir build -N
@@ -855,8 +870,8 @@ Results:
 - Build passed.
 - `Decoder2to4Test` passed.
 - `Decoder5to32Test` passed.
-- `MemoryBitStructuralContractTest` passed.
-- `MemoryBitBehavioralContractTest` passed.
+- `FlipFlopCellStructuralContractTest` passed.
+- `FlipFlopCellBehavioralContractTest` passed.
 - `Memory64Kx32Test` passed.
 - `Register32StructuralContractTest` passed.
 - `RegisterFile4x32Test` passed.

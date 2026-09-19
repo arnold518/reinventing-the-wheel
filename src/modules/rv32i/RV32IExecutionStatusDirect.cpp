@@ -206,6 +206,10 @@ void RV32IExecutionStatusDirect::evaluate(size_t current_time,
     _updateOutputWire(simulator, "PC_WRITE", result.pc_write, current_time);
     _updateOutputWire(simulator, "REGISTER_WRITE", result.register_write, current_time);
     _updateOutputWire(simulator, "MEMORY_REQUEST_ACTIVE", result.memory_request, current_time);
+    _updateOutputWire(simulator, "FETCH_REQUEST_ACTIVE",
+        input.rst == LogicValue::LOW && input.enable == LogicValue::HIGH
+        && halted_ == LogicValue::LOW && trapped_ == LogicValue::LOW
+            ? LogicValue::HIGH : LogicValue::LOW, current_time);
     _updateOutputWire(simulator, "HALTED", halted_, current_time);
     _updateOutputWire(simulator, "TRAPPED", trapped_, current_time);
     _updateOutputWire<4>(simulator, "TRAP_CAUSE", trap_cause_, current_time);

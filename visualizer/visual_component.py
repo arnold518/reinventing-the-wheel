@@ -186,15 +186,11 @@ class VisualWire:
 
     def connect(self, pin_map):
         source_cpp = self.cpp_handle.get_source_pin()
-        if source_cpp and (owner := source_cpp.get_owner()):
-            key = f"{owner.get_id()}.{source_cpp.get_name()}"
-            self.source_vpin = pin_map.get(key)
-        
+        self.source_vpin = pin_map.get(source_cpp.get_id()) if source_cpp else None
+        self.sink_vpins = []
         for sink_cpp in self.cpp_handle.get_sink_pins():
-            if (owner := sink_cpp.get_owner()):
-                key = f"{owner.get_id()}.{sink_cpp.get_name()}"
-                if (vpin := pin_map.get(key)):
-                    self.sink_vpins.append(vpin)
+            if (vpin := pin_map.get(sink_cpp.get_id())):
+                self.sink_vpins.append(vpin)
 
     def update_state(self):
         self.color = _aggregate_signal_color(self.cpp_handle)

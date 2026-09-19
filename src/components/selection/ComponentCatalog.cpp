@@ -295,7 +295,7 @@ std::shared_ptr<Component> ComponentCatalog::createChild(
         request.instance_name, selection, request.parameters);
     auto component = descriptor.factory(
         request.instance_name, request.parameters, child_context);
-    validateInstance(contract(request.contract_id), descriptor, component);
+    validateInstance(contract(request.contract_id), descriptor, component, request.parameters);
     return component;
 }
 
@@ -315,7 +315,8 @@ BuildResult ComponentCatalog::createRoot(ComponentBuildRequest request,
 void ComponentCatalog::validateInstance(
     const ContractDescriptor& expected_contract,
     const ImplementationDescriptor& implementation,
-    const std::shared_ptr<Component>& component) const {
+    const std::shared_ptr<Component>& component,
+    const ParameterMap& parameters) const {
     if (!component) {
         throw std::runtime_error("Implementation factory returned null for '"
                                  + implementation.id + "'");
@@ -346,8 +347,8 @@ void ComponentCatalog::validateInstance(
                                    "without declaring it a terminal primitive");
     }
 
-    if (!expected_contract.pins.empty()) {
-        const auto expected = normalizedSchema(expected_contract.pins);
+    if (expected_contract.parameterized_pins || !expected_contract.pins.empty()) {
+        const auto expected = normalizedSchema(expected_contract.pinsFor(parameters));
         const auto actual = schemaOf(*io);
         if (expected != actual) {
             std::ostringstream message;

@@ -38,13 +38,21 @@
 #include "modules/composite/ZeroDetect32.hpp"
 #include "modules/composite/ZeroDetect8.hpp"
 #include "modules/memory/Memory64Kx32.hpp"
+#include "modules/memory/MemoryContainerCatalog.hpp"
+#include "modules/memory/SRAM.hpp"
+#include "modules/memory/DRAM.hpp"
+#include "modules/memory/ROM.hpp"
+#include "modules/memory/NORFlash.hpp"
+#include "modules/memory/MemoryBusAdapter32.hpp"
+#include "modules/memory/MemoryProtocol.hpp"
 #include "modules/memory/Memory32x32.hpp"
 #include "modules/memory/Memory4x32.hpp"
-#include "modules/memory/MemoryBit.hpp"
+#include "modules/memory/FlipFlopCell.hpp"
 #include "modules/memory/Register32.hpp"
 #include "modules/memory/RegisterFile32x32.hpp"
 #include "modules/memory/RegisterFile4x32.hpp"
 #include "modules/rv32i/RV32IBitPatternMatcher.hpp"
+#include "modules/rv32i/RV32IMemoryRequest.hpp"
 #include "modules/rv32i/RV32IControlFlowUnit.hpp"
 #include "modules/rv32i/RV32IDecodeControlUnit.hpp"
 #include "modules/rv32i/RV32IExecutionControlStatusUnit.hpp"
@@ -53,6 +61,7 @@
 #include "modules/rv32i/RV32IPipelineStages.hpp"
 #include "modules/rv32i/RV32IFiveStageCore.hpp"
 #include "modules/rv32i/RV32ISingleCycleCore.hpp"
+#include "modules/rv32i/RV32ISingleCycleStages.hpp"
 #include "modules/rv32i/RV32ISingleCycleSystem.hpp"
 #include "modules/utility/BitAdapter.hpp"
 #include "modules/utility/Constant.hpp"
@@ -609,23 +618,27 @@ void registerStructuralFamilies(ComponentCatalog& catalog) {
     addStructural<ALU32CompareUnit>(catalog, "alu.compare.width32", "alu.compare.width32.structural", "ALU32CompareUnit", "ALU32CompareUnitTest");
     addStructural<ALU32ResultSelector>(catalog, "alu.result-selector.width32", "alu.result-selector.width32.structural", "ALU32ResultSelector", "ALU32ResultSelectorTest");
     addStructural<ALU32FlagUnit>(catalog, "alu.flags.width32", "alu.flags.width32.structural", "ALU32FlagUnit", "ALU32FlagUnitTest");
+    addStructural<RV32IMemoryLanes>(catalog, "rv32i.memory-lanes", "rv32i.memory-lanes.structural", "RV32IMemoryLanes", "RV32IMemoryLanesTest");
+    addStructural<RV32IMemoryRequest>(catalog, "rv32i.memory-request", "rv32i.memory-request.structural", "RV32IMemoryRequest", "RV32IMemoryRequestTest");
 }
 
 void registerStorage(ComponentCatalog& catalog) {
-    const auto memory_bit = std::string(families::MemoryBit.id());
+    addStructural<MemoryBusAdapter32>(catalog, "memory.bus-adapter.width32", "memory.bus-adapter.width32.structural",
+        "MemoryBusAdapter32", "MemoryBusAdapter32Test");
+    const auto flip_flop_cell = std::string(families::FlipFlopCell.id());
     catalog.registerContract({
-        memory_bit, 1, "Write-enabled memory bit",
-        schemaFor(families::MemoryBit), {}, "four-state", "clock-boundary"});
+        flip_flop_cell, 1, "Write-enabled flip-flop cell",
+        schemaFor(families::FlipFlopCell), {}, "four-state", "clock-boundary"});
     catalog.registerImplementation(implementationFor(
-        families::MemoryBit,
+        families::FlipFlopCell,
         "memory.write-enabled-bit.structural.mux-dff",
-        Fidelity::Structural, verifiedStructural("MemoryBitTest")));
+        Fidelity::Structural, verifiedStructural("FlipFlopCellTest")));
     catalog.registerImplementation(implementationFor(
-        families::MemoryBit,
+        families::FlipFlopCell,
         "memory.write-enabled-bit.behavioral.direct",
         Fidelity::Behavioral,
-        verifiedBehavioral("MemoryBit structural mux/DFF", "MemoryBitTest",
-                           "MemoryBitTest", "four-state", "clock-boundary")));
+        verifiedBehavioral("FlipFlopCell structural mux/DFF", "FlipFlopCellTest",
+                           "FlipFlopCellTest", "four-state", "clock-boundary")));
 
     const auto register32 = std::string(families::Register32.id());
     catalog.registerContract({
@@ -639,7 +652,7 @@ void registerStorage(ComponentCatalog& catalog) {
         families::Register32,
         "memory.register.width32.behavioral.direct",
         Fidelity::Behavioral,
-        verifiedBehavioral("Register32 structural bit cells", "Register32Test",
+        verifiedBehavioral("Register32 structural FFWord storage", "Register32Test",
                            "Register32Test", "four-state", "clock-boundary")));
 
     addStructural<RegisterFile4x32>(catalog, "memory.register-file.4x32", "memory.register-file.4x32.structural", "4x32 register file", "RegisterFile4x32Test");
@@ -953,6 +966,23 @@ void registerRV32I(ComponentCatalog& catalog) {
     catalog.registerImplementation(
         std::move(five_stage_behavioral));
 
+    for(const auto* stage : {&families::RV32ISingleCycleFetchStage,
+            &families::RV32ISingleCycleDecodeStage, &families::RV32ISingleCycleExecuteStage,
+            &families::RV32ISingleCycleMemoryStage, &families::RV32ISingleCycleWritebackStage,
+            &families::RV32ISingleCycleNextPCStage}) {
+        const std::string id(stage->id()), name(stage->typeName()), test=name+"Test";
+        const std::vector<std::string> capabilities = stage==&families::RV32ISingleCycleDecodeStage
+            ? std::vector<std::string>{"register-state-view"} : std::vector<std::string>{};
+        catalog.registerContract({id,1,name,schemaFor(*stage),capabilities,"known-binary","stable-after-settle"});
+        auto structure=implementationFor(*stage,id+".structural",Fidelity::Structural,verifiedStructural(test));
+        structure.capabilities=capabilities;
+        catalog.registerImplementation(std::move(structure));
+        auto behavior=implementationFor(*stage,id+".behavioral",Fidelity::Behavioral,
+            verifiedBehavioral(name+" structural datapath",test,test,"known-binary","stable-after-settle"));
+        behavior.capabilities=capabilities;
+        catalog.registerImplementation(std::move(behavior));
+    }
+
     const auto core =
         std::string(families::RV32ISingleCycleCore.id());
     catalog.registerContract({
@@ -1024,6 +1054,13 @@ std::shared_ptr<ComponentCatalog> createBuiltinComponentCatalog() {
     registerStructuralFamilies(*catalog);
     registerStorage(*catalog);
     registerRV32I(*catalog);
+    registerMemoryContainers(*catalog);
+    registerSRAMComponents(*catalog);
+    memory_device::registerMatrixComponents(*catalog);
+    registerDRAMComponents(*catalog);
+    registerROMComponents(*catalog);
+    registerNORFlashComponents(*catalog);
+    memory::registerMemoryEndpoints(*catalog);
     catalog->freeze();
     return catalog;
 }

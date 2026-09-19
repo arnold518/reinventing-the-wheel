@@ -257,7 +257,8 @@ def main():
         metric.name: metric.value
         for metric in program.get_performance_metrics()
     }
-    assert program_metrics["cpu.cpi"] == 1.0
+    assert program.is_simulation_precomputed()
+    assert program_metrics["cpu.cpi"] > 1.0  # Includes transaction-memory waits.
     assert program_metrics["cpu.hardware_cycles"] > 0
     system = program.get_root()
     assert system.get_name() == "RV32I_PROGRAM_ROOT"
@@ -274,7 +275,8 @@ def main():
     assert system_children["CLOCK"].get_type_name() == "ClockGenerator"
     clock_wire = next(
         wire for wire in system.get_wires()
-        if wire.get_name() == "CLK"
+        if wire.get_source_pin() is not None
+        and wire.get_source_pin().get_owner().get_name() == "CLOCK"
     )
     assert clock_wire.get_source_pin().get_owner().get_name() == "CLOCK"
     assert {
@@ -283,15 +285,17 @@ def main():
     } == {"CORE", "INSTRUCTION_MEMORY", "DATA_MEMORY"}
     assert system_children["INSTRUCTION_MEMORY"].get_selected_fidelity() == "behavioral"
     assert system_children["DATA_MEMORY"].get_selected_fidelity() == "behavioral"
+    for name in ("INSTRUCTION_MEMORY", "DATA_MEMORY"):
+        assert system_children[name].get_type_name() == "MemoryContainer<sram,32>"
+        assert {"REQ_VALID", "RSP_READY"} <= set(system_children[name].get_input_pins())
+        assert {"REQ_READY", "RSP_VALID"} <= set(system_children[name].get_output_pins())
     core = system_children["CORE"]
     assert core.get_selected_fidelity() == "structural"
     profile_fingerprint = core.get_profile_fingerprint()
     core_children = {child.get_name(): child for child in core.get_children()}
     expected_core_fidelities = {
-        "CONTROL_FLOW": "structural",
-        "DECODE_CONTROL": "structural",
-        "REGISTER_FILE": "behavioral",
-        "ALU": "structural",
+        "FETCH": "structural", "DECODE": "structural", "EXECUTE": "structural",
+        "MEMORY": "structural", "WRITEBACK": "structural", "NEXT_PC": "structural",
         "EXECUTION_STATUS": "structural",
     }
     for child_name, expected_fidelity in expected_core_fidelities.items():
@@ -319,7 +323,7 @@ def main():
             {
                 (
                     "RV32I_PROGRAM_ROOT"
-                    ".CORE.REGISTER_FILE"
+                    ".CORE.DECODE.REGISTER_FILE"
                 ): "structural",
             },
             "visualizer-storage-expanded",
@@ -332,7 +336,7 @@ def main():
     }["CORE"]
     expanded_register_file = {
         child.get_name(): child
-        for child in expanded_register_core.get_children()
+        for child in next(c for c in expanded_register_core.get_children() if c.get_name() == "DECODE").get_children()
     }["REGISTER_FILE"]
     assert expanded_register_file.get_selected_fidelity() == "structural"
     assert list(expanded_register_file.get_children())
@@ -431,6 +435,8 @@ def main():
         for child in pipeline_core.get_children()
     }
     assert list(pipeline_core_children) == [
+        "FETCH_REQUEST", "DATA_REQUEST", "LOAD_STORE", "DATA_ISSUE", "DATA_OPERATION",
+        "MEMORY_ZERO", "FETCH_WRITE_DATA", "FETCH_OPERATION", "FETCH_MASK",
         "FETCH",
         "IF_ID",
         "DECODE",
@@ -445,6 +451,7 @@ def main():
     assert all(
         child.get_selected_fidelity() == "structural"
         for child in pipeline_core_children.values()
+        if child.get_contract_id().startswith("rv32i.")
     )
     pipeline_components = list(walk_components(pipeline_root))
     pipeline_memory = [
@@ -463,7 +470,7 @@ def main():
         if component.get_contract_id().startswith("rv32i.")
         and component.get_contract_id() not in BEHAVIORAL_MEMORY_CONTRACTS
     ]
-    assert len(rv32i_components) > len(pipeline_core_children)
+    assert len(rv32i_components) > 10
     assert all(
         component.get_selected_fidelity() == "structural"
         for component in rv32i_components
@@ -624,23 +631,23 @@ def main():
         (8, "0x00100073", "ebreak"),
     ]
 
-    memory_bit_session = server.CircuitSession(
-        "memory-bit",
+    flip_flop_cell_session = server.CircuitSession(
+        "flip-flop-cell",
         layout_manager,
     )
-    progressive_payload = memory_bit_session.topology_response()
+    progressive_payload = flip_flop_cell_session.topology_response()
     assert (
         progressive_payload["topologyEncoding"]
         == "progressive-v1"
     )
     assert progressive_payload["loadedScopeIds"] == [
-        memory_bit_session.root.get_id()
+        flip_flop_cell_session.root.get_id()
     ]
     assert len(progressive_payload["pins"]) < len(
-        memory_bit_session.pins
+        flip_flop_cell_session.pins
     )
     assert len(progressive_payload["wires"]) < len(
-        memory_bit_session.wires
+        flip_flop_cell_session.wires
     )
     assert all(
         "childIds" not in component
@@ -658,10 +665,10 @@ def main():
     )
 
     memory_root_children = list(
-        memory_bit_session.root.get_children()
+        flip_flop_cell_session.root.get_children()
     )
     assert memory_root_children
-    child_scope = memory_bit_session.topology_slice([
+    child_scope = flip_flop_cell_session.topology_slice([
         memory_root_children[0].get_id(),
         memory_root_children[0].get_id(),
     ])
@@ -679,27 +686,27 @@ def main():
         assert set(wire["sinkPinIds"]).issubset(
             child_scope_pin_ids
         )
-    complete_memory_bit_topology = (
-        memory_bit_session.topology_slice([
+    complete_flip_flop_cell_topology = (
+        flip_flop_cell_session.topology_slice([
             component["id"]
-            for component in memory_bit_session.components
+            for component in flip_flop_cell_session.components
         ])
     )
     assert {
         pin["id"]
-        for pin in complete_memory_bit_topology["pins"]
+        for pin in complete_flip_flop_cell_topology["pins"]
     } == {
-        pin["id"] for pin in memory_bit_session.pins
+        pin["id"] for pin in flip_flop_cell_session.pins
     }
     assert {
         wire["id"]
-        for wire in complete_memory_bit_topology["wires"]
+        for wire in complete_flip_flop_cell_topology["wires"]
     } == {
-        wire["id"] for wire in memory_bit_session.wires
+        wire["id"] for wire in flip_flop_cell_session.wires
     }
     try:
-        memory_bit_session.topology_slice(
-            ["MEMORY_BIT_ROOT.UNKNOWN"]
+        flip_flop_cell_session.topology_slice(
+            ["FLIP_FLOP_CELL_ROOT.UNKNOWN"]
         )
     except ValueError as error:
         assert "Unknown topology scope owner" in str(error)
@@ -755,18 +762,18 @@ def main():
 
     base_core_children = layout_manager.type_layouts["RV32ISingleCycleCore"]["children"]
     assert set(expected_core_fidelities).issubset(base_core_children)
-    original_register_file_position = base_core_children["REGISTER_FILE"]["rel_pos"]
+    original_register_file_position = base_core_children["DECODE"]["rel_pos"]
     layout_manager.update_profile_child_layout(
         profile_fingerprint,
         "RV32ISingleCycleCore",
-        "REGISTER_FILE",
+        "DECODE",
         [0.123, 0.456],
         0.078,
     )
     profile_core_layout = layout_manager.get_layout_for_component(core)
-    assert profile_core_layout["children"]["REGISTER_FILE"]["rel_pos"] == [0.123, 0.456]
+    assert profile_core_layout["children"]["DECODE"]["rel_pos"] == [0.123, 0.456]
     assert (
-        layout_manager.type_layouts["RV32ISingleCycleCore"]["children"]["REGISTER_FILE"]["rel_pos"]
+        layout_manager.type_layouts["RV32ISingleCycleCore"]["children"]["DECODE"]["rel_pos"]
         == original_register_file_position
     )
 

@@ -3,6 +3,7 @@
 #include "basic/PinBase.hpp"
 #include <cstddef>
 #include <cstdint>
+#include <functional>
 #include <map>
 #include <optional>
 #include <string>
@@ -44,6 +45,12 @@ struct ContractDescriptor {
     std::vector<std::string> required_capabilities;
     std::string semantic_domain = "four-state";
     std::string observation = "stable-after-settle";
+    // Optional exact schema for contracts whose pin count depends on parameters.
+    std::function<std::vector<PinDescriptor>(const ParameterMap&)> parameterized_pins = {};
+
+    std::vector<PinDescriptor> pinsFor(const ParameterMap& parameters) const {
+        return parameterized_pins ? parameterized_pins(parameters) : pins;
+    }
 };
 
 struct VerificationEvidence {

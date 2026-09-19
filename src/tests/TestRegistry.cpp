@@ -7,8 +7,13 @@
 #include "tests/ComponentSelectionTests.hpp"
 #include "tests/FullCircuitTest.hpp"
 #include "tests/MemoryComponentTests.hpp"
+#include "tests/MemoryContainerTests.hpp"
+#include "tests/SRAMTests.hpp"
+#include "tests/MemoryDeviceTests.hpp"
+#include "tests/MemoryEndpointTests.hpp"
 #include "tests/ALU32LowerLevelSliceTests.hpp"
 #include "tests/RV32IBlockStandaloneTests.hpp"
+#include "tests/RV32IMemoryAccessTests.hpp"
 #include "tests/RV32IControlTests.hpp"
 #include "tests/RV32IDecoderTests.hpp"
 #include "tests/RV32IElfTests.hpp"
@@ -20,6 +25,7 @@
 #include "tests/RV32IProgramCases.hpp"
 #include "tests/RV32IProgramTests.hpp"
 #include "tests/RV32ISingleCycleTests.hpp"
+#include "tests/RV32ISingleCycleStageTests.hpp"
 #include "tests/UtilityComponentTests.hpp"
 #include "components/selection/BuiltinComponentCatalog.hpp"
 #include "modules/rv32i/RV32IFiveStageCore.hpp"
@@ -49,8 +55,13 @@ RegisteredTestKind componentKind(
         "sequential.d-flip-flop",
         "memory.write-enabled-bit",
         "memory.register.width32",
+        "memory.bus-adapter.width32",
         "rv32i.control-flow",
+        "rv32i.memory-request",
         "rv32i.execution-status",
+        "rv32i.single-cycle.fetch",
+        "rv32i.single-cycle.decode",
+        "rv32i.single-cycle.memory",
         "rv32i.pipeline-register.if-id",
         "rv32i.pipeline-register.id-ex",
         "rv32i.pipeline-register.ex-mem",
@@ -68,10 +79,15 @@ RegisteredTestKind componentKind(
         "rv32i.core.educational-five-stage",
         "rv32i.system.educational-single-cycle",
     };
-    if (sequential.count(contract_id) != 0) {
+    if (sequential.count(contract_id) != 0 || contract_id.starts_with("memory.ff-word.")) {
         return RegisteredTestKind::Sequential;
     }
-    if (memory.count(contract_id) != 0) {
+    if (memory.count(contract_id) != 0 || contract_id.starts_with("memory.endpoint.") ||
+        contract_id.starts_with("memory.scalable.") || contract_id.starts_with("memory.controller.") ||
+        contract_id.starts_with("memory.transaction-port.") || contract_id.starts_with("memory.container.") ||
+        contract_id.starts_with("memory.ff-storage-bank.") || contract_id.starts_with("memory.sram.") ||
+        contract_id.starts_with("memory.dram.") || contract_id.starts_with("memory.rom.") ||
+        contract_id.starts_with("memory.nor-flash.") || contract_id.starts_with("memory.matrix.")) {
         return RegisteredTestKind::Memory;
     }
     if (program.count(contract_id) != 0) {
@@ -227,8 +243,69 @@ const std::vector<TestRegistryEntry>& getTestRegistry() {
         entry<GatedDLatchTest>("GatedDLatchTest"),
         entry<DFlipFlopTest>("DFlipFlopTest"),
         entry<ClockGeneratorTest>("ClockGeneratorTest"),
-        entry<MemoryBitTest>("MemoryBitTest"),
+        entry<FlipFlopCellTest>("FlipFlopCellTest"),
         entry<Memory64Kx32Test>("Memory64Kx32Test"),
+        entry<MemoryStorageTest>("MemoryStorageTest"),
+        entry<MemoryBusAdapter32Test>("MemoryBusAdapter32Test"),
+        entry<MemoryBusAdapterIntegrationTest>("MemoryBusAdapterIntegrationTest"),
+        entry<MemoryTransactionPortTest>("MemoryTransactionPortTest"),
+        entry<MemoryControllerTest>("MemoryControllerTest"),
+        entry<MemoryEndpointFFTest>("MemoryEndpointFFTest"),
+        entry<MemoryEndpointSRAMTest>("MemoryEndpointSRAMTest"),
+        entry<MemoryEndpointDRAMTest>("MemoryEndpointDRAMTest"),
+        entry<MemoryEndpointROMTest>("MemoryEndpointROMTest"),
+        entry<MemoryEndpointFlashTest>("MemoryEndpointFlashTest"),
+        entry<MemoryEndpointRelayTest>("MemoryEndpointRelayTest"),
+        entry<ScalableMemoryContainerTest>("ScalableMemoryContainerTest"),
+        entry<MemoryEndpointContractTest>("MemoryEndpointContractTest"),
+        entry<MemoryEndpointTimingTest>("MemoryEndpointTimingTest"),
+        entry<FFMemoryContainerTest>("FFMemoryContainerTest"),
+        entry<FFWordTest>("FFWordTest"),
+        entry<FFWordContractTest>("FFWordContractTest"),
+        entry<FFStorageBankTest>("FFStorageBankTest"),
+        entry<FFStorageBankContractTest>("FFStorageBankContractTest"),
+        entry<FFMemoryFidelityTest>("FFMemoryFidelityTest"),
+        entry<SRAMContainerTest>("SRAMContainerTest"),
+        entry<SRAMCellTest>("SRAMCellTest"),
+        entry<SRAMRowTest>("SRAMRowTest"),
+        entry<SRAMBitlinePairTest>("SRAMBitlinePairTest"),
+        entry<SRAMRowDecoderTest>("SRAMRowDecoderTest"),
+        entry<SRAMPrechargeTest>("SRAMPrechargeTest"),
+        entry<SRAMWriteDriverTest>("SRAMWriteDriverTest"),
+        entry<SRAMSenseAmplifierTest>("SRAMSenseAmplifierTest"),
+        entry<SRAMColumnSelectorTest>("SRAMColumnSelectorTest"),
+        entry<SRAMAccessControlTest>("SRAMAccessControlTest"),
+        entry<SRAMOutputBufferTest>("SRAMOutputBufferTest"),
+        entry<SRAMStorageBankTest>("SRAMStorageBankTest"),
+        entry<SRAMTest>("SRAMTest"),
+        entry<SRAMContractTest>("SRAMContractTest"),
+        entry<SRAMTimingTest>("SRAMTimingTest"),
+        entry<MatrixRowDecoderTest>("MatrixRowDecoderTest"),
+        entry<MatrixColumnMuxTest>("MatrixColumnMuxTest"),
+        entry<MatrixWriteDistributorTest>("MatrixWriteDistributorTest"),
+        entry<StaticReadColumnTest>("StaticReadColumnTest"),
+        entry<MemoryOutputBufferTest>("MemoryOutputBufferTest"),
+        entry<ROMCellTest>("ROMCellTest"),
+        entry<ROMRowTest>("ROMRowTest"),
+        entry<ROMAddressControlTest>("ROMAddressControlTest"),
+        entry<ROMStorageBankTest>("ROMStorageBankTest"),
+        entry<ROMTest>("ROMTest"),
+        entry<DRAMCellTest>("DRAMCellTest"),
+        entry<DRAMRowTest>("DRAMRowTest"),
+        entry<DRAMSenseColumnTest>("DRAMSenseColumnTest"),
+        entry<DRAMStorageBankTest>("DRAMStorageBankTest"),
+        entry<DRAMCommandControlTest>("DRAMCommandControlTest"),
+        entry<DRAMTest>("DRAMTest"),
+        entry<NORFlashCellTest>("NORFlashCellTest"),
+        entry<NORFlashRowTest>("NORFlashRowTest"),
+        entry<NORFlashStorageBankTest>("NORFlashStorageBankTest"),
+        entry<NORFlashCommandControlTest>("NORFlashCommandControlTest"),
+        entry<NORFlashTest>("NORFlashTest"),
+        entry<MemoryHelperContractTest>("MemoryHelperContractTest"),
+        entry<MemoryDeviceContractTest>("MemoryDeviceContractTest"),
+        entry<MemoryDeviceTimingTest>("MemoryDeviceTimingTest"),
+        entry<ROMContainerTest>("ROMContainerTest"),
+        entry<MemoryContainerContractTest>("MemoryContainerContractTest"),
         entry<Register32Test>("Register32Test"),
         entry<RegisterFile4x32Test>("RegisterFile4x32Test"),
         entry<RegisterFile32x32Test>("RegisterFile32x32Test"),
@@ -312,6 +389,8 @@ const std::vector<TestRegistryEntry>& getTestRegistry() {
         entry<ALUHierarchyTest>("ALUHierarchyTest"),
         entry<Adder32Test>("Adder32Test"),
         entry<AddSub32Test>("AddSub32Test"),
+        entry<RV32IMemoryLanesTest>("RV32IMemoryLanesTest"),
+        entry<RV32IMemoryRequestTest>("RV32IMemoryRequestTest"),
         entry<Logic32Test>("Logic32Test"),
         entry<ZeroDetect32Test>("ZeroDetect32Test"),
         entry<Comparator32Test>("Comparator32Test"),
@@ -365,6 +444,13 @@ const std::vector<TestRegistryEntry>& getTestRegistry() {
         entry<RV32IInstructionLockstepHarnessTest>("RV32IInstructionLockstepHarnessTest"),
         entry<RV32IInstructionLockstepMismatchDetectionTest>("RV32IInstructionLockstepMismatchDetectionTest"),
         entry<RV32ISingleCycleCoreTest>("RV32ISingleCycleCoreTest"),
+        entry<RV32ISingleCycleFetchStageTest>("RV32ISingleCycleFetchStageTest"),
+        entry<RV32ISingleCycleDecodeStageTest>("RV32ISingleCycleDecodeStageTest"),
+        entry<RV32ISingleCycleExecuteStageTest>("RV32ISingleCycleExecuteStageTest"),
+        entry<RV32ISingleCycleMemoryStageTest>("RV32ISingleCycleMemoryStageTest"),
+        entry<RV32ISingleCycleWritebackStageTest>("RV32ISingleCycleWritebackStageTest"),
+        entry<RV32ISingleCycleNextPCStageTest>("RV32ISingleCycleNextPCStageTest"),
+        entry<RV32ISingleCycleStageIntegrationTest>("RV32ISingleCycleStageIntegrationTest"),
         entry<RV32IProfileToggleSweepTest>(
             "RV32IProfileToggleSweepTest"),
         };

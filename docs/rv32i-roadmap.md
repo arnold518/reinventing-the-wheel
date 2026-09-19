@@ -69,7 +69,7 @@ Completed:
   - `SRLatch`
   - `GatedDLatch`
   - structural `DFlipFlop`
-  - `MemoryBit`
+  - `FlipFlopCell`
   - `Register32`
 - Register-file and memory components:
   - `RegisterFile4x32`
@@ -132,7 +132,7 @@ Most recent full-regression result:
   children. Each family remains recursively selectable by profile.
 - RV32I visualizer scenarios keep non-storage datapath/control components
   structural while selecting behavioral `Memory64Kx32`,
-  `RegisterFile32x32`, `Register32`, and `MemoryBit` so the compact storage
+  `RegisterFile32x32`, `Register32`, and `FlipFlopCell` so the compact storage
   overrides are used.
 - Single-cycle and five-stage program scenarios now have the same outside
   shape and a real visible `ClockGenerator`; no source-less clock pin or extra
@@ -176,7 +176,7 @@ Why two memory instances:
 
 The lower-level structural components remain the educational source of truth:
 
-- `MemoryBit`, `Register32`, `RegisterFile32x32`, `Memory4x32`, and `Memory32x32` explain storage behavior.
+- `FlipFlopCell`, `Register32`, `RegisterFile32x32`, `Memory4x32`, and `Memory32x32` explain storage behavior.
 - `RegisterFile32x32` keeps the selection/routing hierarchy visible but uses compact behavioral register words internally; the fully structural `Register32` is its representative storage-word proof.
 - the behavioral fidelity of `RegisterFile32x32` is the compact same-contract
   register-file selection.
@@ -291,8 +291,8 @@ Implemented components:
 - `SRLatch`
 - `GatedDLatch`
 - structural `DFlipFlop`
-- `MemoryBit`
-- the behavioral fidelity of `MemoryBit`
+- `FlipFlopCell`
+- the behavioral fidelity of `FlipFlopCell`
 - `Register32`
 - the behavioral fidelity of `Register32`
 - `Decoder2to4`

@@ -143,7 +143,7 @@ Added/updated structural sequential tests:
 - `SRLatchTest`
 - `GatedDLatchTest`
 - `DFlipFlopTest`
-- `MemoryBitStructuralContractTest`
+- `FlipFlopCellStructuralContractTest`
 - `FullCircuitTest`
 
 Coverage includes:
@@ -151,7 +151,7 @@ Coverage includes:
 - SR latch set, reset, hold, and invalid active-low input behavior.
 - D latch reset, disabled hold, enabled transparent high/low, unknown propagation, and reset clearing unknown.
 - DFF reset, pre-edge hold, rising-edge capture, no high-level capture, no falling-edge capture, unknown capture, and reset clearing unknown.
-- MemoryBit write-enable behavior after switching its internal `STATE` DFF to the structural implementation.
+- FlipFlopCell write-enable behavior after switching its internal `STATE` DFF to the structural implementation.
 - Full integration circuit with reset initialization and a clock low phase before meaningful rising-edge capture.
 
 ## Visualizer Exposure
@@ -161,7 +161,7 @@ Registered scenarios:
 - `sr-latch` -> `SRLatchTest`
 - `gated-d-latch` -> `GatedDLatchTest`
 - `dff` -> `DFlipFlopTest`
-- `memory-bit` -> `MemoryBitStructuralContractTest`
+- `flip-flop-cell` -> `FlipFlopCellStructuralContractTest`
 
 Hosted visualizer verification after restart:
 
@@ -170,7 +170,7 @@ Hosted visualizer verification after restart:
 | `sr-latch` | `SRLatch` | 3 | 10 | 8 | 18 |
 | `gated-d-latch` | `GatedDLatch` | 10 | 31 | 20 | 50 |
 | `dff` | `DFlipFlop` | 22 | 69 | 42 | 61 |
-| `memory-bit` | `MemoryBit` | 28 | 89 | 55 | 129 |
+| `flip-flop-cell` | `FlipFlopCell` | 28 | 89 | 55 | 129 |
 
 ## Verification Results
 
@@ -178,7 +178,7 @@ Commands run:
 
 ```bash
 cmake --build build -j 4
-ctest --test-dir build --output-on-failure -R "SRLatchTest|GatedDLatchTest|DFlipFlopTest|MemoryBitStructuralContractTest|FullCircuitTest|ClockGeneratorTest"
+ctest --test-dir build --output-on-failure -R "SRLatchTest|GatedDLatchTest|DFlipFlopTest|FlipFlopCellStructuralContractTest|FullCircuitTest|ClockGeneratorTest"
 ctest --test-dir build --output-on-failure
 ```
 
@@ -187,7 +187,7 @@ Results:
 - Build passed.
 - Focused sequential subset passed: 6/6 in 0.08 seconds.
 - Full CTest passed: 72/72 in 202.44 seconds.
-- Hosted visualizer restarted and scenario discovery includes `sr-latch`, `gated-d-latch`, `dff`, and `memory-bit`.
+- Hosted visualizer restarted and scenario discovery includes `sr-latch`, `gated-d-latch`, `dff`, and `flip-flop-cell`.
 
 ## Known Limits
 

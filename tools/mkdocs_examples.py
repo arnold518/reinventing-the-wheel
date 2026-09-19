@@ -49,7 +49,7 @@ def render_table(data, scenario, test):
         f'<div class="example-table-scroll" role="region" tabindex="0" '
         f'aria-label="{escape(data["rootType"])} recorded test rows" aria-describedby="{description}">',
         '<table class="example-table"><thead><tr>',
-        '<th scope="col">Checkpoint<small>zero-based label</small></th>',
+        '<th scope="col">Checkpoint<small>zero-based number · timeline label</small></th>',
         '<th scope="col">Time<small>simulator units</small></th>',
     ]
     for group, pin in columns:
@@ -57,9 +57,13 @@ def render_table(data, scenario, test):
         html.append(f'<th scope="col"><code>{escape(pin["name"])}</code><small>{label} · {pin["width"]} bit</small></th>')
     html.append('</tr></thead><tbody>')
     previous_time = -1
+    labels = set()
     for index, row in enumerate(rows):
-        if row["rowIndex"] != index or row["checkpoint"] != f"row-{index}" or row["time"] <= previous_time:
+        label = row["checkpoint"]
+        if (row["rowIndex"] != index or not isinstance(label, str) or not label
+                or label in labels or row["time"] <= previous_time):
             raise ValueError(f"Invalid checkpoint order for {scenario}")
+        labels.add(label)
         previous_time = row["time"]
         if set(row["inputs"]) != {pin["name"] for pin in data["inputs"]}:
             raise ValueError(f"Missing/extra inputs for {scenario}/{index}")
@@ -67,7 +71,7 @@ def render_table(data, scenario, test):
             raise ValueError(f"Unexpected output for {scenario}/{index}")
         html.append(f'<tr data-checkpoint="{escape(row["checkpoint"])}" data-time="{row["time"]}" '
                     f'data-timeline-index="{row["timelineIndex"]}">'
-                    f'<th scope="row"><code>{escape(row["checkpoint"])}</code></th><td>{row["time"]}</td>')
+                    f'<th scope="row"><small>#{index}</small><code>{escape(label)}</code></th><td>{row["time"]}</td>')
         for group, pin in columns:
             value = row[group].get(pin["name"])
             html.append(f'<td data-pin="{escape(pin["name"])}" data-direction="{group}" '
@@ -76,7 +80,9 @@ def render_table(data, scenario, test):
     html.extend(['</tbody></table></div>',
                  '<p class="example-table-help">Scroll within the table for all rows and pins. '
                  'Buses use hexadecimal; values containing X/Z use MSB-first binary. '
-                 'Ignored inputs retain their actual test values. Use the matching checkpoint label in the simulation below.</p>',
+                 'Inputs show the declared values in effect at each checkpoint, including retained inputs. '
+                 'Sequential tests also replay preparation changes between checkpoints, such as lowering the clock. '
+                 'Use the matching checkpoint label in the simulation below.</p>',
                  '</div>'])
     return "\n".join(html)
 

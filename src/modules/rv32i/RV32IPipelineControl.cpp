@@ -320,17 +320,25 @@ public:
     const char* getTypeName() const override { return TypeName; }
 
     void evaluate(size_t current_time, Simulator& simulator) override {
-        const auto address =
-            getInputPin<32>("ADDRESS")->getValueAsUInt64();
-        const auto size =
-            getInputPin<2>("SIZE")->getValueAsUInt64();
-        const bool misaligned =
-            (size == 1 && (address & 0x1U) != 0)
-            || (size == 2 && (address & 0x3U) != 0);
+        const auto address = getInputPin<32>("ADDRESS")->getValueAsVector();
+        const auto size = getInputPin<2>("SIZE")->getValueAsVector();
+        // Mirror the structural gates, including reserved SIZE=3 and X/Z.
+        const auto and_bit = [](LogicValue a, LogicValue b) {
+            if (a == LogicValue::LOW || b == LogicValue::LOW) return LogicValue::LOW;
+            if (a == LogicValue::HIGH && b == LogicValue::HIGH) return LogicValue::HIGH;
+            return LogicValue::UNKNOWN;
+        };
+        const auto or_bit = [](LogicValue a, LogicValue b) {
+            if (a == LogicValue::HIGH || b == LogicValue::HIGH) return LogicValue::HIGH;
+            if (a == LogicValue::LOW && b == LogicValue::LOW) return LogicValue::LOW;
+            return LogicValue::UNKNOWN;
+        };
+        const auto misaligned = or_bit(and_bit(size[0], address[0]),
+            and_bit(size[1], or_bit(address[0], address[1])));
         _updateOutputWire(
             simulator,
             "MISALIGNED",
-            misaligned ? LogicValue::HIGH : LogicValue::LOW,
+            misaligned,
             current_time);
     }
 };

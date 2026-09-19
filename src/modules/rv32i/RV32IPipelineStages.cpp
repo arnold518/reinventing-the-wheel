@@ -7,7 +7,7 @@
 #include "modules/basic/Mux.hpp"
 #include "modules/composite/Adder32.hpp"
 #include "modules/composite/ALU32.hpp"
-#include "modules/memory/MemoryBit.hpp"
+#include "modules/memory/FlipFlopCell.hpp"
 #include "modules/memory/Register32.hpp"
 #include "modules/memory/RegisterFile32x32.hpp"
 #include "modules/rv32i/RV32IDecodeControlUnit.hpp"
@@ -2596,9 +2596,9 @@ void RV32IWritebackStage::buildInternals(ComponentBuilder& builder) {
     const auto committed_pc = builder.add(
         circuit::families::Register32, "COMMITTED_PC_STATE");
     const auto halted = builder.add(
-        circuit::families::MemoryBit, "HALTED_STATE");
+        circuit::families::FlipFlopCell, "HALTED_STATE");
     const auto trapped = builder.add(
-        circuit::families::MemoryBit, "TRAPPED_STATE");
+        circuit::families::FlipFlopCell, "TRAPPED_STATE");
     const auto trap_cause = builder.add(
         circuit::families::Register32, "TRAP_CAUSE_STATE");
     const auto retired_count = builder.add(

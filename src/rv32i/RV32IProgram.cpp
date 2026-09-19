@@ -1,10 +1,15 @@
 #include "rv32i/RV32IProgram.hpp"
+#include "modules/memory/MemoryContainer.hpp"
 
 #include "modules/memory/Memory64Kx32.hpp"
 #include <stdexcept>
 #include <utility>
 
 namespace rv32i {
+
+void RV32IProgram::loadInto(BehavioralMemoryContainer& memory, uint32_t base_address) const {
+    memory.initializeBytes(base_address, program_bytes);
+}
 
 RV32IProgram::RV32IProgram(std::vector<uint8_t> bytes)
     : program_bytes(std::move(bytes)) {}

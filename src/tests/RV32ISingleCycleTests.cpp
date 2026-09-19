@@ -13,7 +13,8 @@
 #include "modules/composite/Logic32.hpp"
 #include "modules/composite/Shifter32.hpp"
 #include "modules/composite/ZeroDetect32.hpp"
-#include "modules/memory/MemoryBit.hpp"
+#include "modules/memory/FlipFlopCell.hpp"
+#include "modules/memory/FFStorageBank.hpp"
 #include "modules/memory/Register32.hpp"
 #include "modules/memory/RegisterFile32x32.hpp"
 #include "modules/rv32i/RV32IBuildProfiles.hpp"
@@ -21,6 +22,8 @@
 #include "modules/rv32i/RV32IDecodeControlUnit.hpp"
 #include "modules/rv32i/RV32IExecutionControlStatusUnit.hpp"
 #include "modules/rv32i/RV32ISingleCycleCore.hpp"
+#include "modules/rv32i/RV32ISingleCycleStages.hpp"
+#include "modules/rv32i/RV32IPipelineControl.hpp"
 #include "modules/rv32i/RV32IReferenceCore.hpp"
 #include "modules/memory/Memory64Kx32.hpp"
 #include "rv32i/RV32IProgram.hpp"
@@ -56,7 +59,7 @@ rv32i::RV32IMemorySize memorySize(uint64_t encoded) {
 RV32ISystemProgramCase singleCycleProgramCase(size_t number) {
     auto test_case = rv32iProgramCase(number);
     test_case.name = rv32iProgramScenarioName(number);
-    test_case.max_cycles_per_instruction = 1;
+    test_case.max_cycles_per_instruction = 64;
     test_case.cycle_time_step = 4000;
     return test_case;
 }
@@ -97,157 +100,39 @@ uint32_t encodeI(
         | opcode;
 }
 
-circuit::test::NamedValues coreStatusOutputs(
-    uint32_t pc,
-    bool halted,
-    bool instruction_attempt) {
-    using namespace circuit::test;
-    return {
-        {"PC", logicBits(32, pc)},
-        {"HALTED", logicBit(halted)},
-        {"TRAPPED", logicBit(false)},
-        {"TRAP_CAUSE", logicBits(4, 0)},
-        {"INSTRUCTION_ATTEMPT",
-         logicBit(instruction_attempt)},
-        {"IMEM_ADDR", logicBits(32, pc)},
-        {"IMEM_READ_EN", logicBit(true)},
-        {"DMEM_READ_EN", logicBit(false)},
-        {"DMEM_WRITE_EN", logicBit(false)},
-    };
-}
-
 circuit::test::ComponentTestSpec singleCycleCoreSpec() {
     using namespace circuit::test;
-    const auto addi_x1 = encodeI(5, 0, 0, 1);
-    const auto addi_x2 = encodeI(7, 1, 0, 2);
-    constexpr uint32_t EBreak = 0x00100073U;
-
-    ActionScenario scenario{
-        "instruction-sequence",
-        {},
-        {},
-        {500'000, 10'000'000},
+    ActionScenario scenario{"instruction-sequence", {}, {}, {500'000,10'000'000}};
+    auto action=[&](std::string label,NamedValues inputs,NamedValues expected={},CheckpointKind kind=CheckpointKind::Settled) {
+        scenario.actions.push_back({std::move(label),kind,std::move(inputs),std::move(expected)});
     };
-    scenario.actions = {
-        {
-            "reset",
-            CheckpointKind::Settled,
-            {
-                {"CLK", logicBit(false)},
-                {"RST", logicBit(true)},
-                {"ENABLE", logicBit(true)},
-                {"IMEM_READ_DATA",
-                 LogicVector(32, LogicValue::UNKNOWN)},
-                {"IMEM_READY", logicBit(true)},
-                {"IMEM_FAULT", logicBit(false)},
-                {"DMEM_READ_DATA", logicBits(32, 0)},
-                {"DMEM_READY", logicBit(true)},
-                {"DMEM_FAULT", logicBit(false)},
-            },
-            coreStatusOutputs(0, false, false),
-        },
-        {
-            {},
-            CheckpointKind::Settled,
-            {
-                {"RST", logicBit(false)},
-                {"IMEM_READY", logicBit(false)},
-            },
-            {},
-            false,
-        },
-        {
-            "wait-for-instruction-memory",
-            CheckpointKind::AfterEdge,
-            {{"CLK", logicBit(true)}},
-            coreStatusOutputs(0, false, false),
-        },
-        {
-            {},
-            CheckpointKind::Settled,
-            {{"CLK", logicBit(false)}},
-            {},
-            false,
-        },
-        {
-            {},
-            CheckpointKind::Settled,
-            {
-                {"IMEM_READY", logicBit(true)},
-                {"ENABLE", logicBit(false)},
-                {"IMEM_READ_DATA", logicBits(32, addi_x1)},
-            },
-            {},
-            false,
-        },
-        {
-            "disabled-hold",
-            CheckpointKind::AfterEdge,
-            {{"CLK", logicBit(true)}},
-            coreStatusOutputs(0, false, false),
-        },
-        {
-            {},
-            CheckpointKind::Settled,
-            {{"CLK", logicBit(false)}},
-            {},
-            false,
-        },
-        {
-            {},
-            CheckpointKind::Settled,
-            {{"ENABLE", logicBit(true)}},
-            {},
-            false,
-        },
-        {
-            "commit-addi-x1",
-            CheckpointKind::InstructionCommit,
-            {{"CLK", logicBit(true)}},
-            coreStatusOutputs(4, false, true),
-        },
-        {
-            {},
-            CheckpointKind::Settled,
-            {
-                {"CLK", logicBit(false)},
-                {"IMEM_READ_DATA", logicBits(32, addi_x2)},
-            },
-            {},
-            false,
-        },
-        {
-            "commit-addi-x2",
-            CheckpointKind::InstructionCommit,
-            {{"CLK", logicBit(true)}},
-            coreStatusOutputs(8, false, true),
-        },
-        {
-            {},
-            CheckpointKind::Settled,
-            {
-                {"CLK", logicBit(false)},
-                {"IMEM_READ_DATA", logicBits(32, EBreak)},
-            },
-            {},
-            false,
-        },
-        {
-            "halt",
-            CheckpointKind::InstructionCommit,
-            {{"CLK", logicBit(true)}},
-            coreStatusOutputs(8, true, false),
-        },
-    };
-
-    return {
-        "RV32ISingleCycleCoreTest",
-        std::string(
-            circuit::families::RV32ISingleCycleCore.id()),
-        "RV32I_SINGLE_CYCLE_CORE_ROOT",
-        {},
-        {std::move(scenario)},
-    };
+    action("reset",{{"CLK",logicBit(false)},{"RST",logicBit(true)},{"ENABLE",logicBit(true)},
+        {"IMEM_REQ_READY",logicBit(false)},{"IMEM_RSP_VALID",logicBit(false)},
+        {"IMEM_RSP_READ_DATA",logicBits(32,0)},{"IMEM_RSP_STATUS",logicBits(3,0)},
+        {"DMEM_REQ_READY",logicBit(false)},{"DMEM_RSP_VALID",logicBit(false)},
+        {"DMEM_RSP_READ_DATA",logicBits(32,0)},{"DMEM_RSP_STATUS",logicBits(3,0)}},
+        {{"PC",logicBits(32,0)},{"IMEM_REQ_VALID",logicBit(false)},{"HALTED",logicBit(false)}});
+    action("release",{{"RST",logicBit(false)}});
+    const std::array<uint32_t,3> instructions{encodeI(5,0,0,1),encodeI(7,1,0,2),0x00100073};
+    for(size_t i=0;i<instructions.size();++i) {
+        action("prepare-"+std::to_string(i),{{"CLK",logicBit(false)},{"IMEM_RSP_VALID",logicBit(false)},{"IMEM_REQ_READY",logicBit(false)}});
+        action("issue-"+std::to_string(i),{{"CLK",logicBit(true)}},
+            {{"IMEM_REQ_VALID",logicBit(true)},{"IMEM_REQ_ADDR",logicBits(32,i*4)},{"PC",logicBits(32,i*4)}},CheckpointKind::AfterEdge);
+        action("wait-low-"+std::to_string(i),{{"CLK",logicBit(false)}});
+        action("request-backpressure-"+std::to_string(i),{{"CLK",logicBit(true)}},
+            {{"IMEM_REQ_VALID",logicBit(true)},{"PC",logicBits(32,i*4)}},CheckpointKind::AfterEdge);
+        action("accept-low-"+std::to_string(i),{{"CLK",logicBit(false)},{"IMEM_REQ_READY",logicBit(true)}});
+        action("accepted-not-complete-"+std::to_string(i),{{"CLK",logicBit(true)}},
+            {{"IMEM_REQ_VALID",logicBit(false)},{"PC",logicBits(32,i*4)},{"INSTRUCTION_ATTEMPT",logicBit(false)}},CheckpointKind::AfterEdge);
+        action("response-paused-"+std::to_string(i),{{"CLK",logicBit(false)},{"ENABLE",logicBit(false)},
+            {"IMEM_RSP_VALID",logicBit(true)},{"IMEM_RSP_READ_DATA",logicBits(32,instructions[i])}},
+            {{"IMEM_RSP_READY",logicBit(false)},{"PC",logicBits(32,i*4)}});
+        action("resume-"+std::to_string(i),{{"ENABLE",logicBit(true)}},{{"IMEM_RSP_READY",logicBit(true)}});
+        action("commit-"+std::to_string(i),{{"CLK",logicBit(true)}},
+            {{"PC",logicBits(32,i==2?8:(i+1)*4)},{"HALTED",logicBit(i==2)},{"TRAPPED",logicBit(false)}},CheckpointKind::InstructionCommit);
+    }
+    return {"RV32ISingleCycleCoreTest",std::string(circuit::families::RV32ISingleCycleCore.id()),
+        "RV32I_SINGLE_CYCLE_CORE_ROOT",{}, {std::move(scenario)}};
 }
 }
 
@@ -316,6 +201,7 @@ void RV32ISystemProfileRun::setupCircuit() {
         root, root_context);
     buildCircuit();
     setInitialState();
+    runSimulation();
 }
 
 void RV32ISystemProfileRun::setBuildProfile(
@@ -351,19 +237,7 @@ RV32ISystemProfileRun::getCheckpoints() const {
 
 std::vector<SimulationTest::PerformanceMetric>
 RV32ISystemProfileRun::getPerformanceMetrics() const {
-    if (totalCycles() != 0) {
-        return RV32IInstructionLockstepTest::getPerformanceMetrics();
-    }
-    auto metrics = SimulationTest::getPerformanceMetrics();
-    const auto instructions =
-        getCase().expected_result.instruction_count;
-    metrics.insert(metrics.begin(), {
-        {"cpu.hardware_cycles", static_cast<double>(instructions), "cycles", "Single-cycle instructions in the visualized program window."},
-        {"cpu.retired_instructions", static_cast<double>(instructions), "instructions", "Architecturally retired instructions, including the terminal instruction."},
-        {"cpu.cpi", instructions == 0 ? 0.0 : 1.0, "cycles/instruction", "A single-cycle core completes each instruction in one hardware cycle."},
-        {"cpu.ipc", instructions == 0 ? 0.0 : 1.0, "instructions/cycle", "A single-cycle core completes one instruction per hardware cycle."},
-    });
-    return metrics;
+    return RV32IInstructionLockstepTest::getPerformanceMetrics();
 }
 
 void RV32ISystemProfileRun::buildCircuit() {
@@ -435,6 +309,7 @@ void RV32ISystemProfileRun::clockComponentOneCycle(
 ) {
     (void)cycle_index;
     last_access_ = {};
+    if (core_->getOutputPin("INSTRUCTION_ATTEMPT")->getValue() != LogicValue::HIGH) return;
     const auto reference_core =
         std::dynamic_pointer_cast<RV32IReferenceCore>(core_);
     if (!reference_core) {
@@ -448,40 +323,44 @@ void RV32ISystemProfileRun::clockComponentOneCycle(
             getTestName()
                 + ": instruction did not settle before its active edge");
 
+        const auto child=[&](const std::string& name) {
+            for (auto& c:core->getChildren()) if(c->getName()==name) return std::dynamic_pointer_cast<IOComponent>(c);
+            throw std::logic_error("Missing CPU observation block "+name);
+        };
+        auto lanes=child("MEMORY"), request=lanes;
+        auto decode=child("DECODE");
+        const bool issuing=lanes->getInputPin("ISSUE")->getValue()==LogicValue::HIGH;
         const bool read =
-            core->getOutputPin("DMEM_READ_EN")->getValue()
-            == LogicValue::HIGH;
+            issuing && decode->getOutputPin("MEM_READ")->getValue()==LogicValue::HIGH;
         const bool write =
-            core->getOutputPin("DMEM_WRITE_EN")->getValue()
-            == LogicValue::HIGH;
+            issuing && decode->getOutputPin("MEM_WRITE")->getValue()==LogicValue::HIGH;
         if (read || write) {
             last_access_.kind = read
                 ? rv32i::RV32IMemoryAccessKind::Read
                 : rv32i::RV32IMemoryAccessKind::Write;
             last_access_.size = memorySize(
-                core->getOutputPin<2>("DMEM_SIZE")
+                lanes->getInputPin<2>("SIZE")
                     ->getValueAsUInt64());
             last_access_.sign_extend =
                 read
-                && core->getOutputPin("DMEM_SIGN_EXTEND")
+                && lanes->getInputPin("SIGN_EXTEND")
                        ->getValue()
                     == LogicValue::HIGH;
             last_access_.address = static_cast<uint32_t>(
-                core->getOutputPin<32>("DMEM_ADDR")
+                lanes->getInputPin<32>("ADDR")
                     ->getValueAsUInt64());
             last_access_.write_data = write
                 ? static_cast<uint32_t>(
-                    core->getOutputPin<32>("DMEM_WRITE_DATA")
+                    lanes->getInputPin<32>("WRITE_DATA")
                         ->getValueAsUInt64())
                 : 0;
-            const auto memory = data_memory_;
             last_access_.fault =
-                memory->getOutputPin("FAULT")->getValue()
+                request->getOutputPin("FAULT")->getValue()
                 == LogicValue::HIGH;
             if (read && !last_access_.fault) {
                 last_access_.read_data =
                     static_cast<uint32_t>(
-                        memory->getOutputPin<32>("READ_DATA")
+                        lanes->getOutputPin<32>("READ_DATA")
                             ->getValueAsUInt64());
             }
         }
@@ -573,19 +452,29 @@ profileToggleAuditCases() {
     static const std::vector<ProfileToggleAuditCase> cases{
         {&circuit::families::RV32ISingleCycleCore, 1,
          "single-cycle core"},
-        {&circuit::families::RV32IControlFlow, 5,
-         "jump and link control flow"},
+        {&circuit::families::RV32ISingleCycleFetchStage, 5,"fetch and PC state"},
+        {&circuit::families::RV32ISingleCycleDecodeStage, 2,"decode and register state"},
+        {&circuit::families::RV32ISingleCycleExecuteStage, 5,"shared jump ALU"},
+        {&circuit::families::RV32ISingleCycleMemoryStage, 3,"memory transactions"},
+        {&circuit::families::RV32ISingleCycleWritebackStage, 3,"writeback selection"},
+        {&circuit::families::RV32ISingleCycleNextPCStage, 5,"next PC selection"},
         {&circuit::families::RV32IDecodeControl, 2,
          "R-type and I-type decode"},
         {&circuit::families::RV32IExecutionStatus, 9,
          "illegal-instruction trap state"},
         {&circuit::families::RegisterFile32x32, 7,
          "Fibonacci register dependencies"},
+        {&circuit::families::FFStorageBank<32>(), 7,
+         "register-file storage bank"},
+        {&circuit::families::FFWord<32>(), 7,
+         "byte-masked register storage words"},
+        {&circuit::families::RV32IMemoryAlignmentUnit, 3,
+         "instruction and data address alignment"},
         {&circuit::families::Register32, 7,
          "all register words and program counter"},
-        {&circuit::families::MemoryBit, 7,
+        {&circuit::families::FlipFlopCell, 7,
          "register and program-counter bit cells"},
-        {&circuit::families::MemoryBit, 9,
+        {&circuit::families::FlipFlopCell, 9,
          "halt and trap-status bit cells"},
         {&circuit::families::ALU32, 2,
          "complete ALU operation coverage"},

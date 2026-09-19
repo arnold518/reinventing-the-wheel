@@ -17,7 +17,7 @@ fidelity for fast testing, equivalence checking, and visualization:
 - Reuse the existing structural `ALU32`.
 - Use the existing `RegisterFile32x32` structural shape in the educational
   structural core and keep its behavioral fidelity as the compact selection.
-- Continue using `Memory64Kx32` for CPU-scale instruction and data memory; `Memory4x32`, `Memory32x32`, `Register32`, and `MemoryBit` are its lower-level teaching path.
+- Continue using `Memory64Kx32` for CPU-scale instruction and data memory; `Memory4x32`, `Memory32x32`, `Register32`, and `FlipFlopCell` are its lower-level teaching path.
 - Give all five major core-block families structural and behavioral fidelities
   with one shared pin contract and one public type name.
 - Keep lower-level or representative-slice tests beneath every behavioral scale abstraction.

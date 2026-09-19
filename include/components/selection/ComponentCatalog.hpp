@@ -71,7 +71,8 @@ private:
         const ResolvedSelection& selection) const;
     void validateInstance(const ContractDescriptor& contract,
                           const ImplementationDescriptor& implementation,
-                          const std::shared_ptr<Component>& component) const;
+                          const std::shared_ptr<Component>& component,
+                          const ParameterMap& parameters) const;
 
     std::map<std::string, ContractDescriptor> contracts_;
     std::map<std::string, ImplementationDescriptor> implementations_;

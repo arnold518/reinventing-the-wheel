@@ -6,6 +6,7 @@ site_url: http://127.0.0.1:8893/
 
 hooks:
   - tools/mkdocs_examples.py
+  - tools/mkdocs_rv32i.py
   - tools/mkdocs_preview.py
 
 watch:

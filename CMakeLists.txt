@@ -46,11 +46,32 @@ set(CORE_LOGIC_SOURCES
     src/modules/basic/Latch.cpp
     src/modules/basic/DFlipFlop.cpp
     src/modules/basic/ClockGenerator.cpp
-    src/modules/memory/MemoryBitDirect.cpp
+    src/modules/memory/FlipFlopCellDirect.cpp
     src/modules/memory/Memory64Kx32.cpp
+    src/modules/memory/MemoryStorage.cpp
+    src/modules/memory/MemoryProtocol.cpp
+    src/modules/memory/MemoryController.cpp
+    src/modules/memory/MemoryContainer.cpp
+    src/modules/memory/MemoryEndpointEngine.cpp
+    src/modules/memory/MemoryEndpointCatalog.cpp
+    src/modules/memory/MemoryBusAdapter32.cpp
+    src/modules/memory/MemoryContainerCatalog.cpp
+    src/modules/memory/FFMemory.cpp
+    src/modules/memory/SRAM.cpp
+    src/modules/memory/DigitalMemory.cpp
+    src/modules/memory/DRAM.cpp
+    src/modules/memory/ROM.cpp
+    src/modules/memory/NORFlash.cpp
+    src/modules/memory/SRAMCatalog.cpp
+    src/tests/SRAMTests.cpp
+    src/tests/MemoryDeviceTests.cpp
+    src/tests/MemoryHelperTests.cpp
+    src/tests/MemoryEndpointTests.cpp
+    src/tests/MemoryContainerTests.cpp
+    src/tests/MemoryBusAdapterTests.cpp
     src/modules/memory/Register32Direct.cpp
     src/modules/memory/RegisterFile32x32Direct.cpp
-    src/modules/memory/MemoryBit.cpp
+    src/modules/memory/FlipFlopCell.cpp
     src/modules/memory/Register32.cpp
     src/modules/memory/RegisterFile4x32.cpp
     src/modules/memory/RegisterFile32x32.cpp
@@ -71,7 +92,12 @@ set(CORE_LOGIC_SOURCES
     src/modules/rv32i/RV32IFiveStageCore.cpp
     src/modules/rv32i/RV32IBuildProfiles.cpp
     src/modules/rv32i/RV32ISingleCycleCore.cpp
+    src/modules/rv32i/RV32ISingleCycleStages.cpp
+    src/modules/rv32i/RV32ISingleCycleStagesDirect.cpp
     src/modules/rv32i/RV32ISingleCycleSystem.cpp
+    src/modules/rv32i/RV32IMemoryRequest.cpp
+    src/modules/rv32i/RV32IMemoryLanes.cpp
+    src/modules/rv32i/RV32IMemorySystem.cpp
     src/modules/rv32i/RV32IReferenceSystem.cpp
     src/modules/composite/HalfAdder.cpp
     src/modules/composite/FullAdder.cpp
@@ -125,6 +151,7 @@ set(CORE_LOGIC_SOURCES
     src/tests/ALUIntegrationTests.cpp
     src/tests/ALU32LowerLevelSliceTests.cpp
     src/tests/RV32IBlockStandaloneTests.cpp
+    src/tests/RV32IMemoryAccessTests.cpp
     src/tests/RV32IDecoderTests.cpp
     src/tests/RV32IControlTests.cpp
     src/tests/RV32IElfTests.cpp
@@ -136,6 +163,7 @@ set(CORE_LOGIC_SOURCES
     src/tests/RV32IFiveStageTests.cpp
     src/tests/RV32IPipelineBlockTests.cpp
     src/tests/RV32ISingleCycleTests.cpp
+    src/tests/RV32ISingleCycleStageTests.cpp
     src/tests/RV32IProgramScenarios.cpp
     src/tests/MemoryComponentTests.cpp
     src/tests/TestRegistry.cpp
@@ -192,12 +220,15 @@ if(CIRCUITSIM_BUILD_PYTHON)
 
     # The include directories are inherited automatically from SimulatorLib.
 
-    # After building the Python module, automatically copy it to visualizer-v2.
+    # Keep both frontends on the same pin-identity and binding contract.
     add_custom_command(TARGET circuit_backend POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy
             $<TARGET_FILE:circuit_backend>
             ${PROJECT_SOURCE_DIR}/visualizer-v2/$<TARGET_FILE_NAME:circuit_backend>
-        COMMENT "Copying circuit_backend module to visualizer-v2 directory..."
+        COMMAND ${CMAKE_COMMAND} -E copy
+            $<TARGET_FILE:circuit_backend>
+            ${PROJECT_SOURCE_DIR}/visualizer/$<TARGET_FILE_NAME:circuit_backend>
+        COMMENT "Copying circuit_backend module to both visualizer directories..."
     )
 endif()
 

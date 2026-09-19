@@ -39,6 +39,38 @@ try {
   const topology = JSON.parse(bridge.topologySliceJson([payload.rootId]));
   assert.deepEqual(topology.scopeIds, [payload.rootId]);
   assert(topology.pins.length > 0);
+  const pinsById = new Map(topology.pins.map(pin => [pin.id, pin]));
+  assert.equal(pinsById.size, topology.pins.length, "Pin IDs must be unique across directions");
+  for (const pin of topology.pins)
+    assert.equal(pin.id, `${pin.componentId}.${pin.type}.${pin.name}`);
+  for (const wire of topology.wires) {
+    if (wire.sourcePinId != null) assert(pinsById.has(wire.sourcePinId));
+    for (const id of wire.sinkPinIds) assert(pinsById.has(id));
+  }
+
+  if (payload.rootType === "RV32IMemoryLanes") {
+    for (let lane = 0; lane < 4; ++lane) {
+      const id = `${payload.rootId}.LANE_${lane}`;
+      assert.equal(topology.pins.filter(p => p.componentId === id).length, 4);
+      for (const name of ["LOAD", "STORE"]) {
+        assert(topology.wires.some(w => w.sourcePinId === `${id}.output.${name}`));
+        assert(topology.wires.some(w => w.sinkPinIds.includes(`${id}.input.${name}`)));
+      }
+    }
+    for (const row of payload.checkpoints) {
+      const values = JSON.parse(bridge.stateJson(row.index)).pins;
+      for (let lane = 0; lane < 4; ++lane) {
+        const id = `${payload.rootId}.LANE_${lane}`;
+        for (const [name, input, output] of [
+          ["LOAD", 0x80ff3412, 0x80ff3412 >>> (8 * lane)],
+          ["STORE", 0xdeadbeef, (0xdeadbeef << (8 * lane)) >>> 0],
+        ]) for (const [direction, expected] of [["input", input], ["output", output]]) {
+          const pin = pinsById.get(`${id}.${direction}.${name}`);
+          assert.equal(values[pin.stateIndex], expected.toString(2).padStart(32, "0"));
+        }
+      }
+    }
+  }
 
   if (payload.rootType === "Memory64Kx32" || payload.rootType === "RegisterFile32x32") {
     const componentState = JSON.parse(bridge.componentStateJson(0, payload.rootId));

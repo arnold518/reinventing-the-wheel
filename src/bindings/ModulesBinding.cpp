@@ -2,6 +2,7 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 #include <cstdint>
+#include <algorithm>
 #include <stdexcept>
 #include <utility>
 
@@ -18,9 +19,13 @@
 #include "modules/basic/DFlipFlop.hpp"
 #include "modules/basic/ClockGenerator.hpp"
 #include "modules/memory/Memory64Kx32.hpp"
+#include "modules/memory/MemoryContainerCatalog.hpp"
+#include "modules/memory/MemoryProtocol.hpp"
+#include "modules/memory/SRAM.hpp"
+#include "components/selection/BuiltinComponentCatalog.hpp"
 #include "modules/memory/Memory4x32.hpp"
 #include "modules/memory/Memory32x32.hpp"
-#include "modules/memory/MemoryBit.hpp"
+#include "modules/memory/FlipFlopCell.hpp"
 #include "modules/memory/Register32.hpp"
 #include "modules/memory/RegisterFile4x32.hpp"
 #include "modules/memory/RegisterFile32x32.hpp"
@@ -33,7 +38,9 @@
 #include "modules/rv32i/RV32IPipelineRegisters.hpp"
 #include "modules/rv32i/RV32IPipelineStages.hpp"
 #include "modules/rv32i/RV32ISingleCycleCore.hpp"
+#include "modules/rv32i/RV32ISingleCycleStages.hpp"
 #include "modules/rv32i/RV32ISingleCycleSystem.hpp"
+#include "modules/rv32i/RV32IMemoryRequest.hpp"
 
 #include "modules/composite/HalfAdder.hpp"
 #include "modules/composite/FullAdder.hpp"
@@ -115,6 +122,162 @@ void bindCompositeModule(py::module_& m, const char* name, const char* descripti
 }
 
 void bindModules(py::module_& m) {
+    m.def("create_memory_device_component", [](const std::string& family, const std::string& kind,
+            const std::string& name, const circuit::ParameterMap& parameters, const std::string& fidelity) {
+        if (family != "dram" && family != "rom" && family != "nor-flash" && family != "matrix")
+            throw std::invalid_argument("Expected dram, rom, nor-flash or matrix family");
+        if (fidelity != "structural" && fidelity != "behavioral") throw std::invalid_argument("Invalid fidelity");
+        const auto selected = fidelity == "structural" ? circuit::Fidelity::Structural : circuit::Fidelity::Behavioral;
+        const auto id = "memory." + family + "." + kind;
+        const auto& catalog = circuit::builtinComponentCatalog();
+        const auto implementations = catalog.implementationsFor(id);
+        if (std::none_of(implementations.begin(), implementations.end(), [&](const auto& impl) {
+                return impl.fidelity == selected && impl.supports(parameters);
+            })) throw std::invalid_argument("Unsupported memory component, parameters or fidelity");
+        return std::dynamic_pointer_cast<IOComponent>(catalog.createRoot({id, name, parameters, {}, {}, {}},
+            circuit::withExactFidelity(circuit::canonicalDefaultProfile(), name, selected)).root);
+    }, py::arg("family"), py::arg("kind"), py::arg("name"), py::arg("parameters") = circuit::ParameterMap{},
+       py::arg("fidelity") = "structural");
+    m.def("create_sram_component", [](const std::string& kind, const std::string& name,
+            const circuit::ParameterMap& parameters, const std::string& fidelity) {
+        if (fidelity != "structural" && fidelity != "behavioral") throw std::invalid_argument("Invalid SRAM fidelity");
+        const auto selected = fidelity == "structural" ? circuit::Fidelity::Structural : circuit::Fidelity::Behavioral;
+        const auto id = "memory.sram." + kind;
+        const auto& catalog = circuit::builtinComponentCatalog();
+        const auto implementations = catalog.implementationsFor(id);
+        if (std::none_of(implementations.begin(), implementations.end(), [&](const auto& impl) {
+            return impl.fidelity == selected && impl.supports(parameters);
+        })) throw std::invalid_argument("Requested SRAM component/fidelity/parameters are not supported");
+        return std::dynamic_pointer_cast<IOComponent>(catalog.createRoot({id, name, parameters, {}, {}, {}},
+            circuit::withExactFidelity(circuit::canonicalDefaultProfile(), name, selected)).root);
+    }, py::arg("kind"), py::arg("name"), py::arg("parameters") = circuit::ParameterMap{}, py::arg("fidelity") = "structural");
+    const auto create_sram = [](const std::string& kind, const std::string& name, size_t width, size_t depth,
+            size_t words_per_row, size_t phase_ticks, const std::string& fidelity) {
+        if (fidelity != "structural" && fidelity != "behavioral") throw std::invalid_argument("Invalid SRAM fidelity");
+        SRAMDeviceConfig config{depth, words_per_row, phase_ticks};
+        config.validate(width, fidelity == "structural" || kind == "bank");
+        auto profile = circuit::withExactFidelity(circuit::canonicalDefaultProfile(), name,
+            fidelity == "structural" ? circuit::Fidelity::Structural : circuit::Fidelity::Behavioral);
+        return std::dynamic_pointer_cast<IOComponent>(circuit::builtinComponentCatalog().createRoot(
+            {"memory.sram." + kind + "." + std::to_string(width), name, sramParameters(config), {}, {}, {}}, profile).root);
+    };
+    m.def("create_sram", [create_sram](const std::string& name, size_t width, size_t depth, size_t k, size_t ticks, const std::string& fidelity) {
+        return create_sram("device", name, width, depth, k, ticks, fidelity);
+    }, py::arg("name"), py::arg("data_width") = 8, py::arg("depth_words") = 4, py::arg("words_per_row") = 2,
+       py::arg("phase_ticks") = 32, py::arg("fidelity") = "structural");
+    m.def("create_sram_storage_bank", [create_sram](const std::string& name, size_t width, size_t depth, size_t k, const std::string& fidelity) {
+        return create_sram("bank", name, width, depth, k, 32, fidelity);
+    }, py::arg("name"), py::arg("data_width") = 8, py::arg("depth_words") = 4, py::arg("words_per_row") = 2,
+       py::arg("fidelity") = "structural");
+    m.def("create_memory_bus_adapter", [](const std::string& name) {
+        circuit::ComponentBuildRequest request{"memory.bus-adapter.width32", name, {}, {}, {}, {}};
+        return std::dynamic_pointer_cast<IOComponent>(circuit::builtinComponentCatalog().createRoot(
+            request, circuit::canonicalDefaultProfile()).root);
+    }, py::arg("name"));
+    const auto create_memory = [](const std::string& name, const std::string& model,
+            size_t width, size_t depth, size_t read_delay, bool history, const std::string& fidelity) {
+        if (fidelity != "structural" && fidelity != "behavioral")
+            throw std::invalid_argument("Memory fidelity must be structural or behavioral");
+        circuit::ComponentBuildRequest request{
+            "memory.container." + model + "." + std::to_string(width), name,
+            {{"depth_words", std::to_string(depth)}, {"read_delay_ticks", std::to_string(read_delay)},
+             {"record_history", history ? "1" : "0"}}, {}, {}, {}};
+        auto profile = circuit::withExactFidelity(circuit::canonicalDefaultProfile(), name,
+            fidelity == "structural" ? circuit::Fidelity::Structural : circuit::Fidelity::Behavioral,
+            "memory-factory");
+        // Strict selection: a requested full structural array must never silently become behavioral.
+        if (fidelity == "structural") {
+            const auto implementations = circuit::builtinComponentCatalog().implementationsFor(request.contract_id);
+            const bool supported = std::any_of(implementations.begin(), implementations.end(), [&](const auto& impl) {
+                return impl.fidelity == circuit::Fidelity::Structural && impl.supports(request.parameters);
+            });
+            if (!supported)
+                throw std::invalid_argument("No structural MemoryArray supports this model, width, depth, or delay");
+        }
+        return std::dynamic_pointer_cast<IOComponent>(
+            circuit::builtinComponentCatalog().createRoot(request, profile).root);
+    };
+    m.def("create_memory_array", create_memory, py::arg("name"), py::arg("model"), py::arg("data_width") = 32,
+       py::arg("depth_words") = 4096, py::arg("read_delay_ticks") = 1,
+       py::arg("record_history") = true, py::arg("fidelity") = "behavioral");
+    auto create_endpoint = [](const std::string& kind, const std::string& name, const std::string& model,
+            size_t width, size_t depth, circuit::ParameterMap parameters, const std::string& fidelity) {
+        if (fidelity != "structural" && fidelity != "behavioral") throw std::invalid_argument("Unknown memory fidelity");
+        parameters["depth_words"] = std::to_string(depth);
+        auto choice = fidelity == "structural" ? circuit::Fidelity::Structural : circuit::Fidelity::Behavioral;
+        circuit::ComponentBuildRequest request{"memory." + kind + "." + model + "." + std::to_string(width),name,parameters,{},{},{}};
+        const auto& catalog = circuit::builtinComponentCatalog();
+        const auto implementations = catalog.implementationsFor(request.contract_id);
+        if (std::none_of(implementations.begin(), implementations.end(), [&](const auto& i) { return i.fidelity == choice && i.supports(parameters); }))
+            throw std::invalid_argument("Unsupported memory endpoint configuration/fidelity");
+        return std::dynamic_pointer_cast<IOComponent>(catalog.createRoot(request,
+            circuit::withExactFidelity(circuit::canonicalDefaultProfile(),name,choice)).root);
+    };
+    m.def("create_memory_container", [create_endpoint](const std::string& name, const std::string& model,
+        size_t width, size_t depth, circuit::ParameterMap parameters) {
+        return create_endpoint("scalable",name,model,width,depth,std::move(parameters),"behavioral");
+    }, py::arg("name"), py::arg("model"), py::arg("data_width")=32, py::arg("depth_words")=4096, py::arg("parameters")=circuit::ParameterMap{});
+    m.def("create_memory_controller", [create_endpoint](const std::string& name, const std::string& model,
+        size_t width, size_t depth, circuit::ParameterMap parameters) {
+        return create_endpoint("controller",name,model,width,depth,std::move(parameters),"structural");
+    }, py::arg("name"), py::arg("model"), py::arg("data_width")=32, py::arg("depth_words")=4, py::arg("parameters")=circuit::ParameterMap{});
+    m.def("create_memory_endpoint", [create_endpoint](const std::string& name, const std::string& model,
+        size_t width, size_t depth, circuit::ParameterMap parameters, const std::string& fidelity) {
+        return create_endpoint("endpoint",name,model,width,depth,std::move(parameters),fidelity);
+    }, py::arg("name"), py::arg("model"), py::arg("data_width")=32, py::arg("depth_words")=4,
+       py::arg("parameters")=circuit::ParameterMap{}, py::arg("fidelity")="structural");
+    m.def("create_ff_memory", [create_memory](const std::string& name, size_t width, size_t depth,
+            size_t delay, bool history, const std::string& fidelity) {
+        return create_memory(name, "ff", width, depth, delay, history, fidelity);
+    }, py::arg("name"), py::arg("data_width") = 32, py::arg("depth_words") = 4,
+       py::arg("read_delay_ticks") = 1, py::arg("record_history") = true,
+       py::arg("fidelity") = "structural");
+    m.def("create_ff_word", [](const std::string& name, size_t width, const std::string& fidelity) {
+        if (fidelity != "structural" && fidelity != "behavioral")
+            throw std::invalid_argument("FF word fidelity must be structural or behavioral");
+        auto profile = circuit::withExactFidelity(circuit::canonicalDefaultProfile(), name,
+            fidelity == "structural" ? circuit::Fidelity::Structural : circuit::Fidelity::Behavioral);
+        return std::dynamic_pointer_cast<IOComponent>(circuit::builtinComponentCatalog().createRoot(
+            {"memory.ff-word." + std::to_string(width), name, {}, {}, {}, {}}, profile).root);
+    }, py::arg("name"), py::arg("data_width") = 32, py::arg("fidelity") = "structural");
+    m.def("create_ff_storage_bank", [](const std::string& name, size_t width, size_t depth, const std::string& fidelity) {
+        if (fidelity != "structural" && fidelity != "behavioral")
+            throw std::invalid_argument("FF bank fidelity must be structural or behavioral");
+        auto profile = circuit::withExactFidelity(circuit::canonicalDefaultProfile(), name,
+            fidelity == "structural" ? circuit::Fidelity::Structural : circuit::Fidelity::Behavioral);
+        return std::dynamic_pointer_cast<IOComponent>(circuit::builtinComponentCatalog().createRoot(
+            {"memory.ff-storage-bank." + std::to_string(width), name,
+             {{"depth_words", std::to_string(depth)}}, {}, {}, {}}, profile).root);
+    }, py::arg("name"), py::arg("data_width") = 32, py::arg("depth_words") = 4,
+       py::arg("fidelity") = "structural");
+    m.def("load_memory_bytes", [](const std::shared_ptr<Component>& component, uint32_t address,
+                                  const std::vector<uint8_t>& bytes) {
+        auto memory = std::dynamic_pointer_cast<MemoryStateView>(component);
+        if (!memory) throw std::invalid_argument("Component does not support memory image loading");
+        memory->loadMemoryBytes(address, bytes);
+    });
+    m.def("memory_configuration", [](const std::shared_ptr<Component>& component) {
+        auto memory = std::dynamic_pointer_cast<MemoryStateView>(component);
+        if (!memory) throw std::invalid_argument("Component does not expose memory storage");
+        const auto& storage = memory->memoryStorage();
+        py::dict result;
+        result["capacity_bytes"] = storage.capacityBytes();
+        result["depth_words"] = storage.capacityWords();
+        result["data_width"] = storage.wordBits();
+        result["record_history"] = storage.isHistoryRecordingEnabled();
+        return result;
+    });
+    m.def("memory_snapshot", [](const std::shared_ptr<Component>& component, size_t time,
+                                uint32_t address, size_t count) {
+        auto view = std::dynamic_pointer_cast<MemoryStateView>(component);
+        if (!view) throw std::invalid_argument("Component does not expose memory storage");
+        const auto& memory = view->memoryStorage();
+        py::dict result;
+        result["words"] = memory.getWordsAtTime(time, address, std::min(count, size_t{256}));
+        result["touched_words"] = memory.getTouchedWordsAtTime(time, 256);
+        result["touched_count"] = memory.getTouchedWordCountAtTime(time);
+        return result;
+    }, py::arg("component"), py::arg("time"), py::arg("address") = 0, py::arg("count") = 1);
     m.def(
         "disassemble_rv32i_instruction",
         &rv32i::RV32IDecoder::disassemble,
@@ -306,8 +469,8 @@ void bindModules(py::module_& m) {
             py::arg("base_address"),
             py::arg("word_count"),
             "Returns a word-aligned memory window at the requested simulation time.");
-    bindCompositeModule<MemoryBit>(m, "MemoryBit", "Structural one-bit storage cell with write enable and reset.");
-    bindCompositeModule<Register32>(m, "Register32", "Structural 32-bit register built from MemoryBit cells.");
+    bindCompositeModule<FlipFlopCell>(m, "FlipFlopCell", "Structural one-bit storage cell with write enable and reset.");
+    bindCompositeModule<Register32>(m, "Register32", "Whole-word 32-bit register built from FFWord<32> storage.");
     bindCompositeModule<RegisterFile4x32>(m, "RegisterFile4x32", "Four-entry 32-bit register file built from behavioral register cells.");
     bindCompositeModule<RegisterFile32x32>(m, "RegisterFile32x32", "32-entry 32-bit register file built from behavioral register cells.");
     bindCompositeModule<Memory4x32>(m, "Memory4x32", "Four-word 32-bit memory slice with CPU-facing memory pins.");
@@ -346,8 +509,16 @@ void bindModules(py::module_& m) {
         .def("get_output_pins", &RV32IBitPatternMatcher::getAllOutputPins, py::return_value_policy::reference_internal)
         .def_property_readonly("mask", &RV32IBitPatternMatcher::mask)
         .def_property_readonly("value", &RV32IBitPatternMatcher::value);
-    bindCompositeModule<RV32ISingleCycleCore>(m, "RV32ISingleCycleCore", "Structural single-cycle RV32I core composed from the five educational blocks.");
+    bindCompositeModule<RV32ISingleCycleCore>(m, "RV32ISingleCycleCore", "Non-pipelined RV32I core composed from six logical stages and execution control.");
+    bindCompositeModule<RV32ISingleCycleFetchStage>(m, "RV32ISingleCycleFetchStage", "PC, incrementer and universal instruction requester.");
+    bindCompositeModule<RV32ISingleCycleDecodeStage>(m, "RV32ISingleCycleDecodeStage", "Instruction decode and architectural register file.");
+    bindCompositeModule<RV32ISingleCycleExecuteStage>(m, "RV32ISingleCycleExecuteStage", "Shared ALU and concurrent branch target calculation.");
+    bindCompositeModule<RV32ISingleCycleMemoryStage>(m, "RV32ISingleCycleMemoryStage", "Data requester and load/store lanes.");
+    bindCompositeModule<RV32ISingleCycleWritebackStage>(m, "RV32ISingleCycleWritebackStage", "Combinational writeback selection.");
+    bindCompositeModule<RV32ISingleCycleNextPCStage>(m, "RV32ISingleCycleNextPCStage", "Combinational next-PC selection.");
     bindCompositeModule<RV32ISingleCycleSystem>(m, "RV32ISingleCycleSystem", "Structural RV32I core with separate behavioral instruction and data memories.");
+    bindCompositeModule<RV32IMemoryRequest>(m, "RV32IMemoryRequest", "CPU-owned universal requester with stable payload and redirect tracking.");
+    bindCompositeModule<RV32IMemoryLanes>(m, "RV32IMemoryLanes", "Structural RV32I byte-lane routing, masks, alignment and extension.");
 
     bindCompositeModule<Adder8>(m, "Adder8", "8-bit adder.");
     bindCompositeModule<TwosComplement8>(m, "TwosComplement8", "8-bit two's complement.");

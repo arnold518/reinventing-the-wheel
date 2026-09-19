@@ -148,14 +148,15 @@ ActionScenario actionScenarioFromRows(
     const ParameterMap& parameters) {
     const auto& catalog = builtinComponentCatalog();
     const auto& contract = catalog.contract(contract_id);
+    const auto pins = contract.pinsFor(parameters);
     std::shared_ptr<IOComponent> parameterized_schema;
     const auto widthOf = [&](const std::string& name, PinType direction) {
         const auto found = std::find_if(
-            contract.pins.begin(), contract.pins.end(),
+            pins.begin(), pins.end(),
             [&](const auto& pin) {
                 return pin.name == name && pin.direction == direction;
             });
-        if (found != contract.pins.end()) {
+        if (found != pins.end()) {
             return found->width;
         }
         if (!parameterized_schema) {

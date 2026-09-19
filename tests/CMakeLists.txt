@@ -1,5 +1,50 @@
 add_executable(SimulationTestRunner SimulationTestRunner.cpp)
 target_link_libraries(SimulationTestRunner PRIVATE SimulatorLib)
+add_executable(Register32FFIntegrationTest Register32FFIntegrationTest.cpp)
+target_link_libraries(Register32FFIntegrationTest PRIVATE SimulatorLib)
+add_test(NAME Register32FFIntegrationTest COMMAND Register32FFIntegrationTest)
+set_tests_properties(Register32FFIntegrationTest PROPERTIES LABELS "memory;register;rv32i;integration" TIMEOUT 180)
+add_test(NAME Register32DocumentationTest COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/Register32DocumentationTest.py ${CMAKE_CXX_COMPILER} ${PROJECT_BINARY_DIR}/libSimulatorLib.a)
+set_tests_properties(Register32DocumentationTest PROPERTIES LABELS "memory;register;documentation")
+add_executable(RegisterFileFFIntegrationTest RegisterFileFFIntegrationTest.cpp)
+target_link_libraries(RegisterFileFFIntegrationTest PRIVATE SimulatorLib)
+add_test(NAME RegisterFileFFIntegrationTest COMMAND RegisterFileFFIntegrationTest)
+set_tests_properties(RegisterFileFFIntegrationTest PROPERTIES LABELS "memory;register-file;integration" TIMEOUT 180)
+add_test(NAME RegisterFileDocumentationTest COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/RegisterFileDocumentationTest.py ${CMAKE_CXX_COMPILER} ${PROJECT_BINARY_DIR}/libSimulatorLib.a)
+set_tests_properties(RegisterFileDocumentationTest PROPERTIES LABELS "memory;register-file;documentation")
+add_test(NAME RV32IBuildingBlocksDocumentationTest COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/RV32IBuildingBlocksDocumentationTest.py $<TARGET_FILE:VisualizerSessionProbe> ${CMAKE_CXX_COMPILER} ${PROJECT_BINARY_DIR}/libSimulatorLib.a)
+set_tests_properties(RV32IBuildingBlocksDocumentationTest PROPERTIES LABELS "rv32i;documentation")
+add_test(NAME RV32ISingleCycleDocumentationTest COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/RV32ISingleCycleDocumentationTest.py $<TARGET_FILE:VisualizerSessionProbe> ${CMAKE_CXX_COMPILER} ${PROJECT_BINARY_DIR}/libSimulatorLib.a)
+set_tests_properties(RV32ISingleCycleDocumentationTest PROPERTIES LABELS "rv32i;documentation" TIMEOUT 240)
+add_executable(RV32IMemoryMigrationTest RV32IMemoryMigrationTest.cpp)
+target_link_libraries(RV32IMemoryMigrationTest PRIVATE SimulatorLib)
+add_test(NAME RV32IMemoryMigrationTest COMMAND RV32IMemoryMigrationTest)
+set_tests_properties(RV32IMemoryMigrationTest PROPERTIES LABELS "rv32i;memory;integration" TIMEOUT 180)
+add_test(NAME RV32IMemoryLayoutTest COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/RV32IMemoryLayoutTest.py)
+set_tests_properties(RV32IMemoryLayoutTest PROPERTIES LABELS "rv32i;memory;visualizer")
+add_test(NAME RV32ISingleCycleLayoutTest COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/RV32ISingleCycleLayoutTest.py)
+set_tests_properties(RV32ISingleCycleLayoutTest PROPERTIES LABELS "rv32i;visualizer;layout")
+add_test(NAME RV32IBuildingBlockLayoutTest COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/RV32IBuildingBlockLayoutTest.py)
+set_tests_properties(RV32IBuildingBlockLayoutTest PROPERTIES LABELS "rv32i;visualizer" TIMEOUT 120)
+add_executable(MemoryContainerBenchmark MemoryContainerBenchmark.cpp)
+target_link_libraries(MemoryContainerBenchmark PRIVATE SimulatorLib)
+add_executable(MemoryEndpointBenchmark MemoryEndpointBenchmark.cpp)
+target_link_libraries(MemoryEndpointBenchmark PRIVATE SimulatorLib)
+add_executable(FFMemoryBenchmark FFMemoryBenchmark.cpp)
+target_link_libraries(FFMemoryBenchmark PRIVATE SimulatorLib)
+add_executable(SRAMBenchmark SRAMBenchmark.cpp)
+target_link_libraries(SRAMBenchmark PRIVATE SimulatorLib)
+
+add_test(NAME SRAMBindingsTest COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/SRAMBindingsTest.py)
+set_tests_properties(SRAMBindingsTest PROPERTIES ENVIRONMENT "PYTHONPATH=${PROJECT_SOURCE_DIR}/visualizer-v2" LABELS "memory;sram;bindings")
+add_test(NAME SRAMLayoutTest COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/SRAMLayoutTest.py)
+set_tests_properties(SRAMLayoutTest PROPERTIES LABELS "memory;sram;visualizer")
+add_test(NAME MemoryDeviceLayoutTest COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/MemoryDeviceLayoutTest.py $<TARGET_FILE:VisualizerSessionProbe>)
+set_tests_properties(MemoryDeviceLayoutTest PROPERTIES LABELS "memory;new-memory;visualizer;bindings")
+add_test(NAME MemoryEndpointIntegrationTest COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/MemoryEndpointIntegrationTest.py $<TARGET_FILE:VisualizerSessionProbe>)
+set_tests_properties(MemoryEndpointIntegrationTest PROPERTIES LABELS "memory;memory-endpoint;visualizer;bindings;documentation")
+add_test(NAME MemoryDeviceDocumentationTest COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/MemoryDeviceDocumentationTest.py $<TARGET_FILE:VisualizerSessionProbe> ${CMAKE_CXX_COMPILER})
+set_tests_properties(MemoryDeviceDocumentationTest PROPERTIES LABELS "memory;new-memory;documentation")
 
 add_executable(
     VisualizerSessionProbe
@@ -13,7 +58,7 @@ add_test(
         $<TARGET_FILE:rv32i_benchmark_elf>
         ${PROJECT_SOURCE_DIR}/tests/fixtures/rv32i/external-smoke/self-check.elf
         0x3ffc0
-        100
+        1000
         both
 )
 set_tests_properties(
@@ -43,8 +88,69 @@ set(SIMULATION_TESTS
     GatedDLatchTest
     DFlipFlopTest
     ClockGeneratorTest
-    MemoryBitTest
+    FlipFlopCellTest
     Memory64Kx32Test
+    MemoryStorageTest
+    MemoryBusAdapter32Test
+    MemoryBusAdapterIntegrationTest
+    MemoryTransactionPortTest
+    MemoryControllerTest
+    MemoryEndpointFFTest
+    MemoryEndpointSRAMTest
+    MemoryEndpointDRAMTest
+    MemoryEndpointROMTest
+    MemoryEndpointFlashTest
+    MemoryEndpointRelayTest
+    ScalableMemoryContainerTest
+    MemoryEndpointContractTest
+    MemoryEndpointTimingTest
+    FFMemoryContainerTest
+    FFWordTest
+    FFWordContractTest
+    FFStorageBankTest
+    FFStorageBankContractTest
+    FFMemoryFidelityTest
+    SRAMContainerTest
+    SRAMCellTest
+    SRAMRowTest
+    SRAMBitlinePairTest
+    SRAMRowDecoderTest
+    SRAMPrechargeTest
+    SRAMWriteDriverTest
+    SRAMSenseAmplifierTest
+    SRAMColumnSelectorTest
+    SRAMAccessControlTest
+    SRAMOutputBufferTest
+    SRAMStorageBankTest
+    SRAMTest
+    SRAMContractTest
+    SRAMTimingTest
+    MatrixRowDecoderTest
+    MatrixColumnMuxTest
+    MatrixWriteDistributorTest
+    StaticReadColumnTest
+    MemoryOutputBufferTest
+    ROMCellTest
+    ROMRowTest
+    ROMAddressControlTest
+    ROMStorageBankTest
+    ROMTest
+    DRAMCellTest
+    DRAMRowTest
+    DRAMSenseColumnTest
+    DRAMStorageBankTest
+    DRAMCommandControlTest
+    DRAMTest
+    NORFlashCellTest
+    NORFlashRowTest
+    NORFlashStorageBankTest
+    NORFlashCommandControlTest
+    NORFlashTest
+    MemoryHelperContractTest
+    MemoryDeviceContractTest
+    MemoryDeviceTimingTest
+    ROMContainerTest
+    MemoryContainerContractTest
     Register32Test
     RegisterFile4x32Test
     RegisterFile32x32Test
@@ -145,6 +251,8 @@ set(SIMULATION_TESTS
     RV32IHazardDetectionUnitTest
     RV32IPipelineControlFlowUnitTest
     RV32IMemoryAlignmentUnitTest
+    RV32IMemoryLanesTest
+    RV32IMemoryRequestTest
     RV32IPipelineRetirementUnitTest
     RV32IPipelineCoordinatorTest
     RV32IFetchStageTest
@@ -163,6 +271,13 @@ set(SIMULATION_TESTS
     RV32IInstructionLockstepHarnessTest
     RV32IInstructionLockstepMismatchDetectionTest
     RV32ISingleCycleCoreTest
+    RV32ISingleCycleFetchStageTest
+    RV32ISingleCycleDecodeStageTest
+    RV32ISingleCycleExecuteStageTest
+    RV32ISingleCycleMemoryStageTest
+    RV32ISingleCycleWritebackStageTest
+    RV32ISingleCycleNextPCStageTest
+    RV32ISingleCycleStageIntegrationTest
     RV32IProfileToggleSweepTest
 )
 
@@ -199,6 +314,7 @@ set(INTEGRATION_TESTS
 
 set(SLOW_SIMULATION_TESTS
     ALU32Test
+    MemoryContainerContractTest
     Memory32x32Test
     RegisterFile32x32Test
     RV32ISingleCycleCoreTest
@@ -286,6 +402,13 @@ add_test(
     COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/VisualizerModuleBindingsTest.py
 )
 
+add_test(NAME MemoryContainerBindingsTest
+    COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/MemoryContainerBindingsTest.py
+        $<TARGET_FILE:VisualizerSessionProbe>)
+set_tests_properties(MemoryContainerBindingsTest PROPERTIES
+    ENVIRONMENT "PYTHONPATH=${PROJECT_SOURCE_DIR}/visualizer-v2"
+    LABELS "visualizer;memory;contract")
+
 add_test(
     NAME VisualizerSessionContractTest
     COMMAND
@@ -293,12 +416,30 @@ add_test(
         ${CMAKE_CURRENT_SOURCE_DIR}/VisualizerSessionContractTest.py
         $<TARGET_FILE:VisualizerSessionProbe>
 )
+add_test(NAME VisualizerPinIdentityTest
+    COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/VisualizerPinIdentityTest.py
+        $<TARGET_FILE:VisualizerSessionProbe>)
+set_tests_properties(VisualizerPinIdentityTest PROPERTIES
+    ENVIRONMENT "PYTHONPATH=${PROJECT_SOURCE_DIR}/visualizer-v2"
+    LABELS "visualizer;unit;rv32i")
+add_test(NAME VisualizerAutomaticLayoutTest
+    COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/VisualizerAutomaticLayoutTest.py)
+set_tests_properties(VisualizerAutomaticLayoutTest PROPERTIES LABELS "visualizer;layout")
 add_test(
     NAME DocumentationExamplesTest
     COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/DocumentationExamplesTest.py
-        $<TARGET_FILE:VisualizerSessionProbe>
+        $<TARGET_FILE:VisualizerSessionProbe> ${CMAKE_CXX_COMPILER}
 )
 set_tests_properties(DocumentationExamplesTest PROPERTIES LABELS "documentation;visualizer")
+add_executable(RV32IReferenceProbe RV32IReferenceProbe.cpp)
+target_link_libraries(RV32IReferenceProbe PRIVATE SimulatorLib)
+add_test(
+    NAME RV32IReferenceDocumentationTest
+    COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/RV32IReferenceDocumentationTest.py
+        $<TARGET_FILE:RV32IReferenceProbe>
+        ${CMAKE_CXX_COMPILER} $<TARGET_FILE:SimulatorLib>
+)
+set_tests_properties(RV32IReferenceDocumentationTest PROPERTIES LABELS "documentation;rv32i")
 set_tests_properties(
     VisualizerSessionContractTest
     PROPERTIES
@@ -322,6 +463,17 @@ set_tests_properties(
 )
 find_program(CIRCUITSIM_NODE_EXECUTABLE NAMES node nodejs)
 if(CIRCUITSIM_NODE_EXECUTABLE)
+    add_test(NAME VisualizerAutomaticLayoutMigrationTest COMMAND ${CIRCUITSIM_NODE_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/VisualizerAutomaticLayoutMigrationTest.mjs)
+    set_tests_properties(VisualizerAutomaticLayoutMigrationTest PROPERTIES LABELS "visualizer;layout;unit")
+    add_test(NAME VisualizerTopologyIdentityTest COMMAND ${CIRCUITSIM_NODE_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/VisualizerTopologyIdentityTest.js)
+    set_tests_properties(VisualizerTopologyIdentityTest PROPERTIES LABELS "visualizer;unit")
+    add_test(NAME VisualizerMemoryCellViewTest COMMAND ${CIRCUITSIM_NODE_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/VisualizerMemoryCellViewTest.js)
+    add_test(NAME RegisterFileProfileMigrationTest COMMAND ${CIRCUITSIM_NODE_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/RegisterFileProfileMigrationTest.mjs)
+    add_test(
+        NAME VisualizerReferenceProfileTest
+        COMMAND ${CIRCUITSIM_NODE_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/VisualizerReferenceProfileTest.mjs
+    )
+    set_tests_properties(VisualizerReferenceProfileTest PROPERTIES LABELS "visualizer;documentation")
     add_test(
         NAME VisualizerCameraAnimationTest
         COMMAND ${CIRCUITSIM_NODE_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/VisualizerCameraAnimationTest.js
@@ -342,6 +494,9 @@ if(CIRCUITSIM_NODE_EXECUTABLE)
         NAME VisualizerRewireGeometryTest
         COMMAND ${CIRCUITSIM_NODE_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/VisualizerRewireGeometryTest.js
     )
+    add_test(NAME SRAMLayoutMigrationTest COMMAND ${CIRCUITSIM_NODE_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/SRAMLayoutMigrationTest.mjs)
+    add_test(NAME RV32ILayoutMigrationTest COMMAND ${CIRCUITSIM_NODE_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/RV32ILayoutMigrationTest.mjs)
+    set_tests_properties(RV32ILayoutMigrationTest PROPERTIES LABELS "rv32i;visualizer;unit")
     set_tests_properties(
         VisualizerRewireGeometryTest
         PROPERTIES LABELS "visualizer;unit"

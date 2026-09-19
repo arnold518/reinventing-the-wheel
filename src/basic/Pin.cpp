@@ -25,8 +25,10 @@ LogicValue PinBase::getValue() const {
 }
 
 std::string PinBase::getID() const {
+    // Input and output names are separate namespaces in IOComponent.
+    const std::string direction = type == PinType::INPUT ? "input" : "output";
     if (auto owner_comp = owner.lock()) {
-        return owner_comp->getID() + "." + name;
+        return owner_comp->getID() + "." + direction + "." + name;
     }
-    return "OrphanPin:" + name;
+    return "OrphanPin:" + direction + "." + name;
 }

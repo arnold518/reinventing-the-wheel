@@ -47,8 +47,11 @@ void Register32Direct::evaluate(size_t current_time,
             }
         } else if (we != LogicValue::LOW) {
             for (size_t bit = 0; bit < stored_value_.size(); ++bit) {
-                stored_value_[bit] = mergePossibleValues(
-                    stored_value_[bit], input[bit]);
+                // Match FFWord's AND/OR feedback mux, not an optimistic
+                // merge: with uncertain enable, even agreed ones become X.
+                stored_value_[bit] = stored_value_[bit] == LogicValue::LOW
+                    && input[bit] == LogicValue::LOW
+                    ? LogicValue::LOW : LogicValue::UNKNOWN;
             }
         }
     }

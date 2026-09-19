@@ -2,6 +2,9 @@
   overflow: initial;
 }
 
+/* Long reference-page titles must not expand Material's hidden mobile topic. */
+.md-header__title { min-width: 0; overflow: hidden; }
+
 .simulator-embed {
   width: 100%;
   height: clamp(32rem, 72vh, 56rem);
@@ -57,3 +60,18 @@
 .md-typeset .example-table tbody tr:nth-child(even) > * { background: var(--md-code-bg-color); }
 .md-typeset .example-table tbody tr:hover > * { background: var(--md-accent-fg-color--transparent); }
 .md-typeset .example-table code { font-size: inherit; padding: 0; background: none; }
+
+.reference-table-scroll {
+  max-height: 26rem;
+  max-width: 100%;
+  overflow: auto;
+  overscroll-behavior: contain;
+  margin: 1rem 0;
+  border: 1px solid var(--md-default-fg-color--lightest);
+}
+.reference-table-scroll:focus-visible { outline: 2px solid var(--md-accent-fg-color); }
+.md-typeset .reference-table-scroll .md-typeset__scrollwrap { margin: 0; }
+.md-typeset .reference-table-scroll .md-typeset__table { display: block; padding: 0; }
+.md-typeset .reference-table-scroll table { margin: 0; white-space: nowrap; }
+.md-typeset .reference-table-scroll thead th { position: sticky; top: 0; z-index: 2; background: var(--md-code-bg-color); }
+.md-typeset .reference-table-scroll tbody td:first-child { position: sticky; left: 0; z-index: 1; background: var(--md-default-bg-color); }

@@ -9,6 +9,7 @@
 #include "components/selection/BuiltinComponentCatalog.hpp"
 #include "components/selection/StandardProfiles.hpp"
 #include "modules/memory/Memory64Kx32.hpp"
+#include "modules/rv32i/RV32IMemorySystem.hpp"
 #include "modules/rv32i/RV32IFiveStageCore.hpp"
 #include "modules/utility/Constant.hpp"
 #include "rv32i/RV32IElfImage.hpp"
@@ -67,7 +68,7 @@ void drive(
 }
 
 uint32_t readWord(
-    const Memory64Kx32& memory,
+    const MemoryStorage& memory,
     uint32_t address) {
     const auto bytes = memory.readBytes(address, 4);
     return static_cast<uint32_t>(bytes[0])
@@ -125,142 +126,32 @@ BenchmarkResult runFiveStage(
     auto root_context = scope->child(
         FiveStageRootName,
         std::nullopt);
-    auto root = Component::createWithContext<Component>(
-        root_context,
-        FiveStageRootName);
+    auto root = Component::createWithContext<IOComponent>(
+        root_context, FiveStageRootName, [](IOComponent* s) {
+            for (auto name : {"CLK", "RST"}) s->addPin(name, PinType::INPUT);
+        });
     ComponentBuilder builder(root, root_context);
 
     auto core = builder.add(
         circuit::families::RV32IFiveStageCore,
         "CORE");
     auto state_view = std::dynamic_pointer_cast<RV32IStateView>(core);
-    auto instruction_memory =
-        std::dynamic_pointer_cast<Memory64Kx32>(
-            builder.add(
-                circuit::families::Memory64Kx32,
-                "INSTRUCTION_MEMORY"));
-    auto data_memory =
-        std::dynamic_pointer_cast<Memory64Kx32>(
-            builder.add(
-                circuit::families::Memory64Kx32,
-                "DATA_MEMORY"));
-    require(core != nullptr, "Five-stage benchmark core was not built");
-    require(
-        state_view != nullptr,
-        "Five-stage benchmark core lacks architectural state");
-    require(
-        instruction_memory != nullptr && data_memory != nullptr,
-        "Five-stage benchmark memories were not built");
-
-    builder.addNewComponent<ConstantValue<1>>(
-        "CONST_LOW", 0);
-    builder.addNewComponent<ConstantValue<2>>(
-        "CONST_WORD_SIZE", 2);
-    builder.addNewComponent<ConstantValue<32>>(
-        "CONST_ZERO32", 0);
-
-    auto clk_wire = builder.addNewWire(
-        "CLK_IN",
-        nullptr,
-        {core->getInputPin("CLK"),
-         instruction_memory->getInputPin("CLK"),
-         data_memory->getInputPin("CLK")});
-    auto rst_wire = builder.addNewWire(
-        "RST_IN", nullptr, {core->getInputPin("RST")});
-    auto enable_wire = builder.addNewWire(
-        "ENABLE_IN", nullptr, {core->getInputPin("ENABLE")});
-
-    builder.addNewWire<32>(
-        "IMEM_ADDR",
-        core->getOutputPin<32>("IMEM_ADDR"),
-        {instruction_memory->getInputPin<32>("ADDR")});
-    builder.addNewWire(
-        "IMEM_READ_EN",
-        core->getOutputPin("IMEM_READ_EN"),
-        {instruction_memory->getInputPin("READ_EN")});
-    builder.addNewWire<32>(
-        "IMEM_READ_DATA",
-        instruction_memory->getOutputPin<32>("READ_DATA"),
-        {core->getInputPin<32>("IMEM_READ_DATA")});
-    builder.addNewWire(
-        "IMEM_READY",
-        instruction_memory->getOutputPin("READY"),
-        {core->getInputPin("IMEM_READY")});
-    builder.addNewWire(
-        "IMEM_FAULT",
-        instruction_memory->getOutputPin("FAULT"),
-        {core->getInputPin("IMEM_FAULT")});
-
-    builder.addNewWire<32>(
-        "DMEM_ADDR",
-        core->getOutputPin<32>("DMEM_ADDR"),
-        {data_memory->getInputPin<32>("ADDR")});
-    builder.addNewWire<32>(
-        "DMEM_WRITE_DATA",
-        core->getOutputPin<32>("DMEM_WRITE_DATA"),
-        {data_memory->getInputPin<32>("WRITE_DATA")});
-    builder.addNewWire(
-        "DMEM_READ_EN",
-        core->getOutputPin("DMEM_READ_EN"),
-        {data_memory->getInputPin("READ_EN")});
-    builder.addNewWire(
-        "DMEM_WRITE_EN",
-        core->getOutputPin("DMEM_WRITE_EN"),
-        {data_memory->getInputPin("WRITE_EN")});
-    builder.addNewWire<2>(
-        "DMEM_SIZE",
-        core->getOutputPin<2>("DMEM_SIZE"),
-        {data_memory->getInputPin<2>("SIZE")});
-    builder.addNewWire(
-        "DMEM_SIGN_EXTEND",
-        core->getOutputPin("DMEM_SIGN_EXTEND"),
-        {data_memory->getInputPin("SIGN_EXTEND")});
-    builder.addNewWire<32>(
-        "DMEM_READ_DATA",
-        data_memory->getOutputPin<32>("READ_DATA"),
-        {core->getInputPin<32>("DMEM_READ_DATA")});
-    builder.addNewWire(
-        "DMEM_READY",
-        data_memory->getOutputPin("READY"),
-        {core->getInputPin("DMEM_READY")});
-    builder.addNewWire(
-        "DMEM_FAULT",
-        data_memory->getOutputPin("FAULT"),
-        {core->getInputPin("DMEM_FAULT")});
-
-    auto constant_low =
-        builder.getComponent<ConstantValue<1>>("CONST_LOW");
-    auto constant_word =
-        builder.getComponent<ConstantValue<2>>(
-            "CONST_WORD_SIZE");
-    auto constant_zero =
-        builder.getComponent<ConstantValue<32>>(
-            "CONST_ZERO32");
-    builder.addNewWire(
-        "CONST_LOW_fanout",
-        constant_low->getOutputPin("OUT"),
-        {instruction_memory->getInputPin("WRITE_EN"),
-         instruction_memory->getInputPin("SIGN_EXTEND"),
-         instruction_memory->getInputPin("RST"),
-         data_memory->getInputPin("RST")});
-    builder.addNewWire<2>(
-        "CONST_WORD_SIZE_to_imem",
-        constant_word->getOutputPin<2>("OUT"),
-        {instruction_memory->getInputPin<2>("SIZE")});
-    builder.addNewWire<32>(
-        "CONST_ZERO32_to_imem",
-        constant_zero->getOutputPin<32>("OUT"),
-        {instruction_memory->getInputPin<32>("WRITE_DATA")});
-
-    instruction_memory->clearContents();
-    data_memory->clearContents();
-    instruction_memory->setHistoryRecordingEnabled(false);
-    data_memory->setHistoryRecordingEnabled(false);
+    auto instruction_memory = rv32i::buildMemory(builder, *root, "INSTRUCTION_MEMORY", {});
+    auto data_memory = rv32i::buildMemory(builder, *root, "DATA_MEMORY", {});
+    rv32i::wireMemorySystem(builder, core, instruction_memory, data_memory,
+        root->getInputPin("CLK"), root->getInputPin("RST"));
+    auto clk_wire = builder.addNewWire("CLK_IN", nullptr, {root->getInputPin("CLK")});
+    auto rst_wire = builder.addNewWire("RST_IN", nullptr, {root->getInputPin("RST")});
+    auto enable_wire = builder.addNewWire("ENABLE_IN", nullptr, {core->getInputPin("ENABLE")});
+    auto instruction_view = rv32i::memoryView(instruction_memory);
+    auto data_view = rv32i::memoryView(data_memory);
+    instruction_view->setMemoryHistoryRecordingEnabled(false);
+    data_view->setMemoryHistoryRecordingEnabled(false);
+    instruction_view->clearMemoryImage();
+    data_view->clearMemoryImage();
     for (const auto& segment : image.segments()) {
-        instruction_memory->loadBytes(
-            segment.address, segment.bytes);
-        data_memory->loadBytes(
-            segment.address, segment.bytes);
+        instruction_view->initializeMemoryBytes(segment.address, segment.bytes);
+        data_view->initializeMemoryBytes(segment.address, segment.bytes);
     }
 
     SimulationTest::scheduleInitialEventsForTree(root, *sim, 0);
@@ -316,7 +207,7 @@ BenchmarkResult runFiveStage(
             && retired_address_pin->getValueAsUInt64()
                 == tohost_address) {
             result.tohost = readWord(
-                *data_memory, tohost_address);
+                data_view->memoryStorage(), tohost_address);
         }
         if (result.tohost == 1 || result.tohost == 3) {
             break;

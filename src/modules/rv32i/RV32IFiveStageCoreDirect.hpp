@@ -1,6 +1,7 @@
 #pragma once
 
 #include "components/BasicComponent.hpp"
+#include "RV32IMemoryRequestModel.hpp"
 #include "components/capabilities/RV32IStateView.hpp"
 #include "rv32i/RV32IControl.hpp"
 #include "rv32i/RV32IInstructionTrace.hpp"
@@ -83,6 +84,7 @@ private:
         bool data_fault = false;
     };
 
+    rv32i::MemoryRequestState instruction_request_, data_request_;
     std::array<uint32_t, 32> registers_{};
     uint32_t fetch_pc_ = 0;
     uint32_t committed_pc_ = 0;

@@ -4,6 +4,7 @@
 #include "components/ComponentBuilder.hpp"
 #include "components/ComponentBuilder.tpp"
 #include "modules/basic/Gate.hpp"
+#include "modules/memory/MemoryStructuralBuilder.hpp"
 #include "modules/basic/Mux.hpp"
 #include "modules/composite/ALU32.hpp"
 #include "modules/rv32i/RV32IBitPatternMatcher.hpp"
@@ -260,6 +261,278 @@ std::vector<Rewire::BitMap> decodeMappings() {
 }
 
 namespace {
+// Fixed structural subcircuits. These boundaries add no logic or state:
+// the same shared predicates, AND terms and serial OR chains remain expandable.
+void controlOutputs(IOComponent* self) {
+    self->addPin<5>("ALU_OP", PinType::OUTPUT);
+    self->addPin<2>("ALU_A_SEL", PinType::OUTPUT);
+    self->addPin<2>("ALU_B_SEL", PinType::OUTPUT);
+    self->addPin("LEGAL", PinType::OUTPUT);
+    self->addPin("REG_WRITE", PinType::OUTPUT);
+    self->addPin("MEM_READ", PinType::OUTPUT);
+    self->addPin("MEM_WRITE", PinType::OUTPUT);
+    self->addPin<2>("WRITEBACK_SEL", PinType::OUTPUT);
+    self->addPin<2>("MEM_SIZE", PinType::OUTPUT);
+    self->addPin("LOAD_SIGN_EXTEND", PinType::OUTPUT);
+    self->addPin("USES_RS1", PinType::OUTPUT);
+    self->addPin("USES_RS2", PinType::OUTPUT);
+    self->addPin<3>("BRANCH_TYPE", PinType::OUTPUT);
+    self->addPin<2>("JUMP_TYPE", PinType::OUTPUT);
+    self->addPin("HALT_REQUEST", PinType::OUTPUT);
+    self->addPin("TRAP_REQUEST", PinType::OUTPUT);
+    self->addPin<4>("DECODE_TRAP_CAUSE", PinType::OUTPUT);
+    self->addPin<3>("IMMEDIATE_SELECT", PinType::OUTPUT);
+}
+
+class RV32IInstructionRecognition : public IOComponent {
+public:
+    explicit RV32IInstructionRecognition(std::string name)
+        : IOComponent(std::move(name), [](IOComponent* s) {
+            s->addPin<32>("INSTRUCTION", PinType::INPUT);
+            s->addPin<32>("MATCH_LO", PinType::OUTPUT);
+            s->addPin<8>("MATCH_HI", PinType::OUTPUT);
+        }) {}
+    const char* getTypeName() const override { return "RV32IInstructionRecognition"; }
+    void buildInternals(ComponentBuilder& builder) override {
+        const auto& instruction_patterns = patterns();
+        std::vector<Rewire::WireSpec> inputs;
+        std::vector<Rewire::BitMap> mappings;
+        for (size_t i = 0; i < instruction_patterns.size(); ++i) {
+            const auto& name = instruction_patterns[i].name;
+            inputs.push_back({name, 1});
+            mappings.emplace_back(name, 0, i < 32 ? "MATCH_LO" : "MATCH_HI", i % 32);
+        }
+        auto pack = builder.addNewComponent<Rewire>("MATCH_LINES", inputs,
+            std::vector<Rewire::WireSpec>{{"MATCH_LO",32},{"MATCH_HI",8}}, mappings);
+        std::vector<std::vector<std::shared_ptr<Pin<>>>> match_sinks(instruction_patterns.size());
+        for (size_t i = 0; i < instruction_patterns.size(); ++i)
+            match_sinks[i].push_back(pack->getInputPin(instruction_patterns[i].name));
+        std::vector<std::shared_ptr<Pin<32>>> instruction_sinks;
+        struct SharedPredicate {
+            std::string name;
+            uint32_t mask;
+            uint32_t value;
+            std::vector<std::shared_ptr<Pin<>>> sinks;
+        };
+        std::vector<SharedPredicate> predicates;
+        std::map<std::pair<uint32_t, uint32_t>, size_t> predicate_indexes;
+
+        auto addPredicate = [&](uint32_t mask,
+                                uint32_t value,
+                                std::string name) {
+            const auto key = std::make_pair(mask, value & mask);
+            if (const auto found = predicate_indexes.find(key);
+                found != predicate_indexes.end()) {
+                return found->second;
+            }
+
+            const size_t index = predicates.size();
+            predicates.push_back(
+                {std::move(name), mask, value & mask, {}});
+            predicate_indexes.emplace(key, index);
+            const auto& predicate = predicates.back();
+            builder.addNewComponent<RV32IBitPatternMatcher>(
+                predicate.name, predicate.mask, predicate.value);
+            instruction_sinks.push_back(
+                builder.getInputPin<RV32IBitPatternMatcher, 32>(
+                    predicate.name, "INPUT"));
+            return index;
+        };
+
+        constexpr uint32_t OpcodeMask = 0x0000007FU;
+        constexpr uint32_t Funct3Mask = 0x00007000U;
+        constexpr uint32_t Funct7Mask = 0xFE000000U;
+        constexpr size_t NoPredicate = static_cast<size_t>(-1);
+        std::vector<size_t> direct_predicates(
+            instruction_patterns.size(), NoPredicate);
+        std::vector<std::shared_ptr<Pin<>>> recognition_outputs(
+            instruction_patterns.size());
+
+        for (size_t index = 0; index < instruction_patterns.size(); ++index) {
+            const auto& pattern = instruction_patterns[index];
+            std::vector<size_t> terms;
+            if (pattern.mask == 0xFFFFFFFFU) {
+                terms.push_back(addPredicate(
+                    pattern.mask,
+                    pattern.value,
+                    "PREDECODE_EXACT_" + pattern.name));
+            } else {
+                uint32_t factored_mask = OpcodeMask;
+                terms.push_back(addPredicate(
+                    OpcodeMask,
+                    pattern.value,
+                    "PREDECODE_OPCODE_"
+                        + hexText(pattern.value & OpcodeMask, 2)));
+                if ((pattern.mask & Funct3Mask) != 0) {
+                    factored_mask |= Funct3Mask;
+                    terms.push_back(addPredicate(
+                        Funct3Mask,
+                        pattern.value,
+                        "PREDECODE_FUNCT3_"
+                            + hexText(
+                                (pattern.value & Funct3Mask) >> 12U, 1)));
+                }
+                if ((pattern.mask & Funct7Mask) != 0) {
+                    factored_mask |= Funct7Mask;
+                    terms.push_back(addPredicate(
+                        Funct7Mask,
+                        pattern.value,
+                        "PREDECODE_FUNCT7_"
+                            + hexText(
+                                (pattern.value & Funct7Mask) >> 25U, 2)));
+                }
+                if (factored_mask != pattern.mask) {
+                    throw std::logic_error(
+                        "RV32I decode pattern cannot be factored into "
+                        "opcode/funct3/funct7 predicates: " + pattern.name);
+                }
+            }
+
+            if (terms.size() == 1) {
+                direct_predicates[index] = terms.front();
+                continue;
+            }
+
+            std::string previous_gate;
+            for (size_t term = 1; term < terms.size(); ++term) {
+                const auto gate =
+                    "RECOGNIZE_" + pattern.name + "_AND_"
+                    + std::to_string(term);
+                builder.addNewComponent<ANDGate>(gate);
+                if (term == 1) {
+                    predicates[terms[0]].sinks.push_back(
+                        builder.getInputPin<ANDGate>(gate, "A"));
+                } else {
+                    builder.addNewWire(
+                        previous_gate + "_to_" + gate,
+                        builder.getOutputPin<ANDGate>(
+                            previous_gate, "OUT"),
+                        {builder.getInputPin<ANDGate>(gate, "A")});
+                }
+                predicates[terms[term]].sinks.push_back(
+                    builder.getInputPin<ANDGate>(gate, "B"));
+                previous_gate = gate;
+            }
+            recognition_outputs[index] =
+                builder.getOutputPin<ANDGate>(previous_gate, "OUT");
+        }
+
+        builder.addNewWire<32>("INSTRUCTION_fanout", getInputPin<32>("INSTRUCTION"), instruction_sinks);
+        for (size_t i = 0; i < instruction_patterns.size(); ++i) {
+            if (direct_predicates[i] != NoPredicate) {
+                auto& sinks = predicates[direct_predicates[i]].sinks;
+                sinks.insert(sinks.end(), match_sinks[i].begin(), match_sinks[i].end());
+            } else {
+                builder.addNewWire("MATCH_" + instruction_patterns[i].name,
+                    recognition_outputs[i], match_sinks[i]);
+            }
+        }
+        for (const auto& predicate : predicates)
+            builder.addNewWire(predicate.name + "_fanout",
+                builder.getOutputPin<RV32IBitPatternMatcher>(predicate.name, "MATCH"), predicate.sinks);
+        builder.addNewWire<32>("matches_low", pack->getOutputPin<32>("MATCH_LO"), {getOutputPin<32>("MATCH_LO")});
+        builder.addNewWire<8>("matches_high", pack->getOutputPin<8>("MATCH_HI"), {getOutputPin<8>("MATCH_HI")});
+    }
+};
+
+// One control output owns its bit equations. Parameterized type keys prevent
+// the layout of a five-bit ALU opcode from leaking into a one-bit write enable.
+class RV32IDecodeControlField : public IOComponent {
+    std::string type_;
+    size_t width_;
+    uint8_t default_;
+    std::vector<uint8_t> values_;
+public:
+    RV32IDecodeControlField(std::string name, size_t width, uint8_t fallback,
+                            std::vector<uint8_t> values)
+        : IOComponent(name, [width](IOComponent* s) {
+            s->addPin<32>("MATCH_LO", PinType::INPUT);
+            s->addPin<8>("MATCH_HI", PinType::INPUT);
+            s->addPinDynamic("OUT", PinType::OUTPUT, width);
+        }), type_("RV32IDecodeControlField<" + name + ">"), width_(width),
+           default_(fallback), values_(std::move(values)) {}
+    const char* getTypeName() const override { return type_.c_str(); }
+    void buildInternals(ComponentBuilder& b) override {
+        circuit::memory_detail::StructuralWiring w(b);
+        std::vector<Rewire::WireSpec> outputs;
+        std::vector<Rewire::BitMap> mappings;
+        for (size_t i = 0; i < patterns().size(); ++i) {
+            outputs.push_back({patterns()[i].name, 1});
+            mappings.emplace_back(i < 32 ? "MATCH_LO" : "MATCH_HI", i % 32, patterns()[i].name, 0);
+        }
+        auto matches = b.addNewComponent<Rewire>("MATCH_BITS",
+            std::vector<Rewire::WireSpec>{{"MATCH_LO",32},{"MATCH_HI",8}}, outputs, mappings);
+        for (auto pin : {"MATCH_LO", "MATCH_HI"})
+            w.connect(getInputPinDynamic(pin), matches->getInputPinDynamic(pin));
+        std::vector<Rewire::WireSpec> bit_inputs;
+        std::vector<Rewire::BitMap> bit_maps;
+        for (size_t bit = 0; bit < width_; ++bit) {
+            bit_inputs.push_back({"BIT_" + std::to_string(bit), 1});
+            bit_maps.emplace_back("BIT_" + std::to_string(bit), 0, "OUT", bit);
+        }
+        auto join = b.addNewComponent<Rewire>("OUTPUT_BITS", bit_inputs,
+            std::vector<Rewire::WireSpec>{{"OUT", width_}}, bit_maps);
+        for (size_t bit = 0; bit < width_; ++bit) {
+            const bool fallback = ((default_ >> bit) & 1U) != 0;
+            std::vector<circuit::memory_detail::StructuralWiring::PinPtr> terms;
+            for (size_t i = 0; i < values_.size(); ++i)
+                if ((((values_[i] >> bit) & 1U) != 0) != fallback)
+                    terms.push_back(matches->getOutputPin(patterns()[i].name));
+            const auto prefix = "BIT_" + std::to_string(bit);
+            auto value = terms.empty() ? w.constant(prefix + "_CONSTANT", fallback) : terms.front();
+            // Preserve the original gate depth and partial-unknown propagation.
+            for (size_t i = 1; i < terms.size(); ++i)
+                value = w.either(prefix + "_OR_" + std::to_string(i), value, terms[i]);
+            if (!terms.empty() && fallback) value = w.invert(prefix + "_DEFAULT_NOT", value);
+            w.connect(value, join->getInputPin(prefix));
+        }
+        w.connect(join->getOutputPinDynamic("OUT"), getOutputPinDynamic("OUT"));
+        w.finish();
+    }
+};
+
+class RV32IDecodeControlSignals : public IOComponent {
+public:
+    explicit RV32IDecodeControlSignals(std::string name)
+        : IOComponent(std::move(name), [](IOComponent* s) {
+            s->addPin<32>("MATCH_LO", PinType::INPUT);
+            s->addPin<8>("MATCH_HI", PinType::INPUT);
+            controlOutputs(s);
+        }) {}
+    const char* getTypeName() const override { return "RV32IDecodeControlSignals"; }
+    void buildInternals(ComponentBuilder& b) override {
+        circuit::memory_detail::StructuralWiring w(b);
+        auto field = [&](const char* name, size_t width, uint8_t fallback,
+                         const std::function<uint8_t(const ControlWord&)>& value) {
+            std::vector<uint8_t> values;
+            for (const auto& pattern : patterns()) values.push_back(value(pattern.control));
+            auto child = b.addNewComponent<RV32IDecodeControlField>(name, width, fallback, values);
+            for (auto pin : {"MATCH_LO", "MATCH_HI"})
+                w.connect(getInputPinDynamic(pin), child->getInputPinDynamic(pin));
+            w.connect(child->getOutputPinDynamic("OUT"), getOutputPinDynamic(name));
+        };
+        field("LEGAL", 1, 0, [](const ControlWord&) { return 1; });
+        field("REG_WRITE", 1, 0, [](const ControlWord& c) { return c.reg_write; });
+        field("MEM_READ", 1, 0, [](const ControlWord& c) { return c.mem_read; });
+        field("MEM_WRITE", 1, 0, [](const ControlWord& c) { return c.mem_write; });
+        field("LOAD_SIGN_EXTEND", 1, 0, [](const ControlWord& c) { return c.load_sign_extend; });
+        field("USES_RS1", 1, 0, [](const ControlWord& c) { return c.uses_rs1; });
+        field("USES_RS2", 1, 0, [](const ControlWord& c) { return c.uses_rs2; });
+        field("HALT_REQUEST", 1, 0, [](const ControlWord& c) { return c.halt; });
+        field("TRAP_REQUEST", 1, 1, [](const ControlWord& c) { return c.trap; });
+        field("ALU_OP", 5, ALU32Op::ZERO, [](const ControlWord& c) { return c.alu_op; });
+        field("ALU_A_SEL", 2, ALU_A_ZERO, [](const ControlWord& c) { return c.alu_a; });
+        field("ALU_B_SEL", 2, ALU_B_ZERO, [](const ControlWord& c) { return c.alu_b; });
+        field("WRITEBACK_SEL", 2, WB_NONE, [](const ControlWord& c) { return c.writeback; });
+        field("MEM_SIZE", 2, MEM_WORD, [](const ControlWord& c) { return c.mem_size; });
+        field("BRANCH_TYPE", 3, 0, [](const ControlWord& c) { return c.branch; });
+        field("JUMP_TYPE", 2, 0, [](const ControlWord& c) { return c.jump; });
+        field("DECODE_TRAP_CAUSE", 4, TRAP_ILLEGAL, [](const ControlWord& c) { return c.trap_cause; });
+        field("IMMEDIATE_SELECT", 3, 0, [](const ControlWord& c) { return c.immediate; });
+        w.finish();
+    }
+};
+
 void defineDecodeControlPins(IOComponent* self) {
     self->addPin<32>("INSTRUCTION", PinType::INPUT);
     self->addPin<5>("RS1_ADDR", PinType::OUTPUT);
@@ -288,324 +561,41 @@ void defineDecodeControlPins(IOComponent* self) {
 
 namespace circuit::families {
 const ComponentFamily RV32IDecodeControl{
-    "rv32i.decode-control",
-    "RV32IDecodeControlUnit",
-    defineDecodeControlPins,
+    "rv32i.decode-control", "RV32IDecodeControlUnit", defineDecodeControlPins,
     [](const std::string& name, const std::shared_ptr<BuildContext>& context) {
-        return Component::createWithContext<::RV32IDecodeControlUnit>(
-            context, name);
+        return Component::createWithContext<::RV32IDecodeControlUnit>(context, name);
     },
     [](const std::string& name, const std::shared_ptr<BuildContext>& context) {
-        return Component::createWithContext<
-            ::RV32IDecodeControlDirect>(context, name);
+        return Component::createWithContext<::RV32IDecodeControlDirect>(context, name);
     }};
 }
 
 RV32IDecodeControlUnit::RV32IDecodeControlUnit(std::string name)
-    : IOComponent(std::move(name),
-                  circuit::families::RV32IDecodeControl.pinInitializer()) {}
+    : IOComponent(std::move(name), circuit::families::RV32IDecodeControl.pinInitializer()) {}
 
-void RV32IDecodeControlUnit::buildInternals(ComponentBuilder& builder) {
-    builder.addNewComponent<Rewire>(
-        "FIELDS_AND_IMMEDIATES",
+void RV32IDecodeControlUnit::buildInternals(ComponentBuilder& b) {
+    circuit::memory_detail::StructuralWiring w(b);
+    auto fields = b.addNewComponent<Rewire>("FIELDS_AND_IMMEDIATES",
         std::vector<Rewire::WireSpec>{{"INSTRUCTION", 32}},
-        std::vector<Rewire::WireSpec>{{"RS1", 5}, {"RS2", 5}, {"RD", 5},
-                                      {"IMM_I", 32}, {"IMM_S", 32}, {"IMM_B", 32},
-                                      {"IMM_U", 32}, {"IMM_J", 32}},
-        decodeMappings(),
-        Rewire::UnmappedBitValue::LOW);
-    builder.addNewComponent<Mux8to1_32bit>("IMMEDIATE_MUX");
-    builder.addNewComponent<BitJoiner<3>>("IMMEDIATE_SELECT_JOIN");
-    builder.addNewComponent<ConstantValue<1>>("CONST_LOW", 0);
-    builder.addNewComponent<ConstantValue<1>>("CONST_HIGH", 1);
-    builder.addNewComponent<ConstantValue<32>>("CONST_ZERO32", 0);
-
-    const auto& instruction_patterns = patterns();
-    std::vector<std::vector<std::shared_ptr<Pin<>>>> match_sinks(instruction_patterns.size());
-    std::vector<std::shared_ptr<Pin<32>>> instruction_sinks{
-        builder.getInputPin<Rewire, 32>("FIELDS_AND_IMMEDIATES", "INSTRUCTION")};
-
-    struct SharedPredicate {
-        std::string name;
-        uint32_t mask;
-        uint32_t value;
-        std::vector<std::shared_ptr<Pin<>>> sinks;
-    };
-    std::vector<SharedPredicate> predicates;
-    std::map<std::pair<uint32_t, uint32_t>, size_t> predicate_indexes;
-
-    auto addPredicate = [&](uint32_t mask,
-                            uint32_t value,
-                            std::string name) {
-        const auto key = std::make_pair(mask, value & mask);
-        if (const auto found = predicate_indexes.find(key);
-            found != predicate_indexes.end()) {
-            return found->second;
-        }
-
-        const size_t index = predicates.size();
-        predicates.push_back(
-            {std::move(name), mask, value & mask, {}});
-        predicate_indexes.emplace(key, index);
-        const auto& predicate = predicates.back();
-        builder.addNewComponent<RV32IBitPatternMatcher>(
-            predicate.name, predicate.mask, predicate.value);
-        instruction_sinks.push_back(
-            builder.getInputPin<RV32IBitPatternMatcher, 32>(
-                predicate.name, "INPUT"));
-        return index;
-    };
-
-    constexpr uint32_t OpcodeMask = 0x0000007FU;
-    constexpr uint32_t Funct3Mask = 0x00007000U;
-    constexpr uint32_t Funct7Mask = 0xFE000000U;
-    constexpr size_t NoPredicate = static_cast<size_t>(-1);
-    std::vector<size_t> direct_predicates(
-        instruction_patterns.size(), NoPredicate);
-    std::vector<std::shared_ptr<Pin<>>> recognition_outputs(
-        instruction_patterns.size());
-
-    for (size_t index = 0; index < instruction_patterns.size(); ++index) {
-        const auto& pattern = instruction_patterns[index];
-        std::vector<size_t> terms;
-        if (pattern.mask == 0xFFFFFFFFU) {
-            terms.push_back(addPredicate(
-                pattern.mask,
-                pattern.value,
-                "PREDECODE_EXACT_" + pattern.name));
-        } else {
-            uint32_t factored_mask = OpcodeMask;
-            terms.push_back(addPredicate(
-                OpcodeMask,
-                pattern.value,
-                "PREDECODE_OPCODE_"
-                    + hexText(pattern.value & OpcodeMask, 2)));
-            if ((pattern.mask & Funct3Mask) != 0) {
-                factored_mask |= Funct3Mask;
-                terms.push_back(addPredicate(
-                    Funct3Mask,
-                    pattern.value,
-                    "PREDECODE_FUNCT3_"
-                        + hexText(
-                            (pattern.value & Funct3Mask) >> 12U, 1)));
-            }
-            if ((pattern.mask & Funct7Mask) != 0) {
-                factored_mask |= Funct7Mask;
-                terms.push_back(addPredicate(
-                    Funct7Mask,
-                    pattern.value,
-                    "PREDECODE_FUNCT7_"
-                        + hexText(
-                            (pattern.value & Funct7Mask) >> 25U, 2)));
-            }
-            if (factored_mask != pattern.mask) {
-                throw std::logic_error(
-                    "RV32I decode pattern cannot be factored into "
-                    "opcode/funct3/funct7 predicates: " + pattern.name);
-            }
-        }
-
-        if (terms.size() == 1) {
-            direct_predicates[index] = terms.front();
-            continue;
-        }
-
-        std::string previous_gate;
-        for (size_t term = 1; term < terms.size(); ++term) {
-            const auto gate =
-                "RECOGNIZE_" + pattern.name + "_AND_"
-                + std::to_string(term);
-            builder.addNewComponent<ANDGate>(gate);
-            if (term == 1) {
-                predicates[terms[0]].sinks.push_back(
-                    builder.getInputPin<ANDGate>(gate, "A"));
-            } else {
-                builder.addNewWire(
-                    previous_gate + "_to_" + gate,
-                    builder.getOutputPin<ANDGate>(
-                        previous_gate, "OUT"),
-                    {builder.getInputPin<ANDGate>(gate, "A")});
-            }
-            predicates[terms[term]].sinks.push_back(
-                builder.getInputPin<ANDGate>(gate, "B"));
-            previous_gate = gate;
-        }
-        recognition_outputs[index] =
-            builder.getOutputPin<ANDGate>(previous_gate, "OUT");
-    }
-    builder.addNewWire<32>(
-        "INSTRUCTION_fanout",
-        getInputPin<32>("INSTRUCTION"),
-        instruction_sinks);
-
-    builder.addNewWire<5>("RS1_to_output", builder.getOutputPin<Rewire, 5>("FIELDS_AND_IMMEDIATES", "RS1"), {getOutputPin<5>("RS1_ADDR")});
-    builder.addNewWire<5>("RS2_to_output", builder.getOutputPin<Rewire, 5>("FIELDS_AND_IMMEDIATES", "RS2"), {getOutputPin<5>("RS2_ADDR")});
-    builder.addNewWire<5>("RD_to_output", builder.getOutputPin<Rewire, 5>("FIELDS_AND_IMMEDIATES", "RD"), {getOutputPin<5>("RD_ADDR")});
-
-    for (const auto& [name, mux_input] : std::vector<std::pair<std::string, size_t>>{
-             {"IMM_I", IMM_I}, {"IMM_S", IMM_S}, {"IMM_B", IMM_B}, {"IMM_U", IMM_U}, {"IMM_J", IMM_J}}) {
-        builder.addNewWire<32>(
-            name + "_to_mux",
-            builder.getOutputPin<Rewire, 32>("FIELDS_AND_IMMEDIATES", name),
-            {builder.getInputPin<Mux8to1_32bit, 32>("IMMEDIATE_MUX", "IN" + std::to_string(mux_input))});
-    }
-    builder.addNewWire<32>(
-        "ZERO_to_immediate_mux",
-        builder.getOutputPin<ConstantValue<32>, 32>("CONST_ZERO32", "OUT"),
-        {builder.getInputPin<Mux8to1_32bit, 32>("IMMEDIATE_MUX", "IN0"),
-         builder.getInputPin<Mux8to1_32bit, 32>("IMMEDIATE_MUX", "IN6"),
-         builder.getInputPin<Mux8to1_32bit, 32>("IMMEDIATE_MUX", "IN7")});
-    builder.addNewWire<3>(
-        "immediate_select_to_mux",
-        builder.getOutputPin<BitJoiner<3>, 3>("IMMEDIATE_SELECT_JOIN", "OUT"),
-        {builder.getInputPin<Mux8to1_32bit, 3>("IMMEDIATE_MUX", "SEL")});
-    builder.addNewWire<32>(
-        "immediate_to_output",
-        builder.getOutputPin<Mux8to1_32bit, 32>("IMMEDIATE_MUX", "OUT"),
-        {getOutputPin<32>("IMM")});
-
-    std::vector<std::shared_ptr<Pin<>>> low_sinks;
-    std::vector<std::shared_ptr<Pin<>>> high_sinks;
-
-    auto connectEncodedBit = [&](const std::string& signal_name,
-                                 size_t bit_index,
-                                 bool default_value,
-                                 const std::function<uint8_t(const ControlWord&)>& value,
-                                 const std::shared_ptr<Pin<>>& destination) {
-        std::vector<size_t> differing_matches;
-        for (size_t index = 0; index < instruction_patterns.size(); ++index) {
-            const bool bit_value = ((value(instruction_patterns[index].control) >> bit_index) & 1U) != 0;
-            if (bit_value != default_value) {
-                differing_matches.push_back(index);
-            }
-        }
-
-        if (differing_matches.empty()) {
-            (default_value ? high_sinks : low_sinks).push_back(destination);
-            return;
-        }
-
-        std::shared_ptr<Pin<>> difference_output;
-        if (differing_matches.size() == 1) {
-            if (!default_value) {
-                match_sinks[differing_matches.front()].push_back(destination);
-                return;
-            }
-            const auto not_name = signal_name + "_BIT_" + std::to_string(bit_index) + "_DEFAULT_NOT";
-            builder.addNewComponent<NOTGate>(not_name);
-            match_sinks[differing_matches.front()].push_back(builder.getInputPin<NOTGate>(not_name, "IN"));
-            builder.addNewWire(not_name + "_to_destination", builder.getOutputPin<NOTGate>(not_name, "OUT"), {destination});
-            return;
-        }
-
-        const auto base = signal_name + "_BIT_" + std::to_string(bit_index) + "_OR_";
-        builder.addNewComponent<ORGate>(base + "1");
-        match_sinks[differing_matches[0]].push_back(builder.getInputPin<ORGate>(base + "1", "A"));
-        match_sinks[differing_matches[1]].push_back(builder.getInputPin<ORGate>(base + "1", "B"));
-        std::string previous = base + "1";
-
-        for (size_t term = 2; term < differing_matches.size(); ++term) {
-            const auto gate = base + std::to_string(term);
-            builder.addNewComponent<ORGate>(gate);
-            builder.addNewWire(
-                previous + "_to_" + gate,
-                builder.getOutputPin<ORGate>(previous, "OUT"),
-                {builder.getInputPin<ORGate>(gate, "A")});
-            match_sinks[differing_matches[term]].push_back(builder.getInputPin<ORGate>(gate, "B"));
-            previous = gate;
-        }
-        difference_output = builder.getOutputPin<ORGate>(previous, "OUT");
-
-        if (!default_value) {
-            builder.addNewWire(signal_name + "_BIT_" + std::to_string(bit_index) + "_to_destination", difference_output, {destination});
-            return;
-        }
-
-        const auto not_name = signal_name + "_BIT_" + std::to_string(bit_index) + "_DEFAULT_NOT";
-        builder.addNewComponent<NOTGate>(not_name);
-        builder.addNewWire(not_name + "_input", difference_output, {builder.getInputPin<NOTGate>(not_name, "IN")});
-        builder.addNewWire(not_name + "_to_destination", builder.getOutputPin<NOTGate>(not_name, "OUT"), {destination});
-    };
-
-    auto connectSingle = [&](const std::string& name,
-                             bool default_value,
-                             const std::function<bool(const ControlWord&)>& getter,
-                             const std::shared_ptr<Pin<>>& destination) {
-        connectEncodedBit(name, 0, default_value,
-                          [getter](const ControlWord& control) { return static_cast<uint8_t>(getter(control)); },
-                          destination);
-    };
-
-    auto connectBus = [&]<size_t Width>(const std::string& name,
-                                       uint8_t default_value,
-                                       const std::function<uint8_t(const ControlWord&)>& getter,
-                                       const std::shared_ptr<Pin<Width>>& output) {
-        const auto join_name = name + "_JOIN";
-        builder.addNewComponent<BitJoiner<Width>>(join_name);
-        for (size_t bit = 0; bit < Width; ++bit) {
-            connectEncodedBit(name, bit, ((default_value >> bit) & 1U) != 0, getter,
-                              builder.getInputPin<BitJoiner<Width>>(join_name, "IN_" + std::to_string(bit)));
-        }
-        builder.addNewWire<Width>(
-            name + "_bus_to_output",
-            builder.getOutputPin<BitJoiner<Width>, Width>(join_name, "OUT"),
-            {output});
-    };
-
-    connectSingle("LEGAL", false, [](const ControlWord&) { return true; }, getOutputPin("LEGAL"));
-    connectSingle("REG_WRITE", false, [](const ControlWord& c) { return c.reg_write; }, getOutputPin("REG_WRITE"));
-    connectSingle("MEM_READ", false, [](const ControlWord& c) { return c.mem_read; }, getOutputPin("MEM_READ"));
-    connectSingle("MEM_WRITE", false, [](const ControlWord& c) { return c.mem_write; }, getOutputPin("MEM_WRITE"));
-    connectSingle("LOAD_SIGN_EXTEND", false, [](const ControlWord& c) { return c.load_sign_extend; }, getOutputPin("LOAD_SIGN_EXTEND"));
-    connectSingle("USES_RS1", false, [](const ControlWord& c) { return c.uses_rs1; }, getOutputPin("USES_RS1"));
-    connectSingle("USES_RS2", false, [](const ControlWord& c) { return c.uses_rs2; }, getOutputPin("USES_RS2"));
-    connectSingle("HALT_REQUEST", false, [](const ControlWord& c) { return c.halt; }, getOutputPin("HALT_REQUEST"));
-    connectSingle("TRAP_REQUEST", true, [](const ControlWord& c) { return c.trap; }, getOutputPin("TRAP_REQUEST"));
-
-    connectBus.template operator()<5>("ALU_OP", ALU32Op::ZERO, [](const ControlWord& c) { return c.alu_op; }, getOutputPin<5>("ALU_OP"));
-    connectBus.template operator()<2>("ALU_A_SEL", ALU_A_ZERO, [](const ControlWord& c) { return c.alu_a; }, getOutputPin<2>("ALU_A_SEL"));
-    connectBus.template operator()<2>("ALU_B_SEL", ALU_B_ZERO, [](const ControlWord& c) { return c.alu_b; }, getOutputPin<2>("ALU_B_SEL"));
-    connectBus.template operator()<2>("WRITEBACK_SEL", WB_NONE, [](const ControlWord& c) { return c.writeback; }, getOutputPin<2>("WRITEBACK_SEL"));
-    connectBus.template operator()<2>("MEM_SIZE", MEM_WORD, [](const ControlWord& c) { return c.mem_size; }, getOutputPin<2>("MEM_SIZE"));
-    connectBus.template operator()<3>("BRANCH_TYPE", 0, [](const ControlWord& c) { return c.branch; }, getOutputPin<3>("BRANCH_TYPE"));
-    connectBus.template operator()<2>("JUMP_TYPE", 0, [](const ControlWord& c) { return c.jump; }, getOutputPin<2>("JUMP_TYPE"));
-    connectBus.template operator()<4>("DECODE_TRAP_CAUSE", TRAP_ILLEGAL,
-                                      [](const ControlWord& c) { return c.trap_cause; },
-                                      getOutputPin<4>("DECODE_TRAP_CAUSE"));
-
-    for (size_t bit = 0; bit < 3; ++bit) {
-        connectEncodedBit("IMMEDIATE_SELECT", bit, false,
-                          [](const ControlWord& c) { return c.immediate; },
-                          builder.getInputPin<BitJoiner<3>>("IMMEDIATE_SELECT_JOIN", "IN_" + std::to_string(bit)));
-    }
-
-    for (size_t index = 0; index < instruction_patterns.size(); ++index) {
-        if (direct_predicates[index] != NoPredicate) {
-            auto& sinks = predicates[direct_predicates[index]].sinks;
-            sinks.insert(
-                sinks.end(),
-                match_sinks[index].begin(),
-                match_sinks[index].end());
-            continue;
-        }
-        builder.addNewWire(
-            "MATCH_" + instruction_patterns[index].name + "_fanout",
-            recognition_outputs[index],
-            match_sinks[index]);
-    }
-    for (const auto& predicate : predicates) {
-        builder.addNewWire(
-            predicate.name + "_fanout",
-            builder.getOutputPin<RV32IBitPatternMatcher>(
-                predicate.name, "MATCH"),
-            predicate.sinks);
-    }
-    builder.addNewWire(
-        "CONST_LOW_fanout",
-        builder.getOutputPin<ConstantValue<1>>("CONST_LOW", "OUT"),
-        low_sinks);
-    builder.addNewWire(
-        "CONST_HIGH_fanout",
-        builder.getOutputPin<ConstantValue<1>>("CONST_HIGH", "OUT"),
-        high_sinks);
+        std::vector<Rewire::WireSpec>{{"RS1",5},{"RS2",5},{"RD",5},
+            {"IMM_I",32},{"IMM_S",32},{"IMM_B",32},{"IMM_U",32},{"IMM_J",32}},
+        decodeMappings(), Rewire::UnmappedBitValue::LOW);
+    auto recognition = b.addNewComponent<RV32IInstructionRecognition>("RECOGNITION");
+    auto controls = b.addNewComponent<RV32IDecodeControlSignals>("CONTROL_SIGNALS");
+    auto immediate = b.addNewComponent<Mux8to1_32bit>("IMMEDIATE_MUX");
+    auto zero = b.addNewComponent<ConstantValue<32>>("CONST_ZERO32", 0);
+    w.connect(getInputPin<32>("INSTRUCTION"), fields->getInputPin<32>("INSTRUCTION"));
+    w.connect(getInputPin<32>("INSTRUCTION"), recognition->getInputPin<32>("INSTRUCTION"));
+    for (auto pin : {"MATCH_LO", "MATCH_HI"})
+        w.connect(recognition->getOutputPinDynamic(pin), controls->getInputPinDynamic(pin));
+    for (const auto& [name, pin] : controls->getAllOutputPins())
+        w.connect(pin, name == "IMMEDIATE_SELECT" ? immediate->getInputPinDynamic("SEL") : getOutputPinDynamic(name));
+    for (const auto* name : {"RS1", "RS2", "RD"})
+        w.connect(fields->getOutputPin<5>(name), getOutputPin<5>(std::string(name) + "_ADDR"));
+    for (const auto& [name, slot] : std::vector<std::pair<std::string,size_t>>{
+            {"IMM_I",IMM_I},{"IMM_S",IMM_S},{"IMM_B",IMM_B},{"IMM_U",IMM_U},{"IMM_J",IMM_J}})
+        w.connect(fields->getOutputPin<32>(name), immediate->getInputPin<32>("IN" + std::to_string(slot)));
+    for (const auto* pin : {"IN0","IN6","IN7"}) w.connect(zero->getOutputPin<32>("OUT"), immediate->getInputPin<32>(pin));
+    w.connect(immediate->getOutputPin<32>("OUT"), getOutputPin<32>("IMM"));
+    w.finish();
 }

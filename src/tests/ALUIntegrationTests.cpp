@@ -2,6 +2,8 @@
 #include "components/ComponentBuilder.tpp"
 #include "modules/composite/ALU8.hpp"
 #include "modules/composite/ALU32.hpp"
+#include "modules/composite/ALU32FlagUnit.hpp"
+#include "modules/utility/Rewire.hpp"
 #include <array>
 #include <functional>
 #include <map>
@@ -117,6 +119,17 @@ std::vector<TestRow> flags32Rows() {
         row.inputs["ARITH_OVERFLOW"] = unknown;
         rows.push_back(row);
     }
+    for (auto lower : {LogicValue::UNKNOWN, LogicValue::HIGH_Z})
+        for (auto sign : {LogicValue::LOW, LogicValue::HIGH, LogicValue::UNKNOWN, LogicValue::HIGH_Z}) {
+            auto row = rows.front();
+            std::vector<LogicValue> value(32, lower);
+            value[0] = LogicValue::HIGH; // Known nonzero despite unrelated X/Z bits.
+            value[31] = sign;
+            row.inputs["RESULT"] = TestValue(value);
+            row.outputs["ZERO"] = bit(false);
+            row.outputs["NEGATIVE"] = sign;
+            rows.push_back(row);
+        }
     return rows;
 }
 void checkHierarchy(const std::shared_ptr<Component>& root,
@@ -147,4 +160,19 @@ void ALUHierarchyTest::verifyResults() {
     checkHierarchy(Component::create<ALU32>("ALU32"), {{"CONTROL", "ALU32ControlDecoder"}, {"ARITHMETIC", "AddSub32"},
         {"LOGIC", "Logic32"}, {"SHIFT", "Shifter32"}, {"COMPARE", "ALU32CompareUnit"},
         {"RESULT_SELECT", "ALU32ResultSelector"}, {"FLAGS", "ALU32FlagUnit"}}, 32);
+    auto flags = Component::create<ALU32FlagUnit>("FLAGS");
+    std::shared_ptr<Rewire> sign;
+    for (const auto& child : flags->getChildren()) {
+        if (child->getName() == "RESULT_SPLIT")
+            throw std::runtime_error("ALU32 flags must not split all result bits for the sign flag");
+        if (child->getName() == "SIGN_BIT") sign = std::dynamic_pointer_cast<Rewire>(child);
+    }
+    if (!sign || sign->getInputSpecs().size() != 1 || sign->getOutputSpecs().size() != 1
+        || sign->getTotalInputBits() != 32 || sign->getTotalOutputBits() != 1
+        || sign->getBitMappings().size() != 1)
+        throw std::runtime_error("ALU32 SIGN_BIT must be a 32-to-1 bit-selection rewire");
+    const auto& mapping = sign->getBitMappings().front();
+    if (mapping.src_wire != "RESULT" || mapping.src_bit != 31
+        || mapping.dst_wire != "SIGN" || mapping.dst_bit != 0)
+        throw std::runtime_error("ALU32 SIGN_BIT must expose only RESULT[31]");
 }

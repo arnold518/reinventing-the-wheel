@@ -166,7 +166,9 @@ class App:
         self._build_recursive_step(root_vc, all_components_map, all_visual_pins)
         
         all_components = list(all_components_map.values())
-        pin_map = {pin.parent.cpp_handle.get_id() + "." + pin.name: pin for pin in all_visual_pins}
+        pin_map = {pin.cpp_handle.get_id(): pin for pin in all_visual_pins}
+        if len(pin_map) != len(all_visual_pins):
+            raise RuntimeError("Visualizer topology has duplicate pin IDs")
         
         all_wires = []
         def collect_wires_recursively(component):

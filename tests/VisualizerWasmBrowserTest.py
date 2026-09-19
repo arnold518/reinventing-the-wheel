@@ -11,6 +11,29 @@ from urllib.parse import urljoin
 from playwright.sync_api import sync_playwright
 
 
+def check_component_documentation_pattern(page, component_count: int) -> None:
+    overview = page.locator("article table").first
+    assert overview.locator("thead th").all_text_contents() == ["Component", "Description", "Structural", "Behavioral"]
+    availability = overview.locator("tbody tr").evaluate_all(
+        "rows => rows.map(row => [...row.cells].slice(2).map(cell => cell.textContent.trim()))")
+    assert availability == [["Yes", "Yes"]] * component_count, availability
+    headings = page.locator("article h3").evaluate_all(
+        "nodes => nodes.map(node => node.childNodes[0].textContent.trim())")
+    assert headings == ["IO pins", "Behavior", "Implementation", "Examples", "Source and tests"] * component_count
+    subheadings = page.locator("article h4").evaluate_all("""nodes => nodes.map(node => {
+      let parent = node.previousElementSibling;
+      while (parent && parent.tagName !== 'H3') parent = parent.previousElementSibling;
+      return [node.childNodes[0].textContent.trim(), parent?.childNodes[0].textContent.trim()];
+    })""")
+    for title, parent in (("C++ example", "Behavior"), ("Unknown inputs and timing", "Behavior"),
+                          ("Structural implementation", "Implementation"), ("Behavioral implementation", "Implementation"),
+                          ("Embedded simulation", "Examples")):
+        matches = [item for item in subheadings if item[0] == title]
+        assert matches == [[title, parent]] * component_count, matches
+    assert not any(title in {"Binary behavioral reference", "Simulator variants", "Structural circuit"}
+                   for title, _ in subheadings), subheadings
+
+
 def assert_control_accessible(scope, selector: str) -> None:
     control = scope.locator(selector)
     geometry = control.evaluate("""element => {
@@ -487,13 +510,13 @@ def main() -> None:
                 ? window.CircuitRewireGeometry.packedBusModel(controlPack.rewire)
                 : null;
 
-              const memory = await request('api/circuit?scenario=memory-bit');
+              const memory = await request('api/circuit?scenario=flip-flop-cell');
               const root = memory.body.components.find((component) => component.id === memory.body.rootId);
               const applied = await request('api/circuit/apply', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                  scenario: 'memory-bit',
+                  scenario: 'flip-flop-cell',
                   revision: memory.body.profile.revision,
                   exactOverrides: { [memory.body.rootId]: 'behavioral' },
                 }),
@@ -502,7 +525,7 @@ def main() -> None:
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                  scenario: 'memory-bit',
+                  scenario: 'flip-flop-cell',
                   revision: memory.body.profile.revision,
                   exactOverrides: {},
                 }),
@@ -553,7 +576,7 @@ def main() -> None:
                 return { ok: response.ok, body: JSON.parse(await response.text()) };
               }
               const adder = await request('api/circuit?scenario=adder8');
-              const memory = await request('api/circuit?scenario=memory-bit');
+              const memory = await request('api/circuit?scenario=flip-flop-cell');
               const defaultLayout = await (await fetch(
                 new URL('layout.json', document.baseURI),
               )).json();
@@ -606,6 +629,7 @@ def main() -> None:
             timeout=30_000,
         )
         assert "Arithmetic Components" in embed_page.locator("h1").inner_text()
+        check_component_documentation_pattern(embed_page, 3)
         assert embed_page.locator(".simulator-embed iframe").count() == 3
         chapter_embeds = {}
         example_row_count = 0
@@ -648,9 +672,7 @@ def main() -> None:
             embed_page.goto(urljoin(sys.argv[1], f"../alu8/{section}/"),
                             wait_until="domcontentloaded", timeout=30_000)
             assert title in embed_page.locator("h1").inner_text()
-            headings = embed_page.locator("article h3").evaluate_all(
-                "nodes => nodes.map(node => node.childNodes[0].textContent.trim())")
-            assert headings == ["IO pins", "Behavior", "Implementation", "Examples", "Source and tests"] * len(scenarios)
+            check_component_documentation_pattern(embed_page, len(scenarios))
             assert embed_page.locator(".simulator-embed iframe").count() == len(scenarios)
             for scenario, component_type, rows in scenarios:
                 selector = f".simulator-embed iframe[src$='scenario={scenario}']"

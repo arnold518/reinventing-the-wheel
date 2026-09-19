@@ -50,7 +50,10 @@ def main() -> None:
     for parent, child in (
         ("FullAdder", "HalfAdder"),
         ("Mux8to1", "Mux2to1"),
-        ("Register32", "MemoryBit"),
+        ("Register32", "FlipFlopCell"),
+        ("FFMemory8", "FlipFlopCell"),
+        ("FFStorageBank<8,4>", "FFWord<8>"),
+        ("SRAM8", "GatedDLatch"),
         ("RV32IFiveStageCore", "RV32IExecuteStage"),
     ):
         assert effective_color(parent) != effective_color(child)
@@ -79,6 +82,10 @@ def main() -> None:
     assert color_for_layout_type("BitSplitter<32>") != color_for_layout_type(
         "BitJoiner<32>"
     )
+    for family in ("FFArray", "FFMemory", "SRAM", "ROM", "IdealRAMReference"):
+        for width in (8, 16, 32):
+            assert color_for_layout_type(f"{family}{width}") == color_for_layout_type(f"{family}8")
+            assert color_for_layout_type(f"{family}{width}") != list(DEFAULT_COMPONENT_COLOR)
     assert color_for_layout_type(
         "RV32IBitPatternMatcher<mask=0xffffffff,value=0x00000073>"
     ) == [20, 184, 166, 190]

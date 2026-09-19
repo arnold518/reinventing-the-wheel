@@ -5,7 +5,7 @@
 #include "components/ComponentBuilder.tpp"
 #include "modules/basic/Gate.hpp"
 #include "modules/basic/Mux.hpp"
-#include "modules/memory/MemoryBit.hpp"
+#include "modules/memory/FlipFlopCell.hpp"
 #include "modules/memory/Register32.hpp"
 #include "modules/utility/Constant.hpp"
 #include <map>
@@ -272,7 +272,7 @@ void RV32IPipelineRegisterBlock::buildInternals(
     ComponentBuilder& builder) {
     builder.addNewComponent<NOTGate>("NOT_FLUSH");
     builder.addNewComponent<ANDGate>("VALID_GATE");
-    builder.add(circuit::families::MemoryBit, "VALID_STATE");
+    builder.add(circuit::families::FlipFlopCell, "VALID_STATE");
 
     builder.addNewWire(
         "D_VALID_to_gate",

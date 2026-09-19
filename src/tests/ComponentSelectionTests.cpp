@@ -11,7 +11,7 @@
 #include "modules/composite/ALU32.hpp"
 #include "modules/composite/HalfAdder.hpp"
 #include "modules/memory/Memory64Kx32.hpp"
-#include "modules/memory/MemoryBit.hpp"
+#include "modules/memory/FlipFlopCell.hpp"
 #include "modules/memory/Register32.hpp"
 #include "modules/memory/RegisterFile32x32.hpp"
 #include "modules/rv32i/RV32IBuildProfiles.hpp"
@@ -33,11 +33,11 @@ void require(bool condition, const std::string& message) {
     }
 }
 
-circuit::ContractDescriptor memoryBitContract(std::string id = "memory.write-enabled-bit") {
+circuit::ContractDescriptor flipFlopCellContract(std::string id = "memory.write-enabled-bit") {
     return {
         std::move(id),
         1,
-        "Write-enabled memory bit",
+        "Write-enabled flip-flop cell",
         {
             {"D", 1, PinType::INPUT},
             {"WE", 1, PinType::INPUT},
@@ -55,7 +55,7 @@ circuit::VerificationEvidence structuralEvidence() {
     return {
         circuit::VerificationStatus::Verified,
         {"gate-level implementation"},
-        {"MemoryBitTest"},
+        {"FlipFlopCellTest"},
         {},
         {},
         "four-state",
@@ -66,54 +66,54 @@ circuit::VerificationEvidence structuralEvidence() {
 circuit::VerificationEvidence behavioralEvidence() {
     return {
         circuit::VerificationStatus::Verified,
-        {"MemoryBit mux and DFF structure"},
-        {"MemoryBitTest"},
-        {"MemoryBitTest"},
+        {"FlipFlopCell mux and DFF structure"},
+        {"FlipFlopCellTest"},
+        {"FlipFlopCellTest"},
         {},
         "four-state",
         "clock-boundary",
     };
 }
 
-circuit::ImplementationDescriptor structuralMemoryBit() {
+circuit::ImplementationDescriptor structuralFlipFlopCell() {
     circuit::ImplementationDescriptor descriptor;
     descriptor.id = "memory.write-enabled-bit.structural.mux-dff";
     descriptor.contract_id = "memory.write-enabled-bit";
     descriptor.fidelity = circuit::Fidelity::Structural;
-    descriptor.concrete_type_name = MemoryBit::TypeName;
+    descriptor.concrete_type_name = FlipFlopCell::TypeName;
     descriptor.evidence = structuralEvidence();
     descriptor.factory = [](
         const std::string& name,
         const circuit::ParameterMap&,
         const std::shared_ptr<circuit::BuildContext>& context) {
-        return Component::createWithContext<MemoryBit>(context, name);
+        return Component::createWithContext<FlipFlopCell>(context, name);
     };
     return descriptor;
 }
 
-circuit::ImplementationDescriptor behavioralMemoryBit() {
+circuit::ImplementationDescriptor behavioralFlipFlopCell() {
     circuit::ImplementationDescriptor descriptor;
     descriptor.id = "memory.write-enabled-bit.behavioral.direct";
     descriptor.contract_id = "memory.write-enabled-bit";
     descriptor.fidelity = circuit::Fidelity::Behavioral;
     descriptor.concrete_type_name =
-        std::string(circuit::families::MemoryBit.typeName());
+        std::string(circuit::families::FlipFlopCell.typeName());
     descriptor.evidence = behavioralEvidence();
     descriptor.factory = [](
         const std::string& name,
         const circuit::ParameterMap&,
         const std::shared_ptr<circuit::BuildContext>& context) {
-        return circuit::families::MemoryBit.create(
+        return circuit::families::FlipFlopCell.create(
             circuit::Fidelity::Behavioral, name, context);
     };
     return descriptor;
 }
 
-circuit::ComponentCatalog memoryBitCatalog() {
+circuit::ComponentCatalog flipFlopCellCatalog() {
     circuit::ComponentCatalog catalog;
-    catalog.registerContract(memoryBitContract());
-    catalog.registerImplementation(structuralMemoryBit());
-    catalog.registerImplementation(behavioralMemoryBit());
+    catalog.registerContract(flipFlopCellContract());
+    catalog.registerImplementation(structuralFlipFlopCell());
+    catalog.registerImplementation(behavioralFlipFlopCell());
     catalog.freeze();
     return catalog;
 }
@@ -169,10 +169,10 @@ std::shared_ptr<IOComponent> createBuiltinFamilyDut(
     return io;
 }
 
-std::vector<LogicValue> runMemoryBitTrace(circuit::Fidelity fidelity) {
+std::vector<LogicValue> runFlipFlopCellTrace(circuit::Fidelity fidelity) {
     Simulator simulator;
     auto component = createBuiltinFamilyDut(
-        circuit::families::MemoryBit, fidelity);
+        circuit::families::FlipFlopCell, fidelity);
     ComponentBuilder builder(component);
     auto d = builder.addNewWire("D_IN", nullptr, {component->getInputPin("D")});
     auto we = builder.addNewWire("WE_IN", nullptr, {component->getInputPin("WE")});
@@ -276,7 +276,7 @@ std::string BuildProfileTest::getTestName() const {
 }
 
 void BuildProfileTest::verifyResults() {
-    auto catalog = memoryBitCatalog();
+    auto catalog = flipFlopCellCatalog();
     const circuit::ComponentBuildRequest root{
         "memory.write-enabled-bit", "memory", {}, {}, "four-state", "clock-boundary"};
 
@@ -360,14 +360,14 @@ std::string ComponentCatalogSelectionTest::getTestName() const {
 }
 
 void ComponentCatalogSelectionTest::verifyResults() {
-    auto catalog = memoryBitCatalog();
+    auto catalog = flipFlopCellCatalog();
     const circuit::ComponentBuildRequest root{
         "memory.write-enabled-bit", "memory", {}, {}, "four-state", "clock-boundary"};
 
     auto structural_profile = circuit::strictAllStructural();
     auto structural = catalog.createRoot(root, structural_profile);
-    require(std::dynamic_pointer_cast<MemoryBit>(structural.root) != nullptr,
-            "Structural profile did not select MemoryBit");
+    require(std::dynamic_pointer_cast<FlipFlopCell>(structural.root) != nullptr,
+            "Structural profile did not select FlipFlopCell");
     require(structural.root->getSelectedFidelity() == "structural",
             "Structural instance metadata is incorrect");
     require(structural.root->getContractId() == root.contract_id,
@@ -381,8 +381,8 @@ void ComponentCatalogSelectionTest::verifyResults() {
     auto behavioral_profile = circuit::strictAllBehavioral();
     auto behavioral = catalog.createRoot(root, behavioral_profile);
     require(behavioral.root->getTypeName()
-                == std::string(circuit::families::MemoryBit.typeName()),
-            "Behavioral profile changed the public MemoryBit type");
+                == std::string(circuit::families::FlipFlopCell.typeName()),
+            "Behavioral profile changed the public FlipFlopCell type");
     require(std::dynamic_pointer_cast<BasicComponent>(behavioral.root) != nullptr,
             "Behavioral profile did not select a direct evaluator");
     require(behavioral.root->getSelectedFidelity() == "behavioral",
@@ -393,8 +393,8 @@ void ComponentCatalogSelectionTest::verifyResults() {
             "Behavioral manifest should contain one direct implementation node");
 
     circuit::ComponentCatalog behavioral_only;
-    behavioral_only.registerContract(memoryBitContract("memory.behavioral-only"));
-    auto only = behavioralMemoryBit();
+    behavioral_only.registerContract(flipFlopCellContract("memory.behavioral-only"));
+    auto only = behavioralFlipFlopCell();
     only.id = "memory.behavioral-only.direct";
     only.contract_id = "memory.behavioral-only";
     behavioral_only.registerImplementation(std::move(only));
@@ -526,6 +526,32 @@ void BuiltinComponentCatalogInventoryTest::verifyResults() {
     }
 
     const std::set<std::string> expected_types{
+        "MemoryBusAdapter32", "FFMemory8", "FFMemory16", "FFMemory32", "SRAM8", "SRAM16", "SRAM32",
+        "FFWord<8>", "FFWord<16>", "FFWord<32>",
+        "FFStorageBank<8>", "FFStorageBank<16>", "FFStorageBank<32>",
+        "SRAMCell", "SRAMRow", "SRAMBitlinePair", "SRAMRowDecoder",
+        "SRAMPrecharge", "SRAMWriteDriver", "SRAMSenseAmplifier",
+        "SRAMStorageBank<8>", "SRAMStorageBank<16>", "SRAMStorageBank<32>",
+        "SRAMColumnSelector<8>", "SRAMColumnSelector<16>", "SRAMColumnSelector<32>",
+        "SRAMAccessControl<8>", "SRAMAccessControl<16>", "SRAMAccessControl<32>",
+        "SRAMOutputBuffer<8>", "SRAMOutputBuffer<16>", "SRAMOutputBuffer<32>",
+        "SRAM<8>", "SRAM<16>", "SRAM<32>",
+        "MatrixRowDecoder", "StaticReadColumn",
+        "MatrixColumnMux<8>", "MatrixColumnMux<16>", "MatrixColumnMux<32>",
+        "MatrixWriteDistributor<8>", "MatrixWriteDistributor<16>", "MatrixWriteDistributor<32>",
+        "MemoryOutputBuffer<8>", "MemoryOutputBuffer<16>", "MemoryOutputBuffer<32>",
+        "DRAMCell", "DRAMRow", "DRAMSenseColumn",
+        "DRAMStorageBank<8>", "DRAMStorageBank<16>", "DRAMStorageBank<32>",
+        "DRAMCommandControl<8>", "DRAMCommandControl<16>", "DRAMCommandControl<32>",
+        "DRAM<8>", "DRAM<16>", "DRAM<32>",
+        "ROMCell", "ROMRow", "ROMAddressControl",
+        "ROMStorageBank<8>", "ROMStorageBank<16>", "ROMStorageBank<32>",
+        "ROM<8>", "ROM<16>", "ROM<32>",
+        "NORFlashCell", "NORFlashRow",
+        "NORFlashStorageBank<8>", "NORFlashStorageBank<16>", "NORFlashStorageBank<32>",
+        "NORFlashCommandControl<8>", "NORFlashCommandControl<16>", "NORFlashCommandControl<32>",
+        "NORFlash<8>", "NORFlash<16>", "NORFlash<32>",
+        "ROM8", "ROM16", "ROM32", "IdealRAMReference8", "IdealRAMReference16", "IdealRAMReference32",
         "ALU32", "ALU8", "AND8", "ANDGate", "AddSub32", "Adder32",
         "Adder8", "Memory64Kx32", "AddSub8", "ArithmeticUnit8", "LogicUnit8",
         "BarrelShifter8", "CompareSelect8", "ALU8FlagUnit",
@@ -535,7 +561,7 @@ void BuiltinComponentCatalogInventoryTest::verifyResults() {
         "DFlipFlop", "Decoder2to4", "Decoder5to32", "Decrementer8",
         "EqualityChecker8", "FullAdder",
         "GatedDLatch", "HalfAdder", "Incrementer8", "Logic32",
-        "Memory32x32", "Memory4x32", "MemoryBit", "Mux16to1",
+        "Memory32x32", "Memory4x32", "FlipFlopCell", "Mux16to1",
         "Mux16to1_8bit", "Mux2to1", "Mux2to1_32bit", "Mux2to1_4bit",
         "Mux2to1_8bit", "Mux32to1", "Mux32to1_32bit", "Mux4to1",
         "Mux4to1_32bit", "Mux4to1_8bit", "Mux8to1", "Mux8to1_32bit",
@@ -543,11 +569,14 @@ void BuiltinComponentCatalogInventoryTest::verifyResults() {
         "NOTGate", "OR8", "ORGate", "RV32IBitPatternMatcher",
         "RV32IControlFlowUnit", "RV32IDecodeControlUnit",
         "RV32IExecutionControlStatusUnit", "RV32ISingleCycleCore",
+        "RV32ISingleCycleFetchStage", "RV32ISingleCycleDecodeStage", "RV32ISingleCycleExecuteStage",
+        "RV32ISingleCycleMemoryStage", "RV32ISingleCycleWritebackStage", "RV32ISingleCycleNextPCStage",
         "RV32ISingleCycleSystem", "RV32IFiveStageCore",
         "RV32IIFIDPipelineRegister", "RV32IIDEXPipelineRegister",
         "RV32IEXMEMPipelineRegister", "RV32IMEMWBPipelineRegister",
         "RV32IForwardingUnit", "RV32IHazardDetectionUnit",
         "RV32IPipelineControlFlowUnit", "RV32IMemoryAlignmentUnit",
+        "RV32IMemoryLanes", "RV32IMemoryRequest",
         "RV32IPipelineRetirementUnit", "RV32IPipelineCoordinator",
         "RV32IFetchStage", "RV32IDecodeStage", "RV32IExecuteStage",
         "RV32IMemoryStage", "RV32IWritebackStage",
@@ -560,8 +589,12 @@ void BuiltinComponentCatalogInventoryTest::verifyResults() {
         "ALU32CompareUnit", "ALU32ResultSelector", "ALU32FlagUnit"
     };
 
-    require(registered_types == expected_types,
-            "Built-in catalog does not cover every production module TypeName");
+    for (const auto& type : expected_types)
+        require(registered_types.count(type) != 0,
+                "Built-in catalog is missing production module TypeName: " + type);
+    for (const auto& type : registered_types)
+        require(expected_types.count(type) != 0,
+                "Production module TypeName is missing from the expected inventory: " + type);
     require(implementation_count >= expected_types.size(),
             "Built-in catalog unexpectedly lost implementation variants");
 }
@@ -579,7 +612,7 @@ void RecursiveBuildProfileTest::verifyResults() {
         std::string(circuit::families::Memory64Kx32.id()),
         std::string(circuit::families::RegisterFile32x32.id()),
         std::string(circuit::families::Register32.id()),
-        std::string(circuit::families::MemoryBit.id()),
+        std::string(circuit::families::FlipFlopCell.id()),
     };
     size_t rv32i_contracts = 0;
     size_t reusable_contracts = 0;
@@ -625,10 +658,12 @@ void RecursiveBuildProfileTest::verifyResults() {
     require(result.root->getSelectedFidelity() == "structural",
             "Depth-zero profile must keep the RV32I core structural");
     const std::map<std::string, std::string> expected_children{
-        {"CONTROL_FLOW", "RV32IControlFlowUnit"},
-        {"DECODE_CONTROL", "RV32IDecodeControlUnit"},
-        {"REGISTER_FILE", "RegisterFile32x32"},
-        {"ALU", "ALU32"},
+        {"FETCH", "RV32ISingleCycleFetchStage"},
+        {"DECODE", "RV32ISingleCycleDecodeStage"},
+        {"EXECUTE", "RV32ISingleCycleExecuteStage"},
+        {"MEMORY", "RV32ISingleCycleMemoryStage"},
+        {"WRITEBACK", "RV32ISingleCycleWritebackStage"},
+        {"NEXT_PC", "RV32ISingleCycleNextPCStage"},
         {"EXECUTION_STATUS", "RV32IExecutionControlStatusUnit"},
     };
     for (const auto& [name, type] : expected_children) {
@@ -763,9 +798,9 @@ void ComponentTestModelTest::verifyResults() {
     using namespace circuit::test;
 
     ComponentTestSpec spec{
-        "MemoryBitTest",
-        std::string(circuit::families::MemoryBit.id()),
-        "MEMORY_BIT_ROOT",
+        "FlipFlopCellTest",
+        std::string(circuit::families::FlipFlopCell.id()),
+        "FLIP_FLOP_CELL_ROOT",
         {},
         {},
     };
@@ -826,7 +861,7 @@ void ComponentTestModelTest::verifyResults() {
     ComponentTestRunner runner;
     auto runs = runner.runAll(spec, spec.scenarios.front());
     require(runs.targets.size() == 2,
-            "Unified component test must run both MemoryBit fidelities");
+            "Unified component test must run both FlipFlopCell fidelities");
     require(runs.targets[0].root != runs.targets[1].root,
             "Fidelity runs must use independent component trees");
     require(runs.targets[0].simulator != runs.targets[1].simulator,

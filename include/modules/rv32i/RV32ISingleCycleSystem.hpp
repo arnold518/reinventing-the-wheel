@@ -1,9 +1,9 @@
 #pragma once
 
 #include "components/IOComponent.hpp"
+#include "modules/rv32i/RV32IMemorySystem.hpp"
 #include "components/capabilities/RV32ISystemProgramAccess.hpp"
 #include "components/selection/ComponentFamily.hpp"
-#include "modules/memory/Memory64Kx32.hpp"
 #include "modules/rv32i/RV32ISingleCycleCore.hpp"
 #include "rv32i/RV32IProgram.hpp"
 #include "rv32i/RV32IArchitecturalState.hpp"
@@ -20,14 +20,15 @@ class RV32ISingleCycleSystem
     : public IOComponent,
       public RV32ISystemProgramAccess {
 public:
-    explicit RV32ISingleCycleSystem(std::string name);
+    explicit RV32ISingleCycleSystem(std::string name,
+        rv32i::MemoryConfiguration instructions = {}, rv32i::MemoryConfiguration data = {});
     static constexpr const char* TypeName = "RV32ISingleCycleSystem";
     const char* getTypeName() const override { return TypeName; }
     void buildInternals(ComponentBuilder& builder) override;
 
     std::shared_ptr<IOComponent> core() const { return core_; }
-    std::shared_ptr<Memory64Kx32> instructionMemory() const { return instruction_memory_; }
-    std::shared_ptr<Memory64Kx32> dataMemory() const { return data_memory_; }
+    std::shared_ptr<IOComponent> instructionMemory() const { return instruction_memory_; }
+    std::shared_ptr<IOComponent> dataMemory() const { return data_memory_; }
 
     void clearInstructionMemory() override;
     void clearDataMemory() override;
@@ -57,7 +58,8 @@ public:
         size_t end_time) const override;
 
 private:
+    rv32i::MemoryConfiguration instruction_config_, data_config_;
     std::shared_ptr<IOComponent> core_{};
-    std::shared_ptr<Memory64Kx32> instruction_memory_{};
-    std::shared_ptr<Memory64Kx32> data_memory_{};
+    std::shared_ptr<IOComponent> instruction_memory_{};
+    std::shared_ptr<IOComponent> data_memory_{};
 };

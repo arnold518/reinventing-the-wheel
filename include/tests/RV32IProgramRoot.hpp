@@ -1,6 +1,7 @@
 #pragma once
 
 #include "components/IOComponent.hpp"
+#include "modules/rv32i/RV32IMemorySystem.hpp"
 #include "components/capabilities/RV32IStateView.hpp"
 #include "components/selection/ComponentFamily.hpp"
 #include "rv32i/RV32IProgram.hpp"
@@ -11,23 +12,23 @@
 #include <vector>
 
 class ClockGenerator;
-class Memory64Kx32;
 class Simulator;
 template<size_t WIDTH> class Wire;
 
 /**
  * Fixed testbench container shared by every visual RV32I program scenario.
  *
- * The root deliberately has exactly four children at one level: CLOCK, CORE,
- * INSTRUCTION_MEMORY, and DATA_MEMORY.  The root is not a fidelity choice;
- * the recursive BuildProfile starts at CORE and the two memories.
+ * CORE connects through two explicit CPU adapters to universal memory endpoints.
+ * The root is a fixed testbench, not a fidelity choice.
  */
 class RV32IProgramRoot : public IOComponent {
 public:
     RV32IProgramRoot(
         std::string name,
         const circuit::ComponentFamily& core_family,
-        size_t clock_half_period);
+        size_t clock_half_period,
+        rv32i::MemoryConfiguration instructions = {},
+        rv32i::MemoryConfiguration data = {});
 
     static constexpr const char* TypeName = "RV32IProgramRoot";
     static constexpr const char* RootName = "RV32I_PROGRAM_ROOT";
@@ -64,10 +65,10 @@ public:
     std::shared_ptr<RV32IStateView> stateView() const {
         return state_view_;
     }
-    std::shared_ptr<Memory64Kx32> instructionMemory() const {
+    std::shared_ptr<IOComponent> instructionMemory() const {
         return instruction_memory_;
     }
-    std::shared_ptr<Memory64Kx32> dataMemory() const {
+    std::shared_ptr<IOComponent> dataMemory() const {
         return data_memory_;
     }
     std::shared_ptr<ClockGenerator> clock() const { return clock_; }
@@ -78,13 +79,8 @@ private:
     std::shared_ptr<ClockGenerator> clock_{};
     std::shared_ptr<IOComponent> core_{};
     std::shared_ptr<RV32IStateView> state_view_{};
-    std::shared_ptr<Memory64Kx32> instruction_memory_{};
-    std::shared_ptr<Memory64Kx32> data_memory_{};
+    std::shared_ptr<IOComponent> instruction_memory_{};
+    std::shared_ptr<IOComponent> data_memory_{};
 
-    std::shared_ptr<Wire<1>> imem_write_enable_{};
-    std::shared_ptr<Wire<1>> imem_sign_extend_{};
-    std::shared_ptr<Wire<1>> imem_reset_{};
-    std::shared_ptr<Wire<1>> dmem_reset_{};
-    std::shared_ptr<Wire<2>> imem_size_{};
-    std::shared_ptr<Wire<32>> imem_write_data_{};
+    rv32i::MemoryConfiguration instruction_config_, data_config_;
 };

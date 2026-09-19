@@ -84,7 +84,10 @@ The layered layout calculation also no longer forces a child width larger than t
 
 The original decoder used 40 independent full-instruction matcher
 configurations and contained 2,514 components. Its factored replacement uses
-22 shared opcode/function/exact predicates and contains 1,964 components.
+22 shared opcode/function/exact predicates and contained 1,964 components at
+the time of these measurements. The later 4.2 hierarchy refactor has 2,064
+components including routing/group boundaries; the historical timing numbers
+below are not measurements of that refactor.
 Defaults were regenerated for the new predicates, recognition terms, and
 `Mux8to1_32bit`. The deterministic layout overlap audit passes for the updated
 decoder hierarchy.
@@ -123,9 +126,9 @@ two inputs and one output, and completed without a browser error. A temporary
 profile-store browser test also completed:
 
 ```text
-MemoryBit structural: 28 components, 89 pins, 55 wires
-MemoryBit behavioral: 1 component, 5 pins, 5 wires
-MemoryBit restored:   28 components, 89 pins, 55 wires
+FlipFlopCell structural: 28 components, 89 pins, 55 wires
+FlipFlopCell behavioral: 1 component, 5 pins, 5 wires
+FlipFlopCell restored:   28 components, 89 pins, 55 wires
 ```
 
 Cold CPU construction and simulation remain intentionally exact and took

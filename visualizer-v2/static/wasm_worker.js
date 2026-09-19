@@ -1,4 +1,5 @@
-import createCircuitSimModule from "./circuitsim_wasm.js";
+import createCircuitSimModule from "./circuitsim_wasm.js?v=7";
+import { upgradeDefaultLayout } from "./layout_migration.mjs?v=3";
 
 const DB_NAME = "circuitsim-visualizer-v2";
 const DB_VERSION = 1;
@@ -14,7 +15,7 @@ const PREFERRED_ALIASES = {
   GatedDLatchTest: ["gated-d-latch", "gateddlatch", "d-latch"],
   DFlipFlopTest: ["dff", "d-flip-flop"],
   ClockGeneratorTest: ["clock"],
-  MemoryBitTest: ["memory-bit", "memorybit"],
+  FlipFlopCellTest: ["flip-flop-cell", "flipflopcell"],
   Memory64Kx32Test: ["memory64kx32", "memory-64kx32"],
   Register32Test: ["register32", "register-32"],
   RegisterFile4x32Test: ["register-file4x32", "register-file-4x32", "registerfile4x32", "rf4x32"],
@@ -55,8 +56,18 @@ const PREFERRED_ALIASES = {
   ALU32Test: ["alu32", "rv32i-alu32"],
   ALU32RepresentativeSliceTest: ["alu32-slice"],
   RV32ISingleCycleCoreTest: ["rv32i-core"],
+  RV32ISingleCycleFetchStageTest: ["rv32i-single-cycle-fetch"],
+  RV32ISingleCycleDecodeStageTest: ["rv32i-single-cycle-decode"],
+  RV32ISingleCycleExecuteStageTest: ["rv32i-single-cycle-execute"],
+  RV32ISingleCycleMemoryStageTest: ["rv32i-single-cycle-memory"],
+  RV32ISingleCycleWritebackStageTest: ["rv32i-single-cycle-writeback"],
+  RV32ISingleCycleNextPCStageTest: ["rv32i-single-cycle-next-pc"],
   RV32IFiveStageCoreTest: ["rv32i-five-stage-core", "rv32i-pipeline-core"],
   RV32IControlFlowUnitTest: ["rv32i-control-flow"],
+  RV32IMemoryLanesTest: ["rv32i-memory-lanes"],
+  RV32IMemoryRequestTest: ["rv32i-memory-request"],
+  RV32IMemoryAlignmentUnitTest: ["rv32i-memory-alignment"],
+  RV32IBitPatternMatcherTest: ["rv32i-pattern-matcher"],
   RV32IDecodeControlUnitTest: ["rv32i-decode-control", "rv32i-decode"],
   RV32IExecutionControlStatusUnitTest: ["rv32i-execution-status", "rv32i-status"],
   RV32IProgramLoaderTest: ["rv32i-program-loader", "rv32i-program", "program-loader"],
@@ -105,7 +116,37 @@ function migrateProfileOverrides(overrides) {
       migrated[path] = fidelity;
     }
   }
-  return Object.fromEntries(Object.entries(migrated).sort(([left], [right]) => left.localeCompare(right)));
+  const ffPath = path => path.replace(
+    /(^|\.)(REGISTER_FILE|REGISTER_FILE32X32_ROOT)\.X([1-9]|[12][0-9]|3[01])(?=\.|$)(.*)$/,
+    (_match, dot, parent, index, tail) => `${dot}${parent}.STORAGE.WORD_${Number(index)-1}${tail
+      .replace(/^\.BIT_(\d+)(?=\.|$)/, '.CELL_$1')
+      .replace(/^\.D_SPLIT(?=\.|$)/, '.DATA')
+      .replace(/^\.Q_JOIN(?=\.|$)/, '.OUTPUT')}`,
+  );
+  const stagePath = path => {
+    const moves = {
+      'CONTROL_FLOW.PC_IMM_ADD': 'EXECUTE.BRANCH_TARGET_ADD',
+      'CONTROL_FLOW.RS1_IMM_ADD': 'EXECUTE.ALU.ARITHMETIC',
+      'CONTROL_FLOW.JALR_MASK': 'EXECUTE.JALR_MASK',
+      'CONTROL_FLOW': 'FETCH', 'DECODE_CONTROL': 'DECODE.CONTROL',
+      'REGISTER_FILE': 'DECODE.REGISTER_FILE', 'ALU_A_MUX': 'EXECUTE.OPERAND_A',
+      'ALU_B_MUX': 'EXECUTE.OPERAND_B', 'ALU': 'EXECUTE.ALU',
+      'WRITEBACK_MUX': 'WRITEBACK.RESULT_SELECT', 'FETCH_REQUEST': 'FETCH.REQUEST',
+      'DATA_REQUEST': 'MEMORY.REQUEST', 'LOAD_STORE': 'MEMORY.LANES',
+    };
+    const match = path.match(/^(.*\.CORE\.|RV32I_SINGLE_CYCLE_CORE_ROOT\.)(.*)$/);
+    if (match) for (const [old, next] of Object.entries(moves)) {
+      if (match[2] === old || match[2].startsWith(old + '.')) return match[1] + next + match[2].slice(old.length);
+    }
+    return path;
+  };
+  const currentPath = path => stagePath(ffPath(path)).replace(
+    /^(REGISTER32_ROOT|RV32I[^.]*\.(?:[A-Za-z0-9_]+\.)*[A-Za-z0-9_]+_STATE)\.(BIT_([0-9]|[12][0-9]|3[01])|D_SPLIT|Q_JOIN)(?=\.|$)/,
+    (_match, parent, old, bit) => `${parent}.STORAGE.${bit !== undefined ? 'CELL_' + bit : {D_SPLIT:'DATA',Q_JOIN:'OUTPUT'}[old]}`,
+  );
+  const result = Object.fromEntries(Object.entries(migrated).map(([path, fidelity]) => [currentPath(path), fidelity]));
+  for (const [path, fidelity] of Object.entries(migrated)) if (currentPath(path) === path) result[path] = fidelity;
+  return Object.fromEntries(Object.entries(result).sort(([left], [right]) => left.localeCompare(right)));
 }
 
 function normalizeProfileStore(value) {
@@ -168,9 +209,9 @@ function mergeLayout(base, override) {
 // Fill missing defaults, reflow recognized legacy ALU child topologies, and
 // keep other saved settings and placements.
 function mergeLayoutStores(defaults, saved) {
-  const mergeEntries = (base = {}, overrides = {}) => Object.fromEntries(
+  const mergeEntries = (base = {}, overrides = {}, fallback = {}) => Object.fromEntries(
     [...new Set([...Object.keys(base), ...Object.keys(overrides)])].map(
-      key => [key, mergeLayout(base[key], overrides[key])],
+      key => [key, mergeLayout(base[key], upgradeDefaultLayout(base[key] || fallback[key], overrides[key]))],
     ),
   );
   const profiles = {};
@@ -178,7 +219,7 @@ function mergeLayoutStores(defaults, saved) {
     ...Object.keys(defaults.profile_layouts || {}),
     ...Object.keys(saved.profile_layouts || {}),
   ])) {
-    profiles[key] = mergeEntries(defaults.profile_layouts?.[key], saved.profile_layouts?.[key]);
+    profiles[key] = mergeEntries(defaults.profile_layouts?.[key], saved.profile_layouts?.[key], defaults.type_layouts);
   }
   return {
     ...defaults,
@@ -192,11 +233,21 @@ function mergeLayoutStores(defaults, saved) {
 
 function componentLayout(component, layout, layoutKey) {
   const types = layout.type_layouts || {};
-  const base = types[component.type] || {};
-  const specialized = component.layoutType && component.layoutType !== component.type
+  const base = { ...(types[component.type] || {}) };
+  if (component.type === "Rewire" && component.layoutType && component.layoutType !== component.type) {
+    delete base.aspect_ratio;
+    delete base.min_aspect_ratio;
+  }
+  let specialized = component.layoutType && component.layoutType !== component.type
     ? mergeLayout(base, types[component.layoutType] || {})
     : base;
   const fingerprint = component.profileFingerprint;
+  if (fingerprint && fingerprint !== "explicit" && component.type === "Rewire" && component.layoutType !== component.type) {
+    const legacy = { ...(layout.profile_layouts?.[fingerprint]?.Rewire || {}) };
+    delete legacy.aspect_ratio;
+    delete legacy.min_aspect_ratio;
+    specialized = mergeLayout(specialized, legacy);
+  }
   const profile = fingerprint && fingerprint !== "explicit"
     ? ((((layout.profile_layouts || {})[fingerprint] || {})[component.layoutType || component.type]) || {})
     : {};
@@ -212,10 +263,11 @@ function enrichPayload(payload, layout) {
     const titleRatio = Number(entry.title_bar_ratio ?? settings.title_bar_ratio ?? 0.15);
     const pinRatio = Number(entry.pin_size_ratio ?? settings.pin_size_ratio ?? 0.1);
     const pinCount = Math.max(component.inputPinCount || 0, component.outputPinCount || 0);
+    const aspectFloor = Number(entry.aspect_ratio_floor ?? 0.35);
     const computedMinimum = pinCount
-      ? Math.max(0.35, titleRatio + pinRatio * 1.15 * (pinCount + 1))
-      : Math.max(0.35, titleRatio + pinRatio);
-    component.minAspectRatio = Number(entry.min_aspect_ratio ?? computedMinimum);
+      ? Math.max(aspectFloor, titleRatio + pinRatio * 1.15 * (pinCount + 1))
+      : Math.max(aspectFloor, titleRatio + pinRatio);
+    component.minAspectRatio = Math.max(computedMinimum, Number(entry.min_aspect_ratio ?? computedMinimum));
     component.aspectRatio = Math.max(
       component.minAspectRatio,
       Number(entry.aspect_ratio ?? component.minAspectRatio),
@@ -281,7 +333,7 @@ async function initialize() {
       fetch(new URL("./palette.json", import.meta.url)),
     ]);
     const module = await createCircuitSimModule({
-      locateFile: (path) => new URL(path, import.meta.url).toString(),
+      locateFile: (path) => new URL(`${path}?v=7`, import.meta.url).toString(),
       print: (...args) => console.log("[CircuitSim WASM]", ...args),
       printErr: (...args) => console.error("[CircuitSim WASM]", ...args),
     });
@@ -337,12 +389,17 @@ async function localProfileStore() {
   ));
 }
 
-async function loadScenario(scenarioValue, requestedOverrides = null, requestedRevision = null) {
+async function loadScenario(scenarioValue, requestedOverrides = null, requestedRevision = null, coreFidelity = null) {
   const descriptor = normalizeScenario(scenarioValue);
+  if (coreFidelity && (!/^rv32i-(?:five-stage-)?program[0-9]+$/.test(descriptor.key)
+      || !["structural", "behavioral"].includes(coreFidelity))) {
+    throw new TypeError("core_fidelity requires an RV32I program and structural or behavioral");
+  }
   const store = await profileStore();
   const saved = store.scenarios[descriptor.key] || { revision: 0, exact_overrides: {} };
   const revision = requestedRevision == null ? Number(saved.revision || 0) : requestedRevision;
-  const overrides = requestedOverrides == null ? (saved.exact_overrides || {}) : requestedOverrides;
+  const overrides = { ...(requestedOverrides == null ? (saved.exact_overrides || {}) : requestedOverrides) };
+  if (coreFidelity) overrides["RV32I_PROGRAM_ROOT.CORE"] = coreFidelity;
   bridge.clearProfileOverrides();
   for (const [path, fidelity] of Object.entries(overrides)) {
     bridge.setProfileOverride(path, fidelity);
@@ -417,7 +474,7 @@ async function handleRequest(message) {
     });
   }
   if (message.method === "GET" && path === "/api/circuit") {
-    return JSON.stringify(await loadScenario(query.get("scenario") || "adder8"));
+    return JSON.stringify(await loadScenario(query.get("scenario") || "adder8", null, null, query.get("core_fidelity")));
   }
   if (message.method === "GET" && path === "/api/state") {
     if (query.get("session") && query.get("session") !== currentPayload?.sessionId) {
@@ -476,6 +533,10 @@ async function handleRequest(message) {
     const overrides = body.exactOverrides || {};
     const componentById = new Map((currentPayload?.components || []).map((component) => [component.id, component]));
     for (const [path, fidelity] of Object.entries(overrides)) {
+      // Match the native profile store: a saved descendant can be temporarily
+      // absent beneath a behavioral parent. Preserve it on expand/collapse;
+      // only newly added or changed overrides must target a visible component.
+      if (saved.exact_overrides?.[path] === fidelity) continue;
       const component = componentById.get(path);
       if (!component) throw new Error(`Cannot add an override for unknown component '${path}'`);
       if (!(component.availableFidelities || []).includes(fidelity)) {

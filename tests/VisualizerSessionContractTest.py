@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 import shutil
 import subprocess
@@ -103,6 +104,56 @@ def main() -> None:
         compare_topology("ALU8Test", "alu8", layout_path)
         compare_topology("AddSub8Test", "addsub8", layout_path)
         compare_topology("ArithmeticUnit8Test", "arithmetic8", layout_path)
+        compare_topology("SRLatchTest", "sr-latch", layout_path)
+        compare_topology("GatedDLatchTest", "gated-d-latch", layout_path)
+        compare_topology("DFlipFlopTest", "dff", layout_path)
+        compare_topology("FlipFlopCellTest", "flip-flop-cell", layout_path)
+        compare_topology("RewireTest", "rewire", layout_path)
+
+        # A saved global Rewire aspect must not make every pin configuration
+        # inherit the proportions of the largest one. Styles remain reusable.
+        manager = server.LayoutManager(Path(directory) / "rewire-layout.json")
+        manager.type_layouts["Rewire"] = {"aspect_ratio": 9, "min_aspect_ratio": 9, "color": [1, 2, 3, 190]}
+        for width in (8, 16, 32):
+            memory = circuit_backend.create_memory_array("M", "ff", width, 1, fidelity="structural")
+            read = next(c for c in memory.get_children() if c.get_name() == "READ_SELECT")
+            rewire = next(c for c in read.get_children() if c.get_type_name() == "Rewire")
+            key = f"Rewire<in=1,out={width}>"
+            assert server._component_layout_type(rewire) == key
+            assert "aspect_ratio" not in manager.get_layout_for_component(rewire)
+            manager.ensure_component_layout_defaults(rewire)
+            minimum = manager.minimum_aspect_for_component(rewire)
+            assert manager.aspect_for_component(rewire) == minimum < 9
+            assert manager.get_layout_for_component(rewire)["color"] == [1, 2, 3, 190]
+            manager.type_layouts[key]["aspect_ratio"] = minimum + 0.5
+            assert manager.aspect_for_component(rewire) == minimum + 0.5
+        assert manager.type_layouts["Rewire"]["aspect_ratio"] == 9
+
+        # Reset is clocked during setup for RV32I program fixtures. Loading
+        # the viewer must continue that history, not erase it. A terminal
+        # status that changes only at the end must still be known before it.
+        for number in (1, 5, 9):
+            scenario = f"rv32i-program{number}"
+            test = f"RV32ISingleCycleSystemTest/program-{number:02}"
+            overrides = {"RV32I_PROGRAM_ROOT.CORE": "behavioral"}
+            native = server.CircuitSession(scenario, server.LayoutManager(layout_path),
+                                           profile_overrides=overrides)
+            native_topology = native.topology_response()
+            extra = ("--override", "RV32I_PROGRAM_ROOT.CORE", "behavioral")
+            topology = probe("topology", test, scenario, *extra)
+            assert topology["timestamps"] == native_topology["timestamps"]
+            assert topology["checkpoints"] == native_topology["checkpoints"]
+            pins = {p["name"]: p for p in topology["pins"] if p["componentId"] == topology["rootId"]}
+            for checkpoint in topology["checkpoints"]:
+                index = checkpoint["index"]
+                state = probe("state", test, scenario, str(index), *extra)
+                assert state == native.state_at_index(index)
+                detail = checkpoint["detail"]
+                expected = {"PC": f'{int(re.search(r"pc_after=0x([0-9a-f]+)", detail)[1], 16):032b}',
+                            "HALTED": "1" if "halted=true" in detail else "0",
+                            "TRAPPED": "1" if "trapped=true" in detail else "0"}
+                for name, value in expected.items():
+                    assert state["pins"][pins[name]["stateIndex"]] == value, (scenario, checkpoint, name)
 
         native = native_session("memory64kx32", layout_path)
         expected = native.topology_response()

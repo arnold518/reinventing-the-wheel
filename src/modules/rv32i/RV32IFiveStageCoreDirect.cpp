@@ -287,11 +287,11 @@ RV32IFiveStageCoreDirect::accessMemory(
     result.target_misaligned = state.target_misaligned;
     if (state.valid
         && (state.control.mem_read || state.control.mem_write)) {
-        result.memory_data = inputWord(*this, "DMEM_READ_DATA");
+        result.memory_data = rv32i::memoryLoadData(inputWord(*this, "DMEM_RSP_READ_DATA"),state.alu_result,memorySizeEncoding(state.control.mem_size),state.control.load_sign_extend);
         result.data_misaligned =
             isMisaligned(state.alu_result, state.control.mem_size);
         result.data_fault =
-            high(getInputValue("DMEM_FAULT"))
+            (getInputPin<3>("DMEM_RSP_STATUS")->getValueAsUInt64()!=0)
             && !result.data_misaligned;
     }
     return result;
@@ -427,7 +427,7 @@ void RV32IFiveStageCoreDirect::advanceOneCycle() {
     const bool load_active = loadReadActive();
     const bool memory_wait =
         (store_active || load_active)
-        && !high(getInputValue("DMEM_READY"));
+        && !data_request_.done(*this,"DMEM_",ex_mem_.alu_result);
     if (memory_wait) {
         return;
     }
@@ -546,15 +546,15 @@ void RV32IFiveStageCoreDirect::advanceOneCycle() {
                 || control.halt;
         }
         if (!terminalPending() && !terminal_in_id
-            && high(getInputValue("IMEM_READY"))) {
+            && instruction_request_.done(*this,"IMEM_",fetch_pc_)) {
             next_if_id.valid = true;
             next_if_id.pc = fetch_pc_;
             next_if_id.instruction =
-                inputWord(*this, "IMEM_READ_DATA");
+                inputWord(*this, "IMEM_RSP_READ_DATA");
             next_if_id.pc_misaligned =
                 (fetch_pc_ & 0x3U) != 0;
             next_if_id.instruction_fault =
-                high(getInputValue("IMEM_FAULT"));
+                (getInputPin<3>("IMEM_RSP_STATUS")->getValueAsUInt64()!=0);
             next_fetch_pc = fetch_pc_ + 4U;
         }
     }
@@ -666,54 +666,10 @@ void RV32IFiveStageCoreDirect::driveOutputs(
             : LogicValue::LOW,
         current_time);
 
-    _updateOutputWire<32>(
-        simulator, "IMEM_ADDR", fetch_pc_, current_time);
-    _updateOutputWire(
-        simulator,
-        "IMEM_READ_EN",
-        enabled && !terminalPending()
-            ? LogicValue::HIGH
-            : LogicValue::LOW,
-        current_time);
-
-    const auto memory_address = ex_mem_.alu_result;
-    const auto memory_size = ex_mem_.control.mem_size;
-    _updateOutputWire<32>(
-        simulator, "DMEM_ADDR", memory_address, current_time);
-    _updateOutputWire<32>(
-        simulator,
-        "DMEM_WRITE_DATA",
-        ex_mem_.store_data,
-        current_time);
-    _updateOutputWire(
-        simulator,
-        "DMEM_READ_EN",
-        load_active ? LogicValue::HIGH : LogicValue::LOW,
-        current_time);
-    _updateOutputWire(
-        simulator,
-        "DMEM_WRITE_EN",
-        store_active ? LogicValue::HIGH : LogicValue::LOW,
-        current_time);
-    _updateOutputWire<2>(
-        simulator,
-        "DMEM_SIZE",
-        (store_active || load_active)
-            ? memorySizeEncoding(memory_size)
-            : 0,
-        current_time);
-    _updateOutputWire(
-        simulator,
-        "DMEM_SIGN_EXTEND",
-        load_active && ex_mem_.control.load_sign_extend
-            ? LogicValue::HIGH
-            : LogicValue::LOW,
-        current_time);
-
     const bool stall =
         loadUseHazard()
         || ((store_active || load_active)
-            && !high(getInputValue("DMEM_READY")));
+            && !data_request_.done(*this,"DMEM_",ex_mem_.alu_result));
     _updateOutputWire(
         simulator,
         "PIPELINE_STALL",
@@ -722,7 +678,7 @@ void RV32IFiveStageCoreDirect::driveOutputs(
 
     const bool memory_stall =
         enabled && (store_active || load_active)
-        && !high(getInputValue("DMEM_READY"));
+        && !data_request_.done(*this,"DMEM_",ex_mem_.alu_result);
     const bool data_port_stall = false;
     const bool retire_terminal =
         enabled && mem_wb_.valid
@@ -759,6 +715,14 @@ void RV32IFiveStageCoreDirect::driveOutputs(
     const bool pipeline_flush =
         normal_step
         && (older_memory_fault || ex_preterminal || ex_redirect);
+    const bool take_instruction=normal_step && !pipeline_flush && !load_use_stall && !terminalPending()
+        && instruction_request_.done(*this,"IMEM_",fetch_pc_);
+    const bool take_data=normal_step || (retire_terminal && !memory_stall);
+    const bool reset=getInputValue("RST")!=LogicValue::LOW;
+    rv32i::publishMemoryRequest(instruction_request_,reset,take_instruction,fetch_pc_,
+        [&]<size_t W>(const char* pin,uint64_t value){ _updateOutputWire<W>(simulator,std::string("IMEM_")+pin,value,current_time); });
+    rv32i::publishMemoryRequest(data_request_,reset,take_data,ex_mem_.alu_result,
+        [&]<size_t W>(const char* pin,uint64_t value){ _updateOutputWire<W>(simulator,std::string("DMEM_")+pin,value,current_time); });
     for (const auto& [name, active] :
          std::array<std::pair<const char*, bool>, 4>{{
              {"LOAD_USE_STALL", load_use_stall},
@@ -805,6 +769,15 @@ void RV32IFiveStageCoreDirect::driveOutputs(
 void RV32IFiveStageCoreDirect::evaluate(
     size_t current_time,
     Simulator& simulator) {
+    const bool enabled=high(getInputValue("ENABLE")) && !halted_ && !trapped_;
+    const auto old_fetch_pc=fetch_pc_, old_data_address=ex_mem_.alu_result;
+    const unsigned old_size=memorySizeEncoding(ex_mem_.control.mem_size);
+    const bool issue_instruction=enabled && !terminalPending();
+    const bool issue_data=loadReadActive() || storeWriteActive();
+    const bool write_data=storeWriteActive();
+    const auto old_store=ex_mem_.store_data;
+    const bool take_instruction=high(getOutputPin("IMEM_RSP_READY")->getValue());
+    const bool take_data=high(getOutputPin("DMEM_RSP_READY")->getValue());
     const auto clk = getInputValue("CLK");
     const auto rst = getInputValue("RST");
     if (rst == LogicValue::HIGH) {
@@ -815,6 +788,13 @@ void RV32IFiveStageCoreDirect::evaluate(
         && clk == LogicValue::HIGH) {
         advanceOneCycle();
     }
+    const bool edge=previous_clk_==LogicValue::LOW && clk==LogicValue::HIGH;
+    instruction_request_.tick(*this,"IMEM_",rst==LogicValue::HIGH,edge,
+        issue_instruction,take_instruction,old_fetch_pc,0,old_fetch_pc,0,15);
+    data_request_.tick(*this,"DMEM_",rst==LogicValue::HIGH,edge,
+        issue_data,take_data,old_data_address,write_data?1:0,
+        rv32i::memoryWordAddress(old_data_address,old_size),old_store<<((old_data_address&3)*8),
+        rv32i::memoryWriteMask(old_data_address,old_size));
     previous_clk_ = clk;
     driveOutputs(current_time, simulator);
 }

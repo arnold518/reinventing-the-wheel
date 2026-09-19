@@ -28,6 +28,10 @@ from urllib.parse import parse_qs, unquote, urlparse
 
 from palette import color_for_layout_type
 from profile_store import ProfileStore, validate_overrides
+import sram_layout
+import memory_device_layout
+import rv32i_layout
+import register_file_layout
 
 
 ROOT_DIR = Path(__file__).resolve().parents[1]
@@ -115,7 +119,7 @@ PREFERRED_SCENARIO_ALIASES = {
     "GatedDLatchTest": ["gated-d-latch", "gateddlatch", "d-latch"],
     "DFlipFlopTest": ["dff", "d-flip-flop"],
     "ClockGeneratorTest": ["clock"],
-    "MemoryBitTest": ["memory-bit", "memorybit"],
+    "FlipFlopCellTest": ["flip-flop-cell", "flipflopcell"],
     "Memory64Kx32Test": ["memory64kx32", "memory-64kx32"],
     "Register32Test": ["register32", "register-32"],
     "RegisterFile4x32Test": ["register-file4x32", "register-file-4x32", "registerfile4x32", "rf4x32"],
@@ -138,6 +142,10 @@ PREFERRED_SCENARIO_ALIASES = {
     "ALU8ControlDecoderTest": ["alu8-control"],
     "ALU8ResultSelectorTest": ["alu8-result-selector"],
     "ALU32ControlDecoderTest": ["alu32-control"],
+    "RV32IMemoryLanesTest": ["rv32i-memory-lanes"],
+    "RV32IMemoryRequestTest": ["rv32i-memory-request"],
+    "RV32IMemoryAlignmentUnitTest": ["rv32i-memory-alignment"],
+    "RV32IBitPatternMatcherTest": ["rv32i-pattern-matcher"],
     "ALU32CompareUnitTest": ["alu32-compare"],
     "ALU32ResultSelectorTest": ["alu32-result-selector"],
     "ALU32FlagUnitTest": ["alu32-flags"],
@@ -156,6 +164,12 @@ PREFERRED_SCENARIO_ALIASES = {
     "ALU32Test": ["alu32", "rv32i-alu32"],
     "ALU32RepresentativeSliceTest": ["alu32-slice"],
     "RV32ISingleCycleCoreTest": ["rv32i-core"],
+    "RV32ISingleCycleFetchStageTest": ["rv32i-single-cycle-fetch"],
+    "RV32ISingleCycleDecodeStageTest": ["rv32i-single-cycle-decode"],
+    "RV32ISingleCycleExecuteStageTest": ["rv32i-single-cycle-execute"],
+    "RV32ISingleCycleMemoryStageTest": ["rv32i-single-cycle-memory"],
+    "RV32ISingleCycleWritebackStageTest": ["rv32i-single-cycle-writeback"],
+    "RV32ISingleCycleNextPCStageTest": ["rv32i-single-cycle-next-pc"],
     "RV32IFiveStageCoreTest": ["rv32i-five-stage-core", "rv32i-pipeline-core"],
     "RV32IControlFlowUnitTest": ["rv32i-control-flow"],
     "RV32IDecodeControlUnitTest": ["rv32i-decode-control", "rv32i-decode"],
@@ -291,6 +305,17 @@ def _pin_width_by_name(component: Any, getter_name: str, pin_name: str) -> int |
 
 def _component_layout_type(component: Any) -> str:
     component_type = _component_type(component)
+    # Compatibility layout keys; visible component names use the FF vocabulary.
+    if component_type.startswith("FFMemory"):
+        return "FFArray" + component_type[len("FFMemory"):]
+    if component_type.startswith("FFWord<"):
+        return "MemoryWord<FFArray," + component_type[len("FFWord<"):]
+    if component_type.startswith("FFStorageBank<"):
+        return "MemoryStorageBank<FFArray," + component_type[len("FFStorageBank<"):]
+    if component_type == "Rewire":
+        inputs = _component_pin_count(component, "get_input_pins")
+        outputs = _component_pin_count(component, "get_output_pins")
+        return f"Rewire<in={inputs},out={outputs}>"
     if component_type == "BitSplitter":
         width = _pin_width_by_name(component, "get_input_pins", "IN")
         return f"BitSplitter<{width}>" if width else component_type
@@ -343,6 +368,7 @@ def _minimum_aspect_ratio_for_pins(
     layout: dict[str, Any] | None = None,
 ) -> float:
     layout = layout or {}
+    aspect_floor = max(0.01, _float_value(layout.get("aspect_ratio_floor"), MIN_VISIBLE_ASPECT_RATIO))
     title_ratio = max(
         0.0,
         _float_value(
@@ -368,10 +394,10 @@ def _minimum_aspect_ratio_for_pins(
         _component_pin_count(component, "get_output_pins"),
     )
     if pin_count == 0:
-        minimum = max(MIN_VISIBLE_ASPECT_RATIO, title_ratio + pin_size_ratio)
+        minimum = max(aspect_floor, title_ratio + pin_size_ratio)
     else:
         minimum = max(
-            MIN_VISIBLE_ASPECT_RATIO,
+            aspect_floor,
             title_ratio + pin_size_ratio * PIN_SPACING_CLEARANCE_RATIO * (pin_count + 1),
         )
     return round(minimum, 3)
@@ -440,8 +466,10 @@ def _constrain_child_horizontal(
     rel_width: float,
     boundary_fraction: float,
     pin_size_fraction: float,
+    child_stub_ratio: float | None = None,
 ) -> tuple[float, float]:
-    stub_ratio = _stub_margin_ratio(boundary_fraction, pin_size_fraction)
+    stub_ratio = (_stub_margin_ratio(boundary_fraction, pin_size_fraction)
+                  if child_stub_ratio is None else child_stub_ratio)
     rel_width = min(rel_width, _max_width_with_stubs(boundary_fraction, stub_ratio))
     min_left = boundary_fraction + stub_ratio * rel_width
     max_left = 1 - boundary_fraction - stub_ratio * rel_width - rel_width
@@ -457,6 +485,7 @@ def _balanced_grid_layout(
     child_aspects: dict[str, float],
     boundary_fraction: float,
     pin_size_fraction: float,
+    child_stub_ratios: dict[str, float] | None = None,
 ) -> dict[str, dict[str, Any]]:
     count = len(children)
     if count == 0:
@@ -467,14 +496,23 @@ def _balanced_grid_layout(
     cell_w = (1.0 - padding * (cols + 1)) / cols if cols > 0 else 0.5
     cell_h = (1.0 - padding * (rows + 1)) / rows if rows > 0 else 0.5
     usable_y_fraction = max(0.1, 1.0 - title_fraction)
-    stub_ratio = _stub_margin_ratio(boundary_fraction, pin_size_fraction)
-    max_rel_width = _max_column_width_with_stubs(cols, boundary_fraction, stub_ratio)
+    parent_margin = _stub_margin_ratio(boundary_fraction, pin_size_fraction)
+    child_stub_ratios = child_stub_ratios or {}
+    stub_ratio = max(
+        (child_stub_ratios.get(c.get_id(), parent_margin) for c in children),
+        default=parent_margin,
+    )
+    max_rel_width = _max_column_width_with_stubs(cols, parent_margin, stub_ratio)
 
     result: dict[str, dict[str, Any]] = {}
     for index, child in enumerate(sorted(children, key=lambda item: _natural_key(item.get_name()))):
         col = index % cols
         row = index // cols
-        width_from_height = cell_h * usable_y_fraction * parent_aspect / max(child_aspects[child.get_id()], 0.01)
+        # The horizontal footprint also bounds half the child pin height.
+        # Account for both top/bottom extents, not the parent's pin size.
+        vertical_extent = 2 * child_stub_ratios.get(child.get_id(), pin_size_fraction / 2) / max(parent_aspect, .01)
+        width_from_height = cell_h * usable_y_fraction / max(
+            child_aspects[child.get_id()] / max(parent_aspect, .01) + vertical_extent, .01)
         rel_width = max(
             MIN_RELATIVE_CHILD_WIDTH,
             min(cell_w, width_from_height * GRID_CHILD_FILL_RATIO, max_rel_width),
@@ -482,14 +520,65 @@ def _balanced_grid_layout(
         rel_x, rel_width = _constrain_child_horizontal(
             padding + col * (cell_w + padding) + max(0, cell_w - rel_width) / 2,
             rel_width,
-            boundary_fraction,
+            parent_margin,
             pin_size_fraction,
+            child_stub_ratios.get(child.get_id(), parent_margin),
         )
         rel_pos = [
             rel_x,
-            title_fraction + usable_y_fraction * (padding + row * (cell_h + padding)),
+            title_fraction + usable_y_fraction * (padding + row * (cell_h + padding))
+            + rel_width * vertical_extent / 2,
         ]
         result[child.get_name()] = {"rel_pos": rel_pos, "rel_width": rel_width}
+    return result
+
+
+SINGLE_CYCLE_STAGE_ORDER = ("FETCH", "DECODE", "EXECUTE", "MEMORY", "WRITEBACK")
+
+
+def _single_cycle_core_layout(
+    children: list[Any],
+    parent_aspect: float,
+    title_fraction: float,
+    child_aspects: dict[str, float],
+    boundary_fraction: float,
+    pin_size_fraction: float,
+    child_stub_ratios: dict[str, float] | None = None,
+) -> dict[str, dict[str, Any]] | None:
+    """Logical datapath order, with PC selection/status on a separate lower row.
+
+    Feedback wires must not determine stage order. Fit actual child dimensions
+    and pin footprints, including mixed-fidelity/custom proportions. Unknown
+    topologies deliberately fall back to the generic graph layout.
+    """
+    by_name = {child.get_name(): child for child in children}
+    if set(by_name) != {*SINGLE_CYCLE_STAGE_ORDER, "NEXT_PC", "EXECUTION_STATUS"}:
+        return None
+    margin = _stub_margin_ratio(boundary_fraction, pin_size_fraction)
+    available = max(.01, 1 - 2 * margin)
+    body_height = max(.01, 1 - title_fraction - margin)
+    aspect = max(parent_aspect, .01)
+    stubs = child_stub_ratios or {}
+    result = {}
+
+    def fit(name, center_x, center_y, width_budget, height_budget):
+        child_id = by_name[name].get_id()
+        stub = stubs.get(child_id, margin)
+        # A stub ratio bounds half the pin height too. This conservative
+        # envelope keeps pins as well as bodies inside their allotted row.
+        width = min(width_budget / (1 + 2 * stub),
+                    height_budget * aspect / max(child_aspects[child_id] + 2 * stub, .01))
+        height = width * child_aspects[child_id] / aspect
+        result[name] = {"rel_pos": [center_x - width / 2, center_y - height / 2],
+                        "rel_width": width}
+
+    slot = available / len(SINGLE_CYCLE_STAGE_ORDER)
+    for index, name in enumerate(SINGLE_CYCLE_STAGE_ORDER):
+        fit(name, margin + slot * (index + .5), title_fraction + body_height * .27,
+            slot * .88, body_height * .44)
+    for name, center in (("NEXT_PC", .30), ("EXECUTION_STATUS", .70)):
+        fit(name, margin + available * center, title_fraction + body_height * .77,
+            available * .27, body_height * .36)
     return result
 
 
@@ -523,15 +612,18 @@ def _five_stage_pipeline_layout(
         *FIVE_STAGE_PIPELINE_CHILD_ORDER,
         "COORDINATOR",
     }
-    if set(child_by_name) != required_names:
+    memory_names = {"FETCH_REQUEST", "DATA_REQUEST", "LOAD_STORE", "DATA_ISSUE", "DATA_OPERATION",
+                    "MEMORY_ZERO", "FETCH_WRITE_DATA", "FETCH_OPERATION", "FETCH_MASK"}
+    has_memory = set(child_by_name) == required_names | memory_names
+    if set(child_by_name) != required_names and not has_memory:
         return None
 
     content_top = title_fraction
     content_height = max(0.1, 1.0 - content_top)
     pipeline_top = content_top + content_height * 0.04
-    pipeline_height = content_height * 0.60
-    coordinator_top = content_top + content_height * 0.72
-    coordinator_height = content_height * 0.22
+    pipeline_height = content_height * (0.42 if has_memory else 0.60)
+    coordinator_top = content_top + content_height * (0.51 if has_memory else 0.72)
+    coordinator_height = content_height * (0.14 if has_memory else 0.22)
     stub_ratio = _stub_margin_ratio(
         boundary_fraction, pin_size_fraction
     )
@@ -617,6 +709,19 @@ def _five_stage_pipeline_layout(
         ],
         "rel_width": coordinator_width,
     }
+    if has_memory:
+        service_y = content_top + content_height * 0.73
+        for name, center, preferred in (
+            ("FETCH_REQUEST", 0.15, 0.17), ("LOAD_STORE", 0.49, 0.16),
+            ("DATA_REQUEST", 0.82, 0.17)):
+            aspect = child_aspects[child_by_name[name].get_id()]
+            width = min(preferred, 0.23 * content_height * parent_aspect / max(aspect, .01))
+            placements[name] = {"rel_pos": [center-width/2, service_y], "rel_width": width}
+        for i, name in enumerate(("MEMORY_ZERO", "FETCH_WRITE_DATA", "FETCH_OPERATION", "FETCH_MASK",
+                                  "DATA_ISSUE", "DATA_OPERATION")):
+            aspect = child_aspects[child_by_name[name].get_id()]
+            width = min(.035, .04 * parent_aspect / max(aspect, .01))
+            placements[name] = {"rel_pos": [.32+i*.055, content_top+content_height*.66], "rel_width": width}
     return placements
 
 
@@ -714,7 +819,7 @@ def _rv32i_program_root_layout(
     return placements
 
 
-def _layered_graph_layout(
+def _custom_child_layout(
     parent: Any,
     children: list[Any],
     parent_aspect: float,
@@ -722,9 +827,45 @@ def _layered_graph_layout(
     child_aspects: dict[str, float],
     boundary_fraction: float,
     pin_size_fraction: float,
-) -> dict[str, dict[str, Any]]:
+    child_stub_ratios: dict[str, float] | None = None,
+) -> dict[str, dict[str, Any]] | None:
+    """Return an intentional floorplan, or None for generic automatic layout.
+
+    Keep this dispatch shared with offline refresh tools so a newly introduced
+    floorplan cannot accidentally be overwritten by a broad automatic reflow.
+    """
     if not children:
         return {}
+
+    register_layout = register_file_layout.placements(
+        _component_type(parent),
+        {child.get_name(): child_aspects[child.get_id()] for child in children},
+        parent_aspect,
+    )
+    if register_layout is not None:
+        return register_layout
+    cpu_layout = rv32i_layout.placements(
+        _component_type(parent),
+        {child.get_name(): child_aspects[child.get_id()] for child in children},
+        parent_aspect,
+    )
+    if cpu_layout is not None:
+        return cpu_layout
+
+    memory_layout = sram_layout.placements(
+        _component_type(parent),
+        {child.get_name(): child_aspects[child.get_id()] for child in children},
+        parent_aspect,
+    )
+    if memory_layout is not None:
+        return memory_layout
+    memory_layout = memory_device_layout.placements(
+        _component_type(parent),
+        {child.get_name(): child_aspects[child.get_id()] for child in children},
+        parent_aspect,
+    )
+    if memory_layout is not None:
+        return memory_layout
 
     if _component_type(parent) == "RV32IProgramRoot":
         program_layout = _rv32i_program_root_layout(
@@ -750,6 +891,30 @@ def _layered_graph_layout(
         if pipeline_layout is not None:
             return pipeline_layout
 
+    if _component_type(parent) == "RV32ISingleCycleCore":
+        return _single_cycle_core_layout(
+            children, parent_aspect, title_fraction, child_aspects,
+            boundary_fraction, pin_size_fraction, child_stub_ratios,
+        )
+
+    return None
+
+
+def _layered_graph_layout(
+    parent: Any,
+    children: list[Any],
+    parent_aspect: float,
+    title_fraction: float,
+    child_aspects: dict[str, float],
+    boundary_fraction: float,
+    pin_size_fraction: float,
+    child_stub_ratios: dict[str, float] | None = None,
+) -> dict[str, dict[str, Any]]:
+    custom = _custom_child_layout(parent, children, parent_aspect, title_fraction,
+                                 child_aspects, boundary_fraction, pin_size_fraction,
+                                 child_stub_ratios)
+    if custom is not None:
+        return custom
     child_by_id = {child.get_id(): child for child in children}
     child_ids = list(child_by_id)
     input_driven: set[str] = set()
@@ -787,6 +952,7 @@ def _layered_graph_layout(
             child_aspects,
             boundary_fraction,
             pin_size_fraction,
+            child_stub_ratios,
         )
 
     full_sccs = _tarjan_scc(child_ids, edges)
@@ -911,6 +1077,7 @@ def _layered_graph_layout(
             child_aspects,
             boundary_fraction,
             pin_size_fraction,
+            child_stub_ratios,
         )
 
     node_levels = {node: levels[scc_index_by_node[node]] for node in child_ids}
@@ -991,8 +1158,8 @@ def _layered_graph_layout(
     column_widths: list[float] = []
     for nodes in visual_columns:
         maximum_height_per_width = max(
-            child_aspects[node] / max(parent_aspect, 0.01)
-            + pin_size_fraction
+            (child_aspects[node] + 2 * (child_stub_ratios or {}).get(node, pin_size_fraction / 2))
+            / max(parent_aspect, 0.01)
             for node in nodes
         )
         rel_width = min(
@@ -1016,18 +1183,22 @@ def _layered_graph_layout(
             )
         column_widths.append(rel_width)
 
-    stub_ratio = _stub_margin_ratio(boundary_fraction, pin_size_fraction)
-    maximum_width = _max_width_with_stubs(
-        boundary_fraction,
-        stub_ratio,
-    )
+    # Parent inner stubs and child outer stubs have independent styles. Using
+    # the parent's compact pin ratios for a normal-sized child underestimates
+    # its footprint and makes an ordinary forward wire double back.
+    parent_margin = _stub_margin_ratio(boundary_fraction, pin_size_fraction)
+    child_stub_ratios = child_stub_ratios or {}
+    column_stub_ratios = [
+        max(child_stub_ratios.get(node, parent_margin) for node in nodes)
+        for nodes in visual_columns
+    ]
+    outer_width_factors = [1 + 2 * ratio for ratio in column_stub_ratios]
     column_widths = [
-        min(width, maximum_width)
-        for width in column_widths
+        min(width, _max_width_with_stubs(parent_margin, ratio))
+        for width, ratio in zip(column_widths, column_stub_ratios)
     ]
 
-    available_width = max(0.0, 1 - 2 * boundary_fraction)
-    outer_width_factor = 1 + 2 * stub_ratio
+    available_width = max(0.0, 1 - 2 * parent_margin)
     if visual_column_count > 1:
         # Keep a predictable portion of the parent available as wire gutters.
         # If the preferred heterogeneous column widths do not fit, scale them
@@ -1036,14 +1207,16 @@ def _layered_graph_layout(
             available_width
             * max(0.0, 1 - LAYERED_HORIZONTAL_FILL_RATIO)
         )
-        body_budget = max(
+        outer_budget = max(
             0.0,
             available_width - minimum_total_gutter,
-        ) / max(outer_width_factor, 0.01)
-        preferred_body_width = sum(column_widths)
-        if preferred_body_width > body_budget:
-            scale = body_budget / max(
-                preferred_body_width,
+        )
+        preferred_outer_width = sum(
+            w * factor for w, factor in zip(column_widths, outer_width_factors)
+        )
+        if preferred_outer_width > outer_budget:
+            scale = outer_budget / max(
+                preferred_outer_width,
                 MIN_RELATIVE_CHILD_WIDTH,
             )
             column_widths = [
@@ -1052,8 +1225,8 @@ def _layered_graph_layout(
             ]
 
     total_outer_width = sum(
-        width * outer_width_factor
-        for width in column_widths
+        width * factor
+        for width, factor in zip(column_widths, outer_width_factors)
     )
     inter_column_gap = (
         max(0.0, available_width - total_outer_width)
@@ -1066,8 +1239,10 @@ def _layered_graph_layout(
     if visual_column_count == 1:
         column_centers.append(0.5)
     else:
-        outer_cursor = boundary_fraction
-        for rel_width in column_widths:
+        outer_cursor = parent_margin
+        for rel_width, stub_ratio, outer_width_factor in zip(
+            column_widths, column_stub_ratios, outer_width_factors
+        ):
             column_centers.append(
                 outer_cursor
                 + stub_ratio * rel_width
@@ -1089,8 +1264,9 @@ def _layered_graph_layout(
             rel_x, fitted_width = _constrain_child_horizontal(
                 x_center - rel_width / 2,
                 rel_width,
-                boundary_fraction,
+                parent_margin,
                 pin_size_fraction,
+                child_stub_ratios.get(node, parent_margin),
             )
             rel_pos = [
                 rel_x,
@@ -1137,13 +1313,26 @@ class LayoutManager:
         return _clone(self.type_layouts.get(component_type, {}))
 
     def get_layout_for_component(self, component: Any) -> dict[str, Any]:
+        return self.layout_for_component_profile(component, _component_profile_fingerprint(component))
+
+    def layout_for_component_profile(self, component: Any, profile_fingerprint: str) -> dict[str, Any]:
+        """Resolve geometry for a profile without constructing its simulation."""
         component_type = _component_type(component)
         component_layout_type = _component_layout_type(component)
         layout = self.get_layout_for(component_type)
+        if component_type == "Rewire" and component_layout_type != component_type:
+            # Legacy shared proportions were enlarged by unrelated Rewires.
+            # Retain styling; geometry now belongs to the pin-count variant.
+            layout.pop("aspect_ratio", None)
+            layout.pop("min_aspect_ratio", None)
         if component_layout_type != component_type:
             layout = self._merge_layouts(layout, self.get_layout_for(component_layout_type))
-        profile_fingerprint = _component_profile_fingerprint(component)
         if profile_fingerprint != "explicit":
+            if component_type == "Rewire" and component_layout_type != component_type:
+                legacy = _clone(self.profile_layouts.get(profile_fingerprint, {}).get(component_type, {}))
+                legacy.pop("aspect_ratio", None)
+                legacy.pop("min_aspect_ratio", None)
+                layout = self._merge_layouts(layout, legacy)
             profile_layout = self.profile_layouts.get(profile_fingerprint, {}).get(component_layout_type, {})
             layout = self._merge_layouts(layout, profile_layout)
         return layout
@@ -1201,6 +1390,16 @@ class LayoutManager:
             ),
         )
 
+    def child_stub_ratios(self, children: list[Any]) -> dict[str, float]:
+        """Horizontal pin footprints, resolved with each child's own profile/style."""
+        return {
+            child.get_id(): _stub_margin_ratio(
+                self.visual_ratio_for_component(child, "boundary_area_ratio"),
+                self.visual_ratio_for_component(child, "pin_size_ratio"),
+            )
+            for child in children
+        }
+
     @staticmethod
     def _coerced_aspect(layout: dict[str, Any], fallback: float, minimum: float) -> float:
         if "aspect_ratio" not in layout:
@@ -1229,9 +1428,10 @@ class LayoutManager:
     ) -> None:
         component_type = _component_layout_type(component)
         layout = self.type_layouts.setdefault(component_type, {})
-        for key, value in COMPONENT_LAYOUT_DEFAULTS.get(
-            component_type, {}
-        ).items():
+        defaults = {**COMPONENT_LAYOUT_DEFAULTS.get(component_type, {}), **sram_layout.defaults(component_type),
+                    **memory_device_layout.defaults(component_type), **rv32i_layout.defaults(component_type),
+                    **register_file_layout.defaults(component_type)}
+        for key, value in defaults.items():
             if key not in layout:
                 layout[key] = value
                 self.is_dirty = True
@@ -1511,7 +1711,8 @@ class CircuitSession:
         self.simulator = self.test_scenario.get_simulator()
         if not self.test_scenario.is_simulation_precomputed():
             self.test_scenario.schedule_initial_events(0)
-            self.simulator.run_and_record(self.test_scenario.get_run_duration())
+            # Preserve any reset/preload history recorded by setup_circuit().
+            self.simulator.advance_and_record(self.test_scenario.get_run_duration())
         checkpoint_metadata = self._checkpoint_metadata()
         checkpoint_times = [checkpoint["time"] for checkpoint in checkpoint_metadata]
         self.timestamps = sorted({int(time) for time in self.simulator.get_unique_timestamps()} | set(checkpoint_times))
@@ -1552,7 +1753,7 @@ class CircuitSession:
         self.wire_handles: dict[str, Any] = {}
         self.pin_handles_by_index: list[Any] = []
         self.wire_handles_by_index: list[Any] = []
-        self.pin_handles_by_component_name: dict[tuple[str, str], Any] = {}
+        self.pin_handles_by_component_direction_name: dict[tuple[str, str, str], Any] = {}
         self._build_topology()
         self._validate_topology_endpoints()
         self.signal_snapshot = circuit_backend.VisualSignalSnapshot(
@@ -1730,11 +1931,16 @@ class CircuitSession:
         try:
             pin_id = pin.get_id()
         except AttributeError:
-            pin_id = f"{component_id}.{pin_name}"
+            pin_id = f"{component_id}.{pin_type}.{pin_name}"
+        if pin_id in self.pin_handles:
+            raise RuntimeError(f"Visualizer topology has a duplicate pin ID: {pin_id}")
+        key = (component_id, pin_type, pin_name)
+        if key in self.pin_handles_by_component_direction_name:
+            raise RuntimeError(f"Visualizer topology has a duplicate pin: {key}")
         state_index = len(self.pin_handles_by_index)
         self.pin_handles[pin_id] = pin
         self.pin_handles_by_index.append(pin)
-        self.pin_handles_by_component_name[(component_id, pin_name)] = pin
+        self.pin_handles_by_component_direction_name[key] = pin
         record = {
             "id": pin_id,
             "componentId": component_id,
@@ -1833,6 +2039,11 @@ class CircuitSession:
     ) -> dict[str, dict[str, Any]]:
         manager = layout_manager or self.layout_manager
         is_root = depth == 0
+        if memory_device_layout.defaults(_component_type(component)) or rv32i_layout.defaults(_component_type(component)):
+            # A bank can be encountered before its row types. Seed their thin
+            # matrix proportions before calculating normalized row positions.
+            for child in children:
+                manager.ensure_component_layout_defaults(child)
         parent_aspect = manager.aspect_for_component(component, scenario_key=self.layout_key, is_root=is_root)
         title_ratio = manager.visual_ratio_for_component(
             component,
@@ -1865,6 +2076,7 @@ class CircuitSession:
             child_aspects,
             boundary_fraction,
             pin_size_fraction,
+            manager.child_stub_ratios(children),
         )
 
     def _ensure_child_defaults(self, component: Any, children: list[Any], depth: int) -> None:
@@ -1999,8 +2211,14 @@ class CircuitSession:
                 "wires": wires,
             }
 
-    def _component_pin_value(self, component_id: str, pin_name: str) -> str | None:
-        handle = self.pin_handles_by_component_name.get((component_id, pin_name))
+    def _component_pin_value(self, component_id: str, pin_name: str, pin_type: str | None = None) -> str | None:
+        if pin_type is None:
+            inputs = self._component_pin_value(component_id, pin_name, "input")
+            outputs = self._component_pin_value(component_id, pin_name, "output")
+            if inputs is not None and outputs is not None:
+                raise ValueError(f"Ambiguous pin name; specify direction: {component_id}.{pin_name}")
+            return inputs if inputs is not None else outputs
+        handle = self.pin_handles_by_component_direction_name.get((component_id, pin_type, pin_name))
         return _signal_value(handle) if handle else None
 
     def _component_ports(self, component_id: str, pin_names: tuple[str, ...]) -> dict[str, dict[str, Any]]:
@@ -2101,6 +2319,9 @@ class CircuitSession:
             "supported": True,
             "capacityBytes": 64 * 1024 * 4,
             "capacityWords": 64 * 1024,
+            "wordBits": 32,
+            "historyEnabled": True,
+            "touchedWordsTruncated": False,
             "memoryRole": memory_role,
             "windowActive": window_active,
             "activeAddress": active_address,
@@ -2131,6 +2352,46 @@ class CircuitSession:
                 return self._register_file_state(component, component_id, index, timestamp)
             if component_type == "Memory64Kx32":
                 return self._memory64kx32_state(component, component_id, index, timestamp)
+            native_device = bool(re.fullmatch(r"(SRAM|DRAM|ROM|NORFlash)<(8|16|32)>", component_type)) or component_type.startswith("MemoryContainer<")
+            if native_device or re.fullmatch(r"(FFMemory|SRAM|ROM|IdealRAMReference)(8|16|32)", component_type):
+                try:
+                    config = circuit_backend.memory_configuration(component)
+                except ValueError:
+                    config = None  # Structural slices expose pins, not the compact store.
+                if config is not None and config["record_history"]:
+                    ports = self._component_ports(component_id, (
+                        "WORD_ADDR", "WRITE_DATA", "WRITE_MASK", "WE", "READ_EN",
+                        "CLK", "RST", "READ_DATA", "FAULT", "CMD", "ADDR", "BUSY", "ERROR",
+                        "READ_VALID", "ROW_OPEN", "WRITE_ENABLED", "CE_N", "OE_N", "WE_N",
+                        "REQ_VALID", "REQ_READY", "REQ_OP", "REQ_ADDR", "REQ_WRITE_DATA", "REQ_WRITE_MASK",
+                        "RSP_VALID", "RSP_READY", "RSP_READ_DATA", "RSP_STATUS"))
+                    word = _binary_value_to_int(ports.get("WORD_ADDR", {}).get("value"))
+                    address = word * (config["data_width"] // 8) if word is not None else None
+                    if address is not None and address > 0xFFFFFFFF:
+                        address = None
+                    if native_device and ("CMD" in ports or address is not None and address >= config["capacity_bytes"]):
+                        address = None
+                    active = address is not None and any(
+                        ports.get(pin, {}).get("value") == "1" for pin in ("READ_EN", "WE"))
+                    if component_type.startswith(("ROM<", "SRAM<")):
+                        active = address is not None and all(ports.get(p, {}).get("value") == "0" for p in ("CE_N", "OE_N"))
+                        if component_type.startswith("SRAM<"):
+                            active = active and ports.get("WE_N", {}).get("value") == "1"
+                    snapshot = circuit_backend.memory_snapshot(component, timestamp,
+                        (address or 0) if active else 0,
+                        min(16, config["depth_words"]) if native_device else int(active))
+                    return {
+                        "index": index, "time": timestamp, "componentId": component_id,
+                        "type": component_type, "supported": True,
+                        "capacityBytes": config["capacity_bytes"], "capacityWords": config["depth_words"],
+                        "wordBits": config["data_width"], "historyEnabled": True, "memoryRole": "generic",
+                        "windowActive": active, "activeAddress": address, "activeBaseAddress": address,
+                        "touchedWordCount": snapshot["touched_count"],
+                        "touchedWordsTruncated": snapshot["touched_count"] > len(snapshot["touched_words"]),
+                        "touchedWords": [_memory_word_entry(a, bits) for a, bits in snapshot["touched_words"]],
+                        "windowWords": [_memory_word_entry(a, bits) for a, bits in snapshot["words"]],
+                        "ports": ports,
+                    }
             return {
                 "index": index,
                 "time": timestamp,
@@ -2185,19 +2446,31 @@ class SessionStore:
             profile_overrides=overrides,
         ))
 
-    def get(self, scenario: str) -> CircuitSession:
+    def get(self, scenario: str, core_fidelity: str | None = None) -> CircuitSession:
         scenario_key = normalize_scenario(scenario)
+        if core_fidelity and (
+            not re.fullmatch(r"rv32i-(?:five-stage-)?program[0-9]+", scenario_key)
+            or core_fidelity not in ("structural", "behavioral")
+        ):
+            raise ValueError("core_fidelity requires an RV32I program and structural or behavioral")
         with self.lock:
             self._reload_layout_if_changed()
             session_id = self.active_sessions.get(scenario_key)
             session = self.sessions.get(session_id or "")
             revision, overrides = self.profile_store.get(scenario_key)
+            if core_fidelity:
+                overrides = {**overrides, "RV32I_PROGRAM_ROOT.CORE": core_fidelity}
             if (
                 session is None
                 or session.profile_revision != revision
                 or session.profile_overrides != overrides
             ):
-                return self._new_for_saved_profile(scenario_key)
+                if not core_fidelity:
+                    return self._new_for_saved_profile(scenario_key)
+                return self._remember(CircuitSession(
+                    scenario_key, self.layout_manager,
+                    profile_revision=revision, profile_overrides=overrides,
+                ))
             self.sessions.move_to_end(session.session_id)
             return session
 
@@ -2365,7 +2638,8 @@ class VisualizerHandler(SimpleHTTPRequestHandler):
                 json_response(self, {"default": DEFAULT_SCENARIO, "scenarios": SCENARIO_OPTIONS})
             elif path == "/api/circuit":
                 scenario = query.get("scenario", [DEFAULT_SCENARIO])[0]
-                json_response(self, STORE.get(scenario).topology_response())
+                core_fidelity = query.get("core_fidelity", [None])[0]
+                json_response(self, STORE.get(scenario, core_fidelity).topology_response())
             elif path == "/api/state":
                 index = int(query.get("index", [0])[0])
                 session_id = query.get("session", [""])[0]

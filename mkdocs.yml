@@ -1,5 +1,5 @@
-site_name: CircuitSim Notes
-site_description: Documentation and lecture notes for the CircuitSim project
+site_name: Reinventing the Wheel
+site_description: Documentation and lecture notes for the reinventing the wheel project
 site_url: https://arnold518.github.io/reinventing-the-wheel/
 
 repo_name: arnold518/reinventing-the-wheel
@@ -11,6 +11,7 @@ strict: true
 
 hooks:
   - tools/mkdocs_examples.py
+  - tools/mkdocs_rv32i.py
 
 theme:
   name: material
@@ -112,6 +113,81 @@ nav:
       - 2.4. Comparison and Selection: alu8/2.4.md
       - 2.5. Flags: alu8/2.5.md
       - 2.6. Complete ALU8: alu8/2.6.md
+  - Memories:
+      - 3.1. Memory Devices:
+          - memory/3.1/index.md
+          - 3.1.0. Helper Components: memory/3.1.0.md
+          - 3.1.1. Flip-Flop Storage: memory/3.1.1.md
+          - 3.1.2. SRAM: memory/3.1.2.md
+          - 3.1.3. DRAM: memory/3.1.3.md
+          - 3.1.4. ROM: memory/3.1.4.md
+          - 3.1.5. NOR Flash: memory/3.1.5.md
+          - 3.1.6. Scalable Memory Container: memory/3.1.6.md
+      - 3.2. Memory Transactions: memory/3.2.md
+      - 3.3. Memory Controllers: memory/3.3.md
+  - RV32I:
+      - 4.1. RV32I Reference:
+          - rv32i/4.1/index.md
+          - 4.1.1. Machine Model: rv32i/4.1/machine.md
+          - 4.1.2. Formats and Decoding: rv32i/4.1/formats.md
+          - 4.1.3. Instruction Reference:
+              - rv32i/4.1/instructions/index.md
+              - Arithmetic: rv32i/4.1/instructions/arithmetic.md
+              - Logic: rv32i/4.1/instructions/logic.md
+              - Shifts: rv32i/4.1/instructions/shifts.md
+              - Comparisons: rv32i/4.1/instructions/comparisons.md
+              - Upper Immediates: rv32i/4.1/instructions/upper-immediates.md
+              - Loads: rv32i/4.1/instructions/loads.md
+              - Stores: rv32i/4.1/instructions/stores.md
+              - Branches: rv32i/4.1/instructions/branches.md
+              - Jumps: rv32i/4.1/instructions/jumps.md
+              - Ordering and System: rv32i/4.1/instructions/system.md
+          - 4.1.4. Executable Reference: rv32i/4.1/implementation.md
+          - 4.1.5. Programs and Verification:
+              - rv32i/4.1/programs/index.md
+              - Instruction Behavior:
+                  - 1. Array sum, loop, and stores: rv32i/4.1/programs/program-01.md
+                  - 2. Arithmetic, logic, shifts, and comparisons: rv32i/4.1/programs/program-02.md
+                  - 3. Signed and unsigned memory accesses: rv32i/4.1/programs/program-03.md
+                  - 4. Conditional branches and fallthrough: rv32i/4.1/programs/program-04.md
+                  - 5. Direct call, indirect jump, and return: rv32i/4.1/programs/program-05.md
+                  - 6. Upper immediates, PC-relative values, and FENCE: rv32i/4.1/programs/program-06.md
+                  - 7. Fibonacci sequence: rv32i/4.1/programs/program-07.md
+                  - 8. Byte copy and checksum: rv32i/4.1/programs/program-08.md
+              - Traps:
+                  - 9. Illegal instruction and precise stopping: rv32i/4.1/programs/program-09.md
+                  - 10. Environment-call trap: rv32i/4.1/programs/program-10.md
+                  - 11. Misaligned word load: rv32i/4.1/programs/program-11.md
+                  - 12. Misaligned halfword store: rv32i/4.1/programs/program-12.md
+                  - 13. Out-of-range word load: rv32i/4.1/programs/program-13.md
+                  - 14. Out-of-range word store: rv32i/4.1/programs/program-14.md
+                  - 15. Misaligned jump target: rv32i/4.1/programs/program-15.md
+                  - 16. Instruction-fetch access fault: rv32i/4.1/programs/program-16.md
+              - Workloads:
+                  - 17. Independent ALU chains: rv32i/4.1/programs/program-17.md
+                  - 18. Dependent ALU chain: rv32i/4.1/programs/program-18.md
+                  - 19. Repeated load-use pairs: rv32i/4.1/programs/program-19.md
+                  - 20. Branch-heavy loop: rv32i/4.1/programs/program-20.md
+                  - 21. Sixteen-word array sum: rv32i/4.1/programs/program-21.md
+                  - 22. Word copy and checksum: rv32i/4.1/programs/program-22.md
+      - 4.2. RV32I Building Blocks:
+          - rv32i/4.2/index.md
+          - 4.2.1. Register32: rv32i/4.2/register.md
+          - 4.2.2. Register File: rv32i/4.2/register-file.md
+          - 4.2.3. ALU32: rv32i/4.2/alu32.md
+          - 4.2.4. Instruction Decoder: rv32i/4.2/instruction-decoder.md
+          - 4.2.5. Program Counter and Control Flow: rv32i/4.2/control-flow.md
+          - 4.2.6. Memory Access: rv32i/4.2/memory-access.md
+          - 4.2.7. Execution Control and Status: rv32i/4.2/execution-status.md
+      - 4.3. Single-Cycle Core:
+          - rv32i/4.3/index.md
+          - 4.3.1. Fetch: rv32i/4.3/fetch.md
+          - 4.3.2. Decode and Register Read: rv32i/4.3/decode.md
+          - 4.3.3. Execute: rv32i/4.3/execute.md
+          - 4.3.4. Memory Access: rv32i/4.3/memory.md
+          - 4.3.5. Writeback: rv32i/4.3/writeback.md
+          - 4.3.6. Next PC: rv32i/4.3/next-pc.md
+          - 4.3.7. Complete Core: rv32i/4.3/core.md
   - Blog:
       - blog/index.md
   - Simulator: visualizer.md

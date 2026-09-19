@@ -95,11 +95,9 @@ public:
 
     void setupCircuit() override {
         sim->setHistoryRecordingEnabled(record_history_);
-        const auto profile = circuit::withExactFidelity(
-            circuit::canonicalDefaultProfile(),
-            RootName,
-            fidelity_,
-            "external-rv32i-self-check");
+        const auto profile = rv32i::withBehavioralMemoryParts(circuit::withExactFidelity(
+            circuit::withExactFidelity(circuit::canonicalDefaultProfile(), RootName, circuit::Fidelity::Structural),
+            std::string(RootName) + ".CORE", fidelity_, "external-rv32i-self-check"));
         auto build =
             circuit::builtinComponentCatalog().createRoot(
                 rv32i::educationalSystemRequest(RootName),
@@ -129,7 +127,6 @@ public:
     rv32i::test::ExternalFixtureRunResult
     result() const {
         auto result = result_;
-        result.hardware_cycles = result.instruction_count;
         result.simulator_counters =
             sim->getPerformanceCounters();
         return result;
@@ -217,9 +214,12 @@ protected:
         size_t last_observation_time =
             sim->getCurrentTime();
         std::map<uint32_t, uint8_t> observed_writes;
-        for (size_t instruction = 0;
-             instruction < maximum_instructions_;
-             ++instruction) {
+        const auto system = std::dynamic_pointer_cast<RV32ISingleCycleSystem>(system_);
+        require(system != nullptr, "External fixture requires the transaction-connected system");
+        for (size_t cycle = 0;
+             cycle / 64 < maximum_instructions_ && result_.instruction_count < maximum_instructions_;
+             ++cycle) {
+            const bool attempt = system->core()->getOutputPin("INSTRUCTION_ATTEMPT")->getValue() == LogicValue::HIGH;
             const size_t start_time =
                 sim->getCurrentTime();
             drive(
@@ -234,6 +234,7 @@ protected:
                 false);
             sim->advanceAndRecord(
                 start_time + CycleTimeStep);
+            result_.hardware_cycles = cycle + 1;
 
             if (record_history_) {
                 const auto writes =
@@ -248,12 +249,7 @@ protected:
                     observed_writes,
                     tohost_address_);
             } else {
-                const auto access =
-                    program_access_->lastCommittedDataMemoryAccess();
-                if (access.kind
-                        == rv32i::RV32IMemoryAccessKind::Write
-                    && access.address <= tohost_address_
-                    && access.address + 4 > tohost_address_) {
+                if (attempt) {
                     const auto bytes = program_access_->readDataBytes(
                         tohost_address_, 4);
                     result_.tohost = static_cast<uint32_t>(bytes[0])
@@ -264,20 +260,20 @@ protected:
             }
             last_observation_time =
                 sim->getCurrentTime();
+            if (!attempt) continue;
 
             result_.pc = static_cast<uint32_t>(
                 system_->getOutputPin<32>("PC")
                     ->getValueAsUInt64());
-            result_.instruction_count =
-                instruction + 1;
+            ++result_.instruction_count;
             if (record_history_) {
                 checkpoints_.push_back({
                     sim->getCurrentTime(),
-                    "I" + std::to_string(instruction + 1),
+                    "I" + std::to_string(result_.instruction_count),
                     "PC=" + hex32(result_.pc)
                         + ", tohost="
                         + hex32(result_.tohost),
-                    instruction + 1,
+                    static_cast<size_t>(result_.instruction_count),
                 });
             }
 

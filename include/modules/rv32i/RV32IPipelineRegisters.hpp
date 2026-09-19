@@ -17,7 +17,7 @@ extern const ComponentFamily RV32IMEMWBPipelineRegister;
  *
  * Each public family supplies meaningful field names, while this base keeps
  * the storage implementation identical: one Register32 per payload field and
- * one MemoryBit for the valid flag.
+ * one FlipFlopCell for the valid flag.
  */
 class RV32IPipelineRegisterBlock : public IOComponent {
 public:
@@ -62,4 +62,3 @@ public:
     static constexpr const char* TypeName = "RV32IMEMWBPipelineRegister";
     const char* getTypeName() const override { return TypeName; }
 };
-

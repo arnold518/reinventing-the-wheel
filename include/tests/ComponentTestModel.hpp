@@ -144,6 +144,8 @@ public:
     }
     // Read-only source of declared inputs/expectations for documentation export.
     const ComponentTestSpec& getSpec() const { return spec_; }
+    // Construction-only tools must use the same selected parameter set as the preview.
+    const ActionScenario& getSelectedScenario() const { return selectedScenario(); }
     bool supportsBuildProfile() const override { return true; }
     BuildProfile getBuildProfile() const override { return profile_; }
     void setBuildProfile(BuildProfile profile) override;

@@ -123,7 +123,7 @@ The tests follow the repository's component rule:
 The default program profile selects non-storage component contracts in the
 `rv32i.` namespace structurally. The four storage families with dedicated
 visualizer drawings—`Memory64Kx32`, `RegisterFile32x32`, `Register32`, and
-`MemoryBit`—select their tested behavioral implementations. Other reusable
+`FlipFlopCell`—select their tested behavioral implementations. Other reusable
 implementation details outside the RV32I namespace also select behavioral
 implementations when available; fixed gates and rewires remain structural
 primitives. This keeps the pipeline, control, decoder, and ALU visible while

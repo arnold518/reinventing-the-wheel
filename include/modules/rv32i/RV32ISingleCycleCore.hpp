@@ -21,16 +21,15 @@ public:
     rv32i::RV32IArchitecturalState
     snapshotArchitecturalState() const override;
 
-    std::shared_ptr<IOComponent> controlFlow() const { return control_flow_; }
-    std::shared_ptr<IOComponent> decodeControl() const { return decode_control_; }
-    std::shared_ptr<IOComponent> registerFile() const { return register_file_; }
-    std::shared_ptr<IOComponent> alu() const { return alu_; }
+    std::shared_ptr<IOComponent> fetchStage() const { return fetch_; }
+    std::shared_ptr<IOComponent> decodeStage() const { return decode_; }
+    std::shared_ptr<IOComponent> executeStage() const { return execute_; }
+    std::shared_ptr<IOComponent> memoryStage() const { return memory_; }
+    std::shared_ptr<IOComponent> writebackStage() const { return writeback_; }
+    std::shared_ptr<IOComponent> nextPCStage() const { return next_pc_; }
     std::shared_ptr<IOComponent> executionStatus() const { return execution_status_; }
 
 private:
-    std::shared_ptr<IOComponent> control_flow_{};
-    std::shared_ptr<IOComponent> decode_control_{};
-    std::shared_ptr<IOComponent> register_file_{};
-    std::shared_ptr<IOComponent> alu_{};
+    std::shared_ptr<IOComponent> fetch_{},decode_{},execute_{},memory_{},writeback_{},next_pc_{};
     std::shared_ptr<IOComponent> execution_status_{};
 };

@@ -37,7 +37,7 @@ also verifies that:
 | `RV32IExecutionControlStatusUnit` | 1 | Illegal-instruction trap state |
 | `RegisterFile32x32` | 1 | Fibonacci register dependencies |
 | `Register32` | 32 | Register words and program counter |
-| `MemoryBit` | 1,030 | Register, PC, halt, and trap-status cells |
+| `FlipFlopCell` | 1,030 | Register, PC, halt, and trap-status cells |
 | `ALU32` | 1 | Complete ALU operation coverage |
 | `AddSub32` | 3 | Addition and subtraction |
 | `Logic32` | 1 | Bitwise logic |
@@ -46,7 +46,7 @@ also verifies that:
 | `ZeroDetect32` | 2 | Equality and result-zero detection |
 | **Total** | **1,077** | **14 contracts, 15 runs** |
 
-`MemoryBit` intentionally has two scenarios because its instances occur in both
+`FlipFlopCell` intentionally has two scenarios because its instances occur in both
 ordinary register/PC storage and halt/trap status storage.
 
 ## Bugs found and fixed

@@ -51,7 +51,7 @@ RV32ISystemProgramCase fiveStageProgramCase(size_t number) {
     auto test_case = rv32iProgramCase(number);
     test_case.name =
         rv32iFiveStageProgramScenarioName(number);
-    test_case.max_cycles_per_instruction = 16;
+    test_case.max_cycles_per_instruction = 128;
     test_case.cycle_time_step = 100;
     return test_case;
 }
@@ -244,12 +244,11 @@ initializeComponentForLockstep(
             "initial registers");
     }
 
-    instruction_memory_->clearContents();
-    data_memory_->clearContents();
-    test_case.program.loadInto(
-        *instruction_memory_, test_case.program_base);
+    program_root_->clearInstructionMemory();
+    program_root_->clearDataMemory();
+    program_root_->loadProgram(test_case.program, test_case.program_base);
     for (const auto& data : test_case.initial_data) {
-        data_memory_->loadBytes(data.address, data.bytes);
+        program_root_->loadDataBytes(data.address, data.bytes);
     }
 
     scheduleInitialEvents(0);
@@ -401,7 +400,7 @@ void RV32IFiveStageCoreProgramTest::verifyResults() {
     verifyRV32IProgramExpectedResult(
         getCase(),
         snapshotComponentState(),
-        data_memory_->getByteWritesInTimeRange(
+        program_root_->dataMemoryWritesInTimeRange(
             0, sim->getCurrentTime()),
         getTestName());
 }

@@ -1,4 +1,5 @@
 #include "modules/rv32i/RV32IFiveStageCore.hpp"
+#include "RV32IMemoryRequestWiring.hpp"
 
 #include "components/ComponentBuilder.hpp"
 #include "components/ComponentBuilder.tpp"
@@ -16,12 +17,8 @@ void fiveStageCorePins(IOComponent* self) {
     self->addPin("CLK", PinType::INPUT);
     self->addPin("RST", PinType::INPUT);
     self->addPin("ENABLE", PinType::INPUT);
-    self->addPin<32>("IMEM_READ_DATA", PinType::INPUT);
-    self->addPin("IMEM_READY", PinType::INPUT);
-    self->addPin("IMEM_FAULT", PinType::INPUT);
-    self->addPin<32>("DMEM_READ_DATA", PinType::INPUT);
-    self->addPin("DMEM_READY", PinType::INPUT);
-    self->addPin("DMEM_FAULT", PinType::INPUT);
+    rv32i::memoryRequestPins(self, "IMEM_");
+    rv32i::memoryRequestPins(self, "DMEM_");
 
     self->addPin<32>("PC", PinType::OUTPUT);
     self->addPin<32>("FETCH_PC", PinType::OUTPUT);
@@ -42,14 +39,6 @@ void fiveStageCorePins(IOComponent* self) {
     self->addPin("RETIRED_MEM_SIGN_EXTEND", PinType::OUTPUT);
     self->addPin("RETIRED_MEM_FAULT", PinType::OUTPUT);
 
-    self->addPin<32>("IMEM_ADDR", PinType::OUTPUT);
-    self->addPin("IMEM_READ_EN", PinType::OUTPUT);
-    self->addPin<32>("DMEM_ADDR", PinType::OUTPUT);
-    self->addPin<32>("DMEM_WRITE_DATA", PinType::OUTPUT);
-    self->addPin("DMEM_READ_EN", PinType::OUTPUT);
-    self->addPin("DMEM_WRITE_EN", PinType::OUTPUT);
-    self->addPin<2>("DMEM_SIZE", PinType::OUTPUT);
-    self->addPin("DMEM_SIGN_EXTEND", PinType::OUTPUT);
 
     self->addPin("PIPELINE_STALL", PinType::OUTPUT);
     self->addPin("LOAD_USE_STALL", PinType::OUTPUT);
@@ -88,6 +77,15 @@ RV32IFiveStageCore::RV32IFiveStageCore(std::string name)
           circuit::families::RV32IFiveStageCore.pinInitializer()) {}
 
 void RV32IFiveStageCore::buildInternals(ComponentBuilder& builder) {
+    auto fetch_request=builder.addNewComponent<RV32IMemoryRequest>("FETCH_REQUEST");
+    auto data_request=builder.addNewComponent<RV32IMemoryRequest>("DATA_REQUEST");
+    auto lanes=builder.addNewComponent<RV32IMemoryLanes>("LOAD_STORE");
+    auto data_issue=builder.addNewComponent<ORGate>("DATA_ISSUE");
+    auto data_op=builder.addNewComponent<BitJoiner<3>>("DATA_OPERATION");
+    rv32i::wireRequestBus(builder,*this,fetch_request,"IMEM_");
+    rv32i::wireRequestBus(builder,*this,data_request,"DMEM_");
+    rv32i::wireRequestFields(builder,fetch_request,data_request,lanes,data_op);
+    builder.addNewWire("DATA_ISSUE",data_issue->getOutputPin("OUT"),{data_request->getInputPin("ISSUE")});
     const auto fetch = builder.add(
         circuit::families::RV32IFetchStage, "FETCH");
     const auto if_id = builder.add(
@@ -112,7 +110,7 @@ void RV32IFiveStageCore::buildInternals(ComponentBuilder& builder) {
     builder.addNewWire(
         "CLK",
         getInputPin("CLK"),
-        {fetch->getInputPin("CLK"),
+        {fetch_request->getInputPin("CLK"), data_request->getInputPin("CLK"), fetch->getInputPin("CLK"),
          if_id->getInputPin("CLK"),
          decode_stage_->getInputPin("CLK"),
          id_ex->getInputPin("CLK"),
@@ -122,7 +120,7 @@ void RV32IFiveStageCore::buildInternals(ComponentBuilder& builder) {
     builder.addNewWire(
         "RST",
         getInputPin("RST"),
-        {fetch->getInputPin("RST"),
+        {fetch_request->getInputPin("RST"), data_request->getInputPin("RST"), fetch->getInputPin("RST"),
          if_id->getInputPin("RST"),
          decode_stage_->getInputPin("RST"),
          id_ex->getInputPin("RST"),
@@ -135,27 +133,27 @@ void RV32IFiveStageCore::buildInternals(ComponentBuilder& builder) {
         {coordinator->getInputPin("ENABLE")});
     builder.addNewWire<32>(
         "IMEM_READ_DATA",
-        getInputPin<32>("IMEM_READ_DATA"),
+        fetch_request->getOutputPin<32>("READ_DATA"),
         {fetch->getInputPin<32>("IMEM_READ_DATA")});
     builder.addNewWire(
         "IMEM_READY",
-        getInputPin("IMEM_READY"),
+        fetch_request->getOutputPin("DONE"),
         {coordinator->getInputPin("IMEM_READY")});
     builder.addNewWire(
         "IMEM_FAULT",
-        getInputPin("IMEM_FAULT"),
+        fetch_request->getOutputPin("FAULT"),
         {fetch->getInputPin("IMEM_FAULT")});
     builder.addNewWire<32>(
         "DMEM_READ_DATA",
-        getInputPin<32>("DMEM_READ_DATA"),
+        lanes->getOutputPin<32>("READ_DATA"),
         {memory->getInputPin<32>("DMEM_READ_DATA")});
     builder.addNewWire(
         "DMEM_READY",
-        getInputPin("DMEM_READY"),
+        data_request->getOutputPin("DONE"),
         {coordinator->getInputPin("DMEM_READY")});
     builder.addNewWire(
         "DMEM_FAULT",
-        getInputPin("DMEM_FAULT"),
+        data_request->getOutputPin("FAULT"),
         {memory->getInputPin("DMEM_FAULT")});
 
     builder.addNewWire<32>(
@@ -165,7 +163,7 @@ void RV32IFiveStageCore::buildInternals(ComponentBuilder& builder) {
     builder.addNewWire<32>(
         "IMEM_ADDR",
         fetch->getOutputPin<32>("IMEM_ADDR"),
-        {getOutputPin<32>("IMEM_ADDR")});
+        {fetch_request->getInputPin<32>("ADDR"), fetch_request->getInputPin<32>("TAG")});
     builder.addNewWire(
         "FETCH_OUT_VALID",
         fetch->getOutputPin("OUT_VALID"),
@@ -427,7 +425,7 @@ void RV32IFiveStageCore::buildInternals(ComponentBuilder& builder) {
     builder.addNewWire(
         "COORDINATOR_FETCH_VALID",
         coordinator->getOutputPin("FETCH_VALID"),
-        {fetch->getInputPin("FETCH_VALID")});
+        {fetch->getInputPin("FETCH_VALID"), fetch_request->getInputPin("TAKE")});
     builder.addNewWire(
         "COORDINATOR_FETCH_PC_WRITE",
         coordinator->getOutputPin("FETCH_PC_WRITE"),
@@ -455,7 +453,7 @@ void RV32IFiveStageCore::buildInternals(ComponentBuilder& builder) {
     builder.addNewWire(
         "COORDINATOR_EX_MEM_WRITE",
         coordinator->getOutputPin("EX_MEM_WRITE"),
-        {ex_mem->getInputPin("WRITE_ENABLE")});
+        {ex_mem->getInputPin("WRITE_ENABLE"), data_request->getInputPin("TAKE")});
     builder.addNewWire(
         "COORDINATOR_EX_MEM_FLUSH",
         coordinator->getOutputPin("EX_MEM_FLUSH"),
@@ -475,17 +473,17 @@ void RV32IFiveStageCore::buildInternals(ComponentBuilder& builder) {
     builder.addNewWire(
         "COORDINATOR_IMEM_READ",
         coordinator->getOutputPin("IMEM_READ_ENABLE"),
-        {getOutputPin("IMEM_READ_EN")});
+        {fetch_request->getInputPin("ISSUE")});
     builder.addNewWire(
         "COORDINATOR_DMEM_READ",
         coordinator->getOutputPin("DMEM_READ_ENABLE"),
         {memory->getInputPin("DMEM_READ_ENABLE"),
-         getOutputPin("DMEM_READ_EN")});
+         data_issue->getInputPin("A")});
     builder.addNewWire(
         "COORDINATOR_DMEM_WRITE",
         coordinator->getOutputPin("DMEM_WRITE_ENABLE"),
         {memory->getInputPin("DMEM_WRITE_ENABLE"),
-         getOutputPin("DMEM_WRITE_EN")});
+         data_issue->getInputPin("B"), data_op->getInputPin("IN_0")});
     builder.addNewWire(
         "COORDINATOR_STALL",
         coordinator->getOutputPin("PIPELINE_STALL"),
@@ -536,19 +534,19 @@ void RV32IFiveStageCore::buildInternals(ComponentBuilder& builder) {
     builder.addNewWire<32>(
         "DMEM_ADDR",
         memory->getOutputPin<32>("DMEM_ADDR"),
-        {getOutputPin<32>("DMEM_ADDR")});
+        {lanes->getInputPin<32>("ADDR"), data_request->getInputPin<32>("TAG")});
     builder.addNewWire<32>(
         "DMEM_WRITE_DATA",
         memory->getOutputPin<32>("DMEM_WRITE_DATA"),
-        {getOutputPin<32>("DMEM_WRITE_DATA")});
+        {lanes->getInputPin<32>("WRITE_DATA")});
     builder.addNewWire<2>(
         "DMEM_SIZE",
         memory->getOutputPin<2>("DMEM_SIZE"),
-        {getOutputPin<2>("DMEM_SIZE")});
+        {lanes->getInputPin<2>("SIZE")});
     builder.addNewWire(
         "DMEM_SIGN_EXTEND",
         memory->getOutputPin("DMEM_SIGN_EXTEND"),
-        {getOutputPin("DMEM_SIGN_EXTEND")});
+        {lanes->getInputPin("SIGN_EXTEND")});
 }
 
 rv32i::RV32IArchitecturalState

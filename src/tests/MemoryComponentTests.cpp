@@ -3,7 +3,7 @@
 #include "components/Component.hpp"
 #include "components/selection/ComponentFamily.hpp"
 #include "modules/memory/Memory64Kx32.hpp"
-#include "modules/memory/MemoryBit.hpp"
+#include "modules/memory/FlipFlopCell.hpp"
 #include "modules/memory/Register32.hpp"
 #include "modules/memory/RegisterFile32x32.hpp"
 #include <cassert>
@@ -82,7 +82,7 @@ circuit::test::LogicVector gateUnknownWrite(
     return result;
 }
 
-circuit::test::ComponentTestSpec memoryBitSpec() {
+circuit::test::ComponentTestSpec flipFlopCellSpec() {
     using namespace circuit::test;
 
     ActionScenario scenario{
@@ -207,9 +207,9 @@ circuit::test::ComponentTestSpec memoryBitSpec() {
             "A stored high-impedance input becomes unknown state."),
     };
     return {
-        "MemoryBitTest",
-        std::string(circuit::families::MemoryBit.id()),
-        "MEMORY_BIT_ROOT",
+        "FlipFlopCellTest",
+        std::string(circuit::families::FlipFlopCell.id()),
+        "FLIP_FLOP_CELL_ROOT",
         {},
         {std::move(scenario)},
     };
@@ -331,7 +331,7 @@ circuit::test::ComponentTestSpec register32Spec() {
         {{"CLK", logicBit(true)}},
         {{"Q", logicBits(32, 0)}},
         CheckpointKind::AfterEdge,
-        "An uncertain write preserves bits where hold and write agree."));
+        "An uncertain write preserves agreed zeros in the gate-built feedback mux."));
     scenario.actions.push_back(
         driveAction({{"CLK", logicBit(false)}}));
     scenario.actions.push_back(checkpointAction(
@@ -353,6 +353,50 @@ circuit::test::ComponentTestSpec register32Spec() {
         {{"Q", normalized_high_z}},
         CheckpointKind::AfterEdge,
         "Each high-impedance data lane is stored as unknown."));
+
+    // Both X and Z control values must follow the reused FFWord mux, including
+    // the previously untested agreed-one case (the AND/OR network produces X).
+    for (const auto uncertain : {LogicValue::UNKNOWN, LogicValue::HIGH_Z}) {
+        const std::string label = uncertain == LogicValue::UNKNOWN ? "x" : "z";
+        scenario.actions.push_back(driveAction({{"CLK", logicBit(false)}}));
+        scenario.actions.push_back(driveAction({
+            {"RST", logicBit(false)}, {"WE", logicBit(true)},
+            {"D", logicBits(32, 0xffffffffU)},
+        }));
+        scenario.actions.push_back(driveAction({{"CLK", logicBit(true)}}));
+        scenario.actions.push_back(driveAction({{"CLK", logicBit(false)}}));
+        scenario.actions.push_back(driveAction({{"WE", logicBit(uncertain)}}));
+        scenario.actions.push_back(checkpointAction(
+            label + "-enable-agreed-ones", {{"CLK", logicBit(true)}},
+            {{"Q", LogicVector(32, LogicValue::UNKNOWN)}}, CheckpointKind::AfterEdge));
+        scenario.actions.push_back(checkpointAction(
+            label + "-reset-priority-clock-high", {{"RST", logicBit(true)}},
+            {{"Q", logicBits(32, 0)}}, CheckpointKind::Settled,
+            "Asynchronous reset clears storage even while CLK is high and WE is uncertain."));
+        scenario.actions.push_back(driveAction({{"CLK", logicBit(false)}}));
+        scenario.actions.push_back(driveAction({
+            {"RST", logicBit(false)}, {"D", logicBits(32, 0x00ff00ffU)},
+        }));
+        auto uncertain_bytes = logicBits(32, 0);
+        for (size_t bit = 0; bit < 32; ++bit)
+            if ((0x00ff00ffU >> bit) & 1U) uncertain_bytes[bit] = LogicValue::UNKNOWN;
+        scenario.actions.push_back(checkpointAction(
+            label + "-enable-mixed-data", {{"CLK", logicBit(true)}},
+            {{"Q", uncertain_bytes}}, CheckpointKind::AfterEdge));
+        scenario.actions.push_back(driveAction({{"CLK", logicBit(false)}}));
+        scenario.actions.push_back(driveAction({
+            {"WE", logicBit(true)}, {"D", logicBits(32, 0xaaaaaaaaU)},
+        }));
+        scenario.actions.push_back(driveAction({{"CLK", logicBit(true)}}));
+        auto reset_result = logicBits(32, 0);
+        for (size_t bit = 1; bit < 32; bit += 2) reset_result[bit] = LogicValue::UNKNOWN;
+        scenario.actions.push_back(checkpointAction(
+            label + "-reset-mixed-state", {{"RST", logicBit(uncertain)}},
+            {{"Q", reset_result}}));
+        scenario.actions.push_back(checkpointAction(
+            label + "-reset-recovery", {{"RST", logicBit(true)}},
+            {{"Q", logicBits(32, 0)}}));
+    }
 
     return {
         "Register32Test",
@@ -1317,9 +1361,9 @@ circuit::test::ComponentTestSpec memory64Kx32Spec() {
 }
 }
 
-MemoryBitTest::MemoryBitTest()
+FlipFlopCellTest::FlipFlopCellTest()
     : circuit::test::ComponentScenarioTest(
-          memoryBitSpec(), "contract") {}
+          flipFlopCellSpec(), "contract") {}
 
 Memory64Kx32Test::Memory64Kx32Test()
     : circuit::test::ComponentScenarioTest(

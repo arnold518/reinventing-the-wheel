@@ -1,8 +1,8 @@
 {
   "scenarios": {
-    "memory-bit": {
+    "flip-flop-cell": {
       "exact_overrides": {
-        "MEMORY_BIT_ROOT": "structural"
+        "FLIP_FLOP_CELL_ROOT": "structural"
       },
       "revision": 6
     },
@@ -35,7 +35,7 @@
     },
     "rv32i-register-file": {
       "exact_overrides": {
-        "REGISTER_FILE32X32_ROOT.X1": "structural"
+        "REGISTER_FILE32X32_ROOT.STORAGE.WORD_0": "structural"
       },
       "revision": 2
     }

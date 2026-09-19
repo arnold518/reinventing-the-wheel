@@ -4,7 +4,7 @@
 #include "components/ComponentBuilder.tpp"
 #include "modules/basic/Decoder.hpp"
 #include "modules/basic/Mux.hpp"
-#include "modules/memory/Register32.hpp"
+#include "modules/memory/FFStorageBank.hpp"
 #include "modules/memory/RegisterFile32x32Direct.hpp"
 #include "modules/utility/Constant.hpp"
 #include <memory>
@@ -56,27 +56,17 @@ void RegisterFile32x32::buildInternals(ComponentBuilder& builder) {
     builder.addNewComponent<Mux32to1_32bit>("RS2_MUX");
     builder.addNewComponent<Decoder5to32>("RD_DECODER");
 
-    for (size_t reg = 1; reg < RegisterCount; ++reg) {
-        builder.add(circuit::families::Register32, regName(reg));
-    }
-
-    std::vector<std::shared_ptr<Pin<32>>> write_data_sinks;
-    std::vector<std::shared_ptr<Pin<>>> clk_sinks;
-    std::vector<std::shared_ptr<Pin<>>> rst_sinks;
-    write_data_sinks.reserve(RegisterCount);
-    clk_sinks.reserve(RegisterCount - 1);
-    rst_sinks.reserve(RegisterCount - 1);
-
-    for (size_t reg = 1; reg < RegisterCount; ++reg) {
-        const auto name = regName(reg);
-        write_data_sinks.push_back(builder.getInputPin<IOComponent, 32>(name, "D"));
-        clk_sinks.push_back(builder.getInputPin<IOComponent>(name, "CLK"));
-        rst_sinks.push_back(builder.getInputPin<IOComponent>(name, "RST"));
-    }
-
-    builder.addNewWire<32>("WRITE_DATA_internal", getInputPin<32>("WRITE_DATA"), write_data_sinks);
-    builder.addNewWire("CLK_internal", getInputPin("CLK"), clk_sinks);
-    builder.addNewWire("RST_internal", getInputPin("RST"), rst_sinks);
+    // x0 has no storage. Physical word n holds architectural register x(n+1).
+    // Keep decoding/read selection outside the reusable parallel-output FF bank.
+    const std::shared_ptr<IOComponent> storage = builder.getBuildContext()
+        ? builder.add(circuit::families::FFStorageBank<32>(), "STORAGE", {{"depth_words", "31"}})
+        : builder.addNewComponent<FFStorageBank<32>>("STORAGE", RegisterCount - 1);
+    auto mask = builder.addNewComponent<ConstantValue<4>>("FULL_WRITE_MASK", 15);
+    circuit::memory_detail::StructuralWiring storage_wires(builder);
+    for (const auto* pin : {"WRITE_DATA", "CLK", "RST"})
+        storage_wires.connect(getInputPinDynamic(pin), storage->getInputPinDynamic(pin));
+    storage_wires.connect(mask->getOutputPin<4>("OUT"), storage->getInputPin<4>("WRITE_MASK"));
+    storage_wires.finish();
 
     builder.addNewWire<AddressWidth>(
         "RD_ADDR_internal",
@@ -92,7 +82,7 @@ void RegisterFile32x32::buildInternals(ComponentBuilder& builder) {
         builder.addNewWire(
             regName(reg) + "_WE_internal",
             builder.getOutputPin<Decoder5to32>("RD_DECODER", "OUT" + std::to_string(reg)),
-            {builder.getInputPin<IOComponent>(regName(reg), "WE")});
+            {storage->getInputPin("WRITE_" + std::to_string(reg - 1))});
     }
 
     builder.addNewWire<AddressWidth>(
@@ -116,7 +106,7 @@ void RegisterFile32x32::buildInternals(ComponentBuilder& builder) {
         const auto input_name = "IN" + std::to_string(reg);
         builder.addNewWire<32>(
             name + "_to_read_muxes",
-            builder.getOutputPin<IOComponent, 32>(name, "Q"),
+            storage->getOutputPin<32>("WORD_" + std::to_string(reg - 1)),
             {builder.getInputPin<Mux32to1_32bit, 32>("RS1_MUX", input_name),
              builder.getInputPin<Mux32to1_32bit, 32>("RS2_MUX", input_name)});
     }
@@ -138,12 +128,10 @@ std::vector<std::vector<LogicValue>> RegisterFile32x32::getRegisterStateAtTime(
     std::vector<std::vector<LogicValue>> result(
         RegisterCount, std::vector<LogicValue>(32, LogicValue::LOW));
     for (const auto& child : getChildren()) {
-        const auto& name = child->getName();
-        if (name.size() < 2 || name.front() != 'X') continue;
-        const auto index = static_cast<size_t>(std::stoul(name.substr(1)));
-        if (index == 0 || index >= result.size()) continue;
-        const auto word = std::dynamic_pointer_cast<IOComponent>(child);
-        if (word) result[index] = word->getOutputPin<32>("Q")->getValueAsVector();
+        if (child->getName() != "STORAGE") continue;
+        const auto storage = std::dynamic_pointer_cast<IOComponent>(child);
+        if (storage) for (size_t reg = 1; reg < RegisterCount; ++reg)
+            result[reg] = storage->getOutputPin<32>("WORD_" + std::to_string(reg - 1))->getValueAsVector();
     }
     return result;
 }

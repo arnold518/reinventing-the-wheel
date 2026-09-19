@@ -114,6 +114,16 @@ response still contains the complete indexed value vector for every pin and
 wire, and the server retains the full time-travel history; only drawing
 metadata is delayed.
 
+Pin identities include direction: `<component ID>.input.<name>` or
+`<component ID>.output.<name>`. An input and an output may legally share a
+display name (for example, a memory-lane Rewire's `LOAD` and `STORE` ports),
+but they have separate IDs and state indices. Native, WASM, and legacy desktop
+wire endpoints all use the core pin ID. Backend directionless lookups are
+allowed only for unambiguous names; ambiguous names require a direction.
+The browser accepts identical records repeated across lazy topology scopes,
+but rejects conflicting duplicate IDs or missing wire endpoints instead of
+silently dropping ports. Component IDs and saved layout keys are unchanged.
+
 For the 54,049-component Program 1 tree this reduced the initial response from
 128.8 MB to 17.9 MB uncompressed and 0.77 MB over browser gzip. A clean local
 headless browser displayed the overview in 2.8 seconds. Deep focus remains
@@ -153,15 +163,15 @@ Final verification:
 complete CTest suite: see unified-component-migration-report.md
 canonical layouts: 110 scenarios, 131 type layouts, 110 root layouts
 live service: http://127.0.0.1:8765/api/health -> {"ok":true}
-MemoryBit Apply & Run: 28 structural -> 1 behavioral -> 28 structural
+FlipFlopCell Apply & Run: 28 structural -> 1 behavioral -> 28 structural
 RV32I program 9: 54,049 component records, 48 rendered DOM rows
 browser console errors: 0
 ```
 
 The live screenshot pass also checked draft collapse, a successful rebuild,
-returning to the inherited profile, and smooth focus on `MemoryBit.STATE`.
+returning to the inherited profile, and smooth focus on `FlipFlopCell.STATE`.
 
-Behavioral state overlays follow the selected implementation. MemoryBit value
+Behavioral state overlays follow the selected implementation. FlipFlopCell value
 badges, register-file tables, and large-memory tables render only when their
 component fidelity is `behavioral`. Structural versions show their child
 circuits without the behavioral overlay or its additional state requests.

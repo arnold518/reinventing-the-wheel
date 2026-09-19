@@ -4,6 +4,7 @@
 #include <map>
 #include <memory>
 #include <string>
+#include <tuple>
 #include <vector>
 
 class Component;
@@ -51,6 +52,9 @@ private:
     void buildTopology();
     size_t clampedIndex(size_t index) const;
     std::string pinValue(const std::shared_ptr<PinBase>& pin) const;
+    std::shared_ptr<PinBase> componentPin(
+        const std::string& component_id, const std::string& name,
+        const std::string& direction = "") const;
     std::string portsJson(
         const std::string& component_id,
         const std::vector<std::string>& names) const;
@@ -74,8 +78,8 @@ private:
     std::map<std::string, size_t> component_index_by_id_;
     std::map<std::string, std::vector<size_t>> pin_indices_by_component_;
     std::map<std::string, std::vector<size_t>> wire_indices_by_owner_;
-    std::map<std::pair<std::string, std::string>, size_t>
-        pin_index_by_component_name_;
+    std::map<std::tuple<std::string, std::string, std::string>, size_t>
+        pin_index_by_component_direction_name_;
 };
 
 } // namespace circuit::visualizer

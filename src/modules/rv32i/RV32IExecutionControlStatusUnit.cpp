@@ -5,7 +5,7 @@
 #include "components/ComponentBuilder.tpp"
 #include "modules/basic/Gate.hpp"
 #include "modules/basic/Mux.hpp"
-#include "modules/memory/MemoryBit.hpp"
+#include "modules/memory/FlipFlopCell.hpp"
 #include "modules/rv32i/RV32IComponentEncoding.hpp"
 #include "modules/utility/BitAdapter.hpp"
 #include "modules/utility/Constant.hpp"
@@ -17,6 +17,32 @@
 #include <vector>
 
 namespace {
+// One link of the existing combinational priority chain, not a pipeline stage.
+class RV32IStatusPriority : public IOComponent {
+public:
+    explicit RV32IStatusPriority(std::string name)
+        : IOComponent(std::move(name), [](IOComponent* s) {
+            s->addPin("PERMISSION", PinType::INPUT);
+            s->addPin("CONDITION", PinType::INPUT);
+            s->addPin("EVENT", PinType::OUTPUT);
+            s->addPin("ALLOW_NEXT", PinType::OUTPUT);
+        }) {}
+    const char* getTypeName() const override { return "RV32IStatusPriority"; }
+    void buildInternals(ComponentBuilder& b) override {
+        b.addNewComponent<ANDGate>("EVENT");
+        b.addNewComponent<NOTGate>("NOT_CONDITION");
+        b.addNewComponent<ANDGate>("ALLOW_NEXT");
+        b.addNewWire("permission", getInputPin("PERMISSION"),
+            {b.getInputPin<ANDGate>("EVENT","A"), b.getInputPin<ANDGate>("ALLOW_NEXT","A")});
+        b.addNewWire("condition", getInputPin("CONDITION"),
+            {b.getInputPin<ANDGate>("EVENT","B"), b.getInputPin<NOTGate>("NOT_CONDITION","IN")});
+        b.addNewWire("not_condition", b.getOutputPin<NOTGate>("NOT_CONDITION","OUT"),
+            {b.getInputPin<ANDGate>("ALLOW_NEXT","B")});
+        b.addNewWire("event", b.getOutputPin<ANDGate>("EVENT","OUT"), {getOutputPin("EVENT")});
+        b.addNewWire("allow_next", b.getOutputPin<ANDGate>("ALLOW_NEXT","OUT"), {getOutputPin("ALLOW_NEXT")});
+    }
+};
+
 using NetId = size_t;
 
 struct LogicNet {
@@ -77,10 +103,11 @@ public:
     std::pair<NetId, NetId> priorityStage(const std::string& name,
                                           NetId permission,
                                           NetId condition) {
-        const auto event = logicalAnd(name + "_EVENT", permission, condition);
-        const auto not_condition = logicalNot(name + "_NOT_CONDITION", condition);
-        const auto next_permission = logicalAnd(name + "_ALLOW_NEXT", permission, not_condition);
-        return {event, next_permission};
+        auto stage = builder_.addNewComponent<RV32IStatusPriority>(name);
+        sink(permission, stage->getInputPin("PERMISSION"));
+        sink(condition, stage->getInputPin("CONDITION"));
+        return {source(name + "_EVENT", stage->getOutputPin("EVENT")),
+                source(name + "_ALLOW_NEXT", stage->getOutputPin("ALLOW_NEXT"))};
     }
 
     void materialize() {
@@ -121,6 +148,7 @@ void defineExecutionStatusPins(IOComponent* self) {
     self->addPin("PC_WRITE", PinType::OUTPUT);
     self->addPin("REGISTER_WRITE", PinType::OUTPUT);
     self->addPin("MEMORY_REQUEST_ACTIVE", PinType::OUTPUT);
+    self->addPin("FETCH_REQUEST_ACTIVE", PinType::OUTPUT);
     self->addPin("HALTED", PinType::OUTPUT);
     self->addPin("TRAPPED", PinType::OUTPUT);
     self->addPin<4>("TRAP_CAUSE", PinType::OUTPUT);
@@ -149,8 +177,8 @@ RV32IExecutionControlStatusUnit::RV32IExecutionControlStatusUnit(std::string nam
                   circuit::families::RV32IExecutionStatus.pinInitializer()) {}
 
 void RV32IExecutionControlStatusUnit::buildInternals(ComponentBuilder& builder) {
-    builder.add(circuit::families::MemoryBit, "HALTED_STATE");
-    builder.add(circuit::families::MemoryBit, "TRAPPED_STATE");
+    builder.add(circuit::families::FlipFlopCell, "HALTED_STATE");
+    builder.add(circuit::families::FlipFlopCell, "TRAPPED_STATE");
     builder.addNewComponent<BitSplitter<32>>("ADDRESS_SPLIT");
     builder.addNewComponent<BitSplitter<2>>("SIZE_SPLIT");
     builder.addNewComponent<BitSplitter<4>>("CAUSE_D_SPLIT");
@@ -159,7 +187,7 @@ void RV32IExecutionControlStatusUnit::buildInternals(ComponentBuilder& builder) 
 
     for (size_t bit = 0; bit < 4; ++bit) {
         const auto name = "TRAP_CAUSE_BIT_" + std::to_string(bit);
-        builder.add(circuit::families::MemoryBit, name);
+        builder.add(circuit::families::FlipFlopCell, name);
     }
 
     builder.addNewComponent<ConstantValue<4>>("CAUSE_NONE", cause(rv32i::RV32IExecutionTrapCause::None));
@@ -260,6 +288,7 @@ void RV32IExecutionControlStatusUnit::buildInternals(ComponentBuilder& builder) 
     const auto not_trapped = logic.logicalNot("NOT_TRAPPED", trapped);
     const auto not_reset = logic.logicalNot("NOT_RESET", rst);
     const auto active = logic.andAll("ACTIVE", {enable, not_halted, not_trapped, not_reset});
+    logic.sink(active, getOutputPin("FETCH_REQUEST_ACTIVE"));
     const auto not_pc_misaligned = logic.logicalNot("NOT_PC_MISALIGNED", pc_misaligned);
     const auto not_imem_fault = logic.logicalNot("NOT_IMEM_FAULT", imem_fault);
     const auto not_trap_request = logic.logicalNot("NOT_TRAP_REQUEST", trap_request);

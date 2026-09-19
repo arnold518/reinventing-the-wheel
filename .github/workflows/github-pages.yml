@@ -73,7 +73,7 @@ jobs:
           SITE_READY=0
           for attempt in {1..20}; do
             if curl --fail --silent --output "$SITE_HOME_HTML" http://127.0.0.1:8877/ \
-              && grep --quiet "CircuitSim Notes" "$SITE_HOME_HTML"; then
+              && grep --quiet "Reinventing the Wheel" "$SITE_HOME_HTML"; then
               SITE_READY=1
               break
             fi
@@ -81,6 +81,15 @@ jobs:
           done
           test "$SITE_READY" -eq 1
           python3 tests/VisualizerWasmBrowserTest.py http://127.0.0.1:8877/simulator/
+          python3 tests/MemoryContainerBrowserTest.py http://127.0.0.1:8877/simulator/
+          python3 tests/MemoryDocumentationBrowserTest.py http://127.0.0.1:8877/
+          python3 tests/MemoryEndpointBrowserTest.py http://127.0.0.1:8877/
+          python3 tests/SRAMDocumentationBrowserTest.py http://127.0.0.1:8877/
+          python3 tests/SRAMLayoutBrowserTest.py http://127.0.0.1:8877/simulator/
+          python3 tests/RV32IDocumentationBrowserTest.py http://127.0.0.1:8877/
+          python3 tests/RV32IBuildingBlocksBrowserTest.py http://127.0.0.1:8877/
+          python3 tests/RV32ISingleCycleDocumentationBrowserTest.py http://127.0.0.1:8877/
+          python3 tests/RV32IMemoryBrowserTest.py http://127.0.0.1:8877/
 
       - name: Configure Pages
         uses: actions/configure-pages@v5

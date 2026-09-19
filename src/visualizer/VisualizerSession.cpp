@@ -8,6 +8,7 @@
 #include "components/capabilities/RegisterStateView.hpp"
 #include "components/selection/BuildProfile.hpp"
 #include "modules/memory/Memory64Kx32.hpp"
+#include "components/capabilities/MemoryStateView.hpp"
 #include "modules/rv32i/RV32IBitPatternMatcher.hpp"
 #include "modules/utility/Constant.hpp"
 #include "modules/utility/Rewire.hpp"
@@ -223,7 +224,17 @@ std::string normalizedProfileFingerprint(
 
 std::string componentLayoutType(const std::shared_ptr<Component>& component) {
     const std::string type = component ? component->getTypeName() : "Component";
+    // Display the FF-specific names without invalidating saved type layouts.
+    if (type.starts_with("FFMemory")) return "FFArray" + type.substr(8);
+    if (type.starts_with("FFWord<")) return "MemoryWord<FFArray," + type.substr(7);
+    if (type.starts_with("FFStorageBank<")) return "MemoryStorageBank<FFArray," + type.substr(14);
     const auto io = std::dynamic_pointer_cast<IOComponent>(component);
+    if (io && type == "Rewire") {
+        // Rewires with different pin counts need independent aspect ratios.
+        // Keep the logical type/implementation identity unchanged.
+        return "Rewire<in=" + std::to_string(io->getAllInputPins().size()) +
+               ",out=" + std::to_string(io->getAllOutputPins().size()) + ">";
+    }
     if (io && type == "BitSplitter") {
         const auto pin = io->getInputPinDynamic("IN");
         return pin ? "BitSplitter<" + std::to_string(pin->getWidth()) + ">" : type;
@@ -399,7 +410,10 @@ VisualizerSession::VisualizerSession(
     if (!simulator_) throw std::runtime_error("C++ test scenario did not produce a simulator");
     if (!test_->isSimulationPrecomputed()) {
         test_->scheduleInitialEvents(0);
-        simulator_->runAndRecord(test_->getRunDuration());
+        // setupCircuit() may already have clocked reset and recorded initial
+        // pin values. Continue that fresh scenario; runAndRecord would clear
+        // its reset history and turn unchanged-until-halt pins into X on seek.
+        simulator_->advanceAndRecord(test_->getRunDuration());
     }
 
     timestamps_ = simulator_->getUniqueTimestamps();
@@ -430,9 +444,8 @@ std::string VisualizerSession::exampleRowsJson() const {
     const auto scenario = std::find_if(scenarios.begin(), scenarios.end(), [&](const auto& item) {
         return item.id == artifact.scenario_id;
     });
-    if (!artifact.completed || scenario == scenarios.end()
-        || scenario->actions.size() != artifact.checkpoints.size())
-        throw std::runtime_error("Example table requires a completed run with one checkpoint per action");
+    if (!artifact.completed || scenario == scenarios.end())
+        throw std::runtime_error("Example table requires a completed scenario run");
     auto root = std::dynamic_pointer_cast<IOComponent>(root_);
     if (!root) throw std::runtime_error("Example table requires an IO component");
     const auto schema = [](const auto& pins) {
@@ -454,17 +467,33 @@ std::string VisualizerSession::exampleRowsJson() const {
         object.end();
         return result;
     };
-    size_t row_index = 0;
-    auto rows = arrayJson(scenario->actions, [&](const auto& action) {
-        const auto index = row_index++;
+    circuit::test::NamedValues inputs;
+    std::vector<std::string> rows;
+    for (size_t action_index = 0; action_index < scenario->actions.size(); ++action_index) {
+        const auto& action = scenario->actions[action_index];
+        // Sequential scenarios change only selected inputs. Include preparation
+        // actions (e.g. lowering CLK) even when they do not emit a checkpoint.
+        for (const auto& [name, value] : action.inputs) inputs[name] = value;
+        if (!action.emit_checkpoint) continue;
+        const auto index = rows.size();
         const auto& checkpoint = artifact.checkpoints.at(index);
-        if (!action.emit_checkpoint || action.checkpoint_kind != circuit::test::CheckpointKind::Settled
-            || action.checkpoint_id != checkpoint.id)
-            throw std::runtime_error("Example tables support settled row scenarios only");
-        // Do not silently turn retained/undriven inputs or unchecked outputs
-        // into documented test expectations.
-        if (action.inputs.size() != root->getAllInputPins().size())
-            throw std::runtime_error("Example row must explicitly drive every input pin");
+        // ComponentTestRunner drains every action before snapshotting, including
+        // transaction/commit-labelled observations. Preserve that label instead
+        // of dropping valid status-unit examples or calling them clock edges.
+        const char* kind = nullptr;
+        switch (action.checkpoint_kind) {
+            case circuit::test::CheckpointKind::Settled: kind = "settled"; break;
+            case circuit::test::CheckpointKind::AfterEdge: kind = "after-edge"; break;
+            case circuit::test::CheckpointKind::TransactionComplete: kind = "transaction-complete"; break;
+            case circuit::test::CheckpointKind::InstructionCommit: kind = "instruction-commit"; break;
+            default: throw std::runtime_error("Unsupported example checkpoint kind");
+        }
+        if (action.checkpoint_id != checkpoint.id || action.checkpoint_kind != checkpoint.kind)
+            throw std::runtime_error("Example checkpoint does not match its declared action");
+        // Retained inputs come from declared drives, never guessed defaults.
+        // Unchecked outputs remain absent from the documented expectations.
+        if (inputs.size() != root->getAllInputPins().size())
+            throw std::runtime_error("Every example input must have been explicitly driven");
         for (const auto& [name, expected] : action.expected_outputs) {
             const auto actual = checkpoint.pins.outputs.find(name);
             if (actual == checkpoint.pins.outputs.end() || actual->second != expected)
@@ -477,13 +506,19 @@ std::string VisualizerSession::exampleRowsJson() const {
         JsonObject item(result);
         item.string("checkpoint", checkpoint.id);
         item.number("rowIndex", index);
+        item.number("actionIndex", action_index);
+        item.string("kind", kind);
+        item.string("detail", action.detail);
         item.number("time", checkpoint.actual_time);
         item.number("timelineIndex", static_cast<size_t>(std::distance(timestamps_.begin(), time)));
-        item.raw("inputs", namedValues(action.inputs));
+        item.raw("inputs", namedValues(inputs));
+        item.raw("drivenInputs", namedValues(action.inputs));
         item.raw("expectedOutputs", namedValues(action.expected_outputs));
         item.end();
-        return result;
-    });
+        rows.push_back(std::move(result));
+    }
+    if (rows.size() != artifact.checkpoints.size())
+        throw std::runtime_error("Example table checkpoint count does not match the recorded run");
     std::string result;
     JsonObject object(result);
     object.number("schemaVersion", 1);
@@ -495,7 +530,7 @@ std::string VisualizerSession::exampleRowsJson() const {
     object.string("fidelity", root_->getSelectedFidelity());
     object.raw("inputs", schema(root->getAllInputPins()));
     object.raw("outputs", schema(root->getAllOutputPins()));
-    object.raw("rows", rows);
+    object.raw("rows", arrayJson(rows, [](const auto& row) { return row; }));
     object.end();
     return result;
 }
@@ -563,7 +598,10 @@ void VisualizerSession::buildTopology() {
                 pin.type = type;
                 pin.width = std::max<size_t>(1, item.second->getWidth());
                 pin.state_index = pins_.size();
-                pin_index_by_component_name_[{pin.component_id, pin.name}] = pin.state_index;
+                if (!pin_index_by_component_direction_name_.emplace(
+                        std::make_tuple(pin.component_id, pin.type, pin.name), pin.state_index).second) {
+                    throw std::runtime_error("Visualizer topology has a duplicate pin: " + pin.id);
+                }
                 pin_indices_by_component_[pin.component_id].push_back(pin.state_index);
                 pins_.push_back(std::move(pin));
             };
@@ -600,7 +638,11 @@ void VisualizerSession::buildTopology() {
     walk(root_, 0, false, 0);
 
     std::set<std::string> pin_ids;
-    for (const auto& pin : pins_) pin_ids.insert(pin.id);
+    for (const auto& pin : pins_) {
+        if (!pin_ids.insert(pin.id).second) {
+            throw std::runtime_error("Visualizer topology has a duplicate pin ID: " + pin.id);
+        }
+    }
     for (const auto& wire : wires_) {
         if (wire.has_source && pin_ids.count(wire.source_pin_id) == 0) {
             throw std::runtime_error("Visualizer topology has an unexposed source pin: " + wire.source_pin_id);
@@ -718,15 +760,30 @@ std::string VisualizerSession::stateJson(size_t index) {
     return out;
 }
 
+std::shared_ptr<PinBase> VisualizerSession::componentPin(
+    const std::string& component_id, const std::string& name,
+    const std::string& direction) const {
+    if (direction.empty()) {
+        const auto input = componentPin(component_id, name, "input");
+        const auto output = componentPin(component_id, name, "output");
+        if (input && output) {
+            throw std::invalid_argument("Ambiguous pin name; specify direction: " + component_id + "." + name);
+        }
+        return input ? input : output;
+    }
+    const auto found = pin_index_by_component_direction_name_.find({component_id, direction, name});
+    return found == pin_index_by_component_direction_name_.end() ? nullptr : pins_[found->second].handle;
+}
+
 std::string VisualizerSession::portsJson(
     const std::string& component_id,
     const std::vector<std::string>& names) const {
     std::string out;
     JsonObject object(out);
     for (const auto& name : names) {
-        const auto found = pin_index_by_component_name_.find({component_id, name});
-        if (found == pin_index_by_component_name_.end()) continue;
-        const auto value = pinValue(pins_[found->second].handle);
+        const auto pin = componentPin(component_id, name);
+        if (!pin) continue;
+        const auto value = pinValue(pin);
         const auto hex = hexValue(value);
         object.key(name);
         JsonObject port(out);
@@ -787,36 +844,69 @@ std::string VisualizerSession::componentStateJson(
         return out;
     }
 
-    if (const auto memory = std::dynamic_pointer_cast<Memory64Kx32>(component.handle)) {
-        object.boolean("supported", true);
-        const auto ports = portsJson(component_id, {
+    if (const auto view = std::dynamic_pointer_cast<MemoryStateView>(component.handle)) {
+        const auto& memory = view->memoryStorage();
+        const std::string device_type = component.handle->getTypeName();
+        const bool command_device = device_type.starts_with("DRAM<") || device_type.starts_with("NORFlash<") || device_type.starts_with("MemoryContainer<");
+        const bool rom_device = device_type.starts_with("ROM<");
+        const bool sram_device = device_type.starts_with("SRAM<");
+        const bool native_device = command_device || rom_device || sram_device;
+        const bool array_port = component.handle->getTypeName() != std::string("Memory64Kx32");
+        const auto ports = array_port ? portsJson(component_id, {
+            "WORD_ADDR", "WRITE_DATA", "WRITE_MASK", "WE", "READ_EN", "CLK", "RST", "READ_DATA", "FAULT",
+            "CMD", "ADDR", "BUSY", "ERROR", "READ_VALID", "ROW_OPEN", "WRITE_ENABLED", "CE_N", "OE_N", "WE_N",
+            "REQ_VALID", "REQ_READY", "REQ_OP", "REQ_ADDR", "REQ_WRITE_DATA", "REQ_WRITE_MASK",
+            "RSP_VALID", "RSP_READY", "RSP_READ_DATA", "RSP_STATUS"}) : portsJson(component_id, {
             "ADDR", "WRITE_DATA", "READ_EN", "WRITE_EN", "SIZE",
             "SIGN_EXTEND", "CLK", "RST", "READ_DATA", "READY", "FAULT"});
         uint64_t active_address = 0;
         bool has_active_address = false;
-        const auto address_pin = pin_index_by_component_name_.find({component_id, "ADDR"});
-        if (address_pin != pin_index_by_component_name_.end()) {
-            has_active_address = binaryValue(pinValue(pins_[address_pin->second].handle), active_address);
+        const auto address_pin = componentPin(component_id, array_port ? "WORD_ADDR" : "ADDR", "input");
+        if (address_pin) {
+            has_active_address = binaryValue(pinValue(address_pin), active_address);
         }
         auto port_is_high = [&](const std::string& name) {
-            const auto pin = pin_index_by_component_name_.find({component_id, name});
-            return pin != pin_index_by_component_name_.end()
-                && pinValue(pins_[pin->second].handle) == "1";
+            const auto pin = componentPin(component_id, name, "input");
+            return pin && pinValue(pin) == "1";
         };
-        const uint32_t active_base = static_cast<uint32_t>(active_address) & ~uint32_t{3};
+        auto port_is_low = [&](const std::string& name) {
+            const auto pin = componentPin(component_id, name, "input");
+            return pin && pinValue(pin) == "0";
+        };
+        const size_t word_bytes = memory.wordBits() / 8;
+        if (array_port && has_active_address) active_address *= word_bytes;
+        if (active_address > std::numeric_limits<uint32_t>::max()) has_active_address = false;
+        // Command pins can change after acceptance and DRAM ADDR alternates
+        // between a row and a slot. Do not label them as a latched linear access.
+        if (command_device || (native_device && active_address >= memory.capacityBytes()))
+            has_active_address = false;
+        const uint32_t active_base = static_cast<uint32_t>(active_address - active_address % word_bytes);
         const bool window_active = has_active_address
-            && (port_is_high("READ_EN") || port_is_high("WRITE_EN"));
+            && (port_is_high("READ_EN") || port_is_high(array_port ? "WE" : "WRITE_EN")
+                || ((rom_device || sram_device) && port_is_low("CE_N") && port_is_low("OE_N")
+                    && (!sram_device || port_is_high("WE_N"))));
         const bool instruction = scenario_key_ == "rv32i-program-loader"
             || endsWith(component_id, ".INSTRUCTION_MEMORY")
             || endsWith(component_id, "INSTRUCTION_MEMORY");
         const bool data = endsWith(component_id, ".DATA_MEMORY")
             || endsWith(component_id, "DATA_MEMORY");
-        const auto touched = memory->getTouchedWordsAtTime(timestamp, Memory64Kx32::capacityWords());
-        const auto window = window_active
-            ? memory->getWordsAtTime(timestamp, active_base, 1)
+        if (!memory.isHistoryRecordingEnabled()) {
+            object.boolean("supported", false);
+            object.end();
+            return out;
+        }
+        object.boolean("supported", true);
+        const auto touched = memory.getTouchedWordsAtTime(timestamp, array_port ? 256 : memory.capacityWords());
+        const auto window = native_device
+            ? memory.getWordsAtTime(timestamp, window_active ? active_base : 0,
+                                    std::min(size_t{16}, memory.capacityWords()))
+            : window_active
+            ? memory.getWordsAtTime(timestamp, active_base, 1)
             : std::vector<Memory64Kx32::MemoryWordState>{};
-        object.number("capacityBytes", Memory64Kx32::capacityBytes());
-        object.number("capacityWords", Memory64Kx32::capacityWords());
+        object.number("capacityBytes", memory.capacityBytes());
+        object.number("capacityWords", memory.capacityWords());
+        object.number("wordBits", memory.wordBits());
+        object.boolean("historyEnabled", memory.isHistoryRecordingEnabled());
         object.string("memoryRole", instruction ? "instruction" : (data ? "data" : "generic"));
         object.boolean("windowActive", window_active);
         if (has_active_address) {
@@ -826,7 +916,9 @@ std::string VisualizerSession::componentStateJson(
             object.null("activeAddress");
             object.null("activeBaseAddress");
         }
-        object.number("touchedWordCount", touched.size());
+        const auto touched_count = memory.getTouchedWordCountAtTime(timestamp);
+        object.number("touchedWordCount", touched_count);
+        object.boolean("touchedWordsTruncated", touched_count > touched.size());
         object.raw("touchedWords", arrayJson(touched, [&](const auto& word) {
             return memoryWordJson(word.first, word.second, instruction);
         }));

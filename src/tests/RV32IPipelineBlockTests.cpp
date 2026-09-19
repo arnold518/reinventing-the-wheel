@@ -475,6 +475,28 @@ ComponentTestSpec memoryAlignmentSpec() {
         },
         {100'000, 2'000'000},
     };
+    // All four-state combinations of the four meaningful input bits.
+    const std::array values{LogicValue::LOW, LogicValue::HIGH, LogicValue::UNKNOWN, LogicValue::HIGH_Z};
+    const auto and_bit = [](LogicValue a, LogicValue b) {
+        if (a == LogicValue::LOW || b == LogicValue::LOW) return LogicValue::LOW;
+        if (a == LogicValue::HIGH && b == LogicValue::HIGH) return LogicValue::HIGH;
+        return LogicValue::UNKNOWN;
+    };
+    const auto or_bit = [](LogicValue a, LogicValue b) {
+        if (a == LogicValue::HIGH || b == LogicValue::HIGH) return LogicValue::HIGH;
+        if (a == LogicValue::LOW && b == LogicValue::LOW) return LogicValue::LOW;
+        return LogicValue::UNKNOWN;
+    };
+    for (unsigned row = 0; row < 256; ++row) {
+        auto address = logicBits(32, 0x100);
+        auto size = logicBits(2, 0);
+        address[0] = values[row & 3]; address[1] = values[(row >> 2) & 3];
+        size[0] = values[(row >> 4) & 3]; size[1] = values[(row >> 6) & 3];
+        const auto expected = or_bit(and_bit(size[0],address[0]),
+            and_bit(size[1],or_bit(address[0],address[1])));
+        scenario.actions.push_back(checkpoint("four-state-"+std::to_string(row),
+            {{"ADDRESS",address},{"SIZE",size}}, {{"MISALIGNED",logicBit(expected)}}));
+    }
     return {
         "RV32IMemoryAlignmentUnitTest",
         std::string(
@@ -1130,176 +1152,37 @@ ComponentTestSpec writebackStageSpec() {
     };
 }
 
-NamedValues coreInputs(
-    bool clk,
-    bool rst,
-    uint32_t instruction) {
-    return {
-        {"CLK", logicBit(clk)},
-        {"RST", logicBit(rst)},
-        {"ENABLE", logicBit(true)},
-        {"IMEM_READ_DATA", logicBits(32, instruction)},
-        {"IMEM_READY", logicBit(true)},
-        {"IMEM_FAULT", logicBit(false)},
-        {"DMEM_READ_DATA", logicBits(32, 0)},
-        {"DMEM_READY", logicBit(true)},
-        {"DMEM_FAULT", logicBit(false)},
-    };
-}
-
-NamedValues coreStageOutputs(
-    uint32_t retired,
-    bool halted,
-    bool if_valid,
-    uint32_t if_pc,
-    bool id_valid,
-    uint32_t id_pc,
-    bool ex_valid,
-    uint32_t ex_pc,
-    bool mem_valid,
-    uint32_t mem_pc) {
-    return {
-        {"RETIRED_COUNT", logicBits(32, retired)},
-        {"HALTED", logicBit(halted)},
-        {"TRAPPED", logicBit(false)},
-        {"TRAP_CAUSE", logicBits(4, 0)},
-        {"IF_ID_VALID", logicBit(if_valid)},
-        {"IF_ID_PC", logicBits(32, if_pc)},
-        {"ID_EX_VALID", logicBit(id_valid)},
-        {"ID_EX_PC", logicBits(32, id_pc)},
-        {"EX_MEM_VALID", logicBit(ex_valid)},
-        {"EX_MEM_PC", logicBits(32, ex_pc)},
-        {"MEM_WB_VALID", logicBit(mem_valid)},
-        {"MEM_WB_PC", logicBits(32, mem_pc)},
-    };
-}
-
 ComponentTestSpec fiveStageCoreSpec() {
-    constexpr uint32_t addi_x1 = 0x00500093U;
-    constexpr uint32_t addi_x2 = 0x00708113U;
-    constexpr uint32_t add_x3 = 0x002081B3U;
-    constexpr uint32_t ebreak = 0x00100073U;
-
-    ActionScenario scenario{
-        "forwarding-and-retirement",
-        {},
-        {
-            checkpoint(
-                "reset",
-                coreInputs(false, true, addi_x1),
-                coreStageOutputs(
-                    0, false,
-                    false, 0,
-                    false, 0,
-                    false, 0,
-                    false, 0)),
-            checkpoint(
-                "release-reset",
-                {{"RST", logicBit(false)}},
-                coreStageOutputs(
-                    0, false,
-                    false, 0,
-                    false, 0,
-                    false, 0,
-                    false, 0)),
-            checkpoint(
-                "fetch-first",
-                {{"CLK", logicBit(true)}},
-                coreStageOutputs(
-                    0, false,
-                    true, 0,
-                    false, 0,
-                    false, 0,
-                    false, 0),
-                CheckpointKind::AfterEdge),
-            drive(coreInputs(false, false, addi_x2)),
-            checkpoint(
-                "decode-first",
-                {{"CLK", logicBit(true)}},
-                coreStageOutputs(
-                    0, false,
-                    true, 4,
-                    true, 0,
-                    false, 0,
-                    false, 0),
-                CheckpointKind::AfterEdge),
-            drive(coreInputs(false, false, add_x3)),
-            checkpoint(
-                "execute-first",
-                {{"CLK", logicBit(true)}},
-                coreStageOutputs(
-                    0, false,
-                    true, 8,
-                    true, 4,
-                    true, 0,
-                    false, 0),
-                CheckpointKind::AfterEdge),
-            drive(coreInputs(false, false, ebreak)),
-            checkpoint(
-                "fill-pipeline",
-                {{"CLK", logicBit(true)}},
-                coreStageOutputs(
-                    0, false,
-                    true, 12,
-                    true, 8,
-                    true, 4,
-                    true, 0),
-                CheckpointKind::AfterEdge),
-            drive(coreInputs(false, false, 0)),
-            checkpoint(
-                "retire-first",
-                {{"CLK", logicBit(true)}},
-                coreStageOutputs(
-                    1, false,
-                    false, 0,
-                    true, 12,
-                    true, 8,
-                    true, 4),
-                CheckpointKind::InstructionCommit),
-            drive({{"CLK", logicBit(false)}}),
-            checkpoint(
-                "retire-second",
-                {{"CLK", logicBit(true)}},
-                coreStageOutputs(
-                    2, false,
-                    false, 0,
-                    false, 0,
-                    true, 12,
-                    true, 8),
-                CheckpointKind::InstructionCommit),
-            drive({{"CLK", logicBit(false)}}),
-            checkpoint(
-                "retire-third",
-                {{"CLK", logicBit(true)}},
-                coreStageOutputs(
-                    3, false,
-                    false, 0,
-                    false, 0,
-                    false, 0,
-                    true, 12),
-                CheckpointKind::InstructionCommit),
-            drive({{"CLK", logicBit(false)}}),
-            checkpoint(
-                "halt-at-writeback",
-                {{"CLK", logicBit(true)}},
-                coreStageOutputs(
-                    4, true,
-                    false, 0,
-                    false, 0,
-                    false, 0,
-                    false, 0),
-                CheckpointKind::InstructionCommit),
-        },
-        {200'000, 4'000'000},
-    };
-
-    return {
-        "RV32IFiveStageCoreTest",
-        std::string(circuit::families::RV32IFiveStageCore.id()),
-        "RV32I_FIVE_STAGE_CORE_ROOT",
-        {},
-        {std::move(scenario)},
-    };
+    ActionScenario scenario{"forwarding-and-retirement", {}, {}, {500'000, 10'000'000}};
+    scenario.actions.push_back(checkpoint("reset",
+        {{"CLK",logicBit(false)},{"RST",logicBit(true)},{"ENABLE",logicBit(true)},
+         {"IMEM_REQ_READY",logicBit(true)},{"IMEM_RSP_VALID",logicBit(false)},
+         {"IMEM_RSP_READ_DATA",logicBits(32,0)},{"IMEM_RSP_STATUS",logicBits(3,0)},
+         {"DMEM_REQ_READY",logicBit(true)},{"DMEM_RSP_VALID",logicBit(false)},
+         {"DMEM_RSP_READ_DATA",logicBits(32,0)},{"DMEM_RSP_STATUS",logicBits(3,0)}},
+        {{"RETIRED_COUNT",logicBits(32,0)},{"HALTED",logicBit(false)},
+         {"IMEM_REQ_VALID",logicBit(false)}}));
+    scenario.actions.push_back(checkpoint("release-reset",{{"RST",logicBit(false)}},{}));
+    const std::array<uint32_t,4> words{0x00500093U,0x00708113U,0x002081b3U,0x00100073U};
+    // Accept a request one edge after capture, then return its word on the next
+    // edge. Instruction responses therefore enter IF/ID on edges 3, 6, 9, 12.
+    for(unsigned cycle=1;cycle<=16;++cycle) {
+        const bool response=cycle%3==0 && cycle<=12;
+        scenario.actions.push_back(drive({
+            {"CLK",logicBit(false)},{"IMEM_RSP_VALID",logicBit(response)},
+            {"IMEM_RSP_READ_DATA",logicBits(32,response?words[cycle/3-1]:0)}}));
+        const auto retired=cycle<7?0U:std::min(4U,1+(cycle-7)/3);
+        NamedValues expected{{"RETIRED_COUNT",logicBits(32,retired)},
+            {"HALTED",logicBit(cycle==16)},{"TRAPPED",logicBit(false)}};
+        if(cycle<=10 && cycle%3==1) {
+            expected.emplace("IMEM_REQ_VALID",logicBit(true));
+            expected.emplace("IMEM_REQ_ADDR",logicBits(32,(cycle/3)*4));
+        }
+        scenario.actions.push_back(checkpoint("edge-"+std::to_string(cycle),
+            {{"CLK",logicBit(true)}},std::move(expected),CheckpointKind::AfterEdge));
+    }
+    return {"RV32IFiveStageCoreTest",std::string(circuit::families::RV32IFiveStageCore.id()),
+            "RV32I_FIVE_STAGE_CORE_ROOT",{}, {std::move(scenario)}};
 }
 } // namespace
 

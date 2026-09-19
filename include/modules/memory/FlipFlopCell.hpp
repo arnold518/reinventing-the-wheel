@@ -4,13 +4,13 @@
 #include "components/selection/ComponentFamily.hpp"
 
 namespace circuit::families {
-extern const ComponentFamily MemoryBit;
+extern const ComponentFamily FlipFlopCell;
 }
 
-class MemoryBit : public IOComponent {
+class FlipFlopCell : public IOComponent {
 public:
-    MemoryBit(std::string name);
-    static constexpr const char* TypeName = "MemoryBit";
+    FlipFlopCell(std::string name);
+    static constexpr const char* TypeName = "FlipFlopCell";
     const char* getTypeName() const override { return TypeName; }
     void buildInternals(ComponentBuilder& builder) override;
 };

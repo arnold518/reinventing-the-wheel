@@ -249,7 +249,7 @@ they do not expand into thousands of cells unless the user requests it.
 
 The parent/core program profile now selects non-storage `rv32i.*` contracts
 structurally. `Memory64Kx32`, `RegisterFile32x32`, `Register32`, and
-`MemoryBit` select behavioral fidelity by default so their specialized
+`FlipFlopCell` select behavioral fidelity by default so their specialized
 visualizer drawings are used. Other reusable non-RV32I contracts also select
 behavioral implementations when available, while fixed gates and rewires
 remain structural primitives. This makes the pipeline stages, control units,

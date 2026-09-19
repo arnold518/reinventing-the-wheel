@@ -188,7 +188,7 @@ reasons, preventing layout duplication when only prose changes.
 
 ## Migrated selectable families
 
-- `MemoryBit`
+- `FlipFlopCell`
 - `Register32`
 - `RegisterFile32x32`
 - `AddSub32`

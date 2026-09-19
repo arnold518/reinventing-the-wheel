@@ -388,11 +388,11 @@ Detailed report:
 
 - `docs/structural-dff-report.md`
 
-### `MemoryBit`
+### `FlipFlopCell`
 
 Purpose:
 
-`MemoryBit` is the one-bit structural write-enabled storage cell.
+`FlipFlopCell` is the one-bit structural write-enabled storage cell.
 
 Pins:
 
@@ -414,20 +414,20 @@ Status:
 - Tested.
 - Exposed to the visualizer.
 
-### the behavioral fidelity of `MemoryBit`
+### the behavioral fidelity of `FlipFlopCell`
 
 Purpose:
 
-the behavioral fidelity of `MemoryBit` is the compact one-bit storage abstraction.
+the behavioral fidelity of `FlipFlopCell` is the compact one-bit storage abstraction.
 
 RV32I role:
 
-It is used when the structural storage cell is too expensive to repeat at large scale. It keeps the same external behavior as `MemoryBit`.
+It is used when the structural storage cell is too expensive to repeat at large scale. It keeps the same external behavior as `FlipFlopCell`.
 
 Status:
 
 - Implemented.
-- Tested against the memory-bit contract.
+- Tested against the flip-flop-cell contract.
 - Exposed to the visualizer.
 
 ### `Register32` and the behavioral fidelity of `Register32`
@@ -442,8 +442,8 @@ They are one register word, not the full RV32I register file. They establish the
 
 Important distinction:
 
-- `Register32` is a 32-bit storage word made from structural `MemoryBit` cells.
-- the behavioral fidelity of `Register32` is a 32-bit storage word made from behavioral memory bits.
+- `Register32` is a 32-bit storage word made from structural `FlipFlopCell` cells.
+- the behavioral fidelity of `Register32` is a compact 32-bit storage word.
 - Neither one means all 32 RV32I architectural registers.
 
 Status:
@@ -907,7 +907,7 @@ The current visualizer exposes scenarios for the major foundation components:
 - 32-bit arithmetic, comparison, shift, and ALU tests.
 - `alu32`
 - `rv32i-alu32`
-- `memory-bit`
+- `flip-flop-cell`
 - `register32`
 - `register-file4x32`
 - `rv32i-register-file`

@@ -29,8 +29,12 @@ The structural decoder does not call the behavioral decoder or control library. 
 This is a factored programmable-logic-array shape: shared field predicates,
 instruction product terms, then a control-output plane. It avoids comparing
 the same opcode and function bits independently for every instruction. The
-structural hierarchy now contains 1,964 components, down from the previously
-recorded 2,514.
+predicate factoring reduced the hierarchy from 2,514 to 1,964 components. The
+subsequent 4.2 visualization refactor adds explicit recognition/control-field
+boundaries and zero-delay match-bus routing: the hierarchy now contains 2,064
+components, but only five immediate children instead of 541. This is a hierarchy
+improvement, not a claim of gate-count optimization. The 450 control OR gates
+and seven control NOT gates remain inside eighteen named output fields.
 
 Illegal instructions produce inactive side effects, `TRAP_REQUEST=1`, and `DECODE_TRAP_CAUSE=IllegalInstruction`. `ECALL` requests an environment-call trap, while `EBREAK` requests a halt.
 

@@ -3,9 +3,9 @@
 #include "simulator/SimulationTest.hpp"
 #include "tests/ComponentTestModel.hpp"
 
-class MemoryBitTest : public circuit::test::ComponentScenarioTest {
+class FlipFlopCellTest : public circuit::test::ComponentScenarioTest {
 public:
-    MemoryBitTest();
+    FlipFlopCellTest();
 };
 
 class Memory64Kx32Test : public circuit::test::ComponentScenarioTest {

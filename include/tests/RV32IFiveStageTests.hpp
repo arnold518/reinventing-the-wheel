@@ -66,8 +66,8 @@ private:
     std::shared_ptr<RV32IProgramRoot> program_root_{};
     std::shared_ptr<IOComponent> core_{};
     std::shared_ptr<RV32IStateView> state_view_{};
-    std::shared_ptr<Memory64Kx32> instruction_memory_{};
-    std::shared_ptr<Memory64Kx32> data_memory_{};
+    std::shared_ptr<IOComponent> instruction_memory_{};
+    std::shared_ptr<IOComponent> data_memory_{};
     std::shared_ptr<Wire<1>> rst_wire_{};
     std::shared_ptr<Wire<1>> enable_wire_{};
     bool simulation_precomputed_ = false;

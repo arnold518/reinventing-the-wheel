@@ -1,6 +1,6 @@
-#include "modules/memory/MemoryBitDirect.hpp"
+#include "modules/memory/FlipFlopCellDirect.hpp"
 #include "components/selection/ComponentFamily.hpp"
-#include "modules/memory/MemoryBit.hpp"
+#include "modules/memory/FlipFlopCell.hpp"
 
 #include <utility>
 
@@ -22,13 +22,13 @@ LogicValue mergePossibleValues(
 }
 }
 
-MemoryBitDirect::MemoryBitDirect(std::string name)
+FlipFlopCellDirect::FlipFlopCellDirect(std::string name)
     : BasicComponent(std::move(name), 1,
-                     circuit::families::MemoryBit.pinInitializer()),
+                     circuit::families::FlipFlopCell.pinInitializer()),
       stored_value(LogicValue::UNKNOWN),
       previous_clk(LogicValue::UNKNOWN) {}
 
-void MemoryBitDirect::evaluate(size_t current_time, Simulator& simulator) {
+void FlipFlopCellDirect::evaluate(size_t current_time, Simulator& simulator) {
     const auto d = getInputValue("D");
     const auto we = getInputValue("WE");
     const auto clk = getInputValue("CLK");
@@ -43,8 +43,10 @@ void MemoryBitDirect::evaluate(size_t current_time, Simulator& simulator) {
         if (we == LogicValue::HIGH) {
             stored_value = knownOrUnknown(d);
         } else if (we != LogicValue::LOW) {
-            stored_value = mergePossibleValues(
-                stored_value, d);
+            // Match the structural AND/OR feedback mux, not an optimistic
+            // merge: (1 & X) | (1 & X) is X, even when both candidates agree.
+            stored_value = stored_value == LogicValue::LOW && d == LogicValue::LOW
+                ? LogicValue::LOW : LogicValue::UNKNOWN;
         }
     }
 

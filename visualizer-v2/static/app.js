@@ -378,13 +378,23 @@ function componentLayoutKey(component) {
 
 function getTypeLayoutFor(component) {
   const typeLayouts = app.layout.type_layouts || {};
-  const baseLayout = typeLayouts[component.type] || {};
+  const baseLayout = { ...(typeLayouts[component.type] || {}) };
   const layoutKey = componentLayoutKey(component);
-  const specializedLayout = layoutKey === component.type
+  if (component.type === "Rewire" && layoutKey !== component.type) {
+    delete baseLayout.aspect_ratio;
+    delete baseLayout.min_aspect_ratio;
+  }
+  let specializedLayout = layoutKey === component.type
     ? baseLayout
     : mergeLayout(baseLayout, typeLayouts[layoutKey] || {});
   const fingerprint = component.profileFingerprint;
   if (!fingerprint || fingerprint === "explicit") return specializedLayout;
+  if (component.type === "Rewire" && layoutKey !== component.type) {
+    const legacy = { ...(app.layout.profile_layouts?.[fingerprint]?.Rewire || {}) };
+    delete legacy.aspect_ratio;
+    delete legacy.min_aspect_ratio;
+    specializedLayout = mergeLayout(specializedLayout, legacy);
+  }
   const profileLayout = (((app.layout.profile_layouts || {})[fingerprint] || {})[layoutKey]) || {};
   return mergeLayout(specializedLayout, profileLayout);
 }
@@ -1408,11 +1418,12 @@ function parseKnownBinary(value) {
 
 function registerWordDisplay(register) {
   if (!register) return "--";
-  if (register.hex) return register.hex.replace(/^0x/i, "").toUpperCase().padStart(8, "0");
   const bits = register.bits || "";
+  const digits = Math.max(1, Math.ceil((bits.length || 32) / 4));
+  if (register.hex) return register.hex.replace(/^0x/i, "").toUpperCase().padStart(digits, "0");
   if (!bits) return "--";
-  if ([...bits].every((bit) => bit === "X")) return "XXXXXXXX";
-  if ([...bits].every((bit) => bit === "Z")) return "ZZZZZZZZ";
+  if ([...bits].every((bit) => bit === "X")) return "X".repeat(digits);
+  if ([...bits].every((bit) => bit === "Z")) return "Z".repeat(digits);
   return "MIXED";
 }
 
@@ -1982,7 +1993,92 @@ function drawPackedRewireContents(component, parts, groups, model) {
   });
 }
 
+function drawUnpackedRewireContents(component, parts, model) {
+  const source = pinByName(component.inputPins, model.source);
+  const outputs = pinMapByName(component.outputPins);
+  const taps = model.taps.map(tap => ({ ...tap, pin: outputs.get(tap.destination) }));
+  if (!source || taps.some(tap => !tap.pin)) return;
+
+  withComponentBodyClip(parts, 38, 24, () => {
+    const body = parts.bodyRect;
+    const fields = taps.some(tap => tap.width > 1);
+    const spineX = body.x + body.w * (fields ? 0.28 : 0.42);
+    const tapX = body.x + body.w * (fields ? 0.40 : 0.54);
+    const ys = taps.map(tap => tap.pin.pos.y).sort((a, b) => a - b);
+    const rowGap = Math.min(...ys.slice(1).map((y, i) => y - ys[i]));
+    const tapRise = Math.min(rowGap * 0.22, body.h * 0.025);
+    const topY = Math.min(source.pos.y, ys[0] - tapRise);
+    const bottomY = Math.max(source.pos.y, ys[ys.length - 1]);
+    const pad = Math.min(body.w, body.h) * 0.035;
+    const busValue = adapterPinSignal(source);
+
+    drawAdapterPanel({ x: spineX - pad, y: topY - pad,
+      w: pad * 2, h: bottomY - topY + pad * 2 }, "rgba(148, 163, 184, 0.34)");
+    drawAdapterPolyline(component, [pinInnerContactPoint(source), { x: spineX, y: source.pos.y }],
+      busValue, [source], model.width);
+    // One full-width source spine, independent of the number/width of fields.
+    drawAdapterPolyline(component, [{ x: spineX, y: topY }, { x: spineX, y: bottomY }],
+      busValue, [source], model.width, false);
+
+    const fontPx = Math.min(12, rowGap * app.camera.zoom * 0.28);
+    taps.forEach(tap => {
+      const y = tap.pin.pos.y;
+      const value = tap.sourceBits
+        ? window.CircuitRewireGeometry.fieldValue(tap, busValue, model.unmappedDefault)
+        : signalBitAt(busValue, tap.sourceBit);
+      // Angled, labeled bus taps distinguish bit extraction from an ordinary
+      // electrical junction. Do not put misleading junction dots on the spine.
+      const path = [{ x: tapX, y }, pinInnerContactPoint(tap.pin)];
+      if (!tap.sourceBits || tap.sourceBits.some(bit => bit !== null)) {
+        path.unshift({ x: spineX, y: y - tapRise });
+      }
+      drawAdapterPolyline(component, path, value, [source, tap.pin], tap.width || 1, !fields);
+      const availablePx = (pinInnerContactPoint(tap.pin).x - tapX) * app.camera.zoom - 8;
+      if (fontPx >= 7 && availablePx >= 20) {
+        const label = worldToScreen({ x: tapX + body.w * 0.025, y });
+        ctx.save();
+        ctx.font = `700 ${Math.floor(fontPx)}px ui-monospace, SFMono-Regular, Consolas, monospace`;
+        ctx.textAlign = "left";
+        ctx.textBaseline = "bottom";
+        ctx.fillStyle = "rgba(238, 244, 255, 0.88)";
+        if (fields) {
+          // Output width/name and the exact bit expression replace repeated
+          // slash markers. Wrap at concatenation boundaries above each tap.
+          const lines = [];
+          let line = "";
+          for (const word of tap.label.split(" ")) {
+            const candidate = line ? `${line} ${word}` : word;
+            if (line && ctx.measureText(candidate).width > availablePx) {
+              lines.push(line); line = word;
+            } else line = candidate;
+          }
+          if (line) lines.push(line);
+          const lineHeight = Math.ceil(fontPx) + 2;
+          const maxLines = Math.max(1, Math.floor(rowGap * app.camera.zoom * 0.75 / lineHeight) - 1);
+          const visible = lines.slice(0, maxLines);
+          if (lines.length > maxLines) visible[visible.length - 1] += " …";
+          const texts = [`${tap.destination}[${tap.width}]`, ...visible];
+          texts.forEach((text, index) => {
+            const fitted = ellipsizeText(text, availablePx);
+            if (fitted) ctx.fillText(fitted, label.x, label.y - 3 - (texts.length - 1 - index) * lineHeight);
+          });
+        } else {
+          const fitted = ellipsizeText(tap.label, availablePx);
+          if (fitted) ctx.fillText(fitted, label.x, label.y - 3);
+        }
+        ctx.restore();
+      }
+    });
+  });
+}
+
 function drawRewireContents(component, parts) {
+  const unpackedModel = window.CircuitRewireGeometry?.unpackedBusModel(component.rewire)
+    || window.CircuitRewireGeometry?.fieldExtractionModel(component.rewire);
+  if (unpackedModel) {
+    drawUnpackedRewireContents(component, parts, unpackedModel);
+    return;
+  }
   const inputPins = pinMapByName(component.inputPins);
   const outputPins = pinMapByName(component.outputPins);
   const groups = groupedRewireMappings(component)
@@ -2038,7 +2134,7 @@ function drawRewireContents(component, parts) {
     groups.forEach((group, index) => {
       const sourceY = group.sourcePin.pos.y;
       const outputY = group.outputPin.pos.y;
-      const bendX = (leftX + rightX) / 2 + (groups.length > 1 ? ((index % 3) - 1) * Math.min(body.w * 0.018, 4 / app.camera.zoom) : 0);
+      const bendX = leftX + (rightX - leftX) * (index + 1) / (groups.length + 1);
       const route = [
         { x: leftX, y: sourceY },
         { x: bendX, y: sourceY },
@@ -2060,9 +2156,12 @@ function drawRewireContents(component, parts) {
   });
 }
 
-function drawMemoryBitValue(component, parts) {
-  const qPin = pinByName(component.outputPins, "Q");
-  const value = qPin ? pinValue(qPin) : "X";
+function drawMemoryCellValue(component, parts) {
+  if (!CircuitMemoryCellView.supports(component.type, component.fidelity)) return;
+  const pins = Object.fromEntries([...component.inputPins, ...component.outputPins]
+    .map(pin => [pin.name, pinValue(pin)]));
+  const model = CircuitMemoryCellView.model(component.type, component.fidelity, pins);
+  if (!model) return;
   const screenRect = rectToScreenRect(parts.bodyRect);
   const clipped = clipScreenRect(screenRect, 0);
   if (
@@ -2073,14 +2172,15 @@ function drawMemoryBitValue(component, parts) {
     return;
   }
 
-  const color = valueColor(value);
-  const panelWidth = screenRect.w * 0.46;
+  const panelWidth = screenRect.w * (model.fields.length > 1 ? 0.31 : 0.46);
   const panelHeight = screenRect.h * 0.5;
   if (panelWidth < 72 || panelHeight < 52) return;
 
+  const gap = screenRect.w * 0.04;
+  const groupWidth = model.fields.length * panelWidth + (model.fields.length - 1) * gap;
   const panel = {
-    x: screenRect.x + (screenRect.w - panelWidth) / 2,
-    y: screenRect.y + (screenRect.h - panelHeight) / 2,
+    x: screenRect.x + (screenRect.w - groupWidth) / 2,
+    y: screenRect.y + (screenRect.h - panelHeight) / 2 - (model.controls.length ? panelHeight * 0.08 : 0),
     w: panelWidth,
     h: panelHeight,
   };
@@ -2088,31 +2188,43 @@ function drawMemoryBitValue(component, parts) {
   ctx.beginPath();
   ctx.rect(clipped.x, clipped.y, clipped.w, clipped.h);
   ctx.clip();
-  drawScreenRoundedRect(
-    panel,
-    `rgba(${color.join(",")}, 0.12)`,
-    `rgb(${color.join(",")})`,
-    Math.max(1.5, Math.min(panelWidth, panelHeight) * 0.012),
-    Math.min(panelWidth, panelHeight) * 0.07,
-  );
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-  ctx.font = `700 ${Math.floor(panelHeight * 0.13)}px Arial, Helvetica, sans-serif`;
-  ctx.fillStyle = "rgba(238, 244, 255, 0.72)";
-  ctx.fillText(
-    "STORED BIT",
-    panel.x + panel.w / 2,
-    panel.y + panel.h * 0.24,
-  );
-  ctx.font = `800 ${Math.floor(
-    Math.min(panelHeight * 0.52, panelWidth * 0.28)
-  )}px ui-monospace, SFMono-Regular, Consolas, monospace`;
-  ctx.fillStyle = `rgb(${color.join(",")})`;
-  ctx.fillText(
-    value[0] || "X",
-    panel.x + panel.w / 2,
-    panel.y + panel.h * 0.65,
-  );
+  const longestLabel = Math.max(...model.fields.map(field => field.label.length));
+  const labelSize = Math.max(8, Math.floor(Math.min(panelHeight * 0.13, panelWidth * 0.82 / (longestLabel * 0.64))));
+  for (const field of model.fields) {
+    const color = valueColor(field.value);
+    drawScreenRoundedRect(
+      panel,
+      `rgba(${color.join(",")}, 0.12)`,
+      `rgb(${color.join(",")})`,
+      Math.max(1.5, Math.min(panelWidth, panelHeight) * 0.012),
+      Math.min(panelWidth, panelHeight) * 0.07,
+    );
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.font = `700 ${labelSize}px Arial, Helvetica, sans-serif`;
+    ctx.fillStyle = "rgba(238, 244, 255, 0.72)";
+    ctx.fillText(
+      field.label,
+      panel.x + panel.w / 2,
+      panel.y + panel.h * 0.24,
+    );
+    ctx.font = `800 ${Math.floor(
+      Math.min(panelHeight * 0.52, panelWidth * 0.28)
+    )}px ui-monospace, SFMono-Regular, Consolas, monospace`;
+    ctx.fillStyle = `rgb(${color.join(",")})`;
+    ctx.fillText(
+      field.value,
+      panel.x + panel.w / 2,
+      panel.y + panel.h * 0.65,
+    );
+    panel.x += panelWidth + gap;
+  }
+  if (model.controls.length) {
+    ctx.font = `600 ${Math.max(8, Math.floor(Math.min(panelHeight * 0.12, screenRect.w / 29)))}px ui-monospace, monospace`;
+    ctx.fillStyle = "rgba(238, 244, 255, 0.82)";
+    ctx.fillText(model.controls.map(control => `${control.pin}=${control.value}`).join("  "),
+      screenRect.x + screenRect.w / 2, panel.y + panel.h * 1.2);
+  }
   ctx.restore();
 }
 
@@ -2482,11 +2594,24 @@ function drawMemory64Kx32Contents(component, parts) {
   if (rect.w < 100 || rect.h < 62) return;
 
   const ports = state.ports || {};
-  const fault = ports.FAULT && ports.FAULT.value;
-  const readActive = ports.READ_EN && ports.READ_EN.value === "1";
-  const writeActive = ports.WRITE_EN && ports.WRITE_EN.value === "1";
-  const accessMode = writeActive && readActive ? "WRITE+READ" : writeActive ? "WRITE" : readActive ? "READ" : "IDLE";
-  const mode = fault === "1" ? (accessMode === "IDLE" ? "FAULT" : `FAULT ${accessMode}`) : accessMode;
+  const transaction = Boolean(ports.REQ_VALID);
+  const response = ports.RSP_VALID?.value === "1";
+  const status = ports.RSP_STATUS?.value || "";
+  const fault = transaction
+    ? (response && /^[01]{3}$/.test(status) && parseInt(status, 2) !== 0 ? "1" : "0")
+    : (ports.FAULT || ports.ERROR)?.value;
+  const readActive = ports.READ_EN?.value === "1" || ports.READ_VALID?.value === "1"
+    || (ports.CE_N?.value === "0" && ports.OE_N?.value === "0" && ports.WE_N?.value !== "0");
+  const writeActive = (ports.WRITE_EN || ports.WE)?.value === "1"
+    || (ports.CE_N?.value === "0" && ports.WE_N?.value === "0");
+  const accessMode = transaction
+    ? ports.RST?.value === "1" ? "RESET" : response ? "RESPONSE" : ports.REQ_READY?.value === "1" ? "READY" : "BUSY"
+    : ports.BUSY?.value === "1" ? "BUSY"
+    : writeActive && readActive ? "WRITE+READ" : writeActive ? "WRITE" : readActive ? "READ"
+    : ports.ROW_OPEN?.value === "1" ? "ROW OPEN"
+    : ports.WRITE_ENABLED?.value === "1" ? "WRITE ENABLED" : "IDLE";
+  const errorLabel = transaction ? `ERROR ${parseInt(status, 2)}` : ports.ERROR ? "ERROR" : "FAULT";
+  const mode = fault === "1" ? (accessMode === "IDLE" ? errorLabel : `${errorLabel} ${accessMode}`) : accessMode;
   const modeColor = fault === "1"
     ? "rgb(211, 47, 47)"
     : writeActive && readActive
@@ -2496,7 +2621,8 @@ function drawMemory64Kx32Contents(component, parts) {
       : readActive
         ? "rgb(89, 214, 141)"
         : "rgba(238, 244, 255, 0.65)";
-  const activeHex = state.activeAddress == null ? "ADDR XXXXXXXX" : `ADDR ${state.activeAddress.toString(16).toUpperCase().padStart(8, "0")}`;
+  const activeHex = ports.CMD || transaction ? "SNAPSHOT (BYTE ADDRESSES)"
+    : state.activeAddress == null ? "ADDR XXXXXXXX" : `ADDR ${state.activeAddress.toString(16).toUpperCase().padStart(8, "0")}`;
   const showingInstructions = state.memoryRole === "instruction";
   const headerH = rect.h * 0.18;
   const headerGap = rect.h * 0.01;
@@ -2533,7 +2659,9 @@ function drawMemory64Kx32Contents(component, parts) {
   ctx.textBaseline = "middle";
   ctx.textAlign = "left";
   ctx.fillStyle = "rgba(238, 244, 255, 0.84)";
-  ctx.fillText(activeHex, rect.x + 7, rect.y + headerH / 2);
+  const memoryHeader = state.touchedWordsTruncated ? `${activeHex} (first 256 touched)` : activeHex;
+  const modeWidth = ctx.measureText(mode).width;
+  ctx.fillText(ellipsizeText(memoryHeader, Math.max(0, rect.w - modeWidth - 24)), rect.x + 7, rect.y + headerH / 2);
   ctx.textAlign = "right";
   ctx.fillStyle = modeColor;
   ctx.fillText(mode, rect.x + rect.w - 7, rect.y + headerH / 2);
@@ -2549,7 +2677,7 @@ function drawMemory64Kx32Contents(component, parts) {
       w: rect.w,
       h: Math.max(0, rowH - rowGap),
     };
-    const active = activeBase != null && row.address === activeBase;
+    const active = state.windowActive && activeBase != null && row.address === activeBase;
     const value = showingInstructions && row.instructionText ? row.instructionText : registerWordDisplay(row);
     const valueRgb = valueColor(row.bits || "X");
     drawScreenRoundedRect(
@@ -2612,17 +2740,15 @@ function drawComponentForeground(component, vr) {
   if (component.type === "BitSplitter") drawBitSplitterContents(component, parts);
   if (component.type === "BitJoiner") drawBitJoinerContents(component, parts);
   if (component.type === "Rewire") drawRewireContents(component, parts);
+  drawMemoryCellValue(component, parts);
   if (component.fidelity === "behavioral") {
-    if (component.type === "MemoryBit") {
-      drawMemoryBitValue(component, parts);
-    }
     if (component.type === "Register32") {
       drawRegister32Value(component, parts);
     }
     if (component.type === "RegisterFile32x32") {
       drawRegisterFileContents(component, parts);
     }
-    if (component.type === "Memory64Kx32") {
+    if (isMemoryArrayType(component.type)) {
       drawMemory64Kx32Contents(component, parts);
     }
   }
@@ -3733,12 +3859,18 @@ function setTimeLabel(state) {
   }
 }
 
+function isMemoryArrayType(type) {
+  return type === "Memory64Kx32" || /^(FFMemory|SRAM|ROM|IdealRAMReference)(8|16|32)$/.test(type)
+    || /^MemoryContainer<(ff|sram|dram|rom|nor-flash),(8|16|32)>$/.test(type)
+    || /^(SRAM|DRAM|ROM|NORFlash)<(8|16|32)>$/.test(type);
+}
+
 function statefulOverlayComponents() {
   return app.componentOrder.filter((component) => (
     component.fidelity === "behavioral"
     && (
       component.type === "RegisterFile32x32"
-      || component.type === "Memory64Kx32"
+      || isMemoryArrayType(component.type)
     )
   ));
 }
@@ -3894,6 +4026,40 @@ function updateTopologyProgress() {
 }
 
 function mergeTopologyRecords(payload) {
+  // Lazy scopes legitimately repeat boundary pins and wires. Accept identical
+  // records, but never silently merge two different pins under the same ID.
+  // Validate the entire batch before mutating the live topology.
+  const incomingPins = new Map();
+  for (const [stateIndex, data] of (payload.pins || []).entries()) {
+    const pin = { ...data, stateIndex: data.stateIndex ?? stateIndex };
+    const previous = incomingPins.get(pin.id) || app.pins.get(pin.id);
+    if (previous && ["componentId", "name", "type", "width", "stateIndex"]
+      .some((key) => previous[key] !== pin[key])) {
+      throw new Error(`Conflicting topology pin ID: ${pin.id}`);
+    }
+    if (!app.components.has(pin.componentId) || !["input", "output"].includes(pin.type)) {
+      throw new Error(`Invalid topology pin: ${pin.id}`);
+    }
+    incomingPins.set(pin.id, pin);
+  }
+  const incomingWires = new Map();
+  for (const [stateIndex, data] of (payload.wires || []).entries()) {
+    const wire = { ...data, stateIndex: data.stateIndex ?? stateIndex };
+    const previous = incomingWires.get(wire.id) || app.wires.get(wire.id);
+    if (previous && (["ownerId", "name", "width", "stateIndex", "sourcePinId"]
+      .some((key) => previous[key] !== wire[key])
+      || JSON.stringify(previous.sinkPinIds || []) !== JSON.stringify(wire.sinkPinIds || []))) {
+      throw new Error(`Conflicting topology wire ID: ${wire.id}`);
+    }
+    const endpoints = [...(wire.sinkPinIds || [])];
+    if (wire.sourcePinId != null) endpoints.push(wire.sourcePinId);
+    for (const id of endpoints) {
+      if (!incomingPins.has(id) && !app.pins.has(id)) {
+        throw new Error(`Missing topology pin ${id} for wire ${wire.id}`);
+      }
+    }
+    incomingWires.set(wire.id, wire);
+  }
   const touchedComponents = new Set();
   const addedWires = [];
 
@@ -4148,7 +4314,14 @@ async function loadCircuit(scenario) {
   loading.classList.remove("hidden");
   setPlaying(false);
   await nextPaint();
-  const response = await visualizerRequest(apiUrl(`api/circuit?scenario=${encodeURIComponent(scenario)}`));
+  const query = new URLSearchParams({ scenario });
+  // Documentation can choose the initial core without overwriting a saved
+  // explorer profile. Explicit Apply remains the only profile write.
+  const coreFidelity = new URLSearchParams(window.location.search).get("core_fidelity");
+  if (coreFidelity && /^rv32i-(?:five-stage-)?program[0-9]+$/.test(scenario)) {
+    query.set("core_fidelity", coreFidelity);
+  }
+  const response = await visualizerRequest(apiUrl(`api/circuit?${query}`));
   if (!response.ok) throw new Error(await response.text());
   loading.textContent = "Decoding circuit index…";
   await nextPaint();
