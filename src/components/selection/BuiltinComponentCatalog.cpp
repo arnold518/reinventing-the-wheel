@@ -28,29 +28,22 @@
 #include "modules/composite/Adder32.hpp"
 #include "modules/composite/Adder8.hpp"
 #include "modules/composite/Arithmetic8.hpp"
-#include "modules/composite/Comparator32.hpp"
 #include "modules/composite/Comparator8.hpp"
 #include "modules/composite/FullAdder.hpp"
 #include "modules/composite/HalfAdder.hpp"
 #include "modules/composite/Logic32.hpp"
 #include "modules/composite/Shifter32.hpp"
-#include "modules/composite/Shifter8.hpp"
 #include "modules/composite/ZeroDetect32.hpp"
 #include "modules/composite/ZeroDetect8.hpp"
-#include "modules/memory/Memory64Kx32.hpp"
-#include "modules/memory/MemoryContainerCatalog.hpp"
+#include "modules/memory/FFMemoryCatalog.hpp"
 #include "modules/memory/SRAM.hpp"
 #include "modules/memory/DRAM.hpp"
 #include "modules/memory/ROM.hpp"
 #include "modules/memory/NORFlash.hpp"
-#include "modules/memory/MemoryBusAdapter32.hpp"
 #include "modules/memory/MemoryProtocol.hpp"
-#include "modules/memory/Memory32x32.hpp"
-#include "modules/memory/Memory4x32.hpp"
 #include "modules/memory/FlipFlopCell.hpp"
-#include "modules/memory/Register32.hpp"
+#include "modules/memory/Register.hpp"
 #include "modules/memory/RegisterFile32x32.hpp"
-#include "modules/memory/RegisterFile4x32.hpp"
 #include "modules/rv32i/RV32IBitPatternMatcher.hpp"
 #include "modules/rv32i/RV32IMemoryRequest.hpp"
 #include "modules/rv32i/RV32IControlFlowUnit.hpp"
@@ -60,8 +53,10 @@
 #include "modules/rv32i/RV32IPipelineRegisters.hpp"
 #include "modules/rv32i/RV32IPipelineStages.hpp"
 #include "modules/rv32i/RV32IFiveStageCore.hpp"
+#include "modules/rv32i/RV32IPrediction.hpp"
 #include "modules/rv32i/RV32ISingleCycleCore.hpp"
 #include "modules/rv32i/RV32ISingleCycleStages.hpp"
+#include "modules/rv32i/RV32IBaselinePipeline.hpp"
 #include "modules/rv32i/RV32ISingleCycleSystem.hpp"
 #include "modules/utility/BitAdapter.hpp"
 #include "modules/utility/Constant.hpp"
@@ -529,29 +524,20 @@ void registerStructuralFamilies(ComponentCatalog& catalog) {
     addStructural<SRLatch>(catalog, "sequential.sr-latch", "sequential.sr-latch.structural", "SR latch", "SRLatchTest");
     addStructural<GatedDLatch>(catalog, "sequential.gated-d-latch", "sequential.gated-d-latch.structural", "Gated D latch", "GatedDLatchTest");
     addStructural<DFlipFlop>(catalog, "sequential.d-flip-flop", "sequential.d-flip-flop.structural", "D flip-flop", "DFlipFlopTest");
-    addStructural<Decoder2to4>(catalog, "decode.2-to-4", "decode.2-to-4.structural", "2-to-4 decoder", "Decoder2to4Test");
     addStructural<Decoder5to32>(catalog, "decode.5-to-32", "decode.5-to-32.structural", "5-to-32 decoder", "Decoder5to32Test");
 
-    addStructural<AND8>(catalog, "logic.and.width8", "logic.and.width8.structural", "8-bit AND", "AND8Test");
-    addStructural<OR8>(catalog, "logic.or.width8", "logic.or.width8.structural", "8-bit OR", "OR8Test");
     addStructural<XOR8>(catalog, "logic.xor.width8", "logic.xor.width8.structural", "8-bit XOR", "XOR8Test");
     addStructural<NOT8>(catalog, "logic.not.width8", "logic.not.width8.structural", "8-bit NOT", "NOT8Test");
-    addStructural<NAND8>(catalog, "logic.nand.width8", "logic.nand.width8.structural", "8-bit NAND", "NAND8Test");
-    addStructural<NOR8>(catalog, "logic.nor.width8", "logic.nor.width8.structural", "8-bit NOR", "NOR8Test");
 
     addStructural<Mux2to1>(catalog, "mux.2x1.width1", "mux.2x1.width1.structural", "2:1 bit mux", "Mux2to1Test");
     addStructural<Mux4to1>(catalog, "mux.4x1.width1", "mux.4x1.width1.structural", "4:1 bit mux", "Mux4to1Test");
     addStructural<Mux8to1>(catalog, "mux.8x1.width1", "mux.8x1.width1.structural", "8:1 bit mux", "Mux8to1Test");
-    addStructural<Mux16to1>(catalog, "mux.16x1.width1", "mux.16x1.width1.structural", "16:1 bit mux", "Mux16to1Test");
     addStructural<Mux32to1>(catalog, "mux.32x1.width1", "mux.32x1.width1.structural", "32:1 bit mux", "Mux32to1Test");
     addStructural<Mux2to1_4bit>(catalog, "mux.2x1.width4", "mux.2x1.width4.structural", "2:1 4-bit mux", "Mux2to1_4bitTest");
-    addStructural<Mux2to1_8bit>(catalog, "mux.2x1.width8", "mux.2x1.width8.structural", "2:1 8-bit mux", "Mux2to1_8bitTest");
     addStructural<Mux2to1_32bit>(catalog, "mux.2x1.width32", "mux.2x1.width32.structural", "2:1 32-bit mux", "Mux2to1_32bitTest");
-    addStructural<Mux4to1_8bit>(catalog, "mux.4x1.width8", "mux.4x1.width8.structural", "4:1 8-bit mux", "Mux4to1_8bitTest");
     addStructural<Mux4to1_32bit>(catalog, "mux.4x1.width32", "mux.4x1.width32.structural", "4:1 32-bit mux", "Mux4to1_32bitTest");
     addStructural<Mux8to1_8bit>(catalog, "mux.8x1.width8", "mux.8x1.width8.structural", "8:1 8-bit mux", "Mux8to1_8bitTest");
     addStructural<Mux8to1_32bit>(catalog, "mux.8x1.width32", "mux.8x1.width32.structural", "8:1 32-bit mux", "Mux8to1_32bitTest");
-    addStructural<Mux16to1_8bit>(catalog, "mux.16x1.width8", "mux.16x1.width8.structural", "16:1 8-bit mux", "Mux16to1_8bitTest");
     addStructural<Mux32to1_32bit>(catalog, "mux.32x1.width32", "mux.32x1.width32.structural", "32:1 32-bit mux", "Mux32to1_32bitTest");
 
     addStructural<HalfAdder>(catalog, "arithmetic.half-adder", "arithmetic.half-adder.structural", "Half adder", "HalfAdderTest");
@@ -571,15 +557,6 @@ void registerStructuralFamilies(ComponentCatalog& catalog) {
     addStructural<Incrementer8>(catalog, "arithmetic.incrementer.width8", "arithmetic.incrementer.width8.structural", "8-bit incrementer", "Incrementer8Test");
     addStructural<Decrementer8>(catalog, "arithmetic.decrementer.width8", "arithmetic.decrementer.width8.structural", "8-bit decrementer", "Decrementer8Test");
     addStructural<EqualityChecker8>(catalog, "compare.equal.width8", "compare.equal.width8.structural", "8-bit equality", "EqualityChecker8Test");
-    addStructural<Comparator8>(catalog, "compare.unsigned.width8", "compare.unsigned.width8.structural", "8-bit comparator", "Comparator8Test");
-    addStructural<SignedComparator8>(catalog, "compare.signed.width8", "compare.signed.width8.structural", "8-bit signed comparator", "SignedComparator8Test");
-    addSelectableFamily(
-        catalog,
-        families::Comparator32,
-        "compare.width32",
-        "32-bit comparator",
-        "Comparator32Test",
-        "Comparator32 structural subtract-and-detect network");
     addSelectableFamily(catalog, families::ZeroDetect8, "compare.zero.width8", "8-bit zero detect", "ZeroDetect8Test", "ZeroDetect8 structural circuit", 1, "ALU8FidelityContractTest");
     addSelectableFamily(
         catalog,
@@ -595,9 +572,6 @@ void registerStructuralFamilies(ComponentCatalog& catalog) {
         "32-bit logic",
         "Logic32Test",
         "Logic32 structural per-bit gate array");
-    addStructural<ShiftLeftLogical8>(catalog, "shift.left-logical.width8", "shift.left-logical.width8.structural", "8-bit shift left", "ShiftLeftLogical8Test");
-    addStructural<ShiftRightLogical8>(catalog, "shift.right-logical.width8", "shift.right-logical.width8.structural", "8-bit shift right", "ShiftRightLogical8Test");
-    addStructural<ShiftRightArithmetic8>(catalog, "shift.right-arithmetic.width8", "shift.right-arithmetic.width8.structural", "8-bit arithmetic shift", "ShiftRightArithmetic8Test");
     addSelectableFamily(
         catalog,
         families::Shifter32,
@@ -623,8 +597,6 @@ void registerStructuralFamilies(ComponentCatalog& catalog) {
 }
 
 void registerStorage(ComponentCatalog& catalog) {
-    addStructural<MemoryBusAdapter32>(catalog, "memory.bus-adapter.width32", "memory.bus-adapter.width32.structural",
-        "MemoryBusAdapter32", "MemoryBusAdapter32Test");
     const auto flip_flop_cell = std::string(families::FlipFlopCell.id());
     catalog.registerContract({
         flip_flop_cell, 1, "Write-enabled flip-flop cell",
@@ -640,22 +612,6 @@ void registerStorage(ComponentCatalog& catalog) {
         verifiedBehavioral("FlipFlopCell structural mux/DFF", "FlipFlopCellTest",
                            "FlipFlopCellTest", "four-state", "clock-boundary")));
 
-    const auto register32 = std::string(families::Register32.id());
-    catalog.registerContract({
-        register32, 1, "32-bit write-enabled register",
-        schemaFor(families::Register32), {}, "four-state", "clock-boundary"});
-    catalog.registerImplementation(implementationFor(
-        families::Register32,
-        "memory.register.width32.structural.bits",
-        Fidelity::Structural, verifiedStructural("Register32Test")));
-    catalog.registerImplementation(implementationFor(
-        families::Register32,
-        "memory.register.width32.behavioral.direct",
-        Fidelity::Behavioral,
-        verifiedBehavioral("Register32 structural FFWord storage", "Register32Test",
-                           "Register32Test", "four-state", "clock-boundary")));
-
-    addStructural<RegisterFile4x32>(catalog, "memory.register-file.4x32", "memory.register-file.4x32.structural", "4x32 register file", "RegisterFile4x32Test");
 
     const auto register_file =
         std::string(families::RegisterFile32x32.id());
@@ -679,23 +635,7 @@ void registerStorage(ComponentCatalog& catalog) {
     behavioral.capabilities = {"register-state-view"};
     catalog.registerImplementation(std::move(behavioral));
 
-    addStructural<Memory4x32>(catalog, "memory.word-array.4x32", "memory.word-array.4x32.structural", "4x32 memory slice", "Memory4x32Test");
-    addStructural<Memory32x32>(catalog, "memory.word-array.32x32", "memory.word-array.32x32.structural", "32x32 memory slice", "Memory32x32Test");
 
-    const auto memory64 = std::string(families::Memory64Kx32.id());
-    const auto memory64_evidence = verifiedBehavioralFromSlices(
-            "Memory4x32 and Memory32x32 representative slices",
-            "Memory64Kx32Test",
-            {"Memory4x32Test", "Memory32x32Test"},
-            "four-state", "clock-boundary");
-    catalog.registerContract({
-        memory64, 1, "RV32I 64Kx32 memory",
-        schemaFor(families::Memory64Kx32), {},
-        memory64_evidence.semantic_domain, memory64_evidence.observation});
-    catalog.registerImplementation(implementationFor(
-        families::Memory64Kx32,
-        "rv32i.memory.64k-x32.behavioral.direct",
-        Fidelity::Behavioral, memory64_evidence));
 }
 
 void registerRV32I(ComponentCatalog& catalog) {
@@ -713,6 +653,18 @@ void registerRV32I(ComponentCatalog& catalog) {
         verifiedBehavioral("ALU32 structural implementation", "ALU32Test",
                            "ALU32Test", "known-binary",
                            "stable-after-settle")));
+
+    catalog.registerContract({std::string(families::ALU32Core.id()),1,
+        "RV32I core ALU datapath",schemaFor(families::ALU32Core),{},
+        "known-binary","stable-after-settle"});
+    catalog.registerImplementation(implementationFor(families::ALU32Core,
+        "rv32i.alu32-core.structural",Fidelity::Structural,
+        verifiedStructural("ALU32CoreTest")));
+    catalog.registerImplementation(implementationFor(families::ALU32Core,
+        "rv32i.alu32-core.behavioral.direct",Fidelity::Behavioral,
+        verifiedBehavioral("ALU32 shared arithmetic and compare network",
+            "ALU32CoreTest","ALU32CoreTest",
+            "known-binary","stable-after-settle")));
 
     const auto control_flow = std::string(families::RV32IControlFlow.id());
     catalog.registerContract({
@@ -809,21 +761,30 @@ void registerRV32I(ComponentCatalog& catalog) {
             "known-binary",
             "clock-boundary",
         });
-        catalog.registerImplementation(implementationFor(
+        auto structural = implementationFor(
             family,
             contract_id + ".structural.register32-bank",
             Fidelity::Structural,
-            verifiedStructural(test_name)));
-        catalog.registerImplementation(implementationFor(
+            verifiedStructural(test_name));
+        auto behavioral = implementationFor(
             family,
             contract_id + ".behavioral.direct",
             Fidelity::Behavioral,
             verifiedBehavioral(
-                display_name + " structural Register32 bank",
+                display_name + " structural Register<32> bank",
                 test_name,
                 test_name,
                 "known-binary",
-                "clock-boundary")));
+                "clock-boundary"));
+        auto supports = [](const ParameterMap& parameters) {
+            return parameters.empty() ||
+                (parameters.size() == 1 && parameters.contains("compact_packet") &&
+                 parameters.at("compact_packet") == "1");
+        };
+        structural.supports = supports;
+        behavioral.supports = supports;
+        catalog.registerImplementation(std::move(structural));
+        catalog.registerImplementation(std::move(behavioral));
     };
 
     add_pipeline_register(
@@ -846,7 +807,8 @@ void registerRV32I(ComponentCatalog& catalog) {
     const auto add_pipeline_control = [&](
         const ComponentFamily& family,
         const std::string& display_name,
-        const std::string& test_name) {
+        const std::string& test_name,
+        bool configurable_fetch = false) {
         const auto contract_id = std::string(family.id());
         catalog.registerContract({
             contract_id,
@@ -857,12 +819,12 @@ void registerRV32I(ComponentCatalog& catalog) {
             "known-binary",
             "stable-after-settle",
         });
-        catalog.registerImplementation(implementationFor(
+        auto structural = implementationFor(
             family,
             contract_id + ".structural.gates",
             Fidelity::Structural,
-            verifiedStructural(test_name)));
-        catalog.registerImplementation(implementationFor(
+            verifiedStructural(test_name));
+        auto behavioral = implementationFor(
             family,
             contract_id + ".behavioral.direct",
             Fidelity::Behavioral,
@@ -871,21 +833,43 @@ void registerRV32I(ComponentCatalog& catalog) {
                 test_name,
                 test_name,
                 "known-binary",
-                "stable-after-settle")));
+                "stable-after-settle"));
+        if (configurable_fetch) {
+            auto supports = [](const ParameterMap& parameters) {
+                return parameters.empty() ||
+                    (parameters.size() == 1 && parameters.contains("external_next_pc") &&
+                     (parameters.at("external_next_pc") == "0" ||
+                      parameters.at("external_next_pc") == "1"));
+            };
+            structural.supports = supports;
+            behavioral.supports = supports;
+        }
+        catalog.registerImplementation(std::move(structural));
+        catalog.registerImplementation(std::move(behavioral));
     };
 
     add_pipeline_control(
         families::RV32IForwardingUnit,
         "RV32I pipeline forwarding unit",
         "RV32IForwardingUnitTest");
+    for (const auto* family : {&families::RV32IPredictionCounter, &families::RV32IBranchPredecode,
+                              &families::RV32IBranchRecovery, &families::RV32IBranchPredictor,
+                              &families::RV32IPredictionPath}) {
+        const std::string id(family->id()), name(family->typeName()), test=name+"Test";
+        const bool configured = family==&families::RV32IBranchPredictor || family==&families::RV32IPredictionPath;
+        catalog.registerContract({id,1,name,schemaFor(*family),{},"known-binary","stable-after-settle"});
+        for (const auto fidelity : {Fidelity::Structural,Fidelity::Behavioral}) {
+            auto impl=implementationFor(*family,id+"."+toString(fidelity),fidelity,
+                fidelity==Fidelity::Structural ? verifiedStructural(test)
+                    : verifiedBehavioral(name+" structural circuit",test,test,"known-binary","stable-after-settle"));
+            if (configured) impl.supports=rv32i::supportsPredictionParameters;
+            catalog.registerImplementation(std::move(impl));
+        }
+    }
     add_pipeline_control(
         families::RV32IHazardDetectionUnit,
         "RV32I pipeline load-use hazard detector",
         "RV32IHazardDetectionUnitTest");
-    add_pipeline_control(
-        families::RV32IPipelineControlFlowUnit,
-        "RV32I pipeline control-flow unit",
-        "RV32IPipelineControlFlowUnitTest");
     add_pipeline_control(
         families::RV32IMemoryAlignmentUnit,
         "RV32I memory-alignment checker",
@@ -901,7 +885,7 @@ void registerRV32I(ComponentCatalog& catalog) {
     add_pipeline_control(
         families::RV32IFetchStage,
         "RV32I pipeline fetch stage",
-        "RV32IFetchStageTest");
+        "RV32IFetchStageTest", true);
     add_pipeline_control(
         families::RV32IDecodeStage,
         "RV32I pipeline decode stage",
@@ -915,6 +899,10 @@ void registerRV32I(ComponentCatalog& catalog) {
         "RV32I pipeline memory stage",
         "RV32IMemoryStageTest");
     add_pipeline_control(
+        families::RV32IPipelineExecutionStatus,
+        "RV32I sticky pipeline execution status",
+        "RV32IPipelineExecutionStatusTest");
+    add_pipeline_control(
         families::RV32IWritebackStage,
         "RV32I pipeline writeback stage",
         "RV32IWritebackStageTest");
@@ -923,10 +911,10 @@ void registerRV32I(ComponentCatalog& catalog) {
         std::string(families::RV32IFiveStageCore.id());
     catalog.registerContract({
         five_stage_core,
-        1,
+        2,
         "Educational RV32I five-stage core",
         schemaFor(families::RV32IFiveStageCore),
-        {"rv32i-architectural-state-view"},
+        {"rv32i-pipeline-state-view", "rv32i-retirement-view"},
         "known-binary",
         "clock-boundary",
     });
@@ -936,7 +924,8 @@ void registerRV32I(ComponentCatalog& catalog) {
         Fidelity::Structural,
         verifiedStructural("RV32IFiveStageCoreTest"));
     five_stage_structural.capabilities = {
-        "rv32i-architectural-state-view"};
+        "rv32i-pipeline-state-view", "rv32i-retirement-view"};
+    five_stage_structural.supports = rv32i::supportsPredictionParameters;
     catalog.registerImplementation(
         std::move(five_stage_structural));
     auto five_stage_behavioral = implementationFor(
@@ -954,7 +943,6 @@ void registerRV32I(ComponentCatalog& catalog) {
                 "RV32IMEMWBPipelineRegisterTest",
                 "RV32IForwardingUnitTest",
                 "RV32IHazardDetectionUnitTest",
-                "RV32IPipelineControlFlowUnitTest",
                 "RV32IMemoryAlignmentUnitTest",
                 "RV32IPipelineRetirementUnitTest",
                 "RV32IPipelineCoordinatorTest",
@@ -962,7 +950,8 @@ void registerRV32I(ComponentCatalog& catalog) {
             "known-binary",
             "clock-boundary"));
     five_stage_behavioral.capabilities = {
-        "rv32i-architectural-state-view"};
+        "rv32i-pipeline-state-view", "rv32i-retirement-view"};
+    five_stage_behavioral.supports = rv32i::supportsPredictionParameters;
     catalog.registerImplementation(
         std::move(five_stage_behavioral));
 
@@ -983,10 +972,26 @@ void registerRV32I(ComponentCatalog& catalog) {
         catalog.registerImplementation(std::move(behavior));
     }
 
+    for(const auto* block : {&families::RV32IBaselineFetchStage, &families::RV32IBaselineDecodeStage,
+            &families::RV32IBaselineExecuteStage, &families::RV32IBaselineMemoryStage,
+            &families::RV32IBaselineDependencyUnit, &families::RV32IBaselineControl,
+            &families::RV32IBaselinePipelineCore}) {
+        const std::string id(block->id()),name(block->typeName()),test=name+"Test";
+        const bool core=block==&families::RV32IBaselinePipelineCore;
+        const std::vector<std::string> caps=core?std::vector<std::string>{"rv32i-pipeline-state-view","rv32i-retirement-view"}:
+            block==&families::RV32IBaselineDecodeStage?std::vector<std::string>{"register-state-view"}:std::vector<std::string>{};
+        catalog.registerContract({id,core?2u:1u,name,schemaFor(*block),caps,"known-binary",core?"clock-boundary":"stable-after-settle"});
+        auto structure=implementationFor(*block,id+".structural",Fidelity::Structural,verifiedStructural(test));
+        structure.capabilities=caps;catalog.registerImplementation(std::move(structure));
+        auto behavior=implementationFor(*block,id+".behavioral",Fidelity::Behavioral,
+            verifiedBehavioral(name+" structural circuitry",test,test,"known-binary",core?"clock-boundary":"stable-after-settle"));
+        behavior.capabilities=caps;catalog.registerImplementation(std::move(behavior));
+    }
+
     const auto core =
         std::string(families::RV32ISingleCycleCore.id());
     catalog.registerContract({
-        core, 1, "Educational RV32I single-cycle core",
+        core, 2, "Educational RV32I single-cycle core",
         schemaFor(families::RV32ISingleCycleCore),
         {"rv32i-architectural-state-view"},
         "known-binary", "clock-boundary"});
@@ -1054,7 +1059,7 @@ std::shared_ptr<ComponentCatalog> createBuiltinComponentCatalog() {
     registerStructuralFamilies(*catalog);
     registerStorage(*catalog);
     registerRV32I(*catalog);
-    registerMemoryContainers(*catalog);
+    registerFFMemories(*catalog);
     registerSRAMComponents(*catalog);
     memory_device::registerMatrixComponents(*catalog);
     registerDRAMComponents(*catalog);

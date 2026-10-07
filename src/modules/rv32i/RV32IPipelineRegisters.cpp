@@ -6,12 +6,33 @@
 #include "modules/basic/Gate.hpp"
 #include "modules/basic/Mux.hpp"
 #include "modules/memory/FlipFlopCell.hpp"
-#include "modules/memory/Register32.hpp"
+#include "modules/memory/Register.hpp"
+#include "modules/memory/MemoryController.hpp"
 #include "modules/utility/Constant.hpp"
+#include "modules/utility/Rewire.hpp"
 #include <map>
+#include <stdexcept>
 #include <utility>
 
 namespace {
+struct PacketSlice { size_t offset,width; };
+std::vector<PacketSlice> compactSlices(const std::string& field,const std::string& type_name) {
+    if (field=="FETCH_STATUS" || field=="MEMORY_STATUS") return {{0,2}};
+    if (field=="EXECUTION_STATUS") return {{0,1}};
+    if (field=="REGISTER_ADDRESSES") {
+        if (type_name=="RV32IIDEXPipelineRegister") return {{0,5},{5,5},{10,5}};
+        return {{10,5}}; // only RD is used after Execute
+    }
+    if (field=="CONTROL") return {{0,16},{16,8},{24,4},{28,2},{30,1}};
+    return {{0,32}};
+}
+bool compactPacket(const std::shared_ptr<circuit::BuildContext>& context) {
+    if (!context || context->parameters().empty()) return false;
+    const auto& p=context->parameters();
+    if (p.size()!=1 || !p.contains("compact_packet") || p.at("compact_packet")!="1")
+        throw std::invalid_argument("pipeline register requires compact_packet=1");
+    return true;
+}
 const std::vector<std::string>& ifidFields() {
     static const std::vector<std::string> fields{
         "PC",
@@ -104,13 +125,14 @@ public:
     RV32IPipelineRegisterDirect(
         std::string name,
         std::string type_name,
-        std::vector<std::string> fields)
+        std::vector<std::string> fields,
+        bool compact)
         : BasicComponent(
               std::move(name),
               1,
               pipelineRegisterPins(fields)),
           type_name_(std::move(type_name)),
-          fields_(std::move(fields)) {
+          fields_(std::move(fields)),compact_(compact) {
         for (const auto& field : fields_) {
             stored_.emplace(
                 field,
@@ -151,6 +173,12 @@ public:
                 for (const auto& field : fields_) {
                     auto input = getInputPin<32>("D_" + field)
                         ->getValueAsVector();
+                    if (compact_) {
+                        std::vector<bool> used(32,false);
+                        for (auto [offset,width]:compactSlices(field,type_name_))
+                            for (size_t bit=offset;bit<offset+width;++bit) used[bit]=true;
+                        for (size_t bit=0;bit<32;++bit) if (!used[bit]) input[bit]=LogicValue::LOW;
+                    }
                     for (auto& bit : input) {
                         bit = binaryOrUnknown(bit);
                     }
@@ -168,8 +196,14 @@ public:
                     const auto input =
                         getInputPin<32>("D_" + field)->getValueAsVector();
                     auto& held = stored_.at(field);
+                    std::vector<bool> used(32,true);
+                    if (compact_) {
+                        used.assign(32,false);
+                        for (auto [offset,width]:compactSlices(field,type_name_))
+                            for (size_t bit=offset;bit<offset+width;++bit) used[bit]=true;
+                    }
                     for (size_t bit = 0; bit < held.size(); ++bit) {
-                        held[bit] = merge(held[bit], input[bit]);
+                        held[bit] = used[bit]?merge(held[bit], input[bit]):LogicValue::LOW;
                     }
                 }
             }
@@ -189,6 +223,7 @@ public:
 private:
     std::string type_name_;
     std::vector<std::string> fields_;
+    bool compact_ = false;
     std::map<std::string, std::vector<LogicValue>> stored_;
     LogicValue valid_ = LogicValue::UNKNOWN;
     LogicValue previous_clk_ = LogicValue::UNKNOWN;
@@ -202,14 +237,14 @@ const ComponentFamily RV32IIFIDPipelineRegister{
     pipelineRegisterPins(ifidFields()),
     [](const std::string& name, const std::shared_ptr<BuildContext>& context) {
         return Component::createWithContext<::RV32IIFIDPipelineRegister>(
-            context, name);
+            context, name,compactPacket(context));
     },
     [](const std::string& name, const std::shared_ptr<BuildContext>& context) {
         return Component::createWithContext<RV32IPipelineRegisterDirect>(
             context,
             name,
             RV32IIFIDPipelineRegister::TypeName,
-            ifidFields());
+            ifidFields(),compactPacket(context));
     }};
 
 const ComponentFamily RV32IIDEXPipelineRegister{
@@ -218,14 +253,14 @@ const ComponentFamily RV32IIDEXPipelineRegister{
     pipelineRegisterPins(idexFields()),
     [](const std::string& name, const std::shared_ptr<BuildContext>& context) {
         return Component::createWithContext<::RV32IIDEXPipelineRegister>(
-            context, name);
+            context, name,compactPacket(context));
     },
     [](const std::string& name, const std::shared_ptr<BuildContext>& context) {
         return Component::createWithContext<RV32IPipelineRegisterDirect>(
             context,
             name,
             RV32IIDEXPipelineRegister::TypeName,
-            idexFields());
+            idexFields(),compactPacket(context));
     }};
 
 const ComponentFamily RV32IEXMEMPipelineRegister{
@@ -234,14 +269,14 @@ const ComponentFamily RV32IEXMEMPipelineRegister{
     pipelineRegisterPins(exmemFields()),
     [](const std::string& name, const std::shared_ptr<BuildContext>& context) {
         return Component::createWithContext<::RV32IEXMEMPipelineRegister>(
-            context, name);
+            context, name,compactPacket(context));
     },
     [](const std::string& name, const std::shared_ptr<BuildContext>& context) {
         return Component::createWithContext<RV32IPipelineRegisterDirect>(
             context,
             name,
             RV32IEXMEMPipelineRegister::TypeName,
-            exmemFields());
+            exmemFields(),compactPacket(context));
     }};
 
 const ComponentFamily RV32IMEMWBPipelineRegister{
@@ -250,23 +285,24 @@ const ComponentFamily RV32IMEMWBPipelineRegister{
     pipelineRegisterPins(memwbFields()),
     [](const std::string& name, const std::shared_ptr<BuildContext>& context) {
         return Component::createWithContext<::RV32IMEMWBPipelineRegister>(
-            context, name);
+            context, name,compactPacket(context));
     },
     [](const std::string& name, const std::shared_ptr<BuildContext>& context) {
         return Component::createWithContext<RV32IPipelineRegisterDirect>(
             context,
             name,
             RV32IMEMWBPipelineRegister::TypeName,
-            memwbFields());
+            memwbFields(),compactPacket(context));
     }};
 } // namespace circuit::families
 
 RV32IPipelineRegisterBlock::RV32IPipelineRegisterBlock(
     std::string name,
     std::vector<std::string> fields,
-    PinInitFunction initializer)
+    PinInitFunction initializer,
+    bool compact)
     : IOComponent(std::move(name), std::move(initializer)),
-      fields_(std::move(fields)) {}
+      fields_(std::move(fields)),compact_(compact) {}
 
 void RV32IPipelineRegisterBlock::buildInternals(
     ComponentBuilder& builder) {
@@ -302,21 +338,46 @@ void RV32IPipelineRegisterBlock::buildInternals(
 
     for (const auto& field : fields_) {
         const auto child = field + "_STATE";
-        builder.add(circuit::families::Register32, child);
-        builder.addNewWire<32>(
-            field + "_D_to_state",
-            getInputPin<32>("D_" + field),
-            {builder.getInputPin<IOComponent, 32>(child, "D")});
-        builder.addNewWire<32>(
-            field + "_Q_to_output",
-            builder.getOutputPin<IOComponent, 32>(child, "Q"),
-            {getOutputPin<32>("Q_" + field)});
-        write_enable_sinks.push_back(
-            builder.getInputPin<IOComponent>(child, "WE"));
-        clock_sinks.push_back(
-            builder.getInputPin<IOComponent>(child, "CLK"));
-        reset_sinks.push_back(
-            builder.getInputPin<IOComponent>(child, "RST"));
+        auto slices=compact_?compactSlices(field,getTypeName()):std::vector<PacketSlice>{{0,32}};
+        if (slices.size()==1 && slices.front().offset==0 && slices.front().width==32) {
+            builder.add(circuit::families::registerWord(32), child);
+            builder.addNewWire<32>(field + "_D_to_state",getInputPin<32>("D_" + field),
+                {builder.getInputPin<IOComponent,32>(child,"D")});
+            builder.addNewWire<32>(field + "_Q_to_output",builder.getOutputPin<IOComponent,32>(child,"Q"),
+                {getOutputPin<32>("Q_" + field)});
+            write_enable_sinks.push_back(builder.getInputPin<IOComponent>(child,"WE"));
+            clock_sinks.push_back(builder.getInputPin<IOComponent>(child,"CLK"));
+            reset_sinks.push_back(builder.getInputPin<IOComponent>(child,"RST"));
+            continue;
+        }
+        std::vector<Rewire::WireSpec> slice_ports;
+        std::vector<Rewire::BitMap> input_maps,output_maps;
+        for (size_t i=0;i<slices.size();++i) {
+            const auto name="SLICE_"+std::to_string(i);
+            slice_ports.push_back({name,slices[i].width});
+            auto in=identity_mapping("IN",slices[i].offset,slices[i].width,name);
+            input_maps.insert(input_maps.end(),in.begin(),in.end());
+            auto out=identity_mapping(name,0,slices[i].width,"OUT",slices[i].offset);
+            output_maps.insert(output_maps.end(),out.begin(),out.end());
+        }
+        auto split=builder.addNewComponent<Rewire>(field+"_SPLIT",
+            std::vector<Rewire::WireSpec>{{"IN",32}},slice_ports,input_maps);
+        auto join=builder.addNewComponent<Rewire>(field+"_JOIN",slice_ports,
+            std::vector<Rewire::WireSpec>{{"OUT",32}},output_maps,Rewire::UnmappedBitValue::LOW);
+        builder.addNewWire<32>(field+"_D_to_split",getInputPin<32>("D_"+field),{split->getInputPin<32>("IN")});
+        builder.addNewWire<32>(field+"_join_to_Q",join->getOutputPin<32>("OUT"),{getOutputPin<32>("Q_"+field)});
+        for (size_t i=0;i<slices.size();++i) {
+            const auto name="SLICE_"+std::to_string(i);
+            const auto part=child+"_"+std::to_string(i);
+            auto state=builder.add(circuit::families::registerWord(slices[i].width),part);
+            builder.addNewWireDynamic(field+"_D_"+name,slices[i].width,split->getOutputPinDynamic(name),
+                {state->getInputPinDynamic("D")});
+            builder.addNewWireDynamic(field+"_Q_"+name,slices[i].width,state->getOutputPinDynamic("Q"),
+                {join->getInputPinDynamic(name)});
+            write_enable_sinks.push_back(builder.getInputPin<IOComponent>(part,"WE"));
+            clock_sinks.push_back(builder.getInputPin<IOComponent>(part,"CLK"));
+            reset_sinks.push_back(builder.getInputPin<IOComponent>(part,"RST"));
+        }
     }
 
     builder.addNewWire(
@@ -329,26 +390,26 @@ void RV32IPipelineRegisterBlock::buildInternals(
         "FLUSH_fanout", getInputPin("FLUSH"), flush_sinks);
 }
 
-RV32IIFIDPipelineRegister::RV32IIFIDPipelineRegister(std::string name)
+RV32IIFIDPipelineRegister::RV32IIFIDPipelineRegister(std::string name,bool compact)
     : RV32IPipelineRegisterBlock(
           std::move(name),
           ifidFields(),
-          circuit::families::RV32IIFIDPipelineRegister.pinInitializer()) {}
+          circuit::families::RV32IIFIDPipelineRegister.pinInitializer(),compact) {}
 
-RV32IIDEXPipelineRegister::RV32IIDEXPipelineRegister(std::string name)
+RV32IIDEXPipelineRegister::RV32IIDEXPipelineRegister(std::string name,bool compact)
     : RV32IPipelineRegisterBlock(
           std::move(name),
           idexFields(),
-          circuit::families::RV32IIDEXPipelineRegister.pinInitializer()) {}
+          circuit::families::RV32IIDEXPipelineRegister.pinInitializer(),compact) {}
 
-RV32IEXMEMPipelineRegister::RV32IEXMEMPipelineRegister(std::string name)
+RV32IEXMEMPipelineRegister::RV32IEXMEMPipelineRegister(std::string name,bool compact)
     : RV32IPipelineRegisterBlock(
           std::move(name),
           exmemFields(),
-          circuit::families::RV32IEXMEMPipelineRegister.pinInitializer()) {}
+          circuit::families::RV32IEXMEMPipelineRegister.pinInitializer(),compact) {}
 
-RV32IMEMWBPipelineRegister::RV32IMEMWBPipelineRegister(std::string name)
+RV32IMEMWBPipelineRegister::RV32IMEMWBPipelineRegister(std::string name,bool compact)
     : RV32IPipelineRegisterBlock(
           std::move(name),
           memwbFields(),
-          circuit::families::RV32IMEMWBPipelineRegister.pinInitializer()) {}
+          circuit::families::RV32IMEMWBPipelineRegister.pinInitializer(),compact) {}

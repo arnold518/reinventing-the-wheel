@@ -15,47 +15,50 @@ template<std::size_t W>
 void check_port() {
     memory_example::Port<W> port;
     typename memory_example::Port<W>::Inputs in;
-    in.reset = true;
-    auto out = port.step(in);
-    assert(!out.request_ready && !out.response_valid && !out.start);
-    assert(out.read_data == Bits(W, L) && out.request.address == bits(32, 0));
-    in.reset = false; in.request_valid = true; in.request = request<W>(Operation::Write, 12, 0xa5);
-    in.rising_edge = true;
-    out = port.step(in); // Backend is unavailable.
-    assert(!out.request_ready && out.request.address == bits(32, 0));
-    in.backend_ready = true; in.rising_edge = false;
-    out = port.step(in); // No rising edge: do not latch.
-    assert(out.request_ready && out.request.address == bits(32, 0));
-    in.rising_edge = true;
-    out = port.step(in);
-    assert(!out.request_ready && !out.start && out.request.address == bits(32, 12));
-    assert(out.request.data == bits(W, 0xa5));
-    in.request = request<W>(Operation::EraseBlock, 0xffffffffu);
-    in.backend_ready = false;
-    out = port.step(in);
-    assert(out.start && !out.response_valid && out.request.address == bits(32, 12));
-    in.done = true; in.result = bits(W, 0x5a); in.status = bits(3, 5); in.rising_edge = false;
-    out = port.step(in);
-    assert(out.start && !out.response_valid);
-    in.rising_edge = true;
-    out = port.step(in);
-    assert(!out.start && out.response_valid && out.read_data == bits(W, 0x5a) && out.status == bits(3, 5));
-    in.result.assign(W, X); in.status.assign(3, X);
-    for (unsigned i = 0; i < 4; ++i) {
-        out = port.step(in);
-        assert(out.response_valid && out.read_data == bits(W, 0x5a) && out.status == bits(3, 5));
+    in.reset=true;
+    auto out=port.step(in);
+    assert(!out.request_ready&&!out.response_valid&&!out.start);
+    in.reset=false; in.request_valid=true;
+    in.request=request<W>(Operation::Write,12,0xa5);
+    out=port.step(in);
+    assert(!out.request_ready&&out.request.address==bits(32,12));
+    in.backend_ready=true;
+    out=port.step(in); // Live bypass, no edge or extra SETUP cycle.
+    assert(out.start&&out.request_ready&&out.request.data==bits(W,0xa5));
+    in.rising_edge=true; out=port.step(in);
+    assert(!out.start&&!out.request_ready);
+    in.rising_edge=false; in.request_valid=false; in.backend_ready=false;
+    in.request=request<W>(Operation::Read,0);
+    in.done=true; in.result=bits(W,0x5a); in.status=bits(3,5);
+    out=port.step(in);
+    assert(out.response_valid&&out.finish&&out.read_data==bits(W,0x5a));
+    assert(out.request.address==bits(32,0)); // Sequencer, not frontend, owns request.
+    in.rising_edge=true; port.step(in); // Retain blocked result.
+    in.done=false; in.result.assign(W,X); in.status.assign(3,X);
+    for (unsigned i=0;i<4;++i) {
+        out=port.step(in);
+        assert(out.response_valid&&out.read_data==bits(W,0x5a)&&out.status==bits(3,5));
     }
-    in.backend_ready = true; in.response_ready = true;
-    out = port.step(in);
-    assert(out.request_ready && !out.response_valid);
-    assert(out.request.address == bits(32, 12)); // No same-edge consume + accept.
-    in.request.op.assign(3, X); in.request.address.assign(32, X);
-    out = port.step(in);
-    assert(out.request.address == Bits(32, X)); // Validation is not the frontend's job.
-    in.reset = true; in.rising_edge = false;
-    out = port.step(in);
-    assert(!out.request_ready && !out.response_valid && !out.start);
-    assert(out.request.address == bits(32, 0) && out.read_data == Bits(W, L));
+    in.rising_edge=false; in.backend_ready=true; in.response_ready=true;
+    in.request_valid=true; out=port.step(in);
+    assert(out.request_ready&&out.start&&out.response_valid);
+    in.rising_edge=true; out=port.step(in); // Consume old response + accept new.
+    assert(!out.request_ready&&!out.response_valid);
+    in.reset=true; out=port.step(in);
+    assert(!out.request_ready&&!out.response_valid&&!out.start);
+
+    memory_example::ResponseBuffer<W> buffer;
+    typename memory_example::ResponseBuffer<W>::Inputs b;
+    b.valid=true;b.ready=true;b.data=bits(W,0x31);
+    auto view=buffer.outputs(b);
+    assert(view.ready&&view.valid&&view.data==b.data);
+    b.edge=true; buffer.step(b); // Empty bypass consumes without filling.
+    b.valid=false; assert(!buffer.outputs(b).valid);
+    b.ready=false;b.valid=true;buffer.step(b);
+    b.data=bits(W,0x42);b.ready=true;
+    assert(buffer.outputs(b).data==bits(W,0x31)); // Old result wins.
+    buffer.step(b);b.valid=false;b.ready=false;
+    assert(buffer.outputs(b).data==bits(W,0x42)&&buffer.outputs(b).valid);
 }
 
 struct RelayModel { static constexpr auto technology = Technology::Container; };
@@ -71,12 +74,12 @@ struct Device {
 
 template<std::size_t W>
 struct Device<W, RelayModel> {
-    memory_example::Container<W, SRAMModel> model;
-    typename memory_example::Container<W, SRAMModel>::Outputs out;
+    memory_example::CompactEndpoint<W, SRAMModel> model;
+    typename memory_example::CompactEndpoint<W, SRAMModel>::Outputs out;
     bool previous = false;
     explicit Device(EndpointConfig config) : model(config) {}
     void update(std::size_t time, const Signals& pins) {
-        typename memory_example::Container<W, SRAMModel>::Inputs in;
+        typename memory_example::CompactEndpoint<W, SRAMModel>::Inputs in;
         const bool clock = high(pins, "CLK");
         in.rising_edge = clock && !previous; previous = clock;
         in.reset = high(pins, "RST"); in.request_valid = high(pins, "REQ_VALID");
@@ -123,7 +126,10 @@ struct ControllerRig {
         }
         out = controller.step(time, in, [&](const std::string& pin, std::size_t width) {
             if constexpr (Model::technology == Technology::Container) return signal(sampled, pin, width);
-            else return device.read(pin, width);
+            else {
+                if constexpr (Model::technology == Technology::FF) device.update(time, controller.native_pins());
+                return device.read(pin, width);
+            }
         });
         const auto& pins = controller.native_pins();
         if (high(pins, "WE") || high(pins, "READ_EN") || !high(pins, "CE_N") ||
@@ -289,8 +295,9 @@ void check_sequence_against_simulator() {
             feedback["RSP_VALID"] = {time % 11 ? H : L};
             feedback["RSP_STATUS"] = bits(3, random() % 8);
             auto read = [&](const std::string& pin, std::size_t width) { return signal(feedback, pin, width); };
-            reference.step(time, edge, reset, start, req, read);
-            actual.step(time, edge, reset, start, req, read);
+            const bool finish_response=time%17!=0;
+            reference.step(time, edge, reset, start, req, read, finish_response);
+            actual.step(time, edge, reset, start, req, read, finish_response);
             assert(reference.outputs == actual.outputs && reference.result == actual.result);
             assert(reference.available == actual.available && reference.done == actual.done);
             assert(reference.status == actual.status && reference.deadline() == actual.deadline());

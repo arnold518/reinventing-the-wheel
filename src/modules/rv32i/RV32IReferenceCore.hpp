@@ -28,7 +28,6 @@ public:
     std::map<uint32_t, uint8_t> lastDataMemoryWrites() const;
 
 private:
-    rv32i::MemoryRequestState instruction_request_, data_request_;
     uint32_t reset_pc_ = 0;
     rv32i::RV32IState state_{};
     rv32i::RV32IMemoryTrace last_data_memory_access_{};

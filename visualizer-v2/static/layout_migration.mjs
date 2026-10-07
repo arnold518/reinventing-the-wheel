@@ -1,7 +1,7 @@
 // Upgrade only recognized, unchanged shipped geometry. Keep user styling,
 // positions and proportions; never discard the entire browser layout store.
 function upgradeLegacyDefaultLayout(base, saved) {
-  if (!["sram-matrix-v1", "rv32i-datapath-v1", "rv32i-stages-v2", "rv32i-single-cycle-auto-v3", "rv32i-single-cycle-stage-order-v1", "rv32i-blocks-v4", "rv32i-alu-auto-v5", "rv32i-alu-auto-v6", "register-file-ff-v1"].includes(base?.layout_revision) || !saved ||
+  if (!["sram-matrix-v1", "rv32i-datapath-v1", "rv32i-stages-v2", "rv32i-single-cycle-auto-v3", "rv32i-single-cycle-stage-order-v1", "rv32i-blocks-v4", "rv32i-alu-auto-v5", "rv32i-alu-auto-v6", "rv32i-routing-v1", "register-file-ff-v1", "rv32i-advanced-grouping-v2"].includes(base?.layout_revision) || !saved ||
       saved.layout_revision === base.layout_revision || !base.previous_default) return saved;
   const previous = base.previous_default;
   const result = {...saved, children: {...saved.children}};

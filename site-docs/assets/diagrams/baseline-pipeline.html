@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en" class="diagram-standalone">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Five stages with four clock boundaries</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;600&amp;family=Ubuntu+Mono&amp;display=swap" rel="stylesheet"/>
+<style>body { margin: 24px auto; max-width: 688px; padding: 0 16px; } * { box-sizing: border-box; }</style>
+</head>
+<body>
+<!-- diagram:start -->
+<figure class="circuit-figure" data-diagram="baseline-pipeline">
+<div class="diagram-viewport" role="region" aria-label="Five stages with four clock boundaries" tabindex="0">
+<svg viewBox="0 0 640 490" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="baseline-pipeline-title baseline-pipeline-desc">
+<title id="baseline-pipeline-title">Five stages with four clock boundaries</title>
+<desc id="baseline-pipeline-desc">Fetch, Decode, Execute, Memory and Writeback are separated by IF/ID, ID/EX, EX/MEM and MEM/WB registers. Dependency checks and stall/bubble control form a separate control row. A separate six-bit status block remembers halt and trap events.</desc>
+<style>.circuit-figure {
+  --dg-paper: var(--md-default-bg-color, #fff);
+  --dg-ink: var(--md-default-fg-color, #202735);
+  --dg-muted: #566174;
+  --dg-rule: #c8ced8;
+  --dg-surface: #f5f6f9;
+  --dg-accent: #4051b5;
+  --dg-tint: #eef0fc;
+  margin: 1.5rem 0; max-width: 100%; text-align: left;
+  font-family: var(--md-text-font-family, 'Noto Sans', sans-serif);
+}
+[data-md-color-scheme="slate"] .circuit-figure {
+  --dg-muted: #b4bdd0; --dg-rule: #4b5569; --dg-surface: #262c38;
+  --dg-accent: #acb7ff; --dg-tint: #303853;
+}
+@media (prefers-color-scheme: dark) {
+  .diagram-standalone .circuit-figure {
+    --dg-paper: #1e2129; --dg-ink: #e4e7ef; --dg-muted: #b4bdd0;
+    --dg-rule: #4b5569; --dg-surface: #262c38;
+    --dg-accent: #acb7ff; --dg-tint: #303853;
+  }
+  .diagram-standalone body { background: #1e2129; color: #e4e7ef; }
+}
+.circuit-figure .diagram-viewport {
+  max-width: 100%; overflow: auto; overscroll-behavior-x: contain;
+}
+.circuit-figure .diagram-viewport:focus-visible {
+  outline: 2px solid var(--dg-accent); outline-offset: 3px;
+}
+.circuit-figure svg { display: block; width: 640px; min-width: 640px; max-width: none; margin: 0 auto; }
+.circuit-figure figcaption {
+  display: block; margin: .6rem 0 0; max-width: none; text-align: left;
+  color: var(--dg-muted); font-style: normal; font-size: 14px; line-height: 1.6;
+}
+.circuit-figure figcaption strong { color: var(--dg-ink); font-weight: 600; }
+.circuit-figure .dg-zone { fill: var(--dg-paper); stroke: var(--dg-rule); stroke-width: 1.2; }
+.circuit-figure .dg-box { fill: var(--dg-paper); stroke: var(--dg-rule); stroke-width: 1.2; }
+.circuit-figure .dg-store { fill: var(--dg-surface); stroke: var(--dg-rule); stroke-width: 1.2; }
+.circuit-figure .dg-focus { fill: var(--dg-tint); stroke: var(--dg-accent); stroke-width: 1.4; }
+.circuit-figure .dg-label { fill: var(--dg-paper); stroke: none; }
+.circuit-figure text { fill: var(--dg-ink); font-family: var(--md-text-font-family, 'Noto Sans', sans-serif); font-size: 16px; }
+.circuit-figure .dg-name { font-weight: 600; }
+.circuit-figure .dg-small { font-size: 14px; fill: var(--dg-muted); }
+.circuit-figure .dg-code { font-family: var(--md-code-font-family, 'Ubuntu Mono', monospace); font-size: 14px; fill: var(--dg-muted); }
+.circuit-figure .dg-tag { font-size: 12px; font-weight: 600; letter-spacing: .06em; fill: var(--dg-muted); }
+.circuit-figure .dg-edge { fill: none; stroke: var(--dg-muted); stroke-width: 1.5; }
+.circuit-figure .dg-marker { fill: var(--dg-muted); }
+.circuit-figure .dg-marker-accent { fill: var(--dg-accent); }
+.circuit-figure .dg-rule { stroke: var(--dg-rule); stroke-width: 1; }</style>
+<defs>
+<marker id="baseline-pipeline-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><path d="M 0 0 L 8 3 L 0 6 Z" class="dg-marker"/></marker>
+<marker id="baseline-pipeline-arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><path d="M 0 0 L 8 3 L 0 6 Z" class="dg-marker-accent"/></marker>
+<marker id="baseline-pipeline-arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><path d="M 0 0 L 8 3 L 0 6 Z" class="dg-marker"/></marker>
+</defs>
+<rect width="640" height="490" fill="var(--dg-paper)"/>
+<text x="20" y="30" class="dg-tag" text-anchor="start">DATAPATH</text>
+<rect data-node="FETCH" x="14" y="64" width="96" height="64" rx="6" class="dg-box"/>
+<text x="62.0" y="101.0" class="dg-name" text-anchor="middle">Fetch</text>
+<text x="62" y="168" class="dg-small" text-anchor="middle">Instruction</text>
+<text x="62" y="188" class="dg-small" text-anchor="middle">and fetch PC</text>
+<path class="dg-edge" d="M 110 96 L 121 96" marker-end="url(#baseline-pipeline-arrow)"/>
+<rect data-node="IF_ID" x="121" y="54" width="10" height="84" rx="2" class="dg-focus"/>
+<path class="dg-edge" d="M 131 96 L 139 96" marker-end="url(#baseline-pipeline-arrow)"/>
+<text x="126" y="48" class="dg-code" text-anchor="middle">IF/ID</text>
+<rect data-node="DECODE" x="139" y="64" width="96" height="64" rx="6" class="dg-box"/>
+<text x="187.0" y="101.0" class="dg-name" text-anchor="middle">Decode</text>
+<text x="187" y="168" class="dg-small" text-anchor="middle">Decode and</text>
+<text x="187" y="188" class="dg-small" text-anchor="middle">register read</text>
+<path class="dg-edge" d="M 235 96 L 246 96" marker-end="url(#baseline-pipeline-arrow)"/>
+<rect data-node="ID_EX" x="246" y="54" width="10" height="84" rx="2" class="dg-focus"/>
+<path class="dg-edge" d="M 256 96 L 264 96" marker-end="url(#baseline-pipeline-arrow)"/>
+<text x="251" y="48" class="dg-code" text-anchor="middle">ID/EX</text>
+<rect data-node="EXECUTE" x="264" y="64" width="96" height="64" rx="6" class="dg-box"/>
+<text x="312.0" y="101.0" class="dg-name" text-anchor="middle">Execute</text>
+<text x="312" y="168" class="dg-small" text-anchor="middle">ALU and</text>
+<text x="312" y="188" class="dg-small" text-anchor="middle">branch target</text>
+<path class="dg-edge" d="M 360 96 L 371 96" marker-end="url(#baseline-pipeline-arrow)"/>
+<rect data-node="EX_MEM" x="371" y="54" width="10" height="84" rx="2" class="dg-focus"/>
+<path class="dg-edge" d="M 381 96 L 389 96" marker-end="url(#baseline-pipeline-arrow)"/>
+<text x="376" y="48" class="dg-code" text-anchor="middle">EX/MEM</text>
+<rect data-node="MEMORY" x="389" y="64" width="96" height="64" rx="6" class="dg-box"/>
+<text x="437.0" y="101.0" class="dg-name" text-anchor="middle">Memory</text>
+<text x="437" y="168" class="dg-small" text-anchor="middle">Zero-wait load</text>
+<text x="437" y="188" class="dg-small" text-anchor="middle">or store</text>
+<path class="dg-edge" d="M 485 96 L 496 96" marker-end="url(#baseline-pipeline-arrow)"/>
+<rect data-node="MEM_WB" x="496" y="54" width="10" height="84" rx="2" class="dg-focus"/>
+<path class="dg-edge" d="M 506 96 L 514 96" marker-end="url(#baseline-pipeline-arrow)"/>
+<text x="501" y="48" class="dg-code" text-anchor="middle">MEM/WB</text>
+<rect data-node="WRITEBACK" x="514" y="64" width="96" height="64" rx="6" class="dg-box"/>
+<text x="562.0" y="101.0" class="dg-name" text-anchor="middle">Writeback</text>
+<text x="562" y="168" class="dg-small" text-anchor="middle">Register write</text>
+<text x="562" y="188" class="dg-small" text-anchor="middle">and retirement</text>
+<path class="dg-edge" d="M 20 220 L 620 220"/>
+<text x="20" y="248" class="dg-tag" text-anchor="start">CONTROL</text>
+<rect data-node="DEPENDENCIES" x="20" y="272" width="276" height="68" rx="6" class="dg-store"/>
+<text x="158.0" y="303.0" class="dg-name" text-anchor="middle">Dependencies</text>
+<text x="158.0" y="325.0" class="dg-small" text-anchor="middle">Wait for EX / MEM / WB</text>
+<path class="dg-edge" d="M 296 306 L 344 306" marker-end="url(#baseline-pipeline-arrow)"/>
+<rect data-node="CONTROL" x="344" y="272" width="276" height="68" rx="6" class="dg-focus"/>
+<text x="482.0" y="303.0" class="dg-name" text-anchor="middle">Advance, hold, or bubble</text>
+<text x="482.0" y="325.0" class="dg-small" text-anchor="middle">Branch wait and precise stopping</text>
+<rect data-node="EXECUTION_STATUS" x="344" y="388" width="276" height="68" rx="6" class="dg-store"/>
+<text x="482.0" y="419.0" class="dg-name" text-anchor="middle">Execution status</text>
+<text x="482.0" y="441.0" class="dg-small" text-anchor="middle">Halt / trap flags + cause · 6 bits</text>
+<path class="dg-edge" d="M 482 388 L 482 340" marker-end="url(#baseline-pipeline-arrow)"/>
+<text x="20" y="408" class="dg-small" text-anchor="start">Writeback sends stop events.</text>
+<text x="20" y="432" class="dg-small" text-anchor="start">Status persists until reset.</text>
+<text x="20" y="456" class="dg-small" text-anchor="start">Completed PC: host observation.</text>
+</svg>
+</div>
+<figcaption><strong>Boxes compute; narrow bars capture.</strong> Each instruction advances at most one register per edge. Dependencies wait for writeback; branches stop fetch until Execute resolves their next PC. Instruction and data memories are external. Writeback has no storage; completed PC is host-side observation.</figcaption>
+</figure>
+<!-- diagram:end -->
+</body>
+</html>

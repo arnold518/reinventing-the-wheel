@@ -5,9 +5,8 @@ import server
 
 
 BEHAVIORAL_MEMORY_CONTRACTS = {
-    "rv32i.memory.64k-x32",
     "rv32i.register-file",
-    "memory.register.width32",
+    "memory.register.32",
     "memory.write-enabled-bit",
 }
 
@@ -119,6 +118,8 @@ def assert_default_children_do_not_overlap(component):
 
 
 def main():
+    for width in (1, 2, 3, 4, 5, 8, 16, 32):
+        assert hasattr(circuit_backend, f"RegisterW{width}")
     # Horizontal stubs must remain non-zero so turnaround routing can infer
     # whether each pin points left or right.
     assert (
@@ -258,7 +259,7 @@ def main():
         for metric in program.get_performance_metrics()
     }
     assert program.is_simulation_precomputed()
-    assert program_metrics["cpu.cpi"] > 1.0  # Includes transaction-memory waits.
+    assert program_metrics["cpu.cpi"] == 1.0
     assert program_metrics["cpu.hardware_cycles"] > 0
     system = program.get_root()
     assert system.get_name() == "RV32I_PROGRAM_ROOT"
@@ -286,9 +287,9 @@ def main():
     assert system_children["INSTRUCTION_MEMORY"].get_selected_fidelity() == "behavioral"
     assert system_children["DATA_MEMORY"].get_selected_fidelity() == "behavioral"
     for name in ("INSTRUCTION_MEMORY", "DATA_MEMORY"):
-        assert system_children[name].get_type_name() == "MemoryContainer<sram,32>"
-        assert {"REQ_VALID", "RSP_READY"} <= set(system_children[name].get_input_pins())
-        assert {"REQ_READY", "RSP_VALID"} <= set(system_children[name].get_output_pins())
+        assert system_children[name].get_type_name() == "MemoryEndpoint<ff,32>"
+        assert {"REQ_ADDR", "REQ_VALID", "RSP_READY"} <= set(system_children[name].get_input_pins())
+        assert {"RSP_READ_DATA", "RSP_STATUS", "REQ_READY"} <= set(system_children[name].get_output_pins())
     core = system_children["CORE"]
     assert core.get_selected_fidelity() == "structural"
     profile_fingerprint = core.get_profile_fingerprint()
@@ -435,8 +436,8 @@ def main():
         for child in pipeline_core.get_children()
     }
     assert list(pipeline_core_children) == [
-        "FETCH_REQUEST", "DATA_REQUEST", "LOAD_STORE", "DATA_ISSUE", "DATA_OPERATION",
-        "MEMORY_ZERO", "FETCH_WRITE_DATA", "FETCH_OPERATION", "FETCH_MASK",
+        "FETCH_REQUEST", "DATA_REQUEST", "LOAD_STORE", "DATA_OPERATION",
+        "MEMORY_ZERO",
         "FETCH",
         "IF_ID",
         "DECODE",
@@ -446,13 +447,32 @@ def main():
         "MEMORY",
         "MEM_WB",
         "WRITEBACK",
+        "EXECUTION_STATUS",
         "COORDINATOR",
+        "PREDICTION",
     ]
+    assert pipeline_core_children["PREDICTION"].get_type_name() == "RV32IPredictionPath"
+    assert not any(child.get_type_name().endswith("Gate") for child in pipeline_core_children.values())
+    coordinator_children = {child.get_name(): child for child in pipeline_core_children["COORDINATOR"].get_children()}
+    for name in ("FETCH_STOPPED", "FETCH_CONSUME", "FETCH_DISCARD", "DATA_ISSUE"):
+        assert coordinator_children[name].get_type_name() == "ORGate"
     assert all(
         child.get_selected_fidelity() == "structural"
         for child in pipeline_core_children.values()
         if child.get_contract_id().startswith("rv32i.")
     )
+    assert not any(c.get_type_name() in {"Register<32>", "FlipFlopCell", "DFlipFlop"}
+                   for c in walk_components(pipeline_core_children["WRITEBACK"]))
+    status_children = {
+        child.get_name(): child.get_type_name()
+        for child in pipeline_core_children["EXECUTION_STATUS"].get_children()
+    }
+    assert status_children == {
+        "HIGH": "ConstantValue",
+        "HALTED_STATE": "FlipFlopCell",
+        "TRAPPED_STATE": "FlipFlopCell",
+        "TRAP_CAUSE_WORD": "Register<4>",
+    }
     pipeline_components = list(walk_components(pipeline_root))
     pipeline_memory = [
         component

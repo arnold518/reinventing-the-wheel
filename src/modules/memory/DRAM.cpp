@@ -339,25 +339,29 @@ class DRAMBankDirect : public Primitive {
     bool prepared_ = true, sensed_ = false;
     size_t selected_ = 0;
 };
-class DRAMDirect : public Primitive, public MemoryStateView {
+class DRAMDirect : public Primitive, public MemoryDeviceStorage {
   public:
+    const char* getTypeName() const override { return memoryDisplayType(Primitive::getTypeName()); }
     DRAMDirect(std::string n, size_t width, DRAMDeviceConfig c)
         : Primitive(std::move(n), "DRAM<" + std::to_string(width) + ">",
                     [width](IOComponent *s) { devicePins(s, width); }),
-          width_(width), state_(width, c), storage_(c.depth_words, width, X, c.record_history),
-          closed_(c.rows(), 0), buffer_(c.columns(width), X) {}
+          MemoryDeviceStorage(c.depth_words, width, X, c.record_history, c.storage_limits),
+          width_(width), state_(width, c), buffer_(c.columns(width), X) {}
     const MemoryStorage &memoryStorage() const override { return storage_; }
     void loadMemoryBytes(uint32_t, const std::vector<uint8_t> &) override {
         throw std::logic_error("Initialize DRAM through ACT/WRITE commands");
     }
     void evaluate(size_t t, Simulator &sim) override {
+        started_ = true;
         bool old_wl = state_.wl, old_sense = state_.sense, old_write = state_.write;
         auto previous = state_.due;
         if (auto due = state_.update(*this, t); due && (*due != previous || t >= previous))
             wake(sim, *due);
         auto start = state_.row * state_.config.words_per_row * (width_ / 8);
         if (!old_wl && state_.wl) {
-            buffer_ = t - closed_[state_.row] >= state_.config.retention_ticks
+            const auto it = closed_.find(state_.row);
+            const size_t closed = it == closed_.end() ? 0 : it->second;
+            buffer_ = t - closed >= state_.config.retention_ticks
                           ? Bits(buffer_.size(), X)
                           : storage_.readLogic(start, buffer_.size() / 8);
             storage_.writeLogic(t, start, Bits(buffer_.size(), X));
@@ -365,13 +369,28 @@ class DRAMDirect : public Primitive, public MemoryStateView {
         if (!old_sense && state_.sense)
             storage_.writeLogic(t, start, buffer_);
         if (!old_write && state_.write) {
-            for (size_t bit = 0; bit < width_; ++bit)
-                if (state_.mask[bit / 8] == H)
-                    buffer_[state_.col * width_ + bit] = stored(state_.data[bit]);
-            storage_.writeLogic(t, start, buffer_);
+            // Only selected byte lanes are logical writes. Sampling and
+            // restoring the rest of the row above are internal DRAM activity.
+            for (size_t byte = 0; byte < width_ / 8; ++byte) if (state_.mask[byte] == H) {
+                Bits lane(8);
+                for (size_t bit = 0; bit < 8; ++bit) {
+                    const auto b = byte * 8 + bit;
+                    lane[bit] = buffer_[state_.col * width_ + b] = stored(state_.data[b]);
+                }
+                storage_.writeLogic(t, start + state_.col * (width_ / 8) + byte, lane, true);
+            }
         }
-        if (old_wl && !state_.wl)
+        if (old_wl && !state_.wl) {
+            const auto budget = state_.config.storage_limits.max_resident_bytes;
+            if (!closed_.contains(state_.row) &&
+                (closed_.size() + 1) > (budget - std::min(budget, storage_.allocatedDataBytes())) / 128)
+                throw std::length_error("DRAM row metadata budget exceeded");
             closed_[state_.row] = t;
+        }
+        // Allocating another data page must also respect metadata already held.
+        const auto budget = state_.config.storage_limits.max_resident_bytes;
+        if (closed_.size() > (budget - std::min(budget, storage_.allocatedDataBytes())) / 128)
+            throw std::length_error("DRAM row metadata budget exceeded");
         if (state_.precharge)
             std::fill(buffer_.begin(), buffer_.end(), X);
         publish(sim, t, "BUSY", state_.busy ? H : L);
@@ -387,8 +406,7 @@ class DRAMDirect : public Primitive, public MemoryStateView {
   private:
     size_t width_;
     Commands state_;
-    MemoryStorage storage_;
-    std::vector<size_t> closed_;
+    std::map<size_t, size_t> closed_;
     Bits buffer_;
 };
 } // namespace
@@ -399,21 +417,25 @@ void DRAMDeviceConfig::validate(size_t width, bool expanded) const {
         throw std::invalid_argument("DRAM phase_ticks=32..10000 and retention_ticks>8*phase_ticks required");
 }
 DRAMDeviceConfig dramConfigFromParameters(const ParameterMap &p) {
-    keys(p, {"depth_words", "words_per_row", "phase_ticks", "retention_ticks", "record_history"});
+    keys(p, {"depth_words", "words_per_row", "phase_ticks", "retention_ticks", "record_history",
+             "paged", "max_resident_bytes", "max_history_bytes"});
     DRAMDeviceConfig c;
     c.depth_words = parameter(p, "depth_words", 4);
     c.words_per_row = parameter(p, "words_per_row", 2);
     c.phase_ticks = parameter(p, "phase_ticks", 32);
     c.retention_ticks = parameter(p, "retention_ticks", 100000);
     c.record_history = historyParameter(p);
+    c.storage_limits = storageLimits(p);
     return c;
 }
 ParameterMap dramParameters(const DRAMDeviceConfig &c) {
-    return {{"record_history", c.record_history ? "1" : "0"},
+    auto p = storageParameters(c.storage_limits);
+    p.insert({{"record_history", c.record_history ? "1" : "0"},
             {"depth_words", std::to_string(c.depth_words)},
             {"words_per_row", std::to_string(c.words_per_row)},
             {"phase_ticks", std::to_string(c.phase_ticks)},
-            {"retention_ticks", std::to_string(c.retention_ticks)}};
+            {"retention_ticks", std::to_string(c.retention_ticks)}});
+    return p;
 }
 DRAMCell::DRAMCell(std::string n, size_t retention)
     : Primitive(std::move(n), "DRAMCell", cellPins), retention_(retention) {

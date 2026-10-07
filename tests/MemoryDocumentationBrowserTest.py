@@ -1,4 +1,4 @@
-"""Browser validation of all seven standalone FF documentation scenarios."""
+"""Browser validation of the standalone Chapter 3 FF storage scenarios."""
 
 from pathlib import Path
 import shutil
@@ -35,6 +35,8 @@ def main():
         response = page.goto(urljoin(base, "memory/3.1.1/"), wait_until="domcontentloaded")
         assert response and response.ok
         assert "§ 3.1.1. Flip-Flop Storage" in page.locator("h1").inner_text()
+        assert "Register<W>" not in page.locator("article").inner_text()
+        assert page.locator('iframe[src*="scenario=register32"]').count() == 0
         overview = page.locator("article table").first
         assert overview.locator("thead th").all_text_contents() == ["Component", "Description", "Structural", "Behavioral"]
         availability = overview.locator("tbody tr").evaluate_all("""rows => rows.map(row => ({

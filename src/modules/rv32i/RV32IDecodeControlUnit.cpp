@@ -262,7 +262,7 @@ std::vector<Rewire::BitMap> decodeMappings() {
 
 namespace {
 // Fixed structural subcircuits. These boundaries add no logic or state:
-// the same shared predicates, AND terms and serial OR chains remain expandable.
+// the shared predicates and bit equations remain expandable.
 void controlOutputs(IOComponent* self) {
     self->addPin<5>("ALU_OP", PinType::OUTPUT);
     self->addPin<2>("ALU_A_SEL", PinType::OUTPUT);
@@ -345,8 +345,8 @@ public:
         constexpr size_t NoPredicate = static_cast<size_t>(-1);
         std::vector<size_t> direct_predicates(
             instruction_patterns.size(), NoPredicate);
-        std::vector<std::shared_ptr<Pin<>>> recognition_outputs(
-            instruction_patterns.size());
+        std::map<std::pair<size_t,size_t>,std::string> shared_prefixes;
+        std::map<std::string,std::vector<std::shared_ptr<Pin<>>>> gate_sinks;
 
         for (size_t index = 0; index < instruction_patterns.size(); ++index) {
             const auto& pattern = instruction_patterns[index];
@@ -394,7 +394,16 @@ public:
             }
 
             std::string previous_gate;
-            for (size_t term = 1; term < terms.size(); ++term) {
+            size_t first_term=1;
+            if (terms.size() == 3) {
+                auto key=std::make_pair(terms[0],terms[1]);
+                auto found=shared_prefixes.find(key);
+                if (found != shared_prefixes.end()) {
+                    previous_gate=found->second;
+                    first_term=2;
+                }
+            }
+            for (size_t term = first_term; term < terms.size(); ++term) {
                 const auto gate =
                     "RECOGNIZE_" + pattern.name + "_AND_"
                     + std::to_string(term);
@@ -402,19 +411,17 @@ public:
                 if (term == 1) {
                     predicates[terms[0]].sinks.push_back(
                         builder.getInputPin<ANDGate>(gate, "A"));
+                    if (terms.size() == 3)
+                        shared_prefixes.emplace(std::make_pair(terms[0],terms[1]),gate);
                 } else {
-                    builder.addNewWire(
-                        previous_gate + "_to_" + gate,
-                        builder.getOutputPin<ANDGate>(
-                            previous_gate, "OUT"),
-                        {builder.getInputPin<ANDGate>(gate, "A")});
+                    gate_sinks[previous_gate].push_back(builder.getInputPin<ANDGate>(gate,"A"));
                 }
                 predicates[terms[term]].sinks.push_back(
                     builder.getInputPin<ANDGate>(gate, "B"));
                 previous_gate = gate;
             }
-            recognition_outputs[index] =
-                builder.getOutputPin<ANDGate>(previous_gate, "OUT");
+            gate_sinks[previous_gate].insert(gate_sinks[previous_gate].end(),
+                match_sinks[index].begin(),match_sinks[index].end());
         }
 
         builder.addNewWire<32>("INSTRUCTION_fanout", getInputPin<32>("INSTRUCTION"), instruction_sinks);
@@ -422,11 +429,10 @@ public:
             if (direct_predicates[i] != NoPredicate) {
                 auto& sinks = predicates[direct_predicates[i]].sinks;
                 sinks.insert(sinks.end(), match_sinks[i].begin(), match_sinks[i].end());
-            } else {
-                builder.addNewWire("MATCH_" + instruction_patterns[i].name,
-                    recognition_outputs[i], match_sinks[i]);
             }
         }
+        for (const auto& [gate,sinks]:gate_sinks)
+            builder.addNewWire(gate+"_fanout",builder.getOutputPin<ANDGate>(gate,"OUT"),sinks);
         for (const auto& predicate : predicates)
             builder.addNewWire(predicate.name + "_fanout",
                 builder.getOutputPin<RV32IBitPatternMatcher>(predicate.name, "MATCH"), predicate.sinks);
@@ -472,6 +478,30 @@ public:
         }
         auto join = b.addNewComponent<Rewire>("OUTPUT_BITS", bit_inputs,
             std::vector<Rewire::WireSpec>{{"OUT", width_}}, bit_maps);
+        // A few output bits use the same adjacent recognition pair. Share
+        // those OR nodes within this field while retaining balanced depth.
+        std::map<std::pair<std::string,std::string>,
+                 circuit::memory_detail::StructuralWiring::PinPtr> shared_or;
+        auto reduceShared = [&](const std::string& name,
+                                std::vector<circuit::memory_detail::StructuralWiring::PinPtr> inputs) {
+            for (size_t level = 0; inputs.size() > 1; ++level) {
+                std::vector<circuit::memory_detail::StructuralWiring::PinPtr> next;
+                for (size_t i = 0; i < inputs.size(); i += 2) {
+                    if (i + 1 == inputs.size()) {
+                        next.push_back(inputs[i]);
+                        continue;
+                    }
+                    const auto key = std::make_pair(inputs[i]->getID(), inputs[i+1]->getID());
+                    auto [found, inserted] = shared_or.try_emplace(key);
+                    if (inserted)
+                        found->second = w.either(name + "_" + std::to_string(level) + "_" +
+                                                  std::to_string(i/2), inputs[i], inputs[i+1]);
+                    next.push_back(found->second);
+                }
+                inputs = std::move(next);
+            }
+            return inputs.front();
+        };
         for (size_t bit = 0; bit < width_; ++bit) {
             const bool fallback = ((default_ >> bit) & 1U) != 0;
             std::vector<circuit::memory_detail::StructuralWiring::PinPtr> terms;
@@ -479,11 +509,10 @@ public:
                 if ((((values_[i] >> bit) & 1U) != 0) != fallback)
                     terms.push_back(matches->getOutputPin(patterns()[i].name));
             const auto prefix = "BIT_" + std::to_string(bit);
-            auto value = terms.empty() ? w.constant(prefix + "_CONSTANT", fallback) : terms.front();
-            // Preserve the original gate depth and partial-unknown propagation.
-            for (size_t i = 1; i < terms.size(); ++i)
-                value = w.either(prefix + "_OR_" + std::to_string(i), value, terms[i]);
-            if (!terms.empty() && fallback) value = w.invert(prefix + "_DEFAULT_NOT", value);
+            const bool has_terms = !terms.empty();
+            auto value = terms.empty() ? w.constant(prefix + "_CONSTANT", fallback)
+                                       : reduceShared(prefix + "_OR", std::move(terms));
+            if (has_terms && fallback) value = w.invert(prefix + "_DEFAULT_NOT", value);
             w.connect(value, join->getInputPin(prefix));
         }
         w.connect(join->getOutputPinDynamic("OUT"), getOutputPinDynamic("OUT"));

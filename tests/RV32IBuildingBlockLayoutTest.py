@@ -1,4 +1,4 @@
-"""4.2 grouping, hierarchy-local wiring and generated layout regression checks."""
+"""4.3 grouping, hierarchy-local wiring and generated layout regression checks."""
 import gc
 from pathlib import Path
 import runpy
@@ -6,7 +6,7 @@ import sys
 import tempfile
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / "visualizer-v2"))
+sys.path.append(str(ROOT / "visualizer-v2"))
 import server
 import rv32i_layout
 
@@ -14,7 +14,7 @@ generators = runpy.run_path(str(ROOT / "tools/generate-rv32i-building-block-layo
 SCENARIOS, ALU_SCENARIOS = generators["SCENARIOS"], generators["ALU_SCENARIOS"]
 default_placements = generators["placements"]
 COUNTS = {"RV32IDecodeControlUnit": 5, "RV32IMemoryLanes": 9,
-          "RV32IMemoryRequest": 38, "RV32IExecutionControlStatusUnit": 73}
+          "RV32IMemoryRequest": 46, "RV32IExecutionControlStatusUnit": 68}
 
 
 def walk(component):
@@ -74,16 +74,27 @@ def main():
         test.setup_circuit()
         root = test.get_root()
         manager = server.LayoutManager(server.LAYOUT_PATH)
+        layout_key = server.scenario_layout_key(alias, root)
         kind = root.get_type_name()
         if kind in COUNTS:
             assert len(root.get_children()) == COUNTS[kind], (kind, "flattened hierarchy")
+        if kind == "RV32IMemoryRequest":
+            groups = {c.get_name(): c for c in root.get_children()}
+            # The reassociated response path is now a separate qualification
+            # network. Preserve it, the payload and three protocol-state cells.
+            assert {"RESPONSE_ELIGIBLE", "RESPONSE_PRESENT", "RESPONSE_RUNNING",
+                    "READY_RUNNING", "STATUS", "BUSY", "SENT", "ABANDONED", "REQUEST_TAG",
+                    "REQUEST_OP", "REQUEST_ADDR", "REQUEST_WRITE_DATA",
+                    "REQUEST_WRITE_MASK"} <= groups.keys()
+            assert groups["STATUS"].get_type_name() == "BitSplitter"
+            assert groups["STATUS"].get_input_pins()["IN"].get_width() == 3
         if kind == "RV32IDecodeControlUnit":
             groups = {c.get_name(): c for c in root.get_children()}
             assert len(groups["CONTROL_SIGNALS"].get_children()) == 18
             fields = list(walk(groups["CONTROL_SIGNALS"]))
-            assert sum(c.get_type_name() == "ORGate" for c in fields) == 450
+            assert sum(c.get_type_name() == "ORGate" for c in fields) == 423
             assert sum(c.get_type_name() == "NOTGate" for c in fields) == 7
-            assert len(groups["RECOGNITION"].get_children()) == 71
+            assert len(groups["RECOGNITION"].get_children()) == 68
         for component in walk(root):
             children = list(component.get_children())
             kind = component.get_type_name()
@@ -101,21 +112,22 @@ def main():
             if automatic:
                 assert rv32i_layout.placements(kind, {c.get_name(): manager.aspect_for_component(c)
                     for c in children}, manager.aspect_for_component(component)) is None, (kind,"custom layout override")
-                expected = default_placements(manager, component, alias if is_root else None)
+                expected = default_placements(manager, component, layout_key if is_root else None)
                 for child in children:
-                    actual = manager.get_child_layout_for_component(component, child.get_name(), scenario_key=alias, is_root=is_root)
+                    actual = manager.get_child_layout_for_component(component, child.get_name(), scenario_key=layout_key, is_root=is_root)
                     wanted = expected[child.get_name()]
+                    assert "rel_pos" in actual and "rel_width" in actual, (alias, kind, child.get_name(), "missing saved placement")
                     assert all(abs(a-b)<1e-9 for a,b in zip(actual["rel_pos"],wanted["rel_pos"])), (kind,child.get_name(),"not the automatic position")
                     assert abs(actual["rel_width"]-wanted["rel_width"])<1e-9, (kind,child.get_name(),"not the automatic width")
-            aspect = manager.aspect_for_component(component, scenario_key=alias, is_root=is_root)
-            title = manager.visual_ratio_for_component(component, "title_bar_ratio", scenario_key=alias, is_root=is_root)/aspect
+            aspect = manager.aspect_for_component(component, scenario_key=layout_key, is_root=is_root)
+            title = manager.visual_ratio_for_component(component, "title_bar_ratio", scenario_key=layout_key, is_root=is_root)/aspect
             rectangles = []
             parent_margin = server._stub_margin_ratio(
-                manager.visual_ratio_for_component(component,"boundary_area_ratio",scenario_key=alias,is_root=is_root),
-                manager.visual_ratio_for_component(component,"pin_size_ratio",scenario_key=alias,is_root=is_root))
+                manager.visual_ratio_for_component(component,"boundary_area_ratio",scenario_key=layout_key,is_root=is_root),
+                manager.visual_ratio_for_component(component,"pin_size_ratio",scenario_key=layout_key,is_root=is_root))
             stub_ratios = manager.child_stub_ratios(children)
             for child in children:
-                placement = manager.get_child_layout_for_component(component, child.get_name(), scenario_key=alias, is_root=is_root)
+                placement = manager.get_child_layout_for_component(component, child.get_name(), scenario_key=layout_key, is_root=is_root)
                 x, y = placement["rel_pos"]
                 w = placement["rel_width"]
                 h = w*manager.aspect_for_component(child)/aspect

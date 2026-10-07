@@ -1,4 +1,5 @@
 #include "modules/memory/RegisterFile32x32Direct.hpp"
+#include "basic/LogicValueHelpers.hpp"
 #include "components/selection/ComponentFamily.hpp"
 #include "modules/memory/RegisterFile32x32.hpp"
 
@@ -22,9 +23,7 @@ std::vector<LogicValue> unknownWord() {
     return std::vector<LogicValue>(WordWidth, LogicValue::UNKNOWN);
 }
 
-LogicValue sanitizeBit(LogicValue value) {
-    return (value == LogicValue::HIGH || value == LogicValue::LOW) ? value : LogicValue::UNKNOWN;
-}
+using circuit::logic_values::sanitizeBit;
 
 LogicValue andValue(LogicValue left, LogicValue right) {
     if (left == LogicValue::LOW || right == LogicValue::LOW) {
@@ -206,7 +205,8 @@ void RegisterFile32x32Direct::evaluate(size_t current_time, Simulator& simulator
 
     registers[0] = zeroWord();
     if (registers != before_registers) {
-        recordRegisterHistory(current_time);
+        if (!simulator.isHistoryRecordingEnabled()) register_history.clear();
+        else recordRegisterHistory(current_time);
     }
 
     previous_clk = clk;

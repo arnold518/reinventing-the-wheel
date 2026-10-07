@@ -6,7 +6,6 @@
 namespace circuit::families {
 extern const ComponentFamily RV32IForwardingUnit;
 extern const ComponentFamily RV32IHazardDetectionUnit;
-extern const ComponentFamily RV32IPipelineControlFlowUnit;
 extern const ComponentFamily RV32IMemoryAlignmentUnit;
 extern const ComponentFamily RV32IPipelineRetirementUnit;
 extern const ComponentFamily RV32IPipelineCoordinator;
@@ -20,19 +19,20 @@ public:
     void buildInternals(ComponentBuilder& builder) override;
 };
 
-class RV32IHazardDetectionUnit : public IOComponent {
+// Decode only needs a writeback-to-register-read bypass. Execute retains the
+// full two-producer forwarding unit.
+class RV32IWritebackBypass : public IOComponent {
 public:
-    explicit RV32IHazardDetectionUnit(std::string name);
-    static constexpr const char* TypeName = "RV32IHazardDetectionUnit";
+    explicit RV32IWritebackBypass(std::string name);
+    static constexpr const char* TypeName = "RV32IWritebackBypass";
     const char* getTypeName() const override { return TypeName; }
     void buildInternals(ComponentBuilder& builder) override;
 };
 
-class RV32IPipelineControlFlowUnit : public IOComponent {
+class RV32IHazardDetectionUnit : public IOComponent {
 public:
-    explicit RV32IPipelineControlFlowUnit(std::string name);
-    static constexpr const char* TypeName =
-        "RV32IPipelineControlFlowUnit";
+    explicit RV32IHazardDetectionUnit(std::string name);
+    static constexpr const char* TypeName = "RV32IHazardDetectionUnit";
     const char* getTypeName() const override { return TypeName; }
     void buildInternals(ComponentBuilder& builder) override;
 };

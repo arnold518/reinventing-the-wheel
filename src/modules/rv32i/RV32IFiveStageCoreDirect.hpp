@@ -2,9 +2,11 @@
 
 #include "components/BasicComponent.hpp"
 #include "RV32IMemoryRequestModel.hpp"
-#include "components/capabilities/RV32IStateView.hpp"
+#include "components/capabilities/RV32IPipelineStateView.hpp"
+#include "components/capabilities/RV32IRetirementView.hpp"
 #include "rv32i/RV32IControl.hpp"
 #include "rv32i/RV32IInstructionTrace.hpp"
+#include "rv32i/RV32IPrediction.hpp"
 #include <array>
 #include <cstdint>
 
@@ -17,18 +19,21 @@
  */
 class RV32IFiveStageCoreDirect
     : public BasicComponent,
-      public RV32IStateView {
+      public RV32IPipelineStateView, public RV32IRetirementView {
 public:
-    explicit RV32IFiveStageCoreDirect(std::string name);
+    explicit RV32IFiveStageCoreDirect(std::string name, rv32i::PredictionConfig prediction = {});
     static constexpr const char* TypeName = "RV32IFiveStageCore";
     const char* getTypeName() const override { return TypeName; }
 
     void evaluate(size_t current_time, Simulator& simulator) override;
     rv32i::RV32IArchitecturalState
-    snapshotArchitecturalState() const override;
+    snapshotPipelineState(uint32_t observed_pc) const override;
+
+    RV32IRetirementObservation pendingRetirement() const override;
 
 private:
     struct FetchDecodeState {
+        uint32_t predicted_next_pc = 0;
         bool valid = false;
         uint32_t pc = 0;
         uint32_t instruction = 0;
@@ -37,6 +42,7 @@ private:
     };
 
     struct DecodeExecuteState {
+        uint32_t predicted_next_pc = 0;
         bool valid = false;
         uint32_t pc = 0;
         uint32_t instruction = 0;
@@ -52,6 +58,7 @@ private:
     };
 
     struct ExecuteMemoryState {
+        bool branch_taken = false;
         bool valid = false;
         uint32_t pc = 0;
         uint32_t instruction = 0;
@@ -84,18 +91,14 @@ private:
         bool data_fault = false;
     };
 
+    rv32i::PredictionState prediction_;
     rv32i::MemoryRequestState instruction_request_, data_request_;
     std::array<uint32_t, 32> registers_{};
     uint32_t fetch_pc_ = 0;
-    uint32_t committed_pc_ = 0;
     bool halted_ = false;
     bool trapped_ = false;
     rv32i::RV32IExecutionTrapCause trap_cause_ =
         rv32i::RV32IExecutionTrapCause::None;
-    uint32_t retired_count_ = 0;
-    uint32_t retired_pc_ = 0;
-    uint32_t retired_instruction_ = 0;
-    rv32i::RV32IMemoryTrace retired_memory_{};
     LogicValue previous_clk_ = LogicValue::UNKNOWN;
 
     FetchDecodeState if_id_{};

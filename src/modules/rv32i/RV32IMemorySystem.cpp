@@ -3,6 +3,17 @@
 #include "modules/memory/MemoryController.hpp"
 
 namespace rv32i {
+void directMemoryPins(IOComponent* s, const std::string& p, bool instruction) {
+    s->addPin<32>(p+"WORD_ADDR",PinType::OUTPUT);
+    s->addPin(p+"READ_EN",PinType::OUTPUT);
+    s->addPin<32>(p+"READ_DATA",PinType::INPUT);
+    s->addPin(p+"FAULT",PinType::INPUT);
+    if (!instruction) {
+        s->addPin<32>(p+"WRITE_DATA",PinType::OUTPUT);
+        s->addPin<4>(p+"WRITE_MASK",PinType::OUTPUT);
+        s->addPin(p+"WE",PinType::OUTPUT);
+    }
+}
 std::shared_ptr<IOComponent> buildMemory(ComponentBuilder& b, IOComponent& parent,
     const std::string& name, const MemoryConfiguration& config) {
     const std::string id = std::string(config.expanded_endpoint ? "memory.endpoint." : "memory.scalable.")
@@ -22,6 +33,7 @@ void wireMemorySystem(ComponentBuilder& b, const std::shared_ptr<IOComponent>& c
     w.connect(reset, core->getInputPin("RST"));
     for (auto [prefix, memory] : std::vector<std::pair<std::string,std::shared_ptr<IOComponent>>>{{"IMEM_",instructions},{"DMEM_",data}}) {
         w.connect(clock,memory->getInputPin("CLK"));
+        // CPU reset must not erase the loaded program or data image.
         w.connect(reset,memory->getInputPin("RST"));
         for (auto& [name,pin] : memory->getAllInputPins()) {
             if(name=="CLK" || name=="RST") continue;

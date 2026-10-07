@@ -7,6 +7,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 option(CIRCUITSIM_BUILD_PYTHON "Build the native pybind11 visualizer backend" ON)
 option(CIRCUITSIM_BUILD_TESTS "Build the native CTest suite" ON)
+option(CIRCUITSIM_DEPLOY_PYTHON "Copy the native module to the frontend directories" ON)
 
 if(EMSCRIPTEN)
     set(CIRCUITSIM_BUILD_PYTHON OFF CACHE BOOL "" FORCE)
@@ -23,7 +24,13 @@ endif()
 
 # --- Source File Definitions ---
 set(CORE_LOGIC_SOURCES
+    src/benchmark/Benchmark.cpp
     src/analysis/CircuitTimingAnalyzer.cpp
+    src/analysis/SafeClockTiming.cpp
+    src/analysis/MemoryTimingState.cpp
+    src/analysis/RV32IExperiment.cpp
+    src/analysis/RV32IBenchmarks.cpp
+    src/analysis/RV32IWorkloads.cpp
     src/basic/Pin.cpp
     src/basic/Wire.cpp
     src/basic/TemplateInstantiations.cpp
@@ -47,15 +54,14 @@ set(CORE_LOGIC_SOURCES
     src/modules/basic/DFlipFlop.cpp
     src/modules/basic/ClockGenerator.cpp
     src/modules/memory/FlipFlopCellDirect.cpp
-    src/modules/memory/Memory64Kx32.cpp
     src/modules/memory/MemoryStorage.cpp
     src/modules/memory/MemoryProtocol.cpp
     src/modules/memory/MemoryController.cpp
     src/modules/memory/MemoryContainer.cpp
+    src/modules/memory/BehavioralMemoryEndpoint.cpp
     src/modules/memory/MemoryEndpointEngine.cpp
     src/modules/memory/MemoryEndpointCatalog.cpp
-    src/modules/memory/MemoryBusAdapter32.cpp
-    src/modules/memory/MemoryContainerCatalog.cpp
+    src/modules/memory/FFMemoryCatalog.cpp
     src/modules/memory/FFMemory.cpp
     src/modules/memory/SRAM.cpp
     src/modules/memory/DigitalMemory.cpp
@@ -67,16 +73,12 @@ set(CORE_LOGIC_SOURCES
     src/tests/MemoryDeviceTests.cpp
     src/tests/MemoryHelperTests.cpp
     src/tests/MemoryEndpointTests.cpp
-    src/tests/MemoryContainerTests.cpp
-    src/tests/MemoryBusAdapterTests.cpp
-    src/modules/memory/Register32Direct.cpp
+    src/tests/FFMemoryTests.cpp
+    src/modules/memory/RegisterDirect.cpp
     src/modules/memory/RegisterFile32x32Direct.cpp
     src/modules/memory/FlipFlopCell.cpp
-    src/modules/memory/Register32.cpp
-    src/modules/memory/RegisterFile4x32.cpp
+    src/modules/memory/Register.cpp
     src/modules/memory/RegisterFile32x32.cpp
-    src/modules/memory/Memory4x32.cpp
-    src/modules/memory/Memory32x32.cpp
     src/modules/rv32i/RV32IReferenceCore.cpp
     src/modules/rv32i/RV32IControlFlowDirect.cpp
     src/modules/rv32i/RV32IDecodeControlDirect.cpp
@@ -87,13 +89,29 @@ set(CORE_LOGIC_SOURCES
     src/modules/rv32i/RV32IExecutionControlStatusUnit.cpp
     src/modules/rv32i/RV32IPipelineRegisters.cpp
     src/modules/rv32i/RV32IPipelineControl.cpp
+    src/modules/rv32i/RV32IPipelineControlDirect.cpp
+    src/modules/rv32i/RV32IForwardingUnit.cpp
+    src/modules/rv32i/RV32IMemoryAlignmentUnit.cpp
+    src/modules/rv32i/RV32IPipelineRetirementUnit.cpp
+    src/modules/rv32i/RV32IPipelineCoordinator.cpp
+    src/modules/rv32i/RV32IPrediction.cpp
     src/modules/rv32i/RV32IPipelineStages.cpp
+    src/modules/rv32i/RV32IPipelineStagesDirect.cpp
+    src/modules/rv32i/RV32IPipelinePacking.cpp
+    src/modules/rv32i/RV32IFetchStage.cpp
+    src/modules/rv32i/RV32IDecodeStage.cpp
+    src/modules/rv32i/RV32IExecuteStage.cpp
+    src/modules/rv32i/RV32IMemoryStage.cpp
+    src/modules/rv32i/RV32IWritebackStage.cpp
     src/modules/rv32i/RV32IFiveStageCoreDirect.cpp
     src/modules/rv32i/RV32IFiveStageCore.cpp
     src/modules/rv32i/RV32IBuildProfiles.cpp
     src/modules/rv32i/RV32ISingleCycleCore.cpp
     src/modules/rv32i/RV32ISingleCycleStages.cpp
     src/modules/rv32i/RV32ISingleCycleStagesDirect.cpp
+    src/modules/rv32i/RV32IBaselinePipeline.cpp
+    src/modules/rv32i/RV32IBaselinePipelineCore.cpp
+    src/modules/rv32i/RV32IBaselinePipelineDirect.cpp
     src/modules/rv32i/RV32ISingleCycleSystem.cpp
     src/modules/rv32i/RV32IMemoryRequest.cpp
     src/modules/rv32i/RV32IMemoryLanes.cpp
@@ -103,16 +121,15 @@ set(CORE_LOGIC_SOURCES
     src/modules/composite/FullAdder.cpp
     src/modules/composite/Adder8.cpp
     src/modules/composite/Adder32.cpp
+    src/modules/composite/IncrementBy4.cpp
     src/modules/composite/AddSub32.cpp
     src/modules/composite/Logic32.cpp
     src/modules/composite/ZeroDetect32.cpp
-    src/modules/composite/Comparator32.cpp
     src/modules/composite/Shifter32.cpp
     src/modules/composite/ALU32.cpp
     src/modules/composite/ALU32Direct.cpp
     src/modules/composite/Arithmetic8.cpp
     src/modules/composite/Comparator8.cpp
-    src/modules/composite/Shifter8.cpp
     src/modules/composite/ZeroDetect8.cpp
     src/modules/composite/ALU8.cpp
     src/modules/composite/ALU8Behavioral.cpp
@@ -161,9 +178,11 @@ set(CORE_LOGIC_SOURCES
     src/tests/RV32IInstructionLockstepTests.cpp
     src/tests/RV32IProgramRoot.cpp
     src/tests/RV32IFiveStageTests.cpp
+    src/tests/RV32IPredictionTests.cpp
     src/tests/RV32IPipelineBlockTests.cpp
     src/tests/RV32ISingleCycleTests.cpp
     src/tests/RV32ISingleCycleStageTests.cpp
+    src/tests/RV32IBaselinePipelineTests.cpp
     src/tests/RV32IProgramScenarios.cpp
     src/tests/MemoryComponentTests.cpp
     src/tests/TestRegistry.cpp
@@ -221,6 +240,7 @@ if(CIRCUITSIM_BUILD_PYTHON)
     # The include directories are inherited automatically from SimulatorLib.
 
     # Keep both frontends on the same pin-identity and binding contract.
+    if(CIRCUITSIM_DEPLOY_PYTHON)
     add_custom_command(TARGET circuit_backend POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy
             $<TARGET_FILE:circuit_backend>
@@ -230,6 +250,7 @@ if(CIRCUITSIM_BUILD_PYTHON)
             ${PROJECT_SOURCE_DIR}/visualizer/$<TARGET_FILE_NAME:circuit_backend>
         COMMENT "Copying circuit_backend module to both visualizer directories..."
     )
+    endif()
 endif()
 
 # ===================================================================
@@ -311,11 +332,12 @@ add_executable(
 )
 target_link_libraries(rv32i_benchmark_elf PRIVATE SimulatorLib)
 
-add_executable(
-    rv32i_performance
-    tools/rv32i-performance/RV32IPerformanceRunner.cpp
-)
-target_link_libraries(rv32i_performance PRIVATE SimulatorLib)
+if(NOT EMSCRIPTEN)
+    add_executable(rv32i_experiment tools/rv32i-performance/RV32IExperimentRunner.cpp)
+    target_link_libraries(rv32i_experiment PRIVATE SimulatorLib)
+    add_executable(rv32i_cycle_estimate tools/rv32i-benchmarks/RV32ICycleEstimate.cpp)
+    target_link_libraries(rv32i_cycle_estimate PRIVATE SimulatorLib)
+endif()
 
 # ===================================================================
 # Target 4: CTest Integration

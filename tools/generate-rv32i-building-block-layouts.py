@@ -1,8 +1,8 @@
-"""Refresh standalone 4.2 defaults and newly grouped structural descendants.
+"""Refresh standalone 4.3 defaults and newly grouped structural descendants.
 
 Run after generate-rv32i-memory-layouts.py to refit CPU ancestors too.
 Topology construction only; one scenario at a time, without waveform history.
-Apply automatic layout to every 4.2.3 component and structural descendant.
+Apply automatic layout to every 4.3.3 component and structural descendant.
 Keep unrelated register placements and preserve previous defaults for migration.
 """
 import argparse
@@ -27,7 +27,7 @@ ALU_SCENARIOS = {
     "alu32": "ALU32Test",
 }
 SCENARIOS = {
-    "register32": "Register32Test",
+    "register32": "RegisterTest",
     "rv32i-register-file": "RegisterFile32x32Test", **ALU_SCENARIOS,
     "rv32i-decode-control": "RV32IDecodeControlUnitTest",
     "rv32i-pattern-matcher": "RV32IBitPatternMatcherTest",
@@ -41,10 +41,16 @@ SCENARIOS = {
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--alu32-only", action="store_true", help="Refresh all eight 4.2.3 scenarios and their descendants")
+    parser.add_argument("--alu32-only", action="store_true", help="Refresh all eight 4.3.3 scenarios and their descendants")
+    parser.add_argument("--memory-request-only", action="store_true", help="Refresh only the revised zero-wait requester")
+    parser.add_argument("--scenario", choices=SCENARIOS, action="append",
+                        help="Refresh only a named 4.3 scenario (repeatable)")
     args = parser.parse_args()
     manager = server.LayoutManager(ROOT / "visualizer-v2/layout.json")
-    for alias, scenario in (ALU_SCENARIOS if args.alu32_only else SCENARIOS).items():
+    selected = ({alias: SCENARIOS[alias] for alias in args.scenario} if args.scenario else
+                {"rv32i-memory-request": SCENARIOS["rv32i-memory-request"]}
+                if args.memory_request_only else ALU_SCENARIOS if args.alu32_only else SCENARIOS)
+    for alias, scenario in selected.items():
         automatic = alias in ALU_SCENARIOS
         revision = rv32i_layout.ALU_AUTOMATIC_REVISION if automatic else None
         test = server.circuit_backend.create_test_by_name(scenario)
@@ -55,6 +61,8 @@ def main():
             kind = server._component_layout_type(component)
             manager.ensure_component_layout_defaults(component)
             entry = manager.type_layouts[kind]
+            if args.memory_request_only and entry.get("layout_mode") == "manual":
+                continue
             style = rv32i_layout.defaults(kind)
             previous = {**manager.settings, **entry}
             if style:
@@ -67,6 +75,8 @@ def main():
                 reflow(entry, style, generated, kind=kind, previous=previous, revision=revision)
                 for profile in manager.profile_layouts.values():
                     if kind in profile:
+                        if args.memory_request_only and profile[kind].get("layout_mode") == "manual":
+                            continue
                         reflow(profile[kind], style, generated, kind=kind, revision=revision)
             else:
                 for name, geometry in generated.items():
@@ -77,6 +87,8 @@ def main():
             for key in {alias, server.scenario_layout_key(alias, root),
                         *(k for k in manager.root_layouts if k.startswith(alias + "@"))}:
                 entry = manager.root_layouts.setdefault(key, {})
+                if args.memory_request_only and entry.get("layout_mode") == "manual":
+                    continue
                 previous = {**manager.settings, **old_root, **entry}
                 reflow(entry, style, manager.type_layouts[kind]["children"], previous=previous, kind=kind, revision=revision)
         manager.is_dirty = True

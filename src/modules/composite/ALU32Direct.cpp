@@ -1,4 +1,5 @@
 #include "modules/composite/ALU32Direct.hpp"
+#include "basic/LogicValueHelpers.hpp"
 #include "components/selection/ComponentFamily.hpp"
 
 #include "modules/composite/ALU32.hpp"
@@ -8,17 +9,8 @@
 #include <vector>
 
 namespace {
-bool allKnown(const std::vector<LogicValue>& values) {
-    for (const auto value : values) {
-        if (value != LogicValue::LOW && value != LogicValue::HIGH) {
-            return false;
-        }
-    }
-    return true;
-}
-LogicValue logic(bool value) {
-    return value ? LogicValue::HIGH : LogicValue::LOW;
-}
+using circuit::logic_values::allKnown;
+using circuit::logic_values::logic;
 
 uint32_t arithmeticShiftRight(uint32_t value, uint32_t amount) {
     amount &= 0x1FU;
@@ -41,9 +33,10 @@ bool subOverflow(uint32_t a, uint32_t b, uint32_t result) {
 }
 }
 
-ALU32Direct::ALU32Direct(std::string name)
+ALU32Direct::ALU32Direct(std::string name,bool full_flags)
     : BasicComponent(std::move(name), 1,
-                     circuit::families::ALU32.pinInitializer()) {}
+                     full_flags?circuit::families::ALU32.pinInitializer():circuit::families::ALU32Core.pinInitializer()),
+      full_flags_(full_flags) {}
 
 void ALU32Direct::evaluate(size_t current_time, Simulator& simulator) {
     const auto a_bits = getInputPin<32>("A")->getValueAsVector();
@@ -51,10 +44,11 @@ void ALU32Direct::evaluate(size_t current_time, Simulator& simulator) {
     const auto op_bits = getInputPin<5>("OP")->getValueAsVector();
     if (!allKnown(a_bits) || !allKnown(b_bits) || !allKnown(op_bits)) {
         _updateOutputWire<32>(simulator, "OUT", std::vector<LogicValue>(32, LogicValue::UNKNOWN), current_time);
-        for (const char* pin : {"ZERO", "EQ", "LT_SIGNED", "LT_UNSIGNED",
-                                "NEGATIVE", "CARRY_OUT", "OVERFLOW"}) {
+        for (const char* pin : {"EQ", "LT_SIGNED", "LT_UNSIGNED"}) {
             _updateOutputWire(simulator, pin, LogicValue::UNKNOWN, current_time);
         }
+        if (full_flags_) for (const char* pin : {"ZERO","NEGATIVE","CARRY_OUT","OVERFLOW"})
+            _updateOutputWire(simulator,pin,LogicValue::UNKNOWN,current_time);
         return;
     }
 
@@ -101,7 +95,7 @@ void ALU32Direct::evaluate(size_t current_time, Simulator& simulator) {
     }
 
     _updateOutputWire<32>(simulator, "OUT", result, current_time);
-    _updateOutputWire(simulator, "ZERO", logic(result == 0), current_time);
+    if (full_flags_) _updateOutputWire(simulator, "ZERO", logic(result == 0), current_time);
     const bool comparison_valid =
         op == ALU32Op::SUB || op == ALU32Op::SLT
         || op == ALU32Op::SLTU;
@@ -122,7 +116,9 @@ void ALU32Direct::evaluate(size_t current_time, Simulator& simulator) {
         "LT_UNSIGNED",
         logic(comparison_valid && a < b),
         current_time);
-    _updateOutputWire(simulator, "NEGATIVE", logic((result & 0x80000000U) != 0), current_time);
-    _updateOutputWire(simulator, "CARRY_OUT", logic(carry), current_time);
-    _updateOutputWire(simulator, "OVERFLOW", logic(overflow), current_time);
+    if (full_flags_) {
+        _updateOutputWire(simulator, "NEGATIVE", logic((result & 0x80000000U) != 0), current_time);
+        _updateOutputWire(simulator, "CARRY_OUT", logic(carry), current_time);
+        _updateOutputWire(simulator, "OVERFLOW", logic(overflow), current_time);
+    }
 }

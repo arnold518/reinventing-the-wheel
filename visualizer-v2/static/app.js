@@ -65,6 +65,9 @@ document.body.classList.toggle("compact-view", embeddedView || compactViewport.m
 
 const ui = {
   scenario: document.getElementById("scenario-select"),
+  programControls: document.getElementById('program-controls'),
+  programCore: document.getElementById('program-core'),
+  programPolicy: document.getElementById('program-policy'),
   slider: document.getElementById("time-slider"),
   checkpointMarks: document.getElementById("checkpoint-marks"),
   playPause: document.getElementById("play-pause"),
@@ -111,6 +114,14 @@ const ui = {
   selectionInfo: document.getElementById("selection-info"),
   componentPinsSection: document.getElementById("component-pins-section"),
   componentPins: document.getElementById("component-pins"),
+  memorySection: document.getElementById("memory-inspector-section"),
+  memoryDetails: document.getElementById("memory-details"),
+  memoryAddress: document.getElementById("memory-address"),
+  memoryAddressForm: document.getElementById("memory-address-form"),
+  memoryPagePrev: document.getElementById("memory-page-prev"),
+  memoryPageNext: document.getElementById("memory-page-next"),
+  memoryFollow: document.getElementById("memory-follow"),
+  memoryPageSummary: document.getElementById("memory-page-summary"),
   typeStyleSection: document.getElementById("type-style-section"),
   layoutSection: document.getElementById("layout-section"),
   restoreTypeStyle: document.getElementById("restore-type-style"),
@@ -119,6 +130,8 @@ const ui = {
 };
 
 const app = {
+  memoryPages: new Map(),
+  memoryFollowing: new Map(),
   compactView: embeddedView || compactViewport.matches,
   inspectorOpen: false,
   dpr: 1,
@@ -1993,7 +2006,7 @@ function drawPackedRewireContents(component, parts, groups, model) {
   });
 }
 
-function drawUnpackedRewireContents(component, parts, model) {
+function drawUnpackedRewireContents(component, parts, model, laneIndex = 0, laneCount = 1) {
   const source = pinByName(component.inputPins, model.source);
   const outputs = pinMapByName(component.outputPins);
   const taps = model.taps.map(tap => ({ ...tap, pin: outputs.get(tap.destination) }));
@@ -2002,10 +2015,12 @@ function drawUnpackedRewireContents(component, parts, model) {
   withComponentBodyClip(parts, 38, 24, () => {
     const body = parts.bodyRect;
     const fields = taps.some(tap => tap.width > 1);
-    const spineX = body.x + body.w * (fields ? 0.28 : 0.42);
-    const tapX = body.x + body.w * (fields ? 0.40 : 0.54);
+    const multiple = laneCount > 1;
+    const spineX = body.x + body.w * (multiple ? .18 + .18 * laneIndex / (laneCount - 1) : fields ? 0.28 : 0.42);
+    const tapX = body.x + body.w * (multiple ? .48 : fields ? 0.40 : 0.54);
     const ys = taps.map(tap => tap.pin.pos.y).sort((a, b) => a - b);
-    const rowGap = Math.min(...ys.slice(1).map((y, i) => y - ys[i]));
+    const allYs = (multiple ? component.outputPins.map(pin => pin.pos.y) : ys).slice().sort((a,b) => a-b);
+    const rowGap = Math.min(body.h, ...allYs.slice(1).map((y, i) => y - allYs[i]));
     const tapRise = Math.min(rowGap * 0.22, body.h * 0.025);
     const topY = Math.min(source.pos.y, ys[0] - tapRise);
     const bottomY = Math.max(source.pos.y, ys[ys.length - 1]);
@@ -2020,7 +2035,7 @@ function drawUnpackedRewireContents(component, parts, model) {
     drawAdapterPolyline(component, [{ x: spineX, y: topY }, { x: spineX, y: bottomY }],
       busValue, [source], model.width, false);
 
-    const fontPx = Math.min(12, rowGap * app.camera.zoom * 0.28);
+    const fontPx = Math.min(12, rowGap * app.camera.zoom * (multiple ? .46 : .28));
     taps.forEach(tap => {
       const y = tap.pin.pos.y;
       const value = tap.sourceBits
@@ -2073,6 +2088,12 @@ function drawUnpackedRewireContents(component, parts, model) {
 }
 
 function drawRewireContents(component, parts) {
+  const multiBusModel = window.CircuitRewireGeometry?.multiBusUnpackModel(component.rewire);
+  if (multiBusModel) {
+    multiBusModel.sources.forEach((source, i) =>
+      drawUnpackedRewireContents(component, parts, source, i, multiBusModel.sources.length));
+    return;
+  }
   const unpackedModel = window.CircuitRewireGeometry?.unpackedBusModel(component.rewire)
     || window.CircuitRewireGeometry?.fieldExtractionModel(component.rewire);
   if (unpackedModel) {
@@ -2228,7 +2249,7 @@ function drawMemoryCellValue(component, parts) {
   ctx.restore();
 }
 
-function drawRegister32Value(component, parts) {
+function drawRegisterValue(component, parts) {
   const qPin = pinByName(component.outputPins, "Q");
   const value = qPin ? pinValue(qPin) : "X";
   const screenRect = rectToScreenRect(parts.bodyRect);
@@ -2271,8 +2292,9 @@ function drawRegister32Value(component, parts) {
   ctx.textBaseline = "middle";
   ctx.font = `700 ${Math.floor(panelHeight * 0.11)}px Arial, Helvetica, sans-serif`;
   ctx.fillStyle = "rgba(238, 244, 255, 0.72)";
+  const width = Number(component.type.match(/^Register<(\d+)>$/)?.[1] || 32);
   ctx.fillText(
-    "STORED WORD",
+    width === 32 ? "STORED WORD" : `STORED ${width}-BIT VALUE`,
     panel.x + panel.w / 2,
     panel.y + panel.h * 0.2,
   );
@@ -2478,17 +2500,7 @@ function drawRegisterFileContents(component, parts) {
 }
 
 function memoryRowsForDisplay(state) {
-  const rows = [];
-  const seen = new Set();
-  const append = (row, source) => {
-    if (!row || seen.has(row.address)) return;
-    seen.add(row.address);
-    rows.push({ ...row, source });
-  };
-  (state.touchedWords || []).forEach((row) => append(row, "touched"));
-  (state.windowWords || []).forEach((row) => append(row, "window"));
-  rows.sort((a, b) => a.address - b.address);
-  return rows;
+  return window.CircuitMemoryView.rows(state);
 }
 
 function memoryScrollOffset(componentId, maxOffset) {
@@ -2499,7 +2511,9 @@ function memoryScrollOffset(componentId, maxOffset) {
 }
 
 function setMemoryScrollOffset(componentId, offset, maxOffset) {
+  app.memoryFollowing.set(componentId, false);
   app.memoryScrollOffsets.set(componentId, clamp(Math.floor(Number(offset) || 0), 0, maxOffset));
+  updateInspector();
   requestRender();
 }
 
@@ -2572,7 +2586,7 @@ function drawMemoryScrollControls(componentId, controlRect, offset, maxOffset, s
   app.memoryScrollControls.push({ componentId, direction: "down", rect: downRect, enabled: downEnabled, maxOffset, step });
 }
 
-function drawMemory64Kx32Contents(component, parts) {
+function drawMemoryContents(component, parts) {
   const state = app.componentStates.get(component.id);
   if (!state || !state.supported) return;
 
@@ -2597,7 +2611,8 @@ function drawMemory64Kx32Contents(component, parts) {
   const transaction = Boolean(ports.REQ_VALID);
   const response = ports.RSP_VALID?.value === "1";
   const status = ports.RSP_STATUS?.value || "";
-  const fault = transaction
+  const transactionStyle = window.CircuitMemoryView.transactionStyle(state);
+  const fault = transactionStyle ? (transactionStyle.fault ? "1" : "0") : transaction
     ? (response && /^[01]{3}$/.test(status) && parseInt(status, 2) !== 0 ? "1" : "0")
     : (ports.FAULT || ports.ERROR)?.value;
   const readActive = ports.READ_EN?.value === "1" || ports.READ_VALID?.value === "1"
@@ -2611,8 +2626,8 @@ function drawMemory64Kx32Contents(component, parts) {
     : ports.ROW_OPEN?.value === "1" ? "ROW OPEN"
     : ports.WRITE_ENABLED?.value === "1" ? "WRITE ENABLED" : "IDLE";
   const errorLabel = transaction ? `ERROR ${parseInt(status, 2)}` : ports.ERROR ? "ERROR" : "FAULT";
-  const mode = fault === "1" ? (accessMode === "IDLE" ? errorLabel : `${errorLabel} ${accessMode}`) : accessMode;
-  const modeColor = fault === "1"
+  const mode = transactionStyle?.mode ?? (fault === "1" ? (accessMode === "IDLE" ? errorLabel : `${errorLabel} ${accessMode}`) : accessMode);
+  const modeColor = transactionStyle?.color ?? (fault === "1"
     ? "rgb(211, 47, 47)"
     : writeActive && readActive
       ? "rgb(124, 197, 255)"
@@ -2620,9 +2635,9 @@ function drawMemory64Kx32Contents(component, parts) {
       ? "rgb(255, 184, 77)"
       : readActive
         ? "rgb(89, 214, 141)"
-        : "rgba(238, 244, 255, 0.65)";
-  const activeHex = ports.CMD || transaction ? "SNAPSHOT (BYTE ADDRESSES)"
-    : state.activeAddress == null ? "ADDR XXXXXXXX" : `ADDR ${state.activeAddress.toString(16).toUpperCase().padStart(8, "0")}`;
+        : "rgba(238, 244, 255, 0.65)");
+  const activeHex = state.activeAddress != null ? `ADDR ${state.activeAddress.toString(16).toUpperCase().padStart(8, "0")}`
+    : ports.CMD ? "SNAPSHOT (BYTE ADDRESSES)" : state.transaction ? "NO ACTIVE ACCESS" : "ADDR XXXXXXXX";
   const showingInstructions = state.memoryRole === "instruction";
   const headerH = rect.h * 0.18;
   const headerGap = rect.h * 0.01;
@@ -2636,7 +2651,14 @@ function drawMemory64Kx32Contents(component, parts) {
   const scrollControlGap = showScrollControls ? tableH * 0.015 : 0;
   const rowsAreaH = Math.max(0, tableH - scrollControlH - scrollControlGap);
   const maxOffset = Math.max(0, rows.length - visibleRowCount);
-  const offset = memoryScrollOffset(component.id, maxOffset);
+  let offset = memoryScrollOffset(component.id, maxOffset);
+  if (app.memoryFollowing.get(component.id) !== false && state.windowActive) {
+    const activeIndex = rows.findIndex(row => row.address === state.activeBaseAddress);
+    if (activeIndex >= 0) {
+      offset = clamp(activeIndex - Math.floor(visibleRowCount / 2), 0, maxOffset);
+      app.memoryScrollOffsets.set(component.id, offset);
+    }
+  }
   const shownRows = rows.slice(offset, offset + visibleRowCount);
   const rowH = visibleRowCount ? rowsAreaH / visibleRowCount : rowsAreaH;
   const rowGap = rowH * 0.12;
@@ -2659,7 +2681,7 @@ function drawMemory64Kx32Contents(component, parts) {
   ctx.textBaseline = "middle";
   ctx.textAlign = "left";
   ctx.fillStyle = "rgba(238, 244, 255, 0.84)";
-  const memoryHeader = state.touchedWordsTruncated ? `${activeHex} (first 256 touched)` : activeHex;
+  const memoryHeader = state.manualPage ? `PAGE ${state.pageAddress.toString(16).toUpperCase().padStart(8, "0")}` : activeHex;
   const modeWidth = ctx.measureText(mode).width;
   ctx.fillText(ellipsizeText(memoryHeader, Math.max(0, rect.w - modeWidth - 24)), rect.x + 7, rect.y + headerH / 2);
   ctx.textAlign = "right";
@@ -2742,14 +2764,14 @@ function drawComponentForeground(component, vr) {
   if (component.type === "Rewire") drawRewireContents(component, parts);
   drawMemoryCellValue(component, parts);
   if (component.fidelity === "behavioral") {
-    if (component.type === "Register32") {
-      drawRegister32Value(component, parts);
+    if (/^Register<\d+>$/.test(component.type)) {
+      drawRegisterValue(component, parts);
     }
     if (component.type === "RegisterFile32x32") {
       drawRegisterFileContents(component, parts);
     }
     if (isMemoryArrayType(component.type)) {
-      drawMemory64Kx32Contents(component, parts);
+      drawMemoryContents(component, parts);
     }
   }
 
@@ -3218,6 +3240,7 @@ function showComponentInspector(component) {
   setSectionVisible(ui.typeStyleSection, true);
   setSectionVisible(ui.layoutSection, true);
   renderComponentPins(component);
+  renderMemoryInspector(component);
 
   ui.componentAspect.min = String(minAspect);
   ui.componentAspect.max = String(Math.max(3, Math.ceil(aspect * 20) / 20));
@@ -3229,7 +3252,76 @@ function showComponentInspector(component) {
   ui.restoreTypeStyle.disabled = !app.savedLayout;
 }
 
+function renderMemoryInspector(component) {
+  const state = app.componentStates.get(component.id);
+  const supported = Boolean(state?.supported && state.capacityBytes != null);
+  setSectionVisible(ui.memorySection, supported);
+  if (!supported) return;
+  const hex = value => value == null ? "—" : `0x${value.toString(16).toUpperCase().padStart(8, "0")}`;
+  const rows = [["Capacity", `${state.capacityWords} × ${state.wordBits} bits (${state.capacityBytes} bytes)`],
+    ["Role", state.memoryRole], ["Active address", hex(state.activeAddress)]];
+  if (state.transaction) {
+    const tx = state.transaction;
+    rows.push(["Transaction", [tx.operation, tx.phase].filter(Boolean).join(" · ")],
+      ["Context", tx.source === "accepted" ? `Accepted at t=${tx.acceptedTime}` : tx.source],
+      ["Write data", tx.writeData || "—"], ["Byte mask", tx.writeMask || "—"],
+      ["Response status", tx.status || "—"]);
+  }
+  if (state.deviceActivity) {
+    const activity = state.deviceActivity;
+    rows.push(["Device phase", activity.phase], ["Maintenance", activity.maintenance ? "refresh" : "none"]);
+    for (const [name, bits] of Object.entries(activity.signals || {})) rows.push([name, bits]);
+  }
+  setInfoRows(ui.memoryDetails, rows);
+  if (document.activeElement !== ui.memoryAddress) ui.memoryAddress.value = hex(state.pageAddress);
+  ui.memoryAddress.setCustomValidity("");
+  ui.memoryPagePrev.disabled = !state.hasPreviousPage;
+  ui.memoryPageNext.disabled = !state.hasNextPage;
+  ui.memoryFollow.setAttribute("aria-pressed", String(app.memoryFollowing.get(component.id) !== false && !state.manualPage));
+  const end = state.pageAddress + state.pageWords * state.wordBits / 8 - 1;
+  ui.memoryPageSummary.textContent = `${hex(state.pageAddress)}–${hex(end)} · ${state.pageWords} words`
+    + (state.touchedWordsTruncated && !state.manualPage ? " · sparse list limited to 256; use address pages for all contents" : "");
+}
+
+async function setMemoryPage(componentId, address) {
+  if (address == null) {
+    app.memoryPages.delete(componentId);
+    app.memoryFollowing.set(componentId, true);
+  } else {
+    app.memoryPages.set(componentId, address);
+    app.memoryFollowing.set(componentId, false);
+  }
+  app.memoryScrollOffsets.set(componentId, 0);
+  await setStateIndex(app.currentIndex);
+}
+
+ui.memoryAddressForm.addEventListener("submit", event => {
+  event.preventDefault();
+  const component = selectedComponent(), state = app.componentStates.get(component?.id);
+  if (!state?.supported) return;
+  try {
+    const address = window.CircuitMemoryView.parseAddress(ui.memoryAddress.value, state.capacityBytes);
+    setMemoryPage(component.id, address).catch(showError);
+  } catch (error) {
+    ui.memoryAddress.setCustomValidity(error.message);
+    ui.memoryAddress.reportValidity();
+  }
+});
+ui.memoryAddress.addEventListener("input", () => ui.memoryAddress.setCustomValidity(""));
+for (const [button, direction] of [[ui.memoryPagePrev, -1], [ui.memoryPageNext, 1]])
+  button.addEventListener("click", () => {
+    const component = selectedComponent(), state = app.componentStates.get(component?.id);
+    if (!state?.supported) return;
+    const next = clamp(state.pageAddress + direction * state.pageSize * state.wordBits / 8, 0, state.capacityBytes - state.wordBits / 8);
+    setMemoryPage(component.id, next).catch(showError);
+  });
+ui.memoryFollow.addEventListener("click", () => {
+  const component = selectedComponent();
+  if (component) setMemoryPage(component.id, null).catch(showError);
+});
+
 function showPinInspector(pin) {
+  setSectionVisible(ui.memorySection, false);
   const component = app.components.get(pin.componentId);
   const sourceWires = pin.sourceWireIds || [];
   const sinkWires = pin.sinkWireIds || [];
@@ -3254,6 +3346,7 @@ function showPinInspector(pin) {
 }
 
 function showWireInspector(wire) {
+  setSectionVisible(ui.memorySection, false);
   const endpoints = wireEndpointSummary(wire);
   const owner = app.components.get(wire.ownerId);
 
@@ -3860,8 +3953,8 @@ function setTimeLabel(state) {
 }
 
 function isMemoryArrayType(type) {
-  return type === "Memory64Kx32" || /^(FFMemory|SRAM|ROM|IdealRAMReference)(8|16|32)$/.test(type)
-    || /^MemoryContainer<(ff|sram|dram|rom|nor-flash),(8|16|32)>$/.test(type)
+  return /^FFMemory(8|16|32)$/.test(type)
+    || /^Memory(Container|Endpoint)<(ff|sram|dram|rom|nor-flash),(8|16|32)>$/.test(type)
     || /^(SRAM|DRAM|ROM|NORFlash)<(8|16|32)>$/.test(type);
 }
 
@@ -3883,8 +3976,10 @@ async function refreshComponentStates(index, requestId = null) {
   }
 
   const states = await Promise.all(components.map(async (component) => {
+    const address = app.memoryPages.get(component.id);
+    const pageQuery = address == null ? "" : `&address=${address}`;
     const response = await visualizerRequest(apiUrl(
-      `api/component-state?session=${encodeURIComponent(app.sessionId)}&index=${index}&componentId=${encodeURIComponent(component.id)}`,
+      `api/component-state?session=${encodeURIComponent(app.sessionId)}&index=${index}&componentId=${encodeURIComponent(component.id)}${pageQuery}`,
     ));
     if (!response.ok) throw new Error(await response.text());
     return [component.id, await response.json()];
@@ -4223,6 +4318,8 @@ function buildLocalModel(payload) {
   app.wires = new Map();
   app.componentStates = new Map();
   app.memoryScrollOffsets = new Map();
+  app.memoryPages = new Map();
+  app.memoryFollowing = new Map();
   app.memoryScrollControls = [];
   app.componentOrder = [];
   app.pinOrder = [];
@@ -4292,24 +4389,49 @@ function buildLocalModel(payload) {
   scheduleVisibleTopology();
 }
 
+let scenarioCatalogApi, scenarioCatalogData, scenarioOptions = [];
+
+function syncScenarioSelection(value) {
+  const selected = scenarioCatalogApi.findScenario(scenarioOptions, value, scenarioCatalogData);
+  if (!selected) throw new Error(`Unknown scenario '${value}'`);
+  ui.scenario.value = selected.workload
+    ? scenarioOptions.find(o => o.workload === selected.workload && o.core === 'single').key : selected.key;
+  ui.programControls.classList.toggle('hidden', !selected.workload);
+  document.body.classList.toggle('program-view', Boolean(selected.workload));
+  if (selected.workload) {
+    ui.programCore.value = selected.core;
+    ui.programPolicy.value = selected.policy || 'not-taken';
+    ui.programPolicy.disabled = selected.core !== 'advanced';
+  }
+  return selected.key;
+}
+
 async function loadScenarios() {
   const response = await visualizerRequest(apiUrl("api/scenarios"));
   if (!response.ok) throw new Error(await response.text());
   const payload = await response.json();
   const params = new URLSearchParams(window.location.search);
+  scenarioCatalogApi = await import('./scenario_catalog.mjs');
+  scenarioCatalogData = payload.catalog;
+  scenarioOptions = payload.scenarios;
   const selected = params.get("scenario") || payload.default;
   ui.scenario.innerHTML = "";
-  for (const scenario of payload.scenarios) {
-    const option = document.createElement("option");
-    option.value = scenario.key;
-    option.textContent = `${scenario.key} (${scenario.className})`;
-    if (scenario.key === selected) option.selected = true;
-    ui.scenario.appendChild(option);
+  for (const group of scenarioCatalogApi.menuOptions(scenarioOptions, payload.groups)) {
+    const element = document.createElement('optgroup');
+    element.label = group.title;
+    for (const scenario of group.options) {
+      const option = document.createElement('option');
+      option.value = scenario.key;
+      option.textContent = scenario.title;
+      element.appendChild(option);
+    }
+    ui.scenario.appendChild(element);
   }
-  return selected;
+  return syncScenarioSelection(selected);
 }
 
 async function loadCircuit(scenario) {
+  document.body.dataset.circuitsimStatus = 'loading';
   loading.textContent = "Building and simulating circuit…";
   loading.classList.remove("hidden");
   setPlaying(false);
@@ -4318,7 +4440,7 @@ async function loadCircuit(scenario) {
   // Documentation can choose the initial core without overwriting a saved
   // explorer profile. Explicit Apply remains the only profile write.
   const coreFidelity = new URLSearchParams(window.location.search).get("core_fidelity");
-  if (coreFidelity && /^rv32i-(?:five-stage-)?program[0-9]+$/.test(scenario)) {
+  if (coreFidelity && /^rv32i-(?:(?:five-stage|baseline)-|predict-[a-z-]+-)?program[0-9]+$/.test(scenario)) {
     query.set("core_fidelity", coreFidelity);
   }
   const response = await visualizerRequest(apiUrl(`api/circuit?${query}`));
@@ -4333,6 +4455,7 @@ async function loadCircuit(scenario) {
   await refreshComponentStates(app.currentIndex, app.stateRequestId);
   loading.classList.add("hidden");
   ui.saveStatus.textContent = "";
+  document.body.dataset.circuitsimStatus = 'ready';
 }
 
 async function applyExplorerProfile(request) {
@@ -4432,11 +4555,25 @@ compactViewport.addEventListener("change", () => {
   requestRender();
 });
 
-ui.scenario.addEventListener("change", () => {
+function selectScenario(scenario) {
+  syncScenarioSelection(scenario);
   const url = new URL(window.location);
-  url.searchParams.set("scenario", ui.scenario.value);
+  url.searchParams.set("scenario", scenario);
   window.history.replaceState({}, "", url);
-  loadCircuit(ui.scenario.value).catch(showError);
+  loadCircuit(scenario).catch(showError);
+}
+
+ui.scenario.addEventListener("change", () => {
+  const option = scenarioOptions.find(o => o.key === ui.scenario.value);
+  const chosen = option.workload ? scenarioCatalogApi.resolveProgram(scenarioOptions,
+    option.workload, ui.programCore.value, ui.programPolicy.value) : option;
+  selectScenario(chosen.key);
+});
+for (const control of [ui.programCore, ui.programPolicy]) control.addEventListener('change', () => {
+  const option = scenarioOptions.find(o => o.key === ui.scenario.value);
+  const chosen = scenarioCatalogApi.resolveProgram(scenarioOptions, option.workload,
+    ui.programCore.value, ui.programPolicy.value);
+  selectScenario(chosen.key);
 });
 ui.playPause.addEventListener("click", () => setPlaying(!app.playing));
 ui.checkpointBack.addEventListener("click", () => stepCheckpoint(-1));

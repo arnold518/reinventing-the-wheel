@@ -1,4 +1,7 @@
 #include "Bindings.hpp"
+#include "modules/rv32i/RV32IPrediction.hpp"
+#include "visualizer/MemoryInspector.hpp"
+#include "simulator/Simulator.hpp"
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 #include <cstdint>
@@ -18,16 +21,12 @@
 #include "modules/basic/Latch.hpp"
 #include "modules/basic/DFlipFlop.hpp"
 #include "modules/basic/ClockGenerator.hpp"
-#include "modules/memory/Memory64Kx32.hpp"
-#include "modules/memory/MemoryContainerCatalog.hpp"
+#include "modules/memory/FFMemoryCatalog.hpp"
 #include "modules/memory/MemoryProtocol.hpp"
 #include "modules/memory/SRAM.hpp"
 #include "components/selection/BuiltinComponentCatalog.hpp"
-#include "modules/memory/Memory4x32.hpp"
-#include "modules/memory/Memory32x32.hpp"
 #include "modules/memory/FlipFlopCell.hpp"
-#include "modules/memory/Register32.hpp"
-#include "modules/memory/RegisterFile4x32.hpp"
+#include "modules/memory/Register.hpp"
 #include "modules/memory/RegisterFile32x32.hpp"
 #include "modules/rv32i/RV32IControlFlowUnit.hpp"
 #include "modules/rv32i/RV32IDecodeControlUnit.hpp"
@@ -39,6 +38,7 @@
 #include "modules/rv32i/RV32IPipelineStages.hpp"
 #include "modules/rv32i/RV32ISingleCycleCore.hpp"
 #include "modules/rv32i/RV32ISingleCycleStages.hpp"
+#include "modules/rv32i/RV32IBaselinePipeline.hpp"
 #include "modules/rv32i/RV32ISingleCycleSystem.hpp"
 #include "modules/rv32i/RV32IMemoryRequest.hpp"
 
@@ -49,12 +49,10 @@
 #include "modules/composite/AddSub32.hpp"
 #include "modules/composite/Logic32.hpp"
 #include "modules/composite/ZeroDetect32.hpp"
-#include "modules/composite/Comparator32.hpp"
 #include "modules/composite/Shifter32.hpp"
 #include "modules/composite/ALU32.hpp"
 #include "modules/composite/Arithmetic8.hpp"
 #include "modules/composite/Comparator8.hpp"
-#include "modules/composite/Shifter8.hpp"
 #include "modules/composite/ZeroDetect8.hpp"
 #include "modules/composite/ALU8.hpp"
 #include "modules/composite/ALU8ControlDecoder.hpp"
@@ -122,6 +120,20 @@ void bindCompositeModule(py::module_& m, const char* name, const char* descripti
 }
 
 void bindModules(py::module_& m) {
+    m.def("memory_activity_timestamps", &circuit::visualizer::memoryActivityTimestamps,
+          py::arg("root"));
+    py::class_<circuit::visualizer::MemoryInspector>(m, "MemoryInspector")
+        .def(py::init<std::shared_ptr<Component>, const Simulator&>(), py::keep_alive<1, 3>())
+        .def("state_json", &circuit::visualizer::MemoryInspector::stateJson,
+             py::arg("index"), py::arg("time"), py::arg("scenario") = "",
+             py::arg("address") = -1, py::arg("count") = 64);
+    m.def("initialize_memory_bytes", [](const std::shared_ptr<Component>& component,
+                                        uint32_t address, const std::vector<uint8_t>& bytes) {
+        auto view = std::dynamic_pointer_cast<MemoryStateView>(component);
+        if (!view) throw std::invalid_argument("Component does not expose memory storage");
+        view->initializeMemoryBytes(address, bytes);
+    }, py::arg("component"), py::arg("address"), py::arg("bytes"),
+       "Provision an image before simulation; never a runtime memory write.");
     m.def("create_memory_device_component", [](const std::string& family, const std::string& kind,
             const std::string& name, const circuit::ParameterMap& parameters, const std::string& fidelity) {
         if (family != "dram" && family != "rom" && family != "nor-flash" && family != "matrix")
@@ -169,37 +181,6 @@ void bindModules(py::module_& m) {
         return create_sram("bank", name, width, depth, k, 32, fidelity);
     }, py::arg("name"), py::arg("data_width") = 8, py::arg("depth_words") = 4, py::arg("words_per_row") = 2,
        py::arg("fidelity") = "structural");
-    m.def("create_memory_bus_adapter", [](const std::string& name) {
-        circuit::ComponentBuildRequest request{"memory.bus-adapter.width32", name, {}, {}, {}, {}};
-        return std::dynamic_pointer_cast<IOComponent>(circuit::builtinComponentCatalog().createRoot(
-            request, circuit::canonicalDefaultProfile()).root);
-    }, py::arg("name"));
-    const auto create_memory = [](const std::string& name, const std::string& model,
-            size_t width, size_t depth, size_t read_delay, bool history, const std::string& fidelity) {
-        if (fidelity != "structural" && fidelity != "behavioral")
-            throw std::invalid_argument("Memory fidelity must be structural or behavioral");
-        circuit::ComponentBuildRequest request{
-            "memory.container." + model + "." + std::to_string(width), name,
-            {{"depth_words", std::to_string(depth)}, {"read_delay_ticks", std::to_string(read_delay)},
-             {"record_history", history ? "1" : "0"}}, {}, {}, {}};
-        auto profile = circuit::withExactFidelity(circuit::canonicalDefaultProfile(), name,
-            fidelity == "structural" ? circuit::Fidelity::Structural : circuit::Fidelity::Behavioral,
-            "memory-factory");
-        // Strict selection: a requested full structural array must never silently become behavioral.
-        if (fidelity == "structural") {
-            const auto implementations = circuit::builtinComponentCatalog().implementationsFor(request.contract_id);
-            const bool supported = std::any_of(implementations.begin(), implementations.end(), [&](const auto& impl) {
-                return impl.fidelity == circuit::Fidelity::Structural && impl.supports(request.parameters);
-            });
-            if (!supported)
-                throw std::invalid_argument("No structural MemoryArray supports this model, width, depth, or delay");
-        }
-        return std::dynamic_pointer_cast<IOComponent>(
-            circuit::builtinComponentCatalog().createRoot(request, profile).root);
-    };
-    m.def("create_memory_array", create_memory, py::arg("name"), py::arg("model"), py::arg("data_width") = 32,
-       py::arg("depth_words") = 4096, py::arg("read_delay_ticks") = 1,
-       py::arg("record_history") = true, py::arg("fidelity") = "behavioral");
     auto create_endpoint = [](const std::string& kind, const std::string& name, const std::string& model,
             size_t width, size_t depth, circuit::ParameterMap parameters, const std::string& fidelity) {
         if (fidelity != "structural" && fidelity != "behavioral") throw std::invalid_argument("Unknown memory fidelity");
@@ -215,7 +196,7 @@ void bindModules(py::module_& m) {
     };
     m.def("create_memory_container", [create_endpoint](const std::string& name, const std::string& model,
         size_t width, size_t depth, circuit::ParameterMap parameters) {
-        return create_endpoint("scalable",name,model,width,depth,std::move(parameters),"behavioral");
+        return create_endpoint("device",name,model,width,depth,std::move(parameters),"behavioral");
     }, py::arg("name"), py::arg("model"), py::arg("data_width")=32, py::arg("depth_words")=4096, py::arg("parameters")=circuit::ParameterMap{});
     m.def("create_memory_controller", [create_endpoint](const std::string& name, const std::string& model,
         size_t width, size_t depth, circuit::ParameterMap parameters) {
@@ -226,9 +207,21 @@ void bindModules(py::module_& m) {
         return create_endpoint("endpoint",name,model,width,depth,std::move(parameters),fidelity);
     }, py::arg("name"), py::arg("model"), py::arg("data_width")=32, py::arg("depth_words")=4,
        py::arg("parameters")=circuit::ParameterMap{}, py::arg("fidelity")="structural");
-    m.def("create_ff_memory", [create_memory](const std::string& name, size_t width, size_t depth,
+    m.def("create_ff_memory", [](const std::string& name, size_t width, size_t depth,
             size_t delay, bool history, const std::string& fidelity) {
-        return create_memory(name, "ff", width, depth, delay, history, fidelity);
+        if (fidelity != "structural" && fidelity != "behavioral")
+            throw std::invalid_argument("FF memory fidelity must be structural or behavioral");
+        const auto choice = fidelity == "structural" ? circuit::Fidelity::Structural : circuit::Fidelity::Behavioral;
+        const auto id = "memory.container.ff." + std::to_string(width);
+        circuit::ParameterMap parameters{{"depth_words", std::to_string(depth)},
+            {"read_delay_ticks", std::to_string(delay)}, {"record_history", history ? "1" : "0"}};
+        const auto& catalog = circuit::builtinComponentCatalog();
+        const auto implementations = catalog.implementationsFor(id);
+        if (std::none_of(implementations.begin(), implementations.end(), [&](const auto& i) {
+                return i.fidelity == choice && i.supports(parameters);
+            })) throw std::invalid_argument("Unsupported FF memory geometry, delay or fidelity");
+        return std::dynamic_pointer_cast<IOComponent>(catalog.createRoot({id,name,parameters,{},{},{}},
+            circuit::withExactFidelity(circuit::canonicalDefaultProfile(),name,choice)).root);
     }, py::arg("name"), py::arg("data_width") = 32, py::arg("depth_words") = 4,
        py::arg("read_delay_ticks") = 1, py::arg("record_history") = true,
        py::arg("fidelity") = "structural");
@@ -401,80 +394,31 @@ void bindModules(py::module_& m) {
         .def("get_input_pins", &FullAdder::getInputPins, py::return_value_policy::reference_internal)
         .def("get_output_pins", &FullAdder::getOutputPins, py::return_value_policy::reference_internal);
 
-    bindCompositeModule<AND8>(m, "AND8", "8-bit bitwise AND.");
-    bindCompositeModule<OR8>(m, "OR8", "8-bit bitwise OR.");
     bindCompositeModule<XOR8>(m, "XOR8", "8-bit bitwise XOR.");
     bindCompositeModule<NOT8>(m, "NOT8", "8-bit bitwise NOT.");
-    bindCompositeModule<NAND8>(m, "NAND8", "8-bit bitwise NAND.");
-    bindCompositeModule<NOR8>(m, "NOR8", "8-bit bitwise NOR.");
 
     bindCompositeModule<Mux2to1>(m, "Mux2to1", "2:1 one-bit multiplexer.");
     bindCompositeModule<Mux4to1>(m, "Mux4to1", "4:1 one-bit multiplexer.");
     bindCompositeModule<Mux8to1>(m, "Mux8to1", "8:1 one-bit multiplexer.");
-    bindCompositeModule<Mux16to1>(m, "Mux16to1", "16:1 one-bit multiplexer.");
     bindCompositeModule<Mux32to1>(m, "Mux32to1", "32:1 one-bit multiplexer.");
-    bindCompositeModule<Mux2to1_8bit>(m, "Mux2to1_8bit", "2:1 8-bit multiplexer.");
     bindCompositeModule<Mux2to1_4bit>(m, "Mux2to1_4bit", "2:1 4-bit multiplexer.");
     bindCompositeModule<Mux2to1_32bit>(m, "Mux2to1_32bit", "2:1 32-bit multiplexer.");
-    bindCompositeModule<Mux4to1_8bit>(m, "Mux4to1_8bit", "4:1 8-bit multiplexer.");
     bindCompositeModule<Mux4to1_32bit>(m, "Mux4to1_32bit", "4:1 32-bit multiplexer.");
     bindCompositeModule<Mux8to1_8bit>(m, "Mux8to1_8bit", "8:1 8-bit multiplexer.");
     bindCompositeModule<Mux8to1_32bit>(m, "Mux8to1_32bit", "8:1 32-bit multiplexer.");
-    bindCompositeModule<Mux16to1_8bit>(m, "Mux16to1_8bit", "16:1 8-bit multiplexer.");
     bindCompositeModule<Mux32to1_32bit>(m, "Mux32to1_32bit", "32:1 32-bit multiplexer.");
-    bindCompositeModule<Decoder2to4>(m, "Decoder2to4", "2-bit enabled one-hot decoder.");
     bindCompositeModule<Decoder5to32>(m, "Decoder5to32", "5-bit enabled one-hot decoder.");
 
-    py::class_<Memory64Kx32, BasicComponent, std::shared_ptr<Memory64Kx32>>(
-        m,
-        "Memory64Kx32",
-        "Behavioral 64K-word 32-bit byte-addressed RV32I memory.",
-        py::module_local(false))
-        .def(py::init([](const std::string& instance_name) {
-            return Component::create<Memory64Kx32>(instance_name);
-        }), py::arg("name"))
-        .def("get_name", &Memory64Kx32::getName)
-        .def("get_parent", &Memory64Kx32::getParent)
-        .def("get_children", &Memory64Kx32::getChildren, py::return_value_policy::reference_internal)
-        .def("get_input_pins", &Memory64Kx32::getAllInputPins, py::return_value_policy::reference_internal)
-        .def("get_output_pins", &Memory64Kx32::getAllOutputPins, py::return_value_policy::reference_internal)
-        .def_static("capacity_bytes", &Memory64Kx32::capacityBytes)
-        .def_static("capacity_words", &Memory64Kx32::capacityWords)
-        .def(
-            "get_touched_words_at_time",
-            &Memory64Kx32::getTouchedWordsAtTime,
-            py::arg("time"),
-            py::arg("max_words") = 64,
-            "Returns 32-bit words touched since the effective reset at the requested simulation time.")
-        .def(
-            "get_touched_word_count_at_time",
-            &Memory64Kx32::getTouchedWordCountAtTime,
-            py::arg("time"),
-            "Counts words touched since the effective reset at the requested simulation time.")
-        .def(
-            "get_occupied_words_at_time",
-            &Memory64Kx32::getOccupiedWordsAtTime,
-            py::arg("time"),
-            py::arg("max_words") = 64,
-            "Deprecated alias for get_touched_words_at_time.")
-        .def(
-            "get_occupied_word_count_at_time",
-            &Memory64Kx32::getOccupiedWordCountAtTime,
-            py::arg("time"),
-            "Deprecated alias for get_touched_word_count_at_time.")
-        .def(
-            "get_words_at_time",
-            &Memory64Kx32::getWordsAtTime,
-            py::arg("time"),
-            py::arg("base_address"),
-            py::arg("word_count"),
-            "Returns a word-aligned memory window at the requested simulation time.");
     bindCompositeModule<FlipFlopCell>(m, "FlipFlopCell", "Structural one-bit storage cell with write enable and reset.");
-    bindCompositeModule<Register32>(m, "Register32", "Whole-word 32-bit register built from FFWord<32> storage.");
-    bindCompositeModule<RegisterFile4x32>(m, "RegisterFile4x32", "Four-entry 32-bit register file built from behavioral register cells.");
-    bindCompositeModule<RegisterFile32x32>(m, "RegisterFile32x32", "32-entry 32-bit register file built from behavioral register cells.");
-    bindCompositeModule<Memory4x32>(m, "Memory4x32", "Four-word 32-bit memory slice with CPU-facing memory pins.");
-    bindCompositeModule<Memory32x32>(m, "Memory32x32", "Thirty-two-word 32-bit memory slice with CPU-facing memory pins.");
+    bindCompositeModule<Register<1>>(m, "RegisterW1", "Whole-word 1-bit register built from flip-flop cells.");
+    bindCompositeModule<Register<2>>(m, "RegisterW2", "Whole-word 2-bit register built from flip-flop cells.");
+    bindCompositeModule<Register<3>>(m, "RegisterW3", "Whole-word 3-bit register built from flip-flop cells.");
+    bindCompositeModule<Register<4>>(m, "RegisterW4", "Whole-word 4-bit register built from flip-flop cells.");
+    bindCompositeModule<Register<5>>(m, "RegisterW5", "Whole-word 5-bit register built from flip-flop cells.");
+    bindCompositeModule<Register<8>>(m, "RegisterW8", "Whole-word 8-bit register built from flip-flop cells.");
+    bindCompositeModule<Register<16>>(m, "RegisterW16", "Whole-word 16-bit register built from flip-flop cells.");
+    bindCompositeModule<Register<32>>(m, "RegisterW32", "Whole-word 32-bit register built from flip-flop cells.");
+    bindCompositeModule<RegisterFile32x32>(m, "RegisterFile32x32", "RV32I register file built from 31 Register<32> words and hardwired x0.");
     bindCompositeModule<RV32IControlFlowUnit>(m, "RV32IControlFlowUnit", "Structural RV32I PC, branch, and jump block.");
     bindCompositeModule<RV32IDecodeControlUnit>(m, "RV32IDecodeControlUnit", "Structural RV32I field, immediate, and control decoder.");
     bindCompositeModule<RV32IExecutionControlStatusUnit>(m, "RV32IExecutionControlStatusUnit", "Structural RV32I commit permission, memory handshake, halt, and trap-state block.");
@@ -483,8 +427,12 @@ void bindModules(py::module_& m) {
     bindCompositeModule<RV32IEXMEMPipelineRegister>(m, "RV32IEXMEMPipelineRegister", "RV32I EX/MEM pipeline state.");
     bindCompositeModule<RV32IMEMWBPipelineRegister>(m, "RV32IMEMWBPipelineRegister", "RV32I MEM/WB pipeline state.");
     bindCompositeModule<RV32IForwardingUnit>(m, "RV32IForwardingUnit", "RV32I EX/MEM and MEM/WB forwarding selector.");
+    bindCompositeModule<RV32IPredictionCounter>(m, "RV32IPredictionCounter", "One-bit or saturating two-bit update logic.");
+    bindCompositeModule<RV32IBranchPredecode>(m, "RV32IBranchPredecode", "Fetch-time B/J target extraction.");
+    bindCompositeModule<RV32IBranchPredictor>(m, "RV32IBranchPredictor", "Configurable branch direction prediction.");
+    bindCompositeModule<RV32IBranchRecovery>(m, "RV32IBranchRecovery", "Next-PC comparison and qualified training.");
+    bindCompositeModule<RV32IPredictionPath>(m, "RV32IPredictionPath", "Grouped prediction metadata and recovery.");
     bindCompositeModule<RV32IHazardDetectionUnit>(m, "RV32IHazardDetectionUnit", "RV32I load-use hazard detector.");
-    bindCompositeModule<RV32IPipelineControlFlowUnit>(m, "RV32IPipelineControlFlowUnit", "RV32I pipeline branch, jump, and redirect unit.");
     bindCompositeModule<RV32IMemoryAlignmentUnit>(m, "RV32IMemoryAlignmentUnit", "RV32I byte, halfword, and word alignment checker.");
     bindCompositeModule<RV32IPipelineRetirementUnit>(m, "RV32IPipelineRetirementUnit", "RV32I precise retirement and trap-priority unit.");
     bindCompositeModule<RV32IPipelineCoordinator>(m, "RV32IPipelineCoordinator", "RV32I pipeline stall, bubble, flush, and stage-write coordinator.");
@@ -492,8 +440,16 @@ void bindModules(py::module_& m) {
     bindCompositeModule<RV32IDecodeStage>(m, "RV32IDecodeStage", "RV32I decode and register-read stage.");
     bindCompositeModule<RV32IExecuteStage>(m, "RV32IExecuteStage", "RV32I forwarding, ALU, and control-flow stage.");
     bindCompositeModule<RV32IMemoryStage>(m, "RV32IMemoryStage", "RV32I data-memory and alignment stage.");
-    bindCompositeModule<RV32IWritebackStage>(m, "RV32IWritebackStage", "RV32I retirement and architectural-state stage.");
+    bindCompositeModule<RV32IPipelineExecutionStatus>(m, "RV32IPipelineExecutionStatus", "Sticky pipeline halt and trap status.");
+    bindCompositeModule<RV32IWritebackStage>(m, "RV32IWritebackStage", "Combinational RV32I result selection and retirement permission.");
     bindCompositeModule<RV32IFiveStageCore>(m, "RV32IFiveStageCore", "Educational RV32I five-stage pipelined core.");
+    bindCompositeModule<RV32IBaselinePipelineCore>(m, "RV32IBaselinePipelineCore", "Stall-only, non-speculative RV32I pipeline with direct memories.");
+    bindCompositeModule<RV32IBaselineFetchStage>(m, "RV32IBaselineFetchStage", "Direct fetch and redirect selection.");
+    bindCompositeModule<RV32IBaselineDecodeStage>(m, "RV32IBaselineDecodeStage", "Decode and register file without writeback bypass.");
+    bindCompositeModule<RV32IBaselineExecuteStage>(m, "RV32IBaselineExecuteStage", "Captured-operand ALU and branch resolution.");
+    bindCompositeModule<RV32IBaselineMemoryStage>(m, "RV32IBaselineMemoryStage", "Direct load/store access with fault qualification.");
+    bindCompositeModule<RV32IBaselineDependencyUnit>(m, "RV32IBaselineDependencyUnit", "RAW dependency checks against EX, MEM and WB.");
+    bindCompositeModule<RV32IBaselineControl>(m, "RV32IBaselineControl", "Stall, bubble, branch-wait and precise-stop control.");
     py::class_<RV32IBitPatternMatcher, IOComponent, std::shared_ptr<RV32IBitPatternMatcher>>(
         m,
         "RV32IBitPatternMatcher",
@@ -527,11 +483,6 @@ void bindModules(py::module_& m) {
     bindCompositeModule<Incrementer8>(m, "Incrementer8", "8-bit incrementer.");
     bindCompositeModule<Decrementer8>(m, "Decrementer8", "8-bit decrementer.");
     bindCompositeModule<EqualityChecker8>(m, "EqualityChecker8", "8-bit equality checker.");
-    bindCompositeModule<Comparator8>(m, "Comparator8", "8-bit unsigned comparator.");
-    bindCompositeModule<SignedComparator8>(m, "SignedComparator8", "8-bit signed comparator.");
-    bindCompositeModule<ShiftLeftLogical8>(m, "ShiftLeftLogical8", "8-bit logical shift left.");
-    bindCompositeModule<ShiftRightLogical8>(m, "ShiftRightLogical8", "8-bit logical shift right.");
-    bindCompositeModule<ShiftRightArithmetic8>(m, "ShiftRightArithmetic8", "8-bit arithmetic shift right.");
     bindCompositeModule<ZeroDetect8>(m, "ZeroDetect8", "8-bit zero detector.");
     bindCompositeModule<ALU8>(m, "ALU8", "8-bit arithmetic logic unit.");
     bindCompositeModule<ALU8ControlDecoder>(m, "ALU8ControlDecoder", "Structural ALU integration block.");
@@ -550,7 +501,6 @@ void bindModules(py::module_& m) {
     bindCompositeModule<AddSub32>(m, "AddSub32", "Structural 32-bit add/subtract unit.");
     bindCompositeModule<Logic32>(m, "Logic32", "Structural 32-bit bitwise logic unit.");
     bindCompositeModule<ZeroDetect32>(m, "ZeroDetect32", "Structural 32-bit zero detector.");
-    bindCompositeModule<Comparator32>(m, "Comparator32", "Structural 32-bit comparator.");
     bindCompositeModule<Shifter32>(m, "Shifter32", "Structural 32-bit barrel shifter.");
     bindCompositeModule<ALU32>(m, "ALU32", "Structural RV32I-oriented 32-bit ALU.");
 

@@ -11,14 +11,17 @@ extern const ComponentFamily RV32IDecodeStage;
 extern const ComponentFamily RV32IExecuteStage;
 extern const ComponentFamily RV32IMemoryStage;
 extern const ComponentFamily RV32IWritebackStage;
+extern const ComponentFamily RV32IPipelineExecutionStatus;
 }
 
 class RV32IFetchStage : public IOComponent {
 public:
-    explicit RV32IFetchStage(std::string name);
+    explicit RV32IFetchStage(std::string name, bool external_next_pc = false);
     static constexpr const char* TypeName = "RV32IFetchStage";
     const char* getTypeName() const override { return TypeName; }
     void buildInternals(ComponentBuilder& builder) override;
+private:
+    bool external_next_pc_;
 };
 
 class RV32IDecodeStage
@@ -57,6 +60,14 @@ class RV32IWritebackStage : public IOComponent {
 public:
     explicit RV32IWritebackStage(std::string name);
     static constexpr const char* TypeName = "RV32IWritebackStage";
+    const char* getTypeName() const override { return TypeName; }
+    void buildInternals(ComponentBuilder& builder) override;
+};
+
+class RV32IPipelineExecutionStatus : public IOComponent {
+public:
+    explicit RV32IPipelineExecutionStatus(std::string name);
+    static constexpr const char* TypeName = "RV32IPipelineExecutionStatus";
     const char* getTypeName() const override { return TypeName; }
     void buildInternals(ComponentBuilder& builder) override;
 };

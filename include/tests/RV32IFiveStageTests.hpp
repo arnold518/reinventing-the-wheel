@@ -2,15 +2,17 @@
 
 #include "components/selection/BuildProfile.hpp"
 #include "tests/RV32IInstructionLockstepTests.hpp"
+#include "rv32i/RV32IPrediction.hpp"
+#include <optional>
 #include <cstddef>
 #include <map>
 #include <memory>
 #include <string>
 
 class IOComponent;
-class Memory64Kx32;
 class RV32IProgramRoot;
 class RV32IStateView;
+class RV32IRetirementView;
 template<size_t WIDTH> class Wire;
 
 std::string rv32iFiveStageProgramScenarioName(
@@ -28,7 +30,8 @@ class RV32IFiveStageCoreProgramTest
     : public RV32IInstructionLockstepTest {
 public:
     explicit RV32IFiveStageCoreProgramTest(
-        size_t program_number = 9);
+        size_t program_number = 9, bool baseline = false,
+        std::optional<rv32i::PredictionConfig> prediction = std::nullopt);
 
     bool run() override;
     void setupCircuit() override;
@@ -61,6 +64,8 @@ protected:
 
 private:
     size_t program_number_;
+    bool baseline_ = false;
+    std::optional<rv32i::PredictionConfig> prediction_;
     circuit::BuildProfile profile_ =
         circuit::canonicalDefaultProfile();
     std::shared_ptr<RV32IProgramRoot> program_root_{};
@@ -70,10 +75,22 @@ private:
     std::shared_ptr<IOComponent> data_memory_{};
     std::shared_ptr<Wire<1>> rst_wire_{};
     std::shared_ptr<Wire<1>> enable_wire_{};
+    std::shared_ptr<RV32IRetirementView> retirement_view_;
+    uint64_t observed_retirements_ = 0;
+    rv32i::RV32IMemoryTrace retired_memory_{};
     bool simulation_precomputed_ = false;
     size_t load_use_stall_cycles_ = 0;
     size_t memory_stall_cycles_ = 0;
     size_t data_port_stall_cycles_ = 0;
     size_t pipeline_flushes_ = 0;
     size_t occupied_pipeline_slots_ = 0;
+    size_t data_stall_cycles_ = 0;
+    size_t branch_wait_cycles_ = 0;
+    size_t branches_resolved_ = 0, branch_misses_ = 0, prediction_recoveries_ = 0;
+};
+
+class RV32IBaselinePipelineProgramTest : public RV32IFiveStageCoreProgramTest {
+public:
+    explicit RV32IBaselinePipelineProgramTest(size_t program=9)
+        : RV32IFiveStageCoreProgramTest(program,true,std::nullopt) {}
 };

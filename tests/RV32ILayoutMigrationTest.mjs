@@ -6,7 +6,7 @@ const layout = JSON.parse(readFileSync(new URL('../visualizer-v2/layout.json', i
 let count = 0;
 for (const store of [layout.type_layouts, layout.root_layouts, ...Object.values(layout.profile_layouts)]) {
   for (const entry of Object.values(store)) {
-    if (!['rv32i-datapath-v1','rv32i-stages-v2','rv32i-single-cycle-auto-v3','rv32i-single-cycle-stage-order-v1','rv32i-blocks-v4','rv32i-alu-auto-v5','rv32i-alu-auto-v6'].includes(entry.layout_revision)) continue;
+    if (!['rv32i-datapath-v1','rv32i-stages-v2','rv32i-single-cycle-auto-v3','rv32i-single-cycle-stage-order-v1','rv32i-blocks-v4','rv32i-alu-auto-v5','rv32i-alu-auto-v6','rv32i-routing-v1'].includes(entry.layout_revision)) continue;
     const old = structuredClone(entry.previous_default);
     const migrated = upgradeDefaultLayout(entry, old);
     for (const key of ['aspect_ratio', 'min_aspect_ratio', 'pin_size_ratio', 'title_bar_ratio'])

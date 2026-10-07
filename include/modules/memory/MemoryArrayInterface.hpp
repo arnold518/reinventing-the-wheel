@@ -1,6 +1,7 @@
 #pragma once
 
 #include "components/IOComponent.hpp"
+#include "modules/memory/MemoryStorage.hpp"
 
 // Shared geometry and port, independent of either a cell implementation or a
 // behavioral model. Width fixes the pins; depth is a construction parameter.
@@ -9,6 +10,7 @@ struct MemoryConfig {
     size_t read_delay_ticks = 1;
     LogicValue initial_value = LogicValue::UNKNOWN;
     bool record_history = true;
+    MemoryStorage::Limits storage_limits{true, 64 * 1024 * 1024, 16 * 1024 * 1024};
 };
 
 template<size_t Width>

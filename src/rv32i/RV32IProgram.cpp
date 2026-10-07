@@ -1,14 +1,13 @@
 #include "rv32i/RV32IProgram.hpp"
-#include "modules/memory/MemoryContainer.hpp"
+#include "components/capabilities/MemoryStateView.hpp"
 
-#include "modules/memory/Memory64Kx32.hpp"
 #include <stdexcept>
 #include <utility>
 
 namespace rv32i {
 
-void RV32IProgram::loadInto(BehavioralMemoryContainer& memory, uint32_t base_address) const {
-    memory.initializeBytes(base_address, program_bytes);
+void RV32IProgram::loadInto(MemoryStateView& memory, uint32_t base_address) const {
+    memory.initializeMemoryBytes(base_address, program_bytes);
 }
 
 RV32IProgram::RV32IProgram(std::vector<uint8_t> bytes)
@@ -46,10 +45,6 @@ uint32_t RV32IProgram::wordAt(size_t word_index) const {
          | (static_cast<uint32_t>(program_bytes[byte_index + 1]) << 8)
          | (static_cast<uint32_t>(program_bytes[byte_index + 2]) << 16)
          | (static_cast<uint32_t>(program_bytes[byte_index + 3]) << 24);
-}
-
-void RV32IProgram::loadInto(Memory64Kx32& memory, uint32_t base_address) const {
-    memory.loadBytes(base_address, program_bytes);
 }
 
 }

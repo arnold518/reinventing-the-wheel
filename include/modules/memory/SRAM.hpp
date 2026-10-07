@@ -11,6 +11,8 @@ struct SRAMDeviceConfig {
     size_t depth_words = 4;
     size_t words_per_row = 2;
     size_t phase_ticks = 32;
+    bool record_history = true;
+    MemoryStorage::Limits storage_limits{true, 64 * 1024 * 1024, 16 * 1024 * 1024};
     void validate(size_t width, bool structural = false) const;
     size_t rows() const { return depth_words / words_per_row; }
     size_t columns(size_t width) const { return width * words_per_row; }

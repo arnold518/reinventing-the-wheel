@@ -61,8 +61,14 @@ for (const [test, scenario] of scenarios) {
       const rootIndex = actual.components.findIndex(component => component.id === actual.rootId);
       assert.equal(actual.components.filter(component => component.parentIndex === rootIndex).length, 7,
         'alu32: seven functional blocks');
-      assert.equal(actual.components.filter(component => component.type === 'FullAdder').length, 32,
-        'alu32: one shared arithmetic chain');
+      assert.equal(actual.components.filter(component => component.type === 'AddSub32').length, 1,
+        'alu32: one shared arithmetic unit');
+      assert.equal(actual.components.filter(component => component.type === 'ParallelPrefixAdder32').length, 1,
+        'alu32: one shared prefix adder');
+      assert.equal(actual.components.filter(component => component.type === 'HalfAdder').length, 32,
+        'alu32: one sum bit-slice per bit');
+      assert.equal(actual.components.filter(component => component.type.startsWith('CarryPrefixLevel<')).length, 5,
+        'alu32: five prefix-carry levels');
     }
     console.log(JSON.stringify({ scenario, wasmMs, nativeProcessMs, components: actual.stats.componentCount, timestamps: actual.timestamps.length }));
     if (!test.includes('32')) {

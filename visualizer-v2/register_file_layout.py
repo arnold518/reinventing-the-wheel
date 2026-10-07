@@ -2,7 +2,8 @@
 from rv32i_layout import Floorplan
 
 REVISION = "register-file-ff-v1"
-KINDS = {"RegisterFile32x32": 1.07, "FFStorageBank<32,31>": 1.2, "FFWord<32>": .8,
+KINDS = {"RegisterFile32x32": 1.07, "RegisterFileStorageBank": 1.2,
+         "FFStorageBank<32,31>": 1.2, "FFWord<32>": .8,
          "MemoryStorageBank<FFArray,32,31>": 1.2, "MemoryWord<FFArray,32>": .8}
 
 
@@ -23,7 +24,7 @@ def placements(kind, aspects, parent_aspect):
         for name, rect in {
             "RD_DECODER": (.03,.21,.18,.70), "STORAGE": (.24,.21,.39,.70),
             "RS1_MUX": (.66,.21,.14,.70), "RS2_MUX": (.83,.21,.14,.70),
-            "FULL_WRITE_MASK": (.29,.05,.18,.13), "X0_ZERO": (.70,.05,.18,.13),
+            "X0_ZERO": (.70,.05,.18,.13),
         }.items():
             p.slot(name, *rect)
     elif "StorageBank" in kind:

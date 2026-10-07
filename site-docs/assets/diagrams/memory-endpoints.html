@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en" class="diagram-standalone">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Memory architecture: device, controller, endpoint</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;600&amp;family=Ubuntu+Mono&amp;display=swap" rel="stylesheet"/>
+<style>body { margin: 24px auto; max-width: 688px; padding: 0 16px; } * { box-sizing: border-box; }</style>
+</head>
+<body>
+<!-- diagram:start -->
+<figure class="circuit-figure" data-diagram="memory-endpoints">
+<div class="diagram-viewport" role="region" aria-label="Memory architecture: device, controller, endpoint" tabindex="0">
+<svg viewBox="0 0 640 556" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="memory-endpoints-title memory-endpoints-desc">
+<title id="memory-endpoints-title">Memory architecture: device, controller, endpoint</title>
+<desc id="memory-endpoints-desc">MemoryEndpoint contains a MemoryController and one native memory device. The controller exposes the universal transaction interface and connects to the device through technology-specific native pins. The device is either expanded storage or a scalable MemoryContainer, for FF, SRAM, DRAM, ROM, or NOR flash.</desc>
+<style>.circuit-figure {
+  --dg-paper: var(--md-default-bg-color, #fff);
+  --dg-ink: var(--md-default-fg-color, #202735);
+  --dg-muted: #566174;
+  --dg-rule: #c8ced8;
+  --dg-surface: #f5f6f9;
+  --dg-accent: #4051b5;
+  --dg-tint: #eef0fc;
+  margin: 1.5rem 0; max-width: 100%; text-align: left;
+  font-family: var(--md-text-font-family, 'Noto Sans', sans-serif);
+}
+[data-md-color-scheme="slate"] .circuit-figure {
+  --dg-muted: #b4bdd0; --dg-rule: #4b5569; --dg-surface: #262c38;
+  --dg-accent: #acb7ff; --dg-tint: #303853;
+}
+@media (prefers-color-scheme: dark) {
+  .diagram-standalone .circuit-figure {
+    --dg-paper: #1e2129; --dg-ink: #e4e7ef; --dg-muted: #b4bdd0;
+    --dg-rule: #4b5569; --dg-surface: #262c38;
+    --dg-accent: #acb7ff; --dg-tint: #303853;
+  }
+  .diagram-standalone body { background: #1e2129; color: #e4e7ef; }
+}
+.circuit-figure .diagram-viewport {
+  max-width: 100%; overflow: auto; overscroll-behavior-x: contain;
+}
+.circuit-figure .diagram-viewport:focus-visible {
+  outline: 2px solid var(--dg-accent); outline-offset: 3px;
+}
+.circuit-figure svg { display: block; width: 640px; min-width: 640px; max-width: none; margin: 0 auto; }
+.circuit-figure figcaption {
+  display: block; margin: .6rem 0 0; max-width: none; text-align: left;
+  color: var(--dg-muted); font-style: normal; font-size: 14px; line-height: 1.6;
+}
+.circuit-figure figcaption strong { color: var(--dg-ink); font-weight: 600; }
+.circuit-figure .dg-zone { fill: var(--dg-paper); stroke: var(--dg-rule); stroke-width: 1.2; }
+.circuit-figure .dg-box { fill: var(--dg-paper); stroke: var(--dg-rule); stroke-width: 1.2; }
+.circuit-figure .dg-store { fill: var(--dg-surface); stroke: var(--dg-rule); stroke-width: 1.2; }
+.circuit-figure .dg-focus { fill: var(--dg-tint); stroke: var(--dg-accent); stroke-width: 1.4; }
+.circuit-figure .dg-label { fill: var(--dg-paper); stroke: none; }
+.circuit-figure text { fill: var(--dg-ink); font-family: var(--md-text-font-family, 'Noto Sans', sans-serif); font-size: 16px; }
+.circuit-figure .dg-name { font-weight: 600; }
+.circuit-figure .dg-small { font-size: 14px; fill: var(--dg-muted); }
+.circuit-figure .dg-code { font-family: var(--md-code-font-family, 'Ubuntu Mono', monospace); font-size: 14px; fill: var(--dg-muted); }
+.circuit-figure .dg-tag { font-size: 12px; font-weight: 600; letter-spacing: .06em; fill: var(--dg-muted); }
+.circuit-figure .dg-edge { fill: none; stroke: var(--dg-muted); stroke-width: 1.5; }
+.circuit-figure .dg-marker { fill: var(--dg-muted); }
+.circuit-figure .dg-marker-accent { fill: var(--dg-accent); }
+.circuit-figure .dg-rule { stroke: var(--dg-rule); stroke-width: 1; }</style>
+<defs>
+<marker id="memory-endpoints-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><path d="M 0 0 L 8 3 L 0 6 Z" class="dg-marker"/></marker>
+<marker id="memory-endpoints-arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><path d="M 0 0 L 8 3 L 0 6 Z" class="dg-marker-accent"/></marker>
+<marker id="memory-endpoints-arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><path d="M 0 0 L 8 3 L 0 6 Z" class="dg-marker"/></marker>
+</defs>
+<rect width="640" height="556" fill="var(--dg-paper)"/>
+<rect data-node="endpoint" x="24" y="112" width="592" height="420" rx="6" class="dg-zone"/>
+<text x="48" y="144" class="dg-name" text-anchor="start">MemoryEndpoint</text>
+<path class="dg-edge" d="M 320 88 L 320 176"/>
+<rect data-node="transaction-interface" x="64" y="24" width="512" height="64" rx="6" class="dg-focus"/>
+<text x="320.0" y="53.0" class="dg-name" text-anchor="middle">Universal transaction interface</text>
+<text x="320.0" y="75.0" class="dg-small" text-anchor="middle">REQ_* / RSP_* · 3.2</text>
+<rect data-node="controller" x="64" y="176" width="512" height="64" rx="6" class="dg-box"/>
+<text x="320.0" y="205.0" class="dg-name" text-anchor="middle">MemoryController</text>
+<text x="320.0" y="227.0" class="dg-small" text-anchor="middle">FF bypass · timed native control · response retention</text>
+<path class="dg-edge" d="M 320 240 L 320 254"/>
+<text x="320" y="278" class="dg-small" text-anchor="middle">Technology-specific native pins</text>
+<path class="dg-edge" d="M 320 288 L 320 312"/>
+<rect data-node="native-device" x="48" y="312" width="544" height="196" rx="6" class="dg-store"/>
+<text x="320" y="340" class="dg-name" text-anchor="middle">Native memory device · 3.1</text>
+<rect data-node="expanded-device" x="64" y="366" width="232" height="76" rx="6" class="dg-box"/>
+<text x="180.0" y="401.0" class="dg-name" text-anchor="middle">Expanded device</text>
+<text x="180.0" y="423.0" class="dg-small" text-anchor="middle">bank · words / rows · cells</text>
+<text x="320" y="410" class="dg-small" text-anchor="middle">or</text>
+<rect data-node="container" x="344" y="366" width="232" height="76" rx="6" class="dg-box"/>
+<text x="460.0" y="401.0" class="dg-name" text-anchor="middle">MemoryContainer</text>
+<text x="460.0" y="423.0" class="dg-small" text-anchor="middle">scalable behavioral storage</text>
+<text x="320" y="480" class="dg-small" text-anchor="middle">FF · SRAM · DRAM · ROM · NOR flash</text>
+</svg>
+</div>
+<figcaption><strong>One endpoint = controller + one device.</strong> The two device representations are alternatives, with the same native contract for the selected technology. Lines denote interfaces, not one-way data flow. Direct native access omits the controller. BehavioralMemoryEndpoint is the fused behavioral implementation of the whole assembly.</figcaption>
+</figure>
+<!-- diagram:end -->
+</body>
+</html>

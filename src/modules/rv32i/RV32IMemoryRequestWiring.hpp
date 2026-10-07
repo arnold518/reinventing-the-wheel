@@ -15,15 +15,17 @@ inline void wireRequestBus(ComponentBuilder& b, IOComponent& core,
 }
 inline void wireRequestFields(ComponentBuilder& b, const std::shared_ptr<IOComponent>& fetch,
                               const std::shared_ptr<IOComponent>& data, const std::shared_ptr<IOComponent>& lanes,
-                              const std::shared_ptr<IOComponent>& operation) {
+                              const std::shared_ptr<IOComponent>& operation, bool read_only_fetch = false) {
     circuit::memory_detail::StructuralWiring w(b);
     auto zero=w.constant("MEMORY_ZERO",false);
-    auto zero32=b.addNewComponent<ConstantValue<32>>("FETCH_WRITE_DATA",0);
-    auto read=b.addNewComponent<ConstantValue<3>>("FETCH_OPERATION",0);
-    auto mask=b.addNewComponent<ConstantValue<4>>("FETCH_MASK",15);
-    w.connect(zero32->getOutputPin<32>("OUT"),fetch->getInputPin<32>("WRITE_DATA"));
-    w.connect(read->getOutputPin<3>("OUT"),fetch->getInputPin<3>("OP"));
-    w.connect(mask->getOutputPin<4>("OUT"),fetch->getInputPin<4>("WRITE_MASK"));
+    if (!read_only_fetch) {
+        auto zero32=b.addNewComponent<ConstantValue<32>>("FETCH_WRITE_DATA",0);
+        auto read=b.addNewComponent<ConstantValue<3>>("FETCH_OPERATION",0);
+        auto mask=b.addNewComponent<ConstantValue<4>>("FETCH_MASK",15);
+        w.connect(zero32->getOutputPin<32>("OUT"),fetch->getInputPin<32>("WRITE_DATA"));
+        w.connect(read->getOutputPin<3>("OUT"),fetch->getInputPin<3>("OP"));
+        w.connect(mask->getOutputPin<4>("OUT"),fetch->getInputPin<4>("WRITE_MASK"));
+    }
     w.connect(zero,operation->getInputPin("IN_1"));
     w.connect(zero,operation->getInputPin("IN_2"));
     w.connect(operation->getOutputPin<3>("OUT"),data->getInputPin<3>("OP"));

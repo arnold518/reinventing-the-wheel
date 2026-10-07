@@ -75,7 +75,6 @@ private:
     Stage stage_;
     uint32_t pc_=0;
     LogicValue previous_clock_=LogicValue::UNKNOWN;
-    MemoryRequestState request_;
     std::vector<Bits> registers_;
     std::map<size_t,std::vector<Bits>> history_;
     std::optional<uint32_t> known(const std::string& name) const {
@@ -110,24 +109,15 @@ private:
     void unknownOutputs(size_t t,Simulator& s) {
         for(auto& [name,pin]:getAllOutputPins()) emit(name,Bits(pin->getWidth(),LogicValue::UNKNOWN),t,s);
     }
-    void publishRequest(const std::string& prefix,uint32_t tag,size_t t,Simulator& s) {
-        publishMemoryRequest(request_,high("RST"),high("TAKE"),tag,[&]<size_t W>(const std::string& p,uint32_t v) {
-            emit(prefix+p,v,t,s);
-        });
-        emit("DONE",request_.done(*this,prefix,tag),t,s);
-        if(auto status=known(prefix+"RSP_STATUS")) emit("FAULT",*status!=0,t,s);
-        else emit("FAULT",Bits(1,LogicValue::UNKNOWN),t,s);
-    }
     void fetch(size_t t,Simulator& s) {
         const bool rising=edge(),reset=high("RST");
-        // Capture request payload from OLD PC before committing NEXT_PC.
-        request_.tick(*this,"IMEM_",reset,rising,high("ISSUE"),high("TAKE"),pc_,0,pc_,0,15);
         if(reset) pc_=0;
         else if(rising&&high("PC_WRITE")) pc_=value("NEXT_PC");
         emit("PC",pc_,t,s);emit("PC_PLUS_4",pc_+4,t,s);
         emit("PC_MISALIGNED",bool(pc_&3),t,s);
-        emit("INSTRUCTION",getInputPin<32>("IMEM_RSP_READ_DATA")->getValueAsVector(),t,s);
-        publishRequest("IMEM_",pc_,t,s);
+        emit("INSTRUCTION",getInputPin<32>("IMEM_READ_DATA")->getValueAsVector(),t,s);
+        emit("IMEM_WORD_ADDR",pc_>>2,t,s);emit("IMEM_READ_EN",high("ISSUE"),t,s);
+        emit("DONE",1,t,s);emit("FAULT",getInputPin("IMEM_FAULT")->getValueAsVector(),t,s);
     }
     void decode(size_t t,Simulator& s) {
         const bool rising=edge();
@@ -166,12 +156,15 @@ private:
     }
     void memory(size_t t,Simulator& s) {
         const auto addr=value("ADDR"),size=value("SIZE");
-        request_.tick(*this,"DMEM_",high("RST"),edge(),high("ISSUE"),high("TAKE"),addr,
-            high("MEM_WRITE"),memoryWordAddress(addr,size),value("WRITE_DATA")<<((addr&3)*8),memoryWriteMask(addr,size));
-        publishRequest("DMEM_",addr,t,s);
-        emit("MISALIGNED",size==3||(size==1&&(addr&1))||(size==2&&(addr&3)),t,s);
+        const bool bad=size==3||(size==1&&(addr&1))||(size==2&&(addr&3));
+        emit("MISALIGNED",bad,t,s);emit("DONE",1,t,s);
+        emit("FAULT",getInputPin("DMEM_FAULT")->getValueAsVector(),t,s);
+        emit("DMEM_WORD_ADDR",addr>>2,t,s);emit("DMEM_READ_EN",high("ISSUE"),t,s);
+        emit("DMEM_WE",high("ISSUE")&&high("MEM_WRITE")&&high("COMMIT")&&!bad,t,s);
+        emit("DMEM_WRITE_DATA",value("WRITE_DATA")<<((addr&3)*8),t,s);
+        emit("DMEM_WRITE_MASK",memoryWriteMask(addr,size),t,s);
         // Preserve unknown neighboring lanes without rejecting a known LB/LH.
-        const auto word=getInputPin<32>("DMEM_RSP_READ_DATA")->getValueAsVector();
+        const auto word=getInputPin<32>("DMEM_READ_DATA")->getValueAsVector();
         Bits shifted(32,LogicValue::LOW),loaded(32,LogicValue::LOW);
         const size_t offset=(addr&3)*8;
         for(size_t i=0;i+offset<32;++i) shifted[i]=word[i+offset];

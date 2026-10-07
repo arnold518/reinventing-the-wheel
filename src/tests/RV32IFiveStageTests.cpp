@@ -6,13 +6,14 @@
 #include "components/ComponentBuilder.tpp"
 #include "components/IOComponent.hpp"
 #include "components/capabilities/RV32IStateView.hpp"
+#include "components/capabilities/RV32IRetirementView.hpp"
 #include "components/selection/BuildContext.hpp"
 #include "components/selection/BuildManifest.hpp"
 #include "components/selection/BuiltinComponentCatalog.hpp"
 #include "components/selection/StandardProfiles.hpp"
-#include "modules/memory/Memory64Kx32.hpp"
 #include "modules/rv32i/RV32IBuildProfiles.hpp"
 #include "modules/rv32i/RV32IFiveStageCore.hpp"
+#include "modules/rv32i/RV32IBaselinePipeline.hpp"
 #include "simulator/Event.hpp"
 #include "tests/RV32IProgramCases.hpp"
 #include "tests/RV32IProgramRoot.hpp"
@@ -36,15 +37,6 @@ void drive(
             time,
             wire,
             value ? LogicValue::HIGH : LogicValue::LOW));
-}
-
-rv32i::RV32IMemorySize memorySize(uint64_t encoded) {
-    switch (encoded) {
-        case 0: return rv32i::RV32IMemorySize::Byte;
-        case 1: return rv32i::RV32IMemorySize::Halfword;
-        case 2: return rv32i::RV32IMemorySize::Word;
-        default: return rv32i::RV32IMemorySize::None;
-    }
 }
 
 RV32ISystemProgramCase fiveStageProgramCase(size_t number) {
@@ -95,8 +87,10 @@ std::string rv32iFiveStageProgramScenarioName(
 }
 
 RV32IFiveStageCoreProgramTest::
-RV32IFiveStageCoreProgramTest(size_t program_number)
+RV32IFiveStageCoreProgramTest(size_t program_number, bool baseline, std::optional<rv32i::PredictionConfig> prediction)
     : program_number_(program_number),
+      baseline_(baseline),
+      prediction_(prediction),
       profile_(fiveStageStructuralCoreProfile()) {
     (void)rv32iFiveStageProgramScenarioName(program_number_);
 }
@@ -104,7 +98,7 @@ RV32IFiveStageCoreProgramTest(size_t program_number)
 bool RV32IFiveStageCoreProgramTest::run() {
     try {
         RV32IFiveStageCoreProgramTest answer_sheet(
-            program_number_);
+            program_number_, baseline_, prediction_);
         answer_sheet.profile_ = circuit::strictAllBehavioral();
         if (!answer_sheet.SimulationTest::run()) {
             return false;
@@ -117,6 +111,16 @@ bool RV32IFiveStageCoreProgramTest::run() {
             answer_sheet.getCheckpoints(),
             getCheckpoints(),
             getCase().name + " selected profile");
+        if(baseline_ || prediction_) {
+            require(totalCycles()==answer_sheet.totalCycles(),getCase().name+": fidelity cycle count differs");
+            for(size_t i=0;i<getCheckpoints().size();++i)
+                require(getCheckpoints()[i].time==answer_sheet.getCheckpoints()[i].time,
+                    getCase().name+": fidelity retirement edge differs");
+            require(data_stall_cycles_==answer_sheet.data_stall_cycles_ && branch_wait_cycles_==answer_sheet.branch_wait_cycles_,
+                getCase().name+": fidelity interlock counters differ");
+            require(branches_resolved_==answer_sheet.branches_resolved_ && branch_misses_==answer_sheet.branch_misses_
+                && prediction_recoveries_==answer_sheet.prediction_recoveries_,getCase().name+": fidelity prediction counters differ");
+        }
         return true;
     } catch (const std::exception& error) {
         std::cerr << "[FAIL] Test '" << getTestName()
@@ -141,8 +145,8 @@ void RV32IFiveStageCoreProgramTest::setupCircuit() {
     program_root_ = Component::createWithContext<RV32IProgramRoot>(
         root_context,
         RV32IProgramRoot::RootName,
-        circuit::families::RV32IFiveStageCore,
-        50);
+        baseline_ ? circuit::families::RV32IBaselinePipelineCore : circuit::families::RV32IFiveStageCore,
+        baseline_ ? 2000 : 50, prediction_ ? prediction_->parameters() : circuit::ParameterMap{});
     root = program_root_;
     builder = std::make_unique<ComponentBuilder>(
         root, root_context);
@@ -160,6 +164,7 @@ void RV32IFiveStageCoreProgramTest::setBuildProfile(
     initial_events_scheduled_ = false;
     core_.reset();
     state_view_.reset();
+    retirement_view_.reset();
     instruction_memory_.reset();
     data_memory_.reset();
     program_root_.reset();
@@ -170,13 +175,25 @@ void RV32IFiveStageCoreProgramTest::setBuildProfile(
 
 RV32ISystemProgramCase
 RV32IFiveStageCoreProgramTest::getCase() const {
-    return fiveStageProgramCase(program_number_);
+    auto c=fiveStageProgramCase(program_number_);
+    if(baseline_) {
+        c.name="RV32IBaselinePipelineProgramTest/program-"+std::string(program_number_<10?"0":"")+std::to_string(program_number_);
+        c.cycle_time_step=4000;
+    }
+    if (prediction_) {
+        c.name="RV32IPredictionProgramTest/"+std::string(rv32i::predictionPolicyName(prediction_->policy))+
+            "/program-"+std::string(program_number_<10?"0":"")+std::to_string(program_number_);
+        c.expected_five_stage.defined=false; // Policy-specific timing is compared across fidelities, not to the old sequential-fetch counts.
+    }
+    return c;
 }
 
 void RV32IFiveStageCoreProgramTest::buildCircuit() {
     require(program_root_ != nullptr, "five-stage program root was not built");
     core_ = program_root_->core();
     state_view_ = program_root_->stateView();
+    retirement_view_ = std::dynamic_pointer_cast<RV32IRetirementView>(core_);
+    require(retirement_view_ != nullptr, "pipeline core lacks pre-edge retirement observation");
     instruction_memory_ = program_root_->instructionMemory();
     data_memory_ = program_root_->dataMemory();
     require(core_ != nullptr, "five-stage core was not built");
@@ -228,6 +245,15 @@ RV32IFiveStageCoreProgramTest::getPerformanceMetrics() const {
         {"pipeline.flush_events", static_cast<double>(pipeline_flushes_), "flushes", "Cycles that flush younger work after a redirect or exception."},
         {"pipeline.average_occupancy", occupancy, "fraction", "Average occupied fraction of the four inter-stage registers."},
     });
+    if(baseline_) {
+        metrics.push_back({"pipeline.data_stall_cycles",double(data_stall_cycles_),"cycles","Decode waits for an EX, MEM, or WB register producer; no forwarding."});
+        metrics.push_back({"pipeline.branch_wait_cycles",double(branch_wait_cycles_),"cycles","Fetch waits for a branch or jump to resolve in Execute."});
+    } else {
+        metrics.push_back({"prediction.branches",double(branches_resolved_),"branches","Conditional branches resolved once when Execute advances."});
+        metrics.push_back({"prediction.branch_misses",double(branch_misses_),"branches","Resolved conditional branches with the wrong predicted next PC."});
+        metrics.push_back({"prediction.recoveries",double(prediction_recoveries_),"redirects","Qualified next-PC corrections, including JALR."});
+        if(branches_resolved_) metrics.push_back({"prediction.next_pc_accuracy",1.0-double(branch_misses_)/branches_resolved_,"fraction","Next-PC accuracy; a branch to fallthrough is correct regardless of direction."});
+    }
     return metrics;
 }
 
@@ -255,15 +281,24 @@ initializeComponentForLockstep(
     program_root_->initializeFixedInputs(*sim, 0);
     drive(*sim, 0, rst_wire_, true);
     drive(*sim, 0, enable_wire_, true);
-    program_root_->startClock(*sim, 20);
-    sim->advanceAndRecord(70);
-    drive(*sim, 70, rst_wire_, false);
-    sim->advanceAndRecord(100);
+    const size_t scale=baseline_?40:1;
+    program_root_->startClock(*sim, 20*scale);
+    sim->advanceAndRecord(70*scale);
+    drive(*sim, 70*scale, rst_wire_, false);
+    // advanceAndRecord stops at the last event, not the requested deadline.
+    // A benign input event fixes the observation origin across fidelities;
+    // otherwise reset settling introduces a few ticks of timestamp skew.
+    drive(*sim,100*scale,enable_wire_,true);
+    sim->advanceAndRecord(100*scale);
+    observed_retirements_ = 0;
+    retired_memory_ = {};
     load_use_stall_cycles_ = 0;
     memory_stall_cycles_ = 0;
     data_port_stall_cycles_ = 0;
     pipeline_flushes_ = 0;
     occupied_pipeline_slots_ = 0;
+    data_stall_cycles_=branch_wait_cycles_=0;
+    branches_resolved_=branch_misses_=prediction_recoveries_=0;
 }
 
 void RV32IFiveStageCoreProgramTest::observePerformanceCycle() {
@@ -275,6 +310,8 @@ void RV32IFiveStageCoreProgramTest::observePerformanceCycle() {
     memory_stall_cycles_ += highOutput("MEMORY_STALL");
     data_port_stall_cycles_ += highOutput("DATA_PORT_STALL");
     pipeline_flushes_ += highOutput("PIPELINE_FLUSH");
+    if(baseline_) {data_stall_cycles_+=highOutput("DATA_STALL");branch_wait_cycles_+=highOutput("BRANCH_WAIT");}
+    else {branches_resolved_+=highOutput("BRANCH_RESOLVED");branch_misses_+=highOutput("BRANCH_MISS");prediction_recoveries_+=highOutput("PREDICTION_RECOVERY");}
     for (const auto* signal : {
              "IF_ID_VALID", "ID_EX_VALID",
              "EX_MEM_VALID", "MEM_WB_VALID"}) {
@@ -286,7 +323,15 @@ void RV32IFiveStageCoreProgramTest::clockComponentOneCycle(
     size_t cycle_index,
     size_t cycle_start_time) {
     (void)cycle_index;
-    (void)cycle_start_time;
+    // Sample the settled packet before its rising edge replaces MEM/WB.
+    // Observation state belongs to this harness, never to the circuit.
+    if (core_->getOutputPin("COMMIT_VALID")->getValue() == LogicValue::HIGH) {
+        const auto observation = retirement_view_->pendingRetirement();
+        require(observation.pc == state_view_->snapshotArchitecturalState().toKnownState().pc, "retirement packet PC differs from architectural PC");
+        ++observed_retirements_;
+        retired_memory_ = observation.memory;
+    }
+    program_root_->observeRetirementBeforeEdge(*sim, cycle_start_time + 20 * (baseline_ ? 40 : 1));
 }
 
 rv32i::RV32IState
@@ -297,55 +342,14 @@ snapshotComponentState() const {
         "five-stage state view is not initialized");
     auto state = state_view_->snapshotArchitecturalState()
         .toKnownState();
-    state.instruction_count =
-        core_->getOutputPin<32>("RETIRED_COUNT")
-            ->getValueAsUInt64();
+    state.instruction_count = observed_retirements_;
     return state;
 }
 
 rv32i::RV32IMemoryTrace
 RV32IFiveStageCoreProgramTest::
 lastDataMemoryAccess() const {
-    rv32i::RV32IMemoryTrace trace;
-    const bool read =
-        core_->getOutputPin("RETIRED_MEM_READ")
-            ->getValue() == LogicValue::HIGH;
-    const bool write =
-        core_->getOutputPin("RETIRED_MEM_WRITE")
-            ->getValue() == LogicValue::HIGH;
-    if (!read && !write) {
-        return trace;
-    }
-    trace.kind = read
-        ? rv32i::RV32IMemoryAccessKind::Read
-        : rv32i::RV32IMemoryAccessKind::Write;
-    trace.size = memorySize(
-        core_->getOutputPin<2>("RETIRED_MEM_SIZE")
-            ->getValueAsUInt64());
-    trace.sign_extend =
-        read
-        && core_->getOutputPin(
-                "RETIRED_MEM_SIGN_EXTEND")
-                   ->getValue() == LogicValue::HIGH;
-    trace.address = static_cast<uint32_t>(
-        core_->getOutputPin<32>("RETIRED_MEM_ADDR")
-            ->getValueAsUInt64());
-    trace.write_data = write
-        ? static_cast<uint32_t>(
-              core_->getOutputPin<32>(
-                       "RETIRED_MEM_WRITE_DATA")
-                  ->getValueAsUInt64())
-        : 0;
-    trace.read_data = read
-        ? static_cast<uint32_t>(
-              core_->getOutputPin<32>(
-                       "RETIRED_MEM_READ_DATA")
-                  ->getValueAsUInt64())
-        : 0;
-    trace.fault =
-        core_->getOutputPin("RETIRED_MEM_FAULT")
-            ->getValue() == LogicValue::HIGH;
-    return trace;
+    return retired_memory_;
 }
 
 std::map<uint32_t, uint8_t>
@@ -382,7 +386,7 @@ lastDataMemoryWrites() const {
 void RV32IFiveStageCoreProgramTest::verifyResults() {
     RV32IInstructionLockstepTest::verifyResults();
     const auto& expected = getCase().expected_five_stage;
-    if (expected.defined) {
+    if (expected.defined && !baseline_) {
         require(totalCycles() == expected.cycles,
                 getTestName() + ": five-stage cycle count changed");
         require(load_use_stall_cycles_

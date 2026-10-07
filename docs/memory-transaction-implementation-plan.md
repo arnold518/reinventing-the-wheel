@@ -1,5 +1,20 @@
 # Memory transaction endpoints
 
+Historical implementation record (2026-09-18). The compact transaction model
+described here as `MemoryContainer` is now `BehavioralMemoryEndpoint`.
+`MemoryContainer` now means a scalable native device without transaction state;
+see [3.1.6](../site-docs/memory/3.1.6.md), [3.3](../site-docs/memory/3.3.md), and
+[current CPU integration](rv32i-memory-integration.md). Measurements below belong
+to the earlier architecture and are not current performance claims.
+
+The legacy array contracts/factories retained during that migration have since
+been retired; see [cleanup](rv32i-cleanup.md).
+
+The current protocol is v2: it permits zero-wait completion and same-edge
+response consumption/new request acceptance. FF bypasses native sequencing;
+delayed devices retain their actual command timing. See
+[the endpoint v2 implementation record](memory-endpoint-v2-work.md).
+
 Implement a versioned, aligned, single-outstanding request/response port for
 8/16/32-bit words. READ/WRITE/PROGRAM/ERASE_BLOCK retain distinct semantics.
 Native FF/SRAM/DRAM/ROM/NOR controllers and a transaction-to-transaction relay
@@ -111,7 +126,7 @@ Reproduction:
 
 ```sh
 ctest --test-dir build --output-on-failure -j1 --timeout 120 \
-  -R '^(MemoryTransactionPortTest|MemoryControllerTest|MemoryEndpoint.*Test|ScalableMemoryContainerTest|MemoryStorageTest|MemoryContainerBindingsTest)$'
+  -R '^(MemoryTransactionPortTest|MemoryControllerTest|MemoryEndpoint.*Test|ScalableMemoryContainerTest|MemoryStorageTest|FFMemoryBindingsTest)$'
 node --max-old-space-size=512 tests/MemoryEndpointWasmParityTest.mjs \
   build-wasm/circuitsim_wasm.js build-wasm/circuitsim_wasm.wasm build/tests/VisualizerSessionProbe
 /usr/bin/python3 tests/MemoryEndpointBrowserTest.py http://127.0.0.1:8893/

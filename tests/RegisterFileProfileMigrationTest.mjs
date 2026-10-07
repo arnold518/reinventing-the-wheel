@@ -16,7 +16,10 @@ const legacy = {
   'UNRELATED.X7': 'behavioral',
   'REGISTER32_ROOT.BIT_31.STATE': 'behavioral',
   'REGISTER32_ROOT.BIT_0': 'behavioral',
+  'REGISTER32_ROOT.STORAGE': 'behavioral',
   'REGISTER32_ROOT.STORAGE.CELL_0': 'structural',
+  'REGISTER32_ROOT.STORAGE.CELL_1': 'structural',
+  'REGISTER32_ROOT.STORAGE.OUTPUT': 'structural',
   'REGISTER32_ROOT.D_SPLIT': 'structural',
   'RV32I_SINGLE_CYCLE_SYSTEM_ROOT.CORE.CONTROL_FLOW.PC_STATE.BIT_7': 'behavioral',
   'RV32I_PROGRAM_ROOT.CORE.IF_ID.INSTRUCTION_STATE.BIT_5.STATE': 'behavioral',
@@ -25,20 +28,23 @@ const legacy = {
 };
 const expected = {
   'RV32I_PROGRAM_ROOT.CORE.DECODE.REGISTER_FILE.STORAGE.WORD_6': 'behavioral',
-  'RV32I_PROGRAM_ROOT.CORE.DECODE.REGISTER_FILE.STORAGE.WORD_6.CELL_31.STATE': 'behavioral',
+  'RV32I_PROGRAM_ROOT.CORE.DECODE.REGISTER_FILE.STORAGE.WORD_6.BIT_31.STATE': 'behavioral',
   'REGISTER_FILE32X32_ROOT.STORAGE.WORD_0': 'structural',
-  'REGISTER_FILE32X32_ROOT.STORAGE.WORD_0.CELL_0': 'behavioral',
+  'REGISTER_FILE32X32_ROOT.STORAGE.WORD_0.BIT_0': 'behavioral',
   'UNRELATED.X7': 'behavioral',
-  'REGISTER32_ROOT.STORAGE.CELL_31.STATE': 'behavioral',
-  'REGISTER32_ROOT.STORAGE.CELL_0': 'structural',
-  'REGISTER32_ROOT.STORAGE.DATA': 'structural',
-  'RV32I_PROGRAM_ROOT.CORE.FETCH.PC_STATE.STORAGE.CELL_7': 'behavioral',
-  'RV32I_PROGRAM_ROOT.CORE.IF_ID.INSTRUCTION_STATE.STORAGE.CELL_5.STATE': 'behavioral',
+  'REGISTER32_ROOT.BIT_31.STATE': 'behavioral',
+  'REGISTER32_ROOT': 'behavioral',
+  'REGISTER32_ROOT.BIT_0': 'behavioral',
+  'REGISTER32_ROOT.BIT_1': 'structural',
+  'REGISTER32_ROOT.INPUT_BITS': 'structural',
+  'REGISTER32_ROOT.OUTPUT_BITS': 'structural',
+  'RV32I_PROGRAM_ROOT.CORE.FETCH.PC_STATE.BIT_7': 'behavioral',
+  'RV32I_PROGRAM_ROOT.CORE.IF_ID.INSTRUCTION_STATE.BIT_5.STATE': 'behavioral',
   'RV32I_PROGRAM_ROOT.CORE.FETCH.REQUEST.REQUEST_DATA.BIT_1': 'behavioral',
   'UNRELATED.BIT_0': 'behavioral',
 };
-// Stage refactoring must migrate both program and standalone-core selections,
-// preserve descendant overrides, and leave already current/pipeline paths alone.
+// Stage and register refactoring must preserve descendant overrides, migrate
+// the former wrapper children, and leave current/pipeline paths alone.
 for (const prefix of ['RV32I_PROGRAM_ROOT.CORE.', 'RV32I_SINGLE_CYCLE_CORE_ROOT.']) {
   for (const [old, current] of [
     ['DECODE_CONTROL', 'DECODE.CONTROL'], ['ALU', 'EXECUTE.ALU'],

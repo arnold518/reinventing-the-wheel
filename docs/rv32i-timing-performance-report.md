@@ -3,6 +3,11 @@
 Date: 2026-08-05  
 Branch: `rv32i-pipeline-performance`
 
+Historical report: the cores, memory endpoints and timing analyzer have changed
+since these measurements. Do not reuse its clock values or speedups for the
+current implementation. The current measurement contract is documented in
+[`tools/rv32i-performance/README.md`](../tools/rv32i-performance/README.md).
+
 ## Outcome
 
 CircuitSim now measures three separate things:
@@ -179,6 +184,10 @@ captures fully rendered single-cycle and five-stage program 9 at 9,826 and
   traversed components, and no overlap exception.
 
 ## Reproduction
+
+Historical commands for the measurements above. `rv32i_performance` is now
+retired; use `tools/benchmarks/run.py` for new campaigns. On this host, build
+serially (`-j1`) to avoid exhausting memory.
 
 ```bash
 cmake -S . -B build

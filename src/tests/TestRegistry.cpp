@@ -7,7 +7,7 @@
 #include "tests/ComponentSelectionTests.hpp"
 #include "tests/FullCircuitTest.hpp"
 #include "tests/MemoryComponentTests.hpp"
-#include "tests/MemoryContainerTests.hpp"
+#include "tests/FFMemoryTests.hpp"
 #include "tests/SRAMTests.hpp"
 #include "tests/MemoryDeviceTests.hpp"
 #include "tests/MemoryEndpointTests.hpp"
@@ -19,6 +19,7 @@
 #include "tests/RV32IElfTests.hpp"
 #include "tests/RV32IExternalValidationTests.hpp"
 #include "tests/RV32IFiveStageTests.hpp"
+#include "tests/RV32IPredictionTests.hpp"
 #include "tests/RV32IInstructionLockstepTests.hpp"
 #include "tests/RV32IInstructionOracleTests.hpp"
 #include "tests/RV32IPipelineBlockTests.hpp"
@@ -26,6 +27,7 @@
 #include "tests/RV32IProgramTests.hpp"
 #include "tests/RV32ISingleCycleTests.hpp"
 #include "tests/RV32ISingleCycleStageTests.hpp"
+#include "tests/RV32IBaselinePipelineTests.hpp"
 #include "tests/UtilityComponentTests.hpp"
 #include "components/selection/BuiltinComponentCatalog.hpp"
 #include "modules/rv32i/RV32IFiveStageCore.hpp"
@@ -54,36 +56,41 @@ RegisteredTestKind componentKind(
         "sequential.gated-d-latch",
         "sequential.d-flip-flop",
         "memory.write-enabled-bit",
-        "memory.register.width32",
-        "memory.bus-adapter.width32",
         "rv32i.control-flow",
         "rv32i.memory-request",
         "rv32i.execution-status",
         "rv32i.single-cycle.fetch",
         "rv32i.single-cycle.decode",
-        "rv32i.single-cycle.memory",
         "rv32i.pipeline-register.if-id",
         "rv32i.pipeline-register.id-ex",
         "rv32i.pipeline-register.ex-mem",
         "rv32i.pipeline-register.mem-wb",
+        "memory.response-buffer.8",
+        "memory.response-buffer.16",
+        "memory.response-buffer.32",
+        "rv32i.pipeline.stage.fetch",
+        "rv32i.pipeline.stage.decode",
+        "rv32i.baseline.fetch",
+        "rv32i.baseline.decode",
+        "rv32i.prediction.predictor",
+        "rv32i.prediction.path",
     };
     static const std::set<std::string> memory{
-        "memory.register-file.4x32",
         "rv32i.register-file",
-        "memory.word-array.4x32",
-        "memory.word-array.32x32",
-        "rv32i.memory.64k-x32",
-    };
+        };
     static const std::set<std::string> program{
         "rv32i.core.educational-single-cycle",
         "rv32i.core.educational-five-stage",
         "rv32i.system.educational-single-cycle",
+        "rv32i.core.baseline-pipeline",
     };
-    if (sequential.count(contract_id) != 0 || contract_id.starts_with("memory.ff-word.")) {
+    if (sequential.count(contract_id) != 0 || contract_id.starts_with("memory.ff-word.") ||
+        contract_id.starts_with("memory.register.")) {
         return RegisteredTestKind::Sequential;
     }
     if (memory.count(contract_id) != 0 || contract_id.starts_with("memory.endpoint.") ||
         contract_id.starts_with("memory.scalable.") || contract_id.starts_with("memory.controller.") ||
+        contract_id.starts_with("memory.device.") ||
         contract_id.starts_with("memory.transaction-port.") || contract_id.starts_with("memory.container.") ||
         contract_id.starts_with("memory.ff-storage-bank.") || contract_id.starts_with("memory.sram.") ||
         contract_id.starts_with("memory.dram.") || contract_id.starts_with("memory.rom.") ||
@@ -184,13 +191,19 @@ void markVisualizable(
     static const std::set<std::string> additional{
         "FullCircuitTest",
         "WireTemplateTest",
-        "SimulatorAdvanceAndRecordTest",
-        "SimulatorUnwiredOutputPinHistoryTest",
         "RewireValidationTest",
-        "ALU32RepresentativeSliceTest",
         "RV32IProgramLoaderTest",
+        "FFAlwaysReadyControllerTest",
+        "RegisterTest",
+    };
+    static const std::set<std::string> headless{
+        "RegisterWidthsTest", "ClockedStateBitTest",
     };
     for (auto& entry : entries) {
+        if (headless.count(entry.name) != 0) {
+            entry.visualizable = false;
+            continue;
+        }
         entry.visualizable =
             entry.visualizable
             || !entry.contract_ids.empty()
@@ -244,28 +257,30 @@ const std::vector<TestRegistryEntry>& getTestRegistry() {
         entry<DFlipFlopTest>("DFlipFlopTest"),
         entry<ClockGeneratorTest>("ClockGeneratorTest"),
         entry<FlipFlopCellTest>("FlipFlopCellTest"),
-        entry<Memory64Kx32Test>("Memory64Kx32Test"),
         entry<MemoryStorageTest>("MemoryStorageTest"),
-        entry<MemoryBusAdapter32Test>("MemoryBusAdapter32Test"),
-        entry<MemoryBusAdapterIntegrationTest>("MemoryBusAdapterIntegrationTest"),
         entry<MemoryTransactionPortTest>("MemoryTransactionPortTest"),
+        entry<MemoryResponseBufferTest>("MemoryResponseBufferTest"),
+        entry<RegisterWidthsTest>("RegisterWidthsTest"),
+        entry<ClockedStateBitTest>("ClockedStateBitTest"),
         entry<MemoryControllerTest>("MemoryControllerTest"),
+        entry<FFAlwaysReadyControllerTest>("FFAlwaysReadyControllerTest"),
         entry<MemoryEndpointFFTest>("MemoryEndpointFFTest"),
         entry<MemoryEndpointSRAMTest>("MemoryEndpointSRAMTest"),
         entry<MemoryEndpointDRAMTest>("MemoryEndpointDRAMTest"),
         entry<MemoryEndpointROMTest>("MemoryEndpointROMTest"),
         entry<MemoryEndpointFlashTest>("MemoryEndpointFlashTest"),
         entry<MemoryEndpointRelayTest>("MemoryEndpointRelayTest"),
-        entry<ScalableMemoryContainerTest>("ScalableMemoryContainerTest"),
+        entry<ScalableMemoryEndpointTest>("ScalableMemoryEndpointTest"),
+        entry<NativeMemoryContainerTest>("NativeMemoryContainerTest"),
+        entry<NativeMemoryDeviceContractTest>("NativeMemoryDeviceContractTest"),
         entry<MemoryEndpointContractTest>("MemoryEndpointContractTest"),
         entry<MemoryEndpointTimingTest>("MemoryEndpointTimingTest"),
-        entry<FFMemoryContainerTest>("FFMemoryContainerTest"),
+        entry<FFMemoryTest>("FFMemoryTest"),
         entry<FFWordTest>("FFWordTest"),
         entry<FFWordContractTest>("FFWordContractTest"),
         entry<FFStorageBankTest>("FFStorageBankTest"),
         entry<FFStorageBankContractTest>("FFStorageBankContractTest"),
         entry<FFMemoryFidelityTest>("FFMemoryFidelityTest"),
-        entry<SRAMContainerTest>("SRAMContainerTest"),
         entry<SRAMCellTest>("SRAMCellTest"),
         entry<SRAMRowTest>("SRAMRowTest"),
         entry<SRAMBitlinePairTest>("SRAMBitlinePairTest"),
@@ -304,13 +319,9 @@ const std::vector<TestRegistryEntry>& getTestRegistry() {
         entry<MemoryHelperContractTest>("MemoryHelperContractTest"),
         entry<MemoryDeviceContractTest>("MemoryDeviceContractTest"),
         entry<MemoryDeviceTimingTest>("MemoryDeviceTimingTest"),
-        entry<ROMContainerTest>("ROMContainerTest"),
-        entry<MemoryContainerContractTest>("MemoryContainerContractTest"),
-        entry<Register32Test>("Register32Test"),
-        entry<RegisterFile4x32Test>("RegisterFile4x32Test"),
+        entry<FFMemoryContractTest>("FFMemoryContractTest"),
+        entry<RegisterTest>("RegisterTest"),
         entry<RegisterFile32x32Test>("RegisterFile32x32Test"),
-        entry<Memory4x32Test>("Memory4x32Test"),
-        entry<Memory32x32Test>("Memory32x32Test"),
         entry<RewireTest>("RewireTest"),
         entry<RewireValidationTest>("RewireValidationTest"),
         entry<BitSplitter1Test>("BitSplitter1Test"),
@@ -336,27 +347,18 @@ const std::vector<TestRegistryEntry>& getTestRegistry() {
         entry<ConstantValue32Test>("ConstantValue32Test"),
         entry<HalfAdderTest>("HalfAdderTest"),
         entry<FullAdderTest>("FullAdderTest"),
-        entry<AND8Test>("AND8Test"),
-        entry<OR8Test>("OR8Test"),
         entry<XOR8Test>("XOR8Test"),
         entry<NOT8Test>("NOT8Test"),
-        entry<NAND8Test>("NAND8Test"),
-        entry<NOR8Test>("NOR8Test"),
         entry<Mux2to1Test>("Mux2to1Test"),
         entry<Mux4to1Test>("Mux4to1Test"),
         entry<Mux8to1Test>("Mux8to1Test"),
-        entry<Mux16to1Test>("Mux16to1Test"),
         entry<Mux32to1Test>("Mux32to1Test"),
-        entry<Mux2to1_8bitTest>("Mux2to1_8bitTest"),
         entry<Mux2to1_4bitTest>("Mux2to1_4bitTest"),
         entry<Mux2to1_32bitTest>("Mux2to1_32bitTest"),
-        entry<Mux4to1_8bitTest>("Mux4to1_8bitTest"),
         entry<Mux4to1_32bitTest>("Mux4to1_32bitTest"),
         entry<Mux8to1_8bitTest>("Mux8to1_8bitTest"),
         entry<Mux8to1_32bitTest>("Mux8to1_32bitTest"),
-        entry<Mux16to1_8bitTest>("Mux16to1_8bitTest"),
         entry<Mux32to1_32bitTest>("Mux32to1_32bitTest"),
-        entry<Decoder2to4Test>("Decoder2to4Test"),
         entry<Decoder5to32Test>("Decoder5to32Test"),
         entry<Adder8Test>("Adder8Test"),
         entry<TwosComplement8Test>("TwosComplement8Test"),
@@ -365,11 +367,6 @@ const std::vector<TestRegistryEntry>& getTestRegistry() {
         entry<Incrementer8Test>("Incrementer8Test"),
         entry<Decrementer8Test>("Decrementer8Test"),
         entry<EqualityChecker8Test>("EqualityChecker8Test"),
-        entry<Comparator8Test>("Comparator8Test"),
-        entry<SignedComparator8Test>("SignedComparator8Test"),
-        entry<ShiftLeftLogical8Test>("ShiftLeftLogical8Test"),
-        entry<ShiftRightLogical8Test>("ShiftRightLogical8Test"),
-        entry<ShiftRightArithmetic8Test>("ShiftRightArithmetic8Test"),
         entry<ZeroDetect8Test>("ZeroDetect8Test"),
         entry<ALU8Test>("ALU8Test"),
         entry<AddSub8Test>("AddSub8Test"),
@@ -393,9 +390,9 @@ const std::vector<TestRegistryEntry>& getTestRegistry() {
         entry<RV32IMemoryRequestTest>("RV32IMemoryRequestTest"),
         entry<Logic32Test>("Logic32Test"),
         entry<ZeroDetect32Test>("ZeroDetect32Test"),
-        entry<Comparator32Test>("Comparator32Test"),
         entry<Shifter32Test>("Shifter32Test"),
         entry<ALU32Test>("ALU32Test"),
+        entry<ALU32CoreTest>("ALU32CoreTest"),
         entry<ALU32RepresentativeSliceTest>("ALU32RepresentativeSliceTest"),
         entry<RV32IControlFlowUnitTest>("RV32IControlFlowUnitTest"),
         entry<RV32IDecodeControlUnitTest>("RV32IDecodeControlUnitTest"),
@@ -413,8 +410,6 @@ const std::vector<TestRegistryEntry>& getTestRegistry() {
             "RV32IForwardingUnitTest"),
         entry<RV32IHazardDetectionUnitTest>(
             "RV32IHazardDetectionUnitTest"),
-        entry<RV32IPipelineControlFlowUnitTest>(
-            "RV32IPipelineControlFlowUnitTest"),
         entry<RV32IMemoryAlignmentUnitTest>(
             "RV32IMemoryAlignmentUnitTest"),
         entry<RV32IPipelineRetirementUnitTest>(
@@ -429,10 +424,16 @@ const std::vector<TestRegistryEntry>& getTestRegistry() {
             "RV32IExecuteStageTest"),
         entry<RV32IMemoryStageTest>(
             "RV32IMemoryStageTest"),
+        entry<RV32IPipelineExecutionStatusTest>("RV32IPipelineExecutionStatusTest"),
         entry<RV32IWritebackStageTest>(
             "RV32IWritebackStageTest"),
         entry<RV32IFiveStageCoreTest>(
             "RV32IFiveStageCoreTest"),
+        entry<RV32IPredictionCounterTest>("RV32IPredictionCounterTest"),
+        entry<RV32IBranchPredecodeTest>("RV32IBranchPredecodeTest"),
+        entry<RV32IBranchPredictorTest>("RV32IBranchPredictorTest"),
+        entry<RV32IBranchRecoveryTest>("RV32IBranchRecoveryTest"),
+        entry<RV32IPredictionPathTest>("RV32IPredictionPathTest"),
         entry<RV32IBitPatternMatcherTest>("RV32IBitPatternMatcherTest"),
         entry<RV32IDecoderTest>("RV32IDecoderTest"),
         entry<RV32IControlTest>("RV32IControlTest"),
@@ -451,6 +452,13 @@ const std::vector<TestRegistryEntry>& getTestRegistry() {
         entry<RV32ISingleCycleWritebackStageTest>("RV32ISingleCycleWritebackStageTest"),
         entry<RV32ISingleCycleNextPCStageTest>("RV32ISingleCycleNextPCStageTest"),
         entry<RV32ISingleCycleStageIntegrationTest>("RV32ISingleCycleStageIntegrationTest"),
+        entry<RV32IBaselineFetchStageTest>("RV32IBaselineFetchStageTest"),
+        entry<RV32IBaselineDecodeStageTest>("RV32IBaselineDecodeStageTest"),
+        entry<RV32IBaselineExecuteStageTest>("RV32IBaselineExecuteStageTest"),
+        entry<RV32IBaselineMemoryStageTest>("RV32IBaselineMemoryStageTest"),
+        entry<RV32IBaselineDependencyUnitTest>("RV32IBaselineDependencyUnitTest"),
+        entry<RV32IBaselineControlTest>("RV32IBaselineControlTest"),
+        entry<RV32IBaselinePipelineCoreTest>("RV32IBaselinePipelineCoreTest"),
         entry<RV32IProfileToggleSweepTest>(
             "RV32IProfileToggleSweepTest"),
         };
@@ -506,10 +514,29 @@ const std::vector<TestRegistryEntry>& getTestRegistry() {
                 [program_number] {
                     return std::make_unique<
                         RV32IFiveStageCoreProgramTest>(
-                            program_number);
+                            program_number, false, std::nullopt);
                 },
                 true,
             });
+        }
+        for(size_t n=1;n<=RV32IProgramCaseCount;++n) {
+            const std::string scenario="program-"+std::string(n<10?"0":"")+std::to_string(n);
+            std::vector<std::string> labels{"simulation","integration","program","rv32i","pipeline","baseline","slow"};
+            if (n > RV32ICorrectnessProgramCaseCount) labels.push_back("performance");
+            entries.push_back({"RV32IBaselinePipelineProgramTest/"+scenario,"RV32IBaselinePipelineProgramTest",
+                RegisteredTestKind::Program,{},scenario,std::move(labels),
+                [n]{return std::make_unique<RV32IBaselinePipelineProgramTest>(n);},true});
+        }
+        for (auto policy : {rv32i::PredictionPolicy::NotTaken,rv32i::PredictionPolicy::Taken,
+                            rv32i::PredictionPolicy::BackwardTaken,rv32i::PredictionPolicy::OneBit,rv32i::PredictionPolicy::TwoBit}) {
+            for (size_t n = 1; n <= RV32IProgramCaseCount; ++n) {
+                const std::string scenario=std::string(rv32i::predictionPolicyName(policy))+"/program-"+std::string(n<10?"0":"")+std::to_string(n);
+                std::vector<std::string> labels{"simulation","integration","program","rv32i","pipeline","prediction","slow"};
+                if (n > RV32ICorrectnessProgramCaseCount) labels.push_back("performance");
+                entries.push_back({"RV32IPredictionProgramTest/"+scenario,"RV32IPredictionProgramTest",RegisteredTestKind::Program,
+                    {},scenario,std::move(labels),
+                    [n,policy]{return std::make_unique<RV32IFiveStageCoreProgramTest>(n,false,rv32i::PredictionConfig{policy,16});},true});
+            }
         }
         attachComponentMetadata(entries);
         attachNonComponentMetadata(entries);

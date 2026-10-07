@@ -1,5 +1,12 @@
 # CircuitSim
 
+Processor and memory performance campaigns share the data-only benchmark
+envelope documented in [docs/benchmark-system.md](docs/benchmark-system.md).
+Scenario organization and native/browser validation commands are documented in
+[docs/test-organization.md](docs/test-organization.md).
+Use `tools/benchmarks/run.py` as the serial campaign entry point; domain runners
+retain their own correctness and completion rules.
+
 CircuitSim is a C++20 event-driven digital-logic simulator with native Python
 bindings and an interactive HTML/canvas visualizer.
 
@@ -9,6 +16,10 @@ static hosting under `/simulator/`; see
 [`docs/webassembly-github-pages-report.md`](docs/webassembly-github-pages-report.md).
 
 ## Documentation site
+
+The configurable memory containers and structural request/response adapter are
+described in [the memory implementation contract](docs/general-memory-container.md).
+Existing RV32I memory interfaces remain available unchanged.
 
 The public Material for MkDocs source is isolated in `site-docs/`; the existing
 `docs/` directory remains an internal collection of implementation reports.

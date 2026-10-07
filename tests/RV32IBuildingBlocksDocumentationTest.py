@@ -1,4 +1,4 @@
-"""Compile/replay exact 4.2 C++ examples and check live pin/fidelity schemas.
+"""Compile/replay exact 4.3 C++ examples and check live pin/fidelity schemas.
 
 Serial probes and one compiler; no full cores or full test suite.
 """
@@ -18,13 +18,13 @@ from mkdocs_examples import render_table
 
 snippets, outputs = [], {}
 for number,page in enumerate(("alu32","instruction-decoder","control-flow","memory-access","execution-status"),3):
-    document=(ROOT/f"site-docs/rv32i/4.2/{page}.md").read_text()
-    assert document.startswith(f"# § 4.2.{number}.")
-    assert f"rv32i/4.2/{page}.md" in (ROOT/"mkdocs.yml").read_text()
-    assert f"({page}.md)" in (ROOT/"site-docs/rv32i/4.2/index.md").read_text()
+    document=(ROOT/f"site-docs/rv32i/4.3/{page}.md").read_text()
+    assert document.startswith(f"# § 4.3.{number}.")
+    assert f"rv32i/4.3/{page}.md" in (ROOT/"mkdocs.yml").read_text()
+    assert f"({page}.md)" in (ROOT/"site-docs/rv32i/4.3/index.md").read_text()
     assert "| Component | Description | Structural | Behavioral |" in document
     components=re.findall(r"(?m)^\| `([^`]+)` \| [^|\n]+ \| (Yes|No) \| (Yes|No) \|$",document)
-    parts=re.split(r"(?m)^## 4\.2\.\d+\.\d+\. ",document)[1:]
+    parts=re.split(r"(?m)^## 4\.3\.\d+\.\d+\. ",document)[1:]
     assert len(components)==len(parts)==document.count('class="simulator-embed"')
     snippets+=re.findall(r"```cpp\n(.*?)\n```",document,re.S)
     for (name,structural,behavioral),part in zip(components,parts):
@@ -119,6 +119,7 @@ models={
     "ALU32ResultSelectorTest":("alu32_example::select","ARITHMETIC_RESULT AND_RESULT OR_RESULT XOR_RESULT SHIFT_RESULT SLT_RESULT SLTU_RESULT A B LOCAL_OP HIGH_HALF OUT_OF_RANGE"),
     "ALU32FlagUnitTest":("alu32_example::flags","RESULT ARITHMETIC_ENABLE ARITH_CARRY ARITH_OVERFLOW"),
     "ALU32Test":("alu32_example::alu","A B OP"),
+    "ALU32CoreTest":("alu32_example::core","A B OP"),
     "RV32IDecodeControlUnitTest":("decode_example::decode","INSTRUCTION"),
     "RV32IMemoryLanesTest":("memory_access_example::lanes","ADDR WRITE_DATA WORD_DATA SIZE SIGN_EXTEND"),
     "RV32IMemoryAlignmentUnitTest":("memory_access_example::misaligned","ADDRESS SIZE"),
@@ -191,5 +192,5 @@ with tempfile.TemporaryDirectory(prefix="ritw-building-blocks-doc-") as temp:
     source.write_text("\n\n".join(snippets)+harness)
     subprocess.run([COMPILER,"-std=c++20","-O0","-I"+str(ROOT/"include"),str(source),LIBRARY,"-pthread","-o",str(binary)],check=True,timeout=120)
     subprocess.run([str(binary)],check=True,timeout=120)
-assert len(outputs)==15
-print("All 15 new component references checked.")
+assert len(outputs)==16
+print("All 16 component references checked.")

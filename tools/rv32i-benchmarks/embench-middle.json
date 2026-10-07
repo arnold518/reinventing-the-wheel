@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "id": "embench-middle-v1",
+  "kernel_repetitions": 1,
+  "warmup_heat": 0,
+  "cases": [
+    {"name": "crc32", "source": "crc32/crc_32.c", "elf": "embench-middle-crc32.elf"},
+    {"name": "nettle-sha256", "source": "nettle-sha256/nettle-sha256.c", "elf": "embench-middle-nettle-sha256.elf"},
+    {"name": "sglib-combined", "source": "sglib-combined/combined.c", "elf": "embench-middle-sglib-combined.elf"}
+  ]
+}

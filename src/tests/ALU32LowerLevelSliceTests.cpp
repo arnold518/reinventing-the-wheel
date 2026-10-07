@@ -7,7 +7,6 @@
 #include "modules/composite/ALU32.hpp"
 #include "modules/composite/AddSub32.hpp"
 #include "modules/composite/Adder32.hpp"
-#include "modules/composite/Comparator32.hpp"
 #include "modules/composite/FullAdder.hpp"
 #include "modules/composite/Logic32.hpp"
 #include "modules/composite/Shifter32.hpp"
@@ -117,19 +116,6 @@ AddExpected addExpected(
     result.carry_out = carry;
     result.overflow = logicXor(carry_into_sign, carry);
     return result;
-}
-
-LogicValue zeroExpected(const LogicVector& values) {
-    bool has_unknown = false;
-    for (const auto value : values) {
-        if (value == LogicValue::HIGH) {
-            return LogicValue::LOW;
-        }
-        if (value != LogicValue::LOW) {
-            has_unknown = true;
-        }
-    }
-    return has_unknown ? LogicValue::UNKNOWN : LogicValue::HIGH;
 }
 
 std::array<LogicVector, 3> shiftExpected(
@@ -342,17 +328,6 @@ TestRow addSub4Row(uint32_t a, uint32_t b, bool sub) {
             {{"OUT", bits(result)},
              {"CARRY_OUT", bit(sub ? subCarry4(a, b) : addCarry4(a, b))},
              {"OVERFLOW", bit(sub ? subOverflow4(a, b, result) : addOverflow4(a, b, result))}}};
-}
-
-TestRow comparatorRow(uint32_t a, uint32_t b) {
-    const uint32_t diff = a - b;
-    return {{{"A", bits(a)}, {"B", bits(b)}},
-            {{"EQ", bit(a == b)},
-             {"LT_SIGNED", bit(static_cast<int32_t>(a) < static_cast<int32_t>(b))},
-             {"LT_UNSIGNED", bit(a < b)},
-             {"DIFF", bits(diff)},
-             {"CARRY_OUT", bit(subCarry(a, b))},
-             {"OVERFLOW", bit(subOverflow(a, b, diff))}}};
 }
 
 TestRow shifterRow(
@@ -609,46 +584,6 @@ std::vector<TestRow> zeroDetect32Rows() {
     return rows;
 }
 
-std::vector<TestRow> comparator32Rows() {
-    std::vector<TestRow> rows;
-    constexpr uint32_t values[] = {
-        0x00000000U,
-        0x00000001U,
-        0x00000002U,
-        0x7fffffffU,
-        0x80000000U,
-        0xffffffffU,
-    };
-    for (uint32_t a : values) {
-        for (uint32_t b : values) {
-            rows.push_back(comparatorRow(a, b));
-        }
-    }
-    for (const auto unknown_value :
-         {LogicValue::UNKNOWN, LogicValue::HIGH_Z}) {
-        auto left = circuit::test::logicBits(32, 0x80000000U);
-        left[5] = unknown_value;
-        const auto right = circuit::test::logicBits(32, 0);
-        const auto subtraction =
-            addExpected(left, right, LogicValue::HIGH, true);
-        rows.push_back({
-            {{"A", TestValue(left)}, {"B", TestValue(right)}},
-            {
-                {"EQ", TestValue(zeroExpected(subtraction.out))},
-                {"LT_SIGNED", TestValue(logicXor(
-                    subtraction.out[31], subtraction.overflow))},
-                {"LT_UNSIGNED", TestValue(logicNot(
-                    subtraction.carry_out))},
-                {"DIFF", TestValue(subtraction.out)},
-                {"CARRY_OUT", TestValue(
-                    subtraction.carry_out)},
-                {"OVERFLOW", TestValue(subtraction.overflow)},
-            },
-        });
-    }
-    return rows;
-}
-
 std::vector<TestRow> shifter32Rows() {
     std::vector<TestRow> rows;
     rows.reserve((32 + 4) * 12);
@@ -761,6 +696,19 @@ circuit::test::ComponentTestSpec alu32TestSpec() {
         {100'000, 2'000'000}));
     return spec;
 }
+
+circuit::test::ComponentTestSpec alu32CoreTestSpec() {
+    auto rows = alu32Rows();
+    for (auto& row : rows)
+        for (const auto* flag : {"ZERO", "NEGATIVE", "CARRY_OUT", "OVERFLOW"})
+            row.outputs.erase(flag);
+    circuit::test::ComponentTestSpec spec{
+        "ALU32CoreTest", std::string(circuit::families::ALU32Core.id()),
+        "ALU32_CORE_ROOT", {}, {}};
+    spec.scenarios.push_back(circuit::test::actionScenarioFromRows(
+        "truth-table", spec.contract_id, rows, {100'000, 2'000'000}));
+    return spec;
+}
 }
 
 Adder32Test::Adder32Test()
@@ -775,14 +723,14 @@ Logic32Test::Logic32Test()
 ZeroDetect32Test::ZeroDetect32Test()
     : TruthTableComponentTest<ZeroDetect32>("ZeroDetect32Test", "ZERO_DETECT32_ROOT", zeroDetect32Rows()) {}
 
-Comparator32Test::Comparator32Test()
-    : TruthTableComponentTest<Comparator32>("Comparator32Test", "COMPARATOR32_ROOT", comparator32Rows()) {}
-
 Shifter32Test::Shifter32Test()
     : TruthTableComponentTest<Shifter32>("Shifter32Test", "SHIFTER32_ROOT", shifter32Rows()) {}
 
 ALU32Test::ALU32Test()
     : ComponentScenarioTest(alu32TestSpec(), "truth-table") {}
+
+ALU32CoreTest::ALU32CoreTest()
+    : ComponentScenarioTest(alu32CoreTestSpec(), "truth-table") {}
 
 std::string ALU32RepresentativeSliceTest::getTestName() const {
     return "ALU32RepresentativeSliceTest";

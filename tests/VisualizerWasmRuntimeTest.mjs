@@ -72,7 +72,7 @@ try {
     }
   }
 
-  if (payload.rootType === "Memory64Kx32" || payload.rootType === "RegisterFile32x32") {
+  if (payload.rootType.startsWith("MemoryContainer<") || payload.rootType === "RegisterFile32x32") {
     const componentState = JSON.parse(bridge.componentStateJson(0, payload.rootId));
     assert.equal(componentState.supported, true);
     assert.equal(componentState.type, payload.rootType);

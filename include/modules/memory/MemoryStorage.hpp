@@ -29,6 +29,8 @@ public:
     size_t capacityBytes() const noexcept { return capacity_; }
     size_t capacityWords() const noexcept { return capacity_ / word_bytes_; }
     size_t wordBits() const noexcept { return word_bytes_ * 8; }
+    // Read-only, O(resident bytes), without materializing sparse address space.
+    bool isFullyBinary() const noexcept;
     bool canAccess(uint32_t address, size_t count) const noexcept;
     std::vector<LogicValue> readLogic(uint32_t address, size_t count) const;
     std::vector<uint8_t> readBytes(uint32_t address, size_t count) const;

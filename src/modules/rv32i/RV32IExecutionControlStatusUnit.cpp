@@ -6,10 +6,12 @@
 #include "modules/basic/Gate.hpp"
 #include "modules/basic/Mux.hpp"
 #include "modules/memory/FlipFlopCell.hpp"
+#include "modules/memory/MemoryController.hpp"
 #include "modules/rv32i/RV32IComponentEncoding.hpp"
 #include "modules/utility/BitAdapter.hpp"
 #include "modules/utility/Constant.hpp"
 #include "rv32i/RV32IState.hpp"
+#include "RV32ILogicNetwork.hpp"
 #include <cstddef>
 #include <memory>
 #include <string>
@@ -43,62 +45,12 @@ public:
     }
 };
 
-using NetId = size_t;
+using rv32i::detail::NetId;
 
-struct LogicNet {
-    std::string name;
-    std::shared_ptr<Pin<>> source;
-    std::vector<std::shared_ptr<Pin<>>> sinks;
-};
-
-class LogicNetlist {
+// Shared gate/net helper plus this unit's priority-chain link.
+class LogicNetlist : public rv32i::detail::LogicNetwork {
 public:
-    explicit LogicNetlist(ComponentBuilder& builder) : builder_(builder) {}
-
-    NetId source(std::string name, std::shared_ptr<Pin<>> pin) {
-        nets_.push_back({std::move(name), std::move(pin), {}});
-        return nets_.size() - 1;
-    }
-
-    void sink(NetId net, std::shared_ptr<Pin<>> pin) {
-        nets_.at(net).sinks.push_back(std::move(pin));
-    }
-
-    NetId logicalNot(const std::string& name, NetId input) {
-        builder_.addNewComponent<NOTGate>(name);
-        sink(input, builder_.getInputPin<NOTGate>(name, "IN"));
-        return source(name + "_OUT", builder_.getOutputPin<NOTGate>(name, "OUT"));
-    }
-
-    NetId logicalAnd(const std::string& name, NetId left, NetId right) {
-        builder_.addNewComponent<ANDGate>(name);
-        sink(left, builder_.getInputPin<ANDGate>(name, "A"));
-        sink(right, builder_.getInputPin<ANDGate>(name, "B"));
-        return source(name + "_OUT", builder_.getOutputPin<ANDGate>(name, "OUT"));
-    }
-
-    NetId logicalOr(const std::string& name, NetId left, NetId right) {
-        builder_.addNewComponent<ORGate>(name);
-        sink(left, builder_.getInputPin<ORGate>(name, "A"));
-        sink(right, builder_.getInputPin<ORGate>(name, "B"));
-        return source(name + "_OUT", builder_.getOutputPin<ORGate>(name, "OUT"));
-    }
-
-    NetId andAll(const std::string& prefix, const std::vector<NetId>& inputs) {
-        NetId current = inputs.front();
-        for (size_t index = 1; index < inputs.size(); ++index) {
-            current = logicalAnd(prefix + "_" + std::to_string(index), current, inputs[index]);
-        }
-        return current;
-    }
-
-    NetId orAll(const std::string& prefix, const std::vector<NetId>& inputs) {
-        NetId current = inputs.front();
-        for (size_t index = 1; index < inputs.size(); ++index) {
-            current = logicalOr(prefix + "_" + std::to_string(index), current, inputs[index]);
-        }
-        return current;
-    }
+    using LogicNetwork::LogicNetwork;
 
     std::pair<NetId, NetId> priorityStage(const std::string& name,
                                           NetId permission,
@@ -109,16 +61,6 @@ public:
         return {source(name + "_EVENT", stage->getOutputPin("EVENT")),
                 source(name + "_ALLOW_NEXT", stage->getOutputPin("ALLOW_NEXT"))};
     }
-
-    void materialize() {
-        for (auto& net : nets_) {
-            builder_.addNewWire(net.name, net.source, net.sinks);
-        }
-    }
-
-private:
-    ComponentBuilder& builder_;
-    std::vector<LogicNet> nets_;
 };
 
 uint8_t cause(rv32i::RV32IExecutionTrapCause value) {
@@ -181,14 +123,9 @@ void RV32IExecutionControlStatusUnit::buildInternals(ComponentBuilder& builder) 
     builder.add(circuit::families::FlipFlopCell, "TRAPPED_STATE");
     builder.addNewComponent<BitSplitter<32>>("ADDRESS_SPLIT");
     builder.addNewComponent<BitSplitter<2>>("SIZE_SPLIT");
-    builder.addNewComponent<BitSplitter<4>>("CAUSE_D_SPLIT");
-    builder.addNewComponent<BitJoiner<4>>("CAUSE_Q_JOIN");
+    builder.add(circuit::families::registerWord(4), "TRAP_CAUSE_WORD");
     builder.addNewComponent<ConstantValue<1>>("CONST_HIGH", 1);
 
-    for (size_t bit = 0; bit < 4; ++bit) {
-        const auto name = "TRAP_CAUSE_BIT_" + std::to_string(bit);
-        builder.add(circuit::families::FlipFlopCell, name);
-    }
 
     builder.addNewComponent<ConstantValue<4>>("CAUSE_NONE", cause(rv32i::RV32IExecutionTrapCause::None));
     builder.addNewComponent<ConstantValue<4>>("CAUSE_ILLEGAL", cause(rv32i::RV32IExecutionTrapCause::IllegalInstruction));
@@ -257,22 +194,11 @@ void RV32IExecutionControlStatusUnit::buildInternals(ComponentBuilder& builder) 
     logic.sink(halted, getOutputPin("HALTED"));
     logic.sink(trapped, getOutputPin("TRAPPED"));
 
-    for (size_t bit = 0; bit < 4; ++bit) {
-        const auto cell = "TRAP_CAUSE_BIT_" + std::to_string(bit);
-        logic.sink(clk, builder.getInputPin<IOComponent>(cell, "CLK"));
-        logic.sink(rst, builder.getInputPin<IOComponent>(cell, "RST"));
-        builder.addNewWire(
-            "CAUSE_D_bit_" + std::to_string(bit),
-            builder.getOutputPin<BitSplitter<4>>("CAUSE_D_SPLIT", "OUT_" + std::to_string(bit)),
-            {builder.getInputPin<IOComponent>(cell, "D")});
-        builder.addNewWire(
-            "CAUSE_Q_bit_" + std::to_string(bit),
-            builder.getOutputPin<IOComponent>(cell, "Q"),
-            {builder.getInputPin<BitJoiner<4>>("CAUSE_Q_JOIN", "IN_" + std::to_string(bit))});
-    }
+    logic.sink(clk, builder.getInputPin<IOComponent>("TRAP_CAUSE_WORD", "CLK"));
+    logic.sink(rst, builder.getInputPin<IOComponent>("TRAP_CAUSE_WORD", "RST"));
     builder.addNewWire<4>(
         "CAUSE_Q_to_output",
-        builder.getOutputPin<BitJoiner<4>, 4>("CAUSE_Q_JOIN", "OUT"),
+        builder.getOutputPin<IOComponent, 4>("TRAP_CAUSE_WORD", "Q"),
         {getOutputPin<4>("TRAP_CAUSE")});
 
     const auto address_low = logic.logicalOr("ADDRESS_LOW_OR", address_bit0, address_bit1);
@@ -349,10 +275,7 @@ void RV32IExecutionControlStatusUnit::buildInternals(ComponentBuilder& builder) 
          data_fault_event, target_event});
     logic.sink(trap_event, builder.getInputPin<IOComponent>("TRAPPED_STATE", "WE"));
     logic.sink(halt_event, builder.getInputPin<IOComponent>("HALTED_STATE", "WE"));
-    for (size_t bit = 0; bit < 4; ++bit) {
-        logic.sink(trap_event, builder.getInputPin<IOComponent>(
-            "TRAP_CAUSE_BIT_" + std::to_string(bit), "WE"));
-    }
+    logic.sink(trap_event, builder.getInputPin<IOComponent>("TRAP_CAUSE_WORD", "WE"));
 
     const auto control_alignment_event = logic.logicalOr(
         "CONTROL_ALIGNMENT_EVENT", pc_event, target_event);
@@ -433,7 +356,7 @@ void RV32IExecutionControlStatusUnit::buildInternals(ComponentBuilder& builder) 
     builder.addNewWire<4>(
         "final_cause_to_state",
         builder.getOutputPin<Mux2to1_4bit, 4>("CAUSE_DATA_ACCESS_MUX", "OUT"),
-        {builder.getInputPin<BitSplitter<4>, 4>("CAUSE_D_SPLIT", "IN")});
+        {builder.getInputPin<IOComponent, 4>("TRAP_CAUSE_WORD", "D")});
 
     logic.materialize();
 }

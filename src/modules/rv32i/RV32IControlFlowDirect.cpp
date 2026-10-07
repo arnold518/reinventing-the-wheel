@@ -1,4 +1,5 @@
 #include "modules/rv32i/RV32IControlFlowDirect.hpp"
+#include "basic/LogicValueHelpers.hpp"
 #include "components/selection/ComponentFamily.hpp"
 #include "modules/rv32i/RV32IControlFlowUnit.hpp"
 
@@ -11,14 +12,7 @@ bool isKnown(LogicValue value) {
     return value == LogicValue::LOW || value == LogicValue::HIGH;
 }
 
-bool allKnown(const std::vector<LogicValue>& values) {
-    for (const auto value : values) {
-        if (!isKnown(value)) {
-            return false;
-        }
-    }
-    return true;
-}
+using circuit::logic_values::allKnown;
 
 uint32_t toUInt32(const std::vector<LogicValue>& values) {
     uint32_t result = 0;

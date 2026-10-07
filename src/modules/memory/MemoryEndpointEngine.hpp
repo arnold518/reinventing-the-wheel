@@ -18,6 +18,9 @@ inline size_t after(size_t t, size_t delay) {
 }
 struct Request { Bits op, address, data, mask; };
 Status validateRequest(const Request&, size_t width, Technology, const EndpointConfig&);
+// Only pins belonging to the selected native interface, not the sequencer's
+// superset of scratch signals for all technologies.
+std::vector<std::string> nativeActivityInputs(Technology);
 
 // Device-specific sequencing is a timed digital controller primitive. It does
 // not own contents; the same primitive drives either native pins or a compact
@@ -26,8 +29,14 @@ class NativeSequence {
 public:
     NativeSequence(size_t, Technology, EndpointConfig);
     void step(size_t time, bool clock_edge, bool reset, bool start, const Request&,
-              const std::function<Bits(const std::string&, size_t)>& read);
+              const std::function<Bits(const std::string&, size_t)>& read, bool finish = false);
     size_t deadline() const { return due_; }
+    const char* phaseName() const {
+        static constexpr const char* names[]{"idle", "array-setup", "array-write", "array-read", "static-access",
+            "command-raise", "command-lower", "command-wait", "release", "relay-request", "relay-response"};
+        return names[static_cast<size_t>(phase_)];
+    }
+    bool maintenanceActive() const { return maintenance_ && phase_ != Phase::Idle; }
     bool done = false, available = true;
     Bits result;
     Status status = Status::Ok;

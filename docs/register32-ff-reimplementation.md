@@ -24,9 +24,9 @@ gate-by-gate equivalence.
 
 ## Documentation and visualizer
 
-4.2.1 is the new Register32 reference; the register file is now 4.2.2, followed
-by ALU32 (4.2.3), decoder (4.2.4), control flow (4.2.5), memory access (4.2.6),
-and execution status (4.2.7). Existing page filenames remain stable. Chapter 3
+4.3.1 is the new Register32 reference; the register file is now 4.3.2, followed
+by ALU32 (4.3.3), decoder (4.3.4), control flow (4.3.5), memory access (4.3.6),
+and execution status (4.3.7). Existing page filenames remain stable. Chapter 3
 and single-cycle cross-references link to the new register page.
 
 The reference follows the existing component-table, IO, behavior/C++ example,
@@ -53,12 +53,12 @@ are intentionally not renamed by this compatibility rule.
   The single-cycle core exercises one Register32, and the pipeline exercises 43.
 - Focused regressions: old small memories/register file, PC/control-flow units,
   all four pipeline register blocks, retirement, Fetch, and single-cycle stages.
-- Documentation: register and register-file C++ examples plus 4.2/4.3 references;
+- Documentation: register and register-file C++ examples plus 4.3/4.4 references;
   clean strict MkDocs build after renumbering headings and fragment links.
 - `Register32WasmParityTest.mjs`: native/WASM topology, timestamps, checkpoints,
   every expected output and final internal state agree for three register modes,
   single-cycle Fetch and IF/ID.
-- Browser checks on port 8893: all seven 4.2 pages pass navigation, rendered-table,
+- Browser checks on port 8893: all seven 4.3 pages pass navigation, rendered-table,
   embed and mobile-width checks. Live WASM passes 56 register, 47 register-file,
   and 31 control-flow checkpoints. Tests start with the previous saved layout;
   the new register shell and focused FF word/cell views also pass geometry checks.

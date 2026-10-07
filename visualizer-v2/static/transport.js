@@ -3,7 +3,7 @@
 
   async function wasmTransport() {
     if (!wasmTransportPromise) {
-      wasmTransportPromise = import("./wasm_transport.js?v=11")
+      wasmTransportPromise = import("./wasm_transport.js?v=14")
         .then((module) => module.createWasmTransport());
     }
     return wasmTransportPromise;

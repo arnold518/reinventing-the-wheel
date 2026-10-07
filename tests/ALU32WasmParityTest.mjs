@@ -1,4 +1,4 @@
-// Focused native/WASM contract check for the eight 4.2.3 references.
+// Focused native/WASM contract check for the eight 4.3.3 references.
 import assert from 'node:assert/strict';
 import {execFileSync} from 'node:child_process';
 import {readFile} from 'node:fs/promises';

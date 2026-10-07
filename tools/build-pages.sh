@@ -21,7 +21,7 @@ emcmake cmake \
     -S "$REPOSITORY_DIR" \
     -B "$BUILD_DIR" \
     -DCMAKE_BUILD_TYPE=Release
-cmake --build "$BUILD_DIR" --target circuitsim_wasm --parallel 2
+cmake --build "$BUILD_DIR" --target circuitsim_wasm --parallel "${CIRCUITSIM_BUILD_JOBS:-1}"
 
 # Refresh the full package even after an interrupted post-link packaging step,
 # or when only JavaScript, JSON, or documentation changed.
@@ -36,9 +36,19 @@ done
 cmake -E copy "$REPOSITORY_DIR/visualizer-v2/profiles.defaults.json" "$BUILD_DIR/pages/simulator/profiles.json"
 cmake -E copy "$REPOSITORY_DIR/visualizer-v2/static/runtime-config.pages.js" "$BUILD_DIR/pages/simulator/runtime-config.js"
 
+node "$REPOSITORY_DIR/tools/validate-pages-memory-layouts.mjs" \
+    "$BUILD_DIR/pages/simulator/circuitsim_wasm.js" "$BUILD_DIR/pages/simulator/circuitsim_wasm.wasm" \
+    "$BUILD_DIR/pages/simulator/layout.json"
+
+EXAMPLE_FILTER_ARGS=()
+if [[ -n "${CIRCUITSIM_EXAMPLE_FILTER:-}" ]]; then
+    # Local focused rebuilds keep previously verified unrelated examples.
+    # The generator rejects a missing previous bundle; CI defaults to all rows.
+    EXAMPLE_FILTER_ARGS=("$CIRCUITSIM_EXAMPLE_FILTER" "${CIRCUITSIM_PREVIOUS_EXAMPLES:-$SITE_DIR/simulator/example-rows.json}")
+fi
 node "$REPOSITORY_DIR/tools/generate-example-rows.mjs" \
     "$BUILD_DIR/pages/simulator/circuitsim_wasm.js" "$BUILD_DIR/pages/simulator/circuitsim_wasm.wasm" \
-    "$REPOSITORY_DIR/site-docs" "$BUILD_DIR/pages/simulator/example-rows.json"
+    "$REPOSITORY_DIR/site-docs" "$BUILD_DIR/pages/simulator/example-rows.json" "${EXAMPLE_FILTER_ARGS[@]}"
 
 CIRCUITSIM_EXAMPLE_ROWS="$BUILD_DIR/pages/simulator/example-rows.json" python3 -m mkdocs build \
     --config-file "$REPOSITORY_DIR/mkdocs.yml" \

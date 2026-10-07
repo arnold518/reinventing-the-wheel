@@ -21,7 +21,8 @@ class RV32ISingleCycleSystem
       public RV32ISystemProgramAccess {
 public:
     explicit RV32ISingleCycleSystem(std::string name,
-        rv32i::MemoryConfiguration instructions = {}, rv32i::MemoryConfiguration data = {});
+        rv32i::MemoryConfiguration instructions = rv32i::zeroWaitMemoryConfiguration(),
+        rv32i::MemoryConfiguration data = rv32i::zeroWaitMemoryConfiguration());
     static constexpr const char* TypeName = "RV32ISingleCycleSystem";
     const char* getTypeName() const override { return TypeName; }
     void buildInternals(ComponentBuilder& builder) override;

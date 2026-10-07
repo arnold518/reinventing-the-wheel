@@ -17,7 +17,7 @@ void ALU8ResultSelector::buildInternals(ComponentBuilder& builder) {
         std::vector<Net::Signal> selected;
         for (size_t i = 0; i < sources.size(); ++i)
             selected.push_back(n.binary<ANDGate>("RESULT_SELECT_" + std::to_string(i) + "_" + std::to_string(bit), words[i][bit], enables[i]));
-        out[bit] = n.any("RESULT_OR_" + std::to_string(bit), selected);
+        out[bit] = n.reduceBalanced("RESULT_OR_" + std::to_string(bit), selected, false);
     }
     auto result = n.join<8>("RESULT_JOIN", out);
     n.connect(result, n.output("OUT"));

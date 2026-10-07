@@ -23,13 +23,14 @@ def main():
         overrides = ({"MEMORY_ENDPOINT_ROOT": "behavioral" if scenario == "scalable-memory-container" else "structural"}
                      if args.transactions else {"MEMORY_ROOT": "structural"})
         session = server.CircuitSession(scenario, layout, profile_overrides=overrides)
-        transaction_kind = lambda kind: kind.startswith(("MemoryEndpoint<", "MemoryController<", "MemoryTransactionPort<", "MemoryPayloadRegister<", "MemoryNativeSequencer<", "MemoryContainer<"))
+        transaction_kind = lambda kind: kind.startswith(("MemoryEndpoint<", "MemoryController<", "MemoryTransactionPort<", "MemoryResponseBuffer<", "MemoryFFRequestCheck", "MemoryPayloadMux", "Register<", "MemoryNativeSequencer<", "MemoryContainer<"))
         if args.transactions and args.reflow:
             # Only the newly introduced endpoint families belong to this reflow.
             # Native FF/SRAM/DRAM/ROM/flash layouts may contain user edits.
             for component in session.component_handles.values():
                 kind = component.get_type_name()
                 if transaction_kind(kind):
+                    if layout.type_layouts.get(kind,{}).get("layout_mode") == "manual": continue
                     layout.type_layouts.setdefault(kind, {}).update(memory_device_layout.defaults(kind))
                     profile = layout.profile_layouts.setdefault(server._component_profile_fingerprint(component), {})
                     profile.setdefault(kind, {}).update(memory_device_layout.defaults(kind))
@@ -38,6 +39,7 @@ def main():
             layout.root_layouts.setdefault(session.layout_key, {}).update(root_defaults)
         for component in session.component_handles.values():
             kind = component.get_type_name()
+            if layout.type_layouts.get(kind,{}).get("layout_mode") == "manual": continue
             if args.transactions and not transaction_kind(kind):
                 continue
             if not memory_device_layout.defaults(kind) or not component.get_children():

@@ -3,7 +3,7 @@
 
 #include "components/BasicComponent.hpp"
 #include "components/capabilities/RV32ISystemProgramAccess.hpp"
-#include "modules/memory/Memory64Kx32.hpp"
+#include "modules/memory/MemoryStorage.hpp"
 #include "rv32i/RV32IArchitecturalState.hpp"
 #include "rv32i/RV32IInstructionTrace.hpp"
 #include "rv32i/RV32IProgram.hpp"
@@ -27,10 +27,10 @@ public:
     const char* getTypeName() const override { return TypeName; }
     void evaluate(size_t current_time, Simulator& simulator) override;
 
-    std::shared_ptr<Memory64Kx32> instructionMemory() const {
+    std::shared_ptr<MemoryStorage> instructionMemory() const {
         return instruction_memory_;
     }
-    std::shared_ptr<Memory64Kx32> dataMemory() const {
+    std::shared_ptr<MemoryStorage> dataMemory() const {
         return data_memory_;
     }
 
@@ -85,8 +85,8 @@ private:
 
     uint32_t reset_pc_ = 0;
     rv32i::RV32IState state_{};
-    std::shared_ptr<Memory64Kx32> instruction_memory_;
-    std::shared_ptr<Memory64Kx32> data_memory_;
+    std::shared_ptr<MemoryStorage> instruction_memory_;
+    std::shared_ptr<MemoryStorage> data_memory_;
     rv32i::RV32IMemoryTrace last_data_memory_access_{};
     std::map<uint32_t, uint8_t> last_data_memory_writes_{};
     std::vector<DataMemoryWrite> data_memory_write_history_{};

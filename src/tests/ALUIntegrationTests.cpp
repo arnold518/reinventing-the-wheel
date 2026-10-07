@@ -133,17 +133,23 @@ std::vector<TestRow> flags32Rows() {
     return rows;
 }
 void checkHierarchy(const std::shared_ptr<Component>& root,
-                    const std::map<std::string, std::string>& expected, unsigned full_adders) {
+                    const std::map<std::string, std::string>& expected, unsigned full_adders,
+                    bool prefix = false) {
     std::map<std::string, std::string> actual;
     for (const auto& child : root->getChildren()) actual[child->getName()] = child->getTypeName();
     if (actual != expected) throw std::runtime_error(root->getName() + ": ALU must expose seven named functional blocks");
-    unsigned count = 0;
+    unsigned count = 0, prefixes = 0, half_adders = 0, add_sub_units = 0;
     std::function<void(const std::shared_ptr<Component>&)> visit = [&](const auto& component) {
         if (std::string(component->getTypeName()) == "FullAdder") ++count;
+        if (std::string(component->getTypeName()) == "HalfAdder") ++half_adders;
+        if (std::string(component->getTypeName()) == "ParallelPrefixAdder32") ++prefixes;
+        if (std::string(component->getTypeName()) == "AddSub32") ++add_sub_units;
         for (const auto& child : component->getChildren()) visit(child);
     };
     visit(root);
     if (count != full_adders) throw std::runtime_error(root->getName() + ": arithmetic must use one shared carry chain");
+    if (prefix && (prefixes != 1 || half_adders != 32 || add_sub_units != 1))
+        throw std::runtime_error(root->getName() + ": arithmetic must share one 32-bit prefix add/sub unit");
 }
 } // namespace
 
@@ -159,7 +165,7 @@ void ALUHierarchyTest::verifyResults() {
         {"RESULT_SELECT", "ALU8ResultSelector"}, {"FLAGS", "ALU8FlagUnit"}}, 8);
     checkHierarchy(Component::create<ALU32>("ALU32"), {{"CONTROL", "ALU32ControlDecoder"}, {"ARITHMETIC", "AddSub32"},
         {"LOGIC", "Logic32"}, {"SHIFT", "Shifter32"}, {"COMPARE", "ALU32CompareUnit"},
-        {"RESULT_SELECT", "ALU32ResultSelector"}, {"FLAGS", "ALU32FlagUnit"}}, 32);
+        {"RESULT_SELECT", "ALU32ResultSelector"}, {"FLAGS", "ALU32FlagUnit"}}, 0, true);
     auto flags = Component::create<ALU32FlagUnit>("FLAGS");
     std::shared_ptr<Rewire> sign;
     for (const auto& child : flags->getChildren()) {

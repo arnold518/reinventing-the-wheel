@@ -1,10 +1,10 @@
+#include "rv32i/RV32IFunctionalMemory.hpp"
 #include "tests/RV32IExternalValidationTests.hpp"
 
 #include "basic/Wire.hpp"
 #include "components/ComponentBuilder.hpp"
 #include "components/capabilities/RV32ISystemProgramAccess.hpp"
 #include "components/selection/BuiltinComponentCatalog.hpp"
-#include "modules/memory/Memory64Kx32.hpp"
 #include "modules/rv32i/RV32IBuildProfiles.hpp"
 #include "modules/rv32i/RV32ISingleCycleSystem.hpp"
 #include "rv32i/RV32IElfImage.hpp"
@@ -179,7 +179,7 @@ protected:
         const auto image =
             rv32i::RV32IElfImage::fromFile(elf_path_);
         image.requireFitsMemory(
-            Memory64Kx32::capacityBytes());
+            rv32i::RV32IFunctionalMemory::DefaultCapacityBytes);
         require(
             image.entryPoint() == 0,
             getTestName()
@@ -210,6 +210,7 @@ protected:
         sim->advanceAndRecord(1000);
         drive(*sim, 1000, rst_wire_, false);
         sim->advanceAndRecord(5000);
+        sim->resetPerformanceCounters();
 
         size_t last_observation_time =
             sim->getCurrentTime();
@@ -220,8 +221,7 @@ protected:
              cycle / 64 < maximum_instructions_ && result_.instruction_count < maximum_instructions_;
              ++cycle) {
             const bool attempt = system->core()->getOutputPin("INSTRUCTION_ATTEMPT")->getValue() == LogicValue::HIGH;
-            const size_t start_time =
-                sim->getCurrentTime();
+            const size_t start_time = 5000 + cycle * CycleTimeStep;
             drive(
                 *sim,
                 start_time + 1000,

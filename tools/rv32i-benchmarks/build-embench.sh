@@ -63,6 +63,13 @@ if [[ "${actual_commit}" != "${EMBENCH_COMMIT}" ]]; then
     exit 3
 fi
 
+if [[ "${benchmark}" == "all" ]]; then
+    while IFS= read -r name; do
+        "${script_dir}/build-embench.sh" "${name}" "${output_root}"
+    done < <(find "${source_root}/src" -mindepth 1 -maxdepth 1 -type d -printf '%f\n' | sort)
+    exit 0
+fi
+
 benchmark_source="${source_root}/src/${benchmark}"
 if [[ ! -d "${benchmark_source}" ]]; then
     echo "Unknown Embench benchmark: ${benchmark}" >&2

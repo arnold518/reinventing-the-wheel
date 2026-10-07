@@ -2,7 +2,7 @@
 
 The instruction-level specification and executable answer sheet for CircuitSim's RV32I core. The single-cycle and five-stage cores must agree on the ordered register, memory, PC, and terminal effects defined here; their internal circuits and timing may differ.
 
-Hardware component interfaces and implementations are documented separately in [4.2. RV32I Building Blocks](../4.2/index.md).
+Hardware component interfaces and implementations are documented separately in [4.3. RV32I Building Blocks](../4.3/index.md).
 
 ## Contents
 
@@ -12,7 +12,8 @@ Hardware component interfaces and implementations are documented separately in [
 | [4.1.2. Instruction formats and decoding](formats.md) | Field positions, immediate reconstruction, selection rules, and invalid encodings |
 | [4.1.3. Instruction reference](instructions/index.md) | All 40 instructions, each with syntax, encoding, operands, operation, exceptions, and an example |
 | [4.1.4. Executable RV32I reference](implementation.md) | Architectural state, instruction-step API, complete behavioral implementation, and a runnable example |
-| [4.1.5. Programs and verification](programs/index.md) | All 22 program fixtures: setup, full assembly, execution, expected results, and embedded checkpoint tables |
+
+Programs and verification are documented in [4.2. Benchmarking and Verification](../4.2/index.md), including all 22 fixed programs, generated workloads, compiled workloads, and the shared measurement contract. The one-step instruction examples remain with the executable reference above.
 
 ## Instruction families
 

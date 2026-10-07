@@ -36,8 +36,6 @@ public:
         auto mask = b.addNewComponent<BitSplitter<Width / 8>>("MASK");
         w.connect(this->template getInputPin<Width>("WRITE_DATA"), data->template getInputPin<Width>("IN"));
         w.connect(this->template getInputPin<Width / 8>("WRITE_MASK"), mask->template getInputPin<Width / 8>("IN"));
-        // Keep legacy structural paths and their propagation timing intact.
-        w.constant("ZERO", false);
         for (size_t byte = 0; byte < Width / 8; ++byte) {
             auto enable = w.both("BYTE_" + std::to_string(byte), this->getInputPin("WE"),
                                 mask->getOutputPin("OUT_" + std::to_string(byte)));

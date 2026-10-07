@@ -1,0 +1,7 @@
+{
+  "release": "12.4.0-2",
+  "gcc_version": "12.4.0",
+  "url": "https://github.com/xpack-dev-tools/riscv-none-elf-gcc-xpack/releases/download/v12.4.0-2/xpack-riscv-none-elf-gcc-12.4.0-2-linux-x64.tar.gz",
+  "sha256": "589eb2b600853a2aa1f759aa8997fce1941dcba9413ab50ff63326cb2d46e6b0",
+  "multilib": "rv32i/ilp32"
+}

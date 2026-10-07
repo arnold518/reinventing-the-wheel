@@ -1,20 +1,28 @@
 #include "modules/composite/Adder32.hpp"
+#include "modules/composite/ParallelPrefixAdder32.hpp"
 #include "components/ComponentBuilder.hpp"
 #include "components/ComponentBuilder.tpp"
 #include "modules/composite/FullAdder.hpp"
 #include "modules/utility/BitAdapter.hpp"
 #include <string>
 
-Adder32::Adder32(std::string name)
+Adder32::Adder32(std::string name, bool parallel_prefix)
     : IOComponent(std::move(name), [](IOComponent* self) {
           self->addPin<32>("A", PinType::INPUT);
           self->addPin<32>("B", PinType::INPUT);
           self->addPin("Cin", PinType::INPUT);
           self->addPin<32>("Sum", PinType::OUTPUT);
           self->addPin("Cout", PinType::OUTPUT);
-      }) {}
+      }), parallel_prefix_(parallel_prefix) {}
 
 void Adder32::buildInternals(ComponentBuilder& builder) {
+    if (parallel_prefix_) {
+        circuit::memory_detail::StructuralWiring w(builder);
+        auto adder=builder.addNewComponent<ParallelPrefixAdder32>("PREFIX_ADDER");
+        for (auto p:{"A","B","Cin"}) w.connect(getInputPinDynamic(p),adder->getInputPinDynamic(p));
+        for (auto p:{"Sum","Cout"}) w.connect(adder->getOutputPinDynamic(p),getOutputPinDynamic(p));
+        w.finish(); return;
+    }
     builder.addNewComponent<BitSplitter<32>>("A_SPLIT");
     builder.addNewComponent<BitSplitter<32>>("B_SPLIT");
     builder.addNewComponent<BitJoiner<32>>("SUM_JOIN");

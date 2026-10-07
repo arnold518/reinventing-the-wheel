@@ -1,4 +1,5 @@
 #include "modules/rv32i/RV32IDecodeControlDirect.hpp"
+#include "basic/LogicValueHelpers.hpp"
 #include "components/selection/ComponentFamily.hpp"
 #include "modules/rv32i/RV32IDecodeControlUnit.hpp"
 
@@ -11,18 +12,9 @@
 #include <vector>
 
 namespace {
-bool allKnown(const std::vector<LogicValue>& values) {
-    for (const auto value : values) {
-        if (value != LogicValue::LOW && value != LogicValue::HIGH) {
-            return false;
-        }
-    }
-    return true;
-}
+using circuit::logic_values::allKnown;
 
-LogicValue logic(bool value) {
-    return value ? LogicValue::HIGH : LogicValue::LOW;
-}
+using circuit::logic_values::logic;
 }
 
 RV32IDecodeControlDirect::RV32IDecodeControlDirect(std::string name)

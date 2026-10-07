@@ -14,6 +14,7 @@ with sync_playwright() as p:
     browser = p.chromium.launch(executable_path=shutil.which("google-chrome") or shutil.which("chromium"),
                                 headless=True, args=["--no-sandbox"])
     for scenario in ("rv32i-program3", "rv32i-five-stage-program3"):
+        direct = scenario == "rv32i-program3"
         for fidelity in ("structural", "behavioral"):
             context = browser.new_context(viewport={"width": 1440, "height": 1000})
             page = context.new_page()
@@ -37,7 +38,7 @@ with sync_playwright() as p:
                 assert r["x"] + r["w"] <= parent["x"] + parent["w"] + .01, name
                 assert r["y"] + r["h"] <= parent["y"] + parent["h"] + .01, name
             for memory in ("INSTRUCTION_MEMORY", "DATA_MEMORY"):
-                assert children[memory]["type"] == "MemoryContainer<sram,32>"
+                assert children[memory]["type"] == "MemoryEndpoint<ff,32>"
             assert children["INSTRUCTION_MEMORY"]["rect"]["x"] < children["CORE"]["rect"]["x"] < children["DATA_MEMORY"]["rect"]["x"]
             rects = [(n, c["rect"]) for n, c in children.items()]
             for i, (name, a) in enumerate(rects):
@@ -52,7 +53,7 @@ with sync_playwright() as p:
             if screens:
                 page.screenshot(path=str(screens / f"{scenario}-{fidelity}.png"))
                 if fidelity == "structural":
-                    for part in ("CORE", "CORE.FETCH.REQUEST" if scenario == "rv32i-program3" else "CORE.FETCH_REQUEST"):
+                    for part in ("CORE", "CORE.MEMORY" if direct else "CORE.FETCH_REQUEST"):
                         page.evaluate("id=>smoothlyFocusComponent(id)", "RV32I_PROGRAM_ROOT." + part)
                         page.wait_for_function(settled)
                         page.screenshot(path=str(screens / f"{scenario}-{part}.png"))

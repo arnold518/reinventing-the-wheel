@@ -21,11 +21,13 @@ Technology technologyFromName(const std::string& n) {
     throw std::invalid_argument("Unknown memory technology: " + n);
 }
 void EndpointConfig::validate(size_t width, Technology t, bool structural) const {
+    if (always_ready && t != Technology::FF)
+        throw std::invalid_argument("Always-ready endpoint mode is FF-only");
     if ((width != 8 && width != 16 && width != 32) || !depth_words ||
         depth_words > std::numeric_limits<uint32_t>::max() / (width / 8))
         throw std::invalid_argument("Memory endpoint requires W=8/16/32 and nonzero 32-bit-addressable capacity");
-    if (phase_ticks < 32 || phase_ticks > 10000 || guard_ticks < 64 || guard_ticks > 1000000 ||
-        program_ticks < phase_ticks || program_ticks > 1000000 || erase_ticks < program_ticks || erase_ticks > 10000000)
+    if (t != Technology::FF && (phase_ticks < 32 || phase_ticks > 10000 || guard_ticks < 64 || guard_ticks > 1000000 ||
+        program_ticks < phase_ticks || program_ticks > 1000000 || erase_ticks < program_ticks || erase_ticks > 10000000))
         throw std::invalid_argument("Invalid endpoint timing; guards must allow structural signals to settle");
     if (t != Technology::FF && t != Technology::Container &&
         (!words_per_row || words_per_row > 16 || (words_per_row & (words_per_row - 1)) || depth_words % words_per_row))
@@ -46,14 +48,14 @@ void EndpointConfig::validate(size_t width, Technology t, bool structural) const
         throw std::invalid_argument("Only ROM accepts a construction-time hexadecimal image");
     if (!max_resident_bytes || (record_history && !max_history_bytes))
         throw std::invalid_argument("Memory resource budgets must be positive");
-    if (structural && depth_words > 4096 / width)
+    if (structural && expanded_storage && depth_words > 4096 / width)
         throw std::invalid_argument("Expanded endpoint storage is limited to 4096 cells");
 }
 EndpointConfig endpointConfig(const ParameterMap& p) {
     using namespace memory_device;
     keys(p, {"depth_words", "words_per_row", "block_words", "phase_ticks", "guard_ticks",
              "program_ticks", "erase_ticks", "retention_ticks", "refresh_interval_ticks",
-             "max_resident_bytes", "max_history_bytes", "paged", "record_history", "image_hex"});
+             "max_resident_bytes", "max_history_bytes", "paged", "record_history", "image_hex", "expanded_storage", "always_ready"});
     EndpointConfig c;
 #define PARAM(n) c.n = parameter(p, #n, c.n)
     PARAM(depth_words); PARAM(words_per_row); PARAM(block_words); PARAM(phase_ticks); PARAM(guard_ticks);
@@ -61,8 +63,11 @@ EndpointConfig endpointConfig(const ParameterMap& p) {
     PARAM(max_resident_bytes); PARAM(max_history_bytes);
 #undef PARAM
     auto paged = parameter(p, "paged", 1), history = parameter(p, "record_history", 1);
-    if (paged > 1 || history > 1) throw std::invalid_argument("Memory booleans must be 0 or 1");
+    auto expanded = parameter(p, "expanded_storage", 1), always_ready = parameter(p,"always_ready",0);
+    if (paged > 1 || history > 1 || expanded > 1 || always_ready > 1) throw std::invalid_argument("Memory booleans must be 0 or 1");
     c.paged = paged; c.record_history = history;
+    c.expanded_storage = expanded;
+    c.always_ready = always_ready;
     if (auto i = p.find("image_hex"); i != p.end()) c.image_hex = i->second;
     return c;
 }
@@ -72,6 +77,8 @@ ParameterMap endpointParameters(const EndpointConfig& c) {
     PARAM(depth_words); PARAM(words_per_row); PARAM(block_words); PARAM(phase_ticks); PARAM(guard_ticks);
     PARAM(program_ticks); PARAM(erase_ticks); PARAM(retention_ticks); PARAM(refresh_interval_ticks);
     PARAM(max_resident_bytes); PARAM(max_history_bytes); PARAM(paged); PARAM(record_history);
+    PARAM(expanded_storage);
+    PARAM(always_ready);
 #undef PARAM
     p["image_hex"] = c.image_hex; return p;
 }

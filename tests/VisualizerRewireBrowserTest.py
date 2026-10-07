@@ -28,7 +28,6 @@ with sync_playwright() as playwright:
     page.on("pageerror", lambda error: errors.append(str(error)))
     page.on("request", lambda request: api_requests.append(request.url) if "/api/" in request.url else None)
     for scenario, suffix in (("ff-memory-container", ".READ_SELECT.WORD_0_BITS"),
-                             ("sram-container", ".READ_SELECT.WORD_0_BITS"),
                              ("rewire", "")):
         print(f"Checking {scenario} unpacker", flush=True)
         page.goto(base + "?scenario=" + scenario, wait_until="domcontentloaded")
@@ -221,6 +220,70 @@ with sync_playwright() as playwright:
     if screenshots:
         page.screenshot(path=str(screenshots / "rv32i-control-pack.png"))
     print("RV32I control packer passed", flush=True)
+
+    # Regression: tiny two-gate MEM_WRITE and the buried fetch address mux.
+    for suffix, label in (("DECODE.CONTROL.CONTROL_SIGNALS.MEM_WRITE", "mem-write"),
+                          ("FETCH_REQUEST", "fetch-request")):
+        target = "RV32I_PROGRAM_ROOT.CORE." + suffix
+        page.evaluate("id=>smoothlyFocusComponent(id)", target)
+        idle(page)
+        placements = page.evaluate("""id=>{
+            const parent=app.components.get(id), result={};
+            for(const c of app.componentOrder.filter(c=>c.parentId===id))
+                result[c.name]={x:(c.rect.x-parent.rect.x)/parent.rect.w,
+                    y:(c.rect.y-parent.rect.y)/parent.rect.h, w:c.rect.w/parent.rect.w};
+            return result;
+        }""", target)
+        if label == "mem-write":
+            a, b = (placements[f"BIT_0_OR_{level}_0"] for level in (0, 1))
+            assert a["w"] > .18 and b["w"] > .18, placements
+            assert a["x"] + a["w"] < b["x"], placements
+        else:
+            assert placements["REQUEST_ADDR"]["x"] < placements["SELECT_ADDR"]["x"] < placements["TAG_MATCH"]["x"]
+            assert placements["SELECT_ADDR"]["w"] > .15
+            assert placements["SELECT_ADDR"]["y"] < placements["START"]["y"]
+        if screenshots: page.screenshot(path=str(screenshots / f"rv32i-{label}.png"))
+
+    target = "RV32I_PROGRAM_ROOT.CORE.DECODE.CONTROL.CONTROL_SIGNALS.MEM_WRITE.MATCH_BITS"
+    page.evaluate("id=>smoothlyFocusComponent(id)", target)
+    idle(page)
+    result = page.evaluate("""async id=>{
+        const c=app.components.get(id), model=CircuitRewireGeometry.multiBusUnpackModel(c.rewire);
+        const inputs=pinMapByName(c.inputPins),outputs=pinMapByName(c.outputPins),failures=[];
+        for(const row of app.checkpoints) {
+            await setStateIndex(row.index);
+            for(const source of model.sources) for(const tap of source.taps)
+                if(signalBitAt(pinValue(inputs.get(source.source)),tap.sourceBit)!==pinValue(outputs.get(tap.destination)))
+                    failures.push([row.label,tap.destination]);
+        }
+        return {failures,rows:app.checkpoints.length,model,aspect:c.rect.h/c.rect.w};
+    }""", target)
+    assert not result["failures"], result
+    assert abs(result["aspect"] - 2.2) < .001
+    assert [(s["source"], s["width"], len(s["taps"])) for s in result["model"]["sources"]] == [
+        ("MATCH_LO", 32, 32), ("MATCH_HI", 8, 8)]
+    drawing = page.evaluate("""id=>{
+        const c=app.components.get(id),paths=[],labels=[];
+        const line=drawAdapterPolyline,dot=drawAdapterJunction,text=ctx.fillText;
+        let dots=0;
+        try {
+            drawAdapterPolyline=(c,points,value,pins,width,...rest)=>{
+                paths.push({points,value,width});return line(c,points,value,pins,width,...rest);};
+            drawAdapterJunction=(...args)=>{dots++;return dot(...args);};
+            ctx.fillText=function(t,...args){labels.push(t);return text.call(this,t,...args);};
+            drawRewireContents(c,componentDrawParts(c));
+        } finally {drawAdapterPolyline=line;drawAdapterJunction=dot;ctx.fillText=text;requestRender();}
+        return {paths,labels,dots};
+    }""", target)
+    assert drawing["dots"] == 0 and len(drawing["paths"]) == 44, drawing
+    assert [p["width"] for p in drawing["paths"]] == [32, 32] + [1]*32 + [8, 8] + [1]*8
+    verticals = [(a, b) for p in drawing["paths"] for a, b in zip(p["points"], p["points"][1:])
+                 if a["x"] == b["x"] and a["y"] != b["y"]]
+    assert len(verticals) == 2 and len({a["x"] for a, b in verticals}) == 2, "One separate spine per bus"
+    assert drawing["labels"] == [t["label"] for s in result["model"]["sources"] for t in s["taps"]], drawing
+    assert not any("…" in label for label in drawing["labels"]), "Focused mappings must be legible"
+    if screenshots: page.screenshot(path=str(screenshots / "rv32i-match-bits.png"))
+    print(f'RV32I routing: MEM_WRITE/fetch floorplans, two independent buses, 40 labels and {result["rows"]} checkpoints passed', flush=True)
     assert not errors, errors
     assert not api_requests, api_requests
     browser.close()

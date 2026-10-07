@@ -12,7 +12,7 @@ for (const type of ['FlipFlopCell', 'SRAMCell', 'DRAMCell', 'ROMCell', 'NORFlash
   }
   assert.equal(model(type, 'behavioral', {}).fields[0].value, 'X');
 }
-assert.equal(model('Register32','behavioral',{Q:'1'}), null);
+assert.equal(model('Register<32>','behavioral',{Q:'1'}), null);
 assert.equal(model('DRAMCell','behavioral',{Q:'1',SAMPLE:'X'}).fields[1].value, 'X');
 assert.deepEqual(model('NORFlashCell','behavioral',{WL:'1',PROGRAM:'0',ERASE:'Z'}).controls,
   [{pin:'WL',value:'1'},{pin:'PROGRAM',value:'0'},{pin:'ERASE',value:'Z'}]);

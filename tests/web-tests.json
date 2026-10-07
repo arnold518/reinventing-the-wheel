@@ -1,0 +1,437 @@
+{
+  "schema": 1,
+  "tests": [
+    {
+      "name": "ALU32WasmParityTest",
+      "file": "ALU32WasmParityTest.mjs",
+      "kind": "parity",
+      "args": [
+        "{js}",
+        "{wasm}",
+        "{probe}"
+      ],
+      "suites": [],
+      "timeout": 1800
+    },
+    {
+      "name": "ALU8WasmParityTest",
+      "file": "ALU8WasmParityTest.mjs",
+      "kind": "parity",
+      "args": [
+        "{js}",
+        "{wasm}",
+        "{probe}"
+      ],
+      "suites": [],
+      "timeout": 1800
+    },
+    {
+      "name": "AdderDocumentationBrowserTest",
+      "file": "AdderDocumentationBrowserTest.py",
+      "kind": "browser",
+      "args": [
+        "{base}"
+      ],
+      "suites": [],
+      "timeout": 1200
+    },
+    {
+      "name": "DocumentationDiagramsBrowserTest",
+      "file": "DocumentationDiagramsBrowserTest.py",
+      "kind": "browser",
+      "args": [
+        "{base}"
+      ],
+      "suites": [],
+      "timeout": 1200
+    },
+    {
+      "name": "FFMemoryBrowserTest",
+      "file": "FFMemoryBrowserTest.py",
+      "kind": "browser",
+      "args": [
+        "{simulator}"
+      ],
+      "suites": [
+        "smoke",
+        "cleanup"
+      ],
+      "timeout": 1200
+    },
+    {
+      "name": "FFMemoryWasmParityTest",
+      "file": "FFMemoryWasmParityTest.mjs",
+      "kind": "parity",
+      "args": [
+        "{js}",
+        "{wasm}",
+        "{probe}"
+      ],
+      "suites": [
+        "cleanup"
+      ],
+      "timeout": 1800
+    },
+    {
+      "name": "MemoryDeviceDocumentationBrowserTest",
+      "file": "MemoryDeviceDocumentationBrowserTest.py",
+      "kind": "browser",
+      "args": [
+        "{base}"
+      ],
+      "suites": [],
+      "timeout": 1200
+    },
+    {
+      "name": "MemoryDeviceWasmParityTest",
+      "file": "MemoryDeviceWasmParityTest.mjs",
+      "kind": "parity",
+      "args": [
+        "{js}",
+        "{wasm}",
+        "{probe}"
+      ],
+      "suites": [],
+      "timeout": 1800
+    },
+    {
+      "name": "MemoryDocumentationBrowserTest",
+      "file": "MemoryDocumentationBrowserTest.py",
+      "kind": "browser",
+      "args": [
+        "{base}"
+      ],
+      "suites": [
+        "smoke",
+        "cleanup"
+      ],
+      "timeout": 1200
+    },
+    {
+      "name": "MemoryEndpointBrowserTest",
+      "file": "MemoryEndpointBrowserTest.py",
+      "kind": "browser",
+      "args": [
+        "{base}"
+      ],
+      "suites": [
+        "smoke"
+      ],
+      "timeout": 1200
+    },
+    {
+      "name": "MemoryEndpointWasmParityTest",
+      "file": "MemoryEndpointWasmParityTest.mjs",
+      "kind": "parity",
+      "args": [
+        "{js}",
+        "{wasm}",
+        "{probe}"
+      ],
+      "suites": [
+        "cleanup"
+      ],
+      "timeout": 1800
+    },
+    {
+      "name": "MemoryInspectorBrowserTest",
+      "file": "MemoryInspectorBrowserTest.py",
+      "kind": "browser",
+      "args": [
+        "{base}"
+      ],
+      "suites": [
+        "cleanup"
+      ],
+      "timeout": 1200
+    },
+    {
+      "name": "MemoryInspectorWasmParityTest",
+      "file": "MemoryInspectorWasmParityTest.mjs",
+      "kind": "parity",
+      "args": [
+        "{js}",
+        "{wasm}",
+        "{probe}"
+      ],
+      "suites": [
+        "cleanup"
+      ],
+      "timeout": 1800
+    },
+    {
+      "name": "MemoryReferenceExamplesBrowserTest",
+      "file": "MemoryReferenceExamplesBrowserTest.py",
+      "kind": "browser",
+      "args": [
+        "{base}"
+      ],
+      "suites": [],
+      "timeout": 1200
+    },
+    {
+      "name": "RV32IAdvancedBrowserTest",
+      "file": "RV32IAdvancedBrowserTest.py",
+      "kind": "browser",
+      "args": [
+        "{base}"
+      ],
+      "suites": [],
+      "timeout": 1200
+    },
+    {
+      "name": "RV32IAdvancedWasmParityTest",
+      "file": "RV32IAdvancedWasmParityTest.mjs",
+      "kind": "parity",
+      "args": [
+        "{js}",
+        "{wasm}",
+        "{probe}"
+      ],
+      "suites": [],
+      "timeout": 1800
+    },
+    {
+      "name": "RV32IBaselineBrowserTest",
+      "file": "RV32IBaselineBrowserTest.py",
+      "kind": "browser",
+      "args": [
+        "{base}"
+      ],
+      "suites": [],
+      "timeout": 1200
+    },
+    {
+      "name": "RV32IBaselineWasmParityTest",
+      "file": "RV32IBaselineWasmParityTest.mjs",
+      "kind": "parity",
+      "args": [
+        "{js}",
+        "{wasm}",
+        "{probe}"
+      ],
+      "suites": [],
+      "timeout": 1800
+    },
+    {
+      "name": "RV32IBuildingBlocksBrowserTest",
+      "file": "RV32IBuildingBlocksBrowserTest.py",
+      "kind": "browser",
+      "args": [
+        "{base}"
+      ],
+      "suites": [
+        "smoke"
+      ],
+      "timeout": 1200
+    },
+    {
+      "name": "RV32ICoreLayoutBrowserTest",
+      "file": "RV32ICoreLayoutBrowserTest.py",
+      "kind": "browser",
+      "args": [
+        "{base}"
+      ],
+      "suites": [],
+      "timeout": 1200
+    },
+    {
+      "name": "RV32IDocumentationBrowserTest",
+      "file": "RV32IDocumentationBrowserTest.py",
+      "kind": "browser",
+      "args": [
+        "{base}"
+      ],
+      "suites": [
+        "smoke"
+      ],
+      "timeout": 1200
+    },
+    {
+      "name": "RV32IMemoryBrowserTest",
+      "file": "RV32IMemoryBrowserTest.py",
+      "kind": "browser",
+      "args": [
+        "{base}"
+      ],
+      "suites": [
+        "smoke"
+      ],
+      "timeout": 1200
+    },
+    {
+      "name": "RV32IMemoryWasmParityTest",
+      "file": "RV32IMemoryWasmParityTest.mjs",
+      "kind": "parity",
+      "args": [
+        "{js}",
+        "{wasm}",
+        "{probe}"
+      ],
+      "suites": [
+        "cleanup"
+      ],
+      "timeout": 1800
+    },
+    {
+      "name": "RV32ISingleCycleDocumentationBrowserTest",
+      "file": "RV32ISingleCycleDocumentationBrowserTest.py",
+      "kind": "browser",
+      "args": [
+        "{base}"
+      ],
+      "suites": [
+        "smoke"
+      ],
+      "timeout": 1200
+    },
+    {
+      "name": "Register32WasmParityTest",
+      "file": "Register32WasmParityTest.mjs",
+      "kind": "parity",
+      "args": [
+        "{js}",
+        "{wasm}",
+        "{probe}"
+      ],
+      "suites": [],
+      "timeout": 1800
+    },
+    {
+      "name": "RegisterFileAndCellsBrowserTest",
+      "file": "RegisterFileAndCellsBrowserTest.py",
+      "kind": "browser",
+      "args": [
+        "{base}"
+      ],
+      "suites": [],
+      "timeout": 1200
+    },
+    {
+      "name": "SRAMDocumentationBrowserTest",
+      "file": "SRAMDocumentationBrowserTest.py",
+      "kind": "browser",
+      "args": [
+        "{base}"
+      ],
+      "suites": [
+        "smoke"
+      ],
+      "timeout": 1200
+    },
+    {
+      "name": "SRAMLayoutBrowserTest",
+      "file": "SRAMLayoutBrowserTest.py",
+      "kind": "browser",
+      "args": [
+        "{simulator}"
+      ],
+      "suites": [
+        "smoke"
+      ],
+      "timeout": 1200
+    },
+    {
+      "name": "SRAMWasmParityTest",
+      "file": "SRAMWasmParityTest.mjs",
+      "kind": "parity",
+      "args": [
+        "{js}",
+        "{wasm}",
+        "{probe}"
+      ],
+      "suites": [],
+      "timeout": 1800
+    },
+    {
+      "name": "VisualizerAutomaticLayoutBrowserTest",
+      "file": "VisualizerAutomaticLayoutBrowserTest.py",
+      "kind": "browser",
+      "args": [
+        "{simulator}"
+      ],
+      "suites": [],
+      "timeout": 1200
+    },
+    {
+      "name": "VisualizerRewireBrowserTest",
+      "file": "VisualizerRewireBrowserTest.py",
+      "kind": "browser",
+      "args": [
+        "{simulator}"
+      ],
+      "suites": [
+        "cleanup"
+      ],
+      "timeout": 1200
+    },
+    {
+      "name": "VisualizerScenarioBrowserTest",
+      "file": "VisualizerScenarioBrowserTest.py",
+      "kind": "browser",
+      "args": [
+        "{simulator}"
+      ],
+      "suites": [
+        "smoke",
+        "cleanup"
+      ],
+      "timeout": 1200
+    },
+    {
+      "name": "VisualizerScenarioWasmParityTest",
+      "file": "VisualizerScenarioWasmParityTest.mjs",
+      "kind": "parity",
+      "args": [
+        "{js}",
+        "{wasm}",
+        "{probe}"
+      ],
+      "suites": [
+        "cleanup"
+      ],
+      "timeout": 1800
+    },
+    {
+      "name": "VisualizerWasmBrowserTest",
+      "file": "VisualizerWasmBrowserTest.py",
+      "kind": "browser",
+      "args": [
+        "{simulator}"
+      ],
+      "suites": [
+        "smoke",
+        "cleanup"
+      ],
+      "timeout": 1200
+    },
+    {
+      "name": "VisualizerWasmRuntimeTest",
+      "file": "VisualizerWasmRuntimeTest.mjs",
+      "kind": "runtime",
+      "args": [
+        "{js}",
+        "{wasm}"
+      ],
+      "suites": [
+        "smoke"
+      ],
+      "timeout": 120
+    },
+    {
+      "name": "ALU8WasmRuntimeSmoke",
+      "file": "VisualizerWasmRuntimeTest.mjs",
+      "kind": "runtime",
+      "args": [
+        "{js}",
+        "{wasm}",
+        "ALU8Test",
+        "alu8"
+      ],
+      "suites": [
+        "smoke"
+      ],
+      "timeout": 120
+    }
+  ]
+}

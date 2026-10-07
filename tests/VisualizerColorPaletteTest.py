@@ -50,7 +50,9 @@ def main() -> None:
     for parent, child in (
         ("FullAdder", "HalfAdder"),
         ("Mux8to1", "Mux2to1"),
-        ("Register32", "FlipFlopCell"),
+        ("Register<32>", "FlipFlopCell"),
+        ("RegisterFile32x32", "RegisterFileStorageBank"),
+        ("RegisterFileStorageBank", "Register<32>"),
         ("FFMemory8", "FlipFlopCell"),
         ("FFStorageBank<8,4>", "FFWord<8>"),
         ("SRAM8", "GatedDLatch"),
@@ -65,7 +67,7 @@ def main() -> None:
         for layout_type in TYPE_LAYOUTS
         if effective_color(layout_type) == list(DEFAULT_COMPONENT_COLOR)
     }
-    assert neutral_types == {"Component", "IOComponent"}
+    assert neutral_types == {"Component", "IOComponent"}, neutral_types
 
     for layout_type in TYPE_LAYOUTS:
         color = effective_color(layout_type)
@@ -86,6 +88,13 @@ def main() -> None:
         for width in (8, 16, 32):
             assert color_for_layout_type(f"{family}{width}") == color_for_layout_type(f"{family}8")
             assert color_for_layout_type(f"{family}{width}") != list(DEFAULT_COMPONENT_COLOR)
+    # Layout-only specializations retain their hardware family's color.
+    for family, suffix in (("Decoder5to32", "<x0-unused>"),
+                           *((f"RV32I{stage}PipelineRegister", "<compact>")
+                             for stage in ("IFID", "IDEX", "EXMEM", "MEMWB")),
+                           ("RV32IMemoryLanes", "DataOnly"),
+                           ("RV32IMemoryAddress", "DataOnly")):
+        assert color_for_layout_type(family + suffix) == color_for_layout_type(family)
     assert color_for_layout_type(
         "RV32IBitPatternMatcher<mask=0xffffffff,value=0x00000073>"
     ) == [20, 184, 166, 190]

@@ -1,21 +1,20 @@
 # Stage-wise non-pipelined RV32I core
 
-Published component references: [§4.3 Single-Cycle Core](../site-docs/rv32i/4.3/index.md).
+Published component references: [§4.4 Single-Cycle Core](../site-docs/rv32i/4.4/index.md).
 
-`RV32ISingleCycleCore` retains its public identity and both universal memory
-ports. Its structural implementation is now six independently selectable
-datapath stages plus `RV32IExecutionControlStatusUnit`. These are logical stages,
-not pipeline registers or six execution cycles. Memory transactions can span
-several clocks. Existing five-stage pipeline components are unchanged.
+`RV32ISingleCycleCore` has six independently selectable datapath stages plus
+`RV32IExecutionControlStatusUnit`. Its native FF memories read asynchronously
+and capture stores with architectural writes on one edge. There are no pending
+transactions or inter-stage registers. The pipeline retains transaction ports.
 
 ## Components and state ownership
 
 | Component | Core child | Structural | Behavioral | State |
 | --- | --- | --- | --- | --- |
-| `RV32ISingleCycleFetchStage` | `FETCH` | Yes | Yes | PC and instruction-request progress/payload |
+| `RV32ISingleCycleFetchStage` | `FETCH` | Yes | Yes | PC only |
 | `RV32ISingleCycleDecodeStage` | `DECODE` | Yes | Yes | The sole architectural register file |
 | `RV32ISingleCycleExecuteStage` | `EXECUTE` | Yes | Yes | None |
-| `RV32ISingleCycleMemoryStage` | `MEMORY` | Yes | Yes | Data-request progress/payload; no memory contents |
+| `RV32ISingleCycleMemoryStage` | `MEMORY` | Yes | Yes | None; no request state or memory contents |
 | `RV32ISingleCycleWritebackStage` | `WRITEBACK` | Yes | Yes | None |
 | `RV32ISingleCycleNextPCStage` | `NEXT_PC` | Yes | Yes | None |
 | `RV32IExecutionControlStatusUnit` | `EXECUTION_STATUS` | Yes | Yes | Halt/trap status and cause |
@@ -31,23 +30,19 @@ gate delays or arbitrary X/Z controls.
 
 ### Fetch
 
-Inputs: `CLK`, `RST`, `ISSUE`, `TAKE`, `PC_WRITE`, `NEXT_PC<32>`, and the
-`IMEM_` universal memory response/ready pins. Outputs: `PC<32>`,
-`PC_PLUS_4<32>`, `INSTRUCTION<32>`, `DONE`, `FAULT`, `PC_MISALIGNED`, and
-the `IMEM_` request/response-ready pins.
+Inputs: CLK, RST, ISSUE, PC_WRITE, NEXT_PC, IMEM_READ_DATA, IMEM_FAULT.
+Outputs: PC, PC_PLUS_4, INSTRUCTION, DONE, FAULT, PC_MISALIGNED,
+IMEM_WORD_ADDR, IMEM_READ_EN. See the published page for widths.
 
-Contains `Register32`, `Adder32`, an alignment checker, and
-`RV32IMemoryRequest`. Reset clears PC and requester state. A rising edge with
-`PC_WRITE` loads `NEXT_PC`; otherwise PC holds. Fetch captures the old PC into
-the requester. Request acceptance is not completion. `DONE` marks a matching
-response; the endpoint holds its instruction until `TAKE` consumes it. `ISSUE`
-only permits a new request and never retracts an already pending request.
+Register32 owns PC; Adder32 computes PC+4. Direct wiring exposes PC/4 as the
+word index and forwards the memory word/fault. DONE is one; ISSUE enables the
+read. There is no TAKE input, request capture, or handshake.
 
 ### Decode
 
 Inputs: `INSTRUCTION<32>`, `CLK`, `RST`, `REGISTER_WRITE`, `WB_VALUE<32>`.
 Outputs: the complete `RV32IDecodeControlUnit` interface plus
-`RS1_VALUE<32>` and `RS2_VALUE<32>`. The existing 4.2 decoder reference defines
+`RS1_VALUE<32>` and `RS2_VALUE<32>`. The existing 4.3 decoder reference defines
 the control encodings.
 
 Contains the decoder and `RegisterFile32x32`. Read addresses and the write
@@ -72,19 +67,14 @@ for SUB/SLT/SLTU, exactly as in ALU32; the decoder selects SUB for branches.
 
 ### Memory
 
-Inputs: `CLK`, `RST`, `ISSUE`, `TAKE`, `MEM_WRITE`, `SIGN_EXTEND`, `ADDR<32>`,
-`WRITE_DATA<32>`, `SIZE<2>`, and `DMEM_` response/ready pins. Outputs:
-`READ_DATA<32>`, `DONE`, `FAULT`, `MISALIGNED`, and `DMEM_` request/response-ready
-pins. SIZE 0/1/2 means byte/halfword/word; 3 is invalid.
+Inputs: ISSUE, COMMIT, MEM_WRITE, SIGN_EXTEND, ADDR, WRITE_DATA, SIZE,
+DMEM_READ_DATA, DMEM_FAULT. Outputs: READ_DATA, DONE, FAULT, MISALIGNED,
+DMEM_WORD_ADDR, DMEM_WRITE_DATA, DMEM_WRITE_MASK, DMEM_READ_EN, DMEM_WE.
 
-Contains `RV32IMemoryLanes`, the alignment checker, and the data requester.
-It formats a word transaction, holds the accepted payload stable, waits for a
-response, and extracts/sign-extends the selected load lanes. Misaligned or
-invalid-size requests retain the existing deliberately invalid bus-address
-encoding, so the endpoint rejects them rather than writing an aligned address.
-The execution controller determines the architectural fault. Memory contents
-and technology controllers remain outside the core. `READ_DATA`/`FAULT` are
-only consumed when `DONE` is asserted; idle bus contents have no ISA meaning.
+RV32IMemoryLanes formats data/masks. Alignment and invalid SIZE suppress WE;
+COMMIT supplies final permission. READ_EN checks active loads and stores before
+commit. DONE is one, FAULT forwards the native access fault, and MISALIGNED
+separately reports bad alignment/size. No clock, reset, or storage exists here.
 
 ### Writeback
 
@@ -101,21 +91,20 @@ checked only for a selected transfer. Fetch owns the physical PC register.
 
 ## Completion and no reading back
 
-Execution status authorizes PC/register writes only for a successful normal
-attempt. Halt/trap attempts consume responses without those writes. Its
-`FETCH_REQUEST_ACTIVE` output permits new fetches only while enabled, out of
-reset, and not halted/trapped. Reset discards requester state; already launched
-device side effects follow the memory protocol and are not rolled back.
+Execution status authorizes PC/register/store writes only for a successful
+normal attempt. Halt/trap attempts set terminal status without ordinary writes.
+FETCH_REQUEST_ACTIVE and MEMORY_REQUEST_ACTIVE act as direct read enables;
+PC_WRITE also supplies Memory.COMMIT. Native FF reset is tied low. No request
+state or in-flight operation needs draining on CPU reset.
 
 All operands, targets, addresses, and link values use pre-completion PC and
-register values. Requester registers are internal protocol state, not temporary
-architectural registers. Stores await acknowledgment rather than reading back
-their written data. There are no interstage latches, forwarding paths, or
+register values. Stores capture with PC/register writes, without acknowledgment
+or reading back their written data. There are no interstage latches, forwarding paths, or
 instruction execution phase registers.
 
 For example, at PC=16 with x5=24, `jalr x5,0(x5)` computes target=24 and link=20
 before either state write. The completion edge writes PC=24 and x5=20. During a
-stalled `lw x1,0(x1)`, x1 continues to hold the address until the load completes.
+`lw x1,0(x1)`, x1 holds the old address throughout settling, then captures the load at the edge.
 
 ## Verification and visualization
 
@@ -137,9 +126,10 @@ in both native and WASM clients. Removed control-flow arithmetic paths map to
 their corresponding new computation; this is a best-effort migration, not a
 claim that old and new internal hierarchies are identical.
 
-### Validation results
+### Historical validation results
 
-Focused validation on 2026-09-19 (not the repository-wide suite):
+The following results describe the earlier transaction-backed version on
+2026-09-19, not current timing or hierarchy counts:
 
 - 35 native CTest cases passed: all six stage contracts, the no-reading-back
   integration test, core/status checks, all 22 single-cycle programs, memory

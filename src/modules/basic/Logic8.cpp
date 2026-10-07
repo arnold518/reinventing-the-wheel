@@ -75,28 +75,6 @@ void buildNot8(IOComponent& component, ComponentBuilder& builder) {
 }
 }
 
-AND8::AND8(std::string name)
-    : IOComponent(std::move(name), [](IOComponent* self) {
-        self->addPin<8>("A", PinType::INPUT);
-        self->addPin<8>("B", PinType::INPUT);
-        self->addPin<8>("OUT", PinType::OUTPUT);
-    }) {}
-
-void AND8::buildInternals(ComponentBuilder& builder) {
-    buildBinaryLogic8<ANDGate>(*this, builder);
-}
-
-OR8::OR8(std::string name)
-    : IOComponent(std::move(name), [](IOComponent* self) {
-        self->addPin<8>("A", PinType::INPUT);
-        self->addPin<8>("B", PinType::INPUT);
-        self->addPin<8>("OUT", PinType::OUTPUT);
-    }) {}
-
-void OR8::buildInternals(ComponentBuilder& builder) {
-    buildBinaryLogic8<ORGate>(*this, builder);
-}
-
 XOR8::XOR8(std::string name)
     : IOComponent(std::move(name), [](IOComponent* self) {
         self->addPin<8>("A", PinType::INPUT);
@@ -116,26 +94,4 @@ NOT8::NOT8(std::string name)
 
 void NOT8::buildInternals(ComponentBuilder& builder) {
     buildNot8(*this, builder);
-}
-
-NAND8::NAND8(std::string name)
-    : IOComponent(std::move(name), [](IOComponent* self) {
-        self->addPin<8>("A", PinType::INPUT);
-        self->addPin<8>("B", PinType::INPUT);
-        self->addPin<8>("OUT", PinType::OUTPUT);
-    }) {}
-
-void NAND8::buildInternals(ComponentBuilder& builder) {
-    buildBinaryLogic8<NANDGate>(*this, builder);
-}
-
-NOR8::NOR8(std::string name)
-    : IOComponent(std::move(name), [](IOComponent* self) {
-        self->addPin<8>("A", PinType::INPUT);
-        self->addPin<8>("B", PinType::INPUT);
-        self->addPin<8>("OUT", PinType::OUTPUT);
-    }) {}
-
-void NOR8::buildInternals(ComponentBuilder& builder) {
-    buildBinaryLogic8<NORGate>(*this, builder);
 }

@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en" class="diagram-standalone">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Select a next PC before updating it</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;600&amp;family=Ubuntu+Mono&amp;display=swap" rel="stylesheet"/>
+<style>body { margin: 24px auto; max-width: 688px; padding: 0 16px; } * { box-sizing: border-box; }</style>
+</head>
+<body>
+<!-- diagram:start -->
+<figure class="circuit-figure" data-diagram="single-cycle-next-pc">
+<div class="diagram-viewport" role="region" aria-label="Select a next PC before updating it" tabindex="0">
+<svg viewBox="0 0 640 288" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="single-cycle-next-pc-title single-cycle-next-pc-desc">
+<title id="single-cycle-next-pc-title">Select a next PC before updating it</title>
+<desc id="single-cycle-next-pc-desc">Next PC selects the fallthrough or branch/jump target using the decoded jump type and branch condition; Fetch owns the PC register.</desc>
+<style>.circuit-figure {
+  --dg-paper: var(--md-default-bg-color, #fff);
+  --dg-ink: var(--md-default-fg-color, #202735);
+  --dg-muted: #566174;
+  --dg-rule: #c8ced8;
+  --dg-surface: #f5f6f9;
+  --dg-accent: #4051b5;
+  --dg-tint: #eef0fc;
+  margin: 1.5rem 0; max-width: 100%; text-align: left;
+  font-family: var(--md-text-font-family, 'Noto Sans', sans-serif);
+}
+[data-md-color-scheme="slate"] .circuit-figure {
+  --dg-muted: #b4bdd0; --dg-rule: #4b5569; --dg-surface: #262c38;
+  --dg-accent: #acb7ff; --dg-tint: #303853;
+}
+@media (prefers-color-scheme: dark) {
+  .diagram-standalone .circuit-figure {
+    --dg-paper: #1e2129; --dg-ink: #e4e7ef; --dg-muted: #b4bdd0;
+    --dg-rule: #4b5569; --dg-surface: #262c38;
+    --dg-accent: #acb7ff; --dg-tint: #303853;
+  }
+  .diagram-standalone body { background: #1e2129; color: #e4e7ef; }
+}
+.circuit-figure .diagram-viewport {
+  max-width: 100%; overflow: auto; overscroll-behavior-x: contain;
+}
+.circuit-figure .diagram-viewport:focus-visible {
+  outline: 2px solid var(--dg-accent); outline-offset: 3px;
+}
+.circuit-figure svg { display: block; width: 640px; min-width: 640px; max-width: none; margin: 0 auto; }
+.circuit-figure figcaption {
+  display: block; margin: .6rem 0 0; max-width: none; text-align: left;
+  color: var(--dg-muted); font-style: normal; font-size: 14px; line-height: 1.6;
+}
+.circuit-figure figcaption strong { color: var(--dg-ink); font-weight: 600; }
+.circuit-figure .dg-zone { fill: var(--dg-paper); stroke: var(--dg-rule); stroke-width: 1.2; }
+.circuit-figure .dg-box { fill: var(--dg-paper); stroke: var(--dg-rule); stroke-width: 1.2; }
+.circuit-figure .dg-store { fill: var(--dg-surface); stroke: var(--dg-rule); stroke-width: 1.2; }
+.circuit-figure .dg-focus { fill: var(--dg-tint); stroke: var(--dg-accent); stroke-width: 1.4; }
+.circuit-figure .dg-label { fill: var(--dg-paper); stroke: none; }
+.circuit-figure text { fill: var(--dg-ink); font-family: var(--md-text-font-family, 'Noto Sans', sans-serif); font-size: 16px; }
+.circuit-figure .dg-name { font-weight: 600; }
+.circuit-figure .dg-small { font-size: 14px; fill: var(--dg-muted); }
+.circuit-figure .dg-code { font-family: var(--md-code-font-family, 'Ubuntu Mono', monospace); font-size: 14px; fill: var(--dg-muted); }
+.circuit-figure .dg-tag { font-size: 12px; font-weight: 600; letter-spacing: .06em; fill: var(--dg-muted); }
+.circuit-figure .dg-edge { fill: none; stroke: var(--dg-muted); stroke-width: 1.5; }
+.circuit-figure .dg-marker { fill: var(--dg-muted); }
+.circuit-figure .dg-marker-accent { fill: var(--dg-accent); }
+.circuit-figure .dg-rule { stroke: var(--dg-rule); stroke-width: 1; }</style>
+<defs>
+<marker id="single-cycle-next-pc-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><path d="M 0 0 L 8 3 L 0 6 Z" class="dg-marker"/></marker>
+<marker id="single-cycle-next-pc-arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><path d="M 0 0 L 8 3 L 0 6 Z" class="dg-marker-accent"/></marker>
+<marker id="single-cycle-next-pc-arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><path d="M 0 0 L 8 3 L 0 6 Z" class="dg-marker"/></marker>
+</defs>
+<rect width="640" height="288" fill="var(--dg-paper)"/>
+<path class="dg-edge" d="M 224 72 L 280 72" marker-end="url(#single-cycle-next-pc-arrow)"/>
+<path class="dg-edge" d="M 224 176 L 280 176" marker-end="url(#single-cycle-next-pc-arrow)"/>
+<path class="dg-edge" d="M 416 124 L 480 124" marker-end="url(#single-cycle-next-pc-arrow)"/>
+<rect data-node="fallthrough" x="40" y="44" width="184" height="56" rx="6" class="dg-box"/>
+<text x="132.0" y="69.0" class="dg-name" text-anchor="middle">PC + 4</text>
+<text x="132.0" y="91.0" class="dg-small" text-anchor="middle">FETCH</text>
+<rect data-node="target" x="40" y="148" width="184" height="56" rx="6" class="dg-box"/>
+<text x="132.0" y="173.0" class="dg-name" text-anchor="middle">Control target</text>
+<text x="132.0" y="195.0" class="dg-small" text-anchor="middle">EXECUTE</text>
+<rect data-node="NEXT_PC" x="280" y="44" width="136" height="160" rx="6" class="dg-focus"/>
+<text x="348" y="116" class="dg-name" text-anchor="middle">NEXT_PC</text>
+<text x="348" y="144" class="dg-small" text-anchor="middle">Select + check</text>
+<rect data-node="PC" x="480" y="92" width="120" height="64" rx="6" class="dg-box"/>
+<text x="540.0" y="121.0" class="dg-name" text-anchor="middle">FETCH</text>
+<text x="540.0" y="143.0" class="dg-small" text-anchor="middle">PC input</text>
+<text x="40" y="256" class="dg-code" text-anchor="start">Selection inputs:  DECODE.JUMP_TYPE  ·  EXECUTE.BRANCH_TAKEN</text>
+</svg>
+</div>
+<figcaption><strong>Choosing a PC is not writing the PC.</strong> JUMP_TYPE and BRANCH_TAKEN control selection. NEXT_PC checks the active target's alignment; FETCH updates PC only when PC_WRITE is asserted.</figcaption>
+</figure>
+<!-- diagram:end -->
+</body>
+</html>

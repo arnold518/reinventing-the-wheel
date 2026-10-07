@@ -380,7 +380,7 @@ ComponentTestSpec constantSpec(
     const auto mask = widthMask(width);
     const auto pattern = 0xdeadbeefULL & mask;
     std::vector<ActionScenario> scenarios;
-    for (const auto [id, value] :
+    for (const auto& [id, value] :
          std::vector<std::pair<std::string, uint64_t>>{
              {"representative", pattern},
              {"zero", 0},

@@ -2,6 +2,9 @@
 
 Last updated: 2026-08-05
 
+Memory contract and compatibility reviewed: 2026-09-23. Historical measurements
+below retain their original context.
+
 ## Result
 
 `RV32IFiveStageCore` is implemented and maintained alongside the timing and
@@ -32,29 +35,32 @@ Inputs:
 | `CLK` | Pipeline clock. |
 | `RST` | Reset architectural and pipeline state. |
 | `ENABLE` | Permit fetch, movement, and retirement. |
-| `IMEM_READ_DATA`, `IMEM_READY`, `IMEM_FAULT` | Instruction-memory response. |
-| `DMEM_READ_DATA`, `DMEM_READY`, `DMEM_FAULT` | Data-memory response. |
+| `IMEM_REQ_READY`, `DMEM_REQ_READY` | Endpoint can accept the request at the rising edge. |
+| `IMEM_RSP_VALID`, `DMEM_RSP_VALID` | Response is available; it may arrive in the request cycle or later. |
+| `IMEM_RSP_READ_DATA`, `DMEM_RSP_READ_DATA` | 32-bit instruction/data response. |
+| `IMEM_RSP_STATUS`, `DMEM_RSP_STATUS` | Three-bit status; zero success, nonzero access error. |
 
 Memory request outputs:
 
 | Signal | Meaning |
 | --- | --- |
-| `IMEM_ADDR`, `IMEM_READ_EN` | Current instruction fetch request. |
-| `DMEM_ADDR`, `DMEM_WRITE_DATA` | Current data address and store value. |
-| `DMEM_READ_EN`, `DMEM_WRITE_EN` | Load/store request enables. |
-| `DMEM_SIZE`, `DMEM_SIGN_EXTEND` | Byte/halfword/word width and load extension. |
+| `IMEM_REQ_VALID`, `DMEM_REQ_VALID` | Request is present; held with its payload until accepted. |
+| `IMEM_REQ_ADDR`, `DMEM_REQ_ADDR` | 32-bit aligned byte addresses. |
+| `IMEM_REQ_OP`, `DMEM_REQ_OP` | Three-bit operation: instruction READ=0; data READ=0 or WRITE=1. |
+| `IMEM_REQ_WRITE_DATA`, `DMEM_REQ_WRITE_DATA` | 32-bit positioned store data; instruction port zero. |
+| `IMEM_REQ_WRITE_MASK`, `DMEM_REQ_WRITE_MASK` | Four store-byte enables; instruction port zero. |
+| `IMEM_RSP_READY`, `DMEM_RSP_READY` | Core can accept the response. |
+
+Byte/halfword selection and load sign extension remain inside the core's memory
+lane logic; they are not separate endpoint pins.
 
 Architectural and retirement outputs:
 
 | Signal | Meaning |
 | --- | --- |
-| `PC` | PC of the most recently retired architectural instruction. |
 | `FETCH_PC` | Current speculative/sequential fetch PC. |
 | `HALTED`, `TRAPPED`, `TRAP_CAUSE` | Terminal architectural state. |
 | `INSTRUCTION_ATTEMPT`, `COMMIT_VALID` | Attempt/retirement observations. |
-| `RETIRED_COUNT` | Number of retired instructions. |
-| `RETIRED_PC`, `RETIRED_INSTRUCTION` | Identity of the retiring instruction. |
-| `RETIRED_MEM_*` | Logical memory action associated with that retirement. |
 
 Pipeline outputs:
 
@@ -69,26 +75,63 @@ Pipeline outputs:
 These are ordinary simulator pins. Tests and the HTML visualizer observe the
 same history; no testing-only mutation path is required.
 
+## Memory integration
+
+This is the transaction-capable advanced pipeline, not
+[`RV32IBaselinePipelineCore`](../site-docs/rv32i/4.5/core.md).
+The default system uses separate zero-wait `MemoryEndpoint<ff,32>` instances for
+instructions and data, each 65,536 words (256 KiB). Instruction and data memories
+can be configured independently through `rv32i::MemoryConfiguration`.
+
+| Memory component | Suitable use |
+| --- | --- |
+| `MemoryEndpoint<ff,32>` | Default instruction and read/write data memory; no memory wait cycles |
+| `MemoryEndpoint<sram,32>` | Instruction and read/write data memory through the current delayed controller |
+| `MemoryEndpoint<dram,32>` | Instruction and read/write data memory with DRAM commands, timing, and refresh |
+| `MemoryEndpoint<rom,32>` | Provisioned instruction memory or read-only data; stores return an access error |
+| `MemoryEndpoint<nor-flash,32>` | Provisioned instruction memory or read-only data; ordinary RV32I stores do not program or erase flash |
+
+Each endpoint can be fused behavioral or a visible matching controller plus
+native device. Use a scalable `MemoryContainer<technology,32>` for large images;
+small cell-expanded devices expose the lower-level circuit. A native container
+alone does not have the CPU's universal transaction pins. Structural expansion
+limits and image-provisioning capabilities still apply.
+
+The requesters retain an unaccepted request, track at most one outstanding
+operation per port, and associate the response with that operation. Pipeline
+control holds the affected progress while memory is pending. Redirect handling
+drains obsolete fetch responses without treating them as new instructions;
+waiting does not replay an accepted store. Zero-wait FF responses can complete
+without an added memory cycle, while delayed endpoints insert waits.
+
+ROM and flash compatibility is also an operation constraint, not just a timing
+constraint. The core emits READ/WRITE, not the flash endpoint's PROGRAM/ERASE
+operations. Thus flash is not a writable RAM substitute. Caches are not required
+for any of these connections and are outside the current configuration.
+
+The [cross-core compatibility table](rv32i-memory-integration.md#memory-compatibility-by-core)
+contrasts this behavior with the single-cycle and baseline cores: they require
+zero-wait FF endpoints and cannot automatically stall for a delayed replacement.
+
 ## Structural Shape
 
-The structural core wires ten peer components:
+The structural core wires the pipeline below plus nine transaction-memory interface helpers (20 direct children in total):
 
 ```text
 FETCH -> IF_ID -> DECODE -> ID_EX -> EXECUTE
       -> EX_MEM -> MEMORY -> MEM_WB -> WRITEBACK
 
-                         COORDINATOR
+                    COORDINATOR <- EXECUTION_STATUS
 ```
 
 `FETCH`, `DECODE`, `EXECUTE`, `MEMORY`, and `WRITEBACK` are semantic component
 families, not visual grouping placeholders. Their structural implementations
 contain the detailed PC, register-file, forwarding, ALU, alignment, memory,
-retirement, and architectural-state circuits. Their behavioral
+retirement circuits. Sticky halt/trap state is separate; completed PC is host observation. Their behavioral
 implementations expose the same pins as compact answer sheets.
 
 The old prototype placed 144 implementation details directly under the core.
-The final default core has ten direct children (11 components including the
-root), so its overview shows pipeline architecture before gate detail.
+The current core groups stage logic behind named components; transaction helpers and execution status occupy separate control/interface rows.
 
 The profile is recursive. Selecting the core as structural exposes this
 wiring. Each child family then independently follows the same profile and can
@@ -164,8 +207,7 @@ present. Its dedicated test checks that priority independently of the core.
 Stores themselves use the MEM-stage port. The coordinator suppresses a younger
 MEM request when an older WB instruction is becoming terminal. Misaligned
 requests are also suppressed, and the memory contract rejects faulting writes.
-The stable `RETIRED_MEM_*` pins describe the store later, when it retires; they
-are observation state, not a second data-memory path.
+A read-only `RV32IRetirementView` inspects the existing MEM/WB packet before retirement. Counters and saved traces live in the test/benchmark harness, not in Writeback hardware.
 
 ## Tests
 
@@ -207,11 +249,15 @@ For every program:
 5. hard-coded final registers, memory writes, halt, and trap expectations are
    checked.
 
-Per-retirement store comparison uses `RETIRED_MEM_*`. This matters because a
+Per-retirement store comparison uses the pre-edge `RV32IRetirementView` snapshot. This matters because a
 real five-stage store changes physical memory in MEM, one cycle before that
 instruction reaches WB. The test still compares the complete physical memory
 write history at program completion, so the trace cannot hide a missing or
 extra write.
+
+## Minimal Writeback update
+
+Both pipeline cores now share a Writeback stage without retirement-count or trace registers. Writeback now contains only combinational result selection and commit qualification: zero storage bits and no CLK/RST. A separate RV32IPipelineExecutionStatus stores six halt/trap bits. Completed PC is host-side RV32IPipelineObserver state; RV32IPipelineStateView composes it with actual register/status values. The core no longer exposes a committed PC pin. Public `PC` and `RETIRED_*` pins were removed; tests and benchmarks observe COMMIT_VALID and the existing MEM/WB packet before the edge instead. Historical resource counts below describe their original snapshots, not this updated circuit.
 
 ## Educational Datapath Resource Cleanup
 

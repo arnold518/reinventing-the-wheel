@@ -6,7 +6,7 @@ import tempfile
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / "visualizer-v2"))
+sys.path.append(str(ROOT / "visualizer-v2"))
 import server
 import sram_layout
 import circuit_backend as backend

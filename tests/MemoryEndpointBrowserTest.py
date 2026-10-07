@@ -18,21 +18,24 @@ def verify_endpoint_layout(page):
     page.wait_for_function(settled)
     fields = page.evaluate("""id => Object.fromEntries(app.components.get(id).childIds
         .map(id=>app.components.get(id)).map(c=>[c.name,{id:c.id,rect:c.rect}]))""", port_id)
-    mask, address = fields["REQUEST_MASK"]["rect"], fields["REQUEST_ADDRESS"]["rect"]
-    assert mask["w"] * mask["h"] < address["w"] * address["h"]
-    ordered = [fields[n]["rect"]["x"] for n in ("PHASE_0", "NOT_0", "IDLE", "AVAILABLE", "READY", "ACCEPT")]
+    ordered = [fields[n]["rect"]["x"] for n in ("REQUEST_OP", "REQUEST_ADDR", "REQUEST_DATA", "REQUEST_MASK", "RESPONSE")]
     assert ordered == sorted(ordered) and len(set(ordered)) == len(ordered)
-    page.evaluate("id=>smoothlyFocusComponent(id)", fields["REQUEST_ADDRESS"]["id"])
+    assert "PENDING" in fields and "PHASE_0" not in fields
+    response = fields["RESPONSE"]["id"]
+    page.evaluate("id=>smoothlyFocusComponent(id)", response)
+    page.wait_for_function(settled)
+    held = response+".HELD_DATA"
+    page.evaluate("id=>smoothlyFocusComponent(id)", held)
     page.wait_for_function(settled)
     cells = page.evaluate("""id=>app.components.get(id).childIds.map(id=>app.components.get(id))
         .filter(c=>c.name.startsWith('BIT_')).sort((a,b)=>Number(a.name.slice(4))-Number(b.name.slice(4)))
-        .map(c=>c.rect)""", fields["REQUEST_ADDRESS"]["id"])
-    assert len(cells) == 32
-    rows = [cells[i:i+8] for i in range(0,32,8)]
+        .map(c=>c.rect)""", held)
+    assert len(cells) in (8,16,32)
+    rows = [cells[i:i+8] for i in range(0,len(cells),8)]
     for row in rows:
         assert max(c["y"] for c in row) - min(c["y"] for c in row) < 1e-6
         assert all(a["x"]+a["w"] < b["x"] for a,b in zip(row,row[1:]))
-    for top, bottom in zip(rows, rows[1:]):
+    for top,bottom in zip(rows,rows[1:]):
         for a,b in zip(top,bottom):
             assert abs(a["x"]-b["x"]) < 1e-6 and a["y"]+a["h"] < b["y"]
     bounds = page.evaluate("""()=>[...app.components.values()]
@@ -109,15 +112,24 @@ with sync_playwright() as p:
             page.locator('.explorer-row.selected .explorer-arrow').click()
             page.locator('#apply-profile').click()
             page.wait_for_function("app.components.size===1 && app.components.get(app.rootId).fidelity==='behavioral' && document.querySelector('#loading').classList.contains('hidden')")
-        if scenario=="scalable-memory-container" or scenario.startswith("memory-endpoint-") and scenario!="memory-endpoint-relay":
+        if scenario in ("scalable-memory-container", "native-memory-container") or scenario.startswith("memory-endpoint-") and scenario!="memory-endpoint-relay":
             info=page.evaluate("""async()=>{await setStateIndex(app.timestamps.length-1);return app.componentStates.get(app.rootId);}""")
             assert info and info["supported"] and len(info["windowWords"])==4
-            assert "RSP_STATUS" in info["ports"]
+            assert ("FAULT" if scenario == "native-memory-container" else "RSP_STATUS") in info["ports"]
             labels=page.evaluate("""async()=>{const labels=[],original=ctx.fillText;
                 ctx.fillText=function(text,...args){labels.push(String(text));return original.call(this,text,...args)};
                 try{requestRender();await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)))}
                 finally{ctx.fillText=original}return labels;}""")
-            assert any(s.startswith("SNAPSHOT") for s in labels),(scenario,labels)
+            if scenario == "native-memory-container":
+                # A direct FF device has a live word-address port.
+                assert "REQ_VALID" not in info["ports"]
+                assert info["activeAddress"] is not None
+                assert f"ADDR {info['activeAddress']:08X}" in labels,(scenario,labels)
+            else:
+                style=page.evaluate("s=>CircuitMemoryView.transactionStyle(s)",info)
+                assert style and style["mode"] in labels,(scenario,info,labels)
+                if info["windowActive"]:
+                    assert f"ADDR {info['activeAddress']:08X}" in labels,(scenario,labels)
             if screens: page.screenshot(path=str(screens/f"{scenario}-compact.png"))
         assert not errors,(scenario,errors)
         assert not api,(scenario,api)

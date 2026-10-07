@@ -85,7 +85,7 @@ The layered layout calculation also no longer forces a child width larger than t
 The original decoder used 40 independent full-instruction matcher
 configurations and contained 2,514 components. Its factored replacement uses
 22 shared opcode/function/exact predicates and contained 1,964 components at
-the time of these measurements. The later 4.2 hierarchy refactor has 2,064
+the time of these measurements. The later 4.3 hierarchy refactor has 2,064
 components including routing/group boundaries; the historical timing numbers
 below are not measurements of that refactor.
 Defaults were regenerated for the new predicates, recognition terms, and

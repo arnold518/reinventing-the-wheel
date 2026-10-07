@@ -5,6 +5,8 @@
 #include "modules/basic/Decoder.hpp"
 #include "modules/basic/Mux.hpp"
 #include "modules/memory/FFStorageBank.hpp"
+#include "modules/memory/Register.hpp"
+#include "modules/memory/MemoryStructuralBuilder.hpp"
 #include "modules/memory/RegisterFile32x32Direct.hpp"
 #include "modules/utility/Constant.hpp"
 #include <memory>
@@ -30,6 +32,34 @@ void defineRegisterFile32x32Pins(IOComponent* self) {
     self->addPin<32>("RS1_DATA", PinType::OUTPUT);
     self->addPin<32>("RS2_DATA", PinType::OUTPUT);
 }
+
+class RegisterFileStorageBank : public IOComponent {
+public:
+    explicit RegisterFileStorageBank(std::string name)
+        : IOComponent(std::move(name), [](IOComponent* self) {
+            self->addPin<32>("WRITE_DATA", PinType::INPUT);
+            self->addPin("CLK", PinType::INPUT);
+            self->addPin("RST", PinType::INPUT);
+            for (size_t word = 0; word < RegisterCount - 1; ++word) {
+                self->addPin("WRITE_" + std::to_string(word), PinType::INPUT);
+                self->addPin<32>("WORD_" + std::to_string(word), PinType::OUTPUT);
+            }
+        }) {}
+    const char* getTypeName() const override { return "RegisterFileStorageBank"; }
+    void buildInternals(ComponentBuilder& builder) override {
+        circuit::memory_detail::StructuralWiring wires(builder);
+        for (size_t word = 0; word < RegisterCount - 1; ++word) {
+            const auto name = "WORD_" + std::to_string(word);
+            auto storage = builder.add(circuit::families::registerWord(32), name);
+            wires.connect(getInputPin<32>("WRITE_DATA"), storage->getInputPin<32>("D"));
+            for (const auto* pin : {"CLK", "RST"})
+                wires.connect(getInputPin(pin), storage->getInputPin(pin));
+            wires.connect(getInputPin("WRITE_" + std::to_string(word)), storage->getInputPin("WE"));
+            wires.connect(storage->getOutputPin<32>("Q"), getOutputPin<32>(name));
+        }
+        wires.finish();
+    }
+};
 }
 
 namespace circuit::families {
@@ -54,18 +84,14 @@ void RegisterFile32x32::buildInternals(ComponentBuilder& builder) {
     builder.addNewComponent<ConstantValue<32>>("X0_ZERO", 0);
     builder.addNewComponent<Mux32to1_32bit>("RS1_MUX");
     builder.addNewComponent<Mux32to1_32bit>("RS2_MUX");
-    builder.addNewComponent<Decoder5to32>("RD_DECODER");
+    builder.addNewComponent<Decoder5to32>("RD_DECODER",true);
 
     // x0 has no storage. Physical word n holds architectural register x(n+1).
     // Keep decoding/read selection outside the reusable parallel-output FF bank.
-    const std::shared_ptr<IOComponent> storage = builder.getBuildContext()
-        ? builder.add(circuit::families::FFStorageBank<32>(), "STORAGE", {{"depth_words", "31"}})
-        : builder.addNewComponent<FFStorageBank<32>>("STORAGE", RegisterCount - 1);
-    auto mask = builder.addNewComponent<ConstantValue<4>>("FULL_WRITE_MASK", 15);
+    const std::shared_ptr<IOComponent> storage = builder.addNewComponent<RegisterFileStorageBank>("STORAGE");
     circuit::memory_detail::StructuralWiring storage_wires(builder);
     for (const auto* pin : {"WRITE_DATA", "CLK", "RST"})
         storage_wires.connect(getInputPinDynamic(pin), storage->getInputPinDynamic(pin));
-    storage_wires.connect(mask->getOutputPin<4>("OUT"), storage->getInputPin<4>("WRITE_MASK"));
     storage_wires.finish();
 
     builder.addNewWire<AddressWidth>(

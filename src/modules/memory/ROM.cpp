@@ -123,15 +123,18 @@ class ROMBankDirect : public Primitive {
     ROMDeviceConfig config_;
     std::vector<uint8_t> image_;
 };
-class ROMDirect : public Primitive, public MemoryStateView {
+class ROMDirect : public Primitive, public MemoryDeviceStorage {
   public:
+    const char* getTypeName() const override { return memoryDisplayType(Primitive::getTypeName()); }
     ROMDirect(std::string n, size_t width, ROMDeviceConfig c)
         : Primitive(std::move(n), "ROM<" + std::to_string(width) + ">",
                     [width](IOComponent *s) { devicePins(s, width); }),
-          width_(width), config_(checked(c, width)), storage_(c.depth_words, width, L, c.record_history) {
+          MemoryDeviceStorage(c.depth_words, width, L, c.record_history, c.storage_limits),
+          width_(width), config_(checked(c, width)) {
         if (!c.image_hex.empty()) {
-            auto image = c.image(width);
-            image.resize(c.image_hex.size() / 2);
+            std::vector<uint8_t> image(c.image_hex.size() / 2);
+            for (size_t i = 0; i < image.size(); ++i)
+                image[i] = (hex(c.image_hex[2 * i]) << 4) | hex(c.image_hex[2 * i + 1]);
             storage_.loadBytes(0, image);
         }
     }
@@ -140,6 +143,7 @@ class ROMDirect : public Primitive, public MemoryStateView {
         throw std::logic_error("ROM contents are immutable; supply image_hex at construction");
     }
     void evaluate(size_t t, Simulator &sim) override {
+        started_ = true;
         auto ce = getInputValue("CE_N"), oe = getInputValue("OE_N");
         auto a = read("WORD_ADDR");
         Bits out(width_, Z);
@@ -157,7 +161,6 @@ class ROMDirect : public Primitive, public MemoryStateView {
     }
     size_t width_;
     ROMDeviceConfig config_;
-    MemoryStorage storage_;
 };
 } // namespace
 void ROMDeviceConfig::validate(size_t width, bool expanded) const {
@@ -175,20 +178,23 @@ std::vector<uint8_t> ROMDeviceConfig::image(size_t width) const {
     return out;
 }
 ROMDeviceConfig romConfigFromParameters(const ParameterMap &p) {
-    keys(p, {"depth_words", "words_per_row", "image_hex", "record_history"});
+    keys(p, {"depth_words", "words_per_row", "image_hex", "record_history", "paged", "max_resident_bytes", "max_history_bytes"});
     ROMDeviceConfig c;
     c.depth_words = parameter(p, "depth_words", 4);
     c.words_per_row = parameter(p, "words_per_row", 2);
     if (auto it = p.find("image_hex"); it != p.end())
         c.image_hex = it->second;
     c.record_history = historyParameter(p);
+    c.storage_limits = storageLimits(p);
     return c;
 }
 ParameterMap romParameters(const ROMDeviceConfig &c) {
-    return {{"record_history", c.record_history ? "1" : "0"},
+    auto p = storageParameters(c.storage_limits);
+    p.insert({{"record_history", c.record_history ? "1" : "0"},
             {"depth_words", std::to_string(c.depth_words)},
             {"words_per_row", std::to_string(c.words_per_row)},
-            {"image_hex", c.image_hex}};
+            {"image_hex", c.image_hex}});
+    return p;
 }
 ROMCell::ROMCell(std::string n, bool v) : IOComponent(std::move(n), cellPins), value_(v) {
 }

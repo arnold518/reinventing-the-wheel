@@ -11,6 +11,10 @@
 #include <utility>
 
 namespace {
+rv32i::MemoryConfiguration defaultMemory(const circuit::ComponentFamily& family) {
+    return (family.id() == "rv32i.core.educational-single-cycle" || family.id() == "rv32i.core.baseline-pipeline")
+        ? rv32i::zeroWaitMemoryConfiguration() : rv32i::MemoryConfiguration{};
+}
 void initializePins(IOComponent* self) {
     self->addPin("RST", PinType::INPUT);
     self->addPin("ENABLE", PinType::INPUT);
@@ -39,14 +43,20 @@ void requireBuilt(bool condition, const char* operation) {
 }
 } // namespace
 
+RV32IProgramRoot::RV32IProgramRoot(std::string name,
+    const circuit::ComponentFamily& core_family, size_t clock_half_period, circuit::ParameterMap core_parameters)
+    : RV32IProgramRoot(std::move(name), core_family, clock_half_period,
+                      defaultMemory(core_family), defaultMemory(core_family), std::move(core_parameters)) {}
+
 RV32IProgramRoot::RV32IProgramRoot(
     std::string name,
     const circuit::ComponentFamily& core_family,
     size_t clock_half_period,
     rv32i::MemoryConfiguration instructions,
-    rv32i::MemoryConfiguration data)
+    rv32i::MemoryConfiguration data, circuit::ParameterMap core_parameters)
     : IOComponent(std::move(name), initializePins),
       core_family_(core_family),
+      core_parameters_(std::move(core_parameters)),
       clock_half_period_(clock_half_period),
       instruction_config_(std::move(instructions)), data_config_(std::move(data)) {
     if (clock_half_period_ == 0) {
@@ -58,10 +68,17 @@ RV32IProgramRoot::RV32IProgramRoot(
 void RV32IProgramRoot::buildInternals(ComponentBuilder& builder) {
     clock_ = builder.addNewComponent<ClockGenerator>(
         "CLOCK", clock_half_period_);
-    core_ = builder.add(core_family_, "CORE");
+    core_ = builder.add(core_family_, "CORE", core_parameters_);
+    const bool fixed_cycle=core_family_.id()=="rv32i.core.educational-single-cycle" || core_family_.id()=="rv32i.core.baseline-pipeline";
+    if(fixed_cycle&&(instruction_config_.technology!=circuit::memory::Technology::FF || data_config_.technology!=circuit::memory::Technology::FF))
+        throw std::invalid_argument("Fixed-cycle cores require zero-wait FF endpoints");
     instruction_memory_ = rv32i::buildMemory(builder, *this, "INSTRUCTION_MEMORY", instruction_config_);
     data_memory_ = rv32i::buildMemory(builder, *this, "DATA_MEMORY", data_config_);
     state_view_ = std::dynamic_pointer_cast<RV32IStateView>(core_);
+    if (auto pipeline = std::dynamic_pointer_cast<RV32IPipelineStateView>(core_)) {
+        pipeline_observer_ = std::make_shared<RV32IPipelineObserver>(pipeline);
+        state_view_ = pipeline_observer_;
+    }
 
     requireBuilt(clock_ != nullptr, "clock");
     requireBuilt(core_ != nullptr, "core");
@@ -77,10 +94,11 @@ void RV32IProgramRoot::buildInternals(ComponentBuilder& builder) {
         getInputPin("ENABLE"),
         {core_->getInputPin("ENABLE")});
 
-    builder.addNewWire<32>(
-        "PC",
-        core_->getOutputPin<32>("PC"),
-        {getOutputPin<32>("PC")});
+    if (pipeline_observer_) {
+        observed_pc_wire_ = builder.addNewWire<32>("OBSERVED_PC", nullptr, {getOutputPin<32>("PC")});
+    } else {
+        builder.addNewWire<32>("PC", core_->getOutputPin<32>("PC"), {getOutputPin<32>("PC")});
+    }
     builder.addNewWire(
         "HALTED",
         core_->getOutputPin("HALTED"),
@@ -96,8 +114,23 @@ void RV32IProgramRoot::buildInternals(ComponentBuilder& builder) {
 
 }
 
-void RV32IProgramRoot::initializeFixedInputs(Simulator&, size_t) const {
-    // Constants now belong to the visible CPU memory adapters' wiring.
+void RV32IProgramRoot::initializeFixedInputs(Simulator& simulator, size_t time) const {
+    if (pipeline_observer_) {
+        pipeline_observer_->reset();
+        drive(simulator, time, observed_pc_wire_, 0);
+    }
+}
+
+void RV32IProgramRoot::observeRetirementBeforeEdge(Simulator& simulator, size_t edge_time) {
+    if (!pipeline_observer_) return;
+    if (getInputPin("RST")->getValue() == LogicValue::HIGH) {
+        pipeline_observer_->reset();
+    } else if (core_->getOutputPin("COMMIT_VALID")->getValue() == LogicValue::HIGH) {
+        const auto view = std::dynamic_pointer_cast<RV32IRetirementView>(core_);
+        if (!view) throw std::logic_error("Missing pipeline retirement view");
+        pipeline_observer_->retire(view->pendingRetirement());
+    }
+    drive(simulator, edge_time, observed_pc_wire_, pipeline_observer_->pc());
 }
 
 void RV32IProgramRoot::startClock(

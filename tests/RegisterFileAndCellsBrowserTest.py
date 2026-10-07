@@ -1,6 +1,5 @@
 """Focused static/WASM checks. One browser session at a time to bound memory."""
 from pathlib import Path
-import json
 import shutil
 import sys
 from urllib.parse import urljoin
@@ -41,11 +40,11 @@ with sync_playwright() as p:
     # Verify rendered reference table independently of loading a simulator.
     context=browser.new_context(java_script_enabled=False,viewport={"width":1440,"height":1000})
     page=context.new_page()
-    assert page.goto(urljoin(base,"rv32i/4.2/"),wait_until="domcontentloaded").ok
-    assert "4.2. RV32I Building Blocks" in page.locator("h1").inner_text()
-    assert page.goto(urljoin(base,"rv32i/4.2/register-file/"),wait_until="domcontentloaded").ok
-    assert "4.2.2. Register File" in page.locator("h1").inner_text()
-    assert page.locator('.md-nav--primary a.md-nav__link').filter(has_text="4.2.2. Register File").count()==1
+    assert page.goto(urljoin(base,"rv32i/4.3/"),wait_until="domcontentloaded").ok
+    assert "4.3. RV32I Building Blocks" in page.locator("h1").inner_text()
+    assert page.goto(urljoin(base,"rv32i/4.3/register-file/"),wait_until="domcontentloaded").ok
+    assert "4.3.2. Register File" in page.locator("h1").inner_text()
+    assert page.locator('.md-nav--primary a.md-nav__link').filter(has_text="4.3.2. Register File").count()==1
     assert page.locator('.md-nav--primary a.md-nav__link').filter(has_text="3.4. Register File").count()==0
     simulator_url=page.locator(".simulator-embed iframe").evaluate("iframe=>iframe.src")
     assert simulator_url==urljoin(base,"simulator/?scenario=rv32i-register-file&embed=1")
@@ -56,7 +55,7 @@ with sync_playwright() as p:
         page.set_viewport_size({"width":width,"height":1000})
         assert page.evaluate("document.documentElement.scrollWidth<=innerWidth+1"),width
     context.close()
-    for scenario,behavioral in (("rv32i-register-file",False),("flip-flop-cell",True),("sram-cell",True),
+    for scenario,behavioral in (("register32",False),("rv32i-register-file",False),("flip-flop-cell",True),("sram-cell",True),
                                ("dram-cell",False),("rom-cell",True),("nor-flash-cell",False)):
         context=browser.new_context(viewport={"width":1600,"height":1000})
         page=context.new_page();page.set_default_timeout(90000)
@@ -71,10 +70,19 @@ with sync_playwright() as p:
                 exactOverrides:{[app.rootId]:'behavioral'},pendingFocusId:app.rootId});}""")
             assert page.evaluate("app.components.get(app.rootId).fidelity")=="behavioral"
         focus(page,root)
-        if scenario=="rv32i-register-file":
+        if scenario=="register32":
+            word=geometry(page,root)
+            assert set(word)=={f"BIT_{bit}" for bit in range(32)} | {"INPUT_BITS","OUTPUT_BITS"}
+            for row in range(4):
+                for bit in range(row*8+1,row*8+8):
+                    assert word[f"BIT_{bit}"]["x"]>word[f"BIT_{bit-1}"]["x"]
+                    assert abs(word[f"BIT_{bit}"]["y"]-word[f"BIT_{bit-1}"]["y"])<.01
+            if screens: page.screenshot(path=str(screens/"register32.png"))
+            print("register32: four numeric rows of eight FF cells passed",flush=True)
+        elif scenario=="rv32i-register-file":
             assert page.evaluate("app.checkpoints.map(c=>({label:c.label,time:c.time,index:c.index}))")==rows
             top=geometry(page,root)
-            assert set(top)=={"RD_DECODER","FULL_WRITE_MASK","STORAGE","X0_ZERO","RS1_MUX","RS2_MUX"}
+            assert set(top)=={"RD_DECODER","STORAGE","X0_ZERO","RS1_MUX","RS2_MUX"}
             assert top["RD_DECODER"]["x"] < top["STORAGE"]["x"] < top["RS1_MUX"]["x"] < top["RS2_MUX"]["x"]
             assert top["STORAGE"]["w"] / page.evaluate("app.components.get(app.rootId).rect.w") >= .25
             if screens: page.screenshot(path=str(screens/"register-file.png"))
@@ -87,7 +95,7 @@ with sync_playwright() as p:
                 else: assert bank[f"WORD_{i}"]["y"]>bank[f"WORD_{i-1}"]["y"]
             if screens: page.screenshot(path=str(screens/"register-bank.png"))
             word=geometry(page,root+".STORAGE.WORD_0")
-            assert sum(name.startswith("CELL_") for name in word)==32
+            assert set(word)=={f"BIT_{bit}" for bit in range(32)} | {"INPUT_BITS","OUTPUT_BITS"}
             if screens: page.screenshot(path=str(screens/"register-word.png"))
             print(f"register file: {len(rows)} documented checkpoints, bank and word geometry passed",flush=True)
         else:

@@ -1,11 +1,26 @@
 #pragma once
 #include "modules/memory/MemoryProtocol.hpp"
+#include "modules/memory/Register.hpp"
+#include "components/capabilities/MemoryStateView.hpp"
+#include "components/selection/ComponentFamily.hpp"
 void defineMemoryTransactionPortPins(IOComponent*, size_t width);
+void defineMemoryResponseBufferPins(IOComponent*, size_t width);
 
-// Shared FF-based payload register, also used for CPU request metadata.
-class MemoryPayloadRegister : public IOComponent {
+namespace circuit::families {
+extern const ComponentFamily ClockedStateBit;
+}
+
+class ClockedStateBit : public IOComponent {
 public:
-    MemoryPayloadRegister(std::string, size_t width);
+    explicit ClockedStateBit(std::string name);
+    const char* getTypeName() const override { return "ClockedStateBit"; }
+    void buildInternals(ComponentBuilder&) override;
+};
+
+// One-entry fall-through response storage. Empty buffers do not add a cycle.
+class MemoryResponseBuffer : public IOComponent {
+public:
+    MemoryResponseBuffer(std::string, size_t width);
     const char* getTypeName() const override { return type_.c_str(); }
     void buildInternals(ComponentBuilder&) override;
 private:
@@ -27,8 +42,9 @@ private:
     std::string type_;
 };
 
-// A structural protocol frontend shared by all controllers. BACK_READY/DONE connect
-// to the native sequencer; request and response payloads are real FF registers.
+// Structural frontend for delayed controllers. START captures live request fields
+// in the native sequencer; FINISH releases its completion. Responses fall through
+// when possible and are retained in FFs under backpressure.
 class MemoryTransactionPort : public IOComponent {
 public:
     MemoryTransactionPort(std::string, size_t width);
@@ -40,13 +56,20 @@ private:
 };
 
 // Convenient assembly: controller plus separately visible native memory.
-class MemoryEndpoint : public IOComponent {
+class MemoryEndpoint : public IOComponent, public MemoryStateView {
 public:
     MemoryEndpoint(std::string, size_t width, circuit::memory::Technology,
                    circuit::memory::EndpointConfig = {});
     const char* getTypeName() const override { return type_.c_str(); }
     void buildInternals(ComponentBuilder&) override;
+    const MemoryStorage& memoryStorage() const override;
+    void loadMemoryBytes(uint32_t, const std::vector<uint8_t>&) override;
+    void initializeMemoryBytes(uint32_t, const std::vector<uint8_t>&) override;
+    void clearMemoryImage() override;
+    void setMemoryHistoryRecordingEnabled(bool) override;
 private:
+    std::shared_ptr<MemoryStateView> storage_;
+    const std::shared_ptr<MemoryStateView>& storageView() const;
     size_t width_;
     circuit::memory::Technology technology_;
     circuit::memory::EndpointConfig config_;

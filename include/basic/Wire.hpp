@@ -32,7 +32,7 @@ public:
     LogicValue getSingleValue() const override;
     void setSingleValue(LogicValue new_value) override;
 
-    void propagateChange(Simulator& simulator, size_t propagation_time);
+    void propagateChange(Simulator& simulator, size_t propagation_time) override;
 };
 
 #include "basic/Wire.tpp"

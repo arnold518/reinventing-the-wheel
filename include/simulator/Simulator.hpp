@@ -57,6 +57,10 @@ public:
     std::optional<size_t> nextEventTime() const;
     void setCircuitStateAtTime(size_t target_time);
     std::vector<size_t> getUniqueTimestamps() const;
+    // Read-only observation. Inputs use their driving wire; primitive outputs
+    // can have pin-only history. Neither method scrubs or advances the circuit.
+    const PinHistory& signalHistory(const std::shared_ptr<PinBase>& pin) const;
+    size_t historyRevision() const noexcept { return history_revision_; }
     void recordChange(size_t time, std::shared_ptr<WireBase> wire, const std::vector<LogicValue>& value);
     void recordChange(size_t time, std::shared_ptr<Wire<>> wire, LogicValue value);
     void recordPinChange(size_t time, std::shared_ptr<PinBase> pin, const std::vector<LogicValue>& value);
@@ -77,5 +81,6 @@ private:
     PinHistoryLog _pin_log;
     PinHistoryLog _headless_pin_state;
     bool history_recording_enabled_ = true;
+    size_t history_revision_ = 0;
     SimulatorPerformanceCounters performance_counters_;
 };

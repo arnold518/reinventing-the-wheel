@@ -586,10 +586,12 @@ void ComponentScenarioTest::setupCircuit() {
         spec_.contract_id,
         parameters);
     if (!root_decision.fidelity) {
+        auto preferred = builtinComponentCatalog().contract(spec_.contract_id).preferred_fidelity;
+        if (std::find(fidelities.begin(), fidelities.end(), preferred) == fidelities.end()) preferred = fidelities.front();
         profile = withExactFidelity(
             std::move(profile),
             spec_.instance_name,
-            fidelities.front(),
+            preferred,
             profile_.name() + "-preview");
     }
     artifacts_.push_back(

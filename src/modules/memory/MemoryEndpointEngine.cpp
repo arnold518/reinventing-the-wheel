@@ -19,6 +19,17 @@ Status validateRequest(const Request& r, size_t width, Technology technology, co
     } else if (op > unsigned(Operation::Write)) return Status::Unsupported;
     return Status::Ok;
 }
+std::vector<std::string> nativeActivityInputs(Technology t) {
+    switch (t) {
+    case Technology::FF: return {"WORD_ADDR", "WE", "READ_EN"};
+    case Technology::SRAM: return {"WORD_ADDR", "CE_N", "OE_N", "WE_N"};
+    case Technology::ROM: return {"WORD_ADDR", "CE_N", "OE_N"};
+    case Technology::DRAM: return {"ADDR", "CMD"};
+    case Technology::NORFlash: return {"WORD_ADDR", "CMD"};
+    case Technology::Container: return {"REQ_ADDR", "REQ_OP", "REQ_VALID", "RSP_READY"};
+    }
+    return {};
+}
 NativeSequence::NativeSequence(size_t w, Technology technology, EndpointConfig config)
     : result(w, L), width_(w), technology_(technology), config_(config) { idlePins(); }
 void NativeSequence::idlePins() {
@@ -42,20 +53,21 @@ void NativeSequence::finish(size_t t) {
     idlePins(); phase_ = Phase::Release; due_ = after(t, config_.guard_ticks);
 }
 void NativeSequence::step(size_t t, bool clock_edge, bool reset, bool start, const Request& request,
-                         const std::function<Bits(const std::string&, size_t)>& read) {
+                         const std::function<Bits(const std::string&, size_t)>& read, bool finish_response) {
     if (reset) aborted_ = true;
+    if (clock_edge && finish_response) done = false;
     if (phase_ == Phase::Idle) {
         // A downstream structural transaction frontend needs an initial reset.
         // Forward reset only while idle: resetting a live downstream request
         // would discard its response and prevent the relay from draining it.
         if (technology_ == Technology::Container) outputs["RST"] = {reset ? H : L};
-        if (!start) done = false;
-        if (reset) { available = false; return; }
-        available = !done;
+        if (reset) { done = false; available = false; return; }
+        available = true;
         if (done) return;
-        const bool refresh = technology_ == Technology::DRAM && clock_edge &&
+        const bool refresh_due = technology_ == Technology::DRAM &&
                              config_.refresh_interval_ticks && t >= next_refresh_;
-        if (!start && !refresh) { aborted_ = false; return; }
+        const bool refresh = refresh_due && clock_edge && !start;
+        if (!(start && clock_edge) && !refresh) { aborted_ = false; return; }
         aborted_ = false; maintenance_ = refresh; available = false; status = Status::Ok;
         result.assign(width_, L); commands_.clear();
         if (refresh) {
@@ -88,8 +100,15 @@ void NativeSequence::step(size_t t, bool clock_edge, bool reset, bool start, con
         }
         if (technology_ == Technology::DRAM) {
             const auto row = word / config_.words_per_row;
-            if (row_open_ && row_ != row) commands_.push_back({4, 0});
-            if (!row_open_ || row_ != row) commands_.push_back({1, uint32_t(row)});
+            // An accepted request cannot suppress refresh indefinitely. Perform
+            // due maintenance before its access, using the already latched
+            // request; no second queue or discarded START pulse is needed.
+            if (refresh_due) {
+                if (row_open_) commands_.push_back({4, 0});
+                commands_.push_back({5, 0});
+                next_refresh_ = after(t, config_.refresh_interval_ticks);
+            } else if (row_open_ && row_ != row) commands_.push_back({4, 0});
+            if (refresh_due || !row_open_ || row_ != row) commands_.push_back({1, uint32_t(row)});
             commands_.push_back({op == 0 ? 2u : 3u, uint32_t(word % config_.words_per_row)});
         } else {
             if (op) commands_.push_back({4, 0});
@@ -155,7 +174,7 @@ void NativeSequence::step(size_t t, bool clock_edge, bool reset, bool start, con
     }
     case Phase::Release:
         phase_ = Phase::Idle; done = !maintenance_ && !aborted_;
-        available = !done && !reset; break;
+        available = !reset; break;
     default: break;
     }
     if (status != Status::Ok) result.assign(width_, L);
@@ -224,7 +243,9 @@ class DRAMDeviceModel final : public DeviceModel {
     std::map<size_t, size_t> closed_;
     Bits buffer_, data_, mask_;
 public:
-    DRAMDeviceModel(size_t w, EndpointConfig c) : DeviceModel(w, c, X), buffer_(w * c.words_per_row, X) {}
+    DRAMDeviceModel(size_t w, EndpointConfig c) : DeviceModel(w, c, X), buffer_(w * c.words_per_row, X) {
+        outputs["ROW_OPEN"] = {L};
+    }
     void update(size_t t, const Signals& s) override {
         if (due_ && t >= due_) {
             due_ = 0; ++stage_;
@@ -236,7 +257,7 @@ public:
                     storage.writeLogic(t, start, Bits(buffer_.size(), X));
                 } else if (stage_ == 2) storage.writeLogic(t, start, buffer_);
                 else if (stage_ == 3) {
-                    if (op_ == 1) { open_ = true; outputs["BUSY"] = {L}; }
+                    if (op_ == 1) { open_ = true; outputs["ROW_OPEN"] = {H}; outputs["BUSY"] = {L}; }
                     else closed_[row_] = t;
                 } else if (stage_ == 5) { refresh_row_ = (refresh_row_ + 1) % (config_.depth_words / config_.words_per_row); outputs["BUSY"] = {L}; }
             } else if (op_ == 2) {
@@ -245,11 +266,13 @@ public:
             } else if (op_ == 3) {
                 if (stage_ == 1) {
                     for (size_t b = 0; b < width_; ++b) if (mask_[b / 8] == H) buffer_[col_ * width_ + b] = stored(data_[b]);
-                    storage.writeLogic(t, start, buffer_, true);
+                    // Report the addressed lanes, not the entire open row:
+                    // neighboring bytes may still be unknown or unmodified.
+                    writeWord(t, row_ * config_.words_per_row + col_, data_, mask_);
                 } else if (stage_ == 3) outputs["BUSY"] = {L};
             } else if (op_ == 4) {
                 if (stage_ == 1) closed_[row_] = t;
-                if (stage_ == 3) { open_ = false; outputs["BUSY"] = {L}; }
+                if (stage_ == 3) { open_ = false; outputs["ROW_OPEN"] = {L}; outputs["BUSY"] = {L}; }
             }
             if (high(outputs, "BUSY")) due_ = after(t, config_.phase_ticks);
         }
@@ -275,7 +298,9 @@ class NORFlashDeviceModel final : public DeviceModel {
     bool enabled_ = false;
     Bits data_, mask_;
 public:
-    NORFlashDeviceModel(size_t w, EndpointConfig c) : DeviceModel(w, c, H) {}
+    NORFlashDeviceModel(size_t w, EndpointConfig c) : DeviceModel(w, c, H) {
+        outputs["WRITE_ENABLED"] = {L};
+    }
     void update(size_t t, const Signals& s) override {
         if (due_ && t >= due_) {
             due_ = 0; ++stage_;
@@ -298,10 +323,10 @@ public:
         if (!op) return;
         outputs["ERROR"] = {L}; outputs["READ_VALID"] = {L}; outputs["READ_DATA"] = Bits(width_, Z);
         if (high(outputs, "BUSY") || ((op == 2 || op == 3) && !enabled_)) { outputs["ERROR"] = {H}; return; }
-        if (op == 4 || op == 5) { enabled_ = op == 4; return; }
+        if (op == 4 || op == 5) { enabled_ = op == 4; outputs["WRITE_ENABLED"] = {enabled_ ? H : L}; return; }
         op_ = op; stage_ = 0; address_ = number(signal(s, "WORD_ADDR", 32));
         data_ = signal(s, "WRITE_DATA", width_); mask_ = signal(s, "WRITE_MASK", width_ / 8);
-        if (op != 1) enabled_ = false;
+        if (op != 1) { enabled_ = false; outputs["WRITE_ENABLED"] = {L}; }
         outputs["BUSY"] = {H}; due_ = after(t, op == 1 ? config_.phase_ticks : op == 2 ? config_.program_ticks : config_.erase_ticks);
     }
 };

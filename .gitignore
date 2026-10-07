@@ -14,3 +14,10 @@
 /visualizer-v2/circuit_backend*.so
 /visualizer-v2/profiles.json
 /books/
+
+# Generated artifacts are local, never source inputs.
+**/__pycache__/
+*.pyc
+/visualizer/circuit_backend*.so
+/build-cleanup/
+/build-wasm-cleanup/

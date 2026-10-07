@@ -106,6 +106,46 @@ void buildBusMux(IOComponent& component, ComponentBuilder& builder) {
 
     builder.addNewComponent<BitJoiner<BUS_WIDTH>>("OUT_JOIN");
 
+    if constexpr (INPUT_COUNT == 2 && SEL_WIDTH == 1) {
+        builder.addNewComponent<NOTGate>("NOT_SEL");
+        std::vector<std::shared_ptr<Pin<>>> selected_sinks{
+            builder.getInputPin<NOTGate>("NOT_SEL", "IN")};
+        std::vector<std::shared_ptr<Pin<>>> unselected_sinks;
+        for (size_t bit = 0; bit < BUS_WIDTH; ++bit) {
+            const auto suffix = std::to_string(bit);
+            const auto a = "SELECT_A_" + suffix;
+            const auto b = "SELECT_B_" + suffix;
+            const auto out = "COMBINE_" + suffix;
+            builder.addNewComponent<ANDGate>(a);
+            builder.addNewComponent<ANDGate>(b);
+            builder.addNewComponent<ORGate>(out);
+            builder.addNewWire("A_BIT_" + suffix,
+                builder.getOutputPin<BitSplitter<BUS_WIDTH>>("A_SPLIT", "OUT_" + suffix),
+                {builder.getInputPin<ANDGate>(a, "A")});
+            builder.addNewWire("B_BIT_" + suffix,
+                builder.getOutputPin<BitSplitter<BUS_WIDTH>>("B_SPLIT", "OUT_" + suffix),
+                {builder.getInputPin<ANDGate>(b, "A")});
+            selected_sinks.push_back(builder.getInputPin<ANDGate>(b, "B"));
+            unselected_sinks.push_back(builder.getInputPin<ANDGate>(a, "B"));
+            builder.addNewWire(a + "_to_" + out,
+                builder.getOutputPin<ANDGate>(a, "OUT"),
+                {builder.getInputPin<ORGate>(out, "A")});
+            builder.addNewWire(b + "_to_" + out,
+                builder.getOutputPin<ANDGate>(b, "OUT"),
+                {builder.getInputPin<ORGate>(out, "B")});
+            builder.addNewWire(out + "_to_JOIN_" + suffix,
+                builder.getOutputPin<ORGate>(out, "OUT"),
+                {builder.getInputPin<BitJoiner<BUS_WIDTH>>("OUT_JOIN", "IN_" + suffix)});
+        }
+        builder.addNewWire("SEL_bus_internal", component.getInputPin("SEL"), selected_sinks);
+        builder.addNewWire("NOT_SEL_internal", builder.getOutputPin<NOTGate>("NOT_SEL", "OUT"),
+            unselected_sinks);
+        builder.addNewWire<BUS_WIDTH>("OUT_bus_internal",
+            builder.getOutputPin<BitJoiner<BUS_WIDTH>, BUS_WIDTH>("OUT_JOIN", "OUT"),
+            {component.getOutputPin<BUS_WIDTH>("OUT")});
+        return;
+    }
+
     std::vector<std::shared_ptr<Pin<SEL_WIDTH>>> select_sinks;
     select_sinks.reserve(BUS_WIDTH);
 
@@ -176,17 +216,6 @@ void Mux8to1::buildInternals(ComponentBuilder& builder) {
     buildOneBitMuxTree<3>(*this, builder, 8);
 }
 
-Mux16to1::Mux16to1(std::string name)
-    : IOComponent(std::move(name), [](IOComponent* self) {
-        for (int i = 0; i < 16; ++i) self->addPin("IN" + std::to_string(i), PinType::INPUT);
-        self->addPin<4>("SEL", PinType::INPUT);
-        self->addPin("OUT", PinType::OUTPUT);
-    }) {}
-
-void Mux16to1::buildInternals(ComponentBuilder& builder) {
-    buildOneBitMuxTree<4>(*this, builder, 16);
-}
-
 Mux32to1::Mux32to1(std::string name)
     : IOComponent(std::move(name), [](IOComponent* self) {
         for (int i = 0; i < 32; ++i) self->addPin("IN" + std::to_string(i), PinType::INPUT);
@@ -196,18 +225,6 @@ Mux32to1::Mux32to1(std::string name)
 
 void Mux32to1::buildInternals(ComponentBuilder& builder) {
     buildOneBitMuxTree<5>(*this, builder, 32);
-}
-
-Mux2to1_8bit::Mux2to1_8bit(std::string name)
-    : IOComponent(std::move(name), [](IOComponent* self) {
-        self->addPin<8>("A", PinType::INPUT);
-        self->addPin<8>("B", PinType::INPUT);
-        self->addPin("SEL", PinType::INPUT);
-        self->addPin<8>("OUT", PinType::OUTPUT);
-    }) {}
-
-void Mux2to1_8bit::buildInternals(ComponentBuilder& builder) {
-    buildBusMux<Mux2to1, 2, 1, 8>(*this, builder);
 }
 
 Mux2to1_4bit::Mux2to1_4bit(std::string name)
@@ -232,17 +249,6 @@ Mux2to1_32bit::Mux2to1_32bit(std::string name)
 
 void Mux2to1_32bit::buildInternals(ComponentBuilder& builder) {
     buildBusMux<Mux2to1, 2, 1, 32>(*this, builder);
-}
-
-Mux4to1_8bit::Mux4to1_8bit(std::string name)
-    : IOComponent(std::move(name), [](IOComponent* self) {
-        for (int i = 0; i < 4; ++i) self->addPin<8>("IN" + std::to_string(i), PinType::INPUT);
-        self->addPin<2>("SEL", PinType::INPUT);
-        self->addPin<8>("OUT", PinType::OUTPUT);
-    }) {}
-
-void Mux4to1_8bit::buildInternals(ComponentBuilder& builder) {
-    buildBusMux<Mux4to1, 4, 2, 8>(*this, builder);
 }
 
 Mux4to1_32bit::Mux4to1_32bit(std::string name)
@@ -276,17 +282,6 @@ Mux8to1_32bit::Mux8to1_32bit(std::string name)
 
 void Mux8to1_32bit::buildInternals(ComponentBuilder& builder) {
     buildBusMux<Mux8to1, 8, 3, 32>(*this, builder);
-}
-
-Mux16to1_8bit::Mux16to1_8bit(std::string name)
-    : IOComponent(std::move(name), [](IOComponent* self) {
-        for (int i = 0; i < 16; ++i) self->addPin<8>("IN" + std::to_string(i), PinType::INPUT);
-        self->addPin<4>("SEL", PinType::INPUT);
-        self->addPin<8>("OUT", PinType::OUTPUT);
-    }) {}
-
-void Mux16to1_8bit::buildInternals(ComponentBuilder& builder) {
-    buildBusMux<Mux16to1, 16, 4, 8>(*this, builder);
 }
 
 Mux32to1_32bit::Mux32to1_32bit(std::string name)

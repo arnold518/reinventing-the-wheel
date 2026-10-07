@@ -11,12 +11,14 @@ from urllib.parse import urljoin
 from playwright.sync_api import sync_playwright
 
 
-def check_component_documentation_pattern(page, component_count: int) -> None:
+def check_component_documentation_pattern(page, components: tuple[tuple[str, bool], ...]) -> None:
+    component_count = len(components)
     overview = page.locator("article table").first
     assert overview.locator("thead th").all_text_contents() == ["Component", "Description", "Structural", "Behavioral"]
     availability = overview.locator("tbody tr").evaluate_all(
-        "rows => rows.map(row => [...row.cells].slice(2).map(cell => cell.textContent.trim()))")
-    assert availability == [["Yes", "Yes"]] * component_count, availability
+        "rows => rows.map(row => [0, 2, 3].map(i => row.cells[i].textContent.trim()))")
+    assert availability == [[name, "Yes", "Yes" if behavioral else "No"]
+                            for name, behavioral in components], availability
     headings = page.locator("article h3").evaluate_all(
         "nodes => nodes.map(node => node.childNodes[0].textContent.trim())")
     assert headings == ["IO pins", "Behavior", "Implementation", "Examples", "Source and tests"] * component_count
@@ -29,7 +31,8 @@ def check_component_documentation_pattern(page, component_count: int) -> None:
                           ("Structural implementation", "Implementation"), ("Behavioral implementation", "Implementation"),
                           ("Embedded simulation", "Examples")):
         matches = [item for item in subheadings if item[0] == title]
-        assert matches == [[title, parent]] * component_count, matches
+        count = sum(behavioral for _, behavioral in components) if title == "Behavioral implementation" else component_count
+        assert matches == [[title, parent]] * count, matches
     assert not any(title in {"Binary behavioral reference", "Simulator variants", "Structural circuit"}
                    for title, _ in subheadings), subheadings
 
@@ -179,7 +182,7 @@ def check_camera_controls(page) -> list:
     }""")
 
 
-def check_focus_camera(page) -> list:
+def check_focus_camera(page, component_types=("FullAdder", "HalfAdder", "XORGate")) -> list:
     results = []
     root_id = page.evaluate("app.rootId")
     page.locator(".explorer-row").first.click()
@@ -189,9 +192,9 @@ def check_focus_camera(page) -> list:
     # Root reset and explorer focus must include the same pins and padding.
     page.locator("#reset-view").click()
     results.append(assert_camera_framed(page, root_id))
-    children = page.evaluate("""() => ['FullAdder', 'HalfAdder', 'XORGate'].map(
-      type => app.componentOrder.find(c => c.type === type)?.id).filter(Boolean)""")
-    assert len(children) == 3
+    children = page.evaluate("""types => types.map(
+      type => app.componentOrder.find(c => c.type === type)?.id).filter(Boolean)""", list(component_types))
+    assert len(children) == len(component_types), (component_types, children)
     for component_id in children:
         page.evaluate("id => app.explorer.onFocus(id)", component_id)
         results.append(assert_camera_framed(page, component_id))
@@ -217,7 +220,7 @@ def check_alu_assembly(page, scenario: str) -> dict:
     return result
 
 
-def check_example_table(page, embed, scenario: str) -> int:
+def check_example_table(page, embed, scenario: str, *, behavioral=True) -> int:
     block = page.locator(f'.example-table-block[data-scenario="{scenario}"]')
     assert block.count() == 1
     rows = block.locator("tbody tr").evaluate_all("""nodes => nodes.map(row => ({
@@ -228,12 +231,13 @@ def check_example_table(page, embed, scenario: str) -> int:
     }))""")
     model = embed.locator("body").evaluate("""() => ({
       profile: app.components.get(app.rootId).profileFingerprint,
-      selectable: app.components.get(app.rootId).profileSelectable,
+      selectable: Boolean(app.components.get(app.rootId).profileSelectable),
       fidelities: app.components.get(app.rootId).availableFidelities,
       checkpoints: app.checkpoints.map(c => ({checkpoint: c.label, time: c.time, index: c.index})),
     })""")
     assert block.get_attribute("data-profile") == model["profile"]
-    assert model["selectable"] and set(model["fidelities"]) == {"structural", "behavioral"}, scenario
+    assert model["selectable"] == behavioral, (scenario, model)
+    assert set(model["fidelities"]) == ({"structural", "behavioral"} if behavioral else {"structural"}), scenario
     assert [{k: row[k] for k in ("checkpoint", "time", "index")} for row in rows] == model["checkpoints"]
     # The exported expectations must match actual recorded pins in the iframe,
     # including the final X/Z examples where present.
@@ -629,13 +633,17 @@ def main() -> None:
             timeout=30_000,
         )
         assert "Arithmetic Components" in embed_page.locator("h1").inner_text()
-        check_component_documentation_pattern(embed_page, 3)
-        assert embed_page.locator(".simulator-embed iframe").count() == 3
+        check_component_documentation_pattern(embed_page, (
+            ("HalfAdder", False), ("FullAdder", False), ("Adder8", True),
+            ("AddSub8", True), ("ArithmeticUnit8", True)))
+        assert embed_page.locator(".simulator-embed iframe").count() == 5
         chapter_embeds = {}
         example_row_count = 0
-        for scenario, component_count in (("adder8", 68), ("addsub8", 85), ("arithmetic8", 826)):
+        for scenario, component_count in (("half-adder", 3), ("full-adder", 8),
+                                           ("adder8", 68), ("addsub8", 85), ("arithmetic8", 826)):
             # Each iframe is lazy-loaded below its own component tables.
-            selector = f".simulator-embed iframe[src$='scenario={scenario}']"
+            selector = (f".simulator-embed iframe[src$='scenario={scenario}'], "
+                        f".simulator-embed iframe[src*='scenario={scenario}&']")
             embed_page.locator(selector).scroll_into_view_if_needed()
             chapter_embed = embed_page.frame_locator(selector)
             chapter_embed.locator("body[data-circuitsim-status='ready']").wait_for(timeout=30_000)
@@ -651,7 +659,8 @@ def main() -> None:
             if scenario == "adder8":
                 embed_page.screenshot(path="/tmp/circuitsim-embed-compact.png")
             chapter_embeds[scenario] = stats
-            example_row_count += check_example_table(embed_page, chapter_embed, scenario)
+            example_row_count += check_example_table(embed_page, chapter_embed, scenario,
+                behavioral=scenario not in {"half-adder", "full-adder"})
             link = embed_page.locator(f"a.md-button[href$='scenario={scenario}']")
             assert link.count() == 1
 
@@ -672,7 +681,7 @@ def main() -> None:
             embed_page.goto(urljoin(sys.argv[1], f"../alu8/{section}/"),
                             wait_until="domcontentloaded", timeout=30_000)
             assert title in embed_page.locator("h1").inner_text()
-            check_component_documentation_pattern(embed_page, len(scenarios))
+            check_component_documentation_pattern(embed_page, tuple((kind, True) for _, kind, _ in scenarios))
             assert embed_page.locator(".simulator-embed iframe").count() == len(scenarios)
             for scenario, component_type, rows in scenarios:
                 selector = f".simulator-embed iframe[src$='scenario={scenario}']"
@@ -690,7 +699,7 @@ def main() -> None:
                 assert embed_page.locator(f"a.md-button[href$='scenario={scenario}']").count() == 1
                 chapter_embeds[scenario] = model
                 example_row_count += check_example_table(embed_page, chapter_embed, scenario)
-        assert example_row_count == 649
+        assert example_row_count == 729  # Includes 16 half-adder and 64 full-adder four-state rows.
         static_context = browser.new_context(java_script_enabled=False)
         static_page = static_context.new_page()
         static_page.goto(urljoin(sys.argv[1], "../alu8/2.6/"), wait_until="domcontentloaded")
@@ -752,7 +761,10 @@ def main() -> None:
         assert all(alu_contract.values()), alu_contract
         page.goto(f"{sys.argv[1]}?scenario=alu32", wait_until="domcontentloaded", timeout=30_000)
         page.wait_for_function("document.body.dataset.circuitsimStatus === 'ready'", timeout=60_000)
-        camera_checks.extend(check_focus_camera(page))
+        # ALU32's optimized carry path is a prefix tree, not a ripple chain.
+        # Keep testing nested arithmetic and gates against actual DOM bounds.
+        camera_checks.extend(check_focus_camera(page,
+            ("AddSub32", "ParallelPrefixAdder32", "CarryCombine", "XORGate")))
         alu32_assembly = check_alu_assembly(page, "alu32")
         assert not page_errors, page_errors
         assert not embed_errors, embed_errors

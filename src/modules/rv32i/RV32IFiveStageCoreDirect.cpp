@@ -1,3 +1,5 @@
+#include "modules/rv32i/RV32IPipelineObservation.hpp"
+#include "basic/LogicValueHelpers.hpp"
 #include "modules/rv32i/RV32IFiveStageCoreDirect.hpp"
 
 #include "modules/composite/ALU32.hpp"
@@ -8,9 +10,7 @@
 #include <utility>
 
 namespace {
-bool high(LogicValue value) {
-    return value == LogicValue::HIGH;
-}
+using circuit::logic_values::high;
 
 uint32_t inputWord(const BasicComponent& component, const char* name) {
     return static_cast<uint32_t>(
@@ -113,23 +113,19 @@ bool preMemoryTerminal(
 }
 } // namespace
 
-RV32IFiveStageCoreDirect::RV32IFiveStageCoreDirect(std::string name)
+RV32IFiveStageCoreDirect::RV32IFiveStageCoreDirect(std::string name, rv32i::PredictionConfig prediction)
     : BasicComponent(
           std::move(name),
           1,
-          circuit::families::RV32IFiveStageCore.pinInitializer()) {}
+          circuit::families::RV32IFiveStageCore.pinInitializer()), prediction_(prediction) {}
 
 void RV32IFiveStageCoreDirect::resetState() {
+    prediction_.reset();
     registers_.fill(0);
     fetch_pc_ = 0;
-    committed_pc_ = 0;
     halted_ = false;
     trapped_ = false;
     trap_cause_ = rv32i::RV32IExecutionTrapCause::None;
-    retired_count_ = 0;
-    retired_pc_ = 0;
-    retired_instruction_ = 0;
-    retired_memory_ = {};
     if_id_ = {};
     id_ex_ = {};
     ex_mem_ = {};
@@ -141,6 +137,7 @@ RV32IFiveStageCoreDirect::decode(
     const FetchDecodeState& state,
     const std::array<uint32_t, 32>& register_snapshot) const {
     DecodeExecuteState result;
+    result.predicted_next_pc = state.predicted_next_pc;
     result.valid = state.valid;
     result.pc = state.pc;
     result.instruction = state.instruction;
@@ -253,6 +250,7 @@ RV32IFiveStageCoreDirect::execute(
 
     const bool branch = branchTaken(
         state.control.branch, rs1, rs2);
+    result.branch_taken = branch;
     if (branch
         || state.control.jump == rv32i::RV32IJumpType::JAL) {
         result.next_pc = state.pc + state.immediate;
@@ -415,7 +413,11 @@ bool RV32IFiveStageCoreDirect::loadReadActive() const {
             ex_mem_.pc_misaligned,
             ex_mem_.instruction_fault,
             ex_mem_.target_misaligned,
-            ex_mem_.control);
+            ex_mem_.control)
+        // Alignment is resolved locally before issuing a transaction, just
+        // as in the structural memory stage and the store guard above.
+        && !isMisaligned(
+            ex_mem_.alu_result, ex_mem_.control.mem_size);
 }
 
 void RV32IFiveStageCoreDirect::advanceOneCycle() {
@@ -427,37 +429,15 @@ void RV32IFiveStageCoreDirect::advanceOneCycle() {
     const bool load_active = loadReadActive();
     const bool memory_wait =
         (store_active || load_active)
-        && !data_request_.done(*this,"DMEM_",ex_mem_.alu_result);
+        && !data_request_.done(*this,"DMEM_",ex_mem_.alu_result,storeWriteActive()||loadReadActive());
     if (memory_wait) {
         return;
     }
+    const auto predicted_fetch_pc=prediction_.predict(fetch_pc_,inputWord(*this,"IMEM_RSP_READ_DATA"));
 
     bool terminal_retired = false;
     if (mem_wb_.valid) {
         const auto cause = retirementTrap(mem_wb_);
-        retired_pc_ = mem_wb_.pc;
-        retired_instruction_ = mem_wb_.instruction;
-        retired_memory_ = {};
-        if (mem_wb_.control.mem_read) {
-            retired_memory_.kind =
-                rv32i::RV32IMemoryAccessKind::Read;
-            retired_memory_.size = mem_wb_.control.mem_size;
-            retired_memory_.sign_extend =
-                mem_wb_.control.load_sign_extend;
-            retired_memory_.address = mem_wb_.alu_result;
-            retired_memory_.read_data = mem_wb_.memory_data;
-            retired_memory_.fault =
-                mem_wb_.data_misaligned || mem_wb_.data_fault;
-        } else if (mem_wb_.control.mem_write) {
-            retired_memory_.kind =
-                rv32i::RV32IMemoryAccessKind::Write;
-            retired_memory_.size = mem_wb_.control.mem_size;
-            retired_memory_.address = mem_wb_.alu_result;
-            retired_memory_.write_data = mem_wb_.store_data;
-            retired_memory_.fault =
-                mem_wb_.data_misaligned || mem_wb_.data_fault;
-        }
-        ++retired_count_;
 
         if (cause != rv32i::RV32IExecutionTrapCause::None) {
             trapped_ = true;
@@ -471,7 +451,6 @@ void RV32IFiveStageCoreDirect::advanceOneCycle() {
                 registers_[mem_wb_.rd] =
                     writebackValue(mem_wb_);
             }
-            committed_pc_ = mem_wb_.next_pc;
         }
         registers_[0] = 0;
     }
@@ -508,12 +487,7 @@ void RV32IFiveStageCoreDirect::advanceOneCycle() {
     const bool ex_redirect =
         next_ex_mem.valid
         && !ex_preterminal
-        && (next_ex_mem.control.branch
-                != rv32i::RV32IBranchType::None
-            ? next_ex_mem.next_pc
-                != next_ex_mem.pc_plus_4
-            : next_ex_mem.control.jump
-                != rv32i::RV32IJumpType::None);
+        && next_ex_mem.next_pc != id_ex_.predicted_next_pc;
     const bool hazard = loadUseHazard();
     const bool kill_younger =
         older_memory_fault || ex_preterminal || ex_redirect;
@@ -546,19 +520,23 @@ void RV32IFiveStageCoreDirect::advanceOneCycle() {
                 || control.halt;
         }
         if (!terminalPending() && !terminal_in_id
-            && instruction_request_.done(*this,"IMEM_",fetch_pc_)) {
+            && instruction_request_.done(*this,"IMEM_",fetch_pc_,high(getInputValue("ENABLE"))&&!halted_&&!trapped_)) {
             next_if_id.valid = true;
             next_if_id.pc = fetch_pc_;
             next_if_id.instruction =
                 inputWord(*this, "IMEM_RSP_READ_DATA");
+            next_if_id.predicted_next_pc = predicted_fetch_pc;
             next_if_id.pc_misaligned =
                 (fetch_pc_ & 0x3U) != 0;
             next_if_id.instruction_fault =
                 (getInputPin<3>("IMEM_RSP_STATUS")->getValueAsUInt64()!=0);
-            next_fetch_pc = fetch_pc_ + 4U;
+            next_fetch_pc = predicted_fetch_pc;
         }
     }
 
+    if (!older_memory_fault && !ex_preterminal && next_ex_mem.valid
+        && next_ex_mem.control.branch != rv32i::RV32IBranchType::None)
+        prediction_.update(next_ex_mem.pc,next_ex_mem.branch_taken);
     mem_wb_ = next_mem_wb;
     ex_mem_ = older_memory_fault
         ? ExecuteMemoryState{}
@@ -575,10 +553,13 @@ void RV32IFiveStageCoreDirect::driveOutputs(
         high(getInputValue("ENABLE")) && !halted_ && !trapped_;
     const bool store_active = storeWriteActive();
     const bool load_active = loadReadActive();
-    const bool commit_valid = enabled && mem_wb_.valid;
+    // Match the coordinator: a held MEM/WB packet must not retire again
+    // while an older cycle is frozen waiting for the data port.
+    const bool memory_wait = (store_active || load_active)
+        && !data_request_.done(*this,"DMEM_",ex_mem_.alu_result,storeWriteActive()||loadReadActive());
+    const bool commit_valid = enabled && getInputValue("RST") == LogicValue::LOW
+        && !memory_wait && mem_wb_.valid;
 
-    _updateOutputWire<32>(
-        simulator, "PC", committed_pc_, current_time);
     _updateOutputWire<32>(
         simulator, "FETCH_PC", fetch_pc_, current_time);
     _updateOutputWire(
@@ -606,70 +587,10 @@ void RV32IFiveStageCoreDirect::driveOutputs(
         "COMMIT_VALID",
         commit_valid ? LogicValue::HIGH : LogicValue::LOW,
         current_time);
-    _updateOutputWire<32>(
-        simulator, "RETIRED_COUNT", retired_count_, current_time);
-    _updateOutputWire<32>(
-        simulator, "RETIRED_PC", retired_pc_, current_time);
-    _updateOutputWire<32>(
-        simulator,
-        "RETIRED_INSTRUCTION",
-        retired_instruction_,
-        current_time);
-    _updateOutputWire(
-        simulator,
-        "RETIRED_MEM_READ",
-        retired_memory_.kind == rv32i::RV32IMemoryAccessKind::Read
-            ? LogicValue::HIGH
-            : LogicValue::LOW,
-        current_time);
-    _updateOutputWire(
-        simulator,
-        "RETIRED_MEM_WRITE",
-        retired_memory_.kind == rv32i::RV32IMemoryAccessKind::Write
-            ? LogicValue::HIGH
-            : LogicValue::LOW,
-        current_time);
-    _updateOutputWire<32>(
-        simulator,
-        "RETIRED_MEM_ADDR",
-        retired_memory_.address,
-        current_time);
-    _updateOutputWire<32>(
-        simulator,
-        "RETIRED_MEM_WRITE_DATA",
-        retired_memory_.write_data,
-        current_time);
-    _updateOutputWire<32>(
-        simulator,
-        "RETIRED_MEM_READ_DATA",
-        retired_memory_.read_data,
-        current_time);
-    _updateOutputWire<2>(
-        simulator,
-        "RETIRED_MEM_SIZE",
-        retired_memory_.kind == rv32i::RV32IMemoryAccessKind::None
-            ? 0
-            : memorySizeEncoding(retired_memory_.size),
-        current_time);
-    _updateOutputWire(
-        simulator,
-        "RETIRED_MEM_SIGN_EXTEND",
-        retired_memory_.sign_extend
-            ? LogicValue::HIGH
-            : LogicValue::LOW,
-        current_time);
-    _updateOutputWire(
-        simulator,
-        "RETIRED_MEM_FAULT",
-        retired_memory_.fault
-            ? LogicValue::HIGH
-            : LogicValue::LOW,
-        current_time);
-
     const bool stall =
         loadUseHazard()
         || ((store_active || load_active)
-            && !data_request_.done(*this,"DMEM_",ex_mem_.alu_result));
+            && !data_request_.done(*this,"DMEM_",ex_mem_.alu_result,storeWriteActive()||loadReadActive()));
     _updateOutputWire(
         simulator,
         "PIPELINE_STALL",
@@ -678,7 +599,7 @@ void RV32IFiveStageCoreDirect::driveOutputs(
 
     const bool memory_stall =
         enabled && (store_active || load_active)
-        && !data_request_.done(*this,"DMEM_",ex_mem_.alu_result);
+        && !data_request_.done(*this,"DMEM_",ex_mem_.alu_result,storeWriteActive()||loadReadActive());
     const bool data_port_stall = false;
     const bool retire_terminal =
         enabled && mem_wb_.valid
@@ -705,30 +626,34 @@ void RV32IFiveStageCoreDirect::driveOutputs(
             next_ex_mem.control);
     const bool ex_redirect =
         next_ex_mem.valid && !ex_preterminal
-        && (next_ex_mem.control.branch
-                != rv32i::RV32IBranchType::None
-            ? next_ex_mem.next_pc != next_ex_mem.pc_plus_4
-            : next_ex_mem.control.jump
-                != rv32i::RV32IJumpType::None);
+        && next_ex_mem.next_pc != id_ex_.predicted_next_pc;
     const bool load_use_stall =
         normal_step && loadUseHazard();
     const bool pipeline_flush =
         normal_step
         && (older_memory_fault || ex_preterminal || ex_redirect);
     const bool take_instruction=normal_step && !pipeline_flush && !load_use_stall && !terminalPending()
-        && instruction_request_.done(*this,"IMEM_",fetch_pc_);
+        && instruction_request_.done(*this,"IMEM_",fetch_pc_,high(getInputValue("ENABLE"))&&!halted_&&!trapped_);
     const bool take_data=normal_step || (retire_terminal && !memory_stall);
     const bool reset=getInputValue("RST")!=LogicValue::LOW;
-    rv32i::publishMemoryRequest(instruction_request_,reset,take_instruction,fetch_pc_,
+    const unsigned port_size=(store_active||load_active)?memorySizeEncoding(ex_mem_.control.mem_size):0;
+    const bool discard_instruction=pipeline_flush||(enabled&&!memory_stall&&retire_terminal)||halted_||trapped_;
+    rv32i::publishMemoryRequest(instruction_request_,reset,take_instruction||discard_instruction,fetch_pc_,
+        enabled,0,fetch_pc_,0,15,
         [&]<size_t W>(const char* pin,uint64_t value){ _updateOutputWire<W>(simulator,std::string("IMEM_")+pin,value,current_time); });
     rv32i::publishMemoryRequest(data_request_,reset,take_data,ex_mem_.alu_result,
+        store_active||load_active,store_active?1:0,rv32i::memoryWordAddress(ex_mem_.alu_result,port_size),
+        ex_mem_.store_data<<((ex_mem_.alu_result&3)*8),rv32i::memoryWriteMask(ex_mem_.alu_result,port_size),
         [&]<size_t W>(const char* pin,uint64_t value){ _updateOutputWire<W>(simulator,std::string("DMEM_")+pin,value,current_time); });
     for (const auto& [name, active] :
-         std::array<std::pair<const char*, bool>, 4>{{
+         std::array<std::pair<const char*, bool>, 7>{{
              {"LOAD_USE_STALL", load_use_stall},
              {"MEMORY_STALL", memory_stall},
              {"DATA_PORT_STALL", data_port_stall},
              {"PIPELINE_FLUSH", pipeline_flush},
+             {"BRANCH_RESOLVED", normal_step && !reset && !older_memory_fault && !ex_preterminal && next_ex_mem.valid && next_ex_mem.control.branch!=rv32i::RV32IBranchType::None},
+             {"BRANCH_MISS", normal_step && !reset && !older_memory_fault && ex_redirect && next_ex_mem.control.branch!=rv32i::RV32IBranchType::None},
+             {"PREDICTION_RECOVERY", normal_step && !reset && !older_memory_fault && ex_redirect},
          }}) {
         _updateOutputWire(
             simulator, name,
@@ -771,8 +696,8 @@ void RV32IFiveStageCoreDirect::evaluate(
     Simulator& simulator) {
     const bool enabled=high(getInputValue("ENABLE")) && !halted_ && !trapped_;
     const auto old_fetch_pc=fetch_pc_, old_data_address=ex_mem_.alu_result;
-    const unsigned old_size=memorySizeEncoding(ex_mem_.control.mem_size);
-    const bool issue_instruction=enabled && !terminalPending();
+    const unsigned old_size=(loadReadActive()||storeWriteActive())?memorySizeEncoding(ex_mem_.control.mem_size):0;
+    const bool issue_instruction=enabled;
     const bool issue_data=loadReadActive() || storeWriteActive();
     const bool write_data=storeWriteActive();
     const auto old_store=ex_mem_.store_data;
@@ -800,13 +725,19 @@ void RV32IFiveStageCoreDirect::evaluate(
 }
 
 rv32i::RV32IArchitecturalState
-RV32IFiveStageCoreDirect::snapshotArchitecturalState() const {
+RV32IFiveStageCoreDirect::snapshotPipelineState(uint32_t observed_pc) const {
     rv32i::RV32IState state;
-    state.pc = committed_pc_;
+    state.pc = observed_pc;
     state.x = registers_;
     state.halted = halted_;
     state.trapped = trapped_;
     state.trap_cause = trap_cause_;
-    state.instruction_count = retired_count_;
     return rv32i::RV32IArchitecturalState::fromKnown(state);
+}
+
+RV32IRetirementObservation RV32IFiveStageCoreDirect::pendingRetirement() const {
+    return {mem_wb_.pc, mem_wb_.instruction, rv32i::observeMemoryRetirement(
+        mem_wb_.control, mem_wb_.alu_result, mem_wb_.store_data, mem_wb_.memory_data,
+        mem_wb_.data_misaligned || mem_wb_.data_fault), mem_wb_.next_pc,
+        retirementTrap(mem_wb_) != rv32i::RV32IExecutionTrapCause::None || mem_wb_.control.halt};
 }

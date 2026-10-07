@@ -16,13 +16,13 @@ std::shared_ptr<Component> child(const std::shared_ptr<Component>& parent, const
     throw std::runtime_error("Missing child " + name);
 }
 void checkHierarchy(const std::shared_ptr<Component>& root) {
-    require(root->getChildren().size() == 6, "register file must group its storage");
+    require(root->getChildren().size() == 5, "register file must group its storage");
     auto bank = child(root, "STORAGE");
-    require(std::string(bank->getTypeName()) == "FFStorageBank<32,31>", "wrong bank geometry");
+    require(std::string(bank->getTypeName()) == "RegisterFileStorageBank", "wrong bank geometry");
     require(bank->getChildren().size() == 31, "x0 must not allocate storage");
     auto word = child(bank, "WORD_0");
-    require(std::string(word->getTypeName()) == "FFWord<32>", "bank must use FFWord");
-    require(std::string(child(word, "CELL_0")->getTypeName()) == "FlipFlopCell", "word must use FF cells");
+    require(std::string(word->getTypeName()) == "Register<32>", "bank must use whole-word registers");
+    require(std::string(child(word, "BIT_0")->getTypeName()) == "FlipFlopCell", "register must use FF cells");
 }
 }
 int main() {
@@ -52,13 +52,11 @@ int main() {
             spec.instance_name, Fidelity::Behavioral));
         auto reference_view = std::dynamic_pointer_cast<RegisterStateView>(reference.root);
         require(bool(reference_view), "behavioral register-state capability missing");
-        for (const auto& mode : {"structural", "bank", "words", "cells"}) {
+        for (const auto& mode : {"structural", "words", "cells"}) {
             std::vector<ProfileRule> rules{preferFidelity(Fidelity::Structural,
                 ProfileSelector::exactPath(spec.instance_name))};
-            if (std::string(mode) == "bank") rules.push_back(preferFidelity(Fidelity::Behavioral,
-                ProfileSelector::exactPath(spec.instance_name + ".STORAGE")));
             if (std::string(mode) == "words") rules.push_back(preferFidelity(Fidelity::Behavioral,
-                ProfileSelector::contract("memory.ff-word.32")));
+                ProfileSelector::contract("memory.register.32")));
             if (std::string(mode) == "cells") rules.push_back(preferFidelity(Fidelity::Behavioral,
                 ProfileSelector::contract("memory.write-enabled-bit")));
             auto run = runner.run(spec, scenario, withProfileOverrides(canonicalDefaultProfile(), rules));
@@ -77,7 +75,7 @@ int main() {
             std::cout << mode << ": " << run.checkpoints.size() << " checkpoints and full register history passed\n";
         }
         // Exercise the structural register-file shell in both actual CPU users.
-        // Compact only its FF bank so these focused program runs stay small.
+        // Compact its 31 word registers while keeping the register-file shell.
         for (bool pipeline : {false, true}) {
             auto program = createTestByName(pipeline ? "RV32IFiveStageCoreProgramTest/program-03"
                                                      : "RV32ISingleCycleSystemTest/program-03");
@@ -85,14 +83,15 @@ int main() {
                 + "DECODE.REGISTER_FILE";
             program->setBuildProfile(withProfileOverrides(program->getBuildProfile(), {
                 preferFidelity(Fidelity::Structural, ProfileSelector::exactPath(path)),
-                preferFidelity(Fidelity::Behavioral, ProfileSelector::exactPath(path + ".STORAGE")),
+                preferFidelity(Fidelity::Behavioral, ProfileSelector::contract("memory.register.32")),
             }));
-            require(program->run(), "RV32I program failed with FF-bank register file");
+            require(program->run(), "RV32I program failed with whole-word register file");
             auto core = child(program->getRoot(), "CORE");
             auto regfile = child(child(core, "DECODE"), "REGISTER_FILE");
-            require(regfile->getChildren().size() == 6, "CPU override did not select new structural file");
-            require(child(regfile,"STORAGE")->getChildren().empty(), "CPU bank was not compact");
-            std::cout << (pipeline ? "pipeline" : "single-cycle") << ": program-03 with new FF bank passed\n";
+            require(regfile->getChildren().size() == 5, "CPU override did not select structural file");
+            require(child(regfile,"STORAGE")->getChildren().size()==31, "CPU bank geometry changed");
+            require(child(child(regfile,"STORAGE"),"WORD_0")->getChildren().empty(), "CPU word was not compact");
+            std::cout << (pipeline ? "pipeline" : "single-cycle") << ": program-03 with compact register words passed\n";
         }
     } catch (const std::exception& e) {
         std::cerr << e.what() << '\n'; return 1;

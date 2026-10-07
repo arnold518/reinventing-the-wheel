@@ -30,8 +30,9 @@ PC + IMEM  ->  registers  ->  ALU/branch  -> load data  -> reg write
   branch/jump decision.
 - **MEM** completes loads and performs aligned, non-faulting stores.
 - **WB** retires the oldest instruction, writes the register file, or records
-  halt/trap state. It also publishes the stable retirement trace used by tests
-  and the visualizer.
+  halt/trap state. Tests observe the existing MEM/WB packet through a read-only
+  view and retain retirement counts/traces outside the circuit. Their instruction
+  checkpoints remain available in the visualizer.
 
 ## Required Blocks
 
@@ -169,3 +170,5 @@ subtree.
 - Multi-cycle execution units.
 - Pipeline performance dashboards and cache/pipeline comparison experiments.
 - Privileged state, interrupts, and ISA extensions outside current RV32I scope.
+
+Current implementation note: Writeback is combinational. A separate EXECUTION_STATUS block retains six halt/trap bits. Completed PC and retirement history belong to host observation, not datapath registers. MEM/WB and the register file remain the actual Writeback input and destination storage.

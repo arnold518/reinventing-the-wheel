@@ -1,6 +1,6 @@
+#include "rv32i/RV32IFunctionalMemory.hpp"
 #include "tests/RV32IElfTests.hpp"
 
-#include "modules/memory/Memory64Kx32.hpp"
 #include "rv32i/RV32IElfImage.hpp"
 #include <cstdint>
 #include <stdexcept>
@@ -101,7 +101,7 @@ void verifyValidElf() {
         && segment.bytes[6] == 0
         && segment.bytes[7] == 0,
         "zero-filled memory tail");
-    image.requireFitsMemory(Memory64Kx32::capacityBytes());
+    image.requireFitsMemory(rv32i::RV32IFunctionalMemory::DefaultCapacityBytes);
 }
 
 void verifyMalformedElfsAreRejected() {
@@ -165,7 +165,7 @@ void verifyMemoryLimit() {
     bool rejected = false;
     try {
         image.requireFitsMemory(
-            Memory64Kx32::capacityBytes() - 1);
+            rv32i::RV32IFunctionalMemory::DefaultCapacityBytes - 1);
     } catch (const std::out_of_range&) {
         rejected = true;
     }

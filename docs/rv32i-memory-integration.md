@@ -1,97 +1,159 @@
-# RV32I direct transaction-memory ports
+# RV32I memory integration
 
-The single-cycle datapath (with wait cycles) and five-stage pipeline expose the common memory protocol directly. Separate instruction and data memories default to `MemoryContainer<sram,32>` with 65,536 words each. Program, ELF, and benchmark harnesses use the same wiring.
+All three cores expose the same universal REQ/RSP fields. The strict single-cycle
+core and baseline require zero-wait timing; the transaction-capable pipeline also
+supports delayed endpoints. No external RV32I adapter is required.
 
-```text
-                       +-> instruction MemoryContainer or MemoryEndpoint
-CPU IMEM_REQ/RSP ------+
-CPU DMEM_REQ/RSP ------+-> data MemoryContainer or MemoryEndpoint
-                       shared CLK / RST
-```
+| User | Memory boundary | Default storage | Completion |
+| --- | --- | --- | --- |
+| Single-cycle core | Universal REQ/RSP | Two zero-wait `MemoryEndpoint<ff,32>` devices | One enabled instruction per rising edge after settling |
+| Baseline pipeline | Universal REQ/RSP | Two zero-wait FF endpoints | No memory wait cycles |
+| Advanced five-stage pipeline (`RV32IFiveStageCore`) | Universal REQ/RSP | Two fused FF endpoints by default; configurable technology | Same-edge completion or delayed responses |
 
-There is no external RV32I memory adapter and no container relay controller inside the CPU. The top-level program circuit contains only CLOCK, CORE, INSTRUCTION_MEMORY, and DATA_MEMORY. A native SRAM/DRAM/etc. device still needs its technology controller; the complete `MemoryEndpoint` exposes the universal interface.
+Each default memory has 65,536 words (256 KiB). Capacity does not force extra CPU
+cycles. Logical capacity and resident allocation are separate; native devices
+share paged storage and explicit allocation/history budgets.
+
+## Memory compatibility by core
+
+Sharing the REQ/RSP interface does not mean every core handles every response
+latency. The strict single-cycle and baseline cores assume acceptance and a
+response in the request cycle. The advanced pipeline additionally tracks
+outstanding requests and holds progress until the response arrives.
+
+| Endpoint | Single-cycle | Baseline pipeline | Advanced pipeline | Suitable role |
+| --- | --- | --- | --- | --- |
+| `MemoryEndpoint<ff,32>` | Yes; default | Yes; default | Yes; default | Instructions and read/write data; zero-wait |
+| `MemoryEndpoint<sram,32>` | No | No | Yes | Instructions and read/write data; current controller adds wait cycles |
+| `MemoryEndpoint<dram,32>` | No | No | Yes | Instructions and read/write data; command timing and refresh |
+| `MemoryEndpoint<rom,32>` | No | No | Yes, read-only | Provisioned instructions or constant data; stores fault |
+| `MemoryEndpoint<nor-flash,32>` | No | No | Yes, reads | Provisioned instructions or constant data; ordinary stores cannot program flash |
+
+These entries apply to the current controllers, not a claim that SRAM or ROM
+must inherently take multiple CPU cycles. Endpoint fidelity does not change
+compatibility: a fused `BehavioralMemoryEndpoint` and the corresponding visible
+controller/device assembly keep the same contract. An endpoint may contain a
+scalable `MemoryContainer<technology,32>` or a small expanded native device;
+the container's native pins alone are not a drop-in replacement for REQ/RSP.
+For FF storage, the small expanded device is `FFMemory<32>`.
+
+The fixed-cycle program roots and `RV32ISingleCycleSystem` reject non-FF
+configurations during construction. The cores themselves do not use
+`REQ_READY=0` or `RSP_VALID=0` to wait. Manually wiring a delayed endpoint around
+those guards can make them capture stale instructions/load data or advance past
+unaccepted requests/stores. There is no automatic timing-contract trap.
+The baseline's dependency and branch stalls do not supply memory-wait control.
+
+A longer clock period allows combinational paths to settle; it does not remove
+protocol phases that need additional edges. Use the advanced pipeline for
+delayed endpoints. Supporting those endpoints in a fixed-cycle core would
+require new CPU-side hold/completion control, not merely a different controller.
 
 ## Components and responsibilities
 
-| Component | Responsibility | Structural | Behavioral |
-| --- | --- | --- | --- |
-| `RV32IMemoryRequest` inside each core | Hold one request stable, track acceptance, acknowledge or discard its response | Yes: payload FFs, three state FFs, gates | Matching state model inside behavioral cores; not a separately selectable helper variant |
-| `RV32IMemoryLanes` inside each core | Little-endian byte/halfword lanes, masks, sign extension, alignment preservation | Yes: rewires, muxes, gates | Matching operations inside behavioral cores; not a separately selectable helper variant |
-| `RV32ISingleCycleCore`, `RV32IFiveStageCore` | Request/response scheduling, datapath and retirement | Yes | Yes |
-| `MemoryContainer<technology,32>` | Scalable storage and technology-specific transaction behavior | No full-size expansion | Yes, backed by representative device contracts |
-| `MemoryEndpoint<technology,32>` | Controller plus a separate native memory device, with the same external port | Yes | Yes |
+| Component | Responsibility |
+| --- | --- |
+| `MemoryContainer` | Scalable native FF/SRAM/DRAM/ROM/NOR behavior, with that technology's pins |
+| `MemoryController` | Map transactions to native pins; FF completes without wait cycles, other technologies sequence operations and hold responses; owns no contents |
+| `MemoryEndpoint` | Controller plus native device behind the common transaction interface |
+| `BehavioralMemoryEndpoint` | Fused behavioral implementation of that assembly |
+| `RV32IMemoryLanes` | Byte/halfword selection, store shifts/masks, load sign extension |
+| `RV32IMemoryRequest` | Pipeline-side outstanding-request tracking and redirect draining |
 
-The requester does not store memory contents, execute technology commands, or buffer responses. The endpoint owns a response until the CPU acknowledges it. Its only storage is the request payload, original address tag, and BUSY/SENT/ABANDONED bits.
+The legacy `memory.scalable.*` catalog IDs retain their transaction contracts.
+New native containers use `memory.device.*`; their schemas are not silently
+interchangeable with the legacy IDs.
 
-## Public CPU ports
+## Single-cycle path
 
-Both ports use the following signals, prefixed with `IMEM_` or `DMEM_`. Directions are relative to the CPU.
+Fetch owns only PC state, its incrementer, and direct read wiring. Memory is
+combinational: address/lane formatting, alignment checks, and commit-gated WE.
+Neither stage has a requester, payload register, response buffer, or memory array.
 
-| Signals | Direction | Width | Meaning |
-| --- | --- | --- | --- |
-| `REQ_VALID`, `REQ_READY` | Output, input | 1 each | A request transfers on a rising edge with both high |
-| `REQ_OP` | Output | 3 | Read = 0; ordinary write = 1 |
-| `REQ_ADDR` | Output | 32 | Byte address of the accessed word |
-| `REQ_WRITE_DATA` | Output | 32 | Store data shifted into the selected byte lanes |
-| `REQ_WRITE_MASK` | Output | 4 | One write enable per byte lane |
-| `RSP_VALID`, `RSP_READY` | Input, output | 1 each | A response transfers on a rising edge with both high |
-| `RSP_READ_DATA` | Input | 32 | Endpoint-held read word |
-| `RSP_STATUS` | Input | 3 | Zero = success; other status values become CPU access faults |
-| `CLK`, `RST` | Input | 1 each | Shared core/endpoint signals, not separately forwarded per-port outputs |
+Stage-local WORD_ADDR/READ_EN/READ_DATA/FAULT and masked-write signals are
+formatted by combinational port groups. The core boundary exposes IMEM_/DMEM_
+REQ_VALID/READY, REQ_OP/ADDR/WRITE_DATA/WRITE_MASK and RSP_VALID/READY/READ_DATA/STATUS.
+REQ_ADDR is an aligned byte address.
 
-The legacy public READ_EN, WRITE_EN, SIZE, SIGN_EXTEND, READY, FAULT, and CONSUME memory signals are removed. Internal pipeline stages can still describe a load/store in instruction terms; this is not a public memory-device interface.
+PC/register/memory writes capture old-state-derived values on the same rising
+edge. DMEM_READ_EN also checks store addresses before authorizing WE. Faults
+suppress normal writes. DONE is constant high, not a settling detector: the
+clock period must accommodate the complete combinational path.
 
-## Request and completion behavior
+The system shares CLK and interface RST with its FF endpoints; controllers tie
+native storage reset low. The root contains CLOCK, CORE and two endpoints.
+Visible FF controller/device assemblies are supported too. Fixed-cycle factories
+reject non-FF technologies, rather than silently using delayed memory.
 
-1. When idle, the core's requester captures the next access at a rising edge.
-2. It holds VALID and the payload stable until READY accepts the request. A fetch redirect cannot withdraw an already offered request.
-3. Acceptance is not completion. The requester waits for the corresponding response.
-4. A matching response becomes available to the datapath. The endpoint holds it during CPU stalls or ENABLE pauses.
-5. The single-cycle datapath consumes it at an instruction attempt; pipeline stage advancement consumes it when that stage can proceed. Each transaction is consumed once.
-6. A changed fetch tag makes the old request obsolete. ABANDONED remembers this even if the PC returns to the old address before the response arrives. The old response is drained without entering the pipeline; a new request is then captured.
+## Advanced pipeline path
 
-Each port has one outstanding transaction; no bursts, IDs, speculation rollback, cache, or coherence are introduced. A capture/accept/response sequence takes multiple clocks. The current implementation also leaves a capture boundary between transactions rather than accepting another request on the response-consumption edge.
+`RV32IFiveStageCore` retains IMEM_REQ/RSP and DMEM_REQ/RSP, byte-addressed aligned
+transactions, held valid/payload, backpressure, and one outstanding operation
+per port. Redirects drain obsolete instruction responses, including ABA changes.
+A store is applied by the endpoint before its completion response; interface
+reset cannot undo an already launched physical operation.
 
-Byte and halfword loads select and extend the addressed lane; stores shift data and generate byte masks. Invalid halfword/word alignment, or reserved size 3, remains an invalid word address at the endpoint instead of silently rounding down to a legal access. The endpoint returns an error without changing storage. No CPU store is translated into flash program/erase.
+`rv32i::MemoryConfiguration` independently selects instruction/data technology,
+capacity, and endpoint form. ROM rejects ordinary stores; flash requires
+PROGRAM/ERASE rather than SW. DRAM sequencing and refresh belong to its
+controller. Native DRAM still retains destructive reads, row state, and retention.
 
-Reset is common to the core and endpoint. It clears in-flight interface state; committed writes remain stored. There is no old relay that defers endpoint reset or replays requests. A native operation already launched behind a controller follows that endpoint's reset contract.
+`expanded_endpoint=false` selects a fused behavioral endpoint.
+`expanded_endpoint=true` selects a visible controller/device assembly;
+setting `device.expanded_storage=false` keeps that controller visible while
+using scalable native storage. Controller register count depends on port width,
+not the number of stored words. Full cell expansion retains its 4,096-cell guard.
 
-## Choosing storage
+## Provisioning and inspection
 
-`rv32i::MemoryConfiguration` is accepted independently for instruction and data memory by `RV32IProgramRoot` and `RV32ISingleCycleSystem`:
+`MemoryStateView` exposes bounded snapshots and optional pre-simulation image
+initialization. Reset never reopens provisioning. Runtime writes use native
+pins or transactions and retain the selected technology's rules. Expanded
+devices without a host image capability use construction images or pin writes.
 
-```cpp
-rv32i::MemoryConfiguration instruction, data;
-instruction.technology = circuit::memory::Technology::ROM;
-instruction.device.depth_words = 8;
-instruction.device.image_hex = program_image_hex; // Little-endian image bytes.
-data.technology = circuit::memory::Technology::SRAM;
-data.device.depth_words = 4;
+The isolated instruction answer-sheet system owns host-side `MemoryStorage`;
+it does not construct an unconnected hardware memory. The compact native FF
+device uses private `FFMemoryDirect<W>`, tested against the structural
+`FFMemory<W>` contract. Neither host storage nor this direct device adds a
+transaction layer. The superseded `Memory64Kx32` and generic legacy container
+have been removed (see [cleanup](rv32i-cleanup.md)).
 
-// The same wiring supports small expanded, native-device endpoints.
-instruction.expanded_endpoint = true;
-data.expanded_endpoint = true;
-```
+## Current validation
 
-Leave `expanded_endpoint` false for scalable containers. Technology, capacity, timing, image, and host-resource budgets are separate configuration fields. Expanded endpoints retain their small-geometry limits; expanding a 256 KiB SRAM into cells is not the default. Normal component build profiles still control eligible endpoint/device abstractions.
+All 22 single-cycle program cases enforce at most one clock per instruction.
+Stage tests cover both fidelities; integration covers overlapping source/
+destination operands and the no-reading-back rule. Native memory equivalence,
+controller/scalable-device composition, and 256 MiB sparse devices are covered
+by `NativeMemoryDeviceContractTest`. `RV32IMemoryMigrationTest` covers the
+zero-wait fixed-cycle paths and configurable pipeline endpoints.
 
-The cores issue ordinary read and write operations. ROM rejects stores; NOR flash requires its separate program/erase operations and therefore rejects ordinary CPU stores. A DRAM endpoint/container retains its own refresh behavior. Exposing flash commands through CPU software would need an additional control-register/MMIO interface, not a silent change to `SW`.
+Published pin contracts, behavioral examples, diagrams, and embedded rows:
+[3.1](../site-docs/memory/3.1/index.md),
+[3.1.6](../site-docs/memory/3.1.6.md),
+[3.3](../site-docs/memory/3.3.md), and
+[4.3](../site-docs/rv32i/4.4/index.md).
 
-## Program loading and inspection
+## Zero-wait endpoint timing regression
 
-Containers expose an optional `MemoryStateView` capability for inspecting storage and provisioning a program image **before the first evaluation**. ELF loading and program fixtures use that capability, not a concrete legacy-memory cast. Initialization/clearing is rejected once simulation starts; reset does not reopen this host loading window. Runtime software accesses still use pins and obey technology rules.
+The current FF default yields the following counts for the transaction-capable
+pipeline. These are simulated architectural clocks, not host runtimes or calibrated
+physical-chip timings. SRAM remains selectable; these counts do not claim that
+SRAM itself became faster.
 
-Fully expanded endpoints need not provide a host state/image capability. Initialize ROM through its construction image, and writable devices through their pins. The focused integration test runs a program from an expanded ROM endpoint against expanded SRAM without a host-memory shortcut.
+| Program | Cycles | Load-use stalls | Memory wait cycles |
+| --- | ---: | ---: | ---: |
+| 17 | 77 | 0 | 0 |
+| 18 | 70 | 0 | 0 |
+| 19 | 103 | 32 | 0 |
+| 20 | 85 | 0 | 0 |
+| 21 | 134 | 16 | 0 |
+| 22 | 87 | 8 | 0 |
 
-`Memory64Kx32` remains available for independent legacy component tests and the isolated `RV32IReferenceSystem` answer-sheet oracle. It is no longer the memory in the executable program roots or ELF/benchmark systems. Keeping that oracle independent avoids checking the new transaction system against itself.
+## Historical transaction-only migration evidence
 
-## Timing and validation
-
-“Single-cycle” describes the datapath, not a promise of one clock per instruction with variable-latency memory. Both cores wait for actual responses. Removing the external relay reduces transaction overhead; it does not turn this uncached system into a one-instruction-per-cycle pipeline.
-
-The focused integration test exercises the structural requester/formatter with all five memory technologies, each as a container and expanded endpoint. It checks lanes, signed loads, masks, alignment/range faults, ROM/flash restrictions, request and response backpressure, redirect/ABA handling, reset, and image provisioning. Both CPU systems also run a small ROM/SRAM program using either device form.
-
-The existing 44 program cases compare architectural traces and memory writes between structural/behavioral cores and the instruction oracle. Core-level scenarios now drive the universal handshakes explicitly. Native/WASM parity checks cover topology, timestamps, state, and memory inspection; browser checks cover both fidelities and all 22 documentation programs.
+The following records describe the earlier wait-state single-cycle datapath
+architecture. They are preserved as history, not current timing
+or test-count claims.
 
 ### Pipeline timing regression values
 

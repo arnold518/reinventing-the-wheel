@@ -42,6 +42,8 @@ RV32ISingleCycleSystem::RV32ISingleCycleSystem(std::string name,
 
 void RV32ISingleCycleSystem::buildInternals(ComponentBuilder& builder) {
     core_ = builder.add(circuit::families::RV32ISingleCycleCore, "CORE");
+    if(instruction_config_.technology!=circuit::memory::Technology::FF || data_config_.technology!=circuit::memory::Technology::FF)
+        throw std::invalid_argument("Strict single-cycle core requires zero-wait FF endpoints");
     instruction_memory_ = rv32i::buildMemory(builder, *this, "INSTRUCTION_MEMORY", instruction_config_);
     data_memory_ = rv32i::buildMemory(builder, *this, "DATA_MEMORY", data_config_);
     rv32i::wireMemorySystem(builder, core_, instruction_memory_, data_memory_,

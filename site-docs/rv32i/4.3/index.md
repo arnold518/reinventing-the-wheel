@@ -1,73 +1,59 @@
-# § 4.3. Single-Cycle Core
+# § 4.3. RV32I Building Blocks
 
-`RV32ISingleCycleCore` connects six logical datapath stages and a shared execution-status unit. Each stage has structural and behavioral implementations under the same pin contract. [4.1](../4.1/index.md) specifies the instructions; [4.2](../4.2/index.md) specifies the reused building blocks.
-
-“Single-cycle” names the non-pipelined datapath, not a promise that every instruction finishes on the next clock. The universal memory ports use clocked request/response transactions, so fetches and loads/stores can require several clocks. There are no IF/ID/EX/MEM/WB pipeline registers and no overlapped instructions.
-
-## Components
-
-| Component | Description | Structural | Behavioral |
-| --- | --- | :---: | :---: |
-| `RV32ISingleCycleFetchStage` | PC storage, PC+4, instruction transaction, fetch status | Yes | Yes |
-| `RV32ISingleCycleDecodeStage` | Instruction decoding and the architectural register file | Yes | Yes |
-| `RV32ISingleCycleExecuteStage` | Shared ALU, operand selection, branch comparison, jump/branch targets | Yes | Yes |
-| `RV32ISingleCycleMemoryStage` | Data transaction and load/store lane formatting | Yes | Yes |
-| `RV32ISingleCycleWritebackStage` | Select the value to write to a destination register | Yes | Yes |
-| `RV32ISingleCycleNextPCStage` | Select the next PC and check an active transfer's alignment | Yes | Yes |
-| `RV32ISingleCycleCore` | Connect the six stages, execution status, and two external memory ports | Yes | Yes |
-
-Columns describe registered simulator implementations, not the simplified C++ examples. `RV32IExecutionControlStatusUnit` is reused from [4.2.7](../4.2/execution-status.md), with both implementations; it is not a seventh datapath stage.
+Component references for the RV32I datapath and its control and memory-access logic. [4.1](../4.1/index.md) specifies instruction behavior; this section defines the hardware interfaces and implementations used to realize that behavior. Complete core wiring and pipeline scheduling belong in the later core sections.
 
 ## Contents
 
 | Section | Coverage |
 | --- | --- |
-| [4.3.1. Fetch](fetch.md) | PC, PC+4, request capture, response lifetime, reset |
-| [4.3.2. Decode and Register Read](decode.md) | Decoding controls, two reads, one completion-edge write, x0 |
-| [4.3.3. Execute](execute.md) | Operand selectors, one shared ALU, branch conditions, target generation |
-| [4.3.4. Memory Access](memory.md) | Transaction pins, byte lanes, sign extension, faults, backpressure |
-| [4.3.5. Writeback](writeback.md) | Zero/ALU/load/link selection; no storage |
-| [4.3.6. Next PC](next-pc.md) | Fallthrough versus transfer, target alignment; no PC storage |
-| [4.3.7. Complete Core](core.md) | Full wiring, completion, memory endpoints, instruction examples and tests |
+| [4.3.1. Register&lt;W&gt;](register.md) | Width-parametric FF storage, reset, clocked capture, and PC/pipeline/control uses |
+| [4.3.2. Register File](register-file.md) | Register addressing, two independent reads, clocked writes, x0, and FF storage construction |
+| [4.3.3. ALU32](alu32.md) | Operation encoding, arithmetic/logic/shifts/comparisons, result selection, and flags |
+| [4.3.4. Instruction Decoder](instruction-decoder.md) | Field extraction, immediate construction, recognition, illegal encodings, and control outputs |
+| [4.3.5. Program Counter and Control Flow](control-flow.md) | PC storage and updates, branch decisions, sequential execution, and jump targets |
+| [4.3.6. Memory Access](memory-access.md) | Byte/halfword/word formatting, sign extension, masks, alignment, and transaction requests |
+| [4.3.7. Execution Control and Status](execution-status.md) | Reset, execution enable, halt/trap handling, and architectural update control |
 
-Each stage page follows **IO pins → behavior and C++ example → structural/behavioral implementation → examples and embedded simulation → tests**. Its scrollable example table contains all recorded rows, including checkpoint numbers and simulator times. The C++ examples reuse explicitly linked 4.2 models rather than redefining the decoder, ALU, or transaction protocol.
+## Component grouping
 
-## Datapath and state ownership
+| Reference | Components covered |
+| --- | --- |
+| `Register<W>` | One word at widths 1/2/3/4/5/8/16/32; structurally contains W `FlipFlopCell` instances |
+| Register File | `RegisterFile32x32`; its storage bank holds 31 `Register<32>` words, each built from `FlipFlopCell` instances |
+| ALU32 | `ALU32`, `ALU32Core`, `AddSub32`, `Logic32`, `Shifter32`, `ALU32ControlDecoder`, `ALU32CompareUnit`, `ALU32ResultSelector`, `ALU32FlagUnit` |
+| Instruction Decoder | `RV32IDecodeControlUnit`, `RV32IBitPatternMatcher` |
+| Program Counter and Control Flow | `RV32IControlFlowUnit` |
+| Memory Access | `RV32IMemoryLanes`, `RV32IMemoryAlignmentUnit`, `RV32IMemoryRequest` |
+| Execution Control and Status | `RV32IExecutionControlStatusUnit` |
 
-```text
-instruction endpoint ⇄ FETCH ── instruction ──► DECODE ── operands/control ──► EXECUTE
-                       │ PC, PC+4                ▲                            │
-                       │                         │ WB_VALUE                   │ address/result
-                       │                      WRITEBACK ◄── load value ─── MEMORY ⇄ data endpoint
-                       │                         ▲
-                       └──────── PC+4 ───────────┤
-                                                 └── ALU result (from EXECUTE)
+ALU32's internal units belong within its reference rather than becoming separate top-level sections. Existing ALU8 concepts can be cross-referenced, but the 32-bit pins, operation encoding, and behavior must be specified explicitly. `ALU32` is registered as `rv32i.alu32`; its arithmetic operations are reusable even though this particular interface serves the RV32I core.
 
-FETCH ◄── NEXT_PC ◄── PC+4 / control target / branch and jump selection
-  ▲          ▲
-  └── completion enables and status from EXECUTION_STATUS ──► DECODE / MEMORY
-```
+The combined `RV32IControlFlowUnit` remains a standalone reference component. The stage-wise single-cycle core distributes its responsibilities across Fetch, Execute, and Next PC, allowing JAL/JALR targets to reuse the main ALU.
 
-| State | Owner | When it changes |
-| --- | --- | --- |
-| Architectural PC | `FETCH.PC_STATE` | Reset or an authorized completion edge |
-| x1–x31; x0 is constant zero | `DECODE.REGISTER_FILE` | Reset or an authorized destination write |
-| Pending request fields and progress | `FETCH.REQUEST`, `MEMORY.REQUEST` | Request/response protocol edges; reset |
-| Halt/trap flags and cause | `EXECUTION_STATUS` | Terminal attempt edge; reset |
-| Instruction/data storage | External memory endpoints | Their own initialization, write, and reset contracts |
+Each component reference follows the same pattern: **IO pins → behavior and C++ example → structural/behavioral implementation → examples and embedded simulation → tests**. Component tables distinguish registered structural and behavioral implementations. Example tables include all recorded checkpoints and their simulation times.
 
-Execute, Writeback, and Next PC are combinational. Request payload registers are protocol state, not pipeline registers. No stage owns a second register file or a private instruction/data memory.
+## Structural organization in the visualizer
 
-## ALU sharing
+| Reference | Organization |
+| --- | --- |
+| `Register<W>` | One whole-word write enable; expand the register to inspect its numbered bit cells |
+| Register File | Address decoder → 31 whole-word registers → two independent read muxes; keep word/bit ordering inside storage |
+| ALU32 | Seven functional units; all eight 4.3.3 components and their structural descendants use automatic connectivity layouts, without custom placement overrides |
+| Instruction Decoder | Field extraction and recognition feed named control fields and immediate selection; expand each field to inspect its bit equations |
+| Control Flow | Automatic connectivity layout for the PC, arithmetic, branch decision, and next-PC selection |
+| Memory Access | Address guard → byte routing/selection → load extension and write mask; request payload/state are separate from the tag-comparison block |
+| Execution Status | Conditions → seven ordered priority links → cause selection and retained status |
 
-`EXECUTE.ALU` performs register/immediate arithmetic, effective-address addition, branch comparisons, LUI/AUIPC, and JAL/JALR target addition. A branch needs comparison and `PC+IMM` concurrently, so `EXECUTE.BRANCH_TARGET_ADD` is separate. `FETCH.PC_PLUS_4_ADD` independently supplies fallthrough and the link value. There is no duplicate `RS1+IMM` jump adder.
+Automatic graph layout is used where it preserves readable signal flow. Repeated bit lanes, register words, control equations, and priority links keep an explicit numeric or functional ordering. These groupings are real structural hierarchy, not hidden behavioral replacements; the public IO and selectable fidelities are unchanged.
 
-## No reading back
+## Boundaries with other sections
 
-An instruction does not modify an architectural register or PC and then read that new value to finish itself. Source operands, effective addresses, targets, and link values use the pre-completion state. On a normal completion edge, the PC and destination register capture their already-computed inputs together. Stores wait for acknowledgment, not for a read-back of the data they wrote.
+[Chapter 3](../../memory/3.1/index.md) owns memory cells, technology-specific words/rows, banks, devices, and `MemoryContainer`, together with the [transaction protocol](../../memory/3.2.md) and [memory controllers](../../memory/3.3.md). This section introduces `Register<W>` and the register file as RV32I building blocks reusing FF cells. The register file is a CPU operand store, not an interchangeable transaction endpoint. `RV32IMemoryRequest` is the CPU-side requester; it is not a technology-specific memory controller.
 
-For `jalr x5,0(x5)` at PC=16 with old x5=24, Execute computes target 24 while Writeback selects link 20. The edge writes PC=24 and x5=20. The updated x5 is not used to compute the target. For `lw x1,0(x1)`, x1 retains the address throughout the wait and changes only when the load completes.
+The core sections are:
 
-## Modeling boundary
+- [4.4. Single-Cycle Core](../4.4/index.md): Fetch, Decode, Execute, Memory, Writeback, and Next PC references; their complete wiring, memory endpoints, shared ALU, and completion rules.
+- [4.5. Baseline Pipeline](../4.5/index.md): five stages, interstage registers, dependency stalls, and conservative control-flow handling.
+- [4.6. Advanced Pipeline](../4.6/index.md): forwarding, load-use handling, switchable prediction, recovery, and memory waits.
 
-Stage equivalence covers settled binary values and clock-edge state transitions after reset. Structural gate delays and behavioral one-tick outputs need not match, and arbitrary X/Z behavior is not claimed equivalent. The examples omit events, delays, and history storage; the per-stage timing notes state the nonbinary limitations. Clock/control/data setup must precede capture. These are simulator contracts, not a calibrated physical timing or metastability model.
+Pipeline-only state and coordination stay with the pipeline documentation. They are not prerequisites for the single-cycle core's component references.

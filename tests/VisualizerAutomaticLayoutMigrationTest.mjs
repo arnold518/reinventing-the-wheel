@@ -38,4 +38,17 @@ const latest={automatic_layout_revision:'v3',children:{A:{rel_pos:[.4,.4],rel_wi
   automatic_layout_history:[{revision:'v1',children:{A:{rel_pos:[.1,.1],rel_width:.2}}},
     {revision:'v2',children:{A:{rel_pos:[.2,.2],rel_width:.2}}}]};
 assert.deepEqual(upgradeDefaultLayout(latest,{automatic_layout_revision:'v1',children:latest.automatic_layout_history[0].children}).children,latest.children);
+// Pipeline bank proportions migrate together with their regenerated geometry.
+for (const kind of ['RV32IIFIDPipelineRegister','RV32IIDEXPipelineRegister','RV32IEXMEMPipelineRegister','RV32IMEMWBPipelineRegister','RV32IFiveStageCore']) {
+  const base=layout.type_layouts[kind], previous=base.previous_default;
+  assert.equal(base.layout_revision,'rv32i-advanced-grouping-v2');
+  assert(previous);
+  const saved={...structuredClone(previous), color:[9,8,7,255]};
+  const upgraded=upgradeDefaultLayout(base,saved);
+  assert.equal(upgraded.aspect_ratio,base.aspect_ratio);
+  assert.deepEqual(upgraded.color,saved.color);
+  assert.equal(upgradeDefaultLayout(base,{...saved,aspect_ratio:9.876}).aspect_ratio,9.876);
+  const manual={...saved,layout_mode:'manual'};
+  assert.equal(upgradeDefaultLayout(base,manual),manual);
+}
 console.log(`${count} automatic layout migrations passed; styles, manual positions and skipped revisions preserved`);

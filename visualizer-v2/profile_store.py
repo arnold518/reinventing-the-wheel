@@ -104,15 +104,24 @@ def migrate_component_paths(overrides: dict[str, str]) -> dict[str, str]:
 
     def current_path(path):
         path = stage_path(ff_path(path))
-        # Register32 now contains one FFWord. Limit name-based compatibility
-        # to its registered root and RV32I state words; unrelated BIT_n helpers
-        # (especially MemoryPayloadRegister) must not be rewritten.
+        # The former Register32/MemoryPayloadRegister wrapper is now a direct
+        # Register<32>. Limit migration to known register roots; other STORAGE
+        # branches (notably register files) have a different hierarchy.
+        path = re.sub(r"^(REGISTER32_ROOT|RV32I[^.]*\.(?:[A-Za-z0-9_]+\.)*[A-Za-z0-9_]+_STATE)\.STORAGE$",
+                      r"\1", path)
         def register_child(match):
             old = match[2]
-            child = "CELL_" + match[3] if match[3] is not None else {"D_SPLIT": "DATA", "Q_JOIN": "OUTPUT"}[old]
-            return match[1] + ".STORAGE." + child
-        return re.sub(r"^(REGISTER32_ROOT|RV32I[^.]*\.(?:[A-Za-z0-9_]+\.)*[A-Za-z0-9_]+_STATE)\.(BIT_([0-9]|[12][0-9]|3[01])|D_SPLIT|Q_JOIN)(?=\.|$)",
+            child = ("BIT_" + match[3] if match[3] is not None else
+                     {"DATA": "INPUT_BITS", "OUTPUT": "OUTPUT_BITS", "D_SPLIT": "INPUT_BITS", "Q_JOIN": "OUTPUT_BITS"}[old])
+            return match[1] + "." + child
+        path = re.sub(r"^(REGISTER32_ROOT|RV32I[^.]*\.(?:[A-Za-z0-9_]+\.)*[A-Za-z0-9_]+_STATE)\."
+                      r"(?:STORAGE\.)?(CELL_([0-9]|[12][0-9]|3[01])|DATA|OUTPUT|D_SPLIT|Q_JOIN)(?=\.|$)",
                       register_child, path)
+        def file_word_child(match):
+            child = "BIT_" + match[5] if match[5] is not None else {"DATA": "INPUT_BITS", "OUTPUT": "OUTPUT_BITS"}[match[4]]
+            return match[1] + match[2] + ".STORAGE.WORD_" + match[3] + "." + child
+        return re.sub(r"(^|\.)(REGISTER_FILE|REGISTER_FILE32X32_ROOT)\.STORAGE\.WORD_(\d+)\."
+                      r"(CELL_(\d+)|DATA|OUTPUT)(?=\.|$)", file_word_child, path)
 
     result = {current_path(path): fidelity for path, fidelity in migrated.items()}
     # Explicit choices already using the new hierarchy take precedence.

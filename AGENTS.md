@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-CircuitSim is a digital logic circuit simulator with event-driven simulation engine (C++20) and interactive visualization (Python/Pygame). It simulates circuits at the gate level with accurate timing and supports hierarchical component composition.
+CircuitSim is a digital logic circuit simulator with event-driven simulation engine (C++20) and interactive browser visualization (native Python backend or serverless WebAssembly; optional older Pygame client). It simulates circuits at the gate level with accurate timing and supports hierarchical component composition.
 
 **Core Architecture**: Event-driven simulation with priority queue processing WireUpdateEvents and ComponentEvalEvents. Components are composed hierarchically (composite pattern) where complex circuits are built from simpler gates.
 
@@ -26,24 +26,23 @@ This project prioritizes learning hardware by building lower-level structures be
 # From project root
 mkdir -p build && cd build
 cmake ..
-make -j$(nproc)
+make -j1
 ```
 
 ### Rebuild After Changes
 ```bash
 # C++ changes only
-cd build && make -j$(nproc)
+cd build && make -j1
 
 # CMakeLists.txt changes
-cd build && cmake .. && make -j$(nproc)
+cd build && cmake .. && make -j1
 ```
 
 ### Build Outputs
 - `build/circuit_backend.cpython-*.so` - Python module (pybind11)
   - **Automatically copied to `visualizer/` after build** (via CMake POST_BUILD command)
 - `build/sim` - C++ standalone executable
-- `build/tests/FullCircuitTest` - CTest executable
-- `build/tests/FullAdderTest` - CTest executable
+- `build/tests/SimulationTestRunner` - registry-driven CTest/scenario runner
 
 ### Running Tests
 ```bash
@@ -51,7 +50,7 @@ cd build && cmake .. && make -j$(nproc)
 cd build && ctest --verbose
 
 # Single test directly
-cd build && ./tests/FullAdderTest
+cd build && ./tests/SimulationTestRunner FullAdderTest
 ```
 
 ### Running Visualizer
@@ -61,7 +60,7 @@ cd visualizer
 python main.py
 ```
 
-**Important**: The `circuit_backend` Python module is automatically copied from `build/` to `visualizer/` after every successful build. No manual copying needed! The visualizer loads `circuit_backend` module and runs `FullAdderTest` by default (see main.py:106).
+**Important**: The `circuit_backend` Python module is automatically copied from `build/` to `visualizer/` after every successful build. No manual copying needed! Both frontends use `create_test_by_name` from the shared scenario registry. Browser development uses `visualizer-v2/server.py`; MkDocs/WASM packaging uses `tools/build-pages.sh`. Use `CIRCUITSIM_DEPLOY_PYTHON=OFF` for isolated validation builds.
 
 ## Code Architecture
 
@@ -300,9 +299,9 @@ class MyTest : public SimulationTest {
 
 ## Known Limitations (Current State)
 
-- Single-bit wires only (no buses)
+- Multi-bit pins/wires are supported; check component width constraints rather than assuming all widths exist.
 - No clock domain modeling (everything in global time)
-- No X-propagation for uninitialized wires (defaults to UNKNOWN)
+- Four-state logic exists; equivalence domains and propagation details are component-specific.
 - Visualization breaks with >1000 components
 - No VCD/waveform export (would be valuable addition)
 
@@ -311,6 +310,8 @@ class MyTest : public SimulationTest {
 ## Strategic Roadmap: Gate-Level → CPU → GPU
 
 **Project Evolution**: Gate-level learning tool → Hybrid CPU simulator → Performance-optimized multi-core/GPU
+
+This roadmap is historical planning context, not a current inventory. Consult the code, component catalog, current site documentation, and measured benchmark artifacts for implemented features. Do not remove structural implementations or the visualizer as routine cleanup.
 
 ### Three-Year Vision
 
@@ -358,7 +359,7 @@ class MyTest : public SimulationTest {
 
 ### Critical Infrastructure: Multi-Bit Buses (Required First!)
 
-**Current limitation**: Only single-bit wires exist. Cannot build CPU without multi-bit data paths.
+**Historical prerequisite (implemented)**: multi-bit pins and wires already support the current RV32I cores. The sketch below records the original roadmap, not a new implementation requirement.
 
 ```cpp
 // Phase 1 requirement: Bus<WIDTH> template
@@ -562,7 +563,7 @@ reinventing-the-wheel/
 
 ### Key Architectural Principles
 
-1. **Multi-bit buses first** - Single-bit wires cannot scale to CPU
+1. **Multi-bit buses first** - Already implemented; preserve the current multi-bit contracts
 2. **Lower-level first** - Gates, slices, and composites come before behavioral shortcuts
 3. **Behavioral must be proven** - Necessary for scale, but only as tested abstraction of lower-level behavior
 4. **Gate-level where educational** - ALU slices, registers, control logic

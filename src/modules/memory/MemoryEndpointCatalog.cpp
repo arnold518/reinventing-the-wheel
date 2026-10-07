@@ -1,12 +1,15 @@
 #include "modules/memory/MemoryController.hpp"
 #include "modules/memory/MemoryContainer.hpp"
+#include "modules/memory/BehavioralMemoryEndpoint.hpp"
 
 namespace circuit::memory {
 namespace {
 void add(ComponentCatalog& c, const std::string& id, const std::string& type,
          memory_device::Schema schema, ComponentFactory structural, ComponentFactory behavioral,
          const std::string& test, ParameterPredicate support = {}) {
-    c.registerContract({id, 1, type, schema({}), {}, "four-state", "transaction-completion", schema});
+    ContractDescriptor contract{id, 2, type, schema({}), {}, "four-state", "transaction-completion-v2", schema};
+    if (id.starts_with("memory.scalable.")) contract.preferred_fidelity = Fidelity::Behavioral;
+    c.registerContract(std::move(contract));
     for (auto f : {Fidelity::Structural, Fidelity::Behavioral}) {
         auto factory = f == Fidelity::Structural ? structural : behavioral;
         if (!factory) continue;
@@ -20,15 +23,76 @@ void add(ComponentCatalog& c, const std::string& id, const std::string& type,
         };
         if (f == Fidelity::Behavioral) impl.capabilities = {"memory-state-view"};
         impl.evidence = {VerificationStatus::Verified, {"FF transaction registers plus native structural device"},
-            {test}, {"MemoryEndpointContractTest"}, {"MemoryEndpointTimingTest"}, "four-state", "transaction-completion"};
-        if (id.starts_with("memory.controller.")) impl.evidence.contract_tests.push_back("MemoryControllerTest");
+            {test}, {"MemoryEndpointContractTest"}, {"MemoryEndpointTimingTest"}, "four-state", "transaction-completion-v2"};
+        if (id.starts_with("memory.controller.")) {
+            // One logical component test owns the controller contract. Device
+            // endpoint scenarios remain integration evidence, not a second owner.
+            impl.evidence.contract_tests = {"MemoryControllerTest"};
+            impl.evidence.representative_tests.push_back(test);
+        }
         c.registerImplementation(std::move(impl));
+    }
+}
+
+// Handshake state and payload registers used by the transaction components.
+void registerClockedStateBit(ComponentCatalog& c) {
+    const auto& state_bit = families::ClockedStateBit;
+    const auto state_id = std::string(state_bit.id());
+    c.registerContract({state_id, 1, "Clocked state bit", memory_device::describe(
+        state_bit.pinInitializer()), {}, "four-state", "clock-boundary"});
+    for (auto fidelity : {Fidelity::Structural, Fidelity::Behavioral}) {
+        ImplementationDescriptor implementation;
+        implementation.id = state_id + (fidelity == Fidelity::Structural ? ".structural.dff" : ".behavioral.direct");
+        implementation.contract_id = state_id;
+        implementation.fidelity = fidelity;
+        implementation.concrete_type_name = "ClockedStateBit";
+        implementation.factory = [fidelity](const std::string& name, const ParameterMap&,
+                                 const std::shared_ptr<BuildContext>& context) {
+            return families::ClockedStateBit.create(fidelity, name, context);
+        };
+        implementation.evidence = {VerificationStatus::Characterized,
+            {"DFlipFlop master/slave storage"}, {"ClockedStateBitTest"},
+            {"ClockedStateBitTest"}, {}, "four-state", "clock-boundary"};
+        c.registerImplementation(std::move(implementation));
+    }
+}
+
+void registerRegisterWords(ComponentCatalog& c) {
+    for (size_t width : {1,2,3,4,5,8,16,32}) {
+        const auto& family = families::registerWord(width);
+        const auto id = std::string(family.id());
+        c.registerContract({id, 1, std::string(family.typeName()),
+            memory_device::describe(family.pinInitializer()), {}, "four-state", "clock-boundary"});
+        for (auto fidelity : {Fidelity::Structural, Fidelity::Behavioral}) {
+            ImplementationDescriptor implementation;
+            implementation.id = id + (fidelity == Fidelity::Structural ? ".structural.bits" : ".behavioral.word");
+            implementation.contract_id = id;
+            implementation.fidelity = fidelity;
+            implementation.concrete_type_name = std::string(family.typeName());
+            implementation.factory = [width, fidelity](const std::string& name, const ParameterMap&,
+                                    const std::shared_ptr<BuildContext>& context) {
+                return families::registerWord(width).create(fidelity, name, context);
+            };
+            implementation.evidence = {VerificationStatus::Characterized,
+                {"FlipFlopCell structural lanes with one shared D/Q bus"},
+                {"RegisterWidthsTest"},
+                {"RegisterWidthsTest"}, {}, "four-state", "clock-boundary"};
+            c.registerImplementation(std::move(implementation));
+        }
     }
 }
 }
 void registerMemoryEndpoints(ComponentCatalog& c) {
+    registerClockedStateBit(c);
+    registerRegisterWords(c);
     for (size_t width : {8,16,32}) {
         const auto suffix = std::to_string(width);
+        add(c,"memory.response-buffer."+suffix,"MemoryResponseBuffer<"+suffix+">",
+            [width](const ParameterMap& p){memory_device::keys(p,{});return memory_device::describe(
+                [width](IOComponent* s){defineMemoryResponseBufferPins(s,width);});},
+            [width](const std::string& n,const ParameterMap&,const std::shared_ptr<BuildContext>& ctx){
+                return Component::createWithContext<MemoryResponseBuffer>(ctx,n,width);
+            },{},"MemoryResponseBufferTest");
         add(c, "memory.transaction-port." + suffix, "MemoryTransactionPort<" + suffix + ">",
             [width](const ParameterMap& p) {
                 memory_device::keys(p, {});
@@ -46,7 +110,7 @@ void registerMemoryEndpoints(ComponentCatalog& c) {
                 return memory_device::describe([=](IOComponent* s) { protocolPins(s,width); });
             };
             ComponentFactory compact = [=](const std::string& n, const ParameterMap& p, const std::shared_ptr<BuildContext>& ctx) {
-                return Component::createWithContext<BehavioralMemoryContainer>(ctx,n,width,t,endpointConfig(p));
+                return Component::createWithContext<BehavioralMemoryEndpoint>(ctx,n,width,t,endpointConfig(p));
             };
             add(c, "memory.controller." + name + "." + suffix, "MemoryController" + dims,
                 [=](const ParameterMap& p) {
@@ -61,8 +125,29 @@ void registerMemoryEndpoints(ComponentCatalog& c) {
                 }, t == Technology::Container ? ComponentFactory{} : compact, test,
                 [=](const ParameterMap& p) { endpointConfig(p).validate(width,t,t != Technology::Container); return true; });
             if (t != Technology::Container)
-                add(c, "memory.scalable." + name + "." + suffix, "MemoryContainer" + dims, schema,
-                    {}, compact, "ScalableMemoryContainerTest");
+                add(c, "memory.scalable." + name + "." + suffix, "MemoryEndpoint" + dims, schema,
+                    [=](const std::string& n, const ParameterMap& p, const std::shared_ptr<BuildContext>& ctx) {
+                        auto config = endpointConfig(p);
+                        config.expanded_storage = false; // controller view, never millions of cells
+                        return Component::createWithContext<MemoryEndpoint>(ctx,n,width,t,config);
+                    }, compact, "ScalableMemoryEndpointTest");
+            if (t != Technology::Container) {
+                auto nativeSchema = [=](const ParameterMap& p) {
+                    auto config = endpointConfig(p);
+                    config.refresh_interval_ticks = 0;
+                    config.validate(width,t);
+                    return memory_device::describe([=](IOComponent* s) {
+                        nativePins(s,width,t,false);
+                        if (t == Technology::DRAM) s->addPin("ROW_OPEN",PinType::OUTPUT);
+                        if (t == Technology::NORFlash) s->addPin("WRITE_ENABLED",PinType::OUTPUT);
+                    });
+                };
+                memory_device::registerBlock(c,"memory.device." + name + "." + suffix,
+                    "MemoryContainer" + dims,nativeSchema,{},
+                    [=](const std::string& n,const ParameterMap& p,const std::shared_ptr<BuildContext>& ctx) {
+                        return createMemoryContainer(n,width,t,endpointConfig(p),ctx);
+                    },"NativeMemoryContainerTest");
+            }
         }
     }
 }

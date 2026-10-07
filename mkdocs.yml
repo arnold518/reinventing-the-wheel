@@ -12,6 +12,7 @@ strict: true
 hooks:
   - tools/mkdocs_examples.py
   - tools/mkdocs_rv32i.py
+  - tools/mkdocs_diagrams.py
 
 theme:
   name: material
@@ -143,51 +144,127 @@ nav:
               - Jumps: rv32i/4.1/instructions/jumps.md
               - Ordering and System: rv32i/4.1/instructions/system.md
           - 4.1.4. Executable Reference: rv32i/4.1/implementation.md
-          - 4.1.5. Programs and Verification:
-              - rv32i/4.1/programs/index.md
-              - Instruction Behavior:
-                  - 1. Array sum, loop, and stores: rv32i/4.1/programs/program-01.md
-                  - 2. Arithmetic, logic, shifts, and comparisons: rv32i/4.1/programs/program-02.md
-                  - 3. Signed and unsigned memory accesses: rv32i/4.1/programs/program-03.md
-                  - 4. Conditional branches and fallthrough: rv32i/4.1/programs/program-04.md
-                  - 5. Direct call, indirect jump, and return: rv32i/4.1/programs/program-05.md
-                  - 6. Upper immediates, PC-relative values, and FENCE: rv32i/4.1/programs/program-06.md
-                  - 7. Fibonacci sequence: rv32i/4.1/programs/program-07.md
-                  - 8. Byte copy and checksum: rv32i/4.1/programs/program-08.md
-              - Traps:
-                  - 9. Illegal instruction and precise stopping: rv32i/4.1/programs/program-09.md
-                  - 10. Environment-call trap: rv32i/4.1/programs/program-10.md
-                  - 11. Misaligned word load: rv32i/4.1/programs/program-11.md
-                  - 12. Misaligned halfword store: rv32i/4.1/programs/program-12.md
-                  - 13. Out-of-range word load: rv32i/4.1/programs/program-13.md
-                  - 14. Out-of-range word store: rv32i/4.1/programs/program-14.md
-                  - 15. Misaligned jump target: rv32i/4.1/programs/program-15.md
-                  - 16. Instruction-fetch access fault: rv32i/4.1/programs/program-16.md
-              - Workloads:
-                  - 17. Independent ALU chains: rv32i/4.1/programs/program-17.md
-                  - 18. Dependent ALU chain: rv32i/4.1/programs/program-18.md
-                  - 19. Repeated load-use pairs: rv32i/4.1/programs/program-19.md
-                  - 20. Branch-heavy loop: rv32i/4.1/programs/program-20.md
-                  - 21. Sixteen-word array sum: rv32i/4.1/programs/program-21.md
-                  - 22. Word copy and checksum: rv32i/4.1/programs/program-22.md
-      - 4.2. RV32I Building Blocks:
+      - 4.2. Benchmarking and Verification:
           - rv32i/4.2/index.md
-          - 4.2.1. Register32: rv32i/4.2/register.md
-          - 4.2.2. Register File: rv32i/4.2/register-file.md
-          - 4.2.3. ALU32: rv32i/4.2/alu32.md
-          - 4.2.4. Instruction Decoder: rv32i/4.2/instruction-decoder.md
-          - 4.2.5. Program Counter and Control Flow: rv32i/4.2/control-flow.md
-          - 4.2.6. Memory Access: rv32i/4.2/memory-access.md
-          - 4.2.7. Execution Control and Status: rv32i/4.2/execution-status.md
-      - 4.3. Single-Cycle Core:
+          - 4.2.1. Architecture: rv32i/4.2/architecture.md
+          - 4.2.2. Execution and Measurement:
+              - rv32i/4.2/execution.md
+              - Clock Analysis: rv32i/4.2/timing.md
+          - 4.2.3. Fixed Programs:
+              - rv32i/4.2/programs/index.md
+              - Instruction Behavior:
+                  - 1. Array sum, loop, and stores: rv32i/4.2/programs/program-01.md
+                  - 2. Arithmetic, logic, shifts, and comparisons: rv32i/4.2/programs/program-02.md
+                  - 3. Signed and unsigned memory accesses: rv32i/4.2/programs/program-03.md
+                  - 4. Conditional branches and fallthrough: rv32i/4.2/programs/program-04.md
+                  - 5. Direct call, indirect jump, and return: rv32i/4.2/programs/program-05.md
+                  - 6. Upper immediates, PC-relative values, and FENCE: rv32i/4.2/programs/program-06.md
+                  - 7. Fibonacci sequence: rv32i/4.2/programs/program-07.md
+                  - 8. Byte copy and checksum: rv32i/4.2/programs/program-08.md
+              - Traps:
+                  - 9. Illegal instruction and precise stopping: rv32i/4.2/programs/program-09.md
+                  - 10. Environment-call trap: rv32i/4.2/programs/program-10.md
+                  - 11. Misaligned word load: rv32i/4.2/programs/program-11.md
+                  - 12. Misaligned halfword store: rv32i/4.2/programs/program-12.md
+                  - 13. Out-of-range word load: rv32i/4.2/programs/program-13.md
+                  - 14. Out-of-range word store: rv32i/4.2/programs/program-14.md
+                  - 15. Misaligned jump target: rv32i/4.2/programs/program-15.md
+                  - 16. Instruction-fetch access fault: rv32i/4.2/programs/program-16.md
+              - Workloads:
+                  - 17. Independent ALU chains: rv32i/4.2/programs/program-17.md
+                  - 18. Dependent ALU chain: rv32i/4.2/programs/program-18.md
+                  - 19. Repeated load-use pairs: rv32i/4.2/programs/program-19.md
+                  - 20. Branch-heavy loop: rv32i/4.2/programs/program-20.md
+                  - 21. Sixteen-word array sum: rv32i/4.2/programs/program-21.md
+                  - 22. Word copy and checksum: rv32i/4.2/programs/program-22.md
+          - 4.2.4. Generated Workloads:
+              - rv32i/4.2/workloads/index.md
+              - Dependent integer recurrence: rv32i/4.2/workloads/dependent.md
+              - Alternating branch loop: rv32i/4.2/workloads/alternating.md
+              - Nested counted loops: rv32i/4.2/workloads/nested.md
+              - Independent ALU chains: rv32i/4.2/workloads/independent.md
+              - Dependency distance: rv32i/4.2/workloads/dependency.md
+              - Immediate load-use pairs: rv32i/4.2/workloads/load-use.md
+              - Scheduled load-use pairs: rv32i/4.2/workloads/load-scheduled.md
+              - Controlled branch outcomes: rv32i/4.2/workloads/branch-pattern.md
+              - Predictor table aliasing: rv32i/4.2/workloads/branch-alias.md
+              - Nested direct and indirect calls: rv32i/4.2/workloads/calls.md
+              - Streaming copy and checksum: rv32i/4.2/workloads/stream.md
+              - Dependent pointer chasing: rv32i/4.2/workloads/pointer-chase.md
+              - Unsigned insertion sort: rv32i/4.2/workloads/sort.md
+              - Bitwise CRC32 kernel: rv32i/4.2/workloads/crc32.md
+              - Byte scan and classification: rv32i/4.2/workloads/scan.md
+          - 4.2.5. Compiled and External Workloads:
+              - rv32i/4.2/compiled/index.md
+              - Self-Checking ELF Smoke: rv32i/4.2/compiled/smoke.md
+              - Compiled C Equivalence: rv32i/4.2/compiled/compiled-equivalence.md
+              - Middle-Scale Compiled Equivalence: rv32i/4.2/compiled/middle-equivalence.md
+              - Embench Source Catalogue:
+                  - aha-mont64: rv32i/4.2/compiled/aha-mont64.md
+                  - crc32: rv32i/4.2/compiled/crc32.md
+                  - cubic: rv32i/4.2/compiled/cubic.md
+                  - edn: rv32i/4.2/compiled/edn.md
+                  - huffbench: rv32i/4.2/compiled/huffbench.md
+                  - matmult-int: rv32i/4.2/compiled/matmult-int.md
+                  - minver: rv32i/4.2/compiled/minver.md
+                  - nbody: rv32i/4.2/compiled/nbody.md
+                  - nettle-aes: rv32i/4.2/compiled/nettle-aes.md
+                  - nettle-sha256: rv32i/4.2/compiled/nettle-sha256.md
+                  - nsichneu: rv32i/4.2/compiled/nsichneu.md
+                  - picojpeg: rv32i/4.2/compiled/picojpeg.md
+                  - qrduino: rv32i/4.2/compiled/qrduino.md
+                  - sglib-combined: rv32i/4.2/compiled/sglib-combined.md
+                  - slre: rv32i/4.2/compiled/slre.md
+                  - st: rv32i/4.2/compiled/st.md
+                  - statemate: rv32i/4.2/compiled/statemate.md
+                  - ud: rv32i/4.2/compiled/ud.md
+                  - wikisort: rv32i/4.2/compiled/wikisort.md
+          - 4.2.6. Verification:
+              - rv32i/4.2/verification/index.md
+              - Infrastructure: rv32i/4.2/verification/infrastructure.md
+              - Workload Correctness: rv32i/4.2/verification/workloads.md
+              - Fidelity Equivalence: rv32i/4.2/verification/equivalence.md
+              - Clock and Timing: rv32i/4.2/verification/timing.md
+          - 4.2.7. Campaigns and Reproducibility: rv32i/4.2/campaigns.md
+      - 4.3. RV32I Building Blocks:
           - rv32i/4.3/index.md
-          - 4.3.1. Fetch: rv32i/4.3/fetch.md
-          - 4.3.2. Decode and Register Read: rv32i/4.3/decode.md
-          - 4.3.3. Execute: rv32i/4.3/execute.md
-          - 4.3.4. Memory Access: rv32i/4.3/memory.md
-          - 4.3.5. Writeback: rv32i/4.3/writeback.md
-          - 4.3.6. Next PC: rv32i/4.3/next-pc.md
-          - 4.3.7. Complete Core: rv32i/4.3/core.md
+          - 4.3.1. Register&lt;W&gt;: rv32i/4.3/register.md
+          - 4.3.2. Register File: rv32i/4.3/register-file.md
+          - 4.3.3. ALU32: rv32i/4.3/alu32.md
+          - 4.3.4. Instruction Decoder: rv32i/4.3/instruction-decoder.md
+          - 4.3.5. Program Counter and Control Flow: rv32i/4.3/control-flow.md
+          - 4.3.6. Memory Access: rv32i/4.3/memory-access.md
+          - 4.3.7. Execution Control and Status: rv32i/4.3/execution-status.md
+      - 4.4. Single-Cycle Core:
+          - rv32i/4.4/index.md
+          - 4.4.1. Fetch: rv32i/4.4/fetch.md
+          - 4.4.2. Decode and Register Read: rv32i/4.4/decode.md
+          - 4.4.3. Execute: rv32i/4.4/execute.md
+          - 4.4.4. Memory Access: rv32i/4.4/memory.md
+          - 4.4.5. Writeback: rv32i/4.4/writeback.md
+          - 4.4.6. Next PC: rv32i/4.4/next-pc.md
+          - 4.4.7. Complete Core: rv32i/4.4/core.md
+      - 4.5. Baseline Pipeline:
+          - rv32i/4.5/index.md
+          - 4.5.1. Pipeline Registers: rv32i/4.5/registers.md
+          - 4.5.2. Fetch: rv32i/4.5/fetch.md
+          - 4.5.3. Decode and Register Read: rv32i/4.5/decode.md
+          - 4.5.4. Execute: rv32i/4.5/execute.md
+          - 4.5.5. Memory Access: rv32i/4.5/memory.md
+          - 4.5.6. Writeback and Retirement: rv32i/4.5/writeback.md
+          - 4.5.7. Dependencies and Control: rv32i/4.5/control.md
+          - 4.5.8. Complete Core: rv32i/4.5/core.md
+      - 4.6. Advanced Pipeline:
+          - rv32i/4.6/index.md
+          - 4.6.1. Operand Forwarding: rv32i/4.6/forwarding.md
+          - 4.6.2. Load-Use Hazards: rv32i/4.6/hazards.md
+          - 4.6.3. Branch Prediction: rv32i/4.6/prediction.md
+          - 4.6.4. Prediction Recovery: rv32i/4.6/recovery.md
+          - 4.6.5. Memory Wait Handling: rv32i/4.6/memory-waits.md
+          - 4.6.6. Complete Advanced Core: rv32i/4.6/core.md
+      - 4.7. Experiment Results:
+          - rv32i/experiments.md
+          - Historical Clock Analysis: rv32i/4.7/timing-history.md
   - Blog:
       - blog/index.md
   - Simulator: visualizer.md

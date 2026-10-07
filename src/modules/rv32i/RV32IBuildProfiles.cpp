@@ -2,11 +2,13 @@
 
 #include "components/selection/ComponentCatalog.hpp"
 #include "components/selection/StandardProfiles.hpp"
-#include "modules/memory/Memory64Kx32.hpp"
 #include "modules/memory/FlipFlopCell.hpp"
-#include "modules/memory/Register32.hpp"
+#include "modules/memory/MemoryController.hpp"
+#include "modules/memory/Register.hpp"
 #include "modules/memory/RegisterFile32x32.hpp"
 #include "modules/rv32i/RV32ISingleCycleSystem.hpp"
+#include <set>
+#include <string>
 #include <utility>
 #include <vector>
 
@@ -68,13 +70,20 @@ circuit::BuildProfile architectureStructuralProfile(
         circuit::ProfileSelector::any(),
         "keep non-RV32I implementation details compact"));
 
+    // Saved layouts and profile overrides are keyed by this profile's
+    // fingerprint, which covers its rule list. Retired RV32I contracts keep
+    // their (now inert) rule, in the catalog's sorted order, so that removing
+    // a component does not orphan every saved RV32I layout.
+    std::set<std::string> contract_ids{"rv32i.pipeline.control-flow"};
     for (const auto& contract : catalog.contracts()) {
-        if (!contract.id.starts_with("rv32i.")) {
-            continue;
+        if (contract.id.starts_with("rv32i.")) {
+            contract_ids.insert(contract.id);
         }
+    }
+    for (const auto& id : contract_ids) {
         builder.addRule(circuit::preferFidelity(
             circuit::Fidelity::Structural,
-            circuit::ProfileSelector::contract(contract.id),
+            circuit::ProfileSelector::contract(id),
             "show the RV32I architecture structurally"));
     }
 
@@ -94,16 +103,20 @@ circuit::BuildProfile withBehavioralMemoryParts(
     }
     std::vector<circuit::ProfileRule> overrides;
     for (const auto* family : {
-             &circuit::families::Memory64Kx32,
              &circuit::families::RegisterFile32x32,
-             &circuit::families::Register32,
              &circuit::families::FlipFlopCell,
+             &circuit::families::ClockedStateBit,
          }) {
         overrides.push_back(circuit::preferFidelity(
             circuit::Fidelity::Behavioral,
             circuit::ProfileSelector::contract(*family),
-            "use the verified behavioral storage visualization"));
+             "use the verified behavioral storage visualization"));
     }
+    for (size_t width : {1,2,3,4,5,8,16,32})
+        overrides.push_back(circuit::preferFidelity(
+            circuit::Fidelity::Behavioral,
+            circuit::ProfileSelector::contract(circuit::families::registerWord(width)),
+            "use a compact request or response payload word"));
     return circuit::withProfileOverrides(
         std::move(base),
         std::move(overrides),

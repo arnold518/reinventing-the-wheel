@@ -72,12 +72,12 @@ if __name__ == "__main__":
 
     # 1. Instantiate the specific C++ test scenario.
     try:
-        test_scenario = circuit_backend.FullAdderTest()
-        print("SUCCESS: Instantiated circuit_backend.FullAdderTest")
+        test_scenario = circuit_backend.create_test_by_name("FullAdderTest")
+        print("SUCCESS: Created FullAdderTest through the shared registry")
     except AttributeError:
         print("\n[FATAL ERROR]")
-        print("Could not find 'FullAdderTest' in the 'circuit_backend' module.")
-        print("Please ensure you have created and compiled the binding for this class.")
+        print("Could not find the shared test registry in the backend.")
+        print("Please build the current circuit_backend module.")
         sys.exit(1)
     except Exception as e:
         print(f"\n[FATAL ERROR] An unexpected error occurred: {e}")

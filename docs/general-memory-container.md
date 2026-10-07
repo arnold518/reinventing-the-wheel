@@ -1,7 +1,8 @@
 # Legacy array container: implementation contract
 
-This is the retained **legacy array-port** implementation report, not the new
-transaction endpoint. Current controllers and scalable technology models are
+This is a **historical legacy array-port** implementation report; its generic
+container and old array aliases have been retired. See [cleanup](rv32i-cleanup.md).
+Current controllers and scalable technology models are
 documented in [3.1.6. Scalable Memory Container](../site-docs/memory/3.1.6.md),
 [3.2. Memory Transactions](../site-docs/memory/3.2.md), and
 [3.3. Memory Controllers](../site-docs/memory/3.3.md).
@@ -405,11 +406,11 @@ Existing `Memory64Kx32` display behavior remains unchanged.
   behavioral FF/SRAM/ROM arrays and mixed FF bank/word/cell selections; stores/loads,
   partial masks, faults, backpressure,
   reset cancellation, and retention.
-- `MemoryContainerBindingsTest`: Python factory/configuration/image APIs and
+- `FFMemoryBindingsTest`: Python factory/configuration/image APIs and
   Python/portable inspector agreement; all recorded output transitions for the
   three four-word structural scenarios match `tests/fixtures/memory-array-timing.json`,
   captured before grouping. This checks transient timing as well as settled results.
-- `MemoryContainerWasmParityTest.mjs`: native/WASM topology, histories,
+- `FFMemoryWasmParityTest.mjs`: native/WASM topology, histories,
   checkpoints, declared examples, and inspector agreement, including the new
   FF word, standalone bank, bank-level device selection, and exact mixed-fidelity selections.
 
@@ -417,15 +418,15 @@ Existing `Memory64Kx32` display behavior remains unchanged.
 cmake --build build --parallel 2
 ctest --test-dir build --output-on-failure -j 4
 tools/build-pages.sh
-node tests/MemoryContainerWasmParityTest.mjs \
+node tests/FFMemoryWasmParityTest.mjs \
   build-wasm/pages/simulator/circuitsim_wasm.js \
   build-wasm/pages/simulator/circuitsim_wasm.wasm \
   build/tests/VisualizerSessionProbe
-build/tests/MemoryContainerBenchmark
+build/tests/MemoryStorageBenchmark
 build/tests/FFMemoryBenchmark
 ```
 
-`MemoryContainerBenchmark` measures 16,384 write/read pairs over a fixed 16 KiB
+`MemoryStorageBenchmark` measures 16,384 write/read pairs over a fixed 16 KiB
 working set, for 16 KiB, 256 KiB, and 4 MiB capacities. It reports a median of
 five measured trials after one warmup, with/without history. These are host
 storage timings, not simulated SRAM access times or CPU performance predictions.
@@ -545,5 +546,5 @@ with the rebuilt native module, then rebuild Pages. This reuses the native
 layout engine and preserves existing placements. The serverless UI check is:
 
 ```bash
-python3 tests/MemoryContainerBrowserTest.py http://127.0.0.1:8893/simulator/
+python3 tests/FFMemoryBrowserTest.py http://127.0.0.1:8893/simulator/
 ```

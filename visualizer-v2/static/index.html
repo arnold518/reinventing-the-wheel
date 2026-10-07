@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>CircuitSim Visualizer V2</title>
   <link rel="icon" href="data:,">
-  <link rel="stylesheet" href="styles.css?v=28">
+  <link rel="stylesheet" href="styles.css?v=29">
 </head>
 <body>
   <canvas id="circuit-canvas"></canvas>
@@ -14,6 +14,22 @@
     <div class="scenario-control">
       <label class="scenario-label" for="scenario-select">Scenario</label>
       <select id="scenario-select"></select>
+      <div id="program-controls" class="hidden">
+        <label for="program-core">Core</label>
+        <select id="program-core">
+          <option value="single">Single-cycle</option>
+          <option value="baseline">Baseline pipeline</option>
+          <option value="advanced">Advanced pipeline</option>
+        </select>
+        <label for="program-policy">Prediction</label>
+        <select id="program-policy">
+          <option value="not-taken">Not taken</option>
+          <option value="taken">Taken</option>
+          <option value="backward-taken">Backward taken</option>
+          <option value="one-bit">One-bit</option>
+          <option value="two-bit">Two-bit</option>
+        </select>
+      </div>
     </div>
     <div class="timeline-track">
       <input id="time-slider" type="range" min="0" max="0" value="0" list="checkpoint-marks" aria-label="Simulation timeline">
@@ -99,6 +115,21 @@
         <div class="inspector-section-title">Details</div>
         <div id="selection-info" class="inspector-table"></div>
       </div>
+      <div id="memory-inspector-section" class="inspector-section hidden">
+        <div class="inspector-section-title">Memory</div>
+        <div id="memory-details" class="inspector-table"></div>
+        <form id="memory-address-form" class="memory-address-form">
+          <label for="memory-address">Byte address</label>
+          <input id="memory-address" type="text" placeholder="0x00000100" autocomplete="off" spellcheck="false">
+          <button type="submit">Go</button>
+        </form>
+        <div class="memory-page-actions">
+          <button id="memory-page-prev" title="Previous address page">Previous page</button>
+          <button id="memory-page-next" title="Next address page">Next page</button>
+          <button id="memory-follow" aria-pressed="true">Follow access</button>
+        </div>
+        <div id="memory-page-summary" class="inspector-value"></div>
+      </div>
       <div id="component-pins-section" class="inspector-section hidden">
         <div class="inspector-section-title">Pins</div>
         <div id="component-pins" class="pin-list"></div>
@@ -130,11 +161,12 @@
   </aside>
   <div id="loading">Loading circuit...</div>
   <script src="runtime-config.js?v=1"></script>
-  <script src="transport.js?v=11"></script>
+  <script src="transport.js?v=14"></script>
   <script src="explorer.js?v=3"></script>
   <script src="wire_geometry.js?v=1"></script>
-  <script src="rewire_geometry.js?v=3"></script>
+  <script src="rewire_geometry.js?v=4"></script>
   <script src="memory_cell_view.js?v=1"></script>
-  <script src="app.js?v=67"></script>
+  <script src="memory_view.js?v=1"></script>
+  <script src="app.js?v=70"></script>
 </body>
 </html>

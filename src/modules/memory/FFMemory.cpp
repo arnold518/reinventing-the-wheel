@@ -1,7 +1,8 @@
 #include "modules/memory/FFMemory.hpp"
 #include "modules/memory/FFWordDirect.hpp"
+#include "modules/memory/FFMemoryDirect.hpp"
 #include "modules/memory/FFStorageBankDirect.hpp"
-#include "modules/memory/MemoryContainerCatalog.hpp"
+#include "modules/memory/FFMemoryCatalog.hpp"
 #include "components/selection/BuildContext.hpp"
 #include "components/selection/ComponentCatalog.hpp"
 #include <charconv>
@@ -56,12 +57,12 @@ const ComponentFamily& FFMemory() {
     static const ComponentFamily family{
         id, ::FFMemory<Width>::TypeName, defineMemoryArrayPins<Width>,
         [](const std::string& name, const std::shared_ptr<BuildContext>& context) {
-            const auto config = context ? memoryConfigFromParameters(context->parameters(), false) : MemoryConfig{};
+            const auto config = context ? ffMemoryConfigFromParameters(context->parameters()) : MemoryConfig{};
             return Component::createWithContext<::FFMemory<Width>>(context, name, config);
         },
         [](const std::string& name, const std::shared_ptr<BuildContext>& context) {
-            const auto config = context ? memoryConfigFromParameters(context->parameters(), false) : MemoryConfig{};
-            return Component::createWithContext<LegacyMemoryContainer<Width, FlipFlopArrayModel>>(context, name, config);
+            const auto config = context ? ffMemoryConfigFromParameters(context->parameters()) : MemoryConfig{};
+            return Component::createWithContext<FFMemoryDirect<Width>>(context, name, config);
         }};
     return family;
 }

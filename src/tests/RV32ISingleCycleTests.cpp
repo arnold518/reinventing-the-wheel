@@ -9,13 +9,11 @@
 #include "components/selection/StandardProfiles.hpp"
 #include "modules/composite/ALU32.hpp"
 #include "modules/composite/AddSub32.hpp"
-#include "modules/composite/Comparator32.hpp"
 #include "modules/composite/Logic32.hpp"
 #include "modules/composite/Shifter32.hpp"
 #include "modules/composite/ZeroDetect32.hpp"
 #include "modules/memory/FlipFlopCell.hpp"
-#include "modules/memory/FFStorageBank.hpp"
-#include "modules/memory/Register32.hpp"
+#include "modules/memory/Register.hpp"
 #include "modules/memory/RegisterFile32x32.hpp"
 #include "modules/rv32i/RV32IBuildProfiles.hpp"
 #include "modules/rv32i/RV32IControlFlowUnit.hpp"
@@ -25,7 +23,6 @@
 #include "modules/rv32i/RV32ISingleCycleStages.hpp"
 #include "modules/rv32i/RV32IPipelineControl.hpp"
 #include "modules/rv32i/RV32IReferenceCore.hpp"
-#include "modules/memory/Memory64Kx32.hpp"
 #include "rv32i/RV32IProgram.hpp"
 #include "simulator/Event.hpp"
 #include "tests/RV32IProgramCases.hpp"
@@ -59,7 +56,7 @@ rv32i::RV32IMemorySize memorySize(uint64_t encoded) {
 RV32ISystemProgramCase singleCycleProgramCase(size_t number) {
     auto test_case = rv32iProgramCase(number);
     test_case.name = rv32iProgramScenarioName(number);
-    test_case.max_cycles_per_instruction = 64;
+    test_case.max_cycles_per_instruction = 1;
     test_case.cycle_time_step = 4000;
     return test_case;
 }
@@ -107,27 +104,21 @@ circuit::test::ComponentTestSpec singleCycleCoreSpec() {
         scenario.actions.push_back({std::move(label),kind,std::move(inputs),std::move(expected)});
     };
     action("reset",{{"CLK",logicBit(false)},{"RST",logicBit(true)},{"ENABLE",logicBit(true)},
-        {"IMEM_REQ_READY",logicBit(false)},{"IMEM_RSP_VALID",logicBit(false)},
         {"IMEM_RSP_READ_DATA",logicBits(32,0)},{"IMEM_RSP_STATUS",logicBits(3,0)},
-        {"DMEM_REQ_READY",logicBit(false)},{"DMEM_RSP_VALID",logicBit(false)},
-        {"DMEM_RSP_READ_DATA",logicBits(32,0)},{"DMEM_RSP_STATUS",logicBits(3,0)}},
+        {"DMEM_RSP_READ_DATA",logicBits(32,0)},{"DMEM_RSP_STATUS",logicBits(3,0)},
+        {"IMEM_REQ_READY",logicBit(true)},{"IMEM_RSP_VALID",logicBit(true)},
+        {"DMEM_REQ_READY",logicBit(true)},{"DMEM_RSP_VALID",logicBit(true)}},
         {{"PC",logicBits(32,0)},{"IMEM_REQ_VALID",logicBit(false)},{"HALTED",logicBit(false)}});
     action("release",{{"RST",logicBit(false)}});
     const std::array<uint32_t,3> instructions{encodeI(5,0,0,1),encodeI(7,1,0,2),0x00100073};
     for(size_t i=0;i<instructions.size();++i) {
-        action("prepare-"+std::to_string(i),{{"CLK",logicBit(false)},{"IMEM_RSP_VALID",logicBit(false)},{"IMEM_REQ_READY",logicBit(false)}});
-        action("issue-"+std::to_string(i),{{"CLK",logicBit(true)}},
-            {{"IMEM_REQ_VALID",logicBit(true)},{"IMEM_REQ_ADDR",logicBits(32,i*4)},{"PC",logicBits(32,i*4)}},CheckpointKind::AfterEdge);
-        action("wait-low-"+std::to_string(i),{{"CLK",logicBit(false)}});
-        action("request-backpressure-"+std::to_string(i),{{"CLK",logicBit(true)}},
-            {{"IMEM_REQ_VALID",logicBit(true)},{"PC",logicBits(32,i*4)}},CheckpointKind::AfterEdge);
-        action("accept-low-"+std::to_string(i),{{"CLK",logicBit(false)},{"IMEM_REQ_READY",logicBit(true)}});
-        action("accepted-not-complete-"+std::to_string(i),{{"CLK",logicBit(true)}},
-            {{"IMEM_REQ_VALID",logicBit(false)},{"PC",logicBits(32,i*4)},{"INSTRUCTION_ATTEMPT",logicBit(false)}},CheckpointKind::AfterEdge);
-        action("response-paused-"+std::to_string(i),{{"CLK",logicBit(false)},{"ENABLE",logicBit(false)},
-            {"IMEM_RSP_VALID",logicBit(true)},{"IMEM_RSP_READ_DATA",logicBits(32,instructions[i])}},
-            {{"IMEM_RSP_READY",logicBit(false)},{"PC",logicBits(32,i*4)}});
-        action("resume-"+std::to_string(i),{{"ENABLE",logicBit(true)}},{{"IMEM_RSP_READY",logicBit(true)}});
+        action("prepare-"+std::to_string(i),{{"CLK",logicBit(false)},{"ENABLE",logicBit(false)},
+            {"IMEM_RSP_READ_DATA",logicBits(32,instructions[i])}},
+            {{"PC",logicBits(32,i*4)},{"INSTRUCTION_ATTEMPT",logicBit(false)}});
+        action("paused-edge-"+std::to_string(i),{{"CLK",logicBit(true)}},
+            {{"PC",logicBits(32,i*4)}},CheckpointKind::AfterEdge);
+        action("falling-"+std::to_string(i),{{"CLK",logicBit(false)},{"ENABLE",logicBit(true)}},
+            {{"IMEM_REQ_ADDR",logicBits(32,i*4)},{"INSTRUCTION_ATTEMPT",logicBit(true)}});
         action("commit-"+std::to_string(i),{{"CLK",logicBit(true)}},
             {{"PC",logicBits(32,i==2?8:(i+1)*4)},{"HALTED",logicBit(i==2)},{"TRAPPED",logicBit(false)}},CheckpointKind::InstructionCommit);
     }
@@ -327,7 +318,7 @@ void RV32ISystemProfileRun::clockComponentOneCycle(
             for (auto& c:core->getChildren()) if(c->getName()==name) return std::dynamic_pointer_cast<IOComponent>(c);
             throw std::logic_error("Missing CPU observation block "+name);
         };
-        auto lanes=child("MEMORY"), request=lanes;
+        auto lanes=child("MEMORY");
         auto decode=child("DECODE");
         const bool issuing=lanes->getInputPin("ISSUE")->getValue()==LogicValue::HIGH;
         const bool read =
@@ -355,8 +346,8 @@ void RV32ISystemProfileRun::clockComponentOneCycle(
                         ->getValueAsUInt64())
                 : 0;
             last_access_.fault =
-                request->getOutputPin("FAULT")->getValue()
-                == LogicValue::HIGH;
+                lanes->getOutputPin("FAULT")->getValue() == LogicValue::HIGH
+                || lanes->getOutputPin("MISALIGNED")->getValue() == LogicValue::HIGH;
             if (read && !last_access_.fault) {
                 last_access_.read_data =
                     static_cast<uint32_t>(
@@ -442,9 +433,14 @@ private:
 };
 
 struct ProfileToggleAuditCase {
-    const circuit::ComponentFamily* family;
+    std::string contract;
     size_t program_number;
     std::string context;
+    circuit::Fidelity fidelity=circuit::Fidelity::Behavioral;
+    ProfileToggleAuditCase(const circuit::ComponentFamily* family,size_t program,std::string description)
+        :contract(family->id()),program_number(program),context(std::move(description)) {}
+    ProfileToggleAuditCase(std::string id,size_t program,std::string description,circuit::Fidelity f)
+        :contract(std::move(id)),program_number(program),context(std::move(description)),fidelity(f) {}
 };
 
 const std::vector<ProfileToggleAuditCase>&
@@ -455,7 +451,9 @@ profileToggleAuditCases() {
         {&circuit::families::RV32ISingleCycleFetchStage, 5,"fetch and PC state"},
         {&circuit::families::RV32ISingleCycleDecodeStage, 2,"decode and register state"},
         {&circuit::families::RV32ISingleCycleExecuteStage, 5,"shared jump ALU"},
-        {&circuit::families::RV32ISingleCycleMemoryStage, 3,"memory transactions"},
+        {&circuit::families::RV32ISingleCycleMemoryStage, 3,"direct memory access"},
+        {"memory.scalable.ff.32",3,"compact instruction/data FF endpoints",circuit::Fidelity::Behavioral},
+        {"memory.scalable.ff.32",3,"structural FF controllers with compact storage",circuit::Fidelity::Structural},
         {&circuit::families::RV32ISingleCycleWritebackStage, 3,"writeback selection"},
         {&circuit::families::RV32ISingleCycleNextPCStage, 5,"next PC selection"},
         {&circuit::families::RV32IDecodeControl, 2,
@@ -464,19 +462,17 @@ profileToggleAuditCases() {
          "illegal-instruction trap state"},
         {&circuit::families::RegisterFile32x32, 7,
          "Fibonacci register dependencies"},
-        {&circuit::families::FFStorageBank<32>(), 7,
-         "register-file storage bank"},
-        {&circuit::families::FFWord<32>(), 7,
-         "byte-masked register storage words"},
         {&circuit::families::RV32IMemoryAlignmentUnit, 3,
          "instruction and data address alignment"},
-        {&circuit::families::Register32, 7,
+        {&circuit::families::registerWord(32), 7,
          "all register words and program counter"},
+        {&circuit::families::registerWord(4), 9,
+         "trap-cause register"},
         {&circuit::families::FlipFlopCell, 7,
          "register and program-counter bit cells"},
         {&circuit::families::FlipFlopCell, 9,
          "halt and trap-status bit cells"},
-        {&circuit::families::ALU32, 2,
+        {&circuit::families::ALU32Core, 2,
          "complete ALU operation coverage"},
         {&circuit::families::AddSub32, 2,
          "addition and subtraction"},
@@ -604,28 +600,42 @@ void RV32IProfileToggleSweepTest::verifyResults() {
         selectable_instances += count;
     }
 
+    // Check the complete audit inventory before running any program. A stale
+    // contract or newly introduced selectable block is a coverage failure,
+    // even if all earlier program cases happen to pass.
     for (const auto& audit : profileToggleAuditCases()) {
-        const auto contract =
-            std::string(audit.family->id());
-        const auto expected = inventory.find(contract);
         require(
-            expected != inventory.end(),
+            inventory.contains(audit.contract),
             "Profile-toggle audit names a contract outside the "
-            "canonical RV32I tree: " + contract);
-        covered_contracts.insert(contract);
+            "canonical RV32I tree: " + audit.contract);
+        covered_contracts.insert(audit.contract);
+    }
+    std::set<std::string> missing;
+    for (const auto& [contract, count] : inventory) {
+        (void)count;
+        if (!covered_contracts.contains(contract)) missing.insert(contract);
+    }
+    require(
+        missing.empty(),
+        "RV32I profile-toggle audit omitted selectable contracts: "
+            + joinContracts(missing));
+
+    for (const auto& audit : profileToggleAuditCases()) {
+        const auto& contract = audit.contract;
+        const auto expected = inventory.find(contract);
 
         auto profile = circuit::canonicalDefaultProfile();
         profile = circuit::withProfileOverrides(
             std::move(profile),
             {circuit::preferFidelity(
-                circuit::Fidelity::Behavioral,
+                audit.fidelity,
                 circuit::ProfileSelector::contract(contract),
                 "mixed-fidelity audit for " + contract)},
             "rv32i-profile-toggle-" + contract);
 
         const auto label =
             "RV32IProfileToggleSweepTest/"
-            + contract + "/program-"
+            + contract + "/" + circuit::toString(audit.fidelity) + "/program-"
             + (audit.program_number < 10 ? "0" : "")
             + std::to_string(audit.program_number);
         RV32IProfileToggleRun run(
@@ -650,8 +660,8 @@ void RV32IProfileToggleSweepTest::verifyResults() {
                         + component->getID());
                 require(
                     component->getSelectedFidelity()
-                        == "behavioral",
-                    label + " did not select behavioral fidelity at "
+                        == circuit::toString(audit.fidelity),
+                    label + " did not select requested fidelity at "
                         + component->getID());
                 require(
                     !component
@@ -668,29 +678,13 @@ void RV32IProfileToggleSweepTest::verifyResults() {
         std::cout
             << "[AUDIT] " << contract
             << ": " << selected_count
-            << " instance(s) behavioral; "
+            << " instance(s) " << circuit::toString(audit.fidelity) << "; "
             << audit.context << std::endl;
     }
 
-    std::set<std::string> inventory_contracts;
-    for (const auto& [contract, count] : inventory) {
-        (void)count;
-        inventory_contracts.insert(contract);
-    }
-    std::set<std::string> missing;
-    std::set_difference(
-        inventory_contracts.begin(),
-        inventory_contracts.end(),
-        covered_contracts.begin(),
-        covered_contracts.end(),
-        std::inserter(missing, missing.end()));
-    require(
-        missing.empty(),
-        "RV32I profile-toggle audit omitted selectable contracts: "
-            + joinContracts(missing));
     std::cout
         << "[AUDIT] Covered all "
-        << inventory_contracts.size()
+        << inventory.size()
         << " selectable contracts and "
         << selectable_instances
         << " canonical instances." << std::endl;

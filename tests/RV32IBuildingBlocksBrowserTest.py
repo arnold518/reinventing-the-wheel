@@ -1,7 +1,7 @@
-"""Rendered 4.2 pages and every new embed, serially to bound browser memory."""
+"""Rendered 4.3 pages and every new embed, serially to bound browser memory."""
 from pathlib import Path
-import json
 import os
+import json
 import re
 import shutil
 import sys
@@ -12,11 +12,11 @@ ROOT=Path(__file__).resolve().parents[1]
 base=(sys.argv[1] if len(sys.argv)>1 else "http://127.0.0.1:8893/").rstrip("/")+"/"
 screens=Path(sys.argv[2]) if len(sys.argv)>2 else None
 if screens: screens.mkdir(parents=True,exist_ok=True)
-exports=json.loads((ROOT/"build-wasm/pages/simulator/example-rows.json").read_text())["scenarios"]
+exports=json.loads(Path(os.environ.get('CIRCUITSIM_EXAMPLE_ROWS', ROOT/"build-wasm/pages/simulator/example-rows.json")).read_text())["scenarios"]
 shipped=json.loads((ROOT/"visualizer-v2/layout.json").read_text())
 scenarios={}
 DETAILS = {
-    "register32": ("STORAGE", "STORAGE.CELL_0"),
+    "register32": ("BIT_0",),
     "alu32": ("CONTROL","ARITHMETIC","LOGIC","SHIFT","COMPARE","COMPARE.ARITHMETIC_ZERO","RESULT_SELECT","FLAGS","FLAGS.RESULT_ZERO"),
     "rv32i-decode-control": ("RECOGNITION","CONTROL_SIGNALS","CONTROL_SIGNALS.ALU_OP","CONTROL_SIGNALS.LEGAL"),
     "rv32i-memory-lanes": ("ADDRESS","LOAD_EXTEND","LOAD_EXTEND.BYTE_0","LOAD_EXTEND.BYTE_3","WRITE_MASK"),
@@ -29,12 +29,17 @@ with sync_playwright() as p:
         headless=True,args=["--no-sandbox"])
     context=browser.new_context(java_script_enabled=False,viewport={"width":1440,"height":1000})
     page=context.new_page()
-    assert page.goto(urljoin(base,"rv32i/4.2/"),wait_until="domcontentloaded").ok
+    assert page.goto(urljoin(base,"rv32i/4.3/"),wait_until="domcontentloaded").ok
     assert "Planned" not in page.locator("article").inner_text()
     for number,slug in enumerate(("register","register-file","alu32","instruction-decoder","control-flow","memory-access","execution-status"),1):
-        assert page.goto(urljoin(base,f"rv32i/4.2/{slug}/"),wait_until="domcontentloaded").ok
-        assert f"4.2.{number}." in page.locator("h1").inner_text()
-        document=(ROOT/f"site-docs/rv32i/4.2/{slug}.md").read_text()
+        assert page.goto(urljoin(base,f"rv32i/4.3/{slug}/"),wait_until="domcontentloaded").ok
+        assert f"4.3.{number}." in page.locator("h1").inner_text()
+        if slug == "register":
+            assert "Register<W>" in page.locator("h1").inner_text()
+            assert "Register<W>" in page.title()
+            assert "Register<W>" in page.locator("nav.md-nav--primary").inner_text()
+            assert "1, 2, 3, 4, 5, 8, 16, and 32 bits" in page.locator("article").inner_text()
+        document=(ROOT/f"site-docs/rv32i/4.3/{slug}.md").read_text()
         aliases=re.findall(r"<!-- simulator-examples: (\S+) \S+ -->",document)
         assert page.locator(".simulator-embed iframe").count()==len(aliases)
         for alias in aliases:
@@ -50,7 +55,7 @@ with sync_playwright() as p:
                 assert table.evaluate("el=>el.tabIndex===0 && el.clientWidth<=innerWidth")
         page.set_viewport_size({"width":1440,"height":1000})
         if screens: page.screenshot(path=str(screens/f"{slug}-document.png"))
-        print(f"4.2.{number}: rendered tables, navigation, embed paths and mobile widths passed",flush=True)
+        print(f"4.3.{number}: rendered tables, navigation, embed paths and mobile widths passed",flush=True)
     context.close()
     for alias,rows in scenarios.items():
         selected=os.environ.get("RITW_BROWSER_SCENARIOS")
@@ -87,9 +92,9 @@ with sync_playwright() as p:
             parent:c.rect,children:c.childIds.map(id=>app.components.get(id)).map(c=>({name:c.name,...c.rect}))};}""")
         parent,children=geometry["parent"],geometry["children"]
         if alias == "register32":
-            assert {c["name"] for c in children} == {"STORAGE", "FULL_WRITE_MASK"}
-            assert page.evaluate("app.components.get(app.rootId+'.STORAGE').type") == "FFWord<32>"
-            assert not page.evaluate("app.components.has(app.rootId+'.BIT_0')")
+            assert {c["name"] for c in children} == {"INPUT_BITS", "OUTPUT_BITS", *(f"BIT_{bit}" for bit in range(32))}
+            assert page.evaluate("app.components.get(app.rootId+'.BIT_0').type") == "FlipFlopCell"
+            assert not page.evaluate("app.components.has(app.rootId+'.STORAGE')")
         expected=shipped["root_layouts"].get(alias,{})
         if expected.get("layout_revision") in {"rv32i-blocks-v4","rv32i-alu-auto-v5","rv32i-alu-auto-v6"}:
             if "aspect_ratio" in expected:
@@ -152,8 +157,12 @@ with sync_playwright() as p:
                     assert dx<=.01 or dy<=.01,(alias,suffix,a["name"],b["name"])
             if suffix in {"COMPARE.ARITHMETIC_ZERO", "FLAGS.RESULT_ZERO"}:
                 wire = page.evaluate("""suffix=>{
-                    const w=app.wires.get(app.rootId+'.'+suffix+'.A_bus_internal');
-                    const source=app.pins.get(w.sourcePinId), sink=w.sinkPins[0];
+                    const id=app.rootId+'.'+suffix;
+                    const source=app.components.get(id).inputPins.find(pin=>pin.name==='A');
+                    const sink=app.components.get(id+'.A_SPLIT').inputPins.find(pin=>pin.name==='IN');
+                    const w=[...app.wires.values()].find(w=>w.sourcePinId===source?.id &&
+                        w.sinkPins.some(pin=>pin.id===sink?.id));
+                    if (!w) throw new Error('Missing zero-detector input wire: '+suffix);
                     return {source:activeStub(source,true), sink:activeStub(sink,false),
                         points:w.branches[0].points};
                 }""",suffix)

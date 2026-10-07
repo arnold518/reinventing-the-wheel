@@ -34,7 +34,7 @@ constexpr uint8_t writeback(RV32IWritebackSource source) {
     return 0;
 }
 
-// This encoding is the external Memory64Kx32 SIZE contract.
+// Shared RV32I memory-size encoding used by request formatting and lane selection.
 constexpr uint8_t memorySize(RV32IMemorySize size) {
     switch (size) {
         case RV32IMemorySize::Byte: return 0;

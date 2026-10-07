@@ -38,12 +38,6 @@ public:
     RV32IHazardDetectionUnitTest();
 };
 
-class RV32IPipelineControlFlowUnitTest
-    : public circuit::test::ComponentScenarioTest {
-public:
-    RV32IPipelineControlFlowUnitTest();
-};
-
 class RV32IMemoryAlignmentUnitTest
     : public circuit::test::ComponentScenarioTest {
 public:
@@ -97,4 +91,9 @@ class RV32IFiveStageCoreTest
 public:
     RV32IFiveStageCoreTest();
     bool run() override;
+};
+
+class RV32IPipelineExecutionStatusTest : public circuit::test::ComponentScenarioTest {
+public:
+    RV32IPipelineExecutionStatusTest();
 };

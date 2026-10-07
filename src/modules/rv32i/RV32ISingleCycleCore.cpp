@@ -3,6 +3,8 @@
 #include "modules/rv32i/RV32IExecutionControlStatusUnit.hpp"
 #include "modules/rv32i/RV32IReferenceCore.hpp"
 #include "modules/rv32i/RV32IMemoryRequest.hpp"
+#include "modules/rv32i/RV32IMemorySystem.hpp"
+#include "RV32IZeroWaitMemoryPort.hpp"
 #include "modules/memory/MemoryStructuralBuilder.hpp"
 #include "components/capabilities/RegisterStateView.hpp"
 #include <limits>
@@ -41,13 +43,11 @@ void RV32ISingleCycleCore::buildInternals(ComponentBuilder& b) {
                         const std::shared_ptr<IOComponent>& to,const char* input) {
         w.connect(from->getOutputPinDynamic(output),to->getInputPinDynamic(input));
     };
-    for(auto c:{fetch_,decode_,memory_,execution_status_}) for(auto p:{"CLK","RST"})
+    for(auto c:{fetch_,decode_,execution_status_}) for(auto p:{"CLK","RST"})
         w.connect(getInputPin(p),c->getInputPin(p));
     w.connect(getInputPin("ENABLE"),execution_status_->getInputPin("ENABLE"));
-    for(auto& [prefix,stage]:std::vector<std::pair<std::string,std::shared_ptr<IOComponent>>>{{"IMEM_",fetch_},{"DMEM_",memory_}}) {
-        for(auto& [name,pin]:stage->getAllInputPins()) if(name.starts_with(prefix)) w.connect(getInputPinDynamic(name),pin);
-        for(auto& [name,pin]:stage->getAllOutputPins()) if(name.starts_with(prefix)) w.connect(pin,getOutputPinDynamic(name));
-    }
+    rv32i::wireZeroWaitPort(b,w,*this,fetch_,"IMEM_",true);
+    rv32i::wireZeroWaitPort(b,w,*this,memory_,"DMEM_",false);
     w.connect(fetch_->getOutputPin<32>("PC"),getOutputPin<32>("PC"));
     link(fetch_,"INSTRUCTION",decode_,"INSTRUCTION");
     link(fetch_,"PC",execute_,"PC");
@@ -81,9 +81,13 @@ void RV32ISingleCycleCore::buildInternals(ComponentBuilder& b) {
     link(execution_status_,"REGISTER_WRITE",decode_,"REGISTER_WRITE");
     link(execution_status_,"FETCH_REQUEST_ACTIVE",fetch_,"ISSUE");
     link(execution_status_,"MEMORY_REQUEST_ACTIVE",memory_,"ISSUE");
-    // Both requesters consume at the SAME completion edge. Neither register
-    // writeback nor a new PC is ever read back to finish this instruction.
-    for(auto stage:{fetch_,memory_}) link(execution_status_,"INSTRUCTION_ATTEMPT",stage,"TAKE");
+    // PC, register file, and data memory all commit on the same edge. No
+    // request or response registers exist between these combinational stages.
+    // ISSUE already excludes older fetch/decode faults and terminal state.
+    // Alignment is checked by the memory stage; the endpoint validates the
+    // store and suppresses invalid writes itself. Never feed its response back
+    // into REQ_OP: a rejected write must remain a write, not become a read.
+    w.connect(w.constant("STORE_AUTHORIZED",true),memory_->getInputPin("COMMIT"));
     for(auto p:{"HALTED","TRAPPED","TRAP_CAUSE","INSTRUCTION_ATTEMPT"})
         w.connect(execution_status_->getOutputPinDynamic(p),getOutputPinDynamic(p));
     w.finish();

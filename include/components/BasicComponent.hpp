@@ -54,6 +54,13 @@ protected:
         }
     }
 
+    // Width-erased form of the overloads above for pins whose width is only
+    // known at run time. A missing pin or a width mismatch is ignored, as the
+    // typed overloads do; a width without a Wire instantiation is an error.
+    void _updateOutputWireDynamic(Simulator& simulator, const std::string& pin_name,
+                                  const std::vector<LogicValue>& new_value,
+                                  size_t current_sim_time);
+
 public:
     BasicComponent(std::string name, size_t delay_val, PinInitFunction initializer = nullptr);
     static constexpr const char* TypeName = "BasicComponent";

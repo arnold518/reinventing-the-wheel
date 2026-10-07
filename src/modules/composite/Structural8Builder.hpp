@@ -1,7 +1,6 @@
 #pragma once
 
-#include "components/ComponentBuilder.hpp"
-#include "components/ComponentBuilder.tpp"
+#include "components/StructuralNetBuilder.hpp"
 #include "modules/basic/Gate.hpp"
 #include "modules/basic/Mux.hpp"
 #include "modules/utility/BitAdapter.hpp"
@@ -11,27 +10,17 @@
 #include <stdexcept>
 
 namespace circuit::detail {
-// Construction-only helper: accumulate one fan-out wire per source pin.
-// This does not evaluate logic or introduce a behavioral component.
-class StructuralBuilder {
+// ALU-side structural builder: nets are ordered by source role and named
+// <owner>__<pin>_internal.
+class StructuralBuilder : public StructuralNetBuilder {
 public:
-    using Signal = std::shared_ptr<PinBase>;
+    using Signal = PinPtr;
     using Bits = std::array<Signal, 8>;
     StructuralBuilder(IOComponent& root, ComponentBuilder& builder)
-        : root_(root), builder_(builder) {}
+        : StructuralNetBuilder(builder), root_(root) {}
 
     Signal input(const std::string& name) { return root_.getInputPinDynamic(name); }
     Signal output(const std::string& name) { return root_.getOutputPinDynamic(name); }
-    void connect(const Signal& source, const Signal& sink) {
-        if (!source || !sink || source->getWidth() != sink->getWidth())
-            throw std::logic_error("Invalid structural ALU connection");
-        const auto key = source->getOwner().get() == &root_
-            ? "INPUT/" + source->getName()
-            : "CHILD/" + source->getOwner()->getName() + "/" + source->getName();
-        auto& net = nets_[key];
-        net.first = source;
-        net.second.push_back(sink);
-    }
     template<class T, class... Args>
     std::shared_ptr<T> add(const std::string& name, Args&&... args) {
         return builder_.addNewComponent<T>(name, std::forward<Args>(args)...);
@@ -57,16 +46,6 @@ public:
         for (size_t i = 0; i < Width; ++i) connect(bits[i], c->getInputPin("IN_" + std::to_string(i)));
         return c->template getOutputPin<Width>("OUT");
     }
-    template<class Gate>
-    Signal binary(const std::string& name, const Signal& a, const Signal& b) {
-        auto c = add<Gate>(name);
-        connect(a, c->getInputPin("A")); connect(b, c->getInputPin("B"));
-        return c->getOutputPin("OUT");
-    }
-    Signal invert(const std::string& name, const Signal& a) {
-        auto c = add<NOTGate>(name); connect(a, c->getInputPin("IN"));
-        return c->getOutputPin("OUT");
-    }
     Signal mux(const std::string& name, const Signal& a, const Signal& b, const Signal& sel) {
         auto c = add<Mux2to1>(name);
         connect(a, c->getInputPin("A")); connect(b, c->getInputPin("B")); connect(sel, c->getInputPin("SEL"));
@@ -77,6 +56,9 @@ public:
         for (size_t i = 1; i < signals.size(); ++i)
             signals[0] = binary<ORGate>(name + "_" + std::to_string(i), signals[0], signals[i]);
         return signals[0];
+    }
+    Signal reduceBalanced(const std::string& name, std::vector<Signal> signals, bool conjunction) {
+        return reduce(name, std::move(signals), conjunction);
     }
     Signal selectBit8(const std::string& name, const std::array<Signal, 8>& inputs, const Signal& op) {
         auto c = add<Mux8to1>(name);
@@ -96,20 +78,23 @@ public:
             bits[i] = binary<ANDGate>(name + "_BIT_" + std::to_string(i), bits[i], enable);
         return join<8>(name + "_JOIN", bits);
     }
-    void finish() {
-        // Lexical source order keeps wire ordering identical across native/WASM
-        // builds and repeated constructions, independent of allocator addresses.
-        for (const auto& [key, net] : nets_) {
-            const auto& [source, sinks] = net;
-            builder_.addNewWireDynamic(
-                source->getOwner()->getName() + "__" + source->getName() + "_internal",
-                source->getWidth(), source, sinks);
-        }
+protected:
+    // Lexical source order keeps wire ordering identical across native/WASM
+    // builds and repeated constructions, independent of allocator addresses.
+    std::string netKey(const PinPtr& source) const override {
+        return source->getOwner().get() == &root_
+            ? "INPUT/" + source->getName()
+            : "CHILD/" + source->getOwner()->getName() + "/" + source->getName();
     }
+    std::string wireName(const PinPtr& source, size_t) const override {
+        return source->getOwner()->getName() + "__" + source->getName() + "_internal";
+    }
+    [[noreturn]] void throwInvalidConnection() const override {
+        throw std::logic_error("Invalid structural ALU connection");
+    }
+
 private:
     IOComponent& root_;
-    ComponentBuilder& builder_;
-    std::map<std::string, std::pair<Signal, std::vector<Signal>>> nets_;
 };
 // Compatibility name for the original eight-bit unit builders. split/join,
 // connect and gate construction are width-independent.

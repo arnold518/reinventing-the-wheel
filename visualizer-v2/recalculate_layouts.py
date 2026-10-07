@@ -19,7 +19,7 @@ AUTOMATIC_REVISION = "automatic-stub-clearance-v1"
 
 
 PROGRAM_SCENARIO = re.compile(
-    r"^(RV32ISingleCycleSystemTest|RV32IFiveStageCoreProgramTest)"
+    r"^(RV32ISingleCycleSystemTest|RV32IFiveStageCoreProgramTest|RV32IBaselinePipelineProgramTest)"
     r"/program-[0-9]{2}$"
 )
 
@@ -140,6 +140,21 @@ def refresh_automatic(layout_path: Path, scenarios: list[str] | None = None, *, 
                 for fingerprint, entries in manager.profile_layouts.items():
                     if kind in entries and entries[kind].get("children"):
                         update(f"profile/{fingerprint}/{kind}", entries[kind], component, children, fingerprint)
+                # The type fallback is laid out with explicit styles. A real
+                # instance can have a different child aspect/stub profile even
+                # when its parent has no saved profile entry yet. Persist that
+                # automatic variant so static/WASM rendering sees the same
+                # geometry as the native visualizer.
+                fingerprint = server._component_profile_fingerprint(component)
+                if fingerprint != "explicit" and not manager.profile_layouts.get(fingerprint, {}).get(kind, {}).get("children"):
+                    view = ProfileLayoutView(manager, fingerprint)
+                    arguments = layout_arguments(view, component, children)
+                    if server._custom_child_layout(*arguments) is None:
+                        generated = server._layered_graph_layout(*arguments)
+                        fallback = view.get_layout_for_component(component).get("children", {})
+                        if any(fallback.get(name) != placement for name, placement in generated.items()):
+                            entry = manager.profile_layouts.setdefault(fingerprint, {}).setdefault(kind, {})
+                            update(f"profile/{fingerprint}/{kind}", entry, component, children, fingerprint)
             if depth == 0:
                 canonical = {item["key"] for item in options}
                 root_keys = [key for key in manager.root_layouts

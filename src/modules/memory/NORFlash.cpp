@@ -249,17 +249,19 @@ class BankDirect : public Primitive {
     Bits values_;
     std::vector<uint8_t> initialized_;
 };
-class FlashDirect : public Primitive, public MemoryStateView {
+class FlashDirect : public Primitive, public MemoryDeviceStorage {
   public:
+    const char* getTypeName() const override { return memoryDisplayType(Primitive::getTypeName()); }
     FlashDirect(std::string n, size_t w, NORFlashConfig c)
         : Primitive(std::move(n), "NORFlash<" + std::to_string(w) + ">",
                     [=](IOComponent *s) { devicePins(s, w, c); }),
-          state_(w, c), storage_(c.depth_words, w, H, c.record_history) {}
+          MemoryDeviceStorage(c.depth_words, w, H, c.record_history, c.storage_limits), state_(w, c) {}
     const MemoryStorage &memoryStorage() const override { return storage_; }
     void loadMemoryBytes(uint32_t, const std::vector<uint8_t> &) override {
         throw std::logic_error("Initialize flash through WREN/PROGRAM commands");
     }
     void evaluate(size_t t, Simulator &sim) override {
+        started_ = true;
         bool was_program = state_.program, was_erase = state_.erase;
         auto previous = state_.due;
         state_.update(*this, t);
@@ -270,14 +272,16 @@ class FlashDirect : public Primitive, public MemoryStateView {
             for (size_t bit = 0; bit < state_.width; ++bit)
                 if (state_.mask[bit / 8] == H)
                     q[bit] = programBit(q[bit], state_.data[bit]);
-            storage_.writeLogic(t, state_.address * (state_.width / 8), q);
+            for (size_t byte = 0; byte < state_.width / 8; ++byte) if (state_.mask[byte] == H)
+                storage_.writeLogic(t, state_.address * (state_.width / 8) + byte,
+                                    Bits(q.begin() + byte * 8, q.begin() + (byte + 1) * 8), true);
         }
         if (state_.erase && !was_erase) {
             auto first = state_.address / state_.config.block_words * state_.config.block_words;
             // Bound temporary storage even for a device-sized erase block.
             const Bits erased(state_.width, H);
             for (size_t word = first; word < first + state_.config.block_words; ++word)
-                storage_.writeLogic(t, word * (state_.width / 8), erased);
+                storage_.writeLogic(t, word * (state_.width / 8), erased, true);
         }
         for (const auto &[p, v] : std::vector<std::pair<std::string, bool>>{{"BUSY", state_.busy},
                                                                             {"ERROR", state_.error},
@@ -291,7 +295,6 @@ class FlashDirect : public Primitive, public MemoryStateView {
 
   private:
     Commands state_;
-    MemoryStorage storage_;
 };
 } // namespace
 void NORFlashConfig::validate(size_t w, bool expanded) const {
@@ -304,7 +307,7 @@ void NORFlashConfig::validate(size_t w, bool expanded) const {
 }
 NORFlashConfig norFlashConfigFromParameters(const ParameterMap &p) {
     keys(p, {"depth_words", "words_per_row", "block_words", "phase_ticks", "program_ticks", "erase_ticks",
-             "record_history"});
+             "record_history", "paged", "max_resident_bytes", "max_history_bytes"});
     NORFlashConfig c;
     c.depth_words = parameter(p, "depth_words", 4);
     c.words_per_row = parameter(p, "words_per_row", 2);
@@ -313,16 +316,19 @@ NORFlashConfig norFlashConfigFromParameters(const ParameterMap &p) {
     c.program_ticks = parameter(p, "program_ticks", 128);
     c.erase_ticks = parameter(p, "erase_ticks", 256);
     c.record_history = historyParameter(p);
+    c.storage_limits = storageLimits(p);
     return c;
 }
 ParameterMap norFlashParameters(const NORFlashConfig &c) {
-    return {{"record_history", c.record_history ? "1" : "0"},
+    auto p = storageParameters(c.storage_limits);
+    p.insert({{"record_history", c.record_history ? "1" : "0"},
             {"depth_words", std::to_string(c.depth_words)},
             {"words_per_row", std::to_string(c.words_per_row)},
             {"block_words", std::to_string(c.block_words)},
             {"phase_ticks", std::to_string(c.phase_ticks)},
             {"program_ticks", std::to_string(c.program_ticks)},
-            {"erase_ticks", std::to_string(c.erase_ticks)}};
+            {"erase_ticks", std::to_string(c.erase_ticks)}});
+    return p;
 }
 NORFlashCell::NORFlashCell(std::string n) : Primitive(std::move(n), "NORFlashCell", cellPins) {
 }

@@ -7,6 +7,7 @@
 #include "components/selection/StandardProfiles.hpp"
 #include <iostream>
 #include <optional>
+#include <set>
 
 using namespace circuit;
 using namespace circuit::test;
@@ -25,30 +26,23 @@ ComponentTestSpec spec(const ComponentFamily& f,ActionScenario s) {
 }
 ComponentTestSpec fetchSpec() {
     Scenario s;
-    s.add("reset",{{"CLK",logicBit(false)},{"RST",logicBit(true)},{"ISSUE",logicBit(true)},
-        {"TAKE",logicBit(false)},{"PC_WRITE",logicBit(false)},{"NEXT_PC",logicBits(32,16)},
-        {"IMEM_REQ_READY",logicBit(false)},{"IMEM_RSP_VALID",logicBit(false)},
-        {"IMEM_RSP_READ_DATA",logicBits(32,0)},{"IMEM_RSP_STATUS",logicBits(3,0)}},
-        {{"PC",logicBits(32,0)},{"PC_PLUS_4",logicBits(32,4)},{"IMEM_REQ_VALID",logicBit(false)}});
-    s.add("release",{{"RST",logicBit(false)}});
-    s.edge("capture-old-pc",{{"IMEM_REQ_VALID",logicBit(true)},{"IMEM_REQ_ADDR",logicBits(32,0)}});
-    s.add("change-uncommitted-next-pc",{{"CLK",logicBit(false)},{"NEXT_PC",logicBits(32,24)}});
-    s.edge("hold-request",{{"PC",logicBits(32,0)},{"IMEM_REQ_ADDR",logicBits(32,0)}});
-    s.add("accept-low",{{"CLK",logicBit(false)},{"IMEM_REQ_READY",logicBit(true)}});
-    s.edge("accept",{{"DONE",logicBit(false)},{"IMEM_REQ_VALID",logicBit(false)}});
-    s.add("response",{{"CLK",logicBit(false)},{"IMEM_RSP_VALID",logicBit(true)},
-        {"IMEM_RSP_READ_DATA",logicBits(32,0x01000093)}},
-        {{"DONE",logicBit(true)},{"INSTRUCTION",logicBits(32,0x01000093)},{"IMEM_RSP_READY",logicBit(false)}});
-    s.edge("response-backpressure",{{"PC",logicBits(32,0)},{"DONE",logicBit(true)}});
-    s.add("authorize-completion",{{"CLK",logicBit(false)},{"TAKE",logicBit(true)},{"PC_WRITE",logicBit(true)},{"NEXT_PC",logicBits(32,16)}},
-        {{"PC",logicBits(32,0)},{"IMEM_RSP_READY",logicBit(true)}});
-    s.edge("commit",{{"PC",logicBits(32,16)},{"PC_PLUS_4",logicBits(32,20)},{"DONE",logicBit(false)}});
-    s.add("stop",{{"CLK",logicBit(false)},{"ISSUE",logicBit(false)},{"TAKE",logicBit(false)},
-        {"PC_WRITE",logicBit(false)},{"IMEM_RSP_VALID",logicBit(false)}});
-    s.edge("no-new-fetch",{{"IMEM_REQ_VALID",logicBit(false)},{"PC",logicBits(32,16)}});
-    s.add("resume",{{"CLK",logicBit(false)},{"ISSUE",logicBit(true)}});
-    s.edge("next-request",{{"IMEM_REQ_ADDR",logicBits(32,16)},{"IMEM_REQ_VALID",logicBit(true)}});
-    s.add("reset-outstanding-request",{{"RST",logicBit(true)}},{{"PC",logicBits(32,0)},{"IMEM_REQ_VALID",logicBit(false)},{"IMEM_RSP_READY",logicBit(false)}});
+    s.add("reset",{{"CLK",logicBit(false)},{"RST",logicBit(true)},{"ISSUE",logicBit(false)},
+        {"PC_WRITE",logicBit(false)},{"NEXT_PC",logicBits(32,16)},
+        {"IMEM_READ_DATA",logicBits(32,0)},{"IMEM_FAULT",logicBit(false)}},
+        {{"PC",logicBits(32,0)},{"PC_PLUS_4",logicBits(32,4)},{"IMEM_READ_EN",logicBit(false)}});
+    s.add("read-without-clock",{{"RST",logicBit(false)},{"ISSUE",logicBit(true)},
+        {"IMEM_READ_DATA",logicBits(32,0x01000093)}},
+        {{"DONE",logicBit(true)},{"INSTRUCTION",logicBits(32,0x01000093)},{"IMEM_WORD_ADDR",logicBits(32,0)}});
+    s.add("next-pc-not-yet-committed",{{"PC_WRITE",logicBit(true)}},{{"PC",logicBits(32,0)}});
+    s.edge("commit",{{"PC",logicBits(32,16)},{"PC_PLUS_4",logicBits(32,20)},{"IMEM_WORD_ADDR",logicBits(32,4)}});
+    s.add("high-clock-holds-pc",{{"NEXT_PC",logicBits(32,24)}},{{"PC",logicBits(32,16)}});
+    s.add("falling-edge",{{"CLK",logicBit(false)}},{{"PC",logicBits(32,16)}});
+    s.edge("second-commit",{{"PC",logicBits(32,24)}});
+    s.add("disabled",{{"CLK",logicBit(false)},{"ISSUE",logicBit(false)},{"PC_WRITE",logicBit(false)}},
+        {{"IMEM_READ_EN",logicBit(false)}});
+    s.edge("hold",{{"PC",logicBits(32,24)}});
+    s.add("fault-propagates",{{"IMEM_FAULT",logicBit(true)}},{{"FAULT",logicBit(true)}});
+    s.add("reset-pc",{{"RST",logicBit(true)}},{{"PC",logicBits(32,0)}});
     return spec(families::RV32ISingleCycleFetchStage,s);
 }
 ComponentTestSpec decodeSpec() {
@@ -97,11 +91,6 @@ ComponentTestSpec executeSpec() {
 }
 ComponentTestSpec memorySpec() {
     Scenario s;
-    s.add("reset",{{"CLK",logicBit(false)},{"RST",logicBit(true)},{"ISSUE",logicBit(false)},{"TAKE",logicBit(false)},
-        {"MEM_WRITE",logicBit(false)},{"SIGN_EXTEND",logicBit(false)},{"ADDR",logicBits(32,0)},
-        {"WRITE_DATA",logicBits(32,0)},{"SIZE",logicBits(2,2)},{"DMEM_REQ_READY",logicBit(false)},
-        {"DMEM_RSP_VALID",logicBit(false)},{"DMEM_RSP_READ_DATA",logicBits(32,0)},{"DMEM_RSP_STATUS",logicBits(3,0)}});
-    s.add("release",{{"RST",logicBit(false)}});
     struct Row {unsigned offset,size;bool write,sign;uint32_t response,result;unsigned mask,status;};
     const Row rows[]{ {1,0,false,true,0x8000,0xffffff80,2,0},{3,0,false,false,0x80000000,0x80,8,0},
         {2,1,false,true,0x80010000,0xffff8001,12,0},{0,1,false,false,0xfffe,0xfffe,3,0},
@@ -110,24 +99,22 @@ ComponentTestSpec memorySpec() {
         {0,3,false,false,0,0,0,3},{0,2,false,false,0,0,15,2}};
     size_t n=0;
     for(auto r:rows) {
-        const auto label=std::to_string(n++);const bool bad=r.size==3||(r.size==1&&(r.offset&1))||(r.size==2&&r.offset);
-        s.add("setup-"+label,{{"CLK",logicBit(false)},{"ISSUE",logicBit(true)},{"TAKE",logicBit(false)},
+        const auto label=std::to_string(n++);
+        const bool bad=r.size==3||(r.size==1&&(r.offset&1))||(r.size==2&&r.offset);
+        s.add("direct-access-"+label,{{"ISSUE",logicBit(true)},{"COMMIT",logicBit(false)},
             {"ADDR",logicBits(32,0x100+r.offset)},{"SIZE",logicBits(2,r.size)},{"MEM_WRITE",logicBit(r.write)},
             {"SIGN_EXTEND",logicBit(r.sign)},{"WRITE_DATA",logicBits(32,0xdeadbeef)},
-            {"DMEM_REQ_READY",logicBit(false)},{"DMEM_RSP_VALID",logicBit(false)},{"DMEM_RSP_STATUS",logicBits(3,0)}});
-        s.edge("capture-"+label,{{"DMEM_REQ_VALID",logicBit(true)},{"DMEM_REQ_ADDR",logicBits(32,0x100+bad)},
-            {"DMEM_REQ_OP",logicBits(3,r.write)},{"DMEM_REQ_WRITE_MASK",logicBits(4,r.mask)},
-            {"DMEM_REQ_WRITE_DATA",logicBits(32,uint32_t(0xdeadbeefU<<(r.offset*8)))},{"MISALIGNED",logicBit(bad)}});
-        s.add("backpressure-low-"+label,{{"CLK",logicBit(false)},{"WRITE_DATA",logicBits(32,0)}});
-        s.edge("payload-held-"+label,{{"DMEM_REQ_WRITE_DATA",logicBits(32,uint32_t(0xdeadbeefU<<(r.offset*8)))},{"DONE",logicBit(false)}});
-        s.add("accept-low-"+label,{{"CLK",logicBit(false)},{"DMEM_REQ_READY",logicBit(true)}});
-        s.edge("accept-"+label,{{"DONE",logicBit(false)},{"DMEM_REQ_VALID",logicBit(false)}});
-        s.add("respond-"+label,{{"CLK",logicBit(false)},{"DMEM_RSP_VALID",logicBit(true)},
-            {"DMEM_RSP_STATUS",logicBits(3,r.status)},{"DMEM_RSP_READ_DATA",logicBits(32,r.response)}},
-            {{"DONE",logicBit(true)},{"FAULT",logicBit(r.status!=0)},{"READ_DATA",logicBits(32,r.result)},{"DMEM_RSP_READY",logicBit(false)}});
-        s.edge("response-held-"+label,{{"DONE",logicBit(true)}});
-        s.add("take-low-"+label,{{"CLK",logicBit(false)},{"TAKE",logicBit(true)}},{{"DMEM_RSP_READY",logicBit(true)}});
-        s.edge("consume-"+label,{{"DONE",logicBit(false)},{"DMEM_REQ_VALID",logicBit(false)}});
+            {"DMEM_FAULT",logicBit(r.status!=0)},{"DMEM_READ_DATA",logicBits(32,r.response)}},
+            {{"DONE",logicBit(true)},{"FAULT",logicBit(r.status!=0)},{"READ_DATA",logicBits(32,r.result)},
+             {"DMEM_WORD_ADDR",logicBits(32,0x40)},{"DMEM_WRITE_MASK",logicBits(4,r.mask)},
+             {"DMEM_WRITE_DATA",logicBits(32,uint32_t(0xdeadbeefU<<(r.offset*8)))},
+             {"MISALIGNED",logicBit(bad)},{"DMEM_WE",logicBit(false)}});
+        s.add("authorize-"+label,{{"COMMIT",logicBit(r.status==0)}},
+            {{"DMEM_WE",logicBit(r.write&&!bad&&r.status==0)}});
+        s.add("payload-is-not-buffered-"+label,{{"WRITE_DATA",logicBits(32,0)}},
+            {{"DMEM_WRITE_DATA",logicBits(32,0)}});
+        s.add("disabled-"+label,{{"ISSUE",logicBit(false)}},
+            {{"DMEM_WE",logicBit(false)},{"DMEM_READ_EN",logicBit(false)}});
     }
     return spec(families::RV32ISingleCycleMemoryStage,s);
 }
@@ -174,7 +161,7 @@ protected:
             0x0010a023, // sw x1,0(x1): source supplies data and address
             0x00100073});
         c.initial_data={{0x100,{0,2,0,0}}};c.max_instructions=12;
-        c.max_cycles_per_instruction=64;c.cycle_time_step=4000;
+        c.max_cycles_per_instruction=1;c.cycle_time_step=4000;
         c.expected_result.defined=true;c.expected_result.pc=32;
         c.expected_result.instruction_count=8;c.expected_result.halted=true;
         c.expected_result.registers={{1,1028},{5,20}};
@@ -207,18 +194,23 @@ void RV32ISingleCycleStageIntegrationTest::verifyResults() {
         if(std::string(mode)=="whole-core") rules.push_back(preferFidelity(Fidelity::Behavioral,ProfileSelector::exactPath("RV32I_PROGRAM_ROOT.CORE")));
         if(std::string(mode)=="register-file") {
             rules.push_back(preferFidelity(Fidelity::Structural,ProfileSelector::exactPath("RV32I_PROGRAM_ROOT.CORE.DECODE.REGISTER_FILE")));
-            rules.push_back(preferFidelity(Fidelity::Behavioral,ProfileSelector::exactPath("RV32I_PROGRAM_ROOT.CORE.DECODE.REGISTER_FILE.STORAGE")));
+            rules.push_back(preferFidelity(Fidelity::Behavioral,ProfileSelector::contract("memory.register.32")));
         }
         run.setBuildProfile(withProfileOverrides(run.getBuildProfile(),rules));
         if(!run.run()) throw std::runtime_error("No-reading-back integration failed: "+std::string(mode));
         if(std::string(mode)=="structural") {
             std::shared_ptr<Component> core;
             for(auto c:run.getRoot()->getChildren()) if(c->getName()=="CORE") core=c;
-            if(!core||core->getChildren().size()!=7) throw std::runtime_error("Core must contain six stages plus status");
+            std::set<std::string> children;
+            if(core) for(const auto& child:core->getChildren()) children.insert(child->getName());
+            const std::set<std::string> expected{"FETCH","DECODE","EXECUTE","MEMORY","WRITEBACK","NEXT_PC",
+                "EXECUTION_STATUS","INSTRUCTION_PORT","DATA_PORT","INSTRUCTION_NO_WRITE",
+                "INSTRUCTION_WRITE_ZERO","INSTRUCTION_MASK_ZERO","STORE_AUTHORIZED"};
+            if(children!=expected) throw std::runtime_error("Core must contain six stages, status, two combinational ports and four constants");
             auto typed=std::dynamic_pointer_cast<RV32ISingleCycleCore>(core);
             size_t alus=0,adders=0;
             for(auto child:typed->executeStage()->getChildren()) {
-                alus+=std::string(child->getTypeName())=="ALU32";
+                alus+=std::string(child->getTypeName())=="ALU32Core";
                 adders+=std::string(child->getTypeName())=="Adder32";
                 if(child->getName()=="RS1_IMM_ADD") throw std::runtime_error("Duplicate JALR adder");
             }

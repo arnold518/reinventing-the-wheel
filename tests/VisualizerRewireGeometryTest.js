@@ -103,6 +103,40 @@ for (const mutate of [
 }
 assert.equal(geometry.unpackedBusModel(null), null);
 
+// Decode MATCH_BITS contains two buses, not one 40-bit wire. Rendering must
+// preserve the source of every output even when pin order is interleaved.
+const matchBits = {
+  inputs: [{name: "MATCH_LO", width: 32}, {name: "MATCH_HI", width: 8}],
+  outputs: Array.from({length: 40}, (_, bit) => ({name: `OP_${bit}`, width: 1}))
+    .sort((a, b) => a.name.localeCompare(b.name)),
+  mappings: Array.from({length: 40}, (_, bit) => ({
+    srcWire: bit < 32 ? "MATCH_LO" : "MATCH_HI", srcBit: bit % 32,
+    dstWire: `OP_${bit}`, dstBit: 0,
+  })),
+};
+const matchModel = geometry.multiBusUnpackModel(matchBits);
+assert.deepEqual(matchModel.sources.map(s => [s.source, s.width, s.taps.length]),
+  [["MATCH_LO", 32, 32], ["MATCH_HI", 8, 8]]);
+assert.equal(geometry.multiBusUnpackModel(unpacker(8)), null);
+assert.equal(geometry.multiBusUnpackModel(null), null);
+for (const mutate of [
+  r => r.inputs.push({...r.inputs[0]}),
+  r => { r.inputs[0].width = 1; },
+  r => { r.outputs[0].width = 2; },
+  r => { r.outputs[1].name = r.outputs[0].name; },
+  r => r.mappings.pop(),
+  r => { r.mappings[0].srcWire = "MISSING"; },
+  r => { r.mappings[0].srcBit = 32; },
+  r => { r.mappings[0].srcBit = -1; },
+  r => { r.mappings[0].srcBit = .5; },
+  r => { r.mappings[0].dstBit = 1; },
+  r => { r.mappings[0].dstWire = "MISSING"; },
+  r => { r.mappings[0].dstWire = r.mappings[1].dstWire; },
+]) {
+  const invalid = structuredClone(matchBits); mutate(invalid);
+  assert.equal(geometry.multiBusUnpackModel(invalid), null);
+}
+
 const fields = {
   inputs: [{ name: "WORD", width: 8 }],
   outputs: [{ name: "SLICE", width: 3 }, { name: "SIGN", width: 8 },
@@ -218,6 +252,35 @@ for (const zoom of [1, 2, 8]) {
   for (const tap of fieldModel.taps) assert(labels.includes(`${tap.destination}[${tap.width}]`));
 }
 
+for (const rewire of [matchBits, {...matchBits, mappings: matchBits.mappings.map(m =>
+  ({...m, srcWire: "MATCH_LO", srcBit: m.srcBit % 32}))},
+  // Only one tap from the second bus must still yield finite geometry.
+  {...matchBits, mappings: matchBits.mappings.map((m, i) => i < 39
+    ? {...m, srcWire: "MATCH_LO", srcBit: i % 32} : m)},
+]) {
+  lines.length = labels.length = 0;
+  const values = {MATCH_LO: "10XZ".repeat(8), MATCH_HI: "ZX101010"};
+  const model = geometry.multiBusUnpackModel(rewire);
+  context.app.camera.zoom = 2;
+  context.drawRewireContents({rewire,
+    inputPins: rewire.inputs.map((pin, i) => ({...pin, pos: {x: 0, y: 150 + i*400}, value: values[pin.name]})),
+    outputPins: rewire.outputs.map((pin, i) => ({...pin, pos: {x: 500, y: 20 + i*20}})),
+  }, {bodyRect: {x: 0, y: 0, w: 500, h: 840}});
+  assert.equal(lines.length, 40 + 2 * model.sources.length);
+  const verticals = lines.filter(line => line.points.length === 2 && line.points[0].x === line.points[1].x);
+  assert.equal(verticals.length, model.sources.length, "One independent spine per used source");
+  assert.equal(new Set(verticals.map(line => line.points[0].x)).size, model.sources.length);
+  assert(lines.every(line => line.points.every(p => Number.isFinite(p.x) && Number.isFinite(p.y))));
+  let offset = 0;
+  for (const source of model.sources) {
+    assert.deepEqual(lines.slice(offset, offset + 2).map(l => l.width), [source.width, source.width]);
+    assert.deepEqual(lines.slice(offset + 2, offset + 2 + source.taps.length).map(l => l.value),
+      source.taps.map(t => values[source.source].at(-1 - t.sourceBit)));
+    offset += 2 + source.taps.length;
+  }
+  assert.deepEqual(labels, model.sources.flatMap(s => s.taps.map(t => t.label)));
+}
+
 // The multi-source fallback must not cycle eight routes through three lanes.
 for (const name of ["groupedRewireMappings", "rewireRouteValue"])
   vm.runInContext(extract(appSource, name), context);
@@ -260,4 +323,4 @@ for (const source of [appSource, workerSource]) {
   assert.equal(get().aspect_ratio, 2);
   assert.deepEqual(get().color, layout.profile_layouts.saved[c.layoutType].color);
 }
-console.log("Rewire geometry: packing, bit/field taps, fills, X/Z values, fallback lanes and layout variants passed");
+console.log("Rewire geometry: packing, single/multi-bus taps, fields, fills, X/Z values, fallback lanes and layout variants passed");

@@ -3,7 +3,6 @@
 #include "modules/composite/AddSub32.hpp"
 #include "modules/composite/Adder32.hpp"
 #include "modules/composite/ALU32.hpp"
-#include "modules/composite/Comparator32.hpp"
 #include "modules/composite/Logic32.hpp"
 #include "modules/composite/Shifter32.hpp"
 #include "modules/composite/ZeroDetect32.hpp"
@@ -30,11 +29,6 @@ public:
     ZeroDetect32Test();
 };
 
-class Comparator32Test : public TruthTableComponentTest<Comparator32> {
-public:
-    Comparator32Test();
-};
-
 class Shifter32Test : public TruthTableComponentTest<Shifter32> {
 public:
     Shifter32Test();
@@ -43,6 +37,11 @@ public:
 class ALU32Test : public circuit::test::ComponentScenarioTest {
 public:
     ALU32Test();
+};
+
+class ALU32CoreTest : public circuit::test::ComponentScenarioTest {
+public:
+    ALU32CoreTest();
 };
 
 class ALU32RepresentativeSliceTest : public StandaloneVerificationTest {

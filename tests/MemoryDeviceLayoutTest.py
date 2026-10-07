@@ -7,7 +7,7 @@ import tempfile
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / "visualizer-v2"))
+sys.path.append(str(ROOT / "visualizer-v2"))
 import circuit_backend as backend
 import server
 import memory_device_layout as geometry
@@ -154,11 +154,12 @@ class MemoryDeviceLayoutTest(unittest.TestCase):
                         aspects = {c.get_name(): manager.aspect_for_component(c) for c in children}
                         aspect = manager.aspect_for_component(component)
                         layout = geometry.placements(component.get_type_name(), aspects, aspect)
-                        self.assertIsNotNone(layout)
+                        self.assertIsNotNone(layout, (kind, width, slots, component.get_type_name(), set(aspects)))
                         self.assertEqual(set(layout), set(aspects))
                         for slot in range(slots):
                             names = [f"SELECT_{slot}_{bit}" if kind == "column-mux"
-                                     else f"WRITE_{slot * width + bit}" for bit in range(width)]
+                                     else f"WRITE_SLOT_{slot}_BYTE_{bit}"
+                                     for bit in range(width if kind == "column-mux" else width // 8)]
                             self.assertEqual(sorted(names, key=lambda n: layout[n]["rel_pos"][0]), names)
                             self.assertEqual(len({layout[n]["rel_pos"][1] for n in names}), 1)
                         rectangles = []

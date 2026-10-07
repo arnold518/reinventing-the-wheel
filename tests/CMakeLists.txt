@@ -1,11 +1,98 @@
 add_executable(SimulationTestRunner SimulationTestRunner.cpp)
+add_executable(MemoryArchitectureCleanupTest MemoryArchitectureCleanupTest.cpp)
+target_link_libraries(MemoryArchitectureCleanupTest PRIVATE SimulatorLib)
+add_test(NAME MemoryArchitectureCleanupTest COMMAND MemoryArchitectureCleanupTest)
+set_tests_properties(MemoryArchitectureCleanupTest PROPERTIES LABELS "memory;integration;cleanup" TIMEOUT 60)
+add_executable(SafeClockTimingTest SafeClockTimingTest.cpp)
+add_executable(ArithmeticTimingOptimizationTest ArithmeticTimingOptimizationTest.cpp)
+add_executable(RV32ILogicOptimizationTest RV32ILogicOptimizationTest.cpp)
+target_link_libraries(RV32ILogicOptimizationTest PRIVATE SimulatorLib)
+add_test(NAME RV32ILogicOptimizationTest COMMAND RV32ILogicOptimizationTest)
+set_tests_properties(RV32ILogicOptimizationTest PROPERTIES LABELS "rv32i;timing" TIMEOUT 120)
+target_link_libraries(ArithmeticTimingOptimizationTest PRIVATE SimulatorLib)
+add_test(NAME ArithmeticTimingOptimizationTest COMMAND ArithmeticTimingOptimizationTest)
+set_tests_properties(ArithmeticTimingOptimizationTest PROPERTIES LABELS "arithmetic;timing" TIMEOUT 120)
+target_link_libraries(SafeClockTimingTest PRIVATE SimulatorLib)
+add_test(NAME SafeClockTimingTest COMMAND SafeClockTimingTest)
+set_tests_properties(SafeClockTimingTest PROPERTIES LABELS "timing;analysis" TIMEOUT 60)
+add_executable(MemoryEndpointSafeClockTest MemoryEndpointSafeClockTest.cpp)
+target_link_libraries(MemoryEndpointSafeClockTest PRIVATE SimulatorLib)
+add_test(NAME MemoryEndpointSafeClockTest COMMAND MemoryEndpointSafeClockTest)
+set_tests_properties(MemoryEndpointSafeClockTest PROPERTIES LABELS "memory;timing;analysis" TIMEOUT 60)
+add_executable(MemoryStateTimingTest MemoryStateTimingTest.cpp)
+target_link_libraries(MemoryStateTimingTest PRIVATE SimulatorLib)
+add_test(NAME MemoryStateTimingTest COMMAND MemoryStateTimingTest)
+set_tests_properties(MemoryStateTimingTest PROPERTIES LABELS "memory;timing;analysis" TIMEOUT 60)
+add_executable(MemoryFeedbackTimingTest MemoryFeedbackTimingTest.cpp)
+target_link_libraries(MemoryFeedbackTimingTest PRIVATE SimulatorLib)
+add_test(NAME MemoryFeedbackTimingTest COMMAND MemoryFeedbackTimingTest)
+set_tests_properties(MemoryFeedbackTimingTest PROPERTIES LABELS "memory;timing;analysis" TIMEOUT 60)
+add_executable(BinaryStartupTimingTest BinaryStartupTimingTest.cpp)
+target_link_libraries(BinaryStartupTimingTest PRIVATE SimulatorLib)
+add_test(NAME BinaryStartupTimingTest COMMAND BinaryStartupTimingTest)
+set_tests_properties(BinaryStartupTimingTest PROPERTIES LABELS "memory;timing;analysis" TIMEOUT 60)
+add_executable(RV32IExperimentTest RV32IExperimentTest.cpp)
+add_executable(BenchmarkModelTest BenchmarkModelTest.cpp)
+target_link_libraries(BenchmarkModelTest PRIVATE SimulatorLib)
+add_test(NAME BenchmarkModelTest COMMAND BenchmarkModelTest)
+set_tests_properties(BenchmarkModelTest PROPERTIES LABELS "benchmark;rv32i;memory" TIMEOUT 60)
+add_test(NAME BenchmarkCampaignCLITest COMMAND ${Python3_EXECUTABLE}
+    ${CMAKE_CURRENT_SOURCE_DIR}/BenchmarkCampaignCLITest.py ${PROJECT_BINARY_DIR})
+set_tests_properties(BenchmarkCampaignCLITest PROPERTIES LABELS "benchmark;rv32i;memory" TIMEOUT 150)
+add_test(NAME FullEmbenchCampaignTest COMMAND ${Python3_EXECUTABLE}
+    ${CMAKE_CURRENT_SOURCE_DIR}/FullEmbenchCampaignTest.py ${PROJECT_BINARY_DIR})
+set_tests_properties(FullEmbenchCampaignTest PROPERTIES LABELS "benchmark;rv32i" TIMEOUT 180)
+add_test(NAME BackgroundCampaignResumeTest COMMAND ${Python3_EXECUTABLE}
+    ${CMAKE_CURRENT_SOURCE_DIR}/BackgroundCampaignResumeTest.py)
+set_tests_properties(BackgroundCampaignResumeTest PROPERTIES LABELS "benchmark;recovery" TIMEOUT 30)
+add_test(NAME CleanupValidationRunnerTest COMMAND ${Python3_EXECUTABLE}
+    ${CMAKE_CURRENT_SOURCE_DIR}/CleanupValidationRunnerTest.py)
+set_tests_properties(CleanupValidationRunnerTest PROPERTIES LABELS "cleanup;infrastructure" TIMEOUT 30)
+add_test(NAME WebTestRunnerTest COMMAND ${Python3_EXECUTABLE}
+    ${CMAKE_CURRENT_SOURCE_DIR}/WebTestRunnerTest.py)
+set_tests_properties(WebTestRunnerTest PROPERTIES LABELS "cleanup;infrastructure;visualizer" TIMEOUT 30)
+add_test(NAME VisualizerScenarioCatalogTest COMMAND ${Python3_EXECUTABLE}
+    ${CMAKE_CURRENT_SOURCE_DIR}/VisualizerScenarioCatalogTest.py)
+set_tests_properties(VisualizerScenarioCatalogTest PROPERTIES LABELS "visualizer;framework;cleanup" TIMEOUT 240 RUN_SERIAL TRUE)
+add_test(NAME VisualizerLegacySmokeTest COMMAND ${Python3_EXECUTABLE}
+    -c "import runpy; runpy.run_path('${PROJECT_SOURCE_DIR}/visualizer/smoke_test.py', run_name='__main__')")
+set_tests_properties(VisualizerLegacySmokeTest PROPERTIES LABELS "visualizer;bindings;cleanup" TIMEOUT 30)
+add_test(NAME RV32IMiddleBenchmarkTest COMMAND ${Python3_EXECUTABLE}
+    ${CMAKE_CURRENT_SOURCE_DIR}/RV32IMiddleBenchmarkTest.py --build-dir ${PROJECT_BINARY_DIR})
+set_tests_properties(RV32IMiddleBenchmarkTest PROPERTIES LABELS "benchmark;rv32i;equivalence" TIMEOUT 120 RUN_SERIAL TRUE)
+add_executable(RV32IBenchmarkTest RV32IBenchmarkTest.cpp)
+target_link_libraries(RV32IBenchmarkTest PRIVATE SimulatorLib)
+add_test(NAME RV32IBenchmarkTest COMMAND RV32IBenchmarkTest)
+set_tests_properties(RV32IBenchmarkTest PROPERTIES LABELS "benchmark;rv32i;experiment" TIMEOUT 60)
+add_test(NAME RV32IBenchmarkCLITest COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/RV32IBenchmarkCLITest.py $<TARGET_FILE:rv32i_experiment>)
+set_tests_properties(RV32IBenchmarkCLITest PROPERTIES LABELS "benchmark;rv32i;experiment" TIMEOUT 360)
+add_test(NAME RV32IDifferentialTest COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/RV32IDifferentialTest.py $<TARGET_FILE:rv32i_experiment>)
+set_tests_properties(RV32IDifferentialTest PROPERTIES LABELS "benchmark;rv32i;experiment;equivalence" TIMEOUT 600 RUN_SERIAL TRUE)
+target_link_libraries(RV32IExperimentTest PRIVATE SimulatorLib)
+add_test(NAME RV32IExperimentTest COMMAND RV32IExperimentTest)
+set_tests_properties(RV32IExperimentTest PROPERTIES LABELS "benchmark;rv32i;experiment;timing" TIMEOUT 60)
+add_test(NAME RV32IExperimentCLITest COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/RV32IExperimentCLITest.py $<TARGET_FILE:rv32i_experiment>)
+set_tests_properties(RV32IExperimentCLITest PROPERTIES LABELS "benchmark;rv32i;experiment;timing" TIMEOUT 240)
+add_test(NAME RV32IBinaryClockCLITest COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/RV32IBinaryClockCLITest.py $<TARGET_FILE:rv32i_experiment>)
+set_tests_properties(RV32IBinaryClockCLITest PROPERTIES LABELS "benchmark;rv32i;experiment;timing" TIMEOUT 180)
+add_executable(MemoryInspectorTest MemoryInspectorTest.cpp)
+target_link_libraries(MemoryInspectorTest PRIVATE SimulatorLib)
+add_test(NAME MemoryInspectorTest COMMAND MemoryInspectorTest)
+set_tests_properties(MemoryInspectorTest PROPERTIES LABELS "memory;visualizer" TIMEOUT 30)
 target_link_libraries(SimulationTestRunner PRIVATE SimulatorLib)
+add_test(NAME DocumentationDiagramsTest COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/DocumentationDiagramsTest.py)
+set_tests_properties(DocumentationDiagramsTest PROPERTIES LABELS "documentation;diagrams" TIMEOUT 30)
+add_test(NAME RV32IBenchmarkDocumentationTest COMMAND ${Python3_EXECUTABLE}
+    ${CMAKE_CURRENT_SOURCE_DIR}/RV32IBenchmarkDocumentationTest.py $<TARGET_FILE:rv32i_experiment>)
+set_tests_properties(RV32IBenchmarkDocumentationTest PROPERTIES LABELS "documentation;rv32i;benchmark" TIMEOUT 30)
 add_executable(Register32FFIntegrationTest Register32FFIntegrationTest.cpp)
 target_link_libraries(Register32FFIntegrationTest PRIVATE SimulatorLib)
 add_test(NAME Register32FFIntegrationTest COMMAND Register32FFIntegrationTest)
 set_tests_properties(Register32FFIntegrationTest PROPERTIES LABELS "memory;register;rv32i;integration" TIMEOUT 180)
 add_test(NAME Register32DocumentationTest COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/Register32DocumentationTest.py ${CMAKE_CXX_COMPILER} ${PROJECT_BINARY_DIR}/libSimulatorLib.a)
 set_tests_properties(Register32DocumentationTest PROPERTIES LABELS "memory;register;documentation")
+add_test(NAME RegisterLayoutGenerationTest COMMAND ${Python3_EXECUTABLE} ${PROJECT_SOURCE_DIR}/tools/generate-register-layouts.py --check)
+set_tests_properties(RegisterLayoutGenerationTest PROPERTIES LABELS "memory;register;layout;visualizer" TIMEOUT 30)
 add_executable(RegisterFileFFIntegrationTest RegisterFileFFIntegrationTest.cpp)
 target_link_libraries(RegisterFileFFIntegrationTest PRIVATE SimulatorLib)
 add_test(NAME RegisterFileFFIntegrationTest COMMAND RegisterFileFFIntegrationTest)
@@ -17,6 +104,20 @@ set_tests_properties(RV32IBuildingBlocksDocumentationTest PROPERTIES LABELS "rv3
 add_test(NAME RV32ISingleCycleDocumentationTest COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/RV32ISingleCycleDocumentationTest.py $<TARGET_FILE:VisualizerSessionProbe> ${CMAKE_CXX_COMPILER} ${PROJECT_BINARY_DIR}/libSimulatorLib.a)
 set_tests_properties(RV32ISingleCycleDocumentationTest PROPERTIES LABELS "rv32i;documentation" TIMEOUT 240)
 add_executable(RV32IMemoryMigrationTest RV32IMemoryMigrationTest.cpp)
+add_executable(RV32IBaselineExamplesTest RV32IBaselineExamplesTest.cpp)
+target_link_libraries(RV32IBaselineExamplesTest PRIVATE SimulatorLib)
+add_test(NAME RV32IBaselineExamplesTest COMMAND RV32IBaselineExamplesTest)
+set_tests_properties(RV32IBaselineExamplesTest PROPERTIES LABELS "rv32i;documentation;baseline")
+add_executable(RV32IAdvancedExamplesTest RV32IAdvancedExamplesTest.cpp)
+target_link_libraries(RV32IAdvancedExamplesTest PRIVATE SimulatorLib)
+add_test(NAME RV32IAdvancedExamplesTest COMMAND RV32IAdvancedExamplesTest)
+set_tests_properties(RV32IAdvancedExamplesTest PROPERTIES LABELS "rv32i;documentation;prediction")
+add_test(NAME RV32IBaselineDocumentationTest
+    COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/RV32IBaselineDocumentationTest.py $<TARGET_FILE:VisualizerSessionProbe>)
+set_tests_properties(RV32IBaselineDocumentationTest PROPERTIES LABELS "rv32i;documentation;baseline")
+add_test(NAME RV32IAdvancedDocumentationTest
+    COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/RV32IAdvancedDocumentationTest.py $<TARGET_FILE:VisualizerSessionProbe>)
+set_tests_properties(RV32IAdvancedDocumentationTest PROPERTIES LABELS "rv32i;documentation;prediction" TIMEOUT 120)
 target_link_libraries(RV32IMemoryMigrationTest PRIVATE SimulatorLib)
 add_test(NAME RV32IMemoryMigrationTest COMMAND RV32IMemoryMigrationTest)
 set_tests_properties(RV32IMemoryMigrationTest PROPERTIES LABELS "rv32i;memory;integration" TIMEOUT 180)
@@ -26,8 +127,8 @@ add_test(NAME RV32ISingleCycleLayoutTest COMMAND ${Python3_EXECUTABLE} ${CMAKE_C
 set_tests_properties(RV32ISingleCycleLayoutTest PROPERTIES LABELS "rv32i;visualizer;layout")
 add_test(NAME RV32IBuildingBlockLayoutTest COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/RV32IBuildingBlockLayoutTest.py)
 set_tests_properties(RV32IBuildingBlockLayoutTest PROPERTIES LABELS "rv32i;visualizer" TIMEOUT 120)
-add_executable(MemoryContainerBenchmark MemoryContainerBenchmark.cpp)
-target_link_libraries(MemoryContainerBenchmark PRIVATE SimulatorLib)
+add_executable(MemoryStorageBenchmark MemoryStorageBenchmark.cpp)
+target_link_libraries(MemoryStorageBenchmark PRIVATE SimulatorLib)
 add_executable(MemoryEndpointBenchmark MemoryEndpointBenchmark.cpp)
 target_link_libraries(MemoryEndpointBenchmark PRIVATE SimulatorLib)
 add_executable(FFMemoryBenchmark FFMemoryBenchmark.cpp)
@@ -36,13 +137,15 @@ add_executable(SRAMBenchmark SRAMBenchmark.cpp)
 target_link_libraries(SRAMBenchmark PRIVATE SimulatorLib)
 
 add_test(NAME SRAMBindingsTest COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/SRAMBindingsTest.py)
-set_tests_properties(SRAMBindingsTest PROPERTIES ENVIRONMENT "PYTHONPATH=${PROJECT_SOURCE_DIR}/visualizer-v2" LABELS "memory;sram;bindings")
+set_tests_properties(SRAMBindingsTest PROPERTIES ENVIRONMENT "PYTHONPATH=${PROJECT_BINARY_DIR}:${PROJECT_SOURCE_DIR}/visualizer-v2" LABELS "memory;sram;bindings")
 add_test(NAME SRAMLayoutTest COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/SRAMLayoutTest.py)
 set_tests_properties(SRAMLayoutTest PROPERTIES LABELS "memory;sram;visualizer")
 add_test(NAME MemoryDeviceLayoutTest COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/MemoryDeviceLayoutTest.py $<TARGET_FILE:VisualizerSessionProbe>)
 set_tests_properties(MemoryDeviceLayoutTest PROPERTIES LABELS "memory;new-memory;visualizer;bindings")
 add_test(NAME MemoryEndpointIntegrationTest COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/MemoryEndpointIntegrationTest.py $<TARGET_FILE:VisualizerSessionProbe>)
 set_tests_properties(MemoryEndpointIntegrationTest PROPERTIES LABELS "memory;memory-endpoint;visualizer;bindings;documentation")
+add_test(NAME MemoryInspectorIntegrationTest COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/MemoryInspectorIntegrationTest.py $<TARGET_FILE:VisualizerSessionProbe>)
+set_tests_properties(MemoryInspectorIntegrationTest PROPERTIES LABELS "memory;visualizer;bindings" TIMEOUT 180)
 add_test(NAME MemoryDeviceDocumentationTest COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/MemoryDeviceDocumentationTest.py $<TARGET_FILE:VisualizerSessionProbe> ${CMAKE_CXX_COMPILER})
 set_tests_properties(MemoryDeviceDocumentationTest PROPERTIES LABELS "memory;new-memory;documentation")
 
@@ -89,28 +192,30 @@ set(SIMULATION_TESTS
     DFlipFlopTest
     ClockGeneratorTest
     FlipFlopCellTest
-    Memory64Kx32Test
     MemoryStorageTest
-    MemoryBusAdapter32Test
-    MemoryBusAdapterIntegrationTest
     MemoryTransactionPortTest
+    MemoryResponseBufferTest
+    RegisterWidthsTest
+    ClockedStateBitTest
     MemoryControllerTest
+    FFAlwaysReadyControllerTest
     MemoryEndpointFFTest
     MemoryEndpointSRAMTest
     MemoryEndpointDRAMTest
     MemoryEndpointROMTest
     MemoryEndpointFlashTest
     MemoryEndpointRelayTest
-    ScalableMemoryContainerTest
+    ScalableMemoryEndpointTest
+    NativeMemoryContainerTest
+    NativeMemoryDeviceContractTest
     MemoryEndpointContractTest
     MemoryEndpointTimingTest
-    FFMemoryContainerTest
+    FFMemoryTest
     FFWordTest
     FFWordContractTest
     FFStorageBankTest
     FFStorageBankContractTest
     FFMemoryFidelityTest
-    SRAMContainerTest
     SRAMCellTest
     SRAMRowTest
     SRAMBitlinePairTest
@@ -149,13 +254,9 @@ set(SIMULATION_TESTS
     MemoryHelperContractTest
     MemoryDeviceContractTest
     MemoryDeviceTimingTest
-    ROMContainerTest
-    MemoryContainerContractTest
-    Register32Test
-    RegisterFile4x32Test
+    FFMemoryContractTest
+    RegisterTest
     RegisterFile32x32Test
-    Memory4x32Test
-    Memory32x32Test
     RewireTest
     RewireValidationTest
     BitSplitter1Test
@@ -181,27 +282,18 @@ set(SIMULATION_TESTS
     ConstantValue32Test
     HalfAdderTest
     FullAdderTest
-    AND8Test
-    OR8Test
     XOR8Test
     NOT8Test
-    NAND8Test
-    NOR8Test
     Mux2to1Test
     Mux4to1Test
     Mux8to1Test
-    Mux16to1Test
     Mux32to1Test
-    Mux2to1_8bitTest
     Mux2to1_4bitTest
     Mux2to1_32bitTest
-    Mux4to1_8bitTest
     Mux4to1_32bitTest
     Mux8to1_8bitTest
     Mux8to1_32bitTest
-    Mux16to1_8bitTest
     Mux32to1_32bitTest
-    Decoder2to4Test
     Decoder5to32Test
     Adder8Test
     TwosComplement8Test
@@ -210,11 +302,6 @@ set(SIMULATION_TESTS
     Incrementer8Test
     Decrementer8Test
     EqualityChecker8Test
-    Comparator8Test
-    SignedComparator8Test
-    ShiftLeftLogical8Test
-    ShiftRightLogical8Test
-    ShiftRightArithmetic8Test
     ZeroDetect8Test
     ALU8Test
     AddSub8Test
@@ -234,11 +321,13 @@ set(SIMULATION_TESTS
     ALUHierarchyTest
     Adder32Test
     AddSub32Test
+    RV32IMemoryLanesTest
+    RV32IMemoryRequestTest
     Logic32Test
     ZeroDetect32Test
-    Comparator32Test
     Shifter32Test
     ALU32Test
+    ALU32CoreTest
     ALU32RepresentativeSliceTest
     RV32IControlFlowUnitTest
     RV32IDecodeControlUnitTest
@@ -249,18 +338,21 @@ set(SIMULATION_TESTS
     RV32IMEMWBPipelineRegisterTest
     RV32IForwardingUnitTest
     RV32IHazardDetectionUnitTest
-    RV32IPipelineControlFlowUnitTest
     RV32IMemoryAlignmentUnitTest
-    RV32IMemoryLanesTest
-    RV32IMemoryRequestTest
     RV32IPipelineRetirementUnitTest
     RV32IPipelineCoordinatorTest
     RV32IFetchStageTest
     RV32IDecodeStageTest
     RV32IExecuteStageTest
     RV32IMemoryStageTest
+    RV32IPipelineExecutionStatusTest
     RV32IWritebackStageTest
     RV32IFiveStageCoreTest
+    RV32IPredictionCounterTest
+    RV32IBranchPredecodeTest
+    RV32IBranchPredictorTest
+    RV32IBranchRecoveryTest
+    RV32IPredictionPathTest
     RV32IBitPatternMatcherTest
     RV32IDecoderTest
     RV32IControlTest
@@ -278,6 +370,13 @@ set(SIMULATION_TESTS
     RV32ISingleCycleWritebackStageTest
     RV32ISingleCycleNextPCStageTest
     RV32ISingleCycleStageIntegrationTest
+    RV32IBaselineFetchStageTest
+    RV32IBaselineDecodeStageTest
+    RV32IBaselineExecuteStageTest
+    RV32IBaselineMemoryStageTest
+    RV32IBaselineDependencyUnitTest
+    RV32IBaselineControlTest
+    RV32IBaselinePipelineCoreTest
     RV32IProfileToggleSweepTest
 )
 
@@ -314,8 +413,8 @@ set(INTEGRATION_TESTS
 
 set(SLOW_SIMULATION_TESTS
     ALU32Test
-    MemoryContainerContractTest
-    Memory32x32Test
+    ALU32CoreTest
+    FFMemoryContractTest
     RegisterFile32x32Test
     RV32ISingleCycleCoreTest
     RV32IExternalValidationSmokeTest
@@ -397,16 +496,52 @@ foreach(program_number RANGE 1 ${RV32I_PROGRAM_CASE_COUNT})
     list(APPEND SIMULATION_TESTS "${program_test_name}")
 endforeach()
 
+# Keep these program families in the same order as getTestRegistry().
+foreach(program_number RANGE 1 ${RV32I_PROGRAM_CASE_COUNT})
+    if(program_number LESS 10)
+        set(program_suffix "0${program_number}")
+    else()
+        set(program_suffix "${program_number}")
+    endif()
+    set(program_test_name "RV32IBaselinePipelineProgramTest/program-${program_suffix}")
+    add_test(NAME ${program_test_name} COMMAND SimulationTestRunner ${program_test_name})
+    set(program_test_labels simulation integration program rv32i pipeline baseline slow)
+    if(program_number GREATER ${RV32I_CORRECTNESS_PROGRAM_CASE_COUNT})
+        list(APPEND program_test_labels performance)
+    endif()
+    set_tests_properties(${program_test_name} PROPERTIES
+        LABELS "${program_test_labels}")
+    list(APPEND SIMULATION_TESTS "${program_test_name}")
+endforeach()
+foreach(policy not-taken taken backward-taken one-bit two-bit)
+    foreach(program RANGE 1 ${RV32I_PROGRAM_CASE_COUNT})
+        if(program LESS 10)
+            set(program_suffix "0${program}")
+        else()
+            set(program_suffix "${program}")
+        endif()
+        set(prediction_test "RV32IPredictionProgramTest/${policy}/program-${program_suffix}")
+        add_test(NAME ${prediction_test} COMMAND SimulationTestRunner ${prediction_test})
+        set(program_test_labels simulation integration program rv32i pipeline prediction slow)
+        if(program GREATER ${RV32I_CORRECTNESS_PROGRAM_CASE_COUNT})
+            list(APPEND program_test_labels performance)
+        endif()
+        set_tests_properties(${prediction_test} PROPERTIES
+            LABELS "${program_test_labels}")
+        list(APPEND SIMULATION_TESTS "${prediction_test}")
+    endforeach()
+endforeach()
+
 add_test(
     NAME VisualizerModuleBindingsTest
     COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/VisualizerModuleBindingsTest.py
 )
 
-add_test(NAME MemoryContainerBindingsTest
-    COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/MemoryContainerBindingsTest.py
+add_test(NAME FFMemoryBindingsTest
+    COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/FFMemoryBindingsTest.py
         $<TARGET_FILE:VisualizerSessionProbe>)
-set_tests_properties(MemoryContainerBindingsTest PROPERTIES
-    ENVIRONMENT "PYTHONPATH=${PROJECT_SOURCE_DIR}/visualizer-v2"
+set_tests_properties(FFMemoryBindingsTest PROPERTIES
+    ENVIRONMENT "PYTHONPATH=${PROJECT_BINARY_DIR}:${PROJECT_SOURCE_DIR}/visualizer-v2"
     LABELS "visualizer;memory;contract")
 
 add_test(
@@ -420,7 +555,7 @@ add_test(NAME VisualizerPinIdentityTest
     COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/VisualizerPinIdentityTest.py
         $<TARGET_FILE:VisualizerSessionProbe>)
 set_tests_properties(VisualizerPinIdentityTest PROPERTIES
-    ENVIRONMENT "PYTHONPATH=${PROJECT_SOURCE_DIR}/visualizer-v2"
+    ENVIRONMENT "PYTHONPATH=${PROJECT_BINARY_DIR}:${PROJECT_SOURCE_DIR}/visualizer-v2"
     LABELS "visualizer;unit;rv32i")
 add_test(NAME VisualizerAutomaticLayoutTest
     COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/VisualizerAutomaticLayoutTest.py)
@@ -443,7 +578,7 @@ set_tests_properties(RV32IReferenceDocumentationTest PROPERTIES LABELS "document
 set_tests_properties(
     VisualizerSessionContractTest
     PROPERTIES
-        ENVIRONMENT "PYTHONPATH=${PROJECT_SOURCE_DIR}/visualizer-v2"
+        ENVIRONMENT "PYTHONPATH=${PROJECT_BINARY_DIR}:${PROJECT_SOURCE_DIR}/visualizer-v2"
         LABELS "visualizer;system;wasm"
 )
 
@@ -458,7 +593,7 @@ add_test(
 set_tests_properties(
     VisualizerColorPaletteTest
     PROPERTIES
-        ENVIRONMENT "PYTHONPATH=${PROJECT_SOURCE_DIR}/visualizer-v2"
+        ENVIRONMENT "PYTHONPATH=${PROJECT_BINARY_DIR}:${PROJECT_SOURCE_DIR}/visualizer-v2"
         LABELS "visualizer;unit"
 )
 find_program(CIRCUITSIM_NODE_EXECUTABLE NAMES node nodejs)
@@ -468,6 +603,8 @@ if(CIRCUITSIM_NODE_EXECUTABLE)
     add_test(NAME VisualizerTopologyIdentityTest COMMAND ${CIRCUITSIM_NODE_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/VisualizerTopologyIdentityTest.js)
     set_tests_properties(VisualizerTopologyIdentityTest PROPERTIES LABELS "visualizer;unit")
     add_test(NAME VisualizerMemoryCellViewTest COMMAND ${CIRCUITSIM_NODE_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/VisualizerMemoryCellViewTest.js)
+    add_test(NAME VisualizerMemoryViewTest COMMAND ${CIRCUITSIM_NODE_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/VisualizerMemoryViewTest.js)
+    set_tests_properties(VisualizerMemoryViewTest PROPERTIES LABELS "memory;visualizer;unit")
     add_test(NAME RegisterFileProfileMigrationTest COMMAND ${CIRCUITSIM_NODE_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/RegisterFileProfileMigrationTest.mjs)
     add_test(
         NAME VisualizerReferenceProfileTest
@@ -505,13 +642,13 @@ endif()
 set_tests_properties(
     VisualizerProfileStoreTest
     PROPERTIES
-        ENVIRONMENT "PYTHONPATH=${PROJECT_SOURCE_DIR}/visualizer-v2"
+        ENVIRONMENT "PYTHONPATH=${PROJECT_BINARY_DIR}:${PROJECT_SOURCE_DIR}/visualizer-v2"
         LABELS "visualizer;system"
 )
 set_tests_properties(
     VisualizerModuleBindingsTest
     PROPERTIES
-        ENVIRONMENT "PYTHONPATH=${PROJECT_SOURCE_DIR}/visualizer-v2"
+        ENVIRONMENT "PYTHONPATH=${PROJECT_BINARY_DIR}:${PROJECT_SOURCE_DIR}/visualizer-v2"
         LABELS "visualizer;system"
 )
 
@@ -527,3 +664,10 @@ set_tests_properties(
     TestRegistryCoverageTest
     PROPERTIES LABELS "framework"
 )
+
+# All Python checks must import this build's backend, including tests that
+# exercise source-side layout helpers. An isolated build must never silently
+# validate the older module deployed to the running preview.
+get_property(circuitsim_directory_tests DIRECTORY PROPERTY TESTS)
+set_property(TEST ${circuitsim_directory_tests} APPEND PROPERTY ENVIRONMENT
+    "PYTHONPATH=${PROJECT_BINARY_DIR}:${PROJECT_SOURCE_DIR}/visualizer-v2")

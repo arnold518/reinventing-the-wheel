@@ -1,4 +1,5 @@
 #include "modules/rv32i/RV32IReferenceSystem.hpp"
+#include "basic/LogicValueHelpers.hpp"
 
 #include "components/Component.hpp"
 #include "modules/rv32i/RV32ISingleCycleSystem.hpp"
@@ -7,11 +8,7 @@
 #include <utility>
 
 namespace {
-LogicValue sanitizeBit(LogicValue value) {
-    return value == LogicValue::HIGH || value == LogicValue::LOW
-        ? value
-        : LogicValue::UNKNOWN;
-}
+using circuit::logic_values::sanitizeBit;
 
 size_t memorySizeBytes(rv32i::RV32IMemorySize size) {
     switch (size) {
@@ -29,12 +26,9 @@ RV32IReferenceSystem::RV32IReferenceSystem(std::string name)
           name,
           1,
           circuit::families::RV32ISingleCycleSystem.pinInitializer()),
-      instruction_memory_(
-          Component::create<Memory64Kx32>(
-              name + ".INSTRUCTION_MEMORY_STATE")),
-      data_memory_(
-          Component::create<Memory64Kx32>(
-              name + ".DATA_MEMORY_STATE")) {}
+      instruction_memory_(std::make_shared<MemoryStorage>(65536, 32, LogicValue::LOW)),
+      data_memory_(std::make_shared<MemoryStorage>(65536, 32, LogicValue::LOW)) {}
+
 
 void RV32IReferenceSystem::setInitialPC(uint32_t pc) {
     reset_pc_ = pc;
@@ -67,7 +61,7 @@ void RV32IReferenceSystem::clearDataMemory() {
 void RV32IReferenceSystem::loadProgram(
     const rv32i::RV32IProgram& program,
     uint32_t base_address) {
-    program.loadInto(*instruction_memory_, base_address);
+    instruction_memory_->loadBytes(base_address, program.bytes());
 }
 
 void RV32IReferenceSystem::loadInstructionBytes(
@@ -100,7 +94,7 @@ void RV32IReferenceSystem::setProgramMemoryHistoryRecordingEnabled(
 void RV32IReferenceSystem::loadDataWords(
     uint32_t base_address,
     const std::vector<uint32_t>& words) {
-    data_memory_->loadWords(base_address, words);
+    data_memory_->loadBytes(base_address, rv32i::RV32IProgram::fromWords(words).bytes());
 }
 
 std::map<uint32_t, uint8_t>
@@ -139,10 +133,10 @@ void RV32IReferenceSystem::applyDataMemoryWrite(
             static_cast<uint32_t>(memory.address + byte);
         const auto value = static_cast<uint8_t>(
             (memory.write_data >> (byte * 8)) & 0xffU);
-        data_memory_->writeU8AtTime(
-            current_time,
-            address,
-            value);
+        std::vector<LogicValue> bits(8, LogicValue::LOW);
+        for (size_t bit = 0; bit < 8; ++bit)
+            if (value & (1u << bit)) bits[bit] = LogicValue::HIGH;
+        data_memory_->writeLogic(current_time, address, bits, true);
         last_data_memory_writes_[address] = value;
         if (data_memory_->isHistoryRecordingEnabled()) {
             data_memory_write_history_.push_back({

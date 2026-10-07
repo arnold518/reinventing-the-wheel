@@ -1,6 +1,32 @@
 #include "modules/composite/ALU32ResultSelector.hpp"
 #include "modules/composite/Structural8Builder.hpp"
 #include "components/PinMacros.hpp"
+#include "modules/memory/MemoryStructuralBuilder.hpp"
+
+namespace {
+// A visible bit slice keeps the selection network expandable without putting
+// hundreds of gates in the selector's top-level view.
+class ALU32ResultBit : public IOComponent {
+public:
+    explicit ALU32ResultBit(std::string name) : IOComponent(std::move(name), [](IOComponent* s) {
+        for (unsigned i=0;i<9;++i) {
+            s->addPin("DATA_"+std::to_string(i),PinType::INPUT);
+            s->addPin("SELECT_"+std::to_string(i),PinType::INPUT);
+        }
+        s->addPin("OUT",PinType::OUTPUT);
+    }) {}
+    const char* getTypeName() const override { return "ALU32ResultBit"; }
+    void buildInternals(ComponentBuilder& b) override {
+        circuit::memory_detail::StructuralWiring w(b);
+        std::vector<decltype(w)::PinPtr> terms;
+        for (unsigned i=0;i<9;++i) {
+            const auto id=std::to_string(i);
+            terms.push_back(w.both("MASK_"+id,getInputPin("DATA_"+id),getInputPin("SELECT_"+id)));
+        }
+        w.connect(w.reduce("RESULT",terms,false),getOutputPin("OUT"));w.finish();
+    }
+};
+}
 
 BEGIN_PINS(ALU32ResultSelector, IOComponent)
     INPUT_PIN_WIDTH("ARITHMETIC_RESULT", 32)
@@ -20,30 +46,37 @@ END_PINS()
 
 void ALU32ResultSelector::buildInternals(ComponentBuilder& builder) {
     circuit::detail::StructuralBuilder n(*this, builder);
-    auto low = n.add<Mux8to1_32bit>("RESULT_LOW_MUX");
-    auto high = n.add<Mux8to1_32bit>("RESULT_HIGH_MUX");
-    auto half = n.add<Mux2to1_32bit>("RESULT_HALF_MUX");
-    auto range = n.add<Mux2to1_32bit>("RESULT_RANGE_MUX");
-    auto zero = n.constant<32>("CONST_ZERO32", 0);
-    const std::array<circuit::detail::StructuralBuilder::Signal, 8> low_sources{
-        n.input("ARITHMETIC_RESULT"), n.input("ARITHMETIC_RESULT"),
-        n.input("AND_RESULT"), n.input("OR_RESULT"), n.input("XOR_RESULT"),
-        n.input("SHIFT_RESULT"), n.input("SHIFT_RESULT"), n.input("SHIFT_RESULT")};
-    const std::array<circuit::detail::StructuralBuilder::Signal, 8> high_sources{
-        n.input("SLT_RESULT"), n.input("SLTU_RESULT"), n.input("A"), n.input("B"),
-        zero, zero, zero, zero};
-    for (size_t i = 0; i < 8; ++i) {
-        n.connect(low_sources[i], low->getInputPin<32>("IN" + std::to_string(i)));
-        n.connect(high_sources[i], high->getInputPin<32>("IN" + std::to_string(i)));
+    auto local=n.split<3>("LOCAL_BITS",n.input("LOCAL_OP"));
+    std::array<circuit::detail::StructuralBuilder::Signal,4> op{
+        local[0],local[1],local[2],n.input("HIGH_HALF")}, inverse;
+    for(unsigned i=0;i<4;++i) inverse[i]=n.invert("NOT_OP_"+std::to_string(i),op[i]);
+    auto valid=n.invert("IN_RANGE",n.input("OUT_OF_RANGE"));
+    std::array<circuit::detail::StructuralBuilder::Signal,12> terms;
+    for(unsigned code=0;code<terms.size();++code) {
+        std::vector<circuit::detail::StructuralBuilder::Signal> factors;
+        for(unsigned bit=0;bit<4;++bit) factors.push_back(code&(1u<<bit)?op[bit]:inverse[bit]);
+        factors.push_back(valid);
+        terms[code]=n.reduceBalanced("OP_"+std::to_string(code),factors,true);
     }
-    n.connect(n.input("LOCAL_OP"), low->getInputPin<3>("SEL"));
-    n.connect(n.input("LOCAL_OP"), high->getInputPin<3>("SEL"));
-    n.connect(low->getOutputPin<32>("OUT"), half->getInputPin<32>("A"));
-    n.connect(high->getOutputPin<32>("OUT"), half->getInputPin<32>("B"));
-    n.connect(n.input("HIGH_HALF"), half->getInputPin("SEL"));
-    n.connect(half->getOutputPin<32>("OUT"), range->getInputPin<32>("A"));
-    n.connect(zero, range->getInputPin<32>("B"));
-    n.connect(n.input("OUT_OF_RANGE"), range->getInputPin("SEL"));
-    n.connect(range->getOutputPin<32>("OUT"), n.output("OUT"));
+    // Keep every minterm, including repeated arithmetic/shift inputs. Dropping
+    // (s | !s) would change the original gate mux's X/Z select semantics.
+    std::array<circuit::detail::StructuralBuilder::Signal,9> selects{
+        n.binary<ORGate>("ARITHMETIC_SELECT",terms[0],terms[1]),terms[2],terms[3],terms[4],
+        n.reduceBalanced("SHIFT_SELECT",{terms[5],terms[6],terms[7]},false),
+        terms[8],terms[9],terms[10],terms[11]};
+    const std::array<const char*,9> names{"ARITHMETIC_RESULT","AND_RESULT","OR_RESULT",
+        "XOR_RESULT","SHIFT_RESULT","SLT_RESULT","SLTU_RESULT","A","B"};
+    std::array<std::array<circuit::detail::StructuralBuilder::Signal,32>,9> data;
+    for(unsigned i=0;i<names.size();++i) data[i]=n.split<32>(std::string(names[i])+"_BITS",n.input(names[i]));
+    std::array<circuit::detail::StructuralBuilder::Signal,32> result;
+    for(unsigned bit=0;bit<32;++bit) {
+        auto slice=n.add<ALU32ResultBit>("BIT_"+std::to_string(bit));
+        for(unsigned i=0;i<names.size();++i) {
+            n.connect(data[i][bit],slice->getInputPin("DATA_"+std::to_string(i)));
+            n.connect(selects[i],slice->getInputPin("SELECT_"+std::to_string(i)));
+        }
+        result[bit]=slice->getOutputPin("OUT");
+    }
+    n.connect(n.join<32>("RESULT",result),n.output("OUT"));
     n.finish();
 }

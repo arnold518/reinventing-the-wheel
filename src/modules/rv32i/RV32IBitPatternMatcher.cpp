@@ -1,4 +1,5 @@
 #include "modules/rv32i/RV32IBitPatternMatcher.hpp"
+#include "modules/memory/MemoryStructuralBuilder.hpp"
 
 #include "components/ComponentBuilder.hpp"
 #include "components/ComponentBuilder.tpp"
@@ -54,27 +55,8 @@ void RV32IBitPatternMatcher::buildInternals(ComponentBuilder& builder) {
         return;
     }
 
-    builder.addNewComponent<ANDGate>("AND_1");
-    builder.addNewWire("TERM_0_to_AND_1", terms[0], {builder.getInputPin<ANDGate>("AND_1", "A")});
-    builder.addNewWire("TERM_1_to_AND_1", terms[1], {builder.getInputPin<ANDGate>("AND_1", "B")});
-
-    std::string previous = "AND_1";
-    for (size_t term = 2; term < terms.size(); ++term) {
-        const auto gate = "AND_" + std::to_string(term);
-        builder.addNewComponent<ANDGate>(gate);
-        builder.addNewWire(
-            previous + "_to_" + gate,
-            builder.getOutputPin<ANDGate>(previous, "OUT"),
-            {builder.getInputPin<ANDGate>(gate, "A")});
-        builder.addNewWire(
-            "TERM_" + std::to_string(term) + "_to_" + gate,
-            terms[term],
-            {builder.getInputPin<ANDGate>(gate, "B")});
-        previous = gate;
-    }
-
-    builder.addNewWire(
-        "match_chain_to_MATCH",
-        builder.getOutputPin<ANDGate>(previous, "OUT"),
-        {getOutputPin("MATCH")});
+    circuit::memory_detail::StructuralWiring w(builder);
+    std::vector<circuit::memory_detail::StructuralWiring::PinPtr> inputs(terms.begin(),terms.end());
+    w.connect(w.reduce("MATCH_TREE",inputs,true),getOutputPin("MATCH"));
+    w.finish();
 }

@@ -5,6 +5,7 @@
 #include "components/capabilities/RV32IStateView.hpp"
 #include "components/selection/ComponentFamily.hpp"
 #include "rv32i/RV32IProgram.hpp"
+#include "rv32i/RV32IPipelineObserver.hpp"
 #include <cstddef>
 #include <cstdint>
 #include <map>
@@ -18,17 +19,21 @@ template<size_t WIDTH> class Wire;
 /**
  * Fixed testbench container shared by every visual RV32I program scenario.
  *
- * CORE connects through two explicit CPU adapters to universal memory endpoints.
+ * Single-cycle and baseline CORE connect directly to FF devices; advanced
+ * pipeline CORE uses transaction endpoints. No external CPU adapter.
+ * Pipeline completed PC is explicitly host-observed, not a core register.
  * The root is a fixed testbench, not a fidelity choice.
  */
 class RV32IProgramRoot : public IOComponent {
 public:
+    RV32IProgramRoot(std::string name, const circuit::ComponentFamily& core_family,
+        size_t clock_half_period, circuit::ParameterMap core_parameters = {});
     RV32IProgramRoot(
         std::string name,
         const circuit::ComponentFamily& core_family,
         size_t clock_half_period,
-        rv32i::MemoryConfiguration instructions = {},
-        rv32i::MemoryConfiguration data = {});
+        rv32i::MemoryConfiguration instructions,
+        rv32i::MemoryConfiguration data = {}, circuit::ParameterMap core_parameters = {});
 
     static constexpr const char* TypeName = "RV32IProgramRoot";
     static constexpr const char* RootName = "RV32I_PROGRAM_ROOT";
@@ -40,6 +45,9 @@ public:
         Simulator& simulator,
         size_t time = 0) const;
     void startClock(Simulator& simulator, size_t first_rising_time) const;
+    // Host hook: sample settled pre-edge outputs once, before advancing across
+    // the rising edge. observed PC is a testbench output, never a core input.
+    void observeRetirementBeforeEdge(Simulator& simulator, size_t edge_time);
 
     void clearInstructionMemory();
     void clearDataMemory();
@@ -75,10 +83,13 @@ public:
 
 private:
     circuit::ComponentFamily core_family_;
+    circuit::ParameterMap core_parameters_;
     size_t clock_half_period_;
     std::shared_ptr<ClockGenerator> clock_{};
     std::shared_ptr<IOComponent> core_{};
     std::shared_ptr<RV32IStateView> state_view_{};
+    std::shared_ptr<RV32IPipelineObserver> pipeline_observer_{};
+    std::shared_ptr<Wire<32>> observed_pc_wire_{};
     std::shared_ptr<IOComponent> instruction_memory_{};
     std::shared_ptr<IOComponent> data_memory_{};
 

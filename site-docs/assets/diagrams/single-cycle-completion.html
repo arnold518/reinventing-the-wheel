@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en" class="diagram-standalone">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>One edge commits the instruction</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;600&amp;family=Ubuntu+Mono&amp;display=swap" rel="stylesheet"/>
+<style>body { margin: 24px auto; max-width: 688px; padding: 0 16px; } * { box-sizing: border-box; }</style>
+</head>
+<body>
+<!-- diagram:start -->
+<figure class="circuit-figure" data-diagram="single-cycle-completion">
+<div class="diagram-viewport" role="region" aria-label="One edge commits the instruction" tabindex="0">
+<svg viewBox="0 0 640 328" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="single-cycle-completion-title single-cycle-completion-desc">
+<title id="single-cycle-completion-title">One edge commits the instruction</title>
+<desc id="single-cycle-completion-desc">Execution status combines decode legality, memory faults, and address checks to authorize PC and register updates. It authorizes memory intent before the response; the endpoint itself rejects invalid stores.</desc>
+<style>.circuit-figure {
+  --dg-paper: var(--md-default-bg-color, #fff);
+  --dg-ink: var(--md-default-fg-color, #202735);
+  --dg-muted: #566174;
+  --dg-rule: #c8ced8;
+  --dg-surface: #f5f6f9;
+  --dg-accent: #4051b5;
+  --dg-tint: #eef0fc;
+  margin: 1.5rem 0; max-width: 100%; text-align: left;
+  font-family: var(--md-text-font-family, 'Noto Sans', sans-serif);
+}
+[data-md-color-scheme="slate"] .circuit-figure {
+  --dg-muted: #b4bdd0; --dg-rule: #4b5569; --dg-surface: #262c38;
+  --dg-accent: #acb7ff; --dg-tint: #303853;
+}
+@media (prefers-color-scheme: dark) {
+  .diagram-standalone .circuit-figure {
+    --dg-paper: #1e2129; --dg-ink: #e4e7ef; --dg-muted: #b4bdd0;
+    --dg-rule: #4b5569; --dg-surface: #262c38;
+    --dg-accent: #acb7ff; --dg-tint: #303853;
+  }
+  .diagram-standalone body { background: #1e2129; color: #e4e7ef; }
+}
+.circuit-figure .diagram-viewport {
+  max-width: 100%; overflow: auto; overscroll-behavior-x: contain;
+}
+.circuit-figure .diagram-viewport:focus-visible {
+  outline: 2px solid var(--dg-accent); outline-offset: 3px;
+}
+.circuit-figure svg { display: block; width: 640px; min-width: 640px; max-width: none; margin: 0 auto; }
+.circuit-figure figcaption {
+  display: block; margin: .6rem 0 0; max-width: none; text-align: left;
+  color: var(--dg-muted); font-style: normal; font-size: 14px; line-height: 1.6;
+}
+.circuit-figure figcaption strong { color: var(--dg-ink); font-weight: 600; }
+.circuit-figure .dg-zone { fill: var(--dg-paper); stroke: var(--dg-rule); stroke-width: 1.2; }
+.circuit-figure .dg-box { fill: var(--dg-paper); stroke: var(--dg-rule); stroke-width: 1.2; }
+.circuit-figure .dg-store { fill: var(--dg-surface); stroke: var(--dg-rule); stroke-width: 1.2; }
+.circuit-figure .dg-focus { fill: var(--dg-tint); stroke: var(--dg-accent); stroke-width: 1.4; }
+.circuit-figure .dg-label { fill: var(--dg-paper); stroke: none; }
+.circuit-figure text { fill: var(--dg-ink); font-family: var(--md-text-font-family, 'Noto Sans', sans-serif); font-size: 16px; }
+.circuit-figure .dg-name { font-weight: 600; }
+.circuit-figure .dg-small { font-size: 14px; fill: var(--dg-muted); }
+.circuit-figure .dg-code { font-family: var(--md-code-font-family, 'Ubuntu Mono', monospace); font-size: 14px; fill: var(--dg-muted); }
+.circuit-figure .dg-tag { font-size: 12px; font-weight: 600; letter-spacing: .06em; fill: var(--dg-muted); }
+.circuit-figure .dg-edge { fill: none; stroke: var(--dg-muted); stroke-width: 1.5; }
+.circuit-figure .dg-marker { fill: var(--dg-muted); }
+.circuit-figure .dg-marker-accent { fill: var(--dg-accent); }
+.circuit-figure .dg-rule { stroke: var(--dg-rule); stroke-width: 1; }</style>
+<defs>
+<marker id="single-cycle-completion-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><path d="M 0 0 L 8 3 L 0 6 Z" class="dg-marker"/></marker>
+<marker id="single-cycle-completion-arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><path d="M 0 0 L 8 3 L 0 6 Z" class="dg-marker-accent"/></marker>
+<marker id="single-cycle-completion-arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><path d="M 0 0 L 8 3 L 0 6 Z" class="dg-marker"/></marker>
+</defs>
+<rect width="640" height="328" fill="var(--dg-paper)"/>
+<path class="dg-edge" d="M 208 64 L 248 64" marker-end="url(#single-cycle-completion-arrow)"/>
+<path class="dg-edge" d="M 412 64 L 452 64" marker-end="url(#single-cycle-completion-arrow)"/>
+<path class="dg-edge" d="M 208 164 L 248 164" marker-end="url(#single-cycle-completion-arrow)"/>
+<path class="dg-edge" d="M 412 164 L 452 164" marker-end="url(#single-cycle-completion-arrow)"/>
+<path class="dg-edge" d="M 208 264 L 248 264" marker-end="url(#single-cycle-completion-arrow)"/>
+<path class="dg-edge" d="M 412 264 L 452 264" marker-end="url(#single-cycle-completion-arrow)"/>
+<rect data-node="EXECUTION_STATUS" x="248" y="32" width="164" height="264" rx="6" class="dg-focus"/>
+<text x="330" y="148" class="dg-code" text-anchor="middle">EXECUTION_STATUS</text>
+<text x="330" y="180" class="dg-small" text-anchor="middle">Completion control</text>
+<text x="40" y="60" class="dg-name" text-anchor="start">Decode</text>
+<text x="40" y="84" class="dg-small" text-anchor="start">legality / stop requests</text>
+<text x="40" y="160" class="dg-name" text-anchor="start">Fetch + Memory</text>
+<text x="40" y="184" class="dg-small" text-anchor="start">DONE / FAULT</text>
+<text x="40" y="260" class="dg-name" text-anchor="start">Address checks</text>
+<text x="40" y="284" class="dg-small" text-anchor="start">PC / target / data</text>
+<text x="464" y="60" class="dg-name" text-anchor="start">State writes</text>
+<text x="464" y="84" class="dg-small" text-anchor="start">PC / registers</text>
+<text x="464" y="160" class="dg-name" text-anchor="start">Memory intent</text>
+<text x="464" y="184" class="dg-small" text-anchor="start">prior-fault qualification</text>
+<text x="464" y="260" class="dg-name" text-anchor="start">Terminal state</text>
+<text x="464" y="284" class="dg-small" text-anchor="start">halt / trap / cause</text>
+</svg>
+</div>
+<figcaption><strong>Compute from old state, then capture together.</strong> The endpoint validates stores independently: response faults do not feed back into the request opcode. DONE is tied high; the clock period must allow the full path to settle. Clock, reset, and ENABLE are omitted.</figcaption>
+</figure>
+<!-- diagram:end -->
+</body>
+</html>

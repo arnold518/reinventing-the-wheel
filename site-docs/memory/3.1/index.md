@@ -13,22 +13,13 @@ Shared addressing and output circuitry is documented in [3.1.0. Helper Component
 | [3.1.3. DRAM](../3.1.3.md) | `DRAMCell` → `DRAMRow` → `DRAMStorageBank<W>` → `DRAM<W>` | ACTIVATE row, READ/WRITE column, PRECHARGE, REFRESH | Destructive sampling, row buffer, restoration, retention |
 | [3.1.4. ROM](../3.1.4.md) | `ROMCell` → `ROMRow` → `ROMStorageBank<W>` → `ROM<W>` | Asynchronous read only | Immutable construction-time image |
 | [3.1.5. NOR flash](../3.1.5.md) | `NORFlashCell` → `NORFlashRow` → `NORFlashStorageBank<W>` → `NORFlash<W>` | Clocked read/program/erase commands | Program 1→0; block erase to 1; no refresh |
-| [3.1.6. Scalable memory container](../3.1.6.md) | `MemoryContainer<W,Model>` | Common request/response port | Compact controller-plus-device model for any of the five technologies |
+| [3.1.6. Scalable memory container](../3.1.6.md) | `MemoryContainer<Model,W>` | Selected technology's native pins | Scalable behavioral device; no transaction buffering |
 
-`MemoryContainer` is not a sixth physical technology. It is a scalable representation of an entire memory endpoint. Its model determines whether the contents behave as FF storage, SRAM, DRAM, ROM, or NOR flash.
+`MemoryContainer` is not a sixth physical technology. It is the scalable representation of a native device. Its model determines both the storage behavior and the native interface. A controller is optional for direct-device users and required when converting a native interface to transactions.
 
 ## Storage layers
 
-```text
-Native memory device
-├── Address decoding and access/command control
-├── Storage bank
-│   ├── FF: words → clocked cells
-│   └── SRAM/DRAM/ROM/NOR: rows → cells in physical bit columns
-│       └── Technology-specific column sensing / row-buffer state
-├── Read selection and, where writable, write distribution
-└── Output publication / output enable
-```
+<!-- diagram: memory-storage -->
 
 | Layer | Responsibility | What it does not provide |
 | --- | --- | --- |
@@ -57,27 +48,23 @@ For word address A, `row = A / K`, `slot = A % K`; bit b occupies physical colum
 
 Do not confuse **word address**, **row address**, and **byte address**. Native FF/SRAM/ROM use word addresses; native DRAM's command selects whether its address means row or column slot. The transaction port and memory inspector use byte addresses. A W-bit aligned transaction at byte address B accesses word `B / (W/8)`; the controller performs the native mapping.
 
-Expanded devices and pin-expanded banks are limited to **4,096 cells**. Behavioral banks keep their many row/column pins and therefore keep the bank's size limits. A behavioral native device removes those internal pins; a `MemoryContainer` additionally models the transaction-facing controller. These are different abstraction boundaries, not interchangeable labels for the same interface. Native SRAM supports up to 2^24 words; native DRAM/ROM/NOR support up to 2^20 words. Container capacity instead follows its 32-bit byte-address and host-resource limits; see [3.1.6](../3.1.6.md#configuration).
+Expanded devices and pin-expanded banks are limited to **4,096 cells**. Behavioral banks keep their many row/column pins and therefore keep those limits. Behavioral native devices and containers remove internal pin expansion and use paged storage within 32-bit byte-capacity and host-resource limits. A large device does not require a large controller: the controller's payload registers depend on port width, not memory depth. See [3.1.6](../3.1.6.md#configuration).
 
 ## Device and transaction boundaries
 
-```text
-Requester / future cache
-         │ common transactions (§3.2)
-         ├── MemoryEndpoint (§3.3)
-         │     ├── MemoryController ── native pins ── native memory device
-         │     └── The controller owns access state; the device owns contents.
-         └── MemoryContainer (§3.1.6)
-               └── Compact controller + technology model + backing storage
-```
+<!-- diagram: memory-endpoints -->
 
-The two branches are alternative implementations of a transaction-facing endpoint. A native device can be used directly through its native pins. A standalone `MemoryController` contains no storage and must be connected to a device. A `MemoryContainer` already includes controller behavior and can be connected directly to a transaction requester; it does not require a second technology controller.
+`MemoryEndpoint` contains a `MemoryController` and one native memory device. The controller translates transactions into native operations, retaining state only when required by timing or backpressure; the device owns the stored contents and technology-specific behavior. The two boxes inside the device are **alternative representations**, not two memories connected at once: an expanded implementation or a scalable `MemoryContainer`.
+
+For a selected technology, both representations keep the same native interface. Direct-device users connect there and omit the controller. Transaction requesters connect one level above, through the common REQ/RSP interface. `BehavioralMemoryEndpoint` is the fused behavioral implementation of the whole assembly, not another name for `MemoryContainer`.
+
+The universal interface does not require multiple cycles. An FF controller exposes a combinational response and writes on the shared clock; other controllers sequence their native device's timing. Empty response buffers bypass their registers.
 
 Native FF reset clears FF storage. Transaction reset only resets the interface and drains already launched work; it is not connected to native FF storage reset and does not erase contents. Caches, arbitration, coherence, and accelerator access sit above this endpoint and are not implemented by these storage components.
 
-The RV32I single-cycle and five-stage program systems use separate 32-bit SRAM-model `MemoryContainer` endpoints (256 KiB each by default). Each core directly exposes the common `IMEM_REQ_*` / `IMEM_RSP_*` and `DMEM_REQ_*` / `DMEM_RSP_*` transaction ports. Byte/halfword formatting and request tracking belong inside the CPU; no external CPU-memory adapter or relay controller is needed. A small controller/device `MemoryEndpoint` can replace a container without changing this wiring. Native SRAM or DRAM pins alone are not interchangeable with transaction pins.
+The controller type follows the device technology; its capacity, geometry, and timing settings must match the attached device. Expanded versus scalable storage does not change the controller's native pin contract. Native-device contracts are defined in 3.1.1–3.1.6; the transaction contract and controller composition are defined in [3.2](../3.2.md) and [3.3](../3.3.md). Processor-specific connections belong to the processor documentation, such as the [single-cycle core](../../rv32i/4.4/core.md).
 
-`MemoryBusAdapter32`, `Memory64Kx32`, and `LegacyMemoryContainer` retain their older interfaces for existing standalone tests and the isolated instruction answer sheet. They are not used on the migrated CPU memory ports and are not aliases for the transaction-facing container.
+The compact FF device uses the tested private `FFMemoryDirect<W>` implementation. The instruction answer sheet uses host-side `MemoryStorage`; it does not instantiate an additional memory circuit. All simulated CPU memory ports use the device/controller/endpoint architecture above.
 
 ## Structural and behavioral implementations
 
@@ -91,10 +78,10 @@ Four-state values are `0`, `1`, `X` (unknown), and `Z` (released output). Stored
 
 Expanded banks place rows vertically and cells left to right in numeric column order. Column sensing aligns with those cells; control and decoding remain beside storage. These are logical diagrams, not semiconductor floorplans. Behavioral devices show a bounded memory window and touched words instead of thousands of cells.
 
-The memory inspector reads a storage snapshot through `MemoryStateView`; it does not issue a memory operation. Command-device address pins can change meaning between phases, so they are not a persistent linear read cursor. DRAM idle expiry is evaluated on access/refresh: an old snapshot alone does not establish that charge has survived retention. The DRAM/ROM/NOR native devices and transaction container reject unrestricted debug loading. A container additionally provides explicit image provisioning before its first simulator evaluation, used by the RV32I program/ELF loaders. After simulation starts, writes must use transactions; reset does not reopen the image loader. Expanded devices without a host image hook must use their construction image or native/transaction operations.
+The memory inspector reads a snapshot through `MemoryStateView`; it does not issue an operation. Command-device address pins are not a persistent linear read cursor. DRAM idle expiry is evaluated on access/refresh: an old snapshot does not prove charge survived retention. Scalable native devices support explicit image provisioning before their first evaluation. Runtime changes must use native pins, or transactions when a controller is attached. Reset does not reopen provisioning. Expanded devices without an image hook use construction images or pin operations.
 
-Use `record_history=0` when content time travel is unnecessary. This disables memory-content history, not the simulator's separate wire history. Large containers additionally provide allocation and history budgets; native compact devices do not all share those resource controls.
+Use `record_history=0` when content time travel is unnecessary. This disables memory-content history, not the simulator's separate wire history. Scalable native devices share allocation and history budgets. DRAM keeps sparse row metadata; neither a controller nor a small native bank can make unbounded event history safe.
 
 Each component reference follows IO pins → behavior → C++ example → implementation → examples → source/tests. The complete scrollable example table includes checkpoint number and absolute settled time. “Not checked” means no assertion for that pin at that checkpoint, not a zero value. Fidelity changes can change checkpoint times.
 
-`MemoryDeviceContractTest` and `MemoryDeviceTimingTest` cover native DRAM/ROM/NOR devices and shared helpers. FF and SRAM have their own contract tests. `MemoryEndpointContractTest` and `MemoryEndpointTimingTest` compare transaction endpoints with the scalable container, including masks, errors, reset, backpressure, and refresh. These are contract checks, not hardware-performance calibration.
+`MemoryDeviceContractTest` and `MemoryDeviceTimingTest` cover native DRAM/ROM/NOR devices and helpers. FF and SRAM have their own contract tests. `NativeMemoryDeviceContractTest` checks scalable native representations and controller/device composition. `MemoryEndpointContractTest` and `MemoryEndpointTimingTest` compare assembled and fused endpoints, including masks, errors, reset, backpressure, and refresh. These are contract checks, not hardware-performance calibration.

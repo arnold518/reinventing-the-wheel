@@ -10,10 +10,10 @@ const source = (await Promise.all(['3.2','3.3','3.1.6'].map(s =>
   readFile(new URL(`../site-docs/memory/${s}.md`, import.meta.url),'utf8')))).join('\n');
 let count = 0;
 for (const [, scenario, test] of source.matchAll(/<!-- simulator-examples: (\S+) (\S+) -->/g)) {
-  const modes = scenario === 'scalable-memory-container' ? ['behavioral'] :
+  const modes = ['scalable-memory-container','native-memory-container'].includes(scenario) ? ['behavioral'] :
     scenario.startsWith('memory-endpoint-') && scenario !== 'memory-endpoint-relay' ? ['structural','behavioral','device'] : ['structural'];
   for (const mode of modes) {
-    const overrides = [['MEMORY_ENDPOINT_ROOT', mode === 'behavioral' ? mode : 'structural']];
+    const overrides = [[scenario === 'native-memory-container' ? 'MEMORY_CONTAINER_ROOT' : 'MEMORY_ENDPOINT_ROOT', mode === 'behavioral' ? mode : 'structural']];
     if (mode === 'device') overrides.push(['MEMORY_ENDPOINT_ROOT.MEMORY','behavioral']);
     const native = (...args) => JSON.parse(execFileSync(probePath,
       [...args,...overrides.flatMap(([p,f])=>['--override',p,f])], {encoding:'utf8',maxBuffer:32*1024*1024}));
@@ -36,7 +36,7 @@ for (const [, scenario, test] of source.matchAll(/<!-- simulator-examples: (\S+)
     } finally {bridge.delete();}
   }
 }
-for (const test of ['MemoryEndpointContractTest','MemoryEndpointTimingTest']) {
+for (const test of ['MemoryEndpointContractTest','MemoryEndpointTimingTest','NativeMemoryDeviceContractTest']) {
   const bridge=new module.WasmVisualizer();
   try {bridge.loadScenario(test,test,0); console.log(`${test}: WASM passed`);}
   finally {bridge.delete();}

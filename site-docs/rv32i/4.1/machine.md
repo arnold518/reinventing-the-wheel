@@ -36,7 +36,7 @@ Instruction operations use Python-style pseudocode. Each block starts **after su
 | `check_target(address)` | Raise `InstructionAddressMisaligned` unless the target is divisible by four; do not check instruction-memory range here |
 | `trap(cause)` | Stop the current operation with the named terminal trap; no later statements execute |
 
-The [documentation tests](programs/index.md#validation-boundary) execute these operation blocks against the compiled reference. The complete production C++ implementation is in [4.1.4](implementation.md).
+The [documentation tests](../4.2/verification/workloads.md#fixed-programs-and-isa-references) execute these operation blocks against the compiled reference. The complete production C++ implementation is in [4.1.4](implementation.md).
 
 ## Register and PC updates
 
@@ -54,8 +54,8 @@ The [documentation tests](programs/index.md#validation-boundary) execute these o
 | Instruction width / alignment | 32-bit instructions, four-byte-aligned instruction addresses (`IALIGN=32`) |
 | Byte order | Little-endian for instructions and data |
 | Memory organization | Separate instruction and data memories in the visual testbench; a data store does not modify instruction memory |
-| Default capacity | Each `MemoryContainer<sram,32>` has 65,536 **words** (256 KiB): byte addresses `0x00000000`–`0x0003FFFF` |
-| Memory transactions | The core exposes common `IMEM_REQ_*` / `IMEM_RSP_*` and `DMEM_REQ_*` / `DMEM_RSP_*` ports directly and waits for responses. A compatible memory endpoint can replace a container |
+| Default capacity | Each FF-model instruction/data device has 65,536 **words** (256 KiB): byte addresses `0x00000000`–`0x0003FFFF` |
+| Memory interface | All cores: universal REQ/RSP endpoints. Single-cycle and baseline require zero-wait FF timing; the transaction-capable pipeline also supports delayed technologies. These timing interfaces do not change instruction semantics |
 | Reset | Visual program core resets PC and all registers to zero, clears halt/trap state; program/data memory is retained |
 | Initial memory | Fixtures explicitly clear memory and load their instruction/data images before running |
 | Execution status | Simulator state `halted`, `trapped`, and `trap_cause`; these are not privileged RISC-V CSRs |

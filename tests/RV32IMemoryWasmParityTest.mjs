@@ -30,6 +30,7 @@ for (const stage of ['Fetch','Decode','Execute','Memory','Writeback','NextPC']) 
 }
 for (const [family, prefix] of [['RV32ISingleCycleSystemTest', 'rv32i-program'],
                               ['RV32IFiveStageCoreProgramTest', 'rv32i-five-stage-program']]) {
+  const direct = family === 'RV32ISingleCycleSystemTest';
   for (const fidelity of ['structural', 'behavioral']) {
     const scenario = prefix + '3', test = family + '/program-03';
     const native = (...args) => JSON.parse(execFileSync(probePath,
@@ -44,7 +45,7 @@ for (const [family, prefix] of [['RV32ISingleCycleSystemTest', 'rv32i-program'],
         assert.deepEqual(topology[key], expected[key], `${scenario}/${fidelity}/${key}`);
       for (const name of ['INSTRUCTION_MEMORY', 'DATA_MEMORY']) {
         const id = topology.rootId + '.' + name;
-        assert.equal(topology.components.find(c => c.id === id).type, 'MemoryContainer<sram,32>');
+        assert.equal(topology.components.find(c => c.id === id).type, 'MemoryEndpoint<ff,32>');
         const pinNames = topology.pins.filter(p => p.componentId === id).map(p => p.name);
         for (const pin of ['REQ_VALID', 'REQ_READY', 'RSP_VALID', 'RSP_READY', 'RSP_STATUS'])
           assert(pinNames.includes(pin), `${id}/${pin}`);

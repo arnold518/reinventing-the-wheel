@@ -53,13 +53,12 @@ def refresh_layout(path):
     for key, entry in manager.root_layouts.items():
         if not re.fullmatch(r"rv32i-program\d+(?:@[^@]+)?", key) or entry.get("layout_mode") == "manual":
             continue
-        if set(entry.get("children", {})) != {child.get_name() for child in children}:
-            continue
         fingerprint = key.split("@", 1)[1] if "@" in key else server._component_profile_fingerprint(program)
         view = refresh.ProfileLayoutView(manager, fingerprint)
         generated = server._custom_child_layout(*refresh.layout_arguments(view, program, children, key))
         assert generated is not None
-        placements = deepcopy(entry["children"])
+        placements = {name: deepcopy(entry.get("children", {}).get(name, placement))
+                      for name, placement in generated.items()}
         placements["CORE"].update(generated["CORE"])
         refresh._assert_child_bounds(view, program, children, placements, key)
         refresh._assert_no_child_overlap(view, program, children, placements, 0, key)

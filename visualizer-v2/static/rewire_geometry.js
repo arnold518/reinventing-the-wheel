@@ -106,6 +106,35 @@
     };
   }
 
+  // Several independent source buses can each fan out to one-bit outputs.
+  // Keep their spines separate: no output combines bits from two sources.
+  function multiBusUnpackModel(rewire) {
+    const inputs = rewire?.inputs || [], outputs = rewire?.outputs || [];
+    const mappings = rewire?.mappings || [];
+    if (inputs.length < 2 || outputs.length < 2 || mappings.length !== outputs.length
+        || outputs.some(pin => pin.width !== 1)) return null;
+    const sources = new Map();
+    for (const pin of inputs) {
+      if (!pin.name || !Number.isInteger(pin.width) || pin.width <= 1 || sources.has(pin.name)) return null;
+      sources.set(pin.name, {source: pin.name, width: pin.width, taps: []});
+    }
+    const byOutput = new Map();
+    for (const m of mappings) {
+      const source = sources.get(m.srcWire);
+      if (!source || m.dstBit !== 0 || !Number.isInteger(m.srcBit)
+          || m.srcBit < 0 || m.srcBit >= source.width || byOutput.has(m.dstWire)) return null;
+      byOutput.set(m.dstWire, m);
+    }
+    if (new Set(outputs.map(pin => pin.name)).size !== outputs.length) return null;
+    for (const pin of outputs) {
+      const m = byOutput.get(pin.name);
+      if (!m) return null;
+      sources.get(m.srcWire).taps.push({destination: pin.name, sourceBit: m.srcBit,
+        label: `${m.srcWire}[${m.srcBit}] → ${pin.name}`});
+    }
+    return {sources: [...sources.values()].filter(source => source.taps.length)};
+  }
+
   function fillBit(unmappedDefault) {
     return ({ LOW: "0", HIGH: "1" })[unmappedDefault] || "X";
   }
@@ -183,6 +212,7 @@
     groupedMappings,
     packedBusModel,
     unpackedBusModel,
+    multiBusUnpackModel,
     fieldExtractionModel,
     fieldValue,
   };

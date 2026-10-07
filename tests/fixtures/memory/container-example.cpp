@@ -1,4 +1,4 @@
-// Appended to the exact C++ block extracted from site-docs/memory/3.1.6.md.
+// Appended to the fused endpoint C++ reference in site-docs/memory/3.3.md.
 // It deliberately does not contain a second copy of the documented class.
 #include <cassert>
 #include <iostream>
@@ -9,7 +9,7 @@ using namespace circuit::memory;
 
 template<std::size_t W, class Model>
 struct Rig {
-    using Example = memory_example::Container<W, Model>;
+    using Example = memory_example::CompactEndpoint<W, Model>;
     Example memory;
     typename Example::Inputs in;
     typename Example::Outputs out;
@@ -60,7 +60,7 @@ struct Rig {
         in.request = request;
         in.request_valid = true;
         do { tick(); } while (!in.rising_edge);
-        assert(!out.request_ready && !out.response_valid);
+        assert(!out.request_ready); // FF may already have a held zero-wait response.
         in.request_valid = false;
         // Payload changes after acceptance must not change the latched request.
         in.request = Rig::request(Operation::EraseBlock, 0xffffffffu);
@@ -114,6 +114,7 @@ void check_model() {
 
     auto initial = rig.read(0);
     assert(initial.status == Status::Ok);
+    assert(rig.memory.storage().getByteWritesInTimeRange(0, rig.time).empty());
     if constexpr (Model::technology == Technology::ROM) {
         assert(initial.read_data == bits(W, 0x1234));
         rig.expect(R::request(Operation::Read, 3 * bytes), Status::Ok);
@@ -126,10 +127,15 @@ void check_model() {
         rig.expect(R::request(Operation::Program, 0, 0xf0f0f0f0), Status::Ok);
         rig.expect(R::request(Operation::Program, 0, 0xffffffff), Status::Ok);
         rig.expect(R::request(Operation::Read, 0), Status::Ok, bits(W, 0xf0f0f0f0));
+        const auto before_zero_mask = rig.time;
         rig.expect(R::request(Operation::Program, 0, 0, 0), Status::Ok);
         rig.expect(R::request(Operation::Read, 0), Status::Ok, bits(W, 0xf0f0f0f0));
+        assert(rig.memory.storage().getByteWritesInTimeRange(before_zero_mask, rig.time).empty());
+        const auto before_byte = rig.time;
         rig.expect(R::request(Operation::Program, 0, 0, 1), Status::Ok);
         rig.expect(R::request(Operation::Read, 0), Status::Ok, bits(W, 0xf0f0f000));
+        assert((rig.memory.storage().getByteWritesInTimeRange(before_byte, rig.time) ==
+                std::map<std::uint32_t, std::uint8_t>{{0, 0}}));
         rig.expect(R::request(Operation::Program, bytes, 0), Status::Ok);
         rig.expect(R::request(Operation::Program, 3 * bytes, 0x55555555), Status::Ok);
         rig.expect(R::request(Operation::EraseBlock, bytes), Status::Alignment);
@@ -150,10 +156,19 @@ void check_model() {
     } else {
         assert(initial.read_data == Bits(W, X));
         rig.expect(R::request(Operation::Write, 3 * bytes, 0x12345678), Status::Ok);
+        std::map<std::uint32_t, std::uint8_t> first_write;
+        for (std::size_t byte = 0; byte < bytes; ++byte)
+            first_write[3 * bytes + byte] = std::uint8_t(0x12345678u >> (byte * 8));
+        assert(rig.memory.storage().getByteWritesInTimeRange(0, rig.time) == first_write);
+        const auto before_zero_mask = rig.time;
         rig.expect(R::request(Operation::Write, 3 * bytes, 0, 0), Status::Ok);
         rig.expect(R::request(Operation::Read, 3 * bytes), Status::Ok, bits(W, 0x12345678));
+        assert(rig.memory.storage().getByteWritesInTimeRange(before_zero_mask, rig.time).empty());
+        const auto before_byte = rig.time;
         rig.expect(R::request(Operation::Write, 3 * bytes, 0xa5, 1), Status::Ok);
         rig.expect(R::request(Operation::Read, 3 * bytes), Status::Ok, bits(W, 0x123456a5));
+        assert((rig.memory.storage().getByteWritesInTimeRange(before_byte, rig.time) ==
+                std::map<std::uint32_t, std::uint8_t>{{3 * bytes, 0xa5}}));
         rig.expect(R::request(Operation::Program, 0), Status::Unsupported);
         rig.expect(R::request(Operation::EraseBlock, 0), Status::Unsupported);
         auto unknown = R::request(Operation::Write, 0, 0xffffffff, mask);
@@ -233,7 +248,7 @@ void check_configuration_and_sparse_storage() {
     assert(rig.memory.storage().allocatedDataBytes() <= config.max_resident_bytes);
     config.depth_words = 0;
     bool rejected = false;
-    try { memory_example::Container<32, SRAMModel> invalid(config); }
+    try { memory_example::CompactEndpoint<32, SRAMModel> invalid(config); }
     catch (const std::invalid_argument&) { rejected = true; }
     assert(rejected);
 }

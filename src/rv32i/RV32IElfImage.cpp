@@ -1,6 +1,6 @@
+#include "rv32i/RV32IFunctionalMemory.hpp"
 #include "rv32i/RV32IElfImage.hpp"
 
-#include "modules/memory/Memory64Kx32.hpp"
 #include <algorithm>
 #include <fstream>
 #include <iterator>
@@ -173,7 +173,7 @@ RV32IElfImage RV32IElfImage::fromBytes(
                << std::numeric_limits<uint32_t>::digits)) {
             reject("PT_LOAD address range overflows RV32");
         }
-        if (memory_end > Memory64Kx32::capacityBytes()) {
+        if (memory_end > rv32i::RV32IFunctionalMemory::DefaultCapacityBytes) {
             reject("PT_LOAD address range exceeds CircuitSim memory");
         }
         if (memory_size == 0) {

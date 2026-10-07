@@ -45,10 +45,10 @@ void keys(const ParameterMap &p, std::initializer_list<const char *> allowed) {
             throw std::invalid_argument("Unknown memory parameter: " + key);
 }
 void Geometry::validate(size_t width, bool expanded) const {
-    if ((width != 8 && width != 16 && width != 32) || !depth_words || depth_words > (1u << 20) ||
+    if ((width != 8 && width != 16 && width != 32) || !depth_words || depth_words > UINT32_MAX / (width / 8) ||
         !words_per_row || words_per_row > 16 || (words_per_row & (words_per_row - 1)) ||
         depth_words % words_per_row)
-        throw std::invalid_argument("Memory requires W=8/16/32, N=1..2^20, power-of-two K<=16 dividing N");
+        throw std::invalid_argument("Memory requires W=8/16/32, 32-bit byte capacity, power-of-two K<=16 dividing N");
     if (expanded && depth_words > 4096 / width)
         throw std::invalid_argument("Expanded memory is limited to 4096 cells");
 }
@@ -58,36 +58,25 @@ bool historyParameter(const ParameterMap &p) {
         throw std::invalid_argument("record_history must be 0 or 1");
     return v != 0;
 }
+MemoryStorage::Limits storageLimits(const ParameterMap &p) {
+    const auto paged = parameter(p, "paged", 1);
+    const auto resident = parameter(p, "max_resident_bytes", 64 * 1024 * 1024);
+    const auto history = parameter(p, "max_history_bytes", 16 * 1024 * 1024);
+    if (paged > 1 || !resident || (!history && historyParameter(p)))
+        throw std::invalid_argument("Invalid memory storage limits");
+    return {paged != 0, resident, history};
+}
+ParameterMap storageParameters(const MemoryStorage::Limits &limits) {
+    return {{"paged", limits.paged ? "1" : "0"},
+            {"max_resident_bytes", std::to_string(limits.max_resident_bytes)},
+            {"max_history_bytes", std::to_string(limits.max_history_bytes)}};
+}
 void Primitive::publish(Simulator &sim, size_t t, const std::string &pin, const Bits &value) {
     auto it = published_.find(pin);
     if (it != published_.end() && it->second == value)
         return;
     published_[pin] = value;
-    switch (value.size()) {
-    case 1:
-        _updateOutputWire(sim, pin, value[0], t);
-        break;
-    case 2:
-        _updateOutputWire<2>(sim, pin, value, t);
-        break;
-    case 3:
-        _updateOutputWire<3>(sim, pin, value, t);
-        break;
-    case 4:
-        _updateOutputWire<4>(sim, pin, value, t);
-        break;
-    case 8:
-        _updateOutputWire<8>(sim, pin, value, t);
-        break;
-    case 16:
-        _updateOutputWire<16>(sim, pin, value, t);
-        break;
-    case 32:
-        _updateOutputWire<32>(sim, pin, value, t);
-        break;
-    default:
-        throw std::logic_error("Unsupported memory pin width");
-    }
+    _updateOutputWireDynamic(sim, pin, value, t);
 }
 void Primitive::wake(Simulator &sim, size_t t) {
     sim.scheduleEvent(std::make_shared<ComponentEvalEvent>(t, shared_from_this()));
@@ -106,6 +95,8 @@ void registerBlock(ComponentCatalog &c, const std::string &id, const std::string
                    bool terminal, ParameterPredicate support) {
     c.registerContract({id, 1, type, schema({}), {}, "four-state", "stable-after-settle", schema});
     for (auto fidelity : {Fidelity::Structural, Fidelity::Behavioral}) {
+        if (fidelity == Fidelity::Structural && !structural)
+            continue;
         if (fidelity == Fidelity::Behavioral && !behavioral)
             continue;
         ImplementationDescriptor i;
@@ -134,6 +125,8 @@ void registerBlock(ComponentCatalog &c, const std::string &id, const std::string
                       {"MemoryDeviceTimingTest"},
                       "four-state",
                       "stable-after-settle"};
+        if (id.starts_with("memory.device."))
+            i.evidence.equivalence_tests.push_back("NativeMemoryDeviceContractTest");
         c.registerImplementation(std::move(i));
     }
 }
@@ -151,6 +144,8 @@ std::shared_ptr<IOComponent> bitAdapter(ComponentBuilder &b, const std::string &
     if (width == 1)
         throw std::invalid_argument("One-bit adapters are unnecessary; connect directly");
     if (split) {
+        if (width == 3)
+            return b.addNewComponent<BitSplitter<3>>(n);
         if (width == 2)
             return b.addNewComponent<BitSplitter<2>>(n);
         if (width == 4)
@@ -162,6 +157,12 @@ std::shared_ptr<IOComponent> bitAdapter(ComponentBuilder &b, const std::string &
         if (width == 32)
             return b.addNewComponent<BitSplitter<32>>(n);
     } else {
+        if (width == 2)
+            return b.addNewComponent<BitJoiner<2>>(n);
+        if (width == 3)
+            return b.addNewComponent<BitJoiner<3>>(n);
+        if (width == 4)
+            return b.addNewComponent<BitJoiner<4>>(n);
         if (width == 8)
             return b.addNewComponent<BitJoiner<8>>(n);
         if (width == 16)
@@ -188,13 +189,21 @@ void MatrixRowDecoder::buildInternals(ComponentBuilder &b) {
     auto a = bitAdapter(b, "ADDRESS_BITS", 32, true);
     w.connect(getInputPin<32>("ROW_ADDR"), a->getInputPin<32>("IN"));
     std::vector<memory_detail::StructuralWiring::PinPtr> positive, negative;
-    for (size_t bit = 0; bit < 32; ++bit) {
+    size_t row_bits = 0;
+    while ((size_t{1} << row_bits) < rows_) ++row_bits;
+    for (size_t bit = 0; bit < row_bits; ++bit) {
         positive.push_back(a->getOutputPin("OUT_" + std::to_string(bit)));
         negative.push_back(w.invert("NOT_" + std::to_string(bit), positive.back()));
     }
+    std::vector<memory_detail::StructuralWiring::PinPtr> high_zero;
+    for (size_t bit = row_bits; bit < 32; ++bit)
+        high_zero.push_back(w.invert("NOT_" + std::to_string(bit),
+                                    a->getOutputPin("OUT_" + std::to_string(bit))));
+    auto valid_high = w.reduce("HIGH_ADDRESS_VALID", std::move(high_zero), true);
+    auto enabled = w.both("VALID_AND_ENABLED", valid_high, getInputPin("ENABLE"));
     for (size_t r = 0; r < rows_; ++r) {
         w.connect(memory_detail::decodeMatch(w, "ROW_" + std::to_string(r), positive, negative,
-                                            r, getInputPin("ENABLE")),
+                                            r, enabled),
                   getOutputPin("WL_" + std::to_string(r)));
     }
     w.finish();
@@ -262,13 +271,17 @@ void MatrixWriteDistributor::buildInternals(ComponentBuilder &b) {
     w.connect(getInputPinDynamic("DATA"), data->getInputPinDynamic("IN"));
     if (mask)
         w.connect(getInputPinDynamic("MASK"), mask->getInputPinDynamic("IN"));
-    for (size_t c = 0; c < width_ * k_; ++c) {
-        auto n = std::to_string(c);
-        auto bit = c % width_;
-        auto m = mask ? mask->getOutputPin("OUT_" + std::to_string(bit / 8)) : getInputPin("MASK");
-        w.connect(w.both("WRITE_" + n, decode->getOutputPin("WL_" + std::to_string(c / width_)), m),
-                  getOutputPin("DRIVE_" + n));
-        w.connect(data->getOutputPin("OUT_" + std::to_string(bit)), getOutputPin("DATA_" + n));
+    for (size_t slot = 0; slot < k_; ++slot) {
+        for (size_t byte = 0; byte < width_ / 8; ++byte) {
+            auto m = mask ? mask->getOutputPin("OUT_" + std::to_string(byte)) : getInputPin("MASK");
+            auto enabled = w.both("WRITE_SLOT_" + std::to_string(slot) + "_BYTE_" + std::to_string(byte),
+                                  decode->getOutputPin("WL_" + std::to_string(slot)), m);
+            for (size_t bit = byte * 8; bit < (byte + 1) * 8; ++bit) {
+                auto n = std::to_string(slot * width_ + bit);
+                w.connect(enabled, getOutputPin("DRIVE_" + n));
+                w.connect(data->getOutputPin("OUT_" + std::to_string(bit)), getOutputPin("DATA_" + n));
+            }
+        }
     }
     w.finish();
 }

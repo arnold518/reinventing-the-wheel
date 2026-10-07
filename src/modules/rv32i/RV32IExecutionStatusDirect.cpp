@@ -1,4 +1,5 @@
 #include "modules/rv32i/RV32IExecutionStatusDirect.hpp"
+#include "basic/LogicValueHelpers.hpp"
 #include "components/selection/ComponentFamily.hpp"
 #include "modules/rv32i/RV32IExecutionControlStatusUnit.hpp"
 
@@ -13,18 +14,9 @@ bool isKnown(LogicValue value) {
     return value == LogicValue::LOW || value == LogicValue::HIGH;
 }
 
-bool allKnown(const std::vector<LogicValue>& values) {
-    for (const auto value : values) {
-        if (!isKnown(value)) {
-            return false;
-        }
-    }
-    return true;
-}
+using circuit::logic_values::allKnown;
 
-bool high(LogicValue value) {
-    return value == LogicValue::HIGH;
-}
+using circuit::logic_values::high;
 
 LogicValue bit(bool value) {
     return value ? LogicValue::HIGH : LogicValue::LOW;

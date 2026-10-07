@@ -2,6 +2,10 @@
 
 Last updated: 2026-07-19
 
+> Historical bring-up report, not the current component inventory. All three
+> RV32I cores now exist, and the legacy memories mentioned below are retired.
+> See [cleanup](rv32i-cleanup.md) and the current site documentation.
+
 ## Status
 
 This report tracks the components built on the path toward the first RV32I CPU runner.

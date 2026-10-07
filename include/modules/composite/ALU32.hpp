@@ -6,6 +6,7 @@
 
 namespace circuit::families {
 extern const ComponentFamily ALU32;
+extern const ComponentFamily ALU32Core;
 }
 
 namespace ALU32Op {
@@ -26,8 +27,10 @@ constexpr uint8_t ZERO = 0x0C;
 
 class ALU32 : public IOComponent {
 public:
-    explicit ALU32(std::string name);
+    explicit ALU32(std::string name,bool full_flags = true);
     static constexpr const char* TypeName = "ALU32";
-    const char* getTypeName() const override { return TypeName; }
+    const char* getTypeName() const override { return full_flags_?TypeName:"ALU32Core"; }
     void buildInternals(ComponentBuilder& builder) override;
+private:
+    bool full_flags_ = true;
 };

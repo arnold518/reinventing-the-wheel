@@ -1,8 +1,8 @@
-# RV32I 4.2 layout and hierarchy review
+# RV32I 4.3 layout and hierarchy review
 
 ## Scope
 
-Review all six 4.2 references, keeping public pins, behavioral implementations,
+Review all six 4.3 references, keeping public pins, behavioral implementations,
 and the lower-level-first design intact. Retain word/bit order where a generic
 graph layout would destroy it. New helper blocks are fixed structural circuits,
 not new behavioral implementations or simulator primitives.
@@ -10,7 +10,7 @@ not new behavioral implementations or simulator primitives.
 | Reference | Decision |
 | --- | --- |
 | Register file | Keep its six-part decoder/storage/two-read-port layout and numeric FF word order |
-| ALU32 and its seven units | Retain the existing functional hierarchy; following the explicit automatic-layout request, regenerate all eight 4.2.2 references and structural descendants using the standard connectivity algorithm, with no custom bit-row/compare/flag placement rules |
+| ALU32 and its seven units | Retain the existing functional hierarchy; following the explicit automatic-layout request, regenerate all eight 4.3.2 references and structural descendants using the standard connectivity algorithm, with no custom bit-row/compare/flag placement rules |
 | Decoder | Replace the flat 541-child view with a five-block input/recognition/control/immediate floorplan; recognition and eighteen control fields remain expandable |
 | Pattern matcher | Keep numeric predicate/AND ordering; no functional changes |
 | Control flow / alignment | Calculate automatic connectivity layouts |
@@ -104,7 +104,7 @@ rejects any ALU-specific custom placement override.
 
 Focused native validation passed: twelve ALU/execute-stage tests, the ALU8
 contract regression, both layout suites, layout migration, rewire geometry,
-and the compiled 4.2 documentation examples (18 tests total). The flag scenario
+and the compiled 4.3 documentation examples (18 tests total). The flag scenario
 now has 42 checkpoints, including the eight new four-state sign-isolation cases.
 
 Native/WASM parity passed for all eight references and the single-cycle execute
@@ -130,7 +130,7 @@ also use child-specific footprints. Parent pin clearance is kept independent.
 The same correction is used by native default/reset placement and the offline
 layout generators; no wire topology, ALU behavior, or routing semantics changed.
 
-All eight 4.2.2 references and their structural descendants were regenerated as
+All eight 4.3.2 references and their structural descendants were regenerated as
 `rv32i-alu-auto-v6`. Previous shipped defaults migrate on reload; edited child
 placements, component proportions and colors are retained. Regression checks
 cover graph/grid placement with mixed pin sizes and child profile overrides,

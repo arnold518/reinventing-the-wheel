@@ -5,7 +5,6 @@
 #include "modules/basic/Mux.hpp"
 #include "modules/composite/Arithmetic8.hpp"
 #include "modules/composite/Comparator8.hpp"
-#include "modules/composite/Shifter8.hpp"
 #include "tests/TestHelpers.hpp"
 #include <array>
 #include <cassert>
@@ -551,67 +550,6 @@ TestRow equalityFourStateRow() {
     };
 }
 
-TestRow comparatorFourStateRow() {
-    const auto right = bus8With(0, LogicValue::HIGH_Z);
-    return {
-        {{"A", bits(0)}, {"B", pinVector(right)}},
-        {
-            {"LT", pinLogic(LogicValue::UNKNOWN)},
-            {"GT", pinLogic(LogicValue::UNKNOWN)},
-            {"EQ", pinLogic(LogicValue::UNKNOWN)},
-        },
-    };
-}
-
-TestRow signedComparatorFourStateRow() {
-    const auto right = bus8With(0, LogicValue::UNKNOWN);
-    return {
-        {{"A", bits(0)}, {"B", pinVector(right)}},
-        {
-            {"SLT", pinLogic(LogicValue::UNKNOWN)},
-            {"SGT", pinLogic(LogicValue::UNKNOWN)},
-            {"SEQ", pinLogic(LogicValue::UNKNOWN)},
-        },
-    };
-}
-
-TestRow shiftLeftFourStateRow() {
-    const auto input = bus8With(7, LogicValue::HIGH_Z, 0x01);
-    auto result = circuit::test::logicBits(8, 0x02);
-    return {
-        {{"A", pinVector(input)}},
-        {
-            {"Result", pinVector(result)},
-            {"Carry", pinLogic(LogicValue::HIGH_Z)},
-        },
-    };
-}
-
-TestRow shiftRightLogicalFourStateRow() {
-    const auto input = bus8With(0, LogicValue::UNKNOWN, 0x80);
-    auto result = circuit::test::logicBits(8, 0x40);
-    return {
-        {{"A", pinVector(input)}},
-        {
-            {"Result", pinVector(result)},
-            {"Carry", pinLogic(LogicValue::UNKNOWN)},
-        },
-    };
-}
-
-TestRow shiftRightArithmeticFourStateRow() {
-    const auto input = bus8With(7, LogicValue::HIGH_Z, 0x01);
-    auto result = circuit::test::logicBits(8, 0);
-    result[6] = LogicValue::HIGH_Z;
-    result[7] = LogicValue::HIGH_Z;
-    return {
-        {{"A", pinVector(input)}},
-        {
-            {"Result", pinVector(result)},
-            {"Carry", bit(true)},
-        },
-    };
-}
 }
 
 std::vector<TestRow> halfAdderRows();
@@ -691,22 +629,6 @@ std::vector<TestRow> fullAdderRows() {
     return rows;
 }
 
-AND8Test::AND8Test()
-    : TruthTableComponentTest<AND8>(
-          "AND8Test",
-          "AND8_ROOT",
-          binaryLogic8Rows(
-              LogicOperation::And,
-              {{0xF0, 0x3C}, {0xFF, 0x00}, {0xA5, 0x5A}, {0x81, 0xC3}})) {}
-
-OR8Test::OR8Test()
-    : TruthTableComponentTest<OR8>(
-          "OR8Test",
-          "OR8_ROOT",
-          binaryLogic8Rows(
-              LogicOperation::Or,
-              {{0xF0, 0x0F}, {0x00, 0x00}, {0xA5, 0x5A}, {0x81, 0x42}})) {}
-
 XOR8Test::XOR8Test()
     : TruthTableComponentTest<XOR8>(
           "XOR8Test",
@@ -719,22 +641,6 @@ NOT8Test::NOT8Test()
     : TruthTableComponentTest<NOT8>(
           "NOT8Test", "NOT8_ROOT", not8Rows()) {}
 
-NAND8Test::NAND8Test()
-    : TruthTableComponentTest<NAND8>(
-          "NAND8Test",
-          "NAND8_ROOT",
-          binaryLogic8Rows(
-              LogicOperation::Nand,
-              {{0xFF, 0x0F}, {0xFF, 0xFF}, {0x00, 0xFF}, {0x81, 0xC3}})) {}
-
-NOR8Test::NOR8Test()
-    : TruthTableComponentTest<NOR8>(
-          "NOR8Test",
-          "NOR8_ROOT",
-          binaryLogic8Rows(
-              LogicOperation::Nor,
-              {{0xF0, 0x0F}, {0x00, 0x00}, {0xA5, 0x5A}, {0x81, 0x42}})) {}
-
 Mux2to1Test::Mux2to1Test()
     : TruthTableComponentTest<Mux2to1>("Mux2to1Test", "MUX2TO1_ROOT", oneBitMuxRows(2)) {}
 
@@ -744,23 +650,14 @@ Mux4to1Test::Mux4to1Test()
 Mux8to1Test::Mux8to1Test()
     : TruthTableComponentTest<Mux8to1>("Mux8to1Test", "MUX8TO1_ROOT", oneBitMuxRows(8)) {}
 
-Mux16to1Test::Mux16to1Test()
-    : TruthTableComponentTest<Mux16to1>("Mux16to1Test", "MUX16TO1_ROOT", oneBitMuxRows(16)) {}
-
 Mux32to1Test::Mux32to1Test()
     : TruthTableComponentTest<Mux32to1>("Mux32to1Test", "MUX32TO1_ROOT", oneBitMuxRows(32)) {}
-
-Mux2to1_8bitTest::Mux2to1_8bitTest()
-    : TruthTableComponentTest<Mux2to1_8bit>("Mux2to1_8bitTest", "MUX2TO1_8BIT_ROOT", busMuxRows(2)) {}
 
 Mux2to1_4bitTest::Mux2to1_4bitTest()
     : TruthTableComponentTest<Mux2to1_4bit>("Mux2to1_4bitTest", "MUX2TO1_4BIT_ROOT", busMux4Rows(2)) {}
 
 Mux2to1_32bitTest::Mux2to1_32bitTest()
     : TruthTableComponentTest<Mux2to1_32bit>("Mux2to1_32bitTest", "MUX2TO1_32BIT_ROOT", busMux32Rows(2)) {}
-
-Mux4to1_8bitTest::Mux4to1_8bitTest()
-    : TruthTableComponentTest<Mux4to1_8bit>("Mux4to1_8bitTest", "MUX4TO1_8BIT_ROOT", busMuxRows(4)) {}
 
 Mux4to1_32bitTest::Mux4to1_32bitTest()
     : TruthTableComponentTest<Mux4to1_32bit>("Mux4to1_32bitTest", "MUX4TO1_32BIT_ROOT", busMux32Rows(4)) {}
@@ -771,14 +668,8 @@ Mux8to1_8bitTest::Mux8to1_8bitTest()
 Mux8to1_32bitTest::Mux8to1_32bitTest()
     : TruthTableComponentTest<Mux8to1_32bit>("Mux8to1_32bitTest", "MUX8TO1_32BIT_ROOT", busMux32Rows(8)) {}
 
-Mux16to1_8bitTest::Mux16to1_8bitTest()
-    : TruthTableComponentTest<Mux16to1_8bit>("Mux16to1_8bitTest", "MUX16TO1_8BIT_ROOT", busMuxRows(16)) {}
-
 Mux32to1_32bitTest::Mux32to1_32bitTest()
     : TruthTableComponentTest<Mux32to1_32bit>("Mux32to1_32bitTest", "MUX32TO1_32BIT_ROOT", busMux32Rows(32)) {}
-
-Decoder2to4Test::Decoder2to4Test()
-    : TruthTableComponentTest<Decoder2to4>("Decoder2to4Test", "DECODER2TO4_ROOT", decoderRows(4)) {}
 
 Decoder5to32Test::Decoder5to32Test()
     : TruthTableComponentTest<Decoder5to32>("Decoder5to32Test", "DECODER5TO32_ROOT", decoderRows(32)) {}
@@ -848,63 +739,6 @@ EqualityChecker8Test::EqualityChecker8Test()
         {{{"A", bits(0xFF)}, {"B", bits(0x00)}}, {{"EQ", bit(false)}}},
         {{{"A", bits(0x80)}, {"B", bits(0x00)}}, {{"EQ", bit(false)}}},
         equalityFourStateRow(),
-    }) {}
-
-Comparator8Test::Comparator8Test()
-    : TruthTableComponentTest<Comparator8>("Comparator8Test", "COMPARATOR8_ROOT", {
-        {{{"A", bits(0x01)}, {"B", bits(0x02)}}, {{"LT", bit(true)}, {"GT", bit(false)}, {"EQ", bit(false)}}},
-        {{{"A", bits(0x42)}, {"B", bits(0x42)}}, {{"LT", bit(false)}, {"GT", bit(false)}, {"EQ", bit(true)}}},
-        {{{"A", bits(0xFF)}, {"B", bits(0x02)}}, {{"LT", bit(false)}, {"GT", bit(true)}, {"EQ", bit(false)}}},
-        {{{"A", bits(0x00)}, {"B", bits(0xFF)}}, {{"LT", bit(true)}, {"GT", bit(false)}, {"EQ", bit(false)}}},
-        {{{"A", bits(0xFF)}, {"B", bits(0x00)}}, {{"LT", bit(false)}, {"GT", bit(true)}, {"EQ", bit(false)}}},
-        {{{"A", bits(0x00)}, {"B", bits(0x00)}}, {{"LT", bit(false)}, {"GT", bit(false)}, {"EQ", bit(true)}}},
-        {{{"A", bits(0x80)}, {"B", bits(0x7F)}}, {{"LT", bit(false)}, {"GT", bit(true)}, {"EQ", bit(false)}}},
-        comparatorFourStateRow(),
-    }) {}
-
-SignedComparator8Test::SignedComparator8Test()
-    : TruthTableComponentTest<SignedComparator8>("SignedComparator8Test", "SIGNED_COMPARATOR8_ROOT", {
-        {{{"A", bits(0xFF)}, {"B", bits(0x01)}}, {{"SLT", bit(true)}, {"SGT", bit(false)}, {"SEQ", bit(false)}}},
-        {{{"A", bits(0x7F)}, {"B", bits(0x80)}}, {{"SLT", bit(false)}, {"SGT", bit(true)}, {"SEQ", bit(false)}}},
-        {{{"A", bits(0x80)}, {"B", bits(0x80)}}, {{"SLT", bit(false)}, {"SGT", bit(false)}, {"SEQ", bit(true)}}},
-        {{{"A", bits(0x80)}, {"B", bits(0xFF)}}, {{"SLT", bit(true)}, {"SGT", bit(false)}, {"SEQ", bit(false)}}},
-        {{{"A", bits(0xFF)}, {"B", bits(0x80)}}, {{"SLT", bit(false)}, {"SGT", bit(true)}, {"SEQ", bit(false)}}},
-        {{{"A", bits(0x00)}, {"B", bits(0xFF)}}, {{"SLT", bit(false)}, {"SGT", bit(true)}, {"SEQ", bit(false)}}},
-        {{{"A", bits(0x7F)}, {"B", bits(0x01)}}, {{"SLT", bit(false)}, {"SGT", bit(true)}, {"SEQ", bit(false)}}},
-        {{{"A", bits(0x00)}, {"B", bits(0x00)}}, {{"SLT", bit(false)}, {"SGT", bit(false)}, {"SEQ", bit(true)}}},
-        signedComparatorFourStateRow(),
-    }) {}
-
-ShiftLeftLogical8Test::ShiftLeftLogical8Test()
-    : TruthTableComponentTest<ShiftLeftLogical8>("ShiftLeftLogical8Test", "SHIFT_LEFT_LOGICAL8_ROOT", {
-        {{{"A", bits(0x00)}}, {{"Result", bits(0x00)}, {"Carry", bit(false)}}},
-        {{{"A", bits(0x01)}}, {{"Result", bits(0x02)}, {"Carry", bit(false)}}},
-        {{{"A", bits(0x7F)}}, {{"Result", bits(0xFE)}, {"Carry", bit(false)}}},
-        {{{"A", bits(0x80)}}, {{"Result", bits(0x00)}, {"Carry", bit(true)}}},
-        {{{"A", bits(0xFF)}}, {{"Result", bits(0xFE)}, {"Carry", bit(true)}}},
-        shiftLeftFourStateRow(),
-    }) {}
-
-ShiftRightLogical8Test::ShiftRightLogical8Test()
-    : TruthTableComponentTest<ShiftRightLogical8>("ShiftRightLogical8Test", "SHIFT_RIGHT_LOGICAL8_ROOT", {
-        {{{"A", bits(0x00)}}, {{"Result", bits(0x00)}, {"Carry", bit(false)}}},
-        {{{"A", bits(0x81)}}, {{"Result", bits(0x40)}, {"Carry", bit(true)}}},
-        {{{"A", bits(0x02)}}, {{"Result", bits(0x01)}, {"Carry", bit(false)}}},
-        {{{"A", bits(0x80)}}, {{"Result", bits(0x40)}, {"Carry", bit(false)}}},
-        {{{"A", bits(0xFF)}}, {{"Result", bits(0x7F)}, {"Carry", bit(true)}}},
-        shiftRightLogicalFourStateRow(),
-    }) {}
-
-ShiftRightArithmetic8Test::ShiftRightArithmetic8Test()
-    : TruthTableComponentTest<ShiftRightArithmetic8>("ShiftRightArithmetic8Test", "SHIFT_RIGHT_ARITHMETIC8_ROOT", {
-        {{{"A", bits(0x00)}}, {{"Result", bits(0x00)}, {"Carry", bit(false)}}},
-        {{{"A", bits(0x81)}}, {{"Result", bits(0xC0)}, {"Carry", bit(true)}}},
-        {{{"A", bits(0x80)}}, {{"Result", bits(0xC0)}, {"Carry", bit(false)}}},
-        {{{"A", bits(0x02)}}, {{"Result", bits(0x01)}, {"Carry", bit(false)}}},
-        {{{"A", bits(0x01)}}, {{"Result", bits(0x00)}, {"Carry", bit(true)}}},
-        {{{"A", bits(0x7F)}}, {{"Result", bits(0x3F)}, {"Carry", bit(true)}}},
-        {{{"A", bits(0xFF)}}, {{"Result", bits(0xFF)}, {"Carry", bit(true)}}},
-        shiftRightArithmeticFourStateRow(),
     }) {}
 
 Adder8Test::Adder8Test()

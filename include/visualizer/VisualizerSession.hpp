@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstddef>
+#include <cstdint>
 #include <map>
 #include <memory>
 #include <string>
@@ -14,6 +15,7 @@ class Simulator;
 class WireBase;
 
 namespace circuit::visualizer {
+class MemoryInspector;
 
 // Portable visualizer-facing facade shared by the native parity tests and the
 // WebAssembly binding.  It intentionally returns the same JSON contracts as
@@ -36,7 +38,8 @@ public:
     std::string topologyResponseJson();
     std::string topologySliceJson(const std::vector<std::string>& owner_ids) const;
     std::string stateJson(size_t index);
-    std::string componentStateJson(size_t index, const std::string& component_id);
+    std::string componentStateJson(size_t index, const std::string& component_id,
+                                  int64_t address = -1, size_t count = 64);
     // Verified settled scenario rows, not inferred expectations from pin history.
     std::string exampleRowsJson() const;
 
@@ -76,6 +79,7 @@ private:
     std::vector<PinRecord> pins_;
     std::vector<WireRecord> wires_;
     std::map<std::string, size_t> component_index_by_id_;
+    std::map<std::string, std::unique_ptr<MemoryInspector>> memory_inspectors_;
     std::map<std::string, std::vector<size_t>> pin_indices_by_component_;
     std::map<std::string, std::vector<size_t>> wire_indices_by_owner_;
     std::map<std::tuple<std::string, std::string, std::string>, size_t>

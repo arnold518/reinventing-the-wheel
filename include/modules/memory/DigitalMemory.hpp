@@ -4,6 +4,7 @@
 #include "components/capabilities/MemoryStateView.hpp"
 #include "components/selection/ComponentCatalog.hpp"
 #include "modules/memory/MemoryStructuralBuilder.hpp"
+#include "modules/memory/MemoryDeviceStorage.hpp"
 #include <optional>
 
 namespace circuit::memory_device {
@@ -18,10 +19,13 @@ LogicValue stored(LogicValue value);
 size_t parameter(const ParameterMap &params, const std::string &key, size_t fallback);
 void keys(const ParameterMap &params, std::initializer_list<const char *> allowed);
 bool historyParameter(const ParameterMap &params);
+MemoryStorage::Limits storageLimits(const ParameterMap &params);
+ParameterMap storageParameters(const MemoryStorage::Limits &limits);
 
 struct Geometry {
     size_t depth_words = 4, words_per_row = 2;
     bool record_history = true;
+    MemoryStorage::Limits storage_limits{true, 64 * 1024 * 1024, 16 * 1024 * 1024};
     size_t rows() const { return depth_words / words_per_row; }
     size_t columns(size_t width) const { return words_per_row * width; }
     void validate(size_t width, bool expanded = false) const;

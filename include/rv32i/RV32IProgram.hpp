@@ -4,8 +4,7 @@
 #include <cstdint>
 #include <vector>
 
-class Memory64Kx32;
-class BehavioralMemoryContainer;
+class MemoryStateView;
 
 namespace rv32i {
 
@@ -23,8 +22,7 @@ public:
 
     uint8_t byteAt(size_t index) const;
     uint32_t wordAt(size_t word_index) const;
-    void loadInto(Memory64Kx32& memory, uint32_t base_address = 0) const;
-    void loadInto(BehavioralMemoryContainer& memory, uint32_t base_address = 0) const;
+    void loadInto(MemoryStateView& memory, uint32_t base_address = 0) const;
 
 private:
     std::vector<uint8_t> program_bytes;

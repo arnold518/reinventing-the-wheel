@@ -1,7 +1,7 @@
 #include "rv32i/RV32IInstructionOracle.hpp"
 
 #include "modules/composite/ALU32.hpp"
-#include "modules/memory/Memory64Kx32.hpp"
+#include "modules/memory/MemoryStorage.hpp"
 #include "rv32i/RV32IDecoder.hpp"
 #include <cstdint>
 
@@ -181,18 +181,18 @@ uint32_t writebackValue(const RV32IControlSignals& control,
     return 0;
 }
 
-class NonMutatingMemory64Kx32 {
+class NonMutatingMemoryStorage {
 public:
-    explicit NonMutatingMemory64Kx32(Memory64Kx32& memory)
+    explicit NonMutatingMemoryStorage(MemoryStorage& memory)
         : memory_(memory) {}
 
     bool canAccess(uint32_t address, size_t count) const {
         return memory_.canAccess(address, count);
     }
 
-    uint8_t readU8(uint32_t address) const { return memory_.readU8(address); }
-    uint16_t readU16(uint32_t address) const { return memory_.readU16(address); }
-    uint32_t readU32(uint32_t address) const { return memory_.readU32(address); }
+    uint8_t readU8(uint32_t address) const { return uint8_t(read(address, 1)); }
+    uint16_t readU16(uint32_t address) const { return uint16_t(read(address, 2)); }
+    uint32_t readU32(uint32_t address) const { return read(address, 4); }
 
     void writeU8(uint32_t address, uint8_t value) {
         (void)address;
@@ -210,7 +210,13 @@ public:
     }
 
 private:
-    Memory64Kx32& memory_;
+    MemoryStorage& memory_;
+    uint32_t read(uint32_t address, size_t bytes) const {
+        const auto data = memory_.readBytes(address, bytes);
+        uint32_t value = 0;
+        for (size_t i = 0; i < bytes; ++i) value |= uint32_t(data[i]) << (8 * i);
+        return value;
+    }
 };
 
 template<typename InstructionMemoryT, typename DataMemoryT>
@@ -373,11 +379,12 @@ RV32IInstructionTrace RV32IInstructionOracle::step(RV32IState& state,
 
 RV32IInstructionTrace RV32IInstructionOracle::stepWithoutDataMemoryWrite(
     RV32IState& state,
-    Memory64Kx32& instruction_memory,
-    Memory64Kx32& data_memory
+    MemoryStorage& instruction_memory,
+    MemoryStorage& data_memory
 ) {
-    NonMutatingMemory64Kx32 non_mutating_data_memory(data_memory);
-    return stepImpl(state, instruction_memory, non_mutating_data_memory);
+    NonMutatingMemoryStorage non_mutating_data_memory(data_memory);
+    NonMutatingMemoryStorage instructions(instruction_memory);
+    return stepImpl(state, instructions, non_mutating_data_memory);
 }
 
 RV32IInstructionRunResult RV32IInstructionOracle::run(RV32IState& state, RV32IFunctionalMemory& memory, size_t max_instructions) {

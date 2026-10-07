@@ -11,21 +11,19 @@ namespace {
 // Fixed, combinational structural helpers. No new storage or behavioral model.
 class RV32IMemoryAddress : public IOComponent {
 public:
-    explicit RV32IMemoryAddress(std::string name)
-        : IOComponent(std::move(name), [](IOComponent* s) {
+    explicit RV32IMemoryAddress(std::string name,bool with_word_address = true)
+        : IOComponent(std::move(name), [with_word_address](IOComponent* s) {
             s->addPin<32>("ADDR", PinType::INPUT);
             s->addPin<2>("SIZE", PinType::INPUT);
-            s->addPin<32>("WORD_ADDR", PinType::OUTPUT);
+            if (with_word_address) s->addPin<32>("WORD_ADDR", PinType::OUTPUT);
             s->addPin<2>("OFFSET", PinType::OUTPUT);
             for (auto p : {"BYTE", "HALF", "WORD"}) s->addPin(p, PinType::OUTPUT);
-        }) {}
-    const char* getTypeName() const override { return "RV32IMemoryAddress"; }
+        }),with_word_address_(with_word_address) {}
+    const char* getTypeName() const override { return with_word_address_?"RV32IMemoryAddress":"RV32IMemoryAddressDataOnly"; }
     void buildInternals(ComponentBuilder& b) override {
         StructuralWiring w(b);
-        auto zero = w.constant("ZERO", false);
         auto address = b.addNewComponent<BitSplitter<32>>("ADDRESS_BITS");
         auto size = b.addNewComponent<BitSplitter<2>>("SIZE_BITS");
-        auto result = b.addNewComponent<BitJoiner<32>>("WORD_ADDRESS");
         auto offset = b.addNewComponent<BitJoiner<2>>("BYTE_OFFSET");
         w.connect(getInputPin<32>("ADDR"), address->getInputPin<32>("IN"));
         w.connect(getInputPin<2>("SIZE"), size->getInputPin<2>("IN"));
@@ -37,27 +35,33 @@ public:
         auto half = w.both("HALF_SIZE", s0, ns1);
         auto ns0 = w.invert("NOT_SIZE_0", s0);
         auto word = w.both("WORD_SIZE", s1, ns0);
-        auto not_byte = w.invert("NOT_BYTE", byte);
-        auto bad_low = w.both("BAD_LOW_BIT", a0, not_byte);
-        auto bad_word_high = w.both("WORD_HIGH_BIT", a1, word);
-        auto reserved_size = w.both("RESERVED_SIZE", s0, s1);
-        auto bad_high = w.either("BAD_HIGH_BIT", bad_word_high, reserved_size);
-        auto bad = w.either("BAD_ALIGNMENT", bad_low, bad_high);
-        // Preserve an invalid address for endpoint rejection; never round an
-        // illegal CPU access into a legal aligned write.
-        w.connect(bad, result->getInputPin("IN_0"));
-        w.connect(zero, result->getInputPin("IN_1"));
-        for (size_t i = 2; i < 32; ++i)
-            w.connect(address->getOutputPin("OUT_" + std::to_string(i)), result->getInputPin("IN_" + std::to_string(i)));
+        if (with_word_address_) {
+            auto zero = w.constant("ZERO", false);
+            auto result = b.addNewComponent<BitJoiner<32>>("WORD_ADDRESS");
+            auto not_byte = w.invert("NOT_BYTE", byte);
+            auto bad_low = w.both("BAD_LOW_BIT", a0, not_byte);
+            auto bad_word_high = w.both("WORD_HIGH_BIT", a1, word);
+            auto reserved_size = w.both("RESERVED_SIZE", s0, s1);
+            auto bad_high = w.either("BAD_HIGH_BIT", bad_word_high, reserved_size);
+            auto bad = w.either("BAD_ALIGNMENT", bad_low, bad_high);
+            // Keep an invalid address for endpoint rejection rather than
+            // rounding an illegal access into a legal aligned write.
+            w.connect(bad, result->getInputPin("IN_0"));
+            w.connect(zero, result->getInputPin("IN_1"));
+            for (size_t i = 2; i < 32; ++i)
+                w.connect(address->getOutputPin("OUT_" + std::to_string(i)), result->getInputPin("IN_" + std::to_string(i)));
+            w.connect(result->getOutputPin<32>("OUT"), getOutputPin<32>("WORD_ADDR"));
+        }
         w.connect(a0, offset->getInputPin("IN_0"));
         w.connect(a1, offset->getInputPin("IN_1"));
-        w.connect(result->getOutputPin<32>("OUT"), getOutputPin<32>("WORD_ADDR"));
         w.connect(offset->getOutputPin<2>("OUT"), getOutputPin<2>("OFFSET"));
         w.connect(byte, getOutputPin("BYTE"));
         w.connect(half, getOutputPin("HALF"));
         w.connect(word, getOutputPin("WORD"));
         w.finish();
     }
+private:
+    bool with_word_address_;
 };
 
 template<size_t Byte>
@@ -79,10 +83,14 @@ public:
         auto bits = b.addNewComponent<BitSplitter<8>>("DATA");
         auto result = b.addNewComponent<BitJoiner<8>>("RESULT");
         w.connect(getInputPin<8>("DATA"), bits->getInputPin<8>("IN"));
+        auto byte_fill = Byte == 0 ? nullptr :
+            w.both("BYTE_FILL", getInputPin("BYTE"), getInputPin("BYTE_SIGN"));
+        auto half_fill = Byte < 2 ? nullptr :
+            w.both("HALF_FILL", getInputPin("HALF"), getInputPin("HALF_SIGN"));
         for (size_t i = 0; i < 8; ++i) {
             auto bit = bits->getOutputPin("OUT_" + std::to_string(i));
-            auto byte = w.both("BYTE_" + std::to_string(i), getInputPin("BYTE"), Byte == 0 ? bit : getInputPin("BYTE_SIGN"));
-            auto half = w.both("HALF_" + std::to_string(i), getInputPin("HALF"), Byte < 2 ? bit : getInputPin("HALF_SIGN"));
+            auto byte = Byte == 0 ? w.both("BYTE_" + std::to_string(i), getInputPin("BYTE"), bit) : byte_fill;
+            auto half = Byte < 2 ? w.both("HALF_" + std::to_string(i), getInputPin("HALF"), bit) : half_fill;
             auto word = w.both("WORD_" + std::to_string(i), getInputPin("WORD"), bit);
             auto value = w.reduce("RESULT_" + std::to_string(i), {byte, half, word}, false);
             w.connect(value, result->getInputPin("IN_" + std::to_string(i)));
@@ -157,10 +165,12 @@ public:
         w.connect(getInputPin<2>("OFFSET"), offset->getInputPin<2>("IN"));
         auto a0 = offset->getOutputPin("OUT_0"), a1 = offset->getOutputPin("OUT_1");
         auto na0 = w.invert("NOT_A0", a0), na1 = w.invert("NOT_A1", a1);
+        auto low_half = w.both("LOW_HALF", getInputPin("HALF"), na1);
+        auto high_half = w.both("HIGH_HALF", getInputPin("HALF"), a1);
         for (size_t i = 0; i < 4; ++i) {
             auto selected = w.both("SELECT_LANE_" + std::to_string(i), i & 1 ? a0 : na0, i & 2 ? a1 : na1);
             auto byte = w.both("BYTE_MASK_" + std::to_string(i), getInputPin("BYTE"), selected);
-            auto half = w.both("HALF_MASK_" + std::to_string(i), getInputPin("HALF"), i < 2 ? na1 : a1);
+            auto half = i < 2 ? low_half : high_half;
             auto subword = w.either("SUBWORD_MASK_" + std::to_string(i), byte, half);
             auto value = w.either("MASK_" + std::to_string(i), getInputPin("WORD"), subword);
             w.connect(value, mask->getInputPin("IN_" + std::to_string(i)));
@@ -171,25 +181,27 @@ public:
 };
 }
 
-RV32IMemoryLanes::RV32IMemoryLanes(std::string name)
-    : IOComponent(std::move(name), [](IOComponent* s) {
+RV32IMemoryLanes::RV32IMemoryLanes(std::string name,bool with_word_address)
+    : IOComponent(std::move(name), [with_word_address](IOComponent* s) {
         for (auto p : {"ADDR", "WRITE_DATA", "WORD_DATA"}) s->addPin<32>(p, PinType::INPUT);
         s->addPin<2>("SIZE", PinType::INPUT);
         s->addPin("SIGN_EXTEND", PinType::INPUT);
-        for (auto p : {"WORD_ADDR", "WORD_WRITE_DATA", "READ_DATA"}) s->addPin<32>(p, PinType::OUTPUT);
+        if (with_word_address) s->addPin<32>("WORD_ADDR",PinType::OUTPUT);
+        for (auto p : {"WORD_WRITE_DATA", "READ_DATA"}) s->addPin<32>(p, PinType::OUTPUT);
         s->addPin<4>("WRITE_MASK", PinType::OUTPUT);
-    }) {}
+    }),with_word_address_(with_word_address) {}
 
 void RV32IMemoryLanes::buildInternals(ComponentBuilder& b) {
     StructuralWiring w(b);
-    auto address = b.addNewComponent<RV32IMemoryAddress>("ADDRESS");
+    auto address = b.addNewComponent<RV32IMemoryAddress>("ADDRESS",with_word_address_);
     auto store = b.addNewComponent<Mux4to1_32bit>("STORE_LANES");
     auto load = b.addNewComponent<Mux4to1_32bit>("LOAD_LANES");
     auto extend = b.addNewComponent<RV32ILoadExtender>("LOAD_EXTEND");
     auto mask = b.addNewComponent<RV32IByteWriteMask>("WRITE_MASK");
     w.connect(getInputPin<32>("ADDR"), address->getInputPin<32>("ADDR"));
     w.connect(getInputPin<2>("SIZE"), address->getInputPin<2>("SIZE"));
-    w.connect(address->getOutputPin<32>("WORD_ADDR"), getOutputPin<32>("WORD_ADDR"));
+    if (with_word_address_)
+        w.connect(address->getOutputPin<32>("WORD_ADDR"), getOutputPin<32>("WORD_ADDR"));
     for (auto child : {std::static_pointer_cast<IOComponent>(store), std::static_pointer_cast<IOComponent>(load)})
         w.connect(address->getOutputPin<2>("OFFSET"), child->getInputPin<2>("SEL"));
     w.connect(address->getOutputPin<2>("OFFSET"), mask->getInputPin<2>("OFFSET"));

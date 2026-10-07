@@ -39,6 +39,11 @@ public:
 void processWireUpdateEvent(size_t time, const std::shared_ptr<WireBase>& wire,
                             const std::vector<LogicValue>& values, Simulator& sim);
 
+// Width-erased WireUpdateEvent factory. Returns nullptr for a missing wire or
+// a width without a Wire<WIDTH> instantiation.
+std::shared_ptr<Event> makeWireUpdateEvent(size_t time, const std::shared_ptr<WireBase>& wire,
+                                           const std::vector<LogicValue>& values);
+
 class ComponentEvalEvent : public Event {
 public:
     std::shared_ptr<Component> component_to_evaluate;

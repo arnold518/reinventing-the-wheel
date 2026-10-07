@@ -78,15 +78,17 @@ private:
     std::vector<std::array<LogicValue, 3>> published_; std::string type_;
 };
 
-template<size_t W> class DeviceDirect : public BasicComponent, public MemoryStateView {
+template<size_t W> class DeviceDirect : public BasicComponent, public MemoryDeviceStorage {
 public:
     DeviceDirect(std::string name, SRAMDeviceConfig c)
-        : BasicComponent(std::move(name), 1, defineSRAMPins<W>), config_(checked(c)),
-          storage_(config_.depth_words, W), sequence_(W) {}
-    const char* getTypeName() const override { return SRAM<W>::TypeName.c_str(); }
+        : BasicComponent(std::move(name), 1, defineSRAMPins<W>),
+          MemoryDeviceStorage(c.depth_words, W, LogicValue::UNKNOWN, c.record_history, c.storage_limits),
+          config_(checked(c)), sequence_(W) {}
+    const char* getTypeName() const override { return memoryDisplayType(SRAM<W>::TypeName.c_str()); }
     const MemoryStorage& memoryStorage() const override { return storage_; }
-    void loadMemoryBytes(uint32_t address, const std::vector<uint8_t>& bytes) override { storage_.loadBytes(address, bytes); }
+    void loadMemoryBytes(uint32_t address, const std::vector<uint8_t>& bytes) override { initializeMemoryBytes(address, bytes); }
     void evaluate(size_t t, Simulator& sim) override {
+        started_ = true;
         const auto previous = sequence_.phase;
         if (auto due = sequence_.update(*this, t, config_.phase_ticks)) sim.scheduleEvent(std::make_shared<ComponentEvalEvent>(*due, this->shared_from_this()));
         const auto word = number(sequence_.address);
@@ -104,6 +106,6 @@ public:
     }
 private:
     static SRAMDeviceConfig checked(SRAMDeviceConfig c) { c.validate(W); return c; }
-    SRAMDeviceConfig config_; MemoryStorage storage_; AccessSequence sequence_;
+    SRAMDeviceConfig config_; AccessSequence sequence_;
 };
 }

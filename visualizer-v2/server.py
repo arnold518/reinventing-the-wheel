@@ -32,6 +32,7 @@ import sram_layout
 import memory_device_layout
 import rv32i_layout
 import register_file_layout
+from scenario_catalog import CATALOG as SCENARIO_CATALOG, aliases_for, default_alias, scenario_options
 
 
 ROOT_DIR = Path(__file__).resolve().parents[1]
@@ -80,6 +81,17 @@ LAYERED_VERTICAL_FILL_RATIO = 0.9
 LAYERED_DENSE_ROW_WIDTH_CAP = 0.1
 MIN_RELATIVE_CHILD_WIDTH = 1e-6
 COMPONENT_LAYOUT_DEFAULTS = {
+    # Dense recognition-bus extraction needs room for source-bit labels.
+    # Small edge markers retain forty distinct output pins without forcing
+    # the adapter into a nearly five-times-taller-than-wide strip.
+    "Rewire<in=2,out=40>": {
+        "aspect_ratio": 2.2,
+        "min_aspect_ratio": .1,
+        "aspect_ratio_floor": .08,
+        "title_bar_ratio": .085,
+        "pin_size_ratio": .034,
+        "boundary_area_ratio": .025,
+    },
     # Program scenarios use a fixed, shallow testbench container around the
     # selectable CPU and memory implementations.  Keep the outside wide like
     # a system block diagram for both CPU families.
@@ -112,90 +124,8 @@ NON_VISUALIZABLE_TESTS = {
     "RewireValidationTest",
 }
 PREFERRED_SCENARIO_ALIASES = {
-    "FullAdderTest": ["full-adder", "fulladder"],
-    "HalfAdderTest": ["half-adder", "halfadder"],
-    "FullCircuitTest": ["full-circuit", "fullcircuit"],
-    "SRLatchTest": ["sr-latch", "srlatch"],
-    "GatedDLatchTest": ["gated-d-latch", "gateddlatch", "d-latch"],
-    "DFlipFlopTest": ["dff", "d-flip-flop"],
-    "ClockGeneratorTest": ["clock"],
-    "FlipFlopCellTest": ["flip-flop-cell", "flipflopcell"],
-    "Memory64Kx32Test": ["memory64kx32", "memory-64kx32"],
-    "Register32Test": ["register32", "register-32"],
-    "RegisterFile4x32Test": ["register-file4x32", "register-file-4x32", "registerfile4x32", "rf4x32"],
-    "RegisterFile32x32Test": ["rv32i-register-file", "register-file32x32", "register-file-32x32", "registerfile32x32", "rf32x32"],
-    "Memory4x32Test": ["memory4x32", "memory-4x32", "mem4x32"],
-    "Memory32x32Test": ["memory32x32", "memory-32x32", "mem32x32"],
-    "ConstantValue1Test": ["constant1"],
-    "ConstantValue2Test": ["constant2"],
-    "ConstantValue4Test": ["constant4"],
-    "ConstantValue32Test": ["constant32"],
-    "Adder8Test": ["adder8", "8-bit-adder"],
-    "ZeroDetect8Test": ["zero-detect8"],
-    "ALU8Test": ["alu8"],
-    "AddSub8Test": ["addsub8"],
-    "ArithmeticUnit8Test": ["arithmetic8"],
-    "LogicUnit8Test": ["logic8"],
-    "BarrelShifter8Test": ["barrel-shifter8"],
-    "CompareSelect8Test": ["compare-select8"],
-    "ALU8FlagUnitTest": ["alu8-flags"],
-    "ALU8ControlDecoderTest": ["alu8-control"],
-    "ALU8ResultSelectorTest": ["alu8-result-selector"],
-    "ALU32ControlDecoderTest": ["alu32-control"],
-    "RV32IMemoryLanesTest": ["rv32i-memory-lanes"],
-    "RV32IMemoryRequestTest": ["rv32i-memory-request"],
-    "RV32IMemoryAlignmentUnitTest": ["rv32i-memory-alignment"],
-    "RV32IBitPatternMatcherTest": ["rv32i-pattern-matcher"],
-    "ALU32CompareUnitTest": ["alu32-compare"],
-    "ALU32ResultSelectorTest": ["alu32-result-selector"],
-    "ALU32FlagUnitTest": ["alu32-flags"],
-    "Mux32to1Test": ["mux32to1"],
-    "Mux4to1_32bitTest": ["mux4to1-32bit"],
-    "Mux32to1_32bitTest": ["mux32to1-32bit"],
-    "Decoder2to4Test": ["decoder2to4", "decoder-2to4", "decoder-2-4"],
-    "Decoder5to32Test": ["decoder5to32", "decoder-5to32", "decoder-5-32"],
-    "RewireTest": ["rewire"],
-    "Adder32Test": ["adder32"],
-    "AddSub32Test": ["addsub32", "add-sub32"],
-    "Logic32Test": ["logic32"],
-    "ZeroDetect32Test": ["zero-detect32"],
-    "Comparator32Test": ["comparator32"],
-    "Shifter32Test": ["shifter32"],
-    "ALU32Test": ["alu32", "rv32i-alu32"],
-    "ALU32RepresentativeSliceTest": ["alu32-slice"],
-    "RV32ISingleCycleCoreTest": ["rv32i-core"],
-    "RV32ISingleCycleFetchStageTest": ["rv32i-single-cycle-fetch"],
-    "RV32ISingleCycleDecodeStageTest": ["rv32i-single-cycle-decode"],
-    "RV32ISingleCycleExecuteStageTest": ["rv32i-single-cycle-execute"],
-    "RV32ISingleCycleMemoryStageTest": ["rv32i-single-cycle-memory"],
-    "RV32ISingleCycleWritebackStageTest": ["rv32i-single-cycle-writeback"],
-    "RV32ISingleCycleNextPCStageTest": ["rv32i-single-cycle-next-pc"],
-    "RV32IFiveStageCoreTest": ["rv32i-five-stage-core", "rv32i-pipeline-core"],
-    "RV32IControlFlowUnitTest": ["rv32i-control-flow"],
-    "RV32IDecodeControlUnitTest": ["rv32i-decode-control", "rv32i-decode"],
-    "RV32IExecutionControlStatusUnitTest": ["rv32i-execution-status", "rv32i-status"],
-    "RV32IProgramLoaderTest": ["rv32i-program-loader", "rv32i-program", "program-loader"],
+    name: aliases_for(name) for name in circuit_backend.get_registered_test_names()
 }
-
-_PROGRAM_TEST_NAME = re.compile(
-    r"^(RV32ISingleCycleSystemTest|RV32IFiveStageCoreProgramTest)"
-    r"/program-([0-9]+)$"
-)
-for _test_name in circuit_backend.get_registered_test_names():
-    _program_match = _PROGRAM_TEST_NAME.fullmatch(_test_name)
-    if not _program_match:
-        continue
-    _architecture, _number_text = _program_match.groups()
-    _program_number = int(_number_text)
-    _alias_prefix = (
-        "rv32i-program"
-        if _architecture == "RV32ISingleCycleSystemTest"
-        else "rv32i-five-stage-program"
-    )
-    PREFERRED_SCENARIO_ALIASES[_test_name] = [
-        f"{_alias_prefix}{_program_number}"
-    ]
-
 
 def _clone(value: Any) -> Any:
     return copy.deepcopy(value)
@@ -305,6 +235,18 @@ def _pin_width_by_name(component: Any, getter_name: str, pin_name: str) -> int |
 
 def _component_layout_type(component: Any) -> str:
     component_type = _component_type(component)
+    # The zero-wait FF controller intentionally omits its response buffer.
+    # Keep its saved geometry separate from the buffered controller with the
+    # same public component type and pins.
+    if component_type.startswith("MemoryController<ff,") and component.get_children():
+        if not any(child.get_name() == "RESPONSE" for child in component.get_children()):
+            return component_type[:-1] + ",always-ready>"
+    if component_type == "Decoder5to32" and component.get_children():
+        if any(child.get_name() == "OUT0_ZERO" for child in component.get_children()):
+            return "Decoder5to32<x0-unused>"
+    if component_type.endswith("PipelineRegister") and component.get_children():
+        if any(child.get_name().endswith("_SPLIT") for child in component.get_children()):
+            return component_type + "<compact>"
     # Compatibility layout keys; visible component names use the FF vocabulary.
     if component_type.startswith("FFMemory"):
         return "FFArray" + component_type[len("FFMemory"):]
@@ -552,7 +494,8 @@ def _single_cycle_core_layout(
     topologies deliberately fall back to the generic graph layout.
     """
     by_name = {child.get_name(): child for child in children}
-    if set(by_name) != {*SINGLE_CYCLE_STAGE_ORDER, "NEXT_PC", "EXECUTION_STATUS"}:
+    ports = {"INSTRUCTION_PORT", "DATA_PORT", "INSTRUCTION_NO_WRITE", "INSTRUCTION_WRITE_ZERO", "INSTRUCTION_MASK_ZERO", "STORE_AUTHORIZED"}
+    if set(by_name) != {*SINGLE_CYCLE_STAGE_ORDER, "NEXT_PC", "EXECUTION_STATUS", *ports}:
         return None
     margin = _stub_margin_ratio(boundary_fraction, pin_size_fraction)
     available = max(.01, 1 - 2 * margin)
@@ -579,6 +522,12 @@ def _single_cycle_core_layout(
     for name, center in (("NEXT_PC", .30), ("EXECUTION_STATUS", .70)):
         fit(name, margin + available * center, title_fraction + body_height * .77,
             available * .27, body_height * .36)
+    for name, center in (("INSTRUCTION_PORT", .065), ("DATA_PORT", .935)):
+        fit(name, margin + available * center, title_fraction + body_height * .77,
+            available * .10, body_height * .30)
+    for index, name in enumerate(("INSTRUCTION_NO_WRITE", "INSTRUCTION_WRITE_ZERO", "INSTRUCTION_MASK_ZERO", "STORE_AUTHORIZED")):
+        fit(name, margin + available * (.08 + index*.08), title_fraction + body_height * .98,
+            available * .035, body_height * .035)
     return result
 
 
@@ -593,6 +542,44 @@ FIVE_STAGE_PIPELINE_CHILD_ORDER = (
     "MEM_WB",
     "WRITEBACK",
 )
+
+
+def _baseline_pipeline_layout(children, parent_aspect, title_fraction, child_aspects,
+                              boundary_fraction, pin_size_fraction, child_stub_ratios=None):
+    """Stage order is architectural, not inferred from feedback edges."""
+    by_name = {c.get_name(): c for c in children}
+    ports = {"INSTRUCTION_PORT", "DATA_PORT", "INSTRUCTION_NO_WRITE", "INSTRUCTION_WRITE_ZERO", "INSTRUCTION_MASK_ZERO"}
+    if set(by_name) != {*FIVE_STAGE_PIPELINE_CHILD_ORDER, "DEPENDENCIES", "CONTROL", "NO_MEMORY_WAIT", "EXECUTION_STATUS", *ports}:
+        return None
+    margin = _stub_margin_ratio(boundary_fraction, pin_size_fraction)
+    stubs = child_stub_ratios or {}
+    available = 1 - 2 * margin
+    body = 1 - title_fraction - margin
+    result = {}
+
+    def fit(name, x, y, width, height):
+        cid = by_name[name].get_id()
+        stub = stubs.get(cid, margin)
+        rw = min(width / (1 + 2 * stub), height * parent_aspect / (child_aspects[cid] + 2 * stub))
+        rh = rw * child_aspects[cid] / parent_aspect
+        result[name] = {"rel_pos": [x - rw / 2, y - rh / 2], "rel_width": rw}
+
+    weights = [1 if i % 2 == 0 else .44 for i in range(9)]
+    unit = available / sum(weights)
+    cursor = margin
+    for name, weight in zip(FIVE_STAGE_PIPELINE_CHILD_ORDER, weights):
+        width = unit * weight
+        fit(name, cursor + width / 2, title_fraction + body * .28, width * .88, body * .43)
+        cursor += width
+    fit("DEPENDENCIES", margin + available * .19, title_fraction + body * .75, available * .27, body * .36)
+    fit("CONTROL", margin + available * .51, title_fraction + body * .75, available * .27, body * .36)
+    fit("EXECUTION_STATUS", margin + available * .81, title_fraction + body * .75, available * .22, body * .36)
+    fit("NO_MEMORY_WAIT", margin + available * .055, title_fraction + body * .975, available * .035, body * .045)
+    for name, center in (("INSTRUCTION_PORT", .10), ("DATA_PORT", .73)):
+        fit(name, margin + available * center, title_fraction + body * .51, available * .12, body * .10)
+    for index, name in enumerate(("INSTRUCTION_NO_WRITE", "INSTRUCTION_WRITE_ZERO", "INSTRUCTION_MASK_ZERO")):
+        fit(name, margin + available * (.14+index*.08), title_fraction + body * .975, available * .035, body * .035)
+    return result
 
 
 def _five_stage_pipeline_layout(
@@ -610,20 +597,22 @@ def _five_stage_pipeline_layout(
     }
     required_names = {
         *FIVE_STAGE_PIPELINE_CHILD_ORDER,
-        "COORDINATOR",
+        "COORDINATOR", "EXECUTION_STATUS",
     }
-    memory_names = {"FETCH_REQUEST", "DATA_REQUEST", "LOAD_STORE", "DATA_ISSUE", "DATA_OPERATION",
-                    "MEMORY_ZERO", "FETCH_WRITE_DATA", "FETCH_OPERATION", "FETCH_MASK"}
-    has_memory = set(child_by_name) == required_names | memory_names
+    memory_names = {"FETCH_REQUEST", "DATA_REQUEST", "LOAD_STORE", "DATA_OPERATION", "MEMORY_ZERO"}
+    optional_helpers = {"FETCH_WRITE_DATA", "FETCH_OPERATION", "FETCH_MASK", "PREDICTED_PC_SELECT"}
+    names = set(child_by_name)
+    has_prediction = "PREDICTION" in names
+    has_memory = memory_names <= names and names <= required_names | memory_names | optional_helpers | {"PREDICTION"}
     if set(child_by_name) != required_names and not has_memory:
         return None
 
     content_top = title_fraction
     content_height = max(0.1, 1.0 - content_top)
     pipeline_top = content_top + content_height * 0.04
-    pipeline_height = content_height * (0.42 if has_memory else 0.60)
-    coordinator_top = content_top + content_height * (0.51 if has_memory else 0.72)
-    coordinator_height = content_height * (0.14 if has_memory else 0.22)
+    pipeline_height = content_height * (0.38 if has_prediction else 0.42 if has_memory else 0.60)
+    coordinator_top = content_top + content_height * (0.46 if has_prediction else 0.51 if has_memory else 0.72)
+    coordinator_height = content_height * (0.24 if has_prediction else 0.14 if has_memory else 0.22)
     stub_ratio = _stub_margin_ratio(
         boundary_fraction, pin_size_fraction
     )
@@ -688,7 +677,7 @@ def _five_stage_pipeline_layout(
 
     coordinator = child_by_name["COORDINATOR"]
     coordinator_width = min(
-        available_width * 0.72 / outer_width_factor,
+        available_width * (0.30 if has_prediction else 0.52) / outer_width_factor,
         coordinator_height
         * parent_aspect
         / max(child_aspects[coordinator.get_id()], 0.01),
@@ -700,7 +689,7 @@ def _five_stage_pipeline_layout(
     )
     placements["COORDINATOR"] = {
         "rel_pos": [
-            0.5 - coordinator_width / 2,
+            (0.58 if has_prediction else 0.35) - coordinator_width / 2,
             coordinator_top
             + max(
                 0.0,
@@ -709,20 +698,35 @@ def _five_stage_pipeline_layout(
         ],
         "rel_width": coordinator_width,
     }
+    status_aspect = child_aspects[child_by_name["EXECUTION_STATUS"].get_id()]
+    status_width = min(.22 / outer_width_factor, coordinator_height * parent_aspect / max(status_aspect, .01))
+    placements["EXECUTION_STATUS"] = {
+        "rel_pos": [.83-status_width/2, coordinator_top+(coordinator_height-status_width*status_aspect/parent_aspect)/2],
+        "rel_width": status_width,
+    }
+    if has_prediction:
+        aspect = child_aspects[child_by_name["PREDICTION"].get_id()]
+        width = min(.34 / outer_width_factor, coordinator_height * parent_aspect / max(aspect,.01))
+        placements["PREDICTION"] = {"rel_pos": [.20-width/2, coordinator_top+(coordinator_height-width*aspect/parent_aspect)/2], "rel_width": width}
+        if "PREDICTED_PC_SELECT" in child_by_name:
+            aspect = child_aspects[child_by_name["PREDICTED_PC_SELECT"].get_id()]
+            width = min(.035, .035*parent_aspect/max(aspect,.01))
+            placements["PREDICTED_PC_SELECT"] = {"rel_pos": [.18,content_top+content_height*.73],"rel_width":width}
     if has_memory:
-        service_y = content_top + content_height * 0.73
+        service_y = content_top + content_height * (0.79 if has_prediction else 0.73)
         for name, center, preferred in (
             ("FETCH_REQUEST", 0.15, 0.17), ("LOAD_STORE", 0.49, 0.16),
             ("DATA_REQUEST", 0.82, 0.17)):
             aspect = child_aspects[child_by_name[name].get_id()]
-            width = min(preferred, 0.23 * content_height * parent_aspect / max(aspect, .01))
+            width = min(preferred, (0.16 if has_prediction else 0.23) * content_height * parent_aspect / max(aspect, .01))
             placements[name] = {"rel_pos": [center-width/2, service_y], "rel_width": width}
-        for i, name in enumerate(("MEMORY_ZERO", "FETCH_WRITE_DATA", "FETCH_OPERATION", "FETCH_MASK",
-                                  "DATA_ISSUE", "DATA_OPERATION")):
+        helpers = [name for name in ("MEMORY_ZERO", "FETCH_WRITE_DATA", "FETCH_OPERATION", "FETCH_MASK", "DATA_OPERATION")
+                   if name in child_by_name]
+        for i, name in enumerate(helpers):
             aspect = child_aspects[child_by_name[name].get_id()]
             width = min(.035, .04 * parent_aspect / max(aspect, .01))
-            placements[name] = {"rel_pos": [.32+i*.055, content_top+content_height*.66], "rel_width": width}
-    return placements
+            placements[name] = {"rel_pos": [.32+i*(.055 if len(helpers)>6 else .08), content_top+content_height*(.73 if has_prediction else .66)], "rel_width": width}
+    return placements if set(placements) == names else None
 
 
 def _rv32i_program_root_layout(
@@ -746,7 +750,8 @@ def _rv32i_program_root_layout(
         "INSTRUCTION_MEMORY",
         "DATA_MEMORY",
     }
-    if set(child_by_name) != required:
+    constants = {"MEMORY_RESET_LOW", "INSTRUCTION_WRITE_ZERO", "INSTRUCTION_MASK_ZERO"}
+    if set(child_by_name) not in (required, required | constants):
         return None
 
     content_top = title_fraction
@@ -779,6 +784,13 @@ def _rv32i_program_root_layout(
     }
     center_y = content_top + content_height * 0.43
     placements: dict[str, dict[str, Any]] = {}
+    # Native memories need inactive reset/write tie-offs. Keep these small
+    # service components below the datapath, not between its three main blocks.
+    for i, name in enumerate(sorted(constants & set(child_by_name))):
+        placements[name] = {
+            "rel_pos": [0.35 + i * 0.20, content_top + content_height * 0.86],
+            "rel_width": fitted_width(name, 0.10, content_height * 0.10),
+        }
     for name in ("INSTRUCTION_MEMORY", "CORE", "DATA_MEMORY"):
         child = child_by_name[name]
         rel_x, rel_width = _constrain_child_horizontal(
@@ -878,6 +890,10 @@ def _custom_child_layout(
         )
         if program_layout is not None:
             return program_layout
+
+    if _component_type(parent) == "RV32IBaselinePipelineCore":
+        return _baseline_pipeline_layout(children, parent_aspect, title_fraction, child_aspects,
+                                         boundary_fraction, pin_size_fraction, child_stub_ratios)
 
     if _component_type(parent) == "RV32IFiveStageCore":
         pipeline_layout = _five_stage_pipeline_layout(
@@ -1595,11 +1611,7 @@ class LayoutManager:
 
 
 def scenario_default_alias(class_name: str) -> str:
-    stem = class_name[:-4] if class_name.endswith("Test") else class_name
-    stem = stem.replace("_", "-")
-    stem = re.sub(r"([A-Z]+)([A-Z][a-z])", r"\1-\2", stem)
-    stem = re.sub(r"([a-z0-9])([A-Z])", r"\1-\2", stem)
-    return stem.lower()
+    return default_alias(class_name)
 
 
 def scenario_canonical_alias(class_name: str) -> str:
@@ -1639,15 +1651,14 @@ def _scenario_classes() -> dict[str, Any]:
 
         aliases = {scenario_default_alias(class_name), class_name.lower(), *PREFERRED_SCENARIO_ALIASES.get(class_name, [])}
         for alias in aliases:
-            scenarios[alias] = scenario_factory
+            scenarios[alias.lower().replace('_', '-')] = scenario_factory
     return scenarios
 
 
 def _scenario_options() -> list[dict[str, str]]:
-    return [
-        {"key": scenario_canonical_alias(class_name), "className": class_name}
-        for class_name in visualizable_test_names()
-    ]
+    visible = set(visualizable_test_names())
+    return scenario_options([d for d in circuit_backend.get_registered_test_descriptors()
+                             if d['name'] in visible])
 
 
 def _scenario_aliases_to_canonical() -> dict[str, str]:
@@ -1656,7 +1667,7 @@ def _scenario_aliases_to_canonical() -> dict[str, str]:
         canonical = scenario_canonical_alias(class_name)
         aliases = {scenario_default_alias(class_name), class_name.lower(), *PREFERRED_SCENARIO_ALIASES.get(class_name, [])}
         for alias in aliases:
-            aliases_to_canonical[alias] = canonical
+            aliases_to_canonical[alias.lower().replace('_', '-')] = canonical
     return aliases_to_canonical
 
 
@@ -1715,7 +1726,8 @@ class CircuitSession:
             self.simulator.advance_and_record(self.test_scenario.get_run_duration())
         checkpoint_metadata = self._checkpoint_metadata()
         checkpoint_times = [checkpoint["time"] for checkpoint in checkpoint_metadata]
-        self.timestamps = sorted({int(time) for time in self.simulator.get_unique_timestamps()} | set(checkpoint_times))
+        self.timestamps = sorted({int(time) for time in self.simulator.get_unique_timestamps()}
+            | set(checkpoint_times) | set(circuit_backend.memory_activity_timestamps(self.root)))
         if not self.timestamps:
             self.timestamps = [0]
         timestamp_index = {timestamp: index for index, timestamp in enumerate(self.timestamps)}
@@ -1748,6 +1760,7 @@ class CircuitSession:
             str, list[dict[str, Any]]
         ] = defaultdict(list)
         self.component_handles: dict[str, Any] = {}
+        self.memory_inspectors: dict[str, Any] = {}
         self.component_depths: dict[str, int] = {}
         self.pin_handles: dict[str, Any] = {}
         self.wire_handles: dict[str, Any] = {}
@@ -2276,69 +2289,8 @@ class CircuitSession:
             "ports": ports,
         }
 
-    def _memory64kx32_state(self, component: Any, component_id: str, index: int, timestamp: int) -> dict[str, Any]:
-        ports = self._component_ports(
-            component_id,
-            (
-                "ADDR",
-                "WRITE_DATA",
-                "READ_EN",
-                "WRITE_EN",
-                "SIZE",
-                "SIGN_EXTEND",
-                "CLK",
-                "RST",
-                "READ_DATA",
-                "READY",
-                "FAULT",
-            ),
-        )
-        active_address = _binary_value_to_int(ports.get("ADDR", {}).get("value"))
-        active_base = active_address & ~0x3 if active_address is not None else None
-        read_active = ports.get("READ_EN", {}).get("value") == "1"
-        write_active = ports.get("WRITE_EN", {}).get("value") == "1"
-        memory_role = "data" if component_id.endswith(".DATA_MEMORY") or component_id.endswith("DATA_MEMORY") else "generic"
-        if (
-            self.scenario_key == "rv32i-program-loader"
-            or component_id.endswith(".INSTRUCTION_MEMORY")
-            or component_id.endswith("INSTRUCTION_MEMORY")
-        ):
-            memory_role = "instruction"
-        window_active = active_base is not None and (read_active or write_active)
-        if window_active:
-            window_words = component.get_words_at_time(timestamp, active_base, 1)
-        else:
-            window_words = []
-        touched_words = component.get_touched_words_at_time(timestamp, 64 * 1024)
-
-        return {
-            "index": index,
-            "time": timestamp,
-            "componentId": component_id,
-            "type": "Memory64Kx32",
-            "supported": True,
-            "capacityBytes": 64 * 1024 * 4,
-            "capacityWords": 64 * 1024,
-            "wordBits": 32,
-            "historyEnabled": True,
-            "touchedWordsTruncated": False,
-            "memoryRole": memory_role,
-            "windowActive": window_active,
-            "activeAddress": active_address,
-            "activeBaseAddress": active_base,
-            "touchedWordCount": len(touched_words),
-            "touchedWords": [
-                _memory_word_entry(address, word, decode_instruction=memory_role == "instruction")
-                for address, word in touched_words
-            ],
-            "windowWords": [
-                _memory_word_entry(address, word, decode_instruction=memory_role == "instruction")
-                for address, word in window_words
-            ],
-            "ports": ports,
-        }
-
-    def component_state_at_index(self, index: int, component_id: str) -> dict[str, Any]:
+    def component_state_at_index(self, index: int, component_id: str,
+                                 address: int = -1, count: int = 64) -> dict[str, Any]:
         with self.lock:
             component = self.component_handles.get(component_id)
             if component is None:
@@ -2350,55 +2302,10 @@ class CircuitSession:
             component_type = _component_type(component)
             if component_type == "RegisterFile32x32":
                 return self._register_file_state(component, component_id, index, timestamp)
-            if component_type == "Memory64Kx32":
-                return self._memory64kx32_state(component, component_id, index, timestamp)
-            native_device = bool(re.fullmatch(r"(SRAM|DRAM|ROM|NORFlash)<(8|16|32)>", component_type)) or component_type.startswith("MemoryContainer<")
-            if native_device or re.fullmatch(r"(FFMemory|SRAM|ROM|IdealRAMReference)(8|16|32)", component_type):
-                try:
-                    config = circuit_backend.memory_configuration(component)
-                except ValueError:
-                    config = None  # Structural slices expose pins, not the compact store.
-                if config is not None and config["record_history"]:
-                    ports = self._component_ports(component_id, (
-                        "WORD_ADDR", "WRITE_DATA", "WRITE_MASK", "WE", "READ_EN",
-                        "CLK", "RST", "READ_DATA", "FAULT", "CMD", "ADDR", "BUSY", "ERROR",
-                        "READ_VALID", "ROW_OPEN", "WRITE_ENABLED", "CE_N", "OE_N", "WE_N",
-                        "REQ_VALID", "REQ_READY", "REQ_OP", "REQ_ADDR", "REQ_WRITE_DATA", "REQ_WRITE_MASK",
-                        "RSP_VALID", "RSP_READY", "RSP_READ_DATA", "RSP_STATUS"))
-                    word = _binary_value_to_int(ports.get("WORD_ADDR", {}).get("value"))
-                    address = word * (config["data_width"] // 8) if word is not None else None
-                    if address is not None and address > 0xFFFFFFFF:
-                        address = None
-                    if native_device and ("CMD" in ports or address is not None and address >= config["capacity_bytes"]):
-                        address = None
-                    active = address is not None and any(
-                        ports.get(pin, {}).get("value") == "1" for pin in ("READ_EN", "WE"))
-                    if component_type.startswith(("ROM<", "SRAM<")):
-                        active = address is not None and all(ports.get(p, {}).get("value") == "0" for p in ("CE_N", "OE_N"))
-                        if component_type.startswith("SRAM<"):
-                            active = active and ports.get("WE_N", {}).get("value") == "1"
-                    snapshot = circuit_backend.memory_snapshot(component, timestamp,
-                        (address or 0) if active else 0,
-                        min(16, config["depth_words"]) if native_device else int(active))
-                    return {
-                        "index": index, "time": timestamp, "componentId": component_id,
-                        "type": component_type, "supported": True,
-                        "capacityBytes": config["capacity_bytes"], "capacityWords": config["depth_words"],
-                        "wordBits": config["data_width"], "historyEnabled": True, "memoryRole": "generic",
-                        "windowActive": active, "activeAddress": address, "activeBaseAddress": address,
-                        "touchedWordCount": snapshot["touched_count"],
-                        "touchedWordsTruncated": snapshot["touched_count"] > len(snapshot["touched_words"]),
-                        "touchedWords": [_memory_word_entry(a, bits) for a, bits in snapshot["touched_words"]],
-                        "windowWords": [_memory_word_entry(a, bits) for a, bits in snapshot["words"]],
-                        "ports": ports,
-                    }
-            return {
-                "index": index,
-                "time": timestamp,
-                "componentId": component_id,
-                "type": component_type,
-                "supported": False,
-            }
+            if component_id not in self.memory_inspectors:
+                self.memory_inspectors[component_id] = circuit_backend.MemoryInspector(component, self.simulator)
+            return json.loads(self.memory_inspectors[component_id].state_json(
+                index, timestamp, self.scenario_key, address, count))
 
 
 class SessionStore:
@@ -2449,7 +2356,7 @@ class SessionStore:
     def get(self, scenario: str, core_fidelity: str | None = None) -> CircuitSession:
         scenario_key = normalize_scenario(scenario)
         if core_fidelity and (
-            not re.fullmatch(r"rv32i-(?:five-stage-)?program[0-9]+", scenario_key)
+            not re.fullmatch(r"rv32i-(?:(?:five-stage|baseline)-|predict-[a-z-]+-)?program[0-9]+", scenario_key)
             or core_fidelity not in ("structural", "behavioral")
         ):
             raise ValueError("core_fidelity requires an RV32I program and structural or behavioral")
@@ -2635,7 +2542,8 @@ class VisualizerHandler(SimpleHTTPRequestHandler):
             if path == "/api/health":
                 json_response(self, {"ok": True})
             elif path == "/api/scenarios":
-                json_response(self, {"default": DEFAULT_SCENARIO, "scenarios": SCENARIO_OPTIONS})
+                json_response(self, {"default": DEFAULT_SCENARIO, "scenarios": SCENARIO_OPTIONS,
+                                     "groups": SCENARIO_CATALOG['groups'], "catalog": SCENARIO_CATALOG})
             elif path == "/api/circuit":
                 scenario = query.get("scenario", [DEFAULT_SCENARIO])[0]
                 core_fidelity = query.get("core_fidelity", [None])[0]
@@ -2671,7 +2579,8 @@ class VisualizerHandler(SimpleHTTPRequestHandler):
                 json_response(
                     self,
                     session.component_state_at_index(
-                        index, component_id))
+                        index, component_id, int(query.get("address", [-1])[0]),
+                        int(query.get("count", [64])[0])))
             else:
                 self._serve_static(path, raw_path)
         except Exception as exc:

@@ -10,9 +10,8 @@
 #include "components/selection/StandardProfiles.hpp"
 #include "modules/composite/ALU32.hpp"
 #include "modules/composite/HalfAdder.hpp"
-#include "modules/memory/Memory64Kx32.hpp"
 #include "modules/memory/FlipFlopCell.hpp"
-#include "modules/memory/Register32.hpp"
+#include "modules/memory/Register.hpp"
 #include "modules/memory/RegisterFile32x32.hpp"
 #include "modules/rv32i/RV32IBuildProfiles.hpp"
 #include "modules/rv32i/RV32ISingleCycleSystem.hpp"
@@ -225,7 +224,7 @@ std::vector<std::vector<LogicValue>> runRegisterTrace(
     circuit::Fidelity fidelity) {
     Simulator simulator;
     auto component = createBuiltinFamilyDut(
-        circuit::families::Register32, fidelity);
+        circuit::families::registerWord(32), fidelity);
     ComponentBuilder builder(component);
     auto d = builder.addNewWire<32>(
         "D_IN", nullptr, {component->getInputPin<32>("D")});
@@ -525,9 +524,8 @@ void BuiltinComponentCatalogInventoryTest::verifyResults() {
                 + contract_id);
     }
 
-    const std::set<std::string> expected_types{
-        "MemoryBusAdapter32", "FFMemory8", "FFMemory16", "FFMemory32", "SRAM8", "SRAM16", "SRAM32",
-        "FFWord<8>", "FFWord<16>", "FFWord<32>",
+    std::set<std::string> expected_types{
+        "FFMemory8", "FFMemory16", "FFMemory32", "FFWord<8>", "FFWord<16>", "FFWord<32>",
         "FFStorageBank<8>", "FFStorageBank<16>", "FFStorageBank<32>",
         "SRAMCell", "SRAMRow", "SRAMBitlinePair", "SRAMRowDecoder",
         "SRAMPrecharge", "SRAMWriteDriver", "SRAMSenseAmplifier",
@@ -551,44 +549,61 @@ void BuiltinComponentCatalogInventoryTest::verifyResults() {
         "NORFlashStorageBank<8>", "NORFlashStorageBank<16>", "NORFlashStorageBank<32>",
         "NORFlashCommandControl<8>", "NORFlashCommandControl<16>", "NORFlashCommandControl<32>",
         "NORFlash<8>", "NORFlash<16>", "NORFlash<32>",
-        "ROM8", "ROM16", "ROM32", "IdealRAMReference8", "IdealRAMReference16", "IdealRAMReference32",
-        "ALU32", "ALU8", "AND8", "ANDGate", "AddSub32", "Adder32",
-        "Adder8", "Memory64Kx32", "AddSub8", "ArithmeticUnit8", "LogicUnit8",
+        "ALU32", "ALU32Core", "ALU8", "ANDGate", "AddSub32", "Adder32",
+        "Adder8", "AddSub8", "ArithmeticUnit8", "LogicUnit8",
         "BarrelShifter8", "CompareSelect8", "ALU8FlagUnit",
-        "Register32", "RegisterFile32x32",
+        "Register<32>", "RegisterFile32x32",
         "BitJoiner", "BitSplitter",
-        "ClockGenerator", "Comparator32", "Comparator8", "ConstantValue",
-        "DFlipFlop", "Decoder2to4", "Decoder5to32", "Decrementer8",
+        "ClockGenerator", "ClockedStateBit", "ConstantValue",
+        "DFlipFlop", "Decoder5to32", "Decrementer8",
         "EqualityChecker8", "FullAdder",
         "GatedDLatch", "HalfAdder", "Incrementer8", "Logic32",
-        "Memory32x32", "Memory4x32", "FlipFlopCell", "Mux16to1",
-        "Mux16to1_8bit", "Mux2to1", "Mux2to1_32bit", "Mux2to1_4bit",
-        "Mux2to1_8bit", "Mux32to1", "Mux32to1_32bit", "Mux4to1",
-        "Mux4to1_32bit", "Mux4to1_8bit", "Mux8to1", "Mux8to1_32bit",
-        "Mux8to1_8bit", "NAND8", "NANDGate", "NOR8", "NORGate", "NOT8",
-        "NOTGate", "OR8", "ORGate", "RV32IBitPatternMatcher",
+        "FlipFlopCell",
+        "Mux2to1", "Mux2to1_32bit", "Mux2to1_4bit",
+        "Mux32to1", "Mux32to1_32bit", "Mux4to1",
+        "Mux4to1_32bit", "Mux8to1", "Mux8to1_32bit",
+        "Mux8to1_8bit", "NANDGate", "NORGate", "NOT8",
+        "NOTGate", "ORGate", "RV32IBitPatternMatcher",
         "RV32IControlFlowUnit", "RV32IDecodeControlUnit",
         "RV32IExecutionControlStatusUnit", "RV32ISingleCycleCore",
         "RV32ISingleCycleFetchStage", "RV32ISingleCycleDecodeStage", "RV32ISingleCycleExecuteStage",
         "RV32ISingleCycleMemoryStage", "RV32ISingleCycleWritebackStage", "RV32ISingleCycleNextPCStage",
         "RV32ISingleCycleSystem", "RV32IFiveStageCore",
+        "RV32IBaselineFetchStage", "RV32IBaselineDecodeStage",
+        "RV32IBaselineExecuteStage", "RV32IBaselineMemoryStage",
+        "RV32IBaselineDependencyUnit", "RV32IBaselineControl",
+        "RV32IBaselinePipelineCore", "RV32IPipelineExecutionStatus",
         "RV32IIFIDPipelineRegister", "RV32IIDEXPipelineRegister",
         "RV32IEXMEMPipelineRegister", "RV32IMEMWBPipelineRegister",
         "RV32IForwardingUnit", "RV32IHazardDetectionUnit",
-        "RV32IPipelineControlFlowUnit", "RV32IMemoryAlignmentUnit",
+        "RV32IPredictionCounter", "RV32IBranchPredecode",
+        "RV32IBranchRecovery", "RV32IBranchPredictor", "RV32IPredictionPath",
+        "RV32IMemoryAlignmentUnit",
         "RV32IMemoryLanes", "RV32IMemoryRequest",
         "RV32IPipelineRetirementUnit", "RV32IPipelineCoordinator",
         "RV32IFetchStage", "RV32IDecodeStage", "RV32IExecuteStage",
         "RV32IMemoryStage", "RV32IWritebackStage",
-        "RegisterFile4x32", "Rewire", "SRLatch",
-        "ShiftLeftLogical8", "ShiftRightArithmetic8", "ShiftRightLogical8",
-        "Shifter32", "SignedComparator8", "Subtractor8",
+        "Rewire", "SRLatch",
+        "Shifter32", "Subtractor8",
         "SubtractorWithBorrow8", "TwosComplement8", "XOR8", "XORGate",
         "ZeroDetect32", "ZeroDetect8",
         "ALU8ControlDecoder", "ALU8ResultSelector", "ALU32ControlDecoder",
         "ALU32CompareUnit", "ALU32ResultSelector", "ALU32FlagUnit"
     };
 
+    for (const auto width : {"8", "16", "32"}) {
+        expected_types.insert(std::string("MemoryTransactionPort<") + width + ">");
+        expected_types.insert(std::string("MemoryResponseBuffer<") + width + ">");
+        for (const auto technology : {"ff", "sram", "dram", "rom", "nor-flash", "container"}) {
+            const std::string suffix = "<" + std::string(technology) + "," + width + ">";
+            expected_types.insert("MemoryController" + suffix);
+            expected_types.insert("MemoryEndpoint" + suffix);
+            if (std::string(technology) != "container")
+                expected_types.insert("MemoryContainer" + suffix);
+        }
+    }
+    for (const auto width : {"1", "2", "3", "4", "5", "8", "16", "32"})
+        expected_types.insert(std::string("Register<") + width + ">");
     for (const auto& type : expected_types)
         require(registered_types.count(type) != 0,
                 "Built-in catalog is missing production module TypeName: " + type);
@@ -609,9 +624,8 @@ void RecursiveBuildProfileTest::verifyResults() {
         rv32i::architectureStructuralProfile(
             *catalog, "rv32i-architecture-profile-test");
     const std::set<std::string> behavioral_memory_contracts{
-        std::string(circuit::families::Memory64Kx32.id()),
         std::string(circuit::families::RegisterFile32x32.id()),
-        std::string(circuit::families::Register32.id()),
+        std::string(circuit::families::registerWord(32).id()),
         std::string(circuit::families::FlipFlopCell.id()),
     };
     size_t rv32i_contracts = 0;

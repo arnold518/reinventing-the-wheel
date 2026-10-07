@@ -29,6 +29,18 @@ MemoryStorage::MemoryStorage(size_t depth, size_t bits, LogicValue initial, bool
 size_t MemoryStorage::allocatedDataBytes() const noexcept {
     return bytes_.capacity() * sizeof(PackedByte) + pages_.size() * (PageBytes * sizeof(PackedByte) + 128);
 }
+bool MemoryStorage::isFullyBinary() const noexcept {
+    if (!limits_.paged) {
+        return std::all_of(bytes_.begin(), bytes_.end(), [](const auto& b) { return b.known == 255; });
+    }
+    if (live_fill_.known != 255 && pages_.size() != capacity_ / PageBytes + (capacity_ % PageBytes != 0))
+        return false;
+    for (const auto& [page, bytes] : pages_) {
+        const auto count = std::min(PageBytes, capacity_ - page * PageBytes);
+        for (size_t i = 0; i < count; ++i) if (bytes[i].known != 255) return false;
+    }
+    return true;
+}
 MemoryStorage::PackedByte MemoryStorage::currentByte(uint32_t at) const {
     if (!limits_.paged) return bytes_[at];
     auto page = pages_.find(at / PageBytes);

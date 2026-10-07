@@ -6,7 +6,7 @@
 #include "modules/basic/Gate.hpp"
 #include "modules/basic/Mux.hpp"
 #include "modules/composite/Adder32.hpp"
-#include "modules/memory/Register32.hpp"
+#include "modules/memory/Register.hpp"
 #include "modules/utility/BitAdapter.hpp"
 #include "modules/utility/Constant.hpp"
 #include "modules/utility/Rewire.hpp"
@@ -52,7 +52,7 @@ RV32IControlFlowUnit::RV32IControlFlowUnit(std::string name)
                   circuit::families::RV32IControlFlow.pinInitializer()) {}
 
 void RV32IControlFlowUnit::buildInternals(ComponentBuilder& builder) {
-    builder.add(circuit::families::Register32, "PC_STATE");
+    builder.add(circuit::families::registerWord(32), "PC_STATE");
     builder.addNewComponent<Adder32>("PC_PLUS_4_ADD");
     builder.addNewComponent<Adder32>("PC_IMM_ADD");
     builder.addNewComponent<Adder32>("RS1_IMM_ADD");

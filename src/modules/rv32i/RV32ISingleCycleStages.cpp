@@ -1,10 +1,12 @@
 #include "modules/rv32i/RV32ISingleCycleStages.hpp"
 #include "RV32ISingleCycleStagesDirect.hpp"
 #include "RV32IMemoryRequestWiring.hpp"
-#include "modules/memory/Register32.hpp"
+#include "modules/rv32i/RV32IMemorySystem.hpp"
+#include "modules/memory/Register.hpp"
 #include "modules/memory/RegisterFile32x32.hpp"
 #include "modules/composite/ALU32.hpp"
 #include "modules/composite/Adder32.hpp"
+#include "modules/composite/IncrementBy4.hpp"
 #include "modules/basic/Mux.hpp"
 #include "modules/rv32i/RV32IDecodeControlUnit.hpp"
 #include "modules/rv32i/RV32IPipelineControl.hpp"
@@ -14,9 +16,9 @@
 using circuit::memory_detail::StructuralWiring;
 namespace {
 void fetchPins(IOComponent* s) {
-    for(auto p:{"CLK","RST","ISSUE","TAKE","PC_WRITE"}) s->addPin(p,PinType::INPUT);
+    for(auto p:{"CLK","RST","ISSUE","PC_WRITE"}) s->addPin(p,PinType::INPUT);
     s->addPin<32>("NEXT_PC",PinType::INPUT);
-    rv32i::memoryRequestPins(s,"IMEM_");
+    rv32i::directMemoryPins(s,"IMEM_",true);
     for(auto p:{"PC","PC_PLUS_4","INSTRUCTION"}) s->addPin<32>(p,PinType::OUTPUT);
     for(auto p:{"DONE","FAULT","PC_MISALIGNED"}) s->addPin(p,PinType::OUTPUT);
 }
@@ -35,10 +37,10 @@ void executePins(IOComponent* s) {
     s->addPin("BRANCH_TAKEN",PinType::OUTPUT);
 }
 void memoryPins(IOComponent* s) {
-    for(auto p:{"CLK","RST","ISSUE","TAKE","MEM_WRITE","SIGN_EXTEND"}) s->addPin(p,PinType::INPUT);
+    for(auto p:{"ISSUE","COMMIT","MEM_WRITE","SIGN_EXTEND"}) s->addPin(p,PinType::INPUT);
     for(auto p:{"ADDR","WRITE_DATA"}) s->addPin<32>(p,PinType::INPUT);
     s->addPin<2>("SIZE",PinType::INPUT);
-    rv32i::memoryRequestPins(s,"DMEM_");
+    rv32i::directMemoryPins(s,"DMEM_");
     s->addPin<32>("READ_DATA",PinType::OUTPUT);
     for(auto p:{"DONE","FAULT","MISALIGNED"}) s->addPin(p,PinType::OUTPUT);
 }
@@ -100,35 +102,39 @@ const circuit::ComponentFamily& family(Stage s) {
 
 void RV32ISingleCycleFetchStage::buildInternals(ComponentBuilder& b) {
     StructuralWiring w(b);
-    auto pc=b.add(circuit::families::Register32,"PC_STATE");
-    auto add=b.addNewComponent<Adder32>("PC_PLUS_4_ADD");
-    auto four=b.addNewComponent<ConstantValue<32>>("FOUR",4);
-    auto request=b.addNewComponent<RV32IMemoryRequest>("REQUEST");
+    auto pc=b.add(circuit::families::registerWord(32),"PC_STATE");
+    auto add=b.addNewComponent<IncrementBy4>("PC_PLUS_4_ADD");
     auto align=b.add(circuit::families::RV32IMemoryAlignmentUnit,"ALIGNMENT");
     auto word=b.addNewComponent<ConstantValue<2>>("WORD_SIZE",2);
-    auto zero=w.constant("ZERO",false);
-    auto read=b.addNewComponent<ConstantValue<3>>("READ_OP",0);
-    auto data=b.addNewComponent<ConstantValue<32>>("WRITE_ZERO",0);
-    auto mask=b.addNewComponent<ConstantValue<4>>("READ_MASK",15);
-    for(auto p:{"CLK","RST"}) {in(w,*this,pc,p);in(w,*this,request,p);}
+    auto one=w.constant("ONE",true);
+    for(auto p:{"CLK","RST"}) in(w,*this,pc,p);
     in(w,*this,pc,"PC_WRITE","WE");in(w,*this,pc,"NEXT_PC","D");
-    for(auto p:{"ISSUE","TAKE"}) in(w,*this,request,p);
     auto value=pc->getOutputPin<32>("Q");
     w.connect(value,getOutputPin<32>("PC"));
-    for(auto p:{"ADDR","TAG"}) w.connect(value,request->getInputPin<32>(p));
     w.connect(value,align->getInputPin<32>("ADDRESS"));
     w.connect(word->getOutputPin<2>("OUT"),align->getInputPin<2>("SIZE"));
     out(w,*this,align,"MISALIGNED","PC_MISALIGNED");
     w.connect(value,add->getInputPin<32>("A"));
-    w.connect(four->getOutputPin<32>("OUT"),add->getInputPin<32>("B"));
-    w.connect(zero,add->getInputPin("Cin"));
     out(w,*this,add,"Sum","PC_PLUS_4");
-    w.connect(read->getOutputPin<3>("OUT"),request->getInputPin<3>("OP"));
-    w.connect(data->getOutputPin<32>("OUT"),request->getInputPin<32>("WRITE_DATA"));
-    w.connect(mask->getOutputPin<4>("OUT"),request->getInputPin<4>("WRITE_MASK"));
-    for(auto p:{"DONE","FAULT"}) out(w,*this,request,p);
-    out(w,*this,request,"READ_DATA","INSTRUCTION");
-    rv32i::wireRequestBus(b,*this,request,"IMEM_");
+    auto ports=b.addNewComponent<Rewire>("MEMORY_PORT",
+        std::vector<Rewire::WireSpec>{{"PC",32},{"READ_DATA",32},{"FAULT",1},{"ENABLE",1}},
+        std::vector<Rewire::WireSpec>{{"WORD_ADDR",32},{"INSTRUCTION",32},{"ACCESS_FAULT",1},{"READ_EN",1}},
+        [] {
+            auto m=identity_mapping("PC",2,30,"WORD_ADDR");
+            for(auto v:identity_mapping("READ_DATA",0,32,"INSTRUCTION")) m.push_back(v);
+            for(auto v:identity_mapping("FAULT",0,1,"ACCESS_FAULT")) m.push_back(v);
+            for(auto v:identity_mapping("ENABLE",0,1,"READ_EN")) m.push_back(v);
+            return m;
+        }(),Rewire::UnmappedBitValue::LOW);
+    w.connect(value,ports->getInputPin<32>("PC"));
+    in(w,*this,ports,"IMEM_READ_DATA","READ_DATA");
+    in(w,*this,ports,"IMEM_FAULT","FAULT");
+    in(w,*this,ports,"ISSUE","ENABLE");
+    out(w,*this,ports,"WORD_ADDR","IMEM_WORD_ADDR");
+    out(w,*this,ports,"READ_EN","IMEM_READ_EN");
+    out(w,*this,ports,"INSTRUCTION");
+    out(w,*this,ports,"ACCESS_FAULT","FAULT");
+    w.connect(one,getOutputPin("DONE"));
     w.finish();
 }
 
@@ -155,7 +161,9 @@ std::vector<std::vector<LogicValue>> RV32ISingleCycleDecodeStage::getRegisterSta
 
 void RV32ISingleCycleExecuteStage::buildInternals(ComponentBuilder& b) {
     StructuralWiring w(b);
-    auto alu=b.add(circuit::families::ALU32,"ALU");
+    auto alu=b.getBuildContext()
+        ? b.add(circuit::families::ALU32Core,"ALU")
+        : b.addNewComponent<ALU32>("ALU",false);
     auto a=b.addNewComponent<Mux4to1_32bit>("OPERAND_A");
     auto c=b.addNewComponent<Mux4to1_32bit>("OPERAND_B");
     auto zero=b.addNewComponent<ConstantValue<32>>("ZERO32",0);
@@ -192,29 +200,38 @@ void RV32ISingleCycleExecuteStage::buildInternals(ComponentBuilder& b) {
 
 void RV32ISingleCycleMemoryStage::buildInternals(ComponentBuilder& b) {
     StructuralWiring w(b);
-    auto lanes=b.addNewComponent<RV32IMemoryLanes>("LANES");
-    auto request=b.addNewComponent<RV32IMemoryRequest>("REQUEST");
+    auto lanes=b.addNewComponent<RV32IMemoryLanes>("LANES",false);
     auto align=b.add(circuit::families::RV32IMemoryAlignmentUnit,"ALIGNMENT");
-    auto op=b.addNewComponent<BitJoiner<3>>("OPERATION");
-    auto zero=w.constant("ZERO",false);
-    for(auto p:{"CLK","RST","ISSUE","TAKE"}) in(w,*this,request,p);
     for(auto p:{"ADDR","WRITE_DATA","SIZE","SIGN_EXTEND"}) in(w,*this,lanes,p);
-    in(w,*this,request,"ADDR","TAG");
+    in(w,*this,lanes,"DMEM_READ_DATA","WORD_DATA");
     in(w,*this,align,"ADDR","ADDRESS");in(w,*this,align,"SIZE");
     auto size_bits=b.addNewComponent<BitSplitter<2>>("SIZE_BITS");
     in(w,*this,size_bits,"SIZE","IN");
     auto invalid=w.both("INVALID_SIZE",size_bits->getOutputPin("OUT_0"),size_bits->getOutputPin("OUT_1"));
     auto bad=w.either("BAD_ADDRESS_OR_SIZE",invalid,align->getOutputPin("MISALIGNED"));
     w.connect(bad,getOutputPin("MISALIGNED"));
-    in(w,*this,op,"MEM_WRITE","IN_0");
-    w.connect(zero,op->getInputPin("IN_1"));w.connect(zero,op->getInputPin("IN_2"));
-    w.connect(op->getOutputPin<3>("OUT"),request->getInputPin<3>("OP"));
-    w.connect(lanes->getOutputPin<32>("WORD_ADDR"),request->getInputPin<32>("ADDR"));
-    w.connect(lanes->getOutputPin<32>("WORD_WRITE_DATA"),request->getInputPin<32>("WRITE_DATA"));
-    w.connect(lanes->getOutputPin<4>("WRITE_MASK"),request->getInputPin<4>("WRITE_MASK"));
-    w.connect(request->getOutputPin<32>("READ_DATA"),lanes->getInputPin<32>("WORD_DATA"));
-    out(w,*this,lanes,"READ_DATA");for(auto p:{"DONE","FAULT"}) out(w,*this,request,p);
-    rv32i::wireRequestBus(b,*this,request,"DMEM_");
+    auto ports=b.addNewComponent<Rewire>("MEMORY_PORT",
+        std::vector<Rewire::WireSpec>{{"ADDR",32},{"FAULT",1},{"ENABLE",1}},
+        std::vector<Rewire::WireSpec>{{"WORD_ADDR",32},{"ACCESS_FAULT",1},{"READ_EN",1}},
+        [] {
+            auto m=identity_mapping("ADDR",2,30,"WORD_ADDR");
+            for(auto v:identity_mapping("FAULT",0,1,"ACCESS_FAULT")) m.push_back(v);
+            for(auto v:identity_mapping("ENABLE",0,1,"READ_EN")) m.push_back(v);
+            return m;
+        }(),Rewire::UnmappedBitValue::LOW);
+    in(w,*this,ports,"ADDR");
+    in(w,*this,ports,"DMEM_FAULT","FAULT");
+    in(w,*this,ports,"ISSUE","ENABLE");
+    out(w,*this,ports,"WORD_ADDR","DMEM_WORD_ADDR");
+    out(w,*this,ports,"ACCESS_FAULT","FAULT");
+    out(w,*this,ports,"READ_EN","DMEM_READ_EN");
+    auto write=w.both("WRITE_INTENT",getInputPin("ISSUE"),getInputPin("MEM_WRITE"));
+    auto allowed=w.both("WRITE_ALLOWED",getInputPin("COMMIT"),w.invert("ALIGNED",bad));
+    w.connect(w.both("COMMIT_STORE",write,allowed),getOutputPin("DMEM_WE"));
+    out(w,*this,lanes,"WORD_WRITE_DATA","DMEM_WRITE_DATA");
+    out(w,*this,lanes,"WRITE_MASK","DMEM_WRITE_MASK");
+    out(w,*this,lanes,"READ_DATA");
+    w.connect(w.constant("ONE",true),getOutputPin("DONE"));
     w.finish();
 }
 
@@ -237,10 +254,12 @@ void RV32ISingleCycleNextPCStage::buildInternals(ComponentBuilder& b) {
     auto select=b.addNewComponent<Mux2to1_32bit>("NEXT_PC_SELECT");
     in(w,*this,select,"PC_PLUS_4","A");in(w,*this,select,"CONTROL_TARGET","B");
     w.connect(taken,select->getInputPin("SEL"));out(w,*this,select,"OUT","NEXT_PC");
-    auto align=b.add(circuit::families::RV32IMemoryAlignmentUnit,"ALIGNMENT");
-    auto word=b.addNewComponent<ConstantValue<2>>("WORD_SIZE",2);
-    in(w,*this,align,"CONTROL_TARGET","ADDRESS");
-    w.connect(word->getOutputPin<2>("OUT"),align->getInputPin<2>("SIZE"));
-    auto misaligned=w.both("TAKEN_MISALIGNED",taken,align->getOutputPin("MISALIGNED"));
+    // RV32I instruction alignment is always four bytes, unlike data accesses.
+    auto low=b.addNewComponent<Rewire>("TARGET_LOW_BITS",std::vector<Rewire::WireSpec>{{"ADDRESS",32}},
+        std::vector<Rewire::WireSpec>{{"BIT_0",1},{"BIT_1",1}},
+        std::vector<Rewire::BitMap>{{"ADDRESS",0,"BIT_0",0},{"ADDRESS",1,"BIT_1",0}});
+    in(w,*this,low,"CONTROL_TARGET","ADDRESS");
+    auto unaligned=w.either("TARGET_UNALIGNED",low->getOutputPin("BIT_0"),low->getOutputPin("BIT_1"));
+    auto misaligned=w.both("TAKEN_MISALIGNED",taken,unaligned);
     w.connect(misaligned,getOutputPin("TARGET_MISALIGNED"));w.finish();
 }

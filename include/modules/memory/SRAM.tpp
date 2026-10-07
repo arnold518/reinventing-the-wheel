@@ -46,25 +46,29 @@ template<size_t W> void SRAMColumnSelector<W>::buildInternals(ComponentBuilder& 
     auto address = b.addNewComponent<BitSplitter<32>>("ADDRESS");
     w.connect(this->template getInputPin<32>("WORD_ADDR"), address->template getInputPin<32>("IN"));
     std::vector<StructuralWiring::PinPtr> selectPins;
+    std::vector<StructuralWiring::PinPtr> invertedSelectPins;
     for (size_t bit = 0; bit < selectBits; ++bit)
         selectPins.push_back(address->getOutputPin("OUT_" + std::to_string(bit)));
+    for (size_t bit = 0; bit < selectBits; ++bit)
+        invertedSelectPins.push_back(w.invert("NOT_SELECT_" + std::to_string(bit), selectPins[bit]));
     const auto one = w.constant("ONE", true);
     std::vector<StructuralWiring::PinPtr> selects;
     for (size_t slot = 0; slot < words_per_row_; ++slot) {
         std::vector<StructuralWiring::PinPtr> terms;
         for (size_t bit = 0; bit < selectBits; ++bit) {
-            auto a = address->getOutputPin("OUT_" + std::to_string(bit));
-            terms.push_back(slot & (size_t{1} << bit) ? a : w.invert("NOT_" + std::to_string(slot) + "_" + std::to_string(bit), a));
+            terms.push_back(slot & (size_t{1} << bit) ? selectPins[bit] : invertedSelectPins[bit]);
         }
         selects.push_back(w.reduce("SELECT_" + std::to_string(slot), terms, true));
     }
     for (size_t bit = 0; bit < W; ++bit) {
         const auto lane = std::to_string(bit);
+        auto pass_bl = w.both("PASS_BL_" + lane, this->getInputPin("WRITE_BL_" + lane), one);
+        auto pass_bar = w.both("PASS_BAR_" + lane, this->getInputPin("WRITE_BL_BAR_" + lane), one);
         for (size_t slot = 0; slot < words_per_row_; ++slot) {
             const auto col = std::to_string(slot * W + bit);
             w.connect(w.both("DRIVE_" + col, selects[slot], this->getInputPin("WRITE_DRIVE_" + lane)), this->getOutputPin("DRIVE_" + col));
-            w.connect(w.both("PASS_BL_" + col, this->getInputPin("WRITE_BL_" + lane), one), this->getOutputPin("DRIVE_BL_" + col));
-            w.connect(w.both("PASS_BAR_" + col, this->getInputPin("WRITE_BL_BAR_" + lane), one), this->getOutputPin("DRIVE_BL_BAR_" + col));
+            w.connect(pass_bl, this->getOutputPin("DRIVE_BL_" + col));
+            w.connect(pass_bar, this->getOutputPin("DRIVE_BL_BAR_" + col));
         }
         for (const std::string signal : {"BL", "BL_BAR", "VALID"}) {
             std::vector<StructuralWiring::PinPtr> inputs;

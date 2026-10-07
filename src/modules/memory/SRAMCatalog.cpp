@@ -132,15 +132,18 @@ void registerSRAMComponents(circuit::ComponentCatalog& catalog) {
     }, sized<SRAMBitlinePair>("rows", 2, 512), {}, "SRAMBitlinePairTest", true);
     registerBlock(catalog, "row-decoder", "SRAMRowDecoder", [](const ParameterMap& params) {
         auto c = sramConfigFromParameters(params); c.validate(8, true); Pins p; in(p, "WORD_ADDR", 32); in(p, "ENABLE");
-        for (size_t r = 0; r < c.rows(); ++r) out(p, "WL_" + std::to_string(r)); return p;
+        for (size_t r = 0; r < c.rows(); ++r) out(p, "WL_" + std::to_string(r));
+        return p;
     }, configured<SRAMRowDecoder>(), {}, "SRAMRowDecoderTest");
     registerBlock(catalog, "precharge", "SRAMPrecharge", [](const ParameterMap& params) {
         auto columns = dimension(params, "columns", 2, 4096); Pins p; in(p, "ENABLE");
-        for (size_t c = 0; c < columns; ++c) out(p, "PRECHARGE_" + std::to_string(c)); return p;
+        for (size_t c = 0; c < columns; ++c) out(p, "PRECHARGE_" + std::to_string(c));
+        return p;
     }, sized<SRAMPrecharge>("columns", 2, 4096), {}, "SRAMPrechargeTest");
     registerBlock(catalog, "write-driver", "SRAMWriteDriver", [](const ParameterMap& params) {
         empty(params); Pins p; for (const auto* n : {"D", "ENABLE", "MASK"}) in(p, n);
-        for (const auto* n : {"BL", "BL_BAR", "DRIVE"}) out(p, n); return p;
+        for (const auto* n : {"BL", "BL_BAR", "DRIVE"}) out(p, n);
+        return p;
     }, simple<SRAMWriteDriver>(), {}, "SRAMWriteDriverTest");
     registerBlock(catalog, "sense-amplifier", "SRAMSenseAmplifier", [](const ParameterMap& params) {
         empty(params); Pins p; for (const auto* n : {"BL", "BL_BAR", "VALID", "ENABLE"}) in(p, n); out(p, "Q"); return p;

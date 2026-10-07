@@ -8,33 +8,12 @@ public:
     FlipFlopCellTest();
 };
 
-class Memory64Kx32Test : public circuit::test::ComponentScenarioTest {
+class RegisterTest : public circuit::test::ComponentScenarioTest {
 public:
-    Memory64Kx32Test();
-    bool run() override;
-};
-
-class Register32Test : public circuit::test::ComponentScenarioTest {
-public:
-    Register32Test();
-};
-
-class RegisterFile4x32Test : public circuit::test::ComponentScenarioTest {
-public:
-    RegisterFile4x32Test();
+    RegisterTest();
 };
 
 class RegisterFile32x32Test : public circuit::test::ComponentScenarioTest {
 public:
     RegisterFile32x32Test();
-};
-
-class Memory4x32Test : public circuit::test::ComponentScenarioTest {
-public:
-    Memory4x32Test();
-};
-
-class Memory32x32Test : public circuit::test::ComponentScenarioTest {
-public:
-    Memory32x32Test();
 };

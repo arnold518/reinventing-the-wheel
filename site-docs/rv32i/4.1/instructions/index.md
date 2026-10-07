@@ -36,7 +36,7 @@ Data memory contains word `0x80FF7F01` at `0x100` (bytes `01 7F FF 80`), and is 
 
 `Run` means execution can continue. `Halt` means CircuitSim's EBREAK convention. A named exception means a terminal trap. Every example increments the reference's attempted-instruction count once; this count is not a privileged retired-instruction counter.
 
-The example word, operands, operation block, expected registers, PC, memory, and status are checked by `RV32IReferenceDocumentationTest`. [Program-level examples](../programs/index.md) additionally provide simulator times and instruction checkpoints.
+The example word, operands, operation block, expected registers, PC, memory, and status are checked by `RV32IReferenceDocumentationTest`. [Program-level examples](../../4.2/programs/index.md) additionally provide simulator times and instruction checkpoints.
 
 ## Assembler aliases
 

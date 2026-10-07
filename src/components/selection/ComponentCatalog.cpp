@@ -244,7 +244,7 @@ ResolvedSelection ComponentCatalog::resolve(
     }
 
     if (!selected) {
-        for (const auto fidelity : {Fidelity::Structural, Fidelity::Behavioral}) {
+        for (const auto fidelity : {requested_contract.preferred_fidelity, Fidelity::Structural, Fidelity::Behavioral}) {
             const auto found = std::find_if(
                 candidates.begin(), candidates.end(),
                 [fidelity](const auto* candidate) {
@@ -259,7 +259,9 @@ ResolvedSelection ComponentCatalog::resolve(
 
     std::string reason = decision.matched_rule
         ? decision.reason
-        : "canonical fallback: structural when available, otherwise behavioral";
+        : requested_contract.preferred_fidelity == Fidelity::Behavioral
+            ? "contract default: compact behavioral implementation"
+            : "canonical fallback: structural when available, otherwise behavioral";
     if (exception) {
         reason += "; unavailable fidelity exception recorded";
     }

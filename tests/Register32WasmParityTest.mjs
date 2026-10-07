@@ -1,4 +1,4 @@
-// Register32 and representative CPU users, with bounded sequential sessions.
+// Register<32> and representative CPU users, with bounded sequential sessions.
 import assert from 'node:assert/strict';
 import {execFileSync} from 'node:child_process';
 import {readFile} from 'node:fs/promises';
@@ -8,9 +8,9 @@ import {pathToFileURL} from 'node:url';
 const [modulePath, wasmPath, probePath] = process.argv.slice(2);
 const module = await (await import(pathToFileURL(resolve(modulePath)))).default({wasmBinary: await readFile(wasmPath)});
 const cases = [
-  ['Register32Test','register32',[]],
-  ['Register32Test','register32',[['REGISTER32_ROOT','behavioral']]],
-  ['Register32Test','register32',[['REGISTER32_ROOT.STORAGE','behavioral']]],
+  ['RegisterTest','register32',[]],
+  ['RegisterTest','register32',[['REGISTER32_ROOT','behavioral']]],
+  ['RegisterTest','register32',[['REGISTER32_ROOT.BIT_0','behavioral']]],
   ['RV32ISingleCycleFetchStageTest','rv32i-single-cycle-fetch',[]],
   ['RV32IIFIDPipelineRegisterTest','rv32i-ifid-pipeline-register',[]],
 ];
@@ -35,8 +35,8 @@ for (const [test, alias, overrides] of cases) {
     }
     assert.deepEqual(JSON.parse(bridge.stateJson(actual.timestamps.length-1)),
       native('state',test,alias,String(actual.timestamps.length-1)));
-    for (const register of actual.components.filter(c=>c.type==='Register32' && c.fidelity==='structural'))
-      assert.equal(actual.components.find(c=>c.id===register.id+'.STORAGE')?.type,'FFWord<32>');
+    for (const register of actual.components.filter(c=>c.type==='Register<32>' && c.fidelity==='structural'))
+      assert.equal(actual.components.find(c=>c.id===register.id+'.BIT_0')?.type,'FlipFlopCell');
     console.log(`${alias} ${JSON.stringify(overrides)}: topology, ${actual.checkpoints.length} checkpoints, examples and final state match`);
   } finally { bridge.delete(); }
 }

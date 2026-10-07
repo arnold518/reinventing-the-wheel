@@ -1,5 +1,6 @@
-"""Render 4.3 references and exercise each WASM embed in isolation."""
+"""Render 4.4 references and exercise each WASM embed in isolation."""
 from pathlib import Path
+import os
 import json
 import re
 import shutil
@@ -9,7 +10,7 @@ from playwright.sync_api import sync_playwright
 
 ROOT = Path(__file__).resolve().parents[1]
 base = (sys.argv[1] if len(sys.argv) > 1 else "http://127.0.0.1:8893/").rstrip("/") + "/"
-exports = json.loads((ROOT / "build-wasm/pages/simulator/example-rows.json").read_text())["scenarios"]
+exports = json.loads(Path(os.environ.get('CIRCUITSIM_EXAMPLE_ROWS', ROOT / "build-wasm/pages/simulator/example-rows.json")).read_text())["scenarios"]
 scenarios = {}
 with sync_playwright() as p:
     browser = p.chromium.launch(executable_path=shutil.which("google-chrome") or shutil.which("chromium"),
@@ -17,14 +18,14 @@ with sync_playwright() as p:
     context = browser.new_context(java_script_enabled=False, viewport={"width":1440,"height":1000})
     page = context.new_page()
     page.set_default_timeout(60000)
-    assert page.goto(urljoin(base, "rv32i/4.3/"), wait_until="domcontentloaded").ok
+    assert page.goto(urljoin(base, "rv32i/4.4/"), wait_until="domcontentloaded").ok
     assert "No reading back" in page.locator("article").inner_text()
     for number, slug in enumerate(("fetch","decode","execute","memory","writeback","next-pc","core"), 1):
-        assert page.goto(urljoin(base, f"rv32i/4.3/{slug}/"), wait_until="domcontentloaded").ok
-        assert f"4.3.{number}." in page.locator("h1").inner_text()
+        assert page.goto(urljoin(base, f"rv32i/4.4/{slug}/"), wait_until="domcontentloaded").ok
+        assert f"4.4.{number}." in page.locator("h1").inner_text()
         assert page.locator(".simulator-embed iframe").count() == 1
         if slug != "core":
-            document = (ROOT / f"site-docs/rv32i/4.3/{slug}.md").read_text()
+            document = (ROOT / f"site-docs/rv32i/4.4/{slug}.md").read_text()
             alias = re.findall(r"<!-- simulator-examples: (\S+) \S+ -->", document)[0]
             rows = page.locator(f'.example-table-block[data-scenario="{alias}"] tbody tr').evaluate_all(
                 "rows=>rows.map(r=>({label:r.dataset.checkpoint,time:Number(r.dataset.time),index:Number(r.dataset.timelineIndex)}))")
@@ -39,7 +40,7 @@ with sync_playwright() as p:
             for table in page.locator(".example-table-scroll").all():
                 assert table.evaluate("el=>el.tabIndex===0 && el.clientWidth<=innerWidth")
         page.set_viewport_size({"width":1440,"height":1000})
-        print(f"4.3.{number}: rendered pins, tables, embed URL and mobile widths passed", flush=True)
+        print(f"4.4.{number}: rendered pins, tables, embed URL and mobile widths passed", flush=True)
     context.close()
 
     for alias, rows in [*scenarios.items(), ("rv32i-program3", None)]:
@@ -69,7 +70,10 @@ with sync_playwright() as p:
         else:
             assert page.evaluate("app.components.get('RV32I_PROGRAM_ROOT.CORE').fidelity") == "structural"
             names = page.evaluate("app.components.get('RV32I_PROGRAM_ROOT.CORE').childIds.map(id=>app.components.get(id).name).sort()")
-            assert names == sorted(["FETCH","DECODE","EXECUTE","MEMORY","WRITEBACK","NEXT_PC","EXECUTION_STATUS"])
+            assert names == sorted(["FETCH", "DECODE", "EXECUTE", "MEMORY", "WRITEBACK",
+                                    "NEXT_PC", "EXECUTION_STATUS", "INSTRUCTION_PORT", "DATA_PORT",
+                                    "INSTRUCTION_NO_WRITE", "INSTRUCTION_WRITE_ZERO", "INSTRUCTION_MASK_ZERO",
+                                    "STORE_AUTHORIZED"]), names
             assert page.evaluate("app.checkpoints.length") == 17
         assert not errors and not api, (alias,errors,api)
         print(f"{alias}: live WASM embed passed without backend API calls", flush=True)

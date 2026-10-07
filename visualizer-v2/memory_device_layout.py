@@ -32,19 +32,25 @@ def transaction_aspect(width):
 def defaults(kind):
     row = re.fullmatch(FAMILY + r"Row<(\d+)>", kind)
     bank = re.fullmatch(FAMILY + r"StorageBank<(\d+),(\d+),(\d+)>", kind)
-    if kind == "RV32IMemoryRequest":
-        aspect, pins, title = 1.5, 13, .14
-    elif kind == "RV32IMemoryLanes":
+    if kind in {"RV32IMemoryRequest","RV32IFetchRequest"}:
+        aspect, pins, title = (1.5,13,.14) if kind=="RV32IMemoryRequest" else (1.15,10,.14)
+    elif kind in {"RV32IMemoryLanes","RV32IMemoryLanesDataOnly"}:
         aspect, pins, title = 1.5, 5, .05
     elif kind.startswith("MemoryEndpoint<"):
         aspect, pins, title = 0.8, 9, 0.04
     elif kind.startswith("MemoryController<"):
         width = int(re.findall(r"\d+", kind)[-1])
         aspect, pins, title = 0.22 + 0.57 * transaction_aspect(width), 20, 0.04
-    elif kind.startswith("MemoryTransactionPort<"):
+    elif kind.startswith(("MemoryTransactionPort<", "MemoryResponseBuffer<")):
         aspect, pins, title = transaction_aspect(int(re.findall(r"\d+", kind)[0])), 16, 0.04
-    elif kind.startswith("MemoryPayloadRegister<"):
+    elif kind.startswith("MemoryFFRequestCheck<"):
+        aspect, pins, title = 1.1, 8, .04
+    elif kind.startswith("MemoryPayloadMux<"):
+        aspect, pins, title = .8, 4, .04
+    elif kind.startswith("Register<"):
         aspect, pins, title = payload_aspect(int(re.findall(r"\d+", kind)[0])), 5, 0.035
+    elif kind == "ClockedStateBit":
+        aspect,pins,title=.6,4,.08
     elif kind.startswith(("MemoryNativeSequencer<", "MemoryContainer<")):
         aspect, pins, title = 1.4, 18, 0.06
     elif row:
@@ -76,39 +82,73 @@ def placements(kind, aspects, parent_aspect):
     result = {}
 
     def place(name, x, y, width):
-        if kind == "RV32IMemoryRequest":
-            y += .08  # Reserve a readable request-block title above the tag lanes.
         result[name] = {"rel_pos": [x, y / parent_aspect], "rel_width": width}
 
-    if kind == "RV32IMemoryRequest":
-        # Request payload at left; numeric tag comparison lanes at right;
-        # handshake state and decisions occupy the bottom rail.
-        payloads = ["REQUEST_OP", "REQUEST_WRITE_MASK", "REQUEST_ADDR", "REQUEST_WRITE_DATA", "REQUEST_TAG"]
-        if not set(payloads) <= set(aspects): return None
-        y = .10
-        for name in payloads:
-            place(name, .065, y, .31)
-            y += .31 * aspects[name] + .045
-        place("CURRENT_TAG", .49, .09, .035)
-        place("SAVED_TAG", .89, .09, .035)
-        for bit in range(32):
-            place(f"TAG_DIFFERENT_{bit}", .55+(bit%8)*.038, .105+(bit//8)*.080, .025)
-        for level in range(5):
-            for bit in range(16 >> level):
-                place(f"TAG_CHANGED_{level}_{bit}", .49+(bit%8)*.055, .46+level*.07+(bit//8)*.032, .021)
-        bottom = max(.93, y)
-        state = ["BUSY", "SENT", "ABANDONED"]
-        for i,name in enumerate(state):
-            place(name, .08+i*.14, bottom, .075)
-        controls = [name for name in aspects if name not in result and name not in {"RESPONSE_DATA", "STATUS"}]
-        for i,name in enumerate(controls):
-            place(name, .06+(i%10)*.089, bottom+.16+(i//10)*.08, .038)
-        place("RESPONSE_DATA", .70, bottom, .12)
-        place("STATUS", .89, bottom, .025)
+    if kind in {"RV32IMemoryRequest", "RV32IFetchRequest"}:
+        # The tag comparison is now one expandable child, not 32 exposed XORs.
+        # Fetch stores only the address; the generic requester retains its five
+        # payload fields. Keep both variants' state and handshake path below.
+        payloads = [n for n in ("REQUEST_TAG", "REQUEST_ADDR", "REQUEST_OP",
+                                "REQUEST_WRITE_DATA", "REQUEST_WRITE_MASK") if n in aspects]
+        if "REQUEST_ADDR" not in payloads or "TAG_MATCH" not in aspects:
+            return None
+        def box(name, x, y, width, height, fill=.75):
+            child_width = min(width * fill, height * .75 / max(aspects[name], .01))
+            place(name, x + (width - child_width) / 2,
+                  y + (height - child_width * aspects[name]) / 2, child_width)
+        for i, name in enumerate(payloads):
+            box(name, .05 + (i % 2) * .25, .19 + (i // 2) * .18, .22, .16)
+        box("TAG_MATCH", .57, .19, .30, .32)
+        for i, name in enumerate(("RESPONSE_DATA", "STATUS")):
+            if name in aspects:
+                box(name, .59 + i * .18, .53, .17, .16)
+        control_y = .77
+        controls = [n for n in ("BUSY", "SENT", "ABANDONED") if n in aspects]
+        controls += sorted((n for n in aspects if n not in result and n not in controls),
+                           key=lambda n: [int(s) if s.isdigit() else s for s in re.split(r"(\d+)", n)])
+        columns = 7
+        rows = (len(controls) + columns - 1) // columns
+        cell_height = (parent_aspect - control_y - .05) / max(rows, 1)
+        if cell_height <= 0:
+            return None
+        for i, name in enumerate(controls):
+            box(name, .045 + (i % columns) * .91 / columns,
+                control_y + (i // columns) * cell_height, .91 / columns, cell_height, .55)
     elif kind.startswith("MemoryEndpoint<"):
         if set(aspects) != {"CONTROLLER", "MEMORY"}: return None
         place("CONTROLLER", 0.05, 0.12, 0.40)
-        place("MEMORY", 0.52, 0.12, 0.43)
+        # Leave room for the device's right pin stub as well as the box.
+        place("MEMORY", 0.52, 0.12, 0.42)
+    elif kind.startswith(("MemoryController<ff,", "MemoryTransactionPort<", "MemoryResponseBuffer<")):
+        # A left-to-right data path above a separate handshake/control rail.
+        # Box fitting respects different payload widths and fidelity aspects.
+        if kind.startswith("MemoryController<ff,"):
+            major = ["REQUEST_CHECK", "READ_RESULT", "RESPONSE_STATUS"]
+            if "RESPONSE" in aspects:
+                major.append("RESPONSE")
+        elif kind.startswith("MemoryTransactionPort<"):
+            major = ["REQUEST_OP", "REQUEST_ADDR", "REQUEST_DATA", "REQUEST_MASK", "RESPONSE"]
+        else:
+            major = ["HELD_DATA", "SELECT_DATA", "HELD_STATUS", "SELECT_STATUS"]
+        if not set(major) <= set(aspects): return None
+        def box(name, x, y, width, height):
+            w = min(width*.82, height*.78 / max(aspects[name], .01))
+            place(name, x+(width-w)/2, y+(height-w*aspects[name])/2, w)
+        # Large response/validation groups stay readable; tiny rewires do not
+        # acquire the area of an address/payload register.
+        top = parent_aspect * .48
+        for i, name in enumerate(major):
+            box(name, .04+i*.92/len(major), .07, .92/len(major), top-.07)
+        preferred = ["PENDING", "OCCUPIED", "IDLE", "EMPTY", "SPACE", "RUNNING",
+                     "REQUEST_SLOT", "READY", "INPUT_READY", "ACCEPT", "COMPLETION",
+                     "RESPONSE_TAKEN", "FINISH", "CAPTURE", "HOLD", "NEXT_PENDING", "NEXT_FULL"]
+        rest = [n for n in preferred if n in aspects and n not in result]
+        rest += sorted(n for n in aspects if n not in result and n not in rest)
+        columns = 6
+        rows = (len(rest)+columns-1)//columns
+        height = (parent_aspect-top-.04)/max(rows,1)
+        for i, name in enumerate(rest):
+            box(name, .04+(i%columns)*.92/columns, top+(i//columns)*height, .92/columns, height)
     elif kind.startswith("MemoryController<"):
         if set(aspects) not in ({"TRANSACTION", "DEVICE_CONTROL"}, {"TRANSACTION", "DEVICE_CONTROL", "BUS_CLOCK"}): return None
         place("TRANSACTION", 0.05, 0.10, 0.57)
@@ -116,39 +156,7 @@ def placements(kind, aspects, parent_aspect):
         place("DEVICE_CONTROL", 0.70, control_y, 0.25)
         if "BUS_CLOCK" in aspects:
             place("BUS_CLOCK", 0.76, control_y + 0.25 * aspects["DEVICE_CONTROL"] + 0.06, 0.10)
-    elif kind.startswith("MemoryTransactionPort<"):
-        requests = ["REQUEST_OP", "REQUEST_ADDRESS", "REQUEST_DATA", "REQUEST_MASK"]
-        responses = ["RESPONSE_DATA", "RESPONSE_STATUS"]
-        if not set(requests + responses) <= set(aspects): return None
-        place("REQUEST_OP", 0.055, 0.09, 0.19)
-        place("REQUEST_MASK", 0.29, 0.09, 0.19)
-        y = max(0.18, 0.09 + 0.19 * max(aspects["REQUEST_OP"], aspects["REQUEST_MASK"])+0.035)
-        for name in ("REQUEST_ADDRESS", "REQUEST_DATA"):
-            place(name, 0.055, y, 0.42)
-            y += 0.42 * aspects[name] + 0.045
-        right = 0.09
-        for name in responses:
-            place(name, 0.58, right, 0.36)
-            right += 0.36 * aspects[name] + 0.045
-        base = max(y, right) + 0.015
-        # State -> decode -> request/completion decisions -> next state/output.
-        # Explicit signal-flow groups replace the previous alphabetical grid.
-        controls = {
-            "PHASE_0": (0.065, 0.02), "PHASE_1": (0.065, 0.16),
-            "NOT_0": (0.235, 0.02), "NOT_1": (0.235, 0.16),
-            "IDLE": (0.405, 0.00), "SETUP": (0.405, 0.10),
-            "WAIT": (0.405, 0.20), "RESPONSE": (0.405, 0.30),
-            "AVAILABLE": (0.565, 0.00), "READY": (0.725, 0.00), "ACCEPT": (0.875, 0.00),
-            "COMPLETE": (0.565, 0.20), "HOLD": (0.565, 0.30),
-            "NOT_RSP_READY": (0.065, 0.32), "NOT_RESET": (0.235, 0.32),
-            "NEXT_0_BUSY": (0.725, 0.30), "NEXT_0": (0.875, 0.30),
-            "NEXT_1_BUSY": (0.725, 0.40), "NEXT_1": (0.875, 0.40),
-            "VALID": (0.725, 0.10), "START_RUNNING": (0.875, 0.20), "ONE": (0.065, 0.42),
-        }
-        if set(aspects) - set(requests + responses) != set(controls): return None
-        for name, (x, y) in controls.items():
-            place(name, x, base + y, 0.075)
-    elif kind.startswith("MemoryPayloadRegister<"):
+    elif kind.startswith("Register<"):
         bits = sorted((n for n in aspects if n.startswith("BIT_")), key=lambda n: int(n[4:]))
         if not bits: return None
         columns, rows = min(8, len(bits)), (len(bits) + 7) // 8
@@ -195,15 +203,17 @@ def placements(kind, aspects, parent_aspect):
         for name in controls:
             place(name, 0.045, y, 0.10)
             y += 0.10 * aspects[name] + 0.025
-        pitch, gate_width = 0.64 / width, 0.64 * 0.65 / width
+        lanes = width if mux else width // 8
+        pitch, gate_width = 0.64 / lanes, 0.64 * 0.65 / lanes
         gates = set(aspects) - set(controls)
         if not gates:
             return None
-        lane_pitch = gate_width * max(aspects[name] for name in gates) + 0.018
-        for bit in range(width):
+        # Leave vertical clearance for child pin markers as well as boxes.
+        lane_pitch = gate_width * max(aspects[name] for name in gates) + 0.06
+        for bit in range(lanes):
             x = 0.25 + (bit + 0.5) * pitch - gate_width / 2
             for slot in range(slots):
-                name = f"SELECT_{slot}_{bit}" if mux else f"WRITE_{slot * width + bit}"
+                name = f"SELECT_{slot}_{bit}" if mux else f"WRITE_SLOT_{slot}_BYTE_{bit}"
                 if name not in aspects:
                     return None
                 place(name, x, 0.065 + slot * lane_pitch, gate_width)

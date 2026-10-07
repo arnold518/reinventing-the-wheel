@@ -1,8 +1,8 @@
 # Single-cycle core: supporting reference notes
 
-The published stage and core references are now [§4.3](../site-docs/rv32i/4.3/index.md). This working note retains the core-specific material and source markers originally separated from §4.1.4, including the host/reference APIs checked by the documentation tests. The public instruction-level reference remains [§4.1](../site-docs/rv32i/4.1/index.md).
+The published stage and core references are now [§4.4](../site-docs/rv32i/4.4/index.md). This working note retains the core-specific material and source markers originally separated from §4.1.4, including the host/reference APIs checked by the documentation tests. The public instruction-level reference remains [§4.1](../site-docs/rv32i/4.1/index.md).
 
-The pin table remains checked against the implementation by `RV32IReferenceDocumentationTest`. Source markers are retained for source validation and internal API reference.
+The published core pin table is checked against the implementation by `RV32IReferenceDocumentationTest`. Source markers are retained here for source validation and internal API reference.
 
 ## Execution organization
 
@@ -10,14 +10,14 @@ The structural core now has six independently selectable stage components. These
 
 | Phase | Inputs / work | Result | Current implementation |
 | --- | --- | --- | --- |
-| Fetch | Current PC, instruction endpoint | Instruction, PC, PC+4, fetch status | `FETCH`: PC storage, incrementer, requester |
+| Fetch | Current PC, native instruction memory | Instruction, PC, PC+4, fetch status | `FETCH`: PC storage, incrementer, direct read |
 | Decode / register read | Word and register state | Source values and execution controls | `DECODE.CONTROL` and `DECODE.REGISTER_FILE` |
 | Execute | Source values, immediate, old PC | ALU result, address, branch condition, control target | `EXECUTE`: one shared ALU, operand muxes, concurrent branch-target adder |
-| Memory | Effective address, width, store value, data endpoint | Load value and transaction status | `MEMORY`: lane formatting and requester; storage remains external |
+| Memory | Effective address, width, store value, native data memory | Load value and access faults | `MEMORY`: combinational lanes and store permission; storage remains external |
 | Writeback | ALU result, load result, PC+4 | Register write value | `WRITEBACK`: result mux; Decode owns the register-file write port |
 | Next PC | PC+4, control target, branch/jump selection | Candidate next PC and target alignment | `NEXT_PC`: selection and alignment; Fetch owns PC capture |
 
-`EXECUTION_STATUS` separately authorizes completion and records terminal status. The C++ instruction oracle still implements the same architectural transition within `stepImpl()`, with helper functions; it is not the implementation of the six behavioral stage components. The functional store is applied after its checks and before the final PC assignment; a store has no later branch-target check. Transaction memories timestamp a store when the endpoint applies it; the CPU retires it only after its response.
+`EXECUTION_STATUS` separately authorizes completion and records terminal status. The C++ instruction oracle still implements the same architectural transition within `stepImpl()`, with helper functions; it is not the implementation of the six behavioral stage components. The functional store is applied after its checks and before the final PC assignment; a store has no later branch-target check. In the single-cycle circuit, memory writes and architectural writes capture together at the rising edge.
 
 For a successful `lw x5, 4(x6)`: fetch its word, read `x6` and offset `4`, calculate the address, read the word, then commit `x5` and PC+4. A load fault suppresses the normal register and PC updates.
 
@@ -43,50 +43,19 @@ The internal `stepWithoutDataMemoryWrite()` variant computes the same instructio
 
 ## Core IO pins
 
-All words are 32 bits unless a different width is listed. Pin values are binary at supported execution checkpoints.
+See the authoritative [complete core IO table](../site-docs/rv32i/4.4/core.md#io-pins). Both memory ports use the universal byte-addressed REQ/RSP interface, not the old native word-address pins. Pin values are binary at supported execution checkpoints.
 
-| Pin | Direction | Width | Contract |
-| --- | --- | ---: | --- |
-| `CLK` | Input | 1 | Known LOW→HIGH transition attempts an instruction when permitted |
-| `RST` | Input | 1 | High resets core state; reset has priority and does not require a rising edge |
-| `ENABLE` | Input | 1 | High permits execution; low holds architectural state |
-| `IMEM_REQ_VALID` | Output | 1 | Held until request acceptance |
-| `IMEM_REQ_READY` | Input | 1 | Endpoint can accept the request |
-| `IMEM_REQ_OP` | Output | 3 | Read operation (0) |
-| `IMEM_REQ_ADDR` | Output | 32 | Byte address of the accessed word |
-| `IMEM_REQ_WRITE_DATA` | Output | 32 | Zero (fetch is a read) |
-| `IMEM_REQ_WRITE_MASK` | Output | 4 | All byte lanes |
-| `IMEM_RSP_VALID` | Input | 1 | Endpoint response is available |
-| `IMEM_RSP_READY` | Output | 1 | Core acknowledges or discards the response |
-| `IMEM_RSP_READ_DATA` | Input | 32 | Whole word; subword lane selection occurs inside the CPU |
-| `IMEM_RSP_STATUS` | Input | 3 | Zero for success; nonzero becomes access fault |
-| `DMEM_REQ_VALID` | Output | 1 | Held until request acceptance |
-| `DMEM_REQ_READY` | Input | 1 | Endpoint can accept the request |
-| `DMEM_REQ_OP` | Output | 3 | Read (0) or ordinary write (1) |
-| `DMEM_REQ_ADDR` | Output | 32 | Byte address of the accessed word |
-| `DMEM_REQ_WRITE_DATA` | Output | 32 | Store value shifted into its byte lanes |
-| `DMEM_REQ_WRITE_MASK` | Output | 4 | One write enable per byte |
-| `DMEM_RSP_VALID` | Input | 1 | Endpoint response is available |
-| `DMEM_RSP_READY` | Output | 1 | Core acknowledges or discards the response |
-| `DMEM_RSP_READ_DATA` | Input | 32 | Whole word; subword lane selection occurs inside the CPU |
-| `DMEM_RSP_STATUS` | Input | 3 | Zero for success; nonzero becomes access fault |
-| `PC` | Output | 32 | Current architectural PC |
-| `HALTED` | Output | 1 | Latched project halt status |
-| `TRAPPED` | Output | 1 | Latched terminal trap status |
-| `TRAP_CAUSE` | Output | 4 | Project cause encoding |
-| `INSTRUCTION_ATTEMPT` | Output | 1 | Permission to commit the current attempt at the next rising edge |
-
-Both ports connect directly to `MemoryContainer` or a complete `MemoryEndpoint`. CLK/RST are shared. Request acceptance and response completion are different edges. The internal `RV32IMemoryLanes` handles width/sign extension and byte masks; `RV32IMemoryRequest` holds each request stable and tracks obsolete fetches. See [direct memory integration](rv32i-memory-integration.md).
+Both ports connect to zero-wait FF memory endpoints. Their controllers translate requests to native FF storage operations without adding a memory cycle. CLK is shared; native storage reset is tied low so CPU reset preserves images. Two combinational `RV32IZeroWaitMemoryPort` groups translate the stages' native signals. `RV32IMemoryLanes` handles width/sign extension and byte masks. There is no `RV32IMemoryRequest` or pending transaction state in this core. See [memory integration](rv32i-memory-integration.md).
 
 The compact `RV32ISingleCycleSystem` has only six pins: inputs `CLK`, `RST`, `ENABLE` and outputs `PC<32>`, `HALTED`, `TRAPPED`. Its memory and full architectural state are accessed through APIs. It has **no** `TRAP_CAUSE` or external memory pin. The visual `RV32IProgramRoot` is a different testbench: it contains an internal clock and exposes `RST`, `ENABLE`, `PC`, `HALTED`, `TRAPPED`, and `TRAP_CAUSE` while leaving both memories visible.
 
 ## Clock, memory, and unknown-input behavior
 
-The core is active only with `RST=0`, `ENABLE=1`, and neither terminal status set. It waits for the matching instruction response; a load/store additionally waits for the matching data response. REQ_VALID remains asserted until acceptance, not until completion. Endpoint RSP_VALID/data/status stay stable while RSP_READY is low. The attached memory must reject a faulting store rather than write partial data. Instruction/memory response signals must settle before the active edge.
+The core is active only with `RST=0`, `ENABLE=1`, and neither terminal status set. Endpoint responses and all combinational paths must settle before the active edge. For every active access, REQ_READY and RSP_VALID must both be asserted before that edge. This is a zero-wait endpoint contract, not support for stalling on a delayed response. Stores require final commit permission; access/alignment faults suppress stores and ordinary PC/register writes. The universal handshake adds no extra memory cycle here.
 
-The reference computes the instruction result directly on a permitted rising edge, then publishes outputs with its one abstract simulator-delay tick. That tick is **not** gate propagation, a measured hardware latency, or the 4000-unit clock period used by the program fixtures. Falling edges and input-only reevaluations can update request outputs but do not execute another instruction.
+The reference computes the instruction result directly on a permitted rising edge, then publishes outputs with its one abstract simulator-delay tick. That tick is **not** gate propagation, a measured hardware latency, or the clock period chosen for a program fixture. Falling edges and input-only reevaluations can update memory request outputs but do not execute another instruction.
 
-The registered whole-core contract is **known-binary, clock-boundary** equivalence. It is not a four-state-equivalent replacement for every internal gate. Unknown/high-impedance control bits are sanitized to unknown; an unknown clock transition is not a recognized LOW→HIGH edge. Unknown instruction data suppresses an ordinary attempt; a ready fetch-fault response can still terminate without a valid instruction word. In this behavioral single-cycle reference, a load attempting to consume unknown selected data bits raises a simulator logic error, not an architectural RISC-V exception. Unknown neighboring byte lanes are ignored by byte/halfword loads. Do not interpret gate-level X/Z propagation as part of the binary ISA answer sheet.
+The registered whole-core contract is **known-binary, clock-boundary** equivalence. It is not a four-state-equivalent replacement for every internal gate. Unknown/high-impedance control bits are sanitized to unknown; an unknown clock transition is not a recognized LOW→HIGH edge. Unknown instruction data suppresses an ordinary attempt; an asserted instruction-memory fault can still terminate without a valid instruction word. In this behavioral single-cycle reference, a load attempting to consume unknown selected data bits raises a simulator logic error, not an architectural RISC-V exception. Unknown neighboring byte lanes are ignored by byte/halfword loads. Do not interpret gate-level X/Z propagation as part of the binary ISA answer sheet.
 
 Reference-only host setters can preload a register or change reset PC. They are not general public hardware pins, and they do not imply that the structural core supports an arbitrary reset vector. The visual program fixtures use zero reset PC and zero initial registers.
 

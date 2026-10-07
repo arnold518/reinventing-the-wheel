@@ -17,6 +17,12 @@ struct EndpointConfig {
     size_t max_resident_bytes = 64 * 1024 * 1024;
     size_t max_history_bytes = 16 * 1024 * 1024;
     bool paged = true, record_history = true;
+    // Expand cells only when requested. A structural controller can otherwise
+    // drive a scalable native device of any supported capacity.
+    bool expanded_storage = true;
+    // FF-only contract: the consumer holds RSP_READY high, so no response
+    // needs to be retained after the accepting edge.
+    bool always_ready = false;
     std::string image_hex;
     void validate(size_t width, Technology, bool structural = false) const;
 };

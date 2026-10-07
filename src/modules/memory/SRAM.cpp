@@ -41,16 +41,19 @@ public:
 }
 
 void SRAMDeviceConfig::validate(size_t width, bool structural) const {
-    if ((width != 8 && width != 16 && width != 32) || !depth_words || depth_words > (size_t{1} << 24) ||
+    if ((width != 8 && width != 16 && width != 32) || !depth_words || depth_words > UINT32_MAX / (width / 8) ||
         !words_per_row || words_per_row > 64 || (words_per_row & (words_per_row - 1)) ||
         depth_words % words_per_row || phase_ticks < 32 || phase_ticks > 10000)
-        throw std::invalid_argument("SRAM requires W=8/16/32, N=1..2^24, power-of-two K<=64 dividing N, phase_ticks=32..10000");
+        throw std::invalid_argument("SRAM requires W=8/16/32, 32-bit byte capacity, power-of-two K<=64 dividing N, phase_ticks=32..10000");
     if (structural && depth_words > 4096 / width)
         throw std::invalid_argument("Structural SRAM and pin-expanded banks are limited to 4096 cells");
 }
 SRAMDeviceConfig sramConfigFromParameters(const circuit::ParameterMap& p) {
     SRAMDeviceConfig c;
+    c.record_history = circuit::memory_device::historyParameter(p);
+    c.storage_limits = circuit::memory_device::storageLimits(p);
     for (const auto& [key, value] : p) {
+        if (key == "record_history" || key == "paged" || key == "max_resident_bytes" || key == "max_history_bytes") continue;
         size_t n = 0;
         auto result = std::from_chars(value.data(), value.data() + value.size(), n);
         if (result.ec != std::errc{} || result.ptr != value.data() + value.size())
@@ -63,8 +66,10 @@ SRAMDeviceConfig sramConfigFromParameters(const circuit::ParameterMap& p) {
     return c;
 }
 circuit::ParameterMap sramParameters(const SRAMDeviceConfig& c) {
-    return {{"depth_words", std::to_string(c.depth_words)}, {"words_per_row", std::to_string(c.words_per_row)},
-            {"phase_ticks", std::to_string(c.phase_ticks)}};
+    auto p = circuit::memory_device::storageParameters(c.storage_limits);
+    p.insert({{"depth_words", std::to_string(c.depth_words)}, {"words_per_row", std::to_string(c.words_per_row)},
+              {"phase_ticks", std::to_string(c.phase_ticks)}, {"record_history", c.record_history ? "1" : "0"}});
+    return p;
 }
 
 namespace circuit::sram {
@@ -222,13 +227,20 @@ void SRAMRowDecoder::buildInternals(ComponentBuilder& b) {
     auto split = b.addNewComponent<BitSplitter<32>>("ADDRESS");
     w.connect(getInputPin<32>("WORD_ADDR"), split->getInputPin<32>("IN"));
     const auto low = addressBits(config_.words_per_row);
+    const auto row_bits = addressBits(config_.rows());
     std::vector<StructuralWiring::PinPtr> pos, neg;
-    for (size_t bit = low; bit < 32; ++bit) {
+    for (size_t bit = low; bit < low + row_bits; ++bit) {
         auto a = split->getOutputPin("OUT_" + std::to_string(bit));
         pos.push_back(a); neg.push_back(w.invert("NOT_" + std::to_string(bit), a));
     }
+    std::vector<StructuralWiring::PinPtr> high_zero;
+    for (size_t bit = low + row_bits; bit < 32; ++bit)
+        high_zero.push_back(w.invert("NOT_" + std::to_string(bit),
+            split->getOutputPin("OUT_" + std::to_string(bit))));
+    auto valid_high = w.reduce("HIGH_ADDRESS_VALID", std::move(high_zero), true);
+    auto enabled = w.both("VALID_AND_ENABLED", valid_high, getInputPin("ENABLE"));
     for (size_t r = 0; r < config_.rows(); ++r) {
-        w.connect(decodeMatch(w, "ROW_" + std::to_string(r), pos, neg, r, getInputPin("ENABLE")),
+        w.connect(decodeMatch(w, "ROW_" + std::to_string(r), pos, neg, r, enabled),
                   getOutputPin("WL_" + std::to_string(r)));
     }
     w.finish();
@@ -241,7 +253,9 @@ SRAMPrecharge::SRAMPrecharge(std::string name, size_t columns)
 void SRAMPrecharge::buildInternals(ComponentBuilder& b) {
     circuit::memory_detail::StructuralWiring w(b);
     auto one = w.constant("ONE", true);
-    for (size_t c = 0; c < columns_; ++c) w.connect(w.both("COLUMN_" + std::to_string(c), getInputPin("ENABLE"), one), getOutputPin("PRECHARGE_" + std::to_string(c)));
+    auto precharge = w.both("PRECHARGE", getInputPin("ENABLE"), one);
+    for (size_t c = 0; c < columns_; ++c)
+        w.connect(precharge, getOutputPin("PRECHARGE_" + std::to_string(c)));
     w.finish();
 }
 SRAMWriteDriver::SRAMWriteDriver(std::string name) : IOComponent(std::move(name), [](IOComponent* s) {

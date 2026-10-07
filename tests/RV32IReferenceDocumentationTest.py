@@ -25,7 +25,7 @@ DEFERRED_CORE = (REPOSITORY / "docs/rv32i-single-cycle-documentation-notes.md").
 PROGRAM_COUNT = int(re.search(r"\bProgramCount\s*=\s*(\d+)",
     (REPOSITORY / "include/rv32i/RV32IValidationConfig.hpp").read_text())[1])
 PROGRAM_DOCUMENTS = {int(match[1]): source for path, source in DOCUMENTS.items()
-    if (match := re.fullmatch(r"4\.1/programs/program-(\d+)\.md", path))}
+    if (match := re.fullmatch(r"4\.2/programs/program-(\d+)\.md", path))}
 ENTRIES = {}
 for path, source in DOCUMENTS.items():
     if "/instructions/" not in path or path.endswith("/index.md"):
@@ -295,11 +295,13 @@ class RV32IReferenceDocumentationTest(unittest.TestCase):
             self.assertEqual(result[:3], ["INVALID", "Invalid", status], word)
 
     def test_pin_table_matches_public_schema(self):
-        # Read the compiled schema, including the shared universal-port helper.
+        # Check the published contract, including grouped universal-port rows.
         result = subprocess.run([PROBE, "pins"], text=True, capture_output=True, check=True)
         pins = [tuple(line.split()) for line in result.stdout.splitlines()]
-        section = DEFERRED_CORE.split("## Core IO pins", 1)[1].split("## Clock,", 1)[0]
-        documented = re.findall(r"(?m)^\| `([A-Z_]+)` \| (Input|Output) \| (\d+) \|", section)
+        section = DOCUMENTS["4.4/core.md"].split("### IO pins", 1)[1].split("### Behavior", 1)[0]
+        rows = re.findall(r"(?m)^\| (.*?) \| (Input|Output) \| (\d+)(?: each)? \|", section)
+        documented = [(name, direction, width) for names, direction, width in rows
+                      for name in re.findall(r"`([A-Z_]+)`", names)]
         self.assertEqual(sorted(documented), sorted(pins))
         system = (REPOSITORY / "src/modules/rv32i/RV32ISingleCycleSystem.cpp").read_text()
         function = system.split("void initializeSystemPins", 1)[1].split("} // namespace", 1)[0]
@@ -333,7 +335,7 @@ class RV32IReferenceDocumentationTest(unittest.TestCase):
             self.assertIn(f"## {heading}", reference)
         for hardware_detail in ("Core IO pins", "Clock, memory, and unknown-input behavior",
                                 "RV32IReferenceCore", "RV32IReferenceSystem",
-                                "IMEM_RSP_VALID", "`WRITEBACK`", "`DECODE.CONTROL`"):
+                                "RV32IZeroWaitMemoryPort", "`WRITEBACK`", "`DECODE.CONTROL`"):
             self.assertNotIn(hardware_detail, reference)
             self.assertIn(hardware_detail, DEFERRED_CORE)
 
@@ -355,9 +357,10 @@ class RV32IReferenceDocumentationTest(unittest.TestCase):
             self.assertEqual(result.stdout, expected + "\n")
 
     def test_program_rendering_and_links(self):
-        self.assertEqual(len(PROGRAM.findall(DOCUMENT)), PROGRAM_COUNT)
-        for scenario, test in PROGRAM.findall(DOCUMENT):
-            self.assertIn(f"scenario={scenario}&amp;core_fidelity=behavioral", DOCUMENT)
+        program_document = "\n\n".join(PROGRAM_DOCUMENTS.values())
+        self.assertEqual(len(PROGRAM.findall(program_document)), PROGRAM_COUNT)
+        for scenario, test in PROGRAM.findall(program_document):
+            self.assertIn(f"scenario={scenario}&amp;core_fidelity=behavioral", program_document)
             data = {"scenario": scenario, "registeredTest": test, "coreFidelity": "behavioral",
                     "checkpoints": [{"rowIndex": 0, "time": 7001, "index": 7,
                         "label": "I0 ADDI @ 0x00000000", "detail": "x1 < 2 & > 0"}]}
@@ -371,7 +374,7 @@ class RV32IReferenceDocumentationTest(unittest.TestCase):
 
     def test_all_program_pages_follow_the_same_pattern(self):
         self.assertEqual(set(PROGRAM_DOCUMENTS), set(range(1, PROGRAM_COUNT + 1)))
-        catalogue = DOCUMENTS["4.1/programs/index.md"]
+        catalogue = DOCUMENTS["4.2/programs/index.md"]
         fields = ["Purpose", "Setup", "Assembly", "Execution", "Expected result", "Simulation and checkpoints"]
         for number, source in PROGRAM_DOCUMENTS.items():
             self.assertTrue(source.startswith(f"# Program {number}: "))

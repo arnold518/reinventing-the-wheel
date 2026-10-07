@@ -72,10 +72,16 @@ int main(int argc, char** argv) {
         }
 
         size_t revision = 0;
+        int64_t address = -1;
+        size_t count = 64;
         std::map<std::string, std::string> overrides;
         while (cursor < static_cast<size_t>(argc)) {
             const std::string option = argv[cursor++];
-            if (option == "--revision") {
+            if (option == "--address" || option == "--count") {
+                if (cursor >= static_cast<size_t>(argc)) throw std::invalid_argument("Missing memory page argument");
+                if (option == "--address") address = static_cast<int64_t>(parseIndex(argv[cursor++]));
+                else count = parseIndex(argv[cursor++]);
+            } else if (option == "--revision") {
                 if (cursor >= static_cast<size_t>(argc)) {
                     throw std::invalid_argument("--revision requires a value");
                 }
@@ -103,7 +109,7 @@ int main(int argc, char** argv) {
         } else if (command == "state") {
             std::cout << session.stateJson(state_index);
         } else if (command == "component") {
-            std::cout << session.componentStateJson(state_index, component_id);
+            std::cout << session.componentStateJson(state_index, component_id, address, count);
         } else {
             std::cout << session.topologySliceJson(owner_ids);
         }

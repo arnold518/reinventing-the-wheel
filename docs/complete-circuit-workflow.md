@@ -1,5 +1,12 @@
 # Complete Circuit Building Workflow
 
+> Historical API examples below predate the current component catalog. New components must use `Component::create`, register their contracts/fidelities and evidence, and place reusable scenarios in `include/tests` / `src/tests`. Register scenarios in `TestRegistry.cpp` and invoke them through `SimulationTestRunner`; do not add a Python class or executable per test. Build serially (`-j1`) on this host. Consult `docs/rv32i-cleanup.md` for retired interfaces.
+
+For current menu registration and native/browser execution, see
+[Test organization](test-organization.md). New visible components also need a
+title/group in `visualizer-v2/static/scenarios.json`; new browser/WASM checks
+belong in `tests/web-tests.json`.
+
 This guide shows the **complete step-by-step workflow** for building a new circuit from scratch, using `FullAdder` as the reference example.
 
 **NEW**: This guide now shows **both old and new APIs**. The new APIs (introduced Dec 2025) reduce boilerplate by 50% while maintaining type safety.
@@ -759,11 +766,11 @@ From project root:
 mkdir -p build
 cd build
 cmake ..
-make -j$(nproc)
+make -j1
 
 # Subsequent builds (after changes)
 cd build
-make -j$(nproc)
+make -j1
 ```
 
 **Expected output:**
@@ -807,22 +814,21 @@ Test project /path/to/build
 
 **File:** `visualizer/main.py`
 
-Change the test scenario (line ~106):
+Use the registered test name or its visualizer alias:
 
 ```python
 def initialize_circuit(self):
-    # Change this line to use your test:
-    self.test_scenario = circuit_backend.FullAdderTest()  # <-- YOUR TEST HERE
+    self.test_scenario = circuit_backend.create_test_by_name("FullAdderTest")
 
     self.test_scenario.setup_circuit()
     root_cpp = self.test_scenario.get_root()
     # ... rest of initialization ...
 ```
 
-Run from project root:
+The actual Pygame client accepts a scenario argument; no source edit is needed:
 ```bash
 cd visualizer
-python main.py
+python main.py full-adder
 ```
 
 **Note:** The Python module (`circuit_backend.cpython-*.so`) is automatically available in the `visualizer/` directory after building - no manual copying required!
@@ -840,21 +846,20 @@ python main.py
 
 When adding a new circuit (e.g., FullAdder), you need to touch these files:
 
-### Files to Create (5)
+### Files to Create
 
 - [ ] `include/modules/composite/FullAdder.hpp` - Component header
 - [ ] `src/modules/composite/FullAdder.cpp` - Component implementation
 - [ ] `include/tests/FullAdderTest.hpp` - Test header
 - [ ] `src/tests/FullAdderTest.cpp` - Test implementation
-- [ ] `tests/FullAdderTest.cpp` - CTest executable (with main())
 
-### Files to Modify (5)
+### Files to Modify
 
 - [ ] `CMakeLists.txt` - Add to CORE_LOGIC_SOURCES (2 lines)
 - [ ] `src/bindings/ModulesBinding.cpp` - Add include + binding (~13 lines)
-- [ ] `src/bindings/TestsBinding.cpp` - Add include + binding (~11 lines)
-- [ ] `tests/CMakeLists.txt` - Add to TEST_SOURCES (1 line)
-- [ ] `visualizer/main.py` - Change test scenario (1 line)
+- [ ] `src/tests/TestRegistry.cpp` - Register the reusable scenario factory
+- [ ] `tests/CMakeLists.txt` - Register with the shared `SimulationTestRunner`
+- [ ] `visualizer-v2/static/scenarios.json` - Add the component title/group
 
 ### Auto-Generated (Don't Edit)
 

@@ -239,10 +239,15 @@ void SRAMContractTest::verifyResults() {
         require(results.targets.size() == 2, "SRAM cell/row must have both fidelities");
         runner.compare(results.targets[0], results.targets[1]);
     }
-    for (auto config : {SRAMDeviceConfig{0,1}, SRAMDeviceConfig{5,2}, SRAMDeviceConfig{4,3}, SRAMDeviceConfig{4,0}, SRAMDeviceConfig{4,2,1}, SRAMDeviceConfig{size_t{1} << 25, 2}}) {
+    for (auto config : {SRAMDeviceConfig{0,1}, SRAMDeviceConfig{5,2}, SRAMDeviceConfig{4,3}, SRAMDeviceConfig{4,0}, SRAMDeviceConfig{4,2,1}}) {
         bool rejected = false; try { config.validate(8); } catch (const std::invalid_argument&) { rejected = true; }
         require(rejected, "Invalid SRAM geometry accepted");
     }
+    SRAMDeviceConfig{size_t{1} << 25, 2}.validate(8); // Scalable devices exceed the old 16-Mword cap.
+    bool oversized = false;
+    try { SRAMDeviceConfig{size_t{1} << 30, 2}.validate(32); }
+    catch (const std::invalid_argument&) { oversized = true; }
+    require(oversized, "SRAM exceeded its 32-bit byte capacity");
     bool rejected = false; try { sramConfigFromParameters({{"typo", "4"}}); } catch (const std::invalid_argument&) { rejected = true; }
     require(rejected, "Unknown SRAM parameter accepted");
     // Nontrivial geometry and independently maintained randomized byte-write oracle.

@@ -47,6 +47,9 @@ struct ContractDescriptor {
     std::string observation = "stable-after-settle";
     // Optional exact schema for contracts whose pin count depends on parameters.
     std::function<std::vector<PinDescriptor>(const ParameterMap&)> parameterized_pins = {};
+    // Scalable abstractions may default to a compact implementation while
+    // retaining an explicit structural choice. Does not alter profile identity.
+    Fidelity preferred_fidelity = Fidelity::Structural;
 
     std::vector<PinDescriptor> pinsFor(const ParameterMap& parameters) const {
         return parameterized_pins ? parameterized_pins(parameters) : pins;

@@ -1,5 +1,6 @@
-import createCircuitSimModule from "./circuitsim_wasm.js?v=7";
-import { upgradeDefaultLayout } from "./layout_migration.mjs?v=3";
+import createCircuitSimModule from "./circuitsim_wasm.js?v=9";
+import { upgradeDefaultLayout } from "./layout_migration.mjs?v=4";
+import { defaultAlias, aliasesFor as catalogAliasesFor, scenarioOptions as makeScenarioOptions } from './scenario_catalog.mjs';
 
 const DB_NAME = "circuitsim-visualizer-v2";
 const DB_VERSION = 1;
@@ -7,72 +8,7 @@ const LAYOUT_KEY = "layout";
 const PROFILE_KEY = "profiles";
 const NON_VISUALIZABLE = new Set(["WireTemplateTest", "RewireValidationTest"]);
 
-const PREFERRED_ALIASES = {
-  FullAdderTest: ["full-adder", "fulladder"],
-  HalfAdderTest: ["half-adder", "halfadder"],
-  FullCircuitTest: ["full-circuit", "fullcircuit"],
-  SRLatchTest: ["sr-latch", "srlatch"],
-  GatedDLatchTest: ["gated-d-latch", "gateddlatch", "d-latch"],
-  DFlipFlopTest: ["dff", "d-flip-flop"],
-  ClockGeneratorTest: ["clock"],
-  FlipFlopCellTest: ["flip-flop-cell", "flipflopcell"],
-  Memory64Kx32Test: ["memory64kx32", "memory-64kx32"],
-  Register32Test: ["register32", "register-32"],
-  RegisterFile4x32Test: ["register-file4x32", "register-file-4x32", "registerfile4x32", "rf4x32"],
-  RegisterFile32x32Test: ["rv32i-register-file", "register-file32x32", "register-file-32x32", "registerfile32x32", "rf32x32"],
-  Memory4x32Test: ["memory4x32", "memory-4x32", "mem4x32"],
-  Memory32x32Test: ["memory32x32", "memory-32x32", "mem32x32"],
-  ConstantValue1Test: ["constant1"],
-  ConstantValue2Test: ["constant2"],
-  ConstantValue4Test: ["constant4"],
-  ConstantValue32Test: ["constant32"],
-  Adder8Test: ["adder8", "8-bit-adder"],
-  ZeroDetect8Test: ["zero-detect8"],
-  ALU8Test: ["alu8"],
-  AddSub8Test: ["addsub8"],
-  ArithmeticUnit8Test: ["arithmetic8"],
-  LogicUnit8Test: ["logic8"],
-  BarrelShifter8Test: ["barrel-shifter8"],
-  CompareSelect8Test: ["compare-select8"],
-  ALU8FlagUnitTest: ["alu8-flags"],
-  ALU8ControlDecoderTest: ["alu8-control"],
-  ALU8ResultSelectorTest: ["alu8-result-selector"],
-  ALU32ControlDecoderTest: ["alu32-control"],
-  ALU32CompareUnitTest: ["alu32-compare"],
-  ALU32ResultSelectorTest: ["alu32-result-selector"],
-  ALU32FlagUnitTest: ["alu32-flags"],
-  Mux32to1Test: ["mux32to1"],
-  Mux4to1_32bitTest: ["mux4to1-32bit"],
-  Mux32to1_32bitTest: ["mux32to1-32bit"],
-  Decoder2to4Test: ["decoder2to4", "decoder-2to4", "decoder-2-4"],
-  Decoder5to32Test: ["decoder5to32", "decoder-5to32", "decoder-5-32"],
-  RewireTest: ["rewire"],
-  Adder32Test: ["adder32"],
-  AddSub32Test: ["addsub32", "add-sub32"],
-  Logic32Test: ["logic32"],
-  ZeroDetect32Test: ["zero-detect32"],
-  Comparator32Test: ["comparator32"],
-  Shifter32Test: ["shifter32"],
-  ALU32Test: ["alu32", "rv32i-alu32"],
-  ALU32RepresentativeSliceTest: ["alu32-slice"],
-  RV32ISingleCycleCoreTest: ["rv32i-core"],
-  RV32ISingleCycleFetchStageTest: ["rv32i-single-cycle-fetch"],
-  RV32ISingleCycleDecodeStageTest: ["rv32i-single-cycle-decode"],
-  RV32ISingleCycleExecuteStageTest: ["rv32i-single-cycle-execute"],
-  RV32ISingleCycleMemoryStageTest: ["rv32i-single-cycle-memory"],
-  RV32ISingleCycleWritebackStageTest: ["rv32i-single-cycle-writeback"],
-  RV32ISingleCycleNextPCStageTest: ["rv32i-single-cycle-next-pc"],
-  RV32IFiveStageCoreTest: ["rv32i-five-stage-core", "rv32i-pipeline-core"],
-  RV32IControlFlowUnitTest: ["rv32i-control-flow"],
-  RV32IMemoryLanesTest: ["rv32i-memory-lanes"],
-  RV32IMemoryRequestTest: ["rv32i-memory-request"],
-  RV32IMemoryAlignmentUnitTest: ["rv32i-memory-alignment"],
-  RV32IBitPatternMatcherTest: ["rv32i-pattern-matcher"],
-  RV32IDecodeControlUnitTest: ["rv32i-decode-control", "rv32i-decode"],
-  RV32IExecutionControlStatusUnitTest: ["rv32i-execution-status", "rv32i-status"],
-  RV32IProgramLoaderTest: ["rv32i-program-loader", "rv32i-program", "program-loader"],
-};
-
+let scenarioCatalog = null;
 let modulePromise = null;
 let bridge = null;
 let defaultLayout = null;
@@ -140,10 +76,16 @@ function migrateProfileOverrides(overrides) {
     }
     return path;
   };
-  const currentPath = path => stagePath(ffPath(path)).replace(
-    /^(REGISTER32_ROOT|RV32I[^.]*\.(?:[A-Za-z0-9_]+\.)*[A-Za-z0-9_]+_STATE)\.(BIT_([0-9]|[12][0-9]|3[01])|D_SPLIT|Q_JOIN)(?=\.|$)/,
-    (_match, parent, old, bit) => `${parent}.STORAGE.${bit !== undefined ? 'CELL_' + bit : {D_SPLIT:'DATA',Q_JOIN:'OUTPUT'}[old]}`,
-  );
+  const currentPath = path => stagePath(ffPath(path))
+    .replace(/^(REGISTER32_ROOT|RV32I[^.]*\.(?:[A-Za-z0-9_]+\.)*[A-Za-z0-9_]+_STATE)\.STORAGE$/, '$1')
+    .replace(
+      /^(REGISTER32_ROOT|RV32I[^.]*\.(?:[A-Za-z0-9_]+\.)*[A-Za-z0-9_]+_STATE)\.(?:STORAGE\.)?(CELL_([0-9]|[12][0-9]|3[01])|DATA|OUTPUT|D_SPLIT|Q_JOIN)(?=\.|$)/,
+      (_match, parent, old, bit) => `${parent}.${bit !== undefined ? 'BIT_' + bit : {DATA:'INPUT_BITS',OUTPUT:'OUTPUT_BITS',D_SPLIT:'INPUT_BITS',Q_JOIN:'OUTPUT_BITS'}[old]}`,
+    )
+    .replace(
+      /(^|\.)(REGISTER_FILE|REGISTER_FILE32X32_ROOT)\.STORAGE\.WORD_(\d+)\.(CELL_(\d+)|DATA|OUTPUT)(?=\.|$)/,
+      (_match, dot, parent, word, old, bit) => `${dot}${parent}.STORAGE.WORD_${word}.${bit !== undefined ? 'BIT_' + bit : {DATA:'INPUT_BITS',OUTPUT:'OUTPUT_BITS'}[old]}`,
+    );
   const result = Object.fromEntries(Object.entries(migrated).map(([path, fidelity]) => [currentPath(path), fidelity]));
   for (const [path, fidelity] of Object.entries(migrated)) if (currentPath(path) === path) result[path] = fidelity;
   return Object.fromEntries(Object.entries(result).sort(([left], [right]) => left.localeCompare(right)));
@@ -173,23 +115,7 @@ function colorForLayoutType(layoutType) {
   return clone((palette.type_colors || {})[layoutType] || fallback);
 }
 
-function defaultAlias(className) {
-  const stem = className.endsWith("Test") ? className.slice(0, -4) : className;
-  return stem
-    .replaceAll("_", "-")
-    .replace(/([A-Z]+)([A-Z][a-z])/g, "$1-$2")
-    .replace(/([a-z0-9])([A-Z])/g, "$1-$2")
-    .toLowerCase();
-}
-
-function aliasesFor(name) {
-  const single = name.match(/^RV32ISingleCycleSystemTest\/program-([0-9]+)$/);
-  if (single) return [`rv32i-program${Number(single[1])}`];
-  const five = name.match(/^RV32IFiveStageCoreProgramTest\/program-([0-9]+)$/);
-  if (five) return [`rv32i-five-stage-program${Number(five[1])}`];
-  return PREFERRED_ALIASES[name] || [defaultAlias(name)];
-}
-
+function aliasesFor(name) { return catalogAliasesFor(name, scenarioCatalog); }
 function mergeLayout(base, override) {
   // Only the two reorganized ALUs need a one-time child-topology reflow.
   // Keep styling and all unrelated/user-adjusted current-topology layouts.
@@ -331,23 +257,26 @@ async function initialize() {
       fetch(new URL("./layout.json", import.meta.url)),
       fetch(new URL("./profiles.json", import.meta.url)),
       fetch(new URL("./palette.json", import.meta.url)),
+      fetch(new URL('./scenarios.json', import.meta.url)),
     ]);
     const module = await createCircuitSimModule({
-      locateFile: (path) => new URL(`${path}?v=7`, import.meta.url).toString(),
+      locateFile: (path) => new URL(`${path}?v=9`, import.meta.url).toString(),
       print: (...args) => console.log("[CircuitSim WASM]", ...args),
       printErr: (...args) => console.error("[CircuitSim WASM]", ...args),
     });
     bridge = new module.WasmVisualizer();
     descriptors = JSON.parse(bridge.visualizableTestsJson())
       .filter((item) => item.visualizable && !NON_VISUALIZABLE.has(item.name));
-    scenarioOptions = descriptors.map((item) => {
+    const [layoutResponse, profileResponse, paletteResponse, catalogResponse] = await assetsPromise;
+    if (!catalogResponse.ok) throw new Error('Unable to load the scenario catalog');
+    scenarioCatalog = await catalogResponse.json();
+    scenarioOptions = makeScenarioOptions(descriptors, scenarioCatalog);
+    for (const item of descriptors) {
       const aliases = aliasesFor(item.name);
       const key = aliases[0] || defaultAlias(item.name);
       const allAliases = new Set([key, defaultAlias(item.name), item.name.toLowerCase(), ...aliases]);
-      for (const alias of allAliases) scenariosByAlias.set(alias, { ...item, key });
-      return { key, className: item.name };
-    });
-    const [layoutResponse, profileResponse, paletteResponse] = await assetsPromise;
+      for (const alias of allAliases) scenariosByAlias.set(alias.toLowerCase().replaceAll('_', '-'), { ...item, key });
+    }
     if (!layoutResponse.ok) throw new Error("Unable to load the bundled CircuitSim layout");
     if (!profileResponse.ok) throw new Error("Unable to load the bundled CircuitSim profiles");
     if (!paletteResponse.ok) throw new Error("Unable to load the bundled CircuitSim palette");
@@ -391,7 +320,7 @@ async function localProfileStore() {
 
 async function loadScenario(scenarioValue, requestedOverrides = null, requestedRevision = null, coreFidelity = null) {
   const descriptor = normalizeScenario(scenarioValue);
-  if (coreFidelity && (!/^rv32i-(?:five-stage-)?program[0-9]+$/.test(descriptor.key)
+  if (coreFidelity && (!/^rv32i-(?:(?:five-stage|baseline)-|predict-[a-z-]+-)?program[0-9]+$/.test(descriptor.key)
       || !["structural", "behavioral"].includes(coreFidelity))) {
     throw new TypeError("core_fidelity requires an RV32I program and structural or behavioral");
   }
@@ -470,6 +399,8 @@ async function handleRequest(message) {
     return JSON.stringify({
       default: scenariosByAlias.has("adder8") ? "adder8" : fallback,
       scenarios: scenarioOptions,
+      groups: scenarioCatalog.groups,
+      catalog: scenarioCatalog,
       runtime: "wasm",
     });
   }
@@ -486,9 +417,14 @@ async function handleRequest(message) {
     if (query.get("session") && query.get("session") !== currentPayload?.sessionId) {
       throw new Error("Unknown or expired visualizer session");
     }
-    return bridge.componentStateJson(
+    const address = query.has("address") ? Number(query.get("address")) : -1;
+    const count = query.has("count") ? Number(query.get("count")) : 64;
+    if (!Number.isInteger(address) || address < -1 || address > 0xffffffff
+        || !Number.isInteger(count) || count < 1 || count > 256) throw new TypeError("Invalid memory page");
+    return bridge.memoryPageJson(
       Number(query.get("index") || 0),
       String(query.get("componentId") || ""),
+      address, count,
     );
   }
   if (message.method === "POST" && path === "/api/topology") {

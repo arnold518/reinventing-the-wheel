@@ -71,7 +71,8 @@ class DocumentationExamplesTest(unittest.TestCase):
         return self.states[key]
 
     def test_complete_scenario_coverage(self):
-        expected_counts = {"adder8": 14, "addsub8": 80, "arithmetic8": 80, "logic8": 32,
+        expected_counts = {"half-adder": 16, "full-adder": 64,
+            "adder8": 14, "addsub8": 80, "arithmetic8": 80, "logic8": 32,
             "barrel-shifter8": 96, "zero-detect8": 11, "compare-select8": 40,
             "alu8-flags": 128, "alu8-control": 32, "alu8-result-selector": 66, "alu8": 70,
             "sr-latch": 8, "gated-d-latch": 12, "dff": 14, "flip-flop-cell": 13,
@@ -81,7 +82,7 @@ class DocumentationExamplesTest(unittest.TestCase):
             "sram-sense-amplifier": 5, "sram-column-selector": 2, "sram-access-control": 5,
             "sram-output-buffer": 4, "sram": 35}
         self.assertEqual({key: len(data["rows"]) for key, data in self.exports.items()}, expected_counts)
-        self.assertEqual(sum(expected_counts.values()), 1027)
+        self.assertEqual(sum(expected_counts.values()), 1107)
         for path, source in self.sources.items():
             count = len(MARKER.findall(source))
             self.assertEqual(count, source.count("### Examples"), path)
@@ -194,7 +195,7 @@ class DocumentationExamplesTest(unittest.TestCase):
                     self.assertEqual(behavior_headings[-2:], ["C++ example", "Unknown inputs and timing"])
                     self.assertEqual(behavior_headings.count("C++ example"), 1)
                     self.assertEqual(implementation_headings[0], "Structural implementation")
-                    has_behavioral = component not in {"SRLatch", "GatedDLatch", "DFlipFlop",
+                    has_behavioral = component not in {"HalfAdder", "FullAdder", "SRLatch", "GatedDLatch", "DFlipFlop",
                         "SRAMBitlinePair", "SRAMRowDecoder", "SRAMPrecharge", "SRAMWriteDriver",
                         "SRAMSenseAmplifier", "SRAMColumnSelector<W>", "SRAMAccessControl<W>", "SRAMOutputBuffer<W>"}
                     self.assertEqual(implementation_headings.count("Behavioral implementation"), int(has_behavioral))
@@ -208,7 +209,18 @@ class DocumentationExamplesTest(unittest.TestCase):
                     self.assertNotIn("#### Binary behavioral reference", section)
                     self.assertNotIn("Simulator variants", source)
                     self.assertNotIn("#### Structural circuit", section)
-        self.assertEqual(component_count, 30)
+        self.assertEqual(component_count, 32)
+
+    def test_arithmetic_reference_order_and_old_links(self):
+        source = self.sources[REPOSITORY / "site-docs/alu8/2.1.md"]
+        self.assertEqual(re.findall(r"(?m)^## 2\.1\.(\d+)\. `([^`]+)`$", source), [
+            (str(index), component) for index, component in enumerate(
+                ("HalfAdder", "FullAdder", "Adder8", "AddSub8", "ArithmeticUnit8"), 1)])
+        for anchor, number, component in (("211-adder8", 3, "Adder8"),
+                                           ("212-addsub8", 4, "AddSub8"),
+                                           ("213-arithmeticunit8", 5, "ArithmeticUnit8")):
+            self.assertEqual(source.count(f'<a id="{anchor}"></a>'), 1)
+            self.assertIn(f'<a id="{anchor}"></a>\n\n## 2.1.{number}. `{component}`', source)
 
     def test_sram_cpp_examples_compile_and_match_binary_device_rows(self):
         source = (REPOSITORY / "site-docs/memory/3.1.2.md").read_text()
@@ -247,8 +259,10 @@ int main() {
         for path, source in self.sources.items():
             if path.parent.name == "alu8":
                 snippets.extend(re.findall(r"```cpp\n(.*?)\n```", source, re.S))
-        self.assertEqual(len(snippets), 11)
+        self.assertEqual(len(snippets), 13)
         calls = {
+            "half-adder": ("half_adder_ref", "A B"),
+            "full-adder": ("full_adder_ref", "A B Carry_in"),
             "adder8": ("adder8_ref", "A B Cin"),
             "addsub8": ("addsub8_ref", "A B SUB C_IN"),
             "arithmetic8": ("arithmetic8_ref", "A B OP C_IN"),
@@ -285,6 +299,7 @@ int main() {
                 checks.append("}")
                 row_counts[scenario] += 1
         self.assertEqual(row_counts, {
+            "half-adder": 4, "full-adder": 8,
             "adder8": 12, "addsub8": 80, "arithmetic8": 80, "logic8": 32,
             "barrel-shifter8": 96, "zero-detect8": 7, "compare-select8": 40,
             "alu8-flags": 128, "alu8-control": 32, "alu8-result-selector": 64, "alu8": 70})

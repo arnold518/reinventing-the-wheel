@@ -4,6 +4,7 @@
 #include <emscripten/val.h>
 
 #include <map>
+#include <cmath>
 #include <memory>
 #include <stdexcept>
 #include <string>
@@ -52,6 +53,12 @@ public:
         return session().componentStateJson(index, component_id);
     }
 
+    std::string memoryPageJson(size_t index, const std::string& component_id, double address, size_t count) {
+        if (!std::isfinite(address) || std::floor(address) != address || address < -1 || address > UINT32_MAX)
+            throw std::invalid_argument("Invalid memory page address");
+        return session().componentStateJson(index, component_id, static_cast<int64_t>(address), count);
+    }
+
     std::string topologySliceJson(const emscripten::val& owner_ids) const {
         if (!owner_ids.isArray()) {
             throw std::invalid_argument("ownerIds must be an array");
@@ -90,5 +97,6 @@ EMSCRIPTEN_BINDINGS(circuitsim_visualizer) {
         .function("stateJson", &WasmVisualizer::stateJson)
         .function("exampleRowsJson", &WasmVisualizer::exampleRowsJson)
         .function("componentStateJson", &WasmVisualizer::componentStateJson)
+        .function("memoryPageJson", &WasmVisualizer::memoryPageJson)
         .function("topologySliceJson", &WasmVisualizer::topologySliceJson);
 }

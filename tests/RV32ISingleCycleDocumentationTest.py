@@ -1,4 +1,4 @@
-"""Check 4.3 pin tables and compile/replay its actual C++ reference examples.
+"""Check 4.4 pin tables and compile/replay its actual C++ reference examples.
 
 Serial native probes and one compiler. No full structural CPU sweep or rebuild.
 """
@@ -20,15 +20,15 @@ STAGES = (("fetch", "Fetch"), ("decode", "Decode"), ("execute", "Execute"),
           ("memory", "Memory"), ("writeback", "Writeback"), ("next-pc", "NextPC"))
 snippets, fields, inputs = [], {}, {}
 for page in ("alu32", "instruction-decoder", "memory-access", "execution-status"):
-    document = (ROOT / f"site-docs/rv32i/4.2/{page}.md").read_text()
+    document = (ROOT / f"site-docs/rv32i/4.3/{page}.md").read_text()
     snippets += re.findall(r"```cpp\n(.*?)\n```", document, re.S)
 
 navigation = (ROOT / "mkdocs.yml").read_text()
-index = (ROOT / "site-docs/rv32i/4.3/index.md").read_text()
+index = (ROOT / "site-docs/rv32i/4.4/index.md").read_text()
 for number, (slug, stage) in enumerate((*STAGES, ("core", "Core")), 1):
-    document = (ROOT / f"site-docs/rv32i/4.3/{slug}.md").read_text()
-    assert document.startswith(f"# § 4.3.{number}.")
-    assert f"rv32i/4.3/{slug}.md" in navigation and f"({slug}.md)" in index
+    document = (ROOT / f"site-docs/rv32i/4.4/{slug}.md").read_text()
+    assert document.startswith(f"# § 4.4.{number}.")
+    assert f"rv32i/4.4/{slug}.md" in navigation and f"({slug}.md)" in index
     assert "| Component | Description | Structural | Behavioral |" in document
     for heading in ("IO pins", "Behavior", "Implementation", "Examples", "Tests"):
         assert f"### {heading}\n" in document, (slug, heading)
@@ -98,31 +98,20 @@ template<class Factory> void replay(const std::string& name,Factory factory) {
     std::cout<<name<<": exact C++ example passed "<<count<<" checkpoints\n";
 }
 
-// Test-only universal endpoint: hold responses, add variable acceptance stalls
-// and two response-delay clocks. Memory ownership stays outside the Core model.
+// Direct test memory: reads are combinational; masked writes use the edge.
 struct Endpoint {
     rv32i::RV32IFunctionalMemory memory;
-    bool pending=false, valid=false;
-    unsigned wait=0,status=0;
-    uint32_t data=0;
     std::map<uint32_t,uint8_t> writes;
     explicit Endpoint(size_t bytes):memory(bytes) {}
-    bool ready(size_t cycle) const { return !pending && !valid && cycle%3!=0; }
-    void edge(bool accept,bool req,bool take,unsigned op,uint32_t address,uint32_t write,unsigned mask) {
-        if(valid && take) { valid=false;return; }
-        if(pending) { if(--wait==0) { pending=false;valid=true; } return; }
-        if(!accept || !req) return;
-        require(op<=1,"unexpected memory operation");
-        status=address&3 ? 3 : !memory.canAccess(address,4) ? 2 : 0;
-        data=0;
-        if(!status) {
-            if(op==0) data=memory.readU32(address);
-            else for(unsigned b=0;b<4;++b) if(mask&(1u<<b)) {
-                const uint8_t byte=uint8_t(write>>(8*b));
-                memory.writeU8(address+b,byte); writes[address+b]=byte;
-            }
+    bool fault(uint32_t word) const { return uint64_t(word)*4+4>memory.sizeBytes(); }
+    uint32_t read(uint32_t word) const { return fault(word)?0:memory.readU32(word*4); }
+    void edge(bool enable,uint32_t word,uint32_t data,unsigned mask) {
+        // Universal endpoint: an error response rejects the requested store.
+        if(!enable || fault(word)) return;
+        for(unsigned byte=0;byte<4;++byte) if(mask&(1u<<byte)) {
+            const uint8_t value=uint8_t(data>>(byte*8));
+            memory.writeU8(word*4+byte,value);writes[word*4+byte]=value;
         }
-        pending=true; wait=2;
     }
 };
 void check_program(const RV32ISystemProgramCase& fixture) {
@@ -139,19 +128,16 @@ void check_program(const RV32ISystemProgramCase& fixture) {
     Core core;
     CoreInputs i{}; i.RST=true; core.evaluate(i);i.RST=false;
     bool terminal=false;
-    for(size_t cycle=0;cycle<fixture.max_instructions*64;++cycle) {
-        i.CLK=false;i.ENABLE=cycle%11!=5; // Also pause execution during transactions.
-        i.IMEM_REQ_READY=imem.ready(cycle);i.IMEM_RSP_VALID=imem.valid;
-        i.IMEM_RSP_READ_DATA=imem.data;i.IMEM_RSP_STATUS=imem.status;
-        i.DMEM_REQ_READY=dmem.ready(cycle);i.DMEM_RSP_VALID=dmem.valid;
-        i.DMEM_RSP_READ_DATA=dmem.data;i.DMEM_RSP_STATUS=dmem.status;
+    for(size_t cycle=0;cycle<fixture.max_instructions*2;++cycle) {
+        i.CLK=false;i.ENABLE=cycle%11!=5;
+        const auto pc=core.observe(i).IMEM_REQ_ADDR/4;
+        i.IMEM_RSP_READ_DATA=imem.read(pc);i.IMEM_RSP_STATUS=imem.fault(pc)?2:0;
+        const auto address=core.evaluate(i).DMEM_REQ_ADDR/4;
+        i.DMEM_RSP_READ_DATA=dmem.read(address);i.DMEM_RSP_STATUS=dmem.fault(address)?2:0;
         const auto before=core.evaluate(i);
         const auto old_registers=core.registers();
-        // All three clocked actors use the same pre-edge interface snapshot.
-        imem.edge(i.IMEM_REQ_READY,before.IMEM_REQ_VALID,before.IMEM_RSP_READY,
-                  before.IMEM_REQ_OP,before.IMEM_REQ_ADDR,before.IMEM_REQ_WRITE_DATA,before.IMEM_REQ_WRITE_MASK);
-        dmem.edge(i.DMEM_REQ_READY,before.DMEM_REQ_VALID,before.DMEM_RSP_READY,
-                  before.DMEM_REQ_OP,before.DMEM_REQ_ADDR,before.DMEM_REQ_WRITE_DATA,before.DMEM_REQ_WRITE_MASK);
+        require(before.INSTRUCTION_ATTEMPT==i.ENABLE,fixture.name+": instruction needs extra cycle");
+        dmem.edge(before.DMEM_REQ_VALID&&before.DMEM_REQ_OP==1,before.DMEM_REQ_ADDR/4,before.DMEM_REQ_WRITE_DATA,before.DMEM_REQ_WRITE_MASK);
         i.CLK=true;
         const auto after=core.evaluate(i);
         if(before.INSTRUCTION_ATTEMPT) rv32i::RV32IInstructionOracle::step(expected,oracle_i,oracle_d);
@@ -196,4 +182,4 @@ with tempfile.TemporaryDirectory(prefix="ritw-single-cycle-doc-") as temp:
     subprocess.run([COMPILER, "-std=c++20", "-O0", "-I" + str(ROOT / "include"),
                     str(source), LIBRARY, "-pthread", "-o", str(binary)], check=True, timeout=120)
     subprocess.run([str(binary)], check=True, timeout=120)
-print("All seven 4.3 references and their C++ examples checked.")
+print("All seven 4.4 references and their C++ examples checked.")

@@ -42,8 +42,8 @@ ComponentTestSpec requestSpec() {
     add("reset", {{"CLK",b(false)}, {"RST",b(true)}, {"ISSUE",b(false)}, {"TAKE",b(false)},
         {"TAG",logicBits(32,0)}, {"ADDR",logicBits(32,0x100)}, {"WRITE_DATA",logicBits(32,0x12345678)},
         {"OP",logicBits(3,1)}, {"WRITE_MASK",logicBits(4,15)}, {"BUS_REQ_READY",b(false)},
-        {"BUS_RSP_VALID",b(false)}, {"BUS_RSP_READ_DATA",logicBits(32,0)}, {"BUS_RSP_STATUS",logicBits(3,0)}}, bus(false,false,false,0));
-    add("issue-before-edge", {{"RST",b(false)},{"ISSUE",b(true)}}, bus(false,false,false,0));
+        {"BUS_RSP_VALID",b(false)}, {"BUS_RSP_READ_DATA",logicBits(32,0)}, {"BUS_RSP_STATUS",logicBits(3,0)}}, bus(false,false,false,0x100));
+    add("issue-before-edge", {{"RST",b(false)},{"ISSUE",b(true)}}, bus(true,false,false,0x100));
     add("capture", {{"CLK",b(true)}}, bus(true,false,false,0x100));
     add("payload-held", {{"CLK",b(false)}, {"ISSUE",b(false)}, {"ADDR",logicBits(32,0x200)},
         {"WRITE_DATA",logicBits(32,0)}, {"OP",logicBits(3,0)}, {"WRITE_MASK",logicBits(4,0)}},
@@ -57,19 +57,19 @@ ComponentTestSpec requestSpec() {
         {{"DONE",b(true)}, {"BUS_RSP_READY",b(false)}, {"READ_DATA",logicBits(32,0x89abcdef)}, {"FAULT",b(true)}});
     add("response-held-edge", {{"CLK",b(true)}}, bus(false,false,true,0x100));
     add("take-setup", {{"CLK",b(false)}, {"TAKE",b(true)}}, bus(false,true,true,0x100));
-    add("taken", {{"CLK",b(true)}}, bus(false,false,false,0x100));
+    add("taken", {{"CLK",b(true)}}, bus(false,false,false,0x200));
     add("new-issue-setup", {{"CLK",b(false)}, {"ISSUE",b(true)}, {"TAKE",b(false)},
-        {"BUS_REQ_READY",b(false)}, {"BUS_RSP_VALID",b(false)}, {"TAG",logicBits(32,4)}}, bus(false,false,false,0x100));
+        {"BUS_REQ_READY",b(false)}, {"BUS_RSP_VALID",b(false)}, {"TAG",logicBits(32,4)}}, bus(true,false,false,0x200));
     add("second-capture", {{"CLK",b(true)}}, bus(true,false,false,0x200));
-    add("redirect-before-accept", {{"CLK",b(false)}, {"TAG",logicBits(32,8)}, {"ISSUE",b(false)}}, bus(true,false,false,0x200));
-    add("record-abandonment", {{"CLK",b(true)}}, bus(true,false,false,0x200));
-    add("tag-returns-ABA", {{"CLK",b(false)}, {"TAG",logicBits(32,4)}, {"BUS_REQ_READY",b(true)}}, bus(true,false,false,0x200));
+    add("redirect-before-accept", {{"CLK",b(false)}, {"TAG",logicBits(32,8)}, {"ISSUE",b(false)}}, bus(true,true,false,0x200));
+    add("record-abandonment", {{"CLK",b(true)}}, bus(true,true,false,0x200));
+    add("tag-returns-ABA", {{"CLK",b(false)}, {"TAG",logicBits(32,4)}, {"BUS_REQ_READY",b(true)}}, bus(true,true,false,0x200));
     add("abandoned-accepted", {{"CLK",b(true)}}, bus(false,true,false,0x200));
     add("stale-response", {{"CLK",b(false)}, {"BUS_RSP_VALID",b(true)}}, bus(false,true,false,0x200));
     add("stale-drained", {{"CLK",b(true)}}, bus(false,false,false,0x200));
     add("ungated-response-wires", {{"CLK",b(false)}, {"BUS_RSP_VALID",b(false)}},
         {{"DONE",b(false)}, {"FAULT",b(true)}, {"READ_DATA",logicBits(32,0x89abcdef)}});
-    add("reset-again", {{"RST",b(true)}}, bus(false,false,false,0));
+    add("reset-again", {{"RST",b(true)}}, bus(false,false,false,0x200));
     return {"RV32IMemoryRequestTest","rv32i.memory-request","RV32I_MEMORY_REQUEST_ROOT",{}, {scenario}};
 }
 }

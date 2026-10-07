@@ -341,102 +341,6 @@ ComponentTestSpec hazardSpec() {
     };
 }
 
-NamedValues controlFlowInputs(
-    uint32_t pc,
-    uint32_t rs1,
-    uint32_t immediate,
-    uint8_t branch,
-    uint8_t jump,
-    bool eq,
-    bool lt_signed,
-    bool lt_unsigned) {
-    return {
-        {"PC", logicBits(32, pc)},
-        {"RS1_VALUE", logicBits(32, rs1)},
-        {"IMMEDIATE", logicBits(32, immediate)},
-        {"BRANCH_TYPE", logicBits(3, branch)},
-        {"JUMP_TYPE", logicBits(2, jump)},
-        {"EQ", logicBit(eq)},
-        {"LT_SIGNED", logicBit(lt_signed)},
-        {"LT_UNSIGNED", logicBit(lt_unsigned)},
-    };
-}
-
-NamedValues controlFlowOutputs(
-    uint32_t plus4,
-    uint32_t next,
-    bool branch_taken,
-    bool redirect,
-    bool misaligned) {
-    return {
-        {"PC_PLUS_4", logicBits(32, plus4)},
-        {"NEXT_PC", logicBits(32, next)},
-        {"BRANCH_TAKEN", logicBit(branch_taken)},
-        {"REDIRECT", logicBit(redirect)},
-        {"TARGET_MISALIGNED", logicBit(misaligned)},
-    };
-}
-
-ComponentTestSpec pipelineControlFlowSpec() {
-    ActionScenario scenario{
-        "truth-table",
-        {},
-        {
-            checkpoint(
-                "sequential",
-                controlFlowInputs(
-                    0x100, 0, 0, 0, 0,
-                    false, false, false),
-                controlFlowOutputs(
-                    0x104, 0x104, false, false, false)),
-            checkpoint(
-                "taken-branch",
-                controlFlowInputs(
-                    0x100, 0, 0x20, 1, 0,
-                    true, false, false),
-                controlFlowOutputs(
-                    0x104, 0x120, true, true, false)),
-            checkpoint(
-                "not-taken-branch",
-                controlFlowInputs(
-                    0x100, 0, 0x20, 1, 0,
-                    false, false, false),
-                controlFlowOutputs(
-                    0x104, 0x104, false, false, false)),
-            checkpoint(
-                "jal",
-                controlFlowInputs(
-                    0x100, 0, 0x40, 0, 1,
-                    false, false, false),
-                controlFlowOutputs(
-                    0x104, 0x140, false, true, false)),
-            checkpoint(
-                "jalr-masks-bit-zero",
-                controlFlowInputs(
-                    0x100, 0x201, 2, 0, 2,
-                    false, false, false),
-                controlFlowOutputs(
-                    0x104, 0x202, false, true, true)),
-            checkpoint(
-                "misaligned-taken-branch",
-                controlFlowInputs(
-                    0x100, 0, 2, 1, 0,
-                    true, false, false),
-                controlFlowOutputs(
-                    0x104, 0x102, true, true, true)),
-        },
-        {200'000, 4'000'000},
-    };
-    return {
-        "RV32IPipelineControlFlowUnitTest",
-        std::string(
-            circuit::families::RV32IPipelineControlFlowUnit.id()),
-        "RV32I_PIPELINE_CONTROL_FLOW_ROOT",
-        {},
-        {std::move(scenario)},
-    };
-}
-
 ComponentTestSpec memoryAlignmentSpec() {
     ActionScenario scenario{
         "truth-table",
@@ -686,6 +590,8 @@ NamedValues coordinatorOutputs(
     bool pipeline_flush = false) {
     return {
         {"ACTIVE", logicBit(active)},
+        {"FETCH_RESPONSE_TAKE", logicBit(fetch_valid || if_flush)},
+        {"DATA_REQUEST_ISSUE", logicBit(dmem_read || dmem_write)},
         {"IMEM_READ_ENABLE", logicBit(imem_read)},
         {"DMEM_READ_ENABLE", logicBit(dmem_read)},
         {"DMEM_WRITE_ENABLE", logicBit(dmem_write)},
@@ -710,6 +616,10 @@ NamedValues coordinatorOutputs(
 }
 
 ComponentTestSpec pipelineCoordinatorSpec() {
+    auto stopped_outputs = coordinatorOutputs(
+        false, false, false, false, false, false, false, false, false,
+        false, false, false, false, false, false, false, false);
+    stopped_outputs["FETCH_RESPONSE_TAKE"] = logicBit(true);
     ActionScenario scenario{
         "control-cases",
         {},
@@ -721,6 +631,15 @@ ComponentTestSpec pipelineCoordinatorSpec() {
                     false, false, false, false, false, false,
                     false, false, false, false, false, false,
                     false, false, false, false, false)),
+            checkpoint(
+                "halted-drains-fetch-response",
+                coordinatorInputs(true, true), stopped_outputs),
+            checkpoint(
+                "trapped-drains-fetch-response",
+                coordinatorInputs(true, false, true), stopped_outputs),
+            checkpoint(
+                "paused-halted-still-drains-fetch-response",
+                coordinatorInputs(false, true), stopped_outputs),
             checkpoint(
                 "normal-fetch-and-advance",
                 coordinatorInputs(),
@@ -978,7 +897,8 @@ ComponentTestSpec executeStageSpec() {
                  {"OUT_NEXT_PC", logicBits(32, 0x104)},
                  {"OUT_EXECUTION_STATUS", logicBits(32, 0)},
                  {"REDIRECT", logicBit(false)},
-                 {"PRETERMINAL", logicBit(false)}}),
+                 {"PRETERMINAL", logicBit(false)},
+                 {"IS_BRANCH",logicBit(false)},{"BRANCH_TAKEN",logicBit(false)}}),
             checkpoint(
                 "ex-forwarding",
                 {{"EX_MEM_VALID", logicBit(true)},
@@ -994,6 +914,17 @@ ComponentTestSpec executeStageSpec() {
                  {"REDIRECT", logicBit(true)},
                  {"REDIRECT_PC", logicBits(32, 0x208)},
                  {"PRETERMINAL", logicBit(false)}}),
+            checkpoint("wb-branch-forwarding",{{"IN_RS2_VALUE",logicBits(32,9)},
+                {"MEM_WB_VALID",logicBit(true)},{"MEM_WB_REG_WRITE",logicBit(true)},{"MEM_WB_RD",logicBits(5,1)},
+                {"MEM_WB_VALUE",logicBits(32,9)}},{{"BRANCH_TAKEN",logicBit(true)}}),
+            checkpoint("younger-unready-blocks-old-wb",{{"EX_MEM_VALID",logicBit(true)},
+                {"EX_MEM_REG_WRITE",logicBit(true)},{"EX_MEM_RESULT_READY",logicBit(false)},{"EX_MEM_RD",logicBits(5,1)}},
+                {{"BRANCH_TAKEN",logicBit(false)},{"OUT_NEXT_PC",logicBits(32,0x204)}}),
+            checkpoint("jal-shares-alu",executeInputs(0x008000ef,0x100,0,0),
+                {{"OUT_ALU_RESULT",logicBits(32,0x108)},{"OUT_NEXT_PC",logicBits(32,0x108)},
+                 {"OUT_PC_PLUS_4",logicBits(32,0x104)},{"IS_BRANCH",logicBit(false)}}),
+            checkpoint("jalr-shares-alu-and-clears-bit-zero",executeInputs(0x001080e7,0x100,0x208,0),
+                {{"OUT_ALU_RESULT",logicBits(32,0x209)},{"OUT_NEXT_PC",logicBits(32,0x208)},{"PRETERMINAL",logicBit(false)}}),
         },
         {300'000, 5'000'000},
     };
@@ -1093,63 +1024,108 @@ ComponentTestSpec memoryStageSpec() {
 }
 
 ComponentTestSpec writebackStageSpec() {
-    constexpr uint32_t addi_x1_x0_5 = 0x00500093U;
-    ActionScenario scenario{
-        "commit-and-state",
-        {},
-        {
-            checkpoint(
-                "reset",
-                {{"CLK", logicBit(false)},
-                 {"RST", logicBit(true)},
-                 {"COMMIT_ENABLE", logicBit(true)},
-                 {"IN_VALID", logicBit(false)},
-                 {"IN_PC", logicBits(32, 0)},
-                 {"IN_INSTRUCTION", logicBits(32, addi_x1_x0_5)},
-                 {"IN_ALU_RESULT", logicBits(32, 5)},
-                 {"IN_MEMORY_DATA", logicBits(32, 0)},
-                 {"IN_STORE_DATA", logicBits(32, 0)},
-                 {"IN_PC_PLUS_4", logicBits(32, 4)},
-                 {"IN_NEXT_PC", logicBits(32, 4)},
-                 {"IN_CONTROL", logicBits(
-                     32, controlWord(addi_x1_x0_5))},
-                 {"IN_REGISTER_ADDRESSES", logicBits(
-                     32, addressWord(addi_x1_x0_5))},
-                 {"IN_FETCH_STATUS", logicBits(32, 0)},
-                 {"IN_EXECUTION_STATUS", logicBits(32, 0)},
-                 {"IN_MEMORY_STATUS", logicBits(32, 0)}},
-                {{"PC", logicBits(32, 0)},
-                 {"HALTED", logicBit(false)},
-                 {"TRAPPED", logicBit(false)},
-                 {"RETIRED_COUNT", logicBits(32, 0)},
-                 {"COMMIT_VALID", logicBit(false)}}),
-            drive(
-                {{"RST", logicBit(false)},
-                 {"IN_VALID", logicBit(true)}}),
-            checkpoint(
-                "commit-addi",
-                {{"CLK", logicBit(true)}},
-                {{"PC", logicBits(32, 4)},
-                 {"RETIRED_COUNT", logicBits(32, 1)},
-                 {"RETIRED_PC", logicBits(32, 0)},
-                 {"RETIRED_INSTRUCTION", logicBits(
-                     32, addi_x1_x0_5)},
-                 {"WB_VALUE", logicBits(32, 5)},
-                 {"WB_RD", logicBits(5, 1)},
-                 {"REGISTER_WRITE", logicBit(true)},
-                 {"COMMIT_VALID", logicBit(true)},
-                 {"TERMINAL", logicBit(false)}},
-                CheckpointKind::InstructionCommit),
-        },
-        {300'000, 5'000'000},
-    };
-    return {
-        "RV32IWritebackStageTest",
-        std::string(circuit::families::RV32IWritebackStage.id()),
-        "RV32I_WRITEBACK_STAGE_ROOT",
-        {},
-        {std::move(scenario)},
-    };
+    ActionScenario scenario{"combinational-writeback", {}, {}, {300'000, 5'000'000}};
+    auto& actions = scenario.actions;
+    actions.push_back(checkpoint("bubble",
+        {{"COMMIT_ENABLE",logicBit(true)},{"IN_VALID",logicBit(false)},
+         {"IN_ALU_RESULT",logicBits(32,5)},{"IN_MEMORY_DATA",logicBits(32,0x81234567U)},
+         {"IN_PC_PLUS_4",logicBits(32,12)},{"IN_CONTROL",logicBits(32,controlWord(0x00500093U))},
+         {"IN_REGISTER_ADDRESSES",logicBits(32,addressWord(0x00500093U))},
+         {"IN_FETCH_STATUS",logicBits(32,0)},{"IN_EXECUTION_STATUS",logicBits(32,0)},
+         {"IN_MEMORY_STATUS",logicBits(32,0)}},
+        {{"COMMIT_VALID",logicBit(false)},{"REGISTER_WRITE",logicBit(false)},
+         {"WB_VALID",logicBit(false)},{"WB_VALUE",logicBits(32,5)},{"WB_RD",logicBits(5,1)},
+         {"HALT_EVENT",logicBit(false)},{"TRAP_EVENT",logicBit(false)},{"TRAP_CAUSE",logicBits(4,0)}}));
+    actions.push_back(checkpoint("addi-without-clock",{{"IN_VALID",logicBit(true)}},
+        {{"COMMIT_VALID",logicBit(true)},{"REGISTER_WRITE",logicBit(true)},{"WB_VALID",logicBit(true)},
+         {"WB_REG_WRITE",logicBit(true)},{"TERMINAL",logicBit(false)},{"RETIRE_TERMINAL",logicBit(false)}}));
+    actions.push_back(checkpoint("disabled-result-still-combinational",
+        {{"COMMIT_ENABLE",logicBit(false)},{"IN_ALU_RESULT",logicBits(32,99)}},
+        {{"COMMIT_VALID",logicBit(false)},{"REGISTER_WRITE",logicBit(false)},{"WB_VALUE",logicBits(32,99)}}));
+    struct Selection {const char* name; uint32_t instruction,value,rd; bool write;};
+    for(const auto& row : std::vector<Selection>{
+        {"load",0x00002103U,0x81234567U,2,true},{"jump-link",0x008001efU,12,3,true},
+        {"store",0x00302023U,0,0,false},{"alu-again",0x00500093U,99,1,true}}) {
+        actions.push_back(checkpoint(row.name,
+            {{"COMMIT_ENABLE",logicBit(true)},{"IN_CONTROL",logicBits(32,controlWord(row.instruction))},
+             {"IN_REGISTER_ADDRESSES",logicBits(32,addressWord(row.instruction))}},
+            {{"WB_VALUE",logicBits(32,row.value)},{"WB_RD",logicBits(5,row.rd)},
+             {"REGISTER_WRITE",logicBit(row.write)},{"COMMIT_VALID",logicBit(true)}}));
+    }
+    actions.push_back(checkpoint("halt-without-permission",
+        {{"IN_CONTROL",logicBits(32,controlWord(0x00100073U))},{"COMMIT_ENABLE",logicBit(false)}},
+        {{"TERMINAL",logicBit(true)},{"RETIRE_TERMINAL",logicBit(false)},{"HALT_EVENT",logicBit(false)}}));
+    actions.push_back(checkpoint("halt-event",{{"COMMIT_ENABLE",logicBit(true)}},
+        {{"HALT_EVENT",logicBit(true)},{"TRAP_EVENT",logicBit(false)},{"RETIRE_TERMINAL",logicBit(true)},
+         {"REGISTER_WRITE",logicBit(false)}}));
+    actions.push_back(checkpoint("halt-does-not-stick",
+        {{"IN_CONTROL",logicBits(32,controlWord(0x00500093U))}},
+        {{"HALT_EVENT",logicBit(false)},{"TERMINAL",logicBit(false)},{"REGISTER_WRITE",logicBit(true)}}));
+    struct Fault {const char* name; uint32_t instruction,fetch,memory,execute,cause;};
+    for (const auto& f : std::vector<Fault>{
+            {"pc-before-fetch-and-halt",0x00100073U,3,0,1,3},
+            {"fetch-before-illegal",0xffffffffU,2,0,0,4},
+            {"illegal-before-target",0xffffffffU,0,0,1,1},
+            {"ecall",0x00000073U,0,0,0,2},
+            {"load-alignment-before-access",0x00002103U,0,3,1,5},
+            {"load-access-before-target",0x00002103U,0,2,1,6},
+            {"store-alignment-before-access",0x00302023U,0,3,1,7},
+            {"store-access-before-target",0x00302023U,0,2,1,8},
+            {"target-misaligned",0x008001efU,0,0,1,3}}) {
+        actions.push_back(checkpoint(f.name,
+            {{"IN_CONTROL",logicBits(32,controlWord(f.instruction))},{"IN_VALID",logicBit(true)},
+             {"IN_FETCH_STATUS",logicBits(32,f.fetch)},{"IN_MEMORY_STATUS",logicBits(32,f.memory)},
+             {"IN_EXECUTION_STATUS",logicBits(32,f.execute)}},
+            {{"HALT_EVENT",logicBit(false)},{"TRAP_EVENT",logicBit(true)},{"TRAP_CAUSE",logicBits(4,f.cause)},
+             {"REGISTER_WRITE",logicBit(false)},{"RETIRE_TERMINAL",logicBit(true)},{"COMMIT_VALID",logicBit(true)}}));
+        actions.push_back(checkpoint(std::string(f.name)+"-bubble-clears",
+            {{"IN_VALID",logicBit(false)}},
+            {{"TRAP_EVENT",logicBit(false)},{"TRAP_CAUSE",logicBits(4,f.cause)},
+             {"TERMINAL",logicBit(false)},{"RETIRE_TERMINAL",logicBit(false)},{"COMMIT_VALID",logicBit(false)}}));
+    }
+    return {"RV32IWritebackStageTest",std::string(circuit::families::RV32IWritebackStage.id()),
+        "RV32I_WRITEBACK_STAGE_ROOT",{}, {std::move(scenario)}};
+}
+
+ComponentTestSpec executionStatusSpec() {
+    ActionScenario scenario{"sticky-status", {}, {}, {300'000, 5'000'000}};
+    auto& actions = scenario.actions;
+    actions.push_back(checkpoint("reset",{{"CLK",logicBit(false)},{"RST",logicBit(true)},
+        {"HALT_EVENT",logicBit(false)},{"TRAP_EVENT",logicBit(false)},{"EVENT_TRAP_CAUSE",logicBits(4,0)}},
+        {{"HALTED",logicBit(false)},{"TRAPPED",logicBit(false)},{"TRAP_CAUSE",logicBits(4,0)}}));
+    actions.push_back(checkpoint("halt-needs-edge",{{"RST",logicBit(false)},{"HALT_EVENT",logicBit(true)}},
+        {{"HALTED",logicBit(false)}}));
+    actions.push_back(checkpoint("halt-edge",{{"CLK",logicBit(true)}},{{"HALTED",logicBit(true)}}));
+    actions.push_back(checkpoint("halt-sticky",{{"CLK",logicBit(false)},{"HALT_EVENT",logicBit(false)}},
+        {{"HALTED",logicBit(true)},{"TRAPPED",logicBit(false)}}));
+    for(unsigned cause=0;cause<16;++cause) {
+        const auto name=std::to_string(cause);
+        actions.push_back(checkpoint("reset-"+name,
+            {{"RST",logicBit(true)},{"CLK",logicBit(false)},{"TRAP_EVENT",logicBit(true)},{"EVENT_TRAP_CAUSE",logicBits(4,cause)}},
+            {{"HALTED",logicBit(false)},{"TRAPPED",logicBit(false)},{"TRAP_CAUSE",logicBits(4,0)}}));
+        actions.push_back(checkpoint("no-edge-"+name,{{"RST",logicBit(false)}},
+            {{"TRAPPED",logicBit(false)},{"TRAP_CAUSE",logicBits(4,0)}}));
+        actions.push_back(checkpoint("trap-edge-"+name,{{"CLK",logicBit(true)}},
+            {{"TRAPPED",logicBit(true)},{"TRAP_CAUSE",logicBits(4,cause)}}));
+        actions.push_back(checkpoint("cause-held-"+name,
+            {{"TRAP_EVENT",logicBit(false)},{"EVENT_TRAP_CAUSE",logicBits(4,15-cause)}},
+            {{"TRAPPED",logicBit(true)},{"TRAP_CAUSE",logicBits(4,cause)}}));
+        actions.push_back(drive({{"CLK",logicBit(false)}}));
+        actions.push_back(checkpoint("idle-edge-"+name,{{"CLK",logicBit(true)}},
+            {{"TRAPPED",logicBit(true)},{"TRAP_CAUSE",logicBits(4,cause)}}));
+    }
+    actions.push_back(checkpoint("async-reset-high-clock",{{"RST",logicBit(true)},{"HALT_EVENT",logicBit(true)},{"TRAP_EVENT",logicBit(true)}},
+        {{"HALTED",logicBit(false)},{"TRAPPED",logicBit(false)},{"TRAP_CAUSE",logicBits(4,0)}}));
+    actions.push_back(drive({{"CLK",logicBit(false)},{"RST",logicBit(false)},{"EVENT_TRAP_CAUSE",logicBits(4,9)}}));
+    actions.push_back(checkpoint("independent-events-together",{{"CLK",logicBit(true)}},
+        {{"HALTED",logicBit(true)},{"TRAPPED",logicBit(true)},{"TRAP_CAUSE",logicBits(4,9)}}));
+    actions.push_back(checkpoint("cause-change-with-high-clock",{{"EVENT_TRAP_CAUSE",logicBits(4,6)}},
+        {{"TRAP_CAUSE",logicBits(4,9)}}));
+    actions.push_back(drive({{"CLK",logicBit(false)}}));
+    actions.push_back(checkpoint("new-event-replaces-cause",{{"CLK",logicBit(true)}},
+        {{"HALTED",logicBit(true)},{"TRAPPED",logicBit(true)},{"TRAP_CAUSE",logicBits(4,6)}}));
+    return {"RV32IPipelineExecutionStatusTest",std::string(circuit::families::RV32IPipelineExecutionStatus.id()),
+        "RV32I_PIPELINE_EXECUTION_STATUS_ROOT",{}, {std::move(scenario)}};
 }
 
 ComponentTestSpec fiveStageCoreSpec() {
@@ -1160,22 +1136,21 @@ ComponentTestSpec fiveStageCoreSpec() {
          {"IMEM_RSP_READ_DATA",logicBits(32,0)},{"IMEM_RSP_STATUS",logicBits(3,0)},
          {"DMEM_REQ_READY",logicBit(true)},{"DMEM_RSP_VALID",logicBit(false)},
          {"DMEM_RSP_READ_DATA",logicBits(32,0)},{"DMEM_RSP_STATUS",logicBits(3,0)}},
-        {{"RETIRED_COUNT",logicBits(32,0)},{"HALTED",logicBit(false)},
+        {{"HALTED",logicBit(false)},
          {"IMEM_REQ_VALID",logicBit(false)}}));
     scenario.actions.push_back(checkpoint("release-reset",{{"RST",logicBit(false)}},{}));
     const std::array<uint32_t,4> words{0x00500093U,0x00708113U,0x002081b3U,0x00100073U};
-    // Accept a request one edge after capture, then return its word on the next
-    // edge. Instruction responses therefore enter IF/ID on edges 3, 6, 9, 12.
+    // Accept a request immediately, but deliberately delay the mock memory
+    // response. Words still enter IF/ID on edges 3, 6, 9, 12.
     for(unsigned cycle=1;cycle<=16;++cycle) {
         const bool response=cycle%3==0 && cycle<=12;
         scenario.actions.push_back(drive({
             {"CLK",logicBit(false)},{"IMEM_RSP_VALID",logicBit(response)},
             {"IMEM_RSP_READ_DATA",logicBits(32,response?words[cycle/3-1]:0)}}));
-        const auto retired=cycle<7?0U:std::min(4U,1+(cycle-7)/3);
-        NamedValues expected{{"RETIRED_COUNT",logicBits(32,retired)},
+        NamedValues expected{
             {"HALTED",logicBit(cycle==16)},{"TRAPPED",logicBit(false)}};
         if(cycle<=10 && cycle%3==1) {
-            expected.emplace("IMEM_REQ_VALID",logicBit(true));
+            expected.emplace("IMEM_REQ_VALID",logicBit(false)); // Already accepted on this edge.
             expected.emplace("IMEM_REQ_ADDR",logicBits(32,(cycle/3)*4));
         }
         scenario.actions.push_back(checkpoint("edge-"+std::to_string(cycle),
@@ -1238,11 +1213,6 @@ RV32IHazardDetectionUnitTest::RV32IHazardDetectionUnitTest()
     : ComponentScenarioTest(
           hazardSpec(), {}, rv32iPreviewProfile()) {}
 
-RV32IPipelineControlFlowUnitTest::
-RV32IPipelineControlFlowUnitTest()
-    : ComponentScenarioTest(
-          pipelineControlFlowSpec(), {}, rv32iPreviewProfile()) {}
-
 RV32IMemoryAlignmentUnitTest::
 RV32IMemoryAlignmentUnitTest()
     : ComponentScenarioTest(
@@ -1274,6 +1244,9 @@ RV32IMemoryStageTest::RV32IMemoryStageTest()
     : ComponentScenarioTest(
           memoryStageSpec(), {}, rv32iPreviewProfile()) {}
 
+RV32IPipelineExecutionStatusTest::RV32IPipelineExecutionStatusTest()
+    : ComponentScenarioTest(executionStatusSpec(), {}, rv32iPreviewProfile()) {}
+
 RV32IWritebackStageTest::RV32IWritebackStageTest()
     : ComponentScenarioTest(
           writebackStageSpec(), {}, rv32iPreviewProfile()) {}
@@ -1297,16 +1270,15 @@ bool RV32IFiveStageCoreTest::run() {
             "five-stage core test produced no fidelity artifacts");
         for (const auto& artifact : artifacts) {
             const auto state_view =
-                std::dynamic_pointer_cast<RV32IStateView>(
+                std::dynamic_pointer_cast<RV32IPipelineStateView>(
                     artifact.root);
             require(
                 state_view != nullptr,
                 "five-stage core lacks architectural-state view");
             const auto state =
-                state_view->snapshotArchitecturalState().toKnownState();
+                state_view->snapshotPipelineState(0).toKnownState();
             require(
-                state.pc == 12
-                    && state.x[1] == 5
+                state.x[1] == 5
                     && state.x[2] == 12
                     && state.x[3] == 17
                     && state.halted

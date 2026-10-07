@@ -124,13 +124,29 @@ def main():
         assert source.locator("pre").first.is_visible()
         check_widths("implementation")
 
-        visit("rv32i/4.1/programs/")
         for marker, count in (("rv32i-step-examples", 40), ("rv32i-edge-examples", 14)):
             table = page.locator(f'.reference-table-scroll[aria-label="{marker}"]')
             assert table.locator("tbody tr").count() == count
+
+        repository = Path(__file__).resolve().parent.parent
+        benchmark_pages = [source for source in sorted((repository / "site-docs/rv32i/4.2").rglob("*.md"))
+                           if "programs" not in source.parts]
+        for source in benchmark_pages:
+            relative = source.relative_to(repository / "site-docs").with_suffix("")
+            route = str(relative.parent if relative.name == "index" else relative) + "/"
+            visit(route)
+            check_widths(route)
+        visit("rv32i/4.2/")
+        assert "Benchmarking and Verification" in page.locator("h1").inner_text()
+        for scheme in ("slate", "default"):
+            page.evaluate("scheme => document.body.dataset.mdColorScheme = scheme", scheme)
+            check_widths("benchmark-index/" + scheme)
+            if screenshots:
+                page.screenshot(path=str(screenshots / f"benchmark-index-{scheme}.png"))
+
+        visit("rv32i/4.2/programs/")
         program_links = page.locator('article a[href*="program-"]').evaluate_all(
             r"links => links.filter(a => /\/program-[0-9]+\/$/.test(a.pathname) && !a.hash).map(a => a.href)")
-        repository = Path(__file__).resolve().parent.parent
         count_source = (repository / "include/rv32i/RV32IValidationConfig.hpp").read_text()
         program_count = int(re.search(r"\bProgramCount\s*=\s*(\d+)", count_source)[1])
         assert len(program_links) == len(set(program_links)) == program_count, program_links
@@ -141,7 +157,7 @@ def main():
         for link in program_links:
             number = int(re.search(r"program-(\d+)/", link)[1])
             scenario = f"rv32i-program{number}"
-            source = (repository / f"site-docs/rv32i/4.1/programs/program-{number:02}.md").read_text()
+            source = (repository / f"site-docs/rv32i/4.2/programs/program-{number:02}.md").read_text()
             expected = {key: int(value, 0) for key, value in re.findall(
                 r"(?m)^\| `(PC|Attempts|HALTED|TRAPPED|TRAP_CAUSE)` \| `?([0-9A-Fx]+)`? \|", source)}
             visit(link)
@@ -163,14 +179,14 @@ def main():
               const core = app.components.get('RV32I_PROGRAM_ROOT.CORE');
               if (core.fidelity !== 'behavioral') throw new Error('Reference is not behavioral');
               for (const name of ['INSTRUCTION_MEMORY', 'DATA_MEMORY']) {
-                if (app.components.get('RV32I_PROGRAM_ROOT.' + name)?.type !== 'MemoryContainer<sram,32>')
-                  throw new Error('Reference program is not using transaction memory: ' + name);
+                if (app.components.get('RV32I_PROGRAM_ROOT.' + name)?.type !== 'MemoryEndpoint<ff,32>')
+                  throw new Error('Reference program is not using an FF endpoint: ' + name);
               }
               if (app.components.get(app.rootId).childIds.length !== 4)
-                throw new Error('The core must connect directly to its two memory endpoints');
+                throw new Error('Expected core, two endpoints and clock');
               const corePins = [...app.pins.values()].filter(p => p.componentId === core.id).map(p => p.name);
-              for (const name of ['IMEM_REQ_VALID', 'IMEM_RSP_READY', 'DMEM_REQ_VALID', 'DMEM_RSP_STATUS'])
-                if (!corePins.includes(name)) throw new Error('Missing universal CPU port: '+name);
+              for (const name of ['IMEM_REQ_ADDR', 'IMEM_RSP_READ_DATA', 'DMEM_REQ_VALID', 'DMEM_RSP_STATUS'])
+                if (!corePins.includes(name)) throw new Error('Missing native CPU port: '+name);
               const pins = [...app.pins.values()].filter(pin => pin.componentId === app.rootId);
               for (const [i, row] of rows.entries()) {
                 const expected = app.checkpoints[i];
@@ -216,6 +232,7 @@ def main():
         plain.close()
         assert not errors, errors
         print(json.dumps({"instructionEntries": len(links), "familyPages": len(families),
+                          "benchmarkReferencePages": len(benchmark_pages),
                           "programPages": len(results), "programCheckpoints": sum(r["count"] for r in results),
                           "referenceEmbeds": results, "widths": widths,
                           "sourceListings": "expanded", "savedProfile": "unchanged"}))

@@ -1,5 +1,7 @@
+/* Long display equations scroll locally instead of widening the article. */
 .md-typeset div.arithmatex {
-  overflow: initial;
+  max-width: 100%;
+  overflow: auto;
 }
 
 /* Long reference-page titles must not expand Material's hidden mobile topic. */

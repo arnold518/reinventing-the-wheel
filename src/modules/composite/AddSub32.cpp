@@ -1,4 +1,5 @@
 #include "modules/composite/AddSub32.hpp"
+#include "modules/composite/ParallelPrefixAdder32.hpp"
 #include "components/BasicComponent.hpp"
 #include "components/ComponentBuilder.hpp"
 #include "components/ComponentBuilder.tpp"
@@ -122,12 +123,30 @@ const ComponentFamily AddSub32{
     }};
 }
 
-AddSub32::AddSub32(std::string name)
+AddSub32::AddSub32(std::string name, bool parallel_prefix)
     : IOComponent(
           std::move(name),
-          circuit::families::AddSub32.pinInitializer()) {}
+          circuit::families::AddSub32.pinInitializer()), parallel_prefix_(parallel_prefix) {}
 
 void AddSub32::buildInternals(ComponentBuilder& builder) {
+    if (parallel_prefix_) {
+        circuit::memory_detail::StructuralWiring w(builder);
+        auto bits=builder.addNewComponent<BitSplitter<32>>("B_SPLIT");
+        auto effective=builder.addNewComponent<BitJoiner<32>>("EFFECTIVE_B");
+        auto adder=builder.addNewComponent<ParallelPrefixAdder32>("PREFIX_ADDER");
+        w.connect(getInputPin<32>("B"),bits->getInputPin<32>("IN"));
+        for (size_t i=0;i<32;++i) {
+            const auto n=std::to_string(i);
+            w.connect(w.binary<XORGate>("B_XOR_SUB_"+n,bits->getOutputPin("OUT_"+n),getInputPin("SUB")),effective->getInputPin("IN_"+n));
+        }
+        w.connect(getInputPin<32>("A"),adder->getInputPin<32>("A"));
+        w.connect(effective->getOutputPin<32>("OUT"),adder->getInputPin<32>("B"));
+        w.connect(getInputPin("SUB"),adder->getInputPin("Cin"));
+        w.connect(adder->getOutputPin<32>("Sum"),getOutputPin<32>("OUT"));
+        w.connect(adder->getOutputPin("Cout"),getOutputPin("CARRY_OUT"));
+        w.connect(w.binary<XORGate>("OVERFLOW_XOR",adder->getOutputPin("C31"),adder->getOutputPin("Cout")),getOutputPin("OVERFLOW"));
+        w.finish(); return;
+    }
     builder.addNewComponent<BitSplitter<32>>("A_SPLIT");
     builder.addNewComponent<BitSplitter<32>>("B_SPLIT");
     builder.addNewComponent<BitJoiner<32>>("OUT_JOIN");

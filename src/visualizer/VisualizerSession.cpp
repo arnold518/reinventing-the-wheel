@@ -1,4 +1,5 @@
 #include "visualizer/VisualizerSession.hpp"
+#include "visualizer/MemoryInspector.hpp"
 
 #include "basic/LogicValue.hpp"
 #include "basic/PinBase.hpp"
@@ -7,8 +8,8 @@
 #include "components/IOComponent.hpp"
 #include "components/capabilities/RegisterStateView.hpp"
 #include "components/selection/BuildProfile.hpp"
-#include "modules/memory/Memory64Kx32.hpp"
 #include "components/capabilities/MemoryStateView.hpp"
+#include "components/capabilities/MemoryActivityView.hpp"
 #include "modules/rv32i/RV32IBitPatternMatcher.hpp"
 #include "modules/utility/Constant.hpp"
 #include "modules/utility/Rewire.hpp"
@@ -224,6 +225,21 @@ std::string normalizedProfileFingerprint(
 
 std::string componentLayoutType(const std::shared_ptr<Component>& component) {
     const std::string type = component ? component->getTypeName() : "Component";
+    if (!component) return type;
+    const auto& children = component->getChildren();
+    auto has_child = [&](const auto& predicate) {
+        return std::any_of(children.begin(), children.end(), [&](const auto& child) {
+            return predicate(child->getName());
+        });
+    };
+    if (type.starts_with("MemoryController<ff,") && !children.empty() &&
+        !has_child([](const std::string& name) { return name == "RESPONSE"; }))
+        return type.substr(0, type.size() - 1) + ",always-ready>";
+    if (type == "Decoder5to32" && has_child([](const std::string& name) { return name == "OUT0_ZERO"; }))
+        return "Decoder5to32<x0-unused>";
+    if (type.ends_with("PipelineRegister") &&
+        has_child([](const std::string& name) { return name.ends_with("_SPLIT"); }))
+        return type + "<compact>";
     // Display the FF-specific names without invalidating saved type layouts.
     if (type.starts_with("FFMemory")) return "FFArray" + type.substr(8);
     if (type.starts_with("FFWord<")) return "MemoryWord<FFArray," + type.substr(7);
@@ -328,6 +344,236 @@ std::string memoryWordJson(
 
 } // namespace
 
+std::vector<size_t> memoryActivityTimestamps(const std::shared_ptr<Component>& root) {
+    std::vector<size_t> times;
+    const auto visit = [&](auto&& self, const std::shared_ptr<Component>& component) -> void {
+        if (auto view = std::dynamic_pointer_cast<MemoryActivityView>(component))
+            view->appendMemoryActivityTimes(times);
+        for (const auto& child : component->getChildren()) self(self, child);
+    };
+    if (root) visit(visit, root);
+    std::sort(times.begin(), times.end());
+    times.erase(std::unique(times.begin(), times.end()), times.end());
+    return times;
+}
+
+MemoryInspector::MemoryInspector(std::shared_ptr<Component> component, const Simulator& simulator)
+    : component_(std::dynamic_pointer_cast<IOComponent>(component)), simulator_(simulator) {
+    if (!component_) throw std::invalid_argument("Memory inspection requires an IO component");
+    // A visible native MEMORY inherits its enclosing endpoint's bus context.
+    for (auto current = component; current; current = current->getParent()) {
+        auto io = std::dynamic_pointer_cast<IOComponent>(current);
+        if (io && std::string(io->getTypeName()).starts_with("MemoryEndpoint<")) {
+            endpoint_ = io;
+            break;
+        }
+    }
+}
+
+std::shared_ptr<PinBase> MemoryInspector::pin(const std::shared_ptr<IOComponent>& io, const std::string& name) const {
+    if (!io) return {};
+    if (auto it = io->getAllInputPins().find(name); it != io->getAllInputPins().end()) return it->second;
+    if (auto it = io->getAllOutputPins().find(name); it != io->getAllOutputPins().end()) return it->second;
+    return {};
+}
+
+std::string MemoryInspector::value(const std::shared_ptr<IOComponent>& io, const std::string& name, size_t time) const {
+    auto p = pin(io, name);
+    if (!p) return {};
+    const auto& history = simulator_.signalHistory(p);
+    auto it = std::upper_bound(history.begin(), history.end(), time,
+        [](size_t t, const auto& entry) { return t < entry.first; });
+    return it == history.begin() ? std::string(p->getWidth(), 'X') : logicVectorValue(std::prev(it)->second);
+}
+
+void MemoryInspector::rebuildTransactions() {
+    if (!endpoint_ || revision_ == simulator_.historyRevision()) return;
+    revision_ = simulator_.historyRevision();
+    edges_.clear();
+    std::set<size_t> times;
+    for (const auto& name : {"CLK", "RST"})
+        for (const auto& [time, bits] : simulator_.signalHistory(pin(endpoint_, name))) {
+            (void)bits;
+            times.insert(time);
+        }
+    std::optional<size_t> pending, completed;
+    for (const auto time : times) {
+        // The interface is synchronous: request/ready and response/ready must
+        // be stable before the edge. Reading post-edge pins can instead see the
+        // next instruction, or READY deasserted by the just-accepted request.
+        const bool reset = value(endpoint_, "RST", time) != "0";
+        const bool edge = time > 0 && value(endpoint_, "CLK", time - 1) == "0"
+            && value(endpoint_, "CLK", time) == "1";
+        if (reset) {
+            pending.reset(); completed.reset();
+        } else if (edge) {
+            const bool accept = value(endpoint_, "REQ_VALID", time - 1) == "1"
+                && value(endpoint_, "REQ_READY", time - 1) == "1";
+            const bool consume = value(endpoint_, "RSP_VALID", time - 1) == "1"
+                && value(endpoint_, "RSP_READY", time - 1) == "1";
+            const bool older = pending.has_value();
+            if (consume && older) { completed = pending; pending.reset(); }
+            if (accept) {
+                if (consume && !older) completed = time; // zero-wait bypass
+                else pending = time;                    // held/delayed response
+            }
+        } else continue;
+        if (edges_.empty() || edges_.back().pending != pending || edges_.back().completed != completed)
+            edges_.push_back({time, pending, completed});
+    }
+}
+
+std::string MemoryInspector::stateJson(size_t index, size_t time, const std::string& scenario,
+                                      int64_t address, size_t count) {
+    if (address < -1 || address > int64_t(UINT32_MAX) || count == 0 || count > 256)
+        throw std::invalid_argument("Memory page requires a 32-bit byte address and 1..256 words");
+    std::string out;
+    JsonObject object(out);
+    object.number("index", index); object.number("time", time);
+    object.string("componentId", component_->getID()); object.string("type", component_->getTypeName());
+    auto view = std::dynamic_pointer_cast<MemoryStateView>(component_);
+    if (!view) { object.boolean("supported", false); object.end(); return out; }
+    const MemoryStorage* storage = nullptr;
+    try { storage = &view->memoryStorage(); }
+    catch (const std::logic_error&) { object.boolean("supported", false); object.end(); return out; }
+    const auto& memory = *storage;
+    if (!memory.isHistoryRecordingEnabled() || !simulator_.isHistoryRecordingEnabled()) {
+        object.boolean("supported", false); object.end(); return out;
+    }
+    object.boolean("supported", true);
+    std::string role = scenario == "rv32i-program-loader" ? "instruction" : "generic";
+    for (std::shared_ptr<Component> current = component_; current; current = current->getParent()) {
+        if (current->getName() == "INSTRUCTION_MEMORY") { role = "instruction"; break; }
+        if (current->getName() == "DATA_MEMORY") { role = "data"; break; }
+    }
+    if (memory.wordBits() != 32 && role == "instruction") role = "generic";
+    const size_t word_bytes = memory.wordBits() / 8;
+    bool has_address = false, active = false;
+    uint64_t active_address = 0;
+    std::string transaction = "null";
+    if (endpoint_) {
+        rebuildTransactions();
+        auto it = std::upper_bound(edges_.begin(), edges_.end(), time,
+            [](size_t t, const Edge& edge) { return t < edge.time; });
+        const Edge* edge = it == edges_.begin() ? nullptr : &*std::prev(it);
+        auto accepted = edge ? edge->pending : std::optional<size_t>{};
+        const auto completed = edge ? edge->completed : std::optional<size_t>{};
+        const bool reset = value(endpoint_, "RST", time) != "0";
+        const bool request = value(endpoint_, "REQ_VALID", time) == "1";
+        const bool ready = value(endpoint_, "REQ_READY", time) == "1";
+        const bool response = value(endpoint_, "RSP_VALID", time) == "1";
+        const bool take = value(endpoint_, "RSP_READY", time) == "1";
+        if (reset) accepted.reset();
+        const bool live = !reset && !accepted && request;
+        const bool completing = !reset && !accepted && !live && response && completed.has_value();
+        if (completing) accepted = completed;
+        active = !reset && (accepted.has_value() || live);
+        const size_t sample_time = accepted ? *accepted - 1 : time;
+        const auto operation_bits = value(endpoint_, "REQ_OP", sample_time);
+        uint64_t operation = 0, status = 0;
+        const bool known_op = binaryValue(operation_bits, operation);
+        static const std::vector<std::string> operations{"READ", "WRITE", "PROGRAM", "ERASE"};
+        const auto operation_name = !known_op ? "UNKNOWN" : operation < operations.size() ? operations[operation] : "INVALID";
+        has_address = active && binaryValue(value(endpoint_, "REQ_ADDR", sample_time), active_address);
+        const bool known_status = binaryValue(value(endpoint_, "RSP_STATUS", time), status);
+        static const std::vector<std::string> statuses{"OK", "ALIGNMENT", "RANGE", "READ_ONLY", "UNSUPPORTED", "DEVICE", "INVALID_REQUEST"};
+        transaction.clear();
+        JsonObject tx(transaction);
+        tx.string("phase", reset ? "reset" : response ? (take ? "response" : "response-held")
+            : accepted ? "pending" : live ? (ready ? "offered" : "request-wait") : "idle");
+        tx.string("source", accepted ? "accepted" : live ? "live" : "none");
+        tx.string("operation", active ? operation_name : "");
+        tx.string("operationBits", active ? operation_bits : "");
+        if (has_address) tx.number("address", active_address); else tx.null("address");
+        if (accepted) tx.number("acceptedTime", *accepted); else tx.null("acceptedTime");
+        if (completed) tx.number("lastCompletedRequestTime", *completed); else tx.null("lastCompletedRequestTime");
+        tx.string("writeData", active ? value(endpoint_, "REQ_WRITE_DATA", sample_time) : "");
+        tx.string("writeMask", active ? value(endpoint_, "REQ_WRITE_MASK", sample_time) : "");
+        tx.string("status", !response ? "" : known_status && status < statuses.size() ? statuses[status] : "UNKNOWN");
+        tx.string("endpointId", endpoint_->getID());
+        tx.end();
+    } else {
+        has_address = binaryValue(value(component_, "WORD_ADDR", time), active_address);
+        if (has_address) active_address *= word_bytes;
+        const auto high = [&](const std::string& p) { return value(component_, p, time) == "1"; };
+        const auto low = [&](const std::string& p) { return value(component_, p, time) == "0"; };
+        active = high("READ_EN") || high("WE") || high("WRITE_EN")
+            || (low("CE_N") && (low("WE_N") || (low("OE_N") && !low("WE_N"))));
+        // Native command devices retain snapshot-only addressing: DRAM's ADDR
+        // is a row/column command operand, not a universal byte address.
+        if (pin(component_, "CMD")) { has_address = false; active = false; }
+    }
+    if (active_address > UINT32_MAX) has_address = false;
+    const uint32_t active_base = uint32_t(active_address - active_address % word_bytes);
+    const bool in_range = has_address && active_address < memory.capacityBytes();
+    active = active && in_range;
+    if (address >= 0 && uint64_t(address) >= memory.capacityBytes())
+        throw std::invalid_argument("Memory page address is outside this device");
+    const size_t page_bytes = count * word_bytes;
+    const uint32_t page_address = address >= 0 ? uint32_t(address - address % word_bytes)
+        : active ? uint32_t(active_base / page_bytes * page_bytes) : 0;
+    const size_t page_count = std::min(count, (memory.capacityBytes() - page_address) / word_bytes);
+    const auto touched = memory.getTouchedWordsAtTime(time, 256);
+    const auto touched_count = memory.getTouchedWordCountAtTime(time);
+    object.number("capacityBytes", memory.capacityBytes()); object.number("capacityWords", memory.capacityWords());
+    object.number("wordBits", memory.wordBits()); object.boolean("historyEnabled", true);
+    object.string("memoryRole", role); object.boolean("windowActive", active);
+    if (has_address) {
+        object.number("activeAddress", active_address); object.number("activeBaseAddress", active_base);
+    } else { object.null("activeAddress"); object.null("activeBaseAddress"); }
+    object.number("touchedWordCount", touched_count); object.boolean("touchedWordsTruncated", touched_count > touched.size());
+    object.number("pageAddress", page_address); object.number("pageWords", page_count);
+    object.number("pageSize", count); object.boolean("manualPage", address >= 0);
+    object.boolean("hasPreviousPage", page_address > 0);
+    object.boolean("hasNextPage", page_address + page_count * word_bytes < memory.capacityBytes());
+    const auto render = [&](const auto& word) { return memoryWordJson(word.first, word.second, role == "instruction"); };
+    object.raw("touchedWords", arrayJson(touched, render));
+    object.raw("windowWords", arrayJson(memory.getWordsAtTime(time, page_address, page_count), render));
+    object.raw("transaction", transaction);
+    std::shared_ptr<MemoryActivityView> activity_view = std::dynamic_pointer_cast<MemoryActivityView>(endpoint_);
+    if (!activity_view && endpoint_) {
+        for (const auto& controller : endpoint_->getChildren())
+            if (controller->getName() == "CONTROLLER")
+                for (const auto& child : controller->getChildren())
+                    if (auto candidate = std::dynamic_pointer_cast<MemoryActivityView>(child)) activity_view = candidate;
+    }
+    if (activity_view) {
+        auto activity = activity_view->memoryActivityAtTime(time);
+        // These native-device status pins need not be connected to the
+        // controller, but remain useful when inspecting the whole endpoint.
+        for (const auto& child : endpoint_->getChildren()) if (child->getName() == "MEMORY") {
+            auto device = std::dynamic_pointer_cast<IOComponent>(child);
+            for (auto name : {"ROW_OPEN", "WRITE_ENABLED"}) if (pin(device, name)) {
+                std::vector<LogicValue> bits;
+                for (const auto bit : value(device, name, time))
+                    bits.push_back(bit == '1' ? LogicValue::HIGH : bit == '0' ? LogicValue::LOW
+                        : bit == 'Z' ? LogicValue::HIGH_Z : LogicValue::UNKNOWN);
+                activity.signals[name] = std::move(bits);
+            }
+        }
+        object.key("deviceActivity"); JsonObject detail(out);
+        detail.string("phase", activity.phase); detail.boolean("maintenance", activity.maintenance);
+        detail.key("signals"); JsonObject signals(out);
+        for (const auto& [name, bits] : activity.signals) signals.string(name, logicVectorValue(bits));
+        signals.end(); detail.end();
+    } else object.null("deviceActivity");
+    std::string ports;
+    JsonObject port_object(ports);
+    for (const auto& [name, p] : [&] {
+        auto pins = component_->getAllInputPins();
+        pins.insert(component_->getAllOutputPins().begin(), component_->getAllOutputPins().end());
+        return pins;
+    }()) {
+        (void)p;
+        const auto bits = value(component_, name, time), hex = hexValue(bits);
+        port_object.key(name); JsonObject item(ports); item.string("value", bits);
+        if (hex.empty()) item.null("hex"); else item.string("hex", hex);
+        item.end();
+    }
+    port_object.end(); object.raw("ports", ports); object.end();
+    return out;
+}
+
 struct VisualizerSession::ComponentRecord {
     std::shared_ptr<Component> handle;
     std::string id;
@@ -417,6 +663,8 @@ VisualizerSession::VisualizerSession(
     }
 
     timestamps_ = simulator_->getUniqueTimestamps();
+    const auto activity_times = memoryActivityTimestamps(root_);
+    timestamps_.insert(timestamps_.end(), activity_times.begin(), activity_times.end());
     for (const auto& checkpoint : test_->getCheckpoints()) {
         timestamps_.push_back(checkpoint.time);
     }
@@ -797,7 +1045,7 @@ std::string VisualizerSession::portsJson(
 
 std::string VisualizerSession::componentStateJson(
     size_t index,
-    const std::string& component_id) {
+    const std::string& component_id, int64_t address, size_t count) {
     const auto found = component_index_by_id_.find(component_id);
     if (found == component_index_by_id_.end()) {
         throw std::invalid_argument("Unknown component id '" + component_id + "'");
@@ -844,90 +1092,10 @@ std::string VisualizerSession::componentStateJson(
         return out;
     }
 
-    if (const auto view = std::dynamic_pointer_cast<MemoryStateView>(component.handle)) {
-        const auto& memory = view->memoryStorage();
-        const std::string device_type = component.handle->getTypeName();
-        const bool command_device = device_type.starts_with("DRAM<") || device_type.starts_with("NORFlash<") || device_type.starts_with("MemoryContainer<");
-        const bool rom_device = device_type.starts_with("ROM<");
-        const bool sram_device = device_type.starts_with("SRAM<");
-        const bool native_device = command_device || rom_device || sram_device;
-        const bool array_port = component.handle->getTypeName() != std::string("Memory64Kx32");
-        const auto ports = array_port ? portsJson(component_id, {
-            "WORD_ADDR", "WRITE_DATA", "WRITE_MASK", "WE", "READ_EN", "CLK", "RST", "READ_DATA", "FAULT",
-            "CMD", "ADDR", "BUSY", "ERROR", "READ_VALID", "ROW_OPEN", "WRITE_ENABLED", "CE_N", "OE_N", "WE_N",
-            "REQ_VALID", "REQ_READY", "REQ_OP", "REQ_ADDR", "REQ_WRITE_DATA", "REQ_WRITE_MASK",
-            "RSP_VALID", "RSP_READY", "RSP_READ_DATA", "RSP_STATUS"}) : portsJson(component_id, {
-            "ADDR", "WRITE_DATA", "READ_EN", "WRITE_EN", "SIZE",
-            "SIGN_EXTEND", "CLK", "RST", "READ_DATA", "READY", "FAULT"});
-        uint64_t active_address = 0;
-        bool has_active_address = false;
-        const auto address_pin = componentPin(component_id, array_port ? "WORD_ADDR" : "ADDR", "input");
-        if (address_pin) {
-            has_active_address = binaryValue(pinValue(address_pin), active_address);
-        }
-        auto port_is_high = [&](const std::string& name) {
-            const auto pin = componentPin(component_id, name, "input");
-            return pin && pinValue(pin) == "1";
-        };
-        auto port_is_low = [&](const std::string& name) {
-            const auto pin = componentPin(component_id, name, "input");
-            return pin && pinValue(pin) == "0";
-        };
-        const size_t word_bytes = memory.wordBits() / 8;
-        if (array_port && has_active_address) active_address *= word_bytes;
-        if (active_address > std::numeric_limits<uint32_t>::max()) has_active_address = false;
-        // Command pins can change after acceptance and DRAM ADDR alternates
-        // between a row and a slot. Do not label them as a latched linear access.
-        if (command_device || (native_device && active_address >= memory.capacityBytes()))
-            has_active_address = false;
-        const uint32_t active_base = static_cast<uint32_t>(active_address - active_address % word_bytes);
-        const bool window_active = has_active_address
-            && (port_is_high("READ_EN") || port_is_high(array_port ? "WE" : "WRITE_EN")
-                || ((rom_device || sram_device) && port_is_low("CE_N") && port_is_low("OE_N")
-                    && (!sram_device || port_is_high("WE_N"))));
-        const bool instruction = scenario_key_ == "rv32i-program-loader"
-            || endsWith(component_id, ".INSTRUCTION_MEMORY")
-            || endsWith(component_id, "INSTRUCTION_MEMORY");
-        const bool data = endsWith(component_id, ".DATA_MEMORY")
-            || endsWith(component_id, "DATA_MEMORY");
-        if (!memory.isHistoryRecordingEnabled()) {
-            object.boolean("supported", false);
-            object.end();
-            return out;
-        }
-        object.boolean("supported", true);
-        const auto touched = memory.getTouchedWordsAtTime(timestamp, array_port ? 256 : memory.capacityWords());
-        const auto window = native_device
-            ? memory.getWordsAtTime(timestamp, window_active ? active_base : 0,
-                                    std::min(size_t{16}, memory.capacityWords()))
-            : window_active
-            ? memory.getWordsAtTime(timestamp, active_base, 1)
-            : std::vector<Memory64Kx32::MemoryWordState>{};
-        object.number("capacityBytes", memory.capacityBytes());
-        object.number("capacityWords", memory.capacityWords());
-        object.number("wordBits", memory.wordBits());
-        object.boolean("historyEnabled", memory.isHistoryRecordingEnabled());
-        object.string("memoryRole", instruction ? "instruction" : (data ? "data" : "generic"));
-        object.boolean("windowActive", window_active);
-        if (has_active_address) {
-            object.number("activeAddress", static_cast<size_t>(active_address));
-            object.number("activeBaseAddress", active_base);
-        } else {
-            object.null("activeAddress");
-            object.null("activeBaseAddress");
-        }
-        const auto touched_count = memory.getTouchedWordCountAtTime(timestamp);
-        object.number("touchedWordCount", touched_count);
-        object.boolean("touchedWordsTruncated", touched_count > touched.size());
-        object.raw("touchedWords", arrayJson(touched, [&](const auto& word) {
-            return memoryWordJson(word.first, word.second, instruction);
-        }));
-        object.raw("windowWords", arrayJson(window, [&](const auto& word) {
-            return memoryWordJson(word.first, word.second, instruction);
-        }));
-        object.raw("ports", ports);
-        object.end();
-        return out;
+    if (std::dynamic_pointer_cast<MemoryStateView>(component.handle)) {
+        auto& inspector = memory_inspectors_[component_id];
+        if (!inspector) inspector = std::make_unique<MemoryInspector>(component.handle, *simulator_);
+        return inspector->stateJson(index, timestamp, scenario_key_, address, count);
     }
 
     object.boolean("supported", false);

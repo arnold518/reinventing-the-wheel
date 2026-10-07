@@ -79,6 +79,7 @@ void Simulator::advanceAndRecord(size_t target_time) {
 }
 
 void Simulator::runAndRecord(size_t max_time) {
+    ++history_revision_;
     _log.clear();
     _pin_log.clear();
     current_time = 0;
@@ -204,6 +205,7 @@ void Simulator::recordChange(size_t time, std::shared_ptr<WireBase> wire, const 
     auto& history = _log[std::move(wire)];
     if (history.empty() || history.back().second != value) {
         history.push_back({time, value});
+        ++history_revision_;
     }
 }
 
@@ -229,6 +231,7 @@ void Simulator::recordPinChange(size_t time, std::shared_ptr<PinBase> pin, const
     auto& history = _pin_log[std::move(pin)];
     if (history.empty() || history.back().second != value) {
         history.push_back({time, value});
+        ++history_revision_;
         ++performance_counters_.effective_pin_changes;
     }
 }
@@ -238,6 +241,7 @@ void Simulator::setHistoryRecordingEnabled(bool enabled) {
         return;
     }
     _log.clear();
+    ++history_revision_;
     _pin_log.clear();
     _headless_pin_state.clear();
     history_recording_enabled_ = enabled;
@@ -257,6 +261,7 @@ void Simulator::resetPerformanceCounters() noexcept {
 }
 
 void Simulator::clear() {
+    ++history_revision_;
     while (!event_queue.empty()) {
         event_queue.pop();
     }
@@ -267,4 +272,16 @@ void Simulator::clear() {
     next_scheduling_order = 0;
     scheduled_for_current_time_eval.clear();
     resetPerformanceCounters();
+}
+
+const Simulator::PinHistory& Simulator::signalHistory(const std::shared_ptr<PinBase>& pin) const {
+    static const PinHistory empty;
+    if (!pin || !history_recording_enabled_) return empty;
+    if (auto found = _pin_log.find(pin); found != _pin_log.end()) return found->second;
+    const auto primary = pin->getType() == PinType::INPUT ? pin->getExternalWireBase() : pin->getInternalWireBase();
+    const auto fallback = pin->getType() == PinType::INPUT ? pin->getInternalWireBase() : pin->getExternalWireBase();
+    for (const auto& wire : {primary, fallback}) {
+        if (auto found = _log.find(wire); found != _log.end()) return found->second;
+    }
+    return empty;
 }

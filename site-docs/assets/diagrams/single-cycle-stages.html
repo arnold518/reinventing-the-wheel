@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en" class="diagram-standalone">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Five roles in logical order</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;600&amp;family=Ubuntu+Mono&amp;display=swap" rel="stylesheet"/>
+<style>body { margin: 24px auto; max-width: 688px; padding: 0 16px; } * { box-sizing: border-box; }</style>
+</head>
+<body>
+<!-- diagram:start -->
+<figure class="circuit-figure" data-diagram="single-cycle-stages">
+<div class="diagram-viewport" role="region" aria-label="Five roles in logical order" tabindex="0">
+<svg viewBox="0 0 640 192" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="single-cycle-stages-title single-cycle-stages-desc">
+<title id="single-cycle-stages-title">Five roles in logical order</title>
+<desc id="single-cycle-stages-desc">Fetch obtains the instruction, Decode reads registers, Execute computes, Memory accesses data if needed, and Writeback selects the destination value, without inter-stage pipeline registers.</desc>
+<style>.circuit-figure {
+  --dg-paper: var(--md-default-bg-color, #fff);
+  --dg-ink: var(--md-default-fg-color, #202735);
+  --dg-muted: #566174;
+  --dg-rule: #c8ced8;
+  --dg-surface: #f5f6f9;
+  --dg-accent: #4051b5;
+  --dg-tint: #eef0fc;
+  margin: 1.5rem 0; max-width: 100%; text-align: left;
+  font-family: var(--md-text-font-family, 'Noto Sans', sans-serif);
+}
+[data-md-color-scheme="slate"] .circuit-figure {
+  --dg-muted: #b4bdd0; --dg-rule: #4b5569; --dg-surface: #262c38;
+  --dg-accent: #acb7ff; --dg-tint: #303853;
+}
+@media (prefers-color-scheme: dark) {
+  .diagram-standalone .circuit-figure {
+    --dg-paper: #1e2129; --dg-ink: #e4e7ef; --dg-muted: #b4bdd0;
+    --dg-rule: #4b5569; --dg-surface: #262c38;
+    --dg-accent: #acb7ff; --dg-tint: #303853;
+  }
+  .diagram-standalone body { background: #1e2129; color: #e4e7ef; }
+}
+.circuit-figure .diagram-viewport {
+  max-width: 100%; overflow: auto; overscroll-behavior-x: contain;
+}
+.circuit-figure .diagram-viewport:focus-visible {
+  outline: 2px solid var(--dg-accent); outline-offset: 3px;
+}
+.circuit-figure svg { display: block; width: 640px; min-width: 640px; max-width: none; margin: 0 auto; }
+.circuit-figure figcaption {
+  display: block; margin: .6rem 0 0; max-width: none; text-align: left;
+  color: var(--dg-muted); font-style: normal; font-size: 14px; line-height: 1.6;
+}
+.circuit-figure figcaption strong { color: var(--dg-ink); font-weight: 600; }
+.circuit-figure .dg-zone { fill: var(--dg-paper); stroke: var(--dg-rule); stroke-width: 1.2; }
+.circuit-figure .dg-box { fill: var(--dg-paper); stroke: var(--dg-rule); stroke-width: 1.2; }
+.circuit-figure .dg-store { fill: var(--dg-surface); stroke: var(--dg-rule); stroke-width: 1.2; }
+.circuit-figure .dg-focus { fill: var(--dg-tint); stroke: var(--dg-accent); stroke-width: 1.4; }
+.circuit-figure .dg-label { fill: var(--dg-paper); stroke: none; }
+.circuit-figure text { fill: var(--dg-ink); font-family: var(--md-text-font-family, 'Noto Sans', sans-serif); font-size: 16px; }
+.circuit-figure .dg-name { font-weight: 600; }
+.circuit-figure .dg-small { font-size: 14px; fill: var(--dg-muted); }
+.circuit-figure .dg-code { font-family: var(--md-code-font-family, 'Ubuntu Mono', monospace); font-size: 14px; fill: var(--dg-muted); }
+.circuit-figure .dg-tag { font-size: 12px; font-weight: 600; letter-spacing: .06em; fill: var(--dg-muted); }
+.circuit-figure .dg-edge { fill: none; stroke: var(--dg-muted); stroke-width: 1.5; }
+.circuit-figure .dg-marker { fill: var(--dg-muted); }
+.circuit-figure .dg-marker-accent { fill: var(--dg-accent); }
+.circuit-figure .dg-rule { stroke: var(--dg-rule); stroke-width: 1; }</style>
+<defs>
+<marker id="single-cycle-stages-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><path d="M 0 0 L 8 3 L 0 6 Z" class="dg-marker"/></marker>
+<marker id="single-cycle-stages-arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><path d="M 0 0 L 8 3 L 0 6 Z" class="dg-marker-accent"/></marker>
+<marker id="single-cycle-stages-arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><path d="M 0 0 L 8 3 L 0 6 Z" class="dg-marker"/></marker>
+</defs>
+<rect width="640" height="192" fill="var(--dg-paper)"/>
+<path class="dg-edge" d="M 128 76 L 144 76" marker-end="url(#single-cycle-stages-arrow)"/>
+<path class="dg-edge" d="M 252 76 L 268 76" marker-end="url(#single-cycle-stages-arrow)"/>
+<path class="dg-edge" d="M 376 76 L 392 76" marker-end="url(#single-cycle-stages-arrow)"/>
+<path class="dg-edge" d="M 500 76 L 516 76" marker-end="url(#single-cycle-stages-arrow)"/>
+<rect data-node="FETCH" x="20" y="48" width="108" height="56" rx="6" class="dg-box"/>
+<text x="74.0" y="81.0" class="dg-name" text-anchor="middle">FETCH</text>
+<text x="74" y="136" class="dg-small" text-anchor="middle">Instruction</text>
+<text x="74" y="156" class="dg-small" text-anchor="middle">and PC</text>
+<rect data-node="DECODE" x="144" y="48" width="108" height="56" rx="6" class="dg-box"/>
+<text x="198.0" y="81.0" class="dg-name" text-anchor="middle">DECODE</text>
+<text x="198" y="136" class="dg-small" text-anchor="middle">Decode and</text>
+<text x="198" y="156" class="dg-small" text-anchor="middle">register read</text>
+<rect data-node="EXECUTE" x="268" y="48" width="108" height="56" rx="6" class="dg-box"/>
+<text x="322.0" y="81.0" class="dg-name" text-anchor="middle">EXECUTE</text>
+<text x="322" y="136" class="dg-small" text-anchor="middle">ALU and</text>
+<text x="322" y="156" class="dg-small" text-anchor="middle">targets</text>
+<rect data-node="MEMORY" x="392" y="48" width="108" height="56" rx="6" class="dg-box"/>
+<text x="446.0" y="81.0" class="dg-name" text-anchor="middle">MEMORY</text>
+<text x="446" y="136" class="dg-small" text-anchor="middle">Data access</text>
+<text x="446" y="156" class="dg-small" text-anchor="middle">if required</text>
+<rect data-node="WRITEBACK" x="516" y="48" width="108" height="56" rx="6" class="dg-box"/>
+<text x="570.0" y="81.0" class="dg-name" text-anchor="middle">WRITEBACK</text>
+<text x="570" y="136" class="dg-small" text-anchor="middle">Destination</text>
+<text x="570" y="156" class="dg-small" text-anchor="middle">value</text>
+</svg>
+</div>
+<figcaption><strong>Logical order, not five clock cycles.</strong> These are responsibilities within the single-cycle core, not pipeline stages separated by registers. Not every value passes through Memory; the writeback diagram shows the bypass paths.</figcaption>
+</figure>
+<!-- diagram:end -->
+</body>
+</html>

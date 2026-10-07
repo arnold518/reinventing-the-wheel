@@ -9,7 +9,6 @@
 #include <memory>
 
 class IOComponent;
-class Memory64Kx32;
 class RV32IProgramRoot;
 class RV32IStateView;
 template<size_t WIDTH> class Wire;

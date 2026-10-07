@@ -1,4 +1,4 @@
-"""Real WASM layout refresh, seeded with a pre-refresh browser snapshot."""
+"""Real WASM layout refresh, seeded with an intentionally stale snapshot."""
 from copy import deepcopy
 import json
 from pathlib import Path
@@ -8,15 +8,40 @@ from playwright.sync_api import sync_playwright
 
 ROOT = Path(__file__).resolve().parents[1]
 base = sys.argv[1].rstrip("/") + "/"
-old = json.loads(Path(sys.argv[2]).read_text())
 shipped = json.loads((ROOT / "visualizer-v2/layout.json").read_text())
-screens = Path(sys.argv[3]) if len(sys.argv) > 3 else None
+old = deepcopy(shipped)
+# Mimic a browser snapshot saved before these automatic scopes existed. The
+# static package must restore them while keeping unrelated user placements.
+old["type_layouts"].pop("Register<32>")
+old["root_layouts"].pop("rv32i-memory-lanes")
+screens = Path(sys.argv[2]) if len(sys.argv) > 2 else None
 if screens:
     screens.mkdir(parents=True, exist_ok=True)
 saved = deepcopy(old)
 saved["type_layouts"]["ALU8"]["color"] = [17, 34, 51, 190]
 saved["type_layouts"]["ALU8"]["children"]["CONTROL"]["rel_pos"] = [.123456, .234567]
 saved["type_layouts"]["SRAMRow<16>"]["children"]["CELL_0"]["rel_pos"] = [.0314159, .271828]
+# Real pre-refresh geometry, including a two-input rewire's old proportions.
+# Exercise both shared and profile-scoped defaults; an already-current fixture
+# would not prove that a user's saved browser snapshot can actually upgrade.
+routing_scopes = []
+for section in ["type_layouts", *shipped["profile_layouts"]]:
+    source = shipped[section] if section == "type_layouts" else shipped["profile_layouts"][section]
+    destination = saved[section] if section == "type_layouts" else saved["profile_layouts"][section]
+    for kind, entry in source.items():
+        if not (kind.startswith("RV32IDecodeControlField<") or kind == "RV32IFetchRequest"):
+            continue
+        history = entry.get("automatic_layout_history", [])
+        if not history:
+            continue
+        snapshot = history[-1]
+        destination[kind]["children"] = deepcopy(snapshot["children"])
+        destination[kind]["automatic_layout_revision"] = snapshot["revision"]
+        destination[kind]["color"] = [23, 45, 67, 190]
+        routing_scopes.append((section, kind))
+rewire_kind = "Rewire<in=2,out=40>"
+saved["type_layouts"][rewire_kind] = deepcopy(shipped["type_layouts"][rewire_kind]["previous_default"])
+saved["type_layouts"][rewire_kind]["color"] = [31, 42, 53, 190]
 
 
 def idle(page):
@@ -66,8 +91,27 @@ with sync_playwright() as p:
                     assert actual["children"][child]["rel_width"] == geometry["rel_width"]
             count += 1
     assert count > 100
+    assert migrated["type_layouts"]["Register<32>"]["children"] == shipped["type_layouts"]["Register<32>"]["children"]
+    assert migrated["root_layouts"]["rv32i-memory-lanes"]["children"] == shipped["root_layouts"]["rv32i-memory-lanes"]["children"]
     assert migrated["type_layouts"]["ALU8"]["color"] == [17,34,51,190]
     assert migrated["type_layouts"]["SRAMRow<16>"] == saved["type_layouts"]["SRAMRow<16>"]
+
+    def check_routing_migration():
+        current = page.evaluate("app.layout")
+        assert len(routing_scopes) >= 19
+        for section, kind in routing_scopes:
+            source = shipped[section] if section == "type_layouts" else shipped["profile_layouts"][section]
+            target = current[section] if section == "type_layouts" else current["profile_layouts"][section]
+            for name, expected in source[kind]["children"].items():
+                assert target[kind]["children"][name]["rel_pos"] == expected["rel_pos"], (section, kind, name)
+                assert target[kind]["children"][name]["rel_width"] == expected["rel_width"]
+            assert target[kind]["color"] == [23, 45, 67, 190]
+        actual = current["type_layouts"][rewire_kind]
+        for key in ("aspect_ratio", "min_aspect_ratio", "title_bar_ratio", "pin_size_ratio", "boundary_area_ratio"):
+            assert actual[key] == shipped["type_layouts"][rewire_kind][key], key
+        assert actual["color"] == [31, 42, 53, 190]
+
+    check_routing_migration()
 
     def check_routes():
         routes = page.evaluate("""()=>{
@@ -105,6 +149,8 @@ with sync_playwright() as p:
     idle(page)
     check_routes()
     assert page.evaluate("app.layout.type_layouts.ALU8.children.CONTROL.rel_pos") == [.123456,.234567]
+    check_routing_migration()
     assert not errors, errors
     print(f"{count} saved type/root defaults migrated; manual edits preserved; all eight lane inputs route forward before/after reload")
+    print(f"{len(routing_scopes)} decode/fetch defaults and two-bus rewire style upgraded before/after reload; colors preserved")
     browser.close()

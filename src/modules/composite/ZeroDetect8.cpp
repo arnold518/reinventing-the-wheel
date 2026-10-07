@@ -20,24 +20,19 @@ void ZeroDetect8::buildInternals(ComponentBuilder& builder) {
     }
     builder.addNewComponent<NOTGate>("NOT_ZERO");
 
-    builder.addNewWire(
-        "A_bit_0_to_OR0",
-        builder.getOutputPin<BitSplitter<8>>("A_SPLIT", "OUT_0"),
-        {builder.getInputPin<ORGate>("OR0", "A")});
-    builder.addNewWire(
-        "A_bit_1_to_OR0",
-        builder.getOutputPin<BitSplitter<8>>("A_SPLIT", "OUT_1"),
-        {builder.getInputPin<ORGate>("OR0", "B")});
-
-    for (size_t i = 1; i < 7; ++i) {
-        builder.addNewWire(
-            "OR" + std::to_string(i - 1) + "_to_OR" + std::to_string(i),
-            builder.getOutputPin<ORGate>("OR" + std::to_string(i - 1), "OUT"),
-            {builder.getInputPin<ORGate>("OR" + std::to_string(i), "A")});
-        builder.addNewWire(
-            "A_bit_" + std::to_string(i + 1) + "_to_OR" + std::to_string(i),
-            builder.getOutputPin<BitSplitter<8>>("A_SPLIT", "OUT_" + std::to_string(i + 1)),
-            {builder.getInputPin<ORGate>("OR" + std::to_string(i), "B")});
+    for (size_t i = 0; i < 4; ++i) {
+        for (size_t side = 0; side < 2; ++side)
+            builder.addNewWire("A_bit_" + std::to_string(2 * i + side) + "_to_OR" + std::to_string(i),
+                builder.getOutputPin<BitSplitter<8>>("A_SPLIT", "OUT_" + std::to_string(2 * i + side)),
+                {builder.getInputPin<ORGate>("OR" + std::to_string(i), side == 0 ? "A" : "B")});
+    }
+    for (size_t i = 4; i < 7; ++i) {
+        for (size_t side = 0; side < 2; ++side) {
+            const auto child = i == 6 ? 4 + side : 2 * (i - 4) + side;
+            builder.addNewWire("OR" + std::to_string(child) + "_to_OR" + std::to_string(i),
+                builder.getOutputPin<ORGate>("OR" + std::to_string(child), "OUT"),
+                {builder.getInputPin<ORGate>("OR" + std::to_string(i), side == 0 ? "A" : "B")});
+        }
     }
 
     builder.addNewWire(

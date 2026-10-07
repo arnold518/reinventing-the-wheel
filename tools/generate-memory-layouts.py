@@ -13,11 +13,11 @@ import server
 
 
 layout = server.LayoutManager(root / "visualizer-v2" / "layout.json")
-for scenario in ("ff-memory-container", "ff-word", "ff-storage-bank", "sram-container", "rom-container", "memory-bus-adapter32"):
-    root_id = ("MEMORY_BUS_ADAPTER_ROOT" if scenario == "memory-bus-adapter32" else
+for scenario in ("ff-memory-container", "ff-word", "ff-storage-bank"):
+    root_id = (
                "FF_WORD_ROOT" if scenario == "ff-word" else
                "FF_STORAGE_BANK_ROOT" if scenario == "ff-storage-bank" else "MEMORY_CONTAINER_ROOT")
-    for fidelity in (("structural",) if scenario == "memory-bus-adapter32" else ("structural", "behavioral")):
+    for fidelity in ("structural", "behavioral"):
         session = server.CircuitSession(scenario, layout, profile_overrides={root_id: fidelity})
         if fidelity == "structural" and scenario in ("ff-memory-container", "ff-word", "ff-storage-bank"):
             # A nested word/cell override changes the root profile fingerprint,

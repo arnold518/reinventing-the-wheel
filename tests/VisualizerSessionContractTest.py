@@ -115,7 +115,7 @@ def main() -> None:
         manager = server.LayoutManager(Path(directory) / "rewire-layout.json")
         manager.type_layouts["Rewire"] = {"aspect_ratio": 9, "min_aspect_ratio": 9, "color": [1, 2, 3, 190]}
         for width in (8, 16, 32):
-            memory = circuit_backend.create_memory_array("M", "ff", width, 1, fidelity="structural")
+            memory = circuit_backend.create_ff_memory("M", width, 1, fidelity="structural")
             read = next(c for c in memory.get_children() if c.get_name() == "READ_SELECT")
             rewire = next(c for c in read.get_children() if c.get_type_name() == "Rewire")
             key = f"Rewire<in=1,out={width}>"
@@ -155,13 +155,13 @@ def main() -> None:
                 for name, value in expected.items():
                     assert state["pins"][pins[name]["stateIndex"]] == value, (scenario, checkpoint, name)
 
-        native = native_session("memory64kx32", layout_path)
+        native = native_session("rv32i-program-loader", layout_path)
         expected = native.topology_response()
         root_id = expected["rootId"]
         actual_state = probe(
             "component",
-            "Memory64Kx32Test",
-            "memory64kx32",
+            "RV32IProgramLoaderTest",
+            "rv32i-program-loader",
             "0",
             root_id,
         )
