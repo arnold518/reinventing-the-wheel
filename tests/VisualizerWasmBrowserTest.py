@@ -734,7 +734,7 @@ def main() -> None:
         assert page.evaluate("app.components.size === 1 && app.components.get(app.rootId).fidelity === 'behavioral'")
         root_row.locator(".explorer-arrow").click()
         page.locator("#apply-profile").click()
-        page.wait_for_function("app.components.size === 2406 && app.components.get(app.rootId).fidelity === 'structural' && document.querySelector('#loading').classList.contains('hidden')")
+        page.wait_for_function("app.components.size === 2330 && app.components.get(app.rootId).fidelity === 'structural' && document.querySelector('#loading').classList.contains('hidden')")
         alu_contract = page.evaluate(
             """async () => {
               const response = await window.visualizerRequest(

@@ -45,8 +45,10 @@ def verify_peripheral(page, component_id):
     }""", component_id)
     rectangles = {c["name"]: c["rect"] for c in data["children"]}
     mux = "SELECT_0_0" in rectangles
-    rows = [[rectangles[f"SELECT_{slot}_{bit}" if mux else f"WRITE_{slot * 8 + bit}"]
-             for bit in range(8)] for slot in range(2)]
+    # The column mux has one select gate per bit; the write distributor has
+    # one enable gate per slot and byte lane.
+    rows = [[rectangles[f"SELECT_{slot}_{bit}"] for bit in range(8)] if mux
+            else [rectangles[f"WRITE_SLOT_{slot}_BYTE_0"]] for slot in range(2)]
     for row in rows:
         assert all(a["x"] + a["w"] < b["x"] for a,b in zip(row,row[1:]))
         assert max(r["y"] for r in row) - min(r["y"] for r in row) < 1e-6

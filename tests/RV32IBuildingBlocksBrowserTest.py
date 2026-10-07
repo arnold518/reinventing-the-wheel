@@ -95,7 +95,8 @@ with sync_playwright() as p:
             assert {c["name"] for c in children} == {"INPUT_BITS", "OUTPUT_BITS", *(f"BIT_{bit}" for bit in range(32))}
             assert page.evaluate("app.components.get(app.rootId+'.BIT_0').type") == "FlipFlopCell"
             assert not page.evaluate("app.components.has(app.rootId+'.STORAGE')")
-        expected=shipped["root_layouts"].get(alias,{})
+        # A root layout saved for the active profile takes precedence over the scenario-wide one.
+        expected=shipped["root_layouts"].get(page.evaluate("app.layoutKey")) or shipped["root_layouts"].get(alias,{})
         if expected.get("layout_revision") in {"rv32i-blocks-v4","rv32i-alu-auto-v5","rv32i-alu-auto-v6"}:
             if "aspect_ratio" in expected:
                 assert abs(parent["h"]/parent["w"]-expected["aspect_ratio"])<.002,(alias,"stale proportions")
