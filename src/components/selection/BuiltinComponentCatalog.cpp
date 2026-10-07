@@ -625,89 +625,57 @@ void registerStorage(ComponentCatalog& catalog) {
 
 }
 
+// One known-binary contract with exactly one structural and one behavioral
+// implementation, both proven by the same component test.
+struct FamilyPair {
+    const ComponentFamily& family;
+    std::string display_name;
+    std::string test;
+    std::string lower_level;
+    std::string structural_id;
+    std::string behavioral_id;
+    std::string observation = "stable-after-settle";
+    uint32_t version = 1;
+    std::vector<std::string> capabilities = {};
+    ParameterPredicate supports = {};
+};
+
+void addFamilyPair(ComponentCatalog& catalog, const FamilyPair& entry) {
+    catalog.registerContract({
+        std::string(entry.family.id()), entry.version, entry.display_name,
+        schemaFor(entry.family), entry.capabilities, "known-binary", entry.observation});
+    auto structural = implementationFor(
+        entry.family, entry.structural_id, Fidelity::Structural,
+        verifiedStructural(entry.test));
+    auto behavioral = implementationFor(
+        entry.family, entry.behavioral_id, Fidelity::Behavioral,
+        verifiedBehavioral(entry.lower_level, entry.test, entry.test,
+                           "known-binary", entry.observation));
+    for (auto* implementation : {&structural, &behavioral}) {
+        implementation->capabilities = entry.capabilities;
+        if (entry.supports) implementation->supports = entry.supports;
+        catalog.registerImplementation(std::move(*implementation));
+    }
+}
+
 void registerRV32I(ComponentCatalog& catalog) {
-    const auto alu32 = std::string(families::ALU32.id());
-    catalog.registerContract({
-        alu32, 1, "RV32I ALU32", schemaFor(families::ALU32), {},
-        "known-binary", "stable-after-settle"});
-    catalog.registerImplementation(implementationFor(
-        families::ALU32,
-        "rv32i.alu32.structural", Fidelity::Structural,
-        verifiedStructural("ALU32Test")));
-    catalog.registerImplementation(implementationFor(
-        families::ALU32,
-        "rv32i.alu32.behavioral.direct", Fidelity::Behavioral,
-        verifiedBehavioral("ALU32 structural implementation", "ALU32Test",
-                           "ALU32Test", "known-binary",
-                           "stable-after-settle")));
-
-    catalog.registerContract({std::string(families::ALU32Core.id()),1,
-        "RV32I core ALU datapath",schemaFor(families::ALU32Core),{},
-        "known-binary","stable-after-settle"});
-    catalog.registerImplementation(implementationFor(families::ALU32Core,
-        "rv32i.alu32-core.structural",Fidelity::Structural,
-        verifiedStructural("ALU32CoreTest")));
-    catalog.registerImplementation(implementationFor(families::ALU32Core,
-        "rv32i.alu32-core.behavioral.direct",Fidelity::Behavioral,
-        verifiedBehavioral("ALU32 shared arithmetic and compare network",
-            "ALU32CoreTest","ALU32CoreTest",
-            "known-binary","stable-after-settle")));
-
-    const auto control_flow = std::string(families::RV32IControlFlow.id());
-    catalog.registerContract({
-        control_flow, 1, "RV32I control flow",
-        schemaFor(families::RV32IControlFlow), {}, "known-binary", "clock-boundary"});
-    catalog.registerImplementation(implementationFor(
-        families::RV32IControlFlow,
-        "rv32i.control-flow.structural", Fidelity::Structural,
-        verifiedStructural("RV32IControlFlowUnitTest")));
-    catalog.registerImplementation(implementationFor(
-        families::RV32IControlFlow,
-        "rv32i.control-flow.behavioral.direct",
-        Fidelity::Behavioral,
-        verifiedBehavioral("RV32IControlFlowUnit structure",
-                           "RV32IControlFlowUnitTest",
-                           "RV32IControlFlowUnitTest", "known-binary",
-                           "clock-boundary")));
-
-    const auto decode_control =
-        std::string(families::RV32IDecodeControl.id());
-    catalog.registerContract({
-        decode_control, 1, "RV32I decode and control",
-        schemaFor(families::RV32IDecodeControl), {}, "known-binary",
-        "stable-after-settle"});
-    catalog.registerImplementation(implementationFor(
-        families::RV32IDecodeControl,
-        "rv32i.decode-control.structural",
-        Fidelity::Structural, verifiedStructural("RV32IDecodeControlUnitTest")));
-    catalog.registerImplementation(implementationFor(
-        families::RV32IDecodeControl,
-        "rv32i.decode-control.behavioral.direct",
-        Fidelity::Behavioral,
-        verifiedBehavioral("RV32IDecodeControlUnit structure",
-                           "RV32IDecodeControlUnitTest",
-                           "RV32IDecodeControlUnitTest", "known-binary",
-                           "stable-after-settle")));
-
-    const auto execution_status =
-        std::string(families::RV32IExecutionStatus.id());
-    catalog.registerContract({
-        execution_status, 1, "RV32I execution status",
-        schemaFor(families::RV32IExecutionStatus), {}, "known-binary",
+    addFamilyPair(catalog, {families::ALU32, "RV32I ALU32", "ALU32Test",
+        "ALU32 structural implementation",
+        "rv32i.alu32.structural", "rv32i.alu32.behavioral.direct"});
+    addFamilyPair(catalog, {families::ALU32Core, "RV32I core ALU datapath", "ALU32CoreTest",
+        "ALU32 shared arithmetic and compare network",
+        "rv32i.alu32-core.structural", "rv32i.alu32-core.behavioral.direct"});
+    addFamilyPair(catalog, {families::RV32IControlFlow, "RV32I control flow",
+        "RV32IControlFlowUnitTest", "RV32IControlFlowUnit structure",
+        "rv32i.control-flow.structural", "rv32i.control-flow.behavioral.direct",
         "clock-boundary"});
-    catalog.registerImplementation(implementationFor(
-        families::RV32IExecutionStatus,
-        "rv32i.execution-status.structural",
-        Fidelity::Structural,
-        verifiedStructural("RV32IExecutionControlStatusUnitTest")));
-    catalog.registerImplementation(implementationFor(
-        families::RV32IExecutionStatus,
-        "rv32i.execution-status.behavioral.direct",
-        Fidelity::Behavioral,
-        verifiedBehavioral("RV32IExecutionControlStatusUnit structure",
-                           "RV32IExecutionControlStatusUnitTest",
-                           "RV32IExecutionControlStatusUnitTest", "known-binary",
-                           "clock-boundary")));
+    addFamilyPair(catalog, {families::RV32IDecodeControl, "RV32I decode and control",
+        "RV32IDecodeControlUnitTest", "RV32IDecodeControlUnit structure",
+        "rv32i.decode-control.structural", "rv32i.decode-control.behavioral.direct"});
+    addFamilyPair(catalog, {families::RV32IExecutionStatus, "RV32I execution status",
+        "RV32IExecutionControlStatusUnitTest", "RV32IExecutionControlStatusUnit structure",
+        "rv32i.execution-status.structural", "rv32i.execution-status.behavioral.direct",
+        "clock-boundary"});
 
     catalog.registerContract({
         "rv32i.pattern-matcher", 1, "RV32I pattern matcher",
@@ -738,40 +706,16 @@ void registerRV32I(ComponentCatalog& catalog) {
         const ComponentFamily& family,
         const std::string& display_name,
         const std::string& test_name) {
-        const auto contract_id = std::string(family.id());
-        catalog.registerContract({
-            contract_id,
-            1,
-            display_name,
-            schemaFor(family),
-            {},
-            "known-binary",
-            "clock-boundary",
-        });
-        auto structural = implementationFor(
-            family,
-            contract_id + ".structural.register32-bank",
-            Fidelity::Structural,
-            verifiedStructural(test_name));
-        auto behavioral = implementationFor(
-            family,
-            contract_id + ".behavioral.direct",
-            Fidelity::Behavioral,
-            verifiedBehavioral(
-                display_name + " structural Register<32> bank",
-                test_name,
-                test_name,
-                "known-binary",
-                "clock-boundary"));
-        auto supports = [](const ParameterMap& parameters) {
-            return parameters.empty() ||
-                (parameters.size() == 1 && parameters.contains("compact_packet") &&
-                 parameters.at("compact_packet") == "1");
-        };
-        structural.supports = supports;
-        behavioral.supports = supports;
-        catalog.registerImplementation(std::move(structural));
-        catalog.registerImplementation(std::move(behavioral));
+        const auto id = std::string(family.id());
+        addFamilyPair(catalog, {family, display_name, test_name,
+            display_name + " structural Register<32> bank",
+            id + ".structural.register32-bank", id + ".behavioral.direct",
+            "clock-boundary", 1, {},
+            [](const ParameterMap& parameters) {
+                return parameters.empty() ||
+                    (parameters.size() == 1 && parameters.contains("compact_packet") &&
+                     parameters.at("compact_packet") == "1");
+            }});
     };
 
     add_pipeline_register(
@@ -796,43 +740,20 @@ void registerRV32I(ComponentCatalog& catalog) {
         const std::string& display_name,
         const std::string& test_name,
         bool configurable_fetch = false) {
-        const auto contract_id = std::string(family.id());
-        catalog.registerContract({
-            contract_id,
-            1,
-            display_name,
-            schemaFor(family),
-            {},
-            "known-binary",
-            "stable-after-settle",
-        });
-        auto structural = implementationFor(
-            family,
-            contract_id + ".structural.gates",
-            Fidelity::Structural,
-            verifiedStructural(test_name));
-        auto behavioral = implementationFor(
-            family,
-            contract_id + ".behavioral.direct",
-            Fidelity::Behavioral,
-            verifiedBehavioral(
-                display_name + " structural gate network",
-                test_name,
-                test_name,
-                "known-binary",
-                "stable-after-settle"));
+        const auto id = std::string(family.id());
+        ParameterPredicate supports;
         if (configurable_fetch) {
-            auto supports = [](const ParameterMap& parameters) {
+            supports = [](const ParameterMap& parameters) {
                 return parameters.empty() ||
                     (parameters.size() == 1 && parameters.contains("external_next_pc") &&
                      (parameters.at("external_next_pc") == "0" ||
                       parameters.at("external_next_pc") == "1"));
             };
-            structural.supports = supports;
-            behavioral.supports = supports;
         }
-        catalog.registerImplementation(std::move(structural));
-        catalog.registerImplementation(std::move(behavioral));
+        addFamilyPair(catalog, {family, display_name, test_name,
+            display_name + " structural gate network",
+            id + ".structural.gates", id + ".behavioral.direct",
+            "stable-after-settle", 1, {}, supports});
     };
 
     add_pipeline_control(
@@ -842,16 +763,11 @@ void registerRV32I(ComponentCatalog& catalog) {
     for (const auto* family : {&families::RV32IPredictionCounter, &families::RV32IBranchPredecode,
                               &families::RV32IBranchRecovery, &families::RV32IBranchPredictor,
                               &families::RV32IPredictionPath}) {
-        const std::string id(family->id()), name(family->typeName()), test=name+"Test";
+        const std::string id(family->id()), name(family->typeName());
         const bool configured = family==&families::RV32IBranchPredictor || family==&families::RV32IPredictionPath;
-        catalog.registerContract({id,1,name,schemaFor(*family),{},"known-binary","stable-after-settle"});
-        for (const auto fidelity : {Fidelity::Structural,Fidelity::Behavioral}) {
-            auto impl=implementationFor(*family,id+"."+toString(fidelity),fidelity,
-                fidelity==Fidelity::Structural ? verifiedStructural(test)
-                    : verifiedBehavioral(name+" structural circuit",test,test,"known-binary","stable-after-settle"));
-            if (configured) impl.supports=rv32i::supportsPredictionParameters;
-            catalog.registerImplementation(std::move(impl));
-        }
+        addFamilyPair(catalog, {*family, name, name + "Test", name + " structural circuit",
+            id + ".structural", id + ".behavioral", "stable-after-settle", 1, {},
+            configured ? ParameterPredicate(rv32i::supportsPredictionParameters) : ParameterPredicate()});
     }
     add_pipeline_control(
         families::RV32IHazardDetectionUnit,
@@ -946,33 +862,25 @@ void registerRV32I(ComponentCatalog& catalog) {
             &families::RV32ISingleCycleDecodeStage, &families::RV32ISingleCycleExecuteStage,
             &families::RV32ISingleCycleMemoryStage, &families::RV32ISingleCycleWritebackStage,
             &families::RV32ISingleCycleNextPCStage}) {
-        const std::string id(stage->id()), name(stage->typeName()), test=name+"Test";
-        const std::vector<std::string> capabilities = stage==&families::RV32ISingleCycleDecodeStage
-            ? std::vector<std::string>{"register-state-view"} : std::vector<std::string>{};
-        catalog.registerContract({id,1,name,schemaFor(*stage),capabilities,"known-binary","stable-after-settle"});
-        auto structure=implementationFor(*stage,id+".structural",Fidelity::Structural,verifiedStructural(test));
-        structure.capabilities=capabilities;
-        catalog.registerImplementation(std::move(structure));
-        auto behavior=implementationFor(*stage,id+".behavioral",Fidelity::Behavioral,
-            verifiedBehavioral(name+" structural datapath",test,test,"known-binary","stable-after-settle"));
-        behavior.capabilities=capabilities;
-        catalog.registerImplementation(std::move(behavior));
+        const std::string id(stage->id()), name(stage->typeName());
+        addFamilyPair(catalog, {*stage, name, name + "Test", name + " structural datapath",
+            id + ".structural", id + ".behavioral", "stable-after-settle", 1,
+            stage==&families::RV32ISingleCycleDecodeStage
+                ? std::vector<std::string>{"register-state-view"} : std::vector<std::string>{}});
     }
 
     for(const auto* block : {&families::RV32IBaselineFetchStage, &families::RV32IBaselineDecodeStage,
             &families::RV32IBaselineExecuteStage, &families::RV32IBaselineMemoryStage,
             &families::RV32IBaselineDependencyUnit, &families::RV32IBaselineControl,
             &families::RV32IBaselinePipelineCore}) {
-        const std::string id(block->id()),name(block->typeName()),test=name+"Test";
+        const std::string id(block->id()), name(block->typeName());
         const bool core=block==&families::RV32IBaselinePipelineCore;
-        const std::vector<std::string> caps=core?std::vector<std::string>{"rv32i-pipeline-state-view","rv32i-retirement-view"}:
-            block==&families::RV32IBaselineDecodeStage?std::vector<std::string>{"register-state-view"}:std::vector<std::string>{};
-        catalog.registerContract({id,core?2u:1u,name,schemaFor(*block),caps,"known-binary",core?"clock-boundary":"stable-after-settle"});
-        auto structure=implementationFor(*block,id+".structural",Fidelity::Structural,verifiedStructural(test));
-        structure.capabilities=caps;catalog.registerImplementation(std::move(structure));
-        auto behavior=implementationFor(*block,id+".behavioral",Fidelity::Behavioral,
-            verifiedBehavioral(name+" structural circuitry",test,test,"known-binary",core?"clock-boundary":"stable-after-settle"));
-        behavior.capabilities=caps;catalog.registerImplementation(std::move(behavior));
+        addFamilyPair(catalog, {*block, name, name + "Test", name + " structural circuitry",
+            id + ".structural", id + ".behavioral",
+            core ? "clock-boundary" : "stable-after-settle", core ? 2u : 1u,
+            core ? std::vector<std::string>{"rv32i-pipeline-state-view","rv32i-retirement-view"}
+                 : block==&families::RV32IBaselineDecodeStage
+                     ? std::vector<std::string>{"register-state-view"} : std::vector<std::string>{}});
     }
 
     const auto core =
