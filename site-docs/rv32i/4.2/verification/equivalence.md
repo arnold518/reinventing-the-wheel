@@ -42,7 +42,7 @@ After trace equality, aggregate signatures must also match. A separate negative 
 
 Each subprocess has at most 1024 cycles, an event budget, a 90-second timeout, and a 512 MiB address-space cap. The runner's general trace limit is 4096 cycles. Processes are serial and no visualizer history is retained.
 
-**Source:** `tests/RV32IDifferentialTest.py`; trace capture in `src/analysis/RV32IExperiment.cpp`.
+**Source:** `tests/checks/RV32IDifferentialTest.py`; trace capture in `src/analysis/RV32IExperiment.cpp`.
 
 ## RV32IProfileToggleSweepTest
 

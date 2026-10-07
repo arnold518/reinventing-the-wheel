@@ -100,10 +100,10 @@ The standard output files contain both fidelity records and their manifests. Dir
 - `tools/rv32i-benchmarks/embench/middle.c`: reduced-work entry point; unchanged upstream sources remain under `build/`.
 - `tools/rv32i-benchmarks/build-embench-multilib.py`: serial, pinned full/middle builds and provenance.
 - `tools/benchmarks/run.py`: preset validation and delegation to the common campaign driver.
-- `tests/RV32IMiddleBenchmarkTest.py`: valid/invalid manifests, checksums, accidental full-suite selection, preset flags and optional complete-ELF instruction preflight.
+- `tests/checks/RV32IMiddleBenchmarkTest.py`: valid/invalid manifests, checksums, accidental full-suite selection, preset flags and optional complete-ELF instruction preflight.
 
 ```sh
-python3 tests/RV32IMiddleBenchmarkTest.py --build-dir build \
+python3 tests/checks/RV32IMiddleBenchmarkTest.py --build-dir build \
   --artifacts build/rv32i-embench-middle/artifacts
 ```
 

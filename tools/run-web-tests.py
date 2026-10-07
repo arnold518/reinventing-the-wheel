@@ -31,7 +31,7 @@ def test_inventory():
     if len({r['name'] for r in rows}) != len(rows):
         raise ValueError('Duplicate web-test name')
     for row in rows:
-        if not (ROOT / 'tests' / row['file']).is_file():
+        if not (ROOT / 'tests/web' / row['file']).is_file():
             raise ValueError('Missing web test: ' + row['file'])
     return rows
 
@@ -50,7 +50,7 @@ def command_for(row, args, base):
                   probe=str(args.build_dir / 'tests/VisualizerSessionProbe'), base=base,
                   simulator=base + 'simulator/')
     executable = args.browser_python if row['kind'] == 'browser' else args.node
-    return [executable, str(ROOT / 'tests' / row['file']),
+    return [executable, str(ROOT / 'tests/web' / row['file']),
             *[argument.format(**values) for argument in row['args']]]
 
 

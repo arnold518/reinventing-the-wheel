@@ -418,7 +418,7 @@ Existing `Memory64Kx32` display behavior remains unchanged.
 cmake --build build --parallel 2
 ctest --test-dir build --output-on-failure -j 4
 tools/build-pages.sh
-node tests/FFMemoryWasmParityTest.mjs \
+node tests/web/FFMemoryWasmParityTest.mjs \
   build-wasm/pages/simulator/circuitsim_wasm.js \
   build-wasm/pages/simulator/circuitsim_wasm.wasm \
   build/tests/VisualizerSessionProbe
@@ -546,5 +546,5 @@ with the rebuilt native module, then rebuild Pages. This reuses the native
 layout engine and preserves existing placements. The serverless UI check is:
 
 ```bash
-python3 tests/FFMemoryBrowserTest.py http://127.0.0.1:8893/simulator/
+python3 tests/web/FFMemoryBrowserTest.py http://127.0.0.1:8893/simulator/
 ```

@@ -10,7 +10,7 @@
 
 **Boundary:** metadata validation does not execute every catalogue entry or establish CPU correctness.
 
-**Source:** `tests/BenchmarkModelTest.cpp`; production `include/benchmark/Benchmark.hpp`, `src/benchmark/Benchmark.cpp`, `src/analysis/RV32IWorkloads.cpp`.
+**Source:** `tests/cpp/BenchmarkModelTest.cpp`; production `include/benchmark/Benchmark.hpp`, `src/benchmark/Benchmark.cpp`, `src/analysis/RV32IWorkloads.cpp`.
 
 ## BenchmarkCampaignCLITest
 
@@ -20,7 +20,7 @@
 
 **Boundary:** this is a frontend/artifact smoke test, not execution of all four memory benchmark executables or all external source workloads. Full RV32I provenance is richer than the current memory campaign provenance.
 
-**Source:** `tests/BenchmarkCampaignCLITest.py`, `tools/benchmarks/run.py`.
+**Source:** `tests/checks/BenchmarkCampaignCLITest.py`, `tools/benchmarks/run.py`.
 
 ## RV32IExperimentTest
 
@@ -32,7 +32,7 @@ It also checks the common distinction between 51 attempts, 50 successful retirem
 
 **Boundary:** the cycle goldens apply to that fixture/configuration, not all programs. A compact behavioral core is not accepted as a gate-level critical-path reference.
 
-**Source:** `tests/RV32IExperimentTest.cpp`.
+**Source:** `tests/cpp/RV32IExperimentTest.cpp`.
 
 ## RV32IExperimentCLITest
 
@@ -42,7 +42,7 @@ It also checks the common distinction between 51 attempts, 50 successful retirem
 
 **Boundary:** the SRAM case validates the advanced wait path. It does not make delayed memory compatible with single-cycle/baseline or claim all technology configurations are timing-certified.
 
-**Source:** `tests/RV32IExperimentCLITest.py`. The [timing test page](timing.md) distinguishes safe certificates from candidate analysis.
+**Source:** `tests/checks/RV32IExperimentCLITest.py`. The [timing test page](timing.md) distinguishes safe certificates from candidate analysis.
 
 ## Documentation tests
 

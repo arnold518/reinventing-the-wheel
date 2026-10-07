@@ -16,7 +16,7 @@ The reference-documentation test checks 40 instruction encoding rows, all 128×8
 
 The native fixed fixture supplies explicit expected final values. The general experiment runner additionally/independently uses its shared instruction-oracle path; it does not transplant every fixture assertion into the common run record. The program pages retain embedded single-cycle recordings, whose checkpoint times are not benchmark clock measurements.
 
-**Sources:** `src/tests/RV32IInstructionOracleTests.cpp`, `src/tests/RV32IInstructionLockstepTests.cpp`, `src/tests/RV32ISingleCycleTests.cpp`, `include/tests/RV32IProgramCases.hpp`, `tests/RV32IReferenceDocumentationTest.py`.
+**Sources:** `src/tests/RV32IInstructionOracleTests.cpp`, `src/tests/RV32IInstructionLockstepTests.cpp`, `src/tests/RV32ISingleCycleTests.cpp`, `include/tests/RV32IProgramCases.hpp`, `tests/checks/RV32IReferenceDocumentationTest.py`.
 
 ## RV32IBenchmarkTest
 
@@ -33,7 +33,7 @@ The native fixed fixture supplies explicit expected final values. The general ex
 
 **Boundary:** this runs emitted code in the semantic oracle, not a structural CPU. It is the algorithm/intended-work check underneath later core comparisons.
 
-**Source:** `tests/RV32IBenchmarkTest.cpp`.
+**Source:** `tests/cpp/RV32IBenchmarkTest.cpp`.
 
 ## RV32IBenchmarkCLITest
 
@@ -45,7 +45,7 @@ The region checks compare seven whole iterations with four training plus three m
 
 **Boundary:** these are aggregate comparisons. Exact cycle placement is covered by [RV32IDifferentialTest](equivalence.md).
 
-**Source:** `tests/RV32IBenchmarkCLITest.py`.
+**Source:** `tests/checks/RV32IBenchmarkCLITest.py`.
 
 ## ELF loading and external verdict
 

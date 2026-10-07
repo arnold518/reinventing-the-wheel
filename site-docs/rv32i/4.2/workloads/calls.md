@@ -52,5 +52,5 @@ The explicit period is for a bounded functional check, not a hardware-speed resu
 ## Source and tests
 
 - `src/analysis/RV32IBenchmarks.cpp`: emitted instructions and independent expected results.
-- `tests/RV32IBenchmarkTest.cpp`: generator results, parameter bounds, and edge cases.
-- `tests/RV32IBenchmarkCLITest.py` and `tests/BenchmarkCampaignCLITest.py`: [shared execution/campaign checks](../verification/workloads.md).
+- `tests/cpp/RV32IBenchmarkTest.cpp`: generator results, parameter bounds, and edge cases.
+- `tests/checks/RV32IBenchmarkCLITest.py` and `tests/checks/BenchmarkCampaignCLITest.py`: [shared execution/campaign checks](../verification/workloads.md).

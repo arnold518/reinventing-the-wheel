@@ -49,6 +49,10 @@ The structural datapath and representative slices are retained.
 
 ## Browser and WebAssembly checks
 
+Standalone checks live in three folders by how they are run: `tests/cpp/`
+(C++ programs built by CMake), `tests/checks/` (Python and JavaScript run by
+CTest) and `tests/web/` (browser and WebAssembly checks).
+
 `tests/web-tests.json` inventories every standalone browser/WASM test, its
 arguments, prerequisites, timeout and suite membership. `tools/run-web-tests.py`
 executes them serially and writes per-test logs and `results.json` into a new

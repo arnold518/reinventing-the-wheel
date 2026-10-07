@@ -60,7 +60,8 @@ Background: [component fidelity profiles](unified-component-profiles.md) and
    *IO pins → behavior → implementation → examples → tests*. Example tables
    come from the recorded scenario through
    `<!-- simulator-examples: ALIAS TEST -->`; do not type rows by hand.
-   Standalone browser or WASM checks are listed in `tests/web-tests.json`.
+   Standalone browser or WASM checks go in `tests/web/` and are listed in
+   `tests/web-tests.json`.
 
 ## Build and verify
 

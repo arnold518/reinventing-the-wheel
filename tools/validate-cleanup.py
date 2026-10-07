@@ -84,8 +84,8 @@ def native_and_wasm_checks():
     probe = str(BUILD / 'tests/VisualizerSessionProbe')
     for name in ('FFMemoryWasmParityTest', 'MemoryEndpointWasmParityTest',
                  'MemoryInspectorWasmParityTest', 'RV32IMemoryWasmParityTest', 'VisualizerScenarioWasmParityTest'):
-        run(name, ['node', f'tests/{name}.mjs', js, wasm, probe], timeout=1200)
-    run('loader-wasm', ['node', 'tests/VisualizerWasmRuntimeTest.mjs', js, wasm,
+        run(name, ['node', f'tests/web/{name}.mjs', js, wasm, probe], timeout=1200)
+    run('loader-wasm', ['node', 'tests/web/VisualizerWasmRuntimeTest.mjs', js, wasm,
                         'RV32IProgramLoaderTest', 'rv32i-program-loader'])
 
 

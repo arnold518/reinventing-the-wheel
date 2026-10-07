@@ -110,7 +110,8 @@ include/
   simulator/      Event, Simulator, SimulationTest
   tests/          Scenario and test class headers
 src/              Mirrors include/, plus bindings/ (pybind11), wasm/, visualizer/
-tests/            Standalone C++, Python and JavaScript checks; CMake test lists
+tests/            cpp/ (C++ test programs), checks/ (Python and JavaScript run by CTest),
+                  web/ (browser and WebAssembly checks listed in web-tests.json), fixtures/
 tools/            Site build, benchmarks, validation and layout scripts
 visualizer-v2/    Browser visualizer
 site-docs/        Public documentation source

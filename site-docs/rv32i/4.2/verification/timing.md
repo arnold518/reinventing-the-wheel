@@ -8,7 +8,7 @@ Small constructed circuits check same/opposite-edge setup and hold, shortest-pat
 
 The expected result is either the known bound/status or explicit rejection. In particular, increasing a clock period cannot repair a same-edge hold violation.
 
-**Source:** `tests/SafeClockTimingTest.cpp`.
+**Source:** `tests/cpp/SafeClockTimingTest.cpp`.
 
 ## MemoryEndpointSafeClockTest
 
@@ -16,7 +16,7 @@ Checks the zero-wait FF endpoint's timing contract across supported widths/confi
 
 The endpoint must drain without autonomous delayed work. This validates the **zero-wait FF contract**, not a blanket latency bound for DRAM/SRAM/flash.
 
-**Source:** `tests/MemoryEndpointSafeClockTest.cpp`.
+**Source:** `tests/cpp/MemoryEndpointSafeClockTest.cpp`.
 
 ## MemoryStateTimingTest
 
@@ -24,7 +24,7 @@ Uses the request/response storage and control path to test bounded state-aware t
 
 Checks complete state-case coverage, dynamic agreement between the computed clock and a deliberately slow clock, and rejection on enumeration/settling-budget exhaustion or unresolved cycles. State simplification must not conceal a hold failure.
 
-**Source:** `tests/MemoryStateTimingTest.cpp`.
+**Source:** `tests/cpp/MemoryStateTimingTest.cpp`.
 
 ## MemoryFeedbackTimingTest
 
@@ -34,7 +34,7 @@ A deliberate unknown-address fixture demonstrates actual feedback oscillation, t
 
 **Boundary:** this does not declare every graph cycle harmless. It distinguishes proven settling, a concrete counterexample, and unknown analysis.
 
-**Source:** `tests/MemoryFeedbackTimingTest.cpp`.
+**Source:** `tests/cpp/MemoryFeedbackTimingTest.cpp`.
 
 ## BinaryStartupTimingTest
 
@@ -42,7 +42,7 @@ Checks binary initialization of dense/sparse images, including unknown last word
 
 A binary-startup proof cannot hide hold violations or be attached to unsupported contracts.
 
-**Source:** `tests/BinaryStartupTimingTest.cpp`.
+**Source:** `tests/cpp/BinaryStartupTimingTest.cpp`.
 
 ## RV32IBinaryClockCLITest
 
@@ -50,7 +50,7 @@ For each core, request a binary-startup certificate, require complete state-case
 
 The returned number is a sufficient bound under the recorded contract, not an experimentally found minimum. The all-program run is a regression of the analysis against concrete executions, not the reason the mathematical bound holds.
 
-**Source:** `tests/RV32IBinaryClockCLITest.py`. Additional report/advanced state checks live in `RV32IExperimentCLITest`.
+**Source:** `tests/checks/RV32IBinaryClockCLITest.py`. Additional report/advanced state checks live in `RV32IExperimentCLITest`.
 
 ## Reproduction
 
