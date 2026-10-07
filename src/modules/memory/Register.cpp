@@ -1,4 +1,5 @@
 #include "modules/memory/Register.hpp"
+#include "basic/SupportedWidths.hpp"
 #include "modules/memory/RegisterDirect.hpp"
 #include "modules/memory/FlipFlopCell.hpp"
 #include "modules/memory/MemoryStructuralBuilder.hpp"
@@ -60,17 +61,9 @@ const ComponentFamily& registerFamily() {
 }
 
 const ComponentFamily& registerWord(size_t width) {
-    switch (width) {
-    case 1: return registerFamily<1>();
-    case 2: return registerFamily<2>();
-    case 3: return registerFamily<3>();
-    case 4: return registerFamily<4>();
-    case 5: return registerFamily<5>();
-    case 8: return registerFamily<8>();
-    case 16: return registerFamily<16>();
-    case 32: return registerFamily<32>();
-    default: throw std::invalid_argument("Unsupported register width");
-    }
+    return dispatchWidth(width,
+        []<size_t WIDTH>() -> const ComponentFamily& { return registerFamily<WIDTH>(); },
+        []() -> const ComponentFamily& { throw std::invalid_argument("Unsupported register width"); });
 }
 }
 

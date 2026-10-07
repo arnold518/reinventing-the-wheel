@@ -102,10 +102,6 @@ LogicValue addressMatch(const std::array<LogicValue, AddressWidth>& address, siz
     return has_unknown ? LogicValue::UNKNOWN : LogicValue::HIGH;
 }
 
-bool addressMayMatch(const std::array<LogicValue, AddressWidth>& address, size_t index) {
-    return addressMatch(address, index) != LogicValue::LOW;
-}
-
 std::vector<LogicValue> readSelectedWord(
     const std::array<std::vector<LogicValue>, RegisterCount>& registers,
     const std::array<LogicValue, AddressWidth>& address

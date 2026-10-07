@@ -49,26 +49,6 @@ bool preterminal(
         || rv32i::pipeline_encoding::statusBit(execution_status, 0);
 }
 
-bool branchTaken(
-    rv32i::RV32IBranchType branch,
-    uint32_t left,
-    uint32_t right) {
-    switch (branch) {
-        case rv32i::RV32IBranchType::None: return false;
-        case rv32i::RV32IBranchType::BEQ: return left == right;
-        case rv32i::RV32IBranchType::BNE: return left != right;
-        case rv32i::RV32IBranchType::BLT:
-            return static_cast<int32_t>(left)
-                < static_cast<int32_t>(right);
-        case rv32i::RV32IBranchType::BGE:
-            return static_cast<int32_t>(left)
-                >= static_cast<int32_t>(right);
-        case rv32i::RV32IBranchType::BLTU: return left < right;
-        case rv32i::RV32IBranchType::BGEU: return left >= right;
-    }
-    return false;
-}
-
 uint32_t writebackValue(
     const rv32i::RV32IControlSignals& control,
     uint32_t alu_result,

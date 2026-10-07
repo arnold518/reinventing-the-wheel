@@ -30,12 +30,6 @@ Signal mux(ComponentBuilder& b, StructuralWiring& w, const std::string& name, Si
     w.connect(a,c->getInputPinDynamic("A")); w.connect(d,c->getInputPinDynamic("B"));
     w.connect(select,c->getInputPin("SEL")); return c->getOutputPinDynamic("OUT");
 }
-Signal bridge(ComponentBuilder& b, StructuralWiring& w, const std::string& name, Signal source) {
-    const auto width = source->getWidth();
-    auto r = b.addNewComponent<Rewire>(name, std::vector<Rewire::WireSpec>{{"IN",width}},
-        std::vector<Rewire::WireSpec>{{"OUT",width}}, identity_mapping("IN",0,width,"OUT"));
-    w.connect(source,r->getInputPinDynamic("IN")); return r->getOutputPinDynamic("OUT");
-}
 Signal match(ComponentBuilder& b, StructuralWiring& w, const std::string& name, Signal value, uint32_t mask, uint32_t bits) {
     if (!mask) return w.constant(name,true);
     auto c = b.addNewComponent<RV32IBitPatternMatcher>(name,mask,bits);

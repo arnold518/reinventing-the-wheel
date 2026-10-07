@@ -16,12 +16,6 @@
 #include <vector>
 
 namespace {
-void requireMemory(bool condition, const std::string& message) {
-    if (!condition) {
-        throw std::runtime_error(message);
-    }
-}
-
 uint32_t registerFilePattern(uint32_t reg_index) {
     return 0x10000000U | (reg_index * 0x01010101U);
 }

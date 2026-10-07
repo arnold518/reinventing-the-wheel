@@ -286,8 +286,8 @@
       "timeout": 1200
     },
     {
-      "name": "Register32WasmParityTest",
-      "file": "Register32WasmParityTest.mjs",
+      "name": "RegisterWasmParityTest",
+      "file": "RegisterWasmParityTest.mjs",
       "kind": "parity",
       "args": [
         "{js}",

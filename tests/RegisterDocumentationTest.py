@@ -36,8 +36,8 @@ for page in (ROOT / "site-docs/memory").rglob("*.md"):
     assert "register_example" not in text, page
 assert "../rv32i/4.3/register.md" in (ROOT / "site-docs/memory/3.2.md").read_text()
 
-# Component identifiers, not substrings of still-current test/file names:
-# Register32DocumentationTest and MemoryArrayBlocks.hpp remain real resources.
+# Component identifiers, not substrings of still-current file names:
+# MemoryArrayBlocks.hpp remains a real resource.
 retired = re.compile(r"\b(?:MemoryBit|Register32|Register32Direct|MemoryPayloadRegister|"
                      r"LegacyMemoryContainer|MemoryArraySlice|MemoryArray|MemoryWord|"
                      r"MemoryStorageBank|Memory64Kx32|Memory32x32|Memory4x32|"

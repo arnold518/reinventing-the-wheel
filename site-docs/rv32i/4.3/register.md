@@ -137,7 +137,7 @@ The sequence checks reset, disabled writes, capture versus clock-high hold, alte
 | Test | Coverage |
 | --- | --- |
 | [`RegisterTest`](https://github.com/arnold518/reinventing-the-wheel/blob/github-pages/src/tests/MemoryComponentTests.cpp) | Registered structural/behavioral scenario; every bit, whole-word writes, hold, reset, selected X/Z cases |
-| [`Register32FFIntegrationTest`](https://github.com/arnold518/reinventing-the-wheel/blob/github-pages/tests/Register32FFIntegrationTest.cpp) | Context-free 32-bit construction, structural cell hierarchy, fidelity choices, reverse history, and programs 03/05/07 in the single-cycle and advanced pipeline cores |
-| [`Register32DocumentationTest`](https://github.com/arnold518/reinventing-the-wheel/blob/github-pages/tests/Register32DocumentationTest.py) | Compiles this exact width-parametric C++ example, checks every declared 32-bit scenario action, and replays those bit-lane checks at every supported width |
+| [`RegisterFFIntegrationTest`](https://github.com/arnold518/reinventing-the-wheel/blob/github-pages/tests/RegisterFFIntegrationTest.cpp) | Context-free 32-bit construction, structural cell hierarchy, fidelity choices, reverse history, and programs 03/05/07 in the single-cycle and advanced pipeline cores |
+| [`RegisterDocumentationTest`](https://github.com/arnold518/reinventing-the-wheel/blob/github-pages/tests/RegisterDocumentationTest.py) | Compiles this exact width-parametric C++ example, checks every declared 32-bit scenario action, and replays those bit-lane checks at every supported width |
 | [`RegisterWidthsTest`](https://github.com/arnold518/reinventing-the-wheel/blob/github-pages/src/tests/MemoryEndpointTests.cpp) | Structural/behavioral equivalence at widths 1/2/3/4/5/8/16/32, including unknown values and reset/enable behavior |
 | `FlipFlopCellTest` | Reused lower-level storage-bit contract |

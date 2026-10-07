@@ -46,7 +46,7 @@ are intentionally not renamed by this compatibility rule.
 
 - `Register32Test`: 56 structural/behavioral checkpoints, including each bit,
   disabled writes, capture/hold, X/Z data/control, reset priority and recovery.
-- `Register32FFIntegrationTest`: context-free construction, structural word,
+- `RegisterFFIntegrationTest`: context-free construction, structural word,
   behavioral word, behavioral cells, and reverse-time Q history against the
   behavioral register. Both CPU cores pass programs 03/05/07 with structural
   wrappers; program 03 additionally uses structural FF words with compact cells.
@@ -55,7 +55,7 @@ are intentionally not renamed by this compatibility rule.
   all four pipeline register blocks, retirement, Fetch, and single-cycle stages.
 - Documentation: register and register-file C++ examples plus 4.3/4.4 references;
   clean strict MkDocs build after renumbering headings and fragment links.
-- `Register32WasmParityTest.mjs`: native/WASM topology, timestamps, checkpoints,
+- `RegisterWasmParityTest.mjs`: native/WASM topology, timestamps, checkpoints,
   every expected output and final internal state agree for three register modes,
   single-cycle Fetch and IF/ID.
 - Browser checks on port 8893: all seven 4.3 pages pass navigation, rendered-table,

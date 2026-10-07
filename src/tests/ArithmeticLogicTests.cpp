@@ -14,13 +14,6 @@
 #include <vector>
 
 namespace {
-void expect(bool condition, const char* test_name) {
-    if (!condition) {
-        std::cerr << test_name << " failed" << std::endl;
-        assert(false && "Arithmetic/logic test failed");
-    }
-}
-
 TestValue pinBits(uint64_t value) {
     return bits(value);
 }

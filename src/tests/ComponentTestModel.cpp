@@ -1,4 +1,5 @@
 #include "tests/ComponentTestModel.hpp"
+#include "basic/SupportedWidths.hpp"
 
 #include "basic/PinBase.hpp"
 #include "basic/Wire.hpp"
@@ -49,17 +50,8 @@ std::shared_ptr<Event> makeWireUpdate(
             values);
     };
 
-    switch (wire->getWidth()) {
-        case 1: return create.operator()<1>();
-        case 2: return create.operator()<2>();
-        case 3: return create.operator()<3>();
-        case 4: return create.operator()<4>();
-        case 5: return create.operator()<5>();
-        case 8: return create.operator()<8>();
-        case 16: return create.operator()<16>();
-        case 32: return create.operator()<32>();
-        default: return nullptr;
-    }
+    return circuit::dispatchWidth(wire->getWidth(), create,
+        []() -> decltype(create.operator()<1>()) { return nullptr; });
 }
 
 PinSnapshot snapshotOutputs(const IOComponent& component) {

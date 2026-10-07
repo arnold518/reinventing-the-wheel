@@ -1,4 +1,7 @@
 #include "modules/rv32i/RV32IPipelineStages.hpp"
+#include <string>
+#include <vector>
+#include <stdexcept>
 
 #include "components/ComponentBuilder.hpp"
 #include "components/ComponentBuilder.tpp"
@@ -16,6 +19,13 @@ RV32IMemoryStage::RV32IMemoryStage(std::string name)
           circuit::families::RV32IMemoryStage.pinInitializer()) {}
 
 void RV32IMemoryStage::buildInternals(ComponentBuilder& builder) {
+    using PinPtr = std::shared_ptr<PinBase>;
+    // One named net per call, created in this order.
+    const auto wire = [&](const std::string& name, const PinPtr& source,
+                          const std::vector<PinPtr>& sinks) {
+        if (!source) throw std::logic_error("RV32IMemoryStage net has no source: " + name);
+        builder.addNewWireDynamic(name, source->getWidth(), source, sinks);
+    };
     const auto alignment = builder.add(
         circuit::families::RV32IMemoryAlignmentUnit, "ALIGNMENT");
     builder.addNewComponent<Mux4to1_32bit>("FORWARD_VALUE_MUX");
@@ -117,11 +127,8 @@ void RV32IMemoryStage::buildInternals(ComponentBuilder& builder) {
              "FORWARD_VALUE_MUX", "IN1"),
          builder.getInputPin<Rewire, 32>(
              "DMEM_PORT_PASS", "IN_ADDRESS")});
-    builder.addNewWire<32>(
-        "IN_MEMORY_DATA",
-        getInputPin<32>("DMEM_READ_DATA"),
-        {builder.getInputPin<Rewire, 32>(
-            "PASS", "IN_MEMORY_DATA")});
+    wire("IN_MEMORY_DATA", getInputPin<32>("DMEM_READ_DATA"),
+        {builder.getInputPin<Rewire, 32>("PASS", "IN_MEMORY_DATA")});
     connect_input(
         "STORE_DATA",
         {builder.getInputPin<Rewire, 32>(
@@ -147,269 +154,115 @@ void RV32IMemoryStage::buildInternals(ComponentBuilder& builder) {
         "EXECUTION_STATUS",
         {builder.getInputPin<Rewire, 32>(
             "EXECUTION_STATUS_UNPACK", "STATUS")});
-    builder.addNewWire<32>(
-        "DMEM_ADDR",
-        builder.getOutputPin<Rewire, 32>(
-            "DMEM_PORT_PASS", "OUT_ADDRESS"),
+    wire("DMEM_ADDR", builder.getOutputPin<Rewire, 32>("DMEM_PORT_PASS", "OUT_ADDRESS"),
         {getOutputPin<32>("DMEM_ADDR")});
-    builder.addNewWire<32>(
-        "DMEM_WRITE_DATA",
-        builder.getOutputPin<Rewire, 32>(
-            "DMEM_PORT_PASS", "OUT_WRITE_DATA"),
+    wire("DMEM_WRITE_DATA", builder.getOutputPin<Rewire, 32>("DMEM_PORT_PASS", "OUT_WRITE_DATA"),
         {getOutputPin<32>("DMEM_WRITE_DATA")});
-    builder.addNewWire(
-        "DMEM_FAULT",
-        getInputPin("DMEM_FAULT"),
-        {builder.getInputPin<ANDGate>("MEMORY_FAULT", "A")});
-    builder.addNewWire(
-        "DMEM_READ_ENABLE",
-        getInputPin("DMEM_READ_ENABLE"),
+    wire("DMEM_FAULT", getInputPin("DMEM_FAULT"), {builder.getInputPin<ANDGate>("MEMORY_FAULT", "A")});
+    wire("DMEM_READ_ENABLE", getInputPin("DMEM_READ_ENABLE"),
         {builder.getInputPin<ORGate>("DMEM_ACTIVE", "A"),
-         builder.getInputPin<ANDGate>(
-             "DMEM_SIGN_EXTEND_ENABLE", "A")});
-    builder.addNewWire(
-        "DMEM_WRITE_ENABLE",
-        getInputPin("DMEM_WRITE_ENABLE"),
+         builder.getInputPin<ANDGate>("DMEM_SIGN_EXTEND_ENABLE", "A")});
+    wire("DMEM_WRITE_ENABLE", getInputPin("DMEM_WRITE_ENABLE"),
         {builder.getInputPin<ORGate>("DMEM_ACTIVE", "B")});
-    builder.addNewWire<32>(
-        "ZERO32",
-        builder.getOutputPin<ConstantValue<32>, 32>("ZERO32", "OUT"),
-        {builder.getInputPin<Mux4to1_32bit, 32>(
-             "FORWARD_VALUE_MUX", "IN0"),
-         builder.getInputPin<Mux4to1_32bit, 32>(
-             "FORWARD_VALUE_MUX", "IN2")});
-    builder.addNewWire<2>(
-        "WRITEBACK_SEL",
-        builder.getOutputPin<Rewire, 2>(
-            "CONTROL_UNPACK", "WRITEBACK_SEL"),
-        {builder.getInputPin<Mux4to1_32bit, 2>(
-            "FORWARD_VALUE_MUX", "SEL")});
-    builder.addNewWire<2>(
-        "MEM_SIZE_RAW",
-        builder.getOutputPin<Rewire, 2>(
-            "CONTROL_UNPACK", "MEM_SIZE"),
-        {alignment->getInputPin<2>("SIZE"),
-         builder.getInputPin<BitSplitter<2>, 2>(
-             "DMEM_SIZE_SPLIT", "IN")});
-    builder.addNewWire<5>(
-        "FORWARD_RD",
-        builder.getOutputPin<Rewire, 5>(
-            "ADDRESSES_UNPACK", "RD"),
+    wire("ZERO32", builder.getOutputPin<ConstantValue<32>, 32>("ZERO32", "OUT"),
+        {builder.getInputPin<Mux4to1_32bit, 32>("FORWARD_VALUE_MUX", "IN0"),
+         builder.getInputPin<Mux4to1_32bit, 32>("FORWARD_VALUE_MUX", "IN2")});
+    wire("WRITEBACK_SEL", builder.getOutputPin<Rewire, 2>("CONTROL_UNPACK", "WRITEBACK_SEL"),
+        {builder.getInputPin<Mux4to1_32bit, 2>("FORWARD_VALUE_MUX", "SEL")});
+    wire("MEM_SIZE_RAW", builder.getOutputPin<Rewire, 2>("CONTROL_UNPACK", "MEM_SIZE"),
+        {alignment->getInputPin<2>("SIZE"), builder.getInputPin<BitSplitter<2>, 2>("DMEM_SIZE_SPLIT", "IN")});
+    wire("FORWARD_RD", builder.getOutputPin<Rewire, 5>("ADDRESSES_UNPACK", "RD"),
         {getOutputPin<5>("FORWARD_RD")});
-    builder.addNewWire(
-        "FORWARD_REG_WRITE",
-        builder.getOutputPin<Rewire>(
-            "CONTROL_UNPACK", "REG_WRITE"),
+    wire("FORWARD_REG_WRITE", builder.getOutputPin<Rewire>("CONTROL_UNPACK", "REG_WRITE"),
         {getOutputPin("FORWARD_REG_WRITE")});
-    builder.addNewWire(
-        "MEM_READ",
-        builder.getOutputPin<Rewire>(
-            "CONTROL_UNPACK", "MEM_READ"),
+    wire("MEM_READ", builder.getOutputPin<Rewire>("CONTROL_UNPACK", "MEM_READ"),
         {builder.getInputPin<NOTGate>("NOT_MEM_READ", "IN"),
          builder.getInputPin<ANDGate>("LOAD_REQUEST_1", "B"),
          builder.getInputPin<ORGate>("MEMORY_OPERATION", "A")});
-    builder.addNewWire(
-        "MEM_WRITE",
-        builder.getOutputPin<Rewire>(
-            "CONTROL_UNPACK", "MEM_WRITE"),
-        {builder.getInputPin<ANDGate>("STORE_REQUEST_1", "B"),
-         builder.getInputPin<ORGate>("MEMORY_OPERATION", "B")});
-    builder.addNewWire(
-        "RESULT_READY",
-        builder.getOutputPin<NOTGate>("NOT_MEM_READ", "OUT"),
+    wire("MEM_WRITE", builder.getOutputPin<Rewire>("CONTROL_UNPACK", "MEM_WRITE"),
+        {builder.getInputPin<ANDGate>("STORE_REQUEST_1", "B"), builder.getInputPin<ORGate>("MEMORY_OPERATION", "B")});
+    wire("RESULT_READY", builder.getOutputPin<NOTGate>("NOT_MEM_READ", "OUT"),
         {getOutputPin("FORWARD_RESULT_READY")});
-    builder.addNewWire<32>(
-        "FORWARD_VALUE",
-        builder.getOutputPin<Mux4to1_32bit, 32>(
-            "FORWARD_VALUE_MUX", "OUT"),
+    wire("FORWARD_VALUE", builder.getOutputPin<Mux4to1_32bit, 32>("FORWARD_VALUE_MUX", "OUT"),
         {getOutputPin<32>("FORWARD_VALUE")});
 
-    builder.addNewWire(
-        "PC_MISALIGNED",
-        builder.getOutputPin<Rewire>(
-            "FETCH_STATUS_UNPACK", "PC_MISALIGNED"),
-        {builder.getInputPin<ORGate>(
-            "PRETERMINAL_REASON_1", "A")});
-    builder.addNewWire(
-        "INSTRUCTION_FAULT",
-        builder.getOutputPin<Rewire>(
-            "FETCH_STATUS_UNPACK", "INSTRUCTION_FAULT"),
-        {builder.getInputPin<ORGate>(
-            "PRETERMINAL_REASON_1", "B")});
-    builder.addNewWire(
-        "LEGAL",
-        builder.getOutputPin<Rewire>("CONTROL_UNPACK", "LEGAL"),
+    wire("PC_MISALIGNED", builder.getOutputPin<Rewire>("FETCH_STATUS_UNPACK", "PC_MISALIGNED"),
+        {builder.getInputPin<ORGate>("PRETERMINAL_REASON_1", "A")});
+    wire("INSTRUCTION_FAULT", builder.getOutputPin<Rewire>("FETCH_STATUS_UNPACK", "INSTRUCTION_FAULT"),
+        {builder.getInputPin<ORGate>("PRETERMINAL_REASON_1", "B")});
+    wire("LEGAL", builder.getOutputPin<Rewire>("CONTROL_UNPACK", "LEGAL"),
         {builder.getInputPin<NOTGate>("NOT_LEGAL", "IN")});
-    builder.addNewWire(
-        "NOT_LEGAL",
-        builder.getOutputPin<NOTGate>("NOT_LEGAL", "OUT"),
-        {builder.getInputPin<ORGate>(
-            "PRETERMINAL_REASON_2", "B")});
-    builder.addNewWire(
-        "TRAP",
-        builder.getOutputPin<Rewire>(
-            "CONTROL_UNPACK", "TRAP_REQUEST"),
-        {builder.getInputPin<ORGate>(
-            "PRETERMINAL_REASON_3", "B")});
-    builder.addNewWire(
-        "HALT",
-        builder.getOutputPin<Rewire>(
-            "CONTROL_UNPACK", "HALT_REQUEST"),
-        {builder.getInputPin<ORGate>(
-            "PRETERMINAL_REASON_4", "B")});
-    builder.addNewWire(
-        "TARGET_MISALIGNED",
-        builder.getOutputPin<Rewire>(
-            "EXECUTION_STATUS_UNPACK", "TARGET_MISALIGNED"),
-        {builder.getInputPin<ORGate>(
-            "PRETERMINAL_REASON_5", "B")});
+    wire("NOT_LEGAL", builder.getOutputPin<NOTGate>("NOT_LEGAL", "OUT"),
+        {builder.getInputPin<ORGate>("PRETERMINAL_REASON_2", "B")});
+    wire("TRAP", builder.getOutputPin<Rewire>("CONTROL_UNPACK", "TRAP_REQUEST"),
+        {builder.getInputPin<ORGate>("PRETERMINAL_REASON_3", "B")});
+    wire("HALT", builder.getOutputPin<Rewire>("CONTROL_UNPACK", "HALT_REQUEST"),
+        {builder.getInputPin<ORGate>("PRETERMINAL_REASON_4", "B")});
+    wire("TARGET_MISALIGNED", builder.getOutputPin<Rewire>("EXECUTION_STATUS_UNPACK", "TARGET_MISALIGNED"),
+        {builder.getInputPin<ORGate>("PRETERMINAL_REASON_5", "B")});
     for (size_t index = 1; index <= 4; ++index) {
-        builder.addNewWire(
-            "PRETERMINAL_REASON_" + std::to_string(index),
-            builder.getOutputPin<ORGate>(
-                "PRETERMINAL_REASON_" + std::to_string(index),
-                "OUT"),
-            {builder.getInputPin<ORGate>(
-                "PRETERMINAL_REASON_" + std::to_string(index + 1),
-                "A")});
+        wire("PRETERMINAL_REASON_" + std::to_string(index), builder.getOutputPin<ORGate>("PRETERMINAL_REASON_" + std::to_string(index), "OUT"),
+            {builder.getInputPin<ORGate>("PRETERMINAL_REASON_" + std::to_string(index + 1), "A")});
     }
-    builder.addNewWire(
-        "PRETERMINAL_REASON",
-        builder.getOutputPin<ORGate>(
-            "PRETERMINAL_REASON_5", "OUT"),
+    wire("PRETERMINAL_REASON", builder.getOutputPin<ORGate>("PRETERMINAL_REASON_5", "OUT"),
         {builder.getInputPin<ANDGate>("PRETERMINAL", "B")});
-    builder.addNewWire(
-        "PRETERMINAL",
-        builder.getOutputPin<ANDGate>("PRETERMINAL", "OUT"),
-        {getOutputPin("PRETERMINAL"),
-         builder.getInputPin<NOTGate>("NOT_PRETERMINAL", "IN")});
-    builder.addNewWire(
-        "NOT_PRETERMINAL",
-        builder.getOutputPin<NOTGate>("NOT_PRETERMINAL", "OUT"),
-        {builder.getInputPin<ANDGate>("LOAD_REQUEST_2", "B"),
-         builder.getInputPin<ANDGate>("STORE_REQUEST_2", "B")});
-    builder.addNewWire(
-        "LOAD_REQUEST_1",
-        builder.getOutputPin<ANDGate>("LOAD_REQUEST_1", "OUT"),
+    wire("PRETERMINAL", builder.getOutputPin<ANDGate>("PRETERMINAL", "OUT"),
+        {getOutputPin("PRETERMINAL"), builder.getInputPin<NOTGate>("NOT_PRETERMINAL", "IN")});
+    wire("NOT_PRETERMINAL", builder.getOutputPin<NOTGate>("NOT_PRETERMINAL", "OUT"),
+        {builder.getInputPin<ANDGate>("LOAD_REQUEST_2", "B"), builder.getInputPin<ANDGate>("STORE_REQUEST_2", "B")});
+    wire("LOAD_REQUEST_1", builder.getOutputPin<ANDGate>("LOAD_REQUEST_1", "OUT"),
         {builder.getInputPin<ANDGate>("LOAD_REQUEST_2", "A")});
-    builder.addNewWire(
-        "LOAD_INTENT",
-        builder.getOutputPin<ANDGate>("LOAD_REQUEST_2", "OUT"),
-        {builder.getInputPin<ANDGate>("LOAD_REQUEST", "A"),
-         builder.getInputPin<ANDGate>("LOAD_FAULT", "A")});
-    builder.addNewWire(
-        "STORE_REQUEST_1",
-        builder.getOutputPin<ANDGate>("STORE_REQUEST_1", "OUT"),
+    wire("LOAD_INTENT", builder.getOutputPin<ANDGate>("LOAD_REQUEST_2", "OUT"),
+        {builder.getInputPin<ANDGate>("LOAD_REQUEST", "A"), builder.getInputPin<ANDGate>("LOAD_FAULT", "A")});
+    wire("STORE_REQUEST_1", builder.getOutputPin<ANDGate>("STORE_REQUEST_1", "OUT"),
         {builder.getInputPin<ANDGate>("STORE_REQUEST_2", "A")});
-    builder.addNewWire(
-        "STORE_INTENT",
-        builder.getOutputPin<ANDGate>("STORE_REQUEST_2", "OUT"),
-        {builder.getInputPin<ANDGate>("STORE_REQUEST", "A"),
-         builder.getInputPin<ANDGate>("STORE_FAULT", "A")});
-    builder.addNewWire(
-        "MEMORY_OPERATION",
-        builder.getOutputPin<ORGate>("MEMORY_OPERATION", "OUT"),
+    wire("STORE_INTENT", builder.getOutputPin<ANDGate>("STORE_REQUEST_2", "OUT"),
+        {builder.getInputPin<ANDGate>("STORE_REQUEST", "A"), builder.getInputPin<ANDGate>("STORE_FAULT", "A")});
+    wire("MEMORY_OPERATION", builder.getOutputPin<ORGate>("MEMORY_OPERATION", "OUT"),
         {builder.getInputPin<ANDGate>("MISALIGNED_ACTIVE", "B"),
          builder.getInputPin<ANDGate>("MEMORY_FAULT_ACTIVE", "B")});
 
-    builder.addNewWire(
-        "MISALIGNED",
-        alignment->getOutputPin("MISALIGNED"),
-        {builder.getInputPin<ANDGate>("MISALIGNED_ACTIVE", "A"),
-         builder.getInputPin<NOTGate>("NOT_MISALIGNED", "IN")});
-    builder.addNewWire(
-        "NOT_MISALIGNED",
-        builder.getOutputPin<NOTGate>("NOT_MISALIGNED", "OUT"),
-        {builder.getInputPin<ANDGate>("MEMORY_FAULT", "B"),
-         builder.getInputPin<ANDGate>("LOAD_REQUEST", "B"),
+    wire("MISALIGNED", alignment->getOutputPin("MISALIGNED"),
+        {builder.getInputPin<ANDGate>("MISALIGNED_ACTIVE", "A"), builder.getInputPin<NOTGate>("NOT_MISALIGNED", "IN")});
+    wire("NOT_MISALIGNED", builder.getOutputPin<NOTGate>("NOT_MISALIGNED", "OUT"),
+        {builder.getInputPin<ANDGate>("MEMORY_FAULT", "B"), builder.getInputPin<ANDGate>("LOAD_REQUEST", "B"),
          builder.getInputPin<ANDGate>("STORE_REQUEST", "B")});
-    builder.addNewWire(
-        "MISALIGNED_ACTIVE",
-        builder.getOutputPin<ANDGate>("MISALIGNED_ACTIVE", "OUT"),
-        {builder.getInputPin<Rewire>(
-             "MEMORY_STATUS_PACK", "DATA_MISALIGNED"),
+    wire("MISALIGNED_ACTIVE", builder.getOutputPin<ANDGate>("MISALIGNED_ACTIVE", "OUT"),
+        {builder.getInputPin<Rewire>("MEMORY_STATUS_PACK", "DATA_MISALIGNED"),
          builder.getInputPin<ORGate>("MEMORY_ERROR", "A")});
-    builder.addNewWire(
-        "MEMORY_FAULT_RAW",
-        builder.getOutputPin<ANDGate>("MEMORY_FAULT", "OUT"),
+    wire("MEMORY_FAULT_RAW", builder.getOutputPin<ANDGate>("MEMORY_FAULT", "OUT"),
         {builder.getInputPin<ANDGate>("MEMORY_FAULT_ACTIVE", "A")});
-    builder.addNewWire(
-        "MEMORY_FAULT_ACTIVE",
-        builder.getOutputPin<ANDGate>("MEMORY_FAULT_ACTIVE", "OUT"),
-        {builder.getInputPin<Rewire>(
-             "MEMORY_STATUS_PACK", "DATA_FAULT"),
+    wire("MEMORY_FAULT_ACTIVE", builder.getOutputPin<ANDGate>("MEMORY_FAULT_ACTIVE", "OUT"),
+        {builder.getInputPin<Rewire>("MEMORY_STATUS_PACK", "DATA_FAULT"),
          builder.getInputPin<ORGate>("MEMORY_ERROR", "B")});
-    builder.addNewWire(
-        "MEMORY_ERROR",
-        builder.getOutputPin<ORGate>("MEMORY_ERROR", "OUT"),
-        {builder.getInputPin<ANDGate>("LOAD_FAULT", "B"),
-         builder.getInputPin<ANDGate>("STORE_FAULT", "B")});
-    builder.addNewWire(
-        "LOAD_REQUEST",
-        builder.getOutputPin<ANDGate>("LOAD_REQUEST", "OUT"),
+    wire("MEMORY_ERROR", builder.getOutputPin<ORGate>("MEMORY_ERROR", "OUT"),
+        {builder.getInputPin<ANDGate>("LOAD_FAULT", "B"), builder.getInputPin<ANDGate>("STORE_FAULT", "B")});
+    wire("LOAD_REQUEST", builder.getOutputPin<ANDGate>("LOAD_REQUEST", "OUT"),
         {getOutputPin("LOAD_REQUEST")});
-    builder.addNewWire(
-        "STORE_REQUEST",
-        builder.getOutputPin<ANDGate>("STORE_REQUEST", "OUT"),
+    wire("STORE_REQUEST", builder.getOutputPin<ANDGate>("STORE_REQUEST", "OUT"),
         {getOutputPin("STORE_REQUEST")});
-    builder.addNewWire(
-        "LOAD_FAULT",
-        builder.getOutputPin<ANDGate>("LOAD_FAULT", "OUT"),
-        {getOutputPin("LOAD_FAULT"),
-         builder.getInputPin<ORGate>("ANY_MEMORY_FAULT", "A")});
-    builder.addNewWire(
-        "STORE_FAULT",
-        builder.getOutputPin<ANDGate>("STORE_FAULT", "OUT"),
-        {getOutputPin("STORE_FAULT"),
-         builder.getInputPin<ORGate>("ANY_MEMORY_FAULT", "B")});
-    builder.addNewWire(
-        "ANY_MEMORY_FAULT",
-        builder.getOutputPin<ORGate>("ANY_MEMORY_FAULT", "OUT"),
+    wire("LOAD_FAULT", builder.getOutputPin<ANDGate>("LOAD_FAULT", "OUT"),
+        {getOutputPin("LOAD_FAULT"), builder.getInputPin<ORGate>("ANY_MEMORY_FAULT", "A")});
+    wire("STORE_FAULT", builder.getOutputPin<ANDGate>("STORE_FAULT", "OUT"),
+        {getOutputPin("STORE_FAULT"), builder.getInputPin<ORGate>("ANY_MEMORY_FAULT", "B")});
+    wire("ANY_MEMORY_FAULT", builder.getOutputPin<ORGate>("ANY_MEMORY_FAULT", "OUT"),
         {getOutputPin("MEMORY_FAULT")});
-    builder.addNewWire<32>(
-        "MEMORY_STATUS",
-        builder.getOutputPin<Rewire, 32>(
-            "MEMORY_STATUS_PACK", "STATUS"),
+    wire("MEMORY_STATUS", builder.getOutputPin<Rewire, 32>("MEMORY_STATUS_PACK", "STATUS"),
         {getOutputPin<32>("OUT_MEMORY_STATUS")});
 
-    builder.addNewWire(
-        "DMEM_ACTIVE",
-        builder.getOutputPin<ORGate>("DMEM_ACTIVE", "OUT"),
-        {builder.getInputPin<ANDGate>("DMEM_SIZE_BIT0", "B"),
-         builder.getInputPin<ANDGate>("DMEM_SIZE_BIT1", "B")});
+    wire("DMEM_ACTIVE", builder.getOutputPin<ORGate>("DMEM_ACTIVE", "OUT"),
+        {builder.getInputPin<ANDGate>("DMEM_SIZE_BIT0", "B"), builder.getInputPin<ANDGate>("DMEM_SIZE_BIT1", "B")});
     for (size_t bit_index = 0; bit_index < 2; ++bit_index) {
-        builder.addNewWire(
-            "DMEM_SIZE_RAW_" + std::to_string(bit_index),
-            builder.getOutputPin<BitSplitter<2>>(
-                "DMEM_SIZE_SPLIT",
-                "OUT_" + std::to_string(bit_index)),
-            {builder.getInputPin<ANDGate>(
-                "DMEM_SIZE_BIT" + std::to_string(bit_index),
-                "A")});
-        builder.addNewWire(
-            "DMEM_SIZE_" + std::to_string(bit_index),
-            builder.getOutputPin<ANDGate>(
-                "DMEM_SIZE_BIT" + std::to_string(bit_index),
-                "OUT"),
-            {builder.getInputPin<BitJoiner<2>>(
-                "DMEM_SIZE_JOIN",
-                "IN_" + std::to_string(bit_index))});
+        wire("DMEM_SIZE_RAW_" + std::to_string(bit_index), builder.getOutputPin<BitSplitter<2>>("DMEM_SIZE_SPLIT", "OUT_" + std::to_string(bit_index)),
+            {builder.getInputPin<ANDGate>("DMEM_SIZE_BIT" + std::to_string(bit_index), "A")});
+        wire("DMEM_SIZE_" + std::to_string(bit_index), builder.getOutputPin<ANDGate>("DMEM_SIZE_BIT" + std::to_string(bit_index), "OUT"),
+            {builder.getInputPin<BitJoiner<2>>("DMEM_SIZE_JOIN", "IN_" + std::to_string(bit_index))});
     }
-    builder.addNewWire<2>(
-        "DMEM_SIZE",
-        builder.getOutputPin<BitJoiner<2>, 2>(
-            "DMEM_SIZE_JOIN", "OUT"),
+    wire("DMEM_SIZE", builder.getOutputPin<BitJoiner<2>, 2>("DMEM_SIZE_JOIN", "OUT"),
         {getOutputPin<2>("DMEM_SIZE")});
-    builder.addNewWire(
-        "DMEM_SIGN_EXTEND_RAW",
-        builder.getOutputPin<Rewire>(
-            "CONTROL_UNPACK", "LOAD_SIGN_EXTEND"),
-        {builder.getInputPin<ANDGate>(
-            "DMEM_SIGN_EXTEND_ENABLE", "B")});
-    builder.addNewWire(
-        "DMEM_SIGN_EXTEND",
-        builder.getOutputPin<ANDGate>(
-            "DMEM_SIGN_EXTEND_ENABLE", "OUT"),
+    wire("DMEM_SIGN_EXTEND_RAW", builder.getOutputPin<Rewire>("CONTROL_UNPACK", "LOAD_SIGN_EXTEND"),
+        {builder.getInputPin<ANDGate>("DMEM_SIGN_EXTEND_ENABLE", "B")});
+    wire("DMEM_SIGN_EXTEND", builder.getOutputPin<ANDGate>("DMEM_SIGN_EXTEND_ENABLE", "OUT"),
         {getOutputPin("DMEM_SIGN_EXTEND")});
 
     for (const auto* field_name : {

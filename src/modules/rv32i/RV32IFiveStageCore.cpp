@@ -176,9 +176,11 @@ void RV32IFiveStageCore::buildInternals(ComponentBuilder& builder) {
     }
 
     wire("ID_EX_VALID", id_ex->getOutputPinDynamic("Q_VALID"),
-        {prediction->getInputPinDynamic("EX_VALID"), execute->getInputPinDynamic("IN_VALID"), decode_stage_->getInputPinDynamic("EX_VALID"), getOutputPinDynamic("ID_EX_VALID")});
+        {prediction->getInputPinDynamic("EX_VALID"), execute->getInputPinDynamic("IN_VALID"),
+         decode_stage_->getInputPinDynamic("EX_VALID"), getOutputPinDynamic("ID_EX_VALID")});
     wire("ID_EX_PC", id_ex->getOutputPinDynamic("Q_PC"),
-        {prediction->getInputPinDynamic("EX_PC"), execute->getInputPinDynamic("IN_PC"), getOutputPinDynamic("ID_EX_PC")});
+        {prediction->getInputPinDynamic("EX_PC"), execute->getInputPinDynamic("IN_PC"),
+         getOutputPinDynamic("ID_EX_PC")});
     for (const auto* field : {
              "INSTRUCTION", "RS1_VALUE", "RS2_VALUE", "IMMEDIATE",
              "FETCH_STATUS"}) {
@@ -188,7 +190,8 @@ void RV32IFiveStageCore::buildInternals(ComponentBuilder& builder) {
     wire("ID_EX_CONTROL", id_ex->getOutputPinDynamic("Q_CONTROL"),
         {execute->getInputPinDynamic("IN_CONTROL"), decode_stage_->getInputPinDynamic("EX_CONTROL")});
     wire("ID_EX_ADDRESSES", id_ex->getOutputPinDynamic("Q_REGISTER_ADDRESSES"),
-        {execute->getInputPinDynamic("IN_REGISTER_ADDRESSES"), decode_stage_->getInputPinDynamic("EX_REGISTER_ADDRESSES")});
+        {execute->getInputPinDynamic("IN_REGISTER_ADDRESSES"),
+         decode_stage_->getInputPinDynamic("EX_REGISTER_ADDRESSES")});
 
     wire("EXECUTE_OUT_VALID", execute->getOutputPinDynamic("OUT_VALID"),
         {ex_mem->getInputPinDynamic("D_VALID")});
@@ -212,7 +215,8 @@ void RV32IFiveStageCore::buildInternals(ComponentBuilder& builder) {
         {coordinator->getInputPinDynamic("EX_PRETERMINAL"), prediction->getInputPinDynamic("EX_PRETERMINAL")});
 
     wire("EX_MEM_VALID", ex_mem->getOutputPinDynamic("Q_VALID"),
-        {memory->getInputPinDynamic("IN_VALID"), execute->getInputPinDynamic("EX_MEM_VALID"), getOutputPinDynamic("EX_MEM_VALID")});
+        {memory->getInputPinDynamic("IN_VALID"), execute->getInputPinDynamic("EX_MEM_VALID"),
+         getOutputPinDynamic("EX_MEM_VALID")});
     wire("EX_MEM_PC", ex_mem->getOutputPinDynamic("Q_PC"),
         {memory->getInputPinDynamic("IN_PC"), getOutputPinDynamic("EX_MEM_PC")});
     for (const auto* field : {
@@ -301,7 +305,8 @@ void RV32IFiveStageCore::buildInternals(ComponentBuilder& builder) {
     wire("COORDINATOR_ID_EX_FLUSH", coordinator->getOutputPinDynamic("ID_EX_FLUSH"),
         {id_ex->getInputPinDynamic("FLUSH")});
     wire("COORDINATOR_EX_MEM_WRITE", coordinator->getOutputPinDynamic("EX_MEM_WRITE"),
-        {ex_mem->getInputPinDynamic("WRITE_ENABLE"), data_request->getInputPinDynamic("TAKE"), prediction->getInputPinDynamic("EX_ADVANCE")});
+        {ex_mem->getInputPinDynamic("WRITE_ENABLE"), data_request->getInputPinDynamic("TAKE"),
+         prediction->getInputPinDynamic("EX_ADVANCE")});
     wire("COORDINATOR_EX_MEM_FLUSH", coordinator->getOutputPinDynamic("EX_MEM_FLUSH"),
         {ex_mem->getInputPinDynamic("FLUSH"), prediction->getInputPinDynamic("EX_KILL")});
     wire("COORDINATOR_MEM_WB_WRITE", coordinator->getOutputPinDynamic("MEM_WB_WRITE"),

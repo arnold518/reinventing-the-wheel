@@ -1,4 +1,5 @@
 #include "modules/utility/Rewire.hpp"
+#include "basic/SupportedWidths.hpp"
 #include "basic/PinBase.hpp"
 #include "basic/Wire.hpp"
 #include "basic/WireBase.hpp"
@@ -11,23 +12,7 @@
 #include <stdexcept>
 #include <utility>
 
-namespace {
-bool isSupportedWidth(size_t width) {
-    switch (width) {
-        case 1:
-        case 2:
-        case 3:
-        case 4:
-        case 5:
-        case 8:
-        case 16:
-        case 32:
-            return true;
-        default:
-            return false;
-    }
-}
-}
+using circuit::isSupportedWidth;
 
 Rewire::WireSpec::WireSpec(std::string wire_name, size_t wire_width)
     : name(std::move(wire_name)), width(wire_width) {}

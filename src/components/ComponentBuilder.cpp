@@ -1,4 +1,5 @@
 #include "components/ComponentBuilder.hpp"
+#include "basic/SupportedWidths.hpp"
 #include "components/Component.hpp"
 #include "components/IOComponent.hpp"
 #include "components/WireBuilder.hpp"
@@ -125,17 +126,8 @@ std::shared_ptr<WireBase> ComponentBuilder::addNewWireDynamic(
             typed_sinks);
     };
 
-    switch (width) {
-        case 1: return build.operator()<1>();
-        case 2: return build.operator()<2>();
-        case 3: return build.operator()<3>();
-        case 4: return build.operator()<4>();
-        case 5: return build.operator()<5>();
-        case 8: return build.operator()<8>();
-        case 16: return build.operator()<16>();
-        case 32: return build.operator()<32>();
-        default: return nullptr;
-    }
+    return circuit::dispatchWidth(width, build,
+        []() -> decltype(build.operator()<1>()) { return nullptr; });
 }
 
 std::shared_ptr<Wire<>> ComponentBuilder::getWire(const std::string& name) {

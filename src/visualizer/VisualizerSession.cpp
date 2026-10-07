@@ -211,11 +211,6 @@ bool naturalLess(const std::string& left, const std::string& right) {
     return left.size() < right.size();
 }
 
-bool endsWith(const std::string& value, const std::string& suffix) {
-    return value.size() >= suffix.size()
-        && value.compare(value.size() - suffix.size(), suffix.size(), suffix) == 0;
-}
-
 std::string normalizedProfileFingerprint(
     const std::shared_ptr<Component>& component) {
     if (!component) return "explicit";

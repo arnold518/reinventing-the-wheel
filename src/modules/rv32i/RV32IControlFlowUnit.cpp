@@ -1,4 +1,7 @@
 #include "modules/rv32i/RV32IControlFlowUnit.hpp"
+#include <string>
+#include <vector>
+#include <stdexcept>
 #include "modules/rv32i/RV32IControlFlowDirect.hpp"
 
 #include "components/ComponentBuilder.hpp"
@@ -52,6 +55,13 @@ RV32IControlFlowUnit::RV32IControlFlowUnit(std::string name)
                   circuit::families::RV32IControlFlow.pinInitializer()) {}
 
 void RV32IControlFlowUnit::buildInternals(ComponentBuilder& builder) {
+    using PinPtr = std::shared_ptr<PinBase>;
+    // One named net per call, created in this order.
+    const auto wire = [&](const std::string& name, const PinPtr& source,
+                          const std::vector<PinPtr>& sinks) {
+        if (!source) throw std::logic_error("RV32IControlFlowUnit net has no source: " + name);
+        builder.addNewWireDynamic(name, source->getWidth(), source, sinks);
+    };
     builder.add(circuit::families::registerWord(32), "PC_STATE");
     builder.addNewComponent<Adder32>("PC_PLUS_4_ADD");
     builder.addNewComponent<Adder32>("PC_IMM_ADD");
@@ -83,135 +93,86 @@ void RV32IControlFlowUnit::buildInternals(ComponentBuilder& builder) {
     builder.addNewComponent<ConstantValue<32>>("CONST_FOUR", 4);
     builder.addNewComponent<ConstantValue<32>>("CONST_ZERO32", 0);
 
-    builder.addNewWire(
-        "CLK_to_PC",
-        getInputPin("CLK"),
-        {builder.getInputPin<IOComponent>("PC_STATE", "CLK")});
-    builder.addNewWire(
-        "RST_to_PC",
-        getInputPin("RST"),
-        {builder.getInputPin<IOComponent>("PC_STATE", "RST")});
-    builder.addNewWire(
-        "PC_WRITE_to_PC",
-        getInputPin("PC_WRITE"),
-        {builder.getInputPin<IOComponent>("PC_STATE", "WE")});
+    wire("CLK_to_PC", getInputPin("CLK"), {builder.getInputPin<IOComponent>("PC_STATE", "CLK")});
+    wire("RST_to_PC", getInputPin("RST"), {builder.getInputPin<IOComponent>("PC_STATE", "RST")});
+    wire("PC_WRITE_to_PC", getInputPin("PC_WRITE"), {builder.getInputPin<IOComponent>("PC_STATE", "WE")});
 
-    builder.addNewWire<32>(
-        "PC_fanout",
-        builder.getOutputPin<IOComponent, 32>("PC_STATE", "Q"),
-        {getOutputPin<32>("PC"),
-         builder.getInputPin<Adder32, 32>("PC_PLUS_4_ADD", "A"),
+    wire("PC_fanout", builder.getOutputPin<IOComponent, 32>("PC_STATE", "Q"),
+        {getOutputPin<32>("PC"), builder.getInputPin<Adder32, 32>("PC_PLUS_4_ADD", "A"),
          builder.getInputPin<Adder32, 32>("PC_IMM_ADD", "A"),
          builder.getInputPin<BitSplitter<32>, 32>("PC_SPLIT", "IN")});
-    builder.addNewWire<32>(
-        "IMM_fanout",
-        getInputPin<32>("IMM"),
-        {builder.getInputPin<Adder32, 32>("PC_IMM_ADD", "B"),
-         builder.getInputPin<Adder32, 32>("RS1_IMM_ADD", "B")});
-    builder.addNewWire<32>(
-        "RS1_to_JALR_ADD",
-        getInputPin<32>("RS1_VALUE"),
+    wire("IMM_fanout", getInputPin<32>("IMM"),
+        {builder.getInputPin<Adder32, 32>("PC_IMM_ADD", "B"), builder.getInputPin<Adder32, 32>("RS1_IMM_ADD", "B")});
+    wire("RS1_to_JALR_ADD", getInputPin<32>("RS1_VALUE"),
         {builder.getInputPin<Adder32, 32>("RS1_IMM_ADD", "A")});
-    builder.addNewWire<32>(
-        "CONST_FOUR_to_ADD",
-        builder.getOutputPin<ConstantValue<32>, 32>("CONST_FOUR", "OUT"),
+    wire("CONST_FOUR_to_ADD", builder.getOutputPin<ConstantValue<32>, 32>("CONST_FOUR", "OUT"),
         {builder.getInputPin<Adder32, 32>("PC_PLUS_4_ADD", "B")});
 
-    builder.addNewWire(
-        "CONST_LOW_fanout",
-        builder.getOutputPin<ConstantValue<1>>("CONST_LOW", "OUT"),
+    wire("CONST_LOW_fanout", builder.getOutputPin<ConstantValue<1>>("CONST_LOW", "OUT"),
         {builder.getInputPin<Adder32>("PC_PLUS_4_ADD", "Cin"),
-         builder.getInputPin<Adder32>("PC_IMM_ADD", "Cin"),
-         builder.getInputPin<Adder32>("RS1_IMM_ADD", "Cin"),
-         builder.getInputPin<Mux8to1>("BRANCH_MUX", "IN0"),
-         builder.getInputPin<Mux8to1>("BRANCH_MUX", "IN7")});
+         builder.getInputPin<Adder32>("PC_IMM_ADD", "Cin"), builder.getInputPin<Adder32>("RS1_IMM_ADD", "Cin"),
+         builder.getInputPin<Mux8to1>("BRANCH_MUX", "IN0"), builder.getInputPin<Mux8to1>("BRANCH_MUX", "IN7")});
 
-    builder.addNewWire<32>(
-        "PC_PLUS_4_fanout",
-        builder.getOutputPin<Adder32, 32>("PC_PLUS_4_ADD", "Sum"),
-        {getOutputPin<32>("PC_PLUS_4"),
-         builder.getInputPin<Mux2to1_32bit, 32>("BRANCH_NEXT_MUX", "A")});
-    builder.addNewWire<32>(
-        "PC_IMM_fanout",
-        builder.getOutputPin<Adder32, 32>("PC_IMM_ADD", "Sum"),
+    wire("PC_PLUS_4_fanout", builder.getOutputPin<Adder32, 32>("PC_PLUS_4_ADD", "Sum"),
+        {getOutputPin<32>("PC_PLUS_4"), builder.getInputPin<Mux2to1_32bit, 32>("BRANCH_NEXT_MUX", "A")});
+    wire("PC_IMM_fanout", builder.getOutputPin<Adder32, 32>("PC_IMM_ADD", "Sum"),
         {builder.getInputPin<Mux2to1_32bit, 32>("BRANCH_NEXT_MUX", "B"),
          builder.getInputPin<Mux4to1_32bit, 32>("JUMP_NEXT_MUX", "IN1")});
-    builder.addNewWire<32>(
-        "RS1_IMM_to_JALR_MASK",
-        builder.getOutputPin<Adder32, 32>("RS1_IMM_ADD", "Sum"),
+    wire("RS1_IMM_to_JALR_MASK", builder.getOutputPin<Adder32, 32>("RS1_IMM_ADD", "Sum"),
         {builder.getInputPin<Rewire, 32>("JALR_MASK", "IN")});
-    builder.addNewWire<32>(
-        "JALR_MASK_to_JUMP_MUX",
-        builder.getOutputPin<Rewire, 32>("JALR_MASK", "OUT"),
+    wire("JALR_MASK_to_JUMP_MUX", builder.getOutputPin<Rewire, 32>("JALR_MASK", "OUT"),
         {builder.getInputPin<Mux4to1_32bit, 32>("JUMP_NEXT_MUX", "IN2")});
-    builder.addNewWire<32>(
-        "CONST_ZERO_to_JUMP_MUX",
-        builder.getOutputPin<ConstantValue<32>, 32>("CONST_ZERO32", "OUT"),
+    wire("CONST_ZERO_to_JUMP_MUX", builder.getOutputPin<ConstantValue<32>, 32>("CONST_ZERO32", "OUT"),
         {builder.getInputPin<Mux4to1_32bit, 32>("JUMP_NEXT_MUX", "IN3")});
 
-    builder.addNewWire("EQ_fanout", getInputPin("EQ"),
-        {builder.getInputPin<NOTGate>("NOT_EQ", "IN"),
-         builder.getInputPin<Mux8to1>("BRANCH_MUX", "IN1")});
-    builder.addNewWire("LT_SIGNED_fanout", getInputPin("LT_SIGNED"),
-        {builder.getInputPin<NOTGate>("NOT_LT_SIGNED", "IN"),
-         builder.getInputPin<Mux8to1>("BRANCH_MUX", "IN3")});
-    builder.addNewWire("LT_UNSIGNED_fanout", getInputPin("LT_UNSIGNED"),
-        {builder.getInputPin<NOTGate>("NOT_LT_UNSIGNED", "IN"),
-         builder.getInputPin<Mux8to1>("BRANCH_MUX", "IN5")});
-    builder.addNewWire("NOT_EQ_to_branch", builder.getOutputPin<NOTGate>("NOT_EQ", "OUT"),
+    wire("EQ_fanout", getInputPin("EQ"),
+        {builder.getInputPin<NOTGate>("NOT_EQ", "IN"), builder.getInputPin<Mux8to1>("BRANCH_MUX", "IN1")});
+    wire("LT_SIGNED_fanout", getInputPin("LT_SIGNED"),
+        {builder.getInputPin<NOTGate>("NOT_LT_SIGNED", "IN"), builder.getInputPin<Mux8to1>("BRANCH_MUX", "IN3")});
+    wire("LT_UNSIGNED_fanout", getInputPin("LT_UNSIGNED"),
+        {builder.getInputPin<NOTGate>("NOT_LT_UNSIGNED", "IN"), builder.getInputPin<Mux8to1>("BRANCH_MUX", "IN5")});
+    wire("NOT_EQ_to_branch", builder.getOutputPin<NOTGate>("NOT_EQ", "OUT"),
         {builder.getInputPin<Mux8to1>("BRANCH_MUX", "IN2")});
-    builder.addNewWire("NOT_LT_SIGNED_to_branch", builder.getOutputPin<NOTGate>("NOT_LT_SIGNED", "OUT"),
+    wire("NOT_LT_SIGNED_to_branch", builder.getOutputPin<NOTGate>("NOT_LT_SIGNED", "OUT"),
         {builder.getInputPin<Mux8to1>("BRANCH_MUX", "IN4")});
-    builder.addNewWire("NOT_LT_UNSIGNED_to_branch", builder.getOutputPin<NOTGate>("NOT_LT_UNSIGNED", "OUT"),
+    wire("NOT_LT_UNSIGNED_to_branch", builder.getOutputPin<NOTGate>("NOT_LT_UNSIGNED", "OUT"),
         {builder.getInputPin<Mux8to1>("BRANCH_MUX", "IN6")});
-    builder.addNewWire<3>(
-        "BRANCH_TYPE_to_mux",
-        getInputPin<3>("BRANCH_TYPE"),
+    wire("BRANCH_TYPE_to_mux", getInputPin<3>("BRANCH_TYPE"),
         {builder.getInputPin<Mux8to1, 3>("BRANCH_MUX", "SEL")});
-    builder.addNewWire(
-        "BRANCH_TAKEN_fanout",
-        builder.getOutputPin<Mux8to1>("BRANCH_MUX", "OUT"),
-        {getOutputPin("BRANCH_TAKEN"),
-         builder.getInputPin<Mux2to1_32bit>("BRANCH_NEXT_MUX", "SEL"),
+    wire("BRANCH_TAKEN_fanout", builder.getOutputPin<Mux8to1>("BRANCH_MUX", "OUT"),
+        {getOutputPin("BRANCH_TAKEN"), builder.getInputPin<Mux2to1_32bit>("BRANCH_NEXT_MUX", "SEL"),
          builder.getInputPin<ORGate>("CONTROL_TRANSFER_OR", "A")});
 
-    builder.addNewWire<32>(
-        "BRANCH_NEXT_to_JUMP_MUX",
-        builder.getOutputPin<Mux2to1_32bit, 32>("BRANCH_NEXT_MUX", "OUT"),
+    wire("BRANCH_NEXT_to_JUMP_MUX", builder.getOutputPin<Mux2to1_32bit, 32>("BRANCH_NEXT_MUX", "OUT"),
         {builder.getInputPin<Mux4to1_32bit, 32>("JUMP_NEXT_MUX", "IN0")});
-    builder.addNewWire<2>(
-        "JUMP_TYPE_fanout",
-        getInputPin<2>("JUMP_TYPE"),
+    wire("JUMP_TYPE_fanout", getInputPin<2>("JUMP_TYPE"),
         {builder.getInputPin<Mux4to1_32bit, 2>("JUMP_NEXT_MUX", "SEL"),
          builder.getInputPin<BitSplitter<2>, 2>("JUMP_TYPE_SPLIT", "IN")});
-    builder.addNewWire<32>(
-        "NEXT_PC_fanout",
-        builder.getOutputPin<Mux4to1_32bit, 32>("JUMP_NEXT_MUX", "OUT"),
-        {getOutputPin<32>("NEXT_PC_CANDIDATE"),
-         builder.getInputPin<IOComponent, 32>("PC_STATE", "D"),
+    wire("NEXT_PC_fanout", builder.getOutputPin<Mux4to1_32bit, 32>("JUMP_NEXT_MUX", "OUT"),
+        {getOutputPin<32>("NEXT_PC_CANDIDATE"), builder.getInputPin<IOComponent, 32>("PC_STATE", "D"),
          builder.getInputPin<BitSplitter<32>, 32>("TARGET_SPLIT", "IN")});
 
-    builder.addNewWire("PC_bit0_to_align", builder.getOutputPin<BitSplitter<32>>("PC_SPLIT", "OUT_0"),
+    wire("PC_bit0_to_align", builder.getOutputPin<BitSplitter<32>>("PC_SPLIT", "OUT_0"),
         {builder.getInputPin<ORGate>("PC_LOW_OR", "A")});
-    builder.addNewWire("PC_bit1_to_align", builder.getOutputPin<BitSplitter<32>>("PC_SPLIT", "OUT_1"),
+    wire("PC_bit1_to_align", builder.getOutputPin<BitSplitter<32>>("PC_SPLIT", "OUT_1"),
         {builder.getInputPin<ORGate>("PC_LOW_OR", "B")});
-    builder.addNewWire("PC_align_to_output", builder.getOutputPin<ORGate>("PC_LOW_OR", "OUT"),
+    wire("PC_align_to_output", builder.getOutputPin<ORGate>("PC_LOW_OR", "OUT"),
         {getOutputPin("PC_MISALIGNED")});
 
-    builder.addNewWire("TARGET_bit0_to_align", builder.getOutputPin<BitSplitter<32>>("TARGET_SPLIT", "OUT_0"),
+    wire("TARGET_bit0_to_align", builder.getOutputPin<BitSplitter<32>>("TARGET_SPLIT", "OUT_0"),
         {builder.getInputPin<ORGate>("TARGET_LOW_OR", "A")});
-    builder.addNewWire("TARGET_bit1_to_align", builder.getOutputPin<BitSplitter<32>>("TARGET_SPLIT", "OUT_1"),
+    wire("TARGET_bit1_to_align", builder.getOutputPin<BitSplitter<32>>("TARGET_SPLIT", "OUT_1"),
         {builder.getInputPin<ORGate>("TARGET_LOW_OR", "B")});
-    builder.addNewWire("JUMP_bit0_to_active", builder.getOutputPin<BitSplitter<2>>("JUMP_TYPE_SPLIT", "OUT_0"),
+    wire("JUMP_bit0_to_active", builder.getOutputPin<BitSplitter<2>>("JUMP_TYPE_SPLIT", "OUT_0"),
         {builder.getInputPin<ORGate>("JUMP_ACTIVE_OR", "A")});
-    builder.addNewWire("JUMP_bit1_to_active", builder.getOutputPin<BitSplitter<2>>("JUMP_TYPE_SPLIT", "OUT_1"),
+    wire("JUMP_bit1_to_active", builder.getOutputPin<BitSplitter<2>>("JUMP_TYPE_SPLIT", "OUT_1"),
         {builder.getInputPin<ORGate>("JUMP_ACTIVE_OR", "B")});
-    builder.addNewWire("JUMP_active_to_transfer", builder.getOutputPin<ORGate>("JUMP_ACTIVE_OR", "OUT"),
+    wire("JUMP_active_to_transfer", builder.getOutputPin<ORGate>("JUMP_ACTIVE_OR", "OUT"),
         {builder.getInputPin<ORGate>("CONTROL_TRANSFER_OR", "B")});
-    builder.addNewWire("TARGET_low_to_final", builder.getOutputPin<ORGate>("TARGET_LOW_OR", "OUT"),
+    wire("TARGET_low_to_final", builder.getOutputPin<ORGate>("TARGET_LOW_OR", "OUT"),
         {builder.getInputPin<ANDGate>("TARGET_MISALIGNED_AND", "A")});
-    builder.addNewWire("TRANSFER_active_to_final", builder.getOutputPin<ORGate>("CONTROL_TRANSFER_OR", "OUT"),
+    wire("TRANSFER_active_to_final", builder.getOutputPin<ORGate>("CONTROL_TRANSFER_OR", "OUT"),
         {builder.getInputPin<ANDGate>("TARGET_MISALIGNED_AND", "B")});
-    builder.addNewWire("TARGET_misaligned_to_output", builder.getOutputPin<ANDGate>("TARGET_MISALIGNED_AND", "OUT"),
+    wire("TARGET_misaligned_to_output", builder.getOutputPin<ANDGate>("TARGET_MISALIGNED_AND", "OUT"),
         {getOutputPin("TARGET_MISALIGNED")});
 }

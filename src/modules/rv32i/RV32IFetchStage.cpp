@@ -1,4 +1,7 @@
 #include "modules/rv32i/RV32IPipelineStages.hpp"
+#include <string>
+#include <vector>
+#include <stdexcept>
 
 #include "components/ComponentBuilder.hpp"
 #include "components/ComponentBuilder.tpp"
@@ -17,6 +20,13 @@ RV32IFetchStage::RV32IFetchStage(std::string name, bool external_next_pc)
       external_next_pc_(external_next_pc) {}
 
 void RV32IFetchStage::buildInternals(ComponentBuilder& builder) {
+    using PinPtr = std::shared_ptr<PinBase>;
+    // One named net per call, created in this order.
+    const auto wire = [&](const std::string& name, const PinPtr& source,
+                          const std::vector<PinPtr>& sinks) {
+        if (!source) throw std::logic_error("RV32IFetchStage net has no source: " + name);
+        builder.addNewWireDynamic(name, source->getWidth(), source, sinks);
+    };
     const auto pc = builder.add(
         circuit::families::registerWord(32), "PC_STATE");
     const auto alignment_bits=builder.addNewComponent<Rewire>("ALIGNMENT_BITS",
@@ -43,100 +53,45 @@ void RV32IFetchStage::buildInternals(ComponentBuilder& builder) {
         "STATUS_PACK",
         {"PC_MISALIGNED", "INSTRUCTION_FAULT"});
 
-    builder.addNewWire(
-        "CLK", getInputPin("CLK"), {pc->getInputPin("CLK")});
-    builder.addNewWire(
-        "RST", getInputPin("RST"), {pc->getInputPin("RST")});
-    builder.addNewWire(
-        "PC_WRITE",
-        getInputPin("PC_WRITE"),
-        {pc->getInputPin("WE")});
+    wire("CLK", getInputPin("CLK"), {pc->getInputPin("CLK")});
+    wire("RST", getInputPin("RST"), {pc->getInputPin("RST")});
+    wire("PC_WRITE", getInputPin("PC_WRITE"), {pc->getInputPin("WE")});
     if (!external_next_pc_)
-        builder.addNewWire("PC_REDIRECT", getInputPin("PC_REDIRECT"),
+        wire("PC_REDIRECT", getInputPin("PC_REDIRECT"),
             {builder.getInputPin<Mux2to1_32bit>("NEXT_PC_MUX", "SEL")});
-    builder.addNewWire(
-        "FETCH_VALID",
-        getInputPin("FETCH_VALID"),
-        {builder.getInputPin<Mux2to1_32bit>(
-             "PC_OUTPUT_MUX", "SEL"),
-         builder.getInputPin<Mux2to1_32bit>(
-             "INSTRUCTION_OUTPUT_MUX", "SEL"),
-         builder.getInputPin<Mux2to1_32bit>(
-             "STATUS_OUTPUT_MUX", "SEL"),
-         builder.getInputPin<Rewire>(
-             "VALID_PASS", "IN_VALID")});
-    builder.addNewWire<32>("REDIRECT_PC", getInputPin<32>("REDIRECT_PC"),
-        external_next_pc_
-            ? std::vector<std::shared_ptr<Pin<32>>>{builder.getInputPin<Rewire,32>("NEXT_PC_BRIDGE", "IN")}
-            : std::vector<std::shared_ptr<Pin<32>>>{builder.getInputPin<Mux2to1_32bit,32>("NEXT_PC_MUX", "B")});
-    builder.addNewWire<32>(
-        "IMEM_READ_DATA",
-        getInputPin<32>("IMEM_READ_DATA"),
-        {builder.getInputPin<Mux2to1_32bit, 32>(
-            "INSTRUCTION_OUTPUT_MUX", "B")});
-    builder.addNewWire(
-        "IMEM_FAULT",
-        getInputPin("IMEM_FAULT"),
-        {builder.getInputPin<Rewire>(
-            "STATUS_PACK", "INSTRUCTION_FAULT")});
-    builder.addNewWire("ALIGNMENT_BIT_0",alignment_bits->getOutputPin("BIT_0"),{alignment->getInputPin("A")});
-    builder.addNewWire("ALIGNMENT_BIT_1",alignment_bits->getOutputPin("BIT_1"),{alignment->getInputPin("B")});
-    builder.addNewWire<32>(
-        "ZERO",
-        builder.getOutputPin<ConstantValue<32>, 32>("ZERO", "OUT"),
-        {builder.getInputPin<Mux2to1_32bit, 32>(
-             "PC_OUTPUT_MUX", "A"),
-         builder.getInputPin<Mux2to1_32bit, 32>(
-             "INSTRUCTION_OUTPUT_MUX", "A"),
-         builder.getInputPin<Mux2to1_32bit, 32>(
-             "STATUS_OUTPUT_MUX", "A")});
-    builder.addNewWire<32>(
-        "PC",
-        pc->getOutputPin<32>("Q"),
-        [&] {
-            std::vector<std::shared_ptr<Pin<32>>> sinks{
-                alignment_bits->getInputPin<32>("ADDRESS"),
-                builder.getInputPin<Mux2to1_32bit,32>("PC_OUTPUT_MUX", "B"),
-                getOutputPin<32>("FETCH_PC"), getOutputPin<32>("IMEM_ADDR")};
-            if (!external_next_pc_)
-                sinks.push_back(builder.getInputPin<IncrementBy4,32>("PC_PLUS_4", "A"));
-            return sinks;
-        }());
+    wire("FETCH_VALID", getInputPin("FETCH_VALID"),
+        {builder.getInputPin<Mux2to1_32bit>("PC_OUTPUT_MUX", "SEL"),
+         builder.getInputPin<Mux2to1_32bit>("INSTRUCTION_OUTPUT_MUX", "SEL"),
+         builder.getInputPin<Mux2to1_32bit>("STATUS_OUTPUT_MUX", "SEL"),
+         builder.getInputPin<Rewire>("VALID_PASS", "IN_VALID")});
+    wire("REDIRECT_PC", getInputPin<32>("REDIRECT_PC"), external_next_pc_ ? std::vector<PinPtr>{builder.getInputPin<Rewire,32>("NEXT_PC_BRIDGE",
+        "IN")} : std::vector<PinPtr>{builder.getInputPin<Mux2to1_32bit,32>("NEXT_PC_MUX", "B")});
+    wire("IMEM_READ_DATA", getInputPin<32>("IMEM_READ_DATA"),
+        {builder.getInputPin<Mux2to1_32bit, 32>("INSTRUCTION_OUTPUT_MUX", "B")});
+    wire("IMEM_FAULT", getInputPin("IMEM_FAULT"),
+        {builder.getInputPin<Rewire>("STATUS_PACK", "INSTRUCTION_FAULT")});
+    wire("ALIGNMENT_BIT_0",alignment_bits->getOutputPin("BIT_0"),{alignment->getInputPin("A")});
+    wire("ALIGNMENT_BIT_1",alignment_bits->getOutputPin("BIT_1"),{alignment->getInputPin("B")});
+    wire("ZERO", builder.getOutputPin<ConstantValue<32>, 32>("ZERO", "OUT"),
+        {builder.getInputPin<Mux2to1_32bit, 32>("PC_OUTPUT_MUX", "A"),
+         builder.getInputPin<Mux2to1_32bit, 32>("INSTRUCTION_OUTPUT_MUX", "A"),
+         builder.getInputPin<Mux2to1_32bit, 32>("STATUS_OUTPUT_MUX", "A")});
+    wire("PC", pc->getOutputPin<32>("Q"),
+        [&] {std::vector<PinPtr> sinks{alignment_bits->getInputPin<32>("ADDRESS"), builder.getInputPin<Mux2to1_32bit,32>("PC_OUTPUT_MUX", "B"), getOutputPin<32>("FETCH_PC"), getOutputPin<32>("IMEM_ADDR")}; if (!external_next_pc_) sinks.push_back(builder.getInputPin<IncrementBy4,32>("PC_PLUS_4", "A")); return sinks;}());
     if (!external_next_pc_)
-        builder.addNewWire<32>("PC_PLUS_4", builder.getOutputPin<IncrementBy4,32>("PC_PLUS_4", "Sum"),
+        wire("PC_PLUS_4", builder.getOutputPin<IncrementBy4,32>("PC_PLUS_4", "Sum"),
             {builder.getInputPin<Mux2to1_32bit,32>("NEXT_PC_MUX", "A")});
-    builder.addNewWire<32>("NEXT_PC",
-        external_next_pc_ ? builder.getOutputPin<Rewire,32>("NEXT_PC_BRIDGE", "OUT")
-                          : builder.getOutputPin<Mux2to1_32bit,32>("NEXT_PC_MUX", "OUT"),
+    wire("NEXT_PC", external_next_pc_ ? builder.getOutputPin<Rewire,32>("NEXT_PC_BRIDGE", "OUT") : builder.getOutputPin<Mux2to1_32bit,32>("NEXT_PC_MUX", "OUT"),
         {pc->getInputPin<32>("D")});
-    builder.addNewWire(
-        "MISALIGNED",
-        alignment->getOutputPin("OUT"),
-        {builder.getInputPin<Rewire>(
-            "STATUS_PACK", "PC_MISALIGNED")});
-    builder.addNewWire<32>(
-        "STATUS",
-        builder.getOutputPin<Rewire, 32>("STATUS_PACK", "STATUS"),
-        {builder.getInputPin<Mux2to1_32bit, 32>(
-            "STATUS_OUTPUT_MUX", "B")});
-    builder.addNewWire<32>(
-        "OUT_PC",
-        builder.getOutputPin<Mux2to1_32bit, 32>(
-            "PC_OUTPUT_MUX", "OUT"),
+    wire("MISALIGNED", alignment->getOutputPin("OUT"),
+        {builder.getInputPin<Rewire>("STATUS_PACK", "PC_MISALIGNED")});
+    wire("STATUS", builder.getOutputPin<Rewire, 32>("STATUS_PACK", "STATUS"),
+        {builder.getInputPin<Mux2to1_32bit, 32>("STATUS_OUTPUT_MUX", "B")});
+    wire("OUT_PC", builder.getOutputPin<Mux2to1_32bit, 32>("PC_OUTPUT_MUX", "OUT"),
         {getOutputPin<32>("OUT_PC")});
-    builder.addNewWire<32>(
-        "OUT_INSTRUCTION",
-        builder.getOutputPin<Mux2to1_32bit, 32>(
-            "INSTRUCTION_OUTPUT_MUX", "OUT"),
+    wire("OUT_INSTRUCTION", builder.getOutputPin<Mux2to1_32bit, 32>("INSTRUCTION_OUTPUT_MUX", "OUT"),
         {getOutputPin<32>("OUT_INSTRUCTION")});
-    builder.addNewWire<32>(
-        "OUT_STATUS",
-        builder.getOutputPin<Mux2to1_32bit, 32>(
-            "STATUS_OUTPUT_MUX", "OUT"),
+    wire("OUT_STATUS", builder.getOutputPin<Mux2to1_32bit, 32>("STATUS_OUTPUT_MUX", "OUT"),
         {getOutputPin<32>("OUT_FETCH_STATUS")});
-    builder.addNewWire(
-        "OUT_VALID",
-        builder.getOutputPin<Rewire>(
-            "VALID_PASS", "OUT_VALID"),
-        {getOutputPin("OUT_VALID")});
+    wire("OUT_VALID", builder.getOutputPin<Rewire>("VALID_PASS", "OUT_VALID"), {getOutputPin("OUT_VALID")});
 }

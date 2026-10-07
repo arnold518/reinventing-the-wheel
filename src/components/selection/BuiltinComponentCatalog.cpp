@@ -101,19 +101,6 @@ std::vector<std::string> testIds(std::string test) {
     return {std::move(test)};
 }
 
-std::vector<std::string> numberedTestIds(
-    const std::string& prefix,
-    const std::string& suffix,
-    size_t first,
-    size_t last) {
-    std::vector<std::string> result;
-    result.reserve(last - first + 1);
-    for (size_t number = first; number <= last; ++number) {
-        result.push_back(prefix + std::to_string(number) + suffix);
-    }
-    return result;
-}
-
 VerificationEvidence verifiedStructural(std::vector<std::string> tests) {
     return {
         VerificationStatus::Verified,

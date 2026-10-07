@@ -1,4 +1,5 @@
 #include "components/IOComponent.hpp"
+#include "basic/SupportedWidths.hpp"
 #include "simulator/Simulator.hpp"
 #include "basic/Pin.hpp"
 #include "basic/PinBase.hpp"
@@ -18,17 +19,9 @@ void IOComponent::initPins(std::shared_ptr<IOComponent> self_ptr) {
 }
 
 std::shared_ptr<PinBase> IOComponent::addPinDynamic(const std::string& pin_name, PinType type, size_t width) {
-    switch (width) {
-        case 1: return addPin<1>(pin_name, type);
-        case 2: return addPin<2>(pin_name, type);
-        case 3: return addPin<3>(pin_name, type);
-        case 4: return addPin<4>(pin_name, type);
-        case 5: return addPin<5>(pin_name, type);
-        case 8: return addPin<8>(pin_name, type);
-        case 16: return addPin<16>(pin_name, type);
-        case 32: return addPin<32>(pin_name, type);
-        default: return nullptr;
-    }
+    return circuit::dispatchWidth(width,
+        [&]<size_t WIDTH>() -> std::shared_ptr<PinBase> { return addPin<WIDTH>(pin_name, type); },
+        []() -> std::shared_ptr<PinBase> { return nullptr; });
 }
 
 std::shared_ptr<PinBase> IOComponent::getInputPinDynamic(const std::string& pin_name) const {
