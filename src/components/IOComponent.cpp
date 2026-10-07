@@ -68,10 +68,6 @@ std::string IOComponent::formatPins(int lvl) const
     return ss.str();
 }
 
-const std::map<std::string, std::shared_ptr<Pin<>>>& IOComponent::getInputPins() const { return _inputPins; }
-
-const std::map<std::string, std::shared_ptr<Pin<>>>& IOComponent::getOutputPins() const { return _outputPins; }
-
 const std::map<std::string, std::shared_ptr<PinBase>>& IOComponent::getAllInputPins() const { return _allInputPins; }
 
 const std::map<std::string, std::shared_ptr<PinBase>>& IOComponent::getAllOutputPins() const { return _allOutputPins; }

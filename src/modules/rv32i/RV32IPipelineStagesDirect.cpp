@@ -1,37 +1,11 @@
 #include "modules/rv32i/RV32IPipelineStages.hpp"
+#include "modules/composite/ALU32Direct.hpp"
 #include "basic/LogicValueHelpers.hpp"
 
-#include "components/BasicComponent.hpp"
 #include "components/ComponentBuilder.hpp"
 #include "components/ComponentBuilder.tpp"
-#include "modules/basic/Gate.hpp"
-#include "modules/basic/Mux.hpp"
-#include "modules/composite/Adder32.hpp"
-#include "modules/composite/IncrementBy4.hpp"
 #include "modules/composite/ALU32.hpp"
-#include "modules/memory/FlipFlopCell.hpp"
-#include "modules/memory/MemoryController.hpp"
-#include "modules/memory/Register.hpp"
-#include "modules/memory/MemoryStructuralBuilder.hpp"
-#include "modules/memory/RegisterFile32x32.hpp"
-#include "modules/rv32i/RV32IDecodeControlUnit.hpp"
-#include "modules/rv32i/RV32IPipelineControl.hpp"
 #include "modules/rv32i/RV32IPipelineEncoding.hpp"
-#include "modules/rv32i/RV32ISingleCycleStages.hpp"
-#include "modules/utility/BitAdapter.hpp"
-#include "modules/utility/Constant.hpp"
-#include "modules/utility/Rewire.hpp"
-#include "rv32i/RV32IDecoder.hpp"
-#include "simulator/Simulator.hpp"
-#include <algorithm>
-#include <array>
-#include <cstdint>
-#include <limits>
-#include <memory>
-#include <stdexcept>
-#include <string>
-#include <utility>
-#include <vector>
 #include "RV32IPipelineStagesInternal.hpp"
 
 namespace {
@@ -73,30 +47,6 @@ bool preterminal(
         || control.trap
         || control.halt
         || rv32i::pipeline_encoding::statusBit(execution_status, 0);
-}
-
-uint32_t alu(uint8_t operation, uint32_t a, uint32_t b) {
-    switch (operation) {
-        case ALU32Op::ADD: return a + b;
-        case ALU32Op::SUB: return a - b;
-        case ALU32Op::AND: return a & b;
-        case ALU32Op::OR: return a | b;
-        case ALU32Op::XOR: return a ^ b;
-        case ALU32Op::SLL: return a << (b & 31U);
-        case ALU32Op::SRL: return a >> (b & 31U);
-        case ALU32Op::SRA:
-            return static_cast<uint32_t>(
-                static_cast<int32_t>(a) >> (b & 31U));
-        case ALU32Op::SLT:
-            return static_cast<int32_t>(a)
-                       < static_cast<int32_t>(b)
-                ? 1U
-                : 0U;
-        case ALU32Op::SLTU: return a < b ? 1U : 0U;
-        case ALU32Op::PASS_A: return a;
-        case ALU32Op::PASS_B: return b;
-        default: return 0;
-    }
 }
 
 bool branchTaken(
@@ -456,7 +406,7 @@ public:
             : control.alu_b == rv32i::RV32IALUSourceB::Immediate
                 ? immediate
                 : 0U;
-        const uint32_t result = alu(control.alu_op, alu_a, alu_b);
+        const uint32_t result = alu32Result(control.alu_op, alu_a, alu_b);
         const uint32_t pc_plus_4 = pc + 4U;
         const bool compare=control.alu_op==ALU32Op::SUB||control.alu_op==ALU32Op::SLT||control.alu_op==ALU32Op::SLTU;
         const bool eq=compare&&alu_a==alu_b,lt=compare&&int32_t(alu_a)<int32_t(alu_b),ltu=compare&&alu_a<alu_b;

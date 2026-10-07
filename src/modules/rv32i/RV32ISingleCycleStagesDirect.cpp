@@ -1,4 +1,5 @@
 #include "RV32ISingleCycleStagesDirect.hpp"
+#include "modules/composite/ALU32Direct.hpp"
 #include "RV32IMemoryRequestModel.hpp"
 #include "components/BasicComponent.hpp"
 #include "components/Component.tpp"
@@ -16,18 +17,6 @@ Bits bits(size_t width,uint32_t value) {
     Bits r(width);for(size_t i=0;i<width;++i) r[i]=(value>>i)&1?LogicValue::HIGH:LogicValue::LOW;
     return r;
 }
-uint32_t alu(unsigned op,uint32_t a,uint32_t b) {
-    const unsigned shift=b&31;
-    switch(op) {
-        case ALU32Op::ADD:return a+b;case ALU32Op::SUB:return a-b;
-        case ALU32Op::AND:return a&b;case ALU32Op::OR:return a|b;case ALU32Op::XOR:return a^b;
-        case ALU32Op::SLL:return a<<shift;case ALU32Op::SRL:return a>>shift;
-        case ALU32Op::SRA:return shift && (a&0x80000000u)?(a>>shift)|(~uint32_t{0}<<(32-shift)):a>>shift;
-        case ALU32Op::SLT:return int32_t(a)<int32_t(b);case ALU32Op::SLTU:return a<b;
-        case ALU32Op::PASS_A:return a;case ALU32Op::PASS_B:return b;default:return 0;
-    }
-}
-
 // Independent compact reference for the stage's settled binary/edge contract.
 // It never instantiates a shadow structural circuit or executes an instruction
 // oracle. In particular, Execute has no state, and Decode writes only on CLK.
@@ -147,7 +136,7 @@ private:
         const auto as=value("ALU_A_SEL"),bs=value("ALU_B_SEL");
         const auto a=as==0?value("RS1_VALUE"):as==1?value("PC"):0;
         const auto b=bs==0?value("RS2_VALUE"):bs==1?value("IMM"):0;
-        const auto op=value("ALU_OP"),result=alu(op,a,b),jump=value("JUMP_TYPE");
+        const auto op=value("ALU_OP"),result=alu32Result(op,a,b),jump=value("JUMP_TYPE");
         const bool cmp=op==ALU32Op::SUB||op==ALU32Op::SLT||op==ALU32Op::SLTU;
         const bool eq=cmp&&a==b,lt=cmp&&int32_t(a)<int32_t(b),ltu=cmp&&a<b;
         const bool conditions[]{false,eq,!eq,lt,!lt,ltu,!ltu,false};

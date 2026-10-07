@@ -1,5 +1,5 @@
 #include "RV32IBaselinePipelineInternal.hpp"
-#include "modules/memory/MemoryStructuralBuilder.hpp"
+#include "components/StructuralNetBuilder.hpp"
 #include "modules/memory/RegisterFile32x32.hpp"
 #include "modules/rv32i/RV32IDecodeControlUnit.hpp"
 #include "modules/rv32i/RV32ISingleCycleStages.hpp"
@@ -10,7 +10,7 @@
 #include "modules/utility/Rewire.hpp"
 #include <limits>
 
-using circuit::memory_detail::StructuralWiring;
+using circuit::detail::StructuralWiring;
 using namespace rv32i::baseline;
 namespace {
 using Ptr=std::shared_ptr<IOComponent>;

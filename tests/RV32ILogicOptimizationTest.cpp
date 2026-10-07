@@ -2,7 +2,7 @@
 #include "../src/modules/composite/Structural8Builder.hpp"
 #include "modules/rv32i/RV32ISingleCycleStages.hpp"
 #include "modules/rv32i/RV32IPipelineControl.hpp"
-#include "modules/memory/MemoryStructuralBuilder.hpp"
+#include "components/StructuralNetBuilder.hpp"
 #include "analysis/CircuitTimingAnalyzer.hpp"
 #include "simulator/SimulationTest.hpp"
 #include <iostream>
@@ -48,7 +48,7 @@ class NextPCReference : public RV32ISingleCycleNextPCStage {
 public:
     using RV32ISingleCycleNextPCStage::RV32ISingleCycleNextPCStage;
     void buildInternals(ComponentBuilder& b) override {
-        circuit::memory_detail::StructuralWiring w(b);
+        circuit::detail::StructuralWiring w(b);
         auto jump=b.addNewComponent<BitSplitter<2>>("JUMP");
         w.connect(getInputPin<2>("JUMP_TYPE"),jump->getInputPin<2>("IN"));
         auto jumping=w.either("JUMPING",jump->getOutputPin("OUT_0"),jump->getOutputPin("OUT_1"));

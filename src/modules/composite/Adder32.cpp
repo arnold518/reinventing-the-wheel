@@ -17,7 +17,7 @@ Adder32::Adder32(std::string name, bool parallel_prefix)
 
 void Adder32::buildInternals(ComponentBuilder& builder) {
     if (parallel_prefix_) {
-        circuit::memory_detail::StructuralWiring w(builder);
+        circuit::detail::StructuralWiring w(builder);
         auto adder=builder.addNewComponent<ParallelPrefixAdder32>("PREFIX_ADDER");
         for (auto p:{"A","B","Cin"}) w.connect(getInputPinDynamic(p),adder->getInputPinDynamic(p));
         for (auto p:{"Sum","Cout"}) w.connect(adder->getOutputPinDynamic(p),getOutputPinDynamic(p));

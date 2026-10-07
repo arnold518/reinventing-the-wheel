@@ -1,20 +1,7 @@
 #include "modules/rv32i/RV32IPipelineControl.hpp"
 
-#include "components/BasicComponent.hpp"
 #include "components/ComponentBuilder.hpp"
 #include "components/ComponentBuilder.tpp"
-#include "modules/basic/Gate.hpp"
-#include "modules/basic/Mux.hpp"
-#include "modules/composite/Adder32.hpp"
-#include "modules/utility/BitAdapter.hpp"
-#include "modules/utility/Constant.hpp"
-#include "modules/utility/Rewire.hpp"
-#include "RV32ILogicNetwork.hpp"
-#include <array>
-#include <memory>
-#include <string>
-#include <utility>
-#include <vector>
 #include "RV32IPipelineControlInternal.hpp"
 
 namespace {

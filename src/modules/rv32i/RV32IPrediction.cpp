@@ -2,7 +2,7 @@
 
 #include "components/BasicComponent.hpp"
 #include "components/selection/BuildContext.hpp"
-#include "modules/memory/MemoryStructuralBuilder.hpp"
+#include "components/StructuralNetBuilder.hpp"
 #include "modules/memory/FlipFlopCell.hpp"
 #include "modules/memory/Register.hpp"
 #include "modules/basic/Mux.hpp"
@@ -14,7 +14,7 @@
 #include <array>
 
 namespace {
-using circuit::memory_detail::StructuralWiring;
+using circuit::detail::StructuralWiring;
 using Ptr = std::shared_ptr<IOComponent>;
 using Signal = std::shared_ptr<PinBase>;
 using Policy = rv32i::PredictionPolicy;

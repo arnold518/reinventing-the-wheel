@@ -130,7 +130,7 @@ AddSub32::AddSub32(std::string name, bool parallel_prefix)
 
 void AddSub32::buildInternals(ComponentBuilder& builder) {
     if (parallel_prefix_) {
-        circuit::memory_detail::StructuralWiring w(builder);
+        circuit::detail::StructuralWiring w(builder);
         auto bits=builder.addNewComponent<BitSplitter<32>>("B_SPLIT");
         auto effective=builder.addNewComponent<BitJoiner<32>>("EFFECTIVE_B");
         auto adder=builder.addNewComponent<ParallelPrefixAdder32>("PREFIX_ADDER");

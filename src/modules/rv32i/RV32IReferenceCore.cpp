@@ -1,4 +1,5 @@
 #include "modules/rv32i/RV32IReferenceCore.hpp"
+#include "modules/composite/ALU32Direct.hpp"
 #include "basic/LogicValueHelpers.hpp"
 
 #include "basic/Pin.hpp"
@@ -63,34 +64,6 @@ uint32_t requireKnownUInt(
     return *result;
 }
 
-uint32_t evaluateAlu(
-    uint8_t op,
-    uint32_t a,
-    uint32_t b) {
-    const auto shamt = b & 0x1fU;
-    switch (op) {
-        case ALU32Op::ADD: return a + b;
-        case ALU32Op::SUB: return a - b;
-        case ALU32Op::AND: return a & b;
-        case ALU32Op::OR: return a | b;
-        case ALU32Op::XOR: return a ^ b;
-        case ALU32Op::SLL: return a << shamt;
-        case ALU32Op::SRL: return a >> shamt;
-        case ALU32Op::SRA:
-            return static_cast<uint32_t>(
-                static_cast<int32_t>(a) >> shamt);
-        case ALU32Op::SLT:
-            return static_cast<int32_t>(a)
-                    < static_cast<int32_t>(b)
-                ? 1U : 0U;
-        case ALU32Op::SLTU: return a < b ? 1U : 0U;
-        case ALU32Op::PASS_A: return a;
-        case ALU32Op::PASS_B: return b;
-        case ALU32Op::ZERO: return 0;
-        default: return 0;
-    }
-}
-
 struct CorePreview {
     uint32_t raw = 0;
     rv32i::RV32IDecodedInstruction decoded{};
@@ -153,7 +126,7 @@ CorePreview previewCore(
             ? static_cast<uint32_t>(result.decoded.immediate)
             : 0;
     result.alu_result =
-        evaluateAlu(result.control.alu_op, alu_a, alu_b);
+        alu32Result(result.control.alu_op, alu_a, alu_b);
     result.memory_intent =
         result.control.mem_read || result.control.mem_write;
     const bool memory_response_ready =

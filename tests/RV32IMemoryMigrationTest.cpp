@@ -3,7 +3,7 @@
 #include "modules/memory/MemoryContainer.hpp"
 #include "modules/memory/BehavioralMemoryEndpoint.hpp"
 #include "modules/memory/MemoryController.hpp"
-#include "modules/memory/MemoryStructuralBuilder.hpp"
+#include "components/StructuralNetBuilder.hpp"
 #include "modules/rv32i/RV32ISingleCycleCore.hpp"
 #include "modules/rv32i/RV32IFiveStageCore.hpp"
 #include "tests/RV32IProgramRoot.hpp"
@@ -38,7 +38,7 @@ public:
             if (expanded) memory = b.addNewComponent<MemoryEndpoint>("MEMORY",32,technology,config);
             else memory = b.addNewComponent<BehavioralMemoryEndpoint>("MEMORY",32,technology,config);
         }
-        memory_detail::StructuralWiring w(b);
+        circuit::detail::StructuralWiring w(b);
         for(auto name:{"WORD_ADDR","WORD_WRITE_DATA","WRITE_MASK"})
             w.connect(lanes->getOutputPinDynamic(name),requester->getInputPinDynamic(
                 std::string(name)=="WORD_ADDR"?"ADDR":std::string(name)=="WORD_WRITE_DATA"?"WRITE_DATA":"WRITE_MASK"));

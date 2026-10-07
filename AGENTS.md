@@ -1,12 +1,16 @@
 # AGENTS.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to coding agents working in this repository.
 
 ## Project Overview
 
-CircuitSim is a digital logic circuit simulator with event-driven simulation engine (C++20) and interactive browser visualization (native Python backend or serverless WebAssembly; optional older Pygame client). It simulates circuits at the gate level with accurate timing and supports hierarchical component composition.
+CircuitSim is a digital logic circuit simulator: an event-driven engine in C++20, a browser visualizer (native Python backend or serverless WebAssembly), and a documentation site. It simulates circuits at gate level with propagation delays and builds complex parts from simpler ones (composite pattern).
 
-**Core Architecture**: Event-driven simulation with priority queue processing WireUpdateEvents and ComponentEvalEvents. Components are composed hierarchically (composite pattern) where complex circuits are built from simpler gates.
+What exists today:
+
+- **ALU8** (site chapter 2): a teaching 8-bit ALU built from gates.
+- **Memories** (chapter 3): flip-flop, SRAM, DRAM, ROM and NOR-flash devices, each as a detailed design (cell -> row/word -> bank -> device) and as a scalable `MemoryContainer`; controllers; and a common request/response endpoint.
+- **RV32I** (chapter 4): building blocks, a single-cycle core, a baseline five-stage pipeline (stall only) and an advanced pipeline (forwarding, load-use hazards, branch prediction, memory waits), plus an instruction oracle, benchmark and verification equipment.
 
 ## Architectural Rule: Lower-Level First
 
@@ -21,289 +25,109 @@ This project prioritizes learning hardware by building lower-level structures be
 
 ## Build System
 
-### Initial Build
+Build and test **serially**; parallel compiles run this host out of memory.
+
 ```bash
-# From project root
-mkdir -p build && cd build
-cmake ..
-make -j1
+# Isolated build that does not overwrite the live visualizer module
+cmake -S . -B build-cleanup -DCIRCUITSIM_DEPLOY_PYTHON=OFF
+prlimit --as=4294967296 cmake --build build-cleanup -j1
+ctest --test-dir build-cleanup -j2
+
+# One scenario
+build-cleanup/tests/SimulationTestRunner FullAdderTest
+build-cleanup/tests/SimulationTestRunner --list
 ```
 
-### Rebuild After Changes
-```bash
-# C++ changes only
-cd build && make -j1
-
-# CMakeLists.txt changes
-cd build && cmake .. && make -j1
-```
-
-### Build Outputs
-- `build/circuit_backend.cpython-*.so` - Python module (pybind11)
-  - **Automatically copied to `visualizer/` after build** (via CMake POST_BUILD command)
-- `build/sim` - C++ standalone executable
-- `build/tests/SimulationTestRunner` - registry-driven CTest/scenario runner
-
-### Running Tests
-```bash
-# All C++ tests via CTest
-cd build && ctest --verbose
-
-# Single test directly
-cd build && ./tests/SimulationTestRunner FullAdderTest
-```
-
-### Running Visualizer
-```bash
-# From project root (Python module is auto-deployed after build)
-cd visualizer
-python main.py
-```
-
-**Important**: The `circuit_backend` Python module is automatically copied from `build/` to `visualizer/` after every successful build. No manual copying needed! Both frontends use `create_test_by_name` from the shared scenario registry. Browser development uses `visualizer-v2/server.py`; MkDocs/WASM packaging uses `tools/build-pages.sh`. Use `CIRCUITSIM_DEPLOY_PYTHON=OFF` for isolated validation builds.
+- The default `build/` directory also holds experiment results and validation evidence. Do not delete it as scratch.
+- Without `CIRCUITSIM_DEPLOY_PYTHON=OFF`, the build copies `circuit_backend*.so` into `visualizer-v2/` and `visualizer/`.
+- The published site (docs plus WebAssembly simulator) is built by `tools/build-pages.sh` into `build-wasm/site`; browser and parity checks run through `tools/run-web-tests.py` (inventory in `tests/web-tests.json`).
+- Pushing the `github-pages` branch deploys the site.
 
 ## Code Architecture
 
-### Component Hierarchy (Core Abstraction)
+### Engine
+
+- `include/basic`: `Pin<W>` and `Wire<W>` are width-templated and four-state (0, 1, X, Z). Supported widths are 1, 2, 3, 4, 5, 8, 16 and 32.
+- `include/simulator`: a priority queue ordered by time, then wire updates before component evaluations, then scheduling order. Wire and pin history is recorded for time scrubbing and can be disabled for headless runs.
+- Each pin has an external wire (parent scope) and an internal wire (child scope). A component input cannot be wired directly to its own output; a zero-delay `Rewire` bridges it.
+
+### Components
 
 ```
-Component (base)
-  └─ IOComponent (adds pins)
-      ├─ BasicComponent (adds evaluate() and delay)
-      │   ├─ Logic Gates: NOTGate, ANDGate, ORGate, XORGate, etc.
-      │   ├─ DFlipFlop (sequential)
-      │   └─ ClockGenerator
-      └─ Composite Components (use buildInternals())
-          ├─ HalfAdder (XOR + AND)
-          └─ FullAdder (2 HalfAdders + OR)
+Component
+  └─ IOComponent        (pins; composites implement buildInternals())
+      └─ BasicComponent (delay; leaves implement evaluate())
 ```
 
-**Key Distinction**:
-- `BasicComponent`: Implements `evaluate(time, simulator)` - gate-level logic executed during simulation
-- Composite (plain `IOComponent`): Implements `buildInternals(builder)` - constructs internal circuit from other components
+- Create components with `Component::create<T>()`, `createWithContext`, or a `ComponentBuilder`; never `std::make_shared`, or pins and internals are not built.
+- `ComponentBuilder` templates live in `ComponentBuilder.tpp`; include it in `.cpp` files, not headers.
+- Wire structural circuits with `circuit::detail::StructuralWiring` (`include/components/StructuralNetBuilder.hpp`): call `connect(source, sink)` and then `finish()`.
 
-### Component Creation Pattern
+### Fidelity selection (`include/components/selection`)
 
-**CRITICAL**: Components must be created via `Component::create<T>(args...)`, NOT direct `std::make_shared<T>()`.
+- A `ComponentFamily` is one public contract: an ID, pins, a structural factory and a behavioral factory. There is at most one implementation of each kind.
+- Parents ask for a family, not a class: `builder.add(circuit::families::ALU32, "ALU")`.
+- One `BuildProfile` (ordered rules, last match wins) chooses structural or behavioral per path; a `BuildManifest` records what was built. See `docs/unified-component-profiles.md`.
+- Behavioral classes are usually named `...Direct`; their headers are private, under `src/modules`.
+- A behavioral rule has one owner. Larger behavioral implementations call the smaller component's function (for example `alu32Result`) instead of restating it. The instruction oracle in `src/rv32i` is deliberately independent.
+- Contract IDs are stored in saved profiles and layouts. Renaming or removing one needs a compatibility plan; see the retired list in `src/modules/rv32i/RV32IBuildProfiles.cpp`.
 
-```cpp
-// CORRECT - handles pin initialization and buildInternals
-auto adder = Component::create<FullAdder>("FA1");
+### Tests and scenarios
 
-// WRONG - pins won't exist, buildInternals won't run
-auto adder = std::make_shared<FullAdder>("FA1");
-```
+- `src/tests/TestRegistry.cpp` is the single registry used by CTest (`SimulationTestRunner`), the Python binding (`create_test_by_name`) and the WebAssembly build.
+- Component tests run every available fidelity and compare them. Program tests compare cores against the instruction oracle.
+- See `docs/test-organization.md` and `docs/benchmark-system.md`.
 
-The `create<T>()` template (Component.tpp:8-27):
-1. Constructs the component
-2. Calls `initPins()` if IOComponent (creates external interface pins)
-3. Calls `buildInternals()` to construct internal hierarchy
-4. Returns fully-initialized component
+### Visualizer
 
-### Wire Connectivity Model
+- `visualizer-v2/`: `server.py` (native backend and layout computation) and `static/` (canvas app). The same UI runs without a server through `src/wasm/WasmBindings.cpp` and `VisualizerSession`.
+- `visualizer-v2/static/scenarios.json` defines menu titles and groups; `layout.json` holds saved layouts keyed by type, by profile fingerprint and by scenario root.
+- `visualizer/` is the older Pygame viewer.
 
-Each Pin has TWO wire connections:
-- **external_wire**: Connects to parent component's scope (upward in hierarchy)
-- **internal_wire**: Connects to child components (downward in hierarchy)
+### Documentation
 
-Example in HalfAdder:
-```cpp
-// External pin "A" has:
-//   - external_wire: from parent's circuit to HalfAdder boundary
-//   - internal_wire: from HalfAdder boundary to internal XOR1.A and AND1.A
-
-builder.addNewWire("A_internal",
-    builder.getInputPin("A"),          // Source: HalfAdder's external pin
-    { builder.getInputPin<XORGate>("XOR1", "A"),
-      builder.getInputPin<ANDGate>("AND1", "A") }  // Sinks: internal gates
-);
-```
-
-### Simulation Event Flow
-
-1. **Wire change** → `WireUpdateEvent` scheduled (Priority: WIRE_UPDATE = 0, highest)
-2. **Wire processes** → Propagates new value to all sink pins
-3. **Sink pin owners** (BasicComponents) → `ComponentEvalEvent` scheduled (Priority: COMPONENT_EVAL = 1)
-4. **Component evaluates** → Logic executed, output wires updated
-5. **Cycle repeats** with propagation delays
-
-Events are processed in strict priority order: WireUpdateEvents always before ComponentEvalEvents at same time.
-
-### ComponentBuilder Usage
-
-The builder maintains scoped context for circuit construction:
-
-```cpp
-void MyComposite::buildInternals(ComponentBuilder& builder) {
-    // Add internal components (automatically become children)
-    builder.addNewComponent<XORGate>("xor1");
-    builder.addNewComponent<ANDGate>("and1");
-
-    // Connect wires (source pin → multiple sink pins)
-    builder.addNewWire("wire_name",
-        builder.getOutputPin<XORGate>("xor1", "OUT"),  // Source
-        { builder.getInputPin<ANDGate>("and1", "A") }  // Sinks vector
-    );
-
-    // Access parent component's pins (no template arg)
-    builder.getInputPin("A");   // This component's input pin A
-    builder.getOutputPin("Sum"); // This component's output pin Sum
-}
-```
-
-### Pin Initialization Lambda Pattern
-
-Components define their external interface via lambda passed to IOComponent constructor:
-
-```cpp
-ANDGate::ANDGate(std::string name)
-    : BasicComponent(std::move(name), 1,  // delay = 1
-        [](IOComponent* self) {
-            self->addPin("A", PinType::INPUT);
-            self->addPin("B", PinType::INPUT);
-            self->addPin("OUT", PinType::OUTPUT);
-        })
-{}
-```
-
-This lambda is stored and called later during `initPins()` phase.
+- `site-docs/` is the public MkDocs source (`mkdocs.yml`). Example tables are generated from recorded scenarios, not typed by hand.
+- `docs/` holds internal reports and plans; many are historical.
 
 ## Adding New Components
 
-**IMPORTANT**: For complete step-by-step workflow, see `docs/complete-circuit-workflow.md` - this is the SOURCE OF TRUTH for building circuits.
-
-### Quick Reference
-
-#### Adding a Basic Gate
-1. Declare in `include/modules/basic/Gate.hpp` (or new header)
-2. Implement constructor (pin initialization lambda) and `evaluate()` in corresponding `.cpp`
-3. Add to CMakeLists.txt `CORE_LOGIC_SOURCES` if new file
-4. Export to Python in `src/bindings/ModulesBinding.cpp`
-
-#### Adding a Composite Component
-1. Declare in `include/modules/composite/` with `buildInternals()` override
-2. Implement constructor (external pins) and `buildInternals()` (internal circuit)
-3. Use `ComponentBuilder::addNewComponent<T>()` and `addNewWire()` in buildInternals
-4. Add to CMakeLists.txt and bindings
-5. Create test executable in `tests/` directory
-
-### Template Include Pattern
-
-**IMPORTANT**: ComponentBuilder uses templates, causing circular dependencies.
-
-- `ComponentBuilder.hpp`: Only declarations
-- `ComponentBuilder.tpp`: Template implementations
-- Include `.tpp` where templates are instantiated (e.g., HalfAdder.cpp:3), NOT in headers
-
-## Python Bindings (pybind11)
-
-Bindings split across multiple files in `src/bindings/`:
-- `export.cpp`: Module definition (`PYBIND11_MODULE(circuit_backend, m)`)
-- Each `*Binding.cpp`: Exposes specific classes (Component, Wire, Pin, etc.)
-- All binding functions called from `export.cpp`
-
-**Pattern**: Use `.def_property_readonly()` for getters, expose minimal interface needed by visualizer.
-
-## Visualizer Architecture
-
-- `main.py`: App class, event loop, LayoutManager (saves component positions to layout.json)
-- `visual_component.py`: VisualComponent/VisualIOComponent (mirrors C++ hierarchy), VisualWire, VisualPin
-- `camera.py`: Camera class (pan/zoom, world↔screen coordinate transforms)
-- `ui_elements.py`: Button, Slider widgets
-
-**Data Flow**:
-1. Initialize C++ test (e.g., FullAdderTest)
-2. Build visual hierarchy mirroring C++ components
-3. Run simulation to completion (stores history)
-4. Visualizer scrubs time via `simulator.set_circuit_state_at_time(t)`
-5. Visual components query C++ pin/wire values for rendering
-
-**Layout System**: Hierarchical JSON (layout.json) with type-based defaults and per-instance overrides. Components store positions relative to parent.
-
-## Simulation History & Time Travel
-
-`Simulator` records all wire value changes in `_log: map<Wire*, vector<pair<time, value>>>`.
-
-`setCircuitStateAtTime(t)` replays history using binary search to find value at time t for each wire. This enables the time-scrubbing UI.
-
-## Memory Management
-
-- Extensive use of `std::shared_ptr` for ownership
-- `std::weak_ptr` for back-references (Pin→Component, Wire→Component, Component→parent)
-- All major classes inherit `std::enable_shared_from_this<>` to safely get shared_ptr to `this`
-
-**Rule**: Never store raw pointers to Components/Pins/Wires. Always use shared_ptr or weak_ptr.
+Follow `docs/adding-a-component.md`. (`docs/complete-circuit-workflow.md` is a historical walkthrough of an older API.)
 
 ## File Organization
 
 ```
 include/
-  basic/          - Wire, Pin, LogicValue enum
-  components/     - Component hierarchy (*.hpp + *.tpp for templates)
+  basic/          Pin, Wire, LogicValue
+  components/     Component hierarchy, builders, selection/ (families, catalog, profiles)
   modules/
-    basic/        - Gates, DFlipFlop, ClockGenerator
-    composite/    - HalfAdder, FullAdder
-  simulator/      - Event, Simulator, SimulationTest base
-  tests/          - Test class headers (HalfAdderTest, etc.)
-
-src/
-  (mirrors include/ structure for .cpp implementations)
-  bindings/       - pybind11 Python exports
-  main.cpp        - C++ standalone entry point
-
-visualizer/       - Python/Pygame GUI
-  main.py         - Application entry point
-  layout.json     - Saved component positions (git-ignored typically)
-
-tests/            - CTest C++ test executables
+    basic/        Gates, muxes, decoders, latches, flip-flop, clock
+    composite/    Adders, ALU8 units, ALU32 units
+    memory/       Storage cells, devices, controllers, endpoints, registers
+    rv32i/        Building blocks, stages, cores
+    utility/      Rewire, bit adapters, constants
+  rv32i/          Instruction decoder, oracle, ELF loader (reference model)
+  analysis/       Timing analysis, workloads, experiments
+  simulator/      Event, Simulator, SimulationTest
+  tests/          Scenario and test class headers
+src/              Mirrors include/, plus bindings/ (pybind11), wasm/, visualizer/
+tests/            Standalone C++, Python and JavaScript checks; CMake test lists
+tools/            Site build, benchmarks, validation and layout scripts
+visualizer-v2/    Browser visualizer
+site-docs/        Public documentation source
+docs/             Internal reports and plans
 ```
 
-## Common Patterns
+## Memory Management
 
-### Creating a Test Circuit
-```cpp
-class MyTest : public SimulationTest {
-    std::string getTestName() const override { return "MyTest"; }
+- `std::shared_ptr` for ownership; `std::weak_ptr` for back-references (pin to component, wire to component, component to parent).
+- Never store raw pointers to components, pins or wires.
 
-    void buildCircuit() override {
-        // builder is already initialized in setupCircuit()
-        auto gate1 = builder->addNewComponent<ANDGate>("gate1");
-        auto wire1 = builder->addNewWire("w1",
-            /* source */ nullptr,
-            /* sinks */ {});
-        wire1->setValue(LogicValue::HIGH);
-        // ...
-    }
+## Known Limitations
 
-    void setInitialState() override {
-        // Set initial wire values, schedule first events
-        auto wire = builder->getWire("w1");
-        wire->propagateChange(*sim, 0);
-    }
-
-    void verifyResults() override {
-        // Assert expected final state
-        auto out = builder->getOutputPin("result");
-        assert(out->getValue() == LogicValue::HIGH);
-    }
-
-    size_t getRunDuration() const override { return 100; }
-};
-```
-
-### Debugging Simulation
-- Enable verbose logging in Simulator.cpp (already has detailed logs)
-- Use `root->format(0, true, true)` to print circuit state (wires + pins)
-- Check event queue processing order (WireUpdate before ComponentEval)
-- Verify pin connections: each pin should have correct internal/external wires
-
-## Known Limitations (Current State)
-
-- Multi-bit pins/wires are supported; check component width constraints rather than assuming all widths exist.
-- No clock domain modeling (everything in global time)
-- Four-state logic exists; equivalence domains and propagation details are component-specific.
-- Visualization breaks with >1000 components
-- No VCD/waveform export (would be valuable addition)
+- No clock-domain modelling; everything runs in one global time.
+- Structural (gate-level) cores simulate at tens of cycles per second; behavioral cores at thousands. Large workloads need the behavioral forms.
+- Detailed memory devices are limited to 4,096 cells; larger memories use `MemoryContainer`.
+- No VCD or waveform export.
 
 ---
 

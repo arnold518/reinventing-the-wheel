@@ -5,7 +5,7 @@
 #include "modules/rv32i/RV32IMemoryRequest.hpp"
 #include "modules/rv32i/RV32IMemorySystem.hpp"
 #include "RV32IZeroWaitMemoryPort.hpp"
-#include "modules/memory/MemoryStructuralBuilder.hpp"
+#include "components/StructuralNetBuilder.hpp"
 #include "components/capabilities/RegisterStateView.hpp"
 #include <limits>
 
@@ -38,7 +38,7 @@ void RV32ISingleCycleCore::buildInternals(ComponentBuilder& b) {
     writeback_=b.add(circuit::families::RV32ISingleCycleWritebackStage,"WRITEBACK");
     next_pc_=b.add(circuit::families::RV32ISingleCycleNextPCStage,"NEXT_PC");
     execution_status_=b.add(RV32IExecutionStatus,"EXECUTION_STATUS");
-    circuit::memory_detail::StructuralWiring w(b);
+    circuit::detail::StructuralWiring w(b);
     const auto link=[&](const std::shared_ptr<IOComponent>& from,const char* output,
                         const std::shared_ptr<IOComponent>& to,const char* input) {
         w.connect(from->getOutputPinDynamic(output),to->getInputPinDynamic(input));

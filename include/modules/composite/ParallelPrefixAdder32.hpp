@@ -1,6 +1,6 @@
 #pragma once
 
-#include "modules/memory/MemoryStructuralBuilder.hpp"
+#include "components/StructuralNetBuilder.hpp"
 #include "modules/composite/HalfAdder.hpp"
 #include "modules/utility/BitAdapter.hpp"
 #include <array>
@@ -16,7 +16,7 @@ public:
     }) {}
     const char* getTypeName() const override { return "CarryCombine"; }
     void buildInternals(ComponentBuilder& b) override {
-        memory_detail::StructuralWiring w(b);
+        circuit::detail::StructuralWiring w(b);
         w.connect(w.either("GENERATE", getInputPin("G_HIGH"),
             w.both("PROPAGATE_GENERATE", getInputPin("P_HIGH"), getInputPin("G_LOW"))), getOutputPin("G"));
         w.connect(w.both("PROPAGATE", getInputPin("P_HIGH"), getInputPin("P_LOW")), getOutputPin("P"));
@@ -35,7 +35,7 @@ public:
     }
     const char* getTypeName() const override { return type_.c_str(); }
     void buildInternals(ComponentBuilder& b) override {
-        memory_detail::StructuralWiring w(b);
+        circuit::detail::StructuralWiring w(b);
         auto g = b.addNewComponent<BitSplitter<32>>("GENERATE_BITS");
         auto p = b.addNewComponent<BitSplitter<32>>("PROPAGATE_BITS");
         auto go = b.addNewComponent<BitJoiner<32>>("GENERATES");
@@ -75,7 +75,7 @@ public:
     const char* getTypeName() const override { return "ParallelPrefixAdder32"; }
     void buildInternals(ComponentBuilder& b) override {
         using namespace circuit;
-        memory_detail::StructuralWiring w(b);
+        circuit::detail::StructuralWiring w(b);
         auto a = b.addNewComponent<BitSplitter<32>>("A_BITS");
         auto d = b.addNewComponent<BitSplitter<32>>("B_BITS");
         auto gj = b.addNewComponent<BitJoiner<32>>("BIT_GENERATES");
@@ -83,7 +83,7 @@ public:
         auto result = b.addNewComponent<BitJoiner<32>>("SUM");
         w.connect(getInputPin<32>("A"), a->getInputPin<32>("IN"));
         w.connect(getInputPin<32>("B"), d->getInputPin<32>("IN"));
-        std::array<memory_detail::StructuralWiring::PinPtr,32> propagate;
+        std::array<circuit::detail::StructuralWiring::PinPtr,32> propagate;
         for (size_t i=0; i<32; ++i) {
             const auto n=std::to_string(i);
             auto bit=b.addNewComponent<HalfAdder>("BIT_"+n);

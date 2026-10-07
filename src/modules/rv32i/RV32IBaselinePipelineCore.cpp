@@ -1,5 +1,5 @@
 #include "RV32IBaselinePipelineInternal.hpp"
-#include "modules/memory/MemoryStructuralBuilder.hpp"
+#include "components/StructuralNetBuilder.hpp"
 #include "modules/rv32i/RV32IMemorySystem.hpp"
 #include "RV32IZeroWaitMemoryPort.hpp"
 #include "RV32IPipelineAssembly.hpp"
@@ -9,7 +9,7 @@
 #include <limits>
 
 using namespace rv32i::baseline;
-using circuit::memory_detail::StructuralWiring;
+using circuit::detail::StructuralWiring;
 namespace {
 void corePins(IOComponent* s) {
     for(auto p:{"CLK","RST","ENABLE"}) s->addPin(p,PinType::INPUT);

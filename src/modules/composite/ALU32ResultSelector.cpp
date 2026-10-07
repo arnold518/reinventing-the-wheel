@@ -1,7 +1,7 @@
 #include "modules/composite/ALU32ResultSelector.hpp"
 #include "modules/composite/Structural8Builder.hpp"
 #include "components/PinMacros.hpp"
-#include "modules/memory/MemoryStructuralBuilder.hpp"
+#include "components/StructuralNetBuilder.hpp"
 
 namespace {
 // A visible bit slice keeps the selection network expandable without putting
@@ -17,7 +17,7 @@ public:
     }) {}
     const char* getTypeName() const override { return "ALU32ResultBit"; }
     void buildInternals(ComponentBuilder& b) override {
-        circuit::memory_detail::StructuralWiring w(b);
+        circuit::detail::StructuralWiring w(b);
         std::vector<decltype(w)::PinPtr> terms;
         for (unsigned i=0;i<9;++i) {
             const auto id=std::to_string(i);

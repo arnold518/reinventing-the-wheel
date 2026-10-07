@@ -1,7 +1,7 @@
 #include "analysis/SafeClockTiming.hpp"
 #include "components/ComponentBuilder.tpp"
 #include "modules/memory/BehavioralMemoryEndpoint.hpp"
-#include "modules/memory/MemoryStructuralBuilder.hpp"
+#include "components/StructuralNetBuilder.hpp"
 #include "modules/utility/Rewire.hpp"
 #include "../src/modules/memory/FlipFlopCellDirect.hpp"
 #include "simulator/Simulator.hpp"
@@ -65,7 +65,7 @@ void captures(bool poison) {
         for(auto p:{"CLK","RST","DATA"})c->addPin(p,PinType::INPUT);
         c->addPin("Q",PinType::OUTPUT);
     });
-    ComponentBuilder b(root);circuit::memory_detail::StructuralWiring w(b);
+    ComponentBuilder b(root);circuit::detail::StructuralWiring w(b);
     auto ff=b.addNewComponent<FlipFlopCellDirect>("FF");
     for(auto p:{"CLK","RST"})w.connect(root->getInputPin(p),ff->getInputPin(p));
     w.connect(w.constant("ENABLE",true),ff->getInputPin("WE"));
@@ -92,7 +92,7 @@ void controllingFeedback(bool dual) {
         for(auto p:{"CLK","RST","A"})c->addPin(p,PinType::INPUT);
         c->addPin("Y",PinType::OUTPUT);c->addPin("Q",PinType::OUTPUT);
     });
-    ComponentBuilder b(root);circuit::memory_detail::StructuralWiring w(b);
+    ComponentBuilder b(root);circuit::detail::StructuralWiring w(b);
     auto reg=b.addNewComponent<FlipFlopCellDirect>("FF");
     std::shared_ptr<IOComponent> inner,outer;
     if(dual){inner=b.addNewComponent<ORGate>("INNER");outer=b.addNewComponent<ANDGate>("OUTER");}

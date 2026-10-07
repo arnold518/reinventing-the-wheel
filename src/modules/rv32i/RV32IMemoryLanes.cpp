@@ -1,11 +1,11 @@
 #include "modules/rv32i/RV32IMemoryRequest.hpp"
-#include "modules/memory/MemoryStructuralBuilder.hpp"
+#include "components/StructuralNetBuilder.hpp"
 #include "modules/basic/Mux.hpp"
 #include "modules/utility/BitAdapter.hpp"
 #include "modules/utility/Rewire.hpp"
 
 using namespace circuit;
-using memory_detail::StructuralWiring;
+using circuit::detail::StructuralWiring;
 
 namespace {
 // Fixed, combinational structural helpers. No new storage or behavioral model.

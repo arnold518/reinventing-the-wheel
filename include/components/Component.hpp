@@ -15,7 +15,6 @@ protected:
     std::string name;
     std::weak_ptr<Component> parent;
     std::vector<std::shared_ptr<Component>> children;
-    std::vector<std::shared_ptr<Wire<>>> wires;
     std::vector<std::shared_ptr<WireBase>> all_wires;
     std::optional<circuit::ComponentInstanceMetadata> instance_metadata_;
 
@@ -39,7 +38,6 @@ public:
     std::string getID() const;
     std::shared_ptr<Component> getParent() const;
     const std::vector<std::shared_ptr<Component>>& getChildren() const;
-    const std::vector<std::shared_ptr<Wire<>>>& getWires() const;
     const std::vector<std::shared_ptr<WireBase>>& getAllWires() const;
 
     void setInstanceMetadata(circuit::ComponentInstanceMetadata metadata);

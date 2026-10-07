@@ -13,7 +13,7 @@
 #include "modules/utility/Rewire.hpp"
 #include <stdexcept>
 
-using circuit::memory_detail::StructuralWiring;
+using circuit::detail::StructuralWiring;
 namespace {
 void fetchPins(IOComponent* s) {
     for(auto p:{"CLK","RST","ISSUE","PC_WRITE"}) s->addPin(p,PinType::INPUT);

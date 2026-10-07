@@ -1,4 +1,5 @@
 #include "modules/rv32i/RV32IPipelineObservation.hpp"
+#include "modules/composite/ALU32Direct.hpp"
 #include "basic/LogicValueHelpers.hpp"
 #include "modules/rv32i/RV32IFiveStageCoreDirect.hpp"
 
@@ -52,31 +53,6 @@ rv32i::RV32IExecutionTrapCause decodeTrap(
             return rv32i::RV32IExecutionTrapCause::EnvironmentCall;
     }
     return rv32i::RV32IExecutionTrapCause::IllegalInstruction;
-}
-
-uint32_t evaluateAlu(uint8_t operation, uint32_t a, uint32_t b) {
-    switch (operation) {
-        case ALU32Op::ADD: return a + b;
-        case ALU32Op::SUB: return a - b;
-        case ALU32Op::AND: return a & b;
-        case ALU32Op::OR: return a | b;
-        case ALU32Op::XOR: return a ^ b;
-        case ALU32Op::SLL: return a << (b & 0x1FU);
-        case ALU32Op::SRL: return a >> (b & 0x1FU);
-        case ALU32Op::SRA:
-            return static_cast<uint32_t>(
-                static_cast<int32_t>(a) >> (b & 0x1FU));
-        case ALU32Op::SLT:
-            return static_cast<int32_t>(a)
-                       < static_cast<int32_t>(b)
-                ? 1U
-                : 0U;
-        case ALU32Op::SLTU: return a < b ? 1U : 0U;
-        case ALU32Op::PASS_A: return a;
-        case ALU32Op::PASS_B: return b;
-        case ALU32Op::ZERO: return 0;
-        default: return 0;
-    }
 }
 
 bool branchTaken(
@@ -243,7 +219,7 @@ RV32IFiveStageCoreDirect::execute(
     }();
 
     result.alu_result =
-        evaluateAlu(state.control.alu_op, alu_a, alu_b);
+        alu32Result(state.control.alu_op, alu_a, alu_b);
     result.store_data = rs2;
     result.pc_plus_4 = state.pc + 4U;
     result.next_pc = result.pc_plus_4;

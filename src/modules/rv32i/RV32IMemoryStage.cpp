@@ -1,36 +1,11 @@
 #include "modules/rv32i/RV32IPipelineStages.hpp"
 
-#include "components/BasicComponent.hpp"
 #include "components/ComponentBuilder.hpp"
 #include "components/ComponentBuilder.tpp"
-#include "modules/basic/Gate.hpp"
 #include "modules/basic/Mux.hpp"
-#include "modules/composite/Adder32.hpp"
-#include "modules/composite/IncrementBy4.hpp"
-#include "modules/composite/ALU32.hpp"
-#include "modules/memory/FlipFlopCell.hpp"
-#include "modules/memory/MemoryController.hpp"
-#include "modules/memory/Register.hpp"
-#include "modules/memory/MemoryStructuralBuilder.hpp"
-#include "modules/memory/RegisterFile32x32.hpp"
-#include "modules/rv32i/RV32IDecodeControlUnit.hpp"
+#include "components/StructuralNetBuilder.hpp"
 #include "modules/rv32i/RV32IPipelineControl.hpp"
-#include "modules/rv32i/RV32IPipelineEncoding.hpp"
-#include "modules/rv32i/RV32ISingleCycleStages.hpp"
 #include "modules/utility/BitAdapter.hpp"
-#include "modules/utility/Constant.hpp"
-#include "modules/utility/Rewire.hpp"
-#include "rv32i/RV32IDecoder.hpp"
-#include "simulator/Simulator.hpp"
-#include <algorithm>
-#include <array>
-#include <cstdint>
-#include <limits>
-#include <memory>
-#include <stdexcept>
-#include <string>
-#include <utility>
-#include <vector>
 #include "RV32IPipelineStagesInternal.hpp"
 
 using namespace rv32i::pipeline_stages;

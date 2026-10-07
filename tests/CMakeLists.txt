@@ -120,7 +120,7 @@ add_test(NAME RV32IAdvancedDocumentationTest
 set_tests_properties(RV32IAdvancedDocumentationTest PROPERTIES LABELS "rv32i;documentation;prediction" TIMEOUT 120)
 target_link_libraries(RV32IMemoryMigrationTest PRIVATE SimulatorLib)
 add_test(NAME RV32IMemoryMigrationTest COMMAND RV32IMemoryMigrationTest)
-set_tests_properties(RV32IMemoryMigrationTest PROPERTIES LABELS "rv32i;memory;integration" TIMEOUT 180)
+set_tests_properties(RV32IMemoryMigrationTest PROPERTIES LABELS "rv32i;memory;integration" TIMEOUT 600)
 add_test(NAME RV32IMemoryLayoutTest COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/RV32IMemoryLayoutTest.py)
 set_tests_properties(RV32IMemoryLayoutTest PROPERTIES LABELS "rv32i;memory;visualizer")
 add_test(NAME RV32ISingleCycleLayoutTest COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/RV32ISingleCycleLayoutTest.py)

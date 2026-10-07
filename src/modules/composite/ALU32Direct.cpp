@@ -33,6 +33,24 @@ bool subOverflow(uint32_t a, uint32_t b, uint32_t result) {
 }
 }
 
+uint32_t alu32Result(uint8_t op, uint32_t a, uint32_t b) {
+    switch (op) {
+        case ALU32Op::ADD: return a + b;
+        case ALU32Op::SUB: return a - b;
+        case ALU32Op::AND: return a & b;
+        case ALU32Op::OR: return a | b;
+        case ALU32Op::XOR: return a ^ b;
+        case ALU32Op::SLL: return a << (b & 0x1FU);
+        case ALU32Op::SRL: return a >> (b & 0x1FU);
+        case ALU32Op::SRA: return arithmeticShiftRight(a, b);
+        case ALU32Op::SLT: return static_cast<int32_t>(a) < static_cast<int32_t>(b) ? 1U : 0U;
+        case ALU32Op::SLTU: return a < b ? 1U : 0U;
+        case ALU32Op::PASS_A: return a;
+        case ALU32Op::PASS_B: return b;
+        default: return 0;
+    }
+}
+
 ALU32Direct::ALU32Direct(std::string name,bool full_flags)
     : BasicComponent(std::move(name), 1,
                      full_flags?circuit::families::ALU32.pinInitializer():circuit::families::ALU32Core.pinInitializer()),
@@ -55,43 +73,25 @@ void ALU32Direct::evaluate(size_t current_time, Simulator& simulator) {
     const uint32_t a = static_cast<uint32_t>(getInputPin<32>("A")->getValueAsUInt64());
     const uint32_t b = static_cast<uint32_t>(getInputPin<32>("B")->getValueAsUInt64());
     const uint8_t op = static_cast<uint8_t>(getInputPin<5>("OP")->getValueAsUInt64());
-    uint32_t result = 0;
+    const uint32_t result = alu32Result(op, a, b);
     bool carry = false;
     bool overflow = false;
 
     switch (op) {
-        case ALU32Op::ADD: {
-            const uint64_t wide = static_cast<uint64_t>(a) + static_cast<uint64_t>(b);
-            result = static_cast<uint32_t>(wide);
-            carry = (wide >> 32U) != 0;
+        case ALU32Op::ADD:
+            carry = ((static_cast<uint64_t>(a) + static_cast<uint64_t>(b)) >> 32U) != 0;
             overflow = addOverflow(a, b, result);
             break;
-        }
         case ALU32Op::SUB:
-            result = a - b;
             carry = a >= b;
             overflow = subOverflow(a, b, result);
             break;
-        case ALU32Op::AND: result = a & b; break;
-        case ALU32Op::OR: result = a | b; break;
-        case ALU32Op::XOR: result = a ^ b; break;
-        case ALU32Op::SLL: result = a << (b & 0x1FU); break;
-        case ALU32Op::SRL: result = a >> (b & 0x1FU); break;
-        case ALU32Op::SRA: result = arithmeticShiftRight(a, b); break;
         case ALU32Op::SLT:
-            result = static_cast<int32_t>(a) < static_cast<int32_t>(b) ? 1U : 0U;
-            carry = a >= b;
-            overflow = subOverflow(a, b, a - b);
-            break;
         case ALU32Op::SLTU:
-            result = a < b ? 1U : 0U;
             carry = a >= b;
             overflow = subOverflow(a, b, a - b);
             break;
-        case ALU32Op::PASS_A: result = a; break;
-        case ALU32Op::PASS_B: result = b; break;
-        case ALU32Op::ZERO: result = 0; break;
-        default: result = 0; break;
+        default: break;
     }
 
     _updateOutputWire<32>(simulator, "OUT", result, current_time);

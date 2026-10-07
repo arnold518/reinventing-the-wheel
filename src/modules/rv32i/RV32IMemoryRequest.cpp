@@ -9,7 +9,7 @@
 #include <tuple>
 
 using namespace circuit;
-using memory_detail::StructuralWiring;
+using circuit::detail::StructuralWiring;
 
 namespace {
 // The requester compares all tag bits, not just the current PC's low bits.

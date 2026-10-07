@@ -18,8 +18,6 @@ public:
     using PinInitFunction = std::function<void(IOComponent*)>;
 
 protected:
-    std::map<std::string, std::shared_ptr<Pin<>>> _inputPins;
-    std::map<std::string, std::shared_ptr<Pin<>>> _outputPins;
     std::map<std::string, std::shared_ptr<PinBase>> _allInputPins;
     std::map<std::string, std::shared_ptr<PinBase>> _allOutputPins;
     PinInitFunction _pin_initializer;
@@ -52,8 +50,6 @@ public:
     uint64_t getInputValueAsUInt64(const std::string& pin_name) const;
     std::string formatPins(int lvl) const;
     
-    const std::map<std::string, std::shared_ptr<Pin<>>>& getInputPins() const;
-    const std::map<std::string, std::shared_ptr<Pin<>>>& getOutputPins() const;
     const std::map<std::string, std::shared_ptr<PinBase>>& getAllInputPins() const;
     const std::map<std::string, std::shared_ptr<PinBase>>& getAllOutputPins() const;
 };
@@ -63,14 +59,8 @@ std::shared_ptr<Pin<WIDTH>> IOComponent::_addPin(const std::string& pin_name, Pi
     auto pin = std::make_shared<Pin<WIDTH>>(pin_name, type, self_ptr);
     if (type == PinType::INPUT) {
         _allInputPins[pin_name] = pin;
-        if constexpr (WIDTH == 1) {
-            _inputPins[pin_name] = pin;
-        }
     } else {
         _allOutputPins[pin_name] = pin;
-        if constexpr (WIDTH == 1) {
-            _outputPins[pin_name] = pin;
-        }
     }
     return pin;
 }

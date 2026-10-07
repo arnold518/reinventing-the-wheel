@@ -1,5 +1,5 @@
 #include "modules/composite/ZeroDetect32.hpp"
-#include "modules/memory/MemoryStructuralBuilder.hpp"
+#include "components/StructuralNetBuilder.hpp"
 #include "components/BasicComponent.hpp"
 #include "components/ComponentBuilder.hpp"
 #include "components/ComponentBuilder.tpp"
@@ -69,10 +69,10 @@ ZeroDetect32::ZeroDetect32(std::string name)
           circuit::families::ZeroDetect32.pinInitializer()) {}
 
 void ZeroDetect32::buildInternals(ComponentBuilder& builder) {
-    circuit::memory_detail::StructuralWiring w(builder);
+    circuit::detail::StructuralWiring w(builder);
     auto bits=builder.addNewComponent<BitSplitter<32>>("A_SPLIT");
     w.connect(getInputPin<32>("A"),bits->getInputPin<32>("IN"));
-    std::vector<circuit::memory_detail::StructuralWiring::PinPtr> terms;
+    std::vector<circuit::detail::StructuralWiring::PinPtr> terms;
     for(size_t i=0;i<32;++i) terms.push_back(bits->getOutputPin("OUT_"+std::to_string(i)));
     w.connect(w.invert("NOT_ANY",w.reduce("ANY_BIT",terms,false)),getOutputPin("ZERO"));
     w.finish();

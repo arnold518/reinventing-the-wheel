@@ -18,7 +18,6 @@ std::string Component::getName() const { return name; }
 
 std::shared_ptr<Component> Component::getParent() const { return parent.lock(); }
 const std::vector<std::shared_ptr<Component>>& Component::getChildren() const { return children; }
-const std::vector<std::shared_ptr<Wire<>>>& Component::getWires() const { return wires; }
 const std::vector<std::shared_ptr<WireBase>>& Component::getAllWires() const { return all_wires; }
 
 void Component::setInstanceMetadata(circuit::ComponentInstanceMetadata metadata) {
@@ -165,9 +164,6 @@ void Component::addWire(const std::shared_ptr<WireBase>& wire)
     if (!wire) return;
     wire->setOwner(shared_from_this());
     all_wires.push_back(wire);
-    if (auto single_bit = std::dynamic_pointer_cast<Wire<>>(wire)) {
-        wires.push_back(single_bit);
-    }
 }
 
 std::string Component::format(int lvl, bool formatWires, bool formatPins) const

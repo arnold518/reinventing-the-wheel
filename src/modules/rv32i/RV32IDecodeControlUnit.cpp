@@ -4,7 +4,7 @@
 #include "components/ComponentBuilder.hpp"
 #include "components/ComponentBuilder.tpp"
 #include "modules/basic/Gate.hpp"
-#include "modules/memory/MemoryStructuralBuilder.hpp"
+#include "components/StructuralNetBuilder.hpp"
 #include "modules/basic/Mux.hpp"
 #include "modules/composite/ALU32.hpp"
 #include "modules/rv32i/RV32IBitPatternMatcher.hpp"
@@ -459,7 +459,7 @@ public:
            default_(fallback), values_(std::move(values)) {}
     const char* getTypeName() const override { return type_.c_str(); }
     void buildInternals(ComponentBuilder& b) override {
-        circuit::memory_detail::StructuralWiring w(b);
+        circuit::detail::StructuralWiring w(b);
         std::vector<Rewire::WireSpec> outputs;
         std::vector<Rewire::BitMap> mappings;
         for (size_t i = 0; i < patterns().size(); ++i) {
@@ -481,11 +481,11 @@ public:
         // A few output bits use the same adjacent recognition pair. Share
         // those OR nodes within this field while retaining balanced depth.
         std::map<std::pair<std::string,std::string>,
-                 circuit::memory_detail::StructuralWiring::PinPtr> shared_or;
+                 circuit::detail::StructuralWiring::PinPtr> shared_or;
         auto reduceShared = [&](const std::string& name,
-                                std::vector<circuit::memory_detail::StructuralWiring::PinPtr> inputs) {
+                                std::vector<circuit::detail::StructuralWiring::PinPtr> inputs) {
             for (size_t level = 0; inputs.size() > 1; ++level) {
-                std::vector<circuit::memory_detail::StructuralWiring::PinPtr> next;
+                std::vector<circuit::detail::StructuralWiring::PinPtr> next;
                 for (size_t i = 0; i < inputs.size(); i += 2) {
                     if (i + 1 == inputs.size()) {
                         next.push_back(inputs[i]);
@@ -504,7 +504,7 @@ public:
         };
         for (size_t bit = 0; bit < width_; ++bit) {
             const bool fallback = ((default_ >> bit) & 1U) != 0;
-            std::vector<circuit::memory_detail::StructuralWiring::PinPtr> terms;
+            std::vector<circuit::detail::StructuralWiring::PinPtr> terms;
             for (size_t i = 0; i < values_.size(); ++i)
                 if ((((values_[i] >> bit) & 1U) != 0) != fallback)
                     terms.push_back(matches->getOutputPin(patterns()[i].name));
@@ -530,7 +530,7 @@ public:
         }) {}
     const char* getTypeName() const override { return "RV32IDecodeControlSignals"; }
     void buildInternals(ComponentBuilder& b) override {
-        circuit::memory_detail::StructuralWiring w(b);
+        circuit::detail::StructuralWiring w(b);
         auto field = [&](const char* name, size_t width, uint8_t fallback,
                          const std::function<uint8_t(const ControlWord&)>& value) {
             std::vector<uint8_t> values;
@@ -603,7 +603,7 @@ RV32IDecodeControlUnit::RV32IDecodeControlUnit(std::string name)
     : IOComponent(std::move(name), circuit::families::RV32IDecodeControl.pinInitializer()) {}
 
 void RV32IDecodeControlUnit::buildInternals(ComponentBuilder& b) {
-    circuit::memory_detail::StructuralWiring w(b);
+    circuit::detail::StructuralWiring w(b);
     auto fields = b.addNewComponent<Rewire>("FIELDS_AND_IMMEDIATES",
         std::vector<Rewire::WireSpec>{{"INSTRUCTION", 32}},
         std::vector<Rewire::WireSpec>{{"RS1",5},{"RS2",5},{"RD",5},

@@ -379,9 +379,7 @@ void bindModules(py::module_& m) {
         }), py::arg("name"))
         .def("get_name", &HalfAdder::getName)
         .def("get_parent", &HalfAdder::getParent)
-        .def("get_children", &HalfAdder::getChildren, py::return_value_policy::reference_internal)
-        .def("get_input_pins", &HalfAdder::getInputPins, py::return_value_policy::reference_internal)
-        .def("get_output_pins", &HalfAdder::getOutputPins, py::return_value_policy::reference_internal);
+        .def("get_children", &HalfAdder::getChildren, py::return_value_policy::reference_internal);
     
     // --- FullAdder Binding ---
     py::class_<FullAdder, IOComponent, std::shared_ptr<FullAdder>>(m, "FullAdder", "A standard full-adder.", py::module_local(false))
@@ -390,9 +388,7 @@ void bindModules(py::module_& m) {
         }), py::arg("name"))
         .def("get_name", &FullAdder::getName)
         .def("get_parent", &FullAdder::getParent)
-        .def("get_children", &FullAdder::getChildren, py::return_value_policy::reference_internal)
-        .def("get_input_pins", &FullAdder::getInputPins, py::return_value_policy::reference_internal)
-        .def("get_output_pins", &FullAdder::getOutputPins, py::return_value_policy::reference_internal);
+        .def("get_children", &FullAdder::getChildren, py::return_value_policy::reference_internal);
 
     bindCompositeModule<XOR8>(m, "XOR8", "8-bit bitwise XOR.");
     bindCompositeModule<NOT8>(m, "NOT8", "8-bit bitwise NOT.");

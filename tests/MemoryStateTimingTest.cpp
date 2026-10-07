@@ -5,7 +5,7 @@
 #include "components/selection/BuiltinComponentCatalog.hpp"
 #include "components/selection/StandardProfiles.hpp"
 #include "modules/rv32i/RV32IBuildProfiles.hpp"
-#include "modules/memory/MemoryStructuralBuilder.hpp"
+#include "components/StructuralNetBuilder.hpp"
 #include "modules/basic/Gate.hpp"
 #include "simulator/Simulator.hpp"
 #include <iostream>
@@ -37,7 +37,7 @@ struct Fixture {
         endpoint=Component::create<BehavioralMemoryEndpoint>("MEM",32,Technology::FF);root->addChild(endpoint);
         endpoint->loadWords(0,{0x12345678,0x89abcdef,0x87654321,0});
         endpoint->setHistoryRecordingEnabled(false);sim.setHistoryRecordingEnabled(false);
-        ComponentBuilder b(root);circuit::memory_detail::StructuralWiring w(b);
+        ComponentBuilder b(root);circuit::detail::StructuralWiring w(b);
         for(const auto& [n,p]:root->getAllInputPins()) {
             w.connect(p,request->getInputPinDynamic(n));
             if(n=="CLK"||n=="RST")w.connect(p,endpoint->getInputPinDynamic(n));

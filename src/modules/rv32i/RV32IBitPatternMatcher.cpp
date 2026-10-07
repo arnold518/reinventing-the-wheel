@@ -1,5 +1,5 @@
 #include "modules/rv32i/RV32IBitPatternMatcher.hpp"
-#include "modules/memory/MemoryStructuralBuilder.hpp"
+#include "components/StructuralNetBuilder.hpp"
 
 #include "components/ComponentBuilder.hpp"
 #include "components/ComponentBuilder.tpp"
@@ -55,8 +55,8 @@ void RV32IBitPatternMatcher::buildInternals(ComponentBuilder& builder) {
         return;
     }
 
-    circuit::memory_detail::StructuralWiring w(builder);
-    std::vector<circuit::memory_detail::StructuralWiring::PinPtr> inputs(terms.begin(),terms.end());
+    circuit::detail::StructuralWiring w(builder);
+    std::vector<circuit::detail::StructuralWiring::PinPtr> inputs(terms.begin(),terms.end());
     w.connect(w.reduce("MATCH_TREE",inputs,true),getOutputPin("MATCH"));
     w.finish();
 }

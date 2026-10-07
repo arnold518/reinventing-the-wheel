@@ -62,7 +62,7 @@ struct Fixture {
     Simulator sim;
     ClockSpecification clock;
     Fixture() {
-        ComponentBuilder b(root);circuit::memory_detail::StructuralWiring w(b);
+        ComponentBuilder b(root);circuit::detail::StructuralWiring w(b);
         auto stage=b.addNewComponent<RV32ISingleCycleMemoryStage>("MEMORY");
         auto port=b.addNewComponent<rv32i::ZeroWaitMemoryPort>("PORT");
         endpoint=b.addNewComponent<BehavioralMemoryEndpoint>("MEM",32,Technology::FF);

@@ -1,5 +1,5 @@
 #include "modules/rv32i/RV32IMemorySystem.hpp"
-#include "modules/memory/MemoryStructuralBuilder.hpp"
+#include "components/StructuralNetBuilder.hpp"
 #include "modules/memory/MemoryController.hpp"
 
 namespace rv32i {
@@ -28,7 +28,7 @@ std::shared_ptr<MemoryStateView> memoryView(const std::shared_ptr<IOComponent>& 
 void wireMemorySystem(ComponentBuilder& b, const std::shared_ptr<IOComponent>& core,
     const std::shared_ptr<IOComponent>& instructions, const std::shared_ptr<IOComponent>& data,
     const std::shared_ptr<Pin<1>>& clock, const std::shared_ptr<Pin<1>>& reset) {
-    circuit::memory_detail::StructuralWiring w(b);
+    circuit::detail::StructuralWiring w(b);
     w.connect(clock, core->getInputPin("CLK"));
     w.connect(reset, core->getInputPin("RST"));
     for (auto [prefix, memory] : std::vector<std::pair<std::string,std::shared_ptr<IOComponent>>>{{"IMEM_",instructions},{"DMEM_",data}}) {

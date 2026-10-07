@@ -2,7 +2,7 @@
 #include "components/ComponentBuilder.hpp"
 #include "components/ComponentBuilder.tpp"
 #include "modules/basic/Gate.hpp"
-#include "modules/memory/MemoryStructuralBuilder.hpp"
+#include "components/StructuralNetBuilder.hpp"
 #include "modules/utility/BitAdapter.hpp"
 #include <array>
 #include <utility>
@@ -14,7 +14,7 @@ IncrementBy4::IncrementBy4(std::string name)
     }) {}
 
 void IncrementBy4::buildInternals(ComponentBuilder& builder) {
-    using circuit::memory_detail::StructuralWiring;
+    using circuit::detail::StructuralWiring;
     StructuralWiring w(builder);
     auto split=builder.addNewComponent<BitSplitter<32>>("INPUT_BITS");
     auto join=builder.addNewComponent<BitJoiner<32>>("SUM_BITS");

@@ -1,4 +1,5 @@
 #include "modules/rv32i/RV32IPipelineObservation.hpp"
+#include "modules/composite/ALU32Direct.hpp"
 #include "RV32IBaselinePipelineInternal.hpp"
 #include "components/BasicComponent.hpp"
 #include "components/Component.tpp"
@@ -16,17 +17,6 @@ void carry(const Values& in,Values& out,const std::vector<std::string>& fields) 
 bool terminal(const Values& in) {
     const auto c=unpackControl(get(in,"IN_CONTROL"));
     return get(in,"IN_VALID") && ((get(in,"IN_FETCH_STATUS")&3)||!c.legal||c.halt||c.trap||(get(in,"IN_EXECUTION_STATUS")&1));
-}
-uint32_t alu(unsigned op,uint32_t a,uint32_t b) {
-    const auto sh=b&31;
-    switch(op) {
-        case ALU32Op::ADD:return a+b;case ALU32Op::SUB:return a-b;
-        case ALU32Op::AND:return a&b;case ALU32Op::OR:return a|b;case ALU32Op::XOR:return a^b;
-        case ALU32Op::SLL:return a<<sh;case ALU32Op::SRL:return a>>sh;
-        case ALU32Op::SRA:return sh&&(a&0x80000000U)?(a>>sh)|(~uint32_t{0}<<(32-sh)):a>>sh;
-        case ALU32Op::SLT:return int32_t(a)<int32_t(b);case ALU32Op::SLTU:return a<b;
-        case ALU32Op::PASS_A:return a;case ALU32Op::PASS_B:return b;default:return 0;
-    }
 }
 uint32_t wbValue(const Values& in) {
     switch(bits(get(in,"IN_CONTROL"),9,3)) {
@@ -94,7 +84,7 @@ Values executePacket(const Values& in) {
     const auto word=get(in,"IN_CONTROL"),as=bits(word,27,3),bs=bits(word,29,3),op=bits(word,22,31);
     const auto a=as==0?get(in,"IN_RS1_VALUE"):as==1?get(in,"IN_PC"):0;
     const auto b=bs==0?get(in,"IN_RS2_VALUE"):bs==1?get(in,"IN_IMMEDIATE"):0;
-    const auto result=alu(op,a,b),jump=bits(word,16,3),branch=bits(word,13,7);
+    const auto result=alu32Result(op,a,b),jump=bits(word,16,3),branch=bits(word,13,7);
     const bool cmp=op==ALU32Op::SUB||op==ALU32Op::SLT||op==ALU32Op::SLTU;
     const bool eq=cmp&&a==b,lt=cmp&&int32_t(a)<int32_t(b),ltu=cmp&&a<b;
     const bool conditions[]{false,eq,!eq,lt,!lt,ltu,!ltu,false};

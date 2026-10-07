@@ -1,6 +1,6 @@
 #pragma once
 #include "modules/rv32i/RV32IMemoryRequest.hpp"
-#include "modules/memory/MemoryStructuralBuilder.hpp"
+#include "components/StructuralNetBuilder.hpp"
 #include "modules/utility/BitAdapter.hpp"
 
 namespace rv32i {
@@ -16,7 +16,7 @@ inline void wireRequestBus(ComponentBuilder& b, IOComponent& core,
 inline void wireRequestFields(ComponentBuilder& b, const std::shared_ptr<IOComponent>& fetch,
                               const std::shared_ptr<IOComponent>& data, const std::shared_ptr<IOComponent>& lanes,
                               const std::shared_ptr<IOComponent>& operation, bool read_only_fetch = false) {
-    circuit::memory_detail::StructuralWiring w(b);
+    circuit::detail::StructuralWiring w(b);
     auto zero=w.constant("MEMORY_ZERO",false);
     if (!read_only_fetch) {
         auto zero32=b.addNewComponent<ConstantValue<32>>("FETCH_WRITE_DATA",0);

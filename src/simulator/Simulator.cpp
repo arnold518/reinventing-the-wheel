@@ -70,7 +70,6 @@ void Simulator::advanceAndRecord(size_t target_time) {
 
         if (event->time > current_time) {
             current_time = event->time;
-            scheduled_for_current_time_eval.clear();
         }
 
         recordProcessedEvent(event);
@@ -83,7 +82,6 @@ void Simulator::runAndRecord(size_t max_time) {
     _log.clear();
     _pin_log.clear();
     current_time = 0;
-    scheduled_for_current_time_eval.clear();
     advanceAndRecord(max_time);
 }
 
@@ -111,7 +109,6 @@ DrainResult Simulator::drainUntilIdle(size_t deadline, size_t max_events) {
         event_queue.pop();
         if (next->time > current_time) {
             current_time = next->time;
-            scheduled_for_current_time_eval.clear();
         }
         recordProcessedEvent(next);
         next->process(*this);
@@ -270,7 +267,6 @@ void Simulator::clear() {
     _headless_pin_state.clear();
     current_time = 0;
     next_scheduling_order = 0;
-    scheduled_for_current_time_eval.clear();
     resetPerformanceCounters();
 }
 

@@ -40,7 +40,7 @@ public:
         w.finish();
     }
 };
-inline void wireZeroWaitPort(ComponentBuilder& b,circuit::memory_detail::StructuralWiring& w,
+inline void wireZeroWaitPort(ComponentBuilder& b,circuit::detail::StructuralWiring& w,
     IOComponent& core,const std::shared_ptr<IOComponent>& stage,const std::string& prefix,bool instruction) {
     auto port=b.addNewComponent<ZeroWaitMemoryPort>(prefix=="IMEM_"?"INSTRUCTION_PORT":"DATA_PORT");
     for(auto& [name,pin]:stage->getAllOutputPins())if(name.starts_with(prefix))w.connect(pin,port->getInputPinDynamic(name.substr(prefix.size())));
