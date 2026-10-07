@@ -204,9 +204,9 @@ needed, and was preserved across the deployment checks.
 
 See:
 
-- `docs/unified-component-model-migration-plan.md`
+- `docs/archive/unified-component-model-migration-plan.md`
 - `docs/unified-component-profiles.md`
-- `docs/component-test-model-migration-report.md`
+- `docs/archive/component-test-model-migration-report.md`
 - `docs/visualizer-v2-profile-explorer.md`
-- `docs/rv32i-profile-toggle-audit.md`
-- `docs/rv32i-visualizer-performance-report.md`
+- `docs/archive/rv32i-profile-toggle-audit.md`
+- `docs/archive/rv32i-visualizer-performance-report.md`

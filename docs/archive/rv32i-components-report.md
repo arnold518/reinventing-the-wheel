@@ -4,7 +4,7 @@ Last updated: 2026-07-19
 
 > Historical bring-up report, not the current component inventory. All three
 > RV32I cores now exist, and the legacy memories mentioned below are retired.
-> See [cleanup](rv32i-cleanup.md) and the current site documentation.
+> See [cleanup](../rv32i-cleanup.md) and the current site documentation.
 
 ## Status
 
@@ -364,7 +364,7 @@ Status:
 
 Detailed report:
 
-- `docs/rv32i-milestone-1-report.md`
+- `docs/archive/rv32i-milestone-1-report.md`
 
 ### `SRLatch`, `GatedDLatch`, and Structural `DFlipFlop`
 
@@ -390,7 +390,7 @@ Status:
 
 Detailed report:
 
-- `docs/structural-dff-report.md`
+- `docs/archive/structural-dff-report.md`
 
 ### `FlipFlopCell`
 
@@ -633,7 +633,7 @@ Preload/readback helpers:
 
 Detailed report:
 
-- `docs/memory-components-report.md`
+- `docs/archive/memory-components-report.md`
 
 ### `RV32IProgram`
 
@@ -706,7 +706,7 @@ Status:
 
 Detailed report:
 
-- `docs/rv32i-milestone-6-report.md`
+- `docs/archive/rv32i-milestone-6-report.md`
 
 ## CPU-Level Components
 
@@ -754,7 +754,7 @@ System reset should reset the core, not clear the preloaded instruction memory.
 
 Detailed plan:
 
-- `docs/rv32i-milestone-7-plan.md`
+- `docs/archive/rv32i-milestone-7-plan.md`
 
 ### Control-Flow Implementations
 
@@ -767,7 +767,7 @@ Implemented forms:
 - Structural `RV32IControlFlowUnit` using `Register32`, `Adder32`, muxes, rewires, and branch-decision gates.
 - Compact the behavioral fidelity of `RV32IControlFlowUnit` with identical pins.
 
-`RV32IControlFlowUnitEquivalenceTest` runs the same clock/input sequence in isolated simulators and checks both traces against independent expectations. The structural core uses the structural implementation. See `docs/rv32i-control-flow-equivalence-report.md`.
+`RV32IControlFlowUnitEquivalenceTest` runs the same clock/input sequence in isolated simulators and checks both traces against independent expectations. The structural core uses the structural implementation. See `docs/archive/rv32i-control-flow-equivalence-report.md`.
 
 ### Instruction Decoder
 
@@ -787,7 +787,7 @@ Current state:
 - the behavioral fidelity of `RV32IDecodeControlUnit` exposes the same pins as a compact reference and is not hidden inside the structural component.
 - `RV32IDecodeControlUnitTest` passes all 40 supported instruction forms, 12
   directed illegal encodings, and 64 deterministic pseudo-random raw words in
-  both fidelities. See `docs/rv32i-decode-control-equivalence-report.md`.
+  both fidelities. See `docs/archive/rv32i-decode-control-equivalence-report.md`.
 
 ### Immediate Generator
 
@@ -846,7 +846,7 @@ Responsibilities:
 - ALU output wires directly to memory address, `rs2` directly to store data, decoded size/sign controls directly to memory, and read data directly to writeback.
 - There is no separate load/store forwarding module in the current five-block plan.
 
-`RV32IExecutionControlStatusUnitEquivalenceTest` passes 30 labeled checkpoints covering reset, enable and memory waits, request persistence, every supported halt/trap cause, priority collisions, latched-state suppression, and reset recovery. See `docs/rv32i-execution-status-equivalence-report.md`.
+`RV32IExecutionControlStatusUnitEquivalenceTest` passes 30 labeled checkpoints covering reset, enable and memory waits, request persistence, every supported halt/trap cause, priority collisions, latched-state suppression, and reset recovery. See `docs/archive/rv32i-execution-status-equivalence-report.md`.
 
 ### Writeback Mux
 
@@ -939,4 +939,4 @@ operand/writeback muxes, connects separate instruction/data memories directly,
 and passes all 16 reused lockstep programs. Progressive exact topology loading
 now keeps the 54,049-component system usable in the browser. The next RV32I
 hardening step is external answer-sheet validation against Spike, Sail, or the
-official architecture tests. See `docs/rv32i-structural-core-report.md`.
+official architecture tests. See `docs/archive/rv32i-structural-core-report.md`.

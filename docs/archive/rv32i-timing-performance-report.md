@@ -6,7 +6,7 @@ Branch: `rv32i-pipeline-performance`
 Historical report: the cores, memory endpoints and timing analyzer have changed
 since these measurements. Do not reuse its clock values or speedups for the
 current implementation. The current measurement contract is documented in
-[`tools/rv32i-performance/README.md`](../tools/rv32i-performance/README.md).
+[`tools/rv32i-performance/README.md`](../../tools/rv32i-performance/README.md).
 
 ## Outcome
 

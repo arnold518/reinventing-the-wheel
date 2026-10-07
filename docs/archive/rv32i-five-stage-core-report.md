@@ -78,7 +78,7 @@ same history; no testing-only mutation path is required.
 ## Memory integration
 
 This is the transaction-capable advanced pipeline, not
-[`RV32IBaselinePipelineCore`](../site-docs/rv32i/4.5/core.md).
+[`RV32IBaselinePipelineCore`](../../site-docs/rv32i/4.5/core.md).
 The default system uses separate zero-wait `MemoryEndpoint<ff,32>` instances for
 instructions and data, each 65,536 words (256 KiB). Instruction and data memories
 can be configured independently through `rv32i::MemoryConfiguration`.
@@ -109,7 +109,7 @@ constraint. The core emits READ/WRITE, not the flash endpoint's PROGRAM/ERASE
 operations. Thus flash is not a writable RAM substitute. Caches are not required
 for any of these connections and are outside the current configuration.
 
-The [cross-core compatibility table](rv32i-memory-integration.md#memory-compatibility-by-core)
+The [cross-core compatibility table](../rv32i-memory-integration.md#memory-compatibility-by-core)
 contrasts this behavior with the single-cycle and baseline cores: they require
 zero-wait FF endpoints and cannot automatically stall for a delayed replacement.
 
@@ -227,7 +227,7 @@ Each component test is reused by CTest and the visualizer and checks structural
 and behavioral fidelity under one scenario name.
 
 Program validation reuses the original 16 fixtures documented in
-`docs/rv32i-milestone-7c-program-tests.md`. They cover:
+`docs/archive/rv32i-milestone-7c-program-tests.md`. They cover:
 
 - arithmetic, logic, shifts, comparisons, `LUI`, and `AUIPC`;
 - all load/store widths and sign-extension behavior;

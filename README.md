@@ -17,9 +17,9 @@ static hosting under `/simulator/`; see
 
 ## Documentation site
 
-The configurable memory containers and structural request/response adapter are
-described in [the memory implementation contract](docs/general-memory-container.md).
-Existing RV32I memory interfaces remain available unchanged.
+Memory devices, the scalable memory container, transactions and controllers
+are described in [chapter 3 of the site documentation](site-docs/memory/3.1/index.md).
+Internal working notes are indexed in [docs/README.md](docs/README.md).
 
 The public Material for MkDocs source is isolated in `site-docs/`; the existing
 `docs/` directory remains an internal collection of implementation reports.

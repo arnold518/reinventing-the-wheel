@@ -1,6 +1,6 @@
 # SRAM implementation and validation
 
-Date: 2026-09-17. Public reference (renumbered): [section 3.1.2](../site-docs/memory/3.1.2.md).
+Date: 2026-09-17. Public reference (renumbered): [section 3.1.2](../../site-docs/memory/3.1.2.md).
 
 ## Scope
 

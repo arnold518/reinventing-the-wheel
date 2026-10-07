@@ -34,7 +34,7 @@ Implemented:
 - release-safe semantic test checks that do not disappear with `NDEBUG`
 - the complete beginner guide at `docs/behavioral-rv32i-beginners-guide.md`
 
-The Milestone 7C program suite is listed in `docs/rv32i-milestone-7c-program-tests.md`.
+The Milestone 7C program suite is listed in `docs/archive/rv32i-milestone-7c-program-tests.md`.
 
 Latest focused 7A/7B/7C verification:
 

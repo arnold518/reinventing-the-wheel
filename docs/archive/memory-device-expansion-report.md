@@ -31,14 +31,14 @@ devices at 2^20 words. Compact devices expose read-only memory history, with
 
 ## Documentation and visualization
 
-- [3.1](../site-docs/memory/3.1/index.md): universal roles, geometry, fidelity, and
+- [3.1](../../site-docs/memory/3.1/index.md): universal roles, geometry, fidelity, and
   controller/bus boundary.
-- [3.1.0](../site-docs/memory/3.1.0.md): helper references and reuse boundaries.
-- [3.1.1](../site-docs/memory/3.1.1.md): existing FF reference, renumbered.
-- [3.1.2](../site-docs/memory/3.1.2.md): existing SRAM reference, renumbered.
-- [3.1.3](../site-docs/memory/3.1.3.md): DRAM.
-- [3.1.4](../site-docs/memory/3.1.4.md): ROM.
-- [3.1.5](../site-docs/memory/3.1.5.md): NOR flash.
+- [3.1.0](../../site-docs/memory/3.1.0.md): helper references and reuse boundaries.
+- [3.1.1](../../site-docs/memory/3.1.1.md): existing FF reference, renumbered.
+- [3.1.2](../../site-docs/memory/3.1.2.md): existing SRAM reference, renumbered.
+- [3.1.3](../../site-docs/memory/3.1.3.md): DRAM.
+- [3.1.4](../../site-docs/memory/3.1.4.md): ROM.
+- [3.1.5](../../site-docs/memory/3.1.5.md): NOR flash.
 
 There are 21 newly documented component scenarios. Tables are generated from
 their complete registered checkpoint sequences, not hand-selected examples.

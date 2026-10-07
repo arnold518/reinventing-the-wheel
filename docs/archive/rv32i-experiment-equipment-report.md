@@ -246,7 +246,7 @@ period than single-cycle. On the dependent loop, its taken predictor reduced
 misses from 127/128 for not-taken to 1/128 and cycles from 902 to 651. The
 baseline observed 1,158 data-stall and 640 branch-wait events on that loop;
 these counters may overlap. The complete policy-by-workload table is in
-[§ 4.6](../site-docs/rv32i/experiments.md).
+[§ 4.6](../../site-docs/rv32i/experiments.md).
 
 The compact timed software had a separate host cost: on the dependent loop,
 median execution was approximately 0.189 s for single-cycle, 0.468 s for

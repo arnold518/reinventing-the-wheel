@@ -14,7 +14,7 @@ implementation reuses `MemoryContainer<W, FlipFlopArrayModel>` and its shared
 `MemoryArray<W, FlipFlopCell>` and `MemoryWord<W, FlipFlopCell>` remain C++
 compatibility entry points. FF display names change, while existing device IDs,
 instance paths, and layout keys remain compatible. The legacy components below
-and their RV32I consumers are not retired. See [the current device contract](general-memory-container.md)
+and their RV32I consumers are not retired. See [the current device contract](../general-memory-container.md)
 for ports, capacity, fidelity selection, limits, and tests.
 
 ## Status
@@ -37,7 +37,7 @@ The component order below follows the implementation/evolution path:
 10. `Memory32x32`
 11. `Memory64Kx32`
 
-The structural storage path uses the structural `DFlipFlop` implementation documented in `docs/structural-dff-report.md`. The behavioral path stores state directly in compact `BasicComponent` state, but keeps the same external contracts where possible.
+The structural storage path uses the structural `DFlipFlop` implementation documented in `docs/archive/structural-dff-report.md`. The behavioral path stores state directly in compact `BasicComponent` state, but keeps the same external contracts where possible.
 
 ## Components
 

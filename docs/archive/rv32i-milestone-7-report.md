@@ -6,8 +6,8 @@ Last updated: 2026-07-29
 
 Milestone 7A and 7B are complete. This is a historical bring-up report; the
 later unified structural/behavioral system and complete 16-program suite are
-documented in `docs/rv32i-structural-core-report.md` and
-`docs/unified-component-migration-report.md`.
+documented in `docs/archive/rv32i-structural-core-report.md` and
+`docs/archive/unified-component-migration-report.md`.
 
 Implemented:
 
@@ -91,7 +91,7 @@ Build and registry:
 
 Planning document:
 
-- `docs/rv32i-milestone-7-plan.md`
+- `docs/archive/rv32i-milestone-7-plan.md`
 
 ## 7A Result
 

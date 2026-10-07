@@ -238,4 +238,4 @@ recursive profiles described by this migration:
   progressively.
 
 See `docs/visualizer-v2-profile-explorer.md` and
-`docs/rv32i-visualizer-performance-report.md`.
+`docs/archive/rv32i-visualizer-performance-report.md`.

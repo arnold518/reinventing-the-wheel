@@ -68,7 +68,7 @@ The codebase already has the main pieces needed to start this work:
 
 See `docs/behavioral-rv32i-beginners-guide.md` for the detailed answer-sheet contract and explanations of all 16 program fixtures.
 
-All five major block contracts, the structural single-cycle core, the structural system wrapper, shared lockstep reuse, direct memory wiring, and core/system visualization are implemented. Each structural and behavioral block also has its own single-device visualizer scenario. See `docs/rv32i-structural-core-report.md` for the completed integration record.
+All five major block contracts, the structural single-cycle core, the structural system wrapper, shared lockstep reuse, direct memory wiring, and core/system visualization are implemented. Each structural and behavioral block also has its own single-device visualizer scenario. See `docs/archive/rv32i-structural-core-report.md` for the completed integration record.
 
 Verified baseline before structural implementation begins:
 
@@ -97,7 +97,7 @@ Known validation boundary:
   39 pass Sail 0.13 and the behavioral CircuitSim system. A fully structural
   sample passes, but the full structural sweep remains resource-bound at a
   measured estimate of about 25 serial hours and roughly 1.1 GiB for the
-  smallest test. See `docs/rv32i-external-validation-report.md`.
+  smallest test. See `docs/archive/rv32i-external-validation-report.md`.
 - This does not change the deciding rule: when a structural result,
   answer-sheet result, external model, and ISA reading disagree, the ratified
   RV32I specification remains the source to investigate against.
@@ -114,7 +114,7 @@ Known validation boundary:
 | Phases 4-5: structural core and system | Complete | The five blocks, mux layer, and separate memory interfaces execute all 16 shared program cases in per-instruction lockstep and against hard-coded final outcomes. |
 | Phase 6A: block visualizer | Complete | Ten browser scenarios exercise the two fidelities separately. Structural roots are expandable; behavioral roots show the compact answer-sheet boundary. |
 | Phase 6B: core/system visualizer | Complete | The structural system and core have committed hierarchy layouts; the unified fully structural topology contains 54,049 components. |
-| Phase 6C: lossless visualizer performance | Complete | Indexed bulk snapshots preserve every pin/wire value, gzip reduces transport, idle redraw stops, session caching is bounded, and hierarchy descent stops only below one physical pixel. See `docs/rv32i-visualizer-performance-report.md`. |
+| Phase 6C: lossless visualizer performance | Complete | Indexed bulk snapshots preserve every pin/wire value, gzip reduces transport, idle redraw stops, session caching is bounded, and hierarchy descent stops only below one physical pixel. See `docs/archive/rv32i-visualizer-performance-report.md`. |
 | External RV32I validation boundary | In progress | Strict ELF loading and the smoke fixture pass both fidelities. The complete 39-test ACT4 `I` set passes Sail and behavioral CircuitSim; a full structural run awaits a safe low-history execution path. |
 
 ## Immediate Next Deliverable
@@ -126,7 +126,7 @@ The remaining hardening is a safe low-history full-structural ACT4 run, an
 optional deliberate nonzero reset-vector contract, and conservative
 cold-start/topology-sharing improvements for the 54,000-component hierarchy.
 
-`RV32IExecutionControlStatusUnit` now centralizes the decisions that the first four blocks deliberately do not own: whether the current instruction may update PC or a register, whether a memory request stays active while waiting, which halt/trap state latches, and which fault wins when several requests are present together. Its detailed implementation and verification record is in `docs/rv32i-execution-status-equivalence-report.md`.
+`RV32IExecutionControlStatusUnit` now centralizes the decisions that the first four blocks deliberately do not own: whether the current instruction may update PC or a register, whether a memory request stays active while waiting, which halt/trap state latches, and which fault wins when several requests are present together. Its detailed implementation and verification record is in `docs/archive/rv32i-execution-status-equivalence-report.md`.
 
 The 16 program builders, final-result validator, and structural lockstep adapter should be extracted when the first structural core/system test needs them. They are reuse/integration tasks, not missing generic testing infrastructure.
 
@@ -444,7 +444,7 @@ Structural-specific integration is now complete:
 
 ### Phase 1: Control-Flow Implementations
 
-Status: complete. See `docs/rv32i-control-flow-equivalence-report.md`.
+Status: complete. See `docs/archive/rv32i-control-flow-equivalence-report.md`.
 
 Add structural `RV32IControlFlowUnit` as an expandable composite. After its structural tests pass, add compact the behavioral fidelity of `RV32IControlFlowUnit` with exactly the same pins.
 
@@ -483,7 +483,7 @@ Tests:
 
 ### Phase 2: Decode-Control Implementations
 
-Status: complete for the binary instruction contract used by CPU execution. See `docs/rv32i-decode-control-equivalence-report.md`.
+Status: complete for the binary instruction contract used by CPU execution. See `docs/archive/rv32i-decode-control-equivalence-report.md`.
 
 Add structural `RV32IDecodeControlUnit` as one major composite with visible lower-level children for field splitting, immediate formation, instruction recognition, and control decoding. After the structural field/immediate path and at least one representative instruction-family control slice pass, complete the structural decoder and add the behavioral fidelity of `RV32IDecodeControlUnit` with the same pins.
 
@@ -518,7 +518,7 @@ Tests:
 
 ### Phase 3: Complete All Five Block Equivalence Suites
 
-Status: complete. See `docs/rv32i-register-file-equivalence-report.md`, `docs/rv32i-alu-equivalence-report.md`, and `docs/rv32i-execution-status-equivalence-report.md`.
+Status: complete. See `docs/archive/rv32i-register-file-equivalence-report.md`, `docs/archive/rv32i-alu-equivalence-report.md`, and `docs/archive/rv32i-execution-status-equivalence-report.md`.
 
 Before core integration, complete the two contracts whose structural implementations already exist:
 

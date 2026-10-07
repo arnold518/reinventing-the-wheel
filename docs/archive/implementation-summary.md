@@ -368,8 +368,8 @@ void HalfAdder::buildInternals(ComponentBuilder& builder) {
 6. `src/simulator/TruthTableTest.cpp`
 7. `docs/building-circuits.md`
 8. `docs/complete-circuit-workflow.md`
-9. `docs/simplification-proposals.md`
-10. `docs/implementation-summary.md` (this file)
+9. `docs/archive/simplification-proposals.md`
+10. `docs/archive/implementation-summary.md` (this file)
 
 ### Modified Files (5)
 1. `include/components/ComponentBuilder.hpp` - Added wire() method

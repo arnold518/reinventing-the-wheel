@@ -71,9 +71,9 @@ Primary rule sources:
 Project rule sources:
 
 - `docs/rv32i-roadmap.md`
-- `docs/rv32i-components-report.md`
-- `docs/rv32i-milestone-1-report.md`
-- `docs/memory-components-report.md`
+- `docs/archive/rv32i-components-report.md`
+- `docs/archive/rv32i-milestone-1-report.md`
+- `docs/archive/memory-components-report.md`
 
 Important project decisions:
 

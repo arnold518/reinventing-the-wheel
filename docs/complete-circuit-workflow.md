@@ -1004,6 +1004,6 @@ This guide showed the complete workflow for building a circuit from scratch usin
 
 For more details, see:
 - `docs/building-circuits.md` - Quick API reference
-- `docs/simplification-proposals.md` - All 7 simplification proposals
-- `docs/implementation-summary.md` - API implementation details
-- `docs/conversion-complete.md` - Migration status
+- `docs/archive/simplification-proposals.md` - All 7 simplification proposals
+- `docs/archive/implementation-summary.md` - API implementation details
+- `docs/archive/conversion-complete.md` - Migration status

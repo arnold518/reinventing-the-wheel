@@ -102,8 +102,8 @@ Replacing `REQUEST_WRITE_DATA` with `Register32` would only change its
 implementation, not remove the unnecessary state. Apply this specialization
 before migrating surviving fields to the reusable storage proposed in H23.
 
-Evidence: [requester construction](../src/modules/rv32i/RV32IMemoryRequest.cpp),
-[`wireRequestFields`](../src/modules/rv32i/RV32IMemoryRequestWiring.hpp).
+Evidence: [requester construction](../../src/modules/rv32i/RV32IMemoryRequest.cpp),
+[`wireRequestFields`](../../src/modules/rv32i/RV32IMemoryRequestWiring.hpp).
 
 ### H02. Fetch address and tag are the same saved word
 
@@ -117,8 +117,8 @@ They discard stale responses after a redirect. Do not blindly apply this to
 the data requester: its tag is the original byte address while the bus address
 comes from lane/alignment formatting, so those inputs are not generally equal.
 
-Evidence: [`IMEM_ADDR` and `DMEM_ADDR` wiring](../src/modules/rv32i/RV32IFiveStageCore.cpp),
-[`REQUEST_*` capture loop](../src/modules/rv32i/RV32IMemoryRequest.cpp).
+Evidence: [`IMEM_ADDR` and `DMEM_ADDR` wiring](../../src/modules/rv32i/RV32IFiveStageCore.cpp),
+[`REQUEST_*` capture loop](../../src/modules/rv32i/RV32IMemoryRequest.cpp).
 
 ### H03. Pipeline packets store padding in full registers
 
@@ -153,11 +153,11 @@ Current dynamic pin/wire/Rewire dispatch supports widths 1, 2, 3, 4, 5, 8, 16,
 32, **not arbitrary widths 15 or 31**. A new `Register<15>` alone is insufficient.
 Keeping `CONTROL` at 32 initially still saves 263 of the identified 266 bits.
 
-Evidence: [field lists and registers](../src/modules/rv32i/RV32IPipelineRegisters.cpp),
-[packet encoding](../include/modules/rv32i/RV32IPipelineEncoding.hpp),
-[`pipelineRegisterSpec`](../src/tests/RV32IPipelineBlockTests.cpp),
-[dynamic pin widths](../src/components/IOComponent.cpp),
-[dynamic wire widths](../src/components/ComponentBuilder.cpp).
+Evidence: [field lists and registers](../../src/modules/rv32i/RV32IPipelineRegisters.cpp),
+[packet encoding](../../include/modules/rv32i/RV32IPipelineEncoding.hpp),
+[`pipelineRegisterSpec`](../../src/tests/RV32IPipelineBlockTests.cpp),
+[dynamic pin widths](../../src/components/IOComponent.cpp),
+[dynamic wire widths](../../src/components/ComponentBuilder.cpp).
 
 ### H04. One-bit prediction currently uses two bits per entry
 
@@ -174,7 +174,7 @@ for two-bit policy; static policies already omit the table entirely.
 Test reset/unknown controls, aliases, same-edge lookup/update, saturation for
 the retained two-bit policy, and training suppression on killed instructions.
 
-Evidence: [`PredictionEntry`, `PredictionTable`, `RV32IPredictionCounter`](../src/modules/rv32i/RV32IPrediction.cpp).
+Evidence: [`PredictionEntry`, `PredictionTable`, `RV32IPredictionCounter`](../../src/modules/rv32i/RV32IPrediction.cpp).
 
 ### H05. Advanced fetch has an unselected PC+4 datapath
 
@@ -190,8 +190,8 @@ the standalone generic fetch component if that remains its contract.
 The execute-stage PC+4 adder is a different case: it operates on a different
 instruction concurrently and is not removable by sharing the current fetch PC.
 
-Evidence: [`PREDICTED_PC_SELECT`](../src/modules/rv32i/RV32IFiveStageCore.cpp),
-[`RV32IFetchStage::buildInternals`](../src/modules/rv32i/RV32IFetchStage.cpp).
+Evidence: [`PREDICTED_PC_SELECT`](../../src/modules/rv32i/RV32IFiveStageCore.cpp),
+[`RV32IFetchStage::buildInternals`](../../src/modules/rv32i/RV32IFetchStage.cpp).
 
 ### H06. Decode bypass uses a disabled half of full forwarding
 
@@ -205,8 +205,8 @@ shared nonzero/valid/write qualification, and two 2:1 data muxes. Keep full
 forwarding in Execute. Preserve the current distinction between bypass
 eligibility and the register file's actual write authorization.
 
-Evidence: [`RV32IDecodeStage::buildInternals`](../src/modules/rv32i/RV32IDecodeStage.cpp),
-[`RV32IForwardingUnit`](../src/modules/rv32i/RV32IForwardingUnit.cpp).
+Evidence: [`RV32IDecodeStage::buildInternals`](../../src/modules/rv32i/RV32IDecodeStage.cpp),
+[`RV32IForwardingUnit`](../../src/modules/rv32i/RV32IForwardingUnit.cpp).
 
 ### H07. Decoder still has long serial output reductions
 
@@ -225,7 +225,7 @@ preserves settled four-state values, but changes transient timing; regenerate
 timing certificates and timestamped examples. The source's comment preserving
 old depth is not evidence that the old depth is architecturally necessary.
 
-Evidence: [`RV32IDecodeControlField` and instruction recognition](../src/modules/rv32i/RV32IDecodeControlUnit.cpp).
+Evidence: [`RV32IDecodeControlField` and instruction recognition](../../src/modules/rv32i/RV32IDecodeControlUnit.cpp).
 
 ### H08. Load extension repeats identical sign terms
 
@@ -240,7 +240,7 @@ terms for each lane pair. Keep bit-specific data masking and preserve reserved
 size, unsigned zero-extension, unknown input, and illegal-address behavior.
 There is no need to change the public lane interface for this improvement.
 
-Evidence: [`RV32ILoadByte`, `RV32ILoadExtender`, `RV32IByteWriteMask`](../src/modules/rv32i/RV32IMemoryLanes.cpp).
+Evidence: [`RV32ILoadByte`, `RV32ILoadExtender`, `RV32IByteWriteMask`](../../src/modules/rv32i/RV32IMemoryLanes.cpp).
 
 ## Shared storage, mux, and memory improvements
 
@@ -257,8 +257,8 @@ Do not globally replace gate muxes with C++ conditionals: that changes unknown
 select behavior. Sharing increases fanout, which this simulator does not price
 as electrical delay.
 
-Evidence: [`buildBusMux`](../src/modules/basic/Mux.cpp),
-[`PayloadMux`](../src/modules/memory/MemoryHandshakeWiring.hpp).
+Evidence: [`buildBusMux`](../../src/modules/basic/Mux.cpp),
+[`PayloadMux`](../../src/modules/memory/MemoryHandshakeWiring.hpp).
 
 ### H10. Registers do not need byte-mask gates
 
@@ -276,9 +276,9 @@ constructed by every structural `FFWord` if no diagnostic depends on its path.
 Do not bypass a gate blindly for `Z` inputs: `Z AND 1` becomes `X`, while an
 identity Rewire preserves `Z`. Preserve the storage contract's defined domain.
 
-Evidence: [Register32](../src/modules/memory/Register32.cpp),
-[register file](../src/modules/rv32i/RegisterFile32x32.cpp),
-[FFWord](../include/modules/memory/FFWord.hpp).
+Evidence: [Register32](../../src/modules/memory/Register.cpp),
+[register file](../../src/modules/rv32i/RegisterFile32x32.cpp),
+[FFWord](../../include/modules/memory/FFWord.hpp).
 
 ### H11. Simplify constant-capacity FF address checks
 
@@ -294,7 +294,7 @@ device also protects its own standalone address interface.
 This affects structural FF controllers; current experiment memory macros are
 behavioral, so it is not automatically a benchmark speedup.
 
-Evidence: [`FFRequestCheck`](../src/modules/memory/MemoryFFController.hpp).
+Evidence: [`FFRequestCheck`](../../src/modules/memory/MemoryFFController.hpp).
 
 ### H12. Factor matrix and SRAM row decoding
 
@@ -311,8 +311,8 @@ A single-row or single-column component still has a public 32-bit address
 contract. It cannot become an unconditional wire unless its parent proves the
 address valid; otherwise invalid/unknown addresses change behavior.
 
-Evidence: [MatrixRowDecoder](../src/modules/memory/DigitalMemory.cpp),
-[SRAMRowDecoder](../src/modules/memory/SRAM.cpp).
+Evidence: [MatrixRowDecoder](../../src/modules/memory/DigitalMemory.cpp),
+[SRAMRowDecoder](../../src/modules/memory/SRAM.cpp).
 
 ### H13. Matrix writes repeat one byte enable eight times
 
@@ -324,7 +324,7 @@ AND gates (16 down to 2). The same topology has 15 further immediately repeated
 decoder gates covered by H12; do not double-count them. At W=32, the write-enable
 saving alone is 28 gates per word slot.
 
-Evidence: [`MatrixWriteDistributor::buildInternals`](../src/modules/memory/DigitalMemory.cpp).
+Evidence: [`MatrixWriteDistributor::buildInternals`](../../src/modules/memory/DigitalMemory.cpp).
 
 ### H14. SRAM has repeated peripheral fanout gates
 
@@ -346,8 +346,8 @@ electrical driver for an arbitrarily large array. Keep individual modeled
 bitline/precharge connections. First share identical gates rather than replacing
 all gates with zero-delay rewires, which would alter timing and Z normalization.
 
-Evidence: [SRAMPrecharge/WriteDriver](../src/modules/memory/SRAM.cpp),
-[SRAMColumnSelector/device assembly](../include/modules/memory/SRAM.tpp).
+Evidence: [SRAMPrecharge/WriteDriver](../../src/modules/memory/SRAM.cpp),
+[SRAMColumnSelector/device assembly](../../include/modules/memory/SRAM.tpp).
 
 ### H15. Some state FFs have an unnecessary enable mux
 
@@ -361,9 +361,9 @@ omit that mux. It must have a matching compact implementation and retain reset
 and unknown-input behavior. Do not remove these state bits themselves: accepted,
 pending, abandoned, and occupied are different transaction facts.
 
-Evidence: [requester state](../src/modules/rv32i/RV32IMemoryRequest.cpp),
-[controller/buffer state](../src/modules/memory/MemoryController.cpp),
-[FlipFlopCell](../src/modules/memory/FlipFlopCell.cpp).
+Evidence: [requester state](../../src/modules/rv32i/RV32IMemoryRequest.cpp),
+[controller/buffer state](../../src/modules/memory/MemoryController.cpp),
+[FlipFlopCell](../../src/modules/memory/FlipFlopCell.cpp).
 
 ## Conditional specializations and architectural choices
 
@@ -379,8 +379,8 @@ overflow: the comparison unit uses them. Preserve inspection expectations if
 the same ALU32 identity remains visible. This is lower priority than removing
 duplicate registers and forwarding logic.
 
-Evidence: [ALU32 assembly](../src/modules/composite/ALU32.cpp),
-[Execute usage](../src/modules/rv32i/RV32ISingleCycleStages.cpp).
+Evidence: [ALU32 assembly](../../src/modules/composite/ALU32.cpp),
+[Execute usage](../../src/modules/rv32i/RV32ISingleCycleStages.cpp).
 
 ### H17. Trim packets by stage, but preserve retirement evidence
 
@@ -401,9 +401,9 @@ Do not claim hardware savings merely by moving the same storage into C++.
 Selecting a single WB result earlier is another option, but can move a mux onto
 an earlier critical path and conflicts with separate memory-trace data needs.
 
-Evidence: [retirement observer](../include/modules/rv32i/RV32IPipelineObservation.hpp),
-[baseline dependencies](../src/modules/rv32i/RV32IBaselinePipeline.cpp),
-[packet storage](../src/modules/rv32i/RV32IPipelineRegisters.cpp).
+Evidence: [retirement observer](../../include/modules/rv32i/RV32IPipelineObservation.hpp),
+[baseline dependencies](../../src/modules/rv32i/RV32IBaselinePipeline.cpp),
+[packet storage](../../src/modules/rv32i/RV32IPipelineRegisters.cpp).
 
 ### H18. Consolidate alignment responsibility carefully
 
@@ -420,9 +420,9 @@ or round bad addresses into valid writes. Preserve reserved SIZE=3 and exception
 priority. Advanced fetch's fixed word-size alignment can also use a two-low-bit
 check, as NextPC already does, instead of a general size-controlled checker.
 
-Evidence: [lane address logic](../src/modules/rv32i/RV32IMemoryLanes.cpp),
-[single-cycle stages](../src/modules/rv32i/RV32ISingleCycleStages.cpp),
-[execution status](../src/modules/rv32i/RV32IExecutionControlStatusUnit.cpp).
+Evidence: [lane address logic](../../src/modules/rv32i/RV32IMemoryLanes.cpp),
+[single-cycle stages](../../src/modules/rv32i/RV32ISingleCycleStages.cpp),
+[execution status](../../src/modules/rv32i/RV32IExecutionControlStatusUnit.cpp).
 
 ### H19. Specialized adders for constant operands/unused carries
 
@@ -436,9 +436,9 @@ paths used by AddSub32 overflow. Do not replace the parallel-prefix network
 with a long ripple incrementer merely to reduce nodes: area and delay trade off.
 Compare both node count and certified period before adopting this.
 
-Evidence: [Adder32](../src/modules/composite/Adder32.cpp),
-[prefix network](../include/modules/composite/ParallelPrefixAdder32.hpp),
-[predecode](../src/modules/rv32i/RV32IPrediction.cpp).
+Evidence: [Adder32](../../src/modules/composite/Adder32.cpp),
+[prefix network](../../include/modules/composite/ParallelPrefixAdder32.hpp),
+[predecode](../../src/modules/rv32i/RV32IPrediction.cpp).
 
 ### H20. Always-ready response specialization is optional
 
@@ -457,9 +457,9 @@ principally a structural specialization and modeling choice, not a reason to
 restart current benchmarks. It must preserve same-edge request/response,
 exactly-once stores, reset, and response-status behavior.
 
-Evidence: [zero-wait port](../src/modules/rv32i/RV32IZeroWaitMemoryPort.hpp),
-[FF controller](../src/modules/memory/MemoryFFController.hpp),
-[response buffer](../src/modules/memory/MemoryController.cpp).
+Evidence: [zero-wait port](../../src/modules/rv32i/RV32IZeroWaitMemoryPort.hpp),
+[FF controller](../../src/modules/memory/MemoryFFController.hpp),
+[response buffer](../../src/modules/memory/MemoryController.cpp).
 
 ### H21. Smaller ALU8 reductions can be balanced
 
@@ -472,9 +472,9 @@ Keep the documented ALU8 flags and all supported operations. It already uses
 one shared AddSub8 through ArithmeticUnit8, and comparison consumes that
 arithmetic result rather than constructing a second subtractor.
 
-Evidence: [ZeroDetect8](../src/modules/composite/ZeroDetect8.cpp),
-[result selector](../src/modules/composite/ALU8ResultSelector.cpp),
-[`StructuralBuilder::any`](../src/modules/composite/Structural8Builder.hpp).
+Evidence: [ZeroDetect8](../../src/modules/composite/ZeroDetect8.cpp),
+[result selector](../../src/modules/composite/ALU8ResultSelector.cpp),
+[`StructuralBuilder::any`](../../src/modules/composite/Structural8Builder.hpp).
 
 ### H22. Generic register-write decoder has repeated prefixes
 
@@ -488,8 +488,8 @@ public contract.
 The main saving here is shared decode terms, not x0 storage: the register file
 already stores only x1–x31. Recheck write timing and unknown-address behavior.
 
-Evidence: [decoder construction](../src/modules/basic/Decoder.cpp),
-[register file](../src/modules/rv32i/RegisterFile32x32.cpp).
+Evidence: [decoder construction](../../src/modules/basic/Decoder.cpp),
+[register file](../../src/modules/rv32i/RegisterFile32x32.cpp).
 
 ## Storage abstraction follow-up
 
@@ -543,16 +543,16 @@ START. Do not count them as a second set of payload registers. Likewise,
 not clocked response storage. DRAM sense columns retain row data and restore
 charge cells; their precharge/sense behavior is not a normal FF-word contract.
 
-Evidence: [payloads and transaction forwarding](../src/modules/memory/MemoryController.cpp),
-[requester](../src/modules/rv32i/RV32IMemoryRequest.cpp),
-[FF response path](../src/modules/memory/MemoryFFController.hpp),
-[endpoint catalog](../src/modules/memory/MemoryEndpointCatalog.cpp),
-[Register32 family](../src/modules/memory/Register32.cpp),
-[FF families](../src/modules/memory/FFMemory.cpp),
-[small register file](../src/modules/memory/RegisterFile4x32.cpp),
-[FFMemory](../include/modules/memory/FFMemory.hpp),
-[output driver](../src/modules/memory/DigitalMemory.cpp),
-[DRAM sense columns](../src/modules/memory/DRAM.cpp).
+Evidence: [payloads and transaction forwarding](../../src/modules/memory/MemoryController.cpp),
+[requester](../../src/modules/rv32i/RV32IMemoryRequest.cpp),
+[FF response path](../../src/modules/memory/MemoryFFController.hpp),
+[endpoint catalog](../../src/modules/memory/MemoryEndpointCatalog.cpp),
+[Register32 family](../../src/modules/memory/Register.cpp),
+[FF families](../../src/modules/memory/FFMemory.cpp),
+small register file (since retired),
+[FFMemory](../../include/modules/memory/FFMemory.hpp),
+[output driver](../../src/modules/memory/DigitalMemory.cpp),
+[DRAM sense columns](../../src/modules/memory/DRAM.cpp).
 
 ### H23. Payload words bypass the reusable word-level fidelity boundary
 
@@ -605,12 +605,12 @@ A new compact class needs its own justified timing/reset model and tests;
 do not suppress unsupported-state diagnostics or just assume the old
 sufficient-clock certificate covers it.
 
-Evidence: [payload construction](../src/modules/memory/MemoryController.cpp),
-[Register32](../src/modules/memory/Register32.cpp),
-[byte-masked FFWord](../include/modules/memory/FFWord.hpp),
-[width dispatch](../src/modules/memory/DigitalMemory.cpp),
-[storage profiles](../src/modules/rv32i/RV32IBuildProfiles.cpp),
-[safe-clock storage models](../src/analysis/SafeClockTiming.cpp).
+Evidence: [payload construction](../../src/modules/memory/MemoryController.cpp),
+[Register32](../../src/modules/memory/Register.cpp),
+[byte-masked FFWord](../../include/modules/memory/FFWord.hpp),
+[width dispatch](../../src/modules/memory/DigitalMemory.cpp),
+[storage profiles](../../src/modules/rv32i/RV32IBuildProfiles.cpp),
+[safe-clock storage models](../../src/analysis/SafeClockTiming.cpp).
 
 ### H24. Trap-cause storage repeats a four-bit register design
 
@@ -628,10 +628,10 @@ The predictor's two-bit entry can use the same storage machinery if useful,
 but it is already grouped as an expandable entry. Prioritize H04's actual
 one-bit-policy redundancy before adding optional entry-level abstractions.
 
-Evidence: [execution control/status](../src/modules/rv32i/RV32IExecutionControlStatusUnit.cpp),
-[pipeline execution status and family](../src/modules/rv32i/RV32IPipelineStages.cpp),
-[status catalog](../src/components/selection/BuiltinComponentCatalog.cpp),
-[prediction entry](../src/modules/rv32i/RV32IPrediction.cpp).
+Evidence: [execution control/status](../../src/modules/rv32i/RV32IExecutionControlStatusUnit.cpp),
+[pipeline execution status and family](../../src/modules/rv32i/RV32IPipelineStages.cpp),
+[status catalog](../../src/components/selection/BuiltinComponentCatalog.cpp),
+[prediction entry](../../src/modules/rv32i/RV32IPrediction.cpp).
 
 ## Keep: similar-looking hardware with distinct responsibilities
 
@@ -752,7 +752,7 @@ results into one campaign. Start new focused comparison artifacts only after
 implementation and validation; rerun large workloads only if the changed
 question warrants it.
 
-Evidence: [experiment profiles](../src/analysis/RV32IExperiment.cpp),
-[frozen campaign runner](../tools/benchmarks/run-full-embench-background.py),
-[previous timing optimization](rv32i-circuit-timing-optimization.md),
-[previous logic optimization](rv32i-logic-timing-optimization.md).
+Evidence: [experiment profiles](../../src/analysis/RV32IExperiment.cpp),
+[frozen campaign runner](../../tools/benchmarks/run-full-embench-background.py),
+[previous timing optimization](../rv32i-circuit-timing-optimization.md),
+[previous logic optimization](../rv32i-logic-timing-optimization.md).

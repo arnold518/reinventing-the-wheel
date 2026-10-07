@@ -100,7 +100,7 @@ At the original structural-core milestone, the repository-wide regression
 passed 168/168 tests in 217.32 seconds with four parallel CTest workers. The
 unified component migration later consolidated those wrappers into logical
 contract scenarios; its current regression result is recorded in
-`docs/unified-component-migration-report.md`.
+`docs/archive/unified-component-migration-report.md`.
 
 ## Timeline And Visualization Fixes
 
@@ -121,7 +121,7 @@ unified profile migration expanded the structural register hierarchy, the live
 Program 9 topology contains 54,049 components, 180,155 pins, and 103,361
 wires.
 
-The lossless browser performance pass is recorded in `docs/rv32i-visualizer-performance-report.md`. It keeps every structural signal exact while replacing repeated hierarchical state keys with indexed snapshots, rendering only after changes, compressing responses, bounding cached sessions, and stopping hierarchy descent only below one physical pixel.
+The lossless browser performance pass is recorded in `docs/archive/rv32i-visualizer-performance-report.md`. It keeps every structural signal exact while replacing repeated hierarchical state keys with indexed snapshots, rendering only after changes, compressing responses, bounding cached sessions, and stopping hierarchy descent only below one physical pixel.
 
 ## Current Boundary
 

@@ -95,23 +95,23 @@ Completed:
 
 Detailed status reports:
 
-- `docs/rv32i-components-report.md`
-- `docs/rv32i-milestone-1-report.md`
-- `docs/rv32i-milestone-3-report.md`
-- `docs/rv32i-milestone-5-report.md`
-- `docs/rv32i-milestone-6-report.md`
-- `docs/rv32i-milestone-7-plan.md`
+- `docs/archive/rv32i-components-report.md`
+- `docs/archive/rv32i-milestone-1-report.md`
+- `docs/archive/rv32i-milestone-3-report.md`
+- `docs/archive/rv32i-milestone-5-report.md`
+- `docs/archive/rv32i-milestone-6-report.md`
+- `docs/archive/rv32i-milestone-7-plan.md`
 - `docs/behavioral-rv32i-beginners-guide.md`
-- `docs/rv32i-structural-implementation-plan.md`
-- `docs/rv32i-control-flow-equivalence-report.md`
-- `docs/rv32i-decode-control-equivalence-report.md`
-- `docs/rv32i-register-file-equivalence-report.md`
-- `docs/rv32i-alu-equivalence-report.md`
-- `docs/rv32i-execution-status-equivalence-report.md`
-- `docs/rv32i-external-validation-report.md`
-- `docs/rv32i-program-root-exposure-report.md`
-- `docs/memory-components-report.md`
-- `docs/structural-dff-report.md`
+- `docs/archive/rv32i-structural-implementation-plan.md`
+- `docs/archive/rv32i-control-flow-equivalence-report.md`
+- `docs/archive/rv32i-decode-control-equivalence-report.md`
+- `docs/archive/rv32i-register-file-equivalence-report.md`
+- `docs/archive/rv32i-alu-equivalence-report.md`
+- `docs/archive/rv32i-execution-status-equivalence-report.md`
+- `docs/archive/rv32i-external-validation-report.md`
+- `docs/archive/rv32i-program-root-exposure-report.md`
+- `docs/archive/memory-components-report.md`
+- `docs/archive/structural-dff-report.md`
 
 Current verified baseline:
 
@@ -166,7 +166,7 @@ All five structural/behavioral implementation families now have isolated equival
 
 Generic operand/writeback muxes and direct data-memory connections wire these blocks. The current memory already handles widths, sign extension, range/alignment fault reporting, and faulting-store rejection, so a separate load/store forwarding box is unnecessary. `RV32ISingleCycleCore` and `RV32ISingleCycleSystem` are hierarchy containers rather than additional execution units.
 
-The complete inventory, responsibilities, existing primitives, and datapath diagram are in `docs/rv32i-structural-implementation-plan.md` under **Structural CPU Building Blocks**.
+The complete inventory, responsibilities, existing primitives, and datapath diagram are in `docs/archive/rv32i-structural-implementation-plan.md` under **Structural CPU Building Blocks**.
 
 Why two memory instances:
 
@@ -276,7 +276,7 @@ Verification:
 
 Report:
 
-- `docs/rv32i-milestone-1-report.md`
+- `docs/archive/rv32i-milestone-1-report.md`
 
 ### Milestone 2: Register And Memory Foundation
 
@@ -319,8 +319,8 @@ Verification:
 
 Reports:
 
-- `docs/memory-components-report.md`
-- `docs/structural-dff-report.md`
+- `docs/archive/memory-components-report.md`
+- `docs/archive/structural-dff-report.md`
 
 ### Milestone 3: RV32I Decode Library
 
@@ -377,7 +377,7 @@ Done when:
 
 Report:
 
-- `docs/rv32i-milestone-3-report.md`
+- `docs/archive/rv32i-milestone-3-report.md`
 
 ### Milestone 4: Immediate Generator And Control Contract
 
@@ -428,7 +428,7 @@ Done when:
 
 Report:
 
-- `docs/rv32i-milestone-3-report.md`
+- `docs/archive/rv32i-milestone-3-report.md`
 
 ### Milestone 5: Program Loader And Test Memory Utilities
 
@@ -466,7 +466,7 @@ Done when:
 
 Report:
 
-- `docs/rv32i-milestone-5-report.md`
+- `docs/archive/rv32i-milestone-5-report.md`
 
 ### Milestone 6: RV32I Instruction Oracle
 
@@ -514,7 +514,7 @@ Done when:
 
 Report:
 
-- `docs/rv32i-milestone-6-report.md`
+- `docs/archive/rv32i-milestone-6-report.md`
 
 ### Milestone 7: Behavioral RV32I System Component
 
@@ -585,7 +585,7 @@ Done when:
 
 Plan:
 
-- `docs/rv32i-milestone-7-plan.md`
+- `docs/archive/rv32i-milestone-7-plan.md`
 
 ### Milestone 8: Trace Comparator And Simulation Checkpoints
 
@@ -610,7 +610,7 @@ Done when:
 
 ### Milestone 9: Control-Flow Implementations
 
-Status: implemented and directly equivalence-tested with directed cases plus 64 deterministic randomized control combinations. See `docs/rv32i-control-flow-equivalence-report.md`.
+Status: implemented and directly equivalence-tested with directed cases plus 64 deterministic randomized control combinations. See `docs/archive/rv32i-control-flow-equivalence-report.md`.
 
 Purpose:
 
@@ -645,7 +645,7 @@ Done when:
 Status: implemented and tested through the unified component contract for all
 40 supported instructions, 12 directed illegal encodings, and 64 deterministic
 pseudo-random raw words. See
-`docs/rv32i-decode-control-equivalence-report.md`.
+`docs/archive/rv32i-decode-control-equivalence-report.md`.
 
 Purpose:
 
@@ -673,7 +673,7 @@ Done when:
 
 ### Milestone 11: Complete Equivalent Implementations And Execution Status
 
-Status: complete. See `docs/rv32i-alu-equivalence-report.md`, `docs/rv32i-register-file-equivalence-report.md`, and `docs/rv32i-execution-status-equivalence-report.md`.
+Status: complete. See `docs/archive/rv32i-alu-equivalence-report.md`, `docs/archive/rv32i-register-file-equivalence-report.md`, and `docs/archive/rv32i-execution-status-equivalence-report.md`.
 
 Purpose:
 
@@ -705,7 +705,7 @@ Done when:
 
 ### Milestone 12: Structural Single-Cycle CPU Core
 
-Status: complete. See `docs/rv32i-structural-core-report.md`.
+Status: complete. See `docs/archive/rv32i-structural-core-report.md`.
 
 Purpose:
 
@@ -823,13 +823,13 @@ Done when:
 
 Implementation report:
 
-- `docs/rv32i-external-validation-report.md`
+- `docs/archive/rv32i-external-validation-report.md`
 
 ### Milestone 16: Five-Stage RV32I Core
 
 Status: complete. See
-`docs/rv32i-five-stage-core-plan.md` and
-`docs/rv32i-five-stage-core-report.md`.
+`docs/archive/rv32i-five-stage-core-plan.md` and
+`docs/archive/rv32i-five-stage-core-report.md`.
 
 Purpose:
 
