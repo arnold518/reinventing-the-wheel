@@ -1,4 +1,4 @@
-#include "modules/memory/FlipFlopCellDirect.hpp"
+#include "modules/memory/FlipFlopCellBehavioral.hpp"
 #include "components/selection/ComponentFamily.hpp"
 #include "modules/memory/FlipFlopCell.hpp"
 
@@ -22,13 +22,13 @@ LogicValue mergePossibleValues(
 }
 }
 
-FlipFlopCellDirect::FlipFlopCellDirect(std::string name)
+FlipFlopCellBehavioral::FlipFlopCellBehavioral(std::string name)
     : BasicComponent(std::move(name), 1,
                      circuit::families::FlipFlopCell.pinInitializer()),
       stored_value(LogicValue::UNKNOWN),
       previous_clk(LogicValue::UNKNOWN) {}
 
-void FlipFlopCellDirect::evaluate(size_t current_time, Simulator& simulator) {
+void FlipFlopCellBehavioral::evaluate(size_t current_time, Simulator& simulator) {
     const auto d = getInputValue("D");
     const auto we = getInputValue("WE");
     const auto clk = getInputValue("CLK");

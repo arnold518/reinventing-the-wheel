@@ -68,7 +68,7 @@ Reset clears PC, packets, registers, prediction state and execution status; it c
 
 ### C++ behavior reference
 
-The exact binary examples for the added units are compiled from `examples.hpp`: [forwarding](forwarding.md), [load-use](hazards.md), [prediction](prediction.md), [recovery](recovery.md), and [coordination](memory-waits.md). The inherited ALU, packet and writeback examples remain in §4.5. The compact complete-core implementation is `RV32IFiveStageCoreDirect.cpp`; it composes those contracts with the one-outstanding requester model. It is not an instruction-at-a-time oracle and cannot advance two stage boundaries on one clock edge.
+The exact binary examples for the added units are compiled from `examples.hpp`: [forwarding](forwarding.md), [load-use](hazards.md), [prediction](prediction.md), [recovery](recovery.md), and [coordination](memory-waits.md). The inherited ALU, packet and writeback examples remain in §4.5. The compact complete-core implementation is `RV32IFiveStageCoreBehavioral.cpp`; it composes those contracts with the one-outstanding requester model. It is not an instruction-at-a-time oracle and cannot advance two stage boundaries on one clock edge.
 
 ## Implementation
 

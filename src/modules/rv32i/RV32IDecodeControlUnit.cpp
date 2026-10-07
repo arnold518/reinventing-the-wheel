@@ -1,5 +1,5 @@
 #include "modules/rv32i/RV32IDecodeControlUnit.hpp"
-#include "modules/rv32i/RV32IDecodeControlDirect.hpp"
+#include "modules/rv32i/RV32IDecodeControlBehavioral.hpp"
 
 #include "components/ComponentBuilder.hpp"
 #include "components/ComponentBuilder.tpp"
@@ -595,7 +595,7 @@ const ComponentFamily RV32IDecodeControl{
         return Component::createWithContext<::RV32IDecodeControlUnit>(context, name);
     },
     [](const std::string& name, const std::shared_ptr<BuildContext>& context) {
-        return Component::createWithContext<::RV32IDecodeControlDirect>(context, name);
+        return Component::createWithContext<::RV32IDecodeControlBehavioral>(context, name);
     }};
 }
 

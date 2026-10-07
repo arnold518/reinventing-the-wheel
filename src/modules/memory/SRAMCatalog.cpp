@@ -1,5 +1,5 @@
 #include "modules/memory/SRAM.hpp"
-#include "modules/memory/SRAMDirect.hpp"
+#include "modules/memory/SRAMBehavioral.hpp"
 #include <charconv>
 
 namespace {
@@ -68,7 +68,7 @@ template<size_t W> void registerWidth(ComponentCatalog& catalog) {
     const auto suffix = "." + std::to_string(W), typeSuffix = "<" + std::to_string(W) + ">";
     registerBlock(catalog, "device" + suffix, "SRAM" + typeSuffix, [](const ParameterMap& p) {
         sramConfigFromParameters(p).validate(W); return devicePins<W>();
-    }, configured<SRAM<W>>(), configured<sram::DeviceDirect<W>>(), "SRAMTest", false,
+    }, configured<SRAM<W>>(), configured<sram::DeviceBehavioral<W>>(), "SRAMTest", false,
     [](const ParameterMap& p) { sramConfigFromParameters(p).validate(W, true); return true; });
     registerBlock(catalog, "bank" + suffix, "SRAMStorageBank" + typeSuffix, [](const ParameterMap& params) {
         const auto c = sramConfigFromParameters(params); c.validate(W, true);
@@ -80,7 +80,7 @@ template<size_t W> void registerWidth(ComponentCatalog& catalog) {
             for (const auto* prefix : {"BL_", "BL_BAR_", "VALID_"}) out(p, prefix + n);
         }
         return p;
-    }, configured<SRAMStorageBank<W>>(), configured<sram::BankDirect<W>>(), "SRAMStorageBankTest");
+    }, configured<SRAMStorageBank<W>>(), configured<sram::BankBehavioral<W>>(), "SRAMStorageBankTest");
     registerBlock(catalog, "access-control" + suffix, "SRAMAccessControl" + typeSuffix, [](const ParameterMap& params) {
         sramConfigFromParameters(params).validate(W);
         auto p = devicePins<W>(); p.pop_back();
@@ -113,7 +113,7 @@ void registerSRAMComponents(circuit::ComponentCatalog& catalog) {
     registerBlock(catalog, "cell", "SRAMCell", [](const ParameterMap& params) {
         empty(params); Pins p; for (const auto* n : {"WL", "DRIVE", "BL", "BL_BAR"}) in(p, n);
         out(p, "Q"); out(p, "Q_BAR"); return p;
-    }, simple<SRAMCell>(), simple<circuit::sram::CellDirect>(), "SRAMCellTest");
+    }, simple<SRAMCell>(), simple<circuit::sram::CellBehavioral>(), "SRAMCellTest");
     registerBlock(catalog, "row", "SRAMRow", [](const ParameterMap& params) {
         auto columns = dimension(params, "columns", 2, 4096); Pins p; in(p, "WL");
         for (size_t c = 0; c < columns; ++c) {
@@ -122,7 +122,7 @@ void registerSRAMComponents(circuit::ComponentCatalog& catalog) {
             out(p, "Q_" + n);
         }
         return p;
-    }, sized<SRAMRow>("columns", 2, 4096), sized<circuit::sram::RowDirect>("columns", 2, 4096), "SRAMRowTest");
+    }, sized<SRAMRow>("columns", 2, 4096), sized<circuit::sram::RowBehavioral>("columns", 2, 4096), "SRAMRowTest");
     registerBlock(catalog, "bitline-pair", "SRAMBitlinePair", [](const ParameterMap& params) {
         auto rows = dimension(params, "rows", 2, 512); Pins p;
         for (const auto* n : {"PRECHARGE", "DRIVE", "WRITE_BL", "WRITE_BL_BAR"}) in(p, n);

@@ -4,9 +4,9 @@
 #include "components/BasicComponent.hpp"
 #include <vector>
 
-class RV32IControlFlowDirect : public BasicComponent {
+class RV32IControlFlowBehavioral : public BasicComponent {
 public:
-    explicit RV32IControlFlowDirect(std::string name);
+    explicit RV32IControlFlowBehavioral(std::string name);
     static constexpr const char* TypeName = "RV32IControlFlowUnit";
     const char* getTypeName() const override { return TypeName; }
     void evaluate(size_t current_time, Simulator& simulator) override;

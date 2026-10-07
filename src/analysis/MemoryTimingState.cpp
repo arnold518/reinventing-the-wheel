@@ -1,6 +1,6 @@
 #include "MemoryTimingState.hpp"
-#include "../modules/memory/FlipFlopCellDirect.hpp"
-#include "modules/memory/ClockedStateBitDirect.hpp"
+#include "../modules/memory/FlipFlopCellBehavioral.hpp"
+#include "modules/memory/ClockedStateBitBehavioral.hpp"
 #include "modules/rv32i/RV32IMemoryRequest.hpp"
 #include "modules/basic/Gate.hpp"
 #include "modules/utility/Constant.hpp"
@@ -99,8 +99,8 @@ std::optional<MemoryTimingGroup> memoryTimingStates(
         if(clock.binary_startup)
             group.binary_controls={request->getInputPin("ISSUE"),request->getInputPin("TAKE"),mismatch};
         for(const auto& cell:cells) {
-            if((typeid(*cell)!=typeid(FlipFlopCellDirect) &&
-                typeid(*cell)!=typeid(ClockedStateBitDirect))
+            if((typeid(*cell)!=typeid(FlipFlopCellBehavioral) &&
+                typeid(*cell)!=typeid(ClockedStateBitBehavioral))
                 ||source(cell->getInputPin("CLK"))!=source(request->getInputPin("CLK"))
                 ||source(cell->getInputPin("RST"))!=source(request->getInputPin("RST")))return std::nullopt;
         }
@@ -128,7 +128,7 @@ std::optional<MemoryTimingGroup> memoryTimingStates(
                 e.values[request->getInputPin("BUS_RSP_VALID")]=mode.full||valid?H:L;
                 unsigned next=0,weight=1;
                 for(size_t i=0;i<3;++i) {
-                    if(typeid(*cells[i])==typeid(FlipFlopCellDirect) &&
+                    if(typeid(*cells[i])==typeid(FlipFlopCellBehavioral) &&
                         e.get(cells[i]->getInputPin("WE"))!=H)return std::nullopt;
                     auto d=e.get(cells[i]->getInputPin("D"));if(d==LogicValue::HIGH_Z)d=X;
                     next+=unsigned(d)*weight;weight*=3;

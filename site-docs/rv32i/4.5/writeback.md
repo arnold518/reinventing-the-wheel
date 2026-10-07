@@ -51,7 +51,7 @@ This pure function describes all binary outputs. `Packet` and its packed control
 
 #### Behavioral implementation
 
-`RV32IWritebackStageDirect` evaluates the same selection, fault priority and permissions without retaining state. Both implementations share `rv32i.pipeline.stage.writeback`.
+`RV32IWritebackStageBehavioral` evaluates the same selection, fault priority and permissions without retaining state. Both implementations share `rv32i.pipeline.stage.writeback`.
 
 ### Examples
 
@@ -98,7 +98,7 @@ The two event inputs are independent; asserting both sets both flags. Writeback 
 
 #### Behavioral implementation
 
-`RV32IPipelineExecutionStatusDirect` retains the same six status bits and detects rising edges, with asynchronous reset taking priority. Family: `rv32i.pipeline.execution-status`.
+`RV32IPipelineExecutionStatusBehavioral` retains the same six status bits and detects rising edges, with asynchronous reset taking priority. Family: `rv32i.pipeline.execution-status`.
 
 ### Examples
 
@@ -112,7 +112,7 @@ The scenario checks edge-only capture, sticky flags, reset, every four-bit cause
 
 ### Tests
 
-`RV32IPipelineExecutionStatusTest` compares structural and behavioral implementations; `RV32IBaselineExamplesTest` checks the example. Complete-core program tests check stopping and precise traps in context. Source for both components: `RV32IWritebackStage.cpp` (structural) and `RV32IPipelineStagesDirect.cpp` (behavioral).
+`RV32IPipelineExecutionStatusTest` compares structural and behavioral implementations; `RV32IBaselineExamplesTest` checks the example. Complete-core program tests check stopping and precise traps in context. Source for both components: `RV32IWritebackStage.cpp` (structural) and `RV32IPipelineStagesBehavioral.cpp` (behavioral).
 
 ## Completed-PC observation
 

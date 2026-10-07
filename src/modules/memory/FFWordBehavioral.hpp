@@ -7,9 +7,9 @@
 // Private compact implementation. Equivalence is specified at settled binary
 // checkpoints, not every transient of the structural splitter/gate network.
 template<size_t Width>
-class FFWordDirect : public BasicComponent {
+class FFWordBehavioral : public BasicComponent {
 public:
-    explicit FFWordDirect(std::string name)
+    explicit FFWordBehavioral(std::string name)
         : BasicComponent(std::move(name), 1, defineFFWordPins<Width>) {
         bits_.fill(LogicValue::UNKNOWN);
     }

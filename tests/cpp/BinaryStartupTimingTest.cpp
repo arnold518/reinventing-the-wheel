@@ -3,7 +3,7 @@
 #include "modules/memory/BehavioralMemoryEndpoint.hpp"
 #include "components/StructuralNetBuilder.hpp"
 #include "modules/utility/Rewire.hpp"
-#include "../../src/modules/memory/FlipFlopCellDirect.hpp"
+#include "../../src/modules/memory/FlipFlopCellBehavioral.hpp"
 #include "simulator/Simulator.hpp"
 #include "simulator/SimulationTest.hpp"
 #include <iostream>
@@ -66,7 +66,7 @@ void captures(bool poison) {
         c->addPin("Q",PinType::OUTPUT);
     });
     ComponentBuilder b(root);circuit::detail::StructuralWiring w(b);
-    auto ff=b.addNewComponent<FlipFlopCellDirect>("FF");
+    auto ff=b.addNewComponent<FlipFlopCellBehavioral>("FF");
     for(auto p:{"CLK","RST"})w.connect(root->getInputPin(p),ff->getInputPin(p));
     w.connect(w.constant("ENABLE",true),ff->getInputPin("WE"));
     if(poison) {
@@ -93,7 +93,7 @@ void controllingFeedback(bool dual) {
         c->addPin("Y",PinType::OUTPUT);c->addPin("Q",PinType::OUTPUT);
     });
     ComponentBuilder b(root);circuit::detail::StructuralWiring w(b);
-    auto reg=b.addNewComponent<FlipFlopCellDirect>("FF");
+    auto reg=b.addNewComponent<FlipFlopCellBehavioral>("FF");
     std::shared_ptr<IOComponent> inner,outer;
     if(dual){inner=b.addNewComponent<ORGate>("INNER");outer=b.addNewComponent<ANDGate>("OUTER");}
     else {inner=b.addNewComponent<ANDGate>("INNER");outer=b.addNewComponent<ORGate>("OUTER");}

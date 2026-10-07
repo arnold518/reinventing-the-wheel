@@ -226,7 +226,7 @@ The first rows name common transitions. The remaining rows enumerate all **2,048
 
 ### Tests
 
-`RV32IBaselineControlTest` checks the complete binary truth table and structural/behavioral equivalence. Connected-core tests check that the enables actually hold/bubble the intended pipeline registers. Sources: `RV32IBaselinePipeline.cpp`, `RV32IBaselinePipelineDirect.cpp`.
+`RV32IBaselineControlTest` checks the complete binary truth table and structural/behavioral equivalence. Connected-core tests check that the enables actually hold/bubble the intended pipeline registers. Sources: `RV32IBaselinePipeline.cpp`, `RV32IBaselinePipelineBehavioral.cpp`.
 
 ## Shared structural helper: `RV32IBaselinePacketStatus`
 

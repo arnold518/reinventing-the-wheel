@@ -135,7 +135,7 @@ Each `PRIORITY_*` child is a fixed structural `RV32IStatusPriority` with one-bit
 
 #### Behavioral implementation
 
-`RV32IExecutionStatusDirect` computes the same priority decision, updates four-state stored status at reset/edges, and recomputes outputs. Both forms are registered as `rv32i.execution-status`.
+`RV32IExecutionStatusBehavioral` computes the same priority decision, updates four-state stored status at reset/edges, and recomputes outputs. Both forms are registered as `rv32i.execution-status`.
 
 ### Examples
 
@@ -149,4 +149,4 @@ Each `PRIORITY_*` child is a fixed structural `RV32IStatusPriority` with one-bit
 
 ### Tests
 
-`RV32IExecutionControlStatusUnitTest` checks readiness stalls, normal writes, fault priorities, sticky status, and reset in both fidelities. `RV32IBuildingBlocksDocumentationTest` compiles the exact example and replays the declared binary actions. Source: `src/modules/rv32i/RV32IExecutionControlStatusUnit.cpp` and `RV32IExecutionStatusDirect.cpp`; scenarios: `src/tests/RV32IBlockStandaloneTests.cpp`.
+`RV32IExecutionControlStatusUnitTest` checks readiness stalls, normal writes, fault priorities, sticky status, and reset in both fidelities. `RV32IBuildingBlocksDocumentationTest` compiles the exact example and replays the declared binary actions. Source: `src/modules/rv32i/RV32IExecutionControlStatusUnit.cpp` and `RV32IExecutionStatusBehavioral.cpp`; scenarios: `src/tests/RV32IBlockStandaloneTests.cpp`.

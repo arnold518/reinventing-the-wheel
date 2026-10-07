@@ -1,5 +1,5 @@
 #include "modules/rv32i/RV32IPipelineStages.hpp"
-#include "modules/composite/ALU32Direct.hpp"
+#include "modules/composite/ALU32Behavioral.hpp"
 #include "basic/LogicValueHelpers.hpp"
 
 #include "components/ComponentBuilder.hpp"
@@ -113,9 +113,9 @@ rv32i::RV32IExecutionTrapCause retirementCause(
     return Cause::None;
 }
 
-class RV32IFetchStageDirect : public BasicComponent {
+class RV32IFetchStageBehavioral : public BasicComponent {
 public:
-    explicit RV32IFetchStageDirect(std::string name, bool external_next_pc = false)
+    explicit RV32IFetchStageBehavioral(std::string name, bool external_next_pc = false)
         : BasicComponent(
               std::move(name),
               1,
@@ -168,11 +168,11 @@ private:
     LogicValue previous_clk_ = LogicValue::UNKNOWN;
 };
 
-class RV32IDecodeStageDirect
+class RV32IDecodeStageBehavioral
     : public BasicComponent,
       public RegisterStateView {
 public:
-    explicit RV32IDecodeStageDirect(std::string name)
+    explicit RV32IDecodeStageBehavioral(std::string name)
         : BasicComponent(
               std::move(name),
               1,
@@ -332,9 +332,9 @@ private:
     }
 };
 
-class RV32IExecuteStageDirect : public BasicComponent {
+class RV32IExecuteStageBehavioral : public BasicComponent {
 public:
-    explicit RV32IExecuteStageDirect(std::string name)
+    explicit RV32IExecuteStageBehavioral(std::string name)
         : BasicComponent(
               std::move(name),
               1,
@@ -445,9 +445,9 @@ public:
     }
 };
 
-class RV32IMemoryStageDirect : public BasicComponent {
+class RV32IMemoryStageBehavioral : public BasicComponent {
 public:
-    explicit RV32IMemoryStageDirect(std::string name)
+    explicit RV32IMemoryStageBehavioral(std::string name)
         : BasicComponent(
               std::move(name),
               1,
@@ -576,9 +576,9 @@ public:
     }
 };
 
-class RV32IWritebackStageDirect : public BasicComponent {
+class RV32IWritebackStageBehavioral : public BasicComponent {
 public:
-    explicit RV32IWritebackStageDirect(std::string name)
+    explicit RV32IWritebackStageBehavioral(std::string name)
         : BasicComponent(
               std::move(name),
               1,
@@ -652,9 +652,9 @@ public:
 
 };
 
-class RV32IPipelineExecutionStatusDirect : public BasicComponent {
+class RV32IPipelineExecutionStatusBehavioral : public BasicComponent {
 public:
-    explicit RV32IPipelineExecutionStatusDirect(std::string name)
+    explicit RV32IPipelineExecutionStatusBehavioral(std::string name)
         : BasicComponent(std::move(name), 1,
               circuit::families::RV32IPipelineExecutionStatus.pinInitializer()) {}
     const char* getTypeName() const override { return "RV32IPipelineExecutionStatus"; }
@@ -686,21 +686,21 @@ private:
 
 namespace rv32i::pipeline_stages {
 std::shared_ptr<Component> directFetchStage(const std::string& name, const Context& context, bool external_next_pc) {
-    return Component::createWithContext<RV32IFetchStageDirect>(context, name, external_next_pc);
+    return Component::createWithContext<RV32IFetchStageBehavioral>(context, name, external_next_pc);
 }
 std::shared_ptr<Component> directDecodeStage(const std::string& name, const Context& context) {
-    return Component::createWithContext<RV32IDecodeStageDirect>(context, name);
+    return Component::createWithContext<RV32IDecodeStageBehavioral>(context, name);
 }
 std::shared_ptr<Component> directExecuteStage(const std::string& name, const Context& context) {
-    return Component::createWithContext<RV32IExecuteStageDirect>(context, name);
+    return Component::createWithContext<RV32IExecuteStageBehavioral>(context, name);
 }
 std::shared_ptr<Component> directMemoryStage(const std::string& name, const Context& context) {
-    return Component::createWithContext<RV32IMemoryStageDirect>(context, name);
+    return Component::createWithContext<RV32IMemoryStageBehavioral>(context, name);
 }
 std::shared_ptr<Component> directWritebackStage(const std::string& name, const Context& context) {
-    return Component::createWithContext<RV32IWritebackStageDirect>(context, name);
+    return Component::createWithContext<RV32IWritebackStageBehavioral>(context, name);
 }
 std::shared_ptr<Component> directExecutionStatus(const std::string& name, const Context& context) {
-    return Component::createWithContext<RV32IPipelineExecutionStatusDirect>(context, name);
+    return Component::createWithContext<RV32IPipelineExecutionStatusBehavioral>(context, name);
 }
 } // namespace rv32i::pipeline_stages

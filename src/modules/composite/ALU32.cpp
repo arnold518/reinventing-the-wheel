@@ -7,7 +7,7 @@
 #include "components/ComponentBuilder.hpp"
 #include "components/ComponentBuilder.tpp"
 #include "modules/composite/AddSub32.hpp"
-#include "modules/composite/ALU32Direct.hpp"
+#include "modules/composite/ALU32Behavioral.hpp"
 #include "modules/composite/Logic32.hpp"
 #include "modules/composite/Shifter32.hpp"
 #include <memory>
@@ -37,7 +37,7 @@ const ComponentFamily ALU32{
         return Component::createWithContext<::ALU32>(context, name);
     },
     [](const std::string& name, const std::shared_ptr<BuildContext>& context) {
-        return Component::createWithContext<::ALU32Direct>(context, name);
+        return Component::createWithContext<::ALU32Behavioral>(context, name);
     }};
 const ComponentFamily ALU32Core{
     "rv32i.alu32-core", "ALU32Core",
@@ -46,7 +46,7 @@ const ComponentFamily ALU32Core{
         return Component::createWithContext<::ALU32>(context,name,false);
     },
     [](const std::string& name,const std::shared_ptr<BuildContext>& context){
-        return Component::createWithContext<::ALU32Direct>(context,name,false);
+        return Component::createWithContext<::ALU32Behavioral>(context,name,false);
     }};
 }
 

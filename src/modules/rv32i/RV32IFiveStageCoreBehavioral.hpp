@@ -17,11 +17,11 @@
  * the same IF/ID/EX/MEM/WB valid, forwarding, stall, flush, and retirement
  * rules as the structural core.
  */
-class RV32IFiveStageCoreDirect
+class RV32IFiveStageCoreBehavioral
     : public BasicComponent,
       public RV32IPipelineStateView, public RV32IRetirementView {
 public:
-    explicit RV32IFiveStageCoreDirect(std::string name, rv32i::PredictionConfig prediction = {});
+    explicit RV32IFiveStageCoreBehavioral(std::string name, rv32i::PredictionConfig prediction = {});
     static constexpr const char* TypeName = "RV32IFiveStageCore";
     const char* getTypeName() const override { return TypeName; }
 

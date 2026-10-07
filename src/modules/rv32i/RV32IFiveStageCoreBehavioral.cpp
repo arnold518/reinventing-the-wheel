@@ -1,7 +1,7 @@
 #include "modules/rv32i/RV32IPipelineObservation.hpp"
-#include "modules/composite/ALU32Direct.hpp"
+#include "modules/composite/ALU32Behavioral.hpp"
 #include "basic/LogicValueHelpers.hpp"
-#include "modules/rv32i/RV32IFiveStageCoreDirect.hpp"
+#include "modules/rv32i/RV32IFiveStageCoreBehavioral.hpp"
 
 #include "modules/composite/ALU32.hpp"
 #include "modules/rv32i/RV32IFiveStageCore.hpp"
@@ -89,13 +89,13 @@ bool preMemoryTerminal(
 }
 } // namespace
 
-RV32IFiveStageCoreDirect::RV32IFiveStageCoreDirect(std::string name, rv32i::PredictionConfig prediction)
+RV32IFiveStageCoreBehavioral::RV32IFiveStageCoreBehavioral(std::string name, rv32i::PredictionConfig prediction)
     : BasicComponent(
           std::move(name),
           1,
           circuit::families::RV32IFiveStageCore.pinInitializer()), prediction_(prediction) {}
 
-void RV32IFiveStageCoreDirect::resetState() {
+void RV32IFiveStageCoreBehavioral::resetState() {
     prediction_.reset();
     registers_.fill(0);
     fetch_pc_ = 0;
@@ -108,8 +108,8 @@ void RV32IFiveStageCoreDirect::resetState() {
     mem_wb_ = {};
 }
 
-RV32IFiveStageCoreDirect::DecodeExecuteState
-RV32IFiveStageCoreDirect::decode(
+RV32IFiveStageCoreBehavioral::DecodeExecuteState
+RV32IFiveStageCoreBehavioral::decode(
     const FetchDecodeState& state,
     const std::array<uint32_t, 32>& register_snapshot) const {
     DecodeExecuteState result;
@@ -141,7 +141,7 @@ RV32IFiveStageCoreDirect::decode(
     return result;
 }
 
-uint32_t RV32IFiveStageCoreDirect::writebackValue(
+uint32_t RV32IFiveStageCoreBehavioral::writebackValue(
     const MemoryWritebackState& state) const {
     switch (state.control.writeback) {
         case rv32i::RV32IWritebackSource::None:
@@ -156,8 +156,8 @@ uint32_t RV32IFiveStageCoreDirect::writebackValue(
     return 0;
 }
 
-RV32IFiveStageCoreDirect::ExecuteMemoryState
-RV32IFiveStageCoreDirect::execute(
+RV32IFiveStageCoreBehavioral::ExecuteMemoryState
+RV32IFiveStageCoreBehavioral::execute(
     const DecodeExecuteState& state) const {
     ExecuteMemoryState result;
     result.valid = state.valid;
@@ -243,8 +243,8 @@ RV32IFiveStageCoreDirect::execute(
     return result;
 }
 
-RV32IFiveStageCoreDirect::MemoryWritebackState
-RV32IFiveStageCoreDirect::accessMemory(
+RV32IFiveStageCoreBehavioral::MemoryWritebackState
+RV32IFiveStageCoreBehavioral::accessMemory(
     const ExecuteMemoryState& state) const {
     MemoryWritebackState result;
     result.valid = state.valid;
@@ -272,7 +272,7 @@ RV32IFiveStageCoreDirect::accessMemory(
 }
 
 rv32i::RV32IExecutionTrapCause
-RV32IFiveStageCoreDirect::retirementTrap(
+RV32IFiveStageCoreBehavioral::retirementTrap(
     const MemoryWritebackState& state) const {
     using Cause = rv32i::RV32IExecutionTrapCause;
     if (!state.valid) return Cause::None;
@@ -305,7 +305,7 @@ RV32IFiveStageCoreDirect::retirementTrap(
     return Cause::None;
 }
 
-bool RV32IFiveStageCoreDirect::loadUseHazard() const {
+bool RV32IFiveStageCoreBehavioral::loadUseHazard() const {
     if (!if_id_.valid
         || !id_ex_.valid
         || !id_ex_.control.mem_read
@@ -320,7 +320,7 @@ bool RV32IFiveStageCoreDirect::loadUseHazard() const {
         || (control.uses_rs2 && decoded.rs2 == id_ex_.rd);
 }
 
-bool RV32IFiveStageCoreDirect::terminalPending() const {
+bool RV32IFiveStageCoreBehavioral::terminalPending() const {
     const auto decode_terminal = [](const auto& state) {
         return state.valid
             && (state.pc_misaligned
@@ -352,7 +352,7 @@ bool RV32IFiveStageCoreDirect::terminalPending() const {
                     || mem_wb_.data_fault)));
 }
 
-bool RV32IFiveStageCoreDirect::storeWriteActive() const {
+bool RV32IFiveStageCoreBehavioral::storeWriteActive() const {
     const bool older_terminal =
         mem_wb_.valid
         && (mem_wb_.control.halt
@@ -373,7 +373,7 @@ bool RV32IFiveStageCoreDirect::storeWriteActive() const {
             ex_mem_.alu_result, ex_mem_.control.mem_size);
 }
 
-bool RV32IFiveStageCoreDirect::loadReadActive() const {
+bool RV32IFiveStageCoreBehavioral::loadReadActive() const {
     const bool older_terminal =
         mem_wb_.valid
         && (mem_wb_.control.halt
@@ -396,7 +396,7 @@ bool RV32IFiveStageCoreDirect::loadReadActive() const {
             ex_mem_.alu_result, ex_mem_.control.mem_size);
 }
 
-void RV32IFiveStageCoreDirect::advanceOneCycle() {
+void RV32IFiveStageCoreBehavioral::advanceOneCycle() {
     if (!high(getInputValue("ENABLE")) || halted_ || trapped_) {
         return;
     }
@@ -522,7 +522,7 @@ void RV32IFiveStageCoreDirect::advanceOneCycle() {
     fetch_pc_ = next_fetch_pc;
 }
 
-void RV32IFiveStageCoreDirect::driveOutputs(
+void RV32IFiveStageCoreBehavioral::driveOutputs(
     size_t current_time,
     Simulator& simulator) {
     const bool enabled =
@@ -667,7 +667,7 @@ void RV32IFiveStageCoreDirect::driveOutputs(
         simulator, "MEM_WB_PC", mem_wb_.pc, current_time);
 }
 
-void RV32IFiveStageCoreDirect::evaluate(
+void RV32IFiveStageCoreBehavioral::evaluate(
     size_t current_time,
     Simulator& simulator) {
     const bool enabled=high(getInputValue("ENABLE")) && !halted_ && !trapped_;
@@ -701,7 +701,7 @@ void RV32IFiveStageCoreDirect::evaluate(
 }
 
 rv32i::RV32IArchitecturalState
-RV32IFiveStageCoreDirect::snapshotPipelineState(uint32_t observed_pc) const {
+RV32IFiveStageCoreBehavioral::snapshotPipelineState(uint32_t observed_pc) const {
     rv32i::RV32IState state;
     state.pc = observed_pc;
     state.x = registers_;
@@ -711,7 +711,7 @@ RV32IFiveStageCoreDirect::snapshotPipelineState(uint32_t observed_pc) const {
     return rv32i::RV32IArchitecturalState::fromKnown(state);
 }
 
-RV32IRetirementObservation RV32IFiveStageCoreDirect::pendingRetirement() const {
+RV32IRetirementObservation RV32IFiveStageCoreBehavioral::pendingRetirement() const {
     return {mem_wb_.pc, mem_wb_.instruction, rv32i::observeMemoryRetirement(
         mem_wb_.control, mem_wb_.alu_result, mem_wb_.store_data, mem_wb_.memory_data,
         mem_wb_.data_misaligned || mem_wb_.data_fault), mem_wb_.next_pc,

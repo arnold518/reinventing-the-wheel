@@ -7,7 +7,7 @@
 #include "components/ComponentBuilder.hpp"
 #include "components/ComponentBuilder.tpp"
 #include "components/capabilities/RegisterStateView.hpp"
-#include "modules/rv32i/RV32IFiveStageCoreDirect.hpp"
+#include "modules/rv32i/RV32IFiveStageCoreBehavioral.hpp"
 #include "modules/rv32i/RV32IPipelineControl.hpp"
 #include "modules/rv32i/RV32IPipelineRegisters.hpp"
 #include "modules/rv32i/RV32IPipelineStages.hpp"
@@ -60,7 +60,7 @@ const ComponentFamily RV32IFiveStageCore{
     },
     [](const std::string& name, const std::shared_ptr<BuildContext>& context) {
         return Component::createWithContext<
-            ::RV32IFiveStageCoreDirect>(context, name, context ? rv32i::predictionConfig(context->parameters()) : rv32i::PredictionConfig{});
+            ::RV32IFiveStageCoreBehavioral>(context, name, context ? rv32i::predictionConfig(context->parameters()) : rv32i::PredictionConfig{});
     }};
 } // namespace circuit::families
 
@@ -77,7 +77,7 @@ void RV32IFiveStageCore::buildInternals(ComponentBuilder& builder) {
     rv32i::wireRequestBus(builder,*this,fetch_request,"IMEM_");
     rv32i::wireRequestBus(builder,*this,data_request,"DMEM_");
     rv32i::wireRequestFields(builder,fetch_request,data_request,lanes,data_op,true);
-    const auto fetch = rv32i::detail::addFamilyOrDirect<RV32IFetchStage>(
+    const auto fetch = rv32i::detail::addFamilyOrBehavioral<RV32IFetchStage>(
         builder, circuit::families::RV32IFetchStage, "FETCH", {{"external_next_pc", "1"}}, true);
     const auto if_id = rv32i::detail::addCompactPipelineRegister<RV32IIFIDPipelineRegister>(
         builder, circuit::families::RV32IIFIDPipelineRegister, "IF_ID");
@@ -110,7 +110,7 @@ void RV32IFiveStageCore::buildInternals(ComponentBuilder& builder) {
         {fetch_request->getInputPinDynamic("TAKE")});
     wire("DATA_REQUEST_ISSUE", coordinator->getOutputPinDynamic("DATA_REQUEST_ISSUE"),
         {data_request->getInputPinDynamic("ISSUE")});
-    const auto prediction = rv32i::detail::addFamilyOrDirect<RV32IPredictionPath>(
+    const auto prediction = rv32i::detail::addFamilyOrBehavioral<RV32IPredictionPath>(
         builder, circuit::families::RV32IPredictionPath, "PREDICTION", prediction_.parameters(), prediction_);
     wire("PREDICTED_OR_CORRECTED_PC",prediction->getOutputPinDynamic("FETCH_NEXT_PC"),
         {fetch->getInputPinDynamic("REDIRECT_PC")});

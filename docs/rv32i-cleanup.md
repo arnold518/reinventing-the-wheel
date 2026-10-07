@@ -154,3 +154,12 @@ Kept deliberately: `EqualityChecker8`, `NOT8` and `XOR8` (used by the section
 documented standalone `RV32IControlFlowUnit`. Saved `layout.json` and
 `palette.json` entries for the retired types are inert and were not deleted.
 The scenario catalog now lists 169 components.
+
+## One word for behavioral implementations (October 8)
+
+Behavioral classes and their files were named `...Direct`; they are now named
+`...Behavioral` (for example `ALU32Direct` became `ALU32Behavioral`), matching
+the catalog's "structural" and "behavioral" terms. Only C++ names and file
+names changed. Catalog implementation IDs such as `rv32i.alu32.behavioral.direct`
+are stored in saved profiles and were left as they are. Earlier sections of
+this log use the old names.

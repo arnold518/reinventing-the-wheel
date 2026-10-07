@@ -13,11 +13,11 @@
 // Private compact abstraction of the tested FFMemory structure.
 // Keep edge, reset, mask, history and output-delay behavior identical.
 template<size_t DataWidth>
-class FFMemoryDirect : public BasicComponent, public MemoryDeviceStorage {
+class FFMemoryBehavioral : public BasicComponent, public MemoryDeviceStorage {
 public:
     inline static const std::string TypeName = std::string("FFMemory") + std::to_string(DataWidth);
     const char* getTypeName() const override { return memoryDisplayType(TypeName.c_str()); }
-    FFMemoryDirect(std::string name, MemoryConfig config = MemoryConfig{
+    FFMemoryBehavioral(std::string name, MemoryConfig config = MemoryConfig{
                         .initial_value = LogicValue::UNKNOWN})
         : BasicComponent(std::move(name), config.read_delay_ticks,
                          defineMemoryArrayPins<DataWidth>),

@@ -137,9 +137,9 @@ void defineALU8Pins(IOComponent* self) {
 // Private implementation; public identity and pins belong to the family.
 // One abstract delay tick, not the structural circuit's propagation timing.
 template<class Structural>
-class Direct8 final : public BasicComponent {
+class Behavioral8 final : public BasicComponent {
 public:
-    Direct8(std::string name, circuit::PinInitializer pins)
+    Behavioral8(std::string name, circuit::PinInitializer pins)
         : BasicComponent(std::move(name), 1, std::move(pins)) {}
     static constexpr const char* TypeName = Structural::TypeName;
     const char* getTypeName() const override { return TypeName; }
@@ -220,7 +220,7 @@ circuit::ComponentFamily makeFamily(std::string_view id, circuit::PinInitializer
             return Component::createWithContext<Structural>(context, name);
         },
         [pins](const std::string& name, const std::shared_ptr<circuit::BuildContext>& context) {
-            return Component::createWithContext<Direct8<Structural>>(context, name, pins);
+            return Component::createWithContext<Behavioral8<Structural>>(context, name, pins);
         }};
 }
 } // namespace

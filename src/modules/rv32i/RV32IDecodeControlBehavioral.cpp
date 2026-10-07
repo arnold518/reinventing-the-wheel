@@ -1,4 +1,4 @@
-#include "modules/rv32i/RV32IDecodeControlDirect.hpp"
+#include "modules/rv32i/RV32IDecodeControlBehavioral.hpp"
 #include "basic/LogicValueHelpers.hpp"
 #include "components/selection/ComponentFamily.hpp"
 #include "modules/rv32i/RV32IDecodeControlUnit.hpp"
@@ -17,11 +17,11 @@ using circuit::logic_values::allKnown;
 using circuit::logic_values::logic;
 }
 
-RV32IDecodeControlDirect::RV32IDecodeControlDirect(std::string name)
+RV32IDecodeControlBehavioral::RV32IDecodeControlBehavioral(std::string name)
     : BasicComponent(std::move(name), 1,
                      circuit::families::RV32IDecodeControl.pinInitializer()) {}
 
-void RV32IDecodeControlDirect::evaluate(size_t current_time, Simulator& simulator) {
+void RV32IDecodeControlBehavioral::evaluate(size_t current_time, Simulator& simulator) {
     const auto input = getInputPin<32>("INSTRUCTION")->getValueAsVector();
     if (!allKnown(input)) {
         const std::vector<LogicValue> unknown2(2, LogicValue::UNKNOWN);

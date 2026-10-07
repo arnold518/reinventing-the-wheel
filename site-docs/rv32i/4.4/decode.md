@@ -92,7 +92,7 @@ Real simulator x1–x31 start unknown until reset; the simplified array is only 
 
 #### Behavioral implementation
 
-`DirectDecodeStage` uses the direct stage evaluator, a 32-word four-state register vector, and timestamped register snapshots. It computes controls through `RV32IDecoder`/`RV32IControl` and implements writes on known rising edges. Both implementations expose `register-state-view` so the visualizer can inspect registers without depending on the internal hierarchy. The family is `rv32i.single-cycle.decode`.
+`BehavioralDecodeStage` uses the direct stage evaluator, a 32-word four-state register vector, and timestamped register snapshots. It computes controls through `RV32IDecoder`/`RV32IControl` and implements writes on known rising edges. Both implementations expose `register-state-view` so the visualizer can inspect registers without depending on the internal hierarchy. The family is `rv32i.single-cycle.decode`.
 
 ### Examples
 
@@ -108,4 +108,4 @@ The scenario reuses every decoder vector, then checks register setup without byp
 
 ### Tests
 
-`RV32ISingleCycleDecodeStageTest` compares both implementations, including every forwarded control. `RV32ISingleCycleStageIntegrationTest` exercises overlapping source/destination registers and unchanged registers during memory waits. Native/WASM parity checks also inspect register history. `RV32ISingleCycleDocumentationTest.py` verifies this table and replays the exact example. Source: `RV32ISingleCycleStages.cpp` and `RV32ISingleCycleStagesDirect.cpp`; scenarios: `src/tests/RV32ISingleCycleStageTests.cpp`.
+`RV32ISingleCycleDecodeStageTest` compares both implementations, including every forwarded control. `RV32ISingleCycleStageIntegrationTest` exercises overlapping source/destination registers and unchanged registers during memory waits. Native/WASM parity checks also inspect register history. `RV32ISingleCycleDocumentationTest.py` verifies this table and replays the exact example. Source: `RV32ISingleCycleStages.cpp` and `RV32ISingleCycleStagesBehavioral.cpp`; scenarios: `src/tests/RV32ISingleCycleStageTests.cpp`.

@@ -2,9 +2,9 @@
 
 #include "components/BasicComponent.hpp"
 
-class ClockedStateBitDirect : public BasicComponent {
+class ClockedStateBitBehavioral : public BasicComponent {
 public:
-    explicit ClockedStateBitDirect(std::string name);
+    explicit ClockedStateBitBehavioral(std::string name);
     const char* getTypeName() const override { return "ClockedStateBit"; }
     void evaluate(size_t current_time, Simulator& simulator) override;
 private:

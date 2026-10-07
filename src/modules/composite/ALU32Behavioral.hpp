@@ -11,9 +11,9 @@
 // (The instruction oracle keeps its own independent copy on purpose.)
 uint32_t alu32Result(uint8_t op, uint32_t a, uint32_t b);
 
-class ALU32Direct : public BasicComponent {
+class ALU32Behavioral : public BasicComponent {
 public:
-    explicit ALU32Direct(std::string name,bool full_flags = true);
+    explicit ALU32Behavioral(std::string name,bool full_flags = true);
     static constexpr const char* TypeName = "ALU32";
     const char* getTypeName() const override { return full_flags_?TypeName:"ALU32Core"; }
     void evaluate(size_t current_time, Simulator& simulator) override;

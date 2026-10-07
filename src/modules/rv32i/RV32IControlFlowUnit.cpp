@@ -2,7 +2,7 @@
 #include <string>
 #include <vector>
 #include <stdexcept>
-#include "modules/rv32i/RV32IControlFlowDirect.hpp"
+#include "modules/rv32i/RV32IControlFlowBehavioral.hpp"
 
 #include "components/ComponentBuilder.hpp"
 #include "components/ComponentBuilder.tpp"
@@ -46,7 +46,7 @@ const ComponentFamily RV32IControlFlow{
     },
     [](const std::string& name, const std::shared_ptr<BuildContext>& context) {
         return Component::createWithContext<
-            ::RV32IControlFlowDirect>(context, name);
+            ::RV32IControlFlowBehavioral>(context, name);
     }};
 }
 

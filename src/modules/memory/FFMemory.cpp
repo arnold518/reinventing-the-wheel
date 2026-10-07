@@ -1,7 +1,7 @@
 #include "modules/memory/FFMemory.hpp"
-#include "modules/memory/FFWordDirect.hpp"
-#include "modules/memory/FFMemoryDirect.hpp"
-#include "modules/memory/FFStorageBankDirect.hpp"
+#include "modules/memory/FFWordBehavioral.hpp"
+#include "modules/memory/FFMemoryBehavioral.hpp"
+#include "modules/memory/FFStorageBankBehavioral.hpp"
 #include "modules/memory/FFMemoryCatalog.hpp"
 #include "components/selection/BuildContext.hpp"
 #include "components/selection/ComponentCatalog.hpp"
@@ -31,7 +31,7 @@ const ComponentFamily& FFStorageBank() {
         },
         [](const std::string& name, const std::shared_ptr<BuildContext>& context) {
             const auto depth = context ? ffStorageBankDepthFromParameters(context->parameters()) : 4;
-            return Component::createWithContext<FFStorageBankDirect<Width>>(context, name, depth);
+            return Component::createWithContext<FFStorageBankBehavioral<Width>>(context, name, depth);
         }};
     return family;
 }
@@ -45,7 +45,7 @@ const ComponentFamily& FFWord() {
             return Component::createWithContext<::FFWord<Width>>(context, name);
         },
         [](const std::string& name, const std::shared_ptr<BuildContext>& context) {
-            return Component::createWithContext<FFWordDirect<Width>>(context, name);
+            return Component::createWithContext<FFWordBehavioral<Width>>(context, name);
         }};
     return family;
 }
@@ -62,7 +62,7 @@ const ComponentFamily& FFMemory() {
         },
         [](const std::string& name, const std::shared_ptr<BuildContext>& context) {
             const auto config = context ? ffMemoryConfigFromParameters(context->parameters()) : MemoryConfig{};
-            return Component::createWithContext<FFMemoryDirect<Width>>(context, name, config);
+            return Component::createWithContext<FFMemoryBehavioral<Width>>(context, name, config);
         }};
     return family;
 }

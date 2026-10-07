@@ -222,4 +222,4 @@ The visible FF assembly can use [MemoryContainer&lt;ff,32&gt;](../../memory/3.1.
 
 Stage tests assert exactly one ALU plus one concurrent branch-target adder in Execute. The integration harness permits at most one cycle per instruction and checks old-source load/store/JALR overlaps; final-state-only comparisons could miss early writes. These focused tests do not claim exhaustive instruction-stream, arbitrary X/Z, or physical timing verification.
 
-Source: `src/modules/rv32i/RV32ISingleCycleCore.cpp`, `RV32ISingleCycleStages.cpp`, `RV32ISingleCycleStagesDirect.cpp`, and `RV32IReferenceCore.cpp`. Stage scenarios are in `src/tests/RV32ISingleCycleStageTests.cpp`; program/fidelity tests are in `src/tests/RV32ISingleCycleTests.cpp`.
+Source: `src/modules/rv32i/RV32ISingleCycleCore.cpp`, `RV32ISingleCycleStages.cpp`, `RV32ISingleCycleStagesBehavioral.cpp`, and `RV32IReferenceCore.cpp`. Stage scenarios are in `src/tests/RV32ISingleCycleStageTests.cpp`; program/fidelity tests are in `src/tests/RV32ISingleCycleTests.cpp`.

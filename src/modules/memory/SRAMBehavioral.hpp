@@ -9,9 +9,9 @@ inline LogicValue writeCell(LogicValue q, LogicValue wl, LogicValue drive, Logic
     if (wl == LogicValue::HIGH && drive == LogicValue::HIGH && binary(bl) && bar == invert(bl)) return bl;
     return LogicValue::UNKNOWN;
 }
-class CellDirect : public BasicComponent {
+class CellBehavioral : public BasicComponent {
 public:
-    explicit CellDirect(std::string name) : BasicComponent(std::move(name), 1, [](IOComponent* s) {
+    explicit CellBehavioral(std::string name) : BasicComponent(std::move(name), 1, [](IOComponent* s) {
         for (const auto* p : {"WL", "DRIVE", "BL", "BL_BAR"}) s->addPin(p, PinType::INPUT);
         for (const auto* p : {"Q", "Q_BAR"}) s->addPin(p, PinType::OUTPUT);
     }) {}
@@ -22,9 +22,9 @@ public:
     }
 private: LogicValue q_ = LogicValue::UNKNOWN;
 };
-class RowDirect : public BasicComponent {
+class RowBehavioral : public BasicComponent {
 public:
-    RowDirect(std::string name, size_t columns) : BasicComponent(std::move(name), 1, [columns](IOComponent* s) {
+    RowBehavioral(std::string name, size_t columns) : BasicComponent(std::move(name), 1, [columns](IOComponent* s) {
         if (!columns || columns > 4096) throw std::invalid_argument("Invalid SRAM row width");
         s->addPin("WL", PinType::INPUT);
         for (size_t c = 0; c < columns; ++c) {
@@ -43,9 +43,9 @@ public:
 private: Bits data_; std::string type_;
 };
 
-template<size_t W> class BankDirect : public BasicComponent {
+template<size_t W> class BankBehavioral : public BasicComponent {
 public:
-    BankDirect(std::string name, SRAMDeviceConfig c)
+    BankBehavioral(std::string name, SRAMDeviceConfig c)
         : BasicComponent(std::move(name), 1, [c](IOComponent* s) { defineSRAMBankPins<W>(s, c); }), config_(c),
           data_(c.depth_words * W, LogicValue::UNKNOWN), bitlines_(c.columns(W)),
           published_(c.columns(W), std::array<LogicValue, 3>{LogicValue::UNKNOWN, LogicValue::UNKNOWN, LogicValue::UNKNOWN}),
@@ -78,9 +78,9 @@ private:
     std::vector<std::array<LogicValue, 3>> published_; std::string type_;
 };
 
-template<size_t W> class DeviceDirect : public BasicComponent, public MemoryDeviceStorage {
+template<size_t W> class DeviceBehavioral : public BasicComponent, public MemoryDeviceStorage {
 public:
-    DeviceDirect(std::string name, SRAMDeviceConfig c)
+    DeviceBehavioral(std::string name, SRAMDeviceConfig c)
         : BasicComponent(std::move(name), 1, defineSRAMPins<W>),
           MemoryDeviceStorage(c.depth_words, W, LogicValue::UNKNOWN, c.record_history, c.storage_limits),
           config_(checked(c)), sequence_(W) {}

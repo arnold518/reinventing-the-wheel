@@ -42,7 +42,7 @@ The examples use the [shared Packet definition](core.md#binary-example-types). F
 
 ### Behavioral implementation
 
-The Fetch branch of `DirectStage` stores PC and previous clock, then produces the same native pins and IF/ID packet. Its contract is `rv32i.baseline.fetch`. Equivalence covers settled binary operation after reset, not uninitialized/X-valued PCs.
+The Fetch branch of `BehavioralStage` stores PC and previous clock, then produces the same native pins and IF/ID packet. Its contract is `rv32i.baseline.fetch`. Equivalence covers settled binary operation after reset, not uninitialized/X-valued PCs.
 
 ## Examples
 
@@ -56,4 +56,4 @@ The rows cover reset, direct read, sequential advance, hold, redirect, alignment
 
 ## Tests
 
-`RV32IBaselineFetchStageTest` compares both implementations. The core test checks that a branch redirect does not accept the old instruction-memory word. Sources: `RV32IBaselinePipeline.cpp`, `RV32IBaselinePipelineDirect.cpp`.
+`RV32IBaselineFetchStageTest` compares both implementations. The core test checks that a branch redirect does not accept the old instruction-memory word. Sources: `RV32IBaselinePipeline.cpp`, `RV32IBaselinePipelineBehavioral.cpp`.

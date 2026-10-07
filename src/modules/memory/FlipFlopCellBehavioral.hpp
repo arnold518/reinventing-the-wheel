@@ -3,9 +3,9 @@
 
 #include "components/BasicComponent.hpp"
 
-class FlipFlopCellDirect : public BasicComponent {
+class FlipFlopCellBehavioral : public BasicComponent {
 public:
-    FlipFlopCellDirect(std::string name);
+    FlipFlopCellBehavioral(std::string name);
     static constexpr const char* TypeName = "FlipFlopCell";
     const char* getTypeName() const override { return TypeName; }
     void evaluate(size_t current_time, Simulator& simulator) override;

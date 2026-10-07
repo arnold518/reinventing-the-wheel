@@ -68,4 +68,4 @@ The test includes signed byte extraction, byte/word stores, alignment/access fau
 
 ## Tests
 
-`RV32IBaselineMemoryStageTest` compares both implementations. Program tests check retired memory effects against the instruction reference and independently verify the physical write history. Sources: `RV32IBaselinePipeline.cpp`, `RV32IBaselinePipelineDirect.cpp`.
+`RV32IBaselineMemoryStageTest` compares both implementations. Program tests check retired memory effects against the instruction reference and independently verify the physical write history. Sources: `RV32IBaselinePipeline.cpp`, `RV32IBaselinePipelineBehavioral.cpp`.

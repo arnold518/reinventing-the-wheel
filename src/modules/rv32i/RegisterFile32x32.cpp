@@ -7,7 +7,7 @@
 #include "modules/memory/FFStorageBank.hpp"
 #include "modules/memory/Register.hpp"
 #include "modules/memory/MemoryStructuralBuilder.hpp"
-#include "modules/rv32i/RegisterFile32x32Direct.hpp"
+#include "modules/rv32i/RegisterFile32x32Behavioral.hpp"
 #include "modules/utility/Constant.hpp"
 #include <memory>
 #include <string>
@@ -71,7 +71,7 @@ const ComponentFamily RegisterFile32x32{
         return Component::createWithContext<::RegisterFile32x32>(context, name);
     },
     [](const std::string& name, const std::shared_ptr<BuildContext>& context) {
-        return Component::createWithContext<::RegisterFile32x32Direct>(
+        return Component::createWithContext<::RegisterFile32x32Behavioral>(
             context, name);
     }};
 }

@@ -1,5 +1,5 @@
 #include "modules/rv32i/RV32IPipelineObservation.hpp"
-#include "modules/composite/ALU32Direct.hpp"
+#include "modules/composite/ALU32Behavioral.hpp"
 #include "RV32IBaselinePipelineInternal.hpp"
 #include "components/BasicComponent.hpp"
 #include "components/Component.tpp"
@@ -138,9 +138,9 @@ Values control(const Values& in) {
 }
 
 namespace {
-class DirectStage : public BinaryBlock {
+class BehavioralStage : public BinaryBlock {
 public:
-    DirectStage(std::string n,Block b):BinaryBlock(std::move(n),family(b).pinInitializer()),block_(b) {record(0);}
+    BehavioralStage(std::string n,Block b):BinaryBlock(std::move(n),family(b).pinInitializer()),block_(b) {record(0);}
     const char* getTypeName() const override {return family(block_).typeName().data();}
     std::vector<std::vector<LogicValue>> registerStateAtTime(size_t time) const {
         auto i=history_.upper_bound(time);return i==history_.begin()?i->second:std::prev(i)->second;
@@ -181,17 +181,17 @@ private:
 
 // Only Decode owns architectural registers. Do not advertise a register-file
 // inspector on combinational stages or on Fetch merely to share implementation.
-class DirectDecode : public DirectStage, public RegisterStateView {
+class BehavioralDecode : public BehavioralStage, public RegisterStateView {
 public:
-    explicit DirectDecode(std::string n):DirectStage(std::move(n),Block::DecodeStage) {}
+    explicit BehavioralDecode(std::string n):BehavioralStage(std::move(n),Block::DecodeStage) {}
     std::vector<std::vector<LogicValue>> getRegisterStateAtTime(size_t t) const override {
         return registerStateAtTime(t);
     }
 };
 
-class DirectCore : public BinaryBlock,public RV32IPipelineStateView,public RV32IRetirementView {
+class BehavioralCore : public BinaryBlock,public RV32IPipelineStateView,public RV32IRetirementView {
 public:
-    explicit DirectCore(std::string n):BinaryBlock(std::move(n),circuit::families::RV32IBaselinePipelineCore.pinInitializer()) {}
+    explicit BehavioralCore(std::string n):BinaryBlock(std::move(n),circuit::families::RV32IBaselinePipelineCore.pinInitializer()) {}
     const char* getTypeName() const override {return "RV32IBaselinePipelineCore";}
     rv32i::RV32IArchitecturalState snapshotPipelineState(uint32_t observed_pc) const override {
         rv32i::RV32IArchitecturalState s;s.pc=logicBits(32,observed_pc);for(size_t i=0;i<32;++i) s.x[i]=logicBits(32,regs_[i]);
@@ -259,10 +259,10 @@ private:
 };
 }
 std::shared_ptr<Component> direct(Block b,const std::string& n,const std::shared_ptr<circuit::BuildContext>& c) {
-    if(b==Block::DecodeStage) return Component::createWithContext<DirectDecode>(c,n);
-    return Component::createWithContext<DirectStage>(c,n,b);
+    if(b==Block::DecodeStage) return Component::createWithContext<BehavioralDecode>(c,n);
+    return Component::createWithContext<BehavioralStage>(c,n,b);
 }
 std::shared_ptr<Component> directCore(const std::string& n,const std::shared_ptr<circuit::BuildContext>& c) {
-    return Component::createWithContext<DirectCore>(c,n);
+    return Component::createWithContext<BehavioralCore>(c,n);
 }
 }

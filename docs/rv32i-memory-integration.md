@@ -113,7 +113,7 @@ devices without a host image capability use construction images or pin writes.
 
 The isolated instruction answer-sheet system owns host-side `MemoryStorage`;
 it does not construct an unconnected hardware memory. The compact native FF
-device uses private `FFMemoryDirect<W>`, tested against the structural
+device uses private `FFMemoryBehavioral<W>`, tested against the structural
 `FFMemory<W>` contract. Neither host storage nor this direct device adds a
 transaction layer. The superseded `Memory64Kx32` and generic legacy container
 have been removed (see [cleanup](rv32i-cleanup.md)).

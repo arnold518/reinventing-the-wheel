@@ -10,10 +10,10 @@
 #include "modules/utility/BitAdapter.hpp"
 #include "modules/utility/Constant.hpp"
 #include "modules/utility/Rewire.hpp"
-#include "../modules/memory/FlipFlopCellDirect.hpp"
-#include "modules/memory/RegisterDirect.hpp"
-#include "modules/memory/ClockedStateBitDirect.hpp"
-#include "../modules/rv32i/RegisterFile32x32Direct.hpp"
+#include "../modules/memory/FlipFlopCellBehavioral.hpp"
+#include "modules/memory/RegisterBehavioral.hpp"
+#include "modules/memory/ClockedStateBitBehavioral.hpp"
+#include "../modules/rv32i/RegisterFile32x32Behavioral.hpp"
 #include <algorithm>
 #include <array>
 #include <deque>
@@ -138,9 +138,9 @@ std::optional<ClockComponentContract> builtin(const IOComponent& c) {
     }
     // Match concrete implementation types, not names/metadata: a structural
     // master/slave DFF is NOT given an invented one-tick register contract.
-    const bool reg = typeid(c) == typeid(RegisterDirect) || typeid(c) == typeid(FlipFlopCellDirect)
-        || typeid(c) == typeid(ClockedStateBitDirect);
-    const bool rf = typeid(c) == typeid(RegisterFile32x32Direct);
+    const bool reg = typeid(c) == typeid(RegisterBehavioral) || typeid(c) == typeid(FlipFlopCellBehavioral)
+        || typeid(c) == typeid(ClockedStateBitBehavioral);
+    const bool rf = typeid(c) == typeid(RegisterFile32x32Behavioral);
     if (reg || rf) {
         m.evidence = "simulator-direct-FF-storage-v1; reset held LOW after initialization";
         m.clock_pin = "CLK"; m.fixed_inputs["RST"] = 0;
@@ -391,8 +391,8 @@ class Analysis {
                 else if(!ep->memoryStorage().isFullyBinary())diagnostic(c->getID()+": initial memory image contains X/Z; binary startup rejected");
                 else report.binary_evidence.push_back(c->getID()+": checked all "+std::to_string(ep->memoryStorage().capacityBytes())+" bytes known binary, including sparse default fill");
             } else if(!leaf.contract.launches.empty()) {
-                if(typeid(*c)!=typeid(FlipFlopCellDirect)&&typeid(*c)!=typeid(RegisterDirect)&&typeid(*c)!=typeid(RegisterFile32x32Direct)
-                    &&typeid(*c)!=typeid(ClockedStateBitDirect))
+                if(typeid(*c)!=typeid(FlipFlopCellBehavioral)&&typeid(*c)!=typeid(RegisterBehavioral)&&typeid(*c)!=typeid(RegisterFile32x32Behavioral)
+                    &&typeid(*c)!=typeid(ClockedStateBitBehavioral))
                     diagnostic(c->getID()+": no reset/binary preservation model");
             }
         }
@@ -683,7 +683,7 @@ class Analysis {
                     }
                 } else if(auto it=primitive.find(n);it!=primitive.end()) {
                     const auto& c=*it->second;
-                    if(clock.binary_startup&&typeid(c)==typeid(RegisterFile32x32Direct)) {
+                    if(clock.binary_startup&&typeid(c)==typeid(RegisterFile32x32Behavioral)) {
                         const auto addr=nodes[n].pin->getName()=="RS1_DATA"?"RS1_ADDR":"RS2_ADDR";
                         size_t at=initial[n].arrival[0].late;bool binary=true;
                         for(const auto& bit:bounds[indices.at(c.getInputPin<5>(addr))].bits) {

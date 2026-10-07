@@ -3,9 +3,9 @@
 #include "components/BasicComponent.hpp"
 
 // Compact implementation of the same width-parametric register contract.
-class RegisterDirect : public BasicComponent {
+class RegisterBehavioral : public BasicComponent {
 public:
-    RegisterDirect(std::string name, size_t width);
+    RegisterBehavioral(std::string name, size_t width);
     const char* getTypeName() const override { return type_.c_str(); }
     void evaluate(size_t current_time, Simulator& simulator) override;
 

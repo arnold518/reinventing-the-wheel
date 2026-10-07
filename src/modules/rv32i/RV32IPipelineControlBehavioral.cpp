@@ -9,9 +9,9 @@
 namespace {
 using circuit::logic_values::high;
 
-class RV32IForwardingDirect : public BasicComponent {
+class RV32IForwardingBehavioral : public BasicComponent {
 public:
-    explicit RV32IForwardingDirect(std::string name)
+    explicit RV32IForwardingBehavioral(std::string name)
         : BasicComponent(
               std::move(name),
               1,
@@ -59,9 +59,9 @@ public:
     }
 };
 
-class RV32IHazardDetectionDirect : public BasicComponent {
+class RV32IHazardDetectionBehavioral : public BasicComponent {
 public:
-    explicit RV32IHazardDetectionDirect(std::string name)
+    explicit RV32IHazardDetectionBehavioral(std::string name)
         : BasicComponent(
               std::move(name),
               1,
@@ -99,9 +99,9 @@ public:
     }
 };
 
-class RV32IMemoryAlignmentDirect : public BasicComponent {
+class RV32IMemoryAlignmentBehavioral : public BasicComponent {
 public:
-    explicit RV32IMemoryAlignmentDirect(std::string name)
+    explicit RV32IMemoryAlignmentBehavioral(std::string name)
         : BasicComponent(
               std::move(name),
               1,
@@ -136,9 +136,9 @@ public:
     }
 };
 
-class RV32IPipelineRetirementDirect : public BasicComponent {
+class RV32IPipelineRetirementBehavioral : public BasicComponent {
 public:
-    explicit RV32IPipelineRetirementDirect(std::string name)
+    explicit RV32IPipelineRetirementBehavioral(std::string name)
         : BasicComponent(
               std::move(name),
               1,
@@ -197,9 +197,9 @@ public:
     }
 };
 
-class RV32IPipelineCoordinatorDirect : public BasicComponent {
+class RV32IPipelineCoordinatorBehavioral : public BasicComponent {
 public:
-    explicit RV32IPipelineCoordinatorDirect(std::string name)
+    explicit RV32IPipelineCoordinatorBehavioral(std::string name)
         : BasicComponent(
               std::move(name),
               1,
@@ -307,18 +307,18 @@ public:
 
 namespace rv32i::pipeline_control {
 std::shared_ptr<Component> directForwardingUnit(const std::string& name, const Context& context) {
-    return Component::createWithContext<RV32IForwardingDirect>(context, name);
+    return Component::createWithContext<RV32IForwardingBehavioral>(context, name);
 }
 std::shared_ptr<Component> directHazardDetectionUnit(const std::string& name, const Context& context) {
-    return Component::createWithContext<RV32IHazardDetectionDirect>(context, name);
+    return Component::createWithContext<RV32IHazardDetectionBehavioral>(context, name);
 }
 std::shared_ptr<Component> directMemoryAlignmentUnit(const std::string& name, const Context& context) {
-    return Component::createWithContext<RV32IMemoryAlignmentDirect>(context, name);
+    return Component::createWithContext<RV32IMemoryAlignmentBehavioral>(context, name);
 }
 std::shared_ptr<Component> directPipelineRetirementUnit(const std::string& name, const Context& context) {
-    return Component::createWithContext<RV32IPipelineRetirementDirect>(context, name);
+    return Component::createWithContext<RV32IPipelineRetirementBehavioral>(context, name);
 }
 std::shared_ptr<Component> directPipelineCoordinator(const std::string& name, const Context& context) {
-    return Component::createWithContext<RV32IPipelineCoordinatorDirect>(context, name);
+    return Component::createWithContext<RV32IPipelineCoordinatorBehavioral>(context, name);
 }
 } // namespace rv32i::pipeline_control

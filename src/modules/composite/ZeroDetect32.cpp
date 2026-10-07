@@ -15,9 +15,9 @@ void defineZeroDetect32Pins(IOComponent* self) {
     self->addPin("ZERO", PinType::OUTPUT);
 }
 
-class ZeroDetect32Direct final : public BasicComponent {
+class ZeroDetect32Behavioral final : public BasicComponent {
 public:
-    explicit ZeroDetect32Direct(std::string name)
+    explicit ZeroDetect32Behavioral(std::string name)
         : BasicComponent(
               std::move(name),
               1,
@@ -59,7 +59,7 @@ const ComponentFamily ZeroDetect32{
     },
     [](const std::string& name,
        const std::shared_ptr<BuildContext>& context) {
-        return Component::createWithContext<ZeroDetect32Direct>(context, name);
+        return Component::createWithContext<ZeroDetect32Behavioral>(context, name);
     }};
 }
 

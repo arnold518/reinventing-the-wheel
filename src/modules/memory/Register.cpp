@@ -1,6 +1,6 @@
 #include "modules/memory/Register.hpp"
 #include "basic/SupportedWidths.hpp"
-#include "modules/memory/RegisterDirect.hpp"
+#include "modules/memory/RegisterBehavioral.hpp"
 #include "modules/memory/FlipFlopCell.hpp"
 #include "modules/memory/MemoryStructuralBuilder.hpp"
 #include "modules/utility/BitAdapter.hpp"
@@ -55,7 +55,7 @@ const ComponentFamily& registerFamily() {
             return Component::createWithContext<::Register<Width>>(context, name);
         },
         [](const std::string& name, const std::shared_ptr<BuildContext>& context) {
-            return Component::createWithContext<RegisterDirect>(context, name, Width);
+            return Component::createWithContext<RegisterBehavioral>(context, name, Width);
         }};
     return family;
 }

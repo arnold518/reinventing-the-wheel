@@ -1,4 +1,4 @@
-#include "modules/rv32i/RV32IExecutionStatusDirect.hpp"
+#include "modules/rv32i/RV32IExecutionStatusBehavioral.hpp"
 #include "basic/LogicValueHelpers.hpp"
 #include "components/selection/ComponentFamily.hpp"
 #include "modules/rv32i/RV32IExecutionControlStatusUnit.hpp"
@@ -154,13 +154,13 @@ CombinationalResult compute(const Inputs& input,
 }
 }
 
-RV32IExecutionStatusDirect::RV32IExecutionStatusDirect(
+RV32IExecutionStatusBehavioral::RV32IExecutionStatusBehavioral(
     std::string name)
     : BasicComponent(
           std::move(name), 1,
           circuit::families::RV32IExecutionStatus.pinInitializer()) {}
 
-void RV32IExecutionStatusDirect::evaluate(size_t current_time,
+void RV32IExecutionStatusBehavioral::evaluate(size_t current_time,
                                                           Simulator& simulator) {
     const Inputs input{
         getInputValue("RST"), getInputValue("ENABLE"), getInputValue("LEGAL"),

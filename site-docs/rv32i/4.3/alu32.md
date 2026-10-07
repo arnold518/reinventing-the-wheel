@@ -66,7 +66,7 @@ The default layout follows connectivity. Prefix levels are expandable groups rat
 
 #### Behavioral implementation
 
-`AddSub32Direct` evaluates that same full-adder recurrence with four-state bit values, without constructing its internal gates.
+`AddSub32Behavioral` evaluates that same full-adder recurrence with four-state bit values, without constructing its internal gates.
 
 ### Examples
 
@@ -116,7 +116,7 @@ Two splitters, 32 gates of each operation, and three joiners provide three paral
 
 #### Behavioral implementation
 
-`Logic32Direct` applies the same four-state gate rules per bit with one abstract delay tick.
+`Logic32Behavioral` applies the same four-state gate rules per bit with one abstract delay tick.
 
 ### Examples
 
@@ -174,7 +174,7 @@ A shared right-shift network selects distances 1, 2, 4, 8, and 16. Input/output 
 
 #### Behavioral implementation
 
-`Shifter32Direct` reproduces the reversal, each mux stage, and fill logic using four-state values, then schedules the result with one abstract delay tick.
+`Shifter32Behavioral` reproduces the reversal, each mux stage, and fill logic using four-state values, then schedules the result with one abstract delay tick.
 
 ### Examples
 
@@ -465,7 +465,7 @@ Result alu(uint32_t a, uint32_t b, unsigned op) {
 
 #### Unknown inputs and timing
 
-Structural gates can mask unused/unknown inputs. `ALU32Direct` instead makes **all outputs unknown if any bit of A, B, or OP is nonbinary**, including an unused operand. Its equivalence claim is settled **binary** behavior, not full four-state or transient equivalence. There is no clock: wait for propagation before sampling.
+Structural gates can mask unused/unknown inputs. `ALU32Behavioral` instead makes **all outputs unknown if any bit of A, B, or OP is nonbinary**, including an unused operand. Its equivalence claim is settled **binary** behavior, not full four-state or transient equivalence. There is no clock: wait for propagation before sampling.
 
 ### Implementation
 
@@ -475,7 +475,7 @@ The root contains `CONTROL`, `ARITHMETIC`, `LOGIC`, `SHIFT`, `COMPARE`, `RESULT_
 
 #### Behavioral implementation
 
-`ALU32Direct` computes the selected operation and flags directly with one abstract delay tick. The registered contract is `rv32i.alu32`; structural remains available, including selectable lower-level arithmetic/logic/shifter fidelities.
+`ALU32Behavioral` computes the selected operation and flags directly with one abstract delay tick. The registered contract is `rv32i.alu32`; structural remains available, including selectable lower-level arithmetic/logic/shifter fidelities.
 
 ### Examples
 
@@ -489,7 +489,7 @@ The root contains `CONTROL`, `ARITHMETIC`, `LOGIC`, `SHIFT`, `COMPARE`, `RESULT_
 
 ### Tests
 
-`ALU32Test` checks the integrated binary contract in both fidelities. `ALU32RepresentativeSliceTest` validates the lower-level construction. `RV32IBuildingBlocksDocumentationTest` compiles the C++ examples above and checks their outputs against declared binary test actions. Source implementations, including `ALU32Direct`, are in `src/modules/composite/`.
+`ALU32Test` checks the integrated binary contract in both fidelities. `ALU32RepresentativeSliceTest` validates the lower-level construction. `RV32IBuildingBlocksDocumentationTest` compiles the C++ examples above and checks their outputs against declared binary test actions. Source implementations, including `ALU32Behavioral`, are in `src/modules/composite/`.
 
 ## 4.3.3.9. `ALU32Core`
 
@@ -533,7 +533,7 @@ The `CONTROL`, `ARITHMETIC`, `LOGIC`, `SHIFT`, `COMPARE`, and `RESULT_SELECT` gr
 
 #### Behavioral implementation
 
-The `rv32i.alu32-core` family uses `ALU32Direct` in its reduced-interface mode. It computes the same result and comparisons as the general behavioral ALU but does not expose the four omitted flags.
+The `rv32i.alu32-core` family uses `ALU32Behavioral` in its reduced-interface mode. It computes the same result and comparisons as the general behavioral ALU but does not expose the four omitted flags.
 
 ### Examples
 

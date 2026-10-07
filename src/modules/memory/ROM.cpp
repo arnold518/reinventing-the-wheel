@@ -70,17 +70,17 @@ class ROMAddressControl : public Primitive {
   private:
     ROMDeviceConfig config_;
 };
-class ROMCellDirect : public Primitive {
+class ROMCellBehavioral : public Primitive {
   public:
-    ROMCellDirect(std::string n, bool v) : Primitive(std::move(n), "ROMCell", cellPins), value_(v ? H : L) {}
+    ROMCellBehavioral(std::string n, bool v) : Primitive(std::move(n), "ROMCell", cellPins), value_(v ? H : L) {}
     void evaluate(size_t t, Simulator &sim) override { publish(sim, t, "Q", value_); }
 
   private:
     LogicValue value_;
 };
-class ROMRowDirect : public Primitive {
+class ROMRowBehavioral : public Primitive {
   public:
-    ROMRowDirect(std::string n, std::string contents)
+    ROMRowBehavioral(std::string n, std::string contents)
         : Primitive(std::move(n), "ROMRow<" + std::to_string(contents.size()) + ">",
                     [contents](IOComponent *s) { rowPins(s, contents); }),
           contents_(std::move(contents)) {}
@@ -92,9 +92,9 @@ class ROMRowDirect : public Primitive {
   private:
     std::string contents_;
 };
-class ROMBankDirect : public Primitive {
+class ROMBankBehavioral : public Primitive {
   public:
-    ROMBankDirect(std::string n, size_t width, ROMDeviceConfig c)
+    ROMBankBehavioral(std::string n, size_t width, ROMDeviceConfig c)
         : Primitive(std::move(n),
                     "ROMStorageBank<" + std::to_string(width) + "," + std::to_string(c.depth_words) + "," +
                         std::to_string(c.words_per_row) + ">",
@@ -123,10 +123,10 @@ class ROMBankDirect : public Primitive {
     ROMDeviceConfig config_;
     std::vector<uint8_t> image_;
 };
-class ROMDirect : public Primitive, public MemoryDeviceStorage {
+class ROMBehavioral : public Primitive, public MemoryDeviceStorage {
   public:
     const char* getTypeName() const override { return memoryDisplayType(Primitive::getTypeName()); }
-    ROMDirect(std::string n, size_t width, ROMDeviceConfig c)
+    ROMBehavioral(std::string n, size_t width, ROMDeviceConfig c)
         : Primitive(std::move(n), "ROM<" + std::to_string(width) + ">",
                     [width](IOComponent *s) { devicePins(s, width); }),
           MemoryDeviceStorage(c.depth_words, width, L, c.record_history, c.storage_limits),
@@ -296,7 +296,7 @@ void registerROMComponents(ComponentCatalog &c) {
             return Component::createWithContext<ROMCell>(ctx, n, value(p));
         },
         [value](const std::string &n, const ParameterMap &p, const std::shared_ptr<BuildContext> &ctx) {
-            return Component::createWithContext<ROMCellDirect>(ctx, n, value(p));
+            return Component::createWithContext<ROMCellBehavioral>(ctx, n, value(p));
         },
         "ROMCellTest");
     registerBlock(
@@ -308,7 +308,7 @@ void registerROMComponents(ComponentCatalog &c) {
             return Component::createWithContext<ROMRow>(ctx, n, rowContents(p));
         },
         [](const std::string &n, const ParameterMap &p, const std::shared_ptr<BuildContext> &ctx) {
-            return Component::createWithContext<ROMRowDirect>(ctx, n, rowContents(p));
+            return Component::createWithContext<ROMRowBehavioral>(ctx, n, rowContents(p));
         },
         "ROMRowTest");
     registerBlock(
@@ -335,7 +335,7 @@ void registerROMComponents(ComponentCatalog &c) {
                 return Component::createWithContext<ROMBank>(ctx, n, width, romConfigFromParameters(p));
             },
             [width](const std::string &n, const ParameterMap &p, const std::shared_ptr<BuildContext> &ctx) {
-                return Component::createWithContext<ROMBankDirect>(ctx, n, width, romConfigFromParameters(p));
+                return Component::createWithContext<ROMBankBehavioral>(ctx, n, width, romConfigFromParameters(p));
             },
             "ROMStorageBankTest");
         registerBlock(
@@ -348,7 +348,7 @@ void registerROMComponents(ComponentCatalog &c) {
                 return Component::createWithContext<ROMDevice>(ctx, n, width, romConfigFromParameters(p));
             },
             [width](const std::string &n, const ParameterMap &p, const std::shared_ptr<BuildContext> &ctx) {
-                return Component::createWithContext<ROMDirect>(ctx, n, width, romConfigFromParameters(p));
+                return Component::createWithContext<ROMBehavioral>(ctx, n, width, romConfigFromParameters(p));
             },
             "ROMTest", false,
             [width](const ParameterMap &p) {

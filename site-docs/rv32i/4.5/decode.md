@@ -44,7 +44,7 @@ The instruction decoder and control encoder below are the same reusable, non-sim
 
 ### Behavioral implementation
 
-`DirectDecode` uses the shared `DirectStage` implementation to store the 32 registers and their history, update the WB destination on a known rising edge, then decode and read sources. Both forms expose architectural register-state access for core snapshots and program verification, and share `rv32i.baseline.decode`. Reset precedes binary equivalence checks.
+`BehavioralDecode` uses the shared `BehavioralStage` implementation to store the 32 registers and their history, update the WB destination on a known rising edge, then decode and read sources. Both forms expose architectural register-state access for core snapshots and program verification, and share `rv32i.baseline.decode`. Reset precedes binary equivalence checks.
 
 ## Examples
 
@@ -58,4 +58,4 @@ The scenario writes x1 while decoding an instruction whose destination is x7, ch
 
 ## Tests
 
-`RV32IBaselineDecodeStageTest` compares both implementations. Program tests check the architectural register file at every retirement. Sources: `RV32IBaselinePipeline.cpp`, `RV32IBaselinePipelineDirect.cpp`.
+`RV32IBaselineDecodeStageTest` compares both implementations. Program tests check the architectural register file at every retirement. Sources: `RV32IBaselinePipeline.cpp`, `RV32IBaselinePipelineBehavioral.cpp`.

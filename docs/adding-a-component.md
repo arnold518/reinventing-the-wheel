@@ -15,7 +15,7 @@ Background: [component fidelity profiles](unified-component-profiles.md) and
 - **A behavioral rule has one owner.** If your behavioral implementation needs
   the result of a smaller component (for example the ALU), call that
   component's behavioral function (`alu32Result` in
-  `src/modules/composite/ALU32Direct.hpp`); do not restate it. The instruction
+  `src/modules/composite/ALU32Behavioral.hpp`); do not restate it. The instruction
   oracle in `src/rv32i/` stays independent on purpose.
 - **Catalog contract IDs are stored in saved profiles and layouts.** Do not
   rename or remove one without a compatibility plan. Removing an `rv32i.*`

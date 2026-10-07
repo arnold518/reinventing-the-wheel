@@ -154,7 +154,7 @@ The bank contains **992 writable bits**, not 1,024: x0 does not need flip-flops.
 
 #### Behavioral implementation
 
-[`RegisterFile32x32Direct`](https://github.com/arnold518/reinventing-the-wheel/blob/github-pages/src/modules/rv32i/RegisterFile32x32Direct.cpp) stores 32 logic-vector words, keeps x0 zero, and implements the same decoder/write/read rules without child gates. Read outputs use one abstract delay tick. Register snapshots support the visualizer's register table and timeline scrubbing.
+[`RegisterFile32x32Behavioral`](https://github.com/arnold518/reinventing-the-wheel/blob/github-pages/src/modules/rv32i/RegisterFile32x32Behavioral.cpp) stores 32 logic-vector words, keeps x0 zero, and implements the same decoder/write/read rules without child gates. Read outputs use one abstract delay tick. Register snapshots support the visualizer's register table and timeline scrubbing.
 
 The structural register file can select behavioral `Register<32>` words or their `FlipFlopCell` children. The external pins and register numbering do not change. Its register-state inspector reads the bank's WORD outputs after the simulator restores the requested time.
 

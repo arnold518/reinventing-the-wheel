@@ -1,5 +1,5 @@
 #include "modules/rv32i/RV32IReferenceCore.hpp"
-#include "modules/composite/ALU32Direct.hpp"
+#include "modules/composite/ALU32Behavioral.hpp"
 #include "basic/LogicValueHelpers.hpp"
 
 #include "basic/Pin.hpp"

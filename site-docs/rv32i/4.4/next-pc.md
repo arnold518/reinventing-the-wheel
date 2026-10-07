@@ -58,7 +58,7 @@ The structural implementation follows its OR/AND gates, mux, and alignment check
 
 #### Behavioral implementation
 
-`DirectStage`'s NextPC branch computes selection and qualified alignment directly with one abstract output delay tick. The family is `rv32i.single-cycle.next-pc`.
+`BehavioralStage`'s NextPC branch computes selection and qualified alignment directly with one abstract output delay tick. The family is `rv32i.single-cycle.next-pc`.
 
 ### Examples
 
@@ -74,4 +74,4 @@ All four jump codes, both branch values, and three targets are combined into 24 
 
 ### Tests
 
-`RV32ISingleCycleNextPCStageTest` compares all 24 rows in both implementations. Program 15 checks that a misaligned jump prevents link/PC updates and causes a precise terminal trap. `RV32ISingleCycleDocumentationTest.py` verifies this pin table and the exact C++ example. Source: `RV32ISingleCycleStages.cpp` and `RV32ISingleCycleStagesDirect.cpp`; scenarios: `src/tests/RV32ISingleCycleStageTests.cpp`.
+`RV32ISingleCycleNextPCStageTest` compares all 24 rows in both implementations. Program 15 checks that a misaligned jump prevents link/PC updates and causes a precise terminal trap. `RV32ISingleCycleDocumentationTest.py` verifies this pin table and the exact C++ example. Source: `RV32ISingleCycleStages.cpp` and `RV32ISingleCycleStagesBehavioral.cpp`; scenarios: `src/tests/RV32ISingleCycleStageTests.cpp`.

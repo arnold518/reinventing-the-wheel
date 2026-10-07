@@ -89,7 +89,7 @@ LANES performs byte-lane formatting without constructing an unused guarded word-
 
 #### Behavioral implementation
 
-DirectStage's Memory branch evaluates the same combinational logic without MemoryRequestState or owned contents. Both implementations are registered as `rv32i.single-cycle.memory`.
+BehavioralStage's Memory branch evaluates the same combinational logic without MemoryRequestState or owned contents. Both implementations are registered as `rv32i.single-cycle.memory`.
 
 ### Examples
 
@@ -105,4 +105,4 @@ Eleven accesses cover signed/unsigned loads, every store width, invalid size, mi
 
 ### Tests
 
-`RV32ISingleCycleMemoryStageTest` compares both implementations. `RV32ISingleCycleStageIntegrationTest` checks old-source loads/stores with at most one cycle per instruction. `RV32ISingleCycleDocumentationTest.py` executes the exact C++ example. Sources: `RV32ISingleCycleStages.cpp`, `RV32ISingleCycleStagesDirect.cpp`, and `RV32ISingleCycleStageTests.cpp`.
+`RV32ISingleCycleMemoryStageTest` compares both implementations. `RV32ISingleCycleStageIntegrationTest` checks old-source loads/stores with at most one cycle per instruction. `RV32ISingleCycleDocumentationTest.py` executes the exact C++ example. Sources: `RV32ISingleCycleStages.cpp`, `RV32ISingleCycleStagesBehavioral.cpp`, and `RV32ISingleCycleStageTests.cpp`.

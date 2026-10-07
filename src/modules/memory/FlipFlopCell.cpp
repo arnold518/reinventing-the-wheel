@@ -5,7 +5,7 @@
 #include "components/WireBuilder.hpp"
 #include "modules/basic/DFlipFlop.hpp"
 #include "modules/basic/Mux.hpp"
-#include "modules/memory/FlipFlopCellDirect.hpp"
+#include "modules/memory/FlipFlopCellBehavioral.hpp"
 
 namespace {
 void defineFlipFlopCellPins(IOComponent* self) {
@@ -26,7 +26,7 @@ const ComponentFamily FlipFlopCell{
         return Component::createWithContext<::FlipFlopCell>(context, name);
     },
     [](const std::string& name, const std::shared_ptr<BuildContext>& context) {
-        return Component::createWithContext<::FlipFlopCellDirect>(
+        return Component::createWithContext<::FlipFlopCellBehavioral>(
             context, name);
     }};
 }

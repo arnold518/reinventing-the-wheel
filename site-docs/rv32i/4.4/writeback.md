@@ -58,7 +58,7 @@ For a known selector, the behavioral model copies the selected bit vector (or em
 
 #### Behavioral implementation
 
-`DirectStage`'s Writeback branch selects the same input vector directly. The family is `rv32i.single-cycle.writeback`.
+`BehavioralStage`'s Writeback branch selects the same input vector directly. The family is `rv32i.single-cycle.writeback`.
 
 ### Examples
 
@@ -74,4 +74,4 @@ The four selections use distinct ALU/load/link patterns so a swapped source cann
 
 ### Tests
 
-`RV32ISingleCycleWritebackStageTest` covers every selector in both implementations. The integration test checks load, ALU, and JALR link writes without updating registers early. `RV32ISingleCycleDocumentationTest.py` compiles/replays this example. Source: `RV32ISingleCycleStages.cpp` and `RV32ISingleCycleStagesDirect.cpp`; scenarios: `src/tests/RV32ISingleCycleStageTests.cpp`.
+`RV32ISingleCycleWritebackStageTest` covers every selector in both implementations. The integration test checks load, ALU, and JALR link writes without updating registers early. `RV32ISingleCycleDocumentationTest.py` compiles/replays this example. Source: `RV32ISingleCycleStages.cpp` and `RV32ISingleCycleStagesBehavioral.cpp`; scenarios: `src/tests/RV32ISingleCycleStageTests.cpp`.

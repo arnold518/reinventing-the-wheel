@@ -1,6 +1,6 @@
 #include "modules/rv32i/RV32ISingleCycleStages.hpp"
 #include "components/selection/FamilyFactories.hpp"
-#include "RV32ISingleCycleStagesDirect.hpp"
+#include "RV32ISingleCycleStagesBehavioral.hpp"
 #include "RV32IMemoryRequestWiring.hpp"
 #include "modules/rv32i/RV32IMemorySystem.hpp"
 #include "modules/memory/Register.hpp"

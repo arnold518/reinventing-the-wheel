@@ -192,9 +192,9 @@ class FlashControl : public Primitive {
   private:
     Commands state_;
 };
-class RowDirect : public Primitive {
+class RowBehavioral : public Primitive {
   public:
-    RowDirect(std::string n, size_t cols)
+    RowBehavioral(std::string n, size_t cols)
         : Primitive(std::move(n), "NORFlashRow<" + std::to_string(cols) + ">",
                     [cols](IOComponent *s) { rowPins(s, cols); }),
           values_(cols, H), initialized_(cols, 0) {}
@@ -212,9 +212,9 @@ class RowDirect : public Primitive {
     Bits values_;
     std::vector<uint8_t> initialized_;
 };
-class BankDirect : public Primitive {
+class BankBehavioral : public Primitive {
   public:
-    BankDirect(std::string n, size_t w, NORFlashConfig c)
+    BankBehavioral(std::string n, size_t w, NORFlashConfig c)
         : Primitive(std::move(n),
                     "NORFlashStorageBank<" + std::to_string(w) + "," + std::to_string(c.depth_words) + "," +
                         std::to_string(c.words_per_row) + ">",
@@ -249,10 +249,10 @@ class BankDirect : public Primitive {
     Bits values_;
     std::vector<uint8_t> initialized_;
 };
-class FlashDirect : public Primitive, public MemoryDeviceStorage {
+class FlashBehavioral : public Primitive, public MemoryDeviceStorage {
   public:
     const char* getTypeName() const override { return memoryDisplayType(Primitive::getTypeName()); }
-    FlashDirect(std::string n, size_t w, NORFlashConfig c)
+    FlashBehavioral(std::string n, size_t w, NORFlashConfig c)
         : Primitive(std::move(n), "NORFlash<" + std::to_string(w) + ">",
                     [=](IOComponent *s) { devicePins(s, w, c); }),
           MemoryDeviceStorage(c.depth_words, w, H, c.record_history, c.storage_limits), state_(w, c) {}
@@ -449,7 +449,7 @@ void registerNORFlashComponents(ComponentCatalog &c) {
             return Component::createWithContext<NORFlashRow>(ctx, n, parameter(p, "columns", 4));
         },
         [](const std::string &n, const ParameterMap &p, const std::shared_ptr<BuildContext> &ctx) {
-            return Component::createWithContext<RowDirect>(ctx, n, parameter(p, "columns", 4));
+            return Component::createWithContext<RowBehavioral>(ctx, n, parameter(p, "columns", 4));
         },
         "NORFlashRowTest");
     for (size_t width : {8, 16, 32}) {
@@ -464,7 +464,7 @@ void registerNORFlashComponents(ComponentCatalog &c) {
                                                                   norFlashConfigFromParameters(p));
             },
             [width](const std::string &n, const ParameterMap &p, const std::shared_ptr<BuildContext> &ctx) {
-                return Component::createWithContext<BankDirect>(ctx, n, width,
+                return Component::createWithContext<BankBehavioral>(ctx, n, width,
                                                                 norFlashConfigFromParameters(p));
             },
             "NORFlashStorageBankTest");
@@ -492,7 +492,7 @@ void registerNORFlashComponents(ComponentCatalog &c) {
                                                                     norFlashConfigFromParameters(p));
             },
             [width](const std::string &n, const ParameterMap &p, const std::shared_ptr<BuildContext> &ctx) {
-                return Component::createWithContext<FlashDirect>(ctx, n, width,
+                return Component::createWithContext<FlashBehavioral>(ctx, n, width,
                                                                  norFlashConfigFromParameters(p));
             },
             "NORFlashTest", false,

@@ -80,7 +80,7 @@ Equivalence covers binary operation after reset. Instruction/fault bits are forw
 
 #### Behavioral implementation
 
-The Fetch branch of DirectStage stores PC and previous clock, then publishes the same direct outputs. Both forms are registered as `rv32i.single-cycle.fetch`.
+The Fetch branch of BehavioralStage stores PC and previous clock, then publishes the same direct outputs. Both forms are registered as `rv32i.single-cycle.fetch`.
 
 ### Examples
 
@@ -96,4 +96,4 @@ The scenario reads without a clock, holds PC before commit, captures NEXT_PC onc
 
 ### Tests
 
-`RV32ISingleCycleFetchStageTest` compares both implementations. `RV32ISingleCycleStageIntegrationTest` checks one-cycle completion and old-state operand use. `RV32ISingleCycleDocumentationTest.py` checks every pin and executes this exact C++ example. Sources: `RV32ISingleCycleStages.cpp`, `RV32ISingleCycleStagesDirect.cpp`, and `RV32ISingleCycleStageTests.cpp`.
+`RV32ISingleCycleFetchStageTest` compares both implementations. `RV32ISingleCycleStageIntegrationTest` checks one-cycle completion and old-state operand use. `RV32ISingleCycleDocumentationTest.py` checks every pin and executes this exact C++ example. Sources: `RV32ISingleCycleStages.cpp`, `RV32ISingleCycleStagesBehavioral.cpp`, and `RV32ISingleCycleStageTests.cpp`.

@@ -64,7 +64,7 @@ Native FF reset clears FF storage. Transaction reset only resets the interface a
 
 The controller type follows the device technology; its capacity, geometry, and timing settings must match the attached device. Expanded versus scalable storage does not change the controller's native pin contract. Native-device contracts are defined in 3.1.1–3.1.6; the transaction contract and controller composition are defined in [3.2](../3.2.md) and [3.3](../3.3.md). Processor-specific connections belong to the processor documentation, such as the [single-cycle core](../../rv32i/4.4/core.md).
 
-The compact FF device uses the tested private `FFMemoryDirect<W>` implementation. The instruction answer sheet uses host-side `MemoryStorage`; it does not instantiate an additional memory circuit. All simulated CPU memory ports use the device/controller/endpoint architecture above.
+The compact FF device uses the tested private `FFMemoryBehavioral<W>` implementation. The instruction answer sheet uses host-side `MemoryStorage`; it does not instantiate an additional memory circuit. All simulated CPU memory ports use the device/controller/endpoint architecture above.
 
 ## Structural and behavioral implementations
 

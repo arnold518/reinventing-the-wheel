@@ -1,4 +1,4 @@
-#include "modules/rv32i/RV32IControlFlowDirect.hpp"
+#include "modules/rv32i/RV32IControlFlowBehavioral.hpp"
 #include "basic/LogicValueHelpers.hpp"
 #include "components/selection/ComponentFamily.hpp"
 #include "modules/rv32i/RV32IControlFlowUnit.hpp"
@@ -37,12 +37,12 @@ LogicValue bit(bool value) {
 }
 }
 
-RV32IControlFlowDirect::RV32IControlFlowDirect(std::string name)
+RV32IControlFlowBehavioral::RV32IControlFlowBehavioral(std::string name)
     : BasicComponent(std::move(name), 1,
                      circuit::families::RV32IControlFlow.pinInitializer()),
       pc_(32, LogicValue::UNKNOWN) {}
 
-void RV32IControlFlowDirect::evaluate(size_t current_time, Simulator& simulator) {
+void RV32IControlFlowBehavioral::evaluate(size_t current_time, Simulator& simulator) {
     const auto clk = getInputValue("CLK");
     const auto rst = getInputValue("RST");
     const auto pc_write = getInputValue("PC_WRITE");

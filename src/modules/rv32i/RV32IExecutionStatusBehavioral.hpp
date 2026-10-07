@@ -4,9 +4,9 @@
 #include "components/BasicComponent.hpp"
 #include <vector>
 
-class RV32IExecutionStatusDirect : public BasicComponent {
+class RV32IExecutionStatusBehavioral : public BasicComponent {
 public:
-    explicit RV32IExecutionStatusDirect(std::string name);
+    explicit RV32IExecutionStatusBehavioral(std::string name);
     static constexpr const char* TypeName = "RV32IExecutionControlStatusUnit";
     const char* getTypeName() const override { return TypeName; }
     void evaluate(size_t current_time, Simulator& simulator) override;

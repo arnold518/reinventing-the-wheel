@@ -53,7 +53,7 @@ set(CORE_LOGIC_SOURCES
     src/modules/basic/Latch.cpp
     src/modules/basic/DFlipFlop.cpp
     src/modules/basic/ClockGenerator.cpp
-    src/modules/memory/FlipFlopCellDirect.cpp
+    src/modules/memory/FlipFlopCellBehavioral.cpp
     src/modules/memory/MemoryStorage.cpp
     src/modules/memory/MemoryProtocol.cpp
     src/modules/memory/MemoryController.cpp
@@ -75,44 +75,44 @@ set(CORE_LOGIC_SOURCES
     src/tests/MemoryHelperTests.cpp
     src/tests/MemoryEndpointTests.cpp
     src/tests/FFMemoryTests.cpp
-    src/modules/memory/RegisterDirect.cpp
-    src/modules/rv32i/RegisterFile32x32Direct.cpp
+    src/modules/memory/RegisterBehavioral.cpp
+    src/modules/rv32i/RegisterFile32x32Behavioral.cpp
     src/modules/memory/FlipFlopCell.cpp
     src/modules/memory/Register.cpp
     src/modules/rv32i/RegisterFile32x32.cpp
     src/modules/rv32i/RV32IReferenceCore.cpp
-    src/modules/rv32i/RV32IControlFlowDirect.cpp
-    src/modules/rv32i/RV32IDecodeControlDirect.cpp
-    src/modules/rv32i/RV32IExecutionStatusDirect.cpp
+    src/modules/rv32i/RV32IControlFlowBehavioral.cpp
+    src/modules/rv32i/RV32IDecodeControlBehavioral.cpp
+    src/modules/rv32i/RV32IExecutionStatusBehavioral.cpp
     src/modules/rv32i/RV32IBitPatternMatcher.cpp
     src/modules/rv32i/RV32IControlFlowUnit.cpp
     src/modules/rv32i/RV32IDecodeControlUnit.cpp
     src/modules/rv32i/RV32IExecutionControlStatusUnit.cpp
     src/modules/rv32i/RV32IPipelineRegisters.cpp
     src/modules/rv32i/RV32IPipelineControl.cpp
-    src/modules/rv32i/RV32IPipelineControlDirect.cpp
+    src/modules/rv32i/RV32IPipelineControlBehavioral.cpp
     src/modules/rv32i/RV32IForwardingUnit.cpp
     src/modules/rv32i/RV32IMemoryAlignmentUnit.cpp
     src/modules/rv32i/RV32IPipelineRetirementUnit.cpp
     src/modules/rv32i/RV32IPipelineCoordinator.cpp
     src/modules/rv32i/RV32IPrediction.cpp
     src/modules/rv32i/RV32IPipelineStages.cpp
-    src/modules/rv32i/RV32IPipelineStagesDirect.cpp
+    src/modules/rv32i/RV32IPipelineStagesBehavioral.cpp
     src/modules/rv32i/RV32IPipelinePacking.cpp
     src/modules/rv32i/RV32IFetchStage.cpp
     src/modules/rv32i/RV32IDecodeStage.cpp
     src/modules/rv32i/RV32IExecuteStage.cpp
     src/modules/rv32i/RV32IMemoryStage.cpp
     src/modules/rv32i/RV32IWritebackStage.cpp
-    src/modules/rv32i/RV32IFiveStageCoreDirect.cpp
+    src/modules/rv32i/RV32IFiveStageCoreBehavioral.cpp
     src/modules/rv32i/RV32IFiveStageCore.cpp
     src/modules/rv32i/RV32IBuildProfiles.cpp
     src/modules/rv32i/RV32ISingleCycleCore.cpp
     src/modules/rv32i/RV32ISingleCycleStages.cpp
-    src/modules/rv32i/RV32ISingleCycleStagesDirect.cpp
+    src/modules/rv32i/RV32ISingleCycleStagesBehavioral.cpp
     src/modules/rv32i/RV32IBaselinePipeline.cpp
     src/modules/rv32i/RV32IBaselinePipelineCore.cpp
-    src/modules/rv32i/RV32IBaselinePipelineDirect.cpp
+    src/modules/rv32i/RV32IBaselinePipelineBehavioral.cpp
     src/modules/rv32i/RV32ISingleCycleSystem.cpp
     src/modules/rv32i/RV32IMemoryRequest.cpp
     src/modules/rv32i/RV32IMemoryLanes.cpp
@@ -129,7 +129,7 @@ set(CORE_LOGIC_SOURCES
     src/modules/composite/ZeroDetect32.cpp
     src/modules/composite/Shifter32.cpp
     src/modules/composite/ALU32.cpp
-    src/modules/composite/ALU32Direct.cpp
+    src/modules/composite/ALU32Behavioral.cpp
     src/modules/composite/Arithmetic8.cpp
     src/modules/composite/Comparator8.cpp
     src/modules/composite/ZeroDetect8.cpp

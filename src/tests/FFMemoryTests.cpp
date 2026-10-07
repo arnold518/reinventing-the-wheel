@@ -1,6 +1,6 @@
 #include "modules/memory/FFMemory.hpp"
 #include "tests/FFMemoryTests.hpp"
-#include "modules/memory/FFMemoryDirect.hpp"
+#include "modules/memory/FFMemoryBehavioral.hpp"
 #include "modules/memory/FFMemoryCatalog.hpp"
 #include "basic/Wire.hpp"
 #include <random>
@@ -452,7 +452,7 @@ void FFMemoryContractTest::verifyResults() {
     rejects([] { Component::create<Array>("DELAY", MemoryConfig{.read_delay_ticks = 2}); });
     rejects([] { Component::create<Array>("FILL", MemoryConfig{.initial_value = LogicValue::HIGH}); });
     auto config = MemoryConfig{.depth_words = 4096, .read_delay_ticks = 7};
-    auto memory = Component::create<FFMemoryDirect<32>>("SCALABLE", config);
+    auto memory = Component::create<FFMemoryBehavioral<32>>("SCALABLE", config);
     require(memory->memoryStorage().capacityBytes() == 16384, "Runtime depth incorrect");
     memory->loadMemoryBytes(16380, {1,2,3,4});
     require(memory->memoryStorage().readBytes(16380, 4) == std::vector<uint8_t>({1,2,3,4}), "Image loading failed");
@@ -460,11 +460,11 @@ void FFMemoryContractTest::verifyResults() {
     rejects([] { ffMemoryConfigFromParameters({{"depth_words", "0"}}); });
     rejects([] { ffMemoryConfigFromParameters({{"depth_words", "4x"}}); });
     rejects([] { ffMemoryConfigFromParameters({{"refresh_interval", "100"}}); });
-    rejects([] { Component::create<FFMemoryDirect<32>>("BAD", MemoryConfig{.depth_words = 0}); });
+    rejects([] { Component::create<FFMemoryBehavioral<32>>("BAD", MemoryConfig{.depth_words = 0}); });
     rejects([] { MemoryStorage(std::numeric_limits<size_t>::max(), 32); });
 
     // An output wire, not the eager local pin value, defines propagation delay.
-    auto timed = Component::create<FFMemoryDirect<32>>("TIMED", config);
+    auto timed = Component::create<FFMemoryBehavioral<32>>("TIMED", config);
     timed->loadMemoryBytes(0, {0x81, 0x23, 0x45, 0x67});
     for (const auto& [name, pin] : timed->getAllInputPins()) pin->setValueFromUInt64(0);
     timed->getInputPin("READ_EN")->setValueFromUInt64(1);
@@ -481,7 +481,7 @@ void FFMemoryContractTest::verifyResults() {
     rejects([&] { timed->evaluate(std::numeric_limits<size_t>::max(), sim); });
 
     // FF-specific edge and ignored-input regressions retained from the old suite.
-    auto ff = Component::create<FFMemoryDirect<16>>("FF", MemoryConfig{.initial_value = LogicValue::LOW});
+    auto ff = Component::create<FFMemoryBehavioral<16>>("FF", MemoryConfig{.initial_value = LogicValue::LOW});
     Simulator local;
     for (const auto& [name, pin] : ff->getAllInputPins()) pin->setValueFromUInt64(0);
     auto set = [&](const std::string& name, uint64_t value) { ff->getInputPinDynamic(name)->setValueFromUInt64(value); };

@@ -160,9 +160,9 @@ private: rv32i::PredictionConfig config_; std::string type_;
 };
 
 enum class Kind { Counter, Predecode, Predictor, Recovery, Path };
-class PredictionDirect : public BasicComponent {
+class PredictionBehavioral : public BasicComponent {
 public:
-    PredictionDirect(std::string name, Kind kind, const circuit::ComponentFamily& family, rv32i::PredictionConfig config = {})
+    PredictionBehavioral(std::string name, Kind kind, const circuit::ComponentFamily& family, rv32i::PredictionConfig config = {})
         : BasicComponent(std::move(name),1,family.pinInitializer()), kind_(kind), type_(family.typeName()), state_(config) {}
     const char* getTypeName() const override { return type_.c_str(); }
     void evaluate(size_t time, Simulator& sim) override {
@@ -234,17 +234,17 @@ rv32i::PredictionConfig configOf(const std::shared_ptr<circuit::BuildContext>& c
 
 namespace circuit::families {
 const ComponentFamily RV32IPredictionCounter{ "rv32i.prediction.counter","RV32IPredictionCounter",counterPins, structuralFactory<::RV32IPredictionCounter>(),
-    [](const std::string& n,const std::shared_ptr<BuildContext>& c){return Component::createWithContext<PredictionDirect>(c,n,Kind::Counter,RV32IPredictionCounter);} };
+    [](const std::string& n,const std::shared_ptr<BuildContext>& c){return Component::createWithContext<PredictionBehavioral>(c,n,Kind::Counter,RV32IPredictionCounter);} };
 const ComponentFamily RV32IBranchPredecode{ "rv32i.prediction.predecode","RV32IBranchPredecode",predecodePins, structuralFactory<::RV32IBranchPredecode>(),
-    [](const std::string& n,const std::shared_ptr<BuildContext>& c){return Component::createWithContext<PredictionDirect>(c,n,Kind::Predecode,RV32IBranchPredecode);} };
+    [](const std::string& n,const std::shared_ptr<BuildContext>& c){return Component::createWithContext<PredictionBehavioral>(c,n,Kind::Predecode,RV32IBranchPredecode);} };
 const ComponentFamily RV32IBranchRecovery{ "rv32i.prediction.recovery","RV32IBranchRecovery",recoveryPins, structuralFactory<::RV32IBranchRecovery>(),
-    [](const std::string& n,const std::shared_ptr<BuildContext>& c){return Component::createWithContext<PredictionDirect>(c,n,Kind::Recovery,RV32IBranchRecovery);} };
+    [](const std::string& n,const std::shared_ptr<BuildContext>& c){return Component::createWithContext<PredictionBehavioral>(c,n,Kind::Recovery,RV32IBranchRecovery);} };
 const ComponentFamily RV32IBranchPredictor{ "rv32i.prediction.predictor","RV32IBranchPredictor",predictorPins,
     [](const std::string& n,const std::shared_ptr<BuildContext>& c){return Component::createWithContext<::RV32IBranchPredictor>(c,n,configOf(c));},
-    [](const std::string& n,const std::shared_ptr<BuildContext>& c){return Component::createWithContext<PredictionDirect>(c,n,Kind::Predictor,RV32IBranchPredictor,configOf(c));} };
+    [](const std::string& n,const std::shared_ptr<BuildContext>& c){return Component::createWithContext<PredictionBehavioral>(c,n,Kind::Predictor,RV32IBranchPredictor,configOf(c));} };
 const ComponentFamily RV32IPredictionPath{ "rv32i.prediction.path","RV32IPredictionPath",pathPins,
     [](const std::string& n,const std::shared_ptr<BuildContext>& c){return Component::createWithContext<::RV32IPredictionPath>(c,n,configOf(c));},
-    [](const std::string& n,const std::shared_ptr<BuildContext>& c){return Component::createWithContext<PredictionDirect>(c,n,Kind::Path,RV32IPredictionPath,configOf(c));} };
+    [](const std::string& n,const std::shared_ptr<BuildContext>& c){return Component::createWithContext<PredictionBehavioral>(c,n,Kind::Path,RV32IPredictionPath,configOf(c));} };
 } // namespace circuit::families
 
 RV32IPredictionCounter::RV32IPredictionCounter(std::string n):IOComponent(std::move(n),counterPins) {}

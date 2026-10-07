@@ -249,9 +249,9 @@ struct Charge {
         last = wl;
     }
 };
-class DRAMRowDirect : public Primitive {
+class DRAMRowBehavioral : public Primitive {
   public:
-    DRAMRowDirect(std::string n, size_t columns, size_t retention)
+    DRAMRowBehavioral(std::string n, size_t columns, size_t retention)
         : Primitive(std::move(n), "DRAMRow<" + std::to_string(columns) + ">",
                     [=](IOComponent *s) { rowPins(s, columns, retention); }),
           retention_(retention), cells_(columns) {}
@@ -270,9 +270,9 @@ class DRAMRowDirect : public Primitive {
     size_t retention_;
     std::vector<Charge> cells_;
 };
-class DRAMBankDirect : public Primitive {
+class DRAMBankBehavioral : public Primitive {
   public:
-    DRAMBankDirect(std::string n, size_t width, DRAMDeviceConfig c)
+    DRAMBankBehavioral(std::string n, size_t width, DRAMDeviceConfig c)
         : Primitive(std::move(n),
                     "DRAMStorageBank<" + std::to_string(width) + "," + std::to_string(c.depth_words) + "," +
                         std::to_string(c.words_per_row) + ">",
@@ -339,10 +339,10 @@ class DRAMBankDirect : public Primitive {
     bool prepared_ = true, sensed_ = false;
     size_t selected_ = 0;
 };
-class DRAMDirect : public Primitive, public MemoryDeviceStorage {
+class DRAMBehavioral : public Primitive, public MemoryDeviceStorage {
   public:
     const char* getTypeName() const override { return memoryDisplayType(Primitive::getTypeName()); }
-    DRAMDirect(std::string n, size_t width, DRAMDeviceConfig c)
+    DRAMBehavioral(std::string n, size_t width, DRAMDeviceConfig c)
         : Primitive(std::move(n), "DRAM<" + std::to_string(width) + ">",
                     [width](IOComponent *s) { devicePins(s, width); }),
           MemoryDeviceStorage(c.depth_words, width, X, c.record_history, c.storage_limits),
@@ -642,7 +642,7 @@ void registerDRAMComponents(ComponentCatalog &c) {
         },
         [row](const std::string &n, const ParameterMap &p, const std::shared_ptr<BuildContext> &ctx) {
             auto [cols, t] = row(p);
-            return Component::createWithContext<DRAMRowDirect>(ctx, n, cols, t);
+            return Component::createWithContext<DRAMRowBehavioral>(ctx, n, cols, t);
         },
         "DRAMRowTest");
     auto rows = [](const ParameterMap &p) {
@@ -670,7 +670,7 @@ void registerDRAMComponents(ComponentCatalog &c) {
                 return Component::createWithContext<DRAMBank>(ctx, n, width, dramConfigFromParameters(p));
             },
             [width](const std::string &n, const ParameterMap &p, const std::shared_ptr<BuildContext> &ctx) {
-                return Component::createWithContext<DRAMBankDirect>(ctx, n, width,
+                return Component::createWithContext<DRAMBankBehavioral>(ctx, n, width,
                                                                     dramConfigFromParameters(p));
             },
             "DRAMStorageBankTest");
@@ -695,7 +695,7 @@ void registerDRAMComponents(ComponentCatalog &c) {
                 return Component::createWithContext<DRAMDevice>(ctx, n, width, dramConfigFromParameters(p));
             },
             [width](const std::string &n, const ParameterMap &p, const std::shared_ptr<BuildContext> &ctx) {
-                return Component::createWithContext<DRAMDirect>(ctx, n, width, dramConfigFromParameters(p));
+                return Component::createWithContext<DRAMBehavioral>(ctx, n, width, dramConfigFromParameters(p));
             },
             "DRAMTest", false,
             [width](const ParameterMap &p) {

@@ -38,7 +38,7 @@ assert "../rv32i/4.3/register.md" in (ROOT / "site-docs/memory/3.2.md").read_tex
 
 # Component identifiers, not substrings of still-current file names:
 # MemoryArrayBlocks.hpp remains a real resource.
-retired = re.compile(r"\b(?:MemoryBit|Register32|Register32Direct|MemoryPayloadRegister|"
+retired = re.compile(r"\b(?:MemoryBit|Register32|Register32Behavioral|MemoryPayloadRegister|"
                      r"LegacyMemoryContainer|MemoryArraySlice|MemoryArray|MemoryWord|"
                      r"MemoryStorageBank|Memory64Kx32|Memory32x32|Memory4x32|"
                      r"MemoryBusAdapter32|FlipFlopArrayModel|SRAMArrayModel|"

@@ -68,7 +68,7 @@ Component
 - A `ComponentFamily` is one public contract: an ID, pins, a structural factory and a behavioral factory. There is at most one implementation of each kind.
 - Parents ask for a family, not a class: `builder.add(circuit::families::ALU32, "ALU")`.
 - One `BuildProfile` (ordered rules, last match wins) chooses structural or behavioral per path; a `BuildManifest` records what was built. See `docs/unified-component-profiles.md`.
-- Behavioral classes are usually named `...Direct`; their headers are private, under `src/modules`.
+- Behavioral classes are usually named `...Behavioral`; their headers are private, under `src/modules`.
 - A behavioral rule has one owner. Larger behavioral implementations call the smaller component's function (for example `alu32Result`) instead of restating it. The instruction oracle in `src/rv32i` is deliberately independent.
 - Contract IDs are stored in saved profiles and layouts. Renaming or removing one needs a compatibility plan; see the retired list in `src/modules/rv32i/RV32IBuildProfiles.cpp`.
 

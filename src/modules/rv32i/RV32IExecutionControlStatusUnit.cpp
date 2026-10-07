@@ -1,5 +1,5 @@
 #include "modules/rv32i/RV32IExecutionControlStatusUnit.hpp"
-#include "modules/rv32i/RV32IExecutionStatusDirect.hpp"
+#include "modules/rv32i/RV32IExecutionStatusBehavioral.hpp"
 
 #include "components/ComponentBuilder.hpp"
 #include "components/ComponentBuilder.tpp"
@@ -110,7 +110,7 @@ const ComponentFamily RV32IExecutionStatus{
     },
     [](const std::string& name, const std::shared_ptr<BuildContext>& context) {
         return Component::createWithContext<
-            ::RV32IExecutionStatusDirect>(context, name);
+            ::RV32IExecutionStatusBehavioral>(context, name);
     }};
 }
 

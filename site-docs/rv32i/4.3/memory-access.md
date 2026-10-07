@@ -129,7 +129,7 @@ Two splitters, two AND gates, and two OR gates evaluate the predicate. It is reg
 
 #### Behavioral implementation
 
-`RV32IMemoryAlignmentDirect` evaluates the same four-state gate expression without internal components. It does not coerce unknown bits into a binary integer.
+`RV32IMemoryAlignmentBehavioral` evaluates the same four-state gate expression without internal components. It does not coerce unknown bits into a binary integer.
 
 ### Examples
 
@@ -143,7 +143,7 @@ Two splitters, two AND gates, and two OR gates evaluate the predicate. It is reg
 
 ### Tests
 
-`RV32IMemoryAlignmentUnitTest` includes six named binary cases and all $4^4=256$ combinations of LOW/HIGH/X/Z for the four meaningful bits. It checks 262 checkpoints in each implementation. Source: `src/modules/rv32i/RV32IMemoryAlignmentUnit.cpp` (structural) and `src/modules/rv32i/RV32IPipelineControlDirect.cpp` (behavioral).
+`RV32IMemoryAlignmentUnitTest` includes six named binary cases and all $4^4=256$ combinations of LOW/HIGH/X/Z for the four meaningful bits. It checks 262 checkpoints in each implementation. Source: `src/modules/rv32i/RV32IMemoryAlignmentUnit.cpp` (structural) and `src/modules/rv32i/RV32IPipelineControlBehavioral.cpp` (behavioral).
 
 ## 4.3.6.3. `RV32IMemoryRequest`
 

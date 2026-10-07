@@ -1,7 +1,7 @@
-#include "modules/memory/RegisterDirect.hpp"
+#include "modules/memory/RegisterBehavioral.hpp"
 #include "modules/memory/Register.hpp"
 
-RegisterDirect::RegisterDirect(std::string name, size_t width)
+RegisterBehavioral::RegisterBehavioral(std::string name, size_t width)
     : BasicComponent(std::move(name), 1, [width](IOComponent* self) {
           self->addPinDynamic("D", PinType::INPUT, width);
           self->addPinDynamic("Q", PinType::OUTPUT, width);
@@ -9,7 +9,7 @@ RegisterDirect::RegisterDirect(std::string name, size_t width)
       }), width_(width), type_("Register<" + std::to_string(width) + ">"),
       stored_(width, LogicValue::UNKNOWN) {}
 
-void RegisterDirect::evaluate(size_t time, Simulator& simulator) {
+void RegisterBehavioral::evaluate(size_t time, Simulator& simulator) {
     const auto reset = getInputValue("RST");
     const auto clock = getInputValue("CLK");
     if (reset == LogicValue::HIGH) std::fill(stored_.begin(), stored_.end(), LogicValue::LOW);

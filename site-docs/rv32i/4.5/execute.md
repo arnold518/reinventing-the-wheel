@@ -62,4 +62,4 @@ The rows cover arithmetic, both branch outcomes, selected-target alignment, JAL/
 
 ## Tests
 
-`RV32IBaselineExecuteStageTest` compares both implementations; program cases exercise the complete instruction set supported by the reference. Sources: `RV32IBaselinePipeline.cpp`, `RV32IBaselinePipelineDirect.cpp`.
+`RV32IBaselineExecuteStageTest` compares both implementations; program cases exercise the complete instruction set supported by the reference. Sources: `RV32IBaselinePipeline.cpp`, `RV32IBaselinePipelineBehavioral.cpp`.

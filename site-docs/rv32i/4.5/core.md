@@ -67,7 +67,7 @@ The floorplan preserves stage order even though control and register-write feedb
 
 ### Behavioral implementation
 
-`DirectCore` stores four instruction packets, the fetch PC, register values, and halt/trap status. It evaluates the same cycle rules independently of the structural wiring. It does not run an architectural oracle internally and does not instantiate a shadow structural CPU. Both forms share `rv32i.core.baseline-pipeline`, a pipeline-state view accepting a host-observed PC and a read-only view of the pending MEM/WB retirement packet. Neither keeps retirement counters or saved trace records.
+`BehavioralCore` stores four instruction packets, the fetch PC, register values, and halt/trap status. It evaluates the same cycle rules independently of the structural wiring. It does not run an architectural oracle internally and does not instantiate a shadow structural CPU. Both forms share `rv32i.core.baseline-pipeline`, a pipeline-state view accepting a host-observed PC and a read-only view of the pending MEM/WB retirement packet. Neither keeps retirement counters or saved trace records.
 
 ## Examples
 
@@ -114,4 +114,4 @@ The example below sums an array, branches around the loop, and stores its result
 
 These tests establish the baseline's simulated behavior. They do not establish realistic cache/DRAM latency, hardware clock frequency, or performance relative to a physical processor. Variable-latency memories and forwarding are outside this baseline; the existing advanced `RV32IFiveStageCore` supports them and shares the same simplified Writeback stage.
 
-Sources: `RV32IBaselinePipelineCore.cpp`, `RV32IBaselinePipelineDirect.cpp`, `RV32IBaselinePipelineTests.cpp`, and the shared RV32I program tests.
+Sources: `RV32IBaselinePipelineCore.cpp`, `RV32IBaselinePipelineBehavioral.cpp`, `RV32IBaselinePipelineTests.cpp`, and the shared RV32I program tests.

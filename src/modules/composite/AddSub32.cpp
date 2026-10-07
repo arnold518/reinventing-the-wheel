@@ -64,9 +64,9 @@ std::pair<LogicValue, LogicValue> fullAdder(
     return {sum, logicOr(first_carry, second_carry)};
 }
 
-class AddSub32Direct final : public BasicComponent {
+class AddSub32Behavioral final : public BasicComponent {
 public:
-    explicit AddSub32Direct(std::string name)
+    explicit AddSub32Behavioral(std::string name)
         : BasicComponent(
               std::move(name),
               1,
@@ -119,7 +119,7 @@ const ComponentFamily AddSub32{
     },
     [](const std::string& name,
        const std::shared_ptr<BuildContext>& context) {
-        return Component::createWithContext<AddSub32Direct>(context, name);
+        return Component::createWithContext<AddSub32Behavioral>(context, name);
     }};
 }
 

@@ -1,6 +1,6 @@
 #include "modules/memory/MemoryController.hpp"
 #include "modules/memory/Register.hpp"
-#include "modules/memory/ClockedStateBitDirect.hpp"
+#include "modules/memory/ClockedStateBitBehavioral.hpp"
 #include "modules/basic/DFlipFlop.hpp"
 #include "modules/memory/MemoryContainer.hpp"
 #include "modules/memory/BehavioralMemoryEndpoint.hpp"
@@ -36,9 +36,9 @@ void ClockedStateBit::buildInternals(ComponentBuilder& builder) {
     wires.connect(state->getOutputPin("Q"), getOutputPin("Q"));
     wires.finish();
 }
-ClockedStateBitDirect::ClockedStateBitDirect(std::string name)
+ClockedStateBitBehavioral::ClockedStateBitBehavioral(std::string name)
     : BasicComponent(std::move(name), 1, circuit::families::ClockedStateBit.pinInitializer()) {}
-void ClockedStateBitDirect::evaluate(size_t time, Simulator& simulator) {
+void ClockedStateBitBehavioral::evaluate(size_t time, Simulator& simulator) {
     const auto reset = getInputValue("RST");
     const auto clock = getInputValue("CLK");
     if (reset == H) stored_ = L;
@@ -57,7 +57,7 @@ const ComponentFamily ClockedStateBit{
         return Component::createWithContext<::ClockedStateBit>(context, name);
     },
     [](const std::string& name, const std::shared_ptr<BuildContext>& context) {
-        return Component::createWithContext<ClockedStateBitDirect>(context, name);
+        return Component::createWithContext<ClockedStateBitBehavioral>(context, name);
     }};
 }
 void defineMemoryTransactionPortPins(IOComponent* s, size_t w) {

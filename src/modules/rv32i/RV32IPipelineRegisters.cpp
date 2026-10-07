@@ -120,9 +120,9 @@ LogicValue merge(LogicValue held, LogicValue incoming) {
     return held == incoming ? held : LogicValue::UNKNOWN;
 }
 
-class RV32IPipelineRegisterDirect : public BasicComponent {
+class RV32IPipelineRegisterBehavioral : public BasicComponent {
 public:
-    RV32IPipelineRegisterDirect(
+    RV32IPipelineRegisterBehavioral(
         std::string name,
         std::string type_name,
         std::vector<std::string> fields,
@@ -240,7 +240,7 @@ const ComponentFamily RV32IIFIDPipelineRegister{
             context, name,compactPacket(context));
     },
     [](const std::string& name, const std::shared_ptr<BuildContext>& context) {
-        return Component::createWithContext<RV32IPipelineRegisterDirect>(
+        return Component::createWithContext<RV32IPipelineRegisterBehavioral>(
             context,
             name,
             RV32IIFIDPipelineRegister::TypeName,
@@ -256,7 +256,7 @@ const ComponentFamily RV32IIDEXPipelineRegister{
             context, name,compactPacket(context));
     },
     [](const std::string& name, const std::shared_ptr<BuildContext>& context) {
-        return Component::createWithContext<RV32IPipelineRegisterDirect>(
+        return Component::createWithContext<RV32IPipelineRegisterBehavioral>(
             context,
             name,
             RV32IIDEXPipelineRegister::TypeName,
@@ -272,7 +272,7 @@ const ComponentFamily RV32IEXMEMPipelineRegister{
             context, name,compactPacket(context));
     },
     [](const std::string& name, const std::shared_ptr<BuildContext>& context) {
-        return Component::createWithContext<RV32IPipelineRegisterDirect>(
+        return Component::createWithContext<RV32IPipelineRegisterBehavioral>(
             context,
             name,
             RV32IEXMEMPipelineRegister::TypeName,
@@ -288,7 +288,7 @@ const ComponentFamily RV32IMEMWBPipelineRegister{
             context, name,compactPacket(context));
     },
     [](const std::string& name, const std::shared_ptr<BuildContext>& context) {
-        return Component::createWithContext<RV32IPipelineRegisterDirect>(
+        return Component::createWithContext<RV32IPipelineRegisterBehavioral>(
             context,
             name,
             RV32IMEMWBPipelineRegister::TypeName,

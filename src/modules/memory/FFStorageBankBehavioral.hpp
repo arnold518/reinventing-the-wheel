@@ -6,9 +6,9 @@
 
 // Compact abstraction of parallel FFWords. No decoder, read mux or child topology.
 template<size_t Width>
-class FFStorageBankDirect : public BasicComponent {
+class FFStorageBankBehavioral : public BasicComponent {
 public:
-    FFStorageBankDirect(std::string name, size_t depth)
+    FFStorageBankBehavioral(std::string name, size_t depth)
         : BasicComponent(std::move(name), 1, [depth](IOComponent* self) {
             defineFFStorageBankPins<Width>(self, depth);
         }), words_(validateFFStorageBankDepth<Width>(depth)), type_(ffStorageBankTypeName<Width>(depth)) {

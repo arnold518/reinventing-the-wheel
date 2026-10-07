@@ -49,9 +49,9 @@ LogicValue xorValue(LogicValue left, LogicValue right) {
     return left == right ? LogicValue::LOW : LogicValue::HIGH;
 }
 
-class Logic32Direct final : public BasicComponent {
+class Logic32Behavioral final : public BasicComponent {
 public:
-    explicit Logic32Direct(std::string name)
+    explicit Logic32Behavioral(std::string name)
         : BasicComponent(
               std::move(name),
               1,
@@ -92,7 +92,7 @@ const ComponentFamily Logic32{
     },
     [](const std::string& name,
        const std::shared_ptr<BuildContext>& context) {
-        return Component::createWithContext<Logic32Direct>(context, name);
+        return Component::createWithContext<Logic32Behavioral>(context, name);
     }};
 }
 

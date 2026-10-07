@@ -94,7 +94,7 @@ Structural muxes/gates may isolate unused unknown data. The behavioral stage ins
 
 #### Behavioral implementation
 
-`DirectStage`'s Execute branch computes the selected operation, comparison qualification, branch mux, and target selection directly, without gate objects or an instruction oracle. The family is `rv32i.single-cycle.execute`.
+`BehavioralStage`'s Execute branch computes the selected operation, comparison qualification, branch mux, and target selection directly, without gate objects or an instruction oracle. The family is `rv32i.single-cycle.execute`.
 
 ### Examples
 
@@ -110,4 +110,4 @@ The recorded run covers all 32 ALU opcodes for a fixed operand pair, all eight b
 
 ### Tests
 
-`RV32ISingleCycleExecuteStageTest` checks both implementations; these are representative operand values, not an exhaustive 64-bit operand space. `RV32ISingleCycleStageIntegrationTest` asserts one main ALU and one branch adder, and verifies JALR when its destination is also its source. `RV32ISingleCycleDocumentationTest.py` compiles/replays this example. Source: `RV32ISingleCycleStages.cpp` and `RV32ISingleCycleStagesDirect.cpp`; scenarios: `src/tests/RV32ISingleCycleStageTests.cpp`.
+`RV32ISingleCycleExecuteStageTest` checks both implementations; these are representative operand values, not an exhaustive 64-bit operand space. `RV32ISingleCycleStageIntegrationTest` asserts one main ALU and one branch adder, and verifies JALR when its destination is also its source. `RV32ISingleCycleDocumentationTest.py` compiles/replays this example. Source: `RV32ISingleCycleStages.cpp` and `RV32ISingleCycleStagesBehavioral.cpp`; scenarios: `src/tests/RV32ISingleCycleStageTests.cpp`.

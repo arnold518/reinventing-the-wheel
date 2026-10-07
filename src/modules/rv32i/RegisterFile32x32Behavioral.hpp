@@ -8,10 +8,10 @@
 #include <utility>
 #include <vector>
 
-class RegisterFile32x32Direct : public BasicComponent,
+class RegisterFile32x32Behavioral : public BasicComponent,
                                              public RegisterStateView {
 public:
-    RegisterFile32x32Direct(std::string name);
+    RegisterFile32x32Behavioral(std::string name);
     static constexpr const char* TypeName = "RegisterFile32x32";
     const char* getTypeName() const override { return TypeName; }
     void evaluate(size_t current_time, Simulator& simulator) override;

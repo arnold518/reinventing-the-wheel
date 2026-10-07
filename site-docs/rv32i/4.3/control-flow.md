@@ -100,7 +100,7 @@ PC initially contains `X`. The behavioral implementation clears it on reset, poi
 
 #### Behavioral implementation
 
-`RV32IControlFlowDirect` stores a 32-bit four-state PC vector and previous clock level, updates PC at reset/edges, then recomputes outputs. It has one abstract delay tick and is registered under `rv32i.control-flow`.
+`RV32IControlFlowBehavioral` stores a 32-bit four-state PC vector and previous clock level, updates PC at reset/edges, then recomputes outputs. It has one abstract delay tick and is registered under `rv32i.control-flow`.
 
 ### Examples
 
@@ -114,4 +114,4 @@ PC initially contains `X`. The behavioral implementation clears it on reset, poi
 
 ### Tests
 
-`RV32IControlFlowUnitTest` exercises reset, sequential capture, branch/jump targets, holds, and alignment in both fidelities. `RV32IBuildingBlocksDocumentationTest` replays its actions through the exact C++ example. Source: `src/modules/rv32i/RV32IControlFlowUnit.cpp` and `RV32IControlFlowDirect.cpp`; scenarios: `src/tests/RV32IBlockStandaloneTests.cpp`.
+`RV32IControlFlowUnitTest` exercises reset, sequential capture, branch/jump targets, holds, and alignment in both fidelities. `RV32IBuildingBlocksDocumentationTest` replays its actions through the exact C++ example. Source: `src/modules/rv32i/RV32IControlFlowUnit.cpp` and `RV32IControlFlowBehavioral.cpp`; scenarios: `src/tests/RV32IBlockStandaloneTests.cpp`.

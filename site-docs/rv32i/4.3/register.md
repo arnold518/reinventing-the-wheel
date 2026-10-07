@@ -100,7 +100,7 @@ Unlike [FFWord&lt;W&gt;](../../memory/3.1.1.md), this register has no byte mask 
 
 #### Behavioral implementation
 
-[`RegisterDirect`](https://github.com/arnold518/reinventing-the-wheel/blob/github-pages/src/modules/memory/RegisterDirect.cpp) stores one W-bit logic vector and the previous clock value, applying the rules above with one abstract output-delay tick. The structural register can instead select behavioral `FlipFlopCell` children. Both choices retain the same external pins. Simulator output history supplies `Q` when scrubbing the timeline.
+[`RegisterBehavioral`](https://github.com/arnold518/reinventing-the-wheel/blob/github-pages/src/modules/memory/RegisterBehavioral.cpp) stores one W-bit logic vector and the previous clock value, applying the rules above with one abstract output-delay tick. The structural register can instead select behavioral `FlipFlopCell` children. Both choices retain the same external pins. Simulator output history supplies `Q` when scrubbing the timeline.
 
 #### RV32I integration
 

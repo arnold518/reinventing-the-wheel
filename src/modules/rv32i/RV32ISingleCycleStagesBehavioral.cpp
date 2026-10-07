@@ -1,5 +1,5 @@
-#include "RV32ISingleCycleStagesDirect.hpp"
-#include "modules/composite/ALU32Direct.hpp"
+#include "RV32ISingleCycleStagesBehavioral.hpp"
+#include "modules/composite/ALU32Behavioral.hpp"
 #include "RV32IMemoryRequestModel.hpp"
 #include "components/BasicComponent.hpp"
 #include "components/Component.tpp"
@@ -20,9 +20,9 @@ Bits bits(size_t width,uint32_t value) {
 // Independent compact reference for the stage's settled binary/edge contract.
 // It never instantiates a shadow structural circuit or executes an instruction
 // oracle. In particular, Execute has no state, and Decode writes only on CLK.
-class DirectStage : public BasicComponent {
+class BehavioralStage : public BasicComponent {
 public:
-    DirectStage(std::string name,Stage stage)
+    BehavioralStage(std::string name,Stage stage)
         : BasicComponent(std::move(name),1,family(stage).pinInitializer()),stage_(stage) {
         if(stage==Stage::Decode) {
             registers_.assign(32,Bits(32,LogicValue::UNKNOWN));registers_[0]=bits(32,0);
@@ -163,15 +163,15 @@ private:
         emit("READ_DATA",loaded,t,s);
     }
 };
-class DirectDecodeStage final : public DirectStage, public RegisterStateView {
+class BehavioralDecodeStage final : public BehavioralStage, public RegisterStateView {
 public:
-    explicit DirectDecodeStage(std::string name):DirectStage(std::move(name),Stage::Decode) {}
+    explicit BehavioralDecodeStage(std::string name):BehavioralStage(std::move(name),Stage::Decode) {}
     std::vector<Bits> getRegisterStateAtTime(size_t time) const override { return registerStateAtTime(time); }
 };
 }
 std::shared_ptr<IOComponent> directStage(Stage stage,const std::string& name,
     const std::shared_ptr<circuit::BuildContext>& context) {
-    if(stage==Stage::Decode) return Component::createWithContext<DirectDecodeStage>(context,name);
-    return Component::createWithContext<DirectStage>(context,name,stage);
+    if(stage==Stage::Decode) return Component::createWithContext<BehavioralDecodeStage>(context,name);
+    return Component::createWithContext<BehavioralStage>(context,name,stage);
 }
 }

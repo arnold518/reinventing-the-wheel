@@ -60,9 +60,9 @@ LogicValue muxValue(
         logicAnd(when_high, select));
 }
 
-class Shifter32Direct final : public BasicComponent {
+class Shifter32Behavioral final : public BasicComponent {
 public:
-    explicit Shifter32Direct(std::string name)
+    explicit Shifter32Behavioral(std::string name)
         : BasicComponent(
               std::move(name),
               1,
@@ -119,7 +119,7 @@ const ComponentFamily Shifter32{
     },
     [](const std::string& name,
        const std::shared_ptr<BuildContext>& context) {
-        return Component::createWithContext<Shifter32Direct>(context, name);
+        return Component::createWithContext<Shifter32Behavioral>(context, name);
     }};
 }
 

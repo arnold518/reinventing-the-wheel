@@ -187,7 +187,7 @@ Decoded decode(uint32_t w) {
 
 #### Unknown inputs and timing
 
-The structural decoder handles each predicate and rewired field separately: unknown unused bits need not destroy recognition, and known register bits can remain visible. `RV32IDecodeControlDirect` is deliberately conservative: any nonbinary instruction bit makes **all outputs `X`**. Its registered equivalence scope is binary, settled output values. No instruction is latched here; downstream state must wait for decoding to settle.
+The structural decoder handles each predicate and rewired field separately: unknown unused bits need not destroy recognition, and known register bits can remain visible. `RV32IDecodeControlBehavioral` is deliberately conservative: any nonbinary instruction bit makes **all outputs `X`**. Its registered equivalence scope is binary, settled output values. No instruction is latched here; downstream state must wait for decoding to settle.
 
 ### Implementation
 
@@ -231,7 +231,7 @@ These helpers are fixed structural implementations, not additional behavioral va
 
 #### Behavioral implementation
 
-`RV32IDecodeControlDirect` uses `RV32IDecoder::decode` and `RV32IControl::fromDecoded`, converts their enums to the public pin encodings, and schedules outputs after one abstract delay tick. It is registered under `rv32i.decode-control` alongside the structural implementation.
+`RV32IDecodeControlBehavioral` uses `RV32IDecoder::decode` and `RV32IControl::fromDecoded`, converts their enums to the public pin encodings, and schedules outputs after one abstract delay tick. It is registered under `rv32i.decode-control` alongside the structural implementation.
 
 ### Examples
 
