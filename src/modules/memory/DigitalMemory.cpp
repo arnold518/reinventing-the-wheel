@@ -71,6 +71,19 @@ ParameterMap storageParameters(const MemoryStorage::Limits &limits) {
             {"max_resident_bytes", std::to_string(limits.max_resident_bytes)},
             {"max_history_bytes", std::to_string(limits.max_history_bytes)}};
 }
+void readGeometry(const ParameterMap &p, Geometry &g) {
+    g.depth_words = parameter(p, "depth_words", 4);
+    g.words_per_row = parameter(p, "words_per_row", 2);
+    g.record_history = historyParameter(p);
+    g.storage_limits = storageLimits(p);
+}
+ParameterMap geometryParameters(const Geometry &g) {
+    auto p = storageParameters(g.storage_limits);
+    p.insert({{"record_history", g.record_history ? "1" : "0"},
+              {"depth_words", std::to_string(g.depth_words)},
+              {"words_per_row", std::to_string(g.words_per_row)}});
+    return p;
+}
 void Primitive::publish(Simulator &sim, size_t t, const std::string &pin, const Bits &value) {
     auto it = published_.find(pin);
     if (it != published_.end() && it->second == value)

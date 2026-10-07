@@ -277,7 +277,7 @@ Do not bypass a gate blindly for `Z` inputs: `Z AND 1` becomes `X`, while an
 identity Rewire preserves `Z`. Preserve the storage contract's defined domain.
 
 Evidence: [Register32](../src/modules/memory/Register32.cpp),
-[register file](../src/modules/memory/RegisterFile32x32.cpp),
+[register file](../src/modules/rv32i/RegisterFile32x32.cpp),
 [FFWord](../include/modules/memory/FFWord.hpp).
 
 ### H11. Simplify constant-capacity FF address checks
@@ -489,7 +489,7 @@ The main saving here is shared decode terms, not x0 storage: the register file
 already stores only x1–x31. Recheck write timing and unknown-address behavior.
 
 Evidence: [decoder construction](../src/modules/basic/Decoder.cpp),
-[register file](../src/modules/memory/RegisterFile32x32.cpp).
+[register file](../src/modules/rv32i/RegisterFile32x32.cpp).
 
 ## Storage abstraction follow-up
 

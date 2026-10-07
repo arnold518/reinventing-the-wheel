@@ -6,7 +6,7 @@
 #include "components/selection/StandardProfiles.hpp"
 #include "modules/basic/Gate.hpp"
 #include "modules/basic/DFlipFlop.hpp"
-#include "modules/memory/RegisterFile32x32.hpp"
+#include "modules/rv32i/RegisterFile32x32.hpp"
 #include "modules/utility/Rewire.hpp"
 #include <iostream>
 #include <limits>

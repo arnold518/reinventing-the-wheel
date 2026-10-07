@@ -8,7 +8,7 @@
 #include "modules/composite/FullAdder.hpp"
 #include "modules/memory/Register.hpp"
 #include "modules/memory/FlipFlopCell.hpp"
-#include "modules/memory/RegisterFile32x32.hpp"
+#include "modules/rv32i/RegisterFile32x32.hpp"
 #include "modules/utility/Constant.hpp"
 #include "modules/utility/Rewire.hpp"
 #include "simulator/Event.hpp"

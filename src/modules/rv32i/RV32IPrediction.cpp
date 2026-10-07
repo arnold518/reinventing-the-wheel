@@ -1,4 +1,5 @@
 #include "modules/rv32i/RV32IPrediction.hpp"
+#include "components/selection/FamilyFactories.hpp"
 
 #include "components/BasicComponent.hpp"
 #include "components/selection/BuildContext.hpp"
@@ -231,23 +232,26 @@ rv32i::PredictionConfig configOf(const std::shared_ptr<circuit::BuildContext>& c
 }
 }
 
-#define DEFINE_FIXED(Name,Id,Pins,KindName) \
-namespace circuit::families { const ComponentFamily Name{ "rv32i.prediction." Id,#Name,Pins, \
-    [](const std::string& n,const std::shared_ptr<BuildContext>& c){return Component::createWithContext<::Name>(c,n);}, \
-    [](const std::string& n,const std::shared_ptr<BuildContext>& c){return Component::createWithContext<PredictionDirect>(c,n,Kind::KindName,Name);} }; } \
-Name::Name(std::string n):IOComponent(std::move(n),Pins) {}
-DEFINE_FIXED(RV32IPredictionCounter,"counter",counterPins,Counter)
-DEFINE_FIXED(RV32IBranchPredecode,"predecode",predecodePins,Predecode)
-DEFINE_FIXED(RV32IBranchRecovery,"recovery",recoveryPins,Recovery)
-#undef DEFINE_FIXED
-#define DEFINE_CONFIGURED(Name,Id,Pins,KindName) \
-namespace circuit::families { const ComponentFamily Name{ "rv32i.prediction." Id,#Name,Pins, \
-    [](const std::string& n,const std::shared_ptr<BuildContext>& c){return Component::createWithContext<::Name>(c,n,configOf(c));}, \
-    [](const std::string& n,const std::shared_ptr<BuildContext>& c){return Component::createWithContext<PredictionDirect>(c,n,Kind::KindName,Name,configOf(c));} }; } \
-Name::Name(std::string n,rv32i::PredictionConfig config):IOComponent(std::move(n),Pins),config_(config) { config_.validate(); }
-DEFINE_CONFIGURED(RV32IBranchPredictor,"predictor",predictorPins,Predictor)
-DEFINE_CONFIGURED(RV32IPredictionPath,"path",pathPins,Path)
-#undef DEFINE_CONFIGURED
+namespace circuit::families {
+const ComponentFamily RV32IPredictionCounter{ "rv32i.prediction.counter","RV32IPredictionCounter",counterPins, structuralFactory<::RV32IPredictionCounter>(),
+    [](const std::string& n,const std::shared_ptr<BuildContext>& c){return Component::createWithContext<PredictionDirect>(c,n,Kind::Counter,RV32IPredictionCounter);} };
+const ComponentFamily RV32IBranchPredecode{ "rv32i.prediction.predecode","RV32IBranchPredecode",predecodePins, structuralFactory<::RV32IBranchPredecode>(),
+    [](const std::string& n,const std::shared_ptr<BuildContext>& c){return Component::createWithContext<PredictionDirect>(c,n,Kind::Predecode,RV32IBranchPredecode);} };
+const ComponentFamily RV32IBranchRecovery{ "rv32i.prediction.recovery","RV32IBranchRecovery",recoveryPins, structuralFactory<::RV32IBranchRecovery>(),
+    [](const std::string& n,const std::shared_ptr<BuildContext>& c){return Component::createWithContext<PredictionDirect>(c,n,Kind::Recovery,RV32IBranchRecovery);} };
+const ComponentFamily RV32IBranchPredictor{ "rv32i.prediction.predictor","RV32IBranchPredictor",predictorPins,
+    [](const std::string& n,const std::shared_ptr<BuildContext>& c){return Component::createWithContext<::RV32IBranchPredictor>(c,n,configOf(c));},
+    [](const std::string& n,const std::shared_ptr<BuildContext>& c){return Component::createWithContext<PredictionDirect>(c,n,Kind::Predictor,RV32IBranchPredictor,configOf(c));} };
+const ComponentFamily RV32IPredictionPath{ "rv32i.prediction.path","RV32IPredictionPath",pathPins,
+    [](const std::string& n,const std::shared_ptr<BuildContext>& c){return Component::createWithContext<::RV32IPredictionPath>(c,n,configOf(c));},
+    [](const std::string& n,const std::shared_ptr<BuildContext>& c){return Component::createWithContext<PredictionDirect>(c,n,Kind::Path,RV32IPredictionPath,configOf(c));} };
+} // namespace circuit::families
+
+RV32IPredictionCounter::RV32IPredictionCounter(std::string n):IOComponent(std::move(n),counterPins) {}
+RV32IBranchPredecode::RV32IBranchPredecode(std::string n):IOComponent(std::move(n),predecodePins) {}
+RV32IBranchRecovery::RV32IBranchRecovery(std::string n):IOComponent(std::move(n),recoveryPins) {}
+RV32IBranchPredictor::RV32IBranchPredictor(std::string n,rv32i::PredictionConfig config):IOComponent(std::move(n),predictorPins),config_(config) { config_.validate(); }
+RV32IPredictionPath::RV32IPredictionPath(std::string n,rv32i::PredictionConfig config):IOComponent(std::move(n),pathPins),config_(config) { config_.validate(); }
 
 void RV32IPredictionCounter::buildInternals(ComponentBuilder& b) {
     StructuralWiring w(b);

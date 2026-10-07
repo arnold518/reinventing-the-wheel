@@ -1,6 +1,7 @@
 #include "RV32IBaselinePipelineInternal.hpp"
+#include "components/selection/FamilyFactories.hpp"
 #include "components/StructuralNetBuilder.hpp"
-#include "modules/memory/RegisterFile32x32.hpp"
+#include "modules/rv32i/RegisterFile32x32.hpp"
 #include "modules/rv32i/RV32IDecodeControlUnit.hpp"
 #include "modules/rv32i/RV32ISingleCycleStages.hpp"
 #include "modules/rv32i/RV32IPipelineControl.hpp"
@@ -146,25 +147,42 @@ Ptr packetStatus(ComponentBuilder& b,StructuralWiring& w,IOComponent& s,Pin cont
 }
 }
 
-#define DEFINE_BLOCK(Name,Id,Pins) \
-namespace circuit::families {const ComponentFamily RV32IBaseline##Name{ \
-    "rv32i.baseline." Id,"RV32IBaseline" #Name,Pins, \
-    [](const std::string& n,const std::shared_ptr<BuildContext>& c) {return Component::createWithContext<::RV32IBaseline##Name>(c,n);}, \
-    [](const std::string& n,const std::shared_ptr<BuildContext>& c) {return rv32i::baseline::direct(Block::Name,n,c);}};} \
-RV32IBaseline##Name::RV32IBaseline##Name(std::string n):IOComponent(std::move(n),Pins) {}
-DEFINE_BLOCK(FetchStage,"fetch",fetchPins)
-DEFINE_BLOCK(DecodeStage,"decode",decodePins)
-DEFINE_BLOCK(ExecuteStage,"execute",executePins)
-DEFINE_BLOCK(MemoryStage,"memory",memoryPins)
-DEFINE_BLOCK(DependencyUnit,"dependency",dependencyPins)
-DEFINE_BLOCK(Control,"control",controlPins)
-#undef DEFINE_BLOCK
+namespace circuit::families {
+const ComponentFamily RV32IBaselineFetchStage{
+    "rv32i.baseline.fetch","RV32IBaselineFetchStage",fetchPins, structuralFactory<::RV32IBaselineFetchStage>(),
+    [](const std::string& n,const std::shared_ptr<BuildContext>& c) {return rv32i::baseline::direct(Block::FetchStage,n,c);}};
+const ComponentFamily RV32IBaselineDecodeStage{
+    "rv32i.baseline.decode","RV32IBaselineDecodeStage",decodePins, structuralFactory<::RV32IBaselineDecodeStage>(),
+    [](const std::string& n,const std::shared_ptr<BuildContext>& c) {return rv32i::baseline::direct(Block::DecodeStage,n,c);}};
+const ComponentFamily RV32IBaselineExecuteStage{
+    "rv32i.baseline.execute","RV32IBaselineExecuteStage",executePins, structuralFactory<::RV32IBaselineExecuteStage>(),
+    [](const std::string& n,const std::shared_ptr<BuildContext>& c) {return rv32i::baseline::direct(Block::ExecuteStage,n,c);}};
+const ComponentFamily RV32IBaselineMemoryStage{
+    "rv32i.baseline.memory","RV32IBaselineMemoryStage",memoryPins, structuralFactory<::RV32IBaselineMemoryStage>(),
+    [](const std::string& n,const std::shared_ptr<BuildContext>& c) {return rv32i::baseline::direct(Block::MemoryStage,n,c);}};
+const ComponentFamily RV32IBaselineDependencyUnit{
+    "rv32i.baseline.dependency","RV32IBaselineDependencyUnit",dependencyPins, structuralFactory<::RV32IBaselineDependencyUnit>(),
+    [](const std::string& n,const std::shared_ptr<BuildContext>& c) {return rv32i::baseline::direct(Block::DependencyUnit,n,c);}};
+const ComponentFamily RV32IBaselineControl{
+    "rv32i.baseline.control","RV32IBaselineControl",controlPins, structuralFactory<::RV32IBaselineControl>(),
+    [](const std::string& n,const std::shared_ptr<BuildContext>& c) {return rv32i::baseline::direct(Block::Control,n,c);}};
+} // namespace circuit::families
+
+RV32IBaselineFetchStage::RV32IBaselineFetchStage(std::string n):IOComponent(std::move(n),fetchPins) {}
+RV32IBaselineDecodeStage::RV32IBaselineDecodeStage(std::string n):IOComponent(std::move(n),decodePins) {}
+RV32IBaselineExecuteStage::RV32IBaselineExecuteStage(std::string n):IOComponent(std::move(n),executePins) {}
+RV32IBaselineMemoryStage::RV32IBaselineMemoryStage(std::string n):IOComponent(std::move(n),memoryPins) {}
+RV32IBaselineDependencyUnit::RV32IBaselineDependencyUnit(std::string n):IOComponent(std::move(n),dependencyPins) {}
+RV32IBaselineControl::RV32IBaselineControl(std::string n):IOComponent(std::move(n),controlPins) {}
 namespace rv32i::baseline {
 const circuit::ComponentFamily& family(Block block) {
     switch(block) {
-#define CASE(Name) case Block::Name:return circuit::families::RV32IBaseline##Name;
-        CASE(FetchStage) CASE(DecodeStage) CASE(ExecuteStage) CASE(MemoryStage) CASE(DependencyUnit) CASE(Control)
-#undef CASE
+        case Block::FetchStage:return circuit::families::RV32IBaselineFetchStage;
+        case Block::DecodeStage:return circuit::families::RV32IBaselineDecodeStage;
+        case Block::ExecuteStage:return circuit::families::RV32IBaselineExecuteStage;
+        case Block::MemoryStage:return circuit::families::RV32IBaselineMemoryStage;
+        case Block::DependencyUnit:return circuit::families::RV32IBaselineDependencyUnit;
+        case Block::Control:return circuit::families::RV32IBaselineControl;
     }
     throw std::logic_error("Invalid baseline pipeline block");
 }

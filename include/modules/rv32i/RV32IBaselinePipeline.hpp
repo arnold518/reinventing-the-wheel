@@ -18,20 +18,45 @@ extern const ComponentFamily RV32IBaselineControl;
 extern const ComponentFamily RV32IBaselinePipelineCore;
 }
 
-#define BASELINE_BLOCK(Name) \
-class RV32IBaseline##Name : public IOComponent { \
-public: \
-    explicit RV32IBaseline##Name(std::string name); \
-    static constexpr const char* TypeName = "RV32IBaseline" #Name; \
-    const char* getTypeName() const override { return TypeName; } \
-    void buildInternals(ComponentBuilder&) override; \
+class RV32IBaselineFetchStage : public IOComponent {
+public:
+    explicit RV32IBaselineFetchStage(std::string name);
+    static constexpr const char* TypeName = "RV32IBaselineFetchStage";
+    const char* getTypeName() const override { return TypeName; }
+    void buildInternals(ComponentBuilder&) override;
 };
-BASELINE_BLOCK(FetchStage)
-BASELINE_BLOCK(ExecuteStage)
-BASELINE_BLOCK(MemoryStage)
-BASELINE_BLOCK(DependencyUnit)
-BASELINE_BLOCK(Control)
-#undef BASELINE_BLOCK
+
+class RV32IBaselineExecuteStage : public IOComponent {
+public:
+    explicit RV32IBaselineExecuteStage(std::string name);
+    static constexpr const char* TypeName = "RV32IBaselineExecuteStage";
+    const char* getTypeName() const override { return TypeName; }
+    void buildInternals(ComponentBuilder&) override;
+};
+
+class RV32IBaselineMemoryStage : public IOComponent {
+public:
+    explicit RV32IBaselineMemoryStage(std::string name);
+    static constexpr const char* TypeName = "RV32IBaselineMemoryStage";
+    const char* getTypeName() const override { return TypeName; }
+    void buildInternals(ComponentBuilder&) override;
+};
+
+class RV32IBaselineDependencyUnit : public IOComponent {
+public:
+    explicit RV32IBaselineDependencyUnit(std::string name);
+    static constexpr const char* TypeName = "RV32IBaselineDependencyUnit";
+    const char* getTypeName() const override { return TypeName; }
+    void buildInternals(ComponentBuilder&) override;
+};
+
+class RV32IBaselineControl : public IOComponent {
+public:
+    explicit RV32IBaselineControl(std::string name);
+    static constexpr const char* TypeName = "RV32IBaselineControl";
+    const char* getTypeName() const override { return TypeName; }
+    void buildInternals(ComponentBuilder&) override;
+};
 
 class RV32IBaselineDecodeStage : public IOComponent, public RegisterStateView {
 public:

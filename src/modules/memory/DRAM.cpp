@@ -420,20 +420,14 @@ DRAMDeviceConfig dramConfigFromParameters(const ParameterMap &p) {
     keys(p, {"depth_words", "words_per_row", "phase_ticks", "retention_ticks", "record_history",
              "paged", "max_resident_bytes", "max_history_bytes"});
     DRAMDeviceConfig c;
-    c.depth_words = parameter(p, "depth_words", 4);
-    c.words_per_row = parameter(p, "words_per_row", 2);
+    readGeometry(p, c);
     c.phase_ticks = parameter(p, "phase_ticks", 32);
     c.retention_ticks = parameter(p, "retention_ticks", 100000);
-    c.record_history = historyParameter(p);
-    c.storage_limits = storageLimits(p);
     return c;
 }
 ParameterMap dramParameters(const DRAMDeviceConfig &c) {
-    auto p = storageParameters(c.storage_limits);
-    p.insert({{"record_history", c.record_history ? "1" : "0"},
-            {"depth_words", std::to_string(c.depth_words)},
-            {"words_per_row", std::to_string(c.words_per_row)},
-            {"phase_ticks", std::to_string(c.phase_ticks)},
+    auto p = geometryParameters(c);
+    p.insert({{"phase_ticks", std::to_string(c.phase_ticks)},
             {"retention_ticks", std::to_string(c.retention_ticks)}});
     return p;
 }

@@ -27,7 +27,7 @@
 #include "components/selection/BuiltinComponentCatalog.hpp"
 #include "modules/memory/FlipFlopCell.hpp"
 #include "modules/memory/Register.hpp"
-#include "modules/memory/RegisterFile32x32.hpp"
+#include "modules/rv32i/RegisterFile32x32.hpp"
 #include "modules/rv32i/RV32IControlFlowUnit.hpp"
 #include "modules/rv32i/RV32IDecodeControlUnit.hpp"
 #include "modules/rv32i/RV32IExecutionControlStatusUnit.hpp"

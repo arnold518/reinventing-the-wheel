@@ -309,22 +309,16 @@ NORFlashConfig norFlashConfigFromParameters(const ParameterMap &p) {
     keys(p, {"depth_words", "words_per_row", "block_words", "phase_ticks", "program_ticks", "erase_ticks",
              "record_history", "paged", "max_resident_bytes", "max_history_bytes"});
     NORFlashConfig c;
-    c.depth_words = parameter(p, "depth_words", 4);
-    c.words_per_row = parameter(p, "words_per_row", 2);
+    readGeometry(p, c);
     c.block_words = parameter(p, "block_words", 2);
     c.phase_ticks = parameter(p, "phase_ticks", 32);
     c.program_ticks = parameter(p, "program_ticks", 128);
     c.erase_ticks = parameter(p, "erase_ticks", 256);
-    c.record_history = historyParameter(p);
-    c.storage_limits = storageLimits(p);
     return c;
 }
 ParameterMap norFlashParameters(const NORFlashConfig &c) {
-    auto p = storageParameters(c.storage_limits);
-    p.insert({{"record_history", c.record_history ? "1" : "0"},
-            {"depth_words", std::to_string(c.depth_words)},
-            {"words_per_row", std::to_string(c.words_per_row)},
-            {"block_words", std::to_string(c.block_words)},
+    auto p = geometryParameters(c);
+    p.insert({{"block_words", std::to_string(c.block_words)},
             {"phase_ticks", std::to_string(c.phase_ticks)},
             {"program_ticks", std::to_string(c.program_ticks)},
             {"erase_ticks", std::to_string(c.erase_ticks)}});

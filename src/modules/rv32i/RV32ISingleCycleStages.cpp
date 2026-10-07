@@ -1,9 +1,10 @@
 #include "modules/rv32i/RV32ISingleCycleStages.hpp"
+#include "components/selection/FamilyFactories.hpp"
 #include "RV32ISingleCycleStagesDirect.hpp"
 #include "RV32IMemoryRequestWiring.hpp"
 #include "modules/rv32i/RV32IMemorySystem.hpp"
 #include "modules/memory/Register.hpp"
-#include "modules/memory/RegisterFile32x32.hpp"
+#include "modules/rv32i/RegisterFile32x32.hpp"
 #include "modules/composite/ALU32.hpp"
 #include "modules/composite/Adder32.hpp"
 #include "modules/composite/IncrementBy4.hpp"
@@ -67,23 +68,45 @@ void out(StructuralWiring& w,IOComponent& s,const std::shared_ptr<IOComponent>& 
 }
 }
 
-#define DEFINE_STAGE(Name,Id,Pins) \
-namespace circuit::families { \
-const ComponentFamily RV32ISingleCycle##Name##Stage{ \
-    "rv32i.single-cycle." Id, "RV32ISingleCycle" #Name "Stage", Pins, \
-    [](const std::string& n,const std::shared_ptr<BuildContext>& c) { \
-        return Component::createWithContext<::RV32ISingleCycle##Name##Stage>(c,n); }, \
-    [](const std::string& n,const std::shared_ptr<BuildContext>& c) { \
-        return rv32i::single_cycle::directStage(rv32i::single_cycle::Stage::Name,n,c); }}; } \
-RV32ISingleCycle##Name##Stage::RV32ISingleCycle##Name##Stage(std::string n) \
-    : IOComponent(std::move(n),Pins) {}
-DEFINE_STAGE(Fetch,"fetch",fetchPins)
-DEFINE_STAGE(Decode,"decode",decodePins)
-DEFINE_STAGE(Execute,"execute",executePins)
-DEFINE_STAGE(Memory,"memory",memoryPins)
-DEFINE_STAGE(Writeback,"writeback",writebackPins)
-DEFINE_STAGE(NextPC,"next-pc",nextPCPins)
-#undef DEFINE_STAGE
+namespace circuit::families {
+const ComponentFamily RV32ISingleCycleFetchStage{
+    "rv32i.single-cycle.fetch", "RV32ISingleCycleFetchStage", fetchPins, structuralFactory<::RV32ISingleCycleFetchStage>(),
+    [](const std::string& n,const std::shared_ptr<BuildContext>& c) {
+        return rv32i::single_cycle::directStage(rv32i::single_cycle::Stage::Fetch,n,c); }};
+const ComponentFamily RV32ISingleCycleDecodeStage{
+    "rv32i.single-cycle.decode", "RV32ISingleCycleDecodeStage", decodePins, structuralFactory<::RV32ISingleCycleDecodeStage>(),
+    [](const std::string& n,const std::shared_ptr<BuildContext>& c) {
+        return rv32i::single_cycle::directStage(rv32i::single_cycle::Stage::Decode,n,c); }};
+const ComponentFamily RV32ISingleCycleExecuteStage{
+    "rv32i.single-cycle.execute", "RV32ISingleCycleExecuteStage", executePins, structuralFactory<::RV32ISingleCycleExecuteStage>(),
+    [](const std::string& n,const std::shared_ptr<BuildContext>& c) {
+        return rv32i::single_cycle::directStage(rv32i::single_cycle::Stage::Execute,n,c); }};
+const ComponentFamily RV32ISingleCycleMemoryStage{
+    "rv32i.single-cycle.memory", "RV32ISingleCycleMemoryStage", memoryPins, structuralFactory<::RV32ISingleCycleMemoryStage>(),
+    [](const std::string& n,const std::shared_ptr<BuildContext>& c) {
+        return rv32i::single_cycle::directStage(rv32i::single_cycle::Stage::Memory,n,c); }};
+const ComponentFamily RV32ISingleCycleWritebackStage{
+    "rv32i.single-cycle.writeback", "RV32ISingleCycleWritebackStage", writebackPins, structuralFactory<::RV32ISingleCycleWritebackStage>(),
+    [](const std::string& n,const std::shared_ptr<BuildContext>& c) {
+        return rv32i::single_cycle::directStage(rv32i::single_cycle::Stage::Writeback,n,c); }};
+const ComponentFamily RV32ISingleCycleNextPCStage{
+    "rv32i.single-cycle.next-pc", "RV32ISingleCycleNextPCStage", nextPCPins, structuralFactory<::RV32ISingleCycleNextPCStage>(),
+    [](const std::string& n,const std::shared_ptr<BuildContext>& c) {
+        return rv32i::single_cycle::directStage(rv32i::single_cycle::Stage::NextPC,n,c); }};
+} // namespace circuit::families
+
+RV32ISingleCycleFetchStage::RV32ISingleCycleFetchStage(std::string n)
+    : IOComponent(std::move(n),fetchPins) {}
+RV32ISingleCycleDecodeStage::RV32ISingleCycleDecodeStage(std::string n)
+    : IOComponent(std::move(n),decodePins) {}
+RV32ISingleCycleExecuteStage::RV32ISingleCycleExecuteStage(std::string n)
+    : IOComponent(std::move(n),executePins) {}
+RV32ISingleCycleMemoryStage::RV32ISingleCycleMemoryStage(std::string n)
+    : IOComponent(std::move(n),memoryPins) {}
+RV32ISingleCycleWritebackStage::RV32ISingleCycleWritebackStage(std::string n)
+    : IOComponent(std::move(n),writebackPins) {}
+RV32ISingleCycleNextPCStage::RV32ISingleCycleNextPCStage(std::string n)
+    : IOComponent(std::move(n),nextPCPins) {}
 
 namespace rv32i::single_cycle {
 const circuit::ComponentFamily& family(Stage s) {

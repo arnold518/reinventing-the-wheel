@@ -31,6 +31,10 @@ struct Geometry {
     void validate(size_t width, bool expanded = false) const;
 };
 
+// The settings every matrix device shares (depth, words per row, history and
+// storage budgets), read from and written to a parameter map in one place.
+void readGeometry(const ParameterMap &params, Geometry &geometry);
+ParameterMap geometryParameters(const Geometry &geometry);
 // Common event/pin plumbing, never a common cell behavior.
 class Primitive : public BasicComponent {
   public:

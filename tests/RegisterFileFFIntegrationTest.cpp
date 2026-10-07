@@ -1,6 +1,6 @@
 #include "tests/MemoryComponentTests.hpp"
 #include "components/capabilities/RegisterStateView.hpp"
-#include "modules/memory/RegisterFile32x32.hpp"
+#include "modules/rv32i/RegisterFile32x32.hpp"
 #include "components/Component.tpp"
 #include "tests/TestRegistry.hpp"
 #include <iostream>

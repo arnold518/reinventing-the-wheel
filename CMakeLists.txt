@@ -63,6 +63,7 @@ set(CORE_LOGIC_SOURCES
     src/modules/memory/MemoryEndpointCatalog.cpp
     src/modules/memory/FFMemoryCatalog.cpp
     src/modules/memory/FFMemory.cpp
+    src/modules/memory/MemoryArrayBlocks.cpp
     src/modules/memory/SRAM.cpp
     src/modules/memory/DigitalMemory.cpp
     src/modules/memory/DRAM.cpp
@@ -75,10 +76,10 @@ set(CORE_LOGIC_SOURCES
     src/tests/MemoryEndpointTests.cpp
     src/tests/FFMemoryTests.cpp
     src/modules/memory/RegisterDirect.cpp
-    src/modules/memory/RegisterFile32x32Direct.cpp
+    src/modules/rv32i/RegisterFile32x32Direct.cpp
     src/modules/memory/FlipFlopCell.cpp
     src/modules/memory/Register.cpp
-    src/modules/memory/RegisterFile32x32.cpp
+    src/modules/rv32i/RegisterFile32x32.cpp
     src/modules/rv32i/RV32IReferenceCore.cpp
     src/modules/rv32i/RV32IControlFlowDirect.cpp
     src/modules/rv32i/RV32IDecodeControlDirect.cpp
@@ -121,6 +122,7 @@ set(CORE_LOGIC_SOURCES
     src/modules/composite/FullAdder.cpp
     src/modules/composite/Adder8.cpp
     src/modules/composite/Adder32.cpp
+    src/modules/composite/ParallelPrefixAdder32.cpp
     src/modules/composite/IncrementBy4.cpp
     src/modules/composite/AddSub32.cpp
     src/modules/composite/Logic32.cpp

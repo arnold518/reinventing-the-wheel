@@ -1,7 +1,7 @@
-#include "modules/memory/RegisterFile32x32Direct.hpp"
+#include "modules/rv32i/RegisterFile32x32Direct.hpp"
 #include "basic/LogicValueHelpers.hpp"
 #include "components/selection/ComponentFamily.hpp"
-#include "modules/memory/RegisterFile32x32.hpp"
+#include "modules/rv32i/RegisterFile32x32.hpp"
 
 #include "basic/Wire.hpp"
 #include "simulator/Event.hpp"

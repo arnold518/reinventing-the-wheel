@@ -4,7 +4,7 @@
 #include "components/selection/ComponentFamily.hpp"
 #include "modules/memory/FlipFlopCell.hpp"
 #include "modules/memory/Register.hpp"
-#include "modules/memory/RegisterFile32x32.hpp"
+#include "modules/rv32i/RegisterFile32x32.hpp"
 #include <cassert>
 #include <cstdint>
 #include <iostream>

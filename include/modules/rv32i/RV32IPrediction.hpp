@@ -14,18 +14,29 @@ extern const ComponentFamily RV32IPredictionPath;
 
 // Policy parameters are construction-time configuration, never fidelity or
 // per-instruction controls. Reset initializes dynamic tables to not-taken.
-#define RV32I_PREDICTION_COMPONENT(Name) \
-class Name : public IOComponent { \
-public: \
-    explicit Name(std::string name); \
-    static constexpr const char* TypeName = #Name; \
-    const char* getTypeName() const override { return TypeName; } \
-    void buildInternals(ComponentBuilder&) override; \
+class RV32IPredictionCounter : public IOComponent {
+public:
+    explicit RV32IPredictionCounter(std::string name);
+    static constexpr const char* TypeName = "RV32IPredictionCounter";
+    const char* getTypeName() const override { return TypeName; }
+    void buildInternals(ComponentBuilder&) override;
 };
-RV32I_PREDICTION_COMPONENT(RV32IPredictionCounter)
-RV32I_PREDICTION_COMPONENT(RV32IBranchPredecode)
-RV32I_PREDICTION_COMPONENT(RV32IBranchRecovery)
-#undef RV32I_PREDICTION_COMPONENT
+
+class RV32IBranchPredecode : public IOComponent {
+public:
+    explicit RV32IBranchPredecode(std::string name);
+    static constexpr const char* TypeName = "RV32IBranchPredecode";
+    const char* getTypeName() const override { return TypeName; }
+    void buildInternals(ComponentBuilder&) override;
+};
+
+class RV32IBranchRecovery : public IOComponent {
+public:
+    explicit RV32IBranchRecovery(std::string name);
+    static constexpr const char* TypeName = "RV32IBranchRecovery";
+    const char* getTypeName() const override { return TypeName; }
+    void buildInternals(ComponentBuilder&) override;
+};
 
 class RV32IBranchPredictor : public IOComponent {
 public:

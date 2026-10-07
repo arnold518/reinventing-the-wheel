@@ -180,20 +180,14 @@ std::vector<uint8_t> ROMDeviceConfig::image(size_t width) const {
 ROMDeviceConfig romConfigFromParameters(const ParameterMap &p) {
     keys(p, {"depth_words", "words_per_row", "image_hex", "record_history", "paged", "max_resident_bytes", "max_history_bytes"});
     ROMDeviceConfig c;
-    c.depth_words = parameter(p, "depth_words", 4);
-    c.words_per_row = parameter(p, "words_per_row", 2);
+    readGeometry(p, c);
     if (auto it = p.find("image_hex"); it != p.end())
         c.image_hex = it->second;
-    c.record_history = historyParameter(p);
-    c.storage_limits = storageLimits(p);
     return c;
 }
 ParameterMap romParameters(const ROMDeviceConfig &c) {
-    auto p = storageParameters(c.storage_limits);
-    p.insert({{"record_history", c.record_history ? "1" : "0"},
-            {"depth_words", std::to_string(c.depth_words)},
-            {"words_per_row", std::to_string(c.words_per_row)},
-            {"image_hex", c.image_hex}});
+    auto p = geometryParameters(c);
+    p.insert({{"image_hex", c.image_hex}});
     return p;
 }
 ROMCell::ROMCell(std::string n, bool v) : IOComponent(std::move(n), cellPins), value_(v) {

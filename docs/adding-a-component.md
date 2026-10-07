@@ -29,7 +29,9 @@ Background: [component fidelity profiles](unified-component-profiles.md) and
    `extern const ComponentFamily <Name>;` in `circuit::families`.
 2. **Source** in `src/modules/<area>/`: the pin function, the
    `ComponentFamily` (contract ID, type name, pins, structural factory,
-   behavioral factory), and `buildInternals`. Wire with
+   behavioral factory), and `buildInternals`. `circuit::structuralFactory<T>()`
+   (`components/selection/FamilyFactories.hpp`) is the standard structural
+   factory. Wire with
    `circuit::detail::StructuralWiring`
    (`include/components/StructuralNetBuilder.hpp`). Always create components
    through `Component::create` / `createWithContext` or the builder, never

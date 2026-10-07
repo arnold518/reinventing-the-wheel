@@ -14,7 +14,7 @@
 #include "modules/composite/ZeroDetect32.hpp"
 #include "modules/memory/FlipFlopCell.hpp"
 #include "modules/memory/Register.hpp"
-#include "modules/memory/RegisterFile32x32.hpp"
+#include "modules/rv32i/RegisterFile32x32.hpp"
 #include "modules/rv32i/RV32IBuildProfiles.hpp"
 #include "modules/rv32i/RV32IControlFlowUnit.hpp"
 #include "modules/rv32i/RV32IDecodeControlUnit.hpp"

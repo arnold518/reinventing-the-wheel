@@ -1,4 +1,4 @@
-#include "modules/memory/RegisterFile32x32.hpp"
+#include "modules/rv32i/RegisterFile32x32.hpp"
 
 #include "components/ComponentBuilder.hpp"
 #include "components/ComponentBuilder.tpp"
@@ -7,7 +7,7 @@
 #include "modules/memory/FFStorageBank.hpp"
 #include "modules/memory/Register.hpp"
 #include "modules/memory/MemoryStructuralBuilder.hpp"
-#include "modules/memory/RegisterFile32x32Direct.hpp"
+#include "modules/rv32i/RegisterFile32x32Direct.hpp"
 #include "modules/utility/Constant.hpp"
 #include <memory>
 #include <string>

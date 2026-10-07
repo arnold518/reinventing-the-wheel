@@ -13,7 +13,7 @@
 #include "../modules/memory/FlipFlopCellDirect.hpp"
 #include "modules/memory/RegisterDirect.hpp"
 #include "modules/memory/ClockedStateBitDirect.hpp"
-#include "../modules/memory/RegisterFile32x32Direct.hpp"
+#include "../modules/rv32i/RegisterFile32x32Direct.hpp"
 #include <algorithm>
 #include <array>
 #include <deque>
