@@ -1,5 +1,6 @@
 #include "analysis/RV32IExperiment.hpp"
 #include "analysis/ExperimentClock.hpp"
+#include "analysis/SettlingBound.hpp"
 #include "components/ComponentBuilder.hpp"
 #include "components/ComponentBuilder.tpp"
 #include "components/selection/BuiltinComponentCatalog.hpp"
@@ -28,32 +29,27 @@ int main() {
         rejects([]{ExperimentClock c(0);});rejects([]{ExperimentClock c(5);});
         rejects([&]{clock.edge(std::numeric_limits<size_t>::max());});
         auto opaque=Component::create<Unmodeled>("OPAQUE");
-        check(!CircuitTimingAnalyzer::analyze(opaque).valid,"Unknown sequential module must fail closed");
-        auto root=Component::create<IOComponent>("ROOT");
-        ComponentBuilder b(root);
-        auto a=b.addNewComponent<DFlipFlop>("A"),z=b.addNewComponent<DFlipFlop>("Z");
-        auto g=b.addNewComponent<NOTGate>("G");
-        b.addNewWire("q",a->getOutputPin("Q"),{g->getInputPin("IN")});
-        b.addNewWire("d",g->getOutputPin("OUT"),{z->getInputPin("D")});
-        auto report=CircuitTimingAnalyzer::analyze(root);
-        check(report.valid&&report.critical_path_delay==3,"Launch, combinational and capture allowance");
+        check(!analyzeSettling(opaque).valid,"Unknown sequential module must fail closed");
         auto loop=Component::create<IOComponent>("LOOP");ComponentBuilder lb(loop);
         auto inv=lb.addNewComponent<NOTGate>("INV");
         lb.addNewWire("loop",inv->getOutputPin("OUT"),{inv->getInputPin("IN")});
-        check(CircuitTimingAnalyzer::analyze(loop).combinational_cycle_detected,"Self loop");
+        check(!analyzeSettling(loop).valid,"Self loop");
         auto mapped=Component::create<IOComponent>("MAPPED");ComponentBuilder mb(mapped);
         auto rw=mb.addNewComponent<Rewire>("RW",std::vector<Rewire::WireSpec>{{"A",1},{"B",1}},
             std::vector<Rewire::WireSpec>{{"X",1},{"Y",1}},
             std::vector<Rewire::BitMap>{{"A",0,"X",0},{"B",0,"Y",0}});
         mb.addNewWire("chain",rw->getOutputPin("X"),{rw->getInputPin("B")});
-        check(CircuitTimingAnalyzer::analyze(mapped).valid,"Independent Rewire arcs must not create a loop");
+        check(analyzeSettling(mapped).valid,"Independent Rewire arcs must not create a loop");
         auto rf=circuit::builtinComponentCatalog().createRoot(
             circuit::families::RegisterFile32x32.request("RF"),circuit::strictAllBehavioral()).root;
-        const auto r=CircuitTimingAnalyzer::analyze(rf);
-        check(r.valid&&r.connection_count==2,"Both asynchronous register read arcs remain visible");
+        SettlingOptions reads;reads.sources=SettlingSources::InputsOnly;reads.fixed_inputs["RST"]=0;
+        const auto r=analyzeSettling(rf,reads);
+        size_t read_arcs=0;
+        for(const auto& e:r.endpoints)read_arcs+=e.changes&&e.bound==1&&(e.name=="RS1_DATA"||e.name=="RS2_DATA");
+        check(r.valid&&read_arcs==2,"Both asynchronous register read arcs remain visible");
         // Pure behavioral execution has no defensible gate critical path.
         RV32IExperimentConfig config;
-        rejects([&]{auto c=config;c.timing_only=true;runRV32IExperiment(c);});
+        rejects([&]{auto c=config;c.safe_clock_only=true;runRV32IExperiment(c);});
         for(const auto* core:{"single","baseline","advanced"}) {
             config.core=core;
             auto run=runRV32IExperiment(config);

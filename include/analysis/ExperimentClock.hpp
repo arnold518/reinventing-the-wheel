@@ -21,10 +21,5 @@ struct ExperimentClock {
     }
     size_t falling(size_t cycle) const {return edge(cycle)+period/2;}
     size_t end(size_t cycle) const {return edge(cycle)+period-1;}
-    static size_t recommendedPeriod(size_t path) {
-        if(path>std::numeric_limits<size_t>::max()/4) throw std::overflow_error("Timing path overflow");
-        // Each half-cycle has >= 25% settle margin plus two event-order ticks.
-        return 2*(path+path/4+2);
-    }
 };
 }

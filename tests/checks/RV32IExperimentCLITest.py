@@ -51,11 +51,8 @@ class ExperimentCLI(unittest.TestCase):
         self.assertEqual(safety["status"], "unknown")
         self.assertIsNone(safety["safe_period_ticks"])
         self.assertTrue(any("no all-state timing contract" in d for d in safety["diagnostics"]))
-        # Legacy analysis is retained, but explicitly cannot claim a guarantee.
-        candidate = run("--core", "single", "--timing")
-        self.assertEqual(candidate["timing"]["guarantee"], "candidate-only")
-        self.assertLess(candidate["timing"]["recommended_period"], 458)
-        run("--safe-clock", "--timing", okay=False)
+        # The candidate-clock mode is retired; its option is refused.
+        run("--core", "single", "--timing", okay=False)
         run("--safe-clock", "--fidelity", "behavioral", okay=False)
 
     def test_state_aware_prediction_configurations(self):

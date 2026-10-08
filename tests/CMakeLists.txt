@@ -179,7 +179,7 @@ set(SIMULATION_TESTS
     SimulatorAdvanceAndRecordTest
     SimulatorUnwiredOutputPinHistoryTest
     SimulatorDrainUntilIdleTest
-    CircuitTimingAnalyzerTest
+    SettlingAnalysisTest
     BuildProfileTest
     ComponentCatalogSelectionTest
     BuiltinComponentCatalogInventoryTest
@@ -380,7 +380,7 @@ set(INFRASTRUCTURE_TESTS
     SimulatorAdvanceAndRecordTest
     SimulatorUnwiredOutputPinHistoryTest
     SimulatorDrainUntilIdleTest
-    CircuitTimingAnalyzerTest
+    SettlingAnalysisTest
     BuildProfileTest
     ComponentCatalogSelectionTest
     BuiltinComponentCatalogInventoryTest

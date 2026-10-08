@@ -52,7 +52,7 @@ void RV32IExperimentConfig::validate() const {
     ExperimentClock clock(period);
     (void)clock.edge(max_cycles);
     require(max_cycles && max_events,"Budgets must be positive");
-    require(!trace_cycles || (max_cycles<=4096 && !timing_only && !safe_clock_only),
+    require(!trace_cycles || (max_cycles<=4096 && !safe_clock_only),
         "Cycle tracing requires execution with --max-cycles <= 4096");
     require(!progress_interval_cycles||bool(progress),"Progress interval requires a callback");
     require(program>=1&&program<=rv32i::validation::ProgramCount,"Program number outside shared corpus");
@@ -61,9 +61,7 @@ void RV32IExperimentConfig::validate() const {
         "Prediction settings apply only to advanced");
     require(core=="advanced" || memory.technology==circuit::memory::Technology::FF,
         "Single-cycle and baseline require zero-wait FF endpoints");
-    require(!timing_only || fidelity=="reference","Timing requires the reference structural profile, not a collapsed core");
     require(!safe_clock_only || fidelity=="reference","Safe-clock analysis requires the reference structural profile");
-    require(!(safe_clock_only && timing_only),"Choose safe-clock analysis or legacy timing estimates, not both");
     require(!binary_startup || safe_clock_only,"Binary startup requires safe-clock analysis");
     memory.device.validate(32,memory.technology);
     require(memory.device.depth_words<=65536,"Experiment memory is limited to 256 KiB for bounded oracle checking");
@@ -123,49 +121,9 @@ RV32IExperimentResult runRV32IExperiment(const RV32IExperimentConfig& config) {
         clock.clock_pin="EXPERIMENT.CLK";
         clock.inputs={{"EXPERIMENT.RST",std::nullopt,{},0},
                       {"EXPERIMENT.CORE.ENABLE",std::nullopt,{},1}};
-        // Deliberately no state-dependent protocol cuts from the legacy timing
-        // estimate. Unsupported contracts return Unknown, never a guessed clock.
+        // No state-dependent protocol cuts. Unsupported contracts return
+        // Unknown, never a guessed clock.
         result.safe_clock=computeSafeClockPeriod(root,clock);
-        result.setup_seconds=seconds(started,Clock::now());return result;
-    }
-    if(config.timing_only) {
-        require(config.memory.technology==circuit::memory::Technology::FF,
-            "Timing reference requires FF; delayed devices use the FF core clock with separate device ticks");
-        // Analyze each transparent/held endpoint mode separately. The core
-        // emits known-binary Read/Write requests, so opcode bit 0 cannot change
-        // FF permission status. Read payload is timed only for an active read;
-        // inactive/write payload is unobserved. This is a constrained timing
-        // reference, NOT unrestricted four-state protocol static timing.
-        for(unsigned mode=0;mode<4;++mode) {
-            CircuitTimingOptions options;
-            options.model=[mode](const IOComponent& c)->std::optional<ComponentTimingModel> {
-                // In a valid access window ISSUE is asserted independently of
-                // the eventual store commit. The redundant ISSUE qualification
-                // on FAULT is a false path back from that commit.
-                if(c.getID()=="EXPERIMENT.CORE.DATA_PORT.FAULT"
-                    ||c.getID()=="EXPERIMENT.CORE.INSTRUCTION_PORT.FAULT")
-                    return ComponentTimingModel{{{"B","OUT"}},{},{},1,1};
-                // A held response belongs to an already accepted request:
-                // SENT=1 makes RESPONSE_ELIGIBLE independent of new acceptance.
-                if((c.getID()=="EXPERIMENT.CORE.FETCH_REQUEST.RESPONSE_ELIGIBLE"&&(mode&1))
-                    ||(c.getID()=="EXPERIMENT.CORE.DATA_REQUEST.RESPONSE_ELIGIBLE"&&(mode&2)))
-                    return ComponentTimingModel{{},{},{"OUT"},1,1};
-                if(c.getContractId()!="memory.ff.scalable-endpoint.32")return std::nullopt;
-                ComponentTimingModel m;
-                for(const auto& [n,p]:c.getAllInputPins())if(n!="CLK"&&n!="RST")m.capture_inputs.push_back(n);
-                for(const auto& [n,p]:c.getAllOutputPins())m.launch_outputs.push_back(n);
-                const bool held=(mode&(c.getName()=="IMEM"?1:2))!=0;
-                if(held) m.combinational_arcs={{"RSP_READY","REQ_READY"}};
-                else m.combinational_arcs={{"REQ_VALID","RSP_VALID"},{"REQ_ADDR","RSP_READ_DATA"},{"REQ_ADDR","RSP_STATUS"}};
-                return m;
-            };
-            auto timing=CircuitTimingAnalyzer::analyze(root,options);
-            if(!timing.valid){result.timing=std::move(timing);break;}
-            if(timing.critical_path_delay>result.timing.critical_path_delay)result.timing=std::move(timing);
-        }
-        result.timing.limitation+=" Reference constraints: known-binary legal Read/Write, active-read payload, stable reset; "
-            "ISSUE=1 for access fault qualification, SENT=1 for a held requester response; "
-            "maximum across four empty/held FF endpoint modes. Clock must additionally pass dynamic oracle validation.";
         result.setup_seconds=seconds(started,Clock::now());return result;
     }
     auto iv=rv32i::memoryView(imem),dv=rv32i::memoryView(dmem);

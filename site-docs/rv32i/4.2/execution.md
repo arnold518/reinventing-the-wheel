@@ -12,7 +12,7 @@
 | Workload | Fixed `--program 1..22`, generated `--workload NAME`, or `--elf FILE` |
 | Fidelity | `behavioral` or `reference` |
 | Memory | Default zero-wait FF; delayed technologies require advanced |
-| Clock | Even period at least 4 ticks; candidate `auto` or a separately certified campaign clock |
+| Clock | Even period at least 4 ticks; `auto` (the certified safe period) or an explicit value |
 | Region | Whole program, explicit retirement-PC interval, or generated body interval |
 | Limits | Cycles, processed events, allocation limit; campaign adds process timeout |
 
@@ -85,4 +85,4 @@ Trace collection adds no simulated events but has host overhead. Disable it for 
 
 Use serial processes and explicit budgets. The differential suite uses at most 1,024 cycles per run and a 512 MiB address-space cap. The CLI allows allocation caps from 128 to 4096 MiB; this limits virtual address space, not just resident bytes. Neither an event limit, timeout, failed self-check nor interrupted campaign is evidence of successful completion.
 
-Small runs can use `--period auto` for convenient candidate timing. Research campaigns should explicitly select their [clock basis](timing.md) and retain the certificate or candidate report, not copy a period from a historical result table.
+Small runs can use `--period auto`, which takes the certified safe period of the core. Research campaigns should explicitly select their [clock basis](timing.md) and retain the certificate or candidate report, not copy a period from a historical result table.

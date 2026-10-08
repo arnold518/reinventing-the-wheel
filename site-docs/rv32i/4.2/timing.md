@@ -7,12 +7,12 @@
 | Choice | Meaning | Evidence to retain |
 | --- | --- | --- |
 | Explicit `--period N` | User-selected scheduling period | N and the reason it is safe for every compared target |
-| `--period auto` / reference campaign | Candidate derived from constrained path analysis | Timing report and workload-specific structural checks |
+| `--period auto` / `--clock-mode safe` campaign | Sufficient period for every four-state start | Per-target `--safe-clock` certificate |
 | `--clock-mode binary-safe` campaign | Sufficient period under a checked binary-startup contract | Per-target `--safe-clock --binary-startup` certificate |
 
-The candidate formula is `2 * (D + floor(D / 4) + 2)`, where D is the constrained path delay. Its guarantee remains `candidate-only`; passing a finite program corpus does not make it universal.
+The earlier candidate clock, `2 * (D + floor(D / 4) + 2)` over a longest-path estimate, is retired together with its `--timing` option. Every modeled period now comes from `computeSafeClockPeriod`.
 
-`computeSafeClockPeriod` is a different, non-mutating analysis. A successful result is sufficient **under explicit simulator contracts**, not a physical frequency, exact minimum clock, or proof of ISA correctness. Both fidelities use the clock from the same structural reference profile.
+`computeSafeClockPeriod` is a non-mutating analysis. A successful result is sufficient **under explicit simulator contracts**, not a physical frequency, exact minimum clock, or proof of ISA correctness. Both fidelities use the clock from the same structural reference profile.
 
 ## Sufficient-period calculation
 

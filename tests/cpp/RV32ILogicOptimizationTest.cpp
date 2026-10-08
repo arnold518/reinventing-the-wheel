@@ -3,7 +3,7 @@
 #include "modules/rv32i/RV32ISingleCycleStages.hpp"
 #include "modules/rv32i/RV32IPipelineControl.hpp"
 #include "components/StructuralNetBuilder.hpp"
-#include "analysis/CircuitTimingAnalyzer.hpp"
+#include "analysis/SettlingBound.hpp"
 #include "simulator/SimulationTest.hpp"
 #include <iostream>
 #include <random>
@@ -78,12 +78,12 @@ struct Comparison {
             b.addNewWireDynamic("fast_"+name,p->getWidth(),p,{}),
             b.addNewWireDynamic("ref_"+name,p->getWidth(),reference->getOutputPinDynamic(name),{})};
         sim.setHistoryRecordingEnabled(false);SimulationTest::scheduleInitialEventsForTree(root,sim,0);
-        auto ft=circuit::analysis::CircuitTimingAnalyzer::analyze(fast);
-        auto rt=circuit::analysis::CircuitTimingAnalyzer::analyze(reference);
-        check(ft.valid&&rt.valid&&ft.critical_path_delay<=rt.critical_path_delay,"Combinational depth regressed");
-        check(ft.combinational_component_count<rt.combinational_component_count,"Expected fewer gates");
-        std::cout<<fast->getTypeName()<<": depth "<<rt.critical_path_delay<<" -> "<<ft.critical_path_delay
-            <<", combinational nodes "<<rt.combinational_component_count<<" -> "<<ft.combinational_component_count<<'\n';
+        auto ft=circuit::analysis::analyzeSettling(fast);
+        auto rt=circuit::analysis::analyzeSettling(reference);
+        check(ft.valid&&rt.valid&&ft.bound<=rt.bound,"Combinational depth regressed");
+        check(ft.bit_count<rt.bit_count,"Expected a smaller circuit");
+        std::cout<<fast->getTypeName()<<": settling bound "<<rt.bound<<" -> "<<ft.bound
+            <<", pin bits "<<rt.bit_count<<" -> "<<ft.bit_count<<'\n';
     }
     template<size_t W> void drive(const std::shared_ptr<WireBase>& wire,const Bits& value) {
         sim.scheduleEvent(std::make_shared<WireUpdateEvent<W>>(time,std::dynamic_pointer_cast<Wire<W>>(wire),value));

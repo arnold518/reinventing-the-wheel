@@ -59,7 +59,7 @@ class BinaryClockCLI(unittest.TestCase):
         unsupported = invoke("--safe-clock", "--binary-startup", "--memory", "sram", status=2)
         self.assertFalse(unsupported["safe_clock"]["binary_startup_verified"])
         self.assertIsNone(unsupported["safe_clock"]["safe_period_ticks"])
-        for args in (("--binary-startup",), ("--binary-startup", "--timing"),
+        for args in (("--binary-startup",),
                      ("--safe-clock", "--binary-startup", "--fidelity", "behavioral")):
             invoke(*args, status=1)
 

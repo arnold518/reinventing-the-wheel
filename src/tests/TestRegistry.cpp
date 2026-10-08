@@ -237,7 +237,7 @@ const std::vector<TestRegistryEntry>& getTestRegistry() {
         entry<SimulatorAdvanceAndRecordTest>("SimulatorAdvanceAndRecordTest"),
         entry<SimulatorUnwiredOutputPinHistoryTest>("SimulatorUnwiredOutputPinHistoryTest"),
         entry<SimulatorDrainUntilIdleTest>("SimulatorDrainUntilIdleTest"),
-        entry<CircuitTimingAnalyzerTest>("CircuitTimingAnalyzerTest"),
+        entry<SettlingAnalysisTest>("SettlingAnalysisTest"),
         entry<BuildProfileTest>("BuildProfileTest"),
         entry<ComponentCatalogSelectionTest>("ComponentCatalogSelectionTest"),
         entry<BuiltinComponentCatalogInventoryTest>("BuiltinComponentCatalogInventoryTest"),

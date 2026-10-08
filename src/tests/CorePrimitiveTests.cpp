@@ -1,5 +1,5 @@
 #include "tests/CorePrimitiveTests.hpp"
-#include "analysis/CircuitTimingAnalyzer.hpp"
+#include "analysis/SettlingBound.hpp"
 
 #include "basic/Pin.hpp"
 #include "basic/Wire.hpp"
@@ -375,39 +375,29 @@ void SimulatorDrainUntilIdleTest::verifyResults() {
            "SimulatorDrainUntilIdleTest headless time travel rejected");
 }
 
-std::string CircuitTimingAnalyzerTest::getTestName() const {
-    return "CircuitTimingAnalyzerTest";
+std::string SettlingAnalysisTest::getTestName() const {
+    return "SettlingAnalysisTest";
 }
 
-void CircuitTimingAnalyzerTest::verifyResults() {
+void SettlingAnalysisTest::verifyResults() {
     const auto half_adder = Component::create<HalfAdder>("HALF");
-    const auto half_report =
-        circuit::analysis::CircuitTimingAnalyzer::analyze(half_adder);
-    expect(half_report.valid,
-           "CircuitTimingAnalyzerTest half-adder valid");
-    expect(half_report.critical_path_delay == 1,
-           "CircuitTimingAnalyzerTest half-adder delay");
-    expect(half_report.combinational_component_count == 2,
-           "CircuitTimingAnalyzerTest half-adder component count");
+    const auto half_report = circuit::analysis::analyzeSettling(half_adder);
+    expect(half_report.valid, "SettlingAnalysisTest half-adder valid");
+    expect(half_report.bound == 1, "SettlingAnalysisTest half-adder delay");
 
     const auto full_adder = Component::create<FullAdder>("FULL");
-    const auto full_report =
-        circuit::analysis::CircuitTimingAnalyzer::analyze(full_adder);
-    expect(full_report.valid,
-           "CircuitTimingAnalyzerTest full-adder valid");
+    const auto full_report = circuit::analysis::analyzeSettling(full_adder);
+    expect(full_report.valid, "SettlingAnalysisTest full-adder valid");
     // A/B -> first XOR -> second-half carry AND -> carry OR.
-    expect(full_report.critical_path_delay == 3,
-           "CircuitTimingAnalyzerTest full-adder delay");
-    expect(!full_report.critical_path.empty(),
-           "CircuitTimingAnalyzerTest full-adder path");
+    expect(full_report.bound == 3, "SettlingAnalysisTest full-adder delay");
+    bool has_path = false;
+    for (const auto& endpoint : full_report.endpoints) has_path |= !endpoint.path.empty();
+    expect(has_path, "SettlingAnalysisTest full-adder path");
 
+    // A flip-flop built from gates is a loop of latches: no bound is claimed.
     const auto flip_flop = Component::create<DFlipFlop>("DFF");
-    const auto sequential_report =
-        circuit::analysis::CircuitTimingAnalyzer::analyze(flip_flop);
-    expect(sequential_report.valid,
-           "CircuitTimingAnalyzerTest dff valid");
-    expect(sequential_report.sequential_boundary_count == 1,
-           "CircuitTimingAnalyzerTest dff boundary");
+    expect(!circuit::analysis::analyzeSettling(flip_flop).valid,
+           "SettlingAnalysisTest gate-level flip-flop rejected");
 }
 
 NOTGateTest::NOTGateTest()

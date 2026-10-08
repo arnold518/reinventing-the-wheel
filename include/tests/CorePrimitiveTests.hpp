@@ -38,7 +38,7 @@ protected:
     void verifyResults() override;
 };
 
-class CircuitTimingAnalyzerTest : public StandaloneVerificationTest {
+class SettlingAnalysisTest : public StandaloneVerificationTest {
 public:
     std::string getTestName() const override;
 

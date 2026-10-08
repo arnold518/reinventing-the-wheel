@@ -25,7 +25,6 @@ endif()
 # --- Source File Definitions ---
 set(CORE_LOGIC_SOURCES
     src/benchmark/Benchmark.cpp
-    src/analysis/CircuitTimingAnalyzer.cpp
     src/analysis/SafeClockTiming.cpp
     src/analysis/SettlingBound.cpp
     src/analysis/SettlingGraph.cpp

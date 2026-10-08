@@ -27,7 +27,7 @@ std::string quote(const std::string& s) {
 void usage() {
     std::cout<<"rv32i_experiment [--core single|baseline|advanced] [--program 1..22 | --elf FILE]\n"
         "  [--fidelity behavioral|reference] [--policy not-taken|taken|backward-taken|one-bit|two-bit]\n"
-        "  [--entries N] [--period EVEN_TICKS|auto] [--timing | --safe-clock] [--no-verify]\n"
+        "  [--entries N] [--period EVEN_TICKS|auto] [--safe-clock] [--no-verify]\n"
         "  [--binary-startup] (with --safe-clock: checked binary-initialized contract)\n"
         "  [--workload NAME] [--iterations N] [--list-workloads | --list-benchmark-catalog]\n"
         "  [--start-pc PC --stop-pc PC]\n"
@@ -68,7 +68,6 @@ int main(int argc,char** argv) {
                 std::cout<<"]\n";return 0;
             }
             if(key=="--measure-body"){c.benchmark.measure_body=true;continue;}
-            if(key=="--timing"){c.timing_only=true;c.fidelity="reference";continue;}
             if(key=="--safe-clock"){c.safe_clock_only=true;c.fidelity="reference";continue;}
             if(key=="--binary-startup"){c.binary_startup=true;continue;}
             if(key=="--no-verify"){c.verify=false;continue;}
@@ -118,18 +117,20 @@ int main(int argc,char** argv) {
                 <<" retired="<<progress.retired_instructions
                 <<" host_seconds="<<progress.host_seconds<<'\n';
         };
-        CircuitTimingReport timing;
-        if(automatic&&!c.timing_only&&!c.safe_clock_only) {
-            auto reference=c;reference.timing_only=true;reference.fidelity="reference";
+        // --period auto: the sufficient period certified for the structural
+        // reference of this core, used for every fidelity.
+        ClockTimingReport automatic_clock;
+        if(automatic&&!c.safe_clock_only) {
+            auto reference=c;reference.safe_clock_only=true;reference.fidelity="reference";
             reference.trace_cycles=false;
             // Delayed devices keep the FF reference clock; device times remain ticks.
             reference.memory.technology=circuit::memory::Technology::FF;
-            timing=runRV32IExperiment(reference).timing;
-            if(!timing.valid) {
-                for(const auto& d:timing.diagnostics)std::cerr<<d<<'\n';
-                throw std::runtime_error("Timing analysis invalid; no automatic clock available");
+            automatic_clock=runRV32IExperiment(reference).safe_clock;
+            if(automatic_clock.status!=ClockTimingStatus::SafeUnderContracts||!automatic_clock.safe_period_ticks) {
+                for(const auto& d:automatic_clock.diagnostics)std::cerr<<d<<'\n';
+                throw std::runtime_error("No safe clock could be established; no automatic period available");
             }
-            c.period=ExperimentClock::recommendedPeriod(timing.critical_path_delay);
+            c.period=*automatic_clock.safe_period_ticks;
         }
         const auto r=runRV32IExperiment(c);
         if(c.safe_clock_only) {
@@ -167,7 +168,6 @@ int main(int argc,char** argv) {
             std::cout<<"},\"manifest\":"<<quote(r.manifest)<<"}\n";
             return s.status==ClockTimingStatus::SafeUnderContracts?0:2;
         }
-        if(c.timing_only)timing=r.timing;
         struct rusage usage{};getrusage(RUSAGE_SELF,&usage);
         std::cout<<std::setprecision(12)<<"{\"schema\":1,\"core\":"<<quote(c.core)
             <<",\"program\":"<<c.program<<",\"elf\":"<<quote(c.elf)
@@ -221,20 +221,12 @@ int main(int argc,char** argv) {
         std::cout<<"],\"observations\":{";
         bool first=true;for(const auto& [name,value]:r.observations){if(!first)std::cout<<',';first=false;std::cout<<quote(name)<<':'<<value;}
         std::cout<<"},\"timing\":";
-        if(automatic||c.timing_only) {
-            std::cout<<"{\"valid\":"<<(timing.valid?"true":"false")<<",\"critical_delay\":"<<timing.critical_path_delay
-                <<",\"guarantee\":\"candidate-only\",\"recommended_period\":";
-            if(timing.valid)std::cout<<ExperimentClock::recommendedPeriod(timing.critical_path_delay);else std::cout<<"null";
-            std::cout
-                <<",\"limitation\":"<<quote(timing.limitation)<<",\"diagnostics\":[";
-            first=true;for(const auto& d:timing.diagnostics){if(!first)std::cout<<',';first=false;std::cout<<quote(d);}
-            std::cout<<"],\"path\":[";
-            first=true;for(const auto& p:timing.critical_path){if(!first)std::cout<<',';first=false;std::cout<<"{\"pin\":"<<quote(p.component_id)<<",\"arrival\":"<<p.arrival_time<<'}';}
-            std::cout<<"]}";
+        if(automatic) {
+            std::cout<<"{\"guarantee\":\"safe-under-contracts\",\"period\":"<<*automatic_clock.safe_period_ticks
+                <<",\"limiting_constraint\":"<<quote(automatic_clock.limiting_constraint)<<"}";
         } else std::cout<<"null";
         std::cout<<",\"benchmark_run\":";
-        if(c.timing_only)std::cout<<"null";
-        else std::cout<<circuit::benchmark::toJson(r.benchmark_run);
+        std::cout<<circuit::benchmark::toJson(r.benchmark_run);
         if(c.trace_cycles) {
             std::cout<<",\"cycle_trace_schema\":1,\"cycle_trace\":[";
             bool first_cycle=true;
@@ -251,6 +243,6 @@ int main(int argc,char** argv) {
             std::cout<<']';
         }
         std::cout<<",\"manifest\":"<<quote(r.manifest)<<"}\n";
-        return c.timing_only&&!timing.valid?1:0;
+        return 0;
     } catch(const std::exception& e) {std::cerr<<"Experiment failed: "<<e.what()<<'\n';return 1;}
 }

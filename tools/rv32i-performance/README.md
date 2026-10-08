@@ -39,7 +39,8 @@ for each core and predictor configuration. The campaign records that report in
 `clock_basis: "binary-startup-safe-clock-v1"`. A common explicit `--period` is
 accepted only if it is at least each selected certificate's bound; explicit
 periods remain scheduling choices and have no `modeled_time_ticks` entry. The
-default `--clock-mode reference` retains the older candidate-clock workflow.
+default `--clock-mode safe` uses the `--safe-clock` certificate, which holds for
+every four-state start. The earlier candidate clock is retired.
 
 The default matrix is single-cycle, baseline and five advanced predictor
 policies, programs 17–22, one host warmup and three measured repetitions.
@@ -47,8 +48,8 @@ Each process starts a fresh CPU and cold predictor. Host warmups do not warm
 the next process's predictor. A verified run precedes every measured case.
 `--reference-check` additionally compares the structural implementation's
 cycles, instruction accounting and observations with the compact model.
-Without it, automatically derived clocks are candidates, not dynamically
-validated presets.
+Without it, automatically derived clocks are certified by analysis but not
+dynamically validated.
 
 The driver writes source/binary/ELF fingerprints, platform and dirty-worktree
 provenance, timing paths and implementation manifests, raw JSONL, and JSON/CSV
@@ -255,9 +256,8 @@ the analyzer does not silently assume or certify that startup invariant.
 pins, and is not proof of oscillation. `state_case_count`,
 `checked_state_cases` and `state_evidence` expose the state analysis. Legacy
 mode-specific cuts are not silently imported.
-Existing 458/320/394 clocks are retained as tested candidates; timing JSON marks
-them `guarantee: "candidate-only"`. Do not reinterpret earlier campaign
-artifacts as safety certificates.
+The earlier 458/320/394 candidate clocks and the `--timing` option are retired.
+Do not reinterpret earlier campaign artifacts as safety certificates.
 
 The safe-period function also analyzes supported smaller circuits, including a
 structural FullAdder between compact FF cells. Remaining unknown results need

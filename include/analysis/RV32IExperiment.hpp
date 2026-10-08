@@ -1,5 +1,4 @@
 #pragma once
-#include "analysis/CircuitTimingAnalyzer.hpp"
 #include "analysis/SafeClockTiming.hpp"
 #include "analysis/RV32IBenchmarks.hpp"
 #include "benchmark/Benchmark.hpp"
@@ -31,7 +30,7 @@ struct RV32IExperimentConfig {
     RV32IBenchmarkOptions benchmark;
     std::optional<uint32_t> start_pc, stop_pc; // inclusive/exclusive retirement PCs
     uint32_t tohost=0x3ffc0;
-    bool verify=true, timing_only=false, safe_clock_only=false;
+    bool verify=true, safe_clock_only=false;
     bool binary_startup=false; // only with safe_clock_only; explicit narrower contract
     bool allow_incomplete=false; // bounded calibration run, never a passing benchmark
     // Opt-in settled pre-edge signals plus post-edge architectural retirement.
@@ -47,7 +46,6 @@ struct RV32IExperimentResult {
     std::map<std::string,uint64_t> observations;
     SimulatorPerformanceCounters simulator;
     rv32i::RV32IState final_state;
-    CircuitTimingReport timing;
     ClockTimingReport safe_clock;
     std::string manifest, workload_fingerprint, state_fingerprint;
     std::string workload_description;

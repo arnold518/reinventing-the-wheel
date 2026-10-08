@@ -58,8 +58,8 @@ def main():
     parser.add_argument("--warmups", type=int, default=1, help="Host warmups; each CPU still starts cold")
     parser.add_argument("--timeout", type=int, default=120, help="Seconds per process")
     parser.add_argument("--reference-check", action="store_true", help="Check every selected case structurally at its modeled period")
-    parser.add_argument("--clock-mode", choices=["reference", "binary-safe"], default="reference",
-                        help="Per-core clock source; binary-safe requires a verified binary-startup certificate")
+    parser.add_argument("--clock-mode", choices=["safe", "binary-safe"], default="safe",
+                        help="Per-core clock certificate: every four-state start, or a verified binary start")
     parser.add_argument("--period", type=int, help="Common scheduling period instead of modeled per-core clocks")
     parser.add_argument("--allocation-limit-mib", type=int,
                         help="Address-space allocation limit for every experiment subprocess")
@@ -189,11 +189,17 @@ def main():
                                "analysis_scope": timing["analysis_scope"], "safe_clock": safety,
                                "manifest_file": compact(timing)["manifest_file"], "dynamic_checks": []}
             else:
-                timing = invoke(a.binary, [*base, "--timing", *budgets], a.timeout)
-                period = a.period if a.period is not None else timing["timing"]["recommended_period"]
-                if not timing["timing"]["valid"]:
-                    raise RuntimeError(f"Invalid timing reference for {core}/{policy}")
-                calibration = {"core": core, "policy": policy, "period": period, "timing": timing["timing"],
+                timing = invoke(a.binary, [*base, "--safe-clock", *budgets], a.timeout)
+                safety = timing["safe_clock"]
+                certified = safety["safe_period_ticks"]
+                if safety["status"] != "safe-under-contracts" or not isinstance(certified, int) or certified < 4:
+                    raise RuntimeError(f"No safe clock for {core}/{policy}")
+                period = a.period if a.period is not None else certified
+                if period < certified:
+                    raise RuntimeError(f"Period {period} is below certified bound {certified} for {core}/{policy}")
+                calibration = {"core": core, "policy": policy, "period": period,
+                               "clock_mode": a.clock_mode, "certified_period": certified,
+                               "analysis_scope": timing["analysis_scope"], "safe_clock": safety,
                                "manifest_file": compact(timing)["manifest_file"], "dynamic_checks": []}
             calibrations.append(calibration)
             for label, workload in workloads:
@@ -226,7 +232,7 @@ def main():
                     # Explicit scheduling clocks are never represented as hardware speed.
                     if a.period is None:
                         row["clock_basis"] = ("binary-startup-safe-clock-v1" if a.clock_mode == "binary-safe"
-                                              else "reference-pin-arcs-v1")
+                                              else "safe-clock-contracts-v1")
                         row["modeled_time_ticks"] = row["cycles"] * period
                     raw.write(json.dumps(compact(row)) + "\n")
                     raw.flush()

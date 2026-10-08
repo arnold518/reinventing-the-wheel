@@ -6,11 +6,11 @@ tick at which each output can still change? The answer is an upper bound that
 holds for every input, found from the wiring and the gate rules, without
 trying inputs.
 
-It sits beside the two older analyzers and does not change their results.
+It replaces the earlier longest-path estimate (`CircuitTimingAnalyzer`, now
+removed).
 
 | Analyzer | Gives | Works on |
 | --- | --- | --- |
-| `CircuitTimingAnalyzer` | One number: the longest path, whole pins, no values | Any circuit, with a hand-kept model table |
 | `computeSafeClockPeriod` | A clock period with setup and hold checks | Clocked circuits whose parts all have contracts |
 | `analyzeSettling` | A proven latest change per output and per clocked capture | The same parts as the safe-clock analysis |
 
@@ -22,10 +22,6 @@ It sits beside the two older analyzers and does not change their results.
 | `SettlingGraph` | The circuit as one node per pin bit |
 | `SettlingBound` | Timed evaluation of a case, and the search over cases |
 | `SafeClockTiming` | The clock-period analysis; its memory-mode part is a sequence of named steps (`collectMemoryGroups`, `startMode`, `settleMode`, ...) |
-
-`CircuitTimingAnalyzer` still has its own wire walk and its own model table
-keyed by contract name. It also has no model for `ClockedStateBit`, so it
-rejects the advanced core (`rv32i_experiment --core advanced --timing` fails).
 
 ## Why the result can be trusted
 
