@@ -71,10 +71,17 @@ public:
         return inputs.front();
     }
     // Keys, not pointers, keep net order deterministic across native and WASM.
+    // Several builders may wire one component (a helper function has its own),
+    // so an index whose name is already taken in this scope is skipped: wire
+    // IDs must be unique within their owner.
     void finish() {
         size_t index = 0;
-        for (const auto& [key, net] : nets_)
-            builder_.addNewWireDynamic(wireName(net.first, index++), net.first->getWidth(), net.first, net.second);
+        for (const auto& [key, net] : nets_) {
+            auto name = wireName(net.first, index++);
+            while (builder_.getWireDynamic(name)) name = wireName(net.first, index++);
+            builder_.addNewWireDynamic(std::move(name), net.first->getWidth(), net.first, net.second);
+        }
+        nets_.clear();
     }
 
 protected:
