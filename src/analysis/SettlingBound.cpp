@@ -1,79 +1,20 @@
 #include "analysis/SettlingBound.hpp"
-#include "TimingCircuit.hpp"
+#include "SettlingGraph.hpp"
 #include "basic/PinBase.hpp"
-#include "basic/WireBase.hpp"
-#include "components/BasicComponent.hpp"
-#include "components/IOComponent.hpp"
-#include "modules/basic/Gate.hpp"
-#include "modules/utility/BitAdapter.hpp"
-#include "modules/utility/Rewire.hpp"
 #include <algorithm>
 #include <queue>
 #include <random>
-#include <set>
 #include <stdexcept>
-#include <typeinfo>
-#include <unordered_map>
-#include <unordered_set>
 
 namespace circuit::analysis {
 namespace {
 
-// "Never changes during operation". Smaller than every tick, so max() ignores
-// it and min() prefers it.
-constexpr long long STABLE = -1;
-constexpr int8_t UNKNOWN = 2;
+using namespace detail::settling;
 
-enum class Kind : uint8_t { Stable, Source, Buf, Not, And, Nand, Or, Nor, Xor, Hub };
-
-struct Node {
-    Kind kind = Kind::Stable;
-    int8_t constant = UNKNOWN; // Stable: known final value, if any
-    int a = -1, b = -1;
-    long long delay = 0;       // Source: tick of the last transition, or STABLE
-    int var = -1;              // Source: case-split variable
-    int hub = -1;
-    const PinBase* pin = nullptr;
-    unsigned bit = 0;
-};
-// An opaque contract output: latest of its launch and its timed input arcs.
-struct Hub {
-    std::vector<std::pair<int, long long>> inputs;
-    long long launch = STABLE;
-};
-using Leaf = detail::TimingLeaf;
-struct Group {
-    std::string name;
-    std::vector<std::pair<int, long long>> endpoints; // node, added setup
-};
-
-std::optional<Kind> gateKind(const IOComponent& c) {
-    if (typeid(c) == typeid(NOTGate)) return Kind::Not;
-    if (typeid(c) == typeid(ANDGate)) return Kind::And;
-    if (typeid(c) == typeid(NANDGate)) return Kind::Nand;
-    if (typeid(c) == typeid(ORGate)) return Kind::Or;
-    if (typeid(c) == typeid(NORGate)) return Kind::Nor;
-    if (typeid(c) == typeid(XORGate)) return Kind::Xor;
-    return std::nullopt;
-}
-
-class Analysis {
-    const std::shared_ptr<Component>& root_;
+// Timed evaluation of one case, and the search over cases.
+class Search {
     const SettlingOptions& options_;
-    SettlingReport report_;
-    std::shared_ptr<IOComponent> root_io_;
-    bool root_is_leaf_ = false, failed_ = false;
-
-    std::vector<Leaf> leaves_;
-    std::vector<Node> nodes_;
-    std::vector<Hub> hubs_;
-    std::unordered_map<const PinBase*, int> base_;
-    std::unordered_map<const PinBase*, std::shared_ptr<PinBase>> driver_;
-    std::unordered_set<const PinBase*> clock_roots_, clock_sinks_;
-    std::vector<std::pair<const PinBase*, unsigned>> variables_;
-    std::vector<Group> groups_;
-    std::vector<std::tuple<int, int8_t, std::string>> required_;
-    std::vector<int> order_;
+    const Graph& graph_;
 
     std::vector<int8_t> value_;
     std::vector<long long> time_;
@@ -83,246 +24,9 @@ class Analysis {
 
     // The case being examined: final values assumed for some bits.
     std::vector<int8_t> forced_;
-    std::vector<uint8_t> binary_;      // final value is certainly 0 or 1
-    std::vector<int> touched_, unjustified_, variable_node_;
+    std::vector<int> touched_, unjustified_;
     std::vector<double> weight_;
     bool conflict_ = false;
-
-    void fail(const std::string& message) {
-        failed_ = true;
-        if (report_.diagnostics.size() < 64) report_.diagnostics.push_back(message);
-    }
-    bool rootPin(const PinBase& pin) const { return pin.getOwner() == root_; }
-    int reserve(const std::shared_ptr<PinBase>& pin) {
-        const auto [it, added] = base_.emplace(pin.get(), static_cast<int>(nodes_.size()));
-        if (added) for (unsigned bit = 0; bit < pin->getWidth(); ++bit) {
-            nodes_.emplace_back();
-            nodes_.back().pin = pin.get();
-            nodes_.back().bit = bit;
-        }
-        return it->second;
-    }
-    Node& at(const std::shared_ptr<PinBase>& pin, size_t bit) { return nodes_[base_.at(pin.get()) + bit]; }
-    int index(const std::shared_ptr<PinBase>& pin, size_t bit) const {
-        return base_.at(pin.get()) + static_cast<int>(bit);
-    }
-
-    void collect() {
-        detail::collectTimingLeaves(root_, options_.contracts, 256, leaves_, {
-            nullptr,
-            [&](const Component& part) { fail(part.getID() + ": no timing contract for " + part.getTypeName()); }});
-        root_is_leaf_ = leaves_.size() == 1 && leaves_.front().component == root_;
-    }
-
-    // Which pin drives each reading pin: a leaf output or a root input.
-    void findDrivers() {
-        std::unordered_set<const PinBase*> sources;
-        if (!root_is_leaf_) for (const auto& [name, pin] : root_io_->getAllInputPins()) sources.insert(pin.get());
-        for (const auto& leaf : leaves_)
-            for (const auto& [name, pin] : leaf.component->getAllOutputPins()) sources.insert(pin.get());
-        const auto find = [&](const std::shared_ptr<PinBase>& reader) {
-            const auto source = detail::drivingPin(reader, sources);
-            if (source == reader || !sources.contains(source.get())) return; // nothing drives it
-            if (source->getWidth() != reader->getWidth()) throw std::runtime_error("Width mismatch at " + reader->getID());
-            driver_.emplace(reader.get(), source);
-        };
-        if (root_is_leaf_) return;
-        for (const auto& [name, pin] : root_io_->getAllOutputPins()) find(pin);
-        for (const auto& leaf : leaves_)
-            for (const auto& [name, pin] : leaf.component->getAllInputPins()) find(pin);
-    }
-
-    void makeSource(const std::shared_ptr<PinBase>& pin, long long arrival, bool splittable) {
-        for (unsigned bit = 0; bit < pin->getWidth(); ++bit) {
-            auto& node = at(pin, bit);
-            node.kind = Kind::Source;
-            node.delay = arrival;
-            if (splittable && options_.binary_sources) {
-                node.var = static_cast<int>(variables_.size());
-                variables_.emplace_back(pin.get(), bit);
-                variable_node_.push_back(index(pin, bit));
-            }
-        }
-    }
-    void makeConstant(const std::shared_ptr<PinBase>& pin, uint64_t value) {
-        if (pin->getWidth() < 64 && value >= (uint64_t{1} << pin->getWidth()))
-            throw std::runtime_error("Value exceeds pin width: " + pin->getID());
-        for (unsigned bit = 0; bit < pin->getWidth(); ++bit) {
-            auto& node = at(pin, bit);
-            node.kind = Kind::Stable;
-            node.constant = static_cast<int8_t>((value >> bit) & 1);
-        }
-    }
-    void makeRootInput(const std::shared_ptr<PinBase>& pin) {
-        if (clock_roots_.contains(pin.get())) return; // not data
-        const auto name = pin->getName();
-        if (const auto fixed = options_.fixed_inputs.find(name); fixed != options_.fixed_inputs.end()) {
-            makeConstant(pin, fixed->second);
-            return;
-        }
-        long long arrival = 0;
-        if (const auto it = options_.input_arrival.find(name); it != options_.input_arrival.end())
-            arrival = static_cast<long long>(it->second);
-        const auto final_value = options_.final_inputs.find(name);
-        makeSource(pin, options_.sources == SettlingSources::StateOnly ? STABLE : arrival,
-                   final_value == options_.final_inputs.end());
-        if (final_value == options_.final_inputs.end()) return;
-        if (pin->getWidth() < 64 && final_value->second >= (uint64_t{1} << pin->getWidth()))
-            throw std::runtime_error("Value exceeds pin width: " + pin->getID());
-        for (unsigned bit = 0; bit < pin->getWidth(); ++bit)
-            at(pin, bit).constant = static_cast<int8_t>((final_value->second >> bit) & 1);
-    }
-
-    void makeLeaf(const Leaf& leaf) {
-        const auto& c = *leaf.component;
-        const auto& m = leaf.contract;
-        const auto own = [&](const std::string& name, PinType type) {
-            auto pin = type == PinType::INPUT ? c.getInputPinDynamic(name) : c.getOutputPinDynamic(name);
-            if (!pin) throw std::runtime_error(c.getID() + ": contract names missing pin " + name);
-            return pin;
-        };
-        std::set<std::string> classified{m.clock_pin};
-        for (const auto& arc : m.arcs) classified.insert(arc.input);
-        for (const auto& capture : m.captures) {
-            if (capture.edge != ClockEdge::Rising) fail(c.getID() + ": falling-edge capture is unsupported");
-            classified.insert(capture.pin);
-        }
-        for (const auto& [name, value] : m.fixed_inputs) classified.insert(name);
-        for (const auto& name : m.unused_inputs) classified.insert(name);
-
-        for (const auto& [name, pin] : c.getAllInputPins()) {
-            if (!classified.contains(name)) fail(pin->getID() + ": input absent from timing contract");
-            if (name == m.clock_pin) continue;
-            if (leaf.component == root_) { makeRootInput(pin); continue; }
-            const auto source = driver_.find(pin.get());
-            for (unsigned bit = 0; bit < pin->getWidth(); ++bit) {
-                auto& node = at(pin, bit);
-                if (source == driver_.end()) continue; // undriven: never changes, value unknown
-                node.kind = Kind::Buf;
-                node.a = index(source->second, bit);
-            }
-        }
-        for (const auto& capture : m.captures) {
-            const auto pin = own(capture.pin, PinType::INPUT);
-            for (unsigned bit = 0; bit < pin->getWidth(); ++bit)
-                groups_.front().endpoints.emplace_back(index(pin, bit), static_cast<long long>(capture.setup));
-        }
-        for (const auto& [name, value] : m.fixed_inputs) {
-            const auto pin = own(name, PinType::INPUT);
-            for (unsigned bit = 0; bit < pin->getWidth(); ++bit)
-                required_.emplace_back(index(pin, bit), static_cast<int8_t>((value >> bit) & 1), pin->getID());
-        }
-
-        const auto delay = [&]() {
-            return static_cast<long long>(static_cast<const BasicComponent&>(c).getDelay());
-        };
-        if (leaf.builtin_rules) {
-            if (const auto kind = gateKind(c)) {
-                auto& out = at(own("OUT", PinType::OUTPUT), 0);
-                out.kind = *kind;
-                out.delay = delay();
-                if (*kind == Kind::Not) out.a = index(own("IN", PinType::INPUT), 0);
-                else { out.a = index(own("A", PinType::INPUT), 0); out.b = index(own("B", PinType::INPUT), 0); }
-                return;
-            }
-            if (typeid(c) == typeid(Rewire)) {
-                const auto& rewire = static_cast<const Rewire&>(c);
-                for (const auto& [name, pin] : c.getAllOutputPins())
-                    for (unsigned bit = 0; bit < pin->getWidth(); ++bit) {
-                        auto& node = at(pin, bit);
-                        node.kind = Kind::Stable;
-                        if (rewire.getUnmappedDefault() == Rewire::UnmappedBitValue::LOW) node.constant = 0;
-                        if (rewire.getUnmappedDefault() == Rewire::UnmappedBitValue::HIGH) node.constant = 1;
-                    }
-                for (const auto& map : rewire.getBitMappings()) {
-                    auto& node = at(own(map.dst_wire, PinType::OUTPUT), map.dst_bit);
-                    node.kind = Kind::Buf;
-                    node.constant = UNKNOWN;
-                    node.a = index(own(map.src_wire, PinType::INPUT), map.src_bit);
-                    node.delay = delay();
-                }
-                return;
-            }
-            if (detail::isBitSplitter(c)) {
-                const auto in = own("IN", PinType::INPUT);
-                for (unsigned bit = 0; bit < in->getWidth(); ++bit) {
-                    auto& node = at(own("OUT_" + std::to_string(bit), PinType::OUTPUT), 0);
-                    node.kind = Kind::Buf; node.a = index(in, bit); node.delay = delay();
-                }
-                return;
-            }
-            if (detail::isBitJoiner(c)) {
-                const auto out = own("OUT", PinType::OUTPUT);
-                for (unsigned bit = 0; bit < out->getWidth(); ++bit) {
-                    auto& node = at(out, bit);
-                    node.kind = Kind::Buf; node.delay = delay();
-                    node.a = index(own("IN_" + std::to_string(bit), PinType::INPUT), 0);
-                }
-                return;
-            }
-        }
-        // Any other contract is opaque: timed arcs and launches, no values.
-        for (const auto& [name, pin] : c.getAllOutputPins()) {
-            if (const auto constant = m.constant_outputs.find(name); constant != m.constant_outputs.end()) {
-                makeConstant(pin, constant->second);
-                continue;
-            }
-            if (std::find(m.stable_outputs.begin(), m.stable_outputs.end(), name) != m.stable_outputs.end())
-                continue;
-            Hub hub;
-            bool launched = false;
-            for (const auto& launch : m.launches) if (launch.pin == name) {
-                if (launch.edge != ClockEdge::Rising) fail(c.getID() + ": falling-edge launch is unsupported");
-                launched = true;
-                if (options_.sources != SettlingSources::InputsOnly)
-                    hub.launch = std::max(hub.launch, static_cast<long long>(launch.delay.maximum));
-            }
-            for (const auto& arc : m.arcs) if (arc.output == name) {
-                const auto in = own(arc.input, PinType::INPUT);
-                for (unsigned bit = 0; bit < in->getWidth(); ++bit)
-                    hub.inputs.emplace_back(index(in, bit), static_cast<long long>(arc.delay.maximum));
-            }
-            if (!launched && hub.inputs.empty()) {
-                fail(pin->getID() + ": output absent from timing contract");
-                continue;
-            }
-            if (hub.inputs.empty()) { makeSource(pin, hub.launch, true); continue; }
-            hubs_.push_back(std::move(hub));
-            for (unsigned bit = 0; bit < pin->getWidth(); ++bit) {
-                auto& node = at(pin, bit);
-                node.kind = Kind::Hub;
-                node.hub = static_cast<int>(hubs_.size()) - 1;
-            }
-        }
-    }
-
-    template<class Visit> void inputsOf(int n, Visit&& visit) const {
-        const auto& node = nodes_[n];
-        if (node.kind == Kind::Hub) { for (const auto& [in, d] : hubs_[node.hub].inputs) visit(in); return; }
-        if (node.a >= 0) visit(node.a);
-        if (node.b >= 0) visit(node.b);
-    }
-
-    bool sort() {
-        std::vector<int> waiting(nodes_.size());
-        std::vector<std::vector<int>> readers(nodes_.size());
-        for (int n = 0; n < static_cast<int>(nodes_.size()); ++n)
-            inputsOf(n, [&](int in) { ++waiting[n]; readers[in].push_back(n); });
-        for (int n = 0; n < static_cast<int>(nodes_.size()); ++n) if (!waiting[n]) order_.push_back(n);
-        for (size_t next = 0; next < order_.size(); ++next)
-            for (const int reader : readers[order_[next]]) if (!--waiting[reader]) order_.push_back(reader);
-        if (order_.size() == nodes_.size()) return true;
-        fail("Combinational dependency cycle: no finite settling bound");
-        for (int n = 0, shown = 0; n < static_cast<int>(nodes_.size()) && shown < 8; ++n) if (waiting[n]) {
-            report_.diagnostics.push_back("cycle or downstream: " + label(n));
-            ++shown;
-        }
-        return false;
-    }
-
-    std::string label(int n) const {
-        return nodes_[n].pin->getID() + "[" + std::to_string(nodes_[n].bit) + "]";
-    }
 
     // The timed-value rules. `values == false` ignores every value (per-bit
     // structural longest path). Otherwise the assumed final values of the
@@ -332,7 +36,7 @@ class Analysis {
         conflict_ = false;
         unjustified_.clear();
         for (const int n : order) {
-            const auto& x = nodes_[n];
+            const auto& x = graph_.nodes[n];
             int8_t v = UNKNOWN;
             long long s = STABLE;
             int p = -1;
@@ -369,7 +73,7 @@ class Analysis {
                 break;
             }
             case Kind::Hub: {
-                const auto& hub = hubs_[x.hub];
+                const auto& hub = graph_.hubs[x.hub];
                 s = hub.launch;
                 for (const auto& [in, d] : hub.inputs)
                     if (time_[in] != STABLE && time_[in] + d > s) { s = time_[in] + d; p = in; }
@@ -409,7 +113,7 @@ class Analysis {
             const auto [n, v] = pending.back();
             pending.pop_back();
             if (forced_[n] == v) continue;
-            const auto& x = nodes_[n];
+            const auto& x = graph_.nodes[n];
             if (forced_[n] != UNKNOWN || (x.constant != UNKNOWN && x.constant != v)) return false;
             forced_[n] = v;
             touched_.push_back(n);
@@ -439,7 +143,7 @@ class Analysis {
         };
         for (size_t i = 0; i < touched_.size() && consistent; ++i) {
             const int n = touched_[i];
-            const auto& x = nodes_[n];
+            const auto& x = graph_.nodes[n];
             const int8_t v = forced_[n];
             switch (x.kind) {
             case Kind::And: case Kind::Nand: case Kind::Or: case Kind::Nor: {
@@ -489,8 +193,8 @@ class Analysis {
             pending.pop_back();
             if (stamp_[n] == stamp_counter_ || (open_only && value_[n] != UNKNOWN)) continue;
             stamp_[n] = stamp_counter_;
-            if (nodes_[n].var >= 0 && forced_[n] == UNKNOWN) return n;
-            inputsOf(n, [&](int in) { pending.push_back(in); });
+            if (graph_.nodes[n].var >= 0 && forced_[n] == UNKNOWN) return n;
+            graph_.inputsOf(n, [&](int in) { pending.push_back(in); });
         }
         return -1;
     }
@@ -500,12 +204,12 @@ class Analysis {
     // below it. `opaque` reports open side inputs that may be X or Z.
     int openSide(int critical, bool internal, bool& opaque) {
         for (int n = critical; n >= 0; n = previous_[n]) {
-            const auto& node = nodes_[n];
+            const auto& node = graph_.nodes[n];
             if (node.kind != Kind::And && node.kind != Kind::Nand && node.kind != Kind::Or && node.kind != Kind::Nor)
                 continue;
             const int side = previous_[n] == node.a ? node.b : node.a;
             if (value_[side] != UNKNOWN) continue;
-            if (!binary_[side]) { opaque = true; continue; }
+            if (!graph_.binary[side]) { opaque = true; continue; }
             if (internal) return side;
             if (const int variable = openVariable(side, true); variable >= 0) return variable;
         }
@@ -524,8 +228,8 @@ class Analysis {
             const int n = order[i];
             const double w = weight_[n];
             if (w == 0) continue;
-            if (nodes_[n].var >= 0 && forced_[n] == UNKNOWN && (best < 0 || w > weight_[best])) best = n;
-            inputsOf(n, [&](int in) { if (value_[in] == UNKNOWN) weight_[in] += w; });
+            if (graph_.nodes[n].var >= 0 && forced_[n] == UNKNOWN && (best < 0 || w > weight_[best])) best = n;
+            graph_.inputsOf(n, [&](int in) { if (value_[in] == UNKNOWN) weight_[in] += w; });
         }
         return best;
     }
@@ -543,10 +247,10 @@ class Analysis {
                 pending.pop_back();
                 if (stamp_[n] == stamp_counter_) continue;
                 stamp_[n] = stamp_counter_;
-                if (nodes_[n].var >= 0) variables.push_back(nodes_[n].var);
-                inputsOf(n, [&](int in) { pending.push_back(in); });
+                if (graph_.nodes[n].var >= 0) variables.push_back(graph_.nodes[n].var);
+                graph_.inputsOf(n, [&](int in) { pending.push_back(in); });
             }
-            for (const int n : order_) if (stamp_[n] == stamp_counter_) order.push_back(n);
+            for (const int n : graph_.order) if (stamp_[n] == stamp_counter_) order.push_back(n);
         }
         const size_t start = evaluations_;
         clearCase();
@@ -571,15 +275,15 @@ class Analysis {
         // gives is reached by a real case, so no bound below it exists.
         const auto plain = [&](const std::vector<int8_t>& vector) {
             clearCase();
-            for (const int var : variables) force(variable_node_[var], vector[var]);
+            for (const int var : variables) force(graph_.variable_node[var], vector[var]);
             run(order, true);
             return latest(group).first;
         };
         long long attained = STABLE - 1;
-        std::vector<int8_t> attaining(variables_.size(), UNKNOWN);
+        std::vector<int8_t> attaining(graph_.variables.size(), UNKNOWN);
         std::mt19937_64 random(options_.seed);
         if (!variables.empty()) for (int mode = 0; mode < 8; ++mode) {
-            std::vector<int8_t> vector(variables_.size(), UNKNOWN);
+            std::vector<int8_t> vector(graph_.variables.size(), UNKNOWN);
             for (const int var : variables) vector[var] = static_cast<int8_t>(mode < 2 ? mode : random() & 1);
             if (const auto reached = plain(vector); reached > attained) { attained = reached; attaining = std::move(vector); }
         }
@@ -610,9 +314,9 @@ class Analysis {
             if (branch < 0) {
                 // One complete final vector below the limiting endpoint.
                 // Confirm its value with nothing assumed.
-                std::vector<int8_t> vector(variables_.size(), UNKNOWN);
+                std::vector<int8_t> vector(graph_.variables.size(), UNKNOWN);
                 for (const int var : variables) {
-                    const int8_t decided = forced_[variable_node_[var]];
+                    const int8_t decided = forced_[graph_.variable_node[var]];
                     vector[var] = decided == UNKNOWN ? int8_t{0} : decided;
                 }
                 const auto reached = plain(vector);
@@ -639,159 +343,87 @@ class Analysis {
         const int critical = latest(group).second;
         if (bound == STABLE) { result.changes = false; result.structural = 0; clearCase(); return result; }
         result.bound = static_cast<size_t>(bound);
-        for (int n = critical; n >= 0; n = previous_[n]) result.path.push_back(label(n));
+        for (int n = critical; n >= 0; n = previous_[n]) result.path.push_back(graph_.label(n));
         std::reverse(result.path.begin(), result.path.end());
         if (from_vector) {
             result.tight = sensitized;
-            for (const int var : variables) if (variables_[var].second < 64)
-                result.witness[variables_[var].first->getID()] |= uint64_t(attaining[var]) << variables_[var].second;
+            for (const int var : variables) if (graph_.variables[var].second < 64)
+                result.witness[graph_.variables[var].first->getID()] |= uint64_t(attaining[var]) << graph_.variables[var].second;
         }
         clearCase();
         return result;
     }
 
 public:
-    Analysis(const std::shared_ptr<Component>& root, const SettlingOptions& options)
-        : root_(root), options_(options) {}
+    Search(const SettlingOptions& options, const Graph& graph)
+        : options_(options), graph_(graph), value_(graph.nodes.size(), UNKNOWN),
+          time_(graph.nodes.size(), STABLE), previous_(graph.nodes.size(), -1), stamp_(graph.nodes.size(), 0),
+          forced_(graph.nodes.size(), UNKNOWN), weight_(graph.nodes.size(), 0) {}
 
-    SettlingReport analyze() {
-        try {
-            root_io_ = std::dynamic_pointer_cast<IOComponent>(root_);
-            if (!root_io_) throw std::runtime_error("Root has no pins");
-            collect();
-            if (failed_) return report_;
+    // Two ways of choosing cases; both are sound, so the lower result
+    // stands. The second runs only if the first leaves the bound open.
+    SettlingEndpoint solve(const Group& group) {
+        const bool both = options_.search == SettlingSearch::Both;
+        auto result = solve(group, options_.search == SettlingSearch::Signals,
+                            both ? options_.search_budget / 2 : options_.search_budget);
+        if (!both || !result.changes || result.tight) return result;
+        auto other = solve(group, true, options_.search_budget - result.evaluations);
+        other.evaluations += result.evaluations;
+        if (!other.changes || other.bound < result.bound || (other.bound == result.bound && other.tight))
+            return other;
+        result.evaluations = other.evaluations;
+        return result;
+    }
 
-            for (const auto* pins : {&root_io_->getAllInputPins(), &root_io_->getAllOutputPins()})
-                for (const auto& [name, pin] : *pins) reserve(pin);
-            for (const auto& leaf : leaves_)
-                for (const auto* pins : {&leaf.component->getAllInputPins(), &leaf.component->getAllOutputPins()})
-                    for (const auto& [name, pin] : *pins) reserve(pin);
-
-            findDrivers();
-
-            // One ideal clock, taken straight from a root input.
-            for (const auto& leaf : leaves_) {
-                if (leaf.contract.clock_pin.empty()) {
-                    if (!leaf.contract.captures.empty() || !leaf.contract.launches.empty())
-                        fail(leaf.component->getID() + ": clocked contract lacks a clock pin");
-                    continue;
-                }
-                const auto pin = leaf.component->getInputPinDynamic(leaf.contract.clock_pin);
-                if (!pin) throw std::runtime_error(leaf.component->getID() + ": contract names a missing clock pin");
-                clock_sinks_.insert(pin.get());
-                if (leaf.component == root_) { clock_roots_.insert(pin.get()); continue; }
-                const auto source = driver_.find(pin.get());
-                if (source == driver_.end() || !rootPin(*source->second))
-                    fail(pin->getID() + ": derived, gated or undriven clock is unsupported");
-                else clock_roots_.insert(source->second.get());
+    void fill(SettlingReport& report) {
+        run(graph_.order, true);
+        for (const auto& [n, value, id] : graph_.required)
+            if (time_[n] != STABLE || value_[n] != value) {
+                report.diagnostics.push_back(id + ": contract requires the fixed value " + std::to_string(value)
+                                             + "; state it with fixed_inputs");
+                return;
             }
-            for (const auto& [sink, source] : driver_)
-                if (clock_roots_.contains(source.get()) && !clock_sinks_.contains(sink))
-                    fail(source->getID() + ": clock used as data");
-            for (const auto& [name, value] : options_.fixed_inputs)
-                if (!root_io_->getInputPinDynamic(name)) fail("fixed_inputs names no root input: " + name);
-            for (const auto& [name, value] : options_.final_inputs)
-                if (!root_io_->getInputPinDynamic(name) || options_.fixed_inputs.contains(name))
-                    fail("final_inputs must name a root input that is not fixed: " + name);
-            for (const auto& [name, tick] : options_.input_arrival)
-                if (!root_io_->getInputPinDynamic(name)) fail("input_arrival names no root input: " + name);
-            if (failed_) return report_;
-
-            groups_.push_back({"(captures)", {}});
-            if (!root_is_leaf_) {
-                for (const auto& [name, pin] : root_io_->getAllInputPins()) makeRootInput(pin);
-                for (const auto& [name, pin] : root_io_->getAllOutputPins()) {
-                    const auto source = driver_.find(pin.get());
-                    if (source == driver_.end()) continue;
-                    for (unsigned bit = 0; bit < pin->getWidth(); ++bit) {
-                        auto& node = at(pin, bit);
-                        node.kind = Kind::Buf;
-                        node.a = index(source->second, bit);
-                    }
-                }
-            }
-            for (const auto& leaf : leaves_) makeLeaf(leaf);
-            for (const auto& [name, pin] : root_io_->getAllOutputPins()) {
-                Group group{name, {}};
-                for (unsigned bit = 0; bit < pin->getWidth(); ++bit) group.endpoints.emplace_back(index(pin, bit), 0);
-                groups_.push_back(std::move(group));
-            }
-            if (failed_ || !sort()) return report_;
-
-            value_.assign(nodes_.size(), UNKNOWN);
-            time_.assign(nodes_.size(), STABLE);
-            previous_.assign(nodes_.size(), -1);
-            stamp_.assign(nodes_.size(), 0);
-            forced_.assign(nodes_.size(), UNKNOWN);
-            weight_.assign(nodes_.size(), 0);
-            binary_.assign(nodes_.size(), 0);
-            for (const int n : order_) {
-                const auto& x = nodes_[n];
-                switch (x.kind) {
-                case Kind::Stable: binary_[n] = x.constant != UNKNOWN; break;
-                case Kind::Source: binary_[n] = x.var >= 0 || x.constant != UNKNOWN; break;
-                case Kind::Buf: case Kind::Not: binary_[n] = binary_[x.a]; break;
-                case Kind::Hub: break;
-                default: binary_[n] = binary_[x.a] && binary_[x.b]; break;
-                }
-            }
-            run(order_, true);
-            for (const auto& [n, value, id] : required_)
-                if (time_[n] != STABLE || value_[n] != value)
-                    fail(id + ": contract requires the fixed value " + std::to_string(value)
-                         + "; state it with fixed_inputs");
-            if (failed_) return report_;
-
-            for (const auto& group : groups_) {
-                if (group.endpoints.empty()) continue;
-                // Two ways of choosing cases; both are sound, so the lower
-                // result stands. The second runs only if the first is open.
-                const bool both = options_.search == SettlingSearch::Both;
-                auto result = solve(group, options_.search == SettlingSearch::Signals,
-                                    both ? options_.search_budget / 2 : options_.search_budget);
-                if (both && result.changes && !result.tight) {
-                    auto other = solve(group, true, options_.search_budget - result.evaluations);
-                    other.evaluations += result.evaluations;
-                    if (!other.changes || other.bound < result.bound || (other.bound == result.bound && other.tight))
-                        result = std::move(other);
-                    else result.evaluations = other.evaluations;
-                }
-                report_.endpoints.push_back(std::move(result));
-                report_.structural = std::max(report_.structural, report_.endpoints.back().structural);
-                report_.bound = std::max(report_.bound, report_.endpoints.back().bound);
-            }
-            report_.bit_count = nodes_.size();
-            report_.variable_count = variables_.size();
-            report_.premises = {
-                "Every evaluated part publishes f(inputs at t) at exactly t + its delay",
-                "The supplied and built-in component contracts are sound",
-                "Start-up has passed: logic fed only by unchanging sources is already quiet",
-                "One ideal clock taken directly from a root input; rising-edge state only",
-                options_.binary_sources
-                    ? "ENVIRONMENT: final root-input and clocked-state values are 0 or 1 (earlier values unrestricted)"
-                    : "No value restriction: final source values may be 0, 1, X or Z",
-                options_.sources == SettlingSources::All ? "Root inputs change at their arrival tick and state launches at the clock edge"
-                    : options_.sources == SettlingSources::InputsOnly ? "Only root inputs change; clocked state holds"
-                    : "Only clocked state launches; root inputs hold"};
-            report_.valid = true;
-        } catch (const std::exception& error) {
-            fail(error.what());
-            report_.valid = false;
-            report_.endpoints.clear();
+        for (const auto& group : graph_.groups) {
+            if (group.endpoints.empty()) continue;
+            report.endpoints.push_back(solve(group));
+            report.structural = std::max(report.structural, report.endpoints.back().structural);
+            report.bound = std::max(report.bound, report.endpoints.back().bound);
         }
-        return report_;
+        report.bit_count = graph_.nodes.size();
+        report.variable_count = graph_.variables.size();
+        report.premises = {
+            "Every evaluated part publishes f(inputs at t) at exactly t + its delay",
+            "The supplied and built-in component contracts are sound",
+            "Start-up has passed: logic fed only by unchanging sources is already quiet",
+            "One ideal clock taken directly from a root input; rising-edge state only",
+            options_.binary_sources
+                ? "ENVIRONMENT: final root-input and clocked-state values are 0 or 1 (earlier values unrestricted)"
+                : "No value restriction: final source values may be 0, 1, X or Z",
+            options_.sources == SettlingSources::All ? "Root inputs change at their arrival tick and state launches at the clock edge"
+                : options_.sources == SettlingSources::InputsOnly ? "Only root inputs change; clocked state holds"
+                : "Only clocked state launches; root inputs hold"};
+        report.valid = true;
     }
 };
 
 } // namespace
 
 SettlingReport analyzeSettling(const std::shared_ptr<Component>& root, const SettlingOptions& options) {
+    SettlingReport report;
     if (!root) {
-        SettlingReport report;
         report.diagnostics.push_back("No circuit");
         return report;
     }
-    return Analysis(root, options).analyze();
+    Graph graph;
+    if (!buildGraph(root, options, graph, report.diagnostics)) return report;
+    try {
+        Search(options, graph).fill(report);
+    } catch (const std::exception& error) {
+        report.diagnostics.push_back(error.what());
+        report.valid = false;
+        report.endpoints.clear();
+    }
+    return report;
 }
 
 } // namespace circuit::analysis
