@@ -342,9 +342,6 @@
     "RV32IPredictionPathTest": [
       "rv32i-prediction-path"
     ],
-    "RV32IControlFlowUnitTest": [
-      "rv32i-control-flow"
-    ],
     "RV32IDecodeControlUnitTest": [
       "rv32i-decode-control",
       "rv32i-decode"
@@ -700,14 +697,6 @@
       "title": "Full Adder",
       "group": "alu8"
     },
-    "XOR8Test": {
-      "title": "XOR8",
-      "group": "alu8"
-    },
-    "NOT8Test": {
-      "title": "NOT8",
-      "group": "alu8"
-    },
     "Mux2to1Test": {
       "title": "Mux2to1",
       "group": "wiring"
@@ -754,30 +743,6 @@
     },
     "Adder8Test": {
       "title": "Adder8",
-      "group": "alu8"
-    },
-    "TwosComplement8Test": {
-      "title": "Twos Complement8",
-      "group": "alu8"
-    },
-    "Subtractor8Test": {
-      "title": "Subtractor8",
-      "group": "alu8"
-    },
-    "SubtractorWithBorrow8Test": {
-      "title": "Subtractor With Borrow8",
-      "group": "alu8"
-    },
-    "Incrementer8Test": {
-      "title": "Incrementer8",
-      "group": "alu8"
-    },
-    "Decrementer8Test": {
-      "title": "Decrementer8",
-      "group": "alu8"
-    },
-    "EqualityChecker8Test": {
-      "title": "Equality Checker8",
       "group": "alu8"
     },
     "ZeroDetect8Test": {
@@ -871,10 +836,6 @@
     "ALU32CoreTest": {
       "title": "ALU32 Core Datapath",
       "group": "alu32"
-    },
-    "RV32IControlFlowUnitTest": {
-      "title": "Control Flow Unit",
-      "group": "rv32i-blocks"
     },
     "RV32IDecodeControlUnitTest": {
       "title": "Decode Control Unit",

@@ -232,9 +232,8 @@ nav:
           - 4.3.2. Register File: rv32i/4.3/register-file.md
           - 4.3.3. ALU32: rv32i/4.3/alu32.md
           - 4.3.4. Instruction Decoder: rv32i/4.3/instruction-decoder.md
-          - 4.3.5. Program Counter and Control Flow: rv32i/4.3/control-flow.md
-          - 4.3.6. Memory Access: rv32i/4.3/memory-access.md
-          - 4.3.7. Execution Control and Status: rv32i/4.3/execution-status.md
+          - 4.3.5. Memory Access: rv32i/4.3/memory-access.md
+          - 4.3.6. Execution Control and Status: rv32i/4.3/execution-status.md
       - 4.4. Single-Cycle Core:
           - rv32i/4.4/index.md
           - 4.4.1. Fetch: rv32i/4.4/fetch.md

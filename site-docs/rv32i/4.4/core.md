@@ -55,7 +55,7 @@ CLK and RST reach Fetch, Decode, and execution status. Memory has no clock or st
 
 #### Completion edge
 
-The exact priority rules are in [4.3.7](../4.3/execution-status.md). In short:
+The exact priority rules are in [4.3.6](../4.3/execution-status.md). In short:
 
 1. The current PC selects instruction memory. Decode reads old register values; Execute computes the result, address, and target.
 2. A load reads the selected data word during the same combinational interval. Writeback and Next PC form capture candidates.
@@ -70,7 +70,7 @@ The core retains its existing EBREAK-as-halt and terminal-trap conventions. Ther
 
 #### C++ example
 
-This binary composition uses all six examples in 4.4 plus `status_example::Status` from [4.3.7](../4.3/execution-status.md). Their 4.3 dependencies are unchanged. `observe` only evaluates combinational outputs; `evaluate` applies reset or a clock transition. Call evaluate after inputs change, starting with reset asserted. External zero-wait endpoints supply the current read words/status and own their storage. Capture an authorized store using the same pre-edge outputs as the core.
+This binary composition uses all six examples in 4.4 plus `status_example::Status` from [4.3.6](../4.3/execution-status.md). Their 4.3 dependencies are unchanged. `observe` only evaluates combinational outputs; `evaluate` applies reset or a clock transition. Call evaluate after inputs change, starting with reset asserted. External zero-wait endpoints supply the current read words/status and own their storage. Capture an authorized store using the same pre-edge outputs as the core.
 
 The important ordering is **observe every input from old state, then update all state owners, then observe the new outputs**. The C++ call order therefore cannot feed a newly written register into the same instruction's PC calculation. This is a binary reference composition, not the production core's event-driven implementation.
 

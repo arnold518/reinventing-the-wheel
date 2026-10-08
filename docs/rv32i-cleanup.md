@@ -221,3 +221,18 @@ its name with `MemoryContainer`, the scalable native device, and nothing used
 it. It is removed together with its relay phases in the memory sequencer, the
 `MemoryEndpointRelayTest` scenario, its section on the 3.3 page and its part of
 the tested reference listing. "Container" now only means `MemoryContainer`.
+
+## Documented but unused parts retired (October 8)
+
+- The eight 8-bit helpers that only each other used: `TwosComplement8`,
+  `Subtractor8`, `SubtractorWithBorrow8`, `Incrementer8`, `Decrementer8`,
+  `EqualityChecker8`, `NOT8` and `XOR8`, with `Arithmetic8`, `Logic8` and
+  `Comparator8` sources, their tests and the "existing arithmetic helpers"
+  table on the 2.1 page. `ArithmeticUnit8` covers the same operations.
+- `RV32IControlFlowUnit` (contract `rv32i.control-flow`) and its page, section
+  4.3.5. No core used it; Fetch, Execute and Next PC do its work. Memory
+  Access and Execution Control and Status became 4.3.5 and 4.3.6. The
+  contract ID stays in the retired list in `RV32IBuildProfiles.cpp` so the
+  preview profile's fingerprint does not change.
+
+Saved `layout.json` and `palette.json` entries for these types are inert.

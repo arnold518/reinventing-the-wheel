@@ -31,7 +31,7 @@ with sync_playwright() as p:
     page=context.new_page()
     assert page.goto(urljoin(base,"rv32i/4.3/"),wait_until="domcontentloaded").ok
     assert "Planned" not in page.locator("article").inner_text()
-    for number,slug in enumerate(("register","register-file","alu32","instruction-decoder","control-flow","memory-access","execution-status"),1):
+    for number,slug in enumerate(("register","register-file","alu32","instruction-decoder","memory-access","execution-status"),1):
         assert page.goto(urljoin(base,f"rv32i/4.3/{slug}/"),wait_until="domcontentloaded").ok
         assert f"4.3.{number}." in page.locator("h1").inner_text()
         if slug == "register":

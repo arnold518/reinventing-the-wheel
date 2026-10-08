@@ -45,7 +45,7 @@ This stage cannot wait for a delayed response: DONE stays one and there is no pe
 
 #### C++ example
 
-This binary reference reuses only the combinational lane and alignment examples from [4.3.6](../4.3/memory-access.md).
+This binary reference reuses only the combinational lane and alignment examples from [4.3.5](../4.3/memory-access.md).
 
 ```cpp
 #include <cstdint>

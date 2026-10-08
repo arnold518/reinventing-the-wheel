@@ -107,7 +107,6 @@ Unlike [FFWord&lt;W&gt;](../../memory/3.1.1.md), this register has no byte mask 
 | Consumer | Width / use |
 | --- | --- |
 | Single-cycle Fetch | 32: `PC_STATE`, the current instruction address |
-| Standalone control-flow unit | 32: retained PC for its combined reference datapath |
 | Pipeline Fetch | 32: `PC_STATE`, the next fetch address |
 | IF/ID, ID/EX, EX/MEM, MEM/WB registers | 32 for full-width fields; supported smaller widths for packed status, control, and register addresses |
 | Execution status | 4: `TRAP_CAUSE_WORD` |

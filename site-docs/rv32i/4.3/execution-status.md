@@ -1,4 +1,4 @@
-# § 4.3.7. Execution Control and Status
+# § 4.3.6. Execution Control and Status
 
 `RV32IExecutionControlStatusUnit` qualifies instruction completion in the single-cycle core and remembers halt/trap state. Decoder outputs express intent; this component decides when PC/register updates are permitted after readiness and fault checks. Pipeline retirement uses separate components, documented with the pipeline.
 
@@ -6,7 +6,7 @@
 | --- | --- | :---: | :---: |
 | `RV32IExecutionControlStatusUnit` | Readiness, update enables, fault priority, sticky halt/trap status | Yes | Yes |
 
-## 4.3.7.1. `RV32IExecutionControlStatusUnit`
+## 4.3.6.1. `RV32IExecutionControlStatusUnit`
 
 ### IO pins
 

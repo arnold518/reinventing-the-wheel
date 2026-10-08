@@ -23,7 +23,7 @@ BLOCK_TYPES = {
     "RV32IDecodeControlField",
     "AddSub32", "ZeroDetect32", "ALU32CompareUnit", "ALU32FlagUnit",
     "RV32IDecodeControlUnit", "RV32IInstructionRecognition", "RV32IDecodeControlSignals",
-    "RV32IDecodeControlField", "RV32IControlFlowUnit", "RV32IMemoryAlignmentUnit",
+    "RV32IDecodeControlField", "RV32IMemoryAlignmentUnit",
     "RV32IMemoryLanes", "RV32IMemoryAddress", "RV32ILoadExtender", "RV32ILoadByte",
     "RV32IMemoryLanesDataOnly", "RV32IMemoryAddressDataOnly", "RV32IFetchRequest",
     "IncrementBy4", "RV32IWritebackBypass",
@@ -39,7 +39,7 @@ AUTOMATIC_TYPES = {
     "RV32IPipelineRetirementUnit",
     *(f"RV32ISingleCycle{stage}Stage" for stage in
       ("Fetch", "Decode", "Execute", "Memory", "Writeback", "NextPC")),
-    "RV32IControlFlowUnit", "RV32IMemoryAlignmentUnit",
+    "RV32IMemoryAlignmentUnit",
     "RV32IMemoryLanes", "RV32IMemoryAddress", "RV32IMemoryLanesDataOnly",
     "RV32IMemoryAddressDataOnly", "RV32ILoadExtender", "RV32IStatusPriority",
     "IncrementBy4", "RV32IWritebackBypass",
@@ -65,7 +65,6 @@ ASPECTS = {
     # Pipeline boundaries are narrow, stage-height banks, not small word boxes.
     "RV32IIFIDPipelineRegister": 2.6, "RV32IIDEXPipelineRegister": 2.6,
     "RV32IEXMEMPipelineRegister": 2.6, "RV32IMEMWBPipelineRegister": 2.6,
-    "RV32IControlFlowUnit": .75,
     "RV32IMemoryAlignmentUnit": .5, "RV32IDecodeControlUnit": .9,
     "RV32IBitPatternMatcher": .8, "RV32IForwardingUnit": .9,
     "RV32IHazardDetectionUnit": .7, "RV32IPipelineCoordinator": .38,
@@ -367,15 +366,6 @@ def placements(kind, aspects, parent_aspect):
         p.grid(["HALTED_STATE", "TRAPPED_STATE"], (.26,.10,.61,.24), 2)
         p.slot("HIGH", .05,.16,.12,.12)
         p.slot("TRAP_CAUSE_WORD", .24,.43,.64,.46)
-    elif kind == "RV32IControlFlowUnit":
-        p.grid(["PC_STATE", "PC_PLUS_4_ADD", "PC_IMM_ADD", "PC_IMMEDIATE_ADD", "RS1_IMM_ADD",
-                "RS1_IMMEDIATE_ADD", "JALR_MASK"], (.06,.10,.88,.23), 5)
-        p.grid(["NOT_EQ", "NOT_LT_SIGNED", "NOT_LT_UNSIGNED"], (.06,.39,.23,.21), 1)
-        p.slot("BRANCH_MUX", .34,.37,.17,.29)
-        p.slot("BRANCH_NEXT_MUX", .56,.40,.17,.24)
-        p.slot("JUMP_NEXT_MUX", .78,.40,.17,.24)
-        p.grid([n for n in names if "SPLIT" in n], (.06,.72,.30,.22), 3)
-        p.rest((.42,.74,.53,.18), 4)
     elif kind == "RV32IMemoryAlignmentUnit":
         p.grid(["ADDRESS_SPLIT", "SIZE_SPLIT"], (.05,.12,.20,.79), 2)
         p.slot("LOW_ADDRESS_OR", .31,.57,.19,.25)

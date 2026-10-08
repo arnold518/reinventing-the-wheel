@@ -17,7 +17,7 @@ sys.path.insert(0,str(ROOT/"tools"))
 from mkdocs_examples import render_table
 
 snippets, outputs = [], {}
-for number,page in enumerate(("alu32","instruction-decoder","control-flow","memory-access","execution-status"),3):
+for number,page in enumerate(("alu32","instruction-decoder","memory-access","execution-status"),3):
     document=(ROOT/f"site-docs/rv32i/4.3/{page}.md").read_text()
     assert document.startswith(f"# § 4.3.{number}.")
     assert f"rv32i/4.3/{page}.md" in (ROOT/"mkdocs.yml").read_text()
@@ -147,8 +147,6 @@ try { decode_example::match(0,0,0); throw std::runtime_error("zero mask accepted
 catch(const std::invalid_argument&) {}
 '''
 stateful=[
-    ("RV32IControlFlowUnitTest","flow_example::ControlFlow","flow_example::Inputs",
-     "CLK RST PC_WRITE RS1_VALUE IMM BRANCH_TYPE JUMP_TYPE EQ LT_SIGNED LT_UNSIGNED"),
     ("RV32IMemoryRequestTest","memory_access_example::Request","memory_access_example::RequestInputs",
      "CLK RST ISSUE TAKE TAG ADDR WRITE_DATA OP WRITE_MASK BUS_REQ_READY BUS_RSP_VALID BUS_RSP_READ_DATA BUS_RSP_STATUS"),
     ("RV32IExecutionControlStatusUnitTest","status_example::Status","status_example::Inputs",

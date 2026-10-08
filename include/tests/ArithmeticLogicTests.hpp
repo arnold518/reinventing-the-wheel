@@ -1,12 +1,9 @@
 #pragma once
 
 #include "modules/basic/Decoder.hpp"
-#include "modules/basic/Logic8.hpp"
 #include "modules/basic/Mux.hpp"
 #include "modules/composite/ALU8.hpp"
 #include "modules/composite/Adder8.hpp"
-#include "modules/composite/Arithmetic8.hpp"
-#include "modules/composite/Comparator8.hpp"
 #include "modules/composite/FullAdder.hpp"
 #include "modules/composite/HalfAdder.hpp"
 #include "modules/composite/ZeroDetect8.hpp"
@@ -22,16 +19,6 @@ public:
 class FullAdderTest : public TruthTableComponentTest<FullAdder> {
 public:
     FullAdderTest();
-};
-
-class XOR8Test : public TruthTableComponentTest<XOR8> {
-public:
-    XOR8Test();
-};
-
-class NOT8Test : public TruthTableComponentTest<NOT8> {
-public:
-    NOT8Test();
 };
 
 class Mux2to1Test : public TruthTableComponentTest<Mux2to1> {
@@ -92,36 +79,6 @@ public:
 class Adder8Test : public TruthTableComponentTest<Adder8> {
 public:
     Adder8Test();
-};
-
-class TwosComplement8Test : public TruthTableComponentTest<TwosComplement8> {
-public:
-    TwosComplement8Test();
-};
-
-class Subtractor8Test : public TruthTableComponentTest<Subtractor8> {
-public:
-    Subtractor8Test();
-};
-
-class SubtractorWithBorrow8Test : public TruthTableComponentTest<SubtractorWithBorrow8> {
-public:
-    SubtractorWithBorrow8Test();
-};
-
-class Incrementer8Test : public TruthTableComponentTest<Incrementer8> {
-public:
-    Incrementer8Test();
-};
-
-class Decrementer8Test : public TruthTableComponentTest<Decrementer8> {
-public:
-    Decrementer8Test();
-};
-
-class EqualityChecker8Test : public TruthTableComponentTest<EqualityChecker8> {
-public:
-    EqualityChecker8Test();
 };
 
 class ZeroDetect8Test : public TruthTableComponentTest<ZeroDetect8> {

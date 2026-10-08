@@ -12,7 +12,7 @@ The advanced core accepts the same universal memory interface as the other cores
 
 An endpoint/controller knows how to operate its memory device. A CPU requester remembers which instruction owns the operation and whether the CPU has consumed its response. These are different responsibilities. The native device stores bytes; the pipeline does not duplicate that storage.
 
-The full requester pin contract and binary C++ state machine remain in [4.3.6. Memory Access](../4.3/memory-access.md). The advanced core instantiates `FETCH_REQUEST` and `DATA_REQUEST`, one per port. A zero-wait request and response can complete on the same edge through the bypass. Once captured, a request's payload stays stable until accepted; acceptance is not the same event as completion. Each accepted store occurs exactly once.
+The full requester pin contract and binary C++ state machine remain in [4.3.5. Memory Access](../4.3/memory-access.md). The advanced core instantiates `FETCH_REQUEST` and `DATA_REQUEST`, one per port. A zero-wait request and response can complete on the same edge through the bypass. Once captured, a request's payload stays stable until accepted; acceptance is not the same event as completion. Each accepted store occurs exactly once.
 
 ## Pipeline behavior
 

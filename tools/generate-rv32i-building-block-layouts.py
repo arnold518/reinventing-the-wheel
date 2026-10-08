@@ -31,7 +31,6 @@ SCENARIOS = {
     "rv32i-register-file": "RegisterFile32x32Test", **ALU_SCENARIOS,
     "rv32i-decode-control": "RV32IDecodeControlUnitTest",
     "rv32i-pattern-matcher": "RV32IBitPatternMatcherTest",
-    "rv32i-control-flow": "RV32IControlFlowUnitTest",
     "rv32i-memory-lanes": "RV32IMemoryLanesTest",
     "rv32i-memory-alignment": "RV32IMemoryAlignmentUnitTest",
     "rv32i-memory-request": "RV32IMemoryRequestTest",

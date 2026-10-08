@@ -16,7 +16,6 @@
 
 #include "modules/basic/Decoder.hpp"
 #include "modules/basic/Gate.hpp"
-#include "modules/basic/Logic8.hpp"
 #include "modules/basic/Mux.hpp"
 #include "modules/basic/Latch.hpp"
 #include "modules/basic/DFlipFlop.hpp"
@@ -28,7 +27,6 @@
 #include "modules/memory/FlipFlopCell.hpp"
 #include "modules/memory/Register.hpp"
 #include "modules/rv32i/RegisterFile32x32.hpp"
-#include "modules/rv32i/RV32IControlFlowUnit.hpp"
 #include "modules/rv32i/RV32IDecodeControlUnit.hpp"
 #include "modules/rv32i/RV32IExecutionControlStatusUnit.hpp"
 #include "modules/rv32i/RV32IBitPatternMatcher.hpp"
@@ -51,8 +49,6 @@
 #include "modules/composite/ZeroDetect32.hpp"
 #include "modules/composite/Shifter32.hpp"
 #include "modules/composite/ALU32.hpp"
-#include "modules/composite/Arithmetic8.hpp"
-#include "modules/composite/Comparator8.hpp"
 #include "modules/composite/ZeroDetect8.hpp"
 #include "modules/composite/ALU8.hpp"
 #include "modules/composite/ALU8ControlDecoder.hpp"
@@ -391,8 +387,6 @@ void bindModules(py::module_& m) {
         .def("get_parent", &FullAdder::getParent)
         .def("get_children", &FullAdder::getChildren, py::return_value_policy::reference_internal);
 
-    bindCompositeModule<XOR8>(m, "XOR8", "8-bit bitwise XOR.");
-    bindCompositeModule<NOT8>(m, "NOT8", "8-bit bitwise NOT.");
 
     bindCompositeModule<Mux2to1>(m, "Mux2to1", "2:1 one-bit multiplexer.");
     bindCompositeModule<Mux4to1>(m, "Mux4to1", "4:1 one-bit multiplexer.");
@@ -416,7 +410,6 @@ void bindModules(py::module_& m) {
     bindCompositeModule<Register<16>>(m, "RegisterW16", "Whole-word 16-bit register built from flip-flop cells.");
     bindCompositeModule<Register<32>>(m, "RegisterW32", "Whole-word 32-bit register built from flip-flop cells.");
     bindCompositeModule<RegisterFile32x32>(m, "RegisterFile32x32", "RV32I register file built from 31 Register<32> words and hardwired x0.");
-    bindCompositeModule<RV32IControlFlowUnit>(m, "RV32IControlFlowUnit", "Structural RV32I PC, branch, and jump block.");
     bindCompositeModule<RV32IDecodeControlUnit>(m, "RV32IDecodeControlUnit", "Structural RV32I field, immediate, and control decoder.");
     bindCompositeModule<RV32IExecutionControlStatusUnit>(m, "RV32IExecutionControlStatusUnit", "Structural RV32I commit permission, memory handshake, halt, and trap-state block.");
     bindCompositeModule<RV32IIFIDPipelineRegister>(m, "RV32IIFIDPipelineRegister", "RV32I IF/ID pipeline state.");
@@ -474,12 +467,6 @@ void bindModules(py::module_& m) {
     bindCompositeModule<RV32IMemoryLanes>(m, "RV32IMemoryLanes", "Structural RV32I byte-lane routing, masks, alignment and extension.");
 
     bindCompositeModule<Adder8>(m, "Adder8", "8-bit adder.");
-    bindCompositeModule<TwosComplement8>(m, "TwosComplement8", "8-bit two's complement.");
-    bindCompositeModule<Subtractor8>(m, "Subtractor8", "8-bit subtractor.");
-    bindCompositeModule<SubtractorWithBorrow8>(m, "SubtractorWithBorrow8", "8-bit subtractor with borrow.");
-    bindCompositeModule<Incrementer8>(m, "Incrementer8", "8-bit incrementer.");
-    bindCompositeModule<Decrementer8>(m, "Decrementer8", "8-bit decrementer.");
-    bindCompositeModule<EqualityChecker8>(m, "EqualityChecker8", "8-bit equality checker.");
     bindCompositeModule<ZeroDetect8>(m, "ZeroDetect8", "8-bit zero detector.");
     bindCompositeModule<ALU8>(m, "ALU8", "8-bit arithmetic logic unit.");
     bindCompositeModule<ALU8ControlDecoder>(m, "ALU8ControlDecoder", "Structural ALU integration block.");

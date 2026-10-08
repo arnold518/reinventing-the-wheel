@@ -16,7 +16,7 @@ Each enabled instruction completes at one rising edge after the full combination
 | `RV32ISingleCycleNextPCStage` | Select the next PC and check an active transfer's alignment | Yes | Yes |
 | `RV32ISingleCycleCore` | Connect the six stages, execution status, and two external memory ports | Yes | Yes |
 
-Columns describe registered simulator implementations, not the simplified C++ examples. `RV32IExecutionControlStatusUnit` is reused from [4.3.7](../4.3/execution-status.md), with both implementations; it is not a seventh datapath stage.
+Columns describe registered simulator implementations, not the simplified C++ examples. `RV32IExecutionControlStatusUnit` is reused from [4.3.6](../4.3/execution-status.md), with both implementations; it is not a seventh datapath stage.
 
 ## Contents
 

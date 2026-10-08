@@ -1,10 +1,7 @@
 #include "tests/ArithmeticLogicTests.hpp"
 
 #include "modules/basic/Decoder.hpp"
-#include "modules/basic/Logic8.hpp"
 #include "modules/basic/Mux.hpp"
-#include "modules/composite/Arithmetic8.hpp"
-#include "modules/composite/Comparator8.hpp"
 #include "tests/TestHelpers.hpp"
 #include <array>
 #include <cassert>
@@ -112,74 +109,6 @@ uint8_t knownLogicExpected(
             return static_cast<uint8_t>(~(left | right));
     }
     return 0;
-}
-
-std::vector<TestRow> binaryLogic8Rows(
-    LogicOperation operation,
-    std::initializer_list<std::pair<uint8_t, uint8_t>> known_cases) {
-    std::vector<TestRow> rows;
-    for (const auto [left, right] : known_cases) {
-        rows.push_back({
-            {{"A", bits(left)}, {"B", bits(right)}},
-            {{"OUT", bits(knownLogicExpected(
-                operation, left, right))}},
-        });
-    }
-    const std::vector<LogicValue> left{
-        LogicValue::LOW,
-        LogicValue::HIGH,
-        LogicValue::UNKNOWN,
-        LogicValue::HIGH_Z,
-        LogicValue::LOW,
-        LogicValue::HIGH,
-        LogicValue::UNKNOWN,
-        LogicValue::HIGH_Z,
-    };
-    const std::vector<LogicValue> right{
-        LogicValue::LOW,
-        LogicValue::LOW,
-        LogicValue::LOW,
-        LogicValue::LOW,
-        LogicValue::HIGH,
-        LogicValue::HIGH,
-        LogicValue::HIGH,
-        LogicValue::HIGH,
-    };
-    rows.push_back({
-        {{"A", pinVector(left)}, {"B", pinVector(right)}},
-        {{"OUT", pinVector(logicVectorExpected(
-            operation, left, right))}},
-    });
-    return rows;
-}
-
-std::vector<TestRow> not8Rows() {
-    std::vector<TestRow> rows{
-        {{{"A", bits(0x00)}}, {{"OUT", bits(0xFF)}}},
-        {{{"A", bits(0xA5)}}, {{"OUT", bits(0x5A)}}},
-        {{{"A", bits(0xFF)}}, {{"OUT", bits(0x00)}}},
-        {{{"A", bits(0x81)}}, {{"OUT", bits(0x7E)}}},
-    };
-    const std::vector<LogicValue> input{
-        LogicValue::LOW,
-        LogicValue::HIGH,
-        LogicValue::UNKNOWN,
-        LogicValue::HIGH_Z,
-        LogicValue::HIGH_Z,
-        LogicValue::UNKNOWN,
-        LogicValue::HIGH,
-        LogicValue::LOW,
-    };
-    std::vector<LogicValue> output;
-    output.reserve(input.size());
-    for (const auto value : input) {
-        output.push_back(invertKnown(value));
-    }
-    rows.push_back({
-        {{"A", pinVector(input)}},
-        {{"OUT", pinVector(output)}},
-    });
-    return rows;
 }
 
 TestRow adderRow(uint64_t a, uint64_t b, bool cin, uint64_t sum, bool cout) {
@@ -622,18 +551,6 @@ std::vector<TestRow> fullAdderRows() {
     return rows;
 }
 
-XOR8Test::XOR8Test()
-    : TruthTableComponentTest<XOR8>(
-          "XOR8Test",
-          "XOR8_ROOT",
-          binaryLogic8Rows(
-              LogicOperation::Xor,
-              {{0xAA, 0x55}, {0xFF, 0xFF}, {0xF0, 0x3C}, {0x81, 0x42}})) {}
-
-NOT8Test::NOT8Test()
-    : TruthTableComponentTest<NOT8>(
-          "NOT8Test", "NOT8_ROOT", not8Rows()) {}
-
 Mux2to1Test::Mux2to1Test()
     : TruthTableComponentTest<Mux2to1>("Mux2to1Test", "MUX2TO1_ROOT", oneBitMuxRows(2)) {}
 
@@ -666,73 +583,6 @@ Mux32to1_32bitTest::Mux32to1_32bitTest()
 
 Decoder5to32Test::Decoder5to32Test()
     : TruthTableComponentTest<Decoder5to32>("Decoder5to32Test", "DECODER5TO32_ROOT", decoderRows(32)) {}
-
-TwosComplement8Test::TwosComplement8Test()
-    : TruthTableComponentTest<TwosComplement8>("TwosComplement8Test", "TWOS_COMPLEMENT8_ROOT", {
-        {{{"A", bits(0x00)}}, {{"Result", bits(0x00)}, {"Cout", bit(false)}, {"Overflow", bit(false)}}},
-        {{{"A", bits(0x01)}}, {{"Result", bits(0xFF)}, {"Cout", bit(true)}, {"Overflow", bit(false)}}},
-        {{{"A", bits(0x7F)}}, {{"Result", bits(0x81)}, {"Cout", bit(true)}, {"Overflow", bit(false)}}},
-        {{{"A", bits(0x80)}}, {{"Result", bits(0x80)}, {"Cout", bit(true)}, {"Overflow", bit(true)}}},
-        {{{"A", bits(0xFF)}}, {{"Result", bits(0x01)}, {"Cout", bit(true)}, {"Overflow", bit(false)}}},
-        {{{"A", bits(0x55)}}, {{"Result", bits(0xAB)}, {"Cout", bit(true)}, {"Overflow", bit(false)}}},
-        twosComplementFourStateRow(),
-    }) {}
-
-Subtractor8Test::Subtractor8Test()
-    : TruthTableComponentTest<Subtractor8>("Subtractor8Test", "SUBTRACTOR8_ROOT", {
-        {{{"A", bits(0x05)}, {"B", bits(0x03)}}, {{"Result", bits(0x02)}, {"Cout", bit(true)}, {"Overflow", bit(false)}}},
-        {{{"A", bits(0x00)}, {"B", bits(0x01)}}, {{"Result", bits(0xFF)}, {"Cout", bit(false)}, {"Overflow", bit(false)}}},
-        {{{"A", bits(0x80)}, {"B", bits(0x01)}}, {{"Result", bits(0x7F)}, {"Cout", bit(true)}, {"Overflow", bit(true)}}},
-        {{{"A", bits(0x7F)}, {"B", bits(0xFF)}}, {{"Result", bits(0x80)}, {"Cout", bit(false)}, {"Overflow", bit(true)}}},
-        {{{"A", bits(0x10)}, {"B", bits(0x10)}}, {{"Result", bits(0x00)}, {"Cout", bit(true)}, {"Overflow", bit(false)}}},
-        {{{"A", bits(0xFF)}, {"B", bits(0x01)}}, {{"Result", bits(0xFE)}, {"Cout", bit(true)}, {"Overflow", bit(false)}}},
-        {{{"A", bits(0x00)}, {"B", bits(0x80)}}, {{"Result", bits(0x80)}, {"Cout", bit(false)}, {"Overflow", bit(true)}}},
-        {{{"A", bits(0x80)}, {"B", bits(0x7F)}}, {{"Result", bits(0x01)}, {"Cout", bit(true)}, {"Overflow", bit(true)}}},
-        subtractorFourStateRow(),
-    }) {}
-
-SubtractorWithBorrow8Test::SubtractorWithBorrow8Test()
-    : TruthTableComponentTest<SubtractorWithBorrow8>("SubtractorWithBorrow8Test", "SUBTRACTOR_WITH_BORROW8_ROOT", {
-        {{{"A", bits(0x05)}, {"B", bits(0x03)}, {"Bin", bit(false)}}, {{"Result", bits(0x02)}, {"Bout", bit(true)}, {"Overflow", bit(false)}}},
-        {{{"A", bits(0x05)}, {"B", bits(0x03)}, {"Bin", bit(true)}}, {{"Result", bits(0x01)}, {"Bout", bit(true)}, {"Overflow", bit(false)}}},
-        {{{"A", bits(0x00)}, {"B", bits(0x00)}, {"Bin", bit(true)}}, {{"Result", bits(0xFF)}, {"Bout", bit(false)}, {"Overflow", bit(false)}}},
-        {{{"A", bits(0x80)}, {"B", bits(0x00)}, {"Bin", bit(true)}}, {{"Result", bits(0x7F)}, {"Bout", bit(true)}, {"Overflow", bit(true)}}},
-        {{{"A", bits(0x00)}, {"B", bits(0x01)}, {"Bin", bit(true)}}, {{"Result", bits(0xFE)}, {"Bout", bit(false)}, {"Overflow", bit(false)}}},
-        {{{"A", bits(0x7F)}, {"B", bits(0xFF)}, {"Bin", bit(true)}}, {{"Result", bits(0x7F)}, {"Bout", bit(false)}, {"Overflow", bit(false)}}},
-        {{{"A", bits(0x80)}, {"B", bits(0x7F)}, {"Bin", bit(true)}}, {{"Result", bits(0x00)}, {"Bout", bit(true)}, {"Overflow", bit(true)}}},
-        subtractorBorrowFourStateRow(),
-    }) {}
-
-Incrementer8Test::Incrementer8Test()
-    : TruthTableComponentTest<Incrementer8>("Incrementer8Test", "INCREMENTER8_ROOT", {
-        {{{"A", bits(0x00)}}, {{"Result", bits(0x01)}, {"Cout", bit(false)}, {"Overflow", bit(false)}}},
-        {{{"A", bits(0x7F)}}, {{"Result", bits(0x80)}, {"Cout", bit(false)}, {"Overflow", bit(true)}}},
-        {{{"A", bits(0x80)}}, {{"Result", bits(0x81)}, {"Cout", bit(false)}, {"Overflow", bit(false)}}},
-        {{{"A", bits(0xFE)}}, {{"Result", bits(0xFF)}, {"Cout", bit(false)}, {"Overflow", bit(false)}}},
-        {{{"A", bits(0xFF)}}, {{"Result", bits(0x00)}, {"Cout", bit(true)}, {"Overflow", bit(false)}}},
-        incrementerFourStateRow(),
-    }) {}
-
-Decrementer8Test::Decrementer8Test()
-    : TruthTableComponentTest<Decrementer8>("Decrementer8Test", "DECREMENTER8_ROOT", {
-        {{{"A", bits(0x00)}}, {{"Result", bits(0xFF)}, {"Bout", bit(false)}, {"Overflow", bit(false)}}},
-        {{{"A", bits(0x01)}}, {{"Result", bits(0x00)}, {"Bout", bit(true)}, {"Overflow", bit(false)}}},
-        {{{"A", bits(0x7F)}}, {{"Result", bits(0x7E)}, {"Bout", bit(true)}, {"Overflow", bit(false)}}},
-        {{{"A", bits(0x80)}}, {{"Result", bits(0x7F)}, {"Bout", bit(true)}, {"Overflow", bit(true)}}},
-        {{{"A", bits(0x81)}}, {{"Result", bits(0x80)}, {"Bout", bit(true)}, {"Overflow", bit(false)}}},
-        {{{"A", bits(0xFF)}}, {{"Result", bits(0xFE)}, {"Bout", bit(true)}, {"Overflow", bit(false)}}},
-        decrementerFourStateRow(),
-    }) {}
-
-EqualityChecker8Test::EqualityChecker8Test()
-    : TruthTableComponentTest<EqualityChecker8>("EqualityChecker8Test", "EQUALITY_CHECKER8_ROOT", {
-        {{{"A", bits(0x42)}, {"B", bits(0x42)}}, {{"EQ", bit(true)}}},
-        {{{"A", bits(0x42)}, {"B", bits(0x43)}}, {{"EQ", bit(false)}}},
-        {{{"A", bits(0x00)}, {"B", bits(0x00)}}, {{"EQ", bit(true)}}},
-        {{{"A", bits(0xFF)}, {"B", bits(0x00)}}, {{"EQ", bit(false)}}},
-        {{{"A", bits(0x80)}, {"B", bits(0x00)}}, {{"EQ", bit(false)}}},
-        equalityFourStateRow(),
-    }) {}
 
 Adder8Test::Adder8Test()
     : TruthTableComponentTest<Adder8>(

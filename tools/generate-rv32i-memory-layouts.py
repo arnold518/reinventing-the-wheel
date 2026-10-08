@@ -99,7 +99,7 @@ def main():
         gc.collect()
         print(f"{prefix}: 22 roots reflowed",flush=True)
     aliases = {"rv32i-core":"RV32ISingleCycleCore", "rv32i-five-stage-core":"RV32IFiveStageCore",
-               "rv32i-control-flow":"RV32IControlFlowUnit", "rv32i-decode-control":"RV32IDecodeControlUnit",
+               "rv32i-decode-control":"RV32IDecodeControlUnit",
                "rv32i-execution-status":"RV32IExecutionControlStatusUnit"}
     for key, entry in layout.root_layouts.items():
         kind = aliases.get(key.split("@")[0])

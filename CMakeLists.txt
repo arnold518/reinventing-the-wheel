@@ -47,7 +47,6 @@ set(CORE_LOGIC_SOURCES
     src/components/selection/ComponentCatalog.cpp
     src/components/selection/BuiltinComponentCatalog.cpp
     src/modules/basic/Gate.cpp
-    src/modules/basic/Logic8.cpp
     src/modules/basic/Mux.cpp
     src/modules/basic/Decoder.cpp
     src/modules/basic/Latch.cpp
@@ -81,11 +80,9 @@ set(CORE_LOGIC_SOURCES
     src/modules/memory/Register.cpp
     src/modules/rv32i/RegisterFile32x32.cpp
     src/modules/rv32i/RV32IReferenceCore.cpp
-    src/modules/rv32i/RV32IControlFlowBehavioral.cpp
     src/modules/rv32i/RV32IDecodeControlBehavioral.cpp
     src/modules/rv32i/RV32IExecutionStatusBehavioral.cpp
     src/modules/rv32i/RV32IBitPatternMatcher.cpp
-    src/modules/rv32i/RV32IControlFlowUnit.cpp
     src/modules/rv32i/RV32IDecodeControlUnit.cpp
     src/modules/rv32i/RV32IExecutionControlStatusUnit.cpp
     src/modules/rv32i/RV32IPipelineRegisters.cpp
@@ -130,8 +127,6 @@ set(CORE_LOGIC_SOURCES
     src/modules/composite/Shifter32.cpp
     src/modules/composite/ALU32.cpp
     src/modules/composite/ALU32Behavioral.cpp
-    src/modules/composite/Arithmetic8.cpp
-    src/modules/composite/Comparator8.cpp
     src/modules/composite/ZeroDetect8.cpp
     src/modules/composite/ALU8.cpp
     src/modules/composite/ALU8Behavioral.cpp

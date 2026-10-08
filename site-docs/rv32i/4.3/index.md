@@ -10,9 +10,8 @@ Component references for the RV32I datapath and its control and memory-access lo
 | [4.3.2. Register File](register-file.md) | Register addressing, two independent reads, clocked writes, x0, and FF storage construction |
 | [4.3.3. ALU32](alu32.md) | Operation encoding, arithmetic/logic/shifts/comparisons, result selection, and flags |
 | [4.3.4. Instruction Decoder](instruction-decoder.md) | Field extraction, immediate construction, recognition, illegal encodings, and control outputs |
-| [4.3.5. Program Counter and Control Flow](control-flow.md) | PC storage and updates, branch decisions, sequential execution, and jump targets |
-| [4.3.6. Memory Access](memory-access.md) | Byte/halfword/word formatting, sign extension, masks, alignment, and transaction requests |
-| [4.3.7. Execution Control and Status](execution-status.md) | Reset, execution enable, halt/trap handling, and architectural update control |
+| [4.3.5. Memory Access](memory-access.md) | Byte/halfword/word formatting, sign extension, masks, alignment, and transaction requests |
+| [4.3.6. Execution Control and Status](execution-status.md) | Reset, execution enable, halt/trap handling, and architectural update control |
 
 ## Component grouping
 
@@ -22,13 +21,12 @@ Component references for the RV32I datapath and its control and memory-access lo
 | Register File | `RegisterFile32x32`; its storage bank holds 31 `Register<32>` words, each built from `FlipFlopCell` instances |
 | ALU32 | `ALU32`, `ALU32Core`, `AddSub32`, `Logic32`, `Shifter32`, `ALU32ControlDecoder`, `ALU32CompareUnit`, `ALU32ResultSelector`, `ALU32FlagUnit` |
 | Instruction Decoder | `RV32IDecodeControlUnit`, `RV32IBitPatternMatcher` |
-| Program Counter and Control Flow | `RV32IControlFlowUnit` |
 | Memory Access | `RV32IMemoryLanes`, `RV32IMemoryAlignmentUnit`, `RV32IMemoryRequest` |
 | Execution Control and Status | `RV32IExecutionControlStatusUnit` |
 
 ALU32's internal units belong within its reference rather than becoming separate top-level sections. Existing ALU8 concepts can be cross-referenced, but the 32-bit pins, operation encoding, and behavior must be specified explicitly. `ALU32` is registered as `rv32i.alu32`; its arithmetic operations are reusable even though this particular interface serves the RV32I core.
 
-The combined `RV32IControlFlowUnit` remains a standalone reference component. The stage-wise single-cycle core distributes its responsibilities across Fetch, Execute, and Next PC, allowing JAL/JALR targets to reuse the main ALU.
+There is no separate program-counter block: the stage-wise cores distribute PC storage, branch decisions and next-PC selection across Fetch, Execute, and Next PC ([4.4](../4.4/index.md)), allowing JAL/JALR targets to reuse the main ALU.
 
 Each component reference follows the same pattern: **IO pins → behavior and C++ example → structural/behavioral implementation → examples and embedded simulation → tests**. Component tables distinguish registered structural and behavioral implementations. Example tables include all recorded checkpoints and their simulation times.
 

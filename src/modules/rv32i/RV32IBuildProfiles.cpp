@@ -74,7 +74,7 @@ circuit::BuildProfile architectureStructuralProfile(
     // fingerprint, which covers its rule list. Retired RV32I contracts keep
     // their (now inert) rule, in the catalog's sorted order, so that removing
     // a component does not orphan every saved RV32I layout.
-    std::set<std::string> contract_ids{"rv32i.pipeline.control-flow"};
+    std::set<std::string> contract_ids{"rv32i.pipeline.control-flow", "rv32i.control-flow"};
     for (const auto& contract : catalog.contracts()) {
         if (contract.id.starts_with("rv32i.")) {
             contract_ids.insert(contract.id);

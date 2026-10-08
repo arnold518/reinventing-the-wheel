@@ -1,4 +1,4 @@
-# § 4.3.6. Memory Access
+# § 4.3.5. Memory Access
 
 These are **CPU-side** components. The lane/alignment logic is shared by both cores. The pipeline additionally uses a requester to hold one [universal memory transaction](../../memory/3.2.md) until completion; the strict single-cycle and baseline cores use zero-wait endpoint pins with combinational port formatting, not a stateful requester. These components do not contain storage or replace a [technology-specific controller](../../memory/3.3.md).
 
@@ -14,7 +14,7 @@ Columns count registered implementations. Behavioral pipeline cores contain equi
 
 The two rows separate outgoing payloads from returning data; they do not duplicate hardware. Request/response handshakes and CPU-side issue, completion, and fault controls are specified in the pin tables below.
 
-## 4.3.6.1. `RV32IMemoryLanes`
+## 4.3.5.1. `RV32IMemoryLanes`
 
 ### IO pins
 
@@ -91,7 +91,7 @@ These are fixed structural helpers with no state or registered behavioral varian
 
 `RV32IMemoryLanesTest` exposes 32 checkpoints covering all four size encodings, four offsets, and both sign modes. `RV32IMemoryMigrationTest` additionally exercises formatting against real endpoint responses and checks that rejected stores do not change storage. These are sampled data words, not an exhaustive 32-bit operand test.
 
-## 4.3.6.2. `RV32IMemoryAlignmentUnit`
+## 4.3.5.2. `RV32IMemoryAlignmentUnit`
 
 ### IO pins
 
@@ -145,7 +145,7 @@ Two splitters, two AND gates, and two OR gates evaluate the predicate. It is reg
 
 `RV32IMemoryAlignmentUnitTest` includes six named binary cases and all $4^4=256$ combinations of LOW/HIGH/X/Z for the four meaningful bits. It checks 262 checkpoints in each implementation. Source: `src/modules/rv32i/RV32IMemoryAlignmentUnit.cpp` (structural) and `src/modules/rv32i/RV32IPipelineControlBehavioral.cpp` (behavioral).
 
-## 4.3.6.3. `RV32IMemoryRequest`
+## 4.3.5.3. `RV32IMemoryRequest`
 
 ### IO pins
 

@@ -8,7 +8,6 @@
 #include "modules/basic/Decoder.hpp"
 #include "modules/basic/Gate.hpp"
 #include "modules/basic/Latch.hpp"
-#include "modules/basic/Logic8.hpp"
 #include "modules/basic/Mux.hpp"
 #include "modules/composite/ALU32.hpp"
 #include "modules/composite/ALU8.hpp"
@@ -27,8 +26,6 @@
 #include "modules/composite/AddSub32.hpp"
 #include "modules/composite/Adder32.hpp"
 #include "modules/composite/Adder8.hpp"
-#include "modules/composite/Arithmetic8.hpp"
-#include "modules/composite/Comparator8.hpp"
 #include "modules/composite/FullAdder.hpp"
 #include "modules/composite/HalfAdder.hpp"
 #include "modules/composite/Logic32.hpp"
@@ -46,7 +43,6 @@
 #include "modules/rv32i/RegisterFile32x32.hpp"
 #include "modules/rv32i/RV32IBitPatternMatcher.hpp"
 #include "modules/rv32i/RV32IMemoryRequest.hpp"
-#include "modules/rv32i/RV32IControlFlowUnit.hpp"
 #include "modules/rv32i/RV32IDecodeControlUnit.hpp"
 #include "modules/rv32i/RV32IExecutionControlStatusUnit.hpp"
 #include "modules/rv32i/RV32IPipelineControl.hpp"
@@ -513,8 +509,6 @@ void registerStructuralFamilies(ComponentCatalog& catalog) {
     addStructural<DFlipFlop>(catalog, "sequential.d-flip-flop", "sequential.d-flip-flop.structural", "D flip-flop", "DFlipFlopTest");
     addStructural<Decoder5to32>(catalog, "decode.5-to-32", "decode.5-to-32.structural", "5-to-32 decoder", "Decoder5to32Test");
 
-    addStructural<XOR8>(catalog, "logic.xor.width8", "logic.xor.width8.structural", "8-bit XOR", "XOR8Test");
-    addStructural<NOT8>(catalog, "logic.not.width8", "logic.not.width8.structural", "8-bit NOT", "NOT8Test");
 
     addStructural<Mux2to1>(catalog, "mux.2x1.width1", "mux.2x1.width1.structural", "2:1 bit mux", "Mux2to1Test");
     addStructural<Mux4to1>(catalog, "mux.4x1.width1", "mux.4x1.width1.structural", "4:1 bit mux", "Mux4to1Test");
@@ -538,12 +532,6 @@ void registerStructuralFamilies(ComponentCatalog& catalog) {
         "32-bit add/sub",
         "AddSub32Test",
         "AddSub32 structural full-adder chain");
-    addStructural<TwosComplement8>(catalog, "arithmetic.twos-complement.width8", "arithmetic.twos-complement.width8.structural", "8-bit two's complement", "TwosComplement8Test");
-    addStructural<Subtractor8>(catalog, "arithmetic.subtractor.width8", "arithmetic.subtractor.width8.structural", "8-bit subtractor", "Subtractor8Test");
-    addStructural<SubtractorWithBorrow8>(catalog, "arithmetic.subtractor-borrow.width8", "arithmetic.subtractor-borrow.width8.structural", "8-bit subtractor with borrow", "SubtractorWithBorrow8Test");
-    addStructural<Incrementer8>(catalog, "arithmetic.incrementer.width8", "arithmetic.incrementer.width8.structural", "8-bit incrementer", "Incrementer8Test");
-    addStructural<Decrementer8>(catalog, "arithmetic.decrementer.width8", "arithmetic.decrementer.width8.structural", "8-bit decrementer", "Decrementer8Test");
-    addStructural<EqualityChecker8>(catalog, "compare.equal.width8", "compare.equal.width8.structural", "8-bit equality", "EqualityChecker8Test");
     addSelectableFamily(catalog, families::ZeroDetect8, "compare.zero.width8", "8-bit zero detect", "ZeroDetect8Test", "ZeroDetect8 structural circuit", 1, "ALU8FidelityContractTest");
     addSelectableFamily(
         catalog,
@@ -665,10 +653,6 @@ void registerRV32I(ComponentCatalog& catalog) {
     addFamilyPair(catalog, {families::ALU32Core, "RV32I core ALU datapath", "ALU32CoreTest",
         "ALU32 shared arithmetic and compare network",
         "rv32i.alu32-core.structural", "rv32i.alu32-core.behavioral.direct"});
-    addFamilyPair(catalog, {families::RV32IControlFlow, "RV32I control flow",
-        "RV32IControlFlowUnitTest", "RV32IControlFlowUnit structure",
-        "rv32i.control-flow.structural", "rv32i.control-flow.behavioral.direct",
-        "clock-boundary"});
     addFamilyPair(catalog, {families::RV32IDecodeControl, "RV32I decode and control",
         "RV32IDecodeControlUnitTest", "RV32IDecodeControlUnit structure",
         "rv32i.decode-control.structural", "rv32i.decode-control.behavioral.direct"});

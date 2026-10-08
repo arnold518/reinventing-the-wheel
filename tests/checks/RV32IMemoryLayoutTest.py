@@ -23,7 +23,6 @@ for test_name, alias in (("RV32ISingleCycleSystemTest/program-03", "rv32i-progra
                          ("RV32ISingleCycleCoreTest", "rv32i-core"),
                          ("RV32IFiveStageCoreTest", "rv32i-five-stage-core"),
                          ("RV32IDecodeControlUnitTest", "rv32i-decode-control"),
-                         ("RV32IControlFlowUnitTest", "rv32i-control-flow"),
                          ("RV32IExecutionControlStatusUnitTest", "rv32i-execution-status")):
     test = backend.create_test_by_name(test_name)
     test.setup_circuit()

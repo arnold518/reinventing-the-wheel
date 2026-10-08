@@ -281,8 +281,6 @@ set(SIMULATION_TESTS
     ConstantValue32Test
     HalfAdderTest
     FullAdderTest
-    XOR8Test
-    NOT8Test
     Mux2to1Test
     Mux4to1Test
     Mux8to1Test
@@ -295,12 +293,6 @@ set(SIMULATION_TESTS
     Mux32to1_32bitTest
     Decoder5to32Test
     Adder8Test
-    TwosComplement8Test
-    Subtractor8Test
-    SubtractorWithBorrow8Test
-    Incrementer8Test
-    Decrementer8Test
-    EqualityChecker8Test
     ZeroDetect8Test
     ALU8Test
     AddSub8Test
@@ -328,7 +320,6 @@ set(SIMULATION_TESTS
     ALU32Test
     ALU32CoreTest
     ALU32RepresentativeSliceTest
-    RV32IControlFlowUnitTest
     RV32IDecodeControlUnitTest
     RV32IExecutionControlStatusUnitTest
     RV32IIFIDPipelineRegisterTest
