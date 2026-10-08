@@ -105,15 +105,28 @@ build-cleanup/part_delay_tables --write src/components/selection/ProvenPartDelay
 build-cleanup/part_delay_tables --check     # recompute every stored table from the gates
 ```
 
-44 unclocked parts have tables today: the adders, muxes, decoders, shifters,
-the ALU and its units, the 8-bit ALU parts, decode control, forwarding, hazard
-detection, the predictor parts and the unclocked stages. `SettlingBoundTest`
-drives each one side by side with its gates.
+63 parts have tables today.
 
-Not yet: the 18 clocked parts (register file, pipeline registers, fetch and
-decode stages, memory requester, execution status, the cores), storage and
-memory parts, parts built with non-default parameters, and tables per control
-value.
+- 46 unclocked: the adders, muxes, decoders, shifters, the two composite logic
+  units, the ALU and its units, the 8-bit ALU parts, decode control,
+  forwarding, hazard detection, the predictor parts and the unclocked stages.
+  `SettlingBoundTest` drives each one side by side with its gates.
+- 17 clocked: the three cores, the fetch and decode stages, the pipeline
+  registers, the memory requester, execution status and the prediction path.
+  They are proven with storage and memory compact inside, as in every
+  structural view of a core. The compact cores run and verify at the certified
+  periods.
+
+A table treats reset as held at 0, so a reset change is timed at each output's
+worst case. A harness must therefore leave a whole cycle between releasing
+reset and the first working edge; the advanced-core program harness was
+changed to do so.
+
+Not yet: storage parts (registers, the state bit, the flip-flop cell, the
+register file), which stay compact in the reference profile and so have no
+gates to prove on; the timed memories; parts built with non-default
+parameters; tables per control value; and a side-by-side simulator check for
+clocked parts.
 
 ## What is assumed
 

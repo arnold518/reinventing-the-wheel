@@ -60,13 +60,12 @@ std::vector<Candidate> candidates(const std::set<std::string>& only) {
     for (const auto& contract : catalog.contracts()) {
         if (!only.empty() && !only.contains(contract.id)) continue;
         if (contract.id.rfind("memory.", 0) == 0 || contract.id.rfind("storage.", 0) == 0
-            || contract.id.rfind("sequential.", 0) == 0 || contract.id.rfind("utility.", 0) == 0
-            || contract.id.rfind("logic.", 0) == 0) continue;
+            || contract.id.rfind("sequential.", 0) == 0 || contract.id.rfind("utility.", 0) == 0) continue;
         std::string compact;
         bool gates = false;
         for (const auto& implementation : catalog.implementationsFor(contract.id)) {
             if (implementation.fidelity == circuit::Fidelity::Behavioral) compact = implementation.id;
-            else gates = true;
+            else gates = !implementation.terminal_primitive; // a single gate is its own delay
         }
         if (compact.empty() || !gates) continue;
         try {
@@ -87,6 +86,9 @@ circuit::PartDelays prove(const Candidate& candidate, size_t budget, std::string
         gates = catalog.createRoot({candidate.contract, "DUT", {}},
             rv32i::withBehavioralMemoryParts(circuit::maximallyStructural(), "part-delay-reference-v1")).root;
     } catch (const std::exception& error) { reason = error.what(); return {}; }
+    // Storage keeps its compact form in this profile; a part that is itself
+    // storage then has no gates to prove anything on.
+    if (std::dynamic_pointer_cast<BasicComponent>(gates)) { reason = "storage: compact in the reference profile"; return {}; }
     const auto pins = std::dynamic_pointer_cast<IOComponent>(gates);
     if (!pins || pins->getAllOutputPins().empty()) { reason = "no outputs"; return {}; }
     SettlingOptions options;

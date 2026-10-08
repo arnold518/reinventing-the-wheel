@@ -283,8 +283,13 @@ initializeComponentForLockstep(
     drive(*sim, 0, enable_wire_, true);
     const size_t scale=baseline_?40:1;
     program_root_->startClock(*sim, 20*scale);
-    sim->advanceAndRecord(70*scale);
-    drive(*sim, 70*scale, rst_wire_, false);
+    // Release reset just after the first rising edge, not half a cycle
+    // later: the circuit then has a whole cycle to settle before the first
+    // working edge. Compact parts answer at their real delays, and half of
+    // the advanced core's 100-tick cycle is not enough for that.
+    const size_t release = baseline_ ? 70*scale : 21;
+    sim->advanceAndRecord(release);
+    drive(*sim, release, rst_wire_, false);
     // advanceAndRecord stops at the last event, not the requested deadline.
     // A benign input event fixes the observation origin across fidelities;
     // otherwise reset settling introduces a few ticks of timestamp skew.
