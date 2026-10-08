@@ -444,10 +444,6 @@
       "title": "Memory Endpoint Flash",
       "group": "memory-interface"
     },
-    "MemoryEndpointRelayTest": {
-      "title": "Memory container endpoint",
-      "group": "memory-interface"
-    },
     "ScalableMemoryEndpointTest": {
       "title": "Scalable memory endpoint",
       "group": "memory-interface"

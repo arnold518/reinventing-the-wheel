@@ -2,7 +2,7 @@
 #include "modules/memory/DigitalMemory.hpp"
 
 namespace circuit::memory {
-enum class Technology { FF, SRAM, DRAM, ROM, NORFlash, Container };
+enum class Technology { FF, SRAM, DRAM, ROM, NORFlash };
 enum class Operation : unsigned { Read, Write, Program, EraseBlock };
 enum class Status : unsigned { Ok, Alignment, Range, ReadOnly, Unsupported, Device, InvalidRequest };
 const char* technologyName(Technology);

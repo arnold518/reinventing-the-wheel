@@ -39,8 +39,8 @@ struct Scenario {
         step(label+"-latched", {{"CLK",logicBit(false)},{"REQ_VALID",logicBit(false)},
             {"REQ_ADDR",logicBits(32,0xffffffff)},{"REQ_WRITE_DATA",logicBits(width,0)}});
         step(label+"-execute", {{"CLK",logicBit(true)}});
-        // A relay has another transaction frontend behind it. Supply enough
-        // clocks for either path; no response is consumed until RSP_READY.
+        // Supply enough clocks for the slowest technology; no response is
+        // consumed until RSP_READY.
         for (size_t cycle = 0; cycle < 5; ++cycle) {
             step(label+"-wait-low-"+std::to_string(cycle), {{"CLK",logicBit(false)}});
             step(label+"-wait-high-"+std::to_string(cycle), {{"CLK",logicBit(true)}});
@@ -61,8 +61,8 @@ std::string testName(Technology t) {
     case Technology::DRAM: return "MemoryEndpointDRAMTest";
     case Technology::ROM: return "MemoryEndpointROMTest";
     case Technology::NORFlash: return "MemoryEndpointFlashTest";
-    default: return "MemoryEndpointRelayTest";
     }
+    throw std::invalid_argument("Unknown memory technology");
 }
 ComponentTestSpec endpointSpec(Technology t, size_t width = 8, bool container = false, size_t depth = 4, size_t row_words = 1) {
     ParameterMap config{{"depth_words",std::to_string(depth)},{"words_per_row",std::to_string(row_words)},{"block_words",std::to_string(row_words)}};
@@ -287,7 +287,6 @@ MemoryEndpointSRAMTest::MemoryEndpointSRAMTest() : ComponentScenarioTest(endpoin
 MemoryEndpointDRAMTest::MemoryEndpointDRAMTest() : ComponentScenarioTest(endpointSpec(Technology::DRAM)) {}
 MemoryEndpointROMTest::MemoryEndpointROMTest() : ComponentScenarioTest(endpointSpec(Technology::ROM)) {}
 MemoryEndpointFlashTest::MemoryEndpointFlashTest() : ComponentScenarioTest(endpointSpec(Technology::NORFlash)) {}
-MemoryEndpointRelayTest::MemoryEndpointRelayTest() : ComponentScenarioTest(endpointSpec(Technology::Container)) {}
 ScalableMemoryEndpointTest::ScalableMemoryEndpointTest() : ComponentScenarioTest(endpointSpec(Technology::SRAM,8,true)) {}
 namespace {
 ComponentTestSpec nativeContainerSpec() {

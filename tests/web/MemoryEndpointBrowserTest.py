@@ -108,11 +108,11 @@ with sync_playwright() as p:
             page.evaluate("() => smoothlyFocusComponent(app.rootId)")
             page.wait_for_function("!app.cameraAnimation && !app.geometryDirty && !app.topologyRequestInFlight && !app.pendingScopeIds.size")
             # Camera focus does not need to change the selected root row.
-        if scenario.startswith("memory-endpoint-") and scenario!="memory-endpoint-relay":
+        if scenario.startswith("memory-endpoint-"):
             page.locator('.explorer-row.selected .explorer-arrow').click()
             page.locator('#apply-profile').click()
             page.wait_for_function("app.components.size===1 && app.components.get(app.rootId).fidelity==='behavioral' && document.querySelector('#loading').classList.contains('hidden')")
-        if scenario in ("scalable-memory-container", "native-memory-container") or scenario.startswith("memory-endpoint-") and scenario!="memory-endpoint-relay":
+        if scenario in ("scalable-memory-container", "native-memory-container") or scenario.startswith("memory-endpoint-"):
             info=page.evaluate("""async()=>{await setStateIndex(app.timestamps.length-1);return app.componentStates.get(app.rootId);}""")
             assert info and info["supported"] and len(info["windowWords"])==4
             assert ("FAULT" if scenario == "native-memory-container" else "RSP_STATUS") in info["ports"]

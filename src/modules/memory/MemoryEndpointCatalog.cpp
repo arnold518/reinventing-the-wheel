@@ -100,11 +100,11 @@ void registerMemoryEndpoints(ComponentCatalog& c) {
             }, [width](const std::string& n, const ParameterMap&, const std::shared_ptr<BuildContext>& ctx) {
                 return Component::createWithContext<MemoryTransactionPort>(ctx,n,width);
             }, {}, "MemoryTransactionPortTest");
-        for (auto t : {Technology::FF, Technology::SRAM, Technology::DRAM, Technology::ROM, Technology::NORFlash, Technology::Container}) {
+        for (auto t : {Technology::FF, Technology::SRAM, Technology::DRAM, Technology::ROM, Technology::NORFlash}) {
             const std::string name = technologyName(t), dims = "<" + name + "," + suffix + ">";
             const std::string test = t == Technology::FF ? "MemoryEndpointFFTest" : t == Technology::SRAM ? "MemoryEndpointSRAMTest" :
                 t == Technology::DRAM ? "MemoryEndpointDRAMTest" : t == Technology::ROM ? "MemoryEndpointROMTest" :
-                t == Technology::NORFlash ? "MemoryEndpointFlashTest" : "MemoryEndpointRelayTest";
+                "MemoryEndpointFlashTest";
             auto schema = [=](const ParameterMap& p) {
                 endpointConfig(p).validate(width,t);
                 return memory_device::describe([=](IOComponent* s) { protocolPins(s,width); });
@@ -122,15 +122,14 @@ void registerMemoryEndpoints(ComponentCatalog& c) {
             add(c, "memory." + name + ".endpoint." + suffix, "MemoryEndpoint" + dims, schema,
                 [=](const std::string& n, const ParameterMap& p, const std::shared_ptr<BuildContext>& ctx) {
                     return Component::createWithContext<MemoryEndpoint>(ctx,n,width,t,endpointConfig(p));
-                }, t == Technology::Container ? ComponentFactory{} : compact, test,
-                [=](const ParameterMap& p) { endpointConfig(p).validate(width,t,t != Technology::Container); return true; });
-            if (t != Technology::Container)
-                add(c, "memory." + name + ".scalable-endpoint." + suffix, "MemoryEndpoint" + dims, schema,
+                }, compact, test,
+                [=](const ParameterMap& p) { endpointConfig(p).validate(width,t,true); return true; });
+            add(c, "memory." + name + ".scalable-endpoint." + suffix, "MemoryEndpoint" + dims, schema,
                     [=](const std::string& n, const ParameterMap& p, const std::shared_ptr<BuildContext>& ctx) {
                         // controller view, never millions of cells
                         return Component::createWithContext<MemoryEndpoint>(ctx,n,width,t,endpointConfig(p),true);
                     }, compact, "ScalableMemoryEndpointTest");
-            if (t != Technology::Container) {
+            {
                 auto nativeSchema = [=](const ParameterMap& p) {
                     auto config = endpointConfig(p);
                     config.refresh_interval_ticks = 0;

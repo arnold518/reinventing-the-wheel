@@ -90,7 +90,7 @@ RegisteredTestKind componentKind(
     }
     const bool memory_part = contract_id != "memory.ff.cell" &&
         std::ranges::any_of(std::initializer_list<std::string_view>{"memory.ff.", "memory.sram.", "memory.dram.",
-            "memory.rom.", "memory.nor-flash.", "memory.container.", "memory.shared."},
+            "memory.rom.", "memory.nor-flash.", "memory.shared."},
             [&](std::string_view prefix) { return contract_id.starts_with(prefix); });
     if (memory.count(contract_id) != 0 || memory_part) {
         return RegisteredTestKind::Memory;
@@ -267,7 +267,6 @@ const std::vector<TestRegistryEntry>& getTestRegistry() {
         entry<MemoryEndpointDRAMTest>("MemoryEndpointDRAMTest"),
         entry<MemoryEndpointROMTest>("MemoryEndpointROMTest"),
         entry<MemoryEndpointFlashTest>("MemoryEndpointFlashTest"),
-        entry<MemoryEndpointRelayTest>("MemoryEndpointRelayTest"),
         entry<ScalableMemoryEndpointTest>("ScalableMemoryEndpointTest"),
         entry<NativeMemoryContainerTest>("NativeMemoryContainerTest"),
         entry<NativeMemoryDeviceContractTest>("NativeMemoryDeviceContractTest"),

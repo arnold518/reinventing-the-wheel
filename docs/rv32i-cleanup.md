@@ -212,3 +212,12 @@ request the `scalable-endpoint` contract instead.
 - Still present: the memory-side bridges (`REQUEST_*` in the transaction port,
   `DEVICE_CLOCK`, `BUS_CLOCK`, the zero-wait port's bridges and the SRAM pass
   gates), which are drawn and documented as visible parts.
+
+## Relay "container" technology retired (October 8)
+
+The memory technology named `container` was a transaction-to-transaction relay
+(`MemoryController<container,W>` and `MemoryEndpoint<container,W>`). It shared
+its name with `MemoryContainer`, the scalable native device, and nothing used
+it. It is removed together with its relay phases in the memory sequencer, the
+`MemoryEndpointRelayTest` scenario, its section on the 3.3 page and its part of
+the tested reference listing. "Container" now only means `MemoryContainer`.

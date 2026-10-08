@@ -134,8 +134,7 @@ public:
         publish(sim, time, "RESULT", sequence_.result);
         publish(sim, time, "STATUS", bits(3, unsigned(sequence_.status)));
         for (auto& [name, pin] : getAllOutputPins()) if (name.starts_with("MEM_")) {
-            if (technology_ == Technology::Container && name == "MEM_CLK") publish(sim, time, name, clk);
-            else publish(sim, time, name, signal(sequence_.outputs, name.substr(4), pin->getWidth()));
+            publish(sim, time, name, signal(sequence_.outputs, name.substr(4), pin->getWidth()));
         }
         if (auto due = sequence_.deadline(); due > time && due != scheduled_) { scheduled_ = due; wake(sim, due); }
         if (history_enabled_ && sim.isHistoryRecordingEnabled()) {
@@ -198,16 +197,6 @@ void MemoryController::buildInternals(ComponentBuilder& b) {
     memory_detail::StructuralWiring w(b);
     auto front = b.addNewComponent<MemoryTransactionPort>("TRANSACTION", width_);
     auto control = b.addNewComponent<NativeSequencer>("DEVICE_CONTROL", width_, technology_, config_);
-    std::shared_ptr<Rewire> relay_clock;
-    if (technology_ == Technology::Container) {
-        // A parent input cannot directly drive a parent output through this
-        // simulator's two-scope pin boundary. Rewire is an explicit zero-delay
-        // bridge, so the downstream endpoint samples the same bus edge.
-        relay_clock = b.addNewComponent<Rewire>("BUS_CLOCK",
-            std::vector<Rewire::WireSpec>{{"IN",1}}, std::vector<Rewire::WireSpec>{{"OUT",1}},
-            identity_mapping("IN",0,1,"OUT"));
-        w.connect(getInputPin("CLK"),relay_clock->getInputPin("IN"));
-    }
     for (const auto& [name, pin] : getAllInputPins()) {
         if (name.starts_with("MEM_")) w.connect(pin, control->getInputPinDynamic(name));
         else {
@@ -216,8 +205,7 @@ void MemoryController::buildInternals(ComponentBuilder& b) {
         }
     }
     for (const auto& [name, pin] : getAllOutputPins()) {
-        if (relay_clock && name == "MEM_CLK") w.connect(relay_clock->getOutputPin("OUT"), pin);
-        else w.connect((name.starts_with("MEM_") ? control : std::static_pointer_cast<IOComponent>(front))->getOutputPinDynamic(name), pin);
+        w.connect((name.starts_with("MEM_") ? control : std::static_pointer_cast<IOComponent>(front))->getOutputPinDynamic(name), pin);
     }
     for (auto n : {"START", "FINISH", "OP", "ADDR", "DATA", "MASK"}) w.connect(front->getOutputPinDynamic(n), control->getInputPinDynamic(n));
     for (auto n : {"BACK_READY", "DONE", "RESULT", "STATUS"}) w.connect(control->getOutputPinDynamic(n), front->getInputPinDynamic(n));
@@ -226,14 +214,12 @@ void MemoryController::buildInternals(ComponentBuilder& b) {
 MemoryEndpoint::MemoryEndpoint(std::string n, size_t w, Technology t, EndpointConfig c, bool scalable_device)
     : IOComponent(std::move(n), [w](IOComponent* s) { protocolPins(s, w); }), width_(w), technology_(t),
       config_(c), scalable_device_(scalable_device),
-      type_("MemoryEndpoint<" + std::string(technologyName(t)) + "," + std::to_string(w) + ">") { c.validate(w, t, t != Technology::Container && !scalable_device); }
+      type_("MemoryEndpoint<" + std::string(technologyName(t)) + "," + std::to_string(w) + ">") { c.validate(w, t, !scalable_device); }
 void MemoryEndpoint::buildInternals(ComponentBuilder& b) {
     memory_detail::StructuralWiring w(b);
     auto controller = b.addNewComponent<MemoryController>("CONTROLLER", width_, technology_, config_);
     std::shared_ptr<IOComponent> device;
-    if (technology_ == Technology::Container) {
-        device = b.addNewComponent<BehavioralMemoryEndpoint>("MEMORY", width_, Technology::SRAM, config_);
-    } else if (scalable_device_) {
+    if (scalable_device_) {
         device = memory_device::child(b,*this,memoryContractId(technology_,"scalable-device",width_),
                                       "MEMORY",endpointParameters(config_));
     } else {

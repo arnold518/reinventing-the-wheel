@@ -33,7 +33,7 @@ public:
     size_t deadline() const { return due_; }
     const char* phaseName() const {
         static constexpr const char* names[]{"idle", "array-setup", "array-write", "array-read", "static-access",
-            "command-raise", "command-lower", "command-wait", "release", "relay-request", "relay-response"};
+            "command-raise", "command-lower", "command-wait", "release"};
         return names[static_cast<size_t>(phase_)];
     }
     bool maintenanceActive() const { return maintenance_ && phase_ != Phase::Idle; }
@@ -43,7 +43,7 @@ public:
     Signals outputs;
 private:
     enum class Phase { Idle, ArraySetup, ArrayWrite, ArrayRead, StaticAccess,
-                       CommandRaise, CommandLower, CommandWait, Release, RelayRequest, RelayResponse };
+                       CommandRaise, CommandLower, CommandWait, Release };
     struct Command { unsigned op; uint32_t address; };
     size_t width_, due_ = 0, next_refresh_ = 0;
     Technology technology_;

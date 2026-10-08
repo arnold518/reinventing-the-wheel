@@ -10,7 +10,6 @@ Status validateRequest(const Request& r, size_t width, Technology technology, co
         if (!known(r.mask)) return Status::InvalidRequest;
     if (address % (width / 8)) return Status::Alignment;
     if (address / (width / 8) >= c.depth_words) return Status::Range;
-    if (technology == Technology::Container) return Status::Ok;
     if (technology == Technology::ROM && op) return Status::ReadOnly;
     if (technology == Technology::NORFlash) {
         if (op == unsigned(Operation::Write)) return Status::Unsupported;
@@ -26,7 +25,6 @@ std::vector<std::string> nativeActivityInputs(Technology t) {
     case Technology::ROM: return {"WORD_ADDR", "CE_N", "OE_N"};
     case Technology::DRAM: return {"ADDR", "CMD"};
     case Technology::NORFlash: return {"WORD_ADDR", "CMD"};
-    case Technology::Container: return {"REQ_ADDR", "REQ_OP", "REQ_VALID", "RSP_READY"};
     }
     return {};
 }
@@ -57,10 +55,6 @@ void NativeSequence::step(size_t t, bool clock_edge, bool reset, bool start, con
     if (reset) aborted_ = true;
     if (clock_edge && finish_response) done = false;
     if (phase_ == Phase::Idle) {
-        // A downstream structural transaction frontend needs an initial reset.
-        // Forward reset only while idle: resetting a live downstream request
-        // would discard its response and prevent the relay from draining it.
-        if (technology_ == Technology::Container) outputs["RST"] = {reset ? H : L};
         if (reset) { done = false; available = false; return; }
         available = true;
         if (done) return;
@@ -83,12 +77,6 @@ void NativeSequence::step(size_t t, bool clock_edge, bool reset, bool start, con
         const auto word = number(request.address) / (width_ / 8);
         outputs["WORD_ADDR"] = bits(32, word);
         outputs["WRITE_DATA"] = request.data; outputs["WRITE_MASK"] = request.mask;
-        if (technology_ == Technology::Container) {
-            outputs["REQ_ADDR"] = request.address; outputs["REQ_OP"] = request.op;
-            outputs["REQ_WRITE_DATA"] = request.data; outputs["REQ_WRITE_MASK"] = request.mask;
-            outputs["REQ_VALID"] = {H}; outputs["RSP_READY"] = {L};
-            phase_ = Phase::RelayRequest; return;
-        }
         if (technology_ == Technology::FF) {
             phase_ = Phase::ArraySetup; due_ = after(t, config_.guard_ticks); return;
         }
@@ -117,18 +105,6 @@ void NativeSequence::step(size_t t, bool clock_edge, bool reset, bool start, con
         beginCommand(t); return;
     }
     available = false;
-    if (phase_ == Phase::RelayRequest || phase_ == Phase::RelayResponse) {
-        // This path shares the external bus clock with the attached endpoint.
-        if (!clock_edge) return;
-        if (phase_ == Phase::RelayRequest && read("REQ_READY", 1) == Bits{H}) {
-            outputs["REQ_VALID"] = {L}; outputs["RSP_READY"] = {H}; phase_ = Phase::RelayResponse;
-        } else if (phase_ == Phase::RelayResponse && read("RSP_VALID", 1) == Bits{H}) {
-            auto s = read("RSP_STATUS", 3);
-            status = known(s) && number(s) <= 6 ? Status(number(s)) : Status::Device;
-            result = read("RSP_READ_DATA", width_); finish(t);
-        }
-        return;
-    }
     if (!due_ || t < due_) return;
     due_ = 0;
     switch (phase_) {

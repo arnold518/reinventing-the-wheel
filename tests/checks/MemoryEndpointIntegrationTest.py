@@ -48,8 +48,8 @@ class MemoryEndpointIntegrationTest(unittest.TestCase):
                     self.assertEqual(bool(endpoint.get_children()), fidelity == "structural")
                 with self.assertRaises(ValueError):
                     backend.create_memory_endpoint("BIG", model, width, 4096)
-        relay = backend.create_memory_controller("C", "container", 8)
-        self.assertEqual({c.get_name() for c in relay.get_children()}, {"TRANSACTION", "DEVICE_CONTROL", "BUS_CLOCK"})
+        with self.assertRaises(ValueError):  # the old relay technology is retired
+            backend.create_memory_controller("C", "container", 8)
         for parameters in ({"depth_words": "0"}, {"paged": "2"}, {"oops": "1"},
                            {"max_resident_bytes": "0"}, {"guard_ticks": "1"}):
             # depth_words is a dedicated argument and intentionally overrides the map.
@@ -85,7 +85,6 @@ class MemoryEndpointIntegrationTest(unittest.TestCase):
         for scenario, test in CASES[2:]:
             if not scenario.startswith("memory-endpoint-"): continue
             if scenario == "native-memory-container": continue
-            if scenario == "memory-endpoint-relay": continue
             with tempfile.TemporaryDirectory() as tmp:
                 session = server.CircuitSession(scenario, server.LayoutManager(Path(tmp) / "layout.json"),
                                                profile_overrides={"MEMORY_ENDPOINT_ROOT": "behavioral"})
@@ -146,7 +145,7 @@ class MemoryEndpointIntegrationTest(unittest.TestCase):
         def walk(c):
             yield c
             for child in c.get_children(): yield from walk(child)
-        for model, width in ((m, w) for m in ("ff", "sram", "dram", "rom", "nor-flash", "container") for w in (8, 16, 32)):
+        for model, width in ((m, w) for m in ("ff", "sram", "dram", "rom", "nor-flash") for w in (8, 16, 32)):
             root = backend.create_memory_endpoint("E", model, width)
             with tempfile.TemporaryDirectory() as tmp:
                 manager = server.LayoutManager(Path(tmp) / "layout.json")

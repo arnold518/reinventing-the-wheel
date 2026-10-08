@@ -10,7 +10,6 @@ ENDPOINT_TEST(MemoryEndpointSRAMTest)
 ENDPOINT_TEST(MemoryEndpointDRAMTest)
 ENDPOINT_TEST(MemoryEndpointROMTest)
 ENDPOINT_TEST(MemoryEndpointFlashTest)
-ENDPOINT_TEST(MemoryEndpointRelayTest)
 ENDPOINT_TEST(ScalableMemoryEndpointTest)
 ENDPOINT_TEST(NativeMemoryContainerTest)
 #undef ENDPOINT_TEST

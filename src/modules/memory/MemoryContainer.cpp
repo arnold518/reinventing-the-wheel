@@ -28,7 +28,6 @@ NativeDeviceRequest nativeDeviceRequest(size_t width,Technology technology,const
 std::shared_ptr<IOComponent> createMemoryContainer(
     const std::string& name,size_t width_,Technology technology_,EndpointConfig config_,
     const std::shared_ptr<BuildContext>& context) {
-    if(technology_==Technology::Container) throw std::invalid_argument("A relay is not a native device");
     auto checked=config_;
     checked.refresh_interval_ticks=0; // Refresh policy belongs to a controller.
     checked.validate(width_,technology_);

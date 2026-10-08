@@ -61,8 +61,6 @@ void check_port() {
     assert(buffer.outputs(b).data==bits(W,0x42)&&buffer.outputs(b).valid);
 }
 
-struct RelayModel { static constexpr auto technology = Technology::Container; };
-
 template<std::size_t W, class Model>
 struct Device {
     std::unique_ptr<DeviceModel> model;
@@ -70,31 +68,6 @@ struct Device {
     void update(std::size_t time, const Signals& pins) { model->update(time, pins); }
     Bits read(const std::string& pin, std::size_t width) const { return model->read(pin, width); }
     std::size_t deadline() const { return model->deadline(); }
-};
-
-template<std::size_t W>
-struct Device<W, RelayModel> {
-    memory_example::CompactEndpoint<W, SRAMModel> model;
-    typename memory_example::CompactEndpoint<W, SRAMModel>::Outputs out;
-    bool previous = false;
-    explicit Device(EndpointConfig config) : model(config) {}
-    void update(std::size_t time, const Signals& pins) {
-        typename memory_example::CompactEndpoint<W, SRAMModel>::Inputs in;
-        const bool clock = high(pins, "CLK");
-        in.rising_edge = clock && !previous; previous = clock;
-        in.reset = high(pins, "RST"); in.request_valid = high(pins, "REQ_VALID");
-        in.response_ready = high(pins, "RSP_READY");
-        in.request = {signal(pins, "REQ_OP", 3), signal(pins, "REQ_ADDR", 32),
-                      signal(pins, "REQ_WRITE_DATA", W), signal(pins, "REQ_WRITE_MASK", W / 8)};
-        out = model.step(time, in);
-    }
-    Bits read(const std::string& pin, std::size_t) const {
-        if (pin == "REQ_READY") return {out.request_ready ? H : L};
-        if (pin == "RSP_VALID") return {out.response_valid ? H : L};
-        if (pin == "RSP_READ_DATA") return out.read_data;
-        assert(pin == "RSP_STATUS"); return bits(3, unsigned(out.status));
-    }
-    std::size_t deadline() const { return model.next_event_time(); }
 };
 
 template<std::size_t W, class Model>
@@ -113,27 +86,13 @@ struct ControllerRig {
     }
     void evaluate() {
         device.update(time, controller.native_pins());
-        Signals sampled;
-        if constexpr (Model::technology == Technology::Container) {
-            // The clock bypasses the controller's registered control updates.
-            // Both endpoints sample the pre-edge handshake, as physical FFs do.
-            for (auto [pin, width] : std::vector<std::pair<std::string, std::size_t>>{
-                    {"REQ_READY", 1}, {"RSP_VALID", 1}, {"RSP_READ_DATA", W}, {"RSP_STATUS", 3}})
-                sampled[pin] = device.read(pin, width);
-            auto clocked = controller.native_pins();
-            clocked["CLK"] = {in.clock ? H : L};
-            device.update(time, clocked);
-        }
         out = controller.step(time, in, [&](const std::string& pin, std::size_t width) {
-            if constexpr (Model::technology == Technology::Container) return signal(sampled, pin, width);
-            else {
-                if constexpr (Model::technology == Technology::FF) device.update(time, controller.native_pins());
-                return device.read(pin, width);
-            }
+            if constexpr (Model::technology == Technology::FF) device.update(time, controller.native_pins());
+            return device.read(pin, width);
         });
         const auto& pins = controller.native_pins();
         if (high(pins, "WE") || high(pins, "READ_EN") || !high(pins, "CE_N") ||
-            number(signal(pins, "CMD", 3)) || high(pins, "REQ_VALID")) ++native_accesses;
+            number(signal(pins, "CMD", 3))) ++native_accesses;
         device.update(time, pins);
     }
     void tick() {
@@ -178,7 +137,7 @@ void check_controller() {
     auto before = rig.native_accesses;
     rig.expect(request<W>(Operation::Read, 4 * (W / 8)), Status::Range);
     if constexpr (Model::technology != Technology::DRAM) {
-        assert(before == rig.native_accesses); // Reject before native access/relay.
+        assert(before == rig.native_accesses); // Reject before native access.
     }
     if constexpr (Model::technology == Technology::ROM) {
         rig.expect(request<W>(Operation::Read, 0), Status::Ok);
@@ -269,7 +228,7 @@ template<std::size_t W>
 void check_sequence_against_simulator() {
     std::mt19937 random(518 + W);
     for (auto technology : {Technology::FF, Technology::SRAM, Technology::DRAM,
-                           Technology::ROM, Technology::NORFlash, Technology::Container}) {
+                           Technology::ROM, Technology::NORFlash}) {
         EndpointConfig config;
         config.refresh_interval_ticks = 1024;
         memory_example::Sequence reference(W, technology, config);
@@ -310,10 +269,10 @@ void check_width() {
     check_port<W>();
     check_controller<W, FFModel>(); check_controller<W, SRAMModel>();
     check_controller<W, DRAMModel>(); check_controller<W, ROMModel>();
-    check_controller<W, NORFlashModel>(); check_controller<W, RelayModel>();
+    check_controller<W, NORFlashModel>();
     check_endpoint_reference<W, FFModel>(); check_endpoint_reference<W, SRAMModel>();
     check_endpoint_reference<W, DRAMModel>(); check_endpoint_reference<W, ROMModel>();
-    check_endpoint_reference<W, NORFlashModel>(); check_endpoint_reference<W, RelayModel>();
+    check_endpoint_reference<W, NORFlashModel>();
     check_sequence_against_simulator<W>();
 }
 } // namespace

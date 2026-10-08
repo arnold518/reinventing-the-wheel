@@ -27,6 +27,10 @@ int main() {
         for (const auto* model : {"sram", "rom", "ideal-reference"})
             for (const auto* width : {"8", "16", "32"})
                 rejects([&] { catalog.contract(std::string("memory.container.") + model + "." + width); });
+        // The relay technology named "container" is retired under both spellings.
+        for (const auto* id : {"memory.endpoint.container.8", "memory.container.endpoint.8",
+                "memory.controller.container.8", "memory.container.controller.8"})
+            rejects([&] { catalog.contract(id); });
         // Names used before the memory.<technology>.<what>.<width> rule still resolve.
         for (const auto& [retired, current] : std::initializer_list<std::pair<const char*, const char*>>{
                 {"memory.write-enabled-bit", "memory.ff.cell"}, {"memory.ff-word.8", "memory.ff.word.8"},
@@ -35,7 +39,6 @@ int main() {
                 {"memory.controller.nor-flash.16", "memory.nor-flash.controller.16"},
                 {"memory.endpoint.sram.32", "memory.sram.endpoint.32"},
                 {"memory.scalable.rom.8", "memory.rom.scalable-endpoint.8"},
-                {"memory.endpoint.container.8", "memory.container.endpoint.8"},
                 {"memory.matrix.row-decoder", "memory.shared.row-decoder"},
                 {"memory.transaction-port.8", "memory.shared.transaction-port.8"},
                 {"memory.response-buffer.32", "memory.shared.response-buffer.32"}}) {

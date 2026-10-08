@@ -11,7 +11,7 @@ const source = (await Promise.all(['3.2','3.3','3.1.6'].map(s =>
 let count = 0;
 for (const [, scenario, test] of source.matchAll(/<!-- simulator-examples: (\S+) (\S+) -->/g)) {
   const modes = ['scalable-memory-container','native-memory-container'].includes(scenario) ? ['behavioral'] :
-    scenario.startsWith('memory-endpoint-') && scenario !== 'memory-endpoint-relay' ? ['structural','behavioral','device'] : ['structural'];
+    scenario.startsWith('memory-endpoint-') ? ['structural','behavioral','device'] : ['structural'];
   for (const mode of modes) {
     const overrides = [[scenario === 'native-memory-container' ? 'MEMORY_CONTAINER_ROOT' : 'MEMORY_ENDPOINT_ROOT', mode === 'behavioral' ? mode : 'structural']];
     if (mode === 'device') overrides.push(['MEMORY_ENDPOINT_ROOT.MEMORY','behavioral']);
@@ -25,12 +25,12 @@ for (const [, scenario, test] of source.matchAll(/<!-- simulator-examples: (\S+)
       for (const key of ['rootId','rootType','layoutKey','timestamps','checkpoints','stats','components','pins','wires','state'])
         assert.deepEqual(actual[key],expected[key],`${scenario}/${mode}/${key}`);
       assert.deepEqual(JSON.parse(bridge.exampleRowsJson()),native('examples',test,scenario));
-      const inspector = mode === 'device' || scenario === 'memory-endpoint-relay' ? actual.rootId+'.MEMORY' : actual.rootId;
+      const inspector = mode === 'device' ? actual.rootId+'.MEMORY' : actual.rootId;
       for (const i of new Set([0,Math.floor(actual.timestamps.length/2),actual.timestamps.length-1])) {
         assert.deepEqual(JSON.parse(bridge.stateJson(i)),native('state',test,scenario,String(i)));
         const state=JSON.parse(bridge.componentStateJson(i,inspector));
         assert.deepEqual(state,native('component',test,scenario,String(i),inspector));
-        if (mode !== 'structural' || scenario === 'memory-endpoint-relay') assert.equal(state.supported,true);
+        if (mode !== 'structural') assert.equal(state.supported,true);
       }
       console.log(`${scenario}/${mode}: native/WASM parity passed`);++count;
     } finally {bridge.delete();}

@@ -150,12 +150,10 @@ def placements(kind, aspects, parent_aspect):
         for i, name in enumerate(rest):
             box(name, .04+(i%columns)*.92/columns, top+(i//columns)*height, .92/columns, height)
     elif kind.startswith("MemoryController<"):
-        if set(aspects) not in ({"TRANSACTION", "DEVICE_CONTROL"}, {"TRANSACTION", "DEVICE_CONTROL", "BUS_CLOCK"}): return None
+        if set(aspects) != {"TRANSACTION", "DEVICE_CONTROL"}: return None
         place("TRANSACTION", 0.05, 0.10, 0.57)
         control_y = 0.10 + max(0, (0.57 * aspects["TRANSACTION"] - 0.25 * aspects["DEVICE_CONTROL"]) / 2)
         place("DEVICE_CONTROL", 0.70, control_y, 0.25)
-        if "BUS_CLOCK" in aspects:
-            place("BUS_CLOCK", 0.76, control_y + 0.25 * aspects["DEVICE_CONTROL"] + 0.06, 0.10)
     elif kind.startswith("Register<"):
         bits = sorted((n for n in aspects if n.startswith("BIT_")), key=lambda n: int(n[4:]))
         if not bits: return None

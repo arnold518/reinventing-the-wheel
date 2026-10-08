@@ -11,12 +11,11 @@ const char* technologyName(Technology t) {
     case Technology::DRAM: return "dram";
     case Technology::ROM: return "rom";
     case Technology::NORFlash: return "nor-flash";
-    case Technology::Container: return "container";
     }
     throw std::invalid_argument("Unknown memory technology");
 }
 Technology technologyFromName(const std::string& n) {
-    for (auto t : {Technology::FF, Technology::SRAM, Technology::DRAM, Technology::ROM, Technology::NORFlash, Technology::Container})
+    for (auto t : {Technology::FF, Technology::SRAM, Technology::DRAM, Technology::ROM, Technology::NORFlash})
         if (n == technologyName(t)) return t;
     throw std::invalid_argument("Unknown memory technology: " + n);
 }
@@ -29,7 +28,7 @@ void EndpointConfig::validate(size_t width, Technology t, bool expanded_cells) c
     if (t != Technology::FF && (phase_ticks < 32 || phase_ticks > 10000 || guard_ticks < 64 || guard_ticks > 1000000 ||
         program_ticks < phase_ticks || program_ticks > 1000000 || erase_ticks < program_ticks || erase_ticks > 10000000))
         throw std::invalid_argument("Invalid endpoint timing; guards must allow structural signals to settle");
-    if (t != Technology::FF && t != Technology::Container &&
+    if (t != Technology::FF &&
         (!words_per_row || words_per_row > 16 || (words_per_row & (words_per_row - 1)) || depth_words % words_per_row))
         throw std::invalid_argument("Native matrix geometry requires K=1/2/4/8/16 dividing depth");
     if (t == Technology::NORFlash && (!block_words || block_words > depth_words || depth_words % block_words || block_words % words_per_row))
@@ -44,7 +43,7 @@ void EndpointConfig::validate(size_t width, Technology t, bool expanded_cells) c
     }
     if (image_hex.size() % 2 || image_hex.size() / 2 > depth_words * (width / 8) ||
         !std::all_of(image_hex.begin(), image_hex.end(), [](unsigned char c) { return std::isxdigit(c); }) ||
-        (!image_hex.empty() && t != Technology::ROM && t != Technology::Container))
+        (!image_hex.empty() && t != Technology::ROM))
         throw std::invalid_argument("Only ROM accepts a construction-time hexadecimal image");
     if (!max_resident_bytes || (record_history && !max_history_bytes))
         throw std::invalid_argument("Memory resource budgets must be positive");
@@ -96,7 +95,6 @@ void protocolPins(IOComponent* s, size_t w, const std::string& prefix, bool requ
     add("RSP_STATUS", 3, output); add("RSP_READ_DATA", w, output);
 }
 void nativePins(IOComponent* s, size_t w, Technology t, bool controller) {
-    if (t == Technology::Container) { protocolPins(s, w, "MEM_", true); return; }
     auto command = controller ? PinType::OUTPUT : PinType::INPUT;
     auto result = controller ? PinType::INPUT : PinType::OUTPUT;
     auto add = [&](const char* n, size_t width, PinType d) { s->addPinDynamic(std::string(controller ? "MEM_" : "") + n, d, width); };

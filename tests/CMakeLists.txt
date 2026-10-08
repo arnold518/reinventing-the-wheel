@@ -204,7 +204,6 @@ set(SIMULATION_TESTS
     MemoryEndpointDRAMTest
     MemoryEndpointROMTest
     MemoryEndpointFlashTest
-    MemoryEndpointRelayTest
     ScalableMemoryEndpointTest
     NativeMemoryContainerTest
     NativeMemoryDeviceContractTest

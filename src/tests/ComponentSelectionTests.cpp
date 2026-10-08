@@ -453,12 +453,11 @@ void BuiltinComponentCatalogInventoryTest::verifyResults() {
     for (const auto width : {"8", "16", "32"}) {
         expected_types.insert(std::string("MemoryTransactionPort<") + width + ">");
         expected_types.insert(std::string("MemoryResponseBuffer<") + width + ">");
-        for (const auto technology : {"ff", "sram", "dram", "rom", "nor-flash", "container"}) {
+        for (const auto technology : {"ff", "sram", "dram", "rom", "nor-flash"}) {
             const std::string suffix = "<" + std::string(technology) + "," + width + ">";
             expected_types.insert("MemoryController" + suffix);
             expected_types.insert("MemoryEndpoint" + suffix);
-            if (std::string(technology) != "container")
-                expected_types.insert("MemoryContainer" + suffix);
+            expected_types.insert("MemoryContainer" + suffix);
         }
     }
     for (const auto width : {"1", "2", "3", "4", "5", "8", "16", "32"})
