@@ -364,7 +364,7 @@ void boundaries() {
 void catalog(size_t rounds, size_t budget, bool verbose, const std::set<std::string>& only) {
     const auto& catalog = circuit::builtinComponentCatalog();
     std::mt19937_64 random(0x20261009);
-    size_t confirmed = 0, lowered = 0, enumerated = 0, compared = 0, differing = 0;
+    size_t confirmed = 0, lowered = 0, enumerated = 0, compared = 0, differing = 0, tabled = 0;
     std::cout << std::left << std::setw(44) << "contract" << std::right << std::setw(7) << "paths" << std::setw(7)
               << "any" << std::setw(7) << "0/1" << std::setw(7) << "tight" << std::setw(7)
               << "seen" << std::setw(7) << "seen01" << std::setw(9) << "compact" << '\n';
@@ -437,9 +437,46 @@ void catalog(size_t rounds, size_t budget, bool verbose, const std::set<std::str
         try {
             const auto behavioral = catalog.createRoot({contract.id, "DUT", {}}, circuit::strictAllBehavioral()).root;
             if (const auto leaf = std::dynamic_pointer_cast<BasicComponent>(behavioral)) {
-                compact = std::to_string(leaf->getDelay());
                 ++compared;
-                differing += leaf->getDelay() != timing.delay;
+                if (!leaf->getDelays()) {
+                    compact = std::to_string(leaf->getDelay());
+                    differing += leaf->getDelay() != timing.delay;
+                } else {
+                    // The compact part runs on its proven table: side by side
+                    // with the gates it gives the same values, is never
+                    // earlier than they are, and never later than proven.
+                    compact = "table";
+                    ++tabled;
+                    Bench gates(std::dynamic_pointer_cast<IOComponent>(
+                        catalog.createRoot({contract.id, "DUT", {}}, circuit::maximallyStructural()).root));
+                    Bench modeled(std::dynamic_pointer_cast<IOComponent>(behavioral));
+                    const auto declared = valid(CircuitTimingAnalyzer::settling(modeled.dut, options));
+                    const size_t watch = all.structural + 4;
+                    for (size_t round = 0; round < 4 * rounds; ++round) {
+                        const auto before = randomVector(*gates.dut, random, false);
+                        auto after = randomVector(*gates.dut, random, false);
+                        if (round % 2) { // only one input pin changes
+                            auto pin = after.begin();
+                            std::advance(pin, random() % after.size());
+                            const auto kept = *pin;
+                            after = before;
+                            after[kept.first] = kept.second;
+                        }
+                        const auto real = gates.change(before, after, watch + 1, watch);
+                        const auto shown = modeled.change(before, after, watch + 1, watch);
+                        for (const auto& [name, wire] : gates.outputs)
+                            check(wire->getValueVector() == modeled.outputs.at(name)->getValueVector(),
+                                  contract.id + "." + name + ": the compact part's value differs from the gates");
+                        for (const auto& [name, tick] : shown) {
+                            check(tick <= endpoint(declared, name).bound, contract.id + "." + name + ": the compact part changed after its table allows");
+                            const auto it = real.find(name);
+                            check(it == real.end() || tick >= it->second, contract.id + "." + name + ": the compact part changed before the gates finished");
+                        }
+                    }
+                    for (const auto& e : binary.endpoints)
+                        check(endpoint(declared, e.name).bound >= e.bound || !e.changes,
+                              contract.id + "." + e.name + ": the declared table is faster than the gates");
+                }
             }
         } catch (const std::exception&) {}
         Bench four(part), two(twin);
@@ -454,8 +491,8 @@ void catalog(size_t rounds, size_t budget, bool verbose, const std::set<std::str
     std::cout << confirmed << " gate-level parts confirmed against the simulator; " << lowered
               << " have a proven bound below the longest path; " << enumerated
               << " small parts checked against every final vector\n"
-              << compared << " of them have a compact form; " << differing
-              << " compact forms use a delay different from the proven structural one\n";
+              << compared << " of them have a compact form; " << tabled << " run on a proven delay table and matched their gates; "
+              << differing << " others use a single delay different from the proven one\n";
     check(!only.empty() || (confirmed >= 80 && enumerated >= 25 && lowered >= 3), "Too few parts were confirmed");
 }
 // A false path in a real part. The longest path to the ALU's EQ output runs
@@ -558,8 +595,19 @@ void compactAdder() {
     std::cout << '\n';
 
     // The analyzer reads the table as the compact part's contract.
+    // The catalog has already given the compact adder its stored table; it
+    // must be the one just proven. Without a table the part has no contract.
+    const auto leaf = std::dynamic_pointer_cast<BasicComponent>(compact.dut);
+    check(leaf && leaf->getDelays() && leaf->getDelays()->arcs.size() == table.arcs.size(), "The compact adder must carry its stored table");
+    for (size_t i = 0; i < table.arcs.size(); ++i) {
+        const auto& stored = leaf->getDelays()->arcs[i];
+        check(stored.input == table.arcs[i].input && stored.output == table.arcs[i].output
+              && stored.delay.minimum == table.arcs[i].delay.minimum && stored.delay.maximum == table.arcs[i].delay.maximum,
+              "The stored adder table differs from the gates");
+    }
+    leaf->setDelays({});
     check(!CircuitTimingAnalyzer::settling(compact.dut).valid, "A compact part without a table has no contract");
-    std::dynamic_pointer_cast<BasicComponent>(compact.dut)->setDelays(table);
+    leaf->setDelays(table);
     const auto declared = valid(CircuitTimingAnalyzer::settling(compact.dut, options));
     const auto proven = valid(CircuitTimingAnalyzer::settling(gates.dut, options));
     for (const auto& e : proven.endpoints) check(endpoint(declared, e.name).bound == e.bound, "Compact and gate-level bounds differ");

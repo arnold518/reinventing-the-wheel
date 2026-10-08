@@ -92,7 +92,28 @@ chained adders come to 37 ticks in gates and 38 with compact adders.
 settling times over random input changes, per output, per input pin and per
 control value.
 
-No part ships with a table yet.
+### Which parts have one
+
+`tools/timing/PartDelayTables.cpp` (`part_delay_tables`) proves a table for
+every catalog part that has a gate-level form and a single-part compact form,
+and writes them to `src/components/selection/ProvenPartDelays.generated.inc`.
+The catalog gives each compact part its table when it builds it, for the
+default parameters only.
+
+```bash
+build-cleanup/part_delay_tables --write src/components/selection/ProvenPartDelays.generated.inc
+build-cleanup/part_delay_tables --check     # recompute every stored table from the gates
+```
+
+44 unclocked parts have tables today: the adders, muxes, decoders, shifters,
+the ALU and its units, the 8-bit ALU parts, decode control, forwarding, hazard
+detection, the predictor parts and the unclocked stages. `SettlingBoundTest`
+drives each one side by side with its gates.
+
+Not yet: the 18 clocked parts (register file, pipeline registers, fetch and
+decode stages, memory requester, execution status, the cores), storage and
+memory parts, parts built with non-default parameters, and tables per control
+value.
 
 ## What is assumed
 
@@ -159,5 +180,4 @@ path never decides anything. The proof needs about 250,000 evaluations.
   splits cases only to close loops.
 - A flip-flop built from gates is a loop of latches and gets no bound, so
   clocked circuits must use the compact storage parts.
-- Compact (behavioral) parts still use their typed-in delay until they are
-  given a table. `SettlingBoundTest` prints that delay beside the proven one.
+- A compact part without a table still uses its typed-in single delay.

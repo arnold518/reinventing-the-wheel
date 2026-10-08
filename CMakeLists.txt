@@ -47,6 +47,7 @@ set(CORE_LOGIC_SOURCES
     src/components/selection/StandardProfiles.cpp
     src/components/selection/BuildContext.cpp
     src/components/selection/ComponentCatalog.cpp
+    src/components/selection/ProvenPartDelays.cpp
     src/components/selection/BuiltinComponentCatalog.cpp
     src/modules/basic/Gate.cpp
     src/modules/basic/Mux.cpp
@@ -335,6 +336,8 @@ target_link_libraries(rv32i_benchmark_elf PRIVATE SimulatorLib)
 if(NOT EMSCRIPTEN)
     add_executable(rv32i_experiment tools/rv32i-performance/RV32IExperimentRunner.cpp)
     target_link_libraries(rv32i_experiment PRIVATE SimulatorLib)
+    add_executable(part_delay_tables tools/timing/PartDelayTables.cpp)
+    target_link_libraries(part_delay_tables PRIVATE SimulatorLib)
     add_executable(delay_estimate_experiment tools/timing/DelayEstimateExperiment.cpp)
     target_link_libraries(delay_estimate_experiment PRIVATE SimulatorLib)
     add_executable(rv32i_cycle_estimate tools/rv32i-benchmarks/RV32ICycleEstimate.cpp)

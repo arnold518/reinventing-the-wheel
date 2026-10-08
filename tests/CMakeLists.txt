@@ -4,6 +4,13 @@ target_link_libraries(MemoryArchitectureCleanupTest PRIVATE SimulatorLib)
 add_test(NAME MemoryArchitectureCleanupTest COMMAND MemoryArchitectureCleanupTest)
 set_tests_properties(MemoryArchitectureCleanupTest PROPERTIES LABELS "memory;integration;cleanup" TIMEOUT 60)
 add_executable(SafeClockTimingTest cpp/SafeClockTimingTest.cpp)
+# A sample of the stored delay tables, recomputed from the gates. The full
+# check is `part_delay_tables --check` (about ten minutes).
+add_test(NAME PartDelayTablesTest COMMAND part_delay_tables --check
+    arithmetic.adder.width32 arithmetic.add-sub.width32 mux.32x1.width32 decode.5-to-32
+    shift.barrel.width32 compare.zero.width32 rv32i.decode-control rv32i.pipeline.forwarding
+    rv32i.pipeline.hazard-detection alu.width8 rv32i.prediction.predictor rv32i.memory-lanes)
+set_tests_properties(PartDelayTablesTest PROPERTIES LABELS "timing;analysis" TIMEOUT 600)
 add_executable(SettlingBoundTest cpp/SettlingBoundTest.cpp)
 target_link_libraries(SettlingBoundTest PRIVATE SimulatorLib)
 add_test(NAME SettlingBoundTest COMMAND SettlingBoundTest)

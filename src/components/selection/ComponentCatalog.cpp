@@ -1,3 +1,5 @@
+#include "components/BasicComponent.hpp"
+#include "components/selection/ProvenPartDelays.hpp"
 #include "components/selection/ComponentCatalog.hpp"
 #include "components/selection/BuildContext.hpp"
 #include "components/BasicComponent.hpp"
@@ -309,6 +311,10 @@ std::shared_ptr<Component> ComponentCatalog::createChild(
     auto component = descriptor.factory(
         request.instance_name, request.parameters, child_context);
     validateInstance(contract(request.contract_id), descriptor, component, request.parameters);
+    // A compact part runs on the delays proven on its gate-level form.
+    if (descriptor.fidelity == Fidelity::Behavioral)
+        if (const auto* delays = provenPartDelays(descriptor.id, request.parameters))
+            if (const auto part = std::dynamic_pointer_cast<BasicComponent>(component)) part->setDelays(*delays);
     return component;
 }
 
