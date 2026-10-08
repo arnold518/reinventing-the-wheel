@@ -1,5 +1,5 @@
 #pragma once
-#include "analysis/SafeClockTiming.hpp"
+#include "analysis/CircuitTimingAnalyzer.hpp"
 #include "basic/LogicValue.hpp"
 #include "basic/PinBase.hpp"
 #include "modules/memory/BehavioralMemoryEndpoint.hpp"

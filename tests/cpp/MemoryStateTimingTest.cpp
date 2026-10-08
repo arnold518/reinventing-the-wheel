@@ -1,4 +1,4 @@
-#include "analysis/SafeClockTiming.hpp"
+#include "analysis/CircuitTimingAnalyzer.hpp"
 #include "../../src/analysis/MemoryTimingState.hpp"
 #include "components/ComponentBuilder.hpp"
 #include "components/ComponentBuilder.tpp"
@@ -102,7 +102,7 @@ void run() {
         const auto binary_states=detail::memoryTimingStates(binary_fixture.endpoint,binary);
         check(binary_states&&binary_states->cases.size()==2&&binary_states->binary_controls.size()==3,
             "Binary reachability must expose all quantified control premises");
-        const auto binary_report=computeSafeClockPeriod(binary_fixture.root,binary);
+        const auto binary_report=CircuitTimingAnalyzer::safeClock(binary_fixture.root,binary);
         check(binary_report.status==ClockTimingStatus::SafeUnderContracts&&binary_report.binary_startup_verified,
             "Binary requester control premises must be provable");
         bool controls_checked=false;
@@ -119,17 +119,17 @@ void run() {
         if(p->getOwner()->getName()=="SENT"&&c.full)check(v!=L,"Full response with definite unsent is unreachable");
     }
     check(saw_unknown,"Unknown registered control states must be included");
-    const auto report=computeSafeClockPeriod(fast.root,fast.clock);
+    const auto report=CircuitTimingAnalyzer::safeClock(fast.root,fast.clock);
     for(const auto& d:report.diagnostics)std::cerr<<d<<'\n';
     check(report.status==ClockTimingStatus::SafeUnderContracts && report.checked_state_cases==6,"Expected complete state-aware bound");
     auto bounded=fast.clock;bounded.maximum_state_cases=1;
-    auto bad=computeSafeClockPeriod(fast.root,bounded);
+    auto bad=CircuitTimingAnalyzer::safeClock(fast.root,bounded);
     check(bad.status==ClockTimingStatus::Unknown&&!bad.safe_period_ticks,"State enumeration budget must fail closed");
     bounded=fast.clock;bounded.maximum_state_evaluations=1;
-    bad=computeSafeClockPeriod(fast.root,bounded);
+    bad=CircuitTimingAnalyzer::safeClock(fast.root,bounded);
     check(bad.status==ClockTimingStatus::Unknown&&!bad.safe_period_ticks,"State settling work budget must fail closed");
     auto held=fast.clock;held.outputs[0].hold=1000;
-    bad=computeSafeClockPeriod(fast.root,held);
+    bad=CircuitTimingAnalyzer::safeClock(fast.root,held);
     check(bad.status==ClockTimingStatus::TimingViolation&&!bad.safe_period_ticks,"Mode simplification must not hide hold violations");
     fast.initialize();reference.initialize();
     for(unsigned pass=0;pass<4;++pass)for(unsigned controls=0;controls<64;++controls) {
@@ -140,7 +140,7 @@ void run() {
     // Unrelated oscillators must remain unknown even when a memory proof exists.
     ComponentBuilder b(fast.root);auto inv=b.addNewComponent<NOTGate>("OSCILLATOR");
     b.addNewWire("feedback",inv->getOutputPin("OUT"),{inv->getInputPin("IN")});
-    bad=computeSafeClockPeriod(fast.root,fast.clock);
+    bad=CircuitTimingAnalyzer::safeClock(fast.root,fast.clock);
     check(bad.status==ClockTimingStatus::Unknown&&!bad.safe_period_ticks&&!bad.dependency_cycle.empty(),"Unresolved cycles must fail closed");
     std::cout<<"6 reachable states, 384 four-state transitions; 256 coupled circuit frames at period "
         <<*report.safe_period_ticks<<" matched a 2000-tick reference\n";

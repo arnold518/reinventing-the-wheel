@@ -3,7 +3,7 @@
 #include "modules/rv32i/RV32ISingleCycleStages.hpp"
 #include "modules/rv32i/RV32IPipelineControl.hpp"
 #include "components/StructuralNetBuilder.hpp"
-#include "analysis/SettlingBound.hpp"
+#include "analysis/CircuitTimingAnalyzer.hpp"
 #include "simulator/SimulationTest.hpp"
 #include <iostream>
 #include <random>
@@ -78,8 +78,8 @@ struct Comparison {
             b.addNewWireDynamic("fast_"+name,p->getWidth(),p,{}),
             b.addNewWireDynamic("ref_"+name,p->getWidth(),reference->getOutputPinDynamic(name),{})};
         sim.setHistoryRecordingEnabled(false);SimulationTest::scheduleInitialEventsForTree(root,sim,0);
-        auto ft=circuit::analysis::analyzeSettling(fast);
-        auto rt=circuit::analysis::analyzeSettling(reference);
+        auto ft=circuit::analysis::CircuitTimingAnalyzer::settling(fast);
+        auto rt=circuit::analysis::CircuitTimingAnalyzer::settling(reference);
         check(ft.valid&&rt.valid&&ft.bound<=rt.bound,"Combinational depth regressed");
         check(ft.bit_count<rt.bit_count,"Expected a smaller circuit");
         std::cout<<fast->getTypeName()<<": settling bound "<<rt.bound<<" -> "<<ft.bound

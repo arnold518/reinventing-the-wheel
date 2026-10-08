@@ -1,6 +1,6 @@
 #pragma once
 
-#include "analysis/SafeClockTiming.hpp"
+#include "analysis/CircuitTimingAnalyzer.hpp"
 #include <cstddef>
 #include <functional>
 #include <memory>

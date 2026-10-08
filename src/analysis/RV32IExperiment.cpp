@@ -123,7 +123,7 @@ RV32IExperimentResult runRV32IExperiment(const RV32IExperimentConfig& config) {
                       {"EXPERIMENT.CORE.ENABLE",std::nullopt,{},1}};
         // No state-dependent protocol cuts. Unsupported contracts return
         // Unknown, never a guessed clock.
-        result.safe_clock=computeSafeClockPeriod(root,clock);
+        result.safe_clock=CircuitTimingAnalyzer::safeClock(root,clock);
         result.setup_seconds=seconds(started,Clock::now());return result;
     }
     auto iv=rv32i::memoryView(imem),dv=rv32i::memoryView(dmem);

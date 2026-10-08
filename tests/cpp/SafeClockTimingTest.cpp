@@ -1,4 +1,4 @@
-#include "analysis/SafeClockTiming.hpp"
+#include "analysis/CircuitTimingAnalyzer.hpp"
 #include "components/ComponentBuilder.hpp"
 #include "components/ComponentBuilder.tpp"
 #include "components/selection/BuiltinComponentCatalog.hpp"
@@ -93,70 +93,70 @@ TimingContracts registerContracts(ClockEdge edge = ClockEdge::Rising, size_t hol
 }
 void boundsAndFailures() {
     Fixture f;
-    auto full = computeSafeClockPeriod(f.root, f.clock, registerContracts());
+    auto full = CircuitTimingAnalyzer::safeClock(f.root, f.clock, registerContracts());
     safe(full, 10); // 2 launch + 3 gates + 3 setup + 1 separation, rounded even.
     check(full.critical_path.front() == "ROOT.L.output.Q" && full.critical_path.back() == "ROOT.C.input.D", "Critical path endpoints");
     check(full.checked_setup_relationships == 2 && full.checked_hold_relationships == 2, "Both captures checked");
-    safe(computeSafeClockPeriod(f.root, f.clock, registerContracts(ClockEdge::Falling)), 18);
-    safe(computeSafeClockPeriod(f.root, f.clock, registerContracts(ClockEdge::Falling, 30)), 52);
-    safe(computeSafeClockPeriod(f.root, f.clock, registerContracts(ClockEdge::Rising, 0, 17)), 34);
-    auto bad_hold = computeSafeClockPeriod(f.root, f.clock, registerContracts(ClockEdge::Rising, 6));
+    safe(CircuitTimingAnalyzer::safeClock(f.root, f.clock, registerContracts(ClockEdge::Falling)), 18);
+    safe(CircuitTimingAnalyzer::safeClock(f.root, f.clock, registerContracts(ClockEdge::Falling, 30)), 52);
+    safe(CircuitTimingAnalyzer::safeClock(f.root, f.clock, registerContracts(ClockEdge::Rising, 0, 17)), 34);
+    auto bad_hold = CircuitTimingAnalyzer::safeClock(f.root, f.clock, registerContracts(ClockEdge::Rising, 6));
     check(bad_hold.status == ClockTimingStatus::TimingViolation && !bad_hold.safe_period_ticks
           && mentions(bad_hold, "hold bound"), "Hold violation must not yield a period");
-    unknown(computeSafeClockPeriod(f.root, f.clock), "no all-state timing contract");
+    unknown(CircuitTimingAnalyzer::safeClock(f.root, f.clock), "no all-state timing contract");
     auto missing = f.clock; missing.inputs.clear();
-    unknown(computeSafeClockPeriod(f.root, missing, registerContracts()), "unconstrained");
+    unknown(CircuitTimingAnalyzer::safeClock(f.root, missing, registerContracts()), "unconstrained");
     auto too_small = f.clock; too_small.maximum_nodes = 2;
-    unknown(computeSafeClockPeriod(f.root, too_small, registerContracts()), "budget");
+    unknown(CircuitTimingAnalyzer::safeClock(f.root, too_small, registerContracts()), "budget");
     too_small = f.clock; too_small.maximum_edges = 1;
-    unknown(computeSafeClockPeriod(f.root, too_small, registerContracts()), "budget");
+    unknown(CircuitTimingAnalyzer::safeClock(f.root, too_small, registerContracts()), "budget");
     too_small = f.clock; too_small.maximum_hierarchy_depth = 1;
-    unknown(computeSafeClockPeriod(f.root, too_small, registerContracts()), "depth budget");
+    unknown(CircuitTimingAnalyzer::safeClock(f.root, too_small, registerContracts()), "depth budget");
     auto invalid = f.clock; invalid.inputs[0].delay = {4, 1};
-    unknown(computeSafeClockPeriod(f.root, invalid, registerContracts()), "Reversed");
+    unknown(CircuitTimingAnalyzer::safeClock(f.root, invalid, registerContracts()), "Reversed");
     invalid = f.clock; invalid.inputs.push_back(invalid.inputs[0]);
-    unknown(computeSafeClockPeriod(f.root, invalid, registerContracts()), "Duplicate");
+    unknown(CircuitTimingAnalyzer::safeClock(f.root, invalid, registerContracts()), "Duplicate");
     invalid = f.clock; invalid.inputs[0].pin = "ROOT.C.D";
-    unknown(computeSafeClockPeriod(f.root, invalid, registerContracts()), "internally driven");
+    unknown(CircuitTimingAnalyzer::safeClock(f.root, invalid, registerContracts()), "internally driven");
     invalid = f.clock; invalid.inputs[0].delay.maximum = std::numeric_limits<size_t>::max();
-    unknown(computeSafeClockPeriod(f.root, invalid, registerContracts()), "overflow");
+    unknown(CircuitTimingAnalyzer::safeClock(f.root, invalid, registerContracts()), "overflow");
     invalid = f.clock; invalid.event_separation_ticks = 0;
-    unknown(computeSafeClockPeriod(f.root, invalid, registerContracts()), "Invalid");
+    unknown(CircuitTimingAnalyzer::safeClock(f.root, invalid, registerContracts()), "Invalid");
     invalid = f.clock; invalid.inputs[0].edge = static_cast<ClockEdge>(99);
-    unknown(computeSafeClockPeriod(f.root, invalid, registerContracts()), "Invalid clock edge");
-    unknown(computeSafeClockPeriod({}, f.clock), "Invalid");
+    unknown(CircuitTimingAnalyzer::safeClock(f.root, invalid, registerContracts()), "Invalid clock edge");
+    unknown(CircuitTimingAnalyzer::safeClock({}, f.clock), "Invalid");
 
     auto incomplete = registerContracts();
     const auto original = incomplete.model;
     incomplete.model = [=](const IOComponent& c) {
         auto m = original(c); if (m) m->captures.clear(); return m;
     };
-    unknown(computeSafeClockPeriod(f.root, f.clock, incomplete), "input absent");
+    unknown(CircuitTimingAnalyzer::safeClock(f.root, f.clock, incomplete), "input absent");
     incomplete.model = [=](const IOComponent& c) {
         auto m = original(c); if (m) m->evidence.clear(); return m;
     };
-    unknown(computeSafeClockPeriod(f.root, f.clock, incomplete), "evidence");
+    unknown(CircuitTimingAnalyzer::safeClock(f.root, f.clock, incomplete), "evidence");
     incomplete.model = [=](const IOComponent& c) {
         auto m = original(c); if (m) m->arcs.push_back({"CLK", "Q", {0, 1}}); return m;
     };
-    unknown(computeSafeClockPeriod(f.root, f.clock, incomplete), "clock/unused");
+    unknown(CircuitTimingAnalyzer::safeClock(f.root, f.clock, incomplete), "clock/unused");
     incomplete.model = [=](const IOComponent& c) {
         auto m = original(c); if (m) m->stable_outputs.push_back("Q"); return m;
     };
-    unknown(computeSafeClockPeriod(f.root, f.clock, incomplete), "contradictory");
+    unknown(CircuitTimingAnalyzer::safeClock(f.root, f.clock, incomplete), "contradictory");
     incomplete.model = [=](const IOComponent& c) {
         auto m = original(c); if (m) m->unused_inputs.push_back("CLK"); return m;
     };
-    unknown(computeSafeClockPeriod(f.root, f.clock, incomplete), "clock pin cannot be unused");
+    unknown(CircuitTimingAnalyzer::safeClock(f.root, f.clock, incomplete), "clock pin cannot be unused");
     incomplete.model = [=](const IOComponent& c) {
         auto m = original(c); if (m) m->fixed_inputs["D"] = 2; return m;
     };
-    unknown(computeSafeClockPeriod(f.root, f.clock, incomplete), "exceeds pin width");
+    unknown(CircuitTimingAnalyzer::safeClock(f.root, f.clock, incomplete), "exceeds pin width");
 }
 void cyclesAndClocks() {
     Fixture reconvergent(true);
-    safe(computeSafeClockPeriod(reconvergent.root, reconvergent.clock, registerContracts()), 10);
-    const auto fast_hold = computeSafeClockPeriod(reconvergent.root, reconvergent.clock,
+    safe(CircuitTimingAnalyzer::safeClock(reconvergent.root, reconvergent.clock, registerContracts()), 10);
+    const auto fast_hold = CircuitTimingAnalyzer::safeClock(reconvergent.root, reconvergent.clock,
         registerContracts(ClockEdge::Rising, 3));
     check(fast_hold.status == ClockTimingStatus::TimingViolation && !fast_hold.safe_period_ticks,
           "Hold must follow the shortest reconvergent path, not the longest setup path");
@@ -166,7 +166,7 @@ void cyclesAndClocks() {
     Fixture loop;
     auto inv = loop.b.addNewComponent<NOTGate>("OSCILLATOR");
     loop.b.addNewWire("feedback", inv->getOutputPin("OUT"), {inv->getInputPin("IN")});
-    const auto cyclic=computeSafeClockPeriod(loop.root, loop.clock, registerContracts());
+    const auto cyclic=CircuitTimingAnalyzer::safeClock(loop.root, loop.clock, registerContracts());
     unknown(cyclic, "dependency cycle");
     check(cyclic.dependency_cycle.size()==3 && cyclic.dependency_cycle.front()==cyclic.dependency_cycle.back(),
           "Cycle report must be an actual closed walk, not a list of downstream pins");
@@ -174,18 +174,18 @@ void cyclesAndClocks() {
 
     Fixture opaque;
     opaque.b.addNewComponent<UnmodeledGate>("LOOKS_LIKE_NOT");
-    unknown(computeSafeClockPeriod(opaque.root, opaque.clock, registerContracts()), "no all-state timing contract");
+    unknown(CircuitTimingAnalyzer::safeClock(opaque.root, opaque.clock, registerContracts()), "no all-state timing contract");
 
     Fixture gated;
     auto gate = gated.b.addNewComponent<NOTGate>("CLOCK_GATE");
     gated.b.addNewWire("clock_data", gated.root->getInputPin("CLK"), {gate->getInputPin("IN")});
     gated.b.addNewWire("gated", gate->getOutputPin("OUT"), {gated.capture->getInputPin("CLK")});
-    unknown(computeSafeClockPeriod(gated.root, gated.clock, registerContracts()), "clock");
+    unknown(CircuitTimingAnalyzer::safeClock(gated.root, gated.clock, registerContracts()), "clock");
 
     Fixture physical;
     physical.b.addNewComponent<DFlipFlop>("GATE_DFF");
     // The real master/slave latch feedback must not inherit the direct FF model.
-    unknown(computeSafeClockPeriod(physical.root, physical.clock, registerContracts()), "unconstrained");
+    unknown(CircuitTimingAnalyzer::safeClock(physical.root, physical.clock, registerContracts()), "unconstrained");
 }
 void externalOutputsAndRewire() {
     auto root = Component::create<IOComponent>("RW", [](IOComponent* c) {
@@ -200,9 +200,9 @@ void externalOutputsAndRewire() {
     b.addNewWire("q", rw->getOutputPin("Y"), {root->getOutputPin("Q")});
     ClockSpecification clock; clock.clock_pin = "RW.CLK";
     clock.inputs = {{"RW.D", ClockEdge::Rising, {1,2}, 0}};
-    unknown(computeSafeClockPeriod(root, clock), "no sampling requirement");
+    unknown(CircuitTimingAnalyzer::safeClock(root, clock), "no sampling requirement");
     clock.outputs = {{"RW.Q",ClockEdge::Rising,1,0}};
-    safe(computeSafeClockPeriod(root, clock), 4);
+    safe(CircuitTimingAnalyzer::safeClock(root, clock), 4);
 }
 void builtinStorage() {
     const auto& catalog = circuit::builtinComponentCatalog();
@@ -211,9 +211,9 @@ void builtinStorage() {
     clock.inputs = {{"REG.input.RST",std::nullopt,{},0}, {"REG.input.WE",std::nullopt,{},1},
                     {"REG.input.D",ClockEdge::Rising,{1,3},0}};
     clock.outputs = {{"REG.output.Q",ClockEdge::Rising,0,0}};
-    safe(computeSafeClockPeriod(reg, clock), 4);
+    safe(CircuitTimingAnalyzer::safeClock(reg, clock), 4);
     clock.inputs[0].fixed_value = 1;
-    unknown(computeSafeClockPeriod(reg, clock), "requires fixed value 0");
+    unknown(CircuitTimingAnalyzer::safeClock(reg, clock), "requires fixed value 0");
 
     auto rf = catalog.createRoot(circuit::families::RegisterFile32x32.request("RF"), circuit::strictAllBehavioral()).root;
     clock = {}; clock.clock_pin = "RF.CLK";
@@ -221,7 +221,7 @@ void builtinStorage() {
         {"RF.RD_ADDR",ClockEdge::Rising,{1,1},0}, {"RF.WRITE_DATA",ClockEdge::Rising,{1,1},0},
         {"RF.RS1_ADDR",ClockEdge::Rising,{1,9},0}, {"RF.RS2_ADDR",ClockEdge::Rising,{1,2},0}};
     clock.outputs = {{"RF.RS1_DATA",ClockEdge::Rising,0,0},{"RF.RS2_DATA",ClockEdge::Rising,0,0}};
-    safe(computeSafeClockPeriod(rf, clock), 12); // Read-address arc must not be cut at the clocked macro.
+    safe(CircuitTimingAnalyzer::safeClock(rf, clock), 12); // Read-address arc must not be cut at the clocked macro.
 }
 
 // Dynamic cross-check of a lower-level FullAdder between compact FF cells.
@@ -259,7 +259,7 @@ void structuralAdder() {
     ClockSpecification spec;spec.clock_pin="ADDER.CLK";
     spec.inputs={{"ADDER.RST",std::nullopt,{},0}};
     for (const auto& n:names)spec.inputs.push_back({"ADDER."+n,ClockEdge::Falling,{0,0},0});
-    auto report=computeSafeClockPeriod(root,spec);
+    auto report=CircuitTimingAnalyzer::safeClock(root,spec);
     check(report.status==ClockTimingStatus::SafeUnderContracts,"Structural FullAdder must be analyzable");
     const auto period=*report.safe_period_ticks;
     Simulator sim;sim.setHistoryRecordingEnabled(false);

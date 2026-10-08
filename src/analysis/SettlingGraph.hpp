@@ -1,6 +1,6 @@
 #pragma once
 
-#include "analysis/SettlingBound.hpp"
+#include "analysis/CircuitTimingAnalyzer.hpp"
 #include <cstdint>
 #include <memory>
 #include <string>

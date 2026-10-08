@@ -1,4 +1,4 @@
-#include "analysis/SettlingBound.hpp"
+#include "analysis/CircuitTimingAnalyzer.hpp"
 #include "SettlingGraph.hpp"
 #include "basic/PinBase.hpp"
 #include <algorithm>
@@ -408,7 +408,7 @@ public:
 
 } // namespace
 
-SettlingReport analyzeSettling(const std::shared_ptr<Component>& root, const SettlingOptions& options) {
+SettlingReport CircuitTimingAnalyzer::settling(const std::shared_ptr<Component>& root, const SettlingOptions& options) {
     SettlingReport report;
     if (!root) {
         report.diagnostics.push_back("No circuit");

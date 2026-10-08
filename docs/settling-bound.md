@@ -1,6 +1,6 @@
 # Settling bound: a proven "no later than" for every output
 
-`analyzeSettling` (`include/analysis/SettlingBound.hpp`) answers one question
+`CircuitTimingAnalyzer::settling` (`include/analysis/SettlingBound.hpp`) answers one question
 about a structural circuit: after its inputs stop changing, what is the last
 tick at which each output can still change? The answer is an upper bound that
 holds for every input, found from the wiring and the gate rules, without
@@ -11,8 +11,8 @@ removed).
 
 | Analyzer | Gives | Works on |
 | --- | --- | --- |
-| `computeSafeClockPeriod` | A clock period with setup and hold checks | Clocked circuits whose parts all have contracts |
-| `analyzeSettling` | A proven latest change per output and per clocked capture | The same parts as the safe-clock analysis |
+| `CircuitTimingAnalyzer::safeClock` | A clock period with setup and hold checks | Clocked circuits whose parts all have contracts |
+| `CircuitTimingAnalyzer::settling` | A proven latest change per output and per clocked capture | The same parts as the safe-clock analysis |
 
 ## Source layout
 

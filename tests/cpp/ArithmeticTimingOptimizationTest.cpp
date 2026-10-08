@@ -2,7 +2,7 @@
 #include "modules/composite/AddSub32.hpp"
 #include "modules/composite/ParallelPrefixAdder32.hpp"
 #include "modules/composite/IncrementBy4.hpp"
-#include "analysis/SettlingBound.hpp"
+#include "analysis/CircuitTimingAnalyzer.hpp"
 #include "simulator/SimulationTest.hpp"
 #include <iostream>
 #include <random>
@@ -28,8 +28,8 @@ struct Comparison {
         for(const auto& [n,p]:fast->getAllOutputPins())outputs[n]={b.addNewWireDynamic("fast_"+n,p->getWidth(),p,{}),
             b.addNewWireDynamic("ripple_"+n,p->getWidth(),reference->getOutputPinDynamic(n),{})};
         sim.setHistoryRecordingEnabled(false);SimulationTest::scheduleInitialEventsForTree(root,sim,0);
-        const auto f=circuit::analysis::analyzeSettling(fast);
-        const auto r=circuit::analysis::analyzeSettling(reference);
+        const auto f=circuit::analysis::CircuitTimingAnalyzer::settling(fast);
+        const auto r=circuit::analysis::CircuitTimingAnalyzer::settling(reference);
         check(f.valid&&r.valid&&f.bound<r.bound,"Prefix must shorten the settling bound");
         std::cout<<(subtract?"AddSub32":"Adder32")<<": ripple "<<r.bound<<", prefix "<<f.bound<<" ticks\n";
     }
@@ -92,7 +92,7 @@ void incrementByFour() {
             "PC increment mismatch at row "+std::to_string(row));
         time+=400;
     }
-    const auto compact=circuit::analysis::analyzeSettling(increment);
+    const auto compact=circuit::analysis::CircuitTimingAnalyzer::settling(increment);
     check(compact.valid,"IncrementBy4 timing graph is invalid");
     std::cout<<"IncrementBy4: 256 boundary/random rows passed; settling bound "
              <<compact.bound<<" ticks\n";

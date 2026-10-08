@@ -1,5 +1,5 @@
 #include "tests/CorePrimitiveTests.hpp"
-#include "analysis/SettlingBound.hpp"
+#include "analysis/CircuitTimingAnalyzer.hpp"
 
 #include "basic/Pin.hpp"
 #include "basic/Wire.hpp"
@@ -381,12 +381,12 @@ std::string SettlingAnalysisTest::getTestName() const {
 
 void SettlingAnalysisTest::verifyResults() {
     const auto half_adder = Component::create<HalfAdder>("HALF");
-    const auto half_report = circuit::analysis::analyzeSettling(half_adder);
+    const auto half_report = circuit::analysis::CircuitTimingAnalyzer::settling(half_adder);
     expect(half_report.valid, "SettlingAnalysisTest half-adder valid");
     expect(half_report.bound == 1, "SettlingAnalysisTest half-adder delay");
 
     const auto full_adder = Component::create<FullAdder>("FULL");
-    const auto full_report = circuit::analysis::analyzeSettling(full_adder);
+    const auto full_report = circuit::analysis::CircuitTimingAnalyzer::settling(full_adder);
     expect(full_report.valid, "SettlingAnalysisTest full-adder valid");
     // A/B -> first XOR -> second-half carry AND -> carry OR.
     expect(full_report.bound == 3, "SettlingAnalysisTest full-adder delay");
@@ -396,7 +396,7 @@ void SettlingAnalysisTest::verifyResults() {
 
     // A flip-flop built from gates is a loop of latches: no bound is claimed.
     const auto flip_flop = Component::create<DFlipFlop>("DFF");
-    expect(!circuit::analysis::analyzeSettling(flip_flop).valid,
+    expect(!circuit::analysis::CircuitTimingAnalyzer::settling(flip_flop).valid,
            "SettlingAnalysisTest gate-level flip-flop rejected");
 }
 

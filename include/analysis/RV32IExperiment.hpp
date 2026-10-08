@@ -1,5 +1,5 @@
 #pragma once
-#include "analysis/SafeClockTiming.hpp"
+#include "analysis/CircuitTimingAnalyzer.hpp"
 #include "analysis/RV32IBenchmarks.hpp"
 #include "benchmark/Benchmark.hpp"
 #include "modules/rv32i/RV32IMemorySystem.hpp"

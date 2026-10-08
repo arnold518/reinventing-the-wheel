@@ -1,4 +1,4 @@
-#include "analysis/SafeClockTiming.hpp"
+#include "analysis/CircuitTimingAnalyzer.hpp"
 #include "../../src/analysis/TimedLogicDomain.hpp"
 #include "../../src/modules/memory/MemoryEndpointEngine.hpp"
 #include "../../src/modules/rv32i/RV32IZeroWaitMemoryPort.hpp"
@@ -101,7 +101,7 @@ struct Fixture {
 };
 void feedback() {
     Fixture f;
-    const auto safe=computeSafeClockPeriod(f.root,f.clock);
+    const auto safe=CircuitTimingAnalyzer::safeClock(f.root,f.clock);
     for(const auto& d:safe.diagnostics)std::cerr<<d<<'\n';
     check(safe.status==ClockTimingStatus::SafeUnderContracts,"Known byte lane feedback should now be provable");
     TimingContracts override_model{[](const IOComponent& c)->std::optional<ClockComponentContract>{
@@ -110,7 +110,7 @@ void feedback() {
         for(const auto& [name,p]:c.getAllOutputPins())m.arcs.push_back({"IN",name,{1,100}});
         return m;
     }};
-    const auto replaced=computeSafeClockPeriod(f.root,f.clock,override_model);
+    const auto replaced=CircuitTimingAnalyzer::safeClock(f.root,f.clock,override_model);
     check(replaced.status==ClockTimingStatus::Unknown&&!replaced.safe_period_ticks,
         "Native bit-delay rules must not override an explicit replacement contract");
     f.initialize();
@@ -125,7 +125,7 @@ void feedback() {
         check(f.endpoint->memoryStorage().readLogic(0,16)==reference.endpoint->memoryStorage().readLogic(0,16),"Fast/slow feedback storage differs");
     }
     auto changed=f.clock;changed.inputs[2].edge=ClockEdge::Rising;changed.inputs[2].delay={1,1};
-    const auto unknown=computeSafeClockPeriod(f.root,changed);
+    const auto unknown=CircuitTimingAnalyzer::safeClock(f.root,changed);
     check(unknown.status==ClockTimingStatus::Unknown&&!unknown.safe_period_ticks,"Unrestricted four-state address must not be certified");
     const size_t start=1000+32*period;
     auto address=bits(32,0);address[0]=X;f.drive("ADDR",start+1,address);
@@ -163,7 +163,7 @@ void coreCounterexample(const std::string& family) {
     imem->loadWords(0,{0x00002083,0x0010f093,0x00008023,0x00100073});
     ClockSpecification binary;binary.clock_pin="ROOT.CLK";binary.binary_startup=true;
     binary.inputs={{"ROOT.RST",std::nullopt,{},0},{core->getID()+".ENABLE",std::nullopt,{},1}};
-    const auto rejected=computeSafeClockPeriod(root,binary);
+    const auto rejected=CircuitTimingAnalyzer::safeClock(root,binary);
     bool initial_unknown=false;
     for(const auto& d:rejected.diagnostics)initial_unknown|=d.find("initial memory image contains")!=std::string::npos;
     check(rejected.status==ClockTimingStatus::Unknown&&!rejected.binary_startup_verified&&initial_unknown,

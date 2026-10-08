@@ -1,4 +1,4 @@
-#include "analysis/SafeClockTiming.hpp"
+#include "analysis/CircuitTimingAnalyzer.hpp"
 #include "components/ComponentBuilder.tpp"
 #include "modules/memory/BehavioralMemoryEndpoint.hpp"
 #include "components/StructuralNetBuilder.hpp"
@@ -44,21 +44,21 @@ void endpoint() {
         else clock.inputs.push_back({"MEM."+n,ClockEdge::Rising,{1,7},0,true});
     }
     for(const auto& [n,p]:c->getAllOutputPins())clock.outputs.push_back({"MEM."+n,ClockEdge::Rising,0,0});
-    unknown(computeSafeClockPeriod(c,clock),"initial memory image contains");
+    unknown(CircuitTimingAnalyzer::safeClock(c,clock),"initial memory image contains");
     c->clearContents();c->initializeBytes(3,{0x12,0x34});
-    const auto r=computeSafeClockPeriod(c,clock);
+    const auto r=CircuitTimingAnalyzer::safeClock(c,clock);
     for(const auto& d:r.diagnostics)std::cerr<<d<<'\n';
     check(r.status==ClockTimingStatus::SafeUnderContracts&&r.binary_startup_verified&&r.binary_capture_bits>0,"Binary FF endpoint must be certifiable");
     auto unsafe=clock;
     for(auto& i:unsafe.inputs)if(i.edge){i.binary_values=false;break;}
-    unknown(computeSafeClockPeriod(c,unsafe),"binary_values");
+    unknown(CircuitTimingAnalyzer::safeClock(c,unsafe),"binary_values");
     unsafe=clock;unsafe.maximum_state_evaluations=1;
-    unknown(computeSafeClockPeriod(c,unsafe),"budget");
+    unknown(CircuitTimingAnalyzer::safeClock(c,unsafe),"budget");
     unsafe=clock;unsafe.outputs.front().hold=100;
-    auto hold=computeSafeClockPeriod(c,unsafe);
+    auto hold=CircuitTimingAnalyzer::safeClock(c,unsafe);
     check(hold.status==ClockTimingStatus::TimingViolation&&!hold.binary_startup_verified&&!hold.safe_period_ticks,"Binary proof must not conceal hold violations");
     Simulator sim;c->evaluate(0,sim);
-    unknown(computeSafeClockPeriod(c,clock),"pre-simulation");
+    unknown(CircuitTimingAnalyzer::safeClock(c,clock),"pre-simulation");
 }
 void captures(bool poison) {
     auto root=Component::create<IOComponent>("ROOT",[](IOComponent* c){
@@ -78,13 +78,13 @@ void captures(bool poison) {
     ClockSpecification clock;clock.clock_pin="ROOT.CLK";clock.binary_startup=true;
     clock.inputs={{"ROOT.RST",std::nullopt,{},0},{"ROOT.DATA",ClockEdge::Rising,{1,2},0,true}};
     clock.outputs={{"ROOT.Q",ClockEdge::Rising,0,0}};
-    auto r=computeSafeClockPeriod(root,clock);
+    auto r=CircuitTimingAnalyzer::safeClock(root,clock);
     if(poison)unknown(r,"binary next-state preservation unproved");
     else {
         for(const auto& d:r.diagnostics)std::cerr<<d<<'\n';
         check(r.status==ClockTimingStatus::SafeUnderContracts&&r.binary_startup_verified,"Binary register induction");
         clock.inputs[1].edge=ClockEdge::Falling;
-        unknown(computeSafeClockPeriod(root,clock),"rising-edge launches");
+        unknown(CircuitTimingAnalyzer::safeClock(root,clock),"rising-edge launches");
     }
 }
 void controllingFeedback(bool dual) {
@@ -114,7 +114,7 @@ void controllingFeedback(bool dual) {
     ClockSpecification clock;clock.clock_pin="ROOT.CLK";clock.binary_startup=true;
     clock.inputs={{"ROOT.RST",std::nullopt,{},0},{"ROOT.A",ClockEdge::Rising,{1,5},0,true}};
     clock.outputs={{"ROOT.Y",ClockEdge::Rising,0,0},{"ROOT.Q",ClockEdge::Rising,0,0}};
-    const auto proof=computeSafeClockPeriod(root,clock);
+    const auto proof=CircuitTimingAnalyzer::safeClock(root,clock);
     for(const auto& d:proof.diagnostics)std::cerr<<d<<'\n';
     check(proof.status==ClockTimingStatus::SafeUnderContracts&&proof.binary_startup_verified,"Controlling-value feedback must be provable");
     bool evidence=false;for(const auto& s:proof.state_evidence)evidence|=s.find("controlling-value")!=std::string::npos;

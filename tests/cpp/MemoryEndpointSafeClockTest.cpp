@@ -1,4 +1,4 @@
-#include "analysis/SafeClockTiming.hpp"
+#include "analysis/CircuitTimingAnalyzer.hpp"
 #include "components/ComponentBuilder.hpp"
 #include "components/ComponentBuilder.tpp"
 #include "components/selection/BuiltinComponentCatalog.hpp"
@@ -55,35 +55,35 @@ void staticCoverage() {
             auto c = std::dynamic_pointer_cast<IOComponent>(catalog.createRoot(
                 {family+std::to_string(width),"MEM",{}, {}, {}, {}}, circuit::strictAllBehavioral()).root);
             auto base = specification(*c);
-            safe(computeSafeClockPeriod(c,base),2);
+            safe(CircuitTimingAnalyzer::safeClock(c,base),2);
             for (size_t i=0;i<inputs.size();++i) {
                 auto s=base; s.inputs[i+1].edge=ClockEdge::Rising; s.inputs[i+1].delay={1,9};
-                safe(computeSafeClockPeriod(c,s), inputs[i]=="REQ_WRITE_DATA" ? 10 : 12);
+                safe(CircuitTimingAnalyzer::safeClock(c,s), inputs[i]=="REQ_WRITE_DATA" ? 10 : 12);
                 for (size_t j=0;j<outputs.size();++j) {
                     auto probe=s; probe.outputs[j].setup=20;
-                    safe(computeSafeClockPeriod(c,probe),dependencies.contains({inputs[i],outputs[j]})?32:22);
+                    safe(CircuitTimingAnalyzer::safeClock(c,probe),dependencies.contains({inputs[i],outputs[j]})?32:22);
                     probe.inputs[i+1].edge=ClockEdge::Falling;
-                    safe(computeSafeClockPeriod(c,probe),dependencies.contains({inputs[i],outputs[j]})?62:22);
+                    safe(CircuitTimingAnalyzer::safeClock(c,probe),dependencies.contains({inputs[i],outputs[j]})?62:22);
                 }
                 s.inputs[i+1].delay={0,9};
-                const auto hold=computeSafeClockPeriod(c,s);
+                const auto hold=CircuitTimingAnalyzer::safeClock(c,s);
                 check(hold.status==ClockTimingStatus::TimingViolation && !hold.safe_period_ticks,
                       "All request/control inputs must be rising-edge captures");
             }
-            base.inputs[0].fixed_value=1; unknown(computeSafeClockPeriod(c,base));
+            base.inputs[0].fixed_value=1; unknown(CircuitTimingAnalyzer::safeClock(c,base));
         }
         for (auto tech : {Technology::SRAM,Technology::DRAM,Technology::ROM,Technology::NORFlash}) {
             auto c=Component::create<BehavioralMemoryEndpoint>("MEM",width,tech);
-            unknown(computeSafeClockPeriod(c,specification(*c)));
+            unknown(CircuitTimingAnalyzer::safeClock(c,specification(*c)));
         }
     }
     auto checkCompact=[]<size_t W>() {
         auto c=Component::create<CompactMemoryEndpoint<W,FFModel>>("MEM");
-        safe(computeSafeClockPeriod(c,specification(*c)),2);
+        safe(CircuitTimingAnalyzer::safeClock(c,specification(*c)),2);
     };
     checkCompact.template operator()<8>(); checkCompact.template operator()<16>(); checkCompact.template operator()<32>();
     auto modified=Component::create<ModifiedEndpoint>("MEM",8,Technology::FF);
-    unknown(computeSafeClockPeriod(modified,specification(*modified)));
+    unknown(CircuitTimingAnalyzer::safeClock(modified,specification(*modified)));
 }
 
 // Independent tiny FF endpoint oracle: no production validator, controller or

@@ -1,4 +1,4 @@
-#include "analysis/SettlingBound.hpp"
+#include "analysis/CircuitTimingAnalyzer.hpp"
 #include "components/ComponentBuilder.hpp"
 #include "components/ComponentBuilder.tpp"
 #include "components/selection/BuiltinComponentCatalog.hpp"
@@ -207,31 +207,31 @@ void handBuilt() {
         Part p("CHAIN", [](IOComponent* c) { c->addPin("A", PinType::INPUT); c->addPin("Y", PinType::OUTPUT); });
         p.out(p.chain(p.root->getInputPin("A"), "N", 3), "Y");
         p.finish();
-        const auto r = valid(analyzeSettling(p.root));
+        const auto r = valid(CircuitTimingAnalyzer::settling(p.root));
         check(r.bound == 3 && r.structural == 3, "Three inverters take three ticks");
         Bench bench(p.root);
         check(confirm(bench, r, true, 8, random) == 3, "The inverter chain bound is attained");
     }
     {
         const auto part = falsePathPart();
-        const auto all = valid(analyzeSettling(part));
+        const auto all = valid(CircuitTimingAnalyzer::settling(part));
         check(endpoint(all, "Z").structural == 10 && endpoint(all, "Z").bound == 10,
               "With an X select both selectors stay live: 10 ticks");
         SettlingOptions binary;
         binary.binary_sources = true;
-        const auto bin = valid(analyzeSettling(part, binary));
+        const auto bin = valid(CircuitTimingAnalyzer::settling(part, binary));
         check(endpoint(bin, "Z").bound == 5 && endpoint(bin, "Z").tight, "Binary select removes the false path: 5 ticks");
         Bench four(part), two(falsePathPart());
         check(confirm(four, all, true, 400, random) > 5, "A four-state select must be seen to use the long path");
-        check(confirm(two, valid(analyzeSettling(two.dut, binary)), false, 400, random) == 5,
+        check(confirm(two, valid(CircuitTimingAnalyzer::settling(two.dut, binary)), false, 400, random) == 5,
               "The binary bound of 5 is attained and never exceeded");
 
         SettlingOptions held;
         held.fixed_inputs["S"] = 1;
-        const auto fixed = valid(analyzeSettling(part, held));
+        const auto fixed = valid(CircuitTimingAnalyzer::settling(part, held));
         check(endpoint(fixed, "Z").bound == 2, "S held at 1 leaves only C -> Z");
         Bench hold(falsePathPart());
-        check(confirm(hold, valid(analyzeSettling(hold.dut, held)), true, 200, random, held.fixed_inputs) == 2,
+        check(confirm(hold, valid(CircuitTimingAnalyzer::settling(hold.dut, held)), true, 200, random, held.fixed_inputs) == 2,
               "Held select bound is attained");
     }
     {
@@ -244,7 +244,7 @@ void handBuilt() {
         p.out(p.gate<ANDGate>("AND", slow, zero->getOutputPin("OUT")), "DEAD");
         p.out(p.gate<ORGate>("OR", slow, zero->getOutputPin("OUT")), "LIVE");
         p.finish();
-        const auto r = valid(analyzeSettling(p.root));
+        const auto r = valid(CircuitTimingAnalyzer::settling(p.root));
         check(!endpoint(r, "DEAD").changes && endpoint(r, "LIVE").bound == 5, "Constant folding");
         Bench bench(p.root);
         confirm(bench, r, true, 40, random);
@@ -267,7 +267,7 @@ void handBuilt() {
         }
         auto unused = b.addNewComponent<NOTGate>("UNUSED");
         b.addNewWire("s3", split->getOutputPin("OUT_3"), {unused->getInputPin("IN")});
-        const auto r = valid(analyzeSettling(root));
+        const auto r = valid(CircuitTimingAnalyzer::settling(root));
         check(endpoint(r, "Y").bound == 6, "Per-bit: three stages of splitter + inverter");
         Bench bench(root);
         check(confirm(bench, r, true, 20, random) == 6, "Per-bit bound is attained");
@@ -319,22 +319,22 @@ void boundaries() {
     SettlingOptions options;
     options.contracts = registerContract();
     const auto part = build(false);
-    auto r = valid(analyzeSettling(part, options));
+    auto r = valid(CircuitTimingAnalyzer::settling(part, options));
     // Launch 2, three inverters, AND, setup 1.
     check(endpoint(r, "(captures)").bound == 7 && endpoint(r, "OUT").bound == 5, "Clocked launch to capture");
     options.sources = SettlingSources::InputsOnly;
-    r = valid(analyzeSettling(part, options));
+    r = valid(CircuitTimingAnalyzer::settling(part, options));
     // EN -> inverter -> AND -> setup; IN reaches L.D directly (setup only).
     check(endpoint(r, "(captures)").bound == 3 && !endpoint(r, "OUT").changes, "Inputs only: state holds");
     options.sources = SettlingSources::StateOnly;
-    r = valid(analyzeSettling(part, options));
+    r = valid(CircuitTimingAnalyzer::settling(part, options));
     check(endpoint(r, "(captures)").bound == 7 && endpoint(r, "OUT").bound == 5, "State only");
 
-    invalid(analyzeSettling(part), "no timing contract");
+    invalid(CircuitTimingAnalyzer::settling(part), "no timing contract");
     options.sources = SettlingSources::All;
-    invalid(analyzeSettling(build(true), options), "derived, gated or undriven clock");
+    invalid(CircuitTimingAnalyzer::settling(build(true), options), "derived, gated or undriven clock");
     options.fixed_inputs["MISSING"] = 0;
-    invalid(analyzeSettling(part, options), "names no root input");
+    invalid(CircuitTimingAnalyzer::settling(part, options), "names no root input");
 
     Part latch("LATCH", [](IOComponent* c) {
         c->addPin("S", PinType::INPUT); c->addPin("R", PinType::INPUT); c->addPin("Q", PinType::OUTPUT);
@@ -344,7 +344,7 @@ void boundaries() {
     latch.b.addNewWire("r", latch.root->getInputPin("R"), {a->getInputPin("A")});
     latch.b.addNewWire("q", a->getOutputPin("OUT"), {b->getInputPin("B"), latch.root->getOutputPin("Q")});
     latch.b.addNewWire("qn", b->getOutputPin("OUT"), {a->getInputPin("B")});
-    invalid(analyzeSettling(latch.root), "cycle");
+    invalid(CircuitTimingAnalyzer::settling(latch.root), "cycle");
 }
 
 // Every gate-level part in the catalog: the three bounds must be ordered and
@@ -366,7 +366,7 @@ void catalog(size_t rounds, size_t budget, bool verbose, const std::set<std::str
                 catalog.createRoot({contract.id, "DUT", {}}, circuit::maximallyStructural()).root);
         } catch (const std::exception&) { continue; }
         if (!part || part->getAllOutputPins().empty() || part->getAllInputPins().empty()) continue;
-        const auto all = analyzeSettling(part);
+        const auto all = CircuitTimingAnalyzer::settling(part);
         if (!all.valid) continue;
         bool clocked = false;
         for (const auto& e : all.endpoints) clocked |= e.name == "(captures)";
@@ -374,7 +374,7 @@ void catalog(size_t rounds, size_t budget, bool verbose, const std::set<std::str
         SettlingOptions options;
         options.binary_sources = true;
         options.search_budget = budget;
-        const auto binary = analyzeSettling(part, options);
+        const auto binary = CircuitTimingAnalyzer::settling(part, options);
         check(binary.valid, contract.id + ": binary analysis rejected a part the all-state analysis accepted");
         bool tight = true;
         for (const auto& e : all.endpoints) {
@@ -395,14 +395,14 @@ void catalog(size_t rounds, size_t budget, bool verbose, const std::set<std::str
                     one.final_inputs[name] = (vector >> offset) & ((uint64_t{1} << pin->getWidth()) - 1);
                     offset += pin->getWidth();
                 }
-                for (const auto& e : valid(analyzeSettling(part, one)).endpoints)
+                for (const auto& e : valid(CircuitTimingAnalyzer::settling(part, one)).endpoints)
                     largest[e.name] = std::max(largest[e.name], e.bound);
             }
             // Both ways of choosing cases, each on its own.
             for (const auto search : {SettlingSearch::Variables, SettlingSearch::Signals}) {
                 SettlingOptions single = options;
                 single.search = search;
-                for (const auto& e : valid(analyzeSettling(part, single)).endpoints) {
+                for (const auto& e : valid(CircuitTimingAnalyzer::settling(part, single)).endpoints) {
                     check(e.bound >= largest[e.name], contract.id + "." + e.name + ": search went below a real case");
                     check(!e.tight || e.bound == largest[e.name], contract.id + "." + e.name + ": tight but not attained");
                     check(!e.changes || e.tight, contract.id + "." + e.name + ": a small part was left undecided");
@@ -420,7 +420,7 @@ void catalog(size_t rounds, size_t budget, bool verbose, const std::set<std::str
         }
         Bench four(part), two(twin);
         const auto seen = confirm(four, all, true, rounds, random);
-        const auto seen_binary = confirm(two, valid(analyzeSettling(twin, options)), false, rounds, random);
+        const auto seen_binary = confirm(two, valid(CircuitTimingAnalyzer::settling(twin, options)), false, rounds, random);
         ++confirmed;
         lowered += binary.bound < all.structural;
         std::cout << std::left << std::setw(44) << contract.id << std::right << std::setw(7) << all.structural
@@ -446,7 +446,7 @@ void aluEquality() {
     options.binary_sources = true;
     options.search_budget = 500000;
     Bench bench(build());
-    const auto report = valid(analyzeSettling(bench.dut, options));
+    const auto report = valid(CircuitTimingAnalyzer::settling(bench.dut, options));
     const auto& eq = endpoint(report, "EQ");
     std::cout << "rv32i.alu32 EQ: paths " << eq.structural << ", proven " << eq.bound
               << (eq.tight ? " (attained)" : "") << " after " << eq.evaluations << " evaluations\n";

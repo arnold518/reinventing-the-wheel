@@ -1,4 +1,4 @@
-#include "analysis/SafeClockTiming.hpp"
+#include "analysis/CircuitTimingAnalyzer.hpp"
 #include "TimingCircuit.hpp"
 #include "MemoryTimingState.hpp"
 #include "TimedLogicDomain.hpp"
@@ -943,7 +943,7 @@ const char* clockTimingStatusName(ClockTimingStatus status) {
     }
     return "unknown";
 }
-ClockTimingReport computeSafeClockPeriod(const std::shared_ptr<Component>& root,
+ClockTimingReport CircuitTimingAnalyzer::safeClock(const std::shared_ptr<Component>& root,
     const ClockSpecification& clock, const TimingContracts& contracts) {
     return Analysis(root, clock, contracts).run();
 }
