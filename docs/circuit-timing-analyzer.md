@@ -1,0 +1,136 @@
+# CircuitTimingAnalyzer
+
+One timing analysis for built circuits (`include/analysis/CircuitTimingAnalyzer.hpp`).
+It reads the component tree, uses one contract per indivisible part, and
+answers three questions from the same model and the same engine.
+
+| Question | Call | Answer |
+| --- | --- | --- |
+| Settling | `CircuitTimingAnalyzer::settling` | The last tick at which each output, and each clocked capture, can still change |
+| Clock | `CircuitTimingAnalyzer::safeClock` | A period under which every setup, hold and pulse-width requirement is met, or "unknown" |
+| Part delays | `CircuitTimingAnalyzer::characterize` | Input-to-output and clock-to-output delays of one part: what a compact form of it must reproduce |
+
+All results are simulator ticks, not physical delays. Every answer is an upper
+bound that holds for every input; none is found by trying inputs.
+
+It replaces three earlier tools: the longest-path estimate with its candidate
+clock, the safe-clock analysis with its own value engine, and the separate
+settling analysis.
+
+## Source layout (`src/analysis/`)
+
+| File | Holds |
+| --- | --- |
+| `TimingCircuit` | Which parts are indivisible, the built-in contract table (matched by C++ type), and which pin drives which |
+| `TimingGraph` | The circuit as one node per pin bit. Loops are allowed. The compact FF memory endpoint is a part with its own rule |
+| `TimingEngine` | The one evaluation, and the search over cases |
+| `CircuitTimingAnalyzer` | The settling and part-delay questions |
+| `SafeClockTiming` | The clock question: contract and boundary checks, earliest transitions for hold, the period |
+| `MemoryTimingState` | The reachable states of a memory handshake, used as covering cases |
+| `TimedLogicDomain.hpp` | The FF request validator over sets of values |
+
+## The engine
+
+Each bit carries a fact: from tick `at` on its value lies in a set of
+{0, 1, X, Z}, and it does not change after tick `settled`. Facts start with no
+information and are only tightened, by rules that follow from how parts
+behave:
+
+- A part publishes `f(inputs at t)` at exactly `t + delay`
+  (`BasicComponent::_updateOutputWire`). So an output is settled one delay
+  after all its inputs are.
+- A gate's output set is the image of its input sets. One possible value
+  means the bit is settled.
+- A controlling input (0 on AND, 1 on OR) decides the output alone, as soon as
+  it is itself decided. X and Z never control, exactly as in the gate code.
+- A bit that depends only on unchanging sources never changes.
+
+Tightening repeats until nothing moves. Loops need no special treatment: a
+loop settles when some value on it is decided, and otherwise stays open, in
+which case no bound is claimed.
+
+## Cases
+
+Some paths exist in the wiring but no input uses them. To remove them the
+engine splits a bit that is known to be 0 or 1 into its two cases. The cases
+together cover every input, so the largest is still a bound for all.
+
+A case may fix a source bit or an internal signal. What follows from it is
+added (AND = 1 needs both inputs 1; XOR = 0 with one input known gives the
+other), and a case that contradicts itself is dropped, because no input can
+produce it. Stopping the search early is safe: the number reported is then the
+largest case not yet excluded.
+
+A caller can also supply a set of covering cases. The clock question does
+this for memory: each compact FF endpoint is either empty or holding a
+response, and `MemoryTimingState` enumerates the reachable combinations with
+the handshake registers. Each is settled and checked on its own.
+
+## What is assumed
+
+Every report lists its premises.
+
+- Parts behave as their code does: one fixed delay, output a function of the
+  inputs one delay earlier.
+- The contracts of non-gate parts are right. Built-in contracts exist for
+  gates, the bit adapters, `Rewire`, constants, the compact storage parts and
+  the FF endpoint. Anything else without a contract gives no result.
+- Start-up has passed.
+- One clock, taken straight from a root input.
+- Only with `binary_sources` (settling) or `binary_startup` (clock): changing
+  sources end at 0 or 1. Without it, a case split is possible only where the
+  circuit itself proves a bit binary.
+
+## How it is checked
+
+- `SettlingBoundTest`: hand-built circuits with known answers; every
+  gate-level part in the catalog (93) driven in the real simulator with random,
+  complemented and still-switching input changes, where no output may change
+  after its bound; every final vector of the 33 small parts; the ALU `EQ`
+  false path; part characterization.
+- `SafeClockTimingTest`, `MemoryStateTimingTest`, `BinaryStartupTimingTest`,
+  `MemoryFeedbackTimingTest`, `MemoryEndpointSafeClockTest`: the clock
+  question, including feedback through the memory store path, hold, budgets
+  and every fail-closed case. These were written for the earlier engine and
+  pass unchanged on this one.
+- The three cores certify at the same periods as before the merge: 94
+  (single-cycle), 58 (baseline) and 78 (advanced) ticks.
+
+```bash
+build-cleanup/tests/SettlingBoundTest --verbose --budget=500000 rv32i.alu32
+build-cleanup/rv32i_experiment --core advanced --safe-clock
+```
+
+## What it found
+
+For most parts the longest path is already exact: 88 of 93 are proven `tight`
+at the test's small budget, and the simulator reaches the bound.
+
+| Part and output | Longest path | Proven | Seen in the simulator |
+| --- | ---: | ---: | ---: |
+| `rv32i.alu32` `EQ` | 33 | 30 (tight) | 30 |
+| `rv32i.baseline.execute` `TERMINAL` | 47 | 46 (tight) | not targeted |
+| `rv32i.baseline.execute` `OUT_EXECUTION_STATUS` | 44 | 43 (tight) | not targeted |
+| `alu.width8` | 66 | 65 (tight) | 65 |
+| `shift.barrel.width8` | 22 | 21 (tight) | 21 |
+| `rv32i.prediction.predecode` | 31 | 30 (tight) | 28 |
+| `rv32i.prediction.predictor` | 5 | 4 (tight) | 4 |
+
+The `EQ` case shows what a false path is. The longest path runs through the
+subtractor's carry chain into the zero detector. To matter, every other
+difference bit must be 0. That makes every bit position "propagate", and then
+the carry is already decided by the short carry-in path, so the long generate
+path never decides anything. The proof needs about 250,000 evaluations.
+
+## Limits
+
+- The search has no clause learning. Some outputs stay open at any practical
+  budget; their bound is then the path bound, which is still correct. The
+  execute stage's `OUT_NEXT_PC` (46) is one.
+- The clock question does not yet use the case search to lower a period; it
+  splits cases only to close loops.
+- A flip-flop built from gates is a loop of latches and gets no bound, so
+  clocked circuits must use the compact storage parts.
+- Compact (behavioral) parts still use a typed-in delay. `SettlingBoundTest`
+  prints it beside the proven structural delay; nothing sets one from the
+  other yet.

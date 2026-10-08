@@ -139,6 +139,9 @@ struct SettlingOptions {
     // Root input pin name -> the value it ends at. It still changes; only
     // the value it settles to is stated (for example one operation code).
     std::map<std::string, uint64_t> final_inputs;
+    // Root input pins that hold while the others change: their value is not
+    // known, but they do not move. Used to time one input at a time.
+    std::vector<std::string> held_inputs;
     // Root input pin name -> tick of its last transition (default 0).
     std::map<std::string, size_t> input_arrival;
     // Timed evaluations allowed per endpoint. Running out never weakens the
@@ -171,8 +174,36 @@ struct SettlingReport {
     std::vector<std::string> premises, diagnostics;
 };
 
+// ---- Characterizing one part ----------------------------------------------------
+
+struct PartDelay {
+    std::string output;   // output pin
+    bool changes = false; // false: this cause never changes the output
+    size_t delay = 0;     // proven latest change, in ticks
+    bool tight = false;
+};
+// The delays of one part as seen from outside: what a compact form of the
+// same part has to reproduce.
+struct PartTiming {
+    bool valid = false;
+    bool clocked = false;                    // the part captures or launches on a clock
+    std::vector<PartDelay> input_to_output;  // inputs change while state holds
+    std::vector<PartDelay> clock_to_output;  // state launches while inputs hold
+    size_t input_to_capture = 0;             // latest arrival at a clocked capture, setup included
+    size_t state_to_capture = 0;
+    // One number for a part that has a single delay: the latest change of any
+    // output from any cause.
+    size_t delay = 0;
+    std::vector<std::string> premises, diagnostics;
+};
+
 class CircuitTimingAnalyzer {
 public:
+    // Both settling questions for one part: inputs changing with state held,
+    // and state launching with inputs held. `options.sources` is ignored.
+    static PartTiming characterize(const std::shared_ptr<Component>& root,
+                                   const SettlingOptions& options = {});
+
     /**
      * Upper bound on the last tick at which each root output (and each clocked
      * capture) can still change after its sources stop changing.

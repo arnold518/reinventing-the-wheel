@@ -1,7 +1,7 @@
 #include "analysis/CircuitTimingAnalyzer.hpp"
 #include "TimingCircuit.hpp"
+#include "TimingEngine.hpp"
 #include "MemoryTimingState.hpp"
-#include "TimedLogicDomain.hpp"
 #include "basic/PinBase.hpp"
 #include "basic/WireBase.hpp"
 #include "components/BasicComponent.hpp"
@@ -58,56 +58,12 @@ struct Node {
 struct Edge { size_t to; DelayBounds delay; bool wire; };
 using Leaf = detail::TimingLeaf;
 
-// ---- Memory-mode timing: data kept while the modes are examined ----------
-struct Incoming { size_t from; DelayBounds delay; };
-// What is known about one pin in one memory mode.
-struct Bound {
-    size_t settled = none, previous = none;
-    std::vector<detail::TimedBit> bits;
-    std::optional<uint64_t> value;
-};
-struct EndpointOutput {
-    bool full;
-    std::string name;
-    size_t delay;
-    size_t input = none;
-    std::shared_ptr<BehavioralMemoryEndpoint> endpoint;
-};
-// Where one output bit of a Rewire, splitter or joiner comes from.
-struct BitSource { size_t node = none, bit = 0, delay = 0; unsigned constant = 0; };
-using BitRef = std::pair<size_t, size_t>; // node, bit
-// The same for every mode of one analysis.
+// The reachable states of the memory handshakes: together they cover every
+// situation, and the period must satisfy each of them.
 struct StateTiming {
     std::vector<detail::MemoryTimingGroup> groups;
     size_t case_count = 1;
-    std::vector<std::vector<Incoming>> incoming;
-    std::vector<Node> initial;
-    std::vector<size_t> early, early_previous;
-    std::map<size_t, std::vector<BitSource>> routing;
-    std::map<size_t, std::shared_ptr<IOComponent>> primitive;
-    std::map<std::tuple<BitRef, unsigned, BitRef>, size_t> clamp_cache;
-    size_t controlling_proofs = 0;
 };
-// One mode: one choice of empty/held state for every memory endpoint.
-struct ModeState {
-    std::vector<Bound> bounds;
-    std::map<size_t, EndpointOutput> endpoint_outputs;
-    std::set<size_t> forced;
-};
-bool isGate(const IOComponent& c) {
-    return typeid(c) == typeid(NOTGate) || typeid(c) == typeid(ANDGate) || typeid(c) == typeid(NANDGate)
-        || typeid(c) == typeid(ORGate) || typeid(c) == typeid(NORGate) || typeid(c) == typeid(XORGate);
-}
-// Four-state gate result over the codes 0 = LOW, 1 = HIGH, 2 = X, 3 = Z.
-unsigned gateValue(const IOComponent& gate, unsigned a, unsigned b) {
-    const bool inverted = typeid(gate) == typeid(NANDGate) || typeid(gate) == typeid(NORGate);
-    unsigned v = 2;
-    if (typeid(gate) == typeid(NOTGate)) v = a < 2 ? 1 - a : 2;
-    else if (typeid(gate) == typeid(ANDGate) || typeid(gate) == typeid(NANDGate)) v = !a || !b ? 0 : a == 1 && b == 1 ? 1 : 2;
-    else if (typeid(gate) == typeid(ORGate) || typeid(gate) == typeid(NORGate)) v = a == 1 || b == 1 ? 1 : !a && !b ? 0 : 2;
-    else if (typeid(gate) == typeid(XORGate)) v = a < 2 && b < 2 ? (a != b) : 2;
-    return inverted && v < 2 ? 1 - v : v;
-}
 
 class Analysis {
     const std::shared_ptr<Component>& root;
@@ -126,6 +82,13 @@ class Analysis {
     size_t period = 2, clock_node = none;
     bool unknown = false, violation = false;
     bool state_timing_checked = false;
+    // Per launch edge: earliest transitions, and the shared engine.
+    std::vector<Node> initial;
+    std::array<std::vector<size_t>, 2> early, early_previous;
+    std::array<std::unique_ptr<detail::timing::Graph>, 2> graph;
+    std::array<std::unique_ptr<detail::timing::Engine>, 2> engine;
+    std::vector<bool> changes;
+    size_t case_splits = 0;
 
     void diagnostic(const std::string& message) {
         unknown = true;
@@ -373,424 +336,189 @@ class Analysis {
         report.state_case_count = work.case_count;
     }
 
-    // Earliest transitions retain EVERY all-state arc, including feedback.
-    // Only upper settling bounds use mode information. A shortest-path
-    // search works with cycles and must not discard a hold-time hazard.
-    void earliestArrivals(StateTiming& work) {
-        work.incoming.assign(nodes.size(), {});
-        for (size_t n = 0; n < nodes.size(); ++n)
-            for (const auto& e : edges[n]) work.incoming[e.to].push_back({n, e.delay});
-        work.initial = nodes;
-        work.early.assign(nodes.size(), none);
-        work.early_previous.assign(nodes.size(), none);
-        using Entry = std::pair<size_t, size_t>;
-        std::priority_queue<Entry, std::vector<Entry>, std::greater<Entry>> heap;
-        for (size_t n = 0; n < nodes.size(); ++n) if (nodes[n].arrival[0].valid) {
-            work.early[n] = nodes[n].arrival[0].early;
-            heap.emplace(work.early[n], n);
-        }
-        while (!heap.empty()) {
-            const auto [time, n] = heap.top();
-            heap.pop();
-            if (time != work.early[n]) continue;
-            for (const auto& e : edges[n]) {
-                const auto t = add(time, e.delay.minimum);
-                if (t < work.early[e.to]) {
-                    work.early[e.to] = t;
-                    work.early_previous[e.to] = n;
-                    heap.emplace(t, e.to);
-                }
+    // Earliest transitions retain EVERY all-state arc, including feedback and
+    // the arcs of every memory mode. A shortest-path search works with loops
+    // and must not discard a hold-time hazard.
+    void earliestArrivals() {
+        initial = nodes;
+        for (size_t k = 0; k < 2; ++k) {
+            early[k].assign(nodes.size(), none);
+            early_previous[k].assign(nodes.size(), none);
+            using Entry = std::pair<size_t, size_t>;
+            std::priority_queue<Entry, std::vector<Entry>, std::greater<Entry>> heap;
+            for (size_t n = 0; n < nodes.size(); ++n) if (nodes[n].arrival[k].valid) {
+                early[k][n] = nodes[n].arrival[k].early;
+                heap.emplace(early[k][n], n);
             }
-        }
-    }
-
-    // Which input bit each output bit of the routing parts carries.
-    void buildBitRouting(StateTiming& work) {
-        for (const auto& leaf : leaves) {
-            const auto& c = *leaf.component;
-            for (const auto& [name, p] : c.getAllOutputPins()) {
-                const auto n = indices.at(p);
-                work.primitive[n] = leaf.component;
-                if (typeid(c) == typeid(Rewire)) {
-                    const auto& rw = static_cast<const Rewire&>(c);
-                    auto& r = work.routing[n];
-                    r.resize(p->getWidth());
-                    const auto value = rw.getUnmappedDefault() == Rewire::UnmappedBitValue::LOW ? 1u
-                        : rw.getUnmappedDefault() == Rewire::UnmappedBitValue::HIGH ? 2u : 4u;
-                    for (auto& bit : r) bit.constant = value;
-                    for (const auto& bit : rw.getBitMappings()) if (bit.dst_wire == name)
-                        r[bit.dst_bit] = {indices.at(c.getInputPinDynamic(bit.src_wire)), bit.src_bit, 0, 0};
-                } else if (detail::isBitSplitter(c)) {
-                    work.routing[n] = {{indices.at(c.getInputPinDynamic("IN")), std::stoul(name.substr(4)),
-                                        static_cast<const BasicComponent&>(c).getDelay(), 0}};
-                } else if (detail::isBitJoiner(c)) {
-                    auto& r = work.routing[n];
-                    for (size_t bit = 0; bit < p->getWidth(); ++bit)
-                        r.push_back({indices.at(c.getInputPin("IN_" + std::to_string(bit))), 0,
-                                     static_cast<const BasicComponent&>(c).getDelay(), 0});
-                }
-            }
-        }
-    }
-
-    // Follow pure routing back to the bit a signal really comes from.
-    BitRef origin(const StateTiming& work, BitRef p) const {
-        std::set<BitRef> seen;
-        while (seen.insert(p).second) {
-            if (auto r = work.routing.find(p.first); r != work.routing.end()) {
-                const auto& s = r->second.at(p.second);
-                if (s.node == none) break;
-                p = {s.node, s.bit};
-            } else if (!work.primitive.contains(p.first) && work.incoming[p.first].size() == 1)
-                p.first = work.incoming[p.first][0].from;
-            else break;
-        }
-        return p;
-    }
-
-    // Prove a controlling-value implication from actual gates, including
-    // its delay: if `seed` holds `value`, by when does `target` hold it too?
-    // No CPU names or false-path lists enter this proof. Cycles, unsupported
-    // primitives and depth exhaustion give no implication (`none`).
-    size_t clampDelay(StateTiming& work, BitRef seed, unsigned value, BitRef target) {
-        const auto query = std::make_tuple(seed, value, target);
-        if (auto it = work.clamp_cache.find(query); it != work.clamp_cache.end()) return it->second;
-        using Key = std::tuple<size_t, size_t, unsigned>;
-        std::map<Key, size_t> memo;
-        std::set<Key> active;
-        auto visit = [&](auto&& self, BitRef p, unsigned want, size_t depth) -> size_t {
-            if (report.state_evaluations >= clock.maximum_state_evaluations)
-                throw std::runtime_error("State implication work budget exhausted");
-            ++report.state_evaluations;
-            if (p == seed) return want == value ? 0 : none;
-            const Key key{p.first, p.second, want};
-            if (auto it = memo.find(key); it != memo.end()) return it->second;
-            if (depth >= 128 || !active.insert(key).second) return none;
-            size_t time = none;
-            if (auto r = work.routing.find(p.first); r != work.routing.end()) {
-                const auto& s = r->second.at(p.second);
-                if (s.node == none) {
-                    if (s.constant == (1u << want)) time = 0;
-                } else {
-                    time = self(self, {s.node, s.bit}, want, depth + 1);
-                    if (time != none) time = add(time, s.delay);
-                }
-            } else if (!work.primitive.contains(p.first) && work.incoming[p.first].size() == 1) {
-                const auto& e = work.incoming[p.first][0];
-                time = self(self, {e.from, p.second}, want, depth + 1);
-                if (time != none) time = add(time, e.delay.maximum);
-            } else if (auto it = work.primitive.find(p.first); it != work.primitive.end()) {
-                const auto& c = *it->second;
-                const bool and_gate = typeid(c) == typeid(ANDGate) || typeid(c) == typeid(NANDGate);
-                const bool or_gate = typeid(c) == typeid(ORGate) || typeid(c) == typeid(NORGate);
-                if (typeid(c) == typeid(NOTGate))
-                    time = self(self, {indices.at(c.getInputPin("IN")), 0}, 1 - want, depth + 1);
-                else if (and_gate || or_gate) {
-                    const bool inverted = typeid(c) == typeid(NANDGate) || typeid(c) == typeid(NORGate);
-                    const unsigned input_value = inverted ? 1 - want : want;
-                    const auto a = self(self, {indices.at(c.getInputPin("A")), 0}, input_value, depth + 1);
-                    const auto b = self(self, {indices.at(c.getInputPin("B")), 0}, input_value, depth + 1);
-                    time = (and_gate ? input_value == 0 : input_value == 1) ? std::min(a, b) : std::max(a, b);
-                }
-                if (time != none) time = add(time, static_cast<const BasicComponent&>(c).getDelay());
-            }
-            active.erase(key);
-            memo[key] = time;
-            return time;
-        };
-        const auto result = visit(visit, target, value, 0);
-        work.clamp_cache[query] = result;
-        return result;
-    }
-
-    // What is known before anything propagates in mode `mode`.
-    // False: the circuit does not fit the mode model; the general analysis applies.
-    bool startMode(const StateTiming& work, size_t mode, ModeState& state) {
-        const auto& initial = work.initial;
-        auto& bounds = state.bounds;
-        bounds.assign(nodes.size(), {});
-        for (size_t n = 0; n < nodes.size(); ++n) {
-            bounds[n].bits.resize(nodes[n].pin->getWidth());
-            if (initial[n].stable) bounds[n].settled = 0;
-            if (initial[n].value) bounds[n].value = initial[n].value;
-            if (work.incoming[n].empty() && initial[n].arrival[0].valid) bounds[n].settled = initial[n].arrival[0].late;
-            for (size_t i = 0; i < bounds[n].bits.size(); ++i) {
-                auto& bit = bounds[n].bits[i];
-                bit.settled = bounds[n].settled;
-                if (initial[n].value) bit.values = 1u << ((*initial[n].value >> i) & 1);
-                else if (clock.binary_startup && work.incoming[n].empty() && initial[n].arrival[0].valid)
-                    bit = {3, initial[n].arrival[0].late, bit.settled};
-            }
-        }
-        if (clock.binary_startup) for (const auto& g : work.groups) {
-            // With binary cells and saved data, FF responses are binary
-            // even when an invalid transient request contains X/Z: it
-            // returns a binary error code and zero payload. Preservation
-            // of all write/response captures is checked below.
-            for (const auto& [name, p] : g.endpoint->getAllOutputPins())
-                for (auto& bit : bounds[indices.at(p)].bits) { bit.values = 3; bit.at = g.endpoint->getDelay(); }
-        }
-        size_t selection = mode;
-        for (const auto& g : work.groups) {
-            const auto& c = g.cases[selection % g.cases.size()];
-            selection /= g.cases.size();
-            for (const auto& [pin, value] : c.registers) {
-                const auto n = indices.at(pin);
-                if (!initial[n].arrival[0].valid || !work.incoming[n].empty()) return false;
-                bounds[n].bits[0] = {1u << unsigned(value), bounds[n].settled, bounds[n].settled};
-                if (value == LogicValue::LOW || value == LogicValue::HIGH) bounds[n].value = unsigned(value);
-            }
-            for (const auto& [name, p] : g.endpoint->getAllOutputPins()) {
-                const auto n = indices.at(p);
-                const auto d = g.endpoint->getDelay();
-                EndpointOutput e{c.full, name, d, none, g.endpoint};
-                if (name == "REQ_READY") e.input = indices.at(g.endpoint->getInputPin("RSP_READY"));
-                if (name == "RSP_VALID" || name == "RSP_READ_DATA") e.input = indices.at(g.endpoint->getInputPin("REQ_VALID"));
-                state.endpoint_outputs[n] = e;
-                const bool fixed_one = (name == "REQ_READY" && !c.full) || (name == "RSP_VALID" && c.full);
-                if (fixed_one || (c.full && name != "REQ_READY")) {
-                    // New mode is selected at the edge; old output events
-                    // have drained under the previous cycle's bound. The
-                    // published output need not be stable until edge+d.
-                    bounds[n].settled = d;
-                    state.forced.insert(n);
-                    for (auto& bit : bounds[n].bits) bit.settled = d;
-                    if (fixed_one) { bounds[n].bits[0] = {2, d, d}; bounds[n].value = 1; }
-                }
-            }
-        }
-        return true;
-    }
-
-    // Tightens what is known about one pin, remembering whether anything moved.
-    struct Refiner {
-        Bound& b;
-        bool changed = false;
-        void settle(size_t t, size_t prev) {
-            if (t < b.settled) { b.settled = t; b.previous = prev; changed = true; }
-            for (auto& bit : b.bits) if (t < bit.settled) { bit.settled = t; changed = true; }
-        }
-        void refine(size_t i, const detail::TimedBit& proof) {
-            auto& bit = b.bits.at(i);
-            const auto narrowed = bit.values & proof.values;
-            if (!narrowed) throw std::runtime_error("Contradictory state timing domains");
-            if (narrowed != bit.values) { bit.values = narrowed; bit.at = std::max(bit.at, proof.at); changed = true; }
-            else if (proof.values == bit.values && proof.at < bit.at) { bit.at = proof.at; changed = true; }
-            size_t time = proof.settled;
-            if ((bit.values & (bit.values - 1)) == 0) time = std::min(time, bit.at);
-            if (time < bit.settled) { bit.settled = time; changed = true; }
-        }
-    };
-
-    void refineEndpointOutput(const EndpointOutput& e, ModeState& state, Refiner& r) {
-        auto& bounds = state.bounds;
-        if (e.name == "RSP_STATUS" && !e.full) {
-            auto input = [&](const char* name) -> const std::vector<detail::TimedBit>& {
-                return bounds[indices.at(e.endpoint->getInputPinDynamic(name))].bits;
-            };
-            const auto& storage = e.endpoint->memoryStorage();
-            const auto proof = detail::ffStatusBounds(input("REQ_OP"), input("REQ_ADDR"), input("REQ_WRITE_MASK"),
-                storage.wordBits() / 8, storage.capacityBytes(), e.delay);
-            for (size_t i = 0; i < 3; ++i) r.refine(i, proof[i]);
-        } else if (e.input != none && (e.name == "REQ_READY" || e.name == "RSP_VALID")) {
-            const auto& input = bounds[e.input].bits[0];
-            unsigned domain = 0;
-            for (unsigned v = 0; v < 4; ++v) if (input.values & (1u << v)) domain |= v == 1 ? 2 : 1;
-            r.refine(0, {domain, add(input.at, e.delay), none});
-        } else if (e.input != none && e.name == "RSP_READ_DATA" && !(bounds[e.input].bits[0].values & 2)) {
-            r.settle(add(bounds[e.input].bits[0].at, e.delay), e.input);
-            r.b.value = 0;
-            for (size_t i = 0; i < r.b.bits.size(); ++i) r.refine(i, {1, r.b.settled, r.b.settled});
-        }
-    }
-
-    void refinePrimitiveOutput(const IOComponent& c, size_t n, bool implication_pass,
-                               StateTiming& work, ModeState& state, Refiner& r) {
-        auto& bounds = state.bounds;
-        const auto delay = [&] { return static_cast<const BasicComponent&>(c).getDelay(); };
-        if (clock.binary_startup && typeid(c) == typeid(RegisterFile32x32Behavioral)) {
-            const auto addr = nodes[n].pin->getName() == "RS1_DATA" ? "RS1_ADDR" : "RS2_ADDR";
-            size_t at = work.initial[n].arrival[0].late;
-            bool binary = true;
-            for (const auto& bit : bounds[indices.at(c.getInputPin<5>(addr))].bits) {
-                binary &= !(bit.values & 12);
-                at = std::max(at, add(bit.at, delay()));
-            }
-            if (binary) for (size_t i = 0; i < r.b.bits.size(); ++i) r.refine(i, {3, at, none});
-        }
-        if (!isGate(c)) return;
-        const bool inverter = typeid(c) == typeid(NOTGate);
-        const auto& a = bounds[indices.at(c.getInputPin(inverter ? "IN" : "A"))].bits[0];
-        const auto& other = inverter ? a : bounds[indices.at(c.getInputPin("B"))].bits[0];
-        unsigned domain = 0;
-        for (unsigned x = 0; x < 4; ++x) for (unsigned y = 0; y < 4; ++y)
-            if ((a.values & (1u << x)) && (other.values & (1u << y))) domain |= 1u << gateValue(c, x, y);
-        r.refine(0, {domain, add(std::max(a.at, other.at), delay()), none});
-        if (!implication_pass || r.b.settled != none || (typeid(c) != typeid(ANDGate) && typeid(c) != typeid(ORGate)))
-            return;
-        for (const auto* input : {"A", "B"}) {
-            const auto p = indices.at(c.getInputPin(input));
-            const auto q = indices.at(c.getInputPin(input[0] == 'A' ? "B" : "A"));
-            const auto source = origin(work, {p, 0});
-            const auto& s = bounds[source.first].bits[source.second];
-            if (s.settled == none || s.values != 3 || bounds[p].bits[0].settled == none) continue;
-            // OR(s, s & ...) = s; AND(s, s | ...) = s.
-            // The unbounded input may glitch until its
-            // controlling value has propagated to it.
-            const auto d = clampDelay(work, source, typeid(c) == typeid(ORGate) ? 0 : 1, {q, 0});
-            if (d == none) continue;
-            const auto at = add(std::max(bounds[p].bits[0].settled, add(s.settled, d)), delay());
-            r.settle(at, source.first);
-            r.refine(0, {s.values, at, at});
-            ++work.controlling_proofs;
-        }
-    }
-
-    // One step of the fixpoint for pin `n`. True: something about it tightened.
-    bool refineNode(size_t n, bool implication_pass, StateTiming& work, ModeState& state) {
-        auto& bounds = state.bounds;
-        Refiner r{bounds[n]};
-        const auto& initial = work.initial;
-        const auto& incoming = work.incoming[n];
-        // Generic dependency rule: all inputs settled implies output
-        // settled. Including launch time accounts for changing state.
-        size_t latest = initial[n].arrival[0].valid ? initial[n].arrival[0].late : 0, prev = none;
-        bool complete = !incoming.empty();
-        for (const auto& e : incoming) {
-            if (bounds[e.from].settled == none) { complete = false; break; }
-            const auto t = add(bounds[e.from].settled, e.delay.maximum);
-            if (t > latest) { latest = t; prev = e.from; }
-        }
-        if (complete) r.settle(latest, prev);
-
-        if (const auto ep = state.endpoint_outputs.find(n); ep != state.endpoint_outputs.end()) {
-            refineEndpointOutput(ep->second, state, r);
-        } else if (auto it = work.routing.find(n); it != work.routing.end()) {
-            for (size_t i = 0; i < it->second.size(); ++i) {
-                const auto& route = it->second[i];
-                if (route.node == none) { r.refine(i, {route.constant, 0, 0}); continue; }
-                auto proof = bounds[route.node].bits.at(route.bit);
-                proof.at = add(proof.at, route.delay);
-                if (proof.settled != none) proof.settled = add(proof.settled, route.delay);
-                r.refine(i, proof);
-            }
-        } else if (auto it = work.primitive.find(n); it != work.primitive.end()) {
-            refinePrimitiveOutput(*it->second, n, implication_pass, work, state, r);
-        } else if (incoming.size() == 1) {
-            const auto& from = bounds[incoming[0].from];
-            for (size_t i = 0; i < r.b.bits.size(); ++i) r.refine(i, from.bits.at(i));
-            if (from.value && r.b.value != from.value) { r.b.value = from.value; r.changed = true; }
-        }
-        const auto bit_time = detail::settledAt(r.b.bits);
-        if (bit_time < r.b.settled) { r.b.settled = bit_time; r.b.previous = none; r.changed = true; }
-        return r.changed;
-    }
-
-    // Propagate until nothing tightens; then one more round in which the
-    // gate-implication proof may settle what is still open.
-    // False: the work budget ran out.
-    bool settleMode(StateTiming& work, ModeState& state) {
-        std::deque<size_t> pending;
-        std::vector<bool> queued(nodes.size(), true);
-        for (size_t n = 0; n < nodes.size(); ++n) pending.push_back(n);
-        bool implication_pass = false;
-        while (!pending.empty() || !implication_pass) {
-            if (pending.empty()) {
-                implication_pass = true;
-                for (size_t n = 0; n < nodes.size(); ++n)
-                    if (state.bounds[n].settled == none && !state.forced.contains(n)) { pending.push_back(n); queued[n] = true; }
-                if (pending.empty()) break;
-            }
-            if (report.state_evaluations == clock.maximum_state_evaluations) return false;
-            ++report.state_evaluations;
-            const auto n = pending.front();
-            pending.pop_front();
-            queued[n] = false;
-            if (state.forced.contains(n)) continue;
-            if (!refineNode(n, implication_pass, work, state)) continue;
-            for (const auto& e : edges[n]) if (!queued[e.to]) { queued[e.to] = true; pending.push_back(e.to); }
-        }
-        return true;
-    }
-
-    bool modeSettled(const ModeState& state) const {
-        for (size_t n = 0; n < nodes.size(); ++n)
-            if (n != clock_node && !clock_nodes.contains(n) && !unused.contains(n) && state.bounds[n].settled == none)
-                return false;
-        return true;
-    }
-
-    void explainUnsettledMode(const StateTiming& work, const ModeState& state, size_t mode) {
-        for (const auto& g : work.groups) {
-            const auto n = indices.at(g.endpoint->getOutputPin<3>("RSP_STATUS"));
-            if (state.bounds[n].settled != none) continue;
-            for (const auto* name : {"REQ_OP", "REQ_ADDR", "REQ_WRITE_MASK"}) {
-                const auto& input = state.bounds[indices.at(g.endpoint->getInputPinDynamic(name))];
-                std::string domains;
-                for (const auto& bit : input.bits) domains += "0123456789abcdef"[bit.values];
-                report.state_evidence.push_back(g.endpoint->getID() + "." + name + ": bit domains (LSB first)=" + domains
-                    + " (hex sets: 1=LOW, 2=HIGH, 4=X, 8=Z), settles="
-                    + (input.settled == none ? "unproved" : std::to_string(input.settled)));
-            }
-        }
-        report.state_evidence.push_back("State case " + std::to_string(mode)
-            + ": no bounded settling proof; retaining all-state analysis");
-    }
-
-    // True: the analysis finished here, with a result or a diagnostic.
-    // False: the general analysis in propagate() applies instead.
-    bool propagateMemoryStates() {
-        StateTiming work;
-        if (const auto decided = collectMemoryGroups(work)) return *decided;
-        recordStatePremises(work);
-        earliestArrivals(work);
-        buildBitRouting(work);
-        for (size_t mode = 0; mode < work.case_count; ++mode) {
-            ModeState state;
-            if (!startMode(work, mode, state)) return false;
-            if (!settleMode(work, state)) {
-                nodes = work.initial;
-                diagnostic("State settling work budget exhausted");
-                return true;
-            }
-            if (!modeSettled(state)) {
-                explainUnsettledMode(work, state, mode);
-                nodes = work.initial;
-                if (clock.binary_startup) { diagnostic("Binary-startup settling/preservation proof incomplete"); return true; }
-                return false;
-            }
-            auto& bounds = state.bounds;
-            if (clock.binary_startup) for (const auto& [n, cap] : captures)
-                for (size_t bit = 0; bit < bounds[n].bits.size(); ++bit) {
-                    const auto& proof = bounds[n].bits[bit];
-                    if (proof.values & 12) {
-                        diagnostic(nodes[n].pin->getID() + "[" + std::to_string(bit) + "]: binary next-state preservation unproved");
-                        nodes = work.initial;
-                        return true;
+            while (!heap.empty()) {
+                const auto [time, n] = heap.top();
+                heap.pop();
+                if (time != early[k][n]) continue;
+                for (const auto& e : edges[n]) {
+                    const auto t = add(time, e.delay.minimum);
+                    if (t < early[k][e.to]) {
+                        early[k][e.to] = t;
+                        early_previous[k][e.to] = n;
+                        heap.emplace(t, e.to);
                     }
-                    // Domain restrictions must arrive before capture too, not just
-                    // the possibly earlier value-settling deadline.
-                    bounds[n].settled = std::max(bounds[n].settled, proof.at);
-                    ++report.binary_capture_bits;
                 }
-            nodes = work.initial;
-            for (size_t n = 0; n < nodes.size(); ++n) {
-                if (work.early[n] != none)
-                    nodes[n].arrival[0] = {true, work.early[n], bounds[n].settled, bounds[n].previous, work.early_previous[n]};
-                else { nodes[n].stable = true; nodes[n].value = bounds[n].value; }
             }
-            ++report.checked_state_cases;
-            checkTiming();
-            if (unknown || violation) { state_timing_checked = true; return true; }
         }
-        state_timing_checked = true;
-        if (work.controlling_proofs) report.state_evidence.push_back(std::to_string(work.controlling_proofs)
-            + " timed controlling-value implications proved from native gate wiring");
-        report.assumptions.push_back(clock.binary_startup
-            ? "All binary memory control cases and captured-bit preservation checked with timed settling; hold uses all uncut arcs"
-            : "All reachable four-state memory control cases checked with timed settling; hold uses all uncut arcs");
+    }
+
+    // The circuit as the shared engine sees it, for launches on one edge.
+    bool buildEngine(size_t k) {
+        using namespace detail::timing;
+        GraphRequest request;
+        request.contracts = models;
+        request.binary_sources = clock.binary_startup;
+        request.phase = k == 0 ? ClockEdge::Rising : ClockEdge::Falling;
+        request.other_edge_is_error = false;
+        request.check_clocks = false;      // checked above, with this analysis' own messages
+        request.default_arrival = NEVER;   // every changing input is declared
+        for (const auto& input : clock.inputs) {
+            const auto pin = lookup(input.pin, PinType::INPUT).get();
+            if (!input.edge) request.fixed[pin] = input.fixed_value;
+            else request.arrival[pin] = phase(*input.edge) == k ? static_cast<Tick>(input.delay.maximum) : NEVER;
+        }
+        graph[k] = std::make_unique<Graph>();
+        std::vector<std::string> problems;
+        if (!buildGraph(root, request, *graph[k], problems)) {
+            for (const auto& problem : problems) diagnostic(problem);
+            return false;
+        }
+        engine[k] = std::make_unique<Engine>(*graph[k]);
         return true;
     }
+
+    // Latest arrivals of one covering case, from the shared engine. False:
+    // no result (a diagnostic says why).
+    bool settleCase(size_t k, const detail::timing::Case* known) {
+        using namespace detail::timing;
+        const auto& g = *graph[k];
+        // Every pin must settle, not only the captured ones: an oscillator
+        // anywhere means the circuit has no quiet state to certify.
+        std::vector<int> needed;
+        for (size_t n = 0; n < nodes.size(); ++n) {
+            if (n == clock_node || clock_nodes.contains(n) || unused.contains(n)) continue;
+            if (const auto first = g.first_bit.find(nodes[n].pin.get()); first != g.first_bit.end())
+                for (size_t bit = 0; bit < nodes[n].pin->getWidth(); ++bit) needed.push_back(first->second + int(bit));
+        }
+        engine[k]->setCase(known);
+        std::vector<Fact> facts;
+        size_t splits = 0;
+        const size_t budget = clock.maximum_state_evaluations;
+        const auto outcome = engine[k]->resolve(needed, budget, facts, splits);
+        report.state_evaluations = engine[k]->work();
+        case_splits += splits;
+        if (outcome == Engine::Resolved::OutOfWork) { diagnostic("State settling work budget exhausted"); return false; }
+        if (outcome == Engine::Resolved::No) {
+            if (clock.binary_startup) diagnostic("Binary-startup settling/preservation proof incomplete");
+            else {
+                diagnostic("Combinational dependency cycle: no finite all-state settling bound established");
+                reportDependencyCycle(k);
+            }
+            return false;
+        }
+        for (size_t n = 0; n < nodes.size(); ++n) {
+            const auto first = g.first_bit.find(nodes[n].pin.get());
+            if (n == clock_node || clock_nodes.contains(n) || first == g.first_bit.end()) continue;
+            Tick late = NEVER;
+            bool open = false, decided = true;
+            uint64_t value = 0;
+            for (size_t bit = 0; bit < nodes[n].pin->getWidth(); ++bit) {
+                const Fact& f = facts[first->second + bit];
+                open |= f.settled == OPEN;
+                late = std::max(late, f.settled);
+                if (f.values == HIGH && bit < 64) value |= uint64_t{1} << bit;
+                else if (f.values != LOW) decided = false;
+            }
+            auto& arrival = nodes[n].arrival[k];
+            const size_t earliest = early[k][n];
+            // Proven never to change here, yet reachable in some other mode:
+            // keep the earliest transition so that hold is still checked.
+            if (late == NEVER && earliest == none) arrival.valid = false;
+            else arrival = {true, earliest == none ? 0 : earliest,
+                            open ? none : late == NEVER ? earliest : static_cast<size_t>(late), none, early_previous[k][n]};
+            if (late != NEVER) changes[n] = true;
+            else if (decided && !changes[n]) nodes[n].value = value;
+        }
+        if (clock.binary_startup) for (const auto& [n, capture] : captures) {
+            const auto first = g.first_bit.find(nodes[n].pin.get());
+            if (first == g.first_bit.end()) continue;
+            for (size_t bit = 0; bit < nodes[n].pin->getWidth(); ++bit) {
+                const Fact& f = facts[first->second + bit];
+                if (f.values & (X | Z)) {
+                    diagnostic(nodes[n].pin->getID() + "[" + std::to_string(bit) + "]: binary next-state preservation unproved");
+                    return false;
+                }
+                // Domain restrictions must arrive before capture too, not just
+                // the possibly earlier value-settling deadline.
+                auto& arrival = nodes[n].arrival[k];
+                if (arrival.valid && f.at != NEVER) arrival.late = std::max(arrival.late, static_cast<size_t>(f.at));
+                ++report.binary_capture_bits;
+            }
+        }
+        return true;
+    }
+    void markStable() {
+        for (size_t n = 0; n < nodes.size(); ++n) {
+            if (n == clock_node || clock_nodes.contains(n)) continue;
+            nodes[n].stable = !changes[n];
+            if (changes[n]) nodes[n].value.reset();
+        }
+    }
+
+    // A real closed walk among the pins that stayed open.
+    void reportDependencyCycle(size_t k) {
+        using namespace detail::timing;
+        const auto& g = *graph[k];
+        std::vector<bool> open(nodes.size());
+        for (size_t n = 0; n < nodes.size(); ++n)
+            if (const auto first = g.first_bit.find(nodes[n].pin.get()); first != g.first_bit.end())
+                for (size_t bit = 0; bit < nodes[n].pin->getWidth(); ++bit)
+                    open[n] = open[n] || engine[k]->fact(first->second + int(bit)).settled == OPEN;
+        std::vector<unsigned char> color(nodes.size());
+        std::vector<std::pair<size_t, size_t>> stack;
+        for (size_t start = 0; start < nodes.size() && report.dependency_cycle.empty(); ++start) {
+            if (!open[start] || color[start]) continue;
+            stack.emplace_back(start, 0);
+            color[start] = 1;
+            while (!stack.empty() && report.dependency_cycle.empty()) {
+                auto& [n, next] = stack.back();
+                if (next == edges[n].size()) { color[n] = 2; stack.pop_back(); continue; }
+                const auto target = edges[n][next++].to;
+                if (!open[target] || color[target] == 2) continue;
+                if (!color[target]) { color[target] = 1; stack.emplace_back(target, 0); continue; }
+                auto begin = std::find_if(stack.begin(), stack.end(), [&](const auto& frame) { return frame.first == target; });
+                for (auto it = begin; it != stack.end(); ++it) report.dependency_cycle.push_back(nodes[it->first].pin->getID());
+                report.dependency_cycle.push_back(nodes[target].pin->getID());
+            }
+        }
+    }
+
+    // One reachable state of every memory handshake, as the engine's case.
+    // False: the circuit does not fit the mode model.
+    bool memoryCase(const StateTiming& work, size_t mode, detail::timing::Case& known) {
+        using namespace detail::timing;
+        const auto& g = *graph[0];
+        known.binary_parts = clock.binary_startup;
+        known.part_mode.assign(g.parts.size(), AnyMode);
+        size_t selection = mode;
+        for (const auto& group : work.groups) {
+            const auto& c = group.cases[selection % group.cases.size()];
+            selection /= group.cases.size();
+            for (const auto& [pin, value] : c.registers) {
+                const auto first = g.first_bit.find(pin.get());
+                if (first == g.first_bit.end() || g.nodes[first->second].kind != Kind::Source) return false;
+                known.known.emplace_back(first->second, static_cast<uint8_t>(1u << unsigned(value)));
+            }
+            for (size_t part = 0; part < g.parts.size(); ++part)
+                if (g.parts[part].endpoint == group.endpoint.get()) known.part_mode[part] = c.full ? Full : Empty;
+        }
+        return true;
+    }
+
     void propagate() {
         std::vector<size_t> indegree(nodes.size());
         for (const auto& es : edges) for (const auto& e : es) ++indegree[e.to];
@@ -802,60 +530,60 @@ class Analysis {
             (indegree[i] || nodes[i].arrival[0].valid || nodes[i].arrival[1].valid))
             diagnostic(nodes[i].pin->getID() + ": contradictory stable and changing drivers");
         if (unknown) return;
-        if(propagateMemoryStates())return;
-        std::deque<size_t> queue;
-        for (size_t i = 0; i < nodes.size(); ++i) if (!indegree[i]) queue.push_back(i);
-        size_t processed = 0;
-        while (!queue.empty()) {
-            const auto a = queue.front(); queue.pop_front(); ++processed;
-            for (const auto& e : edges[a]) {
-                for (size_t k = 0; k < 2; ++k) {
-                    const auto from = nodes[a].arrival[k]; if (!from.valid) continue;
-                    auto& to = nodes[e.to].arrival[k];
-                    const auto early = add(from.early, e.delay.minimum), late = add(from.late, e.delay.maximum);
-                    if (!to.valid || early < to.early) { to.early = early; to.early_previous = a; }
-                    if (!to.valid || late > to.late) { to.late = late; to.previous = a; }
-                    to.valid = true;
-                }
-                if (e.wire && nodes[a].value) nodes[e.to].value = nodes[a].value;
-                if (--indegree[e.to] == 0) {
-                    // Unchanging combinational inputs imply unchanging output
-                    // after initialization; this is not constant-value folding.
-                    if (!nodes[e.to].arrival[0].valid && !nodes[e.to].arrival[1].valid) nodes[e.to].stable = true;
-                    queue.push_back(e.to);
-                }
+
+        StateTiming work;
+        const auto decided = collectMemoryGroups(work);
+        if (decided && *decided) return;
+        const bool modes = !decided;
+        if (modes) recordStatePremises(work);
+        earliestArrivals();
+        bool falling = false;
+        for (const auto& n : nodes) falling |= n.arrival[1].valid;
+        if (!buildEngine(0) || (falling && !buildEngine(1))) return;
+
+        for (size_t mode = 0; mode < (modes ? work.case_count : 1); ++mode) {
+            nodes = initial;
+            changes.assign(nodes.size(), false);
+            detail::timing::Case known;
+            const bool fits = modes && memoryCase(work, mode, known);
+            if (!settleCase(0, fits ? &known : nullptr) || (falling && !settleCase(1, nullptr))) {
+                if (modes) report.state_evidence.push_back("State case " + std::to_string(mode)
+                    + ": no bounded settling proof");
+                nodes = initial;
+                return;
             }
+            markStable();
+            if (!modes) return; // run() checks the single general case
+            ++report.checked_state_cases;
+            checkTiming();
+            if (unknown || violation) { state_timing_checked = true; return; }
         }
-        if (processed != nodes.size()) {
-            diagnostic("Combinational dependency cycle: no finite all-state settling bound established");
-            // Kahn's remainder contains downstream pins as well as cycle pins.
-            // Find a real closed walk instead of mislabeling arbitrary captures
-            // as the cause. Iterative DFS keeps large gate graphs off the stack.
-            std::vector<unsigned char> color(nodes.size());
-            std::vector<std::pair<size_t,size_t>> stack;
-            for (size_t start=0; start<nodes.size() && report.dependency_cycle.empty(); ++start) {
-                if (!indegree[start] || color[start]) continue;
-                stack.emplace_back(start,0); color[start]=1;
-                while (!stack.empty() && report.dependency_cycle.empty()) {
-                    auto& [n,next]=stack.back();
-                    if (next==edges[n].size()) {color[n]=2;stack.pop_back();continue;}
-                    const auto target=edges[n][next++].to;
-                    if (!indegree[target] || color[target]==2) continue;
-                    if (!color[target]) {color[target]=1;stack.emplace_back(target,0);continue;}
-                    auto begin=std::find_if(stack.begin(),stack.end(),[&](const auto& frame){return frame.first==target;});
-                    for (auto it=begin;it!=stack.end();++it) report.dependency_cycle.push_back(nodes[it->first].pin->getID());
-                    report.dependency_cycle.push_back(nodes[target].pin->getID());
-                }
-            }
-        }
+        state_timing_checked = true;
+        if (case_splits) report.state_evidence.push_back(std::to_string(case_splits)
+            + " timed controlling-value implications proved from native gate wiring");
+        report.assumptions.push_back(clock.binary_startup
+            ? "All binary memory control cases and captured-bit preservation checked with timed settling; hold uses all uncut arcs"
+            : "All reachable four-state memory control cases checked with timed settling; hold uses all uncut arcs");
     }
     void path(size_t n, size_t k, bool earliest = false) {
         report.critical_path.clear();
-        while (n != none) {
-            report.critical_path.push_back(nodes[n].pin->getID());
-            n = earliest ? nodes[n].arrival[k].early_previous : nodes[n].arrival[k].previous;
+        if (earliest) {
+            for (; n != none; n = early_previous[k][n]) report.critical_path.push_back(nodes[n].pin->getID());
+            std::reverse(report.critical_path.begin(), report.critical_path.end());
+            return;
         }
-        std::reverse(report.critical_path.begin(), report.critical_path.end());
+        // The latest bit of the pin, traced back through the engine.
+        using namespace detail::timing;
+        const auto& g = *graph[k];
+        const auto first = g.first_bit.find(nodes[n].pin.get());
+        if (first == g.first_bit.end()) return;
+        int latest = first->second;
+        for (size_t bit = 1; bit < nodes[n].pin->getWidth(); ++bit)
+            if (engine[k]->fact(first->second + int(bit)).settled > engine[k]->fact(latest).settled) latest = first->second + int(bit);
+        for (const int step : engine[k]->pathTo(latest)) {
+            auto id = g.nodes[step].pin->getID();
+            if (report.critical_path.empty() || report.critical_path.back() != id) report.critical_path.push_back(std::move(id));
+        }
     }
     void checkTiming() {
         std::optional<std::pair<size_t, size_t>> failed_hold;

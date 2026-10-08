@@ -67,4 +67,4 @@ The [historical timing narrative](../4.7/timing-history.md) preserves previous i
 
 ## Source and tests
 
-`include/analysis/SafeClockTiming.hpp`, `src/analysis/SafeClockTiming.cpp`, `src/analysis/MemoryTimingState.cpp`, and `include/analysis/ExperimentClock.hpp`. The [timing test reference](verification/timing.md) separates contract checks, sufficient-bound analysis, and dynamic program regressions.
+`include/analysis/CircuitTimingAnalyzer.hpp`, `src/analysis/SafeClockTiming.cpp`, `src/analysis/MemoryTimingState.cpp`, and `include/analysis/ExperimentClock.hpp`. The [timing test reference](verification/timing.md) separates contract checks, sufficient-bound analysis, and dynamic program regressions.

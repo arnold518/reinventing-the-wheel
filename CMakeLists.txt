@@ -26,8 +26,9 @@ endif()
 set(CORE_LOGIC_SOURCES
     src/benchmark/Benchmark.cpp
     src/analysis/SafeClockTiming.cpp
-    src/analysis/SettlingBound.cpp
-    src/analysis/SettlingGraph.cpp
+    src/analysis/CircuitTimingAnalyzer.cpp
+    src/analysis/TimingGraph.cpp
+    src/analysis/TimingEngine.cpp
     src/analysis/TimingCircuit.cpp
     src/analysis/MemoryTimingState.cpp
     src/analysis/RV32IExperiment.cpp
@@ -334,6 +335,8 @@ target_link_libraries(rv32i_benchmark_elf PRIVATE SimulatorLib)
 if(NOT EMSCRIPTEN)
     add_executable(rv32i_experiment tools/rv32i-performance/RV32IExperimentRunner.cpp)
     target_link_libraries(rv32i_experiment PRIVATE SimulatorLib)
+    add_executable(delay_estimate_experiment tools/timing/DelayEstimateExperiment.cpp)
+    target_link_libraries(delay_estimate_experiment PRIVATE SimulatorLib)
     add_executable(rv32i_cycle_estimate tools/rv32i-benchmarks/RV32ICycleEstimate.cpp)
     target_link_libraries(rv32i_cycle_estimate PRIVATE SimulatorLib)
 endif()

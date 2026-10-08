@@ -330,6 +330,15 @@ void boundaries() {
     r = valid(CircuitTimingAnalyzer::settling(part, options));
     check(endpoint(r, "(captures)").bound == 7 && endpoint(r, "OUT").bound == 5, "State only");
 
+    // Both questions at once: what a compact form of this part must reproduce.
+    options.sources = SettlingSources::All;
+    const auto timing = CircuitTimingAnalyzer::characterize(part, options);
+    check(timing.valid && timing.clocked && timing.delay == 5, "Characterized part");
+    check(timing.input_to_output.size() == 1 && !timing.input_to_output[0].changes && timing.input_to_capture == 3,
+          "Inputs reach only the capture");
+    check(timing.clock_to_output.size() == 1 && timing.clock_to_output[0].delay == 5 && timing.state_to_capture == 7,
+          "State reaches the output and the capture");
+
     invalid(CircuitTimingAnalyzer::settling(part), "no timing contract");
     options.sources = SettlingSources::All;
     invalid(CircuitTimingAnalyzer::settling(build(true), options), "derived, gated or undriven clock");
@@ -352,10 +361,10 @@ void boundaries() {
 void catalog(size_t rounds, size_t budget, bool verbose, const std::set<std::string>& only) {
     const auto& catalog = circuit::builtinComponentCatalog();
     std::mt19937_64 random(0x20261009);
-    size_t confirmed = 0, lowered = 0, enumerated = 0;
+    size_t confirmed = 0, lowered = 0, enumerated = 0, compared = 0, differing = 0;
     std::cout << std::left << std::setw(44) << "contract" << std::right << std::setw(7) << "paths" << std::setw(7)
               << "any" << std::setw(7) << "0/1" << std::setw(7) << "tight" << std::setw(7)
-              << "seen" << std::setw(7) << "seen01" << '\n';
+              << "seen" << std::setw(7) << "seen01" << std::setw(9) << "compact" << '\n';
     for (const auto& contract : catalog.contracts()) {
         if (!only.empty() && !only.contains(contract.id)) continue;
         std::shared_ptr<IOComponent> part, twin;
@@ -418,6 +427,18 @@ void catalog(size_t rounds, size_t budget, bool verbose, const std::set<std::str
             for (const auto& step : e.path) if (step.find(".output.") != std::string::npos || step.find(".input.") == std::string::npos)
                 std::cout << "    " << step << '\n';
         }
+        // The whole-part delay, next to the delay its compact form uses today.
+        const auto timing = CircuitTimingAnalyzer::characterize(part, options);
+        check(timing.valid && !timing.clocked && timing.delay == binary.bound, contract.id + ": characterization disagrees");
+        std::string compact = "-";
+        try {
+            const auto behavioral = catalog.createRoot({contract.id, "DUT", {}}, circuit::strictAllBehavioral()).root;
+            if (const auto leaf = std::dynamic_pointer_cast<BasicComponent>(behavioral)) {
+                compact = std::to_string(leaf->getDelay());
+                ++compared;
+                differing += leaf->getDelay() != timing.delay;
+            }
+        } catch (const std::exception&) {}
         Bench four(part), two(twin);
         const auto seen = confirm(four, all, true, rounds, random);
         const auto seen_binary = confirm(two, valid(CircuitTimingAnalyzer::settling(twin, options)), false, rounds, random);
@@ -425,11 +446,13 @@ void catalog(size_t rounds, size_t budget, bool verbose, const std::set<std::str
         lowered += binary.bound < all.structural;
         std::cout << std::left << std::setw(44) << contract.id << std::right << std::setw(7) << all.structural
                   << std::setw(7) << all.bound << std::setw(7) << binary.bound << std::setw(7) << (tight ? "yes" : "no")
-                  << std::setw(7) << seen << std::setw(7) << seen_binary << '\n';
+                  << std::setw(7) << seen << std::setw(7) << seen_binary << std::setw(9) << compact << '\n';
     }
     std::cout << confirmed << " gate-level parts confirmed against the simulator; " << lowered
               << " have a proven bound below the longest path; " << enumerated
-              << " small parts checked against every final vector\n";
+              << " small parts checked against every final vector\n"
+              << compared << " of them have a compact form; " << differing
+              << " compact forms use a delay different from the proven structural one\n";
     check(!only.empty() || (confirmed >= 80 && enumerated >= 25 && lowered >= 3), "Too few parts were confirmed");
 }
 // A false path in a real part. The longest path to the ALU's EQ output runs

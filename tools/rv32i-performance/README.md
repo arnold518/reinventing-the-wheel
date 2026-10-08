@@ -206,7 +206,7 @@ cmake --build build --target rv32i_experiment SafeClockTimingTest -j1
 build/rv32i_experiment --core advanced --safe-clock
 ```
 
-This calls `CircuitTimingAnalyzer::safeClock` (`include/analysis/SafeClockTiming.hpp`)
+This calls `CircuitTimingAnalyzer::safeClock` (`include/analysis/CircuitTimingAnalyzer.hpp`)
 without running a program. It does **not** call the legacy mode-constrained
 estimator. JSON contains `safe_clock.status`, nullable `safe_period_ticks`,
 limiting constraint/path, a closed `dependency_cycle` when found, contract
