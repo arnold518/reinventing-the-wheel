@@ -292,6 +292,7 @@ set(SIMULATION_TESTS
     Mux8to1_32bitTest
     Mux32to1_32bitTest
     Decoder5to32Test
+    Decoder5to32X0UnusedTest
     Adder8Test
     ZeroDetect8Test
     ALU8Test

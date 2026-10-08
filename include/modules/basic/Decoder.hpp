@@ -1,6 +1,14 @@
 #pragma once
 
 #include "components/IOComponent.hpp"
+#include "components/selection/ComponentFamily.hpp"
+
+namespace circuit::families {
+extern const ComponentFamily Decoder5to32;
+// The register file's write decoder: output 0 is tied low, because x0 has
+// no storage to write.
+extern const ComponentFamily Decoder5to32X0Unused;
+}
 
 class Decoder5to32 : public IOComponent {
 public:

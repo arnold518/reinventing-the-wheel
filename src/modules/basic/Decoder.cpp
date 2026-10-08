@@ -6,6 +6,9 @@
 #include "modules/basic/Gate.hpp"
 #include "modules/utility/BitAdapter.hpp"
 #include "modules/utility/Constant.hpp"
+#include "basic/LogicValueHelpers.hpp"
+#include "components/BasicComponent.hpp"
+#include "components/Component.hpp"
 #include <array>
 #include <memory>
 #include <string>
@@ -182,12 +185,53 @@ void buildDecoder(IOComponent& component, ComponentBuilder& builder,bool zero_ou
     w.connect(component.getInputPin("ENABLE"), enable_sinks);
     w.finish();
 }
+
+// OUT<n> is high when ENABLE is high and ADDR equals n. With unknown
+// inputs each output follows the AND of its address literals and ENABLE,
+// exactly as the gate network does.
+class Decoder5to32Behavioral final : public BasicComponent {
+public:
+    Decoder5to32Behavioral(std::string name, bool zero_output_unused)
+        : BasicComponent(std::move(name), 1, addDecoderPins<5>), zero_output_unused_(zero_output_unused) {}
+    const char* getTypeName() const override { return Decoder5to32::TypeName; }
+    void evaluate(size_t current_time, Simulator& simulator) override {
+        using namespace circuit::logic_values;
+        const auto address = getInputPin<5>("ADDR")->getValueAsVector();
+        const auto enable = getInputPin("ENABLE")->getValue();
+        for (size_t output = 0; output < 32; ++output) {
+            auto value = enable;
+            for (size_t bit = 0; bit < 5; ++bit)
+                value = andGate(value, (output >> bit) & 1U ? address[bit] : notGate(address[bit]));
+            if (output == 0 && zero_output_unused_) value = LogicValue::LOW;
+            _updateOutputWire(simulator, outputPinName(output), value, current_time);
+        }
+    }
+private:
+    bool zero_output_unused_;
+};
+}
+
+namespace circuit::families {
+namespace {
+ComponentFamily decoder5to32Family(std::string_view contract_id, bool zero_output_unused) {
+    return ComponentFamily{
+        contract_id, ::Decoder5to32::TypeName, addDecoderPins<5>,
+        [zero_output_unused](const std::string& name, const std::shared_ptr<BuildContext>& context)
+                -> std::shared_ptr<Component> {
+            return Component::createWithContext<::Decoder5to32>(context, name, zero_output_unused);
+        },
+        [zero_output_unused](const std::string& name, const std::shared_ptr<BuildContext>& context)
+                -> std::shared_ptr<Component> {
+            return Component::createWithContext<Decoder5to32Behavioral>(context, name, zero_output_unused);
+        }};
+}
+}
+const ComponentFamily Decoder5to32 = decoder5to32Family("decode.5-to-32", false);
+const ComponentFamily Decoder5to32X0Unused = decoder5to32Family("decode.5-to-32.x0-unused", true);
 }
 
 Decoder5to32::Decoder5to32(std::string name,bool zero_output_unused)
-    : IOComponent(std::move(name), [](IOComponent* self) {
-        addDecoderPins<5>(self);
-    }),zero_output_unused_(zero_output_unused) {}
+    : IOComponent(std::move(name), addDecoderPins<5>),zero_output_unused_(zero_output_unused) {}
 
 void Decoder5to32::buildInternals(ComponentBuilder& builder) {
     buildDecoder<5>(*this, builder,zero_output_unused_);

@@ -6,6 +6,10 @@
 #include "modules/utility/Rewire.hpp"
 #include "modules/utility/Constant.hpp"
 #include "../memory/MemoryHandshakeWiring.hpp"
+#include "RV32IMemoryRequestModel.hpp"
+#include "basic/LogicValueHelpers.hpp"
+#include "components/BasicComponent.hpp"
+#include "components/Component.hpp"
 #include <tuple>
 
 using namespace circuit;
@@ -50,8 +54,9 @@ void rv32i::memoryRequestPins(IOComponent* s, const std::string& p) {
     s->addPin<3>(p+"RSP_STATUS", PinType::INPUT);
 }
 
-RV32IMemoryRequest::RV32IMemoryRequest(std::string name, bool read_only, bool address_is_tag)
-    : IOComponent(std::move(name), [read_only, address_is_tag](IOComponent* s) {
+namespace {
+circuit::PinInitializer requesterPins(bool read_only, bool address_is_tag) {
+    return [read_only, address_is_tag](IOComponent* s) {
         for (auto n : {"CLK", "RST", "ISSUE", "TAKE"}) s->addPin(n, PinType::INPUT);
         if (!address_is_tag) s->addPin<32>("TAG", PinType::INPUT);
         s->addPin<32>("ADDR", PinType::INPUT);
@@ -63,7 +68,69 @@ RV32IMemoryRequest::RV32IMemoryRequest(std::string name, bool read_only, bool ad
         for (auto n : {"DONE", "FAULT"}) s->addPin(n, PinType::OUTPUT);
         s->addPin<32>("READ_DATA", PinType::OUTPUT);
         rv32i::memoryRequestPins(s, "BUS_");
-    }), read_only_(read_only), address_is_tag_(address_is_tag) {}
+    };
+}
+
+// The requester's rule is rv32i::MemoryRequestState, the same state the
+// behavioral cores keep for their instruction and data requests.
+class RV32IMemoryRequestBehavioral final : public BasicComponent {
+public:
+    RV32IMemoryRequestBehavioral(std::string name, bool read_only, bool address_is_tag)
+        : BasicComponent(std::move(name), 1, requesterPins(read_only, address_is_tag)),
+          read_only_(read_only), address_is_tag_(address_is_tag) {}
+    const char* getTypeName() const override {
+        return read_only_ && address_is_tag_ ? "RV32IFetchRequest" : RV32IMemoryRequest::TypeName;
+    }
+    void evaluate(size_t time, Simulator& simulator) override {
+        using circuit::logic_values::high;
+        const auto word = [&](const char* pin) { return uint32_t(getInputPinDynamic(pin)->getValueAsUInt64()); };
+        const bool reset = getInputValue("RST") != LogicValue::LOW;
+        const auto clock = getInputValue("CLK");
+        const bool edge = previous_clock_ == LogicValue::LOW && clock == LogicValue::HIGH;
+        const bool issue = high(getInputValue("ISSUE")), take = high(getInputValue("TAKE"));
+        const uint32_t address = word("ADDR");
+        const uint32_t tag = address_is_tag_ ? address : word("TAG");
+        const unsigned op = read_only_ ? 0 : unsigned(word("OP"));
+        const uint32_t data = read_only_ ? 0 : word("WRITE_DATA");
+        const unsigned mask = read_only_ ? 15 : unsigned(word("WRITE_MASK"));
+        state_.tick(*this, "BUS_", reset, edge, issue, take, tag, op, address, data, mask);
+        previous_clock_ = clock;
+
+        rv32i::publishMemoryRequest(state_, reset, take, tag, issue, op, address, data, mask, Emit{*this, simulator, time});
+        _updateOutputWire(simulator, "DONE", circuit::logic_values::logic(state_.done(*this, "BUS_", tag, issue)), time);
+        auto fault = LogicValue::LOW;
+        for (const auto bit : getInputPin<3>("BUS_RSP_STATUS")->getValueAsVector())
+            fault = circuit::logic_values::orGate(fault, bit);
+        _updateOutputWire(simulator, "FAULT", fault, time);
+        _updateOutputWire<32>(simulator, "READ_DATA", getInputPin<32>("BUS_RSP_READ_DATA")->getValueAsVector(), time);
+    }
+private:
+    struct Emit {
+        RV32IMemoryRequestBehavioral& self; Simulator& simulator; size_t time;
+        template<size_t W> void operator()(const char* pin, uint64_t value) const {
+            self.template _updateOutputWire<W>(simulator, std::string("BUS_") + pin, value, time);
+        }
+    };
+    bool read_only_, address_is_tag_;
+    rv32i::MemoryRequestState state_;
+    LogicValue previous_clock_ = LogicValue::UNKNOWN;
+};
+}
+
+namespace circuit::families {
+const ComponentFamily RV32IMemoryRequest{
+    "rv32i.memory-request", ::RV32IMemoryRequest::TypeName, requesterPins(false, false),
+    [](const std::string& name, const std::shared_ptr<BuildContext>& context) {
+        return Component::createWithContext<::RV32IMemoryRequest>(context, name);
+    },
+    [](const std::string& name, const std::shared_ptr<BuildContext>& context) {
+        return Component::createWithContext<RV32IMemoryRequestBehavioral>(context, name, false, false);
+    }};
+}
+
+RV32IMemoryRequest::RV32IMemoryRequest(std::string name, bool read_only, bool address_is_tag)
+    : IOComponent(std::move(name), requesterPins(read_only, address_is_tag)),
+      read_only_(read_only), address_is_tag_(address_is_tag) {}
 
 void RV32IMemoryRequest::buildInternals(ComponentBuilder& b) {
     StructuralWiring w(b);

@@ -76,6 +76,11 @@ public:
     Decoder5to32Test();
 };
 
+class Decoder5to32X0UnusedTest : public TruthTableComponentTest<Decoder5to32> {
+public:
+    Decoder5to32X0UnusedTest();
+};
+
 class Adder8Test : public TruthTableComponentTest<Adder8> {
 public:
     Adder8Test();

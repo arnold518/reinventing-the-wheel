@@ -1,5 +1,13 @@
 #pragma once
 #include "components/IOComponent.hpp"
+#include "components/selection/ComponentFamily.hpp"
+
+namespace circuit::families {
+// The general requester (TAG, OP, WRITE_DATA and WRITE_MASK inputs present)
+// and the load/store lane formatter with its WORD_ADDR output.
+extern const ComponentFamily RV32IMemoryRequest;
+extern const ComponentFamily RV32IMemoryLanes;
+}
 
 namespace rv32i {
 // Requester payload pins; CLK/RST are shared with the CPU, not delayed outputs.

@@ -582,7 +582,21 @@ Mux32to1_32bitTest::Mux32to1_32bitTest()
     : TruthTableComponentTest<Mux32to1_32bit>("Mux32to1_32bitTest", "MUX32TO1_32BIT_ROOT", busMux32Rows(32)) {}
 
 Decoder5to32Test::Decoder5to32Test()
-    : TruthTableComponentTest<Decoder5to32>("Decoder5to32Test", "DECODER5TO32_ROOT", decoderRows(32)) {}
+    : TruthTableComponentTest<Decoder5to32>("Decoder5to32Test", "DECODER5TO32_ROOT", decoderRows(32),
+                                            {}, "decode.5-to-32") {}
+
+namespace {
+// The register file's decoder never drives output 0: x0 has no storage.
+std::vector<TestRow> decoderX0UnusedRows() {
+    auto rows = decoderRows(32);
+    for (auto& row : rows) row.outputs["OUT0"] = bit(false);
+    return rows;
+}
+}
+
+Decoder5to32X0UnusedTest::Decoder5to32X0UnusedTest()
+    : TruthTableComponentTest<Decoder5to32>("Decoder5to32X0UnusedTest", "DECODER5TO32_X0_UNUSED_ROOT",
+                                            decoderX0UnusedRows(), {}, "decode.5-to-32.x0-unused") {}
 
 Adder8Test::Adder8Test()
     : TruthTableComponentTest<Adder8>(

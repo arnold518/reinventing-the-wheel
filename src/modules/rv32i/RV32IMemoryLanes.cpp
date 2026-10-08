@@ -3,6 +3,10 @@
 #include "modules/basic/Mux.hpp"
 #include "modules/utility/BitAdapter.hpp"
 #include "modules/utility/Rewire.hpp"
+#include "RV32IMemoryRequestModel.hpp"
+#include "basic/LogicValueHelpers.hpp"
+#include "components/BasicComponent.hpp"
+#include "components/Component.hpp"
 
 using namespace circuit;
 using circuit::detail::StructuralWiring;
@@ -181,15 +185,62 @@ public:
 };
 }
 
-RV32IMemoryLanes::RV32IMemoryLanes(std::string name,bool with_word_address)
-    : IOComponent(std::move(name), [with_word_address](IOComponent* s) {
+namespace {
+circuit::PinInitializer lanesPins(bool with_word_address) {
+    return [with_word_address](IOComponent* s) {
         for (auto p : {"ADDR", "WRITE_DATA", "WORD_DATA"}) s->addPin<32>(p, PinType::INPUT);
         s->addPin<2>("SIZE", PinType::INPUT);
         s->addPin("SIGN_EXTEND", PinType::INPUT);
         if (with_word_address) s->addPin<32>("WORD_ADDR",PinType::OUTPUT);
         for (auto p : {"WORD_WRITE_DATA", "READ_DATA"}) s->addPin<32>(p, PinType::OUTPUT);
         s->addPin<4>("WRITE_MASK", PinType::OUTPUT);
-    }),with_word_address_(with_word_address) {}
+    };
+}
+
+// Byte-lane formatting with the same functions the behavioral cores call.
+// Any unknown input makes every output unknown.
+class RV32IMemoryLanesBehavioral final : public BasicComponent {
+public:
+    RV32IMemoryLanesBehavioral(std::string name, bool with_word_address)
+        : BasicComponent(std::move(name), 1, lanesPins(with_word_address)), with_word_address_(with_word_address) {}
+    const char* getTypeName() const override {
+        return with_word_address_ ? RV32IMemoryLanes::TypeName : "RV32IMemoryLanesDataOnly";
+    }
+    void evaluate(size_t time, Simulator& simulator) override {
+        bool known = true;
+        for (const auto& [name, pin] : getAllInputPins())
+            known = known && circuit::logic_values::allKnown(pin->getValueAsVector());
+        const auto emit = [&](const char* pin, size_t width, uint64_t value) {
+            std::vector<LogicValue> bits(width, LogicValue::UNKNOWN);
+            if (known) for (size_t bit = 0; bit < width; ++bit) bits[bit] = circuit::logic_values::logic((value >> bit) & 1U);
+            _updateOutputWireDynamic(simulator, pin, bits, time);
+        };
+        const auto word = [&](const char* pin) { return known ? uint32_t(getInputPinDynamic(pin)->getValueAsUInt64()) : 0U; };
+        const uint32_t address = word("ADDR");
+        const unsigned size = unsigned(word("SIZE"));
+        if (with_word_address_) emit("WORD_ADDR", 32, rv32i::memoryWordAddress(address, size));
+        emit("WORD_WRITE_DATA", 32, uint32_t(word("WRITE_DATA") << ((address & 3) * 8)));
+        emit("READ_DATA", 32, rv32i::memoryLoadData(word("WORD_DATA"), address, size, word("SIGN_EXTEND") != 0));
+        emit("WRITE_MASK", 4, rv32i::memoryWriteMask(address, size));
+    }
+private:
+    bool with_word_address_;
+};
+}
+
+namespace circuit::families {
+const ComponentFamily RV32IMemoryLanes{
+    "rv32i.memory-lanes", ::RV32IMemoryLanes::TypeName, lanesPins(true),
+    [](const std::string& name, const std::shared_ptr<BuildContext>& context) {
+        return Component::createWithContext<::RV32IMemoryLanes>(context, name);
+    },
+    [](const std::string& name, const std::shared_ptr<BuildContext>& context) {
+        return Component::createWithContext<RV32IMemoryLanesBehavioral>(context, name, true);
+    }};
+}
+
+RV32IMemoryLanes::RV32IMemoryLanes(std::string name,bool with_word_address)
+    : IOComponent(std::move(name), lanesPins(with_word_address)),with_word_address_(with_word_address) {}
 
 void RV32IMemoryLanes::buildInternals(ComponentBuilder& b) {
     StructuralWiring w(b);

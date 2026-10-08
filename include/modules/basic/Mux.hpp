@@ -1,6 +1,16 @@
 #pragma once
 
 #include "components/IOComponent.hpp"
+#include "components/selection/ComponentFamily.hpp"
+
+// The 32-bit bus muxes carry most of a datapath's gates, so they are
+// selectable: structural (a tree of Mux2to1 per bit) or behavioral.
+namespace circuit::families {
+extern const ComponentFamily Mux2to1_32bit;
+extern const ComponentFamily Mux4to1_32bit;
+extern const ComponentFamily Mux8to1_32bit;
+extern const ComponentFamily Mux32to1_32bit;
+}
 
 class Mux2to1 : public IOComponent {
 public:
