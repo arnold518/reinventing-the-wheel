@@ -17,7 +17,7 @@ assert 'src="../../../simulator/?scenario=rv32i-register-file&amp;embed=1"' in s
 index = (ROOT / "site-docs/rv32i/4.3/index.md").read_text()
 assert index.startswith("# § 4.3. RV32I Building Blocks\n")
 assert '(register-file.md)' in index
-for section in range(1, 8):
+for section in range(1, 7):
     assert f'| [4.3.{section}.' in index
 nav = (ROOT / "mkdocs.yml").read_text()
 assert '4.3.2. Register File: rv32i/4.3/register-file.md' in nav

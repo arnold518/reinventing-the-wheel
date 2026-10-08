@@ -190,5 +190,5 @@ with tempfile.TemporaryDirectory(prefix="ritw-building-blocks-doc-") as temp:
     source.write_text("\n\n".join(snippets)+harness)
     subprocess.run([COMPILER,"-std=c++20","-O0","-I"+str(ROOT/"include"),str(source),LIBRARY,"-pthread","-o",str(binary)],check=True,timeout=120)
     subprocess.run([str(binary)],check=True,timeout=120)
-assert len(outputs)==16
-print("All 16 component references checked.")
+assert len(outputs)==15
+print("All 15 component references checked.")

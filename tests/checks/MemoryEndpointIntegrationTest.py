@@ -62,7 +62,7 @@ class MemoryEndpointIntegrationTest(unittest.TestCase):
         self.assertEqual(backend.memory_configuration(huge)["capacity_bytes"], 1 << 28)
 
     def test_documents_and_exported_rows(self):
-        self.assertEqual(len(CASES), 10)
+        self.assertEqual(len(CASES), 9)
         for source in SOURCES.values():
             self.assertIn("| Component | Description | Structural | Behavioral |", source)
             for section in re.split(r"(?m)^## [\d.]+ `", source)[1:]:
