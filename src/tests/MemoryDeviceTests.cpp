@@ -44,7 +44,7 @@ struct Scenario {
     }
 };
 ComponentTestSpec decoder() {
-    Scenario s("MatrixRowDecoderTest", "memory.matrix.row-decoder", {{"rows", "3"}});
+    Scenario s("MatrixRowDecoderTest", "memory.shared.row-decoder", {{"rows", "3"}});
     for (unsigned a : {0u, 1u, 2u, 3u, 0xffffffffu})
         for (bool en : {false, true})
             s.step("row-" + std::to_string(a) + (en ? "-on" : "-off"),
@@ -55,7 +55,7 @@ ComponentTestSpec decoder() {
     return s.spec;
 }
 ComponentTestSpec column() {
-    Scenario s("MatrixColumnMuxTest", "memory.matrix.column-mux.8", {{"words_per_row", "2"}});
+    Scenario s("MatrixColumnMuxTest", "memory.shared.column-mux.8", {{"words_per_row", "2"}});
     for (unsigned c = 0; c < 16; ++c)
         s.state["COL_" + std::to_string(c)] = logicBit(((c < 8 ? 0xa5 : 0x3c) >> (c % 8)) & 1);
     for (unsigned a : {0u, 1u, 2u, 0xffffffffu})
@@ -66,7 +66,7 @@ ComponentTestSpec column() {
     return s.spec;
 }
 ComponentTestSpec driver() {
-    Scenario s("MatrixWriteDistributorTest", "memory.matrix.write-distributor.8", {},
+    Scenario s("MatrixWriteDistributorTest", "memory.shared.write-distributor.8", {},
                {{"DATA", logicBits(8, 0xa5)}, {"MASK", logicBit(H)}});
     for (unsigned a : {0u, 1u, 2u})
         for (bool en : {false, true}) {
@@ -83,7 +83,7 @@ ComponentTestSpec driver() {
     return s.spec;
 }
 ComponentTestSpec readColumn() {
-    Scenario s("StaticReadColumnTest", "memory.matrix.read-column", {},
+    Scenario s("StaticReadColumnTest", "memory.shared.read-column", {},
                {{"Q_0", logicBit(L)}, {"Q_1", logicBit(H)}, {"WL_0", logicBit(L)}, {"WL_1", logicBit(L)}});
     s.step("none", {}, {{"OUT", logicBit(X)}});
     s.step("row-zero", {{"WL_0", logicBit(H)}}, {{"OUT", logicBit(L)}});
@@ -93,7 +93,7 @@ ComponentTestSpec readColumn() {
     return s.spec;
 }
 ComponentTestSpec output() {
-    Scenario s("MemoryOutputBufferTest", "memory.matrix.output-buffer.8", {}, {{"DATA", logicBits(8, 0xa5)}});
+    Scenario s("MemoryOutputBufferTest", "memory.shared.output-buffer.8", {}, {{"DATA", logicBits(8, 0xa5)}});
     for (auto v : {L, H, X, Z})
         s.step("enable-" + std::to_string(int(v)), {{"ENABLE", logicBit(v)}},
                {{"OUT", v == H ? logicBits(8, 0xa5) : LogicVector(8, v == L ? Z : X)}});

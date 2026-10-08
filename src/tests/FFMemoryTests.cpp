@@ -18,7 +18,7 @@ template<class F> void rejects(F f) {
 ComponentTestSpec specFor(size_t width, size_t depth = 4) {
     ComponentTestSpec spec;
     spec.id = "FFMemoryTest";
-    spec.contract_id = std::string("memory.container.ff.") + std::to_string(width);
+    spec.contract_id = std::string("memory.ff.device.") + std::to_string(width);
     spec.instance_name = "MEMORY_CONTAINER_ROOT";
     spec.parameters = {{"depth_words", std::to_string(depth)}};
     ActionScenario scenario;
@@ -95,7 +95,7 @@ circuit::BuildProfile ffMemoryProfile(const std::string& mode, size_t width, con
     if (mode == "cells") return withProfileOverrides(profile,
         {{ProfileSelector::contract(families::FlipFlopCell), Fidelity::Behavioral, "compact FF cells"}});
     if (mode == "words") return withProfileOverrides(profile,
-        {{ProfileSelector::contract("memory.ff-word." + std::to_string(width)), Fidelity::Behavioral, "compact FF words"}});
+        {{ProfileSelector::contract("memory.ff.word." + std::to_string(width)), Fidelity::Behavioral, "compact FF words"}});
     if (mode == "bank") return withExactFidelity(profile, root + ".STORAGE", Fidelity::Behavioral, "compact FF bank");
     if (mode != "structural" && mode != "behavioral") throw std::invalid_argument("Unknown FF profile mode");
     return profile;
@@ -105,7 +105,7 @@ namespace {
 ComponentTestSpec bankSpec(size_t width, size_t depth) {
     ComponentTestSpec spec;
     spec.id = "FFStorageBankTest";
-    spec.contract_id = "memory.ff-storage-bank." + std::to_string(width);
+    spec.contract_id = "memory.ff.bank." + std::to_string(width);
     spec.instance_name = "FF_STORAGE_BANK_ROOT";
     spec.parameters = {{"depth_words", std::to_string(depth)}};
     ActionScenario scenario; scenario.id = "parallel-words";
@@ -157,7 +157,7 @@ ComponentTestSpec bankSpec(size_t width, size_t depth) {
 ComponentTestSpec wordSpec(size_t width) {
     ComponentTestSpec spec;
     spec.id = "FFWordTest";
-    spec.contract_id = "memory.ff-word." + std::to_string(width);
+    spec.contract_id = "memory.ff.word." + std::to_string(width);
     spec.instance_name = "FF_WORD_ROOT";
     ActionScenario scenario; scenario.id = "masked-word";
     NamedValues state{{"WRITE_DATA", logicBits(width, 0)}, {"WRITE_MASK", logicBits(width / 8, 0)},
@@ -216,13 +216,13 @@ void FFStorageBankContractTest::verifyResults() {
             require(io->getAllInputPins().size() == 4 + depth && io->getAllOutputPins().size() == depth,
                     "Bank parameters did not define the exact pin count");
         }
-        for (const auto& child : std::vector<std::string>{"memory.ff-word." + std::to_string(width), "memory.write-enabled-bit"}) {
+        for (const auto& child : std::vector<std::string>{"memory.ff.word." + std::to_string(width), "memory.ff.cell"}) {
             auto profile = withProfileOverrides(canonicalDefaultProfile(),
                 {{ProfileSelector::contract(child), Fidelity::Behavioral, "compact bank children"}});
             const auto mixed = runner.run(spec, spec.scenarios.front(), profile);
             runner.compare(results.targets[0], mixed);
             for (const auto& word : mixed.root->getChildren()) {
-                if (child.starts_with("memory.ff-word.")) {
+                if (child.starts_with("memory.ff.word.")) {
                     require(word->getSelectedFidelity() == "behavioral" && word->getChildren().empty(),
                             "Bank bypassed word fidelity selection");
                 } else for (size_t bit = 0; bit < width; ++bit)
@@ -253,7 +253,7 @@ void FFStorageBankContractTest::verifyResults() {
         runner.compare(startup.targets[0], startup.targets[1]);
     }
     for (size_t width : {8, 16, 32}) {
-        const auto id = "memory.ff-storage-bank." + std::to_string(width);
+        const auto id = "memory.ff.bank." + std::to_string(width);
         for (const auto& p : std::vector<ParameterMap>{{{"depth_words", "0"}}, {{"depth_words", "-1"}},
                 {{"depth_words", "3x"}}, {{"depth_words", std::to_string(4096 / width + 1)}},
                 {{"read_delay_ticks", "1"}}}) {
@@ -272,7 +272,7 @@ void FFStorageBankContractTest::verifyResults() {
     }
     // A wrong-depth factory must be rejected by the parameterized contract schema,
     // not accidentally accepted because its default four-word pin list looks valid.
-    auto contract = catalog.contract("memory.ff-storage-bank.8");
+    auto contract = catalog.contract("memory.ff.bank.8");
     auto impl = catalog.implementationsFor(contract.id).front();
     impl.fidelity = Fidelity::Structural;
     impl.id = "bank.wrong-depth";
@@ -308,7 +308,7 @@ void FFWordContractTest::verifyResults() {
         runner.compare(result.targets[0], mixed);
         for (size_t bit = 0; bit < width; ++bit) {
             auto cell = childNamed(mixed.root, "CELL_" + std::to_string(bit));
-            require(cell->getImplementationId() == "memory.write-enabled-bit.behavioral.direct", "FFWord bypassed cell selection");
+            require(cell->getImplementationId() == "memory.ff.cell.behavioral.direct", "FFWord bypassed cell selection");
         }
         // Unknown power-up state and X data are not silently coerced to zero.
         auto unknown = spec;
@@ -353,16 +353,16 @@ void FFMemoryFidelityTest::verifyResults() {
             require(bank->getTypeName() == "FFStorageBank<" + std::to_string(width) + "," + std::to_string(depth) + ">", "Wrong FF bank");
             if (mode == "bank") {
                 require(bank->getChildren().empty(), "Behavioral bank expanded words");
-                require(bank->getContractId() == "memory.ff-storage-bank." + std::to_string(width), "Bank not selectable");
+                require(bank->getContractId() == "memory.ff.bank." + std::to_string(width), "Bank not selectable");
                 require(result.root->getChildren().size() == 4, "Bank selection collapsed surrounding circuitry");
                 continue;
             }
             for (const auto& word : bank->getChildren()) {
-                require(word->getContractId() == "memory.ff-word." + std::to_string(width), "Word has no public contract");
+                require(word->getContractId() == "memory.ff.word." + std::to_string(width), "Word has no public contract");
                 if (mode == "words") require(word->getChildren().empty(), "Behavioral word expanded cells");
                 else for (size_t bit = 0; bit < width; ++bit)
                     require(childNamed(word, "CELL_" + std::to_string(bit))->getImplementationId() ==
-                        "memory.write-enabled-bit.behavioral.direct", "Cell override ignored inside array");
+                        "memory.ff.cell.behavioral.direct", "Cell override ignored inside array");
             }
         }
         auto profile = withExactFidelity(canonicalDefaultProfile(), spec.instance_name + ".STORAGE.WORD_0", Fidelity::Behavioral);

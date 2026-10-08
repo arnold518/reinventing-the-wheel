@@ -8,7 +8,7 @@ void add(ComponentCatalog& c, const std::string& id, const std::string& type,
          memory_device::Schema schema, ComponentFactory structural, ComponentFactory behavioral,
          const std::string& test, ParameterPredicate support = {}) {
     ContractDescriptor contract{id, 2, type, schema({}), {}, "four-state", "transaction-completion-v2", schema};
-    if (id.starts_with("memory.scalable.")) contract.preferred_fidelity = Fidelity::Behavioral;
+    if (id.find(".scalable-endpoint.") != std::string::npos) contract.preferred_fidelity = Fidelity::Behavioral;
     c.registerContract(std::move(contract));
     for (auto f : {Fidelity::Structural, Fidelity::Behavioral}) {
         auto factory = f == Fidelity::Structural ? structural : behavioral;
@@ -24,7 +24,7 @@ void add(ComponentCatalog& c, const std::string& id, const std::string& type,
         if (f == Fidelity::Behavioral) impl.capabilities = {"memory-state-view"};
         impl.evidence = {VerificationStatus::Verified, {"FF transaction registers plus native structural device"},
             {test}, {"MemoryEndpointContractTest"}, {"MemoryEndpointTimingTest"}, "four-state", "transaction-completion-v2"};
-        if (id.starts_with("memory.controller.")) {
+        if (id.find(".controller.") != std::string::npos) {
             // One logical component test owns the controller contract. Device
             // endpoint scenarios remain integration evidence, not a second owner.
             impl.evidence.contract_tests = {"MemoryControllerTest"};
@@ -87,13 +87,13 @@ void registerMemoryEndpoints(ComponentCatalog& c) {
     registerRegisterWords(c);
     for (size_t width : {8,16,32}) {
         const auto suffix = std::to_string(width);
-        add(c,"memory.response-buffer."+suffix,"MemoryResponseBuffer<"+suffix+">",
+        add(c,"memory.shared.response-buffer."+suffix,"MemoryResponseBuffer<"+suffix+">",
             [width](const ParameterMap& p){memory_device::keys(p,{});return memory_device::describe(
                 [width](IOComponent* s){defineMemoryResponseBufferPins(s,width);});},
             [width](const std::string& n,const ParameterMap&,const std::shared_ptr<BuildContext>& ctx){
                 return Component::createWithContext<MemoryResponseBuffer>(ctx,n,width);
             },{},"MemoryResponseBufferTest");
-        add(c, "memory.transaction-port." + suffix, "MemoryTransactionPort<" + suffix + ">",
+        add(c, "memory.shared.transaction-port." + suffix, "MemoryTransactionPort<" + suffix + ">",
             [width](const ParameterMap& p) {
                 memory_device::keys(p, {});
                 return memory_device::describe([width](IOComponent* s) { defineMemoryTransactionPortPins(s,width); });
@@ -112,20 +112,20 @@ void registerMemoryEndpoints(ComponentCatalog& c) {
             ComponentFactory compact = [=](const std::string& n, const ParameterMap& p, const std::shared_ptr<BuildContext>& ctx) {
                 return Component::createWithContext<BehavioralMemoryEndpoint>(ctx,n,width,t,endpointConfig(p));
             };
-            add(c, "memory.controller." + name + "." + suffix, "MemoryController" + dims,
+            add(c, "memory." + name + ".controller." + suffix, "MemoryController" + dims,
                 [=](const ParameterMap& p) {
                     endpointConfig(p).validate(width,t);
                     return memory_device::describe([=](IOComponent* s) { protocolPins(s,width); nativePins(s,width,t,true); });
                 }, [=](const std::string& n, const ParameterMap& p, const std::shared_ptr<BuildContext>& ctx) {
                     return Component::createWithContext<MemoryController>(ctx,n,width,t,endpointConfig(p));
                 }, {}, test);
-            add(c, "memory.endpoint." + name + "." + suffix, "MemoryEndpoint" + dims, schema,
+            add(c, "memory." + name + ".endpoint." + suffix, "MemoryEndpoint" + dims, schema,
                 [=](const std::string& n, const ParameterMap& p, const std::shared_ptr<BuildContext>& ctx) {
                     return Component::createWithContext<MemoryEndpoint>(ctx,n,width,t,endpointConfig(p));
                 }, t == Technology::Container ? ComponentFactory{} : compact, test,
                 [=](const ParameterMap& p) { endpointConfig(p).validate(width,t,t != Technology::Container); return true; });
             if (t != Technology::Container)
-                add(c, "memory.scalable." + name + "." + suffix, "MemoryEndpoint" + dims, schema,
+                add(c, "memory." + name + ".scalable-endpoint." + suffix, "MemoryEndpoint" + dims, schema,
                     [=](const std::string& n, const ParameterMap& p, const std::shared_ptr<BuildContext>& ctx) {
                         // controller view, never millions of cells
                         return Component::createWithContext<MemoryEndpoint>(ctx,n,width,t,endpointConfig(p),true);
@@ -141,7 +141,7 @@ void registerMemoryEndpoints(ComponentCatalog& c) {
                         if (t == Technology::NORFlash) s->addPin("WRITE_ENABLED",PinType::OUTPUT);
                     });
                 };
-                memory_device::registerBlock(c,"memory.device." + name + "." + suffix,
+                memory_device::registerBlock(c,"memory." + name + ".scalable-device." + suffix,
                     "MemoryContainer" + dims,nativeSchema,{},
                     [=](const std::string& n,const ParameterMap& p,const std::shared_ptr<BuildContext>& ctx) {
                         return createMemoryContainer(n,width,t,endpointConfig(p),ctx);

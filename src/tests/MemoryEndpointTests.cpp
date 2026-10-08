@@ -68,7 +68,7 @@ ComponentTestSpec endpointSpec(Technology t, size_t width = 8, bool container = 
     ParameterMap config{{"depth_words",std::to_string(depth)},{"words_per_row",std::to_string(row_words)},{"block_words",std::to_string(row_words)}};
     if (t == Technology::ROM) config["image_hex"] = "a53c81ff";
     Scenario s(container ? "ScalableMemoryEndpointTest" : testName(t),
-        std::string(container ? "memory.scalable." : "memory.endpoint.") + technologyName(t) + "." + std::to_string(width), width, config);
+        memoryContractId(t, container ? "scalable-endpoint" : "endpoint", width), width, config);
     s.init(); const unsigned mask = (1u << (width/8))-1;
     if (t == Technology::ROM) {
         const uint32_t expected = width == 8 ? 0xa5 : width == 16 ? 0x3ca5 : 0xff813ca5;
@@ -125,7 +125,7 @@ ComponentTestSpec endpointSpec(Technology t, size_t width = 8, bool container = 
     return s.spec;
 }
 ComponentTestSpec frontendSpec() {
-    Scenario s("MemoryTransactionPortTest","memory.transaction-port.8",8);
+    Scenario s("MemoryTransactionPortTest","memory.shared.transaction-port.8",8);
     s.state["BACK_READY"] = logicBit(true); s.state["DONE"] = logicBit(false);
     s.state["RESULT"] = logicBits(8,0xa5); s.state["STATUS"] = logicBits(3,0);
     s.init(); s.step("request",{{"REQ_VALID",logicBit(true)},{"REQ_ADDR",logicBits(32,12)}});
@@ -139,7 +139,7 @@ ComponentTestSpec frontendSpec() {
     return s.spec;
 }
 ComponentTestSpec responseBufferSpec(size_t width=8) {
-    ComponentTestSpec spec{"MemoryResponseBufferTest","memory.response-buffer."+std::to_string(width),
+    ComponentTestSpec spec{"MemoryResponseBufferTest","memory.shared.response-buffer."+std::to_string(width),
         "MEMORY_ENDPOINT_ROOT",{},{{"fall-through",{},{},{}}}};
     NamedValues state{{"CLK",logicBit(false)},{"RST",logicBit(true)},{"IN_VALID",logicBit(false)},
         {"OUT_READY",logicBit(false)},{"IN_DATA",logicBits(width,0)},{"IN_STATUS",logicBits(3,0)}};
@@ -163,7 +163,7 @@ ComponentTestSpec responseBufferSpec(size_t width=8) {
     return spec;
 }
 ComponentTestSpec controllerSpec() {
-    Scenario s("MemoryControllerTest","memory.controller.ff.8",8);
+    Scenario s("MemoryControllerTest","memory.ff.controller.8",8);
     s.state["MEM_READ_DATA"]=logicBits(8,0xa5);s.state["MEM_FAULT"]=logicBit(false);
     s.init();s.transaction("read-attached-port",0,0,0,0,0xa5);
     s.transaction("write-attached-port",1,0,0x3c,1,0);
@@ -255,7 +255,7 @@ void ClockedStateBitTest::verifyResults() {
 MemoryControllerTest::MemoryControllerTest() : ComponentScenarioTest(controllerSpec()) {}
 namespace {
 ComponentTestSpec alwaysReadyControllerSpec() {
-    Scenario s("FFAlwaysReadyControllerTest","memory.controller.ff.8",8,
+    Scenario s("FFAlwaysReadyControllerTest","memory.ff.controller.8",8,
         {{"depth_words","4"},{"always_ready","1"}});
     s.state["RSP_READY"]=logicBit(true);
     s.state["MEM_READ_DATA"]=logicBits(8,0xa5);
@@ -293,7 +293,7 @@ namespace {
 ComponentTestSpec nativeContainerSpec() {
     auto spec=ffMemorySpec(8,4);
     spec.id="NativeMemoryContainerTest";
-    spec.contract_id="memory.device.ff.8";
+    spec.contract_id="memory.ff.scalable-device.8";
     spec.instance_name="MEMORY_CONTAINER_ROOT";
     return spec;
 }
@@ -312,7 +312,7 @@ void verifyEndpointStoragePolicy(Technology technology) {
         const auto context = std::string(technologyName(technology)) + "/mode-" + std::to_string(mode);
         auto create = [&] {
             auto root = builtinComponentCatalog().createRoot(
-                {(mode == 1 ? "memory.scalable." : "memory.endpoint.") + std::string(technologyName(technology)) + ".8",
+                {memoryContractId(technology, mode == 1 ? "scalable-endpoint" : "endpoint", 8),
                  "POLICY_ROOT", policy, {}, {}, {}}, profile).root;
             auto view = std::dynamic_pointer_cast<MemoryStateView>(root);
             require(bool(view), context + ": missing memory state view");
@@ -348,8 +348,7 @@ void verifyEndpointWriteHistory(Technology technology, size_t width) {
     const unsigned mask = (1u << bytes) - 1;
     const bool flash = technology == Technology::NORFlash;
     const unsigned write_op = flash ? 2 : 1;
-    Scenario s("MemoryEndpointWriteHistory", "memory.endpoint." + std::string(technologyName(technology)) +
-        "." + std::to_string(width), width, {{"depth_words", "4"}, {"words_per_row", "2"},
+    Scenario s("MemoryEndpointWriteHistory", memoryContractId(technology, "endpoint", width), width, {{"depth_words", "4"}, {"words_per_row", "2"},
         {"block_words", "2"}, {"refresh_interval_ticks", "0"}});
     using Writes = std::map<uint32_t, uint8_t>;
     std::map<std::string, Writes> expected;
@@ -395,7 +394,7 @@ void verifyEndpointWriteHistory(Technology technology, size_t width) {
         if (mode == 0)
             profile = withExactFidelity(profile, s.spec.instance_name + ".MEMORY", Fidelity::Behavioral);
         auto spec = s.spec;
-        if (mode == 1) spec.contract_id.replace(0, std::string("memory.endpoint.").size(), "memory.scalable.");
+        if (mode == 1) spec.contract_id = memoryContractId(technology, "scalable-endpoint", width);
         auto run = runner.run(spec, spec.scenarios[0], profile);
         auto view = std::dynamic_pointer_cast<MemoryStateView>(run.root);
         require(bool(view), "Write-history endpoint has no memory state view");
@@ -419,7 +418,7 @@ void NativeMemoryDeviceContractTest::verifyResults() {
         for (const auto& scenario:spec.scenarios) {
             auto expanded=runner.run(spec,scenario);
             auto native=spec;
-            native.contract_id="memory.device."+std::string(technologyName(t))+"."+std::to_string(width);
+            native.contract_id=memoryContractId(t,"scalable-device",width);
             auto compact=runner.run(native,scenario);
             runner.compare(expanded,compact);
             require(compact.root->getChildren().empty(),"Native container must be a leaf without controller state");
@@ -437,7 +436,7 @@ void NativeMemoryDeviceContractTest::verifyResults() {
         // A visible structural controller can drive a compact device too.
         auto spec=endpointSpec(t);
         auto expanded=runner.run(spec,spec.scenarios[0]);
-        spec.contract_id.replace(0,std::string("memory.endpoint.").size(),"memory.scalable.");
+        spec.contract_id=memoryContractId(t,"scalable-endpoint",8);
         auto scalable=runner.run(spec,spec.scenarios[0]);
         runner.compare(expanded,scalable);
         EndpointConfig config;config.depth_words=1u<<28;config.record_history=false;
@@ -511,7 +510,7 @@ void MemoryEndpointTimingTest::verifyResults() {
             auto profile=withExactFidelity(canonicalDefaultProfile(),"DUT",compact?Fidelity::Behavioral:Fidelity::Structural);
             if (native_device) profile=withExactFidelity(profile,"DUT.MEMORY",Fidelity::Behavioral);
             root=std::dynamic_pointer_cast<IOComponent>(builtinComponentCatalog().createRoot(
-                {"memory.endpoint."+std::string(technologyName(t))+".8","DUT",config,{},{},{}},profile).root);
+                {memoryContractId(t,"endpoint",8),"DUT",config,{},{},{}},profile).root);
             ComponentBuilder b(root);
             for (auto& [name,pin]:root->getAllInputPins()) wires[name]=b.addNewWireDynamic("IN_"+name,pin->getWidth(),nullptr,{pin});
             for (auto& [name,pin]:root->getAllOutputPins()) b.addNewWireDynamic("OUT_"+name,pin->getWidth(),pin,{});

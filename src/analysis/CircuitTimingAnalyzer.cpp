@@ -18,12 +18,12 @@ std::optional<ComponentTimingModel> builtin(const IOComponent& c) {
     ComponentTimingModel m;
     const std::string id=c.getContractId(), type=c.getTypeName();
     const bool storage=type=="DFlipFlop" || id=="sequential.d-flip-flop"
-        || id=="memory.write-enabled-bit" || id.starts_with("memory.register.")
-        || id.starts_with("memory.ff-word.") || id.starts_with("memory.ff-storage-bank.")
+        || id=="memory.ff.cell" || id.starts_with("memory.register.")
+        || id.starts_with("memory.ff.word.") || id.starts_with("memory.ff.bank.")
         || id.starts_with("rv32i.pipeline-register.");
     const bool rf=id=="rv32i.register-file";
-    const bool ff=id.starts_with("memory.container.ff.") || id.starts_with("memory.device.ff.");
-    const bool endpoint=id.starts_with("memory.scalable.ff.") || id.starts_with("memory.endpoint.ff.");
+    const bool ff=id.starts_with("memory.ff.device.") || id.starts_with("memory.ff.scalable-device.");
+    const bool endpoint=id.starts_with("memory.ff.scalable-endpoint.") || id.starts_with("memory.ff.endpoint.");
     const bool predictor=id=="rv32i.prediction.predictor";
     if(!storage && !rf && !ff && !endpoint && !predictor) return std::nullopt;
     for(const auto& [n,p]:c.getAllInputPins()) if(!control(n)) m.capture_inputs.push_back(n);

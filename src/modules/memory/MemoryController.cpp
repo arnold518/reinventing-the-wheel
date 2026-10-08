@@ -234,7 +234,7 @@ void MemoryEndpoint::buildInternals(ComponentBuilder& b) {
     if (technology_ == Technology::Container) {
         device = b.addNewComponent<BehavioralMemoryEndpoint>("MEMORY", width_, Technology::SRAM, config_);
     } else if (scalable_device_) {
-        device = memory_device::child(b,*this,"memory.device."+std::string(technologyName(technology_))+"."+std::to_string(width_),
+        device = memory_device::child(b,*this,memoryContractId(technology_,"scalable-device",width_),
                                       "MEMORY",endpointParameters(config_));
     } else {
         // An expanded device may itself be selected at behavioral fidelity.

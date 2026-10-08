@@ -187,8 +187,8 @@ Legacy `Memory64Kx32` debug/setup APIs remain available with their existing name
 registered families for widths 8, 16, and 32. Use `builder.add(family, name)`
 inside a catalog/profile construction to allow selection, rather than directly
 constructing a structural class. The root device accepts the capacity parameters
-above; word width is encoded in `memory.ff-word.W` and words take no parameters.
-The bank contract `memory.ff-storage-bank.W` accepts only `depth_words` (default 4).
+above; word width is encoded in `memory.ff.word.W` and words take no parameters.
+The bank contract `memory.ff.bank.W` accepts only `depth_words` (default 4).
 Both bank implementations retain the existing limit of 4096 stored bits and
 one enable/output pair per word. Parameterized contract schemas validate the
 exact pin count and widths at the requested depth. A behavioral bank reduces

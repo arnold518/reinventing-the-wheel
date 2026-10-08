@@ -150,7 +150,7 @@ RV32IExperimentResult runRV32IExperiment(const RV32IExperimentConfig& config) {
                 if((c.getID()=="EXPERIMENT.CORE.FETCH_REQUEST.RESPONSE_ELIGIBLE"&&(mode&1))
                     ||(c.getID()=="EXPERIMENT.CORE.DATA_REQUEST.RESPONSE_ELIGIBLE"&&(mode&2)))
                     return ComponentTimingModel{{},{},{"OUT"},1,1};
-                if(c.getContractId()!="memory.scalable.ff.32")return std::nullopt;
+                if(c.getContractId()!="memory.ff.scalable-endpoint.32")return std::nullopt;
                 ComponentTimingModel m;
                 for(const auto& [n,p]:c.getAllInputPins())if(n!="CLK"&&n!="RST")m.capture_inputs.push_back(n);
                 for(const auto& [n,p]:c.getAllOutputPins())m.launch_outputs.push_back(n);

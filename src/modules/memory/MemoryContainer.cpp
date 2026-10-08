@@ -9,7 +9,7 @@ NativeDeviceRequest nativeDeviceRequest(size_t width,Technology technology,const
                    {"max_resident_bytes",std::to_string(config.max_resident_bytes)},
                    {"max_history_bytes",std::to_string(config.max_history_bytes)}};
     std::string id;
-    if (technology == Technology::FF) id = "memory.container.ff.";
+    if (technology == Technology::FF) id = "memory.ff.device.";
     else {
         id = "memory." + std::string(technologyName(technology)) + ".device.";
         p["words_per_row"] = std::to_string(config.words_per_row);

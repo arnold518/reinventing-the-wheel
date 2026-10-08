@@ -167,7 +167,7 @@ void RV32IProgramLoaderTest::setupCircuit() {
         circuit::Fidelity::Behavioral,
         "rv32i-program-loader");
     auto build = circuit::builtinComponentCatalog().createRoot(
-        {"memory.device.ff.32", "RV32I_PROGRAM_LOADER_ROOT", {{"depth_words", "65536"}}, {}, {}, {}},
+        {"memory.ff.scalable-device.32", "RV32I_PROGRAM_LOADER_ROOT", {{"depth_words", "65536"}}, {}, {}, {}},
         std::move(profile));
     root = std::move(build.root);
     builder = std::make_unique<ComponentBuilder>(root);

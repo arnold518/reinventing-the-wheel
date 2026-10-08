@@ -58,7 +58,7 @@ int main() {
             if (std::string(mode) == "words") rules.push_back(preferFidelity(Fidelity::Behavioral,
                 ProfileSelector::contract("memory.register.32")));
             if (std::string(mode) == "cells") rules.push_back(preferFidelity(Fidelity::Behavioral,
-                ProfileSelector::contract("memory.write-enabled-bit")));
+                ProfileSelector::contract("memory.ff.cell")));
             auto run = runner.run(spec, scenario, withProfileOverrides(canonicalDefaultProfile(), rules));
             ComponentTestRunner::compare(reference, run);
             if (std::string(mode) == "structural") checkHierarchy(run.root);

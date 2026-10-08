@@ -7,6 +7,7 @@
 #include <map>
 #include <optional>
 #include <string>
+#include <string_view>
 #include <vector>
 
 namespace circuit {
@@ -102,5 +103,8 @@ std::string toString(Fidelity value);
 std::string toString(VerificationStatus value);
 std::string toString(UnavailableFidelityPolicy value);
 std::string canonicalizeParameters(const ParameterMap& parameters);
+// Maps a retired contract ID to its current name, so saved profiles and older
+// callers keep working. Current IDs are returned unchanged.
+std::string canonicalContractId(std::string_view id);
 
 } // namespace circuit

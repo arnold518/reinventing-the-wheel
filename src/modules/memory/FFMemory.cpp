@@ -21,7 +21,7 @@ size_t ffStorageBankDepthFromParameters(const circuit::ParameterMap& parameters)
 namespace circuit::families {
 template<size_t Width>
 const ComponentFamily& FFStorageBank() {
-    static const std::string id = "memory.ff-storage-bank." + std::to_string(Width);
+    static const std::string id = "memory.ff.bank." + std::to_string(Width);
     static const std::string type = "FFStorageBank<" + std::to_string(Width) + ">";
     static const ComponentFamily family{
         id, type, [](IOComponent* self) { defineFFStorageBankPins<Width>(self, 4); },
@@ -38,7 +38,7 @@ const ComponentFamily& FFStorageBank() {
 
 template<size_t Width>
 const ComponentFamily& FFWord() {
-    static const std::string id = "memory.ff-word." + std::to_string(Width);
+    static const std::string id = "memory.ff.word." + std::to_string(Width);
     static const ComponentFamily family{
         id, ::FFWord<Width>::TypeName, defineFFWordPins<Width>,
         [](const std::string& name, const std::shared_ptr<BuildContext>& context) {
@@ -53,7 +53,7 @@ const ComponentFamily& FFWord() {
 template<size_t Width>
 const ComponentFamily& FFMemory() {
     // Persisted profiles and callers keep the original device contract ID.
-    static const std::string id = "memory.container.ff." + std::to_string(Width);
+    static const std::string id = "memory.ff.device." + std::to_string(Width);
     static const ComponentFamily family{
         id, ::FFMemory<Width>::TypeName, defineMemoryArrayPins<Width>,
         [](const std::string& name, const std::shared_ptr<BuildContext>& context) {

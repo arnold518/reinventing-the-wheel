@@ -60,9 +60,10 @@ require new CPU-side hold/completion control, not merely a different controller.
 | `RV32IMemoryLanes` | Byte/halfword selection, store shifts/masks, load sign extension |
 | `RV32IMemoryRequest` | Pipeline-side outstanding-request tracking and redirect draining |
 
-The legacy `memory.scalable.*` catalog IDs retain their transaction contracts.
-New native containers use `memory.device.*`; their schemas are not silently
-interchangeable with the legacy IDs.
+Scalable endpoints are `memory.<technology>.scalable-endpoint.<width>` and keep
+the common transaction contract. Native containers are
+`memory.<technology>.scalable-device.<width>`; their schemas are not
+interchangeable with the endpoint's.
 
 ## Single-cycle path
 
@@ -100,7 +101,7 @@ controller. Native DRAM still retains destructive reads, row state, and retentio
 
 `expanded_endpoint=false` selects a fused behavioral endpoint.
 `expanded_endpoint=true` selects a visible controller/device assembly with
-expanded cells (`memory.endpoint.*`); `memory.scalable.*` keeps the controller
+expanded cells (`memory.<technology>.endpoint.*`); `memory.<technology>.scalable-endpoint.*` keeps the controller
 visible while using scalable native storage. Controller register count depends on port width,
 not the number of stored words. Full cell expansion retains its 4,096-cell guard.
 

@@ -40,7 +40,8 @@ bool ProfileSelector::matches(const std::string& path, size_t depth,
                               const ParameterMap& requested_parameters) const {
     if (exact_path && path != *exact_path) return false;
     if (subtree_path && !pathIsInSubtree(path, *subtree_path)) return false;
-    if (contract_id && requested_contract != *contract_id) return false;
+    if (contract_id && requested_contract != *contract_id &&
+        canonicalContractId(requested_contract) != canonicalContractId(*contract_id)) return false;
     if (minimum_depth && depth < *minimum_depth) return false;
     if (maximum_depth && depth > *maximum_depth) return false;
     for (const auto& [key, value] : parameters) {

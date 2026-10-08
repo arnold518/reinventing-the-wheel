@@ -16,8 +16,8 @@ void directMemoryPins(IOComponent* s, const std::string& p, bool instruction) {
 }
 std::shared_ptr<IOComponent> buildMemory(ComponentBuilder& b, IOComponent& parent,
     const std::string& name, const MemoryConfiguration& config) {
-    const std::string id = std::string(config.expanded_endpoint ? "memory.endpoint." : "memory.scalable.")
-        + circuit::memory::technologyName(config.technology) + ".32";
+    const std::string id = circuit::memory::memoryContractId(
+        config.technology, config.expanded_endpoint ? "endpoint" : "scalable-endpoint", 32);
     return circuit::memory_device::child(b, parent, id, name, circuit::memory::endpointParameters(config.device));
 }
 std::shared_ptr<MemoryStateView> memoryView(const std::shared_ptr<IOComponent>& memory) {

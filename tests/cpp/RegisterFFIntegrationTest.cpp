@@ -36,7 +36,7 @@ int main() {
             std::vector<ProfileRule> rules{preferFidelity(mode == "behavioral" ? Fidelity::Behavioral : Fidelity::Structural,
                 ProfileSelector::exactPath(spec.instance_name))};
             if (mode == "cells") rules.push_back(preferFidelity(Fidelity::Behavioral,
-                ProfileSelector::contract("memory.write-enabled-bit")));
+                ProfileSelector::contract("memory.ff.cell")));
             auto run = runner.run(spec, scenario, withProfileOverrides(canonicalDefaultProfile(), rules));
             ComponentTestRunner::compare(reference, run);
             hierarchy(run.root, mode == "behavioral");
@@ -59,7 +59,7 @@ int main() {
             test->setBuildProfile(withProfileOverrides(test->getBuildProfile(), {
                 preferFidelity(mode == "behavioral" ? Fidelity::Behavioral : Fidelity::Structural,
                     ProfileSelector::contract("memory.register.32")),
-                preferFidelity(Fidelity::Behavioral, ProfileSelector::contract("memory.write-enabled-bit")),
+                preferFidelity(Fidelity::Behavioral, ProfileSelector::contract("memory.ff.cell")),
             }));
             require(test->run(), "RV32I program failed with new Register<32>");
             size_t registers = 0;

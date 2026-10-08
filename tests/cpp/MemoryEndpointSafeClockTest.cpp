@@ -51,7 +51,7 @@ void staticCoverage() {
     for (size_t width : {8,16,32}) {
         const auto& catalog = circuit::builtinComponentCatalog();
         // Both catalog families use the SAME fused implementation and contract.
-        for (auto family : {"memory.endpoint.ff.", "memory.scalable.ff."}) {
+        for (auto family : {"memory.ff.endpoint.", "memory.ff.scalable-endpoint."}) {
             auto c = std::dynamic_pointer_cast<IOComponent>(catalog.createRoot(
                 {family+std::to_string(width),"MEM",{}, {}, {}, {}}, circuit::strictAllBehavioral()).root);
             auto base = specification(*c);

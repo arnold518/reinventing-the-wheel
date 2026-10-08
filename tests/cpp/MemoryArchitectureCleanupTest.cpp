@@ -10,7 +10,7 @@
 #include <stdexcept>
 
 namespace {
-void check(bool ok, const char* message) { if (!ok) throw std::runtime_error(message); }
+void check(bool ok, const std::string& message) { if (!ok) throw std::runtime_error(message); }
 template<class F> void rejects(F f) {
     bool rejected = false;
     try { f(); } catch (const std::exception&) { rejected = true; }
@@ -27,8 +27,25 @@ int main() {
         for (const auto* model : {"sram", "rom", "ideal-reference"})
             for (const auto* width : {"8", "16", "32"})
                 rejects([&] { catalog.contract(std::string("memory.container.") + model + "." + width); });
+        // Names used before the memory.<technology>.<what>.<width> rule still resolve.
+        for (const auto& [retired, current] : std::initializer_list<std::pair<const char*, const char*>>{
+                {"memory.write-enabled-bit", "memory.ff.cell"}, {"memory.ff-word.8", "memory.ff.word.8"},
+                {"memory.ff-storage-bank.16", "memory.ff.bank.16"}, {"memory.container.ff.32", "memory.ff.device.32"},
+                {"memory.device.dram.8", "memory.dram.scalable-device.8"},
+                {"memory.controller.nor-flash.16", "memory.nor-flash.controller.16"},
+                {"memory.endpoint.sram.32", "memory.sram.endpoint.32"},
+                {"memory.scalable.rom.8", "memory.rom.scalable-endpoint.8"},
+                {"memory.endpoint.container.8", "memory.container.endpoint.8"},
+                {"memory.matrix.row-decoder", "memory.shared.row-decoder"},
+                {"memory.transaction-port.8", "memory.shared.transaction-port.8"},
+                {"memory.response-buffer.32", "memory.shared.response-buffer.32"}}) {
+            check(circuit::canonicalContractId(retired) == current, std::string("Wrong current name for ") + retired);
+            check(circuit::canonicalContractId(current) == current, std::string("Current name was remapped: ") + current);
+            check(catalog.contract(retired).id == current, std::string("Retired name does not resolve: ") + retired);
+            check(!catalog.implementationsFor(retired).empty(), std::string("Retired name has no implementations: ") + retired);
+        }
         for (size_t width : {8, 16, 32}) {
-            const auto id = "memory.container.ff." + std::to_string(width);
+            const auto id = "memory.ff.device." + std::to_string(width);
             // These IDs remain valid for saved fidelity profiles.
             check(catalog.implementation(id + ".behavioral").contract_id == id, "Lost FF behavioral ID");
             check(catalog.implementation(id + ".structural-slice").contract_id == id, "Lost FF structural ID");

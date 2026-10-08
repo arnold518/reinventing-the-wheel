@@ -19,7 +19,7 @@ void defineFlipFlopCellPins(IOComponent* self) {
 
 namespace circuit::families {
 const ComponentFamily FlipFlopCell{
-    "memory.write-enabled-bit",
+    "memory.ff.cell",
     "FlipFlopCell",
     defineFlipFlopCellPins,
     [](const std::string& name, const std::shared_ptr<BuildContext>& context) {

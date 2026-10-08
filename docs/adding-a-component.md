@@ -17,6 +17,9 @@ Background: [component fidelity profiles](unified-component-profiles.md) and
   component's behavioral function (`alu32Result` in
   `src/modules/composite/ALU32Behavioral.hpp`); do not restate it. The instruction
   oracle in `src/rv32i/` stays independent on purpose.
+- **Memory contracts are named `memory.<technology>.<what>.<width>`** (for
+  example `memory.dram.scalable-endpoint.32`); parts shared by several
+  technologies use `memory.shared.`.
 - **Catalog contract IDs are stored in saved profiles and layouts.** Do not
   rename or remove one without a compatibility plan. Removing an `rv32i.*`
   contract also changes the RV32I preview profile's fingerprint unless its ID

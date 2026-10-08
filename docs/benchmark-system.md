@@ -71,7 +71,7 @@ ctest --test-dir build -R '^(RV32IDifferentialTest|RV32IProfileToggleSweepTest)$
 Processes run serially with a 512 MiB address-space cap and 1,024-cycle execution
 limit for each differential case. A mismatch names its first cycle and field.
 The separate profile-toggle audit covers individual implementation substitutions,
-including both compact and expanded-controller `memory.scalable.ff.32` endpoints.
+including both compact and expanded-controller `memory.ff.scalable-endpoint.32` endpoints.
 
 This strengthens regression evidence, not a mathematical proof of equivalence.
 It does not establish internal gate-waveform equivalence or cover every memory

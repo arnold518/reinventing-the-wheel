@@ -140,7 +140,7 @@ void bindModules(py::module_& m) {
             throw std::invalid_argument("Expected dram, rom, nor-flash or matrix family");
         if (fidelity != "structural" && fidelity != "behavioral") throw std::invalid_argument("Invalid fidelity");
         const auto selected = fidelity == "structural" ? circuit::Fidelity::Structural : circuit::Fidelity::Behavioral;
-        const auto id = "memory." + family + "." + kind;
+        const auto id = circuit::canonicalContractId("memory." + family + "." + kind);
         const auto& catalog = circuit::builtinComponentCatalog();
         const auto implementations = catalog.implementationsFor(id);
         if (std::none_of(implementations.begin(), implementations.end(), [&](const auto& impl) {
@@ -186,7 +186,8 @@ void bindModules(py::module_& m) {
         if (fidelity != "structural" && fidelity != "behavioral") throw std::invalid_argument("Unknown memory fidelity");
         parameters["depth_words"] = std::to_string(depth);
         auto choice = fidelity == "structural" ? circuit::Fidelity::Structural : circuit::Fidelity::Behavioral;
-        circuit::ComponentBuildRequest request{"memory." + kind + "." + model + "." + std::to_string(width),name,parameters,{},{},{}};
+        // Python callers pass the layer first ("endpoint", "scalable", "controller", "device").
+        circuit::ComponentBuildRequest request{circuit::canonicalContractId("memory." + kind + "." + model + "." + std::to_string(width)),name,parameters,{},{},{}};
         const auto& catalog = circuit::builtinComponentCatalog();
         const auto implementations = catalog.implementationsFor(request.contract_id);
         if (std::none_of(implementations.begin(), implementations.end(), [&](const auto& i) { return i.fidelity == choice && i.supports(parameters); }))
@@ -212,7 +213,7 @@ void bindModules(py::module_& m) {
         if (fidelity != "structural" && fidelity != "behavioral")
             throw std::invalid_argument("FF memory fidelity must be structural or behavioral");
         const auto choice = fidelity == "structural" ? circuit::Fidelity::Structural : circuit::Fidelity::Behavioral;
-        const auto id = "memory.container.ff." + std::to_string(width);
+        const auto id = "memory.ff.device." + std::to_string(width);
         circuit::ParameterMap parameters{{"depth_words", std::to_string(depth)},
             {"read_delay_ticks", std::to_string(delay)}, {"record_history", history ? "1" : "0"}};
         const auto& catalog = circuit::builtinComponentCatalog();
@@ -231,7 +232,7 @@ void bindModules(py::module_& m) {
         auto profile = circuit::withExactFidelity(circuit::canonicalDefaultProfile(), name,
             fidelity == "structural" ? circuit::Fidelity::Structural : circuit::Fidelity::Behavioral);
         return std::dynamic_pointer_cast<IOComponent>(circuit::builtinComponentCatalog().createRoot(
-            {"memory.ff-word." + std::to_string(width), name, {}, {}, {}, {}}, profile).root);
+            {"memory.ff.word." + std::to_string(width), name, {}, {}, {}, {}}, profile).root);
     }, py::arg("name"), py::arg("data_width") = 32, py::arg("fidelity") = "structural");
     m.def("create_ff_storage_bank", [](const std::string& name, size_t width, size_t depth, const std::string& fidelity) {
         if (fidelity != "structural" && fidelity != "behavioral")
@@ -239,7 +240,7 @@ void bindModules(py::module_& m) {
         auto profile = circuit::withExactFidelity(circuit::canonicalDefaultProfile(), name,
             fidelity == "structural" ? circuit::Fidelity::Structural : circuit::Fidelity::Behavioral);
         return std::dynamic_pointer_cast<IOComponent>(circuit::builtinComponentCatalog().createRoot(
-            {"memory.ff-storage-bank." + std::to_string(width), name,
+            {"memory.ff.bank." + std::to_string(width), name,
              {{"depth_words", std::to_string(depth)}}, {}, {}, {}}, profile).root);
     }, py::arg("name"), py::arg("data_width") = 32, py::arg("depth_words") = 4,
        py::arg("fidelity") = "structural");

@@ -127,7 +127,8 @@ void registerBlock(ComponentCatalog &c, const std::string &id, const std::string
             }
         };
         i.factory = fidelity == Fidelity::Structural ? structural : behavioral;
-        if (fidelity == Fidelity::Behavioral && id.find(".device.") != std::string::npos)
+        if (fidelity == Fidelity::Behavioral &&
+            (id.find(".device.") != std::string::npos || id.find(".scalable-device.") != std::string::npos))
             i.capabilities = {"memory-state-view"};
         i.evidence = {VerificationStatus::Verified,
                       {terminal ? "explicit digital primitive, not transistor physics"
@@ -138,7 +139,7 @@ void registerBlock(ComponentCatalog &c, const std::string &id, const std::string
                       {"MemoryDeviceTimingTest"},
                       "four-state",
                       "stable-after-settle"};
-        if (id.starts_with("memory.device."))
+        if (id.find(".scalable-device.") != std::string::npos)
             i.evidence.equivalence_tests.push_back("NativeMemoryDeviceContractTest");
         c.registerImplementation(std::move(i));
     }
@@ -343,7 +344,7 @@ void registerMatrixComponents(ComponentCatalog &c) {
         return r;
     };
     registerBlock(
-        c, "memory.matrix.row-decoder", "MatrixRowDecoder",
+        c, "memory.shared.row-decoder", "MatrixRowDecoder",
         [count](const ParameterMap &p) {
             return describe([r = count(p)](IOComponent *s) { decoderPins(s, r); });
         },
@@ -352,7 +353,7 @@ void registerMatrixComponents(ComponentCatalog &c) {
         },
         {}, "MatrixRowDecoderTest");
     registerBlock(
-        c, "memory.matrix.read-column", "StaticReadColumn",
+        c, "memory.shared.read-column", "StaticReadColumn",
         [count](const ParameterMap &p) {
             return describe([r = count(p)](IOComponent *s) { readColumnPins(s, r); });
         },
@@ -367,7 +368,7 @@ void registerMatrixComponents(ComponentCatalog &c) {
             return parameter(p, "words_per_row", 2);
         };
         registerBlock(
-            c, "memory.matrix.column-mux." + suffix, "MatrixColumnMux<" + suffix + ">",
+            c, "memory.shared.column-mux." + suffix, "MatrixColumnMux<" + suffix + ">",
             [width, k](const ParameterMap &p) {
                 return describe([=](IOComponent *s) { muxPins(s, width, k(p)); });
             },
@@ -377,7 +378,7 @@ void registerMatrixComponents(ComponentCatalog &c) {
             },
             {}, "MatrixColumnMuxTest");
         registerBlock(
-            c, "memory.matrix.write-distributor." + suffix, "MatrixWriteDistributor<" + suffix + ">",
+            c, "memory.shared.write-distributor." + suffix, "MatrixWriteDistributor<" + suffix + ">",
             [width, k](const ParameterMap &p) {
                 return describe([=](IOComponent *s) { writePins(s, width, k(p)); });
             },
@@ -387,7 +388,7 @@ void registerMatrixComponents(ComponentCatalog &c) {
             },
             {}, "MatrixWriteDistributorTest");
         registerBlock(
-            c, "memory.matrix.output-buffer." + suffix, "MemoryOutputBuffer<" + suffix + ">",
+            c, "memory.shared.output-buffer." + suffix, "MemoryOutputBuffer<" + suffix + ">",
             [width](const ParameterMap &p) {
                 keys(p, {});
                 return describe([=](IOComponent *s) { outputPins(s, width); });

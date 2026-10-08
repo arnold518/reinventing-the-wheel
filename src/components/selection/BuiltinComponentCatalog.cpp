@@ -590,11 +590,11 @@ void registerStorage(ComponentCatalog& catalog) {
         schemaFor(families::FlipFlopCell), {}, "four-state", "clock-boundary"});
     catalog.registerImplementation(implementationFor(
         families::FlipFlopCell,
-        "memory.write-enabled-bit.structural.mux-dff",
+        "memory.ff.cell.structural.mux-dff",
         Fidelity::Structural, verifiedStructural("FlipFlopCellTest")));
     catalog.registerImplementation(implementationFor(
         families::FlipFlopCell,
-        "memory.write-enabled-bit.behavioral.direct",
+        "memory.ff.cell.behavioral.direct",
         Fidelity::Behavioral,
         verifiedBehavioral("FlipFlopCell structural mux/DFF", "FlipFlopCellTest",
                            "FlipFlopCellTest", "four-state", "clock-boundary")));

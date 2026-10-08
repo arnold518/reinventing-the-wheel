@@ -232,7 +232,7 @@ void ROMBank::buildInternals(ComponentBuilder &b) {
     }
     for (size_t c = 0; c < config_.columns(width_); ++c) {
         auto n = std::to_string(c);
-        auto line = child(b, *this, "memory.matrix.read-column", "COLUMN_" + n,
+        auto line = child(b, *this, "memory.shared.read-column", "COLUMN_" + n,
                           {{"rows", std::to_string(config_.rows())}});
         for (size_t r = 0; r < rows.size(); ++r) {
             auto rn = std::to_string(r);
@@ -254,12 +254,12 @@ void ROMDevice::buildInternals(ComponentBuilder &b) {
     auto control = child(b, *this, "memory.rom.address-control", "ACCESS_CONTROL",
                          {{"depth_words", std::to_string(config_.depth_words)},
                           {"words_per_row", std::to_string(config_.words_per_row)}});
-    auto decoder = child(b, *this, "memory.matrix.row-decoder", "ROW_DECODE",
+    auto decoder = child(b, *this, "memory.shared.row-decoder", "ROW_DECODE",
                          {{"rows", std::to_string(config_.rows())}});
     auto bank = child(b, *this, "memory.rom.bank." + suffix, "STORAGE", romParameters(config_));
-    auto mux = child(b, *this, "memory.matrix.column-mux." + suffix, "COLUMN_SELECT",
+    auto mux = child(b, *this, "memory.shared.column-mux." + suffix, "COLUMN_SELECT",
                      {{"words_per_row", std::to_string(config_.words_per_row)}});
-    auto output = child(b, *this, "memory.matrix.output-buffer." + suffix, "OUTPUT");
+    auto output = child(b, *this, "memory.shared.output-buffer." + suffix, "OUTPUT");
     for (const auto &[pin, p] : getAllInputPins())
         w.connect(p, control->getInputPinDynamic(pin));
     w.connect(control->getOutputPin<32>("ROW_ADDR"), decoder->getInputPin<32>("ROW_ADDR"));

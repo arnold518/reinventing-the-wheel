@@ -55,7 +55,7 @@ RegisteredTestKind componentKind(
         "sequential.sr-latch",
         "sequential.gated-d-latch",
         "sequential.d-flip-flop",
-        "memory.write-enabled-bit",
+        "memory.ff.cell",
         "rv32i.control-flow",
         "rv32i.memory-request",
         "rv32i.execution-status",
@@ -65,9 +65,9 @@ RegisteredTestKind componentKind(
         "rv32i.pipeline-register.id-ex",
         "rv32i.pipeline-register.ex-mem",
         "rv32i.pipeline-register.mem-wb",
-        "memory.response-buffer.8",
-        "memory.response-buffer.16",
-        "memory.response-buffer.32",
+        "memory.shared.response-buffer.8",
+        "memory.shared.response-buffer.16",
+        "memory.shared.response-buffer.32",
         "rv32i.pipeline.stage.fetch",
         "rv32i.pipeline.stage.decode",
         "rv32i.baseline.fetch",
@@ -84,17 +84,15 @@ RegisteredTestKind componentKind(
         "rv32i.system.educational-single-cycle",
         "rv32i.core.baseline-pipeline",
     };
-    if (sequential.count(contract_id) != 0 || contract_id.starts_with("memory.ff-word.") ||
+    if (sequential.count(contract_id) != 0 || contract_id.starts_with("memory.ff.word.") ||
         contract_id.starts_with("memory.register.")) {
         return RegisteredTestKind::Sequential;
     }
-    if (memory.count(contract_id) != 0 || contract_id.starts_with("memory.endpoint.") ||
-        contract_id.starts_with("memory.scalable.") || contract_id.starts_with("memory.controller.") ||
-        contract_id.starts_with("memory.device.") ||
-        contract_id.starts_with("memory.transaction-port.") || contract_id.starts_with("memory.container.") ||
-        contract_id.starts_with("memory.ff-storage-bank.") || contract_id.starts_with("memory.sram.") ||
-        contract_id.starts_with("memory.dram.") || contract_id.starts_with("memory.rom.") ||
-        contract_id.starts_with("memory.nor-flash.") || contract_id.starts_with("memory.matrix.")) {
+    const bool memory_part = contract_id != "memory.ff.cell" &&
+        std::ranges::any_of(std::initializer_list<std::string_view>{"memory.ff.", "memory.sram.", "memory.dram.",
+            "memory.rom.", "memory.nor-flash.", "memory.container.", "memory.shared."},
+            [&](std::string_view prefix) { return contract_id.starts_with(prefix); });
+    if (memory.count(contract_id) != 0 || memory_part) {
         return RegisteredTestKind::Memory;
     }
     if (program.count(contract_id) != 0) {

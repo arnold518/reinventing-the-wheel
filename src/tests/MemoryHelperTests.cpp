@@ -41,7 +41,7 @@ struct Probe {
 };
 
 void outputBuffers(size_t width) {
-    for (const auto* family : {"memory.matrix.output-buffer.", "memory.sram.output-buffer."}) {
+    for (const auto* family : {"memory.shared.output-buffer.", "memory.sram.output-buffer."}) {
         auto built = builtinComponentCatalog().createRoot(
             {family + std::to_string(width), "DUT", {}, {}, {}, {}}, canonicalDefaultProfile());
         Probe probe(std::dynamic_pointer_cast<IOComponent>(built.root));

@@ -35,7 +35,7 @@ namespace {
 template<size_t Width>
 void addFFMemory(circuit::ComponentCatalog& catalog) {
     using namespace circuit;
-    const auto id = std::string("memory.container.ff.") + std::to_string(Width);
+    const auto id = std::string("memory.ff.device.") + std::to_string(Width);
     auto schema = Component::create<IOComponent>("SCHEMA", defineMemoryArrayPins<Width>);
     std::vector<PinDescriptor> pins;
     for (const auto& [name, pin] : schema->getAllInputPins()) pins.push_back({name, pin->getWidth(), PinType::INPUT});

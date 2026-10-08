@@ -102,14 +102,17 @@ circuit::BuildProfile withBehavioralMemoryParts(
         profile_name = base.name();
     }
     std::vector<circuit::ProfileRule> overrides;
-    for (const auto* family : {
-             &circuit::families::RegisterFile32x32,
-             &circuit::families::FlipFlopCell,
-             &circuit::families::ClockedStateBit,
+    // Saved layouts are keyed by this profile's fingerprint, which covers the
+    // rule text. The flip-flop cell is therefore named by its retired ID;
+    // canonicalContractId() makes the rule match memory.ff.cell.
+    for (const std::string id : {
+             std::string(circuit::families::RegisterFile32x32.id()),
+             std::string("memory.write-enabled-bit"),
+             std::string(circuit::families::ClockedStateBit.id()),
          }) {
         overrides.push_back(circuit::preferFidelity(
             circuit::Fidelity::Behavioral,
-            circuit::ProfileSelector::contract(*family),
+            circuit::ProfileSelector::contract(id),
              "use the verified behavioral storage visualization"));
     }
     for (size_t width : {1,2,3,4,5,8,16,32})

@@ -163,3 +163,30 @@ the catalog's "structural" and "behavioral" terms. Only C++ names and file
 names changed. Catalog implementation IDs such as `rv32i.alu32.behavioral.direct`
 are stored in saved profiles and were left as they are. Earlier sections of
 this log use the old names.
+
+## Memory catalog names follow one rule (October 8)
+
+Memory contracts are now named `memory.<technology>.<what>.<width>`:
+
+| Before | Now |
+| --- | --- |
+| `memory.write-enabled-bit` | `memory.ff.cell` |
+| `memory.ff-word.W` | `memory.ff.word.W` |
+| `memory.ff-storage-bank.W` | `memory.ff.bank.W` |
+| `memory.container.ff.W` | `memory.ff.device.W` |
+| `memory.device.T.W` | `memory.T.scalable-device.W` |
+| `memory.controller.T.W` | `memory.T.controller.W` |
+| `memory.endpoint.T.W` | `memory.T.endpoint.W` |
+| `memory.scalable.T.W` | `memory.T.scalable-endpoint.W` |
+| `memory.matrix.*` | `memory.shared.*` |
+| `memory.transaction-port.W` | `memory.shared.transaction-port.W` |
+| `memory.response-buffer.W` | `memory.shared.response-buffer.W` |
+
+The detailed `memory.<technology>.{cell,row,bank,device}` names, `memory.register.W`
+and `memory.clocked-state-bit` are unchanged. `circuit::canonicalContractId`
+(`SelectionTypes.cpp`) maps every old name to its new one; catalog lookups,
+build requests and profile rules all accept the old names.
+`withBehavioralMemoryParts` still names the flip-flop cell by its old ID on
+purpose, because saved layouts are keyed by that profile's fingerprint.
+The `expanded_storage` endpoint parameter was removed at the same time:
+request the `scalable-endpoint` contract instead.

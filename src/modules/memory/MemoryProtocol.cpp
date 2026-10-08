@@ -51,10 +51,13 @@ void EndpointConfig::validate(size_t width, Technology t, bool expanded_cells) c
     if (expanded_cells && depth_words > 4096 / width)
         throw std::invalid_argument("Expanded endpoint storage is limited to 4096 cells");
 }
+std::string memoryContractId(Technology t, std::string_view what, size_t width) {
+    return "memory." + std::string(technologyName(t)) + "." + std::string(what) + "." + std::to_string(width);
+}
 EndpointConfig endpointConfig(const ParameterMap& p) {
     using namespace memory_device;
     if (p.contains("expanded_storage"))
-        throw std::invalid_argument("expanded_storage was removed: request memory.scalable.<technology>.<width> for a scalable device behind the controller");
+        throw std::invalid_argument("expanded_storage was removed: request memory.<technology>.scalable-endpoint.<width> for a scalable device behind the controller");
     keys(p, {"depth_words", "words_per_row", "block_words", "phase_ticks", "guard_ticks",
              "program_ticks", "erase_ticks", "retention_ticks", "refresh_interval_ticks",
              "max_resident_bytes", "max_history_bytes", "paged", "record_history", "image_hex", "always_ready"});

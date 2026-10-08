@@ -53,7 +53,7 @@ for width in (8, 16, 32):
     assert server._component_layout_type(bank) == f"MemoryStorageBank<FFArray,{width},3>"
     for word in bank.get_children():
         assert word.get_type_name() == f"FFWord<{width}>"
-        assert word.get_contract_id() == f"memory.ff-word.{width}"
+        assert word.get_contract_id() == f"memory.ff.word.{width}"
         assert server._component_layout_type(word) == f"MemoryWord<FFArray,{width}>"
     for fidelity in ("structural", "behavioral"):
         word = backend.create_ff_word("W", width, fidelity)
@@ -62,7 +62,7 @@ for width in (8, 16, 32):
         for depth in (1, 3, 7):
             bank = backend.create_ff_storage_bank("BANK", width, depth, fidelity)
             assert bank.get_type_name() == f"FFStorageBank<{width},{depth}>"
-            assert bank.get_contract_id() == f"memory.ff-storage-bank.{width}"
+            assert bank.get_contract_id() == f"memory.ff.bank.{width}"
             assert len(bank.get_input_pins()) == 4 + depth
             assert len(bank.get_output_pins()) == depth
             assert len(bank.get_children()) == (depth if fidelity == "structural" else 0)

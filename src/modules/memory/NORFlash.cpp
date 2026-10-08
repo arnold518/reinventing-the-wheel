@@ -372,7 +372,7 @@ void NORFlashBank::buildInternals(ComponentBuilder &b) {
     }
     for (size_t c = 0; c < config_.columns(width_); ++c) {
         auto cn = std::to_string(c);
-        auto col = child(b, *this, "memory.matrix.read-column", "COLUMN_" + cn,
+        auto col = child(b, *this, "memory.shared.read-column", "COLUMN_" + cn,
                          {{"rows", std::to_string(config_.rows())}});
         for (size_t r = 0; r < rows.size(); ++r) {
             auto rn = std::to_string(r);
@@ -393,14 +393,14 @@ void NORFlashDevice::buildInternals(ComponentBuilder &b) {
     auto suffix = std::to_string(width_);
     auto control = child(b, *this, "memory.nor-flash.command-control." + suffix, "COMMAND_CONTROL",
                          norFlashParameters(config_));
-    auto decoder = child(b, *this, "memory.matrix.row-decoder", "ROW_DECODE",
+    auto decoder = child(b, *this, "memory.shared.row-decoder", "ROW_DECODE",
                          {{"rows", std::to_string(config_.rows())}});
     auto bank = child(b, *this, "memory.nor-flash.bank." + suffix, "STORAGE", norFlashParameters(config_));
-    auto mux = child(b, *this, "memory.matrix.column-mux." + suffix, "COLUMN_SELECT",
+    auto mux = child(b, *this, "memory.shared.column-mux." + suffix, "COLUMN_SELECT",
                      {{"words_per_row", std::to_string(config_.words_per_row)}});
-    auto driver = child(b, *this, "memory.matrix.write-distributor." + suffix, "WRITE_DRIVERS",
+    auto driver = child(b, *this, "memory.shared.write-distributor." + suffix, "WRITE_DRIVERS",
                         {{"words_per_row", std::to_string(config_.words_per_row)}});
-    auto output = child(b, *this, "memory.matrix.output-buffer." + suffix, "OUTPUT");
+    auto output = child(b, *this, "memory.shared.output-buffer." + suffix, "OUTPUT");
     for (const auto &[pin, p] : getAllInputPins())
         w.connect(p, control->getInputPinDynamic(pin));
     w.connect(control->getOutputPin<32>("ROW_ADDR"), decoder->getInputPin<32>("ROW_ADDR"));

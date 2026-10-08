@@ -32,7 +32,7 @@ void require(bool condition, const std::string& message) {
     }
 }
 
-circuit::ContractDescriptor flipFlopCellContract(std::string id = "memory.write-enabled-bit") {
+circuit::ContractDescriptor flipFlopCellContract(std::string id = "memory.ff.cell") {
     return {
         std::move(id),
         1,
@@ -76,8 +76,8 @@ circuit::VerificationEvidence behavioralEvidence() {
 
 circuit::ImplementationDescriptor structuralFlipFlopCell() {
     circuit::ImplementationDescriptor descriptor;
-    descriptor.id = "memory.write-enabled-bit.structural.mux-dff";
-    descriptor.contract_id = "memory.write-enabled-bit";
+    descriptor.id = "memory.ff.cell.structural.mux-dff";
+    descriptor.contract_id = "memory.ff.cell";
     descriptor.fidelity = circuit::Fidelity::Structural;
     descriptor.concrete_type_name = FlipFlopCell::TypeName;
     descriptor.evidence = structuralEvidence();
@@ -92,8 +92,8 @@ circuit::ImplementationDescriptor structuralFlipFlopCell() {
 
 circuit::ImplementationDescriptor behavioralFlipFlopCell() {
     circuit::ImplementationDescriptor descriptor;
-    descriptor.id = "memory.write-enabled-bit.behavioral.direct";
-    descriptor.contract_id = "memory.write-enabled-bit";
+    descriptor.id = "memory.ff.cell.behavioral.direct";
+    descriptor.contract_id = "memory.ff.cell";
     descriptor.fidelity = circuit::Fidelity::Behavioral;
     descriptor.concrete_type_name =
         std::string(circuit::families::FlipFlopCell.typeName());
@@ -136,7 +136,7 @@ std::string BuildProfileTest::getTestName() const {
 void BuildProfileTest::verifyResults() {
     auto catalog = flipFlopCellCatalog();
     const circuit::ComponentBuildRequest root{
-        "memory.write-enabled-bit", "memory", {}, {}, "four-state", "clock-boundary"};
+        "memory.ff.cell", "memory", {}, {}, "four-state", "clock-boundary"};
 
     auto strict_a = circuit::strictAllStructural();
     auto strict_b = circuit::strictAllStructural();
@@ -220,7 +220,7 @@ std::string ComponentCatalogSelectionTest::getTestName() const {
 void ComponentCatalogSelectionTest::verifyResults() {
     auto catalog = flipFlopCellCatalog();
     const circuit::ComponentBuildRequest root{
-        "memory.write-enabled-bit", "memory", {}, {}, "four-state", "clock-boundary"};
+        "memory.ff.cell", "memory", {}, {}, "four-state", "clock-boundary"};
 
     auto structural_profile = circuit::strictAllStructural();
     auto structural = catalog.createRoot(root, structural_profile);
