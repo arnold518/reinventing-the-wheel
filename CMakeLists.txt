@@ -28,6 +28,7 @@ set(CORE_LOGIC_SOURCES
     src/analysis/CircuitTimingAnalyzer.cpp
     src/analysis/SafeClockTiming.cpp
     src/analysis/SettlingBound.cpp
+    src/analysis/TimingCircuit.cpp
     src/analysis/MemoryTimingState.cpp
     src/analysis/RV32IExperiment.cpp
     src/analysis/RV32IBenchmarks.cpp

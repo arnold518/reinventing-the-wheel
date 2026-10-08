@@ -1,5 +1,5 @@
 #include "analysis/SafeClockTiming.hpp"
-#include "BuiltinClockContracts.hpp"
+#include "TimingCircuit.hpp"
 #include "MemoryTimingState.hpp"
 #include "TimedLogicDomain.hpp"
 #include "basic/PinBase.hpp"
@@ -25,6 +25,7 @@
 #include <typeinfo>
 #include <tuple>
 #include <unordered_map>
+#include <unordered_set>
 
 namespace circuit::analysis {
 namespace {
@@ -43,121 +44,6 @@ void validate(DelayBounds d) {
     if (d.minimum > d.maximum) throw std::invalid_argument("Reversed delay bounds");
 }
 
-template<size_t W>
-bool utilityContract(const IOComponent& c, ClockComponentContract& m) {
-    if (typeid(c) == typeid(ConstantValue<W>)) {
-        m.constant_outputs["OUT"] = static_cast<const ConstantValue<W>&>(c).getConstantValue()
-            & ((uint64_t{1} << W) - 1);
-        return true;
-    }
-    if (typeid(c) != typeid(BitSplitter<W>) && typeid(c) != typeid(BitJoiner<W>)) return false;
-    const auto delay = static_cast<const BasicComponent&>(c).getDelay();
-    for (const auto& [i, p] : c.getAllInputPins())
-        for (const auto& [o, q] : c.getAllOutputPins()) m.arcs.push_back({i, o, {delay, delay}});
-    return true;
-}
-template<size_t W> bool splitter(const IOComponent& c) { return typeid(c) == typeid(BitSplitter<W>); }
-template<size_t W> bool joiner(const IOComponent& c) { return typeid(c) == typeid(BitJoiner<W>); }
-bool isSplitter(const IOComponent& c) {
-    return splitter<1>(c)||splitter<2>(c)||splitter<3>(c)||splitter<4>(c)
-        ||splitter<5>(c)||splitter<8>(c)||splitter<16>(c)||splitter<32>(c);
-}
-bool isJoiner(const IOComponent& c) {
-    return joiner<1>(c)||joiner<2>(c)||joiner<3>(c)||joiner<4>(c)
-        ||joiner<5>(c)||joiner<8>(c)||joiner<16>(c)||joiner<32>(c);
-}
-
-std::optional<ClockComponentContract> builtin(const IOComponent& c) {
-    // Built-in contracts cover concrete primitive instances, not an arbitrarily
-    // modified hierarchy attached beneath one of those instances.
-    if (!c.getChildren().empty()) return std::nullopt;
-    ClockComponentContract m;
-    m.evidence = "simulator-exact-primitives-v1";
-    if (typeid(c) == typeid(NOTGate) || typeid(c) == typeid(ANDGate)
-        || typeid(c) == typeid(NANDGate) || typeid(c) == typeid(ORGate)
-        || typeid(c) == typeid(NORGate) || typeid(c) == typeid(XORGate)) {
-        const auto d = static_cast<const BasicComponent&>(c).getDelay();
-        for (const auto& [i, p] : c.getAllInputPins())
-            for (const auto& [o, q] : c.getAllOutputPins()) m.arcs.push_back({i, o, {d, d}});
-        return m;
-    }
-    if (utilityContract<1>(c, m) || utilityContract<2>(c, m) || utilityContract<3>(c, m)
-        || utilityContract<4>(c, m) || utilityContract<5>(c, m) || utilityContract<8>(c, m)
-        || utilityContract<16>(c, m) || utilityContract<32>(c, m)) return m;
-    if (typeid(c) == typeid(Rewire)) {
-        const auto& rw = static_cast<const Rewire&>(c);
-        std::set<std::pair<std::string, std::string>> arcs;
-        std::set<std::string> used, produced;
-        for (const auto& bit : rw.getBitMappings()) {
-            arcs.emplace(bit.src_wire, bit.dst_wire);
-            used.insert(bit.src_wire); produced.insert(bit.dst_wire);
-        }
-        for (const auto& [i, o] : arcs) m.arcs.push_back({i, o, {0, 0}});
-        for (const auto& [i, p] : c.getAllInputPins()) if (!used.contains(i)) m.unused_inputs.push_back(i);
-        for (const auto& [o, p] : c.getAllOutputPins()) if (!produced.contains(o)) {
-            if (rw.getUnmappedDefault() == Rewire::UnmappedBitValue::UNKNOWN) m.stable_outputs.push_back(o);
-            else m.constant_outputs[o] = rw.getUnmappedDefault() == Rewire::UnmappedBitValue::LOW
-                ? 0 : (uint64_t{1} << p->getWidth()) - 1;
-        }
-        return m;
-    }
-    // Exact concrete types only: derived endpoints can override their behavior.
-    // Delayed technologies schedule autonomous wakeups and need a different
-    // timing model; the FF contract must never be selected by port shape alone.
-    if (typeid(c) == typeid(BehavioralMemoryEndpoint)
-        || typeid(c) == typeid(CompactMemoryEndpoint<8, circuit::memory::FFModel>)
-        || typeid(c) == typeid(CompactMemoryEndpoint<16, circuit::memory::FFModel>)
-        || typeid(c) == typeid(CompactMemoryEndpoint<32, circuit::memory::FFModel>)) {
-        const auto& endpoint = static_cast<const BehavioralMemoryEndpoint&>(c);
-        if (endpoint.technology() != circuit::memory::Technology::FF) return std::nullopt;
-        m.evidence = "simulator-FF-endpoint-all-state-v1; MemoryEndpointSafeClockTest; reset held LOW after initialization";
-        m.clock_pin = "CLK"; m.fixed_inputs["RST"] = 0;
-        m.minimum_high_ticks = m.minimum_low_ticks = 1;
-        const auto d = endpoint.getDelay();
-        // The rising edge commits writes and updates FULL / saved DATA / STATUS.
-        // Every non-reset request/control input participates in one of those
-        // updates. Captures and launches are a conservative union over all
-        // empty, held, consume-and-replace, read, write and error states.
-        for (auto i : {"REQ_VALID", "REQ_OP", "REQ_ADDR", "REQ_WRITE_DATA", "REQ_WRITE_MASK", "RSP_READY"})
-            m.captures.push_back({i, ClockEdge::Rising, 0, 0});
-        for (auto o : {"REQ_READY", "RSP_VALID", "RSP_READ_DATA", "RSP_STATUS"})
-            m.launches.push_back({o, ClockEdge::Rising, {d, d}});
-        // With reset LOW and state held fixed, evaluate() simplifies to:
-        // READY = !full || RSP_READY; VALID = full || REQ_VALID;
-        // DATA = full ? saved_data : (REQ_VALID && legal_read ? mem[addr] : 0);
-        // STATUS = full ? saved_status : validate(op, addr, mask).
-        // Thus RSP_READY is NOT a combinational dependency of VALID or DATA;
-        // nor are write data/mask dependencies of read DATA. Do not import
-        // state-specific cuts from the legacy core timing estimator.
-        for (const auto& arc : std::vector<std::pair<std::string, std::string>>{
-                {"RSP_READY", "REQ_READY"}, {"REQ_VALID", "RSP_VALID"},
-                {"REQ_VALID", "RSP_READ_DATA"}, {"REQ_OP", "RSP_READ_DATA"},
-                {"REQ_ADDR", "RSP_READ_DATA"}, {"REQ_OP", "RSP_STATUS"},
-                {"REQ_ADDR", "RSP_STATUS"}, {"REQ_WRITE_MASK", "RSP_STATUS"}})
-            m.arcs.push_back({arc.first, arc.second, {d, d}});
-        return m;
-    }
-    // Match concrete implementation types, not names/metadata: a structural
-    // master/slave DFF is NOT given an invented one-tick register contract.
-    const bool reg = typeid(c) == typeid(RegisterBehavioral) || typeid(c) == typeid(FlipFlopCellBehavioral)
-        || typeid(c) == typeid(ClockedStateBitBehavioral);
-    const bool rf = typeid(c) == typeid(RegisterFile32x32Behavioral);
-    if (reg || rf) {
-        m.evidence = "simulator-direct-FF-storage-v1; reset held LOW after initialization";
-        m.clock_pin = "CLK"; m.fixed_inputs["RST"] = 0;
-        m.minimum_high_ticks = m.minimum_low_ticks = 1;
-        for (const auto& [i, p] : c.getAllInputPins()) {
-            if (i == "CLK" || i == "RST" || (rf && (i == "RS1_ADDR" || i == "RS2_ADDR"))) continue;
-            m.captures.push_back({i, ClockEdge::Rising, 0, 0});
-        }
-        const auto d = static_cast<const BasicComponent&>(c).getDelay();
-        for (const auto& [o, p] : c.getAllOutputPins()) m.launches.push_back({o, ClockEdge::Rising, {d, d}});
-        if (rf) m.arcs = {{"RS1_ADDR", "RS1_DATA", {d, d}}, {"RS2_ADDR", "RS2_DATA", {d, d}}};
-        return m;
-    }
-    return std::nullopt;
-}
-
 struct Arrival {
     bool valid = false;
     size_t early = 0, late = 0, previous = none;
@@ -170,7 +56,7 @@ struct Node {
     std::optional<uint64_t> value;
 };
 struct Edge { size_t to; DelayBounds delay; bool wire; };
-struct Leaf { std::shared_ptr<IOComponent> component; ClockComponentContract contract; bool builtin_rules; };
+using Leaf = detail::TimingLeaf;
 
 class Analysis {
     const std::shared_ptr<Component>& root;
@@ -182,7 +68,7 @@ class Analysis {
     std::vector<std::vector<Edge>> edges;
     std::unordered_map<std::shared_ptr<PinBase>, size_t> indices;
     std::map<std::string, std::shared_ptr<PinBase>> pins;
-    std::set<std::shared_ptr<PinBase>> leaf_outputs;
+    std::unordered_set<const PinBase*> leaf_outputs;
     std::vector<std::pair<size_t, ClockCapture>> captures;
     std::vector<std::pair<size_t, uint64_t>> fixed;
     std::set<size_t> clock_nodes, unused;
@@ -206,25 +92,18 @@ class Analysis {
         if (report.edge_count >= clock.maximum_edges) throw std::runtime_error("Timing edge budget exhausted");
         edges[a].push_back({b, d, wire}); ++report.edge_count;
     }
-    void collect(const std::shared_ptr<Component>& component, size_t depth = 0) {
-        if (depth >= clock.maximum_hierarchy_depth) throw std::runtime_error("Timing hierarchy depth budget exhausted");
-        auto io = std::dynamic_pointer_cast<IOComponent>(component);
-        if (io) {
-            for (const auto* group : {&io->getAllInputPins(), &io->getAllOutputPins()})
-                for (const auto& [name, p] : *group) {
-                    if (pins.size() >= clock.maximum_nodes) throw std::runtime_error("Timing pin budget exhausted");
-                    if (!pins.emplace(p->getID(), p).second) throw std::runtime_error("Duplicate pin ID: " + p->getID());
-                }
-            auto m = models.model ? models.model(*io) : std::nullopt;
-            const bool native_rules=!m;
-            if (!m) m = builtin(*io);
-            if (m) { leaves.push_back({io, std::move(*m),native_rules}); return; }
-        }
-        if (std::dynamic_pointer_cast<BasicComponent>(component) || component->getChildren().empty()) {
-            diagnostic(component->getID() + ": no all-state timing contract for " + component->getTypeName());
-            return;
-        }
-        for (const auto& child : component->getChildren()) collect(child, depth + 1);
+    void collect(const std::shared_ptr<Component>& component) {
+        detail::collectTimingLeaves(component, models, clock.maximum_hierarchy_depth, leaves, {
+            [&](const std::shared_ptr<IOComponent>& io) {
+                for (const auto* group : {&io->getAllInputPins(), &io->getAllOutputPins()})
+                    for (const auto& [name, p] : *group) {
+                        if (pins.size() >= clock.maximum_nodes) throw std::runtime_error("Timing pin budget exhausted");
+                        if (!pins.emplace(p->getID(), p).second) throw std::runtime_error("Duplicate pin ID: " + p->getID());
+                    }
+            },
+            [&](const Component& part) {
+                diagnostic(part.getID() + ": no all-state timing contract for " + part.getTypeName());
+            }});
     }
     std::shared_ptr<PinBase> lookup(const std::string& id, PinType type) {
         auto it = pins.find(id);
@@ -238,34 +117,18 @@ class Analysis {
         if (it == pins.end() || it->second->getType() != type) throw std::runtime_error("Invalid timing pin: " + id);
         return it->second;
     }
-    // Walk upwards through input boundaries and downwards through output
-    // boundaries. Stop only at a modeled leaf output or an undriven input.
-    std::shared_ptr<PinBase> source(std::shared_ptr<PinBase> p) {
-        std::set<std::shared_ptr<PinBase>> seen;
-        while (p) {
-            if (!seen.insert(p).second) throw std::runtime_error("Boundary wire cycle: " + p->getID());
-            if (leaf_outputs.contains(p)) return p;
-            auto w = p->getType() == PinType::INPUT ? p->getExternalWireBase() : p->getInternalWireBase();
-            // Same-owner BasicComponent feedback is stored as an internal
-            // wire. A composite input's ordinary internal wire, conversely,
-            // starts at that very pin and is not an upstream driver.
-            if (!w && p->getType() == PinType::INPUT) {
-                auto internal = p->getInternalWireBase();
-                if (internal && internal->getSourcePinBase() != p) w = internal;
-            }
-            if (!w || !w->getSourcePinBase()) {
-                if (p->getType() == PinType::OUTPUT) throw std::runtime_error("Undriven output: " + p->getID());
-                return p;
-            }
-            p = w->getSourcePinBase();
-        }
-        throw std::runtime_error("Missing wire source");
+    // The modeled leaf output or undriven input that feeds `p`.
+    std::shared_ptr<PinBase> source(const std::shared_ptr<PinBase>& p) {
+        auto driver = detail::drivingPin(p, leaf_outputs);
+        if (driver->getType() == PinType::OUTPUT && !leaf_outputs.contains(driver.get()))
+            throw std::runtime_error("Undriven output: " + driver->getID());
+        return driver;
     }
     void bindContracts() {
         for (const auto& leaf : leaves) {
             const auto& c = leaf.component;
             for (const auto& [n, p] : c->getAllInputPins()) node(p);
-            for (const auto& [n, p] : c->getAllOutputPins()) { node(p); leaf_outputs.insert(p); }
+            for (const auto& [n, p] : c->getAllOutputPins()) { node(p); leaf_outputs.insert(p.get()); }
         }
         for (const auto& leaf : leaves) {
             const auto& c = leaf.component; const auto& m = leaf.contract;
@@ -484,10 +347,10 @@ class Analysis {
                     for(auto& bit:r)bit.constant=value;
                     for(const auto& bit:rw.getBitMappings())if(bit.dst_wire==name)
                         r[bit.dst_bit]={indices.at(c.getInputPinDynamic(bit.src_wire)),bit.src_bit,0,0};
-                } else if(isSplitter(c)) {
+                } else if(detail::isBitSplitter(c)) {
                     routing[n]={{indices.at(c.getInputPinDynamic("IN")),std::stoul(name.substr(4)),
                         static_cast<const BasicComponent&>(c).getDelay(),0}};
-                } else if(isJoiner(c)) {
+                } else if(detail::isBitJoiner(c)) {
                     auto& r=routing[n];
                     for(size_t bit=0;bit<p->getWidth();++bit)r.push_back({indices.at(c.getInputPin("IN_"+std::to_string(bit))),0,
                         static_cast<const BasicComponent&>(c).getDelay(),0});
@@ -921,12 +784,6 @@ public:
     }
 };
 } // namespace
-
-namespace detail {
-std::optional<ClockComponentContract> builtinClockContract(const IOComponent& component) {
-    return builtin(component);
-}
-} // namespace detail
 
 const char* clockTimingStatusName(ClockTimingStatus status) {
     switch (status) {

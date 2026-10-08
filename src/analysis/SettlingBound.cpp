@@ -1,5 +1,5 @@
 #include "analysis/SettlingBound.hpp"
-#include "BuiltinClockContracts.hpp"
+#include "TimingCircuit.hpp"
 #include "basic/PinBase.hpp"
 #include "basic/WireBase.hpp"
 #include "components/BasicComponent.hpp"
@@ -41,26 +41,12 @@ struct Hub {
     std::vector<std::pair<int, long long>> inputs;
     long long launch = STABLE;
 };
-struct Leaf {
-    std::shared_ptr<IOComponent> component;
-    ClockComponentContract contract;
-    bool native = false;
-};
+using Leaf = detail::TimingLeaf;
 struct Group {
     std::string name;
     std::vector<std::pair<int, long long>> endpoints; // node, added setup
 };
 
-template<size_t W> bool splitterOf(const IOComponent& c) { return typeid(c) == typeid(BitSplitter<W>); }
-template<size_t W> bool joinerOf(const IOComponent& c) { return typeid(c) == typeid(BitJoiner<W>); }
-bool isSplitter(const IOComponent& c) {
-    return splitterOf<1>(c) || splitterOf<2>(c) || splitterOf<3>(c) || splitterOf<4>(c)
-        || splitterOf<5>(c) || splitterOf<8>(c) || splitterOf<16>(c) || splitterOf<32>(c);
-}
-bool isJoiner(const IOComponent& c) {
-    return joinerOf<1>(c) || joinerOf<2>(c) || joinerOf<3>(c) || joinerOf<4>(c)
-        || joinerOf<5>(c) || joinerOf<8>(c) || joinerOf<16>(c) || joinerOf<32>(c);
-}
 std::optional<Kind> gateKind(const IOComponent& c) {
     if (typeid(c) == typeid(NOTGate)) return Kind::Not;
     if (typeid(c) == typeid(ANDGate)) return Kind::And;
@@ -121,51 +107,29 @@ class Analysis {
         return base_.at(pin.get()) + static_cast<int>(bit);
     }
 
-    void collect(const std::shared_ptr<Component>& component, size_t depth = 0) {
-        if (depth > 256) throw std::runtime_error("Hierarchy depth limit exceeded");
-        if (auto io = std::dynamic_pointer_cast<IOComponent>(component)) {
-            auto contract = options_.contracts.model ? options_.contracts.model(*io) : std::nullopt;
-            const bool native = !contract;
-            if (!contract) contract = detail::builtinClockContract(*io);
-            if (contract) {
-                if (component == root_) root_is_leaf_ = true;
-                leaves_.push_back({io, std::move(*contract), native});
-                return;
-            }
-        }
-        if (std::dynamic_pointer_cast<BasicComponent>(component) || component->getChildren().empty()) {
-            fail(component->getID() + ": no timing contract for " + component->getTypeName());
-            return;
-        }
-        for (const auto& child : component->getChildren()) collect(child, depth + 1);
+    void collect() {
+        detail::collectTimingLeaves(root_, options_.contracts, 256, leaves_, {
+            nullptr,
+            [&](const Component& part) { fail(part.getID() + ": no timing contract for " + part.getTypeName()); }});
+        root_is_leaf_ = leaves_.size() == 1 && leaves_.front().component == root_;
     }
 
-    // Follow one driven net through hierarchy boundaries to the pins that read it.
-    void trace(const std::shared_ptr<PinBase>& source, const std::shared_ptr<WireBase>& first) {
-        std::vector<std::shared_ptr<WireBase>> pending{first};
-        std::unordered_set<const WireBase*> seen;
-        while (!pending.empty()) {
-            const auto wire = pending.back();
-            pending.pop_back();
-            if (!wire || !seen.insert(wire.get()).second) continue;
-            for (const auto& weak : wire->getSinkPinsBase()) {
-                const auto sink = weak.lock();
-                if (!sink || sink == source) continue;
-                if (base_.contains(sink.get())) {
-                    const bool reads = rootPin(*sink) && !root_is_leaf_
-                        ? sink->getType() == PinType::OUTPUT : sink->getType() == PinType::INPUT;
-                    if (!reads) continue;
-                    if (sink->getWidth() != source->getWidth())
-                        throw std::runtime_error("Width mismatch at " + sink->getID());
-                    const auto [it, added] = driver_.emplace(sink.get(), source);
-                    if (!added && it->second != source)
-                        throw std::runtime_error("Two drivers for " + sink->getID());
-                    continue;
-                }
-                pending.push_back(sink->getType() == PinType::INPUT
-                    ? sink->getInternalWireBase() : sink->getExternalWireBase());
-            }
-        }
+    // Which pin drives each reading pin: a leaf output or a root input.
+    void findDrivers() {
+        std::unordered_set<const PinBase*> sources;
+        if (!root_is_leaf_) for (const auto& [name, pin] : root_io_->getAllInputPins()) sources.insert(pin.get());
+        for (const auto& leaf : leaves_)
+            for (const auto& [name, pin] : leaf.component->getAllOutputPins()) sources.insert(pin.get());
+        const auto find = [&](const std::shared_ptr<PinBase>& reader) {
+            const auto source = detail::drivingPin(reader, sources);
+            if (source == reader || !sources.contains(source.get())) return; // nothing drives it
+            if (source->getWidth() != reader->getWidth()) throw std::runtime_error("Width mismatch at " + reader->getID());
+            driver_.emplace(reader.get(), source);
+        };
+        if (root_is_leaf_) return;
+        for (const auto& [name, pin] : root_io_->getAllOutputPins()) find(pin);
+        for (const auto& leaf : leaves_)
+            for (const auto& [name, pin] : leaf.component->getAllInputPins()) find(pin);
     }
 
     void makeSource(const std::shared_ptr<PinBase>& pin, long long arrival, bool splittable) {
@@ -252,7 +216,7 @@ class Analysis {
         const auto delay = [&]() {
             return static_cast<long long>(static_cast<const BasicComponent&>(c).getDelay());
         };
-        if (leaf.native) {
+        if (leaf.builtin_rules) {
             if (const auto kind = gateKind(c)) {
                 auto& out = at(own("OUT", PinType::OUTPUT), 0);
                 out.kind = *kind;
@@ -279,7 +243,7 @@ class Analysis {
                 }
                 return;
             }
-            if (isSplitter(c)) {
+            if (detail::isBitSplitter(c)) {
                 const auto in = own("IN", PinType::INPUT);
                 for (unsigned bit = 0; bit < in->getWidth(); ++bit) {
                     auto& node = at(own("OUT_" + std::to_string(bit), PinType::OUTPUT), 0);
@@ -287,7 +251,7 @@ class Analysis {
                 }
                 return;
             }
-            if (isJoiner(c)) {
+            if (detail::isBitJoiner(c)) {
                 const auto out = own("OUT", PinType::OUTPUT);
                 for (unsigned bit = 0; bit < out->getWidth(); ++bit) {
                     auto& node = at(out, bit);
@@ -694,7 +658,7 @@ public:
         try {
             root_io_ = std::dynamic_pointer_cast<IOComponent>(root_);
             if (!root_io_) throw std::runtime_error("Root has no pins");
-            collect(root_);
+            collect();
             if (failed_) return report_;
 
             for (const auto* pins : {&root_io_->getAllInputPins(), &root_io_->getAllOutputPins()})
@@ -703,13 +667,7 @@ public:
                 for (const auto* pins : {&leaf.component->getAllInputPins(), &leaf.component->getAllOutputPins()})
                     for (const auto& [name, pin] : *pins) reserve(pin);
 
-            if (!root_is_leaf_)
-                for (const auto& [name, pin] : root_io_->getAllInputPins()) trace(pin, pin->getInternalWireBase());
-            for (const auto& leaf : leaves_) for (const auto& [name, pin] : leaf.component->getAllOutputPins()) {
-                trace(pin, pin->getExternalWireBase());
-                // A leaf reading its own output is wired on the internal side.
-                if (std::dynamic_pointer_cast<BasicComponent>(leaf.component)) trace(pin, pin->getInternalWireBase());
-            }
+            findDrivers();
 
             // One ideal clock, taken straight from a root input.
             for (const auto& leaf : leaves_) {
