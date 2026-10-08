@@ -228,8 +228,7 @@ class MemoryEndpointIntegrationTest(unittest.TestCase):
             subprocess.run([str(binary)], check=True, timeout=30)
 
     def test_transaction_controller_cpp_examples_behavior(self):
-        # Controller explicitly reuses the documented frontend. The container
-        # reference is the separate downstream device in the relay test only.
+        # Controller explicitly reuses the documented frontend.
         snippets = re.findall(r"```cpp\n(.*?)\n```",
                               "\n".join(SOURCES[s] for s in ("3.2", "3.3", "3.1.6")), re.S)
         harness = (ROOT / "tests/fixtures/memory/transaction-controller-examples.cpp").read_text()
