@@ -239,3 +239,14 @@ the tested reference listing. "Container" now only means `MemoryContainer`.
   preview profile's fingerprint does not change.
 
 Saved `layout.json` and `palette.json` entries for these types are inert.
+
+## Saved layouts for retired parts removed (October 8)
+
+`tools/prune-retired-layouts.py` lists, and with `--apply` removes, `layout.json`
+entries that nothing can reach any more: a type whose base name appears nowhere
+in `src/` or `include/`, a part of the retired `container` relay technology, or
+a root layout whose scenario alias belongs to no registered test. It removed 38
+type entries, 4 profile entries and 38 root layouts (about 440 KB). This
+replaces the earlier policy of keeping those entries; placements of live types
+and scenarios are untouched, including child placements for removed filler
+parts inside layouts that are still in use.
