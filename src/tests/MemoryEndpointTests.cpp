@@ -307,12 +307,12 @@ void verifyEndpointStoragePolicy(Technology technology) {
         if (mode == 0)
             profile = withExactFidelity(profile, "POLICY_ROOT.MEMORY", Fidelity::Behavioral);
         ParameterMap policy{{"depth_words", "4"}, {"words_per_row", "2"}, {"block_words", "2"},
-            {"expanded_storage", mode == 1 ? "0" : "1"}, {"record_history", "0"},
+            {"record_history", "0"},
             {"paged", "0"}, {"max_resident_bytes", "64"}, {"max_history_bytes", "1"}};
         const auto context = std::string(technologyName(technology)) + "/mode-" + std::to_string(mode);
         auto create = [&] {
             auto root = builtinComponentCatalog().createRoot(
-                {"memory.endpoint." + std::string(technologyName(technology)) + ".8",
+                {(mode == 1 ? "memory.scalable." : "memory.endpoint.") + std::string(technologyName(technology)) + ".8",
                  "POLICY_ROOT", policy, {}, {}, {}}, profile).root;
             auto view = std::dynamic_pointer_cast<MemoryStateView>(root);
             require(bool(view), context + ": missing memory state view");
@@ -394,8 +394,9 @@ void verifyEndpointWriteHistory(Technology technology, size_t width) {
             mode == 2 ? Fidelity::Behavioral : Fidelity::Structural);
         if (mode == 0)
             profile = withExactFidelity(profile, s.spec.instance_name + ".MEMORY", Fidelity::Behavioral);
-        s.spec.parameters["expanded_storage"] = mode == 1 ? "0" : "1";
-        auto run = runner.run(s.spec, s.spec.scenarios[0], profile);
+        auto spec = s.spec;
+        if (mode == 1) spec.contract_id.replace(0, std::string("memory.endpoint.").size(), "memory.scalable.");
+        auto run = runner.run(spec, spec.scenarios[0], profile);
         auto view = std::dynamic_pointer_cast<MemoryStateView>(run.root);
         require(bool(view), "Write-history endpoint has no memory state view");
         size_t previous = 0, checked = 0;
@@ -436,7 +437,7 @@ void NativeMemoryDeviceContractTest::verifyResults() {
         // A visible structural controller can drive a compact device too.
         auto spec=endpointSpec(t);
         auto expanded=runner.run(spec,spec.scenarios[0]);
-        spec.parameters["expanded_storage"]="0";
+        spec.contract_id.replace(0,std::string("memory.endpoint.").size(),"memory.scalable.");
         auto scalable=runner.run(spec,spec.scenarios[0]);
         runner.compare(expanded,scalable);
         EndpointConfig config;config.depth_words=1u<<28;config.record_history=false;
@@ -447,8 +448,7 @@ void NativeMemoryDeviceContractTest::verifyResults() {
         huge->initializeBytes((1u<<28)-1,{0x42});
         require(huge->readBytes((1u<<28)-1,1)==std::vector<uint8_t>{0x42},"Provision last address");
         rejects([&]{huge->initializeBytes(0,{0x42});});
-        config.expanded_storage=false;
-        auto endpoint=Component::create<MemoryEndpoint>("LARGE_ENDPOINT",8,t,config);
+        auto endpoint=Component::create<MemoryEndpoint>("LARGE_ENDPOINT",8,t,config,true);
         require(endpoint->getChildren().size()==2,"Endpoint should contain controller plus device");
     }
 }

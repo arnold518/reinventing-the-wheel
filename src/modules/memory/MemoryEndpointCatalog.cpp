@@ -127,9 +127,8 @@ void registerMemoryEndpoints(ComponentCatalog& c) {
             if (t != Technology::Container)
                 add(c, "memory.scalable." + name + "." + suffix, "MemoryEndpoint" + dims, schema,
                     [=](const std::string& n, const ParameterMap& p, const std::shared_ptr<BuildContext>& ctx) {
-                        auto config = endpointConfig(p);
-                        config.expanded_storage = false; // controller view, never millions of cells
-                        return Component::createWithContext<MemoryEndpoint>(ctx,n,width,t,config);
+                        // controller view, never millions of cells
+                        return Component::createWithContext<MemoryEndpoint>(ctx,n,width,t,endpointConfig(p),true);
                     }, compact, "ScalableMemoryEndpointTest");
             if (t != Technology::Container) {
                 auto nativeSchema = [=](const ParameterMap& p) {

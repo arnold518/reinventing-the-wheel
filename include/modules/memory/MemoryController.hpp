@@ -58,8 +58,10 @@ private:
 // Convenient assembly: controller plus separately visible native memory.
 class MemoryEndpoint : public IOComponent, public MemoryStateView {
 public:
+    // scalable_device: put one scalable MemoryContainer behind the controller
+    // instead of the detailed cell-level device.
     MemoryEndpoint(std::string, size_t width, circuit::memory::Technology,
-                   circuit::memory::EndpointConfig = {});
+                   circuit::memory::EndpointConfig = {}, bool scalable_device = false);
     const char* getTypeName() const override { return type_.c_str(); }
     void buildInternals(ComponentBuilder&) override;
     const MemoryStorage& memoryStorage() const override;
@@ -73,5 +75,6 @@ private:
     size_t width_;
     circuit::memory::Technology technology_;
     circuit::memory::EndpointConfig config_;
+    bool scalable_device_;
     std::string type_;
 };

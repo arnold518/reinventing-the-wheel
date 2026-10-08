@@ -99,9 +99,9 @@ PROGRAM/ERASE rather than SW. DRAM sequencing and refresh belong to its
 controller. Native DRAM still retains destructive reads, row state, and retention.
 
 `expanded_endpoint=false` selects a fused behavioral endpoint.
-`expanded_endpoint=true` selects a visible controller/device assembly;
-setting `device.expanded_storage=false` keeps that controller visible while
-using scalable native storage. Controller register count depends on port width,
+`expanded_endpoint=true` selects a visible controller/device assembly with
+expanded cells (`memory.endpoint.*`); `memory.scalable.*` keeps the controller
+visible while using scalable native storage. Controller register count depends on port width,
 not the number of stored words. Full cell expansion retains its 4,096-cell guard.
 
 ## Provisioning and inspection

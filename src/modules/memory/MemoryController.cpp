@@ -223,16 +223,17 @@ void MemoryController::buildInternals(ComponentBuilder& b) {
     for (auto n : {"BACK_READY", "DONE", "RESULT", "STATUS"}) w.connect(control->getOutputPinDynamic(n), front->getInputPinDynamic(n));
     w.finish();
 }
-MemoryEndpoint::MemoryEndpoint(std::string n, size_t w, Technology t, EndpointConfig c)
+MemoryEndpoint::MemoryEndpoint(std::string n, size_t w, Technology t, EndpointConfig c, bool scalable_device)
     : IOComponent(std::move(n), [w](IOComponent* s) { protocolPins(s, w); }), width_(w), technology_(t),
-      config_(c), type_("MemoryEndpoint<" + std::string(technologyName(t)) + "," + std::to_string(w) + ">") { c.validate(w, t, t != Technology::Container); }
+      config_(c), scalable_device_(scalable_device),
+      type_("MemoryEndpoint<" + std::string(technologyName(t)) + "," + std::to_string(w) + ">") { c.validate(w, t, t != Technology::Container && !scalable_device); }
 void MemoryEndpoint::buildInternals(ComponentBuilder& b) {
     memory_detail::StructuralWiring w(b);
     auto controller = b.addNewComponent<MemoryController>("CONTROLLER", width_, technology_, config_);
     std::shared_ptr<IOComponent> device;
     if (technology_ == Technology::Container) {
         device = b.addNewComponent<BehavioralMemoryEndpoint>("MEMORY", width_, Technology::SRAM, config_);
-    } else if (!config_.expanded_storage) {
+    } else if (scalable_device_) {
         device = memory_device::child(b,*this,"memory.device."+std::string(technologyName(technology_))+"."+std::to_string(width_),
                                       "MEMORY",endpointParameters(config_));
     } else {

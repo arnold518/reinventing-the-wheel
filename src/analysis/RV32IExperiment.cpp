@@ -103,7 +103,6 @@ RV32IExperimentResult runRV32IExperiment(const RV32IExperimentConfig& config) {
     auto core=b.add(family,"CORE",config.core=="advanced"?config.prediction.parameters():circuit::ParameterMap{});
     auto memory_config=config.memory;
     memory_config.device.record_history=false;
-    memory_config.device.expanded_storage=false;
     auto imem=rv32i::buildMemory(b,*root,"IMEM",memory_config);
     auto dmem=rv32i::buildMemory(b,*root,"DMEM",memory_config);
     rv32i::wireMemorySystem(b,core,imem,dmem,root->getInputPin("CLK"),root->getInputPin("RST"));
