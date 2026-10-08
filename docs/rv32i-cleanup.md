@@ -270,3 +270,14 @@ The five smallest parts (`SRLatch`/`GatedDLatch`, `DFlipFlop`, `FlipFlopCell`,
 (`builder.wire(name).fromInput(...).to<T>(...)`). They now use
 `StructuralWiring` like everything else, and the `WireBuilder` class is
 removed. Their wires are named `net_<index>`.
+
+## Behavioral forms added where a part blocked its parent (October 8)
+
+`Adder32`, the four 32-bit bus muxes, `Decoder5to32` (and its register-file
+variant with output 0 unused, contract `decode.5-to-32.x0-unused`),
+`RV32IMemoryRequest` and `RV32IMemoryLanes` gained behavioral forms under
+their existing contracts. The component tests run both forms against the same
+expected values. `LogicValueHelpers.hpp` now holds the gate rules as
+functions, so a behavioral form gives the same result as the gates for
+unknown inputs. Parents still build these parts by class, so no existing
+circuit or default view changed.

@@ -4,9 +4,9 @@ These are **CPU-side** components. The lane/alignment logic is shared by both co
 
 | Component | Description | Structural | Behavioral |
 | --- | --- | :---: | :---: |
-| `RV32IMemoryLanes` | Little-endian subword extraction, store placement, masks, and endpoint address | Yes | No |
+| `RV32IMemoryLanes` | Little-endian subword extraction, store placement, masks, and endpoint address | Yes | Yes |
 | `RV32IMemoryAlignmentUnit` | Address alignment predicate | Yes | Yes |
-| `RV32IMemoryRequest` | CPU-owned, one-outstanding transaction requester | Yes | No |
+| `RV32IMemoryRequest` | CPU-owned, one-outstanding transaction requester | Yes | Yes |
 
 Columns count registered implementations. Behavioral pipeline cores contain equivalent requester bookkeeping; the [single-cycle Memory](../4.4/memory.md) stage contains only equivalent formatting logic. Those helpers are not separately selectable implementations of these building blocks. C++ examples below specify binary behavior without propagation delays.
 
@@ -75,7 +75,11 @@ Nine top-level children expose the data flow instead of placing every bit gate s
 
 `ADDRESS` receives `ADDR[32]` and `SIZE[2]`; it outputs `WORD_ADDR[32]`, `OFFSET[2]`, and `BYTE/HALF/WORD`. `LOAD_EXTEND` receives shifted `DATA[32]`, those three enables, and `SIGN_EXTEND`; its `OUT[32]` is assembled from four `RV32ILoadByte<0…3>` circuits. Each byte circuit contains eight numbered bit lanes; lower bytes retain input bits while higher bytes select the relevant sign fill. `WRITE_MASK` receives the offset and size enables and produces `MASK[4]`.
 
-These are fixed structural helpers with no state or registered behavioral variants. All original alignment, reserved-size, and partial-unknown behavior remains in gates; grouping does not turn them into behavioral memory devices.
+The internal helpers are fixed structural parts with no state and no behavioral variants of their own; grouping does not turn them into behavioral memory devices.
+
+#### Behavioral implementation
+
+[`RV32IMemoryLanesBehavioral`](https://github.com/arnold518/reinventing-the-wheel/blob/github-pages/src/modules/rv32i/RV32IMemoryLanes.cpp) computes the four outputs with the same lane functions the behavioral cores call (`memoryWordAddress`, `memoryLoadData`, `memoryWriteMask`, and the store shift), with one abstract output-delay tick. It is defined for known binary inputs: if any input bit is `X` or `Z`, every output is unknown. Partial-unknown behavior is specified by the structural gates only.
 
 ### Examples
 
@@ -273,7 +277,11 @@ driving the constant Read operation, zero write data, and full byte mask onto
 the bus. The general data requester retains all five fields, including its
 variable store payload, to keep a pending request stable under backpressure.
 
-Response data is wired straight from `BUS_RSP_READ_DATA` to `READ_DATA`; there is no response register. The retained request/state is why a requester cannot be replaced with a port rename. There is no registered behavioral implementation; `RV32IMemoryRequestModel.hpp` supplies equivalent state bookkeeping inside the behavioral CPU implementations.
+Response data is wired straight from `BUS_RSP_READ_DATA` to `READ_DATA`; there is no response register. The retained request/state is why a requester cannot be replaced with a port rename.
+
+#### Behavioral implementation
+
+[`RV32IMemoryRequestBehavioral`](https://github.com/arnold518/reinventing-the-wheel/blob/github-pages/src/modules/rv32i/RV32IMemoryRequest.cpp) keeps the three state bits and the saved request in one `MemoryRequestState` ([`RV32IMemoryRequestModel.hpp`](https://github.com/arnold518/reinventing-the-wheel/blob/github-pages/src/modules/rv32i/RV32IMemoryRequestModel.hpp)), the same state the behavioral cores keep for their instruction and data requests, so the rule has one owner. Outputs follow with one abstract output-delay tick. It is defined for known binary controls; fault is still the OR of the status bits and response data is passed through unchanged.
 
 Request presence, reset qualification and response validity are prepared before the late `TAKE`/discard decision. This shortens the combinational completion path without adding a cycle or changing when either handshake is accepted.
 

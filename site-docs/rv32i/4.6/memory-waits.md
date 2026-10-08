@@ -4,8 +4,8 @@ The advanced core accepts the same universal memory interface as the other cores
 
 | Component | Description | Structural | Behavioral |
 | --- | --- | :---: | :---: |
-| `RV32IMemoryRequest` | CPU-side ownership of one outstanding request and its response | Yes | In compact core; not separately selectable |
-| `RV32IMemoryLanes` | Load extension, byte-lane placement and masks | Yes | In enclosing behavioral stages/core |
+| `RV32IMemoryRequest` | CPU-side ownership of one outstanding request and its response | Yes | Yes; the advanced core builds its two requesters structurally |
+| `RV32IMemoryLanes` | Load extension, byte-lane placement and masks | Yes | Yes; the cores build theirs structurally |
 | `RV32IPipelineCoordinator` | Combine completion, hazards, recovery and precise stopping | Yes | Yes |
 
 ## Responsibilities
