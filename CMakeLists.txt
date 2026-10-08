@@ -38,7 +38,6 @@ set(CORE_LOGIC_SOURCES
     src/components/IOComponent.cpp
     src/components/BasicComponent.cpp
     src/components/ComponentBuilder.cpp
-    src/components/WireBuilder.cpp
     src/components/selection/SelectionTypes.cpp
     src/components/selection/BuildManifest.cpp
     src/components/selection/BuildProfile.cpp

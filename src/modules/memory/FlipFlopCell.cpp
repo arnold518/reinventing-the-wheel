@@ -2,7 +2,7 @@
 
 #include "components/ComponentBuilder.hpp"
 #include "components/ComponentBuilder.tpp"
-#include "components/WireBuilder.hpp"
+#include "components/StructuralNetBuilder.hpp"
 #include "modules/basic/DFlipFlop.hpp"
 #include "modules/basic/Mux.hpp"
 #include "modules/memory/FlipFlopCellBehavioral.hpp"
@@ -36,31 +36,22 @@ FlipFlopCell::FlipFlopCell(std::string name)
                   circuit::families::FlipFlopCell.pinInitializer()) {}
 
 void FlipFlopCell::buildInternals(ComponentBuilder& builder) {
+    circuit::detail::StructuralWiring w(builder);
     builder.addNewComponent<Mux2to1>("WRITE_MUX");
     builder.addNewComponent<DFlipFlop>("STATE");
 
-    builder.wire("D_to_write_mux")
-        .fromInput("D")
-        .to<Mux2to1>("WRITE_MUX", "B");
+    w.connect(getInputPin("D"), builder.getInputPin<Mux2to1>("WRITE_MUX", "B"));
 
-    builder.wire("WE_to_write_mux")
-        .fromInput("WE")
-        .to<Mux2to1>("WRITE_MUX", "SEL");
+    w.connect(getInputPin("WE"), builder.getInputPin<Mux2to1>("WRITE_MUX", "SEL"));
 
-    builder.wire("CLK_to_state")
-        .fromInput("CLK")
-        .to<DFlipFlop>("STATE", "CLK");
+    w.connect(getInputPin("CLK"), builder.getInputPin<DFlipFlop>("STATE", "CLK"));
 
-    builder.wire("RST_to_state")
-        .fromInput("RST")
-        .to<DFlipFlop>("STATE", "RST");
+    w.connect(getInputPin("RST"), builder.getInputPin<DFlipFlop>("STATE", "RST"));
 
-    builder.wire("write_mux_to_state")
-        .from<Mux2to1>("WRITE_MUX", "OUT")
-        .to<DFlipFlop>("STATE", "D");
+    w.connect(builder.getOutputPin<Mux2to1>("WRITE_MUX", "OUT"), builder.getInputPin<DFlipFlop>("STATE", "D"));
 
-    builder.wire("state_feedback")
-        .from<DFlipFlop>("STATE", "Q")
-        .to<Mux2to1>("WRITE_MUX", "A")
-        .toOutput("Q");
+    w.connect(builder.getOutputPin<DFlipFlop>("STATE", "Q"),
+        {builder.getInputPin<Mux2to1>("WRITE_MUX", "A"),
+        getOutputPin("Q")});
+    w.finish();
 }

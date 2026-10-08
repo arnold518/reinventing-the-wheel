@@ -2,7 +2,7 @@
 #include "components/ComponentBuilder.hpp"
 #include "components/ComponentBuilder.tpp"
 #include "components/PinMacros.hpp"
-#include "components/WireBuilder.hpp"
+#include "components/StructuralNetBuilder.hpp"
 #include "modules/basic/Gate.hpp"
 
 BEGIN_PINS(HalfAdder, IOComponent)
@@ -13,24 +13,20 @@ BEGIN_PINS(HalfAdder, IOComponent)
 END_PINS()
 
 void HalfAdder::buildInternals(ComponentBuilder& builder) {
+    circuit::detail::StructuralWiring w(builder);
     builder.addNewComponent<XORGate>("XOR1");
     builder.addNewComponent<ANDGate>("AND1");
 
-    builder.wire("A_internal")
-        .fromInput("A")
-        .to<XORGate>("XOR1", "A")
-        .to<ANDGate>("AND1", "A");
+    w.connect(getInputPin("A"),
+        {builder.getInputPin<XORGate>("XOR1", "A"),
+        builder.getInputPin<ANDGate>("AND1", "A")});
 
-    builder.wire("B_internal")
-        .fromInput("B")
-        .to<XORGate>("XOR1", "B")
-        .to<ANDGate>("AND1", "B");
+    w.connect(getInputPin("B"),
+        {builder.getInputPin<XORGate>("XOR1", "B"),
+        builder.getInputPin<ANDGate>("AND1", "B")});
 
-    builder.wire("Sum_internal")
-        .from<XORGate>("XOR1", "OUT")
-        .toOutput("Sum");
+    w.connect(builder.getOutputPin<XORGate>("XOR1", "OUT"), getOutputPin("Sum"));
 
-    builder.wire("Carry_internal")
-        .from<ANDGate>("AND1", "OUT")
-        .toOutput("Carry");
+    w.connect(builder.getOutputPin<ANDGate>("AND1", "OUT"), getOutputPin("Carry"));
+    w.finish();
 }

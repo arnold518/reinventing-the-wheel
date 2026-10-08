@@ -3,7 +3,7 @@
 #include "components/ComponentBuilder.hpp"
 #include "components/ComponentBuilder.tpp"
 #include "components/PinMacros.hpp"
-#include "components/WireBuilder.hpp"
+#include "components/StructuralNetBuilder.hpp"
 #include "modules/basic/Gate.hpp"
 #include "modules/basic/Latch.hpp"
 
@@ -16,37 +16,27 @@ BEGIN_PINS(DFlipFlop, IOComponent)
 END_PINS()
 
 void DFlipFlop::buildInternals(ComponentBuilder& builder) {
+    circuit::detail::StructuralWiring w(builder);
     builder.addNewComponent<NOTGate>("NOT_CLK");
     builder.addNewComponent<GatedDLatch>("MASTER");
     builder.addNewComponent<GatedDLatch>("SLAVE");
 
-    builder.wire("D_to_master")
-        .fromInput("D")
-        .to<GatedDLatch>("MASTER", "D");
+    w.connect(getInputPin("D"), builder.getInputPin<GatedDLatch>("MASTER", "D"));
 
-    builder.wire("CLK_internal")
-        .fromInput("CLK")
-        .to<NOTGate>("NOT_CLK", "IN")
-        .to<GatedDLatch>("SLAVE", "EN");
+    w.connect(getInputPin("CLK"),
+        {builder.getInputPin<NOTGate>("NOT_CLK", "IN"),
+        builder.getInputPin<GatedDLatch>("SLAVE", "EN")});
 
-    builder.wire("not_clk_to_master_en")
-        .from<NOTGate>("NOT_CLK", "OUT")
-        .to<GatedDLatch>("MASTER", "EN");
+    w.connect(builder.getOutputPin<NOTGate>("NOT_CLK", "OUT"), builder.getInputPin<GatedDLatch>("MASTER", "EN"));
 
-    builder.wire("RST_to_latches")
-        .fromInput("RST")
-        .to<GatedDLatch>("MASTER", "RST")
-        .to<GatedDLatch>("SLAVE", "RST");
+    w.connect(getInputPin("RST"),
+        {builder.getInputPin<GatedDLatch>("MASTER", "RST"),
+        builder.getInputPin<GatedDLatch>("SLAVE", "RST")});
 
-    builder.wire("master_q_to_slave")
-        .from<GatedDLatch>("MASTER", "Q")
-        .to<GatedDLatch>("SLAVE", "D");
+    w.connect(builder.getOutputPin<GatedDLatch>("MASTER", "Q"), builder.getInputPin<GatedDLatch>("SLAVE", "D"));
 
-    builder.wire("slave_q_to_output")
-        .from<GatedDLatch>("SLAVE", "Q")
-        .toOutput("Q");
+    w.connect(builder.getOutputPin<GatedDLatch>("SLAVE", "Q"), getOutputPin("Q"));
 
-    builder.wire("slave_q_bar_to_output")
-        .from<GatedDLatch>("SLAVE", "Q_BAR")
-        .toOutput("Q_BAR");
+    w.connect(builder.getOutputPin<GatedDLatch>("SLAVE", "Q_BAR"), getOutputPin("Q_BAR"));
+    w.finish();
 }

@@ -264,3 +264,9 @@ words are registers; its decoder and read selectors supply the addressing.
 inside the memory controller's). Both are documented in section 4.3.1 of the
 site, which also states the distinction; section 3.2 now points there for the
 state bit. No circuit changed.
+
+The five smallest parts (`SRLatch`/`GatedDLatch`, `DFlipFlop`, `FlipFlopCell`,
+`HalfAdder`, `FullAdder`) used a third, fluent form
+(`builder.wire(name).fromInput(...).to<T>(...)`). They now use
+`StructuralWiring` like everything else, and the `WireBuilder` class is
+removed. Their wires are named `net_<index>`.

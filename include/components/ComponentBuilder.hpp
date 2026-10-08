@@ -8,8 +8,6 @@
 #include "components/selection/ComponentFamily.hpp"
 #include "components/selection/SelectionTypes.hpp"
 
-// Forward declaration for WireBuilder
-class WireBuilder;
 
 class ComponentBuilder
 {
@@ -66,9 +64,6 @@ public:
         std::string observation = {});
 
     const std::shared_ptr<circuit::BuildContext>& getBuildContext() const;
-
-    // Wire Builder API (fluent interface)
-    WireBuilder wire(std::string name);
 };
 
 // DO NOT INCLUDE THE .tpp FILE HERE. THIS BREAKS THE CYCLE.

@@ -2,7 +2,6 @@
 #include "basic/SupportedWidths.hpp"
 #include "components/Component.hpp"
 #include "components/IOComponent.hpp"
-#include "components/WireBuilder.hpp"
 #include "basic/Pin.hpp"
 #include "basic/PinBase.hpp"
 #include "basic/Wire.hpp"
@@ -156,6 +155,3 @@ std::shared_ptr<Pin<>> ComponentBuilder::getOutputPin(const std::string& pin_nam
     return nullptr;
 }
 
-WireBuilder ComponentBuilder::wire(std::string name) {
-    return WireBuilder(this, std::move(name));
-}

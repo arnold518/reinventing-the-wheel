@@ -3,7 +3,7 @@
 #include "components/ComponentBuilder.hpp"
 #include "components/ComponentBuilder.tpp"
 #include "components/PinMacros.hpp"
-#include "components/WireBuilder.hpp"
+#include "components/StructuralNetBuilder.hpp"
 #include "modules/basic/Gate.hpp"
 
 BEGIN_PINS(SRLatch, IOComponent)
@@ -14,26 +14,22 @@ BEGIN_PINS(SRLatch, IOComponent)
 END_PINS()
 
 void SRLatch::buildInternals(ComponentBuilder& builder) {
+    circuit::detail::StructuralWiring w(builder);
     builder.addNewComponent<NANDGate>("NAND_Q");
     builder.addNewComponent<NANDGate>("NAND_Q_BAR");
 
-    builder.wire("S_bar_to_q")
-        .fromInput("S_BAR")
-        .to<NANDGate>("NAND_Q", "A");
+    w.connect(getInputPin("S_BAR"), builder.getInputPin<NANDGate>("NAND_Q", "A"));
 
-    builder.wire("R_bar_to_q_bar")
-        .fromInput("R_BAR")
-        .to<NANDGate>("NAND_Q_BAR", "A");
+    w.connect(getInputPin("R_BAR"), builder.getInputPin<NANDGate>("NAND_Q_BAR", "A"));
 
-    builder.wire("q_feedback")
-        .from<NANDGate>("NAND_Q", "OUT")
-        .to<NANDGate>("NAND_Q_BAR", "B")
-        .toOutput("Q");
+    w.connect(builder.getOutputPin<NANDGate>("NAND_Q", "OUT"),
+        {builder.getInputPin<NANDGate>("NAND_Q_BAR", "B"),
+        getOutputPin("Q")});
 
-    builder.wire("q_bar_feedback")
-        .from<NANDGate>("NAND_Q_BAR", "OUT")
-        .to<NANDGate>("NAND_Q", "B")
-        .toOutput("Q_BAR");
+    w.connect(builder.getOutputPin<NANDGate>("NAND_Q_BAR", "OUT"),
+        {builder.getInputPin<NANDGate>("NAND_Q", "B"),
+        getOutputPin("Q_BAR")});
+    w.finish();
 }
 
 BEGIN_PINS(GatedDLatch, IOComponent)
@@ -45,6 +41,7 @@ BEGIN_PINS(GatedDLatch, IOComponent)
 END_PINS()
 
 void GatedDLatch::buildInternals(ComponentBuilder& builder) {
+    circuit::detail::StructuralWiring w(builder);
     builder.addNewComponent<NOTGate>("NOT_D");
     builder.addNewComponent<NOTGate>("NOT_RST");
     builder.addNewComponent<NANDGate>("S_DATA_BAR");
@@ -53,50 +50,32 @@ void GatedDLatch::buildInternals(ComponentBuilder& builder) {
     builder.addNewComponent<ANDGate>("R_RESET_GATE");
     builder.addNewComponent<SRLatch>("STATE");
 
-    builder.wire("D_internal")
-        .fromInput("D")
-        .to<NOTGate>("NOT_D", "IN")
-        .to<NANDGate>("S_DATA_BAR", "A");
+    w.connect(getInputPin("D"),
+        {builder.getInputPin<NOTGate>("NOT_D", "IN"),
+        builder.getInputPin<NANDGate>("S_DATA_BAR", "A")});
 
-    builder.wire("not_d_to_r_data")
-        .from<NOTGate>("NOT_D", "OUT")
-        .to<NANDGate>("R_DATA_BAR", "A");
+    w.connect(builder.getOutputPin<NOTGate>("NOT_D", "OUT"), builder.getInputPin<NANDGate>("R_DATA_BAR", "A"));
 
-    builder.wire("EN_to_data_gates")
-        .fromInput("EN")
-        .to<NANDGate>("S_DATA_BAR", "B")
-        .to<NANDGate>("R_DATA_BAR", "B");
+    w.connect(getInputPin("EN"),
+        {builder.getInputPin<NANDGate>("S_DATA_BAR", "B"),
+        builder.getInputPin<NANDGate>("R_DATA_BAR", "B")});
 
-    builder.wire("RST_internal")
-        .fromInput("RST")
-        .to<NOTGate>("NOT_RST", "IN")
-        .to<ORGate>("S_RESET_GATE", "B");
+    w.connect(getInputPin("RST"),
+        {builder.getInputPin<NOTGate>("NOT_RST", "IN"),
+        builder.getInputPin<ORGate>("S_RESET_GATE", "B")});
 
-    builder.wire("not_rst_to_r_reset")
-        .from<NOTGate>("NOT_RST", "OUT")
-        .to<ANDGate>("R_RESET_GATE", "B");
+    w.connect(builder.getOutputPin<NOTGate>("NOT_RST", "OUT"), builder.getInputPin<ANDGate>("R_RESET_GATE", "B"));
 
-    builder.wire("s_data_to_reset_gate")
-        .from<NANDGate>("S_DATA_BAR", "OUT")
-        .to<ORGate>("S_RESET_GATE", "A");
+    w.connect(builder.getOutputPin<NANDGate>("S_DATA_BAR", "OUT"), builder.getInputPin<ORGate>("S_RESET_GATE", "A"));
 
-    builder.wire("r_data_to_reset_gate")
-        .from<NANDGate>("R_DATA_BAR", "OUT")
-        .to<ANDGate>("R_RESET_GATE", "A");
+    w.connect(builder.getOutputPin<NANDGate>("R_DATA_BAR", "OUT"), builder.getInputPin<ANDGate>("R_RESET_GATE", "A"));
 
-    builder.wire("s_reset_to_state")
-        .from<ORGate>("S_RESET_GATE", "OUT")
-        .to<SRLatch>("STATE", "S_BAR");
+    w.connect(builder.getOutputPin<ORGate>("S_RESET_GATE", "OUT"), builder.getInputPin<SRLatch>("STATE", "S_BAR"));
 
-    builder.wire("r_reset_to_state")
-        .from<ANDGate>("R_RESET_GATE", "OUT")
-        .to<SRLatch>("STATE", "R_BAR");
+    w.connect(builder.getOutputPin<ANDGate>("R_RESET_GATE", "OUT"), builder.getInputPin<SRLatch>("STATE", "R_BAR"));
 
-    builder.wire("state_q_to_output")
-        .from<SRLatch>("STATE", "Q")
-        .toOutput("Q");
+    w.connect(builder.getOutputPin<SRLatch>("STATE", "Q"), getOutputPin("Q"));
 
-    builder.wire("state_q_bar_to_output")
-        .from<SRLatch>("STATE", "Q_BAR")
-        .toOutput("Q_BAR");
+    w.connect(builder.getOutputPin<SRLatch>("STATE", "Q_BAR"), getOutputPin("Q_BAR"));
+    w.finish();
 }

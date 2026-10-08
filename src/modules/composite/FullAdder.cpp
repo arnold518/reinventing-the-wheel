@@ -2,7 +2,7 @@
 #include "components/ComponentBuilder.hpp"
 #include "components/ComponentBuilder.tpp"
 #include "components/PinMacros.hpp"
-#include "components/WireBuilder.hpp"
+#include "components/StructuralNetBuilder.hpp"
 #include "modules/basic/Gate.hpp"
 #include "modules/composite/HalfAdder.hpp"
 
@@ -15,39 +15,25 @@ BEGIN_PINS(FullAdder, IOComponent)
 END_PINS()
 
 void FullAdder::buildInternals(ComponentBuilder& builder) {
+    circuit::detail::StructuralWiring w(builder);
     builder.addNewComponent<HalfAdder>("HA1");
     builder.addNewComponent<HalfAdder>("HA2");
     builder.addNewComponent<ORGate>("OR1");
 
-    builder.wire("A_internal")
-        .fromInput("A")
-        .to<HalfAdder>("HA1", "A");
+    w.connect(getInputPin("A"), builder.getInputPin<HalfAdder>("HA1", "A"));
 
-    builder.wire("B_internal")
-        .fromInput("B")
-        .to<HalfAdder>("HA1", "B");
+    w.connect(getInputPin("B"), builder.getInputPin<HalfAdder>("HA1", "B"));
 
-    builder.wire("Cin_internal")
-        .fromInput("Carry_in")
-        .to<HalfAdder>("HA2", "B");
+    w.connect(getInputPin("Carry_in"), builder.getInputPin<HalfAdder>("HA2", "B"));
 
-    builder.wire("HA1_Sum_to_HA2_A")
-        .from<HalfAdder>("HA1", "Sum")
-        .to<HalfAdder>("HA2", "A");
+    w.connect(builder.getOutputPin<HalfAdder>("HA1", "Sum"), builder.getInputPin<HalfAdder>("HA2", "A"));
 
-    builder.wire("HA1_Carry_to_OR")
-        .from<HalfAdder>("HA1", "Carry")
-        .to<ORGate>("OR1", "A");
+    w.connect(builder.getOutputPin<HalfAdder>("HA1", "Carry"), builder.getInputPin<ORGate>("OR1", "A"));
 
-    builder.wire("HA2_Carry_to_OR")
-        .from<HalfAdder>("HA2", "Carry")
-        .to<ORGate>("OR1", "B");
+    w.connect(builder.getOutputPin<HalfAdder>("HA2", "Carry"), builder.getInputPin<ORGate>("OR1", "B"));
 
-    builder.wire("Sum_internal")
-        .from<HalfAdder>("HA2", "Sum")
-        .toOutput("Sum");
+    w.connect(builder.getOutputPin<HalfAdder>("HA2", "Sum"), getOutputPin("Sum"));
 
-    builder.wire("Carry_out_internal")
-        .from<ORGate>("OR1", "OUT")
-        .toOutput("Carry_out");
+    w.connect(builder.getOutputPin<ORGate>("OR1", "OUT"), getOutputPin("Carry_out"));
+    w.finish();
 }
