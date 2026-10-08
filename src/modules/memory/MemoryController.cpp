@@ -13,6 +13,8 @@
 #include "MemoryEndpointEngine.hpp"
 #include "MemoryHandshakeWiring.hpp"
 #include "MemoryFFController.hpp"
+#include "simulator/Event.hpp"
+#include "simulator/Simulator.hpp"
 #include <algorithm>
 
 using namespace circuit;
@@ -179,7 +181,12 @@ class MemoryControllerBehavioral : public Primitive {
         publish(sim, t, "MEM_WORD_ADDR", word);
         publish(sim, t, "MEM_WRITE_DATA", read("REQ_WRITE_DATA"));
         publish(sim, t, "MEM_WRITE_MASK", mask);
-        publish(sim, t, "MEM_CLK", read("CLK"));
+        // The structural form passes the clock to the device with no delay,
+        // so the device sees the edge while the write strobe is still high.
+        const auto clock_pin = getOutputPin("MEM_CLK");
+        clock_pin->setValueFromVector(read("CLK"));
+        if (auto wire = clock_pin->getExternalWireBase())
+            sim.scheduleEvent(makeWireUpdateEvent(t, wire, read("CLK")));
         publish(sim, t, "MEM_RST", L);
         publish(sim, t, "MEM_WE", accept_now && writing ? H : L);
         publish(sim, t, "MEM_READ_EN", accept_now && reading ? H : L);

@@ -281,3 +281,18 @@ expected values. `LogicValueHelpers.hpp` now holds the gate rules as
 functions, so a behavioral form gives the same result as the gates for
 unknown inputs. Parents still build these parts by class, so no existing
 circuit or default view changed.
+
+## Structural CPU views are compact only at storage and memory (October 8)
+
+- `ALU32` builds its arithmetic, logic, shift and zero-detect units by class,
+  so inside an ALU they are always gate-level and no longer selectable one by
+  one. The ALU as a whole remains selectable; each unit keeps its behavioral
+  form for standalone use. No profile or fingerprint changed.
+- `MemoryController` has a behavioral form for all five technologies. An
+  endpoint requests its controller through the catalog, so a profile can show
+  it as gates or as one part. The flip-flop controller passes the clock to its
+  device with no delay in both forms.
+- `src/modules/rv32i/RV32IPipelineRules.hpp` states the pipeline's stage rules
+  once (data alignment, operand forwarding, the execute rule, writeback value,
+  the pre-memory stop condition, retirement cause). The stages' behavioral
+  forms and the whole-core behavioral form both call it.

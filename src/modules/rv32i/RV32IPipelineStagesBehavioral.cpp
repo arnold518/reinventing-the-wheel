@@ -7,6 +7,7 @@
 #include "modules/composite/ALU32.hpp"
 #include "modules/rv32i/RV32IPipelineEncoding.hpp"
 #include "RV32IPipelineStagesInternal.hpp"
+#include "RV32IPipelineRules.hpp"
 
 namespace {
 using rv32i::pipeline_encoding::bits;
@@ -26,27 +27,16 @@ uint8_t address5(const BasicComponent& component, const char* pin) {
 }
 
 bool misaligned(uint32_t address, rv32i::RV32IMemorySize size) {
-    switch (size) {
-        case rv32i::RV32IMemorySize::Byte: return false;
-        case rv32i::RV32IMemorySize::Halfword:
-            return (address & 1U) != 0;
-        case rv32i::RV32IMemorySize::Word:
-            return (address & 3U) != 0;
-        case rv32i::RV32IMemorySize::None: return true;
-    }
-    return true;
+    return rv32i::pipeline_rules::dataMisaligned(address, size);
 }
 
 bool preterminal(
     uint32_t fetch_status,
     uint32_t execution_status,
     const rv32i::RV32IControlSignals& control) {
-    return rv32i::pipeline_encoding::statusBit(fetch_status, 0)
-        || rv32i::pipeline_encoding::statusBit(fetch_status, 1)
-        || !control.legal
-        || control.trap
-        || control.halt
-        || rv32i::pipeline_encoding::statusBit(execution_status, 0);
+    using rv32i::pipeline_encoding::statusBit;
+    return rv32i::pipeline_rules::preterminal(
+        statusBit(fetch_status, 0), statusBit(fetch_status, 1), control, statusBit(execution_status, 0));
 }
 
 uint32_t writebackValue(
@@ -54,27 +44,7 @@ uint32_t writebackValue(
     uint32_t alu_result,
     uint32_t memory_data,
     uint32_t pc_plus_4) {
-    switch (control.writeback) {
-        case rv32i::RV32IWritebackSource::ALU: return alu_result;
-        case rv32i::RV32IWritebackSource::Memory: return memory_data;
-        case rv32i::RV32IWritebackSource::PCPlus4: return pc_plus_4;
-        case rv32i::RV32IWritebackSource::None: return 0;
-    }
-    return 0;
-}
-
-rv32i::RV32IExecutionTrapCause decodeTrap(
-    rv32i::RV32ITrapCause cause) {
-    using Result = rv32i::RV32IExecutionTrapCause;
-    switch (cause) {
-        case rv32i::RV32ITrapCause::EnvironmentCall:
-            return Result::EnvironmentCall;
-        case rv32i::RV32ITrapCause::IllegalInstruction:
-            return Result::IllegalInstruction;
-        case rv32i::RV32ITrapCause::None:
-            return Result::None;
-    }
-    return Result::IllegalInstruction;
+    return rv32i::pipeline_rules::writebackValue(control, alu_result, memory_data, pc_plus_4);
 }
 
 rv32i::RV32IExecutionTrapCause retirementCause(
@@ -83,34 +53,10 @@ rv32i::RV32IExecutionTrapCause retirementCause(
     uint32_t execution_status,
     uint32_t memory_status,
     const rv32i::RV32IControlSignals& control) {
-    using Cause = rv32i::RV32IExecutionTrapCause;
-    if (!valid) return Cause::None;
-    if (rv32i::pipeline_encoding::statusBit(fetch_status, 0)) {
-        return Cause::InstructionAddressMisaligned;
-    }
-    if (rv32i::pipeline_encoding::statusBit(fetch_status, 1)) {
-        return Cause::InstructionAccessFault;
-    }
-    if (!control.legal) return Cause::IllegalInstruction;
-    if (control.trap) return decodeTrap(control.trap_cause);
-    const bool data_misaligned =
-        rv32i::pipeline_encoding::statusBit(memory_status, 0);
-    const bool data_fault =
-        rv32i::pipeline_encoding::statusBit(memory_status, 1);
-    if (data_misaligned) {
-        return control.mem_write
-            ? Cause::StoreAddressMisaligned
-            : Cause::LoadAddressMisaligned;
-    }
-    if (data_fault) {
-        return control.mem_write
-            ? Cause::StoreAccessFault
-            : Cause::LoadAccessFault;
-    }
-    if (rv32i::pipeline_encoding::statusBit(execution_status, 0)) {
-        return Cause::InstructionAddressMisaligned;
-    }
-    return Cause::None;
+    using rv32i::pipeline_encoding::statusBit;
+    return rv32i::pipeline_rules::retirementCause(
+        valid, statusBit(fetch_status, 0), statusBit(fetch_status, 1), control,
+        statusBit(memory_status, 0), statusBit(memory_status, 1), statusBit(execution_status, 0));
 }
 
 class RV32IFetchStageBehavioral : public BasicComponent {
@@ -349,69 +295,26 @@ public:
                 word(*this, "IN_CONTROL"));
         const uint32_t addresses =
             word(*this, "IN_REGISTER_ADDRESSES");
-        const auto forward = [&](uint8_t source, uint32_t original) {
-            if (high(getInputValue("EX_MEM_VALID"))
-                && high(getInputValue("EX_MEM_REG_WRITE"))
-                && address5(*this, "EX_MEM_RD") == source
-                && source != 0) {
-                // A younger unready producer hides an older WB value.
-                return high(getInputValue("EX_MEM_RESULT_READY"))
-                    ? word(*this, "EX_MEM_VALUE") : original;
-            }
-            if (high(getInputValue("MEM_WB_VALID"))
-                && high(getInputValue("MEM_WB_REG_WRITE"))
-                && address5(*this, "MEM_WB_RD") == source
-                && source != 0) {
-                return word(*this, "MEM_WB_VALUE");
-            }
-            return original;
-        };
-        const uint32_t rs1 = forward(
-            rv32i::pipeline_encoding::rs1(addresses),
-            word(*this, "IN_RS1_VALUE"));
-        const uint32_t rs2 = forward(
-            rv32i::pipeline_encoding::rs2(addresses),
-            word(*this, "IN_RS2_VALUE"));
+        const rv32i::pipeline_rules::ForwardSource ex_mem{
+            high(getInputValue("EX_MEM_VALID")), high(getInputValue("EX_MEM_REG_WRITE")),
+            high(getInputValue("EX_MEM_RESULT_READY")), address5(*this, "EX_MEM_RD"), word(*this, "EX_MEM_VALUE")};
+        const rv32i::pipeline_rules::ForwardSource mem_wb{
+            high(getInputValue("MEM_WB_VALID")), high(getInputValue("MEM_WB_REG_WRITE")),
+            true, address5(*this, "MEM_WB_RD"), word(*this, "MEM_WB_VALUE")};
+        const uint32_t rs1 = rv32i::pipeline_rules::forwardOperand(
+            rv32i::pipeline_encoding::rs1(addresses), word(*this, "IN_RS1_VALUE"), ex_mem, mem_wb);
+        const uint32_t rs2 = rv32i::pipeline_rules::forwardOperand(
+            rv32i::pipeline_encoding::rs2(addresses), word(*this, "IN_RS2_VALUE"), ex_mem, mem_wb);
         const uint32_t pc = word(*this, "IN_PC");
-        const uint32_t immediate = word(*this, "IN_IMMEDIATE");
-        const uint32_t alu_a =
-            control.alu_a == rv32i::RV32IALUSourceA::RS1
-            ? rs1
-            : control.alu_a == rv32i::RV32IALUSourceA::PC
-                ? pc
-                : 0U;
-        const uint32_t alu_b =
-            control.alu_b == rv32i::RV32IALUSourceB::RS2
-            ? rs2
-            : control.alu_b == rv32i::RV32IALUSourceB::Immediate
-                ? immediate
-                : 0U;
-        const uint32_t result = alu32Result(control.alu_op, alu_a, alu_b);
-        const uint32_t pc_plus_4 = pc + 4U;
-        const bool compare=control.alu_op==ALU32Op::SUB||control.alu_op==ALU32Op::SLT||control.alu_op==ALU32Op::SLTU;
-        const bool eq=compare&&alu_a==alu_b,lt=compare&&int32_t(alu_a)<int32_t(alu_b),ltu=compare&&alu_a<alu_b;
-        const bool conditions[]{false,eq,!eq,lt,!lt,ltu,!ltu,false};
-        const bool branch = conditions[unsigned(control.branch)&7];
-        _updateOutputWire(simulator,"IS_BRANCH",logic(control.branch!=rv32i::RV32IBranchType::None),time);
-        _updateOutputWire(simulator,"BRANCH_TAKEN",logic(branch),time);
-        uint32_t next_pc = pc_plus_4;
-        if (control.jump != rv32i::RV32IJumpType::None) {
-            next_pc=control.jump==rv32i::RV32IJumpType::JAL ? result
-                : control.jump==rv32i::RV32IJumpType::JALR ? result&~uint32_t{1} : 0;
-        } else if (branch) {
-            next_pc = pc + immediate;
-        }
-        const bool raw_redirect =
-            branch || control.jump != rv32i::RV32IJumpType::None;
-        const auto target=control.jump==rv32i::RV32IJumpType::None ? pc+immediate
-            : control.jump==rv32i::RV32IJumpType::JAL ? result
-            : control.jump==rv32i::RV32IJumpType::JALR ? result&~uint32_t{1} : 0;
+        const auto executed = rv32i::pipeline_rules::execute(control, pc, word(*this, "IN_IMMEDIATE"), rs1, rs2);
+        const uint32_t result = executed.alu_result, pc_plus_4 = executed.pc_plus_4, next_pc = executed.next_pc;
+        const bool raw_redirect = executed.control_taken;
+        _updateOutputWire(simulator,"IS_BRANCH",logic(executed.is_branch),time);
+        _updateOutputWire(simulator,"BRANCH_TAKEN",logic(executed.branch_taken),time);
         _updateOutputWire(simulator,"CONTROL_TAKEN",logic(raw_redirect),time);
-        _updateOutputWire<32>(simulator,"CONTROL_TARGET",target,time);
-        const bool target_misaligned =
-            raw_redirect && (next_pc & 3U) != 0;
+        _updateOutputWire<32>(simulator,"CONTROL_TARGET",executed.target,time);
         const uint32_t execution_status =
-            target_misaligned ? 1U : 0U;
+            executed.target_misaligned ? 1U : 0U;
         const bool valid = high(getInputValue("IN_VALID"));
         const bool terminal = valid && preterminal(
             word(*this, "IN_FETCH_STATUS"),

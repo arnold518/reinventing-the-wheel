@@ -475,7 +475,7 @@ The root contains `CONTROL`, `ARITHMETIC`, `LOGIC`, `SHIFT`, `COMPARE`, `RESULT_
 
 #### Behavioral implementation
 
-`ALU32Behavioral` computes the selected operation and flags directly with one abstract delay tick. The registered contract is `rv32i.alu32`; structural remains available, including selectable lower-level arithmetic/logic/shifter fidelities.
+`ALU32Behavioral` computes the selected operation and flags directly with one abstract delay tick. The registered contract is `rv32i.alu32`; structural remains available. Inside a structural ALU the arithmetic, logic, shift, and zero-detect units are always built from gates; each keeps its own behavioral form when used standalone.
 
 ### Examples
 

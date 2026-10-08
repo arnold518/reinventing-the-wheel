@@ -6,6 +6,7 @@
 #include "modules/composite/ALU32.hpp"
 #include "modules/rv32i/RV32IFiveStageCore.hpp"
 #include "rv32i/RV32IDecoder.hpp"
+#include "RV32IPipelineRules.hpp"
 #include <algorithm>
 #include <cstdint>
 #include <utility>
@@ -28,65 +29,9 @@ uint8_t memorySizeEncoding(rv32i::RV32IMemorySize size) {
     return 2;
 }
 
-bool isMisaligned(uint32_t address, rv32i::RV32IMemorySize size) {
-    switch (size) {
-        case rv32i::RV32IMemorySize::Byte:
-            return false;
-        case rv32i::RV32IMemorySize::Halfword:
-            return (address & 0x1U) != 0;
-        case rv32i::RV32IMemorySize::Word:
-            return (address & 0x3U) != 0;
-        case rv32i::RV32IMemorySize::None:
-            return true;
-    }
-    return true;
-}
-
-rv32i::RV32IExecutionTrapCause decodeTrap(
-    rv32i::RV32ITrapCause cause) {
-    switch (cause) {
-        case rv32i::RV32ITrapCause::None:
-            return rv32i::RV32IExecutionTrapCause::None;
-        case rv32i::RV32ITrapCause::IllegalInstruction:
-            return rv32i::RV32IExecutionTrapCause::IllegalInstruction;
-        case rv32i::RV32ITrapCause::EnvironmentCall:
-            return rv32i::RV32IExecutionTrapCause::EnvironmentCall;
-    }
-    return rv32i::RV32IExecutionTrapCause::IllegalInstruction;
-}
-
-bool branchTaken(
-    rv32i::RV32IBranchType branch,
-    uint32_t left,
-    uint32_t right) {
-    switch (branch) {
-        case rv32i::RV32IBranchType::None: return false;
-        case rv32i::RV32IBranchType::BEQ: return left == right;
-        case rv32i::RV32IBranchType::BNE: return left != right;
-        case rv32i::RV32IBranchType::BLT:
-            return static_cast<int32_t>(left)
-                < static_cast<int32_t>(right);
-        case rv32i::RV32IBranchType::BGE:
-            return static_cast<int32_t>(left)
-                >= static_cast<int32_t>(right);
-        case rv32i::RV32IBranchType::BLTU: return left < right;
-        case rv32i::RV32IBranchType::BGEU: return left >= right;
-    }
-    return false;
-}
-
-bool preMemoryTerminal(
-    bool pc_misaligned,
-    bool instruction_fault,
-    bool target_misaligned,
-    const rv32i::RV32IControlSignals& control) {
-    return pc_misaligned
-        || instruction_fault
-        || !control.legal
-        || control.trap
-        || control.halt
-        || target_misaligned;
-}
+// The stage rules live in RV32IPipelineRules.hpp and are shared with the
+// stages' own behavioral forms.
+using rv32i::pipeline_rules::dataMisaligned;
 } // namespace
 
 RV32IFiveStageCoreBehavioral::RV32IFiveStageCoreBehavioral(std::string name, rv32i::PredictionConfig prediction)
@@ -143,17 +88,8 @@ RV32IFiveStageCoreBehavioral::decode(
 
 uint32_t RV32IFiveStageCoreBehavioral::writebackValue(
     const MemoryWritebackState& state) const {
-    switch (state.control.writeback) {
-        case rv32i::RV32IWritebackSource::None:
-            return 0;
-        case rv32i::RV32IWritebackSource::ALU:
-            return state.alu_result;
-        case rv32i::RV32IWritebackSource::Memory:
-            return state.memory_data;
-        case rv32i::RV32IWritebackSource::PCPlus4:
-            return state.pc_plus_4;
-    }
-    return 0;
+    return rv32i::pipeline_rules::writebackValue(
+        state.control, state.alu_result, state.memory_data, state.pc_plus_4);
 }
 
 RV32IFiveStageCoreBehavioral::ExecuteMemoryState
@@ -171,75 +107,22 @@ RV32IFiveStageCoreBehavioral::execute(
         return result;
     }
 
-    const auto forward = [&](uint8_t source, uint32_t original) {
-        if (source == 0) {
-            return uint32_t{0};
-        }
-        if (ex_mem_.valid
-            && ex_mem_.control.reg_write
-            && ex_mem_.rd != 0
-            && ex_mem_.rd == source) {
-            if (!ex_mem_.control.mem_read) {
-                return ex_mem_.control.writeback
-                        == rv32i::RV32IWritebackSource::PCPlus4
-                    ? ex_mem_.pc_plus_4
-                    : ex_mem_.alu_result;
-            }
-            return original;
-        }
-        if (mem_wb_.valid
-            && mem_wb_.control.reg_write
-            && mem_wb_.rd != 0
-            && mem_wb_.rd == source) {
-            return writebackValue(mem_wb_);
-        }
-        return original;
-    };
-
-    const auto rs1 =
-        forward(state.rs1, state.rs1_value);
-    const auto rs2 =
-        forward(state.rs2, state.rs2_value);
-    const auto alu_a = [&] {
-        switch (state.control.alu_a) {
-            case rv32i::RV32IALUSourceA::RS1: return rs1;
-            case rv32i::RV32IALUSourceA::PC: return state.pc;
-            case rv32i::RV32IALUSourceA::Zero: return uint32_t{0};
-        }
-        return uint32_t{0};
-    }();
-    const auto alu_b = [&] {
-        switch (state.control.alu_b) {
-            case rv32i::RV32IALUSourceB::RS2: return rs2;
-            case rv32i::RV32IALUSourceB::Immediate:
-                return state.immediate;
-            case rv32i::RV32IALUSourceB::Zero: return uint32_t{0};
-        }
-        return uint32_t{0};
-    }();
-
-    result.alu_result =
-        alu32Result(state.control.alu_op, alu_a, alu_b);
+    // A producer in EX/MEM has its value ready unless it is a load, whose
+    // data arrives one stage later.
+    const rv32i::pipeline_rules::ForwardSource from_ex_mem{
+        ex_mem_.valid, ex_mem_.control.reg_write, !ex_mem_.control.mem_read, ex_mem_.rd,
+        ex_mem_.control.writeback == rv32i::RV32IWritebackSource::PCPlus4 ? ex_mem_.pc_plus_4 : ex_mem_.alu_result};
+    const rv32i::pipeline_rules::ForwardSource from_mem_wb{
+        mem_wb_.valid, mem_wb_.control.reg_write, true, mem_wb_.rd, writebackValue(mem_wb_)};
+    const auto rs1 = rv32i::pipeline_rules::forwardOperand(state.rs1, state.rs1_value, from_ex_mem, from_mem_wb);
+    const auto rs2 = rv32i::pipeline_rules::forwardOperand(state.rs2, state.rs2_value, from_ex_mem, from_mem_wb);
+    const auto executed = rv32i::pipeline_rules::execute(state.control, state.pc, state.immediate, rs1, rs2);
+    result.alu_result = executed.alu_result;
     result.store_data = rs2;
-    result.pc_plus_4 = state.pc + 4U;
-    result.next_pc = result.pc_plus_4;
-
-    const bool branch = branchTaken(
-        state.control.branch, rs1, rs2);
-    result.branch_taken = branch;
-    if (branch
-        || state.control.jump == rv32i::RV32IJumpType::JAL) {
-        result.next_pc = state.pc + state.immediate;
-    } else if (
-        state.control.jump == rv32i::RV32IJumpType::JALR) {
-        result.next_pc =
-            (rs1 + state.immediate) & ~uint32_t{1};
-    }
-    const bool redirect =
-        branch
-        || state.control.jump != rv32i::RV32IJumpType::None;
-    result.target_misaligned =
-        redirect && (result.next_pc & 0x3U) != 0;
+    result.pc_plus_4 = executed.pc_plus_4;
+    result.next_pc = executed.next_pc;
+    result.branch_taken = executed.branch_taken;
+    result.target_misaligned = executed.target_misaligned;
     return result;
 }
 
@@ -263,7 +146,7 @@ RV32IFiveStageCoreBehavioral::accessMemory(
         && (state.control.mem_read || state.control.mem_write)) {
         result.memory_data = rv32i::memoryLoadData(inputWord(*this, "DMEM_RSP_READ_DATA"),state.alu_result,memorySizeEncoding(state.control.mem_size),state.control.load_sign_extend);
         result.data_misaligned =
-            isMisaligned(state.alu_result, state.control.mem_size);
+            dataMisaligned(state.alu_result, state.control.mem_size);
         result.data_fault =
             (getInputPin<3>("DMEM_RSP_STATUS")->getValueAsUInt64()!=0)
             && !result.data_misaligned;
@@ -274,35 +157,9 @@ RV32IFiveStageCoreBehavioral::accessMemory(
 rv32i::RV32IExecutionTrapCause
 RV32IFiveStageCoreBehavioral::retirementTrap(
     const MemoryWritebackState& state) const {
-    using Cause = rv32i::RV32IExecutionTrapCause;
-    if (!state.valid) return Cause::None;
-    if (state.pc_misaligned) {
-        return Cause::InstructionAddressMisaligned;
-    }
-    if (state.instruction_fault) {
-        return Cause::InstructionAccessFault;
-    }
-    if (!state.control.legal) {
-        return Cause::IllegalInstruction;
-    }
-    if (state.control.trap) {
-        return decodeTrap(state.control.trap_cause);
-    }
-
-    if (state.data_misaligned) {
-        return state.control.mem_write
-            ? Cause::StoreAddressMisaligned
-            : Cause::LoadAddressMisaligned;
-    }
-    if (state.data_fault) {
-        return state.control.mem_write
-            ? Cause::StoreAccessFault
-            : Cause::LoadAccessFault;
-    }
-    if (state.target_misaligned) {
-        return Cause::InstructionAddressMisaligned;
-    }
-    return Cause::None;
+    return rv32i::pipeline_rules::retirementCause(
+        state.valid, state.pc_misaligned, state.instruction_fault, state.control,
+        state.data_misaligned, state.data_fault, state.target_misaligned);
 }
 
 bool RV32IFiveStageCoreBehavioral::loadUseHazard() const {
@@ -364,12 +221,12 @@ bool RV32IFiveStageCoreBehavioral::storeWriteActive() const {
         && !older_terminal
         && ex_mem_.valid
         && ex_mem_.control.mem_write
-        && !preMemoryTerminal(
+        && !rv32i::pipeline_rules::preterminal(
             ex_mem_.pc_misaligned,
             ex_mem_.instruction_fault,
-            ex_mem_.target_misaligned,
-            ex_mem_.control)
-        && !isMisaligned(
+            ex_mem_.control,
+            ex_mem_.target_misaligned)
+        && !dataMisaligned(
             ex_mem_.alu_result, ex_mem_.control.mem_size);
 }
 
@@ -385,14 +242,14 @@ bool RV32IFiveStageCoreBehavioral::loadReadActive() const {
         && !older_terminal
         && ex_mem_.valid
         && ex_mem_.control.mem_read
-        && !preMemoryTerminal(
+        && !rv32i::pipeline_rules::preterminal(
             ex_mem_.pc_misaligned,
             ex_mem_.instruction_fault,
-            ex_mem_.target_misaligned,
-            ex_mem_.control)
+            ex_mem_.control,
+            ex_mem_.target_misaligned)
         // Alignment is resolved locally before issuing a transaction, just
         // as in the structural memory stage and the store guard above.
-        && !isMisaligned(
+        && !dataMisaligned(
             ex_mem_.alu_result, ex_mem_.control.mem_size);
 }
 
@@ -455,11 +312,11 @@ void RV32IFiveStageCoreBehavioral::advanceOneCycle() {
     auto next_ex_mem = execute(id_ex_);
     const bool ex_preterminal =
         next_ex_mem.valid
-        && preMemoryTerminal(
+        && rv32i::pipeline_rules::preterminal(
             next_ex_mem.pc_misaligned,
             next_ex_mem.instruction_fault,
-            next_ex_mem.target_misaligned,
-            next_ex_mem.control);
+            next_ex_mem.control,
+            next_ex_mem.target_misaligned);
     const bool ex_redirect =
         next_ex_mem.valid
         && !ex_preterminal
@@ -595,11 +452,11 @@ void RV32IFiveStageCoreBehavioral::driveOutputs(
     const auto next_ex_mem = execute(id_ex_);
     const bool ex_preterminal =
         next_ex_mem.valid
-        && preMemoryTerminal(
+        && rv32i::pipeline_rules::preterminal(
             next_ex_mem.pc_misaligned,
             next_ex_mem.instruction_fault,
-            next_ex_mem.target_misaligned,
-            next_ex_mem.control);
+            next_ex_mem.control,
+            next_ex_mem.target_misaligned);
     const bool ex_redirect =
         next_ex_mem.valid && !ex_preterminal
         && next_ex_mem.next_pc != id_ex_.predicted_next_pc;
