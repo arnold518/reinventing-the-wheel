@@ -20,7 +20,7 @@ they were written.
 | Area | Documents |
 | --- | --- |
 | RV32I cores | [rv32i-single-cycle-stages.md](rv32i-single-cycle-stages.md), [rv32i-single-cycle-documentation-notes.md](rv32i-single-cycle-documentation-notes.md), [rv32i-memory-integration.md](rv32i-memory-integration.md) |
-| Timing and performance | [rv32i-circuit-timing-optimization.md](rv32i-circuit-timing-optimization.md), [rv32i-logic-timing-optimization.md](rv32i-logic-timing-optimization.md), [rv32i-core-gap-benchmarks.md](rv32i-core-gap-benchmarks.md), [rv32i-external-benchmark-report.md](rv32i-external-benchmark-report.md) |
+| Timing and performance | [settling-bound.md](settling-bound.md), [rv32i-circuit-timing-optimization.md](rv32i-circuit-timing-optimization.md), [rv32i-logic-timing-optimization.md](rv32i-logic-timing-optimization.md), [rv32i-core-gap-benchmarks.md](rv32i-core-gap-benchmarks.md), [rv32i-external-benchmark-report.md](rv32i-external-benchmark-report.md) |
 | Visualizer and layout | [visualizer-v2-profile-explorer.md](visualizer-v2-profile-explorer.md), [automatic-layout-refresh.md](automatic-layout-refresh.md), [single-cycle-stage-layout.md](single-cycle-stage-layout.md), [wire-routing-algorithms.md](wire-routing-algorithms.md), [visualizer-quick-test.md](visualizer-quick-test.md) |
 | Site and deployment | [webassembly-github-pages-report.md](webassembly-github-pages-report.md) |
 | Planning | [rv32i-roadmap.md](rv32i-roadmap.md) |

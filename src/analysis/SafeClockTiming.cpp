@@ -1,4 +1,5 @@
 #include "analysis/SafeClockTiming.hpp"
+#include "BuiltinClockContracts.hpp"
 #include "MemoryTimingState.hpp"
 #include "TimedLogicDomain.hpp"
 #include "basic/PinBase.hpp"
@@ -920,6 +921,12 @@ public:
     }
 };
 } // namespace
+
+namespace detail {
+std::optional<ClockComponentContract> builtinClockContract(const IOComponent& component) {
+    return builtin(component);
+}
+} // namespace detail
 
 const char* clockTimingStatusName(ClockTimingStatus status) {
     switch (status) {
