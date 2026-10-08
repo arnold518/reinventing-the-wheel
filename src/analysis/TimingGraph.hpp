@@ -35,6 +35,7 @@ struct Node {
     int8_t constant = 2;   // Stable/Source: final value 0 or 1 when known, else 2
     int a = -1, b = -1;
     Tick delay = 0;        // Source: tick of the last transition, or NEVER
+    Tick earliest = OPEN;  // Source: tick of its first transition, when it differs from `delay`
     int var = -1;          // Source: case variable (final value is 0 or 1)
     int owner = -1;        // Hub: hub index. Part: part index.
     uint8_t output = 0;    // Part: which output (PartOutput)
@@ -44,7 +45,9 @@ struct Node {
 // An opaque contract output: latest of its launch and its timed input arcs.
 struct Hub {
     std::vector<std::pair<int, Tick>> inputs;
+    std::vector<Tick> minimum;    // earliest delay of each input arc
     Tick launch = NEVER;
+    Tick launch_minimum = OPEN;   // OPEN: no launch
     // Binary whenever every arc input is (a register file read, under a binary start).
     bool binary_with_inputs = false;
 };
@@ -75,6 +78,7 @@ struct Graph {
     std::vector<int> order;               // inputs first where there is no loop
     std::vector<std::vector<int>> readers;
     bool has_loop = false;
+    std::vector<std::string> clock_inputs; // root inputs used as a clock
     std::unordered_map<const PinBase*, int> first_bit;          // pin -> its first node
     // Bits a contract needs held at a value (for example RST = 0).
     std::vector<std::tuple<int, int8_t, std::string>> required;

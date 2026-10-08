@@ -50,6 +50,34 @@ std::optional<ClockComponentContract> builtinClockContract(const IOComponent& c)
     // Built-in contracts cover concrete primitive instances, not an arbitrarily
     // modified hierarchy attached beneath one of those instances.
     if (!c.getChildren().empty()) return std::nullopt;
+    // A part that declares its delays: the table the simulator runs on is
+    // also its contract.
+    if (const auto* part = dynamic_cast<const BasicComponent*>(&c)) if (const auto* table = part->getDelays()) {
+        ClockComponentContract declared;
+        declared.evidence = "declared part delays: " + table->evidence;
+        declared.clock_pin = table->clock;
+        declared.fixed_inputs = table->fixed_inputs;
+        std::set<std::string> read{table->clock}, written;
+        for (const auto& [name, value] : table->fixed_inputs) read.insert(name);
+        for (const auto& arc : table->arcs) {
+            declared.arcs.push_back({arc.input, arc.output, {arc.delay.minimum, arc.delay.maximum}});
+            read.insert(arc.input); written.insert(arc.output);
+        }
+        for (const auto& [output, range] : table->launches) {
+            declared.launches.push_back({output, ClockEdge::Rising, {range.minimum, range.maximum}});
+            written.insert(output);
+        }
+        for (const auto& [input, setup] : table->setup) {
+            declared.captures.push_back({input, ClockEdge::Rising, setup, 0});
+            read.insert(input);
+        }
+        // The longest path between its own registers needs this much clock.
+        if (!table->clock.empty())
+            declared.minimum_high_ticks = declared.minimum_low_ticks = std::max<size_t>(1, (table->internal_period + 2) / 2);
+        for (const auto& [name, pin] : c.getAllInputPins()) if (!read.contains(name)) declared.unused_inputs.push_back(name);
+        for (const auto& [name, pin] : c.getAllOutputPins()) if (!written.contains(name)) declared.stable_outputs.push_back(name);
+        return declared;
+    }
     ClockComponentContract m;
     m.evidence = "simulator-exact-primitives-v1";
     if (typeid(c) == typeid(NOTGate) || typeid(c) == typeid(ANDGate)

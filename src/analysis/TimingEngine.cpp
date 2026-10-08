@@ -249,6 +249,39 @@ std::vector<int> Engine::pathTo(int n) const {
     return path;
 }
 
+std::vector<Tick> Engine::earliest() const {
+    std::vector<Tick> first(graph_.nodes.size(), OPEN);
+    using Entry = std::pair<Tick, int>;
+    std::priority_queue<Entry, std::vector<Entry>, std::greater<Entry>> heap;
+    const auto reach = [&](int n, Tick tick) {
+        if (tick < first[n]) { first[n] = tick; heap.emplace(tick, n); }
+    };
+    for (int n = 0; n < static_cast<int>(graph_.nodes.size()); ++n) {
+        const auto& x = graph_.nodes[n];
+        if (x.kind == Kind::Source && x.delay != NEVER) reach(n, x.earliest != OPEN ? x.earliest : x.delay);
+        else if (x.kind == Kind::Hub && graph_.hubs[x.owner].launch_minimum != OPEN) reach(n, graph_.hubs[x.owner].launch_minimum);
+        else if (x.kind == Kind::Part) reach(n, graph_.parts[x.owner].delay);
+    }
+    while (!heap.empty()) {
+        const auto [tick, n] = heap.top();
+        heap.pop();
+        if (tick != first[n]) continue;
+        for (const int reader : graph_.readers[n]) {
+            const auto& x = graph_.nodes[reader];
+            Tick delay = x.delay;
+            if (x.kind == Kind::Part) delay = graph_.parts[x.owner].delay;
+            else if (x.kind == Kind::Hub) {
+                const auto& hub = graph_.hubs[x.owner];
+                delay = OPEN;
+                for (size_t i = 0; i < hub.inputs.size(); ++i)
+                    if (hub.inputs[i].first == n) delay = std::min(delay, hub.minimum[i]);
+            }
+            if (delay != OPEN) reach(reader, tick + delay);
+        }
+    }
+    return first;
+}
+
 std::pair<Tick, int> Engine::latest(const Group& group) const {
     Tick best = NEVER;
     int where = -1;

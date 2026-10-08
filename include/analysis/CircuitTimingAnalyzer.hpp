@@ -1,5 +1,6 @@
 #pragma once
 
+#include "components/PartDelays.hpp"
 #include <cstddef>
 #include <cstdint>
 #include <functional>
@@ -157,6 +158,7 @@ struct SettlingEndpoint {
     bool changes = false;   // false: provably never changes in operation
     size_t structural = 0;  // longest per-bit path, values ignored
     size_t bound = 0;       // proven latest change (captures: plus setup)
+    size_t earliest = 0;    // earliest possible change along any wiring path
     // A final source vector reaches `bound` in the timed-value model, so no
     // further case split can lower it. It does not claim that the simulator
     // shows a change that late for some previous state.
@@ -171,6 +173,7 @@ struct SettlingReport {
     size_t structural = 0, bound = 0;
     size_t bit_count = 0, variable_count = 0;
     std::vector<SettlingEndpoint> endpoints;
+    std::vector<std::string> clock_inputs; // root inputs used as a clock
     std::vector<std::string> premises, diagnostics;
 };
 
@@ -199,6 +202,16 @@ struct PartTiming {
 
 class CircuitTimingAnalyzer {
 public:
+    // The delay table of one part, proven on the circuit given: every
+    // input-output pair with only that input changing, clock-to-output, setup
+    // and, when `control` names an input, one set of pairs per value it ends
+    // at. This is what a compact form of the part declares. An empty table
+    // means the part could not be analysed; `diagnostics` then says why.
+    static circuit::PartDelays delays(const std::shared_ptr<Component>& root,
+                                      const SettlingOptions& options = {},
+                                      const std::string& control = "",
+                                      std::vector<std::string>* diagnostics = nullptr);
+
     // Both settling questions for one part: inputs changing with state held,
     // and state launching with inputs held. `options.sources` is ignored.
     static PartTiming characterize(const std::shared_ptr<Component>& root,

@@ -61,6 +61,9 @@ public:
     void evaluateAll();
     const Fact& fact(int n) const { return fact_[n]; }
     std::vector<int> pathTo(int n) const;
+    // Per bit, the earliest tick at which it can change, along any wiring
+    // path and whatever the values; OPEN if nothing reaches it. For hold.
+    std::vector<Tick> earliest() const;
 
     // The latest change of a group, lowered by splitting final values into
     // cases. `signals`: also decide internal signals, not only source bits.

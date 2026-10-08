@@ -1,10 +1,12 @@
 #pragma once
 
 #include "components/IOComponent.hpp"
+#include "components/PartDelays.hpp"
 #include "basic/Wire.hpp"
 #include "ForwardDeclarations.hpp"
 #include "simulator/Event.hpp"
 #include "simulator/Simulator.hpp"
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -20,6 +22,8 @@ class BasicComponent : public IOComponent
 {
 protected:
     size_t delay;
+    // The tick at which an output computed now is published.
+    size_t publishTime(const std::string& output_pin, size_t current_sim_time);
     void _updateOutputWire(Simulator& simulator, const std::string& pin_name,
                            LogicValue new_value, size_t current_sim_time);
 
@@ -30,10 +34,10 @@ protected:
             pin->setValueFromUInt64(new_value);
             if (auto wire = pin->getExternalWire()) {
                 simulator.scheduleEvent(std::make_shared<WireUpdateEvent<WIDTH>>(
-                    current_sim_time + delay, wire, new_value));
+                    publishTime(pin_name, current_sim_time), wire, new_value));
             } else {
                 simulator.recordPinChange(
-                    current_sim_time + delay, pin, pin->getValueAsVector());
+                    publishTime(pin_name, current_sim_time), pin, pin->getValueAsVector());
             }
         }
     }
@@ -46,10 +50,10 @@ protected:
             pin->setValueFromVector(new_value);
             if (auto wire = pin->getExternalWire()) {
                 simulator.scheduleEvent(std::make_shared<WireUpdateEvent<WIDTH>>(
-                    current_sim_time + delay, wire, new_value));
+                    publishTime(pin_name, current_sim_time), wire, new_value));
             } else {
                 simulator.recordPinChange(
-                    current_sim_time + delay, pin, pin->getValueAsVector());
+                    publishTime(pin_name, current_sim_time), pin, pin->getValueAsVector());
             }
         }
     }
@@ -67,6 +71,16 @@ public:
     const char* getTypeName() const override { return TypeName; }
 
     size_t getDelay() const;
+    // Per-output timing. Empty table: every output uses the single delay.
+    void setDelays(circuit::PartDelays delays);
+    const circuit::PartDelays* getDelays() const;
+    // Entry point of the simulator: notes which inputs changed, then evaluates.
+    void evaluateAt(size_t current_time, Simulator& simulator);
     virtual void scheduleInitialEvents(Simulator& simulator, size_t current_time);
     virtual void evaluate(size_t current_time, Simulator& simulator) = 0;
+    ~BasicComponent() override;
+
+private:
+    struct TimedOutputs;
+    std::unique_ptr<TimedOutputs> timed_;
 };

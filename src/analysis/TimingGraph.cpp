@@ -281,17 +281,24 @@ class Builder {
                 launched = true;
                 if (otherEdge(launch.edge, "launch") || !request_.launches) continue;
                 hub.launch = std::max(hub.launch, static_cast<Tick>(launch.delay.maximum));
+                hub.launch_minimum = std::min(hub.launch_minimum, static_cast<Tick>(launch.delay.minimum));
             }
             for (const auto& arc : m.arcs) if (arc.output == name) {
                 const auto in = own(arc.input, PinType::INPUT);
-                for (unsigned bit = 0; bit < in->getWidth(); ++bit)
+                for (unsigned bit = 0; bit < in->getWidth(); ++bit) {
                     hub.inputs.emplace_back(index(in, bit), static_cast<Tick>(arc.delay.maximum));
+                    hub.minimum.push_back(static_cast<Tick>(arc.delay.minimum));
+                }
             }
             if (!launched && hub.inputs.empty()) {
                 fail(pin->getID() + ": output absent from timing contract");
                 continue;
             }
-            if (hub.inputs.empty()) { makeSource(pin, hub.launch, true); continue; }
+            if (hub.inputs.empty()) {
+                makeSource(pin, hub.launch, true);
+                for (unsigned bit = 0; bit < pin->getWidth(); ++bit) at(pin, bit).earliest = hub.launch_minimum;
+                continue;
+            }
             graph_.hubs.push_back(std::move(hub));
             for (unsigned bit = 0; bit < pin->getWidth(); ++bit) {
                 auto& node = at(pin, bit);
@@ -380,6 +387,8 @@ public:
                 graph_.groups.push_back(std::move(group));
             }
             if (failed_) return false;
+            for (const auto& [name, pin] : root_io_->getAllInputPins())
+                if (clock_roots_.contains(pin.get())) graph_.clock_inputs.push_back(name);
             sort();
             return true;
         } catch (const std::exception& error) {

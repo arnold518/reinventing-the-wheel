@@ -8,7 +8,7 @@ answers three questions from the same model and the same engine.
 | --- | --- | --- |
 | Settling | `CircuitTimingAnalyzer::settling` | The last tick at which each output, and each clocked capture, can still change |
 | Clock | `CircuitTimingAnalyzer::safeClock` | A period under which every setup, hold and pulse-width requirement is met, or "unknown" |
-| Part delays | `CircuitTimingAnalyzer::characterize` | Input-to-output and clock-to-output delays of one part: what a compact form of it must reproduce |
+| Part delays | `CircuitTimingAnalyzer::characterize`, `CircuitTimingAnalyzer::delays` | The delays of one part: per output, or as a full table per input-output pair. This is what a compact form of the part must reproduce |
 
 All results are simulator ticks, not physical delays. Every answer is an upper
 bound that holds for every input; none is found by trying inputs.
@@ -65,6 +65,34 @@ A caller can also supply a set of covering cases. The clock question does
 this for memory: each compact FF endpoint is either empty or holding a
 response, and `MemoryTimingState` enumerates the reachable combinations with
 the handshake registers. Each is settled and checked on its own.
+
+## Delay tables for compact parts
+
+A compact (behavioral) part may declare a `circuit::PartDelays` table
+(`include/components/PartDelays.hpp`, `BasicComponent::setDelays`): a latest
+and an earliest delay per input-output pair, clock-to-output and setup for
+clocked parts, and optionally one set of pairs per value of a control input.
+
+- **The simulator** publishes each output at the latest delay of the input
+  that caused it. A newer result never overtakes an older one still on its
+  way. A part without a table keeps its single constructor delay.
+- **The analyzer** reads the same table as the part's contract, and uses the
+  earliest delays for hold.
+- **`CircuitTimingAnalyzer::delays`** generates the table from the gate-level
+  form of the part.
+
+The compact part then gives the same values as the gates, never changes
+before the gates have finished, and never after its table allows. It does not
+copy input-by-input timing (an easy input still waits for the worst case) or
+glitches. A circuit built from compact parts is never faster than the same
+circuit in gates. `SettlingBoundTest` checks all of this on `Adder32`; two
+chained adders come to 37 ticks in gates and 38 with compact adders.
+
+`delay_estimate_experiment` compares proven delays with real gate-level
+settling times over random input changes, per output, per input pin and per
+control value.
+
+No part ships with a table yet.
 
 ## What is assumed
 
@@ -131,6 +159,5 @@ path never decides anything. The proof needs about 250,000 evaluations.
   splits cases only to close loops.
 - A flip-flop built from gates is a loop of latches and gets no bound, so
   clocked circuits must use the compact storage parts.
-- Compact (behavioral) parts still use a typed-in delay. `SettlingBoundTest`
-  prints it beside the proven structural delay; nothing sets one from the
-  other yet.
+- Compact (behavioral) parts still use their typed-in delay until they are
+  given a table. `SettlingBoundTest` prints that delay beside the proven one.

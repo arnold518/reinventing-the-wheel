@@ -1,7 +1,10 @@
 #include "analysis/CircuitTimingAnalyzer.hpp"
 #include "components/ComponentBuilder.hpp"
 #include "components/ComponentBuilder.tpp"
+#include "components/selection/BuildContext.hpp"
+#include "components/selection/BuildManifest.hpp"
 #include "components/selection/BuiltinComponentCatalog.hpp"
+#include "modules/composite/Adder32.hpp"
 #include "components/selection/ComponentCatalog.hpp"
 #include "components/selection/StandardProfiles.hpp"
 #include "modules/basic/Gate.hpp"
@@ -503,6 +506,112 @@ void aluEquality() {
     std::cout << "rv32i.alu32 EQ: latest change seen on equal and near-equal operands: tick " << worst << '\n';
     confirm(bench, report, false, 60, random);
 }
+// A compact part that carries the delay table proven on its gate-level form.
+// Checked on the adder: alone, and as the children of a larger circuit.
+std::shared_ptr<IOComponent> twoAdders(bool compact, const circuit::PartDelays* table) {
+    const auto& catalog = circuit::builtinComponentCatalog();
+    const auto profile = compact ? circuit::strictAllBehavioral() : circuit::maximallyStructural();
+    auto manifest = std::make_shared<circuit::BuildManifest>(profile.name(), profile.fingerprint());
+    auto context = circuit::BuildContext::rootScope(catalog, std::make_shared<const circuit::BuildProfile>(profile), manifest)
+        ->child("PAIR", std::nullopt);
+    auto root = Component::createWithContext<IOComponent>(context, "PAIR", [](IOComponent* c) {
+        for (auto name : {"A", "B", "C"}) c->addPin<32>(name, PinType::INPUT);
+        c->addPin("Cin", PinType::INPUT);
+        c->addPin<32>("OUT", PinType::OUTPUT);
+    });
+    ComponentBuilder b(root, context);
+    auto first = b.add(circuit::families::Adder32, "FIRST"), second = b.add(circuit::families::Adder32, "SECOND");
+    b.addNewWire<32>("a", root->getInputPin<32>("A"), {first->getInputPin<32>("A")});
+    b.addNewWire<32>("b", root->getInputPin<32>("B"), {first->getInputPin<32>("B")});
+    b.addNewWire<32>("c", root->getInputPin<32>("C"), {second->getInputPin<32>("B")});
+    b.addNewWire("cin", root->getInputPin("Cin"), {first->getInputPin("Cin")});
+    b.addNewWire<32>("sum", first->getOutputPin<32>("Sum"), {second->getInputPin<32>("A")});
+    b.addNewWire("carry", first->getOutputPin("Cout"), {second->getInputPin("Cin")});
+    b.addNewWire<32>("out", second->getOutputPin<32>("Sum"), {root->getOutputPin<32>("OUT")});
+    if (table) for (const auto& adder : {first, second}) {
+        const auto leaf = std::dynamic_pointer_cast<BasicComponent>(adder);
+        check(leaf != nullptr, "The compact adder must be one evaluated part");
+        leaf->setDelays(*table);
+    }
+    return root;
+}
+
+void compactAdder() {
+    const auto& catalog = circuit::builtinComponentCatalog();
+    const auto build = [&](const circuit::BuildProfile& profile) {
+        return std::dynamic_pointer_cast<IOComponent>(catalog.createRoot({"arithmetic.adder.width32", "DUT", {}}, profile).root);
+    };
+    SettlingOptions options;
+    options.binary_sources = true;
+    Bench gates(build(circuit::maximallyStructural())), compact(build(circuit::strictAllBehavioral()));
+    std::vector<std::string> problems;
+    const auto table = CircuitTimingAnalyzer::delays(gates.dut, options, "", &problems);
+    for (const auto& problem : problems) std::cerr << problem << '\n';
+    std::map<std::pair<std::string, std::string>, circuit::DelayRange> arcs;
+    for (const auto& arc : table.arcs) arcs[{arc.input, arc.output}] = arc.delay;
+    check(arcs.size() == 6 && table.clock.empty() && table.launches.empty(), "The adder has six input-output pairs");
+    check(arcs[{"A", "Sum"}].maximum == 19 && arcs[{"Cin", "Sum"}].maximum == 3 && arcs[{"Cin", "Cout"}].maximum == 2,
+          "Proven adder pairs");
+    for (const auto& [pair, delay] : arcs) check(delay.minimum >= 1 && delay.minimum <= delay.maximum, "Earliest before latest");
+    std::cout << "Adder32 pairs (earliest..latest):";
+    for (const auto& [pair, delay] : arcs) std::cout << ' ' << pair.first << "->" << pair.second << ' ' << delay.minimum << ".." << delay.maximum;
+    std::cout << '\n';
+
+    // The analyzer reads the table as the compact part's contract.
+    check(!CircuitTimingAnalyzer::settling(compact.dut).valid, "A compact part without a table has no contract");
+    std::dynamic_pointer_cast<BasicComponent>(compact.dut)->setDelays(table);
+    const auto declared = valid(CircuitTimingAnalyzer::settling(compact.dut, options));
+    const auto proven = valid(CircuitTimingAnalyzer::settling(gates.dut, options));
+    for (const auto& e : proven.endpoints) check(endpoint(declared, e.name).bound == e.bound, "Compact and gate-level bounds differ");
+
+    // In the simulator the compact part gives the same values, never changes
+    // before the gates have finished, and never after its table allows.
+    std::mt19937_64 random(0xadd);
+    size_t carry_only = 0, glitches = 0;
+    for (unsigned round = 0; round < 600; ++round) {
+        const auto before = randomVector(*gates.dut, random, false);
+        auto after = randomVector(*gates.dut, random, false);
+        std::string changing;
+        if (round % 3 == 1) { after = before; after["Cin"][0] = before.at("Cin")[0] == LogicValue::LOW ? LogicValue::HIGH : LogicValue::LOW; changing = "Cin"; }
+        if (round % 3 == 2) { after = before; after["A"] = randomVector(*gates.dut, random, false)["A"]; changing = "A"; }
+        const auto real = gates.change(before, after, 30, 30), modeled = compact.change(before, after, 30, 30);
+        for (const auto& [name, wire] : gates.outputs)
+            check(wire->getValueVector() == compact.outputs.at(name)->getValueVector(), "Compact adder value differs");
+        for (const auto& [name, tick] : modeled) {
+            const auto limit = changing.empty() ? endpoint(proven, name).bound : arcs[{changing, name}].maximum;
+            check(tick <= limit, "Compact adder changed after its table allows");
+            if (changing == "Cin") { check(tick <= 3, "A carry-in change must be fast"); ++carry_only; }
+        }
+        // The gates may glitch and return to the old value; the compact part
+        // then shows no change at all. Where it does change, it is not early.
+        for (const auto& [name, tick] : real) {
+            const auto it = modeled.find(name);
+            if (it != modeled.end()) check(it->second >= tick, "Compact adder changed before the gates finished");
+            else ++glitches;
+        }
+    }
+    check(carry_only > 50, "Carry-in changes were not exercised");
+    std::cout << "Compact Adder32 on its proven table: 600 input changes matched; the gates glitched without a final change "
+              << glitches << " times\n";
+
+    // Parents: built from compact adders, a circuit is never faster than the
+    // same circuit in gates, in the analysis and in the simulator.
+    Bench parent_gates(twoAdders(false, nullptr)), parent_compact(twoAdders(true, &table));
+    const auto slow = valid(CircuitTimingAnalyzer::settling(parent_compact.dut, options));
+    const auto fast = valid(CircuitTimingAnalyzer::settling(parent_gates.dut, options));
+    const auto compact_bound = endpoint(slow, "OUT").bound, gate_bound = endpoint(fast, "OUT").bound;
+    std::cout << "Two chained adders: " << gate_bound << " ticks in gates, " << compact_bound << " with compact adders\n";
+    check(compact_bound >= gate_bound, "A compact parent may not be faster than its gates");
+    for (unsigned round = 0; round < 300; ++round) {
+        const auto before = randomVector(*parent_gates.dut, random, false), after = randomVector(*parent_gates.dut, random, false);
+        const auto real = parent_gates.change(before, after, 60, 60), modeled = parent_compact.change(before, after, 60, 60);
+        check(parent_gates.outputs.at("OUT")->getValueVector() == parent_compact.outputs.at("OUT")->getValueVector(),
+              "Compact parent value differs");
+        if (modeled.contains("OUT")) check(modeled.at("OUT") <= compact_bound, "Compact parent exceeded its bound");
+        if (real.contains("OUT") && modeled.contains("OUT"))
+            check(modeled.at("OUT") >= real.at("OUT"), "Compact parent settled before its gates");
+    }
+}
 } // namespace
 
 int main(int argc, char** argv) {
@@ -517,7 +626,7 @@ int main(int argc, char** argv) {
             else if (argument == "--verbose") verbose = true;
             else only.insert(argument);
         }
-        if (only.empty()) { handBuilt(); boundaries(); aluEquality(); }
+        if (only.empty()) { handBuilt(); boundaries(); compactAdder(); aluEquality(); }
         catalog(rounds, budget, verbose, only);
         std::cout << "SettlingBoundTest passed\n";
         return 0;

@@ -12,7 +12,7 @@ ComponentEvalEvent::ComponentEvalEvent(size_t event_time, std::shared_ptr<Compon
 
 void ComponentEvalEvent::process(Simulator& sim) {
     if (auto evaluated = std::dynamic_pointer_cast<BasicComponent>(component_to_evaluate)) {
-        evaluated->evaluate(time, sim);
+        evaluated->evaluateAt(time, sim);
     }
 }
 

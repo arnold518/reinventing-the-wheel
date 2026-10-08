@@ -80,6 +80,8 @@ SettlingReport CircuitTimingAnalyzer::settling(const std::shared_ptr<Component>&
                 return report;
             }
         }
+        const auto first_change = engine.earliest();
+        report.clock_inputs = graph.clock_inputs;
         bool any_endpoint = false;
         for (const auto& group : graph.groups) {
             if (group.endpoints.empty()) continue;
@@ -96,6 +98,9 @@ SettlingReport CircuitTimingAnalyzer::settling(const std::shared_ptr<Component>&
             endpoint.structural = static_cast<size_t>(result.structural);
             endpoint.bound = static_cast<size_t>(result.bound);
             endpoint.tight = result.tight;
+            Tick first = OPEN;
+            for (const auto& [n, extra] : group.endpoints) first = std::min(first, first_change[n]);
+            endpoint.earliest = first == OPEN ? 0 : static_cast<size_t>(first);
             endpoint.evaluations = result.evaluations;
             for (const int n : result.path) endpoint.path.push_back(graph.label(n));
             for (size_t var = 0; var < result.witness.size(); ++var)
@@ -154,6 +159,82 @@ PartTiming CircuitTimingAnalyzer::characterize(const std::shared_ptr<Component>&
     timing.premises.pop_back(); // the per-question source premise does not describe both
     timing.valid = true;
     return timing;
+}
+
+circuit::PartDelays CircuitTimingAnalyzer::delays(const std::shared_ptr<Component>& root,
+                                                  const SettlingOptions& options, const std::string& control,
+                                                  std::vector<std::string>* diagnostics) {
+    circuit::PartDelays table;
+    const auto root_io = std::dynamic_pointer_cast<IOComponent>(root);
+    bool failed = false;
+    const auto ask = [&](const SettlingOptions& asked) {
+        auto report = settling(root, asked);
+        if (!report.valid && !failed) {
+            failed = true;
+            if (diagnostics) *diagnostics = report.diagnostics;
+        }
+        return report;
+    };
+    if (!root_io) { ask(options); return {}; }
+
+    // State launches while every input holds.
+    auto state = options;
+    state.sources = SettlingSources::StateOnly;
+    const auto launched = ask(state);
+    if (failed) return {};
+    for (const auto& endpoint : launched.endpoints) {
+        if (endpoint.name == "(captures)") table.internal_period = endpoint.bound;
+        else if (endpoint.changes) table.launches[endpoint.name] = {endpoint.earliest, endpoint.bound};
+    }
+    if (!launched.clock_inputs.empty()) table.clock = launched.clock_inputs.front();
+
+    // One input changes while the others, and the state, hold.
+    const auto pairs = [&](const SettlingOptions& base, const std::string& only) {
+        std::vector<circuit::PartDelays::Arc> arcs;
+        for (const auto& [changing, pin] : root_io->getAllInputPins()) {
+            if (changing == table.clock || base.fixed_inputs.contains(changing)) continue;
+            if (!only.empty() && changing != only) continue;
+            auto one = base;
+            one.sources = SettlingSources::InputsOnly;
+            one.held_inputs.clear();
+            for (const auto& [name, other] : root_io->getAllInputPins())
+                if (name != changing && name != table.clock && !base.fixed_inputs.contains(name)) one.held_inputs.push_back(name);
+            const auto report = ask(one);
+            if (failed) return arcs;
+            for (const auto& endpoint : report.endpoints) {
+                if (!endpoint.changes) continue;
+                if (endpoint.name == "(captures)") {
+                    auto& setup = table.setup[changing];
+                    setup = std::max(setup, endpoint.bound);
+                } else arcs.push_back({changing, endpoint.name, {endpoint.earliest, endpoint.bound}});
+            }
+        }
+        return arcs;
+    };
+    table.arcs = pairs(options, "");
+    if (!control.empty() && !failed) {
+        const auto pin = root_io->getInputPinDynamic(control);
+        if (!pin || pin->getWidth() > 8) {
+            if (diagnostics) diagnostics->push_back("control must name an input of at most 8 bits: " + control);
+            return {};
+        }
+        for (uint64_t value = 0; value < (uint64_t{1} << pin->getWidth()) && !failed; ++value) {
+            // The control input itself changing and ending at this value...
+            auto ending = options;
+            ending.final_inputs[control] = value;
+            auto arcs = pairs(ending, control);
+            // ...and every other input changing while it holds this value.
+            auto holding = options;
+            holding.fixed_inputs[control] = value;
+            for (auto& arc : pairs(holding, "")) arcs.push_back(std::move(arc));
+            table.arcs_by_control.emplace(value, std::move(arcs));
+        }
+        table.control = control;
+    }
+    if (failed) return {};
+    table.fixed_inputs = options.fixed_inputs;
+    table.evidence = "proven on " + root->getImplementationId();
+    return table;
 }
 
 } // namespace circuit::analysis
