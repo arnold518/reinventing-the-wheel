@@ -103,12 +103,12 @@ circuit::BuildProfile withBehavioralMemoryParts(
     }
     std::vector<circuit::ProfileRule> overrides;
     // Saved layouts are keyed by this profile's fingerprint, which covers the
-    // rule text. The flip-flop cell is therefore named by its retired ID;
-    // canonicalContractId() makes the rule match memory.ff.cell.
+    // rule text. The storage parts are therefore named by their retired IDs;
+    // canonicalContractId() makes the rules match the current contracts.
     for (const std::string id : {
              std::string(circuit::families::RegisterFile32x32.id()),
              std::string("memory.write-enabled-bit"),
-             std::string(circuit::families::ClockedStateBit.id()),
+             std::string("memory.clocked-state-bit"),
          }) {
         overrides.push_back(circuit::preferFidelity(
             circuit::Fidelity::Behavioral,
@@ -118,7 +118,7 @@ circuit::BuildProfile withBehavioralMemoryParts(
     for (size_t width : {1,2,3,4,5,8,16,32})
         overrides.push_back(circuit::preferFidelity(
             circuit::Fidelity::Behavioral,
-            circuit::ProfileSelector::contract(circuit::families::registerWord(width)),
+            circuit::ProfileSelector::contract("memory.register." + std::to_string(width)),
             "use a compact request or response payload word"));
     return circuit::withProfileOverrides(
         std::move(base),

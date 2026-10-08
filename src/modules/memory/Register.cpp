@@ -47,7 +47,7 @@ void Register<Width>::buildInternals(ComponentBuilder& builder) {
 namespace circuit::families {
 template<size_t Width>
 const ComponentFamily& registerFamily() {
-    static const std::string id = "memory.register." + std::to_string(Width);
+    static const std::string id = "storage.register." + std::to_string(Width);
     static const std::string type = Register<Width>::TypeName;
     static const ComponentFamily family{
         id, type, [](IOComponent* self) { definePins(self, Width); },

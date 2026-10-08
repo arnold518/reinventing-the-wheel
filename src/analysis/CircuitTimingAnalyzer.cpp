@@ -18,7 +18,7 @@ std::optional<ComponentTimingModel> builtin(const IOComponent& c) {
     ComponentTimingModel m;
     const std::string id=c.getContractId(), type=c.getTypeName();
     const bool storage=type=="DFlipFlop" || id=="sequential.d-flip-flop"
-        || id=="memory.ff.cell" || id.starts_with("memory.register.")
+        || id=="memory.ff.cell" || id.starts_with("storage.register.")
         || id.starts_with("memory.ff.word.") || id.starts_with("memory.ff.bank.")
         || id.starts_with("rv32i.pipeline-register.");
     const bool rf=id=="rv32i.register-file";

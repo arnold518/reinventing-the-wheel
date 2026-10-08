@@ -34,6 +34,8 @@ int main() {
         // Names used before the memory.<technology>.<what>.<width> rule still resolve.
         for (const auto& [retired, current] : std::initializer_list<std::pair<const char*, const char*>>{
                 {"memory.write-enabled-bit", "memory.ff.cell"}, {"memory.ff-word.8", "memory.ff.word.8"},
+                {"memory.register.32", "storage.register.32"}, {"memory.register.1", "storage.register.1"},
+                {"memory.clocked-state-bit", "storage.state-bit"},
                 {"memory.ff-storage-bank.16", "memory.ff.bank.16"}, {"memory.container.ff.32", "memory.ff.device.32"},
                 {"memory.device.dram.8", "memory.dram.scalable-device.8"},
                 {"memory.controller.nor-flash.16", "memory.nor-flash.controller.16"},

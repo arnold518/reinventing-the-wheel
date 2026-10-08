@@ -182,12 +182,15 @@ Memory contracts are now named `memory.<technology>.<what>.<width>`:
 | `memory.transaction-port.W` | `memory.shared.transaction-port.W` |
 | `memory.response-buffer.W` | `memory.shared.response-buffer.W` |
 
-The detailed `memory.<technology>.{cell,row,bank,device}` names, `memory.register.W`
-and `memory.clocked-state-bit` are unchanged. `circuit::canonicalContractId`
+The detailed `memory.<technology>.{cell,row,bank,device}` names are unchanged.
+General storage parts left the `memory.` prefix in a second step:
+`memory.register.W` is now `storage.register.W` and `memory.clocked-state-bit`
+is `storage.state-bit` (a bare flip-flop with no write-enable, so it is not a
+one-bit register). `circuit::canonicalContractId`
 (`SelectionTypes.cpp`) maps every old name to its new one; catalog lookups,
 build requests and profile rules all accept the old names.
-`withBehavioralMemoryParts` still names the flip-flop cell by its old ID on
-purpose, because saved layouts are keyed by that profile's fingerprint.
+`withBehavioralMemoryParts` still names the flip-flop cell, the state bit and
+the registers by their old IDs on purpose, because saved layouts are keyed by that profile's fingerprint.
 The `expanded_storage` endpoint parameter was removed at the same time:
 request the `scalable-endpoint` contract instead.
 

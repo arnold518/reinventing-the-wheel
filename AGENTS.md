@@ -70,7 +70,7 @@ Component
 - One `BuildProfile` (ordered rules, last match wins) chooses structural or behavioral per path; a `BuildManifest` records what was built. See `docs/unified-component-profiles.md`.
 - Behavioral classes are usually named `...Behavioral`; their headers are private, under `src/modules`.
 - A behavioral rule has one owner. Larger behavioral implementations call the smaller component's function (for example `alu32Result`) instead of restating it. The instruction oracle in `src/rv32i` is deliberately independent.
-- Memory contracts are named `memory.<technology>.<what>.<width>`; retired names are mapped by `circuit::canonicalContractId`.
+- Memory contracts are named `memory.<technology>.<what>.<width>`; registers and state bits are `storage.*`. Retired names are mapped by `circuit::canonicalContractId`.
 - Contract IDs are stored in saved profiles and layouts. Renaming or removing one needs a compatibility plan; see the retired list in `src/modules/rv32i/RV32IBuildProfiles.cpp`.
 
 ### Tests and scenarios

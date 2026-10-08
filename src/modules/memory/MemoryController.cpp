@@ -52,7 +52,7 @@ void ClockedStateBitBehavioral::evaluate(size_t time, Simulator& simulator) {
 }
 namespace circuit::families {
 const ComponentFamily ClockedStateBit{
-    "memory.clocked-state-bit", "ClockedStateBit", defineClockedStateBitPins,
+    "storage.state-bit", "ClockedStateBit", defineClockedStateBitPins,
     [](const std::string& name, const std::shared_ptr<BuildContext>& context) {
         return Component::createWithContext<::ClockedStateBit>(context, name);
     },

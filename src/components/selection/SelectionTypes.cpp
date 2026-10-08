@@ -46,6 +46,9 @@ std::string canonicalizeParameters(const ParameterMap& parameters) {
 
 std::string canonicalContractId(std::string_view id) {
     if (!id.starts_with("memory.")) return std::string(id);
+    // October 2026: general storage parts are not memories.
+    if (id == "memory.clocked-state-bit") return "storage.state-bit";
+    if (id.starts_with("memory.register.")) return "storage." + std::string(id.substr(7));
     // October 2026: memory contracts follow memory.<technology>.<what>.<width>.
     static constexpr std::pair<std::string_view, std::string_view> prefixes[] = {
         {"memory.ff-word.", "memory.ff.word."},

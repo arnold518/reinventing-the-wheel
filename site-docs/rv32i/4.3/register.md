@@ -113,7 +113,7 @@ Unlike [FFWord&lt;W&gt;](../../memory/3.1.1.md), this register has no byte mask 
 | Memory requesters | Retained request fields, sized to their actual payload widths |
 | Register file | 31 instances of `Register<32>`, one for each writable architectural register |
 
-Users select `circuit::families::registerWord(W)`, registered as `memory.register.W` with W replaced by the supported width. The component is introduced here as an RV32I building block; its implementation is also reused by response buffers. Neither use changes its pins or adds a transaction protocol. The standalone structural source is [`Register.hpp`](https://github.com/arnold518/reinventing-the-wheel/blob/github-pages/include/modules/memory/Register.hpp) and [`Register.cpp`](https://github.com/arnold518/reinventing-the-wheel/blob/github-pages/src/modules/memory/Register.cpp).
+Users select `circuit::families::registerWord(W)`, registered as `storage.register.W` with W replaced by the supported width. The component is introduced here as an RV32I building block; its implementation is also reused by response buffers. Neither use changes its pins or adds a transaction protocol. The standalone structural source is [`Register.hpp`](https://github.com/arnold518/reinventing-the-wheel/blob/github-pages/include/modules/memory/Register.hpp) and [`Register.cpp`](https://github.com/arnold518/reinventing-the-wheel/blob/github-pages/src/modules/memory/Register.cpp).
 
 ### Examples
 

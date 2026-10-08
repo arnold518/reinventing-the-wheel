@@ -84,7 +84,7 @@ RegisteredTestKind componentKind(
         "rv32i.core.baseline-pipeline",
     };
     if (sequential.count(contract_id) != 0 || contract_id.starts_with("memory.ff.word.") ||
-        contract_id.starts_with("memory.register.")) {
+        contract_id.starts_with("storage.register.")) {
         return RegisteredTestKind::Sequential;
     }
     const bool memory_part = contract_id != "memory.ff.cell" &&

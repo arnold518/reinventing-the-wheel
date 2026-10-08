@@ -6,7 +6,7 @@ import server
 
 BEHAVIORAL_MEMORY_CONTRACTS = {
     "rv32i.register-file",
-    "memory.register.32",
+    "storage.register.32",
     "memory.ff.cell",
 }
 
