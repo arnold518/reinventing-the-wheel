@@ -17,8 +17,7 @@ END_PINS()
 
 void ALU32CompareUnit::buildInternals(ComponentBuilder& builder) {
     circuit::detail::StructuralBuilder n(*this, builder);
-    // Retain the selectable lower-level zero detector in CPU build profiles.
-    auto zero = builder.add(circuit::families::ZeroDetect32, "ARITHMETIC_ZERO");
+    std::shared_ptr<IOComponent> zero = builder.addNewComponent<ZeroDetect32>("ARITHMETIC_ZERO");
     n.connect(n.input("DIFF"), zero->getInputPin<32>("A"));
     auto diff = n.split<32>("ARITHMETIC_SPLIT", n.input("DIFF"));
     auto ltu = n.invert("NOT_CARRY", n.input("CARRY_IN"));

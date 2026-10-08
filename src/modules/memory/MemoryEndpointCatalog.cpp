@@ -21,7 +21,9 @@ void add(ComponentCatalog& c, const std::string& id, const std::string& type,
             try { schema(p); return f != Fidelity::Structural || !support || support(p); }
             catch (const std::exception&) { return false; }
         };
-        if (f == Fidelity::Behavioral) impl.capabilities = {"memory-state-view"};
+        // A controller owns no storage, so it has no memory state to show.
+        if (f == Fidelity::Behavioral && id.find(".controller.") == std::string::npos)
+            impl.capabilities = {"memory-state-view"};
         impl.evidence = {VerificationStatus::Verified, {"FF transaction registers plus native structural device"},
             {test}, {"MemoryEndpointContractTest"}, {"MemoryEndpointTimingTest"}, "four-state", "transaction-completion-v2"};
         if (id.find(".controller.") != std::string::npos) {
@@ -118,7 +120,9 @@ void registerMemoryEndpoints(ComponentCatalog& c) {
                     return memory_device::describe([=](IOComponent* s) { protocolPins(s,width); nativePins(s,width,t,true); });
                 }, [=](const std::string& n, const ParameterMap& p, const std::shared_ptr<BuildContext>& ctx) {
                     return Component::createWithContext<MemoryController>(ctx,n,width,t,endpointConfig(p));
-                }, {}, test);
+                }, [=](const std::string& n, const ParameterMap& p, const std::shared_ptr<BuildContext>& ctx) {
+                    return createBehavioralMemoryController(n,width,t,endpointConfig(p),ctx);
+                }, test);
             add(c, "memory." + name + ".endpoint." + suffix, "MemoryEndpoint" + dims, schema,
                 [=](const std::string& n, const ParameterMap& p, const std::shared_ptr<BuildContext>& ctx) {
                     return Component::createWithContext<MemoryEndpoint>(ctx,n,width,t,endpointConfig(p));

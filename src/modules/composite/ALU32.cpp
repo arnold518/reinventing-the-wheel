@@ -58,10 +58,13 @@ ALU32::ALU32(std::string name,bool full_flags)
 void ALU32::buildInternals(ComponentBuilder& builder) {
     circuit::detail::StructuralBuilder n(*this, builder);
     auto control = n.add<ALU32ControlDecoder>("CONTROL");
-    // Keep these established paths and fidelity-selectable families intact.
-    auto arith = builder.add(circuit::families::AddSub32, "ARITHMETIC");
-    auto logic = builder.add(circuit::families::Logic32, "LOGIC");
-    auto shift = builder.add(circuit::families::Shifter32, "SHIFT");
+    // Built by class, not through their families: inside an ALU these units
+    // are always gate-level, so a structural CPU view is compact only at the
+    // storage and memory level. The ALU as a whole remains selectable, and
+    // each unit keeps its behavioral form for standalone use.
+    std::shared_ptr<IOComponent> arith = builder.addNewComponent<AddSub32>("ARITHMETIC");
+    std::shared_ptr<IOComponent> logic = builder.addNewComponent<Logic32>("LOGIC");
+    std::shared_ptr<IOComponent> shift = builder.addNewComponent<Shifter32>("SHIFT");
     auto compare = n.add<ALU32CompareUnit>("COMPARE");
     auto result = n.add<ALU32ResultSelector>("RESULT_SELECT");
     std::shared_ptr<ALU32FlagUnit> flags;

@@ -17,7 +17,7 @@ END_PINS()
 
 void ALU32FlagUnit::buildInternals(ComponentBuilder& builder) {
     circuit::detail::StructuralBuilder n(*this, builder);
-    auto zero = builder.add(circuit::families::ZeroDetect32, "RESULT_ZERO");
+    std::shared_ptr<IOComponent> zero = builder.addNewComponent<ZeroDetect32>("RESULT_ZERO");
     n.connect(n.input("RESULT"), zero->getInputPin<32>("A"));
     n.connect(zero->getOutputPin("ZERO"), n.output("ZERO"));
     // Preserve ALU32's direct sign-bit forwarding, including four-state values.

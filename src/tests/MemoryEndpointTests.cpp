@@ -438,6 +438,19 @@ void NativeMemoryDeviceContractTest::verifyResults() {
         spec.contract_id=memoryContractId(t,"scalable-endpoint",8);
         auto scalable=runner.run(spec,spec.scenarios[0]);
         runner.compare(expanded,scalable);
+        // The controller's behavioral form must give the same transactions as
+        // its gates in front of the same device, for every technology.
+        const auto controller_path=spec.instance_name+".CONTROLLER";
+        auto structural_endpoint=withExactFidelity(canonicalDefaultProfile(),spec.instance_name,Fidelity::Structural);
+        auto gate_controller=runner.run(spec,spec.scenarios[0],
+            withExactFidelity(structural_endpoint,controller_path,Fidelity::Structural));
+        auto compact_controller=runner.run(spec,spec.scenarios[0],
+            withExactFidelity(structural_endpoint,controller_path,Fidelity::Behavioral));
+        runner.compare(gate_controller,compact_controller);
+        for (const auto& child : compact_controller.root->getChildren())
+            if (child->getName()=="CONTROLLER")
+                require(child->getSelectedFidelity()=="behavioral" && child->getChildren().empty(),
+                        "Endpoint did not build the behavioral controller");
         EndpointConfig config;config.depth_words=1u<<28;config.record_history=false;
         config.max_resident_bytes=16384;config.max_history_bytes=0;config.refresh_interval_ticks=0;
         auto huge=std::dynamic_pointer_cast<MemoryDeviceStorage>(createMemoryContainer("HUGE",8,t,config));

@@ -107,6 +107,131 @@ public:
     }
 };
 }
+namespace {
+// The whole controller as one part. It applies the same rules as the three
+// components of the structural form: the transaction port's one pending
+// request, the one-entry response buffer, and the native sequencer (the
+// flip-flop technology needs no sequencer: its access is combinational).
+class MemoryControllerBehavioral : public Primitive {
+    size_t width_;
+    Technology technology_;
+    EndpointConfig config_;
+    NativeSequence sequence_;
+    bool pending_ = false, full_ = false;
+    Bits held_data_, held_status_;
+    LogicValue previous_ = X;
+    size_t scheduled_ = 0;
+
+    // The response buffer's clocked update: IN_VALID offers (data, status).
+    void clockBuffer(bool reset, bool edge, bool offered, bool take, const Bits& data, const Bits& status) {
+        if (reset) { full_ = false; held_data_.assign(width_, L); held_status_ = bits(3, 0); return; }
+        if (!edge) return;
+        const bool incoming = offered && (!full_ || take);
+        const bool capture = incoming && (full_ || !take);
+        const bool hold = full_ && !take;
+        if (capture) { held_data_ = data; held_status_ = status; }
+        full_ = capture || hold;
+    }
+    void publishResponse(Simulator& sim, size_t t, bool reset, bool offered, const Bits& data, const Bits& status) {
+        publish(sim, t, "RSP_VALID", !reset && (full_ || offered) ? H : L);
+        publish(sim, t, "RSP_READ_DATA", full_ ? held_data_ : data);
+        publish(sim, t, "RSP_STATUS", full_ ? held_status_ : status);
+    }
+
+    void evaluateFlipFlop(size_t t, Simulator& sim, bool reset, bool edge, bool take, bool issue) {
+        const auto op = read("REQ_OP"), address = read("REQ_ADDR"), mask = read("REQ_WRITE_MASK");
+        const bool fields_known = known(op) && known(address), mask_known = known(mask);
+        const bool o0 = op[0] == H, o1 = op[1] == H, o2 = op[2] == H;
+        const uint64_t byte_address = fields_known ? number(address) : 0;
+        const size_t shift = width_ == 32 ? 2 : width_ == 16 ? 1 : 0;
+        const bool unaligned = byte_address & ((uint64_t{1} << shift) - 1);
+        const bool out_of_range = byte_address >= uint64_t(config_.depth_words) * (width_ / 8);
+        // Later checks override earlier ones, as in the structural status chain.
+        unsigned status = o1 ? 4 : 0;
+        if (out_of_range) status = 2;
+        if (unaligned) status = 1;
+        if ((o0 != o1) && !mask_known) status = 6;
+        if (o2) status = 4;
+        if (!fields_known) status = 6;
+        const bool legal = fields_known && !o1 && !o2 && !unaligned && !out_of_range;
+        const bool reading = legal && !o0, writing = legal && o0 && mask_known;
+
+        const bool always_ready = config_.always_ready;
+        const bool ready = !reset && (always_ready || !full_ || take);
+        const bool accept = issue && ready;
+        const bool device_fault = (reading || writing) && read("MEM_FAULT") == Bits{H};
+        const Bits response_status = bits(3, device_fault ? 5 : status);
+        const Bits response_data = reading && read("MEM_FAULT") == Bits{L} ? read("MEM_READ_DATA") : Bits(width_, L);
+        if (!always_ready) clockBuffer(reset, edge, accept, take, response_data, response_status);
+
+        const bool ready_now = !reset && (always_ready || !full_ || take);
+        const bool accept_now = issue && ready_now;
+        publish(sim, t, "REQ_READY", ready_now ? H : L);
+        if (always_ready) {
+            publish(sim, t, "RSP_VALID", accept_now ? H : L);
+            publish(sim, t, "RSP_READ_DATA", response_data);
+            publish(sim, t, "RSP_STATUS", response_status);
+        } else {
+            publishResponse(sim, t, reset, accept_now, response_data, response_status);
+        }
+        Bits word(32, L);
+        for (size_t bit = 0; bit + shift < 32; ++bit) word[bit] = address[bit + shift];
+        publish(sim, t, "MEM_WORD_ADDR", word);
+        publish(sim, t, "MEM_WRITE_DATA", read("REQ_WRITE_DATA"));
+        publish(sim, t, "MEM_WRITE_MASK", mask);
+        publish(sim, t, "MEM_CLK", read("CLK"));
+        publish(sim, t, "MEM_RST", L);
+        publish(sim, t, "MEM_WE", accept_now && writing ? H : L);
+        publish(sim, t, "MEM_READ_EN", accept_now && reading ? H : L);
+    }
+
+public:
+    MemoryControllerBehavioral(std::string n, size_t w, Technology t, EndpointConfig c)
+        : Primitive(std::move(n), "MemoryController<" + std::string(technologyName(t)) + "," + std::to_string(w) + ">",
+            [=](IOComponent* s) { protocolPins(s, w); nativePins(s, w, t, true); }),
+          width_(w), technology_(t), config_(c), sequence_(w, t, c), held_data_(w, L), held_status_(bits(3, 0)) {
+        c.validate(w, t);
+    }
+    void evaluate(size_t t, Simulator& sim) override {
+        if (scheduled_ <= t) scheduled_ = 0;
+        const auto clk = getInputValue("CLK");
+        const bool edge = previous_ == L && clk == H;
+        previous_ = clk;
+        const bool reset = getInputValue("RST") != L;
+        const bool take = getInputValue("RSP_READY") == H;
+        const bool issue = getInputValue("REQ_VALID") == H;
+        if (technology_ == Technology::FF) { evaluateFlipFlop(t, sim, reset, edge, take, issue); return; }
+
+        struct View { bool completion, finish, ready, accept; };
+        const auto view = [&] {
+            const bool completion = pending_ && sequence_.done;
+            const bool room = !reset && (!full_ || take);
+            const bool slot = !pending_ || (completion && take);
+            const bool ready = !reset && slot && sequence_.available && room;
+            return View{completion, completion && room, ready, ready && issue};
+        };
+        const auto before = view();
+        const Request request{read("REQ_OP"), read("REQ_ADDR"), read("REQ_WRITE_DATA"), read("REQ_WRITE_MASK")};
+        clockBuffer(reset, edge, before.completion, take, sequence_.result, bits(3, unsigned(sequence_.status)));
+        if (reset) pending_ = false;
+        else if (edge) pending_ = before.accept || (pending_ && !before.finish);
+        sequence_.step(t, edge, reset, before.accept, request,
+                       [&](const std::string& pin, size_t) { return read("MEM_" + pin); }, before.finish);
+
+        const auto after = view();
+        publish(sim, t, "REQ_READY", after.ready ? H : L);
+        publishResponse(sim, t, reset, after.completion, sequence_.result, bits(3, unsigned(sequence_.status)));
+        for (auto& [name, pin] : getAllOutputPins())
+            if (name.starts_with("MEM_")) publish(sim, t, name, signal(sequence_.outputs, name.substr(4), pin->getWidth()));
+        if (auto due = sequence_.deadline(); due > t && due != scheduled_) { scheduled_ = due; wake(sim, due); }
+    }
+};
+}
+std::shared_ptr<Component> createBehavioralMemoryController(
+    const std::string& name, size_t width, Technology technology, EndpointConfig config,
+    const std::shared_ptr<BuildContext>& context) {
+    return Component::createWithContext<MemoryControllerBehavioral>(context, name, width, technology, config);
+}
 MemoryTransactionPort::MemoryTransactionPort(std::string n, size_t w)
     : IOComponent(std::move(n), [w](IOComponent* s) { defineMemoryTransactionPortPins(s, w); }), width_(w),
       type_("MemoryTransactionPort<" + std::to_string(w) + ">") {}
@@ -175,7 +300,10 @@ MemoryEndpoint::MemoryEndpoint(std::string n, size_t w, Technology t, EndpointCo
       type_("MemoryEndpoint<" + std::string(technologyName(t)) + "," + std::to_string(w) + ">") { c.validate(w, t, !scalable_device); }
 void MemoryEndpoint::buildInternals(ComponentBuilder& b) {
     memory_detail::StructuralWiring w(b);
-    auto controller = b.addNewComponent<MemoryController>("CONTROLLER", width_, technology_, config_);
+    // The controller is requested through the catalog, so a profile can show
+    // it as gates or as one compact part.
+    auto controller = memory_device::child(b, *this, memoryContractId(technology_, "controller", width_),
+                                           "CONTROLLER", endpointParameters(config_));
     std::shared_ptr<IOComponent> device;
     if (scalable_device_) {
         device = memory_device::child(b,*this,memoryContractId(technology_,"scalable-device",width_),

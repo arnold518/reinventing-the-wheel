@@ -473,14 +473,6 @@ profileToggleAuditCases() {
          "halt and trap-status bit cells"},
         {&circuit::families::ALU32Core, 2,
          "complete ALU operation coverage"},
-        {&circuit::families::AddSub32, 2,
-         "addition and subtraction"},
-        {&circuit::families::Logic32, 2,
-         "bitwise logic"},
-        {&circuit::families::Shifter32, 2,
-         "logical and arithmetic shifts"},
-        {&circuit::families::ZeroDetect32, 4,
-         "branch equality and result-zero detection"},
     };
     return cases;
 }

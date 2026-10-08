@@ -5,6 +5,10 @@
 #include "components/capabilities/MemoryStateView.hpp"
 #include "components/selection/ComponentFamily.hpp"
 void defineMemoryTransactionPortPins(IOComponent*, size_t width);
+// The controller's behavioral form; the class is private to its source file.
+std::shared_ptr<Component> createBehavioralMemoryController(
+    const std::string& name, size_t width, circuit::memory::Technology, circuit::memory::EndpointConfig,
+    const std::shared_ptr<circuit::BuildContext>& context);
 void defineMemoryResponseBufferPins(IOComponent*, size_t width);
 
 // One-entry fall-through response storage. Empty buffers do not add a cycle.

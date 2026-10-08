@@ -599,33 +599,29 @@ void RecursiveBuildProfileTest::verifyResults() {
     require(
         mixed_alu.root->getSelectedFidelity() == "structural",
         "Exact ALU root selection was overridden by its descendant profile");
-    const std::set<std::string> selectable_alu_children{
+    // Inside an ALU the arithmetic, logic, shift and zero-detect units are
+    // built by class and are always gate-level: a profile that makes the
+    // ALU subtree behavioral must not turn them into black boxes.
+    const std::set<std::string> gate_level_alu_units{
         "ARITHMETIC", "LOGIC", "SHIFT",
         "ARITHMETIC_ZERO", "RESULT_ZERO"};
-    size_t selected_children = 0;
-    // The zero detectors now live inside COMPARE and FLAGS. The same subtree
-    // profile must continue to select all five lower-level families.
+    size_t found_units = 0;
     std::vector<std::shared_ptr<Component>> pending_alu{mixed_alu.root};
     while (!pending_alu.empty()) {
         auto child = pending_alu.back();
         pending_alu.pop_back();
-        pending_alu.insert(pending_alu.end(), child->getChildren().begin(), child->getChildren().end());
-        if (selectable_alu_children.count(child->getName()) == 0) {
+        if (gate_level_alu_units.count(child->getName()) == 0) {
+            pending_alu.insert(pending_alu.end(), child->getChildren().begin(), child->getChildren().end());
             continue;
         }
-        ++selected_children;
+        ++found_units;
         require(
-            child->getSelectedFidelity() == "behavioral",
-            "ALU descendant profile did not select behavioral "
-                + child->getName());
-        require(
-            child->getChildren().empty(),
-            "Behavioral ALU descendant must remain a black box: "
-                + child->getName());
+            child->getSelectedFidelity() != "behavioral" && !child->getChildren().empty(),
+            "ALU unit must stay gate-level inside an ALU: " + child->getName());
     }
     require(
-        selected_children == selectable_alu_children.size(),
-        "Structural ALU omitted a profile-selectable descendant block");
+        found_units == gate_level_alu_units.size(),
+        "Structural ALU omitted one of its gate-level units");
 
     auto mixed_system_profile =
         circuit::BuildProfileBuilder("behavioral-core")
