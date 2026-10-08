@@ -226,23 +226,11 @@ void SRAMRowDecoder::buildInternals(ComponentBuilder& b) {
     StructuralWiring w(b);
     auto split = b.addNewComponent<BitSplitter<32>>("ADDRESS");
     w.connect(getInputPin<32>("WORD_ADDR"), split->getInputPin<32>("IN"));
-    const auto low = addressBits(config_.words_per_row);
-    const auto row_bits = addressBits(config_.rows());
-    std::vector<StructuralWiring::PinPtr> pos, neg;
-    for (size_t bit = low; bit < low + row_bits; ++bit) {
-        auto a = split->getOutputPin("OUT_" + std::to_string(bit));
-        pos.push_back(a); neg.push_back(w.invert("NOT_" + std::to_string(bit), a));
-    }
-    std::vector<StructuralWiring::PinPtr> high_zero;
-    for (size_t bit = low + row_bits; bit < 32; ++bit)
-        high_zero.push_back(w.invert("NOT_" + std::to_string(bit),
-            split->getOutputPin("OUT_" + std::to_string(bit))));
-    auto valid_high = w.reduce("HIGH_ADDRESS_VALID", std::move(high_zero), true);
-    auto enabled = w.both("VALID_AND_ENABLED", valid_high, getInputPin("ENABLE"));
-    for (size_t r = 0; r < config_.rows(); ++r) {
-        w.connect(decodeMatch(w, "ROW_" + std::to_string(r), pos, neg, r, enabled),
-                  getOutputPin("WL_" + std::to_string(r)));
-    }
+    // The row field sits above the bits that select a word within the row.
+    const auto lines = rowDecodeLines(
+        w, [&](size_t bit) { return split->getOutputPin("OUT_" + std::to_string(bit)); },
+        addressBits(config_.words_per_row), config_.rows(), getInputPin("ENABLE"));
+    for (size_t r = 0; r < config_.rows(); ++r) w.connect(lines[r], getOutputPin("WL_" + std::to_string(r)));
     w.finish();
 }
 SRAMPrecharge::SRAMPrecharge(std::string name, size_t columns)

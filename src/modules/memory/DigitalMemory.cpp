@@ -202,24 +202,10 @@ void MatrixRowDecoder::buildInternals(ComponentBuilder &b) {
     memory_detail::StructuralWiring w(b);
     auto a = bitAdapter(b, "ADDRESS_BITS", 32, true);
     w.connect(getInputPin<32>("ROW_ADDR"), a->getInputPin<32>("IN"));
-    std::vector<memory_detail::StructuralWiring::PinPtr> positive, negative;
-    size_t row_bits = 0;
-    while ((size_t{1} << row_bits) < rows_) ++row_bits;
-    for (size_t bit = 0; bit < row_bits; ++bit) {
-        positive.push_back(a->getOutputPin("OUT_" + std::to_string(bit)));
-        negative.push_back(w.invert("NOT_" + std::to_string(bit), positive.back()));
-    }
-    std::vector<memory_detail::StructuralWiring::PinPtr> high_zero;
-    for (size_t bit = row_bits; bit < 32; ++bit)
-        high_zero.push_back(w.invert("NOT_" + std::to_string(bit),
-                                    a->getOutputPin("OUT_" + std::to_string(bit))));
-    auto valid_high = w.reduce("HIGH_ADDRESS_VALID", std::move(high_zero), true);
-    auto enabled = w.both("VALID_AND_ENABLED", valid_high, getInputPin("ENABLE"));
-    for (size_t r = 0; r < rows_; ++r) {
-        w.connect(memory_detail::decodeMatch(w, "ROW_" + std::to_string(r), positive, negative,
-                                            r, enabled),
-                  getOutputPin("WL_" + std::to_string(r)));
-    }
+    const auto lines = memory_detail::rowDecodeLines(
+        w, [&](size_t bit) { return a->getOutputPin("OUT_" + std::to_string(bit)); }, 0, rows_,
+        getInputPin("ENABLE"));
+    for (size_t r = 0; r < rows_; ++r) w.connect(lines[r], getOutputPin("WL_" + std::to_string(r)));
     w.finish();
 }
 static void muxPins(IOComponent *s, size_t width, size_t k) {
