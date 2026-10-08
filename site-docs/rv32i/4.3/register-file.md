@@ -1,6 +1,6 @@
 # § 4.3.2. Register File
 
-`RegisterFile32x32` provides the RV32I core's two source-register reads and one destination-register write. It uses the [whole-word FF register](register.md), with register-address decoding and two read selectors around a shared bank. It is not a transaction memory endpoint: register operands are read directly, without requests, responses, or a memory controller.
+`RegisterFile32x32` provides the RV32I core's two source-register reads and one destination-register write. It uses the [whole-word FF register](register.md), with register-address decoding and two read selectors around a shared bank. Its words are registers, not byte-masked memory words, because a register is only ever written whole ([storage and memory](register.md#storage-and-memory)). It is not a transaction memory endpoint: register operands are read directly, without requests, responses, or a memory controller.
 
 Its fixed register count, two-read/one-write interface, and hardwired x0 make it an RV32I-oriented building block. The FF cells are described in [3.1.1](../../memory/3.1.1.md), and the whole-word register family in [4.3.1](register.md); this page defines the CPU-facing organization built around them.
 

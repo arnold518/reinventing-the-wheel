@@ -39,7 +39,7 @@
 #include "modules/memory/NORFlash.hpp"
 #include "modules/memory/MemoryProtocol.hpp"
 #include "modules/memory/FlipFlopCell.hpp"
-#include "modules/memory/Register.hpp"
+#include "modules/storage/Register.hpp"
 #include "modules/rv32i/RegisterFile32x32.hpp"
 #include "modules/rv32i/RV32IBitPatternMatcher.hpp"
 #include "modules/rv32i/RV32IMemoryRequest.hpp"

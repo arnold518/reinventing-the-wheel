@@ -1,6 +1,6 @@
 #include "MemoryTimingState.hpp"
 #include "../modules/memory/FlipFlopCellBehavioral.hpp"
-#include "modules/memory/ClockedStateBitBehavioral.hpp"
+#include "modules/storage/ClockedStateBitBehavioral.hpp"
 #include "modules/rv32i/RV32IMemoryRequest.hpp"
 #include "modules/basic/Gate.hpp"
 #include "modules/utility/Constant.hpp"

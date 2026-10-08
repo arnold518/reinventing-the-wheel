@@ -6,7 +6,7 @@
 #include "modules/basic/Decoder.hpp"
 #include "modules/basic/Mux.hpp"
 #include "modules/memory/FFStorageBank.hpp"
-#include "modules/memory/Register.hpp"
+#include "modules/storage/Register.hpp"
 #include "modules/memory/MemoryStructuralBuilder.hpp"
 #include "modules/rv32i/RegisterFile32x32Behavioral.hpp"
 #include "modules/utility/Constant.hpp"

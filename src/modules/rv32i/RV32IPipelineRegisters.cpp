@@ -7,7 +7,7 @@
 #include "modules/basic/Gate.hpp"
 #include "modules/basic/Mux.hpp"
 #include "modules/memory/FlipFlopCell.hpp"
-#include "modules/memory/Register.hpp"
+#include "modules/storage/Register.hpp"
 #include "modules/memory/MemoryController.hpp"
 #include "modules/utility/Constant.hpp"
 #include "modules/utility/Rewire.hpp"

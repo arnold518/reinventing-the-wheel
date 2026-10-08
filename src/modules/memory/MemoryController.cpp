@@ -1,6 +1,4 @@
 #include "modules/memory/MemoryController.hpp"
-#include "modules/memory/Register.hpp"
-#include "modules/memory/ClockedStateBitBehavioral.hpp"
 #include "modules/basic/DFlipFlop.hpp"
 #include "modules/memory/MemoryContainer.hpp"
 #include "modules/memory/BehavioralMemoryEndpoint.hpp"
@@ -20,46 +18,6 @@
 using namespace circuit;
 using namespace circuit::memory;
 using namespace circuit::memory_device;
-namespace {
-void defineClockedStateBitPins(IOComponent* self) {
-    for (const auto* pin : {"D", "CLK", "RST"}) self->addPin(pin, PinType::INPUT);
-    self->addPin("Q", PinType::OUTPUT);
-}
-}
-ClockedStateBit::ClockedStateBit(std::string name)
-    : IOComponent(std::move(name), circuit::families::ClockedStateBit.pinInitializer()) {}
-void ClockedStateBit::buildInternals(ComponentBuilder& builder) {
-    memory_detail::StructuralWiring wires(builder);
-    auto state = builder.addNewComponent<DFlipFlop>("STATE");
-    for (const auto* pin : {"D", "CLK", "RST"})
-        wires.connect(getInputPin(pin), state->getInputPin(pin));
-    wires.connect(state->getOutputPin("Q"), getOutputPin("Q"));
-    wires.finish();
-}
-ClockedStateBitBehavioral::ClockedStateBitBehavioral(std::string name)
-    : BasicComponent(std::move(name), 1, circuit::families::ClockedStateBit.pinInitializer()) {}
-void ClockedStateBitBehavioral::evaluate(size_t time, Simulator& simulator) {
-    const auto reset = getInputValue("RST");
-    const auto clock = getInputValue("CLK");
-    if (reset == H) stored_ = L;
-    else if (reset != L) stored_ = stored_ == L ? L : X;
-    else if (previous_clock_ == L && clock == H) {
-        const auto data = getInputValue("D");
-        stored_ = data == H || data == L ? data : X;
-    }
-    previous_clock_ = clock;
-    _updateOutputWire(simulator, "Q", stored_, time);
-}
-namespace circuit::families {
-const ComponentFamily ClockedStateBit{
-    "storage.state-bit", "ClockedStateBit", defineClockedStateBitPins,
-    [](const std::string& name, const std::shared_ptr<BuildContext>& context) {
-        return Component::createWithContext<::ClockedStateBit>(context, name);
-    },
-    [](const std::string& name, const std::shared_ptr<BuildContext>& context) {
-        return Component::createWithContext<ClockedStateBitBehavioral>(context, name);
-    }};
-}
 void defineMemoryTransactionPortPins(IOComponent* s, size_t w) {
     protocolPins(s, w);
     for (auto n : {"BACK_READY", "DONE"}) s->addPin(n, PinType::INPUT);

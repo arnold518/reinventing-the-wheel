@@ -11,8 +11,8 @@
 #include "modules/utility/Constant.hpp"
 #include "modules/utility/Rewire.hpp"
 #include "../modules/memory/FlipFlopCellBehavioral.hpp"
-#include "modules/memory/RegisterBehavioral.hpp"
-#include "modules/memory/ClockedStateBitBehavioral.hpp"
+#include "modules/storage/RegisterBehavioral.hpp"
+#include "modules/storage/ClockedStateBitBehavioral.hpp"
 #include "../modules/rv32i/RegisterFile32x32Behavioral.hpp"
 #include <algorithm>
 #include <array>

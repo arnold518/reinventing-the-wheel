@@ -1,5 +1,5 @@
-#include "modules/memory/RegisterBehavioral.hpp"
-#include "modules/memory/Register.hpp"
+#include "modules/storage/RegisterBehavioral.hpp"
+#include "modules/storage/Register.hpp"
 
 RegisterBehavioral::RegisterBehavioral(std::string name, size_t width)
     : BasicComponent(std::move(name), 1, [width](IOComponent* self) {

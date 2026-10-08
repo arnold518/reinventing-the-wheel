@@ -1,21 +1,11 @@
 #pragma once
 #include "modules/memory/MemoryProtocol.hpp"
-#include "modules/memory/Register.hpp"
+#include "modules/storage/ClockedStateBit.hpp"
+#include "modules/storage/Register.hpp"
 #include "components/capabilities/MemoryStateView.hpp"
 #include "components/selection/ComponentFamily.hpp"
 void defineMemoryTransactionPortPins(IOComponent*, size_t width);
 void defineMemoryResponseBufferPins(IOComponent*, size_t width);
-
-namespace circuit::families {
-extern const ComponentFamily ClockedStateBit;
-}
-
-class ClockedStateBit : public IOComponent {
-public:
-    explicit ClockedStateBit(std::string name);
-    const char* getTypeName() const override { return "ClockedStateBit"; }
-    void buildInternals(ComponentBuilder&) override;
-};
 
 // One-entry fall-through response storage. Empty buffers do not add a cycle.
 class MemoryResponseBuffer : public IOComponent {

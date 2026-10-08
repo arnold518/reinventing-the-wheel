@@ -4,7 +4,7 @@
 #include "components/ComponentBuilder.tpp"
 #include "modules/basic/Mux.hpp"
 #include "modules/memory/FlipFlopCell.hpp"
-#include "modules/memory/Register.hpp"
+#include "modules/storage/Register.hpp"
 #include "components/StructuralNetBuilder.hpp"
 #include "modules/rv32i/RV32IPipelineControl.hpp"
 #include "RV32IPipelineStagesInternal.hpp"

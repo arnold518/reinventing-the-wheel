@@ -17,7 +17,7 @@ Component references for the RV32I datapath and its control and memory-access lo
 
 | Reference | Components covered |
 | --- | --- |
-| `Register<W>` | One word at widths 1/2/3/4/5/8/16/32; structurally contains W `FlipFlopCell` instances |
+| `Register<W>` | One word at widths 1/2/3/4/5/8/16/32; structurally contains W `FlipFlopCell` instances. Also `ClockedStateBit`, the always-clocked handshake state bit |
 | Register File | `RegisterFile32x32`; its storage bank holds 31 `Register<32>` words, each built from `FlipFlopCell` instances |
 | ALU32 | `ALU32`, `ALU32Core`, `AddSub32`, `Logic32`, `Shifter32`, `ALU32ControlDecoder`, `ALU32CompareUnit`, `ALU32ResultSelector`, `ALU32FlagUnit` |
 | Instruction Decoder | `RV32IDecodeControlUnit`, `RV32IBitPatternMatcher` |

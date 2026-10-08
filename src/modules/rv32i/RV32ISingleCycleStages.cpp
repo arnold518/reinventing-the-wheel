@@ -3,7 +3,7 @@
 #include "RV32ISingleCycleStagesBehavioral.hpp"
 #include "RV32IMemoryRequestWiring.hpp"
 #include "modules/rv32i/RV32IMemorySystem.hpp"
-#include "modules/memory/Register.hpp"
+#include "modules/storage/Register.hpp"
 #include "modules/rv32i/RegisterFile32x32.hpp"
 #include "modules/composite/ALU32.hpp"
 #include "modules/composite/Adder32.hpp"

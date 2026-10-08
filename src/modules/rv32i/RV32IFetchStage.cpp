@@ -7,7 +7,7 @@
 #include "components/ComponentBuilder.tpp"
 #include "modules/basic/Mux.hpp"
 #include "modules/composite/IncrementBy4.hpp"
-#include "modules/memory/Register.hpp"
+#include "modules/storage/Register.hpp"
 #include "components/StructuralNetBuilder.hpp"
 #include "RV32IPipelineStagesInternal.hpp"
 

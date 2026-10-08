@@ -5,7 +5,7 @@
 #include "components/selection/BuildContext.hpp"
 #include "components/StructuralNetBuilder.hpp"
 #include "modules/memory/FlipFlopCell.hpp"
-#include "modules/memory/Register.hpp"
+#include "modules/storage/Register.hpp"
 #include "modules/basic/Mux.hpp"
 #include "modules/composite/Adder32.hpp"
 #include "modules/composite/IncrementBy4.hpp"

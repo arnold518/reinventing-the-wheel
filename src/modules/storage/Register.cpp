@@ -1,6 +1,6 @@
-#include "modules/memory/Register.hpp"
+#include "modules/storage/Register.hpp"
 #include "basic/SupportedWidths.hpp"
-#include "modules/memory/RegisterBehavioral.hpp"
+#include "modules/storage/RegisterBehavioral.hpp"
 #include "modules/memory/FlipFlopCell.hpp"
 #include "modules/memory/MemoryStructuralBuilder.hpp"
 #include "modules/utility/BitAdapter.hpp"

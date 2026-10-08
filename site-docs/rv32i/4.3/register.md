@@ -7,7 +7,23 @@ Supported widths are **1, 2, 3, 4, 5, 8, 16, and 32 bits**. W is the number of b
 | Component | Description | Structural | Behavioral |
 | --- | --- | :---: | :---: |
 | `Register<W>` | One resettable W-bit register with a whole-word write enable | Yes | Yes |
+| `ClockedStateBit` | One resettable bit that captures on every clock edge, for handshake state | Yes | Yes |
 | `FlipFlopCell` | Reused write-enabled, resettable storage bit | Yes | Yes |
+
+### Storage and memory
+
+The RV32I circuitry keeps state in two different kinds of component.
+
+| | Storage (this section) | Memory ([chapter 3](../../memory/3.1/index.md)) |
+| --- | --- | --- |
+| Access | Every bit is used every cycle, in parallel | One word at a time, chosen by an address |
+| Width | Any supported width, including 1 to 5 bits | Whole bytes: 8, 16, or 32 bits |
+| Write control | One enable for the whole value | An enable plus one mask bit per byte |
+| Technology | Flip-flops only | Flip-flop, SRAM, DRAM, ROM, or NOR flash |
+
+`Register<W>` and `ClockedStateBit` are storage: the program counter, pipeline fields, flags, and handshake state have no address and are always flip-flops. Instruction and data memory are memory, and their technology can be chosen. The register file ([4.3.2](register-file.md)) sits between the two: its words are registers because they are only ever written whole, and the decoder and read selectors around them supply the addressing.
+
+Storage components are catalogued as `storage.register.W` and `storage.state-bit`. `FlipFlopCell` is the flip-flop technology's memory cell (`memory.ff.cell`); registers are built from it, and the CPU also uses it directly for single flags.
 
 ## 4.3.1.1. `Register<W>`
 
@@ -100,7 +116,7 @@ Unlike [FFWord&lt;W&gt;](../../memory/3.1.1.md), this register has no byte mask 
 
 #### Behavioral implementation
 
-[`RegisterBehavioral`](https://github.com/arnold518/reinventing-the-wheel/blob/github-pages/src/modules/memory/RegisterBehavioral.cpp) stores one W-bit logic vector and the previous clock value, applying the rules above with one abstract output-delay tick. The structural register can instead select behavioral `FlipFlopCell` children. Both choices retain the same external pins. Simulator output history supplies `Q` when scrubbing the timeline.
+[`RegisterBehavioral`](https://github.com/arnold518/reinventing-the-wheel/blob/github-pages/src/modules/storage/RegisterBehavioral.cpp) stores one W-bit logic vector and the previous clock value, applying the rules above with one abstract output-delay tick. The structural register can instead select behavioral `FlipFlopCell` children. Both choices retain the same external pins. Simulator output history supplies `Q` when scrubbing the timeline.
 
 #### RV32I integration
 
@@ -113,7 +129,7 @@ Unlike [FFWord&lt;W&gt;](../../memory/3.1.1.md), this register has no byte mask 
 | Memory requesters | Retained request fields, sized to their actual payload widths |
 | Register file | 31 instances of `Register<32>`, one for each writable architectural register |
 
-Users select `circuit::families::registerWord(W)`, registered as `storage.register.W` with W replaced by the supported width. The component is introduced here as an RV32I building block; its implementation is also reused by response buffers. Neither use changes its pins or adds a transaction protocol. The standalone structural source is [`Register.hpp`](https://github.com/arnold518/reinventing-the-wheel/blob/github-pages/include/modules/memory/Register.hpp) and [`Register.cpp`](https://github.com/arnold518/reinventing-the-wheel/blob/github-pages/src/modules/memory/Register.cpp).
+Users select `circuit::families::registerWord(W)`, registered as `storage.register.W` with W replaced by the supported width. The component is introduced here as an RV32I building block; its implementation is also reused by response buffers. Neither use changes its pins or adds a transaction protocol. The standalone structural source is [`Register.hpp`](https://github.com/arnold518/reinventing-the-wheel/blob/github-pages/include/modules/storage/Register.hpp) and [`Register.cpp`](https://github.com/arnold518/reinventing-the-wheel/blob/github-pages/src/modules/storage/Register.cpp).
 
 ### Examples
 
@@ -140,3 +156,57 @@ The sequence checks reset, disabled writes, capture versus clock-high hold, alte
 | [`RegisterDocumentationTest`](https://github.com/arnold518/reinventing-the-wheel/blob/github-pages/tests/RegisterDocumentationTest.py) | Compiles this exact width-parametric C++ example, checks every declared 32-bit scenario action, and replays those bit-lane checks at every supported width |
 | [`RegisterWidthsTest`](https://github.com/arnold518/reinventing-the-wheel/blob/github-pages/src/tests/MemoryEndpointTests.cpp) | Structural/behavioral equivalence at widths 1/2/3/4/5/8/16/32, including unknown values and reset/enable behavior |
 | `FlipFlopCellTest` | Reused lower-level storage-bit contract |
+
+## 4.3.1.2. `ClockedStateBit`
+
+`ClockedStateBit` is one flip-flop with no write enable: it takes a new value on every rising clock edge. Handshake logic computes the next state on every cycle, so it needs no hold path. Use `FlipFlopCell` or `Register<W>` when a value must be kept across cycles.
+
+### IO pins
+
+| Pin | Direction | Width | Meaning |
+| --- | --- | ---: | --- |
+| `D` | Input | 1 | Next state |
+| `CLK` | Input | 1 | Capture on a known low-to-high transition |
+| `RST` | Input | 1 | Active-high asynchronous reset to zero |
+| `Q` | Output | 1 | Current state |
+
+### Behavior
+
+| Condition | Effect |
+| --- | --- |
+| Power-up, before reset or capture | The stored bit is unknown |
+| `RST = 1` | Clear the bit without waiting for a clock edge |
+| `RST = 0`, rising `CLK` | Capture `D`; `X` or `Z` data is stored as unknown |
+| No rising edge, with reset inactive | Retain the previous value |
+
+Reset has priority over capture. An uncertain reset (`X` or `Z`) leaves a stored zero unchanged and makes a stored one unknown.
+
+### Implementation
+
+#### Structural implementation
+
+One `DFlipFlop` named `STATE`, with `D`, `CLK`, and `RST` wired straight in and `Q` straight out. Compared with `FlipFlopCell`, there is no write-enable multiplexer in front of the flip-flop.
+
+#### Behavioral implementation
+
+[`ClockedStateBitBehavioral`](https://github.com/arnold518/reinventing-the-wheel/blob/github-pages/src/modules/storage/ClockedStateBit.cpp) stores one logic value and the previous clock level and applies the rules above with one abstract output-delay tick.
+
+#### Where it is used
+
+| Consumer | State bits |
+| --- | --- |
+| [Memory requesters](memory-access.md) | `BUSY`, `SENT`, `ABANDONED` |
+| [`MemoryTransactionPort`](../../memory/3.2.md) | `PENDING` |
+| [`MemoryResponseBuffer`](../../memory/3.2.md) | `OCCUPIED` |
+
+Users select `circuit::families::ClockedStateBit`, registered as `storage.state-bit`.
+
+### Examples
+
+`ClockedStateBit` has no standalone simulation page. Its recorded behavior is visible inside the memory requester and transaction port simulations linked above: expand `BUSY` or `PENDING` to see the flip-flop.
+
+### Tests
+
+| Test | Coverage |
+| --- | --- |
+| [`ClockedStateBitTest`](https://github.com/arnold518/reinventing-the-wheel/blob/github-pages/src/tests/MemoryEndpointTests.cpp) | Reset, capture of one and zero, hold while the clock stays high or falls, and asynchronous reset, compared between the structural and behavioral implementations |

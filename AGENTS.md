@@ -103,7 +103,8 @@ include/
   modules/
     basic/        Gates, muxes, decoders, latches, flip-flop, clock
     composite/    Adders, ALU8 units, ALU32 units
-    memory/       Storage cells, devices, controllers, endpoints, registers
+    memory/       Storage cells, devices, controllers, endpoints
+    storage/      Register<W> and ClockedStateBit: state with no address
     rv32i/        Building blocks, stages, cores
     utility/      Rewire, bit adapters, constants
   rv32i/          Instruction decoder, oracle, ELF loader (reference model)

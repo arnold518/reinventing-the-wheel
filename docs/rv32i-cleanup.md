@@ -250,3 +250,17 @@ type entries, 4 profile entries and 38 root layouts (about 440 KB). This
 replaces the earlier policy of keeping those entries; placements of live types
 and scenarios are untouched, including child placements for removed filler
 parts inside layouts that are still in use.
+
+## Storage and memory are two families (October 8)
+
+State in the circuits is one of two kinds. Storage has no address and is
+always flip-flops: `Register<W>` (`storage.register.W`), `ClockedStateBit`
+(`storage.state-bit`) and single `FlipFlopCell`s. Memory is reached by address
+and comes in five technologies (`memory.<technology>.*`). The register file's
+words are registers; its decoder and read selectors supply the addressing.
+
+`Register` and `ClockedStateBit` sources moved from `modules/memory` to
+`modules/storage`, and `ClockedStateBit` got its own files (it used to live
+inside the memory controller's). Both are documented in section 4.3.1 of the
+site, which also states the distinction; section 3.2 now points there for the
+state bit. No circuit changed.

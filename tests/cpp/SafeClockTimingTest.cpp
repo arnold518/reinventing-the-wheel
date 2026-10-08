@@ -6,7 +6,7 @@
 #include "modules/basic/Gate.hpp"
 #include "modules/basic/DFlipFlop.hpp"
 #include "modules/composite/FullAdder.hpp"
-#include "modules/memory/Register.hpp"
+#include "modules/storage/Register.hpp"
 #include "modules/memory/FlipFlopCell.hpp"
 #include "modules/rv32i/RegisterFile32x32.hpp"
 #include "modules/utility/Constant.hpp"

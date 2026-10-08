@@ -74,10 +74,11 @@ set(CORE_LOGIC_SOURCES
     src/tests/MemoryHelperTests.cpp
     src/tests/MemoryEndpointTests.cpp
     src/tests/FFMemoryTests.cpp
-    src/modules/memory/RegisterBehavioral.cpp
+    src/modules/storage/RegisterBehavioral.cpp
     src/modules/rv32i/RegisterFile32x32Behavioral.cpp
     src/modules/memory/FlipFlopCell.cpp
-    src/modules/memory/Register.cpp
+    src/modules/storage/ClockedStateBit.cpp
+    src/modules/storage/Register.cpp
     src/modules/rv32i/RegisterFile32x32.cpp
     src/modules/rv32i/RV32IReferenceCore.cpp
     src/modules/rv32i/RV32IDecodeControlBehavioral.cpp
