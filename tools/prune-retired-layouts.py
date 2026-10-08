@@ -14,7 +14,11 @@ names = [n for n in circuit_backend.get_registered_test_names() if f'"{n.split("
 aliases = set()
 for n in names:
     aliases |= {n, n.lower(), default_alias(n), *aliases_for(n)}
+# Layout keys the visualizer derives instead of using the type name directly
+# (VisualizerSession.cpp and server.py: FFMemory is laid out as FFArray<width>).
+DERIVED_KEY_PREFIXES = ('FFArray',)
 def retired_type(t):
+    if t.startswith(DERIVED_KEY_PREFIXES): return False
     base = re.split(r'[<(]', t)[0]
     return base not in tokens or '<container,' in t
 path = root / 'visualizer-v2/layout.json'

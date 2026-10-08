@@ -31344,6 +31344,31 @@
             "automatic_layout_revision": "automatic-stub-clearance-v1:086b96914fdf",
             "layout_mode": "automatic"
         },
+        "FFArray8": {
+            "min_aspect_ratio": 1.07,
+            "aspect_ratio": 1.07,
+            "automatic_layout_history": [{"revision":null, "children":{}}],
+            "children": {
+                "ADDRESS_DECODE": {
+                    "rel_pos": [0.0647018018018018, 0.481895259745727],
+                    "rel_width": 0.1763963963963964
+                },
+                "ACCESS_CONTROL": {
+                    "rel_pos": [0.2961018018018018, 0.481895259745727],
+                    "rel_width": 0.1763963963963964
+                },
+                "STORAGE": {
+                    "rel_pos": [0.5275018018018018, 0.4724160141449861],
+                    "rel_width": 0.1763963963963964
+                },
+                "READ_SELECT": {
+                    "rel_pos": [0.7589018018018018, 0.481895259745727],
+                    "rel_width": 0.1763963963963964
+                }
+            },
+            "automatic_layout_revision": "automatic-stub-clearance-v1:1545e2d362ea",
+            "layout_mode": "automatic"
+        },
         "MemoryAddressDecoder<4,RW>": {
             "min_aspect_ratio": 1.07,
             "aspect_ratio": 1.07,
@@ -71080,6 +71105,46 @@
             }
         },
         "d57a5ed1eeab12fc": {
+            "FFArray8": {
+                "children": {
+                    "ADDRESS_DECODE": {
+                        "rel_pos": [0.0647018018018018, 0.481895259745727],
+                        "rel_width": 0.1763963963963964
+                    },
+                    "ACCESS_CONTROL": {
+                        "rel_pos": [0.2961018018018018, 0.481895259745727],
+                        "rel_width": 0.1763963963963964
+                    },
+                    "STORAGE": {
+                        "rel_pos": [0.5275018018018018, 0.4724160141449861],
+                        "rel_width": 0.1763963963963964
+                    },
+                    "READ_SELECT": {
+                        "rel_pos": [0.7589018018018018, 0.481895259745727],
+                        "rel_width": 0.1763963963963964
+                    }
+                },
+                "automatic_layout_history": [{"revision":null, "children":{"ADDRESS_DECODE":{"rel_pos":[0.0647018018018018, 0.481895259745727],
+                                "rel_width": 0.17639639639639637
+                            },
+                            "ACCESS_CONTROL": {
+                                "rel_pos": [0.2961018018018018, 0.481895259745727],
+                                "rel_width": 0.17639639639639637
+                            },
+                            "STORAGE": {
+                                "rel_pos": [0.5275018018018018, 0.4724160141449861],
+                                "rel_width": 0.17639639639639637
+                            },
+                            "READ_SELECT": {
+                                "rel_pos": [0.7589018018018018, 0.481895259745727],
+                                "rel_width": 0.17639639639639637
+                            }
+                        }
+                    }
+                ],
+                "automatic_layout_revision": "automatic-stub-clearance-v1:1545e2d362ea",
+                "layout_mode": "automatic"
+            },
             "SRAMRowDecoder<4,1>": {
                 "children": {
                     "ADDRESS": {
