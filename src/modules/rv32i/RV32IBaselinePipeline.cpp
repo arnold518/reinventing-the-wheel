@@ -82,16 +82,9 @@ Ptr codec(ComponentBuilder& b,const std::string& name,const std::string& bus,
     }
     return b.addNewComponent<Rewire>(name,pack?a:c,pack?c:a,maps,Rewire::UnmappedBitValue::LOW);
 }
-// Real boundary outputs need a driver, not an input-to-output alias.
-void pass(ComponentBuilder& b,StructuralWiring& w,IOComponent& s,const std::vector<std::string>& fields) {
-    std::vector<Rewire::WireSpec> ins,outs;std::vector<Rewire::BitMap> maps;
-    for(auto& f:fields) {
-        const size_t width=f=="VALID"?1:32;
-        ins.emplace_back("IN_"+f,width);outs.emplace_back("OUT_"+f,width);
-        auto m=identity_mapping("IN_"+f,0,width,"OUT_"+f);maps.insert(maps.end(),m.begin(),m.end());
-    }
-    auto c=b.addNewComponent<Rewire>("PACKET_PASS",ins,outs,maps);
-    for(auto& f:fields) {input(w,s,c,"IN_"+f);output(w,s,c,"OUT_"+f);}
+// Packet fields a stage does not change pass straight from input to output.
+void pass(StructuralWiring& w,IOComponent& s,const std::vector<std::string>& fields) {
+    for(auto& f:fields) w.connect(s.getInputPinDynamic("IN_"+f),s.getOutputPinDynamic("OUT_"+f));
 }
 Pin nonzero(ComponentBuilder& b,StructuralWiring& w,const std::string& name,Pin p) {
     std::vector<Rewire::WireSpec> outs;std::vector<Rewire::BitMap> maps;
@@ -213,7 +206,7 @@ void RV32IBaselineDecodeStage::buildInternals(ComponentBuilder& b) {
     registers_=b.add(circuit::families::RegisterFile32x32,"REGISTER_FILE",{}, {"register-state-view"});
     auto pack=codec(b,"CONTROL_PACK","CONTROL",controls,true);
     auto addr=codec(b,"REGISTER_ADDRESSES","ADDRESSES",{{"RS1",5,0},{"RS2",5,5},{"RD",5,10}},true);
-    pass(b,w,*this,{"VALID","PC","INSTRUCTION","FETCH_STATUS"});
+    pass(w,*this,{"VALID","PC","INSTRUCTION","FETCH_STATUS"});
     input(w,*this,ctrl,"IN_INSTRUCTION","INSTRUCTION");
     for(auto& f:controls) w.connect(ctrl->getOutputPinDynamic(f.name),pack->getInputPinDynamic(f.name));
     for(const std::string p:{"RS1","RS2","RD"}) w.connect(ctrl->getOutputPin<5>(p+"_ADDR"),addr->getInputPin<5>(p));
@@ -240,7 +233,7 @@ void RV32IBaselineExecuteStage::buildInternals(ComponentBuilder& b) {
     auto pc4=b.addNewComponent<Adder32>("PC_PLUS_4_ADD");
     auto four=b.addNewComponent<ConstantValue<32>>("FOUR",4);
     auto status=codec(b,"EXECUTION_STATUS_PACK","STATUS",{{"TARGET_BAD",1,0}},true);
-    pass(b,w,*this,{"VALID","PC","INSTRUCTION","CONTROL","REGISTER_ADDRESSES","FETCH_STATUS"});
+    pass(w,*this,{"VALID","PC","INSTRUCTION","CONTROL","REGISTER_ADDRESSES","FETCH_STATUS"});
     input(w,*this,fields,"IN_CONTROL","CONTROL");
     for(const std::string p:{"PC","RS1_VALUE","RS2_VALUE"}) input(w,*this,alu,"IN_"+p,p);
     input(w,*this,alu,"IN_IMMEDIATE","IMM");
@@ -254,9 +247,7 @@ void RV32IBaselineExecuteStage::buildInternals(ComponentBuilder& b) {
     output(w,*this,pc4,"Sum","OUT_PC_PLUS_4");output(w,*this,alu,"ALU_RESULT","OUT_ALU_RESULT");
     output(w,*this,next,"NEXT_PC","OUT_NEXT_PC");
     // Store data is the captured pre-instruction RS2 value, never an ALU result.
-    auto store=b.addNewComponent<Rewire>("STORE_DATA",std::vector<Rewire::WireSpec>{{"IN",32}},
-        std::vector<Rewire::WireSpec>{{"OUT",32}},identity_mapping("IN",0,32,"OUT"));
-    input(w,*this,store,"IN_RS2_VALUE","IN");output(w,*this,store,"OUT","OUT_STORE_DATA");
+    w.connect(getInputPin<32>("IN_RS2_VALUE"),getOutputPin<32>("OUT_STORE_DATA"));
     w.connect(next->getOutputPin("TARGET_MISALIGNED"),status->getInputPin("TARGET_BAD"));
     output(w,*this,status,"STATUS","OUT_EXECUTION_STATUS");
     auto packet_status=packetStatus(b,w,*this,getInputPin<32>("IN_CONTROL"),status->getOutputPin<32>("STATUS"));
@@ -269,7 +260,7 @@ void RV32IBaselineMemoryStage::buildInternals(ComponentBuilder& b) {
     auto fields=codec(b,"CONTROL_FIELDS","CONTROL",controls,false);
     auto status=codec(b,"MEMORY_STATUS_PACK","STATUS",{{"MISALIGNED",1,0},{"FAULT",1,1}},true);
     auto memory=b.add(circuit::families::RV32ISingleCycleMemoryStage,"ACCESS");
-    std::vector<std::string> carry=executeFields;carry.push_back("VALID");pass(b,w,*this,carry);
+    std::vector<std::string> carry=executeFields;carry.push_back("VALID");pass(w,*this,carry);
     input(w,*this,fields,"IN_CONTROL","CONTROL");
     auto packet_status=packetStatus(b,w,*this,getInputPin<32>("IN_CONTROL"),getInputPin<32>("IN_EXECUTION_STATUS"));
     const auto terminal=packet_status->getOutputPin("TERMINAL");
@@ -339,9 +330,7 @@ void RV32IBaselineControl::buildInternals(ComponentBuilder& b) {
     for(auto n:{"ID_EX_WRITE","EX_MEM_WRITE","MEM_WB_WRITE"}) out(n,active);
     out("ID_EX_FLUSH",w.reduce("EXECUTE_BUBBLE",{stall,older,p("E_CONTROL_FLOW")},false));
     out("EX_MEM_FLUSH",late);
-    auto wb_flush=b.addNewComponent<Rewire>("WRITEBACK_FLUSH",std::vector<Rewire::WireSpec>{{"IN",1}},
-        std::vector<Rewire::WireSpec>{{"OUT",1}},identity_mapping("IN",0,1,"OUT"));
-    w.connect(p("W_TERMINAL"),wb_flush->getInputPin("IN"));out("MEM_WB_FLUSH",wb_flush->getOutputPin("OUT"));
+    out("MEM_WB_FLUSH",p("W_TERMINAL"));
     out("MEMORY_ENABLE",w.both("MEMORY_ALLOWED",active,w.invert("NO_W_TERMINAL",p("W_TERMINAL"))));
     out("DATA_STALL",w.both("ACTIVE_STALL",active,stall));
     out("BRANCH_WAIT",w.both("ACTIVE_BRANCH_WAIT",active,branch));

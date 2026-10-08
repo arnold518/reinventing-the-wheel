@@ -87,12 +87,8 @@ void RV32IExecuteStage::buildInternals(ComponentBuilder& b) {
     addControlUnpack(b,"CONTROL_FIELDS");addAddressUnpack(b,"REGISTER_FIELDS");
     addStatusPack(b,"EXECUTION_STATUS",{"TARGET_MISALIGNED"});
     auto ctrl=b.getComponent<Rewire>("CONTROL_FIELDS"),addr=b.getComponent<Rewire>("REGISTER_FIELDS"),exec=b.getComponent<Rewire>("EXECUTION_STATUS");
-    auto pass=addPassThrough(b,"PACKET_PASS",{{"VALID",1},{"PC",32},{"INSTRUCTION",32},{"CONTROL",32},{"REGISTER_ADDRESSES",32},{"FETCH_STATUS",32}});
-    for(auto& [name,pin]:pass->getAllInputPins()) {
-        w.connect(getInputPinDynamic(name),pin);
-        const auto output="OUT_"+name.substr(3);
-        w.connect(pass->getOutputPinDynamic(output),getOutputPinDynamic(output));
-    }
+    for(const std::string field:{"VALID","PC","INSTRUCTION","CONTROL","REGISTER_ADDRESSES","FETCH_STATUS"})
+        w.connect(getInputPinDynamic("IN_"+field),getOutputPinDynamic("OUT_"+field));
     w.connect(getInputPin<32>("IN_CONTROL"),ctrl->getInputPin<32>("CONTROL"));
     w.connect(getInputPin<32>("IN_REGISTER_ADDRESSES"),addr->getInputPin<32>("ADDRESSES"));
     for(const std::string p:{"RS1_VALUE","RS2_VALUE"}) w.connect(getInputPin<32>("IN_"+p),forward->getInputPin<32>(p));

@@ -14,7 +14,7 @@ generators = runpy.run_path(str(ROOT / "tools/generate-rv32i-building-block-layo
 SCENARIOS, ALU_SCENARIOS = generators["SCENARIOS"], generators["ALU_SCENARIOS"]
 default_placements = generators["placements"]
 COUNTS = {"RV32IDecodeControlUnit": 5, "RV32IMemoryLanes": 9,
-          "RV32IMemoryRequest": 46, "RV32IExecutionControlStatusUnit": 68}
+          "RV32IMemoryRequest": 45, "RV32IExecutionControlStatusUnit": 68}
 
 
 def walk(component):

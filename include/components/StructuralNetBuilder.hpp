@@ -4,8 +4,10 @@
 #include "components/ComponentBuilder.tpp"
 #include "modules/basic/Gate.hpp"
 #include "modules/utility/Constant.hpp"
+#include <initializer_list>
 #include <map>
 #include <memory>
+#include <ranges>
 #include <stdexcept>
 #include <string>
 #include <utility>
@@ -29,6 +31,14 @@ public:
         auto& net = nets_[netKey(source)];
         net.first = source;
         net.second.push_back(sink);
+    }
+    // One source driving several sinks.
+    void connect(const PinPtr& source, std::initializer_list<PinPtr> sinks) {
+        for (const auto& sink : sinks) connect(source, sink);
+    }
+    template<std::ranges::range Sinks>
+    void connect(const PinPtr& source, const Sinks& sinks) {
+        for (const auto& sink : sinks) connect(source, PinPtr(sink));
     }
     template<class Gate>
     PinPtr binary(const std::string& name, const PinPtr& a, const PinPtr& b) {
@@ -93,7 +103,7 @@ protected:
     std::string netKey(const PinPtr& source) const override { return source->getID(); }
     std::string wireName(const PinPtr&, size_t index) const override { return "net_" + std::to_string(index); }
     [[noreturn]] void throwInvalidConnection() const override {
-        throw std::invalid_argument("Invalid structural memory connection");
+        throw std::invalid_argument("Invalid structural connection");
     }
 };
 } // namespace circuit::detail

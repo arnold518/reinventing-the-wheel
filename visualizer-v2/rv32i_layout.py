@@ -238,14 +238,18 @@ def placements(kind, aspects, parent_aspect):
             "TAG_MATCH": (.65,.07,.30,.22),
         }.items(): p.slot(name, *rect)
         rows = [
-            ["READ_OPERATION", "NO_WRITE_DATA", "FULL_READ_MASK", "RESPONSE_DATA", "STATUS", "FAULT_0_0", "FAULT_1_0"],
+            # None keeps the column of a part that no longer exists, so the
+            # saved positions of its neighbours stay valid.
+            ["READ_OPERATION", "NO_WRITE_DATA", "FULL_READ_MASK", None, "STATUS", "FAULT_0_0", "FAULT_1_0"],
             ["RUNNING", "IDLE", "ISSUE_IDLE", "START", "REQUEST_PRESENT", "UNSENT", "SENDING", "VALID", "ACCEPTED"],
             ["STALE", "DISCARD", "MATCHING", "CONSUME", "RESPONSE_ELIGIBLE", "RESPONSE", "USABLE", "DONE_RUNNING"],
             ["RESPONSE_PRESENT", "RESPONSE_RUNNING", "READY_RUNNING", "CAN_FINISH", "FINISHED", "UNFINISHED"],
             ["BUSY_NEXT", "KEEP_BUSY", "BUSY", "SENT_NEXT", "KEEP_SENT", "SENT", "DISCARD_NEXT", "KEEP_ABANDONED", "ABANDONED"],
         ]
         for row, group in enumerate(rows):
-            p.grid(group, (.04,.32+row*.13,.92,.115), len(group))
+            for column, name in enumerate(group):
+                if name in p.aspects and name not in p.result:
+                    p.slot(name, .04+column*.92/len(group), .32+row*.13, .92/len(group), .115)
         if set(p.result) != set(names): return None
     elif kind == "RV32IBaselineDecodeStage":
         # Main decoder and register file stay readable at stage-focus scale.

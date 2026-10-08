@@ -1,3 +1,4 @@
+#include "components/StructuralNetBuilder.hpp"
 #include "modules/rv32i/RV32IPipelineControl.hpp"
 
 #include "components/ComponentBuilder.hpp"
@@ -15,10 +16,9 @@ std::array<NetId, 5> split5(
     IOComponent& owner,
     const std::string& pin_name,
     const std::string& child_name) {
+    circuit::detail::StructuralWiring w(builder);
     builder.addNewComponent<BitSplitter<5>>(child_name);
-    builder.addNewWire<5>(
-        child_name + "_BUS",
-        owner.getInputPin<5>(pin_name),
+    w.connect(owner.getInputPin<5>(pin_name),
         {builder.getInputPin<BitSplitter<5>, 5>(
             child_name, "IN")});
     std::array<NetId, 5> result{};
@@ -29,6 +29,7 @@ std::array<NetId, 5> split5(
                 child_name,
                 "OUT_" + std::to_string(bit)));
     }
+    w.finish();
     return result;
 }
 } // namespace
@@ -39,6 +40,7 @@ RV32IForwardingUnit::RV32IForwardingUnit(std::string name)
           circuit::families::RV32IForwardingUnit.pinInitializer()) {}
 
 void RV32IForwardingUnit::buildInternals(ComponentBuilder& builder) {
+    circuit::detail::StructuralWiring w(builder);
     LogicNetwork logic(builder);
     const auto rs1 =
         split5(builder, logic, *this, "ID_EX_RS1", "RS1_SPLIT");
@@ -107,16 +109,13 @@ void RV32IForwardingUnit::buildInternals(ComponentBuilder& builder) {
     connect_select("B", rs2, "FORWARD_B_JOIN");
     logic.materialize();
 
-    builder.addNewWire<2>(
-        "FORWARD_A_to_output",
-        builder.getOutputPin<BitJoiner<2>, 2>(
+    w.connect(builder.getOutputPin<BitJoiner<2>, 2>(
             "FORWARD_A_JOIN", "OUT"),
         {getOutputPin<2>("FORWARD_A")});
-    builder.addNewWire<2>(
-        "FORWARD_B_to_output",
-        builder.getOutputPin<BitJoiner<2>, 2>(
+    w.connect(builder.getOutputPin<BitJoiner<2>, 2>(
             "FORWARD_B_JOIN", "OUT"),
         {getOutputPin<2>("FORWARD_B")});
+    w.finish();
 }
 
 RV32IWritebackBypass::RV32IWritebackBypass(std::string name)

@@ -134,10 +134,7 @@ void RV32IMemoryRequest::buildInternals(ComponentBuilder& b) {
     auto status = b.addNewComponent<BitSplitter<3>>("STATUS");
     w.connect(getInputPin<3>("BUS_RSP_STATUS"), status->getInputPin<3>("IN"));
     w.connect(w.reduce("FAULT", {status->getOutputPin("OUT_0"),status->getOutputPin("OUT_1"),status->getOutputPin("OUT_2")},false),getOutputPin("FAULT"));
-    // Explicit boundary bridge, not a buffered response. The endpoint owns it.
-    auto data = b.addNewComponent<Rewire>("RESPONSE_DATA", std::vector<Rewire::WireSpec>{{"IN",32}},
-        std::vector<Rewire::WireSpec>{{"OUT",32}}, identity_mapping("IN",0,32,"OUT"));
-    w.connect(getInputPin<32>("BUS_RSP_READ_DATA"), data->getInputPin<32>("IN"));
-    w.connect(data->getOutputPin<32>("OUT"), getOutputPin<32>("READ_DATA"));
+    // Not a buffered response: the endpoint owns the data until it is taken.
+    w.connect(getInputPin<32>("BUS_RSP_READ_DATA"), getOutputPin<32>("READ_DATA"));
     w.finish();
 }

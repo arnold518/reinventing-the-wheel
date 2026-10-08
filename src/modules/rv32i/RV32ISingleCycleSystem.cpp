@@ -1,3 +1,4 @@
+#include "components/StructuralNetBuilder.hpp"
 #include "modules/rv32i/RV32ISingleCycleSystem.hpp"
 
 #include "components/ComponentBuilder.hpp"
@@ -41,6 +42,7 @@ RV32ISingleCycleSystem::RV32ISingleCycleSystem(std::string name,
       instruction_config_(std::move(instructions)), data_config_(std::move(data)) {}
 
 void RV32ISingleCycleSystem::buildInternals(ComponentBuilder& builder) {
+    circuit::detail::StructuralWiring w(builder);
     core_ = builder.add(circuit::families::RV32ISingleCycleCore, "CORE");
     if(instruction_config_.technology!=circuit::memory::Technology::FF || data_config_.technology!=circuit::memory::Technology::FF)
         throw std::invalid_argument("Strict single-cycle core requires zero-wait FF endpoints");
@@ -48,24 +50,17 @@ void RV32ISingleCycleSystem::buildInternals(ComponentBuilder& builder) {
     data_memory_ = rv32i::buildMemory(builder, *this, "DATA_MEMORY", data_config_);
     rv32i::wireMemorySystem(builder, core_, instruction_memory_, data_memory_,
         getInputPin("CLK"), getInputPin("RST"));
-    builder.addNewWire(
-        "ENABLE_to_core",
-        getInputPin("ENABLE"),
+    w.connect(getInputPin("ENABLE"),
         {builder.getInputPin<RV32ISingleCycleCore>("CORE", "ENABLE")});
 
-    builder.addNewWire<32>(
-        "PC_to_output",
-        builder.getOutputPin<RV32ISingleCycleCore, 32>("CORE", "PC"),
+    w.connect(builder.getOutputPin<RV32ISingleCycleCore, 32>("CORE", "PC"),
         {getOutputPin<32>("PC")});
-    builder.addNewWire(
-        "HALTED_to_output",
-        builder.getOutputPin<RV32ISingleCycleCore>("CORE", "HALTED"),
+    w.connect(builder.getOutputPin<RV32ISingleCycleCore>("CORE", "HALTED"),
         {getOutputPin("HALTED")});
-    builder.addNewWire(
-        "TRAPPED_to_output",
-        builder.getOutputPin<RV32ISingleCycleCore>("CORE", "TRAPPED"),
+    w.connect(builder.getOutputPin<RV32ISingleCycleCore>("CORE", "TRAPPED"),
         {getOutputPin("TRAPPED")});
 
+    w.finish();
 }
 
 void RV32ISingleCycleSystem::clearInstructionMemory() {

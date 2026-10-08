@@ -1,3 +1,4 @@
+#include "components/StructuralNetBuilder.hpp"
 #include "modules/composite/Shifter32.hpp"
 #include "components/BasicComponent.hpp"
 #include "components/ComponentBuilder.hpp"
@@ -129,6 +130,7 @@ Shifter32::Shifter32(std::string name)
           circuit::families::Shifter32.pinInitializer()) {}
 
 void Shifter32::buildInternals(ComponentBuilder& builder) {
+    circuit::detail::StructuralWiring w(builder);
     builder.addNewComponent<BitSplitter<32>>("A_SPLIT");
     builder.addNewComponent<BitSplitter<32>>("B_SPLIT");
     builder.addNewComponent<BitJoiner<32>>("OUT_JOIN");
@@ -136,25 +138,15 @@ void Shifter32::buildInternals(ComponentBuilder& builder) {
     builder.addNewComponent<ANDGate>("ARITHMETIC_SIGN");
     builder.addNewComponent<ANDGate>("FILL_ENABLE");
 
-    builder.addNewWire<32>(
-        "A_bus_internal",
-        getInputPin<32>("A"),
+    w.connect(getInputPin<32>("A"),
         {builder.getInputPin<BitSplitter<32>, 32>("A_SPLIT", "IN")});
-    builder.addNewWire<32>(
-        "B_bus_internal",
-        getInputPin<32>("B"),
+    w.connect(getInputPin<32>("B"),
         {builder.getInputPin<BitSplitter<32>, 32>("B_SPLIT", "IN")});
-    builder.addNewWire(
-        "ARITHMETIC_to_fill",
-        getInputPin("ARITHMETIC"),
+    w.connect(getInputPin("ARITHMETIC"),
         {builder.getInputPin<ANDGate>("ARITHMETIC_SIGN", "B")});
-    builder.addNewWire(
-        "ARITHMETIC_SIGN_to_enable",
-        builder.getOutputPin<ANDGate>("ARITHMETIC_SIGN", "OUT"),
+    w.connect(builder.getOutputPin<ANDGate>("ARITHMETIC_SIGN", "OUT"),
         {builder.getInputPin<ANDGate>("FILL_ENABLE", "A")});
-    builder.addNewWire(
-        "NOT_LEFT_to_fill",
-        builder.getOutputPin<NOTGate>("NOT_LEFT", "OUT"),
+    w.connect(builder.getOutputPin<NOTGate>("NOT_LEFT", "OUT"),
         {builder.getInputPin<ANDGate>("FILL_ENABLE", "B")});
 
     // Reverse the input for SLL, feed one five-stage right barrel shifter,
@@ -207,10 +199,7 @@ void Shifter32::buildInternals(ComponentBuilder& builder) {
                 builder.getOutputPin<Mux2to1>(mux, "OUT"));
         }
         for (size_t bit = 0; bit < 32; ++bit) {
-            builder.addNewWire(
-                "SHIFT_S" + std::to_string(stage)
-                    + "_SRC_" + std::to_string(bit),
-                current_sources[bit],
+            w.connect(current_sources[bit],
                 current_sinks[bit]);
         }
         current_sources = std::move(next_sources);
@@ -226,41 +215,29 @@ void Shifter32::buildInternals(ComponentBuilder& builder) {
             builder.getInputPin<Mux2to1>(mux, "B"));
         left_select_sinks.push_back(
             builder.getInputPin<Mux2to1>(mux, "SEL"));
-        builder.addNewWire(
-            "SHIFT_RESULT_" + std::to_string(bit),
-            builder.getOutputPin<Mux2to1>(mux, "OUT"),
+        w.connect(builder.getOutputPin<Mux2to1>(mux, "OUT"),
             {builder.getInputPin<BitJoiner<32>>(
                 "OUT_JOIN", "IN_" + std::to_string(bit))});
     }
     for (size_t bit = 0; bit < 32; ++bit) {
-        builder.addNewWire(
-            "SHIFT_OUT_SOURCE_" + std::to_string(bit),
-            current_sources[bit],
+        w.connect(current_sources[bit],
             output_sinks[bit]);
     }
 
     for (size_t bit = 0; bit < 32; ++bit) {
-        builder.addNewWire(
-            "A_bit_" + std::to_string(bit),
-            builder.getOutputPin<BitSplitter<32>>(
+        w.connect(builder.getOutputPin<BitSplitter<32>>(
                 "A_SPLIT", "OUT_" + std::to_string(bit)),
             a_sinks[bit]);
     }
     for (size_t bit = 0; bit < 5; ++bit) {
-        builder.addNewWire(
-            "B_shift_bit_" + std::to_string(bit),
-            builder.getOutputPin<BitSplitter<32>>(
+        w.connect(builder.getOutputPin<BitSplitter<32>>(
                 "B_SPLIT", "OUT_" + std::to_string(bit)),
             amount_select_sinks[bit]);
     }
-    builder.addNewWire(
-        "LEFT_fanout", getInputPin("LEFT"), left_select_sinks);
-    builder.addNewWire(
-        "FILL_fanout",
-        builder.getOutputPin<ANDGate>("FILL_ENABLE", "OUT"),
+    w.connect(getInputPin("LEFT"), left_select_sinks);
+    w.connect(builder.getOutputPin<ANDGate>("FILL_ENABLE", "OUT"),
         fill_sinks);
-    builder.addNewWire<32>(
-        "OUT_bus_internal",
-        builder.getOutputPin<BitJoiner<32>, 32>("OUT_JOIN", "OUT"),
+    w.connect(builder.getOutputPin<BitJoiner<32>, 32>("OUT_JOIN", "OUT"),
         {getOutputPin<32>("OUT")});
+    w.finish();
 }

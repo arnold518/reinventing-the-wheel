@@ -1,3 +1,4 @@
+#include "components/StructuralNetBuilder.hpp"
 #include "modules/composite/Comparator8.hpp"
 #include "components/ComponentBuilder.hpp"
 #include "components/ComponentBuilder.tpp"
@@ -15,23 +16,17 @@ EqualityChecker8::EqualityChecker8(std::string name)
     }) {}
 
 void EqualityChecker8::buildInternals(ComponentBuilder& builder) {
+    circuit::detail::StructuralWiring w(builder);
     builder.addNewComponent<XOR8>("XOR");
     builder.addNewComponent<ZeroDetect8>("ZERO");
 
-    builder.addNewWire<8>(
-        "A_bus_internal",
-        getInputPin<8>("A"),
+    w.connect(getInputPin<8>("A"),
         {builder.getInputPin<XOR8, 8>("XOR", "A")});
-    builder.addNewWire<8>(
-        "B_bus_internal",
-        getInputPin<8>("B"),
+    w.connect(getInputPin<8>("B"),
         {builder.getInputPin<XOR8, 8>("XOR", "B")});
-    builder.addNewWire<8>(
-        "XOR_to_ZERO",
-        builder.getOutputPin<XOR8, 8>("XOR", "OUT"),
+    w.connect(builder.getOutputPin<XOR8, 8>("XOR", "OUT"),
         {builder.getInputPin<ZeroDetect8, 8>("ZERO", "A")});
-    builder.addNewWire(
-        "ZERO_to_EQ",
-        builder.getOutputPin<ZeroDetect8>("ZERO", "ZERO"),
+    w.connect(builder.getOutputPin<ZeroDetect8>("ZERO", "ZERO"),
         {getOutputPin("EQ")});
+    w.finish();
 }

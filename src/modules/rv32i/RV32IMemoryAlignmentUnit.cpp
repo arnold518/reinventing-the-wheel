@@ -1,3 +1,4 @@
+#include "components/StructuralNetBuilder.hpp"
 #include "modules/rv32i/RV32IPipelineControl.hpp"
 
 #include "components/ComponentBuilder.hpp"
@@ -19,6 +20,7 @@ RV32IMemoryAlignmentUnit::RV32IMemoryAlignmentUnit(
 
 void RV32IMemoryAlignmentUnit::buildInternals(
     ComponentBuilder& builder) {
+    circuit::detail::StructuralWiring w(builder);
     builder.addNewComponent<BitSplitter<32>>("ADDRESS_SPLIT");
     builder.addNewComponent<BitSplitter<2>>("SIZE_SPLIT");
     builder.addNewComponent<ORGate>("LOW_ADDRESS_OR");
@@ -26,59 +28,40 @@ void RV32IMemoryAlignmentUnit::buildInternals(
     builder.addNewComponent<ANDGate>("WORD_MISALIGNED");
     builder.addNewComponent<ORGate>("MISALIGNED_OR");
 
-    builder.addNewWire<32>(
-        "ADDRESS_to_split",
-        getInputPin<32>("ADDRESS"),
+    w.connect(getInputPin<32>("ADDRESS"),
         {builder.getInputPin<BitSplitter<32>, 32>(
             "ADDRESS_SPLIT", "IN")});
-    builder.addNewWire<2>(
-        "SIZE_to_split",
-        getInputPin<2>("SIZE"),
+    w.connect(getInputPin<2>("SIZE"),
         {builder.getInputPin<BitSplitter<2>, 2>(
             "SIZE_SPLIT", "IN")});
-    builder.addNewWire(
-        "ADDRESS_bit0_fanout",
-        builder.getOutputPin<BitSplitter<32>>(
+    w.connect(builder.getOutputPin<BitSplitter<32>>(
             "ADDRESS_SPLIT", "OUT_0"),
         {builder.getInputPin<ORGate>("LOW_ADDRESS_OR", "A"),
          builder.getInputPin<ANDGate>(
              "HALF_MISALIGNED", "B")});
-    builder.addNewWire(
-        "ADDRESS_bit1_to_low_or",
-        builder.getOutputPin<BitSplitter<32>>(
+    w.connect(builder.getOutputPin<BitSplitter<32>>(
             "ADDRESS_SPLIT", "OUT_1"),
         {builder.getInputPin<ORGate>("LOW_ADDRESS_OR", "B")});
-    builder.addNewWire(
-        "SIZE_bit0_to_half",
-        builder.getOutputPin<BitSplitter<2>>(
+    w.connect(builder.getOutputPin<BitSplitter<2>>(
             "SIZE_SPLIT", "OUT_0"),
         {builder.getInputPin<ANDGate>(
             "HALF_MISALIGNED", "A")});
-    builder.addNewWire(
-        "SIZE_bit1_to_word",
-        builder.getOutputPin<BitSplitter<2>>(
+    w.connect(builder.getOutputPin<BitSplitter<2>>(
             "SIZE_SPLIT", "OUT_1"),
         {builder.getInputPin<ANDGate>(
             "WORD_MISALIGNED", "A")});
-    builder.addNewWire(
-        "LOW_ADDRESS_to_word",
-        builder.getOutputPin<ORGate>(
+    w.connect(builder.getOutputPin<ORGate>(
             "LOW_ADDRESS_OR", "OUT"),
         {builder.getInputPin<ANDGate>(
             "WORD_MISALIGNED", "B")});
-    builder.addNewWire(
-        "HALF_to_misaligned_or",
-        builder.getOutputPin<ANDGate>(
+    w.connect(builder.getOutputPin<ANDGate>(
             "HALF_MISALIGNED", "OUT"),
         {builder.getInputPin<ORGate>("MISALIGNED_OR", "A")});
-    builder.addNewWire(
-        "WORD_to_misaligned_or",
-        builder.getOutputPin<ANDGate>(
+    w.connect(builder.getOutputPin<ANDGate>(
             "WORD_MISALIGNED", "OUT"),
         {builder.getInputPin<ORGate>("MISALIGNED_OR", "B")});
-    builder.addNewWire(
-        "MISALIGNED_to_output",
-        builder.getOutputPin<ORGate>(
+    w.connect(builder.getOutputPin<ORGate>(
             "MISALIGNED_OR", "OUT"),
         {getOutputPin("MISALIGNED")});
+    w.finish();
 }

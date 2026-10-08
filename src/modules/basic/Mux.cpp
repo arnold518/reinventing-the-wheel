@@ -1,3 +1,4 @@
+#include "components/StructuralNetBuilder.hpp"
 #include "modules/basic/Mux.hpp"
 #include "components/ComponentBuilder.hpp"
 #include "components/ComponentBuilder.tpp"
@@ -15,29 +16,28 @@ std::string muxInputName(size_t input_count, size_t index) {
 }
 
 void buildMux2FromGates(IOComponent& component, ComponentBuilder& builder) {
+    circuit::detail::StructuralWiring w(builder);
     builder.addNewComponent<NOTGate>("NOT_SEL");
     builder.addNewComponent<ANDGate>("AND_A");
     builder.addNewComponent<ANDGate>("AND_B");
     builder.addNewComponent<ORGate>("OR_OUT");
 
-    builder.addNewWire(
-        "SEL_internal",
-        component.getInputPin("SEL"),
+    w.connect(component.getInputPin("SEL"),
         {builder.getInputPin<NOTGate>("NOT_SEL", "IN"), builder.getInputPin<ANDGate>("AND_B", "B")});
-    builder.addNewWire("A_to_AND", component.getInputPin("A"), {builder.getInputPin<ANDGate>("AND_A", "A")});
-    builder.addNewWire("B_to_AND", component.getInputPin("B"), {builder.getInputPin<ANDGate>("AND_B", "A")});
-    builder.addNewWire("NOT_SEL_to_AND", builder.getOutputPin<NOTGate>("NOT_SEL", "OUT"), {builder.getInputPin<ANDGate>("AND_A", "B")});
-    builder.addNewWire("AND_A_to_OR", builder.getOutputPin<ANDGate>("AND_A", "OUT"), {builder.getInputPin<ORGate>("OR_OUT", "A")});
-    builder.addNewWire("AND_B_to_OR", builder.getOutputPin<ANDGate>("AND_B", "OUT"), {builder.getInputPin<ORGate>("OR_OUT", "B")});
-    builder.addNewWire("OR_to_OUT", builder.getOutputPin<ORGate>("OR_OUT", "OUT"), {component.getOutputPin("OUT")});
+    w.connect(component.getInputPin("A"), {builder.getInputPin<ANDGate>("AND_A", "A")});
+    w.connect(component.getInputPin("B"), {builder.getInputPin<ANDGate>("AND_B", "A")});
+    w.connect(builder.getOutputPin<NOTGate>("NOT_SEL", "OUT"), {builder.getInputPin<ANDGate>("AND_A", "B")});
+    w.connect(builder.getOutputPin<ANDGate>("AND_A", "OUT"), {builder.getInputPin<ORGate>("OR_OUT", "A")});
+    w.connect(builder.getOutputPin<ANDGate>("AND_B", "OUT"), {builder.getInputPin<ORGate>("OR_OUT", "B")});
+    w.connect(builder.getOutputPin<ORGate>("OR_OUT", "OUT"), {component.getOutputPin("OUT")});
+    w.finish();
 }
 
 template<size_t SEL_WIDTH>
 void buildOneBitMuxTree(IOComponent& component, ComponentBuilder& builder, size_t input_count) {
+    circuit::detail::StructuralWiring w(builder);
     builder.addNewComponent<BitSplitter<SEL_WIDTH>>("SEL_SPLIT");
-    builder.addNewWire<SEL_WIDTH>(
-        "SEL_bus_internal",
-        component.getInputPin<SEL_WIDTH>("SEL"),
+    w.connect(component.getInputPin<SEL_WIDTH>("SEL"),
         {builder.getInputPin<BitSplitter<SEL_WIDTH>, SEL_WIDTH>("SEL_SPLIT", "IN")});
 
     std::vector<std::string> previous_level;
@@ -56,29 +56,19 @@ void buildOneBitMuxTree(IOComponent& component, ComponentBuilder& builder, size_
             select_sinks.push_back(builder.getInputPin<Mux2to1>(mux_name, "SEL"));
 
             if (level == 0) {
-                builder.addNewWire(
-                    "IN" + std::to_string(2 * i) + "_to_" + mux_name,
-                    component.getInputPin(muxInputName(input_count, 2 * i)),
+                w.connect(component.getInputPin(muxInputName(input_count, 2 * i)),
                     {builder.getInputPin<Mux2to1>(mux_name, "A")});
-                builder.addNewWire(
-                    "IN" + std::to_string(2 * i + 1) + "_to_" + mux_name,
-                    component.getInputPin(muxInputName(input_count, 2 * i + 1)),
+                w.connect(component.getInputPin(muxInputName(input_count, 2 * i + 1)),
                     {builder.getInputPin<Mux2to1>(mux_name, "B")});
             } else {
-                builder.addNewWire(
-                    previous_level[2 * i] + "_to_" + mux_name,
-                    builder.getOutputPin<Mux2to1>(previous_level[2 * i], "OUT"),
+                w.connect(builder.getOutputPin<Mux2to1>(previous_level[2 * i], "OUT"),
                     {builder.getInputPin<Mux2to1>(mux_name, "A")});
-                builder.addNewWire(
-                    previous_level[2 * i + 1] + "_to_" + mux_name,
-                    builder.getOutputPin<Mux2to1>(previous_level[2 * i + 1], "OUT"),
+                w.connect(builder.getOutputPin<Mux2to1>(previous_level[2 * i + 1], "OUT"),
                     {builder.getInputPin<Mux2to1>(mux_name, "B")});
             }
         }
 
-        builder.addNewWire(
-            "SEL_bit_" + std::to_string(level),
-            builder.getOutputPin<BitSplitter<SEL_WIDTH>>("SEL_SPLIT", "OUT_" + std::to_string(level)),
+        w.connect(builder.getOutputPin<BitSplitter<SEL_WIDTH>>("SEL_SPLIT", "OUT_" + std::to_string(level)),
             select_sinks);
 
         previous_level = std::move(current_level);
@@ -86,21 +76,19 @@ void buildOneBitMuxTree(IOComponent& component, ComponentBuilder& builder, size_
         ++level;
     }
 
-    builder.addNewWire(
-        "MUX_tree_to_OUT",
-        builder.getOutputPin<Mux2to1>(previous_level.front(), "OUT"),
+    w.connect(builder.getOutputPin<Mux2to1>(previous_level.front(), "OUT"),
         {component.getOutputPin("OUT")});
+    w.finish();
 }
 
 template<typename OneBitMuxT, size_t INPUT_COUNT, size_t SEL_WIDTH, size_t BUS_WIDTH>
 void buildBusMux(IOComponent& component, ComponentBuilder& builder) {
+    circuit::detail::StructuralWiring w(builder);
     for (size_t input_index = 0; input_index < INPUT_COUNT; ++input_index) {
         const auto input_name = muxInputName(INPUT_COUNT, input_index);
         const auto splitter_name = input_name + "_SPLIT";
         builder.addNewComponent<BitSplitter<BUS_WIDTH>>(splitter_name);
-        builder.addNewWire<BUS_WIDTH>(
-            input_name + "_bus_internal",
-            component.getInputPin<BUS_WIDTH>(input_name),
+        w.connect(component.getInputPin<BUS_WIDTH>(input_name),
             {builder.getInputPin<BitSplitter<BUS_WIDTH>, BUS_WIDTH>(splitter_name, "IN")});
     }
 
@@ -119,30 +107,25 @@ void buildBusMux(IOComponent& component, ComponentBuilder& builder) {
             builder.addNewComponent<ANDGate>(a);
             builder.addNewComponent<ANDGate>(b);
             builder.addNewComponent<ORGate>(out);
-            builder.addNewWire("A_BIT_" + suffix,
-                builder.getOutputPin<BitSplitter<BUS_WIDTH>>("A_SPLIT", "OUT_" + suffix),
+            w.connect(builder.getOutputPin<BitSplitter<BUS_WIDTH>>("A_SPLIT", "OUT_" + suffix),
                 {builder.getInputPin<ANDGate>(a, "A")});
-            builder.addNewWire("B_BIT_" + suffix,
-                builder.getOutputPin<BitSplitter<BUS_WIDTH>>("B_SPLIT", "OUT_" + suffix),
+            w.connect(builder.getOutputPin<BitSplitter<BUS_WIDTH>>("B_SPLIT", "OUT_" + suffix),
                 {builder.getInputPin<ANDGate>(b, "A")});
             selected_sinks.push_back(builder.getInputPin<ANDGate>(b, "B"));
             unselected_sinks.push_back(builder.getInputPin<ANDGate>(a, "B"));
-            builder.addNewWire(a + "_to_" + out,
-                builder.getOutputPin<ANDGate>(a, "OUT"),
+            w.connect(builder.getOutputPin<ANDGate>(a, "OUT"),
                 {builder.getInputPin<ORGate>(out, "A")});
-            builder.addNewWire(b + "_to_" + out,
-                builder.getOutputPin<ANDGate>(b, "OUT"),
+            w.connect(builder.getOutputPin<ANDGate>(b, "OUT"),
                 {builder.getInputPin<ORGate>(out, "B")});
-            builder.addNewWire(out + "_to_JOIN_" + suffix,
-                builder.getOutputPin<ORGate>(out, "OUT"),
+            w.connect(builder.getOutputPin<ORGate>(out, "OUT"),
                 {builder.getInputPin<BitJoiner<BUS_WIDTH>>("OUT_JOIN", "IN_" + suffix)});
         }
-        builder.addNewWire("SEL_bus_internal", component.getInputPin("SEL"), selected_sinks);
-        builder.addNewWire("NOT_SEL_internal", builder.getOutputPin<NOTGate>("NOT_SEL", "OUT"),
+        w.connect(component.getInputPin("SEL"), selected_sinks);
+        w.connect(builder.getOutputPin<NOTGate>("NOT_SEL", "OUT"),
             unselected_sinks);
-        builder.addNewWire<BUS_WIDTH>("OUT_bus_internal",
-            builder.getOutputPin<BitJoiner<BUS_WIDTH>, BUS_WIDTH>("OUT_JOIN", "OUT"),
+        w.connect(builder.getOutputPin<BitJoiner<BUS_WIDTH>, BUS_WIDTH>("OUT_JOIN", "OUT"),
             {component.getOutputPin<BUS_WIDTH>("OUT")});
+        w.finish();
         return;
     }
 
@@ -158,27 +141,20 @@ void buildBusMux(IOComponent& component, ComponentBuilder& builder) {
         for (size_t input_index = 0; input_index < INPUT_COUNT; ++input_index) {
             const auto input_name = muxInputName(INPUT_COUNT, input_index);
             const auto splitter_name = input_name + "_SPLIT";
-            builder.addNewWire(
-                input_name + "_bit_" + bit_text + "_to_" + mux_name,
-                builder.getOutputPin<BitSplitter<BUS_WIDTH>>(splitter_name, "OUT_" + bit_text),
+            w.connect(builder.getOutputPin<BitSplitter<BUS_WIDTH>>(splitter_name, "OUT_" + bit_text),
                 {builder.getInputPin<OneBitMuxT>(mux_name, muxInputName(INPUT_COUNT, input_index))});
         }
 
-        builder.addNewWire(
-            mux_name + "_to_JOIN_" + bit_text,
-            builder.getOutputPin<OneBitMuxT>(mux_name, "OUT"),
+        w.connect(builder.getOutputPin<OneBitMuxT>(mux_name, "OUT"),
             {builder.getInputPin<BitJoiner<BUS_WIDTH>>("OUT_JOIN", "IN_" + bit_text)});
     }
 
-    builder.addNewWire<SEL_WIDTH>(
-        "SEL_bus_internal",
-        component.getInputPin<SEL_WIDTH>("SEL"),
+    w.connect(component.getInputPin<SEL_WIDTH>("SEL"),
         select_sinks);
 
-    builder.addNewWire<BUS_WIDTH>(
-        "OUT_bus_internal",
-        builder.getOutputPin<BitJoiner<BUS_WIDTH>, BUS_WIDTH>("OUT_JOIN", "OUT"),
+    w.connect(builder.getOutputPin<BitJoiner<BUS_WIDTH>, BUS_WIDTH>("OUT_JOIN", "OUT"),
         {component.getOutputPin<BUS_WIDTH>("OUT")});
+    w.finish();
 }
 }
 

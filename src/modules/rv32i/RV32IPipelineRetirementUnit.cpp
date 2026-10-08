@@ -1,3 +1,4 @@
+#include "components/StructuralNetBuilder.hpp"
 #include "modules/rv32i/RV32IPipelineControl.hpp"
 
 #include "components/ComponentBuilder.hpp"
@@ -20,6 +21,7 @@ RV32IPipelineRetirementUnit::RV32IPipelineRetirementUnit(
 
 void RV32IPipelineRetirementUnit::buildInternals(
     ComponentBuilder& builder) {
+    circuit::detail::StructuralWiring w(builder);
     LogicNetwork logic(builder);
     const auto enable =
         logic.source("ENABLE", getInputPin("ENABLE"));
@@ -107,34 +109,24 @@ void RV32IPipelineRetirementUnit::buildInternals(
     builder.addNewComponent<Mux2to1_4bit>(
         "DATA_FAULT_CAUSE");
 
-    builder.addNewWire(
-        "MEM_WRITE_to_data_cause_muxes",
-        getInputPin("MEM_WRITE"),
+    w.connect(getInputPin("MEM_WRITE"),
         {builder.getInputPin<Mux2to1_4bit>(
              "DATA_MISALIGNED_CAUSE", "SEL"),
          builder.getInputPin<Mux2to1_4bit>(
              "DATA_FAULT_CAUSE", "SEL")});
-    builder.addNewWire<4>(
-        "LOAD_MISALIGNED_to_data_cause",
-        builder.getOutputPin<ConstantValue<4>, 4>(
+    w.connect(builder.getOutputPin<ConstantValue<4>, 4>(
             "CAUSE_LOAD_MISALIGNED", "OUT"),
         {builder.getInputPin<Mux2to1_4bit, 4>(
             "DATA_MISALIGNED_CAUSE", "A")});
-    builder.addNewWire<4>(
-        "STORE_MISALIGNED_to_data_cause",
-        builder.getOutputPin<ConstantValue<4>, 4>(
+    w.connect(builder.getOutputPin<ConstantValue<4>, 4>(
             "CAUSE_STORE_MISALIGNED", "OUT"),
         {builder.getInputPin<Mux2to1_4bit, 4>(
             "DATA_MISALIGNED_CAUSE", "B")});
-    builder.addNewWire<4>(
-        "LOAD_FAULT_to_data_cause",
-        builder.getOutputPin<ConstantValue<4>, 4>(
+    w.connect(builder.getOutputPin<ConstantValue<4>, 4>(
             "CAUSE_LOAD_FAULT", "OUT"),
         {builder.getInputPin<Mux2to1_4bit, 4>(
             "DATA_FAULT_CAUSE", "A")});
-    builder.addNewWire<4>(
-        "STORE_FAULT_to_data_cause",
-        builder.getOutputPin<ConstantValue<4>, 4>(
+    w.connect(builder.getOutputPin<ConstantValue<4>, 4>(
             "CAUSE_STORE_FAULT", "OUT"),
         {builder.getInputPin<Mux2to1_4bit, 4>(
             "DATA_FAULT_CAUSE", "B")});
@@ -174,14 +166,10 @@ void RV32IPipelineRetirementUnit::buildInternals(
         const auto mux_name =
             std::string(stage.name) + "_MUX";
         builder.addNewComponent<Mux2to1_4bit>(mux_name);
-        builder.addNewWire<4>(
-            mux_name + "_previous",
-            previous,
+        w.connect(previous,
             {builder.getInputPin<Mux2to1_4bit, 4>(
                 mux_name, "A")});
-        builder.addNewWire<4>(
-            mux_name + "_cause",
-            stage.cause,
+        w.connect(stage.cause,
             {builder.getInputPin<Mux2to1_4bit, 4>(
                 mux_name, "B")});
         logic.sink(
@@ -192,9 +180,8 @@ void RV32IPipelineRetirementUnit::buildInternals(
             builder.getOutputPin<Mux2to1_4bit, 4>(
                 mux_name, "OUT");
     }
-    builder.addNewWire<4>(
-        "TRAP_CAUSE_to_output",
-        previous,
+    w.connect(previous,
         {getOutputPin<4>("TRAP_CAUSE")});
     logic.materialize();
+    w.finish();
 }

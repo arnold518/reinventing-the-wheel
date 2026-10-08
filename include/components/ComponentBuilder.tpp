@@ -103,7 +103,10 @@ std::shared_ptr<Wire<WIDTH>> ComponentBuilder::addNewWire(
         }
 
         if (source_owner == sink_owner) {
-            if (source_pin->getType() == PinType::OUTPUT && sink_pin->getType() == PinType::INPUT) {
+            // Both pins sit on this component's own boundary: either an
+            // output fed back to an input, or an input passed straight
+            // through to an output. The wire lives inside the component.
+            if (source_pin->getType() != sink_pin->getType()) {
                 source_pin->connectInternal(new_wire);
                 sink_pin->connectInternal(new_wire);
                 new_wire->addSinkPin(sink_pin);

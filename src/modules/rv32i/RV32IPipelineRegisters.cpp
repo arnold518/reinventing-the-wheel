@@ -1,3 +1,4 @@
+#include "components/StructuralNetBuilder.hpp"
 #include "modules/rv32i/RV32IPipelineRegisters.hpp"
 
 #include "components/BasicComponent.hpp"
@@ -306,25 +307,18 @@ RV32IPipelineRegisterBlock::RV32IPipelineRegisterBlock(
 
 void RV32IPipelineRegisterBlock::buildInternals(
     ComponentBuilder& builder) {
+    circuit::detail::StructuralWiring w(builder);
     builder.addNewComponent<NOTGate>("NOT_FLUSH");
     builder.addNewComponent<ANDGate>("VALID_GATE");
     builder.add(circuit::families::FlipFlopCell, "VALID_STATE");
 
-    builder.addNewWire(
-        "D_VALID_to_gate",
-        getInputPin("D_VALID"),
+    w.connect(getInputPin("D_VALID"),
         {builder.getInputPin<ANDGate>("VALID_GATE", "A")});
-    builder.addNewWire(
-        "NOT_FLUSH_to_gate",
-        builder.getOutputPin<NOTGate>("NOT_FLUSH", "OUT"),
+    w.connect(builder.getOutputPin<NOTGate>("NOT_FLUSH", "OUT"),
         {builder.getInputPin<ANDGate>("VALID_GATE", "B")});
-    builder.addNewWire(
-        "VALID_D_to_state",
-        builder.getOutputPin<ANDGate>("VALID_GATE", "OUT"),
+    w.connect(builder.getOutputPin<ANDGate>("VALID_GATE", "OUT"),
         {builder.getInputPin<IOComponent>("VALID_STATE", "D")});
-    builder.addNewWire(
-        "VALID_Q_to_output",
-        builder.getOutputPin<IOComponent>("VALID_STATE", "Q"),
+    w.connect(builder.getOutputPin<IOComponent>("VALID_STATE", "Q"),
         {getOutputPin("Q_VALID")});
 
     std::vector<std::shared_ptr<Pin<>>> write_enable_sinks{
@@ -341,9 +335,9 @@ void RV32IPipelineRegisterBlock::buildInternals(
         auto slices=compact_?compactSlices(field,getTypeName()):std::vector<PacketSlice>{{0,32}};
         if (slices.size()==1 && slices.front().offset==0 && slices.front().width==32) {
             builder.add(circuit::families::registerWord(32), child);
-            builder.addNewWire<32>(field + "_D_to_state",getInputPin<32>("D_" + field),
+            w.connect(getInputPin<32>("D_" + field),
                 {builder.getInputPin<IOComponent,32>(child,"D")});
-            builder.addNewWire<32>(field + "_Q_to_output",builder.getOutputPin<IOComponent,32>(child,"Q"),
+            w.connect(builder.getOutputPin<IOComponent,32>(child,"Q"),
                 {getOutputPin<32>("Q_" + field)});
             write_enable_sinks.push_back(builder.getInputPin<IOComponent>(child,"WE"));
             clock_sinks.push_back(builder.getInputPin<IOComponent>(child,"CLK"));
@@ -364,15 +358,15 @@ void RV32IPipelineRegisterBlock::buildInternals(
             std::vector<Rewire::WireSpec>{{"IN",32}},slice_ports,input_maps);
         auto join=builder.addNewComponent<Rewire>(field+"_JOIN",slice_ports,
             std::vector<Rewire::WireSpec>{{"OUT",32}},output_maps,Rewire::UnmappedBitValue::LOW);
-        builder.addNewWire<32>(field+"_D_to_split",getInputPin<32>("D_"+field),{split->getInputPin<32>("IN")});
-        builder.addNewWire<32>(field+"_join_to_Q",join->getOutputPin<32>("OUT"),{getOutputPin<32>("Q_"+field)});
+        w.connect(getInputPin<32>("D_"+field),{split->getInputPin<32>("IN")});
+        w.connect(join->getOutputPin<32>("OUT"),{getOutputPin<32>("Q_"+field)});
         for (size_t i=0;i<slices.size();++i) {
             const auto name="SLICE_"+std::to_string(i);
             const auto part=child+"_"+std::to_string(i);
             auto state=builder.add(circuit::families::registerWord(slices[i].width),part);
-            builder.addNewWireDynamic(field+"_D_"+name,slices[i].width,split->getOutputPinDynamic(name),
+            w.connect(split->getOutputPinDynamic(name),
                 {state->getInputPinDynamic("D")});
-            builder.addNewWireDynamic(field+"_Q_"+name,slices[i].width,state->getOutputPinDynamic("Q"),
+            w.connect(state->getOutputPinDynamic("Q"),
                 {join->getInputPinDynamic(name)});
             write_enable_sinks.push_back(builder.getInputPin<IOComponent>(part,"WE"));
             clock_sinks.push_back(builder.getInputPin<IOComponent>(part,"CLK"));
@@ -380,14 +374,12 @@ void RV32IPipelineRegisterBlock::buildInternals(
         }
     }
 
-    builder.addNewWire(
-        "WRITE_ENABLE_fanout",
-        getInputPin("WRITE_ENABLE"),
+    w.connect(getInputPin("WRITE_ENABLE"),
         write_enable_sinks);
-    builder.addNewWire("CLK_fanout", getInputPin("CLK"), clock_sinks);
-    builder.addNewWire("RST_fanout", getInputPin("RST"), reset_sinks);
-    builder.addNewWire(
-        "FLUSH_fanout", getInputPin("FLUSH"), flush_sinks);
+    w.connect(getInputPin("CLK"), clock_sinks);
+    w.connect(getInputPin("RST"), reset_sinks);
+    w.connect(getInputPin("FLUSH"), flush_sinks);
+    w.finish();
 }
 
 RV32IIFIDPipelineRegister::RV32IIFIDPipelineRegister(std::string name,bool compact)

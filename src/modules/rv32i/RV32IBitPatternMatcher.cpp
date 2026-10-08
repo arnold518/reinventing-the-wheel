@@ -19,10 +19,9 @@ RV32IBitPatternMatcher::RV32IBitPatternMatcher(std::string name, uint32_t mask, 
       value_(value & mask) {}
 
 void RV32IBitPatternMatcher::buildInternals(ComponentBuilder& builder) {
+    circuit::detail::StructuralWiring w(builder);
     builder.addNewComponent<BitSplitter<32>>("INPUT_SPLIT");
-    builder.addNewWire<32>(
-        "INPUT_bus_internal",
-        getInputPin<32>("INPUT"),
+    w.connect(getInputPin<32>("INPUT"),
         {builder.getInputPin<BitSplitter<32>, 32>("INPUT_SPLIT", "IN")});
 
     std::vector<std::shared_ptr<Pin<>>> terms;
@@ -40,9 +39,7 @@ void RV32IBitPatternMatcher::buildInternals(ComponentBuilder& builder) {
 
         const auto not_name = "NOT_BIT_" + bit_text;
         builder.addNewComponent<NOTGate>(not_name);
-        builder.addNewWire(
-            "BIT_" + bit_text + "_to_NOT",
-            source,
+        w.connect(source,
             {builder.getInputPin<NOTGate>(not_name, "IN")});
         terms.push_back(builder.getOutputPin<NOTGate>(not_name, "OUT"));
     }
@@ -51,11 +48,11 @@ void RV32IBitPatternMatcher::buildInternals(ComponentBuilder& builder) {
         throw std::invalid_argument("RV32IBitPatternMatcher requires a nonzero mask");
     }
     if (terms.size() == 1) {
-        builder.addNewWire("single_term_to_MATCH", terms.front(), {getOutputPin("MATCH")});
+        w.connect(terms.front(), {getOutputPin("MATCH")});
+        w.finish();
         return;
     }
 
-    circuit::detail::StructuralWiring w(builder);
     std::vector<circuit::detail::StructuralWiring::PinPtr> inputs(terms.begin(),terms.end());
     w.connect(w.reduce("MATCH_TREE",inputs,true),getOutputPin("MATCH"));
     w.finish();

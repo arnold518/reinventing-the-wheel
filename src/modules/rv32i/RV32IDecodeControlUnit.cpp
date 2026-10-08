@@ -294,6 +294,7 @@ public:
         }) {}
     const char* getTypeName() const override { return "RV32IInstructionRecognition"; }
     void buildInternals(ComponentBuilder& builder) override {
+        circuit::detail::StructuralWiring w(builder);
         const auto& instruction_patterns = patterns();
         std::vector<Rewire::WireSpec> inputs;
         std::vector<Rewire::BitMap> mappings;
@@ -424,7 +425,7 @@ public:
                 match_sinks[index].begin(),match_sinks[index].end());
         }
 
-        builder.addNewWire<32>("INSTRUCTION_fanout", getInputPin<32>("INSTRUCTION"), instruction_sinks);
+        w.connect(getInputPin<32>("INSTRUCTION"), instruction_sinks);
         for (size_t i = 0; i < instruction_patterns.size(); ++i) {
             if (direct_predicates[i] != NoPredicate) {
                 auto& sinks = predicates[direct_predicates[i]].sinks;
@@ -432,12 +433,12 @@ public:
             }
         }
         for (const auto& [gate,sinks]:gate_sinks)
-            builder.addNewWire(gate+"_fanout",builder.getOutputPin<ANDGate>(gate,"OUT"),sinks);
+            w.connect(builder.getOutputPin<ANDGate>(gate,"OUT"),sinks);
         for (const auto& predicate : predicates)
-            builder.addNewWire(predicate.name + "_fanout",
-                builder.getOutputPin<RV32IBitPatternMatcher>(predicate.name, "MATCH"), predicate.sinks);
-        builder.addNewWire<32>("matches_low", pack->getOutputPin<32>("MATCH_LO"), {getOutputPin<32>("MATCH_LO")});
-        builder.addNewWire<8>("matches_high", pack->getOutputPin<8>("MATCH_HI"), {getOutputPin<8>("MATCH_HI")});
+            w.connect(builder.getOutputPin<RV32IBitPatternMatcher>(predicate.name, "MATCH"), predicate.sinks);
+        w.connect(pack->getOutputPin<32>("MATCH_LO"), {getOutputPin<32>("MATCH_LO")});
+        w.connect(pack->getOutputPin<8>("MATCH_HI"), {getOutputPin<8>("MATCH_HI")});
+        w.finish();
     }
 };
 

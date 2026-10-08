@@ -33,8 +33,6 @@ void RV32IWritebackStage::buildInternals(ComponentBuilder& builder) {
     const auto fetch = builder.getComponent<Rewire>("FETCH_STATUS_UNPACK");
     const auto execute = builder.getComponent<Rewire>("EXECUTION_STATUS_UNPACK");
     const auto memory = builder.getComponent<Rewire>("MEMORY_STATUS_UNPACK");
-    addPassThrough(builder, "VALID_PASS", {{"VALID", 1}});
-    const auto valid = builder.getComponent<Rewire>("VALID_PASS");
 
     w.connect(getInputPin<32>("IN_CONTROL"), control->getInputPin<32>("CONTROL"));
     w.connect(getInputPin<32>("IN_REGISTER_ADDRESSES"), addresses->getInputPin<32>("ADDRESSES"));
@@ -48,8 +46,7 @@ void RV32IWritebackStage::buildInternals(ComponentBuilder& builder) {
     w.connect(control->getOutputPin<2>("WRITEBACK_SEL"), select->getInputPin<2>("SEL"));
     w.connect(select->getOutputPin<32>("OUT"), getOutputPin<32>("WB_VALUE"));
     w.connect(addresses->getOutputPin<5>("RD"), getOutputPin<5>("WB_RD"));
-    w.connect(getInputPin("IN_VALID"), valid->getInputPin("IN_VALID"));
-    w.connect(valid->getOutputPin("OUT_VALID"), getOutputPin("WB_VALID"));
+    w.connect(getInputPin("IN_VALID"), getOutputPin("WB_VALID"));
     w.connect(control->getOutputPin("REG_WRITE"), getOutputPin("WB_REG_WRITE"));
 
     w.connect(getInputPin("COMMIT_ENABLE"), retirement->getInputPin("ENABLE"));

@@ -1,3 +1,4 @@
+#include "components/StructuralNetBuilder.hpp"
 #include "modules/composite/AddSub32.hpp"
 #include "modules/composite/ParallelPrefixAdder32.hpp"
 #include "components/BasicComponent.hpp"
@@ -129,8 +130,8 @@ AddSub32::AddSub32(std::string name, bool parallel_prefix)
           circuit::families::AddSub32.pinInitializer()), parallel_prefix_(parallel_prefix) {}
 
 void AddSub32::buildInternals(ComponentBuilder& builder) {
+    circuit::detail::StructuralWiring w(builder);
     if (parallel_prefix_) {
-        circuit::detail::StructuralWiring w(builder);
         auto bits=builder.addNewComponent<BitSplitter<32>>("B_SPLIT");
         auto effective=builder.addNewComponent<BitJoiner<32>>("EFFECTIVE_B");
         auto adder=builder.addNewComponent<ParallelPrefixAdder32>("PREFIX_ADDER");
@@ -152,13 +153,9 @@ void AddSub32::buildInternals(ComponentBuilder& builder) {
     builder.addNewComponent<BitJoiner<32>>("OUT_JOIN");
     builder.addNewComponent<XORGate>("OVERFLOW_XOR");
 
-    builder.addNewWire<32>(
-        "A_bus_internal",
-        getInputPin<32>("A"),
+    w.connect(getInputPin<32>("A"),
         {builder.getInputPin<BitSplitter<32>, 32>("A_SPLIT", "IN")});
-    builder.addNewWire<32>(
-        "B_bus_internal",
-        getInputPin<32>("B"),
+    w.connect(getInputPin<32>("B"),
         {builder.getInputPin<BitSplitter<32>, 32>("B_SPLIT", "IN")});
 
     std::vector<std::shared_ptr<Pin<>>> sub_sinks;
@@ -174,26 +171,18 @@ void AddSub32::buildInternals(ComponentBuilder& builder) {
 
         sub_sinks.push_back(builder.getInputPin<XORGate>(xor_name, "B"));
 
-        builder.addNewWire(
-            "A_bit_" + bit,
-            builder.getOutputPin<BitSplitter<32>>("A_SPLIT", "OUT_" + bit),
+        w.connect(builder.getOutputPin<BitSplitter<32>>("A_SPLIT", "OUT_" + bit),
             {builder.getInputPin<FullAdder>(adder_name, "A")});
-        builder.addNewWire(
-            "B_bit_" + bit,
-            builder.getOutputPin<BitSplitter<32>>("B_SPLIT", "OUT_" + bit),
+        w.connect(builder.getOutputPin<BitSplitter<32>>("B_SPLIT", "OUT_" + bit),
             {builder.getInputPin<XORGate>(xor_name, "A")});
-        builder.addNewWire(
-            "B_xor_SUB_" + bit + "_to_FA",
-            builder.getOutputPin<XORGate>(xor_name, "OUT"),
+        w.connect(builder.getOutputPin<XORGate>(xor_name, "OUT"),
             {builder.getInputPin<FullAdder>(adder_name, "B")});
-        builder.addNewWire(
-            "SUM_bit_" + bit,
-            builder.getOutputPin<FullAdder>(adder_name, "Sum"),
+        w.connect(builder.getOutputPin<FullAdder>(adder_name, "Sum"),
             {builder.getInputPin<BitJoiner<32>>("OUT_JOIN", "IN_" + bit)});
     }
 
     sub_sinks.push_back(builder.getInputPin<FullAdder>("FA0", "Carry_in"));
-    builder.addNewWire("SUB_control", getInputPin("SUB"), sub_sinks);
+    w.connect(getInputPin("SUB"), sub_sinks);
 
     for (size_t i = 0; i < 31; ++i) {
         const auto from = std::to_string(i);
@@ -203,23 +192,16 @@ void AddSub32::buildInternals(ComponentBuilder& builder) {
         if (i == 30) {
             sinks.push_back(builder.getInputPin<XORGate>("OVERFLOW_XOR", "A"));
         }
-        builder.addNewWire(
-            "carry_" + from + "_to_" + to,
-            builder.getOutputPin<FullAdder>("FA" + from, "Carry_out"),
+        w.connect(builder.getOutputPin<FullAdder>("FA" + from, "Carry_out"),
             sinks);
     }
 
-    builder.addNewWire(
-        "carry_out_fanout",
-        builder.getOutputPin<FullAdder>("FA31", "Carry_out"),
+    w.connect(builder.getOutputPin<FullAdder>("FA31", "Carry_out"),
         {getOutputPin("CARRY_OUT"),
          builder.getInputPin<XORGate>("OVERFLOW_XOR", "B")});
-    builder.addNewWire(
-        "overflow_to_output",
-        builder.getOutputPin<XORGate>("OVERFLOW_XOR", "OUT"),
+    w.connect(builder.getOutputPin<XORGate>("OVERFLOW_XOR", "OUT"),
         {getOutputPin("OVERFLOW")});
-    builder.addNewWire<32>(
-        "out_bus_internal",
-        builder.getOutputPin<BitJoiner<32>, 32>("OUT_JOIN", "OUT"),
+    w.connect(builder.getOutputPin<BitJoiner<32>, 32>("OUT_JOIN", "OUT"),
         {getOutputPin<32>("OUT")});
+    w.finish();
 }

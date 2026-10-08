@@ -127,7 +127,7 @@ This includes every control output and the priority rules, including impossible 
 
 #### Structural implementation
 
-AND/OR/NOT gates form execution permission, dependency wait, branch resolution, age-prioritized terminal conditions, and stage enables. WRITEBACK_FLUSH is a zero-delay boundary Rewire. The complete core keeps this logic in the CONTROL block below the datapath.
+AND/OR/NOT gates form execution permission, dependency wait, branch resolution, age-prioritized terminal conditions, and stage enables. `MEM_WB_FLUSH` is `W_TERMINAL` wired straight through. The complete core keeps this logic in the CONTROL block below the datapath.
 
 #### Behavioral implementation
 

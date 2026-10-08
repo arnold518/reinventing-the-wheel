@@ -1,3 +1,4 @@
+#include "components/StructuralNetBuilder.hpp"
 #include "modules/rv32i/RV32IExecutionControlStatusUnit.hpp"
 #include "modules/rv32i/RV32IExecutionStatusBehavioral.hpp"
 
@@ -31,17 +32,19 @@ public:
         }) {}
     const char* getTypeName() const override { return "RV32IStatusPriority"; }
     void buildInternals(ComponentBuilder& b) override {
+        circuit::detail::StructuralWiring w(b);
         b.addNewComponent<ANDGate>("EVENT");
         b.addNewComponent<NOTGate>("NOT_CONDITION");
         b.addNewComponent<ANDGate>("ALLOW_NEXT");
-        b.addNewWire("permission", getInputPin("PERMISSION"),
+        w.connect(getInputPin("PERMISSION"),
             {b.getInputPin<ANDGate>("EVENT","A"), b.getInputPin<ANDGate>("ALLOW_NEXT","A")});
-        b.addNewWire("condition", getInputPin("CONDITION"),
+        w.connect(getInputPin("CONDITION"),
             {b.getInputPin<ANDGate>("EVENT","B"), b.getInputPin<NOTGate>("NOT_CONDITION","IN")});
-        b.addNewWire("not_condition", b.getOutputPin<NOTGate>("NOT_CONDITION","OUT"),
+        w.connect(b.getOutputPin<NOTGate>("NOT_CONDITION","OUT"),
             {b.getInputPin<ANDGate>("ALLOW_NEXT","B")});
-        b.addNewWire("event", b.getOutputPin<ANDGate>("EVENT","OUT"), {getOutputPin("EVENT")});
-        b.addNewWire("allow_next", b.getOutputPin<ANDGate>("ALLOW_NEXT","OUT"), {getOutputPin("ALLOW_NEXT")});
+        w.connect(b.getOutputPin<ANDGate>("EVENT","OUT"), {getOutputPin("EVENT")});
+        w.connect(b.getOutputPin<ANDGate>("ALLOW_NEXT","OUT"), {getOutputPin("ALLOW_NEXT")});
+        w.finish();
     }
 };
 
@@ -119,6 +122,7 @@ RV32IExecutionControlStatusUnit::RV32IExecutionControlStatusUnit(std::string nam
                   circuit::families::RV32IExecutionStatus.pinInitializer()) {}
 
 void RV32IExecutionControlStatusUnit::buildInternals(ComponentBuilder& builder) {
+    circuit::detail::StructuralWiring w(builder);
     builder.add(circuit::families::FlipFlopCell, "HALTED_STATE");
     builder.add(circuit::families::FlipFlopCell, "TRAPPED_STATE");
     builder.addNewComponent<BitSplitter<32>>("ADDRESS_SPLIT");
@@ -145,13 +149,9 @@ void RV32IExecutionControlStatusUnit::buildInternals(ComponentBuilder& builder) 
     builder.addNewComponent<Mux2to1_4bit>("CAUSE_DATA_MISALIGNED_MUX");
     builder.addNewComponent<Mux2to1_4bit>("CAUSE_DATA_ACCESS_MUX");
 
-    builder.addNewWire<32>(
-        "ALU_ADDRESS_to_split",
-        getInputPin<32>("ALU_ADDRESS"),
+    w.connect(getInputPin<32>("ALU_ADDRESS"),
         {builder.getInputPin<BitSplitter<32>, 32>("ADDRESS_SPLIT", "IN")});
-    builder.addNewWire<2>(
-        "MEM_SIZE_to_split",
-        getInputPin<2>("MEM_SIZE"),
+    w.connect(getInputPin<2>("MEM_SIZE"),
         {builder.getInputPin<BitSplitter<2>, 2>("SIZE_SPLIT", "IN")});
 
     LogicNetlist logic(builder);
@@ -196,9 +196,7 @@ void RV32IExecutionControlStatusUnit::buildInternals(ComponentBuilder& builder) 
 
     logic.sink(clk, builder.getInputPin<IOComponent>("TRAP_CAUSE_WORD", "CLK"));
     logic.sink(rst, builder.getInputPin<IOComponent>("TRAP_CAUSE_WORD", "RST"));
-    builder.addNewWire<4>(
-        "CAUSE_Q_to_output",
-        builder.getOutputPin<IOComponent, 4>("TRAP_CAUSE_WORD", "Q"),
+    w.connect(builder.getOutputPin<IOComponent, 4>("TRAP_CAUSE_WORD", "Q"),
         {getOutputPin<4>("TRAP_CAUSE")});
 
     const auto address_low = logic.logicalOr("ADDRESS_LOW_OR", address_bit0, address_bit1);
@@ -288,75 +286,42 @@ void RV32IExecutionControlStatusUnit::buildInternals(ComponentBuilder& builder) 
     logic.sink(data_misaligned_event, builder.getInputPin<Mux2to1_4bit>("CAUSE_DATA_MISALIGNED_MUX", "SEL"));
     logic.sink(data_fault_event, builder.getInputPin<Mux2to1_4bit>("CAUSE_DATA_ACCESS_MUX", "SEL"));
 
-    builder.addNewWire<4>(
-        "CAUSE_ILLEGAL_to_decode_mux",
-        builder.getOutputPin<ConstantValue<4>, 4>("CAUSE_ILLEGAL", "OUT"),
+    w.connect(builder.getOutputPin<ConstantValue<4>, 4>("CAUSE_ILLEGAL", "OUT"),
         {builder.getInputPin<Mux2to1_4bit, 4>("DECODE_CAUSE_MUX", "A")});
-    builder.addNewWire<4>(
-        "DECODE_CAUSE_to_mux",
-        getInputPin<4>("DECODE_TRAP_CAUSE"),
+    w.connect(getInputPin<4>("DECODE_TRAP_CAUSE"),
         {builder.getInputPin<Mux2to1_4bit, 4>("DECODE_CAUSE_MUX", "B")});
-    builder.addNewWire<4>(
-        "LOAD_MISALIGNED_to_data_mux",
-        builder.getOutputPin<ConstantValue<4>, 4>("CAUSE_LOAD_MISALIGNED", "OUT"),
+    w.connect(builder.getOutputPin<ConstantValue<4>, 4>("CAUSE_LOAD_MISALIGNED", "OUT"),
         {builder.getInputPin<Mux2to1_4bit, 4>("DATA_MISALIGNED_CAUSE_MUX", "A")});
-    builder.addNewWire<4>(
-        "STORE_MISALIGNED_to_data_mux",
-        builder.getOutputPin<ConstantValue<4>, 4>("CAUSE_STORE_MISALIGNED", "OUT"),
+    w.connect(builder.getOutputPin<ConstantValue<4>, 4>("CAUSE_STORE_MISALIGNED", "OUT"),
         {builder.getInputPin<Mux2to1_4bit, 4>("DATA_MISALIGNED_CAUSE_MUX", "B")});
-    builder.addNewWire<4>(
-        "LOAD_ACCESS_to_data_mux",
-        builder.getOutputPin<ConstantValue<4>, 4>("CAUSE_LOAD_ACCESS", "OUT"),
+    w.connect(builder.getOutputPin<ConstantValue<4>, 4>("CAUSE_LOAD_ACCESS", "OUT"),
         {builder.getInputPin<Mux2to1_4bit, 4>("DATA_ACCESS_CAUSE_MUX", "A")});
-    builder.addNewWire<4>(
-        "STORE_ACCESS_to_data_mux",
-        builder.getOutputPin<ConstantValue<4>, 4>("CAUSE_STORE_ACCESS", "OUT"),
+    w.connect(builder.getOutputPin<ConstantValue<4>, 4>("CAUSE_STORE_ACCESS", "OUT"),
         {builder.getInputPin<Mux2to1_4bit, 4>("DATA_ACCESS_CAUSE_MUX", "B")});
 
-    builder.addNewWire<4>(
-        "CAUSE_NONE_to_control_mux",
-        builder.getOutputPin<ConstantValue<4>, 4>("CAUSE_NONE", "OUT"),
+    w.connect(builder.getOutputPin<ConstantValue<4>, 4>("CAUSE_NONE", "OUT"),
         {builder.getInputPin<Mux2to1_4bit, 4>("CAUSE_CONTROL_MUX", "A")});
-    builder.addNewWire<4>(
-        "CAUSE_CONTROL_to_control_mux",
-        builder.getOutputPin<ConstantValue<4>, 4>("CAUSE_INSTRUCTION_MISALIGNED", "OUT"),
+    w.connect(builder.getOutputPin<ConstantValue<4>, 4>("CAUSE_INSTRUCTION_MISALIGNED", "OUT"),
         {builder.getInputPin<Mux2to1_4bit, 4>("CAUSE_CONTROL_MUX", "B")});
-    builder.addNewWire<4>(
-        "control_cause_to_imem_mux",
-        builder.getOutputPin<Mux2to1_4bit, 4>("CAUSE_CONTROL_MUX", "OUT"),
+    w.connect(builder.getOutputPin<Mux2to1_4bit, 4>("CAUSE_CONTROL_MUX", "OUT"),
         {builder.getInputPin<Mux2to1_4bit, 4>("CAUSE_IMEM_MUX", "A")});
-    builder.addNewWire<4>(
-        "CAUSE_IMEM_to_imem_mux",
-        builder.getOutputPin<ConstantValue<4>, 4>("CAUSE_INSTRUCTION_ACCESS", "OUT"),
+    w.connect(builder.getOutputPin<ConstantValue<4>, 4>("CAUSE_INSTRUCTION_ACCESS", "OUT"),
         {builder.getInputPin<Mux2to1_4bit, 4>("CAUSE_IMEM_MUX", "B")});
-    builder.addNewWire<4>(
-        "imem_cause_to_decode_mux",
-        builder.getOutputPin<Mux2to1_4bit, 4>("CAUSE_IMEM_MUX", "OUT"),
+    w.connect(builder.getOutputPin<Mux2to1_4bit, 4>("CAUSE_IMEM_MUX", "OUT"),
         {builder.getInputPin<Mux2to1_4bit, 4>("CAUSE_DECODE_MUX", "A")});
-    builder.addNewWire<4>(
-        "effective_decode_cause_to_priority_mux",
-        builder.getOutputPin<Mux2to1_4bit, 4>("DECODE_CAUSE_MUX", "OUT"),
+    w.connect(builder.getOutputPin<Mux2to1_4bit, 4>("DECODE_CAUSE_MUX", "OUT"),
         {builder.getInputPin<Mux2to1_4bit, 4>("CAUSE_DECODE_MUX", "B")});
-    builder.addNewWire<4>(
-        "decode_cause_to_data_misaligned_mux",
-        builder.getOutputPin<Mux2to1_4bit, 4>("CAUSE_DECODE_MUX", "OUT"),
+    w.connect(builder.getOutputPin<Mux2to1_4bit, 4>("CAUSE_DECODE_MUX", "OUT"),
         {builder.getInputPin<Mux2to1_4bit, 4>("CAUSE_DATA_MISALIGNED_MUX", "A")});
-    builder.addNewWire<4>(
-        "selected_data_misaligned_cause",
-        builder.getOutputPin<Mux2to1_4bit, 4>("DATA_MISALIGNED_CAUSE_MUX", "OUT"),
+    w.connect(builder.getOutputPin<Mux2to1_4bit, 4>("DATA_MISALIGNED_CAUSE_MUX", "OUT"),
         {builder.getInputPin<Mux2to1_4bit, 4>("CAUSE_DATA_MISALIGNED_MUX", "B")});
-    builder.addNewWire<4>(
-        "data_misaligned_cause_to_access_mux",
-        builder.getOutputPin<Mux2to1_4bit, 4>("CAUSE_DATA_MISALIGNED_MUX", "OUT"),
+    w.connect(builder.getOutputPin<Mux2to1_4bit, 4>("CAUSE_DATA_MISALIGNED_MUX", "OUT"),
         {builder.getInputPin<Mux2to1_4bit, 4>("CAUSE_DATA_ACCESS_MUX", "A")});
-    builder.addNewWire<4>(
-        "selected_data_access_cause",
-        builder.getOutputPin<Mux2to1_4bit, 4>("DATA_ACCESS_CAUSE_MUX", "OUT"),
+    w.connect(builder.getOutputPin<Mux2to1_4bit, 4>("DATA_ACCESS_CAUSE_MUX", "OUT"),
         {builder.getInputPin<Mux2to1_4bit, 4>("CAUSE_DATA_ACCESS_MUX", "B")});
-    builder.addNewWire<4>(
-        "final_cause_to_state",
-        builder.getOutputPin<Mux2to1_4bit, 4>("CAUSE_DATA_ACCESS_MUX", "OUT"),
+    w.connect(builder.getOutputPin<Mux2to1_4bit, 4>("CAUSE_DATA_ACCESS_MUX", "OUT"),
         {builder.getInputPin<IOComponent, 4>("TRAP_CAUSE_WORD", "D")});
 
     logic.materialize();
+    w.finish();
 }

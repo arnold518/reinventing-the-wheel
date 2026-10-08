@@ -1,3 +1,4 @@
+#include "components/StructuralNetBuilder.hpp"
 #include "modules/composite/ZeroDetect8.hpp"
 #include "components/ComponentBuilder.hpp"
 #include "components/ComponentBuilder.tpp"
@@ -9,10 +10,9 @@ ZeroDetect8::ZeroDetect8(std::string name)
     : IOComponent(std::move(name), circuit::families::ZeroDetect8.pinInitializer()) {}
 
 void ZeroDetect8::buildInternals(ComponentBuilder& builder) {
+    circuit::detail::StructuralWiring w(builder);
     builder.addNewComponent<BitSplitter<8>>("A_SPLIT");
-    builder.addNewWire<8>(
-        "A_bus_internal",
-        getInputPin<8>("A"),
+    w.connect(getInputPin<8>("A"),
         {builder.getInputPin<BitSplitter<8>, 8>("A_SPLIT", "IN")});
 
     for (size_t i = 0; i < 7; ++i) {
@@ -22,25 +22,20 @@ void ZeroDetect8::buildInternals(ComponentBuilder& builder) {
 
     for (size_t i = 0; i < 4; ++i) {
         for (size_t side = 0; side < 2; ++side)
-            builder.addNewWire("A_bit_" + std::to_string(2 * i + side) + "_to_OR" + std::to_string(i),
-                builder.getOutputPin<BitSplitter<8>>("A_SPLIT", "OUT_" + std::to_string(2 * i + side)),
+            w.connect(builder.getOutputPin<BitSplitter<8>>("A_SPLIT", "OUT_" + std::to_string(2 * i + side)),
                 {builder.getInputPin<ORGate>("OR" + std::to_string(i), side == 0 ? "A" : "B")});
     }
     for (size_t i = 4; i < 7; ++i) {
         for (size_t side = 0; side < 2; ++side) {
             const auto child = i == 6 ? 4 + side : 2 * (i - 4) + side;
-            builder.addNewWire("OR" + std::to_string(child) + "_to_OR" + std::to_string(i),
-                builder.getOutputPin<ORGate>("OR" + std::to_string(child), "OUT"),
+            w.connect(builder.getOutputPin<ORGate>("OR" + std::to_string(child), "OUT"),
                 {builder.getInputPin<ORGate>("OR" + std::to_string(i), side == 0 ? "A" : "B")});
         }
     }
 
-    builder.addNewWire(
-        "ANY_to_NOT",
-        builder.getOutputPin<ORGate>("OR6", "OUT"),
+    w.connect(builder.getOutputPin<ORGate>("OR6", "OUT"),
         {builder.getInputPin<NOTGate>("NOT_ZERO", "IN")});
-    builder.addNewWire(
-        "NOT_to_ZERO",
-        builder.getOutputPin<NOTGate>("NOT_ZERO", "OUT"),
+    w.connect(builder.getOutputPin<NOTGate>("NOT_ZERO", "OUT"),
         {getOutputPin("ZERO")});
+    w.finish();
 }

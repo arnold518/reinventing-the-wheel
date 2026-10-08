@@ -190,3 +190,25 @@ build requests and profile rules all accept the old names.
 purpose, because saved layouts are keyed by that profile's fingerprint.
 The `expanded_storage` endpoint parameter was removed at the same time:
 request the `scalable-endpoint` contract instead.
+
+## One wiring style, and inputs wired straight to outputs (October 8)
+
+- The 27 component sources that created each wire by hand
+  (`builder.addNewWire(name, source, sinks)`) now use
+  `circuit::detail::StructuralWiring`: `connect(source, sinks)` then `finish()`.
+  Their wires are named `net_<index>` and ordered by source pin. A
+  name-independent net list of all 384 scenarios is identical for every scenario
+  that contains no removed filler.
+- `ComponentBuilder::addNewWire` used to drop, silently, a wire from a
+  component's own input pin to its own output pin. It now creates it as an
+  internal wire.
+- The zero-delay `Rewire` fillers that existed only to work around that were
+  removed from the RV32I stages: `VALID_PASS` and `NEXT_PC_BRIDGE` (fetch),
+  `PASS` (decode), `PACKET_PASS` (execute), `PASS` and `DMEM_PORT_PASS` (memory),
+  `VALID_PASS` (writeback), the baseline pipeline's `PACKET_PASS`, `STORE_DATA`
+  and `WRITEBACK_FLUSH`, and `RESPONSE_DATA` in the memory request blocks.
+  Tick timing is unchanged because the fillers had zero delay. Saved layout
+  entries for them are inert and were not deleted.
+- Still present: the memory-side bridges (`REQUEST_*` in the transaction port,
+  `DEVICE_CLOCK`, `BUS_CLOCK`, the zero-wait port's bridges and the SRAM pass
+  gates), which are drawn and documented as visible parts.

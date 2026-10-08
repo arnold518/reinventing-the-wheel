@@ -1,3 +1,4 @@
+#include "components/StructuralNetBuilder.hpp"
 #include "modules/rv32i/RegisterFile32x32.hpp"
 
 #include "components/ComponentBuilder.hpp"
@@ -81,6 +82,7 @@ RegisterFile32x32::RegisterFile32x32(std::string name)
                   circuit::families::RegisterFile32x32.pinInitializer()) {}
 
 void RegisterFile32x32::buildInternals(ComponentBuilder& builder) {
+    circuit::detail::StructuralWiring w(builder);
     builder.addNewComponent<ConstantValue<32>>("X0_ZERO", 0);
     builder.addNewComponent<Mux32to1_32bit>("RS1_MUX");
     builder.addNewComponent<Mux32to1_32bit>("RS2_MUX");
@@ -89,63 +91,44 @@ void RegisterFile32x32::buildInternals(ComponentBuilder& builder) {
     // x0 has no storage. Physical word n holds architectural register x(n+1).
     // Keep decoding/read selection outside the reusable parallel-output FF bank.
     const std::shared_ptr<IOComponent> storage = builder.addNewComponent<RegisterFileStorageBank>("STORAGE");
-    circuit::memory_detail::StructuralWiring storage_wires(builder);
     for (const auto* pin : {"WRITE_DATA", "CLK", "RST"})
-        storage_wires.connect(getInputPinDynamic(pin), storage->getInputPinDynamic(pin));
-    storage_wires.finish();
+        w.connect(getInputPinDynamic(pin), storage->getInputPinDynamic(pin));
 
-    builder.addNewWire<AddressWidth>(
-        "RD_ADDR_internal",
-        getInputPin<AddressWidth>("RD_ADDR"),
+    w.connect(getInputPin<AddressWidth>("RD_ADDR"),
         {builder.getInputPin<Decoder5to32, AddressWidth>("RD_DECODER", "ADDR")});
 
-    builder.addNewWire(
-        "REG_WRITE_internal",
-        getInputPin("REG_WRITE"),
+    w.connect(getInputPin("REG_WRITE"),
         {builder.getInputPin<Decoder5to32>("RD_DECODER", "ENABLE")});
 
     for (size_t reg = 1; reg < RegisterCount; ++reg) {
-        builder.addNewWire(
-            regName(reg) + "_WE_internal",
-            builder.getOutputPin<Decoder5to32>("RD_DECODER", "OUT" + std::to_string(reg)),
+        w.connect(builder.getOutputPin<Decoder5to32>("RD_DECODER", "OUT" + std::to_string(reg)),
             {storage->getInputPin("WRITE_" + std::to_string(reg - 1))});
     }
 
-    builder.addNewWire<AddressWidth>(
-        "RS1_ADDR_internal",
-        getInputPin<AddressWidth>("RS1_ADDR"),
+    w.connect(getInputPin<AddressWidth>("RS1_ADDR"),
         {builder.getInputPin<Mux32to1_32bit, AddressWidth>("RS1_MUX", "SEL")});
 
-    builder.addNewWire<AddressWidth>(
-        "RS2_ADDR_internal",
-        getInputPin<AddressWidth>("RS2_ADDR"),
+    w.connect(getInputPin<AddressWidth>("RS2_ADDR"),
         {builder.getInputPin<Mux32to1_32bit, AddressWidth>("RS2_MUX", "SEL")});
 
-    builder.addNewWire<32>(
-        "X0_to_read_muxes",
-        builder.getOutputPin<ConstantValue<32>, 32>("X0_ZERO", "OUT"),
+    w.connect(builder.getOutputPin<ConstantValue<32>, 32>("X0_ZERO", "OUT"),
         {builder.getInputPin<Mux32to1_32bit, 32>("RS1_MUX", "IN0"),
          builder.getInputPin<Mux32to1_32bit, 32>("RS2_MUX", "IN0")});
 
     for (size_t reg = 1; reg < RegisterCount; ++reg) {
         const auto name = regName(reg);
         const auto input_name = "IN" + std::to_string(reg);
-        builder.addNewWire<32>(
-            name + "_to_read_muxes",
-            storage->getOutputPin<32>("WORD_" + std::to_string(reg - 1)),
+        w.connect(storage->getOutputPin<32>("WORD_" + std::to_string(reg - 1)),
             {builder.getInputPin<Mux32to1_32bit, 32>("RS1_MUX", input_name),
              builder.getInputPin<Mux32to1_32bit, 32>("RS2_MUX", input_name)});
     }
 
-    builder.addNewWire<32>(
-        "RS1_DATA_internal",
-        builder.getOutputPin<Mux32to1_32bit, 32>("RS1_MUX", "OUT"),
+    w.connect(builder.getOutputPin<Mux32to1_32bit, 32>("RS1_MUX", "OUT"),
         {getOutputPin<32>("RS1_DATA")});
 
-    builder.addNewWire<32>(
-        "RS2_DATA_internal",
-        builder.getOutputPin<Mux32to1_32bit, 32>("RS2_MUX", "OUT"),
+    w.connect(builder.getOutputPin<Mux32to1_32bit, 32>("RS2_MUX", "OUT"),
         {getOutputPin<32>("RS2_DATA")});
+    w.finish();
 }
 
 std::vector<std::vector<LogicValue>> RegisterFile32x32::getRegisterStateAtTime(

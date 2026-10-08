@@ -273,7 +273,7 @@ driving the constant Read operation, zero write data, and full byte mask onto
 the bus. The general data requester retains all five fields, including its
 variable store payload, to keep a pending request stable under backpressure.
 
-`RESPONSE_DATA` is a direct boundary rewire, not a response register. The retained request/state is why a requester cannot be replaced with a port rename. There is no registered behavioral implementation; `RV32IMemoryRequestModel.hpp` supplies equivalent state bookkeeping inside the behavioral CPU implementations.
+Response data is wired straight from `BUS_RSP_READ_DATA` to `READ_DATA`; there is no response register. The retained request/state is why a requester cannot be replaced with a port rename. There is no registered behavioral implementation; `RV32IMemoryRequestModel.hpp` supplies equivalent state bookkeeping inside the behavioral CPU implementations.
 
 Request presence, reset qualification and response validity are prepared before the late `TAKE`/discard decision. This shortens the combinational completion path without adding a cycle or changing when either handshake is accepted.
 

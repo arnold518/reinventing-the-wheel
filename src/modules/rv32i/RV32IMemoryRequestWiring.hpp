@@ -8,10 +8,12 @@ namespace rv32i {
 // bus wires terminate directly on the CPU's public universal memory ports.
 inline void wireRequestBus(ComponentBuilder& b, IOComponent& core,
                            const std::shared_ptr<IOComponent>& request, const std::string& prefix) {
+    circuit::detail::StructuralWiring w(b);
     for (auto& [name,pin] : request->getAllInputPins()) if(name.starts_with("BUS_"))
-        b.addNewWireDynamic(prefix+name, pin->getWidth(), core.getInputPinDynamic(prefix+name.substr(4)), {pin});
+        w.connect(core.getInputPinDynamic(prefix+name.substr(4)), {pin});
     for (auto& [name,pin] : request->getAllOutputPins()) if(name.starts_with("BUS_"))
-        b.addNewWireDynamic(prefix+name, pin->getWidth(), pin, {core.getOutputPinDynamic(prefix+name.substr(4))});
+        w.connect(pin, {core.getOutputPinDynamic(prefix+name.substr(4))});
+    w.finish();
 }
 inline void wireRequestFields(ComponentBuilder& b, const std::shared_ptr<IOComponent>& fetch,
                               const std::shared_ptr<IOComponent>& data, const std::shared_ptr<IOComponent>& lanes,

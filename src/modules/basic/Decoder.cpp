@@ -1,3 +1,4 @@
+#include "components/StructuralNetBuilder.hpp"
 #include "modules/basic/Decoder.hpp"
 
 #include "components/ComponentBuilder.hpp"
@@ -43,6 +44,7 @@ void addDecoderPins(IOComponent* self) {
 
 template<size_t ADDR_WIDTH>
 void buildDecoder(IOComponent& component, ComponentBuilder& builder,bool zero_output_unused=false) {
+    circuit::detail::StructuralWiring w(builder);
     static_assert(ADDR_WIDTH >= 2, "decoder helper expects at least two address bits");
 
     constexpr size_t OutputCount = decoderOutputCount<ADDR_WIDTH>();
@@ -64,9 +66,9 @@ void buildDecoder(IOComponent& component, ComponentBuilder& builder,bool zero_ou
         }
         if (zero_output_unused) {
             auto zero=builder.addNewComponent<ConstantValue<1>>("OUT0_ZERO",0);
-            builder.addNewWire("OUT0_constant",zero->getOutputPin("OUT"),{component.getOutputPin("OUT0")});
+            w.connect(zero->getOutputPin("OUT"),{component.getOutputPin("OUT0")});
         }
-        builder.addNewWire<5>("ADDR_internal", component.getInputPin<5>("ADDR"),
+        w.connect(component.getInputPin<5>("ADDR"),
             {builder.getInputPin<BitSplitter<5>, 5>("ADDR_SPLIT", "IN")});
         std::array<std::vector<std::shared_ptr<Pin<>>>, 5> positive_sinks, negative_sinks;
         for (size_t bit = 0; bit < 5; ++bit)
@@ -83,17 +85,14 @@ void buildDecoder(IOComponent& component, ComponentBuilder& builder,bool zero_ou
             const auto suffix = std::to_string(high);
             literal(2, high & 1U, builder.getInputPin<ANDGate>("HIGH_PAIR_" + suffix, "A"));
             literal(3, high & 2U, builder.getInputPin<ANDGate>("HIGH_PAIR_" + suffix, "B"));
-            builder.addNewWire("HIGH_PAIR_" + suffix + "_to_HIGH",
-                builder.getOutputPin<ANDGate>("HIGH_PAIR_" + suffix, "OUT"),
+            w.connect(builder.getOutputPin<ANDGate>("HIGH_PAIR_" + suffix, "OUT"),
                 {builder.getInputPin<ANDGate>("HIGH_" + suffix, "A")});
             literal(4, high & 4U, builder.getInputPin<ANDGate>("HIGH_" + suffix, "B"));
         }
         for (size_t bit = 0; bit < 5; ++bit) {
-            builder.addNewWire("ADDR" + std::to_string(bit) + "_internal",
-                builder.getOutputPin<BitSplitter<5>>("ADDR_SPLIT", "OUT_" + std::to_string(bit)),
+            w.connect(builder.getOutputPin<BitSplitter<5>>("ADDR_SPLIT", "OUT_" + std::to_string(bit)),
                 positive_sinks[bit]);
-            builder.addNewWire("NOT_ADDR" + std::to_string(bit) + "_internal",
-                builder.getOutputPin<NOTGate>(notGateName(bit), "OUT"), negative_sinks[bit]);
+            w.connect(builder.getOutputPin<NOTGate>(notGateName(bit), "OUT"), negative_sinks[bit]);
         }
         std::vector<std::shared_ptr<Pin<>>> enable_sinks;
         std::array<std::vector<std::shared_ptr<Pin<>>>, 4> low_sinks;
@@ -103,21 +102,18 @@ void buildDecoder(IOComponent& component, ComponentBuilder& builder,bool zero_ou
             const auto suffix = std::to_string(output);
             low_sinks[output & 3U].push_back(builder.getInputPin<ANDGate>("MATCH_" + suffix, "A"));
             high_sinks[output >> 2U].push_back(builder.getInputPin<ANDGate>("MATCH_" + suffix, "B"));
-            builder.addNewWire("MATCH_TO_ENABLE_" + suffix,
-                builder.getOutputPin<ANDGate>("MATCH_" + suffix, "OUT"),
+            w.connect(builder.getOutputPin<ANDGate>("MATCH_" + suffix, "OUT"),
                 {builder.getInputPin<ANDGate>(enableGateName(output), "B")});
             enable_sinks.push_back(builder.getInputPin<ANDGate>(enableGateName(output), "A"));
-            builder.addNewWire("OUT" + suffix + "_internal",
-                builder.getOutputPin<ANDGate>(enableGateName(output), "OUT"),
+            w.connect(builder.getOutputPin<ANDGate>(enableGateName(output), "OUT"),
                 {component.getOutputPin(outputPinName(output))});
         }
         for (size_t low = 0; low < low_sinks.size(); ++low)
-            builder.addNewWire("LOW_" + std::to_string(low) + "_fanout",
-                builder.getOutputPin<ANDGate>("LOW_" + std::to_string(low), "OUT"), low_sinks[low]);
+            w.connect(builder.getOutputPin<ANDGate>("LOW_" + std::to_string(low), "OUT"), low_sinks[low]);
         for (size_t high = 0; high < high_sinks.size(); ++high)
-            builder.addNewWire("HIGH_" + std::to_string(high) + "_fanout",
-                builder.getOutputPin<ANDGate>("HIGH_" + std::to_string(high), "OUT"), high_sinks[high]);
-        builder.addNewWire("ENABLE_internal", component.getInputPin("ENABLE"), enable_sinks);
+            w.connect(builder.getOutputPin<ANDGate>("HIGH_" + std::to_string(high), "OUT"), high_sinks[high]);
+        w.connect(component.getInputPin("ENABLE"), enable_sinks);
+        w.finish();
         return;
     }
 
@@ -132,9 +128,7 @@ void buildDecoder(IOComponent& component, ComponentBuilder& builder,bool zero_ou
         builder.addNewComponent<ANDGate>(enableGateName(output));
     }
 
-    builder.addNewWire<ADDR_WIDTH>(
-        "ADDR_internal",
-        component.getInputPin<ADDR_WIDTH>("ADDR"),
+    w.connect(component.getInputPin<ADDR_WIDTH>("ADDR"),
         {builder.getInputPin<BitSplitter<ADDR_WIDTH>, ADDR_WIDTH>("ADDR_SPLIT", "IN")});
 
     std::array<std::vector<std::shared_ptr<Pin<>>>, ADDR_WIDTH> high_sinks;
@@ -161,22 +155,16 @@ void buildDecoder(IOComponent& component, ComponentBuilder& builder,bool zero_ou
         }
 
         for (size_t stage = 1; stage < ADDR_WIDTH - 1; ++stage) {
-            builder.addNewWire(
-                outputPinName(output) + "_MATCH_STAGE_" + std::to_string(stage),
-                builder.getOutputPin<ANDGate>(matchGateName(output, stage - 1), "OUT"),
+            w.connect(builder.getOutputPin<ANDGate>(matchGateName(output, stage - 1), "OUT"),
                 {builder.getInputPin<ANDGate>(matchGateName(output, stage), "A")});
         }
 
-        builder.addNewWire(
-            outputPinName(output) + "_MATCH_internal",
-            builder.getOutputPin<ANDGate>(matchGateName(output, ADDR_WIDTH - 2), "OUT"),
+        w.connect(builder.getOutputPin<ANDGate>(matchGateName(output, ADDR_WIDTH - 2), "OUT"),
             {builder.getInputPin<ANDGate>(enableGateName(output), "B")});
 
         enable_sinks.push_back(builder.getInputPin<ANDGate>(enableGateName(output), "A"));
 
-        builder.addNewWire(
-            outputPinName(output) + "_internal",
-            builder.getOutputPin<ANDGate>(enableGateName(output), "OUT"),
+        w.connect(builder.getOutputPin<ANDGate>(enableGateName(output), "OUT"),
             {component.getOutputPin(outputPinName(output))});
     }
 
@@ -184,18 +172,15 @@ void buildDecoder(IOComponent& component, ComponentBuilder& builder,bool zero_ou
         const auto bit_text = std::to_string(bit);
         high_sinks[bit].push_back(builder.getInputPin<NOTGate>(notGateName(bit), "IN"));
 
-        builder.addNewWire(
-            "ADDR" + bit_text + "_internal",
-            builder.getOutputPin<BitSplitter<ADDR_WIDTH>>("ADDR_SPLIT", "OUT_" + bit_text),
+        w.connect(builder.getOutputPin<BitSplitter<ADDR_WIDTH>>("ADDR_SPLIT", "OUT_" + bit_text),
             high_sinks[bit]);
 
-        builder.addNewWire(
-            "NOT_ADDR" + bit_text + "_internal",
-            builder.getOutputPin<NOTGate>(notGateName(bit), "OUT"),
+        w.connect(builder.getOutputPin<NOTGate>(notGateName(bit), "OUT"),
             low_sinks[bit]);
     }
 
-    builder.addNewWire("ENABLE_internal", component.getInputPin("ENABLE"), enable_sinks);
+    w.connect(component.getInputPin("ENABLE"), enable_sinks);
+    w.finish();
 }
 }
 
