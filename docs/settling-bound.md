@@ -14,6 +14,19 @@ It sits beside the two older analyzers and does not change their results.
 | `computeSafeClockPeriod` | A clock period with setup and hold checks | Clocked circuits whose parts all have contracts |
 | `analyzeSettling` | A proven latest change per output and per clocked capture | The same parts as the safe-clock analysis |
 
+## Source layout
+
+| File (`src/analysis/`) | Holds |
+| --- | --- |
+| `TimingCircuit` | Shared by the safe-clock and settling analyses: the built-in contract table, the walk that finds leaf parts, and the walk that finds which pin drives which |
+| `SettlingGraph` | The circuit as one node per pin bit |
+| `SettlingBound` | Timed evaluation of a case, and the search over cases |
+| `SafeClockTiming` | The clock-period analysis; its memory-mode part is a sequence of named steps (`collectMemoryGroups`, `startMode`, `settleMode`, ...) |
+
+`CircuitTimingAnalyzer` still has its own wire walk and its own model table
+keyed by contract name. It also has no model for `ClockedStateBit`, so it
+rejects the advanced core (`rv32i_experiment --core advanced --timing` fails).
+
 ## Why the result can be trusted
 
 Every evaluated part publishes `f(inputs at t)` at exactly `t + delay`
