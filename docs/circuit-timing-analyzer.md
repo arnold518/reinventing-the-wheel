@@ -105,7 +105,7 @@ build-cleanup/part_delay_tables --write src/components/selection/ProvenPartDelay
 build-cleanup/part_delay_tables --check     # recompute every stored table from the gates
 ```
 
-95 compact implementations run on a proven table (`part_delay_tables
+110 compact implementations run on a proven table (`part_delay_tables
 --coverage` lists every one that does not, with the reason).
 
 - Unclocked logic: the adders, muxes, decoders, shifters, the composite logic
@@ -115,8 +115,9 @@ build-cleanup/part_delay_tables --check     # recompute every stored table from 
   registers, the memory requester, execution status and the prediction path.
 - Storage: every register width, the state bit, the flip-flop cell and the
   register file.
-- Memory: flip-flop words, banks, devices, controllers and endpoints; ROM banks
-  and devices.
+- Memory: flip-flop words, banks, devices, controllers and endpoints; ROM
+  banks, devices and endpoints; the controllers of ROM, SRAM, DRAM and NOR
+  flash.
 
 Two checks run on them. `SettlingBoundTest` drives each unclocked part side by
 side with its gates. `delay_estimate_experiment --compare` does the same for
@@ -165,16 +166,21 @@ reset and the first working edge.
 - A memory primitive that never wakes itself for a later timed step
   (`memory_device::Primitive::respondsOnlyToInputs`) is described as "every
   input reaches every output in one delay", which is sound whatever it stores.
+- The memory sequencer is clocked and also wakes itself between clock edges
+  to step through device phases (`selfTimedClockedPart`). Its contract is
+  marked `self_timed`: its launch delays count from whatever caused the
+  change. The delays of the logic around it can then be proven, which is what
+  a compact controller needs. `safeClock` refuses to certify a period around a
+  self-timed part and says so, so a timed memory is never taken for a
+  zero-wait one.
 
 ### Not covered
 
 Their compact forms are today earlier than their gates by the amount shown.
 
-- Sequenced controllers and endpoints of SRAM, DRAM, ROM and NOR flash (5 to 6
-  ticks): the sequencer wakes itself for timed steps.
-- SRAM cells, rows, banks and devices (2 ticks at the cell): the cell sits in a
-  loop with its bit lines. DRAM and NOR-flash cells and devices: timed
-  primitives without a contract.
+- SRAM cells, rows, banks and devices (2 ticks at the cell), DRAM and NOR-flash
+  cells, rows, banks and devices, and the endpoints that contain them: their
+  cell and command primitives have no contract.
 - The single-cycle system (2 ticks) and every scalable device or endpoint: a
   scalable memory has no gate-level form at its size.
 - Parts built with non-default parameters, and tables per control value.

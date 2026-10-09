@@ -39,6 +39,10 @@ struct PartDelays {
     std::vector<std::string> clock_outputs;
     std::map<std::string, DelayRange> launches;
     std::map<std::string, size_t> setup;
+    // The part also changes outputs at times of its own, between clock edges.
+    // `launches` then count from whatever caused the change, and no clock
+    // period can be certified around the part.
+    bool self_timed = false;
     // Longest register-to-register path inside the part, setup included.
     size_t internal_period = 0;
     // Inputs the table assumes are held, for example RST = 0.

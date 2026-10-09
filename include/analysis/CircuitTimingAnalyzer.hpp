@@ -60,6 +60,11 @@ struct ClockComponentContract {
     std::map<std::string, uint64_t> constant_outputs;
     std::vector<std::string> stable_outputs; // May be an unknown but unchanging value.
     std::vector<std::string> clock_outputs;  // Repeat the clock pin unchanged, for parts further on.
+    // The part also changes its outputs at times of its own, between clock
+    // edges (a memory sequencer stepping through device phases). Its launch
+    // delays then count from whatever caused the change. Such a part can be
+    // timed, but no clock period can be certified around it.
+    bool self_timed = false;
     std::vector<std::string> unused_inputs;
     size_t minimum_high_ticks = 0, minimum_low_ticks = 0;
 };
@@ -176,6 +181,7 @@ struct SettlingReport {
     std::vector<SettlingEndpoint> endpoints;
     std::vector<std::string> clock_inputs;  // root inputs used as a clock
     std::vector<std::string> clock_outputs; // root outputs that pass a clock on
+    bool self_timed = false;                // contains a part that changes outputs between clock edges
     std::vector<std::string> premises, diagnostics;
 };
 

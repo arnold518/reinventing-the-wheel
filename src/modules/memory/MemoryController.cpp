@@ -83,6 +83,7 @@ public:
                 s->addPinDynamic("RESULT", PinType::OUTPUT, w); s->addPin<3>("STATUS", PinType::OUTPUT);
                 nativePins(s, w, t, true);
             }), width_(w), technology_(t), sequence_(w, t, c), history_enabled_(c.record_history) {}
+    bool selfTimedClockedPart() const override { return true; }
     void evaluate(size_t time, Simulator& sim) override {
         if (scheduled_ <= time) scheduled_ = 0;
         auto clk = getInputValue("CLK"); bool rising = previous_ == L && clk == H; previous_ = clk;

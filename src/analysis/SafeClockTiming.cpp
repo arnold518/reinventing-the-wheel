@@ -147,6 +147,10 @@ class Analysis {
         for (const auto& leaf : leaves) {
             const auto& c = leaf.component; const auto& m = leaf.contract;
             if (m.evidence.empty()) { diagnostic(c->getID() + ": contract needs evidence/version"); continue; }
+            if (m.self_timed) {
+                diagnostic(c->getID() + ": self-timed part; its outputs change at times unrelated to the clock");
+                continue;
+            }
             report.contracts.push_back(c->getImplementationId() + ": " + m.evidence);
             std::set<std::string> inputs, outputs;
             auto in = [&](const std::string& n) { inputs.insert(n); return node(lookup(c->getID() + "." + n, PinType::INPUT)); };

@@ -83,6 +83,7 @@ SettlingReport CircuitTimingAnalyzer::settling(const std::shared_ptr<Component>&
         const auto first_change = engine.earliest();
         report.clock_inputs = graph.clock_inputs;
         report.clock_outputs = graph.clock_outputs;
+        report.self_timed = graph.self_timed;
         bool any_endpoint = false;
         for (const auto& group : graph.groups) {
             if (group.endpoints.empty()) continue;
@@ -189,6 +190,7 @@ circuit::PartDelays CircuitTimingAnalyzer::delays(const std::shared_ptr<Componen
     }
     if (!launched.clock_inputs.empty()) table.clock = launched.clock_inputs.front();
     table.clock_outputs = launched.clock_outputs;
+    table.self_timed = launched.self_timed;
 
     // One input changes while the others, and the state, hold.
     const auto pairs = [&](const SettlingOptions& base, const std::string& only) {

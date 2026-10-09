@@ -45,6 +45,7 @@ std::string emit(const std::string& implementation, const circuit::PartDelays& t
     for (const auto& [output, range] : t.launches)
         out << "    t.launches[" << quote(output) << "] = {" << range.minimum << ", " << range.maximum << "};\n";
     for (const auto& [input, setup] : t.setup) out << "    t.setup[" << quote(input) << "] = " << setup << ";\n";
+    if (t.self_timed) out << "    t.self_timed = true;\n";
     if (t.internal_period) out << "    t.internal_period = " << t.internal_period << ";\n";
     for (const auto& [input, value] : t.fixed_inputs) out << "    t.fixed_inputs[" << quote(input) << "] = " << value << ";\n";
     out << "    return t;\n}()},\n";
@@ -56,7 +57,7 @@ std::string emit(const std::string& implementation, const circuit::PartDelays& t
 bool storage(const std::string& contract) {
     return contract.rfind("storage.", 0) == 0 || contract == "rv32i.register-file"
         || (contract.rfind("memory.ff.", 0) == 0 && contract.find(".scalable-") == std::string::npos)
-        || contract.rfind("memory.rom.", 0) == 0;
+        || (contract.rfind("memory.", 0) == 0 && contract.find(".scalable-") == std::string::npos);
 }
 
 struct Candidate {

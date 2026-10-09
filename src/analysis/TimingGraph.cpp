@@ -413,7 +413,10 @@ public:
                     }
                 }
             }
-            for (const auto& leaf : leaves_) makeLeaf(leaf);
+            for (const auto& leaf : leaves_) {
+                graph_.self_timed = graph_.self_timed || leaf.contract.self_timed;
+                makeLeaf(leaf);
+            }
             for (const auto& [name, pin] : root_io_->getAllOutputPins()) {
                 if (clock_outputs_.contains(pin.get())) continue;
                 Group group{name, {}};

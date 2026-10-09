@@ -94,6 +94,7 @@ std::optional<ClockComponentContract> builtinClockContract(const IOComponent& c)
         if (!table->clock.empty())
             declared.minimum_high_ticks = declared.minimum_low_ticks = std::max<size_t>(1, (table->internal_period + 2) / 2);
         declared.clock_outputs = table->clock_outputs;
+        declared.self_timed = table->self_timed;
         for (const auto& output : table->clock_outputs) written.insert(output);
         for (const auto& [name, pin] : c.getAllInputPins()) if (!read.contains(name)) declared.unused_inputs.push_back(name);
         for (const auto& [name, pin] : c.getAllOutputPins()) if (!written.contains(name)) declared.stable_outputs.push_back(name);
@@ -101,6 +102,17 @@ std::optional<ClockComponentContract> builtinClockContract(const IOComponent& c)
     }
     ClockComponentContract m;
     m.evidence = "simulator-exact-primitives-v1";
+    // The memory sequencer: clocked, and it also wakes itself to step through
+    // device phases. Every output may change one delay after either.
+    if (const auto* primitive = dynamic_cast<const circuit::memory_device::Primitive*>(&c);
+        primitive && primitive->selfTimedClockedPart() && c.getInputPinDynamic("CLK")) {
+        const auto d = primitive->getDelay();
+        m.clock_pin = "CLK";
+        m.self_timed = true;
+        for (const auto& [i, p] : c.getAllInputPins()) if (i != "CLK") m.captures.push_back({i, ClockEdge::Rising, 0, 0});
+        for (const auto& [o, q] : c.getAllOutputPins()) m.launches.push_back({o, ClockEdge::Rising, {d, d}});
+        return m;
+    }
     // A memory primitive that only responds to its inputs: every input can
     // reach every output in its one delay, whatever it remembers inside.
     if (const auto* primitive = dynamic_cast<const circuit::memory_device::Primitive*>(&c);

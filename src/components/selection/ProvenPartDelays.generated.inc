@@ -351,6 +351,99 @@
     };
     return t;
 }()},
+{"memory.dram.controller.16.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.controller.16.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["MEM_ADDR"] = {1, 1};
+    t.launches["MEM_CLK"] = {1, 1};
+    t.launches["MEM_CMD"] = {1, 1};
+    t.launches["MEM_WRITE_DATA"] = {1, 1};
+    t.launches["MEM_WRITE_MASK"] = {1, 1};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["MEM_BUSY"] = 0;
+    t.setup["MEM_ERROR"] = 0;
+    t.setup["MEM_READ_DATA"] = 0;
+    t.setup["MEM_READ_VALID"] = 0;
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.dram.controller.32.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.controller.32.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["MEM_ADDR"] = {1, 1};
+    t.launches["MEM_CLK"] = {1, 1};
+    t.launches["MEM_CMD"] = {1, 1};
+    t.launches["MEM_WRITE_DATA"] = {1, 1};
+    t.launches["MEM_WRITE_MASK"] = {1, 1};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["MEM_BUSY"] = 0;
+    t.setup["MEM_ERROR"] = 0;
+    t.setup["MEM_READ_DATA"] = 0;
+    t.setup["MEM_READ_VALID"] = 0;
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.dram.controller.8.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.controller.8.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["MEM_ADDR"] = {1, 1};
+    t.launches["MEM_CLK"] = {1, 1};
+    t.launches["MEM_CMD"] = {1, 1};
+    t.launches["MEM_WRITE_DATA"] = {1, 1};
+    t.launches["MEM_WRITE_MASK"] = {1, 1};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["MEM_BUSY"] = 0;
+    t.setup["MEM_ERROR"] = 0;
+    t.setup["MEM_READ_DATA"] = 0;
+    t.setup["MEM_READ_VALID"] = 0;
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
 {"memory.ff.bank.16.behavioral.direct", [] {
     PartDelays t;
     t.evidence = "proven on memory.ff.bank.16.structural.words";
@@ -743,6 +836,99 @@
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
+{"memory.nor-flash.controller.16.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.nor-flash.controller.16.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["MEM_CLK"] = {1, 1};
+    t.launches["MEM_CMD"] = {1, 1};
+    t.launches["MEM_WORD_ADDR"] = {1, 1};
+    t.launches["MEM_WRITE_DATA"] = {1, 1};
+    t.launches["MEM_WRITE_MASK"] = {1, 1};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["MEM_BUSY"] = 0;
+    t.setup["MEM_ERROR"] = 0;
+    t.setup["MEM_READ_DATA"] = 0;
+    t.setup["MEM_READ_VALID"] = 0;
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.nor-flash.controller.32.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.nor-flash.controller.32.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["MEM_CLK"] = {1, 1};
+    t.launches["MEM_CMD"] = {1, 1};
+    t.launches["MEM_WORD_ADDR"] = {1, 1};
+    t.launches["MEM_WRITE_DATA"] = {1, 1};
+    t.launches["MEM_WRITE_MASK"] = {1, 1};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["MEM_BUSY"] = 0;
+    t.setup["MEM_ERROR"] = 0;
+    t.setup["MEM_READ_DATA"] = 0;
+    t.setup["MEM_READ_VALID"] = 0;
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.nor-flash.controller.8.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.nor-flash.controller.8.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["MEM_CLK"] = {1, 1};
+    t.launches["MEM_CMD"] = {1, 1};
+    t.launches["MEM_WORD_ADDR"] = {1, 1};
+    t.launches["MEM_WRITE_DATA"] = {1, 1};
+    t.launches["MEM_WRITE_MASK"] = {1, 1};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["MEM_BUSY"] = 0;
+    t.setup["MEM_ERROR"] = 0;
+    t.setup["MEM_READ_DATA"] = 0;
+    t.setup["MEM_READ_VALID"] = 0;
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
 {"memory.rom.bank.16.behavioral", [] {
     PartDelays t;
     t.evidence = "proven on memory.rom.bank.16.structural";
@@ -988,6 +1174,84 @@
     };
     return t;
 }()},
+{"memory.rom.controller.16.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.controller.16.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["MEM_CE_N"] = {1, 1};
+    t.launches["MEM_OE_N"] = {1, 1};
+    t.launches["MEM_WORD_ADDR"] = {1, 1};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["MEM_READ_DATA"] = 0;
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.rom.controller.32.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.controller.32.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["MEM_CE_N"] = {1, 1};
+    t.launches["MEM_OE_N"] = {1, 1};
+    t.launches["MEM_WORD_ADDR"] = {1, 1};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["MEM_READ_DATA"] = 0;
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.rom.controller.8.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.controller.8.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["MEM_CE_N"] = {1, 1};
+    t.launches["MEM_OE_N"] = {1, 1};
+    t.launches["MEM_WORD_ADDR"] = {1, 1};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["MEM_READ_DATA"] = 0;
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
 {"memory.rom.device.16.behavioral", [] {
     PartDelays t;
     t.evidence = "proven on memory.rom.device.16.structural";
@@ -1016,6 +1280,159 @@
         Arc{"OE_N", "READ_DATA", {2, 14}},
         Arc{"WORD_ADDR", "READ_DATA", {2, 14}},
     };
+    return t;
+}()},
+{"memory.rom.endpoint.16.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.endpoint.16.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.rom.endpoint.32.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.endpoint.32.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.rom.endpoint.8.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.endpoint.8.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.sram.controller.16.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.controller.16.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["MEM_CE_N"] = {1, 1};
+    t.launches["MEM_OE_N"] = {1, 1};
+    t.launches["MEM_WE_N"] = {1, 1};
+    t.launches["MEM_WORD_ADDR"] = {1, 1};
+    t.launches["MEM_WRITE_DATA"] = {1, 1};
+    t.launches["MEM_WRITE_MASK"] = {1, 1};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["MEM_READ_DATA"] = 0;
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.sram.controller.32.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.controller.32.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["MEM_CE_N"] = {1, 1};
+    t.launches["MEM_OE_N"] = {1, 1};
+    t.launches["MEM_WE_N"] = {1, 1};
+    t.launches["MEM_WORD_ADDR"] = {1, 1};
+    t.launches["MEM_WRITE_DATA"] = {1, 1};
+    t.launches["MEM_WRITE_MASK"] = {1, 1};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["MEM_READ_DATA"] = 0;
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.sram.controller.8.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.controller.8.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["MEM_CE_N"] = {1, 1};
+    t.launches["MEM_OE_N"] = {1, 1};
+    t.launches["MEM_WE_N"] = {1, 1};
+    t.launches["MEM_WORD_ADDR"] = {1, 1};
+    t.launches["MEM_WRITE_DATA"] = {1, 1};
+    t.launches["MEM_WRITE_MASK"] = {1, 1};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["MEM_READ_DATA"] = 0;
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
     return t;
 }()},
 {"mux.2x1.width32.behavioral.direct", [] {
