@@ -92,48 +92,54 @@ void Engine::refinePart(int n, const Node& x, bool values) {
     const Part& part = graph_.parts[x.owner];
     const uint8_t mode = case_ && static_cast<size_t>(x.owner) < case_->part_mode.size()
         ? case_->part_mode[x.owner] : uint8_t(AnyMode);
-    const Tick d = part.delay;
-    // Latest of the launch and the listed input bits, one delay on.
-    const auto arcs = [&](std::initializer_list<std::pair<int, unsigned>> ranges) {
-        Tick settled = d;
+    const Tick launch = part.launch[x.output];
+    // Latest of the launch and the listed input bits, each after its path.
+    struct Range { int first; unsigned count; Tick delay; };
+    const auto arcs = [&](std::initializer_list<Range> ranges) {
+        Tick settled = launch;
         int latest = -1;
-        for (const auto& [first, count] : ranges) for (unsigned i = 0; i < count; ++i) {
-            const Tick t = fact_[first + int(i)].settled;
-            if (t == OPEN) { apply(n, ANY, NEVER, OPEN, -1); return; }
-            if (t != NEVER && t + d > settled) { settled = t + d; latest = first + int(i); }
+        for (const auto& range : ranges) {
+            if (range.delay == NEVER) continue; // no such path
+            for (unsigned i = 0; i < range.count; ++i) {
+                const Tick t = fact_[range.first + int(i)].settled;
+                if (t == OPEN) { apply(n, ANY, NEVER, OPEN, -1); return; }
+                if (t != NEVER && t + range.delay > settled) { settled = t + range.delay; latest = range.first + int(i); }
+            }
         }
         apply(n, ANY, NEVER, settled, latest);
     };
     // HIGH exactly when the input is HIGH; anything else gives LOW.
-    const auto follows = [&](int input) {
+    const auto follows = [&](int input, Tick delay) {
         const Fact& in = fact_[input];
         const uint8_t out = uint8_t((in.values & HIGH ? HIGH : 0) | (in.values & ~HIGH ? LOW : 0));
-        apply(n, out, add(in.at, d), OPEN, input);
+        apply(n, out, add(in.at, delay), OPEN, input);
     };
-    if (values && case_ && case_->binary_parts) apply(n, BINARY, d, OPEN, -1);
+    if (values && case_ && case_->binary_parts) apply(n, BINARY, launch, OPEN, -1);
     switch (x.output) {
     case Ready:
-        if (mode == Empty) { apply(n, values ? HIGH : ANY, d, d, -1); break; }
-        arcs({{part.rsp_ready, 1}});
-        if (mode == Full && values) follows(part.rsp_ready);
+        if (mode == Empty) { apply(n, values ? HIGH : ANY, launch, launch, -1); break; }
+        arcs({{part.rsp_ready, 1, part.ready_from_ready}});
+        if (mode == Full && values && part.ready_from_ready != NEVER) follows(part.rsp_ready, part.ready_from_ready);
         break;
     case Valid:
-        if (mode == Full) { apply(n, values ? HIGH : ANY, d, d, -1); break; }
-        arcs({{part.req_valid, 1}});
-        if (mode == Empty && values) follows(part.req_valid);
+        if (mode == Full) { apply(n, values ? HIGH : ANY, launch, launch, -1); break; }
+        arcs({{part.req_valid, 1, part.valid_from_valid}});
+        if (mode == Empty && values && part.valid_from_valid != NEVER) follows(part.req_valid, part.valid_from_valid);
         break;
     case Data:
-        if (mode == Full) { apply(n, ANY, NEVER, d, -1); break; }
-        arcs({{part.req_valid, 1}, {part.op, 3}, {part.address, part.address_bits}});
+        if (mode == Full) { apply(n, ANY, NEVER, launch, -1); break; }
+        arcs({{part.req_valid, 1, part.data_from_valid}, {part.op, 3, part.data_from_op},
+              {part.address, part.address_bits, part.data_from_address}, {part.mask, part.mask_bits, part.data_from_mask}});
         // No request can be valid: the payload is zero.
-        if (mode == Empty && values && !(fact_[part.req_valid].values & HIGH)) {
-            const Tick t = add(fact_[part.req_valid].at, d);
+        if (mode == Empty && values && part.data_from_valid != NEVER && !(fact_[part.req_valid].values & HIGH)) {
+            const Tick t = std::max(launch, add(fact_[part.req_valid].at, part.data_from_valid));
             apply(n, LOW, t, t, part.req_valid);
         }
         break;
     case Status: {
-        if (mode == Full) { apply(n, ANY, NEVER, d, -1); break; }
-        arcs({{part.op, 3}, {part.address, part.address_bits}, {part.mask, part.mask_bits}});
+        if (mode == Full) { apply(n, ANY, NEVER, launch, -1); break; }
+        arcs({{part.op, 3, part.status_from_op}, {part.address, part.address_bits, part.status_from_address},
+              {part.mask, part.mask_bits, part.status_from_mask}});
         if (mode != Empty || !values) break;
         // The request validator, over the sets its inputs can take.
         const auto bits = [&](int first, unsigned count) {
@@ -145,11 +151,12 @@ void Engine::refinePart(int n, const Node& x, bool values) {
             }
             return result;
         };
+        const Tick slowest = std::max({part.status_from_op, part.status_from_address, part.status_from_mask, Tick{1}});
         const auto proof = ffStatusBounds(bits(part.op, 3), bits(part.address, part.address_bits),
-            bits(part.mask, part.mask_bits), part.bytes_per_word, part.capacity_bytes, static_cast<size_t>(d));
+            bits(part.mask, part.mask_bits), part.bytes_per_word, part.capacity_bytes, static_cast<size_t>(slowest));
         const auto& p = proof[graph_.nodes[n].bit];
-        apply(n, static_cast<uint8_t>(p.values), static_cast<Tick>(p.at),
-              p.settled == unbounded ? OPEN : static_cast<Tick>(p.settled), -1);
+        apply(n, static_cast<uint8_t>(p.values), std::max(launch, static_cast<Tick>(p.at)),
+              p.settled == unbounded ? OPEN : std::max(launch, static_cast<Tick>(p.settled)), -1);
         break;
     }
     }

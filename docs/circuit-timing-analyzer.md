@@ -151,13 +151,37 @@ register file reads in 3 to 12 ticks and answers 14 to 15 after the clock.
 
 Because every structural view of a core keeps storage compact, the storage
 tables enter every clock: the certified periods rose from 94, 58 and 78 to
-106 (single-cycle), 70 (baseline) and 86 (advanced) ticks. After changing a
+106 (single-cycle), 70 (baseline) and 86 (advanced) ticks, before the memory
+sizes below were taken into account. After changing a
 storage part, regenerate the tables twice: the clocked parts are proven on
 top of the storage tables.
 
 A table treats reset as held at 0, so a reset change is timed at each output's
 worst case. A harness must therefore leave a whole cycle between releasing
 reset and the first working edge.
+
+### Memories larger than can be built
+
+A gate-level memory is limited to 4,096 cells, so a 65,536-word memory has no
+gates to prove anything on. Every memory device and endpoint that can be
+analysed is therefore also proven at 64 and 128 words, and a memory built with
+a word count gets a table in which each delay keeps growing per doubling as it
+did between those two sizes (`provenPartDelays`). For the flip-flop memory
+that is 2 ticks per doubling on the read paths and nothing on the setups, at
+every size from 2 to 128 words.
+
+Such a table is an estimate, not a proof, and says so in its evidence:
+"ESTIMATE for 65536 words: proven at 64 and 128 words, growth per doubling
+continued". The scalable form of a memory uses the same tables. The flip-flop
+endpoint whose consumer is always ready (the fixed-cycle cores) is a different
+circuit and is proven as its own variant. A ROM with a specific image, and a
+memory with a non-default row layout, get no table.
+
+The memory endpoint keeps its empty/holding behaviour in the analysis and
+takes its delays path by path from its table.
+
+With the cores' real memory sizes the certified periods are 166
+(single-cycle), 78 (baseline) and 96 (advanced) ticks.
 
 ### How the analysis reaches memory parts
 
@@ -188,8 +212,7 @@ Their compact forms are today earlier than their gates by the amount shown.
   sense column drive each other.
   Both are loops like the flip-flop and would need the same treatment: try
   every case on the smallest unit that contains the loop.
-- The single-cycle system (2 ticks) and every scalable device or endpoint: a
-  scalable memory has no gate-level form at its size.
+- SRAM and DRAM scalable memories, until their cells are characterized.
 - Parts built with non-default parameters, and tables per control value.
 
 ## What is assumed
@@ -220,7 +243,7 @@ Every report lists its premises.
   and every fail-closed case. These were written for the earlier engine and
   pass unchanged on this one.
 - The engine merge itself left the certified periods unchanged (94, 58, 78).
-  They are 106, 70 and 86 since storage runs on its proven delays.
+  They are 166, 78 and 96 with storage and memory on their real delays.
 
 ```bash
 build-cleanup/tests/SettlingBoundTest --verbose --budget=500000 rv32i.alu32

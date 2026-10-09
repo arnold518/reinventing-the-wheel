@@ -27,7 +27,10 @@ class ExperimentCLI(unittest.TestCase):
             self.assertEqual(report["clock_basis"], "safe-clock-contracts-v1")
             safety = report["safe_clock"]
             self.assertFalse(any("no all-state timing contract" in d for d in safety["diagnostics"]))
-            self.assertTrue(any("FF-endpoint-all-state-v1" in c for c in safety["contracts"]))
+            # The memory endpoint is timed by its delay table: an estimate for
+            # its real size, from the two largest sizes proven on gates.
+            self.assertTrue(any("memory.ff.scalable-endpoint.32" in c and "ESTIMATE for 65536 words" in c
+                                for c in safety["contracts"]))
             cycle = safety["dependency_cycle"]
             if core == "advanced":
                 self.assertEqual(safety["status"], "safe-under-contracts")

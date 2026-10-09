@@ -141,12 +141,42 @@ class Builder {
     bool makeEndpoint(const Leaf& leaf) {
         if (!leaf.builtin_rules) return false;
         const auto endpoint = std::dynamic_pointer_cast<BehavioralMemoryEndpoint>(leaf.component);
-        // An endpoint that declares a delay table is described by that table.
-        if (!endpoint || endpoint->getDelays()) return false;
+        if (!endpoint) return false;
         const auto& c = *leaf.component;
         Part part;
         part.endpoint = endpoint.get();
         part.delay = delayOf(c);
+        for (auto& launch : part.launch) launch = part.delay;
+        part.ready_from_ready = part.valid_from_valid = part.data_from_valid = part.data_from_op
+            = part.data_from_address = part.status_from_op = part.status_from_address = part.status_from_mask = part.delay;
+        // A delay table replaces the fused one-tick timing path by path. The
+        // empty/holding behaviour of the endpoint stays the same.
+        if (const auto* table = endpoint->getDelays()) {
+            const auto path = [&](const char* input, const char* output) {
+                Tick latest = NEVER;
+                for (const auto& arc : table->arcs) if (arc.input == input && arc.output == output)
+                    latest = std::max(latest, static_cast<Tick>(arc.delay.maximum));
+                return latest;
+            };
+            const char* names[4] = {"REQ_READY", "RSP_VALID", "RSP_READ_DATA", "RSP_STATUS"};
+            Tick earliest = OPEN;
+            for (int output = 0; output < 4; ++output)
+                if (const auto found = table->launches.find(names[output]); found != table->launches.end()) {
+                    part.launch[output] = static_cast<Tick>(found->second.maximum);
+                    earliest = std::min(earliest, static_cast<Tick>(found->second.minimum));
+                }
+            for (const auto& arc : table->arcs) earliest = std::min(earliest, static_cast<Tick>(arc.delay.minimum));
+            if (earliest != OPEN) part.delay = earliest;
+            part.ready_from_ready = path("RSP_READY", "REQ_READY");
+            part.valid_from_valid = path("REQ_VALID", "RSP_VALID");
+            part.data_from_valid = path("REQ_VALID", "RSP_READ_DATA");
+            part.data_from_op = path("REQ_OP", "RSP_READ_DATA");
+            part.data_from_address = path("REQ_ADDR", "RSP_READ_DATA");
+            part.data_from_mask = path("REQ_WRITE_MASK", "RSP_READ_DATA");
+            part.status_from_op = path("REQ_OP", "RSP_STATUS");
+            part.status_from_address = path("REQ_ADDR", "RSP_STATUS");
+            part.status_from_mask = path("REQ_WRITE_MASK", "RSP_STATUS");
+        }
         const auto in = [&](const char* name) { return c.getInputPinDynamic(name); };
         part.req_valid = index(in("REQ_VALID"), 0);
         part.rsp_ready = index(in("RSP_READY"), 0);

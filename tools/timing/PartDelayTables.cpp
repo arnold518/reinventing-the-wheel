@@ -90,11 +90,12 @@ std::vector<Candidate> candidates(const std::set<std::string>& only) {
 
 // The table of one part, proven on its gates. Storage and memory inside it
 // stay compact, as in every structural view of a core.
-circuit::PartDelays prove(const Candidate& candidate, size_t budget, std::string& reason) {
+circuit::PartDelays prove(const Candidate& candidate, size_t budget, std::string& reason,
+                          const circuit::ParameterMap& parameters = {}) {
     const auto& catalog = circuit::builtinComponentCatalog();
     std::shared_ptr<Component> gates;
     try {
-        gates = catalog.createRoot({candidate.contract, "DUT", {}}, storage(candidate.contract)
+        gates = catalog.createRoot({candidate.contract, "DUT", parameters}, storage(candidate.contract)
             ? circuit::maximallyStructural()
             : rv32i::withBehavioralMemoryParts(circuit::maximallyStructural(), "part-delay-reference-v1")).root;
     } catch (const std::exception& error) { reason = error.what(); return {}; }
@@ -113,6 +114,47 @@ circuit::PartDelays prove(const Candidate& candidate, size_t budget, std::string
     return table;
 }
 
+// The compact implementation of a contract, if it has one.
+std::string compactOf(const std::string& contract) {
+    const auto& catalog = circuit::builtinComponentCatalog();
+    if (!catalog.hasContract(contract)) return {};
+    for (const auto& implementation : catalog.implementationsFor(contract))
+        if (implementation.fidelity == circuit::Fidelity::Behavioral) return implementation.id;
+    return {};
+}
+
+// Memory devices and endpoints are also proven at 64 and 128 words, the two
+// largest sizes that can be built from gates. Larger memories, and the
+// scalable form of the same memory, are estimated from those two.
+size_t sized(const Candidate& candidate, const circuit::PartDelays& standard, size_t budget, std::ostream& body) {
+    const auto device = candidate.contract.find(".device."), endpoint = candidate.contract.find(".endpoint.");
+    if (candidate.contract.rfind("memory.", 0) != 0 || (device == std::string::npos && endpoint == std::string::npos)) return 0;
+    auto scalable = candidate.contract;
+    if (device != std::string::npos) scalable.replace(device, 8, ".scalable-device.");
+    else scalable.replace(endpoint, 10, ".scalable-endpoint.");
+    const auto scalable_implementation = compactOf(scalable);
+    size_t written = 0;
+    // The scalable form with default parameters is the same small memory.
+    if (!scalable_implementation.empty()) { body << emit(scalable_implementation, standard); ++written; }
+    // A flip-flop endpoint whose consumer is always ready is a different
+    // circuit, used by the fixed-cycle cores; it is proven as its own variant.
+    const bool ready_variant = candidate.contract.rfind("memory.ff.endpoint.", 0) == 0;
+    for (const bool always_ready : {false, true}) {
+        if (always_ready && !ready_variant) break;
+        for (const size_t depth : {size_t{64}, size_t{128}}) {
+            circuit::ParameterMap parameters{{"depth_words", std::to_string(depth)}};
+            if (always_ready) parameters["always_ready"] = "1";
+            std::string reason;
+            const auto table = prove(candidate, budget, reason, parameters);
+            if (table.empty()) { std::cerr << "  no " << depth << "-word table for " << candidate.contract << ": " << reason << '\n'; return written; }
+            const auto suffix = "@depth=" + std::to_string(depth) + (always_ready ? "@always_ready" : "");
+            body << emit(candidate.implementation + suffix, table);
+            ++written;
+            if (!scalable_implementation.empty()) { body << emit(scalable_implementation + suffix, table); ++written; }
+        }
+    }
+    return written;
+}
 } // namespace
 
 int main(int argc, char** argv) {
@@ -189,6 +231,7 @@ int main(int argc, char** argv) {
             if (!table.clock.empty() && !clocked) { std::cerr << "skipped " << candidate.contract << ": clocked\n"; continue; }
             body << emit(candidate.implementation, table);
             ++written;
+            written += sized(candidate, table, budget, body);
             std::cerr << "proved " << candidate.contract << " (" << table.arcs.size() << " pairs"
                       << (table.clock.empty() ? "" : ", clocked") << ")\n";
         }

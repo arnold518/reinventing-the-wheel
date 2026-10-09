@@ -705,6 +705,46 @@
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
+{"memory.ff.device.16.behavioral@depth=128", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.ff.device.16.structural-slice";
+    t.arcs = {
+        Arc{"READ_EN", "FAULT", {2, 2}},
+        Arc{"READ_EN", "READ_DATA", {2, 2}},
+        Arc{"WE", "FAULT", {2, 2}},
+        Arc{"WORD_ADDR", "FAULT", {6, 9}},
+        Arc{"WORD_ADDR", "READ_DATA", {4, 17}},
+    };
+    t.clock = "CLK";
+    t.launches["READ_DATA"] = {18, 19};
+    t.setup["WE"] = 11;
+    t.setup["WORD_ADDR"] = 19;
+    t.setup["WRITE_DATA"] = 9;
+    t.setup["WRITE_MASK"] = 11;
+    t.internal_period = 12;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.ff.device.16.behavioral@depth=64", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.ff.device.16.structural-slice";
+    t.arcs = {
+        Arc{"READ_EN", "FAULT", {2, 2}},
+        Arc{"READ_EN", "READ_DATA", {2, 2}},
+        Arc{"WE", "FAULT", {2, 2}},
+        Arc{"WORD_ADDR", "FAULT", {7, 9}},
+        Arc{"WORD_ADDR", "READ_DATA", {4, 15}},
+    };
+    t.clock = "CLK";
+    t.launches["READ_DATA"] = {16, 17};
+    t.setup["WE"] = 11;
+    t.setup["WORD_ADDR"] = 19;
+    t.setup["WRITE_DATA"] = 9;
+    t.setup["WRITE_MASK"] = 11;
+    t.internal_period = 12;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
 {"memory.ff.device.32.behavioral", [] {
     PartDelays t;
     t.evidence = "proven on memory.ff.device.32.structural-slice";
@@ -725,6 +765,46 @@
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
+{"memory.ff.device.32.behavioral@depth=128", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.ff.device.32.structural-slice";
+    t.arcs = {
+        Arc{"READ_EN", "FAULT", {2, 2}},
+        Arc{"READ_EN", "READ_DATA", {2, 2}},
+        Arc{"WE", "FAULT", {2, 2}},
+        Arc{"WORD_ADDR", "FAULT", {6, 9}},
+        Arc{"WORD_ADDR", "READ_DATA", {4, 17}},
+    };
+    t.clock = "CLK";
+    t.launches["READ_DATA"] = {18, 19};
+    t.setup["WE"] = 11;
+    t.setup["WORD_ADDR"] = 19;
+    t.setup["WRITE_DATA"] = 9;
+    t.setup["WRITE_MASK"] = 11;
+    t.internal_period = 12;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.ff.device.32.behavioral@depth=64", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.ff.device.32.structural-slice";
+    t.arcs = {
+        Arc{"READ_EN", "FAULT", {2, 2}},
+        Arc{"READ_EN", "READ_DATA", {2, 2}},
+        Arc{"WE", "FAULT", {2, 2}},
+        Arc{"WORD_ADDR", "FAULT", {7, 9}},
+        Arc{"WORD_ADDR", "READ_DATA", {4, 15}},
+    };
+    t.clock = "CLK";
+    t.launches["READ_DATA"] = {16, 17};
+    t.setup["WE"] = 11;
+    t.setup["WORD_ADDR"] = 19;
+    t.setup["WRITE_DATA"] = 9;
+    t.setup["WRITE_MASK"] = 11;
+    t.internal_period = 12;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
 {"memory.ff.device.8.behavioral", [] {
     PartDelays t;
     t.evidence = "proven on memory.ff.device.8.structural-slice";
@@ -737,6 +817,46 @@
     };
     t.clock = "CLK";
     t.launches["READ_DATA"] = {8, 9};
+    t.setup["WE"] = 11;
+    t.setup["WORD_ADDR"] = 19;
+    t.setup["WRITE_DATA"] = 9;
+    t.setup["WRITE_MASK"] = 11;
+    t.internal_period = 12;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.ff.device.8.behavioral@depth=128", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.ff.device.8.structural-slice";
+    t.arcs = {
+        Arc{"READ_EN", "FAULT", {2, 2}},
+        Arc{"READ_EN", "READ_DATA", {2, 2}},
+        Arc{"WE", "FAULT", {2, 2}},
+        Arc{"WORD_ADDR", "FAULT", {6, 9}},
+        Arc{"WORD_ADDR", "READ_DATA", {4, 17}},
+    };
+    t.clock = "CLK";
+    t.launches["READ_DATA"] = {18, 19};
+    t.setup["WE"] = 11;
+    t.setup["WORD_ADDR"] = 19;
+    t.setup["WRITE_DATA"] = 9;
+    t.setup["WRITE_MASK"] = 11;
+    t.internal_period = 12;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.ff.device.8.behavioral@depth=64", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.ff.device.8.structural-slice";
+    t.arcs = {
+        Arc{"READ_EN", "FAULT", {2, 2}},
+        Arc{"READ_EN", "READ_DATA", {2, 2}},
+        Arc{"WE", "FAULT", {2, 2}},
+        Arc{"WORD_ADDR", "FAULT", {7, 9}},
+        Arc{"WORD_ADDR", "READ_DATA", {4, 15}},
+    };
+    t.clock = "CLK";
+    t.launches["READ_DATA"] = {16, 17};
     t.setup["WE"] = 11;
     t.setup["WORD_ADDR"] = 19;
     t.setup["WRITE_DATA"] = 9;
@@ -774,6 +894,112 @@
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
+{"memory.ff.endpoint.16.behavioral@depth=128", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.ff.endpoint.16.structural";
+    t.arcs = {
+        Arc{"REQ_ADDR", "RSP_READ_DATA", {10, 23}},
+        Arc{"REQ_ADDR", "RSP_STATUS", {9, 27}},
+        Arc{"REQ_OP", "RSP_READ_DATA", {9, 15}},
+        Arc{"REQ_OP", "RSP_STATUS", {9, 24}},
+        Arc{"REQ_VALID", "RSP_READ_DATA", {10, 10}},
+        Arc{"REQ_VALID", "RSP_VALID", {3, 3}},
+        Arc{"REQ_WRITE_MASK", "RSP_READ_DATA", {11, 14}},
+        Arc{"REQ_WRITE_MASK", "RSP_STATUS", {9, 18}},
+        Arc{"RSP_READY", "REQ_READY", {2, 2}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {6, 7};
+    t.launches["RSP_READ_DATA"] = {5, 25};
+    t.launches["RSP_STATUS"] = {5, 7};
+    t.launches["RSP_VALID"] = {5, 10};
+    t.setup["REQ_ADDR"] = 33;
+    t.setup["REQ_OP"] = 30;
+    t.setup["REQ_VALID"] = 16;
+    t.setup["REQ_WRITE_DATA"] = 9;
+    t.setup["REQ_WRITE_MASK"] = 24;
+    t.setup["RSP_READY"] = 18;
+    t.internal_period = 31;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.ff.endpoint.16.behavioral@depth=128@always_ready", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.ff.endpoint.16.structural";
+    t.arcs = {
+        Arc{"REQ_ADDR", "RSP_READ_DATA", {7, 20}},
+        Arc{"REQ_ADDR", "RSP_STATUS", {6, 24}},
+        Arc{"REQ_OP", "RSP_READ_DATA", {6, 12}},
+        Arc{"REQ_OP", "RSP_STATUS", {6, 21}},
+        Arc{"REQ_VALID", "RSP_READ_DATA", {7, 7}},
+        Arc{"REQ_VALID", "RSP_VALID", {1, 1}},
+        Arc{"REQ_WRITE_MASK", "RSP_READ_DATA", {8, 11}},
+        Arc{"REQ_WRITE_MASK", "RSP_STATUS", {6, 15}},
+    };
+    t.clock = "CLK";
+    t.launches["RSP_READ_DATA"] = {21, 22};
+    t.setup["REQ_ADDR"] = 22;
+    t.setup["REQ_OP"] = 19;
+    t.setup["REQ_VALID"] = 13;
+    t.setup["REQ_WRITE_DATA"] = 9;
+    t.setup["REQ_WRITE_MASK"] = 18;
+    t.internal_period = 12;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.ff.endpoint.16.behavioral@depth=64", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.ff.endpoint.16.structural";
+    t.arcs = {
+        Arc{"REQ_ADDR", "RSP_READ_DATA", {10, 21}},
+        Arc{"REQ_ADDR", "RSP_STATUS", {9, 27}},
+        Arc{"REQ_OP", "RSP_READ_DATA", {9, 15}},
+        Arc{"REQ_OP", "RSP_STATUS", {9, 24}},
+        Arc{"REQ_VALID", "RSP_READ_DATA", {10, 10}},
+        Arc{"REQ_VALID", "RSP_VALID", {3, 3}},
+        Arc{"REQ_WRITE_MASK", "RSP_READ_DATA", {11, 14}},
+        Arc{"REQ_WRITE_MASK", "RSP_STATUS", {9, 18}},
+        Arc{"RSP_READY", "REQ_READY", {2, 2}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {6, 7};
+    t.launches["RSP_READ_DATA"] = {5, 23};
+    t.launches["RSP_STATUS"] = {5, 7};
+    t.launches["RSP_VALID"] = {5, 10};
+    t.setup["REQ_ADDR"] = 33;
+    t.setup["REQ_OP"] = 30;
+    t.setup["REQ_VALID"] = 16;
+    t.setup["REQ_WRITE_DATA"] = 9;
+    t.setup["REQ_WRITE_MASK"] = 24;
+    t.setup["RSP_READY"] = 18;
+    t.internal_period = 29;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.ff.endpoint.16.behavioral@depth=64@always_ready", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.ff.endpoint.16.structural";
+    t.arcs = {
+        Arc{"REQ_ADDR", "RSP_READ_DATA", {7, 18}},
+        Arc{"REQ_ADDR", "RSP_STATUS", {6, 24}},
+        Arc{"REQ_OP", "RSP_READ_DATA", {6, 12}},
+        Arc{"REQ_OP", "RSP_STATUS", {6, 21}},
+        Arc{"REQ_VALID", "RSP_READ_DATA", {7, 7}},
+        Arc{"REQ_VALID", "RSP_VALID", {1, 1}},
+        Arc{"REQ_WRITE_MASK", "RSP_READ_DATA", {8, 11}},
+        Arc{"REQ_WRITE_MASK", "RSP_STATUS", {6, 15}},
+    };
+    t.clock = "CLK";
+    t.launches["RSP_READ_DATA"] = {19, 20};
+    t.setup["REQ_ADDR"] = 22;
+    t.setup["REQ_OP"] = 19;
+    t.setup["REQ_VALID"] = 13;
+    t.setup["REQ_WRITE_DATA"] = 9;
+    t.setup["REQ_WRITE_MASK"] = 18;
+    t.internal_period = 12;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
 {"memory.ff.endpoint.32.behavioral", [] {
     PartDelays t;
     t.evidence = "proven on memory.ff.endpoint.32.structural";
@@ -803,6 +1029,112 @@
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
+{"memory.ff.endpoint.32.behavioral@depth=128", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.ff.endpoint.32.structural";
+    t.arcs = {
+        Arc{"REQ_ADDR", "RSP_READ_DATA", {10, 23}},
+        Arc{"REQ_ADDR", "RSP_STATUS", {9, 27}},
+        Arc{"REQ_OP", "RSP_READ_DATA", {9, 15}},
+        Arc{"REQ_OP", "RSP_STATUS", {9, 24}},
+        Arc{"REQ_VALID", "RSP_READ_DATA", {10, 10}},
+        Arc{"REQ_VALID", "RSP_VALID", {3, 3}},
+        Arc{"REQ_WRITE_MASK", "RSP_READ_DATA", {11, 14}},
+        Arc{"REQ_WRITE_MASK", "RSP_STATUS", {9, 18}},
+        Arc{"RSP_READY", "REQ_READY", {2, 2}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {6, 7};
+    t.launches["RSP_READ_DATA"] = {5, 25};
+    t.launches["RSP_STATUS"] = {5, 7};
+    t.launches["RSP_VALID"] = {5, 10};
+    t.setup["REQ_ADDR"] = 33;
+    t.setup["REQ_OP"] = 30;
+    t.setup["REQ_VALID"] = 16;
+    t.setup["REQ_WRITE_DATA"] = 9;
+    t.setup["REQ_WRITE_MASK"] = 24;
+    t.setup["RSP_READY"] = 18;
+    t.internal_period = 31;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.ff.endpoint.32.behavioral@depth=128@always_ready", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.ff.endpoint.32.structural";
+    t.arcs = {
+        Arc{"REQ_ADDR", "RSP_READ_DATA", {7, 20}},
+        Arc{"REQ_ADDR", "RSP_STATUS", {6, 24}},
+        Arc{"REQ_OP", "RSP_READ_DATA", {6, 12}},
+        Arc{"REQ_OP", "RSP_STATUS", {6, 21}},
+        Arc{"REQ_VALID", "RSP_READ_DATA", {7, 7}},
+        Arc{"REQ_VALID", "RSP_VALID", {1, 1}},
+        Arc{"REQ_WRITE_MASK", "RSP_READ_DATA", {8, 11}},
+        Arc{"REQ_WRITE_MASK", "RSP_STATUS", {6, 15}},
+    };
+    t.clock = "CLK";
+    t.launches["RSP_READ_DATA"] = {21, 22};
+    t.setup["REQ_ADDR"] = 22;
+    t.setup["REQ_OP"] = 19;
+    t.setup["REQ_VALID"] = 13;
+    t.setup["REQ_WRITE_DATA"] = 9;
+    t.setup["REQ_WRITE_MASK"] = 18;
+    t.internal_period = 12;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.ff.endpoint.32.behavioral@depth=64", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.ff.endpoint.32.structural";
+    t.arcs = {
+        Arc{"REQ_ADDR", "RSP_READ_DATA", {10, 21}},
+        Arc{"REQ_ADDR", "RSP_STATUS", {9, 27}},
+        Arc{"REQ_OP", "RSP_READ_DATA", {9, 15}},
+        Arc{"REQ_OP", "RSP_STATUS", {9, 24}},
+        Arc{"REQ_VALID", "RSP_READ_DATA", {10, 10}},
+        Arc{"REQ_VALID", "RSP_VALID", {3, 3}},
+        Arc{"REQ_WRITE_MASK", "RSP_READ_DATA", {11, 14}},
+        Arc{"REQ_WRITE_MASK", "RSP_STATUS", {9, 18}},
+        Arc{"RSP_READY", "REQ_READY", {2, 2}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {6, 7};
+    t.launches["RSP_READ_DATA"] = {5, 23};
+    t.launches["RSP_STATUS"] = {5, 7};
+    t.launches["RSP_VALID"] = {5, 10};
+    t.setup["REQ_ADDR"] = 33;
+    t.setup["REQ_OP"] = 30;
+    t.setup["REQ_VALID"] = 16;
+    t.setup["REQ_WRITE_DATA"] = 9;
+    t.setup["REQ_WRITE_MASK"] = 24;
+    t.setup["RSP_READY"] = 18;
+    t.internal_period = 29;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.ff.endpoint.32.behavioral@depth=64@always_ready", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.ff.endpoint.32.structural";
+    t.arcs = {
+        Arc{"REQ_ADDR", "RSP_READ_DATA", {7, 18}},
+        Arc{"REQ_ADDR", "RSP_STATUS", {6, 24}},
+        Arc{"REQ_OP", "RSP_READ_DATA", {6, 12}},
+        Arc{"REQ_OP", "RSP_STATUS", {6, 21}},
+        Arc{"REQ_VALID", "RSP_READ_DATA", {7, 7}},
+        Arc{"REQ_VALID", "RSP_VALID", {1, 1}},
+        Arc{"REQ_WRITE_MASK", "RSP_READ_DATA", {8, 11}},
+        Arc{"REQ_WRITE_MASK", "RSP_STATUS", {6, 15}},
+    };
+    t.clock = "CLK";
+    t.launches["RSP_READ_DATA"] = {19, 20};
+    t.setup["REQ_ADDR"] = 22;
+    t.setup["REQ_OP"] = 19;
+    t.setup["REQ_VALID"] = 13;
+    t.setup["REQ_WRITE_DATA"] = 9;
+    t.setup["REQ_WRITE_MASK"] = 18;
+    t.internal_period = 12;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
 {"memory.ff.endpoint.8.behavioral", [] {
     PartDelays t;
     t.evidence = "proven on memory.ff.endpoint.8.structural";
@@ -829,6 +1161,697 @@
     t.setup["REQ_WRITE_MASK"] = 24;
     t.setup["RSP_READY"] = 18;
     t.internal_period = 23;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.ff.endpoint.8.behavioral@depth=128", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.ff.endpoint.8.structural";
+    t.arcs = {
+        Arc{"REQ_ADDR", "RSP_READ_DATA", {10, 23}},
+        Arc{"REQ_ADDR", "RSP_STATUS", {9, 27}},
+        Arc{"REQ_OP", "RSP_READ_DATA", {9, 15}},
+        Arc{"REQ_OP", "RSP_STATUS", {9, 24}},
+        Arc{"REQ_VALID", "RSP_READ_DATA", {10, 10}},
+        Arc{"REQ_VALID", "RSP_VALID", {3, 3}},
+        Arc{"REQ_WRITE_MASK", "RSP_READ_DATA", {11, 14}},
+        Arc{"REQ_WRITE_MASK", "RSP_STATUS", {9, 18}},
+        Arc{"RSP_READY", "REQ_READY", {2, 2}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {6, 7};
+    t.launches["RSP_READ_DATA"] = {5, 25};
+    t.launches["RSP_STATUS"] = {5, 7};
+    t.launches["RSP_VALID"] = {5, 10};
+    t.setup["REQ_ADDR"] = 33;
+    t.setup["REQ_OP"] = 30;
+    t.setup["REQ_VALID"] = 16;
+    t.setup["REQ_WRITE_DATA"] = 9;
+    t.setup["REQ_WRITE_MASK"] = 24;
+    t.setup["RSP_READY"] = 18;
+    t.internal_period = 31;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.ff.endpoint.8.behavioral@depth=128@always_ready", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.ff.endpoint.8.structural";
+    t.arcs = {
+        Arc{"REQ_ADDR", "RSP_READ_DATA", {7, 20}},
+        Arc{"REQ_ADDR", "RSP_STATUS", {6, 24}},
+        Arc{"REQ_OP", "RSP_READ_DATA", {6, 12}},
+        Arc{"REQ_OP", "RSP_STATUS", {6, 21}},
+        Arc{"REQ_VALID", "RSP_READ_DATA", {7, 7}},
+        Arc{"REQ_VALID", "RSP_VALID", {1, 1}},
+        Arc{"REQ_WRITE_MASK", "RSP_READ_DATA", {8, 11}},
+        Arc{"REQ_WRITE_MASK", "RSP_STATUS", {6, 15}},
+    };
+    t.clock = "CLK";
+    t.launches["RSP_READ_DATA"] = {21, 22};
+    t.setup["REQ_ADDR"] = 22;
+    t.setup["REQ_OP"] = 19;
+    t.setup["REQ_VALID"] = 13;
+    t.setup["REQ_WRITE_DATA"] = 9;
+    t.setup["REQ_WRITE_MASK"] = 18;
+    t.internal_period = 12;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.ff.endpoint.8.behavioral@depth=64", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.ff.endpoint.8.structural";
+    t.arcs = {
+        Arc{"REQ_ADDR", "RSP_READ_DATA", {10, 21}},
+        Arc{"REQ_ADDR", "RSP_STATUS", {9, 27}},
+        Arc{"REQ_OP", "RSP_READ_DATA", {9, 15}},
+        Arc{"REQ_OP", "RSP_STATUS", {9, 24}},
+        Arc{"REQ_VALID", "RSP_READ_DATA", {10, 10}},
+        Arc{"REQ_VALID", "RSP_VALID", {3, 3}},
+        Arc{"REQ_WRITE_MASK", "RSP_READ_DATA", {11, 14}},
+        Arc{"REQ_WRITE_MASK", "RSP_STATUS", {9, 18}},
+        Arc{"RSP_READY", "REQ_READY", {2, 2}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {6, 7};
+    t.launches["RSP_READ_DATA"] = {5, 23};
+    t.launches["RSP_STATUS"] = {5, 7};
+    t.launches["RSP_VALID"] = {5, 10};
+    t.setup["REQ_ADDR"] = 33;
+    t.setup["REQ_OP"] = 30;
+    t.setup["REQ_VALID"] = 16;
+    t.setup["REQ_WRITE_DATA"] = 9;
+    t.setup["REQ_WRITE_MASK"] = 24;
+    t.setup["RSP_READY"] = 18;
+    t.internal_period = 29;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.ff.endpoint.8.behavioral@depth=64@always_ready", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.ff.endpoint.8.structural";
+    t.arcs = {
+        Arc{"REQ_ADDR", "RSP_READ_DATA", {7, 18}},
+        Arc{"REQ_ADDR", "RSP_STATUS", {6, 24}},
+        Arc{"REQ_OP", "RSP_READ_DATA", {6, 12}},
+        Arc{"REQ_OP", "RSP_STATUS", {6, 21}},
+        Arc{"REQ_VALID", "RSP_READ_DATA", {7, 7}},
+        Arc{"REQ_VALID", "RSP_VALID", {1, 1}},
+        Arc{"REQ_WRITE_MASK", "RSP_READ_DATA", {8, 11}},
+        Arc{"REQ_WRITE_MASK", "RSP_STATUS", {6, 15}},
+    };
+    t.clock = "CLK";
+    t.launches["RSP_READ_DATA"] = {19, 20};
+    t.setup["REQ_ADDR"] = 22;
+    t.setup["REQ_OP"] = 19;
+    t.setup["REQ_VALID"] = 13;
+    t.setup["REQ_WRITE_DATA"] = 9;
+    t.setup["REQ_WRITE_MASK"] = 18;
+    t.internal_period = 12;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.ff.scalable-device.16.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.ff.device.16.structural-slice";
+    t.arcs = {
+        Arc{"READ_EN", "FAULT", {2, 2}},
+        Arc{"READ_EN", "READ_DATA", {2, 2}},
+        Arc{"WE", "FAULT", {2, 2}},
+        Arc{"WORD_ADDR", "FAULT", {8, 9}},
+        Arc{"WORD_ADDR", "READ_DATA", {4, 9}},
+    };
+    t.clock = "CLK";
+    t.launches["READ_DATA"] = {8, 9};
+    t.setup["WE"] = 11;
+    t.setup["WORD_ADDR"] = 19;
+    t.setup["WRITE_DATA"] = 9;
+    t.setup["WRITE_MASK"] = 11;
+    t.internal_period = 12;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.ff.scalable-device.16.behavioral@depth=128", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.ff.device.16.structural-slice";
+    t.arcs = {
+        Arc{"READ_EN", "FAULT", {2, 2}},
+        Arc{"READ_EN", "READ_DATA", {2, 2}},
+        Arc{"WE", "FAULT", {2, 2}},
+        Arc{"WORD_ADDR", "FAULT", {6, 9}},
+        Arc{"WORD_ADDR", "READ_DATA", {4, 17}},
+    };
+    t.clock = "CLK";
+    t.launches["READ_DATA"] = {18, 19};
+    t.setup["WE"] = 11;
+    t.setup["WORD_ADDR"] = 19;
+    t.setup["WRITE_DATA"] = 9;
+    t.setup["WRITE_MASK"] = 11;
+    t.internal_period = 12;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.ff.scalable-device.16.behavioral@depth=64", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.ff.device.16.structural-slice";
+    t.arcs = {
+        Arc{"READ_EN", "FAULT", {2, 2}},
+        Arc{"READ_EN", "READ_DATA", {2, 2}},
+        Arc{"WE", "FAULT", {2, 2}},
+        Arc{"WORD_ADDR", "FAULT", {7, 9}},
+        Arc{"WORD_ADDR", "READ_DATA", {4, 15}},
+    };
+    t.clock = "CLK";
+    t.launches["READ_DATA"] = {16, 17};
+    t.setup["WE"] = 11;
+    t.setup["WORD_ADDR"] = 19;
+    t.setup["WRITE_DATA"] = 9;
+    t.setup["WRITE_MASK"] = 11;
+    t.internal_period = 12;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.ff.scalable-device.32.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.ff.device.32.structural-slice";
+    t.arcs = {
+        Arc{"READ_EN", "FAULT", {2, 2}},
+        Arc{"READ_EN", "READ_DATA", {2, 2}},
+        Arc{"WE", "FAULT", {2, 2}},
+        Arc{"WORD_ADDR", "FAULT", {8, 9}},
+        Arc{"WORD_ADDR", "READ_DATA", {4, 9}},
+    };
+    t.clock = "CLK";
+    t.launches["READ_DATA"] = {8, 9};
+    t.setup["WE"] = 11;
+    t.setup["WORD_ADDR"] = 19;
+    t.setup["WRITE_DATA"] = 9;
+    t.setup["WRITE_MASK"] = 11;
+    t.internal_period = 12;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.ff.scalable-device.32.behavioral@depth=128", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.ff.device.32.structural-slice";
+    t.arcs = {
+        Arc{"READ_EN", "FAULT", {2, 2}},
+        Arc{"READ_EN", "READ_DATA", {2, 2}},
+        Arc{"WE", "FAULT", {2, 2}},
+        Arc{"WORD_ADDR", "FAULT", {6, 9}},
+        Arc{"WORD_ADDR", "READ_DATA", {4, 17}},
+    };
+    t.clock = "CLK";
+    t.launches["READ_DATA"] = {18, 19};
+    t.setup["WE"] = 11;
+    t.setup["WORD_ADDR"] = 19;
+    t.setup["WRITE_DATA"] = 9;
+    t.setup["WRITE_MASK"] = 11;
+    t.internal_period = 12;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.ff.scalable-device.32.behavioral@depth=64", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.ff.device.32.structural-slice";
+    t.arcs = {
+        Arc{"READ_EN", "FAULT", {2, 2}},
+        Arc{"READ_EN", "READ_DATA", {2, 2}},
+        Arc{"WE", "FAULT", {2, 2}},
+        Arc{"WORD_ADDR", "FAULT", {7, 9}},
+        Arc{"WORD_ADDR", "READ_DATA", {4, 15}},
+    };
+    t.clock = "CLK";
+    t.launches["READ_DATA"] = {16, 17};
+    t.setup["WE"] = 11;
+    t.setup["WORD_ADDR"] = 19;
+    t.setup["WRITE_DATA"] = 9;
+    t.setup["WRITE_MASK"] = 11;
+    t.internal_period = 12;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.ff.scalable-device.8.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.ff.device.8.structural-slice";
+    t.arcs = {
+        Arc{"READ_EN", "FAULT", {2, 2}},
+        Arc{"READ_EN", "READ_DATA", {2, 2}},
+        Arc{"WE", "FAULT", {2, 2}},
+        Arc{"WORD_ADDR", "FAULT", {8, 9}},
+        Arc{"WORD_ADDR", "READ_DATA", {4, 9}},
+    };
+    t.clock = "CLK";
+    t.launches["READ_DATA"] = {8, 9};
+    t.setup["WE"] = 11;
+    t.setup["WORD_ADDR"] = 19;
+    t.setup["WRITE_DATA"] = 9;
+    t.setup["WRITE_MASK"] = 11;
+    t.internal_period = 12;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.ff.scalable-device.8.behavioral@depth=128", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.ff.device.8.structural-slice";
+    t.arcs = {
+        Arc{"READ_EN", "FAULT", {2, 2}},
+        Arc{"READ_EN", "READ_DATA", {2, 2}},
+        Arc{"WE", "FAULT", {2, 2}},
+        Arc{"WORD_ADDR", "FAULT", {6, 9}},
+        Arc{"WORD_ADDR", "READ_DATA", {4, 17}},
+    };
+    t.clock = "CLK";
+    t.launches["READ_DATA"] = {18, 19};
+    t.setup["WE"] = 11;
+    t.setup["WORD_ADDR"] = 19;
+    t.setup["WRITE_DATA"] = 9;
+    t.setup["WRITE_MASK"] = 11;
+    t.internal_period = 12;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.ff.scalable-device.8.behavioral@depth=64", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.ff.device.8.structural-slice";
+    t.arcs = {
+        Arc{"READ_EN", "FAULT", {2, 2}},
+        Arc{"READ_EN", "READ_DATA", {2, 2}},
+        Arc{"WE", "FAULT", {2, 2}},
+        Arc{"WORD_ADDR", "FAULT", {7, 9}},
+        Arc{"WORD_ADDR", "READ_DATA", {4, 15}},
+    };
+    t.clock = "CLK";
+    t.launches["READ_DATA"] = {16, 17};
+    t.setup["WE"] = 11;
+    t.setup["WORD_ADDR"] = 19;
+    t.setup["WRITE_DATA"] = 9;
+    t.setup["WRITE_MASK"] = 11;
+    t.internal_period = 12;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.ff.scalable-endpoint.16.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.ff.endpoint.16.structural";
+    t.arcs = {
+        Arc{"REQ_ADDR", "RSP_READ_DATA", {10, 18}},
+        Arc{"REQ_ADDR", "RSP_STATUS", {9, 27}},
+        Arc{"REQ_OP", "RSP_READ_DATA", {9, 15}},
+        Arc{"REQ_OP", "RSP_STATUS", {9, 24}},
+        Arc{"REQ_VALID", "RSP_READ_DATA", {10, 10}},
+        Arc{"REQ_VALID", "RSP_VALID", {3, 3}},
+        Arc{"REQ_WRITE_MASK", "RSP_READ_DATA", {11, 14}},
+        Arc{"REQ_WRITE_MASK", "RSP_STATUS", {9, 18}},
+        Arc{"RSP_READY", "REQ_READY", {2, 2}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {6, 7};
+    t.launches["RSP_READ_DATA"] = {5, 17};
+    t.launches["RSP_STATUS"] = {5, 7};
+    t.launches["RSP_VALID"] = {5, 10};
+    t.setup["REQ_ADDR"] = 33;
+    t.setup["REQ_OP"] = 30;
+    t.setup["REQ_VALID"] = 16;
+    t.setup["REQ_WRITE_DATA"] = 9;
+    t.setup["REQ_WRITE_MASK"] = 24;
+    t.setup["RSP_READY"] = 18;
+    t.internal_period = 23;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.ff.scalable-endpoint.16.behavioral@depth=128", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.ff.endpoint.16.structural";
+    t.arcs = {
+        Arc{"REQ_ADDR", "RSP_READ_DATA", {10, 23}},
+        Arc{"REQ_ADDR", "RSP_STATUS", {9, 27}},
+        Arc{"REQ_OP", "RSP_READ_DATA", {9, 15}},
+        Arc{"REQ_OP", "RSP_STATUS", {9, 24}},
+        Arc{"REQ_VALID", "RSP_READ_DATA", {10, 10}},
+        Arc{"REQ_VALID", "RSP_VALID", {3, 3}},
+        Arc{"REQ_WRITE_MASK", "RSP_READ_DATA", {11, 14}},
+        Arc{"REQ_WRITE_MASK", "RSP_STATUS", {9, 18}},
+        Arc{"RSP_READY", "REQ_READY", {2, 2}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {6, 7};
+    t.launches["RSP_READ_DATA"] = {5, 25};
+    t.launches["RSP_STATUS"] = {5, 7};
+    t.launches["RSP_VALID"] = {5, 10};
+    t.setup["REQ_ADDR"] = 33;
+    t.setup["REQ_OP"] = 30;
+    t.setup["REQ_VALID"] = 16;
+    t.setup["REQ_WRITE_DATA"] = 9;
+    t.setup["REQ_WRITE_MASK"] = 24;
+    t.setup["RSP_READY"] = 18;
+    t.internal_period = 31;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.ff.scalable-endpoint.16.behavioral@depth=128@always_ready", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.ff.endpoint.16.structural";
+    t.arcs = {
+        Arc{"REQ_ADDR", "RSP_READ_DATA", {7, 20}},
+        Arc{"REQ_ADDR", "RSP_STATUS", {6, 24}},
+        Arc{"REQ_OP", "RSP_READ_DATA", {6, 12}},
+        Arc{"REQ_OP", "RSP_STATUS", {6, 21}},
+        Arc{"REQ_VALID", "RSP_READ_DATA", {7, 7}},
+        Arc{"REQ_VALID", "RSP_VALID", {1, 1}},
+        Arc{"REQ_WRITE_MASK", "RSP_READ_DATA", {8, 11}},
+        Arc{"REQ_WRITE_MASK", "RSP_STATUS", {6, 15}},
+    };
+    t.clock = "CLK";
+    t.launches["RSP_READ_DATA"] = {21, 22};
+    t.setup["REQ_ADDR"] = 22;
+    t.setup["REQ_OP"] = 19;
+    t.setup["REQ_VALID"] = 13;
+    t.setup["REQ_WRITE_DATA"] = 9;
+    t.setup["REQ_WRITE_MASK"] = 18;
+    t.internal_period = 12;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.ff.scalable-endpoint.16.behavioral@depth=64", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.ff.endpoint.16.structural";
+    t.arcs = {
+        Arc{"REQ_ADDR", "RSP_READ_DATA", {10, 21}},
+        Arc{"REQ_ADDR", "RSP_STATUS", {9, 27}},
+        Arc{"REQ_OP", "RSP_READ_DATA", {9, 15}},
+        Arc{"REQ_OP", "RSP_STATUS", {9, 24}},
+        Arc{"REQ_VALID", "RSP_READ_DATA", {10, 10}},
+        Arc{"REQ_VALID", "RSP_VALID", {3, 3}},
+        Arc{"REQ_WRITE_MASK", "RSP_READ_DATA", {11, 14}},
+        Arc{"REQ_WRITE_MASK", "RSP_STATUS", {9, 18}},
+        Arc{"RSP_READY", "REQ_READY", {2, 2}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {6, 7};
+    t.launches["RSP_READ_DATA"] = {5, 23};
+    t.launches["RSP_STATUS"] = {5, 7};
+    t.launches["RSP_VALID"] = {5, 10};
+    t.setup["REQ_ADDR"] = 33;
+    t.setup["REQ_OP"] = 30;
+    t.setup["REQ_VALID"] = 16;
+    t.setup["REQ_WRITE_DATA"] = 9;
+    t.setup["REQ_WRITE_MASK"] = 24;
+    t.setup["RSP_READY"] = 18;
+    t.internal_period = 29;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.ff.scalable-endpoint.16.behavioral@depth=64@always_ready", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.ff.endpoint.16.structural";
+    t.arcs = {
+        Arc{"REQ_ADDR", "RSP_READ_DATA", {7, 18}},
+        Arc{"REQ_ADDR", "RSP_STATUS", {6, 24}},
+        Arc{"REQ_OP", "RSP_READ_DATA", {6, 12}},
+        Arc{"REQ_OP", "RSP_STATUS", {6, 21}},
+        Arc{"REQ_VALID", "RSP_READ_DATA", {7, 7}},
+        Arc{"REQ_VALID", "RSP_VALID", {1, 1}},
+        Arc{"REQ_WRITE_MASK", "RSP_READ_DATA", {8, 11}},
+        Arc{"REQ_WRITE_MASK", "RSP_STATUS", {6, 15}},
+    };
+    t.clock = "CLK";
+    t.launches["RSP_READ_DATA"] = {19, 20};
+    t.setup["REQ_ADDR"] = 22;
+    t.setup["REQ_OP"] = 19;
+    t.setup["REQ_VALID"] = 13;
+    t.setup["REQ_WRITE_DATA"] = 9;
+    t.setup["REQ_WRITE_MASK"] = 18;
+    t.internal_period = 12;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.ff.scalable-endpoint.32.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.ff.endpoint.32.structural";
+    t.arcs = {
+        Arc{"REQ_ADDR", "RSP_READ_DATA", {10, 18}},
+        Arc{"REQ_ADDR", "RSP_STATUS", {9, 27}},
+        Arc{"REQ_OP", "RSP_READ_DATA", {9, 15}},
+        Arc{"REQ_OP", "RSP_STATUS", {9, 24}},
+        Arc{"REQ_VALID", "RSP_READ_DATA", {10, 10}},
+        Arc{"REQ_VALID", "RSP_VALID", {3, 3}},
+        Arc{"REQ_WRITE_MASK", "RSP_READ_DATA", {11, 14}},
+        Arc{"REQ_WRITE_MASK", "RSP_STATUS", {9, 18}},
+        Arc{"RSP_READY", "REQ_READY", {2, 2}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {6, 7};
+    t.launches["RSP_READ_DATA"] = {5, 17};
+    t.launches["RSP_STATUS"] = {5, 7};
+    t.launches["RSP_VALID"] = {5, 10};
+    t.setup["REQ_ADDR"] = 33;
+    t.setup["REQ_OP"] = 30;
+    t.setup["REQ_VALID"] = 16;
+    t.setup["REQ_WRITE_DATA"] = 9;
+    t.setup["REQ_WRITE_MASK"] = 24;
+    t.setup["RSP_READY"] = 18;
+    t.internal_period = 23;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.ff.scalable-endpoint.32.behavioral@depth=128", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.ff.endpoint.32.structural";
+    t.arcs = {
+        Arc{"REQ_ADDR", "RSP_READ_DATA", {10, 23}},
+        Arc{"REQ_ADDR", "RSP_STATUS", {9, 27}},
+        Arc{"REQ_OP", "RSP_READ_DATA", {9, 15}},
+        Arc{"REQ_OP", "RSP_STATUS", {9, 24}},
+        Arc{"REQ_VALID", "RSP_READ_DATA", {10, 10}},
+        Arc{"REQ_VALID", "RSP_VALID", {3, 3}},
+        Arc{"REQ_WRITE_MASK", "RSP_READ_DATA", {11, 14}},
+        Arc{"REQ_WRITE_MASK", "RSP_STATUS", {9, 18}},
+        Arc{"RSP_READY", "REQ_READY", {2, 2}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {6, 7};
+    t.launches["RSP_READ_DATA"] = {5, 25};
+    t.launches["RSP_STATUS"] = {5, 7};
+    t.launches["RSP_VALID"] = {5, 10};
+    t.setup["REQ_ADDR"] = 33;
+    t.setup["REQ_OP"] = 30;
+    t.setup["REQ_VALID"] = 16;
+    t.setup["REQ_WRITE_DATA"] = 9;
+    t.setup["REQ_WRITE_MASK"] = 24;
+    t.setup["RSP_READY"] = 18;
+    t.internal_period = 31;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.ff.scalable-endpoint.32.behavioral@depth=128@always_ready", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.ff.endpoint.32.structural";
+    t.arcs = {
+        Arc{"REQ_ADDR", "RSP_READ_DATA", {7, 20}},
+        Arc{"REQ_ADDR", "RSP_STATUS", {6, 24}},
+        Arc{"REQ_OP", "RSP_READ_DATA", {6, 12}},
+        Arc{"REQ_OP", "RSP_STATUS", {6, 21}},
+        Arc{"REQ_VALID", "RSP_READ_DATA", {7, 7}},
+        Arc{"REQ_VALID", "RSP_VALID", {1, 1}},
+        Arc{"REQ_WRITE_MASK", "RSP_READ_DATA", {8, 11}},
+        Arc{"REQ_WRITE_MASK", "RSP_STATUS", {6, 15}},
+    };
+    t.clock = "CLK";
+    t.launches["RSP_READ_DATA"] = {21, 22};
+    t.setup["REQ_ADDR"] = 22;
+    t.setup["REQ_OP"] = 19;
+    t.setup["REQ_VALID"] = 13;
+    t.setup["REQ_WRITE_DATA"] = 9;
+    t.setup["REQ_WRITE_MASK"] = 18;
+    t.internal_period = 12;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.ff.scalable-endpoint.32.behavioral@depth=64", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.ff.endpoint.32.structural";
+    t.arcs = {
+        Arc{"REQ_ADDR", "RSP_READ_DATA", {10, 21}},
+        Arc{"REQ_ADDR", "RSP_STATUS", {9, 27}},
+        Arc{"REQ_OP", "RSP_READ_DATA", {9, 15}},
+        Arc{"REQ_OP", "RSP_STATUS", {9, 24}},
+        Arc{"REQ_VALID", "RSP_READ_DATA", {10, 10}},
+        Arc{"REQ_VALID", "RSP_VALID", {3, 3}},
+        Arc{"REQ_WRITE_MASK", "RSP_READ_DATA", {11, 14}},
+        Arc{"REQ_WRITE_MASK", "RSP_STATUS", {9, 18}},
+        Arc{"RSP_READY", "REQ_READY", {2, 2}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {6, 7};
+    t.launches["RSP_READ_DATA"] = {5, 23};
+    t.launches["RSP_STATUS"] = {5, 7};
+    t.launches["RSP_VALID"] = {5, 10};
+    t.setup["REQ_ADDR"] = 33;
+    t.setup["REQ_OP"] = 30;
+    t.setup["REQ_VALID"] = 16;
+    t.setup["REQ_WRITE_DATA"] = 9;
+    t.setup["REQ_WRITE_MASK"] = 24;
+    t.setup["RSP_READY"] = 18;
+    t.internal_period = 29;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.ff.scalable-endpoint.32.behavioral@depth=64@always_ready", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.ff.endpoint.32.structural";
+    t.arcs = {
+        Arc{"REQ_ADDR", "RSP_READ_DATA", {7, 18}},
+        Arc{"REQ_ADDR", "RSP_STATUS", {6, 24}},
+        Arc{"REQ_OP", "RSP_READ_DATA", {6, 12}},
+        Arc{"REQ_OP", "RSP_STATUS", {6, 21}},
+        Arc{"REQ_VALID", "RSP_READ_DATA", {7, 7}},
+        Arc{"REQ_VALID", "RSP_VALID", {1, 1}},
+        Arc{"REQ_WRITE_MASK", "RSP_READ_DATA", {8, 11}},
+        Arc{"REQ_WRITE_MASK", "RSP_STATUS", {6, 15}},
+    };
+    t.clock = "CLK";
+    t.launches["RSP_READ_DATA"] = {19, 20};
+    t.setup["REQ_ADDR"] = 22;
+    t.setup["REQ_OP"] = 19;
+    t.setup["REQ_VALID"] = 13;
+    t.setup["REQ_WRITE_DATA"] = 9;
+    t.setup["REQ_WRITE_MASK"] = 18;
+    t.internal_period = 12;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.ff.scalable-endpoint.8.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.ff.endpoint.8.structural";
+    t.arcs = {
+        Arc{"REQ_ADDR", "RSP_READ_DATA", {10, 18}},
+        Arc{"REQ_ADDR", "RSP_STATUS", {9, 27}},
+        Arc{"REQ_OP", "RSP_READ_DATA", {9, 15}},
+        Arc{"REQ_OP", "RSP_STATUS", {9, 24}},
+        Arc{"REQ_VALID", "RSP_READ_DATA", {10, 10}},
+        Arc{"REQ_VALID", "RSP_VALID", {3, 3}},
+        Arc{"REQ_WRITE_MASK", "RSP_READ_DATA", {11, 14}},
+        Arc{"REQ_WRITE_MASK", "RSP_STATUS", {9, 18}},
+        Arc{"RSP_READY", "REQ_READY", {2, 2}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {6, 7};
+    t.launches["RSP_READ_DATA"] = {5, 17};
+    t.launches["RSP_STATUS"] = {5, 7};
+    t.launches["RSP_VALID"] = {5, 10};
+    t.setup["REQ_ADDR"] = 33;
+    t.setup["REQ_OP"] = 30;
+    t.setup["REQ_VALID"] = 16;
+    t.setup["REQ_WRITE_DATA"] = 9;
+    t.setup["REQ_WRITE_MASK"] = 24;
+    t.setup["RSP_READY"] = 18;
+    t.internal_period = 23;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.ff.scalable-endpoint.8.behavioral@depth=128", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.ff.endpoint.8.structural";
+    t.arcs = {
+        Arc{"REQ_ADDR", "RSP_READ_DATA", {10, 23}},
+        Arc{"REQ_ADDR", "RSP_STATUS", {9, 27}},
+        Arc{"REQ_OP", "RSP_READ_DATA", {9, 15}},
+        Arc{"REQ_OP", "RSP_STATUS", {9, 24}},
+        Arc{"REQ_VALID", "RSP_READ_DATA", {10, 10}},
+        Arc{"REQ_VALID", "RSP_VALID", {3, 3}},
+        Arc{"REQ_WRITE_MASK", "RSP_READ_DATA", {11, 14}},
+        Arc{"REQ_WRITE_MASK", "RSP_STATUS", {9, 18}},
+        Arc{"RSP_READY", "REQ_READY", {2, 2}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {6, 7};
+    t.launches["RSP_READ_DATA"] = {5, 25};
+    t.launches["RSP_STATUS"] = {5, 7};
+    t.launches["RSP_VALID"] = {5, 10};
+    t.setup["REQ_ADDR"] = 33;
+    t.setup["REQ_OP"] = 30;
+    t.setup["REQ_VALID"] = 16;
+    t.setup["REQ_WRITE_DATA"] = 9;
+    t.setup["REQ_WRITE_MASK"] = 24;
+    t.setup["RSP_READY"] = 18;
+    t.internal_period = 31;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.ff.scalable-endpoint.8.behavioral@depth=128@always_ready", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.ff.endpoint.8.structural";
+    t.arcs = {
+        Arc{"REQ_ADDR", "RSP_READ_DATA", {7, 20}},
+        Arc{"REQ_ADDR", "RSP_STATUS", {6, 24}},
+        Arc{"REQ_OP", "RSP_READ_DATA", {6, 12}},
+        Arc{"REQ_OP", "RSP_STATUS", {6, 21}},
+        Arc{"REQ_VALID", "RSP_READ_DATA", {7, 7}},
+        Arc{"REQ_VALID", "RSP_VALID", {1, 1}},
+        Arc{"REQ_WRITE_MASK", "RSP_READ_DATA", {8, 11}},
+        Arc{"REQ_WRITE_MASK", "RSP_STATUS", {6, 15}},
+    };
+    t.clock = "CLK";
+    t.launches["RSP_READ_DATA"] = {21, 22};
+    t.setup["REQ_ADDR"] = 22;
+    t.setup["REQ_OP"] = 19;
+    t.setup["REQ_VALID"] = 13;
+    t.setup["REQ_WRITE_DATA"] = 9;
+    t.setup["REQ_WRITE_MASK"] = 18;
+    t.internal_period = 12;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.ff.scalable-endpoint.8.behavioral@depth=64", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.ff.endpoint.8.structural";
+    t.arcs = {
+        Arc{"REQ_ADDR", "RSP_READ_DATA", {10, 21}},
+        Arc{"REQ_ADDR", "RSP_STATUS", {9, 27}},
+        Arc{"REQ_OP", "RSP_READ_DATA", {9, 15}},
+        Arc{"REQ_OP", "RSP_STATUS", {9, 24}},
+        Arc{"REQ_VALID", "RSP_READ_DATA", {10, 10}},
+        Arc{"REQ_VALID", "RSP_VALID", {3, 3}},
+        Arc{"REQ_WRITE_MASK", "RSP_READ_DATA", {11, 14}},
+        Arc{"REQ_WRITE_MASK", "RSP_STATUS", {9, 18}},
+        Arc{"RSP_READY", "REQ_READY", {2, 2}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {6, 7};
+    t.launches["RSP_READ_DATA"] = {5, 23};
+    t.launches["RSP_STATUS"] = {5, 7};
+    t.launches["RSP_VALID"] = {5, 10};
+    t.setup["REQ_ADDR"] = 33;
+    t.setup["REQ_OP"] = 30;
+    t.setup["REQ_VALID"] = 16;
+    t.setup["REQ_WRITE_DATA"] = 9;
+    t.setup["REQ_WRITE_MASK"] = 24;
+    t.setup["RSP_READY"] = 18;
+    t.internal_period = 29;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.ff.scalable-endpoint.8.behavioral@depth=64@always_ready", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.ff.endpoint.8.structural";
+    t.arcs = {
+        Arc{"REQ_ADDR", "RSP_READ_DATA", {7, 18}},
+        Arc{"REQ_ADDR", "RSP_STATUS", {6, 24}},
+        Arc{"REQ_OP", "RSP_READ_DATA", {6, 12}},
+        Arc{"REQ_OP", "RSP_STATUS", {6, 21}},
+        Arc{"REQ_VALID", "RSP_READ_DATA", {7, 7}},
+        Arc{"REQ_VALID", "RSP_VALID", {1, 1}},
+        Arc{"REQ_WRITE_MASK", "RSP_READ_DATA", {8, 11}},
+        Arc{"REQ_WRITE_MASK", "RSP_STATUS", {6, 15}},
+    };
+    t.clock = "CLK";
+    t.launches["RSP_READ_DATA"] = {19, 20};
+    t.setup["REQ_ADDR"] = 22;
+    t.setup["REQ_OP"] = 19;
+    t.setup["REQ_VALID"] = 13;
+    t.setup["REQ_WRITE_DATA"] = 9;
+    t.setup["REQ_WRITE_MASK"] = 18;
+    t.internal_period = 12;
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
@@ -1690,6 +2713,72 @@
     t.self_timed = true;
     return t;
 }()},
+{"memory.nor-flash.device.16.behavioral@depth=128", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.nor-flash.device.16.structural";
+    t.arcs = {
+        Arc{"CLK", "BUSY", {1, 1}},
+        Arc{"CLK", "ERROR", {1, 1}},
+        Arc{"CLK", "READ_DATA", {2, 17}},
+        Arc{"CLK", "READ_VALID", {1, 1}},
+        Arc{"CLK", "WRITE_ENABLED", {1, 1}},
+        Arc{"CMD", "BUSY", {1, 1}},
+        Arc{"CMD", "ERROR", {1, 1}},
+        Arc{"CMD", "READ_DATA", {2, 17}},
+        Arc{"CMD", "READ_VALID", {1, 1}},
+        Arc{"CMD", "WRITE_ENABLED", {1, 1}},
+        Arc{"WORD_ADDR", "BUSY", {1, 1}},
+        Arc{"WORD_ADDR", "ERROR", {1, 1}},
+        Arc{"WORD_ADDR", "READ_DATA", {2, 17}},
+        Arc{"WORD_ADDR", "READ_VALID", {1, 1}},
+        Arc{"WORD_ADDR", "WRITE_ENABLED", {1, 1}},
+        Arc{"WRITE_DATA", "BUSY", {1, 1}},
+        Arc{"WRITE_DATA", "ERROR", {1, 1}},
+        Arc{"WRITE_DATA", "READ_DATA", {2, 17}},
+        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
+        Arc{"WRITE_DATA", "WRITE_ENABLED", {1, 1}},
+        Arc{"WRITE_MASK", "BUSY", {1, 1}},
+        Arc{"WRITE_MASK", "ERROR", {1, 1}},
+        Arc{"WRITE_MASK", "READ_DATA", {2, 17}},
+        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
+        Arc{"WRITE_MASK", "WRITE_ENABLED", {1, 1}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.nor-flash.device.16.behavioral@depth=64", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.nor-flash.device.16.structural";
+    t.arcs = {
+        Arc{"CLK", "BUSY", {1, 1}},
+        Arc{"CLK", "ERROR", {1, 1}},
+        Arc{"CLK", "READ_DATA", {2, 17}},
+        Arc{"CLK", "READ_VALID", {1, 1}},
+        Arc{"CLK", "WRITE_ENABLED", {1, 1}},
+        Arc{"CMD", "BUSY", {1, 1}},
+        Arc{"CMD", "ERROR", {1, 1}},
+        Arc{"CMD", "READ_DATA", {2, 17}},
+        Arc{"CMD", "READ_VALID", {1, 1}},
+        Arc{"CMD", "WRITE_ENABLED", {1, 1}},
+        Arc{"WORD_ADDR", "BUSY", {1, 1}},
+        Arc{"WORD_ADDR", "ERROR", {1, 1}},
+        Arc{"WORD_ADDR", "READ_DATA", {2, 17}},
+        Arc{"WORD_ADDR", "READ_VALID", {1, 1}},
+        Arc{"WORD_ADDR", "WRITE_ENABLED", {1, 1}},
+        Arc{"WRITE_DATA", "BUSY", {1, 1}},
+        Arc{"WRITE_DATA", "ERROR", {1, 1}},
+        Arc{"WRITE_DATA", "READ_DATA", {2, 17}},
+        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
+        Arc{"WRITE_DATA", "WRITE_ENABLED", {1, 1}},
+        Arc{"WRITE_MASK", "BUSY", {1, 1}},
+        Arc{"WRITE_MASK", "ERROR", {1, 1}},
+        Arc{"WRITE_MASK", "READ_DATA", {2, 17}},
+        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
+        Arc{"WRITE_MASK", "WRITE_ENABLED", {1, 1}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
 {"memory.nor-flash.device.32.behavioral", [] {
     PartDelays t;
     t.evidence = "proven on memory.nor-flash.device.32.structural";
@@ -1717,6 +2806,72 @@
         Arc{"WRITE_MASK", "BUSY", {1, 1}},
         Arc{"WRITE_MASK", "ERROR", {1, 1}},
         Arc{"WRITE_MASK", "READ_DATA", {2, 16}},
+        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
+        Arc{"WRITE_MASK", "WRITE_ENABLED", {1, 1}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.nor-flash.device.32.behavioral@depth=128", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.nor-flash.device.32.structural";
+    t.arcs = {
+        Arc{"CLK", "BUSY", {1, 1}},
+        Arc{"CLK", "ERROR", {1, 1}},
+        Arc{"CLK", "READ_DATA", {2, 17}},
+        Arc{"CLK", "READ_VALID", {1, 1}},
+        Arc{"CLK", "WRITE_ENABLED", {1, 1}},
+        Arc{"CMD", "BUSY", {1, 1}},
+        Arc{"CMD", "ERROR", {1, 1}},
+        Arc{"CMD", "READ_DATA", {2, 17}},
+        Arc{"CMD", "READ_VALID", {1, 1}},
+        Arc{"CMD", "WRITE_ENABLED", {1, 1}},
+        Arc{"WORD_ADDR", "BUSY", {1, 1}},
+        Arc{"WORD_ADDR", "ERROR", {1, 1}},
+        Arc{"WORD_ADDR", "READ_DATA", {2, 17}},
+        Arc{"WORD_ADDR", "READ_VALID", {1, 1}},
+        Arc{"WORD_ADDR", "WRITE_ENABLED", {1, 1}},
+        Arc{"WRITE_DATA", "BUSY", {1, 1}},
+        Arc{"WRITE_DATA", "ERROR", {1, 1}},
+        Arc{"WRITE_DATA", "READ_DATA", {2, 17}},
+        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
+        Arc{"WRITE_DATA", "WRITE_ENABLED", {1, 1}},
+        Arc{"WRITE_MASK", "BUSY", {1, 1}},
+        Arc{"WRITE_MASK", "ERROR", {1, 1}},
+        Arc{"WRITE_MASK", "READ_DATA", {2, 17}},
+        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
+        Arc{"WRITE_MASK", "WRITE_ENABLED", {1, 1}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.nor-flash.device.32.behavioral@depth=64", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.nor-flash.device.32.structural";
+    t.arcs = {
+        Arc{"CLK", "BUSY", {1, 1}},
+        Arc{"CLK", "ERROR", {1, 1}},
+        Arc{"CLK", "READ_DATA", {2, 17}},
+        Arc{"CLK", "READ_VALID", {1, 1}},
+        Arc{"CLK", "WRITE_ENABLED", {1, 1}},
+        Arc{"CMD", "BUSY", {1, 1}},
+        Arc{"CMD", "ERROR", {1, 1}},
+        Arc{"CMD", "READ_DATA", {2, 17}},
+        Arc{"CMD", "READ_VALID", {1, 1}},
+        Arc{"CMD", "WRITE_ENABLED", {1, 1}},
+        Arc{"WORD_ADDR", "BUSY", {1, 1}},
+        Arc{"WORD_ADDR", "ERROR", {1, 1}},
+        Arc{"WORD_ADDR", "READ_DATA", {2, 17}},
+        Arc{"WORD_ADDR", "READ_VALID", {1, 1}},
+        Arc{"WORD_ADDR", "WRITE_ENABLED", {1, 1}},
+        Arc{"WRITE_DATA", "BUSY", {1, 1}},
+        Arc{"WRITE_DATA", "ERROR", {1, 1}},
+        Arc{"WRITE_DATA", "READ_DATA", {2, 17}},
+        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
+        Arc{"WRITE_DATA", "WRITE_ENABLED", {1, 1}},
+        Arc{"WRITE_MASK", "BUSY", {1, 1}},
+        Arc{"WRITE_MASK", "ERROR", {1, 1}},
+        Arc{"WRITE_MASK", "READ_DATA", {2, 17}},
         Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
         Arc{"WRITE_MASK", "WRITE_ENABLED", {1, 1}},
     };
@@ -1756,7 +2911,117 @@
     t.self_timed = true;
     return t;
 }()},
+{"memory.nor-flash.device.8.behavioral@depth=128", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.nor-flash.device.8.structural";
+    t.arcs = {
+        Arc{"CLK", "BUSY", {1, 1}},
+        Arc{"CLK", "ERROR", {1, 1}},
+        Arc{"CLK", "READ_DATA", {2, 17}},
+        Arc{"CLK", "READ_VALID", {1, 1}},
+        Arc{"CLK", "WRITE_ENABLED", {1, 1}},
+        Arc{"CMD", "BUSY", {1, 1}},
+        Arc{"CMD", "ERROR", {1, 1}},
+        Arc{"CMD", "READ_DATA", {2, 17}},
+        Arc{"CMD", "READ_VALID", {1, 1}},
+        Arc{"CMD", "WRITE_ENABLED", {1, 1}},
+        Arc{"WORD_ADDR", "BUSY", {1, 1}},
+        Arc{"WORD_ADDR", "ERROR", {1, 1}},
+        Arc{"WORD_ADDR", "READ_DATA", {2, 17}},
+        Arc{"WORD_ADDR", "READ_VALID", {1, 1}},
+        Arc{"WORD_ADDR", "WRITE_ENABLED", {1, 1}},
+        Arc{"WRITE_DATA", "BUSY", {1, 1}},
+        Arc{"WRITE_DATA", "ERROR", {1, 1}},
+        Arc{"WRITE_DATA", "READ_DATA", {2, 17}},
+        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
+        Arc{"WRITE_DATA", "WRITE_ENABLED", {1, 1}},
+        Arc{"WRITE_MASK", "BUSY", {1, 1}},
+        Arc{"WRITE_MASK", "ERROR", {1, 1}},
+        Arc{"WRITE_MASK", "READ_DATA", {2, 17}},
+        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
+        Arc{"WRITE_MASK", "WRITE_ENABLED", {1, 1}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.nor-flash.device.8.behavioral@depth=64", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.nor-flash.device.8.structural";
+    t.arcs = {
+        Arc{"CLK", "BUSY", {1, 1}},
+        Arc{"CLK", "ERROR", {1, 1}},
+        Arc{"CLK", "READ_DATA", {2, 17}},
+        Arc{"CLK", "READ_VALID", {1, 1}},
+        Arc{"CLK", "WRITE_ENABLED", {1, 1}},
+        Arc{"CMD", "BUSY", {1, 1}},
+        Arc{"CMD", "ERROR", {1, 1}},
+        Arc{"CMD", "READ_DATA", {2, 17}},
+        Arc{"CMD", "READ_VALID", {1, 1}},
+        Arc{"CMD", "WRITE_ENABLED", {1, 1}},
+        Arc{"WORD_ADDR", "BUSY", {1, 1}},
+        Arc{"WORD_ADDR", "ERROR", {1, 1}},
+        Arc{"WORD_ADDR", "READ_DATA", {2, 17}},
+        Arc{"WORD_ADDR", "READ_VALID", {1, 1}},
+        Arc{"WORD_ADDR", "WRITE_ENABLED", {1, 1}},
+        Arc{"WRITE_DATA", "BUSY", {1, 1}},
+        Arc{"WRITE_DATA", "ERROR", {1, 1}},
+        Arc{"WRITE_DATA", "READ_DATA", {2, 17}},
+        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
+        Arc{"WRITE_DATA", "WRITE_ENABLED", {1, 1}},
+        Arc{"WRITE_MASK", "BUSY", {1, 1}},
+        Arc{"WRITE_MASK", "ERROR", {1, 1}},
+        Arc{"WRITE_MASK", "READ_DATA", {2, 17}},
+        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
+        Arc{"WRITE_MASK", "WRITE_ENABLED", {1, 1}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
 {"memory.nor-flash.endpoint.16.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.nor-flash.endpoint.16.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.nor-flash.endpoint.16.behavioral@depth=128", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.nor-flash.endpoint.16.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.nor-flash.endpoint.16.behavioral@depth=64", [] {
     PartDelays t;
     t.evidence = "proven on memory.nor-flash.endpoint.16.structural";
     t.arcs = {
@@ -1800,7 +3065,95 @@
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
+{"memory.nor-flash.endpoint.32.behavioral@depth=128", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.nor-flash.endpoint.32.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.nor-flash.endpoint.32.behavioral@depth=64", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.nor-flash.endpoint.32.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
 {"memory.nor-flash.endpoint.8.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.nor-flash.endpoint.8.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.nor-flash.endpoint.8.behavioral@depth=128", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.nor-flash.endpoint.8.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.nor-flash.endpoint.8.behavioral@depth=64", [] {
     PartDelays t;
     t.evidence = "proven on memory.nor-flash.endpoint.8.structural";
     t.arcs = {
@@ -1844,6 +3197,501 @@
         Arc{"WL", "Q_3", {1, 1}},
     };
     t.self_timed = true;
+    return t;
+}()},
+{"memory.nor-flash.scalable-device.16.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.nor-flash.device.16.structural";
+    t.arcs = {
+        Arc{"CLK", "BUSY", {1, 1}},
+        Arc{"CLK", "ERROR", {1, 1}},
+        Arc{"CLK", "READ_DATA", {2, 16}},
+        Arc{"CLK", "READ_VALID", {1, 1}},
+        Arc{"CLK", "WRITE_ENABLED", {1, 1}},
+        Arc{"CMD", "BUSY", {1, 1}},
+        Arc{"CMD", "ERROR", {1, 1}},
+        Arc{"CMD", "READ_DATA", {2, 16}},
+        Arc{"CMD", "READ_VALID", {1, 1}},
+        Arc{"CMD", "WRITE_ENABLED", {1, 1}},
+        Arc{"WORD_ADDR", "BUSY", {1, 1}},
+        Arc{"WORD_ADDR", "ERROR", {1, 1}},
+        Arc{"WORD_ADDR", "READ_DATA", {2, 16}},
+        Arc{"WORD_ADDR", "READ_VALID", {1, 1}},
+        Arc{"WORD_ADDR", "WRITE_ENABLED", {1, 1}},
+        Arc{"WRITE_DATA", "BUSY", {1, 1}},
+        Arc{"WRITE_DATA", "ERROR", {1, 1}},
+        Arc{"WRITE_DATA", "READ_DATA", {2, 16}},
+        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
+        Arc{"WRITE_DATA", "WRITE_ENABLED", {1, 1}},
+        Arc{"WRITE_MASK", "BUSY", {1, 1}},
+        Arc{"WRITE_MASK", "ERROR", {1, 1}},
+        Arc{"WRITE_MASK", "READ_DATA", {2, 16}},
+        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
+        Arc{"WRITE_MASK", "WRITE_ENABLED", {1, 1}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.nor-flash.scalable-device.16.behavioral@depth=128", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.nor-flash.device.16.structural";
+    t.arcs = {
+        Arc{"CLK", "BUSY", {1, 1}},
+        Arc{"CLK", "ERROR", {1, 1}},
+        Arc{"CLK", "READ_DATA", {2, 17}},
+        Arc{"CLK", "READ_VALID", {1, 1}},
+        Arc{"CLK", "WRITE_ENABLED", {1, 1}},
+        Arc{"CMD", "BUSY", {1, 1}},
+        Arc{"CMD", "ERROR", {1, 1}},
+        Arc{"CMD", "READ_DATA", {2, 17}},
+        Arc{"CMD", "READ_VALID", {1, 1}},
+        Arc{"CMD", "WRITE_ENABLED", {1, 1}},
+        Arc{"WORD_ADDR", "BUSY", {1, 1}},
+        Arc{"WORD_ADDR", "ERROR", {1, 1}},
+        Arc{"WORD_ADDR", "READ_DATA", {2, 17}},
+        Arc{"WORD_ADDR", "READ_VALID", {1, 1}},
+        Arc{"WORD_ADDR", "WRITE_ENABLED", {1, 1}},
+        Arc{"WRITE_DATA", "BUSY", {1, 1}},
+        Arc{"WRITE_DATA", "ERROR", {1, 1}},
+        Arc{"WRITE_DATA", "READ_DATA", {2, 17}},
+        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
+        Arc{"WRITE_DATA", "WRITE_ENABLED", {1, 1}},
+        Arc{"WRITE_MASK", "BUSY", {1, 1}},
+        Arc{"WRITE_MASK", "ERROR", {1, 1}},
+        Arc{"WRITE_MASK", "READ_DATA", {2, 17}},
+        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
+        Arc{"WRITE_MASK", "WRITE_ENABLED", {1, 1}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.nor-flash.scalable-device.16.behavioral@depth=64", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.nor-flash.device.16.structural";
+    t.arcs = {
+        Arc{"CLK", "BUSY", {1, 1}},
+        Arc{"CLK", "ERROR", {1, 1}},
+        Arc{"CLK", "READ_DATA", {2, 17}},
+        Arc{"CLK", "READ_VALID", {1, 1}},
+        Arc{"CLK", "WRITE_ENABLED", {1, 1}},
+        Arc{"CMD", "BUSY", {1, 1}},
+        Arc{"CMD", "ERROR", {1, 1}},
+        Arc{"CMD", "READ_DATA", {2, 17}},
+        Arc{"CMD", "READ_VALID", {1, 1}},
+        Arc{"CMD", "WRITE_ENABLED", {1, 1}},
+        Arc{"WORD_ADDR", "BUSY", {1, 1}},
+        Arc{"WORD_ADDR", "ERROR", {1, 1}},
+        Arc{"WORD_ADDR", "READ_DATA", {2, 17}},
+        Arc{"WORD_ADDR", "READ_VALID", {1, 1}},
+        Arc{"WORD_ADDR", "WRITE_ENABLED", {1, 1}},
+        Arc{"WRITE_DATA", "BUSY", {1, 1}},
+        Arc{"WRITE_DATA", "ERROR", {1, 1}},
+        Arc{"WRITE_DATA", "READ_DATA", {2, 17}},
+        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
+        Arc{"WRITE_DATA", "WRITE_ENABLED", {1, 1}},
+        Arc{"WRITE_MASK", "BUSY", {1, 1}},
+        Arc{"WRITE_MASK", "ERROR", {1, 1}},
+        Arc{"WRITE_MASK", "READ_DATA", {2, 17}},
+        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
+        Arc{"WRITE_MASK", "WRITE_ENABLED", {1, 1}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.nor-flash.scalable-device.32.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.nor-flash.device.32.structural";
+    t.arcs = {
+        Arc{"CLK", "BUSY", {1, 1}},
+        Arc{"CLK", "ERROR", {1, 1}},
+        Arc{"CLK", "READ_DATA", {2, 16}},
+        Arc{"CLK", "READ_VALID", {1, 1}},
+        Arc{"CLK", "WRITE_ENABLED", {1, 1}},
+        Arc{"CMD", "BUSY", {1, 1}},
+        Arc{"CMD", "ERROR", {1, 1}},
+        Arc{"CMD", "READ_DATA", {2, 16}},
+        Arc{"CMD", "READ_VALID", {1, 1}},
+        Arc{"CMD", "WRITE_ENABLED", {1, 1}},
+        Arc{"WORD_ADDR", "BUSY", {1, 1}},
+        Arc{"WORD_ADDR", "ERROR", {1, 1}},
+        Arc{"WORD_ADDR", "READ_DATA", {2, 16}},
+        Arc{"WORD_ADDR", "READ_VALID", {1, 1}},
+        Arc{"WORD_ADDR", "WRITE_ENABLED", {1, 1}},
+        Arc{"WRITE_DATA", "BUSY", {1, 1}},
+        Arc{"WRITE_DATA", "ERROR", {1, 1}},
+        Arc{"WRITE_DATA", "READ_DATA", {2, 16}},
+        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
+        Arc{"WRITE_DATA", "WRITE_ENABLED", {1, 1}},
+        Arc{"WRITE_MASK", "BUSY", {1, 1}},
+        Arc{"WRITE_MASK", "ERROR", {1, 1}},
+        Arc{"WRITE_MASK", "READ_DATA", {2, 16}},
+        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
+        Arc{"WRITE_MASK", "WRITE_ENABLED", {1, 1}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.nor-flash.scalable-device.32.behavioral@depth=128", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.nor-flash.device.32.structural";
+    t.arcs = {
+        Arc{"CLK", "BUSY", {1, 1}},
+        Arc{"CLK", "ERROR", {1, 1}},
+        Arc{"CLK", "READ_DATA", {2, 17}},
+        Arc{"CLK", "READ_VALID", {1, 1}},
+        Arc{"CLK", "WRITE_ENABLED", {1, 1}},
+        Arc{"CMD", "BUSY", {1, 1}},
+        Arc{"CMD", "ERROR", {1, 1}},
+        Arc{"CMD", "READ_DATA", {2, 17}},
+        Arc{"CMD", "READ_VALID", {1, 1}},
+        Arc{"CMD", "WRITE_ENABLED", {1, 1}},
+        Arc{"WORD_ADDR", "BUSY", {1, 1}},
+        Arc{"WORD_ADDR", "ERROR", {1, 1}},
+        Arc{"WORD_ADDR", "READ_DATA", {2, 17}},
+        Arc{"WORD_ADDR", "READ_VALID", {1, 1}},
+        Arc{"WORD_ADDR", "WRITE_ENABLED", {1, 1}},
+        Arc{"WRITE_DATA", "BUSY", {1, 1}},
+        Arc{"WRITE_DATA", "ERROR", {1, 1}},
+        Arc{"WRITE_DATA", "READ_DATA", {2, 17}},
+        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
+        Arc{"WRITE_DATA", "WRITE_ENABLED", {1, 1}},
+        Arc{"WRITE_MASK", "BUSY", {1, 1}},
+        Arc{"WRITE_MASK", "ERROR", {1, 1}},
+        Arc{"WRITE_MASK", "READ_DATA", {2, 17}},
+        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
+        Arc{"WRITE_MASK", "WRITE_ENABLED", {1, 1}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.nor-flash.scalable-device.32.behavioral@depth=64", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.nor-flash.device.32.structural";
+    t.arcs = {
+        Arc{"CLK", "BUSY", {1, 1}},
+        Arc{"CLK", "ERROR", {1, 1}},
+        Arc{"CLK", "READ_DATA", {2, 17}},
+        Arc{"CLK", "READ_VALID", {1, 1}},
+        Arc{"CLK", "WRITE_ENABLED", {1, 1}},
+        Arc{"CMD", "BUSY", {1, 1}},
+        Arc{"CMD", "ERROR", {1, 1}},
+        Arc{"CMD", "READ_DATA", {2, 17}},
+        Arc{"CMD", "READ_VALID", {1, 1}},
+        Arc{"CMD", "WRITE_ENABLED", {1, 1}},
+        Arc{"WORD_ADDR", "BUSY", {1, 1}},
+        Arc{"WORD_ADDR", "ERROR", {1, 1}},
+        Arc{"WORD_ADDR", "READ_DATA", {2, 17}},
+        Arc{"WORD_ADDR", "READ_VALID", {1, 1}},
+        Arc{"WORD_ADDR", "WRITE_ENABLED", {1, 1}},
+        Arc{"WRITE_DATA", "BUSY", {1, 1}},
+        Arc{"WRITE_DATA", "ERROR", {1, 1}},
+        Arc{"WRITE_DATA", "READ_DATA", {2, 17}},
+        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
+        Arc{"WRITE_DATA", "WRITE_ENABLED", {1, 1}},
+        Arc{"WRITE_MASK", "BUSY", {1, 1}},
+        Arc{"WRITE_MASK", "ERROR", {1, 1}},
+        Arc{"WRITE_MASK", "READ_DATA", {2, 17}},
+        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
+        Arc{"WRITE_MASK", "WRITE_ENABLED", {1, 1}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.nor-flash.scalable-device.8.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.nor-flash.device.8.structural";
+    t.arcs = {
+        Arc{"CLK", "BUSY", {1, 1}},
+        Arc{"CLK", "ERROR", {1, 1}},
+        Arc{"CLK", "READ_DATA", {2, 16}},
+        Arc{"CLK", "READ_VALID", {1, 1}},
+        Arc{"CLK", "WRITE_ENABLED", {1, 1}},
+        Arc{"CMD", "BUSY", {1, 1}},
+        Arc{"CMD", "ERROR", {1, 1}},
+        Arc{"CMD", "READ_DATA", {2, 16}},
+        Arc{"CMD", "READ_VALID", {1, 1}},
+        Arc{"CMD", "WRITE_ENABLED", {1, 1}},
+        Arc{"WORD_ADDR", "BUSY", {1, 1}},
+        Arc{"WORD_ADDR", "ERROR", {1, 1}},
+        Arc{"WORD_ADDR", "READ_DATA", {2, 16}},
+        Arc{"WORD_ADDR", "READ_VALID", {1, 1}},
+        Arc{"WORD_ADDR", "WRITE_ENABLED", {1, 1}},
+        Arc{"WRITE_DATA", "BUSY", {1, 1}},
+        Arc{"WRITE_DATA", "ERROR", {1, 1}},
+        Arc{"WRITE_DATA", "READ_DATA", {2, 16}},
+        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
+        Arc{"WRITE_DATA", "WRITE_ENABLED", {1, 1}},
+        Arc{"WRITE_MASK", "BUSY", {1, 1}},
+        Arc{"WRITE_MASK", "ERROR", {1, 1}},
+        Arc{"WRITE_MASK", "READ_DATA", {2, 16}},
+        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
+        Arc{"WRITE_MASK", "WRITE_ENABLED", {1, 1}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.nor-flash.scalable-device.8.behavioral@depth=128", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.nor-flash.device.8.structural";
+    t.arcs = {
+        Arc{"CLK", "BUSY", {1, 1}},
+        Arc{"CLK", "ERROR", {1, 1}},
+        Arc{"CLK", "READ_DATA", {2, 17}},
+        Arc{"CLK", "READ_VALID", {1, 1}},
+        Arc{"CLK", "WRITE_ENABLED", {1, 1}},
+        Arc{"CMD", "BUSY", {1, 1}},
+        Arc{"CMD", "ERROR", {1, 1}},
+        Arc{"CMD", "READ_DATA", {2, 17}},
+        Arc{"CMD", "READ_VALID", {1, 1}},
+        Arc{"CMD", "WRITE_ENABLED", {1, 1}},
+        Arc{"WORD_ADDR", "BUSY", {1, 1}},
+        Arc{"WORD_ADDR", "ERROR", {1, 1}},
+        Arc{"WORD_ADDR", "READ_DATA", {2, 17}},
+        Arc{"WORD_ADDR", "READ_VALID", {1, 1}},
+        Arc{"WORD_ADDR", "WRITE_ENABLED", {1, 1}},
+        Arc{"WRITE_DATA", "BUSY", {1, 1}},
+        Arc{"WRITE_DATA", "ERROR", {1, 1}},
+        Arc{"WRITE_DATA", "READ_DATA", {2, 17}},
+        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
+        Arc{"WRITE_DATA", "WRITE_ENABLED", {1, 1}},
+        Arc{"WRITE_MASK", "BUSY", {1, 1}},
+        Arc{"WRITE_MASK", "ERROR", {1, 1}},
+        Arc{"WRITE_MASK", "READ_DATA", {2, 17}},
+        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
+        Arc{"WRITE_MASK", "WRITE_ENABLED", {1, 1}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.nor-flash.scalable-device.8.behavioral@depth=64", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.nor-flash.device.8.structural";
+    t.arcs = {
+        Arc{"CLK", "BUSY", {1, 1}},
+        Arc{"CLK", "ERROR", {1, 1}},
+        Arc{"CLK", "READ_DATA", {2, 17}},
+        Arc{"CLK", "READ_VALID", {1, 1}},
+        Arc{"CLK", "WRITE_ENABLED", {1, 1}},
+        Arc{"CMD", "BUSY", {1, 1}},
+        Arc{"CMD", "ERROR", {1, 1}},
+        Arc{"CMD", "READ_DATA", {2, 17}},
+        Arc{"CMD", "READ_VALID", {1, 1}},
+        Arc{"CMD", "WRITE_ENABLED", {1, 1}},
+        Arc{"WORD_ADDR", "BUSY", {1, 1}},
+        Arc{"WORD_ADDR", "ERROR", {1, 1}},
+        Arc{"WORD_ADDR", "READ_DATA", {2, 17}},
+        Arc{"WORD_ADDR", "READ_VALID", {1, 1}},
+        Arc{"WORD_ADDR", "WRITE_ENABLED", {1, 1}},
+        Arc{"WRITE_DATA", "BUSY", {1, 1}},
+        Arc{"WRITE_DATA", "ERROR", {1, 1}},
+        Arc{"WRITE_DATA", "READ_DATA", {2, 17}},
+        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
+        Arc{"WRITE_DATA", "WRITE_ENABLED", {1, 1}},
+        Arc{"WRITE_MASK", "BUSY", {1, 1}},
+        Arc{"WRITE_MASK", "ERROR", {1, 1}},
+        Arc{"WRITE_MASK", "READ_DATA", {2, 17}},
+        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
+        Arc{"WRITE_MASK", "WRITE_ENABLED", {1, 1}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.nor-flash.scalable-endpoint.16.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.nor-flash.endpoint.16.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.nor-flash.scalable-endpoint.16.behavioral@depth=128", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.nor-flash.endpoint.16.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.nor-flash.scalable-endpoint.16.behavioral@depth=64", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.nor-flash.endpoint.16.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.nor-flash.scalable-endpoint.32.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.nor-flash.endpoint.32.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.nor-flash.scalable-endpoint.32.behavioral@depth=128", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.nor-flash.endpoint.32.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.nor-flash.scalable-endpoint.32.behavioral@depth=64", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.nor-flash.endpoint.32.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.nor-flash.scalable-endpoint.8.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.nor-flash.endpoint.8.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.nor-flash.scalable-endpoint.8.behavioral@depth=128", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.nor-flash.endpoint.8.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.nor-flash.scalable-endpoint.8.behavioral@depth=64", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.nor-flash.endpoint.8.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
     return t;
 }()},
 {"memory.rom.bank.16.behavioral", [] {
@@ -2179,6 +4027,26 @@
     };
     return t;
 }()},
+{"memory.rom.device.16.behavioral@depth=128", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.device.16.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {2, 16}},
+        Arc{"OE_N", "READ_DATA", {2, 16}},
+        Arc{"WORD_ADDR", "READ_DATA", {2, 16}},
+    };
+    return t;
+}()},
+{"memory.rom.device.16.behavioral@depth=64", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.device.16.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {2, 16}},
+        Arc{"OE_N", "READ_DATA", {2, 16}},
+        Arc{"WORD_ADDR", "READ_DATA", {2, 16}},
+    };
+    return t;
+}()},
 {"memory.rom.device.32.behavioral", [] {
     PartDelays t;
     t.evidence = "proven on memory.rom.device.32.structural";
@@ -2186,6 +4054,26 @@
         Arc{"CE_N", "READ_DATA", {2, 14}},
         Arc{"OE_N", "READ_DATA", {2, 14}},
         Arc{"WORD_ADDR", "READ_DATA", {2, 14}},
+    };
+    return t;
+}()},
+{"memory.rom.device.32.behavioral@depth=128", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.device.32.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {2, 16}},
+        Arc{"OE_N", "READ_DATA", {2, 16}},
+        Arc{"WORD_ADDR", "READ_DATA", {2, 16}},
+    };
+    return t;
+}()},
+{"memory.rom.device.32.behavioral@depth=64", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.device.32.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {2, 16}},
+        Arc{"OE_N", "READ_DATA", {2, 16}},
+        Arc{"WORD_ADDR", "READ_DATA", {2, 16}},
     };
     return t;
 }()},
@@ -2199,7 +4087,71 @@
     };
     return t;
 }()},
+{"memory.rom.device.8.behavioral@depth=128", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.device.8.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {2, 16}},
+        Arc{"OE_N", "READ_DATA", {2, 16}},
+        Arc{"WORD_ADDR", "READ_DATA", {2, 16}},
+    };
+    return t;
+}()},
+{"memory.rom.device.8.behavioral@depth=64", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.device.8.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {2, 16}},
+        Arc{"OE_N", "READ_DATA", {2, 16}},
+        Arc{"WORD_ADDR", "READ_DATA", {2, 16}},
+    };
+    return t;
+}()},
 {"memory.rom.endpoint.16.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.endpoint.16.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.rom.endpoint.16.behavioral@depth=128", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.endpoint.16.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.rom.endpoint.16.behavioral@depth=64", [] {
     PartDelays t;
     t.evidence = "proven on memory.rom.endpoint.16.structural";
     t.arcs = {
@@ -2243,7 +4195,383 @@
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
+{"memory.rom.endpoint.32.behavioral@depth=128", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.endpoint.32.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.rom.endpoint.32.behavioral@depth=64", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.endpoint.32.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
 {"memory.rom.endpoint.8.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.endpoint.8.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.rom.endpoint.8.behavioral@depth=128", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.endpoint.8.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.rom.endpoint.8.behavioral@depth=64", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.endpoint.8.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.rom.scalable-device.16.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.device.16.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {2, 14}},
+        Arc{"OE_N", "READ_DATA", {2, 14}},
+        Arc{"WORD_ADDR", "READ_DATA", {2, 14}},
+    };
+    return t;
+}()},
+{"memory.rom.scalable-device.16.behavioral@depth=128", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.device.16.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {2, 16}},
+        Arc{"OE_N", "READ_DATA", {2, 16}},
+        Arc{"WORD_ADDR", "READ_DATA", {2, 16}},
+    };
+    return t;
+}()},
+{"memory.rom.scalable-device.16.behavioral@depth=64", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.device.16.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {2, 16}},
+        Arc{"OE_N", "READ_DATA", {2, 16}},
+        Arc{"WORD_ADDR", "READ_DATA", {2, 16}},
+    };
+    return t;
+}()},
+{"memory.rom.scalable-device.32.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.device.32.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {2, 14}},
+        Arc{"OE_N", "READ_DATA", {2, 14}},
+        Arc{"WORD_ADDR", "READ_DATA", {2, 14}},
+    };
+    return t;
+}()},
+{"memory.rom.scalable-device.32.behavioral@depth=128", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.device.32.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {2, 16}},
+        Arc{"OE_N", "READ_DATA", {2, 16}},
+        Arc{"WORD_ADDR", "READ_DATA", {2, 16}},
+    };
+    return t;
+}()},
+{"memory.rom.scalable-device.32.behavioral@depth=64", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.device.32.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {2, 16}},
+        Arc{"OE_N", "READ_DATA", {2, 16}},
+        Arc{"WORD_ADDR", "READ_DATA", {2, 16}},
+    };
+    return t;
+}()},
+{"memory.rom.scalable-device.8.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.device.8.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {2, 14}},
+        Arc{"OE_N", "READ_DATA", {2, 14}},
+        Arc{"WORD_ADDR", "READ_DATA", {2, 14}},
+    };
+    return t;
+}()},
+{"memory.rom.scalable-device.8.behavioral@depth=128", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.device.8.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {2, 16}},
+        Arc{"OE_N", "READ_DATA", {2, 16}},
+        Arc{"WORD_ADDR", "READ_DATA", {2, 16}},
+    };
+    return t;
+}()},
+{"memory.rom.scalable-device.8.behavioral@depth=64", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.device.8.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {2, 16}},
+        Arc{"OE_N", "READ_DATA", {2, 16}},
+        Arc{"WORD_ADDR", "READ_DATA", {2, 16}},
+    };
+    return t;
+}()},
+{"memory.rom.scalable-endpoint.16.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.endpoint.16.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.rom.scalable-endpoint.16.behavioral@depth=128", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.endpoint.16.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.rom.scalable-endpoint.16.behavioral@depth=64", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.endpoint.16.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.rom.scalable-endpoint.32.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.endpoint.32.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.rom.scalable-endpoint.32.behavioral@depth=128", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.endpoint.32.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.rom.scalable-endpoint.32.behavioral@depth=64", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.endpoint.32.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.rom.scalable-endpoint.8.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.endpoint.8.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.rom.scalable-endpoint.8.behavioral@depth=128", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.endpoint.8.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.rom.scalable-endpoint.8.behavioral@depth=64", [] {
     PartDelays t;
     t.evidence = "proven on memory.rom.endpoint.8.structural";
     t.arcs = {

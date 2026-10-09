@@ -57,7 +57,13 @@ enum PartOutput : uint8_t { Ready, Valid, Data, Status };
 struct Part {
     const BehavioralMemoryEndpoint* endpoint = nullptr;
     const PinBase* outputs[4] = {};
-    Tick delay = 1;
+    Tick delay = 1;      // earliest response
+    Tick launch[4] = {1, 1, 1, 1}; // latest clock-to-output, per PartOutput
+    // Latest delay of each input-to-output path; NEVER: no such path. The
+    // fused endpoint has one tick everywhere; a delay table gives its own.
+    Tick ready_from_ready = 1, valid_from_valid = 1;
+    Tick data_from_valid = 1, data_from_op = 1, data_from_address = 1, data_from_mask = NEVER;
+    Tick status_from_op = 1, status_from_address = 1, status_from_mask = 1;
     int req_valid = -1, rsp_ready = -1, op = -1, address = -1, mask = -1; // first bit of each input
     unsigned address_bits = 0, mask_bits = 0;
     size_t bytes_per_word = 0, capacity_bytes = 0;
@@ -93,7 +99,10 @@ struct Graph {
             const auto bits = [&](int first, unsigned count) { for (unsigned i = 0; i < count; ++i) visit(first + int(i)); };
             if (node.output == Ready) visit(part.rsp_ready);
             else if (node.output == Valid) visit(part.req_valid);
-            else if (node.output == Data) { visit(part.req_valid); bits(part.op, 3); bits(part.address, part.address_bits); }
+            else if (node.output == Data) {
+                visit(part.req_valid); bits(part.op, 3); bits(part.address, part.address_bits);
+                if (part.data_from_mask != NEVER) bits(part.mask, part.mask_bits);
+            }
             else { bits(part.op, 3); bits(part.address, part.address_bits); bits(part.mask, part.mask_bits); }
             return;
         }
