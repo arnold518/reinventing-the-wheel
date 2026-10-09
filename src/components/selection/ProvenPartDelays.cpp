@@ -70,6 +70,11 @@ const PartDelays* provenPartDelays(const std::string& implementation_id, const P
         return found == tables().end() ? nullptr : &found->second;
     };
     if (parameters.empty()) return exact(implementation_id);
+    // A part proven for these exact parameters (for example the advanced
+    // core for one branch-prediction policy).
+    std::string variant_key = implementation_id;
+    for (const auto& [name, value] : parameters) variant_key += (variant_key == implementation_id ? "?" : "&") + name + "=" + value;
+    if (const auto* proven = exact(variant_key)) return proven;
     if (!sizedMemory(implementation_id, parameters)) return nullptr;
     // A flip-flop endpoint whose consumer is always ready is a different
     // circuit (no response is kept), proven separately.

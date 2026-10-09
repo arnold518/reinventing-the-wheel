@@ -224,10 +224,18 @@ Two apparent loops are not loops, and are described precisely instead of as
 - The DRAM cell's sample follows the word line only, and the sense column's
   restore signal follows precharge, sense and the word lines only.
 
+### Parts built with parameters
+
+Tables are stored for a part's default parameters. A part built with any
+parameter finds a table only where one was proven for that exact combination
+(`variants` in the generator), or through the word-count estimate above. The
+advanced core is proven for each of its five prediction policies at 16
+entries, which is how the experiments and program tests build it.
+
 ### Not covered
 
-- Parts built with other non-default parameters than a word count; a ROM with
-  a specific image; a memory with a non-default row layout.
+- Other parameter combinations: a ROM with a specific image, a memory with a
+  non-default row layout, a predictor with another table size.
 - One delay per control value (for example per ALU operation).
 
 ## What is assumed

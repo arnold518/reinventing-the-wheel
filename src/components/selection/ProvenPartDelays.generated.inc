@@ -9627,6 +9627,496 @@
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
+{"rv32i.core.educational-five-stage.behavioral?prediction=not-taken&prediction_entries=16", [] {
+    PartDelays t;
+    t.evidence = "proven on rv32i.core.educational-five-stage.structural";
+    t.arcs = {
+        Arc{"DMEM_REQ_READY", "BRANCH_MISS", {15, 16}},
+        Arc{"DMEM_REQ_READY", "BRANCH_RESOLVED", {14, 15}},
+        Arc{"DMEM_REQ_READY", "COMMIT_VALID", {10, 10}},
+        Arc{"DMEM_REQ_READY", "DATA_PORT_STALL", {8, 8}},
+        Arc{"DMEM_REQ_READY", "DMEM_RSP_READY", {13, 14}},
+        Arc{"DMEM_REQ_READY", "IMEM_RSP_READY", {15, 17}},
+        Arc{"DMEM_REQ_READY", "INSTRUCTION_ATTEMPT", {10, 10}},
+        Arc{"DMEM_REQ_READY", "LOAD_USE_STALL", {11, 12}},
+        Arc{"DMEM_REQ_READY", "MEMORY_STALL", {7, 7}},
+        Arc{"DMEM_REQ_READY", "PIPELINE_FLUSH", {11, 12}},
+        Arc{"DMEM_REQ_READY", "PIPELINE_STALL", {9, 10}},
+        Arc{"DMEM_REQ_READY", "PREDICTION_RECOVERY", {14, 15}},
+        Arc{"DMEM_RSP_STATUS", "BRANCH_MISS", {13, 14}},
+        Arc{"DMEM_RSP_STATUS", "BRANCH_RESOLVED", {12, 13}},
+        Arc{"DMEM_RSP_STATUS", "IMEM_RSP_READY", {14, 16}},
+        Arc{"DMEM_RSP_STATUS", "PIPELINE_FLUSH", {9, 10}},
+        Arc{"DMEM_RSP_STATUS", "PREDICTION_RECOVERY", {12, 13}},
+        Arc{"DMEM_RSP_VALID", "BRANCH_MISS", {13, 14}},
+        Arc{"DMEM_RSP_VALID", "BRANCH_RESOLVED", {12, 13}},
+        Arc{"DMEM_RSP_VALID", "COMMIT_VALID", {8, 8}},
+        Arc{"DMEM_RSP_VALID", "DATA_PORT_STALL", {6, 6}},
+        Arc{"DMEM_RSP_VALID", "DMEM_RSP_READY", {11, 12}},
+        Arc{"DMEM_RSP_VALID", "IMEM_RSP_READY", {13, 15}},
+        Arc{"DMEM_RSP_VALID", "INSTRUCTION_ATTEMPT", {8, 8}},
+        Arc{"DMEM_RSP_VALID", "LOAD_USE_STALL", {9, 10}},
+        Arc{"DMEM_RSP_VALID", "MEMORY_STALL", {5, 5}},
+        Arc{"DMEM_RSP_VALID", "PIPELINE_FLUSH", {9, 10}},
+        Arc{"DMEM_RSP_VALID", "PIPELINE_STALL", {7, 8}},
+        Arc{"DMEM_RSP_VALID", "PREDICTION_RECOVERY", {12, 13}},
+        Arc{"ENABLE", "BRANCH_MISS", {9, 24}},
+        Arc{"ENABLE", "BRANCH_RESOLVED", {8, 23}},
+        Arc{"ENABLE", "COMMIT_VALID", {4, 18}},
+        Arc{"ENABLE", "DATA_PORT_STALL", {5, 16}},
+        Arc{"ENABLE", "DMEM_REQ_ADDR", {13, 13}},
+        Arc{"ENABLE", "DMEM_REQ_OP", {7, 7}},
+        Arc{"ENABLE", "DMEM_REQ_VALID", {8, 8}},
+        Arc{"ENABLE", "DMEM_REQ_WRITE_MASK", {12, 15}},
+        Arc{"ENABLE", "DMEM_RSP_READY", {7, 22}},
+        Arc{"ENABLE", "IMEM_REQ_VALID", {5, 5}},
+        Arc{"ENABLE", "IMEM_RSP_READY", {7, 25}},
+        Arc{"ENABLE", "INSTRUCTION_ATTEMPT", {4, 18}},
+        Arc{"ENABLE", "LOAD_USE_STALL", {5, 20}},
+        Arc{"ENABLE", "MEMORY_STALL", {4, 15}},
+        Arc{"ENABLE", "PIPELINE_FLUSH", {5, 20}},
+        Arc{"ENABLE", "PIPELINE_STALL", {6, 18}},
+        Arc{"ENABLE", "PREDICTION_RECOVERY", {8, 23}},
+        Arc{"IMEM_REQ_READY", "IMEM_RSP_READY", {11, 11}},
+        Arc{"IMEM_RSP_VALID", "IMEM_RSP_READY", {9, 9}},
+    };
+    t.clock = "CLK";
+    t.launches["BRANCH_MISS"] = {6, 71};
+    t.launches["BRANCH_RESOLVED"] = {6, 70};
+    t.launches["COMMIT_VALID"] = {4, 29};
+    t.launches["DATA_PORT_STALL"] = {6, 27};
+    t.launches["DMEM_REQ_ADDR"] = {5, 24};
+    t.launches["DMEM_REQ_OP"] = {5, 18};
+    t.launches["DMEM_REQ_VALID"] = {6, 19};
+    t.launches["DMEM_REQ_WRITE_DATA"] = {5, 14};
+    t.launches["DMEM_REQ_WRITE_MASK"] = {5, 26};
+    t.launches["DMEM_RSP_READY"] = {6, 33};
+    t.launches["EX_MEM_PC"] = {3, 4};
+    t.launches["EX_MEM_VALID"] = {3, 4};
+    t.launches["FETCH_PC"] = {3, 4};
+    t.launches["HALTED"] = {3, 4};
+    t.launches["ID_EX_PC"] = {3, 4};
+    t.launches["ID_EX_VALID"] = {3, 4};
+    t.launches["IF_ID_PC"] = {3, 4};
+    t.launches["IF_ID_VALID"] = {3, 4};
+    t.launches["IMEM_REQ_ADDR"] = {5, 7};
+    t.launches["IMEM_REQ_VALID"] = {6, 10};
+    t.launches["IMEM_RSP_READY"] = {6, 77};
+    t.launches["INSTRUCTION_ATTEMPT"] = {4, 29};
+    t.launches["LOAD_USE_STALL"] = {7, 31};
+    t.launches["MEMORY_STALL"] = {7, 26};
+    t.launches["MEM_WB_PC"] = {3, 4};
+    t.launches["MEM_WB_VALID"] = {3, 4};
+    t.launches["PIPELINE_FLUSH"] = {7, 71};
+    t.launches["PIPELINE_STALL"] = {7, 29};
+    t.launches["PREDICTION_RECOVERY"] = {8, 70};
+    t.launches["TRAPPED"] = {3, 4};
+    t.launches["TRAP_CAUSE"] = {3, 4};
+    t.setup["DMEM_REQ_READY"] = 30;
+    t.setup["DMEM_RSP_READ_DATA"] = 18;
+    t.setup["DMEM_RSP_STATUS"] = 24;
+    t.setup["DMEM_RSP_VALID"] = 28;
+    t.setup["ENABLE"] = 38;
+    t.setup["IMEM_REQ_READY"] = 19;
+    t.setup["IMEM_RSP_READ_DATA"] = 42;
+    t.setup["IMEM_RSP_STATUS"] = 15;
+    t.setup["IMEM_RSP_VALID"] = 17;
+    t.internal_period = 85;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"rv32i.core.educational-five-stage.behavioral?prediction=taken&prediction_entries=16", [] {
+    PartDelays t;
+    t.evidence = "proven on rv32i.core.educational-five-stage.structural";
+    t.arcs = {
+        Arc{"DMEM_REQ_READY", "BRANCH_MISS", {15, 16}},
+        Arc{"DMEM_REQ_READY", "BRANCH_RESOLVED", {14, 15}},
+        Arc{"DMEM_REQ_READY", "COMMIT_VALID", {10, 10}},
+        Arc{"DMEM_REQ_READY", "DATA_PORT_STALL", {8, 8}},
+        Arc{"DMEM_REQ_READY", "DMEM_RSP_READY", {13, 14}},
+        Arc{"DMEM_REQ_READY", "IMEM_RSP_READY", {15, 17}},
+        Arc{"DMEM_REQ_READY", "INSTRUCTION_ATTEMPT", {10, 10}},
+        Arc{"DMEM_REQ_READY", "LOAD_USE_STALL", {11, 12}},
+        Arc{"DMEM_REQ_READY", "MEMORY_STALL", {7, 7}},
+        Arc{"DMEM_REQ_READY", "PIPELINE_FLUSH", {11, 12}},
+        Arc{"DMEM_REQ_READY", "PIPELINE_STALL", {9, 10}},
+        Arc{"DMEM_REQ_READY", "PREDICTION_RECOVERY", {14, 15}},
+        Arc{"DMEM_RSP_STATUS", "BRANCH_MISS", {13, 14}},
+        Arc{"DMEM_RSP_STATUS", "BRANCH_RESOLVED", {12, 13}},
+        Arc{"DMEM_RSP_STATUS", "IMEM_RSP_READY", {14, 16}},
+        Arc{"DMEM_RSP_STATUS", "PIPELINE_FLUSH", {9, 10}},
+        Arc{"DMEM_RSP_STATUS", "PREDICTION_RECOVERY", {12, 13}},
+        Arc{"DMEM_RSP_VALID", "BRANCH_MISS", {13, 14}},
+        Arc{"DMEM_RSP_VALID", "BRANCH_RESOLVED", {12, 13}},
+        Arc{"DMEM_RSP_VALID", "COMMIT_VALID", {8, 8}},
+        Arc{"DMEM_RSP_VALID", "DATA_PORT_STALL", {6, 6}},
+        Arc{"DMEM_RSP_VALID", "DMEM_RSP_READY", {11, 12}},
+        Arc{"DMEM_RSP_VALID", "IMEM_RSP_READY", {13, 15}},
+        Arc{"DMEM_RSP_VALID", "INSTRUCTION_ATTEMPT", {8, 8}},
+        Arc{"DMEM_RSP_VALID", "LOAD_USE_STALL", {9, 10}},
+        Arc{"DMEM_RSP_VALID", "MEMORY_STALL", {5, 5}},
+        Arc{"DMEM_RSP_VALID", "PIPELINE_FLUSH", {9, 10}},
+        Arc{"DMEM_RSP_VALID", "PIPELINE_STALL", {7, 8}},
+        Arc{"DMEM_RSP_VALID", "PREDICTION_RECOVERY", {12, 13}},
+        Arc{"ENABLE", "BRANCH_MISS", {9, 24}},
+        Arc{"ENABLE", "BRANCH_RESOLVED", {8, 23}},
+        Arc{"ENABLE", "COMMIT_VALID", {4, 18}},
+        Arc{"ENABLE", "DATA_PORT_STALL", {5, 16}},
+        Arc{"ENABLE", "DMEM_REQ_ADDR", {13, 13}},
+        Arc{"ENABLE", "DMEM_REQ_OP", {7, 7}},
+        Arc{"ENABLE", "DMEM_REQ_VALID", {8, 8}},
+        Arc{"ENABLE", "DMEM_REQ_WRITE_MASK", {12, 15}},
+        Arc{"ENABLE", "DMEM_RSP_READY", {7, 22}},
+        Arc{"ENABLE", "IMEM_REQ_VALID", {5, 5}},
+        Arc{"ENABLE", "IMEM_RSP_READY", {7, 25}},
+        Arc{"ENABLE", "INSTRUCTION_ATTEMPT", {4, 18}},
+        Arc{"ENABLE", "LOAD_USE_STALL", {5, 20}},
+        Arc{"ENABLE", "MEMORY_STALL", {4, 15}},
+        Arc{"ENABLE", "PIPELINE_FLUSH", {5, 20}},
+        Arc{"ENABLE", "PIPELINE_STALL", {6, 18}},
+        Arc{"ENABLE", "PREDICTION_RECOVERY", {8, 23}},
+        Arc{"IMEM_REQ_READY", "IMEM_RSP_READY", {11, 11}},
+        Arc{"IMEM_RSP_VALID", "IMEM_RSP_READY", {9, 9}},
+    };
+    t.clock = "CLK";
+    t.launches["BRANCH_MISS"] = {6, 71};
+    t.launches["BRANCH_RESOLVED"] = {6, 70};
+    t.launches["COMMIT_VALID"] = {4, 29};
+    t.launches["DATA_PORT_STALL"] = {6, 27};
+    t.launches["DMEM_REQ_ADDR"] = {5, 24};
+    t.launches["DMEM_REQ_OP"] = {5, 18};
+    t.launches["DMEM_REQ_VALID"] = {6, 19};
+    t.launches["DMEM_REQ_WRITE_DATA"] = {5, 14};
+    t.launches["DMEM_REQ_WRITE_MASK"] = {5, 26};
+    t.launches["DMEM_RSP_READY"] = {6, 33};
+    t.launches["EX_MEM_PC"] = {3, 4};
+    t.launches["EX_MEM_VALID"] = {3, 4};
+    t.launches["FETCH_PC"] = {3, 4};
+    t.launches["HALTED"] = {3, 4};
+    t.launches["ID_EX_PC"] = {3, 4};
+    t.launches["ID_EX_VALID"] = {3, 4};
+    t.launches["IF_ID_PC"] = {3, 4};
+    t.launches["IF_ID_VALID"] = {3, 4};
+    t.launches["IMEM_REQ_ADDR"] = {5, 7};
+    t.launches["IMEM_REQ_VALID"] = {6, 10};
+    t.launches["IMEM_RSP_READY"] = {6, 77};
+    t.launches["INSTRUCTION_ATTEMPT"] = {4, 29};
+    t.launches["LOAD_USE_STALL"] = {7, 31};
+    t.launches["MEMORY_STALL"] = {7, 26};
+    t.launches["MEM_WB_PC"] = {3, 4};
+    t.launches["MEM_WB_VALID"] = {3, 4};
+    t.launches["PIPELINE_FLUSH"] = {7, 71};
+    t.launches["PIPELINE_STALL"] = {7, 29};
+    t.launches["PREDICTION_RECOVERY"] = {8, 70};
+    t.launches["TRAPPED"] = {3, 4};
+    t.launches["TRAP_CAUSE"] = {3, 4};
+    t.setup["DMEM_REQ_READY"] = 30;
+    t.setup["DMEM_RSP_READ_DATA"] = 18;
+    t.setup["DMEM_RSP_STATUS"] = 24;
+    t.setup["DMEM_RSP_VALID"] = 28;
+    t.setup["ENABLE"] = 38;
+    t.setup["IMEM_REQ_READY"] = 19;
+    t.setup["IMEM_RSP_READ_DATA"] = 45;
+    t.setup["IMEM_RSP_STATUS"] = 15;
+    t.setup["IMEM_RSP_VALID"] = 17;
+    t.internal_period = 85;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"rv32i.core.educational-five-stage.behavioral?prediction=backward-taken&prediction_entries=16", [] {
+    PartDelays t;
+    t.evidence = "proven on rv32i.core.educational-five-stage.structural";
+    t.arcs = {
+        Arc{"DMEM_REQ_READY", "BRANCH_MISS", {15, 16}},
+        Arc{"DMEM_REQ_READY", "BRANCH_RESOLVED", {14, 15}},
+        Arc{"DMEM_REQ_READY", "COMMIT_VALID", {10, 10}},
+        Arc{"DMEM_REQ_READY", "DATA_PORT_STALL", {8, 8}},
+        Arc{"DMEM_REQ_READY", "DMEM_RSP_READY", {13, 14}},
+        Arc{"DMEM_REQ_READY", "IMEM_RSP_READY", {15, 17}},
+        Arc{"DMEM_REQ_READY", "INSTRUCTION_ATTEMPT", {10, 10}},
+        Arc{"DMEM_REQ_READY", "LOAD_USE_STALL", {11, 12}},
+        Arc{"DMEM_REQ_READY", "MEMORY_STALL", {7, 7}},
+        Arc{"DMEM_REQ_READY", "PIPELINE_FLUSH", {11, 12}},
+        Arc{"DMEM_REQ_READY", "PIPELINE_STALL", {9, 10}},
+        Arc{"DMEM_REQ_READY", "PREDICTION_RECOVERY", {14, 15}},
+        Arc{"DMEM_RSP_STATUS", "BRANCH_MISS", {13, 14}},
+        Arc{"DMEM_RSP_STATUS", "BRANCH_RESOLVED", {12, 13}},
+        Arc{"DMEM_RSP_STATUS", "IMEM_RSP_READY", {14, 16}},
+        Arc{"DMEM_RSP_STATUS", "PIPELINE_FLUSH", {9, 10}},
+        Arc{"DMEM_RSP_STATUS", "PREDICTION_RECOVERY", {12, 13}},
+        Arc{"DMEM_RSP_VALID", "BRANCH_MISS", {13, 14}},
+        Arc{"DMEM_RSP_VALID", "BRANCH_RESOLVED", {12, 13}},
+        Arc{"DMEM_RSP_VALID", "COMMIT_VALID", {8, 8}},
+        Arc{"DMEM_RSP_VALID", "DATA_PORT_STALL", {6, 6}},
+        Arc{"DMEM_RSP_VALID", "DMEM_RSP_READY", {11, 12}},
+        Arc{"DMEM_RSP_VALID", "IMEM_RSP_READY", {13, 15}},
+        Arc{"DMEM_RSP_VALID", "INSTRUCTION_ATTEMPT", {8, 8}},
+        Arc{"DMEM_RSP_VALID", "LOAD_USE_STALL", {9, 10}},
+        Arc{"DMEM_RSP_VALID", "MEMORY_STALL", {5, 5}},
+        Arc{"DMEM_RSP_VALID", "PIPELINE_FLUSH", {9, 10}},
+        Arc{"DMEM_RSP_VALID", "PIPELINE_STALL", {7, 8}},
+        Arc{"DMEM_RSP_VALID", "PREDICTION_RECOVERY", {12, 13}},
+        Arc{"ENABLE", "BRANCH_MISS", {9, 24}},
+        Arc{"ENABLE", "BRANCH_RESOLVED", {8, 23}},
+        Arc{"ENABLE", "COMMIT_VALID", {4, 18}},
+        Arc{"ENABLE", "DATA_PORT_STALL", {5, 16}},
+        Arc{"ENABLE", "DMEM_REQ_ADDR", {13, 13}},
+        Arc{"ENABLE", "DMEM_REQ_OP", {7, 7}},
+        Arc{"ENABLE", "DMEM_REQ_VALID", {8, 8}},
+        Arc{"ENABLE", "DMEM_REQ_WRITE_MASK", {12, 15}},
+        Arc{"ENABLE", "DMEM_RSP_READY", {7, 22}},
+        Arc{"ENABLE", "IMEM_REQ_VALID", {5, 5}},
+        Arc{"ENABLE", "IMEM_RSP_READY", {7, 25}},
+        Arc{"ENABLE", "INSTRUCTION_ATTEMPT", {4, 18}},
+        Arc{"ENABLE", "LOAD_USE_STALL", {5, 20}},
+        Arc{"ENABLE", "MEMORY_STALL", {4, 15}},
+        Arc{"ENABLE", "PIPELINE_FLUSH", {5, 20}},
+        Arc{"ENABLE", "PIPELINE_STALL", {6, 18}},
+        Arc{"ENABLE", "PREDICTION_RECOVERY", {8, 23}},
+        Arc{"IMEM_REQ_READY", "IMEM_RSP_READY", {11, 11}},
+        Arc{"IMEM_RSP_VALID", "IMEM_RSP_READY", {9, 9}},
+    };
+    t.clock = "CLK";
+    t.launches["BRANCH_MISS"] = {6, 71};
+    t.launches["BRANCH_RESOLVED"] = {6, 70};
+    t.launches["COMMIT_VALID"] = {4, 29};
+    t.launches["DATA_PORT_STALL"] = {6, 27};
+    t.launches["DMEM_REQ_ADDR"] = {5, 24};
+    t.launches["DMEM_REQ_OP"] = {5, 18};
+    t.launches["DMEM_REQ_VALID"] = {6, 19};
+    t.launches["DMEM_REQ_WRITE_DATA"] = {5, 14};
+    t.launches["DMEM_REQ_WRITE_MASK"] = {5, 26};
+    t.launches["DMEM_RSP_READY"] = {6, 33};
+    t.launches["EX_MEM_PC"] = {3, 4};
+    t.launches["EX_MEM_VALID"] = {3, 4};
+    t.launches["FETCH_PC"] = {3, 4};
+    t.launches["HALTED"] = {3, 4};
+    t.launches["ID_EX_PC"] = {3, 4};
+    t.launches["ID_EX_VALID"] = {3, 4};
+    t.launches["IF_ID_PC"] = {3, 4};
+    t.launches["IF_ID_VALID"] = {3, 4};
+    t.launches["IMEM_REQ_ADDR"] = {5, 7};
+    t.launches["IMEM_REQ_VALID"] = {6, 10};
+    t.launches["IMEM_RSP_READY"] = {6, 77};
+    t.launches["INSTRUCTION_ATTEMPT"] = {4, 29};
+    t.launches["LOAD_USE_STALL"] = {7, 31};
+    t.launches["MEMORY_STALL"] = {7, 26};
+    t.launches["MEM_WB_PC"] = {3, 4};
+    t.launches["MEM_WB_VALID"] = {3, 4};
+    t.launches["PIPELINE_FLUSH"] = {7, 71};
+    t.launches["PIPELINE_STALL"] = {7, 29};
+    t.launches["PREDICTION_RECOVERY"] = {8, 70};
+    t.launches["TRAPPED"] = {3, 4};
+    t.launches["TRAP_CAUSE"] = {3, 4};
+    t.setup["DMEM_REQ_READY"] = 30;
+    t.setup["DMEM_RSP_READ_DATA"] = 18;
+    t.setup["DMEM_RSP_STATUS"] = 24;
+    t.setup["DMEM_RSP_VALID"] = 28;
+    t.setup["ENABLE"] = 38;
+    t.setup["IMEM_REQ_READY"] = 19;
+    t.setup["IMEM_RSP_READ_DATA"] = 45;
+    t.setup["IMEM_RSP_STATUS"] = 15;
+    t.setup["IMEM_RSP_VALID"] = 17;
+    t.internal_period = 85;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"rv32i.core.educational-five-stage.behavioral?prediction=one-bit&prediction_entries=16", [] {
+    PartDelays t;
+    t.evidence = "proven on rv32i.core.educational-five-stage.structural";
+    t.arcs = {
+        Arc{"DMEM_REQ_READY", "BRANCH_MISS", {15, 16}},
+        Arc{"DMEM_REQ_READY", "BRANCH_RESOLVED", {14, 15}},
+        Arc{"DMEM_REQ_READY", "COMMIT_VALID", {10, 10}},
+        Arc{"DMEM_REQ_READY", "DATA_PORT_STALL", {8, 8}},
+        Arc{"DMEM_REQ_READY", "DMEM_RSP_READY", {13, 14}},
+        Arc{"DMEM_REQ_READY", "IMEM_RSP_READY", {15, 17}},
+        Arc{"DMEM_REQ_READY", "INSTRUCTION_ATTEMPT", {10, 10}},
+        Arc{"DMEM_REQ_READY", "LOAD_USE_STALL", {11, 12}},
+        Arc{"DMEM_REQ_READY", "MEMORY_STALL", {7, 7}},
+        Arc{"DMEM_REQ_READY", "PIPELINE_FLUSH", {11, 12}},
+        Arc{"DMEM_REQ_READY", "PIPELINE_STALL", {9, 10}},
+        Arc{"DMEM_REQ_READY", "PREDICTION_RECOVERY", {14, 15}},
+        Arc{"DMEM_RSP_STATUS", "BRANCH_MISS", {13, 14}},
+        Arc{"DMEM_RSP_STATUS", "BRANCH_RESOLVED", {12, 13}},
+        Arc{"DMEM_RSP_STATUS", "IMEM_RSP_READY", {14, 16}},
+        Arc{"DMEM_RSP_STATUS", "PIPELINE_FLUSH", {9, 10}},
+        Arc{"DMEM_RSP_STATUS", "PREDICTION_RECOVERY", {12, 13}},
+        Arc{"DMEM_RSP_VALID", "BRANCH_MISS", {13, 14}},
+        Arc{"DMEM_RSP_VALID", "BRANCH_RESOLVED", {12, 13}},
+        Arc{"DMEM_RSP_VALID", "COMMIT_VALID", {8, 8}},
+        Arc{"DMEM_RSP_VALID", "DATA_PORT_STALL", {6, 6}},
+        Arc{"DMEM_RSP_VALID", "DMEM_RSP_READY", {11, 12}},
+        Arc{"DMEM_RSP_VALID", "IMEM_RSP_READY", {13, 15}},
+        Arc{"DMEM_RSP_VALID", "INSTRUCTION_ATTEMPT", {8, 8}},
+        Arc{"DMEM_RSP_VALID", "LOAD_USE_STALL", {9, 10}},
+        Arc{"DMEM_RSP_VALID", "MEMORY_STALL", {5, 5}},
+        Arc{"DMEM_RSP_VALID", "PIPELINE_FLUSH", {9, 10}},
+        Arc{"DMEM_RSP_VALID", "PIPELINE_STALL", {7, 8}},
+        Arc{"DMEM_RSP_VALID", "PREDICTION_RECOVERY", {12, 13}},
+        Arc{"ENABLE", "BRANCH_MISS", {9, 24}},
+        Arc{"ENABLE", "BRANCH_RESOLVED", {8, 23}},
+        Arc{"ENABLE", "COMMIT_VALID", {4, 18}},
+        Arc{"ENABLE", "DATA_PORT_STALL", {5, 16}},
+        Arc{"ENABLE", "DMEM_REQ_ADDR", {13, 13}},
+        Arc{"ENABLE", "DMEM_REQ_OP", {7, 7}},
+        Arc{"ENABLE", "DMEM_REQ_VALID", {8, 8}},
+        Arc{"ENABLE", "DMEM_REQ_WRITE_MASK", {12, 15}},
+        Arc{"ENABLE", "DMEM_RSP_READY", {7, 22}},
+        Arc{"ENABLE", "IMEM_REQ_VALID", {5, 5}},
+        Arc{"ENABLE", "IMEM_RSP_READY", {7, 25}},
+        Arc{"ENABLE", "INSTRUCTION_ATTEMPT", {4, 18}},
+        Arc{"ENABLE", "LOAD_USE_STALL", {5, 20}},
+        Arc{"ENABLE", "MEMORY_STALL", {4, 15}},
+        Arc{"ENABLE", "PIPELINE_FLUSH", {5, 20}},
+        Arc{"ENABLE", "PIPELINE_STALL", {6, 18}},
+        Arc{"ENABLE", "PREDICTION_RECOVERY", {8, 23}},
+        Arc{"IMEM_REQ_READY", "IMEM_RSP_READY", {11, 11}},
+        Arc{"IMEM_RSP_VALID", "IMEM_RSP_READY", {9, 9}},
+    };
+    t.clock = "CLK";
+    t.launches["BRANCH_MISS"] = {6, 71};
+    t.launches["BRANCH_RESOLVED"] = {6, 70};
+    t.launches["COMMIT_VALID"] = {4, 29};
+    t.launches["DATA_PORT_STALL"] = {6, 27};
+    t.launches["DMEM_REQ_ADDR"] = {5, 24};
+    t.launches["DMEM_REQ_OP"] = {5, 18};
+    t.launches["DMEM_REQ_VALID"] = {6, 19};
+    t.launches["DMEM_REQ_WRITE_DATA"] = {5, 14};
+    t.launches["DMEM_REQ_WRITE_MASK"] = {5, 26};
+    t.launches["DMEM_RSP_READY"] = {6, 33};
+    t.launches["EX_MEM_PC"] = {3, 4};
+    t.launches["EX_MEM_VALID"] = {3, 4};
+    t.launches["FETCH_PC"] = {3, 4};
+    t.launches["HALTED"] = {3, 4};
+    t.launches["ID_EX_PC"] = {3, 4};
+    t.launches["ID_EX_VALID"] = {3, 4};
+    t.launches["IF_ID_PC"] = {3, 4};
+    t.launches["IF_ID_VALID"] = {3, 4};
+    t.launches["IMEM_REQ_ADDR"] = {5, 7};
+    t.launches["IMEM_REQ_VALID"] = {6, 10};
+    t.launches["IMEM_RSP_READY"] = {6, 77};
+    t.launches["INSTRUCTION_ATTEMPT"] = {4, 29};
+    t.launches["LOAD_USE_STALL"] = {7, 31};
+    t.launches["MEMORY_STALL"] = {7, 26};
+    t.launches["MEM_WB_PC"] = {3, 4};
+    t.launches["MEM_WB_VALID"] = {3, 4};
+    t.launches["PIPELINE_FLUSH"] = {7, 71};
+    t.launches["PIPELINE_STALL"] = {7, 29};
+    t.launches["PREDICTION_RECOVERY"] = {8, 70};
+    t.launches["TRAPPED"] = {3, 4};
+    t.launches["TRAP_CAUSE"] = {3, 4};
+    t.setup["DMEM_REQ_READY"] = 30;
+    t.setup["DMEM_RSP_READ_DATA"] = 18;
+    t.setup["DMEM_RSP_STATUS"] = 24;
+    t.setup["DMEM_RSP_VALID"] = 28;
+    t.setup["ENABLE"] = 38;
+    t.setup["IMEM_REQ_READY"] = 19;
+    t.setup["IMEM_RSP_READ_DATA"] = 45;
+    t.setup["IMEM_RSP_STATUS"] = 15;
+    t.setup["IMEM_RSP_VALID"] = 17;
+    t.internal_period = 85;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"rv32i.core.educational-five-stage.behavioral?prediction=two-bit&prediction_entries=16", [] {
+    PartDelays t;
+    t.evidence = "proven on rv32i.core.educational-five-stage.structural";
+    t.arcs = {
+        Arc{"DMEM_REQ_READY", "BRANCH_MISS", {15, 16}},
+        Arc{"DMEM_REQ_READY", "BRANCH_RESOLVED", {14, 15}},
+        Arc{"DMEM_REQ_READY", "COMMIT_VALID", {10, 10}},
+        Arc{"DMEM_REQ_READY", "DATA_PORT_STALL", {8, 8}},
+        Arc{"DMEM_REQ_READY", "DMEM_RSP_READY", {13, 14}},
+        Arc{"DMEM_REQ_READY", "IMEM_RSP_READY", {15, 17}},
+        Arc{"DMEM_REQ_READY", "INSTRUCTION_ATTEMPT", {10, 10}},
+        Arc{"DMEM_REQ_READY", "LOAD_USE_STALL", {11, 12}},
+        Arc{"DMEM_REQ_READY", "MEMORY_STALL", {7, 7}},
+        Arc{"DMEM_REQ_READY", "PIPELINE_FLUSH", {11, 12}},
+        Arc{"DMEM_REQ_READY", "PIPELINE_STALL", {9, 10}},
+        Arc{"DMEM_REQ_READY", "PREDICTION_RECOVERY", {14, 15}},
+        Arc{"DMEM_RSP_STATUS", "BRANCH_MISS", {13, 14}},
+        Arc{"DMEM_RSP_STATUS", "BRANCH_RESOLVED", {12, 13}},
+        Arc{"DMEM_RSP_STATUS", "IMEM_RSP_READY", {14, 16}},
+        Arc{"DMEM_RSP_STATUS", "PIPELINE_FLUSH", {9, 10}},
+        Arc{"DMEM_RSP_STATUS", "PREDICTION_RECOVERY", {12, 13}},
+        Arc{"DMEM_RSP_VALID", "BRANCH_MISS", {13, 14}},
+        Arc{"DMEM_RSP_VALID", "BRANCH_RESOLVED", {12, 13}},
+        Arc{"DMEM_RSP_VALID", "COMMIT_VALID", {8, 8}},
+        Arc{"DMEM_RSP_VALID", "DATA_PORT_STALL", {6, 6}},
+        Arc{"DMEM_RSP_VALID", "DMEM_RSP_READY", {11, 12}},
+        Arc{"DMEM_RSP_VALID", "IMEM_RSP_READY", {13, 15}},
+        Arc{"DMEM_RSP_VALID", "INSTRUCTION_ATTEMPT", {8, 8}},
+        Arc{"DMEM_RSP_VALID", "LOAD_USE_STALL", {9, 10}},
+        Arc{"DMEM_RSP_VALID", "MEMORY_STALL", {5, 5}},
+        Arc{"DMEM_RSP_VALID", "PIPELINE_FLUSH", {9, 10}},
+        Arc{"DMEM_RSP_VALID", "PIPELINE_STALL", {7, 8}},
+        Arc{"DMEM_RSP_VALID", "PREDICTION_RECOVERY", {12, 13}},
+        Arc{"ENABLE", "BRANCH_MISS", {9, 24}},
+        Arc{"ENABLE", "BRANCH_RESOLVED", {8, 23}},
+        Arc{"ENABLE", "COMMIT_VALID", {4, 18}},
+        Arc{"ENABLE", "DATA_PORT_STALL", {5, 16}},
+        Arc{"ENABLE", "DMEM_REQ_ADDR", {13, 13}},
+        Arc{"ENABLE", "DMEM_REQ_OP", {7, 7}},
+        Arc{"ENABLE", "DMEM_REQ_VALID", {8, 8}},
+        Arc{"ENABLE", "DMEM_REQ_WRITE_MASK", {12, 15}},
+        Arc{"ENABLE", "DMEM_RSP_READY", {7, 22}},
+        Arc{"ENABLE", "IMEM_REQ_VALID", {5, 5}},
+        Arc{"ENABLE", "IMEM_RSP_READY", {7, 25}},
+        Arc{"ENABLE", "INSTRUCTION_ATTEMPT", {4, 18}},
+        Arc{"ENABLE", "LOAD_USE_STALL", {5, 20}},
+        Arc{"ENABLE", "MEMORY_STALL", {4, 15}},
+        Arc{"ENABLE", "PIPELINE_FLUSH", {5, 20}},
+        Arc{"ENABLE", "PIPELINE_STALL", {6, 18}},
+        Arc{"ENABLE", "PREDICTION_RECOVERY", {8, 23}},
+        Arc{"IMEM_REQ_READY", "IMEM_RSP_READY", {11, 11}},
+        Arc{"IMEM_RSP_VALID", "IMEM_RSP_READY", {9, 9}},
+    };
+    t.clock = "CLK";
+    t.launches["BRANCH_MISS"] = {6, 71};
+    t.launches["BRANCH_RESOLVED"] = {6, 70};
+    t.launches["COMMIT_VALID"] = {4, 29};
+    t.launches["DATA_PORT_STALL"] = {6, 27};
+    t.launches["DMEM_REQ_ADDR"] = {5, 24};
+    t.launches["DMEM_REQ_OP"] = {5, 18};
+    t.launches["DMEM_REQ_VALID"] = {6, 19};
+    t.launches["DMEM_REQ_WRITE_DATA"] = {5, 14};
+    t.launches["DMEM_REQ_WRITE_MASK"] = {5, 26};
+    t.launches["DMEM_RSP_READY"] = {6, 33};
+    t.launches["EX_MEM_PC"] = {3, 4};
+    t.launches["EX_MEM_VALID"] = {3, 4};
+    t.launches["FETCH_PC"] = {3, 4};
+    t.launches["HALTED"] = {3, 4};
+    t.launches["ID_EX_PC"] = {3, 4};
+    t.launches["ID_EX_VALID"] = {3, 4};
+    t.launches["IF_ID_PC"] = {3, 4};
+    t.launches["IF_ID_VALID"] = {3, 4};
+    t.launches["IMEM_REQ_ADDR"] = {5, 7};
+    t.launches["IMEM_REQ_VALID"] = {6, 10};
+    t.launches["IMEM_RSP_READY"] = {6, 77};
+    t.launches["INSTRUCTION_ATTEMPT"] = {4, 29};
+    t.launches["LOAD_USE_STALL"] = {7, 31};
+    t.launches["MEMORY_STALL"] = {7, 26};
+    t.launches["MEM_WB_PC"] = {3, 4};
+    t.launches["MEM_WB_VALID"] = {3, 4};
+    t.launches["PIPELINE_FLUSH"] = {7, 71};
+    t.launches["PIPELINE_STALL"] = {7, 29};
+    t.launches["PREDICTION_RECOVERY"] = {8, 70};
+    t.launches["TRAPPED"] = {3, 4};
+    t.launches["TRAP_CAUSE"] = {3, 4};
+    t.setup["DMEM_REQ_READY"] = 30;
+    t.setup["DMEM_RSP_READ_DATA"] = 18;
+    t.setup["DMEM_RSP_STATUS"] = 24;
+    t.setup["DMEM_RSP_VALID"] = 28;
+    t.setup["ENABLE"] = 38;
+    t.setup["IMEM_REQ_READY"] = 19;
+    t.setup["IMEM_RSP_READ_DATA"] = 45;
+    t.setup["IMEM_RSP_STATUS"] = 15;
+    t.setup["IMEM_RSP_VALID"] = 17;
+    t.internal_period = 85;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
 {"rv32i.core.educational-single-cycle.behavioral", [] {
     PartDelays t;
     t.evidence = "proven on rv32i.core.educational-single-cycle.structural";

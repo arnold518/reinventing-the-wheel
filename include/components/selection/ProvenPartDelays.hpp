@@ -11,6 +11,10 @@ namespace circuit {
 // implementation `implementation_id` built with `parameters`. Null when no
 // table has been generated for it; the part then keeps its single delay.
 //
+// A part built with other parameters has a table only where the generator
+// proved that exact combination (the advanced core for each prediction
+// policy).
+//
 // A memory built with a word count is given a table estimated from the two
 // largest sizes that can be built from gates (64 and 128 words): each delay
 // keeps growing per doubling as it did between them. Such a table says

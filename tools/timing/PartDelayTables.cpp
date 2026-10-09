@@ -114,6 +114,21 @@ circuit::PartDelays prove(const Candidate& candidate, size_t budget, std::string
     return table;
 }
 
+// Parameter combinations that parts are really built with, each proven on
+// its own: the advanced core for every branch-prediction policy.
+std::vector<circuit::ParameterMap> variants(const std::string& contract) {
+    std::vector<circuit::ParameterMap> result;
+    if (contract == "rv32i.core.educational-five-stage")
+        for (const char* policy : {"not-taken", "taken", "backward-taken", "one-bit", "two-bit"})
+            result.push_back({{"prediction", policy}, {"prediction_entries", "16"}});
+    return result;
+}
+std::string variantKey(const std::string& implementation, const circuit::ParameterMap& parameters) {
+    auto key = implementation;
+    for (const auto& [name, value] : parameters) key += (key == implementation ? "?" : "&") + name + "=" + value;
+    return key;
+}
+
 // The compact implementation of a contract, if it has one.
 std::string compactOf(const std::string& contract) {
     const auto& catalog = circuit::builtinComponentCatalog();
@@ -232,6 +247,15 @@ int main(int argc, char** argv) {
             body << emit(candidate.implementation, table);
             ++written;
             written += sized(candidate, table, budget, body);
+            for (const auto& parameters : variants(candidate.contract)) {
+                std::string variant_reason;
+                const auto variant = prove(candidate, budget, variant_reason, parameters);
+                const auto key = variantKey(candidate.implementation, parameters);
+                if (variant.empty()) { std::cerr << "  no table for " << key << ": " << variant_reason << '\n'; continue; }
+                body << emit(key, variant);
+                ++written;
+                std::cerr << "  proved " << key << '\n';
+            }
             std::cerr << "proved " << candidate.contract << " (" << table.arcs.size() << " pairs"
                       << (table.clock.empty() ? "" : ", clocked") << ")\n";
         }
