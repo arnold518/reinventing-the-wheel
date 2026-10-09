@@ -351,6 +351,702 @@
     };
     return t;
 }()},
+{"memory.dram.bank.16.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.bank.16.structural";
+    t.arcs = {
+        Arc{"DATA_0", "COL_0", {1, 1}},
+        Arc{"DATA_1", "COL_1", {1, 1}},
+        Arc{"DATA_10", "COL_10", {1, 1}},
+        Arc{"DATA_11", "COL_11", {1, 1}},
+        Arc{"DATA_12", "COL_12", {1, 1}},
+        Arc{"DATA_13", "COL_13", {1, 1}},
+        Arc{"DATA_14", "COL_14", {1, 1}},
+        Arc{"DATA_15", "COL_15", {1, 1}},
+        Arc{"DATA_16", "COL_16", {1, 1}},
+        Arc{"DATA_17", "COL_17", {1, 1}},
+        Arc{"DATA_18", "COL_18", {1, 1}},
+        Arc{"DATA_19", "COL_19", {1, 1}},
+        Arc{"DATA_2", "COL_2", {1, 1}},
+        Arc{"DATA_20", "COL_20", {1, 1}},
+        Arc{"DATA_21", "COL_21", {1, 1}},
+        Arc{"DATA_22", "COL_22", {1, 1}},
+        Arc{"DATA_23", "COL_23", {1, 1}},
+        Arc{"DATA_24", "COL_24", {1, 1}},
+        Arc{"DATA_25", "COL_25", {1, 1}},
+        Arc{"DATA_26", "COL_26", {1, 1}},
+        Arc{"DATA_27", "COL_27", {1, 1}},
+        Arc{"DATA_28", "COL_28", {1, 1}},
+        Arc{"DATA_29", "COL_29", {1, 1}},
+        Arc{"DATA_3", "COL_3", {1, 1}},
+        Arc{"DATA_30", "COL_30", {1, 1}},
+        Arc{"DATA_31", "COL_31", {1, 1}},
+        Arc{"DATA_4", "COL_4", {1, 1}},
+        Arc{"DATA_5", "COL_5", {1, 1}},
+        Arc{"DATA_6", "COL_6", {1, 1}},
+        Arc{"DATA_7", "COL_7", {1, 1}},
+        Arc{"DATA_8", "COL_8", {1, 1}},
+        Arc{"DATA_9", "COL_9", {1, 1}},
+        Arc{"DRIVE_0", "COL_0", {1, 1}},
+        Arc{"DRIVE_1", "COL_1", {1, 1}},
+        Arc{"DRIVE_10", "COL_10", {1, 1}},
+        Arc{"DRIVE_11", "COL_11", {1, 1}},
+        Arc{"DRIVE_12", "COL_12", {1, 1}},
+        Arc{"DRIVE_13", "COL_13", {1, 1}},
+        Arc{"DRIVE_14", "COL_14", {1, 1}},
+        Arc{"DRIVE_15", "COL_15", {1, 1}},
+        Arc{"DRIVE_16", "COL_16", {1, 1}},
+        Arc{"DRIVE_17", "COL_17", {1, 1}},
+        Arc{"DRIVE_18", "COL_18", {1, 1}},
+        Arc{"DRIVE_19", "COL_19", {1, 1}},
+        Arc{"DRIVE_2", "COL_2", {1, 1}},
+        Arc{"DRIVE_20", "COL_20", {1, 1}},
+        Arc{"DRIVE_21", "COL_21", {1, 1}},
+        Arc{"DRIVE_22", "COL_22", {1, 1}},
+        Arc{"DRIVE_23", "COL_23", {1, 1}},
+        Arc{"DRIVE_24", "COL_24", {1, 1}},
+        Arc{"DRIVE_25", "COL_25", {1, 1}},
+        Arc{"DRIVE_26", "COL_26", {1, 1}},
+        Arc{"DRIVE_27", "COL_27", {1, 1}},
+        Arc{"DRIVE_28", "COL_28", {1, 1}},
+        Arc{"DRIVE_29", "COL_29", {1, 1}},
+        Arc{"DRIVE_3", "COL_3", {1, 1}},
+        Arc{"DRIVE_30", "COL_30", {1, 1}},
+        Arc{"DRIVE_31", "COL_31", {1, 1}},
+        Arc{"DRIVE_4", "COL_4", {1, 1}},
+        Arc{"DRIVE_5", "COL_5", {1, 1}},
+        Arc{"DRIVE_6", "COL_6", {1, 1}},
+        Arc{"DRIVE_7", "COL_7", {1, 1}},
+        Arc{"DRIVE_8", "COL_8", {1, 1}},
+        Arc{"DRIVE_9", "COL_9", {1, 1}},
+        Arc{"PRECHARGE", "COL_0", {1, 1}},
+        Arc{"PRECHARGE", "COL_1", {1, 1}},
+        Arc{"PRECHARGE", "COL_10", {1, 1}},
+        Arc{"PRECHARGE", "COL_11", {1, 1}},
+        Arc{"PRECHARGE", "COL_12", {1, 1}},
+        Arc{"PRECHARGE", "COL_13", {1, 1}},
+        Arc{"PRECHARGE", "COL_14", {1, 1}},
+        Arc{"PRECHARGE", "COL_15", {1, 1}},
+        Arc{"PRECHARGE", "COL_16", {1, 1}},
+        Arc{"PRECHARGE", "COL_17", {1, 1}},
+        Arc{"PRECHARGE", "COL_18", {1, 1}},
+        Arc{"PRECHARGE", "COL_19", {1, 1}},
+        Arc{"PRECHARGE", "COL_2", {1, 1}},
+        Arc{"PRECHARGE", "COL_20", {1, 1}},
+        Arc{"PRECHARGE", "COL_21", {1, 1}},
+        Arc{"PRECHARGE", "COL_22", {1, 1}},
+        Arc{"PRECHARGE", "COL_23", {1, 1}},
+        Arc{"PRECHARGE", "COL_24", {1, 1}},
+        Arc{"PRECHARGE", "COL_25", {1, 1}},
+        Arc{"PRECHARGE", "COL_26", {1, 1}},
+        Arc{"PRECHARGE", "COL_27", {1, 1}},
+        Arc{"PRECHARGE", "COL_28", {1, 1}},
+        Arc{"PRECHARGE", "COL_29", {1, 1}},
+        Arc{"PRECHARGE", "COL_3", {1, 1}},
+        Arc{"PRECHARGE", "COL_30", {1, 1}},
+        Arc{"PRECHARGE", "COL_31", {1, 1}},
+        Arc{"PRECHARGE", "COL_4", {1, 1}},
+        Arc{"PRECHARGE", "COL_5", {1, 1}},
+        Arc{"PRECHARGE", "COL_6", {1, 1}},
+        Arc{"PRECHARGE", "COL_7", {1, 1}},
+        Arc{"PRECHARGE", "COL_8", {1, 1}},
+        Arc{"PRECHARGE", "COL_9", {1, 1}},
+        Arc{"SENSE", "COL_0", {1, 1}},
+        Arc{"SENSE", "COL_1", {1, 1}},
+        Arc{"SENSE", "COL_10", {1, 1}},
+        Arc{"SENSE", "COL_11", {1, 1}},
+        Arc{"SENSE", "COL_12", {1, 1}},
+        Arc{"SENSE", "COL_13", {1, 1}},
+        Arc{"SENSE", "COL_14", {1, 1}},
+        Arc{"SENSE", "COL_15", {1, 1}},
+        Arc{"SENSE", "COL_16", {1, 1}},
+        Arc{"SENSE", "COL_17", {1, 1}},
+        Arc{"SENSE", "COL_18", {1, 1}},
+        Arc{"SENSE", "COL_19", {1, 1}},
+        Arc{"SENSE", "COL_2", {1, 1}},
+        Arc{"SENSE", "COL_20", {1, 1}},
+        Arc{"SENSE", "COL_21", {1, 1}},
+        Arc{"SENSE", "COL_22", {1, 1}},
+        Arc{"SENSE", "COL_23", {1, 1}},
+        Arc{"SENSE", "COL_24", {1, 1}},
+        Arc{"SENSE", "COL_25", {1, 1}},
+        Arc{"SENSE", "COL_26", {1, 1}},
+        Arc{"SENSE", "COL_27", {1, 1}},
+        Arc{"SENSE", "COL_28", {1, 1}},
+        Arc{"SENSE", "COL_29", {1, 1}},
+        Arc{"SENSE", "COL_3", {1, 1}},
+        Arc{"SENSE", "COL_30", {1, 1}},
+        Arc{"SENSE", "COL_31", {1, 1}},
+        Arc{"SENSE", "COL_4", {1, 1}},
+        Arc{"SENSE", "COL_5", {1, 1}},
+        Arc{"SENSE", "COL_6", {1, 1}},
+        Arc{"SENSE", "COL_7", {1, 1}},
+        Arc{"SENSE", "COL_8", {1, 1}},
+        Arc{"SENSE", "COL_9", {1, 1}},
+        Arc{"WL_0", "COL_0", {1, 2}},
+        Arc{"WL_0", "COL_1", {1, 2}},
+        Arc{"WL_0", "COL_10", {1, 2}},
+        Arc{"WL_0", "COL_11", {1, 2}},
+        Arc{"WL_0", "COL_12", {1, 2}},
+        Arc{"WL_0", "COL_13", {1, 2}},
+        Arc{"WL_0", "COL_14", {1, 2}},
+        Arc{"WL_0", "COL_15", {1, 2}},
+        Arc{"WL_0", "COL_16", {1, 2}},
+        Arc{"WL_0", "COL_17", {1, 2}},
+        Arc{"WL_0", "COL_18", {1, 2}},
+        Arc{"WL_0", "COL_19", {1, 2}},
+        Arc{"WL_0", "COL_2", {1, 2}},
+        Arc{"WL_0", "COL_20", {1, 2}},
+        Arc{"WL_0", "COL_21", {1, 2}},
+        Arc{"WL_0", "COL_22", {1, 2}},
+        Arc{"WL_0", "COL_23", {1, 2}},
+        Arc{"WL_0", "COL_24", {1, 2}},
+        Arc{"WL_0", "COL_25", {1, 2}},
+        Arc{"WL_0", "COL_26", {1, 2}},
+        Arc{"WL_0", "COL_27", {1, 2}},
+        Arc{"WL_0", "COL_28", {1, 2}},
+        Arc{"WL_0", "COL_29", {1, 2}},
+        Arc{"WL_0", "COL_3", {1, 2}},
+        Arc{"WL_0", "COL_30", {1, 2}},
+        Arc{"WL_0", "COL_31", {1, 2}},
+        Arc{"WL_0", "COL_4", {1, 2}},
+        Arc{"WL_0", "COL_5", {1, 2}},
+        Arc{"WL_0", "COL_6", {1, 2}},
+        Arc{"WL_0", "COL_7", {1, 2}},
+        Arc{"WL_0", "COL_8", {1, 2}},
+        Arc{"WL_0", "COL_9", {1, 2}},
+        Arc{"WL_1", "COL_0", {1, 2}},
+        Arc{"WL_1", "COL_1", {1, 2}},
+        Arc{"WL_1", "COL_10", {1, 2}},
+        Arc{"WL_1", "COL_11", {1, 2}},
+        Arc{"WL_1", "COL_12", {1, 2}},
+        Arc{"WL_1", "COL_13", {1, 2}},
+        Arc{"WL_1", "COL_14", {1, 2}},
+        Arc{"WL_1", "COL_15", {1, 2}},
+        Arc{"WL_1", "COL_16", {1, 2}},
+        Arc{"WL_1", "COL_17", {1, 2}},
+        Arc{"WL_1", "COL_18", {1, 2}},
+        Arc{"WL_1", "COL_19", {1, 2}},
+        Arc{"WL_1", "COL_2", {1, 2}},
+        Arc{"WL_1", "COL_20", {1, 2}},
+        Arc{"WL_1", "COL_21", {1, 2}},
+        Arc{"WL_1", "COL_22", {1, 2}},
+        Arc{"WL_1", "COL_23", {1, 2}},
+        Arc{"WL_1", "COL_24", {1, 2}},
+        Arc{"WL_1", "COL_25", {1, 2}},
+        Arc{"WL_1", "COL_26", {1, 2}},
+        Arc{"WL_1", "COL_27", {1, 2}},
+        Arc{"WL_1", "COL_28", {1, 2}},
+        Arc{"WL_1", "COL_29", {1, 2}},
+        Arc{"WL_1", "COL_3", {1, 2}},
+        Arc{"WL_1", "COL_30", {1, 2}},
+        Arc{"WL_1", "COL_31", {1, 2}},
+        Arc{"WL_1", "COL_4", {1, 2}},
+        Arc{"WL_1", "COL_5", {1, 2}},
+        Arc{"WL_1", "COL_6", {1, 2}},
+        Arc{"WL_1", "COL_7", {1, 2}},
+        Arc{"WL_1", "COL_8", {1, 2}},
+        Arc{"WL_1", "COL_9", {1, 2}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.dram.bank.32.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.bank.32.structural";
+    t.arcs = {
+        Arc{"DATA_0", "COL_0", {1, 1}},
+        Arc{"DATA_1", "COL_1", {1, 1}},
+        Arc{"DATA_10", "COL_10", {1, 1}},
+        Arc{"DATA_11", "COL_11", {1, 1}},
+        Arc{"DATA_12", "COL_12", {1, 1}},
+        Arc{"DATA_13", "COL_13", {1, 1}},
+        Arc{"DATA_14", "COL_14", {1, 1}},
+        Arc{"DATA_15", "COL_15", {1, 1}},
+        Arc{"DATA_16", "COL_16", {1, 1}},
+        Arc{"DATA_17", "COL_17", {1, 1}},
+        Arc{"DATA_18", "COL_18", {1, 1}},
+        Arc{"DATA_19", "COL_19", {1, 1}},
+        Arc{"DATA_2", "COL_2", {1, 1}},
+        Arc{"DATA_20", "COL_20", {1, 1}},
+        Arc{"DATA_21", "COL_21", {1, 1}},
+        Arc{"DATA_22", "COL_22", {1, 1}},
+        Arc{"DATA_23", "COL_23", {1, 1}},
+        Arc{"DATA_24", "COL_24", {1, 1}},
+        Arc{"DATA_25", "COL_25", {1, 1}},
+        Arc{"DATA_26", "COL_26", {1, 1}},
+        Arc{"DATA_27", "COL_27", {1, 1}},
+        Arc{"DATA_28", "COL_28", {1, 1}},
+        Arc{"DATA_29", "COL_29", {1, 1}},
+        Arc{"DATA_3", "COL_3", {1, 1}},
+        Arc{"DATA_30", "COL_30", {1, 1}},
+        Arc{"DATA_31", "COL_31", {1, 1}},
+        Arc{"DATA_32", "COL_32", {1, 1}},
+        Arc{"DATA_33", "COL_33", {1, 1}},
+        Arc{"DATA_34", "COL_34", {1, 1}},
+        Arc{"DATA_35", "COL_35", {1, 1}},
+        Arc{"DATA_36", "COL_36", {1, 1}},
+        Arc{"DATA_37", "COL_37", {1, 1}},
+        Arc{"DATA_38", "COL_38", {1, 1}},
+        Arc{"DATA_39", "COL_39", {1, 1}},
+        Arc{"DATA_4", "COL_4", {1, 1}},
+        Arc{"DATA_40", "COL_40", {1, 1}},
+        Arc{"DATA_41", "COL_41", {1, 1}},
+        Arc{"DATA_42", "COL_42", {1, 1}},
+        Arc{"DATA_43", "COL_43", {1, 1}},
+        Arc{"DATA_44", "COL_44", {1, 1}},
+        Arc{"DATA_45", "COL_45", {1, 1}},
+        Arc{"DATA_46", "COL_46", {1, 1}},
+        Arc{"DATA_47", "COL_47", {1, 1}},
+        Arc{"DATA_48", "COL_48", {1, 1}},
+        Arc{"DATA_49", "COL_49", {1, 1}},
+        Arc{"DATA_5", "COL_5", {1, 1}},
+        Arc{"DATA_50", "COL_50", {1, 1}},
+        Arc{"DATA_51", "COL_51", {1, 1}},
+        Arc{"DATA_52", "COL_52", {1, 1}},
+        Arc{"DATA_53", "COL_53", {1, 1}},
+        Arc{"DATA_54", "COL_54", {1, 1}},
+        Arc{"DATA_55", "COL_55", {1, 1}},
+        Arc{"DATA_56", "COL_56", {1, 1}},
+        Arc{"DATA_57", "COL_57", {1, 1}},
+        Arc{"DATA_58", "COL_58", {1, 1}},
+        Arc{"DATA_59", "COL_59", {1, 1}},
+        Arc{"DATA_6", "COL_6", {1, 1}},
+        Arc{"DATA_60", "COL_60", {1, 1}},
+        Arc{"DATA_61", "COL_61", {1, 1}},
+        Arc{"DATA_62", "COL_62", {1, 1}},
+        Arc{"DATA_63", "COL_63", {1, 1}},
+        Arc{"DATA_7", "COL_7", {1, 1}},
+        Arc{"DATA_8", "COL_8", {1, 1}},
+        Arc{"DATA_9", "COL_9", {1, 1}},
+        Arc{"DRIVE_0", "COL_0", {1, 1}},
+        Arc{"DRIVE_1", "COL_1", {1, 1}},
+        Arc{"DRIVE_10", "COL_10", {1, 1}},
+        Arc{"DRIVE_11", "COL_11", {1, 1}},
+        Arc{"DRIVE_12", "COL_12", {1, 1}},
+        Arc{"DRIVE_13", "COL_13", {1, 1}},
+        Arc{"DRIVE_14", "COL_14", {1, 1}},
+        Arc{"DRIVE_15", "COL_15", {1, 1}},
+        Arc{"DRIVE_16", "COL_16", {1, 1}},
+        Arc{"DRIVE_17", "COL_17", {1, 1}},
+        Arc{"DRIVE_18", "COL_18", {1, 1}},
+        Arc{"DRIVE_19", "COL_19", {1, 1}},
+        Arc{"DRIVE_2", "COL_2", {1, 1}},
+        Arc{"DRIVE_20", "COL_20", {1, 1}},
+        Arc{"DRIVE_21", "COL_21", {1, 1}},
+        Arc{"DRIVE_22", "COL_22", {1, 1}},
+        Arc{"DRIVE_23", "COL_23", {1, 1}},
+        Arc{"DRIVE_24", "COL_24", {1, 1}},
+        Arc{"DRIVE_25", "COL_25", {1, 1}},
+        Arc{"DRIVE_26", "COL_26", {1, 1}},
+        Arc{"DRIVE_27", "COL_27", {1, 1}},
+        Arc{"DRIVE_28", "COL_28", {1, 1}},
+        Arc{"DRIVE_29", "COL_29", {1, 1}},
+        Arc{"DRIVE_3", "COL_3", {1, 1}},
+        Arc{"DRIVE_30", "COL_30", {1, 1}},
+        Arc{"DRIVE_31", "COL_31", {1, 1}},
+        Arc{"DRIVE_32", "COL_32", {1, 1}},
+        Arc{"DRIVE_33", "COL_33", {1, 1}},
+        Arc{"DRIVE_34", "COL_34", {1, 1}},
+        Arc{"DRIVE_35", "COL_35", {1, 1}},
+        Arc{"DRIVE_36", "COL_36", {1, 1}},
+        Arc{"DRIVE_37", "COL_37", {1, 1}},
+        Arc{"DRIVE_38", "COL_38", {1, 1}},
+        Arc{"DRIVE_39", "COL_39", {1, 1}},
+        Arc{"DRIVE_4", "COL_4", {1, 1}},
+        Arc{"DRIVE_40", "COL_40", {1, 1}},
+        Arc{"DRIVE_41", "COL_41", {1, 1}},
+        Arc{"DRIVE_42", "COL_42", {1, 1}},
+        Arc{"DRIVE_43", "COL_43", {1, 1}},
+        Arc{"DRIVE_44", "COL_44", {1, 1}},
+        Arc{"DRIVE_45", "COL_45", {1, 1}},
+        Arc{"DRIVE_46", "COL_46", {1, 1}},
+        Arc{"DRIVE_47", "COL_47", {1, 1}},
+        Arc{"DRIVE_48", "COL_48", {1, 1}},
+        Arc{"DRIVE_49", "COL_49", {1, 1}},
+        Arc{"DRIVE_5", "COL_5", {1, 1}},
+        Arc{"DRIVE_50", "COL_50", {1, 1}},
+        Arc{"DRIVE_51", "COL_51", {1, 1}},
+        Arc{"DRIVE_52", "COL_52", {1, 1}},
+        Arc{"DRIVE_53", "COL_53", {1, 1}},
+        Arc{"DRIVE_54", "COL_54", {1, 1}},
+        Arc{"DRIVE_55", "COL_55", {1, 1}},
+        Arc{"DRIVE_56", "COL_56", {1, 1}},
+        Arc{"DRIVE_57", "COL_57", {1, 1}},
+        Arc{"DRIVE_58", "COL_58", {1, 1}},
+        Arc{"DRIVE_59", "COL_59", {1, 1}},
+        Arc{"DRIVE_6", "COL_6", {1, 1}},
+        Arc{"DRIVE_60", "COL_60", {1, 1}},
+        Arc{"DRIVE_61", "COL_61", {1, 1}},
+        Arc{"DRIVE_62", "COL_62", {1, 1}},
+        Arc{"DRIVE_63", "COL_63", {1, 1}},
+        Arc{"DRIVE_7", "COL_7", {1, 1}},
+        Arc{"DRIVE_8", "COL_8", {1, 1}},
+        Arc{"DRIVE_9", "COL_9", {1, 1}},
+        Arc{"PRECHARGE", "COL_0", {1, 1}},
+        Arc{"PRECHARGE", "COL_1", {1, 1}},
+        Arc{"PRECHARGE", "COL_10", {1, 1}},
+        Arc{"PRECHARGE", "COL_11", {1, 1}},
+        Arc{"PRECHARGE", "COL_12", {1, 1}},
+        Arc{"PRECHARGE", "COL_13", {1, 1}},
+        Arc{"PRECHARGE", "COL_14", {1, 1}},
+        Arc{"PRECHARGE", "COL_15", {1, 1}},
+        Arc{"PRECHARGE", "COL_16", {1, 1}},
+        Arc{"PRECHARGE", "COL_17", {1, 1}},
+        Arc{"PRECHARGE", "COL_18", {1, 1}},
+        Arc{"PRECHARGE", "COL_19", {1, 1}},
+        Arc{"PRECHARGE", "COL_2", {1, 1}},
+        Arc{"PRECHARGE", "COL_20", {1, 1}},
+        Arc{"PRECHARGE", "COL_21", {1, 1}},
+        Arc{"PRECHARGE", "COL_22", {1, 1}},
+        Arc{"PRECHARGE", "COL_23", {1, 1}},
+        Arc{"PRECHARGE", "COL_24", {1, 1}},
+        Arc{"PRECHARGE", "COL_25", {1, 1}},
+        Arc{"PRECHARGE", "COL_26", {1, 1}},
+        Arc{"PRECHARGE", "COL_27", {1, 1}},
+        Arc{"PRECHARGE", "COL_28", {1, 1}},
+        Arc{"PRECHARGE", "COL_29", {1, 1}},
+        Arc{"PRECHARGE", "COL_3", {1, 1}},
+        Arc{"PRECHARGE", "COL_30", {1, 1}},
+        Arc{"PRECHARGE", "COL_31", {1, 1}},
+        Arc{"PRECHARGE", "COL_32", {1, 1}},
+        Arc{"PRECHARGE", "COL_33", {1, 1}},
+        Arc{"PRECHARGE", "COL_34", {1, 1}},
+        Arc{"PRECHARGE", "COL_35", {1, 1}},
+        Arc{"PRECHARGE", "COL_36", {1, 1}},
+        Arc{"PRECHARGE", "COL_37", {1, 1}},
+        Arc{"PRECHARGE", "COL_38", {1, 1}},
+        Arc{"PRECHARGE", "COL_39", {1, 1}},
+        Arc{"PRECHARGE", "COL_4", {1, 1}},
+        Arc{"PRECHARGE", "COL_40", {1, 1}},
+        Arc{"PRECHARGE", "COL_41", {1, 1}},
+        Arc{"PRECHARGE", "COL_42", {1, 1}},
+        Arc{"PRECHARGE", "COL_43", {1, 1}},
+        Arc{"PRECHARGE", "COL_44", {1, 1}},
+        Arc{"PRECHARGE", "COL_45", {1, 1}},
+        Arc{"PRECHARGE", "COL_46", {1, 1}},
+        Arc{"PRECHARGE", "COL_47", {1, 1}},
+        Arc{"PRECHARGE", "COL_48", {1, 1}},
+        Arc{"PRECHARGE", "COL_49", {1, 1}},
+        Arc{"PRECHARGE", "COL_5", {1, 1}},
+        Arc{"PRECHARGE", "COL_50", {1, 1}},
+        Arc{"PRECHARGE", "COL_51", {1, 1}},
+        Arc{"PRECHARGE", "COL_52", {1, 1}},
+        Arc{"PRECHARGE", "COL_53", {1, 1}},
+        Arc{"PRECHARGE", "COL_54", {1, 1}},
+        Arc{"PRECHARGE", "COL_55", {1, 1}},
+        Arc{"PRECHARGE", "COL_56", {1, 1}},
+        Arc{"PRECHARGE", "COL_57", {1, 1}},
+        Arc{"PRECHARGE", "COL_58", {1, 1}},
+        Arc{"PRECHARGE", "COL_59", {1, 1}},
+        Arc{"PRECHARGE", "COL_6", {1, 1}},
+        Arc{"PRECHARGE", "COL_60", {1, 1}},
+        Arc{"PRECHARGE", "COL_61", {1, 1}},
+        Arc{"PRECHARGE", "COL_62", {1, 1}},
+        Arc{"PRECHARGE", "COL_63", {1, 1}},
+        Arc{"PRECHARGE", "COL_7", {1, 1}},
+        Arc{"PRECHARGE", "COL_8", {1, 1}},
+        Arc{"PRECHARGE", "COL_9", {1, 1}},
+        Arc{"SENSE", "COL_0", {1, 1}},
+        Arc{"SENSE", "COL_1", {1, 1}},
+        Arc{"SENSE", "COL_10", {1, 1}},
+        Arc{"SENSE", "COL_11", {1, 1}},
+        Arc{"SENSE", "COL_12", {1, 1}},
+        Arc{"SENSE", "COL_13", {1, 1}},
+        Arc{"SENSE", "COL_14", {1, 1}},
+        Arc{"SENSE", "COL_15", {1, 1}},
+        Arc{"SENSE", "COL_16", {1, 1}},
+        Arc{"SENSE", "COL_17", {1, 1}},
+        Arc{"SENSE", "COL_18", {1, 1}},
+        Arc{"SENSE", "COL_19", {1, 1}},
+        Arc{"SENSE", "COL_2", {1, 1}},
+        Arc{"SENSE", "COL_20", {1, 1}},
+        Arc{"SENSE", "COL_21", {1, 1}},
+        Arc{"SENSE", "COL_22", {1, 1}},
+        Arc{"SENSE", "COL_23", {1, 1}},
+        Arc{"SENSE", "COL_24", {1, 1}},
+        Arc{"SENSE", "COL_25", {1, 1}},
+        Arc{"SENSE", "COL_26", {1, 1}},
+        Arc{"SENSE", "COL_27", {1, 1}},
+        Arc{"SENSE", "COL_28", {1, 1}},
+        Arc{"SENSE", "COL_29", {1, 1}},
+        Arc{"SENSE", "COL_3", {1, 1}},
+        Arc{"SENSE", "COL_30", {1, 1}},
+        Arc{"SENSE", "COL_31", {1, 1}},
+        Arc{"SENSE", "COL_32", {1, 1}},
+        Arc{"SENSE", "COL_33", {1, 1}},
+        Arc{"SENSE", "COL_34", {1, 1}},
+        Arc{"SENSE", "COL_35", {1, 1}},
+        Arc{"SENSE", "COL_36", {1, 1}},
+        Arc{"SENSE", "COL_37", {1, 1}},
+        Arc{"SENSE", "COL_38", {1, 1}},
+        Arc{"SENSE", "COL_39", {1, 1}},
+        Arc{"SENSE", "COL_4", {1, 1}},
+        Arc{"SENSE", "COL_40", {1, 1}},
+        Arc{"SENSE", "COL_41", {1, 1}},
+        Arc{"SENSE", "COL_42", {1, 1}},
+        Arc{"SENSE", "COL_43", {1, 1}},
+        Arc{"SENSE", "COL_44", {1, 1}},
+        Arc{"SENSE", "COL_45", {1, 1}},
+        Arc{"SENSE", "COL_46", {1, 1}},
+        Arc{"SENSE", "COL_47", {1, 1}},
+        Arc{"SENSE", "COL_48", {1, 1}},
+        Arc{"SENSE", "COL_49", {1, 1}},
+        Arc{"SENSE", "COL_5", {1, 1}},
+        Arc{"SENSE", "COL_50", {1, 1}},
+        Arc{"SENSE", "COL_51", {1, 1}},
+        Arc{"SENSE", "COL_52", {1, 1}},
+        Arc{"SENSE", "COL_53", {1, 1}},
+        Arc{"SENSE", "COL_54", {1, 1}},
+        Arc{"SENSE", "COL_55", {1, 1}},
+        Arc{"SENSE", "COL_56", {1, 1}},
+        Arc{"SENSE", "COL_57", {1, 1}},
+        Arc{"SENSE", "COL_58", {1, 1}},
+        Arc{"SENSE", "COL_59", {1, 1}},
+        Arc{"SENSE", "COL_6", {1, 1}},
+        Arc{"SENSE", "COL_60", {1, 1}},
+        Arc{"SENSE", "COL_61", {1, 1}},
+        Arc{"SENSE", "COL_62", {1, 1}},
+        Arc{"SENSE", "COL_63", {1, 1}},
+        Arc{"SENSE", "COL_7", {1, 1}},
+        Arc{"SENSE", "COL_8", {1, 1}},
+        Arc{"SENSE", "COL_9", {1, 1}},
+        Arc{"WL_0", "COL_0", {1, 2}},
+        Arc{"WL_0", "COL_1", {1, 2}},
+        Arc{"WL_0", "COL_10", {1, 2}},
+        Arc{"WL_0", "COL_11", {1, 2}},
+        Arc{"WL_0", "COL_12", {1, 2}},
+        Arc{"WL_0", "COL_13", {1, 2}},
+        Arc{"WL_0", "COL_14", {1, 2}},
+        Arc{"WL_0", "COL_15", {1, 2}},
+        Arc{"WL_0", "COL_16", {1, 2}},
+        Arc{"WL_0", "COL_17", {1, 2}},
+        Arc{"WL_0", "COL_18", {1, 2}},
+        Arc{"WL_0", "COL_19", {1, 2}},
+        Arc{"WL_0", "COL_2", {1, 2}},
+        Arc{"WL_0", "COL_20", {1, 2}},
+        Arc{"WL_0", "COL_21", {1, 2}},
+        Arc{"WL_0", "COL_22", {1, 2}},
+        Arc{"WL_0", "COL_23", {1, 2}},
+        Arc{"WL_0", "COL_24", {1, 2}},
+        Arc{"WL_0", "COL_25", {1, 2}},
+        Arc{"WL_0", "COL_26", {1, 2}},
+        Arc{"WL_0", "COL_27", {1, 2}},
+        Arc{"WL_0", "COL_28", {1, 2}},
+        Arc{"WL_0", "COL_29", {1, 2}},
+        Arc{"WL_0", "COL_3", {1, 2}},
+        Arc{"WL_0", "COL_30", {1, 2}},
+        Arc{"WL_0", "COL_31", {1, 2}},
+        Arc{"WL_0", "COL_32", {1, 2}},
+        Arc{"WL_0", "COL_33", {1, 2}},
+        Arc{"WL_0", "COL_34", {1, 2}},
+        Arc{"WL_0", "COL_35", {1, 2}},
+        Arc{"WL_0", "COL_36", {1, 2}},
+        Arc{"WL_0", "COL_37", {1, 2}},
+        Arc{"WL_0", "COL_38", {1, 2}},
+        Arc{"WL_0", "COL_39", {1, 2}},
+        Arc{"WL_0", "COL_4", {1, 2}},
+        Arc{"WL_0", "COL_40", {1, 2}},
+        Arc{"WL_0", "COL_41", {1, 2}},
+        Arc{"WL_0", "COL_42", {1, 2}},
+        Arc{"WL_0", "COL_43", {1, 2}},
+        Arc{"WL_0", "COL_44", {1, 2}},
+        Arc{"WL_0", "COL_45", {1, 2}},
+        Arc{"WL_0", "COL_46", {1, 2}},
+        Arc{"WL_0", "COL_47", {1, 2}},
+        Arc{"WL_0", "COL_48", {1, 2}},
+        Arc{"WL_0", "COL_49", {1, 2}},
+        Arc{"WL_0", "COL_5", {1, 2}},
+        Arc{"WL_0", "COL_50", {1, 2}},
+        Arc{"WL_0", "COL_51", {1, 2}},
+        Arc{"WL_0", "COL_52", {1, 2}},
+        Arc{"WL_0", "COL_53", {1, 2}},
+        Arc{"WL_0", "COL_54", {1, 2}},
+        Arc{"WL_0", "COL_55", {1, 2}},
+        Arc{"WL_0", "COL_56", {1, 2}},
+        Arc{"WL_0", "COL_57", {1, 2}},
+        Arc{"WL_0", "COL_58", {1, 2}},
+        Arc{"WL_0", "COL_59", {1, 2}},
+        Arc{"WL_0", "COL_6", {1, 2}},
+        Arc{"WL_0", "COL_60", {1, 2}},
+        Arc{"WL_0", "COL_61", {1, 2}},
+        Arc{"WL_0", "COL_62", {1, 2}},
+        Arc{"WL_0", "COL_63", {1, 2}},
+        Arc{"WL_0", "COL_7", {1, 2}},
+        Arc{"WL_0", "COL_8", {1, 2}},
+        Arc{"WL_0", "COL_9", {1, 2}},
+        Arc{"WL_1", "COL_0", {1, 2}},
+        Arc{"WL_1", "COL_1", {1, 2}},
+        Arc{"WL_1", "COL_10", {1, 2}},
+        Arc{"WL_1", "COL_11", {1, 2}},
+        Arc{"WL_1", "COL_12", {1, 2}},
+        Arc{"WL_1", "COL_13", {1, 2}},
+        Arc{"WL_1", "COL_14", {1, 2}},
+        Arc{"WL_1", "COL_15", {1, 2}},
+        Arc{"WL_1", "COL_16", {1, 2}},
+        Arc{"WL_1", "COL_17", {1, 2}},
+        Arc{"WL_1", "COL_18", {1, 2}},
+        Arc{"WL_1", "COL_19", {1, 2}},
+        Arc{"WL_1", "COL_2", {1, 2}},
+        Arc{"WL_1", "COL_20", {1, 2}},
+        Arc{"WL_1", "COL_21", {1, 2}},
+        Arc{"WL_1", "COL_22", {1, 2}},
+        Arc{"WL_1", "COL_23", {1, 2}},
+        Arc{"WL_1", "COL_24", {1, 2}},
+        Arc{"WL_1", "COL_25", {1, 2}},
+        Arc{"WL_1", "COL_26", {1, 2}},
+        Arc{"WL_1", "COL_27", {1, 2}},
+        Arc{"WL_1", "COL_28", {1, 2}},
+        Arc{"WL_1", "COL_29", {1, 2}},
+        Arc{"WL_1", "COL_3", {1, 2}},
+        Arc{"WL_1", "COL_30", {1, 2}},
+        Arc{"WL_1", "COL_31", {1, 2}},
+        Arc{"WL_1", "COL_32", {1, 2}},
+        Arc{"WL_1", "COL_33", {1, 2}},
+        Arc{"WL_1", "COL_34", {1, 2}},
+        Arc{"WL_1", "COL_35", {1, 2}},
+        Arc{"WL_1", "COL_36", {1, 2}},
+        Arc{"WL_1", "COL_37", {1, 2}},
+        Arc{"WL_1", "COL_38", {1, 2}},
+        Arc{"WL_1", "COL_39", {1, 2}},
+        Arc{"WL_1", "COL_4", {1, 2}},
+        Arc{"WL_1", "COL_40", {1, 2}},
+        Arc{"WL_1", "COL_41", {1, 2}},
+        Arc{"WL_1", "COL_42", {1, 2}},
+        Arc{"WL_1", "COL_43", {1, 2}},
+        Arc{"WL_1", "COL_44", {1, 2}},
+        Arc{"WL_1", "COL_45", {1, 2}},
+        Arc{"WL_1", "COL_46", {1, 2}},
+        Arc{"WL_1", "COL_47", {1, 2}},
+        Arc{"WL_1", "COL_48", {1, 2}},
+        Arc{"WL_1", "COL_49", {1, 2}},
+        Arc{"WL_1", "COL_5", {1, 2}},
+        Arc{"WL_1", "COL_50", {1, 2}},
+        Arc{"WL_1", "COL_51", {1, 2}},
+        Arc{"WL_1", "COL_52", {1, 2}},
+        Arc{"WL_1", "COL_53", {1, 2}},
+        Arc{"WL_1", "COL_54", {1, 2}},
+        Arc{"WL_1", "COL_55", {1, 2}},
+        Arc{"WL_1", "COL_56", {1, 2}},
+        Arc{"WL_1", "COL_57", {1, 2}},
+        Arc{"WL_1", "COL_58", {1, 2}},
+        Arc{"WL_1", "COL_59", {1, 2}},
+        Arc{"WL_1", "COL_6", {1, 2}},
+        Arc{"WL_1", "COL_60", {1, 2}},
+        Arc{"WL_1", "COL_61", {1, 2}},
+        Arc{"WL_1", "COL_62", {1, 2}},
+        Arc{"WL_1", "COL_63", {1, 2}},
+        Arc{"WL_1", "COL_7", {1, 2}},
+        Arc{"WL_1", "COL_8", {1, 2}},
+        Arc{"WL_1", "COL_9", {1, 2}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.dram.bank.8.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.bank.8.structural";
+    t.arcs = {
+        Arc{"DATA_0", "COL_0", {1, 1}},
+        Arc{"DATA_1", "COL_1", {1, 1}},
+        Arc{"DATA_10", "COL_10", {1, 1}},
+        Arc{"DATA_11", "COL_11", {1, 1}},
+        Arc{"DATA_12", "COL_12", {1, 1}},
+        Arc{"DATA_13", "COL_13", {1, 1}},
+        Arc{"DATA_14", "COL_14", {1, 1}},
+        Arc{"DATA_15", "COL_15", {1, 1}},
+        Arc{"DATA_2", "COL_2", {1, 1}},
+        Arc{"DATA_3", "COL_3", {1, 1}},
+        Arc{"DATA_4", "COL_4", {1, 1}},
+        Arc{"DATA_5", "COL_5", {1, 1}},
+        Arc{"DATA_6", "COL_6", {1, 1}},
+        Arc{"DATA_7", "COL_7", {1, 1}},
+        Arc{"DATA_8", "COL_8", {1, 1}},
+        Arc{"DATA_9", "COL_9", {1, 1}},
+        Arc{"DRIVE_0", "COL_0", {1, 1}},
+        Arc{"DRIVE_1", "COL_1", {1, 1}},
+        Arc{"DRIVE_10", "COL_10", {1, 1}},
+        Arc{"DRIVE_11", "COL_11", {1, 1}},
+        Arc{"DRIVE_12", "COL_12", {1, 1}},
+        Arc{"DRIVE_13", "COL_13", {1, 1}},
+        Arc{"DRIVE_14", "COL_14", {1, 1}},
+        Arc{"DRIVE_15", "COL_15", {1, 1}},
+        Arc{"DRIVE_2", "COL_2", {1, 1}},
+        Arc{"DRIVE_3", "COL_3", {1, 1}},
+        Arc{"DRIVE_4", "COL_4", {1, 1}},
+        Arc{"DRIVE_5", "COL_5", {1, 1}},
+        Arc{"DRIVE_6", "COL_6", {1, 1}},
+        Arc{"DRIVE_7", "COL_7", {1, 1}},
+        Arc{"DRIVE_8", "COL_8", {1, 1}},
+        Arc{"DRIVE_9", "COL_9", {1, 1}},
+        Arc{"PRECHARGE", "COL_0", {1, 1}},
+        Arc{"PRECHARGE", "COL_1", {1, 1}},
+        Arc{"PRECHARGE", "COL_10", {1, 1}},
+        Arc{"PRECHARGE", "COL_11", {1, 1}},
+        Arc{"PRECHARGE", "COL_12", {1, 1}},
+        Arc{"PRECHARGE", "COL_13", {1, 1}},
+        Arc{"PRECHARGE", "COL_14", {1, 1}},
+        Arc{"PRECHARGE", "COL_15", {1, 1}},
+        Arc{"PRECHARGE", "COL_2", {1, 1}},
+        Arc{"PRECHARGE", "COL_3", {1, 1}},
+        Arc{"PRECHARGE", "COL_4", {1, 1}},
+        Arc{"PRECHARGE", "COL_5", {1, 1}},
+        Arc{"PRECHARGE", "COL_6", {1, 1}},
+        Arc{"PRECHARGE", "COL_7", {1, 1}},
+        Arc{"PRECHARGE", "COL_8", {1, 1}},
+        Arc{"PRECHARGE", "COL_9", {1, 1}},
+        Arc{"SENSE", "COL_0", {1, 1}},
+        Arc{"SENSE", "COL_1", {1, 1}},
+        Arc{"SENSE", "COL_10", {1, 1}},
+        Arc{"SENSE", "COL_11", {1, 1}},
+        Arc{"SENSE", "COL_12", {1, 1}},
+        Arc{"SENSE", "COL_13", {1, 1}},
+        Arc{"SENSE", "COL_14", {1, 1}},
+        Arc{"SENSE", "COL_15", {1, 1}},
+        Arc{"SENSE", "COL_2", {1, 1}},
+        Arc{"SENSE", "COL_3", {1, 1}},
+        Arc{"SENSE", "COL_4", {1, 1}},
+        Arc{"SENSE", "COL_5", {1, 1}},
+        Arc{"SENSE", "COL_6", {1, 1}},
+        Arc{"SENSE", "COL_7", {1, 1}},
+        Arc{"SENSE", "COL_8", {1, 1}},
+        Arc{"SENSE", "COL_9", {1, 1}},
+        Arc{"WL_0", "COL_0", {1, 2}},
+        Arc{"WL_0", "COL_1", {1, 2}},
+        Arc{"WL_0", "COL_10", {1, 2}},
+        Arc{"WL_0", "COL_11", {1, 2}},
+        Arc{"WL_0", "COL_12", {1, 2}},
+        Arc{"WL_0", "COL_13", {1, 2}},
+        Arc{"WL_0", "COL_14", {1, 2}},
+        Arc{"WL_0", "COL_15", {1, 2}},
+        Arc{"WL_0", "COL_2", {1, 2}},
+        Arc{"WL_0", "COL_3", {1, 2}},
+        Arc{"WL_0", "COL_4", {1, 2}},
+        Arc{"WL_0", "COL_5", {1, 2}},
+        Arc{"WL_0", "COL_6", {1, 2}},
+        Arc{"WL_0", "COL_7", {1, 2}},
+        Arc{"WL_0", "COL_8", {1, 2}},
+        Arc{"WL_0", "COL_9", {1, 2}},
+        Arc{"WL_1", "COL_0", {1, 2}},
+        Arc{"WL_1", "COL_1", {1, 2}},
+        Arc{"WL_1", "COL_10", {1, 2}},
+        Arc{"WL_1", "COL_11", {1, 2}},
+        Arc{"WL_1", "COL_12", {1, 2}},
+        Arc{"WL_1", "COL_13", {1, 2}},
+        Arc{"WL_1", "COL_14", {1, 2}},
+        Arc{"WL_1", "COL_15", {1, 2}},
+        Arc{"WL_1", "COL_2", {1, 2}},
+        Arc{"WL_1", "COL_3", {1, 2}},
+        Arc{"WL_1", "COL_4", {1, 2}},
+        Arc{"WL_1", "COL_5", {1, 2}},
+        Arc{"WL_1", "COL_6", {1, 2}},
+        Arc{"WL_1", "COL_7", {1, 2}},
+        Arc{"WL_1", "COL_8", {1, 2}},
+        Arc{"WL_1", "COL_9", {1, 2}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
 {"memory.dram.controller.16.behavioral", [] {
     PartDelays t;
     t.evidence = "proven on memory.dram.controller.16.structural";
@@ -444,26 +1140,513 @@
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
+{"memory.dram.device.16.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.device.16.structural";
+    t.arcs = {
+        Arc{"ADDR", "BUSY", {1, 1}},
+        Arc{"ADDR", "ERROR", {1, 1}},
+        Arc{"ADDR", "READ_DATA", {2, 15}},
+        Arc{"ADDR", "READ_VALID", {1, 1}},
+        Arc{"ADDR", "ROW_OPEN", {1, 1}},
+        Arc{"CLK", "BUSY", {1, 1}},
+        Arc{"CLK", "ERROR", {1, 1}},
+        Arc{"CLK", "READ_DATA", {2, 15}},
+        Arc{"CLK", "READ_VALID", {1, 1}},
+        Arc{"CLK", "ROW_OPEN", {1, 1}},
+        Arc{"CMD", "BUSY", {1, 1}},
+        Arc{"CMD", "ERROR", {1, 1}},
+        Arc{"CMD", "READ_DATA", {2, 15}},
+        Arc{"CMD", "READ_VALID", {1, 1}},
+        Arc{"CMD", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_DATA", "BUSY", {1, 1}},
+        Arc{"WRITE_DATA", "ERROR", {1, 1}},
+        Arc{"WRITE_DATA", "READ_DATA", {2, 15}},
+        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
+        Arc{"WRITE_DATA", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_MASK", "BUSY", {1, 1}},
+        Arc{"WRITE_MASK", "ERROR", {1, 1}},
+        Arc{"WRITE_MASK", "READ_DATA", {2, 15}},
+        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
+        Arc{"WRITE_MASK", "ROW_OPEN", {1, 1}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.dram.device.16.behavioral@depth=128", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.device.16.structural";
+    t.arcs = {
+        Arc{"ADDR", "BUSY", {1, 1}},
+        Arc{"ADDR", "ERROR", {1, 1}},
+        Arc{"ADDR", "READ_DATA", {2, 17}},
+        Arc{"ADDR", "READ_VALID", {1, 1}},
+        Arc{"ADDR", "ROW_OPEN", {1, 1}},
+        Arc{"CLK", "BUSY", {1, 1}},
+        Arc{"CLK", "ERROR", {1, 1}},
+        Arc{"CLK", "READ_DATA", {2, 17}},
+        Arc{"CLK", "READ_VALID", {1, 1}},
+        Arc{"CLK", "ROW_OPEN", {1, 1}},
+        Arc{"CMD", "BUSY", {1, 1}},
+        Arc{"CMD", "ERROR", {1, 1}},
+        Arc{"CMD", "READ_DATA", {2, 17}},
+        Arc{"CMD", "READ_VALID", {1, 1}},
+        Arc{"CMD", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_DATA", "BUSY", {1, 1}},
+        Arc{"WRITE_DATA", "ERROR", {1, 1}},
+        Arc{"WRITE_DATA", "READ_DATA", {2, 17}},
+        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
+        Arc{"WRITE_DATA", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_MASK", "BUSY", {1, 1}},
+        Arc{"WRITE_MASK", "ERROR", {1, 1}},
+        Arc{"WRITE_MASK", "READ_DATA", {2, 17}},
+        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
+        Arc{"WRITE_MASK", "ROW_OPEN", {1, 1}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.dram.device.16.behavioral@depth=64", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.device.16.structural";
+    t.arcs = {
+        Arc{"ADDR", "BUSY", {1, 1}},
+        Arc{"ADDR", "ERROR", {1, 1}},
+        Arc{"ADDR", "READ_DATA", {2, 17}},
+        Arc{"ADDR", "READ_VALID", {1, 1}},
+        Arc{"ADDR", "ROW_OPEN", {1, 1}},
+        Arc{"CLK", "BUSY", {1, 1}},
+        Arc{"CLK", "ERROR", {1, 1}},
+        Arc{"CLK", "READ_DATA", {2, 17}},
+        Arc{"CLK", "READ_VALID", {1, 1}},
+        Arc{"CLK", "ROW_OPEN", {1, 1}},
+        Arc{"CMD", "BUSY", {1, 1}},
+        Arc{"CMD", "ERROR", {1, 1}},
+        Arc{"CMD", "READ_DATA", {2, 17}},
+        Arc{"CMD", "READ_VALID", {1, 1}},
+        Arc{"CMD", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_DATA", "BUSY", {1, 1}},
+        Arc{"WRITE_DATA", "ERROR", {1, 1}},
+        Arc{"WRITE_DATA", "READ_DATA", {2, 17}},
+        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
+        Arc{"WRITE_DATA", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_MASK", "BUSY", {1, 1}},
+        Arc{"WRITE_MASK", "ERROR", {1, 1}},
+        Arc{"WRITE_MASK", "READ_DATA", {2, 17}},
+        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
+        Arc{"WRITE_MASK", "ROW_OPEN", {1, 1}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.dram.device.32.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.device.32.structural";
+    t.arcs = {
+        Arc{"ADDR", "BUSY", {1, 1}},
+        Arc{"ADDR", "ERROR", {1, 1}},
+        Arc{"ADDR", "READ_DATA", {2, 15}},
+        Arc{"ADDR", "READ_VALID", {1, 1}},
+        Arc{"ADDR", "ROW_OPEN", {1, 1}},
+        Arc{"CLK", "BUSY", {1, 1}},
+        Arc{"CLK", "ERROR", {1, 1}},
+        Arc{"CLK", "READ_DATA", {2, 15}},
+        Arc{"CLK", "READ_VALID", {1, 1}},
+        Arc{"CLK", "ROW_OPEN", {1, 1}},
+        Arc{"CMD", "BUSY", {1, 1}},
+        Arc{"CMD", "ERROR", {1, 1}},
+        Arc{"CMD", "READ_DATA", {2, 15}},
+        Arc{"CMD", "READ_VALID", {1, 1}},
+        Arc{"CMD", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_DATA", "BUSY", {1, 1}},
+        Arc{"WRITE_DATA", "ERROR", {1, 1}},
+        Arc{"WRITE_DATA", "READ_DATA", {2, 15}},
+        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
+        Arc{"WRITE_DATA", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_MASK", "BUSY", {1, 1}},
+        Arc{"WRITE_MASK", "ERROR", {1, 1}},
+        Arc{"WRITE_MASK", "READ_DATA", {2, 15}},
+        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
+        Arc{"WRITE_MASK", "ROW_OPEN", {1, 1}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.dram.device.32.behavioral@depth=128", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.device.32.structural";
+    t.arcs = {
+        Arc{"ADDR", "BUSY", {1, 1}},
+        Arc{"ADDR", "ERROR", {1, 1}},
+        Arc{"ADDR", "READ_DATA", {2, 17}},
+        Arc{"ADDR", "READ_VALID", {1, 1}},
+        Arc{"ADDR", "ROW_OPEN", {1, 1}},
+        Arc{"CLK", "BUSY", {1, 1}},
+        Arc{"CLK", "ERROR", {1, 1}},
+        Arc{"CLK", "READ_DATA", {2, 17}},
+        Arc{"CLK", "READ_VALID", {1, 1}},
+        Arc{"CLK", "ROW_OPEN", {1, 1}},
+        Arc{"CMD", "BUSY", {1, 1}},
+        Arc{"CMD", "ERROR", {1, 1}},
+        Arc{"CMD", "READ_DATA", {2, 17}},
+        Arc{"CMD", "READ_VALID", {1, 1}},
+        Arc{"CMD", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_DATA", "BUSY", {1, 1}},
+        Arc{"WRITE_DATA", "ERROR", {1, 1}},
+        Arc{"WRITE_DATA", "READ_DATA", {2, 17}},
+        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
+        Arc{"WRITE_DATA", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_MASK", "BUSY", {1, 1}},
+        Arc{"WRITE_MASK", "ERROR", {1, 1}},
+        Arc{"WRITE_MASK", "READ_DATA", {2, 17}},
+        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
+        Arc{"WRITE_MASK", "ROW_OPEN", {1, 1}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.dram.device.32.behavioral@depth=64", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.device.32.structural";
+    t.arcs = {
+        Arc{"ADDR", "BUSY", {1, 1}},
+        Arc{"ADDR", "ERROR", {1, 1}},
+        Arc{"ADDR", "READ_DATA", {2, 17}},
+        Arc{"ADDR", "READ_VALID", {1, 1}},
+        Arc{"ADDR", "ROW_OPEN", {1, 1}},
+        Arc{"CLK", "BUSY", {1, 1}},
+        Arc{"CLK", "ERROR", {1, 1}},
+        Arc{"CLK", "READ_DATA", {2, 17}},
+        Arc{"CLK", "READ_VALID", {1, 1}},
+        Arc{"CLK", "ROW_OPEN", {1, 1}},
+        Arc{"CMD", "BUSY", {1, 1}},
+        Arc{"CMD", "ERROR", {1, 1}},
+        Arc{"CMD", "READ_DATA", {2, 17}},
+        Arc{"CMD", "READ_VALID", {1, 1}},
+        Arc{"CMD", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_DATA", "BUSY", {1, 1}},
+        Arc{"WRITE_DATA", "ERROR", {1, 1}},
+        Arc{"WRITE_DATA", "READ_DATA", {2, 17}},
+        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
+        Arc{"WRITE_DATA", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_MASK", "BUSY", {1, 1}},
+        Arc{"WRITE_MASK", "ERROR", {1, 1}},
+        Arc{"WRITE_MASK", "READ_DATA", {2, 17}},
+        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
+        Arc{"WRITE_MASK", "ROW_OPEN", {1, 1}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.dram.device.8.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.device.8.structural";
+    t.arcs = {
+        Arc{"ADDR", "BUSY", {1, 1}},
+        Arc{"ADDR", "ERROR", {1, 1}},
+        Arc{"ADDR", "READ_DATA", {2, 15}},
+        Arc{"ADDR", "READ_VALID", {1, 1}},
+        Arc{"ADDR", "ROW_OPEN", {1, 1}},
+        Arc{"CLK", "BUSY", {1, 1}},
+        Arc{"CLK", "ERROR", {1, 1}},
+        Arc{"CLK", "READ_DATA", {2, 15}},
+        Arc{"CLK", "READ_VALID", {1, 1}},
+        Arc{"CLK", "ROW_OPEN", {1, 1}},
+        Arc{"CMD", "BUSY", {1, 1}},
+        Arc{"CMD", "ERROR", {1, 1}},
+        Arc{"CMD", "READ_DATA", {2, 15}},
+        Arc{"CMD", "READ_VALID", {1, 1}},
+        Arc{"CMD", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_DATA", "BUSY", {1, 1}},
+        Arc{"WRITE_DATA", "ERROR", {1, 1}},
+        Arc{"WRITE_DATA", "READ_DATA", {2, 15}},
+        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
+        Arc{"WRITE_DATA", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_MASK", "BUSY", {1, 1}},
+        Arc{"WRITE_MASK", "ERROR", {1, 1}},
+        Arc{"WRITE_MASK", "READ_DATA", {2, 15}},
+        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
+        Arc{"WRITE_MASK", "ROW_OPEN", {1, 1}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.dram.device.8.behavioral@depth=128", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.device.8.structural";
+    t.arcs = {
+        Arc{"ADDR", "BUSY", {1, 1}},
+        Arc{"ADDR", "ERROR", {1, 1}},
+        Arc{"ADDR", "READ_DATA", {2, 17}},
+        Arc{"ADDR", "READ_VALID", {1, 1}},
+        Arc{"ADDR", "ROW_OPEN", {1, 1}},
+        Arc{"CLK", "BUSY", {1, 1}},
+        Arc{"CLK", "ERROR", {1, 1}},
+        Arc{"CLK", "READ_DATA", {2, 17}},
+        Arc{"CLK", "READ_VALID", {1, 1}},
+        Arc{"CLK", "ROW_OPEN", {1, 1}},
+        Arc{"CMD", "BUSY", {1, 1}},
+        Arc{"CMD", "ERROR", {1, 1}},
+        Arc{"CMD", "READ_DATA", {2, 17}},
+        Arc{"CMD", "READ_VALID", {1, 1}},
+        Arc{"CMD", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_DATA", "BUSY", {1, 1}},
+        Arc{"WRITE_DATA", "ERROR", {1, 1}},
+        Arc{"WRITE_DATA", "READ_DATA", {2, 17}},
+        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
+        Arc{"WRITE_DATA", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_MASK", "BUSY", {1, 1}},
+        Arc{"WRITE_MASK", "ERROR", {1, 1}},
+        Arc{"WRITE_MASK", "READ_DATA", {2, 17}},
+        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
+        Arc{"WRITE_MASK", "ROW_OPEN", {1, 1}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.dram.device.8.behavioral@depth=64", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.device.8.structural";
+    t.arcs = {
+        Arc{"ADDR", "BUSY", {1, 1}},
+        Arc{"ADDR", "ERROR", {1, 1}},
+        Arc{"ADDR", "READ_DATA", {2, 17}},
+        Arc{"ADDR", "READ_VALID", {1, 1}},
+        Arc{"ADDR", "ROW_OPEN", {1, 1}},
+        Arc{"CLK", "BUSY", {1, 1}},
+        Arc{"CLK", "ERROR", {1, 1}},
+        Arc{"CLK", "READ_DATA", {2, 17}},
+        Arc{"CLK", "READ_VALID", {1, 1}},
+        Arc{"CLK", "ROW_OPEN", {1, 1}},
+        Arc{"CMD", "BUSY", {1, 1}},
+        Arc{"CMD", "ERROR", {1, 1}},
+        Arc{"CMD", "READ_DATA", {2, 17}},
+        Arc{"CMD", "READ_VALID", {1, 1}},
+        Arc{"CMD", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_DATA", "BUSY", {1, 1}},
+        Arc{"WRITE_DATA", "ERROR", {1, 1}},
+        Arc{"WRITE_DATA", "READ_DATA", {2, 17}},
+        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
+        Arc{"WRITE_DATA", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_MASK", "BUSY", {1, 1}},
+        Arc{"WRITE_MASK", "ERROR", {1, 1}},
+        Arc{"WRITE_MASK", "READ_DATA", {2, 17}},
+        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
+        Arc{"WRITE_MASK", "ROW_OPEN", {1, 1}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.dram.endpoint.16.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.endpoint.16.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.dram.endpoint.16.behavioral@depth=128", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.endpoint.16.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.dram.endpoint.16.behavioral@depth=64", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.endpoint.16.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.dram.endpoint.32.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.endpoint.32.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.dram.endpoint.32.behavioral@depth=128", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.endpoint.32.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.dram.endpoint.32.behavioral@depth=64", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.endpoint.32.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.dram.endpoint.8.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.endpoint.8.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.dram.endpoint.8.behavioral@depth=128", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.endpoint.8.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.dram.endpoint.8.behavioral@depth=64", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.endpoint.8.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
 {"memory.dram.row.behavioral", [] {
     PartDelays t;
     t.evidence = "proven on memory.dram.row.structural";
     t.arcs = {
         Arc{"D_0", "Q_0", {1, 1}},
-        Arc{"D_0", "SAMPLE_0", {1, 1}},
         Arc{"D_1", "Q_1", {1, 1}},
-        Arc{"D_1", "SAMPLE_1", {1, 1}},
         Arc{"D_2", "Q_2", {1, 1}},
-        Arc{"D_2", "SAMPLE_2", {1, 1}},
         Arc{"D_3", "Q_3", {1, 1}},
-        Arc{"D_3", "SAMPLE_3", {1, 1}},
         Arc{"RESTORE_0", "Q_0", {1, 1}},
-        Arc{"RESTORE_0", "SAMPLE_0", {1, 1}},
         Arc{"RESTORE_1", "Q_1", {1, 1}},
-        Arc{"RESTORE_1", "SAMPLE_1", {1, 1}},
         Arc{"RESTORE_2", "Q_2", {1, 1}},
-        Arc{"RESTORE_2", "SAMPLE_2", {1, 1}},
         Arc{"RESTORE_3", "Q_3", {1, 1}},
-        Arc{"RESTORE_3", "SAMPLE_3", {1, 1}},
         Arc{"WL", "Q_0", {1, 1}},
         Arc{"WL", "Q_1", {1, 1}},
         Arc{"WL", "Q_2", {1, 1}},
@@ -474,6 +1657,501 @@
         Arc{"WL", "SAMPLE_3", {1, 1}},
     };
     t.self_timed = true;
+    return t;
+}()},
+{"memory.dram.scalable-device.16.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.device.16.structural";
+    t.arcs = {
+        Arc{"ADDR", "BUSY", {1, 1}},
+        Arc{"ADDR", "ERROR", {1, 1}},
+        Arc{"ADDR", "READ_DATA", {2, 15}},
+        Arc{"ADDR", "READ_VALID", {1, 1}},
+        Arc{"ADDR", "ROW_OPEN", {1, 1}},
+        Arc{"CLK", "BUSY", {1, 1}},
+        Arc{"CLK", "ERROR", {1, 1}},
+        Arc{"CLK", "READ_DATA", {2, 15}},
+        Arc{"CLK", "READ_VALID", {1, 1}},
+        Arc{"CLK", "ROW_OPEN", {1, 1}},
+        Arc{"CMD", "BUSY", {1, 1}},
+        Arc{"CMD", "ERROR", {1, 1}},
+        Arc{"CMD", "READ_DATA", {2, 15}},
+        Arc{"CMD", "READ_VALID", {1, 1}},
+        Arc{"CMD", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_DATA", "BUSY", {1, 1}},
+        Arc{"WRITE_DATA", "ERROR", {1, 1}},
+        Arc{"WRITE_DATA", "READ_DATA", {2, 15}},
+        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
+        Arc{"WRITE_DATA", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_MASK", "BUSY", {1, 1}},
+        Arc{"WRITE_MASK", "ERROR", {1, 1}},
+        Arc{"WRITE_MASK", "READ_DATA", {2, 15}},
+        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
+        Arc{"WRITE_MASK", "ROW_OPEN", {1, 1}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.dram.scalable-device.16.behavioral@depth=128", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.device.16.structural";
+    t.arcs = {
+        Arc{"ADDR", "BUSY", {1, 1}},
+        Arc{"ADDR", "ERROR", {1, 1}},
+        Arc{"ADDR", "READ_DATA", {2, 17}},
+        Arc{"ADDR", "READ_VALID", {1, 1}},
+        Arc{"ADDR", "ROW_OPEN", {1, 1}},
+        Arc{"CLK", "BUSY", {1, 1}},
+        Arc{"CLK", "ERROR", {1, 1}},
+        Arc{"CLK", "READ_DATA", {2, 17}},
+        Arc{"CLK", "READ_VALID", {1, 1}},
+        Arc{"CLK", "ROW_OPEN", {1, 1}},
+        Arc{"CMD", "BUSY", {1, 1}},
+        Arc{"CMD", "ERROR", {1, 1}},
+        Arc{"CMD", "READ_DATA", {2, 17}},
+        Arc{"CMD", "READ_VALID", {1, 1}},
+        Arc{"CMD", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_DATA", "BUSY", {1, 1}},
+        Arc{"WRITE_DATA", "ERROR", {1, 1}},
+        Arc{"WRITE_DATA", "READ_DATA", {2, 17}},
+        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
+        Arc{"WRITE_DATA", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_MASK", "BUSY", {1, 1}},
+        Arc{"WRITE_MASK", "ERROR", {1, 1}},
+        Arc{"WRITE_MASK", "READ_DATA", {2, 17}},
+        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
+        Arc{"WRITE_MASK", "ROW_OPEN", {1, 1}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.dram.scalable-device.16.behavioral@depth=64", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.device.16.structural";
+    t.arcs = {
+        Arc{"ADDR", "BUSY", {1, 1}},
+        Arc{"ADDR", "ERROR", {1, 1}},
+        Arc{"ADDR", "READ_DATA", {2, 17}},
+        Arc{"ADDR", "READ_VALID", {1, 1}},
+        Arc{"ADDR", "ROW_OPEN", {1, 1}},
+        Arc{"CLK", "BUSY", {1, 1}},
+        Arc{"CLK", "ERROR", {1, 1}},
+        Arc{"CLK", "READ_DATA", {2, 17}},
+        Arc{"CLK", "READ_VALID", {1, 1}},
+        Arc{"CLK", "ROW_OPEN", {1, 1}},
+        Arc{"CMD", "BUSY", {1, 1}},
+        Arc{"CMD", "ERROR", {1, 1}},
+        Arc{"CMD", "READ_DATA", {2, 17}},
+        Arc{"CMD", "READ_VALID", {1, 1}},
+        Arc{"CMD", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_DATA", "BUSY", {1, 1}},
+        Arc{"WRITE_DATA", "ERROR", {1, 1}},
+        Arc{"WRITE_DATA", "READ_DATA", {2, 17}},
+        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
+        Arc{"WRITE_DATA", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_MASK", "BUSY", {1, 1}},
+        Arc{"WRITE_MASK", "ERROR", {1, 1}},
+        Arc{"WRITE_MASK", "READ_DATA", {2, 17}},
+        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
+        Arc{"WRITE_MASK", "ROW_OPEN", {1, 1}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.dram.scalable-device.32.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.device.32.structural";
+    t.arcs = {
+        Arc{"ADDR", "BUSY", {1, 1}},
+        Arc{"ADDR", "ERROR", {1, 1}},
+        Arc{"ADDR", "READ_DATA", {2, 15}},
+        Arc{"ADDR", "READ_VALID", {1, 1}},
+        Arc{"ADDR", "ROW_OPEN", {1, 1}},
+        Arc{"CLK", "BUSY", {1, 1}},
+        Arc{"CLK", "ERROR", {1, 1}},
+        Arc{"CLK", "READ_DATA", {2, 15}},
+        Arc{"CLK", "READ_VALID", {1, 1}},
+        Arc{"CLK", "ROW_OPEN", {1, 1}},
+        Arc{"CMD", "BUSY", {1, 1}},
+        Arc{"CMD", "ERROR", {1, 1}},
+        Arc{"CMD", "READ_DATA", {2, 15}},
+        Arc{"CMD", "READ_VALID", {1, 1}},
+        Arc{"CMD", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_DATA", "BUSY", {1, 1}},
+        Arc{"WRITE_DATA", "ERROR", {1, 1}},
+        Arc{"WRITE_DATA", "READ_DATA", {2, 15}},
+        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
+        Arc{"WRITE_DATA", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_MASK", "BUSY", {1, 1}},
+        Arc{"WRITE_MASK", "ERROR", {1, 1}},
+        Arc{"WRITE_MASK", "READ_DATA", {2, 15}},
+        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
+        Arc{"WRITE_MASK", "ROW_OPEN", {1, 1}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.dram.scalable-device.32.behavioral@depth=128", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.device.32.structural";
+    t.arcs = {
+        Arc{"ADDR", "BUSY", {1, 1}},
+        Arc{"ADDR", "ERROR", {1, 1}},
+        Arc{"ADDR", "READ_DATA", {2, 17}},
+        Arc{"ADDR", "READ_VALID", {1, 1}},
+        Arc{"ADDR", "ROW_OPEN", {1, 1}},
+        Arc{"CLK", "BUSY", {1, 1}},
+        Arc{"CLK", "ERROR", {1, 1}},
+        Arc{"CLK", "READ_DATA", {2, 17}},
+        Arc{"CLK", "READ_VALID", {1, 1}},
+        Arc{"CLK", "ROW_OPEN", {1, 1}},
+        Arc{"CMD", "BUSY", {1, 1}},
+        Arc{"CMD", "ERROR", {1, 1}},
+        Arc{"CMD", "READ_DATA", {2, 17}},
+        Arc{"CMD", "READ_VALID", {1, 1}},
+        Arc{"CMD", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_DATA", "BUSY", {1, 1}},
+        Arc{"WRITE_DATA", "ERROR", {1, 1}},
+        Arc{"WRITE_DATA", "READ_DATA", {2, 17}},
+        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
+        Arc{"WRITE_DATA", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_MASK", "BUSY", {1, 1}},
+        Arc{"WRITE_MASK", "ERROR", {1, 1}},
+        Arc{"WRITE_MASK", "READ_DATA", {2, 17}},
+        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
+        Arc{"WRITE_MASK", "ROW_OPEN", {1, 1}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.dram.scalable-device.32.behavioral@depth=64", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.device.32.structural";
+    t.arcs = {
+        Arc{"ADDR", "BUSY", {1, 1}},
+        Arc{"ADDR", "ERROR", {1, 1}},
+        Arc{"ADDR", "READ_DATA", {2, 17}},
+        Arc{"ADDR", "READ_VALID", {1, 1}},
+        Arc{"ADDR", "ROW_OPEN", {1, 1}},
+        Arc{"CLK", "BUSY", {1, 1}},
+        Arc{"CLK", "ERROR", {1, 1}},
+        Arc{"CLK", "READ_DATA", {2, 17}},
+        Arc{"CLK", "READ_VALID", {1, 1}},
+        Arc{"CLK", "ROW_OPEN", {1, 1}},
+        Arc{"CMD", "BUSY", {1, 1}},
+        Arc{"CMD", "ERROR", {1, 1}},
+        Arc{"CMD", "READ_DATA", {2, 17}},
+        Arc{"CMD", "READ_VALID", {1, 1}},
+        Arc{"CMD", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_DATA", "BUSY", {1, 1}},
+        Arc{"WRITE_DATA", "ERROR", {1, 1}},
+        Arc{"WRITE_DATA", "READ_DATA", {2, 17}},
+        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
+        Arc{"WRITE_DATA", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_MASK", "BUSY", {1, 1}},
+        Arc{"WRITE_MASK", "ERROR", {1, 1}},
+        Arc{"WRITE_MASK", "READ_DATA", {2, 17}},
+        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
+        Arc{"WRITE_MASK", "ROW_OPEN", {1, 1}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.dram.scalable-device.8.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.device.8.structural";
+    t.arcs = {
+        Arc{"ADDR", "BUSY", {1, 1}},
+        Arc{"ADDR", "ERROR", {1, 1}},
+        Arc{"ADDR", "READ_DATA", {2, 15}},
+        Arc{"ADDR", "READ_VALID", {1, 1}},
+        Arc{"ADDR", "ROW_OPEN", {1, 1}},
+        Arc{"CLK", "BUSY", {1, 1}},
+        Arc{"CLK", "ERROR", {1, 1}},
+        Arc{"CLK", "READ_DATA", {2, 15}},
+        Arc{"CLK", "READ_VALID", {1, 1}},
+        Arc{"CLK", "ROW_OPEN", {1, 1}},
+        Arc{"CMD", "BUSY", {1, 1}},
+        Arc{"CMD", "ERROR", {1, 1}},
+        Arc{"CMD", "READ_DATA", {2, 15}},
+        Arc{"CMD", "READ_VALID", {1, 1}},
+        Arc{"CMD", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_DATA", "BUSY", {1, 1}},
+        Arc{"WRITE_DATA", "ERROR", {1, 1}},
+        Arc{"WRITE_DATA", "READ_DATA", {2, 15}},
+        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
+        Arc{"WRITE_DATA", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_MASK", "BUSY", {1, 1}},
+        Arc{"WRITE_MASK", "ERROR", {1, 1}},
+        Arc{"WRITE_MASK", "READ_DATA", {2, 15}},
+        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
+        Arc{"WRITE_MASK", "ROW_OPEN", {1, 1}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.dram.scalable-device.8.behavioral@depth=128", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.device.8.structural";
+    t.arcs = {
+        Arc{"ADDR", "BUSY", {1, 1}},
+        Arc{"ADDR", "ERROR", {1, 1}},
+        Arc{"ADDR", "READ_DATA", {2, 17}},
+        Arc{"ADDR", "READ_VALID", {1, 1}},
+        Arc{"ADDR", "ROW_OPEN", {1, 1}},
+        Arc{"CLK", "BUSY", {1, 1}},
+        Arc{"CLK", "ERROR", {1, 1}},
+        Arc{"CLK", "READ_DATA", {2, 17}},
+        Arc{"CLK", "READ_VALID", {1, 1}},
+        Arc{"CLK", "ROW_OPEN", {1, 1}},
+        Arc{"CMD", "BUSY", {1, 1}},
+        Arc{"CMD", "ERROR", {1, 1}},
+        Arc{"CMD", "READ_DATA", {2, 17}},
+        Arc{"CMD", "READ_VALID", {1, 1}},
+        Arc{"CMD", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_DATA", "BUSY", {1, 1}},
+        Arc{"WRITE_DATA", "ERROR", {1, 1}},
+        Arc{"WRITE_DATA", "READ_DATA", {2, 17}},
+        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
+        Arc{"WRITE_DATA", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_MASK", "BUSY", {1, 1}},
+        Arc{"WRITE_MASK", "ERROR", {1, 1}},
+        Arc{"WRITE_MASK", "READ_DATA", {2, 17}},
+        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
+        Arc{"WRITE_MASK", "ROW_OPEN", {1, 1}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.dram.scalable-device.8.behavioral@depth=64", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.device.8.structural";
+    t.arcs = {
+        Arc{"ADDR", "BUSY", {1, 1}},
+        Arc{"ADDR", "ERROR", {1, 1}},
+        Arc{"ADDR", "READ_DATA", {2, 17}},
+        Arc{"ADDR", "READ_VALID", {1, 1}},
+        Arc{"ADDR", "ROW_OPEN", {1, 1}},
+        Arc{"CLK", "BUSY", {1, 1}},
+        Arc{"CLK", "ERROR", {1, 1}},
+        Arc{"CLK", "READ_DATA", {2, 17}},
+        Arc{"CLK", "READ_VALID", {1, 1}},
+        Arc{"CLK", "ROW_OPEN", {1, 1}},
+        Arc{"CMD", "BUSY", {1, 1}},
+        Arc{"CMD", "ERROR", {1, 1}},
+        Arc{"CMD", "READ_DATA", {2, 17}},
+        Arc{"CMD", "READ_VALID", {1, 1}},
+        Arc{"CMD", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_DATA", "BUSY", {1, 1}},
+        Arc{"WRITE_DATA", "ERROR", {1, 1}},
+        Arc{"WRITE_DATA", "READ_DATA", {2, 17}},
+        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
+        Arc{"WRITE_DATA", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_MASK", "BUSY", {1, 1}},
+        Arc{"WRITE_MASK", "ERROR", {1, 1}},
+        Arc{"WRITE_MASK", "READ_DATA", {2, 17}},
+        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
+        Arc{"WRITE_MASK", "ROW_OPEN", {1, 1}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.dram.scalable-endpoint.16.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.endpoint.16.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.dram.scalable-endpoint.16.behavioral@depth=128", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.endpoint.16.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.dram.scalable-endpoint.16.behavioral@depth=64", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.endpoint.16.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.dram.scalable-endpoint.32.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.endpoint.32.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.dram.scalable-endpoint.32.behavioral@depth=128", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.endpoint.32.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.dram.scalable-endpoint.32.behavioral@depth=64", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.endpoint.32.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.dram.scalable-endpoint.8.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.endpoint.8.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.dram.scalable-endpoint.8.behavioral@depth=128", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.endpoint.8.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.dram.scalable-endpoint.8.behavioral@depth=64", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.endpoint.8.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
     return t;
 }()},
 {"memory.ff.bank.16.behavioral.direct", [] {
@@ -4593,6 +6271,2058 @@
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
+{"memory.sram.bank.16.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.bank.16.structural";
+    t.arcs = {
+        Arc{"DRIVE_0", "BL_0", {1, 5}},
+        Arc{"DRIVE_0", "BL_BAR_0", {1, 5}},
+        Arc{"DRIVE_0", "VALID_0", {1, 5}},
+        Arc{"DRIVE_1", "BL_1", {1, 5}},
+        Arc{"DRIVE_1", "BL_BAR_1", {1, 5}},
+        Arc{"DRIVE_1", "VALID_1", {1, 5}},
+        Arc{"DRIVE_10", "BL_10", {1, 5}},
+        Arc{"DRIVE_10", "BL_BAR_10", {1, 5}},
+        Arc{"DRIVE_10", "VALID_10", {1, 5}},
+        Arc{"DRIVE_11", "BL_11", {1, 5}},
+        Arc{"DRIVE_11", "BL_BAR_11", {1, 5}},
+        Arc{"DRIVE_11", "VALID_11", {1, 5}},
+        Arc{"DRIVE_12", "BL_12", {1, 5}},
+        Arc{"DRIVE_12", "BL_BAR_12", {1, 5}},
+        Arc{"DRIVE_12", "VALID_12", {1, 5}},
+        Arc{"DRIVE_13", "BL_13", {1, 5}},
+        Arc{"DRIVE_13", "BL_BAR_13", {1, 5}},
+        Arc{"DRIVE_13", "VALID_13", {1, 5}},
+        Arc{"DRIVE_14", "BL_14", {1, 5}},
+        Arc{"DRIVE_14", "BL_BAR_14", {1, 5}},
+        Arc{"DRIVE_14", "VALID_14", {1, 5}},
+        Arc{"DRIVE_15", "BL_15", {1, 5}},
+        Arc{"DRIVE_15", "BL_BAR_15", {1, 5}},
+        Arc{"DRIVE_15", "VALID_15", {1, 5}},
+        Arc{"DRIVE_16", "BL_16", {1, 5}},
+        Arc{"DRIVE_16", "BL_BAR_16", {1, 5}},
+        Arc{"DRIVE_16", "VALID_16", {1, 5}},
+        Arc{"DRIVE_17", "BL_17", {1, 5}},
+        Arc{"DRIVE_17", "BL_BAR_17", {1, 5}},
+        Arc{"DRIVE_17", "VALID_17", {1, 5}},
+        Arc{"DRIVE_18", "BL_18", {1, 5}},
+        Arc{"DRIVE_18", "BL_BAR_18", {1, 5}},
+        Arc{"DRIVE_18", "VALID_18", {1, 5}},
+        Arc{"DRIVE_19", "BL_19", {1, 5}},
+        Arc{"DRIVE_19", "BL_BAR_19", {1, 5}},
+        Arc{"DRIVE_19", "VALID_19", {1, 5}},
+        Arc{"DRIVE_2", "BL_2", {1, 5}},
+        Arc{"DRIVE_2", "BL_BAR_2", {1, 5}},
+        Arc{"DRIVE_2", "VALID_2", {1, 5}},
+        Arc{"DRIVE_20", "BL_20", {1, 5}},
+        Arc{"DRIVE_20", "BL_BAR_20", {1, 5}},
+        Arc{"DRIVE_20", "VALID_20", {1, 5}},
+        Arc{"DRIVE_21", "BL_21", {1, 5}},
+        Arc{"DRIVE_21", "BL_BAR_21", {1, 5}},
+        Arc{"DRIVE_21", "VALID_21", {1, 5}},
+        Arc{"DRIVE_22", "BL_22", {1, 5}},
+        Arc{"DRIVE_22", "BL_BAR_22", {1, 5}},
+        Arc{"DRIVE_22", "VALID_22", {1, 5}},
+        Arc{"DRIVE_23", "BL_23", {1, 5}},
+        Arc{"DRIVE_23", "BL_BAR_23", {1, 5}},
+        Arc{"DRIVE_23", "VALID_23", {1, 5}},
+        Arc{"DRIVE_24", "BL_24", {1, 5}},
+        Arc{"DRIVE_24", "BL_BAR_24", {1, 5}},
+        Arc{"DRIVE_24", "VALID_24", {1, 5}},
+        Arc{"DRIVE_25", "BL_25", {1, 5}},
+        Arc{"DRIVE_25", "BL_BAR_25", {1, 5}},
+        Arc{"DRIVE_25", "VALID_25", {1, 5}},
+        Arc{"DRIVE_26", "BL_26", {1, 5}},
+        Arc{"DRIVE_26", "BL_BAR_26", {1, 5}},
+        Arc{"DRIVE_26", "VALID_26", {1, 5}},
+        Arc{"DRIVE_27", "BL_27", {1, 5}},
+        Arc{"DRIVE_27", "BL_BAR_27", {1, 5}},
+        Arc{"DRIVE_27", "VALID_27", {1, 5}},
+        Arc{"DRIVE_28", "BL_28", {1, 5}},
+        Arc{"DRIVE_28", "BL_BAR_28", {1, 5}},
+        Arc{"DRIVE_28", "VALID_28", {1, 5}},
+        Arc{"DRIVE_29", "BL_29", {1, 5}},
+        Arc{"DRIVE_29", "BL_BAR_29", {1, 5}},
+        Arc{"DRIVE_29", "VALID_29", {1, 5}},
+        Arc{"DRIVE_3", "BL_3", {1, 5}},
+        Arc{"DRIVE_3", "BL_BAR_3", {1, 5}},
+        Arc{"DRIVE_3", "VALID_3", {1, 5}},
+        Arc{"DRIVE_30", "BL_30", {1, 5}},
+        Arc{"DRIVE_30", "BL_BAR_30", {1, 5}},
+        Arc{"DRIVE_30", "VALID_30", {1, 5}},
+        Arc{"DRIVE_31", "BL_31", {1, 5}},
+        Arc{"DRIVE_31", "BL_BAR_31", {1, 5}},
+        Arc{"DRIVE_31", "VALID_31", {1, 5}},
+        Arc{"DRIVE_4", "BL_4", {1, 5}},
+        Arc{"DRIVE_4", "BL_BAR_4", {1, 5}},
+        Arc{"DRIVE_4", "VALID_4", {1, 5}},
+        Arc{"DRIVE_5", "BL_5", {1, 5}},
+        Arc{"DRIVE_5", "BL_BAR_5", {1, 5}},
+        Arc{"DRIVE_5", "VALID_5", {1, 5}},
+        Arc{"DRIVE_6", "BL_6", {1, 5}},
+        Arc{"DRIVE_6", "BL_BAR_6", {1, 5}},
+        Arc{"DRIVE_6", "VALID_6", {1, 5}},
+        Arc{"DRIVE_7", "BL_7", {1, 5}},
+        Arc{"DRIVE_7", "BL_BAR_7", {1, 5}},
+        Arc{"DRIVE_7", "VALID_7", {1, 5}},
+        Arc{"DRIVE_8", "BL_8", {1, 5}},
+        Arc{"DRIVE_8", "BL_BAR_8", {1, 5}},
+        Arc{"DRIVE_8", "VALID_8", {1, 5}},
+        Arc{"DRIVE_9", "BL_9", {1, 5}},
+        Arc{"DRIVE_9", "BL_BAR_9", {1, 5}},
+        Arc{"DRIVE_9", "VALID_9", {1, 5}},
+        Arc{"PRECHARGE_0", "BL_0", {1, 5}},
+        Arc{"PRECHARGE_0", "BL_BAR_0", {1, 5}},
+        Arc{"PRECHARGE_0", "VALID_0", {1, 5}},
+        Arc{"PRECHARGE_1", "BL_1", {1, 5}},
+        Arc{"PRECHARGE_1", "BL_BAR_1", {1, 5}},
+        Arc{"PRECHARGE_1", "VALID_1", {1, 5}},
+        Arc{"PRECHARGE_10", "BL_10", {1, 5}},
+        Arc{"PRECHARGE_10", "BL_BAR_10", {1, 5}},
+        Arc{"PRECHARGE_10", "VALID_10", {1, 5}},
+        Arc{"PRECHARGE_11", "BL_11", {1, 5}},
+        Arc{"PRECHARGE_11", "BL_BAR_11", {1, 5}},
+        Arc{"PRECHARGE_11", "VALID_11", {1, 5}},
+        Arc{"PRECHARGE_12", "BL_12", {1, 5}},
+        Arc{"PRECHARGE_12", "BL_BAR_12", {1, 5}},
+        Arc{"PRECHARGE_12", "VALID_12", {1, 5}},
+        Arc{"PRECHARGE_13", "BL_13", {1, 5}},
+        Arc{"PRECHARGE_13", "BL_BAR_13", {1, 5}},
+        Arc{"PRECHARGE_13", "VALID_13", {1, 5}},
+        Arc{"PRECHARGE_14", "BL_14", {1, 5}},
+        Arc{"PRECHARGE_14", "BL_BAR_14", {1, 5}},
+        Arc{"PRECHARGE_14", "VALID_14", {1, 5}},
+        Arc{"PRECHARGE_15", "BL_15", {1, 5}},
+        Arc{"PRECHARGE_15", "BL_BAR_15", {1, 5}},
+        Arc{"PRECHARGE_15", "VALID_15", {1, 5}},
+        Arc{"PRECHARGE_16", "BL_16", {1, 5}},
+        Arc{"PRECHARGE_16", "BL_BAR_16", {1, 5}},
+        Arc{"PRECHARGE_16", "VALID_16", {1, 5}},
+        Arc{"PRECHARGE_17", "BL_17", {1, 5}},
+        Arc{"PRECHARGE_17", "BL_BAR_17", {1, 5}},
+        Arc{"PRECHARGE_17", "VALID_17", {1, 5}},
+        Arc{"PRECHARGE_18", "BL_18", {1, 5}},
+        Arc{"PRECHARGE_18", "BL_BAR_18", {1, 5}},
+        Arc{"PRECHARGE_18", "VALID_18", {1, 5}},
+        Arc{"PRECHARGE_19", "BL_19", {1, 5}},
+        Arc{"PRECHARGE_19", "BL_BAR_19", {1, 5}},
+        Arc{"PRECHARGE_19", "VALID_19", {1, 5}},
+        Arc{"PRECHARGE_2", "BL_2", {1, 5}},
+        Arc{"PRECHARGE_2", "BL_BAR_2", {1, 5}},
+        Arc{"PRECHARGE_2", "VALID_2", {1, 5}},
+        Arc{"PRECHARGE_20", "BL_20", {1, 5}},
+        Arc{"PRECHARGE_20", "BL_BAR_20", {1, 5}},
+        Arc{"PRECHARGE_20", "VALID_20", {1, 5}},
+        Arc{"PRECHARGE_21", "BL_21", {1, 5}},
+        Arc{"PRECHARGE_21", "BL_BAR_21", {1, 5}},
+        Arc{"PRECHARGE_21", "VALID_21", {1, 5}},
+        Arc{"PRECHARGE_22", "BL_22", {1, 5}},
+        Arc{"PRECHARGE_22", "BL_BAR_22", {1, 5}},
+        Arc{"PRECHARGE_22", "VALID_22", {1, 5}},
+        Arc{"PRECHARGE_23", "BL_23", {1, 5}},
+        Arc{"PRECHARGE_23", "BL_BAR_23", {1, 5}},
+        Arc{"PRECHARGE_23", "VALID_23", {1, 5}},
+        Arc{"PRECHARGE_24", "BL_24", {1, 5}},
+        Arc{"PRECHARGE_24", "BL_BAR_24", {1, 5}},
+        Arc{"PRECHARGE_24", "VALID_24", {1, 5}},
+        Arc{"PRECHARGE_25", "BL_25", {1, 5}},
+        Arc{"PRECHARGE_25", "BL_BAR_25", {1, 5}},
+        Arc{"PRECHARGE_25", "VALID_25", {1, 5}},
+        Arc{"PRECHARGE_26", "BL_26", {1, 5}},
+        Arc{"PRECHARGE_26", "BL_BAR_26", {1, 5}},
+        Arc{"PRECHARGE_26", "VALID_26", {1, 5}},
+        Arc{"PRECHARGE_27", "BL_27", {1, 5}},
+        Arc{"PRECHARGE_27", "BL_BAR_27", {1, 5}},
+        Arc{"PRECHARGE_27", "VALID_27", {1, 5}},
+        Arc{"PRECHARGE_28", "BL_28", {1, 5}},
+        Arc{"PRECHARGE_28", "BL_BAR_28", {1, 5}},
+        Arc{"PRECHARGE_28", "VALID_28", {1, 5}},
+        Arc{"PRECHARGE_29", "BL_29", {1, 5}},
+        Arc{"PRECHARGE_29", "BL_BAR_29", {1, 5}},
+        Arc{"PRECHARGE_29", "VALID_29", {1, 5}},
+        Arc{"PRECHARGE_3", "BL_3", {1, 5}},
+        Arc{"PRECHARGE_3", "BL_BAR_3", {1, 5}},
+        Arc{"PRECHARGE_3", "VALID_3", {1, 5}},
+        Arc{"PRECHARGE_30", "BL_30", {1, 5}},
+        Arc{"PRECHARGE_30", "BL_BAR_30", {1, 5}},
+        Arc{"PRECHARGE_30", "VALID_30", {1, 5}},
+        Arc{"PRECHARGE_31", "BL_31", {1, 5}},
+        Arc{"PRECHARGE_31", "BL_BAR_31", {1, 5}},
+        Arc{"PRECHARGE_31", "VALID_31", {1, 5}},
+        Arc{"PRECHARGE_4", "BL_4", {1, 5}},
+        Arc{"PRECHARGE_4", "BL_BAR_4", {1, 5}},
+        Arc{"PRECHARGE_4", "VALID_4", {1, 5}},
+        Arc{"PRECHARGE_5", "BL_5", {1, 5}},
+        Arc{"PRECHARGE_5", "BL_BAR_5", {1, 5}},
+        Arc{"PRECHARGE_5", "VALID_5", {1, 5}},
+        Arc{"PRECHARGE_6", "BL_6", {1, 5}},
+        Arc{"PRECHARGE_6", "BL_BAR_6", {1, 5}},
+        Arc{"PRECHARGE_6", "VALID_6", {1, 5}},
+        Arc{"PRECHARGE_7", "BL_7", {1, 5}},
+        Arc{"PRECHARGE_7", "BL_BAR_7", {1, 5}},
+        Arc{"PRECHARGE_7", "VALID_7", {1, 5}},
+        Arc{"PRECHARGE_8", "BL_8", {1, 5}},
+        Arc{"PRECHARGE_8", "BL_BAR_8", {1, 5}},
+        Arc{"PRECHARGE_8", "VALID_8", {1, 5}},
+        Arc{"PRECHARGE_9", "BL_9", {1, 5}},
+        Arc{"PRECHARGE_9", "BL_BAR_9", {1, 5}},
+        Arc{"PRECHARGE_9", "VALID_9", {1, 5}},
+        Arc{"WL_0", "BL_0", {1, 5}},
+        Arc{"WL_0", "BL_1", {1, 5}},
+        Arc{"WL_0", "BL_10", {1, 5}},
+        Arc{"WL_0", "BL_11", {1, 5}},
+        Arc{"WL_0", "BL_12", {1, 5}},
+        Arc{"WL_0", "BL_13", {1, 5}},
+        Arc{"WL_0", "BL_14", {1, 5}},
+        Arc{"WL_0", "BL_15", {1, 5}},
+        Arc{"WL_0", "BL_16", {1, 5}},
+        Arc{"WL_0", "BL_17", {1, 5}},
+        Arc{"WL_0", "BL_18", {1, 5}},
+        Arc{"WL_0", "BL_19", {1, 5}},
+        Arc{"WL_0", "BL_2", {1, 5}},
+        Arc{"WL_0", "BL_20", {1, 5}},
+        Arc{"WL_0", "BL_21", {1, 5}},
+        Arc{"WL_0", "BL_22", {1, 5}},
+        Arc{"WL_0", "BL_23", {1, 5}},
+        Arc{"WL_0", "BL_24", {1, 5}},
+        Arc{"WL_0", "BL_25", {1, 5}},
+        Arc{"WL_0", "BL_26", {1, 5}},
+        Arc{"WL_0", "BL_27", {1, 5}},
+        Arc{"WL_0", "BL_28", {1, 5}},
+        Arc{"WL_0", "BL_29", {1, 5}},
+        Arc{"WL_0", "BL_3", {1, 5}},
+        Arc{"WL_0", "BL_30", {1, 5}},
+        Arc{"WL_0", "BL_31", {1, 5}},
+        Arc{"WL_0", "BL_4", {1, 5}},
+        Arc{"WL_0", "BL_5", {1, 5}},
+        Arc{"WL_0", "BL_6", {1, 5}},
+        Arc{"WL_0", "BL_7", {1, 5}},
+        Arc{"WL_0", "BL_8", {1, 5}},
+        Arc{"WL_0", "BL_9", {1, 5}},
+        Arc{"WL_0", "BL_BAR_0", {1, 5}},
+        Arc{"WL_0", "BL_BAR_1", {1, 5}},
+        Arc{"WL_0", "BL_BAR_10", {1, 5}},
+        Arc{"WL_0", "BL_BAR_11", {1, 5}},
+        Arc{"WL_0", "BL_BAR_12", {1, 5}},
+        Arc{"WL_0", "BL_BAR_13", {1, 5}},
+        Arc{"WL_0", "BL_BAR_14", {1, 5}},
+        Arc{"WL_0", "BL_BAR_15", {1, 5}},
+        Arc{"WL_0", "BL_BAR_16", {1, 5}},
+        Arc{"WL_0", "BL_BAR_17", {1, 5}},
+        Arc{"WL_0", "BL_BAR_18", {1, 5}},
+        Arc{"WL_0", "BL_BAR_19", {1, 5}},
+        Arc{"WL_0", "BL_BAR_2", {1, 5}},
+        Arc{"WL_0", "BL_BAR_20", {1, 5}},
+        Arc{"WL_0", "BL_BAR_21", {1, 5}},
+        Arc{"WL_0", "BL_BAR_22", {1, 5}},
+        Arc{"WL_0", "BL_BAR_23", {1, 5}},
+        Arc{"WL_0", "BL_BAR_24", {1, 5}},
+        Arc{"WL_0", "BL_BAR_25", {1, 5}},
+        Arc{"WL_0", "BL_BAR_26", {1, 5}},
+        Arc{"WL_0", "BL_BAR_27", {1, 5}},
+        Arc{"WL_0", "BL_BAR_28", {1, 5}},
+        Arc{"WL_0", "BL_BAR_29", {1, 5}},
+        Arc{"WL_0", "BL_BAR_3", {1, 5}},
+        Arc{"WL_0", "BL_BAR_30", {1, 5}},
+        Arc{"WL_0", "BL_BAR_31", {1, 5}},
+        Arc{"WL_0", "BL_BAR_4", {1, 5}},
+        Arc{"WL_0", "BL_BAR_5", {1, 5}},
+        Arc{"WL_0", "BL_BAR_6", {1, 5}},
+        Arc{"WL_0", "BL_BAR_7", {1, 5}},
+        Arc{"WL_0", "BL_BAR_8", {1, 5}},
+        Arc{"WL_0", "BL_BAR_9", {1, 5}},
+        Arc{"WL_0", "VALID_0", {1, 5}},
+        Arc{"WL_0", "VALID_1", {1, 5}},
+        Arc{"WL_0", "VALID_10", {1, 5}},
+        Arc{"WL_0", "VALID_11", {1, 5}},
+        Arc{"WL_0", "VALID_12", {1, 5}},
+        Arc{"WL_0", "VALID_13", {1, 5}},
+        Arc{"WL_0", "VALID_14", {1, 5}},
+        Arc{"WL_0", "VALID_15", {1, 5}},
+        Arc{"WL_0", "VALID_16", {1, 5}},
+        Arc{"WL_0", "VALID_17", {1, 5}},
+        Arc{"WL_0", "VALID_18", {1, 5}},
+        Arc{"WL_0", "VALID_19", {1, 5}},
+        Arc{"WL_0", "VALID_2", {1, 5}},
+        Arc{"WL_0", "VALID_20", {1, 5}},
+        Arc{"WL_0", "VALID_21", {1, 5}},
+        Arc{"WL_0", "VALID_22", {1, 5}},
+        Arc{"WL_0", "VALID_23", {1, 5}},
+        Arc{"WL_0", "VALID_24", {1, 5}},
+        Arc{"WL_0", "VALID_25", {1, 5}},
+        Arc{"WL_0", "VALID_26", {1, 5}},
+        Arc{"WL_0", "VALID_27", {1, 5}},
+        Arc{"WL_0", "VALID_28", {1, 5}},
+        Arc{"WL_0", "VALID_29", {1, 5}},
+        Arc{"WL_0", "VALID_3", {1, 5}},
+        Arc{"WL_0", "VALID_30", {1, 5}},
+        Arc{"WL_0", "VALID_31", {1, 5}},
+        Arc{"WL_0", "VALID_4", {1, 5}},
+        Arc{"WL_0", "VALID_5", {1, 5}},
+        Arc{"WL_0", "VALID_6", {1, 5}},
+        Arc{"WL_0", "VALID_7", {1, 5}},
+        Arc{"WL_0", "VALID_8", {1, 5}},
+        Arc{"WL_0", "VALID_9", {1, 5}},
+        Arc{"WL_1", "BL_0", {1, 5}},
+        Arc{"WL_1", "BL_1", {1, 5}},
+        Arc{"WL_1", "BL_10", {1, 5}},
+        Arc{"WL_1", "BL_11", {1, 5}},
+        Arc{"WL_1", "BL_12", {1, 5}},
+        Arc{"WL_1", "BL_13", {1, 5}},
+        Arc{"WL_1", "BL_14", {1, 5}},
+        Arc{"WL_1", "BL_15", {1, 5}},
+        Arc{"WL_1", "BL_16", {1, 5}},
+        Arc{"WL_1", "BL_17", {1, 5}},
+        Arc{"WL_1", "BL_18", {1, 5}},
+        Arc{"WL_1", "BL_19", {1, 5}},
+        Arc{"WL_1", "BL_2", {1, 5}},
+        Arc{"WL_1", "BL_20", {1, 5}},
+        Arc{"WL_1", "BL_21", {1, 5}},
+        Arc{"WL_1", "BL_22", {1, 5}},
+        Arc{"WL_1", "BL_23", {1, 5}},
+        Arc{"WL_1", "BL_24", {1, 5}},
+        Arc{"WL_1", "BL_25", {1, 5}},
+        Arc{"WL_1", "BL_26", {1, 5}},
+        Arc{"WL_1", "BL_27", {1, 5}},
+        Arc{"WL_1", "BL_28", {1, 5}},
+        Arc{"WL_1", "BL_29", {1, 5}},
+        Arc{"WL_1", "BL_3", {1, 5}},
+        Arc{"WL_1", "BL_30", {1, 5}},
+        Arc{"WL_1", "BL_31", {1, 5}},
+        Arc{"WL_1", "BL_4", {1, 5}},
+        Arc{"WL_1", "BL_5", {1, 5}},
+        Arc{"WL_1", "BL_6", {1, 5}},
+        Arc{"WL_1", "BL_7", {1, 5}},
+        Arc{"WL_1", "BL_8", {1, 5}},
+        Arc{"WL_1", "BL_9", {1, 5}},
+        Arc{"WL_1", "BL_BAR_0", {1, 5}},
+        Arc{"WL_1", "BL_BAR_1", {1, 5}},
+        Arc{"WL_1", "BL_BAR_10", {1, 5}},
+        Arc{"WL_1", "BL_BAR_11", {1, 5}},
+        Arc{"WL_1", "BL_BAR_12", {1, 5}},
+        Arc{"WL_1", "BL_BAR_13", {1, 5}},
+        Arc{"WL_1", "BL_BAR_14", {1, 5}},
+        Arc{"WL_1", "BL_BAR_15", {1, 5}},
+        Arc{"WL_1", "BL_BAR_16", {1, 5}},
+        Arc{"WL_1", "BL_BAR_17", {1, 5}},
+        Arc{"WL_1", "BL_BAR_18", {1, 5}},
+        Arc{"WL_1", "BL_BAR_19", {1, 5}},
+        Arc{"WL_1", "BL_BAR_2", {1, 5}},
+        Arc{"WL_1", "BL_BAR_20", {1, 5}},
+        Arc{"WL_1", "BL_BAR_21", {1, 5}},
+        Arc{"WL_1", "BL_BAR_22", {1, 5}},
+        Arc{"WL_1", "BL_BAR_23", {1, 5}},
+        Arc{"WL_1", "BL_BAR_24", {1, 5}},
+        Arc{"WL_1", "BL_BAR_25", {1, 5}},
+        Arc{"WL_1", "BL_BAR_26", {1, 5}},
+        Arc{"WL_1", "BL_BAR_27", {1, 5}},
+        Arc{"WL_1", "BL_BAR_28", {1, 5}},
+        Arc{"WL_1", "BL_BAR_29", {1, 5}},
+        Arc{"WL_1", "BL_BAR_3", {1, 5}},
+        Arc{"WL_1", "BL_BAR_30", {1, 5}},
+        Arc{"WL_1", "BL_BAR_31", {1, 5}},
+        Arc{"WL_1", "BL_BAR_4", {1, 5}},
+        Arc{"WL_1", "BL_BAR_5", {1, 5}},
+        Arc{"WL_1", "BL_BAR_6", {1, 5}},
+        Arc{"WL_1", "BL_BAR_7", {1, 5}},
+        Arc{"WL_1", "BL_BAR_8", {1, 5}},
+        Arc{"WL_1", "BL_BAR_9", {1, 5}},
+        Arc{"WL_1", "VALID_0", {1, 5}},
+        Arc{"WL_1", "VALID_1", {1, 5}},
+        Arc{"WL_1", "VALID_10", {1, 5}},
+        Arc{"WL_1", "VALID_11", {1, 5}},
+        Arc{"WL_1", "VALID_12", {1, 5}},
+        Arc{"WL_1", "VALID_13", {1, 5}},
+        Arc{"WL_1", "VALID_14", {1, 5}},
+        Arc{"WL_1", "VALID_15", {1, 5}},
+        Arc{"WL_1", "VALID_16", {1, 5}},
+        Arc{"WL_1", "VALID_17", {1, 5}},
+        Arc{"WL_1", "VALID_18", {1, 5}},
+        Arc{"WL_1", "VALID_19", {1, 5}},
+        Arc{"WL_1", "VALID_2", {1, 5}},
+        Arc{"WL_1", "VALID_20", {1, 5}},
+        Arc{"WL_1", "VALID_21", {1, 5}},
+        Arc{"WL_1", "VALID_22", {1, 5}},
+        Arc{"WL_1", "VALID_23", {1, 5}},
+        Arc{"WL_1", "VALID_24", {1, 5}},
+        Arc{"WL_1", "VALID_25", {1, 5}},
+        Arc{"WL_1", "VALID_26", {1, 5}},
+        Arc{"WL_1", "VALID_27", {1, 5}},
+        Arc{"WL_1", "VALID_28", {1, 5}},
+        Arc{"WL_1", "VALID_29", {1, 5}},
+        Arc{"WL_1", "VALID_3", {1, 5}},
+        Arc{"WL_1", "VALID_30", {1, 5}},
+        Arc{"WL_1", "VALID_31", {1, 5}},
+        Arc{"WL_1", "VALID_4", {1, 5}},
+        Arc{"WL_1", "VALID_5", {1, 5}},
+        Arc{"WL_1", "VALID_6", {1, 5}},
+        Arc{"WL_1", "VALID_7", {1, 5}},
+        Arc{"WL_1", "VALID_8", {1, 5}},
+        Arc{"WL_1", "VALID_9", {1, 5}},
+        Arc{"WRITE_BL_0", "BL_0", {1, 5}},
+        Arc{"WRITE_BL_0", "BL_BAR_0", {1, 5}},
+        Arc{"WRITE_BL_0", "VALID_0", {1, 5}},
+        Arc{"WRITE_BL_1", "BL_1", {1, 5}},
+        Arc{"WRITE_BL_1", "BL_BAR_1", {1, 5}},
+        Arc{"WRITE_BL_1", "VALID_1", {1, 5}},
+        Arc{"WRITE_BL_10", "BL_10", {1, 5}},
+        Arc{"WRITE_BL_10", "BL_BAR_10", {1, 5}},
+        Arc{"WRITE_BL_10", "VALID_10", {1, 5}},
+        Arc{"WRITE_BL_11", "BL_11", {1, 5}},
+        Arc{"WRITE_BL_11", "BL_BAR_11", {1, 5}},
+        Arc{"WRITE_BL_11", "VALID_11", {1, 5}},
+        Arc{"WRITE_BL_12", "BL_12", {1, 5}},
+        Arc{"WRITE_BL_12", "BL_BAR_12", {1, 5}},
+        Arc{"WRITE_BL_12", "VALID_12", {1, 5}},
+        Arc{"WRITE_BL_13", "BL_13", {1, 5}},
+        Arc{"WRITE_BL_13", "BL_BAR_13", {1, 5}},
+        Arc{"WRITE_BL_13", "VALID_13", {1, 5}},
+        Arc{"WRITE_BL_14", "BL_14", {1, 5}},
+        Arc{"WRITE_BL_14", "BL_BAR_14", {1, 5}},
+        Arc{"WRITE_BL_14", "VALID_14", {1, 5}},
+        Arc{"WRITE_BL_15", "BL_15", {1, 5}},
+        Arc{"WRITE_BL_15", "BL_BAR_15", {1, 5}},
+        Arc{"WRITE_BL_15", "VALID_15", {1, 5}},
+        Arc{"WRITE_BL_16", "BL_16", {1, 5}},
+        Arc{"WRITE_BL_16", "BL_BAR_16", {1, 5}},
+        Arc{"WRITE_BL_16", "VALID_16", {1, 5}},
+        Arc{"WRITE_BL_17", "BL_17", {1, 5}},
+        Arc{"WRITE_BL_17", "BL_BAR_17", {1, 5}},
+        Arc{"WRITE_BL_17", "VALID_17", {1, 5}},
+        Arc{"WRITE_BL_18", "BL_18", {1, 5}},
+        Arc{"WRITE_BL_18", "BL_BAR_18", {1, 5}},
+        Arc{"WRITE_BL_18", "VALID_18", {1, 5}},
+        Arc{"WRITE_BL_19", "BL_19", {1, 5}},
+        Arc{"WRITE_BL_19", "BL_BAR_19", {1, 5}},
+        Arc{"WRITE_BL_19", "VALID_19", {1, 5}},
+        Arc{"WRITE_BL_2", "BL_2", {1, 5}},
+        Arc{"WRITE_BL_2", "BL_BAR_2", {1, 5}},
+        Arc{"WRITE_BL_2", "VALID_2", {1, 5}},
+        Arc{"WRITE_BL_20", "BL_20", {1, 5}},
+        Arc{"WRITE_BL_20", "BL_BAR_20", {1, 5}},
+        Arc{"WRITE_BL_20", "VALID_20", {1, 5}},
+        Arc{"WRITE_BL_21", "BL_21", {1, 5}},
+        Arc{"WRITE_BL_21", "BL_BAR_21", {1, 5}},
+        Arc{"WRITE_BL_21", "VALID_21", {1, 5}},
+        Arc{"WRITE_BL_22", "BL_22", {1, 5}},
+        Arc{"WRITE_BL_22", "BL_BAR_22", {1, 5}},
+        Arc{"WRITE_BL_22", "VALID_22", {1, 5}},
+        Arc{"WRITE_BL_23", "BL_23", {1, 5}},
+        Arc{"WRITE_BL_23", "BL_BAR_23", {1, 5}},
+        Arc{"WRITE_BL_23", "VALID_23", {1, 5}},
+        Arc{"WRITE_BL_24", "BL_24", {1, 5}},
+        Arc{"WRITE_BL_24", "BL_BAR_24", {1, 5}},
+        Arc{"WRITE_BL_24", "VALID_24", {1, 5}},
+        Arc{"WRITE_BL_25", "BL_25", {1, 5}},
+        Arc{"WRITE_BL_25", "BL_BAR_25", {1, 5}},
+        Arc{"WRITE_BL_25", "VALID_25", {1, 5}},
+        Arc{"WRITE_BL_26", "BL_26", {1, 5}},
+        Arc{"WRITE_BL_26", "BL_BAR_26", {1, 5}},
+        Arc{"WRITE_BL_26", "VALID_26", {1, 5}},
+        Arc{"WRITE_BL_27", "BL_27", {1, 5}},
+        Arc{"WRITE_BL_27", "BL_BAR_27", {1, 5}},
+        Arc{"WRITE_BL_27", "VALID_27", {1, 5}},
+        Arc{"WRITE_BL_28", "BL_28", {1, 5}},
+        Arc{"WRITE_BL_28", "BL_BAR_28", {1, 5}},
+        Arc{"WRITE_BL_28", "VALID_28", {1, 5}},
+        Arc{"WRITE_BL_29", "BL_29", {1, 5}},
+        Arc{"WRITE_BL_29", "BL_BAR_29", {1, 5}},
+        Arc{"WRITE_BL_29", "VALID_29", {1, 5}},
+        Arc{"WRITE_BL_3", "BL_3", {1, 5}},
+        Arc{"WRITE_BL_3", "BL_BAR_3", {1, 5}},
+        Arc{"WRITE_BL_3", "VALID_3", {1, 5}},
+        Arc{"WRITE_BL_30", "BL_30", {1, 5}},
+        Arc{"WRITE_BL_30", "BL_BAR_30", {1, 5}},
+        Arc{"WRITE_BL_30", "VALID_30", {1, 5}},
+        Arc{"WRITE_BL_31", "BL_31", {1, 5}},
+        Arc{"WRITE_BL_31", "BL_BAR_31", {1, 5}},
+        Arc{"WRITE_BL_31", "VALID_31", {1, 5}},
+        Arc{"WRITE_BL_4", "BL_4", {1, 5}},
+        Arc{"WRITE_BL_4", "BL_BAR_4", {1, 5}},
+        Arc{"WRITE_BL_4", "VALID_4", {1, 5}},
+        Arc{"WRITE_BL_5", "BL_5", {1, 5}},
+        Arc{"WRITE_BL_5", "BL_BAR_5", {1, 5}},
+        Arc{"WRITE_BL_5", "VALID_5", {1, 5}},
+        Arc{"WRITE_BL_6", "BL_6", {1, 5}},
+        Arc{"WRITE_BL_6", "BL_BAR_6", {1, 5}},
+        Arc{"WRITE_BL_6", "VALID_6", {1, 5}},
+        Arc{"WRITE_BL_7", "BL_7", {1, 5}},
+        Arc{"WRITE_BL_7", "BL_BAR_7", {1, 5}},
+        Arc{"WRITE_BL_7", "VALID_7", {1, 5}},
+        Arc{"WRITE_BL_8", "BL_8", {1, 5}},
+        Arc{"WRITE_BL_8", "BL_BAR_8", {1, 5}},
+        Arc{"WRITE_BL_8", "VALID_8", {1, 5}},
+        Arc{"WRITE_BL_9", "BL_9", {1, 5}},
+        Arc{"WRITE_BL_9", "BL_BAR_9", {1, 5}},
+        Arc{"WRITE_BL_9", "VALID_9", {1, 5}},
+        Arc{"WRITE_BL_BAR_0", "BL_0", {1, 5}},
+        Arc{"WRITE_BL_BAR_0", "BL_BAR_0", {1, 5}},
+        Arc{"WRITE_BL_BAR_0", "VALID_0", {1, 5}},
+        Arc{"WRITE_BL_BAR_1", "BL_1", {1, 5}},
+        Arc{"WRITE_BL_BAR_1", "BL_BAR_1", {1, 5}},
+        Arc{"WRITE_BL_BAR_1", "VALID_1", {1, 5}},
+        Arc{"WRITE_BL_BAR_10", "BL_10", {1, 5}},
+        Arc{"WRITE_BL_BAR_10", "BL_BAR_10", {1, 5}},
+        Arc{"WRITE_BL_BAR_10", "VALID_10", {1, 5}},
+        Arc{"WRITE_BL_BAR_11", "BL_11", {1, 5}},
+        Arc{"WRITE_BL_BAR_11", "BL_BAR_11", {1, 5}},
+        Arc{"WRITE_BL_BAR_11", "VALID_11", {1, 5}},
+        Arc{"WRITE_BL_BAR_12", "BL_12", {1, 5}},
+        Arc{"WRITE_BL_BAR_12", "BL_BAR_12", {1, 5}},
+        Arc{"WRITE_BL_BAR_12", "VALID_12", {1, 5}},
+        Arc{"WRITE_BL_BAR_13", "BL_13", {1, 5}},
+        Arc{"WRITE_BL_BAR_13", "BL_BAR_13", {1, 5}},
+        Arc{"WRITE_BL_BAR_13", "VALID_13", {1, 5}},
+        Arc{"WRITE_BL_BAR_14", "BL_14", {1, 5}},
+        Arc{"WRITE_BL_BAR_14", "BL_BAR_14", {1, 5}},
+        Arc{"WRITE_BL_BAR_14", "VALID_14", {1, 5}},
+        Arc{"WRITE_BL_BAR_15", "BL_15", {1, 5}},
+        Arc{"WRITE_BL_BAR_15", "BL_BAR_15", {1, 5}},
+        Arc{"WRITE_BL_BAR_15", "VALID_15", {1, 5}},
+        Arc{"WRITE_BL_BAR_16", "BL_16", {1, 5}},
+        Arc{"WRITE_BL_BAR_16", "BL_BAR_16", {1, 5}},
+        Arc{"WRITE_BL_BAR_16", "VALID_16", {1, 5}},
+        Arc{"WRITE_BL_BAR_17", "BL_17", {1, 5}},
+        Arc{"WRITE_BL_BAR_17", "BL_BAR_17", {1, 5}},
+        Arc{"WRITE_BL_BAR_17", "VALID_17", {1, 5}},
+        Arc{"WRITE_BL_BAR_18", "BL_18", {1, 5}},
+        Arc{"WRITE_BL_BAR_18", "BL_BAR_18", {1, 5}},
+        Arc{"WRITE_BL_BAR_18", "VALID_18", {1, 5}},
+        Arc{"WRITE_BL_BAR_19", "BL_19", {1, 5}},
+        Arc{"WRITE_BL_BAR_19", "BL_BAR_19", {1, 5}},
+        Arc{"WRITE_BL_BAR_19", "VALID_19", {1, 5}},
+        Arc{"WRITE_BL_BAR_2", "BL_2", {1, 5}},
+        Arc{"WRITE_BL_BAR_2", "BL_BAR_2", {1, 5}},
+        Arc{"WRITE_BL_BAR_2", "VALID_2", {1, 5}},
+        Arc{"WRITE_BL_BAR_20", "BL_20", {1, 5}},
+        Arc{"WRITE_BL_BAR_20", "BL_BAR_20", {1, 5}},
+        Arc{"WRITE_BL_BAR_20", "VALID_20", {1, 5}},
+        Arc{"WRITE_BL_BAR_21", "BL_21", {1, 5}},
+        Arc{"WRITE_BL_BAR_21", "BL_BAR_21", {1, 5}},
+        Arc{"WRITE_BL_BAR_21", "VALID_21", {1, 5}},
+        Arc{"WRITE_BL_BAR_22", "BL_22", {1, 5}},
+        Arc{"WRITE_BL_BAR_22", "BL_BAR_22", {1, 5}},
+        Arc{"WRITE_BL_BAR_22", "VALID_22", {1, 5}},
+        Arc{"WRITE_BL_BAR_23", "BL_23", {1, 5}},
+        Arc{"WRITE_BL_BAR_23", "BL_BAR_23", {1, 5}},
+        Arc{"WRITE_BL_BAR_23", "VALID_23", {1, 5}},
+        Arc{"WRITE_BL_BAR_24", "BL_24", {1, 5}},
+        Arc{"WRITE_BL_BAR_24", "BL_BAR_24", {1, 5}},
+        Arc{"WRITE_BL_BAR_24", "VALID_24", {1, 5}},
+        Arc{"WRITE_BL_BAR_25", "BL_25", {1, 5}},
+        Arc{"WRITE_BL_BAR_25", "BL_BAR_25", {1, 5}},
+        Arc{"WRITE_BL_BAR_25", "VALID_25", {1, 5}},
+        Arc{"WRITE_BL_BAR_26", "BL_26", {1, 5}},
+        Arc{"WRITE_BL_BAR_26", "BL_BAR_26", {1, 5}},
+        Arc{"WRITE_BL_BAR_26", "VALID_26", {1, 5}},
+        Arc{"WRITE_BL_BAR_27", "BL_27", {1, 5}},
+        Arc{"WRITE_BL_BAR_27", "BL_BAR_27", {1, 5}},
+        Arc{"WRITE_BL_BAR_27", "VALID_27", {1, 5}},
+        Arc{"WRITE_BL_BAR_28", "BL_28", {1, 5}},
+        Arc{"WRITE_BL_BAR_28", "BL_BAR_28", {1, 5}},
+        Arc{"WRITE_BL_BAR_28", "VALID_28", {1, 5}},
+        Arc{"WRITE_BL_BAR_29", "BL_29", {1, 5}},
+        Arc{"WRITE_BL_BAR_29", "BL_BAR_29", {1, 5}},
+        Arc{"WRITE_BL_BAR_29", "VALID_29", {1, 5}},
+        Arc{"WRITE_BL_BAR_3", "BL_3", {1, 5}},
+        Arc{"WRITE_BL_BAR_3", "BL_BAR_3", {1, 5}},
+        Arc{"WRITE_BL_BAR_3", "VALID_3", {1, 5}},
+        Arc{"WRITE_BL_BAR_30", "BL_30", {1, 5}},
+        Arc{"WRITE_BL_BAR_30", "BL_BAR_30", {1, 5}},
+        Arc{"WRITE_BL_BAR_30", "VALID_30", {1, 5}},
+        Arc{"WRITE_BL_BAR_31", "BL_31", {1, 5}},
+        Arc{"WRITE_BL_BAR_31", "BL_BAR_31", {1, 5}},
+        Arc{"WRITE_BL_BAR_31", "VALID_31", {1, 5}},
+        Arc{"WRITE_BL_BAR_4", "BL_4", {1, 5}},
+        Arc{"WRITE_BL_BAR_4", "BL_BAR_4", {1, 5}},
+        Arc{"WRITE_BL_BAR_4", "VALID_4", {1, 5}},
+        Arc{"WRITE_BL_BAR_5", "BL_5", {1, 5}},
+        Arc{"WRITE_BL_BAR_5", "BL_BAR_5", {1, 5}},
+        Arc{"WRITE_BL_BAR_5", "VALID_5", {1, 5}},
+        Arc{"WRITE_BL_BAR_6", "BL_6", {1, 5}},
+        Arc{"WRITE_BL_BAR_6", "BL_BAR_6", {1, 5}},
+        Arc{"WRITE_BL_BAR_6", "VALID_6", {1, 5}},
+        Arc{"WRITE_BL_BAR_7", "BL_7", {1, 5}},
+        Arc{"WRITE_BL_BAR_7", "BL_BAR_7", {1, 5}},
+        Arc{"WRITE_BL_BAR_7", "VALID_7", {1, 5}},
+        Arc{"WRITE_BL_BAR_8", "BL_8", {1, 5}},
+        Arc{"WRITE_BL_BAR_8", "BL_BAR_8", {1, 5}},
+        Arc{"WRITE_BL_BAR_8", "VALID_8", {1, 5}},
+        Arc{"WRITE_BL_BAR_9", "BL_9", {1, 5}},
+        Arc{"WRITE_BL_BAR_9", "BL_BAR_9", {1, 5}},
+        Arc{"WRITE_BL_BAR_9", "VALID_9", {1, 5}},
+    };
+    return t;
+}()},
+{"memory.sram.bank.32.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.bank.32.structural";
+    t.arcs = {
+        Arc{"DRIVE_0", "BL_0", {1, 5}},
+        Arc{"DRIVE_0", "BL_BAR_0", {1, 5}},
+        Arc{"DRIVE_0", "VALID_0", {1, 5}},
+        Arc{"DRIVE_1", "BL_1", {1, 5}},
+        Arc{"DRIVE_1", "BL_BAR_1", {1, 5}},
+        Arc{"DRIVE_1", "VALID_1", {1, 5}},
+        Arc{"DRIVE_10", "BL_10", {1, 5}},
+        Arc{"DRIVE_10", "BL_BAR_10", {1, 5}},
+        Arc{"DRIVE_10", "VALID_10", {1, 5}},
+        Arc{"DRIVE_11", "BL_11", {1, 5}},
+        Arc{"DRIVE_11", "BL_BAR_11", {1, 5}},
+        Arc{"DRIVE_11", "VALID_11", {1, 5}},
+        Arc{"DRIVE_12", "BL_12", {1, 5}},
+        Arc{"DRIVE_12", "BL_BAR_12", {1, 5}},
+        Arc{"DRIVE_12", "VALID_12", {1, 5}},
+        Arc{"DRIVE_13", "BL_13", {1, 5}},
+        Arc{"DRIVE_13", "BL_BAR_13", {1, 5}},
+        Arc{"DRIVE_13", "VALID_13", {1, 5}},
+        Arc{"DRIVE_14", "BL_14", {1, 5}},
+        Arc{"DRIVE_14", "BL_BAR_14", {1, 5}},
+        Arc{"DRIVE_14", "VALID_14", {1, 5}},
+        Arc{"DRIVE_15", "BL_15", {1, 5}},
+        Arc{"DRIVE_15", "BL_BAR_15", {1, 5}},
+        Arc{"DRIVE_15", "VALID_15", {1, 5}},
+        Arc{"DRIVE_16", "BL_16", {1, 5}},
+        Arc{"DRIVE_16", "BL_BAR_16", {1, 5}},
+        Arc{"DRIVE_16", "VALID_16", {1, 5}},
+        Arc{"DRIVE_17", "BL_17", {1, 5}},
+        Arc{"DRIVE_17", "BL_BAR_17", {1, 5}},
+        Arc{"DRIVE_17", "VALID_17", {1, 5}},
+        Arc{"DRIVE_18", "BL_18", {1, 5}},
+        Arc{"DRIVE_18", "BL_BAR_18", {1, 5}},
+        Arc{"DRIVE_18", "VALID_18", {1, 5}},
+        Arc{"DRIVE_19", "BL_19", {1, 5}},
+        Arc{"DRIVE_19", "BL_BAR_19", {1, 5}},
+        Arc{"DRIVE_19", "VALID_19", {1, 5}},
+        Arc{"DRIVE_2", "BL_2", {1, 5}},
+        Arc{"DRIVE_2", "BL_BAR_2", {1, 5}},
+        Arc{"DRIVE_2", "VALID_2", {1, 5}},
+        Arc{"DRIVE_20", "BL_20", {1, 5}},
+        Arc{"DRIVE_20", "BL_BAR_20", {1, 5}},
+        Arc{"DRIVE_20", "VALID_20", {1, 5}},
+        Arc{"DRIVE_21", "BL_21", {1, 5}},
+        Arc{"DRIVE_21", "BL_BAR_21", {1, 5}},
+        Arc{"DRIVE_21", "VALID_21", {1, 5}},
+        Arc{"DRIVE_22", "BL_22", {1, 5}},
+        Arc{"DRIVE_22", "BL_BAR_22", {1, 5}},
+        Arc{"DRIVE_22", "VALID_22", {1, 5}},
+        Arc{"DRIVE_23", "BL_23", {1, 5}},
+        Arc{"DRIVE_23", "BL_BAR_23", {1, 5}},
+        Arc{"DRIVE_23", "VALID_23", {1, 5}},
+        Arc{"DRIVE_24", "BL_24", {1, 5}},
+        Arc{"DRIVE_24", "BL_BAR_24", {1, 5}},
+        Arc{"DRIVE_24", "VALID_24", {1, 5}},
+        Arc{"DRIVE_25", "BL_25", {1, 5}},
+        Arc{"DRIVE_25", "BL_BAR_25", {1, 5}},
+        Arc{"DRIVE_25", "VALID_25", {1, 5}},
+        Arc{"DRIVE_26", "BL_26", {1, 5}},
+        Arc{"DRIVE_26", "BL_BAR_26", {1, 5}},
+        Arc{"DRIVE_26", "VALID_26", {1, 5}},
+        Arc{"DRIVE_27", "BL_27", {1, 5}},
+        Arc{"DRIVE_27", "BL_BAR_27", {1, 5}},
+        Arc{"DRIVE_27", "VALID_27", {1, 5}},
+        Arc{"DRIVE_28", "BL_28", {1, 5}},
+        Arc{"DRIVE_28", "BL_BAR_28", {1, 5}},
+        Arc{"DRIVE_28", "VALID_28", {1, 5}},
+        Arc{"DRIVE_29", "BL_29", {1, 5}},
+        Arc{"DRIVE_29", "BL_BAR_29", {1, 5}},
+        Arc{"DRIVE_29", "VALID_29", {1, 5}},
+        Arc{"DRIVE_3", "BL_3", {1, 5}},
+        Arc{"DRIVE_3", "BL_BAR_3", {1, 5}},
+        Arc{"DRIVE_3", "VALID_3", {1, 5}},
+        Arc{"DRIVE_30", "BL_30", {1, 5}},
+        Arc{"DRIVE_30", "BL_BAR_30", {1, 5}},
+        Arc{"DRIVE_30", "VALID_30", {1, 5}},
+        Arc{"DRIVE_31", "BL_31", {1, 5}},
+        Arc{"DRIVE_31", "BL_BAR_31", {1, 5}},
+        Arc{"DRIVE_31", "VALID_31", {1, 5}},
+        Arc{"DRIVE_32", "BL_32", {1, 5}},
+        Arc{"DRIVE_32", "BL_BAR_32", {1, 5}},
+        Arc{"DRIVE_32", "VALID_32", {1, 5}},
+        Arc{"DRIVE_33", "BL_33", {1, 5}},
+        Arc{"DRIVE_33", "BL_BAR_33", {1, 5}},
+        Arc{"DRIVE_33", "VALID_33", {1, 5}},
+        Arc{"DRIVE_34", "BL_34", {1, 5}},
+        Arc{"DRIVE_34", "BL_BAR_34", {1, 5}},
+        Arc{"DRIVE_34", "VALID_34", {1, 5}},
+        Arc{"DRIVE_35", "BL_35", {1, 5}},
+        Arc{"DRIVE_35", "BL_BAR_35", {1, 5}},
+        Arc{"DRIVE_35", "VALID_35", {1, 5}},
+        Arc{"DRIVE_36", "BL_36", {1, 5}},
+        Arc{"DRIVE_36", "BL_BAR_36", {1, 5}},
+        Arc{"DRIVE_36", "VALID_36", {1, 5}},
+        Arc{"DRIVE_37", "BL_37", {1, 5}},
+        Arc{"DRIVE_37", "BL_BAR_37", {1, 5}},
+        Arc{"DRIVE_37", "VALID_37", {1, 5}},
+        Arc{"DRIVE_38", "BL_38", {1, 5}},
+        Arc{"DRIVE_38", "BL_BAR_38", {1, 5}},
+        Arc{"DRIVE_38", "VALID_38", {1, 5}},
+        Arc{"DRIVE_39", "BL_39", {1, 5}},
+        Arc{"DRIVE_39", "BL_BAR_39", {1, 5}},
+        Arc{"DRIVE_39", "VALID_39", {1, 5}},
+        Arc{"DRIVE_4", "BL_4", {1, 5}},
+        Arc{"DRIVE_4", "BL_BAR_4", {1, 5}},
+        Arc{"DRIVE_4", "VALID_4", {1, 5}},
+        Arc{"DRIVE_40", "BL_40", {1, 5}},
+        Arc{"DRIVE_40", "BL_BAR_40", {1, 5}},
+        Arc{"DRIVE_40", "VALID_40", {1, 5}},
+        Arc{"DRIVE_41", "BL_41", {1, 5}},
+        Arc{"DRIVE_41", "BL_BAR_41", {1, 5}},
+        Arc{"DRIVE_41", "VALID_41", {1, 5}},
+        Arc{"DRIVE_42", "BL_42", {1, 5}},
+        Arc{"DRIVE_42", "BL_BAR_42", {1, 5}},
+        Arc{"DRIVE_42", "VALID_42", {1, 5}},
+        Arc{"DRIVE_43", "BL_43", {1, 5}},
+        Arc{"DRIVE_43", "BL_BAR_43", {1, 5}},
+        Arc{"DRIVE_43", "VALID_43", {1, 5}},
+        Arc{"DRIVE_44", "BL_44", {1, 5}},
+        Arc{"DRIVE_44", "BL_BAR_44", {1, 5}},
+        Arc{"DRIVE_44", "VALID_44", {1, 5}},
+        Arc{"DRIVE_45", "BL_45", {1, 5}},
+        Arc{"DRIVE_45", "BL_BAR_45", {1, 5}},
+        Arc{"DRIVE_45", "VALID_45", {1, 5}},
+        Arc{"DRIVE_46", "BL_46", {1, 5}},
+        Arc{"DRIVE_46", "BL_BAR_46", {1, 5}},
+        Arc{"DRIVE_46", "VALID_46", {1, 5}},
+        Arc{"DRIVE_47", "BL_47", {1, 5}},
+        Arc{"DRIVE_47", "BL_BAR_47", {1, 5}},
+        Arc{"DRIVE_47", "VALID_47", {1, 5}},
+        Arc{"DRIVE_48", "BL_48", {1, 5}},
+        Arc{"DRIVE_48", "BL_BAR_48", {1, 5}},
+        Arc{"DRIVE_48", "VALID_48", {1, 5}},
+        Arc{"DRIVE_49", "BL_49", {1, 5}},
+        Arc{"DRIVE_49", "BL_BAR_49", {1, 5}},
+        Arc{"DRIVE_49", "VALID_49", {1, 5}},
+        Arc{"DRIVE_5", "BL_5", {1, 5}},
+        Arc{"DRIVE_5", "BL_BAR_5", {1, 5}},
+        Arc{"DRIVE_5", "VALID_5", {1, 5}},
+        Arc{"DRIVE_50", "BL_50", {1, 5}},
+        Arc{"DRIVE_50", "BL_BAR_50", {1, 5}},
+        Arc{"DRIVE_50", "VALID_50", {1, 5}},
+        Arc{"DRIVE_51", "BL_51", {1, 5}},
+        Arc{"DRIVE_51", "BL_BAR_51", {1, 5}},
+        Arc{"DRIVE_51", "VALID_51", {1, 5}},
+        Arc{"DRIVE_52", "BL_52", {1, 5}},
+        Arc{"DRIVE_52", "BL_BAR_52", {1, 5}},
+        Arc{"DRIVE_52", "VALID_52", {1, 5}},
+        Arc{"DRIVE_53", "BL_53", {1, 5}},
+        Arc{"DRIVE_53", "BL_BAR_53", {1, 5}},
+        Arc{"DRIVE_53", "VALID_53", {1, 5}},
+        Arc{"DRIVE_54", "BL_54", {1, 5}},
+        Arc{"DRIVE_54", "BL_BAR_54", {1, 5}},
+        Arc{"DRIVE_54", "VALID_54", {1, 5}},
+        Arc{"DRIVE_55", "BL_55", {1, 5}},
+        Arc{"DRIVE_55", "BL_BAR_55", {1, 5}},
+        Arc{"DRIVE_55", "VALID_55", {1, 5}},
+        Arc{"DRIVE_56", "BL_56", {1, 5}},
+        Arc{"DRIVE_56", "BL_BAR_56", {1, 5}},
+        Arc{"DRIVE_56", "VALID_56", {1, 5}},
+        Arc{"DRIVE_57", "BL_57", {1, 5}},
+        Arc{"DRIVE_57", "BL_BAR_57", {1, 5}},
+        Arc{"DRIVE_57", "VALID_57", {1, 5}},
+        Arc{"DRIVE_58", "BL_58", {1, 5}},
+        Arc{"DRIVE_58", "BL_BAR_58", {1, 5}},
+        Arc{"DRIVE_58", "VALID_58", {1, 5}},
+        Arc{"DRIVE_59", "BL_59", {1, 5}},
+        Arc{"DRIVE_59", "BL_BAR_59", {1, 5}},
+        Arc{"DRIVE_59", "VALID_59", {1, 5}},
+        Arc{"DRIVE_6", "BL_6", {1, 5}},
+        Arc{"DRIVE_6", "BL_BAR_6", {1, 5}},
+        Arc{"DRIVE_6", "VALID_6", {1, 5}},
+        Arc{"DRIVE_60", "BL_60", {1, 5}},
+        Arc{"DRIVE_60", "BL_BAR_60", {1, 5}},
+        Arc{"DRIVE_60", "VALID_60", {1, 5}},
+        Arc{"DRIVE_61", "BL_61", {1, 5}},
+        Arc{"DRIVE_61", "BL_BAR_61", {1, 5}},
+        Arc{"DRIVE_61", "VALID_61", {1, 5}},
+        Arc{"DRIVE_62", "BL_62", {1, 5}},
+        Arc{"DRIVE_62", "BL_BAR_62", {1, 5}},
+        Arc{"DRIVE_62", "VALID_62", {1, 5}},
+        Arc{"DRIVE_63", "BL_63", {1, 5}},
+        Arc{"DRIVE_63", "BL_BAR_63", {1, 5}},
+        Arc{"DRIVE_63", "VALID_63", {1, 5}},
+        Arc{"DRIVE_7", "BL_7", {1, 5}},
+        Arc{"DRIVE_7", "BL_BAR_7", {1, 5}},
+        Arc{"DRIVE_7", "VALID_7", {1, 5}},
+        Arc{"DRIVE_8", "BL_8", {1, 5}},
+        Arc{"DRIVE_8", "BL_BAR_8", {1, 5}},
+        Arc{"DRIVE_8", "VALID_8", {1, 5}},
+        Arc{"DRIVE_9", "BL_9", {1, 5}},
+        Arc{"DRIVE_9", "BL_BAR_9", {1, 5}},
+        Arc{"DRIVE_9", "VALID_9", {1, 5}},
+        Arc{"PRECHARGE_0", "BL_0", {1, 5}},
+        Arc{"PRECHARGE_0", "BL_BAR_0", {1, 5}},
+        Arc{"PRECHARGE_0", "VALID_0", {1, 5}},
+        Arc{"PRECHARGE_1", "BL_1", {1, 5}},
+        Arc{"PRECHARGE_1", "BL_BAR_1", {1, 5}},
+        Arc{"PRECHARGE_1", "VALID_1", {1, 5}},
+        Arc{"PRECHARGE_10", "BL_10", {1, 5}},
+        Arc{"PRECHARGE_10", "BL_BAR_10", {1, 5}},
+        Arc{"PRECHARGE_10", "VALID_10", {1, 5}},
+        Arc{"PRECHARGE_11", "BL_11", {1, 5}},
+        Arc{"PRECHARGE_11", "BL_BAR_11", {1, 5}},
+        Arc{"PRECHARGE_11", "VALID_11", {1, 5}},
+        Arc{"PRECHARGE_12", "BL_12", {1, 5}},
+        Arc{"PRECHARGE_12", "BL_BAR_12", {1, 5}},
+        Arc{"PRECHARGE_12", "VALID_12", {1, 5}},
+        Arc{"PRECHARGE_13", "BL_13", {1, 5}},
+        Arc{"PRECHARGE_13", "BL_BAR_13", {1, 5}},
+        Arc{"PRECHARGE_13", "VALID_13", {1, 5}},
+        Arc{"PRECHARGE_14", "BL_14", {1, 5}},
+        Arc{"PRECHARGE_14", "BL_BAR_14", {1, 5}},
+        Arc{"PRECHARGE_14", "VALID_14", {1, 5}},
+        Arc{"PRECHARGE_15", "BL_15", {1, 5}},
+        Arc{"PRECHARGE_15", "BL_BAR_15", {1, 5}},
+        Arc{"PRECHARGE_15", "VALID_15", {1, 5}},
+        Arc{"PRECHARGE_16", "BL_16", {1, 5}},
+        Arc{"PRECHARGE_16", "BL_BAR_16", {1, 5}},
+        Arc{"PRECHARGE_16", "VALID_16", {1, 5}},
+        Arc{"PRECHARGE_17", "BL_17", {1, 5}},
+        Arc{"PRECHARGE_17", "BL_BAR_17", {1, 5}},
+        Arc{"PRECHARGE_17", "VALID_17", {1, 5}},
+        Arc{"PRECHARGE_18", "BL_18", {1, 5}},
+        Arc{"PRECHARGE_18", "BL_BAR_18", {1, 5}},
+        Arc{"PRECHARGE_18", "VALID_18", {1, 5}},
+        Arc{"PRECHARGE_19", "BL_19", {1, 5}},
+        Arc{"PRECHARGE_19", "BL_BAR_19", {1, 5}},
+        Arc{"PRECHARGE_19", "VALID_19", {1, 5}},
+        Arc{"PRECHARGE_2", "BL_2", {1, 5}},
+        Arc{"PRECHARGE_2", "BL_BAR_2", {1, 5}},
+        Arc{"PRECHARGE_2", "VALID_2", {1, 5}},
+        Arc{"PRECHARGE_20", "BL_20", {1, 5}},
+        Arc{"PRECHARGE_20", "BL_BAR_20", {1, 5}},
+        Arc{"PRECHARGE_20", "VALID_20", {1, 5}},
+        Arc{"PRECHARGE_21", "BL_21", {1, 5}},
+        Arc{"PRECHARGE_21", "BL_BAR_21", {1, 5}},
+        Arc{"PRECHARGE_21", "VALID_21", {1, 5}},
+        Arc{"PRECHARGE_22", "BL_22", {1, 5}},
+        Arc{"PRECHARGE_22", "BL_BAR_22", {1, 5}},
+        Arc{"PRECHARGE_22", "VALID_22", {1, 5}},
+        Arc{"PRECHARGE_23", "BL_23", {1, 5}},
+        Arc{"PRECHARGE_23", "BL_BAR_23", {1, 5}},
+        Arc{"PRECHARGE_23", "VALID_23", {1, 5}},
+        Arc{"PRECHARGE_24", "BL_24", {1, 5}},
+        Arc{"PRECHARGE_24", "BL_BAR_24", {1, 5}},
+        Arc{"PRECHARGE_24", "VALID_24", {1, 5}},
+        Arc{"PRECHARGE_25", "BL_25", {1, 5}},
+        Arc{"PRECHARGE_25", "BL_BAR_25", {1, 5}},
+        Arc{"PRECHARGE_25", "VALID_25", {1, 5}},
+        Arc{"PRECHARGE_26", "BL_26", {1, 5}},
+        Arc{"PRECHARGE_26", "BL_BAR_26", {1, 5}},
+        Arc{"PRECHARGE_26", "VALID_26", {1, 5}},
+        Arc{"PRECHARGE_27", "BL_27", {1, 5}},
+        Arc{"PRECHARGE_27", "BL_BAR_27", {1, 5}},
+        Arc{"PRECHARGE_27", "VALID_27", {1, 5}},
+        Arc{"PRECHARGE_28", "BL_28", {1, 5}},
+        Arc{"PRECHARGE_28", "BL_BAR_28", {1, 5}},
+        Arc{"PRECHARGE_28", "VALID_28", {1, 5}},
+        Arc{"PRECHARGE_29", "BL_29", {1, 5}},
+        Arc{"PRECHARGE_29", "BL_BAR_29", {1, 5}},
+        Arc{"PRECHARGE_29", "VALID_29", {1, 5}},
+        Arc{"PRECHARGE_3", "BL_3", {1, 5}},
+        Arc{"PRECHARGE_3", "BL_BAR_3", {1, 5}},
+        Arc{"PRECHARGE_3", "VALID_3", {1, 5}},
+        Arc{"PRECHARGE_30", "BL_30", {1, 5}},
+        Arc{"PRECHARGE_30", "BL_BAR_30", {1, 5}},
+        Arc{"PRECHARGE_30", "VALID_30", {1, 5}},
+        Arc{"PRECHARGE_31", "BL_31", {1, 5}},
+        Arc{"PRECHARGE_31", "BL_BAR_31", {1, 5}},
+        Arc{"PRECHARGE_31", "VALID_31", {1, 5}},
+        Arc{"PRECHARGE_32", "BL_32", {1, 5}},
+        Arc{"PRECHARGE_32", "BL_BAR_32", {1, 5}},
+        Arc{"PRECHARGE_32", "VALID_32", {1, 5}},
+        Arc{"PRECHARGE_33", "BL_33", {1, 5}},
+        Arc{"PRECHARGE_33", "BL_BAR_33", {1, 5}},
+        Arc{"PRECHARGE_33", "VALID_33", {1, 5}},
+        Arc{"PRECHARGE_34", "BL_34", {1, 5}},
+        Arc{"PRECHARGE_34", "BL_BAR_34", {1, 5}},
+        Arc{"PRECHARGE_34", "VALID_34", {1, 5}},
+        Arc{"PRECHARGE_35", "BL_35", {1, 5}},
+        Arc{"PRECHARGE_35", "BL_BAR_35", {1, 5}},
+        Arc{"PRECHARGE_35", "VALID_35", {1, 5}},
+        Arc{"PRECHARGE_36", "BL_36", {1, 5}},
+        Arc{"PRECHARGE_36", "BL_BAR_36", {1, 5}},
+        Arc{"PRECHARGE_36", "VALID_36", {1, 5}},
+        Arc{"PRECHARGE_37", "BL_37", {1, 5}},
+        Arc{"PRECHARGE_37", "BL_BAR_37", {1, 5}},
+        Arc{"PRECHARGE_37", "VALID_37", {1, 5}},
+        Arc{"PRECHARGE_38", "BL_38", {1, 5}},
+        Arc{"PRECHARGE_38", "BL_BAR_38", {1, 5}},
+        Arc{"PRECHARGE_38", "VALID_38", {1, 5}},
+        Arc{"PRECHARGE_39", "BL_39", {1, 5}},
+        Arc{"PRECHARGE_39", "BL_BAR_39", {1, 5}},
+        Arc{"PRECHARGE_39", "VALID_39", {1, 5}},
+        Arc{"PRECHARGE_4", "BL_4", {1, 5}},
+        Arc{"PRECHARGE_4", "BL_BAR_4", {1, 5}},
+        Arc{"PRECHARGE_4", "VALID_4", {1, 5}},
+        Arc{"PRECHARGE_40", "BL_40", {1, 5}},
+        Arc{"PRECHARGE_40", "BL_BAR_40", {1, 5}},
+        Arc{"PRECHARGE_40", "VALID_40", {1, 5}},
+        Arc{"PRECHARGE_41", "BL_41", {1, 5}},
+        Arc{"PRECHARGE_41", "BL_BAR_41", {1, 5}},
+        Arc{"PRECHARGE_41", "VALID_41", {1, 5}},
+        Arc{"PRECHARGE_42", "BL_42", {1, 5}},
+        Arc{"PRECHARGE_42", "BL_BAR_42", {1, 5}},
+        Arc{"PRECHARGE_42", "VALID_42", {1, 5}},
+        Arc{"PRECHARGE_43", "BL_43", {1, 5}},
+        Arc{"PRECHARGE_43", "BL_BAR_43", {1, 5}},
+        Arc{"PRECHARGE_43", "VALID_43", {1, 5}},
+        Arc{"PRECHARGE_44", "BL_44", {1, 5}},
+        Arc{"PRECHARGE_44", "BL_BAR_44", {1, 5}},
+        Arc{"PRECHARGE_44", "VALID_44", {1, 5}},
+        Arc{"PRECHARGE_45", "BL_45", {1, 5}},
+        Arc{"PRECHARGE_45", "BL_BAR_45", {1, 5}},
+        Arc{"PRECHARGE_45", "VALID_45", {1, 5}},
+        Arc{"PRECHARGE_46", "BL_46", {1, 5}},
+        Arc{"PRECHARGE_46", "BL_BAR_46", {1, 5}},
+        Arc{"PRECHARGE_46", "VALID_46", {1, 5}},
+        Arc{"PRECHARGE_47", "BL_47", {1, 5}},
+        Arc{"PRECHARGE_47", "BL_BAR_47", {1, 5}},
+        Arc{"PRECHARGE_47", "VALID_47", {1, 5}},
+        Arc{"PRECHARGE_48", "BL_48", {1, 5}},
+        Arc{"PRECHARGE_48", "BL_BAR_48", {1, 5}},
+        Arc{"PRECHARGE_48", "VALID_48", {1, 5}},
+        Arc{"PRECHARGE_49", "BL_49", {1, 5}},
+        Arc{"PRECHARGE_49", "BL_BAR_49", {1, 5}},
+        Arc{"PRECHARGE_49", "VALID_49", {1, 5}},
+        Arc{"PRECHARGE_5", "BL_5", {1, 5}},
+        Arc{"PRECHARGE_5", "BL_BAR_5", {1, 5}},
+        Arc{"PRECHARGE_5", "VALID_5", {1, 5}},
+        Arc{"PRECHARGE_50", "BL_50", {1, 5}},
+        Arc{"PRECHARGE_50", "BL_BAR_50", {1, 5}},
+        Arc{"PRECHARGE_50", "VALID_50", {1, 5}},
+        Arc{"PRECHARGE_51", "BL_51", {1, 5}},
+        Arc{"PRECHARGE_51", "BL_BAR_51", {1, 5}},
+        Arc{"PRECHARGE_51", "VALID_51", {1, 5}},
+        Arc{"PRECHARGE_52", "BL_52", {1, 5}},
+        Arc{"PRECHARGE_52", "BL_BAR_52", {1, 5}},
+        Arc{"PRECHARGE_52", "VALID_52", {1, 5}},
+        Arc{"PRECHARGE_53", "BL_53", {1, 5}},
+        Arc{"PRECHARGE_53", "BL_BAR_53", {1, 5}},
+        Arc{"PRECHARGE_53", "VALID_53", {1, 5}},
+        Arc{"PRECHARGE_54", "BL_54", {1, 5}},
+        Arc{"PRECHARGE_54", "BL_BAR_54", {1, 5}},
+        Arc{"PRECHARGE_54", "VALID_54", {1, 5}},
+        Arc{"PRECHARGE_55", "BL_55", {1, 5}},
+        Arc{"PRECHARGE_55", "BL_BAR_55", {1, 5}},
+        Arc{"PRECHARGE_55", "VALID_55", {1, 5}},
+        Arc{"PRECHARGE_56", "BL_56", {1, 5}},
+        Arc{"PRECHARGE_56", "BL_BAR_56", {1, 5}},
+        Arc{"PRECHARGE_56", "VALID_56", {1, 5}},
+        Arc{"PRECHARGE_57", "BL_57", {1, 5}},
+        Arc{"PRECHARGE_57", "BL_BAR_57", {1, 5}},
+        Arc{"PRECHARGE_57", "VALID_57", {1, 5}},
+        Arc{"PRECHARGE_58", "BL_58", {1, 5}},
+        Arc{"PRECHARGE_58", "BL_BAR_58", {1, 5}},
+        Arc{"PRECHARGE_58", "VALID_58", {1, 5}},
+        Arc{"PRECHARGE_59", "BL_59", {1, 5}},
+        Arc{"PRECHARGE_59", "BL_BAR_59", {1, 5}},
+        Arc{"PRECHARGE_59", "VALID_59", {1, 5}},
+        Arc{"PRECHARGE_6", "BL_6", {1, 5}},
+        Arc{"PRECHARGE_6", "BL_BAR_6", {1, 5}},
+        Arc{"PRECHARGE_6", "VALID_6", {1, 5}},
+        Arc{"PRECHARGE_60", "BL_60", {1, 5}},
+        Arc{"PRECHARGE_60", "BL_BAR_60", {1, 5}},
+        Arc{"PRECHARGE_60", "VALID_60", {1, 5}},
+        Arc{"PRECHARGE_61", "BL_61", {1, 5}},
+        Arc{"PRECHARGE_61", "BL_BAR_61", {1, 5}},
+        Arc{"PRECHARGE_61", "VALID_61", {1, 5}},
+        Arc{"PRECHARGE_62", "BL_62", {1, 5}},
+        Arc{"PRECHARGE_62", "BL_BAR_62", {1, 5}},
+        Arc{"PRECHARGE_62", "VALID_62", {1, 5}},
+        Arc{"PRECHARGE_63", "BL_63", {1, 5}},
+        Arc{"PRECHARGE_63", "BL_BAR_63", {1, 5}},
+        Arc{"PRECHARGE_63", "VALID_63", {1, 5}},
+        Arc{"PRECHARGE_7", "BL_7", {1, 5}},
+        Arc{"PRECHARGE_7", "BL_BAR_7", {1, 5}},
+        Arc{"PRECHARGE_7", "VALID_7", {1, 5}},
+        Arc{"PRECHARGE_8", "BL_8", {1, 5}},
+        Arc{"PRECHARGE_8", "BL_BAR_8", {1, 5}},
+        Arc{"PRECHARGE_8", "VALID_8", {1, 5}},
+        Arc{"PRECHARGE_9", "BL_9", {1, 5}},
+        Arc{"PRECHARGE_9", "BL_BAR_9", {1, 5}},
+        Arc{"PRECHARGE_9", "VALID_9", {1, 5}},
+        Arc{"WL_0", "BL_0", {1, 5}},
+        Arc{"WL_0", "BL_1", {1, 5}},
+        Arc{"WL_0", "BL_10", {1, 5}},
+        Arc{"WL_0", "BL_11", {1, 5}},
+        Arc{"WL_0", "BL_12", {1, 5}},
+        Arc{"WL_0", "BL_13", {1, 5}},
+        Arc{"WL_0", "BL_14", {1, 5}},
+        Arc{"WL_0", "BL_15", {1, 5}},
+        Arc{"WL_0", "BL_16", {1, 5}},
+        Arc{"WL_0", "BL_17", {1, 5}},
+        Arc{"WL_0", "BL_18", {1, 5}},
+        Arc{"WL_0", "BL_19", {1, 5}},
+        Arc{"WL_0", "BL_2", {1, 5}},
+        Arc{"WL_0", "BL_20", {1, 5}},
+        Arc{"WL_0", "BL_21", {1, 5}},
+        Arc{"WL_0", "BL_22", {1, 5}},
+        Arc{"WL_0", "BL_23", {1, 5}},
+        Arc{"WL_0", "BL_24", {1, 5}},
+        Arc{"WL_0", "BL_25", {1, 5}},
+        Arc{"WL_0", "BL_26", {1, 5}},
+        Arc{"WL_0", "BL_27", {1, 5}},
+        Arc{"WL_0", "BL_28", {1, 5}},
+        Arc{"WL_0", "BL_29", {1, 5}},
+        Arc{"WL_0", "BL_3", {1, 5}},
+        Arc{"WL_0", "BL_30", {1, 5}},
+        Arc{"WL_0", "BL_31", {1, 5}},
+        Arc{"WL_0", "BL_32", {1, 5}},
+        Arc{"WL_0", "BL_33", {1, 5}},
+        Arc{"WL_0", "BL_34", {1, 5}},
+        Arc{"WL_0", "BL_35", {1, 5}},
+        Arc{"WL_0", "BL_36", {1, 5}},
+        Arc{"WL_0", "BL_37", {1, 5}},
+        Arc{"WL_0", "BL_38", {1, 5}},
+        Arc{"WL_0", "BL_39", {1, 5}},
+        Arc{"WL_0", "BL_4", {1, 5}},
+        Arc{"WL_0", "BL_40", {1, 5}},
+        Arc{"WL_0", "BL_41", {1, 5}},
+        Arc{"WL_0", "BL_42", {1, 5}},
+        Arc{"WL_0", "BL_43", {1, 5}},
+        Arc{"WL_0", "BL_44", {1, 5}},
+        Arc{"WL_0", "BL_45", {1, 5}},
+        Arc{"WL_0", "BL_46", {1, 5}},
+        Arc{"WL_0", "BL_47", {1, 5}},
+        Arc{"WL_0", "BL_48", {1, 5}},
+        Arc{"WL_0", "BL_49", {1, 5}},
+        Arc{"WL_0", "BL_5", {1, 5}},
+        Arc{"WL_0", "BL_50", {1, 5}},
+        Arc{"WL_0", "BL_51", {1, 5}},
+        Arc{"WL_0", "BL_52", {1, 5}},
+        Arc{"WL_0", "BL_53", {1, 5}},
+        Arc{"WL_0", "BL_54", {1, 5}},
+        Arc{"WL_0", "BL_55", {1, 5}},
+        Arc{"WL_0", "BL_56", {1, 5}},
+        Arc{"WL_0", "BL_57", {1, 5}},
+        Arc{"WL_0", "BL_58", {1, 5}},
+        Arc{"WL_0", "BL_59", {1, 5}},
+        Arc{"WL_0", "BL_6", {1, 5}},
+        Arc{"WL_0", "BL_60", {1, 5}},
+        Arc{"WL_0", "BL_61", {1, 5}},
+        Arc{"WL_0", "BL_62", {1, 5}},
+        Arc{"WL_0", "BL_63", {1, 5}},
+        Arc{"WL_0", "BL_7", {1, 5}},
+        Arc{"WL_0", "BL_8", {1, 5}},
+        Arc{"WL_0", "BL_9", {1, 5}},
+        Arc{"WL_0", "BL_BAR_0", {1, 5}},
+        Arc{"WL_0", "BL_BAR_1", {1, 5}},
+        Arc{"WL_0", "BL_BAR_10", {1, 5}},
+        Arc{"WL_0", "BL_BAR_11", {1, 5}},
+        Arc{"WL_0", "BL_BAR_12", {1, 5}},
+        Arc{"WL_0", "BL_BAR_13", {1, 5}},
+        Arc{"WL_0", "BL_BAR_14", {1, 5}},
+        Arc{"WL_0", "BL_BAR_15", {1, 5}},
+        Arc{"WL_0", "BL_BAR_16", {1, 5}},
+        Arc{"WL_0", "BL_BAR_17", {1, 5}},
+        Arc{"WL_0", "BL_BAR_18", {1, 5}},
+        Arc{"WL_0", "BL_BAR_19", {1, 5}},
+        Arc{"WL_0", "BL_BAR_2", {1, 5}},
+        Arc{"WL_0", "BL_BAR_20", {1, 5}},
+        Arc{"WL_0", "BL_BAR_21", {1, 5}},
+        Arc{"WL_0", "BL_BAR_22", {1, 5}},
+        Arc{"WL_0", "BL_BAR_23", {1, 5}},
+        Arc{"WL_0", "BL_BAR_24", {1, 5}},
+        Arc{"WL_0", "BL_BAR_25", {1, 5}},
+        Arc{"WL_0", "BL_BAR_26", {1, 5}},
+        Arc{"WL_0", "BL_BAR_27", {1, 5}},
+        Arc{"WL_0", "BL_BAR_28", {1, 5}},
+        Arc{"WL_0", "BL_BAR_29", {1, 5}},
+        Arc{"WL_0", "BL_BAR_3", {1, 5}},
+        Arc{"WL_0", "BL_BAR_30", {1, 5}},
+        Arc{"WL_0", "BL_BAR_31", {1, 5}},
+        Arc{"WL_0", "BL_BAR_32", {1, 5}},
+        Arc{"WL_0", "BL_BAR_33", {1, 5}},
+        Arc{"WL_0", "BL_BAR_34", {1, 5}},
+        Arc{"WL_0", "BL_BAR_35", {1, 5}},
+        Arc{"WL_0", "BL_BAR_36", {1, 5}},
+        Arc{"WL_0", "BL_BAR_37", {1, 5}},
+        Arc{"WL_0", "BL_BAR_38", {1, 5}},
+        Arc{"WL_0", "BL_BAR_39", {1, 5}},
+        Arc{"WL_0", "BL_BAR_4", {1, 5}},
+        Arc{"WL_0", "BL_BAR_40", {1, 5}},
+        Arc{"WL_0", "BL_BAR_41", {1, 5}},
+        Arc{"WL_0", "BL_BAR_42", {1, 5}},
+        Arc{"WL_0", "BL_BAR_43", {1, 5}},
+        Arc{"WL_0", "BL_BAR_44", {1, 5}},
+        Arc{"WL_0", "BL_BAR_45", {1, 5}},
+        Arc{"WL_0", "BL_BAR_46", {1, 5}},
+        Arc{"WL_0", "BL_BAR_47", {1, 5}},
+        Arc{"WL_0", "BL_BAR_48", {1, 5}},
+        Arc{"WL_0", "BL_BAR_49", {1, 5}},
+        Arc{"WL_0", "BL_BAR_5", {1, 5}},
+        Arc{"WL_0", "BL_BAR_50", {1, 5}},
+        Arc{"WL_0", "BL_BAR_51", {1, 5}},
+        Arc{"WL_0", "BL_BAR_52", {1, 5}},
+        Arc{"WL_0", "BL_BAR_53", {1, 5}},
+        Arc{"WL_0", "BL_BAR_54", {1, 5}},
+        Arc{"WL_0", "BL_BAR_55", {1, 5}},
+        Arc{"WL_0", "BL_BAR_56", {1, 5}},
+        Arc{"WL_0", "BL_BAR_57", {1, 5}},
+        Arc{"WL_0", "BL_BAR_58", {1, 5}},
+        Arc{"WL_0", "BL_BAR_59", {1, 5}},
+        Arc{"WL_0", "BL_BAR_6", {1, 5}},
+        Arc{"WL_0", "BL_BAR_60", {1, 5}},
+        Arc{"WL_0", "BL_BAR_61", {1, 5}},
+        Arc{"WL_0", "BL_BAR_62", {1, 5}},
+        Arc{"WL_0", "BL_BAR_63", {1, 5}},
+        Arc{"WL_0", "BL_BAR_7", {1, 5}},
+        Arc{"WL_0", "BL_BAR_8", {1, 5}},
+        Arc{"WL_0", "BL_BAR_9", {1, 5}},
+        Arc{"WL_0", "VALID_0", {1, 5}},
+        Arc{"WL_0", "VALID_1", {1, 5}},
+        Arc{"WL_0", "VALID_10", {1, 5}},
+        Arc{"WL_0", "VALID_11", {1, 5}},
+        Arc{"WL_0", "VALID_12", {1, 5}},
+        Arc{"WL_0", "VALID_13", {1, 5}},
+        Arc{"WL_0", "VALID_14", {1, 5}},
+        Arc{"WL_0", "VALID_15", {1, 5}},
+        Arc{"WL_0", "VALID_16", {1, 5}},
+        Arc{"WL_0", "VALID_17", {1, 5}},
+        Arc{"WL_0", "VALID_18", {1, 5}},
+        Arc{"WL_0", "VALID_19", {1, 5}},
+        Arc{"WL_0", "VALID_2", {1, 5}},
+        Arc{"WL_0", "VALID_20", {1, 5}},
+        Arc{"WL_0", "VALID_21", {1, 5}},
+        Arc{"WL_0", "VALID_22", {1, 5}},
+        Arc{"WL_0", "VALID_23", {1, 5}},
+        Arc{"WL_0", "VALID_24", {1, 5}},
+        Arc{"WL_0", "VALID_25", {1, 5}},
+        Arc{"WL_0", "VALID_26", {1, 5}},
+        Arc{"WL_0", "VALID_27", {1, 5}},
+        Arc{"WL_0", "VALID_28", {1, 5}},
+        Arc{"WL_0", "VALID_29", {1, 5}},
+        Arc{"WL_0", "VALID_3", {1, 5}},
+        Arc{"WL_0", "VALID_30", {1, 5}},
+        Arc{"WL_0", "VALID_31", {1, 5}},
+        Arc{"WL_0", "VALID_32", {1, 5}},
+        Arc{"WL_0", "VALID_33", {1, 5}},
+        Arc{"WL_0", "VALID_34", {1, 5}},
+        Arc{"WL_0", "VALID_35", {1, 5}},
+        Arc{"WL_0", "VALID_36", {1, 5}},
+        Arc{"WL_0", "VALID_37", {1, 5}},
+        Arc{"WL_0", "VALID_38", {1, 5}},
+        Arc{"WL_0", "VALID_39", {1, 5}},
+        Arc{"WL_0", "VALID_4", {1, 5}},
+        Arc{"WL_0", "VALID_40", {1, 5}},
+        Arc{"WL_0", "VALID_41", {1, 5}},
+        Arc{"WL_0", "VALID_42", {1, 5}},
+        Arc{"WL_0", "VALID_43", {1, 5}},
+        Arc{"WL_0", "VALID_44", {1, 5}},
+        Arc{"WL_0", "VALID_45", {1, 5}},
+        Arc{"WL_0", "VALID_46", {1, 5}},
+        Arc{"WL_0", "VALID_47", {1, 5}},
+        Arc{"WL_0", "VALID_48", {1, 5}},
+        Arc{"WL_0", "VALID_49", {1, 5}},
+        Arc{"WL_0", "VALID_5", {1, 5}},
+        Arc{"WL_0", "VALID_50", {1, 5}},
+        Arc{"WL_0", "VALID_51", {1, 5}},
+        Arc{"WL_0", "VALID_52", {1, 5}},
+        Arc{"WL_0", "VALID_53", {1, 5}},
+        Arc{"WL_0", "VALID_54", {1, 5}},
+        Arc{"WL_0", "VALID_55", {1, 5}},
+        Arc{"WL_0", "VALID_56", {1, 5}},
+        Arc{"WL_0", "VALID_57", {1, 5}},
+        Arc{"WL_0", "VALID_58", {1, 5}},
+        Arc{"WL_0", "VALID_59", {1, 5}},
+        Arc{"WL_0", "VALID_6", {1, 5}},
+        Arc{"WL_0", "VALID_60", {1, 5}},
+        Arc{"WL_0", "VALID_61", {1, 5}},
+        Arc{"WL_0", "VALID_62", {1, 5}},
+        Arc{"WL_0", "VALID_63", {1, 5}},
+        Arc{"WL_0", "VALID_7", {1, 5}},
+        Arc{"WL_0", "VALID_8", {1, 5}},
+        Arc{"WL_0", "VALID_9", {1, 5}},
+        Arc{"WL_1", "BL_0", {1, 5}},
+        Arc{"WL_1", "BL_1", {1, 5}},
+        Arc{"WL_1", "BL_10", {1, 5}},
+        Arc{"WL_1", "BL_11", {1, 5}},
+        Arc{"WL_1", "BL_12", {1, 5}},
+        Arc{"WL_1", "BL_13", {1, 5}},
+        Arc{"WL_1", "BL_14", {1, 5}},
+        Arc{"WL_1", "BL_15", {1, 5}},
+        Arc{"WL_1", "BL_16", {1, 5}},
+        Arc{"WL_1", "BL_17", {1, 5}},
+        Arc{"WL_1", "BL_18", {1, 5}},
+        Arc{"WL_1", "BL_19", {1, 5}},
+        Arc{"WL_1", "BL_2", {1, 5}},
+        Arc{"WL_1", "BL_20", {1, 5}},
+        Arc{"WL_1", "BL_21", {1, 5}},
+        Arc{"WL_1", "BL_22", {1, 5}},
+        Arc{"WL_1", "BL_23", {1, 5}},
+        Arc{"WL_1", "BL_24", {1, 5}},
+        Arc{"WL_1", "BL_25", {1, 5}},
+        Arc{"WL_1", "BL_26", {1, 5}},
+        Arc{"WL_1", "BL_27", {1, 5}},
+        Arc{"WL_1", "BL_28", {1, 5}},
+        Arc{"WL_1", "BL_29", {1, 5}},
+        Arc{"WL_1", "BL_3", {1, 5}},
+        Arc{"WL_1", "BL_30", {1, 5}},
+        Arc{"WL_1", "BL_31", {1, 5}},
+        Arc{"WL_1", "BL_32", {1, 5}},
+        Arc{"WL_1", "BL_33", {1, 5}},
+        Arc{"WL_1", "BL_34", {1, 5}},
+        Arc{"WL_1", "BL_35", {1, 5}},
+        Arc{"WL_1", "BL_36", {1, 5}},
+        Arc{"WL_1", "BL_37", {1, 5}},
+        Arc{"WL_1", "BL_38", {1, 5}},
+        Arc{"WL_1", "BL_39", {1, 5}},
+        Arc{"WL_1", "BL_4", {1, 5}},
+        Arc{"WL_1", "BL_40", {1, 5}},
+        Arc{"WL_1", "BL_41", {1, 5}},
+        Arc{"WL_1", "BL_42", {1, 5}},
+        Arc{"WL_1", "BL_43", {1, 5}},
+        Arc{"WL_1", "BL_44", {1, 5}},
+        Arc{"WL_1", "BL_45", {1, 5}},
+        Arc{"WL_1", "BL_46", {1, 5}},
+        Arc{"WL_1", "BL_47", {1, 5}},
+        Arc{"WL_1", "BL_48", {1, 5}},
+        Arc{"WL_1", "BL_49", {1, 5}},
+        Arc{"WL_1", "BL_5", {1, 5}},
+        Arc{"WL_1", "BL_50", {1, 5}},
+        Arc{"WL_1", "BL_51", {1, 5}},
+        Arc{"WL_1", "BL_52", {1, 5}},
+        Arc{"WL_1", "BL_53", {1, 5}},
+        Arc{"WL_1", "BL_54", {1, 5}},
+        Arc{"WL_1", "BL_55", {1, 5}},
+        Arc{"WL_1", "BL_56", {1, 5}},
+        Arc{"WL_1", "BL_57", {1, 5}},
+        Arc{"WL_1", "BL_58", {1, 5}},
+        Arc{"WL_1", "BL_59", {1, 5}},
+        Arc{"WL_1", "BL_6", {1, 5}},
+        Arc{"WL_1", "BL_60", {1, 5}},
+        Arc{"WL_1", "BL_61", {1, 5}},
+        Arc{"WL_1", "BL_62", {1, 5}},
+        Arc{"WL_1", "BL_63", {1, 5}},
+        Arc{"WL_1", "BL_7", {1, 5}},
+        Arc{"WL_1", "BL_8", {1, 5}},
+        Arc{"WL_1", "BL_9", {1, 5}},
+        Arc{"WL_1", "BL_BAR_0", {1, 5}},
+        Arc{"WL_1", "BL_BAR_1", {1, 5}},
+        Arc{"WL_1", "BL_BAR_10", {1, 5}},
+        Arc{"WL_1", "BL_BAR_11", {1, 5}},
+        Arc{"WL_1", "BL_BAR_12", {1, 5}},
+        Arc{"WL_1", "BL_BAR_13", {1, 5}},
+        Arc{"WL_1", "BL_BAR_14", {1, 5}},
+        Arc{"WL_1", "BL_BAR_15", {1, 5}},
+        Arc{"WL_1", "BL_BAR_16", {1, 5}},
+        Arc{"WL_1", "BL_BAR_17", {1, 5}},
+        Arc{"WL_1", "BL_BAR_18", {1, 5}},
+        Arc{"WL_1", "BL_BAR_19", {1, 5}},
+        Arc{"WL_1", "BL_BAR_2", {1, 5}},
+        Arc{"WL_1", "BL_BAR_20", {1, 5}},
+        Arc{"WL_1", "BL_BAR_21", {1, 5}},
+        Arc{"WL_1", "BL_BAR_22", {1, 5}},
+        Arc{"WL_1", "BL_BAR_23", {1, 5}},
+        Arc{"WL_1", "BL_BAR_24", {1, 5}},
+        Arc{"WL_1", "BL_BAR_25", {1, 5}},
+        Arc{"WL_1", "BL_BAR_26", {1, 5}},
+        Arc{"WL_1", "BL_BAR_27", {1, 5}},
+        Arc{"WL_1", "BL_BAR_28", {1, 5}},
+        Arc{"WL_1", "BL_BAR_29", {1, 5}},
+        Arc{"WL_1", "BL_BAR_3", {1, 5}},
+        Arc{"WL_1", "BL_BAR_30", {1, 5}},
+        Arc{"WL_1", "BL_BAR_31", {1, 5}},
+        Arc{"WL_1", "BL_BAR_32", {1, 5}},
+        Arc{"WL_1", "BL_BAR_33", {1, 5}},
+        Arc{"WL_1", "BL_BAR_34", {1, 5}},
+        Arc{"WL_1", "BL_BAR_35", {1, 5}},
+        Arc{"WL_1", "BL_BAR_36", {1, 5}},
+        Arc{"WL_1", "BL_BAR_37", {1, 5}},
+        Arc{"WL_1", "BL_BAR_38", {1, 5}},
+        Arc{"WL_1", "BL_BAR_39", {1, 5}},
+        Arc{"WL_1", "BL_BAR_4", {1, 5}},
+        Arc{"WL_1", "BL_BAR_40", {1, 5}},
+        Arc{"WL_1", "BL_BAR_41", {1, 5}},
+        Arc{"WL_1", "BL_BAR_42", {1, 5}},
+        Arc{"WL_1", "BL_BAR_43", {1, 5}},
+        Arc{"WL_1", "BL_BAR_44", {1, 5}},
+        Arc{"WL_1", "BL_BAR_45", {1, 5}},
+        Arc{"WL_1", "BL_BAR_46", {1, 5}},
+        Arc{"WL_1", "BL_BAR_47", {1, 5}},
+        Arc{"WL_1", "BL_BAR_48", {1, 5}},
+        Arc{"WL_1", "BL_BAR_49", {1, 5}},
+        Arc{"WL_1", "BL_BAR_5", {1, 5}},
+        Arc{"WL_1", "BL_BAR_50", {1, 5}},
+        Arc{"WL_1", "BL_BAR_51", {1, 5}},
+        Arc{"WL_1", "BL_BAR_52", {1, 5}},
+        Arc{"WL_1", "BL_BAR_53", {1, 5}},
+        Arc{"WL_1", "BL_BAR_54", {1, 5}},
+        Arc{"WL_1", "BL_BAR_55", {1, 5}},
+        Arc{"WL_1", "BL_BAR_56", {1, 5}},
+        Arc{"WL_1", "BL_BAR_57", {1, 5}},
+        Arc{"WL_1", "BL_BAR_58", {1, 5}},
+        Arc{"WL_1", "BL_BAR_59", {1, 5}},
+        Arc{"WL_1", "BL_BAR_6", {1, 5}},
+        Arc{"WL_1", "BL_BAR_60", {1, 5}},
+        Arc{"WL_1", "BL_BAR_61", {1, 5}},
+        Arc{"WL_1", "BL_BAR_62", {1, 5}},
+        Arc{"WL_1", "BL_BAR_63", {1, 5}},
+        Arc{"WL_1", "BL_BAR_7", {1, 5}},
+        Arc{"WL_1", "BL_BAR_8", {1, 5}},
+        Arc{"WL_1", "BL_BAR_9", {1, 5}},
+        Arc{"WL_1", "VALID_0", {1, 5}},
+        Arc{"WL_1", "VALID_1", {1, 5}},
+        Arc{"WL_1", "VALID_10", {1, 5}},
+        Arc{"WL_1", "VALID_11", {1, 5}},
+        Arc{"WL_1", "VALID_12", {1, 5}},
+        Arc{"WL_1", "VALID_13", {1, 5}},
+        Arc{"WL_1", "VALID_14", {1, 5}},
+        Arc{"WL_1", "VALID_15", {1, 5}},
+        Arc{"WL_1", "VALID_16", {1, 5}},
+        Arc{"WL_1", "VALID_17", {1, 5}},
+        Arc{"WL_1", "VALID_18", {1, 5}},
+        Arc{"WL_1", "VALID_19", {1, 5}},
+        Arc{"WL_1", "VALID_2", {1, 5}},
+        Arc{"WL_1", "VALID_20", {1, 5}},
+        Arc{"WL_1", "VALID_21", {1, 5}},
+        Arc{"WL_1", "VALID_22", {1, 5}},
+        Arc{"WL_1", "VALID_23", {1, 5}},
+        Arc{"WL_1", "VALID_24", {1, 5}},
+        Arc{"WL_1", "VALID_25", {1, 5}},
+        Arc{"WL_1", "VALID_26", {1, 5}},
+        Arc{"WL_1", "VALID_27", {1, 5}},
+        Arc{"WL_1", "VALID_28", {1, 5}},
+        Arc{"WL_1", "VALID_29", {1, 5}},
+        Arc{"WL_1", "VALID_3", {1, 5}},
+        Arc{"WL_1", "VALID_30", {1, 5}},
+        Arc{"WL_1", "VALID_31", {1, 5}},
+        Arc{"WL_1", "VALID_32", {1, 5}},
+        Arc{"WL_1", "VALID_33", {1, 5}},
+        Arc{"WL_1", "VALID_34", {1, 5}},
+        Arc{"WL_1", "VALID_35", {1, 5}},
+        Arc{"WL_1", "VALID_36", {1, 5}},
+        Arc{"WL_1", "VALID_37", {1, 5}},
+        Arc{"WL_1", "VALID_38", {1, 5}},
+        Arc{"WL_1", "VALID_39", {1, 5}},
+        Arc{"WL_1", "VALID_4", {1, 5}},
+        Arc{"WL_1", "VALID_40", {1, 5}},
+        Arc{"WL_1", "VALID_41", {1, 5}},
+        Arc{"WL_1", "VALID_42", {1, 5}},
+        Arc{"WL_1", "VALID_43", {1, 5}},
+        Arc{"WL_1", "VALID_44", {1, 5}},
+        Arc{"WL_1", "VALID_45", {1, 5}},
+        Arc{"WL_1", "VALID_46", {1, 5}},
+        Arc{"WL_1", "VALID_47", {1, 5}},
+        Arc{"WL_1", "VALID_48", {1, 5}},
+        Arc{"WL_1", "VALID_49", {1, 5}},
+        Arc{"WL_1", "VALID_5", {1, 5}},
+        Arc{"WL_1", "VALID_50", {1, 5}},
+        Arc{"WL_1", "VALID_51", {1, 5}},
+        Arc{"WL_1", "VALID_52", {1, 5}},
+        Arc{"WL_1", "VALID_53", {1, 5}},
+        Arc{"WL_1", "VALID_54", {1, 5}},
+        Arc{"WL_1", "VALID_55", {1, 5}},
+        Arc{"WL_1", "VALID_56", {1, 5}},
+        Arc{"WL_1", "VALID_57", {1, 5}},
+        Arc{"WL_1", "VALID_58", {1, 5}},
+        Arc{"WL_1", "VALID_59", {1, 5}},
+        Arc{"WL_1", "VALID_6", {1, 5}},
+        Arc{"WL_1", "VALID_60", {1, 5}},
+        Arc{"WL_1", "VALID_61", {1, 5}},
+        Arc{"WL_1", "VALID_62", {1, 5}},
+        Arc{"WL_1", "VALID_63", {1, 5}},
+        Arc{"WL_1", "VALID_7", {1, 5}},
+        Arc{"WL_1", "VALID_8", {1, 5}},
+        Arc{"WL_1", "VALID_9", {1, 5}},
+        Arc{"WRITE_BL_0", "BL_0", {1, 5}},
+        Arc{"WRITE_BL_0", "BL_BAR_0", {1, 5}},
+        Arc{"WRITE_BL_0", "VALID_0", {1, 5}},
+        Arc{"WRITE_BL_1", "BL_1", {1, 5}},
+        Arc{"WRITE_BL_1", "BL_BAR_1", {1, 5}},
+        Arc{"WRITE_BL_1", "VALID_1", {1, 5}},
+        Arc{"WRITE_BL_10", "BL_10", {1, 5}},
+        Arc{"WRITE_BL_10", "BL_BAR_10", {1, 5}},
+        Arc{"WRITE_BL_10", "VALID_10", {1, 5}},
+        Arc{"WRITE_BL_11", "BL_11", {1, 5}},
+        Arc{"WRITE_BL_11", "BL_BAR_11", {1, 5}},
+        Arc{"WRITE_BL_11", "VALID_11", {1, 5}},
+        Arc{"WRITE_BL_12", "BL_12", {1, 5}},
+        Arc{"WRITE_BL_12", "BL_BAR_12", {1, 5}},
+        Arc{"WRITE_BL_12", "VALID_12", {1, 5}},
+        Arc{"WRITE_BL_13", "BL_13", {1, 5}},
+        Arc{"WRITE_BL_13", "BL_BAR_13", {1, 5}},
+        Arc{"WRITE_BL_13", "VALID_13", {1, 5}},
+        Arc{"WRITE_BL_14", "BL_14", {1, 5}},
+        Arc{"WRITE_BL_14", "BL_BAR_14", {1, 5}},
+        Arc{"WRITE_BL_14", "VALID_14", {1, 5}},
+        Arc{"WRITE_BL_15", "BL_15", {1, 5}},
+        Arc{"WRITE_BL_15", "BL_BAR_15", {1, 5}},
+        Arc{"WRITE_BL_15", "VALID_15", {1, 5}},
+        Arc{"WRITE_BL_16", "BL_16", {1, 5}},
+        Arc{"WRITE_BL_16", "BL_BAR_16", {1, 5}},
+        Arc{"WRITE_BL_16", "VALID_16", {1, 5}},
+        Arc{"WRITE_BL_17", "BL_17", {1, 5}},
+        Arc{"WRITE_BL_17", "BL_BAR_17", {1, 5}},
+        Arc{"WRITE_BL_17", "VALID_17", {1, 5}},
+        Arc{"WRITE_BL_18", "BL_18", {1, 5}},
+        Arc{"WRITE_BL_18", "BL_BAR_18", {1, 5}},
+        Arc{"WRITE_BL_18", "VALID_18", {1, 5}},
+        Arc{"WRITE_BL_19", "BL_19", {1, 5}},
+        Arc{"WRITE_BL_19", "BL_BAR_19", {1, 5}},
+        Arc{"WRITE_BL_19", "VALID_19", {1, 5}},
+        Arc{"WRITE_BL_2", "BL_2", {1, 5}},
+        Arc{"WRITE_BL_2", "BL_BAR_2", {1, 5}},
+        Arc{"WRITE_BL_2", "VALID_2", {1, 5}},
+        Arc{"WRITE_BL_20", "BL_20", {1, 5}},
+        Arc{"WRITE_BL_20", "BL_BAR_20", {1, 5}},
+        Arc{"WRITE_BL_20", "VALID_20", {1, 5}},
+        Arc{"WRITE_BL_21", "BL_21", {1, 5}},
+        Arc{"WRITE_BL_21", "BL_BAR_21", {1, 5}},
+        Arc{"WRITE_BL_21", "VALID_21", {1, 5}},
+        Arc{"WRITE_BL_22", "BL_22", {1, 5}},
+        Arc{"WRITE_BL_22", "BL_BAR_22", {1, 5}},
+        Arc{"WRITE_BL_22", "VALID_22", {1, 5}},
+        Arc{"WRITE_BL_23", "BL_23", {1, 5}},
+        Arc{"WRITE_BL_23", "BL_BAR_23", {1, 5}},
+        Arc{"WRITE_BL_23", "VALID_23", {1, 5}},
+        Arc{"WRITE_BL_24", "BL_24", {1, 5}},
+        Arc{"WRITE_BL_24", "BL_BAR_24", {1, 5}},
+        Arc{"WRITE_BL_24", "VALID_24", {1, 5}},
+        Arc{"WRITE_BL_25", "BL_25", {1, 5}},
+        Arc{"WRITE_BL_25", "BL_BAR_25", {1, 5}},
+        Arc{"WRITE_BL_25", "VALID_25", {1, 5}},
+        Arc{"WRITE_BL_26", "BL_26", {1, 5}},
+        Arc{"WRITE_BL_26", "BL_BAR_26", {1, 5}},
+        Arc{"WRITE_BL_26", "VALID_26", {1, 5}},
+        Arc{"WRITE_BL_27", "BL_27", {1, 5}},
+        Arc{"WRITE_BL_27", "BL_BAR_27", {1, 5}},
+        Arc{"WRITE_BL_27", "VALID_27", {1, 5}},
+        Arc{"WRITE_BL_28", "BL_28", {1, 5}},
+        Arc{"WRITE_BL_28", "BL_BAR_28", {1, 5}},
+        Arc{"WRITE_BL_28", "VALID_28", {1, 5}},
+        Arc{"WRITE_BL_29", "BL_29", {1, 5}},
+        Arc{"WRITE_BL_29", "BL_BAR_29", {1, 5}},
+        Arc{"WRITE_BL_29", "VALID_29", {1, 5}},
+        Arc{"WRITE_BL_3", "BL_3", {1, 5}},
+        Arc{"WRITE_BL_3", "BL_BAR_3", {1, 5}},
+        Arc{"WRITE_BL_3", "VALID_3", {1, 5}},
+        Arc{"WRITE_BL_30", "BL_30", {1, 5}},
+        Arc{"WRITE_BL_30", "BL_BAR_30", {1, 5}},
+        Arc{"WRITE_BL_30", "VALID_30", {1, 5}},
+        Arc{"WRITE_BL_31", "BL_31", {1, 5}},
+        Arc{"WRITE_BL_31", "BL_BAR_31", {1, 5}},
+        Arc{"WRITE_BL_31", "VALID_31", {1, 5}},
+        Arc{"WRITE_BL_32", "BL_32", {1, 5}},
+        Arc{"WRITE_BL_32", "BL_BAR_32", {1, 5}},
+        Arc{"WRITE_BL_32", "VALID_32", {1, 5}},
+        Arc{"WRITE_BL_33", "BL_33", {1, 5}},
+        Arc{"WRITE_BL_33", "BL_BAR_33", {1, 5}},
+        Arc{"WRITE_BL_33", "VALID_33", {1, 5}},
+        Arc{"WRITE_BL_34", "BL_34", {1, 5}},
+        Arc{"WRITE_BL_34", "BL_BAR_34", {1, 5}},
+        Arc{"WRITE_BL_34", "VALID_34", {1, 5}},
+        Arc{"WRITE_BL_35", "BL_35", {1, 5}},
+        Arc{"WRITE_BL_35", "BL_BAR_35", {1, 5}},
+        Arc{"WRITE_BL_35", "VALID_35", {1, 5}},
+        Arc{"WRITE_BL_36", "BL_36", {1, 5}},
+        Arc{"WRITE_BL_36", "BL_BAR_36", {1, 5}},
+        Arc{"WRITE_BL_36", "VALID_36", {1, 5}},
+        Arc{"WRITE_BL_37", "BL_37", {1, 5}},
+        Arc{"WRITE_BL_37", "BL_BAR_37", {1, 5}},
+        Arc{"WRITE_BL_37", "VALID_37", {1, 5}},
+        Arc{"WRITE_BL_38", "BL_38", {1, 5}},
+        Arc{"WRITE_BL_38", "BL_BAR_38", {1, 5}},
+        Arc{"WRITE_BL_38", "VALID_38", {1, 5}},
+        Arc{"WRITE_BL_39", "BL_39", {1, 5}},
+        Arc{"WRITE_BL_39", "BL_BAR_39", {1, 5}},
+        Arc{"WRITE_BL_39", "VALID_39", {1, 5}},
+        Arc{"WRITE_BL_4", "BL_4", {1, 5}},
+        Arc{"WRITE_BL_4", "BL_BAR_4", {1, 5}},
+        Arc{"WRITE_BL_4", "VALID_4", {1, 5}},
+        Arc{"WRITE_BL_40", "BL_40", {1, 5}},
+        Arc{"WRITE_BL_40", "BL_BAR_40", {1, 5}},
+        Arc{"WRITE_BL_40", "VALID_40", {1, 5}},
+        Arc{"WRITE_BL_41", "BL_41", {1, 5}},
+        Arc{"WRITE_BL_41", "BL_BAR_41", {1, 5}},
+        Arc{"WRITE_BL_41", "VALID_41", {1, 5}},
+        Arc{"WRITE_BL_42", "BL_42", {1, 5}},
+        Arc{"WRITE_BL_42", "BL_BAR_42", {1, 5}},
+        Arc{"WRITE_BL_42", "VALID_42", {1, 5}},
+        Arc{"WRITE_BL_43", "BL_43", {1, 5}},
+        Arc{"WRITE_BL_43", "BL_BAR_43", {1, 5}},
+        Arc{"WRITE_BL_43", "VALID_43", {1, 5}},
+        Arc{"WRITE_BL_44", "BL_44", {1, 5}},
+        Arc{"WRITE_BL_44", "BL_BAR_44", {1, 5}},
+        Arc{"WRITE_BL_44", "VALID_44", {1, 5}},
+        Arc{"WRITE_BL_45", "BL_45", {1, 5}},
+        Arc{"WRITE_BL_45", "BL_BAR_45", {1, 5}},
+        Arc{"WRITE_BL_45", "VALID_45", {1, 5}},
+        Arc{"WRITE_BL_46", "BL_46", {1, 5}},
+        Arc{"WRITE_BL_46", "BL_BAR_46", {1, 5}},
+        Arc{"WRITE_BL_46", "VALID_46", {1, 5}},
+        Arc{"WRITE_BL_47", "BL_47", {1, 5}},
+        Arc{"WRITE_BL_47", "BL_BAR_47", {1, 5}},
+        Arc{"WRITE_BL_47", "VALID_47", {1, 5}},
+        Arc{"WRITE_BL_48", "BL_48", {1, 5}},
+        Arc{"WRITE_BL_48", "BL_BAR_48", {1, 5}},
+        Arc{"WRITE_BL_48", "VALID_48", {1, 5}},
+        Arc{"WRITE_BL_49", "BL_49", {1, 5}},
+        Arc{"WRITE_BL_49", "BL_BAR_49", {1, 5}},
+        Arc{"WRITE_BL_49", "VALID_49", {1, 5}},
+        Arc{"WRITE_BL_5", "BL_5", {1, 5}},
+        Arc{"WRITE_BL_5", "BL_BAR_5", {1, 5}},
+        Arc{"WRITE_BL_5", "VALID_5", {1, 5}},
+        Arc{"WRITE_BL_50", "BL_50", {1, 5}},
+        Arc{"WRITE_BL_50", "BL_BAR_50", {1, 5}},
+        Arc{"WRITE_BL_50", "VALID_50", {1, 5}},
+        Arc{"WRITE_BL_51", "BL_51", {1, 5}},
+        Arc{"WRITE_BL_51", "BL_BAR_51", {1, 5}},
+        Arc{"WRITE_BL_51", "VALID_51", {1, 5}},
+        Arc{"WRITE_BL_52", "BL_52", {1, 5}},
+        Arc{"WRITE_BL_52", "BL_BAR_52", {1, 5}},
+        Arc{"WRITE_BL_52", "VALID_52", {1, 5}},
+        Arc{"WRITE_BL_53", "BL_53", {1, 5}},
+        Arc{"WRITE_BL_53", "BL_BAR_53", {1, 5}},
+        Arc{"WRITE_BL_53", "VALID_53", {1, 5}},
+        Arc{"WRITE_BL_54", "BL_54", {1, 5}},
+        Arc{"WRITE_BL_54", "BL_BAR_54", {1, 5}},
+        Arc{"WRITE_BL_54", "VALID_54", {1, 5}},
+        Arc{"WRITE_BL_55", "BL_55", {1, 5}},
+        Arc{"WRITE_BL_55", "BL_BAR_55", {1, 5}},
+        Arc{"WRITE_BL_55", "VALID_55", {1, 5}},
+        Arc{"WRITE_BL_56", "BL_56", {1, 5}},
+        Arc{"WRITE_BL_56", "BL_BAR_56", {1, 5}},
+        Arc{"WRITE_BL_56", "VALID_56", {1, 5}},
+        Arc{"WRITE_BL_57", "BL_57", {1, 5}},
+        Arc{"WRITE_BL_57", "BL_BAR_57", {1, 5}},
+        Arc{"WRITE_BL_57", "VALID_57", {1, 5}},
+        Arc{"WRITE_BL_58", "BL_58", {1, 5}},
+        Arc{"WRITE_BL_58", "BL_BAR_58", {1, 5}},
+        Arc{"WRITE_BL_58", "VALID_58", {1, 5}},
+        Arc{"WRITE_BL_59", "BL_59", {1, 5}},
+        Arc{"WRITE_BL_59", "BL_BAR_59", {1, 5}},
+        Arc{"WRITE_BL_59", "VALID_59", {1, 5}},
+        Arc{"WRITE_BL_6", "BL_6", {1, 5}},
+        Arc{"WRITE_BL_6", "BL_BAR_6", {1, 5}},
+        Arc{"WRITE_BL_6", "VALID_6", {1, 5}},
+        Arc{"WRITE_BL_60", "BL_60", {1, 5}},
+        Arc{"WRITE_BL_60", "BL_BAR_60", {1, 5}},
+        Arc{"WRITE_BL_60", "VALID_60", {1, 5}},
+        Arc{"WRITE_BL_61", "BL_61", {1, 5}},
+        Arc{"WRITE_BL_61", "BL_BAR_61", {1, 5}},
+        Arc{"WRITE_BL_61", "VALID_61", {1, 5}},
+        Arc{"WRITE_BL_62", "BL_62", {1, 5}},
+        Arc{"WRITE_BL_62", "BL_BAR_62", {1, 5}},
+        Arc{"WRITE_BL_62", "VALID_62", {1, 5}},
+        Arc{"WRITE_BL_63", "BL_63", {1, 5}},
+        Arc{"WRITE_BL_63", "BL_BAR_63", {1, 5}},
+        Arc{"WRITE_BL_63", "VALID_63", {1, 5}},
+        Arc{"WRITE_BL_7", "BL_7", {1, 5}},
+        Arc{"WRITE_BL_7", "BL_BAR_7", {1, 5}},
+        Arc{"WRITE_BL_7", "VALID_7", {1, 5}},
+        Arc{"WRITE_BL_8", "BL_8", {1, 5}},
+        Arc{"WRITE_BL_8", "BL_BAR_8", {1, 5}},
+        Arc{"WRITE_BL_8", "VALID_8", {1, 5}},
+        Arc{"WRITE_BL_9", "BL_9", {1, 5}},
+        Arc{"WRITE_BL_9", "BL_BAR_9", {1, 5}},
+        Arc{"WRITE_BL_9", "VALID_9", {1, 5}},
+        Arc{"WRITE_BL_BAR_0", "BL_0", {1, 5}},
+        Arc{"WRITE_BL_BAR_0", "BL_BAR_0", {1, 5}},
+        Arc{"WRITE_BL_BAR_0", "VALID_0", {1, 5}},
+        Arc{"WRITE_BL_BAR_1", "BL_1", {1, 5}},
+        Arc{"WRITE_BL_BAR_1", "BL_BAR_1", {1, 5}},
+        Arc{"WRITE_BL_BAR_1", "VALID_1", {1, 5}},
+        Arc{"WRITE_BL_BAR_10", "BL_10", {1, 5}},
+        Arc{"WRITE_BL_BAR_10", "BL_BAR_10", {1, 5}},
+        Arc{"WRITE_BL_BAR_10", "VALID_10", {1, 5}},
+        Arc{"WRITE_BL_BAR_11", "BL_11", {1, 5}},
+        Arc{"WRITE_BL_BAR_11", "BL_BAR_11", {1, 5}},
+        Arc{"WRITE_BL_BAR_11", "VALID_11", {1, 5}},
+        Arc{"WRITE_BL_BAR_12", "BL_12", {1, 5}},
+        Arc{"WRITE_BL_BAR_12", "BL_BAR_12", {1, 5}},
+        Arc{"WRITE_BL_BAR_12", "VALID_12", {1, 5}},
+        Arc{"WRITE_BL_BAR_13", "BL_13", {1, 5}},
+        Arc{"WRITE_BL_BAR_13", "BL_BAR_13", {1, 5}},
+        Arc{"WRITE_BL_BAR_13", "VALID_13", {1, 5}},
+        Arc{"WRITE_BL_BAR_14", "BL_14", {1, 5}},
+        Arc{"WRITE_BL_BAR_14", "BL_BAR_14", {1, 5}},
+        Arc{"WRITE_BL_BAR_14", "VALID_14", {1, 5}},
+        Arc{"WRITE_BL_BAR_15", "BL_15", {1, 5}},
+        Arc{"WRITE_BL_BAR_15", "BL_BAR_15", {1, 5}},
+        Arc{"WRITE_BL_BAR_15", "VALID_15", {1, 5}},
+        Arc{"WRITE_BL_BAR_16", "BL_16", {1, 5}},
+        Arc{"WRITE_BL_BAR_16", "BL_BAR_16", {1, 5}},
+        Arc{"WRITE_BL_BAR_16", "VALID_16", {1, 5}},
+        Arc{"WRITE_BL_BAR_17", "BL_17", {1, 5}},
+        Arc{"WRITE_BL_BAR_17", "BL_BAR_17", {1, 5}},
+        Arc{"WRITE_BL_BAR_17", "VALID_17", {1, 5}},
+        Arc{"WRITE_BL_BAR_18", "BL_18", {1, 5}},
+        Arc{"WRITE_BL_BAR_18", "BL_BAR_18", {1, 5}},
+        Arc{"WRITE_BL_BAR_18", "VALID_18", {1, 5}},
+        Arc{"WRITE_BL_BAR_19", "BL_19", {1, 5}},
+        Arc{"WRITE_BL_BAR_19", "BL_BAR_19", {1, 5}},
+        Arc{"WRITE_BL_BAR_19", "VALID_19", {1, 5}},
+        Arc{"WRITE_BL_BAR_2", "BL_2", {1, 5}},
+        Arc{"WRITE_BL_BAR_2", "BL_BAR_2", {1, 5}},
+        Arc{"WRITE_BL_BAR_2", "VALID_2", {1, 5}},
+        Arc{"WRITE_BL_BAR_20", "BL_20", {1, 5}},
+        Arc{"WRITE_BL_BAR_20", "BL_BAR_20", {1, 5}},
+        Arc{"WRITE_BL_BAR_20", "VALID_20", {1, 5}},
+        Arc{"WRITE_BL_BAR_21", "BL_21", {1, 5}},
+        Arc{"WRITE_BL_BAR_21", "BL_BAR_21", {1, 5}},
+        Arc{"WRITE_BL_BAR_21", "VALID_21", {1, 5}},
+        Arc{"WRITE_BL_BAR_22", "BL_22", {1, 5}},
+        Arc{"WRITE_BL_BAR_22", "BL_BAR_22", {1, 5}},
+        Arc{"WRITE_BL_BAR_22", "VALID_22", {1, 5}},
+        Arc{"WRITE_BL_BAR_23", "BL_23", {1, 5}},
+        Arc{"WRITE_BL_BAR_23", "BL_BAR_23", {1, 5}},
+        Arc{"WRITE_BL_BAR_23", "VALID_23", {1, 5}},
+        Arc{"WRITE_BL_BAR_24", "BL_24", {1, 5}},
+        Arc{"WRITE_BL_BAR_24", "BL_BAR_24", {1, 5}},
+        Arc{"WRITE_BL_BAR_24", "VALID_24", {1, 5}},
+        Arc{"WRITE_BL_BAR_25", "BL_25", {1, 5}},
+        Arc{"WRITE_BL_BAR_25", "BL_BAR_25", {1, 5}},
+        Arc{"WRITE_BL_BAR_25", "VALID_25", {1, 5}},
+        Arc{"WRITE_BL_BAR_26", "BL_26", {1, 5}},
+        Arc{"WRITE_BL_BAR_26", "BL_BAR_26", {1, 5}},
+        Arc{"WRITE_BL_BAR_26", "VALID_26", {1, 5}},
+        Arc{"WRITE_BL_BAR_27", "BL_27", {1, 5}},
+        Arc{"WRITE_BL_BAR_27", "BL_BAR_27", {1, 5}},
+        Arc{"WRITE_BL_BAR_27", "VALID_27", {1, 5}},
+        Arc{"WRITE_BL_BAR_28", "BL_28", {1, 5}},
+        Arc{"WRITE_BL_BAR_28", "BL_BAR_28", {1, 5}},
+        Arc{"WRITE_BL_BAR_28", "VALID_28", {1, 5}},
+        Arc{"WRITE_BL_BAR_29", "BL_29", {1, 5}},
+        Arc{"WRITE_BL_BAR_29", "BL_BAR_29", {1, 5}},
+        Arc{"WRITE_BL_BAR_29", "VALID_29", {1, 5}},
+        Arc{"WRITE_BL_BAR_3", "BL_3", {1, 5}},
+        Arc{"WRITE_BL_BAR_3", "BL_BAR_3", {1, 5}},
+        Arc{"WRITE_BL_BAR_3", "VALID_3", {1, 5}},
+        Arc{"WRITE_BL_BAR_30", "BL_30", {1, 5}},
+        Arc{"WRITE_BL_BAR_30", "BL_BAR_30", {1, 5}},
+        Arc{"WRITE_BL_BAR_30", "VALID_30", {1, 5}},
+        Arc{"WRITE_BL_BAR_31", "BL_31", {1, 5}},
+        Arc{"WRITE_BL_BAR_31", "BL_BAR_31", {1, 5}},
+        Arc{"WRITE_BL_BAR_31", "VALID_31", {1, 5}},
+        Arc{"WRITE_BL_BAR_32", "BL_32", {1, 5}},
+        Arc{"WRITE_BL_BAR_32", "BL_BAR_32", {1, 5}},
+        Arc{"WRITE_BL_BAR_32", "VALID_32", {1, 5}},
+        Arc{"WRITE_BL_BAR_33", "BL_33", {1, 5}},
+        Arc{"WRITE_BL_BAR_33", "BL_BAR_33", {1, 5}},
+        Arc{"WRITE_BL_BAR_33", "VALID_33", {1, 5}},
+        Arc{"WRITE_BL_BAR_34", "BL_34", {1, 5}},
+        Arc{"WRITE_BL_BAR_34", "BL_BAR_34", {1, 5}},
+        Arc{"WRITE_BL_BAR_34", "VALID_34", {1, 5}},
+        Arc{"WRITE_BL_BAR_35", "BL_35", {1, 5}},
+        Arc{"WRITE_BL_BAR_35", "BL_BAR_35", {1, 5}},
+        Arc{"WRITE_BL_BAR_35", "VALID_35", {1, 5}},
+        Arc{"WRITE_BL_BAR_36", "BL_36", {1, 5}},
+        Arc{"WRITE_BL_BAR_36", "BL_BAR_36", {1, 5}},
+        Arc{"WRITE_BL_BAR_36", "VALID_36", {1, 5}},
+        Arc{"WRITE_BL_BAR_37", "BL_37", {1, 5}},
+        Arc{"WRITE_BL_BAR_37", "BL_BAR_37", {1, 5}},
+        Arc{"WRITE_BL_BAR_37", "VALID_37", {1, 5}},
+        Arc{"WRITE_BL_BAR_38", "BL_38", {1, 5}},
+        Arc{"WRITE_BL_BAR_38", "BL_BAR_38", {1, 5}},
+        Arc{"WRITE_BL_BAR_38", "VALID_38", {1, 5}},
+        Arc{"WRITE_BL_BAR_39", "BL_39", {1, 5}},
+        Arc{"WRITE_BL_BAR_39", "BL_BAR_39", {1, 5}},
+        Arc{"WRITE_BL_BAR_39", "VALID_39", {1, 5}},
+        Arc{"WRITE_BL_BAR_4", "BL_4", {1, 5}},
+        Arc{"WRITE_BL_BAR_4", "BL_BAR_4", {1, 5}},
+        Arc{"WRITE_BL_BAR_4", "VALID_4", {1, 5}},
+        Arc{"WRITE_BL_BAR_40", "BL_40", {1, 5}},
+        Arc{"WRITE_BL_BAR_40", "BL_BAR_40", {1, 5}},
+        Arc{"WRITE_BL_BAR_40", "VALID_40", {1, 5}},
+        Arc{"WRITE_BL_BAR_41", "BL_41", {1, 5}},
+        Arc{"WRITE_BL_BAR_41", "BL_BAR_41", {1, 5}},
+        Arc{"WRITE_BL_BAR_41", "VALID_41", {1, 5}},
+        Arc{"WRITE_BL_BAR_42", "BL_42", {1, 5}},
+        Arc{"WRITE_BL_BAR_42", "BL_BAR_42", {1, 5}},
+        Arc{"WRITE_BL_BAR_42", "VALID_42", {1, 5}},
+        Arc{"WRITE_BL_BAR_43", "BL_43", {1, 5}},
+        Arc{"WRITE_BL_BAR_43", "BL_BAR_43", {1, 5}},
+        Arc{"WRITE_BL_BAR_43", "VALID_43", {1, 5}},
+        Arc{"WRITE_BL_BAR_44", "BL_44", {1, 5}},
+        Arc{"WRITE_BL_BAR_44", "BL_BAR_44", {1, 5}},
+        Arc{"WRITE_BL_BAR_44", "VALID_44", {1, 5}},
+        Arc{"WRITE_BL_BAR_45", "BL_45", {1, 5}},
+        Arc{"WRITE_BL_BAR_45", "BL_BAR_45", {1, 5}},
+        Arc{"WRITE_BL_BAR_45", "VALID_45", {1, 5}},
+        Arc{"WRITE_BL_BAR_46", "BL_46", {1, 5}},
+        Arc{"WRITE_BL_BAR_46", "BL_BAR_46", {1, 5}},
+        Arc{"WRITE_BL_BAR_46", "VALID_46", {1, 5}},
+        Arc{"WRITE_BL_BAR_47", "BL_47", {1, 5}},
+        Arc{"WRITE_BL_BAR_47", "BL_BAR_47", {1, 5}},
+        Arc{"WRITE_BL_BAR_47", "VALID_47", {1, 5}},
+        Arc{"WRITE_BL_BAR_48", "BL_48", {1, 5}},
+        Arc{"WRITE_BL_BAR_48", "BL_BAR_48", {1, 5}},
+        Arc{"WRITE_BL_BAR_48", "VALID_48", {1, 5}},
+        Arc{"WRITE_BL_BAR_49", "BL_49", {1, 5}},
+        Arc{"WRITE_BL_BAR_49", "BL_BAR_49", {1, 5}},
+        Arc{"WRITE_BL_BAR_49", "VALID_49", {1, 5}},
+        Arc{"WRITE_BL_BAR_5", "BL_5", {1, 5}},
+        Arc{"WRITE_BL_BAR_5", "BL_BAR_5", {1, 5}},
+        Arc{"WRITE_BL_BAR_5", "VALID_5", {1, 5}},
+        Arc{"WRITE_BL_BAR_50", "BL_50", {1, 5}},
+        Arc{"WRITE_BL_BAR_50", "BL_BAR_50", {1, 5}},
+        Arc{"WRITE_BL_BAR_50", "VALID_50", {1, 5}},
+        Arc{"WRITE_BL_BAR_51", "BL_51", {1, 5}},
+        Arc{"WRITE_BL_BAR_51", "BL_BAR_51", {1, 5}},
+        Arc{"WRITE_BL_BAR_51", "VALID_51", {1, 5}},
+        Arc{"WRITE_BL_BAR_52", "BL_52", {1, 5}},
+        Arc{"WRITE_BL_BAR_52", "BL_BAR_52", {1, 5}},
+        Arc{"WRITE_BL_BAR_52", "VALID_52", {1, 5}},
+        Arc{"WRITE_BL_BAR_53", "BL_53", {1, 5}},
+        Arc{"WRITE_BL_BAR_53", "BL_BAR_53", {1, 5}},
+        Arc{"WRITE_BL_BAR_53", "VALID_53", {1, 5}},
+        Arc{"WRITE_BL_BAR_54", "BL_54", {1, 5}},
+        Arc{"WRITE_BL_BAR_54", "BL_BAR_54", {1, 5}},
+        Arc{"WRITE_BL_BAR_54", "VALID_54", {1, 5}},
+        Arc{"WRITE_BL_BAR_55", "BL_55", {1, 5}},
+        Arc{"WRITE_BL_BAR_55", "BL_BAR_55", {1, 5}},
+        Arc{"WRITE_BL_BAR_55", "VALID_55", {1, 5}},
+        Arc{"WRITE_BL_BAR_56", "BL_56", {1, 5}},
+        Arc{"WRITE_BL_BAR_56", "BL_BAR_56", {1, 5}},
+        Arc{"WRITE_BL_BAR_56", "VALID_56", {1, 5}},
+        Arc{"WRITE_BL_BAR_57", "BL_57", {1, 5}},
+        Arc{"WRITE_BL_BAR_57", "BL_BAR_57", {1, 5}},
+        Arc{"WRITE_BL_BAR_57", "VALID_57", {1, 5}},
+        Arc{"WRITE_BL_BAR_58", "BL_58", {1, 5}},
+        Arc{"WRITE_BL_BAR_58", "BL_BAR_58", {1, 5}},
+        Arc{"WRITE_BL_BAR_58", "VALID_58", {1, 5}},
+        Arc{"WRITE_BL_BAR_59", "BL_59", {1, 5}},
+        Arc{"WRITE_BL_BAR_59", "BL_BAR_59", {1, 5}},
+        Arc{"WRITE_BL_BAR_59", "VALID_59", {1, 5}},
+        Arc{"WRITE_BL_BAR_6", "BL_6", {1, 5}},
+        Arc{"WRITE_BL_BAR_6", "BL_BAR_6", {1, 5}},
+        Arc{"WRITE_BL_BAR_6", "VALID_6", {1, 5}},
+        Arc{"WRITE_BL_BAR_60", "BL_60", {1, 5}},
+        Arc{"WRITE_BL_BAR_60", "BL_BAR_60", {1, 5}},
+        Arc{"WRITE_BL_BAR_60", "VALID_60", {1, 5}},
+        Arc{"WRITE_BL_BAR_61", "BL_61", {1, 5}},
+        Arc{"WRITE_BL_BAR_61", "BL_BAR_61", {1, 5}},
+        Arc{"WRITE_BL_BAR_61", "VALID_61", {1, 5}},
+        Arc{"WRITE_BL_BAR_62", "BL_62", {1, 5}},
+        Arc{"WRITE_BL_BAR_62", "BL_BAR_62", {1, 5}},
+        Arc{"WRITE_BL_BAR_62", "VALID_62", {1, 5}},
+        Arc{"WRITE_BL_BAR_63", "BL_63", {1, 5}},
+        Arc{"WRITE_BL_BAR_63", "BL_BAR_63", {1, 5}},
+        Arc{"WRITE_BL_BAR_63", "VALID_63", {1, 5}},
+        Arc{"WRITE_BL_BAR_7", "BL_7", {1, 5}},
+        Arc{"WRITE_BL_BAR_7", "BL_BAR_7", {1, 5}},
+        Arc{"WRITE_BL_BAR_7", "VALID_7", {1, 5}},
+        Arc{"WRITE_BL_BAR_8", "BL_8", {1, 5}},
+        Arc{"WRITE_BL_BAR_8", "BL_BAR_8", {1, 5}},
+        Arc{"WRITE_BL_BAR_8", "VALID_8", {1, 5}},
+        Arc{"WRITE_BL_BAR_9", "BL_9", {1, 5}},
+        Arc{"WRITE_BL_BAR_9", "BL_BAR_9", {1, 5}},
+        Arc{"WRITE_BL_BAR_9", "VALID_9", {1, 5}},
+    };
+    return t;
+}()},
+{"memory.sram.bank.8.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.bank.8.structural";
+    t.arcs = {
+        Arc{"DRIVE_0", "BL_0", {1, 5}},
+        Arc{"DRIVE_0", "BL_BAR_0", {1, 5}},
+        Arc{"DRIVE_0", "VALID_0", {1, 5}},
+        Arc{"DRIVE_1", "BL_1", {1, 5}},
+        Arc{"DRIVE_1", "BL_BAR_1", {1, 5}},
+        Arc{"DRIVE_1", "VALID_1", {1, 5}},
+        Arc{"DRIVE_10", "BL_10", {1, 5}},
+        Arc{"DRIVE_10", "BL_BAR_10", {1, 5}},
+        Arc{"DRIVE_10", "VALID_10", {1, 5}},
+        Arc{"DRIVE_11", "BL_11", {1, 5}},
+        Arc{"DRIVE_11", "BL_BAR_11", {1, 5}},
+        Arc{"DRIVE_11", "VALID_11", {1, 5}},
+        Arc{"DRIVE_12", "BL_12", {1, 5}},
+        Arc{"DRIVE_12", "BL_BAR_12", {1, 5}},
+        Arc{"DRIVE_12", "VALID_12", {1, 5}},
+        Arc{"DRIVE_13", "BL_13", {1, 5}},
+        Arc{"DRIVE_13", "BL_BAR_13", {1, 5}},
+        Arc{"DRIVE_13", "VALID_13", {1, 5}},
+        Arc{"DRIVE_14", "BL_14", {1, 5}},
+        Arc{"DRIVE_14", "BL_BAR_14", {1, 5}},
+        Arc{"DRIVE_14", "VALID_14", {1, 5}},
+        Arc{"DRIVE_15", "BL_15", {1, 5}},
+        Arc{"DRIVE_15", "BL_BAR_15", {1, 5}},
+        Arc{"DRIVE_15", "VALID_15", {1, 5}},
+        Arc{"DRIVE_2", "BL_2", {1, 5}},
+        Arc{"DRIVE_2", "BL_BAR_2", {1, 5}},
+        Arc{"DRIVE_2", "VALID_2", {1, 5}},
+        Arc{"DRIVE_3", "BL_3", {1, 5}},
+        Arc{"DRIVE_3", "BL_BAR_3", {1, 5}},
+        Arc{"DRIVE_3", "VALID_3", {1, 5}},
+        Arc{"DRIVE_4", "BL_4", {1, 5}},
+        Arc{"DRIVE_4", "BL_BAR_4", {1, 5}},
+        Arc{"DRIVE_4", "VALID_4", {1, 5}},
+        Arc{"DRIVE_5", "BL_5", {1, 5}},
+        Arc{"DRIVE_5", "BL_BAR_5", {1, 5}},
+        Arc{"DRIVE_5", "VALID_5", {1, 5}},
+        Arc{"DRIVE_6", "BL_6", {1, 5}},
+        Arc{"DRIVE_6", "BL_BAR_6", {1, 5}},
+        Arc{"DRIVE_6", "VALID_6", {1, 5}},
+        Arc{"DRIVE_7", "BL_7", {1, 5}},
+        Arc{"DRIVE_7", "BL_BAR_7", {1, 5}},
+        Arc{"DRIVE_7", "VALID_7", {1, 5}},
+        Arc{"DRIVE_8", "BL_8", {1, 5}},
+        Arc{"DRIVE_8", "BL_BAR_8", {1, 5}},
+        Arc{"DRIVE_8", "VALID_8", {1, 5}},
+        Arc{"DRIVE_9", "BL_9", {1, 5}},
+        Arc{"DRIVE_9", "BL_BAR_9", {1, 5}},
+        Arc{"DRIVE_9", "VALID_9", {1, 5}},
+        Arc{"PRECHARGE_0", "BL_0", {1, 5}},
+        Arc{"PRECHARGE_0", "BL_BAR_0", {1, 5}},
+        Arc{"PRECHARGE_0", "VALID_0", {1, 5}},
+        Arc{"PRECHARGE_1", "BL_1", {1, 5}},
+        Arc{"PRECHARGE_1", "BL_BAR_1", {1, 5}},
+        Arc{"PRECHARGE_1", "VALID_1", {1, 5}},
+        Arc{"PRECHARGE_10", "BL_10", {1, 5}},
+        Arc{"PRECHARGE_10", "BL_BAR_10", {1, 5}},
+        Arc{"PRECHARGE_10", "VALID_10", {1, 5}},
+        Arc{"PRECHARGE_11", "BL_11", {1, 5}},
+        Arc{"PRECHARGE_11", "BL_BAR_11", {1, 5}},
+        Arc{"PRECHARGE_11", "VALID_11", {1, 5}},
+        Arc{"PRECHARGE_12", "BL_12", {1, 5}},
+        Arc{"PRECHARGE_12", "BL_BAR_12", {1, 5}},
+        Arc{"PRECHARGE_12", "VALID_12", {1, 5}},
+        Arc{"PRECHARGE_13", "BL_13", {1, 5}},
+        Arc{"PRECHARGE_13", "BL_BAR_13", {1, 5}},
+        Arc{"PRECHARGE_13", "VALID_13", {1, 5}},
+        Arc{"PRECHARGE_14", "BL_14", {1, 5}},
+        Arc{"PRECHARGE_14", "BL_BAR_14", {1, 5}},
+        Arc{"PRECHARGE_14", "VALID_14", {1, 5}},
+        Arc{"PRECHARGE_15", "BL_15", {1, 5}},
+        Arc{"PRECHARGE_15", "BL_BAR_15", {1, 5}},
+        Arc{"PRECHARGE_15", "VALID_15", {1, 5}},
+        Arc{"PRECHARGE_2", "BL_2", {1, 5}},
+        Arc{"PRECHARGE_2", "BL_BAR_2", {1, 5}},
+        Arc{"PRECHARGE_2", "VALID_2", {1, 5}},
+        Arc{"PRECHARGE_3", "BL_3", {1, 5}},
+        Arc{"PRECHARGE_3", "BL_BAR_3", {1, 5}},
+        Arc{"PRECHARGE_3", "VALID_3", {1, 5}},
+        Arc{"PRECHARGE_4", "BL_4", {1, 5}},
+        Arc{"PRECHARGE_4", "BL_BAR_4", {1, 5}},
+        Arc{"PRECHARGE_4", "VALID_4", {1, 5}},
+        Arc{"PRECHARGE_5", "BL_5", {1, 5}},
+        Arc{"PRECHARGE_5", "BL_BAR_5", {1, 5}},
+        Arc{"PRECHARGE_5", "VALID_5", {1, 5}},
+        Arc{"PRECHARGE_6", "BL_6", {1, 5}},
+        Arc{"PRECHARGE_6", "BL_BAR_6", {1, 5}},
+        Arc{"PRECHARGE_6", "VALID_6", {1, 5}},
+        Arc{"PRECHARGE_7", "BL_7", {1, 5}},
+        Arc{"PRECHARGE_7", "BL_BAR_7", {1, 5}},
+        Arc{"PRECHARGE_7", "VALID_7", {1, 5}},
+        Arc{"PRECHARGE_8", "BL_8", {1, 5}},
+        Arc{"PRECHARGE_8", "BL_BAR_8", {1, 5}},
+        Arc{"PRECHARGE_8", "VALID_8", {1, 5}},
+        Arc{"PRECHARGE_9", "BL_9", {1, 5}},
+        Arc{"PRECHARGE_9", "BL_BAR_9", {1, 5}},
+        Arc{"PRECHARGE_9", "VALID_9", {1, 5}},
+        Arc{"WL_0", "BL_0", {1, 5}},
+        Arc{"WL_0", "BL_1", {1, 5}},
+        Arc{"WL_0", "BL_10", {1, 5}},
+        Arc{"WL_0", "BL_11", {1, 5}},
+        Arc{"WL_0", "BL_12", {1, 5}},
+        Arc{"WL_0", "BL_13", {1, 5}},
+        Arc{"WL_0", "BL_14", {1, 5}},
+        Arc{"WL_0", "BL_15", {1, 5}},
+        Arc{"WL_0", "BL_2", {1, 5}},
+        Arc{"WL_0", "BL_3", {1, 5}},
+        Arc{"WL_0", "BL_4", {1, 5}},
+        Arc{"WL_0", "BL_5", {1, 5}},
+        Arc{"WL_0", "BL_6", {1, 5}},
+        Arc{"WL_0", "BL_7", {1, 5}},
+        Arc{"WL_0", "BL_8", {1, 5}},
+        Arc{"WL_0", "BL_9", {1, 5}},
+        Arc{"WL_0", "BL_BAR_0", {1, 5}},
+        Arc{"WL_0", "BL_BAR_1", {1, 5}},
+        Arc{"WL_0", "BL_BAR_10", {1, 5}},
+        Arc{"WL_0", "BL_BAR_11", {1, 5}},
+        Arc{"WL_0", "BL_BAR_12", {1, 5}},
+        Arc{"WL_0", "BL_BAR_13", {1, 5}},
+        Arc{"WL_0", "BL_BAR_14", {1, 5}},
+        Arc{"WL_0", "BL_BAR_15", {1, 5}},
+        Arc{"WL_0", "BL_BAR_2", {1, 5}},
+        Arc{"WL_0", "BL_BAR_3", {1, 5}},
+        Arc{"WL_0", "BL_BAR_4", {1, 5}},
+        Arc{"WL_0", "BL_BAR_5", {1, 5}},
+        Arc{"WL_0", "BL_BAR_6", {1, 5}},
+        Arc{"WL_0", "BL_BAR_7", {1, 5}},
+        Arc{"WL_0", "BL_BAR_8", {1, 5}},
+        Arc{"WL_0", "BL_BAR_9", {1, 5}},
+        Arc{"WL_0", "VALID_0", {1, 5}},
+        Arc{"WL_0", "VALID_1", {1, 5}},
+        Arc{"WL_0", "VALID_10", {1, 5}},
+        Arc{"WL_0", "VALID_11", {1, 5}},
+        Arc{"WL_0", "VALID_12", {1, 5}},
+        Arc{"WL_0", "VALID_13", {1, 5}},
+        Arc{"WL_0", "VALID_14", {1, 5}},
+        Arc{"WL_0", "VALID_15", {1, 5}},
+        Arc{"WL_0", "VALID_2", {1, 5}},
+        Arc{"WL_0", "VALID_3", {1, 5}},
+        Arc{"WL_0", "VALID_4", {1, 5}},
+        Arc{"WL_0", "VALID_5", {1, 5}},
+        Arc{"WL_0", "VALID_6", {1, 5}},
+        Arc{"WL_0", "VALID_7", {1, 5}},
+        Arc{"WL_0", "VALID_8", {1, 5}},
+        Arc{"WL_0", "VALID_9", {1, 5}},
+        Arc{"WL_1", "BL_0", {1, 5}},
+        Arc{"WL_1", "BL_1", {1, 5}},
+        Arc{"WL_1", "BL_10", {1, 5}},
+        Arc{"WL_1", "BL_11", {1, 5}},
+        Arc{"WL_1", "BL_12", {1, 5}},
+        Arc{"WL_1", "BL_13", {1, 5}},
+        Arc{"WL_1", "BL_14", {1, 5}},
+        Arc{"WL_1", "BL_15", {1, 5}},
+        Arc{"WL_1", "BL_2", {1, 5}},
+        Arc{"WL_1", "BL_3", {1, 5}},
+        Arc{"WL_1", "BL_4", {1, 5}},
+        Arc{"WL_1", "BL_5", {1, 5}},
+        Arc{"WL_1", "BL_6", {1, 5}},
+        Arc{"WL_1", "BL_7", {1, 5}},
+        Arc{"WL_1", "BL_8", {1, 5}},
+        Arc{"WL_1", "BL_9", {1, 5}},
+        Arc{"WL_1", "BL_BAR_0", {1, 5}},
+        Arc{"WL_1", "BL_BAR_1", {1, 5}},
+        Arc{"WL_1", "BL_BAR_10", {1, 5}},
+        Arc{"WL_1", "BL_BAR_11", {1, 5}},
+        Arc{"WL_1", "BL_BAR_12", {1, 5}},
+        Arc{"WL_1", "BL_BAR_13", {1, 5}},
+        Arc{"WL_1", "BL_BAR_14", {1, 5}},
+        Arc{"WL_1", "BL_BAR_15", {1, 5}},
+        Arc{"WL_1", "BL_BAR_2", {1, 5}},
+        Arc{"WL_1", "BL_BAR_3", {1, 5}},
+        Arc{"WL_1", "BL_BAR_4", {1, 5}},
+        Arc{"WL_1", "BL_BAR_5", {1, 5}},
+        Arc{"WL_1", "BL_BAR_6", {1, 5}},
+        Arc{"WL_1", "BL_BAR_7", {1, 5}},
+        Arc{"WL_1", "BL_BAR_8", {1, 5}},
+        Arc{"WL_1", "BL_BAR_9", {1, 5}},
+        Arc{"WL_1", "VALID_0", {1, 5}},
+        Arc{"WL_1", "VALID_1", {1, 5}},
+        Arc{"WL_1", "VALID_10", {1, 5}},
+        Arc{"WL_1", "VALID_11", {1, 5}},
+        Arc{"WL_1", "VALID_12", {1, 5}},
+        Arc{"WL_1", "VALID_13", {1, 5}},
+        Arc{"WL_1", "VALID_14", {1, 5}},
+        Arc{"WL_1", "VALID_15", {1, 5}},
+        Arc{"WL_1", "VALID_2", {1, 5}},
+        Arc{"WL_1", "VALID_3", {1, 5}},
+        Arc{"WL_1", "VALID_4", {1, 5}},
+        Arc{"WL_1", "VALID_5", {1, 5}},
+        Arc{"WL_1", "VALID_6", {1, 5}},
+        Arc{"WL_1", "VALID_7", {1, 5}},
+        Arc{"WL_1", "VALID_8", {1, 5}},
+        Arc{"WL_1", "VALID_9", {1, 5}},
+        Arc{"WRITE_BL_0", "BL_0", {1, 5}},
+        Arc{"WRITE_BL_0", "BL_BAR_0", {1, 5}},
+        Arc{"WRITE_BL_0", "VALID_0", {1, 5}},
+        Arc{"WRITE_BL_1", "BL_1", {1, 5}},
+        Arc{"WRITE_BL_1", "BL_BAR_1", {1, 5}},
+        Arc{"WRITE_BL_1", "VALID_1", {1, 5}},
+        Arc{"WRITE_BL_10", "BL_10", {1, 5}},
+        Arc{"WRITE_BL_10", "BL_BAR_10", {1, 5}},
+        Arc{"WRITE_BL_10", "VALID_10", {1, 5}},
+        Arc{"WRITE_BL_11", "BL_11", {1, 5}},
+        Arc{"WRITE_BL_11", "BL_BAR_11", {1, 5}},
+        Arc{"WRITE_BL_11", "VALID_11", {1, 5}},
+        Arc{"WRITE_BL_12", "BL_12", {1, 5}},
+        Arc{"WRITE_BL_12", "BL_BAR_12", {1, 5}},
+        Arc{"WRITE_BL_12", "VALID_12", {1, 5}},
+        Arc{"WRITE_BL_13", "BL_13", {1, 5}},
+        Arc{"WRITE_BL_13", "BL_BAR_13", {1, 5}},
+        Arc{"WRITE_BL_13", "VALID_13", {1, 5}},
+        Arc{"WRITE_BL_14", "BL_14", {1, 5}},
+        Arc{"WRITE_BL_14", "BL_BAR_14", {1, 5}},
+        Arc{"WRITE_BL_14", "VALID_14", {1, 5}},
+        Arc{"WRITE_BL_15", "BL_15", {1, 5}},
+        Arc{"WRITE_BL_15", "BL_BAR_15", {1, 5}},
+        Arc{"WRITE_BL_15", "VALID_15", {1, 5}},
+        Arc{"WRITE_BL_2", "BL_2", {1, 5}},
+        Arc{"WRITE_BL_2", "BL_BAR_2", {1, 5}},
+        Arc{"WRITE_BL_2", "VALID_2", {1, 5}},
+        Arc{"WRITE_BL_3", "BL_3", {1, 5}},
+        Arc{"WRITE_BL_3", "BL_BAR_3", {1, 5}},
+        Arc{"WRITE_BL_3", "VALID_3", {1, 5}},
+        Arc{"WRITE_BL_4", "BL_4", {1, 5}},
+        Arc{"WRITE_BL_4", "BL_BAR_4", {1, 5}},
+        Arc{"WRITE_BL_4", "VALID_4", {1, 5}},
+        Arc{"WRITE_BL_5", "BL_5", {1, 5}},
+        Arc{"WRITE_BL_5", "BL_BAR_5", {1, 5}},
+        Arc{"WRITE_BL_5", "VALID_5", {1, 5}},
+        Arc{"WRITE_BL_6", "BL_6", {1, 5}},
+        Arc{"WRITE_BL_6", "BL_BAR_6", {1, 5}},
+        Arc{"WRITE_BL_6", "VALID_6", {1, 5}},
+        Arc{"WRITE_BL_7", "BL_7", {1, 5}},
+        Arc{"WRITE_BL_7", "BL_BAR_7", {1, 5}},
+        Arc{"WRITE_BL_7", "VALID_7", {1, 5}},
+        Arc{"WRITE_BL_8", "BL_8", {1, 5}},
+        Arc{"WRITE_BL_8", "BL_BAR_8", {1, 5}},
+        Arc{"WRITE_BL_8", "VALID_8", {1, 5}},
+        Arc{"WRITE_BL_9", "BL_9", {1, 5}},
+        Arc{"WRITE_BL_9", "BL_BAR_9", {1, 5}},
+        Arc{"WRITE_BL_9", "VALID_9", {1, 5}},
+        Arc{"WRITE_BL_BAR_0", "BL_0", {1, 5}},
+        Arc{"WRITE_BL_BAR_0", "BL_BAR_0", {1, 5}},
+        Arc{"WRITE_BL_BAR_0", "VALID_0", {1, 5}},
+        Arc{"WRITE_BL_BAR_1", "BL_1", {1, 5}},
+        Arc{"WRITE_BL_BAR_1", "BL_BAR_1", {1, 5}},
+        Arc{"WRITE_BL_BAR_1", "VALID_1", {1, 5}},
+        Arc{"WRITE_BL_BAR_10", "BL_10", {1, 5}},
+        Arc{"WRITE_BL_BAR_10", "BL_BAR_10", {1, 5}},
+        Arc{"WRITE_BL_BAR_10", "VALID_10", {1, 5}},
+        Arc{"WRITE_BL_BAR_11", "BL_11", {1, 5}},
+        Arc{"WRITE_BL_BAR_11", "BL_BAR_11", {1, 5}},
+        Arc{"WRITE_BL_BAR_11", "VALID_11", {1, 5}},
+        Arc{"WRITE_BL_BAR_12", "BL_12", {1, 5}},
+        Arc{"WRITE_BL_BAR_12", "BL_BAR_12", {1, 5}},
+        Arc{"WRITE_BL_BAR_12", "VALID_12", {1, 5}},
+        Arc{"WRITE_BL_BAR_13", "BL_13", {1, 5}},
+        Arc{"WRITE_BL_BAR_13", "BL_BAR_13", {1, 5}},
+        Arc{"WRITE_BL_BAR_13", "VALID_13", {1, 5}},
+        Arc{"WRITE_BL_BAR_14", "BL_14", {1, 5}},
+        Arc{"WRITE_BL_BAR_14", "BL_BAR_14", {1, 5}},
+        Arc{"WRITE_BL_BAR_14", "VALID_14", {1, 5}},
+        Arc{"WRITE_BL_BAR_15", "BL_15", {1, 5}},
+        Arc{"WRITE_BL_BAR_15", "BL_BAR_15", {1, 5}},
+        Arc{"WRITE_BL_BAR_15", "VALID_15", {1, 5}},
+        Arc{"WRITE_BL_BAR_2", "BL_2", {1, 5}},
+        Arc{"WRITE_BL_BAR_2", "BL_BAR_2", {1, 5}},
+        Arc{"WRITE_BL_BAR_2", "VALID_2", {1, 5}},
+        Arc{"WRITE_BL_BAR_3", "BL_3", {1, 5}},
+        Arc{"WRITE_BL_BAR_3", "BL_BAR_3", {1, 5}},
+        Arc{"WRITE_BL_BAR_3", "VALID_3", {1, 5}},
+        Arc{"WRITE_BL_BAR_4", "BL_4", {1, 5}},
+        Arc{"WRITE_BL_BAR_4", "BL_BAR_4", {1, 5}},
+        Arc{"WRITE_BL_BAR_4", "VALID_4", {1, 5}},
+        Arc{"WRITE_BL_BAR_5", "BL_5", {1, 5}},
+        Arc{"WRITE_BL_BAR_5", "BL_BAR_5", {1, 5}},
+        Arc{"WRITE_BL_BAR_5", "VALID_5", {1, 5}},
+        Arc{"WRITE_BL_BAR_6", "BL_6", {1, 5}},
+        Arc{"WRITE_BL_BAR_6", "BL_BAR_6", {1, 5}},
+        Arc{"WRITE_BL_BAR_6", "VALID_6", {1, 5}},
+        Arc{"WRITE_BL_BAR_7", "BL_7", {1, 5}},
+        Arc{"WRITE_BL_BAR_7", "BL_BAR_7", {1, 5}},
+        Arc{"WRITE_BL_BAR_7", "VALID_7", {1, 5}},
+        Arc{"WRITE_BL_BAR_8", "BL_8", {1, 5}},
+        Arc{"WRITE_BL_BAR_8", "BL_BAR_8", {1, 5}},
+        Arc{"WRITE_BL_BAR_8", "VALID_8", {1, 5}},
+        Arc{"WRITE_BL_BAR_9", "BL_9", {1, 5}},
+        Arc{"WRITE_BL_BAR_9", "BL_BAR_9", {1, 5}},
+        Arc{"WRITE_BL_BAR_9", "VALID_9", {1, 5}},
+    };
+    return t;
+}()},
+{"memory.sram.cell.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.cell.structural";
+    t.arcs = {
+        Arc{"BL", "Q", {2, 3}},
+        Arc{"BL", "Q_BAR", {2, 3}},
+        Arc{"BL_BAR", "Q", {2, 3}},
+        Arc{"BL_BAR", "Q_BAR", {2, 3}},
+        Arc{"DRIVE", "Q", {2, 3}},
+        Arc{"DRIVE", "Q_BAR", {2, 3}},
+        Arc{"WL", "Q", {2, 3}},
+        Arc{"WL", "Q_BAR", {2, 3}},
+    };
+    return t;
+}()},
 {"memory.sram.controller.16.behavioral", [] {
     PartDelays t;
     t.evidence = "proven on memory.sram.controller.16.structural";
@@ -4677,6 +8407,669 @@
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
     t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.sram.device.16.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.device.16.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {1, 18}},
+        Arc{"OE_N", "READ_DATA", {1, 18}},
+        Arc{"WE_N", "READ_DATA", {1, 18}},
+        Arc{"WORD_ADDR", "READ_DATA", {1, 18}},
+        Arc{"WRITE_DATA", "READ_DATA", {1, 18}},
+        Arc{"WRITE_MASK", "READ_DATA", {1, 18}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.sram.device.16.behavioral@depth=128", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.device.16.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {1, 20}},
+        Arc{"OE_N", "READ_DATA", {1, 20}},
+        Arc{"WE_N", "READ_DATA", {1, 20}},
+        Arc{"WORD_ADDR", "READ_DATA", {1, 20}},
+        Arc{"WRITE_DATA", "READ_DATA", {1, 20}},
+        Arc{"WRITE_MASK", "READ_DATA", {1, 20}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.sram.device.16.behavioral@depth=64", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.device.16.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {1, 20}},
+        Arc{"OE_N", "READ_DATA", {1, 20}},
+        Arc{"WE_N", "READ_DATA", {1, 20}},
+        Arc{"WORD_ADDR", "READ_DATA", {1, 20}},
+        Arc{"WRITE_DATA", "READ_DATA", {1, 20}},
+        Arc{"WRITE_MASK", "READ_DATA", {1, 20}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.sram.device.32.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.device.32.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {1, 18}},
+        Arc{"OE_N", "READ_DATA", {1, 18}},
+        Arc{"WE_N", "READ_DATA", {1, 18}},
+        Arc{"WORD_ADDR", "READ_DATA", {1, 18}},
+        Arc{"WRITE_DATA", "READ_DATA", {1, 18}},
+        Arc{"WRITE_MASK", "READ_DATA", {1, 18}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.sram.device.32.behavioral@depth=128", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.device.32.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {1, 20}},
+        Arc{"OE_N", "READ_DATA", {1, 20}},
+        Arc{"WE_N", "READ_DATA", {1, 20}},
+        Arc{"WORD_ADDR", "READ_DATA", {1, 20}},
+        Arc{"WRITE_DATA", "READ_DATA", {1, 20}},
+        Arc{"WRITE_MASK", "READ_DATA", {1, 20}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.sram.device.32.behavioral@depth=64", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.device.32.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {1, 20}},
+        Arc{"OE_N", "READ_DATA", {1, 20}},
+        Arc{"WE_N", "READ_DATA", {1, 20}},
+        Arc{"WORD_ADDR", "READ_DATA", {1, 20}},
+        Arc{"WRITE_DATA", "READ_DATA", {1, 20}},
+        Arc{"WRITE_MASK", "READ_DATA", {1, 20}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.sram.device.8.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.device.8.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {1, 18}},
+        Arc{"OE_N", "READ_DATA", {1, 18}},
+        Arc{"WE_N", "READ_DATA", {1, 18}},
+        Arc{"WORD_ADDR", "READ_DATA", {1, 18}},
+        Arc{"WRITE_DATA", "READ_DATA", {1, 18}},
+        Arc{"WRITE_MASK", "READ_DATA", {1, 18}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.sram.device.8.behavioral@depth=128", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.device.8.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {1, 20}},
+        Arc{"OE_N", "READ_DATA", {1, 20}},
+        Arc{"WE_N", "READ_DATA", {1, 20}},
+        Arc{"WORD_ADDR", "READ_DATA", {1, 20}},
+        Arc{"WRITE_DATA", "READ_DATA", {1, 20}},
+        Arc{"WRITE_MASK", "READ_DATA", {1, 20}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.sram.device.8.behavioral@depth=64", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.device.8.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {1, 20}},
+        Arc{"OE_N", "READ_DATA", {1, 20}},
+        Arc{"WE_N", "READ_DATA", {1, 20}},
+        Arc{"WORD_ADDR", "READ_DATA", {1, 20}},
+        Arc{"WRITE_DATA", "READ_DATA", {1, 20}},
+        Arc{"WRITE_MASK", "READ_DATA", {1, 20}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.sram.endpoint.16.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.endpoint.16.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 19;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.sram.endpoint.16.behavioral@depth=128", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.endpoint.16.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 21;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.sram.endpoint.16.behavioral@depth=64", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.endpoint.16.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 21;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.sram.endpoint.32.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.endpoint.32.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 19;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.sram.endpoint.32.behavioral@depth=128", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.endpoint.32.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 21;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.sram.endpoint.32.behavioral@depth=64", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.endpoint.32.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 21;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.sram.endpoint.8.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.endpoint.8.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 19;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.sram.endpoint.8.behavioral@depth=128", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.endpoint.8.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 21;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.sram.endpoint.8.behavioral@depth=64", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.endpoint.8.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 21;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.sram.row.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.row.structural";
+    t.arcs = {
+        Arc{"BL_0", "Q_0", {2, 3}},
+        Arc{"BL_1", "Q_1", {2, 3}},
+        Arc{"BL_BAR_0", "Q_0", {2, 3}},
+        Arc{"BL_BAR_1", "Q_1", {2, 3}},
+        Arc{"DRIVE_0", "Q_0", {2, 3}},
+        Arc{"DRIVE_1", "Q_1", {2, 3}},
+        Arc{"WL", "Q_0", {2, 3}},
+        Arc{"WL", "Q_1", {2, 3}},
+    };
+    return t;
+}()},
+{"memory.sram.scalable-device.16.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.device.16.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {1, 18}},
+        Arc{"OE_N", "READ_DATA", {1, 18}},
+        Arc{"WE_N", "READ_DATA", {1, 18}},
+        Arc{"WORD_ADDR", "READ_DATA", {1, 18}},
+        Arc{"WRITE_DATA", "READ_DATA", {1, 18}},
+        Arc{"WRITE_MASK", "READ_DATA", {1, 18}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.sram.scalable-device.16.behavioral@depth=128", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.device.16.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {1, 20}},
+        Arc{"OE_N", "READ_DATA", {1, 20}},
+        Arc{"WE_N", "READ_DATA", {1, 20}},
+        Arc{"WORD_ADDR", "READ_DATA", {1, 20}},
+        Arc{"WRITE_DATA", "READ_DATA", {1, 20}},
+        Arc{"WRITE_MASK", "READ_DATA", {1, 20}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.sram.scalable-device.16.behavioral@depth=64", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.device.16.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {1, 20}},
+        Arc{"OE_N", "READ_DATA", {1, 20}},
+        Arc{"WE_N", "READ_DATA", {1, 20}},
+        Arc{"WORD_ADDR", "READ_DATA", {1, 20}},
+        Arc{"WRITE_DATA", "READ_DATA", {1, 20}},
+        Arc{"WRITE_MASK", "READ_DATA", {1, 20}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.sram.scalable-device.32.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.device.32.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {1, 18}},
+        Arc{"OE_N", "READ_DATA", {1, 18}},
+        Arc{"WE_N", "READ_DATA", {1, 18}},
+        Arc{"WORD_ADDR", "READ_DATA", {1, 18}},
+        Arc{"WRITE_DATA", "READ_DATA", {1, 18}},
+        Arc{"WRITE_MASK", "READ_DATA", {1, 18}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.sram.scalable-device.32.behavioral@depth=128", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.device.32.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {1, 20}},
+        Arc{"OE_N", "READ_DATA", {1, 20}},
+        Arc{"WE_N", "READ_DATA", {1, 20}},
+        Arc{"WORD_ADDR", "READ_DATA", {1, 20}},
+        Arc{"WRITE_DATA", "READ_DATA", {1, 20}},
+        Arc{"WRITE_MASK", "READ_DATA", {1, 20}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.sram.scalable-device.32.behavioral@depth=64", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.device.32.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {1, 20}},
+        Arc{"OE_N", "READ_DATA", {1, 20}},
+        Arc{"WE_N", "READ_DATA", {1, 20}},
+        Arc{"WORD_ADDR", "READ_DATA", {1, 20}},
+        Arc{"WRITE_DATA", "READ_DATA", {1, 20}},
+        Arc{"WRITE_MASK", "READ_DATA", {1, 20}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.sram.scalable-device.8.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.device.8.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {1, 18}},
+        Arc{"OE_N", "READ_DATA", {1, 18}},
+        Arc{"WE_N", "READ_DATA", {1, 18}},
+        Arc{"WORD_ADDR", "READ_DATA", {1, 18}},
+        Arc{"WRITE_DATA", "READ_DATA", {1, 18}},
+        Arc{"WRITE_MASK", "READ_DATA", {1, 18}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.sram.scalable-device.8.behavioral@depth=128", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.device.8.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {1, 20}},
+        Arc{"OE_N", "READ_DATA", {1, 20}},
+        Arc{"WE_N", "READ_DATA", {1, 20}},
+        Arc{"WORD_ADDR", "READ_DATA", {1, 20}},
+        Arc{"WRITE_DATA", "READ_DATA", {1, 20}},
+        Arc{"WRITE_MASK", "READ_DATA", {1, 20}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.sram.scalable-device.8.behavioral@depth=64", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.device.8.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {1, 20}},
+        Arc{"OE_N", "READ_DATA", {1, 20}},
+        Arc{"WE_N", "READ_DATA", {1, 20}},
+        Arc{"WORD_ADDR", "READ_DATA", {1, 20}},
+        Arc{"WRITE_DATA", "READ_DATA", {1, 20}},
+        Arc{"WRITE_MASK", "READ_DATA", {1, 20}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.sram.scalable-endpoint.16.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.endpoint.16.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 19;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.sram.scalable-endpoint.16.behavioral@depth=128", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.endpoint.16.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 21;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.sram.scalable-endpoint.16.behavioral@depth=64", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.endpoint.16.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 21;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.sram.scalable-endpoint.32.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.endpoint.32.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 19;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.sram.scalable-endpoint.32.behavioral@depth=128", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.endpoint.32.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 21;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.sram.scalable-endpoint.32.behavioral@depth=64", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.endpoint.32.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 21;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.sram.scalable-endpoint.8.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.endpoint.8.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 19;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.sram.scalable-endpoint.8.behavioral@depth=128", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.endpoint.8.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 21;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.sram.scalable-endpoint.8.behavioral@depth=64", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.endpoint.8.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 21;
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
@@ -6526,6 +10919,18 @@
         Arc{"READ_DATA", "WB_VALUE", {5, 5}},
         Arc{"WRITEBACK_SEL", "WB_VALUE", {3, 6}},
     };
+    return t;
+}()},
+{"rv32i.system.educational-single-cycle.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on rv32i.system.educational-single-cycle.structural";
+    t.clock = "CLK";
+    t.launches["HALTED"] = {3, 4};
+    t.launches["PC"] = {3, 4};
+    t.launches["TRAPPED"] = {3, 4};
+    t.setup["ENABLE"] = 124;
+    t.internal_period = 155;
+    t.fixed_inputs["RST"] = 0;
     return t;
 }()},
 {"shift.barrel.width32.behavioral.direct", [] {

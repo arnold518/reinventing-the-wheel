@@ -105,7 +105,7 @@ build-cleanup/part_delay_tables --write src/components/selection/ProvenPartDelay
 build-cleanup/part_delay_tables --check     # recompute every stored table from the gates
 ```
 
-121 compact implementations run on a proven table (`part_delay_tables
+172 of the 174 compact implementations run on a table (`part_delay_tables
 --coverage` lists every one that does not, with the reason).
 
 - Unclocked logic: the adders, muxes, decoders, shifters, the composite logic
@@ -116,8 +116,11 @@ build-cleanup/part_delay_tables --check     # recompute every stored table from 
 - Storage: every register width, the state bit, the flip-flop cell and the
   register file.
 - Memory: flip-flop words, banks, devices, controllers and endpoints; ROM
-  banks, devices and endpoints; NOR-flash rows, banks, devices and endpoints;
-  the DRAM row; the controllers of ROM, SRAM, DRAM and NOR flash.
+  banks, devices and endpoints; the cells, rows, banks, devices and endpoints
+  of SRAM, DRAM and NOR flash; the controllers of every technology; the
+  scalable form of each memory; the single-cycle system.
+
+The two without a table are the ROM cell and row, whose outputs never change.
 
 Two checks run on them. `SettlingBoundTest` drives each unclocked part side by
 side with its gates. `delay_estimate_experiment --compare` does the same for
@@ -202,18 +205,30 @@ With the cores' real memory sizes the certified periods are 166
   self-timed part and says so, so a timed memory is never taken for a
   zero-wait one.
 
+### SRAM and DRAM
+
+The gate-level SRAM cell keeps its bit in a latch, a loop of two gates.
+`SRAMCellTimingTest` tries every case: both stored values, every old and new
+value of its four inputs in 0, 1, X and Z, and a second change arriving while
+the first is still settling. Its outputs change 2 to 3 ticks after the last
+input change (`include/modules/memory/SRAMCellTiming.hpp`). One change always
+settles; a second one arriving 1 tick later can leave the latch oscillating,
+so the contract holds for input changes at least 2 ticks apart. The SRAM
+access control spaces its phases by at least 32.
+
+Two apparent loops are not loops, and are described precisely instead of as
+"every input reaches every output":
+
+- What the SRAM bit-line pair sends back to the cells is set from the write
+  side only, never from the cells' own outputs.
+- The DRAM cell's sample follows the word line only, and the sense column's
+  restore signal follows precharge, sense and the word lines only.
+
 ### Not covered
 
-Their compact forms are today earlier than their gates by the amount shown.
-
-- SRAM cells, rows, banks, devices and endpoints (2 ticks at the cell): the
-  cell is a latch in a loop with its bit lines.
-- DRAM banks, devices and endpoints (5 ticks at the endpoint): the cell and its
-  sense column drive each other.
-  Both are loops like the flip-flop and would need the same treatment: try
-  every case on the smallest unit that contains the loop.
-- SRAM and DRAM scalable memories, until their cells are characterized.
-- Parts built with non-default parameters, and tables per control value.
+- Parts built with other non-default parameters than a word count; a ROM with
+  a specific image; a memory with a non-default row layout.
+- One delay per control value (for example per ALU operation).
 
 ## What is assumed
 

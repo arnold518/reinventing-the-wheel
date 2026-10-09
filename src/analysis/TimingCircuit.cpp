@@ -14,6 +14,9 @@
 #include "modules/utility/Rewire.hpp"
 #include "../modules/memory/FlipFlopCellBehavioral.hpp"
 #include "modules/memory/DigitalMemory.hpp"
+#include "modules/memory/DRAM.hpp"
+#include "modules/memory/SRAM.hpp"
+#include "modules/memory/SRAMCellTiming.hpp"
 #include "../modules/rv32i/RegisterFile32x32Behavioral.hpp"
 #include <algorithm>
 #include <set>
@@ -66,6 +69,18 @@ std::optional<ClockComponentContract> builtinClockContract(const IOComponent& c)
         flop.minimum_low_ticks = MINIMUM_LOW;
         return flop;
     }
+    // The gate-level SRAM cell keeps its bit in a latch, also a loop. Every
+    // case is tried (SRAMCellTimingTest): each input reaches the outputs in
+    // 2 to 3 ticks, provided input changes are at least 2 ticks apart.
+    if (typeid(c) == typeid(SRAMCell)) {
+        using namespace circuit::sram_cell_timing;
+        ClockComponentContract cell;
+        cell.evidence = "gate-level SRAMCell, every case tried (SRAMCellTimingTest); input changes at least "
+            + std::to_string(MINIMUM_SPACING) + " ticks apart";
+        for (const auto& [i, p] : c.getAllInputPins())
+            for (const auto& [o, q] : c.getAllOutputPins()) cell.arcs.push_back({i, o, {EARLIEST, LATEST}});
+        return cell;
+    }
     // Built-in contracts cover concrete primitive instances, not an arbitrarily
     // modified hierarchy attached beneath one of those instances.
     if (!c.getChildren().empty()) return std::nullopt;
@@ -111,6 +126,39 @@ std::optional<ClockComponentContract> builtinClockContract(const IOComponent& c)
         m.self_timed = true;
         for (const auto& [i, p] : c.getAllInputPins()) if (i != "CLK") m.captures.push_back({i, ClockEdge::Rising, 0, 0});
         for (const auto& [o, q] : c.getAllOutputPins()) m.launches.push_back({o, ClockEdge::Rising, {d, d}});
+        return m;
+    }
+    // The SRAM bit-line pair. What it sends back to the cells (CELL_DRIVE,
+    // CELL_BL, CELL_BL_BAR) is set from the precharge, drive, write data and
+    // word lines only (BitlineState::update); the cells' own outputs reach
+    // just the read side. Saying so keeps the write path from looking like a
+    // loop through the cells.
+    if (typeid(c) == typeid(SRAMBitlinePair)) {
+        const auto d = static_cast<const BasicComponent&>(c).getDelay();
+        for (const auto& [i, p] : c.getAllInputPins())
+            for (const auto& [o, q] : c.getAllOutputPins()) {
+                const bool from_cell = i.rfind("Q_", 0) == 0, to_cell = o.rfind("CELL_", 0) == 0;
+                if (!(from_cell && to_cell)) m.arcs.push_back({i, o, {d, d}});
+            }
+        return m;
+    }
+    // The DRAM cell and its sense column drive each other: the column reads
+    // the cell's sample and writes the value back. It is not a loop, because
+    // of what each output depends on (DRAMCell::evaluate and
+    // DRAMSenseColumn::evaluate): the cell's SAMPLE follows the word line
+    // only, never RESTORE or D, and the column's RESTORE follows precharge,
+    // sense and the word lines only, never a sample or the write data. Both
+    // also step on their own schedule.
+    if (typeid(c) == typeid(DRAMCell) || typeid(c) == typeid(DRAMSenseColumn)) {
+        const bool cell = typeid(c) == typeid(DRAMCell);
+        const auto d = static_cast<const BasicComponent&>(c).getDelay();
+        m.self_timed = true;
+        for (const auto& [i, p] : c.getAllInputPins())
+            for (const auto& [o, q] : c.getAllOutputPins()) {
+                const bool absent = cell ? (o == "SAMPLE" && i != "WL")
+                    : (o == "RESTORE" && (i == "WRITE" || i == "D" || i.rfind("SAMPLE_", 0) == 0));
+                if (!absent) m.arcs.push_back({i, o, {d, d}});
+            }
         return m;
     }
     // A primitive that is not made of gates and publishes only while being

@@ -11,6 +11,10 @@ add_test(NAME PartDelayTablesTest COMMAND part_delay_tables --check
     shift.barrel.width32 compare.zero.width32 rv32i.decode-control rv32i.pipeline.forwarding
     rv32i.pipeline.hazard-detection alu.width8 rv32i.prediction.predictor rv32i.memory-lanes)
 set_tests_properties(PartDelayTablesTest PROPERTIES LABELS "timing;analysis" TIMEOUT 600)
+add_executable(SRAMCellTimingTest cpp/SRAMCellTimingTest.cpp)
+target_link_libraries(SRAMCellTimingTest PRIVATE SimulatorLib)
+add_test(NAME SRAMCellTimingTest COMMAND SRAMCellTimingTest)
+set_tests_properties(SRAMCellTimingTest PROPERTIES LABELS "timing;analysis;memory" TIMEOUT 300)
 add_executable(DFlipFlopTimingTest cpp/DFlipFlopTimingTest.cpp)
 target_link_libraries(DFlipFlopTimingTest PRIVATE SimulatorLib)
 add_test(NAME DFlipFlopTimingTest COMMAND DFlipFlopTimingTest)

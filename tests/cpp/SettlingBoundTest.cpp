@@ -386,6 +386,10 @@ void catalog(size_t rounds, size_t budget, bool verbose, const std::set<std::str
         // A self-timed part also changes at times of its own; its bounds count
         // from whatever caused the change, not from the input change alone.
         if (all.self_timed) continue;
+        // The SRAM cell needs its input changes at least two ticks apart
+        // (SRAMCellTimingTest); this bench also changes inputs one tick apart.
+        // SRAM is covered by that test and the side-by-side comparison.
+        if (contract.id.rfind("memory.sram.", 0) == 0) continue;
         SettlingOptions options;
         options.binary_sources = true;
         options.search_budget = budget;

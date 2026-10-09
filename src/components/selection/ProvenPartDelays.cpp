@@ -74,7 +74,10 @@ const PartDelays* provenPartDelays(const std::string& implementation_id, const P
     // A flip-flop endpoint whose consumer is always ready is a different
     // circuit (no response is kept), proven separately.
     const auto ready = parameters.find("always_ready");
-    const std::string variant = ready != parameters.end() && ready->second == "1" ? "@always_ready" : "";
+    std::string variant = ready != parameters.end() && ready->second == "1" ? "@always_ready" : "";
+    // Only the endpoint is built differently for an always-ready consumer;
+    // a device inside it is the same circuit either way.
+    if (!variant.empty() && !exact(implementation_id + "@depth=64" + variant)) variant.clear();
     const auto* at64 = exact(implementation_id + "@depth=64" + variant);
     const auto* at128 = exact(implementation_id + "@depth=128" + variant);
     if (!at64 || !at128) return nullptr;
