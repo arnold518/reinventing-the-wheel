@@ -15,6 +15,7 @@ class NORFlashCell : public circuit::memory_device::Primitive {
   public:
     explicit NORFlashCell(std::string name);
     void evaluate(size_t, Simulator &) override;
+    PrimitiveTiming primitiveTiming() const override { return PrimitiveTiming::SelfTimed; }
 
   private:
     LogicValue value_ = LogicValue::HIGH;

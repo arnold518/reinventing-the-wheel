@@ -84,6 +84,7 @@ class SRAMBitlinePair : public BasicComponent {
 public:
     SRAMBitlinePair(std::string name, size_t rows);
     const char* getTypeName() const override { return type_.c_str(); }
+    PrimitiveTiming primitiveTiming() const override { return PrimitiveTiming::InputsOnly; }
     void evaluate(size_t time, Simulator& simulator) override;
 private:
     size_t rows_;
@@ -123,6 +124,7 @@ class SRAMSenseAmplifier : public BasicComponent {
 public:
     static constexpr const char* TypeName = "SRAMSenseAmplifier";
     const char* getTypeName() const override { return TypeName; }
+    PrimitiveTiming primitiveTiming() const override { return PrimitiveTiming::InputsOnly; }
     explicit SRAMSenseAmplifier(std::string name);
     void evaluate(size_t time, Simulator& simulator) override;
 };
@@ -141,6 +143,8 @@ public:
     SRAMAccessControl(std::string name, SRAMDeviceConfig config);
     inline static const std::string TypeName = "SRAMAccessControl<" + std::to_string(W) + ">";
     const char* getTypeName() const override { return TypeName.c_str(); }
+    // Steps through the access phases on its own schedule.
+    PrimitiveTiming primitiveTiming() const override { return PrimitiveTiming::SelfTimed; }
     void evaluate(size_t time, Simulator& simulator) override;
 private:
     SRAMDeviceConfig config_;

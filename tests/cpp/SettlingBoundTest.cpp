@@ -383,6 +383,9 @@ void catalog(size_t rounds, size_t budget, bool verbose, const std::set<std::str
         bool clocked = false;
         for (const auto& e : all.endpoints) clocked |= e.name == "(captures)";
         if (clocked) continue; // clocked parts need an edge-driven bench; not confirmed here
+        // A self-timed part also changes at times of its own; its bounds count
+        // from whatever caused the change, not from the input change alone.
+        if (all.self_timed) continue;
         SettlingOptions options;
         options.binary_sources = true;
         options.search_budget = budget;

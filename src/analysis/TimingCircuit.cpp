@@ -113,11 +113,15 @@ std::optional<ClockComponentContract> builtinClockContract(const IOComponent& c)
         for (const auto& [o, q] : c.getAllOutputPins()) m.launches.push_back({o, ClockEdge::Rising, {d, d}});
         return m;
     }
-    // A memory primitive that only responds to its inputs: every input can
-    // reach every output in its one delay, whatever it remembers inside.
-    if (const auto* primitive = dynamic_cast<const circuit::memory_device::Primitive*>(&c);
-        primitive && primitive->respondsOnlyToInputs() && !c.getAllInputPins().empty()) {
+    // A primitive that is not made of gates and publishes only while being
+    // evaluated: every input can reach every output in its one delay,
+    // whatever it remembers inside. One that also wakes itself is self-timed:
+    // the delay then counts from whatever caused the change.
+    if (const auto* primitive = dynamic_cast<const BasicComponent*>(&c);
+        primitive && primitive->primitiveTiming() != BasicComponent::PrimitiveTiming::Unknown
+        && !c.getAllInputPins().empty()) {
         const auto d = primitive->getDelay();
+        m.self_timed = primitive->primitiveTiming() == BasicComponent::PrimitiveTiming::SelfTimed;
         for (const auto& [i, p] : c.getAllInputPins())
             for (const auto& [o, q] : c.getAllOutputPins()) m.arcs.push_back({i, o, {d, d}});
         return m;

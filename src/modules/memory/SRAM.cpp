@@ -24,6 +24,7 @@ public:
         for (const auto* p : {"S_BAR", "R_BAR"}) s->addPin(p, PinType::OUTPUT);
     }) {}
     const char* getTypeName() const override { return "SRAMCellAccess"; }
+    PrimitiveTiming primitiveTiming() const override { return PrimitiveTiming::InputsOnly; }
     void evaluate(size_t t, Simulator& sim) override {
         const auto wl = getInputValue("WL"), drive = getInputValue("DRIVE");
         auto set = H, reset = H;

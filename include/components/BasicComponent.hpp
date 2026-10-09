@@ -71,6 +71,14 @@ public:
     const char* getTypeName() const override { return TypeName; }
 
     size_t getDelay() const;
+    // How a structural-terminal primitive that is not made of gates times its
+    // outputs, for the timing analysis. Both kinds publish only while being
+    // evaluated, one delay later.
+    //   InputsOnly: it is evaluated only when an input changes.
+    //   SelfTimed:  it also wakes itself for later, timed steps.
+    // Unknown: the analysis needs a contract from elsewhere.
+    enum class PrimitiveTiming { Unknown, InputsOnly, SelfTimed };
+    virtual PrimitiveTiming primitiveTiming() const { return PrimitiveTiming::Unknown; }
     // Per-output timing. Empty table: every output uses the single delay.
     void setDelays(circuit::PartDelays delays);
     const circuit::PartDelays* getDelays() const;

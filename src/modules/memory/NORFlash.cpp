@@ -163,6 +163,7 @@ class FlashControl : public Primitive {
         : Primitive(std::move(n), "NORFlashCommandControl<" + std::to_string(w) + ">",
                     [=](IOComponent *s) { devicePins(s, w, c, true); }),
           state_(w, c) {}
+    PrimitiveTiming primitiveTiming() const override { return PrimitiveTiming::SelfTimed; }
     void evaluate(size_t t, Simulator &sim) override {
         auto previous = state_.due;
         state_.update(*this, t);

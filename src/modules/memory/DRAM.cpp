@@ -195,6 +195,7 @@ class DRAMCommandControl : public Primitive {
         : Primitive(std::move(n), "DRAMCommandControl<" + std::to_string(width) + ">",
                     [width](IOComponent *s) { devicePins(s, width, true); }),
           state_(width, c) {}
+    PrimitiveTiming primitiveTiming() const override { return PrimitiveTiming::SelfTimed; }
     void evaluate(size_t t, Simulator &sim) override {
         auto previous = state_.due;
         if (auto due = state_.update(*this, t); due && (*due != previous || t >= previous))

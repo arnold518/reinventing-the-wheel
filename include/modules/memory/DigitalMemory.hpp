@@ -46,6 +46,9 @@ class Primitive : public BasicComponent {
     // analysis may then treat it as "every input reaches every output in
     // one delay", whatever it remembers inside.
     virtual bool respondsOnlyToInputs() const { return false; }
+    PrimitiveTiming primitiveTiming() const override {
+        return respondsOnlyToInputs() ? PrimitiveTiming::InputsOnly : PrimitiveTiming::Unknown;
+    }
     // True for a clocked primitive that also wakes itself between clock
     // edges and may change any output one delay after either.
     virtual bool selfTimedClockedPart() const { return false; }

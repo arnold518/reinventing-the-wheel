@@ -15,6 +15,7 @@ class DRAMCell : public circuit::memory_device::Primitive {
   public:
     DRAMCell(std::string name, size_t retention_ticks = 100000);
     void evaluate(size_t, Simulator &) override;
+    PrimitiveTiming primitiveTiming() const override { return PrimitiveTiming::SelfTimed; }
 
   private:
     size_t retention_, closed_ = 0;
@@ -35,6 +36,7 @@ class DRAMSenseColumn : public circuit::memory_device::Primitive {
   public:
     DRAMSenseColumn(std::string name, size_t rows = 2);
     void evaluate(size_t, Simulator &) override;
+    PrimitiveTiming primitiveTiming() const override { return PrimitiveTiming::SelfTimed; }
 
   private:
     size_t rows_;
