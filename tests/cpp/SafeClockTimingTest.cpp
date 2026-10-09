@@ -29,7 +29,8 @@ bool mentions(const ClockTimingReport& r, const std::string& text) {
 void safe(const ClockTimingReport& r, size_t period) {
     for (const auto& d : r.diagnostics) std::cerr << d << '\n';
     check(r.status == ClockTimingStatus::SafeUnderContracts && r.safe_period_ticks == period,
-          "Expected safe period " + std::to_string(period));
+          "Expected safe period " + std::to_string(period) + ", got "
+          + (r.safe_period_ticks ? std::to_string(*r.safe_period_ticks) : std::string("none")));
 }
 void unknown(const ClockTimingReport& r, const std::string& text) {
     if (r.status != ClockTimingStatus::Unknown || r.safe_period_ticks || !mentions(r, text))
@@ -211,7 +212,9 @@ void builtinStorage() {
     clock.inputs = {{"REG.input.RST",std::nullopt,{},0}, {"REG.input.WE",std::nullopt,{},1},
                     {"REG.input.D",ClockEdge::Rising,{1,3},0}};
     clock.outputs = {{"REG.output.Q",ClockEdge::Rising,0,0}};
-    safe(CircuitTimingAnalyzer::safeClock(reg, clock), 4);
+    // The compact register runs on the delays proven on its gate-level form:
+    // data up to tick 3, 9 ticks of setup, 1 of separation, rounded even.
+    safe(CircuitTimingAnalyzer::safeClock(reg, clock), 14);
     clock.inputs[0].fixed_value = 1;
     unknown(CircuitTimingAnalyzer::safeClock(reg, clock), "requires fixed value 0");
 
@@ -221,7 +224,9 @@ void builtinStorage() {
         {"RF.RD_ADDR",ClockEdge::Rising,{1,1},0}, {"RF.WRITE_DATA",ClockEdge::Rising,{1,1},0},
         {"RF.RS1_ADDR",ClockEdge::Rising,{1,9},0}, {"RF.RS2_ADDR",ClockEdge::Rising,{1,2},0}};
     clock.outputs = {{"RF.RS1_DATA",ClockEdge::Rising,0,0},{"RF.RS2_DATA",ClockEdge::Rising,0,0}};
-    safe(CircuitTimingAnalyzer::safeClock(rf, clock), 12); // Read-address arc must not be cut at the clocked macro.
+    // Read-address arc must not be cut at the clocked macro: the address up to
+    // tick 9, 12 ticks through the read path, 1 of separation.
+    safe(CircuitTimingAnalyzer::safeClock(rf, clock), 22);
 }
 
 // Dynamic cross-check of a lower-level FullAdder between compact FF cells.

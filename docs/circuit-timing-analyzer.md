@@ -105,28 +105,64 @@ build-cleanup/part_delay_tables --write src/components/selection/ProvenPartDelay
 build-cleanup/part_delay_tables --check     # recompute every stored table from the gates
 ```
 
-63 parts have tables today.
+83 compact implementations run on a proven table (`part_delay_tables
+--coverage` lists every one that does not, with the reason).
 
-- 46 unclocked: the adders, muxes, decoders, shifters, the two composite logic
+- Unclocked logic: the adders, muxes, decoders, shifters, the composite logic
   units, the ALU and its units, the 8-bit ALU parts, decode control,
   forwarding, hazard detection, the predictor parts and the unclocked stages.
   `SettlingBoundTest` drives each one side by side with its gates.
-- 17 clocked: the three cores, the fetch and decode stages, the pipeline
+- Clocked parts: the three cores, the fetch and decode stages, the pipeline
   registers, the memory requester, execution status and the prediction path.
-  They are proven with storage and memory compact inside, as in every
-  structural view of a core. The compact cores run and verify at the certified
-  periods.
+- Storage: every register width, the state bit, the flip-flop cell and the
+  register file.
+- Flip-flop memory: words, banks and devices.
+
+### Storage and the flip-flop
+
+A flip-flop built from gates is a loop of latches, and what it shows after a
+clock edge depends on what it held before. Path analysis cannot bound that.
+The gate-level `DFlipFlop` is therefore characterized by trying everything
+(`DFlipFlopTimingTest`): every stored value, data value and offset of a data
+change around the edge. Its numbers are in
+`include/modules/basic/DFlipFlopTiming.hpp` and are its contract:
+
+| | Ticks |
+| --- | ---: |
+| Setup | 6 |
+| Hold | 1 |
+| Clock to output | 3 to 4 |
+| Shortest clock high / low | 2 / 6 |
+
+Setup is the point from which the output is also on time. Data arriving 2 to
+5 ticks before the edge is still captured, but then shows up as late as
+tick 8.
+
+With that one part known, the ordinary generator handles everything built
+from it. A `Register<32>` needs 9 ticks of setup and answers in 3 to 4; the
+register file reads in 3 to 12 ticks and answers 14 to 15 after the clock.
+
+Because every structural view of a core keeps storage compact, the storage
+tables enter every clock: the certified periods rose from 94, 58 and 78 to
+106 (single-cycle), 70 (baseline) and 86 (advanced) ticks. After changing a
+storage part, regenerate the tables twice: the clocked parts are proven on
+top of the storage tables.
 
 A table treats reset as held at 0, so a reset change is timed at each output's
 worst case. A harness must therefore leave a whole cycle between releasing
-reset and the first working edge; the advanced-core program harness was
-changed to do so.
+reset and the first working edge.
 
-Not yet: storage parts (registers, the state bit, the flip-flop cell, the
-register file), which stay compact in the reference profile and so have no
-gates to prove on; the timed memories; parts built with non-default
-parameters; tables per control value; and a side-by-side simulator check for
-clocked parts.
+### Not covered
+
+- SRAM, DRAM, ROM and NOR-flash cells, rows, banks and devices: their
+  gate-level forms use timed, stateful primitives whose timing comes from
+  explicit device parameters, and those primitives have no contract.
+- Controllers and endpoints of every technology, and the single-cycle system:
+  they forward or derive a clock, and the analysis accepts only a clock taken
+  straight from an input.
+- Scalable devices: no gate-level form to match.
+- Parts built with non-default parameters; tables per control value; a
+  side-by-side simulator check for clocked parts.
 
 ## What is assumed
 
@@ -155,8 +191,8 @@ Every report lists its premises.
   question, including feedback through the memory store path, hold, budgets
   and every fail-closed case. These were written for the earlier engine and
   pass unchanged on this one.
-- The three cores certify at the same periods as before the merge: 94
-  (single-cycle), 58 (baseline) and 78 (advanced) ticks.
+- The engine merge itself left the certified periods unchanged (94, 58, 78).
+  They are 106, 70 and 86 since storage runs on its proven delays.
 
 ```bash
 build-cleanup/tests/SettlingBoundTest --verbose --budget=500000 rv32i.alu32
@@ -191,6 +227,6 @@ path never decides anything. The proof needs about 250,000 evaluations.
   execute stage's `OUT_NEXT_PC` (46) is one.
 - The clock question does not yet use the case search to lower a period; it
   splits cases only to close loops.
-- A flip-flop built from gates is a loop of latches and gets no bound, so
-  clocked circuits must use the compact storage parts.
+- A loop of latches gets no bound from path analysis. The gate-level
+  `DFlipFlop` has a measured contract instead; any other latch loop does not.
 - A compact part without a table still uses its typed-in single delay.

@@ -45,7 +45,8 @@ int main() {
         SettlingOptions reads;reads.sources=SettlingSources::InputsOnly;reads.fixed_inputs["RST"]=0;
         const auto r=CircuitTimingAnalyzer::settling(rf,reads);
         size_t read_arcs=0;
-        for(const auto& e:r.endpoints)read_arcs+=e.changes&&e.bound==1&&(e.name=="RS1_DATA"||e.name=="RS2_DATA");
+        // 12 ticks: the read path proven on the gate-level register file.
+        for(const auto& e:r.endpoints)read_arcs+=e.changes&&e.bound==12&&(e.name=="RS1_DATA"||e.name=="RS2_DATA");
         check(r.valid&&read_arcs==2,"Both asynchronous register read arcs remain visible");
         // Pure behavioral execution has no defensible gate critical path.
         RV32IExperimentConfig config;

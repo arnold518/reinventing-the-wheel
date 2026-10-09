@@ -7,6 +7,7 @@
 //
 //   part_delay_tables --write FILE [--budget=N] [--clocked] [CONTRACT ...]
 //   part_delay_tables --check      [--budget=N] [CONTRACT ...]
+//   part_delay_tables --coverage
 //
 // --check recomputes the tables that are compiled in and fails on any
 // difference. Storage and memory parts are not generated here: a flip-flop
@@ -49,6 +50,13 @@ std::string emit(const std::string& implementation, const circuit::PartDelays& t
     return out.str();
 }
 
+// The parts every structural view of a core keeps compact. They are built
+// from the gate-level flip-flop, whose contract is measured exhaustively.
+bool storage(const std::string& contract) {
+    return contract.rfind("storage.", 0) == 0 || contract == "rv32i.register-file"
+        || (contract.rfind("memory.ff.", 0) == 0 && contract.find(".scalable-") == std::string::npos);
+}
+
 struct Candidate {
     std::string contract, implementation;
 };
@@ -59,7 +67,7 @@ std::vector<Candidate> candidates(const std::set<std::string>& only) {
     std::vector<Candidate> result;
     for (const auto& contract : catalog.contracts()) {
         if (!only.empty() && !only.contains(contract.id)) continue;
-        if (contract.id.rfind("memory.", 0) == 0 || contract.id.rfind("storage.", 0) == 0
+        if ((contract.id.rfind("memory.", 0) == 0 && !storage(contract.id))
             || contract.id.rfind("sequential.", 0) == 0 || contract.id.rfind("utility.", 0) == 0) continue;
         std::string compact;
         bool gates = false;
@@ -83,8 +91,9 @@ circuit::PartDelays prove(const Candidate& candidate, size_t budget, std::string
     const auto& catalog = circuit::builtinComponentCatalog();
     std::shared_ptr<Component> gates;
     try {
-        gates = catalog.createRoot({candidate.contract, "DUT", {}},
-            rv32i::withBehavioralMemoryParts(circuit::maximallyStructural(), "part-delay-reference-v1")).root;
+        gates = catalog.createRoot({candidate.contract, "DUT", {}}, storage(candidate.contract)
+            ? circuit::maximallyStructural()
+            : rv32i::withBehavioralMemoryParts(circuit::maximallyStructural(), "part-delay-reference-v1")).root;
     } catch (const std::exception& error) { reason = error.what(); return {}; }
     // Storage keeps its compact form in this profile; a part that is itself
     // storage then has no gates to prove anything on.
@@ -106,7 +115,7 @@ circuit::PartDelays prove(const Candidate& candidate, size_t budget, std::string
 int main(int argc, char** argv) {
     try {
         std::string write;
-        bool check = false, clocked = false;
+        bool check = false, clocked = false, coverage = false;
         size_t budget = 4000;
         std::set<std::string> only;
         for (int i = 1; i < argc; ++i) {
@@ -114,8 +123,35 @@ int main(int argc, char** argv) {
             if (argument == "--write" && i + 1 < argc) write = argv[++i];
             else if (argument == "--check") check = true;
             else if (argument == "--clocked") clocked = true;
+            else if (argument == "--coverage") coverage = true;
             else if (argument.rfind("--budget=", 0) == 0) budget = std::stoul(argument.substr(9));
             else only.insert(argument);
+        }
+        if (coverage) {
+            // Every compact implementation in the catalog, and whether it
+            // runs on a proven table.
+            const auto& catalog = circuit::builtinComponentCatalog();
+            size_t with = 0, without = 0;
+            for (const auto& contract : catalog.contracts()) {
+                bool gates = false;
+                for (const auto& implementation : catalog.implementationsFor(contract.id))
+                    gates = gates || (implementation.fidelity != circuit::Fidelity::Behavioral && !implementation.terminal_primitive);
+                for (const auto& implementation : catalog.implementationsFor(contract.id)) {
+                    if (implementation.fidelity != circuit::Fidelity::Behavioral) continue;
+                    if (circuit::provenPartDelays(implementation.id, {})) { ++with; continue; }
+                    std::string reason;
+                    std::shared_ptr<Component> built;
+                    try { built = catalog.createRoot({contract.id, "DUT", {}}, circuit::strictAllBehavioral()).root; }
+                    catch (const std::exception&) { reason = "needs parameters"; }
+                    if (reason.empty() && !std::dynamic_pointer_cast<BasicComponent>(built)) reason = "compact form is built from several parts";
+                    if (reason.empty() && !gates) reason = "no gate-level form to match";
+                    if (reason.empty()) { prove({contract.id, implementation.id}, budget, reason); if (reason.empty()) reason = "not generated yet"; }
+                    ++without;
+                    std::cout << "no table: " << implementation.id << ": " << reason << '\n';
+                }
+            }
+            std::cout << with << " compact implementations run on a proven table; " << without << " do not\n";
+            return 0;
         }
         if (write.empty() == !check) throw std::invalid_argument("Choose --write FILE or --check");
 

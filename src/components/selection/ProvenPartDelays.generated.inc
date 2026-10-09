@@ -351,6 +351,167 @@
     };
     return t;
 }()},
+{"memory.ff.bank.16.behavioral.direct", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.ff.bank.16.structural.words";
+    t.clock = "CLK";
+    t.launches["WORD_0"] = {3, 4};
+    t.launches["WORD_1"] = {3, 4};
+    t.launches["WORD_2"] = {3, 4};
+    t.launches["WORD_3"] = {3, 4};
+    t.setup["WRITE_0"] = 10;
+    t.setup["WRITE_1"] = 10;
+    t.setup["WRITE_2"] = 10;
+    t.setup["WRITE_3"] = 10;
+    t.setup["WRITE_DATA"] = 9;
+    t.setup["WRITE_MASK"] = 11;
+    t.internal_period = 12;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.ff.bank.32.behavioral.direct", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.ff.bank.32.structural.words";
+    t.clock = "CLK";
+    t.launches["WORD_0"] = {3, 4};
+    t.launches["WORD_1"] = {3, 4};
+    t.launches["WORD_2"] = {3, 4};
+    t.launches["WORD_3"] = {3, 4};
+    t.setup["WRITE_0"] = 10;
+    t.setup["WRITE_1"] = 10;
+    t.setup["WRITE_2"] = 10;
+    t.setup["WRITE_3"] = 10;
+    t.setup["WRITE_DATA"] = 9;
+    t.setup["WRITE_MASK"] = 11;
+    t.internal_period = 12;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.ff.bank.8.behavioral.direct", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.ff.bank.8.structural.words";
+    t.clock = "CLK";
+    t.launches["WORD_0"] = {3, 4};
+    t.launches["WORD_1"] = {3, 4};
+    t.launches["WORD_2"] = {3, 4};
+    t.launches["WORD_3"] = {3, 4};
+    t.setup["WRITE_0"] = 10;
+    t.setup["WRITE_1"] = 10;
+    t.setup["WRITE_2"] = 10;
+    t.setup["WRITE_3"] = 10;
+    t.setup["WRITE_DATA"] = 9;
+    t.setup["WRITE_MASK"] = 11;
+    t.internal_period = 12;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.ff.cell.behavioral.direct", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.ff.cell.structural.mux-dff";
+    t.clock = "CLK";
+    t.launches["Q"] = {3, 4};
+    t.setup["D"] = 8;
+    t.setup["WE"] = 9;
+    t.internal_period = 12;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.ff.device.16.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.ff.device.16.structural-slice";
+    t.arcs = {
+        Arc{"READ_EN", "FAULT", {2, 2}},
+        Arc{"READ_EN", "READ_DATA", {2, 2}},
+        Arc{"WE", "FAULT", {2, 2}},
+        Arc{"WORD_ADDR", "FAULT", {8, 9}},
+        Arc{"WORD_ADDR", "READ_DATA", {4, 9}},
+    };
+    t.clock = "CLK";
+    t.launches["READ_DATA"] = {8, 9};
+    t.setup["WE"] = 11;
+    t.setup["WORD_ADDR"] = 19;
+    t.setup["WRITE_DATA"] = 9;
+    t.setup["WRITE_MASK"] = 11;
+    t.internal_period = 12;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.ff.device.32.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.ff.device.32.structural-slice";
+    t.arcs = {
+        Arc{"READ_EN", "FAULT", {2, 2}},
+        Arc{"READ_EN", "READ_DATA", {2, 2}},
+        Arc{"WE", "FAULT", {2, 2}},
+        Arc{"WORD_ADDR", "FAULT", {8, 9}},
+        Arc{"WORD_ADDR", "READ_DATA", {4, 9}},
+    };
+    t.clock = "CLK";
+    t.launches["READ_DATA"] = {8, 9};
+    t.setup["WE"] = 11;
+    t.setup["WORD_ADDR"] = 19;
+    t.setup["WRITE_DATA"] = 9;
+    t.setup["WRITE_MASK"] = 11;
+    t.internal_period = 12;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.ff.device.8.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.ff.device.8.structural-slice";
+    t.arcs = {
+        Arc{"READ_EN", "FAULT", {2, 2}},
+        Arc{"READ_EN", "READ_DATA", {2, 2}},
+        Arc{"WE", "FAULT", {2, 2}},
+        Arc{"WORD_ADDR", "FAULT", {8, 9}},
+        Arc{"WORD_ADDR", "READ_DATA", {4, 9}},
+    };
+    t.clock = "CLK";
+    t.launches["READ_DATA"] = {8, 9};
+    t.setup["WE"] = 11;
+    t.setup["WORD_ADDR"] = 19;
+    t.setup["WRITE_DATA"] = 9;
+    t.setup["WRITE_MASK"] = 11;
+    t.internal_period = 12;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.ff.word.16.behavioral.direct", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.ff.word.16.structural.cells";
+    t.clock = "CLK";
+    t.launches["Q"] = {3, 4};
+    t.setup["WE"] = 10;
+    t.setup["WRITE_DATA"] = 9;
+    t.setup["WRITE_MASK"] = 11;
+    t.internal_period = 12;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.ff.word.32.behavioral.direct", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.ff.word.32.structural.cells";
+    t.clock = "CLK";
+    t.launches["Q"] = {3, 4};
+    t.setup["WE"] = 10;
+    t.setup["WRITE_DATA"] = 9;
+    t.setup["WRITE_MASK"] = 11;
+    t.internal_period = 12;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.ff.word.8.behavioral.direct", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.ff.word.8.structural.cells";
+    t.clock = "CLK";
+    t.launches["Q"] = {3, 4};
+    t.setup["WE"] = 10;
+    t.setup["WRITE_DATA"] = 9;
+    t.setup["WRITE_MASK"] = 11;
+    t.internal_period = 12;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
 {"mux.2x1.width32.behavioral.direct", [] {
     PartDelays t;
     t.evidence = "proven on mux.2x1.width32.structural";
@@ -429,6 +590,25 @@
     };
     return t;
 }()},
+{"rv32i.alu32-core.behavioral.direct", [] {
+    PartDelays t;
+    t.evidence = "proven on rv32i.alu32-core.structural";
+    t.arcs = {
+        Arc{"A", "EQ", {11, 27}},
+        Arc{"A", "LT_SIGNED", {6, 22}},
+        Arc{"A", "LT_UNSIGNED", {16, 21}},
+        Arc{"A", "OUT", {6, 28}},
+        Arc{"B", "EQ", {13, 29}},
+        Arc{"B", "LT_SIGNED", {8, 24}},
+        Arc{"B", "LT_UNSIGNED", {18, 23}},
+        Arc{"B", "OUT", {3, 30}},
+        Arc{"OP", "EQ", {4, 33}},
+        Arc{"OP", "LT_SIGNED", {4, 28}},
+        Arc{"OP", "LT_UNSIGNED", {4, 27}},
+        Arc{"OP", "OUT", {5, 34}},
+    };
+    return t;
+}()},
 {"rv32i.alu32.behavioral.direct", [] {
     PartDelays t;
     t.evidence = "proven on rv32i.alu32.structural";
@@ -457,25 +637,6 @@
         Arc{"OP", "OUT", {5, 34}},
         Arc{"OP", "OVERFLOW", {4, 27}},
         Arc{"OP", "ZERO", {12, 41}},
-    };
-    return t;
-}()},
-{"rv32i.alu32-core.behavioral.direct", [] {
-    PartDelays t;
-    t.evidence = "proven on rv32i.alu32-core.structural";
-    t.arcs = {
-        Arc{"A", "EQ", {11, 27}},
-        Arc{"A", "LT_SIGNED", {6, 22}},
-        Arc{"A", "LT_UNSIGNED", {16, 21}},
-        Arc{"A", "OUT", {6, 28}},
-        Arc{"B", "EQ", {13, 29}},
-        Arc{"B", "LT_SIGNED", {8, 24}},
-        Arc{"B", "LT_UNSIGNED", {18, 23}},
-        Arc{"B", "OUT", {3, 30}},
-        Arc{"OP", "EQ", {4, 33}},
-        Arc{"OP", "LT_SIGNED", {4, 28}},
-        Arc{"OP", "LT_UNSIGNED", {4, 27}},
-        Arc{"OP", "OUT", {5, 34}},
     };
     return t;
 }()},
@@ -590,8 +751,8 @@
         Arc{"IN_INSTRUCTION", "OUT_IMMEDIATE", {7, 20}},
         Arc{"IN_INSTRUCTION", "OUT_INSTRUCTION", {0, 0}},
         Arc{"IN_INSTRUCTION", "OUT_REGISTER_ADDRESSES", {0, 0}},
-        Arc{"IN_INSTRUCTION", "OUT_RS1_VALUE", {1, 1}},
-        Arc{"IN_INSTRUCTION", "OUT_RS2_VALUE", {1, 1}},
+        Arc{"IN_INSTRUCTION", "OUT_RS1_VALUE", {3, 12}},
+        Arc{"IN_INSTRUCTION", "OUT_RS2_VALUE", {3, 12}},
         Arc{"IN_INSTRUCTION", "TERMINAL", {10, 18}},
         Arc{"IN_PC", "OUT_PC", {0, 0}},
         Arc{"IN_VALID", "CONTROL_FLOW", {1, 1}},
@@ -599,11 +760,11 @@
         Arc{"IN_VALID", "TERMINAL", {1, 1}},
     };
     t.clock = "CLK";
-    t.launches["OUT_RS1_VALUE"] = {1, 1};
-    t.launches["OUT_RS2_VALUE"] = {1, 1};
-    t.setup["REGISTER_WRITE"] = 0;
-    t.setup["WB_RD"] = 0;
-    t.setup["WB_VALUE"] = 0;
+    t.launches["OUT_RS1_VALUE"] = {14, 15};
+    t.launches["OUT_RS2_VALUE"] = {14, 15};
+    t.setup["REGISTER_WRITE"] = 10;
+    t.setup["WB_RD"] = 15;
+    t.setup["WB_VALUE"] = 9;
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
@@ -693,14 +854,14 @@
         Arc{"IMEM_READ_DATA", "OUT_INSTRUCTION", {0, 0}},
     };
     t.clock = "CLK";
-    t.launches["FETCH_PC"] = {1, 1};
-    t.launches["IMEM_WORD_ADDR"] = {1, 1};
-    t.launches["OUT_FETCH_STATUS"] = {4, 5};
-    t.launches["OUT_PC"] = {1, 1};
-    t.setup["PC_REDIRECT"] = 3;
-    t.setup["PC_WRITE"] = 0;
-    t.setup["REDIRECT_PC"] = 3;
-    t.internal_period = 11;
+    t.launches["FETCH_PC"] = {3, 4};
+    t.launches["IMEM_WORD_ADDR"] = {3, 4};
+    t.launches["OUT_FETCH_STATUS"] = {6, 8};
+    t.launches["OUT_PC"] = {3, 4};
+    t.setup["PC_REDIRECT"] = 12;
+    t.setup["PC_WRITE"] = 9;
+    t.setup["REDIRECT_PC"] = 12;
+    t.internal_period = 23;
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
@@ -773,37 +934,37 @@
         Arc{"ENABLE", "PIPELINE_STALL", {3, 13}},
     };
     t.clock = "CLK";
-    t.launches["BRANCH_WAIT"] = {4, 15};
-    t.launches["COMMIT_VALID"] = {2, 5};
-    t.launches["DATA_STALL"] = {5, 52};
-    t.launches["DMEM_REQ_ADDR"] = {1, 1};
-    t.launches["DMEM_REQ_OP"] = {3, 12};
-    t.launches["DMEM_REQ_VALID"] = {4, 13};
-    t.launches["DMEM_REQ_WRITE_DATA"] = {5, 8};
-    t.launches["DMEM_REQ_WRITE_MASK"] = {4, 8};
-    t.launches["EX_MEM_PC"] = {1, 1};
-    t.launches["EX_MEM_VALID"] = {1, 1};
-    t.launches["FETCH_PC"] = {1, 1};
-    t.launches["HALTED"] = {1, 1};
-    t.launches["ID_EX_PC"] = {1, 1};
-    t.launches["ID_EX_VALID"] = {1, 1};
-    t.launches["IF_ID_PC"] = {1, 1};
-    t.launches["IF_ID_VALID"] = {1, 1};
-    t.launches["IMEM_REQ_ADDR"] = {1, 1};
-    t.launches["IMEM_REQ_VALID"] = {7, 26};
-    t.launches["INSTRUCTION_ATTEMPT"] = {6, 25};
-    t.launches["MEM_WB_PC"] = {1, 1};
-    t.launches["MEM_WB_VALID"] = {1, 1};
-    t.launches["PIPELINE_FLUSH"] = {5, 23};
-    t.launches["PIPELINE_STALL"] = {5, 52};
-    t.launches["TRAPPED"] = {1, 1};
-    t.launches["TRAP_CAUSE"] = {1, 1};
-    t.setup["DMEM_RSP_READ_DATA"] = 9;
-    t.setup["DMEM_RSP_STATUS"] = 15;
-    t.setup["ENABLE"] = 18;
-    t.setup["IMEM_RSP_READ_DATA"] = 0;
-    t.setup["IMEM_RSP_STATUS"] = 4;
-    t.internal_period = 54;
+    t.launches["BRANCH_WAIT"] = {6, 18};
+    t.launches["COMMIT_VALID"] = {4, 8};
+    t.launches["DATA_STALL"] = {7, 55};
+    t.launches["DMEM_REQ_ADDR"] = {3, 4};
+    t.launches["DMEM_REQ_OP"] = {5, 15};
+    t.launches["DMEM_REQ_VALID"] = {6, 16};
+    t.launches["DMEM_REQ_WRITE_DATA"] = {7, 11};
+    t.launches["DMEM_REQ_WRITE_MASK"] = {6, 11};
+    t.launches["EX_MEM_PC"] = {3, 4};
+    t.launches["EX_MEM_VALID"] = {3, 4};
+    t.launches["FETCH_PC"] = {3, 4};
+    t.launches["HALTED"] = {3, 4};
+    t.launches["ID_EX_PC"] = {3, 4};
+    t.launches["ID_EX_VALID"] = {3, 4};
+    t.launches["IF_ID_PC"] = {3, 4};
+    t.launches["IF_ID_VALID"] = {3, 4};
+    t.launches["IMEM_REQ_ADDR"] = {3, 4};
+    t.launches["IMEM_REQ_VALID"] = {9, 29};
+    t.launches["INSTRUCTION_ATTEMPT"] = {8, 28};
+    t.launches["MEM_WB_PC"] = {3, 4};
+    t.launches["MEM_WB_VALID"] = {3, 4};
+    t.launches["PIPELINE_FLUSH"] = {7, 26};
+    t.launches["PIPELINE_STALL"] = {7, 55};
+    t.launches["TRAPPED"] = {3, 4};
+    t.launches["TRAP_CAUSE"] = {3, 4};
+    t.setup["DMEM_RSP_READ_DATA"] = 18;
+    t.setup["DMEM_RSP_STATUS"] = 24;
+    t.setup["ENABLE"] = 26;
+    t.setup["IMEM_RSP_READ_DATA"] = 9;
+    t.setup["IMEM_RSP_STATUS"] = 13;
+    t.internal_period = 66;
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
@@ -861,47 +1022,47 @@
         Arc{"IMEM_RSP_VALID", "IMEM_RSP_READY", {9, 9}},
     };
     t.clock = "CLK";
-    t.launches["BRANCH_MISS"] = {4, 68};
-    t.launches["BRANCH_RESOLVED"] = {4, 67};
-    t.launches["COMMIT_VALID"] = {2, 26};
-    t.launches["DATA_PORT_STALL"] = {4, 24};
-    t.launches["DMEM_REQ_ADDR"] = {3, 21};
-    t.launches["DMEM_REQ_OP"] = {3, 15};
-    t.launches["DMEM_REQ_VALID"] = {4, 16};
-    t.launches["DMEM_REQ_WRITE_DATA"] = {3, 11};
-    t.launches["DMEM_REQ_WRITE_MASK"] = {3, 23};
-    t.launches["DMEM_RSP_READY"] = {4, 30};
-    t.launches["EX_MEM_PC"] = {1, 1};
-    t.launches["EX_MEM_VALID"] = {1, 1};
-    t.launches["FETCH_PC"] = {1, 1};
-    t.launches["HALTED"] = {1, 1};
-    t.launches["ID_EX_PC"] = {1, 1};
-    t.launches["ID_EX_VALID"] = {1, 1};
-    t.launches["IF_ID_PC"] = {1, 1};
-    t.launches["IF_ID_VALID"] = {1, 1};
-    t.launches["IMEM_REQ_ADDR"] = {3, 4};
-    t.launches["IMEM_REQ_VALID"] = {4, 7};
-    t.launches["IMEM_RSP_READY"] = {4, 74};
-    t.launches["INSTRUCTION_ATTEMPT"] = {2, 26};
-    t.launches["LOAD_USE_STALL"] = {5, 28};
-    t.launches["MEMORY_STALL"] = {5, 23};
-    t.launches["MEM_WB_PC"] = {1, 1};
-    t.launches["MEM_WB_VALID"] = {1, 1};
-    t.launches["PIPELINE_FLUSH"] = {5, 68};
-    t.launches["PIPELINE_STALL"] = {5, 26};
-    t.launches["PREDICTION_RECOVERY"] = {6, 67};
-    t.launches["TRAPPED"] = {1, 1};
-    t.launches["TRAP_CAUSE"] = {1, 1};
-    t.setup["DMEM_REQ_READY"] = 21;
-    t.setup["DMEM_RSP_READ_DATA"] = 9;
-    t.setup["DMEM_RSP_STATUS"] = 18;
-    t.setup["DMEM_RSP_VALID"] = 19;
-    t.setup["ENABLE"] = 29;
-    t.setup["IMEM_REQ_READY"] = 13;
-    t.setup["IMEM_RSP_READ_DATA"] = 33;
-    t.setup["IMEM_RSP_STATUS"] = 6;
-    t.setup["IMEM_RSP_VALID"] = 11;
-    t.internal_period = 76;
+    t.launches["BRANCH_MISS"] = {6, 71};
+    t.launches["BRANCH_RESOLVED"] = {6, 70};
+    t.launches["COMMIT_VALID"] = {4, 29};
+    t.launches["DATA_PORT_STALL"] = {6, 27};
+    t.launches["DMEM_REQ_ADDR"] = {5, 24};
+    t.launches["DMEM_REQ_OP"] = {5, 18};
+    t.launches["DMEM_REQ_VALID"] = {6, 19};
+    t.launches["DMEM_REQ_WRITE_DATA"] = {5, 14};
+    t.launches["DMEM_REQ_WRITE_MASK"] = {5, 26};
+    t.launches["DMEM_RSP_READY"] = {6, 33};
+    t.launches["EX_MEM_PC"] = {3, 4};
+    t.launches["EX_MEM_VALID"] = {3, 4};
+    t.launches["FETCH_PC"] = {3, 4};
+    t.launches["HALTED"] = {3, 4};
+    t.launches["ID_EX_PC"] = {3, 4};
+    t.launches["ID_EX_VALID"] = {3, 4};
+    t.launches["IF_ID_PC"] = {3, 4};
+    t.launches["IF_ID_VALID"] = {3, 4};
+    t.launches["IMEM_REQ_ADDR"] = {5, 7};
+    t.launches["IMEM_REQ_VALID"] = {6, 10};
+    t.launches["IMEM_RSP_READY"] = {6, 77};
+    t.launches["INSTRUCTION_ATTEMPT"] = {4, 29};
+    t.launches["LOAD_USE_STALL"] = {7, 31};
+    t.launches["MEMORY_STALL"] = {7, 26};
+    t.launches["MEM_WB_PC"] = {3, 4};
+    t.launches["MEM_WB_VALID"] = {3, 4};
+    t.launches["PIPELINE_FLUSH"] = {7, 71};
+    t.launches["PIPELINE_STALL"] = {7, 29};
+    t.launches["PREDICTION_RECOVERY"] = {8, 70};
+    t.launches["TRAPPED"] = {3, 4};
+    t.launches["TRAP_CAUSE"] = {3, 4};
+    t.setup["DMEM_REQ_READY"] = 30;
+    t.setup["DMEM_RSP_READ_DATA"] = 18;
+    t.setup["DMEM_RSP_STATUS"] = 24;
+    t.setup["DMEM_RSP_VALID"] = 28;
+    t.setup["ENABLE"] = 38;
+    t.setup["IMEM_REQ_READY"] = 19;
+    t.setup["IMEM_RSP_READ_DATA"] = 42;
+    t.setup["IMEM_RSP_STATUS"] = 15;
+    t.setup["IMEM_RSP_VALID"] = 17;
+    t.internal_period = 85;
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
@@ -913,33 +1074,33 @@
         Arc{"ENABLE", "DMEM_REQ_VALID", {6, 11}},
         Arc{"ENABLE", "IMEM_REQ_VALID", {3, 3}},
         Arc{"ENABLE", "INSTRUCTION_ATTEMPT", {4, 4}},
-        Arc{"IMEM_RSP_READ_DATA", "DMEM_REQ_ADDR", {9, 52}},
+        Arc{"IMEM_RSP_READ_DATA", "DMEM_REQ_ADDR", {11, 52}},
         Arc{"IMEM_RSP_READ_DATA", "DMEM_REQ_OP", {7, 50}},
         Arc{"IMEM_RSP_READ_DATA", "DMEM_REQ_VALID", {8, 18}},
-        Arc{"IMEM_RSP_READ_DATA", "DMEM_REQ_WRITE_DATA", {6, 60}},
+        Arc{"IMEM_RSP_READ_DATA", "DMEM_REQ_WRITE_DATA", {8, 60}},
         Arc{"IMEM_RSP_READ_DATA", "DMEM_REQ_WRITE_MASK", {9, 49}},
         Arc{"IMEM_RSP_STATUS", "DMEM_REQ_OP", {9, 10}},
         Arc{"IMEM_RSP_STATUS", "DMEM_REQ_VALID", {8, 11}},
     };
     t.clock = "CLK";
-    t.launches["DMEM_REQ_ADDR"] = {9, 33};
-    t.launches["DMEM_REQ_OP"] = {9, 30};
-    t.launches["DMEM_REQ_VALID"] = {8, 13};
-    t.launches["DMEM_REQ_WRITE_DATA"] = {6, 43};
-    t.launches["DMEM_REQ_WRITE_MASK"] = {14, 29};
-    t.launches["HALTED"] = {1, 1};
-    t.launches["IMEM_REQ_ADDR"] = {1, 1};
-    t.launches["IMEM_REQ_VALID"] = {5, 5};
-    t.launches["INSTRUCTION_ATTEMPT"] = {6, 6};
-    t.launches["PC"] = {1, 1};
-    t.launches["TRAPPED"] = {1, 1};
-    t.launches["TRAP_CAUSE"] = {1, 1};
-    t.setup["DMEM_RSP_READ_DATA"] = 14;
-    t.setup["DMEM_RSP_STATUS"] = 9;
-    t.setup["ENABLE"] = 26;
-    t.setup["IMEM_RSP_READ_DATA"] = 71;
-    t.setup["IMEM_RSP_STATUS"] = 26;
-    t.internal_period = 60;
+    t.launches["DMEM_REQ_ADDR"] = {14, 47};
+    t.launches["DMEM_REQ_OP"] = {11, 44};
+    t.launches["DMEM_REQ_VALID"] = {10, 16};
+    t.launches["DMEM_REQ_WRITE_DATA"] = {18, 57};
+    t.launches["DMEM_REQ_WRITE_MASK"] = {19, 43};
+    t.launches["HALTED"] = {3, 4};
+    t.launches["IMEM_REQ_ADDR"] = {3, 4};
+    t.launches["IMEM_REQ_VALID"] = {7, 8};
+    t.launches["INSTRUCTION_ATTEMPT"] = {8, 9};
+    t.launches["PC"] = {3, 4};
+    t.launches["TRAPPED"] = {3, 4};
+    t.launches["TRAP_CAUSE"] = {3, 4};
+    t.setup["DMEM_RSP_READ_DATA"] = 23;
+    t.setup["DMEM_RSP_STATUS"] = 19;
+    t.setup["ENABLE"] = 35;
+    t.setup["IMEM_RSP_READ_DATA"] = 80;
+    t.setup["IMEM_RSP_STATUS"] = 35;
+    t.internal_period = 83;
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
@@ -1028,30 +1189,30 @@
         Arc{"TRAP_REQUEST", "REGISTER_WRITE", {8, 15}},
     };
     t.clock = "CLK";
-    t.launches["FETCH_REQUEST_ACTIVE"] = {4, 4};
-    t.launches["HALTED"] = {1, 1};
-    t.launches["INSTRUCTION_ATTEMPT"] = {6, 10};
-    t.launches["MEMORY_REQUEST_ACTIVE"] = {7, 7};
-    t.launches["PC_WRITE"] = {11, 17};
-    t.launches["REGISTER_WRITE"] = {12, 18};
-    t.launches["TRAPPED"] = {1, 1};
-    t.launches["TRAP_CAUSE"] = {1, 1};
-    t.setup["ALU_ADDRESS"] = 25;
-    t.setup["DECODE_TRAP_CAUSE"] = 12;
-    t.setup["DMEM_FAULT"] = 19;
-    t.setup["DMEM_READY"] = 24;
-    t.setup["ENABLE"] = 30;
-    t.setup["HALT_REQUEST"] = 29;
-    t.setup["IMEM_FAULT"] = 29;
-    t.setup["IMEM_READY"] = 28;
-    t.setup["LEGAL"] = 28;
-    t.setup["MEM_READ"] = 29;
-    t.setup["MEM_SIZE"] = 24;
-    t.setup["MEM_WRITE"] = 29;
-    t.setup["PC_MISALIGNED"] = 29;
-    t.setup["TARGET_MISALIGNED"] = 16;
-    t.setup["TRAP_REQUEST"] = 29;
-    t.internal_period = 32;
+    t.launches["FETCH_REQUEST_ACTIVE"] = {6, 7};
+    t.launches["HALTED"] = {3, 4};
+    t.launches["INSTRUCTION_ATTEMPT"] = {8, 13};
+    t.launches["MEMORY_REQUEST_ACTIVE"] = {9, 10};
+    t.launches["PC_WRITE"] = {13, 20};
+    t.launches["REGISTER_WRITE"] = {14, 21};
+    t.launches["TRAPPED"] = {3, 4};
+    t.launches["TRAP_CAUSE"] = {3, 4};
+    t.setup["ALU_ADDRESS"] = 34;
+    t.setup["DECODE_TRAP_CAUSE"] = 21;
+    t.setup["DMEM_FAULT"] = 28;
+    t.setup["DMEM_READY"] = 33;
+    t.setup["ENABLE"] = 39;
+    t.setup["HALT_REQUEST"] = 38;
+    t.setup["IMEM_FAULT"] = 38;
+    t.setup["IMEM_READY"] = 37;
+    t.setup["LEGAL"] = 37;
+    t.setup["MEM_READ"] = 38;
+    t.setup["MEM_SIZE"] = 33;
+    t.setup["MEM_WRITE"] = 38;
+    t.setup["PC_MISALIGNED"] = 38;
+    t.setup["TARGET_MISALIGNED"] = 25;
+    t.setup["TRAP_REQUEST"] = 38;
+    t.internal_period = 44;
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
@@ -1092,23 +1253,23 @@
         Arc{"WRITE_MASK", "BUS_REQ_WRITE_MASK", {3, 3}},
     };
     t.clock = "CLK";
-    t.launches["BUS_REQ_ADDR"] = {3, 4};
-    t.launches["BUS_REQ_OP"] = {3, 4};
-    t.launches["BUS_REQ_VALID"] = {4, 4};
-    t.launches["BUS_REQ_WRITE_DATA"] = {3, 4};
-    t.launches["BUS_REQ_WRITE_MASK"] = {3, 4};
-    t.launches["BUS_RSP_READY"] = {4, 12};
-    t.launches["DONE"] = {5, 13};
-    t.setup["ADDR"] = 0;
-    t.setup["BUS_REQ_READY"] = 3;
-    t.setup["BUS_RSP_VALID"] = 4;
-    t.setup["ISSUE"] = 8;
-    t.setup["OP"] = 0;
-    t.setup["TAG"] = 13;
-    t.setup["TAKE"] = 4;
-    t.setup["WRITE_DATA"] = 0;
-    t.setup["WRITE_MASK"] = 0;
-    t.internal_period = 14;
+    t.launches["BUS_REQ_ADDR"] = {5, 7};
+    t.launches["BUS_REQ_OP"] = {5, 7};
+    t.launches["BUS_REQ_VALID"] = {6, 7};
+    t.launches["BUS_REQ_WRITE_DATA"] = {5, 7};
+    t.launches["BUS_REQ_WRITE_MASK"] = {5, 7};
+    t.launches["BUS_RSP_READY"] = {6, 15};
+    t.launches["DONE"] = {7, 16};
+    t.setup["ADDR"] = 9;
+    t.setup["BUS_REQ_READY"] = 9;
+    t.setup["BUS_RSP_VALID"] = 10;
+    t.setup["ISSUE"] = 14;
+    t.setup["OP"] = 9;
+    t.setup["TAG"] = 19;
+    t.setup["TAKE"] = 10;
+    t.setup["WRITE_DATA"] = 9;
+    t.setup["WRITE_MASK"] = 9;
+    t.internal_period = 23;
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
@@ -1116,30 +1277,30 @@
     PartDelays t;
     t.evidence = "proven on rv32i.pipeline-register.ex-mem.structural.register32-bank";
     t.clock = "CLK";
-    t.launches["Q_ALU_RESULT"] = {1, 1};
-    t.launches["Q_CONTROL"] = {1, 1};
-    t.launches["Q_EXECUTION_STATUS"] = {1, 1};
-    t.launches["Q_FETCH_STATUS"] = {1, 1};
-    t.launches["Q_INSTRUCTION"] = {1, 1};
-    t.launches["Q_NEXT_PC"] = {1, 1};
-    t.launches["Q_PC"] = {1, 1};
-    t.launches["Q_PC_PLUS_4"] = {1, 1};
-    t.launches["Q_REGISTER_ADDRESSES"] = {1, 1};
-    t.launches["Q_STORE_DATA"] = {1, 1};
-    t.launches["Q_VALID"] = {1, 1};
-    t.setup["D_ALU_RESULT"] = 0;
-    t.setup["D_CONTROL"] = 0;
-    t.setup["D_EXECUTION_STATUS"] = 0;
-    t.setup["D_FETCH_STATUS"] = 0;
-    t.setup["D_INSTRUCTION"] = 0;
-    t.setup["D_NEXT_PC"] = 0;
-    t.setup["D_PC"] = 0;
-    t.setup["D_PC_PLUS_4"] = 0;
-    t.setup["D_REGISTER_ADDRESSES"] = 0;
-    t.setup["D_STORE_DATA"] = 0;
-    t.setup["D_VALID"] = 1;
-    t.setup["FLUSH"] = 2;
-    t.setup["WRITE_ENABLE"] = 0;
+    t.launches["Q_ALU_RESULT"] = {3, 4};
+    t.launches["Q_CONTROL"] = {3, 4};
+    t.launches["Q_EXECUTION_STATUS"] = {3, 4};
+    t.launches["Q_FETCH_STATUS"] = {3, 4};
+    t.launches["Q_INSTRUCTION"] = {3, 4};
+    t.launches["Q_NEXT_PC"] = {3, 4};
+    t.launches["Q_PC"] = {3, 4};
+    t.launches["Q_PC_PLUS_4"] = {3, 4};
+    t.launches["Q_REGISTER_ADDRESSES"] = {3, 4};
+    t.launches["Q_STORE_DATA"] = {3, 4};
+    t.launches["Q_VALID"] = {3, 4};
+    t.setup["D_ALU_RESULT"] = 9;
+    t.setup["D_CONTROL"] = 9;
+    t.setup["D_EXECUTION_STATUS"] = 9;
+    t.setup["D_FETCH_STATUS"] = 9;
+    t.setup["D_INSTRUCTION"] = 9;
+    t.setup["D_NEXT_PC"] = 9;
+    t.setup["D_PC"] = 9;
+    t.setup["D_PC_PLUS_4"] = 9;
+    t.setup["D_REGISTER_ADDRESSES"] = 9;
+    t.setup["D_STORE_DATA"] = 9;
+    t.setup["D_VALID"] = 9;
+    t.setup["FLUSH"] = 10;
+    t.setup["WRITE_ENABLE"] = 9;
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
@@ -1147,26 +1308,26 @@
     PartDelays t;
     t.evidence = "proven on rv32i.pipeline-register.id-ex.structural.register32-bank";
     t.clock = "CLK";
-    t.launches["Q_CONTROL"] = {1, 1};
-    t.launches["Q_FETCH_STATUS"] = {1, 1};
-    t.launches["Q_IMMEDIATE"] = {1, 1};
-    t.launches["Q_INSTRUCTION"] = {1, 1};
-    t.launches["Q_PC"] = {1, 1};
-    t.launches["Q_REGISTER_ADDRESSES"] = {1, 1};
-    t.launches["Q_RS1_VALUE"] = {1, 1};
-    t.launches["Q_RS2_VALUE"] = {1, 1};
-    t.launches["Q_VALID"] = {1, 1};
-    t.setup["D_CONTROL"] = 0;
-    t.setup["D_FETCH_STATUS"] = 0;
-    t.setup["D_IMMEDIATE"] = 0;
-    t.setup["D_INSTRUCTION"] = 0;
-    t.setup["D_PC"] = 0;
-    t.setup["D_REGISTER_ADDRESSES"] = 0;
-    t.setup["D_RS1_VALUE"] = 0;
-    t.setup["D_RS2_VALUE"] = 0;
-    t.setup["D_VALID"] = 1;
-    t.setup["FLUSH"] = 2;
-    t.setup["WRITE_ENABLE"] = 0;
+    t.launches["Q_CONTROL"] = {3, 4};
+    t.launches["Q_FETCH_STATUS"] = {3, 4};
+    t.launches["Q_IMMEDIATE"] = {3, 4};
+    t.launches["Q_INSTRUCTION"] = {3, 4};
+    t.launches["Q_PC"] = {3, 4};
+    t.launches["Q_REGISTER_ADDRESSES"] = {3, 4};
+    t.launches["Q_RS1_VALUE"] = {3, 4};
+    t.launches["Q_RS2_VALUE"] = {3, 4};
+    t.launches["Q_VALID"] = {3, 4};
+    t.setup["D_CONTROL"] = 9;
+    t.setup["D_FETCH_STATUS"] = 9;
+    t.setup["D_IMMEDIATE"] = 9;
+    t.setup["D_INSTRUCTION"] = 9;
+    t.setup["D_PC"] = 9;
+    t.setup["D_REGISTER_ADDRESSES"] = 9;
+    t.setup["D_RS1_VALUE"] = 9;
+    t.setup["D_RS2_VALUE"] = 9;
+    t.setup["D_VALID"] = 9;
+    t.setup["FLUSH"] = 10;
+    t.setup["WRITE_ENABLE"] = 9;
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
@@ -1174,16 +1335,16 @@
     PartDelays t;
     t.evidence = "proven on rv32i.pipeline-register.if-id.structural.register32-bank";
     t.clock = "CLK";
-    t.launches["Q_FETCH_STATUS"] = {1, 1};
-    t.launches["Q_INSTRUCTION"] = {1, 1};
-    t.launches["Q_PC"] = {1, 1};
-    t.launches["Q_VALID"] = {1, 1};
-    t.setup["D_FETCH_STATUS"] = 0;
-    t.setup["D_INSTRUCTION"] = 0;
-    t.setup["D_PC"] = 0;
-    t.setup["D_VALID"] = 1;
-    t.setup["FLUSH"] = 2;
-    t.setup["WRITE_ENABLE"] = 0;
+    t.launches["Q_FETCH_STATUS"] = {3, 4};
+    t.launches["Q_INSTRUCTION"] = {3, 4};
+    t.launches["Q_PC"] = {3, 4};
+    t.launches["Q_VALID"] = {3, 4};
+    t.setup["D_FETCH_STATUS"] = 9;
+    t.setup["D_INSTRUCTION"] = 9;
+    t.setup["D_PC"] = 9;
+    t.setup["D_VALID"] = 9;
+    t.setup["FLUSH"] = 10;
+    t.setup["WRITE_ENABLE"] = 9;
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
@@ -1191,34 +1352,34 @@
     PartDelays t;
     t.evidence = "proven on rv32i.pipeline-register.mem-wb.structural.register32-bank";
     t.clock = "CLK";
-    t.launches["Q_ALU_RESULT"] = {1, 1};
-    t.launches["Q_CONTROL"] = {1, 1};
-    t.launches["Q_EXECUTION_STATUS"] = {1, 1};
-    t.launches["Q_FETCH_STATUS"] = {1, 1};
-    t.launches["Q_INSTRUCTION"] = {1, 1};
-    t.launches["Q_MEMORY_DATA"] = {1, 1};
-    t.launches["Q_MEMORY_STATUS"] = {1, 1};
-    t.launches["Q_NEXT_PC"] = {1, 1};
-    t.launches["Q_PC"] = {1, 1};
-    t.launches["Q_PC_PLUS_4"] = {1, 1};
-    t.launches["Q_REGISTER_ADDRESSES"] = {1, 1};
-    t.launches["Q_STORE_DATA"] = {1, 1};
-    t.launches["Q_VALID"] = {1, 1};
-    t.setup["D_ALU_RESULT"] = 0;
-    t.setup["D_CONTROL"] = 0;
-    t.setup["D_EXECUTION_STATUS"] = 0;
-    t.setup["D_FETCH_STATUS"] = 0;
-    t.setup["D_INSTRUCTION"] = 0;
-    t.setup["D_MEMORY_DATA"] = 0;
-    t.setup["D_MEMORY_STATUS"] = 0;
-    t.setup["D_NEXT_PC"] = 0;
-    t.setup["D_PC"] = 0;
-    t.setup["D_PC_PLUS_4"] = 0;
-    t.setup["D_REGISTER_ADDRESSES"] = 0;
-    t.setup["D_STORE_DATA"] = 0;
-    t.setup["D_VALID"] = 1;
-    t.setup["FLUSH"] = 2;
-    t.setup["WRITE_ENABLE"] = 0;
+    t.launches["Q_ALU_RESULT"] = {3, 4};
+    t.launches["Q_CONTROL"] = {3, 4};
+    t.launches["Q_EXECUTION_STATUS"] = {3, 4};
+    t.launches["Q_FETCH_STATUS"] = {3, 4};
+    t.launches["Q_INSTRUCTION"] = {3, 4};
+    t.launches["Q_MEMORY_DATA"] = {3, 4};
+    t.launches["Q_MEMORY_STATUS"] = {3, 4};
+    t.launches["Q_NEXT_PC"] = {3, 4};
+    t.launches["Q_PC"] = {3, 4};
+    t.launches["Q_PC_PLUS_4"] = {3, 4};
+    t.launches["Q_REGISTER_ADDRESSES"] = {3, 4};
+    t.launches["Q_STORE_DATA"] = {3, 4};
+    t.launches["Q_VALID"] = {3, 4};
+    t.setup["D_ALU_RESULT"] = 9;
+    t.setup["D_CONTROL"] = 9;
+    t.setup["D_EXECUTION_STATUS"] = 9;
+    t.setup["D_FETCH_STATUS"] = 9;
+    t.setup["D_INSTRUCTION"] = 9;
+    t.setup["D_MEMORY_DATA"] = 9;
+    t.setup["D_MEMORY_STATUS"] = 9;
+    t.setup["D_NEXT_PC"] = 9;
+    t.setup["D_PC"] = 9;
+    t.setup["D_PC_PLUS_4"] = 9;
+    t.setup["D_REGISTER_ADDRESSES"] = 9;
+    t.setup["D_STORE_DATA"] = 9;
+    t.setup["D_VALID"] = 9;
+    t.setup["FLUSH"] = 10;
+    t.setup["WRITE_ENABLE"] = 9;
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
@@ -1436,12 +1597,12 @@
     PartDelays t;
     t.evidence = "proven on rv32i.pipeline.execution-status.structural.gates";
     t.clock = "CLK";
-    t.launches["HALTED"] = {1, 1};
-    t.launches["TRAPPED"] = {1, 1};
-    t.launches["TRAP_CAUSE"] = {1, 1};
-    t.setup["EVENT_TRAP_CAUSE"] = 0;
-    t.setup["HALT_EVENT"] = 0;
-    t.setup["TRAP_EVENT"] = 0;
+    t.launches["HALTED"] = {3, 4};
+    t.launches["TRAPPED"] = {3, 4};
+    t.launches["TRAP_CAUSE"] = {3, 4};
+    t.setup["EVENT_TRAP_CAUSE"] = 9;
+    t.setup["HALT_EVENT"] = 9;
+    t.setup["TRAP_EVENT"] = 9;
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
@@ -1588,8 +1749,8 @@
         Arc{"IN_INSTRUCTION", "OUT_IMMEDIATE", {7, 20}},
         Arc{"IN_INSTRUCTION", "OUT_INSTRUCTION", {0, 0}},
         Arc{"IN_INSTRUCTION", "OUT_REGISTER_ADDRESSES", {0, 0}},
-        Arc{"IN_INSTRUCTION", "OUT_RS1_VALUE", {4, 10}},
-        Arc{"IN_INSTRUCTION", "OUT_RS2_VALUE", {4, 10}},
+        Arc{"IN_INSTRUCTION", "OUT_RS1_VALUE", {6, 15}},
+        Arc{"IN_INSTRUCTION", "OUT_RS2_VALUE", {6, 15}},
         Arc{"IN_INSTRUCTION", "TERMINAL", {8, 18}},
         Arc{"IN_PC", "OUT_PC", {0, 0}},
         Arc{"IN_VALID", "LOAD_USE_HAZARD", {3, 3}},
@@ -1605,11 +1766,11 @@
         Arc{"WB_VALUE", "OUT_RS2_VALUE", {3, 3}},
     };
     t.clock = "CLK";
-    t.launches["OUT_RS1_VALUE"] = {4, 4};
-    t.launches["OUT_RS2_VALUE"] = {4, 4};
-    t.setup["WB_RD"] = 0;
-    t.setup["WB_REGISTER_WRITE"] = 0;
-    t.setup["WB_VALUE"] = 0;
+    t.launches["OUT_RS1_VALUE"] = {17, 18};
+    t.launches["OUT_RS2_VALUE"] = {17, 18};
+    t.setup["WB_RD"] = 15;
+    t.setup["WB_REGISTER_WRITE"] = 10;
+    t.setup["WB_VALUE"] = 9;
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
@@ -1790,14 +1951,14 @@
         Arc{"IMEM_READ_DATA", "OUT_INSTRUCTION", {3, 3}},
     };
     t.clock = "CLK";
-    t.launches["FETCH_PC"] = {1, 1};
-    t.launches["IMEM_ADDR"] = {1, 1};
-    t.launches["OUT_FETCH_STATUS"] = {5, 5};
-    t.launches["OUT_PC"] = {4, 4};
-    t.setup["PC_REDIRECT"] = 3;
-    t.setup["PC_WRITE"] = 0;
-    t.setup["REDIRECT_PC"] = 3;
-    t.internal_period = 11;
+    t.launches["FETCH_PC"] = {3, 4};
+    t.launches["IMEM_ADDR"] = {3, 4};
+    t.launches["OUT_FETCH_STATUS"] = {7, 8};
+    t.launches["OUT_PC"] = {6, 7};
+    t.setup["PC_REDIRECT"] = 12;
+    t.setup["PC_WRITE"] = 9;
+    t.setup["REDIRECT_PC"] = 12;
+    t.internal_period = 23;
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
@@ -1970,15 +2131,15 @@
         Arc{"REDIRECT_APPLY", "FETCH_NEXT_PC", {2, 3}},
     };
     t.clock = "CLK";
-    t.launches["BRANCH_MISS"] = {12, 12};
-    t.launches["EX_PREDICTED_NEXT_PC"] = {1, 1};
-    t.launches["MISPREDICT"] = {11, 11};
-    t.launches["RECOVERY"] = {11, 11};
-    t.setup["FETCH_INSTRUCTION"] = 30;
-    t.setup["FETCH_PC"] = 22;
-    t.setup["ID_EX_WRITE"] = 0;
-    t.setup["IF_ID_WRITE"] = 0;
-    t.internal_period = 1;
+    t.launches["BRANCH_MISS"] = {14, 15};
+    t.launches["EX_PREDICTED_NEXT_PC"] = {3, 4};
+    t.launches["MISPREDICT"] = {13, 14};
+    t.launches["RECOVERY"] = {13, 14};
+    t.setup["FETCH_INSTRUCTION"] = 39;
+    t.setup["FETCH_PC"] = 31;
+    t.setup["ID_EX_WRITE"] = 9;
+    t.setup["IF_ID_WRITE"] = 9;
+    t.internal_period = 13;
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
@@ -2047,6 +2208,23 @@
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
+{"rv32i.register-file.behavioral.direct", [] {
+    PartDelays t;
+    t.evidence = "proven on rv32i.register-file.structural.decoder-mux";
+    t.arcs = {
+        Arc{"RS1_ADDR", "RS1_DATA", {3, 12}},
+        Arc{"RS2_ADDR", "RS2_DATA", {3, 12}},
+    };
+    t.clock = "CLK";
+    t.launches["RS1_DATA"] = {14, 15};
+    t.launches["RS2_DATA"] = {14, 15};
+    t.setup["RD_ADDR"] = 15;
+    t.setup["REG_WRITE"] = 10;
+    t.setup["WRITE_DATA"] = 9;
+    t.internal_period = 12;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
 {"rv32i.single-cycle.decode.behavioral", [] {
     PartDelays t;
     t.evidence = "proven on rv32i.single-cycle.decode.structural";
@@ -2067,20 +2245,20 @@
         Arc{"INSTRUCTION", "RD_ADDR", {0, 0}},
         Arc{"INSTRUCTION", "REG_WRITE", {7, 12}},
         Arc{"INSTRUCTION", "RS1_ADDR", {0, 0}},
-        Arc{"INSTRUCTION", "RS1_VALUE", {1, 1}},
+        Arc{"INSTRUCTION", "RS1_VALUE", {3, 12}},
         Arc{"INSTRUCTION", "RS2_ADDR", {0, 0}},
-        Arc{"INSTRUCTION", "RS2_VALUE", {1, 1}},
+        Arc{"INSTRUCTION", "RS2_VALUE", {3, 12}},
         Arc{"INSTRUCTION", "TRAP_REQUEST", {8, 14}},
         Arc{"INSTRUCTION", "USES_RS1", {5, 13}},
         Arc{"INSTRUCTION", "USES_RS2", {5, 12}},
         Arc{"INSTRUCTION", "WRITEBACK_SEL", {6, 12}},
     };
     t.clock = "CLK";
-    t.launches["RS1_VALUE"] = {1, 1};
-    t.launches["RS2_VALUE"] = {1, 1};
-    t.setup["INSTRUCTION"] = 0;
-    t.setup["REGISTER_WRITE"] = 0;
-    t.setup["WB_VALUE"] = 0;
+    t.launches["RS1_VALUE"] = {14, 15};
+    t.launches["RS2_VALUE"] = {14, 15};
+    t.setup["INSTRUCTION"] = 15;
+    t.setup["REGISTER_WRITE"] = 10;
+    t.setup["WB_VALUE"] = 9;
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
@@ -2123,12 +2301,12 @@
         Arc{"ISSUE", "IMEM_READ_EN", {0, 0}},
     };
     t.clock = "CLK";
-    t.launches["IMEM_WORD_ADDR"] = {1, 1};
-    t.launches["PC"] = {1, 1};
-    t.launches["PC_MISALIGNED"] = {4, 5};
-    t.launches["PC_PLUS_4"] = {2, 8};
-    t.setup["NEXT_PC"] = 0;
-    t.setup["PC_WRITE"] = 0;
+    t.launches["IMEM_WORD_ADDR"] = {3, 4};
+    t.launches["PC"] = {3, 4};
+    t.launches["PC_MISALIGNED"] = {6, 8};
+    t.launches["PC_PLUS_4"] = {4, 11};
+    t.setup["NEXT_PC"] = 9;
+    t.setup["PC_WRITE"] = 9;
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
@@ -2205,5 +2383,102 @@
         Arc{"OP", "CARRY", {4, 18}},
         Arc{"OP", "OUT", {4, 21}},
     };
+    return t;
+}()},
+{"storage.register.1.behavioral.word", [] {
+    PartDelays t;
+    t.evidence = "proven on storage.register.1.structural.bits";
+    t.clock = "CLK";
+    t.launches["Q"] = {3, 4};
+    t.setup["D"] = 8;
+    t.setup["WE"] = 9;
+    t.internal_period = 12;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"storage.register.16.behavioral.word", [] {
+    PartDelays t;
+    t.evidence = "proven on storage.register.16.structural.bits";
+    t.clock = "CLK";
+    t.launches["Q"] = {3, 4};
+    t.setup["D"] = 9;
+    t.setup["WE"] = 9;
+    t.internal_period = 12;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"storage.register.2.behavioral.word", [] {
+    PartDelays t;
+    t.evidence = "proven on storage.register.2.structural.bits";
+    t.clock = "CLK";
+    t.launches["Q"] = {3, 4};
+    t.setup["D"] = 9;
+    t.setup["WE"] = 9;
+    t.internal_period = 12;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"storage.register.3.behavioral.word", [] {
+    PartDelays t;
+    t.evidence = "proven on storage.register.3.structural.bits";
+    t.clock = "CLK";
+    t.launches["Q"] = {3, 4};
+    t.setup["D"] = 9;
+    t.setup["WE"] = 9;
+    t.internal_period = 12;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"storage.register.32.behavioral.word", [] {
+    PartDelays t;
+    t.evidence = "proven on storage.register.32.structural.bits";
+    t.clock = "CLK";
+    t.launches["Q"] = {3, 4};
+    t.setup["D"] = 9;
+    t.setup["WE"] = 9;
+    t.internal_period = 12;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"storage.register.4.behavioral.word", [] {
+    PartDelays t;
+    t.evidence = "proven on storage.register.4.structural.bits";
+    t.clock = "CLK";
+    t.launches["Q"] = {3, 4};
+    t.setup["D"] = 9;
+    t.setup["WE"] = 9;
+    t.internal_period = 12;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"storage.register.5.behavioral.word", [] {
+    PartDelays t;
+    t.evidence = "proven on storage.register.5.structural.bits";
+    t.clock = "CLK";
+    t.launches["Q"] = {3, 4};
+    t.setup["D"] = 9;
+    t.setup["WE"] = 9;
+    t.internal_period = 12;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"storage.register.8.behavioral.word", [] {
+    PartDelays t;
+    t.evidence = "proven on storage.register.8.structural.bits";
+    t.clock = "CLK";
+    t.launches["Q"] = {3, 4};
+    t.setup["D"] = 9;
+    t.setup["WE"] = 9;
+    t.internal_period = 12;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"storage.state-bit.behavioral.direct", [] {
+    PartDelays t;
+    t.evidence = "proven on storage.state-bit.structural.dff";
+    t.clock = "CLK";
+    t.launches["Q"] = {3, 4};
+    t.setup["D"] = 6;
+    t.fixed_inputs["RST"] = 0;
     return t;
 }()},

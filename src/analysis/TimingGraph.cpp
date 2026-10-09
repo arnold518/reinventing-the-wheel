@@ -141,7 +141,8 @@ class Builder {
     bool makeEndpoint(const Leaf& leaf) {
         if (!leaf.builtin_rules) return false;
         const auto endpoint = std::dynamic_pointer_cast<BehavioralMemoryEndpoint>(leaf.component);
-        if (!endpoint) return false;
+        // An endpoint that declares a delay table is described by that table.
+        if (!endpoint || endpoint->getDelays()) return false;
         const auto& c = *leaf.component;
         Part part;
         part.endpoint = endpoint.get();

@@ -3,6 +3,8 @@
 #include "basic/WireBase.hpp"
 #include "components/BasicComponent.hpp"
 #include "components/IOComponent.hpp"
+#include "modules/basic/DFlipFlop.hpp"
+#include "modules/basic/DFlipFlopTiming.hpp"
 #include "modules/basic/Gate.hpp"
 #include "modules/memory/BehavioralMemoryEndpoint.hpp"
 #include "modules/storage/ClockedStateBitBehavioral.hpp"
@@ -11,6 +13,7 @@
 #include "modules/utility/Constant.hpp"
 #include "modules/utility/Rewire.hpp"
 #include "../modules/memory/FlipFlopCellBehavioral.hpp"
+#include "../modules/memory/MemoryFFController.hpp"
 #include "../modules/rv32i/RegisterFile32x32Behavioral.hpp"
 #include <algorithm>
 #include <set>
@@ -47,6 +50,22 @@ bool isBitJoiner(const IOComponent& c) {
 }
 
 std::optional<ClockComponentContract> builtinClockContract(const IOComponent& c) {
+    // The gate-level flip-flop is a loop of latches; no path analysis bounds
+    // it. Its contract is measured exhaustively (DFlipFlopTimingTest) and it is
+    // then one indivisible part, like any other with a contract.
+    if (typeid(c) == typeid(DFlipFlop)) {
+        using namespace circuit::dflipflop_timing;
+        ClockComponentContract flop;
+        flop.evidence = "gate-level DFlipFlop, every binary case tried (DFlipFlopTimingTest); reset held LOW";
+        flop.clock_pin = "CLK";
+        flop.fixed_inputs["RST"] = 0;
+        flop.captures = {{"D", ClockEdge::Rising, SETUP, HOLD}};
+        flop.launches = {{"Q", ClockEdge::Rising, {CLOCK_TO_OUTPUT_MINIMUM, CLOCK_TO_OUTPUT_MAXIMUM}},
+                         {"Q_BAR", ClockEdge::Rising, {CLOCK_TO_OUTPUT_MINIMUM, CLOCK_TO_OUTPUT_MAXIMUM}}};
+        flop.minimum_high_ticks = MINIMUM_HIGH;
+        flop.minimum_low_ticks = MINIMUM_LOW;
+        return flop;
+    }
     // Built-in contracts cover concrete primitive instances, not an arbitrarily
     // modified hierarchy attached beneath one of those instances.
     if (!c.getChildren().empty()) return std::nullopt;
@@ -80,6 +99,13 @@ std::optional<ClockComponentContract> builtinClockContract(const IOComponent& c)
     }
     ClockComponentContract m;
     m.evidence = "simulator-exact-primitives-v1";
+    // "Are these request fields known?" is simulator metadata, not gates: a
+    // stateless one-tick primitive of the FF memory controller.
+    if (typeid(c) == typeid(circuit::memory_detail::RequestKnownBits)) {
+        const auto d = static_cast<const BasicComponent&>(c).getDelay();
+        m.arcs = {{"OP", "FIELDS_KNOWN", {d, d}}, {"ADDR", "FIELDS_KNOWN", {d, d}}, {"MASK", "MASK_KNOWN", {d, d}}};
+        return m;
+    }
     if (typeid(c) == typeid(NOTGate) || typeid(c) == typeid(ANDGate)
         || typeid(c) == typeid(NANDGate) || typeid(c) == typeid(ORGate)
         || typeid(c) == typeid(NORGate) || typeid(c) == typeid(XORGate)) {
