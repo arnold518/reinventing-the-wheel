@@ -41,7 +41,7 @@ class Builder {
     std::unordered_map<const PinBase*, std::shared_ptr<PinBase>> driver_;
     // Pins the request describes although nothing in the circuit drives them.
     std::vector<std::shared_ptr<PinBase>> externals_;
-    std::unordered_set<const PinBase*> clock_roots_, clock_sinks_;
+    std::unordered_set<const PinBase*> clock_roots_, clock_sinks_, clock_carriers_, clock_outputs_;
 
     void fail(const std::string& message) {
         failed_ = true;
@@ -323,7 +323,34 @@ class Builder {
         for (int n = 0; n < count; ++n) if (waiting[n] > 0) graph_.order.push_back(n);
     }
 
-    // One ideal clock, taken straight from a root input.
+    // Where a pin's clock comes from: a root input, reached directly or
+    // through parts that pass the clock on unchanged (a zero-delay Rewire, or
+    // a contract's clock_outputs). Null: it is not such a clock.
+    std::shared_ptr<PinBase> clockSource(const std::shared_ptr<PinBase>& reader, int depth = 0) {
+        const auto found = driver_.find(reader.get());
+        if (found == driver_.end() || depth > 64) return nullptr;
+        const auto& source = found->second;
+        if (rootPin(*source)) { clock_sinks_.insert(reader.get()); return source; }
+        for (const auto& leaf : leaves_) {
+            if (source->getOwner() != leaf.component) continue;
+            std::shared_ptr<PinBase> through;
+            if (leaf.builtin_rules && typeid(*leaf.component) == typeid(Rewire) && delayOf(*leaf.component) == 0) {
+                for (const auto& map : static_cast<const Rewire&>(*leaf.component).getBitMappings())
+                    if (map.dst_wire == source->getName() && map.dst_bit == 0) through = leaf.component->getInputPinDynamic(map.src_wire);
+            } else if (std::find(leaf.contract.clock_outputs.begin(), leaf.contract.clock_outputs.end(), source->getName())
+                       != leaf.contract.clock_outputs.end())
+                through = leaf.component->getInputPinDynamic(leaf.contract.clock_pin);
+            if (!through || through->getWidth() != 1) return nullptr;
+            const auto origin = clockSource(through, depth + 1);
+            if (!origin) return nullptr;
+            clock_sinks_.insert(reader.get());
+            clock_carriers_.insert(source.get());
+            return origin;
+        }
+        return nullptr;
+    }
+
+    // One ideal clock: a root input, possibly passed on unchanged.
     void checkClocks() {
         for (const auto& leaf : leaves_) {
             if (leaf.contract.clock_pin.empty()) {
@@ -335,14 +362,19 @@ class Builder {
             if (!pin) throw std::runtime_error(leaf.component->getID() + ": contract names a missing clock pin");
             clock_sinks_.insert(pin.get());
             if (leaf.component == root_) { clock_roots_.insert(pin.get()); continue; }
-            const auto source = driver_.find(pin.get());
-            if (source == driver_.end() || !rootPin(*source->second)) {
-                if (request_.check_clocks) fail(pin->getID() + ": derived, gated or undriven clock is unsupported");
-            } else clock_roots_.insert(source->second.get());
+            if (const auto origin = clockSource(pin)) clock_roots_.insert(origin.get());
+            else if (request_.check_clocks) fail(pin->getID() + ": derived, gated or undriven clock is unsupported");
         }
+        // A root output that only passes a clock on is not a data output.
+        if (!root_is_leaf_) for (const auto& [name, pin] : root_io_->getAllOutputPins())
+            if (const auto origin = clockSource(pin); origin && clock_roots_.contains(origin.get())) {
+                clock_outputs_.insert(pin.get());
+                graph_.clock_outputs.push_back(name);
+            }
         if (!request_.check_clocks) return;
         for (const auto& [sink, source] : driver_)
-            if (clock_roots_.contains(source.get()) && !clock_sinks_.contains(sink))
+            if ((clock_roots_.contains(source.get()) || clock_carriers_.contains(source.get()))
+                && !clock_sinks_.contains(sink) && !clock_outputs_.contains(sink))
                 fail(source->getID() + ": clock used as data");
     }
 
@@ -373,7 +405,7 @@ public:
                 for (const auto& [name, pin] : root_io_->getAllInputPins()) makeExternal(pin);
                 for (const auto& [name, pin] : root_io_->getAllOutputPins()) {
                     const auto source = driver_.find(pin.get());
-                    if (source == driver_.end()) continue;
+                    if (source == driver_.end() || clock_outputs_.contains(pin.get())) continue;
                     for (unsigned bit = 0; bit < pin->getWidth(); ++bit) {
                         auto& node = at(pin, bit);
                         node.kind = Kind::Buf;
@@ -383,6 +415,7 @@ public:
             }
             for (const auto& leaf : leaves_) makeLeaf(leaf);
             for (const auto& [name, pin] : root_io_->getAllOutputPins()) {
+                if (clock_outputs_.contains(pin.get())) continue;
                 Group group{name, {}};
                 for (unsigned bit = 0; bit < pin->getWidth(); ++bit) group.endpoints.emplace_back(index(pin, bit), 0);
                 graph_.groups.push_back(std::move(group));

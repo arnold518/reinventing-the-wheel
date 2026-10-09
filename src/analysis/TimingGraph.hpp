@@ -78,7 +78,8 @@ struct Graph {
     std::vector<int> order;               // inputs first where there is no loop
     std::vector<std::vector<int>> readers;
     bool has_loop = false;
-    std::vector<std::string> clock_inputs; // root inputs used as a clock
+    std::vector<std::string> clock_inputs;  // root inputs used as a clock
+    std::vector<std::string> clock_outputs; // root outputs that pass a clock on
     std::unordered_map<const PinBase*, int> first_bit;          // pin -> its first node
     // Bits a contract needs held at a value (for example RST = 0).
     std::vector<std::tuple<int, int8_t, std::string>> required;

@@ -12,6 +12,7 @@ public:
             s->addPinDynamic("MASK",PinType::INPUT,width/8);
             s->addPin("FIELDS_KNOWN",PinType::OUTPUT);s->addPin("MASK_KNOWN",PinType::OUTPUT);
         }) {}
+    bool respondsOnlyToInputs() const override {return true;}
     void evaluate(size_t t,Simulator& sim) override {
         publish(sim,t,"FIELDS_KNOWN",memory_device::known(read("OP"))&&memory_device::known(read("ADDR"))?memory_device::H:memory_device::L);
         publish(sim,t,"MASK_KNOWN",memory_device::known(read("MASK"))?memory_device::H:memory_device::L);

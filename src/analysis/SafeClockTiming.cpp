@@ -176,6 +176,9 @@ class Analysis {
             }
             for (const auto& n : m.unused_inputs) unused.insert(in(n));
             for (const auto& n : m.stable_outputs) nodes[out(n)].stable = true;
+            // A passed-on clock is not data. A part clocked from it is still
+            // refused below: this analysis takes the clock from the root only.
+            for (const auto& n : m.clock_outputs) nodes[out(n)].stable = true;
             for (const auto& [n, v] : m.constant_outputs) {
                 const auto i = out(n);
                 if (nodes[i].pin->getWidth() < 64 && v >= (uint64_t{1} << nodes[i].pin->getWidth()))

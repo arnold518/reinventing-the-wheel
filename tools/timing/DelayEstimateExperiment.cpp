@@ -7,7 +7,9 @@
 // per control value. Output is Markdown on stdout.
 //
 //   delay_estimate_experiment [--rounds=N] [--budget=N] [--control=PART:PIN ...] [PART ...]
+//   delay_estimate_experiment --compare [--rounds=N] [--watch=N] [PART ...]   (all parts by default)
 #include "analysis/CircuitTimingAnalyzer.hpp"
+#include "components/BasicComponent.hpp"
 #include "components/ComponentBuilder.hpp"
 #include "components/ComponentBuilder.tpp"
 #include "components/selection/BuiltinComponentCatalog.hpp"
@@ -195,23 +197,97 @@ void experiment(const std::string& contract, size_t rounds, size_t budget, const
         }
     }
 }
+// Side by side: the compact and the gate-level form of one part get the same
+// single-pin input changes, each from a settled start. Reports how often the
+// compact form's last output change came before the gates', and by how much.
+// The rule is that it never does. Clock and reset are ordinary pins here, so
+// clocked parts are exercised too.
+void compare(const std::string& contract, size_t steps, size_t watch) {
+    const auto& catalog = circuit::builtinComponentCatalog();
+    std::shared_ptr<IOComponent> gate_form, compact_form;
+    try {
+        gate_form = std::dynamic_pointer_cast<IOComponent>(catalog.createRoot({contract, "DUT", {}}, circuit::maximallyStructural()).root);
+        compact_form = std::dynamic_pointer_cast<IOComponent>(catalog.createRoot({contract, "DUT", {}}, circuit::strictAllBehavioral()).root);
+    } catch (const std::exception&) { return; }
+    if (!gate_form || !compact_form || gate_form->getAllInputPins().empty() || gate_form->getAllOutputPins().empty()) return;
+    if (std::dynamic_pointer_cast<BasicComponent>(gate_form)) return; // one primitive in both forms
+    const auto leaf = std::dynamic_pointer_cast<BasicComponent>(compact_form);
+    Bench gates(gate_form), compact(compact_form);
+    std::mt19937_64 random(0xc0de);
+    Vector now;
+    for (const auto& [name, pin] : gate_form->getAllInputPins()) now[name] = Bits(pin->getWidth(), LogicValue::LOW);
+    const auto both = [&](const Vector& before, const Vector& after) {
+        return std::pair{gates.change(before, after, watch), compact.change(before, after, watch)};
+    };
+    size_t unsettled = 0;
+    const auto step = [&](const Vector& next) {
+        std::pair<std::map<std::string, size_t>, std::map<std::string, size_t>> result;
+        try { result = both(now, next); } catch (const std::exception&) { ++unsettled; }
+        now = next;
+        return result;
+    };
+    // Reset, with one clock pulse, then release.
+    const bool has_reset = now.contains("RST"), has_clock = now.contains("CLK");
+    auto next = now;
+    if (has_reset) { next["RST"][0] = LogicValue::HIGH; step(next); }
+    if (has_clock) { next["CLK"][0] = LogicValue::HIGH; step(next); next["CLK"][0] = LogicValue::LOW; step(next); }
+    if (has_reset) { next["RST"][0] = LogicValue::LOW; step(next); }
+
+    std::vector<std::string> pins;
+    for (const auto& [name, bits] : now) if (name != "RST") pins.push_back(name);
+    size_t changes = 0, early = 0, worst_early = 0, worst_late = 0, differing = 0;
+    std::string worst_output;
+    for (size_t i = 0; i < steps && unsettled < 5; ++i) {
+        next = now;
+        // The clock ticks half of the time, so clocked parts see many edges.
+        const auto& pin = has_clock && i % 2 ? std::string("CLK") : pins[random() % pins.size()];
+        for (auto& bit : next[pin]) bit = next[pin].size() == 1 ? (bit == LogicValue::LOW ? LogicValue::HIGH : LogicValue::LOW) : LogicValue(random() & 1);
+        const auto [real, modeled] = step(next);
+        for (const auto& [name, wire] : gates.outputs)
+            differing += wire->getValueVector() != compact.outputs.at(name)->getValueVector();
+        for (const auto& [name, tick] : real) {
+            const auto shown = modeled.find(name);
+            if (shown == modeled.end()) continue; // the gates glitched and came back
+            ++changes;
+            if (shown->second < tick) {
+                ++early;
+                if (tick - shown->second > worst_early) { worst_early = tick - shown->second; worst_output = name; }
+            } else worst_late = std::max(worst_late, shown->second - tick);
+        }
+    }
+    std::cout << "| `" << contract << "` | " << (leaf && leaf->getDelays() ? "table" : leaf ? "single delay" : "several parts") << " | "
+              << changes << " | " << early << " | " << worst_early << (worst_early ? " (`" + worst_output + "`)" : "") << " | "
+              << worst_late << " | " << differing << " | " << (unsettled ? std::to_string(unsettled) + " not quiet" : "") << " |\n" << std::flush;
+}
 } // namespace
 
 int main(int argc, char** argv) {
     try {
-        size_t rounds = 400, budget = 20000;
+        size_t rounds = 400, budget = 20000, watch = 200;
+        bool comparing = false;
         std::vector<std::string> parts;
         std::map<std::string, std::set<std::string>> controls;
         for (int i = 1; i < argc; ++i) {
             const std::string argument = argv[i];
             if (argument.rfind("--rounds=", 0) == 0) rounds = std::stoul(argument.substr(9));
             else if (argument.rfind("--budget=", 0) == 0) budget = std::stoul(argument.substr(9));
+            else if (argument.rfind("--watch=", 0) == 0) watch = std::stoul(argument.substr(8));
+            else if (argument == "--compare") comparing = true;
             else if (argument.rfind("--control=", 0) == 0) {
                 const auto spec = argument.substr(10);
                 const auto colon = spec.rfind(':');
                 if (colon == std::string::npos) throw std::invalid_argument("--control=PART:PIN");
                 controls[spec.substr(0, colon)].insert(spec.substr(colon + 1));
             } else parts.push_back(argument);
+        }
+        if (comparing) {
+            if (parts.empty()) for (const auto& contract : circuit::builtinComponentCatalog().contracts()) parts.push_back(contract.id);
+            std::cout << "# Compact against gate-level form, side by side\n\n" << rounds << " single-pin input changes per part, "
+                      << "each from a settled start; outputs watched for " << watch << " ticks.\n\n"
+                      << "| part | compact timing | output changes compared | compact earlier | worst: earlier by | worst: later by | value differences | note |\n"
+                      << "| --- | --- | ---: | ---: | ---: | ---: | ---: | --- |\n";
+            for (const auto& part : parts) compare(part, rounds, watch);
+            return 0;
         }
         if (parts.empty()) throw std::invalid_argument("Name at least one catalog part");
         std::cout << "# Proven delay against real gate-level settling time\n\n"

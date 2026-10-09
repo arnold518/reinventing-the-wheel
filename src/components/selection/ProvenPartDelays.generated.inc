@@ -416,6 +416,150 @@
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
+{"memory.ff.controller.16.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.ff.controller.16.structural";
+    t.arcs = {
+        Arc{"MEM_FAULT", "RSP_READ_DATA", {7, 7}},
+        Arc{"MEM_FAULT", "RSP_STATUS", {6, 7}},
+        Arc{"MEM_READ_DATA", "RSP_READ_DATA", {6, 6}},
+        Arc{"REQ_ADDR", "MEM_READ_EN", {6, 10}},
+        Arc{"REQ_ADDR", "MEM_WE", {3, 11}},
+        Arc{"REQ_ADDR", "MEM_WORD_ADDR", {0, 0}},
+        Arc{"REQ_ADDR", "RSP_READ_DATA", {11, 15}},
+        Arc{"REQ_ADDR", "RSP_STATUS", {9, 27}},
+        Arc{"REQ_OP", "MEM_READ_EN", {4, 7}},
+        Arc{"REQ_OP", "MEM_WE", {3, 8}},
+        Arc{"REQ_OP", "RSP_READ_DATA", {9, 12}},
+        Arc{"REQ_OP", "RSP_STATUS", {9, 24}},
+        Arc{"REQ_VALID", "MEM_READ_EN", {2, 2}},
+        Arc{"REQ_VALID", "MEM_WE", {2, 2}},
+        Arc{"REQ_VALID", "RSP_VALID", {3, 3}},
+        Arc{"REQ_WRITE_DATA", "MEM_WRITE_DATA", {0, 0}},
+        Arc{"REQ_WRITE_MASK", "MEM_READ_EN", {6, 6}},
+        Arc{"REQ_WRITE_MASK", "MEM_WE", {3, 7}},
+        Arc{"REQ_WRITE_MASK", "MEM_WRITE_MASK", {0, 0}},
+        Arc{"REQ_WRITE_MASK", "RSP_READ_DATA", {11, 11}},
+        Arc{"REQ_WRITE_MASK", "RSP_STATUS", {9, 18}},
+        Arc{"RSP_READY", "MEM_READ_EN", {4, 4}},
+        Arc{"RSP_READY", "MEM_WE", {4, 4}},
+        Arc{"RSP_READY", "REQ_READY", {2, 2}},
+    };
+    t.clock = "CLK";
+    t.clock_outputs.push_back("MEM_CLK");
+    t.launches["MEM_READ_EN"] = {8, 9};
+    t.launches["MEM_WE"] = {8, 9};
+    t.launches["REQ_READY"] = {6, 7};
+    t.launches["RSP_READ_DATA"] = {5, 7};
+    t.launches["RSP_STATUS"] = {5, 7};
+    t.launches["RSP_VALID"] = {5, 10};
+    t.setup["MEM_FAULT"] = 13;
+    t.setup["MEM_READ_DATA"] = 12;
+    t.setup["REQ_ADDR"] = 33;
+    t.setup["REQ_OP"] = 30;
+    t.setup["REQ_VALID"] = 12;
+    t.setup["REQ_WRITE_MASK"] = 24;
+    t.setup["RSP_READY"] = 14;
+    t.internal_period = 19;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.ff.controller.32.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.ff.controller.32.structural";
+    t.arcs = {
+        Arc{"MEM_FAULT", "RSP_READ_DATA", {7, 7}},
+        Arc{"MEM_FAULT", "RSP_STATUS", {6, 7}},
+        Arc{"MEM_READ_DATA", "RSP_READ_DATA", {6, 6}},
+        Arc{"REQ_ADDR", "MEM_READ_EN", {6, 10}},
+        Arc{"REQ_ADDR", "MEM_WE", {3, 11}},
+        Arc{"REQ_ADDR", "MEM_WORD_ADDR", {0, 0}},
+        Arc{"REQ_ADDR", "RSP_READ_DATA", {11, 15}},
+        Arc{"REQ_ADDR", "RSP_STATUS", {9, 27}},
+        Arc{"REQ_OP", "MEM_READ_EN", {4, 7}},
+        Arc{"REQ_OP", "MEM_WE", {3, 8}},
+        Arc{"REQ_OP", "RSP_READ_DATA", {9, 12}},
+        Arc{"REQ_OP", "RSP_STATUS", {9, 24}},
+        Arc{"REQ_VALID", "MEM_READ_EN", {2, 2}},
+        Arc{"REQ_VALID", "MEM_WE", {2, 2}},
+        Arc{"REQ_VALID", "RSP_VALID", {3, 3}},
+        Arc{"REQ_WRITE_DATA", "MEM_WRITE_DATA", {0, 0}},
+        Arc{"REQ_WRITE_MASK", "MEM_READ_EN", {6, 6}},
+        Arc{"REQ_WRITE_MASK", "MEM_WE", {3, 7}},
+        Arc{"REQ_WRITE_MASK", "MEM_WRITE_MASK", {0, 0}},
+        Arc{"REQ_WRITE_MASK", "RSP_READ_DATA", {11, 11}},
+        Arc{"REQ_WRITE_MASK", "RSP_STATUS", {9, 18}},
+        Arc{"RSP_READY", "MEM_READ_EN", {4, 4}},
+        Arc{"RSP_READY", "MEM_WE", {4, 4}},
+        Arc{"RSP_READY", "REQ_READY", {2, 2}},
+    };
+    t.clock = "CLK";
+    t.clock_outputs.push_back("MEM_CLK");
+    t.launches["MEM_READ_EN"] = {8, 9};
+    t.launches["MEM_WE"] = {8, 9};
+    t.launches["REQ_READY"] = {6, 7};
+    t.launches["RSP_READ_DATA"] = {5, 7};
+    t.launches["RSP_STATUS"] = {5, 7};
+    t.launches["RSP_VALID"] = {5, 10};
+    t.setup["MEM_FAULT"] = 13;
+    t.setup["MEM_READ_DATA"] = 12;
+    t.setup["REQ_ADDR"] = 33;
+    t.setup["REQ_OP"] = 30;
+    t.setup["REQ_VALID"] = 12;
+    t.setup["REQ_WRITE_MASK"] = 24;
+    t.setup["RSP_READY"] = 14;
+    t.internal_period = 19;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.ff.controller.8.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.ff.controller.8.structural";
+    t.arcs = {
+        Arc{"MEM_FAULT", "RSP_READ_DATA", {7, 7}},
+        Arc{"MEM_FAULT", "RSP_STATUS", {6, 7}},
+        Arc{"MEM_READ_DATA", "RSP_READ_DATA", {6, 6}},
+        Arc{"REQ_ADDR", "MEM_READ_EN", {6, 10}},
+        Arc{"REQ_ADDR", "MEM_WE", {3, 11}},
+        Arc{"REQ_ADDR", "MEM_WORD_ADDR", {0, 0}},
+        Arc{"REQ_ADDR", "RSP_READ_DATA", {11, 15}},
+        Arc{"REQ_ADDR", "RSP_STATUS", {9, 27}},
+        Arc{"REQ_OP", "MEM_READ_EN", {4, 7}},
+        Arc{"REQ_OP", "MEM_WE", {3, 8}},
+        Arc{"REQ_OP", "RSP_READ_DATA", {9, 12}},
+        Arc{"REQ_OP", "RSP_STATUS", {9, 24}},
+        Arc{"REQ_VALID", "MEM_READ_EN", {2, 2}},
+        Arc{"REQ_VALID", "MEM_WE", {2, 2}},
+        Arc{"REQ_VALID", "RSP_VALID", {3, 3}},
+        Arc{"REQ_WRITE_DATA", "MEM_WRITE_DATA", {0, 0}},
+        Arc{"REQ_WRITE_MASK", "MEM_READ_EN", {6, 6}},
+        Arc{"REQ_WRITE_MASK", "MEM_WE", {3, 7}},
+        Arc{"REQ_WRITE_MASK", "MEM_WRITE_MASK", {0, 0}},
+        Arc{"REQ_WRITE_MASK", "RSP_READ_DATA", {11, 11}},
+        Arc{"REQ_WRITE_MASK", "RSP_STATUS", {9, 18}},
+        Arc{"RSP_READY", "MEM_READ_EN", {4, 4}},
+        Arc{"RSP_READY", "MEM_WE", {4, 4}},
+        Arc{"RSP_READY", "REQ_READY", {2, 2}},
+    };
+    t.clock = "CLK";
+    t.clock_outputs.push_back("MEM_CLK");
+    t.launches["MEM_READ_EN"] = {8, 9};
+    t.launches["MEM_WE"] = {8, 9};
+    t.launches["REQ_READY"] = {6, 7};
+    t.launches["RSP_READ_DATA"] = {5, 7};
+    t.launches["RSP_STATUS"] = {5, 7};
+    t.launches["RSP_VALID"] = {5, 10};
+    t.setup["MEM_FAULT"] = 13;
+    t.setup["MEM_READ_DATA"] = 12;
+    t.setup["REQ_ADDR"] = 33;
+    t.setup["REQ_OP"] = 30;
+    t.setup["REQ_VALID"] = 12;
+    t.setup["REQ_WRITE_MASK"] = 24;
+    t.setup["RSP_READY"] = 14;
+    t.internal_period = 19;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
 {"memory.ff.device.16.behavioral", [] {
     PartDelays t;
     t.evidence = "proven on memory.ff.device.16.structural-slice";
@@ -476,6 +620,93 @@
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
+{"memory.ff.endpoint.16.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.ff.endpoint.16.structural";
+    t.arcs = {
+        Arc{"REQ_ADDR", "RSP_READ_DATA", {10, 18}},
+        Arc{"REQ_ADDR", "RSP_STATUS", {9, 27}},
+        Arc{"REQ_OP", "RSP_READ_DATA", {9, 15}},
+        Arc{"REQ_OP", "RSP_STATUS", {9, 24}},
+        Arc{"REQ_VALID", "RSP_READ_DATA", {10, 10}},
+        Arc{"REQ_VALID", "RSP_VALID", {3, 3}},
+        Arc{"REQ_WRITE_MASK", "RSP_READ_DATA", {11, 14}},
+        Arc{"REQ_WRITE_MASK", "RSP_STATUS", {9, 18}},
+        Arc{"RSP_READY", "REQ_READY", {2, 2}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {6, 7};
+    t.launches["RSP_READ_DATA"] = {5, 17};
+    t.launches["RSP_STATUS"] = {5, 7};
+    t.launches["RSP_VALID"] = {5, 10};
+    t.setup["REQ_ADDR"] = 33;
+    t.setup["REQ_OP"] = 30;
+    t.setup["REQ_VALID"] = 16;
+    t.setup["REQ_WRITE_DATA"] = 9;
+    t.setup["REQ_WRITE_MASK"] = 24;
+    t.setup["RSP_READY"] = 18;
+    t.internal_period = 23;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.ff.endpoint.32.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.ff.endpoint.32.structural";
+    t.arcs = {
+        Arc{"REQ_ADDR", "RSP_READ_DATA", {10, 18}},
+        Arc{"REQ_ADDR", "RSP_STATUS", {9, 27}},
+        Arc{"REQ_OP", "RSP_READ_DATA", {9, 15}},
+        Arc{"REQ_OP", "RSP_STATUS", {9, 24}},
+        Arc{"REQ_VALID", "RSP_READ_DATA", {10, 10}},
+        Arc{"REQ_VALID", "RSP_VALID", {3, 3}},
+        Arc{"REQ_WRITE_MASK", "RSP_READ_DATA", {11, 14}},
+        Arc{"REQ_WRITE_MASK", "RSP_STATUS", {9, 18}},
+        Arc{"RSP_READY", "REQ_READY", {2, 2}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {6, 7};
+    t.launches["RSP_READ_DATA"] = {5, 17};
+    t.launches["RSP_STATUS"] = {5, 7};
+    t.launches["RSP_VALID"] = {5, 10};
+    t.setup["REQ_ADDR"] = 33;
+    t.setup["REQ_OP"] = 30;
+    t.setup["REQ_VALID"] = 16;
+    t.setup["REQ_WRITE_DATA"] = 9;
+    t.setup["REQ_WRITE_MASK"] = 24;
+    t.setup["RSP_READY"] = 18;
+    t.internal_period = 23;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.ff.endpoint.8.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.ff.endpoint.8.structural";
+    t.arcs = {
+        Arc{"REQ_ADDR", "RSP_READ_DATA", {10, 18}},
+        Arc{"REQ_ADDR", "RSP_STATUS", {9, 27}},
+        Arc{"REQ_OP", "RSP_READ_DATA", {9, 15}},
+        Arc{"REQ_OP", "RSP_STATUS", {9, 24}},
+        Arc{"REQ_VALID", "RSP_READ_DATA", {10, 10}},
+        Arc{"REQ_VALID", "RSP_VALID", {3, 3}},
+        Arc{"REQ_WRITE_MASK", "RSP_READ_DATA", {11, 14}},
+        Arc{"REQ_WRITE_MASK", "RSP_STATUS", {9, 18}},
+        Arc{"RSP_READY", "REQ_READY", {2, 2}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {6, 7};
+    t.launches["RSP_READ_DATA"] = {5, 17};
+    t.launches["RSP_STATUS"] = {5, 7};
+    t.launches["RSP_VALID"] = {5, 10};
+    t.setup["REQ_ADDR"] = 33;
+    t.setup["REQ_OP"] = 30;
+    t.setup["REQ_VALID"] = 16;
+    t.setup["REQ_WRITE_DATA"] = 9;
+    t.setup["REQ_WRITE_MASK"] = 24;
+    t.setup["RSP_READY"] = 18;
+    t.internal_period = 23;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
 {"memory.ff.word.16.behavioral.direct", [] {
     PartDelays t;
     t.evidence = "proven on memory.ff.word.16.structural.cells";
@@ -510,6 +741,281 @@
     t.setup["WRITE_MASK"] = 11;
     t.internal_period = 12;
     t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.rom.bank.16.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.bank.16.structural";
+    t.arcs = {
+        Arc{"WL_0", "COL_0", {1, 1}},
+        Arc{"WL_0", "COL_1", {1, 1}},
+        Arc{"WL_0", "COL_10", {1, 1}},
+        Arc{"WL_0", "COL_11", {1, 1}},
+        Arc{"WL_0", "COL_12", {1, 1}},
+        Arc{"WL_0", "COL_13", {1, 1}},
+        Arc{"WL_0", "COL_14", {1, 1}},
+        Arc{"WL_0", "COL_15", {1, 1}},
+        Arc{"WL_0", "COL_16", {1, 1}},
+        Arc{"WL_0", "COL_17", {1, 1}},
+        Arc{"WL_0", "COL_18", {1, 1}},
+        Arc{"WL_0", "COL_19", {1, 1}},
+        Arc{"WL_0", "COL_2", {1, 1}},
+        Arc{"WL_0", "COL_20", {1, 1}},
+        Arc{"WL_0", "COL_21", {1, 1}},
+        Arc{"WL_0", "COL_22", {1, 1}},
+        Arc{"WL_0", "COL_23", {1, 1}},
+        Arc{"WL_0", "COL_24", {1, 1}},
+        Arc{"WL_0", "COL_25", {1, 1}},
+        Arc{"WL_0", "COL_26", {1, 1}},
+        Arc{"WL_0", "COL_27", {1, 1}},
+        Arc{"WL_0", "COL_28", {1, 1}},
+        Arc{"WL_0", "COL_29", {1, 1}},
+        Arc{"WL_0", "COL_3", {1, 1}},
+        Arc{"WL_0", "COL_30", {1, 1}},
+        Arc{"WL_0", "COL_31", {1, 1}},
+        Arc{"WL_0", "COL_4", {1, 1}},
+        Arc{"WL_0", "COL_5", {1, 1}},
+        Arc{"WL_0", "COL_6", {1, 1}},
+        Arc{"WL_0", "COL_7", {1, 1}},
+        Arc{"WL_0", "COL_8", {1, 1}},
+        Arc{"WL_0", "COL_9", {1, 1}},
+        Arc{"WL_1", "COL_0", {1, 1}},
+        Arc{"WL_1", "COL_1", {1, 1}},
+        Arc{"WL_1", "COL_10", {1, 1}},
+        Arc{"WL_1", "COL_11", {1, 1}},
+        Arc{"WL_1", "COL_12", {1, 1}},
+        Arc{"WL_1", "COL_13", {1, 1}},
+        Arc{"WL_1", "COL_14", {1, 1}},
+        Arc{"WL_1", "COL_15", {1, 1}},
+        Arc{"WL_1", "COL_16", {1, 1}},
+        Arc{"WL_1", "COL_17", {1, 1}},
+        Arc{"WL_1", "COL_18", {1, 1}},
+        Arc{"WL_1", "COL_19", {1, 1}},
+        Arc{"WL_1", "COL_2", {1, 1}},
+        Arc{"WL_1", "COL_20", {1, 1}},
+        Arc{"WL_1", "COL_21", {1, 1}},
+        Arc{"WL_1", "COL_22", {1, 1}},
+        Arc{"WL_1", "COL_23", {1, 1}},
+        Arc{"WL_1", "COL_24", {1, 1}},
+        Arc{"WL_1", "COL_25", {1, 1}},
+        Arc{"WL_1", "COL_26", {1, 1}},
+        Arc{"WL_1", "COL_27", {1, 1}},
+        Arc{"WL_1", "COL_28", {1, 1}},
+        Arc{"WL_1", "COL_29", {1, 1}},
+        Arc{"WL_1", "COL_3", {1, 1}},
+        Arc{"WL_1", "COL_30", {1, 1}},
+        Arc{"WL_1", "COL_31", {1, 1}},
+        Arc{"WL_1", "COL_4", {1, 1}},
+        Arc{"WL_1", "COL_5", {1, 1}},
+        Arc{"WL_1", "COL_6", {1, 1}},
+        Arc{"WL_1", "COL_7", {1, 1}},
+        Arc{"WL_1", "COL_8", {1, 1}},
+        Arc{"WL_1", "COL_9", {1, 1}},
+    };
+    return t;
+}()},
+{"memory.rom.bank.32.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.bank.32.structural";
+    t.arcs = {
+        Arc{"WL_0", "COL_0", {1, 1}},
+        Arc{"WL_0", "COL_1", {1, 1}},
+        Arc{"WL_0", "COL_10", {1, 1}},
+        Arc{"WL_0", "COL_11", {1, 1}},
+        Arc{"WL_0", "COL_12", {1, 1}},
+        Arc{"WL_0", "COL_13", {1, 1}},
+        Arc{"WL_0", "COL_14", {1, 1}},
+        Arc{"WL_0", "COL_15", {1, 1}},
+        Arc{"WL_0", "COL_16", {1, 1}},
+        Arc{"WL_0", "COL_17", {1, 1}},
+        Arc{"WL_0", "COL_18", {1, 1}},
+        Arc{"WL_0", "COL_19", {1, 1}},
+        Arc{"WL_0", "COL_2", {1, 1}},
+        Arc{"WL_0", "COL_20", {1, 1}},
+        Arc{"WL_0", "COL_21", {1, 1}},
+        Arc{"WL_0", "COL_22", {1, 1}},
+        Arc{"WL_0", "COL_23", {1, 1}},
+        Arc{"WL_0", "COL_24", {1, 1}},
+        Arc{"WL_0", "COL_25", {1, 1}},
+        Arc{"WL_0", "COL_26", {1, 1}},
+        Arc{"WL_0", "COL_27", {1, 1}},
+        Arc{"WL_0", "COL_28", {1, 1}},
+        Arc{"WL_0", "COL_29", {1, 1}},
+        Arc{"WL_0", "COL_3", {1, 1}},
+        Arc{"WL_0", "COL_30", {1, 1}},
+        Arc{"WL_0", "COL_31", {1, 1}},
+        Arc{"WL_0", "COL_32", {1, 1}},
+        Arc{"WL_0", "COL_33", {1, 1}},
+        Arc{"WL_0", "COL_34", {1, 1}},
+        Arc{"WL_0", "COL_35", {1, 1}},
+        Arc{"WL_0", "COL_36", {1, 1}},
+        Arc{"WL_0", "COL_37", {1, 1}},
+        Arc{"WL_0", "COL_38", {1, 1}},
+        Arc{"WL_0", "COL_39", {1, 1}},
+        Arc{"WL_0", "COL_4", {1, 1}},
+        Arc{"WL_0", "COL_40", {1, 1}},
+        Arc{"WL_0", "COL_41", {1, 1}},
+        Arc{"WL_0", "COL_42", {1, 1}},
+        Arc{"WL_0", "COL_43", {1, 1}},
+        Arc{"WL_0", "COL_44", {1, 1}},
+        Arc{"WL_0", "COL_45", {1, 1}},
+        Arc{"WL_0", "COL_46", {1, 1}},
+        Arc{"WL_0", "COL_47", {1, 1}},
+        Arc{"WL_0", "COL_48", {1, 1}},
+        Arc{"WL_0", "COL_49", {1, 1}},
+        Arc{"WL_0", "COL_5", {1, 1}},
+        Arc{"WL_0", "COL_50", {1, 1}},
+        Arc{"WL_0", "COL_51", {1, 1}},
+        Arc{"WL_0", "COL_52", {1, 1}},
+        Arc{"WL_0", "COL_53", {1, 1}},
+        Arc{"WL_0", "COL_54", {1, 1}},
+        Arc{"WL_0", "COL_55", {1, 1}},
+        Arc{"WL_0", "COL_56", {1, 1}},
+        Arc{"WL_0", "COL_57", {1, 1}},
+        Arc{"WL_0", "COL_58", {1, 1}},
+        Arc{"WL_0", "COL_59", {1, 1}},
+        Arc{"WL_0", "COL_6", {1, 1}},
+        Arc{"WL_0", "COL_60", {1, 1}},
+        Arc{"WL_0", "COL_61", {1, 1}},
+        Arc{"WL_0", "COL_62", {1, 1}},
+        Arc{"WL_0", "COL_63", {1, 1}},
+        Arc{"WL_0", "COL_7", {1, 1}},
+        Arc{"WL_0", "COL_8", {1, 1}},
+        Arc{"WL_0", "COL_9", {1, 1}},
+        Arc{"WL_1", "COL_0", {1, 1}},
+        Arc{"WL_1", "COL_1", {1, 1}},
+        Arc{"WL_1", "COL_10", {1, 1}},
+        Arc{"WL_1", "COL_11", {1, 1}},
+        Arc{"WL_1", "COL_12", {1, 1}},
+        Arc{"WL_1", "COL_13", {1, 1}},
+        Arc{"WL_1", "COL_14", {1, 1}},
+        Arc{"WL_1", "COL_15", {1, 1}},
+        Arc{"WL_1", "COL_16", {1, 1}},
+        Arc{"WL_1", "COL_17", {1, 1}},
+        Arc{"WL_1", "COL_18", {1, 1}},
+        Arc{"WL_1", "COL_19", {1, 1}},
+        Arc{"WL_1", "COL_2", {1, 1}},
+        Arc{"WL_1", "COL_20", {1, 1}},
+        Arc{"WL_1", "COL_21", {1, 1}},
+        Arc{"WL_1", "COL_22", {1, 1}},
+        Arc{"WL_1", "COL_23", {1, 1}},
+        Arc{"WL_1", "COL_24", {1, 1}},
+        Arc{"WL_1", "COL_25", {1, 1}},
+        Arc{"WL_1", "COL_26", {1, 1}},
+        Arc{"WL_1", "COL_27", {1, 1}},
+        Arc{"WL_1", "COL_28", {1, 1}},
+        Arc{"WL_1", "COL_29", {1, 1}},
+        Arc{"WL_1", "COL_3", {1, 1}},
+        Arc{"WL_1", "COL_30", {1, 1}},
+        Arc{"WL_1", "COL_31", {1, 1}},
+        Arc{"WL_1", "COL_32", {1, 1}},
+        Arc{"WL_1", "COL_33", {1, 1}},
+        Arc{"WL_1", "COL_34", {1, 1}},
+        Arc{"WL_1", "COL_35", {1, 1}},
+        Arc{"WL_1", "COL_36", {1, 1}},
+        Arc{"WL_1", "COL_37", {1, 1}},
+        Arc{"WL_1", "COL_38", {1, 1}},
+        Arc{"WL_1", "COL_39", {1, 1}},
+        Arc{"WL_1", "COL_4", {1, 1}},
+        Arc{"WL_1", "COL_40", {1, 1}},
+        Arc{"WL_1", "COL_41", {1, 1}},
+        Arc{"WL_1", "COL_42", {1, 1}},
+        Arc{"WL_1", "COL_43", {1, 1}},
+        Arc{"WL_1", "COL_44", {1, 1}},
+        Arc{"WL_1", "COL_45", {1, 1}},
+        Arc{"WL_1", "COL_46", {1, 1}},
+        Arc{"WL_1", "COL_47", {1, 1}},
+        Arc{"WL_1", "COL_48", {1, 1}},
+        Arc{"WL_1", "COL_49", {1, 1}},
+        Arc{"WL_1", "COL_5", {1, 1}},
+        Arc{"WL_1", "COL_50", {1, 1}},
+        Arc{"WL_1", "COL_51", {1, 1}},
+        Arc{"WL_1", "COL_52", {1, 1}},
+        Arc{"WL_1", "COL_53", {1, 1}},
+        Arc{"WL_1", "COL_54", {1, 1}},
+        Arc{"WL_1", "COL_55", {1, 1}},
+        Arc{"WL_1", "COL_56", {1, 1}},
+        Arc{"WL_1", "COL_57", {1, 1}},
+        Arc{"WL_1", "COL_58", {1, 1}},
+        Arc{"WL_1", "COL_59", {1, 1}},
+        Arc{"WL_1", "COL_6", {1, 1}},
+        Arc{"WL_1", "COL_60", {1, 1}},
+        Arc{"WL_1", "COL_61", {1, 1}},
+        Arc{"WL_1", "COL_62", {1, 1}},
+        Arc{"WL_1", "COL_63", {1, 1}},
+        Arc{"WL_1", "COL_7", {1, 1}},
+        Arc{"WL_1", "COL_8", {1, 1}},
+        Arc{"WL_1", "COL_9", {1, 1}},
+    };
+    return t;
+}()},
+{"memory.rom.bank.8.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.bank.8.structural";
+    t.arcs = {
+        Arc{"WL_0", "COL_0", {1, 1}},
+        Arc{"WL_0", "COL_1", {1, 1}},
+        Arc{"WL_0", "COL_10", {1, 1}},
+        Arc{"WL_0", "COL_11", {1, 1}},
+        Arc{"WL_0", "COL_12", {1, 1}},
+        Arc{"WL_0", "COL_13", {1, 1}},
+        Arc{"WL_0", "COL_14", {1, 1}},
+        Arc{"WL_0", "COL_15", {1, 1}},
+        Arc{"WL_0", "COL_2", {1, 1}},
+        Arc{"WL_0", "COL_3", {1, 1}},
+        Arc{"WL_0", "COL_4", {1, 1}},
+        Arc{"WL_0", "COL_5", {1, 1}},
+        Arc{"WL_0", "COL_6", {1, 1}},
+        Arc{"WL_0", "COL_7", {1, 1}},
+        Arc{"WL_0", "COL_8", {1, 1}},
+        Arc{"WL_0", "COL_9", {1, 1}},
+        Arc{"WL_1", "COL_0", {1, 1}},
+        Arc{"WL_1", "COL_1", {1, 1}},
+        Arc{"WL_1", "COL_10", {1, 1}},
+        Arc{"WL_1", "COL_11", {1, 1}},
+        Arc{"WL_1", "COL_12", {1, 1}},
+        Arc{"WL_1", "COL_13", {1, 1}},
+        Arc{"WL_1", "COL_14", {1, 1}},
+        Arc{"WL_1", "COL_15", {1, 1}},
+        Arc{"WL_1", "COL_2", {1, 1}},
+        Arc{"WL_1", "COL_3", {1, 1}},
+        Arc{"WL_1", "COL_4", {1, 1}},
+        Arc{"WL_1", "COL_5", {1, 1}},
+        Arc{"WL_1", "COL_6", {1, 1}},
+        Arc{"WL_1", "COL_7", {1, 1}},
+        Arc{"WL_1", "COL_8", {1, 1}},
+        Arc{"WL_1", "COL_9", {1, 1}},
+    };
+    return t;
+}()},
+{"memory.rom.device.16.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.device.16.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {2, 14}},
+        Arc{"OE_N", "READ_DATA", {2, 14}},
+        Arc{"WORD_ADDR", "READ_DATA", {2, 14}},
+    };
+    return t;
+}()},
+{"memory.rom.device.32.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.device.32.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {2, 14}},
+        Arc{"OE_N", "READ_DATA", {2, 14}},
+        Arc{"WORD_ADDR", "READ_DATA", {2, 14}},
+    };
+    return t;
+}()},
+{"memory.rom.device.8.behavioral", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.device.8.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {2, 14}},
+        Arc{"OE_N", "READ_DATA", {2, 14}},
+        Arc{"WORD_ADDR", "READ_DATA", {2, 14}},
+    };
     return t;
 }()},
 {"mux.2x1.width32.behavioral.direct", [] {

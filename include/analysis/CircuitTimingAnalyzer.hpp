@@ -59,6 +59,7 @@ struct ClockComponentContract {
     std::map<std::string, uint64_t> fixed_inputs;
     std::map<std::string, uint64_t> constant_outputs;
     std::vector<std::string> stable_outputs; // May be an unknown but unchanging value.
+    std::vector<std::string> clock_outputs;  // Repeat the clock pin unchanged, for parts further on.
     std::vector<std::string> unused_inputs;
     size_t minimum_high_ticks = 0, minimum_low_ticks = 0;
 };
@@ -173,7 +174,8 @@ struct SettlingReport {
     size_t structural = 0, bound = 0;
     size_t bit_count = 0, variable_count = 0;
     std::vector<SettlingEndpoint> endpoints;
-    std::vector<std::string> clock_inputs; // root inputs used as a clock
+    std::vector<std::string> clock_inputs;  // root inputs used as a clock
+    std::vector<std::string> clock_outputs; // root outputs that pass a clock on
     std::vector<std::string> premises, diagnostics;
 };
 

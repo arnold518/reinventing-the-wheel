@@ -105,18 +105,24 @@ build-cleanup/part_delay_tables --write src/components/selection/ProvenPartDelay
 build-cleanup/part_delay_tables --check     # recompute every stored table from the gates
 ```
 
-83 compact implementations run on a proven table (`part_delay_tables
+95 compact implementations run on a proven table (`part_delay_tables
 --coverage` lists every one that does not, with the reason).
 
 - Unclocked logic: the adders, muxes, decoders, shifters, the composite logic
   units, the ALU and its units, the 8-bit ALU parts, decode control,
   forwarding, hazard detection, the predictor parts and the unclocked stages.
-  `SettlingBoundTest` drives each one side by side with its gates.
 - Clocked parts: the three cores, the fetch and decode stages, the pipeline
   registers, the memory requester, execution status and the prediction path.
 - Storage: every register width, the state bit, the flip-flop cell and the
   register file.
-- Flip-flop memory: words, banks and devices.
+- Memory: flip-flop words, banks, devices, controllers and endpoints; ROM banks
+  and devices.
+
+Two checks run on them. `SettlingBoundTest` drives each unclocked part side by
+side with its gates. `delay_estimate_experiment --compare` does the same for
+every part in the catalog, clocked ones included, with single-pin input
+changes: it reports how often a compact form's last output change came before
+its gates'. For every part with a table that count is zero.
 
 ### Storage and the flip-flop
 
@@ -152,17 +158,26 @@ A table treats reset as held at 0, so a reset change is timed at each output's
 worst case. A harness must therefore leave a whole cycle between releasing
 reset and the first working edge.
 
+### How the analysis reaches memory parts
+
+- A part may pass its clock on unchanged (a contract's `clock_outputs`, or a
+  zero-delay `Rewire`). The memory controller does this for its device.
+- A memory primitive that never wakes itself for a later timed step
+  (`memory_device::Primitive::respondsOnlyToInputs`) is described as "every
+  input reaches every output in one delay", which is sound whatever it stores.
+
 ### Not covered
 
-- SRAM, DRAM, ROM and NOR-flash cells, rows, banks and devices: their
-  gate-level forms use timed, stateful primitives whose timing comes from
-  explicit device parameters, and those primitives have no contract.
-- Controllers and endpoints of every technology, and the single-cycle system:
-  they forward or derive a clock, and the analysis accepts only a clock taken
-  straight from an input.
-- Scalable devices: no gate-level form to match.
-- Parts built with non-default parameters; tables per control value; a
-  side-by-side simulator check for clocked parts.
+Their compact forms are today earlier than their gates by the amount shown.
+
+- Sequenced controllers and endpoints of SRAM, DRAM, ROM and NOR flash (5 to 6
+  ticks): the sequencer wakes itself for timed steps.
+- SRAM cells, rows, banks and devices (2 ticks at the cell): the cell sits in a
+  loop with its bit lines. DRAM and NOR-flash cells and devices: timed
+  primitives without a contract.
+- The single-cycle system (2 ticks) and every scalable device or endpoint: a
+  scalable memory has no gate-level form at its size.
+- Parts built with non-default parameters, and tables per control value.
 
 ## What is assumed
 

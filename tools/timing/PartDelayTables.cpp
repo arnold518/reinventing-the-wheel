@@ -41,6 +41,7 @@ std::string emit(const std::string& implementation, const circuit::PartDelays& t
         out << "    };\n";
     }
     if (!t.clock.empty()) out << "    t.clock = " << quote(t.clock) << ";\n";
+    for (const auto& output : t.clock_outputs) out << "    t.clock_outputs.push_back(" << quote(output) << ");\n";
     for (const auto& [output, range] : t.launches)
         out << "    t.launches[" << quote(output) << "] = {" << range.minimum << ", " << range.maximum << "};\n";
     for (const auto& [input, setup] : t.setup) out << "    t.setup[" << quote(input) << "] = " << setup << ";\n";
@@ -54,7 +55,8 @@ std::string emit(const std::string& implementation, const circuit::PartDelays& t
 // from the gate-level flip-flop, whose contract is measured exhaustively.
 bool storage(const std::string& contract) {
     return contract.rfind("storage.", 0) == 0 || contract == "rv32i.register-file"
-        || (contract.rfind("memory.ff.", 0) == 0 && contract.find(".scalable-") == std::string::npos);
+        || (contract.rfind("memory.ff.", 0) == 0 && contract.find(".scalable-") == std::string::npos)
+        || contract.rfind("memory.rom.", 0) == 0;
 }
 
 struct Candidate {

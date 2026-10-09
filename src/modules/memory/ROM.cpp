@@ -57,6 +57,7 @@ class ROMAddressControl : public Primitive {
         : Primitive(std::move(n), "ROMAddressControl", controlPins), config_(std::move(c)) {
         config_.validate(8);
     }
+    bool respondsOnlyToInputs() const override { return true; }
     void evaluate(size_t t, Simulator &sim) override {
         auto a = read("WORD_ADDR");
         bool valid = known(a) && number(a) < config_.depth_words;

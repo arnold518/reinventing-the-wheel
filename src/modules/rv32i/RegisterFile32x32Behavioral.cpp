@@ -207,8 +207,8 @@ void RegisterFile32x32Behavioral::evaluate(size_t current_time, Simulator& simul
 
     previous_clk = clk;
 
-    updateOutputWord(*this, simulator, "RS1_DATA", readSelectedWord(registers, rs1_addr), current_time + delay);
-    updateOutputWord(*this, simulator, "RS2_DATA", readSelectedWord(registers, rs2_addr), current_time + delay);
+    updateOutputWord(*this, simulator, "RS1_DATA", readSelectedWord(registers, rs1_addr), publishTime("RS1_DATA", current_time));
+    updateOutputWord(*this, simulator, "RS2_DATA", readSelectedWord(registers, rs2_addr), publishTime("RS2_DATA", current_time));
 }
 
 std::vector<std::vector<LogicValue>> RegisterFile32x32Behavioral::getRegisterStateAtTime(size_t target_time) const {

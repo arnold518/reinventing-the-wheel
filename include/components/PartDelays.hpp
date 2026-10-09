@@ -35,6 +35,8 @@ struct PartDelays {
     // Clocked parts. Outputs change `launches` after the rising edge; inputs
     // listed in `setup` are sampled at it and must be quiet that long before.
     std::string clock;
+    // Outputs that pass the clock on unchanged to parts further on.
+    std::vector<std::string> clock_outputs;
     std::map<std::string, DelayRange> launches;
     std::map<std::string, size_t> setup;
     // Longest register-to-register path inside the part, setup included.

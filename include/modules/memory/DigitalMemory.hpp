@@ -41,6 +41,11 @@ class Primitive : public BasicComponent {
     Primitive(std::string name, std::string type, PinInitFunction pins)
         : BasicComponent(std::move(name), 1, std::move(pins)), type_(std::move(type)) {}
     const char *getTypeName() const override { return type_.c_str(); }
+    // True for a primitive whose outputs change only one delay after an
+    // input change: it never wakes itself for a later, timed step. The timing
+    // analysis may then treat it as "every input reaches every output in
+    // one delay", whatever it remembers inside.
+    virtual bool respondsOnlyToInputs() const { return false; }
     void scheduleInitialEvents(Simulator &sim, size_t time) override {
         if (getAllInputPins().empty())
             wake(sim, time);
@@ -105,6 +110,7 @@ class StaticReadColumn : public Primitive {
   public:
     StaticReadColumn(std::string name, size_t rows);
     void evaluate(size_t, Simulator &) override;
+    bool respondsOnlyToInputs() const override { return true; }
 
   private:
     size_t rows_;
@@ -113,6 +119,7 @@ class MemoryOutputBuffer : public Primitive {
   public:
     MemoryOutputBuffer(std::string name, size_t width);
     void evaluate(size_t, Simulator &) override;
+    bool respondsOnlyToInputs() const override { return true; }
 
   private:
     size_t width_;

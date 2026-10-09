@@ -13,7 +13,7 @@
 #include "modules/utility/Constant.hpp"
 #include "modules/utility/Rewire.hpp"
 #include "../modules/memory/FlipFlopCellBehavioral.hpp"
-#include "../modules/memory/MemoryFFController.hpp"
+#include "modules/memory/DigitalMemory.hpp"
 #include "../modules/rv32i/RegisterFile32x32Behavioral.hpp"
 #include <algorithm>
 #include <set>
@@ -93,17 +93,21 @@ std::optional<ClockComponentContract> builtinClockContract(const IOComponent& c)
         // The longest path between its own registers needs this much clock.
         if (!table->clock.empty())
             declared.minimum_high_ticks = declared.minimum_low_ticks = std::max<size_t>(1, (table->internal_period + 2) / 2);
+        declared.clock_outputs = table->clock_outputs;
+        for (const auto& output : table->clock_outputs) written.insert(output);
         for (const auto& [name, pin] : c.getAllInputPins()) if (!read.contains(name)) declared.unused_inputs.push_back(name);
         for (const auto& [name, pin] : c.getAllOutputPins()) if (!written.contains(name)) declared.stable_outputs.push_back(name);
         return declared;
     }
     ClockComponentContract m;
     m.evidence = "simulator-exact-primitives-v1";
-    // "Are these request fields known?" is simulator metadata, not gates: a
-    // stateless one-tick primitive of the FF memory controller.
-    if (typeid(c) == typeid(circuit::memory_detail::RequestKnownBits)) {
-        const auto d = static_cast<const BasicComponent&>(c).getDelay();
-        m.arcs = {{"OP", "FIELDS_KNOWN", {d, d}}, {"ADDR", "FIELDS_KNOWN", {d, d}}, {"MASK", "MASK_KNOWN", {d, d}}};
+    // A memory primitive that only responds to its inputs: every input can
+    // reach every output in its one delay, whatever it remembers inside.
+    if (const auto* primitive = dynamic_cast<const circuit::memory_device::Primitive*>(&c);
+        primitive && primitive->respondsOnlyToInputs() && !c.getAllInputPins().empty()) {
+        const auto d = primitive->getDelay();
+        for (const auto& [i, p] : c.getAllInputPins())
+            for (const auto& [o, q] : c.getAllOutputPins()) m.arcs.push_back({i, o, {d, d}});
         return m;
     }
     if (typeid(c) == typeid(NOTGate) || typeid(c) == typeid(ANDGate)

@@ -54,6 +54,11 @@ void staticCoverage() {
         for (auto family : {"memory.ff.endpoint.", "memory.ff.scalable-endpoint."}) {
             auto c = std::dynamic_pointer_cast<IOComponent>(catalog.createRoot(
                 {family+std::to_string(width),"MEM",{}, {}, {}, {}}, circuit::strictAllBehavioral()).root);
+            // This test is about the fused endpoint's own one-tick contract,
+            // which is what every sized or scalable memory uses. The default
+            // expanded endpoint now also carries a delay table proven on its
+            // gate-level controller and device; set it aside here.
+            std::dynamic_pointer_cast<BasicComponent>(c)->setDelays({});
             auto base = specification(*c);
             safe(CircuitTimingAnalyzer::safeClock(c,base),2);
             for (size_t i=0;i<inputs.size();++i) {
