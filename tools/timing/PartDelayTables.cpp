@@ -8,6 +8,7 @@
 //   part_delay_tables --write FILE [--budget=N] [--clocked] [CONTRACT ...]
 //   part_delay_tables --check      [--budget=N] [CONTRACT ...]
 //   part_delay_tables --coverage
+//   part_delay_tables --verify FILE   (recompute every entry; must equal FILE)
 //
 // --check recomputes the tables that are compiled in and fails on any
 // difference. Storage and memory parts are not generated here: a flip-flop
@@ -48,6 +49,15 @@ std::string emit(const std::string& implementation, const circuit::PartDelays& t
     if (t.self_timed) out << "    t.self_timed = true;\n";
     if (t.internal_period) out << "    t.internal_period = " << t.internal_period << ";\n";
     for (const auto& [input, value] : t.fixed_inputs) out << "    t.fixed_inputs[" << quote(input) << "] = " << value << ";\n";
+    if (!t.control.empty()) {
+        out << "    t.control = " << quote(t.control) << ";\n";
+        for (const auto& [value, arcs] : t.arcs_by_control) {
+            out << "    t.arcs_by_control[" << value << "] = {";
+            for (const auto& arc : arcs)
+                out << "{" << quote(arc.input) << ", " << quote(arc.output) << ", {" << arc.delay.minimum << ", " << arc.delay.maximum << "}}, ";
+            out << "};\n";
+        }
+    }
     out << "    return t;\n}()},\n";
     return out.str();
 }
@@ -111,7 +121,12 @@ circuit::PartDelays prove(const Candidate& candidate, size_t budget, std::string
     options.search_budget = budget;
     if (pins->getInputPinDynamic("RST")) options.fixed_inputs["RST"] = 0;
     std::vector<std::string> diagnostics;
-    auto table = CircuitTimingAnalyzer::delays(gates, options, "", &diagnostics);
+    // A part whose work depends on an operation code also gets one set of
+    // delays per code, so that a quick operation need not wait for a slow one.
+    const auto operation = pins->getInputPinDynamic("OP");
+    const bool per_operation = operation && operation->getWidth() <= 5
+        && (candidate.contract == "rv32i.alu32" || candidate.contract == "rv32i.alu32-core" || candidate.contract == "alu.width8");
+    auto table = CircuitTimingAnalyzer::delays(gates, options, per_operation ? "OP" : "", &diagnostics);
     if (table.empty()) reason = diagnostics.empty() ? "nothing changes" : diagnostics.front();
     return table;
 }
@@ -122,7 +137,8 @@ std::vector<circuit::ParameterMap> variants(const std::string& contract) {
     std::vector<circuit::ParameterMap> result;
     if (contract == "rv32i.core.educational-five-stage")
         for (const char* policy : {"not-taken", "taken", "backward-taken", "one-bit", "two-bit"})
-            result.push_back({{"prediction", policy}, {"prediction_entries", "16"}});
+            for (const char* entries : {"1", "2", "4", "8", "16", "32", "64", "128", "256"})
+                result.push_back({{"prediction", policy}, {"prediction_entries", entries}});
     return result;
 }
 std::string variantKey(const std::string& implementation, const circuit::ParameterMap& parameters) {
@@ -155,19 +171,37 @@ size_t sized(const Candidate& candidate, const circuit::PartDelays& standard, si
     if (!scalable_implementation.empty()) { body << emit(scalable_implementation, standard); ++written; }
     // A flip-flop endpoint whose consumer is always ready is a different
     // circuit, used by the fixed-cycle cores; it is proven as its own variant.
+    // Every other technology is also proven for each row layout.
+    const bool flip_flop = candidate.contract.rfind("memory.ff.", 0) == 0;
     const bool ready_variant = candidate.contract.rfind("memory.ff.endpoint.", 0) == 0;
-    for (const bool always_ready : {false, true}) {
-        if (always_ready && !ready_variant) break;
-        for (const size_t depth : {size_t{64}, size_t{128}}) {
-            circuit::ParameterMap parameters{{"depth_words", std::to_string(depth)}};
-            if (always_ready) parameters["always_ready"] = "1";
+    for (const char* layout : {"2", "1", "4", "8", "16"}) {
+        const bool standard_layout = std::string(layout) == "2";
+        if (!standard_layout && flip_flop) break;
+        const std::string rows = standard_layout ? "" : std::string("@rows=") + layout;
+        if (!standard_layout) {
+            // The default size in this layout (where the layout fits it).
             std::string reason;
-            const auto table = prove(candidate, budget, reason, parameters);
-            if (table.empty()) { std::cerr << "  no " << depth << "-word table for " << candidate.contract << ": " << reason << '\n'; return written; }
-            const auto suffix = "@depth=" + std::to_string(depth) + (always_ready ? "@always_ready" : "");
-            body << emit(candidate.implementation + suffix, table);
-            ++written;
-            if (!scalable_implementation.empty()) { body << emit(scalable_implementation + suffix, table); ++written; }
+            const auto table = prove(candidate, budget, reason, {{"words_per_row", layout}});
+            if (!table.empty()) {
+                body << emit(candidate.implementation + rows, table);
+                ++written;
+                if (!scalable_implementation.empty()) { body << emit(scalable_implementation + rows, table); ++written; }
+            }
+        }
+        for (const bool always_ready : {false, true}) {
+            if (always_ready && !ready_variant) break;
+            for (const size_t depth : {size_t{64}, size_t{128}}) {
+                circuit::ParameterMap parameters{{"depth_words", std::to_string(depth)}};
+                if (!standard_layout) parameters["words_per_row"] = layout;
+                if (always_ready) parameters["always_ready"] = "1";
+                std::string reason;
+                const auto table = prove(candidate, budget, reason, parameters);
+                if (table.empty()) { std::cerr << "  no " << depth << "-word table for " << candidate.contract << rows << ": " << reason << '\n'; continue; }
+                const auto suffix = "@depth=" + std::to_string(depth) + rows + (always_ready ? "@always_ready" : "");
+                body << emit(candidate.implementation + suffix, table);
+                ++written;
+                if (!scalable_implementation.empty()) { body << emit(scalable_implementation + suffix, table); ++written; }
+            }
         }
     }
     return written;
@@ -176,13 +210,14 @@ size_t sized(const Candidate& candidate, const circuit::PartDelays& standard, si
 
 int main(int argc, char** argv) {
     try {
-        std::string write;
+        std::string write, verify;
         bool check = false, clocked = false, coverage = false;
         size_t budget = 4000;
         std::set<std::string> only;
         for (int i = 1; i < argc; ++i) {
             const std::string argument = argv[i];
             if (argument == "--write" && i + 1 < argc) write = argv[++i];
+            else if (argument == "--verify" && i + 1 < argc) verify = argv[++i];
             else if (argument == "--check") check = true;
             else if (argument == "--clocked") clocked = true;
             else if (argument == "--coverage") coverage = true;
@@ -214,6 +249,33 @@ int main(int argc, char** argv) {
             }
             std::cout << with << " compact implementations run on a proven table; " << without << " do not\n";
             return 0;
+        }
+        if (!verify.empty()) {
+            // Every stored table, recomputed from the gates and compared as text.
+            std::ostringstream fresh;
+            fresh << "// Generated by part_delay_tables. Do not edit by hand.\n";
+            size_t entries = 0;
+            for (const auto& candidate : candidates({})) {
+                std::string reason;
+                const auto table = prove(candidate, budget, reason);
+                if (table.empty()) continue;
+                fresh << emit(candidate.implementation, table);
+                entries += 1 + sized(candidate, table, budget, fresh);
+                for (const auto& parameters : variants(candidate.contract)) {
+                    std::string variant_reason;
+                    const auto variant = prove(candidate, budget, variant_reason, parameters);
+                    if (variant.empty()) continue;
+                    fresh << emit(variantKey(candidate.implementation, parameters), variant);
+                    ++entries;
+                }
+            }
+            std::ifstream stored(verify);
+            std::stringstream installed;
+            installed << stored.rdbuf();
+            const bool same = installed.str() == fresh.str();
+            std::cout << entries << " table entries recomputed from the gates: "
+                      << (same ? "identical to the stored file" : "DIFFERENT from the stored file") << '\n';
+            return same ? 0 : 1;
         }
         if (write.empty() == !check) throw std::invalid_argument("Choose --write FILE or --check");
 

@@ -28,7 +28,8 @@ inline RV32IExecutionTrapCause decodeTrap(RV32ITrapCause cause) {
         case RV32ITrapCause::IllegalInstruction: return RV32IExecutionTrapCause::IllegalInstruction;
         case RV32ITrapCause::EnvironmentCall: return RV32IExecutionTrapCause::EnvironmentCall;
     }
-    return RV32IExecutionTrapCause::IllegalInstruction;
+    // A code decode never produces passes through unchanged, as in the gates.
+    return static_cast<RV32IExecutionTrapCause>(cause);
 }
 
 inline uint32_t writebackValue(const RV32IControlSignals& control, uint32_t alu_result,

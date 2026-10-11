@@ -110,7 +110,7 @@ Values memoryPacket(const Values& in) {
     o["TERMINAL"]=early||(eligible&&(bad||fault));
     o["DMEM_WORD_ADDR"]=addr>>2;o["DMEM_READ_EN"]=issue;o["DMEM_WE"]=issue&&memwrite&&!bad;
     o["DMEM_WRITE_DATA"]=get(in,"IN_STORE_DATA")<<(offset*8);
-    o["DMEM_WRITE_MASK"]=size==0?1U<<offset:size==1?((3U<<offset)&15):size==2?15:0;return o;
+    o["DMEM_WRITE_MASK"]=size==0?1U<<offset:size==1?3U<<(addr&2):size==2?15:0;return o;
 }
 Values dependency(const Values& in) {
     Values o;const auto d=get(in,"D_CONTROL"),a=get(in,"D_REGISTER_ADDRESSES");

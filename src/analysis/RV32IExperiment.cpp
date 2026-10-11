@@ -61,7 +61,6 @@ void RV32IExperimentConfig::validate() const {
         "Prediction settings apply only to advanced");
     require(core=="advanced" || memory.technology==circuit::memory::Technology::FF,
         "Single-cycle and baseline require zero-wait FF endpoints");
-    require(!safe_clock_only || fidelity=="reference","Safe-clock analysis requires the reference structural profile");
     require(!binary_startup || safe_clock_only,"Binary startup requires safe-clock analysis");
     memory.device.validate(32,memory.technology);
     require(memory.device.depth_words<=65536,"Experiment memory is limited to 256 KiB for bounded oracle checking");

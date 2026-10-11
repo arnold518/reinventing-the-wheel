@@ -11,6 +11,13 @@ add_test(NAME PartDelayTablesTest COMMAND part_delay_tables --check
     shift.barrel.width32 compare.zero.width32 rv32i.decode-control rv32i.pipeline.forwarding
     rv32i.pipeline.hazard-detection alu.width8 rv32i.prediction.predictor rv32i.memory-lanes)
 set_tests_properties(PartDelayTablesTest PROPERTIES LABELS "timing;analysis" TIMEOUT 600)
+add_test(NAME PartDelayTablesCompleteTest COMMAND part_delay_tables --verify
+    ${CMAKE_SOURCE_DIR}/src/components/selection/ProvenPartDelays.generated.inc)
+set_tests_properties(PartDelayTablesCompleteTest PROPERTIES LABELS "timing;analysis;slow" TIMEOUT 3600)
+add_executable(DelayRuleTest cpp/DelayRuleTest.cpp)
+target_link_libraries(DelayRuleTest PRIVATE SimulatorLib)
+add_test(NAME DelayRuleTest COMMAND DelayRuleTest)
+set_tests_properties(DelayRuleTest PROPERTIES LABELS "timing;analysis;slow" TIMEOUT 5400)
 add_executable(SRAMCellTimingTest cpp/SRAMCellTimingTest.cpp)
 target_link_libraries(SRAMCellTimingTest PRIVATE SimulatorLib)
 add_test(NAME SRAMCellTimingTest COMMAND SRAMCellTimingTest)

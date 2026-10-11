@@ -5,7 +5,12 @@
 #include "components/BasicComponent.hpp"
 #include "components/Component.hpp"
 #include "components/IOComponent.hpp"
+#include "analysis/DelayTwin.hpp"
+#include "components/selection/StandardProfiles.hpp"
 #include <algorithm>
+#include <cstdlib>
+#include <map>
+#include <mutex>
 #include <set>
 #include <sstream>
 #include <stdexcept>
@@ -314,8 +319,40 @@ std::shared_ptr<Component> ComponentCatalog::createChild(
     // A compact part runs on the delays proven on its gate-level form.
     if (descriptor.fidelity == Fidelity::Behavioral)
         if (const auto* delays = provenPartDelays(descriptor.id, request.parameters))
-            if (const auto part = std::dynamic_pointer_cast<BasicComponent>(component)) part->setDelays(*delays);
+            if (const auto part = std::dynamic_pointer_cast<BasicComponent>(component)) {
+                auto table = *delays;
+                table.twin = delayTwin(request, descriptor.id, table);
+                part->setDelays(std::move(table));
+            }
     return component;
+}
+
+// The gates of a combinational compact part, flattened once per kind of part
+// and shared by every instance, so its delay can follow the data.
+std::shared_ptr<const DelayTwin> ComponentCatalog::delayTwin(
+    const ComponentBuildRequest& request, const std::string& implementation, const PartDelays& table) const {
+    thread_local bool building = false;
+    if (building || std::getenv("CIRCUITSIM_NO_DELAY_TWIN")) return nullptr;
+    // Parts with state keep their table: the twin has no notion of a clock.
+    if (table.arcs.empty() || !table.clock.empty() || table.self_timed || !table.launches.empty() || !table.fixed_inputs.empty())
+        return nullptr;
+    std::string key = implementation;
+    for (const auto& [name, value] : request.parameters) key += "|" + name + "=" + value;
+    static std::mutex guard;
+    static std::map<std::string, std::shared_ptr<const DelayTwin>> twins;
+    {
+        const std::lock_guard<std::mutex> lock(guard);
+        if (const auto found = twins.find(key); found != twins.end()) return found->second;
+    }
+    std::shared_ptr<const DelayTwin> twin;
+    building = true;
+    try {
+        const auto gates = createRoot({request.contract_id, "TWIN", request.parameters}, maximallyStructural()).root;
+        if (gates && !std::dynamic_pointer_cast<BasicComponent>(gates)) twin = analysis::buildDelayTwin(gates);
+    } catch (const std::exception&) {}
+    building = false;
+    const std::lock_guard<std::mutex> lock(guard);
+    return twins.emplace(key, twin).first->second;
 }
 
 BuildResult ComponentCatalog::createRoot(ComponentBuildRequest request,

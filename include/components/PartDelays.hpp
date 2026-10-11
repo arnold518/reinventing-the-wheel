@@ -1,8 +1,10 @@
 #pragma once
 
 #include <cstddef>
+#include "basic/LogicValue.hpp"
 #include <cstdint>
 #include <map>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -10,6 +12,24 @@ namespace circuit {
 
 struct DelayRange {
     size_t minimum = 0, maximum = 0;
+};
+
+// The gates a compact part stands for, kept only to time it. Given the value
+// every input bit has now and the tick it last changed, one pass over the
+// gates tells when each output has its final value. A gate with an input at
+// its controlling value (0 into AND, 1 into OR) settles with that input and
+// does not wait for the other; this is what makes the answer follow the data,
+// for example how far a carry really travels. It holds for any earlier
+// history of the inputs, so changes that overlap are covered as well.
+struct DelayTwin {
+    virtual ~DelayTwin() = default;
+    // Pin names and widths, in the order `settle` takes and gives them.
+    std::vector<std::pair<std::string, size_t>> inputs, outputs;
+    // changed[i][bit]: tick of that bit's last change, -1 if it never changed.
+    // settled[o]: tick by which output o is final, -1 if nothing can move it.
+    virtual void settle(const std::vector<std::vector<LogicValue>>& values,
+                        const std::vector<std::vector<long long>>& changed,
+                        std::vector<long long>& settled) const = 0;
 };
 
 // The timing of one evaluated part as seen from outside, in ticks.
@@ -47,6 +67,10 @@ struct PartDelays {
     size_t internal_period = 0;
     // Inputs the table assumes are held, for example RST = 0.
     std::map<std::string, uint64_t> fixed_inputs;
+
+    // Optional: times the part from its gates and the actual values. Never
+    // later than the numbers above allow.
+    std::shared_ptr<const DelayTwin> twin;
 
     bool empty() const { return arcs.empty() && launches.empty() && setup.empty(); }
 };

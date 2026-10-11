@@ -84,6 +84,13 @@ public:
     const circuit::PartDelays* getDelays() const;
     // Entry point of the simulator: notes which inputs changed, then evaluates.
     void evaluateAt(size_t current_time, Simulator& simulator);
+    // A part with a delay table watches its own setup times: an input listed
+    // in the table's `setup` that changed too shortly before a rising clock
+    // edge is counted. The gates would capture such data late or wrongly; the
+    // compact part still captures it, so a run is only a faithful model of
+    // the gates while this count stays zero.
+    static size_t setupViolations();
+    static void resetSetupViolations();
     virtual void scheduleInitialEvents(Simulator& simulator, size_t current_time);
     virtual void evaluate(size_t current_time, Simulator& simulator) = 0;
     ~BasicComponent() override;

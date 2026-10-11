@@ -59,9 +59,12 @@ class BinaryClockCLI(unittest.TestCase):
         unsupported = invoke("--safe-clock", "--binary-startup", "--memory", "sram", status=2)
         self.assertFalse(unsupported["safe_clock"]["binary_startup_verified"])
         self.assertIsNone(unsupported["safe_clock"]["safe_period_ticks"])
-        for args in (("--binary-startup",),
-                     ("--safe-clock", "--binary-startup", "--fidelity", "behavioral")):
-            invoke(*args, status=1)
+        invoke("--binary-startup", status=1)
+        # The compact system is analyzed from its delay tables. For the advanced
+        # core the ready signals of core and memory form a loop that only the
+        # gates resolve, so no clock is claimed.
+        compact = invoke("--safe-clock", "--binary-startup", "--fidelity", "behavioral", status=2)
+        self.assertIsNone(compact["safe_clock"]["safe_period_ticks"])
 
 
 if __name__ == "__main__":

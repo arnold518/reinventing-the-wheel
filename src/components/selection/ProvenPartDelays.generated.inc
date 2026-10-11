@@ -76,6 +76,39 @@
         Arc{"OP", "OVERFLOW", {6, 47}},
         Arc{"OP", "ZERO", {12, 66}},
     };
+    t.control = "OP";
+    t.arcs_by_control[0] = {{"OP", "CARRY", {7, 40}}, {"OP", "INVALID_OP", {5, 6}}, {"OP", "NEGATIVE", {9, 45}}, {"OP", "OUT", {7, 43}}, {"OP", "OVERFLOW", {6, 41}}, {"OP", "ZERO", {12, 48}}, {"A", "CARRY", {12, 27}}, {"A", "NEGATIVE", {6, 32}}, {"A", "OUT", {4, 30}}, {"A", "OVERFLOW", {12, 28}}, {"A", "ZERO", {9, 35}}, {"B", "CARRY", {6, 29}}, {"B", "NEGATIVE", {6, 34}}, {"B", "OUT", {4, 32}}, {"B", "OVERFLOW", {14, 30}}, {"B", "ZERO", {9, 37}}, };
+    t.arcs_by_control[1] = {{"OP", "CARRY", {7, 44}}, {"OP", "INVALID_OP", {5, 6}}, {"OP", "NEGATIVE", {9, 49}}, {"OP", "OUT", {7, 47}}, {"OP", "OVERFLOW", {6, 45}}, {"OP", "ZERO", {12, 52}}, {"A", "CARRY", {12, 28}}, {"A", "NEGATIVE", {6, 33}}, {"A", "OUT", {4, 31}}, {"A", "OVERFLOW", {12, 29}}, {"A", "ZERO", {9, 36}}, {"B", "CARRY", {6, 30}}, {"B", "NEGATIVE", {6, 35}}, {"B", "OUT", {4, 33}}, {"B", "OVERFLOW", {14, 31}}, {"B", "ZERO", {9, 38}}, {"C_IN", "CARRY", {9, 25}}, {"C_IN", "NEGATIVE", {30, 30}}, {"C_IN", "OUT", {14, 28}}, {"C_IN", "OVERFLOW", {26, 26}}, {"C_IN", "ZERO", {19, 33}}, };
+    t.arcs_by_control[2] = {{"OP", "CARRY", {7, 42}}, {"OP", "INVALID_OP", {5, 6}}, {"OP", "NEGATIVE", {9, 47}}, {"OP", "OUT", {7, 45}}, {"OP", "OVERFLOW", {6, 43}}, {"OP", "ZERO", {12, 50}}, {"A", "CARRY", {12, 28}}, {"A", "NEGATIVE", {6, 33}}, {"A", "OUT", {4, 31}}, {"A", "OVERFLOW", {12, 29}}, {"A", "ZERO", {9, 36}}, {"B", "CARRY", {6, 30}}, {"B", "NEGATIVE", {6, 35}}, {"B", "OUT", {4, 33}}, {"B", "OVERFLOW", {14, 31}}, {"B", "ZERO", {9, 38}}, };
+    t.arcs_by_control[3] = {{"OP", "CARRY", {7, 44}}, {"OP", "INVALID_OP", {5, 7}}, {"OP", "NEGATIVE", {9, 49}}, {"OP", "OUT", {7, 47}}, {"OP", "OVERFLOW", {6, 45}}, {"OP", "ZERO", {12, 52}}, {"A", "CARRY", {12, 28}}, {"A", "NEGATIVE", {6, 33}}, {"A", "OUT", {4, 31}}, {"A", "OVERFLOW", {12, 29}}, {"A", "ZERO", {9, 36}}, {"B", "CARRY", {6, 30}}, {"B", "NEGATIVE", {6, 35}}, {"B", "OUT", {4, 33}}, {"B", "OVERFLOW", {14, 31}}, {"B", "ZERO", {9, 38}}, {"C_IN", "CARRY", {9, 25}}, {"C_IN", "NEGATIVE", {30, 30}}, {"C_IN", "OUT", {14, 28}}, {"C_IN", "OVERFLOW", {26, 26}}, {"C_IN", "ZERO", {19, 33}}, };
+    t.arcs_by_control[4] = {{"OP", "CARRY", {7, 40}}, {"OP", "INVALID_OP", {5, 6}}, {"OP", "NEGATIVE", {9, 45}}, {"OP", "OUT", {7, 43}}, {"OP", "OVERFLOW", {6, 41}}, {"OP", "ZERO", {12, 48}}, {"A", "CARRY", {12, 28}}, {"A", "NEGATIVE", {6, 33}}, {"A", "OUT", {4, 31}}, {"A", "OVERFLOW", {12, 29}}, {"A", "ZERO", {9, 36}}, };
+    t.arcs_by_control[5] = {{"OP", "CARRY", {7, 43}}, {"OP", "INVALID_OP", {5, 6}}, {"OP", "NEGATIVE", {9, 48}}, {"OP", "OUT", {7, 46}}, {"OP", "OVERFLOW", {6, 44}}, {"OP", "ZERO", {12, 51}}, {"A", "CARRY", {12, 28}}, {"A", "NEGATIVE", {6, 33}}, {"A", "OUT", {4, 31}}, {"A", "OVERFLOW", {12, 29}}, {"A", "ZERO", {9, 36}}, };
+    t.arcs_by_control[6] = {{"OP", "CARRY", {7, 41}}, {"OP", "INVALID_OP", {5, 6}}, {"OP", "NEGATIVE", {9, 46}}, {"OP", "OUT", {7, 44}}, {"OP", "OVERFLOW", {6, 42}}, {"OP", "ZERO", {12, 49}}, {"A", "CARRY", {12, 30}}, {"A", "NEGATIVE", {6, 35}}, {"A", "OUT", {4, 33}}, {"A", "OVERFLOW", {12, 31}}, {"A", "ZERO", {9, 38}}, };
+    t.arcs_by_control[7] = {{"OP", "CARRY", {7, 13}}, {"OP", "INVALID_OP", {5, 8}}, {"OP", "NEGATIVE", {9, 17}}, {"OP", "OUT", {7, 15}}, {"OP", "OVERFLOW", {6, 12}}, {"OP", "ZERO", {12, 20}}, };
+    t.arcs_by_control[8] = {{"OP", "CARRY", {7, 14}}, {"OP", "INVALID_OP", {5, 6}}, {"OP", "NEGATIVE", {9, 18}}, {"OP", "OUT", {7, 16}}, {"OP", "OVERFLOW", {6, 13}}, {"OP", "ZERO", {12, 21}}, {"A", "NEGATIVE", {6, 15}}, {"A", "OUT", {4, 13}}, {"A", "ZERO", {9, 18}}, {"B", "NEGATIVE", {6, 15}}, {"B", "OUT", {4, 13}}, {"B", "ZERO", {9, 18}}, };
+    t.arcs_by_control[9] = {{"OP", "CARRY", {7, 14}}, {"OP", "INVALID_OP", {5, 6}}, {"OP", "NEGATIVE", {9, 18}}, {"OP", "OUT", {7, 16}}, {"OP", "OVERFLOW", {6, 13}}, {"OP", "ZERO", {12, 21}}, {"A", "NEGATIVE", {6, 15}}, {"A", "OUT", {4, 13}}, {"A", "ZERO", {9, 18}}, {"B", "NEGATIVE", {6, 15}}, {"B", "OUT", {4, 13}}, {"B", "ZERO", {9, 18}}, };
+    t.arcs_by_control[10] = {{"OP", "CARRY", {7, 13}}, {"OP", "INVALID_OP", {5, 6}}, {"OP", "NEGATIVE", {9, 17}}, {"OP", "OUT", {7, 15}}, {"OP", "OVERFLOW", {6, 12}}, {"OP", "ZERO", {12, 20}}, {"A", "NEGATIVE", {6, 15}}, {"A", "OUT", {4, 13}}, {"A", "ZERO", {9, 18}}, {"B", "NEGATIVE", {6, 15}}, {"B", "OUT", {4, 13}}, {"B", "ZERO", {9, 18}}, };
+    t.arcs_by_control[11] = {{"OP", "CARRY", {7, 13}}, {"OP", "INVALID_OP", {5, 7}}, {"OP", "NEGATIVE", {9, 17}}, {"OP", "OUT", {7, 15}}, {"OP", "OVERFLOW", {6, 12}}, {"OP", "ZERO", {12, 20}}, {"A", "NEGATIVE", {6, 15}}, {"A", "OUT", {4, 13}}, {"A", "ZERO", {9, 18}}, };
+    t.arcs_by_control[12] = {{"OP", "CARRY", {7, 14}}, {"OP", "INVALID_OP", {5, 6}}, {"OP", "NEGATIVE", {9, 18}}, {"OP", "OUT", {7, 16}}, {"OP", "OVERFLOW", {6, 13}}, {"OP", "ZERO", {12, 21}}, {"A", "NEGATIVE", {6, 16}}, {"A", "OUT", {4, 14}}, {"A", "ZERO", {9, 19}}, {"B", "NEGATIVE", {6, 16}}, {"B", "OUT", {4, 14}}, {"B", "ZERO", {9, 19}}, };
+    t.arcs_by_control[13] = {{"OP", "CARRY", {7, 14}}, {"OP", "INVALID_OP", {5, 6}}, {"OP", "NEGATIVE", {9, 18}}, {"OP", "OUT", {7, 16}}, {"OP", "OVERFLOW", {6, 13}}, {"OP", "ZERO", {12, 21}}, {"A", "NEGATIVE", {6, 16}}, {"A", "OUT", {4, 14}}, {"A", "ZERO", {9, 19}}, {"B", "NEGATIVE", {6, 16}}, {"B", "OUT", {4, 14}}, {"B", "ZERO", {9, 19}}, };
+    t.arcs_by_control[14] = {{"OP", "CARRY", {7, 13}}, {"OP", "INVALID_OP", {5, 6}}, {"OP", "NEGATIVE", {9, 17}}, {"OP", "OUT", {7, 15}}, {"OP", "OVERFLOW", {6, 12}}, {"OP", "ZERO", {12, 20}}, {"A", "NEGATIVE", {6, 16}}, {"A", "OUT", {4, 14}}, {"A", "ZERO", {9, 19}}, {"B", "NEGATIVE", {6, 16}}, {"B", "OUT", {4, 14}}, {"B", "ZERO", {9, 19}}, };
+    t.arcs_by_control[15] = {{"OP", "CARRY", {7, 13}}, {"OP", "INVALID_OP", {5, 7}}, {"OP", "NEGATIVE", {9, 17}}, {"OP", "OUT", {7, 15}}, {"OP", "OVERFLOW", {6, 12}}, {"OP", "ZERO", {12, 20}}, };
+    t.arcs_by_control[16] = {{"OP", "CARRY", {7, 21}}, {"OP", "INVALID_OP", {5, 6}}, {"OP", "NEGATIVE", {9, 28}}, {"OP", "OUT", {7, 26}}, {"OP", "OVERFLOW", {6, 12}}, {"OP", "ZERO", {12, 31}}, {"A", "CARRY", {12, 12}}, {"A", "NEGATIVE", {6, 19}}, {"A", "OUT", {4, 17}}, {"A", "ZERO", {9, 22}}, {"B", "CARRY", {6, 11}}, {"B", "NEGATIVE", {6, 18}}, {"B", "OUT", {4, 16}}, {"B", "ZERO", {9, 21}}, {"C_IN", "CARRY", {9, 9}}, };
+    t.arcs_by_control[17] = {{"OP", "CARRY", {7, 21}}, {"OP", "INVALID_OP", {5, 6}}, {"OP", "NEGATIVE", {9, 28}}, {"OP", "OUT", {7, 26}}, {"OP", "OVERFLOW", {6, 12}}, {"OP", "ZERO", {12, 31}}, {"A", "CARRY", {12, 12}}, {"A", "NEGATIVE", {6, 19}}, {"A", "OUT", {4, 17}}, {"A", "ZERO", {9, 22}}, {"B", "CARRY", {6, 11}}, {"B", "NEGATIVE", {6, 18}}, {"B", "OUT", {4, 16}}, {"B", "ZERO", {9, 21}}, {"C_IN", "CARRY", {9, 9}}, };
+    t.arcs_by_control[18] = {{"OP", "CARRY", {7, 20}}, {"OP", "INVALID_OP", {5, 6}}, {"OP", "NEGATIVE", {9, 28}}, {"OP", "OUT", {7, 26}}, {"OP", "OVERFLOW", {6, 12}}, {"OP", "ZERO", {12, 31}}, {"A", "CARRY", {12, 12}}, {"A", "NEGATIVE", {6, 20}}, {"A", "OUT", {4, 18}}, {"A", "ZERO", {9, 23}}, {"B", "CARRY", {6, 11}}, {"B", "NEGATIVE", {6, 18}}, {"B", "OUT", {4, 16}}, {"B", "ZERO", {9, 21}}, {"C_IN", "CARRY", {9, 9}}, };
+    t.arcs_by_control[19] = {{"OP", "CARRY", {7, 20}}, {"OP", "INVALID_OP", {5, 7}}, {"OP", "NEGATIVE", {9, 27}}, {"OP", "OUT", {7, 27}}, {"OP", "OVERFLOW", {6, 12}}, {"OP", "ZERO", {12, 32}}, {"A", "CARRY", {12, 12}}, {"A", "NEGATIVE", {6, 19}}, {"A", "OUT", {4, 19}}, {"A", "ZERO", {9, 24}}, {"B", "CARRY", {6, 11}}, {"B", "NEGATIVE", {6, 18}}, {"B", "OUT", {4, 18}}, {"B", "ZERO", {9, 23}}, {"C_IN", "CARRY", {9, 9}}, };
+    t.arcs_by_control[20] = {{"OP", "CARRY", {7, 17}}, {"OP", "INVALID_OP", {5, 6}}, {"OP", "NEGATIVE", {9, 27}}, {"OP", "OUT", {7, 25}}, {"OP", "OVERFLOW", {6, 12}}, {"OP", "ZERO", {12, 30}}, {"A", "CARRY", {12, 12}}, {"A", "NEGATIVE", {6, 21}}, {"A", "OUT", {4, 19}}, {"A", "ZERO", {9, 24}}, {"B", "CARRY", {6, 11}}, {"B", "NEGATIVE", {6, 20}}, {"B", "OUT", {4, 18}}, {"B", "ZERO", {9, 23}}, {"C_IN", "CARRY", {9, 9}}, };
+    t.arcs_by_control[21] = {{"OP", "CARRY", {7, 13}}, {"OP", "INVALID_OP", {5, 6}}, {"OP", "NEGATIVE", {9, 19}}, {"OP", "OUT", {7, 60}}, {"OP", "OVERFLOW", {6, 12}}, {"OP", "ZERO", {12, 65}}, {"A", "OUT", {4, 42}}, {"A", "ZERO", {9, 47}}, {"B", "OUT", {4, 44}}, {"B", "ZERO", {9, 49}}, };
+    t.arcs_by_control[22] = {{"OP", "CARRY", {7, 13}}, {"OP", "INVALID_OP", {5, 6}}, {"OP", "NEGATIVE", {9, 19}}, {"OP", "OUT", {7, 53}}, {"OP", "OVERFLOW", {6, 12}}, {"OP", "ZERO", {12, 58}}, {"A", "OUT", {4, 38}}, {"A", "ZERO", {9, 43}}, {"B", "OUT", {4, 40}}, {"B", "ZERO", {9, 45}}, };
+    t.arcs_by_control[23] = {{"OP", "CARRY", {7, 13}}, {"OP", "INVALID_OP", {5, 7}}, {"OP", "NEGATIVE", {9, 21}}, {"OP", "OUT", {7, 57}}, {"OP", "OVERFLOW", {6, 12}}, {"OP", "ZERO", {12, 62}}, {"A", "OUT", {4, 40}}, {"A", "ZERO", {9, 45}}, {"B", "OUT", {4, 42}}, {"B", "ZERO", {9, 47}}, };
+    t.arcs_by_control[24] = {{"OP", "CARRY", {7, 13}}, {"OP", "INVALID_OP", {5, 6}}, {"OP", "NEGATIVE", {9, 56}}, {"OP", "OUT", {7, 54}}, {"OP", "OVERFLOW", {6, 12}}, {"OP", "ZERO", {12, 59}}, {"A", "NEGATIVE", {6, 43}}, {"A", "OUT", {4, 41}}, {"A", "ZERO", {9, 46}}, {"B", "NEGATIVE", {6, 45}}, {"B", "OUT", {4, 43}}, {"B", "ZERO", {9, 48}}, };
+    t.arcs_by_control[25] = {{"OP", "CARRY", {7, 13}}, {"OP", "INVALID_OP", {5, 6}}, {"OP", "NEGATIVE", {9, 58}}, {"OP", "OUT", {7, 56}}, {"OP", "OVERFLOW", {6, 12}}, {"OP", "ZERO", {12, 61}}, {"A", "NEGATIVE", {6, 43}}, {"A", "OUT", {4, 41}}, {"A", "ZERO", {9, 46}}, {"B", "NEGATIVE", {6, 45}}, {"B", "OUT", {4, 43}}, {"B", "ZERO", {9, 48}}, };
+    t.arcs_by_control[26] = {{"OP", "CARRY", {7, 13}}, {"OP", "INVALID_OP", {5, 6}}, {"OP", "NEGATIVE", {9, 56}}, {"OP", "OUT", {7, 54}}, {"OP", "OVERFLOW", {6, 12}}, {"OP", "ZERO", {12, 59}}, {"A", "NEGATIVE", {6, 45}}, {"A", "OUT", {4, 43}}, {"A", "ZERO", {9, 48}}, {"B", "NEGATIVE", {6, 47}}, {"B", "OUT", {4, 45}}, {"B", "ZERO", {9, 50}}, };
+    t.arcs_by_control[27] = {{"OP", "CARRY", {7, 13}}, {"OP", "INVALID_OP", {5, 7}}, {"OP", "NEGATIVE", {9, 58}}, {"OP", "OUT", {7, 56}}, {"OP", "OVERFLOW", {6, 12}}, {"OP", "ZERO", {12, 61}}, {"A", "NEGATIVE", {6, 45}}, {"A", "OUT", {4, 43}}, {"A", "ZERO", {9, 48}}, {"B", "NEGATIVE", {6, 47}}, {"B", "OUT", {4, 45}}, {"B", "ZERO", {9, 50}}, };
+    t.arcs_by_control[28] = {{"OP", "CARRY", {7, 13}}, {"OP", "INVALID_OP", {5, 6}}, {"OP", "NEGATIVE", {9, 17}}, {"OP", "OUT", {7, 15}}, {"OP", "OVERFLOW", {6, 12}}, {"OP", "ZERO", {12, 20}}, {"A", "NEGATIVE", {6, 6}}, {"A", "OUT", {4, 4}}, {"A", "ZERO", {9, 9}}, };
+    t.arcs_by_control[29] = {{"OP", "CARRY", {7, 13}}, {"OP", "INVALID_OP", {5, 6}}, {"OP", "NEGATIVE", {9, 18}}, {"OP", "OUT", {7, 16}}, {"OP", "OVERFLOW", {6, 12}}, {"OP", "ZERO", {12, 21}}, {"B", "NEGATIVE", {6, 6}}, {"B", "OUT", {4, 4}}, {"B", "ZERO", {9, 9}}, };
+    t.arcs_by_control[30] = {{"OP", "CARRY", {7, 13}}, {"OP", "INVALID_OP", {5, 6}}, {"OP", "NEGATIVE", {9, 18}}, {"OP", "OUT", {7, 16}}, {"OP", "OVERFLOW", {6, 12}}, {"OP", "ZERO", {12, 21}}, };
+    t.arcs_by_control[31] = {{"OP", "CARRY", {7, 13}}, {"OP", "INVALID_OP", {5, 6}}, {"OP", "NEGATIVE", {9, 17}}, {"OP", "OUT", {7, 15}}, {"OP", "OVERFLOW", {6, 12}}, {"OP", "ZERO", {12, 20}}, };
     return t;
 }()},
 {"arithmetic.add-sub.width32.behavioral.direct", [] {
@@ -1338,6 +1371,666 @@
     t.self_timed = true;
     return t;
 }()},
+{"memory.dram.device.16.behavioral@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.device.16.structural";
+    t.arcs = {
+        Arc{"ADDR", "BUSY", {1, 1}},
+        Arc{"ADDR", "ERROR", {1, 1}},
+        Arc{"ADDR", "READ_DATA", {2, 15}},
+        Arc{"ADDR", "READ_VALID", {1, 1}},
+        Arc{"ADDR", "ROW_OPEN", {1, 1}},
+        Arc{"CLK", "BUSY", {1, 1}},
+        Arc{"CLK", "ERROR", {1, 1}},
+        Arc{"CLK", "READ_DATA", {2, 15}},
+        Arc{"CLK", "READ_VALID", {1, 1}},
+        Arc{"CLK", "ROW_OPEN", {1, 1}},
+        Arc{"CMD", "BUSY", {1, 1}},
+        Arc{"CMD", "ERROR", {1, 1}},
+        Arc{"CMD", "READ_DATA", {2, 15}},
+        Arc{"CMD", "READ_VALID", {1, 1}},
+        Arc{"CMD", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_DATA", "BUSY", {1, 1}},
+        Arc{"WRITE_DATA", "ERROR", {1, 1}},
+        Arc{"WRITE_DATA", "READ_DATA", {2, 15}},
+        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
+        Arc{"WRITE_DATA", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_MASK", "BUSY", {1, 1}},
+        Arc{"WRITE_MASK", "ERROR", {1, 1}},
+        Arc{"WRITE_MASK", "READ_DATA", {2, 15}},
+        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
+        Arc{"WRITE_MASK", "ROW_OPEN", {1, 1}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.dram.scalable-device.16.behavioral@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.device.16.structural";
+    t.arcs = {
+        Arc{"ADDR", "BUSY", {1, 1}},
+        Arc{"ADDR", "ERROR", {1, 1}},
+        Arc{"ADDR", "READ_DATA", {2, 15}},
+        Arc{"ADDR", "READ_VALID", {1, 1}},
+        Arc{"ADDR", "ROW_OPEN", {1, 1}},
+        Arc{"CLK", "BUSY", {1, 1}},
+        Arc{"CLK", "ERROR", {1, 1}},
+        Arc{"CLK", "READ_DATA", {2, 15}},
+        Arc{"CLK", "READ_VALID", {1, 1}},
+        Arc{"CLK", "ROW_OPEN", {1, 1}},
+        Arc{"CMD", "BUSY", {1, 1}},
+        Arc{"CMD", "ERROR", {1, 1}},
+        Arc{"CMD", "READ_DATA", {2, 15}},
+        Arc{"CMD", "READ_VALID", {1, 1}},
+        Arc{"CMD", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_DATA", "BUSY", {1, 1}},
+        Arc{"WRITE_DATA", "ERROR", {1, 1}},
+        Arc{"WRITE_DATA", "READ_DATA", {2, 15}},
+        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
+        Arc{"WRITE_DATA", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_MASK", "BUSY", {1, 1}},
+        Arc{"WRITE_MASK", "ERROR", {1, 1}},
+        Arc{"WRITE_MASK", "READ_DATA", {2, 15}},
+        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
+        Arc{"WRITE_MASK", "ROW_OPEN", {1, 1}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.dram.device.16.behavioral@depth=64@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.device.16.structural";
+    t.arcs = {
+        Arc{"ADDR", "BUSY", {1, 1}},
+        Arc{"ADDR", "ERROR", {1, 1}},
+        Arc{"ADDR", "READ_DATA", {2, 16}},
+        Arc{"ADDR", "READ_VALID", {1, 1}},
+        Arc{"ADDR", "ROW_OPEN", {1, 1}},
+        Arc{"CLK", "BUSY", {1, 1}},
+        Arc{"CLK", "ERROR", {1, 1}},
+        Arc{"CLK", "READ_DATA", {2, 16}},
+        Arc{"CLK", "READ_VALID", {1, 1}},
+        Arc{"CLK", "ROW_OPEN", {1, 1}},
+        Arc{"CMD", "BUSY", {1, 1}},
+        Arc{"CMD", "ERROR", {1, 1}},
+        Arc{"CMD", "READ_DATA", {2, 16}},
+        Arc{"CMD", "READ_VALID", {1, 1}},
+        Arc{"CMD", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_DATA", "BUSY", {1, 1}},
+        Arc{"WRITE_DATA", "ERROR", {1, 1}},
+        Arc{"WRITE_DATA", "READ_DATA", {2, 16}},
+        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
+        Arc{"WRITE_DATA", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_MASK", "BUSY", {1, 1}},
+        Arc{"WRITE_MASK", "ERROR", {1, 1}},
+        Arc{"WRITE_MASK", "READ_DATA", {2, 16}},
+        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
+        Arc{"WRITE_MASK", "ROW_OPEN", {1, 1}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.dram.scalable-device.16.behavioral@depth=64@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.device.16.structural";
+    t.arcs = {
+        Arc{"ADDR", "BUSY", {1, 1}},
+        Arc{"ADDR", "ERROR", {1, 1}},
+        Arc{"ADDR", "READ_DATA", {2, 16}},
+        Arc{"ADDR", "READ_VALID", {1, 1}},
+        Arc{"ADDR", "ROW_OPEN", {1, 1}},
+        Arc{"CLK", "BUSY", {1, 1}},
+        Arc{"CLK", "ERROR", {1, 1}},
+        Arc{"CLK", "READ_DATA", {2, 16}},
+        Arc{"CLK", "READ_VALID", {1, 1}},
+        Arc{"CLK", "ROW_OPEN", {1, 1}},
+        Arc{"CMD", "BUSY", {1, 1}},
+        Arc{"CMD", "ERROR", {1, 1}},
+        Arc{"CMD", "READ_DATA", {2, 16}},
+        Arc{"CMD", "READ_VALID", {1, 1}},
+        Arc{"CMD", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_DATA", "BUSY", {1, 1}},
+        Arc{"WRITE_DATA", "ERROR", {1, 1}},
+        Arc{"WRITE_DATA", "READ_DATA", {2, 16}},
+        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
+        Arc{"WRITE_DATA", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_MASK", "BUSY", {1, 1}},
+        Arc{"WRITE_MASK", "ERROR", {1, 1}},
+        Arc{"WRITE_MASK", "READ_DATA", {2, 16}},
+        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
+        Arc{"WRITE_MASK", "ROW_OPEN", {1, 1}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.dram.device.16.behavioral@depth=128@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.device.16.structural";
+    t.arcs = {
+        Arc{"ADDR", "BUSY", {1, 1}},
+        Arc{"ADDR", "ERROR", {1, 1}},
+        Arc{"ADDR", "READ_DATA", {2, 16}},
+        Arc{"ADDR", "READ_VALID", {1, 1}},
+        Arc{"ADDR", "ROW_OPEN", {1, 1}},
+        Arc{"CLK", "BUSY", {1, 1}},
+        Arc{"CLK", "ERROR", {1, 1}},
+        Arc{"CLK", "READ_DATA", {2, 16}},
+        Arc{"CLK", "READ_VALID", {1, 1}},
+        Arc{"CLK", "ROW_OPEN", {1, 1}},
+        Arc{"CMD", "BUSY", {1, 1}},
+        Arc{"CMD", "ERROR", {1, 1}},
+        Arc{"CMD", "READ_DATA", {2, 16}},
+        Arc{"CMD", "READ_VALID", {1, 1}},
+        Arc{"CMD", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_DATA", "BUSY", {1, 1}},
+        Arc{"WRITE_DATA", "ERROR", {1, 1}},
+        Arc{"WRITE_DATA", "READ_DATA", {2, 16}},
+        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
+        Arc{"WRITE_DATA", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_MASK", "BUSY", {1, 1}},
+        Arc{"WRITE_MASK", "ERROR", {1, 1}},
+        Arc{"WRITE_MASK", "READ_DATA", {2, 16}},
+        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
+        Arc{"WRITE_MASK", "ROW_OPEN", {1, 1}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.dram.scalable-device.16.behavioral@depth=128@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.device.16.structural";
+    t.arcs = {
+        Arc{"ADDR", "BUSY", {1, 1}},
+        Arc{"ADDR", "ERROR", {1, 1}},
+        Arc{"ADDR", "READ_DATA", {2, 16}},
+        Arc{"ADDR", "READ_VALID", {1, 1}},
+        Arc{"ADDR", "ROW_OPEN", {1, 1}},
+        Arc{"CLK", "BUSY", {1, 1}},
+        Arc{"CLK", "ERROR", {1, 1}},
+        Arc{"CLK", "READ_DATA", {2, 16}},
+        Arc{"CLK", "READ_VALID", {1, 1}},
+        Arc{"CLK", "ROW_OPEN", {1, 1}},
+        Arc{"CMD", "BUSY", {1, 1}},
+        Arc{"CMD", "ERROR", {1, 1}},
+        Arc{"CMD", "READ_DATA", {2, 16}},
+        Arc{"CMD", "READ_VALID", {1, 1}},
+        Arc{"CMD", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_DATA", "BUSY", {1, 1}},
+        Arc{"WRITE_DATA", "ERROR", {1, 1}},
+        Arc{"WRITE_DATA", "READ_DATA", {2, 16}},
+        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
+        Arc{"WRITE_DATA", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_MASK", "BUSY", {1, 1}},
+        Arc{"WRITE_MASK", "ERROR", {1, 1}},
+        Arc{"WRITE_MASK", "READ_DATA", {2, 16}},
+        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
+        Arc{"WRITE_MASK", "ROW_OPEN", {1, 1}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.dram.device.16.behavioral@rows=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.device.16.structural";
+    t.arcs = {
+        Arc{"ADDR", "BUSY", {1, 1}},
+        Arc{"ADDR", "ERROR", {1, 1}},
+        Arc{"ADDR", "READ_DATA", {2, 17}},
+        Arc{"ADDR", "READ_VALID", {1, 1}},
+        Arc{"ADDR", "ROW_OPEN", {1, 1}},
+        Arc{"CLK", "BUSY", {1, 1}},
+        Arc{"CLK", "ERROR", {1, 1}},
+        Arc{"CLK", "READ_DATA", {2, 17}},
+        Arc{"CLK", "READ_VALID", {1, 1}},
+        Arc{"CLK", "ROW_OPEN", {1, 1}},
+        Arc{"CMD", "BUSY", {1, 1}},
+        Arc{"CMD", "ERROR", {1, 1}},
+        Arc{"CMD", "READ_DATA", {2, 17}},
+        Arc{"CMD", "READ_VALID", {1, 1}},
+        Arc{"CMD", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_DATA", "BUSY", {1, 1}},
+        Arc{"WRITE_DATA", "ERROR", {1, 1}},
+        Arc{"WRITE_DATA", "READ_DATA", {2, 17}},
+        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
+        Arc{"WRITE_DATA", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_MASK", "BUSY", {1, 1}},
+        Arc{"WRITE_MASK", "ERROR", {1, 1}},
+        Arc{"WRITE_MASK", "READ_DATA", {2, 17}},
+        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
+        Arc{"WRITE_MASK", "ROW_OPEN", {1, 1}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.dram.scalable-device.16.behavioral@rows=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.device.16.structural";
+    t.arcs = {
+        Arc{"ADDR", "BUSY", {1, 1}},
+        Arc{"ADDR", "ERROR", {1, 1}},
+        Arc{"ADDR", "READ_DATA", {2, 17}},
+        Arc{"ADDR", "READ_VALID", {1, 1}},
+        Arc{"ADDR", "ROW_OPEN", {1, 1}},
+        Arc{"CLK", "BUSY", {1, 1}},
+        Arc{"CLK", "ERROR", {1, 1}},
+        Arc{"CLK", "READ_DATA", {2, 17}},
+        Arc{"CLK", "READ_VALID", {1, 1}},
+        Arc{"CLK", "ROW_OPEN", {1, 1}},
+        Arc{"CMD", "BUSY", {1, 1}},
+        Arc{"CMD", "ERROR", {1, 1}},
+        Arc{"CMD", "READ_DATA", {2, 17}},
+        Arc{"CMD", "READ_VALID", {1, 1}},
+        Arc{"CMD", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_DATA", "BUSY", {1, 1}},
+        Arc{"WRITE_DATA", "ERROR", {1, 1}},
+        Arc{"WRITE_DATA", "READ_DATA", {2, 17}},
+        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
+        Arc{"WRITE_DATA", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_MASK", "BUSY", {1, 1}},
+        Arc{"WRITE_MASK", "ERROR", {1, 1}},
+        Arc{"WRITE_MASK", "READ_DATA", {2, 17}},
+        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
+        Arc{"WRITE_MASK", "ROW_OPEN", {1, 1}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.dram.device.16.behavioral@depth=64@rows=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.device.16.structural";
+    t.arcs = {
+        Arc{"ADDR", "BUSY", {1, 1}},
+        Arc{"ADDR", "ERROR", {1, 1}},
+        Arc{"ADDR", "READ_DATA", {2, 18}},
+        Arc{"ADDR", "READ_VALID", {1, 1}},
+        Arc{"ADDR", "ROW_OPEN", {1, 1}},
+        Arc{"CLK", "BUSY", {1, 1}},
+        Arc{"CLK", "ERROR", {1, 1}},
+        Arc{"CLK", "READ_DATA", {2, 18}},
+        Arc{"CLK", "READ_VALID", {1, 1}},
+        Arc{"CLK", "ROW_OPEN", {1, 1}},
+        Arc{"CMD", "BUSY", {1, 1}},
+        Arc{"CMD", "ERROR", {1, 1}},
+        Arc{"CMD", "READ_DATA", {2, 18}},
+        Arc{"CMD", "READ_VALID", {1, 1}},
+        Arc{"CMD", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_DATA", "BUSY", {1, 1}},
+        Arc{"WRITE_DATA", "ERROR", {1, 1}},
+        Arc{"WRITE_DATA", "READ_DATA", {2, 18}},
+        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
+        Arc{"WRITE_DATA", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_MASK", "BUSY", {1, 1}},
+        Arc{"WRITE_MASK", "ERROR", {1, 1}},
+        Arc{"WRITE_MASK", "READ_DATA", {2, 18}},
+        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
+        Arc{"WRITE_MASK", "ROW_OPEN", {1, 1}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.dram.scalable-device.16.behavioral@depth=64@rows=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.device.16.structural";
+    t.arcs = {
+        Arc{"ADDR", "BUSY", {1, 1}},
+        Arc{"ADDR", "ERROR", {1, 1}},
+        Arc{"ADDR", "READ_DATA", {2, 18}},
+        Arc{"ADDR", "READ_VALID", {1, 1}},
+        Arc{"ADDR", "ROW_OPEN", {1, 1}},
+        Arc{"CLK", "BUSY", {1, 1}},
+        Arc{"CLK", "ERROR", {1, 1}},
+        Arc{"CLK", "READ_DATA", {2, 18}},
+        Arc{"CLK", "READ_VALID", {1, 1}},
+        Arc{"CLK", "ROW_OPEN", {1, 1}},
+        Arc{"CMD", "BUSY", {1, 1}},
+        Arc{"CMD", "ERROR", {1, 1}},
+        Arc{"CMD", "READ_DATA", {2, 18}},
+        Arc{"CMD", "READ_VALID", {1, 1}},
+        Arc{"CMD", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_DATA", "BUSY", {1, 1}},
+        Arc{"WRITE_DATA", "ERROR", {1, 1}},
+        Arc{"WRITE_DATA", "READ_DATA", {2, 18}},
+        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
+        Arc{"WRITE_DATA", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_MASK", "BUSY", {1, 1}},
+        Arc{"WRITE_MASK", "ERROR", {1, 1}},
+        Arc{"WRITE_MASK", "READ_DATA", {2, 18}},
+        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
+        Arc{"WRITE_MASK", "ROW_OPEN", {1, 1}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.dram.device.16.behavioral@depth=128@rows=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.device.16.structural";
+    t.arcs = {
+        Arc{"ADDR", "BUSY", {1, 1}},
+        Arc{"ADDR", "ERROR", {1, 1}},
+        Arc{"ADDR", "READ_DATA", {2, 18}},
+        Arc{"ADDR", "READ_VALID", {1, 1}},
+        Arc{"ADDR", "ROW_OPEN", {1, 1}},
+        Arc{"CLK", "BUSY", {1, 1}},
+        Arc{"CLK", "ERROR", {1, 1}},
+        Arc{"CLK", "READ_DATA", {2, 18}},
+        Arc{"CLK", "READ_VALID", {1, 1}},
+        Arc{"CLK", "ROW_OPEN", {1, 1}},
+        Arc{"CMD", "BUSY", {1, 1}},
+        Arc{"CMD", "ERROR", {1, 1}},
+        Arc{"CMD", "READ_DATA", {2, 18}},
+        Arc{"CMD", "READ_VALID", {1, 1}},
+        Arc{"CMD", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_DATA", "BUSY", {1, 1}},
+        Arc{"WRITE_DATA", "ERROR", {1, 1}},
+        Arc{"WRITE_DATA", "READ_DATA", {2, 18}},
+        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
+        Arc{"WRITE_DATA", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_MASK", "BUSY", {1, 1}},
+        Arc{"WRITE_MASK", "ERROR", {1, 1}},
+        Arc{"WRITE_MASK", "READ_DATA", {2, 18}},
+        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
+        Arc{"WRITE_MASK", "ROW_OPEN", {1, 1}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.dram.scalable-device.16.behavioral@depth=128@rows=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.device.16.structural";
+    t.arcs = {
+        Arc{"ADDR", "BUSY", {1, 1}},
+        Arc{"ADDR", "ERROR", {1, 1}},
+        Arc{"ADDR", "READ_DATA", {2, 18}},
+        Arc{"ADDR", "READ_VALID", {1, 1}},
+        Arc{"ADDR", "ROW_OPEN", {1, 1}},
+        Arc{"CLK", "BUSY", {1, 1}},
+        Arc{"CLK", "ERROR", {1, 1}},
+        Arc{"CLK", "READ_DATA", {2, 18}},
+        Arc{"CLK", "READ_VALID", {1, 1}},
+        Arc{"CLK", "ROW_OPEN", {1, 1}},
+        Arc{"CMD", "BUSY", {1, 1}},
+        Arc{"CMD", "ERROR", {1, 1}},
+        Arc{"CMD", "READ_DATA", {2, 18}},
+        Arc{"CMD", "READ_VALID", {1, 1}},
+        Arc{"CMD", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_DATA", "BUSY", {1, 1}},
+        Arc{"WRITE_DATA", "ERROR", {1, 1}},
+        Arc{"WRITE_DATA", "READ_DATA", {2, 18}},
+        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
+        Arc{"WRITE_DATA", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_MASK", "BUSY", {1, 1}},
+        Arc{"WRITE_MASK", "ERROR", {1, 1}},
+        Arc{"WRITE_MASK", "READ_DATA", {2, 18}},
+        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
+        Arc{"WRITE_MASK", "ROW_OPEN", {1, 1}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.dram.device.16.behavioral@depth=64@rows=8", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.device.16.structural";
+    t.arcs = {
+        Arc{"ADDR", "BUSY", {1, 1}},
+        Arc{"ADDR", "ERROR", {1, 1}},
+        Arc{"ADDR", "READ_DATA", {2, 18}},
+        Arc{"ADDR", "READ_VALID", {1, 1}},
+        Arc{"ADDR", "ROW_OPEN", {1, 1}},
+        Arc{"CLK", "BUSY", {1, 1}},
+        Arc{"CLK", "ERROR", {1, 1}},
+        Arc{"CLK", "READ_DATA", {2, 18}},
+        Arc{"CLK", "READ_VALID", {1, 1}},
+        Arc{"CLK", "ROW_OPEN", {1, 1}},
+        Arc{"CMD", "BUSY", {1, 1}},
+        Arc{"CMD", "ERROR", {1, 1}},
+        Arc{"CMD", "READ_DATA", {2, 18}},
+        Arc{"CMD", "READ_VALID", {1, 1}},
+        Arc{"CMD", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_DATA", "BUSY", {1, 1}},
+        Arc{"WRITE_DATA", "ERROR", {1, 1}},
+        Arc{"WRITE_DATA", "READ_DATA", {2, 18}},
+        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
+        Arc{"WRITE_DATA", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_MASK", "BUSY", {1, 1}},
+        Arc{"WRITE_MASK", "ERROR", {1, 1}},
+        Arc{"WRITE_MASK", "READ_DATA", {2, 18}},
+        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
+        Arc{"WRITE_MASK", "ROW_OPEN", {1, 1}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.dram.scalable-device.16.behavioral@depth=64@rows=8", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.device.16.structural";
+    t.arcs = {
+        Arc{"ADDR", "BUSY", {1, 1}},
+        Arc{"ADDR", "ERROR", {1, 1}},
+        Arc{"ADDR", "READ_DATA", {2, 18}},
+        Arc{"ADDR", "READ_VALID", {1, 1}},
+        Arc{"ADDR", "ROW_OPEN", {1, 1}},
+        Arc{"CLK", "BUSY", {1, 1}},
+        Arc{"CLK", "ERROR", {1, 1}},
+        Arc{"CLK", "READ_DATA", {2, 18}},
+        Arc{"CLK", "READ_VALID", {1, 1}},
+        Arc{"CLK", "ROW_OPEN", {1, 1}},
+        Arc{"CMD", "BUSY", {1, 1}},
+        Arc{"CMD", "ERROR", {1, 1}},
+        Arc{"CMD", "READ_DATA", {2, 18}},
+        Arc{"CMD", "READ_VALID", {1, 1}},
+        Arc{"CMD", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_DATA", "BUSY", {1, 1}},
+        Arc{"WRITE_DATA", "ERROR", {1, 1}},
+        Arc{"WRITE_DATA", "READ_DATA", {2, 18}},
+        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
+        Arc{"WRITE_DATA", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_MASK", "BUSY", {1, 1}},
+        Arc{"WRITE_MASK", "ERROR", {1, 1}},
+        Arc{"WRITE_MASK", "READ_DATA", {2, 18}},
+        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
+        Arc{"WRITE_MASK", "ROW_OPEN", {1, 1}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.dram.device.16.behavioral@depth=128@rows=8", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.device.16.structural";
+    t.arcs = {
+        Arc{"ADDR", "BUSY", {1, 1}},
+        Arc{"ADDR", "ERROR", {1, 1}},
+        Arc{"ADDR", "READ_DATA", {2, 19}},
+        Arc{"ADDR", "READ_VALID", {1, 1}},
+        Arc{"ADDR", "ROW_OPEN", {1, 1}},
+        Arc{"CLK", "BUSY", {1, 1}},
+        Arc{"CLK", "ERROR", {1, 1}},
+        Arc{"CLK", "READ_DATA", {2, 19}},
+        Arc{"CLK", "READ_VALID", {1, 1}},
+        Arc{"CLK", "ROW_OPEN", {1, 1}},
+        Arc{"CMD", "BUSY", {1, 1}},
+        Arc{"CMD", "ERROR", {1, 1}},
+        Arc{"CMD", "READ_DATA", {2, 19}},
+        Arc{"CMD", "READ_VALID", {1, 1}},
+        Arc{"CMD", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_DATA", "BUSY", {1, 1}},
+        Arc{"WRITE_DATA", "ERROR", {1, 1}},
+        Arc{"WRITE_DATA", "READ_DATA", {2, 19}},
+        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
+        Arc{"WRITE_DATA", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_MASK", "BUSY", {1, 1}},
+        Arc{"WRITE_MASK", "ERROR", {1, 1}},
+        Arc{"WRITE_MASK", "READ_DATA", {2, 19}},
+        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
+        Arc{"WRITE_MASK", "ROW_OPEN", {1, 1}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.dram.scalable-device.16.behavioral@depth=128@rows=8", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.device.16.structural";
+    t.arcs = {
+        Arc{"ADDR", "BUSY", {1, 1}},
+        Arc{"ADDR", "ERROR", {1, 1}},
+        Arc{"ADDR", "READ_DATA", {2, 19}},
+        Arc{"ADDR", "READ_VALID", {1, 1}},
+        Arc{"ADDR", "ROW_OPEN", {1, 1}},
+        Arc{"CLK", "BUSY", {1, 1}},
+        Arc{"CLK", "ERROR", {1, 1}},
+        Arc{"CLK", "READ_DATA", {2, 19}},
+        Arc{"CLK", "READ_VALID", {1, 1}},
+        Arc{"CLK", "ROW_OPEN", {1, 1}},
+        Arc{"CMD", "BUSY", {1, 1}},
+        Arc{"CMD", "ERROR", {1, 1}},
+        Arc{"CMD", "READ_DATA", {2, 19}},
+        Arc{"CMD", "READ_VALID", {1, 1}},
+        Arc{"CMD", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_DATA", "BUSY", {1, 1}},
+        Arc{"WRITE_DATA", "ERROR", {1, 1}},
+        Arc{"WRITE_DATA", "READ_DATA", {2, 19}},
+        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
+        Arc{"WRITE_DATA", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_MASK", "BUSY", {1, 1}},
+        Arc{"WRITE_MASK", "ERROR", {1, 1}},
+        Arc{"WRITE_MASK", "READ_DATA", {2, 19}},
+        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
+        Arc{"WRITE_MASK", "ROW_OPEN", {1, 1}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.dram.device.16.behavioral@depth=64@rows=16", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.device.16.structural";
+    t.arcs = {
+        Arc{"ADDR", "BUSY", {1, 1}},
+        Arc{"ADDR", "ERROR", {1, 1}},
+        Arc{"ADDR", "READ_DATA", {2, 20}},
+        Arc{"ADDR", "READ_VALID", {1, 1}},
+        Arc{"ADDR", "ROW_OPEN", {1, 1}},
+        Arc{"CLK", "BUSY", {1, 1}},
+        Arc{"CLK", "ERROR", {1, 1}},
+        Arc{"CLK", "READ_DATA", {2, 20}},
+        Arc{"CLK", "READ_VALID", {1, 1}},
+        Arc{"CLK", "ROW_OPEN", {1, 1}},
+        Arc{"CMD", "BUSY", {1, 1}},
+        Arc{"CMD", "ERROR", {1, 1}},
+        Arc{"CMD", "READ_DATA", {2, 20}},
+        Arc{"CMD", "READ_VALID", {1, 1}},
+        Arc{"CMD", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_DATA", "BUSY", {1, 1}},
+        Arc{"WRITE_DATA", "ERROR", {1, 1}},
+        Arc{"WRITE_DATA", "READ_DATA", {2, 20}},
+        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
+        Arc{"WRITE_DATA", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_MASK", "BUSY", {1, 1}},
+        Arc{"WRITE_MASK", "ERROR", {1, 1}},
+        Arc{"WRITE_MASK", "READ_DATA", {2, 20}},
+        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
+        Arc{"WRITE_MASK", "ROW_OPEN", {1, 1}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.dram.scalable-device.16.behavioral@depth=64@rows=16", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.device.16.structural";
+    t.arcs = {
+        Arc{"ADDR", "BUSY", {1, 1}},
+        Arc{"ADDR", "ERROR", {1, 1}},
+        Arc{"ADDR", "READ_DATA", {2, 20}},
+        Arc{"ADDR", "READ_VALID", {1, 1}},
+        Arc{"ADDR", "ROW_OPEN", {1, 1}},
+        Arc{"CLK", "BUSY", {1, 1}},
+        Arc{"CLK", "ERROR", {1, 1}},
+        Arc{"CLK", "READ_DATA", {2, 20}},
+        Arc{"CLK", "READ_VALID", {1, 1}},
+        Arc{"CLK", "ROW_OPEN", {1, 1}},
+        Arc{"CMD", "BUSY", {1, 1}},
+        Arc{"CMD", "ERROR", {1, 1}},
+        Arc{"CMD", "READ_DATA", {2, 20}},
+        Arc{"CMD", "READ_VALID", {1, 1}},
+        Arc{"CMD", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_DATA", "BUSY", {1, 1}},
+        Arc{"WRITE_DATA", "ERROR", {1, 1}},
+        Arc{"WRITE_DATA", "READ_DATA", {2, 20}},
+        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
+        Arc{"WRITE_DATA", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_MASK", "BUSY", {1, 1}},
+        Arc{"WRITE_MASK", "ERROR", {1, 1}},
+        Arc{"WRITE_MASK", "READ_DATA", {2, 20}},
+        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
+        Arc{"WRITE_MASK", "ROW_OPEN", {1, 1}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.dram.device.16.behavioral@depth=128@rows=16", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.device.16.structural";
+    t.arcs = {
+        Arc{"ADDR", "BUSY", {1, 1}},
+        Arc{"ADDR", "ERROR", {1, 1}},
+        Arc{"ADDR", "READ_DATA", {2, 20}},
+        Arc{"ADDR", "READ_VALID", {1, 1}},
+        Arc{"ADDR", "ROW_OPEN", {1, 1}},
+        Arc{"CLK", "BUSY", {1, 1}},
+        Arc{"CLK", "ERROR", {1, 1}},
+        Arc{"CLK", "READ_DATA", {2, 20}},
+        Arc{"CLK", "READ_VALID", {1, 1}},
+        Arc{"CLK", "ROW_OPEN", {1, 1}},
+        Arc{"CMD", "BUSY", {1, 1}},
+        Arc{"CMD", "ERROR", {1, 1}},
+        Arc{"CMD", "READ_DATA", {2, 20}},
+        Arc{"CMD", "READ_VALID", {1, 1}},
+        Arc{"CMD", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_DATA", "BUSY", {1, 1}},
+        Arc{"WRITE_DATA", "ERROR", {1, 1}},
+        Arc{"WRITE_DATA", "READ_DATA", {2, 20}},
+        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
+        Arc{"WRITE_DATA", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_MASK", "BUSY", {1, 1}},
+        Arc{"WRITE_MASK", "ERROR", {1, 1}},
+        Arc{"WRITE_MASK", "READ_DATA", {2, 20}},
+        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
+        Arc{"WRITE_MASK", "ROW_OPEN", {1, 1}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.dram.scalable-device.16.behavioral@depth=128@rows=16", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.device.16.structural";
+    t.arcs = {
+        Arc{"ADDR", "BUSY", {1, 1}},
+        Arc{"ADDR", "ERROR", {1, 1}},
+        Arc{"ADDR", "READ_DATA", {2, 20}},
+        Arc{"ADDR", "READ_VALID", {1, 1}},
+        Arc{"ADDR", "ROW_OPEN", {1, 1}},
+        Arc{"CLK", "BUSY", {1, 1}},
+        Arc{"CLK", "ERROR", {1, 1}},
+        Arc{"CLK", "READ_DATA", {2, 20}},
+        Arc{"CLK", "READ_VALID", {1, 1}},
+        Arc{"CLK", "ROW_OPEN", {1, 1}},
+        Arc{"CMD", "BUSY", {1, 1}},
+        Arc{"CMD", "ERROR", {1, 1}},
+        Arc{"CMD", "READ_DATA", {2, 20}},
+        Arc{"CMD", "READ_VALID", {1, 1}},
+        Arc{"CMD", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_DATA", "BUSY", {1, 1}},
+        Arc{"WRITE_DATA", "ERROR", {1, 1}},
+        Arc{"WRITE_DATA", "READ_DATA", {2, 20}},
+        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
+        Arc{"WRITE_DATA", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_MASK", "BUSY", {1, 1}},
+        Arc{"WRITE_MASK", "ERROR", {1, 1}},
+        Arc{"WRITE_MASK", "READ_DATA", {2, 20}},
+        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
+        Arc{"WRITE_MASK", "ROW_OPEN", {1, 1}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
 {"memory.dram.device.32.behavioral", [] {
     PartDelays t;
     t.evidence = "proven on memory.dram.device.32.structural";
@@ -1530,6 +2223,666 @@
         Arc{"WRITE_MASK", "BUSY", {1, 1}},
         Arc{"WRITE_MASK", "ERROR", {1, 1}},
         Arc{"WRITE_MASK", "READ_DATA", {2, 17}},
+        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
+        Arc{"WRITE_MASK", "ROW_OPEN", {1, 1}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.dram.device.32.behavioral@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.device.32.structural";
+    t.arcs = {
+        Arc{"ADDR", "BUSY", {1, 1}},
+        Arc{"ADDR", "ERROR", {1, 1}},
+        Arc{"ADDR", "READ_DATA", {2, 15}},
+        Arc{"ADDR", "READ_VALID", {1, 1}},
+        Arc{"ADDR", "ROW_OPEN", {1, 1}},
+        Arc{"CLK", "BUSY", {1, 1}},
+        Arc{"CLK", "ERROR", {1, 1}},
+        Arc{"CLK", "READ_DATA", {2, 15}},
+        Arc{"CLK", "READ_VALID", {1, 1}},
+        Arc{"CLK", "ROW_OPEN", {1, 1}},
+        Arc{"CMD", "BUSY", {1, 1}},
+        Arc{"CMD", "ERROR", {1, 1}},
+        Arc{"CMD", "READ_DATA", {2, 15}},
+        Arc{"CMD", "READ_VALID", {1, 1}},
+        Arc{"CMD", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_DATA", "BUSY", {1, 1}},
+        Arc{"WRITE_DATA", "ERROR", {1, 1}},
+        Arc{"WRITE_DATA", "READ_DATA", {2, 15}},
+        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
+        Arc{"WRITE_DATA", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_MASK", "BUSY", {1, 1}},
+        Arc{"WRITE_MASK", "ERROR", {1, 1}},
+        Arc{"WRITE_MASK", "READ_DATA", {2, 15}},
+        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
+        Arc{"WRITE_MASK", "ROW_OPEN", {1, 1}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.dram.scalable-device.32.behavioral@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.device.32.structural";
+    t.arcs = {
+        Arc{"ADDR", "BUSY", {1, 1}},
+        Arc{"ADDR", "ERROR", {1, 1}},
+        Arc{"ADDR", "READ_DATA", {2, 15}},
+        Arc{"ADDR", "READ_VALID", {1, 1}},
+        Arc{"ADDR", "ROW_OPEN", {1, 1}},
+        Arc{"CLK", "BUSY", {1, 1}},
+        Arc{"CLK", "ERROR", {1, 1}},
+        Arc{"CLK", "READ_DATA", {2, 15}},
+        Arc{"CLK", "READ_VALID", {1, 1}},
+        Arc{"CLK", "ROW_OPEN", {1, 1}},
+        Arc{"CMD", "BUSY", {1, 1}},
+        Arc{"CMD", "ERROR", {1, 1}},
+        Arc{"CMD", "READ_DATA", {2, 15}},
+        Arc{"CMD", "READ_VALID", {1, 1}},
+        Arc{"CMD", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_DATA", "BUSY", {1, 1}},
+        Arc{"WRITE_DATA", "ERROR", {1, 1}},
+        Arc{"WRITE_DATA", "READ_DATA", {2, 15}},
+        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
+        Arc{"WRITE_DATA", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_MASK", "BUSY", {1, 1}},
+        Arc{"WRITE_MASK", "ERROR", {1, 1}},
+        Arc{"WRITE_MASK", "READ_DATA", {2, 15}},
+        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
+        Arc{"WRITE_MASK", "ROW_OPEN", {1, 1}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.dram.device.32.behavioral@depth=64@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.device.32.structural";
+    t.arcs = {
+        Arc{"ADDR", "BUSY", {1, 1}},
+        Arc{"ADDR", "ERROR", {1, 1}},
+        Arc{"ADDR", "READ_DATA", {2, 16}},
+        Arc{"ADDR", "READ_VALID", {1, 1}},
+        Arc{"ADDR", "ROW_OPEN", {1, 1}},
+        Arc{"CLK", "BUSY", {1, 1}},
+        Arc{"CLK", "ERROR", {1, 1}},
+        Arc{"CLK", "READ_DATA", {2, 16}},
+        Arc{"CLK", "READ_VALID", {1, 1}},
+        Arc{"CLK", "ROW_OPEN", {1, 1}},
+        Arc{"CMD", "BUSY", {1, 1}},
+        Arc{"CMD", "ERROR", {1, 1}},
+        Arc{"CMD", "READ_DATA", {2, 16}},
+        Arc{"CMD", "READ_VALID", {1, 1}},
+        Arc{"CMD", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_DATA", "BUSY", {1, 1}},
+        Arc{"WRITE_DATA", "ERROR", {1, 1}},
+        Arc{"WRITE_DATA", "READ_DATA", {2, 16}},
+        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
+        Arc{"WRITE_DATA", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_MASK", "BUSY", {1, 1}},
+        Arc{"WRITE_MASK", "ERROR", {1, 1}},
+        Arc{"WRITE_MASK", "READ_DATA", {2, 16}},
+        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
+        Arc{"WRITE_MASK", "ROW_OPEN", {1, 1}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.dram.scalable-device.32.behavioral@depth=64@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.device.32.structural";
+    t.arcs = {
+        Arc{"ADDR", "BUSY", {1, 1}},
+        Arc{"ADDR", "ERROR", {1, 1}},
+        Arc{"ADDR", "READ_DATA", {2, 16}},
+        Arc{"ADDR", "READ_VALID", {1, 1}},
+        Arc{"ADDR", "ROW_OPEN", {1, 1}},
+        Arc{"CLK", "BUSY", {1, 1}},
+        Arc{"CLK", "ERROR", {1, 1}},
+        Arc{"CLK", "READ_DATA", {2, 16}},
+        Arc{"CLK", "READ_VALID", {1, 1}},
+        Arc{"CLK", "ROW_OPEN", {1, 1}},
+        Arc{"CMD", "BUSY", {1, 1}},
+        Arc{"CMD", "ERROR", {1, 1}},
+        Arc{"CMD", "READ_DATA", {2, 16}},
+        Arc{"CMD", "READ_VALID", {1, 1}},
+        Arc{"CMD", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_DATA", "BUSY", {1, 1}},
+        Arc{"WRITE_DATA", "ERROR", {1, 1}},
+        Arc{"WRITE_DATA", "READ_DATA", {2, 16}},
+        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
+        Arc{"WRITE_DATA", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_MASK", "BUSY", {1, 1}},
+        Arc{"WRITE_MASK", "ERROR", {1, 1}},
+        Arc{"WRITE_MASK", "READ_DATA", {2, 16}},
+        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
+        Arc{"WRITE_MASK", "ROW_OPEN", {1, 1}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.dram.device.32.behavioral@depth=128@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.device.32.structural";
+    t.arcs = {
+        Arc{"ADDR", "BUSY", {1, 1}},
+        Arc{"ADDR", "ERROR", {1, 1}},
+        Arc{"ADDR", "READ_DATA", {2, 16}},
+        Arc{"ADDR", "READ_VALID", {1, 1}},
+        Arc{"ADDR", "ROW_OPEN", {1, 1}},
+        Arc{"CLK", "BUSY", {1, 1}},
+        Arc{"CLK", "ERROR", {1, 1}},
+        Arc{"CLK", "READ_DATA", {2, 16}},
+        Arc{"CLK", "READ_VALID", {1, 1}},
+        Arc{"CLK", "ROW_OPEN", {1, 1}},
+        Arc{"CMD", "BUSY", {1, 1}},
+        Arc{"CMD", "ERROR", {1, 1}},
+        Arc{"CMD", "READ_DATA", {2, 16}},
+        Arc{"CMD", "READ_VALID", {1, 1}},
+        Arc{"CMD", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_DATA", "BUSY", {1, 1}},
+        Arc{"WRITE_DATA", "ERROR", {1, 1}},
+        Arc{"WRITE_DATA", "READ_DATA", {2, 16}},
+        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
+        Arc{"WRITE_DATA", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_MASK", "BUSY", {1, 1}},
+        Arc{"WRITE_MASK", "ERROR", {1, 1}},
+        Arc{"WRITE_MASK", "READ_DATA", {2, 16}},
+        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
+        Arc{"WRITE_MASK", "ROW_OPEN", {1, 1}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.dram.scalable-device.32.behavioral@depth=128@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.device.32.structural";
+    t.arcs = {
+        Arc{"ADDR", "BUSY", {1, 1}},
+        Arc{"ADDR", "ERROR", {1, 1}},
+        Arc{"ADDR", "READ_DATA", {2, 16}},
+        Arc{"ADDR", "READ_VALID", {1, 1}},
+        Arc{"ADDR", "ROW_OPEN", {1, 1}},
+        Arc{"CLK", "BUSY", {1, 1}},
+        Arc{"CLK", "ERROR", {1, 1}},
+        Arc{"CLK", "READ_DATA", {2, 16}},
+        Arc{"CLK", "READ_VALID", {1, 1}},
+        Arc{"CLK", "ROW_OPEN", {1, 1}},
+        Arc{"CMD", "BUSY", {1, 1}},
+        Arc{"CMD", "ERROR", {1, 1}},
+        Arc{"CMD", "READ_DATA", {2, 16}},
+        Arc{"CMD", "READ_VALID", {1, 1}},
+        Arc{"CMD", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_DATA", "BUSY", {1, 1}},
+        Arc{"WRITE_DATA", "ERROR", {1, 1}},
+        Arc{"WRITE_DATA", "READ_DATA", {2, 16}},
+        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
+        Arc{"WRITE_DATA", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_MASK", "BUSY", {1, 1}},
+        Arc{"WRITE_MASK", "ERROR", {1, 1}},
+        Arc{"WRITE_MASK", "READ_DATA", {2, 16}},
+        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
+        Arc{"WRITE_MASK", "ROW_OPEN", {1, 1}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.dram.device.32.behavioral@rows=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.device.32.structural";
+    t.arcs = {
+        Arc{"ADDR", "BUSY", {1, 1}},
+        Arc{"ADDR", "ERROR", {1, 1}},
+        Arc{"ADDR", "READ_DATA", {2, 17}},
+        Arc{"ADDR", "READ_VALID", {1, 1}},
+        Arc{"ADDR", "ROW_OPEN", {1, 1}},
+        Arc{"CLK", "BUSY", {1, 1}},
+        Arc{"CLK", "ERROR", {1, 1}},
+        Arc{"CLK", "READ_DATA", {2, 17}},
+        Arc{"CLK", "READ_VALID", {1, 1}},
+        Arc{"CLK", "ROW_OPEN", {1, 1}},
+        Arc{"CMD", "BUSY", {1, 1}},
+        Arc{"CMD", "ERROR", {1, 1}},
+        Arc{"CMD", "READ_DATA", {2, 17}},
+        Arc{"CMD", "READ_VALID", {1, 1}},
+        Arc{"CMD", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_DATA", "BUSY", {1, 1}},
+        Arc{"WRITE_DATA", "ERROR", {1, 1}},
+        Arc{"WRITE_DATA", "READ_DATA", {2, 17}},
+        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
+        Arc{"WRITE_DATA", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_MASK", "BUSY", {1, 1}},
+        Arc{"WRITE_MASK", "ERROR", {1, 1}},
+        Arc{"WRITE_MASK", "READ_DATA", {2, 17}},
+        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
+        Arc{"WRITE_MASK", "ROW_OPEN", {1, 1}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.dram.scalable-device.32.behavioral@rows=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.device.32.structural";
+    t.arcs = {
+        Arc{"ADDR", "BUSY", {1, 1}},
+        Arc{"ADDR", "ERROR", {1, 1}},
+        Arc{"ADDR", "READ_DATA", {2, 17}},
+        Arc{"ADDR", "READ_VALID", {1, 1}},
+        Arc{"ADDR", "ROW_OPEN", {1, 1}},
+        Arc{"CLK", "BUSY", {1, 1}},
+        Arc{"CLK", "ERROR", {1, 1}},
+        Arc{"CLK", "READ_DATA", {2, 17}},
+        Arc{"CLK", "READ_VALID", {1, 1}},
+        Arc{"CLK", "ROW_OPEN", {1, 1}},
+        Arc{"CMD", "BUSY", {1, 1}},
+        Arc{"CMD", "ERROR", {1, 1}},
+        Arc{"CMD", "READ_DATA", {2, 17}},
+        Arc{"CMD", "READ_VALID", {1, 1}},
+        Arc{"CMD", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_DATA", "BUSY", {1, 1}},
+        Arc{"WRITE_DATA", "ERROR", {1, 1}},
+        Arc{"WRITE_DATA", "READ_DATA", {2, 17}},
+        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
+        Arc{"WRITE_DATA", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_MASK", "BUSY", {1, 1}},
+        Arc{"WRITE_MASK", "ERROR", {1, 1}},
+        Arc{"WRITE_MASK", "READ_DATA", {2, 17}},
+        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
+        Arc{"WRITE_MASK", "ROW_OPEN", {1, 1}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.dram.device.32.behavioral@depth=64@rows=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.device.32.structural";
+    t.arcs = {
+        Arc{"ADDR", "BUSY", {1, 1}},
+        Arc{"ADDR", "ERROR", {1, 1}},
+        Arc{"ADDR", "READ_DATA", {2, 18}},
+        Arc{"ADDR", "READ_VALID", {1, 1}},
+        Arc{"ADDR", "ROW_OPEN", {1, 1}},
+        Arc{"CLK", "BUSY", {1, 1}},
+        Arc{"CLK", "ERROR", {1, 1}},
+        Arc{"CLK", "READ_DATA", {2, 18}},
+        Arc{"CLK", "READ_VALID", {1, 1}},
+        Arc{"CLK", "ROW_OPEN", {1, 1}},
+        Arc{"CMD", "BUSY", {1, 1}},
+        Arc{"CMD", "ERROR", {1, 1}},
+        Arc{"CMD", "READ_DATA", {2, 18}},
+        Arc{"CMD", "READ_VALID", {1, 1}},
+        Arc{"CMD", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_DATA", "BUSY", {1, 1}},
+        Arc{"WRITE_DATA", "ERROR", {1, 1}},
+        Arc{"WRITE_DATA", "READ_DATA", {2, 18}},
+        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
+        Arc{"WRITE_DATA", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_MASK", "BUSY", {1, 1}},
+        Arc{"WRITE_MASK", "ERROR", {1, 1}},
+        Arc{"WRITE_MASK", "READ_DATA", {2, 18}},
+        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
+        Arc{"WRITE_MASK", "ROW_OPEN", {1, 1}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.dram.scalable-device.32.behavioral@depth=64@rows=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.device.32.structural";
+    t.arcs = {
+        Arc{"ADDR", "BUSY", {1, 1}},
+        Arc{"ADDR", "ERROR", {1, 1}},
+        Arc{"ADDR", "READ_DATA", {2, 18}},
+        Arc{"ADDR", "READ_VALID", {1, 1}},
+        Arc{"ADDR", "ROW_OPEN", {1, 1}},
+        Arc{"CLK", "BUSY", {1, 1}},
+        Arc{"CLK", "ERROR", {1, 1}},
+        Arc{"CLK", "READ_DATA", {2, 18}},
+        Arc{"CLK", "READ_VALID", {1, 1}},
+        Arc{"CLK", "ROW_OPEN", {1, 1}},
+        Arc{"CMD", "BUSY", {1, 1}},
+        Arc{"CMD", "ERROR", {1, 1}},
+        Arc{"CMD", "READ_DATA", {2, 18}},
+        Arc{"CMD", "READ_VALID", {1, 1}},
+        Arc{"CMD", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_DATA", "BUSY", {1, 1}},
+        Arc{"WRITE_DATA", "ERROR", {1, 1}},
+        Arc{"WRITE_DATA", "READ_DATA", {2, 18}},
+        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
+        Arc{"WRITE_DATA", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_MASK", "BUSY", {1, 1}},
+        Arc{"WRITE_MASK", "ERROR", {1, 1}},
+        Arc{"WRITE_MASK", "READ_DATA", {2, 18}},
+        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
+        Arc{"WRITE_MASK", "ROW_OPEN", {1, 1}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.dram.device.32.behavioral@depth=128@rows=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.device.32.structural";
+    t.arcs = {
+        Arc{"ADDR", "BUSY", {1, 1}},
+        Arc{"ADDR", "ERROR", {1, 1}},
+        Arc{"ADDR", "READ_DATA", {2, 18}},
+        Arc{"ADDR", "READ_VALID", {1, 1}},
+        Arc{"ADDR", "ROW_OPEN", {1, 1}},
+        Arc{"CLK", "BUSY", {1, 1}},
+        Arc{"CLK", "ERROR", {1, 1}},
+        Arc{"CLK", "READ_DATA", {2, 18}},
+        Arc{"CLK", "READ_VALID", {1, 1}},
+        Arc{"CLK", "ROW_OPEN", {1, 1}},
+        Arc{"CMD", "BUSY", {1, 1}},
+        Arc{"CMD", "ERROR", {1, 1}},
+        Arc{"CMD", "READ_DATA", {2, 18}},
+        Arc{"CMD", "READ_VALID", {1, 1}},
+        Arc{"CMD", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_DATA", "BUSY", {1, 1}},
+        Arc{"WRITE_DATA", "ERROR", {1, 1}},
+        Arc{"WRITE_DATA", "READ_DATA", {2, 18}},
+        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
+        Arc{"WRITE_DATA", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_MASK", "BUSY", {1, 1}},
+        Arc{"WRITE_MASK", "ERROR", {1, 1}},
+        Arc{"WRITE_MASK", "READ_DATA", {2, 18}},
+        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
+        Arc{"WRITE_MASK", "ROW_OPEN", {1, 1}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.dram.scalable-device.32.behavioral@depth=128@rows=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.device.32.structural";
+    t.arcs = {
+        Arc{"ADDR", "BUSY", {1, 1}},
+        Arc{"ADDR", "ERROR", {1, 1}},
+        Arc{"ADDR", "READ_DATA", {2, 18}},
+        Arc{"ADDR", "READ_VALID", {1, 1}},
+        Arc{"ADDR", "ROW_OPEN", {1, 1}},
+        Arc{"CLK", "BUSY", {1, 1}},
+        Arc{"CLK", "ERROR", {1, 1}},
+        Arc{"CLK", "READ_DATA", {2, 18}},
+        Arc{"CLK", "READ_VALID", {1, 1}},
+        Arc{"CLK", "ROW_OPEN", {1, 1}},
+        Arc{"CMD", "BUSY", {1, 1}},
+        Arc{"CMD", "ERROR", {1, 1}},
+        Arc{"CMD", "READ_DATA", {2, 18}},
+        Arc{"CMD", "READ_VALID", {1, 1}},
+        Arc{"CMD", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_DATA", "BUSY", {1, 1}},
+        Arc{"WRITE_DATA", "ERROR", {1, 1}},
+        Arc{"WRITE_DATA", "READ_DATA", {2, 18}},
+        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
+        Arc{"WRITE_DATA", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_MASK", "BUSY", {1, 1}},
+        Arc{"WRITE_MASK", "ERROR", {1, 1}},
+        Arc{"WRITE_MASK", "READ_DATA", {2, 18}},
+        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
+        Arc{"WRITE_MASK", "ROW_OPEN", {1, 1}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.dram.device.32.behavioral@depth=64@rows=8", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.device.32.structural";
+    t.arcs = {
+        Arc{"ADDR", "BUSY", {1, 1}},
+        Arc{"ADDR", "ERROR", {1, 1}},
+        Arc{"ADDR", "READ_DATA", {2, 18}},
+        Arc{"ADDR", "READ_VALID", {1, 1}},
+        Arc{"ADDR", "ROW_OPEN", {1, 1}},
+        Arc{"CLK", "BUSY", {1, 1}},
+        Arc{"CLK", "ERROR", {1, 1}},
+        Arc{"CLK", "READ_DATA", {2, 18}},
+        Arc{"CLK", "READ_VALID", {1, 1}},
+        Arc{"CLK", "ROW_OPEN", {1, 1}},
+        Arc{"CMD", "BUSY", {1, 1}},
+        Arc{"CMD", "ERROR", {1, 1}},
+        Arc{"CMD", "READ_DATA", {2, 18}},
+        Arc{"CMD", "READ_VALID", {1, 1}},
+        Arc{"CMD", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_DATA", "BUSY", {1, 1}},
+        Arc{"WRITE_DATA", "ERROR", {1, 1}},
+        Arc{"WRITE_DATA", "READ_DATA", {2, 18}},
+        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
+        Arc{"WRITE_DATA", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_MASK", "BUSY", {1, 1}},
+        Arc{"WRITE_MASK", "ERROR", {1, 1}},
+        Arc{"WRITE_MASK", "READ_DATA", {2, 18}},
+        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
+        Arc{"WRITE_MASK", "ROW_OPEN", {1, 1}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.dram.scalable-device.32.behavioral@depth=64@rows=8", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.device.32.structural";
+    t.arcs = {
+        Arc{"ADDR", "BUSY", {1, 1}},
+        Arc{"ADDR", "ERROR", {1, 1}},
+        Arc{"ADDR", "READ_DATA", {2, 18}},
+        Arc{"ADDR", "READ_VALID", {1, 1}},
+        Arc{"ADDR", "ROW_OPEN", {1, 1}},
+        Arc{"CLK", "BUSY", {1, 1}},
+        Arc{"CLK", "ERROR", {1, 1}},
+        Arc{"CLK", "READ_DATA", {2, 18}},
+        Arc{"CLK", "READ_VALID", {1, 1}},
+        Arc{"CLK", "ROW_OPEN", {1, 1}},
+        Arc{"CMD", "BUSY", {1, 1}},
+        Arc{"CMD", "ERROR", {1, 1}},
+        Arc{"CMD", "READ_DATA", {2, 18}},
+        Arc{"CMD", "READ_VALID", {1, 1}},
+        Arc{"CMD", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_DATA", "BUSY", {1, 1}},
+        Arc{"WRITE_DATA", "ERROR", {1, 1}},
+        Arc{"WRITE_DATA", "READ_DATA", {2, 18}},
+        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
+        Arc{"WRITE_DATA", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_MASK", "BUSY", {1, 1}},
+        Arc{"WRITE_MASK", "ERROR", {1, 1}},
+        Arc{"WRITE_MASK", "READ_DATA", {2, 18}},
+        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
+        Arc{"WRITE_MASK", "ROW_OPEN", {1, 1}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.dram.device.32.behavioral@depth=128@rows=8", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.device.32.structural";
+    t.arcs = {
+        Arc{"ADDR", "BUSY", {1, 1}},
+        Arc{"ADDR", "ERROR", {1, 1}},
+        Arc{"ADDR", "READ_DATA", {2, 19}},
+        Arc{"ADDR", "READ_VALID", {1, 1}},
+        Arc{"ADDR", "ROW_OPEN", {1, 1}},
+        Arc{"CLK", "BUSY", {1, 1}},
+        Arc{"CLK", "ERROR", {1, 1}},
+        Arc{"CLK", "READ_DATA", {2, 19}},
+        Arc{"CLK", "READ_VALID", {1, 1}},
+        Arc{"CLK", "ROW_OPEN", {1, 1}},
+        Arc{"CMD", "BUSY", {1, 1}},
+        Arc{"CMD", "ERROR", {1, 1}},
+        Arc{"CMD", "READ_DATA", {2, 19}},
+        Arc{"CMD", "READ_VALID", {1, 1}},
+        Arc{"CMD", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_DATA", "BUSY", {1, 1}},
+        Arc{"WRITE_DATA", "ERROR", {1, 1}},
+        Arc{"WRITE_DATA", "READ_DATA", {2, 19}},
+        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
+        Arc{"WRITE_DATA", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_MASK", "BUSY", {1, 1}},
+        Arc{"WRITE_MASK", "ERROR", {1, 1}},
+        Arc{"WRITE_MASK", "READ_DATA", {2, 19}},
+        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
+        Arc{"WRITE_MASK", "ROW_OPEN", {1, 1}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.dram.scalable-device.32.behavioral@depth=128@rows=8", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.device.32.structural";
+    t.arcs = {
+        Arc{"ADDR", "BUSY", {1, 1}},
+        Arc{"ADDR", "ERROR", {1, 1}},
+        Arc{"ADDR", "READ_DATA", {2, 19}},
+        Arc{"ADDR", "READ_VALID", {1, 1}},
+        Arc{"ADDR", "ROW_OPEN", {1, 1}},
+        Arc{"CLK", "BUSY", {1, 1}},
+        Arc{"CLK", "ERROR", {1, 1}},
+        Arc{"CLK", "READ_DATA", {2, 19}},
+        Arc{"CLK", "READ_VALID", {1, 1}},
+        Arc{"CLK", "ROW_OPEN", {1, 1}},
+        Arc{"CMD", "BUSY", {1, 1}},
+        Arc{"CMD", "ERROR", {1, 1}},
+        Arc{"CMD", "READ_DATA", {2, 19}},
+        Arc{"CMD", "READ_VALID", {1, 1}},
+        Arc{"CMD", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_DATA", "BUSY", {1, 1}},
+        Arc{"WRITE_DATA", "ERROR", {1, 1}},
+        Arc{"WRITE_DATA", "READ_DATA", {2, 19}},
+        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
+        Arc{"WRITE_DATA", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_MASK", "BUSY", {1, 1}},
+        Arc{"WRITE_MASK", "ERROR", {1, 1}},
+        Arc{"WRITE_MASK", "READ_DATA", {2, 19}},
+        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
+        Arc{"WRITE_MASK", "ROW_OPEN", {1, 1}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.dram.device.32.behavioral@depth=64@rows=16", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.device.32.structural";
+    t.arcs = {
+        Arc{"ADDR", "BUSY", {1, 1}},
+        Arc{"ADDR", "ERROR", {1, 1}},
+        Arc{"ADDR", "READ_DATA", {2, 20}},
+        Arc{"ADDR", "READ_VALID", {1, 1}},
+        Arc{"ADDR", "ROW_OPEN", {1, 1}},
+        Arc{"CLK", "BUSY", {1, 1}},
+        Arc{"CLK", "ERROR", {1, 1}},
+        Arc{"CLK", "READ_DATA", {2, 20}},
+        Arc{"CLK", "READ_VALID", {1, 1}},
+        Arc{"CLK", "ROW_OPEN", {1, 1}},
+        Arc{"CMD", "BUSY", {1, 1}},
+        Arc{"CMD", "ERROR", {1, 1}},
+        Arc{"CMD", "READ_DATA", {2, 20}},
+        Arc{"CMD", "READ_VALID", {1, 1}},
+        Arc{"CMD", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_DATA", "BUSY", {1, 1}},
+        Arc{"WRITE_DATA", "ERROR", {1, 1}},
+        Arc{"WRITE_DATA", "READ_DATA", {2, 20}},
+        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
+        Arc{"WRITE_DATA", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_MASK", "BUSY", {1, 1}},
+        Arc{"WRITE_MASK", "ERROR", {1, 1}},
+        Arc{"WRITE_MASK", "READ_DATA", {2, 20}},
+        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
+        Arc{"WRITE_MASK", "ROW_OPEN", {1, 1}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.dram.scalable-device.32.behavioral@depth=64@rows=16", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.device.32.structural";
+    t.arcs = {
+        Arc{"ADDR", "BUSY", {1, 1}},
+        Arc{"ADDR", "ERROR", {1, 1}},
+        Arc{"ADDR", "READ_DATA", {2, 20}},
+        Arc{"ADDR", "READ_VALID", {1, 1}},
+        Arc{"ADDR", "ROW_OPEN", {1, 1}},
+        Arc{"CLK", "BUSY", {1, 1}},
+        Arc{"CLK", "ERROR", {1, 1}},
+        Arc{"CLK", "READ_DATA", {2, 20}},
+        Arc{"CLK", "READ_VALID", {1, 1}},
+        Arc{"CLK", "ROW_OPEN", {1, 1}},
+        Arc{"CMD", "BUSY", {1, 1}},
+        Arc{"CMD", "ERROR", {1, 1}},
+        Arc{"CMD", "READ_DATA", {2, 20}},
+        Arc{"CMD", "READ_VALID", {1, 1}},
+        Arc{"CMD", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_DATA", "BUSY", {1, 1}},
+        Arc{"WRITE_DATA", "ERROR", {1, 1}},
+        Arc{"WRITE_DATA", "READ_DATA", {2, 20}},
+        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
+        Arc{"WRITE_DATA", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_MASK", "BUSY", {1, 1}},
+        Arc{"WRITE_MASK", "ERROR", {1, 1}},
+        Arc{"WRITE_MASK", "READ_DATA", {2, 20}},
+        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
+        Arc{"WRITE_MASK", "ROW_OPEN", {1, 1}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.dram.device.32.behavioral@depth=128@rows=16", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.device.32.structural";
+    t.arcs = {
+        Arc{"ADDR", "BUSY", {1, 1}},
+        Arc{"ADDR", "ERROR", {1, 1}},
+        Arc{"ADDR", "READ_DATA", {2, 20}},
+        Arc{"ADDR", "READ_VALID", {1, 1}},
+        Arc{"ADDR", "ROW_OPEN", {1, 1}},
+        Arc{"CLK", "BUSY", {1, 1}},
+        Arc{"CLK", "ERROR", {1, 1}},
+        Arc{"CLK", "READ_DATA", {2, 20}},
+        Arc{"CLK", "READ_VALID", {1, 1}},
+        Arc{"CLK", "ROW_OPEN", {1, 1}},
+        Arc{"CMD", "BUSY", {1, 1}},
+        Arc{"CMD", "ERROR", {1, 1}},
+        Arc{"CMD", "READ_DATA", {2, 20}},
+        Arc{"CMD", "READ_VALID", {1, 1}},
+        Arc{"CMD", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_DATA", "BUSY", {1, 1}},
+        Arc{"WRITE_DATA", "ERROR", {1, 1}},
+        Arc{"WRITE_DATA", "READ_DATA", {2, 20}},
+        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
+        Arc{"WRITE_DATA", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_MASK", "BUSY", {1, 1}},
+        Arc{"WRITE_MASK", "ERROR", {1, 1}},
+        Arc{"WRITE_MASK", "READ_DATA", {2, 20}},
+        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
+        Arc{"WRITE_MASK", "ROW_OPEN", {1, 1}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.dram.scalable-device.32.behavioral@depth=128@rows=16", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.device.32.structural";
+    t.arcs = {
+        Arc{"ADDR", "BUSY", {1, 1}},
+        Arc{"ADDR", "ERROR", {1, 1}},
+        Arc{"ADDR", "READ_DATA", {2, 20}},
+        Arc{"ADDR", "READ_VALID", {1, 1}},
+        Arc{"ADDR", "ROW_OPEN", {1, 1}},
+        Arc{"CLK", "BUSY", {1, 1}},
+        Arc{"CLK", "ERROR", {1, 1}},
+        Arc{"CLK", "READ_DATA", {2, 20}},
+        Arc{"CLK", "READ_VALID", {1, 1}},
+        Arc{"CLK", "ROW_OPEN", {1, 1}},
+        Arc{"CMD", "BUSY", {1, 1}},
+        Arc{"CMD", "ERROR", {1, 1}},
+        Arc{"CMD", "READ_DATA", {2, 20}},
+        Arc{"CMD", "READ_VALID", {1, 1}},
+        Arc{"CMD", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_DATA", "BUSY", {1, 1}},
+        Arc{"WRITE_DATA", "ERROR", {1, 1}},
+        Arc{"WRITE_DATA", "READ_DATA", {2, 20}},
+        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
+        Arc{"WRITE_DATA", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_MASK", "BUSY", {1, 1}},
+        Arc{"WRITE_MASK", "ERROR", {1, 1}},
+        Arc{"WRITE_MASK", "READ_DATA", {2, 20}},
         Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
         Arc{"WRITE_MASK", "ROW_OPEN", {1, 1}},
     };
@@ -1734,6 +3087,666 @@
     t.self_timed = true;
     return t;
 }()},
+{"memory.dram.device.8.behavioral@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.device.8.structural";
+    t.arcs = {
+        Arc{"ADDR", "BUSY", {1, 1}},
+        Arc{"ADDR", "ERROR", {1, 1}},
+        Arc{"ADDR", "READ_DATA", {2, 15}},
+        Arc{"ADDR", "READ_VALID", {1, 1}},
+        Arc{"ADDR", "ROW_OPEN", {1, 1}},
+        Arc{"CLK", "BUSY", {1, 1}},
+        Arc{"CLK", "ERROR", {1, 1}},
+        Arc{"CLK", "READ_DATA", {2, 15}},
+        Arc{"CLK", "READ_VALID", {1, 1}},
+        Arc{"CLK", "ROW_OPEN", {1, 1}},
+        Arc{"CMD", "BUSY", {1, 1}},
+        Arc{"CMD", "ERROR", {1, 1}},
+        Arc{"CMD", "READ_DATA", {2, 15}},
+        Arc{"CMD", "READ_VALID", {1, 1}},
+        Arc{"CMD", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_DATA", "BUSY", {1, 1}},
+        Arc{"WRITE_DATA", "ERROR", {1, 1}},
+        Arc{"WRITE_DATA", "READ_DATA", {2, 15}},
+        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
+        Arc{"WRITE_DATA", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_MASK", "BUSY", {1, 1}},
+        Arc{"WRITE_MASK", "ERROR", {1, 1}},
+        Arc{"WRITE_MASK", "READ_DATA", {2, 15}},
+        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
+        Arc{"WRITE_MASK", "ROW_OPEN", {1, 1}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.dram.scalable-device.8.behavioral@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.device.8.structural";
+    t.arcs = {
+        Arc{"ADDR", "BUSY", {1, 1}},
+        Arc{"ADDR", "ERROR", {1, 1}},
+        Arc{"ADDR", "READ_DATA", {2, 15}},
+        Arc{"ADDR", "READ_VALID", {1, 1}},
+        Arc{"ADDR", "ROW_OPEN", {1, 1}},
+        Arc{"CLK", "BUSY", {1, 1}},
+        Arc{"CLK", "ERROR", {1, 1}},
+        Arc{"CLK", "READ_DATA", {2, 15}},
+        Arc{"CLK", "READ_VALID", {1, 1}},
+        Arc{"CLK", "ROW_OPEN", {1, 1}},
+        Arc{"CMD", "BUSY", {1, 1}},
+        Arc{"CMD", "ERROR", {1, 1}},
+        Arc{"CMD", "READ_DATA", {2, 15}},
+        Arc{"CMD", "READ_VALID", {1, 1}},
+        Arc{"CMD", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_DATA", "BUSY", {1, 1}},
+        Arc{"WRITE_DATA", "ERROR", {1, 1}},
+        Arc{"WRITE_DATA", "READ_DATA", {2, 15}},
+        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
+        Arc{"WRITE_DATA", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_MASK", "BUSY", {1, 1}},
+        Arc{"WRITE_MASK", "ERROR", {1, 1}},
+        Arc{"WRITE_MASK", "READ_DATA", {2, 15}},
+        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
+        Arc{"WRITE_MASK", "ROW_OPEN", {1, 1}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.dram.device.8.behavioral@depth=64@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.device.8.structural";
+    t.arcs = {
+        Arc{"ADDR", "BUSY", {1, 1}},
+        Arc{"ADDR", "ERROR", {1, 1}},
+        Arc{"ADDR", "READ_DATA", {2, 16}},
+        Arc{"ADDR", "READ_VALID", {1, 1}},
+        Arc{"ADDR", "ROW_OPEN", {1, 1}},
+        Arc{"CLK", "BUSY", {1, 1}},
+        Arc{"CLK", "ERROR", {1, 1}},
+        Arc{"CLK", "READ_DATA", {2, 16}},
+        Arc{"CLK", "READ_VALID", {1, 1}},
+        Arc{"CLK", "ROW_OPEN", {1, 1}},
+        Arc{"CMD", "BUSY", {1, 1}},
+        Arc{"CMD", "ERROR", {1, 1}},
+        Arc{"CMD", "READ_DATA", {2, 16}},
+        Arc{"CMD", "READ_VALID", {1, 1}},
+        Arc{"CMD", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_DATA", "BUSY", {1, 1}},
+        Arc{"WRITE_DATA", "ERROR", {1, 1}},
+        Arc{"WRITE_DATA", "READ_DATA", {2, 16}},
+        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
+        Arc{"WRITE_DATA", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_MASK", "BUSY", {1, 1}},
+        Arc{"WRITE_MASK", "ERROR", {1, 1}},
+        Arc{"WRITE_MASK", "READ_DATA", {2, 16}},
+        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
+        Arc{"WRITE_MASK", "ROW_OPEN", {1, 1}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.dram.scalable-device.8.behavioral@depth=64@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.device.8.structural";
+    t.arcs = {
+        Arc{"ADDR", "BUSY", {1, 1}},
+        Arc{"ADDR", "ERROR", {1, 1}},
+        Arc{"ADDR", "READ_DATA", {2, 16}},
+        Arc{"ADDR", "READ_VALID", {1, 1}},
+        Arc{"ADDR", "ROW_OPEN", {1, 1}},
+        Arc{"CLK", "BUSY", {1, 1}},
+        Arc{"CLK", "ERROR", {1, 1}},
+        Arc{"CLK", "READ_DATA", {2, 16}},
+        Arc{"CLK", "READ_VALID", {1, 1}},
+        Arc{"CLK", "ROW_OPEN", {1, 1}},
+        Arc{"CMD", "BUSY", {1, 1}},
+        Arc{"CMD", "ERROR", {1, 1}},
+        Arc{"CMD", "READ_DATA", {2, 16}},
+        Arc{"CMD", "READ_VALID", {1, 1}},
+        Arc{"CMD", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_DATA", "BUSY", {1, 1}},
+        Arc{"WRITE_DATA", "ERROR", {1, 1}},
+        Arc{"WRITE_DATA", "READ_DATA", {2, 16}},
+        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
+        Arc{"WRITE_DATA", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_MASK", "BUSY", {1, 1}},
+        Arc{"WRITE_MASK", "ERROR", {1, 1}},
+        Arc{"WRITE_MASK", "READ_DATA", {2, 16}},
+        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
+        Arc{"WRITE_MASK", "ROW_OPEN", {1, 1}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.dram.device.8.behavioral@depth=128@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.device.8.structural";
+    t.arcs = {
+        Arc{"ADDR", "BUSY", {1, 1}},
+        Arc{"ADDR", "ERROR", {1, 1}},
+        Arc{"ADDR", "READ_DATA", {2, 16}},
+        Arc{"ADDR", "READ_VALID", {1, 1}},
+        Arc{"ADDR", "ROW_OPEN", {1, 1}},
+        Arc{"CLK", "BUSY", {1, 1}},
+        Arc{"CLK", "ERROR", {1, 1}},
+        Arc{"CLK", "READ_DATA", {2, 16}},
+        Arc{"CLK", "READ_VALID", {1, 1}},
+        Arc{"CLK", "ROW_OPEN", {1, 1}},
+        Arc{"CMD", "BUSY", {1, 1}},
+        Arc{"CMD", "ERROR", {1, 1}},
+        Arc{"CMD", "READ_DATA", {2, 16}},
+        Arc{"CMD", "READ_VALID", {1, 1}},
+        Arc{"CMD", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_DATA", "BUSY", {1, 1}},
+        Arc{"WRITE_DATA", "ERROR", {1, 1}},
+        Arc{"WRITE_DATA", "READ_DATA", {2, 16}},
+        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
+        Arc{"WRITE_DATA", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_MASK", "BUSY", {1, 1}},
+        Arc{"WRITE_MASK", "ERROR", {1, 1}},
+        Arc{"WRITE_MASK", "READ_DATA", {2, 16}},
+        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
+        Arc{"WRITE_MASK", "ROW_OPEN", {1, 1}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.dram.scalable-device.8.behavioral@depth=128@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.device.8.structural";
+    t.arcs = {
+        Arc{"ADDR", "BUSY", {1, 1}},
+        Arc{"ADDR", "ERROR", {1, 1}},
+        Arc{"ADDR", "READ_DATA", {2, 16}},
+        Arc{"ADDR", "READ_VALID", {1, 1}},
+        Arc{"ADDR", "ROW_OPEN", {1, 1}},
+        Arc{"CLK", "BUSY", {1, 1}},
+        Arc{"CLK", "ERROR", {1, 1}},
+        Arc{"CLK", "READ_DATA", {2, 16}},
+        Arc{"CLK", "READ_VALID", {1, 1}},
+        Arc{"CLK", "ROW_OPEN", {1, 1}},
+        Arc{"CMD", "BUSY", {1, 1}},
+        Arc{"CMD", "ERROR", {1, 1}},
+        Arc{"CMD", "READ_DATA", {2, 16}},
+        Arc{"CMD", "READ_VALID", {1, 1}},
+        Arc{"CMD", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_DATA", "BUSY", {1, 1}},
+        Arc{"WRITE_DATA", "ERROR", {1, 1}},
+        Arc{"WRITE_DATA", "READ_DATA", {2, 16}},
+        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
+        Arc{"WRITE_DATA", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_MASK", "BUSY", {1, 1}},
+        Arc{"WRITE_MASK", "ERROR", {1, 1}},
+        Arc{"WRITE_MASK", "READ_DATA", {2, 16}},
+        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
+        Arc{"WRITE_MASK", "ROW_OPEN", {1, 1}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.dram.device.8.behavioral@rows=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.device.8.structural";
+    t.arcs = {
+        Arc{"ADDR", "BUSY", {1, 1}},
+        Arc{"ADDR", "ERROR", {1, 1}},
+        Arc{"ADDR", "READ_DATA", {2, 17}},
+        Arc{"ADDR", "READ_VALID", {1, 1}},
+        Arc{"ADDR", "ROW_OPEN", {1, 1}},
+        Arc{"CLK", "BUSY", {1, 1}},
+        Arc{"CLK", "ERROR", {1, 1}},
+        Arc{"CLK", "READ_DATA", {2, 17}},
+        Arc{"CLK", "READ_VALID", {1, 1}},
+        Arc{"CLK", "ROW_OPEN", {1, 1}},
+        Arc{"CMD", "BUSY", {1, 1}},
+        Arc{"CMD", "ERROR", {1, 1}},
+        Arc{"CMD", "READ_DATA", {2, 17}},
+        Arc{"CMD", "READ_VALID", {1, 1}},
+        Arc{"CMD", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_DATA", "BUSY", {1, 1}},
+        Arc{"WRITE_DATA", "ERROR", {1, 1}},
+        Arc{"WRITE_DATA", "READ_DATA", {2, 17}},
+        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
+        Arc{"WRITE_DATA", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_MASK", "BUSY", {1, 1}},
+        Arc{"WRITE_MASK", "ERROR", {1, 1}},
+        Arc{"WRITE_MASK", "READ_DATA", {2, 17}},
+        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
+        Arc{"WRITE_MASK", "ROW_OPEN", {1, 1}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.dram.scalable-device.8.behavioral@rows=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.device.8.structural";
+    t.arcs = {
+        Arc{"ADDR", "BUSY", {1, 1}},
+        Arc{"ADDR", "ERROR", {1, 1}},
+        Arc{"ADDR", "READ_DATA", {2, 17}},
+        Arc{"ADDR", "READ_VALID", {1, 1}},
+        Arc{"ADDR", "ROW_OPEN", {1, 1}},
+        Arc{"CLK", "BUSY", {1, 1}},
+        Arc{"CLK", "ERROR", {1, 1}},
+        Arc{"CLK", "READ_DATA", {2, 17}},
+        Arc{"CLK", "READ_VALID", {1, 1}},
+        Arc{"CLK", "ROW_OPEN", {1, 1}},
+        Arc{"CMD", "BUSY", {1, 1}},
+        Arc{"CMD", "ERROR", {1, 1}},
+        Arc{"CMD", "READ_DATA", {2, 17}},
+        Arc{"CMD", "READ_VALID", {1, 1}},
+        Arc{"CMD", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_DATA", "BUSY", {1, 1}},
+        Arc{"WRITE_DATA", "ERROR", {1, 1}},
+        Arc{"WRITE_DATA", "READ_DATA", {2, 17}},
+        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
+        Arc{"WRITE_DATA", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_MASK", "BUSY", {1, 1}},
+        Arc{"WRITE_MASK", "ERROR", {1, 1}},
+        Arc{"WRITE_MASK", "READ_DATA", {2, 17}},
+        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
+        Arc{"WRITE_MASK", "ROW_OPEN", {1, 1}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.dram.device.8.behavioral@depth=64@rows=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.device.8.structural";
+    t.arcs = {
+        Arc{"ADDR", "BUSY", {1, 1}},
+        Arc{"ADDR", "ERROR", {1, 1}},
+        Arc{"ADDR", "READ_DATA", {2, 18}},
+        Arc{"ADDR", "READ_VALID", {1, 1}},
+        Arc{"ADDR", "ROW_OPEN", {1, 1}},
+        Arc{"CLK", "BUSY", {1, 1}},
+        Arc{"CLK", "ERROR", {1, 1}},
+        Arc{"CLK", "READ_DATA", {2, 18}},
+        Arc{"CLK", "READ_VALID", {1, 1}},
+        Arc{"CLK", "ROW_OPEN", {1, 1}},
+        Arc{"CMD", "BUSY", {1, 1}},
+        Arc{"CMD", "ERROR", {1, 1}},
+        Arc{"CMD", "READ_DATA", {2, 18}},
+        Arc{"CMD", "READ_VALID", {1, 1}},
+        Arc{"CMD", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_DATA", "BUSY", {1, 1}},
+        Arc{"WRITE_DATA", "ERROR", {1, 1}},
+        Arc{"WRITE_DATA", "READ_DATA", {2, 18}},
+        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
+        Arc{"WRITE_DATA", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_MASK", "BUSY", {1, 1}},
+        Arc{"WRITE_MASK", "ERROR", {1, 1}},
+        Arc{"WRITE_MASK", "READ_DATA", {2, 18}},
+        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
+        Arc{"WRITE_MASK", "ROW_OPEN", {1, 1}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.dram.scalable-device.8.behavioral@depth=64@rows=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.device.8.structural";
+    t.arcs = {
+        Arc{"ADDR", "BUSY", {1, 1}},
+        Arc{"ADDR", "ERROR", {1, 1}},
+        Arc{"ADDR", "READ_DATA", {2, 18}},
+        Arc{"ADDR", "READ_VALID", {1, 1}},
+        Arc{"ADDR", "ROW_OPEN", {1, 1}},
+        Arc{"CLK", "BUSY", {1, 1}},
+        Arc{"CLK", "ERROR", {1, 1}},
+        Arc{"CLK", "READ_DATA", {2, 18}},
+        Arc{"CLK", "READ_VALID", {1, 1}},
+        Arc{"CLK", "ROW_OPEN", {1, 1}},
+        Arc{"CMD", "BUSY", {1, 1}},
+        Arc{"CMD", "ERROR", {1, 1}},
+        Arc{"CMD", "READ_DATA", {2, 18}},
+        Arc{"CMD", "READ_VALID", {1, 1}},
+        Arc{"CMD", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_DATA", "BUSY", {1, 1}},
+        Arc{"WRITE_DATA", "ERROR", {1, 1}},
+        Arc{"WRITE_DATA", "READ_DATA", {2, 18}},
+        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
+        Arc{"WRITE_DATA", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_MASK", "BUSY", {1, 1}},
+        Arc{"WRITE_MASK", "ERROR", {1, 1}},
+        Arc{"WRITE_MASK", "READ_DATA", {2, 18}},
+        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
+        Arc{"WRITE_MASK", "ROW_OPEN", {1, 1}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.dram.device.8.behavioral@depth=128@rows=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.device.8.structural";
+    t.arcs = {
+        Arc{"ADDR", "BUSY", {1, 1}},
+        Arc{"ADDR", "ERROR", {1, 1}},
+        Arc{"ADDR", "READ_DATA", {2, 18}},
+        Arc{"ADDR", "READ_VALID", {1, 1}},
+        Arc{"ADDR", "ROW_OPEN", {1, 1}},
+        Arc{"CLK", "BUSY", {1, 1}},
+        Arc{"CLK", "ERROR", {1, 1}},
+        Arc{"CLK", "READ_DATA", {2, 18}},
+        Arc{"CLK", "READ_VALID", {1, 1}},
+        Arc{"CLK", "ROW_OPEN", {1, 1}},
+        Arc{"CMD", "BUSY", {1, 1}},
+        Arc{"CMD", "ERROR", {1, 1}},
+        Arc{"CMD", "READ_DATA", {2, 18}},
+        Arc{"CMD", "READ_VALID", {1, 1}},
+        Arc{"CMD", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_DATA", "BUSY", {1, 1}},
+        Arc{"WRITE_DATA", "ERROR", {1, 1}},
+        Arc{"WRITE_DATA", "READ_DATA", {2, 18}},
+        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
+        Arc{"WRITE_DATA", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_MASK", "BUSY", {1, 1}},
+        Arc{"WRITE_MASK", "ERROR", {1, 1}},
+        Arc{"WRITE_MASK", "READ_DATA", {2, 18}},
+        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
+        Arc{"WRITE_MASK", "ROW_OPEN", {1, 1}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.dram.scalable-device.8.behavioral@depth=128@rows=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.device.8.structural";
+    t.arcs = {
+        Arc{"ADDR", "BUSY", {1, 1}},
+        Arc{"ADDR", "ERROR", {1, 1}},
+        Arc{"ADDR", "READ_DATA", {2, 18}},
+        Arc{"ADDR", "READ_VALID", {1, 1}},
+        Arc{"ADDR", "ROW_OPEN", {1, 1}},
+        Arc{"CLK", "BUSY", {1, 1}},
+        Arc{"CLK", "ERROR", {1, 1}},
+        Arc{"CLK", "READ_DATA", {2, 18}},
+        Arc{"CLK", "READ_VALID", {1, 1}},
+        Arc{"CLK", "ROW_OPEN", {1, 1}},
+        Arc{"CMD", "BUSY", {1, 1}},
+        Arc{"CMD", "ERROR", {1, 1}},
+        Arc{"CMD", "READ_DATA", {2, 18}},
+        Arc{"CMD", "READ_VALID", {1, 1}},
+        Arc{"CMD", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_DATA", "BUSY", {1, 1}},
+        Arc{"WRITE_DATA", "ERROR", {1, 1}},
+        Arc{"WRITE_DATA", "READ_DATA", {2, 18}},
+        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
+        Arc{"WRITE_DATA", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_MASK", "BUSY", {1, 1}},
+        Arc{"WRITE_MASK", "ERROR", {1, 1}},
+        Arc{"WRITE_MASK", "READ_DATA", {2, 18}},
+        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
+        Arc{"WRITE_MASK", "ROW_OPEN", {1, 1}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.dram.device.8.behavioral@depth=64@rows=8", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.device.8.structural";
+    t.arcs = {
+        Arc{"ADDR", "BUSY", {1, 1}},
+        Arc{"ADDR", "ERROR", {1, 1}},
+        Arc{"ADDR", "READ_DATA", {2, 18}},
+        Arc{"ADDR", "READ_VALID", {1, 1}},
+        Arc{"ADDR", "ROW_OPEN", {1, 1}},
+        Arc{"CLK", "BUSY", {1, 1}},
+        Arc{"CLK", "ERROR", {1, 1}},
+        Arc{"CLK", "READ_DATA", {2, 18}},
+        Arc{"CLK", "READ_VALID", {1, 1}},
+        Arc{"CLK", "ROW_OPEN", {1, 1}},
+        Arc{"CMD", "BUSY", {1, 1}},
+        Arc{"CMD", "ERROR", {1, 1}},
+        Arc{"CMD", "READ_DATA", {2, 18}},
+        Arc{"CMD", "READ_VALID", {1, 1}},
+        Arc{"CMD", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_DATA", "BUSY", {1, 1}},
+        Arc{"WRITE_DATA", "ERROR", {1, 1}},
+        Arc{"WRITE_DATA", "READ_DATA", {2, 18}},
+        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
+        Arc{"WRITE_DATA", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_MASK", "BUSY", {1, 1}},
+        Arc{"WRITE_MASK", "ERROR", {1, 1}},
+        Arc{"WRITE_MASK", "READ_DATA", {2, 18}},
+        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
+        Arc{"WRITE_MASK", "ROW_OPEN", {1, 1}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.dram.scalable-device.8.behavioral@depth=64@rows=8", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.device.8.structural";
+    t.arcs = {
+        Arc{"ADDR", "BUSY", {1, 1}},
+        Arc{"ADDR", "ERROR", {1, 1}},
+        Arc{"ADDR", "READ_DATA", {2, 18}},
+        Arc{"ADDR", "READ_VALID", {1, 1}},
+        Arc{"ADDR", "ROW_OPEN", {1, 1}},
+        Arc{"CLK", "BUSY", {1, 1}},
+        Arc{"CLK", "ERROR", {1, 1}},
+        Arc{"CLK", "READ_DATA", {2, 18}},
+        Arc{"CLK", "READ_VALID", {1, 1}},
+        Arc{"CLK", "ROW_OPEN", {1, 1}},
+        Arc{"CMD", "BUSY", {1, 1}},
+        Arc{"CMD", "ERROR", {1, 1}},
+        Arc{"CMD", "READ_DATA", {2, 18}},
+        Arc{"CMD", "READ_VALID", {1, 1}},
+        Arc{"CMD", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_DATA", "BUSY", {1, 1}},
+        Arc{"WRITE_DATA", "ERROR", {1, 1}},
+        Arc{"WRITE_DATA", "READ_DATA", {2, 18}},
+        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
+        Arc{"WRITE_DATA", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_MASK", "BUSY", {1, 1}},
+        Arc{"WRITE_MASK", "ERROR", {1, 1}},
+        Arc{"WRITE_MASK", "READ_DATA", {2, 18}},
+        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
+        Arc{"WRITE_MASK", "ROW_OPEN", {1, 1}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.dram.device.8.behavioral@depth=128@rows=8", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.device.8.structural";
+    t.arcs = {
+        Arc{"ADDR", "BUSY", {1, 1}},
+        Arc{"ADDR", "ERROR", {1, 1}},
+        Arc{"ADDR", "READ_DATA", {2, 19}},
+        Arc{"ADDR", "READ_VALID", {1, 1}},
+        Arc{"ADDR", "ROW_OPEN", {1, 1}},
+        Arc{"CLK", "BUSY", {1, 1}},
+        Arc{"CLK", "ERROR", {1, 1}},
+        Arc{"CLK", "READ_DATA", {2, 19}},
+        Arc{"CLK", "READ_VALID", {1, 1}},
+        Arc{"CLK", "ROW_OPEN", {1, 1}},
+        Arc{"CMD", "BUSY", {1, 1}},
+        Arc{"CMD", "ERROR", {1, 1}},
+        Arc{"CMD", "READ_DATA", {2, 19}},
+        Arc{"CMD", "READ_VALID", {1, 1}},
+        Arc{"CMD", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_DATA", "BUSY", {1, 1}},
+        Arc{"WRITE_DATA", "ERROR", {1, 1}},
+        Arc{"WRITE_DATA", "READ_DATA", {2, 19}},
+        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
+        Arc{"WRITE_DATA", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_MASK", "BUSY", {1, 1}},
+        Arc{"WRITE_MASK", "ERROR", {1, 1}},
+        Arc{"WRITE_MASK", "READ_DATA", {2, 19}},
+        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
+        Arc{"WRITE_MASK", "ROW_OPEN", {1, 1}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.dram.scalable-device.8.behavioral@depth=128@rows=8", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.device.8.structural";
+    t.arcs = {
+        Arc{"ADDR", "BUSY", {1, 1}},
+        Arc{"ADDR", "ERROR", {1, 1}},
+        Arc{"ADDR", "READ_DATA", {2, 19}},
+        Arc{"ADDR", "READ_VALID", {1, 1}},
+        Arc{"ADDR", "ROW_OPEN", {1, 1}},
+        Arc{"CLK", "BUSY", {1, 1}},
+        Arc{"CLK", "ERROR", {1, 1}},
+        Arc{"CLK", "READ_DATA", {2, 19}},
+        Arc{"CLK", "READ_VALID", {1, 1}},
+        Arc{"CLK", "ROW_OPEN", {1, 1}},
+        Arc{"CMD", "BUSY", {1, 1}},
+        Arc{"CMD", "ERROR", {1, 1}},
+        Arc{"CMD", "READ_DATA", {2, 19}},
+        Arc{"CMD", "READ_VALID", {1, 1}},
+        Arc{"CMD", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_DATA", "BUSY", {1, 1}},
+        Arc{"WRITE_DATA", "ERROR", {1, 1}},
+        Arc{"WRITE_DATA", "READ_DATA", {2, 19}},
+        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
+        Arc{"WRITE_DATA", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_MASK", "BUSY", {1, 1}},
+        Arc{"WRITE_MASK", "ERROR", {1, 1}},
+        Arc{"WRITE_MASK", "READ_DATA", {2, 19}},
+        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
+        Arc{"WRITE_MASK", "ROW_OPEN", {1, 1}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.dram.device.8.behavioral@depth=64@rows=16", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.device.8.structural";
+    t.arcs = {
+        Arc{"ADDR", "BUSY", {1, 1}},
+        Arc{"ADDR", "ERROR", {1, 1}},
+        Arc{"ADDR", "READ_DATA", {2, 20}},
+        Arc{"ADDR", "READ_VALID", {1, 1}},
+        Arc{"ADDR", "ROW_OPEN", {1, 1}},
+        Arc{"CLK", "BUSY", {1, 1}},
+        Arc{"CLK", "ERROR", {1, 1}},
+        Arc{"CLK", "READ_DATA", {2, 20}},
+        Arc{"CLK", "READ_VALID", {1, 1}},
+        Arc{"CLK", "ROW_OPEN", {1, 1}},
+        Arc{"CMD", "BUSY", {1, 1}},
+        Arc{"CMD", "ERROR", {1, 1}},
+        Arc{"CMD", "READ_DATA", {2, 20}},
+        Arc{"CMD", "READ_VALID", {1, 1}},
+        Arc{"CMD", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_DATA", "BUSY", {1, 1}},
+        Arc{"WRITE_DATA", "ERROR", {1, 1}},
+        Arc{"WRITE_DATA", "READ_DATA", {2, 20}},
+        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
+        Arc{"WRITE_DATA", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_MASK", "BUSY", {1, 1}},
+        Arc{"WRITE_MASK", "ERROR", {1, 1}},
+        Arc{"WRITE_MASK", "READ_DATA", {2, 20}},
+        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
+        Arc{"WRITE_MASK", "ROW_OPEN", {1, 1}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.dram.scalable-device.8.behavioral@depth=64@rows=16", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.device.8.structural";
+    t.arcs = {
+        Arc{"ADDR", "BUSY", {1, 1}},
+        Arc{"ADDR", "ERROR", {1, 1}},
+        Arc{"ADDR", "READ_DATA", {2, 20}},
+        Arc{"ADDR", "READ_VALID", {1, 1}},
+        Arc{"ADDR", "ROW_OPEN", {1, 1}},
+        Arc{"CLK", "BUSY", {1, 1}},
+        Arc{"CLK", "ERROR", {1, 1}},
+        Arc{"CLK", "READ_DATA", {2, 20}},
+        Arc{"CLK", "READ_VALID", {1, 1}},
+        Arc{"CLK", "ROW_OPEN", {1, 1}},
+        Arc{"CMD", "BUSY", {1, 1}},
+        Arc{"CMD", "ERROR", {1, 1}},
+        Arc{"CMD", "READ_DATA", {2, 20}},
+        Arc{"CMD", "READ_VALID", {1, 1}},
+        Arc{"CMD", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_DATA", "BUSY", {1, 1}},
+        Arc{"WRITE_DATA", "ERROR", {1, 1}},
+        Arc{"WRITE_DATA", "READ_DATA", {2, 20}},
+        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
+        Arc{"WRITE_DATA", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_MASK", "BUSY", {1, 1}},
+        Arc{"WRITE_MASK", "ERROR", {1, 1}},
+        Arc{"WRITE_MASK", "READ_DATA", {2, 20}},
+        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
+        Arc{"WRITE_MASK", "ROW_OPEN", {1, 1}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.dram.device.8.behavioral@depth=128@rows=16", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.device.8.structural";
+    t.arcs = {
+        Arc{"ADDR", "BUSY", {1, 1}},
+        Arc{"ADDR", "ERROR", {1, 1}},
+        Arc{"ADDR", "READ_DATA", {2, 20}},
+        Arc{"ADDR", "READ_VALID", {1, 1}},
+        Arc{"ADDR", "ROW_OPEN", {1, 1}},
+        Arc{"CLK", "BUSY", {1, 1}},
+        Arc{"CLK", "ERROR", {1, 1}},
+        Arc{"CLK", "READ_DATA", {2, 20}},
+        Arc{"CLK", "READ_VALID", {1, 1}},
+        Arc{"CLK", "ROW_OPEN", {1, 1}},
+        Arc{"CMD", "BUSY", {1, 1}},
+        Arc{"CMD", "ERROR", {1, 1}},
+        Arc{"CMD", "READ_DATA", {2, 20}},
+        Arc{"CMD", "READ_VALID", {1, 1}},
+        Arc{"CMD", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_DATA", "BUSY", {1, 1}},
+        Arc{"WRITE_DATA", "ERROR", {1, 1}},
+        Arc{"WRITE_DATA", "READ_DATA", {2, 20}},
+        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
+        Arc{"WRITE_DATA", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_MASK", "BUSY", {1, 1}},
+        Arc{"WRITE_MASK", "ERROR", {1, 1}},
+        Arc{"WRITE_MASK", "READ_DATA", {2, 20}},
+        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
+        Arc{"WRITE_MASK", "ROW_OPEN", {1, 1}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.dram.scalable-device.8.behavioral@depth=128@rows=16", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.device.8.structural";
+    t.arcs = {
+        Arc{"ADDR", "BUSY", {1, 1}},
+        Arc{"ADDR", "ERROR", {1, 1}},
+        Arc{"ADDR", "READ_DATA", {2, 20}},
+        Arc{"ADDR", "READ_VALID", {1, 1}},
+        Arc{"ADDR", "ROW_OPEN", {1, 1}},
+        Arc{"CLK", "BUSY", {1, 1}},
+        Arc{"CLK", "ERROR", {1, 1}},
+        Arc{"CLK", "READ_DATA", {2, 20}},
+        Arc{"CLK", "READ_VALID", {1, 1}},
+        Arc{"CLK", "ROW_OPEN", {1, 1}},
+        Arc{"CMD", "BUSY", {1, 1}},
+        Arc{"CMD", "ERROR", {1, 1}},
+        Arc{"CMD", "READ_DATA", {2, 20}},
+        Arc{"CMD", "READ_VALID", {1, 1}},
+        Arc{"CMD", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_DATA", "BUSY", {1, 1}},
+        Arc{"WRITE_DATA", "ERROR", {1, 1}},
+        Arc{"WRITE_DATA", "READ_DATA", {2, 20}},
+        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
+        Arc{"WRITE_DATA", "ROW_OPEN", {1, 1}},
+        Arc{"WRITE_MASK", "BUSY", {1, 1}},
+        Arc{"WRITE_MASK", "ERROR", {1, 1}},
+        Arc{"WRITE_MASK", "READ_DATA", {2, 20}},
+        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
+        Arc{"WRITE_MASK", "ROW_OPEN", {1, 1}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
 {"memory.dram.endpoint.16.behavioral", [] {
     PartDelays t;
     t.evidence = "proven on memory.dram.endpoint.16.structural";
@@ -1863,6 +3876,446 @@
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
     t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.dram.endpoint.16.behavioral@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.endpoint.16.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.dram.scalable-endpoint.16.behavioral@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.endpoint.16.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.dram.endpoint.16.behavioral@depth=64@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.endpoint.16.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.dram.scalable-endpoint.16.behavioral@depth=64@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.endpoint.16.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.dram.endpoint.16.behavioral@depth=128@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.endpoint.16.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.dram.scalable-endpoint.16.behavioral@depth=128@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.endpoint.16.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.dram.endpoint.16.behavioral@rows=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.endpoint.16.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.dram.scalable-endpoint.16.behavioral@rows=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.endpoint.16.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.dram.endpoint.16.behavioral@depth=64@rows=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.endpoint.16.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 19;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.dram.scalable-endpoint.16.behavioral@depth=64@rows=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.endpoint.16.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 19;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.dram.endpoint.16.behavioral@depth=128@rows=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.endpoint.16.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 19;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.dram.scalable-endpoint.16.behavioral@depth=128@rows=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.endpoint.16.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 19;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.dram.endpoint.16.behavioral@depth=64@rows=8", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.endpoint.16.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 19;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.dram.scalable-endpoint.16.behavioral@depth=64@rows=8", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.endpoint.16.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 19;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.dram.endpoint.16.behavioral@depth=128@rows=8", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.endpoint.16.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 20;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.dram.scalable-endpoint.16.behavioral@depth=128@rows=8", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.endpoint.16.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 20;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.dram.endpoint.16.behavioral@depth=64@rows=16", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.endpoint.16.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 21;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.dram.scalable-endpoint.16.behavioral@depth=64@rows=16", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.endpoint.16.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 21;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.dram.endpoint.16.behavioral@depth=128@rows=16", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.endpoint.16.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 21;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.dram.scalable-endpoint.16.behavioral@depth=128@rows=16", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.endpoint.16.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 21;
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
@@ -1998,6 +4451,446 @@
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
+{"memory.dram.endpoint.32.behavioral@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.endpoint.32.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.dram.scalable-endpoint.32.behavioral@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.endpoint.32.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.dram.endpoint.32.behavioral@depth=64@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.endpoint.32.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.dram.scalable-endpoint.32.behavioral@depth=64@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.endpoint.32.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.dram.endpoint.32.behavioral@depth=128@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.endpoint.32.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.dram.scalable-endpoint.32.behavioral@depth=128@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.endpoint.32.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.dram.endpoint.32.behavioral@rows=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.endpoint.32.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.dram.scalable-endpoint.32.behavioral@rows=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.endpoint.32.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.dram.endpoint.32.behavioral@depth=64@rows=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.endpoint.32.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 19;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.dram.scalable-endpoint.32.behavioral@depth=64@rows=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.endpoint.32.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 19;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.dram.endpoint.32.behavioral@depth=128@rows=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.endpoint.32.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 19;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.dram.scalable-endpoint.32.behavioral@depth=128@rows=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.endpoint.32.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 19;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.dram.endpoint.32.behavioral@depth=64@rows=8", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.endpoint.32.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 19;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.dram.scalable-endpoint.32.behavioral@depth=64@rows=8", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.endpoint.32.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 19;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.dram.endpoint.32.behavioral@depth=128@rows=8", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.endpoint.32.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 20;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.dram.scalable-endpoint.32.behavioral@depth=128@rows=8", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.endpoint.32.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 20;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.dram.endpoint.32.behavioral@depth=64@rows=16", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.endpoint.32.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 21;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.dram.scalable-endpoint.32.behavioral@depth=64@rows=16", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.endpoint.32.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 21;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.dram.endpoint.32.behavioral@depth=128@rows=16", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.endpoint.32.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 21;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.dram.scalable-endpoint.32.behavioral@depth=128@rows=16", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.endpoint.32.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 21;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
 {"memory.dram.endpoint.8.behavioral", [] {
     PartDelays t;
     t.evidence = "proven on memory.dram.endpoint.8.structural";
@@ -2127,6 +5020,446 @@
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
     t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.dram.endpoint.8.behavioral@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.endpoint.8.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.dram.scalable-endpoint.8.behavioral@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.endpoint.8.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.dram.endpoint.8.behavioral@depth=64@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.endpoint.8.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.dram.scalable-endpoint.8.behavioral@depth=64@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.endpoint.8.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.dram.endpoint.8.behavioral@depth=128@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.endpoint.8.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.dram.scalable-endpoint.8.behavioral@depth=128@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.endpoint.8.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.dram.endpoint.8.behavioral@rows=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.endpoint.8.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.dram.scalable-endpoint.8.behavioral@rows=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.endpoint.8.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.dram.endpoint.8.behavioral@depth=64@rows=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.endpoint.8.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 19;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.dram.scalable-endpoint.8.behavioral@depth=64@rows=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.endpoint.8.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 19;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.dram.endpoint.8.behavioral@depth=128@rows=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.endpoint.8.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 19;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.dram.scalable-endpoint.8.behavioral@depth=128@rows=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.endpoint.8.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 19;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.dram.endpoint.8.behavioral@depth=64@rows=8", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.endpoint.8.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 19;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.dram.scalable-endpoint.8.behavioral@depth=64@rows=8", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.endpoint.8.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 19;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.dram.endpoint.8.behavioral@depth=128@rows=8", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.endpoint.8.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 20;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.dram.scalable-endpoint.8.behavioral@depth=128@rows=8", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.endpoint.8.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 20;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.dram.endpoint.8.behavioral@depth=64@rows=16", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.endpoint.8.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 21;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.dram.scalable-endpoint.8.behavioral@depth=64@rows=16", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.endpoint.8.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 21;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.dram.endpoint.8.behavioral@depth=128@rows=16", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.endpoint.8.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 21;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.dram.scalable-endpoint.8.behavioral@depth=128@rows=16", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.endpoint.8.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 21;
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
@@ -4643,6 +7976,204 @@
     t.self_timed = true;
     return t;
 }()},
+{"memory.nor-flash.device.16.behavioral@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.nor-flash.device.16.structural";
+    t.arcs = {
+        Arc{"CLK", "BUSY", {1, 1}},
+        Arc{"CLK", "ERROR", {1, 1}},
+        Arc{"CLK", "READ_DATA", {2, 15}},
+        Arc{"CLK", "READ_VALID", {1, 1}},
+        Arc{"CLK", "WRITE_ENABLED", {1, 1}},
+        Arc{"CMD", "BUSY", {1, 1}},
+        Arc{"CMD", "ERROR", {1, 1}},
+        Arc{"CMD", "READ_DATA", {2, 15}},
+        Arc{"CMD", "READ_VALID", {1, 1}},
+        Arc{"CMD", "WRITE_ENABLED", {1, 1}},
+        Arc{"WORD_ADDR", "BUSY", {1, 1}},
+        Arc{"WORD_ADDR", "ERROR", {1, 1}},
+        Arc{"WORD_ADDR", "READ_DATA", {2, 15}},
+        Arc{"WORD_ADDR", "READ_VALID", {1, 1}},
+        Arc{"WORD_ADDR", "WRITE_ENABLED", {1, 1}},
+        Arc{"WRITE_DATA", "BUSY", {1, 1}},
+        Arc{"WRITE_DATA", "ERROR", {1, 1}},
+        Arc{"WRITE_DATA", "READ_DATA", {2, 15}},
+        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
+        Arc{"WRITE_DATA", "WRITE_ENABLED", {1, 1}},
+        Arc{"WRITE_MASK", "BUSY", {1, 1}},
+        Arc{"WRITE_MASK", "ERROR", {1, 1}},
+        Arc{"WRITE_MASK", "READ_DATA", {2, 15}},
+        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
+        Arc{"WRITE_MASK", "WRITE_ENABLED", {1, 1}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.nor-flash.scalable-device.16.behavioral@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.nor-flash.device.16.structural";
+    t.arcs = {
+        Arc{"CLK", "BUSY", {1, 1}},
+        Arc{"CLK", "ERROR", {1, 1}},
+        Arc{"CLK", "READ_DATA", {2, 15}},
+        Arc{"CLK", "READ_VALID", {1, 1}},
+        Arc{"CLK", "WRITE_ENABLED", {1, 1}},
+        Arc{"CMD", "BUSY", {1, 1}},
+        Arc{"CMD", "ERROR", {1, 1}},
+        Arc{"CMD", "READ_DATA", {2, 15}},
+        Arc{"CMD", "READ_VALID", {1, 1}},
+        Arc{"CMD", "WRITE_ENABLED", {1, 1}},
+        Arc{"WORD_ADDR", "BUSY", {1, 1}},
+        Arc{"WORD_ADDR", "ERROR", {1, 1}},
+        Arc{"WORD_ADDR", "READ_DATA", {2, 15}},
+        Arc{"WORD_ADDR", "READ_VALID", {1, 1}},
+        Arc{"WORD_ADDR", "WRITE_ENABLED", {1, 1}},
+        Arc{"WRITE_DATA", "BUSY", {1, 1}},
+        Arc{"WRITE_DATA", "ERROR", {1, 1}},
+        Arc{"WRITE_DATA", "READ_DATA", {2, 15}},
+        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
+        Arc{"WRITE_DATA", "WRITE_ENABLED", {1, 1}},
+        Arc{"WRITE_MASK", "BUSY", {1, 1}},
+        Arc{"WRITE_MASK", "ERROR", {1, 1}},
+        Arc{"WRITE_MASK", "READ_DATA", {2, 15}},
+        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
+        Arc{"WRITE_MASK", "WRITE_ENABLED", {1, 1}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.nor-flash.device.16.behavioral@depth=64@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.nor-flash.device.16.structural";
+    t.arcs = {
+        Arc{"CLK", "BUSY", {1, 1}},
+        Arc{"CLK", "ERROR", {1, 1}},
+        Arc{"CLK", "READ_DATA", {2, 16}},
+        Arc{"CLK", "READ_VALID", {1, 1}},
+        Arc{"CLK", "WRITE_ENABLED", {1, 1}},
+        Arc{"CMD", "BUSY", {1, 1}},
+        Arc{"CMD", "ERROR", {1, 1}},
+        Arc{"CMD", "READ_DATA", {2, 16}},
+        Arc{"CMD", "READ_VALID", {1, 1}},
+        Arc{"CMD", "WRITE_ENABLED", {1, 1}},
+        Arc{"WORD_ADDR", "BUSY", {1, 1}},
+        Arc{"WORD_ADDR", "ERROR", {1, 1}},
+        Arc{"WORD_ADDR", "READ_DATA", {2, 16}},
+        Arc{"WORD_ADDR", "READ_VALID", {1, 1}},
+        Arc{"WORD_ADDR", "WRITE_ENABLED", {1, 1}},
+        Arc{"WRITE_DATA", "BUSY", {1, 1}},
+        Arc{"WRITE_DATA", "ERROR", {1, 1}},
+        Arc{"WRITE_DATA", "READ_DATA", {2, 16}},
+        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
+        Arc{"WRITE_DATA", "WRITE_ENABLED", {1, 1}},
+        Arc{"WRITE_MASK", "BUSY", {1, 1}},
+        Arc{"WRITE_MASK", "ERROR", {1, 1}},
+        Arc{"WRITE_MASK", "READ_DATA", {2, 16}},
+        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
+        Arc{"WRITE_MASK", "WRITE_ENABLED", {1, 1}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.nor-flash.scalable-device.16.behavioral@depth=64@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.nor-flash.device.16.structural";
+    t.arcs = {
+        Arc{"CLK", "BUSY", {1, 1}},
+        Arc{"CLK", "ERROR", {1, 1}},
+        Arc{"CLK", "READ_DATA", {2, 16}},
+        Arc{"CLK", "READ_VALID", {1, 1}},
+        Arc{"CLK", "WRITE_ENABLED", {1, 1}},
+        Arc{"CMD", "BUSY", {1, 1}},
+        Arc{"CMD", "ERROR", {1, 1}},
+        Arc{"CMD", "READ_DATA", {2, 16}},
+        Arc{"CMD", "READ_VALID", {1, 1}},
+        Arc{"CMD", "WRITE_ENABLED", {1, 1}},
+        Arc{"WORD_ADDR", "BUSY", {1, 1}},
+        Arc{"WORD_ADDR", "ERROR", {1, 1}},
+        Arc{"WORD_ADDR", "READ_DATA", {2, 16}},
+        Arc{"WORD_ADDR", "READ_VALID", {1, 1}},
+        Arc{"WORD_ADDR", "WRITE_ENABLED", {1, 1}},
+        Arc{"WRITE_DATA", "BUSY", {1, 1}},
+        Arc{"WRITE_DATA", "ERROR", {1, 1}},
+        Arc{"WRITE_DATA", "READ_DATA", {2, 16}},
+        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
+        Arc{"WRITE_DATA", "WRITE_ENABLED", {1, 1}},
+        Arc{"WRITE_MASK", "BUSY", {1, 1}},
+        Arc{"WRITE_MASK", "ERROR", {1, 1}},
+        Arc{"WRITE_MASK", "READ_DATA", {2, 16}},
+        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
+        Arc{"WRITE_MASK", "WRITE_ENABLED", {1, 1}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.nor-flash.device.16.behavioral@depth=128@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.nor-flash.device.16.structural";
+    t.arcs = {
+        Arc{"CLK", "BUSY", {1, 1}},
+        Arc{"CLK", "ERROR", {1, 1}},
+        Arc{"CLK", "READ_DATA", {2, 16}},
+        Arc{"CLK", "READ_VALID", {1, 1}},
+        Arc{"CLK", "WRITE_ENABLED", {1, 1}},
+        Arc{"CMD", "BUSY", {1, 1}},
+        Arc{"CMD", "ERROR", {1, 1}},
+        Arc{"CMD", "READ_DATA", {2, 16}},
+        Arc{"CMD", "READ_VALID", {1, 1}},
+        Arc{"CMD", "WRITE_ENABLED", {1, 1}},
+        Arc{"WORD_ADDR", "BUSY", {1, 1}},
+        Arc{"WORD_ADDR", "ERROR", {1, 1}},
+        Arc{"WORD_ADDR", "READ_DATA", {2, 16}},
+        Arc{"WORD_ADDR", "READ_VALID", {1, 1}},
+        Arc{"WORD_ADDR", "WRITE_ENABLED", {1, 1}},
+        Arc{"WRITE_DATA", "BUSY", {1, 1}},
+        Arc{"WRITE_DATA", "ERROR", {1, 1}},
+        Arc{"WRITE_DATA", "READ_DATA", {2, 16}},
+        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
+        Arc{"WRITE_DATA", "WRITE_ENABLED", {1, 1}},
+        Arc{"WRITE_MASK", "BUSY", {1, 1}},
+        Arc{"WRITE_MASK", "ERROR", {1, 1}},
+        Arc{"WRITE_MASK", "READ_DATA", {2, 16}},
+        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
+        Arc{"WRITE_MASK", "WRITE_ENABLED", {1, 1}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.nor-flash.scalable-device.16.behavioral@depth=128@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.nor-flash.device.16.structural";
+    t.arcs = {
+        Arc{"CLK", "BUSY", {1, 1}},
+        Arc{"CLK", "ERROR", {1, 1}},
+        Arc{"CLK", "READ_DATA", {2, 16}},
+        Arc{"CLK", "READ_VALID", {1, 1}},
+        Arc{"CLK", "WRITE_ENABLED", {1, 1}},
+        Arc{"CMD", "BUSY", {1, 1}},
+        Arc{"CMD", "ERROR", {1, 1}},
+        Arc{"CMD", "READ_DATA", {2, 16}},
+        Arc{"CMD", "READ_VALID", {1, 1}},
+        Arc{"CMD", "WRITE_ENABLED", {1, 1}},
+        Arc{"WORD_ADDR", "BUSY", {1, 1}},
+        Arc{"WORD_ADDR", "ERROR", {1, 1}},
+        Arc{"WORD_ADDR", "READ_DATA", {2, 16}},
+        Arc{"WORD_ADDR", "READ_VALID", {1, 1}},
+        Arc{"WORD_ADDR", "WRITE_ENABLED", {1, 1}},
+        Arc{"WRITE_DATA", "BUSY", {1, 1}},
+        Arc{"WRITE_DATA", "ERROR", {1, 1}},
+        Arc{"WRITE_DATA", "READ_DATA", {2, 16}},
+        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
+        Arc{"WRITE_DATA", "WRITE_ENABLED", {1, 1}},
+        Arc{"WRITE_MASK", "BUSY", {1, 1}},
+        Arc{"WRITE_MASK", "ERROR", {1, 1}},
+        Arc{"WRITE_MASK", "READ_DATA", {2, 16}},
+        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
+        Arc{"WRITE_MASK", "WRITE_ENABLED", {1, 1}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
 {"memory.nor-flash.device.32.behavioral", [] {
     PartDelays t;
     t.evidence = "proven on memory.nor-flash.device.32.structural";
@@ -4835,6 +8366,204 @@
         Arc{"WRITE_MASK", "BUSY", {1, 1}},
         Arc{"WRITE_MASK", "ERROR", {1, 1}},
         Arc{"WRITE_MASK", "READ_DATA", {2, 17}},
+        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
+        Arc{"WRITE_MASK", "WRITE_ENABLED", {1, 1}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.nor-flash.device.32.behavioral@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.nor-flash.device.32.structural";
+    t.arcs = {
+        Arc{"CLK", "BUSY", {1, 1}},
+        Arc{"CLK", "ERROR", {1, 1}},
+        Arc{"CLK", "READ_DATA", {2, 15}},
+        Arc{"CLK", "READ_VALID", {1, 1}},
+        Arc{"CLK", "WRITE_ENABLED", {1, 1}},
+        Arc{"CMD", "BUSY", {1, 1}},
+        Arc{"CMD", "ERROR", {1, 1}},
+        Arc{"CMD", "READ_DATA", {2, 15}},
+        Arc{"CMD", "READ_VALID", {1, 1}},
+        Arc{"CMD", "WRITE_ENABLED", {1, 1}},
+        Arc{"WORD_ADDR", "BUSY", {1, 1}},
+        Arc{"WORD_ADDR", "ERROR", {1, 1}},
+        Arc{"WORD_ADDR", "READ_DATA", {2, 15}},
+        Arc{"WORD_ADDR", "READ_VALID", {1, 1}},
+        Arc{"WORD_ADDR", "WRITE_ENABLED", {1, 1}},
+        Arc{"WRITE_DATA", "BUSY", {1, 1}},
+        Arc{"WRITE_DATA", "ERROR", {1, 1}},
+        Arc{"WRITE_DATA", "READ_DATA", {2, 15}},
+        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
+        Arc{"WRITE_DATA", "WRITE_ENABLED", {1, 1}},
+        Arc{"WRITE_MASK", "BUSY", {1, 1}},
+        Arc{"WRITE_MASK", "ERROR", {1, 1}},
+        Arc{"WRITE_MASK", "READ_DATA", {2, 15}},
+        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
+        Arc{"WRITE_MASK", "WRITE_ENABLED", {1, 1}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.nor-flash.scalable-device.32.behavioral@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.nor-flash.device.32.structural";
+    t.arcs = {
+        Arc{"CLK", "BUSY", {1, 1}},
+        Arc{"CLK", "ERROR", {1, 1}},
+        Arc{"CLK", "READ_DATA", {2, 15}},
+        Arc{"CLK", "READ_VALID", {1, 1}},
+        Arc{"CLK", "WRITE_ENABLED", {1, 1}},
+        Arc{"CMD", "BUSY", {1, 1}},
+        Arc{"CMD", "ERROR", {1, 1}},
+        Arc{"CMD", "READ_DATA", {2, 15}},
+        Arc{"CMD", "READ_VALID", {1, 1}},
+        Arc{"CMD", "WRITE_ENABLED", {1, 1}},
+        Arc{"WORD_ADDR", "BUSY", {1, 1}},
+        Arc{"WORD_ADDR", "ERROR", {1, 1}},
+        Arc{"WORD_ADDR", "READ_DATA", {2, 15}},
+        Arc{"WORD_ADDR", "READ_VALID", {1, 1}},
+        Arc{"WORD_ADDR", "WRITE_ENABLED", {1, 1}},
+        Arc{"WRITE_DATA", "BUSY", {1, 1}},
+        Arc{"WRITE_DATA", "ERROR", {1, 1}},
+        Arc{"WRITE_DATA", "READ_DATA", {2, 15}},
+        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
+        Arc{"WRITE_DATA", "WRITE_ENABLED", {1, 1}},
+        Arc{"WRITE_MASK", "BUSY", {1, 1}},
+        Arc{"WRITE_MASK", "ERROR", {1, 1}},
+        Arc{"WRITE_MASK", "READ_DATA", {2, 15}},
+        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
+        Arc{"WRITE_MASK", "WRITE_ENABLED", {1, 1}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.nor-flash.device.32.behavioral@depth=64@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.nor-flash.device.32.structural";
+    t.arcs = {
+        Arc{"CLK", "BUSY", {1, 1}},
+        Arc{"CLK", "ERROR", {1, 1}},
+        Arc{"CLK", "READ_DATA", {2, 16}},
+        Arc{"CLK", "READ_VALID", {1, 1}},
+        Arc{"CLK", "WRITE_ENABLED", {1, 1}},
+        Arc{"CMD", "BUSY", {1, 1}},
+        Arc{"CMD", "ERROR", {1, 1}},
+        Arc{"CMD", "READ_DATA", {2, 16}},
+        Arc{"CMD", "READ_VALID", {1, 1}},
+        Arc{"CMD", "WRITE_ENABLED", {1, 1}},
+        Arc{"WORD_ADDR", "BUSY", {1, 1}},
+        Arc{"WORD_ADDR", "ERROR", {1, 1}},
+        Arc{"WORD_ADDR", "READ_DATA", {2, 16}},
+        Arc{"WORD_ADDR", "READ_VALID", {1, 1}},
+        Arc{"WORD_ADDR", "WRITE_ENABLED", {1, 1}},
+        Arc{"WRITE_DATA", "BUSY", {1, 1}},
+        Arc{"WRITE_DATA", "ERROR", {1, 1}},
+        Arc{"WRITE_DATA", "READ_DATA", {2, 16}},
+        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
+        Arc{"WRITE_DATA", "WRITE_ENABLED", {1, 1}},
+        Arc{"WRITE_MASK", "BUSY", {1, 1}},
+        Arc{"WRITE_MASK", "ERROR", {1, 1}},
+        Arc{"WRITE_MASK", "READ_DATA", {2, 16}},
+        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
+        Arc{"WRITE_MASK", "WRITE_ENABLED", {1, 1}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.nor-flash.scalable-device.32.behavioral@depth=64@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.nor-flash.device.32.structural";
+    t.arcs = {
+        Arc{"CLK", "BUSY", {1, 1}},
+        Arc{"CLK", "ERROR", {1, 1}},
+        Arc{"CLK", "READ_DATA", {2, 16}},
+        Arc{"CLK", "READ_VALID", {1, 1}},
+        Arc{"CLK", "WRITE_ENABLED", {1, 1}},
+        Arc{"CMD", "BUSY", {1, 1}},
+        Arc{"CMD", "ERROR", {1, 1}},
+        Arc{"CMD", "READ_DATA", {2, 16}},
+        Arc{"CMD", "READ_VALID", {1, 1}},
+        Arc{"CMD", "WRITE_ENABLED", {1, 1}},
+        Arc{"WORD_ADDR", "BUSY", {1, 1}},
+        Arc{"WORD_ADDR", "ERROR", {1, 1}},
+        Arc{"WORD_ADDR", "READ_DATA", {2, 16}},
+        Arc{"WORD_ADDR", "READ_VALID", {1, 1}},
+        Arc{"WORD_ADDR", "WRITE_ENABLED", {1, 1}},
+        Arc{"WRITE_DATA", "BUSY", {1, 1}},
+        Arc{"WRITE_DATA", "ERROR", {1, 1}},
+        Arc{"WRITE_DATA", "READ_DATA", {2, 16}},
+        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
+        Arc{"WRITE_DATA", "WRITE_ENABLED", {1, 1}},
+        Arc{"WRITE_MASK", "BUSY", {1, 1}},
+        Arc{"WRITE_MASK", "ERROR", {1, 1}},
+        Arc{"WRITE_MASK", "READ_DATA", {2, 16}},
+        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
+        Arc{"WRITE_MASK", "WRITE_ENABLED", {1, 1}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.nor-flash.device.32.behavioral@depth=128@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.nor-flash.device.32.structural";
+    t.arcs = {
+        Arc{"CLK", "BUSY", {1, 1}},
+        Arc{"CLK", "ERROR", {1, 1}},
+        Arc{"CLK", "READ_DATA", {2, 16}},
+        Arc{"CLK", "READ_VALID", {1, 1}},
+        Arc{"CLK", "WRITE_ENABLED", {1, 1}},
+        Arc{"CMD", "BUSY", {1, 1}},
+        Arc{"CMD", "ERROR", {1, 1}},
+        Arc{"CMD", "READ_DATA", {2, 16}},
+        Arc{"CMD", "READ_VALID", {1, 1}},
+        Arc{"CMD", "WRITE_ENABLED", {1, 1}},
+        Arc{"WORD_ADDR", "BUSY", {1, 1}},
+        Arc{"WORD_ADDR", "ERROR", {1, 1}},
+        Arc{"WORD_ADDR", "READ_DATA", {2, 16}},
+        Arc{"WORD_ADDR", "READ_VALID", {1, 1}},
+        Arc{"WORD_ADDR", "WRITE_ENABLED", {1, 1}},
+        Arc{"WRITE_DATA", "BUSY", {1, 1}},
+        Arc{"WRITE_DATA", "ERROR", {1, 1}},
+        Arc{"WRITE_DATA", "READ_DATA", {2, 16}},
+        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
+        Arc{"WRITE_DATA", "WRITE_ENABLED", {1, 1}},
+        Arc{"WRITE_MASK", "BUSY", {1, 1}},
+        Arc{"WRITE_MASK", "ERROR", {1, 1}},
+        Arc{"WRITE_MASK", "READ_DATA", {2, 16}},
+        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
+        Arc{"WRITE_MASK", "WRITE_ENABLED", {1, 1}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.nor-flash.scalable-device.32.behavioral@depth=128@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.nor-flash.device.32.structural";
+    t.arcs = {
+        Arc{"CLK", "BUSY", {1, 1}},
+        Arc{"CLK", "ERROR", {1, 1}},
+        Arc{"CLK", "READ_DATA", {2, 16}},
+        Arc{"CLK", "READ_VALID", {1, 1}},
+        Arc{"CLK", "WRITE_ENABLED", {1, 1}},
+        Arc{"CMD", "BUSY", {1, 1}},
+        Arc{"CMD", "ERROR", {1, 1}},
+        Arc{"CMD", "READ_DATA", {2, 16}},
+        Arc{"CMD", "READ_VALID", {1, 1}},
+        Arc{"CMD", "WRITE_ENABLED", {1, 1}},
+        Arc{"WORD_ADDR", "BUSY", {1, 1}},
+        Arc{"WORD_ADDR", "ERROR", {1, 1}},
+        Arc{"WORD_ADDR", "READ_DATA", {2, 16}},
+        Arc{"WORD_ADDR", "READ_VALID", {1, 1}},
+        Arc{"WORD_ADDR", "WRITE_ENABLED", {1, 1}},
+        Arc{"WRITE_DATA", "BUSY", {1, 1}},
+        Arc{"WRITE_DATA", "ERROR", {1, 1}},
+        Arc{"WRITE_DATA", "READ_DATA", {2, 16}},
+        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
+        Arc{"WRITE_DATA", "WRITE_ENABLED", {1, 1}},
+        Arc{"WRITE_MASK", "BUSY", {1, 1}},
+        Arc{"WRITE_MASK", "ERROR", {1, 1}},
+        Arc{"WRITE_MASK", "READ_DATA", {2, 16}},
         Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
         Arc{"WRITE_MASK", "WRITE_ENABLED", {1, 1}},
     };
@@ -5039,6 +8768,204 @@
     t.self_timed = true;
     return t;
 }()},
+{"memory.nor-flash.device.8.behavioral@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.nor-flash.device.8.structural";
+    t.arcs = {
+        Arc{"CLK", "BUSY", {1, 1}},
+        Arc{"CLK", "ERROR", {1, 1}},
+        Arc{"CLK", "READ_DATA", {2, 15}},
+        Arc{"CLK", "READ_VALID", {1, 1}},
+        Arc{"CLK", "WRITE_ENABLED", {1, 1}},
+        Arc{"CMD", "BUSY", {1, 1}},
+        Arc{"CMD", "ERROR", {1, 1}},
+        Arc{"CMD", "READ_DATA", {2, 15}},
+        Arc{"CMD", "READ_VALID", {1, 1}},
+        Arc{"CMD", "WRITE_ENABLED", {1, 1}},
+        Arc{"WORD_ADDR", "BUSY", {1, 1}},
+        Arc{"WORD_ADDR", "ERROR", {1, 1}},
+        Arc{"WORD_ADDR", "READ_DATA", {2, 15}},
+        Arc{"WORD_ADDR", "READ_VALID", {1, 1}},
+        Arc{"WORD_ADDR", "WRITE_ENABLED", {1, 1}},
+        Arc{"WRITE_DATA", "BUSY", {1, 1}},
+        Arc{"WRITE_DATA", "ERROR", {1, 1}},
+        Arc{"WRITE_DATA", "READ_DATA", {2, 15}},
+        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
+        Arc{"WRITE_DATA", "WRITE_ENABLED", {1, 1}},
+        Arc{"WRITE_MASK", "BUSY", {1, 1}},
+        Arc{"WRITE_MASK", "ERROR", {1, 1}},
+        Arc{"WRITE_MASK", "READ_DATA", {2, 15}},
+        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
+        Arc{"WRITE_MASK", "WRITE_ENABLED", {1, 1}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.nor-flash.scalable-device.8.behavioral@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.nor-flash.device.8.structural";
+    t.arcs = {
+        Arc{"CLK", "BUSY", {1, 1}},
+        Arc{"CLK", "ERROR", {1, 1}},
+        Arc{"CLK", "READ_DATA", {2, 15}},
+        Arc{"CLK", "READ_VALID", {1, 1}},
+        Arc{"CLK", "WRITE_ENABLED", {1, 1}},
+        Arc{"CMD", "BUSY", {1, 1}},
+        Arc{"CMD", "ERROR", {1, 1}},
+        Arc{"CMD", "READ_DATA", {2, 15}},
+        Arc{"CMD", "READ_VALID", {1, 1}},
+        Arc{"CMD", "WRITE_ENABLED", {1, 1}},
+        Arc{"WORD_ADDR", "BUSY", {1, 1}},
+        Arc{"WORD_ADDR", "ERROR", {1, 1}},
+        Arc{"WORD_ADDR", "READ_DATA", {2, 15}},
+        Arc{"WORD_ADDR", "READ_VALID", {1, 1}},
+        Arc{"WORD_ADDR", "WRITE_ENABLED", {1, 1}},
+        Arc{"WRITE_DATA", "BUSY", {1, 1}},
+        Arc{"WRITE_DATA", "ERROR", {1, 1}},
+        Arc{"WRITE_DATA", "READ_DATA", {2, 15}},
+        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
+        Arc{"WRITE_DATA", "WRITE_ENABLED", {1, 1}},
+        Arc{"WRITE_MASK", "BUSY", {1, 1}},
+        Arc{"WRITE_MASK", "ERROR", {1, 1}},
+        Arc{"WRITE_MASK", "READ_DATA", {2, 15}},
+        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
+        Arc{"WRITE_MASK", "WRITE_ENABLED", {1, 1}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.nor-flash.device.8.behavioral@depth=64@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.nor-flash.device.8.structural";
+    t.arcs = {
+        Arc{"CLK", "BUSY", {1, 1}},
+        Arc{"CLK", "ERROR", {1, 1}},
+        Arc{"CLK", "READ_DATA", {2, 16}},
+        Arc{"CLK", "READ_VALID", {1, 1}},
+        Arc{"CLK", "WRITE_ENABLED", {1, 1}},
+        Arc{"CMD", "BUSY", {1, 1}},
+        Arc{"CMD", "ERROR", {1, 1}},
+        Arc{"CMD", "READ_DATA", {2, 16}},
+        Arc{"CMD", "READ_VALID", {1, 1}},
+        Arc{"CMD", "WRITE_ENABLED", {1, 1}},
+        Arc{"WORD_ADDR", "BUSY", {1, 1}},
+        Arc{"WORD_ADDR", "ERROR", {1, 1}},
+        Arc{"WORD_ADDR", "READ_DATA", {2, 16}},
+        Arc{"WORD_ADDR", "READ_VALID", {1, 1}},
+        Arc{"WORD_ADDR", "WRITE_ENABLED", {1, 1}},
+        Arc{"WRITE_DATA", "BUSY", {1, 1}},
+        Arc{"WRITE_DATA", "ERROR", {1, 1}},
+        Arc{"WRITE_DATA", "READ_DATA", {2, 16}},
+        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
+        Arc{"WRITE_DATA", "WRITE_ENABLED", {1, 1}},
+        Arc{"WRITE_MASK", "BUSY", {1, 1}},
+        Arc{"WRITE_MASK", "ERROR", {1, 1}},
+        Arc{"WRITE_MASK", "READ_DATA", {2, 16}},
+        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
+        Arc{"WRITE_MASK", "WRITE_ENABLED", {1, 1}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.nor-flash.scalable-device.8.behavioral@depth=64@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.nor-flash.device.8.structural";
+    t.arcs = {
+        Arc{"CLK", "BUSY", {1, 1}},
+        Arc{"CLK", "ERROR", {1, 1}},
+        Arc{"CLK", "READ_DATA", {2, 16}},
+        Arc{"CLK", "READ_VALID", {1, 1}},
+        Arc{"CLK", "WRITE_ENABLED", {1, 1}},
+        Arc{"CMD", "BUSY", {1, 1}},
+        Arc{"CMD", "ERROR", {1, 1}},
+        Arc{"CMD", "READ_DATA", {2, 16}},
+        Arc{"CMD", "READ_VALID", {1, 1}},
+        Arc{"CMD", "WRITE_ENABLED", {1, 1}},
+        Arc{"WORD_ADDR", "BUSY", {1, 1}},
+        Arc{"WORD_ADDR", "ERROR", {1, 1}},
+        Arc{"WORD_ADDR", "READ_DATA", {2, 16}},
+        Arc{"WORD_ADDR", "READ_VALID", {1, 1}},
+        Arc{"WORD_ADDR", "WRITE_ENABLED", {1, 1}},
+        Arc{"WRITE_DATA", "BUSY", {1, 1}},
+        Arc{"WRITE_DATA", "ERROR", {1, 1}},
+        Arc{"WRITE_DATA", "READ_DATA", {2, 16}},
+        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
+        Arc{"WRITE_DATA", "WRITE_ENABLED", {1, 1}},
+        Arc{"WRITE_MASK", "BUSY", {1, 1}},
+        Arc{"WRITE_MASK", "ERROR", {1, 1}},
+        Arc{"WRITE_MASK", "READ_DATA", {2, 16}},
+        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
+        Arc{"WRITE_MASK", "WRITE_ENABLED", {1, 1}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.nor-flash.device.8.behavioral@depth=128@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.nor-flash.device.8.structural";
+    t.arcs = {
+        Arc{"CLK", "BUSY", {1, 1}},
+        Arc{"CLK", "ERROR", {1, 1}},
+        Arc{"CLK", "READ_DATA", {2, 16}},
+        Arc{"CLK", "READ_VALID", {1, 1}},
+        Arc{"CLK", "WRITE_ENABLED", {1, 1}},
+        Arc{"CMD", "BUSY", {1, 1}},
+        Arc{"CMD", "ERROR", {1, 1}},
+        Arc{"CMD", "READ_DATA", {2, 16}},
+        Arc{"CMD", "READ_VALID", {1, 1}},
+        Arc{"CMD", "WRITE_ENABLED", {1, 1}},
+        Arc{"WORD_ADDR", "BUSY", {1, 1}},
+        Arc{"WORD_ADDR", "ERROR", {1, 1}},
+        Arc{"WORD_ADDR", "READ_DATA", {2, 16}},
+        Arc{"WORD_ADDR", "READ_VALID", {1, 1}},
+        Arc{"WORD_ADDR", "WRITE_ENABLED", {1, 1}},
+        Arc{"WRITE_DATA", "BUSY", {1, 1}},
+        Arc{"WRITE_DATA", "ERROR", {1, 1}},
+        Arc{"WRITE_DATA", "READ_DATA", {2, 16}},
+        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
+        Arc{"WRITE_DATA", "WRITE_ENABLED", {1, 1}},
+        Arc{"WRITE_MASK", "BUSY", {1, 1}},
+        Arc{"WRITE_MASK", "ERROR", {1, 1}},
+        Arc{"WRITE_MASK", "READ_DATA", {2, 16}},
+        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
+        Arc{"WRITE_MASK", "WRITE_ENABLED", {1, 1}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.nor-flash.scalable-device.8.behavioral@depth=128@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.nor-flash.device.8.structural";
+    t.arcs = {
+        Arc{"CLK", "BUSY", {1, 1}},
+        Arc{"CLK", "ERROR", {1, 1}},
+        Arc{"CLK", "READ_DATA", {2, 16}},
+        Arc{"CLK", "READ_VALID", {1, 1}},
+        Arc{"CLK", "WRITE_ENABLED", {1, 1}},
+        Arc{"CMD", "BUSY", {1, 1}},
+        Arc{"CMD", "ERROR", {1, 1}},
+        Arc{"CMD", "READ_DATA", {2, 16}},
+        Arc{"CMD", "READ_VALID", {1, 1}},
+        Arc{"CMD", "WRITE_ENABLED", {1, 1}},
+        Arc{"WORD_ADDR", "BUSY", {1, 1}},
+        Arc{"WORD_ADDR", "ERROR", {1, 1}},
+        Arc{"WORD_ADDR", "READ_DATA", {2, 16}},
+        Arc{"WORD_ADDR", "READ_VALID", {1, 1}},
+        Arc{"WORD_ADDR", "WRITE_ENABLED", {1, 1}},
+        Arc{"WRITE_DATA", "BUSY", {1, 1}},
+        Arc{"WRITE_DATA", "ERROR", {1, 1}},
+        Arc{"WRITE_DATA", "READ_DATA", {2, 16}},
+        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
+        Arc{"WRITE_DATA", "WRITE_ENABLED", {1, 1}},
+        Arc{"WRITE_MASK", "BUSY", {1, 1}},
+        Arc{"WRITE_MASK", "ERROR", {1, 1}},
+        Arc{"WRITE_MASK", "READ_DATA", {2, 16}},
+        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
+        Arc{"WRITE_MASK", "WRITE_ENABLED", {1, 1}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
 {"memory.nor-flash.endpoint.16.behavioral", [] {
     PartDelays t;
     t.evidence = "proven on memory.nor-flash.endpoint.16.structural";
@@ -5150,6 +9077,138 @@
     return t;
 }()},
 {"memory.nor-flash.scalable-endpoint.16.behavioral@depth=128", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.nor-flash.endpoint.16.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.nor-flash.endpoint.16.behavioral@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.nor-flash.endpoint.16.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.nor-flash.scalable-endpoint.16.behavioral@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.nor-flash.endpoint.16.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.nor-flash.endpoint.16.behavioral@depth=64@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.nor-flash.endpoint.16.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.nor-flash.scalable-endpoint.16.behavioral@depth=64@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.nor-flash.endpoint.16.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.nor-flash.endpoint.16.behavioral@depth=128@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.nor-flash.endpoint.16.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.nor-flash.scalable-endpoint.16.behavioral@depth=128@rows=1", [] {
     PartDelays t;
     t.evidence = "proven on memory.nor-flash.endpoint.16.structural";
     t.arcs = {
@@ -5303,6 +9362,138 @@
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
+{"memory.nor-flash.endpoint.32.behavioral@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.nor-flash.endpoint.32.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.nor-flash.scalable-endpoint.32.behavioral@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.nor-flash.endpoint.32.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.nor-flash.endpoint.32.behavioral@depth=64@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.nor-flash.endpoint.32.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.nor-flash.scalable-endpoint.32.behavioral@depth=64@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.nor-flash.endpoint.32.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.nor-flash.endpoint.32.behavioral@depth=128@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.nor-flash.endpoint.32.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.nor-flash.scalable-endpoint.32.behavioral@depth=128@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.nor-flash.endpoint.32.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
 {"memory.nor-flash.endpoint.8.behavioral", [] {
     PartDelays t;
     t.evidence = "proven on memory.nor-flash.endpoint.8.structural";
@@ -5414,6 +9605,138 @@
     return t;
 }()},
 {"memory.nor-flash.scalable-endpoint.8.behavioral@depth=128", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.nor-flash.endpoint.8.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.nor-flash.endpoint.8.behavioral@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.nor-flash.endpoint.8.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.nor-flash.scalable-endpoint.8.behavioral@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.nor-flash.endpoint.8.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.nor-flash.endpoint.8.behavioral@depth=64@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.nor-flash.endpoint.8.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.nor-flash.scalable-endpoint.8.behavioral@depth=64@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.nor-flash.endpoint.8.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.nor-flash.endpoint.8.behavioral@depth=128@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.nor-flash.endpoint.8.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.nor-flash.scalable-endpoint.8.behavioral@depth=128@rows=1", [] {
     PartDelays t;
     t.evidence = "proven on memory.nor-flash.endpoint.8.structural";
     t.arcs = {
@@ -5842,6 +10165,206 @@
     };
     return t;
 }()},
+{"memory.rom.device.16.behavioral@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.device.16.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {2, 14}},
+        Arc{"OE_N", "READ_DATA", {2, 14}},
+        Arc{"WORD_ADDR", "READ_DATA", {2, 14}},
+    };
+    return t;
+}()},
+{"memory.rom.scalable-device.16.behavioral@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.device.16.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {2, 14}},
+        Arc{"OE_N", "READ_DATA", {2, 14}},
+        Arc{"WORD_ADDR", "READ_DATA", {2, 14}},
+    };
+    return t;
+}()},
+{"memory.rom.device.16.behavioral@depth=64@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.device.16.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {2, 15}},
+        Arc{"OE_N", "READ_DATA", {2, 15}},
+        Arc{"WORD_ADDR", "READ_DATA", {2, 15}},
+    };
+    return t;
+}()},
+{"memory.rom.scalable-device.16.behavioral@depth=64@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.device.16.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {2, 15}},
+        Arc{"OE_N", "READ_DATA", {2, 15}},
+        Arc{"WORD_ADDR", "READ_DATA", {2, 15}},
+    };
+    return t;
+}()},
+{"memory.rom.device.16.behavioral@depth=128@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.device.16.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {2, 15}},
+        Arc{"OE_N", "READ_DATA", {2, 15}},
+        Arc{"WORD_ADDR", "READ_DATA", {2, 15}},
+    };
+    return t;
+}()},
+{"memory.rom.scalable-device.16.behavioral@depth=128@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.device.16.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {2, 15}},
+        Arc{"OE_N", "READ_DATA", {2, 15}},
+        Arc{"WORD_ADDR", "READ_DATA", {2, 15}},
+    };
+    return t;
+}()},
+{"memory.rom.device.16.behavioral@rows=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.device.16.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {2, 15}},
+        Arc{"OE_N", "READ_DATA", {2, 15}},
+        Arc{"WORD_ADDR", "READ_DATA", {2, 15}},
+    };
+    return t;
+}()},
+{"memory.rom.scalable-device.16.behavioral@rows=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.device.16.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {2, 15}},
+        Arc{"OE_N", "READ_DATA", {2, 15}},
+        Arc{"WORD_ADDR", "READ_DATA", {2, 15}},
+    };
+    return t;
+}()},
+{"memory.rom.device.16.behavioral@depth=64@rows=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.device.16.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {2, 17}},
+        Arc{"OE_N", "READ_DATA", {2, 17}},
+        Arc{"WORD_ADDR", "READ_DATA", {2, 17}},
+    };
+    return t;
+}()},
+{"memory.rom.scalable-device.16.behavioral@depth=64@rows=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.device.16.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {2, 17}},
+        Arc{"OE_N", "READ_DATA", {2, 17}},
+        Arc{"WORD_ADDR", "READ_DATA", {2, 17}},
+    };
+    return t;
+}()},
+{"memory.rom.device.16.behavioral@depth=128@rows=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.device.16.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {2, 17}},
+        Arc{"OE_N", "READ_DATA", {2, 17}},
+        Arc{"WORD_ADDR", "READ_DATA", {2, 17}},
+    };
+    return t;
+}()},
+{"memory.rom.scalable-device.16.behavioral@depth=128@rows=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.device.16.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {2, 17}},
+        Arc{"OE_N", "READ_DATA", {2, 17}},
+        Arc{"WORD_ADDR", "READ_DATA", {2, 17}},
+    };
+    return t;
+}()},
+{"memory.rom.device.16.behavioral@depth=64@rows=8", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.device.16.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {2, 17}},
+        Arc{"OE_N", "READ_DATA", {2, 17}},
+        Arc{"WORD_ADDR", "READ_DATA", {2, 17}},
+    };
+    return t;
+}()},
+{"memory.rom.scalable-device.16.behavioral@depth=64@rows=8", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.device.16.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {2, 17}},
+        Arc{"OE_N", "READ_DATA", {2, 17}},
+        Arc{"WORD_ADDR", "READ_DATA", {2, 17}},
+    };
+    return t;
+}()},
+{"memory.rom.device.16.behavioral@depth=128@rows=8", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.device.16.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {2, 18}},
+        Arc{"OE_N", "READ_DATA", {2, 18}},
+        Arc{"WORD_ADDR", "READ_DATA", {2, 18}},
+    };
+    return t;
+}()},
+{"memory.rom.scalable-device.16.behavioral@depth=128@rows=8", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.device.16.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {2, 18}},
+        Arc{"OE_N", "READ_DATA", {2, 18}},
+        Arc{"WORD_ADDR", "READ_DATA", {2, 18}},
+    };
+    return t;
+}()},
+{"memory.rom.device.16.behavioral@depth=64@rows=16", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.device.16.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {2, 18}},
+        Arc{"OE_N", "READ_DATA", {2, 18}},
+        Arc{"WORD_ADDR", "READ_DATA", {2, 18}},
+    };
+    return t;
+}()},
+{"memory.rom.scalable-device.16.behavioral@depth=64@rows=16", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.device.16.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {2, 18}},
+        Arc{"OE_N", "READ_DATA", {2, 18}},
+        Arc{"WORD_ADDR", "READ_DATA", {2, 18}},
+    };
+    return t;
+}()},
+{"memory.rom.device.16.behavioral@depth=128@rows=16", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.device.16.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {2, 18}},
+        Arc{"OE_N", "READ_DATA", {2, 18}},
+        Arc{"WORD_ADDR", "READ_DATA", {2, 18}},
+    };
+    return t;
+}()},
+{"memory.rom.scalable-device.16.behavioral@depth=128@rows=16", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.device.16.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {2, 18}},
+        Arc{"OE_N", "READ_DATA", {2, 18}},
+        Arc{"WORD_ADDR", "READ_DATA", {2, 18}},
+    };
+    return t;
+}()},
 {"memory.rom.device.32.behavioral", [] {
     PartDelays t;
     t.evidence = "proven on memory.rom.device.32.structural";
@@ -5902,6 +10425,206 @@
     };
     return t;
 }()},
+{"memory.rom.device.32.behavioral@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.device.32.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {2, 14}},
+        Arc{"OE_N", "READ_DATA", {2, 14}},
+        Arc{"WORD_ADDR", "READ_DATA", {2, 14}},
+    };
+    return t;
+}()},
+{"memory.rom.scalable-device.32.behavioral@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.device.32.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {2, 14}},
+        Arc{"OE_N", "READ_DATA", {2, 14}},
+        Arc{"WORD_ADDR", "READ_DATA", {2, 14}},
+    };
+    return t;
+}()},
+{"memory.rom.device.32.behavioral@depth=64@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.device.32.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {2, 15}},
+        Arc{"OE_N", "READ_DATA", {2, 15}},
+        Arc{"WORD_ADDR", "READ_DATA", {2, 15}},
+    };
+    return t;
+}()},
+{"memory.rom.scalable-device.32.behavioral@depth=64@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.device.32.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {2, 15}},
+        Arc{"OE_N", "READ_DATA", {2, 15}},
+        Arc{"WORD_ADDR", "READ_DATA", {2, 15}},
+    };
+    return t;
+}()},
+{"memory.rom.device.32.behavioral@depth=128@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.device.32.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {2, 15}},
+        Arc{"OE_N", "READ_DATA", {2, 15}},
+        Arc{"WORD_ADDR", "READ_DATA", {2, 15}},
+    };
+    return t;
+}()},
+{"memory.rom.scalable-device.32.behavioral@depth=128@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.device.32.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {2, 15}},
+        Arc{"OE_N", "READ_DATA", {2, 15}},
+        Arc{"WORD_ADDR", "READ_DATA", {2, 15}},
+    };
+    return t;
+}()},
+{"memory.rom.device.32.behavioral@rows=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.device.32.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {2, 15}},
+        Arc{"OE_N", "READ_DATA", {2, 15}},
+        Arc{"WORD_ADDR", "READ_DATA", {2, 15}},
+    };
+    return t;
+}()},
+{"memory.rom.scalable-device.32.behavioral@rows=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.device.32.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {2, 15}},
+        Arc{"OE_N", "READ_DATA", {2, 15}},
+        Arc{"WORD_ADDR", "READ_DATA", {2, 15}},
+    };
+    return t;
+}()},
+{"memory.rom.device.32.behavioral@depth=64@rows=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.device.32.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {2, 17}},
+        Arc{"OE_N", "READ_DATA", {2, 17}},
+        Arc{"WORD_ADDR", "READ_DATA", {2, 17}},
+    };
+    return t;
+}()},
+{"memory.rom.scalable-device.32.behavioral@depth=64@rows=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.device.32.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {2, 17}},
+        Arc{"OE_N", "READ_DATA", {2, 17}},
+        Arc{"WORD_ADDR", "READ_DATA", {2, 17}},
+    };
+    return t;
+}()},
+{"memory.rom.device.32.behavioral@depth=128@rows=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.device.32.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {2, 17}},
+        Arc{"OE_N", "READ_DATA", {2, 17}},
+        Arc{"WORD_ADDR", "READ_DATA", {2, 17}},
+    };
+    return t;
+}()},
+{"memory.rom.scalable-device.32.behavioral@depth=128@rows=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.device.32.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {2, 17}},
+        Arc{"OE_N", "READ_DATA", {2, 17}},
+        Arc{"WORD_ADDR", "READ_DATA", {2, 17}},
+    };
+    return t;
+}()},
+{"memory.rom.device.32.behavioral@depth=64@rows=8", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.device.32.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {2, 17}},
+        Arc{"OE_N", "READ_DATA", {2, 17}},
+        Arc{"WORD_ADDR", "READ_DATA", {2, 17}},
+    };
+    return t;
+}()},
+{"memory.rom.scalable-device.32.behavioral@depth=64@rows=8", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.device.32.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {2, 17}},
+        Arc{"OE_N", "READ_DATA", {2, 17}},
+        Arc{"WORD_ADDR", "READ_DATA", {2, 17}},
+    };
+    return t;
+}()},
+{"memory.rom.device.32.behavioral@depth=128@rows=8", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.device.32.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {2, 18}},
+        Arc{"OE_N", "READ_DATA", {2, 18}},
+        Arc{"WORD_ADDR", "READ_DATA", {2, 18}},
+    };
+    return t;
+}()},
+{"memory.rom.scalable-device.32.behavioral@depth=128@rows=8", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.device.32.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {2, 18}},
+        Arc{"OE_N", "READ_DATA", {2, 18}},
+        Arc{"WORD_ADDR", "READ_DATA", {2, 18}},
+    };
+    return t;
+}()},
+{"memory.rom.device.32.behavioral@depth=64@rows=16", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.device.32.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {2, 18}},
+        Arc{"OE_N", "READ_DATA", {2, 18}},
+        Arc{"WORD_ADDR", "READ_DATA", {2, 18}},
+    };
+    return t;
+}()},
+{"memory.rom.scalable-device.32.behavioral@depth=64@rows=16", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.device.32.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {2, 18}},
+        Arc{"OE_N", "READ_DATA", {2, 18}},
+        Arc{"WORD_ADDR", "READ_DATA", {2, 18}},
+    };
+    return t;
+}()},
+{"memory.rom.device.32.behavioral@depth=128@rows=16", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.device.32.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {2, 18}},
+        Arc{"OE_N", "READ_DATA", {2, 18}},
+        Arc{"WORD_ADDR", "READ_DATA", {2, 18}},
+    };
+    return t;
+}()},
+{"memory.rom.scalable-device.32.behavioral@depth=128@rows=16", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.device.32.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {2, 18}},
+        Arc{"OE_N", "READ_DATA", {2, 18}},
+        Arc{"WORD_ADDR", "READ_DATA", {2, 18}},
+    };
+    return t;
+}()},
 {"memory.rom.device.8.behavioral", [] {
     PartDelays t;
     t.evidence = "proven on memory.rom.device.8.structural";
@@ -5959,6 +10682,206 @@
         Arc{"CE_N", "READ_DATA", {2, 16}},
         Arc{"OE_N", "READ_DATA", {2, 16}},
         Arc{"WORD_ADDR", "READ_DATA", {2, 16}},
+    };
+    return t;
+}()},
+{"memory.rom.device.8.behavioral@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.device.8.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {2, 14}},
+        Arc{"OE_N", "READ_DATA", {2, 14}},
+        Arc{"WORD_ADDR", "READ_DATA", {2, 14}},
+    };
+    return t;
+}()},
+{"memory.rom.scalable-device.8.behavioral@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.device.8.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {2, 14}},
+        Arc{"OE_N", "READ_DATA", {2, 14}},
+        Arc{"WORD_ADDR", "READ_DATA", {2, 14}},
+    };
+    return t;
+}()},
+{"memory.rom.device.8.behavioral@depth=64@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.device.8.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {2, 15}},
+        Arc{"OE_N", "READ_DATA", {2, 15}},
+        Arc{"WORD_ADDR", "READ_DATA", {2, 15}},
+    };
+    return t;
+}()},
+{"memory.rom.scalable-device.8.behavioral@depth=64@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.device.8.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {2, 15}},
+        Arc{"OE_N", "READ_DATA", {2, 15}},
+        Arc{"WORD_ADDR", "READ_DATA", {2, 15}},
+    };
+    return t;
+}()},
+{"memory.rom.device.8.behavioral@depth=128@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.device.8.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {2, 15}},
+        Arc{"OE_N", "READ_DATA", {2, 15}},
+        Arc{"WORD_ADDR", "READ_DATA", {2, 15}},
+    };
+    return t;
+}()},
+{"memory.rom.scalable-device.8.behavioral@depth=128@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.device.8.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {2, 15}},
+        Arc{"OE_N", "READ_DATA", {2, 15}},
+        Arc{"WORD_ADDR", "READ_DATA", {2, 15}},
+    };
+    return t;
+}()},
+{"memory.rom.device.8.behavioral@rows=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.device.8.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {2, 15}},
+        Arc{"OE_N", "READ_DATA", {2, 15}},
+        Arc{"WORD_ADDR", "READ_DATA", {2, 15}},
+    };
+    return t;
+}()},
+{"memory.rom.scalable-device.8.behavioral@rows=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.device.8.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {2, 15}},
+        Arc{"OE_N", "READ_DATA", {2, 15}},
+        Arc{"WORD_ADDR", "READ_DATA", {2, 15}},
+    };
+    return t;
+}()},
+{"memory.rom.device.8.behavioral@depth=64@rows=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.device.8.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {2, 17}},
+        Arc{"OE_N", "READ_DATA", {2, 17}},
+        Arc{"WORD_ADDR", "READ_DATA", {2, 17}},
+    };
+    return t;
+}()},
+{"memory.rom.scalable-device.8.behavioral@depth=64@rows=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.device.8.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {2, 17}},
+        Arc{"OE_N", "READ_DATA", {2, 17}},
+        Arc{"WORD_ADDR", "READ_DATA", {2, 17}},
+    };
+    return t;
+}()},
+{"memory.rom.device.8.behavioral@depth=128@rows=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.device.8.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {2, 17}},
+        Arc{"OE_N", "READ_DATA", {2, 17}},
+        Arc{"WORD_ADDR", "READ_DATA", {2, 17}},
+    };
+    return t;
+}()},
+{"memory.rom.scalable-device.8.behavioral@depth=128@rows=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.device.8.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {2, 17}},
+        Arc{"OE_N", "READ_DATA", {2, 17}},
+        Arc{"WORD_ADDR", "READ_DATA", {2, 17}},
+    };
+    return t;
+}()},
+{"memory.rom.device.8.behavioral@depth=64@rows=8", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.device.8.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {2, 17}},
+        Arc{"OE_N", "READ_DATA", {2, 17}},
+        Arc{"WORD_ADDR", "READ_DATA", {2, 17}},
+    };
+    return t;
+}()},
+{"memory.rom.scalable-device.8.behavioral@depth=64@rows=8", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.device.8.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {2, 17}},
+        Arc{"OE_N", "READ_DATA", {2, 17}},
+        Arc{"WORD_ADDR", "READ_DATA", {2, 17}},
+    };
+    return t;
+}()},
+{"memory.rom.device.8.behavioral@depth=128@rows=8", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.device.8.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {2, 18}},
+        Arc{"OE_N", "READ_DATA", {2, 18}},
+        Arc{"WORD_ADDR", "READ_DATA", {2, 18}},
+    };
+    return t;
+}()},
+{"memory.rom.scalable-device.8.behavioral@depth=128@rows=8", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.device.8.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {2, 18}},
+        Arc{"OE_N", "READ_DATA", {2, 18}},
+        Arc{"WORD_ADDR", "READ_DATA", {2, 18}},
+    };
+    return t;
+}()},
+{"memory.rom.device.8.behavioral@depth=64@rows=16", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.device.8.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {2, 18}},
+        Arc{"OE_N", "READ_DATA", {2, 18}},
+        Arc{"WORD_ADDR", "READ_DATA", {2, 18}},
+    };
+    return t;
+}()},
+{"memory.rom.scalable-device.8.behavioral@depth=64@rows=16", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.device.8.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {2, 18}},
+        Arc{"OE_N", "READ_DATA", {2, 18}},
+        Arc{"WORD_ADDR", "READ_DATA", {2, 18}},
+    };
+    return t;
+}()},
+{"memory.rom.device.8.behavioral@depth=128@rows=16", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.device.8.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {2, 18}},
+        Arc{"OE_N", "READ_DATA", {2, 18}},
+        Arc{"WORD_ADDR", "READ_DATA", {2, 18}},
+    };
+    return t;
+}()},
+{"memory.rom.scalable-device.8.behavioral@depth=128@rows=16", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.device.8.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {2, 18}},
+        Arc{"OE_N", "READ_DATA", {2, 18}},
+        Arc{"WORD_ADDR", "READ_DATA", {2, 18}},
     };
     return t;
 }()},
@@ -6094,6 +11017,446 @@
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
+{"memory.rom.endpoint.16.behavioral@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.endpoint.16.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.rom.scalable-endpoint.16.behavioral@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.endpoint.16.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.rom.endpoint.16.behavioral@depth=64@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.endpoint.16.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.rom.scalable-endpoint.16.behavioral@depth=64@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.endpoint.16.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.rom.endpoint.16.behavioral@depth=128@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.endpoint.16.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.rom.scalable-endpoint.16.behavioral@depth=128@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.endpoint.16.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.rom.endpoint.16.behavioral@rows=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.endpoint.16.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.rom.scalable-endpoint.16.behavioral@rows=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.endpoint.16.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.rom.endpoint.16.behavioral@depth=64@rows=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.endpoint.16.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.rom.scalable-endpoint.16.behavioral@depth=64@rows=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.endpoint.16.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.rom.endpoint.16.behavioral@depth=128@rows=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.endpoint.16.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.rom.scalable-endpoint.16.behavioral@depth=128@rows=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.endpoint.16.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.rom.endpoint.16.behavioral@depth=64@rows=8", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.endpoint.16.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.rom.scalable-endpoint.16.behavioral@depth=64@rows=8", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.endpoint.16.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.rom.endpoint.16.behavioral@depth=128@rows=8", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.endpoint.16.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 19;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.rom.scalable-endpoint.16.behavioral@depth=128@rows=8", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.endpoint.16.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 19;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.rom.endpoint.16.behavioral@depth=64@rows=16", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.endpoint.16.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 19;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.rom.scalable-endpoint.16.behavioral@depth=64@rows=16", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.endpoint.16.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 19;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.rom.endpoint.16.behavioral@depth=128@rows=16", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.endpoint.16.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 19;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.rom.scalable-endpoint.16.behavioral@depth=128@rows=16", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.endpoint.16.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 19;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
 {"memory.rom.endpoint.32.behavioral", [] {
     PartDelays t;
     t.evidence = "proven on memory.rom.endpoint.32.structural";
@@ -6226,6 +11589,446 @@
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
+{"memory.rom.endpoint.32.behavioral@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.endpoint.32.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.rom.scalable-endpoint.32.behavioral@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.endpoint.32.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.rom.endpoint.32.behavioral@depth=64@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.endpoint.32.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.rom.scalable-endpoint.32.behavioral@depth=64@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.endpoint.32.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.rom.endpoint.32.behavioral@depth=128@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.endpoint.32.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.rom.scalable-endpoint.32.behavioral@depth=128@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.endpoint.32.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.rom.endpoint.32.behavioral@rows=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.endpoint.32.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.rom.scalable-endpoint.32.behavioral@rows=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.endpoint.32.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.rom.endpoint.32.behavioral@depth=64@rows=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.endpoint.32.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.rom.scalable-endpoint.32.behavioral@depth=64@rows=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.endpoint.32.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.rom.endpoint.32.behavioral@depth=128@rows=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.endpoint.32.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.rom.scalable-endpoint.32.behavioral@depth=128@rows=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.endpoint.32.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.rom.endpoint.32.behavioral@depth=64@rows=8", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.endpoint.32.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.rom.scalable-endpoint.32.behavioral@depth=64@rows=8", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.endpoint.32.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.rom.endpoint.32.behavioral@depth=128@rows=8", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.endpoint.32.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 19;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.rom.scalable-endpoint.32.behavioral@depth=128@rows=8", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.endpoint.32.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 19;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.rom.endpoint.32.behavioral@depth=64@rows=16", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.endpoint.32.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 19;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.rom.scalable-endpoint.32.behavioral@depth=64@rows=16", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.endpoint.32.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 19;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.rom.endpoint.32.behavioral@depth=128@rows=16", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.endpoint.32.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 19;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.rom.scalable-endpoint.32.behavioral@depth=128@rows=16", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.endpoint.32.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 19;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
 {"memory.rom.endpoint.8.behavioral", [] {
     PartDelays t;
     t.evidence = "proven on memory.rom.endpoint.8.structural";
@@ -6355,6 +12158,446 @@
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
     t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.rom.endpoint.8.behavioral@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.endpoint.8.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.rom.scalable-endpoint.8.behavioral@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.endpoint.8.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.rom.endpoint.8.behavioral@depth=64@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.endpoint.8.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.rom.scalable-endpoint.8.behavioral@depth=64@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.endpoint.8.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.rom.endpoint.8.behavioral@depth=128@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.endpoint.8.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.rom.scalable-endpoint.8.behavioral@depth=128@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.endpoint.8.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.rom.endpoint.8.behavioral@rows=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.endpoint.8.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.rom.scalable-endpoint.8.behavioral@rows=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.endpoint.8.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.rom.endpoint.8.behavioral@depth=64@rows=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.endpoint.8.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.rom.scalable-endpoint.8.behavioral@depth=64@rows=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.endpoint.8.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.rom.endpoint.8.behavioral@depth=128@rows=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.endpoint.8.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.rom.scalable-endpoint.8.behavioral@depth=128@rows=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.endpoint.8.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.rom.endpoint.8.behavioral@depth=64@rows=8", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.endpoint.8.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.rom.scalable-endpoint.8.behavioral@depth=64@rows=8", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.endpoint.8.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 18;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.rom.endpoint.8.behavioral@depth=128@rows=8", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.endpoint.8.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 19;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.rom.scalable-endpoint.8.behavioral@depth=128@rows=8", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.endpoint.8.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 19;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.rom.endpoint.8.behavioral@depth=64@rows=16", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.endpoint.8.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 19;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.rom.scalable-endpoint.8.behavioral@depth=64@rows=16", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.endpoint.8.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 19;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.rom.endpoint.8.behavioral@depth=128@rows=16", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.endpoint.8.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 19;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.rom.scalable-endpoint.8.behavioral@depth=128@rows=16", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.endpoint.8.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 19;
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
@@ -8581,6 +14824,286 @@
     t.self_timed = true;
     return t;
 }()},
+{"memory.sram.device.16.behavioral@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.device.16.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {1, 18}},
+        Arc{"OE_N", "READ_DATA", {1, 18}},
+        Arc{"WE_N", "READ_DATA", {1, 18}},
+        Arc{"WORD_ADDR", "READ_DATA", {1, 18}},
+        Arc{"WRITE_DATA", "READ_DATA", {1, 18}},
+        Arc{"WRITE_MASK", "READ_DATA", {1, 18}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.sram.scalable-device.16.behavioral@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.device.16.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {1, 18}},
+        Arc{"OE_N", "READ_DATA", {1, 18}},
+        Arc{"WE_N", "READ_DATA", {1, 18}},
+        Arc{"WORD_ADDR", "READ_DATA", {1, 18}},
+        Arc{"WRITE_DATA", "READ_DATA", {1, 18}},
+        Arc{"WRITE_MASK", "READ_DATA", {1, 18}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.sram.device.16.behavioral@depth=64@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.device.16.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {1, 19}},
+        Arc{"OE_N", "READ_DATA", {1, 19}},
+        Arc{"WE_N", "READ_DATA", {1, 19}},
+        Arc{"WORD_ADDR", "READ_DATA", {1, 19}},
+        Arc{"WRITE_DATA", "READ_DATA", {1, 19}},
+        Arc{"WRITE_MASK", "READ_DATA", {1, 19}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.sram.scalable-device.16.behavioral@depth=64@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.device.16.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {1, 19}},
+        Arc{"OE_N", "READ_DATA", {1, 19}},
+        Arc{"WE_N", "READ_DATA", {1, 19}},
+        Arc{"WORD_ADDR", "READ_DATA", {1, 19}},
+        Arc{"WRITE_DATA", "READ_DATA", {1, 19}},
+        Arc{"WRITE_MASK", "READ_DATA", {1, 19}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.sram.device.16.behavioral@depth=128@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.device.16.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {1, 19}},
+        Arc{"OE_N", "READ_DATA", {1, 19}},
+        Arc{"WE_N", "READ_DATA", {1, 19}},
+        Arc{"WORD_ADDR", "READ_DATA", {1, 19}},
+        Arc{"WRITE_DATA", "READ_DATA", {1, 19}},
+        Arc{"WRITE_MASK", "READ_DATA", {1, 19}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.sram.scalable-device.16.behavioral@depth=128@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.device.16.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {1, 19}},
+        Arc{"OE_N", "READ_DATA", {1, 19}},
+        Arc{"WE_N", "READ_DATA", {1, 19}},
+        Arc{"WORD_ADDR", "READ_DATA", {1, 19}},
+        Arc{"WRITE_DATA", "READ_DATA", {1, 19}},
+        Arc{"WRITE_MASK", "READ_DATA", {1, 19}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.sram.device.16.behavioral@rows=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.device.16.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {1, 19}},
+        Arc{"OE_N", "READ_DATA", {1, 19}},
+        Arc{"WE_N", "READ_DATA", {1, 19}},
+        Arc{"WORD_ADDR", "READ_DATA", {1, 19}},
+        Arc{"WRITE_DATA", "READ_DATA", {1, 19}},
+        Arc{"WRITE_MASK", "READ_DATA", {1, 19}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.sram.scalable-device.16.behavioral@rows=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.device.16.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {1, 19}},
+        Arc{"OE_N", "READ_DATA", {1, 19}},
+        Arc{"WE_N", "READ_DATA", {1, 19}},
+        Arc{"WORD_ADDR", "READ_DATA", {1, 19}},
+        Arc{"WRITE_DATA", "READ_DATA", {1, 19}},
+        Arc{"WRITE_MASK", "READ_DATA", {1, 19}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.sram.device.16.behavioral@depth=64@rows=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.device.16.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {1, 22}},
+        Arc{"OE_N", "READ_DATA", {1, 22}},
+        Arc{"WE_N", "READ_DATA", {1, 22}},
+        Arc{"WORD_ADDR", "READ_DATA", {1, 22}},
+        Arc{"WRITE_DATA", "READ_DATA", {1, 22}},
+        Arc{"WRITE_MASK", "READ_DATA", {1, 22}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.sram.scalable-device.16.behavioral@depth=64@rows=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.device.16.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {1, 22}},
+        Arc{"OE_N", "READ_DATA", {1, 22}},
+        Arc{"WE_N", "READ_DATA", {1, 22}},
+        Arc{"WORD_ADDR", "READ_DATA", {1, 22}},
+        Arc{"WRITE_DATA", "READ_DATA", {1, 22}},
+        Arc{"WRITE_MASK", "READ_DATA", {1, 22}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.sram.device.16.behavioral@depth=128@rows=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.device.16.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {1, 22}},
+        Arc{"OE_N", "READ_DATA", {1, 22}},
+        Arc{"WE_N", "READ_DATA", {1, 22}},
+        Arc{"WORD_ADDR", "READ_DATA", {1, 22}},
+        Arc{"WRITE_DATA", "READ_DATA", {1, 22}},
+        Arc{"WRITE_MASK", "READ_DATA", {1, 22}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.sram.scalable-device.16.behavioral@depth=128@rows=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.device.16.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {1, 22}},
+        Arc{"OE_N", "READ_DATA", {1, 22}},
+        Arc{"WE_N", "READ_DATA", {1, 22}},
+        Arc{"WORD_ADDR", "READ_DATA", {1, 22}},
+        Arc{"WRITE_DATA", "READ_DATA", {1, 22}},
+        Arc{"WRITE_MASK", "READ_DATA", {1, 22}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.sram.device.16.behavioral@depth=64@rows=8", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.device.16.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {1, 23}},
+        Arc{"OE_N", "READ_DATA", {1, 23}},
+        Arc{"WE_N", "READ_DATA", {1, 23}},
+        Arc{"WORD_ADDR", "READ_DATA", {1, 23}},
+        Arc{"WRITE_DATA", "READ_DATA", {1, 23}},
+        Arc{"WRITE_MASK", "READ_DATA", {1, 23}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.sram.scalable-device.16.behavioral@depth=64@rows=8", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.device.16.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {1, 23}},
+        Arc{"OE_N", "READ_DATA", {1, 23}},
+        Arc{"WE_N", "READ_DATA", {1, 23}},
+        Arc{"WORD_ADDR", "READ_DATA", {1, 23}},
+        Arc{"WRITE_DATA", "READ_DATA", {1, 23}},
+        Arc{"WRITE_MASK", "READ_DATA", {1, 23}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.sram.device.16.behavioral@depth=128@rows=8", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.device.16.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {1, 24}},
+        Arc{"OE_N", "READ_DATA", {1, 24}},
+        Arc{"WE_N", "READ_DATA", {1, 24}},
+        Arc{"WORD_ADDR", "READ_DATA", {1, 24}},
+        Arc{"WRITE_DATA", "READ_DATA", {1, 24}},
+        Arc{"WRITE_MASK", "READ_DATA", {1, 24}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.sram.scalable-device.16.behavioral@depth=128@rows=8", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.device.16.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {1, 24}},
+        Arc{"OE_N", "READ_DATA", {1, 24}},
+        Arc{"WE_N", "READ_DATA", {1, 24}},
+        Arc{"WORD_ADDR", "READ_DATA", {1, 24}},
+        Arc{"WRITE_DATA", "READ_DATA", {1, 24}},
+        Arc{"WRITE_MASK", "READ_DATA", {1, 24}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.sram.device.16.behavioral@depth=64@rows=16", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.device.16.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {1, 25}},
+        Arc{"OE_N", "READ_DATA", {1, 25}},
+        Arc{"WE_N", "READ_DATA", {1, 25}},
+        Arc{"WORD_ADDR", "READ_DATA", {1, 25}},
+        Arc{"WRITE_DATA", "READ_DATA", {1, 25}},
+        Arc{"WRITE_MASK", "READ_DATA", {1, 25}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.sram.scalable-device.16.behavioral@depth=64@rows=16", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.device.16.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {1, 25}},
+        Arc{"OE_N", "READ_DATA", {1, 25}},
+        Arc{"WE_N", "READ_DATA", {1, 25}},
+        Arc{"WORD_ADDR", "READ_DATA", {1, 25}},
+        Arc{"WRITE_DATA", "READ_DATA", {1, 25}},
+        Arc{"WRITE_MASK", "READ_DATA", {1, 25}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.sram.device.16.behavioral@depth=128@rows=16", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.device.16.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {1, 25}},
+        Arc{"OE_N", "READ_DATA", {1, 25}},
+        Arc{"WE_N", "READ_DATA", {1, 25}},
+        Arc{"WORD_ADDR", "READ_DATA", {1, 25}},
+        Arc{"WRITE_DATA", "READ_DATA", {1, 25}},
+        Arc{"WRITE_MASK", "READ_DATA", {1, 25}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.sram.scalable-device.16.behavioral@depth=128@rows=16", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.device.16.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {1, 25}},
+        Arc{"OE_N", "READ_DATA", {1, 25}},
+        Arc{"WE_N", "READ_DATA", {1, 25}},
+        Arc{"WORD_ADDR", "READ_DATA", {1, 25}},
+        Arc{"WRITE_DATA", "READ_DATA", {1, 25}},
+        Arc{"WRITE_MASK", "READ_DATA", {1, 25}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
 {"memory.sram.device.32.behavioral", [] {
     PartDelays t;
     t.evidence = "proven on memory.sram.device.32.structural";
@@ -8665,6 +15188,286 @@
     t.self_timed = true;
     return t;
 }()},
+{"memory.sram.device.32.behavioral@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.device.32.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {1, 18}},
+        Arc{"OE_N", "READ_DATA", {1, 18}},
+        Arc{"WE_N", "READ_DATA", {1, 18}},
+        Arc{"WORD_ADDR", "READ_DATA", {1, 18}},
+        Arc{"WRITE_DATA", "READ_DATA", {1, 18}},
+        Arc{"WRITE_MASK", "READ_DATA", {1, 18}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.sram.scalable-device.32.behavioral@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.device.32.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {1, 18}},
+        Arc{"OE_N", "READ_DATA", {1, 18}},
+        Arc{"WE_N", "READ_DATA", {1, 18}},
+        Arc{"WORD_ADDR", "READ_DATA", {1, 18}},
+        Arc{"WRITE_DATA", "READ_DATA", {1, 18}},
+        Arc{"WRITE_MASK", "READ_DATA", {1, 18}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.sram.device.32.behavioral@depth=64@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.device.32.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {1, 19}},
+        Arc{"OE_N", "READ_DATA", {1, 19}},
+        Arc{"WE_N", "READ_DATA", {1, 19}},
+        Arc{"WORD_ADDR", "READ_DATA", {1, 19}},
+        Arc{"WRITE_DATA", "READ_DATA", {1, 19}},
+        Arc{"WRITE_MASK", "READ_DATA", {1, 19}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.sram.scalable-device.32.behavioral@depth=64@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.device.32.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {1, 19}},
+        Arc{"OE_N", "READ_DATA", {1, 19}},
+        Arc{"WE_N", "READ_DATA", {1, 19}},
+        Arc{"WORD_ADDR", "READ_DATA", {1, 19}},
+        Arc{"WRITE_DATA", "READ_DATA", {1, 19}},
+        Arc{"WRITE_MASK", "READ_DATA", {1, 19}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.sram.device.32.behavioral@depth=128@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.device.32.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {1, 19}},
+        Arc{"OE_N", "READ_DATA", {1, 19}},
+        Arc{"WE_N", "READ_DATA", {1, 19}},
+        Arc{"WORD_ADDR", "READ_DATA", {1, 19}},
+        Arc{"WRITE_DATA", "READ_DATA", {1, 19}},
+        Arc{"WRITE_MASK", "READ_DATA", {1, 19}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.sram.scalable-device.32.behavioral@depth=128@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.device.32.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {1, 19}},
+        Arc{"OE_N", "READ_DATA", {1, 19}},
+        Arc{"WE_N", "READ_DATA", {1, 19}},
+        Arc{"WORD_ADDR", "READ_DATA", {1, 19}},
+        Arc{"WRITE_DATA", "READ_DATA", {1, 19}},
+        Arc{"WRITE_MASK", "READ_DATA", {1, 19}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.sram.device.32.behavioral@rows=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.device.32.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {1, 19}},
+        Arc{"OE_N", "READ_DATA", {1, 19}},
+        Arc{"WE_N", "READ_DATA", {1, 19}},
+        Arc{"WORD_ADDR", "READ_DATA", {1, 19}},
+        Arc{"WRITE_DATA", "READ_DATA", {1, 19}},
+        Arc{"WRITE_MASK", "READ_DATA", {1, 19}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.sram.scalable-device.32.behavioral@rows=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.device.32.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {1, 19}},
+        Arc{"OE_N", "READ_DATA", {1, 19}},
+        Arc{"WE_N", "READ_DATA", {1, 19}},
+        Arc{"WORD_ADDR", "READ_DATA", {1, 19}},
+        Arc{"WRITE_DATA", "READ_DATA", {1, 19}},
+        Arc{"WRITE_MASK", "READ_DATA", {1, 19}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.sram.device.32.behavioral@depth=64@rows=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.device.32.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {1, 22}},
+        Arc{"OE_N", "READ_DATA", {1, 22}},
+        Arc{"WE_N", "READ_DATA", {1, 22}},
+        Arc{"WORD_ADDR", "READ_DATA", {1, 22}},
+        Arc{"WRITE_DATA", "READ_DATA", {1, 22}},
+        Arc{"WRITE_MASK", "READ_DATA", {1, 22}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.sram.scalable-device.32.behavioral@depth=64@rows=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.device.32.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {1, 22}},
+        Arc{"OE_N", "READ_DATA", {1, 22}},
+        Arc{"WE_N", "READ_DATA", {1, 22}},
+        Arc{"WORD_ADDR", "READ_DATA", {1, 22}},
+        Arc{"WRITE_DATA", "READ_DATA", {1, 22}},
+        Arc{"WRITE_MASK", "READ_DATA", {1, 22}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.sram.device.32.behavioral@depth=128@rows=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.device.32.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {1, 22}},
+        Arc{"OE_N", "READ_DATA", {1, 22}},
+        Arc{"WE_N", "READ_DATA", {1, 22}},
+        Arc{"WORD_ADDR", "READ_DATA", {1, 22}},
+        Arc{"WRITE_DATA", "READ_DATA", {1, 22}},
+        Arc{"WRITE_MASK", "READ_DATA", {1, 22}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.sram.scalable-device.32.behavioral@depth=128@rows=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.device.32.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {1, 22}},
+        Arc{"OE_N", "READ_DATA", {1, 22}},
+        Arc{"WE_N", "READ_DATA", {1, 22}},
+        Arc{"WORD_ADDR", "READ_DATA", {1, 22}},
+        Arc{"WRITE_DATA", "READ_DATA", {1, 22}},
+        Arc{"WRITE_MASK", "READ_DATA", {1, 22}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.sram.device.32.behavioral@depth=64@rows=8", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.device.32.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {1, 23}},
+        Arc{"OE_N", "READ_DATA", {1, 23}},
+        Arc{"WE_N", "READ_DATA", {1, 23}},
+        Arc{"WORD_ADDR", "READ_DATA", {1, 23}},
+        Arc{"WRITE_DATA", "READ_DATA", {1, 23}},
+        Arc{"WRITE_MASK", "READ_DATA", {1, 23}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.sram.scalable-device.32.behavioral@depth=64@rows=8", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.device.32.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {1, 23}},
+        Arc{"OE_N", "READ_DATA", {1, 23}},
+        Arc{"WE_N", "READ_DATA", {1, 23}},
+        Arc{"WORD_ADDR", "READ_DATA", {1, 23}},
+        Arc{"WRITE_DATA", "READ_DATA", {1, 23}},
+        Arc{"WRITE_MASK", "READ_DATA", {1, 23}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.sram.device.32.behavioral@depth=128@rows=8", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.device.32.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {1, 24}},
+        Arc{"OE_N", "READ_DATA", {1, 24}},
+        Arc{"WE_N", "READ_DATA", {1, 24}},
+        Arc{"WORD_ADDR", "READ_DATA", {1, 24}},
+        Arc{"WRITE_DATA", "READ_DATA", {1, 24}},
+        Arc{"WRITE_MASK", "READ_DATA", {1, 24}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.sram.scalable-device.32.behavioral@depth=128@rows=8", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.device.32.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {1, 24}},
+        Arc{"OE_N", "READ_DATA", {1, 24}},
+        Arc{"WE_N", "READ_DATA", {1, 24}},
+        Arc{"WORD_ADDR", "READ_DATA", {1, 24}},
+        Arc{"WRITE_DATA", "READ_DATA", {1, 24}},
+        Arc{"WRITE_MASK", "READ_DATA", {1, 24}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.sram.device.32.behavioral@depth=64@rows=16", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.device.32.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {1, 25}},
+        Arc{"OE_N", "READ_DATA", {1, 25}},
+        Arc{"WE_N", "READ_DATA", {1, 25}},
+        Arc{"WORD_ADDR", "READ_DATA", {1, 25}},
+        Arc{"WRITE_DATA", "READ_DATA", {1, 25}},
+        Arc{"WRITE_MASK", "READ_DATA", {1, 25}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.sram.scalable-device.32.behavioral@depth=64@rows=16", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.device.32.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {1, 25}},
+        Arc{"OE_N", "READ_DATA", {1, 25}},
+        Arc{"WE_N", "READ_DATA", {1, 25}},
+        Arc{"WORD_ADDR", "READ_DATA", {1, 25}},
+        Arc{"WRITE_DATA", "READ_DATA", {1, 25}},
+        Arc{"WRITE_MASK", "READ_DATA", {1, 25}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.sram.device.32.behavioral@depth=128@rows=16", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.device.32.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {1, 25}},
+        Arc{"OE_N", "READ_DATA", {1, 25}},
+        Arc{"WE_N", "READ_DATA", {1, 25}},
+        Arc{"WORD_ADDR", "READ_DATA", {1, 25}},
+        Arc{"WRITE_DATA", "READ_DATA", {1, 25}},
+        Arc{"WRITE_MASK", "READ_DATA", {1, 25}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.sram.scalable-device.32.behavioral@depth=128@rows=16", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.device.32.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {1, 25}},
+        Arc{"OE_N", "READ_DATA", {1, 25}},
+        Arc{"WE_N", "READ_DATA", {1, 25}},
+        Arc{"WORD_ADDR", "READ_DATA", {1, 25}},
+        Arc{"WRITE_DATA", "READ_DATA", {1, 25}},
+        Arc{"WRITE_MASK", "READ_DATA", {1, 25}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
 {"memory.sram.device.8.behavioral", [] {
     PartDelays t;
     t.evidence = "proven on memory.sram.device.8.structural";
@@ -8745,6 +15548,286 @@
         Arc{"WORD_ADDR", "READ_DATA", {1, 20}},
         Arc{"WRITE_DATA", "READ_DATA", {1, 20}},
         Arc{"WRITE_MASK", "READ_DATA", {1, 20}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.sram.device.8.behavioral@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.device.8.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {1, 18}},
+        Arc{"OE_N", "READ_DATA", {1, 18}},
+        Arc{"WE_N", "READ_DATA", {1, 18}},
+        Arc{"WORD_ADDR", "READ_DATA", {1, 18}},
+        Arc{"WRITE_DATA", "READ_DATA", {1, 18}},
+        Arc{"WRITE_MASK", "READ_DATA", {1, 18}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.sram.scalable-device.8.behavioral@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.device.8.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {1, 18}},
+        Arc{"OE_N", "READ_DATA", {1, 18}},
+        Arc{"WE_N", "READ_DATA", {1, 18}},
+        Arc{"WORD_ADDR", "READ_DATA", {1, 18}},
+        Arc{"WRITE_DATA", "READ_DATA", {1, 18}},
+        Arc{"WRITE_MASK", "READ_DATA", {1, 18}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.sram.device.8.behavioral@depth=64@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.device.8.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {1, 19}},
+        Arc{"OE_N", "READ_DATA", {1, 19}},
+        Arc{"WE_N", "READ_DATA", {1, 19}},
+        Arc{"WORD_ADDR", "READ_DATA", {1, 19}},
+        Arc{"WRITE_DATA", "READ_DATA", {1, 19}},
+        Arc{"WRITE_MASK", "READ_DATA", {1, 19}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.sram.scalable-device.8.behavioral@depth=64@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.device.8.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {1, 19}},
+        Arc{"OE_N", "READ_DATA", {1, 19}},
+        Arc{"WE_N", "READ_DATA", {1, 19}},
+        Arc{"WORD_ADDR", "READ_DATA", {1, 19}},
+        Arc{"WRITE_DATA", "READ_DATA", {1, 19}},
+        Arc{"WRITE_MASK", "READ_DATA", {1, 19}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.sram.device.8.behavioral@depth=128@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.device.8.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {1, 19}},
+        Arc{"OE_N", "READ_DATA", {1, 19}},
+        Arc{"WE_N", "READ_DATA", {1, 19}},
+        Arc{"WORD_ADDR", "READ_DATA", {1, 19}},
+        Arc{"WRITE_DATA", "READ_DATA", {1, 19}},
+        Arc{"WRITE_MASK", "READ_DATA", {1, 19}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.sram.scalable-device.8.behavioral@depth=128@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.device.8.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {1, 19}},
+        Arc{"OE_N", "READ_DATA", {1, 19}},
+        Arc{"WE_N", "READ_DATA", {1, 19}},
+        Arc{"WORD_ADDR", "READ_DATA", {1, 19}},
+        Arc{"WRITE_DATA", "READ_DATA", {1, 19}},
+        Arc{"WRITE_MASK", "READ_DATA", {1, 19}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.sram.device.8.behavioral@rows=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.device.8.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {1, 19}},
+        Arc{"OE_N", "READ_DATA", {1, 19}},
+        Arc{"WE_N", "READ_DATA", {1, 19}},
+        Arc{"WORD_ADDR", "READ_DATA", {1, 19}},
+        Arc{"WRITE_DATA", "READ_DATA", {1, 19}},
+        Arc{"WRITE_MASK", "READ_DATA", {1, 19}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.sram.scalable-device.8.behavioral@rows=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.device.8.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {1, 19}},
+        Arc{"OE_N", "READ_DATA", {1, 19}},
+        Arc{"WE_N", "READ_DATA", {1, 19}},
+        Arc{"WORD_ADDR", "READ_DATA", {1, 19}},
+        Arc{"WRITE_DATA", "READ_DATA", {1, 19}},
+        Arc{"WRITE_MASK", "READ_DATA", {1, 19}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.sram.device.8.behavioral@depth=64@rows=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.device.8.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {1, 22}},
+        Arc{"OE_N", "READ_DATA", {1, 22}},
+        Arc{"WE_N", "READ_DATA", {1, 22}},
+        Arc{"WORD_ADDR", "READ_DATA", {1, 22}},
+        Arc{"WRITE_DATA", "READ_DATA", {1, 22}},
+        Arc{"WRITE_MASK", "READ_DATA", {1, 22}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.sram.scalable-device.8.behavioral@depth=64@rows=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.device.8.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {1, 22}},
+        Arc{"OE_N", "READ_DATA", {1, 22}},
+        Arc{"WE_N", "READ_DATA", {1, 22}},
+        Arc{"WORD_ADDR", "READ_DATA", {1, 22}},
+        Arc{"WRITE_DATA", "READ_DATA", {1, 22}},
+        Arc{"WRITE_MASK", "READ_DATA", {1, 22}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.sram.device.8.behavioral@depth=128@rows=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.device.8.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {1, 22}},
+        Arc{"OE_N", "READ_DATA", {1, 22}},
+        Arc{"WE_N", "READ_DATA", {1, 22}},
+        Arc{"WORD_ADDR", "READ_DATA", {1, 22}},
+        Arc{"WRITE_DATA", "READ_DATA", {1, 22}},
+        Arc{"WRITE_MASK", "READ_DATA", {1, 22}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.sram.scalable-device.8.behavioral@depth=128@rows=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.device.8.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {1, 22}},
+        Arc{"OE_N", "READ_DATA", {1, 22}},
+        Arc{"WE_N", "READ_DATA", {1, 22}},
+        Arc{"WORD_ADDR", "READ_DATA", {1, 22}},
+        Arc{"WRITE_DATA", "READ_DATA", {1, 22}},
+        Arc{"WRITE_MASK", "READ_DATA", {1, 22}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.sram.device.8.behavioral@depth=64@rows=8", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.device.8.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {1, 23}},
+        Arc{"OE_N", "READ_DATA", {1, 23}},
+        Arc{"WE_N", "READ_DATA", {1, 23}},
+        Arc{"WORD_ADDR", "READ_DATA", {1, 23}},
+        Arc{"WRITE_DATA", "READ_DATA", {1, 23}},
+        Arc{"WRITE_MASK", "READ_DATA", {1, 23}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.sram.scalable-device.8.behavioral@depth=64@rows=8", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.device.8.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {1, 23}},
+        Arc{"OE_N", "READ_DATA", {1, 23}},
+        Arc{"WE_N", "READ_DATA", {1, 23}},
+        Arc{"WORD_ADDR", "READ_DATA", {1, 23}},
+        Arc{"WRITE_DATA", "READ_DATA", {1, 23}},
+        Arc{"WRITE_MASK", "READ_DATA", {1, 23}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.sram.device.8.behavioral@depth=128@rows=8", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.device.8.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {1, 24}},
+        Arc{"OE_N", "READ_DATA", {1, 24}},
+        Arc{"WE_N", "READ_DATA", {1, 24}},
+        Arc{"WORD_ADDR", "READ_DATA", {1, 24}},
+        Arc{"WRITE_DATA", "READ_DATA", {1, 24}},
+        Arc{"WRITE_MASK", "READ_DATA", {1, 24}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.sram.scalable-device.8.behavioral@depth=128@rows=8", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.device.8.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {1, 24}},
+        Arc{"OE_N", "READ_DATA", {1, 24}},
+        Arc{"WE_N", "READ_DATA", {1, 24}},
+        Arc{"WORD_ADDR", "READ_DATA", {1, 24}},
+        Arc{"WRITE_DATA", "READ_DATA", {1, 24}},
+        Arc{"WRITE_MASK", "READ_DATA", {1, 24}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.sram.device.8.behavioral@depth=64@rows=16", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.device.8.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {1, 25}},
+        Arc{"OE_N", "READ_DATA", {1, 25}},
+        Arc{"WE_N", "READ_DATA", {1, 25}},
+        Arc{"WORD_ADDR", "READ_DATA", {1, 25}},
+        Arc{"WRITE_DATA", "READ_DATA", {1, 25}},
+        Arc{"WRITE_MASK", "READ_DATA", {1, 25}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.sram.scalable-device.8.behavioral@depth=64@rows=16", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.device.8.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {1, 25}},
+        Arc{"OE_N", "READ_DATA", {1, 25}},
+        Arc{"WE_N", "READ_DATA", {1, 25}},
+        Arc{"WORD_ADDR", "READ_DATA", {1, 25}},
+        Arc{"WRITE_DATA", "READ_DATA", {1, 25}},
+        Arc{"WRITE_MASK", "READ_DATA", {1, 25}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.sram.device.8.behavioral@depth=128@rows=16", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.device.8.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {1, 25}},
+        Arc{"OE_N", "READ_DATA", {1, 25}},
+        Arc{"WE_N", "READ_DATA", {1, 25}},
+        Arc{"WORD_ADDR", "READ_DATA", {1, 25}},
+        Arc{"WRITE_DATA", "READ_DATA", {1, 25}},
+        Arc{"WRITE_MASK", "READ_DATA", {1, 25}},
+    };
+    t.self_timed = true;
+    return t;
+}()},
+{"memory.sram.scalable-device.8.behavioral@depth=128@rows=16", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.device.8.structural";
+    t.arcs = {
+        Arc{"CE_N", "READ_DATA", {1, 25}},
+        Arc{"OE_N", "READ_DATA", {1, 25}},
+        Arc{"WE_N", "READ_DATA", {1, 25}},
+        Arc{"WORD_ADDR", "READ_DATA", {1, 25}},
+        Arc{"WRITE_DATA", "READ_DATA", {1, 25}},
+        Arc{"WRITE_MASK", "READ_DATA", {1, 25}},
     };
     t.self_timed = true;
     return t;
@@ -8881,6 +15964,446 @@
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
+{"memory.sram.endpoint.16.behavioral@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.endpoint.16.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 19;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.sram.scalable-endpoint.16.behavioral@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.endpoint.16.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 19;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.sram.endpoint.16.behavioral@depth=64@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.endpoint.16.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 20;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.sram.scalable-endpoint.16.behavioral@depth=64@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.endpoint.16.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 20;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.sram.endpoint.16.behavioral@depth=128@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.endpoint.16.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 20;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.sram.scalable-endpoint.16.behavioral@depth=128@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.endpoint.16.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 20;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.sram.endpoint.16.behavioral@rows=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.endpoint.16.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 20;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.sram.scalable-endpoint.16.behavioral@rows=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.endpoint.16.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 20;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.sram.endpoint.16.behavioral@depth=64@rows=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.endpoint.16.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 23;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.sram.scalable-endpoint.16.behavioral@depth=64@rows=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.endpoint.16.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 23;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.sram.endpoint.16.behavioral@depth=128@rows=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.endpoint.16.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 23;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.sram.scalable-endpoint.16.behavioral@depth=128@rows=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.endpoint.16.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 23;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.sram.endpoint.16.behavioral@depth=64@rows=8", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.endpoint.16.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 24;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.sram.scalable-endpoint.16.behavioral@depth=64@rows=8", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.endpoint.16.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 24;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.sram.endpoint.16.behavioral@depth=128@rows=8", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.endpoint.16.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 25;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.sram.scalable-endpoint.16.behavioral@depth=128@rows=8", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.endpoint.16.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 25;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.sram.endpoint.16.behavioral@depth=64@rows=16", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.endpoint.16.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 26;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.sram.scalable-endpoint.16.behavioral@depth=64@rows=16", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.endpoint.16.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 26;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.sram.endpoint.16.behavioral@depth=128@rows=16", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.endpoint.16.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 26;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.sram.scalable-endpoint.16.behavioral@depth=128@rows=16", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.endpoint.16.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 26;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
 {"memory.sram.endpoint.32.behavioral", [] {
     PartDelays t;
     t.evidence = "proven on memory.sram.endpoint.32.structural";
@@ -9010,6 +16533,446 @@
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
     t.internal_period = 21;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.sram.endpoint.32.behavioral@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.endpoint.32.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 19;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.sram.scalable-endpoint.32.behavioral@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.endpoint.32.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 19;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.sram.endpoint.32.behavioral@depth=64@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.endpoint.32.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 20;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.sram.scalable-endpoint.32.behavioral@depth=64@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.endpoint.32.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 20;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.sram.endpoint.32.behavioral@depth=128@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.endpoint.32.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 20;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.sram.scalable-endpoint.32.behavioral@depth=128@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.endpoint.32.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 20;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.sram.endpoint.32.behavioral@rows=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.endpoint.32.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 20;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.sram.scalable-endpoint.32.behavioral@rows=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.endpoint.32.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 20;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.sram.endpoint.32.behavioral@depth=64@rows=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.endpoint.32.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 23;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.sram.scalable-endpoint.32.behavioral@depth=64@rows=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.endpoint.32.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 23;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.sram.endpoint.32.behavioral@depth=128@rows=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.endpoint.32.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 23;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.sram.scalable-endpoint.32.behavioral@depth=128@rows=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.endpoint.32.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 23;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.sram.endpoint.32.behavioral@depth=64@rows=8", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.endpoint.32.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 24;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.sram.scalable-endpoint.32.behavioral@depth=64@rows=8", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.endpoint.32.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 24;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.sram.endpoint.32.behavioral@depth=128@rows=8", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.endpoint.32.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 25;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.sram.scalable-endpoint.32.behavioral@depth=128@rows=8", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.endpoint.32.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 25;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.sram.endpoint.32.behavioral@depth=64@rows=16", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.endpoint.32.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 26;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.sram.scalable-endpoint.32.behavioral@depth=64@rows=16", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.endpoint.32.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 26;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.sram.endpoint.32.behavioral@depth=128@rows=16", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.endpoint.32.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 26;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.sram.scalable-endpoint.32.behavioral@depth=128@rows=16", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.endpoint.32.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 26;
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
@@ -9145,6 +17108,446 @@
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
+{"memory.sram.endpoint.8.behavioral@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.endpoint.8.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 19;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.sram.scalable-endpoint.8.behavioral@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.endpoint.8.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 19;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.sram.endpoint.8.behavioral@depth=64@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.endpoint.8.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 20;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.sram.scalable-endpoint.8.behavioral@depth=64@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.endpoint.8.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 20;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.sram.endpoint.8.behavioral@depth=128@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.endpoint.8.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 20;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.sram.scalable-endpoint.8.behavioral@depth=128@rows=1", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.endpoint.8.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 20;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.sram.endpoint.8.behavioral@rows=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.endpoint.8.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 20;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.sram.scalable-endpoint.8.behavioral@rows=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.endpoint.8.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 20;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.sram.endpoint.8.behavioral@depth=64@rows=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.endpoint.8.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 23;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.sram.scalable-endpoint.8.behavioral@depth=64@rows=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.endpoint.8.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 23;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.sram.endpoint.8.behavioral@depth=128@rows=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.endpoint.8.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 23;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.sram.scalable-endpoint.8.behavioral@depth=128@rows=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.endpoint.8.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 23;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.sram.endpoint.8.behavioral@depth=64@rows=8", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.endpoint.8.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 24;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.sram.scalable-endpoint.8.behavioral@depth=64@rows=8", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.endpoint.8.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 24;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.sram.endpoint.8.behavioral@depth=128@rows=8", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.endpoint.8.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 25;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.sram.scalable-endpoint.8.behavioral@depth=128@rows=8", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.endpoint.8.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 25;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.sram.endpoint.8.behavioral@depth=64@rows=16", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.endpoint.8.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 26;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.sram.scalable-endpoint.8.behavioral@depth=64@rows=16", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.endpoint.8.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 26;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.sram.endpoint.8.behavioral@depth=128@rows=16", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.endpoint.8.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 26;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.sram.scalable-endpoint.8.behavioral@depth=128@rows=16", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.endpoint.8.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {4, 4}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
+    t.setup["REQ_ADDR"] = 0;
+    t.setup["REQ_OP"] = 0;
+    t.setup["REQ_VALID"] = 8;
+    t.setup["REQ_WRITE_DATA"] = 0;
+    t.setup["REQ_WRITE_MASK"] = 0;
+    t.setup["RSP_READY"] = 13;
+    t.self_timed = true;
+    t.internal_period = 26;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
 {"memory.sram.row.behavioral", [] {
     PartDelays t;
     t.evidence = "proven on memory.sram.row.structural";
@@ -9267,6 +17670,39 @@
         Arc{"OP", "OVERFLOW", {4, 27}},
         Arc{"OP", "ZERO", {12, 41}},
     };
+    t.control = "OP";
+    t.arcs_by_control[0] = {{"OP", "CARRY_OUT", {4, 24}}, {"OP", "EQ", {4, 4}}, {"OP", "LT_SIGNED", {4, 4}}, {"OP", "LT_UNSIGNED", {4, 4}}, {"OP", "NEGATIVE", {5, 29}}, {"OP", "OUT", {5, 29}}, {"OP", "OVERFLOW", {4, 25}}, {"OP", "ZERO", {12, 36}}, {"A", "CARRY_OUT", {15, 20}}, {"A", "NEGATIVE", {6, 25}}, {"A", "OUT", {6, 25}}, {"A", "OVERFLOW", {16, 21}}, {"A", "ZERO", {13, 32}}, {"B", "CARRY_OUT", {17, 22}}, {"B", "NEGATIVE", {3, 27}}, {"B", "OUT", {3, 27}}, {"B", "OVERFLOW", {18, 23}}, {"B", "ZERO", {10, 34}}, };
+    t.arcs_by_control[1] = {{"OP", "CARRY_OUT", {4, 26}}, {"OP", "EQ", {4, 33}}, {"OP", "LT_SIGNED", {4, 28}}, {"OP", "LT_UNSIGNED", {4, 27}}, {"OP", "NEGATIVE", {5, 31}}, {"OP", "OUT", {5, 31}}, {"OP", "OVERFLOW", {4, 27}}, {"OP", "ZERO", {12, 38}}, {"A", "CARRY_OUT", {15, 20}}, {"A", "EQ", {11, 27}}, {"A", "LT_SIGNED", {6, 22}}, {"A", "LT_UNSIGNED", {16, 21}}, {"A", "NEGATIVE", {6, 25}}, {"A", "OUT", {6, 25}}, {"A", "OVERFLOW", {16, 21}}, {"A", "ZERO", {13, 32}}, {"B", "CARRY_OUT", {17, 22}}, {"B", "EQ", {13, 29}}, {"B", "LT_SIGNED", {8, 24}}, {"B", "LT_UNSIGNED", {18, 23}}, {"B", "NEGATIVE", {3, 27}}, {"B", "OUT", {3, 27}}, {"B", "OVERFLOW", {18, 23}}, {"B", "ZERO", {10, 34}}, };
+    t.arcs_by_control[2] = {{"OP", "CARRY_OUT", {4, 4}}, {"OP", "EQ", {4, 4}}, {"OP", "LT_SIGNED", {4, 4}}, {"OP", "LT_UNSIGNED", {4, 4}}, {"OP", "NEGATIVE", {5, 12}}, {"OP", "OUT", {5, 12}}, {"OP", "OVERFLOW", {4, 4}}, {"OP", "ZERO", {12, 19}}, {"A", "NEGATIVE", {6, 8}}, {"A", "OUT", {6, 8}}, {"A", "ZERO", {13, 15}}, {"B", "NEGATIVE", {3, 8}}, {"B", "OUT", {3, 8}}, {"B", "ZERO", {10, 15}}, };
+    t.arcs_by_control[3] = {{"OP", "CARRY_OUT", {4, 4}}, {"OP", "EQ", {4, 5}}, {"OP", "LT_SIGNED", {4, 5}}, {"OP", "LT_UNSIGNED", {4, 5}}, {"OP", "NEGATIVE", {5, 12}}, {"OP", "OUT", {5, 12}}, {"OP", "OVERFLOW", {4, 4}}, {"OP", "ZERO", {12, 19}}, {"A", "NEGATIVE", {6, 8}}, {"A", "OUT", {6, 8}}, {"A", "ZERO", {13, 15}}, {"B", "NEGATIVE", {3, 8}}, {"B", "OUT", {3, 8}}, {"B", "ZERO", {10, 15}}, };
+    t.arcs_by_control[4] = {{"OP", "CARRY_OUT", {4, 5}}, {"OP", "EQ", {4, 4}}, {"OP", "LT_SIGNED", {4, 4}}, {"OP", "LT_UNSIGNED", {4, 4}}, {"OP", "NEGATIVE", {5, 12}}, {"OP", "OUT", {5, 12}}, {"OP", "OVERFLOW", {4, 5}}, {"OP", "ZERO", {12, 19}}, {"A", "NEGATIVE", {6, 8}}, {"A", "OUT", {6, 8}}, {"A", "ZERO", {13, 15}}, {"B", "NEGATIVE", {3, 8}}, {"B", "OUT", {3, 8}}, {"B", "ZERO", {10, 15}}, };
+    t.arcs_by_control[5] = {{"OP", "CARRY_OUT", {4, 5}}, {"OP", "EQ", {4, 6}}, {"OP", "LT_SIGNED", {4, 6}}, {"OP", "LT_UNSIGNED", {4, 6}}, {"OP", "NEGATIVE", {5, 23}}, {"OP", "OUT", {5, 23}}, {"OP", "OVERFLOW", {4, 5}}, {"OP", "ZERO", {12, 30}}, {"A", "NEGATIVE", {6, 21}}, {"A", "OUT", {6, 21}}, {"A", "ZERO", {13, 28}}, {"B", "NEGATIVE", {3, 20}}, {"B", "OUT", {3, 20}}, {"B", "ZERO", {10, 27}}, };
+    t.arcs_by_control[6] = {{"OP", "CARRY_OUT", {4, 4}}, {"OP", "EQ", {4, 4}}, {"OP", "LT_SIGNED", {4, 4}}, {"OP", "LT_UNSIGNED", {4, 4}}, {"OP", "NEGATIVE", {5, 23}}, {"OP", "OUT", {5, 23}}, {"OP", "OVERFLOW", {4, 4}}, {"OP", "ZERO", {12, 30}}, {"A", "NEGATIVE", {6, 21}}, {"A", "OUT", {6, 21}}, {"A", "ZERO", {13, 28}}, {"B", "NEGATIVE", {3, 20}}, {"B", "OUT", {3, 20}}, {"B", "ZERO", {10, 27}}, };
+    t.arcs_by_control[7] = {{"OP", "CARRY_OUT", {4, 4}}, {"OP", "EQ", {4, 5}}, {"OP", "LT_SIGNED", {4, 5}}, {"OP", "LT_UNSIGNED", {4, 5}}, {"OP", "NEGATIVE", {5, 23}}, {"OP", "OUT", {5, 23}}, {"OP", "OVERFLOW", {4, 4}}, {"OP", "ZERO", {12, 30}}, {"A", "NEGATIVE", {6, 21}}, {"A", "OUT", {6, 21}}, {"A", "ZERO", {13, 28}}, {"B", "NEGATIVE", {3, 20}}, {"B", "OUT", {3, 20}}, {"B", "ZERO", {10, 27}}, };
+    t.arcs_by_control[8] = {{"OP", "CARRY_OUT", {4, 26}}, {"OP", "EQ", {4, 33}}, {"OP", "LT_SIGNED", {4, 28}}, {"OP", "LT_UNSIGNED", {4, 27}}, {"OP", "NEGATIVE", {5, 12}}, {"OP", "OUT", {5, 34}}, {"OP", "OVERFLOW", {4, 27}}, {"OP", "ZERO", {12, 41}}, {"A", "CARRY_OUT", {15, 20}}, {"A", "EQ", {11, 27}}, {"A", "LT_SIGNED", {6, 22}}, {"A", "LT_UNSIGNED", {16, 21}}, {"A", "OUT", {6, 28}}, {"A", "OVERFLOW", {16, 21}}, {"A", "ZERO", {13, 35}}, {"B", "CARRY_OUT", {17, 22}}, {"B", "EQ", {13, 29}}, {"B", "LT_SIGNED", {8, 24}}, {"B", "LT_UNSIGNED", {18, 23}}, {"B", "OUT", {3, 30}}, {"B", "OVERFLOW", {18, 23}}, {"B", "ZERO", {10, 37}}, };
+    t.arcs_by_control[9] = {{"OP", "CARRY_OUT", {4, 26}}, {"OP", "EQ", {4, 33}}, {"OP", "LT_SIGNED", {4, 28}}, {"OP", "LT_UNSIGNED", {4, 27}}, {"OP", "NEGATIVE", {5, 12}}, {"OP", "OUT", {5, 33}}, {"OP", "OVERFLOW", {4, 27}}, {"OP", "ZERO", {12, 40}}, {"A", "CARRY_OUT", {15, 20}}, {"A", "EQ", {11, 27}}, {"A", "LT_SIGNED", {6, 22}}, {"A", "LT_UNSIGNED", {16, 21}}, {"A", "OUT", {6, 27}}, {"A", "OVERFLOW", {16, 21}}, {"A", "ZERO", {13, 34}}, {"B", "CARRY_OUT", {17, 22}}, {"B", "EQ", {13, 29}}, {"B", "LT_SIGNED", {8, 24}}, {"B", "LT_UNSIGNED", {18, 23}}, {"B", "OUT", {3, 29}}, {"B", "OVERFLOW", {18, 23}}, {"B", "ZERO", {10, 36}}, };
+    t.arcs_by_control[10] = {{"OP", "CARRY_OUT", {4, 4}}, {"OP", "EQ", {4, 5}}, {"OP", "LT_SIGNED", {4, 5}}, {"OP", "LT_UNSIGNED", {4, 5}}, {"OP", "NEGATIVE", {5, 12}}, {"OP", "OUT", {5, 12}}, {"OP", "OVERFLOW", {4, 4}}, {"OP", "ZERO", {12, 19}}, {"A", "NEGATIVE", {6, 6}}, {"A", "OUT", {6, 6}}, {"A", "ZERO", {13, 13}}, };
+    t.arcs_by_control[11] = {{"OP", "CARRY_OUT", {4, 4}}, {"OP", "EQ", {4, 5}}, {"OP", "LT_SIGNED", {4, 5}}, {"OP", "LT_UNSIGNED", {4, 5}}, {"OP", "NEGATIVE", {5, 12}}, {"OP", "OUT", {5, 12}}, {"OP", "OVERFLOW", {4, 4}}, {"OP", "ZERO", {12, 19}}, {"B", "NEGATIVE", {3, 3}}, {"B", "OUT", {3, 3}}, {"B", "ZERO", {10, 10}}, };
+    t.arcs_by_control[12] = {{"OP", "CARRY_OUT", {4, 5}}, {"OP", "EQ", {4, 6}}, {"OP", "LT_SIGNED", {4, 6}}, {"OP", "LT_UNSIGNED", {4, 6}}, {"OP", "NEGATIVE", {5, 12}}, {"OP", "OUT", {5, 12}}, {"OP", "OVERFLOW", {4, 5}}, {"OP", "ZERO", {12, 19}}, };
+    t.arcs_by_control[13] = {{"OP", "CARRY_OUT", {4, 5}}, {"OP", "EQ", {4, 6}}, {"OP", "LT_SIGNED", {4, 6}}, {"OP", "LT_UNSIGNED", {4, 6}}, {"OP", "NEGATIVE", {5, 12}}, {"OP", "OUT", {5, 12}}, {"OP", "OVERFLOW", {4, 5}}, {"OP", "ZERO", {12, 19}}, };
+    t.arcs_by_control[14] = {{"OP", "CARRY_OUT", {4, 4}}, {"OP", "EQ", {4, 5}}, {"OP", "LT_SIGNED", {4, 5}}, {"OP", "LT_UNSIGNED", {4, 5}}, {"OP", "NEGATIVE", {5, 12}}, {"OP", "OUT", {5, 12}}, {"OP", "OVERFLOW", {4, 4}}, {"OP", "ZERO", {12, 19}}, };
+    t.arcs_by_control[15] = {{"OP", "CARRY_OUT", {4, 4}}, {"OP", "EQ", {4, 5}}, {"OP", "LT_SIGNED", {4, 5}}, {"OP", "LT_UNSIGNED", {4, 5}}, {"OP", "NEGATIVE", {5, 12}}, {"OP", "OUT", {5, 12}}, {"OP", "OVERFLOW", {4, 4}}, {"OP", "ZERO", {12, 19}}, };
+    t.arcs_by_control[16] = {{"OP", "CARRY_OUT", {4, 5}}, {"OP", "EQ", {4, 4}}, {"OP", "LT_SIGNED", {4, 4}}, {"OP", "LT_UNSIGNED", {4, 4}}, {"OP", "NEGATIVE", {5, 10}}, {"OP", "OUT", {5, 10}}, {"OP", "OVERFLOW", {4, 5}}, {"OP", "ZERO", {12, 17}}, };
+    t.arcs_by_control[17] = {{"OP", "CARRY_OUT", {4, 5}}, {"OP", "EQ", {4, 6}}, {"OP", "LT_SIGNED", {4, 6}}, {"OP", "LT_UNSIGNED", {4, 6}}, {"OP", "NEGATIVE", {5, 10}}, {"OP", "OUT", {5, 10}}, {"OP", "OVERFLOW", {4, 5}}, {"OP", "ZERO", {12, 17}}, };
+    t.arcs_by_control[18] = {{"OP", "CARRY_OUT", {4, 4}}, {"OP", "EQ", {4, 4}}, {"OP", "LT_SIGNED", {4, 4}}, {"OP", "LT_UNSIGNED", {4, 4}}, {"OP", "NEGATIVE", {5, 10}}, {"OP", "OUT", {5, 10}}, {"OP", "OVERFLOW", {4, 4}}, {"OP", "ZERO", {12, 17}}, };
+    t.arcs_by_control[19] = {{"OP", "CARRY_OUT", {4, 4}}, {"OP", "EQ", {4, 5}}, {"OP", "LT_SIGNED", {4, 5}}, {"OP", "LT_UNSIGNED", {4, 5}}, {"OP", "NEGATIVE", {5, 10}}, {"OP", "OUT", {5, 10}}, {"OP", "OVERFLOW", {4, 4}}, {"OP", "ZERO", {12, 17}}, };
+    t.arcs_by_control[20] = {{"OP", "CARRY_OUT", {4, 5}}, {"OP", "EQ", {4, 4}}, {"OP", "LT_SIGNED", {4, 4}}, {"OP", "LT_UNSIGNED", {4, 4}}, {"OP", "NEGATIVE", {5, 10}}, {"OP", "OUT", {5, 10}}, {"OP", "OVERFLOW", {4, 5}}, {"OP", "ZERO", {12, 17}}, };
+    t.arcs_by_control[21] = {{"OP", "CARRY_OUT", {4, 5}}, {"OP", "EQ", {4, 6}}, {"OP", "LT_SIGNED", {4, 6}}, {"OP", "LT_UNSIGNED", {4, 6}}, {"OP", "NEGATIVE", {5, 10}}, {"OP", "OUT", {5, 10}}, {"OP", "OVERFLOW", {4, 5}}, {"OP", "ZERO", {12, 17}}, };
+    t.arcs_by_control[22] = {{"OP", "CARRY_OUT", {4, 4}}, {"OP", "EQ", {4, 4}}, {"OP", "LT_SIGNED", {4, 4}}, {"OP", "LT_UNSIGNED", {4, 4}}, {"OP", "NEGATIVE", {5, 10}}, {"OP", "OUT", {5, 10}}, {"OP", "OVERFLOW", {4, 4}}, {"OP", "ZERO", {12, 17}}, };
+    t.arcs_by_control[23] = {{"OP", "CARRY_OUT", {4, 4}}, {"OP", "EQ", {4, 5}}, {"OP", "LT_SIGNED", {4, 5}}, {"OP", "LT_UNSIGNED", {4, 5}}, {"OP", "NEGATIVE", {5, 10}}, {"OP", "OUT", {5, 10}}, {"OP", "OVERFLOW", {4, 4}}, {"OP", "ZERO", {12, 17}}, };
+    t.arcs_by_control[24] = {{"OP", "CARRY_OUT", {4, 5}}, {"OP", "EQ", {4, 6}}, {"OP", "LT_SIGNED", {4, 6}}, {"OP", "LT_UNSIGNED", {4, 6}}, {"OP", "NEGATIVE", {5, 10}}, {"OP", "OUT", {5, 10}}, {"OP", "OVERFLOW", {4, 5}}, {"OP", "ZERO", {12, 17}}, };
+    t.arcs_by_control[25] = {{"OP", "CARRY_OUT", {4, 5}}, {"OP", "EQ", {4, 6}}, {"OP", "LT_SIGNED", {4, 6}}, {"OP", "LT_UNSIGNED", {4, 6}}, {"OP", "NEGATIVE", {5, 10}}, {"OP", "OUT", {5, 10}}, {"OP", "OVERFLOW", {4, 5}}, {"OP", "ZERO", {12, 17}}, };
+    t.arcs_by_control[26] = {{"OP", "CARRY_OUT", {4, 4}}, {"OP", "EQ", {4, 5}}, {"OP", "LT_SIGNED", {4, 5}}, {"OP", "LT_UNSIGNED", {4, 5}}, {"OP", "NEGATIVE", {5, 10}}, {"OP", "OUT", {5, 10}}, {"OP", "OVERFLOW", {4, 4}}, {"OP", "ZERO", {12, 17}}, };
+    t.arcs_by_control[27] = {{"OP", "CARRY_OUT", {4, 4}}, {"OP", "EQ", {4, 5}}, {"OP", "LT_SIGNED", {4, 5}}, {"OP", "LT_UNSIGNED", {4, 5}}, {"OP", "NEGATIVE", {5, 10}}, {"OP", "OUT", {5, 10}}, {"OP", "OVERFLOW", {4, 4}}, {"OP", "ZERO", {12, 17}}, };
+    t.arcs_by_control[28] = {{"OP", "CARRY_OUT", {4, 5}}, {"OP", "EQ", {4, 6}}, {"OP", "LT_SIGNED", {4, 6}}, {"OP", "LT_UNSIGNED", {4, 6}}, {"OP", "NEGATIVE", {5, 10}}, {"OP", "OUT", {5, 10}}, {"OP", "OVERFLOW", {4, 5}}, {"OP", "ZERO", {12, 17}}, };
+    t.arcs_by_control[29] = {{"OP", "CARRY_OUT", {4, 5}}, {"OP", "EQ", {4, 6}}, {"OP", "LT_SIGNED", {4, 6}}, {"OP", "LT_UNSIGNED", {4, 6}}, {"OP", "NEGATIVE", {5, 10}}, {"OP", "OUT", {5, 10}}, {"OP", "OVERFLOW", {4, 5}}, {"OP", "ZERO", {12, 17}}, };
+    t.arcs_by_control[30] = {{"OP", "CARRY_OUT", {4, 4}}, {"OP", "EQ", {4, 5}}, {"OP", "LT_SIGNED", {4, 5}}, {"OP", "LT_UNSIGNED", {4, 5}}, {"OP", "NEGATIVE", {5, 10}}, {"OP", "OUT", {5, 10}}, {"OP", "OVERFLOW", {4, 4}}, {"OP", "ZERO", {12, 17}}, };
+    t.arcs_by_control[31] = {{"OP", "CARRY_OUT", {4, 4}}, {"OP", "EQ", {4, 5}}, {"OP", "LT_SIGNED", {4, 5}}, {"OP", "LT_UNSIGNED", {4, 5}}, {"OP", "NEGATIVE", {5, 10}}, {"OP", "OUT", {5, 10}}, {"OP", "OVERFLOW", {4, 4}}, {"OP", "ZERO", {12, 17}}, };
     return t;
 }()},
 {"rv32i.alu32-core.behavioral.direct", [] {
@@ -9286,6 +17722,39 @@
         Arc{"OP", "LT_UNSIGNED", {4, 27}},
         Arc{"OP", "OUT", {5, 34}},
     };
+    t.control = "OP";
+    t.arcs_by_control[0] = {{"OP", "EQ", {4, 4}}, {"OP", "LT_SIGNED", {4, 4}}, {"OP", "LT_UNSIGNED", {4, 4}}, {"OP", "OUT", {5, 29}}, {"A", "OUT", {6, 25}}, {"B", "OUT", {3, 27}}, };
+    t.arcs_by_control[1] = {{"OP", "EQ", {4, 33}}, {"OP", "LT_SIGNED", {4, 28}}, {"OP", "LT_UNSIGNED", {4, 27}}, {"OP", "OUT", {5, 31}}, {"A", "EQ", {11, 27}}, {"A", "LT_SIGNED", {6, 22}}, {"A", "LT_UNSIGNED", {16, 21}}, {"A", "OUT", {6, 25}}, {"B", "EQ", {13, 29}}, {"B", "LT_SIGNED", {8, 24}}, {"B", "LT_UNSIGNED", {18, 23}}, {"B", "OUT", {3, 27}}, };
+    t.arcs_by_control[2] = {{"OP", "EQ", {4, 4}}, {"OP", "LT_SIGNED", {4, 4}}, {"OP", "LT_UNSIGNED", {4, 4}}, {"OP", "OUT", {5, 12}}, {"A", "OUT", {6, 8}}, {"B", "OUT", {3, 8}}, };
+    t.arcs_by_control[3] = {{"OP", "EQ", {4, 5}}, {"OP", "LT_SIGNED", {4, 5}}, {"OP", "LT_UNSIGNED", {4, 5}}, {"OP", "OUT", {5, 12}}, {"A", "OUT", {6, 8}}, {"B", "OUT", {3, 8}}, };
+    t.arcs_by_control[4] = {{"OP", "EQ", {4, 4}}, {"OP", "LT_SIGNED", {4, 4}}, {"OP", "LT_UNSIGNED", {4, 4}}, {"OP", "OUT", {5, 12}}, {"A", "OUT", {6, 8}}, {"B", "OUT", {3, 8}}, };
+    t.arcs_by_control[5] = {{"OP", "EQ", {4, 6}}, {"OP", "LT_SIGNED", {4, 6}}, {"OP", "LT_UNSIGNED", {4, 6}}, {"OP", "OUT", {5, 23}}, {"A", "OUT", {6, 21}}, {"B", "OUT", {3, 20}}, };
+    t.arcs_by_control[6] = {{"OP", "EQ", {4, 4}}, {"OP", "LT_SIGNED", {4, 4}}, {"OP", "LT_UNSIGNED", {4, 4}}, {"OP", "OUT", {5, 23}}, {"A", "OUT", {6, 21}}, {"B", "OUT", {3, 20}}, };
+    t.arcs_by_control[7] = {{"OP", "EQ", {4, 5}}, {"OP", "LT_SIGNED", {4, 5}}, {"OP", "LT_UNSIGNED", {4, 5}}, {"OP", "OUT", {5, 23}}, {"A", "OUT", {6, 21}}, {"B", "OUT", {3, 20}}, };
+    t.arcs_by_control[8] = {{"OP", "EQ", {4, 33}}, {"OP", "LT_SIGNED", {4, 28}}, {"OP", "LT_UNSIGNED", {4, 27}}, {"OP", "OUT", {5, 34}}, {"A", "EQ", {11, 27}}, {"A", "LT_SIGNED", {6, 22}}, {"A", "LT_UNSIGNED", {16, 21}}, {"A", "OUT", {6, 28}}, {"B", "EQ", {13, 29}}, {"B", "LT_SIGNED", {8, 24}}, {"B", "LT_UNSIGNED", {18, 23}}, {"B", "OUT", {3, 30}}, };
+    t.arcs_by_control[9] = {{"OP", "EQ", {4, 33}}, {"OP", "LT_SIGNED", {4, 28}}, {"OP", "LT_UNSIGNED", {4, 27}}, {"OP", "OUT", {5, 33}}, {"A", "EQ", {11, 27}}, {"A", "LT_SIGNED", {6, 22}}, {"A", "LT_UNSIGNED", {16, 21}}, {"A", "OUT", {6, 27}}, {"B", "EQ", {13, 29}}, {"B", "LT_SIGNED", {8, 24}}, {"B", "LT_UNSIGNED", {18, 23}}, {"B", "OUT", {3, 29}}, };
+    t.arcs_by_control[10] = {{"OP", "EQ", {4, 5}}, {"OP", "LT_SIGNED", {4, 5}}, {"OP", "LT_UNSIGNED", {4, 5}}, {"OP", "OUT", {5, 12}}, {"A", "OUT", {6, 6}}, };
+    t.arcs_by_control[11] = {{"OP", "EQ", {4, 5}}, {"OP", "LT_SIGNED", {4, 5}}, {"OP", "LT_UNSIGNED", {4, 5}}, {"OP", "OUT", {5, 12}}, {"B", "OUT", {3, 3}}, };
+    t.arcs_by_control[12] = {{"OP", "EQ", {4, 6}}, {"OP", "LT_SIGNED", {4, 6}}, {"OP", "LT_UNSIGNED", {4, 6}}, {"OP", "OUT", {5, 12}}, };
+    t.arcs_by_control[13] = {{"OP", "EQ", {4, 6}}, {"OP", "LT_SIGNED", {4, 6}}, {"OP", "LT_UNSIGNED", {4, 6}}, {"OP", "OUT", {5, 12}}, };
+    t.arcs_by_control[14] = {{"OP", "EQ", {4, 5}}, {"OP", "LT_SIGNED", {4, 5}}, {"OP", "LT_UNSIGNED", {4, 5}}, {"OP", "OUT", {5, 12}}, };
+    t.arcs_by_control[15] = {{"OP", "EQ", {4, 5}}, {"OP", "LT_SIGNED", {4, 5}}, {"OP", "LT_UNSIGNED", {4, 5}}, {"OP", "OUT", {5, 12}}, };
+    t.arcs_by_control[16] = {{"OP", "EQ", {4, 4}}, {"OP", "LT_SIGNED", {4, 4}}, {"OP", "LT_UNSIGNED", {4, 4}}, {"OP", "OUT", {5, 10}}, };
+    t.arcs_by_control[17] = {{"OP", "EQ", {4, 6}}, {"OP", "LT_SIGNED", {4, 6}}, {"OP", "LT_UNSIGNED", {4, 6}}, {"OP", "OUT", {5, 10}}, };
+    t.arcs_by_control[18] = {{"OP", "EQ", {4, 4}}, {"OP", "LT_SIGNED", {4, 4}}, {"OP", "LT_UNSIGNED", {4, 4}}, {"OP", "OUT", {5, 10}}, };
+    t.arcs_by_control[19] = {{"OP", "EQ", {4, 5}}, {"OP", "LT_SIGNED", {4, 5}}, {"OP", "LT_UNSIGNED", {4, 5}}, {"OP", "OUT", {5, 10}}, };
+    t.arcs_by_control[20] = {{"OP", "EQ", {4, 4}}, {"OP", "LT_SIGNED", {4, 4}}, {"OP", "LT_UNSIGNED", {4, 4}}, {"OP", "OUT", {5, 10}}, };
+    t.arcs_by_control[21] = {{"OP", "EQ", {4, 6}}, {"OP", "LT_SIGNED", {4, 6}}, {"OP", "LT_UNSIGNED", {4, 6}}, {"OP", "OUT", {5, 10}}, };
+    t.arcs_by_control[22] = {{"OP", "EQ", {4, 4}}, {"OP", "LT_SIGNED", {4, 4}}, {"OP", "LT_UNSIGNED", {4, 4}}, {"OP", "OUT", {5, 10}}, };
+    t.arcs_by_control[23] = {{"OP", "EQ", {4, 5}}, {"OP", "LT_SIGNED", {4, 5}}, {"OP", "LT_UNSIGNED", {4, 5}}, {"OP", "OUT", {5, 10}}, };
+    t.arcs_by_control[24] = {{"OP", "EQ", {4, 6}}, {"OP", "LT_SIGNED", {4, 6}}, {"OP", "LT_UNSIGNED", {4, 6}}, {"OP", "OUT", {5, 10}}, };
+    t.arcs_by_control[25] = {{"OP", "EQ", {4, 6}}, {"OP", "LT_SIGNED", {4, 6}}, {"OP", "LT_UNSIGNED", {4, 6}}, {"OP", "OUT", {5, 10}}, };
+    t.arcs_by_control[26] = {{"OP", "EQ", {4, 5}}, {"OP", "LT_SIGNED", {4, 5}}, {"OP", "LT_UNSIGNED", {4, 5}}, {"OP", "OUT", {5, 10}}, };
+    t.arcs_by_control[27] = {{"OP", "EQ", {4, 5}}, {"OP", "LT_SIGNED", {4, 5}}, {"OP", "LT_UNSIGNED", {4, 5}}, {"OP", "OUT", {5, 10}}, };
+    t.arcs_by_control[28] = {{"OP", "EQ", {4, 6}}, {"OP", "LT_SIGNED", {4, 6}}, {"OP", "LT_UNSIGNED", {4, 6}}, {"OP", "OUT", {5, 10}}, };
+    t.arcs_by_control[29] = {{"OP", "EQ", {4, 6}}, {"OP", "LT_SIGNED", {4, 6}}, {"OP", "LT_UNSIGNED", {4, 6}}, {"OP", "OUT", {5, 10}}, };
+    t.arcs_by_control[30] = {{"OP", "EQ", {4, 5}}, {"OP", "LT_SIGNED", {4, 5}}, {"OP", "LT_UNSIGNED", {4, 5}}, {"OP", "OUT", {5, 10}}, };
+    t.arcs_by_control[31] = {{"OP", "EQ", {4, 5}}, {"OP", "LT_SIGNED", {4, 5}}, {"OP", "LT_UNSIGNED", {4, 5}}, {"OP", "OUT", {5, 10}}, };
     return t;
 }()},
 {"rv32i.baseline.control.behavioral", [] {
@@ -9714,7 +18183,1183 @@
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
+{"rv32i.core.educational-five-stage.behavioral?prediction=not-taken&prediction_entries=1", [] {
+    PartDelays t;
+    t.evidence = "proven on rv32i.core.educational-five-stage.structural";
+    t.arcs = {
+        Arc{"DMEM_REQ_READY", "BRANCH_MISS", {15, 22}},
+        Arc{"DMEM_REQ_READY", "BRANCH_RESOLVED", {14, 21}},
+        Arc{"DMEM_REQ_READY", "COMMIT_VALID", {10, 10}},
+        Arc{"DMEM_REQ_READY", "DATA_PORT_STALL", {8, 8}},
+        Arc{"DMEM_REQ_READY", "DMEM_RSP_READY", {13, 19}},
+        Arc{"DMEM_REQ_READY", "IMEM_RSP_READY", {15, 22}},
+        Arc{"DMEM_REQ_READY", "INSTRUCTION_ATTEMPT", {10, 10}},
+        Arc{"DMEM_REQ_READY", "LOAD_USE_STALL", {11, 17}},
+        Arc{"DMEM_REQ_READY", "MEMORY_STALL", {7, 7}},
+        Arc{"DMEM_REQ_READY", "PIPELINE_FLUSH", {11, 17}},
+        Arc{"DMEM_REQ_READY", "PIPELINE_STALL", {9, 10}},
+        Arc{"DMEM_REQ_READY", "PREDICTION_RECOVERY", {14, 21}},
+        Arc{"DMEM_RSP_STATUS", "BRANCH_MISS", {13, 14}},
+        Arc{"DMEM_RSP_STATUS", "BRANCH_RESOLVED", {12, 13}},
+        Arc{"DMEM_RSP_STATUS", "IMEM_RSP_READY", {14, 16}},
+        Arc{"DMEM_RSP_STATUS", "PIPELINE_FLUSH", {9, 10}},
+        Arc{"DMEM_RSP_STATUS", "PREDICTION_RECOVERY", {12, 13}},
+        Arc{"DMEM_RSP_VALID", "BRANCH_MISS", {13, 20}},
+        Arc{"DMEM_RSP_VALID", "BRANCH_RESOLVED", {12, 19}},
+        Arc{"DMEM_RSP_VALID", "COMMIT_VALID", {8, 8}},
+        Arc{"DMEM_RSP_VALID", "DATA_PORT_STALL", {6, 6}},
+        Arc{"DMEM_RSP_VALID", "DMEM_RSP_READY", {11, 17}},
+        Arc{"DMEM_RSP_VALID", "IMEM_RSP_READY", {13, 20}},
+        Arc{"DMEM_RSP_VALID", "INSTRUCTION_ATTEMPT", {8, 8}},
+        Arc{"DMEM_RSP_VALID", "LOAD_USE_STALL", {9, 15}},
+        Arc{"DMEM_RSP_VALID", "MEMORY_STALL", {5, 5}},
+        Arc{"DMEM_RSP_VALID", "PIPELINE_FLUSH", {9, 15}},
+        Arc{"DMEM_RSP_VALID", "PIPELINE_STALL", {7, 8}},
+        Arc{"DMEM_RSP_VALID", "PREDICTION_RECOVERY", {12, 19}},
+        Arc{"ENABLE", "BRANCH_MISS", {9, 30}},
+        Arc{"ENABLE", "BRANCH_RESOLVED", {8, 29}},
+        Arc{"ENABLE", "COMMIT_VALID", {4, 18}},
+        Arc{"ENABLE", "DATA_PORT_STALL", {5, 16}},
+        Arc{"ENABLE", "DMEM_REQ_ADDR", {13, 15}},
+        Arc{"ENABLE", "DMEM_REQ_OP", {7, 7}},
+        Arc{"ENABLE", "DMEM_REQ_VALID", {8, 8}},
+        Arc{"ENABLE", "DMEM_REQ_WRITE_MASK", {12, 15}},
+        Arc{"ENABLE", "DMEM_RSP_READY", {7, 27}},
+        Arc{"ENABLE", "IMEM_REQ_VALID", {5, 5}},
+        Arc{"ENABLE", "IMEM_RSP_READY", {7, 30}},
+        Arc{"ENABLE", "INSTRUCTION_ATTEMPT", {4, 18}},
+        Arc{"ENABLE", "LOAD_USE_STALL", {5, 25}},
+        Arc{"ENABLE", "MEMORY_STALL", {4, 15}},
+        Arc{"ENABLE", "PIPELINE_FLUSH", {5, 25}},
+        Arc{"ENABLE", "PIPELINE_STALL", {6, 18}},
+        Arc{"ENABLE", "PREDICTION_RECOVERY", {8, 29}},
+        Arc{"IMEM_REQ_READY", "IMEM_RSP_READY", {11, 11}},
+        Arc{"IMEM_RSP_VALID", "IMEM_RSP_READY", {9, 9}},
+    };
+    t.clock = "CLK";
+    t.launches["BRANCH_MISS"] = {6, 71};
+    t.launches["BRANCH_RESOLVED"] = {6, 70};
+    t.launches["COMMIT_VALID"] = {4, 30};
+    t.launches["DATA_PORT_STALL"] = {6, 28};
+    t.launches["DMEM_REQ_ADDR"] = {5, 27};
+    t.launches["DMEM_REQ_OP"] = {5, 18};
+    t.launches["DMEM_REQ_VALID"] = {6, 20};
+    t.launches["DMEM_REQ_WRITE_DATA"] = {5, 14};
+    t.launches["DMEM_REQ_WRITE_MASK"] = {5, 27};
+    t.launches["DMEM_RSP_READY"] = {6, 39};
+    t.launches["EX_MEM_PC"] = {3, 4};
+    t.launches["EX_MEM_VALID"] = {3, 4};
+    t.launches["FETCH_PC"] = {3, 4};
+    t.launches["HALTED"] = {3, 4};
+    t.launches["ID_EX_PC"] = {3, 4};
+    t.launches["ID_EX_VALID"] = {3, 4};
+    t.launches["IF_ID_PC"] = {3, 4};
+    t.launches["IF_ID_VALID"] = {3, 4};
+    t.launches["IMEM_REQ_ADDR"] = {5, 7};
+    t.launches["IMEM_REQ_VALID"] = {6, 10};
+    t.launches["IMEM_RSP_READY"] = {6, 77};
+    t.launches["INSTRUCTION_ATTEMPT"] = {4, 30};
+    t.launches["LOAD_USE_STALL"] = {7, 37};
+    t.launches["MEMORY_STALL"] = {7, 27};
+    t.launches["MEM_WB_PC"] = {3, 4};
+    t.launches["MEM_WB_VALID"] = {3, 4};
+    t.launches["PIPELINE_FLUSH"] = {7, 71};
+    t.launches["PIPELINE_STALL"] = {7, 30};
+    t.launches["PREDICTION_RECOVERY"] = {8, 70};
+    t.launches["TRAPPED"] = {3, 4};
+    t.launches["TRAP_CAUSE"] = {3, 4};
+    t.setup["DMEM_REQ_READY"] = 30;
+    t.setup["DMEM_RSP_READ_DATA"] = 18;
+    t.setup["DMEM_RSP_STATUS"] = 24;
+    t.setup["DMEM_RSP_VALID"] = 28;
+    t.setup["ENABLE"] = 38;
+    t.setup["IMEM_REQ_READY"] = 19;
+    t.setup["IMEM_RSP_READ_DATA"] = 45;
+    t.setup["IMEM_RSP_STATUS"] = 15;
+    t.setup["IMEM_RSP_VALID"] = 17;
+    t.internal_period = 85;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"rv32i.core.educational-five-stage.behavioral?prediction=not-taken&prediction_entries=2", [] {
+    PartDelays t;
+    t.evidence = "proven on rv32i.core.educational-five-stage.structural";
+    t.arcs = {
+        Arc{"DMEM_REQ_READY", "BRANCH_MISS", {15, 22}},
+        Arc{"DMEM_REQ_READY", "BRANCH_RESOLVED", {14, 21}},
+        Arc{"DMEM_REQ_READY", "COMMIT_VALID", {10, 10}},
+        Arc{"DMEM_REQ_READY", "DATA_PORT_STALL", {8, 8}},
+        Arc{"DMEM_REQ_READY", "DMEM_RSP_READY", {13, 19}},
+        Arc{"DMEM_REQ_READY", "IMEM_RSP_READY", {15, 22}},
+        Arc{"DMEM_REQ_READY", "INSTRUCTION_ATTEMPT", {10, 10}},
+        Arc{"DMEM_REQ_READY", "LOAD_USE_STALL", {11, 17}},
+        Arc{"DMEM_REQ_READY", "MEMORY_STALL", {7, 7}},
+        Arc{"DMEM_REQ_READY", "PIPELINE_FLUSH", {11, 17}},
+        Arc{"DMEM_REQ_READY", "PIPELINE_STALL", {9, 10}},
+        Arc{"DMEM_REQ_READY", "PREDICTION_RECOVERY", {14, 21}},
+        Arc{"DMEM_RSP_STATUS", "BRANCH_MISS", {13, 14}},
+        Arc{"DMEM_RSP_STATUS", "BRANCH_RESOLVED", {12, 13}},
+        Arc{"DMEM_RSP_STATUS", "IMEM_RSP_READY", {14, 16}},
+        Arc{"DMEM_RSP_STATUS", "PIPELINE_FLUSH", {9, 10}},
+        Arc{"DMEM_RSP_STATUS", "PREDICTION_RECOVERY", {12, 13}},
+        Arc{"DMEM_RSP_VALID", "BRANCH_MISS", {13, 20}},
+        Arc{"DMEM_RSP_VALID", "BRANCH_RESOLVED", {12, 19}},
+        Arc{"DMEM_RSP_VALID", "COMMIT_VALID", {8, 8}},
+        Arc{"DMEM_RSP_VALID", "DATA_PORT_STALL", {6, 6}},
+        Arc{"DMEM_RSP_VALID", "DMEM_RSP_READY", {11, 17}},
+        Arc{"DMEM_RSP_VALID", "IMEM_RSP_READY", {13, 20}},
+        Arc{"DMEM_RSP_VALID", "INSTRUCTION_ATTEMPT", {8, 8}},
+        Arc{"DMEM_RSP_VALID", "LOAD_USE_STALL", {9, 15}},
+        Arc{"DMEM_RSP_VALID", "MEMORY_STALL", {5, 5}},
+        Arc{"DMEM_RSP_VALID", "PIPELINE_FLUSH", {9, 15}},
+        Arc{"DMEM_RSP_VALID", "PIPELINE_STALL", {7, 8}},
+        Arc{"DMEM_RSP_VALID", "PREDICTION_RECOVERY", {12, 19}},
+        Arc{"ENABLE", "BRANCH_MISS", {9, 30}},
+        Arc{"ENABLE", "BRANCH_RESOLVED", {8, 29}},
+        Arc{"ENABLE", "COMMIT_VALID", {4, 18}},
+        Arc{"ENABLE", "DATA_PORT_STALL", {5, 16}},
+        Arc{"ENABLE", "DMEM_REQ_ADDR", {13, 15}},
+        Arc{"ENABLE", "DMEM_REQ_OP", {7, 7}},
+        Arc{"ENABLE", "DMEM_REQ_VALID", {8, 8}},
+        Arc{"ENABLE", "DMEM_REQ_WRITE_MASK", {12, 15}},
+        Arc{"ENABLE", "DMEM_RSP_READY", {7, 27}},
+        Arc{"ENABLE", "IMEM_REQ_VALID", {5, 5}},
+        Arc{"ENABLE", "IMEM_RSP_READY", {7, 30}},
+        Arc{"ENABLE", "INSTRUCTION_ATTEMPT", {4, 18}},
+        Arc{"ENABLE", "LOAD_USE_STALL", {5, 25}},
+        Arc{"ENABLE", "MEMORY_STALL", {4, 15}},
+        Arc{"ENABLE", "PIPELINE_FLUSH", {5, 25}},
+        Arc{"ENABLE", "PIPELINE_STALL", {6, 18}},
+        Arc{"ENABLE", "PREDICTION_RECOVERY", {8, 29}},
+        Arc{"IMEM_REQ_READY", "IMEM_RSP_READY", {11, 11}},
+        Arc{"IMEM_RSP_VALID", "IMEM_RSP_READY", {9, 9}},
+    };
+    t.clock = "CLK";
+    t.launches["BRANCH_MISS"] = {6, 71};
+    t.launches["BRANCH_RESOLVED"] = {6, 70};
+    t.launches["COMMIT_VALID"] = {4, 30};
+    t.launches["DATA_PORT_STALL"] = {6, 28};
+    t.launches["DMEM_REQ_ADDR"] = {5, 27};
+    t.launches["DMEM_REQ_OP"] = {5, 18};
+    t.launches["DMEM_REQ_VALID"] = {6, 20};
+    t.launches["DMEM_REQ_WRITE_DATA"] = {5, 14};
+    t.launches["DMEM_REQ_WRITE_MASK"] = {5, 27};
+    t.launches["DMEM_RSP_READY"] = {6, 39};
+    t.launches["EX_MEM_PC"] = {3, 4};
+    t.launches["EX_MEM_VALID"] = {3, 4};
+    t.launches["FETCH_PC"] = {3, 4};
+    t.launches["HALTED"] = {3, 4};
+    t.launches["ID_EX_PC"] = {3, 4};
+    t.launches["ID_EX_VALID"] = {3, 4};
+    t.launches["IF_ID_PC"] = {3, 4};
+    t.launches["IF_ID_VALID"] = {3, 4};
+    t.launches["IMEM_REQ_ADDR"] = {5, 7};
+    t.launches["IMEM_REQ_VALID"] = {6, 10};
+    t.launches["IMEM_RSP_READY"] = {6, 77};
+    t.launches["INSTRUCTION_ATTEMPT"] = {4, 30};
+    t.launches["LOAD_USE_STALL"] = {7, 37};
+    t.launches["MEMORY_STALL"] = {7, 27};
+    t.launches["MEM_WB_PC"] = {3, 4};
+    t.launches["MEM_WB_VALID"] = {3, 4};
+    t.launches["PIPELINE_FLUSH"] = {7, 71};
+    t.launches["PIPELINE_STALL"] = {7, 30};
+    t.launches["PREDICTION_RECOVERY"] = {8, 70};
+    t.launches["TRAPPED"] = {3, 4};
+    t.launches["TRAP_CAUSE"] = {3, 4};
+    t.setup["DMEM_REQ_READY"] = 30;
+    t.setup["DMEM_RSP_READ_DATA"] = 18;
+    t.setup["DMEM_RSP_STATUS"] = 24;
+    t.setup["DMEM_RSP_VALID"] = 28;
+    t.setup["ENABLE"] = 38;
+    t.setup["IMEM_REQ_READY"] = 19;
+    t.setup["IMEM_RSP_READ_DATA"] = 45;
+    t.setup["IMEM_RSP_STATUS"] = 15;
+    t.setup["IMEM_RSP_VALID"] = 17;
+    t.internal_period = 85;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"rv32i.core.educational-five-stage.behavioral?prediction=not-taken&prediction_entries=4", [] {
+    PartDelays t;
+    t.evidence = "proven on rv32i.core.educational-five-stage.structural";
+    t.arcs = {
+        Arc{"DMEM_REQ_READY", "BRANCH_MISS", {15, 22}},
+        Arc{"DMEM_REQ_READY", "BRANCH_RESOLVED", {14, 21}},
+        Arc{"DMEM_REQ_READY", "COMMIT_VALID", {10, 10}},
+        Arc{"DMEM_REQ_READY", "DATA_PORT_STALL", {8, 8}},
+        Arc{"DMEM_REQ_READY", "DMEM_RSP_READY", {13, 19}},
+        Arc{"DMEM_REQ_READY", "IMEM_RSP_READY", {15, 22}},
+        Arc{"DMEM_REQ_READY", "INSTRUCTION_ATTEMPT", {10, 10}},
+        Arc{"DMEM_REQ_READY", "LOAD_USE_STALL", {11, 17}},
+        Arc{"DMEM_REQ_READY", "MEMORY_STALL", {7, 7}},
+        Arc{"DMEM_REQ_READY", "PIPELINE_FLUSH", {11, 17}},
+        Arc{"DMEM_REQ_READY", "PIPELINE_STALL", {9, 10}},
+        Arc{"DMEM_REQ_READY", "PREDICTION_RECOVERY", {14, 21}},
+        Arc{"DMEM_RSP_STATUS", "BRANCH_MISS", {13, 14}},
+        Arc{"DMEM_RSP_STATUS", "BRANCH_RESOLVED", {12, 13}},
+        Arc{"DMEM_RSP_STATUS", "IMEM_RSP_READY", {14, 16}},
+        Arc{"DMEM_RSP_STATUS", "PIPELINE_FLUSH", {9, 10}},
+        Arc{"DMEM_RSP_STATUS", "PREDICTION_RECOVERY", {12, 13}},
+        Arc{"DMEM_RSP_VALID", "BRANCH_MISS", {13, 20}},
+        Arc{"DMEM_RSP_VALID", "BRANCH_RESOLVED", {12, 19}},
+        Arc{"DMEM_RSP_VALID", "COMMIT_VALID", {8, 8}},
+        Arc{"DMEM_RSP_VALID", "DATA_PORT_STALL", {6, 6}},
+        Arc{"DMEM_RSP_VALID", "DMEM_RSP_READY", {11, 17}},
+        Arc{"DMEM_RSP_VALID", "IMEM_RSP_READY", {13, 20}},
+        Arc{"DMEM_RSP_VALID", "INSTRUCTION_ATTEMPT", {8, 8}},
+        Arc{"DMEM_RSP_VALID", "LOAD_USE_STALL", {9, 15}},
+        Arc{"DMEM_RSP_VALID", "MEMORY_STALL", {5, 5}},
+        Arc{"DMEM_RSP_VALID", "PIPELINE_FLUSH", {9, 15}},
+        Arc{"DMEM_RSP_VALID", "PIPELINE_STALL", {7, 8}},
+        Arc{"DMEM_RSP_VALID", "PREDICTION_RECOVERY", {12, 19}},
+        Arc{"ENABLE", "BRANCH_MISS", {9, 30}},
+        Arc{"ENABLE", "BRANCH_RESOLVED", {8, 29}},
+        Arc{"ENABLE", "COMMIT_VALID", {4, 18}},
+        Arc{"ENABLE", "DATA_PORT_STALL", {5, 16}},
+        Arc{"ENABLE", "DMEM_REQ_ADDR", {13, 15}},
+        Arc{"ENABLE", "DMEM_REQ_OP", {7, 7}},
+        Arc{"ENABLE", "DMEM_REQ_VALID", {8, 8}},
+        Arc{"ENABLE", "DMEM_REQ_WRITE_MASK", {12, 15}},
+        Arc{"ENABLE", "DMEM_RSP_READY", {7, 27}},
+        Arc{"ENABLE", "IMEM_REQ_VALID", {5, 5}},
+        Arc{"ENABLE", "IMEM_RSP_READY", {7, 30}},
+        Arc{"ENABLE", "INSTRUCTION_ATTEMPT", {4, 18}},
+        Arc{"ENABLE", "LOAD_USE_STALL", {5, 25}},
+        Arc{"ENABLE", "MEMORY_STALL", {4, 15}},
+        Arc{"ENABLE", "PIPELINE_FLUSH", {5, 25}},
+        Arc{"ENABLE", "PIPELINE_STALL", {6, 18}},
+        Arc{"ENABLE", "PREDICTION_RECOVERY", {8, 29}},
+        Arc{"IMEM_REQ_READY", "IMEM_RSP_READY", {11, 11}},
+        Arc{"IMEM_RSP_VALID", "IMEM_RSP_READY", {9, 9}},
+    };
+    t.clock = "CLK";
+    t.launches["BRANCH_MISS"] = {6, 71};
+    t.launches["BRANCH_RESOLVED"] = {6, 70};
+    t.launches["COMMIT_VALID"] = {4, 30};
+    t.launches["DATA_PORT_STALL"] = {6, 28};
+    t.launches["DMEM_REQ_ADDR"] = {5, 27};
+    t.launches["DMEM_REQ_OP"] = {5, 18};
+    t.launches["DMEM_REQ_VALID"] = {6, 20};
+    t.launches["DMEM_REQ_WRITE_DATA"] = {5, 14};
+    t.launches["DMEM_REQ_WRITE_MASK"] = {5, 27};
+    t.launches["DMEM_RSP_READY"] = {6, 39};
+    t.launches["EX_MEM_PC"] = {3, 4};
+    t.launches["EX_MEM_VALID"] = {3, 4};
+    t.launches["FETCH_PC"] = {3, 4};
+    t.launches["HALTED"] = {3, 4};
+    t.launches["ID_EX_PC"] = {3, 4};
+    t.launches["ID_EX_VALID"] = {3, 4};
+    t.launches["IF_ID_PC"] = {3, 4};
+    t.launches["IF_ID_VALID"] = {3, 4};
+    t.launches["IMEM_REQ_ADDR"] = {5, 7};
+    t.launches["IMEM_REQ_VALID"] = {6, 10};
+    t.launches["IMEM_RSP_READY"] = {6, 77};
+    t.launches["INSTRUCTION_ATTEMPT"] = {4, 30};
+    t.launches["LOAD_USE_STALL"] = {7, 37};
+    t.launches["MEMORY_STALL"] = {7, 27};
+    t.launches["MEM_WB_PC"] = {3, 4};
+    t.launches["MEM_WB_VALID"] = {3, 4};
+    t.launches["PIPELINE_FLUSH"] = {7, 71};
+    t.launches["PIPELINE_STALL"] = {7, 30};
+    t.launches["PREDICTION_RECOVERY"] = {8, 70};
+    t.launches["TRAPPED"] = {3, 4};
+    t.launches["TRAP_CAUSE"] = {3, 4};
+    t.setup["DMEM_REQ_READY"] = 30;
+    t.setup["DMEM_RSP_READ_DATA"] = 18;
+    t.setup["DMEM_RSP_STATUS"] = 24;
+    t.setup["DMEM_RSP_VALID"] = 28;
+    t.setup["ENABLE"] = 38;
+    t.setup["IMEM_REQ_READY"] = 19;
+    t.setup["IMEM_RSP_READ_DATA"] = 45;
+    t.setup["IMEM_RSP_STATUS"] = 15;
+    t.setup["IMEM_RSP_VALID"] = 17;
+    t.internal_period = 85;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"rv32i.core.educational-five-stage.behavioral?prediction=not-taken&prediction_entries=8", [] {
+    PartDelays t;
+    t.evidence = "proven on rv32i.core.educational-five-stage.structural";
+    t.arcs = {
+        Arc{"DMEM_REQ_READY", "BRANCH_MISS", {15, 22}},
+        Arc{"DMEM_REQ_READY", "BRANCH_RESOLVED", {14, 21}},
+        Arc{"DMEM_REQ_READY", "COMMIT_VALID", {10, 10}},
+        Arc{"DMEM_REQ_READY", "DATA_PORT_STALL", {8, 8}},
+        Arc{"DMEM_REQ_READY", "DMEM_RSP_READY", {13, 19}},
+        Arc{"DMEM_REQ_READY", "IMEM_RSP_READY", {15, 22}},
+        Arc{"DMEM_REQ_READY", "INSTRUCTION_ATTEMPT", {10, 10}},
+        Arc{"DMEM_REQ_READY", "LOAD_USE_STALL", {11, 17}},
+        Arc{"DMEM_REQ_READY", "MEMORY_STALL", {7, 7}},
+        Arc{"DMEM_REQ_READY", "PIPELINE_FLUSH", {11, 17}},
+        Arc{"DMEM_REQ_READY", "PIPELINE_STALL", {9, 10}},
+        Arc{"DMEM_REQ_READY", "PREDICTION_RECOVERY", {14, 21}},
+        Arc{"DMEM_RSP_STATUS", "BRANCH_MISS", {13, 14}},
+        Arc{"DMEM_RSP_STATUS", "BRANCH_RESOLVED", {12, 13}},
+        Arc{"DMEM_RSP_STATUS", "IMEM_RSP_READY", {14, 16}},
+        Arc{"DMEM_RSP_STATUS", "PIPELINE_FLUSH", {9, 10}},
+        Arc{"DMEM_RSP_STATUS", "PREDICTION_RECOVERY", {12, 13}},
+        Arc{"DMEM_RSP_VALID", "BRANCH_MISS", {13, 20}},
+        Arc{"DMEM_RSP_VALID", "BRANCH_RESOLVED", {12, 19}},
+        Arc{"DMEM_RSP_VALID", "COMMIT_VALID", {8, 8}},
+        Arc{"DMEM_RSP_VALID", "DATA_PORT_STALL", {6, 6}},
+        Arc{"DMEM_RSP_VALID", "DMEM_RSP_READY", {11, 17}},
+        Arc{"DMEM_RSP_VALID", "IMEM_RSP_READY", {13, 20}},
+        Arc{"DMEM_RSP_VALID", "INSTRUCTION_ATTEMPT", {8, 8}},
+        Arc{"DMEM_RSP_VALID", "LOAD_USE_STALL", {9, 15}},
+        Arc{"DMEM_RSP_VALID", "MEMORY_STALL", {5, 5}},
+        Arc{"DMEM_RSP_VALID", "PIPELINE_FLUSH", {9, 15}},
+        Arc{"DMEM_RSP_VALID", "PIPELINE_STALL", {7, 8}},
+        Arc{"DMEM_RSP_VALID", "PREDICTION_RECOVERY", {12, 19}},
+        Arc{"ENABLE", "BRANCH_MISS", {9, 30}},
+        Arc{"ENABLE", "BRANCH_RESOLVED", {8, 29}},
+        Arc{"ENABLE", "COMMIT_VALID", {4, 18}},
+        Arc{"ENABLE", "DATA_PORT_STALL", {5, 16}},
+        Arc{"ENABLE", "DMEM_REQ_ADDR", {13, 15}},
+        Arc{"ENABLE", "DMEM_REQ_OP", {7, 7}},
+        Arc{"ENABLE", "DMEM_REQ_VALID", {8, 8}},
+        Arc{"ENABLE", "DMEM_REQ_WRITE_MASK", {12, 15}},
+        Arc{"ENABLE", "DMEM_RSP_READY", {7, 27}},
+        Arc{"ENABLE", "IMEM_REQ_VALID", {5, 5}},
+        Arc{"ENABLE", "IMEM_RSP_READY", {7, 30}},
+        Arc{"ENABLE", "INSTRUCTION_ATTEMPT", {4, 18}},
+        Arc{"ENABLE", "LOAD_USE_STALL", {5, 25}},
+        Arc{"ENABLE", "MEMORY_STALL", {4, 15}},
+        Arc{"ENABLE", "PIPELINE_FLUSH", {5, 25}},
+        Arc{"ENABLE", "PIPELINE_STALL", {6, 18}},
+        Arc{"ENABLE", "PREDICTION_RECOVERY", {8, 29}},
+        Arc{"IMEM_REQ_READY", "IMEM_RSP_READY", {11, 11}},
+        Arc{"IMEM_RSP_VALID", "IMEM_RSP_READY", {9, 9}},
+    };
+    t.clock = "CLK";
+    t.launches["BRANCH_MISS"] = {6, 71};
+    t.launches["BRANCH_RESOLVED"] = {6, 70};
+    t.launches["COMMIT_VALID"] = {4, 30};
+    t.launches["DATA_PORT_STALL"] = {6, 28};
+    t.launches["DMEM_REQ_ADDR"] = {5, 27};
+    t.launches["DMEM_REQ_OP"] = {5, 18};
+    t.launches["DMEM_REQ_VALID"] = {6, 20};
+    t.launches["DMEM_REQ_WRITE_DATA"] = {5, 14};
+    t.launches["DMEM_REQ_WRITE_MASK"] = {5, 27};
+    t.launches["DMEM_RSP_READY"] = {6, 39};
+    t.launches["EX_MEM_PC"] = {3, 4};
+    t.launches["EX_MEM_VALID"] = {3, 4};
+    t.launches["FETCH_PC"] = {3, 4};
+    t.launches["HALTED"] = {3, 4};
+    t.launches["ID_EX_PC"] = {3, 4};
+    t.launches["ID_EX_VALID"] = {3, 4};
+    t.launches["IF_ID_PC"] = {3, 4};
+    t.launches["IF_ID_VALID"] = {3, 4};
+    t.launches["IMEM_REQ_ADDR"] = {5, 7};
+    t.launches["IMEM_REQ_VALID"] = {6, 10};
+    t.launches["IMEM_RSP_READY"] = {6, 77};
+    t.launches["INSTRUCTION_ATTEMPT"] = {4, 30};
+    t.launches["LOAD_USE_STALL"] = {7, 37};
+    t.launches["MEMORY_STALL"] = {7, 27};
+    t.launches["MEM_WB_PC"] = {3, 4};
+    t.launches["MEM_WB_VALID"] = {3, 4};
+    t.launches["PIPELINE_FLUSH"] = {7, 71};
+    t.launches["PIPELINE_STALL"] = {7, 30};
+    t.launches["PREDICTION_RECOVERY"] = {8, 70};
+    t.launches["TRAPPED"] = {3, 4};
+    t.launches["TRAP_CAUSE"] = {3, 4};
+    t.setup["DMEM_REQ_READY"] = 30;
+    t.setup["DMEM_RSP_READ_DATA"] = 18;
+    t.setup["DMEM_RSP_STATUS"] = 24;
+    t.setup["DMEM_RSP_VALID"] = 28;
+    t.setup["ENABLE"] = 38;
+    t.setup["IMEM_REQ_READY"] = 19;
+    t.setup["IMEM_RSP_READ_DATA"] = 45;
+    t.setup["IMEM_RSP_STATUS"] = 15;
+    t.setup["IMEM_RSP_VALID"] = 17;
+    t.internal_period = 85;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
 {"rv32i.core.educational-five-stage.behavioral?prediction=not-taken&prediction_entries=16", [] {
+    PartDelays t;
+    t.evidence = "proven on rv32i.core.educational-five-stage.structural";
+    t.arcs = {
+        Arc{"DMEM_REQ_READY", "BRANCH_MISS", {15, 22}},
+        Arc{"DMEM_REQ_READY", "BRANCH_RESOLVED", {14, 21}},
+        Arc{"DMEM_REQ_READY", "COMMIT_VALID", {10, 10}},
+        Arc{"DMEM_REQ_READY", "DATA_PORT_STALL", {8, 8}},
+        Arc{"DMEM_REQ_READY", "DMEM_RSP_READY", {13, 19}},
+        Arc{"DMEM_REQ_READY", "IMEM_RSP_READY", {15, 22}},
+        Arc{"DMEM_REQ_READY", "INSTRUCTION_ATTEMPT", {10, 10}},
+        Arc{"DMEM_REQ_READY", "LOAD_USE_STALL", {11, 17}},
+        Arc{"DMEM_REQ_READY", "MEMORY_STALL", {7, 7}},
+        Arc{"DMEM_REQ_READY", "PIPELINE_FLUSH", {11, 17}},
+        Arc{"DMEM_REQ_READY", "PIPELINE_STALL", {9, 10}},
+        Arc{"DMEM_REQ_READY", "PREDICTION_RECOVERY", {14, 21}},
+        Arc{"DMEM_RSP_STATUS", "BRANCH_MISS", {13, 14}},
+        Arc{"DMEM_RSP_STATUS", "BRANCH_RESOLVED", {12, 13}},
+        Arc{"DMEM_RSP_STATUS", "IMEM_RSP_READY", {14, 16}},
+        Arc{"DMEM_RSP_STATUS", "PIPELINE_FLUSH", {9, 10}},
+        Arc{"DMEM_RSP_STATUS", "PREDICTION_RECOVERY", {12, 13}},
+        Arc{"DMEM_RSP_VALID", "BRANCH_MISS", {13, 20}},
+        Arc{"DMEM_RSP_VALID", "BRANCH_RESOLVED", {12, 19}},
+        Arc{"DMEM_RSP_VALID", "COMMIT_VALID", {8, 8}},
+        Arc{"DMEM_RSP_VALID", "DATA_PORT_STALL", {6, 6}},
+        Arc{"DMEM_RSP_VALID", "DMEM_RSP_READY", {11, 17}},
+        Arc{"DMEM_RSP_VALID", "IMEM_RSP_READY", {13, 20}},
+        Arc{"DMEM_RSP_VALID", "INSTRUCTION_ATTEMPT", {8, 8}},
+        Arc{"DMEM_RSP_VALID", "LOAD_USE_STALL", {9, 15}},
+        Arc{"DMEM_RSP_VALID", "MEMORY_STALL", {5, 5}},
+        Arc{"DMEM_RSP_VALID", "PIPELINE_FLUSH", {9, 15}},
+        Arc{"DMEM_RSP_VALID", "PIPELINE_STALL", {7, 8}},
+        Arc{"DMEM_RSP_VALID", "PREDICTION_RECOVERY", {12, 19}},
+        Arc{"ENABLE", "BRANCH_MISS", {9, 30}},
+        Arc{"ENABLE", "BRANCH_RESOLVED", {8, 29}},
+        Arc{"ENABLE", "COMMIT_VALID", {4, 18}},
+        Arc{"ENABLE", "DATA_PORT_STALL", {5, 16}},
+        Arc{"ENABLE", "DMEM_REQ_ADDR", {13, 15}},
+        Arc{"ENABLE", "DMEM_REQ_OP", {7, 7}},
+        Arc{"ENABLE", "DMEM_REQ_VALID", {8, 8}},
+        Arc{"ENABLE", "DMEM_REQ_WRITE_MASK", {12, 15}},
+        Arc{"ENABLE", "DMEM_RSP_READY", {7, 27}},
+        Arc{"ENABLE", "IMEM_REQ_VALID", {5, 5}},
+        Arc{"ENABLE", "IMEM_RSP_READY", {7, 30}},
+        Arc{"ENABLE", "INSTRUCTION_ATTEMPT", {4, 18}},
+        Arc{"ENABLE", "LOAD_USE_STALL", {5, 25}},
+        Arc{"ENABLE", "MEMORY_STALL", {4, 15}},
+        Arc{"ENABLE", "PIPELINE_FLUSH", {5, 25}},
+        Arc{"ENABLE", "PIPELINE_STALL", {6, 18}},
+        Arc{"ENABLE", "PREDICTION_RECOVERY", {8, 29}},
+        Arc{"IMEM_REQ_READY", "IMEM_RSP_READY", {11, 11}},
+        Arc{"IMEM_RSP_VALID", "IMEM_RSP_READY", {9, 9}},
+    };
+    t.clock = "CLK";
+    t.launches["BRANCH_MISS"] = {6, 71};
+    t.launches["BRANCH_RESOLVED"] = {6, 70};
+    t.launches["COMMIT_VALID"] = {4, 30};
+    t.launches["DATA_PORT_STALL"] = {6, 28};
+    t.launches["DMEM_REQ_ADDR"] = {5, 27};
+    t.launches["DMEM_REQ_OP"] = {5, 18};
+    t.launches["DMEM_REQ_VALID"] = {6, 20};
+    t.launches["DMEM_REQ_WRITE_DATA"] = {5, 14};
+    t.launches["DMEM_REQ_WRITE_MASK"] = {5, 27};
+    t.launches["DMEM_RSP_READY"] = {6, 39};
+    t.launches["EX_MEM_PC"] = {3, 4};
+    t.launches["EX_MEM_VALID"] = {3, 4};
+    t.launches["FETCH_PC"] = {3, 4};
+    t.launches["HALTED"] = {3, 4};
+    t.launches["ID_EX_PC"] = {3, 4};
+    t.launches["ID_EX_VALID"] = {3, 4};
+    t.launches["IF_ID_PC"] = {3, 4};
+    t.launches["IF_ID_VALID"] = {3, 4};
+    t.launches["IMEM_REQ_ADDR"] = {5, 7};
+    t.launches["IMEM_REQ_VALID"] = {6, 10};
+    t.launches["IMEM_RSP_READY"] = {6, 77};
+    t.launches["INSTRUCTION_ATTEMPT"] = {4, 30};
+    t.launches["LOAD_USE_STALL"] = {7, 37};
+    t.launches["MEMORY_STALL"] = {7, 27};
+    t.launches["MEM_WB_PC"] = {3, 4};
+    t.launches["MEM_WB_VALID"] = {3, 4};
+    t.launches["PIPELINE_FLUSH"] = {7, 71};
+    t.launches["PIPELINE_STALL"] = {7, 30};
+    t.launches["PREDICTION_RECOVERY"] = {8, 70};
+    t.launches["TRAPPED"] = {3, 4};
+    t.launches["TRAP_CAUSE"] = {3, 4};
+    t.setup["DMEM_REQ_READY"] = 30;
+    t.setup["DMEM_RSP_READ_DATA"] = 18;
+    t.setup["DMEM_RSP_STATUS"] = 24;
+    t.setup["DMEM_RSP_VALID"] = 28;
+    t.setup["ENABLE"] = 38;
+    t.setup["IMEM_REQ_READY"] = 19;
+    t.setup["IMEM_RSP_READ_DATA"] = 45;
+    t.setup["IMEM_RSP_STATUS"] = 15;
+    t.setup["IMEM_RSP_VALID"] = 17;
+    t.internal_period = 85;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"rv32i.core.educational-five-stage.behavioral?prediction=not-taken&prediction_entries=32", [] {
+    PartDelays t;
+    t.evidence = "proven on rv32i.core.educational-five-stage.structural";
+    t.arcs = {
+        Arc{"DMEM_REQ_READY", "BRANCH_MISS", {15, 22}},
+        Arc{"DMEM_REQ_READY", "BRANCH_RESOLVED", {14, 21}},
+        Arc{"DMEM_REQ_READY", "COMMIT_VALID", {10, 10}},
+        Arc{"DMEM_REQ_READY", "DATA_PORT_STALL", {8, 8}},
+        Arc{"DMEM_REQ_READY", "DMEM_RSP_READY", {13, 19}},
+        Arc{"DMEM_REQ_READY", "IMEM_RSP_READY", {15, 22}},
+        Arc{"DMEM_REQ_READY", "INSTRUCTION_ATTEMPT", {10, 10}},
+        Arc{"DMEM_REQ_READY", "LOAD_USE_STALL", {11, 17}},
+        Arc{"DMEM_REQ_READY", "MEMORY_STALL", {7, 7}},
+        Arc{"DMEM_REQ_READY", "PIPELINE_FLUSH", {11, 17}},
+        Arc{"DMEM_REQ_READY", "PIPELINE_STALL", {9, 10}},
+        Arc{"DMEM_REQ_READY", "PREDICTION_RECOVERY", {14, 21}},
+        Arc{"DMEM_RSP_STATUS", "BRANCH_MISS", {13, 14}},
+        Arc{"DMEM_RSP_STATUS", "BRANCH_RESOLVED", {12, 13}},
+        Arc{"DMEM_RSP_STATUS", "IMEM_RSP_READY", {14, 16}},
+        Arc{"DMEM_RSP_STATUS", "PIPELINE_FLUSH", {9, 10}},
+        Arc{"DMEM_RSP_STATUS", "PREDICTION_RECOVERY", {12, 13}},
+        Arc{"DMEM_RSP_VALID", "BRANCH_MISS", {13, 20}},
+        Arc{"DMEM_RSP_VALID", "BRANCH_RESOLVED", {12, 19}},
+        Arc{"DMEM_RSP_VALID", "COMMIT_VALID", {8, 8}},
+        Arc{"DMEM_RSP_VALID", "DATA_PORT_STALL", {6, 6}},
+        Arc{"DMEM_RSP_VALID", "DMEM_RSP_READY", {11, 17}},
+        Arc{"DMEM_RSP_VALID", "IMEM_RSP_READY", {13, 20}},
+        Arc{"DMEM_RSP_VALID", "INSTRUCTION_ATTEMPT", {8, 8}},
+        Arc{"DMEM_RSP_VALID", "LOAD_USE_STALL", {9, 15}},
+        Arc{"DMEM_RSP_VALID", "MEMORY_STALL", {5, 5}},
+        Arc{"DMEM_RSP_VALID", "PIPELINE_FLUSH", {9, 15}},
+        Arc{"DMEM_RSP_VALID", "PIPELINE_STALL", {7, 8}},
+        Arc{"DMEM_RSP_VALID", "PREDICTION_RECOVERY", {12, 19}},
+        Arc{"ENABLE", "BRANCH_MISS", {9, 30}},
+        Arc{"ENABLE", "BRANCH_RESOLVED", {8, 29}},
+        Arc{"ENABLE", "COMMIT_VALID", {4, 18}},
+        Arc{"ENABLE", "DATA_PORT_STALL", {5, 16}},
+        Arc{"ENABLE", "DMEM_REQ_ADDR", {13, 15}},
+        Arc{"ENABLE", "DMEM_REQ_OP", {7, 7}},
+        Arc{"ENABLE", "DMEM_REQ_VALID", {8, 8}},
+        Arc{"ENABLE", "DMEM_REQ_WRITE_MASK", {12, 15}},
+        Arc{"ENABLE", "DMEM_RSP_READY", {7, 27}},
+        Arc{"ENABLE", "IMEM_REQ_VALID", {5, 5}},
+        Arc{"ENABLE", "IMEM_RSP_READY", {7, 30}},
+        Arc{"ENABLE", "INSTRUCTION_ATTEMPT", {4, 18}},
+        Arc{"ENABLE", "LOAD_USE_STALL", {5, 25}},
+        Arc{"ENABLE", "MEMORY_STALL", {4, 15}},
+        Arc{"ENABLE", "PIPELINE_FLUSH", {5, 25}},
+        Arc{"ENABLE", "PIPELINE_STALL", {6, 18}},
+        Arc{"ENABLE", "PREDICTION_RECOVERY", {8, 29}},
+        Arc{"IMEM_REQ_READY", "IMEM_RSP_READY", {11, 11}},
+        Arc{"IMEM_RSP_VALID", "IMEM_RSP_READY", {9, 9}},
+    };
+    t.clock = "CLK";
+    t.launches["BRANCH_MISS"] = {6, 71};
+    t.launches["BRANCH_RESOLVED"] = {6, 70};
+    t.launches["COMMIT_VALID"] = {4, 30};
+    t.launches["DATA_PORT_STALL"] = {6, 28};
+    t.launches["DMEM_REQ_ADDR"] = {5, 27};
+    t.launches["DMEM_REQ_OP"] = {5, 18};
+    t.launches["DMEM_REQ_VALID"] = {6, 20};
+    t.launches["DMEM_REQ_WRITE_DATA"] = {5, 14};
+    t.launches["DMEM_REQ_WRITE_MASK"] = {5, 27};
+    t.launches["DMEM_RSP_READY"] = {6, 39};
+    t.launches["EX_MEM_PC"] = {3, 4};
+    t.launches["EX_MEM_VALID"] = {3, 4};
+    t.launches["FETCH_PC"] = {3, 4};
+    t.launches["HALTED"] = {3, 4};
+    t.launches["ID_EX_PC"] = {3, 4};
+    t.launches["ID_EX_VALID"] = {3, 4};
+    t.launches["IF_ID_PC"] = {3, 4};
+    t.launches["IF_ID_VALID"] = {3, 4};
+    t.launches["IMEM_REQ_ADDR"] = {5, 7};
+    t.launches["IMEM_REQ_VALID"] = {6, 10};
+    t.launches["IMEM_RSP_READY"] = {6, 77};
+    t.launches["INSTRUCTION_ATTEMPT"] = {4, 30};
+    t.launches["LOAD_USE_STALL"] = {7, 37};
+    t.launches["MEMORY_STALL"] = {7, 27};
+    t.launches["MEM_WB_PC"] = {3, 4};
+    t.launches["MEM_WB_VALID"] = {3, 4};
+    t.launches["PIPELINE_FLUSH"] = {7, 71};
+    t.launches["PIPELINE_STALL"] = {7, 30};
+    t.launches["PREDICTION_RECOVERY"] = {8, 70};
+    t.launches["TRAPPED"] = {3, 4};
+    t.launches["TRAP_CAUSE"] = {3, 4};
+    t.setup["DMEM_REQ_READY"] = 30;
+    t.setup["DMEM_RSP_READ_DATA"] = 18;
+    t.setup["DMEM_RSP_STATUS"] = 24;
+    t.setup["DMEM_RSP_VALID"] = 28;
+    t.setup["ENABLE"] = 38;
+    t.setup["IMEM_REQ_READY"] = 19;
+    t.setup["IMEM_RSP_READ_DATA"] = 45;
+    t.setup["IMEM_RSP_STATUS"] = 15;
+    t.setup["IMEM_RSP_VALID"] = 17;
+    t.internal_period = 85;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"rv32i.core.educational-five-stage.behavioral?prediction=not-taken&prediction_entries=64", [] {
+    PartDelays t;
+    t.evidence = "proven on rv32i.core.educational-five-stage.structural";
+    t.arcs = {
+        Arc{"DMEM_REQ_READY", "BRANCH_MISS", {15, 22}},
+        Arc{"DMEM_REQ_READY", "BRANCH_RESOLVED", {14, 21}},
+        Arc{"DMEM_REQ_READY", "COMMIT_VALID", {10, 10}},
+        Arc{"DMEM_REQ_READY", "DATA_PORT_STALL", {8, 8}},
+        Arc{"DMEM_REQ_READY", "DMEM_RSP_READY", {13, 19}},
+        Arc{"DMEM_REQ_READY", "IMEM_RSP_READY", {15, 22}},
+        Arc{"DMEM_REQ_READY", "INSTRUCTION_ATTEMPT", {10, 10}},
+        Arc{"DMEM_REQ_READY", "LOAD_USE_STALL", {11, 17}},
+        Arc{"DMEM_REQ_READY", "MEMORY_STALL", {7, 7}},
+        Arc{"DMEM_REQ_READY", "PIPELINE_FLUSH", {11, 17}},
+        Arc{"DMEM_REQ_READY", "PIPELINE_STALL", {9, 10}},
+        Arc{"DMEM_REQ_READY", "PREDICTION_RECOVERY", {14, 21}},
+        Arc{"DMEM_RSP_STATUS", "BRANCH_MISS", {13, 14}},
+        Arc{"DMEM_RSP_STATUS", "BRANCH_RESOLVED", {12, 13}},
+        Arc{"DMEM_RSP_STATUS", "IMEM_RSP_READY", {14, 16}},
+        Arc{"DMEM_RSP_STATUS", "PIPELINE_FLUSH", {9, 10}},
+        Arc{"DMEM_RSP_STATUS", "PREDICTION_RECOVERY", {12, 13}},
+        Arc{"DMEM_RSP_VALID", "BRANCH_MISS", {13, 20}},
+        Arc{"DMEM_RSP_VALID", "BRANCH_RESOLVED", {12, 19}},
+        Arc{"DMEM_RSP_VALID", "COMMIT_VALID", {8, 8}},
+        Arc{"DMEM_RSP_VALID", "DATA_PORT_STALL", {6, 6}},
+        Arc{"DMEM_RSP_VALID", "DMEM_RSP_READY", {11, 17}},
+        Arc{"DMEM_RSP_VALID", "IMEM_RSP_READY", {13, 20}},
+        Arc{"DMEM_RSP_VALID", "INSTRUCTION_ATTEMPT", {8, 8}},
+        Arc{"DMEM_RSP_VALID", "LOAD_USE_STALL", {9, 15}},
+        Arc{"DMEM_RSP_VALID", "MEMORY_STALL", {5, 5}},
+        Arc{"DMEM_RSP_VALID", "PIPELINE_FLUSH", {9, 15}},
+        Arc{"DMEM_RSP_VALID", "PIPELINE_STALL", {7, 8}},
+        Arc{"DMEM_RSP_VALID", "PREDICTION_RECOVERY", {12, 19}},
+        Arc{"ENABLE", "BRANCH_MISS", {9, 30}},
+        Arc{"ENABLE", "BRANCH_RESOLVED", {8, 29}},
+        Arc{"ENABLE", "COMMIT_VALID", {4, 18}},
+        Arc{"ENABLE", "DATA_PORT_STALL", {5, 16}},
+        Arc{"ENABLE", "DMEM_REQ_ADDR", {13, 15}},
+        Arc{"ENABLE", "DMEM_REQ_OP", {7, 7}},
+        Arc{"ENABLE", "DMEM_REQ_VALID", {8, 8}},
+        Arc{"ENABLE", "DMEM_REQ_WRITE_MASK", {12, 15}},
+        Arc{"ENABLE", "DMEM_RSP_READY", {7, 27}},
+        Arc{"ENABLE", "IMEM_REQ_VALID", {5, 5}},
+        Arc{"ENABLE", "IMEM_RSP_READY", {7, 30}},
+        Arc{"ENABLE", "INSTRUCTION_ATTEMPT", {4, 18}},
+        Arc{"ENABLE", "LOAD_USE_STALL", {5, 25}},
+        Arc{"ENABLE", "MEMORY_STALL", {4, 15}},
+        Arc{"ENABLE", "PIPELINE_FLUSH", {5, 25}},
+        Arc{"ENABLE", "PIPELINE_STALL", {6, 18}},
+        Arc{"ENABLE", "PREDICTION_RECOVERY", {8, 29}},
+        Arc{"IMEM_REQ_READY", "IMEM_RSP_READY", {11, 11}},
+        Arc{"IMEM_RSP_VALID", "IMEM_RSP_READY", {9, 9}},
+    };
+    t.clock = "CLK";
+    t.launches["BRANCH_MISS"] = {6, 71};
+    t.launches["BRANCH_RESOLVED"] = {6, 70};
+    t.launches["COMMIT_VALID"] = {4, 30};
+    t.launches["DATA_PORT_STALL"] = {6, 28};
+    t.launches["DMEM_REQ_ADDR"] = {5, 27};
+    t.launches["DMEM_REQ_OP"] = {5, 18};
+    t.launches["DMEM_REQ_VALID"] = {6, 20};
+    t.launches["DMEM_REQ_WRITE_DATA"] = {5, 14};
+    t.launches["DMEM_REQ_WRITE_MASK"] = {5, 27};
+    t.launches["DMEM_RSP_READY"] = {6, 39};
+    t.launches["EX_MEM_PC"] = {3, 4};
+    t.launches["EX_MEM_VALID"] = {3, 4};
+    t.launches["FETCH_PC"] = {3, 4};
+    t.launches["HALTED"] = {3, 4};
+    t.launches["ID_EX_PC"] = {3, 4};
+    t.launches["ID_EX_VALID"] = {3, 4};
+    t.launches["IF_ID_PC"] = {3, 4};
+    t.launches["IF_ID_VALID"] = {3, 4};
+    t.launches["IMEM_REQ_ADDR"] = {5, 7};
+    t.launches["IMEM_REQ_VALID"] = {6, 10};
+    t.launches["IMEM_RSP_READY"] = {6, 77};
+    t.launches["INSTRUCTION_ATTEMPT"] = {4, 30};
+    t.launches["LOAD_USE_STALL"] = {7, 37};
+    t.launches["MEMORY_STALL"] = {7, 27};
+    t.launches["MEM_WB_PC"] = {3, 4};
+    t.launches["MEM_WB_VALID"] = {3, 4};
+    t.launches["PIPELINE_FLUSH"] = {7, 71};
+    t.launches["PIPELINE_STALL"] = {7, 30};
+    t.launches["PREDICTION_RECOVERY"] = {8, 70};
+    t.launches["TRAPPED"] = {3, 4};
+    t.launches["TRAP_CAUSE"] = {3, 4};
+    t.setup["DMEM_REQ_READY"] = 30;
+    t.setup["DMEM_RSP_READ_DATA"] = 18;
+    t.setup["DMEM_RSP_STATUS"] = 24;
+    t.setup["DMEM_RSP_VALID"] = 28;
+    t.setup["ENABLE"] = 38;
+    t.setup["IMEM_REQ_READY"] = 19;
+    t.setup["IMEM_RSP_READ_DATA"] = 45;
+    t.setup["IMEM_RSP_STATUS"] = 15;
+    t.setup["IMEM_RSP_VALID"] = 17;
+    t.internal_period = 85;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"rv32i.core.educational-five-stage.behavioral?prediction=not-taken&prediction_entries=128", [] {
+    PartDelays t;
+    t.evidence = "proven on rv32i.core.educational-five-stage.structural";
+    t.arcs = {
+        Arc{"DMEM_REQ_READY", "BRANCH_MISS", {15, 22}},
+        Arc{"DMEM_REQ_READY", "BRANCH_RESOLVED", {14, 21}},
+        Arc{"DMEM_REQ_READY", "COMMIT_VALID", {10, 10}},
+        Arc{"DMEM_REQ_READY", "DATA_PORT_STALL", {8, 8}},
+        Arc{"DMEM_REQ_READY", "DMEM_RSP_READY", {13, 19}},
+        Arc{"DMEM_REQ_READY", "IMEM_RSP_READY", {15, 22}},
+        Arc{"DMEM_REQ_READY", "INSTRUCTION_ATTEMPT", {10, 10}},
+        Arc{"DMEM_REQ_READY", "LOAD_USE_STALL", {11, 17}},
+        Arc{"DMEM_REQ_READY", "MEMORY_STALL", {7, 7}},
+        Arc{"DMEM_REQ_READY", "PIPELINE_FLUSH", {11, 17}},
+        Arc{"DMEM_REQ_READY", "PIPELINE_STALL", {9, 10}},
+        Arc{"DMEM_REQ_READY", "PREDICTION_RECOVERY", {14, 21}},
+        Arc{"DMEM_RSP_STATUS", "BRANCH_MISS", {13, 14}},
+        Arc{"DMEM_RSP_STATUS", "BRANCH_RESOLVED", {12, 13}},
+        Arc{"DMEM_RSP_STATUS", "IMEM_RSP_READY", {14, 16}},
+        Arc{"DMEM_RSP_STATUS", "PIPELINE_FLUSH", {9, 10}},
+        Arc{"DMEM_RSP_STATUS", "PREDICTION_RECOVERY", {12, 13}},
+        Arc{"DMEM_RSP_VALID", "BRANCH_MISS", {13, 20}},
+        Arc{"DMEM_RSP_VALID", "BRANCH_RESOLVED", {12, 19}},
+        Arc{"DMEM_RSP_VALID", "COMMIT_VALID", {8, 8}},
+        Arc{"DMEM_RSP_VALID", "DATA_PORT_STALL", {6, 6}},
+        Arc{"DMEM_RSP_VALID", "DMEM_RSP_READY", {11, 17}},
+        Arc{"DMEM_RSP_VALID", "IMEM_RSP_READY", {13, 20}},
+        Arc{"DMEM_RSP_VALID", "INSTRUCTION_ATTEMPT", {8, 8}},
+        Arc{"DMEM_RSP_VALID", "LOAD_USE_STALL", {9, 15}},
+        Arc{"DMEM_RSP_VALID", "MEMORY_STALL", {5, 5}},
+        Arc{"DMEM_RSP_VALID", "PIPELINE_FLUSH", {9, 15}},
+        Arc{"DMEM_RSP_VALID", "PIPELINE_STALL", {7, 8}},
+        Arc{"DMEM_RSP_VALID", "PREDICTION_RECOVERY", {12, 19}},
+        Arc{"ENABLE", "BRANCH_MISS", {9, 30}},
+        Arc{"ENABLE", "BRANCH_RESOLVED", {8, 29}},
+        Arc{"ENABLE", "COMMIT_VALID", {4, 18}},
+        Arc{"ENABLE", "DATA_PORT_STALL", {5, 16}},
+        Arc{"ENABLE", "DMEM_REQ_ADDR", {13, 15}},
+        Arc{"ENABLE", "DMEM_REQ_OP", {7, 7}},
+        Arc{"ENABLE", "DMEM_REQ_VALID", {8, 8}},
+        Arc{"ENABLE", "DMEM_REQ_WRITE_MASK", {12, 15}},
+        Arc{"ENABLE", "DMEM_RSP_READY", {7, 27}},
+        Arc{"ENABLE", "IMEM_REQ_VALID", {5, 5}},
+        Arc{"ENABLE", "IMEM_RSP_READY", {7, 30}},
+        Arc{"ENABLE", "INSTRUCTION_ATTEMPT", {4, 18}},
+        Arc{"ENABLE", "LOAD_USE_STALL", {5, 25}},
+        Arc{"ENABLE", "MEMORY_STALL", {4, 15}},
+        Arc{"ENABLE", "PIPELINE_FLUSH", {5, 25}},
+        Arc{"ENABLE", "PIPELINE_STALL", {6, 18}},
+        Arc{"ENABLE", "PREDICTION_RECOVERY", {8, 29}},
+        Arc{"IMEM_REQ_READY", "IMEM_RSP_READY", {11, 11}},
+        Arc{"IMEM_RSP_VALID", "IMEM_RSP_READY", {9, 9}},
+    };
+    t.clock = "CLK";
+    t.launches["BRANCH_MISS"] = {6, 71};
+    t.launches["BRANCH_RESOLVED"] = {6, 70};
+    t.launches["COMMIT_VALID"] = {4, 30};
+    t.launches["DATA_PORT_STALL"] = {6, 28};
+    t.launches["DMEM_REQ_ADDR"] = {5, 27};
+    t.launches["DMEM_REQ_OP"] = {5, 18};
+    t.launches["DMEM_REQ_VALID"] = {6, 20};
+    t.launches["DMEM_REQ_WRITE_DATA"] = {5, 14};
+    t.launches["DMEM_REQ_WRITE_MASK"] = {5, 27};
+    t.launches["DMEM_RSP_READY"] = {6, 39};
+    t.launches["EX_MEM_PC"] = {3, 4};
+    t.launches["EX_MEM_VALID"] = {3, 4};
+    t.launches["FETCH_PC"] = {3, 4};
+    t.launches["HALTED"] = {3, 4};
+    t.launches["ID_EX_PC"] = {3, 4};
+    t.launches["ID_EX_VALID"] = {3, 4};
+    t.launches["IF_ID_PC"] = {3, 4};
+    t.launches["IF_ID_VALID"] = {3, 4};
+    t.launches["IMEM_REQ_ADDR"] = {5, 7};
+    t.launches["IMEM_REQ_VALID"] = {6, 10};
+    t.launches["IMEM_RSP_READY"] = {6, 77};
+    t.launches["INSTRUCTION_ATTEMPT"] = {4, 30};
+    t.launches["LOAD_USE_STALL"] = {7, 37};
+    t.launches["MEMORY_STALL"] = {7, 27};
+    t.launches["MEM_WB_PC"] = {3, 4};
+    t.launches["MEM_WB_VALID"] = {3, 4};
+    t.launches["PIPELINE_FLUSH"] = {7, 71};
+    t.launches["PIPELINE_STALL"] = {7, 30};
+    t.launches["PREDICTION_RECOVERY"] = {8, 70};
+    t.launches["TRAPPED"] = {3, 4};
+    t.launches["TRAP_CAUSE"] = {3, 4};
+    t.setup["DMEM_REQ_READY"] = 30;
+    t.setup["DMEM_RSP_READ_DATA"] = 18;
+    t.setup["DMEM_RSP_STATUS"] = 24;
+    t.setup["DMEM_RSP_VALID"] = 28;
+    t.setup["ENABLE"] = 38;
+    t.setup["IMEM_REQ_READY"] = 19;
+    t.setup["IMEM_RSP_READ_DATA"] = 45;
+    t.setup["IMEM_RSP_STATUS"] = 15;
+    t.setup["IMEM_RSP_VALID"] = 17;
+    t.internal_period = 85;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"rv32i.core.educational-five-stage.behavioral?prediction=not-taken&prediction_entries=256", [] {
+    PartDelays t;
+    t.evidence = "proven on rv32i.core.educational-five-stage.structural";
+    t.arcs = {
+        Arc{"DMEM_REQ_READY", "BRANCH_MISS", {15, 22}},
+        Arc{"DMEM_REQ_READY", "BRANCH_RESOLVED", {14, 21}},
+        Arc{"DMEM_REQ_READY", "COMMIT_VALID", {10, 10}},
+        Arc{"DMEM_REQ_READY", "DATA_PORT_STALL", {8, 8}},
+        Arc{"DMEM_REQ_READY", "DMEM_RSP_READY", {13, 19}},
+        Arc{"DMEM_REQ_READY", "IMEM_RSP_READY", {15, 22}},
+        Arc{"DMEM_REQ_READY", "INSTRUCTION_ATTEMPT", {10, 10}},
+        Arc{"DMEM_REQ_READY", "LOAD_USE_STALL", {11, 17}},
+        Arc{"DMEM_REQ_READY", "MEMORY_STALL", {7, 7}},
+        Arc{"DMEM_REQ_READY", "PIPELINE_FLUSH", {11, 17}},
+        Arc{"DMEM_REQ_READY", "PIPELINE_STALL", {9, 10}},
+        Arc{"DMEM_REQ_READY", "PREDICTION_RECOVERY", {14, 21}},
+        Arc{"DMEM_RSP_STATUS", "BRANCH_MISS", {13, 14}},
+        Arc{"DMEM_RSP_STATUS", "BRANCH_RESOLVED", {12, 13}},
+        Arc{"DMEM_RSP_STATUS", "IMEM_RSP_READY", {14, 16}},
+        Arc{"DMEM_RSP_STATUS", "PIPELINE_FLUSH", {9, 10}},
+        Arc{"DMEM_RSP_STATUS", "PREDICTION_RECOVERY", {12, 13}},
+        Arc{"DMEM_RSP_VALID", "BRANCH_MISS", {13, 20}},
+        Arc{"DMEM_RSP_VALID", "BRANCH_RESOLVED", {12, 19}},
+        Arc{"DMEM_RSP_VALID", "COMMIT_VALID", {8, 8}},
+        Arc{"DMEM_RSP_VALID", "DATA_PORT_STALL", {6, 6}},
+        Arc{"DMEM_RSP_VALID", "DMEM_RSP_READY", {11, 17}},
+        Arc{"DMEM_RSP_VALID", "IMEM_RSP_READY", {13, 20}},
+        Arc{"DMEM_RSP_VALID", "INSTRUCTION_ATTEMPT", {8, 8}},
+        Arc{"DMEM_RSP_VALID", "LOAD_USE_STALL", {9, 15}},
+        Arc{"DMEM_RSP_VALID", "MEMORY_STALL", {5, 5}},
+        Arc{"DMEM_RSP_VALID", "PIPELINE_FLUSH", {9, 15}},
+        Arc{"DMEM_RSP_VALID", "PIPELINE_STALL", {7, 8}},
+        Arc{"DMEM_RSP_VALID", "PREDICTION_RECOVERY", {12, 19}},
+        Arc{"ENABLE", "BRANCH_MISS", {9, 30}},
+        Arc{"ENABLE", "BRANCH_RESOLVED", {8, 29}},
+        Arc{"ENABLE", "COMMIT_VALID", {4, 18}},
+        Arc{"ENABLE", "DATA_PORT_STALL", {5, 16}},
+        Arc{"ENABLE", "DMEM_REQ_ADDR", {13, 15}},
+        Arc{"ENABLE", "DMEM_REQ_OP", {7, 7}},
+        Arc{"ENABLE", "DMEM_REQ_VALID", {8, 8}},
+        Arc{"ENABLE", "DMEM_REQ_WRITE_MASK", {12, 15}},
+        Arc{"ENABLE", "DMEM_RSP_READY", {7, 27}},
+        Arc{"ENABLE", "IMEM_REQ_VALID", {5, 5}},
+        Arc{"ENABLE", "IMEM_RSP_READY", {7, 30}},
+        Arc{"ENABLE", "INSTRUCTION_ATTEMPT", {4, 18}},
+        Arc{"ENABLE", "LOAD_USE_STALL", {5, 25}},
+        Arc{"ENABLE", "MEMORY_STALL", {4, 15}},
+        Arc{"ENABLE", "PIPELINE_FLUSH", {5, 25}},
+        Arc{"ENABLE", "PIPELINE_STALL", {6, 18}},
+        Arc{"ENABLE", "PREDICTION_RECOVERY", {8, 29}},
+        Arc{"IMEM_REQ_READY", "IMEM_RSP_READY", {11, 11}},
+        Arc{"IMEM_RSP_VALID", "IMEM_RSP_READY", {9, 9}},
+    };
+    t.clock = "CLK";
+    t.launches["BRANCH_MISS"] = {6, 71};
+    t.launches["BRANCH_RESOLVED"] = {6, 70};
+    t.launches["COMMIT_VALID"] = {4, 30};
+    t.launches["DATA_PORT_STALL"] = {6, 28};
+    t.launches["DMEM_REQ_ADDR"] = {5, 27};
+    t.launches["DMEM_REQ_OP"] = {5, 18};
+    t.launches["DMEM_REQ_VALID"] = {6, 20};
+    t.launches["DMEM_REQ_WRITE_DATA"] = {5, 14};
+    t.launches["DMEM_REQ_WRITE_MASK"] = {5, 27};
+    t.launches["DMEM_RSP_READY"] = {6, 39};
+    t.launches["EX_MEM_PC"] = {3, 4};
+    t.launches["EX_MEM_VALID"] = {3, 4};
+    t.launches["FETCH_PC"] = {3, 4};
+    t.launches["HALTED"] = {3, 4};
+    t.launches["ID_EX_PC"] = {3, 4};
+    t.launches["ID_EX_VALID"] = {3, 4};
+    t.launches["IF_ID_PC"] = {3, 4};
+    t.launches["IF_ID_VALID"] = {3, 4};
+    t.launches["IMEM_REQ_ADDR"] = {5, 7};
+    t.launches["IMEM_REQ_VALID"] = {6, 10};
+    t.launches["IMEM_RSP_READY"] = {6, 77};
+    t.launches["INSTRUCTION_ATTEMPT"] = {4, 30};
+    t.launches["LOAD_USE_STALL"] = {7, 37};
+    t.launches["MEMORY_STALL"] = {7, 27};
+    t.launches["MEM_WB_PC"] = {3, 4};
+    t.launches["MEM_WB_VALID"] = {3, 4};
+    t.launches["PIPELINE_FLUSH"] = {7, 71};
+    t.launches["PIPELINE_STALL"] = {7, 30};
+    t.launches["PREDICTION_RECOVERY"] = {8, 70};
+    t.launches["TRAPPED"] = {3, 4};
+    t.launches["TRAP_CAUSE"] = {3, 4};
+    t.setup["DMEM_REQ_READY"] = 30;
+    t.setup["DMEM_RSP_READ_DATA"] = 18;
+    t.setup["DMEM_RSP_STATUS"] = 24;
+    t.setup["DMEM_RSP_VALID"] = 28;
+    t.setup["ENABLE"] = 38;
+    t.setup["IMEM_REQ_READY"] = 19;
+    t.setup["IMEM_RSP_READ_DATA"] = 45;
+    t.setup["IMEM_RSP_STATUS"] = 15;
+    t.setup["IMEM_RSP_VALID"] = 17;
+    t.internal_period = 85;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"rv32i.core.educational-five-stage.behavioral?prediction=taken&prediction_entries=1", [] {
+    PartDelays t;
+    t.evidence = "proven on rv32i.core.educational-five-stage.structural";
+    t.arcs = {
+        Arc{"DMEM_REQ_READY", "BRANCH_MISS", {15, 22}},
+        Arc{"DMEM_REQ_READY", "BRANCH_RESOLVED", {14, 21}},
+        Arc{"DMEM_REQ_READY", "COMMIT_VALID", {10, 10}},
+        Arc{"DMEM_REQ_READY", "DATA_PORT_STALL", {8, 8}},
+        Arc{"DMEM_REQ_READY", "DMEM_RSP_READY", {13, 19}},
+        Arc{"DMEM_REQ_READY", "IMEM_RSP_READY", {15, 22}},
+        Arc{"DMEM_REQ_READY", "INSTRUCTION_ATTEMPT", {10, 10}},
+        Arc{"DMEM_REQ_READY", "LOAD_USE_STALL", {11, 17}},
+        Arc{"DMEM_REQ_READY", "MEMORY_STALL", {7, 7}},
+        Arc{"DMEM_REQ_READY", "PIPELINE_FLUSH", {11, 17}},
+        Arc{"DMEM_REQ_READY", "PIPELINE_STALL", {9, 10}},
+        Arc{"DMEM_REQ_READY", "PREDICTION_RECOVERY", {14, 21}},
+        Arc{"DMEM_RSP_STATUS", "BRANCH_MISS", {13, 14}},
+        Arc{"DMEM_RSP_STATUS", "BRANCH_RESOLVED", {12, 13}},
+        Arc{"DMEM_RSP_STATUS", "IMEM_RSP_READY", {14, 16}},
+        Arc{"DMEM_RSP_STATUS", "PIPELINE_FLUSH", {9, 10}},
+        Arc{"DMEM_RSP_STATUS", "PREDICTION_RECOVERY", {12, 13}},
+        Arc{"DMEM_RSP_VALID", "BRANCH_MISS", {13, 20}},
+        Arc{"DMEM_RSP_VALID", "BRANCH_RESOLVED", {12, 19}},
+        Arc{"DMEM_RSP_VALID", "COMMIT_VALID", {8, 8}},
+        Arc{"DMEM_RSP_VALID", "DATA_PORT_STALL", {6, 6}},
+        Arc{"DMEM_RSP_VALID", "DMEM_RSP_READY", {11, 17}},
+        Arc{"DMEM_RSP_VALID", "IMEM_RSP_READY", {13, 20}},
+        Arc{"DMEM_RSP_VALID", "INSTRUCTION_ATTEMPT", {8, 8}},
+        Arc{"DMEM_RSP_VALID", "LOAD_USE_STALL", {9, 15}},
+        Arc{"DMEM_RSP_VALID", "MEMORY_STALL", {5, 5}},
+        Arc{"DMEM_RSP_VALID", "PIPELINE_FLUSH", {9, 15}},
+        Arc{"DMEM_RSP_VALID", "PIPELINE_STALL", {7, 8}},
+        Arc{"DMEM_RSP_VALID", "PREDICTION_RECOVERY", {12, 19}},
+        Arc{"ENABLE", "BRANCH_MISS", {9, 30}},
+        Arc{"ENABLE", "BRANCH_RESOLVED", {8, 29}},
+        Arc{"ENABLE", "COMMIT_VALID", {4, 18}},
+        Arc{"ENABLE", "DATA_PORT_STALL", {5, 16}},
+        Arc{"ENABLE", "DMEM_REQ_ADDR", {13, 15}},
+        Arc{"ENABLE", "DMEM_REQ_OP", {7, 7}},
+        Arc{"ENABLE", "DMEM_REQ_VALID", {8, 8}},
+        Arc{"ENABLE", "DMEM_REQ_WRITE_MASK", {12, 15}},
+        Arc{"ENABLE", "DMEM_RSP_READY", {7, 27}},
+        Arc{"ENABLE", "IMEM_REQ_VALID", {5, 5}},
+        Arc{"ENABLE", "IMEM_RSP_READY", {7, 30}},
+        Arc{"ENABLE", "INSTRUCTION_ATTEMPT", {4, 18}},
+        Arc{"ENABLE", "LOAD_USE_STALL", {5, 25}},
+        Arc{"ENABLE", "MEMORY_STALL", {4, 15}},
+        Arc{"ENABLE", "PIPELINE_FLUSH", {5, 25}},
+        Arc{"ENABLE", "PIPELINE_STALL", {6, 18}},
+        Arc{"ENABLE", "PREDICTION_RECOVERY", {8, 29}},
+        Arc{"IMEM_REQ_READY", "IMEM_RSP_READY", {11, 11}},
+        Arc{"IMEM_RSP_VALID", "IMEM_RSP_READY", {9, 9}},
+    };
+    t.clock = "CLK";
+    t.launches["BRANCH_MISS"] = {6, 71};
+    t.launches["BRANCH_RESOLVED"] = {6, 70};
+    t.launches["COMMIT_VALID"] = {4, 30};
+    t.launches["DATA_PORT_STALL"] = {6, 28};
+    t.launches["DMEM_REQ_ADDR"] = {5, 27};
+    t.launches["DMEM_REQ_OP"] = {5, 18};
+    t.launches["DMEM_REQ_VALID"] = {6, 20};
+    t.launches["DMEM_REQ_WRITE_DATA"] = {5, 14};
+    t.launches["DMEM_REQ_WRITE_MASK"] = {5, 27};
+    t.launches["DMEM_RSP_READY"] = {6, 39};
+    t.launches["EX_MEM_PC"] = {3, 4};
+    t.launches["EX_MEM_VALID"] = {3, 4};
+    t.launches["FETCH_PC"] = {3, 4};
+    t.launches["HALTED"] = {3, 4};
+    t.launches["ID_EX_PC"] = {3, 4};
+    t.launches["ID_EX_VALID"] = {3, 4};
+    t.launches["IF_ID_PC"] = {3, 4};
+    t.launches["IF_ID_VALID"] = {3, 4};
+    t.launches["IMEM_REQ_ADDR"] = {5, 7};
+    t.launches["IMEM_REQ_VALID"] = {6, 10};
+    t.launches["IMEM_RSP_READY"] = {6, 77};
+    t.launches["INSTRUCTION_ATTEMPT"] = {4, 30};
+    t.launches["LOAD_USE_STALL"] = {7, 37};
+    t.launches["MEMORY_STALL"] = {7, 27};
+    t.launches["MEM_WB_PC"] = {3, 4};
+    t.launches["MEM_WB_VALID"] = {3, 4};
+    t.launches["PIPELINE_FLUSH"] = {7, 71};
+    t.launches["PIPELINE_STALL"] = {7, 30};
+    t.launches["PREDICTION_RECOVERY"] = {8, 70};
+    t.launches["TRAPPED"] = {3, 4};
+    t.launches["TRAP_CAUSE"] = {3, 4};
+    t.setup["DMEM_REQ_READY"] = 30;
+    t.setup["DMEM_RSP_READ_DATA"] = 18;
+    t.setup["DMEM_RSP_STATUS"] = 24;
+    t.setup["DMEM_RSP_VALID"] = 28;
+    t.setup["ENABLE"] = 38;
+    t.setup["IMEM_REQ_READY"] = 19;
+    t.setup["IMEM_RSP_READ_DATA"] = 45;
+    t.setup["IMEM_RSP_STATUS"] = 15;
+    t.setup["IMEM_RSP_VALID"] = 17;
+    t.internal_period = 85;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"rv32i.core.educational-five-stage.behavioral?prediction=taken&prediction_entries=2", [] {
+    PartDelays t;
+    t.evidence = "proven on rv32i.core.educational-five-stage.structural";
+    t.arcs = {
+        Arc{"DMEM_REQ_READY", "BRANCH_MISS", {15, 22}},
+        Arc{"DMEM_REQ_READY", "BRANCH_RESOLVED", {14, 21}},
+        Arc{"DMEM_REQ_READY", "COMMIT_VALID", {10, 10}},
+        Arc{"DMEM_REQ_READY", "DATA_PORT_STALL", {8, 8}},
+        Arc{"DMEM_REQ_READY", "DMEM_RSP_READY", {13, 19}},
+        Arc{"DMEM_REQ_READY", "IMEM_RSP_READY", {15, 22}},
+        Arc{"DMEM_REQ_READY", "INSTRUCTION_ATTEMPT", {10, 10}},
+        Arc{"DMEM_REQ_READY", "LOAD_USE_STALL", {11, 17}},
+        Arc{"DMEM_REQ_READY", "MEMORY_STALL", {7, 7}},
+        Arc{"DMEM_REQ_READY", "PIPELINE_FLUSH", {11, 17}},
+        Arc{"DMEM_REQ_READY", "PIPELINE_STALL", {9, 10}},
+        Arc{"DMEM_REQ_READY", "PREDICTION_RECOVERY", {14, 21}},
+        Arc{"DMEM_RSP_STATUS", "BRANCH_MISS", {13, 14}},
+        Arc{"DMEM_RSP_STATUS", "BRANCH_RESOLVED", {12, 13}},
+        Arc{"DMEM_RSP_STATUS", "IMEM_RSP_READY", {14, 16}},
+        Arc{"DMEM_RSP_STATUS", "PIPELINE_FLUSH", {9, 10}},
+        Arc{"DMEM_RSP_STATUS", "PREDICTION_RECOVERY", {12, 13}},
+        Arc{"DMEM_RSP_VALID", "BRANCH_MISS", {13, 20}},
+        Arc{"DMEM_RSP_VALID", "BRANCH_RESOLVED", {12, 19}},
+        Arc{"DMEM_RSP_VALID", "COMMIT_VALID", {8, 8}},
+        Arc{"DMEM_RSP_VALID", "DATA_PORT_STALL", {6, 6}},
+        Arc{"DMEM_RSP_VALID", "DMEM_RSP_READY", {11, 17}},
+        Arc{"DMEM_RSP_VALID", "IMEM_RSP_READY", {13, 20}},
+        Arc{"DMEM_RSP_VALID", "INSTRUCTION_ATTEMPT", {8, 8}},
+        Arc{"DMEM_RSP_VALID", "LOAD_USE_STALL", {9, 15}},
+        Arc{"DMEM_RSP_VALID", "MEMORY_STALL", {5, 5}},
+        Arc{"DMEM_RSP_VALID", "PIPELINE_FLUSH", {9, 15}},
+        Arc{"DMEM_RSP_VALID", "PIPELINE_STALL", {7, 8}},
+        Arc{"DMEM_RSP_VALID", "PREDICTION_RECOVERY", {12, 19}},
+        Arc{"ENABLE", "BRANCH_MISS", {9, 30}},
+        Arc{"ENABLE", "BRANCH_RESOLVED", {8, 29}},
+        Arc{"ENABLE", "COMMIT_VALID", {4, 18}},
+        Arc{"ENABLE", "DATA_PORT_STALL", {5, 16}},
+        Arc{"ENABLE", "DMEM_REQ_ADDR", {13, 15}},
+        Arc{"ENABLE", "DMEM_REQ_OP", {7, 7}},
+        Arc{"ENABLE", "DMEM_REQ_VALID", {8, 8}},
+        Arc{"ENABLE", "DMEM_REQ_WRITE_MASK", {12, 15}},
+        Arc{"ENABLE", "DMEM_RSP_READY", {7, 27}},
+        Arc{"ENABLE", "IMEM_REQ_VALID", {5, 5}},
+        Arc{"ENABLE", "IMEM_RSP_READY", {7, 30}},
+        Arc{"ENABLE", "INSTRUCTION_ATTEMPT", {4, 18}},
+        Arc{"ENABLE", "LOAD_USE_STALL", {5, 25}},
+        Arc{"ENABLE", "MEMORY_STALL", {4, 15}},
+        Arc{"ENABLE", "PIPELINE_FLUSH", {5, 25}},
+        Arc{"ENABLE", "PIPELINE_STALL", {6, 18}},
+        Arc{"ENABLE", "PREDICTION_RECOVERY", {8, 29}},
+        Arc{"IMEM_REQ_READY", "IMEM_RSP_READY", {11, 11}},
+        Arc{"IMEM_RSP_VALID", "IMEM_RSP_READY", {9, 9}},
+    };
+    t.clock = "CLK";
+    t.launches["BRANCH_MISS"] = {6, 71};
+    t.launches["BRANCH_RESOLVED"] = {6, 70};
+    t.launches["COMMIT_VALID"] = {4, 30};
+    t.launches["DATA_PORT_STALL"] = {6, 28};
+    t.launches["DMEM_REQ_ADDR"] = {5, 27};
+    t.launches["DMEM_REQ_OP"] = {5, 18};
+    t.launches["DMEM_REQ_VALID"] = {6, 20};
+    t.launches["DMEM_REQ_WRITE_DATA"] = {5, 14};
+    t.launches["DMEM_REQ_WRITE_MASK"] = {5, 27};
+    t.launches["DMEM_RSP_READY"] = {6, 39};
+    t.launches["EX_MEM_PC"] = {3, 4};
+    t.launches["EX_MEM_VALID"] = {3, 4};
+    t.launches["FETCH_PC"] = {3, 4};
+    t.launches["HALTED"] = {3, 4};
+    t.launches["ID_EX_PC"] = {3, 4};
+    t.launches["ID_EX_VALID"] = {3, 4};
+    t.launches["IF_ID_PC"] = {3, 4};
+    t.launches["IF_ID_VALID"] = {3, 4};
+    t.launches["IMEM_REQ_ADDR"] = {5, 7};
+    t.launches["IMEM_REQ_VALID"] = {6, 10};
+    t.launches["IMEM_RSP_READY"] = {6, 77};
+    t.launches["INSTRUCTION_ATTEMPT"] = {4, 30};
+    t.launches["LOAD_USE_STALL"] = {7, 37};
+    t.launches["MEMORY_STALL"] = {7, 27};
+    t.launches["MEM_WB_PC"] = {3, 4};
+    t.launches["MEM_WB_VALID"] = {3, 4};
+    t.launches["PIPELINE_FLUSH"] = {7, 71};
+    t.launches["PIPELINE_STALL"] = {7, 30};
+    t.launches["PREDICTION_RECOVERY"] = {8, 70};
+    t.launches["TRAPPED"] = {3, 4};
+    t.launches["TRAP_CAUSE"] = {3, 4};
+    t.setup["DMEM_REQ_READY"] = 30;
+    t.setup["DMEM_RSP_READ_DATA"] = 18;
+    t.setup["DMEM_RSP_STATUS"] = 24;
+    t.setup["DMEM_RSP_VALID"] = 28;
+    t.setup["ENABLE"] = 38;
+    t.setup["IMEM_REQ_READY"] = 19;
+    t.setup["IMEM_RSP_READ_DATA"] = 45;
+    t.setup["IMEM_RSP_STATUS"] = 15;
+    t.setup["IMEM_RSP_VALID"] = 17;
+    t.internal_period = 85;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"rv32i.core.educational-five-stage.behavioral?prediction=taken&prediction_entries=4", [] {
+    PartDelays t;
+    t.evidence = "proven on rv32i.core.educational-five-stage.structural";
+    t.arcs = {
+        Arc{"DMEM_REQ_READY", "BRANCH_MISS", {15, 22}},
+        Arc{"DMEM_REQ_READY", "BRANCH_RESOLVED", {14, 21}},
+        Arc{"DMEM_REQ_READY", "COMMIT_VALID", {10, 10}},
+        Arc{"DMEM_REQ_READY", "DATA_PORT_STALL", {8, 8}},
+        Arc{"DMEM_REQ_READY", "DMEM_RSP_READY", {13, 19}},
+        Arc{"DMEM_REQ_READY", "IMEM_RSP_READY", {15, 22}},
+        Arc{"DMEM_REQ_READY", "INSTRUCTION_ATTEMPT", {10, 10}},
+        Arc{"DMEM_REQ_READY", "LOAD_USE_STALL", {11, 17}},
+        Arc{"DMEM_REQ_READY", "MEMORY_STALL", {7, 7}},
+        Arc{"DMEM_REQ_READY", "PIPELINE_FLUSH", {11, 17}},
+        Arc{"DMEM_REQ_READY", "PIPELINE_STALL", {9, 10}},
+        Arc{"DMEM_REQ_READY", "PREDICTION_RECOVERY", {14, 21}},
+        Arc{"DMEM_RSP_STATUS", "BRANCH_MISS", {13, 14}},
+        Arc{"DMEM_RSP_STATUS", "BRANCH_RESOLVED", {12, 13}},
+        Arc{"DMEM_RSP_STATUS", "IMEM_RSP_READY", {14, 16}},
+        Arc{"DMEM_RSP_STATUS", "PIPELINE_FLUSH", {9, 10}},
+        Arc{"DMEM_RSP_STATUS", "PREDICTION_RECOVERY", {12, 13}},
+        Arc{"DMEM_RSP_VALID", "BRANCH_MISS", {13, 20}},
+        Arc{"DMEM_RSP_VALID", "BRANCH_RESOLVED", {12, 19}},
+        Arc{"DMEM_RSP_VALID", "COMMIT_VALID", {8, 8}},
+        Arc{"DMEM_RSP_VALID", "DATA_PORT_STALL", {6, 6}},
+        Arc{"DMEM_RSP_VALID", "DMEM_RSP_READY", {11, 17}},
+        Arc{"DMEM_RSP_VALID", "IMEM_RSP_READY", {13, 20}},
+        Arc{"DMEM_RSP_VALID", "INSTRUCTION_ATTEMPT", {8, 8}},
+        Arc{"DMEM_RSP_VALID", "LOAD_USE_STALL", {9, 15}},
+        Arc{"DMEM_RSP_VALID", "MEMORY_STALL", {5, 5}},
+        Arc{"DMEM_RSP_VALID", "PIPELINE_FLUSH", {9, 15}},
+        Arc{"DMEM_RSP_VALID", "PIPELINE_STALL", {7, 8}},
+        Arc{"DMEM_RSP_VALID", "PREDICTION_RECOVERY", {12, 19}},
+        Arc{"ENABLE", "BRANCH_MISS", {9, 30}},
+        Arc{"ENABLE", "BRANCH_RESOLVED", {8, 29}},
+        Arc{"ENABLE", "COMMIT_VALID", {4, 18}},
+        Arc{"ENABLE", "DATA_PORT_STALL", {5, 16}},
+        Arc{"ENABLE", "DMEM_REQ_ADDR", {13, 15}},
+        Arc{"ENABLE", "DMEM_REQ_OP", {7, 7}},
+        Arc{"ENABLE", "DMEM_REQ_VALID", {8, 8}},
+        Arc{"ENABLE", "DMEM_REQ_WRITE_MASK", {12, 15}},
+        Arc{"ENABLE", "DMEM_RSP_READY", {7, 27}},
+        Arc{"ENABLE", "IMEM_REQ_VALID", {5, 5}},
+        Arc{"ENABLE", "IMEM_RSP_READY", {7, 30}},
+        Arc{"ENABLE", "INSTRUCTION_ATTEMPT", {4, 18}},
+        Arc{"ENABLE", "LOAD_USE_STALL", {5, 25}},
+        Arc{"ENABLE", "MEMORY_STALL", {4, 15}},
+        Arc{"ENABLE", "PIPELINE_FLUSH", {5, 25}},
+        Arc{"ENABLE", "PIPELINE_STALL", {6, 18}},
+        Arc{"ENABLE", "PREDICTION_RECOVERY", {8, 29}},
+        Arc{"IMEM_REQ_READY", "IMEM_RSP_READY", {11, 11}},
+        Arc{"IMEM_RSP_VALID", "IMEM_RSP_READY", {9, 9}},
+    };
+    t.clock = "CLK";
+    t.launches["BRANCH_MISS"] = {6, 71};
+    t.launches["BRANCH_RESOLVED"] = {6, 70};
+    t.launches["COMMIT_VALID"] = {4, 30};
+    t.launches["DATA_PORT_STALL"] = {6, 28};
+    t.launches["DMEM_REQ_ADDR"] = {5, 27};
+    t.launches["DMEM_REQ_OP"] = {5, 18};
+    t.launches["DMEM_REQ_VALID"] = {6, 20};
+    t.launches["DMEM_REQ_WRITE_DATA"] = {5, 14};
+    t.launches["DMEM_REQ_WRITE_MASK"] = {5, 27};
+    t.launches["DMEM_RSP_READY"] = {6, 39};
+    t.launches["EX_MEM_PC"] = {3, 4};
+    t.launches["EX_MEM_VALID"] = {3, 4};
+    t.launches["FETCH_PC"] = {3, 4};
+    t.launches["HALTED"] = {3, 4};
+    t.launches["ID_EX_PC"] = {3, 4};
+    t.launches["ID_EX_VALID"] = {3, 4};
+    t.launches["IF_ID_PC"] = {3, 4};
+    t.launches["IF_ID_VALID"] = {3, 4};
+    t.launches["IMEM_REQ_ADDR"] = {5, 7};
+    t.launches["IMEM_REQ_VALID"] = {6, 10};
+    t.launches["IMEM_RSP_READY"] = {6, 77};
+    t.launches["INSTRUCTION_ATTEMPT"] = {4, 30};
+    t.launches["LOAD_USE_STALL"] = {7, 37};
+    t.launches["MEMORY_STALL"] = {7, 27};
+    t.launches["MEM_WB_PC"] = {3, 4};
+    t.launches["MEM_WB_VALID"] = {3, 4};
+    t.launches["PIPELINE_FLUSH"] = {7, 71};
+    t.launches["PIPELINE_STALL"] = {7, 30};
+    t.launches["PREDICTION_RECOVERY"] = {8, 70};
+    t.launches["TRAPPED"] = {3, 4};
+    t.launches["TRAP_CAUSE"] = {3, 4};
+    t.setup["DMEM_REQ_READY"] = 30;
+    t.setup["DMEM_RSP_READ_DATA"] = 18;
+    t.setup["DMEM_RSP_STATUS"] = 24;
+    t.setup["DMEM_RSP_VALID"] = 28;
+    t.setup["ENABLE"] = 38;
+    t.setup["IMEM_REQ_READY"] = 19;
+    t.setup["IMEM_RSP_READ_DATA"] = 45;
+    t.setup["IMEM_RSP_STATUS"] = 15;
+    t.setup["IMEM_RSP_VALID"] = 17;
+    t.internal_period = 85;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"rv32i.core.educational-five-stage.behavioral?prediction=taken&prediction_entries=8", [] {
     PartDelays t;
     t.evidence = "proven on rv32i.core.educational-five-stage.structural";
     t.arcs = {
@@ -9910,6 +19555,790 @@
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
+{"rv32i.core.educational-five-stage.behavioral?prediction=taken&prediction_entries=32", [] {
+    PartDelays t;
+    t.evidence = "proven on rv32i.core.educational-five-stage.structural";
+    t.arcs = {
+        Arc{"DMEM_REQ_READY", "BRANCH_MISS", {15, 22}},
+        Arc{"DMEM_REQ_READY", "BRANCH_RESOLVED", {14, 21}},
+        Arc{"DMEM_REQ_READY", "COMMIT_VALID", {10, 10}},
+        Arc{"DMEM_REQ_READY", "DATA_PORT_STALL", {8, 8}},
+        Arc{"DMEM_REQ_READY", "DMEM_RSP_READY", {13, 19}},
+        Arc{"DMEM_REQ_READY", "IMEM_RSP_READY", {15, 22}},
+        Arc{"DMEM_REQ_READY", "INSTRUCTION_ATTEMPT", {10, 10}},
+        Arc{"DMEM_REQ_READY", "LOAD_USE_STALL", {11, 17}},
+        Arc{"DMEM_REQ_READY", "MEMORY_STALL", {7, 7}},
+        Arc{"DMEM_REQ_READY", "PIPELINE_FLUSH", {11, 17}},
+        Arc{"DMEM_REQ_READY", "PIPELINE_STALL", {9, 10}},
+        Arc{"DMEM_REQ_READY", "PREDICTION_RECOVERY", {14, 21}},
+        Arc{"DMEM_RSP_STATUS", "BRANCH_MISS", {13, 14}},
+        Arc{"DMEM_RSP_STATUS", "BRANCH_RESOLVED", {12, 13}},
+        Arc{"DMEM_RSP_STATUS", "IMEM_RSP_READY", {14, 16}},
+        Arc{"DMEM_RSP_STATUS", "PIPELINE_FLUSH", {9, 10}},
+        Arc{"DMEM_RSP_STATUS", "PREDICTION_RECOVERY", {12, 13}},
+        Arc{"DMEM_RSP_VALID", "BRANCH_MISS", {13, 20}},
+        Arc{"DMEM_RSP_VALID", "BRANCH_RESOLVED", {12, 19}},
+        Arc{"DMEM_RSP_VALID", "COMMIT_VALID", {8, 8}},
+        Arc{"DMEM_RSP_VALID", "DATA_PORT_STALL", {6, 6}},
+        Arc{"DMEM_RSP_VALID", "DMEM_RSP_READY", {11, 17}},
+        Arc{"DMEM_RSP_VALID", "IMEM_RSP_READY", {13, 20}},
+        Arc{"DMEM_RSP_VALID", "INSTRUCTION_ATTEMPT", {8, 8}},
+        Arc{"DMEM_RSP_VALID", "LOAD_USE_STALL", {9, 15}},
+        Arc{"DMEM_RSP_VALID", "MEMORY_STALL", {5, 5}},
+        Arc{"DMEM_RSP_VALID", "PIPELINE_FLUSH", {9, 15}},
+        Arc{"DMEM_RSP_VALID", "PIPELINE_STALL", {7, 8}},
+        Arc{"DMEM_RSP_VALID", "PREDICTION_RECOVERY", {12, 19}},
+        Arc{"ENABLE", "BRANCH_MISS", {9, 30}},
+        Arc{"ENABLE", "BRANCH_RESOLVED", {8, 29}},
+        Arc{"ENABLE", "COMMIT_VALID", {4, 18}},
+        Arc{"ENABLE", "DATA_PORT_STALL", {5, 16}},
+        Arc{"ENABLE", "DMEM_REQ_ADDR", {13, 15}},
+        Arc{"ENABLE", "DMEM_REQ_OP", {7, 7}},
+        Arc{"ENABLE", "DMEM_REQ_VALID", {8, 8}},
+        Arc{"ENABLE", "DMEM_REQ_WRITE_MASK", {12, 15}},
+        Arc{"ENABLE", "DMEM_RSP_READY", {7, 27}},
+        Arc{"ENABLE", "IMEM_REQ_VALID", {5, 5}},
+        Arc{"ENABLE", "IMEM_RSP_READY", {7, 30}},
+        Arc{"ENABLE", "INSTRUCTION_ATTEMPT", {4, 18}},
+        Arc{"ENABLE", "LOAD_USE_STALL", {5, 25}},
+        Arc{"ENABLE", "MEMORY_STALL", {4, 15}},
+        Arc{"ENABLE", "PIPELINE_FLUSH", {5, 25}},
+        Arc{"ENABLE", "PIPELINE_STALL", {6, 18}},
+        Arc{"ENABLE", "PREDICTION_RECOVERY", {8, 29}},
+        Arc{"IMEM_REQ_READY", "IMEM_RSP_READY", {11, 11}},
+        Arc{"IMEM_RSP_VALID", "IMEM_RSP_READY", {9, 9}},
+    };
+    t.clock = "CLK";
+    t.launches["BRANCH_MISS"] = {6, 71};
+    t.launches["BRANCH_RESOLVED"] = {6, 70};
+    t.launches["COMMIT_VALID"] = {4, 30};
+    t.launches["DATA_PORT_STALL"] = {6, 28};
+    t.launches["DMEM_REQ_ADDR"] = {5, 27};
+    t.launches["DMEM_REQ_OP"] = {5, 18};
+    t.launches["DMEM_REQ_VALID"] = {6, 20};
+    t.launches["DMEM_REQ_WRITE_DATA"] = {5, 14};
+    t.launches["DMEM_REQ_WRITE_MASK"] = {5, 27};
+    t.launches["DMEM_RSP_READY"] = {6, 39};
+    t.launches["EX_MEM_PC"] = {3, 4};
+    t.launches["EX_MEM_VALID"] = {3, 4};
+    t.launches["FETCH_PC"] = {3, 4};
+    t.launches["HALTED"] = {3, 4};
+    t.launches["ID_EX_PC"] = {3, 4};
+    t.launches["ID_EX_VALID"] = {3, 4};
+    t.launches["IF_ID_PC"] = {3, 4};
+    t.launches["IF_ID_VALID"] = {3, 4};
+    t.launches["IMEM_REQ_ADDR"] = {5, 7};
+    t.launches["IMEM_REQ_VALID"] = {6, 10};
+    t.launches["IMEM_RSP_READY"] = {6, 77};
+    t.launches["INSTRUCTION_ATTEMPT"] = {4, 30};
+    t.launches["LOAD_USE_STALL"] = {7, 37};
+    t.launches["MEMORY_STALL"] = {7, 27};
+    t.launches["MEM_WB_PC"] = {3, 4};
+    t.launches["MEM_WB_VALID"] = {3, 4};
+    t.launches["PIPELINE_FLUSH"] = {7, 71};
+    t.launches["PIPELINE_STALL"] = {7, 30};
+    t.launches["PREDICTION_RECOVERY"] = {8, 70};
+    t.launches["TRAPPED"] = {3, 4};
+    t.launches["TRAP_CAUSE"] = {3, 4};
+    t.setup["DMEM_REQ_READY"] = 30;
+    t.setup["DMEM_RSP_READ_DATA"] = 18;
+    t.setup["DMEM_RSP_STATUS"] = 24;
+    t.setup["DMEM_RSP_VALID"] = 28;
+    t.setup["ENABLE"] = 38;
+    t.setup["IMEM_REQ_READY"] = 19;
+    t.setup["IMEM_RSP_READ_DATA"] = 45;
+    t.setup["IMEM_RSP_STATUS"] = 15;
+    t.setup["IMEM_RSP_VALID"] = 17;
+    t.internal_period = 85;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"rv32i.core.educational-five-stage.behavioral?prediction=taken&prediction_entries=64", [] {
+    PartDelays t;
+    t.evidence = "proven on rv32i.core.educational-five-stage.structural";
+    t.arcs = {
+        Arc{"DMEM_REQ_READY", "BRANCH_MISS", {15, 22}},
+        Arc{"DMEM_REQ_READY", "BRANCH_RESOLVED", {14, 21}},
+        Arc{"DMEM_REQ_READY", "COMMIT_VALID", {10, 10}},
+        Arc{"DMEM_REQ_READY", "DATA_PORT_STALL", {8, 8}},
+        Arc{"DMEM_REQ_READY", "DMEM_RSP_READY", {13, 19}},
+        Arc{"DMEM_REQ_READY", "IMEM_RSP_READY", {15, 22}},
+        Arc{"DMEM_REQ_READY", "INSTRUCTION_ATTEMPT", {10, 10}},
+        Arc{"DMEM_REQ_READY", "LOAD_USE_STALL", {11, 17}},
+        Arc{"DMEM_REQ_READY", "MEMORY_STALL", {7, 7}},
+        Arc{"DMEM_REQ_READY", "PIPELINE_FLUSH", {11, 17}},
+        Arc{"DMEM_REQ_READY", "PIPELINE_STALL", {9, 10}},
+        Arc{"DMEM_REQ_READY", "PREDICTION_RECOVERY", {14, 21}},
+        Arc{"DMEM_RSP_STATUS", "BRANCH_MISS", {13, 14}},
+        Arc{"DMEM_RSP_STATUS", "BRANCH_RESOLVED", {12, 13}},
+        Arc{"DMEM_RSP_STATUS", "IMEM_RSP_READY", {14, 16}},
+        Arc{"DMEM_RSP_STATUS", "PIPELINE_FLUSH", {9, 10}},
+        Arc{"DMEM_RSP_STATUS", "PREDICTION_RECOVERY", {12, 13}},
+        Arc{"DMEM_RSP_VALID", "BRANCH_MISS", {13, 20}},
+        Arc{"DMEM_RSP_VALID", "BRANCH_RESOLVED", {12, 19}},
+        Arc{"DMEM_RSP_VALID", "COMMIT_VALID", {8, 8}},
+        Arc{"DMEM_RSP_VALID", "DATA_PORT_STALL", {6, 6}},
+        Arc{"DMEM_RSP_VALID", "DMEM_RSP_READY", {11, 17}},
+        Arc{"DMEM_RSP_VALID", "IMEM_RSP_READY", {13, 20}},
+        Arc{"DMEM_RSP_VALID", "INSTRUCTION_ATTEMPT", {8, 8}},
+        Arc{"DMEM_RSP_VALID", "LOAD_USE_STALL", {9, 15}},
+        Arc{"DMEM_RSP_VALID", "MEMORY_STALL", {5, 5}},
+        Arc{"DMEM_RSP_VALID", "PIPELINE_FLUSH", {9, 15}},
+        Arc{"DMEM_RSP_VALID", "PIPELINE_STALL", {7, 8}},
+        Arc{"DMEM_RSP_VALID", "PREDICTION_RECOVERY", {12, 19}},
+        Arc{"ENABLE", "BRANCH_MISS", {9, 30}},
+        Arc{"ENABLE", "BRANCH_RESOLVED", {8, 29}},
+        Arc{"ENABLE", "COMMIT_VALID", {4, 18}},
+        Arc{"ENABLE", "DATA_PORT_STALL", {5, 16}},
+        Arc{"ENABLE", "DMEM_REQ_ADDR", {13, 15}},
+        Arc{"ENABLE", "DMEM_REQ_OP", {7, 7}},
+        Arc{"ENABLE", "DMEM_REQ_VALID", {8, 8}},
+        Arc{"ENABLE", "DMEM_REQ_WRITE_MASK", {12, 15}},
+        Arc{"ENABLE", "DMEM_RSP_READY", {7, 27}},
+        Arc{"ENABLE", "IMEM_REQ_VALID", {5, 5}},
+        Arc{"ENABLE", "IMEM_RSP_READY", {7, 30}},
+        Arc{"ENABLE", "INSTRUCTION_ATTEMPT", {4, 18}},
+        Arc{"ENABLE", "LOAD_USE_STALL", {5, 25}},
+        Arc{"ENABLE", "MEMORY_STALL", {4, 15}},
+        Arc{"ENABLE", "PIPELINE_FLUSH", {5, 25}},
+        Arc{"ENABLE", "PIPELINE_STALL", {6, 18}},
+        Arc{"ENABLE", "PREDICTION_RECOVERY", {8, 29}},
+        Arc{"IMEM_REQ_READY", "IMEM_RSP_READY", {11, 11}},
+        Arc{"IMEM_RSP_VALID", "IMEM_RSP_READY", {9, 9}},
+    };
+    t.clock = "CLK";
+    t.launches["BRANCH_MISS"] = {6, 71};
+    t.launches["BRANCH_RESOLVED"] = {6, 70};
+    t.launches["COMMIT_VALID"] = {4, 30};
+    t.launches["DATA_PORT_STALL"] = {6, 28};
+    t.launches["DMEM_REQ_ADDR"] = {5, 27};
+    t.launches["DMEM_REQ_OP"] = {5, 18};
+    t.launches["DMEM_REQ_VALID"] = {6, 20};
+    t.launches["DMEM_REQ_WRITE_DATA"] = {5, 14};
+    t.launches["DMEM_REQ_WRITE_MASK"] = {5, 27};
+    t.launches["DMEM_RSP_READY"] = {6, 39};
+    t.launches["EX_MEM_PC"] = {3, 4};
+    t.launches["EX_MEM_VALID"] = {3, 4};
+    t.launches["FETCH_PC"] = {3, 4};
+    t.launches["HALTED"] = {3, 4};
+    t.launches["ID_EX_PC"] = {3, 4};
+    t.launches["ID_EX_VALID"] = {3, 4};
+    t.launches["IF_ID_PC"] = {3, 4};
+    t.launches["IF_ID_VALID"] = {3, 4};
+    t.launches["IMEM_REQ_ADDR"] = {5, 7};
+    t.launches["IMEM_REQ_VALID"] = {6, 10};
+    t.launches["IMEM_RSP_READY"] = {6, 77};
+    t.launches["INSTRUCTION_ATTEMPT"] = {4, 30};
+    t.launches["LOAD_USE_STALL"] = {7, 37};
+    t.launches["MEMORY_STALL"] = {7, 27};
+    t.launches["MEM_WB_PC"] = {3, 4};
+    t.launches["MEM_WB_VALID"] = {3, 4};
+    t.launches["PIPELINE_FLUSH"] = {7, 71};
+    t.launches["PIPELINE_STALL"] = {7, 30};
+    t.launches["PREDICTION_RECOVERY"] = {8, 70};
+    t.launches["TRAPPED"] = {3, 4};
+    t.launches["TRAP_CAUSE"] = {3, 4};
+    t.setup["DMEM_REQ_READY"] = 30;
+    t.setup["DMEM_RSP_READ_DATA"] = 18;
+    t.setup["DMEM_RSP_STATUS"] = 24;
+    t.setup["DMEM_RSP_VALID"] = 28;
+    t.setup["ENABLE"] = 38;
+    t.setup["IMEM_REQ_READY"] = 19;
+    t.setup["IMEM_RSP_READ_DATA"] = 45;
+    t.setup["IMEM_RSP_STATUS"] = 15;
+    t.setup["IMEM_RSP_VALID"] = 17;
+    t.internal_period = 85;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"rv32i.core.educational-five-stage.behavioral?prediction=taken&prediction_entries=128", [] {
+    PartDelays t;
+    t.evidence = "proven on rv32i.core.educational-five-stage.structural";
+    t.arcs = {
+        Arc{"DMEM_REQ_READY", "BRANCH_MISS", {15, 22}},
+        Arc{"DMEM_REQ_READY", "BRANCH_RESOLVED", {14, 21}},
+        Arc{"DMEM_REQ_READY", "COMMIT_VALID", {10, 10}},
+        Arc{"DMEM_REQ_READY", "DATA_PORT_STALL", {8, 8}},
+        Arc{"DMEM_REQ_READY", "DMEM_RSP_READY", {13, 19}},
+        Arc{"DMEM_REQ_READY", "IMEM_RSP_READY", {15, 22}},
+        Arc{"DMEM_REQ_READY", "INSTRUCTION_ATTEMPT", {10, 10}},
+        Arc{"DMEM_REQ_READY", "LOAD_USE_STALL", {11, 17}},
+        Arc{"DMEM_REQ_READY", "MEMORY_STALL", {7, 7}},
+        Arc{"DMEM_REQ_READY", "PIPELINE_FLUSH", {11, 17}},
+        Arc{"DMEM_REQ_READY", "PIPELINE_STALL", {9, 10}},
+        Arc{"DMEM_REQ_READY", "PREDICTION_RECOVERY", {14, 21}},
+        Arc{"DMEM_RSP_STATUS", "BRANCH_MISS", {13, 14}},
+        Arc{"DMEM_RSP_STATUS", "BRANCH_RESOLVED", {12, 13}},
+        Arc{"DMEM_RSP_STATUS", "IMEM_RSP_READY", {14, 16}},
+        Arc{"DMEM_RSP_STATUS", "PIPELINE_FLUSH", {9, 10}},
+        Arc{"DMEM_RSP_STATUS", "PREDICTION_RECOVERY", {12, 13}},
+        Arc{"DMEM_RSP_VALID", "BRANCH_MISS", {13, 20}},
+        Arc{"DMEM_RSP_VALID", "BRANCH_RESOLVED", {12, 19}},
+        Arc{"DMEM_RSP_VALID", "COMMIT_VALID", {8, 8}},
+        Arc{"DMEM_RSP_VALID", "DATA_PORT_STALL", {6, 6}},
+        Arc{"DMEM_RSP_VALID", "DMEM_RSP_READY", {11, 17}},
+        Arc{"DMEM_RSP_VALID", "IMEM_RSP_READY", {13, 20}},
+        Arc{"DMEM_RSP_VALID", "INSTRUCTION_ATTEMPT", {8, 8}},
+        Arc{"DMEM_RSP_VALID", "LOAD_USE_STALL", {9, 15}},
+        Arc{"DMEM_RSP_VALID", "MEMORY_STALL", {5, 5}},
+        Arc{"DMEM_RSP_VALID", "PIPELINE_FLUSH", {9, 15}},
+        Arc{"DMEM_RSP_VALID", "PIPELINE_STALL", {7, 8}},
+        Arc{"DMEM_RSP_VALID", "PREDICTION_RECOVERY", {12, 19}},
+        Arc{"ENABLE", "BRANCH_MISS", {9, 30}},
+        Arc{"ENABLE", "BRANCH_RESOLVED", {8, 29}},
+        Arc{"ENABLE", "COMMIT_VALID", {4, 18}},
+        Arc{"ENABLE", "DATA_PORT_STALL", {5, 16}},
+        Arc{"ENABLE", "DMEM_REQ_ADDR", {13, 15}},
+        Arc{"ENABLE", "DMEM_REQ_OP", {7, 7}},
+        Arc{"ENABLE", "DMEM_REQ_VALID", {8, 8}},
+        Arc{"ENABLE", "DMEM_REQ_WRITE_MASK", {12, 15}},
+        Arc{"ENABLE", "DMEM_RSP_READY", {7, 27}},
+        Arc{"ENABLE", "IMEM_REQ_VALID", {5, 5}},
+        Arc{"ENABLE", "IMEM_RSP_READY", {7, 30}},
+        Arc{"ENABLE", "INSTRUCTION_ATTEMPT", {4, 18}},
+        Arc{"ENABLE", "LOAD_USE_STALL", {5, 25}},
+        Arc{"ENABLE", "MEMORY_STALL", {4, 15}},
+        Arc{"ENABLE", "PIPELINE_FLUSH", {5, 25}},
+        Arc{"ENABLE", "PIPELINE_STALL", {6, 18}},
+        Arc{"ENABLE", "PREDICTION_RECOVERY", {8, 29}},
+        Arc{"IMEM_REQ_READY", "IMEM_RSP_READY", {11, 11}},
+        Arc{"IMEM_RSP_VALID", "IMEM_RSP_READY", {9, 9}},
+    };
+    t.clock = "CLK";
+    t.launches["BRANCH_MISS"] = {6, 71};
+    t.launches["BRANCH_RESOLVED"] = {6, 70};
+    t.launches["COMMIT_VALID"] = {4, 30};
+    t.launches["DATA_PORT_STALL"] = {6, 28};
+    t.launches["DMEM_REQ_ADDR"] = {5, 27};
+    t.launches["DMEM_REQ_OP"] = {5, 18};
+    t.launches["DMEM_REQ_VALID"] = {6, 20};
+    t.launches["DMEM_REQ_WRITE_DATA"] = {5, 14};
+    t.launches["DMEM_REQ_WRITE_MASK"] = {5, 27};
+    t.launches["DMEM_RSP_READY"] = {6, 39};
+    t.launches["EX_MEM_PC"] = {3, 4};
+    t.launches["EX_MEM_VALID"] = {3, 4};
+    t.launches["FETCH_PC"] = {3, 4};
+    t.launches["HALTED"] = {3, 4};
+    t.launches["ID_EX_PC"] = {3, 4};
+    t.launches["ID_EX_VALID"] = {3, 4};
+    t.launches["IF_ID_PC"] = {3, 4};
+    t.launches["IF_ID_VALID"] = {3, 4};
+    t.launches["IMEM_REQ_ADDR"] = {5, 7};
+    t.launches["IMEM_REQ_VALID"] = {6, 10};
+    t.launches["IMEM_RSP_READY"] = {6, 77};
+    t.launches["INSTRUCTION_ATTEMPT"] = {4, 30};
+    t.launches["LOAD_USE_STALL"] = {7, 37};
+    t.launches["MEMORY_STALL"] = {7, 27};
+    t.launches["MEM_WB_PC"] = {3, 4};
+    t.launches["MEM_WB_VALID"] = {3, 4};
+    t.launches["PIPELINE_FLUSH"] = {7, 71};
+    t.launches["PIPELINE_STALL"] = {7, 30};
+    t.launches["PREDICTION_RECOVERY"] = {8, 70};
+    t.launches["TRAPPED"] = {3, 4};
+    t.launches["TRAP_CAUSE"] = {3, 4};
+    t.setup["DMEM_REQ_READY"] = 30;
+    t.setup["DMEM_RSP_READ_DATA"] = 18;
+    t.setup["DMEM_RSP_STATUS"] = 24;
+    t.setup["DMEM_RSP_VALID"] = 28;
+    t.setup["ENABLE"] = 38;
+    t.setup["IMEM_REQ_READY"] = 19;
+    t.setup["IMEM_RSP_READ_DATA"] = 45;
+    t.setup["IMEM_RSP_STATUS"] = 15;
+    t.setup["IMEM_RSP_VALID"] = 17;
+    t.internal_period = 85;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"rv32i.core.educational-five-stage.behavioral?prediction=taken&prediction_entries=256", [] {
+    PartDelays t;
+    t.evidence = "proven on rv32i.core.educational-five-stage.structural";
+    t.arcs = {
+        Arc{"DMEM_REQ_READY", "BRANCH_MISS", {15, 22}},
+        Arc{"DMEM_REQ_READY", "BRANCH_RESOLVED", {14, 21}},
+        Arc{"DMEM_REQ_READY", "COMMIT_VALID", {10, 10}},
+        Arc{"DMEM_REQ_READY", "DATA_PORT_STALL", {8, 8}},
+        Arc{"DMEM_REQ_READY", "DMEM_RSP_READY", {13, 19}},
+        Arc{"DMEM_REQ_READY", "IMEM_RSP_READY", {15, 22}},
+        Arc{"DMEM_REQ_READY", "INSTRUCTION_ATTEMPT", {10, 10}},
+        Arc{"DMEM_REQ_READY", "LOAD_USE_STALL", {11, 17}},
+        Arc{"DMEM_REQ_READY", "MEMORY_STALL", {7, 7}},
+        Arc{"DMEM_REQ_READY", "PIPELINE_FLUSH", {11, 17}},
+        Arc{"DMEM_REQ_READY", "PIPELINE_STALL", {9, 10}},
+        Arc{"DMEM_REQ_READY", "PREDICTION_RECOVERY", {14, 21}},
+        Arc{"DMEM_RSP_STATUS", "BRANCH_MISS", {13, 14}},
+        Arc{"DMEM_RSP_STATUS", "BRANCH_RESOLVED", {12, 13}},
+        Arc{"DMEM_RSP_STATUS", "IMEM_RSP_READY", {14, 16}},
+        Arc{"DMEM_RSP_STATUS", "PIPELINE_FLUSH", {9, 10}},
+        Arc{"DMEM_RSP_STATUS", "PREDICTION_RECOVERY", {12, 13}},
+        Arc{"DMEM_RSP_VALID", "BRANCH_MISS", {13, 20}},
+        Arc{"DMEM_RSP_VALID", "BRANCH_RESOLVED", {12, 19}},
+        Arc{"DMEM_RSP_VALID", "COMMIT_VALID", {8, 8}},
+        Arc{"DMEM_RSP_VALID", "DATA_PORT_STALL", {6, 6}},
+        Arc{"DMEM_RSP_VALID", "DMEM_RSP_READY", {11, 17}},
+        Arc{"DMEM_RSP_VALID", "IMEM_RSP_READY", {13, 20}},
+        Arc{"DMEM_RSP_VALID", "INSTRUCTION_ATTEMPT", {8, 8}},
+        Arc{"DMEM_RSP_VALID", "LOAD_USE_STALL", {9, 15}},
+        Arc{"DMEM_RSP_VALID", "MEMORY_STALL", {5, 5}},
+        Arc{"DMEM_RSP_VALID", "PIPELINE_FLUSH", {9, 15}},
+        Arc{"DMEM_RSP_VALID", "PIPELINE_STALL", {7, 8}},
+        Arc{"DMEM_RSP_VALID", "PREDICTION_RECOVERY", {12, 19}},
+        Arc{"ENABLE", "BRANCH_MISS", {9, 30}},
+        Arc{"ENABLE", "BRANCH_RESOLVED", {8, 29}},
+        Arc{"ENABLE", "COMMIT_VALID", {4, 18}},
+        Arc{"ENABLE", "DATA_PORT_STALL", {5, 16}},
+        Arc{"ENABLE", "DMEM_REQ_ADDR", {13, 15}},
+        Arc{"ENABLE", "DMEM_REQ_OP", {7, 7}},
+        Arc{"ENABLE", "DMEM_REQ_VALID", {8, 8}},
+        Arc{"ENABLE", "DMEM_REQ_WRITE_MASK", {12, 15}},
+        Arc{"ENABLE", "DMEM_RSP_READY", {7, 27}},
+        Arc{"ENABLE", "IMEM_REQ_VALID", {5, 5}},
+        Arc{"ENABLE", "IMEM_RSP_READY", {7, 30}},
+        Arc{"ENABLE", "INSTRUCTION_ATTEMPT", {4, 18}},
+        Arc{"ENABLE", "LOAD_USE_STALL", {5, 25}},
+        Arc{"ENABLE", "MEMORY_STALL", {4, 15}},
+        Arc{"ENABLE", "PIPELINE_FLUSH", {5, 25}},
+        Arc{"ENABLE", "PIPELINE_STALL", {6, 18}},
+        Arc{"ENABLE", "PREDICTION_RECOVERY", {8, 29}},
+        Arc{"IMEM_REQ_READY", "IMEM_RSP_READY", {11, 11}},
+        Arc{"IMEM_RSP_VALID", "IMEM_RSP_READY", {9, 9}},
+    };
+    t.clock = "CLK";
+    t.launches["BRANCH_MISS"] = {6, 71};
+    t.launches["BRANCH_RESOLVED"] = {6, 70};
+    t.launches["COMMIT_VALID"] = {4, 30};
+    t.launches["DATA_PORT_STALL"] = {6, 28};
+    t.launches["DMEM_REQ_ADDR"] = {5, 27};
+    t.launches["DMEM_REQ_OP"] = {5, 18};
+    t.launches["DMEM_REQ_VALID"] = {6, 20};
+    t.launches["DMEM_REQ_WRITE_DATA"] = {5, 14};
+    t.launches["DMEM_REQ_WRITE_MASK"] = {5, 27};
+    t.launches["DMEM_RSP_READY"] = {6, 39};
+    t.launches["EX_MEM_PC"] = {3, 4};
+    t.launches["EX_MEM_VALID"] = {3, 4};
+    t.launches["FETCH_PC"] = {3, 4};
+    t.launches["HALTED"] = {3, 4};
+    t.launches["ID_EX_PC"] = {3, 4};
+    t.launches["ID_EX_VALID"] = {3, 4};
+    t.launches["IF_ID_PC"] = {3, 4};
+    t.launches["IF_ID_VALID"] = {3, 4};
+    t.launches["IMEM_REQ_ADDR"] = {5, 7};
+    t.launches["IMEM_REQ_VALID"] = {6, 10};
+    t.launches["IMEM_RSP_READY"] = {6, 77};
+    t.launches["INSTRUCTION_ATTEMPT"] = {4, 30};
+    t.launches["LOAD_USE_STALL"] = {7, 37};
+    t.launches["MEMORY_STALL"] = {7, 27};
+    t.launches["MEM_WB_PC"] = {3, 4};
+    t.launches["MEM_WB_VALID"] = {3, 4};
+    t.launches["PIPELINE_FLUSH"] = {7, 71};
+    t.launches["PIPELINE_STALL"] = {7, 30};
+    t.launches["PREDICTION_RECOVERY"] = {8, 70};
+    t.launches["TRAPPED"] = {3, 4};
+    t.launches["TRAP_CAUSE"] = {3, 4};
+    t.setup["DMEM_REQ_READY"] = 30;
+    t.setup["DMEM_RSP_READ_DATA"] = 18;
+    t.setup["DMEM_RSP_STATUS"] = 24;
+    t.setup["DMEM_RSP_VALID"] = 28;
+    t.setup["ENABLE"] = 38;
+    t.setup["IMEM_REQ_READY"] = 19;
+    t.setup["IMEM_RSP_READ_DATA"] = 45;
+    t.setup["IMEM_RSP_STATUS"] = 15;
+    t.setup["IMEM_RSP_VALID"] = 17;
+    t.internal_period = 85;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"rv32i.core.educational-five-stage.behavioral?prediction=backward-taken&prediction_entries=1", [] {
+    PartDelays t;
+    t.evidence = "proven on rv32i.core.educational-five-stage.structural";
+    t.arcs = {
+        Arc{"DMEM_REQ_READY", "BRANCH_MISS", {15, 22}},
+        Arc{"DMEM_REQ_READY", "BRANCH_RESOLVED", {14, 21}},
+        Arc{"DMEM_REQ_READY", "COMMIT_VALID", {10, 10}},
+        Arc{"DMEM_REQ_READY", "DATA_PORT_STALL", {8, 8}},
+        Arc{"DMEM_REQ_READY", "DMEM_RSP_READY", {13, 19}},
+        Arc{"DMEM_REQ_READY", "IMEM_RSP_READY", {15, 22}},
+        Arc{"DMEM_REQ_READY", "INSTRUCTION_ATTEMPT", {10, 10}},
+        Arc{"DMEM_REQ_READY", "LOAD_USE_STALL", {11, 17}},
+        Arc{"DMEM_REQ_READY", "MEMORY_STALL", {7, 7}},
+        Arc{"DMEM_REQ_READY", "PIPELINE_FLUSH", {11, 17}},
+        Arc{"DMEM_REQ_READY", "PIPELINE_STALL", {9, 10}},
+        Arc{"DMEM_REQ_READY", "PREDICTION_RECOVERY", {14, 21}},
+        Arc{"DMEM_RSP_STATUS", "BRANCH_MISS", {13, 14}},
+        Arc{"DMEM_RSP_STATUS", "BRANCH_RESOLVED", {12, 13}},
+        Arc{"DMEM_RSP_STATUS", "IMEM_RSP_READY", {14, 16}},
+        Arc{"DMEM_RSP_STATUS", "PIPELINE_FLUSH", {9, 10}},
+        Arc{"DMEM_RSP_STATUS", "PREDICTION_RECOVERY", {12, 13}},
+        Arc{"DMEM_RSP_VALID", "BRANCH_MISS", {13, 20}},
+        Arc{"DMEM_RSP_VALID", "BRANCH_RESOLVED", {12, 19}},
+        Arc{"DMEM_RSP_VALID", "COMMIT_VALID", {8, 8}},
+        Arc{"DMEM_RSP_VALID", "DATA_PORT_STALL", {6, 6}},
+        Arc{"DMEM_RSP_VALID", "DMEM_RSP_READY", {11, 17}},
+        Arc{"DMEM_RSP_VALID", "IMEM_RSP_READY", {13, 20}},
+        Arc{"DMEM_RSP_VALID", "INSTRUCTION_ATTEMPT", {8, 8}},
+        Arc{"DMEM_RSP_VALID", "LOAD_USE_STALL", {9, 15}},
+        Arc{"DMEM_RSP_VALID", "MEMORY_STALL", {5, 5}},
+        Arc{"DMEM_RSP_VALID", "PIPELINE_FLUSH", {9, 15}},
+        Arc{"DMEM_RSP_VALID", "PIPELINE_STALL", {7, 8}},
+        Arc{"DMEM_RSP_VALID", "PREDICTION_RECOVERY", {12, 19}},
+        Arc{"ENABLE", "BRANCH_MISS", {9, 30}},
+        Arc{"ENABLE", "BRANCH_RESOLVED", {8, 29}},
+        Arc{"ENABLE", "COMMIT_VALID", {4, 18}},
+        Arc{"ENABLE", "DATA_PORT_STALL", {5, 16}},
+        Arc{"ENABLE", "DMEM_REQ_ADDR", {13, 15}},
+        Arc{"ENABLE", "DMEM_REQ_OP", {7, 7}},
+        Arc{"ENABLE", "DMEM_REQ_VALID", {8, 8}},
+        Arc{"ENABLE", "DMEM_REQ_WRITE_MASK", {12, 15}},
+        Arc{"ENABLE", "DMEM_RSP_READY", {7, 27}},
+        Arc{"ENABLE", "IMEM_REQ_VALID", {5, 5}},
+        Arc{"ENABLE", "IMEM_RSP_READY", {7, 30}},
+        Arc{"ENABLE", "INSTRUCTION_ATTEMPT", {4, 18}},
+        Arc{"ENABLE", "LOAD_USE_STALL", {5, 25}},
+        Arc{"ENABLE", "MEMORY_STALL", {4, 15}},
+        Arc{"ENABLE", "PIPELINE_FLUSH", {5, 25}},
+        Arc{"ENABLE", "PIPELINE_STALL", {6, 18}},
+        Arc{"ENABLE", "PREDICTION_RECOVERY", {8, 29}},
+        Arc{"IMEM_REQ_READY", "IMEM_RSP_READY", {11, 11}},
+        Arc{"IMEM_RSP_VALID", "IMEM_RSP_READY", {9, 9}},
+    };
+    t.clock = "CLK";
+    t.launches["BRANCH_MISS"] = {6, 71};
+    t.launches["BRANCH_RESOLVED"] = {6, 70};
+    t.launches["COMMIT_VALID"] = {4, 30};
+    t.launches["DATA_PORT_STALL"] = {6, 28};
+    t.launches["DMEM_REQ_ADDR"] = {5, 27};
+    t.launches["DMEM_REQ_OP"] = {5, 18};
+    t.launches["DMEM_REQ_VALID"] = {6, 20};
+    t.launches["DMEM_REQ_WRITE_DATA"] = {5, 14};
+    t.launches["DMEM_REQ_WRITE_MASK"] = {5, 27};
+    t.launches["DMEM_RSP_READY"] = {6, 39};
+    t.launches["EX_MEM_PC"] = {3, 4};
+    t.launches["EX_MEM_VALID"] = {3, 4};
+    t.launches["FETCH_PC"] = {3, 4};
+    t.launches["HALTED"] = {3, 4};
+    t.launches["ID_EX_PC"] = {3, 4};
+    t.launches["ID_EX_VALID"] = {3, 4};
+    t.launches["IF_ID_PC"] = {3, 4};
+    t.launches["IF_ID_VALID"] = {3, 4};
+    t.launches["IMEM_REQ_ADDR"] = {5, 7};
+    t.launches["IMEM_REQ_VALID"] = {6, 10};
+    t.launches["IMEM_RSP_READY"] = {6, 77};
+    t.launches["INSTRUCTION_ATTEMPT"] = {4, 30};
+    t.launches["LOAD_USE_STALL"] = {7, 37};
+    t.launches["MEMORY_STALL"] = {7, 27};
+    t.launches["MEM_WB_PC"] = {3, 4};
+    t.launches["MEM_WB_VALID"] = {3, 4};
+    t.launches["PIPELINE_FLUSH"] = {7, 71};
+    t.launches["PIPELINE_STALL"] = {7, 30};
+    t.launches["PREDICTION_RECOVERY"] = {8, 70};
+    t.launches["TRAPPED"] = {3, 4};
+    t.launches["TRAP_CAUSE"] = {3, 4};
+    t.setup["DMEM_REQ_READY"] = 30;
+    t.setup["DMEM_RSP_READ_DATA"] = 18;
+    t.setup["DMEM_RSP_STATUS"] = 24;
+    t.setup["DMEM_RSP_VALID"] = 28;
+    t.setup["ENABLE"] = 38;
+    t.setup["IMEM_REQ_READY"] = 19;
+    t.setup["IMEM_RSP_READ_DATA"] = 45;
+    t.setup["IMEM_RSP_STATUS"] = 15;
+    t.setup["IMEM_RSP_VALID"] = 17;
+    t.internal_period = 85;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"rv32i.core.educational-five-stage.behavioral?prediction=backward-taken&prediction_entries=2", [] {
+    PartDelays t;
+    t.evidence = "proven on rv32i.core.educational-five-stage.structural";
+    t.arcs = {
+        Arc{"DMEM_REQ_READY", "BRANCH_MISS", {15, 22}},
+        Arc{"DMEM_REQ_READY", "BRANCH_RESOLVED", {14, 21}},
+        Arc{"DMEM_REQ_READY", "COMMIT_VALID", {10, 10}},
+        Arc{"DMEM_REQ_READY", "DATA_PORT_STALL", {8, 8}},
+        Arc{"DMEM_REQ_READY", "DMEM_RSP_READY", {13, 19}},
+        Arc{"DMEM_REQ_READY", "IMEM_RSP_READY", {15, 22}},
+        Arc{"DMEM_REQ_READY", "INSTRUCTION_ATTEMPT", {10, 10}},
+        Arc{"DMEM_REQ_READY", "LOAD_USE_STALL", {11, 17}},
+        Arc{"DMEM_REQ_READY", "MEMORY_STALL", {7, 7}},
+        Arc{"DMEM_REQ_READY", "PIPELINE_FLUSH", {11, 17}},
+        Arc{"DMEM_REQ_READY", "PIPELINE_STALL", {9, 10}},
+        Arc{"DMEM_REQ_READY", "PREDICTION_RECOVERY", {14, 21}},
+        Arc{"DMEM_RSP_STATUS", "BRANCH_MISS", {13, 14}},
+        Arc{"DMEM_RSP_STATUS", "BRANCH_RESOLVED", {12, 13}},
+        Arc{"DMEM_RSP_STATUS", "IMEM_RSP_READY", {14, 16}},
+        Arc{"DMEM_RSP_STATUS", "PIPELINE_FLUSH", {9, 10}},
+        Arc{"DMEM_RSP_STATUS", "PREDICTION_RECOVERY", {12, 13}},
+        Arc{"DMEM_RSP_VALID", "BRANCH_MISS", {13, 20}},
+        Arc{"DMEM_RSP_VALID", "BRANCH_RESOLVED", {12, 19}},
+        Arc{"DMEM_RSP_VALID", "COMMIT_VALID", {8, 8}},
+        Arc{"DMEM_RSP_VALID", "DATA_PORT_STALL", {6, 6}},
+        Arc{"DMEM_RSP_VALID", "DMEM_RSP_READY", {11, 17}},
+        Arc{"DMEM_RSP_VALID", "IMEM_RSP_READY", {13, 20}},
+        Arc{"DMEM_RSP_VALID", "INSTRUCTION_ATTEMPT", {8, 8}},
+        Arc{"DMEM_RSP_VALID", "LOAD_USE_STALL", {9, 15}},
+        Arc{"DMEM_RSP_VALID", "MEMORY_STALL", {5, 5}},
+        Arc{"DMEM_RSP_VALID", "PIPELINE_FLUSH", {9, 15}},
+        Arc{"DMEM_RSP_VALID", "PIPELINE_STALL", {7, 8}},
+        Arc{"DMEM_RSP_VALID", "PREDICTION_RECOVERY", {12, 19}},
+        Arc{"ENABLE", "BRANCH_MISS", {9, 30}},
+        Arc{"ENABLE", "BRANCH_RESOLVED", {8, 29}},
+        Arc{"ENABLE", "COMMIT_VALID", {4, 18}},
+        Arc{"ENABLE", "DATA_PORT_STALL", {5, 16}},
+        Arc{"ENABLE", "DMEM_REQ_ADDR", {13, 15}},
+        Arc{"ENABLE", "DMEM_REQ_OP", {7, 7}},
+        Arc{"ENABLE", "DMEM_REQ_VALID", {8, 8}},
+        Arc{"ENABLE", "DMEM_REQ_WRITE_MASK", {12, 15}},
+        Arc{"ENABLE", "DMEM_RSP_READY", {7, 27}},
+        Arc{"ENABLE", "IMEM_REQ_VALID", {5, 5}},
+        Arc{"ENABLE", "IMEM_RSP_READY", {7, 30}},
+        Arc{"ENABLE", "INSTRUCTION_ATTEMPT", {4, 18}},
+        Arc{"ENABLE", "LOAD_USE_STALL", {5, 25}},
+        Arc{"ENABLE", "MEMORY_STALL", {4, 15}},
+        Arc{"ENABLE", "PIPELINE_FLUSH", {5, 25}},
+        Arc{"ENABLE", "PIPELINE_STALL", {6, 18}},
+        Arc{"ENABLE", "PREDICTION_RECOVERY", {8, 29}},
+        Arc{"IMEM_REQ_READY", "IMEM_RSP_READY", {11, 11}},
+        Arc{"IMEM_RSP_VALID", "IMEM_RSP_READY", {9, 9}},
+    };
+    t.clock = "CLK";
+    t.launches["BRANCH_MISS"] = {6, 71};
+    t.launches["BRANCH_RESOLVED"] = {6, 70};
+    t.launches["COMMIT_VALID"] = {4, 30};
+    t.launches["DATA_PORT_STALL"] = {6, 28};
+    t.launches["DMEM_REQ_ADDR"] = {5, 27};
+    t.launches["DMEM_REQ_OP"] = {5, 18};
+    t.launches["DMEM_REQ_VALID"] = {6, 20};
+    t.launches["DMEM_REQ_WRITE_DATA"] = {5, 14};
+    t.launches["DMEM_REQ_WRITE_MASK"] = {5, 27};
+    t.launches["DMEM_RSP_READY"] = {6, 39};
+    t.launches["EX_MEM_PC"] = {3, 4};
+    t.launches["EX_MEM_VALID"] = {3, 4};
+    t.launches["FETCH_PC"] = {3, 4};
+    t.launches["HALTED"] = {3, 4};
+    t.launches["ID_EX_PC"] = {3, 4};
+    t.launches["ID_EX_VALID"] = {3, 4};
+    t.launches["IF_ID_PC"] = {3, 4};
+    t.launches["IF_ID_VALID"] = {3, 4};
+    t.launches["IMEM_REQ_ADDR"] = {5, 7};
+    t.launches["IMEM_REQ_VALID"] = {6, 10};
+    t.launches["IMEM_RSP_READY"] = {6, 77};
+    t.launches["INSTRUCTION_ATTEMPT"] = {4, 30};
+    t.launches["LOAD_USE_STALL"] = {7, 37};
+    t.launches["MEMORY_STALL"] = {7, 27};
+    t.launches["MEM_WB_PC"] = {3, 4};
+    t.launches["MEM_WB_VALID"] = {3, 4};
+    t.launches["PIPELINE_FLUSH"] = {7, 71};
+    t.launches["PIPELINE_STALL"] = {7, 30};
+    t.launches["PREDICTION_RECOVERY"] = {8, 70};
+    t.launches["TRAPPED"] = {3, 4};
+    t.launches["TRAP_CAUSE"] = {3, 4};
+    t.setup["DMEM_REQ_READY"] = 30;
+    t.setup["DMEM_RSP_READ_DATA"] = 18;
+    t.setup["DMEM_RSP_STATUS"] = 24;
+    t.setup["DMEM_RSP_VALID"] = 28;
+    t.setup["ENABLE"] = 38;
+    t.setup["IMEM_REQ_READY"] = 19;
+    t.setup["IMEM_RSP_READ_DATA"] = 45;
+    t.setup["IMEM_RSP_STATUS"] = 15;
+    t.setup["IMEM_RSP_VALID"] = 17;
+    t.internal_period = 85;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"rv32i.core.educational-five-stage.behavioral?prediction=backward-taken&prediction_entries=4", [] {
+    PartDelays t;
+    t.evidence = "proven on rv32i.core.educational-five-stage.structural";
+    t.arcs = {
+        Arc{"DMEM_REQ_READY", "BRANCH_MISS", {15, 22}},
+        Arc{"DMEM_REQ_READY", "BRANCH_RESOLVED", {14, 21}},
+        Arc{"DMEM_REQ_READY", "COMMIT_VALID", {10, 10}},
+        Arc{"DMEM_REQ_READY", "DATA_PORT_STALL", {8, 8}},
+        Arc{"DMEM_REQ_READY", "DMEM_RSP_READY", {13, 19}},
+        Arc{"DMEM_REQ_READY", "IMEM_RSP_READY", {15, 22}},
+        Arc{"DMEM_REQ_READY", "INSTRUCTION_ATTEMPT", {10, 10}},
+        Arc{"DMEM_REQ_READY", "LOAD_USE_STALL", {11, 17}},
+        Arc{"DMEM_REQ_READY", "MEMORY_STALL", {7, 7}},
+        Arc{"DMEM_REQ_READY", "PIPELINE_FLUSH", {11, 17}},
+        Arc{"DMEM_REQ_READY", "PIPELINE_STALL", {9, 10}},
+        Arc{"DMEM_REQ_READY", "PREDICTION_RECOVERY", {14, 21}},
+        Arc{"DMEM_RSP_STATUS", "BRANCH_MISS", {13, 14}},
+        Arc{"DMEM_RSP_STATUS", "BRANCH_RESOLVED", {12, 13}},
+        Arc{"DMEM_RSP_STATUS", "IMEM_RSP_READY", {14, 16}},
+        Arc{"DMEM_RSP_STATUS", "PIPELINE_FLUSH", {9, 10}},
+        Arc{"DMEM_RSP_STATUS", "PREDICTION_RECOVERY", {12, 13}},
+        Arc{"DMEM_RSP_VALID", "BRANCH_MISS", {13, 20}},
+        Arc{"DMEM_RSP_VALID", "BRANCH_RESOLVED", {12, 19}},
+        Arc{"DMEM_RSP_VALID", "COMMIT_VALID", {8, 8}},
+        Arc{"DMEM_RSP_VALID", "DATA_PORT_STALL", {6, 6}},
+        Arc{"DMEM_RSP_VALID", "DMEM_RSP_READY", {11, 17}},
+        Arc{"DMEM_RSP_VALID", "IMEM_RSP_READY", {13, 20}},
+        Arc{"DMEM_RSP_VALID", "INSTRUCTION_ATTEMPT", {8, 8}},
+        Arc{"DMEM_RSP_VALID", "LOAD_USE_STALL", {9, 15}},
+        Arc{"DMEM_RSP_VALID", "MEMORY_STALL", {5, 5}},
+        Arc{"DMEM_RSP_VALID", "PIPELINE_FLUSH", {9, 15}},
+        Arc{"DMEM_RSP_VALID", "PIPELINE_STALL", {7, 8}},
+        Arc{"DMEM_RSP_VALID", "PREDICTION_RECOVERY", {12, 19}},
+        Arc{"ENABLE", "BRANCH_MISS", {9, 30}},
+        Arc{"ENABLE", "BRANCH_RESOLVED", {8, 29}},
+        Arc{"ENABLE", "COMMIT_VALID", {4, 18}},
+        Arc{"ENABLE", "DATA_PORT_STALL", {5, 16}},
+        Arc{"ENABLE", "DMEM_REQ_ADDR", {13, 15}},
+        Arc{"ENABLE", "DMEM_REQ_OP", {7, 7}},
+        Arc{"ENABLE", "DMEM_REQ_VALID", {8, 8}},
+        Arc{"ENABLE", "DMEM_REQ_WRITE_MASK", {12, 15}},
+        Arc{"ENABLE", "DMEM_RSP_READY", {7, 27}},
+        Arc{"ENABLE", "IMEM_REQ_VALID", {5, 5}},
+        Arc{"ENABLE", "IMEM_RSP_READY", {7, 30}},
+        Arc{"ENABLE", "INSTRUCTION_ATTEMPT", {4, 18}},
+        Arc{"ENABLE", "LOAD_USE_STALL", {5, 25}},
+        Arc{"ENABLE", "MEMORY_STALL", {4, 15}},
+        Arc{"ENABLE", "PIPELINE_FLUSH", {5, 25}},
+        Arc{"ENABLE", "PIPELINE_STALL", {6, 18}},
+        Arc{"ENABLE", "PREDICTION_RECOVERY", {8, 29}},
+        Arc{"IMEM_REQ_READY", "IMEM_RSP_READY", {11, 11}},
+        Arc{"IMEM_RSP_VALID", "IMEM_RSP_READY", {9, 9}},
+    };
+    t.clock = "CLK";
+    t.launches["BRANCH_MISS"] = {6, 71};
+    t.launches["BRANCH_RESOLVED"] = {6, 70};
+    t.launches["COMMIT_VALID"] = {4, 30};
+    t.launches["DATA_PORT_STALL"] = {6, 28};
+    t.launches["DMEM_REQ_ADDR"] = {5, 27};
+    t.launches["DMEM_REQ_OP"] = {5, 18};
+    t.launches["DMEM_REQ_VALID"] = {6, 20};
+    t.launches["DMEM_REQ_WRITE_DATA"] = {5, 14};
+    t.launches["DMEM_REQ_WRITE_MASK"] = {5, 27};
+    t.launches["DMEM_RSP_READY"] = {6, 39};
+    t.launches["EX_MEM_PC"] = {3, 4};
+    t.launches["EX_MEM_VALID"] = {3, 4};
+    t.launches["FETCH_PC"] = {3, 4};
+    t.launches["HALTED"] = {3, 4};
+    t.launches["ID_EX_PC"] = {3, 4};
+    t.launches["ID_EX_VALID"] = {3, 4};
+    t.launches["IF_ID_PC"] = {3, 4};
+    t.launches["IF_ID_VALID"] = {3, 4};
+    t.launches["IMEM_REQ_ADDR"] = {5, 7};
+    t.launches["IMEM_REQ_VALID"] = {6, 10};
+    t.launches["IMEM_RSP_READY"] = {6, 77};
+    t.launches["INSTRUCTION_ATTEMPT"] = {4, 30};
+    t.launches["LOAD_USE_STALL"] = {7, 37};
+    t.launches["MEMORY_STALL"] = {7, 27};
+    t.launches["MEM_WB_PC"] = {3, 4};
+    t.launches["MEM_WB_VALID"] = {3, 4};
+    t.launches["PIPELINE_FLUSH"] = {7, 71};
+    t.launches["PIPELINE_STALL"] = {7, 30};
+    t.launches["PREDICTION_RECOVERY"] = {8, 70};
+    t.launches["TRAPPED"] = {3, 4};
+    t.launches["TRAP_CAUSE"] = {3, 4};
+    t.setup["DMEM_REQ_READY"] = 30;
+    t.setup["DMEM_RSP_READ_DATA"] = 18;
+    t.setup["DMEM_RSP_STATUS"] = 24;
+    t.setup["DMEM_RSP_VALID"] = 28;
+    t.setup["ENABLE"] = 38;
+    t.setup["IMEM_REQ_READY"] = 19;
+    t.setup["IMEM_RSP_READ_DATA"] = 45;
+    t.setup["IMEM_RSP_STATUS"] = 15;
+    t.setup["IMEM_RSP_VALID"] = 17;
+    t.internal_period = 85;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"rv32i.core.educational-five-stage.behavioral?prediction=backward-taken&prediction_entries=8", [] {
+    PartDelays t;
+    t.evidence = "proven on rv32i.core.educational-five-stage.structural";
+    t.arcs = {
+        Arc{"DMEM_REQ_READY", "BRANCH_MISS", {15, 22}},
+        Arc{"DMEM_REQ_READY", "BRANCH_RESOLVED", {14, 21}},
+        Arc{"DMEM_REQ_READY", "COMMIT_VALID", {10, 10}},
+        Arc{"DMEM_REQ_READY", "DATA_PORT_STALL", {8, 8}},
+        Arc{"DMEM_REQ_READY", "DMEM_RSP_READY", {13, 19}},
+        Arc{"DMEM_REQ_READY", "IMEM_RSP_READY", {15, 22}},
+        Arc{"DMEM_REQ_READY", "INSTRUCTION_ATTEMPT", {10, 10}},
+        Arc{"DMEM_REQ_READY", "LOAD_USE_STALL", {11, 17}},
+        Arc{"DMEM_REQ_READY", "MEMORY_STALL", {7, 7}},
+        Arc{"DMEM_REQ_READY", "PIPELINE_FLUSH", {11, 17}},
+        Arc{"DMEM_REQ_READY", "PIPELINE_STALL", {9, 10}},
+        Arc{"DMEM_REQ_READY", "PREDICTION_RECOVERY", {14, 21}},
+        Arc{"DMEM_RSP_STATUS", "BRANCH_MISS", {13, 14}},
+        Arc{"DMEM_RSP_STATUS", "BRANCH_RESOLVED", {12, 13}},
+        Arc{"DMEM_RSP_STATUS", "IMEM_RSP_READY", {14, 16}},
+        Arc{"DMEM_RSP_STATUS", "PIPELINE_FLUSH", {9, 10}},
+        Arc{"DMEM_RSP_STATUS", "PREDICTION_RECOVERY", {12, 13}},
+        Arc{"DMEM_RSP_VALID", "BRANCH_MISS", {13, 20}},
+        Arc{"DMEM_RSP_VALID", "BRANCH_RESOLVED", {12, 19}},
+        Arc{"DMEM_RSP_VALID", "COMMIT_VALID", {8, 8}},
+        Arc{"DMEM_RSP_VALID", "DATA_PORT_STALL", {6, 6}},
+        Arc{"DMEM_RSP_VALID", "DMEM_RSP_READY", {11, 17}},
+        Arc{"DMEM_RSP_VALID", "IMEM_RSP_READY", {13, 20}},
+        Arc{"DMEM_RSP_VALID", "INSTRUCTION_ATTEMPT", {8, 8}},
+        Arc{"DMEM_RSP_VALID", "LOAD_USE_STALL", {9, 15}},
+        Arc{"DMEM_RSP_VALID", "MEMORY_STALL", {5, 5}},
+        Arc{"DMEM_RSP_VALID", "PIPELINE_FLUSH", {9, 15}},
+        Arc{"DMEM_RSP_VALID", "PIPELINE_STALL", {7, 8}},
+        Arc{"DMEM_RSP_VALID", "PREDICTION_RECOVERY", {12, 19}},
+        Arc{"ENABLE", "BRANCH_MISS", {9, 30}},
+        Arc{"ENABLE", "BRANCH_RESOLVED", {8, 29}},
+        Arc{"ENABLE", "COMMIT_VALID", {4, 18}},
+        Arc{"ENABLE", "DATA_PORT_STALL", {5, 16}},
+        Arc{"ENABLE", "DMEM_REQ_ADDR", {13, 15}},
+        Arc{"ENABLE", "DMEM_REQ_OP", {7, 7}},
+        Arc{"ENABLE", "DMEM_REQ_VALID", {8, 8}},
+        Arc{"ENABLE", "DMEM_REQ_WRITE_MASK", {12, 15}},
+        Arc{"ENABLE", "DMEM_RSP_READY", {7, 27}},
+        Arc{"ENABLE", "IMEM_REQ_VALID", {5, 5}},
+        Arc{"ENABLE", "IMEM_RSP_READY", {7, 30}},
+        Arc{"ENABLE", "INSTRUCTION_ATTEMPT", {4, 18}},
+        Arc{"ENABLE", "LOAD_USE_STALL", {5, 25}},
+        Arc{"ENABLE", "MEMORY_STALL", {4, 15}},
+        Arc{"ENABLE", "PIPELINE_FLUSH", {5, 25}},
+        Arc{"ENABLE", "PIPELINE_STALL", {6, 18}},
+        Arc{"ENABLE", "PREDICTION_RECOVERY", {8, 29}},
+        Arc{"IMEM_REQ_READY", "IMEM_RSP_READY", {11, 11}},
+        Arc{"IMEM_RSP_VALID", "IMEM_RSP_READY", {9, 9}},
+    };
+    t.clock = "CLK";
+    t.launches["BRANCH_MISS"] = {6, 71};
+    t.launches["BRANCH_RESOLVED"] = {6, 70};
+    t.launches["COMMIT_VALID"] = {4, 30};
+    t.launches["DATA_PORT_STALL"] = {6, 28};
+    t.launches["DMEM_REQ_ADDR"] = {5, 27};
+    t.launches["DMEM_REQ_OP"] = {5, 18};
+    t.launches["DMEM_REQ_VALID"] = {6, 20};
+    t.launches["DMEM_REQ_WRITE_DATA"] = {5, 14};
+    t.launches["DMEM_REQ_WRITE_MASK"] = {5, 27};
+    t.launches["DMEM_RSP_READY"] = {6, 39};
+    t.launches["EX_MEM_PC"] = {3, 4};
+    t.launches["EX_MEM_VALID"] = {3, 4};
+    t.launches["FETCH_PC"] = {3, 4};
+    t.launches["HALTED"] = {3, 4};
+    t.launches["ID_EX_PC"] = {3, 4};
+    t.launches["ID_EX_VALID"] = {3, 4};
+    t.launches["IF_ID_PC"] = {3, 4};
+    t.launches["IF_ID_VALID"] = {3, 4};
+    t.launches["IMEM_REQ_ADDR"] = {5, 7};
+    t.launches["IMEM_REQ_VALID"] = {6, 10};
+    t.launches["IMEM_RSP_READY"] = {6, 77};
+    t.launches["INSTRUCTION_ATTEMPT"] = {4, 30};
+    t.launches["LOAD_USE_STALL"] = {7, 37};
+    t.launches["MEMORY_STALL"] = {7, 27};
+    t.launches["MEM_WB_PC"] = {3, 4};
+    t.launches["MEM_WB_VALID"] = {3, 4};
+    t.launches["PIPELINE_FLUSH"] = {7, 71};
+    t.launches["PIPELINE_STALL"] = {7, 30};
+    t.launches["PREDICTION_RECOVERY"] = {8, 70};
+    t.launches["TRAPPED"] = {3, 4};
+    t.launches["TRAP_CAUSE"] = {3, 4};
+    t.setup["DMEM_REQ_READY"] = 30;
+    t.setup["DMEM_RSP_READ_DATA"] = 18;
+    t.setup["DMEM_RSP_STATUS"] = 24;
+    t.setup["DMEM_RSP_VALID"] = 28;
+    t.setup["ENABLE"] = 38;
+    t.setup["IMEM_REQ_READY"] = 19;
+    t.setup["IMEM_RSP_READ_DATA"] = 45;
+    t.setup["IMEM_RSP_STATUS"] = 15;
+    t.setup["IMEM_RSP_VALID"] = 17;
+    t.internal_period = 85;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
 {"rv32i.core.educational-five-stage.behavioral?prediction=backward-taken&prediction_entries=16", [] {
     PartDelays t;
     t.evidence = "proven on rv32i.core.educational-five-stage.structural";
@@ -10000,6 +20429,790 @@
     t.setup["DMEM_RSP_STATUS"] = 24;
     t.setup["DMEM_RSP_VALID"] = 28;
     t.setup["ENABLE"] = 38;
+    t.setup["IMEM_REQ_READY"] = 19;
+    t.setup["IMEM_RSP_READ_DATA"] = 45;
+    t.setup["IMEM_RSP_STATUS"] = 15;
+    t.setup["IMEM_RSP_VALID"] = 17;
+    t.internal_period = 85;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"rv32i.core.educational-five-stage.behavioral?prediction=backward-taken&prediction_entries=32", [] {
+    PartDelays t;
+    t.evidence = "proven on rv32i.core.educational-five-stage.structural";
+    t.arcs = {
+        Arc{"DMEM_REQ_READY", "BRANCH_MISS", {15, 22}},
+        Arc{"DMEM_REQ_READY", "BRANCH_RESOLVED", {14, 21}},
+        Arc{"DMEM_REQ_READY", "COMMIT_VALID", {10, 10}},
+        Arc{"DMEM_REQ_READY", "DATA_PORT_STALL", {8, 8}},
+        Arc{"DMEM_REQ_READY", "DMEM_RSP_READY", {13, 19}},
+        Arc{"DMEM_REQ_READY", "IMEM_RSP_READY", {15, 22}},
+        Arc{"DMEM_REQ_READY", "INSTRUCTION_ATTEMPT", {10, 10}},
+        Arc{"DMEM_REQ_READY", "LOAD_USE_STALL", {11, 17}},
+        Arc{"DMEM_REQ_READY", "MEMORY_STALL", {7, 7}},
+        Arc{"DMEM_REQ_READY", "PIPELINE_FLUSH", {11, 17}},
+        Arc{"DMEM_REQ_READY", "PIPELINE_STALL", {9, 10}},
+        Arc{"DMEM_REQ_READY", "PREDICTION_RECOVERY", {14, 21}},
+        Arc{"DMEM_RSP_STATUS", "BRANCH_MISS", {13, 14}},
+        Arc{"DMEM_RSP_STATUS", "BRANCH_RESOLVED", {12, 13}},
+        Arc{"DMEM_RSP_STATUS", "IMEM_RSP_READY", {14, 16}},
+        Arc{"DMEM_RSP_STATUS", "PIPELINE_FLUSH", {9, 10}},
+        Arc{"DMEM_RSP_STATUS", "PREDICTION_RECOVERY", {12, 13}},
+        Arc{"DMEM_RSP_VALID", "BRANCH_MISS", {13, 20}},
+        Arc{"DMEM_RSP_VALID", "BRANCH_RESOLVED", {12, 19}},
+        Arc{"DMEM_RSP_VALID", "COMMIT_VALID", {8, 8}},
+        Arc{"DMEM_RSP_VALID", "DATA_PORT_STALL", {6, 6}},
+        Arc{"DMEM_RSP_VALID", "DMEM_RSP_READY", {11, 17}},
+        Arc{"DMEM_RSP_VALID", "IMEM_RSP_READY", {13, 20}},
+        Arc{"DMEM_RSP_VALID", "INSTRUCTION_ATTEMPT", {8, 8}},
+        Arc{"DMEM_RSP_VALID", "LOAD_USE_STALL", {9, 15}},
+        Arc{"DMEM_RSP_VALID", "MEMORY_STALL", {5, 5}},
+        Arc{"DMEM_RSP_VALID", "PIPELINE_FLUSH", {9, 15}},
+        Arc{"DMEM_RSP_VALID", "PIPELINE_STALL", {7, 8}},
+        Arc{"DMEM_RSP_VALID", "PREDICTION_RECOVERY", {12, 19}},
+        Arc{"ENABLE", "BRANCH_MISS", {9, 30}},
+        Arc{"ENABLE", "BRANCH_RESOLVED", {8, 29}},
+        Arc{"ENABLE", "COMMIT_VALID", {4, 18}},
+        Arc{"ENABLE", "DATA_PORT_STALL", {5, 16}},
+        Arc{"ENABLE", "DMEM_REQ_ADDR", {13, 15}},
+        Arc{"ENABLE", "DMEM_REQ_OP", {7, 7}},
+        Arc{"ENABLE", "DMEM_REQ_VALID", {8, 8}},
+        Arc{"ENABLE", "DMEM_REQ_WRITE_MASK", {12, 15}},
+        Arc{"ENABLE", "DMEM_RSP_READY", {7, 27}},
+        Arc{"ENABLE", "IMEM_REQ_VALID", {5, 5}},
+        Arc{"ENABLE", "IMEM_RSP_READY", {7, 30}},
+        Arc{"ENABLE", "INSTRUCTION_ATTEMPT", {4, 18}},
+        Arc{"ENABLE", "LOAD_USE_STALL", {5, 25}},
+        Arc{"ENABLE", "MEMORY_STALL", {4, 15}},
+        Arc{"ENABLE", "PIPELINE_FLUSH", {5, 25}},
+        Arc{"ENABLE", "PIPELINE_STALL", {6, 18}},
+        Arc{"ENABLE", "PREDICTION_RECOVERY", {8, 29}},
+        Arc{"IMEM_REQ_READY", "IMEM_RSP_READY", {11, 11}},
+        Arc{"IMEM_RSP_VALID", "IMEM_RSP_READY", {9, 9}},
+    };
+    t.clock = "CLK";
+    t.launches["BRANCH_MISS"] = {6, 71};
+    t.launches["BRANCH_RESOLVED"] = {6, 70};
+    t.launches["COMMIT_VALID"] = {4, 30};
+    t.launches["DATA_PORT_STALL"] = {6, 28};
+    t.launches["DMEM_REQ_ADDR"] = {5, 27};
+    t.launches["DMEM_REQ_OP"] = {5, 18};
+    t.launches["DMEM_REQ_VALID"] = {6, 20};
+    t.launches["DMEM_REQ_WRITE_DATA"] = {5, 14};
+    t.launches["DMEM_REQ_WRITE_MASK"] = {5, 27};
+    t.launches["DMEM_RSP_READY"] = {6, 39};
+    t.launches["EX_MEM_PC"] = {3, 4};
+    t.launches["EX_MEM_VALID"] = {3, 4};
+    t.launches["FETCH_PC"] = {3, 4};
+    t.launches["HALTED"] = {3, 4};
+    t.launches["ID_EX_PC"] = {3, 4};
+    t.launches["ID_EX_VALID"] = {3, 4};
+    t.launches["IF_ID_PC"] = {3, 4};
+    t.launches["IF_ID_VALID"] = {3, 4};
+    t.launches["IMEM_REQ_ADDR"] = {5, 7};
+    t.launches["IMEM_REQ_VALID"] = {6, 10};
+    t.launches["IMEM_RSP_READY"] = {6, 77};
+    t.launches["INSTRUCTION_ATTEMPT"] = {4, 30};
+    t.launches["LOAD_USE_STALL"] = {7, 37};
+    t.launches["MEMORY_STALL"] = {7, 27};
+    t.launches["MEM_WB_PC"] = {3, 4};
+    t.launches["MEM_WB_VALID"] = {3, 4};
+    t.launches["PIPELINE_FLUSH"] = {7, 71};
+    t.launches["PIPELINE_STALL"] = {7, 30};
+    t.launches["PREDICTION_RECOVERY"] = {8, 70};
+    t.launches["TRAPPED"] = {3, 4};
+    t.launches["TRAP_CAUSE"] = {3, 4};
+    t.setup["DMEM_REQ_READY"] = 30;
+    t.setup["DMEM_RSP_READ_DATA"] = 18;
+    t.setup["DMEM_RSP_STATUS"] = 24;
+    t.setup["DMEM_RSP_VALID"] = 28;
+    t.setup["ENABLE"] = 38;
+    t.setup["IMEM_REQ_READY"] = 19;
+    t.setup["IMEM_RSP_READ_DATA"] = 45;
+    t.setup["IMEM_RSP_STATUS"] = 15;
+    t.setup["IMEM_RSP_VALID"] = 17;
+    t.internal_period = 85;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"rv32i.core.educational-five-stage.behavioral?prediction=backward-taken&prediction_entries=64", [] {
+    PartDelays t;
+    t.evidence = "proven on rv32i.core.educational-five-stage.structural";
+    t.arcs = {
+        Arc{"DMEM_REQ_READY", "BRANCH_MISS", {15, 22}},
+        Arc{"DMEM_REQ_READY", "BRANCH_RESOLVED", {14, 21}},
+        Arc{"DMEM_REQ_READY", "COMMIT_VALID", {10, 10}},
+        Arc{"DMEM_REQ_READY", "DATA_PORT_STALL", {8, 8}},
+        Arc{"DMEM_REQ_READY", "DMEM_RSP_READY", {13, 19}},
+        Arc{"DMEM_REQ_READY", "IMEM_RSP_READY", {15, 22}},
+        Arc{"DMEM_REQ_READY", "INSTRUCTION_ATTEMPT", {10, 10}},
+        Arc{"DMEM_REQ_READY", "LOAD_USE_STALL", {11, 17}},
+        Arc{"DMEM_REQ_READY", "MEMORY_STALL", {7, 7}},
+        Arc{"DMEM_REQ_READY", "PIPELINE_FLUSH", {11, 17}},
+        Arc{"DMEM_REQ_READY", "PIPELINE_STALL", {9, 10}},
+        Arc{"DMEM_REQ_READY", "PREDICTION_RECOVERY", {14, 21}},
+        Arc{"DMEM_RSP_STATUS", "BRANCH_MISS", {13, 14}},
+        Arc{"DMEM_RSP_STATUS", "BRANCH_RESOLVED", {12, 13}},
+        Arc{"DMEM_RSP_STATUS", "IMEM_RSP_READY", {14, 16}},
+        Arc{"DMEM_RSP_STATUS", "PIPELINE_FLUSH", {9, 10}},
+        Arc{"DMEM_RSP_STATUS", "PREDICTION_RECOVERY", {12, 13}},
+        Arc{"DMEM_RSP_VALID", "BRANCH_MISS", {13, 20}},
+        Arc{"DMEM_RSP_VALID", "BRANCH_RESOLVED", {12, 19}},
+        Arc{"DMEM_RSP_VALID", "COMMIT_VALID", {8, 8}},
+        Arc{"DMEM_RSP_VALID", "DATA_PORT_STALL", {6, 6}},
+        Arc{"DMEM_RSP_VALID", "DMEM_RSP_READY", {11, 17}},
+        Arc{"DMEM_RSP_VALID", "IMEM_RSP_READY", {13, 20}},
+        Arc{"DMEM_RSP_VALID", "INSTRUCTION_ATTEMPT", {8, 8}},
+        Arc{"DMEM_RSP_VALID", "LOAD_USE_STALL", {9, 15}},
+        Arc{"DMEM_RSP_VALID", "MEMORY_STALL", {5, 5}},
+        Arc{"DMEM_RSP_VALID", "PIPELINE_FLUSH", {9, 15}},
+        Arc{"DMEM_RSP_VALID", "PIPELINE_STALL", {7, 8}},
+        Arc{"DMEM_RSP_VALID", "PREDICTION_RECOVERY", {12, 19}},
+        Arc{"ENABLE", "BRANCH_MISS", {9, 30}},
+        Arc{"ENABLE", "BRANCH_RESOLVED", {8, 29}},
+        Arc{"ENABLE", "COMMIT_VALID", {4, 18}},
+        Arc{"ENABLE", "DATA_PORT_STALL", {5, 16}},
+        Arc{"ENABLE", "DMEM_REQ_ADDR", {13, 15}},
+        Arc{"ENABLE", "DMEM_REQ_OP", {7, 7}},
+        Arc{"ENABLE", "DMEM_REQ_VALID", {8, 8}},
+        Arc{"ENABLE", "DMEM_REQ_WRITE_MASK", {12, 15}},
+        Arc{"ENABLE", "DMEM_RSP_READY", {7, 27}},
+        Arc{"ENABLE", "IMEM_REQ_VALID", {5, 5}},
+        Arc{"ENABLE", "IMEM_RSP_READY", {7, 30}},
+        Arc{"ENABLE", "INSTRUCTION_ATTEMPT", {4, 18}},
+        Arc{"ENABLE", "LOAD_USE_STALL", {5, 25}},
+        Arc{"ENABLE", "MEMORY_STALL", {4, 15}},
+        Arc{"ENABLE", "PIPELINE_FLUSH", {5, 25}},
+        Arc{"ENABLE", "PIPELINE_STALL", {6, 18}},
+        Arc{"ENABLE", "PREDICTION_RECOVERY", {8, 29}},
+        Arc{"IMEM_REQ_READY", "IMEM_RSP_READY", {11, 11}},
+        Arc{"IMEM_RSP_VALID", "IMEM_RSP_READY", {9, 9}},
+    };
+    t.clock = "CLK";
+    t.launches["BRANCH_MISS"] = {6, 71};
+    t.launches["BRANCH_RESOLVED"] = {6, 70};
+    t.launches["COMMIT_VALID"] = {4, 30};
+    t.launches["DATA_PORT_STALL"] = {6, 28};
+    t.launches["DMEM_REQ_ADDR"] = {5, 27};
+    t.launches["DMEM_REQ_OP"] = {5, 18};
+    t.launches["DMEM_REQ_VALID"] = {6, 20};
+    t.launches["DMEM_REQ_WRITE_DATA"] = {5, 14};
+    t.launches["DMEM_REQ_WRITE_MASK"] = {5, 27};
+    t.launches["DMEM_RSP_READY"] = {6, 39};
+    t.launches["EX_MEM_PC"] = {3, 4};
+    t.launches["EX_MEM_VALID"] = {3, 4};
+    t.launches["FETCH_PC"] = {3, 4};
+    t.launches["HALTED"] = {3, 4};
+    t.launches["ID_EX_PC"] = {3, 4};
+    t.launches["ID_EX_VALID"] = {3, 4};
+    t.launches["IF_ID_PC"] = {3, 4};
+    t.launches["IF_ID_VALID"] = {3, 4};
+    t.launches["IMEM_REQ_ADDR"] = {5, 7};
+    t.launches["IMEM_REQ_VALID"] = {6, 10};
+    t.launches["IMEM_RSP_READY"] = {6, 77};
+    t.launches["INSTRUCTION_ATTEMPT"] = {4, 30};
+    t.launches["LOAD_USE_STALL"] = {7, 37};
+    t.launches["MEMORY_STALL"] = {7, 27};
+    t.launches["MEM_WB_PC"] = {3, 4};
+    t.launches["MEM_WB_VALID"] = {3, 4};
+    t.launches["PIPELINE_FLUSH"] = {7, 71};
+    t.launches["PIPELINE_STALL"] = {7, 30};
+    t.launches["PREDICTION_RECOVERY"] = {8, 70};
+    t.launches["TRAPPED"] = {3, 4};
+    t.launches["TRAP_CAUSE"] = {3, 4};
+    t.setup["DMEM_REQ_READY"] = 30;
+    t.setup["DMEM_RSP_READ_DATA"] = 18;
+    t.setup["DMEM_RSP_STATUS"] = 24;
+    t.setup["DMEM_RSP_VALID"] = 28;
+    t.setup["ENABLE"] = 38;
+    t.setup["IMEM_REQ_READY"] = 19;
+    t.setup["IMEM_RSP_READ_DATA"] = 45;
+    t.setup["IMEM_RSP_STATUS"] = 15;
+    t.setup["IMEM_RSP_VALID"] = 17;
+    t.internal_period = 85;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"rv32i.core.educational-five-stage.behavioral?prediction=backward-taken&prediction_entries=128", [] {
+    PartDelays t;
+    t.evidence = "proven on rv32i.core.educational-five-stage.structural";
+    t.arcs = {
+        Arc{"DMEM_REQ_READY", "BRANCH_MISS", {15, 22}},
+        Arc{"DMEM_REQ_READY", "BRANCH_RESOLVED", {14, 21}},
+        Arc{"DMEM_REQ_READY", "COMMIT_VALID", {10, 10}},
+        Arc{"DMEM_REQ_READY", "DATA_PORT_STALL", {8, 8}},
+        Arc{"DMEM_REQ_READY", "DMEM_RSP_READY", {13, 19}},
+        Arc{"DMEM_REQ_READY", "IMEM_RSP_READY", {15, 22}},
+        Arc{"DMEM_REQ_READY", "INSTRUCTION_ATTEMPT", {10, 10}},
+        Arc{"DMEM_REQ_READY", "LOAD_USE_STALL", {11, 17}},
+        Arc{"DMEM_REQ_READY", "MEMORY_STALL", {7, 7}},
+        Arc{"DMEM_REQ_READY", "PIPELINE_FLUSH", {11, 17}},
+        Arc{"DMEM_REQ_READY", "PIPELINE_STALL", {9, 10}},
+        Arc{"DMEM_REQ_READY", "PREDICTION_RECOVERY", {14, 21}},
+        Arc{"DMEM_RSP_STATUS", "BRANCH_MISS", {13, 14}},
+        Arc{"DMEM_RSP_STATUS", "BRANCH_RESOLVED", {12, 13}},
+        Arc{"DMEM_RSP_STATUS", "IMEM_RSP_READY", {14, 16}},
+        Arc{"DMEM_RSP_STATUS", "PIPELINE_FLUSH", {9, 10}},
+        Arc{"DMEM_RSP_STATUS", "PREDICTION_RECOVERY", {12, 13}},
+        Arc{"DMEM_RSP_VALID", "BRANCH_MISS", {13, 20}},
+        Arc{"DMEM_RSP_VALID", "BRANCH_RESOLVED", {12, 19}},
+        Arc{"DMEM_RSP_VALID", "COMMIT_VALID", {8, 8}},
+        Arc{"DMEM_RSP_VALID", "DATA_PORT_STALL", {6, 6}},
+        Arc{"DMEM_RSP_VALID", "DMEM_RSP_READY", {11, 17}},
+        Arc{"DMEM_RSP_VALID", "IMEM_RSP_READY", {13, 20}},
+        Arc{"DMEM_RSP_VALID", "INSTRUCTION_ATTEMPT", {8, 8}},
+        Arc{"DMEM_RSP_VALID", "LOAD_USE_STALL", {9, 15}},
+        Arc{"DMEM_RSP_VALID", "MEMORY_STALL", {5, 5}},
+        Arc{"DMEM_RSP_VALID", "PIPELINE_FLUSH", {9, 15}},
+        Arc{"DMEM_RSP_VALID", "PIPELINE_STALL", {7, 8}},
+        Arc{"DMEM_RSP_VALID", "PREDICTION_RECOVERY", {12, 19}},
+        Arc{"ENABLE", "BRANCH_MISS", {9, 30}},
+        Arc{"ENABLE", "BRANCH_RESOLVED", {8, 29}},
+        Arc{"ENABLE", "COMMIT_VALID", {4, 18}},
+        Arc{"ENABLE", "DATA_PORT_STALL", {5, 16}},
+        Arc{"ENABLE", "DMEM_REQ_ADDR", {13, 15}},
+        Arc{"ENABLE", "DMEM_REQ_OP", {7, 7}},
+        Arc{"ENABLE", "DMEM_REQ_VALID", {8, 8}},
+        Arc{"ENABLE", "DMEM_REQ_WRITE_MASK", {12, 15}},
+        Arc{"ENABLE", "DMEM_RSP_READY", {7, 27}},
+        Arc{"ENABLE", "IMEM_REQ_VALID", {5, 5}},
+        Arc{"ENABLE", "IMEM_RSP_READY", {7, 30}},
+        Arc{"ENABLE", "INSTRUCTION_ATTEMPT", {4, 18}},
+        Arc{"ENABLE", "LOAD_USE_STALL", {5, 25}},
+        Arc{"ENABLE", "MEMORY_STALL", {4, 15}},
+        Arc{"ENABLE", "PIPELINE_FLUSH", {5, 25}},
+        Arc{"ENABLE", "PIPELINE_STALL", {6, 18}},
+        Arc{"ENABLE", "PREDICTION_RECOVERY", {8, 29}},
+        Arc{"IMEM_REQ_READY", "IMEM_RSP_READY", {11, 11}},
+        Arc{"IMEM_RSP_VALID", "IMEM_RSP_READY", {9, 9}},
+    };
+    t.clock = "CLK";
+    t.launches["BRANCH_MISS"] = {6, 71};
+    t.launches["BRANCH_RESOLVED"] = {6, 70};
+    t.launches["COMMIT_VALID"] = {4, 30};
+    t.launches["DATA_PORT_STALL"] = {6, 28};
+    t.launches["DMEM_REQ_ADDR"] = {5, 27};
+    t.launches["DMEM_REQ_OP"] = {5, 18};
+    t.launches["DMEM_REQ_VALID"] = {6, 20};
+    t.launches["DMEM_REQ_WRITE_DATA"] = {5, 14};
+    t.launches["DMEM_REQ_WRITE_MASK"] = {5, 27};
+    t.launches["DMEM_RSP_READY"] = {6, 39};
+    t.launches["EX_MEM_PC"] = {3, 4};
+    t.launches["EX_MEM_VALID"] = {3, 4};
+    t.launches["FETCH_PC"] = {3, 4};
+    t.launches["HALTED"] = {3, 4};
+    t.launches["ID_EX_PC"] = {3, 4};
+    t.launches["ID_EX_VALID"] = {3, 4};
+    t.launches["IF_ID_PC"] = {3, 4};
+    t.launches["IF_ID_VALID"] = {3, 4};
+    t.launches["IMEM_REQ_ADDR"] = {5, 7};
+    t.launches["IMEM_REQ_VALID"] = {6, 10};
+    t.launches["IMEM_RSP_READY"] = {6, 77};
+    t.launches["INSTRUCTION_ATTEMPT"] = {4, 30};
+    t.launches["LOAD_USE_STALL"] = {7, 37};
+    t.launches["MEMORY_STALL"] = {7, 27};
+    t.launches["MEM_WB_PC"] = {3, 4};
+    t.launches["MEM_WB_VALID"] = {3, 4};
+    t.launches["PIPELINE_FLUSH"] = {7, 71};
+    t.launches["PIPELINE_STALL"] = {7, 30};
+    t.launches["PREDICTION_RECOVERY"] = {8, 70};
+    t.launches["TRAPPED"] = {3, 4};
+    t.launches["TRAP_CAUSE"] = {3, 4};
+    t.setup["DMEM_REQ_READY"] = 30;
+    t.setup["DMEM_RSP_READ_DATA"] = 18;
+    t.setup["DMEM_RSP_STATUS"] = 24;
+    t.setup["DMEM_RSP_VALID"] = 28;
+    t.setup["ENABLE"] = 38;
+    t.setup["IMEM_REQ_READY"] = 19;
+    t.setup["IMEM_RSP_READ_DATA"] = 45;
+    t.setup["IMEM_RSP_STATUS"] = 15;
+    t.setup["IMEM_RSP_VALID"] = 17;
+    t.internal_period = 85;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"rv32i.core.educational-five-stage.behavioral?prediction=backward-taken&prediction_entries=256", [] {
+    PartDelays t;
+    t.evidence = "proven on rv32i.core.educational-five-stage.structural";
+    t.arcs = {
+        Arc{"DMEM_REQ_READY", "BRANCH_MISS", {15, 22}},
+        Arc{"DMEM_REQ_READY", "BRANCH_RESOLVED", {14, 21}},
+        Arc{"DMEM_REQ_READY", "COMMIT_VALID", {10, 10}},
+        Arc{"DMEM_REQ_READY", "DATA_PORT_STALL", {8, 8}},
+        Arc{"DMEM_REQ_READY", "DMEM_RSP_READY", {13, 19}},
+        Arc{"DMEM_REQ_READY", "IMEM_RSP_READY", {15, 22}},
+        Arc{"DMEM_REQ_READY", "INSTRUCTION_ATTEMPT", {10, 10}},
+        Arc{"DMEM_REQ_READY", "LOAD_USE_STALL", {11, 17}},
+        Arc{"DMEM_REQ_READY", "MEMORY_STALL", {7, 7}},
+        Arc{"DMEM_REQ_READY", "PIPELINE_FLUSH", {11, 17}},
+        Arc{"DMEM_REQ_READY", "PIPELINE_STALL", {9, 10}},
+        Arc{"DMEM_REQ_READY", "PREDICTION_RECOVERY", {14, 21}},
+        Arc{"DMEM_RSP_STATUS", "BRANCH_MISS", {13, 14}},
+        Arc{"DMEM_RSP_STATUS", "BRANCH_RESOLVED", {12, 13}},
+        Arc{"DMEM_RSP_STATUS", "IMEM_RSP_READY", {14, 16}},
+        Arc{"DMEM_RSP_STATUS", "PIPELINE_FLUSH", {9, 10}},
+        Arc{"DMEM_RSP_STATUS", "PREDICTION_RECOVERY", {12, 13}},
+        Arc{"DMEM_RSP_VALID", "BRANCH_MISS", {13, 20}},
+        Arc{"DMEM_RSP_VALID", "BRANCH_RESOLVED", {12, 19}},
+        Arc{"DMEM_RSP_VALID", "COMMIT_VALID", {8, 8}},
+        Arc{"DMEM_RSP_VALID", "DATA_PORT_STALL", {6, 6}},
+        Arc{"DMEM_RSP_VALID", "DMEM_RSP_READY", {11, 17}},
+        Arc{"DMEM_RSP_VALID", "IMEM_RSP_READY", {13, 20}},
+        Arc{"DMEM_RSP_VALID", "INSTRUCTION_ATTEMPT", {8, 8}},
+        Arc{"DMEM_RSP_VALID", "LOAD_USE_STALL", {9, 15}},
+        Arc{"DMEM_RSP_VALID", "MEMORY_STALL", {5, 5}},
+        Arc{"DMEM_RSP_VALID", "PIPELINE_FLUSH", {9, 15}},
+        Arc{"DMEM_RSP_VALID", "PIPELINE_STALL", {7, 8}},
+        Arc{"DMEM_RSP_VALID", "PREDICTION_RECOVERY", {12, 19}},
+        Arc{"ENABLE", "BRANCH_MISS", {9, 30}},
+        Arc{"ENABLE", "BRANCH_RESOLVED", {8, 29}},
+        Arc{"ENABLE", "COMMIT_VALID", {4, 18}},
+        Arc{"ENABLE", "DATA_PORT_STALL", {5, 16}},
+        Arc{"ENABLE", "DMEM_REQ_ADDR", {13, 15}},
+        Arc{"ENABLE", "DMEM_REQ_OP", {7, 7}},
+        Arc{"ENABLE", "DMEM_REQ_VALID", {8, 8}},
+        Arc{"ENABLE", "DMEM_REQ_WRITE_MASK", {12, 15}},
+        Arc{"ENABLE", "DMEM_RSP_READY", {7, 27}},
+        Arc{"ENABLE", "IMEM_REQ_VALID", {5, 5}},
+        Arc{"ENABLE", "IMEM_RSP_READY", {7, 30}},
+        Arc{"ENABLE", "INSTRUCTION_ATTEMPT", {4, 18}},
+        Arc{"ENABLE", "LOAD_USE_STALL", {5, 25}},
+        Arc{"ENABLE", "MEMORY_STALL", {4, 15}},
+        Arc{"ENABLE", "PIPELINE_FLUSH", {5, 25}},
+        Arc{"ENABLE", "PIPELINE_STALL", {6, 18}},
+        Arc{"ENABLE", "PREDICTION_RECOVERY", {8, 29}},
+        Arc{"IMEM_REQ_READY", "IMEM_RSP_READY", {11, 11}},
+        Arc{"IMEM_RSP_VALID", "IMEM_RSP_READY", {9, 9}},
+    };
+    t.clock = "CLK";
+    t.launches["BRANCH_MISS"] = {6, 71};
+    t.launches["BRANCH_RESOLVED"] = {6, 70};
+    t.launches["COMMIT_VALID"] = {4, 30};
+    t.launches["DATA_PORT_STALL"] = {6, 28};
+    t.launches["DMEM_REQ_ADDR"] = {5, 27};
+    t.launches["DMEM_REQ_OP"] = {5, 18};
+    t.launches["DMEM_REQ_VALID"] = {6, 20};
+    t.launches["DMEM_REQ_WRITE_DATA"] = {5, 14};
+    t.launches["DMEM_REQ_WRITE_MASK"] = {5, 27};
+    t.launches["DMEM_RSP_READY"] = {6, 39};
+    t.launches["EX_MEM_PC"] = {3, 4};
+    t.launches["EX_MEM_VALID"] = {3, 4};
+    t.launches["FETCH_PC"] = {3, 4};
+    t.launches["HALTED"] = {3, 4};
+    t.launches["ID_EX_PC"] = {3, 4};
+    t.launches["ID_EX_VALID"] = {3, 4};
+    t.launches["IF_ID_PC"] = {3, 4};
+    t.launches["IF_ID_VALID"] = {3, 4};
+    t.launches["IMEM_REQ_ADDR"] = {5, 7};
+    t.launches["IMEM_REQ_VALID"] = {6, 10};
+    t.launches["IMEM_RSP_READY"] = {6, 77};
+    t.launches["INSTRUCTION_ATTEMPT"] = {4, 30};
+    t.launches["LOAD_USE_STALL"] = {7, 37};
+    t.launches["MEMORY_STALL"] = {7, 27};
+    t.launches["MEM_WB_PC"] = {3, 4};
+    t.launches["MEM_WB_VALID"] = {3, 4};
+    t.launches["PIPELINE_FLUSH"] = {7, 71};
+    t.launches["PIPELINE_STALL"] = {7, 30};
+    t.launches["PREDICTION_RECOVERY"] = {8, 70};
+    t.launches["TRAPPED"] = {3, 4};
+    t.launches["TRAP_CAUSE"] = {3, 4};
+    t.setup["DMEM_REQ_READY"] = 30;
+    t.setup["DMEM_RSP_READ_DATA"] = 18;
+    t.setup["DMEM_RSP_STATUS"] = 24;
+    t.setup["DMEM_RSP_VALID"] = 28;
+    t.setup["ENABLE"] = 38;
+    t.setup["IMEM_REQ_READY"] = 19;
+    t.setup["IMEM_RSP_READ_DATA"] = 45;
+    t.setup["IMEM_RSP_STATUS"] = 15;
+    t.setup["IMEM_RSP_VALID"] = 17;
+    t.internal_period = 85;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"rv32i.core.educational-five-stage.behavioral?prediction=one-bit&prediction_entries=1", [] {
+    PartDelays t;
+    t.evidence = "proven on rv32i.core.educational-five-stage.structural";
+    t.arcs = {
+        Arc{"DMEM_REQ_READY", "BRANCH_MISS", {15, 22}},
+        Arc{"DMEM_REQ_READY", "BRANCH_RESOLVED", {14, 21}},
+        Arc{"DMEM_REQ_READY", "COMMIT_VALID", {10, 10}},
+        Arc{"DMEM_REQ_READY", "DATA_PORT_STALL", {8, 8}},
+        Arc{"DMEM_REQ_READY", "DMEM_RSP_READY", {13, 19}},
+        Arc{"DMEM_REQ_READY", "IMEM_RSP_READY", {15, 22}},
+        Arc{"DMEM_REQ_READY", "INSTRUCTION_ATTEMPT", {10, 10}},
+        Arc{"DMEM_REQ_READY", "LOAD_USE_STALL", {11, 17}},
+        Arc{"DMEM_REQ_READY", "MEMORY_STALL", {7, 7}},
+        Arc{"DMEM_REQ_READY", "PIPELINE_FLUSH", {11, 17}},
+        Arc{"DMEM_REQ_READY", "PIPELINE_STALL", {9, 10}},
+        Arc{"DMEM_REQ_READY", "PREDICTION_RECOVERY", {14, 21}},
+        Arc{"DMEM_RSP_STATUS", "BRANCH_MISS", {13, 14}},
+        Arc{"DMEM_RSP_STATUS", "BRANCH_RESOLVED", {12, 13}},
+        Arc{"DMEM_RSP_STATUS", "IMEM_RSP_READY", {14, 16}},
+        Arc{"DMEM_RSP_STATUS", "PIPELINE_FLUSH", {9, 10}},
+        Arc{"DMEM_RSP_STATUS", "PREDICTION_RECOVERY", {12, 13}},
+        Arc{"DMEM_RSP_VALID", "BRANCH_MISS", {13, 20}},
+        Arc{"DMEM_RSP_VALID", "BRANCH_RESOLVED", {12, 19}},
+        Arc{"DMEM_RSP_VALID", "COMMIT_VALID", {8, 8}},
+        Arc{"DMEM_RSP_VALID", "DATA_PORT_STALL", {6, 6}},
+        Arc{"DMEM_RSP_VALID", "DMEM_RSP_READY", {11, 17}},
+        Arc{"DMEM_RSP_VALID", "IMEM_RSP_READY", {13, 20}},
+        Arc{"DMEM_RSP_VALID", "INSTRUCTION_ATTEMPT", {8, 8}},
+        Arc{"DMEM_RSP_VALID", "LOAD_USE_STALL", {9, 15}},
+        Arc{"DMEM_RSP_VALID", "MEMORY_STALL", {5, 5}},
+        Arc{"DMEM_RSP_VALID", "PIPELINE_FLUSH", {9, 15}},
+        Arc{"DMEM_RSP_VALID", "PIPELINE_STALL", {7, 8}},
+        Arc{"DMEM_RSP_VALID", "PREDICTION_RECOVERY", {12, 19}},
+        Arc{"ENABLE", "BRANCH_MISS", {9, 30}},
+        Arc{"ENABLE", "BRANCH_RESOLVED", {8, 29}},
+        Arc{"ENABLE", "COMMIT_VALID", {4, 18}},
+        Arc{"ENABLE", "DATA_PORT_STALL", {5, 16}},
+        Arc{"ENABLE", "DMEM_REQ_ADDR", {13, 15}},
+        Arc{"ENABLE", "DMEM_REQ_OP", {7, 7}},
+        Arc{"ENABLE", "DMEM_REQ_VALID", {8, 8}},
+        Arc{"ENABLE", "DMEM_REQ_WRITE_MASK", {12, 15}},
+        Arc{"ENABLE", "DMEM_RSP_READY", {7, 27}},
+        Arc{"ENABLE", "IMEM_REQ_VALID", {5, 5}},
+        Arc{"ENABLE", "IMEM_RSP_READY", {7, 30}},
+        Arc{"ENABLE", "INSTRUCTION_ATTEMPT", {4, 18}},
+        Arc{"ENABLE", "LOAD_USE_STALL", {5, 25}},
+        Arc{"ENABLE", "MEMORY_STALL", {4, 15}},
+        Arc{"ENABLE", "PIPELINE_FLUSH", {5, 25}},
+        Arc{"ENABLE", "PIPELINE_STALL", {6, 18}},
+        Arc{"ENABLE", "PREDICTION_RECOVERY", {8, 29}},
+        Arc{"IMEM_REQ_READY", "IMEM_RSP_READY", {11, 11}},
+        Arc{"IMEM_RSP_VALID", "IMEM_RSP_READY", {9, 9}},
+    };
+    t.clock = "CLK";
+    t.launches["BRANCH_MISS"] = {6, 71};
+    t.launches["BRANCH_RESOLVED"] = {6, 70};
+    t.launches["COMMIT_VALID"] = {4, 30};
+    t.launches["DATA_PORT_STALL"] = {6, 28};
+    t.launches["DMEM_REQ_ADDR"] = {5, 27};
+    t.launches["DMEM_REQ_OP"] = {5, 18};
+    t.launches["DMEM_REQ_VALID"] = {6, 20};
+    t.launches["DMEM_REQ_WRITE_DATA"] = {5, 14};
+    t.launches["DMEM_REQ_WRITE_MASK"] = {5, 27};
+    t.launches["DMEM_RSP_READY"] = {6, 39};
+    t.launches["EX_MEM_PC"] = {3, 4};
+    t.launches["EX_MEM_VALID"] = {3, 4};
+    t.launches["FETCH_PC"] = {3, 4};
+    t.launches["HALTED"] = {3, 4};
+    t.launches["ID_EX_PC"] = {3, 4};
+    t.launches["ID_EX_VALID"] = {3, 4};
+    t.launches["IF_ID_PC"] = {3, 4};
+    t.launches["IF_ID_VALID"] = {3, 4};
+    t.launches["IMEM_REQ_ADDR"] = {5, 7};
+    t.launches["IMEM_REQ_VALID"] = {6, 10};
+    t.launches["IMEM_RSP_READY"] = {6, 77};
+    t.launches["INSTRUCTION_ATTEMPT"] = {4, 30};
+    t.launches["LOAD_USE_STALL"] = {7, 37};
+    t.launches["MEMORY_STALL"] = {7, 27};
+    t.launches["MEM_WB_PC"] = {3, 4};
+    t.launches["MEM_WB_VALID"] = {3, 4};
+    t.launches["PIPELINE_FLUSH"] = {7, 71};
+    t.launches["PIPELINE_STALL"] = {7, 30};
+    t.launches["PREDICTION_RECOVERY"] = {8, 70};
+    t.launches["TRAPPED"] = {3, 4};
+    t.launches["TRAP_CAUSE"] = {3, 4};
+    t.setup["DMEM_REQ_READY"] = 31;
+    t.setup["DMEM_RSP_READ_DATA"] = 18;
+    t.setup["DMEM_RSP_STATUS"] = 24;
+    t.setup["DMEM_RSP_VALID"] = 29;
+    t.setup["ENABLE"] = 39;
+    t.setup["IMEM_REQ_READY"] = 19;
+    t.setup["IMEM_RSP_READ_DATA"] = 45;
+    t.setup["IMEM_RSP_STATUS"] = 15;
+    t.setup["IMEM_RSP_VALID"] = 17;
+    t.internal_period = 85;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"rv32i.core.educational-five-stage.behavioral?prediction=one-bit&prediction_entries=2", [] {
+    PartDelays t;
+    t.evidence = "proven on rv32i.core.educational-five-stage.structural";
+    t.arcs = {
+        Arc{"DMEM_REQ_READY", "BRANCH_MISS", {15, 22}},
+        Arc{"DMEM_REQ_READY", "BRANCH_RESOLVED", {14, 21}},
+        Arc{"DMEM_REQ_READY", "COMMIT_VALID", {10, 10}},
+        Arc{"DMEM_REQ_READY", "DATA_PORT_STALL", {8, 8}},
+        Arc{"DMEM_REQ_READY", "DMEM_RSP_READY", {13, 19}},
+        Arc{"DMEM_REQ_READY", "IMEM_RSP_READY", {15, 22}},
+        Arc{"DMEM_REQ_READY", "INSTRUCTION_ATTEMPT", {10, 10}},
+        Arc{"DMEM_REQ_READY", "LOAD_USE_STALL", {11, 17}},
+        Arc{"DMEM_REQ_READY", "MEMORY_STALL", {7, 7}},
+        Arc{"DMEM_REQ_READY", "PIPELINE_FLUSH", {11, 17}},
+        Arc{"DMEM_REQ_READY", "PIPELINE_STALL", {9, 10}},
+        Arc{"DMEM_REQ_READY", "PREDICTION_RECOVERY", {14, 21}},
+        Arc{"DMEM_RSP_STATUS", "BRANCH_MISS", {13, 14}},
+        Arc{"DMEM_RSP_STATUS", "BRANCH_RESOLVED", {12, 13}},
+        Arc{"DMEM_RSP_STATUS", "IMEM_RSP_READY", {14, 16}},
+        Arc{"DMEM_RSP_STATUS", "PIPELINE_FLUSH", {9, 10}},
+        Arc{"DMEM_RSP_STATUS", "PREDICTION_RECOVERY", {12, 13}},
+        Arc{"DMEM_RSP_VALID", "BRANCH_MISS", {13, 20}},
+        Arc{"DMEM_RSP_VALID", "BRANCH_RESOLVED", {12, 19}},
+        Arc{"DMEM_RSP_VALID", "COMMIT_VALID", {8, 8}},
+        Arc{"DMEM_RSP_VALID", "DATA_PORT_STALL", {6, 6}},
+        Arc{"DMEM_RSP_VALID", "DMEM_RSP_READY", {11, 17}},
+        Arc{"DMEM_RSP_VALID", "IMEM_RSP_READY", {13, 20}},
+        Arc{"DMEM_RSP_VALID", "INSTRUCTION_ATTEMPT", {8, 8}},
+        Arc{"DMEM_RSP_VALID", "LOAD_USE_STALL", {9, 15}},
+        Arc{"DMEM_RSP_VALID", "MEMORY_STALL", {5, 5}},
+        Arc{"DMEM_RSP_VALID", "PIPELINE_FLUSH", {9, 15}},
+        Arc{"DMEM_RSP_VALID", "PIPELINE_STALL", {7, 8}},
+        Arc{"DMEM_RSP_VALID", "PREDICTION_RECOVERY", {12, 19}},
+        Arc{"ENABLE", "BRANCH_MISS", {9, 30}},
+        Arc{"ENABLE", "BRANCH_RESOLVED", {8, 29}},
+        Arc{"ENABLE", "COMMIT_VALID", {4, 18}},
+        Arc{"ENABLE", "DATA_PORT_STALL", {5, 16}},
+        Arc{"ENABLE", "DMEM_REQ_ADDR", {13, 15}},
+        Arc{"ENABLE", "DMEM_REQ_OP", {7, 7}},
+        Arc{"ENABLE", "DMEM_REQ_VALID", {8, 8}},
+        Arc{"ENABLE", "DMEM_REQ_WRITE_MASK", {12, 15}},
+        Arc{"ENABLE", "DMEM_RSP_READY", {7, 27}},
+        Arc{"ENABLE", "IMEM_REQ_VALID", {5, 5}},
+        Arc{"ENABLE", "IMEM_RSP_READY", {7, 30}},
+        Arc{"ENABLE", "INSTRUCTION_ATTEMPT", {4, 18}},
+        Arc{"ENABLE", "LOAD_USE_STALL", {5, 25}},
+        Arc{"ENABLE", "MEMORY_STALL", {4, 15}},
+        Arc{"ENABLE", "PIPELINE_FLUSH", {5, 25}},
+        Arc{"ENABLE", "PIPELINE_STALL", {6, 18}},
+        Arc{"ENABLE", "PREDICTION_RECOVERY", {8, 29}},
+        Arc{"IMEM_REQ_READY", "IMEM_RSP_READY", {11, 11}},
+        Arc{"IMEM_RSP_VALID", "IMEM_RSP_READY", {9, 9}},
+    };
+    t.clock = "CLK";
+    t.launches["BRANCH_MISS"] = {6, 71};
+    t.launches["BRANCH_RESOLVED"] = {6, 70};
+    t.launches["COMMIT_VALID"] = {4, 30};
+    t.launches["DATA_PORT_STALL"] = {6, 28};
+    t.launches["DMEM_REQ_ADDR"] = {5, 27};
+    t.launches["DMEM_REQ_OP"] = {5, 18};
+    t.launches["DMEM_REQ_VALID"] = {6, 20};
+    t.launches["DMEM_REQ_WRITE_DATA"] = {5, 14};
+    t.launches["DMEM_REQ_WRITE_MASK"] = {5, 27};
+    t.launches["DMEM_RSP_READY"] = {6, 39};
+    t.launches["EX_MEM_PC"] = {3, 4};
+    t.launches["EX_MEM_VALID"] = {3, 4};
+    t.launches["FETCH_PC"] = {3, 4};
+    t.launches["HALTED"] = {3, 4};
+    t.launches["ID_EX_PC"] = {3, 4};
+    t.launches["ID_EX_VALID"] = {3, 4};
+    t.launches["IF_ID_PC"] = {3, 4};
+    t.launches["IF_ID_VALID"] = {3, 4};
+    t.launches["IMEM_REQ_ADDR"] = {5, 7};
+    t.launches["IMEM_REQ_VALID"] = {6, 10};
+    t.launches["IMEM_RSP_READY"] = {6, 77};
+    t.launches["INSTRUCTION_ATTEMPT"] = {4, 30};
+    t.launches["LOAD_USE_STALL"] = {7, 37};
+    t.launches["MEMORY_STALL"] = {7, 27};
+    t.launches["MEM_WB_PC"] = {3, 4};
+    t.launches["MEM_WB_VALID"] = {3, 4};
+    t.launches["PIPELINE_FLUSH"] = {7, 71};
+    t.launches["PIPELINE_STALL"] = {7, 30};
+    t.launches["PREDICTION_RECOVERY"] = {8, 70};
+    t.launches["TRAPPED"] = {3, 4};
+    t.launches["TRAP_CAUSE"] = {3, 4};
+    t.setup["DMEM_REQ_READY"] = 31;
+    t.setup["DMEM_RSP_READ_DATA"] = 18;
+    t.setup["DMEM_RSP_STATUS"] = 24;
+    t.setup["DMEM_RSP_VALID"] = 29;
+    t.setup["ENABLE"] = 39;
+    t.setup["IMEM_REQ_READY"] = 19;
+    t.setup["IMEM_RSP_READ_DATA"] = 45;
+    t.setup["IMEM_RSP_STATUS"] = 15;
+    t.setup["IMEM_RSP_VALID"] = 17;
+    t.internal_period = 85;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"rv32i.core.educational-five-stage.behavioral?prediction=one-bit&prediction_entries=4", [] {
+    PartDelays t;
+    t.evidence = "proven on rv32i.core.educational-five-stage.structural";
+    t.arcs = {
+        Arc{"DMEM_REQ_READY", "BRANCH_MISS", {15, 22}},
+        Arc{"DMEM_REQ_READY", "BRANCH_RESOLVED", {14, 21}},
+        Arc{"DMEM_REQ_READY", "COMMIT_VALID", {10, 10}},
+        Arc{"DMEM_REQ_READY", "DATA_PORT_STALL", {8, 8}},
+        Arc{"DMEM_REQ_READY", "DMEM_RSP_READY", {13, 19}},
+        Arc{"DMEM_REQ_READY", "IMEM_RSP_READY", {15, 22}},
+        Arc{"DMEM_REQ_READY", "INSTRUCTION_ATTEMPT", {10, 10}},
+        Arc{"DMEM_REQ_READY", "LOAD_USE_STALL", {11, 17}},
+        Arc{"DMEM_REQ_READY", "MEMORY_STALL", {7, 7}},
+        Arc{"DMEM_REQ_READY", "PIPELINE_FLUSH", {11, 17}},
+        Arc{"DMEM_REQ_READY", "PIPELINE_STALL", {9, 10}},
+        Arc{"DMEM_REQ_READY", "PREDICTION_RECOVERY", {14, 21}},
+        Arc{"DMEM_RSP_STATUS", "BRANCH_MISS", {13, 14}},
+        Arc{"DMEM_RSP_STATUS", "BRANCH_RESOLVED", {12, 13}},
+        Arc{"DMEM_RSP_STATUS", "IMEM_RSP_READY", {14, 16}},
+        Arc{"DMEM_RSP_STATUS", "PIPELINE_FLUSH", {9, 10}},
+        Arc{"DMEM_RSP_STATUS", "PREDICTION_RECOVERY", {12, 13}},
+        Arc{"DMEM_RSP_VALID", "BRANCH_MISS", {13, 20}},
+        Arc{"DMEM_RSP_VALID", "BRANCH_RESOLVED", {12, 19}},
+        Arc{"DMEM_RSP_VALID", "COMMIT_VALID", {8, 8}},
+        Arc{"DMEM_RSP_VALID", "DATA_PORT_STALL", {6, 6}},
+        Arc{"DMEM_RSP_VALID", "DMEM_RSP_READY", {11, 17}},
+        Arc{"DMEM_RSP_VALID", "IMEM_RSP_READY", {13, 20}},
+        Arc{"DMEM_RSP_VALID", "INSTRUCTION_ATTEMPT", {8, 8}},
+        Arc{"DMEM_RSP_VALID", "LOAD_USE_STALL", {9, 15}},
+        Arc{"DMEM_RSP_VALID", "MEMORY_STALL", {5, 5}},
+        Arc{"DMEM_RSP_VALID", "PIPELINE_FLUSH", {9, 15}},
+        Arc{"DMEM_RSP_VALID", "PIPELINE_STALL", {7, 8}},
+        Arc{"DMEM_RSP_VALID", "PREDICTION_RECOVERY", {12, 19}},
+        Arc{"ENABLE", "BRANCH_MISS", {9, 30}},
+        Arc{"ENABLE", "BRANCH_RESOLVED", {8, 29}},
+        Arc{"ENABLE", "COMMIT_VALID", {4, 18}},
+        Arc{"ENABLE", "DATA_PORT_STALL", {5, 16}},
+        Arc{"ENABLE", "DMEM_REQ_ADDR", {13, 15}},
+        Arc{"ENABLE", "DMEM_REQ_OP", {7, 7}},
+        Arc{"ENABLE", "DMEM_REQ_VALID", {8, 8}},
+        Arc{"ENABLE", "DMEM_REQ_WRITE_MASK", {12, 15}},
+        Arc{"ENABLE", "DMEM_RSP_READY", {7, 27}},
+        Arc{"ENABLE", "IMEM_REQ_VALID", {5, 5}},
+        Arc{"ENABLE", "IMEM_RSP_READY", {7, 30}},
+        Arc{"ENABLE", "INSTRUCTION_ATTEMPT", {4, 18}},
+        Arc{"ENABLE", "LOAD_USE_STALL", {5, 25}},
+        Arc{"ENABLE", "MEMORY_STALL", {4, 15}},
+        Arc{"ENABLE", "PIPELINE_FLUSH", {5, 25}},
+        Arc{"ENABLE", "PIPELINE_STALL", {6, 18}},
+        Arc{"ENABLE", "PREDICTION_RECOVERY", {8, 29}},
+        Arc{"IMEM_REQ_READY", "IMEM_RSP_READY", {11, 11}},
+        Arc{"IMEM_RSP_VALID", "IMEM_RSP_READY", {9, 9}},
+    };
+    t.clock = "CLK";
+    t.launches["BRANCH_MISS"] = {6, 71};
+    t.launches["BRANCH_RESOLVED"] = {6, 70};
+    t.launches["COMMIT_VALID"] = {4, 30};
+    t.launches["DATA_PORT_STALL"] = {6, 28};
+    t.launches["DMEM_REQ_ADDR"] = {5, 27};
+    t.launches["DMEM_REQ_OP"] = {5, 18};
+    t.launches["DMEM_REQ_VALID"] = {6, 20};
+    t.launches["DMEM_REQ_WRITE_DATA"] = {5, 14};
+    t.launches["DMEM_REQ_WRITE_MASK"] = {5, 27};
+    t.launches["DMEM_RSP_READY"] = {6, 39};
+    t.launches["EX_MEM_PC"] = {3, 4};
+    t.launches["EX_MEM_VALID"] = {3, 4};
+    t.launches["FETCH_PC"] = {3, 4};
+    t.launches["HALTED"] = {3, 4};
+    t.launches["ID_EX_PC"] = {3, 4};
+    t.launches["ID_EX_VALID"] = {3, 4};
+    t.launches["IF_ID_PC"] = {3, 4};
+    t.launches["IF_ID_VALID"] = {3, 4};
+    t.launches["IMEM_REQ_ADDR"] = {5, 7};
+    t.launches["IMEM_REQ_VALID"] = {6, 10};
+    t.launches["IMEM_RSP_READY"] = {6, 77};
+    t.launches["INSTRUCTION_ATTEMPT"] = {4, 30};
+    t.launches["LOAD_USE_STALL"] = {7, 37};
+    t.launches["MEMORY_STALL"] = {7, 27};
+    t.launches["MEM_WB_PC"] = {3, 4};
+    t.launches["MEM_WB_VALID"] = {3, 4};
+    t.launches["PIPELINE_FLUSH"] = {7, 71};
+    t.launches["PIPELINE_STALL"] = {7, 30};
+    t.launches["PREDICTION_RECOVERY"] = {8, 70};
+    t.launches["TRAPPED"] = {3, 4};
+    t.launches["TRAP_CAUSE"] = {3, 4};
+    t.setup["DMEM_REQ_READY"] = 31;
+    t.setup["DMEM_RSP_READ_DATA"] = 18;
+    t.setup["DMEM_RSP_STATUS"] = 24;
+    t.setup["DMEM_RSP_VALID"] = 29;
+    t.setup["ENABLE"] = 39;
+    t.setup["IMEM_REQ_READY"] = 19;
+    t.setup["IMEM_RSP_READ_DATA"] = 45;
+    t.setup["IMEM_RSP_STATUS"] = 15;
+    t.setup["IMEM_RSP_VALID"] = 17;
+    t.internal_period = 85;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"rv32i.core.educational-five-stage.behavioral?prediction=one-bit&prediction_entries=8", [] {
+    PartDelays t;
+    t.evidence = "proven on rv32i.core.educational-five-stage.structural";
+    t.arcs = {
+        Arc{"DMEM_REQ_READY", "BRANCH_MISS", {15, 22}},
+        Arc{"DMEM_REQ_READY", "BRANCH_RESOLVED", {14, 21}},
+        Arc{"DMEM_REQ_READY", "COMMIT_VALID", {10, 10}},
+        Arc{"DMEM_REQ_READY", "DATA_PORT_STALL", {8, 8}},
+        Arc{"DMEM_REQ_READY", "DMEM_RSP_READY", {13, 19}},
+        Arc{"DMEM_REQ_READY", "IMEM_RSP_READY", {15, 22}},
+        Arc{"DMEM_REQ_READY", "INSTRUCTION_ATTEMPT", {10, 10}},
+        Arc{"DMEM_REQ_READY", "LOAD_USE_STALL", {11, 17}},
+        Arc{"DMEM_REQ_READY", "MEMORY_STALL", {7, 7}},
+        Arc{"DMEM_REQ_READY", "PIPELINE_FLUSH", {11, 17}},
+        Arc{"DMEM_REQ_READY", "PIPELINE_STALL", {9, 10}},
+        Arc{"DMEM_REQ_READY", "PREDICTION_RECOVERY", {14, 21}},
+        Arc{"DMEM_RSP_STATUS", "BRANCH_MISS", {13, 14}},
+        Arc{"DMEM_RSP_STATUS", "BRANCH_RESOLVED", {12, 13}},
+        Arc{"DMEM_RSP_STATUS", "IMEM_RSP_READY", {14, 16}},
+        Arc{"DMEM_RSP_STATUS", "PIPELINE_FLUSH", {9, 10}},
+        Arc{"DMEM_RSP_STATUS", "PREDICTION_RECOVERY", {12, 13}},
+        Arc{"DMEM_RSP_VALID", "BRANCH_MISS", {13, 20}},
+        Arc{"DMEM_RSP_VALID", "BRANCH_RESOLVED", {12, 19}},
+        Arc{"DMEM_RSP_VALID", "COMMIT_VALID", {8, 8}},
+        Arc{"DMEM_RSP_VALID", "DATA_PORT_STALL", {6, 6}},
+        Arc{"DMEM_RSP_VALID", "DMEM_RSP_READY", {11, 17}},
+        Arc{"DMEM_RSP_VALID", "IMEM_RSP_READY", {13, 20}},
+        Arc{"DMEM_RSP_VALID", "INSTRUCTION_ATTEMPT", {8, 8}},
+        Arc{"DMEM_RSP_VALID", "LOAD_USE_STALL", {9, 15}},
+        Arc{"DMEM_RSP_VALID", "MEMORY_STALL", {5, 5}},
+        Arc{"DMEM_RSP_VALID", "PIPELINE_FLUSH", {9, 15}},
+        Arc{"DMEM_RSP_VALID", "PIPELINE_STALL", {7, 8}},
+        Arc{"DMEM_RSP_VALID", "PREDICTION_RECOVERY", {12, 19}},
+        Arc{"ENABLE", "BRANCH_MISS", {9, 30}},
+        Arc{"ENABLE", "BRANCH_RESOLVED", {8, 29}},
+        Arc{"ENABLE", "COMMIT_VALID", {4, 18}},
+        Arc{"ENABLE", "DATA_PORT_STALL", {5, 16}},
+        Arc{"ENABLE", "DMEM_REQ_ADDR", {13, 15}},
+        Arc{"ENABLE", "DMEM_REQ_OP", {7, 7}},
+        Arc{"ENABLE", "DMEM_REQ_VALID", {8, 8}},
+        Arc{"ENABLE", "DMEM_REQ_WRITE_MASK", {12, 15}},
+        Arc{"ENABLE", "DMEM_RSP_READY", {7, 27}},
+        Arc{"ENABLE", "IMEM_REQ_VALID", {5, 5}},
+        Arc{"ENABLE", "IMEM_RSP_READY", {7, 30}},
+        Arc{"ENABLE", "INSTRUCTION_ATTEMPT", {4, 18}},
+        Arc{"ENABLE", "LOAD_USE_STALL", {5, 25}},
+        Arc{"ENABLE", "MEMORY_STALL", {4, 15}},
+        Arc{"ENABLE", "PIPELINE_FLUSH", {5, 25}},
+        Arc{"ENABLE", "PIPELINE_STALL", {6, 18}},
+        Arc{"ENABLE", "PREDICTION_RECOVERY", {8, 29}},
+        Arc{"IMEM_REQ_READY", "IMEM_RSP_READY", {11, 11}},
+        Arc{"IMEM_RSP_VALID", "IMEM_RSP_READY", {9, 9}},
+    };
+    t.clock = "CLK";
+    t.launches["BRANCH_MISS"] = {6, 71};
+    t.launches["BRANCH_RESOLVED"] = {6, 70};
+    t.launches["COMMIT_VALID"] = {4, 30};
+    t.launches["DATA_PORT_STALL"] = {6, 28};
+    t.launches["DMEM_REQ_ADDR"] = {5, 27};
+    t.launches["DMEM_REQ_OP"] = {5, 18};
+    t.launches["DMEM_REQ_VALID"] = {6, 20};
+    t.launches["DMEM_REQ_WRITE_DATA"] = {5, 14};
+    t.launches["DMEM_REQ_WRITE_MASK"] = {5, 27};
+    t.launches["DMEM_RSP_READY"] = {6, 39};
+    t.launches["EX_MEM_PC"] = {3, 4};
+    t.launches["EX_MEM_VALID"] = {3, 4};
+    t.launches["FETCH_PC"] = {3, 4};
+    t.launches["HALTED"] = {3, 4};
+    t.launches["ID_EX_PC"] = {3, 4};
+    t.launches["ID_EX_VALID"] = {3, 4};
+    t.launches["IF_ID_PC"] = {3, 4};
+    t.launches["IF_ID_VALID"] = {3, 4};
+    t.launches["IMEM_REQ_ADDR"] = {5, 7};
+    t.launches["IMEM_REQ_VALID"] = {6, 10};
+    t.launches["IMEM_RSP_READY"] = {6, 77};
+    t.launches["INSTRUCTION_ATTEMPT"] = {4, 30};
+    t.launches["LOAD_USE_STALL"] = {7, 37};
+    t.launches["MEMORY_STALL"] = {7, 27};
+    t.launches["MEM_WB_PC"] = {3, 4};
+    t.launches["MEM_WB_VALID"] = {3, 4};
+    t.launches["PIPELINE_FLUSH"] = {7, 71};
+    t.launches["PIPELINE_STALL"] = {7, 30};
+    t.launches["PREDICTION_RECOVERY"] = {8, 70};
+    t.launches["TRAPPED"] = {3, 4};
+    t.launches["TRAP_CAUSE"] = {3, 4};
+    t.setup["DMEM_REQ_READY"] = 31;
+    t.setup["DMEM_RSP_READ_DATA"] = 18;
+    t.setup["DMEM_RSP_STATUS"] = 24;
+    t.setup["DMEM_RSP_VALID"] = 29;
+    t.setup["ENABLE"] = 39;
     t.setup["IMEM_REQ_READY"] = 19;
     t.setup["IMEM_RSP_READ_DATA"] = 45;
     t.setup["IMEM_RSP_STATUS"] = 15;
@@ -10106,7 +21319,1183 @@
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
+{"rv32i.core.educational-five-stage.behavioral?prediction=one-bit&prediction_entries=32", [] {
+    PartDelays t;
+    t.evidence = "proven on rv32i.core.educational-five-stage.structural";
+    t.arcs = {
+        Arc{"DMEM_REQ_READY", "BRANCH_MISS", {15, 22}},
+        Arc{"DMEM_REQ_READY", "BRANCH_RESOLVED", {14, 21}},
+        Arc{"DMEM_REQ_READY", "COMMIT_VALID", {10, 10}},
+        Arc{"DMEM_REQ_READY", "DATA_PORT_STALL", {8, 8}},
+        Arc{"DMEM_REQ_READY", "DMEM_RSP_READY", {13, 19}},
+        Arc{"DMEM_REQ_READY", "IMEM_RSP_READY", {15, 22}},
+        Arc{"DMEM_REQ_READY", "INSTRUCTION_ATTEMPT", {10, 10}},
+        Arc{"DMEM_REQ_READY", "LOAD_USE_STALL", {11, 17}},
+        Arc{"DMEM_REQ_READY", "MEMORY_STALL", {7, 7}},
+        Arc{"DMEM_REQ_READY", "PIPELINE_FLUSH", {11, 17}},
+        Arc{"DMEM_REQ_READY", "PIPELINE_STALL", {9, 10}},
+        Arc{"DMEM_REQ_READY", "PREDICTION_RECOVERY", {14, 21}},
+        Arc{"DMEM_RSP_STATUS", "BRANCH_MISS", {13, 14}},
+        Arc{"DMEM_RSP_STATUS", "BRANCH_RESOLVED", {12, 13}},
+        Arc{"DMEM_RSP_STATUS", "IMEM_RSP_READY", {14, 16}},
+        Arc{"DMEM_RSP_STATUS", "PIPELINE_FLUSH", {9, 10}},
+        Arc{"DMEM_RSP_STATUS", "PREDICTION_RECOVERY", {12, 13}},
+        Arc{"DMEM_RSP_VALID", "BRANCH_MISS", {13, 20}},
+        Arc{"DMEM_RSP_VALID", "BRANCH_RESOLVED", {12, 19}},
+        Arc{"DMEM_RSP_VALID", "COMMIT_VALID", {8, 8}},
+        Arc{"DMEM_RSP_VALID", "DATA_PORT_STALL", {6, 6}},
+        Arc{"DMEM_RSP_VALID", "DMEM_RSP_READY", {11, 17}},
+        Arc{"DMEM_RSP_VALID", "IMEM_RSP_READY", {13, 20}},
+        Arc{"DMEM_RSP_VALID", "INSTRUCTION_ATTEMPT", {8, 8}},
+        Arc{"DMEM_RSP_VALID", "LOAD_USE_STALL", {9, 15}},
+        Arc{"DMEM_RSP_VALID", "MEMORY_STALL", {5, 5}},
+        Arc{"DMEM_RSP_VALID", "PIPELINE_FLUSH", {9, 15}},
+        Arc{"DMEM_RSP_VALID", "PIPELINE_STALL", {7, 8}},
+        Arc{"DMEM_RSP_VALID", "PREDICTION_RECOVERY", {12, 19}},
+        Arc{"ENABLE", "BRANCH_MISS", {9, 30}},
+        Arc{"ENABLE", "BRANCH_RESOLVED", {8, 29}},
+        Arc{"ENABLE", "COMMIT_VALID", {4, 18}},
+        Arc{"ENABLE", "DATA_PORT_STALL", {5, 16}},
+        Arc{"ENABLE", "DMEM_REQ_ADDR", {13, 15}},
+        Arc{"ENABLE", "DMEM_REQ_OP", {7, 7}},
+        Arc{"ENABLE", "DMEM_REQ_VALID", {8, 8}},
+        Arc{"ENABLE", "DMEM_REQ_WRITE_MASK", {12, 15}},
+        Arc{"ENABLE", "DMEM_RSP_READY", {7, 27}},
+        Arc{"ENABLE", "IMEM_REQ_VALID", {5, 5}},
+        Arc{"ENABLE", "IMEM_RSP_READY", {7, 30}},
+        Arc{"ENABLE", "INSTRUCTION_ATTEMPT", {4, 18}},
+        Arc{"ENABLE", "LOAD_USE_STALL", {5, 25}},
+        Arc{"ENABLE", "MEMORY_STALL", {4, 15}},
+        Arc{"ENABLE", "PIPELINE_FLUSH", {5, 25}},
+        Arc{"ENABLE", "PIPELINE_STALL", {6, 18}},
+        Arc{"ENABLE", "PREDICTION_RECOVERY", {8, 29}},
+        Arc{"IMEM_REQ_READY", "IMEM_RSP_READY", {11, 11}},
+        Arc{"IMEM_RSP_VALID", "IMEM_RSP_READY", {9, 9}},
+    };
+    t.clock = "CLK";
+    t.launches["BRANCH_MISS"] = {6, 71};
+    t.launches["BRANCH_RESOLVED"] = {6, 70};
+    t.launches["COMMIT_VALID"] = {4, 30};
+    t.launches["DATA_PORT_STALL"] = {6, 28};
+    t.launches["DMEM_REQ_ADDR"] = {5, 27};
+    t.launches["DMEM_REQ_OP"] = {5, 18};
+    t.launches["DMEM_REQ_VALID"] = {6, 20};
+    t.launches["DMEM_REQ_WRITE_DATA"] = {5, 14};
+    t.launches["DMEM_REQ_WRITE_MASK"] = {5, 27};
+    t.launches["DMEM_RSP_READY"] = {6, 39};
+    t.launches["EX_MEM_PC"] = {3, 4};
+    t.launches["EX_MEM_VALID"] = {3, 4};
+    t.launches["FETCH_PC"] = {3, 4};
+    t.launches["HALTED"] = {3, 4};
+    t.launches["ID_EX_PC"] = {3, 4};
+    t.launches["ID_EX_VALID"] = {3, 4};
+    t.launches["IF_ID_PC"] = {3, 4};
+    t.launches["IF_ID_VALID"] = {3, 4};
+    t.launches["IMEM_REQ_ADDR"] = {5, 7};
+    t.launches["IMEM_REQ_VALID"] = {6, 10};
+    t.launches["IMEM_RSP_READY"] = {6, 77};
+    t.launches["INSTRUCTION_ATTEMPT"] = {4, 30};
+    t.launches["LOAD_USE_STALL"] = {7, 37};
+    t.launches["MEMORY_STALL"] = {7, 27};
+    t.launches["MEM_WB_PC"] = {3, 4};
+    t.launches["MEM_WB_VALID"] = {3, 4};
+    t.launches["PIPELINE_FLUSH"] = {7, 71};
+    t.launches["PIPELINE_STALL"] = {7, 30};
+    t.launches["PREDICTION_RECOVERY"] = {8, 70};
+    t.launches["TRAPPED"] = {3, 4};
+    t.launches["TRAP_CAUSE"] = {3, 4};
+    t.setup["DMEM_REQ_READY"] = 31;
+    t.setup["DMEM_RSP_READ_DATA"] = 18;
+    t.setup["DMEM_RSP_STATUS"] = 24;
+    t.setup["DMEM_RSP_VALID"] = 29;
+    t.setup["ENABLE"] = 39;
+    t.setup["IMEM_REQ_READY"] = 19;
+    t.setup["IMEM_RSP_READ_DATA"] = 45;
+    t.setup["IMEM_RSP_STATUS"] = 15;
+    t.setup["IMEM_RSP_VALID"] = 17;
+    t.internal_period = 85;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"rv32i.core.educational-five-stage.behavioral?prediction=one-bit&prediction_entries=64", [] {
+    PartDelays t;
+    t.evidence = "proven on rv32i.core.educational-five-stage.structural";
+    t.arcs = {
+        Arc{"DMEM_REQ_READY", "BRANCH_MISS", {15, 22}},
+        Arc{"DMEM_REQ_READY", "BRANCH_RESOLVED", {14, 21}},
+        Arc{"DMEM_REQ_READY", "COMMIT_VALID", {10, 10}},
+        Arc{"DMEM_REQ_READY", "DATA_PORT_STALL", {8, 8}},
+        Arc{"DMEM_REQ_READY", "DMEM_RSP_READY", {13, 19}},
+        Arc{"DMEM_REQ_READY", "IMEM_RSP_READY", {15, 22}},
+        Arc{"DMEM_REQ_READY", "INSTRUCTION_ATTEMPT", {10, 10}},
+        Arc{"DMEM_REQ_READY", "LOAD_USE_STALL", {11, 17}},
+        Arc{"DMEM_REQ_READY", "MEMORY_STALL", {7, 7}},
+        Arc{"DMEM_REQ_READY", "PIPELINE_FLUSH", {11, 17}},
+        Arc{"DMEM_REQ_READY", "PIPELINE_STALL", {9, 10}},
+        Arc{"DMEM_REQ_READY", "PREDICTION_RECOVERY", {14, 21}},
+        Arc{"DMEM_RSP_STATUS", "BRANCH_MISS", {13, 14}},
+        Arc{"DMEM_RSP_STATUS", "BRANCH_RESOLVED", {12, 13}},
+        Arc{"DMEM_RSP_STATUS", "IMEM_RSP_READY", {14, 16}},
+        Arc{"DMEM_RSP_STATUS", "PIPELINE_FLUSH", {9, 10}},
+        Arc{"DMEM_RSP_STATUS", "PREDICTION_RECOVERY", {12, 13}},
+        Arc{"DMEM_RSP_VALID", "BRANCH_MISS", {13, 20}},
+        Arc{"DMEM_RSP_VALID", "BRANCH_RESOLVED", {12, 19}},
+        Arc{"DMEM_RSP_VALID", "COMMIT_VALID", {8, 8}},
+        Arc{"DMEM_RSP_VALID", "DATA_PORT_STALL", {6, 6}},
+        Arc{"DMEM_RSP_VALID", "DMEM_RSP_READY", {11, 17}},
+        Arc{"DMEM_RSP_VALID", "IMEM_RSP_READY", {13, 20}},
+        Arc{"DMEM_RSP_VALID", "INSTRUCTION_ATTEMPT", {8, 8}},
+        Arc{"DMEM_RSP_VALID", "LOAD_USE_STALL", {9, 15}},
+        Arc{"DMEM_RSP_VALID", "MEMORY_STALL", {5, 5}},
+        Arc{"DMEM_RSP_VALID", "PIPELINE_FLUSH", {9, 15}},
+        Arc{"DMEM_RSP_VALID", "PIPELINE_STALL", {7, 8}},
+        Arc{"DMEM_RSP_VALID", "PREDICTION_RECOVERY", {12, 19}},
+        Arc{"ENABLE", "BRANCH_MISS", {9, 30}},
+        Arc{"ENABLE", "BRANCH_RESOLVED", {8, 29}},
+        Arc{"ENABLE", "COMMIT_VALID", {4, 18}},
+        Arc{"ENABLE", "DATA_PORT_STALL", {5, 16}},
+        Arc{"ENABLE", "DMEM_REQ_ADDR", {13, 15}},
+        Arc{"ENABLE", "DMEM_REQ_OP", {7, 7}},
+        Arc{"ENABLE", "DMEM_REQ_VALID", {8, 8}},
+        Arc{"ENABLE", "DMEM_REQ_WRITE_MASK", {12, 15}},
+        Arc{"ENABLE", "DMEM_RSP_READY", {7, 27}},
+        Arc{"ENABLE", "IMEM_REQ_VALID", {5, 5}},
+        Arc{"ENABLE", "IMEM_RSP_READY", {7, 30}},
+        Arc{"ENABLE", "INSTRUCTION_ATTEMPT", {4, 18}},
+        Arc{"ENABLE", "LOAD_USE_STALL", {5, 25}},
+        Arc{"ENABLE", "MEMORY_STALL", {4, 15}},
+        Arc{"ENABLE", "PIPELINE_FLUSH", {5, 25}},
+        Arc{"ENABLE", "PIPELINE_STALL", {6, 18}},
+        Arc{"ENABLE", "PREDICTION_RECOVERY", {8, 29}},
+        Arc{"IMEM_REQ_READY", "IMEM_RSP_READY", {11, 11}},
+        Arc{"IMEM_RSP_VALID", "IMEM_RSP_READY", {9, 9}},
+    };
+    t.clock = "CLK";
+    t.launches["BRANCH_MISS"] = {6, 71};
+    t.launches["BRANCH_RESOLVED"] = {6, 70};
+    t.launches["COMMIT_VALID"] = {4, 30};
+    t.launches["DATA_PORT_STALL"] = {6, 28};
+    t.launches["DMEM_REQ_ADDR"] = {5, 27};
+    t.launches["DMEM_REQ_OP"] = {5, 18};
+    t.launches["DMEM_REQ_VALID"] = {6, 20};
+    t.launches["DMEM_REQ_WRITE_DATA"] = {5, 14};
+    t.launches["DMEM_REQ_WRITE_MASK"] = {5, 27};
+    t.launches["DMEM_RSP_READY"] = {6, 39};
+    t.launches["EX_MEM_PC"] = {3, 4};
+    t.launches["EX_MEM_VALID"] = {3, 4};
+    t.launches["FETCH_PC"] = {3, 4};
+    t.launches["HALTED"] = {3, 4};
+    t.launches["ID_EX_PC"] = {3, 4};
+    t.launches["ID_EX_VALID"] = {3, 4};
+    t.launches["IF_ID_PC"] = {3, 4};
+    t.launches["IF_ID_VALID"] = {3, 4};
+    t.launches["IMEM_REQ_ADDR"] = {5, 7};
+    t.launches["IMEM_REQ_VALID"] = {6, 10};
+    t.launches["IMEM_RSP_READY"] = {6, 77};
+    t.launches["INSTRUCTION_ATTEMPT"] = {4, 30};
+    t.launches["LOAD_USE_STALL"] = {7, 37};
+    t.launches["MEMORY_STALL"] = {7, 27};
+    t.launches["MEM_WB_PC"] = {3, 4};
+    t.launches["MEM_WB_VALID"] = {3, 4};
+    t.launches["PIPELINE_FLUSH"] = {7, 71};
+    t.launches["PIPELINE_STALL"] = {7, 30};
+    t.launches["PREDICTION_RECOVERY"] = {8, 70};
+    t.launches["TRAPPED"] = {3, 4};
+    t.launches["TRAP_CAUSE"] = {3, 4};
+    t.setup["DMEM_REQ_READY"] = 31;
+    t.setup["DMEM_RSP_READ_DATA"] = 18;
+    t.setup["DMEM_RSP_STATUS"] = 24;
+    t.setup["DMEM_RSP_VALID"] = 29;
+    t.setup["ENABLE"] = 39;
+    t.setup["IMEM_REQ_READY"] = 19;
+    t.setup["IMEM_RSP_READ_DATA"] = 45;
+    t.setup["IMEM_RSP_STATUS"] = 15;
+    t.setup["IMEM_RSP_VALID"] = 17;
+    t.internal_period = 85;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"rv32i.core.educational-five-stage.behavioral?prediction=one-bit&prediction_entries=128", [] {
+    PartDelays t;
+    t.evidence = "proven on rv32i.core.educational-five-stage.structural";
+    t.arcs = {
+        Arc{"DMEM_REQ_READY", "BRANCH_MISS", {15, 22}},
+        Arc{"DMEM_REQ_READY", "BRANCH_RESOLVED", {14, 21}},
+        Arc{"DMEM_REQ_READY", "COMMIT_VALID", {10, 10}},
+        Arc{"DMEM_REQ_READY", "DATA_PORT_STALL", {8, 8}},
+        Arc{"DMEM_REQ_READY", "DMEM_RSP_READY", {13, 19}},
+        Arc{"DMEM_REQ_READY", "IMEM_RSP_READY", {15, 22}},
+        Arc{"DMEM_REQ_READY", "INSTRUCTION_ATTEMPT", {10, 10}},
+        Arc{"DMEM_REQ_READY", "LOAD_USE_STALL", {11, 17}},
+        Arc{"DMEM_REQ_READY", "MEMORY_STALL", {7, 7}},
+        Arc{"DMEM_REQ_READY", "PIPELINE_FLUSH", {11, 17}},
+        Arc{"DMEM_REQ_READY", "PIPELINE_STALL", {9, 10}},
+        Arc{"DMEM_REQ_READY", "PREDICTION_RECOVERY", {14, 21}},
+        Arc{"DMEM_RSP_STATUS", "BRANCH_MISS", {13, 14}},
+        Arc{"DMEM_RSP_STATUS", "BRANCH_RESOLVED", {12, 13}},
+        Arc{"DMEM_RSP_STATUS", "IMEM_RSP_READY", {14, 16}},
+        Arc{"DMEM_RSP_STATUS", "PIPELINE_FLUSH", {9, 10}},
+        Arc{"DMEM_RSP_STATUS", "PREDICTION_RECOVERY", {12, 13}},
+        Arc{"DMEM_RSP_VALID", "BRANCH_MISS", {13, 20}},
+        Arc{"DMEM_RSP_VALID", "BRANCH_RESOLVED", {12, 19}},
+        Arc{"DMEM_RSP_VALID", "COMMIT_VALID", {8, 8}},
+        Arc{"DMEM_RSP_VALID", "DATA_PORT_STALL", {6, 6}},
+        Arc{"DMEM_RSP_VALID", "DMEM_RSP_READY", {11, 17}},
+        Arc{"DMEM_RSP_VALID", "IMEM_RSP_READY", {13, 20}},
+        Arc{"DMEM_RSP_VALID", "INSTRUCTION_ATTEMPT", {8, 8}},
+        Arc{"DMEM_RSP_VALID", "LOAD_USE_STALL", {9, 15}},
+        Arc{"DMEM_RSP_VALID", "MEMORY_STALL", {5, 5}},
+        Arc{"DMEM_RSP_VALID", "PIPELINE_FLUSH", {9, 15}},
+        Arc{"DMEM_RSP_VALID", "PIPELINE_STALL", {7, 8}},
+        Arc{"DMEM_RSP_VALID", "PREDICTION_RECOVERY", {12, 19}},
+        Arc{"ENABLE", "BRANCH_MISS", {9, 30}},
+        Arc{"ENABLE", "BRANCH_RESOLVED", {8, 29}},
+        Arc{"ENABLE", "COMMIT_VALID", {4, 18}},
+        Arc{"ENABLE", "DATA_PORT_STALL", {5, 16}},
+        Arc{"ENABLE", "DMEM_REQ_ADDR", {13, 15}},
+        Arc{"ENABLE", "DMEM_REQ_OP", {7, 7}},
+        Arc{"ENABLE", "DMEM_REQ_VALID", {8, 8}},
+        Arc{"ENABLE", "DMEM_REQ_WRITE_MASK", {12, 15}},
+        Arc{"ENABLE", "DMEM_RSP_READY", {7, 27}},
+        Arc{"ENABLE", "IMEM_REQ_VALID", {5, 5}},
+        Arc{"ENABLE", "IMEM_RSP_READY", {7, 30}},
+        Arc{"ENABLE", "INSTRUCTION_ATTEMPT", {4, 18}},
+        Arc{"ENABLE", "LOAD_USE_STALL", {5, 25}},
+        Arc{"ENABLE", "MEMORY_STALL", {4, 15}},
+        Arc{"ENABLE", "PIPELINE_FLUSH", {5, 25}},
+        Arc{"ENABLE", "PIPELINE_STALL", {6, 18}},
+        Arc{"ENABLE", "PREDICTION_RECOVERY", {8, 29}},
+        Arc{"IMEM_REQ_READY", "IMEM_RSP_READY", {11, 11}},
+        Arc{"IMEM_RSP_VALID", "IMEM_RSP_READY", {9, 9}},
+    };
+    t.clock = "CLK";
+    t.launches["BRANCH_MISS"] = {6, 71};
+    t.launches["BRANCH_RESOLVED"] = {6, 70};
+    t.launches["COMMIT_VALID"] = {4, 30};
+    t.launches["DATA_PORT_STALL"] = {6, 28};
+    t.launches["DMEM_REQ_ADDR"] = {5, 27};
+    t.launches["DMEM_REQ_OP"] = {5, 18};
+    t.launches["DMEM_REQ_VALID"] = {6, 20};
+    t.launches["DMEM_REQ_WRITE_DATA"] = {5, 14};
+    t.launches["DMEM_REQ_WRITE_MASK"] = {5, 27};
+    t.launches["DMEM_RSP_READY"] = {6, 39};
+    t.launches["EX_MEM_PC"] = {3, 4};
+    t.launches["EX_MEM_VALID"] = {3, 4};
+    t.launches["FETCH_PC"] = {3, 4};
+    t.launches["HALTED"] = {3, 4};
+    t.launches["ID_EX_PC"] = {3, 4};
+    t.launches["ID_EX_VALID"] = {3, 4};
+    t.launches["IF_ID_PC"] = {3, 4};
+    t.launches["IF_ID_VALID"] = {3, 4};
+    t.launches["IMEM_REQ_ADDR"] = {5, 7};
+    t.launches["IMEM_REQ_VALID"] = {6, 10};
+    t.launches["IMEM_RSP_READY"] = {6, 77};
+    t.launches["INSTRUCTION_ATTEMPT"] = {4, 30};
+    t.launches["LOAD_USE_STALL"] = {7, 37};
+    t.launches["MEMORY_STALL"] = {7, 27};
+    t.launches["MEM_WB_PC"] = {3, 4};
+    t.launches["MEM_WB_VALID"] = {3, 4};
+    t.launches["PIPELINE_FLUSH"] = {7, 71};
+    t.launches["PIPELINE_STALL"] = {7, 30};
+    t.launches["PREDICTION_RECOVERY"] = {8, 70};
+    t.launches["TRAPPED"] = {3, 4};
+    t.launches["TRAP_CAUSE"] = {3, 4};
+    t.setup["DMEM_REQ_READY"] = 31;
+    t.setup["DMEM_RSP_READ_DATA"] = 18;
+    t.setup["DMEM_RSP_STATUS"] = 24;
+    t.setup["DMEM_RSP_VALID"] = 29;
+    t.setup["ENABLE"] = 39;
+    t.setup["IMEM_REQ_READY"] = 19;
+    t.setup["IMEM_RSP_READ_DATA"] = 45;
+    t.setup["IMEM_RSP_STATUS"] = 15;
+    t.setup["IMEM_RSP_VALID"] = 17;
+    t.internal_period = 85;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"rv32i.core.educational-five-stage.behavioral?prediction=one-bit&prediction_entries=256", [] {
+    PartDelays t;
+    t.evidence = "proven on rv32i.core.educational-five-stage.structural";
+    t.arcs = {
+        Arc{"DMEM_REQ_READY", "BRANCH_MISS", {15, 22}},
+        Arc{"DMEM_REQ_READY", "BRANCH_RESOLVED", {14, 21}},
+        Arc{"DMEM_REQ_READY", "COMMIT_VALID", {10, 10}},
+        Arc{"DMEM_REQ_READY", "DATA_PORT_STALL", {8, 8}},
+        Arc{"DMEM_REQ_READY", "DMEM_RSP_READY", {13, 19}},
+        Arc{"DMEM_REQ_READY", "IMEM_RSP_READY", {15, 22}},
+        Arc{"DMEM_REQ_READY", "INSTRUCTION_ATTEMPT", {10, 10}},
+        Arc{"DMEM_REQ_READY", "LOAD_USE_STALL", {11, 17}},
+        Arc{"DMEM_REQ_READY", "MEMORY_STALL", {7, 7}},
+        Arc{"DMEM_REQ_READY", "PIPELINE_FLUSH", {11, 17}},
+        Arc{"DMEM_REQ_READY", "PIPELINE_STALL", {9, 10}},
+        Arc{"DMEM_REQ_READY", "PREDICTION_RECOVERY", {14, 21}},
+        Arc{"DMEM_RSP_STATUS", "BRANCH_MISS", {13, 14}},
+        Arc{"DMEM_RSP_STATUS", "BRANCH_RESOLVED", {12, 13}},
+        Arc{"DMEM_RSP_STATUS", "IMEM_RSP_READY", {14, 16}},
+        Arc{"DMEM_RSP_STATUS", "PIPELINE_FLUSH", {9, 10}},
+        Arc{"DMEM_RSP_STATUS", "PREDICTION_RECOVERY", {12, 13}},
+        Arc{"DMEM_RSP_VALID", "BRANCH_MISS", {13, 20}},
+        Arc{"DMEM_RSP_VALID", "BRANCH_RESOLVED", {12, 19}},
+        Arc{"DMEM_RSP_VALID", "COMMIT_VALID", {8, 8}},
+        Arc{"DMEM_RSP_VALID", "DATA_PORT_STALL", {6, 6}},
+        Arc{"DMEM_RSP_VALID", "DMEM_RSP_READY", {11, 17}},
+        Arc{"DMEM_RSP_VALID", "IMEM_RSP_READY", {13, 20}},
+        Arc{"DMEM_RSP_VALID", "INSTRUCTION_ATTEMPT", {8, 8}},
+        Arc{"DMEM_RSP_VALID", "LOAD_USE_STALL", {9, 15}},
+        Arc{"DMEM_RSP_VALID", "MEMORY_STALL", {5, 5}},
+        Arc{"DMEM_RSP_VALID", "PIPELINE_FLUSH", {9, 15}},
+        Arc{"DMEM_RSP_VALID", "PIPELINE_STALL", {7, 8}},
+        Arc{"DMEM_RSP_VALID", "PREDICTION_RECOVERY", {12, 19}},
+        Arc{"ENABLE", "BRANCH_MISS", {9, 30}},
+        Arc{"ENABLE", "BRANCH_RESOLVED", {8, 29}},
+        Arc{"ENABLE", "COMMIT_VALID", {4, 18}},
+        Arc{"ENABLE", "DATA_PORT_STALL", {5, 16}},
+        Arc{"ENABLE", "DMEM_REQ_ADDR", {13, 15}},
+        Arc{"ENABLE", "DMEM_REQ_OP", {7, 7}},
+        Arc{"ENABLE", "DMEM_REQ_VALID", {8, 8}},
+        Arc{"ENABLE", "DMEM_REQ_WRITE_MASK", {12, 15}},
+        Arc{"ENABLE", "DMEM_RSP_READY", {7, 27}},
+        Arc{"ENABLE", "IMEM_REQ_VALID", {5, 5}},
+        Arc{"ENABLE", "IMEM_RSP_READY", {7, 30}},
+        Arc{"ENABLE", "INSTRUCTION_ATTEMPT", {4, 18}},
+        Arc{"ENABLE", "LOAD_USE_STALL", {5, 25}},
+        Arc{"ENABLE", "MEMORY_STALL", {4, 15}},
+        Arc{"ENABLE", "PIPELINE_FLUSH", {5, 25}},
+        Arc{"ENABLE", "PIPELINE_STALL", {6, 18}},
+        Arc{"ENABLE", "PREDICTION_RECOVERY", {8, 29}},
+        Arc{"IMEM_REQ_READY", "IMEM_RSP_READY", {11, 11}},
+        Arc{"IMEM_RSP_VALID", "IMEM_RSP_READY", {9, 9}},
+    };
+    t.clock = "CLK";
+    t.launches["BRANCH_MISS"] = {6, 71};
+    t.launches["BRANCH_RESOLVED"] = {6, 70};
+    t.launches["COMMIT_VALID"] = {4, 30};
+    t.launches["DATA_PORT_STALL"] = {6, 28};
+    t.launches["DMEM_REQ_ADDR"] = {5, 27};
+    t.launches["DMEM_REQ_OP"] = {5, 18};
+    t.launches["DMEM_REQ_VALID"] = {6, 20};
+    t.launches["DMEM_REQ_WRITE_DATA"] = {5, 14};
+    t.launches["DMEM_REQ_WRITE_MASK"] = {5, 27};
+    t.launches["DMEM_RSP_READY"] = {6, 39};
+    t.launches["EX_MEM_PC"] = {3, 4};
+    t.launches["EX_MEM_VALID"] = {3, 4};
+    t.launches["FETCH_PC"] = {3, 4};
+    t.launches["HALTED"] = {3, 4};
+    t.launches["ID_EX_PC"] = {3, 4};
+    t.launches["ID_EX_VALID"] = {3, 4};
+    t.launches["IF_ID_PC"] = {3, 4};
+    t.launches["IF_ID_VALID"] = {3, 4};
+    t.launches["IMEM_REQ_ADDR"] = {5, 7};
+    t.launches["IMEM_REQ_VALID"] = {6, 10};
+    t.launches["IMEM_RSP_READY"] = {6, 77};
+    t.launches["INSTRUCTION_ATTEMPT"] = {4, 30};
+    t.launches["LOAD_USE_STALL"] = {7, 37};
+    t.launches["MEMORY_STALL"] = {7, 27};
+    t.launches["MEM_WB_PC"] = {3, 4};
+    t.launches["MEM_WB_VALID"] = {3, 4};
+    t.launches["PIPELINE_FLUSH"] = {7, 71};
+    t.launches["PIPELINE_STALL"] = {7, 30};
+    t.launches["PREDICTION_RECOVERY"] = {8, 70};
+    t.launches["TRAPPED"] = {3, 4};
+    t.launches["TRAP_CAUSE"] = {3, 4};
+    t.setup["DMEM_REQ_READY"] = 31;
+    t.setup["DMEM_RSP_READ_DATA"] = 18;
+    t.setup["DMEM_RSP_STATUS"] = 24;
+    t.setup["DMEM_RSP_VALID"] = 29;
+    t.setup["ENABLE"] = 39;
+    t.setup["IMEM_REQ_READY"] = 19;
+    t.setup["IMEM_RSP_READ_DATA"] = 45;
+    t.setup["IMEM_RSP_STATUS"] = 15;
+    t.setup["IMEM_RSP_VALID"] = 17;
+    t.internal_period = 85;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"rv32i.core.educational-five-stage.behavioral?prediction=two-bit&prediction_entries=1", [] {
+    PartDelays t;
+    t.evidence = "proven on rv32i.core.educational-five-stage.structural";
+    t.arcs = {
+        Arc{"DMEM_REQ_READY", "BRANCH_MISS", {15, 22}},
+        Arc{"DMEM_REQ_READY", "BRANCH_RESOLVED", {14, 21}},
+        Arc{"DMEM_REQ_READY", "COMMIT_VALID", {10, 10}},
+        Arc{"DMEM_REQ_READY", "DATA_PORT_STALL", {8, 8}},
+        Arc{"DMEM_REQ_READY", "DMEM_RSP_READY", {13, 19}},
+        Arc{"DMEM_REQ_READY", "IMEM_RSP_READY", {15, 22}},
+        Arc{"DMEM_REQ_READY", "INSTRUCTION_ATTEMPT", {10, 10}},
+        Arc{"DMEM_REQ_READY", "LOAD_USE_STALL", {11, 17}},
+        Arc{"DMEM_REQ_READY", "MEMORY_STALL", {7, 7}},
+        Arc{"DMEM_REQ_READY", "PIPELINE_FLUSH", {11, 17}},
+        Arc{"DMEM_REQ_READY", "PIPELINE_STALL", {9, 10}},
+        Arc{"DMEM_REQ_READY", "PREDICTION_RECOVERY", {14, 21}},
+        Arc{"DMEM_RSP_STATUS", "BRANCH_MISS", {13, 14}},
+        Arc{"DMEM_RSP_STATUS", "BRANCH_RESOLVED", {12, 13}},
+        Arc{"DMEM_RSP_STATUS", "IMEM_RSP_READY", {14, 16}},
+        Arc{"DMEM_RSP_STATUS", "PIPELINE_FLUSH", {9, 10}},
+        Arc{"DMEM_RSP_STATUS", "PREDICTION_RECOVERY", {12, 13}},
+        Arc{"DMEM_RSP_VALID", "BRANCH_MISS", {13, 20}},
+        Arc{"DMEM_RSP_VALID", "BRANCH_RESOLVED", {12, 19}},
+        Arc{"DMEM_RSP_VALID", "COMMIT_VALID", {8, 8}},
+        Arc{"DMEM_RSP_VALID", "DATA_PORT_STALL", {6, 6}},
+        Arc{"DMEM_RSP_VALID", "DMEM_RSP_READY", {11, 17}},
+        Arc{"DMEM_RSP_VALID", "IMEM_RSP_READY", {13, 20}},
+        Arc{"DMEM_RSP_VALID", "INSTRUCTION_ATTEMPT", {8, 8}},
+        Arc{"DMEM_RSP_VALID", "LOAD_USE_STALL", {9, 15}},
+        Arc{"DMEM_RSP_VALID", "MEMORY_STALL", {5, 5}},
+        Arc{"DMEM_RSP_VALID", "PIPELINE_FLUSH", {9, 15}},
+        Arc{"DMEM_RSP_VALID", "PIPELINE_STALL", {7, 8}},
+        Arc{"DMEM_RSP_VALID", "PREDICTION_RECOVERY", {12, 19}},
+        Arc{"ENABLE", "BRANCH_MISS", {9, 30}},
+        Arc{"ENABLE", "BRANCH_RESOLVED", {8, 29}},
+        Arc{"ENABLE", "COMMIT_VALID", {4, 18}},
+        Arc{"ENABLE", "DATA_PORT_STALL", {5, 16}},
+        Arc{"ENABLE", "DMEM_REQ_ADDR", {13, 15}},
+        Arc{"ENABLE", "DMEM_REQ_OP", {7, 7}},
+        Arc{"ENABLE", "DMEM_REQ_VALID", {8, 8}},
+        Arc{"ENABLE", "DMEM_REQ_WRITE_MASK", {12, 15}},
+        Arc{"ENABLE", "DMEM_RSP_READY", {7, 27}},
+        Arc{"ENABLE", "IMEM_REQ_VALID", {5, 5}},
+        Arc{"ENABLE", "IMEM_RSP_READY", {7, 30}},
+        Arc{"ENABLE", "INSTRUCTION_ATTEMPT", {4, 18}},
+        Arc{"ENABLE", "LOAD_USE_STALL", {5, 25}},
+        Arc{"ENABLE", "MEMORY_STALL", {4, 15}},
+        Arc{"ENABLE", "PIPELINE_FLUSH", {5, 25}},
+        Arc{"ENABLE", "PIPELINE_STALL", {6, 18}},
+        Arc{"ENABLE", "PREDICTION_RECOVERY", {8, 29}},
+        Arc{"IMEM_REQ_READY", "IMEM_RSP_READY", {11, 11}},
+        Arc{"IMEM_RSP_VALID", "IMEM_RSP_READY", {9, 9}},
+    };
+    t.clock = "CLK";
+    t.launches["BRANCH_MISS"] = {6, 71};
+    t.launches["BRANCH_RESOLVED"] = {6, 70};
+    t.launches["COMMIT_VALID"] = {4, 30};
+    t.launches["DATA_PORT_STALL"] = {6, 28};
+    t.launches["DMEM_REQ_ADDR"] = {5, 27};
+    t.launches["DMEM_REQ_OP"] = {5, 18};
+    t.launches["DMEM_REQ_VALID"] = {6, 20};
+    t.launches["DMEM_REQ_WRITE_DATA"] = {5, 14};
+    t.launches["DMEM_REQ_WRITE_MASK"] = {5, 27};
+    t.launches["DMEM_RSP_READY"] = {6, 39};
+    t.launches["EX_MEM_PC"] = {3, 4};
+    t.launches["EX_MEM_VALID"] = {3, 4};
+    t.launches["FETCH_PC"] = {3, 4};
+    t.launches["HALTED"] = {3, 4};
+    t.launches["ID_EX_PC"] = {3, 4};
+    t.launches["ID_EX_VALID"] = {3, 4};
+    t.launches["IF_ID_PC"] = {3, 4};
+    t.launches["IF_ID_VALID"] = {3, 4};
+    t.launches["IMEM_REQ_ADDR"] = {5, 7};
+    t.launches["IMEM_REQ_VALID"] = {6, 10};
+    t.launches["IMEM_RSP_READY"] = {6, 77};
+    t.launches["INSTRUCTION_ATTEMPT"] = {4, 30};
+    t.launches["LOAD_USE_STALL"] = {7, 37};
+    t.launches["MEMORY_STALL"] = {7, 27};
+    t.launches["MEM_WB_PC"] = {3, 4};
+    t.launches["MEM_WB_VALID"] = {3, 4};
+    t.launches["PIPELINE_FLUSH"] = {7, 71};
+    t.launches["PIPELINE_STALL"] = {7, 30};
+    t.launches["PREDICTION_RECOVERY"] = {8, 70};
+    t.launches["TRAPPED"] = {3, 4};
+    t.launches["TRAP_CAUSE"] = {3, 4};
+    t.setup["DMEM_REQ_READY"] = 31;
+    t.setup["DMEM_RSP_READ_DATA"] = 18;
+    t.setup["DMEM_RSP_STATUS"] = 24;
+    t.setup["DMEM_RSP_VALID"] = 29;
+    t.setup["ENABLE"] = 39;
+    t.setup["IMEM_REQ_READY"] = 19;
+    t.setup["IMEM_RSP_READ_DATA"] = 45;
+    t.setup["IMEM_RSP_STATUS"] = 15;
+    t.setup["IMEM_RSP_VALID"] = 17;
+    t.internal_period = 85;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"rv32i.core.educational-five-stage.behavioral?prediction=two-bit&prediction_entries=2", [] {
+    PartDelays t;
+    t.evidence = "proven on rv32i.core.educational-five-stage.structural";
+    t.arcs = {
+        Arc{"DMEM_REQ_READY", "BRANCH_MISS", {15, 22}},
+        Arc{"DMEM_REQ_READY", "BRANCH_RESOLVED", {14, 21}},
+        Arc{"DMEM_REQ_READY", "COMMIT_VALID", {10, 10}},
+        Arc{"DMEM_REQ_READY", "DATA_PORT_STALL", {8, 8}},
+        Arc{"DMEM_REQ_READY", "DMEM_RSP_READY", {13, 19}},
+        Arc{"DMEM_REQ_READY", "IMEM_RSP_READY", {15, 22}},
+        Arc{"DMEM_REQ_READY", "INSTRUCTION_ATTEMPT", {10, 10}},
+        Arc{"DMEM_REQ_READY", "LOAD_USE_STALL", {11, 17}},
+        Arc{"DMEM_REQ_READY", "MEMORY_STALL", {7, 7}},
+        Arc{"DMEM_REQ_READY", "PIPELINE_FLUSH", {11, 17}},
+        Arc{"DMEM_REQ_READY", "PIPELINE_STALL", {9, 10}},
+        Arc{"DMEM_REQ_READY", "PREDICTION_RECOVERY", {14, 21}},
+        Arc{"DMEM_RSP_STATUS", "BRANCH_MISS", {13, 14}},
+        Arc{"DMEM_RSP_STATUS", "BRANCH_RESOLVED", {12, 13}},
+        Arc{"DMEM_RSP_STATUS", "IMEM_RSP_READY", {14, 16}},
+        Arc{"DMEM_RSP_STATUS", "PIPELINE_FLUSH", {9, 10}},
+        Arc{"DMEM_RSP_STATUS", "PREDICTION_RECOVERY", {12, 13}},
+        Arc{"DMEM_RSP_VALID", "BRANCH_MISS", {13, 20}},
+        Arc{"DMEM_RSP_VALID", "BRANCH_RESOLVED", {12, 19}},
+        Arc{"DMEM_RSP_VALID", "COMMIT_VALID", {8, 8}},
+        Arc{"DMEM_RSP_VALID", "DATA_PORT_STALL", {6, 6}},
+        Arc{"DMEM_RSP_VALID", "DMEM_RSP_READY", {11, 17}},
+        Arc{"DMEM_RSP_VALID", "IMEM_RSP_READY", {13, 20}},
+        Arc{"DMEM_RSP_VALID", "INSTRUCTION_ATTEMPT", {8, 8}},
+        Arc{"DMEM_RSP_VALID", "LOAD_USE_STALL", {9, 15}},
+        Arc{"DMEM_RSP_VALID", "MEMORY_STALL", {5, 5}},
+        Arc{"DMEM_RSP_VALID", "PIPELINE_FLUSH", {9, 15}},
+        Arc{"DMEM_RSP_VALID", "PIPELINE_STALL", {7, 8}},
+        Arc{"DMEM_RSP_VALID", "PREDICTION_RECOVERY", {12, 19}},
+        Arc{"ENABLE", "BRANCH_MISS", {9, 30}},
+        Arc{"ENABLE", "BRANCH_RESOLVED", {8, 29}},
+        Arc{"ENABLE", "COMMIT_VALID", {4, 18}},
+        Arc{"ENABLE", "DATA_PORT_STALL", {5, 16}},
+        Arc{"ENABLE", "DMEM_REQ_ADDR", {13, 15}},
+        Arc{"ENABLE", "DMEM_REQ_OP", {7, 7}},
+        Arc{"ENABLE", "DMEM_REQ_VALID", {8, 8}},
+        Arc{"ENABLE", "DMEM_REQ_WRITE_MASK", {12, 15}},
+        Arc{"ENABLE", "DMEM_RSP_READY", {7, 27}},
+        Arc{"ENABLE", "IMEM_REQ_VALID", {5, 5}},
+        Arc{"ENABLE", "IMEM_RSP_READY", {7, 30}},
+        Arc{"ENABLE", "INSTRUCTION_ATTEMPT", {4, 18}},
+        Arc{"ENABLE", "LOAD_USE_STALL", {5, 25}},
+        Arc{"ENABLE", "MEMORY_STALL", {4, 15}},
+        Arc{"ENABLE", "PIPELINE_FLUSH", {5, 25}},
+        Arc{"ENABLE", "PIPELINE_STALL", {6, 18}},
+        Arc{"ENABLE", "PREDICTION_RECOVERY", {8, 29}},
+        Arc{"IMEM_REQ_READY", "IMEM_RSP_READY", {11, 11}},
+        Arc{"IMEM_RSP_VALID", "IMEM_RSP_READY", {9, 9}},
+    };
+    t.clock = "CLK";
+    t.launches["BRANCH_MISS"] = {6, 71};
+    t.launches["BRANCH_RESOLVED"] = {6, 70};
+    t.launches["COMMIT_VALID"] = {4, 30};
+    t.launches["DATA_PORT_STALL"] = {6, 28};
+    t.launches["DMEM_REQ_ADDR"] = {5, 27};
+    t.launches["DMEM_REQ_OP"] = {5, 18};
+    t.launches["DMEM_REQ_VALID"] = {6, 20};
+    t.launches["DMEM_REQ_WRITE_DATA"] = {5, 14};
+    t.launches["DMEM_REQ_WRITE_MASK"] = {5, 27};
+    t.launches["DMEM_RSP_READY"] = {6, 39};
+    t.launches["EX_MEM_PC"] = {3, 4};
+    t.launches["EX_MEM_VALID"] = {3, 4};
+    t.launches["FETCH_PC"] = {3, 4};
+    t.launches["HALTED"] = {3, 4};
+    t.launches["ID_EX_PC"] = {3, 4};
+    t.launches["ID_EX_VALID"] = {3, 4};
+    t.launches["IF_ID_PC"] = {3, 4};
+    t.launches["IF_ID_VALID"] = {3, 4};
+    t.launches["IMEM_REQ_ADDR"] = {5, 7};
+    t.launches["IMEM_REQ_VALID"] = {6, 10};
+    t.launches["IMEM_RSP_READY"] = {6, 77};
+    t.launches["INSTRUCTION_ATTEMPT"] = {4, 30};
+    t.launches["LOAD_USE_STALL"] = {7, 37};
+    t.launches["MEMORY_STALL"] = {7, 27};
+    t.launches["MEM_WB_PC"] = {3, 4};
+    t.launches["MEM_WB_VALID"] = {3, 4};
+    t.launches["PIPELINE_FLUSH"] = {7, 71};
+    t.launches["PIPELINE_STALL"] = {7, 30};
+    t.launches["PREDICTION_RECOVERY"] = {8, 70};
+    t.launches["TRAPPED"] = {3, 4};
+    t.launches["TRAP_CAUSE"] = {3, 4};
+    t.setup["DMEM_REQ_READY"] = 31;
+    t.setup["DMEM_RSP_READ_DATA"] = 18;
+    t.setup["DMEM_RSP_STATUS"] = 24;
+    t.setup["DMEM_RSP_VALID"] = 29;
+    t.setup["ENABLE"] = 39;
+    t.setup["IMEM_REQ_READY"] = 19;
+    t.setup["IMEM_RSP_READ_DATA"] = 45;
+    t.setup["IMEM_RSP_STATUS"] = 15;
+    t.setup["IMEM_RSP_VALID"] = 17;
+    t.internal_period = 85;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"rv32i.core.educational-five-stage.behavioral?prediction=two-bit&prediction_entries=4", [] {
+    PartDelays t;
+    t.evidence = "proven on rv32i.core.educational-five-stage.structural";
+    t.arcs = {
+        Arc{"DMEM_REQ_READY", "BRANCH_MISS", {15, 22}},
+        Arc{"DMEM_REQ_READY", "BRANCH_RESOLVED", {14, 21}},
+        Arc{"DMEM_REQ_READY", "COMMIT_VALID", {10, 10}},
+        Arc{"DMEM_REQ_READY", "DATA_PORT_STALL", {8, 8}},
+        Arc{"DMEM_REQ_READY", "DMEM_RSP_READY", {13, 19}},
+        Arc{"DMEM_REQ_READY", "IMEM_RSP_READY", {15, 22}},
+        Arc{"DMEM_REQ_READY", "INSTRUCTION_ATTEMPT", {10, 10}},
+        Arc{"DMEM_REQ_READY", "LOAD_USE_STALL", {11, 17}},
+        Arc{"DMEM_REQ_READY", "MEMORY_STALL", {7, 7}},
+        Arc{"DMEM_REQ_READY", "PIPELINE_FLUSH", {11, 17}},
+        Arc{"DMEM_REQ_READY", "PIPELINE_STALL", {9, 10}},
+        Arc{"DMEM_REQ_READY", "PREDICTION_RECOVERY", {14, 21}},
+        Arc{"DMEM_RSP_STATUS", "BRANCH_MISS", {13, 14}},
+        Arc{"DMEM_RSP_STATUS", "BRANCH_RESOLVED", {12, 13}},
+        Arc{"DMEM_RSP_STATUS", "IMEM_RSP_READY", {14, 16}},
+        Arc{"DMEM_RSP_STATUS", "PIPELINE_FLUSH", {9, 10}},
+        Arc{"DMEM_RSP_STATUS", "PREDICTION_RECOVERY", {12, 13}},
+        Arc{"DMEM_RSP_VALID", "BRANCH_MISS", {13, 20}},
+        Arc{"DMEM_RSP_VALID", "BRANCH_RESOLVED", {12, 19}},
+        Arc{"DMEM_RSP_VALID", "COMMIT_VALID", {8, 8}},
+        Arc{"DMEM_RSP_VALID", "DATA_PORT_STALL", {6, 6}},
+        Arc{"DMEM_RSP_VALID", "DMEM_RSP_READY", {11, 17}},
+        Arc{"DMEM_RSP_VALID", "IMEM_RSP_READY", {13, 20}},
+        Arc{"DMEM_RSP_VALID", "INSTRUCTION_ATTEMPT", {8, 8}},
+        Arc{"DMEM_RSP_VALID", "LOAD_USE_STALL", {9, 15}},
+        Arc{"DMEM_RSP_VALID", "MEMORY_STALL", {5, 5}},
+        Arc{"DMEM_RSP_VALID", "PIPELINE_FLUSH", {9, 15}},
+        Arc{"DMEM_RSP_VALID", "PIPELINE_STALL", {7, 8}},
+        Arc{"DMEM_RSP_VALID", "PREDICTION_RECOVERY", {12, 19}},
+        Arc{"ENABLE", "BRANCH_MISS", {9, 30}},
+        Arc{"ENABLE", "BRANCH_RESOLVED", {8, 29}},
+        Arc{"ENABLE", "COMMIT_VALID", {4, 18}},
+        Arc{"ENABLE", "DATA_PORT_STALL", {5, 16}},
+        Arc{"ENABLE", "DMEM_REQ_ADDR", {13, 15}},
+        Arc{"ENABLE", "DMEM_REQ_OP", {7, 7}},
+        Arc{"ENABLE", "DMEM_REQ_VALID", {8, 8}},
+        Arc{"ENABLE", "DMEM_REQ_WRITE_MASK", {12, 15}},
+        Arc{"ENABLE", "DMEM_RSP_READY", {7, 27}},
+        Arc{"ENABLE", "IMEM_REQ_VALID", {5, 5}},
+        Arc{"ENABLE", "IMEM_RSP_READY", {7, 30}},
+        Arc{"ENABLE", "INSTRUCTION_ATTEMPT", {4, 18}},
+        Arc{"ENABLE", "LOAD_USE_STALL", {5, 25}},
+        Arc{"ENABLE", "MEMORY_STALL", {4, 15}},
+        Arc{"ENABLE", "PIPELINE_FLUSH", {5, 25}},
+        Arc{"ENABLE", "PIPELINE_STALL", {6, 18}},
+        Arc{"ENABLE", "PREDICTION_RECOVERY", {8, 29}},
+        Arc{"IMEM_REQ_READY", "IMEM_RSP_READY", {11, 11}},
+        Arc{"IMEM_RSP_VALID", "IMEM_RSP_READY", {9, 9}},
+    };
+    t.clock = "CLK";
+    t.launches["BRANCH_MISS"] = {6, 71};
+    t.launches["BRANCH_RESOLVED"] = {6, 70};
+    t.launches["COMMIT_VALID"] = {4, 30};
+    t.launches["DATA_PORT_STALL"] = {6, 28};
+    t.launches["DMEM_REQ_ADDR"] = {5, 27};
+    t.launches["DMEM_REQ_OP"] = {5, 18};
+    t.launches["DMEM_REQ_VALID"] = {6, 20};
+    t.launches["DMEM_REQ_WRITE_DATA"] = {5, 14};
+    t.launches["DMEM_REQ_WRITE_MASK"] = {5, 27};
+    t.launches["DMEM_RSP_READY"] = {6, 39};
+    t.launches["EX_MEM_PC"] = {3, 4};
+    t.launches["EX_MEM_VALID"] = {3, 4};
+    t.launches["FETCH_PC"] = {3, 4};
+    t.launches["HALTED"] = {3, 4};
+    t.launches["ID_EX_PC"] = {3, 4};
+    t.launches["ID_EX_VALID"] = {3, 4};
+    t.launches["IF_ID_PC"] = {3, 4};
+    t.launches["IF_ID_VALID"] = {3, 4};
+    t.launches["IMEM_REQ_ADDR"] = {5, 7};
+    t.launches["IMEM_REQ_VALID"] = {6, 10};
+    t.launches["IMEM_RSP_READY"] = {6, 77};
+    t.launches["INSTRUCTION_ATTEMPT"] = {4, 30};
+    t.launches["LOAD_USE_STALL"] = {7, 37};
+    t.launches["MEMORY_STALL"] = {7, 27};
+    t.launches["MEM_WB_PC"] = {3, 4};
+    t.launches["MEM_WB_VALID"] = {3, 4};
+    t.launches["PIPELINE_FLUSH"] = {7, 71};
+    t.launches["PIPELINE_STALL"] = {7, 30};
+    t.launches["PREDICTION_RECOVERY"] = {8, 70};
+    t.launches["TRAPPED"] = {3, 4};
+    t.launches["TRAP_CAUSE"] = {3, 4};
+    t.setup["DMEM_REQ_READY"] = 31;
+    t.setup["DMEM_RSP_READ_DATA"] = 18;
+    t.setup["DMEM_RSP_STATUS"] = 24;
+    t.setup["DMEM_RSP_VALID"] = 29;
+    t.setup["ENABLE"] = 39;
+    t.setup["IMEM_REQ_READY"] = 19;
+    t.setup["IMEM_RSP_READ_DATA"] = 45;
+    t.setup["IMEM_RSP_STATUS"] = 15;
+    t.setup["IMEM_RSP_VALID"] = 17;
+    t.internal_period = 85;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"rv32i.core.educational-five-stage.behavioral?prediction=two-bit&prediction_entries=8", [] {
+    PartDelays t;
+    t.evidence = "proven on rv32i.core.educational-five-stage.structural";
+    t.arcs = {
+        Arc{"DMEM_REQ_READY", "BRANCH_MISS", {15, 22}},
+        Arc{"DMEM_REQ_READY", "BRANCH_RESOLVED", {14, 21}},
+        Arc{"DMEM_REQ_READY", "COMMIT_VALID", {10, 10}},
+        Arc{"DMEM_REQ_READY", "DATA_PORT_STALL", {8, 8}},
+        Arc{"DMEM_REQ_READY", "DMEM_RSP_READY", {13, 19}},
+        Arc{"DMEM_REQ_READY", "IMEM_RSP_READY", {15, 22}},
+        Arc{"DMEM_REQ_READY", "INSTRUCTION_ATTEMPT", {10, 10}},
+        Arc{"DMEM_REQ_READY", "LOAD_USE_STALL", {11, 17}},
+        Arc{"DMEM_REQ_READY", "MEMORY_STALL", {7, 7}},
+        Arc{"DMEM_REQ_READY", "PIPELINE_FLUSH", {11, 17}},
+        Arc{"DMEM_REQ_READY", "PIPELINE_STALL", {9, 10}},
+        Arc{"DMEM_REQ_READY", "PREDICTION_RECOVERY", {14, 21}},
+        Arc{"DMEM_RSP_STATUS", "BRANCH_MISS", {13, 14}},
+        Arc{"DMEM_RSP_STATUS", "BRANCH_RESOLVED", {12, 13}},
+        Arc{"DMEM_RSP_STATUS", "IMEM_RSP_READY", {14, 16}},
+        Arc{"DMEM_RSP_STATUS", "PIPELINE_FLUSH", {9, 10}},
+        Arc{"DMEM_RSP_STATUS", "PREDICTION_RECOVERY", {12, 13}},
+        Arc{"DMEM_RSP_VALID", "BRANCH_MISS", {13, 20}},
+        Arc{"DMEM_RSP_VALID", "BRANCH_RESOLVED", {12, 19}},
+        Arc{"DMEM_RSP_VALID", "COMMIT_VALID", {8, 8}},
+        Arc{"DMEM_RSP_VALID", "DATA_PORT_STALL", {6, 6}},
+        Arc{"DMEM_RSP_VALID", "DMEM_RSP_READY", {11, 17}},
+        Arc{"DMEM_RSP_VALID", "IMEM_RSP_READY", {13, 20}},
+        Arc{"DMEM_RSP_VALID", "INSTRUCTION_ATTEMPT", {8, 8}},
+        Arc{"DMEM_RSP_VALID", "LOAD_USE_STALL", {9, 15}},
+        Arc{"DMEM_RSP_VALID", "MEMORY_STALL", {5, 5}},
+        Arc{"DMEM_RSP_VALID", "PIPELINE_FLUSH", {9, 15}},
+        Arc{"DMEM_RSP_VALID", "PIPELINE_STALL", {7, 8}},
+        Arc{"DMEM_RSP_VALID", "PREDICTION_RECOVERY", {12, 19}},
+        Arc{"ENABLE", "BRANCH_MISS", {9, 30}},
+        Arc{"ENABLE", "BRANCH_RESOLVED", {8, 29}},
+        Arc{"ENABLE", "COMMIT_VALID", {4, 18}},
+        Arc{"ENABLE", "DATA_PORT_STALL", {5, 16}},
+        Arc{"ENABLE", "DMEM_REQ_ADDR", {13, 15}},
+        Arc{"ENABLE", "DMEM_REQ_OP", {7, 7}},
+        Arc{"ENABLE", "DMEM_REQ_VALID", {8, 8}},
+        Arc{"ENABLE", "DMEM_REQ_WRITE_MASK", {12, 15}},
+        Arc{"ENABLE", "DMEM_RSP_READY", {7, 27}},
+        Arc{"ENABLE", "IMEM_REQ_VALID", {5, 5}},
+        Arc{"ENABLE", "IMEM_RSP_READY", {7, 30}},
+        Arc{"ENABLE", "INSTRUCTION_ATTEMPT", {4, 18}},
+        Arc{"ENABLE", "LOAD_USE_STALL", {5, 25}},
+        Arc{"ENABLE", "MEMORY_STALL", {4, 15}},
+        Arc{"ENABLE", "PIPELINE_FLUSH", {5, 25}},
+        Arc{"ENABLE", "PIPELINE_STALL", {6, 18}},
+        Arc{"ENABLE", "PREDICTION_RECOVERY", {8, 29}},
+        Arc{"IMEM_REQ_READY", "IMEM_RSP_READY", {11, 11}},
+        Arc{"IMEM_RSP_VALID", "IMEM_RSP_READY", {9, 9}},
+    };
+    t.clock = "CLK";
+    t.launches["BRANCH_MISS"] = {6, 71};
+    t.launches["BRANCH_RESOLVED"] = {6, 70};
+    t.launches["COMMIT_VALID"] = {4, 30};
+    t.launches["DATA_PORT_STALL"] = {6, 28};
+    t.launches["DMEM_REQ_ADDR"] = {5, 27};
+    t.launches["DMEM_REQ_OP"] = {5, 18};
+    t.launches["DMEM_REQ_VALID"] = {6, 20};
+    t.launches["DMEM_REQ_WRITE_DATA"] = {5, 14};
+    t.launches["DMEM_REQ_WRITE_MASK"] = {5, 27};
+    t.launches["DMEM_RSP_READY"] = {6, 39};
+    t.launches["EX_MEM_PC"] = {3, 4};
+    t.launches["EX_MEM_VALID"] = {3, 4};
+    t.launches["FETCH_PC"] = {3, 4};
+    t.launches["HALTED"] = {3, 4};
+    t.launches["ID_EX_PC"] = {3, 4};
+    t.launches["ID_EX_VALID"] = {3, 4};
+    t.launches["IF_ID_PC"] = {3, 4};
+    t.launches["IF_ID_VALID"] = {3, 4};
+    t.launches["IMEM_REQ_ADDR"] = {5, 7};
+    t.launches["IMEM_REQ_VALID"] = {6, 10};
+    t.launches["IMEM_RSP_READY"] = {6, 77};
+    t.launches["INSTRUCTION_ATTEMPT"] = {4, 30};
+    t.launches["LOAD_USE_STALL"] = {7, 37};
+    t.launches["MEMORY_STALL"] = {7, 27};
+    t.launches["MEM_WB_PC"] = {3, 4};
+    t.launches["MEM_WB_VALID"] = {3, 4};
+    t.launches["PIPELINE_FLUSH"] = {7, 71};
+    t.launches["PIPELINE_STALL"] = {7, 30};
+    t.launches["PREDICTION_RECOVERY"] = {8, 70};
+    t.launches["TRAPPED"] = {3, 4};
+    t.launches["TRAP_CAUSE"] = {3, 4};
+    t.setup["DMEM_REQ_READY"] = 31;
+    t.setup["DMEM_RSP_READ_DATA"] = 18;
+    t.setup["DMEM_RSP_STATUS"] = 24;
+    t.setup["DMEM_RSP_VALID"] = 29;
+    t.setup["ENABLE"] = 39;
+    t.setup["IMEM_REQ_READY"] = 19;
+    t.setup["IMEM_RSP_READ_DATA"] = 45;
+    t.setup["IMEM_RSP_STATUS"] = 15;
+    t.setup["IMEM_RSP_VALID"] = 17;
+    t.internal_period = 85;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
 {"rv32i.core.educational-five-stage.behavioral?prediction=two-bit&prediction_entries=16", [] {
+    PartDelays t;
+    t.evidence = "proven on rv32i.core.educational-five-stage.structural";
+    t.arcs = {
+        Arc{"DMEM_REQ_READY", "BRANCH_MISS", {15, 22}},
+        Arc{"DMEM_REQ_READY", "BRANCH_RESOLVED", {14, 21}},
+        Arc{"DMEM_REQ_READY", "COMMIT_VALID", {10, 10}},
+        Arc{"DMEM_REQ_READY", "DATA_PORT_STALL", {8, 8}},
+        Arc{"DMEM_REQ_READY", "DMEM_RSP_READY", {13, 19}},
+        Arc{"DMEM_REQ_READY", "IMEM_RSP_READY", {15, 22}},
+        Arc{"DMEM_REQ_READY", "INSTRUCTION_ATTEMPT", {10, 10}},
+        Arc{"DMEM_REQ_READY", "LOAD_USE_STALL", {11, 17}},
+        Arc{"DMEM_REQ_READY", "MEMORY_STALL", {7, 7}},
+        Arc{"DMEM_REQ_READY", "PIPELINE_FLUSH", {11, 17}},
+        Arc{"DMEM_REQ_READY", "PIPELINE_STALL", {9, 10}},
+        Arc{"DMEM_REQ_READY", "PREDICTION_RECOVERY", {14, 21}},
+        Arc{"DMEM_RSP_STATUS", "BRANCH_MISS", {13, 14}},
+        Arc{"DMEM_RSP_STATUS", "BRANCH_RESOLVED", {12, 13}},
+        Arc{"DMEM_RSP_STATUS", "IMEM_RSP_READY", {14, 16}},
+        Arc{"DMEM_RSP_STATUS", "PIPELINE_FLUSH", {9, 10}},
+        Arc{"DMEM_RSP_STATUS", "PREDICTION_RECOVERY", {12, 13}},
+        Arc{"DMEM_RSP_VALID", "BRANCH_MISS", {13, 20}},
+        Arc{"DMEM_RSP_VALID", "BRANCH_RESOLVED", {12, 19}},
+        Arc{"DMEM_RSP_VALID", "COMMIT_VALID", {8, 8}},
+        Arc{"DMEM_RSP_VALID", "DATA_PORT_STALL", {6, 6}},
+        Arc{"DMEM_RSP_VALID", "DMEM_RSP_READY", {11, 17}},
+        Arc{"DMEM_RSP_VALID", "IMEM_RSP_READY", {13, 20}},
+        Arc{"DMEM_RSP_VALID", "INSTRUCTION_ATTEMPT", {8, 8}},
+        Arc{"DMEM_RSP_VALID", "LOAD_USE_STALL", {9, 15}},
+        Arc{"DMEM_RSP_VALID", "MEMORY_STALL", {5, 5}},
+        Arc{"DMEM_RSP_VALID", "PIPELINE_FLUSH", {9, 15}},
+        Arc{"DMEM_RSP_VALID", "PIPELINE_STALL", {7, 8}},
+        Arc{"DMEM_RSP_VALID", "PREDICTION_RECOVERY", {12, 19}},
+        Arc{"ENABLE", "BRANCH_MISS", {9, 30}},
+        Arc{"ENABLE", "BRANCH_RESOLVED", {8, 29}},
+        Arc{"ENABLE", "COMMIT_VALID", {4, 18}},
+        Arc{"ENABLE", "DATA_PORT_STALL", {5, 16}},
+        Arc{"ENABLE", "DMEM_REQ_ADDR", {13, 15}},
+        Arc{"ENABLE", "DMEM_REQ_OP", {7, 7}},
+        Arc{"ENABLE", "DMEM_REQ_VALID", {8, 8}},
+        Arc{"ENABLE", "DMEM_REQ_WRITE_MASK", {12, 15}},
+        Arc{"ENABLE", "DMEM_RSP_READY", {7, 27}},
+        Arc{"ENABLE", "IMEM_REQ_VALID", {5, 5}},
+        Arc{"ENABLE", "IMEM_RSP_READY", {7, 30}},
+        Arc{"ENABLE", "INSTRUCTION_ATTEMPT", {4, 18}},
+        Arc{"ENABLE", "LOAD_USE_STALL", {5, 25}},
+        Arc{"ENABLE", "MEMORY_STALL", {4, 15}},
+        Arc{"ENABLE", "PIPELINE_FLUSH", {5, 25}},
+        Arc{"ENABLE", "PIPELINE_STALL", {6, 18}},
+        Arc{"ENABLE", "PREDICTION_RECOVERY", {8, 29}},
+        Arc{"IMEM_REQ_READY", "IMEM_RSP_READY", {11, 11}},
+        Arc{"IMEM_RSP_VALID", "IMEM_RSP_READY", {9, 9}},
+    };
+    t.clock = "CLK";
+    t.launches["BRANCH_MISS"] = {6, 71};
+    t.launches["BRANCH_RESOLVED"] = {6, 70};
+    t.launches["COMMIT_VALID"] = {4, 30};
+    t.launches["DATA_PORT_STALL"] = {6, 28};
+    t.launches["DMEM_REQ_ADDR"] = {5, 27};
+    t.launches["DMEM_REQ_OP"] = {5, 18};
+    t.launches["DMEM_REQ_VALID"] = {6, 20};
+    t.launches["DMEM_REQ_WRITE_DATA"] = {5, 14};
+    t.launches["DMEM_REQ_WRITE_MASK"] = {5, 27};
+    t.launches["DMEM_RSP_READY"] = {6, 39};
+    t.launches["EX_MEM_PC"] = {3, 4};
+    t.launches["EX_MEM_VALID"] = {3, 4};
+    t.launches["FETCH_PC"] = {3, 4};
+    t.launches["HALTED"] = {3, 4};
+    t.launches["ID_EX_PC"] = {3, 4};
+    t.launches["ID_EX_VALID"] = {3, 4};
+    t.launches["IF_ID_PC"] = {3, 4};
+    t.launches["IF_ID_VALID"] = {3, 4};
+    t.launches["IMEM_REQ_ADDR"] = {5, 7};
+    t.launches["IMEM_REQ_VALID"] = {6, 10};
+    t.launches["IMEM_RSP_READY"] = {6, 77};
+    t.launches["INSTRUCTION_ATTEMPT"] = {4, 30};
+    t.launches["LOAD_USE_STALL"] = {7, 37};
+    t.launches["MEMORY_STALL"] = {7, 27};
+    t.launches["MEM_WB_PC"] = {3, 4};
+    t.launches["MEM_WB_VALID"] = {3, 4};
+    t.launches["PIPELINE_FLUSH"] = {7, 71};
+    t.launches["PIPELINE_STALL"] = {7, 30};
+    t.launches["PREDICTION_RECOVERY"] = {8, 70};
+    t.launches["TRAPPED"] = {3, 4};
+    t.launches["TRAP_CAUSE"] = {3, 4};
+    t.setup["DMEM_REQ_READY"] = 31;
+    t.setup["DMEM_RSP_READ_DATA"] = 18;
+    t.setup["DMEM_RSP_STATUS"] = 24;
+    t.setup["DMEM_RSP_VALID"] = 29;
+    t.setup["ENABLE"] = 39;
+    t.setup["IMEM_REQ_READY"] = 19;
+    t.setup["IMEM_RSP_READ_DATA"] = 45;
+    t.setup["IMEM_RSP_STATUS"] = 15;
+    t.setup["IMEM_RSP_VALID"] = 17;
+    t.internal_period = 85;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"rv32i.core.educational-five-stage.behavioral?prediction=two-bit&prediction_entries=32", [] {
+    PartDelays t;
+    t.evidence = "proven on rv32i.core.educational-five-stage.structural";
+    t.arcs = {
+        Arc{"DMEM_REQ_READY", "BRANCH_MISS", {15, 22}},
+        Arc{"DMEM_REQ_READY", "BRANCH_RESOLVED", {14, 21}},
+        Arc{"DMEM_REQ_READY", "COMMIT_VALID", {10, 10}},
+        Arc{"DMEM_REQ_READY", "DATA_PORT_STALL", {8, 8}},
+        Arc{"DMEM_REQ_READY", "DMEM_RSP_READY", {13, 19}},
+        Arc{"DMEM_REQ_READY", "IMEM_RSP_READY", {15, 22}},
+        Arc{"DMEM_REQ_READY", "INSTRUCTION_ATTEMPT", {10, 10}},
+        Arc{"DMEM_REQ_READY", "LOAD_USE_STALL", {11, 17}},
+        Arc{"DMEM_REQ_READY", "MEMORY_STALL", {7, 7}},
+        Arc{"DMEM_REQ_READY", "PIPELINE_FLUSH", {11, 17}},
+        Arc{"DMEM_REQ_READY", "PIPELINE_STALL", {9, 10}},
+        Arc{"DMEM_REQ_READY", "PREDICTION_RECOVERY", {14, 21}},
+        Arc{"DMEM_RSP_STATUS", "BRANCH_MISS", {13, 14}},
+        Arc{"DMEM_RSP_STATUS", "BRANCH_RESOLVED", {12, 13}},
+        Arc{"DMEM_RSP_STATUS", "IMEM_RSP_READY", {14, 16}},
+        Arc{"DMEM_RSP_STATUS", "PIPELINE_FLUSH", {9, 10}},
+        Arc{"DMEM_RSP_STATUS", "PREDICTION_RECOVERY", {12, 13}},
+        Arc{"DMEM_RSP_VALID", "BRANCH_MISS", {13, 20}},
+        Arc{"DMEM_RSP_VALID", "BRANCH_RESOLVED", {12, 19}},
+        Arc{"DMEM_RSP_VALID", "COMMIT_VALID", {8, 8}},
+        Arc{"DMEM_RSP_VALID", "DATA_PORT_STALL", {6, 6}},
+        Arc{"DMEM_RSP_VALID", "DMEM_RSP_READY", {11, 17}},
+        Arc{"DMEM_RSP_VALID", "IMEM_RSP_READY", {13, 20}},
+        Arc{"DMEM_RSP_VALID", "INSTRUCTION_ATTEMPT", {8, 8}},
+        Arc{"DMEM_RSP_VALID", "LOAD_USE_STALL", {9, 15}},
+        Arc{"DMEM_RSP_VALID", "MEMORY_STALL", {5, 5}},
+        Arc{"DMEM_RSP_VALID", "PIPELINE_FLUSH", {9, 15}},
+        Arc{"DMEM_RSP_VALID", "PIPELINE_STALL", {7, 8}},
+        Arc{"DMEM_RSP_VALID", "PREDICTION_RECOVERY", {12, 19}},
+        Arc{"ENABLE", "BRANCH_MISS", {9, 30}},
+        Arc{"ENABLE", "BRANCH_RESOLVED", {8, 29}},
+        Arc{"ENABLE", "COMMIT_VALID", {4, 18}},
+        Arc{"ENABLE", "DATA_PORT_STALL", {5, 16}},
+        Arc{"ENABLE", "DMEM_REQ_ADDR", {13, 15}},
+        Arc{"ENABLE", "DMEM_REQ_OP", {7, 7}},
+        Arc{"ENABLE", "DMEM_REQ_VALID", {8, 8}},
+        Arc{"ENABLE", "DMEM_REQ_WRITE_MASK", {12, 15}},
+        Arc{"ENABLE", "DMEM_RSP_READY", {7, 27}},
+        Arc{"ENABLE", "IMEM_REQ_VALID", {5, 5}},
+        Arc{"ENABLE", "IMEM_RSP_READY", {7, 30}},
+        Arc{"ENABLE", "INSTRUCTION_ATTEMPT", {4, 18}},
+        Arc{"ENABLE", "LOAD_USE_STALL", {5, 25}},
+        Arc{"ENABLE", "MEMORY_STALL", {4, 15}},
+        Arc{"ENABLE", "PIPELINE_FLUSH", {5, 25}},
+        Arc{"ENABLE", "PIPELINE_STALL", {6, 18}},
+        Arc{"ENABLE", "PREDICTION_RECOVERY", {8, 29}},
+        Arc{"IMEM_REQ_READY", "IMEM_RSP_READY", {11, 11}},
+        Arc{"IMEM_RSP_VALID", "IMEM_RSP_READY", {9, 9}},
+    };
+    t.clock = "CLK";
+    t.launches["BRANCH_MISS"] = {6, 71};
+    t.launches["BRANCH_RESOLVED"] = {6, 70};
+    t.launches["COMMIT_VALID"] = {4, 30};
+    t.launches["DATA_PORT_STALL"] = {6, 28};
+    t.launches["DMEM_REQ_ADDR"] = {5, 27};
+    t.launches["DMEM_REQ_OP"] = {5, 18};
+    t.launches["DMEM_REQ_VALID"] = {6, 20};
+    t.launches["DMEM_REQ_WRITE_DATA"] = {5, 14};
+    t.launches["DMEM_REQ_WRITE_MASK"] = {5, 27};
+    t.launches["DMEM_RSP_READY"] = {6, 39};
+    t.launches["EX_MEM_PC"] = {3, 4};
+    t.launches["EX_MEM_VALID"] = {3, 4};
+    t.launches["FETCH_PC"] = {3, 4};
+    t.launches["HALTED"] = {3, 4};
+    t.launches["ID_EX_PC"] = {3, 4};
+    t.launches["ID_EX_VALID"] = {3, 4};
+    t.launches["IF_ID_PC"] = {3, 4};
+    t.launches["IF_ID_VALID"] = {3, 4};
+    t.launches["IMEM_REQ_ADDR"] = {5, 7};
+    t.launches["IMEM_REQ_VALID"] = {6, 10};
+    t.launches["IMEM_RSP_READY"] = {6, 77};
+    t.launches["INSTRUCTION_ATTEMPT"] = {4, 30};
+    t.launches["LOAD_USE_STALL"] = {7, 37};
+    t.launches["MEMORY_STALL"] = {7, 27};
+    t.launches["MEM_WB_PC"] = {3, 4};
+    t.launches["MEM_WB_VALID"] = {3, 4};
+    t.launches["PIPELINE_FLUSH"] = {7, 71};
+    t.launches["PIPELINE_STALL"] = {7, 30};
+    t.launches["PREDICTION_RECOVERY"] = {8, 70};
+    t.launches["TRAPPED"] = {3, 4};
+    t.launches["TRAP_CAUSE"] = {3, 4};
+    t.setup["DMEM_REQ_READY"] = 31;
+    t.setup["DMEM_RSP_READ_DATA"] = 18;
+    t.setup["DMEM_RSP_STATUS"] = 24;
+    t.setup["DMEM_RSP_VALID"] = 29;
+    t.setup["ENABLE"] = 39;
+    t.setup["IMEM_REQ_READY"] = 19;
+    t.setup["IMEM_RSP_READ_DATA"] = 45;
+    t.setup["IMEM_RSP_STATUS"] = 15;
+    t.setup["IMEM_RSP_VALID"] = 17;
+    t.internal_period = 85;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"rv32i.core.educational-five-stage.behavioral?prediction=two-bit&prediction_entries=64", [] {
+    PartDelays t;
+    t.evidence = "proven on rv32i.core.educational-five-stage.structural";
+    t.arcs = {
+        Arc{"DMEM_REQ_READY", "BRANCH_MISS", {15, 22}},
+        Arc{"DMEM_REQ_READY", "BRANCH_RESOLVED", {14, 21}},
+        Arc{"DMEM_REQ_READY", "COMMIT_VALID", {10, 10}},
+        Arc{"DMEM_REQ_READY", "DATA_PORT_STALL", {8, 8}},
+        Arc{"DMEM_REQ_READY", "DMEM_RSP_READY", {13, 19}},
+        Arc{"DMEM_REQ_READY", "IMEM_RSP_READY", {15, 22}},
+        Arc{"DMEM_REQ_READY", "INSTRUCTION_ATTEMPT", {10, 10}},
+        Arc{"DMEM_REQ_READY", "LOAD_USE_STALL", {11, 17}},
+        Arc{"DMEM_REQ_READY", "MEMORY_STALL", {7, 7}},
+        Arc{"DMEM_REQ_READY", "PIPELINE_FLUSH", {11, 17}},
+        Arc{"DMEM_REQ_READY", "PIPELINE_STALL", {9, 10}},
+        Arc{"DMEM_REQ_READY", "PREDICTION_RECOVERY", {14, 21}},
+        Arc{"DMEM_RSP_STATUS", "BRANCH_MISS", {13, 14}},
+        Arc{"DMEM_RSP_STATUS", "BRANCH_RESOLVED", {12, 13}},
+        Arc{"DMEM_RSP_STATUS", "IMEM_RSP_READY", {14, 16}},
+        Arc{"DMEM_RSP_STATUS", "PIPELINE_FLUSH", {9, 10}},
+        Arc{"DMEM_RSP_STATUS", "PREDICTION_RECOVERY", {12, 13}},
+        Arc{"DMEM_RSP_VALID", "BRANCH_MISS", {13, 20}},
+        Arc{"DMEM_RSP_VALID", "BRANCH_RESOLVED", {12, 19}},
+        Arc{"DMEM_RSP_VALID", "COMMIT_VALID", {8, 8}},
+        Arc{"DMEM_RSP_VALID", "DATA_PORT_STALL", {6, 6}},
+        Arc{"DMEM_RSP_VALID", "DMEM_RSP_READY", {11, 17}},
+        Arc{"DMEM_RSP_VALID", "IMEM_RSP_READY", {13, 20}},
+        Arc{"DMEM_RSP_VALID", "INSTRUCTION_ATTEMPT", {8, 8}},
+        Arc{"DMEM_RSP_VALID", "LOAD_USE_STALL", {9, 15}},
+        Arc{"DMEM_RSP_VALID", "MEMORY_STALL", {5, 5}},
+        Arc{"DMEM_RSP_VALID", "PIPELINE_FLUSH", {9, 15}},
+        Arc{"DMEM_RSP_VALID", "PIPELINE_STALL", {7, 8}},
+        Arc{"DMEM_RSP_VALID", "PREDICTION_RECOVERY", {12, 19}},
+        Arc{"ENABLE", "BRANCH_MISS", {9, 30}},
+        Arc{"ENABLE", "BRANCH_RESOLVED", {8, 29}},
+        Arc{"ENABLE", "COMMIT_VALID", {4, 18}},
+        Arc{"ENABLE", "DATA_PORT_STALL", {5, 16}},
+        Arc{"ENABLE", "DMEM_REQ_ADDR", {13, 15}},
+        Arc{"ENABLE", "DMEM_REQ_OP", {7, 7}},
+        Arc{"ENABLE", "DMEM_REQ_VALID", {8, 8}},
+        Arc{"ENABLE", "DMEM_REQ_WRITE_MASK", {12, 15}},
+        Arc{"ENABLE", "DMEM_RSP_READY", {7, 27}},
+        Arc{"ENABLE", "IMEM_REQ_VALID", {5, 5}},
+        Arc{"ENABLE", "IMEM_RSP_READY", {7, 30}},
+        Arc{"ENABLE", "INSTRUCTION_ATTEMPT", {4, 18}},
+        Arc{"ENABLE", "LOAD_USE_STALL", {5, 25}},
+        Arc{"ENABLE", "MEMORY_STALL", {4, 15}},
+        Arc{"ENABLE", "PIPELINE_FLUSH", {5, 25}},
+        Arc{"ENABLE", "PIPELINE_STALL", {6, 18}},
+        Arc{"ENABLE", "PREDICTION_RECOVERY", {8, 29}},
+        Arc{"IMEM_REQ_READY", "IMEM_RSP_READY", {11, 11}},
+        Arc{"IMEM_RSP_VALID", "IMEM_RSP_READY", {9, 9}},
+    };
+    t.clock = "CLK";
+    t.launches["BRANCH_MISS"] = {6, 71};
+    t.launches["BRANCH_RESOLVED"] = {6, 70};
+    t.launches["COMMIT_VALID"] = {4, 30};
+    t.launches["DATA_PORT_STALL"] = {6, 28};
+    t.launches["DMEM_REQ_ADDR"] = {5, 27};
+    t.launches["DMEM_REQ_OP"] = {5, 18};
+    t.launches["DMEM_REQ_VALID"] = {6, 20};
+    t.launches["DMEM_REQ_WRITE_DATA"] = {5, 14};
+    t.launches["DMEM_REQ_WRITE_MASK"] = {5, 27};
+    t.launches["DMEM_RSP_READY"] = {6, 39};
+    t.launches["EX_MEM_PC"] = {3, 4};
+    t.launches["EX_MEM_VALID"] = {3, 4};
+    t.launches["FETCH_PC"] = {3, 4};
+    t.launches["HALTED"] = {3, 4};
+    t.launches["ID_EX_PC"] = {3, 4};
+    t.launches["ID_EX_VALID"] = {3, 4};
+    t.launches["IF_ID_PC"] = {3, 4};
+    t.launches["IF_ID_VALID"] = {3, 4};
+    t.launches["IMEM_REQ_ADDR"] = {5, 7};
+    t.launches["IMEM_REQ_VALID"] = {6, 10};
+    t.launches["IMEM_RSP_READY"] = {6, 77};
+    t.launches["INSTRUCTION_ATTEMPT"] = {4, 30};
+    t.launches["LOAD_USE_STALL"] = {7, 37};
+    t.launches["MEMORY_STALL"] = {7, 27};
+    t.launches["MEM_WB_PC"] = {3, 4};
+    t.launches["MEM_WB_VALID"] = {3, 4};
+    t.launches["PIPELINE_FLUSH"] = {7, 71};
+    t.launches["PIPELINE_STALL"] = {7, 30};
+    t.launches["PREDICTION_RECOVERY"] = {8, 70};
+    t.launches["TRAPPED"] = {3, 4};
+    t.launches["TRAP_CAUSE"] = {3, 4};
+    t.setup["DMEM_REQ_READY"] = 31;
+    t.setup["DMEM_RSP_READ_DATA"] = 18;
+    t.setup["DMEM_RSP_STATUS"] = 24;
+    t.setup["DMEM_RSP_VALID"] = 29;
+    t.setup["ENABLE"] = 39;
+    t.setup["IMEM_REQ_READY"] = 19;
+    t.setup["IMEM_RSP_READ_DATA"] = 45;
+    t.setup["IMEM_RSP_STATUS"] = 15;
+    t.setup["IMEM_RSP_VALID"] = 17;
+    t.internal_period = 85;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"rv32i.core.educational-five-stage.behavioral?prediction=two-bit&prediction_entries=128", [] {
+    PartDelays t;
+    t.evidence = "proven on rv32i.core.educational-five-stage.structural";
+    t.arcs = {
+        Arc{"DMEM_REQ_READY", "BRANCH_MISS", {15, 22}},
+        Arc{"DMEM_REQ_READY", "BRANCH_RESOLVED", {14, 21}},
+        Arc{"DMEM_REQ_READY", "COMMIT_VALID", {10, 10}},
+        Arc{"DMEM_REQ_READY", "DATA_PORT_STALL", {8, 8}},
+        Arc{"DMEM_REQ_READY", "DMEM_RSP_READY", {13, 19}},
+        Arc{"DMEM_REQ_READY", "IMEM_RSP_READY", {15, 22}},
+        Arc{"DMEM_REQ_READY", "INSTRUCTION_ATTEMPT", {10, 10}},
+        Arc{"DMEM_REQ_READY", "LOAD_USE_STALL", {11, 17}},
+        Arc{"DMEM_REQ_READY", "MEMORY_STALL", {7, 7}},
+        Arc{"DMEM_REQ_READY", "PIPELINE_FLUSH", {11, 17}},
+        Arc{"DMEM_REQ_READY", "PIPELINE_STALL", {9, 10}},
+        Arc{"DMEM_REQ_READY", "PREDICTION_RECOVERY", {14, 21}},
+        Arc{"DMEM_RSP_STATUS", "BRANCH_MISS", {13, 14}},
+        Arc{"DMEM_RSP_STATUS", "BRANCH_RESOLVED", {12, 13}},
+        Arc{"DMEM_RSP_STATUS", "IMEM_RSP_READY", {14, 16}},
+        Arc{"DMEM_RSP_STATUS", "PIPELINE_FLUSH", {9, 10}},
+        Arc{"DMEM_RSP_STATUS", "PREDICTION_RECOVERY", {12, 13}},
+        Arc{"DMEM_RSP_VALID", "BRANCH_MISS", {13, 20}},
+        Arc{"DMEM_RSP_VALID", "BRANCH_RESOLVED", {12, 19}},
+        Arc{"DMEM_RSP_VALID", "COMMIT_VALID", {8, 8}},
+        Arc{"DMEM_RSP_VALID", "DATA_PORT_STALL", {6, 6}},
+        Arc{"DMEM_RSP_VALID", "DMEM_RSP_READY", {11, 17}},
+        Arc{"DMEM_RSP_VALID", "IMEM_RSP_READY", {13, 20}},
+        Arc{"DMEM_RSP_VALID", "INSTRUCTION_ATTEMPT", {8, 8}},
+        Arc{"DMEM_RSP_VALID", "LOAD_USE_STALL", {9, 15}},
+        Arc{"DMEM_RSP_VALID", "MEMORY_STALL", {5, 5}},
+        Arc{"DMEM_RSP_VALID", "PIPELINE_FLUSH", {9, 15}},
+        Arc{"DMEM_RSP_VALID", "PIPELINE_STALL", {7, 8}},
+        Arc{"DMEM_RSP_VALID", "PREDICTION_RECOVERY", {12, 19}},
+        Arc{"ENABLE", "BRANCH_MISS", {9, 30}},
+        Arc{"ENABLE", "BRANCH_RESOLVED", {8, 29}},
+        Arc{"ENABLE", "COMMIT_VALID", {4, 18}},
+        Arc{"ENABLE", "DATA_PORT_STALL", {5, 16}},
+        Arc{"ENABLE", "DMEM_REQ_ADDR", {13, 15}},
+        Arc{"ENABLE", "DMEM_REQ_OP", {7, 7}},
+        Arc{"ENABLE", "DMEM_REQ_VALID", {8, 8}},
+        Arc{"ENABLE", "DMEM_REQ_WRITE_MASK", {12, 15}},
+        Arc{"ENABLE", "DMEM_RSP_READY", {7, 27}},
+        Arc{"ENABLE", "IMEM_REQ_VALID", {5, 5}},
+        Arc{"ENABLE", "IMEM_RSP_READY", {7, 30}},
+        Arc{"ENABLE", "INSTRUCTION_ATTEMPT", {4, 18}},
+        Arc{"ENABLE", "LOAD_USE_STALL", {5, 25}},
+        Arc{"ENABLE", "MEMORY_STALL", {4, 15}},
+        Arc{"ENABLE", "PIPELINE_FLUSH", {5, 25}},
+        Arc{"ENABLE", "PIPELINE_STALL", {6, 18}},
+        Arc{"ENABLE", "PREDICTION_RECOVERY", {8, 29}},
+        Arc{"IMEM_REQ_READY", "IMEM_RSP_READY", {11, 11}},
+        Arc{"IMEM_RSP_VALID", "IMEM_RSP_READY", {9, 9}},
+    };
+    t.clock = "CLK";
+    t.launches["BRANCH_MISS"] = {6, 71};
+    t.launches["BRANCH_RESOLVED"] = {6, 70};
+    t.launches["COMMIT_VALID"] = {4, 30};
+    t.launches["DATA_PORT_STALL"] = {6, 28};
+    t.launches["DMEM_REQ_ADDR"] = {5, 27};
+    t.launches["DMEM_REQ_OP"] = {5, 18};
+    t.launches["DMEM_REQ_VALID"] = {6, 20};
+    t.launches["DMEM_REQ_WRITE_DATA"] = {5, 14};
+    t.launches["DMEM_REQ_WRITE_MASK"] = {5, 27};
+    t.launches["DMEM_RSP_READY"] = {6, 39};
+    t.launches["EX_MEM_PC"] = {3, 4};
+    t.launches["EX_MEM_VALID"] = {3, 4};
+    t.launches["FETCH_PC"] = {3, 4};
+    t.launches["HALTED"] = {3, 4};
+    t.launches["ID_EX_PC"] = {3, 4};
+    t.launches["ID_EX_VALID"] = {3, 4};
+    t.launches["IF_ID_PC"] = {3, 4};
+    t.launches["IF_ID_VALID"] = {3, 4};
+    t.launches["IMEM_REQ_ADDR"] = {5, 7};
+    t.launches["IMEM_REQ_VALID"] = {6, 10};
+    t.launches["IMEM_RSP_READY"] = {6, 77};
+    t.launches["INSTRUCTION_ATTEMPT"] = {4, 30};
+    t.launches["LOAD_USE_STALL"] = {7, 37};
+    t.launches["MEMORY_STALL"] = {7, 27};
+    t.launches["MEM_WB_PC"] = {3, 4};
+    t.launches["MEM_WB_VALID"] = {3, 4};
+    t.launches["PIPELINE_FLUSH"] = {7, 71};
+    t.launches["PIPELINE_STALL"] = {7, 30};
+    t.launches["PREDICTION_RECOVERY"] = {8, 70};
+    t.launches["TRAPPED"] = {3, 4};
+    t.launches["TRAP_CAUSE"] = {3, 4};
+    t.setup["DMEM_REQ_READY"] = 31;
+    t.setup["DMEM_RSP_READ_DATA"] = 18;
+    t.setup["DMEM_RSP_STATUS"] = 24;
+    t.setup["DMEM_RSP_VALID"] = 29;
+    t.setup["ENABLE"] = 39;
+    t.setup["IMEM_REQ_READY"] = 19;
+    t.setup["IMEM_RSP_READ_DATA"] = 45;
+    t.setup["IMEM_RSP_STATUS"] = 15;
+    t.setup["IMEM_RSP_VALID"] = 17;
+    t.internal_period = 85;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"rv32i.core.educational-five-stage.behavioral?prediction=two-bit&prediction_entries=256", [] {
     PartDelays t;
     t.evidence = "proven on rv32i.core.educational-five-stage.structural";
     t.arcs = {

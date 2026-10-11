@@ -242,20 +242,109 @@ parameter finds a table only where one was proven for that exact combination
 advanced core is proven for each of its five prediction policies at 16
 entries, which is how the experiments and program tests build it.
 
-### Not covered
+### Parts built with other parameters, and delays per operation
 
-- Other parameter combinations: a memory with a non-default row layout, a
-  predictor with another table size. A ROM image does not matter: it only
-  sets constants behind the read column, and the proven table is the same
-  for every image.
-- One delay per control value (for example per ALU operation).
+- A memory built with another row layout has its own table (`@rows=K`).
+- The advanced core has a table for each prediction policy and each
+  predictor table size from 1 to 256 entries.
+- `rv32i.alu32`, `rv32i.alu32-core` and `alu.width8` carry one set of delays
+  per operation code (`control = "OP"`, `arcs_by_control`). While the
+  operation is steady, a data input uses the delays of that operation. A
+  change of the operation itself costs the output's largest delay.
+- A ROM image does not matter: it only sets constants behind the read
+  column, and the proven table is the same for every image.
+
+### How the engine uses a table
+
+`BasicComponent::evaluateAt` and `publishTime`:
+
+- Every input pin that changes keeps the outputs it reaches busy for that
+  pin's delay, whether or not the value computed at that moment differs. A
+  later, faster input cannot publish a result that a slower one is still
+  shaping.
+- Only a rising clock edge counts as a clock change.
+- An output restated at the value it already has is not a change.
+- An output that changes with no listed path (reset, a value the gates
+  never show) waits the output's largest delay.
+- Setup watch: at a rising edge with the fixed inputs at their values, an
+  input that changed less than its setup time before the edge is counted
+  (`BasicComponent::setupViolations()`).
+
+### Delays that follow the data
+
+A combinational compact part also carries its own gates as a flat list (a
+`DelayTwin`, built once per kind of part from its gate-level form by
+`buildDelayTwin`, attached by the catalog). Whenever its inputs change it
+makes one pass over that list with the value each input bit has now and
+the tick each bit last changed, and reads off when every output is final:
+
+- a gate with an input at its deciding value (0 into AND, 1 into OR) is
+  final when that input is, and does not wait for the other input;
+- any other gate is final one delay after its later input;
+- a bit that never changed delays nothing.
+
+So the time follows the data: a carry that stops after two positions costs
+two positions. The result holds for any earlier history of the inputs, so
+changes that overlap are covered without the single-pin assumption of the
+tables. The part publishes at the earlier of this time and the table's.
+
+A part gets a gate list only if it is purely combinational: no clock, no
+state, no loop, plain gates only, at most 60,000 gate nodes. 43 of the 97
+compared parts have one. `CIRCUITSIM_NO_DELAY_TWIN=1` turns it off.
+
+### The delay rule and how far it holds
+
+The rule: a compact part takes at least as long as its gates, and not much
+longer. `DelayRuleTest` runs every part as gates and as its compact form
+through the same situations (one pin, X or Z, a few pins, all pins, edge
+patterns, two pins a few ticks apart, clock edges) and compares them output
+by output.
+
+Holds, in every comparison made (100 parts, about 100,000 situations):
+
+- a compact output never changes before the gates' output;
+- a compact output on a table changes at exactly the delay the table gives;
+  one timed from its gates changes no later than that;
+- the gates stay within the table, also when several pins change at once or
+  a few ticks apart, and also for gate-level parts sitting inside larger parts;
+- the three cores, compact, run at the clock proven on their gates (166, 80,
+  98) with no setup violation, and take exactly the gates' cycle count for
+  every program, memory technology and prediction policy compared.
+
+Does not hold, and why:
+
+- "Not much longer" in every single situation, for parts with state. A
+  table has one number per pair of pins, and that number must cover the
+  slowest case. Combinational parts no longer depend on it (see "Delays
+  that follow the data" below): over all parts the gates now take 96% of
+  the compact time on average, and the 8-bit ripple adder went from 38% to
+  92%. Registers, memories and whole cores still run on their tables,
+  because the gate list has no notion of a clock or of stored values. Four
+  of them are below 70% on single input changes (the single-cycle and
+  baseline cores, `rv32i.prediction.path`, `rv32i.prediction.recovery`);
+  they are listed in the test with their measured shares. At a clock they
+  are exact: same period, same cycles.
+- Pulses. Gates can leave a value and come back to it; a compact part
+  computes the final value once and stays still, so a parent built from
+  compact parts can go quiet sooner than the same parent in gates. Showing X
+  while an output may still move would copy this, but a table cannot tell a
+  line that may pulse from one that never does, and X on a line that never
+  pulses (a request line into a self-timed memory) would stop the part that
+  reads it.
+- Several pins at once is tested, not proven. A table is proven for one pin
+  changing while the others hold. No case was found where the gates exceed
+  the largest of the single-pin delays, but no proof says they cannot.
+
+None of the three reaches a clocked experiment. The clock is proven on the
+gates of the whole system, pulses and simultaneous changes included, and a
+run at that clock gives the same cycles in both forms.
 
 ## What is assumed
 
 Every report lists its premises.
 
-- Parts behave as their code does: one fixed delay, output a function of the
-  inputs one delay earlier.
+- Parts behave as their code does: output a function of the inputs, one
+  fixed delay later for a gate, the table's delay for a compact part.
 - The contracts of non-gate parts are right. Built-in contracts exist for
   gates, the bit adapters, `Rewire`, constants, the compact storage parts and
   the FF endpoint. Anything else without a contract gives no result.
@@ -280,7 +369,14 @@ Every report lists its premises.
 - The engine merge itself left the certified periods unchanged (94, 58, 78).
   They are 166, 80 and 98 with storage and memory on their real delays.
 
+- `PartDelayTablesCompleteTest`: every stored table regenerated from the
+  gates and compared.
+- `DelayRuleTest`: the delay rule above, part by part and for the cores.
+  `--report` prints without failing on the targets; `--floors` prints the
+  measured shares of the parts below them.
+
 ```bash
+build-cleanup/tests/DelayRuleTest --report rv32i.alu32
 build-cleanup/tests/SettlingBoundTest --verbose --budget=500000 rv32i.alu32
 build-cleanup/rv32i_experiment --core advanced --safe-clock
 ```

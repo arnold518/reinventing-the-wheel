@@ -26,10 +26,6 @@ uint8_t address5(const BasicComponent& component, const char* pin) {
         component.getInputPin<5>(pin)->getValueAsUInt64());
 }
 
-bool misaligned(uint32_t address, rv32i::RV32IMemorySize size) {
-    return rv32i::pipeline_rules::dataMisaligned(address, size);
-}
-
 bool preterminal(
     uint32_t fetch_status,
     uint32_t execution_status,
@@ -371,8 +367,11 @@ public:
             control);
         const bool memory_operation =
             control.mem_read || control.mem_write;
+        // The size field as its two bits, as the alignment gates read it:
+        // bit 0 asks for an even address, bit 1 for a multiple of four.
+        const uint32_t size_code = rv32i::pipeline_encoding::bits(word(*this, "IN_CONTROL"), 11, 0x3U);
         const bool data_misaligned =
-            memory_operation && misaligned(address, control.mem_size);
+            memory_operation && (((size_code & 1U) && (address & 1U)) || ((size_code & 2U) && (address & 3U)));
         const bool data_fault =
             memory_operation
             && high(getInputValue("DMEM_FAULT"))
@@ -464,10 +463,7 @@ public:
         _updateOutputWire<2>(
             simulator,
             "DMEM_SIZE",
-            port_active
-                ? rv32i::component_encoding::memorySize(
-                      control.mem_size)
-                : 0U,
+            port_active ? size_code : 0U,
             time);
         _updateOutputWire(
             simulator,

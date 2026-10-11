@@ -116,7 +116,7 @@ Two splitters, 32 gates of each operation, and three joiners provide three paral
 
 #### Behavioral implementation
 
-`Logic32Behavioral` applies the same four-state gate rules per bit with one abstract delay tick.
+`Logic32Behavioral` applies the same four-state gate rules per bit and publishes when the gate-level form would have settled for the same inputs.
 
 ### Examples
 
@@ -475,7 +475,7 @@ The root contains `CONTROL`, `ARITHMETIC`, `LOGIC`, `SHIFT`, `COMPARE`, `RESULT_
 
 #### Behavioral implementation
 
-`ALU32Behavioral` computes the selected operation and flags directly with one abstract delay tick. The registered contract is `rv32i.alu32`; structural remains available. Inside a structural ALU the arithmetic, logic, shift, and zero-detect units are always built from gates; each keeps its own behavioral form when used standalone.
+`ALU32Behavioral` computes the selected operation and flags directly and publishes each output when the gate-level ALU would have settled for the same operands: it keeps a flat list of those gates and times every change on it, never earlier than the gates and never later than the delay proven for the selected operation. The registered contract is `rv32i.alu32`; structural remains available. Inside a structural ALU the arithmetic, logic, shift, and zero-detect units are always built from gates; each keeps its own behavioral form when used standalone.
 
 ### Examples
 

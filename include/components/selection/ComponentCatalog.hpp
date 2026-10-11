@@ -3,6 +3,7 @@
 #include "components/selection/BuildManifest.hpp"
 #include "components/selection/BuildProfile.hpp"
 #include "components/selection/SelectionTypes.hpp"
+#include "components/PartDelays.hpp"
 #include <functional>
 #include <map>
 #include <memory>
@@ -60,6 +61,9 @@ public:
     std::shared_ptr<Component> createChild(
         const ComponentBuildRequest& request,
         const std::shared_ptr<BuildContext>& parent_context) const;
+
+    std::shared_ptr<const DelayTwin> delayTwin(
+        const ComponentBuildRequest& request, const std::string& implementation, const PartDelays& table) const;
 
     BuildResult createRoot(ComponentBuildRequest request,
                            BuildProfile profile) const;

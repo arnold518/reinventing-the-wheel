@@ -48,9 +48,17 @@ int main() {
         // 12 ticks: the read path proven on the gate-level register file.
         for(const auto& e:r.endpoints)read_arcs+=e.changes&&e.bound==12&&(e.name=="RS1_DATA"||e.name=="RS2_DATA");
         check(r.valid&&read_arcs==2,"Both asynchronous register read arcs remain visible");
-        // Pure behavioral execution has no defensible gate critical path.
+        // A compact system is analyzed from its proven delay tables; it is
+        // never certified faster than its gates.
         RV32IExperimentConfig config;
-        rejects([&]{auto c=config;c.safe_clock_only=true;runRV32IExperiment(c);});
+        for(const auto* core:{"single","baseline"}) {
+            auto compact=config;compact.core=core;compact.safe_clock_only=true;
+            auto gates=compact;gates.fidelity="reference";
+            const auto compact_clock=runRV32IExperiment(compact).safe_clock,gate_clock=runRV32IExperiment(gates).safe_clock;
+            check(compact_clock.status==ClockTimingStatus::SafeUnderContracts&&gate_clock.safe_period_ticks
+                  &&compact_clock.safe_period_ticks&&*compact_clock.safe_period_ticks>=*gate_clock.safe_period_ticks,
+                  "Compact system clock is proven and not below the gates'");
+        }
         for(const auto* core:{"single","baseline","advanced"}) {
             config.core=core;
             auto run=runRV32IExperiment(config);

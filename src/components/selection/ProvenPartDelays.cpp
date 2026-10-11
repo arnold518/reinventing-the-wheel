@@ -26,7 +26,7 @@ bool sameCircuit(const ParameterMap& parameters) {
         "refresh_interval_ticks", "always_ready", "words_per_row", "block_words", "image_hex"};
     for (const auto& [name, value] : parameters) {
         if (!untimed.contains(name)) return false;
-        if ((name == "words_per_row" || name == "block_words") && value != "2") return false;
+        if (name == "block_words" && value != "2") return false;
     }
     return true;
 }
@@ -74,10 +74,16 @@ const PartDelays* provenPartDelays(const std::string& implementation_id, const P
     for (const auto& [name, value] : parameters) variant_key += (variant_key == implementation_id ? "?" : "&") + name + "=" + value;
     if (const auto* proven = exact(variant_key)) return proven;
     if (implementation_id.rfind("memory.", 0) != 0 || !sameCircuit(parameters)) return nullptr;
+    // The row layout is part of the circuit, except for flip-flop memory,
+    // which has none. Each layout other than the default is proven on its own.
+    std::string rows;
+    if (const auto layout = parameters.find("words_per_row");
+        layout != parameters.end() && layout->second != "2" && implementation_id.find(".ff.") == std::string::npos)
+        rows = "@rows=" + layout->second;
     // No word count: the default size, as proven.
     if (!parameters.contains("depth_words")) {
         const auto ready_default = parameters.find("always_ready");
-        return ready_default != parameters.end() && ready_default->second == "1" ? nullptr : exact(implementation_id);
+        return ready_default != parameters.end() && ready_default->second == "1" ? nullptr : exact(implementation_id + rows);
     }
     // A flip-flop endpoint whose consumer is always ready is a different
     // circuit (no response is kept), proven separately.
@@ -86,6 +92,7 @@ const PartDelays* provenPartDelays(const std::string& implementation_id, const P
     // Only the endpoint is built differently for an always-ready consumer;
     // a device inside it is the same circuit either way.
     if (!variant.empty() && !exact(implementation_id + "@depth=64" + variant)) variant.clear();
+    variant = rows + variant;
     const auto* at64 = exact(implementation_id + "@depth=64" + variant);
     const auto* at128 = exact(implementation_id + "@depth=128" + variant);
     if (!at64 || !at128) return nullptr;

@@ -72,22 +72,19 @@ constexpr RV32IMemorySize memorySize(uint32_t value) {
     }
 }
 
+// The gate-level stages act on the bits of a field, also for codes decode
+// never produces (branch 7, jump 3, a trap cause above 2). Such a code is
+// kept as it is, so the rules below it give what the gates give.
 constexpr RV32IBranchType branchType(uint32_t value) {
-    return value <= static_cast<uint32_t>(RV32IBranchType::BGEU)
-        ? static_cast<RV32IBranchType>(value)
-        : RV32IBranchType::None;
+    return static_cast<RV32IBranchType>(value & 0x7U);
 }
 
 constexpr RV32IJumpType jumpType(uint32_t value) {
-    return value <= static_cast<uint32_t>(RV32IJumpType::JALR)
-        ? static_cast<RV32IJumpType>(value)
-        : RV32IJumpType::None;
+    return static_cast<RV32IJumpType>(value & 0x3U);
 }
 
 constexpr RV32ITrapCause trapCause(uint32_t value) {
-    return value <= static_cast<uint32_t>(RV32ITrapCause::EnvironmentCall)
-        ? static_cast<RV32ITrapCause>(value)
-        : RV32ITrapCause::IllegalInstruction;
+    return static_cast<RV32ITrapCause>(value & 0xFU);
 }
 
 constexpr RV32IControlSignals unpackControl(uint32_t word) {
