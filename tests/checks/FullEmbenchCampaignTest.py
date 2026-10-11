@@ -24,7 +24,7 @@ class FullEmbenchCampaignTest(unittest.TestCase):
                 [str(BUILD / "rv32i_cycle_estimate"), "--program", str(program)], text=True, timeout=10))
             actual = json.loads(subprocess.check_output(
                 [str(BUILD / "rv32i_experiment"), "--program", str(program), "--core", "baseline",
-                 "--period", "62", "--allocation-limit-mib", "512"], text=True, timeout=30))
+                 "--period", "auto", "--allocation-limit-mib", "512"], text=True, timeout=60))
             self.assertEqual(estimated["instructions"], actual["retired_instructions"] + actual["terminal_attempts"])
             self.assertEqual(estimated["baseline_cycles_estimate"], actual["cycles"])
 

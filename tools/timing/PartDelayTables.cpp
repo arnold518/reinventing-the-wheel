@@ -104,8 +104,10 @@ circuit::PartDelays prove(const Candidate& candidate, size_t budget, std::string
     if (std::dynamic_pointer_cast<BasicComponent>(gates)) { reason = "storage: compact in the reference profile"; return {}; }
     const auto pins = std::dynamic_pointer_cast<IOComponent>(gates);
     if (!pins || pins->getAllOutputPins().empty()) { reason = "no outputs"; return {}; }
+    // Proven for inputs that end at any of 0, 1, X or Z. Assuming 0 or 1
+    // would remove a few false paths, but an X on a select line keeps both
+    // sides live, and a compact part must not be faster than its gates then.
     SettlingOptions options;
-    options.binary_sources = true;
     options.search_budget = budget;
     if (pins->getInputPinDynamic("RST")) options.fixed_inputs["RST"] = 0;
     std::vector<std::string> diagnostics;

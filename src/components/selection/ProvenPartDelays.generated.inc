@@ -55,26 +55,26 @@
     t.evidence = "proven on alu.width8.structural";
     t.arcs = {
         Arc{"A", "CARRY", {12, 30}},
-        Arc{"A", "NEGATIVE", {6, 45}},
-        Arc{"A", "OUT", {4, 43}},
+        Arc{"A", "NEGATIVE", {6, 47}},
+        Arc{"A", "OUT", {4, 45}},
         Arc{"A", "OVERFLOW", {12, 31}},
-        Arc{"A", "ZERO", {9, 48}},
+        Arc{"A", "ZERO", {9, 50}},
         Arc{"B", "CARRY", {6, 30}},
         Arc{"B", "NEGATIVE", {6, 47}},
         Arc{"B", "OUT", {4, 45}},
         Arc{"B", "OVERFLOW", {14, 31}},
         Arc{"B", "ZERO", {9, 50}},
         Arc{"C_IN", "CARRY", {9, 25}},
-        Arc{"C_IN", "NEGATIVE", {30, 30}},
-        Arc{"C_IN", "OUT", {14, 28}},
+        Arc{"C_IN", "NEGATIVE", {30, 42}},
+        Arc{"C_IN", "OUT", {14, 40}},
         Arc{"C_IN", "OVERFLOW", {26, 26}},
-        Arc{"C_IN", "ZERO", {19, 33}},
-        Arc{"OP", "CARRY", {7, 43}},
+        Arc{"C_IN", "ZERO", {19, 45}},
+        Arc{"OP", "CARRY", {7, 46}},
         Arc{"OP", "INVALID_OP", {5, 8}},
-        Arc{"OP", "NEGATIVE", {9, 58}},
-        Arc{"OP", "OUT", {7, 60}},
-        Arc{"OP", "OVERFLOW", {6, 44}},
-        Arc{"OP", "ZERO", {12, 65}},
+        Arc{"OP", "NEGATIVE", {9, 63}},
+        Arc{"OP", "OUT", {7, 61}},
+        Arc{"OP", "OVERFLOW", {6, 47}},
+        Arc{"OP", "ZERO", {12, 66}},
     };
     return t;
 }()},
@@ -2247,6 +2247,7 @@
         Arc{"RSP_READY", "MEM_READ_EN", {4, 4}},
         Arc{"RSP_READY", "MEM_WE", {4, 4}},
         Arc{"RSP_READY", "REQ_READY", {2, 2}},
+        Arc{"RSP_READY", "RSP_VALID", {5, 5}},
     };
     t.clock = "CLK";
     t.clock_outputs.push_back("MEM_CLK");
@@ -2295,6 +2296,7 @@
         Arc{"RSP_READY", "MEM_READ_EN", {4, 4}},
         Arc{"RSP_READY", "MEM_WE", {4, 4}},
         Arc{"RSP_READY", "REQ_READY", {2, 2}},
+        Arc{"RSP_READY", "RSP_VALID", {5, 5}},
     };
     t.clock = "CLK";
     t.clock_outputs.push_back("MEM_CLK");
@@ -2343,6 +2345,7 @@
         Arc{"RSP_READY", "MEM_READ_EN", {4, 4}},
         Arc{"RSP_READY", "MEM_WE", {4, 4}},
         Arc{"RSP_READY", "REQ_READY", {2, 2}},
+        Arc{"RSP_READY", "RSP_VALID", {5, 5}},
     };
     t.clock = "CLK";
     t.clock_outputs.push_back("MEM_CLK");
@@ -2727,28 +2730,32 @@
     PartDelays t;
     t.evidence = "proven on memory.ff.endpoint.16.structural";
     t.arcs = {
-        Arc{"REQ_ADDR", "RSP_READ_DATA", {10, 18}},
+        Arc{"REQ_ADDR", "RSP_READ_DATA", {10, 20}},
         Arc{"REQ_ADDR", "RSP_STATUS", {9, 27}},
-        Arc{"REQ_OP", "RSP_READ_DATA", {9, 15}},
+        Arc{"REQ_OP", "RSP_READ_DATA", {9, 17}},
         Arc{"REQ_OP", "RSP_STATUS", {9, 24}},
-        Arc{"REQ_VALID", "RSP_READ_DATA", {10, 10}},
+        Arc{"REQ_VALID", "RSP_READ_DATA", {10, 11}},
+        Arc{"REQ_VALID", "RSP_STATUS", {10, 11}},
         Arc{"REQ_VALID", "RSP_VALID", {3, 3}},
-        Arc{"REQ_WRITE_MASK", "RSP_READ_DATA", {11, 14}},
+        Arc{"REQ_WRITE_MASK", "RSP_READ_DATA", {11, 16}},
         Arc{"REQ_WRITE_MASK", "RSP_STATUS", {9, 18}},
         Arc{"RSP_READY", "REQ_READY", {2, 2}},
+        Arc{"RSP_READY", "RSP_READ_DATA", {12, 13}},
+        Arc{"RSP_READY", "RSP_STATUS", {12, 13}},
+        Arc{"RSP_READY", "RSP_VALID", {5, 5}},
     };
     t.clock = "CLK";
     t.launches["REQ_READY"] = {6, 7};
-    t.launches["RSP_READ_DATA"] = {5, 17};
-    t.launches["RSP_STATUS"] = {5, 7};
+    t.launches["RSP_READ_DATA"] = {5, 18};
+    t.launches["RSP_STATUS"] = {5, 18};
     t.launches["RSP_VALID"] = {5, 10};
     t.setup["REQ_ADDR"] = 33;
     t.setup["REQ_OP"] = 30;
-    t.setup["REQ_VALID"] = 16;
+    t.setup["REQ_VALID"] = 17;
     t.setup["REQ_WRITE_DATA"] = 9;
     t.setup["REQ_WRITE_MASK"] = 24;
-    t.setup["RSP_READY"] = 18;
-    t.internal_period = 23;
+    t.setup["RSP_READY"] = 19;
+    t.internal_period = 24;
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
@@ -2756,28 +2763,32 @@
     PartDelays t;
     t.evidence = "proven on memory.ff.endpoint.16.structural";
     t.arcs = {
-        Arc{"REQ_ADDR", "RSP_READ_DATA", {10, 18}},
+        Arc{"REQ_ADDR", "RSP_READ_DATA", {10, 20}},
         Arc{"REQ_ADDR", "RSP_STATUS", {9, 27}},
-        Arc{"REQ_OP", "RSP_READ_DATA", {9, 15}},
+        Arc{"REQ_OP", "RSP_READ_DATA", {9, 17}},
         Arc{"REQ_OP", "RSP_STATUS", {9, 24}},
-        Arc{"REQ_VALID", "RSP_READ_DATA", {10, 10}},
+        Arc{"REQ_VALID", "RSP_READ_DATA", {10, 11}},
+        Arc{"REQ_VALID", "RSP_STATUS", {10, 11}},
         Arc{"REQ_VALID", "RSP_VALID", {3, 3}},
-        Arc{"REQ_WRITE_MASK", "RSP_READ_DATA", {11, 14}},
+        Arc{"REQ_WRITE_MASK", "RSP_READ_DATA", {11, 16}},
         Arc{"REQ_WRITE_MASK", "RSP_STATUS", {9, 18}},
         Arc{"RSP_READY", "REQ_READY", {2, 2}},
+        Arc{"RSP_READY", "RSP_READ_DATA", {12, 13}},
+        Arc{"RSP_READY", "RSP_STATUS", {12, 13}},
+        Arc{"RSP_READY", "RSP_VALID", {5, 5}},
     };
     t.clock = "CLK";
     t.launches["REQ_READY"] = {6, 7};
-    t.launches["RSP_READ_DATA"] = {5, 17};
-    t.launches["RSP_STATUS"] = {5, 7};
+    t.launches["RSP_READ_DATA"] = {5, 18};
+    t.launches["RSP_STATUS"] = {5, 18};
     t.launches["RSP_VALID"] = {5, 10};
     t.setup["REQ_ADDR"] = 33;
     t.setup["REQ_OP"] = 30;
-    t.setup["REQ_VALID"] = 16;
+    t.setup["REQ_VALID"] = 17;
     t.setup["REQ_WRITE_DATA"] = 9;
     t.setup["REQ_WRITE_MASK"] = 24;
-    t.setup["RSP_READY"] = 18;
-    t.internal_period = 23;
+    t.setup["RSP_READY"] = 19;
+    t.internal_period = 24;
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
@@ -2787,25 +2798,29 @@
     t.arcs = {
         Arc{"REQ_ADDR", "RSP_READ_DATA", {10, 21}},
         Arc{"REQ_ADDR", "RSP_STATUS", {9, 27}},
-        Arc{"REQ_OP", "RSP_READ_DATA", {9, 15}},
+        Arc{"REQ_OP", "RSP_READ_DATA", {9, 17}},
         Arc{"REQ_OP", "RSP_STATUS", {9, 24}},
-        Arc{"REQ_VALID", "RSP_READ_DATA", {10, 10}},
+        Arc{"REQ_VALID", "RSP_READ_DATA", {10, 11}},
+        Arc{"REQ_VALID", "RSP_STATUS", {10, 11}},
         Arc{"REQ_VALID", "RSP_VALID", {3, 3}},
-        Arc{"REQ_WRITE_MASK", "RSP_READ_DATA", {11, 14}},
+        Arc{"REQ_WRITE_MASK", "RSP_READ_DATA", {11, 16}},
         Arc{"REQ_WRITE_MASK", "RSP_STATUS", {9, 18}},
         Arc{"RSP_READY", "REQ_READY", {2, 2}},
+        Arc{"RSP_READY", "RSP_READ_DATA", {12, 13}},
+        Arc{"RSP_READY", "RSP_STATUS", {12, 13}},
+        Arc{"RSP_READY", "RSP_VALID", {5, 5}},
     };
     t.clock = "CLK";
     t.launches["REQ_READY"] = {6, 7};
     t.launches["RSP_READ_DATA"] = {5, 23};
-    t.launches["RSP_STATUS"] = {5, 7};
+    t.launches["RSP_STATUS"] = {5, 18};
     t.launches["RSP_VALID"] = {5, 10};
     t.setup["REQ_ADDR"] = 33;
     t.setup["REQ_OP"] = 30;
-    t.setup["REQ_VALID"] = 16;
+    t.setup["REQ_VALID"] = 17;
     t.setup["REQ_WRITE_DATA"] = 9;
     t.setup["REQ_WRITE_MASK"] = 24;
-    t.setup["RSP_READY"] = 18;
+    t.setup["RSP_READY"] = 19;
     t.internal_period = 29;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -2816,25 +2831,29 @@
     t.arcs = {
         Arc{"REQ_ADDR", "RSP_READ_DATA", {10, 21}},
         Arc{"REQ_ADDR", "RSP_STATUS", {9, 27}},
-        Arc{"REQ_OP", "RSP_READ_DATA", {9, 15}},
+        Arc{"REQ_OP", "RSP_READ_DATA", {9, 17}},
         Arc{"REQ_OP", "RSP_STATUS", {9, 24}},
-        Arc{"REQ_VALID", "RSP_READ_DATA", {10, 10}},
+        Arc{"REQ_VALID", "RSP_READ_DATA", {10, 11}},
+        Arc{"REQ_VALID", "RSP_STATUS", {10, 11}},
         Arc{"REQ_VALID", "RSP_VALID", {3, 3}},
-        Arc{"REQ_WRITE_MASK", "RSP_READ_DATA", {11, 14}},
+        Arc{"REQ_WRITE_MASK", "RSP_READ_DATA", {11, 16}},
         Arc{"REQ_WRITE_MASK", "RSP_STATUS", {9, 18}},
         Arc{"RSP_READY", "REQ_READY", {2, 2}},
+        Arc{"RSP_READY", "RSP_READ_DATA", {12, 13}},
+        Arc{"RSP_READY", "RSP_STATUS", {12, 13}},
+        Arc{"RSP_READY", "RSP_VALID", {5, 5}},
     };
     t.clock = "CLK";
     t.launches["REQ_READY"] = {6, 7};
     t.launches["RSP_READ_DATA"] = {5, 23};
-    t.launches["RSP_STATUS"] = {5, 7};
+    t.launches["RSP_STATUS"] = {5, 18};
     t.launches["RSP_VALID"] = {5, 10};
     t.setup["REQ_ADDR"] = 33;
     t.setup["REQ_OP"] = 30;
-    t.setup["REQ_VALID"] = 16;
+    t.setup["REQ_VALID"] = 17;
     t.setup["REQ_WRITE_DATA"] = 9;
     t.setup["REQ_WRITE_MASK"] = 24;
-    t.setup["RSP_READY"] = 18;
+    t.setup["RSP_READY"] = 19;
     t.internal_period = 29;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -2845,25 +2864,29 @@
     t.arcs = {
         Arc{"REQ_ADDR", "RSP_READ_DATA", {10, 23}},
         Arc{"REQ_ADDR", "RSP_STATUS", {9, 27}},
-        Arc{"REQ_OP", "RSP_READ_DATA", {9, 15}},
+        Arc{"REQ_OP", "RSP_READ_DATA", {9, 17}},
         Arc{"REQ_OP", "RSP_STATUS", {9, 24}},
-        Arc{"REQ_VALID", "RSP_READ_DATA", {10, 10}},
+        Arc{"REQ_VALID", "RSP_READ_DATA", {10, 11}},
+        Arc{"REQ_VALID", "RSP_STATUS", {10, 11}},
         Arc{"REQ_VALID", "RSP_VALID", {3, 3}},
-        Arc{"REQ_WRITE_MASK", "RSP_READ_DATA", {11, 14}},
+        Arc{"REQ_WRITE_MASK", "RSP_READ_DATA", {11, 16}},
         Arc{"REQ_WRITE_MASK", "RSP_STATUS", {9, 18}},
         Arc{"RSP_READY", "REQ_READY", {2, 2}},
+        Arc{"RSP_READY", "RSP_READ_DATA", {12, 13}},
+        Arc{"RSP_READY", "RSP_STATUS", {12, 13}},
+        Arc{"RSP_READY", "RSP_VALID", {5, 5}},
     };
     t.clock = "CLK";
     t.launches["REQ_READY"] = {6, 7};
     t.launches["RSP_READ_DATA"] = {5, 25};
-    t.launches["RSP_STATUS"] = {5, 7};
+    t.launches["RSP_STATUS"] = {5, 18};
     t.launches["RSP_VALID"] = {5, 10};
     t.setup["REQ_ADDR"] = 33;
     t.setup["REQ_OP"] = 30;
-    t.setup["REQ_VALID"] = 16;
+    t.setup["REQ_VALID"] = 17;
     t.setup["REQ_WRITE_DATA"] = 9;
     t.setup["REQ_WRITE_MASK"] = 24;
-    t.setup["RSP_READY"] = 18;
+    t.setup["RSP_READY"] = 19;
     t.internal_period = 31;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -2874,25 +2897,29 @@
     t.arcs = {
         Arc{"REQ_ADDR", "RSP_READ_DATA", {10, 23}},
         Arc{"REQ_ADDR", "RSP_STATUS", {9, 27}},
-        Arc{"REQ_OP", "RSP_READ_DATA", {9, 15}},
+        Arc{"REQ_OP", "RSP_READ_DATA", {9, 17}},
         Arc{"REQ_OP", "RSP_STATUS", {9, 24}},
-        Arc{"REQ_VALID", "RSP_READ_DATA", {10, 10}},
+        Arc{"REQ_VALID", "RSP_READ_DATA", {10, 11}},
+        Arc{"REQ_VALID", "RSP_STATUS", {10, 11}},
         Arc{"REQ_VALID", "RSP_VALID", {3, 3}},
-        Arc{"REQ_WRITE_MASK", "RSP_READ_DATA", {11, 14}},
+        Arc{"REQ_WRITE_MASK", "RSP_READ_DATA", {11, 16}},
         Arc{"REQ_WRITE_MASK", "RSP_STATUS", {9, 18}},
         Arc{"RSP_READY", "REQ_READY", {2, 2}},
+        Arc{"RSP_READY", "RSP_READ_DATA", {12, 13}},
+        Arc{"RSP_READY", "RSP_STATUS", {12, 13}},
+        Arc{"RSP_READY", "RSP_VALID", {5, 5}},
     };
     t.clock = "CLK";
     t.launches["REQ_READY"] = {6, 7};
     t.launches["RSP_READ_DATA"] = {5, 25};
-    t.launches["RSP_STATUS"] = {5, 7};
+    t.launches["RSP_STATUS"] = {5, 18};
     t.launches["RSP_VALID"] = {5, 10};
     t.setup["REQ_ADDR"] = 33;
     t.setup["REQ_OP"] = 30;
-    t.setup["REQ_VALID"] = 16;
+    t.setup["REQ_VALID"] = 17;
     t.setup["REQ_WRITE_DATA"] = 9;
     t.setup["REQ_WRITE_MASK"] = 24;
-    t.setup["RSP_READY"] = 18;
+    t.setup["RSP_READY"] = 19;
     t.internal_period = 31;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -2903,11 +2930,12 @@
     t.arcs = {
         Arc{"REQ_ADDR", "RSP_READ_DATA", {7, 18}},
         Arc{"REQ_ADDR", "RSP_STATUS", {6, 24}},
-        Arc{"REQ_OP", "RSP_READ_DATA", {6, 12}},
+        Arc{"REQ_OP", "RSP_READ_DATA", {6, 14}},
         Arc{"REQ_OP", "RSP_STATUS", {6, 21}},
-        Arc{"REQ_VALID", "RSP_READ_DATA", {7, 7}},
+        Arc{"REQ_VALID", "RSP_READ_DATA", {7, 8}},
+        Arc{"REQ_VALID", "RSP_STATUS", {7, 8}},
         Arc{"REQ_VALID", "RSP_VALID", {1, 1}},
-        Arc{"REQ_WRITE_MASK", "RSP_READ_DATA", {8, 11}},
+        Arc{"REQ_WRITE_MASK", "RSP_READ_DATA", {8, 13}},
         Arc{"REQ_WRITE_MASK", "RSP_STATUS", {6, 15}},
     };
     t.clock = "CLK";
@@ -2927,11 +2955,12 @@
     t.arcs = {
         Arc{"REQ_ADDR", "RSP_READ_DATA", {7, 18}},
         Arc{"REQ_ADDR", "RSP_STATUS", {6, 24}},
-        Arc{"REQ_OP", "RSP_READ_DATA", {6, 12}},
+        Arc{"REQ_OP", "RSP_READ_DATA", {6, 14}},
         Arc{"REQ_OP", "RSP_STATUS", {6, 21}},
-        Arc{"REQ_VALID", "RSP_READ_DATA", {7, 7}},
+        Arc{"REQ_VALID", "RSP_READ_DATA", {7, 8}},
+        Arc{"REQ_VALID", "RSP_STATUS", {7, 8}},
         Arc{"REQ_VALID", "RSP_VALID", {1, 1}},
-        Arc{"REQ_WRITE_MASK", "RSP_READ_DATA", {8, 11}},
+        Arc{"REQ_WRITE_MASK", "RSP_READ_DATA", {8, 13}},
         Arc{"REQ_WRITE_MASK", "RSP_STATUS", {6, 15}},
     };
     t.clock = "CLK";
@@ -2951,11 +2980,12 @@
     t.arcs = {
         Arc{"REQ_ADDR", "RSP_READ_DATA", {7, 20}},
         Arc{"REQ_ADDR", "RSP_STATUS", {6, 24}},
-        Arc{"REQ_OP", "RSP_READ_DATA", {6, 12}},
+        Arc{"REQ_OP", "RSP_READ_DATA", {6, 14}},
         Arc{"REQ_OP", "RSP_STATUS", {6, 21}},
-        Arc{"REQ_VALID", "RSP_READ_DATA", {7, 7}},
+        Arc{"REQ_VALID", "RSP_READ_DATA", {7, 8}},
+        Arc{"REQ_VALID", "RSP_STATUS", {7, 8}},
         Arc{"REQ_VALID", "RSP_VALID", {1, 1}},
-        Arc{"REQ_WRITE_MASK", "RSP_READ_DATA", {8, 11}},
+        Arc{"REQ_WRITE_MASK", "RSP_READ_DATA", {8, 13}},
         Arc{"REQ_WRITE_MASK", "RSP_STATUS", {6, 15}},
     };
     t.clock = "CLK";
@@ -2975,11 +3005,12 @@
     t.arcs = {
         Arc{"REQ_ADDR", "RSP_READ_DATA", {7, 20}},
         Arc{"REQ_ADDR", "RSP_STATUS", {6, 24}},
-        Arc{"REQ_OP", "RSP_READ_DATA", {6, 12}},
+        Arc{"REQ_OP", "RSP_READ_DATA", {6, 14}},
         Arc{"REQ_OP", "RSP_STATUS", {6, 21}},
-        Arc{"REQ_VALID", "RSP_READ_DATA", {7, 7}},
+        Arc{"REQ_VALID", "RSP_READ_DATA", {7, 8}},
+        Arc{"REQ_VALID", "RSP_STATUS", {7, 8}},
         Arc{"REQ_VALID", "RSP_VALID", {1, 1}},
-        Arc{"REQ_WRITE_MASK", "RSP_READ_DATA", {8, 11}},
+        Arc{"REQ_WRITE_MASK", "RSP_READ_DATA", {8, 13}},
         Arc{"REQ_WRITE_MASK", "RSP_STATUS", {6, 15}},
     };
     t.clock = "CLK";
@@ -2997,28 +3028,32 @@
     PartDelays t;
     t.evidence = "proven on memory.ff.endpoint.32.structural";
     t.arcs = {
-        Arc{"REQ_ADDR", "RSP_READ_DATA", {10, 18}},
+        Arc{"REQ_ADDR", "RSP_READ_DATA", {10, 20}},
         Arc{"REQ_ADDR", "RSP_STATUS", {9, 27}},
-        Arc{"REQ_OP", "RSP_READ_DATA", {9, 15}},
+        Arc{"REQ_OP", "RSP_READ_DATA", {9, 17}},
         Arc{"REQ_OP", "RSP_STATUS", {9, 24}},
-        Arc{"REQ_VALID", "RSP_READ_DATA", {10, 10}},
+        Arc{"REQ_VALID", "RSP_READ_DATA", {10, 11}},
+        Arc{"REQ_VALID", "RSP_STATUS", {10, 11}},
         Arc{"REQ_VALID", "RSP_VALID", {3, 3}},
-        Arc{"REQ_WRITE_MASK", "RSP_READ_DATA", {11, 14}},
+        Arc{"REQ_WRITE_MASK", "RSP_READ_DATA", {11, 16}},
         Arc{"REQ_WRITE_MASK", "RSP_STATUS", {9, 18}},
         Arc{"RSP_READY", "REQ_READY", {2, 2}},
+        Arc{"RSP_READY", "RSP_READ_DATA", {12, 13}},
+        Arc{"RSP_READY", "RSP_STATUS", {12, 13}},
+        Arc{"RSP_READY", "RSP_VALID", {5, 5}},
     };
     t.clock = "CLK";
     t.launches["REQ_READY"] = {6, 7};
-    t.launches["RSP_READ_DATA"] = {5, 17};
-    t.launches["RSP_STATUS"] = {5, 7};
+    t.launches["RSP_READ_DATA"] = {5, 18};
+    t.launches["RSP_STATUS"] = {5, 18};
     t.launches["RSP_VALID"] = {5, 10};
     t.setup["REQ_ADDR"] = 33;
     t.setup["REQ_OP"] = 30;
-    t.setup["REQ_VALID"] = 16;
+    t.setup["REQ_VALID"] = 17;
     t.setup["REQ_WRITE_DATA"] = 9;
     t.setup["REQ_WRITE_MASK"] = 24;
-    t.setup["RSP_READY"] = 18;
-    t.internal_period = 23;
+    t.setup["RSP_READY"] = 19;
+    t.internal_period = 24;
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
@@ -3026,28 +3061,32 @@
     PartDelays t;
     t.evidence = "proven on memory.ff.endpoint.32.structural";
     t.arcs = {
-        Arc{"REQ_ADDR", "RSP_READ_DATA", {10, 18}},
+        Arc{"REQ_ADDR", "RSP_READ_DATA", {10, 20}},
         Arc{"REQ_ADDR", "RSP_STATUS", {9, 27}},
-        Arc{"REQ_OP", "RSP_READ_DATA", {9, 15}},
+        Arc{"REQ_OP", "RSP_READ_DATA", {9, 17}},
         Arc{"REQ_OP", "RSP_STATUS", {9, 24}},
-        Arc{"REQ_VALID", "RSP_READ_DATA", {10, 10}},
+        Arc{"REQ_VALID", "RSP_READ_DATA", {10, 11}},
+        Arc{"REQ_VALID", "RSP_STATUS", {10, 11}},
         Arc{"REQ_VALID", "RSP_VALID", {3, 3}},
-        Arc{"REQ_WRITE_MASK", "RSP_READ_DATA", {11, 14}},
+        Arc{"REQ_WRITE_MASK", "RSP_READ_DATA", {11, 16}},
         Arc{"REQ_WRITE_MASK", "RSP_STATUS", {9, 18}},
         Arc{"RSP_READY", "REQ_READY", {2, 2}},
+        Arc{"RSP_READY", "RSP_READ_DATA", {12, 13}},
+        Arc{"RSP_READY", "RSP_STATUS", {12, 13}},
+        Arc{"RSP_READY", "RSP_VALID", {5, 5}},
     };
     t.clock = "CLK";
     t.launches["REQ_READY"] = {6, 7};
-    t.launches["RSP_READ_DATA"] = {5, 17};
-    t.launches["RSP_STATUS"] = {5, 7};
+    t.launches["RSP_READ_DATA"] = {5, 18};
+    t.launches["RSP_STATUS"] = {5, 18};
     t.launches["RSP_VALID"] = {5, 10};
     t.setup["REQ_ADDR"] = 33;
     t.setup["REQ_OP"] = 30;
-    t.setup["REQ_VALID"] = 16;
+    t.setup["REQ_VALID"] = 17;
     t.setup["REQ_WRITE_DATA"] = 9;
     t.setup["REQ_WRITE_MASK"] = 24;
-    t.setup["RSP_READY"] = 18;
-    t.internal_period = 23;
+    t.setup["RSP_READY"] = 19;
+    t.internal_period = 24;
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
@@ -3057,25 +3096,29 @@
     t.arcs = {
         Arc{"REQ_ADDR", "RSP_READ_DATA", {10, 21}},
         Arc{"REQ_ADDR", "RSP_STATUS", {9, 27}},
-        Arc{"REQ_OP", "RSP_READ_DATA", {9, 15}},
+        Arc{"REQ_OP", "RSP_READ_DATA", {9, 17}},
         Arc{"REQ_OP", "RSP_STATUS", {9, 24}},
-        Arc{"REQ_VALID", "RSP_READ_DATA", {10, 10}},
+        Arc{"REQ_VALID", "RSP_READ_DATA", {10, 11}},
+        Arc{"REQ_VALID", "RSP_STATUS", {10, 11}},
         Arc{"REQ_VALID", "RSP_VALID", {3, 3}},
-        Arc{"REQ_WRITE_MASK", "RSP_READ_DATA", {11, 14}},
+        Arc{"REQ_WRITE_MASK", "RSP_READ_DATA", {11, 16}},
         Arc{"REQ_WRITE_MASK", "RSP_STATUS", {9, 18}},
         Arc{"RSP_READY", "REQ_READY", {2, 2}},
+        Arc{"RSP_READY", "RSP_READ_DATA", {12, 13}},
+        Arc{"RSP_READY", "RSP_STATUS", {12, 13}},
+        Arc{"RSP_READY", "RSP_VALID", {5, 5}},
     };
     t.clock = "CLK";
     t.launches["REQ_READY"] = {6, 7};
     t.launches["RSP_READ_DATA"] = {5, 23};
-    t.launches["RSP_STATUS"] = {5, 7};
+    t.launches["RSP_STATUS"] = {5, 18};
     t.launches["RSP_VALID"] = {5, 10};
     t.setup["REQ_ADDR"] = 33;
     t.setup["REQ_OP"] = 30;
-    t.setup["REQ_VALID"] = 16;
+    t.setup["REQ_VALID"] = 17;
     t.setup["REQ_WRITE_DATA"] = 9;
     t.setup["REQ_WRITE_MASK"] = 24;
-    t.setup["RSP_READY"] = 18;
+    t.setup["RSP_READY"] = 19;
     t.internal_period = 29;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -3086,25 +3129,29 @@
     t.arcs = {
         Arc{"REQ_ADDR", "RSP_READ_DATA", {10, 21}},
         Arc{"REQ_ADDR", "RSP_STATUS", {9, 27}},
-        Arc{"REQ_OP", "RSP_READ_DATA", {9, 15}},
+        Arc{"REQ_OP", "RSP_READ_DATA", {9, 17}},
         Arc{"REQ_OP", "RSP_STATUS", {9, 24}},
-        Arc{"REQ_VALID", "RSP_READ_DATA", {10, 10}},
+        Arc{"REQ_VALID", "RSP_READ_DATA", {10, 11}},
+        Arc{"REQ_VALID", "RSP_STATUS", {10, 11}},
         Arc{"REQ_VALID", "RSP_VALID", {3, 3}},
-        Arc{"REQ_WRITE_MASK", "RSP_READ_DATA", {11, 14}},
+        Arc{"REQ_WRITE_MASK", "RSP_READ_DATA", {11, 16}},
         Arc{"REQ_WRITE_MASK", "RSP_STATUS", {9, 18}},
         Arc{"RSP_READY", "REQ_READY", {2, 2}},
+        Arc{"RSP_READY", "RSP_READ_DATA", {12, 13}},
+        Arc{"RSP_READY", "RSP_STATUS", {12, 13}},
+        Arc{"RSP_READY", "RSP_VALID", {5, 5}},
     };
     t.clock = "CLK";
     t.launches["REQ_READY"] = {6, 7};
     t.launches["RSP_READ_DATA"] = {5, 23};
-    t.launches["RSP_STATUS"] = {5, 7};
+    t.launches["RSP_STATUS"] = {5, 18};
     t.launches["RSP_VALID"] = {5, 10};
     t.setup["REQ_ADDR"] = 33;
     t.setup["REQ_OP"] = 30;
-    t.setup["REQ_VALID"] = 16;
+    t.setup["REQ_VALID"] = 17;
     t.setup["REQ_WRITE_DATA"] = 9;
     t.setup["REQ_WRITE_MASK"] = 24;
-    t.setup["RSP_READY"] = 18;
+    t.setup["RSP_READY"] = 19;
     t.internal_period = 29;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -3115,25 +3162,29 @@
     t.arcs = {
         Arc{"REQ_ADDR", "RSP_READ_DATA", {10, 23}},
         Arc{"REQ_ADDR", "RSP_STATUS", {9, 27}},
-        Arc{"REQ_OP", "RSP_READ_DATA", {9, 15}},
+        Arc{"REQ_OP", "RSP_READ_DATA", {9, 17}},
         Arc{"REQ_OP", "RSP_STATUS", {9, 24}},
-        Arc{"REQ_VALID", "RSP_READ_DATA", {10, 10}},
+        Arc{"REQ_VALID", "RSP_READ_DATA", {10, 11}},
+        Arc{"REQ_VALID", "RSP_STATUS", {10, 11}},
         Arc{"REQ_VALID", "RSP_VALID", {3, 3}},
-        Arc{"REQ_WRITE_MASK", "RSP_READ_DATA", {11, 14}},
+        Arc{"REQ_WRITE_MASK", "RSP_READ_DATA", {11, 16}},
         Arc{"REQ_WRITE_MASK", "RSP_STATUS", {9, 18}},
         Arc{"RSP_READY", "REQ_READY", {2, 2}},
+        Arc{"RSP_READY", "RSP_READ_DATA", {12, 13}},
+        Arc{"RSP_READY", "RSP_STATUS", {12, 13}},
+        Arc{"RSP_READY", "RSP_VALID", {5, 5}},
     };
     t.clock = "CLK";
     t.launches["REQ_READY"] = {6, 7};
     t.launches["RSP_READ_DATA"] = {5, 25};
-    t.launches["RSP_STATUS"] = {5, 7};
+    t.launches["RSP_STATUS"] = {5, 18};
     t.launches["RSP_VALID"] = {5, 10};
     t.setup["REQ_ADDR"] = 33;
     t.setup["REQ_OP"] = 30;
-    t.setup["REQ_VALID"] = 16;
+    t.setup["REQ_VALID"] = 17;
     t.setup["REQ_WRITE_DATA"] = 9;
     t.setup["REQ_WRITE_MASK"] = 24;
-    t.setup["RSP_READY"] = 18;
+    t.setup["RSP_READY"] = 19;
     t.internal_period = 31;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -3144,25 +3195,29 @@
     t.arcs = {
         Arc{"REQ_ADDR", "RSP_READ_DATA", {10, 23}},
         Arc{"REQ_ADDR", "RSP_STATUS", {9, 27}},
-        Arc{"REQ_OP", "RSP_READ_DATA", {9, 15}},
+        Arc{"REQ_OP", "RSP_READ_DATA", {9, 17}},
         Arc{"REQ_OP", "RSP_STATUS", {9, 24}},
-        Arc{"REQ_VALID", "RSP_READ_DATA", {10, 10}},
+        Arc{"REQ_VALID", "RSP_READ_DATA", {10, 11}},
+        Arc{"REQ_VALID", "RSP_STATUS", {10, 11}},
         Arc{"REQ_VALID", "RSP_VALID", {3, 3}},
-        Arc{"REQ_WRITE_MASK", "RSP_READ_DATA", {11, 14}},
+        Arc{"REQ_WRITE_MASK", "RSP_READ_DATA", {11, 16}},
         Arc{"REQ_WRITE_MASK", "RSP_STATUS", {9, 18}},
         Arc{"RSP_READY", "REQ_READY", {2, 2}},
+        Arc{"RSP_READY", "RSP_READ_DATA", {12, 13}},
+        Arc{"RSP_READY", "RSP_STATUS", {12, 13}},
+        Arc{"RSP_READY", "RSP_VALID", {5, 5}},
     };
     t.clock = "CLK";
     t.launches["REQ_READY"] = {6, 7};
     t.launches["RSP_READ_DATA"] = {5, 25};
-    t.launches["RSP_STATUS"] = {5, 7};
+    t.launches["RSP_STATUS"] = {5, 18};
     t.launches["RSP_VALID"] = {5, 10};
     t.setup["REQ_ADDR"] = 33;
     t.setup["REQ_OP"] = 30;
-    t.setup["REQ_VALID"] = 16;
+    t.setup["REQ_VALID"] = 17;
     t.setup["REQ_WRITE_DATA"] = 9;
     t.setup["REQ_WRITE_MASK"] = 24;
-    t.setup["RSP_READY"] = 18;
+    t.setup["RSP_READY"] = 19;
     t.internal_period = 31;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -3173,11 +3228,12 @@
     t.arcs = {
         Arc{"REQ_ADDR", "RSP_READ_DATA", {7, 18}},
         Arc{"REQ_ADDR", "RSP_STATUS", {6, 24}},
-        Arc{"REQ_OP", "RSP_READ_DATA", {6, 12}},
+        Arc{"REQ_OP", "RSP_READ_DATA", {6, 14}},
         Arc{"REQ_OP", "RSP_STATUS", {6, 21}},
-        Arc{"REQ_VALID", "RSP_READ_DATA", {7, 7}},
+        Arc{"REQ_VALID", "RSP_READ_DATA", {7, 8}},
+        Arc{"REQ_VALID", "RSP_STATUS", {7, 8}},
         Arc{"REQ_VALID", "RSP_VALID", {1, 1}},
-        Arc{"REQ_WRITE_MASK", "RSP_READ_DATA", {8, 11}},
+        Arc{"REQ_WRITE_MASK", "RSP_READ_DATA", {8, 13}},
         Arc{"REQ_WRITE_MASK", "RSP_STATUS", {6, 15}},
     };
     t.clock = "CLK";
@@ -3197,11 +3253,12 @@
     t.arcs = {
         Arc{"REQ_ADDR", "RSP_READ_DATA", {7, 18}},
         Arc{"REQ_ADDR", "RSP_STATUS", {6, 24}},
-        Arc{"REQ_OP", "RSP_READ_DATA", {6, 12}},
+        Arc{"REQ_OP", "RSP_READ_DATA", {6, 14}},
         Arc{"REQ_OP", "RSP_STATUS", {6, 21}},
-        Arc{"REQ_VALID", "RSP_READ_DATA", {7, 7}},
+        Arc{"REQ_VALID", "RSP_READ_DATA", {7, 8}},
+        Arc{"REQ_VALID", "RSP_STATUS", {7, 8}},
         Arc{"REQ_VALID", "RSP_VALID", {1, 1}},
-        Arc{"REQ_WRITE_MASK", "RSP_READ_DATA", {8, 11}},
+        Arc{"REQ_WRITE_MASK", "RSP_READ_DATA", {8, 13}},
         Arc{"REQ_WRITE_MASK", "RSP_STATUS", {6, 15}},
     };
     t.clock = "CLK";
@@ -3221,11 +3278,12 @@
     t.arcs = {
         Arc{"REQ_ADDR", "RSP_READ_DATA", {7, 20}},
         Arc{"REQ_ADDR", "RSP_STATUS", {6, 24}},
-        Arc{"REQ_OP", "RSP_READ_DATA", {6, 12}},
+        Arc{"REQ_OP", "RSP_READ_DATA", {6, 14}},
         Arc{"REQ_OP", "RSP_STATUS", {6, 21}},
-        Arc{"REQ_VALID", "RSP_READ_DATA", {7, 7}},
+        Arc{"REQ_VALID", "RSP_READ_DATA", {7, 8}},
+        Arc{"REQ_VALID", "RSP_STATUS", {7, 8}},
         Arc{"REQ_VALID", "RSP_VALID", {1, 1}},
-        Arc{"REQ_WRITE_MASK", "RSP_READ_DATA", {8, 11}},
+        Arc{"REQ_WRITE_MASK", "RSP_READ_DATA", {8, 13}},
         Arc{"REQ_WRITE_MASK", "RSP_STATUS", {6, 15}},
     };
     t.clock = "CLK";
@@ -3245,11 +3303,12 @@
     t.arcs = {
         Arc{"REQ_ADDR", "RSP_READ_DATA", {7, 20}},
         Arc{"REQ_ADDR", "RSP_STATUS", {6, 24}},
-        Arc{"REQ_OP", "RSP_READ_DATA", {6, 12}},
+        Arc{"REQ_OP", "RSP_READ_DATA", {6, 14}},
         Arc{"REQ_OP", "RSP_STATUS", {6, 21}},
-        Arc{"REQ_VALID", "RSP_READ_DATA", {7, 7}},
+        Arc{"REQ_VALID", "RSP_READ_DATA", {7, 8}},
+        Arc{"REQ_VALID", "RSP_STATUS", {7, 8}},
         Arc{"REQ_VALID", "RSP_VALID", {1, 1}},
-        Arc{"REQ_WRITE_MASK", "RSP_READ_DATA", {8, 11}},
+        Arc{"REQ_WRITE_MASK", "RSP_READ_DATA", {8, 13}},
         Arc{"REQ_WRITE_MASK", "RSP_STATUS", {6, 15}},
     };
     t.clock = "CLK";
@@ -3267,28 +3326,32 @@
     PartDelays t;
     t.evidence = "proven on memory.ff.endpoint.8.structural";
     t.arcs = {
-        Arc{"REQ_ADDR", "RSP_READ_DATA", {10, 18}},
+        Arc{"REQ_ADDR", "RSP_READ_DATA", {10, 20}},
         Arc{"REQ_ADDR", "RSP_STATUS", {9, 27}},
-        Arc{"REQ_OP", "RSP_READ_DATA", {9, 15}},
+        Arc{"REQ_OP", "RSP_READ_DATA", {9, 17}},
         Arc{"REQ_OP", "RSP_STATUS", {9, 24}},
-        Arc{"REQ_VALID", "RSP_READ_DATA", {10, 10}},
+        Arc{"REQ_VALID", "RSP_READ_DATA", {10, 11}},
+        Arc{"REQ_VALID", "RSP_STATUS", {10, 11}},
         Arc{"REQ_VALID", "RSP_VALID", {3, 3}},
-        Arc{"REQ_WRITE_MASK", "RSP_READ_DATA", {11, 14}},
+        Arc{"REQ_WRITE_MASK", "RSP_READ_DATA", {11, 16}},
         Arc{"REQ_WRITE_MASK", "RSP_STATUS", {9, 18}},
         Arc{"RSP_READY", "REQ_READY", {2, 2}},
+        Arc{"RSP_READY", "RSP_READ_DATA", {12, 13}},
+        Arc{"RSP_READY", "RSP_STATUS", {12, 13}},
+        Arc{"RSP_READY", "RSP_VALID", {5, 5}},
     };
     t.clock = "CLK";
     t.launches["REQ_READY"] = {6, 7};
-    t.launches["RSP_READ_DATA"] = {5, 17};
-    t.launches["RSP_STATUS"] = {5, 7};
+    t.launches["RSP_READ_DATA"] = {5, 18};
+    t.launches["RSP_STATUS"] = {5, 18};
     t.launches["RSP_VALID"] = {5, 10};
     t.setup["REQ_ADDR"] = 33;
     t.setup["REQ_OP"] = 30;
-    t.setup["REQ_VALID"] = 16;
+    t.setup["REQ_VALID"] = 17;
     t.setup["REQ_WRITE_DATA"] = 9;
     t.setup["REQ_WRITE_MASK"] = 24;
-    t.setup["RSP_READY"] = 18;
-    t.internal_period = 23;
+    t.setup["RSP_READY"] = 19;
+    t.internal_period = 24;
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
@@ -3296,28 +3359,32 @@
     PartDelays t;
     t.evidence = "proven on memory.ff.endpoint.8.structural";
     t.arcs = {
-        Arc{"REQ_ADDR", "RSP_READ_DATA", {10, 18}},
+        Arc{"REQ_ADDR", "RSP_READ_DATA", {10, 20}},
         Arc{"REQ_ADDR", "RSP_STATUS", {9, 27}},
-        Arc{"REQ_OP", "RSP_READ_DATA", {9, 15}},
+        Arc{"REQ_OP", "RSP_READ_DATA", {9, 17}},
         Arc{"REQ_OP", "RSP_STATUS", {9, 24}},
-        Arc{"REQ_VALID", "RSP_READ_DATA", {10, 10}},
+        Arc{"REQ_VALID", "RSP_READ_DATA", {10, 11}},
+        Arc{"REQ_VALID", "RSP_STATUS", {10, 11}},
         Arc{"REQ_VALID", "RSP_VALID", {3, 3}},
-        Arc{"REQ_WRITE_MASK", "RSP_READ_DATA", {11, 14}},
+        Arc{"REQ_WRITE_MASK", "RSP_READ_DATA", {11, 16}},
         Arc{"REQ_WRITE_MASK", "RSP_STATUS", {9, 18}},
         Arc{"RSP_READY", "REQ_READY", {2, 2}},
+        Arc{"RSP_READY", "RSP_READ_DATA", {12, 13}},
+        Arc{"RSP_READY", "RSP_STATUS", {12, 13}},
+        Arc{"RSP_READY", "RSP_VALID", {5, 5}},
     };
     t.clock = "CLK";
     t.launches["REQ_READY"] = {6, 7};
-    t.launches["RSP_READ_DATA"] = {5, 17};
-    t.launches["RSP_STATUS"] = {5, 7};
+    t.launches["RSP_READ_DATA"] = {5, 18};
+    t.launches["RSP_STATUS"] = {5, 18};
     t.launches["RSP_VALID"] = {5, 10};
     t.setup["REQ_ADDR"] = 33;
     t.setup["REQ_OP"] = 30;
-    t.setup["REQ_VALID"] = 16;
+    t.setup["REQ_VALID"] = 17;
     t.setup["REQ_WRITE_DATA"] = 9;
     t.setup["REQ_WRITE_MASK"] = 24;
-    t.setup["RSP_READY"] = 18;
-    t.internal_period = 23;
+    t.setup["RSP_READY"] = 19;
+    t.internal_period = 24;
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
@@ -3327,25 +3394,29 @@
     t.arcs = {
         Arc{"REQ_ADDR", "RSP_READ_DATA", {10, 21}},
         Arc{"REQ_ADDR", "RSP_STATUS", {9, 27}},
-        Arc{"REQ_OP", "RSP_READ_DATA", {9, 15}},
+        Arc{"REQ_OP", "RSP_READ_DATA", {9, 17}},
         Arc{"REQ_OP", "RSP_STATUS", {9, 24}},
-        Arc{"REQ_VALID", "RSP_READ_DATA", {10, 10}},
+        Arc{"REQ_VALID", "RSP_READ_DATA", {10, 11}},
+        Arc{"REQ_VALID", "RSP_STATUS", {10, 11}},
         Arc{"REQ_VALID", "RSP_VALID", {3, 3}},
-        Arc{"REQ_WRITE_MASK", "RSP_READ_DATA", {11, 14}},
+        Arc{"REQ_WRITE_MASK", "RSP_READ_DATA", {11, 16}},
         Arc{"REQ_WRITE_MASK", "RSP_STATUS", {9, 18}},
         Arc{"RSP_READY", "REQ_READY", {2, 2}},
+        Arc{"RSP_READY", "RSP_READ_DATA", {12, 13}},
+        Arc{"RSP_READY", "RSP_STATUS", {12, 13}},
+        Arc{"RSP_READY", "RSP_VALID", {5, 5}},
     };
     t.clock = "CLK";
     t.launches["REQ_READY"] = {6, 7};
     t.launches["RSP_READ_DATA"] = {5, 23};
-    t.launches["RSP_STATUS"] = {5, 7};
+    t.launches["RSP_STATUS"] = {5, 18};
     t.launches["RSP_VALID"] = {5, 10};
     t.setup["REQ_ADDR"] = 33;
     t.setup["REQ_OP"] = 30;
-    t.setup["REQ_VALID"] = 16;
+    t.setup["REQ_VALID"] = 17;
     t.setup["REQ_WRITE_DATA"] = 9;
     t.setup["REQ_WRITE_MASK"] = 24;
-    t.setup["RSP_READY"] = 18;
+    t.setup["RSP_READY"] = 19;
     t.internal_period = 29;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -3356,25 +3427,29 @@
     t.arcs = {
         Arc{"REQ_ADDR", "RSP_READ_DATA", {10, 21}},
         Arc{"REQ_ADDR", "RSP_STATUS", {9, 27}},
-        Arc{"REQ_OP", "RSP_READ_DATA", {9, 15}},
+        Arc{"REQ_OP", "RSP_READ_DATA", {9, 17}},
         Arc{"REQ_OP", "RSP_STATUS", {9, 24}},
-        Arc{"REQ_VALID", "RSP_READ_DATA", {10, 10}},
+        Arc{"REQ_VALID", "RSP_READ_DATA", {10, 11}},
+        Arc{"REQ_VALID", "RSP_STATUS", {10, 11}},
         Arc{"REQ_VALID", "RSP_VALID", {3, 3}},
-        Arc{"REQ_WRITE_MASK", "RSP_READ_DATA", {11, 14}},
+        Arc{"REQ_WRITE_MASK", "RSP_READ_DATA", {11, 16}},
         Arc{"REQ_WRITE_MASK", "RSP_STATUS", {9, 18}},
         Arc{"RSP_READY", "REQ_READY", {2, 2}},
+        Arc{"RSP_READY", "RSP_READ_DATA", {12, 13}},
+        Arc{"RSP_READY", "RSP_STATUS", {12, 13}},
+        Arc{"RSP_READY", "RSP_VALID", {5, 5}},
     };
     t.clock = "CLK";
     t.launches["REQ_READY"] = {6, 7};
     t.launches["RSP_READ_DATA"] = {5, 23};
-    t.launches["RSP_STATUS"] = {5, 7};
+    t.launches["RSP_STATUS"] = {5, 18};
     t.launches["RSP_VALID"] = {5, 10};
     t.setup["REQ_ADDR"] = 33;
     t.setup["REQ_OP"] = 30;
-    t.setup["REQ_VALID"] = 16;
+    t.setup["REQ_VALID"] = 17;
     t.setup["REQ_WRITE_DATA"] = 9;
     t.setup["REQ_WRITE_MASK"] = 24;
-    t.setup["RSP_READY"] = 18;
+    t.setup["RSP_READY"] = 19;
     t.internal_period = 29;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -3385,25 +3460,29 @@
     t.arcs = {
         Arc{"REQ_ADDR", "RSP_READ_DATA", {10, 23}},
         Arc{"REQ_ADDR", "RSP_STATUS", {9, 27}},
-        Arc{"REQ_OP", "RSP_READ_DATA", {9, 15}},
+        Arc{"REQ_OP", "RSP_READ_DATA", {9, 17}},
         Arc{"REQ_OP", "RSP_STATUS", {9, 24}},
-        Arc{"REQ_VALID", "RSP_READ_DATA", {10, 10}},
+        Arc{"REQ_VALID", "RSP_READ_DATA", {10, 11}},
+        Arc{"REQ_VALID", "RSP_STATUS", {10, 11}},
         Arc{"REQ_VALID", "RSP_VALID", {3, 3}},
-        Arc{"REQ_WRITE_MASK", "RSP_READ_DATA", {11, 14}},
+        Arc{"REQ_WRITE_MASK", "RSP_READ_DATA", {11, 16}},
         Arc{"REQ_WRITE_MASK", "RSP_STATUS", {9, 18}},
         Arc{"RSP_READY", "REQ_READY", {2, 2}},
+        Arc{"RSP_READY", "RSP_READ_DATA", {12, 13}},
+        Arc{"RSP_READY", "RSP_STATUS", {12, 13}},
+        Arc{"RSP_READY", "RSP_VALID", {5, 5}},
     };
     t.clock = "CLK";
     t.launches["REQ_READY"] = {6, 7};
     t.launches["RSP_READ_DATA"] = {5, 25};
-    t.launches["RSP_STATUS"] = {5, 7};
+    t.launches["RSP_STATUS"] = {5, 18};
     t.launches["RSP_VALID"] = {5, 10};
     t.setup["REQ_ADDR"] = 33;
     t.setup["REQ_OP"] = 30;
-    t.setup["REQ_VALID"] = 16;
+    t.setup["REQ_VALID"] = 17;
     t.setup["REQ_WRITE_DATA"] = 9;
     t.setup["REQ_WRITE_MASK"] = 24;
-    t.setup["RSP_READY"] = 18;
+    t.setup["RSP_READY"] = 19;
     t.internal_period = 31;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -3414,25 +3493,29 @@
     t.arcs = {
         Arc{"REQ_ADDR", "RSP_READ_DATA", {10, 23}},
         Arc{"REQ_ADDR", "RSP_STATUS", {9, 27}},
-        Arc{"REQ_OP", "RSP_READ_DATA", {9, 15}},
+        Arc{"REQ_OP", "RSP_READ_DATA", {9, 17}},
         Arc{"REQ_OP", "RSP_STATUS", {9, 24}},
-        Arc{"REQ_VALID", "RSP_READ_DATA", {10, 10}},
+        Arc{"REQ_VALID", "RSP_READ_DATA", {10, 11}},
+        Arc{"REQ_VALID", "RSP_STATUS", {10, 11}},
         Arc{"REQ_VALID", "RSP_VALID", {3, 3}},
-        Arc{"REQ_WRITE_MASK", "RSP_READ_DATA", {11, 14}},
+        Arc{"REQ_WRITE_MASK", "RSP_READ_DATA", {11, 16}},
         Arc{"REQ_WRITE_MASK", "RSP_STATUS", {9, 18}},
         Arc{"RSP_READY", "REQ_READY", {2, 2}},
+        Arc{"RSP_READY", "RSP_READ_DATA", {12, 13}},
+        Arc{"RSP_READY", "RSP_STATUS", {12, 13}},
+        Arc{"RSP_READY", "RSP_VALID", {5, 5}},
     };
     t.clock = "CLK";
     t.launches["REQ_READY"] = {6, 7};
     t.launches["RSP_READ_DATA"] = {5, 25};
-    t.launches["RSP_STATUS"] = {5, 7};
+    t.launches["RSP_STATUS"] = {5, 18};
     t.launches["RSP_VALID"] = {5, 10};
     t.setup["REQ_ADDR"] = 33;
     t.setup["REQ_OP"] = 30;
-    t.setup["REQ_VALID"] = 16;
+    t.setup["REQ_VALID"] = 17;
     t.setup["REQ_WRITE_DATA"] = 9;
     t.setup["REQ_WRITE_MASK"] = 24;
-    t.setup["RSP_READY"] = 18;
+    t.setup["RSP_READY"] = 19;
     t.internal_period = 31;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -3443,11 +3526,12 @@
     t.arcs = {
         Arc{"REQ_ADDR", "RSP_READ_DATA", {7, 18}},
         Arc{"REQ_ADDR", "RSP_STATUS", {6, 24}},
-        Arc{"REQ_OP", "RSP_READ_DATA", {6, 12}},
+        Arc{"REQ_OP", "RSP_READ_DATA", {6, 14}},
         Arc{"REQ_OP", "RSP_STATUS", {6, 21}},
-        Arc{"REQ_VALID", "RSP_READ_DATA", {7, 7}},
+        Arc{"REQ_VALID", "RSP_READ_DATA", {7, 8}},
+        Arc{"REQ_VALID", "RSP_STATUS", {7, 8}},
         Arc{"REQ_VALID", "RSP_VALID", {1, 1}},
-        Arc{"REQ_WRITE_MASK", "RSP_READ_DATA", {8, 11}},
+        Arc{"REQ_WRITE_MASK", "RSP_READ_DATA", {8, 13}},
         Arc{"REQ_WRITE_MASK", "RSP_STATUS", {6, 15}},
     };
     t.clock = "CLK";
@@ -3467,11 +3551,12 @@
     t.arcs = {
         Arc{"REQ_ADDR", "RSP_READ_DATA", {7, 18}},
         Arc{"REQ_ADDR", "RSP_STATUS", {6, 24}},
-        Arc{"REQ_OP", "RSP_READ_DATA", {6, 12}},
+        Arc{"REQ_OP", "RSP_READ_DATA", {6, 14}},
         Arc{"REQ_OP", "RSP_STATUS", {6, 21}},
-        Arc{"REQ_VALID", "RSP_READ_DATA", {7, 7}},
+        Arc{"REQ_VALID", "RSP_READ_DATA", {7, 8}},
+        Arc{"REQ_VALID", "RSP_STATUS", {7, 8}},
         Arc{"REQ_VALID", "RSP_VALID", {1, 1}},
-        Arc{"REQ_WRITE_MASK", "RSP_READ_DATA", {8, 11}},
+        Arc{"REQ_WRITE_MASK", "RSP_READ_DATA", {8, 13}},
         Arc{"REQ_WRITE_MASK", "RSP_STATUS", {6, 15}},
     };
     t.clock = "CLK";
@@ -3491,11 +3576,12 @@
     t.arcs = {
         Arc{"REQ_ADDR", "RSP_READ_DATA", {7, 20}},
         Arc{"REQ_ADDR", "RSP_STATUS", {6, 24}},
-        Arc{"REQ_OP", "RSP_READ_DATA", {6, 12}},
+        Arc{"REQ_OP", "RSP_READ_DATA", {6, 14}},
         Arc{"REQ_OP", "RSP_STATUS", {6, 21}},
-        Arc{"REQ_VALID", "RSP_READ_DATA", {7, 7}},
+        Arc{"REQ_VALID", "RSP_READ_DATA", {7, 8}},
+        Arc{"REQ_VALID", "RSP_STATUS", {7, 8}},
         Arc{"REQ_VALID", "RSP_VALID", {1, 1}},
-        Arc{"REQ_WRITE_MASK", "RSP_READ_DATA", {8, 11}},
+        Arc{"REQ_WRITE_MASK", "RSP_READ_DATA", {8, 13}},
         Arc{"REQ_WRITE_MASK", "RSP_STATUS", {6, 15}},
     };
     t.clock = "CLK";
@@ -3515,11 +3601,12 @@
     t.arcs = {
         Arc{"REQ_ADDR", "RSP_READ_DATA", {7, 20}},
         Arc{"REQ_ADDR", "RSP_STATUS", {6, 24}},
-        Arc{"REQ_OP", "RSP_READ_DATA", {6, 12}},
+        Arc{"REQ_OP", "RSP_READ_DATA", {6, 14}},
         Arc{"REQ_OP", "RSP_STATUS", {6, 21}},
-        Arc{"REQ_VALID", "RSP_READ_DATA", {7, 7}},
+        Arc{"REQ_VALID", "RSP_READ_DATA", {7, 8}},
+        Arc{"REQ_VALID", "RSP_STATUS", {7, 8}},
         Arc{"REQ_VALID", "RSP_VALID", {1, 1}},
-        Arc{"REQ_WRITE_MASK", "RSP_READ_DATA", {8, 11}},
+        Arc{"REQ_WRITE_MASK", "RSP_READ_DATA", {8, 13}},
         Arc{"REQ_WRITE_MASK", "RSP_STATUS", {6, 15}},
     };
     t.clock = "CLK";
@@ -9469,7 +9556,7 @@
         Arc{"IN_VALID", "DMEM_WE", {5, 7}},
         Arc{"IN_VALID", "OUT_MEMORY_STATUS", {3, 5}},
         Arc{"IN_VALID", "OUT_VALID", {0, 0}},
-        Arc{"IN_VALID", "TERMINAL", {3, 5}},
+        Arc{"IN_VALID", "TERMINAL", {3, 7}},
         Arc{"MEMORY_ENABLE", "DMEM_READ_EN", {1, 1}},
         Arc{"MEMORY_ENABLE", "DMEM_WE", {3, 3}},
     };
@@ -9486,13 +9573,13 @@
         Arc{"DMEM_RSP_STATUS", "PIPELINE_STALL", {10, 11}},
         Arc{"ENABLE", "BRANCH_WAIT", {3, 3}},
         Arc{"ENABLE", "COMMIT_VALID", {3, 3}},
-        Arc{"ENABLE", "DATA_STALL", {3, 13}},
+        Arc{"ENABLE", "DATA_STALL", {3, 15}},
         Arc{"ENABLE", "DMEM_REQ_OP", {6, 6}},
         Arc{"ENABLE", "DMEM_REQ_VALID", {5, 7}},
-        Arc{"ENABLE", "IMEM_REQ_VALID", {5, 15}},
-        Arc{"ENABLE", "INSTRUCTION_ATTEMPT", {4, 14}},
-        Arc{"ENABLE", "PIPELINE_FLUSH", {3, 13}},
-        Arc{"ENABLE", "PIPELINE_STALL", {3, 13}},
+        Arc{"ENABLE", "IMEM_REQ_VALID", {5, 18}},
+        Arc{"ENABLE", "INSTRUCTION_ATTEMPT", {4, 17}},
+        Arc{"ENABLE", "PIPELINE_FLUSH", {3, 15}},
+        Arc{"ENABLE", "PIPELINE_STALL", {3, 15}},
     };
     t.clock = "CLK";
     t.launches["BRANCH_WAIT"] = {6, 18};
@@ -9512,20 +9599,20 @@
     t.launches["IF_ID_PC"] = {3, 4};
     t.launches["IF_ID_VALID"] = {3, 4};
     t.launches["IMEM_REQ_ADDR"] = {3, 4};
-    t.launches["IMEM_REQ_VALID"] = {9, 29};
-    t.launches["INSTRUCTION_ATTEMPT"] = {8, 28};
+    t.launches["IMEM_REQ_VALID"] = {9, 58};
+    t.launches["INSTRUCTION_ATTEMPT"] = {8, 57};
     t.launches["MEM_WB_PC"] = {3, 4};
     t.launches["MEM_WB_VALID"] = {3, 4};
-    t.launches["PIPELINE_FLUSH"] = {7, 26};
+    t.launches["PIPELINE_FLUSH"] = {7, 55};
     t.launches["PIPELINE_STALL"] = {7, 55};
     t.launches["TRAPPED"] = {3, 4};
     t.launches["TRAP_CAUSE"] = {3, 4};
     t.setup["DMEM_RSP_READ_DATA"] = 18;
     t.setup["DMEM_RSP_STATUS"] = 24;
-    t.setup["ENABLE"] = 26;
+    t.setup["ENABLE"] = 28;
     t.setup["IMEM_RSP_READ_DATA"] = 9;
     t.setup["IMEM_RSP_STATUS"] = 13;
-    t.internal_period = 66;
+    t.internal_period = 68;
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
@@ -9533,66 +9620,66 @@
     PartDelays t;
     t.evidence = "proven on rv32i.core.educational-five-stage.structural";
     t.arcs = {
-        Arc{"DMEM_REQ_READY", "BRANCH_MISS", {15, 16}},
-        Arc{"DMEM_REQ_READY", "BRANCH_RESOLVED", {14, 15}},
+        Arc{"DMEM_REQ_READY", "BRANCH_MISS", {15, 22}},
+        Arc{"DMEM_REQ_READY", "BRANCH_RESOLVED", {14, 21}},
         Arc{"DMEM_REQ_READY", "COMMIT_VALID", {10, 10}},
         Arc{"DMEM_REQ_READY", "DATA_PORT_STALL", {8, 8}},
-        Arc{"DMEM_REQ_READY", "DMEM_RSP_READY", {13, 14}},
-        Arc{"DMEM_REQ_READY", "IMEM_RSP_READY", {15, 17}},
+        Arc{"DMEM_REQ_READY", "DMEM_RSP_READY", {13, 19}},
+        Arc{"DMEM_REQ_READY", "IMEM_RSP_READY", {15, 22}},
         Arc{"DMEM_REQ_READY", "INSTRUCTION_ATTEMPT", {10, 10}},
-        Arc{"DMEM_REQ_READY", "LOAD_USE_STALL", {11, 12}},
+        Arc{"DMEM_REQ_READY", "LOAD_USE_STALL", {11, 17}},
         Arc{"DMEM_REQ_READY", "MEMORY_STALL", {7, 7}},
-        Arc{"DMEM_REQ_READY", "PIPELINE_FLUSH", {11, 12}},
+        Arc{"DMEM_REQ_READY", "PIPELINE_FLUSH", {11, 17}},
         Arc{"DMEM_REQ_READY", "PIPELINE_STALL", {9, 10}},
-        Arc{"DMEM_REQ_READY", "PREDICTION_RECOVERY", {14, 15}},
+        Arc{"DMEM_REQ_READY", "PREDICTION_RECOVERY", {14, 21}},
         Arc{"DMEM_RSP_STATUS", "BRANCH_MISS", {13, 14}},
         Arc{"DMEM_RSP_STATUS", "BRANCH_RESOLVED", {12, 13}},
         Arc{"DMEM_RSP_STATUS", "IMEM_RSP_READY", {14, 16}},
         Arc{"DMEM_RSP_STATUS", "PIPELINE_FLUSH", {9, 10}},
         Arc{"DMEM_RSP_STATUS", "PREDICTION_RECOVERY", {12, 13}},
-        Arc{"DMEM_RSP_VALID", "BRANCH_MISS", {13, 14}},
-        Arc{"DMEM_RSP_VALID", "BRANCH_RESOLVED", {12, 13}},
+        Arc{"DMEM_RSP_VALID", "BRANCH_MISS", {13, 20}},
+        Arc{"DMEM_RSP_VALID", "BRANCH_RESOLVED", {12, 19}},
         Arc{"DMEM_RSP_VALID", "COMMIT_VALID", {8, 8}},
         Arc{"DMEM_RSP_VALID", "DATA_PORT_STALL", {6, 6}},
-        Arc{"DMEM_RSP_VALID", "DMEM_RSP_READY", {11, 12}},
-        Arc{"DMEM_RSP_VALID", "IMEM_RSP_READY", {13, 15}},
+        Arc{"DMEM_RSP_VALID", "DMEM_RSP_READY", {11, 17}},
+        Arc{"DMEM_RSP_VALID", "IMEM_RSP_READY", {13, 20}},
         Arc{"DMEM_RSP_VALID", "INSTRUCTION_ATTEMPT", {8, 8}},
-        Arc{"DMEM_RSP_VALID", "LOAD_USE_STALL", {9, 10}},
+        Arc{"DMEM_RSP_VALID", "LOAD_USE_STALL", {9, 15}},
         Arc{"DMEM_RSP_VALID", "MEMORY_STALL", {5, 5}},
-        Arc{"DMEM_RSP_VALID", "PIPELINE_FLUSH", {9, 10}},
+        Arc{"DMEM_RSP_VALID", "PIPELINE_FLUSH", {9, 15}},
         Arc{"DMEM_RSP_VALID", "PIPELINE_STALL", {7, 8}},
-        Arc{"DMEM_RSP_VALID", "PREDICTION_RECOVERY", {12, 13}},
-        Arc{"ENABLE", "BRANCH_MISS", {9, 24}},
-        Arc{"ENABLE", "BRANCH_RESOLVED", {8, 23}},
+        Arc{"DMEM_RSP_VALID", "PREDICTION_RECOVERY", {12, 19}},
+        Arc{"ENABLE", "BRANCH_MISS", {9, 30}},
+        Arc{"ENABLE", "BRANCH_RESOLVED", {8, 29}},
         Arc{"ENABLE", "COMMIT_VALID", {4, 18}},
         Arc{"ENABLE", "DATA_PORT_STALL", {5, 16}},
-        Arc{"ENABLE", "DMEM_REQ_ADDR", {13, 13}},
+        Arc{"ENABLE", "DMEM_REQ_ADDR", {13, 15}},
         Arc{"ENABLE", "DMEM_REQ_OP", {7, 7}},
         Arc{"ENABLE", "DMEM_REQ_VALID", {8, 8}},
         Arc{"ENABLE", "DMEM_REQ_WRITE_MASK", {12, 15}},
-        Arc{"ENABLE", "DMEM_RSP_READY", {7, 22}},
+        Arc{"ENABLE", "DMEM_RSP_READY", {7, 27}},
         Arc{"ENABLE", "IMEM_REQ_VALID", {5, 5}},
-        Arc{"ENABLE", "IMEM_RSP_READY", {7, 25}},
+        Arc{"ENABLE", "IMEM_RSP_READY", {7, 30}},
         Arc{"ENABLE", "INSTRUCTION_ATTEMPT", {4, 18}},
-        Arc{"ENABLE", "LOAD_USE_STALL", {5, 20}},
+        Arc{"ENABLE", "LOAD_USE_STALL", {5, 25}},
         Arc{"ENABLE", "MEMORY_STALL", {4, 15}},
-        Arc{"ENABLE", "PIPELINE_FLUSH", {5, 20}},
+        Arc{"ENABLE", "PIPELINE_FLUSH", {5, 25}},
         Arc{"ENABLE", "PIPELINE_STALL", {6, 18}},
-        Arc{"ENABLE", "PREDICTION_RECOVERY", {8, 23}},
+        Arc{"ENABLE", "PREDICTION_RECOVERY", {8, 29}},
         Arc{"IMEM_REQ_READY", "IMEM_RSP_READY", {11, 11}},
         Arc{"IMEM_RSP_VALID", "IMEM_RSP_READY", {9, 9}},
     };
     t.clock = "CLK";
     t.launches["BRANCH_MISS"] = {6, 71};
     t.launches["BRANCH_RESOLVED"] = {6, 70};
-    t.launches["COMMIT_VALID"] = {4, 29};
-    t.launches["DATA_PORT_STALL"] = {6, 27};
-    t.launches["DMEM_REQ_ADDR"] = {5, 24};
+    t.launches["COMMIT_VALID"] = {4, 30};
+    t.launches["DATA_PORT_STALL"] = {6, 28};
+    t.launches["DMEM_REQ_ADDR"] = {5, 27};
     t.launches["DMEM_REQ_OP"] = {5, 18};
-    t.launches["DMEM_REQ_VALID"] = {6, 19};
+    t.launches["DMEM_REQ_VALID"] = {6, 20};
     t.launches["DMEM_REQ_WRITE_DATA"] = {5, 14};
-    t.launches["DMEM_REQ_WRITE_MASK"] = {5, 26};
-    t.launches["DMEM_RSP_READY"] = {6, 33};
+    t.launches["DMEM_REQ_WRITE_MASK"] = {5, 27};
+    t.launches["DMEM_RSP_READY"] = {6, 39};
     t.launches["EX_MEM_PC"] = {3, 4};
     t.launches["EX_MEM_VALID"] = {3, 4};
     t.launches["FETCH_PC"] = {3, 4};
@@ -9604,13 +9691,13 @@
     t.launches["IMEM_REQ_ADDR"] = {5, 7};
     t.launches["IMEM_REQ_VALID"] = {6, 10};
     t.launches["IMEM_RSP_READY"] = {6, 77};
-    t.launches["INSTRUCTION_ATTEMPT"] = {4, 29};
-    t.launches["LOAD_USE_STALL"] = {7, 31};
-    t.launches["MEMORY_STALL"] = {7, 26};
+    t.launches["INSTRUCTION_ATTEMPT"] = {4, 30};
+    t.launches["LOAD_USE_STALL"] = {7, 37};
+    t.launches["MEMORY_STALL"] = {7, 27};
     t.launches["MEM_WB_PC"] = {3, 4};
     t.launches["MEM_WB_VALID"] = {3, 4};
     t.launches["PIPELINE_FLUSH"] = {7, 71};
-    t.launches["PIPELINE_STALL"] = {7, 29};
+    t.launches["PIPELINE_STALL"] = {7, 30};
     t.launches["PREDICTION_RECOVERY"] = {8, 70};
     t.launches["TRAPPED"] = {3, 4};
     t.launches["TRAP_CAUSE"] = {3, 4};
@@ -9620,7 +9707,7 @@
     t.setup["DMEM_RSP_VALID"] = 28;
     t.setup["ENABLE"] = 38;
     t.setup["IMEM_REQ_READY"] = 19;
-    t.setup["IMEM_RSP_READ_DATA"] = 42;
+    t.setup["IMEM_RSP_READ_DATA"] = 45;
     t.setup["IMEM_RSP_STATUS"] = 15;
     t.setup["IMEM_RSP_VALID"] = 17;
     t.internal_period = 85;
@@ -9631,66 +9718,66 @@
     PartDelays t;
     t.evidence = "proven on rv32i.core.educational-five-stage.structural";
     t.arcs = {
-        Arc{"DMEM_REQ_READY", "BRANCH_MISS", {15, 16}},
-        Arc{"DMEM_REQ_READY", "BRANCH_RESOLVED", {14, 15}},
+        Arc{"DMEM_REQ_READY", "BRANCH_MISS", {15, 22}},
+        Arc{"DMEM_REQ_READY", "BRANCH_RESOLVED", {14, 21}},
         Arc{"DMEM_REQ_READY", "COMMIT_VALID", {10, 10}},
         Arc{"DMEM_REQ_READY", "DATA_PORT_STALL", {8, 8}},
-        Arc{"DMEM_REQ_READY", "DMEM_RSP_READY", {13, 14}},
-        Arc{"DMEM_REQ_READY", "IMEM_RSP_READY", {15, 17}},
+        Arc{"DMEM_REQ_READY", "DMEM_RSP_READY", {13, 19}},
+        Arc{"DMEM_REQ_READY", "IMEM_RSP_READY", {15, 22}},
         Arc{"DMEM_REQ_READY", "INSTRUCTION_ATTEMPT", {10, 10}},
-        Arc{"DMEM_REQ_READY", "LOAD_USE_STALL", {11, 12}},
+        Arc{"DMEM_REQ_READY", "LOAD_USE_STALL", {11, 17}},
         Arc{"DMEM_REQ_READY", "MEMORY_STALL", {7, 7}},
-        Arc{"DMEM_REQ_READY", "PIPELINE_FLUSH", {11, 12}},
+        Arc{"DMEM_REQ_READY", "PIPELINE_FLUSH", {11, 17}},
         Arc{"DMEM_REQ_READY", "PIPELINE_STALL", {9, 10}},
-        Arc{"DMEM_REQ_READY", "PREDICTION_RECOVERY", {14, 15}},
+        Arc{"DMEM_REQ_READY", "PREDICTION_RECOVERY", {14, 21}},
         Arc{"DMEM_RSP_STATUS", "BRANCH_MISS", {13, 14}},
         Arc{"DMEM_RSP_STATUS", "BRANCH_RESOLVED", {12, 13}},
         Arc{"DMEM_RSP_STATUS", "IMEM_RSP_READY", {14, 16}},
         Arc{"DMEM_RSP_STATUS", "PIPELINE_FLUSH", {9, 10}},
         Arc{"DMEM_RSP_STATUS", "PREDICTION_RECOVERY", {12, 13}},
-        Arc{"DMEM_RSP_VALID", "BRANCH_MISS", {13, 14}},
-        Arc{"DMEM_RSP_VALID", "BRANCH_RESOLVED", {12, 13}},
+        Arc{"DMEM_RSP_VALID", "BRANCH_MISS", {13, 20}},
+        Arc{"DMEM_RSP_VALID", "BRANCH_RESOLVED", {12, 19}},
         Arc{"DMEM_RSP_VALID", "COMMIT_VALID", {8, 8}},
         Arc{"DMEM_RSP_VALID", "DATA_PORT_STALL", {6, 6}},
-        Arc{"DMEM_RSP_VALID", "DMEM_RSP_READY", {11, 12}},
-        Arc{"DMEM_RSP_VALID", "IMEM_RSP_READY", {13, 15}},
+        Arc{"DMEM_RSP_VALID", "DMEM_RSP_READY", {11, 17}},
+        Arc{"DMEM_RSP_VALID", "IMEM_RSP_READY", {13, 20}},
         Arc{"DMEM_RSP_VALID", "INSTRUCTION_ATTEMPT", {8, 8}},
-        Arc{"DMEM_RSP_VALID", "LOAD_USE_STALL", {9, 10}},
+        Arc{"DMEM_RSP_VALID", "LOAD_USE_STALL", {9, 15}},
         Arc{"DMEM_RSP_VALID", "MEMORY_STALL", {5, 5}},
-        Arc{"DMEM_RSP_VALID", "PIPELINE_FLUSH", {9, 10}},
+        Arc{"DMEM_RSP_VALID", "PIPELINE_FLUSH", {9, 15}},
         Arc{"DMEM_RSP_VALID", "PIPELINE_STALL", {7, 8}},
-        Arc{"DMEM_RSP_VALID", "PREDICTION_RECOVERY", {12, 13}},
-        Arc{"ENABLE", "BRANCH_MISS", {9, 24}},
-        Arc{"ENABLE", "BRANCH_RESOLVED", {8, 23}},
+        Arc{"DMEM_RSP_VALID", "PREDICTION_RECOVERY", {12, 19}},
+        Arc{"ENABLE", "BRANCH_MISS", {9, 30}},
+        Arc{"ENABLE", "BRANCH_RESOLVED", {8, 29}},
         Arc{"ENABLE", "COMMIT_VALID", {4, 18}},
         Arc{"ENABLE", "DATA_PORT_STALL", {5, 16}},
-        Arc{"ENABLE", "DMEM_REQ_ADDR", {13, 13}},
+        Arc{"ENABLE", "DMEM_REQ_ADDR", {13, 15}},
         Arc{"ENABLE", "DMEM_REQ_OP", {7, 7}},
         Arc{"ENABLE", "DMEM_REQ_VALID", {8, 8}},
         Arc{"ENABLE", "DMEM_REQ_WRITE_MASK", {12, 15}},
-        Arc{"ENABLE", "DMEM_RSP_READY", {7, 22}},
+        Arc{"ENABLE", "DMEM_RSP_READY", {7, 27}},
         Arc{"ENABLE", "IMEM_REQ_VALID", {5, 5}},
-        Arc{"ENABLE", "IMEM_RSP_READY", {7, 25}},
+        Arc{"ENABLE", "IMEM_RSP_READY", {7, 30}},
         Arc{"ENABLE", "INSTRUCTION_ATTEMPT", {4, 18}},
-        Arc{"ENABLE", "LOAD_USE_STALL", {5, 20}},
+        Arc{"ENABLE", "LOAD_USE_STALL", {5, 25}},
         Arc{"ENABLE", "MEMORY_STALL", {4, 15}},
-        Arc{"ENABLE", "PIPELINE_FLUSH", {5, 20}},
+        Arc{"ENABLE", "PIPELINE_FLUSH", {5, 25}},
         Arc{"ENABLE", "PIPELINE_STALL", {6, 18}},
-        Arc{"ENABLE", "PREDICTION_RECOVERY", {8, 23}},
+        Arc{"ENABLE", "PREDICTION_RECOVERY", {8, 29}},
         Arc{"IMEM_REQ_READY", "IMEM_RSP_READY", {11, 11}},
         Arc{"IMEM_RSP_VALID", "IMEM_RSP_READY", {9, 9}},
     };
     t.clock = "CLK";
     t.launches["BRANCH_MISS"] = {6, 71};
     t.launches["BRANCH_RESOLVED"] = {6, 70};
-    t.launches["COMMIT_VALID"] = {4, 29};
-    t.launches["DATA_PORT_STALL"] = {6, 27};
-    t.launches["DMEM_REQ_ADDR"] = {5, 24};
+    t.launches["COMMIT_VALID"] = {4, 30};
+    t.launches["DATA_PORT_STALL"] = {6, 28};
+    t.launches["DMEM_REQ_ADDR"] = {5, 27};
     t.launches["DMEM_REQ_OP"] = {5, 18};
-    t.launches["DMEM_REQ_VALID"] = {6, 19};
+    t.launches["DMEM_REQ_VALID"] = {6, 20};
     t.launches["DMEM_REQ_WRITE_DATA"] = {5, 14};
-    t.launches["DMEM_REQ_WRITE_MASK"] = {5, 26};
-    t.launches["DMEM_RSP_READY"] = {6, 33};
+    t.launches["DMEM_REQ_WRITE_MASK"] = {5, 27};
+    t.launches["DMEM_RSP_READY"] = {6, 39};
     t.launches["EX_MEM_PC"] = {3, 4};
     t.launches["EX_MEM_VALID"] = {3, 4};
     t.launches["FETCH_PC"] = {3, 4};
@@ -9702,13 +9789,13 @@
     t.launches["IMEM_REQ_ADDR"] = {5, 7};
     t.launches["IMEM_REQ_VALID"] = {6, 10};
     t.launches["IMEM_RSP_READY"] = {6, 77};
-    t.launches["INSTRUCTION_ATTEMPT"] = {4, 29};
-    t.launches["LOAD_USE_STALL"] = {7, 31};
-    t.launches["MEMORY_STALL"] = {7, 26};
+    t.launches["INSTRUCTION_ATTEMPT"] = {4, 30};
+    t.launches["LOAD_USE_STALL"] = {7, 37};
+    t.launches["MEMORY_STALL"] = {7, 27};
     t.launches["MEM_WB_PC"] = {3, 4};
     t.launches["MEM_WB_VALID"] = {3, 4};
     t.launches["PIPELINE_FLUSH"] = {7, 71};
-    t.launches["PIPELINE_STALL"] = {7, 29};
+    t.launches["PIPELINE_STALL"] = {7, 30};
     t.launches["PREDICTION_RECOVERY"] = {8, 70};
     t.launches["TRAPPED"] = {3, 4};
     t.launches["TRAP_CAUSE"] = {3, 4};
@@ -9718,7 +9805,7 @@
     t.setup["DMEM_RSP_VALID"] = 28;
     t.setup["ENABLE"] = 38;
     t.setup["IMEM_REQ_READY"] = 19;
-    t.setup["IMEM_RSP_READ_DATA"] = 42;
+    t.setup["IMEM_RSP_READ_DATA"] = 45;
     t.setup["IMEM_RSP_STATUS"] = 15;
     t.setup["IMEM_RSP_VALID"] = 17;
     t.internal_period = 85;
@@ -9729,66 +9816,66 @@
     PartDelays t;
     t.evidence = "proven on rv32i.core.educational-five-stage.structural";
     t.arcs = {
-        Arc{"DMEM_REQ_READY", "BRANCH_MISS", {15, 16}},
-        Arc{"DMEM_REQ_READY", "BRANCH_RESOLVED", {14, 15}},
+        Arc{"DMEM_REQ_READY", "BRANCH_MISS", {15, 22}},
+        Arc{"DMEM_REQ_READY", "BRANCH_RESOLVED", {14, 21}},
         Arc{"DMEM_REQ_READY", "COMMIT_VALID", {10, 10}},
         Arc{"DMEM_REQ_READY", "DATA_PORT_STALL", {8, 8}},
-        Arc{"DMEM_REQ_READY", "DMEM_RSP_READY", {13, 14}},
-        Arc{"DMEM_REQ_READY", "IMEM_RSP_READY", {15, 17}},
+        Arc{"DMEM_REQ_READY", "DMEM_RSP_READY", {13, 19}},
+        Arc{"DMEM_REQ_READY", "IMEM_RSP_READY", {15, 22}},
         Arc{"DMEM_REQ_READY", "INSTRUCTION_ATTEMPT", {10, 10}},
-        Arc{"DMEM_REQ_READY", "LOAD_USE_STALL", {11, 12}},
+        Arc{"DMEM_REQ_READY", "LOAD_USE_STALL", {11, 17}},
         Arc{"DMEM_REQ_READY", "MEMORY_STALL", {7, 7}},
-        Arc{"DMEM_REQ_READY", "PIPELINE_FLUSH", {11, 12}},
+        Arc{"DMEM_REQ_READY", "PIPELINE_FLUSH", {11, 17}},
         Arc{"DMEM_REQ_READY", "PIPELINE_STALL", {9, 10}},
-        Arc{"DMEM_REQ_READY", "PREDICTION_RECOVERY", {14, 15}},
+        Arc{"DMEM_REQ_READY", "PREDICTION_RECOVERY", {14, 21}},
         Arc{"DMEM_RSP_STATUS", "BRANCH_MISS", {13, 14}},
         Arc{"DMEM_RSP_STATUS", "BRANCH_RESOLVED", {12, 13}},
         Arc{"DMEM_RSP_STATUS", "IMEM_RSP_READY", {14, 16}},
         Arc{"DMEM_RSP_STATUS", "PIPELINE_FLUSH", {9, 10}},
         Arc{"DMEM_RSP_STATUS", "PREDICTION_RECOVERY", {12, 13}},
-        Arc{"DMEM_RSP_VALID", "BRANCH_MISS", {13, 14}},
-        Arc{"DMEM_RSP_VALID", "BRANCH_RESOLVED", {12, 13}},
+        Arc{"DMEM_RSP_VALID", "BRANCH_MISS", {13, 20}},
+        Arc{"DMEM_RSP_VALID", "BRANCH_RESOLVED", {12, 19}},
         Arc{"DMEM_RSP_VALID", "COMMIT_VALID", {8, 8}},
         Arc{"DMEM_RSP_VALID", "DATA_PORT_STALL", {6, 6}},
-        Arc{"DMEM_RSP_VALID", "DMEM_RSP_READY", {11, 12}},
-        Arc{"DMEM_RSP_VALID", "IMEM_RSP_READY", {13, 15}},
+        Arc{"DMEM_RSP_VALID", "DMEM_RSP_READY", {11, 17}},
+        Arc{"DMEM_RSP_VALID", "IMEM_RSP_READY", {13, 20}},
         Arc{"DMEM_RSP_VALID", "INSTRUCTION_ATTEMPT", {8, 8}},
-        Arc{"DMEM_RSP_VALID", "LOAD_USE_STALL", {9, 10}},
+        Arc{"DMEM_RSP_VALID", "LOAD_USE_STALL", {9, 15}},
         Arc{"DMEM_RSP_VALID", "MEMORY_STALL", {5, 5}},
-        Arc{"DMEM_RSP_VALID", "PIPELINE_FLUSH", {9, 10}},
+        Arc{"DMEM_RSP_VALID", "PIPELINE_FLUSH", {9, 15}},
         Arc{"DMEM_RSP_VALID", "PIPELINE_STALL", {7, 8}},
-        Arc{"DMEM_RSP_VALID", "PREDICTION_RECOVERY", {12, 13}},
-        Arc{"ENABLE", "BRANCH_MISS", {9, 24}},
-        Arc{"ENABLE", "BRANCH_RESOLVED", {8, 23}},
+        Arc{"DMEM_RSP_VALID", "PREDICTION_RECOVERY", {12, 19}},
+        Arc{"ENABLE", "BRANCH_MISS", {9, 30}},
+        Arc{"ENABLE", "BRANCH_RESOLVED", {8, 29}},
         Arc{"ENABLE", "COMMIT_VALID", {4, 18}},
         Arc{"ENABLE", "DATA_PORT_STALL", {5, 16}},
-        Arc{"ENABLE", "DMEM_REQ_ADDR", {13, 13}},
+        Arc{"ENABLE", "DMEM_REQ_ADDR", {13, 15}},
         Arc{"ENABLE", "DMEM_REQ_OP", {7, 7}},
         Arc{"ENABLE", "DMEM_REQ_VALID", {8, 8}},
         Arc{"ENABLE", "DMEM_REQ_WRITE_MASK", {12, 15}},
-        Arc{"ENABLE", "DMEM_RSP_READY", {7, 22}},
+        Arc{"ENABLE", "DMEM_RSP_READY", {7, 27}},
         Arc{"ENABLE", "IMEM_REQ_VALID", {5, 5}},
-        Arc{"ENABLE", "IMEM_RSP_READY", {7, 25}},
+        Arc{"ENABLE", "IMEM_RSP_READY", {7, 30}},
         Arc{"ENABLE", "INSTRUCTION_ATTEMPT", {4, 18}},
-        Arc{"ENABLE", "LOAD_USE_STALL", {5, 20}},
+        Arc{"ENABLE", "LOAD_USE_STALL", {5, 25}},
         Arc{"ENABLE", "MEMORY_STALL", {4, 15}},
-        Arc{"ENABLE", "PIPELINE_FLUSH", {5, 20}},
+        Arc{"ENABLE", "PIPELINE_FLUSH", {5, 25}},
         Arc{"ENABLE", "PIPELINE_STALL", {6, 18}},
-        Arc{"ENABLE", "PREDICTION_RECOVERY", {8, 23}},
+        Arc{"ENABLE", "PREDICTION_RECOVERY", {8, 29}},
         Arc{"IMEM_REQ_READY", "IMEM_RSP_READY", {11, 11}},
         Arc{"IMEM_RSP_VALID", "IMEM_RSP_READY", {9, 9}},
     };
     t.clock = "CLK";
     t.launches["BRANCH_MISS"] = {6, 71};
     t.launches["BRANCH_RESOLVED"] = {6, 70};
-    t.launches["COMMIT_VALID"] = {4, 29};
-    t.launches["DATA_PORT_STALL"] = {6, 27};
-    t.launches["DMEM_REQ_ADDR"] = {5, 24};
+    t.launches["COMMIT_VALID"] = {4, 30};
+    t.launches["DATA_PORT_STALL"] = {6, 28};
+    t.launches["DMEM_REQ_ADDR"] = {5, 27};
     t.launches["DMEM_REQ_OP"] = {5, 18};
-    t.launches["DMEM_REQ_VALID"] = {6, 19};
+    t.launches["DMEM_REQ_VALID"] = {6, 20};
     t.launches["DMEM_REQ_WRITE_DATA"] = {5, 14};
-    t.launches["DMEM_REQ_WRITE_MASK"] = {5, 26};
-    t.launches["DMEM_RSP_READY"] = {6, 33};
+    t.launches["DMEM_REQ_WRITE_MASK"] = {5, 27};
+    t.launches["DMEM_RSP_READY"] = {6, 39};
     t.launches["EX_MEM_PC"] = {3, 4};
     t.launches["EX_MEM_VALID"] = {3, 4};
     t.launches["FETCH_PC"] = {3, 4};
@@ -9800,13 +9887,13 @@
     t.launches["IMEM_REQ_ADDR"] = {5, 7};
     t.launches["IMEM_REQ_VALID"] = {6, 10};
     t.launches["IMEM_RSP_READY"] = {6, 77};
-    t.launches["INSTRUCTION_ATTEMPT"] = {4, 29};
-    t.launches["LOAD_USE_STALL"] = {7, 31};
-    t.launches["MEMORY_STALL"] = {7, 26};
+    t.launches["INSTRUCTION_ATTEMPT"] = {4, 30};
+    t.launches["LOAD_USE_STALL"] = {7, 37};
+    t.launches["MEMORY_STALL"] = {7, 27};
     t.launches["MEM_WB_PC"] = {3, 4};
     t.launches["MEM_WB_VALID"] = {3, 4};
     t.launches["PIPELINE_FLUSH"] = {7, 71};
-    t.launches["PIPELINE_STALL"] = {7, 29};
+    t.launches["PIPELINE_STALL"] = {7, 30};
     t.launches["PREDICTION_RECOVERY"] = {8, 70};
     t.launches["TRAPPED"] = {3, 4};
     t.launches["TRAP_CAUSE"] = {3, 4};
@@ -9827,66 +9914,66 @@
     PartDelays t;
     t.evidence = "proven on rv32i.core.educational-five-stage.structural";
     t.arcs = {
-        Arc{"DMEM_REQ_READY", "BRANCH_MISS", {15, 16}},
-        Arc{"DMEM_REQ_READY", "BRANCH_RESOLVED", {14, 15}},
+        Arc{"DMEM_REQ_READY", "BRANCH_MISS", {15, 22}},
+        Arc{"DMEM_REQ_READY", "BRANCH_RESOLVED", {14, 21}},
         Arc{"DMEM_REQ_READY", "COMMIT_VALID", {10, 10}},
         Arc{"DMEM_REQ_READY", "DATA_PORT_STALL", {8, 8}},
-        Arc{"DMEM_REQ_READY", "DMEM_RSP_READY", {13, 14}},
-        Arc{"DMEM_REQ_READY", "IMEM_RSP_READY", {15, 17}},
+        Arc{"DMEM_REQ_READY", "DMEM_RSP_READY", {13, 19}},
+        Arc{"DMEM_REQ_READY", "IMEM_RSP_READY", {15, 22}},
         Arc{"DMEM_REQ_READY", "INSTRUCTION_ATTEMPT", {10, 10}},
-        Arc{"DMEM_REQ_READY", "LOAD_USE_STALL", {11, 12}},
+        Arc{"DMEM_REQ_READY", "LOAD_USE_STALL", {11, 17}},
         Arc{"DMEM_REQ_READY", "MEMORY_STALL", {7, 7}},
-        Arc{"DMEM_REQ_READY", "PIPELINE_FLUSH", {11, 12}},
+        Arc{"DMEM_REQ_READY", "PIPELINE_FLUSH", {11, 17}},
         Arc{"DMEM_REQ_READY", "PIPELINE_STALL", {9, 10}},
-        Arc{"DMEM_REQ_READY", "PREDICTION_RECOVERY", {14, 15}},
+        Arc{"DMEM_REQ_READY", "PREDICTION_RECOVERY", {14, 21}},
         Arc{"DMEM_RSP_STATUS", "BRANCH_MISS", {13, 14}},
         Arc{"DMEM_RSP_STATUS", "BRANCH_RESOLVED", {12, 13}},
         Arc{"DMEM_RSP_STATUS", "IMEM_RSP_READY", {14, 16}},
         Arc{"DMEM_RSP_STATUS", "PIPELINE_FLUSH", {9, 10}},
         Arc{"DMEM_RSP_STATUS", "PREDICTION_RECOVERY", {12, 13}},
-        Arc{"DMEM_RSP_VALID", "BRANCH_MISS", {13, 14}},
-        Arc{"DMEM_RSP_VALID", "BRANCH_RESOLVED", {12, 13}},
+        Arc{"DMEM_RSP_VALID", "BRANCH_MISS", {13, 20}},
+        Arc{"DMEM_RSP_VALID", "BRANCH_RESOLVED", {12, 19}},
         Arc{"DMEM_RSP_VALID", "COMMIT_VALID", {8, 8}},
         Arc{"DMEM_RSP_VALID", "DATA_PORT_STALL", {6, 6}},
-        Arc{"DMEM_RSP_VALID", "DMEM_RSP_READY", {11, 12}},
-        Arc{"DMEM_RSP_VALID", "IMEM_RSP_READY", {13, 15}},
+        Arc{"DMEM_RSP_VALID", "DMEM_RSP_READY", {11, 17}},
+        Arc{"DMEM_RSP_VALID", "IMEM_RSP_READY", {13, 20}},
         Arc{"DMEM_RSP_VALID", "INSTRUCTION_ATTEMPT", {8, 8}},
-        Arc{"DMEM_RSP_VALID", "LOAD_USE_STALL", {9, 10}},
+        Arc{"DMEM_RSP_VALID", "LOAD_USE_STALL", {9, 15}},
         Arc{"DMEM_RSP_VALID", "MEMORY_STALL", {5, 5}},
-        Arc{"DMEM_RSP_VALID", "PIPELINE_FLUSH", {9, 10}},
+        Arc{"DMEM_RSP_VALID", "PIPELINE_FLUSH", {9, 15}},
         Arc{"DMEM_RSP_VALID", "PIPELINE_STALL", {7, 8}},
-        Arc{"DMEM_RSP_VALID", "PREDICTION_RECOVERY", {12, 13}},
-        Arc{"ENABLE", "BRANCH_MISS", {9, 24}},
-        Arc{"ENABLE", "BRANCH_RESOLVED", {8, 23}},
+        Arc{"DMEM_RSP_VALID", "PREDICTION_RECOVERY", {12, 19}},
+        Arc{"ENABLE", "BRANCH_MISS", {9, 30}},
+        Arc{"ENABLE", "BRANCH_RESOLVED", {8, 29}},
         Arc{"ENABLE", "COMMIT_VALID", {4, 18}},
         Arc{"ENABLE", "DATA_PORT_STALL", {5, 16}},
-        Arc{"ENABLE", "DMEM_REQ_ADDR", {13, 13}},
+        Arc{"ENABLE", "DMEM_REQ_ADDR", {13, 15}},
         Arc{"ENABLE", "DMEM_REQ_OP", {7, 7}},
         Arc{"ENABLE", "DMEM_REQ_VALID", {8, 8}},
         Arc{"ENABLE", "DMEM_REQ_WRITE_MASK", {12, 15}},
-        Arc{"ENABLE", "DMEM_RSP_READY", {7, 22}},
+        Arc{"ENABLE", "DMEM_RSP_READY", {7, 27}},
         Arc{"ENABLE", "IMEM_REQ_VALID", {5, 5}},
-        Arc{"ENABLE", "IMEM_RSP_READY", {7, 25}},
+        Arc{"ENABLE", "IMEM_RSP_READY", {7, 30}},
         Arc{"ENABLE", "INSTRUCTION_ATTEMPT", {4, 18}},
-        Arc{"ENABLE", "LOAD_USE_STALL", {5, 20}},
+        Arc{"ENABLE", "LOAD_USE_STALL", {5, 25}},
         Arc{"ENABLE", "MEMORY_STALL", {4, 15}},
-        Arc{"ENABLE", "PIPELINE_FLUSH", {5, 20}},
+        Arc{"ENABLE", "PIPELINE_FLUSH", {5, 25}},
         Arc{"ENABLE", "PIPELINE_STALL", {6, 18}},
-        Arc{"ENABLE", "PREDICTION_RECOVERY", {8, 23}},
+        Arc{"ENABLE", "PREDICTION_RECOVERY", {8, 29}},
         Arc{"IMEM_REQ_READY", "IMEM_RSP_READY", {11, 11}},
         Arc{"IMEM_RSP_VALID", "IMEM_RSP_READY", {9, 9}},
     };
     t.clock = "CLK";
     t.launches["BRANCH_MISS"] = {6, 71};
     t.launches["BRANCH_RESOLVED"] = {6, 70};
-    t.launches["COMMIT_VALID"] = {4, 29};
-    t.launches["DATA_PORT_STALL"] = {6, 27};
-    t.launches["DMEM_REQ_ADDR"] = {5, 24};
+    t.launches["COMMIT_VALID"] = {4, 30};
+    t.launches["DATA_PORT_STALL"] = {6, 28};
+    t.launches["DMEM_REQ_ADDR"] = {5, 27};
     t.launches["DMEM_REQ_OP"] = {5, 18};
-    t.launches["DMEM_REQ_VALID"] = {6, 19};
+    t.launches["DMEM_REQ_VALID"] = {6, 20};
     t.launches["DMEM_REQ_WRITE_DATA"] = {5, 14};
-    t.launches["DMEM_REQ_WRITE_MASK"] = {5, 26};
-    t.launches["DMEM_RSP_READY"] = {6, 33};
+    t.launches["DMEM_REQ_WRITE_MASK"] = {5, 27};
+    t.launches["DMEM_RSP_READY"] = {6, 39};
     t.launches["EX_MEM_PC"] = {3, 4};
     t.launches["EX_MEM_VALID"] = {3, 4};
     t.launches["FETCH_PC"] = {3, 4};
@@ -9898,13 +9985,13 @@
     t.launches["IMEM_REQ_ADDR"] = {5, 7};
     t.launches["IMEM_REQ_VALID"] = {6, 10};
     t.launches["IMEM_RSP_READY"] = {6, 77};
-    t.launches["INSTRUCTION_ATTEMPT"] = {4, 29};
-    t.launches["LOAD_USE_STALL"] = {7, 31};
-    t.launches["MEMORY_STALL"] = {7, 26};
+    t.launches["INSTRUCTION_ATTEMPT"] = {4, 30};
+    t.launches["LOAD_USE_STALL"] = {7, 37};
+    t.launches["MEMORY_STALL"] = {7, 27};
     t.launches["MEM_WB_PC"] = {3, 4};
     t.launches["MEM_WB_VALID"] = {3, 4};
     t.launches["PIPELINE_FLUSH"] = {7, 71};
-    t.launches["PIPELINE_STALL"] = {7, 29};
+    t.launches["PIPELINE_STALL"] = {7, 30};
     t.launches["PREDICTION_RECOVERY"] = {8, 70};
     t.launches["TRAPPED"] = {3, 4};
     t.launches["TRAP_CAUSE"] = {3, 4};
@@ -9925,66 +10012,66 @@
     PartDelays t;
     t.evidence = "proven on rv32i.core.educational-five-stage.structural";
     t.arcs = {
-        Arc{"DMEM_REQ_READY", "BRANCH_MISS", {15, 16}},
-        Arc{"DMEM_REQ_READY", "BRANCH_RESOLVED", {14, 15}},
+        Arc{"DMEM_REQ_READY", "BRANCH_MISS", {15, 22}},
+        Arc{"DMEM_REQ_READY", "BRANCH_RESOLVED", {14, 21}},
         Arc{"DMEM_REQ_READY", "COMMIT_VALID", {10, 10}},
         Arc{"DMEM_REQ_READY", "DATA_PORT_STALL", {8, 8}},
-        Arc{"DMEM_REQ_READY", "DMEM_RSP_READY", {13, 14}},
-        Arc{"DMEM_REQ_READY", "IMEM_RSP_READY", {15, 17}},
+        Arc{"DMEM_REQ_READY", "DMEM_RSP_READY", {13, 19}},
+        Arc{"DMEM_REQ_READY", "IMEM_RSP_READY", {15, 22}},
         Arc{"DMEM_REQ_READY", "INSTRUCTION_ATTEMPT", {10, 10}},
-        Arc{"DMEM_REQ_READY", "LOAD_USE_STALL", {11, 12}},
+        Arc{"DMEM_REQ_READY", "LOAD_USE_STALL", {11, 17}},
         Arc{"DMEM_REQ_READY", "MEMORY_STALL", {7, 7}},
-        Arc{"DMEM_REQ_READY", "PIPELINE_FLUSH", {11, 12}},
+        Arc{"DMEM_REQ_READY", "PIPELINE_FLUSH", {11, 17}},
         Arc{"DMEM_REQ_READY", "PIPELINE_STALL", {9, 10}},
-        Arc{"DMEM_REQ_READY", "PREDICTION_RECOVERY", {14, 15}},
+        Arc{"DMEM_REQ_READY", "PREDICTION_RECOVERY", {14, 21}},
         Arc{"DMEM_RSP_STATUS", "BRANCH_MISS", {13, 14}},
         Arc{"DMEM_RSP_STATUS", "BRANCH_RESOLVED", {12, 13}},
         Arc{"DMEM_RSP_STATUS", "IMEM_RSP_READY", {14, 16}},
         Arc{"DMEM_RSP_STATUS", "PIPELINE_FLUSH", {9, 10}},
         Arc{"DMEM_RSP_STATUS", "PREDICTION_RECOVERY", {12, 13}},
-        Arc{"DMEM_RSP_VALID", "BRANCH_MISS", {13, 14}},
-        Arc{"DMEM_RSP_VALID", "BRANCH_RESOLVED", {12, 13}},
+        Arc{"DMEM_RSP_VALID", "BRANCH_MISS", {13, 20}},
+        Arc{"DMEM_RSP_VALID", "BRANCH_RESOLVED", {12, 19}},
         Arc{"DMEM_RSP_VALID", "COMMIT_VALID", {8, 8}},
         Arc{"DMEM_RSP_VALID", "DATA_PORT_STALL", {6, 6}},
-        Arc{"DMEM_RSP_VALID", "DMEM_RSP_READY", {11, 12}},
-        Arc{"DMEM_RSP_VALID", "IMEM_RSP_READY", {13, 15}},
+        Arc{"DMEM_RSP_VALID", "DMEM_RSP_READY", {11, 17}},
+        Arc{"DMEM_RSP_VALID", "IMEM_RSP_READY", {13, 20}},
         Arc{"DMEM_RSP_VALID", "INSTRUCTION_ATTEMPT", {8, 8}},
-        Arc{"DMEM_RSP_VALID", "LOAD_USE_STALL", {9, 10}},
+        Arc{"DMEM_RSP_VALID", "LOAD_USE_STALL", {9, 15}},
         Arc{"DMEM_RSP_VALID", "MEMORY_STALL", {5, 5}},
-        Arc{"DMEM_RSP_VALID", "PIPELINE_FLUSH", {9, 10}},
+        Arc{"DMEM_RSP_VALID", "PIPELINE_FLUSH", {9, 15}},
         Arc{"DMEM_RSP_VALID", "PIPELINE_STALL", {7, 8}},
-        Arc{"DMEM_RSP_VALID", "PREDICTION_RECOVERY", {12, 13}},
-        Arc{"ENABLE", "BRANCH_MISS", {9, 24}},
-        Arc{"ENABLE", "BRANCH_RESOLVED", {8, 23}},
+        Arc{"DMEM_RSP_VALID", "PREDICTION_RECOVERY", {12, 19}},
+        Arc{"ENABLE", "BRANCH_MISS", {9, 30}},
+        Arc{"ENABLE", "BRANCH_RESOLVED", {8, 29}},
         Arc{"ENABLE", "COMMIT_VALID", {4, 18}},
         Arc{"ENABLE", "DATA_PORT_STALL", {5, 16}},
-        Arc{"ENABLE", "DMEM_REQ_ADDR", {13, 13}},
+        Arc{"ENABLE", "DMEM_REQ_ADDR", {13, 15}},
         Arc{"ENABLE", "DMEM_REQ_OP", {7, 7}},
         Arc{"ENABLE", "DMEM_REQ_VALID", {8, 8}},
         Arc{"ENABLE", "DMEM_REQ_WRITE_MASK", {12, 15}},
-        Arc{"ENABLE", "DMEM_RSP_READY", {7, 22}},
+        Arc{"ENABLE", "DMEM_RSP_READY", {7, 27}},
         Arc{"ENABLE", "IMEM_REQ_VALID", {5, 5}},
-        Arc{"ENABLE", "IMEM_RSP_READY", {7, 25}},
+        Arc{"ENABLE", "IMEM_RSP_READY", {7, 30}},
         Arc{"ENABLE", "INSTRUCTION_ATTEMPT", {4, 18}},
-        Arc{"ENABLE", "LOAD_USE_STALL", {5, 20}},
+        Arc{"ENABLE", "LOAD_USE_STALL", {5, 25}},
         Arc{"ENABLE", "MEMORY_STALL", {4, 15}},
-        Arc{"ENABLE", "PIPELINE_FLUSH", {5, 20}},
+        Arc{"ENABLE", "PIPELINE_FLUSH", {5, 25}},
         Arc{"ENABLE", "PIPELINE_STALL", {6, 18}},
-        Arc{"ENABLE", "PREDICTION_RECOVERY", {8, 23}},
+        Arc{"ENABLE", "PREDICTION_RECOVERY", {8, 29}},
         Arc{"IMEM_REQ_READY", "IMEM_RSP_READY", {11, 11}},
         Arc{"IMEM_RSP_VALID", "IMEM_RSP_READY", {9, 9}},
     };
     t.clock = "CLK";
     t.launches["BRANCH_MISS"] = {6, 71};
     t.launches["BRANCH_RESOLVED"] = {6, 70};
-    t.launches["COMMIT_VALID"] = {4, 29};
-    t.launches["DATA_PORT_STALL"] = {6, 27};
-    t.launches["DMEM_REQ_ADDR"] = {5, 24};
+    t.launches["COMMIT_VALID"] = {4, 30};
+    t.launches["DATA_PORT_STALL"] = {6, 28};
+    t.launches["DMEM_REQ_ADDR"] = {5, 27};
     t.launches["DMEM_REQ_OP"] = {5, 18};
-    t.launches["DMEM_REQ_VALID"] = {6, 19};
+    t.launches["DMEM_REQ_VALID"] = {6, 20};
     t.launches["DMEM_REQ_WRITE_DATA"] = {5, 14};
-    t.launches["DMEM_REQ_WRITE_MASK"] = {5, 26};
-    t.launches["DMEM_RSP_READY"] = {6, 33};
+    t.launches["DMEM_REQ_WRITE_MASK"] = {5, 27};
+    t.launches["DMEM_RSP_READY"] = {6, 39};
     t.launches["EX_MEM_PC"] = {3, 4};
     t.launches["EX_MEM_VALID"] = {3, 4};
     t.launches["FETCH_PC"] = {3, 4};
@@ -9996,21 +10083,21 @@
     t.launches["IMEM_REQ_ADDR"] = {5, 7};
     t.launches["IMEM_REQ_VALID"] = {6, 10};
     t.launches["IMEM_RSP_READY"] = {6, 77};
-    t.launches["INSTRUCTION_ATTEMPT"] = {4, 29};
-    t.launches["LOAD_USE_STALL"] = {7, 31};
-    t.launches["MEMORY_STALL"] = {7, 26};
+    t.launches["INSTRUCTION_ATTEMPT"] = {4, 30};
+    t.launches["LOAD_USE_STALL"] = {7, 37};
+    t.launches["MEMORY_STALL"] = {7, 27};
     t.launches["MEM_WB_PC"] = {3, 4};
     t.launches["MEM_WB_VALID"] = {3, 4};
     t.launches["PIPELINE_FLUSH"] = {7, 71};
-    t.launches["PIPELINE_STALL"] = {7, 29};
+    t.launches["PIPELINE_STALL"] = {7, 30};
     t.launches["PREDICTION_RECOVERY"] = {8, 70};
     t.launches["TRAPPED"] = {3, 4};
     t.launches["TRAP_CAUSE"] = {3, 4};
-    t.setup["DMEM_REQ_READY"] = 30;
+    t.setup["DMEM_REQ_READY"] = 31;
     t.setup["DMEM_RSP_READ_DATA"] = 18;
     t.setup["DMEM_RSP_STATUS"] = 24;
-    t.setup["DMEM_RSP_VALID"] = 28;
-    t.setup["ENABLE"] = 38;
+    t.setup["DMEM_RSP_VALID"] = 29;
+    t.setup["ENABLE"] = 39;
     t.setup["IMEM_REQ_READY"] = 19;
     t.setup["IMEM_RSP_READ_DATA"] = 45;
     t.setup["IMEM_RSP_STATUS"] = 15;
@@ -10023,66 +10110,66 @@
     PartDelays t;
     t.evidence = "proven on rv32i.core.educational-five-stage.structural";
     t.arcs = {
-        Arc{"DMEM_REQ_READY", "BRANCH_MISS", {15, 16}},
-        Arc{"DMEM_REQ_READY", "BRANCH_RESOLVED", {14, 15}},
+        Arc{"DMEM_REQ_READY", "BRANCH_MISS", {15, 22}},
+        Arc{"DMEM_REQ_READY", "BRANCH_RESOLVED", {14, 21}},
         Arc{"DMEM_REQ_READY", "COMMIT_VALID", {10, 10}},
         Arc{"DMEM_REQ_READY", "DATA_PORT_STALL", {8, 8}},
-        Arc{"DMEM_REQ_READY", "DMEM_RSP_READY", {13, 14}},
-        Arc{"DMEM_REQ_READY", "IMEM_RSP_READY", {15, 17}},
+        Arc{"DMEM_REQ_READY", "DMEM_RSP_READY", {13, 19}},
+        Arc{"DMEM_REQ_READY", "IMEM_RSP_READY", {15, 22}},
         Arc{"DMEM_REQ_READY", "INSTRUCTION_ATTEMPT", {10, 10}},
-        Arc{"DMEM_REQ_READY", "LOAD_USE_STALL", {11, 12}},
+        Arc{"DMEM_REQ_READY", "LOAD_USE_STALL", {11, 17}},
         Arc{"DMEM_REQ_READY", "MEMORY_STALL", {7, 7}},
-        Arc{"DMEM_REQ_READY", "PIPELINE_FLUSH", {11, 12}},
+        Arc{"DMEM_REQ_READY", "PIPELINE_FLUSH", {11, 17}},
         Arc{"DMEM_REQ_READY", "PIPELINE_STALL", {9, 10}},
-        Arc{"DMEM_REQ_READY", "PREDICTION_RECOVERY", {14, 15}},
+        Arc{"DMEM_REQ_READY", "PREDICTION_RECOVERY", {14, 21}},
         Arc{"DMEM_RSP_STATUS", "BRANCH_MISS", {13, 14}},
         Arc{"DMEM_RSP_STATUS", "BRANCH_RESOLVED", {12, 13}},
         Arc{"DMEM_RSP_STATUS", "IMEM_RSP_READY", {14, 16}},
         Arc{"DMEM_RSP_STATUS", "PIPELINE_FLUSH", {9, 10}},
         Arc{"DMEM_RSP_STATUS", "PREDICTION_RECOVERY", {12, 13}},
-        Arc{"DMEM_RSP_VALID", "BRANCH_MISS", {13, 14}},
-        Arc{"DMEM_RSP_VALID", "BRANCH_RESOLVED", {12, 13}},
+        Arc{"DMEM_RSP_VALID", "BRANCH_MISS", {13, 20}},
+        Arc{"DMEM_RSP_VALID", "BRANCH_RESOLVED", {12, 19}},
         Arc{"DMEM_RSP_VALID", "COMMIT_VALID", {8, 8}},
         Arc{"DMEM_RSP_VALID", "DATA_PORT_STALL", {6, 6}},
-        Arc{"DMEM_RSP_VALID", "DMEM_RSP_READY", {11, 12}},
-        Arc{"DMEM_RSP_VALID", "IMEM_RSP_READY", {13, 15}},
+        Arc{"DMEM_RSP_VALID", "DMEM_RSP_READY", {11, 17}},
+        Arc{"DMEM_RSP_VALID", "IMEM_RSP_READY", {13, 20}},
         Arc{"DMEM_RSP_VALID", "INSTRUCTION_ATTEMPT", {8, 8}},
-        Arc{"DMEM_RSP_VALID", "LOAD_USE_STALL", {9, 10}},
+        Arc{"DMEM_RSP_VALID", "LOAD_USE_STALL", {9, 15}},
         Arc{"DMEM_RSP_VALID", "MEMORY_STALL", {5, 5}},
-        Arc{"DMEM_RSP_VALID", "PIPELINE_FLUSH", {9, 10}},
+        Arc{"DMEM_RSP_VALID", "PIPELINE_FLUSH", {9, 15}},
         Arc{"DMEM_RSP_VALID", "PIPELINE_STALL", {7, 8}},
-        Arc{"DMEM_RSP_VALID", "PREDICTION_RECOVERY", {12, 13}},
-        Arc{"ENABLE", "BRANCH_MISS", {9, 24}},
-        Arc{"ENABLE", "BRANCH_RESOLVED", {8, 23}},
+        Arc{"DMEM_RSP_VALID", "PREDICTION_RECOVERY", {12, 19}},
+        Arc{"ENABLE", "BRANCH_MISS", {9, 30}},
+        Arc{"ENABLE", "BRANCH_RESOLVED", {8, 29}},
         Arc{"ENABLE", "COMMIT_VALID", {4, 18}},
         Arc{"ENABLE", "DATA_PORT_STALL", {5, 16}},
-        Arc{"ENABLE", "DMEM_REQ_ADDR", {13, 13}},
+        Arc{"ENABLE", "DMEM_REQ_ADDR", {13, 15}},
         Arc{"ENABLE", "DMEM_REQ_OP", {7, 7}},
         Arc{"ENABLE", "DMEM_REQ_VALID", {8, 8}},
         Arc{"ENABLE", "DMEM_REQ_WRITE_MASK", {12, 15}},
-        Arc{"ENABLE", "DMEM_RSP_READY", {7, 22}},
+        Arc{"ENABLE", "DMEM_RSP_READY", {7, 27}},
         Arc{"ENABLE", "IMEM_REQ_VALID", {5, 5}},
-        Arc{"ENABLE", "IMEM_RSP_READY", {7, 25}},
+        Arc{"ENABLE", "IMEM_RSP_READY", {7, 30}},
         Arc{"ENABLE", "INSTRUCTION_ATTEMPT", {4, 18}},
-        Arc{"ENABLE", "LOAD_USE_STALL", {5, 20}},
+        Arc{"ENABLE", "LOAD_USE_STALL", {5, 25}},
         Arc{"ENABLE", "MEMORY_STALL", {4, 15}},
-        Arc{"ENABLE", "PIPELINE_FLUSH", {5, 20}},
+        Arc{"ENABLE", "PIPELINE_FLUSH", {5, 25}},
         Arc{"ENABLE", "PIPELINE_STALL", {6, 18}},
-        Arc{"ENABLE", "PREDICTION_RECOVERY", {8, 23}},
+        Arc{"ENABLE", "PREDICTION_RECOVERY", {8, 29}},
         Arc{"IMEM_REQ_READY", "IMEM_RSP_READY", {11, 11}},
         Arc{"IMEM_RSP_VALID", "IMEM_RSP_READY", {9, 9}},
     };
     t.clock = "CLK";
     t.launches["BRANCH_MISS"] = {6, 71};
     t.launches["BRANCH_RESOLVED"] = {6, 70};
-    t.launches["COMMIT_VALID"] = {4, 29};
-    t.launches["DATA_PORT_STALL"] = {6, 27};
-    t.launches["DMEM_REQ_ADDR"] = {5, 24};
+    t.launches["COMMIT_VALID"] = {4, 30};
+    t.launches["DATA_PORT_STALL"] = {6, 28};
+    t.launches["DMEM_REQ_ADDR"] = {5, 27};
     t.launches["DMEM_REQ_OP"] = {5, 18};
-    t.launches["DMEM_REQ_VALID"] = {6, 19};
+    t.launches["DMEM_REQ_VALID"] = {6, 20};
     t.launches["DMEM_REQ_WRITE_DATA"] = {5, 14};
-    t.launches["DMEM_REQ_WRITE_MASK"] = {5, 26};
-    t.launches["DMEM_RSP_READY"] = {6, 33};
+    t.launches["DMEM_REQ_WRITE_MASK"] = {5, 27};
+    t.launches["DMEM_RSP_READY"] = {6, 39};
     t.launches["EX_MEM_PC"] = {3, 4};
     t.launches["EX_MEM_VALID"] = {3, 4};
     t.launches["FETCH_PC"] = {3, 4};
@@ -10094,21 +10181,21 @@
     t.launches["IMEM_REQ_ADDR"] = {5, 7};
     t.launches["IMEM_REQ_VALID"] = {6, 10};
     t.launches["IMEM_RSP_READY"] = {6, 77};
-    t.launches["INSTRUCTION_ATTEMPT"] = {4, 29};
-    t.launches["LOAD_USE_STALL"] = {7, 31};
-    t.launches["MEMORY_STALL"] = {7, 26};
+    t.launches["INSTRUCTION_ATTEMPT"] = {4, 30};
+    t.launches["LOAD_USE_STALL"] = {7, 37};
+    t.launches["MEMORY_STALL"] = {7, 27};
     t.launches["MEM_WB_PC"] = {3, 4};
     t.launches["MEM_WB_VALID"] = {3, 4};
     t.launches["PIPELINE_FLUSH"] = {7, 71};
-    t.launches["PIPELINE_STALL"] = {7, 29};
+    t.launches["PIPELINE_STALL"] = {7, 30};
     t.launches["PREDICTION_RECOVERY"] = {8, 70};
     t.launches["TRAPPED"] = {3, 4};
     t.launches["TRAP_CAUSE"] = {3, 4};
-    t.setup["DMEM_REQ_READY"] = 30;
+    t.setup["DMEM_REQ_READY"] = 31;
     t.setup["DMEM_RSP_READ_DATA"] = 18;
     t.setup["DMEM_RSP_STATUS"] = 24;
-    t.setup["DMEM_RSP_VALID"] = 28;
-    t.setup["ENABLE"] = 38;
+    t.setup["DMEM_RSP_VALID"] = 29;
+    t.setup["ENABLE"] = 39;
     t.setup["IMEM_REQ_READY"] = 19;
     t.setup["IMEM_RSP_READ_DATA"] = 45;
     t.setup["IMEM_RSP_STATUS"] = 15;
@@ -10126,19 +10213,19 @@
         Arc{"ENABLE", "IMEM_REQ_VALID", {3, 3}},
         Arc{"ENABLE", "INSTRUCTION_ATTEMPT", {4, 4}},
         Arc{"IMEM_RSP_READ_DATA", "DMEM_REQ_ADDR", {11, 52}},
-        Arc{"IMEM_RSP_READ_DATA", "DMEM_REQ_OP", {7, 50}},
-        Arc{"IMEM_RSP_READ_DATA", "DMEM_REQ_VALID", {8, 18}},
-        Arc{"IMEM_RSP_READ_DATA", "DMEM_REQ_WRITE_DATA", {8, 60}},
-        Arc{"IMEM_RSP_READ_DATA", "DMEM_REQ_WRITE_MASK", {9, 49}},
+        Arc{"IMEM_RSP_READ_DATA", "DMEM_REQ_OP", {7, 63}},
+        Arc{"IMEM_RSP_READ_DATA", "DMEM_REQ_VALID", {8, 64}},
+        Arc{"IMEM_RSP_READ_DATA", "DMEM_REQ_WRITE_DATA", {8, 62}},
+        Arc{"IMEM_RSP_READ_DATA", "DMEM_REQ_WRITE_MASK", {9, 62}},
         Arc{"IMEM_RSP_STATUS", "DMEM_REQ_OP", {9, 10}},
         Arc{"IMEM_RSP_STATUS", "DMEM_REQ_VALID", {8, 11}},
     };
     t.clock = "CLK";
     t.launches["DMEM_REQ_ADDR"] = {14, 47};
-    t.launches["DMEM_REQ_OP"] = {11, 44};
-    t.launches["DMEM_REQ_VALID"] = {10, 16};
+    t.launches["DMEM_REQ_OP"] = {11, 58};
+    t.launches["DMEM_REQ_VALID"] = {10, 59};
     t.launches["DMEM_REQ_WRITE_DATA"] = {18, 57};
-    t.launches["DMEM_REQ_WRITE_MASK"] = {19, 43};
+    t.launches["DMEM_REQ_WRITE_MASK"] = {19, 57};
     t.launches["HALTED"] = {3, 4};
     t.launches["IMEM_REQ_ADDR"] = {3, 4};
     t.launches["IMEM_REQ_VALID"] = {7, 8};
@@ -10147,11 +10234,11 @@
     t.launches["TRAPPED"] = {3, 4};
     t.launches["TRAP_CAUSE"] = {3, 4};
     t.setup["DMEM_RSP_READ_DATA"] = 23;
-    t.setup["DMEM_RSP_STATUS"] = 19;
-    t.setup["ENABLE"] = 35;
-    t.setup["IMEM_RSP_READ_DATA"] = 80;
-    t.setup["IMEM_RSP_STATUS"] = 35;
-    t.internal_period = 83;
+    t.setup["DMEM_RSP_STATUS"] = 32;
+    t.setup["ENABLE"] = 40;
+    t.setup["IMEM_RSP_READ_DATA"] = 93;
+    t.setup["IMEM_RSP_STATUS"] = 40;
+    t.internal_period = 88;
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
@@ -11175,8 +11262,8 @@
         Arc{"EX_VALID", "RECOVERY", {5, 5}},
         Arc{"EX_VALID", "RESOLVE", {4, 4}},
         Arc{"EX_VALID", "UPDATE", {5, 5}},
-        Arc{"FETCH_INSTRUCTION", "FETCH_NEXT_PC", {9, 33}},
-        Arc{"FETCH_INSTRUCTION", "PREDICTED_NEXT_PC", {6, 30}},
+        Arc{"FETCH_INSTRUCTION", "FETCH_NEXT_PC", {9, 36}},
+        Arc{"FETCH_INSTRUCTION", "PREDICTED_NEXT_PC", {6, 33}},
         Arc{"FETCH_PC", "FETCH_NEXT_PC", {7, 25}},
         Arc{"FETCH_PC", "PREDICTED_NEXT_PC", {4, 22}},
         Arc{"REDIRECT_APPLY", "FETCH_NEXT_PC", {2, 3}},
@@ -11186,7 +11273,7 @@
     t.launches["EX_PREDICTED_NEXT_PC"] = {3, 4};
     t.launches["MISPREDICT"] = {13, 14};
     t.launches["RECOVERY"] = {13, 14};
-    t.setup["FETCH_INSTRUCTION"] = 39;
+    t.setup["FETCH_INSTRUCTION"] = 42;
     t.setup["FETCH_PC"] = 31;
     t.setup["ID_EX_WRITE"] = 9;
     t.setup["IF_ID_WRITE"] = 9;
@@ -11444,7 +11531,7 @@
         Arc{"B", "OUT", {6, 13}},
         Arc{"C_IN", "CARRY", {7, 7}},
         Arc{"OP", "CARRY", {4, 18}},
-        Arc{"OP", "OUT", {4, 21}},
+        Arc{"OP", "OUT", {4, 22}},
     };
     return t;
 }()},

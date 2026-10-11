@@ -184,7 +184,7 @@ The memory endpoint keeps its empty/holding behaviour in the analysis and
 takes its delays path by path from its table.
 
 With the cores' real memory sizes the certified periods are 166
-(single-cycle), 78 (baseline) and 96 (advanced) ticks.
+(single-cycle), 80 (baseline) and 98 (advanced) ticks.
 
 ### How the analysis reaches memory parts
 
@@ -224,6 +224,16 @@ Two apparent loops are not loops, and are described precisely instead of as
 - The DRAM cell's sample follows the word line only, and the sense column's
   restore signal follows precharge, sense and the word lines only.
 
+### Inputs that end at X or Z
+
+The tables are proven for inputs that end at any of 0, 1, X or Z. Assuming 0
+or 1 would remove a few false paths (the ALU's `EQ` is 30 instead of 33 that
+way), but an X on a select line keeps both sides of a choice live, and a
+compact part must not be faster than its gates then. The case search remains
+available to `settling` through `binary_sources`; the tables do not use it.
+`delay_estimate_experiment --compare --four-state` drives X and Z as well.
+The flip-flop is measured with X and Z data too.
+
 ### Parts built with parameters
 
 Tables are stored for a part's default parameters. A part built with any
@@ -234,8 +244,10 @@ entries, which is how the experiments and program tests build it.
 
 ### Not covered
 
-- Other parameter combinations: a ROM with a specific image, a memory with a
-  non-default row layout, a predictor with another table size.
+- Other parameter combinations: a memory with a non-default row layout, a
+  predictor with another table size. A ROM image does not matter: it only
+  sets constants behind the read column, and the proven table is the same
+  for every image.
 - One delay per control value (for example per ALU operation).
 
 ## What is assumed
@@ -266,7 +278,7 @@ Every report lists its premises.
   and every fail-closed case. These were written for the earlier engine and
   pass unchanged on this one.
 - The engine merge itself left the certified periods unchanged (94, 58, 78).
-  They are 166, 78 and 96 with storage and memory on their real delays.
+  They are 166, 80 and 98 with storage and memory on their real delays.
 
 ```bash
 build-cleanup/tests/SettlingBoundTest --verbose --budget=500000 rv32i.alu32

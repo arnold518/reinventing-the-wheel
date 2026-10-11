@@ -7,7 +7,8 @@
 // per control value. Output is Markdown on stdout.
 //
 //   delay_estimate_experiment [--rounds=N] [--budget=N] [--control=PART:PIN ...] [PART ...]
-//   delay_estimate_experiment --compare [--rounds=N] [--watch=N] [PART ...]   (all parts by default)
+//   delay_estimate_experiment --compare [--four-state] [--rounds=N] [--watch=N] [PART ...]
+//   (all parts by default; --four-state also drives X and Z)
 #include "analysis/CircuitTimingAnalyzer.hpp"
 #include "components/BasicComponent.hpp"
 #include "components/ComponentBuilder.hpp"
@@ -202,7 +203,7 @@ void experiment(const std::string& contract, size_t rounds, size_t budget, const
 // compact form's last output change came before the gates', and by how much.
 // The rule is that it never does. Clock and reset are ordinary pins here, so
 // clocked parts are exercised too.
-void compare(const std::string& contract, size_t steps, size_t watch) {
+void compare(const std::string& contract, size_t steps, size_t watch, bool four_state) {
     const auto& catalog = circuit::builtinComponentCatalog();
     std::shared_ptr<IOComponent> gate_form, compact_form;
     try {
@@ -241,7 +242,12 @@ void compare(const std::string& contract, size_t steps, size_t watch) {
         next = now;
         // The clock ticks half of the time, so clocked parts see many edges.
         const auto& pin = has_clock && i % 2 ? std::string("CLK") : pins[random() % pins.size()];
-        for (auto& bit : next[pin]) bit = next[pin].size() == 1 ? (bit == LogicValue::LOW ? LogicValue::HIGH : LogicValue::LOW) : LogicValue(random() & 1);
+        // With --four-state a data pin may also go to X or Z. The clock stays 0/1.
+        const unsigned values = four_state && pin != "CLK" ? 4 : 2;
+        for (auto& bit : next[pin]) {
+            if (values == 2 && next[pin].size() == 1) bit = bit == LogicValue::LOW ? LogicValue::HIGH : LogicValue::LOW;
+            else bit = LogicValue(random() % values);
+        }
         const auto [real, modeled] = step(next);
         for (const auto& [name, wire] : gates.outputs)
             differing += wire->getValueVector() != compact.outputs.at(name)->getValueVector();
@@ -264,7 +270,7 @@ void compare(const std::string& contract, size_t steps, size_t watch) {
 int main(int argc, char** argv) {
     try {
         size_t rounds = 400, budget = 20000, watch = 200;
-        bool comparing = false;
+        bool comparing = false, four_state = false;
         std::vector<std::string> parts;
         std::map<std::string, std::set<std::string>> controls;
         for (int i = 1; i < argc; ++i) {
@@ -273,6 +279,7 @@ int main(int argc, char** argv) {
             else if (argument.rfind("--budget=", 0) == 0) budget = std::stoul(argument.substr(9));
             else if (argument.rfind("--watch=", 0) == 0) watch = std::stoul(argument.substr(8));
             else if (argument == "--compare") comparing = true;
+            else if (argument == "--four-state") four_state = true;
             else if (argument.rfind("--control=", 0) == 0) {
                 const auto spec = argument.substr(10);
                 const auto colon = spec.rfind(':');
@@ -286,7 +293,7 @@ int main(int argc, char** argv) {
                       << "each from a settled start; outputs watched for " << watch << " ticks.\n\n"
                       << "| part | compact timing | output changes compared | compact earlier | worst: earlier by | worst: later by | value differences | note |\n"
                       << "| --- | --- | ---: | ---: | ---: | ---: | ---: | --- |\n";
-            for (const auto& part : parts) compare(part, rounds, watch);
+            for (const auto& part : parts) compare(part, rounds, watch, four_state);
             return 0;
         }
         if (parts.empty()) throw std::invalid_argument("Name at least one catalog part");

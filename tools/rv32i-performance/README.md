@@ -143,7 +143,7 @@ without claiming benchmark completion:
 ```sh
 build/rv32i_experiment --core advanced --fidelity reference \
   --elf build/rv32i-embench/artifacts/crc32/crc32.elf \
-  --period 78 --max-cycles 10000 --allow-incomplete --progress-cycles 1000
+  --period 98 --max-cycles 10000 --allow-incomplete --progress-cycles 1000
 ```
 
 Such a row has `completed: false`, `verified: false` and an `incomplete` common

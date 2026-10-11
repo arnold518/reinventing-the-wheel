@@ -37,36 +37,42 @@ struct Bench {
     void set(const std::shared_ptr<Wire<>>& wire, bool value, size_t at) {
         sim.scheduleEvent(std::make_shared<WireUpdateEvent<>>(at, wire, value ? LogicValue::HIGH : LogicValue::LOW));
     }
+    void data(LogicValue value, size_t at) { sim.scheduleEvent(std::make_shared<WireUpdateEvent<>>(at, d, value)); }
     bool high(const std::shared_ptr<Wire<>>& wire) const { return wire->getValueVector()[0] == LogicValue::HIGH; }
     // Leave the flip-flop holding `stored`, with the clock low and D at `data`.
-    void prepare(bool stored, bool data) {
+    void prepare(bool stored, LogicValue resting) {
         set(rst, false, now); set(clk, false, now); set(d, stored, now);
         sim.advanceAndRecord(now += QUIET);
         set(clk, true, now); sim.advanceAndRecord(now += QUIET);
-        set(clk, false, now); set(d, data, now);
+        set(clk, false, now); data(resting, now);
         sim.advanceAndRecord(now += QUIET);
         if (high(q) != stored || high(q_bar) == stored) throw std::runtime_error("Flip-flop could not be prepared");
     }
 };
 
+// What a flip-flop holds after capturing a data value: X or Z become X.
+LogicValue wanted(LogicValue data) {
+    return data == LogicValue::LOW || data == LogicValue::HIGH ? data : LogicValue::UNKNOWN;
+}
+const LogicValue VALUES[] = {LogicValue::LOW, LogicValue::HIGH, LogicValue::UNKNOWN, LogicValue::HIGH_Z};
+
 struct Edge {
-    bool captured = false; // the value Q ends at
-    bool clean = true;     // Q and Q_BAR end as complements
+    LogicValue captured = LogicValue::UNKNOWN; // the value Q ends at
+    bool clean = true;     // quiet at the end, and Q and Q_BAR agree with each other
     size_t first = 0, last = 0; // first and last output change after the edge (0: none)
 };
 // A rising edge. D changes from `before` to `after` at `offset` ticks
 // relative to the edge (negative: earlier). The clock stays high `high_for`.
-Edge edge(Bench& bench, bool stored, bool before, bool after, long offset, size_t high_for = QUIET, size_t low_for = QUIET) {
+Edge edge(Bench& bench, bool stored, LogicValue before, LogicValue after, long offset, size_t high_for = QUIET, size_t low_for = QUIET) {
     bench.prepare(stored, before);
     // An optional short low phase right before the edge.
     if (low_for < QUIET) {
         bench.set(bench.clk, true, bench.now); bench.sim.advanceAndRecord(bench.now += QUIET);
-        if (bench.high(bench.q) != before) throw std::runtime_error("Unexpected preparation");
-        stored = before;
+        if (bench.q->getValueVector()[0] != wanted(before)) throw std::runtime_error("Unexpected preparation");
         bench.set(bench.clk, false, bench.now + WINDOW - low_for);
     }
     const size_t at = bench.now + WINDOW;
-    bench.set(bench.d, after, static_cast<size_t>(static_cast<long>(at) + offset));
+    bench.data(after, static_cast<size_t>(static_cast<long>(at) + offset));
     bench.set(bench.clk, true, at);
     bench.set(bench.clk, false, at + high_for);
     bench.sim.advanceAndRecord(at - 1);
@@ -82,9 +88,12 @@ Edge edge(Bench& bench, bool stored, bool before, bool after, long offset, size_
     }
     bench.now = at + WINDOW + QUIET;
     bench.sim.advanceAndRecord(bench.now += QUIET);
-    result.captured = bench.high(bench.q);
-    result.clean = bench.high(bench.q) != bench.high(bench.q_bar)
-        && bench.q->getValueVector()[0] != LogicValue::UNKNOWN && !bench.sim.hasPendingEvents();
+    result.captured = bench.q->getValueVector()[0];
+    const auto bar = bench.q_bar->getValueVector()[0];
+    // 0 and 1 come with their complement; unknown data gives X on both.
+    result.clean = !bench.sim.hasPendingEvents()
+        && (result.captured == LogicValue::UNKNOWN ? bar == LogicValue::UNKNOWN
+            : bar == (result.captured == LogicValue::HIGH ? LogicValue::LOW : LogicValue::HIGH));
     return result;
 }
 
@@ -102,12 +111,14 @@ int main() {
         bench.set(bench.clk, false, bench.now); bench.set(bench.rst, false, bench.now);
         bench.sim.advanceAndRecord(bench.now += QUIET);
 
-        // Clock-to-output, with data quiet well before the edge.
+        // Clock-to-output, with data quiet well before the edge. Data is tried
+        // in all four values: X or Z is captured as X.
         size_t earliest = WINDOW, latest = 0;
-        for (int stored = 0; stored < 2; ++stored) for (int data = 0; data < 2; ++data) {
+        for (int stored = 0; stored < 2; ++stored) for (const auto data : VALUES) {
             const auto result = edge(bench, stored, data, data, -static_cast<long>(WINDOW));
-            check(result.clean && result.captured == bool(data), "A quiet edge must capture its data");
-            check((result.last != 0) == (stored != data), "The output changes exactly when the stored value does");
+            check(result.clean && result.captured == wanted(data), "A quiet edge must capture its data");
+            const bool changes = wanted(data) != (stored ? LogicValue::HIGH : LogicValue::LOW);
+            check((result.last != 0) == changes, "The output changes exactly when the stored value does");
             if (result.last) { earliest = std::min(earliest, result.first); latest = std::max(latest, result.last); }
         }
         // Setup: the smallest lead such that every earlier data change is
@@ -115,31 +126,34 @@ int main() {
         // arrives at the last moment is captured, but shows up late.
         size_t setup = 0, late_capture = 0;
         for (size_t lead = 0; lead <= WINDOW; ++lead)
-            for (int stored = 0; stored < 2; ++stored) for (int data = 0; data < 2; ++data) {
-                const auto result = edge(bench, stored, !data, data, -static_cast<long>(lead));
-                if (!result.clean || result.captured != bool(data)) setup = lead + 1;
+            for (int stored = 0; stored < 2; ++stored) for (const auto before : VALUES) for (const auto data : VALUES) {
+                if (before == data) continue;
+                const auto result = edge(bench, stored, before, data, -static_cast<long>(lead));
+                if (!result.clean || result.captured != wanted(data)) setup = lead + 1;
                 else if (result.last > latest) { setup = lead + 1; late_capture = std::max(late_capture, result.last); }
             }
         // Hold: the smallest lag such that every later data change is ignored
         // and does not disturb the output either.
         size_t hold = 0;
         for (size_t lag = 0; lag <= WINDOW; ++lag)
-            for (int stored = 0; stored < 2; ++stored) for (int data = 0; data < 2; ++data) {
-                const auto result = edge(bench, stored, data, !data, static_cast<long>(lag));
-                if (!result.clean || result.captured != bool(data) || result.last > latest) hold = lag + 1;
+            for (int stored = 0; stored < 2; ++stored) for (const auto data : VALUES) for (const auto next : VALUES) {
+                if (next == data) continue;
+                const auto result = edge(bench, stored, data, next, static_cast<long>(lag));
+                if (!result.clean || result.captured != wanted(data) || result.last > latest) hold = lag + 1;
             }
         // Clock pulse widths: the shortest high and low phases that still work.
         size_t minimum_high = 0, minimum_low = 0;
         for (size_t width = 1; width <= WINDOW; ++width)
-            for (int stored = 0; stored < 2; ++stored) for (int data = 0; data < 2; ++data) {
+            for (int stored = 0; stored < 2; ++stored) for (const auto before : VALUES) for (const auto data : VALUES) {
                 auto result = edge(bench, stored, data, data, -static_cast<long>(WINDOW), width);
-                if (!result.clean || result.captured != bool(data) || result.last > latest) minimum_high = width + 1;
+                if (!result.clean || result.captured != wanted(data) || result.last > latest) minimum_high = width + 1;
+                if (before == data) continue;
                 // Data changes while the clock is still high; the low phase
                 // alone has to let the first latch take it.
-                result = edge(bench, stored, !data, data, -static_cast<long>(WINDOW), QUIET, width);
-                if (!result.clean || result.captured != bool(data) || result.last > latest) minimum_low = width + 1;
+                result = edge(bench, stored, before, data, -static_cast<long>(WINDOW), QUIET, width);
+                if (!result.clean || result.captured != wanted(data) || result.last > latest) minimum_low = width + 1;
             }
-        std::cout << "DFlipFlop, every stored value, data value and offset within " << WINDOW << " ticks of the edge:\n"
+        std::cout << "DFlipFlop, every stored value, data value (0, 1, X, Z) and offset within " << WINDOW << " ticks of the edge:\n"
                   << "  setup " << setup << ", hold " << hold << ", clock-to-output " << earliest << ".." << latest
                   << ", shortest high " << minimum_high << ", shortest low " << minimum_low << " ticks\n"
                   << "  (data arriving later than the setup time can still be captured, with the output as late as tick "
