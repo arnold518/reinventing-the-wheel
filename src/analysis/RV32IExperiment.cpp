@@ -1,3 +1,5 @@
+#include "modules/memory/BehavioralMemoryEndpoint.hpp"
+#include "MemoryTimingState.hpp"
 #include "components/selection/ProvenPartDelays.hpp"
 #include "analysis/RV32IExperiment.hpp"
 #include "analysis/ExperimentClock.hpp"
@@ -123,13 +125,12 @@ RV32IExperimentResult runRV32IExperiment(const RV32IExperimentConfig& config) {
         clock.clock_pin="EXPERIMENT.CLK";
         clock.inputs={{"EXPERIMENT.RST",std::nullopt,{},0},
                       {"EXPERIMENT.CORE.ENABLE",std::nullopt,{},1}};
-        // A timed memory answers at a clock edge and lets RSP_READY through
-        // to REQ_READY late in the cycle. The gates of the core need that
-        // only shortly before the edge in the states where it happens; the
-        // compact core's table cannot tell states apart and asks for more.
-        // The period covers both, so a compact run stays inside its setup times.
-        if(config.memory.technology!=circuit::memory::Technology::FF)
-            if(const auto* compact=circuit::provenPartDelays(core->getContractId()+".behavioral",
+        // A memory lets RSP_READY through to REQ_READY late in the cycle.
+        // The gates of the core need that only shortly before the edge in
+        // the states where it happens; the compact core's table cannot tell
+        // states apart and asks for more. The period covers both, so a
+        // compact run stays inside its setup times.
+        if(const auto* compact=circuit::provenPartDelays(core->getContractId()+".behavioral",
                     config.core=="advanced"?config.prediction.parameters():circuit::ParameterMap{}))
                 for(const auto& [pin,setup]:compact->setup)
                     if(pin.starts_with("IMEM_")||pin.starts_with("DMEM_"))
@@ -190,7 +191,37 @@ RV32IExperimentResult runRV32IExperiment(const RV32IExperimentConfig& config) {
     size_t start_visits=0;
     size_t total_attempts=0;
     bool instruction_pending=false,data_pending=false;
+    std::vector<detail::MemoryTimingGroup> handshakes;
+    if(config.check_handshake_states) {
+        require(config.fidelity=="reference"&&config.core=="advanced","Handshake states are checked on the gate-level advanced core");
+        ClockSpecification specification;
+        for(const auto& memory:{imem,dmem}) {
+            auto group=detail::memoryTimingStates(std::dynamic_pointer_cast<BehavioralMemoryEndpoint>(memory),specification);
+            require(bool(group),"No handshake state model for this memory");
+            handshakes.push_back(std::move(*group));
+        }
+    }
+    const auto checkHandshakes=[&](size_t cycle) {
+        for(const auto& group:handshakes) {
+            const auto& e=*group.endpoint;
+            const auto ready=e.getOutputPinDynamic("REQ_READY")->getBit(0),valid=e.getOutputPinDynamic("RSP_VALID")->getBit(0);
+            auto take=e.getInputPinDynamic("RSP_READY")->getBit(0);
+            if(take!=LogicValue::LOW&&take!=LogicValue::HIGH)take=LogicValue::UNKNOWN;
+            bool known=false;
+            for(const auto& c:group.cases) {
+                bool same=true;
+                for(const auto& [pin,value]:c.registers)same=same&&pin->getBit(0)==value;
+                for(const auto& [pin,values]:c.register_values)same=same&&(values>>unsigned(pin->getBit(0))&1);
+                if(c.sequenced)same=same&&valid==c.valid&&ready==c.ready[unsigned(take)];
+                else same=same&&(c.full?valid:ready)==LogicValue::HIGH;
+                known=known||same;
+            }
+            require(known,"Cycle "+std::to_string(cycle)+": "+e.getID()+" is in a handshake state the clock analysis did not cover");
+            ++result.handshake_states_checked;
+        }
+    };
     for(size_t cycle=0;cycle<config.max_cycles;++cycle) {
+        checkHandshakes(cycle);
         if(config.progress_interval_cycles&&cycle&&cycle%config.progress_interval_cycles==0)
             config.progress({cycle,total_attempts,result.retired,seconds(execution_started,Clock::now())});
         const auto cycle_started=Clock::now();

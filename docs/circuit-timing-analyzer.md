@@ -184,7 +184,9 @@ The memory endpoint keeps its empty/holding behaviour in the analysis and
 takes its delays path by path from its table.
 
 With the cores' real memory sizes the certified periods are 166
-(single-cycle), 80 (baseline) and 98 (advanced) ticks.
+(single-cycle), 80 (baseline) and 100 (advanced) ticks. The advanced core's
+98 became 100 when the compact core's setup needs at its memory pins were
+added to the analysis (see "Memories that time themselves").
 
 ### How the analysis reaches memory parts
 
@@ -490,8 +492,15 @@ asks for REQ_READY earlier (19 ticks before the edge for the fetch port,
 at its memory pins to the same analysis (`ClockSpecification::also_captured`).
 `--period auto` then gives 102, and at that period gates and compact form
 agree with 0 setup violations (program 20: SRAM and ROM 400 cycles,
-NOR-flash 334, DRAM 583; all verified). With the flip-flop memory the
-period stays 98 and this addition is not applied.
+NOR-flash 334, DRAM 583; all verified). The same addition applies with the
+flip-flop memory, whose period goes from 98 to 100; the single-cycle and
+baseline cores keep 166 and 80.
+
+The state lists are checked against simulation: `rv32i_experiment
+--fidelity reference --check-handshake-states` fails if, in any cycle, a
+memory port is in a state that is not in its list (program 20: 170 port
+states with the flip-flop memory, 800 SRAM, 1166 DRAM, 800 ROM, 668
+NOR-flash, all covered).
 
 Limits: the state model needs the endpoint wired to the core's requester
 (`RV32IMemoryRequest`) and a delay table that says `clocked_interface`; a

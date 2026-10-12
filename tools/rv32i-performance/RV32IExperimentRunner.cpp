@@ -39,6 +39,7 @@ void usage() {
         "  [--max-cycles N] [--max-events N] [--allow-incomplete] [--progress-cycles N]\n"
         "  [--tohost ADDRESS] [--allocation-limit-mib N]\n"
         "  [--trace-cycles] (requires --max-cycles <= 4096; validation only)\n"
+        "  [--check-handshake-states] (gate-level advanced core; validation only)\n"
         "JSON on stdout; errors on stderr. One fresh, cold-predictor run. History is disabled.\n";
 }
 }
@@ -74,6 +75,7 @@ int main(int argc,char** argv) {
             if(key=="--no-verify"){c.verify=false;continue;}
             if(key=="--allow-incomplete"){c.allow_incomplete=true;continue;}
             if(key=="--trace-cycles"){c.trace_cycles=true;continue;}
+            if(key=="--check-handshake-states"){c.check_handshake_states=true;continue;}
             if(++i>=argc)throw std::invalid_argument("Missing value for "+key);
             std::string value=argv[i];
             if(key=="--core")c.core=value;
@@ -200,7 +202,7 @@ int main(int argc,char** argv) {
             <<",\"predictor_at_window\":"<<quote(r.measurement_start_pc?"inherits-prefix-training":"cold")
             <<",\"completed\":"<<(r.completed?"true":"false")
             <<",\"prefix_verified\":"<<(r.prefix_verified?"true":"false")
-            <<",\"verified\":"<<(r.verified?"true":"false")<<",\"setup_violations\":"<<setup_violations<<",\"cycles\":"<<r.cycles
+            <<",\"verified\":"<<(r.verified?"true":"false")<<",\"setup_violations\":"<<setup_violations<<",\"handshake_states_checked\":"<<r.handshake_states_checked<<",\"cycles\":"<<r.cycles
             <<",\"instruction_attempts\":"<<r.attempts<<",\"retired_instructions\":"<<r.retired
             <<",\"terminal_attempts\":"<<r.terminal_attempts
             <<",\"whole_program_cycles\":"<<r.whole_program_cycles

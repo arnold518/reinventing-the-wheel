@@ -143,7 +143,7 @@ without claiming benchmark completion:
 ```sh
 build/rv32i_experiment --core advanced --fidelity reference \
   --elf build/rv32i-embench/artifacts/crc32/crc32.elf \
-  --period 98 --max-cycles 10000 --allow-incomplete --progress-cycles 1000
+  --period 100 --max-cycles 10000 --allow-incomplete --progress-cycles 1000
 ```
 
 Such a row has `completed: false`, `verified: false` and an `incomplete` common
@@ -155,8 +155,10 @@ change inside its setup time. Anything above 0 means the clock is too fast
 for that system (the run also warns on stderr), and the compact form may
 then differ from its gates. `--period auto` certifies a clock for
 `--memory sram|dram|rom|nor-flash` too (102 for the advanced core, against
-98 with the flip-flop memory); that period also covers what the compact
+100 with the flip-flop memory); that period also covers what the compact
 core's table needs at its memory pins, so a compact run reports 0.
+`--fidelity reference --check-handshake-states` (validation only) fails if
+a memory port is ever in a handshake state the clock analysis did not cover.
 
 ## Windows
 

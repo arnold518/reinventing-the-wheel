@@ -58,6 +58,15 @@ class ExperimentCLI(unittest.TestCase):
         timed = run("--core", "advanced", "--memory", "sram", "--program", "20", "--period", "auto")
         self.assertTrue(timed["verified"])
         self.assertEqual(timed["setup_violations"], 0)
+        # Every handshake state the gate-level system passes through is one
+        # the clock analysis went through.
+        for memory in ("ff", "sram", "dram"):
+            seen = run("--core", "advanced", "--memory", memory, "--program", "20", "--fidelity", "reference",
+                       "--period", "auto", "--check-handshake-states")
+            self.assertTrue(seen["verified"])
+            self.assertEqual(seen["setup_violations"], 0)
+            self.assertEqual(seen["handshake_states_checked"], 2 * seen["cycles"])
+        run("--core", "advanced", "--program", "20", "--check-handshake-states", okay=False)
         # The candidate-clock mode is retired; its option is refused.
         run("--core", "single", "--timing", okay=False)
         run("--safe-clock", "--fidelity", "behavioral", okay=False)

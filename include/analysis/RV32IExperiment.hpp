@@ -36,6 +36,9 @@ struct RV32IExperimentConfig {
     // Opt-in settled pre-edge signals plus post-edge architectural retirement.
     // Restricted to <=4096 cycles; ordinary performance runs retain no trace.
     bool trace_cycles=false;
+    // Validation only, gate-level core: every cycle, the memory handshake as
+    // simulated must be one of the states the clock analysis went through.
+    bool check_handshake_states=false;
     size_t progress_interval_cycles=0;
     std::function<void(const RV32IExperimentProgress&)> progress;
     void validate() const;
@@ -54,6 +57,7 @@ struct RV32IExperimentResult {
     std::vector<uint32_t> benchmark_branch_pcs;
     double setup_seconds=0, execution_seconds=0, verification_seconds=0;
     bool completed=false, prefix_verified=false, verified=false;
+    size_t handshake_states_checked=0;
     benchmark::RunRecord benchmark_run;
     std::vector<std::map<std::string,uint64_t>> cycle_trace;
 };
