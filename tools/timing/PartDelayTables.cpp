@@ -51,6 +51,7 @@ std::string emit(const std::string& implementation, const circuit::PartDelays& t
         out << "    t.launches[" << quote(output) << "] = {" << range.minimum << ", " << range.maximum << "};\n";
     for (const auto& [input, setup] : t.setup) out << "    t.setup[" << quote(input) << "] = " << setup << ";\n";
     if (t.self_timed) out << "    t.self_timed = true;\n";
+    if (t.clocked_interface) out << "    t.clocked_interface = true;\n";
     if (t.internal_period) out << "    t.internal_period = " << t.internal_period << ";\n";
     for (const auto& [input, value] : t.fixed_inputs) out << "    t.fixed_inputs[" << quote(input) << "] = " << value << ";\n";
     if (!t.control.empty()) {

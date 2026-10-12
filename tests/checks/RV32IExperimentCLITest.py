@@ -53,8 +53,9 @@ class ExperimentCLI(unittest.TestCase):
         safety = json.loads(p.stdout)["safe_clock"]
         self.assertEqual(safety["status"], "unknown")
         self.assertIsNone(safety["safe_period_ticks"])
-        # A timed memory steps on its own schedule; no clock is certified around it.
-        self.assertTrue(any("self-timed part" in d for d in safety["diagnostics"]))
+        # A timed memory's endpoint keeps to the clock from outside, but its
+        # handshake with the requester has no state model yet: no clock is certified.
+        self.assertTrue(any("dependency cycle" in d for d in safety["diagnostics"]))
         # The candidate-clock mode is retired; its option is refused.
         run("--core", "single", "--timing", okay=False)
         run("--safe-clock", "--fidelity", "behavioral", okay=False)

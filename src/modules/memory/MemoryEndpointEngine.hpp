@@ -93,7 +93,12 @@ private:
     Phase phase_ = Phase::Idle;
     Request request_;
     std::deque<Command> commands_;
-    bool aborted_ = false, maintenance_ = false, row_open_ = false, rested_ = false;
+    bool aborted_ = false, maintenance_ = false, row_open_ = false;
+    // An operation has ended (finished_: with a response) and the next clock
+    // edge has not yet shown it; work_* hold its result until then.
+    bool finished_ = false, settling_ = false;
+    Bits work_result_;
+    Status work_status_ = Status::Ok;
     size_t row_ = 0;
     void idlePins();
     void beginCommand(size_t);

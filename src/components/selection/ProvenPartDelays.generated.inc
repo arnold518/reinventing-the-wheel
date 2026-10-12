@@ -1092,10 +1092,10 @@
     t.launches["MEM_CMD"] = {1, 1};
     t.launches["MEM_WRITE_DATA"] = {1, 1};
     t.launches["MEM_WRITE_MASK"] = {1, 1};
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["MEM_BUSY"] = 0;
     t.setup["MEM_ERROR"] = 0;
     t.setup["MEM_READ_DATA"] = 0;
@@ -1123,10 +1123,10 @@
     t.launches["MEM_CMD"] = {1, 1};
     t.launches["MEM_WRITE_DATA"] = {1, 1};
     t.launches["MEM_WRITE_MASK"] = {1, 1};
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["MEM_BUSY"] = 0;
     t.setup["MEM_ERROR"] = 0;
     t.setup["MEM_READ_DATA"] = 0;
@@ -1154,10 +1154,10 @@
     t.launches["MEM_CMD"] = {1, 1};
     t.launches["MEM_WRITE_DATA"] = {1, 1};
     t.launches["MEM_WRITE_MASK"] = {1, 1};
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["MEM_BUSY"] = 0;
     t.setup["MEM_ERROR"] = 0;
     t.setup["MEM_READ_DATA"] = 0;
@@ -3754,10 +3754,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -3765,6 +3765,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -3776,10 +3777,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -3787,6 +3788,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -3798,10 +3800,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -3809,6 +3811,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -3820,10 +3823,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -3831,6 +3834,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -3842,10 +3846,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -3853,6 +3857,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -3864,10 +3869,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -3875,6 +3880,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -3886,10 +3892,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -3897,6 +3903,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -3908,10 +3915,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -3919,6 +3926,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -3930,10 +3938,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -3941,6 +3949,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -3952,10 +3961,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -3963,6 +3972,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -3974,10 +3984,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -3985,6 +3995,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -3996,10 +4007,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -4007,6 +4018,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -4018,10 +4030,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -4029,6 +4041,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -4040,10 +4053,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -4051,6 +4064,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -4062,10 +4076,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -4073,6 +4087,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 19;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -4084,10 +4099,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -4095,6 +4110,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 19;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -4106,10 +4122,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -4117,6 +4133,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 19;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -4128,10 +4145,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -4139,6 +4156,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 19;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -4150,10 +4168,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -4161,6 +4179,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 19;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -4172,10 +4191,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -4183,6 +4202,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 19;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -4194,10 +4214,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -4205,6 +4225,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 20;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -4216,10 +4237,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -4227,6 +4248,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 20;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -4238,10 +4260,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -4249,6 +4271,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 21;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -4260,10 +4283,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -4271,6 +4294,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 21;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -4282,10 +4306,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -4293,6 +4317,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 21;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -4304,10 +4329,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -4315,6 +4340,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 21;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -4326,10 +4352,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -4337,6 +4363,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -4348,10 +4375,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -4359,6 +4386,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -4370,10 +4398,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -4381,6 +4409,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -4392,10 +4421,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -4403,6 +4432,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -4414,10 +4444,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -4425,6 +4455,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -4436,10 +4467,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -4447,6 +4478,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -4458,10 +4490,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -4469,6 +4501,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -4480,10 +4513,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -4491,6 +4524,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -4502,10 +4536,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -4513,6 +4547,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -4524,10 +4559,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -4535,6 +4570,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -4546,10 +4582,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -4557,6 +4593,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -4568,10 +4605,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -4579,6 +4616,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -4590,10 +4628,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -4601,6 +4639,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -4612,10 +4651,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -4623,6 +4662,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -4634,10 +4674,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -4645,6 +4685,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 19;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -4656,10 +4697,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -4667,6 +4708,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 19;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -4678,10 +4720,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -4689,6 +4731,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 19;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -4700,10 +4743,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -4711,6 +4754,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 19;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -4722,10 +4766,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -4733,6 +4777,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 19;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -4744,10 +4789,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -4755,6 +4800,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 19;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -4766,10 +4812,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -4777,6 +4823,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 20;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -4788,10 +4835,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -4799,6 +4846,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 20;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -4810,10 +4858,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -4821,6 +4869,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 21;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -4832,10 +4881,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -4843,6 +4892,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 21;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -4854,10 +4904,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -4865,6 +4915,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 21;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -4876,10 +4927,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -4887,6 +4938,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 21;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -4898,10 +4950,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -4909,6 +4961,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -4920,10 +4973,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -4931,6 +4984,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -4942,10 +4996,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -4953,6 +5007,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -4964,10 +5019,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -4975,6 +5030,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -4986,10 +5042,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -4997,6 +5053,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -5008,10 +5065,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -5019,6 +5076,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -5030,10 +5088,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -5041,6 +5099,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -5052,10 +5111,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -5063,6 +5122,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -5074,10 +5134,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -5085,6 +5145,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -5096,10 +5157,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -5107,6 +5168,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -5118,10 +5180,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -5129,6 +5191,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -5140,10 +5203,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -5151,6 +5214,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -5162,10 +5226,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -5173,6 +5237,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -5184,10 +5249,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -5195,6 +5260,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -5206,10 +5272,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -5217,6 +5283,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 19;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -5228,10 +5295,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -5239,6 +5306,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 19;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -5250,10 +5318,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -5261,6 +5329,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 19;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -5272,10 +5341,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -5283,6 +5352,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 19;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -5294,10 +5364,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -5305,6 +5375,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 19;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -5316,10 +5387,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -5327,6 +5398,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 19;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -5338,10 +5410,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -5349,6 +5421,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 20;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -5360,10 +5433,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -5371,6 +5444,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 20;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -5382,10 +5456,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -5393,6 +5467,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 21;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -5404,10 +5479,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -5415,6 +5490,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 21;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -5426,10 +5502,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -5437,6 +5513,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 21;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -5448,10 +5525,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -5459,6 +5536,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 21;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -7697,10 +7775,10 @@
     t.launches["MEM_WORD_ADDR"] = {1, 1};
     t.launches["MEM_WRITE_DATA"] = {1, 1};
     t.launches["MEM_WRITE_MASK"] = {1, 1};
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["MEM_BUSY"] = 0;
     t.setup["MEM_ERROR"] = 0;
     t.setup["MEM_READ_DATA"] = 0;
@@ -7728,10 +7806,10 @@
     t.launches["MEM_WORD_ADDR"] = {1, 1};
     t.launches["MEM_WRITE_DATA"] = {1, 1};
     t.launches["MEM_WRITE_MASK"] = {1, 1};
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["MEM_BUSY"] = 0;
     t.setup["MEM_ERROR"] = 0;
     t.setup["MEM_READ_DATA"] = 0;
@@ -7759,10 +7837,10 @@
     t.launches["MEM_WORD_ADDR"] = {1, 1};
     t.launches["MEM_WRITE_DATA"] = {1, 1};
     t.launches["MEM_WRITE_MASK"] = {1, 1};
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["MEM_BUSY"] = 0;
     t.setup["MEM_ERROR"] = 0;
     t.setup["MEM_READ_DATA"] = 0;
@@ -8973,10 +9051,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -8984,6 +9062,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -8995,10 +9074,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -9006,6 +9085,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -9017,10 +9097,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -9028,6 +9108,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -9039,10 +9120,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -9050,6 +9131,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -9061,10 +9143,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -9072,6 +9154,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -9083,10 +9166,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -9094,6 +9177,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -9105,10 +9189,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -9116,6 +9200,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -9127,10 +9212,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -9138,6 +9223,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -9149,10 +9235,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -9160,6 +9246,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -9171,10 +9258,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -9182,6 +9269,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -9193,10 +9281,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -9204,6 +9292,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -9215,10 +9304,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -9226,6 +9315,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -9237,10 +9327,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -9248,6 +9338,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -9259,10 +9350,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -9270,6 +9361,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -9281,10 +9373,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -9292,6 +9384,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -9303,10 +9396,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -9314,6 +9407,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -9325,10 +9419,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -9336,6 +9430,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -9347,10 +9442,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -9358,6 +9453,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -9369,10 +9465,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -9380,6 +9476,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -9391,10 +9488,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -9402,6 +9499,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -9413,10 +9511,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -9424,6 +9522,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -9435,10 +9534,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -9446,6 +9545,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -9457,10 +9557,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -9468,6 +9568,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -9479,10 +9580,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -9490,6 +9591,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -9501,10 +9603,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -9512,6 +9614,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -9523,10 +9626,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -9534,6 +9637,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -9545,10 +9649,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -9556,6 +9660,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -9567,10 +9672,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -9578,6 +9683,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -9589,10 +9695,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -9600,6 +9706,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -9611,10 +9718,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -9622,6 +9729,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -9633,10 +9741,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -9644,6 +9752,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -9655,10 +9764,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -9666,6 +9775,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -9677,10 +9787,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -9688,6 +9798,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -9699,10 +9810,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -9710,6 +9821,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -9721,10 +9833,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -9732,6 +9844,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -9743,10 +9856,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -9754,6 +9867,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -10037,10 +10151,10 @@
     t.launches["MEM_CE_N"] = {1, 1};
     t.launches["MEM_OE_N"] = {1, 1};
     t.launches["MEM_WORD_ADDR"] = {1, 1};
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["MEM_READ_DATA"] = 0;
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
@@ -10063,10 +10177,10 @@
     t.launches["MEM_CE_N"] = {1, 1};
     t.launches["MEM_OE_N"] = {1, 1};
     t.launches["MEM_WORD_ADDR"] = {1, 1};
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["MEM_READ_DATA"] = 0;
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
@@ -10089,10 +10203,10 @@
     t.launches["MEM_CE_N"] = {1, 1};
     t.launches["MEM_OE_N"] = {1, 1};
     t.launches["MEM_WORD_ADDR"] = {1, 1};
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["MEM_READ_DATA"] = 0;
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
@@ -10892,10 +11006,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -10903,6 +11017,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -10914,10 +11029,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -10925,6 +11040,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -10936,10 +11052,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -10947,6 +11063,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -10958,10 +11075,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -10969,6 +11086,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -10980,10 +11098,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -10991,6 +11109,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -11002,10 +11121,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -11013,6 +11132,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -11024,10 +11144,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -11035,6 +11155,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -11046,10 +11167,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -11057,6 +11178,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -11068,10 +11190,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -11079,6 +11201,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -11090,10 +11213,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -11101,6 +11224,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -11112,10 +11236,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -11123,6 +11247,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -11134,10 +11259,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -11145,6 +11270,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -11156,10 +11282,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -11167,6 +11293,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -11178,10 +11305,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -11189,6 +11316,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -11200,10 +11328,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -11211,6 +11339,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -11222,10 +11351,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -11233,6 +11362,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -11244,10 +11374,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -11255,6 +11385,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -11266,10 +11397,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -11277,6 +11408,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -11288,10 +11420,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -11299,6 +11431,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -11310,10 +11443,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -11321,6 +11454,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -11332,10 +11466,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -11343,6 +11477,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 19;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -11354,10 +11489,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -11365,6 +11500,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 19;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -11376,10 +11512,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -11387,6 +11523,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 19;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -11398,10 +11535,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -11409,6 +11546,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 19;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -11420,10 +11558,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -11431,6 +11569,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 19;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -11442,10 +11581,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -11453,6 +11592,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 19;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -11464,10 +11604,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -11475,6 +11615,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -11486,10 +11627,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -11497,6 +11638,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -11508,10 +11650,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -11519,6 +11661,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -11530,10 +11673,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -11541,6 +11684,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -11552,10 +11696,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -11563,6 +11707,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -11574,10 +11719,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -11585,6 +11730,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -11596,10 +11742,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -11607,6 +11753,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -11618,10 +11765,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -11629,6 +11776,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -11640,10 +11788,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -11651,6 +11799,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -11662,10 +11811,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -11673,6 +11822,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -11684,10 +11834,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -11695,6 +11845,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -11706,10 +11857,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -11717,6 +11868,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -11728,10 +11880,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -11739,6 +11891,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -11750,10 +11903,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -11761,6 +11914,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -11772,10 +11926,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -11783,6 +11937,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -11794,10 +11949,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -11805,6 +11960,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -11816,10 +11972,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -11827,6 +11983,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -11838,10 +11995,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -11849,6 +12006,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -11860,10 +12018,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -11871,6 +12029,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -11882,10 +12041,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -11893,6 +12052,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -11904,10 +12064,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -11915,6 +12075,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 19;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -11926,10 +12087,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -11937,6 +12098,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 19;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -11948,10 +12110,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -11959,6 +12121,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 19;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -11970,10 +12133,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -11981,6 +12144,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 19;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -11992,10 +12156,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -12003,6 +12167,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 19;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -12014,10 +12179,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -12025,6 +12190,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 19;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -12036,10 +12202,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -12047,6 +12213,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -12058,10 +12225,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -12069,6 +12236,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -12080,10 +12248,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -12091,6 +12259,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -12102,10 +12271,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -12113,6 +12282,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -12124,10 +12294,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -12135,6 +12305,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -12146,10 +12317,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -12157,6 +12328,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -12168,10 +12340,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -12179,6 +12351,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -12190,10 +12363,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -12201,6 +12374,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -12212,10 +12386,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -12223,6 +12397,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -12234,10 +12409,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -12245,6 +12420,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -12256,10 +12432,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -12267,6 +12443,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -12278,10 +12455,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -12289,6 +12466,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -12300,10 +12478,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -12311,6 +12489,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -12322,10 +12501,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -12333,6 +12512,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -12344,10 +12524,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -12355,6 +12535,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -12366,10 +12547,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -12377,6 +12558,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -12388,10 +12570,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -12399,6 +12581,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -12410,10 +12593,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -12421,6 +12604,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -12432,10 +12616,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -12443,6 +12627,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -12454,10 +12639,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -12465,6 +12650,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 18;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -12476,10 +12662,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -12487,6 +12673,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 19;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -12498,10 +12685,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -12509,6 +12696,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 19;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -12520,10 +12708,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -12531,6 +12719,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 19;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -12542,10 +12731,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -12553,6 +12742,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 19;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -12564,10 +12754,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -12575,6 +12765,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 19;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -12586,10 +12777,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -12597,6 +12788,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 19;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -14666,10 +14858,10 @@
     t.launches["MEM_WORD_ADDR"] = {1, 1};
     t.launches["MEM_WRITE_DATA"] = {1, 1};
     t.launches["MEM_WRITE_MASK"] = {1, 1};
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["MEM_READ_DATA"] = 0;
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
@@ -14695,10 +14887,10 @@
     t.launches["MEM_WORD_ADDR"] = {1, 1};
     t.launches["MEM_WRITE_DATA"] = {1, 1};
     t.launches["MEM_WRITE_MASK"] = {1, 1};
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["MEM_READ_DATA"] = 0;
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
@@ -14724,10 +14916,10 @@
     t.launches["MEM_WORD_ADDR"] = {1, 1};
     t.launches["MEM_WRITE_DATA"] = {1, 1};
     t.launches["MEM_WRITE_MASK"] = {1, 1};
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["MEM_READ_DATA"] = 0;
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
@@ -15839,10 +16031,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -15850,6 +16042,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 19;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -15861,10 +16054,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -15872,6 +16065,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 19;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -15883,10 +16077,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -15894,6 +16088,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 21;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -15905,10 +16100,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -15916,6 +16111,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 21;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -15927,10 +16123,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -15938,6 +16134,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 21;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -15949,10 +16146,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -15960,6 +16157,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 21;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -15971,10 +16169,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -15982,6 +16180,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 19;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -15993,10 +16192,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -16004,6 +16203,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 19;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -16015,10 +16215,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -16026,6 +16226,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 20;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -16037,10 +16238,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -16048,6 +16249,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 20;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -16059,10 +16261,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -16070,6 +16272,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 20;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -16081,10 +16284,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -16092,6 +16295,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 20;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -16103,10 +16307,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -16114,6 +16318,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 20;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -16125,10 +16330,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -16136,6 +16341,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 20;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -16147,10 +16353,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -16158,6 +16364,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 23;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -16169,10 +16376,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -16180,6 +16387,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 23;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -16191,10 +16399,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -16202,6 +16410,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 23;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -16213,10 +16422,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -16224,6 +16433,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 23;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -16235,10 +16445,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -16246,6 +16456,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 24;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -16257,10 +16468,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -16268,6 +16479,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 24;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -16279,10 +16491,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -16290,6 +16502,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 25;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -16301,10 +16514,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -16312,6 +16525,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 25;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -16323,10 +16537,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -16334,6 +16548,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 26;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -16345,10 +16560,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -16356,6 +16571,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 26;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -16367,10 +16583,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -16378,6 +16594,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 26;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -16389,10 +16606,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -16400,6 +16617,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 26;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -16411,10 +16629,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -16422,6 +16640,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 19;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -16433,10 +16652,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -16444,6 +16663,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 19;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -16455,10 +16675,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -16466,6 +16686,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 21;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -16477,10 +16698,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -16488,6 +16709,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 21;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -16499,10 +16721,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -16510,6 +16732,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 21;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -16521,10 +16744,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -16532,6 +16755,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 21;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -16543,10 +16767,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -16554,6 +16778,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 19;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -16565,10 +16790,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -16576,6 +16801,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 19;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -16587,10 +16813,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -16598,6 +16824,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 20;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -16609,10 +16836,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -16620,6 +16847,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 20;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -16631,10 +16859,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -16642,6 +16870,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 20;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -16653,10 +16882,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -16664,6 +16893,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 20;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -16675,10 +16905,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -16686,6 +16916,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 20;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -16697,10 +16928,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -16708,6 +16939,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 20;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -16719,10 +16951,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -16730,6 +16962,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 23;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -16741,10 +16974,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -16752,6 +16985,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 23;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -16763,10 +16997,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -16774,6 +17008,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 23;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -16785,10 +17020,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -16796,6 +17031,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 23;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -16807,10 +17043,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -16818,6 +17054,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 24;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -16829,10 +17066,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -16840,6 +17077,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 24;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -16851,10 +17089,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -16862,6 +17100,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 25;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -16873,10 +17112,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -16884,6 +17123,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 25;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -16895,10 +17135,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -16906,6 +17146,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 26;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -16917,10 +17158,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -16928,6 +17169,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 26;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -16939,10 +17181,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -16950,6 +17192,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 26;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -16961,10 +17204,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -16972,6 +17215,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 26;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -16983,10 +17227,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -16994,6 +17238,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 19;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -17005,10 +17250,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -17016,6 +17261,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 19;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -17027,10 +17273,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -17038,6 +17284,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 21;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -17049,10 +17296,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -17060,6 +17307,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 21;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -17071,10 +17319,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -17082,6 +17330,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 21;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -17093,10 +17342,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -17104,6 +17353,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 21;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -17115,10 +17365,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -17126,6 +17376,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 19;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -17137,10 +17388,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -17148,6 +17399,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 19;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -17159,10 +17411,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -17170,6 +17422,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 20;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -17181,10 +17434,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -17192,6 +17445,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 20;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -17203,10 +17457,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -17214,6 +17468,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 20;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -17225,10 +17480,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -17236,6 +17491,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 20;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -17247,10 +17503,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -17258,6 +17514,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 20;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -17269,10 +17526,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -17280,6 +17537,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 20;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -17291,10 +17549,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -17302,6 +17560,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 23;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -17313,10 +17572,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -17324,6 +17583,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 23;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -17335,10 +17595,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -17346,6 +17606,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 23;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -17357,10 +17618,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -17368,6 +17629,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 23;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -17379,10 +17641,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -17390,6 +17652,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 24;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -17401,10 +17664,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -17412,6 +17675,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 24;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -17423,10 +17687,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -17434,6 +17698,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 25;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -17445,10 +17710,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -17456,6 +17721,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 25;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -17467,10 +17733,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -17478,6 +17744,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 26;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -17489,10 +17756,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -17500,6 +17767,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 26;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -17511,10 +17779,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -17522,6 +17790,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 26;
     t.fixed_inputs["RST"] = 0;
     return t;
@@ -17533,10 +17802,10 @@
         Arc{"RSP_READY", "REQ_READY", {4, 4}},
     };
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {4, 9};
-    t.launches["RSP_READ_DATA"] = {5, 9};
-    t.launches["RSP_STATUS"] = {5, 9};
-    t.launches["RSP_VALID"] = {5, 7};
+    t.launches["REQ_READY"] = {3, 9};
+    t.launches["RSP_READ_DATA"] = {4, 7};
+    t.launches["RSP_STATUS"] = {4, 7};
+    t.launches["RSP_VALID"] = {4, 7};
     t.setup["REQ_ADDR"] = 0;
     t.setup["REQ_OP"] = 0;
     t.setup["REQ_VALID"] = 8;
@@ -17544,6 +17813,7 @@
     t.setup["REQ_WRITE_MASK"] = 0;
     t.setup["RSP_READY"] = 13;
     t.self_timed = true;
+    t.clocked_interface = true;
     t.internal_period = 26;
     t.fixed_inputs["RST"] = 0;
     return t;

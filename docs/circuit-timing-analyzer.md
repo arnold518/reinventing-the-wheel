@@ -419,37 +419,55 @@ things went wrong, in the gates and in the compact form alike:
   DRAM the gates finished and the compact core computed a wrong result; at
   112 on SRAM the compact core finished and the gates hung.
 
-The transaction port now captures "done" and "backend ready" on a clock
-edge before using them, and shows the result only with the captured "done"
-(`MemoryTransactionPort`: `DONE_SEEN`, `BACK_BUSY_SEEN`, `RESULT_SHOWN`,
-`STATUS_SHOWN`; the same in the compact controller and endpoint). Everything
-the core sees from such a memory changes just after a clock edge. The cost
-is one cycle per access. Measured afterwards, advanced core, program 20:
+The memory sequencer still times the device in ticks, but it now speaks
+to the transaction port only at a clock edge: a finished operation shows
+"done", its result and "backend ready" at the next edge (`NativeSequence`).
+Everything the core sees from such a memory changes just after a clock
+edge. The cost is one cycle per access. A DRAM refresh starts only once the
+backend has been seen ready for an edge, so a waiting request is never
+overtaken by one refresh after another.
+
+Measured afterwards, advanced core, program 20:
 
 | memory | period 100 | 108 | 120 | 166 |
 |---|---|---|---|---|
 | SRAM, ROM | 400 | 334 | 334 | 268 |
 | NOR-flash | 334 | 334 | 334 | 268 |
-| DRAM | 583 | 559 | 529 | 436 |
+| DRAM | 588 | 564 | 537 | 442 |
 
 Gates and compact form give the same cycles, both verified against the
-instruction oracle, at every period compared (12 runs of each form over the
-four memories, periods 100 to 166), and the compact core sees no setup
-violation from period 100 up (12 periods from 100 to 166 per memory).
+instruction oracle, in every comparison made (14 runs of each form over
+the four memories, periods 100 to 166), and the compact core sees no setup
+violation from period 100 up (periods 100 to 1000 tried per memory). At 98,
+the core's own certified clock, it sees 51: these memories answer "request
+ready" a little later after the edge than the flip-flop memory does.
 
-A DRAM refresh starts at a clock edge when it is due. It now also waits
-for one idle edge after an operation: the core sees "ready" one edge after
-the memory goes idle, and without that wait a short refresh interval could
-start one refresh after another in front of a waiting request
-(`NativeSequence`, `rested_`).
+Because of that rule the analysis can certify a clock for these systems.
+A self-timed part's contract names the pins that still keep to the clock
+(`clocked_pins`; for the sequencer everything but its device side,
+`MEM_*`). When the graph is built, the analysis walks back from every root
+output and every pin captured by the clock; if it never meets an output
+that a self-timed part changes on its own time, the circuit keeps to its
+clock as seen from outside (`clocked_interface` in the report and in the
+part's delay table), and it is treated as an ordinary clocked part. A
+memory endpoint passes: the sequencer's own-time outputs reach only the
+memory device, and the device's outputs only the sequencer. A memory
+controller alone does not: its device pins are its outputs.
 
-The core's own certified clock of 98 is 2 ticks short for these memories:
-their "request ready" leaves the endpoint later than the flip-flop
-memory's. The analysis still cannot certify a clock for a system with a
-self-timed memory, and `--period auto` still gives 98 there. An experiment
-now reports `setup_violations` in its result and warns on stderr when a
-compact part saw an input change inside its setup time, so such a run is
-not taken for a clean one (at 98: 51 violations).
+That removes the first of two obstacles to certifying a clock for a core
+with such a memory. The second remains: the core's requester and the
+endpoint depend on each other within a cycle ("request ready" depends on
+"response ready", which depends on "done", which depends on "request
+ready"). For the flip-flop endpoint the analysis resolves this by going
+through every reachable state of the handshake
+(`MemoryTimingState.cpp`); that model does not cover an endpoint with a
+sequencer yet, so the result for these systems is still "unknown"
+(combinational dependency cycle), and `--period auto` refuses them and
+asks for an explicit period.
+
+An experiment reports `setup_violations` in its result and warns on stderr
+when a compact part saw an input change inside its setup time, so a run at
+a clock that is too fast is not taken for a clean one.
 
 None of the first three reaches a clocked experiment. The clock is proven on the
 gates of the whole system, pulses and simultaneous changes included, and a

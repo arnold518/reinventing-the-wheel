@@ -124,11 +124,15 @@ int main(int argc,char** argv) {
         if(automatic&&!c.safe_clock_only) {
             auto reference=c;reference.safe_clock_only=true;reference.fidelity="reference";
             reference.trace_cycles=false;
-            // Delayed devices keep the FF reference clock; device times remain ticks.
-            reference.memory.technology=circuit::memory::Technology::FF;
+            // The clock is certified for the system as built, memory included:
+            // a delayed memory answers the core a little later after the edge
+            // than the flip-flop memory does. Device times remain ticks.
             automatic_clock=runRV32IExperiment(reference).safe_clock;
             if(automatic_clock.status!=ClockTimingStatus::SafeUnderContracts||!automatic_clock.safe_period_ticks) {
                 for(const auto& d:automatic_clock.diagnostics)std::cerr<<d<<'\n';
+                if(c.memory.technology!=circuit::memory::Technology::FF)
+                    throw std::runtime_error("No clock can be certified yet for a system with this memory; give an explicit --period "
+                        "(the result reports setup_violations, which must be 0)");
                 throw std::runtime_error("No safe clock could be established; no automatic period available");
             }
             c.period=*automatic_clock.safe_period_ticks;

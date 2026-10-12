@@ -87,6 +87,10 @@ struct Graph {
     std::vector<std::string> clock_inputs;  // root inputs used as a clock
     std::vector<std::string> clock_outputs; // root outputs that pass a clock on
     bool self_timed = false;
+    // A change made by a self-timed part on its own time can reach a root
+    // output or a pin captured by the clock (the first such path, as text).
+    bool self_timed_escapes = false;
+    std::string self_timed_escape;
     std::unordered_map<const PinBase*, int> first_bit;          // pin -> its first node
     // Bits a contract needs held at a value (for example RST = 0).
     std::vector<std::tuple<int, int8_t, std::string>> required;

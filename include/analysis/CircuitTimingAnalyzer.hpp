@@ -65,6 +65,10 @@ struct ClockComponentContract {
     // delays then count from whatever caused the change. Such a part can be
     // timed, but no clock period can be certified around it.
     bool self_timed = false;
+    // Of a self-timed part: the pins that still keep to the clock (outputs
+    // that change only one launch delay after an edge, inputs read only at
+    // an edge). Every other pin of the part is on its own time. Empty: all are.
+    std::vector<std::string> clocked_pins;
     std::vector<std::string> unused_inputs;
     size_t minimum_high_ticks = 0, minimum_low_ticks = 0;
 };
@@ -182,6 +186,9 @@ struct SettlingReport {
     std::vector<std::string> clock_inputs;  // root inputs used as a clock
     std::vector<std::string> clock_outputs; // root outputs that pass a clock on
     bool self_timed = false;                // contains a part that changes outputs between clock edges
+    // ...but no such change can reach a root output or a pin captured by the
+    // clock: seen from outside, the circuit keeps to its clock.
+    bool clocked_interface = false;
     std::vector<std::string> premises, diagnostics;
 };
 

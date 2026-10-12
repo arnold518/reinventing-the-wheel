@@ -74,6 +74,10 @@ struct PartDelays {
     // `launches` then count from whatever caused the change, and no clock
     // period can be certified around the part.
     bool self_timed = false;
+    // A self-timed part whose self-timed changes stay inside it: none can
+    // reach an output or anything captured by the clock. Its outputs then
+    // move only after a clock edge, and a clock can be certified around it.
+    bool clocked_interface = false;
     // Longest register-to-register path inside the part, setup included.
     size_t internal_period = 0;
     // Inputs the table assumes are held, for example RST = 0.

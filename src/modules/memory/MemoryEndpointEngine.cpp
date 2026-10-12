@@ -29,7 +29,7 @@ std::vector<std::string> nativeActivityInputs(Technology t) {
     return {};
 }
 NativeSequence::NativeSequence(size_t w, Technology technology, EndpointConfig config)
-    : result(w, L), width_(w), technology_(technology), config_(config) { idlePins(); }
+    : result(w, L), width_(w), technology_(technology), config_(config), work_result_(w, L) { idlePins(); }
 void NativeSequence::idlePins() {
     outputs["CLK"] = {L}; outputs["RST"] = {L}; outputs["CMD"] = bits(3, 0);
     outputs["CE_N"] = outputs["WE_N"] = outputs["OE_N"] = {H};
@@ -55,19 +55,28 @@ void NativeSequence::step(size_t t, bool clock_edge, bool reset, bool start, con
     if (reset) aborted_ = true;
     if (clock_edge && finish_response) done = false;
     if (phase_ == Phase::Idle) {
-        if (reset) { done = false; available = false; rested_ = false; return; }
-        available = true;
-        if (done) return;
+        if (reset) { done = false; finished_ = settling_ = false; available = false; return; }
+        // The device is timed in ticks, but the sequencer speaks to the
+        // transaction port only at a clock edge: a finished operation shows
+        // DONE, its result and BACK_READY at the next edge, like any other
+        // clocked state. Shown the moment the device finishes, they would
+        // reach the requester at any point of its cycle.
+        const bool was_available = !settling_;
+        if (clock_edge) {
+            if (finished_) { done = true; result = work_result_; status = work_status_; finished_ = false; }
+            settling_ = false;
+        }
+        available = !settling_;
+        if (done || finished_) return;
         const bool refresh_due = technology_ == Technology::DRAM &&
                              config_.refresh_interval_ticks && t >= next_refresh_;
-        // The requester sees "ready" one clock edge after the backend goes
-        // idle. A refresh waits for that one idle edge too, so that a waiting
-        // request is never overtaken by one refresh after another.
-        const bool refresh = refresh_due && clock_edge && !start && rested_;
-        if (clock_edge) rested_ = true;
+        // A refresh starts only once the backend has been seen ready for an
+        // edge, so a waiting request is never overtaken by one refresh after
+        // another.
+        const bool refresh = refresh_due && clock_edge && !start && was_available;
         if (!(start && clock_edge) && !refresh) { aborted_ = false; return; }
-        rested_ = false;
-        aborted_ = false; maintenance_ = refresh; available = false; status = Status::Ok;
+        aborted_ = false; maintenance_ = refresh; available = false; settling_ = true;
+        status = work_status_ = Status::Ok; work_result_.assign(width_, L);
         result.assign(width_, L); commands_.clear();
         if (refresh) {
             if (row_open_) commands_.push_back({4, 0});
@@ -76,8 +85,8 @@ void NativeSequence::step(size_t t, bool clock_edge, bool reset, bool start, con
             beginCommand(t); return;
         }
         request_ = request;
-        status = validateRequest(request, width_, technology_, config_);
-        if (status != Status::Ok) { finish(t); return; }
+        work_status_ = validateRequest(request, width_, technology_, config_);
+        if (work_status_ != Status::Ok) { finish(t); return; }
         const auto op = number(request.op);
         const auto word = number(request.address) / (width_ / 8);
         outputs["WORD_ADDR"] = bits(32, word);
@@ -121,11 +130,11 @@ void NativeSequence::step(size_t t, bool clock_edge, bool reset, bool start, con
         outputs["CLK"] = {H}; phase_ = Phase::ArrayRead;
         due_ = after(t, config_.guard_ticks); break;
     case Phase::ArrayRead:
-        if (read("FAULT", 1) != Bits{L}) status = Status::Device;
-        if (number(request_.op) == 0) result = read("READ_DATA", width_);
+        if (read("FAULT", 1) != Bits{L}) work_status_ = Status::Device;
+        if (number(request_.op) == 0) work_result_ = read("READ_DATA", width_);
         finish(t); break;
     case Phase::StaticAccess:
-        if (number(request_.op) == 0) result = read("READ_DATA", width_);
+        if (number(request_.op) == 0) work_result_ = read("READ_DATA", width_);
         finish(t); break;
     case Phase::CommandRaise:
         outputs["CLK"] = {H}; phase_ = Phase::CommandLower;
@@ -140,7 +149,7 @@ void NativeSequence::step(size_t t, bool clock_edge, bool reset, bool start, con
     }
     case Phase::CommandWait: {
         if (read("BUSY", 1) != Bits{L}) { due_ = after(t, config_.guard_ticks); break; }
-        if (read("ERROR", 1) != Bits{L}) { status = Status::Device; commands_.clear(); finish(t); break; }
+        if (read("ERROR", 1) != Bits{L}) { work_status_ = Status::Device; commands_.clear(); finish(t); break; }
         const auto command = commands_.front(); commands_.pop_front();
         if (technology_ == Technology::DRAM) {
             if (command.op == 1) { row_open_ = true; row_ = command.address; }
@@ -148,17 +157,16 @@ void NativeSequence::step(size_t t, bool clock_edge, bool reset, bool start, con
         }
         if ((technology_ == Technology::DRAM && command.op == 2) ||
             (technology_ == Technology::NORFlash && command.op == 1)) {
-            if (read("READ_VALID", 1) != Bits{H}) status = Status::Device;
-            else result = read("READ_DATA", width_);
+            if (read("READ_VALID", 1) != Bits{H}) work_status_ = Status::Device;
+            else work_result_ = read("READ_DATA", width_);
         }
         beginCommand(t); break;
     }
     case Phase::Release:
-        phase_ = Phase::Idle; done = !maintenance_ && !aborted_;
-        available = !reset; break;
+        phase_ = Phase::Idle; finished_ = !maintenance_ && !aborted_; break;
     default: break;
     }
-    if (status != Status::Ok) result.assign(width_, L);
+    if (work_status_ != Status::Ok) work_result_.assign(width_, L);
 }
 
 DeviceModel::DeviceModel(size_t width, EndpointConfig c, LogicValue fill)

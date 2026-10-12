@@ -42,6 +42,8 @@ class Builder {
     // Pins the request describes although nothing in the circuit drives them.
     std::vector<std::shared_ptr<PinBase>> externals_;
     std::unordered_set<const PinBase*> clock_roots_, clock_sinks_, clock_carriers_, clock_outputs_;
+    std::unordered_set<int> own_time_; // outputs a self-timed part changes on its own time
+    std::vector<int> clocked_;         // pins captured by the clock
 
     void fail(const std::string& message) {
         failed_ = true;
@@ -217,6 +219,12 @@ class Builder {
             if (request_.other_edge_is_error) fail(c.getID() + ": falling-edge " + what + " is unsupported");
             return true;
         };
+        // A self-timed part: which of its pins are on its own time.
+        const auto ownTime = [&](const std::string& name) {
+            return m.self_timed && std::find(m.clocked_pins.begin(), m.clocked_pins.end(), name) == m.clocked_pins.end();
+        };
+        for (const auto& [name, pin] : c.getAllOutputPins())
+            if (ownTime(name)) for (unsigned bit = 0; bit < pin->getWidth(); ++bit) own_time_.insert(index(pin, bit));
         std::set<std::string> classified{m.clock_pin};
         for (const auto& arc : m.arcs) classified.insert(arc.input);
         for (const auto& capture : m.captures) classified.insert(capture.pin);
@@ -242,8 +250,10 @@ class Builder {
         for (const auto& capture : m.captures) {
             if (otherEdge(capture.edge, "capture")) continue;
             const auto pin = own(capture.pin, PinType::INPUT);
-            for (unsigned bit = 0; bit < pin->getWidth(); ++bit)
+            for (unsigned bit = 0; bit < pin->getWidth(); ++bit) {
                 graph_.groups.front().endpoints.emplace_back(index(pin, bit), static_cast<Tick>(capture.setup));
+                if (!ownTime(capture.pin)) clocked_.push_back(index(pin, bit));
+            }
         }
         for (const auto& [name, value] : m.fixed_inputs) {
             const auto pin = own(name, PinType::INPUT);
@@ -336,6 +346,27 @@ class Builder {
                 node.kind = Kind::Hub;
                 node.owner = static_cast<int>(graph_.hubs.size()) - 1;
             }
+        }
+    }
+
+    // Can a change a self-timed part makes on its own time reach a root
+    // output or a pin captured by the clock? Walks back from those.
+    void findEscapes() {
+        if (own_time_.empty()) return;
+        std::vector<int> pending = clocked_;
+        for (size_t group = 1; group < graph_.groups.size(); ++group)
+            for (const auto& [node, setup] : graph_.groups[group].endpoints) pending.push_back(node);
+        std::vector<char> seen(graph_.nodes.size(), 0);
+        while (!pending.empty() && !graph_.self_timed_escapes) {
+            const int n = pending.back(); pending.pop_back();
+            if (seen[n]) continue;
+            seen[n] = 1;
+            if (own_time_.contains(n)) {
+                graph_.self_timed_escapes = true;
+                graph_.self_timed_escape = graph_.label(n);
+                break;
+            }
+            graph_.inputsOf(n, [&](int in) { if (in >= 0 && !seen[in]) pending.push_back(in); });
         }
     }
 
@@ -456,6 +487,7 @@ public:
             if (failed_) return false;
             for (const auto& [name, pin] : root_io_->getAllInputPins())
                 if (clock_roots_.contains(pin.get())) graph_.clock_inputs.push_back(name);
+            findEscapes();
             sort();
             return true;
         } catch (const std::exception& error) {

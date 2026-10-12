@@ -109,7 +109,8 @@ std::optional<ClockComponentContract> builtinClockContract(const IOComponent& c)
         if (!table->clock.empty())
             declared.minimum_high_ticks = declared.minimum_low_ticks = std::max<size_t>(1, (table->internal_period + 2) / 2);
         declared.clock_outputs = table->clock_outputs;
-        declared.self_timed = table->self_timed;
+        // Self-timed inside only: from outside it is an ordinary clocked part.
+        declared.self_timed = table->self_timed && !table->clocked_interface;
         for (const auto& output : table->clock_outputs) written.insert(output);
         for (const auto& [name, pin] : c.getAllInputPins()) if (!read.contains(name)) declared.unused_inputs.push_back(name);
         for (const auto& [name, pin] : c.getAllOutputPins()) if (!written.contains(name)) declared.stable_outputs.push_back(name);
@@ -126,6 +127,11 @@ std::optional<ClockComponentContract> builtinClockContract(const IOComponent& c)
         m.self_timed = true;
         for (const auto& [i, p] : c.getAllInputPins()) if (i != "CLK") m.captures.push_back({i, ClockEdge::Rising, 0, 0});
         for (const auto& [o, q] : c.getAllOutputPins()) m.launches.push_back({o, ClockEdge::Rising, {d, d}});
+        // Only the device side (MEM_*) runs on the sequencer's own time. What
+        // it tells the transaction port (DONE, the result, BACK_READY) it
+        // shows at a clock edge, and START/FINISH and the request it reads at one.
+        for (const auto* pins : {&c.getAllInputPins(), &c.getAllOutputPins()})
+            for (const auto& [name, pin] : *pins) if (name != "CLK" && !name.starts_with("MEM_")) m.clocked_pins.push_back(name);
         return m;
     }
     // The SRAM bit-line pair. What it sends back to the cells (CELL_DRIVE,
