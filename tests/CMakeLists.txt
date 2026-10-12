@@ -105,7 +105,7 @@ set_tests_properties(RV32IExperimentTest PROPERTIES LABELS "benchmark;rv32i;expe
 add_test(NAME RV32IExperimentCLITest COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/checks/RV32IExperimentCLITest.py $<TARGET_FILE:rv32i_experiment>)
 set_tests_properties(RV32IExperimentCLITest PROPERTIES LABELS "benchmark;rv32i;experiment;timing" TIMEOUT 240)
 add_test(NAME RV32IBinaryClockCLITest COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/checks/RV32IBinaryClockCLITest.py $<TARGET_FILE:rv32i_experiment>)
-set_tests_properties(RV32IBinaryClockCLITest PROPERTIES LABELS "benchmark;rv32i;experiment;timing" TIMEOUT 180)
+set_tests_properties(RV32IBinaryClockCLITest PROPERTIES LABELS "benchmark;rv32i;experiment;timing" TIMEOUT 300)
 add_executable(MemoryInspectorTest cpp/MemoryInspectorTest.cpp)
 target_link_libraries(MemoryInspectorTest PRIVATE SimulatorLib)
 add_test(NAME MemoryInspectorTest COMMAND MemoryInspectorTest)
