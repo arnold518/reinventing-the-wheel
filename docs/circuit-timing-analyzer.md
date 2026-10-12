@@ -370,8 +370,11 @@ Does not hold, and why:
   99%, the ROM device from 18% to 74%). Below 70%, and listed in the test
   with their measured shares: the single-cycle and baseline cores as whole
   parts (54% and 59%; too large for a gate list), and the DRAM and
-  NOR-flash banks (56% to 69%; their cells are not gates). At a clock they
-  are exact: same period, same cycles.
+  NOR-flash banks (56% to 69%; their cells are not gates), and the SRAM,
+  ROM and NOR-flash controllers and endpoints (57% to 67%: they time
+  themselves, so they have no gate list, and after a clock edge they answer
+  at the latest time their table allows, a few ticks after their gates).
+  At a clock they are exact: same period, same cycles.
 - Pulses. Gates can leave a value and come back to it; a compact part
   computes the final value once and stays still, so a parent built from
   compact parts can go quiet sooner than the same parent in gates. The

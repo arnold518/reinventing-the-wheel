@@ -63,6 +63,7 @@ using Vector = std::map<std::string, Bits>;
 // Why a part may miss a "not much longer" target.
 const char* const DATA = "a whole core is too large for a gate list with state, so it stays on its table, which must cover its slowest case";
 const char* const CELLS = "its cells are not gates (they hold charge and are sensed or programmed in timed steps), so it has no gate list and stays on its table";
+const char* const LAUNCH = "it times itself, so it has no gate list; after a clock edge it answers at the latest time its table allows, a few ticks after its gates";
 const char* const SAMPLE = "this sample of changes did not reach its slowest case";
 
 // Parts below a target, with the shares measured for them. A listed part
@@ -75,6 +76,22 @@ const std::map<std::string, Floor> FLOORS = {
     {"memory.nor-flash.bank.16", {65, -1, CELLS}},
     {"memory.nor-flash.bank.32", {65, -1, CELLS}},
     {"memory.nor-flash.bank.8", {65, -1, CELLS}},
+    {"memory.nor-flash.controller.16", {57, -1, LAUNCH}},
+    {"memory.nor-flash.controller.32", {66, -1, LAUNCH}},
+    {"memory.nor-flash.controller.8", {60, -1, LAUNCH}},
+    {"memory.nor-flash.endpoint.16", {58, -1, LAUNCH}},
+    {"memory.nor-flash.endpoint.32", {66, -1, LAUNCH}},
+    {"memory.nor-flash.endpoint.8", {67, -1, LAUNCH}},
+    {"memory.rom.controller.32", {60, -1, LAUNCH}},
+    {"memory.rom.controller.8", {65, -1, LAUNCH}},
+    {"memory.rom.endpoint.16", {61, -1, LAUNCH}},
+    {"memory.rom.endpoint.32", {66, -1, LAUNCH}},
+    {"memory.rom.endpoint.8", {63, -1, LAUNCH}},
+    {"memory.sram.controller.32", {60, -1, LAUNCH}},
+    {"memory.sram.controller.8", {65, -1, LAUNCH}},
+    {"memory.sram.endpoint.16", {61, -1, LAUNCH}},
+    {"memory.sram.endpoint.32", {66, -1, LAUNCH}},
+    {"memory.sram.endpoint.8", {63, -1, LAUNCH}},
     {"rv32i.core.baseline-pipeline", {59, 20, DATA}},
     {"rv32i.core.educational-single-cycle", {54, 66, DATA}},
 };
