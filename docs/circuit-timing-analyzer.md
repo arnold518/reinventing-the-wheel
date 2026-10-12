@@ -272,7 +272,7 @@ entries, which is how the experiments and program tests build it.
 
 ### Delays that follow the data
 
-A combinational compact part also carries its own gates as a flat list (a
+A compact part also carries its own gates as a flat list (a
 `DelayTwin`, built once per kind of part from its gate-level form by
 `buildDelayTwin`, attached by the catalog). Whenever its inputs change it
 makes one pass over that list with the value each input bit has now and
@@ -288,9 +288,43 @@ two positions. The result holds for any earlier history of the inputs, so
 changes that overlap are covered without the single-pin assumption of the
 tables. The part publishes at the earlier of this time and the table's.
 
-A part gets a gate list only if it is purely combinational: no clock, no
-state, no loop, plain gates only, at most 60,000 gate nodes. 43 of the 97
-compared parts have one. `CIRCUITSIM_NO_DELAY_TWIN=1` turns it off.
+Parts with a clock have one too. The list then also carries the part's
+flip-flops, and each instance keeps what they hold: at a rising clock edge a
+flip-flop takes the value that stood at its data input before the edge (X if
+it had not been quiet for the setup time), and its output counts as changed
+one clock-to-output delay later. A reset in progress or an unknown clock
+gives no answer, and the table applies. Before a time from the list is
+used, the value the list ends on is compared with the value the part
+computed; if they differ the table applies.
+
+A leaf inside the gate-level form that is not a gate (a memory's address
+control, read column or output buffer) is kept as it is timed: its output
+follows each of its inputs by that leaf's delay, and its value is left
+open. That is always safe but coarser, because the list cannot see which of
+the leaf's outputs really change. A memory leaf can narrow this by saying
+which input reaches which output (`Primitive::reaches`); the ROM's address
+control does, which also brought the ROM's own table down (output enable
+to data: 14 ticks to 2).
+
+A part gets no gate list if its gate-level form has a loop, a stored state
+that is not a plain flip-flop, more than one clock, more than 60,000 gate
+nodes, or more than 12,000 with flip-flops (the list is walked on every
+clock edge, so whole cores stay on their tables). 90 of the 97 compared
+parts have one; the others are the three cores, the register file (46,941
+nodes) and the three decode stages that contain it.
+`CIRCUITSIM_NO_DELAY_TWIN=1` turns it
+off, and `CIRCUITSIM_DELAY_TRACE=1` prints which parts got one and each
+time its answer was not used.
+
+### Showing X while an output may still move (option)
+
+With `CIRCUITSIM_STRICT_SETTLING=1` a part with a gate list shows X on an
+output from the earliest tick the table says it can move until the tick
+its gates are final, and then the value. This copies the pulses gates
+make. It is off by default: X on a line that never pulses can stop a part
+that reads it, and the clocks are proven with pulses included either way.
+In the test (`DelayRuleTest --strict-settling`) it breaks nothing and
+leaves 371 of 4,948 pulses unmatched, all in parts without a gate list.
 
 ### The delay rule and how far it holds
 
@@ -300,7 +334,7 @@ through the same situations (one pin, X or Z, a few pins, all pins, edge
 patterns, two pins a few ticks apart, clock edges) and compares them output
 by output.
 
-Holds, in every comparison made (100 parts, about 100,000 situations):
+Holds, in every comparison made (97 parts, about 96,000 situations, 123,000 output changes):
 
 - a compact output never changes before the gates' output;
 - a compact output on a table changes at exactly the delay the table gives;
@@ -313,27 +347,24 @@ Holds, in every comparison made (100 parts, about 100,000 situations):
 
 Does not hold, and why:
 
-- "Not much longer" in every single situation, for parts with state. A
-  table has one number per pair of pins, and that number must cover the
-  slowest case. Combinational parts no longer depend on it (see "Delays
-  that follow the data" below): over all parts the gates now take 96% of
-  the compact time on average, and the 8-bit ripple adder went from 38% to
-  92%. Registers, memories and whole cores still run on their tables,
-  because the gate list has no notion of a clock or of stored values. Four
-  of them are below 70% on single input changes (the single-cycle and
-  baseline cores, `rv32i.prediction.path`, `rv32i.prediction.recovery`);
-  they are listed in the test with their measured shares. At a clock they
-  are exact: same period, same cycles.
+- "Not much longer" in every single situation, for parts without a gate
+  list. Over all parts the gates take 98% of the compact time on average
+  (90% before gate lists; the 8-bit ripple adder went from 38% to 92%,
+  `rv32i.prediction.path` from 44% to 98%, the flip-flop memory endpoint
+  from 76% to 94%). Two kinds remain below 70% and are listed in the test
+  with their measured shares: the single-cycle and baseline cores as whole
+  parts (57% and 59%; too large for a gate list with state), and the ROM
+  device (65%; its non-gate leaves hide which outputs change). At a clock
+  they are exact: same period, same cycles.
 - Pulses. Gates can leave a value and come back to it; a compact part
   computes the final value once and stays still, so a parent built from
-  compact parts can go quiet sooner than the same parent in gates. Showing X
-  while an output may still move would copy this, but a table cannot tell a
-  line that may pulse from one that never does, and X on a line that never
-  pulses (a request line into a self-timed memory) would stop the part that
-  reads it.
-- Several pins at once is tested, not proven. A table is proven for one pin
-  changing while the others hold. No case was found where the gates exceed
-  the largest of the single-pin delays, but no proof says they cannot.
+  compact parts can go quiet sooner than the same parent in gates. The
+  strict-settling option above removes this for parts with a gate list.
+- Several pins at once is tested, not proven, for parts on a table only. A
+  table is proven for one pin changing while the others hold. A gate list
+  has no such limit: its time holds for any history of the inputs. For the
+  seven parts on tables no case was found where the gates exceed the largest
+  of the single-pin delays, but no proof says they cannot.
 
 None of the three reaches a clocked experiment. The clock is proven on the
 gates of the whole system, pulses and simultaneous changes included, and a

@@ -49,6 +49,9 @@ class Primitive : public BasicComponent {
     PrimitiveTiming primitiveTiming() const override {
         return respondsOnlyToInputs() ? PrimitiveTiming::InputsOnly : PrimitiveTiming::Unknown;
     }
+    // False where a change of this input can never change that output, so
+    // the timing analysis draws no path between them.
+    virtual bool reaches(const std::string &, const std::string &) const { return true; }
     // True for a clocked primitive that also wakes itself between clock
     // edges and may change any output one delay after either.
     virtual bool selfTimedClockedPart() const { return false; }

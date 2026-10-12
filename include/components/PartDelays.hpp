@@ -21,15 +21,26 @@ struct DelayRange {
 // does not wait for the other; this is what makes the answer follow the data,
 // for example how far a carry really travels. It holds for any earlier
 // history of the inputs, so changes that overlap are covered as well.
+//
+// A part with flip-flops is covered too: the twin keeps the bit each one
+// holds, takes the value at its data input on a rising clock edge, and lets
+// its output change one clock-to-output delay later.
 struct DelayTwin {
     virtual ~DelayTwin() = default;
     // Pin names and widths, in the order `settle` takes and gives them.
     std::vector<std::pair<std::string, size_t>> inputs, outputs;
+    // What one part remembers between changes: the bits its flip-flops hold.
+    // Null for a part without state.
+    struct State { virtual ~State() = default; };
+    virtual std::unique_ptr<State> start() const { return nullptr; }
     // changed[i][bit]: tick of that bit's last change, -1 if it never changed.
     // settled[o]: tick by which output o is final, -1 if nothing can move it.
-    virtual void settle(const std::vector<std::vector<LogicValue>>& values,
-                        const std::vector<std::vector<long long>>& changed,
-                        std::vector<long long>& settled) const = 0;
+    // value[o][bit]: what the gates end on there: 0, 1, or 2 for unknown.
+    // False: no answer for this change (a reset in progress, an unknown
+    // clock); the table applies.
+    virtual bool settle(State* state, long long now, const std::vector<std::vector<LogicValue>>& values,
+                        const std::vector<std::vector<long long>>& changed, std::vector<long long>& settled,
+                        std::vector<std::vector<uint8_t>>& value) const = 0;
 };
 
 // The timing of one evaluated part as seen from outside, in ticks.

@@ -9,6 +9,7 @@
 #include "components/selection/StandardProfiles.hpp"
 #include <algorithm>
 #include <cstdlib>
+#include <iostream>
 #include <map>
 #include <mutex>
 #include <set>
@@ -333,9 +334,15 @@ std::shared_ptr<const DelayTwin> ComponentCatalog::delayTwin(
     const ComponentBuildRequest& request, const std::string& implementation, const PartDelays& table) const {
     thread_local bool building = false;
     if (building || std::getenv("CIRCUITSIM_NO_DELAY_TWIN")) return nullptr;
-    // Parts with state keep their table: the twin has no notion of a clock.
-    if (table.arcs.empty() || !table.clock.empty() || table.self_timed || !table.launches.empty() || !table.fixed_inputs.empty())
-        return nullptr;
+    // A part that times itself keeps its table.
+    // A held input such as RST is an input like any other to the gate list.
+    if ((table.arcs.empty() && table.launches.empty()) || table.self_timed) return nullptr;
+    // Parts with state known to be far over the size a gate list may have.
+    // Finding that out means building all their gates, which a run of a
+    // compact core must not pay for.
+    for (const char* large : {"rv32i.core.", "rv32i.system.", "rv32i.register-file", "rv32i.baseline.decode",
+                              "rv32i.pipeline.stage.decode", "rv32i.single-cycle.decode"})
+        if (request.contract_id.rfind(large, 0) == 0) return nullptr;
     std::string key = implementation;
     for (const auto& [name, value] : request.parameters) key += "|" + name + "=" + value;
     static std::mutex guard;
@@ -348,8 +355,12 @@ std::shared_ptr<const DelayTwin> ComponentCatalog::delayTwin(
     building = true;
     try {
         const auto gates = createRoot({request.contract_id, "TWIN", request.parameters}, maximallyStructural()).root;
-        if (gates && !std::dynamic_pointer_cast<BasicComponent>(gates)) twin = analysis::buildDelayTwin(gates);
-    } catch (const std::exception&) {}
+        std::string why = "no gate-level form";
+        if (gates && !std::dynamic_pointer_cast<BasicComponent>(gates)) twin = analysis::buildDelayTwin(gates, &why);
+        if (std::getenv("CIRCUITSIM_DELAY_TRACE")) std::cerr << (twin ? "delay twin for " : "no delay twin for ") << key << (twin ? "" : ": " + why) << '\n';
+    } catch (const std::exception& error) {
+        if (std::getenv("CIRCUITSIM_DELAY_TRACE")) std::cerr << "no delay twin for " << key << ": " << error.what() << '\n';
+    }
     building = false;
     const std::lock_guard<std::mutex> lock(guard);
     return twins.emplace(key, twin).first->second;

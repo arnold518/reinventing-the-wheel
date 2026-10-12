@@ -58,6 +58,12 @@ class ROMAddressControl : public Primitive {
         config_.validate(8);
     }
     bool respondsOnlyToInputs() const override { return true; }
+    // The enables do not enter the row and column numbers, and the output
+    // enable does not select a row.
+    bool reaches(const std::string &input, const std::string &output) const override {
+        if (input == "WORD_ADDR") return true;
+        return output == "OUTPUT_ENABLE" || (input == "CE_N" && output == "ROW_ENABLE");
+    }
     void evaluate(size_t t, Simulator &sim) override {
         auto a = read("WORD_ADDR");
         bool valid = known(a) && number(a) < config_.depth_words;

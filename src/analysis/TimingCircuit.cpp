@@ -170,8 +170,10 @@ std::optional<ClockComponentContract> builtinClockContract(const IOComponent& c)
         && !c.getAllInputPins().empty()) {
         const auto d = primitive->getDelay();
         m.self_timed = primitive->primitiveTiming() == BasicComponent::PrimitiveTiming::SelfTimed;
+        const auto* memory = dynamic_cast<const circuit::memory_device::Primitive*>(primitive);
         for (const auto& [i, p] : c.getAllInputPins())
-            for (const auto& [o, q] : c.getAllOutputPins()) m.arcs.push_back({i, o, {d, d}});
+            for (const auto& [o, q] : c.getAllOutputPins())
+                if (!memory || memory->reaches(i, o)) m.arcs.push_back({i, o, {d, d}});
         return m;
     }
     if (typeid(c) == typeid(NOTGate) || typeid(c) == typeid(ANDGate)
