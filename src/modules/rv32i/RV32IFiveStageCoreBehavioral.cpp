@@ -554,7 +554,18 @@ void RV32IFiveStageCoreBehavioral::evaluate(
         rv32i::memoryWordAddress(old_data_address,old_size),old_store<<((old_data_address&3)*8),
         rv32i::memoryWriteMask(old_data_address,old_size));
     previous_clk_ = clk;
-    driveOutputs(current_time, simulator);
+    // The core's state is kept as plain numbers. When the reset, or the
+    // enable or a memory handshake bit at a clock edge, is not 0 or 1, that
+    // state is no longer known: every output shows X until a reset, never 0
+    // or 1 where the gates hold X.
+    if (rst == LogicValue::HIGH) state_unknown_ = false;
+    else if (rst != LogicValue::LOW) state_unknown_ = true;
+    else if (edge)
+        for (const auto* pin : {"ENABLE", "IMEM_REQ_READY", "IMEM_RSP_VALID", "DMEM_REQ_READY", "DMEM_RSP_VALID"})
+            if (const auto value = getInputValue(pin); value != LogicValue::LOW && value != LogicValue::HIGH) state_unknown_ = true;
+    if (!state_unknown_) { driveOutputs(current_time, simulator); return; }
+    for (const auto& [name, pin] : getAllOutputPins())
+        _updateOutputWireDynamic(simulator, name, std::vector<LogicValue>(pin->getWidth(), LogicValue::UNKNOWN), current_time);
 }
 
 rv32i::RV32IArchitecturalState

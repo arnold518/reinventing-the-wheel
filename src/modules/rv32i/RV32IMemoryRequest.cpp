@@ -10,6 +10,8 @@
 #include "basic/LogicValueHelpers.hpp"
 #include "components/BasicComponent.hpp"
 #include "components/Component.hpp"
+#include "modules/storage/RegisterBehavioral.hpp"
+#include <array>
 #include <tuple>
 
 using namespace circuit;
@@ -71,8 +73,10 @@ circuit::PinInitializer requesterPins(bool read_only, bool address_is_tag) {
     };
 }
 
-// The requester's rule is rv32i::MemoryRequestState, the same state the
-// behavioral cores keep for their instruction and data requests.
+// The requester as one part. It evaluates the gate-level form's own handshake
+// logic and registers by their four-state rules, so an unknown input leaves X
+// exactly where the gates hold X. (The behavioral cores keep the same rule as
+// plain numbers in rv32i::MemoryRequestState.)
 class RV32IMemoryRequestBehavioral final : public BasicComponent {
 public:
     RV32IMemoryRequestBehavioral(std::string name, bool read_only, bool address_is_tag)
@@ -82,37 +86,78 @@ public:
         return read_only_ && address_is_tag_ ? "RV32IFetchRequest" : RV32IMemoryRequest::TypeName;
     }
     void evaluate(size_t time, Simulator& simulator) override {
-        using circuit::logic_values::high;
-        const auto word = [&](const char* pin) { return uint32_t(getInputPinDynamic(pin)->getValueAsUInt64()); };
-        const bool reset = getInputValue("RST") != LogicValue::LOW;
-        const auto clock = getInputValue("CLK");
+        using namespace circuit::logic_values;
+        const auto reset = getInputValue("RST"), clock = getInputValue("CLK");
+        const auto running = notGate(reset);
+        const auto issue = sanitizeBit(getInputValue("ISSUE")), take = sanitizeBit(getInputValue("TAKE"));
+        const auto request_ready = sanitizeBit(getInputValue("BUS_REQ_READY"));
+        const auto response_valid = sanitizeBit(getInputValue("BUS_RSP_VALID"));
+        const auto current = getInputPin<32>(address_is_tag_ ? "ADDR" : "TAG")->getValueAsVector();
+        struct Nets { LogicValue start, valid, ready, done, busy, sent, abandoned; };
+        const auto nets = [&] {
+            const auto start = andGate(andGate(issue, notGate(busy_)), running);
+            auto mismatch = LogicValue::LOW;
+            const auto& saved = words_[address_is_tag_ ? 2 : 0];
+            for (size_t bit = 0; bit < 32; ++bit) mismatch = orGate(mismatch, xorGate(current[bit], saved[bit]));
+            const auto discard = andGate(busy_, orGate(abandoned_, mismatch));
+            const auto sending = andGate(orGate(busy_, issue), notGate(sent_));
+            const auto valid = andGate(sending, running);
+            const auto accepted = andGate(valid, request_ready);
+            const auto consume = orGate(take, discard);
+            const auto response_running = andGate(orGate(sent_, sending), running);
+            const auto unfinished = notGate(andGate(andGate(response_running, response_valid), consume));
+            return Nets{start, valid, andGate(response_running, consume),
+                        andGate(andGate(andGate(orGate(sent_, accepted), response_valid), notGate(discard)), running),
+                        andGate(orGate(busy_, start), unfinished), andGate(orGate(sent_, accepted), unfinished),
+                        andGate(andGate(busy_, discard), unfinished)};
+        };
+        const auto before = nets();
         const bool edge = previous_clock_ == LogicValue::LOW && clock == LogicValue::HIGH;
-        const bool issue = high(getInputValue("ISSUE")), take = high(getInputValue("TAKE"));
-        const uint32_t address = word("ADDR");
-        const uint32_t tag = address_is_tag_ ? address : word("TAG");
-        const unsigned op = read_only_ ? 0 : unsigned(word("OP"));
-        const uint32_t data = read_only_ ? 0 : word("WRITE_DATA");
-        const unsigned mask = read_only_ ? 15 : unsigned(word("WRITE_MASK"));
-        state_.tick(*this, "BUS_", reset, edge, issue, take, tag, op, address, data, mask);
+        for (size_t index = 0; index < WORDS; ++index) {
+            if (!present(index)) continue;
+            auto previous = previous_clock_;
+            registerStep(words_[index], previous, reset, clock, before.start, getInputPinDynamic(INPUTS[index])->getValueAsVector());
+        }
+        const auto state = [&](LogicValue& bit, LogicValue next) {
+            if (reset == LogicValue::HIGH) bit = LogicValue::LOW;
+            else if (reset != LogicValue::LOW) bit = bit == LogicValue::LOW ? LogicValue::LOW : LogicValue::UNKNOWN;
+            else if (edge) bit = next;
+        };
+        state(busy_, before.busy); state(sent_, before.sent); state(abandoned_, before.abandoned);
         previous_clock_ = clock;
 
-        rv32i::publishMemoryRequest(state_, reset, take, tag, issue, op, address, data, mask, Emit{*this, simulator, time});
-        _updateOutputWire(simulator, "DONE", circuit::logic_values::logic(state_.done(*this, "BUS_", tag, issue)), time);
+        const auto now = nets();
+        _updateOutputWire(simulator, "BUS_REQ_VALID", now.valid, time);
+        _updateOutputWire(simulator, "BUS_RSP_READY", now.ready, time);
+        _updateOutputWire(simulator, "DONE", now.done, time);
+        for (size_t index = 1; index < WORDS; ++index) {
+            const auto name = std::string("BUS_REQ_") + INPUTS[index];
+            if (!present(index)) {
+                _updateOutputWireDynamic(simulator, name, std::vector<LogicValue>(
+                    words_[index].size(), index == 4 ? LogicValue::HIGH : LogicValue::LOW), time);
+                continue;
+            }
+            auto value = getInputPinDynamic(INPUTS[index])->getValueAsVector();
+            for (size_t bit = 0; bit < value.size(); ++bit) value[bit] = mux2(sanitizeBit(value[bit]), words_[index][bit], busy_);
+            _updateOutputWireDynamic(simulator, name, value, time);
+        }
         auto fault = LogicValue::LOW;
         for (const auto bit : getInputPin<3>("BUS_RSP_STATUS")->getValueAsVector())
-            fault = circuit::logic_values::orGate(fault, bit);
+            fault = orGate(fault, bit);
         _updateOutputWire(simulator, "FAULT", fault, time);
         _updateOutputWire<32>(simulator, "READ_DATA", getInputPin<32>("BUS_RSP_READ_DATA")->getValueAsVector(), time);
     }
 private:
-    struct Emit {
-        RV32IMemoryRequestBehavioral& self; Simulator& simulator; size_t time;
-        template<size_t W> void operator()(const char* pin, uint64_t value) const {
-            self.template _updateOutputWire<W>(simulator, std::string("BUS_") + pin, value, time);
-        }
-    };
+    // The request registers: tag, operation, address, write data, write mask.
+    static constexpr size_t WORDS = 5;
+    static constexpr const char* INPUTS[WORDS] = {"TAG", "OP", "ADDR", "WRITE_DATA", "WRITE_MASK"};
+    bool present(size_t index) const { return index == 0 ? !address_is_tag_ : index == 2 || !read_only_; }
     bool read_only_, address_is_tag_;
-    rv32i::MemoryRequestState state_;
+    LogicValue busy_ = LogicValue::UNKNOWN, sent_ = LogicValue::UNKNOWN, abandoned_ = LogicValue::UNKNOWN;
+    std::array<std::vector<LogicValue>, WORDS> words_{
+        std::vector<LogicValue>(32, LogicValue::UNKNOWN), std::vector<LogicValue>(3, LogicValue::UNKNOWN),
+        std::vector<LogicValue>(32, LogicValue::UNKNOWN), std::vector<LogicValue>(32, LogicValue::UNKNOWN),
+        std::vector<LogicValue>(4, LogicValue::UNKNOWN)};
     LogicValue previous_clock_ = LogicValue::UNKNOWN;
 };
 }

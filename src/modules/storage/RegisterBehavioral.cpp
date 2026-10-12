@@ -9,25 +9,27 @@ RegisterBehavioral::RegisterBehavioral(std::string name, size_t width)
       }), width_(width), type_("Register<" + std::to_string(width) + ">"),
       stored_(width, LogicValue::UNKNOWN) {}
 
-void RegisterBehavioral::evaluate(size_t time, Simulator& simulator) {
-    const auto reset = getInputValue("RST");
-    const auto clock = getInputValue("CLK");
-    if (reset == LogicValue::HIGH) std::fill(stored_.begin(), stored_.end(), LogicValue::LOW);
+void registerStep(std::vector<LogicValue>& stored, LogicValue& previous_clock, LogicValue reset, LogicValue clock,
+                  LogicValue enable, const std::vector<LogicValue>& data) {
+    if (reset == LogicValue::HIGH) std::fill(stored.begin(), stored.end(), LogicValue::LOW);
     else if (reset != LogicValue::LOW) {
-        for (auto& bit : stored_) if (bit != LogicValue::LOW) bit = LogicValue::UNKNOWN;
-    } else if (previous_clock_ == LogicValue::LOW && clock == LogicValue::HIGH) {
-        const auto enable = getInputValue("WE");
-        const auto data = getInputPinDynamic("D")->getValueAsVector();
+        for (auto& bit : stored) if (bit != LogicValue::LOW) bit = LogicValue::UNKNOWN;
+    } else if (previous_clock == LogicValue::LOW && clock == LogicValue::HIGH) {
         if (enable == LogicValue::HIGH) {
-            for (size_t bit = 0; bit < width_; ++bit)
-                stored_[bit] = data[bit] == LogicValue::HIGH || data[bit] == LogicValue::LOW
+            for (size_t bit = 0; bit < stored.size(); ++bit)
+                stored[bit] = data[bit] == LogicValue::HIGH || data[bit] == LogicValue::LOW
                     ? data[bit] : LogicValue::UNKNOWN;
         } else if (enable != LogicValue::LOW) {
-            for (size_t bit = 0; bit < width_; ++bit)
-                stored_[bit] = stored_[bit] == LogicValue::LOW && data[bit] == LogicValue::LOW
+            for (size_t bit = 0; bit < stored.size(); ++bit)
+                stored[bit] = stored[bit] == LogicValue::LOW && data[bit] == LogicValue::LOW
                     ? LogicValue::LOW : LogicValue::UNKNOWN;
         }
     }
-    previous_clock_ = clock;
+    previous_clock = clock;
+}
+
+void RegisterBehavioral::evaluate(size_t time, Simulator& simulator) {
+    registerStep(stored_, previous_clock_, getInputValue("RST"), getInputValue("CLK"), getInputValue("WE"),
+                 getInputPinDynamic("D")->getValueAsVector());
     _updateOutputWireDynamic(simulator, "Q", stored_, time);
 }

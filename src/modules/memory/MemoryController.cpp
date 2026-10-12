@@ -120,28 +120,20 @@ class MemoryControllerBehavioral : public Primitive {
     Technology technology_;
     EndpointConfig config_;
     NativeSequence sequence_;
-    bool pending_ = false, full_ = false;
-    Bits held_data_, held_status_;
+    // The handshake state and logic are the gates' own, in four-state form
+    // (see ResponseBuffer).
+    LogicValue pending_ = L;
+    ResponseBuffer buffer_;
     LogicValue previous_ = X;
     size_t scheduled_ = 0;
 
-    // The response buffer's clocked update: IN_VALID offers (data, status).
-    void clockBuffer(bool reset, bool edge, bool offered, bool take, const Bits& data, const Bits& status) {
-        if (reset) { full_ = false; held_data_.assign(width_, L); held_status_ = bits(3, 0); return; }
-        if (!edge) return;
-        const bool incoming = offered && (!full_ || take);
-        const bool capture = incoming && (full_ || !take);
-        const bool hold = full_ && !take;
-        if (capture) { held_data_ = data; held_status_ = status; }
-        full_ = capture || hold;
-    }
-    void publishResponse(Simulator& sim, size_t t, bool reset, bool offered, const Bits& data, const Bits& status) {
-        publish(sim, t, "RSP_VALID", !reset && (full_ || offered) ? H : L);
-        publish(sim, t, "RSP_READ_DATA", full_ ? held_data_ : data);
-        publish(sim, t, "RSP_STATUS", full_ ? held_status_ : status);
+    void publishResponse(Simulator& sim, size_t t, LogicValue reset, LogicValue offered, const Bits& data, const Bits& status) {
+        publish(sim, t, "RSP_VALID", buffer_.valid(reset, offered));
+        publish(sim, t, "RSP_READ_DATA", buffer_.select(data, buffer_.data));
+        publish(sim, t, "RSP_STATUS", buffer_.select(status, buffer_.status));
     }
 
-    void evaluateFlipFlop(size_t t, Simulator& sim, bool reset, bool edge, bool take, bool issue) {
+    void evaluateFlipFlop(size_t t, Simulator& sim, LogicValue reset, bool edge, LogicValue take, LogicValue issue) {
         const auto op = read("REQ_OP"), address = read("REQ_ADDR"), mask = read("REQ_WRITE_MASK");
         const bool fields_known = known(op) && known(address), mask_known = known(mask);
         const bool o0 = op[0] == H, o1 = op[1] == H, o2 = op[2] == H;
@@ -160,18 +152,18 @@ class MemoryControllerBehavioral : public Primitive {
         const bool reading = legal && !o0, writing = legal && o0 && mask_known;
 
         const bool always_ready = config_.always_ready;
-        const bool ready = !reset && (always_ready || !full_ || take);
-        const bool accept = issue && ready;
+        const auto ready = [&] { return both(no(reset), always_ready ? H : buffer_.room(take)); };
+        const auto accept = both(issue, ready());
         const bool device_fault = (reading || writing) && read("MEM_FAULT") == Bits{H};
         const Bits response_status = bits(3, device_fault ? 5 : status);
         const Bits response_data = reading && read("MEM_FAULT") == Bits{L} ? read("MEM_READ_DATA") : Bits(width_, L);
-        if (!always_ready) clockBuffer(reset, edge, accept, take, response_data, response_status);
+        if (!always_ready) buffer_.clock(reset, edge, accept, take, response_data, response_status);
 
-        const bool ready_now = !reset && (always_ready || !full_ || take);
-        const bool accept_now = issue && ready_now;
-        publish(sim, t, "REQ_READY", ready_now ? H : L);
+        const auto ready_now = ready();
+        const auto accept_now = both(issue, ready_now);
+        publish(sim, t, "REQ_READY", ready_now);
         if (always_ready) {
-            publish(sim, t, "RSP_VALID", accept_now ? H : L);
+            publish(sim, t, "RSP_VALID", accept_now);
             publish(sim, t, "RSP_READ_DATA", response_data);
             publish(sim, t, "RSP_STATUS", response_status);
         } else {
@@ -189,15 +181,15 @@ class MemoryControllerBehavioral : public Primitive {
         if (auto wire = clock_pin->getExternalWireBase())
             sim.scheduleEvent(makeWireUpdateEvent(t, wire, read("CLK")));
         publish(sim, t, "MEM_RST", L);
-        publish(sim, t, "MEM_WE", accept_now && writing ? H : L);
-        publish(sim, t, "MEM_READ_EN", accept_now && reading ? H : L);
+        publish(sim, t, "MEM_WE", both(accept_now, bit(writing)));
+        publish(sim, t, "MEM_READ_EN", both(accept_now, bit(reading)));
     }
 
 public:
     MemoryControllerBehavioral(std::string n, size_t w, Technology t, EndpointConfig c)
         : Primitive(std::move(n), "MemoryController<" + std::string(technologyName(t)) + "," + std::to_string(w) + ">",
             [=](IOComponent* s) { protocolPins(s, w); nativePins(s, w, t, true); }),
-          width_(w), technology_(t), config_(c), sequence_(w, t, c), held_data_(w, L), held_status_(bits(3, 0)) {
+          width_(w), technology_(t), config_(c), sequence_(w, t, c), buffer_(w) {
         c.validate(w, t);
     }
     void evaluate(size_t t, Simulator& sim) override {
@@ -205,29 +197,31 @@ public:
         const auto clk = getInputValue("CLK");
         const bool edge = previous_ == L && clk == H;
         previous_ = clk;
-        const bool reset = getInputValue("RST") != L;
-        const bool take = getInputValue("RSP_READY") == H;
-        const bool issue = getInputValue("REQ_VALID") == H;
+        const auto reset = clean(getInputValue("RST")), take = clean(getInputValue("RSP_READY")),
+                   issue = clean(getInputValue("REQ_VALID"));
         if (technology_ == Technology::FF) { evaluateFlipFlop(t, sim, reset, edge, take, issue); return; }
 
-        struct View { bool completion, finish, ready, accept; };
+        struct View { LogicValue completion, finish, ready, accept; };
         const auto view = [&] {
-            const bool completion = pending_ && sequence_.done;
-            const bool room = !reset && (!full_ || take);
-            const bool slot = !pending_ || (completion && take);
-            const bool ready = !reset && slot && sequence_.available && room;
-            return View{completion, completion && room, ready, ready && issue};
+            const auto completion = both(pending_, bit(sequence_.done));
+            const auto room = both(no(reset), buffer_.room(take));
+            const auto slot = either(no(pending_), both(completion, take));
+            const auto ready = both(both(no(reset), slot), both(bit(sequence_.available), room));
+            return View{completion, both(completion, room), ready, both(ready, issue)};
         };
         const auto before = view();
         const Request request{read("REQ_OP"), read("REQ_ADDR"), read("REQ_WRITE_DATA"), read("REQ_WRITE_MASK")};
-        clockBuffer(reset, edge, before.completion, take, sequence_.result, bits(3, unsigned(sequence_.status)));
-        if (reset) pending_ = false;
-        else if (edge) pending_ = before.accept || (pending_ && !before.finish);
-        sequence_.step(t, edge, reset, before.accept, request,
-                       [&](const std::string& pin, size_t) { return read("MEM_" + pin); }, before.finish);
+        buffer_.clock(reset, edge, before.completion, take, sequence_.result, bits(3, unsigned(sequence_.status)));
+        if (reset == H) pending_ = L;
+        else if (reset != L) fade(pending_);
+        else if (edge) pending_ = either(before.accept, both(pending_, no(before.finish)));
+        // The sequencer is the same part in the gate-level form; like there,
+        // it starts and finishes only on a clean 1.
+        sequence_.step(t, edge, reset != L, before.accept == H, request,
+                       [&](const std::string& pin, size_t) { return read("MEM_" + pin); }, before.finish == H);
 
         const auto after = view();
-        publish(sim, t, "REQ_READY", after.ready ? H : L);
+        publish(sim, t, "REQ_READY", after.ready);
         publishResponse(sim, t, reset, after.completion, sequence_.result, bits(3, unsigned(sequence_.status)));
         for (auto& [name, pin] : getAllOutputPins())
             if (name.starts_with("MEM_")) publish(sim, t, name, signal(sequence_.outputs, name.substr(4), pin->getWidth()));

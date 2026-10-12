@@ -1,3 +1,4 @@
+#include "components/BasicComponent.hpp"
 #include "analysis/RV32IExperiment.hpp"
 #include "analysis/ExperimentClock.hpp"
 #include "analysis/RV32IWorkloads.hpp"
@@ -132,7 +133,17 @@ int main(int argc,char** argv) {
             }
             c.period=*automatic_clock.safe_period_ticks;
         }
+        BasicComponent::resetSetupViolations();
         const auto r=runRV32IExperiment(c);
+        // A compact part saw an input change inside its setup time: at this
+        // clock its gates might capture something else, so the run is not a
+        // trustworthy model of the gate-level system. Memories that time
+        // themselves answer at any moment of the cycle and can cause this at
+        // any clock.
+        const auto setup_violations=BasicComponent::setupViolations();
+        if(setup_violations&&!c.safe_clock_only)
+            std::cerr<<"warning: "<<setup_violations<<" input change(s) inside a compact part's setup time at period "
+                <<c.period<<"; the compact form may differ from its gates at this clock\n";
         if(c.safe_clock_only) {
             const auto& s=r.safe_clock;
             auto strings=[](const std::vector<std::string>& values) {
@@ -188,7 +199,7 @@ int main(int argc,char** argv) {
             <<",\"predictor_at_window\":"<<quote(r.measurement_start_pc?"inherits-prefix-training":"cold")
             <<",\"completed\":"<<(r.completed?"true":"false")
             <<",\"prefix_verified\":"<<(r.prefix_verified?"true":"false")
-            <<",\"verified\":"<<(r.verified?"true":"false")<<",\"cycles\":"<<r.cycles
+            <<",\"verified\":"<<(r.verified?"true":"false")<<",\"setup_violations\":"<<setup_violations<<",\"cycles\":"<<r.cycles
             <<",\"instruction_attempts\":"<<r.attempts<<",\"retired_instructions\":"<<r.retired
             <<",\"terminal_attempts\":"<<r.terminal_attempts
             <<",\"whole_program_cycles\":"<<r.whole_program_cycles

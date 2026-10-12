@@ -4,6 +4,7 @@
 #include "modules/basic/Gate.hpp"
 #include "components/StructuralNetBuilder.hpp"
 #include "modules/utility/BitAdapter.hpp"
+#include "basic/LogicValueHelpers.hpp"
 #include <array>
 #include <utility>
 
@@ -36,4 +37,16 @@ void IncrementBy4::buildInternals(ComponentBuilder& builder) {
     }
     w.connect(join->getOutputPin<32>("OUT"),getOutputPin<32>("Sum"));
     w.finish();
+}
+
+std::vector<LogicValue> incrementBy4(const std::vector<LogicValue>& value) {
+    using namespace circuit::logic_values;
+    std::vector<LogicValue> sum(32);
+    auto below = LogicValue::HIGH; // AND of bits 2..i-1
+    for (size_t i = 0; i < 32; ++i) {
+        const auto bit = sanitizeBit(value[i]);
+        sum[i] = i < 2 ? bit : i == 2 ? notGate(bit) : xorGate(bit, below);
+        if (i >= 2) below = andGate(below, bit);
+    }
+    return sum;
 }

@@ -499,7 +499,12 @@ void FFMemoryContractTest::verifyResults() {
     set("WRITE_MASK", 3); set("CLK", 0); step(12);
     ff->getInputPinDynamic("WORD_ADDR")->setBit(0, LogicValue::UNKNOWN);
     set("CLK", 1); step(14);
-    require(read() == retained, "Unknown address corrupted a known word");
+    // As in the gates: a word the unknown address bit may select keeps 0 only
+    // where its old and new bit are both 0; the rest is no longer known.
+    std::vector<LogicValue> merged(16);
+    for (size_t bit = 0; bit < 16; ++bit)
+        merged[bit] = ((0xabcd | 0x5678) >> bit) & 1 ? LogicValue::UNKNOWN : LogicValue::LOW;
+    require(ff->memoryStorage().readLogic(0, 2) == merged, "Unknown address did not leave X where the gate-level word does");
     require(ff->getOutputPin("FAULT")->getValue() == LogicValue::UNKNOWN, "Unknown address not reported");
     set("WE", 0); set("READ_EN", 0); step(16);
     require(ff->getOutputPin("FAULT")->getValue() == LogicValue::LOW, "Disabled access depends on ignored address");

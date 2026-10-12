@@ -1,5 +1,6 @@
 #pragma once
 
+#include "basic/LogicValueHelpers.hpp"
 #include "components/BasicComponent.hpp"
 #include "components/capabilities/MemoryStateView.hpp"
 #include "modules/memory/MemoryArrayInterface.hpp"
@@ -53,15 +54,36 @@ public:
         if (rst == LogicValue::HIGH) storage_.fill(time, LogicValue::LOW);
         else if (!known(rst)) storage_.fill(time, LogicValue::UNKNOWN);
         const bool write_time = (previous_clk_ == LogicValue::LOW && clk == LogicValue::HIGH);
-        {
-            if (!reset_active && write_time && we == LogicValue::HIGH &&
-                selected && mask_known && fault == LogicValue::LOW) {
-                const auto bits = this->template getInputPin<DataWidth>("WRITE_DATA")->getValueAsVector();
+        // A word's write enable is WE AND its address match, per byte AND the
+        // mask bit, as in the gates. A clean 1 stores the data; an unknown
+        // enable leaves 0 only where the old and new bit are both 0.
+        if (!reset_active && write_time && we != LogicValue::LOW) {
+            const auto address = getInputPinDynamic("WORD_ADDR")->getValueAsVector();
+            const auto mask_bits = getInputPinDynamic("WRITE_MASK")->getValueAsVector();
+            const auto bits = this->template getInputPin<DataWidth>("WRITE_DATA")->getValueAsVector();
+            const auto write = [&](uint32_t target, LogicValue enable) {
                 for (size_t byte = 0; byte < DataWidth / 8; ++byte) {
-                    if (mask & (1u << byte)) storage_.writeLogic(time,
-                        static_cast<uint32_t>(word * (DataWidth / 8) + byte),
-                        {bits.begin() + byte * 8, bits.begin() + (byte + 1) * 8}, true);
+                    const auto on = circuit::logic_values::andGate(enable, mask_bits[byte]);
+                    if (on == LogicValue::LOW) continue;
+                    const auto at = static_cast<uint32_t>(target * (DataWidth / 8) + byte);
+                    std::vector<LogicValue> next(bits.begin() + byte * 8, bits.begin() + (byte + 1) * 8);
+                    if (on != LogicValue::HIGH) {
+                        const auto old = storage_.readLogic(at, 1);
+                        for (size_t bit = 0; bit < 8; ++bit)
+                            next[bit] = old[bit] == LogicValue::LOW && next[bit] == LogicValue::LOW
+                                ? LogicValue::LOW : LogicValue::UNKNOWN;
+                    }
+                    storage_.writeLogic(time, at, next, true);
                 }
+            };
+            const auto enable = known(we) ? we : LogicValue::UNKNOWN;
+            if (address_known) { if (selected) write(word, enable); }
+            else for (uint32_t target = 0; target < config_.depth_words; ++target) {
+                // Every word the known address bits do not rule out.
+                bool possible = true;
+                for (size_t bit = 0; bit < address.size() && possible; ++bit)
+                    possible = !known(address[bit]) || (address[bit] == LogicValue::HIGH) == bool((uint64_t{target} >> bit) & 1);
+                if (possible) write(target, LogicValue::UNKNOWN);
             }
         }
         previous_clk_ = clk;

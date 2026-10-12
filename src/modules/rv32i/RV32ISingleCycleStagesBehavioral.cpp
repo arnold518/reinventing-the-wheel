@@ -4,6 +4,10 @@
 #include "components/BasicComponent.hpp"
 #include "components/Component.tpp"
 #include "modules/composite/ALU32.hpp"
+#include "modules/composite/IncrementBy4.hpp"
+#include "modules/storage/RegisterBehavioral.hpp"
+#include "modules/rv32i/RegisterFile32x32Behavioral.hpp"
+#include "basic/LogicValueHelpers.hpp"
 #include "modules/rv32i/RV32IComponentEncoding.hpp"
 #include "rv32i/RV32IControl.hpp"
 #include "rv32i/RV32IDecoder.hpp"
@@ -62,7 +66,7 @@ public:
     }
 private:
     Stage stage_;
-    uint32_t pc_=0;
+    Bits pc_=Bits(32,LogicValue::UNKNOWN);
     LogicValue previous_clock_=LogicValue::UNKNOWN;
     std::vector<Bits> registers_;
     std::map<size_t,std::vector<Bits>> history_;
@@ -98,24 +102,27 @@ private:
     void unknownOutputs(size_t t,Simulator& s) {
         for(auto& [name,pin]:getAllOutputPins()) emit(name,Bits(pin->getWidth(),LogicValue::UNKNOWN),t,s);
     }
+    // A register, an incrementer and wires, each by its own four-state rule.
     void fetch(size_t t,Simulator& s) {
-        const bool rising=edge(),reset=high("RST");
-        if(reset) pc_=0;
-        else if(rising&&high("PC_WRITE")) pc_=value("NEXT_PC");
-        emit("PC",pc_,t,s);emit("PC_PLUS_4",pc_+4,t,s);
-        emit("PC_MISALIGNED",bool(pc_&3),t,s);
+        using namespace circuit::logic_values;
+        registerStep(pc_,previous_clock_,getInputValue("RST"),getInputValue("CLK"),getInputValue("PC_WRITE"),
+            getInputPin<32>("NEXT_PC")->getValueAsVector());
+        Bits word_address(32,LogicValue::LOW);
+        for(size_t i=2;i<32;++i) word_address[i-2]=pc_[i];
+        emit("PC",pc_,t,s);emit("PC_PLUS_4",incrementBy4(pc_),t,s);
+        emit("PC_MISALIGNED",Bits{orGate(pc_[0],pc_[1])},t,s);
         emit("INSTRUCTION",getInputPin<32>("IMEM_READ_DATA")->getValueAsVector(),t,s);
-        emit("IMEM_WORD_ADDR",pc_>>2,t,s);emit("IMEM_READ_EN",high("ISSUE"),t,s);
+        emit("IMEM_WORD_ADDR",word_address,t,s);emit("IMEM_READ_EN",getInputPin("ISSUE")->getValueAsVector(),t,s);
         emit("DONE",1,t,s);emit("FAULT",getInputPin("IMEM_FAULT")->getValueAsVector(),t,s);
     }
     void decode(size_t t,Simulator& s) {
-        const bool rising=edge();
         auto raw=known("INSTRUCTION");
         const auto d=RV32IDecoder::decode(raw.value_or(0));
         auto old=registers_;
-        if(high("RST")) for(auto& reg:registers_) reg=bits(32,0);
-        else if(rising&&high("REGISTER_WRITE")&&raw&&d.rd!=0)
-            registers_[d.rd]=getInputPin<32>("WB_VALUE")->getValueAsVector();
+        const auto instruction=getInputPin<32>("INSTRUCTION")->getValueAsVector();
+        rv32i::register_file::step(registers_,previous_clock_,getInputValue("RST"),getInputValue("CLK"),
+            getInputValue("REGISTER_WRITE"),Bits(instruction.begin()+7,instruction.begin()+12),
+            getInputPin<32>("WB_VALUE")->getValueAsVector());
         if(old!=registers_) history_[t+delay]=registers_;
         if(!raw) {unknownOutputs(t,s);return;}
         const auto c=RV32IControl::fromDecoded(d);

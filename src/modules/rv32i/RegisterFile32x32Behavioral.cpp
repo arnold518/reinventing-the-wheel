@@ -87,21 +87,6 @@ std::array<LogicValue, AddressWidth> inputAddress(const std::shared_ptr<Pin<Addr
     return bits;
 }
 
-LogicValue addressMatch(const std::array<LogicValue, AddressWidth>& address, size_t index) {
-    bool has_unknown = false;
-    for (size_t bit = 0; bit < AddressWidth; ++bit) {
-        const bool expected_high = ((index >> bit) & 1U) != 0;
-        if (address[bit] == LogicValue::UNKNOWN) {
-            has_unknown = true;
-            continue;
-        }
-        if ((address[bit] == LogicValue::HIGH) != expected_high) {
-            return LogicValue::LOW;
-        }
-    }
-    return has_unknown ? LogicValue::UNKNOWN : LogicValue::HIGH;
-}
-
 std::vector<LogicValue> readSelectedWord(
     const std::array<std::vector<LogicValue>, RegisterCount>& registers,
     const std::array<LogicValue, AddressWidth>& address
@@ -171,41 +156,11 @@ void RegisterFile32x32Behavioral::evaluate(size_t current_time, Simulator& simul
     const auto rst = sanitizeBit(getInputValue("RST"));
     const auto before_registers = registers;
 
-    if (rst == LogicValue::HIGH) {
-        for (size_t reg = 1; reg < RegisterCount; ++reg) {
-            registers[reg] = zeroWord();
-        }
-    } else if (rst != LogicValue::LOW) {
-        for (size_t reg = 1; reg < RegisterCount; ++reg) {
-            for (auto& value : registers[reg]) {
-                value = value == LogicValue::LOW
-                    ? LogicValue::LOW
-                    : LogicValue::UNKNOWN;
-            }
-        }
-    } else if (previous_clk == LogicValue::LOW && clk == LogicValue::HIGH) {
-        for (size_t reg = 1; reg < RegisterCount; ++reg) {
-            const auto local_write_enable = andValue(reg_write, addressMatch(rd_addr, reg));
-            if (local_write_enable == LogicValue::HIGH) {
-                registers[reg] = write_data;
-            } else if (local_write_enable == LogicValue::UNKNOWN) {
-                for (size_t bit = 0; bit < WordWidth; ++bit) {
-                    registers[reg][bit] = muxGateValue(
-                        registers[reg][bit],
-                        write_data[bit],
-                        local_write_enable);
-                }
-            }
-        }
-    }
-
-    registers[0] = zeroWord();
+    rv32i::register_file::step(registers, previous_clk, rst, clk, reg_write, rd_addr, write_data);
     if (registers != before_registers) {
         if (!simulator.isHistoryRecordingEnabled()) register_history.clear();
         else recordRegisterHistory(current_time);
     }
-
-    previous_clk = clk;
 
     updateOutputWord(*this, simulator, "RS1_DATA", readSelectedWord(registers, rs1_addr), publishTime("RS1_DATA", current_time));
     updateOutputWord(*this, simulator, "RS2_DATA", readSelectedWord(registers, rs2_addr), publishTime("RS2_DATA", current_time));

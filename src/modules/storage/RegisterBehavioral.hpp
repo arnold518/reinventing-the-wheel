@@ -2,6 +2,12 @@
 
 #include "components/BasicComponent.hpp"
 
+// The register's rule for one evaluation, shared by every compact part that
+// holds a register: unknown reset, enable or data leave X exactly where the
+// gate-level register does.
+void registerStep(std::vector<LogicValue>& stored, LogicValue& previous_clock, LogicValue reset, LogicValue clock,
+                  LogicValue enable, const std::vector<LogicValue>& data);
+
 // Compact implementation of the same width-parametric register contract.
 class RegisterBehavioral : public BasicComponent {
 public:

@@ -166,14 +166,15 @@ bool DeviceModel::edge(const Signals& s) {
     const auto clk = signal(s, "CLK")[0];
     const bool edge = previous_clock_ == L && clk == H; previous_clock_ = clk; return edge;
 }
-void DeviceModel::writeWord(size_t t, uint32_t word, const Bits& data, const Bits& mask, bool program) {
+void DeviceModel::writeWord(size_t t, uint32_t word, const Bits& data, const Bits& mask, bool program, LogicValue enable) {
     auto old = storage.readLogic(word * (width_ / 8), width_ / 8);
-    for (size_t byte = 0; byte < width_ / 8; ++byte) if (mask[byte] == H) {
+    for (size_t byte = 0; byte < width_ / 8; ++byte) if (const auto on = both(enable, mask[byte]); on != L) {
         Bits lane(8);
         for (size_t bit = 0; bit < 8; ++bit) {
             const auto b = byte * 8 + bit;
             const auto d = stored(data[b]);
-            lane[bit] = !program ? d : old[b] == L || d == L ? L : old[b] == H && d == H ? H : X;
+            lane[bit] = on != H ? (old[b] == L && d == L ? L : X)
+                : !program ? d : old[b] == L || d == L ? L : old[b] == H && d == H ? H : X;
         }
         storage.writeLogic(t, word * (width_ / 8) + byte, lane, true);
     }
@@ -183,7 +184,8 @@ public:
     FFDeviceModel(size_t w, EndpointConfig c) : DeviceModel(w, c, X) {}
     void update(size_t t, const Signals& s) override {
         const bool rising = edge(s); const auto word = number(signal(s, "WORD_ADDR", 32));
-        if (rising && high(s, "WE")) writeWord(t, word, signal(s, "WRITE_DATA", width_), signal(s, "WRITE_MASK", width_ / 8));
+        if (rising && signal(s, "WE") != Bits{L})
+            writeWord(t, word, signal(s, "WRITE_DATA", width_), signal(s, "WRITE_MASK", width_ / 8), false, clean(signal(s, "WE")[0]));
         outputs["READ_DATA"] = high(s, "READ_EN") ? storage.readLogic(word * (width_ / 8), width_ / 8) : Bits(width_, L);
     }
 };

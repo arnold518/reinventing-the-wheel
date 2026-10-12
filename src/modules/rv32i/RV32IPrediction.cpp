@@ -6,6 +6,8 @@
 #include "components/StructuralNetBuilder.hpp"
 #include "modules/memory/FlipFlopCell.hpp"
 #include "modules/storage/Register.hpp"
+#include "modules/storage/RegisterBehavioral.hpp"
+#include "basic/LogicValueHelpers.hpp"
 #include "modules/basic/Mux.hpp"
 #include "modules/composite/Adder32.hpp"
 #include "modules/composite/IncrementBy4.hpp"
@@ -189,17 +191,23 @@ public:
         }
         const auto clk=getInputValue("CLK");
         const bool edge=previous_==LogicValue::LOW&&clk==LogicValue::HIGH;
-        if (h("RST")) {state_.reset();if_id_=id_ex_=0;}
+        if (kind_==Kind::Path) {
+            // The two prediction registers follow the register's own rule;
+            // both capture values from before the edge.
+            const auto predicted=bitsOf(state_.predict(n("FETCH_PC"),n("FETCH_INSTRUCTION")));
+            const auto old_if_id=if_id_;
+            auto clock=previous_;
+            registerStep(if_id_,clock,getInputValue("RST"),clk,getInputValue("IF_ID_WRITE"),predicted);
+            clock=previous_;
+            registerStep(id_ex_,clock,getInputValue("RST"),clk,getInputValue("ID_EX_WRITE"),old_if_id);
+        }
+        if (h("RST")) state_.reset();
         else if (edge) {
             if (kind_==Kind::Predictor) {
                 if (h("UPDATE")) state_.update(n("UPDATE_PC"),h("UPDATE_TAKEN"));
             } else {
                 // All capture values are from pre-edge state, including a lookup
                 // colliding with the table's update address.
-                const auto predicted=state_.predict(n("FETCH_PC"),n("FETCH_INSTRUCTION"));
-                const auto old_if_id=if_id_;
-                if (h("IF_ID_WRITE")) if_id_=predicted;
-                if (h("ID_EX_WRITE")) id_ex_=old_if_id;
                 if (h("EX_VALID")&&!h("EX_PRETERMINAL")&&h("EX_ADVANCE")&&!h("EX_KILL")&&h("EX_IS_BRANCH"))
                     state_.update(n("EX_PC"),h("EX_TAKEN"));
             }
@@ -211,21 +219,30 @@ public:
             _updateOutputWire<2>(sim,"COUNTER",state_.counter(n("PC")),time);
         } else {
             const auto predicted=state_.predict(n("FETCH_PC"),n("FETCH_INSTRUCTION"));
-            word("PREDICTED_NEXT_PC",predicted);word("EX_PREDICTED_NEXT_PC",id_ex_);
+            word("PREDICTED_NEXT_PC",predicted);_updateOutputWire<32>(sim,"EX_PREDICTED_NEXT_PC",id_ex_,time);
             const auto actual=n(h("EX_CONTROL_TAKEN")?"EX_TARGET_PC":"EX_FALLTHROUGH_PC");
             word("FETCH_NEXT_PC",h("REDIRECT_APPLY")?actual:predicted);
             const bool eligible=h("EX_VALID")&&!h("EX_PRETERMINAL")&&!h("RST");
             const bool resolve=eligible&&h("EX_ADVANCE")&&!h("EX_KILL");
-            bit("MISPREDICT",eligible&&id_ex_!=actual);
+            // Compared bit by bit: one known differing bit is enough.
+            using namespace circuit::logic_values;
+            auto differs=LogicValue::LOW;
+            for(size_t i=0;i<32;++i) differs=orGate(differs,xorGate(id_ex_[i],logic((actual>>i)&1)));
+            _updateOutputWire(sim,"MISPREDICT",andGate(logic(eligible),differs),time);
             bit("RESOLVE",resolve);bit("UPDATE",resolve&&h("EX_IS_BRANCH"));
-            bit("RECOVERY",resolve&&id_ex_!=actual);
-            bit("BRANCH_MISS",resolve&&h("EX_IS_BRANCH")&&id_ex_!=actual);
+            _updateOutputWire(sim,"RECOVERY",andGate(logic(resolve),differs),time);
+            _updateOutputWire(sim,"BRANCH_MISS",andGate(logic(resolve&&h("EX_IS_BRANCH")),differs),time);
         }
     }
 private:
     Kind kind_; std::string type_; rv32i::PredictionState state_;
     LogicValue previous_=LogicValue::UNKNOWN;
-    uint32_t if_id_=0,id_ex_=0;
+    std::vector<LogicValue> if_id_=std::vector<LogicValue>(32,LogicValue::UNKNOWN),id_ex_=if_id_;
+    static std::vector<LogicValue> bitsOf(uint32_t value) {
+        std::vector<LogicValue> bits(32);
+        for(size_t i=0;i<32;++i) bits[i]=(value>>i)&1?LogicValue::HIGH:LogicValue::LOW;
+        return bits;
+    }
 };
 rv32i::PredictionConfig configOf(const std::shared_ptr<circuit::BuildContext>& c) {
     return c ? rv32i::predictionConfig(c->parameters()) : rv32i::PredictionConfig{};

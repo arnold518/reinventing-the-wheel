@@ -100,6 +100,7 @@ private:
     rv32i::RV32IExecutionTrapCause trap_cause_ =
         rv32i::RV32IExecutionTrapCause::None;
     LogicValue previous_clk_ = LogicValue::UNKNOWN;
+    bool state_unknown_ = false;
 
     FetchDecodeState if_id_{};
     DecodeExecuteState id_ex_{};

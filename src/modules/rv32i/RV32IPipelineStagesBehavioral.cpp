@@ -5,6 +5,9 @@
 #include "components/ComponentBuilder.hpp"
 #include "components/ComponentBuilder.tpp"
 #include "modules/composite/ALU32.hpp"
+#include "modules/composite/IncrementBy4.hpp"
+#include "modules/storage/RegisterBehavioral.hpp"
+#include "modules/rv32i/RegisterFile32x32Behavioral.hpp"
 #include "modules/rv32i/RV32IPipelineEncoding.hpp"
 #include "RV32IPipelineStagesInternal.hpp"
 #include "RV32IPipelineRules.hpp"
@@ -67,46 +70,37 @@ public:
     static constexpr const char* TypeName = "RV32IFetchStage";
     const char* getTypeName() const override { return TypeName; }
 
+    // The gates are a register, an incrementer and two-input multiplexers;
+    // each is evaluated by its own four-state rule.
     void evaluate(size_t time, Simulator& simulator) override {
-        const auto clk = getInputValue("CLK");
-        const auto rst = getInputValue("RST");
-        if (rst == LogicValue::HIGH) {
-            pc_ = 0;
-        } else if (
-            rst == LogicValue::LOW
-            && previous_clk_ == LogicValue::LOW
-            && clk == LogicValue::HIGH
-            && high(getInputValue("PC_WRITE"))) {
-            pc_ = (external_next_pc_ || high(getInputValue("PC_REDIRECT")))
-                ? word(*this, "REDIRECT_PC")
-                : pc_ + 4U;
-        }
-        previous_clk_ = clk;
+        using namespace circuit::logic_values;
+        using Bits = std::vector<LogicValue>;
+        const auto select = [](const Bits& a, const Bits& b, LogicValue sel) {
+            Bits out(32);
+            for (size_t bit = 0; bit < 32; ++bit) out[bit] = mux2(sanitizeBit(a[bit]), sanitizeBit(b[bit]), sel);
+            return out;
+        };
+        const Bits zero(32, LogicValue::LOW);
+        const Bits redirect = getInputPin<32>("REDIRECT_PC")->getValueAsVector();
+        registerStep(pc_, previous_clk_, getInputValue("RST"), getInputValue("CLK"), getInputValue("PC_WRITE"),
+                     external_next_pc_ ? redirect : select(incrementBy4(pc_), redirect, getInputValue("PC_REDIRECT")));
 
-        const bool valid = high(getInputValue("FETCH_VALID"));
-        const uint32_t status =
-            ((pc_ & 3U) != 0 ? 1U : 0U)
-            | (high(getInputValue("IMEM_FAULT")) ? 2U : 0U);
+        const auto valid = getInputValue("FETCH_VALID");
+        Bits status(32, LogicValue::LOW);
+        status[0] = orGate(pc_[0], pc_[1]);
+        status[1] = getInputValue("IMEM_FAULT");
         _updateOutputWire<32>(simulator, "FETCH_PC", pc_, time);
         _updateOutputWire<32>(simulator, "IMEM_ADDR", pc_, time);
-        _updateOutputWire(simulator, "OUT_VALID", logic(valid), time);
-        _updateOutputWire<32>(
-            simulator, "OUT_PC", valid ? pc_ : 0U, time);
-        _updateOutputWire<32>(
-            simulator,
-            "OUT_INSTRUCTION",
-            valid ? word(*this, "IMEM_READ_DATA") : 0U,
-            time);
-        _updateOutputWire<32>(
-            simulator,
-            "OUT_FETCH_STATUS",
-            valid ? status : 0U,
-            time);
+        _updateOutputWire(simulator, "OUT_VALID", valid, time);
+        _updateOutputWire<32>(simulator, "OUT_PC", select(zero, pc_, valid), time);
+        _updateOutputWire<32>(simulator, "OUT_INSTRUCTION",
+                              select(zero, getInputPin<32>("IMEM_READ_DATA")->getValueAsVector(), valid), time);
+        _updateOutputWire<32>(simulator, "OUT_FETCH_STATUS", select(zero, status, valid), time);
     }
 
 private:
     bool external_next_pc_;
-    uint32_t pc_ = 0;
+    std::vector<LogicValue> pc_ = std::vector<LogicValue>(32, LogicValue::UNKNOWN);
     LogicValue previous_clk_ = LogicValue::UNKNOWN;
 };
 
@@ -130,46 +124,24 @@ public:
     const char* getTypeName() const override { return TypeName; }
 
     void evaluate(size_t time, Simulator& simulator) override {
-        const auto clk = getInputValue("CLK");
-        const auto rst = getInputValue("RST");
-        if (rst == LogicValue::HIGH) {
-            for (auto& value : registers_) {
-                value.fill(LogicValue::LOW);
-            }
-            record(time);
-        } else if (
-            rst == LogicValue::LOW
-            && previous_clk_ == LogicValue::LOW
-            && clk == LogicValue::HIGH
-            && high(getInputValue("WB_REGISTER_WRITE"))) {
-            const auto rd = address5(*this, "WB_RD");
-            if (rd != 0) {
-                const auto data =
-                    getInputPin<32>("WB_VALUE")->getValueAsVector();
-                std::copy(data.begin(), data.end(), registers_[rd].begin());
-                record(time);
-            }
-        }
-        registers_[0].fill(LogicValue::LOW);
-        previous_clk_ = clk;
+        const auto before = registers_;
+        rv32i::register_file::step(
+            registers_, previous_clk_, getInputValue("RST"), getInputValue("CLK"), getInputValue("WB_REGISTER_WRITE"),
+            getInputPin<5>("WB_RD")->getValueAsVector(), getInputPin<32>("WB_VALUE")->getValueAsVector());
+        if (registers_ != before) record(time);
 
         const uint32_t instruction = word(*this, "IN_INSTRUCTION");
         const auto decoded = rv32i::RV32IDecoder::decode(instruction);
         const auto control = rv32i::RV32IControl::fromDecoded(decoded);
+        // A stored bit the gates do not know stays unknown on the way out.
         const auto read = [&](uint8_t address) {
-            if (address == 0) return uint32_t{0};
-            uint32_t value = 0;
-            for (size_t bit_index = 0; bit_index < 32; ++bit_index) {
-                if (registers_[address][bit_index] == LogicValue::HIGH) {
-                    value |= uint32_t{1} << bit_index;
-                }
-            }
             if (high(getInputValue("WB_VALID"))
                 && high(getInputValue("WB_REG_WRITE"))
+                && address != 0
                 && address5(*this, "WB_RD") == address) {
-                return word(*this, "WB_VALUE");
+                return getInputPin<32>("WB_VALUE")->getValueAsVector();
             }
-            return value;
+            return std::vector<LogicValue>(registers_[address].begin(), registers_[address].end());
         };
         const uint32_t control_word =
             rv32i::pipeline_encoding::packControl(control);
@@ -557,28 +529,23 @@ public:
         : BasicComponent(std::move(name), 1,
               circuit::families::RV32IPipelineExecutionStatus.pinInitializer()) {}
     const char* getTypeName() const override { return "RV32IPipelineExecutionStatus"; }
+    // Three registers sharing a clock and reset, each by the register's rule.
     void evaluate(size_t time, Simulator& sim) override {
-        const auto clk = getInputValue("CLK");
-        const auto rst = getInputValue("RST");
-        if (rst == LogicValue::HIGH) {
-            halted_ = trapped_ = false;
-            cause_ = 0;
-        } else if (rst == LogicValue::LOW && previous_clk_ == LogicValue::LOW && clk == LogicValue::HIGH) {
-            if (high(getInputValue("HALT_EVENT"))) halted_ = true;
-            if (high(getInputValue("TRAP_EVENT"))) {
-                trapped_ = true;
-                cause_ = getInputPin<4>("EVENT_TRAP_CAUSE")->getValueAsUInt64();
-            }
-        }
-        previous_clk_ = clk;
-        _updateOutputWire(sim, "HALTED", logic(halted_), time);
-        _updateOutputWire(sim, "TRAPPED", logic(trapped_), time);
+        const auto clk = getInputValue("CLK"), rst = getInputValue("RST");
+        auto clock = previous_clk_;
+        registerStep(halted_, clock, rst, clk, getInputValue("HALT_EVENT"), {LogicValue::HIGH});
+        clock = previous_clk_;
+        registerStep(trapped_, clock, rst, clk, getInputValue("TRAP_EVENT"), {LogicValue::HIGH});
+        registerStep(cause_, previous_clk_, rst, clk, getInputValue("TRAP_EVENT"),
+                     getInputPin<4>("EVENT_TRAP_CAUSE")->getValueAsVector());
+        _updateOutputWire(sim, "HALTED", halted_[0], time);
+        _updateOutputWire(sim, "TRAPPED", trapped_[0], time);
         _updateOutputWire<4>(sim, "TRAP_CAUSE", cause_, time);
     }
 private:
     LogicValue previous_clk_ = LogicValue::UNKNOWN;
-    bool halted_ = false, trapped_ = false;
-    uint8_t cause_ = 0;
+    std::vector<LogicValue> halted_{LogicValue::UNKNOWN}, trapped_{LogicValue::UNKNOWN},
+        cause_ = std::vector<LogicValue>(4, LogicValue::UNKNOWN);
 };
 
 } // namespace

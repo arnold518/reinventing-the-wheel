@@ -7,17 +7,17 @@ struct BehavioralMemoryEndpoint::State {
     size_t width, scheduled = 0;
     Technology technology;
     EndpointConfig config;
-    bool pending = false, full = false;
+    // The handshake state is the gates' own, in four-state form.
+    LogicValue pending = L;
+    ResponseBuffer buffer;
     NativeSequence sequence;
     std::unique_ptr<DeviceModel> device;
     Request request;
-    Bits result;
-    Status status = Status::Ok;
     LogicValue previous = X;
     bool started = false;
     State(size_t w, Technology t, EndpointConfig c)
-        : width(w), technology(t), config(c), sequence(w, t, c), device(makeDeviceModel(w, t, c)),
-          request{bits(3,0), bits(32,0), Bits(w,L), Bits(w/8,L)}, result(w,L) {}
+        : width(w), technology(t), config(c), buffer(w), sequence(w, t, c), device(makeDeviceModel(w, t, c)),
+          request{bits(3,0), bits(32,0), Bits(w,L), Bits(w/8,L)} {}
 };
 BehavioralMemoryEndpoint::BehavioralMemoryEndpoint(std::string n, size_t w, Technology t, EndpointConfig c)
     : Primitive(std::move(n), "MemoryEndpoint<" + std::string(technologyName(t)) + "," + std::to_string(w) + ">",
@@ -54,66 +54,62 @@ void BehavioralMemoryEndpoint::evaluate(size_t t, Simulator& sim) {
     auto clk=getInputValue("CLK");
     const bool edge=s.previous==L && clk==H;
     s.previous=clk;
-    const bool reset=getInputValue("RST")!=L;
+    const auto reset=clean(getInputValue("RST"));
     // The always-ready FF specialization has no response storage. Its
     // consumer contract requires RSP_READY=1, and this model must not create
     // a hidden hold register if that contract is violated.
-    const bool take=s.config.always_ready||getInputValue("RSP_READY")==H;
-    const bool issue=getInputValue("REQ_VALID")==H;
+    const auto take=s.config.always_ready?H:clean(getInputValue("RSP_READY"));
+    const auto issue=clean(getInputValue("REQ_VALID"));
     const Request request{read("REQ_OP"),read("REQ_ADDR"),read("REQ_WRITE_DATA"),read("REQ_WRITE_MASK")};
-    const bool room=!s.full||take;
     const bool fast=s.technology==Technology::FF;
-    const bool complete=s.pending&&s.sequence.done;
-    const bool ready=!reset&&room&&(fast||((!s.pending||(complete&&take))&&s.sequence.available));
-    const bool accept=ready&&issue;
-    const bool incoming=fast?accept:complete;
-    Bits data(s.width,L);
-    Status status=Status::Ok;
-    if(fast) {
-        status=validateRequest(request,s.width,Technology::FF,s.config);
-        if(accept && status==Status::Ok && number(request.op)==0)
-            data=s.device->storage.readLogic(number(request.address),s.width/8);
-    } else {
-        data=s.sequence.result;
-        status=s.sequence.status;
-    }
-    if(reset) {
-        s.pending=s.full=false;
-        s.result.assign(s.width,L);s.status=Status::Ok;
-    } else if(edge) {
-        const bool capture=incoming&&room&&(s.full||!take);
-        const bool held=s.full&&!take;
-        if(capture){s.result=data;s.status=status;}
-        s.full=capture||held;
-        if(!fast)s.pending=accept||(s.pending&&!(complete&&room));
-    }
+    struct View { LogicValue complete, finish, ready, accept, incoming; };
+    const auto view=[&] {
+        const auto room=s.buffer.room(take);
+        const auto complete=both(s.pending,bit(s.sequence.done));
+        const auto slot=fast?H:both(either(no(s.pending),both(complete,take)),bit(s.sequence.available));
+        const auto ready=both(both(no(reset),room),slot);
+        const auto accept=both(ready,issue);
+        return View{complete,both(complete,both(no(reset),room)),ready,accept,fast?accept:complete};
+    };
+    // The flip-flop device answers in the same cycle: its read data is the
+    // word when the read is accepted, 0 when it is not.
+    const auto fastStatus=fast?validateRequest(request,s.width,Technology::FF,s.config):Status::Ok;
+    const auto fastData=[&](LogicValue accept) {
+        if(fastStatus!=Status::Ok||number(request.op)!=0||accept==L) return Bits(s.width,L);
+        auto word=s.device->storage.readLogic(number(request.address),s.width/8);
+        if(accept!=H) for(auto& value:word) fade(value); // a stored 0 reads 0 either way
+        return word;
+    };
+    const auto before=view();
+    if(!s.config.always_ready||!fast)
+        s.buffer.clock(reset,edge,before.incoming,take,fast?fastData(before.accept):s.sequence.result,
+            bits(3,unsigned(fast?fastStatus:s.sequence.status)));
+    if(reset==H) s.pending=L;
+    else if(reset!=L) fade(s.pending);
+    else if(edge&&!fast) s.pending=either(before.accept,both(s.pending,no(before.finish)));
     if(fast) {
         // Writes are triggered once, by acceptance on the shared edge.
+        const bool writing=fastStatus==Status::Ok&&number(request.op)==1;
         Signals pins{{"CLK",{clk}},{"WORD_ADDR",bits(32,number(request.address)/(s.width/8))},
-            {"WE",{!reset&&accept&&status==Status::Ok&&number(request.op)==1?H:L}},
+            {"WE",{both(both(no(reset),before.accept),bit(writing))}},
             {"READ_EN",{L}},{"WRITE_DATA",request.data},{"WRITE_MASK",request.mask}};
         s.device->update(t,pins);
     } else {
+        // The sequencer starts and finishes only on a clean 1, as its
+        // gate-level form does.
         s.device->update(t,s.sequence.outputs);
-        s.sequence.step(t,edge,reset,accept,request,
-            [&](const std::string& pin,size_t width){return s.device->read(pin,width);},complete&&room);
+        s.sequence.step(t,edge,reset!=L,before.accept==H,request,
+            [&](const std::string& pin,size_t width){return s.device->read(pin,width);},before.finish==H);
         s.device->update(t,s.sequence.outputs);
     }
     // Recompute the combinational view after the edge.
-    const bool room_now=!s.full||take;
-    const bool complete_now=s.pending&&s.sequence.done;
-    const bool ready_now=!reset&&room_now&&(fast||((!s.pending||(complete_now&&take))&&s.sequence.available));
-    const bool incoming_now=fast?(ready_now&&issue):complete_now;
-    if(fast) {
-        data.assign(s.width,L);
-        if(ready_now&&issue&&status==Status::Ok&&number(request.op)==0)
-            data=s.device->storage.readLogic(number(request.address),s.width/8);
-    }
-    if(!fast){data=s.sequence.result;status=s.sequence.status;}
-    publish(sim,t,"REQ_READY",ready_now?H:L);
-    publish(sim,t,"RSP_VALID",!reset&&(s.full||incoming_now)?H:L);
-    publish(sim,t,"RSP_READ_DATA",s.full?s.result:data);
-    publish(sim,t,"RSP_STATUS",bits(3,unsigned(s.full?s.status:status)));
+    const auto now=view();
+    const auto data=fast?fastData(now.accept):s.sequence.result;
+    const auto status=bits(3,unsigned(fast?fastStatus:s.sequence.status));
+    publish(sim,t,"REQ_READY",now.ready);
+    publish(sim,t,"RSP_VALID",s.buffer.valid(reset,now.incoming));
+    publish(sim,t,"RSP_READ_DATA",s.buffer.select(data,s.buffer.data));
+    publish(sim,t,"RSP_STATUS",s.buffer.select(status,s.buffer.status));
     if (sim.isHistoryRecordingEnabled() && s.device->storage.isHistoryRecordingEnabled()) {
         MemoryActivity activity{fast ? "combinational" : s.sequence.phaseName(), s.sequence.maintenanceActive(), {}};
         if (!fast) {

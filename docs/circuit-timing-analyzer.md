@@ -345,7 +345,7 @@ through the same situations (one pin, X or Z, a few pins, all pins, edge
 patterns, two pins a few ticks apart, clock edges) and compares them output
 by output.
 
-Holds, in every comparison made (138 parts and sizes, about 113,000 situations, 138,000 output changes):
+Holds, in every comparison made (138 parts and sizes, about 117,000 situations, 140,000 output changes):
 
 - a compact output never changes before the gates' output;
 - a compact output on a table changes at exactly the delay the table gives;
@@ -378,17 +378,22 @@ Does not hold, and why:
   with the largest delay to an output, changed alone from many starting
   values); no case was found where the gates exceed the table, but no
   proof says they cannot.
-- Values after an X or Z. With every input at 0 or 1 from the start, the
-  two forms never differ in value (0 differences in 68,000 situations).
-  After an X or Z on a control input, several compact parts with state keep
-  a clean 0/1 where their gates hold X, because those parts compute with
-  plain numbers: the fetch stages, the decode stages (through the register
-  file's write address), `rv32i.memory-request`, the execution-status
-  parts, `rv32i.prediction.path`, the flip-flop memory controller, device
-  and endpoint, the memory controllers, and the five-stage core. The test
-  counts these per part and by direction and does not compare their
-  timing. The registers, pipeline registers and memory words follow their
-  gates exactly, X included.
+- Values after an X or Z, for the five-stage core only. With every input at
+  0 or 1 from the start, the two forms never differ in value. After an X or
+  Z on an input, every compact part but one now leaves X exactly where its
+  gates do: the fetch and decode stages, the execution-status parts, the
+  prediction path, `rv32i.memory-request`, the memory controllers and
+  endpoints and the flip-flop memory device evaluate their registers and
+  handshake gates by the same four-state rules as the gates (shared
+  functions: `registerStep`, `rv32i::register_file::step`, `incrementBy4`,
+  `ResponseBuffer`). The compact five-stage core keeps its state as plain
+  numbers; when its reset, or its enable or a memory handshake bit at a
+  clock edge, is not 0 or 1, it shows X on every output until a reset. So
+  it never shows 0 or 1 where its gates hold X, but it shows X on outputs
+  its gates still know (about 16,000 output values in the test, counted
+  there by direction; before this, 54,000 values were 0/1 in the compact
+  form only and 2,350 were opposite). Data with unknown bits read from a
+  memory is still treated as 0 by the compact cores.
 - Parts that time themselves (DRAM, NOR-flash, the SRAM device and their
   controllers and endpoints) are compared with their gates only, not with
   their tables, and only until they start working on their own. Their

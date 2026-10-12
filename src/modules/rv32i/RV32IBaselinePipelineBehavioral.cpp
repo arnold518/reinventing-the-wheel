@@ -4,8 +4,13 @@
 #include "components/BasicComponent.hpp"
 #include "components/Component.tpp"
 #include "modules/composite/ALU32.hpp"
+#include "modules/composite/IncrementBy4.hpp"
+#include "modules/storage/RegisterBehavioral.hpp"
+#include "basic/LogicValueHelpers.hpp"
 #include "rv32i/RV32IDecoder.hpp"
+#include "modules/rv32i/RegisterFile32x32Behavioral.hpp"
 #include <limits>
+#include <set>
 
 namespace rv32i::baseline {
 namespace {
@@ -53,8 +58,9 @@ protected:
         }return v;
     }
     bool rising() {auto c=getInputPin("CLK")->getValue();bool e=previous_==LogicValue::LOW&&c==LogicValue::HIGH;previous_=c;return e;}
-    void emit(const Values& values,size_t t,Simulator& s) {
+    void emit(const Values& values,size_t t,Simulator& s,const std::set<std::string>& skip={}) {
         for(auto& [n,p]:getAllOutputPins()) {
+            if(skip.contains(n)) continue;
             auto v=get(values,n);
             switch(p->getWidth()) {
                 case 1:_updateOutputWire(s,n,v?LogicValue::HIGH:LogicValue::LOW,t);break;
@@ -146,26 +152,30 @@ public:
         auto i=history_.upper_bound(time);return i==history_.begin()?i->second:std::prev(i)->second;
     }
     void evaluate(size_t t,Simulator& s) override {
+        if(block_==Block::FetchStage) {fetch(t,s);return;}
         auto in=inputs();Values out;
-        if(block_==Block::FetchStage||block_==Block::DecodeStage) {
+        if(block_==Block::DecodeStage) {
             if(!s.isHistoryRecordingEnabled() && history_.size()>1) {
                 auto latest=*history_.rbegin();history_.clear();history_.insert(std::move(latest));
             }
-            const bool edge=rising();
-            if(get(in,"RST")) {pc_=0;regs_.fill(0);record(t+delay);}
-            else if(edge) {
-                if(block_==Block::FetchStage&&get(in,"PC_WRITE")) pc_=get(in,"PC_REDIRECT")?get(in,"REDIRECT_PC"):pc_+4;
-                if(block_==Block::DecodeStage&&get(in,"REGISTER_WRITE")&&get(in,"WB_RD")) {
-                    regs_[get(in,"WB_RD")&31]=get(in,"WB_VALUE");record(t+delay);
-                }
-            }
+            const auto before=words_;
+            rv32i::register_file::step(words_,previous_clock_,getInputValue("RST"),getInputValue("CLK"),
+                getInputValue("REGISTER_WRITE"),getInputPin<5>("WB_RD")->getValueAsVector(),
+                getInputPin<32>("WB_VALUE")->getValueAsVector());
+            if(words_!=before) record(t+delay);
         }
         switch(block_) {
-            case Block::FetchStage:
-                out={{"FETCH_PC",pc_},{"OUT_PC",pc_},{"OUT_INSTRUCTION",get(in,"IMEM_READ_DATA")},
-                    {"OUT_VALID",get(in,"FETCH_VALID")},{"OUT_FETCH_STATUS",uint32_t(bool(pc_&3))|(get(in,"IMEM_FAULT")<<1)},
-                    {"IMEM_WORD_ADDR",pc_>>2},{"IMEM_READ_EN",get(in,"FETCH_VALID")}};break;
-            case Block::DecodeStage:out=decodePacket(in,regs_);break;
+            case Block::FetchStage:break;
+            case Block::DecodeStage: {
+                // A stored bit the gates do not know stays unknown on the way out.
+                std::array<uint32_t,32> known{};
+                out=decodePacket(in,known);
+                const auto a=get(out,"OUT_REGISTER_ADDRESSES");
+                emit(out,t,s,{"OUT_RS1_VALUE","OUT_RS2_VALUE"});
+                _updateOutputWire<32>(s,"OUT_RS1_VALUE",words_[rs1(a)],t);
+                _updateOutputWire<32>(s,"OUT_RS2_VALUE",words_[rs2(a)],t);
+                return;
+            }
             case Block::ExecuteStage:out=executePacket(in);break;
             case Block::MemoryStage:out=memoryPacket(in);break;
             case Block::DependencyUnit:out=dependency(in);break;
@@ -174,9 +184,31 @@ public:
         emit(out,t,s);
     }
 private:
-    Block block_;uint32_t pc_=0;std::array<uint32_t,32> regs_{};
+    Block block_;std::vector<LogicValue> pc_=std::vector<LogicValue>(32,LogicValue::UNKNOWN);
+    LogicValue fetch_clock_=LogicValue::UNKNOWN,previous_clock_=LogicValue::UNKNOWN;
+    std::array<std::vector<LogicValue>,32> words_=[] {
+        std::array<std::vector<LogicValue>,32> w;w.fill(std::vector<LogicValue>(32,LogicValue::UNKNOWN));
+        w[0].assign(32,LogicValue::LOW);return w;}();
+    // A register, an incrementer, a multiplexer and wires, each by its own
+    // four-state rule.
+    void fetch(size_t t,Simulator& s) {
+        using namespace circuit::logic_values;
+        const auto redirect=getInputPin<32>("REDIRECT_PC")->getValueAsVector();
+        const auto select=getInputValue("PC_REDIRECT");
+        auto next=incrementBy4(pc_);
+        for(size_t i=0;i<32;++i) next[i]=mux2(next[i],sanitizeBit(redirect[i]),select);
+        registerStep(pc_,fetch_clock_,getInputValue("RST"),getInputValue("CLK"),getInputValue("PC_WRITE"),next);
+        std::vector<LogicValue> word_address(32,LogicValue::LOW),status(32,LogicValue::LOW);
+        for(size_t i=2;i<32;++i) word_address[i-2]=pc_[i];
+        status[0]=orGate(pc_[0],pc_[1]);status[1]=getInputValue("IMEM_FAULT");
+        _updateOutputWire<32>(s,"FETCH_PC",pc_,t);_updateOutputWire<32>(s,"OUT_PC",pc_,t);
+        _updateOutputWire<32>(s,"OUT_INSTRUCTION",getInputPin<32>("IMEM_READ_DATA")->getValueAsVector(),t);
+        _updateOutputWire(s,"OUT_VALID",getInputValue("FETCH_VALID"),t);
+        _updateOutputWire(s,"IMEM_READ_EN",getInputValue("FETCH_VALID"),t);
+        _updateOutputWire<32>(s,"OUT_FETCH_STATUS",status,t);_updateOutputWire<32>(s,"IMEM_WORD_ADDR",word_address,t);
+    }
     std::map<size_t,std::vector<std::vector<LogicValue>>> history_;
-    void record(size_t t) {std::vector<std::vector<LogicValue>> v;for(auto x:regs_) v.push_back(logicBits(32,x));if(history_.empty()||history_.rbegin()->second!=v) history_[t]=std::move(v);}
+    void record(size_t t) {std::vector<std::vector<LogicValue>> v(words_.begin(),words_.end());if(history_.empty()||history_.rbegin()->second!=v) history_[t]=std::move(v);}
 };
 
 // Only Decode owns architectural registers. Do not advertise a register-file

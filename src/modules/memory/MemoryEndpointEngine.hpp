@@ -16,6 +16,48 @@ inline size_t after(size_t t, size_t delay) {
     if (delay > size_t(-1) - t) throw std::overflow_error("Memory event time overflow");
     return t + delay;
 }
+// The handshake gates as four-state functions, for the compact controller and
+// endpoint: an unknown reset, request or response-ready bit leaves X where
+// the gate-level state bits and registers hold X, and nowhere else.
+inline LogicValue both(LogicValue a, LogicValue b) { return a == L || b == L ? L : a == H && b == H ? H : X; }
+inline LogicValue either(LogicValue a, LogicValue b) { return a == H || b == H ? H : a == L && b == L ? L : X; }
+inline LogicValue no(LogicValue a) { return a == H ? L : a == L ? H : X; }
+inline LogicValue clean(LogicValue a) { return a == H || a == L ? a : X; }
+inline LogicValue bit(bool value) { return value ? H : L; }
+// A state bit or register bit losing its reset: 0 stays 0, the rest is unknown.
+inline void fade(LogicValue& value) { if (value != L) value = X; }
+// The one-entry response buffer (MemoryResponseBuffer as built).
+struct ResponseBuffer {
+    LogicValue full = L;
+    Bits data, status = Bits(3, L);
+    explicit ResponseBuffer(size_t width) : data(width, L) {}
+    LogicValue room(LogicValue take) const { return either(no(full), take); }
+    // The clocked update: `offered` is IN_VALID with (in_data, in_status).
+    void clock(LogicValue reset, bool edge, LogicValue offered, LogicValue take, const Bits& in_data, const Bits& in_status) {
+        if (reset == H) { full = L; data.assign(data.size(), L); status.assign(3, L); return; }
+        if (reset != L) { fade(full); for (auto* held : {&data, &status}) for (auto& value : *held) fade(value); return; }
+        if (!edge) return;
+        const auto capture = both(both(offered, room(take)), either(full, no(take)));
+        const auto hold = both(full, no(take));
+        const auto store = [&](Bits& held, const Bits& in) {
+            for (size_t i = 0; i < held.size(); ++i) {
+                if (capture == H) held[i] = clean(in[i]);
+                else if (capture != L) held[i] = held[i] == L && in[i] == L ? L : X;
+            }
+        };
+        store(data, in_data); store(status, in_status);
+        full = either(capture, hold);
+    }
+    LogicValue valid(LogicValue reset, LogicValue offered) const { return both(no(reset), either(full, offered)); }
+    // The output multiplexers: the held word when full, else the offered one.
+    Bits select(const Bits& offered, const Bits& held) const {
+        Bits out(held.size());
+        for (size_t i = 0; i < held.size(); ++i)
+            out[i] = either(both(clean(offered[i]), no(full)), both(held[i], full));
+        return out;
+    }
+};
+
 struct Request { Bits op, address, data, mask; };
 Status validateRequest(const Request&, size_t width, Technology, const EndpointConfig&);
 // Only pins belonging to the selected native interface, not the sequencer's
@@ -72,7 +114,9 @@ protected:
     Signals outputs;
     LogicValue previous_clock_ = X;
     bool edge(const Signals&);
-    void writeWord(size_t, uint32_t, const Bits&, const Bits&, bool program = false);
+    // `enable` is the word's write enable: on an unknown enable or mask bit a
+    // stored bit stays 0 only where the old and the new bit are both 0.
+    void writeWord(size_t, uint32_t, const Bits&, const Bits&, bool program = false, LogicValue enable = H);
 };
 std::unique_ptr<DeviceModel> makeDeviceModel(size_t, Technology, EndpointConfig);
 }

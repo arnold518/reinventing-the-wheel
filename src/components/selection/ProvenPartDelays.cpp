@@ -98,6 +98,9 @@ const PartDelays* provenPartDelays(const std::string& implementation_id, const P
     if (!at64 || !at128) return nullptr;
     size_t depth = 0;
     try { depth = std::stoull(parameters.at("depth_words")); } catch (const std::exception&) { return nullptr; }
+    // 64 words or fewer: the table proven at 64 words, not the looser one
+    // for 128.
+    if (depth <= 64) return at64;
     static std::map<std::string, PartDelays> estimated;
     const auto key = implementation_id + "@depth=" + std::to_string(depth) + variant;
     auto found = estimated.find(key);
