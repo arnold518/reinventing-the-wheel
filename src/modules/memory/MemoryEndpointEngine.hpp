@@ -93,7 +93,7 @@ private:
     Phase phase_ = Phase::Idle;
     Request request_;
     std::deque<Command> commands_;
-    bool aborted_ = false, maintenance_ = false, row_open_ = false;
+    bool aborted_ = false, maintenance_ = false, row_open_ = false, rested_ = false;
     size_t row_ = 0;
     void idlePins();
     void beginCommand(size_t);

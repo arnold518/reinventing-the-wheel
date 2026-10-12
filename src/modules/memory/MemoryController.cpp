@@ -122,7 +122,7 @@ class MemoryControllerBehavioral : public Primitive {
     NativeSequence sequence_;
     // The handshake state and logic are the gates' own, in four-state form
     // (see ResponseBuffer).
-    LogicValue pending_ = L;
+    LogicValue pending_ = L, done_seen_ = L, busy_seen_ = L;
     ResponseBuffer buffer_;
     LogicValue previous_ = X;
     size_t scheduled_ = 0;
@@ -203,18 +203,29 @@ public:
 
         struct View { LogicValue completion, finish, ready, accept; };
         const auto view = [&] {
-            const auto completion = both(pending_, bit(sequence_.done));
+            const auto completion = both(pending_, done_seen_);
             const auto room = both(no(reset), buffer_.room(take));
             const auto slot = either(no(pending_), both(completion, take));
-            const auto ready = both(both(no(reset), slot), both(bit(sequence_.available), room));
+            const auto ready = both(both(no(reset), slot), both(both(no(busy_seen_), bit(sequence_.available)), room));
             return View{completion, both(completion, room), ready, both(ready, issue)};
         };
         const auto before = view();
         const Request request{read("REQ_OP"), read("REQ_ADDR"), read("REQ_WRITE_DATA"), read("REQ_WRITE_MASK")};
-        buffer_.clock(reset, edge, before.completion, take, sequence_.result, bits(3, unsigned(sequence_.status)));
-        if (reset == H) pending_ = L;
-        else if (reset != L) fade(pending_);
-        else if (edge) pending_ = either(before.accept, both(pending_, no(before.finish)));
+        // The result and status are shown only with the captured completion.
+        const auto shown = [&](Bits value, LogicValue completion) {
+            for (auto& one : value) one = both(completion, clean(one));
+            return value;
+        };
+        buffer_.clock(reset, edge, before.completion, take, shown(sequence_.result, before.completion),
+                      shown(bits(3, unsigned(sequence_.status)), before.completion));
+        // DONE and BACK_READY as captured at this edge (see MemoryTransactionPort).
+        if (reset == H) pending_ = done_seen_ = busy_seen_ = L;
+        else if (reset != L) { fade(pending_); fade(done_seen_); fade(busy_seen_); }
+        else if (edge) {
+            pending_ = either(before.accept, both(pending_, no(before.finish)));
+            done_seen_ = both(bit(sequence_.done), no(before.finish));
+            busy_seen_ = bit(!sequence_.available);
+        }
         // The sequencer is the same part in the gate-level form; like there,
         // it starts and finishes only on a clean 1.
         sequence_.step(t, edge, reset != L, before.accept == H, request,
@@ -222,7 +233,8 @@ public:
 
         const auto after = view();
         publish(sim, t, "REQ_READY", after.ready);
-        publishResponse(sim, t, reset, after.completion, sequence_.result, bits(3, unsigned(sequence_.status)));
+        publishResponse(sim, t, reset, after.completion, shown(sequence_.result, after.completion),
+                        shown(bits(3, unsigned(sequence_.status)), after.completion));
         for (auto& [name, pin] : getAllOutputPins())
             if (name.starts_with("MEM_")) publish(sim, t, name, signal(sequence_.outputs, name.substr(4), pin->getWidth()));
         if (auto due = sequence_.deadline(); due > t && due != scheduled_) { scheduled_ = due; wake(sim, due); }
@@ -246,22 +258,41 @@ void MemoryTransactionPort::buildInternals(ComponentBuilder& b) {
         w.connect(getInputPin(p),response->getInputPin(p));
     }
     w.connect(getInputPin("RSP_READY"),response->getInputPin("OUT_READY"));
-    auto completion=w.both("COMPLETION",pending->getOutputPin("Q"),getInputPin("DONE"));
+    // The sequencer times itself: DONE and BACK_READY rise at any moment of
+    // the cycle. Each is first captured at a clock edge, so that everything
+    // the requester sees changes just after an edge, like any other state.
+    // Used raw, a DONE that rises a few ticks before an edge is acted on here
+    // while the requester has not seen RSP_VALID yet, and the response is lost.
+    auto done_seen=b.add(families::ClockedStateBit,"DONE_SEEN");
+    // Kept as "busy seen", so that a reset leaves the backend counted as ready.
+    auto busy_seen=b.add(families::ClockedStateBit,"BACK_BUSY_SEEN");
+    for(auto p:{"CLK","RST"}) {
+        w.connect(getInputPin(p),done_seen->getInputPin(p));
+        w.connect(getInputPin(p),busy_seen->getInputPin(p));
+    }
+    w.connect(w.invert("BACK_BUSY",getInputPin("BACK_READY")),busy_seen->getInputPin("D"));
+    // BACK_READY falls at a clock edge (a start or a refresh): that is used at once.
+    auto back_ready=w.both("BACK_READY_NOW",w.invert("BACK_READY_SEEN",busy_seen->getOutputPin("Q")),getInputPin("BACK_READY"));
+    auto completion=w.both("COMPLETION",pending->getOutputPin("Q"),done_seen->getOutputPin("Q"));
     auto finish=w.both("FINISH",completion,response->getOutputPin("IN_READY"));
     // Capacity is one outstanding transaction, including a held response.
     auto response_taken=w.both("RESPONSE_TAKEN",completion,getInputPin("RSP_READY"));
     auto slot=w.either("REQUEST_SLOT",w.invert("IDLE",pending->getOutputPin("Q")),response_taken);
     auto ready=w.reduce("READY",{w.invert("RUNNING",getInputPin("RST")),slot,
-        getInputPin("BACK_READY"),response->getOutputPin("IN_READY")},true);
+        back_ready,response->getOutputPin("IN_READY")},true);
     auto accept=w.both("ACCEPT",ready,getInputPin("REQ_VALID"));
     w.connect(w.either("NEXT_PENDING",accept,w.both("KEEP_PENDING",pending->getOutputPin("Q"),
         w.invert("NOT_FINISHED",finish))),pending->getInputPin("D"));
+    // A finished response is not seen twice.
+    w.connect(w.both("DONE_UNFINISHED",getInputPin("DONE"),w.invert("NOT_FINISHING",finish)),done_seen->getInputPin("D"));
     w.connect(ready,getOutputPin("REQ_READY"));
     w.connect(accept,getOutputPin("START"));
     w.connect(finish,getOutputPin("FINISH"));
     w.connect(completion,response->getInputPin("IN_VALID"));
-    w.connect(getInputPinDynamic("RESULT"),response->getInputPinDynamic("IN_DATA"));
-    w.connect(getInputPin<3>("STATUS"),response->getInputPin<3>("IN_STATUS"));
+    // The result appears at any moment too: it is shown only with the
+    // captured completion, so the response data also changes just after an edge.
+    w.connect(memory_detail::payloadGate(b,w,"RESULT_SHOWN",getInputPinDynamic("RESULT"),completion),response->getInputPinDynamic("IN_DATA"));
+    w.connect(memory_detail::payloadGate(b,w,"STATUS_SHOWN",getInputPin<3>("STATUS"),completion),response->getInputPin<3>("IN_STATUS"));
     for(auto [source,target]:std::vector<std::pair<std::string,std::string>>{
         {"OUT_VALID","RSP_VALID"},{"OUT_DATA","RSP_READ_DATA"},{"OUT_STATUS","RSP_STATUS"}})
         w.connect(response->getOutputPinDynamic(source),getOutputPinDynamic(target));

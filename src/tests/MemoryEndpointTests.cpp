@@ -132,7 +132,10 @@ ComponentTestSpec frontendSpec() {
     s.step("accept",{{"CLK",logicBit(true)}},{{"REQ_READY",logicBit(false)},{"ADDR",logicBits(32,12)}});
     s.step("backend-owns-payload",{{"CLK",logicBit(false)},{"REQ_ADDR",logicBits(32,0)},{"REQ_VALID",logicBit(false)}},{{"ADDR",logicBits(32,0)}});
     s.step("pending",{{"CLK",logicBit(true)}},{{"START",logicBit(false)},{"RSP_VALID",logicBit(false)}});
-    s.step("done",{{"CLK",logicBit(false)},{"DONE",logicBit(true)}});
+    // DONE may rise at any moment: it is acted on only once a clock edge has captured it.
+    s.step("done",{{"CLK",logicBit(false)},{"DONE",logicBit(true)}},{{"RSP_VALID",logicBit(false)}});
+    s.step("done-seen",{{"CLK",logicBit(true)}},{{"RSP_VALID",logicBit(true)},{"RSP_READ_DATA",logicBits(8,0xa5)}});
+    s.step("offered",{{"CLK",logicBit(false)}},{{"RSP_VALID",logicBit(true)}});
     s.step("capture-response",{{"CLK",logicBit(true)}},{{"RSP_VALID",logicBit(true)},{"RSP_READ_DATA",logicBits(8,0xa5)}});
     s.step("hold",{{"CLK",logicBit(false)},{"RESULT",logicBits(8,0)}},{{"RSP_READ_DATA",logicBits(8,0xa5)}});
     s.step("reset-response",{{"RST",logicBit(true)}},{{"RSP_VALID",logicBit(false)},{"REQ_READY",logicBit(false)}});

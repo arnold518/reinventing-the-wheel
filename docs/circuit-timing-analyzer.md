@@ -319,9 +319,14 @@ reason, in `NoGateList.generated.inc` (written by `part_delay_tables
 their gates only to find that out: the three cores and the single-cycle
 system (82,765 to 121,327 nodes) and 41 memory parts that time themselves
 or contain cells that do (DRAM, NOR-flash, the SRAM device and what is
-built on them). Every other compact part has one, the register file and
-the decode stages included. A falling clock edge on its own costs no pass.
-`CIRCUITSIM_NO_DELAY_TWIN=1` turns gate lists off, and
+built on them). The register file is listed too, by measurement: on its
+table it has the same shares as with its gate list, and because gate-level
+cores keep the register file compact, its large list made every such run
+21% slower. Every other compact part has one, the decode stages included.
+A falling clock edge on its own costs no pass.
+`CIRCUITSIM_NO_DELAY_TWIN=1` turns gate lists off,
+`CIRCUITSIM_NO_DELAY_TWIN_FOR=prefix` turns them off for the contracts
+starting with that prefix (to measure what one costs), and
 `CIRCUITSIM_DELAY_TRACE=1` prints which parts got one and each time its
 answer was not used.
 
@@ -399,12 +404,52 @@ Does not hold, and why:
   their tables, and only until they start working on their own. Their
   system-level check is the cycle count below.
 
-The advanced core on DRAM and on NOR-flash takes the same cycles in both
-forms at every clock tried (program 20: 218, 330, 468 cycles on DRAM and
-136, 202, 268 on NOR-flash at periods 400, 200, 120). At the core's own
-certified clock of 98 neither form finishes on these memories: the
-analysis cannot certify a clock for a system with a self-timed memory, and
-`--period auto` still picks 98 there.
+### Memories that time themselves
+
+SRAM, DRAM, ROM and NOR-flash finish an access after a number of ticks, not
+at a clock edge. Their controller used the "done" signal as it came. Two
+things went wrong, in the gates and in the compact form alike:
+
+- A "done" rising a few ticks before a clock edge was acted on by the
+  controller (response counted as taken) while the core had not yet seen
+  "response valid". The response was lost and the core waited forever
+  (program 20 on SRAM at periods 108 and 110, on DRAM at 98 and 102).
+- The same late signal reached the core inside its setup time. The gates
+  and the compact core then captured different things: at period 100 on
+  DRAM the gates finished and the compact core computed a wrong result; at
+  112 on SRAM the compact core finished and the gates hung.
+
+The transaction port now captures "done" and "backend ready" on a clock
+edge before using them, and shows the result only with the captured "done"
+(`MemoryTransactionPort`: `DONE_SEEN`, `BACK_BUSY_SEEN`, `RESULT_SHOWN`,
+`STATUS_SHOWN`; the same in the compact controller and endpoint). Everything
+the core sees from such a memory changes just after a clock edge. The cost
+is one cycle per access. Measured afterwards, advanced core, program 20:
+
+| memory | period 100 | 108 | 120 | 166 |
+|---|---|---|---|---|
+| SRAM, ROM | 400 | 334 | 334 | 268 |
+| NOR-flash | 334 | 334 | 334 | 268 |
+| DRAM | 583 | 559 | 529 | 436 |
+
+Gates and compact form give the same cycles, both verified against the
+instruction oracle, at every period compared (12 runs of each form over the
+four memories, periods 100 to 166), and the compact core sees no setup
+violation from period 100 up (12 periods from 100 to 166 per memory).
+
+A DRAM refresh starts at a clock edge when it is due. It now also waits
+for one idle edge after an operation: the core sees "ready" one edge after
+the memory goes idle, and without that wait a short refresh interval could
+start one refresh after another in front of a waiting request
+(`NativeSequence`, `rested_`).
+
+The core's own certified clock of 98 is 2 ticks short for these memories:
+their "request ready" leaves the endpoint later than the flip-flop
+memory's. The analysis still cannot certify a clock for a system with a
+self-timed memory, and `--period auto` still gives 98 there. An experiment
+now reports `setup_violations` in its result and warns on stderr when a
+compact part saw an input change inside its setup time, so such a run is
+not taken for a clean one (at 98: 51 violations).
 
 None of the first three reaches a clocked experiment. The clock is proven on the
 gates of the whole system, pulses and simultaneous changes included, and a

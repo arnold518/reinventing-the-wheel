@@ -49,6 +49,37 @@ inline StructuralWiring::PinPtr payloadMux(ComponentBuilder& b, StructuralWiring
     w.connect(select,mux->getInputPin("SEL"));
     return mux->getOutputPinDynamic("OUT");
 }
+// A bus shown only while ENABLE is 1 (0 otherwise): one AND gate per bit.
+class PayloadGate : public IOComponent {
+public:
+    PayloadGate(std::string n, size_t width)
+        : IOComponent(std::move(n), [width](IOComponent* s) {
+            s->addPinDynamic("IN", PinType::INPUT, width);
+            s->addPin("ENABLE", PinType::INPUT);
+            s->addPinDynamic("OUT", PinType::OUTPUT, width);
+        }), width_(width), type_("MemoryPayloadGate<"+std::to_string(width)+">") {}
+    const char* getTypeName() const override { return type_.c_str(); }
+    void buildInternals(ComponentBuilder& b) override {
+        StructuralWiring w(b);
+        auto in = memory_device::bitAdapter(b,"IN_BITS",width_,true);
+        auto out = memory_device::bitAdapter(b,"RESULT",width_,false);
+        w.connect(getInputPinDynamic("IN"),in->getInputPinDynamic("IN"));
+        for (size_t i=0;i<width_;++i) {
+            auto bit=std::to_string(i);
+            w.connect(w.both("SHOWN_"+bit,getInputPin("ENABLE"),in->getOutputPin("OUT_"+bit)),out->getInputPin("IN_"+bit));
+        }
+        w.connect(out->getOutputPinDynamic("OUT"),getOutputPinDynamic("OUT"));
+        w.finish();
+    }
+private: size_t width_; std::string type_;
+};
+inline StructuralWiring::PinPtr payloadGate(ComponentBuilder& b, StructuralWiring& w,
+    const std::string& name, StructuralWiring::PinPtr in, StructuralWiring::PinPtr enable) {
+    auto gate=b.addNewComponent<PayloadGate>(name,in->getWidth());
+    w.connect(in,gate->getInputPinDynamic("IN"));
+    w.connect(enable,gate->getInputPin("ENABLE"));
+    return gate->getOutputPinDynamic("OUT");
+}
 inline StructuralWiring::PinPtr bridge(ComponentBuilder& b, StructuralWiring& w,
     const std::string& name, StructuralWiring::PinPtr source) {
     const auto width=source->getWidth();

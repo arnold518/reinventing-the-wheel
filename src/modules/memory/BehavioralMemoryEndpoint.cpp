@@ -8,7 +8,7 @@ struct BehavioralMemoryEndpoint::State {
     Technology technology;
     EndpointConfig config;
     // The handshake state is the gates' own, in four-state form.
-    LogicValue pending = L;
+    LogicValue pending = L, done_seen = L, busy_seen = L;
     ResponseBuffer buffer;
     NativeSequence sequence;
     std::unique_ptr<DeviceModel> device;
@@ -65,8 +65,8 @@ void BehavioralMemoryEndpoint::evaluate(size_t t, Simulator& sim) {
     struct View { LogicValue complete, finish, ready, accept, incoming; };
     const auto view=[&] {
         const auto room=s.buffer.room(take);
-        const auto complete=both(s.pending,bit(s.sequence.done));
-        const auto slot=fast?H:both(either(no(s.pending),both(complete,take)),bit(s.sequence.available));
+        const auto complete=both(s.pending,s.done_seen);
+        const auto slot=fast?H:both(either(no(s.pending),both(complete,take)),both(no(s.busy_seen),bit(s.sequence.available)));
         const auto ready=both(both(no(reset),room),slot);
         const auto accept=both(ready,issue);
         return View{complete,both(complete,both(no(reset),room)),ready,accept,fast?accept:complete};
@@ -80,13 +80,24 @@ void BehavioralMemoryEndpoint::evaluate(size_t t, Simulator& sim) {
         if(accept!=H) for(auto& value:word) fade(value); // a stored 0 reads 0 either way
         return word;
     };
+    // A sequenced device's result and status are shown only with the captured
+    // completion (see MemoryTransactionPort).
+    const auto shown=[&](Bits value,LogicValue completion) {
+        if(!fast) for(auto& one:value) one=both(completion,clean(one));
+        return value;
+    };
     const auto before=view();
     if(!s.config.always_ready||!fast)
-        s.buffer.clock(reset,edge,before.incoming,take,fast?fastData(before.accept):s.sequence.result,
-            bits(3,unsigned(fast?fastStatus:s.sequence.status)));
-    if(reset==H) s.pending=L;
-    else if(reset!=L) fade(s.pending);
-    else if(edge&&!fast) s.pending=either(before.accept,both(s.pending,no(before.finish)));
+        s.buffer.clock(reset,edge,before.incoming,take,fast?fastData(before.accept):shown(s.sequence.result,before.complete),
+            shown(bits(3,unsigned(fast?fastStatus:s.sequence.status)),before.complete));
+    // DONE and BACK_READY as captured at this edge (see MemoryTransactionPort).
+    if(reset==H) s.pending=s.done_seen=s.busy_seen=L;
+    else if(reset!=L) {fade(s.pending);fade(s.done_seen);fade(s.busy_seen);}
+    else if(edge&&!fast) {
+        s.pending=either(before.accept,both(s.pending,no(before.finish)));
+        s.done_seen=both(bit(s.sequence.done),no(before.finish));
+        s.busy_seen=bit(!s.sequence.available);
+    }
     if(fast) {
         // Writes are triggered once, by acceptance on the shared edge.
         const bool writing=fastStatus==Status::Ok&&number(request.op)==1;
@@ -104,8 +115,8 @@ void BehavioralMemoryEndpoint::evaluate(size_t t, Simulator& sim) {
     }
     // Recompute the combinational view after the edge.
     const auto now=view();
-    const auto data=fast?fastData(now.accept):s.sequence.result;
-    const auto status=bits(3,unsigned(fast?fastStatus:s.sequence.status));
+    const auto data=fast?fastData(now.accept):shown(s.sequence.result,now.complete);
+    const auto status=shown(bits(3,unsigned(fast?fastStatus:s.sequence.status)),now.complete);
     publish(sim,t,"REQ_READY",now.ready);
     publish(sim,t,"RSP_VALID",s.buffer.valid(reset,now.incoming));
     publish(sim,t,"RSP_READ_DATA",s.buffer.select(data,s.buffer.data));

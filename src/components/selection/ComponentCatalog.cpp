@@ -341,6 +341,8 @@ std::shared_ptr<const DelayTwin> ComponentCatalog::delayTwin(
     // that out means building all their gates, which a run of a compact
     // core must not pay for.
     if (partsWithoutGateList().contains(request.contract_id)) return nullptr;
+    // For measuring what one part's gate list costs: CIRCUITSIM_NO_DELAY_TWIN_FOR=contract-prefix.
+    if (const char* skip = std::getenv("CIRCUITSIM_NO_DELAY_TWIN_FOR"); skip && *skip && request.contract_id.rfind(skip, 0) == 0) return nullptr;
     std::string key = implementation;
     for (const auto& [name, value] : request.parameters) key += "|" + name + "=" + value;
     static std::mutex guard;

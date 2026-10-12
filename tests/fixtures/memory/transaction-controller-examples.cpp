@@ -31,15 +31,19 @@ void check_port() {
     in.request=request<W>(Operation::Read,0);
     in.done=true; in.result=bits(W,0x5a); in.status=bits(3,5);
     out=port.step(in);
+    assert(!out.response_valid&&!out.finish); // DONE is not used before an edge has captured it.
+    in.rising_edge=true; out=port.step(in);
     assert(out.response_valid&&out.finish&&out.read_data==bits(W,0x5a));
     assert(out.request.address==bits(32,0)); // Sequencer, not frontend, owns request.
-    in.rising_edge=true; port.step(in); // Retain blocked result.
+    port.step(in); // Retain blocked result.
     in.done=false; in.result.assign(W,X); in.status.assign(3,X);
     for (unsigned i=0;i<4;++i) {
         out=port.step(in);
         assert(out.response_valid&&out.read_data==bits(W,0x5a)&&out.status==bits(3,5));
     }
-    in.rising_edge=false; in.backend_ready=true; in.response_ready=true;
+    in.backend_ready=true; out=port.step(in); // An edge sees the backend ready again.
+    assert(out.response_valid&&out.read_data==bits(W,0x5a));
+    in.rising_edge=false; in.response_ready=true;
     in.request_valid=true; out=port.step(in);
     assert(out.request_ready&&out.start&&out.response_valid);
     in.rising_edge=true; out=port.step(in); // Consume old response + accept new.

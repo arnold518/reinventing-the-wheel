@@ -215,7 +215,16 @@ size_t sized(const Candidate& candidate, const circuit::PartDelays& standard, si
 // stored state that is not a flip-flop). Finding that out means building all
 // their gates, so the catalog reads the answer from a generated file.
 std::set<std::string> withoutGateList(std::map<std::string, std::string>* reasons = nullptr) {
+    // Parts that could have a gate list but are better off without: measured,
+    // the list changes nothing and costs run time.
+    static const std::map<std::string, std::string> NO_GAIN = {
+        {"rv32i.register-file", "no gain: the same shares on its table (DelayRuleTest), and its large gate list made gate-level core runs 21% slower"},
+    };
     std::set<std::string> large, seen;
+    for (const auto& [contract, why] : NO_GAIN) {
+        large.insert(contract); seen.insert(contract);
+        if (reasons) (*reasons)[contract] = why;
+    }
     for (const auto& candidate : candidates({})) {
         if (!seen.insert(candidate.contract).second) continue;
         try {

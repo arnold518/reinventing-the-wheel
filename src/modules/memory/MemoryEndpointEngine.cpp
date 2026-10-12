@@ -55,13 +55,18 @@ void NativeSequence::step(size_t t, bool clock_edge, bool reset, bool start, con
     if (reset) aborted_ = true;
     if (clock_edge && finish_response) done = false;
     if (phase_ == Phase::Idle) {
-        if (reset) { done = false; available = false; return; }
+        if (reset) { done = false; available = false; rested_ = false; return; }
         available = true;
         if (done) return;
         const bool refresh_due = technology_ == Technology::DRAM &&
                              config_.refresh_interval_ticks && t >= next_refresh_;
-        const bool refresh = refresh_due && clock_edge && !start;
+        // The requester sees "ready" one clock edge after the backend goes
+        // idle. A refresh waits for that one idle edge too, so that a waiting
+        // request is never overtaken by one refresh after another.
+        const bool refresh = refresh_due && clock_edge && !start && rested_;
+        if (clock_edge) rested_ = true;
         if (!(start && clock_edge) && !refresh) { aborted_ = false; return; }
+        rested_ = false;
         aborted_ = false; maintenance_ = refresh; available = false; status = Status::Ok;
         result.assign(width_, L); commands_.clear();
         if (refresh) {

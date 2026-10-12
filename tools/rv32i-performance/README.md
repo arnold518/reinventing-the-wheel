@@ -150,6 +150,13 @@ Such a row has `completed: false`, `verified: false` and an `incomplete` common
 status. `prefix_verified` only says every observed retirement matched the ISA
 oracle; it is not an upstream benchmark pass.
 
+Every run reports `setup_violations`: how often a compact part saw an input
+change inside its setup time. Anything above 0 means the clock is too fast
+for that system (the run also warns on stderr), and the compact form may
+then differ from its gates. With `--memory sram|dram|rom|nor-flash` use a
+period of at least 100 for the advanced core; `--period auto` gives the
+flip-flop memory's clock (98), which is 2 ticks short there.
+
 ## Windows
 
 ```sh
