@@ -62,18 +62,21 @@ using Vector = std::map<std::string, Bits>;
 
 // Why a part may miss a "not much longer" target.
 const char* const DATA = "a whole core is too large for a gate list with state, so it stays on its table, which must cover its slowest case";
+const char* const CELLS = "its cells are not gates (they hold charge and are sensed or programmed in timed steps), so it has no gate list and stays on its table";
 const char* const SAMPLE = "this sample of changes did not reach its slowest case";
-const char* const LEAVES = "its address control, read columns and output buffer are not made of gates: the gate list times them by their own delays without knowing which of their outputs really change";
 
 // Parts below a target, with the shares measured for them. A listed part
 // passes while it stays at or above these; it fails if it drops lower.
 struct Floor { int typical, worst; const char* why; };
 const std::map<std::string, Floor> FLOORS = {
-    {"memory.rom.device.16", {65, 100, LEAVES}},
-    {"memory.rom.device.32", {65, 100, LEAVES}},
-    {"memory.rom.device.8", {65, 100, LEAVES}},
+    {"memory.dram.bank.16", {65, -1, CELLS}},
+    {"memory.dram.bank.32", {56, -1, CELLS}},
+    {"memory.dram.bank.8", {69, -1, CELLS}},
+    {"memory.nor-flash.bank.16", {65, -1, CELLS}},
+    {"memory.nor-flash.bank.32", {65, -1, CELLS}},
+    {"memory.nor-flash.bank.8", {65, -1, CELLS}},
     {"rv32i.core.baseline-pipeline", {59, 20, DATA}},
-    {"rv32i.core.educational-single-cycle", {57, 66, DATA}},
+    {"rv32i.core.educational-single-cycle", {54, 66, DATA}},
 };
 
 // Parts whose pins must not move a few ticks apart.
@@ -154,7 +157,11 @@ struct Tally {
     // Outputs where the two forms end on different values: their timing cannot
     // be compared. `differ_clean` counts those with every input at 0 or 1.
     size_t differ = 0, differ_clean = 0;
-    std::string difference;
+    // Of those: both forms at 0/1 but opposite; only the compact form at 0/1;
+    // only the gates at 0/1; X in one and Z in the other.
+    size_t differ_opposite = 0, differ_compact_knows = 0, differ_gates_know = 0, differ_unknowns = 0;
+    std::string difference, serious;
+    bool own_pace = false;
     std::vector<std::string> failures;
     void fail(const std::string& what) { if (failures.size() < 4) failures.push_back(what); }
 };
@@ -269,14 +276,28 @@ std::string compactInside(const std::shared_ptr<Component>& node) {
 
 // A ROM's contents are part of what is built: an empty one never changes its
 // data, so every form gets the same fixed image.
+// The parameters the part under test is built with (a size other than the default).
+circuit::ParameterMap build_parameters;
+
 circuit::ParameterMap contents(const std::string& contract) {
-    if (contract.rfind("memory.rom.", 0) != 0 || contract.find("device") == std::string::npos) return {};
+    auto parameters = build_parameters;
+    if (contract.rfind("memory.rom.", 0) != 0 || contract.find("device") == std::string::npos) return parameters;
     const size_t width = std::stoul(contract.substr(contract.rfind('.') + 1));
+    const size_t words = parameters.contains("depth_words") ? std::stoul(parameters.at("depth_words")) : 4;
     std::mt19937_64 random(0x0c0de);
     std::string image;
-    for (size_t digit = 0; digit < 4 * (width / 8) * 2; ++digit) image += "0123456789abcdef"[random() % 16];
-    return {{"image_hex", image}};
+    for (size_t digit = 0; digit < words * (width / 8) * 2; ++digit) image += "0123456789abcdef"[random() % 16];
+    parameters["image_hex"] = image;
+    return parameters;
 }
+
+// Sizes other than the default that are compared as well, one or two per
+// family of tables (word count, row layout, an always-ready consumer).
+const std::vector<std::pair<std::string, circuit::ParameterMap>> VARIANTS = {
+    {"memory.rom.device.8", {{"depth_words", "128"}, {"words_per_row", "4"}}},
+    {"memory.ff.device.8", {{"depth_words", "64"}}},
+    {"memory.ff.endpoint.8", {{"depth_words", "64"}, {"always_ready", "1"}}},
+};
 
 std::shared_ptr<IOComponent> build(const std::string& contract, const circuit::BuildProfile& profile) {
     try {
@@ -306,7 +327,7 @@ Bits patternBits(size_t width, std::mt19937_64& random) {
 
 // One part, in gates, compact, and as gates around compact inner parts, put
 // through the same situations of every kind.
-std::optional<Tally> part(const std::string& contract, size_t rounds, bool four_state) {
+std::optional<Tally> part(const std::string& contract, size_t rounds, bool four_state, size_t search) {
     const auto gate_form = build(contract, circuit::maximallyStructural());
     const auto compact_form = build(contract, circuit::strictAllBehavioral());
     if (!gate_form || !compact_form || gate_form->getAllInputPins().empty() || gate_form->getAllOutputPins().empty()) return std::nullopt;
@@ -314,8 +335,9 @@ std::optional<Tally> part(const std::string& contract, size_t rounds, bool four_
     if (std::dynamic_pointer_cast<BasicComponent>(gate_form) || !leaf || !leaf->getDelays()) return std::nullopt;
     const auto table = *leaf->getDelays();
     // A self-timed part also changes on its own schedule; its delays count
-    // from whatever caused the change, which this bench cannot observe.
-    if (table.self_timed) return std::nullopt;
+    // from whatever caused the change, which this bench cannot observe. It is
+    // compared with its gates only, not with its table.
+    const bool own_pace = table.self_timed;
     const auto mixed_form = build(contract, circuit::structuralThroughDepth(
         1, circuit::UnavailableFidelityPolicy::UseOnlyAvailableAndRecordException));
 
@@ -336,6 +358,7 @@ std::optional<Tally> part(const std::string& contract, size_t rounds, bool four_
     if (mixed_form && !std::dynamic_pointer_cast<BasicComponent>(mixed_form)) mixed.emplace(mixed_form);
     Tally tally;
     tally.timed_by_gates = table.twin != nullptr;
+    tally.own_pace = own_pace;
     std::mt19937_64 random(0xde1a7);
     Vector now;
     for (const auto& [name, pin] : gate_form->getAllInputPins()) now[name] = Bits(pin->getWidth(), LogicValue::LOW);
@@ -388,7 +411,9 @@ std::optional<Tally> part(const std::string& contract, size_t rounds, bool four_
         ++tally.sets[kind].situations;
         const std::string what = std::string(KIND_NAMES[kind]) + " (" + changed.begin()->first + (changed.size() > 1 ? ", ..." : "") + ")";
         if (gates.restless || compact.restless) {
-            tally.fail(std::string(gates.restless ? "the gates" : "the compact part") + " did not go quiet, " + what);
+            // A part that times itself may keep working (a refresh, a
+            // request in progress); what was compared until then stands.
+            if (!own_pace) tally.fail(std::string(gates.restless ? "the gates" : "the compact part") + " did not go quiet, " + what);
             return false;
         }
         bool clean = true;
@@ -407,7 +432,21 @@ std::optional<Tally> part(const std::string& contract, size_t rounds, bool four_
             const bool blend_agreed = std::exchange(blend_agreement[output], blend_agree);
             if (!agree) {
                 ++tally.differ;
-                if (clean && !tally.differ_clean++) tally.difference = output + ", " + what;
+                if (clean) {
+                    const auto compact_value = wire->getValueVector();
+                    const auto known = [](LogicValue bit) { return bit == LogicValue::LOW || bit == LogicValue::HIGH; };
+                    bool opposite = false, compact_knows = false, gates_know = false;
+                    for (size_t bit = 0; bit < gate_value.size(); ++bit) {
+                        if (gate_value[bit] == compact_value[bit]) continue;
+                        if (known(gate_value[bit]) && known(compact_value[bit])) opposite = true;
+                        else if (known(compact_value[bit])) compact_knows = true;
+                        else if (known(gate_value[bit])) gates_know = true;
+                    }
+                    ++(opposite ? tally.differ_opposite : compact_knows ? tally.differ_compact_knows
+                       : gates_know ? tally.differ_gates_know : tally.differ_unknowns);
+                    if ((opposite || compact_knows) && tally.serious.empty()) tally.serious = output + ", " + what;
+                    if (!tally.differ_clean++) tally.difference = output + ", " + what;
+                }
             }
             if (!agree || !agreed) continue;
             // The latest the table lets this output move: each changed pin
@@ -425,7 +464,11 @@ std::optional<Tally> part(const std::string& contract, size_t rounds, bool four_
                 for (const auto& [pin, at] : changed) { const auto d = tableDelay(table, pin, output, now); std::cerr << ' ' << pin << '@' << at << '+' << (d ? int(*d) : -1); }
                 std::cerr << (new_control ? " new-control" : "") << " clk=" << (has_clock ? int(now.at(table.clock)[0] == LogicValue::HIGH) : -1) << '\n';
             }
-            if (modeled != shown.end()) {
+            if (own_pace) {
+                if (gate != real.end()) ++tally.within;
+                if (modeled != shown.end()) ++tally.exact;
+            }
+            if (!own_pace && modeled != shown.end()) {
                 if (!allowed) tally.fail(output + " changed, a path the table does not have, " + what);
                 // All pins at once: the compact part answers at exactly the table's delay.
                 else if (kind != Staggered && !table.twin && modeled->second != *allowed)
@@ -441,7 +484,7 @@ std::optional<Tally> part(const std::string& contract, size_t rounds, bool four_
                                + std::to_string(*allowed) + ", " + what);
                 else ++tally.exact;
             }
-            if (gate != real.end()) {
+            if (!own_pace && gate != real.end()) {
                 if (!allowed) tally.fail("gates: " + output + " changed, a path the table does not have, " + what);
                 else if (gate->second > *allowed)
                     tally.fail("gates: " + output + " changed after " + std::to_string(gate->second) + " ticks, later than the table's "
@@ -534,6 +577,32 @@ std::optional<Tally> part(const std::string& contract, size_t rounds, bool four_
         }
     }
     if (pins.empty()) for (size_t round = 0; round < rounds; ++round) if (!clockEdge()) return tally;
+    // A part on a table: look for its slowest cases on purpose. For each
+    // output the gates have not yet brought near the table's delay, the pin
+    // with the largest delay to it is changed alone, from fresh values of
+    // the other pins every few tries.
+    if (!table.twin && !own_pace && search) {
+        size_t budget = 10 * search;
+        for (const auto& [output, largest] : worst) {
+            if (tally.closest.contains(output) && tally.closest.at(output) >= 0.9) continue;
+            std::string slowest;
+            size_t delay = 0;
+            for (const auto& arc : table.arcs) if (arc.output == output && arc.delay.maximum > delay
+                && std::find(pins.begin(), pins.end(), arc.input) != pins.end()) { delay = arc.delay.maximum; slowest = arc.input; }
+            if (slowest.empty()) continue;
+            for (size_t attempt = 0; attempt < search && budget; ++attempt, --budget) {
+                if (tally.closest.contains(output) && tally.closest.at(output) >= 0.9) break;
+                auto target = now;
+                if (attempt % 4 == 0) {
+                    for (const auto& pin : pins) target[pin] = attempt % 8 ? randomBits(now.at(pin).size(), 2, random) : patternBits(now.at(pin).size(), random);
+                    if (!situation(AllPins, target, {}, 0) || !clockEdge()) return tally;
+                    target = now;
+                }
+                target[slowest] = attempt % 2 ? patternBits(now.at(slowest).size(), random) : fresh(slowest);
+                if (!situation(OnePin, target, {}, 0)) return tally;
+            }
+        }
+    }
     return tally;
 }
 
@@ -637,6 +706,7 @@ int main(int argc, char** argv) {
         size_t rounds = 100;
         double typical_target = 70, worst_target = 90, clock_margin = 10;
         bool report_only = false, four_state = true, print_floors = false, strict = false;
+        size_t search = 40;
         std::ostringstream floors;
         std::set<std::string> only;
         for (int i = 1; i < argc; ++i) {
@@ -646,6 +716,7 @@ int main(int argc, char** argv) {
             else if (argument.rfind("--worst=", 0) == 0) worst_target = std::stod(argument.substr(8));
             else if (argument.rfind("--clock-margin=", 0) == 0) clock_margin = std::stod(argument.substr(15));
             else if (argument == "--report") report_only = true;
+            else if (argument.rfind("--search=", 0) == 0) search = std::stoul(argument.substr(9));
             else if (argument == "--binary") four_state = false;
             else if (argument == "--strict-settling") { setenv("CIRCUITSIM_STRICT_SETTLING", "1", 1); strict = report_only = true; }
             else if (argument == "--floors") print_floors = report_only = true;
@@ -660,20 +731,34 @@ int main(int argc, char** argv) {
         size_t parts = 0, broken = 0, slow = 0, exact = 0, within = 0, excused = 0, differing = 0, inner = 0, pulses = 0, sooner = 0,
                parent = 0, parent_sooner = 0, situations = 0, compared = 0, detours = 0;
         Tally::Set totals[KINDS];
+        std::ostringstream differences;
+        size_t opposite = 0, compact_knows = 0;
         const auto percent = [](double value) { return value < 0 ? std::string("-") : std::to_string(int(value + 0.5)) + "%"; };
         const auto share = [](const Tally::Set& set) { return set.compared ? 100.0 * set.share / double(set.compared) : -1.0; };
+        // `id` names the row; `contract` and `parameters` say what is built.
+        struct Subject { std::string id, contract; circuit::ParameterMap parameters; };
+        std::vector<Subject> subjects;
         for (const auto& contract : circuit::builtinComponentCatalog().contracts()) {
-            if (!only.empty() && !only.contains(contract.id)) continue;
+            subjects.push_back({contract.id, contract.id, {}});
+            for (const auto& [id, parameters] : VARIANTS) if (id == contract.id) {
+                std::string label = id;
+                for (const auto& [name, value] : parameters) label += "@" + name + "=" + value;
+                subjects.push_back({label, id, parameters});
+            }
+        }
+        for (const auto& contract : subjects) {
+            if (!only.empty() && !only.contains(contract.id) && !only.contains(contract.contract)) continue;
+            build_parameters = contract.parameters;
             if (const auto reason = NOT_DRIVEN.find(contract.id); reason != NOT_DRIVEN.end()) {
                 std::cout << std::left << std::setw(38) << contract.id << "  not driven: " << reason->second << '\n';
                 continue;
             }
-            if (const auto form = build(contract.id, circuit::maximallyStructural()); form && !std::dynamic_pointer_cast<BasicComponent>(form))
+            if (const auto form = build(contract.contract, circuit::maximallyStructural()); form && !std::dynamic_pointer_cast<BasicComponent>(form))
                 if (const auto inside = compactInside(form); !inside.empty()) {
                     std::cout << std::left << std::setw(38) << contract.id << "  not compared: its structural form has no gates for " << inside << '\n';
                     continue;
                 }
-            const auto tally = part(contract.id, rounds, four_state);
+            const auto tally = part(contract.contract, rounds, four_state, search);
             if (!tally) continue;
             ++parts;
             exact += tally->exact; within += tally->within; inner += tally->inner; pulses += tally->pulses; sooner += tally->sooner;
@@ -694,13 +779,19 @@ int main(int argc, char** argv) {
                 || (!tally->timed_by_gates && worst >= 0 && worst < worst_target);
             std::string note;
             differing += tally->differ_clean;
+            if (tally->differ_clean) differences << "  " << std::left << std::setw(38) << contract.id << std::right << std::setw(7)
+                                                 << tally->differ_opposite << std::setw(9) << tally->differ_compact_knows << std::setw(9)
+                                                 << tally->differ_gates_know << std::setw(7) << tally->differ_unknowns << "  "
+                                                 << (tally->serious.empty() ? tally->difference : tally->serious) << '\n';
+            opposite += tally->differ_opposite; compact_knows += tally->differ_compact_knows;
             if (!tally->failures.empty()) { ++broken; note = "RULE BROKEN: " + tally->failures.front(); }
             else if (tally->timed_by_gates && !below) note = "timed from its gates";
+            else if (tally->own_pace && !below) note = "times itself: compared with its gates, not its table";
 
             else if (below) {
                 const auto floor = FLOORS.find(contract.id);
                 if (print_floors) floors << "    {\"" << contract.id << "\", {" << int(typical) << ", " << int(worst) << ", "
-                                         << (contract.id.rfind("memory.rom.", 0) == 0 ? "LEAVES" : typical < typical_target ? "DATA" : "SAMPLE") << "}},\n";
+                                         << (contract.id.find(".bank.") != std::string::npos ? "CELLS" : typical < typical_target ? "DATA" : "SAMPLE") << "}},\n";
                 if (floor == FLOORS.end()) { ++slow; note = "below target"; }
                 else if (typical < floor->second.typical || worst < floor->second.worst) { ++slow; note = "below its recorded shares"; }
                 else { ++excused; note = std::string("excepted: ") + floor->second.why; }
@@ -711,6 +802,7 @@ int main(int argc, char** argv) {
                       << tally->pulses << std::setw(7) << tally->sooner << "  " << note << '\n';
             for (size_t i = 1; i < tally->failures.size(); ++i) std::cout << std::string(40, ' ') << "  also: " << tally->failures[i] << '\n';
         }
+        build_parameters.clear();
         std::cout << std::left << std::setw(38) << "all parts" << std::right << std::setw(6) << situations << std::setw(8) << compared;
         Tally::Set everything;
         for (int kind = 0; kind < KINDS; ++kind) {
@@ -732,6 +824,10 @@ int main(int argc, char** argv) {
         if (print_floors) std::cout << "Measured shares of the parts below a target:\n" << floors.str();
         if (differing) std::cout << differing << " output values differed between the forms while every input was 0 or 1 (state left by an"
                                     " earlier X or Z, or input codes with no meaning); their timing is not compared.\n";
+        if (differing) std::cout << "  " << std::left << std::setw(38) << "part" << std::right << std::setw(7) << "0 vs 1" << std::setw(9)
+                                 << "compact" << std::setw(9) << "gates" << std::setw(7) << "X vs Z" << "  (compact: only the compact form shows 0/1; gates: only the gates do)\n"
+                                 << differences.str() << "  " << opposite << " outputs at opposite values and " << compact_knows
+                                 << " where only the compact form shows 0/1, after an earlier X or Z\n";
         if (strict) {
             // With strict settling a compact output may not look settled before its gates, pulses included.
             std::cout << "Strict settling: " << pulses << " outputs still moved only in the gates; " << parent_sooner

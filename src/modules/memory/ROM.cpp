@@ -64,14 +64,23 @@ class ROMAddressControl : public Primitive {
         if (input == "WORD_ADDR") return true;
         return output == "OUTPUT_ENABLE" || (input == "CE_N" && output == "ROW_ENABLE");
     }
-    void evaluate(size_t t, Simulator &sim) override {
-        auto a = read("WORD_ADDR");
+    void evaluate(size_t t, Simulator &sim) override { publishSettled(sim, t); }
+    bool settled(const Values &in, Values &out, Deciders &deciders) const override {
+        const auto &a = in.at("WORD_ADDR");
         bool valid = known(a) && number(a) < config_.depth_words;
-        auto ce = getInputValue("CE_N"), oe = getInputValue("OE_N");
-        publish(sim, t, "ROW_ADDR", valid ? bits(32, number(a) / config_.words_per_row) : Bits(32, X));
-        publish(sim, t, "COLUMN_ADDR", valid ? bits(32, number(a) % config_.words_per_row) : Bits(32, X));
-        publish(sim, t, "ROW_ENABLE", ce == L && valid ? H : L);
-        publish(sim, t, "OUTPUT_ENABLE", ce == H || oe == H ? L : ce == L && oe == L && valid ? H : X);
+        auto ce = in.at("CE_N")[0], oe = in.at("OE_N")[0];
+        out["ROW_ADDR"] = valid ? bits(32, number(a) / config_.words_per_row) : Bits(32, X);
+        out["COLUMN_ADDR"] = valid ? bits(32, number(a) % config_.words_per_row) : Bits(32, X);
+        out["ROW_ENABLE"] = Bits{ce == L && valid ? H : L};
+        out["OUTPUT_ENABLE"] = Bits{ce == H || oe == H ? L : ce == L && oe == L && valid ? H : X};
+        deciders["ROW_ADDR"] = deciders["COLUMN_ADDR"] = {"WORD_ADDR"};
+        // A chip that is not selected enables no row and no output, whatever the address.
+        deciders["ROW_ENABLE"] = ce != L ? std::set<std::string>{"CE_N"}
+                                 : !valid ? std::set<std::string>{"WORD_ADDR"} : std::set<std::string>{"CE_N", "WORD_ADDR"};
+        deciders["OUTPUT_ENABLE"] = ce == H   ? std::set<std::string>{"CE_N"}
+                                    : oe == H ? std::set<std::string>{"OE_N"}
+                                              : std::set<std::string>{"CE_N", "OE_N", "WORD_ADDR"};
+        return true;
     }
 
   private:

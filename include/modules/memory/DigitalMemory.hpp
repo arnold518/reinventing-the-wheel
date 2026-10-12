@@ -5,7 +5,9 @@
 #include "components/selection/ComponentCatalog.hpp"
 #include "modules/memory/MemoryStructuralBuilder.hpp"
 #include "modules/memory/MemoryDeviceStorage.hpp"
+#include <map>
 #include <optional>
+#include <set>
 
 namespace circuit::memory_device {
 using Bits = std::vector<LogicValue>;
@@ -52,6 +54,14 @@ class Primitive : public BasicComponent {
     // False where a change of this input can never change that output, so
     // the timing analysis draws no path between them.
     virtual bool reaches(const std::string &, const std::string &) const { return true; }
+    // For a primitive whose outputs are a plain function of its inputs: the
+    // values the outputs settle on for these input values, and for each
+    // output the inputs that decide it at those values. Once those are
+    // final the output is, whatever the other inputs still do. Its own
+    // evaluate() publishes exactly these values. False: not described.
+    using Values = std::map<std::string, Bits>;
+    using Deciders = std::map<std::string, std::set<std::string>>;
+    virtual bool settled(const Values &, Values &, Deciders &) const { return false; }
     // True for a clocked primitive that also wakes itself between clock
     // edges and may change any output one delay after either.
     virtual bool selfTimedClockedPart() const { return false; }
@@ -67,6 +77,8 @@ class Primitive : public BasicComponent {
         publish(sim, time, pin, Bits{value});
     }
     void wake(Simulator &sim, size_t time);
+    // Publishes what settled() gives for the values now on the input pins.
+    void publishSettled(Simulator &sim, size_t time);
 
   private:
     std::string type_;
@@ -120,6 +132,7 @@ class StaticReadColumn : public Primitive {
     StaticReadColumn(std::string name, size_t rows);
     void evaluate(size_t, Simulator &) override;
     bool respondsOnlyToInputs() const override { return true; }
+    bool settled(const Values &, Values &, Deciders &) const override;
 
   private:
     size_t rows_;
@@ -129,6 +142,7 @@ class MemoryOutputBuffer : public Primitive {
     MemoryOutputBuffer(std::string name, size_t width);
     void evaluate(size_t, Simulator &) override;
     bool respondsOnlyToInputs() const override { return true; }
+    bool settled(const Values &, Values &, Deciders &) const override;
 
   private:
     size_t width_;

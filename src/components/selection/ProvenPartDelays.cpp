@@ -105,6 +105,13 @@ const PartDelays* provenPartDelays(const std::string& implementation_id, const P
     return &found->second;
 }
 
+const std::set<std::string>& partsWithoutGateList() {
+    static const std::set<std::string> generated = {
+#include "NoGateList.generated.inc"
+    };
+    return generated;
+}
+
 std::vector<std::string> provenPartDelayImplementations() {
     std::vector<std::string> names;
     for (const auto& [name, table] : tables()) names.push_back(name);

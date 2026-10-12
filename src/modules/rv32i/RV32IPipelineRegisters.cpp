@@ -115,10 +115,18 @@ LogicValue binaryOrUnknown(LogicValue value) {
         : LogicValue::UNKNOWN;
 }
 
+// A bit when it is unknown whether it is being written: the register's gates
+// choose between the held and the incoming bit with AND and OR gates, which
+// give 0 only if both are 0 and cannot tell that two 1s agree.
 LogicValue merge(LogicValue held, LogicValue incoming) {
-    held = binaryOrUnknown(held);
-    incoming = binaryOrUnknown(incoming);
-    return held == incoming ? held : LogicValue::UNKNOWN;
+    return held == LogicValue::LOW && incoming == LogicValue::LOW ? LogicValue::LOW : LogicValue::UNKNOWN;
+}
+
+// The valid bit offered to the register: D_VALID AND NOT FLUSH, as its gate computes it.
+LogicValue incomingValid(LogicValue flush, LogicValue valid) {
+    valid = binaryOrUnknown(valid);
+    if (flush == LogicValue::HIGH || valid == LogicValue::LOW) return LogicValue::LOW;
+    return flush == LogicValue::LOW ? valid : LogicValue::UNKNOWN;
 }
 
 class RV32IPipelineRegisterBehavioral : public BasicComponent {
@@ -166,11 +174,7 @@ public:
         } else if (previous_clk_ == LogicValue::LOW
                    && clk == LogicValue::HIGH) {
             if (write_enable == LogicValue::HIGH) {
-                valid_ = flush == LogicValue::HIGH
-                    ? LogicValue::LOW
-                    : flush == LogicValue::LOW
-                        ? binaryOrUnknown(getInputValue("D_VALID"))
-                        : LogicValue::UNKNOWN;
+                valid_ = incomingValid(flush, getInputValue("D_VALID"));
                 for (const auto& field : fields_) {
                     auto input = getInputPin<32>("D_" + field)
                         ->getValueAsVector();
@@ -186,12 +190,7 @@ public:
                     stored_.at(field) = std::move(input);
                 }
             } else if (write_enable != LogicValue::LOW) {
-                const auto candidate_valid =
-                    flush == LogicValue::HIGH
-                    ? LogicValue::LOW
-                    : flush == LogicValue::LOW
-                        ? binaryOrUnknown(getInputValue("D_VALID"))
-                        : LogicValue::UNKNOWN;
+                const auto candidate_valid = incomingValid(flush, getInputValue("D_VALID"));
                 valid_ = merge(valid_, candidate_valid);
                 for (const auto& field : fields_) {
                     const auto input =

@@ -290,21 +290,40 @@ StaticReadColumn::StaticReadColumn(std::string n, size_t rows)
                 [rows](IOComponent *s) { readColumnPins(s, rows); }),
       rows_(rows) {
 }
+void Primitive::publishSettled(Simulator &sim, size_t t) {
+    Values inputs, outputs;
+    Deciders deciders;
+    for (const auto &[name, pin] : getAllInputPins())
+        inputs[name] = pin->getValueAsVector();
+    if (!settled(inputs, outputs, deciders))
+        throw std::logic_error(getID() + ": publishSettled without settled()");
+    for (const auto &[name, value] : outputs)
+        publish(sim, t, name, value);
+}
 void StaticReadColumn::evaluate(size_t t, Simulator &sim) {
-    size_t count = 0;
-    auto out = X;
+    publishSettled(sim, t);
+}
+bool StaticReadColumn::settled(const Values &in, Values &out, Deciders &deciders) const {
+    size_t count = 0, selected = 0;
+    bool lines_known = true;
+    auto &words = deciders["OUT"];
     for (size_t r = 0; r < rows_; ++r) {
-        auto wl = getInputValue("WL_" + std::to_string(r));
-        if (!binary(wl)) {
-            publish(sim, t, "OUT", X);
-            return;
-        }
+        words.insert("WL_" + std::to_string(r));
+        auto wl = in.at("WL_" + std::to_string(r))[0];
+        lines_known = lines_known && binary(wl);
         if (wl == H) {
             ++count;
-            out = stored(getInputValue("Q_" + std::to_string(r)));
+            selected = r;
         }
     }
-    publish(sim, t, "OUT", count == 1 ? out : X);
+    // One selected row: its cell is read, and no other cell matters.
+    if (lines_known && count == 1) {
+        out["OUT"] = Bits{stored(in.at("Q_" + std::to_string(selected))[0])};
+        words.insert("Q_" + std::to_string(selected));
+    } else {
+        out["OUT"] = Bits{X};
+    }
+    return true;
 }
 static void outputPins(IOComponent *s, size_t width) {
     Geometry{}.validate(width);
@@ -318,8 +337,14 @@ MemoryOutputBuffer::MemoryOutputBuffer(std::string n, size_t width)
       width_(width) {
 }
 void MemoryOutputBuffer::evaluate(size_t t, Simulator &sim) {
-    auto en = getInputValue("ENABLE");
-    publish(sim, t, "OUT", en == H ? read("DATA") : Bits(width_, en == L ? Z : X));
+    publishSettled(sim, t);
+}
+bool MemoryOutputBuffer::settled(const Values &in, Values &out, Deciders &deciders) const {
+    auto en = in.at("ENABLE")[0];
+    out["OUT"] = en == H ? in.at("DATA") : Bits(width_, en == L ? Z : X);
+    // A buffer that is not enabled shows nothing of its data.
+    deciders["OUT"] = en == H ? std::set<std::string>{"ENABLE", "DATA"} : std::set<std::string>{"ENABLE"};
+    return true;
 }
 void registerMatrixComponents(ComponentCatalog &c) {
     auto count = [](const ParameterMap &p) {

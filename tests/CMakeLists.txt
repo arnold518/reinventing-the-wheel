@@ -18,6 +18,11 @@ add_executable(DelayRuleTest cpp/DelayRuleTest.cpp)
 target_link_libraries(DelayRuleTest PRIVATE SimulatorLib)
 add_test(NAME DelayRuleTest COMMAND DelayRuleTest)
 set_tests_properties(DelayRuleTest PROPERTIES LABELS "timing;analysis;slow" TIMEOUT 5400)
+# The same comparison with X shown while an output may still move (an option
+# of the engine, off by default): a compact output must not look settled
+# before its gates, pulses included.
+add_test(NAME DelayRuleStrictSettlingTest COMMAND DelayRuleTest --strict-settling)
+set_tests_properties(DelayRuleStrictSettlingTest PROPERTIES LABELS "timing;analysis;slow" TIMEOUT 5400)
 add_executable(SRAMCellTimingTest cpp/SRAMCellTimingTest.cpp)
 target_link_libraries(SRAMCellTimingTest PRIVATE SimulatorLib)
 add_test(NAME SRAMCellTimingTest COMMAND SRAMCellTimingTest)

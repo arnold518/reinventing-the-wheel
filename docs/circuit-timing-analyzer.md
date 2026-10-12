@@ -298,23 +298,32 @@ used, the value the list ends on is compared with the value the part
 computed; if they differ the table applies.
 
 A leaf inside the gate-level form that is not a gate (a memory's address
-control, read column or output buffer) is kept as it is timed: its output
-follows each of its inputs by that leaf's delay, and its value is left
-open. That is always safe but coarser, because the list cannot see which of
-the leaf's outputs really change. A memory leaf can narrow this by saying
-which input reaches which output (`Primitive::reaches`); the ROM's address
-control does, which also brought the ROM's own table down (output enable
-to data: 14 ticks to 2).
+control, read column or output buffer) is timed by its own delays: its
+output follows each input that reaches it by that leaf's delay. A memory
+leaf can say which input reaches which output (`Primitive::reaches`), which
+also tightens the part's table (ROM output enable to data: 14 ticks to 2).
+A leaf that is a plain function of its inputs can also describe itself
+(`Primitive::settled`: its output values, and the inputs that decide each
+output at those values; its own `evaluate` publishes exactly that). The
+list then knows the leaf's values, and an output bit does not wait for
+input bits that cannot change it: the latest input bits are taken first and
+every value of them is tried (up to six bits). The ROM's three leaves do
+this. A leaf that does not describe itself has its value left open, which
+is safe but coarser.
 
 A part gets no gate list if its gate-level form has a loop, a stored state
-that is not a plain flip-flop, more than one clock, more than 60,000 gate
-nodes, or more than 12,000 with flip-flops (the list is walked on every
-clock edge, so whole cores stay on their tables). 90 of the 97 compared
-parts have one; the others are the three cores, the register file (46,941
-nodes) and the three decode stages that contain it.
-`CIRCUITSIM_NO_DELAY_TWIN=1` turns it
-off, and `CIRCUITSIM_DELAY_TRACE=1` prints which parts got one and each
-time its answer was not used.
+that is not a plain flip-flop, more than one clock, a part that times
+itself, or more than 60,000 gate nodes. Those parts are listed, with the
+reason, in `NoGateList.generated.inc` (written by `part_delay_tables
+--gate-lists`, checked by `--verify`), so that no run pays for building
+their gates only to find that out: the three cores and the single-cycle
+system (82,765 to 121,327 nodes) and 41 memory parts that time themselves
+or contain cells that do (DRAM, NOR-flash, the SRAM device and what is
+built on them). Every other compact part has one, the register file and
+the decode stages included. A falling clock edge on its own costs no pass.
+`CIRCUITSIM_NO_DELAY_TWIN=1` turns gate lists off, and
+`CIRCUITSIM_DELAY_TRACE=1` prints which parts got one and each time its
+answer was not used.
 
 ### Showing X while an output may still move (option)
 
@@ -323,8 +332,10 @@ output from the earliest tick the table says it can move until the tick
 its gates are final, and then the value. This copies the pulses gates
 make. It is off by default: X on a line that never pulses can stop a part
 that reads it, and the clocks are proven with pulses included either way.
-In the test (`DelayRuleTest --strict-settling`) it breaks nothing and
-leaves 371 of 4,948 pulses unmatched, all in parts without a gate list.
+`DelayRuleStrictSettlingTest` runs the whole comparison with it on: a
+compact output must then not look settled before its gates, pulses
+included. The pulses it leaves unmatched are all in parts without a gate
+list.
 
 ### The delay rule and how far it holds
 
@@ -334,7 +345,7 @@ through the same situations (one pin, X or Z, a few pins, all pins, edge
 patterns, two pins a few ticks apart, clock edges) and compares them output
 by output.
 
-Holds, in every comparison made (97 parts, about 96,000 situations, 123,000 output changes):
+Holds, in every comparison made (138 parts and sizes, about 113,000 situations, 138,000 output changes):
 
 - a compact output never changes before the gates' output;
 - a compact output on a table changes at exactly the delay the table gives;
@@ -348,14 +359,14 @@ Holds, in every comparison made (97 parts, about 96,000 situations, 123,000 outp
 Does not hold, and why:
 
 - "Not much longer" in every single situation, for parts without a gate
-  list. Over all parts the gates take 98% of the compact time on average
+  list. Over all parts the gates take 95% of the compact time on average
   (90% before gate lists; the 8-bit ripple adder went from 38% to 92%,
-  `rv32i.prediction.path` from 44% to 98%, the flip-flop memory endpoint
-  from 76% to 94%). Two kinds remain below 70% and are listed in the test
+  `rv32i.prediction.path` from 44% to 98%, the decode stages from 91% to
+  99%, the ROM device from 18% to 74%). Below 70%, and listed in the test
   with their measured shares: the single-cycle and baseline cores as whole
-  parts (57% and 59%; too large for a gate list with state), and the ROM
-  device (65%; its non-gate leaves hide which outputs change). At a clock
-  they are exact: same period, same cycles.
+  parts (54% and 59%; too large for a gate list), and the DRAM and
+  NOR-flash banks (56% to 69%; their cells are not gates). At a clock they
+  are exact: same period, same cycles.
 - Pulses. Gates can leave a value and come back to it; a compact part
   computes the final value once and stays still, so a parent built from
   compact parts can go quiet sooner than the same parent in gates. The
@@ -363,10 +374,34 @@ Does not hold, and why:
 - Several pins at once is tested, not proven, for parts on a table only. A
   table is proven for one pin changing while the others hold. A gate list
   has no such limit: its time holds for any history of the inputs. For the
-  seven parts on tables no case was found where the gates exceed the largest
-  of the single-pin delays, but no proof says they cannot.
+  parts on tables the test also looks for slow cases on purpose (the pin
+  with the largest delay to an output, changed alone from many starting
+  values); no case was found where the gates exceed the table, but no
+  proof says they cannot.
+- Values after an X or Z. With every input at 0 or 1 from the start, the
+  two forms never differ in value (0 differences in 68,000 situations).
+  After an X or Z on a control input, several compact parts with state keep
+  a clean 0/1 where their gates hold X, because those parts compute with
+  plain numbers: the fetch stages, the decode stages (through the register
+  file's write address), `rv32i.memory-request`, the execution-status
+  parts, `rv32i.prediction.path`, the flip-flop memory controller, device
+  and endpoint, the memory controllers, and the five-stage core. The test
+  counts these per part and by direction and does not compare their
+  timing. The registers, pipeline registers and memory words follow their
+  gates exactly, X included.
+- Parts that time themselves (DRAM, NOR-flash, the SRAM device and their
+  controllers and endpoints) are compared with their gates only, not with
+  their tables, and only until they start working on their own. Their
+  system-level check is the cycle count below.
 
-None of the three reaches a clocked experiment. The clock is proven on the
+The advanced core on DRAM and on NOR-flash takes the same cycles in both
+forms at every clock tried (program 20: 218, 330, 468 cycles on DRAM and
+136, 202, 268 on NOR-flash at periods 400, 200, 120). At the core's own
+certified clock of 98 neither form finishes on these memories: the
+analysis cannot certify a clock for a system with a self-timed memory, and
+`--period auto` still picks 98 there.
+
+None of the first three reaches a clocked experiment. The clock is proven on the
 gates of the whole system, pulses and simultaneous changes included, and a
 run at that clock gives the same cycles in both forms.
 

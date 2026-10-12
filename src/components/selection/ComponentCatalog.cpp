@@ -337,12 +337,10 @@ std::shared_ptr<const DelayTwin> ComponentCatalog::delayTwin(
     // A part that times itself keeps its table.
     // A held input such as RST is an input like any other to the gate list.
     if ((table.arcs.empty() && table.launches.empty()) || table.self_timed) return nullptr;
-    // Parts with state known to be far over the size a gate list may have.
-    // Finding that out means building all their gates, which a run of a
-    // compact core must not pay for.
-    for (const char* large : {"rv32i.core.", "rv32i.system.", "rv32i.register-file", "rv32i.baseline.decode",
-                              "rv32i.pipeline.stage.decode", "rv32i.single-cycle.decode"})
-        if (request.contract_id.rfind(large, 0) == 0) return nullptr;
+    // Parts known to get no gate list (a whole core is too large). Finding
+    // that out means building all their gates, which a run of a compact
+    // core must not pay for.
+    if (partsWithoutGateList().contains(request.contract_id)) return nullptr;
     std::string key = implementation;
     for (const auto& [name, value] : request.parameters) key += "|" + name + "=" + value;
     static std::mutex guard;
