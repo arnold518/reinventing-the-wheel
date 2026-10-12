@@ -85,6 +85,10 @@ struct ClockSpecification {
     std::string clock_pin; // Fully qualified external clock input pin ID.
     std::vector<ClockInputConstraint> inputs;
     std::vector<ClockCapture> outputs; // Fully qualified external output pin IDs.
+    // Input pins inside the circuit whose value must also be settled `setup`
+    // before the edge: what the compact form of a part needs at that input,
+    // so the period holds for the compact form as well as for the gates.
+    std::vector<ClockCapture> also_captured;
     // One ideal, directly distributed, 50% duty-cycle clock. Strict separation
     // avoids relying on simulator ordering for coincident data/clock events.
     size_t event_separation_ticks = 1;

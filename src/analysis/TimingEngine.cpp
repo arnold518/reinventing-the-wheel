@@ -115,6 +115,24 @@ void Engine::refinePart(int n, const Node& x, bool values) {
         apply(n, out, add(in.at, delay), OPEN, input);
     };
     if (values && case_ && case_->binary_parts) apply(n, BINARY, launch, OPEN, -1);
+    if (mode == Sequenced) {
+        // The state is fixed between edges: RSP_VALID and the response are
+        // out one launch after the edge; REQ_READY is too, unless this state
+        // lets RSP_READY through.
+        const SequencedMode& m = case_->sequenced[x.owner];
+        if (x.output == Valid) apply(n, values ? m.valid : ANY, launch, launch, -1);
+        else if (x.output != Ready) apply(n, ANY, NEVER, launch, -1);
+        else if (m.ready[0] == m.ready[1] && m.ready[1] == m.ready[2]) apply(n, values ? m.ready[0] : ANY, launch, launch, -1);
+        else {
+            arcs({{part.rsp_ready, 1, part.ready_from_ready}});
+            const Fact& in = fact_[part.rsp_ready];
+            const uint8_t out = uint8_t((in.values & LOW ? m.ready[0] : 0) | (in.values & HIGH ? m.ready[1] : 0)
+                                        | (in.values & (X | Z) ? m.ready[2] : 0));
+            if (values && part.ready_from_ready != NEVER && in.at != OPEN)
+                apply(n, out, std::max(launch, add(in.at, part.ready_from_ready)), OPEN, part.rsp_ready);
+        }
+        return;
+    }
     switch (x.output) {
     case Ready:
         if (mode == Empty) { apply(n, values ? HIGH : ANY, launch, launch, -1); break; }

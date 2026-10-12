@@ -130,9 +130,6 @@ int main(int argc,char** argv) {
             automatic_clock=runRV32IExperiment(reference).safe_clock;
             if(automatic_clock.status!=ClockTimingStatus::SafeUnderContracts||!automatic_clock.safe_period_ticks) {
                 for(const auto& d:automatic_clock.diagnostics)std::cerr<<d<<'\n';
-                if(c.memory.technology!=circuit::memory::Technology::FF)
-                    throw std::runtime_error("No clock can be certified yet for a system with this memory; give an explicit --period "
-                        "(the result reports setup_violations, which must be 0)");
                 throw std::runtime_error("No safe clock could be established; no automatic period available");
             }
             c.period=*automatic_clock.safe_period_ticks;

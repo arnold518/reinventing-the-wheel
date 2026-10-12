@@ -257,6 +257,11 @@ class Analysis {
                 + (cap.edge == ClockEdge::Rising ? "rising" : "falling")
                 + " edge, setup " + std::to_string(cap.setup) + ", hold " + std::to_string(cap.hold));
         }
+        for (const auto& cap : clock.also_captured) {
+            phase(cap.edge);
+            captures.emplace_back(node(source(lookup(cap.pin, PinType::INPUT))), cap);
+            report.assumptions.push_back(cap.pin + ": also settled " + std::to_string(cap.setup) + " before the edge");
+        }
         if (const auto io = std::dynamic_pointer_cast<IOComponent>(root))
             for (const auto& [name, p] : io->getAllOutputPins()) if (!external_outputs.contains(p->getID()))
                 diagnostic(p->getID() + ": external output has no sampling requirement");
@@ -313,7 +318,7 @@ class Analysis {
                 return false;
             }
             if (group->cases.size() > clock.maximum_state_cases / work.case_count) {
-                diagnostic("Memory timing state-case budget exhausted");
+                diagnostic("Memory timing state-case budget exhausted (" + group->evidence + ")");
                 return true;
             }
             work.case_count *= group->cases.size();
@@ -511,6 +516,7 @@ class Analysis {
         const auto& g = *graph[0];
         known.binary_parts = clock.binary_startup;
         known.part_mode.assign(g.parts.size(), AnyMode);
+        known.sequenced.assign(g.parts.size(), {});
         size_t selection = mode;
         for (const auto& group : work.groups) {
             const auto& c = group.cases[selection % group.cases.size()];
@@ -520,8 +526,17 @@ class Analysis {
                 if (first == g.first_bit.end() || g.nodes[first->second].kind != Kind::Source) return false;
                 known.known.emplace_back(first->second, static_cast<uint8_t>(1u << unsigned(value)));
             }
+            for (const auto& [pin, values] : c.register_values) {
+                const auto first = g.first_bit.find(pin.get());
+                if (first == g.first_bit.end() || g.nodes[first->second].kind != Kind::Source) return false;
+                known.known.emplace_back(first->second, values);
+            }
             for (size_t part = 0; part < g.parts.size(); ++part)
-                if (g.parts[part].endpoint == group.endpoint.get()) known.part_mode[part] = c.full ? Full : Empty;
+                if (g.parts[part].endpoint == group.endpoint.get()) {
+                    known.part_mode[part] = c.sequenced ? Sequenced : c.full ? Full : Empty;
+                    const auto set = [](LogicValue v) { return static_cast<uint8_t>(1u << unsigned(v)); };
+                    if (c.sequenced) known.sequenced[part] = {{set(c.ready[0]), set(c.ready[1]), set(c.ready[2])}, set(c.valid)};
+                }
         }
         return true;
     }

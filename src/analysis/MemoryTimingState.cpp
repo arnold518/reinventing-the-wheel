@@ -58,15 +58,108 @@ struct Evaluate {
         active.erase(p);values[p]=result;return result;
     }
 };
+
+// The endpoint of a timed memory with its requester. The endpoint's own
+// handshake (BehavioralMemoryEndpoint::evaluate, four-state): PENDING, the
+// response buffer's FULL, and what the sequencer shows, which changes only at
+// a clock edge: idle (ready for a start), working (not ready, no result) or
+// done (result shown). How long the device works is left open, so every
+// number of working cycles is covered, and so is a refresh starting by itself.
+std::optional<MemoryTimingGroup> sequencedStates(const std::shared_ptr<BehavioralMemoryEndpoint>& endpoint,
+    const std::shared_ptr<IOComponent>& request,const std::array<std::shared_ptr<IOComponent>,3>& cells,
+    const std::shared_ptr<PinBase>& mismatch) {
+    enum Sequencer:unsigned{Idle,Working,Done};
+    const auto bit=[](bool v){return v?H:L;};
+    const auto clean=[](LogicValue v){return v==H||v==L?v:X;};
+    struct View{LogicValue ready,valid,accept,finish,full,pending;};
+    const auto view=[&](LogicValue pending,LogicValue full,unsigned seq,LogicValue take,LogicValue issue) {
+        const auto room=either(inv(full),take);
+        const auto complete=both(pending,bit(seq==Done));
+        const auto slot=both(either(inv(pending),both(complete,take)),bit(seq!=Working));
+        const auto ready=both(room,slot),accept=both(ready,issue),finish=both(complete,room);
+        const auto capture=both(both(complete,room),either(full,inv(take)));
+        return View{ready,either(full,complete),accept,finish,
+            either(capture,both(full,inv(take))),either(accept,both(pending,inv(finish)))};
+    };
+    MemoryTimingGroup group;group.endpoint=endpoint;
+    const bool refreshes=endpoint->technology()==memory::Technology::DRAM;
+    // code = registers (27) + 27 * (pending + 3 * full + 9 * sequencer)
+    // After reset the sequencer is not ready until its first edge.
+    std::vector<unsigned> queue{0,243*Working};std::set<unsigned> seen{0,243*Working};size_t transitions=0;
+    std::map<std::array<unsigned,4>,size_t> shown;
+    for(size_t index=0;index<queue.size();++index) {
+        unsigned digits=queue[index];
+        MemoryTimingCase mode;mode.sequenced=true;
+        std::array<unsigned,4> signature{};
+        for(size_t i=0;i<3;++i){mode.registers[cells[i]->getOutputPin("Q")]=LogicValue(digits%3);digits/=3;}
+        const auto pending=LogicValue(digits%3),full=LogicValue(digits/3%3);const unsigned seq=digits/9;
+        const std::array<LogicValue,3> takes{L,H,X};
+        for(size_t i=0;i<3;++i)signature[i]=unsigned(mode.ready[i]=view(pending,full,seq,takes[i],L).ready);
+        signature[3]=unsigned(mode.valid=view(pending,full,seq,L,L).valid);
+        // States in which the endpoint shows the same are one timing case,
+        // with every value the requester's registers take among them.
+        const auto [found,fresh]=shown.emplace(signature,group.cases.size());
+        if(fresh){group.cases.push_back(mode);group.cases.back().registers.clear();}
+        for(const auto& [pin,value]:mode.registers)
+            group.cases[found->second].register_values[pin]|=uint8_t(1u<<unsigned(value));
+        for(unsigned controls=0;controls<64;++controls) {
+            Evaluate e;
+            e.values=mode.registers;
+            e.values[request->getInputPin("RST")]=L;
+            e.values[request->getInputPin("ISSUE")]=LogicValue(controls%4);
+            e.values[request->getInputPin("TAKE")]=LogicValue(controls/4%4);
+            e.values[mismatch]=LogicValue(controls/16);
+            const auto issue=clean(e.get(request->getOutputPin("BUS_REQ_VALID")));
+            const auto take=clean(e.get(request->getOutputPin("BUS_RSP_READY")));
+            const auto now=view(pending,full,seq,take,issue);
+            e.values[request->getInputPin("BUS_REQ_READY")]=now.ready;
+            e.values[request->getInputPin("BUS_RSP_VALID")]=now.valid;
+            unsigned next=0,weight=1;
+            for(size_t i=0;i<3;++i) {
+                if(typeid(*cells[i])==typeid(FlipFlopCellBehavioral) &&
+                    e.get(cells[i]->getInputPin("WE"))!=H)return std::nullopt;
+                auto d=e.get(cells[i]->getInputPin("D"));if(d==LogicValue::HIGH_Z)d=X;
+                next+=unsigned(d)*weight;weight*=3;
+            }
+            next+=27*(unsigned(now.pending)+3*unsigned(now.full));
+            // The sequencer starts and finishes only on a clean 1.
+            std::vector<unsigned> after;
+            const bool start=now.accept==H;
+            if(seq==Done&&now.finish!=H)after={Done};
+            else if(seq!=Working) {
+                after={start?Working:Idle};
+                if(refreshes&&!start)after.push_back(Working);
+            } else {
+                after={Working};
+                if(pending!=L)after.push_back(Done);
+                if(pending!=H)after.push_back(Idle);
+            }
+            for(const auto s:after) {
+                const unsigned code=next+243*s;
+                if(seen.insert(code).second)queue.push_back(code);
+                ++transitions;
+            }
+        }
+    }
+    group.evidence=endpoint->getID()+" + "+request->getID()+": exhaustive actual control-netlist reachability with the timed memory's clocked handshake; "
+        +std::to_string(queue.size())+" states, "+std::to_string(group.cases.size())+" timing cases, "
+        +std::to_string(transitions)+" four-state transitions";
+    return group;
+}
 }
 std::optional<MemoryTimingGroup> memoryTimingStates(
     const std::shared_ptr<BehavioralMemoryEndpoint>& endpoint,const ClockSpecification& clock) {
     try {
-        if(typeid(*endpoint)!=typeid(BehavioralMemoryEndpoint)
+        // A timed memory is taken only with a delay table proven on its
+        // gates that says its interface keeps to the clock.
+        const bool sequenced=endpoint->technology()!=memory::Technology::FF;
+        if(sequenced) {
+            const auto* table=endpoint->getDelays();
+            if(!table||!table->clocked_interface||clock.binary_startup)return std::nullopt;
+        } else if(typeid(*endpoint)!=typeid(BehavioralMemoryEndpoint)
             &&typeid(*endpoint)!=typeid(CompactMemoryEndpoint<8,memory::FFModel>)
             &&typeid(*endpoint)!=typeid(CompactMemoryEndpoint<16,memory::FFModel>)
             &&typeid(*endpoint)!=typeid(CompactMemoryEndpoint<32,memory::FFModel>))return std::nullopt;
-        if(endpoint->technology()!=memory::Technology::FF)return std::nullopt;
         MemoryTimingGroup group;group.endpoint=endpoint;
         const auto ready_source=source(endpoint->getInputPin("RSP_READY"));
         bool always_ready=false;
@@ -74,6 +167,7 @@ std::optional<MemoryTimingGroup> memoryTimingStates(
             always_ready=(static_cast<const ConstantValue<1>&>(*ready_source->getOwner()).getConstantValue()&1)!=0;
         for(const auto& input:clock.inputs)if(!input.edge && input.fixed_value==1)
             if(input.pin==ready_source->getID() || input.pin==ready_source->getOwner()->getID()+"."+ready_source->getName())always_ready=true;
+        if(always_ready&&sequenced)return std::nullopt;
         if(always_ready) {
             // From reset full=0; with TAKE=1, full'=accept && full. Induction
             // holds even for nonbinary request controls (only HIGH accepts).
@@ -104,6 +198,7 @@ std::optional<MemoryTimingGroup> memoryTimingStates(
                 ||source(cell->getInputPin("CLK"))!=source(request->getInputPin("CLK"))
                 ||source(cell->getInputPin("RST"))!=source(request->getInputPin("RST")))return std::nullopt;
         }
+        if(sequenced)return sequencedStates(endpoint,request,cells,mismatch);
         // Three ternary registers (Z captures as X) and one binary endpoint
         // FULL bit: at most 54 states. Reset is the seed; operation holds RST=0.
         std::vector<unsigned> queue{0};std::set<unsigned> seen{0};size_t transitions=0;

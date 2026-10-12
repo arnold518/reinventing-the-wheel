@@ -202,8 +202,9 @@ With the cores' real memory sizes the certified periods are 166
   marked `self_timed`: its launch delays count from whatever caused the
   change. The delays of the logic around it can then be proven, which is what
   a compact controller needs. `safeClock` refuses to certify a period around a
-  self-timed part and says so, so a timed memory is never taken for a
-  zero-wait one.
+  self-timed part and says so, unless the part's table shows that it keeps
+  to the clock from outside (a memory endpoint, see "Memories that time
+  themselves"), so a timed memory is never taken for a zero-wait one.
 
 ### SRAM and DRAM
 
@@ -442,8 +443,8 @@ Gates and compact form give the same cycles, both verified against the
 instruction oracle, in every comparison made (14 runs of each form over
 the four memories, periods 100 to 166), and the compact core sees no setup
 violation from period 100 up (periods 100 to 1000 tried per memory). At 98,
-the core's own certified clock, it sees 51: these memories answer "request
-ready" a little later after the edge than the flip-flop memory does.
+the clock certified with the flip-flop memory, it sees 51: these memories
+answer "request ready" a little later after the edge than that memory does.
 
 Because of that rule the analysis can certify a clock for these systems.
 A self-timed part's contract names the pins that still keep to the clock
@@ -458,15 +459,44 @@ memory device, and the device's outputs only the sequencer. A memory
 controller alone does not: its device pins are its outputs.
 
 That removes the first of two obstacles to certifying a clock for a core
-with such a memory. The second remains: the core's requester and the
+with such a memory. The second was that the core's requester and the
 endpoint depend on each other within a cycle ("request ready" depends on
 "response ready", which depends on "done", which depends on "request
-ready"). For the flip-flop endpoint the analysis resolves this by going
-through every reachable state of the handshake
-(`MemoryTimingState.cpp`); that model does not cover an endpoint with a
-sequencer yet, so the result for these systems is still "unknown"
-(combinational dependency cycle), and `--period auto` refuses them and
-asks for an explicit period.
+ready"). As for the flip-flop endpoint, the analysis resolves this by
+going through every reachable state of the handshake
+(`sequencedStates` in `MemoryTimingState.cpp`):
+
+- The endpoint's own state is PENDING, the response buffer's FULL (both
+  four-state, by the rule of `BehavioralMemoryEndpoint::evaluate`) and what
+  the sequencer shows: idle, working, or done. Because the sequencer speaks
+  only at clock edges, these are fixed between two edges. How many cycles
+  the device works is left open, and a DRAM refresh may start by itself, so
+  every device timing is covered.
+- The requester's three registers are followed through its actual gates,
+  with the core's decisions (issue, take, tag mismatch) free over 0, 1, X, Z.
+- In each state the endpoint shows RSP_VALID as one value and REQ_READY as
+  a function of RSP_READY alone. States that show the same are one timing
+  case, carrying every value the requester's registers take among them (a
+  superset of the reachable states, so nothing is left out): 6 cases per
+  SRAM, ROM or NOR-flash endpoint, 8 per DRAM endpoint.
+- The engine settles each pair of cases (`Sequenced` part mode). The loop
+  closes only in states where REQ_READY lets RSP_READY through, and there
+  the requester's registers already decide the rest.
+
+The certified period is 92 for the gates of the advanced core with any of
+the four memories. The compact core's table cannot tell states apart and
+asks for REQ_READY earlier (19 ticks before the edge for the fetch port,
+30 for the data port), so the experiment adds what the compact core needs
+at its memory pins to the same analysis (`ClockSpecification::also_captured`).
+`--period auto` then gives 102, and at that period gates and compact form
+agree with 0 setup violations (program 20: SRAM and ROM 400 cycles,
+NOR-flash 334, DRAM 583; all verified). With the flip-flop memory the
+period stays 98 and this addition is not applied.
+
+Limits: the state model needs the endpoint wired to the core's requester
+(`RV32IMemoryRequest`) and a delay table that says `clocked_interface`; a
+binary-startup certificate (`--binary-startup`) is not available for timed
+memories; the gate-level endpoint itself is not analysed, its table is.
 
 An experiment reports `setup_violations` in its result and warns on stderr
 when a compact part saw an input change inside its setup time, so a run at

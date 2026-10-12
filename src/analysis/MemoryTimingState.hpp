@@ -9,6 +9,15 @@ namespace circuit::analysis::detail {
 struct MemoryTimingCase {
     bool full = false;
     std::map<std::shared_ptr<PinBase>, LogicValue> registers;
+    // A timed memory (SRAM, DRAM, ROM, NOR flash): between two clock edges
+    // its endpoint shows RSP_VALID as one value and REQ_READY as a function
+    // of RSP_READY alone (indexed by RSP_READY = 0, 1, X).
+    // Such a case stands for every reachable state that shows these values:
+    // `register_values` is the set of values (bit 1 << value) each requester
+    // register takes among them.
+    bool sequenced = false;
+    LogicValue ready[3] = {}, valid = LogicValue::LOW;
+    std::map<std::shared_ptr<PinBase>, uint8_t> register_values;
 };
 struct MemoryTimingGroup {
     std::shared_ptr<BehavioralMemoryEndpoint> endpoint;

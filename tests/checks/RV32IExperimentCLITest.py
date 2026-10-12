@@ -47,15 +47,17 @@ class ExperimentCLI(unittest.TestCase):
                 self.assertEqual(cycle, [])
             self.assertNotIn("recommended_period", safety)
         # A matching port shape must NOT grant the FF contract to a timed device.
-        p = subprocess.run([BINARY, "--core", "advanced", "--memory", "sram", "--safe-clock", "--allocation-limit-mib", "512"],
-                           capture_output=True, text=True, timeout=45)
-        self.assertEqual(p.returncode, 2, p.stderr)
-        safety = json.loads(p.stdout)["safe_clock"]
-        self.assertEqual(safety["status"], "unknown")
-        self.assertIsNone(safety["safe_period_ticks"])
-        # A timed memory's endpoint keeps to the clock from outside, but its
-        # handshake with the requester has no state model yet: no clock is certified.
-        self.assertTrue(any("dependency cycle" in d for d in safety["diagnostics"]))
+        # A timed memory's endpoint keeps to the clock from outside, and its
+        # handshake with the requester is covered state by state: a clock is
+        # certified, and it also covers what the compact core needs.
+        safety = run("--core", "advanced", "--memory", "sram", "--safe-clock")["safe_clock"]
+        self.assertEqual(safety["status"], "safe-under-contracts")
+        self.assertEqual(safety["safe_period_ticks"], 102)
+        self.assertEqual(safety["checked_state_cases"], safety["state_case_count"])
+        self.assertTrue(any("timed memory's clocked handshake" in e for e in safety["state_evidence"]))
+        timed = run("--core", "advanced", "--memory", "sram", "--program", "20", "--period", "auto")
+        self.assertTrue(timed["verified"])
+        self.assertEqual(timed["setup_violations"], 0)
         # The candidate-clock mode is retired; its option is refused.
         run("--core", "single", "--timing", okay=False)
         run("--safe-clock", "--fidelity", "behavioral", okay=False)

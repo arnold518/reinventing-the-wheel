@@ -153,9 +153,10 @@ oracle; it is not an upstream benchmark pass.
 Every run reports `setup_violations`: how often a compact part saw an input
 change inside its setup time. Anything above 0 means the clock is too fast
 for that system (the run also warns on stderr), and the compact form may
-then differ from its gates. With `--memory sram|dram|rom|nor-flash` give an
-explicit period, at least 100 for the advanced core: no clock can be
-certified for those systems yet, so `--period auto` refuses them.
+then differ from its gates. `--period auto` certifies a clock for
+`--memory sram|dram|rom|nor-flash` too (102 for the advanced core, against
+98 with the flip-flop memory); that period also covers what the compact
+core's table needs at its memory pins, so a compact run reports 0.
 
 ## Windows
 

@@ -1,3 +1,4 @@
+#include "components/selection/ProvenPartDelays.hpp"
 #include "analysis/RV32IExperiment.hpp"
 #include "analysis/ExperimentClock.hpp"
 #include "analysis/RV32IWorkloads.hpp"
@@ -117,9 +118,22 @@ RV32IExperimentResult runRV32IExperiment(const RV32IExperimentConfig& config) {
             rv32i::memoryView(imem)->clearMemoryImage();
             rv32i::memoryView(dmem)->clearMemoryImage();
         }
+        // Two timed memories: up to 8 handshake cases each (DRAM), 64 together.
+        clock.maximum_state_cases=256;
         clock.clock_pin="EXPERIMENT.CLK";
         clock.inputs={{"EXPERIMENT.RST",std::nullopt,{},0},
                       {"EXPERIMENT.CORE.ENABLE",std::nullopt,{},1}};
+        // A timed memory answers at a clock edge and lets RSP_READY through
+        // to REQ_READY late in the cycle. The gates of the core need that
+        // only shortly before the edge in the states where it happens; the
+        // compact core's table cannot tell states apart and asks for more.
+        // The period covers both, so a compact run stays inside its setup times.
+        if(config.memory.technology!=circuit::memory::Technology::FF)
+            if(const auto* compact=circuit::provenPartDelays(core->getContractId()+".behavioral",
+                    config.core=="advanced"?config.prediction.parameters():circuit::ParameterMap{}))
+                for(const auto& [pin,setup]:compact->setup)
+                    if(pin.starts_with("IMEM_")||pin.starts_with("DMEM_"))
+                        clock.also_captured.push_back({"EXPERIMENT.CORE."+pin,ClockEdge::Rising,setup,0});
         // No state-dependent protocol cuts. Unsupported contracts return
         // Unknown, never a guessed clock.
         result.safe_clock=CircuitTimingAnalyzer::safeClock(root,clock);

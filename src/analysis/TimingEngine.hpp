@@ -28,7 +28,10 @@ struct Fact {
     bool operator==(const Fact&) const = default;
 };
 
-enum PartMode : uint8_t { AnyMode, Empty, Full };
+enum PartMode : uint8_t { AnyMode, Empty, Full, Sequenced };
+// A timed memory's endpoint in one handshake state: RSP_VALID, and REQ_READY
+// for RSP_READY = 0, 1, X. Each is a set of one value.
+struct SequencedMode { uint8_t ready[3] = {ANY, ANY, ANY}, valid = ANY; };
 
 // What a caller knows beyond the circuit itself, for one of a set of cases
 // that together cover every situation (for example the reachable states of a
@@ -36,6 +39,7 @@ enum PartMode : uint8_t { AnyMode, Empty, Full };
 struct Case {
     std::vector<std::pair<int, uint8_t>> known; // source bit -> set of final values
     std::vector<uint8_t> part_mode;             // per Graph::parts entry
+    std::vector<SequencedMode> sequenced;       // per Graph::parts entry, where part_mode is Sequenced
     bool binary_parts = false;                  // part and register-file outputs are 0 or 1
 };
 
