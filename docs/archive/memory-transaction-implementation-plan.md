@@ -4,11 +4,11 @@ Historical implementation record (2026-09-18). The compact transaction model
 described here as `MemoryContainer` is now `BehavioralMemoryEndpoint`.
 `MemoryContainer` now means a scalable native device without transaction state;
 see [3.1.6](../../site-docs/memory/3.1.6.md), [3.3](../../site-docs/memory/3.3.md), and
-[current CPU integration](../rv32i-memory-integration.md). Measurements below belong
+[current CPU integration](../reference/rv32i-memory-integration.md). Measurements below belong
 to the earlier architecture and are not current performance claims.
 
 The legacy array contracts/factories retained during that migration have since
-been retired; see [cleanup](../rv32i-cleanup.md).
+been retired; see [cleanup](rv32i-cleanup.md).
 
 The current protocol is v2: it permits zero-wait completion and same-edge
 response consumption/new request acceptance. FF bypasses native sequencing;

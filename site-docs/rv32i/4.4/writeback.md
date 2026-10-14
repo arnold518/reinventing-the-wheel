@@ -48,7 +48,7 @@ WritebackOutputs writeback(const WritebackInputs& i) {
 
 #### Unknown inputs and timing
 
-For a known selector, the behavioral model copies the selected bit vector (or emits zero for selector 0), preserving selected X/Z bits. An unknown selector makes its output X. Structural mux logic can resolve or transform X/Z differently; the registered equivalence scope is settled binary values. Neither implementation stores a result. Behavioral output delay is one abstract tick; structural delay follows the mux tree.
+For a known selector, the behavioral model copies the selected bit vector (or emits zero for selector 0), preserving selected X/Z bits. An unknown selector makes its output X. Structural mux logic can resolve or transform X/Z differently; the registered equivalence scope is settled binary values. Neither implementation stores a result. A catalog-selected behavioral output uses the mux tree’s characterized delay, shortened to its actual settling time when a delay twin can answer. Structural fidelity exposes each mux transition.
 
 ### Implementation
 

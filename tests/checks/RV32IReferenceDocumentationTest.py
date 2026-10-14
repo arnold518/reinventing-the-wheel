@@ -21,7 +21,7 @@ DOC_ROOT = REPOSITORY / "site-docs/rv32i"
 DOCUMENTS = {str(path.relative_to(DOC_ROOT)): path.read_text()
              for path in sorted(DOC_ROOT.rglob("*.md"))}
 DOCUMENT = "\n\n".join(DOCUMENTS.values())
-DEFERRED_CORE = (REPOSITORY / "docs/rv32i-single-cycle-documentation-notes.md").read_text()
+DEFERRED_CORE = (REPOSITORY / "docs/reference/rv32i-single-cycle-documentation-notes.md").read_text()
 PROGRAM_COUNT = int(re.search(r"\bProgramCount\s*=\s*(\d+)",
     (REPOSITORY / "include/rv32i/RV32IValidationConfig.hpp").read_text())[1])
 PROGRAM_DOCUMENTS = {int(match[1]): source for path, source in DOCUMENTS.items()

@@ -84,7 +84,7 @@ ExecuteOutputs execute(const ExecuteInputs& i) {
 
 #### Unknown inputs and timing
 
-Structural muxes/gates may isolate unused unknown data. The behavioral stage instead sets all three outputs to X if **any input bit** is nonbinary, even an unused operand or selector. Equivalence therefore covers settled binary inputs only. There is no clock or stored state; gate-propagation times differ from the compact one-tick model.
+Structural muxes/gates may isolate unused unknown data. The behavioral stage instead sets all three outputs to X if **any input bit** is nonbinary, even an unused operand or selector. Equivalence therefore covers settled binary inputs only. There is no clock or stored state. The catalog-selected compact stage uses gate-derived delays, while its settled-value computation does not reproduce intermediate gate glitches.
 
 ### Implementation
 

@@ -52,7 +52,7 @@ Arithmetic addsub(uint32_t a, uint32_t b, bool sub) {
 
 #### Unknown inputs and timing
 
-Each bit follows XOR/AND/OR full-adder logic. A known controlling zero or one can mask an unknown; the entire word is not automatically discarded. Structural carries propagate through a prefix network; the behavioral implementation emits settled values after one abstract delay tick.
+Each bit follows XOR/AND/OR full-adder logic. A known controlling zero or one can mask an unknown; the entire word is not automatically discarded. Structural carries propagate through a prefix network. The catalog-selected behavioral implementation uses gate-derived path delays; a supported delay twin can time how far the carry propagates for the current operands.
 
 ### Implementation
 
@@ -174,7 +174,7 @@ A shared right-shift network selects distances 1, 2, 4, 8, and 16. Input/output 
 
 #### Behavioral implementation
 
-`Shifter32Behavioral` reproduces the reversal, each mux stage, and fill logic using four-state values, then schedules the result with one abstract delay tick.
+`Shifter32Behavioral` reproduces the reversal, each mux stage, and fill logic using four-state values. Catalog construction gives it gate-derived output delays, with a delay twin where supported to time the current shift and data.
 
 ### Examples
 
@@ -475,7 +475,7 @@ The root contains `CONTROL`, `ARITHMETIC`, `LOGIC`, `SHIFT`, `COMPARE`, `RESULT_
 
 #### Behavioral implementation
 
-`ALU32Behavioral` computes the selected operation and flags directly and publishes each output when the gate-level ALU would have settled for the same operands: it keeps a flat list of those gates and times every change on it, never earlier than the gates and never later than the delay proven for the selected operation. The registered contract is `rv32i.alu32`; structural remains available. Inside a structural ALU the arithmetic, logic, shift, and zero-detect units are always built from gates; each keeps its own behavioral form when used standalone.
+`ALU32Behavioral` computes the selected operation and flags directly. When its delay twin agrees with that result, the catalog-selected part can use the current operands' gate-list settling time within its per-operation delay-table bound; an older pending result still retains publication order. If the twin cannot answer, the table supplies the timing. The registered contract is `rv32i.alu32`; structural remains available. Inside a structural ALU the arithmetic, logic, shift, and zero-detect units are always built from gates; each keeps its own behavioral form when used standalone.
 
 ### Examples
 

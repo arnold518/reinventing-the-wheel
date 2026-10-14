@@ -96,7 +96,7 @@ Full-width payloads use `Register<32>`. In core instances, `FETCH_STATUS` and `M
 
 ### Behavioral implementation
 
-`RV32IPipelineRegisterBehavioral` models known clock edges, hold, flush, reset, and bitwise unknown merging. With the compact core schema, it zeros unstored bits at capture and preserves the same 32-bit observable packet as the structural implementation. Standalone instances retain arbitrary input bits.
+`RV32IPipelineRegisterBehavioral` models known clock edges, hold, flush, reset, and four-state capture. When a write control is uncertain, a stored bit stays zero only if both its held and incoming values are zero; every other pair becomes `X`, including two ones. With the compact core schema, it zeros unstored bits at capture and preserves the same 32-bit observable packet as the structural implementation. Standalone instances retain arbitrary input bits.
 
 ## Examples
 

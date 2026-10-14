@@ -261,9 +261,7 @@ nav:
           - 4.6.4. Prediction Recovery: rv32i/4.6/recovery.md
           - 4.6.5. Memory Wait Handling: rv32i/4.6/memory-waits.md
           - 4.6.6. Complete Advanced Core: rv32i/4.6/core.md
-      - 4.7. Experiment Results:
-          - rv32i/experiments.md
-          - Historical Clock Analysis: rv32i/4.7/timing-history.md
+      - 4.7. Experiment Results: rv32i/experiments.md
   - Blog:
       - blog/index.md
   - Simulator: visualizer.md

@@ -1,11 +1,11 @@
 # Complete Circuit Building Workflow
 
-> **Use [adding-a-component.md](adding-a-component.md) for the current steps.** This page is a historical walkthrough.
+> **Use [adding-a-component.md](../guides/adding-a-component.md) for the current steps.** This page is a historical walkthrough.
 
 > Historical API examples below predate the current component catalog. New components must use `Component::create`, register their contracts/fidelities and evidence, and place reusable scenarios in `include/tests` / `src/tests`. Register scenarios in `TestRegistry.cpp` and invoke them through `SimulationTestRunner`; do not add a Python class or executable per test. Build serially (`-j1`) on this host. Consult `docs/rv32i-cleanup.md` for retired interfaces.
 
 For current menu registration and native/browser execution, see
-[Test organization](test-organization.md). New visible components also need a
+[Test organization](../reference/test-organization.md). New visible components also need a
 title/group in `visualizer-v2/static/scenarios.json`; new browser/WASM checks
 belong in `tests/web-tests.json`.
 

@@ -59,4 +59,4 @@ A clock cycle must allow its combinational paths to settle. The test period is a
 | [4.5.7. Dependencies and Control](control.md) | Stalls, branch waits, terminal priority |
 | [4.5.8. Complete Core](core.md) | Assembly, public IO, program verification |
 
-All behavioral equivalence claims in this section cover settled binary signals after reset. Compact models are not analog timing models and do not claim structural X/Z propagation equivalence. Structural subcomponents remain selectable for inspecting lower-level circuitry.
+All behavioral equivalence claims in this section cover settled binary signals after reset. Catalog-selected compact stages and the complete core use delays characterized from their structural forms; eligible smaller parts can use a delay twin to time current values, while the large core uses its conservative table. Compact models are not analog timing models and do not claim structural X/Z propagation equivalence. Structural subcomponents remain selectable for inspecting lower-level circuitry.

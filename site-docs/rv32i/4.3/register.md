@@ -116,7 +116,7 @@ Unlike [FFWord&lt;W&gt;](../../memory/3.1.1.md), this register has no byte mask 
 
 #### Behavioral implementation
 
-[`RegisterBehavioral`](https://github.com/arnold518/reinventing-the-wheel/blob/github-pages/src/modules/storage/RegisterBehavioral.cpp) stores one W-bit logic vector and the previous clock value, applying the rules above with one abstract output-delay tick. The structural register can instead select behavioral `FlipFlopCell` children. Both choices retain the same external pins. Simulator output history supplies `Q` when scrubbing the timeline.
+[`RegisterBehavioral`](https://github.com/arnold518/reinventing-the-wheel/blob/github-pages/src/modules/storage/RegisterBehavioral.cpp) stores one W-bit logic vector and the previous clock value, applying the rules above. Catalog construction attaches gate-derived clock-to-output and setup timing; a supported delay twin can time the current state and inputs. The structural register can instead select behavioral `FlipFlopCell` children. Both choices retain the same external pins. Simulator output history supplies `Q` when scrubbing the timeline.
 
 #### RV32I integration
 
@@ -189,7 +189,7 @@ One `DFlipFlop` named `STATE`, with `D`, `CLK`, and `RST` wired straight in and 
 
 #### Behavioral implementation
 
-[`ClockedStateBitBehavioral`](https://github.com/arnold518/reinventing-the-wheel/blob/github-pages/src/modules/storage/ClockedStateBit.cpp) stores one logic value and the previous clock level and applies the rules above with one abstract output-delay tick.
+[`ClockedStateBitBehavioral`](https://github.com/arnold518/reinventing-the-wheel/blob/github-pages/src/modules/storage/ClockedStateBit.cpp) stores one logic value and the previous clock level and applies the rules above. A catalog-selected instance uses clock-to-output and setup delays characterized from the structural state bit.
 
 #### Where it is used
 

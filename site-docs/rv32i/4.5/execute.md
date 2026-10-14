@@ -48,7 +48,7 @@ The [shared Packet type](core.md#binary-example-types) carries instruction field
 
 ### Behavioral implementation
 
-`executePacket` evaluates the same binary ALU, branch conditions, targets, and status without a simulator-owned register. The registered family is `rv32i.baseline.execute`. The behavioral stage publishes after the delays proven on the gates (never earlier than them); compare values after settling.
+`executePacket` evaluates the same binary ALU, branch conditions, targets, and status without a simulator-owned register. The registered family is `rv32i.baseline.execute`. A catalog-selected behavioral stage uses gate-derived per-path delays and, where available, a delay twin for the current values. Compare values after settling; the checked equivalence scope is binary inputs.
 
 ## Examples
 

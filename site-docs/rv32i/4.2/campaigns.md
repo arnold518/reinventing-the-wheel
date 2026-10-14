@@ -74,13 +74,16 @@ Memory provenance records binary hashes and start time, but currently does not i
 
 Measurement repetitions omit repeated oracle execution and must match the checked run's signature. Their individual `validated` field need not be true: read the phase and its checked counterpart together. Across cores the driver checks workload/final-state fingerprints and retirement counts, not equality of cycles. It rejects source/binary changes during an RV32I campaign.
 
-## Reading results
+## Interpreting campaign output
 
 Compare the same image, input, measurement window, memory configuration, and startup contract. Use cycles/CPI for scheduling and modeled ticks for clock-adjusted simulated execution; use host seconds/events/RSS for simulator cost. Observation counters overlap and cannot be added as a CPI breakdown. An explicit common `--period` is a scheduling experiment, not a certified hardware-speed claim.
 
 A missing `COMPLETE`, timeout, budget exhaustion, or failed verifier is an incomplete campaign. Existing artifacts remain useful for diagnosis but are not a complete result set. Increase budgets deliberately after a small run; do not parallelize large structural builds/runs on a memory-constrained host.
 
-[§ 4.7](../experiments.md) retains earlier measurements as dated snapshots. These instructions do not imply those experiments were rerun on the current source.
+Completed campaign coverage, measured values, clock certificates and their
+source snapshots are reported in [§ 4.7](../experiments.md). Keep the
+recorded fidelity and completion artifacts with each run when applying this
+setup to a new checkout.
 
 ## Source and tests
 
@@ -88,3 +91,6 @@ A missing `COMPLETE`, timeout, budget exhaustion, or failed verifier is an incom
 - `tools/rv32i-performance/experiment.py`: RV32I selection, calibration, checking, and recording.
 - `tools/rv32i-performance/benchmark_suite.py`: the 15-family and 23-case panels.
 - `BenchmarkCampaignCLITest`, `RV32IBenchmarkCLITest`: bounded campaign/artifact regression coverage.
+- `FullEmbenchCampaignTest`, `BackgroundCampaignResumeTest`: frozen-campaign
+  and recovery checks using small or synthetic fixtures; see the
+  [infrastructure test reference](verification/infrastructure.md).

@@ -109,7 +109,7 @@ constraint. The core emits READ/WRITE, not the flash endpoint's PROGRAM/ERASE
 operations. Thus flash is not a writable RAM substitute. Caches are not required
 for any of these connections and are outside the current configuration.
 
-The [cross-core compatibility table](../rv32i-memory-integration.md#memory-compatibility-by-core)
+The [cross-core compatibility table](../reference/rv32i-memory-integration.md#memory-compatibility-by-core)
 contrasts this behavior with the single-cycle and baseline cores: they require
 zero-wait FF endpoints and cannot automatically stall for a delayed replacement.
 

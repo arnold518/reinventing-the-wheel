@@ -24,6 +24,12 @@ The two logical memories do not alias. ELF segments are initially copied into bo
 
 Single-cycle and baseline require zero-wait FF endpoints and cannot simply be attached to a delayed device. Advanced supports memory waits. The main comparison holds memory constant with zero-wait FF and **no caches**. ROM/flash are not substitutes for ordinary writable data RAM.
 
+With SRAM, DRAM, ROM or NOR-flash, the sequencer exposes a finished device
+operation, its result and backend readiness to the request/response port at the
+next clock edge. The advanced core waits for that response; its measured cycles
+include this clocked handoff. The [timing contract](timing.md#core-and-memory-scope)
+describes which of these systems have a certified automatic period.
+
 Simulator, register-file and memory histories are disabled for long headless runs. Functional state and counters remain active; the absence of a timeline must not be interpreted as an empty program.
 
 ## Fidelity

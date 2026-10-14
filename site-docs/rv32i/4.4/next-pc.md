@@ -58,7 +58,7 @@ The structural implementation follows its OR/AND gates, mux, and alignment check
 
 #### Behavioral implementation
 
-`BehavioralStage`'s NextPC branch computes selection and qualified alignment directly with one abstract output delay tick. The family is `rv32i.single-cycle.next-pc`.
+`BehavioralStage`'s NextPC branch computes selection and qualified alignment directly. Catalog selection attaches output delays characterized from the structural selection and alignment circuit. The family is `rv32i.single-cycle.next-pc`.
 
 ### Examples
 

@@ -62,6 +62,11 @@ Each checked structural and behavioral run independently checks architectural st
 
 This is complete-program aggregate equivalence, **not a cycle-by-cycle wire-trace comparison or a formal proof**. The structural reference expands the CPU datapath but keeps the existing compact register/storage abstractions. The short differential suite remains responsible for settled cycle-trace checks.
 
+The [current result coverage](../../experiments.md#completed-campaign-coverage)
+separates the checked-in ELF fixtures from the projected full Embench suite.
+This reduced-work middle suite has not been rerun on the current source, so
+§ 4.7 does not present its older measurements as current results.
+
 ## Measurement and running
 
 Build explicitly from the existing pinned source checkout and verified multilib compiler; neither ordinary tests nor the campaign download or compile automatically. Output directories must be new.

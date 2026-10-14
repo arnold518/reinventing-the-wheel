@@ -4,6 +4,8 @@
 
 | Component | Description | Structural | Behavioral |
 | --- | --- | :---: | :---: |
+| `RV32IFetchStage` | Fetch PC and IF/ID packet; advanced core uses prediction's external next PC | Yes | Yes |
+| `RV32IMemoryStage` | Memory access and MEM/WB packet with request and forwarding signals | Yes | Yes |
 | `RV32IForwardingUnit` | Select the newest available operand | Yes | Yes |
 | `RV32IHazardDetectionUnit` | Detect the remaining immediate load dependency | Yes | Yes |
 | `RV32IPredictionCounter` | One-bit / saturating two-bit state transition | Yes | Yes |
@@ -42,4 +44,4 @@ The ALU, register file, instruction decoding, packet encoding, and architectural
 
 Each unblocked instruction advances one stage at each rising edge. After filling, an independent instruction stream can retire one instruction per cycle. A single instruction still crosses five stages. Hazards, prediction misses, and memory waits reduce throughput.
 
-Both fidelities implement the same settled binary signals and clock-edge behavior after reset. Gate propagation times are not a measured hardware frequency. Caches, BTBs, return-address stacks, speculative memory writes, and multiple outstanding requests are outside this section.
+Both fidelities implement the same settled binary signals and clock-edge behavior after reset. Catalog-selected behavioral components carry gate-derived delay tables; smaller eligible parts can use a delay twin for the current values, while the complete core and self-timed memory parts use their tables. Propagation delays can vary within a run, while the selected CPU clock period is fixed. Neither is a measured hardware frequency. Caches, BTBs, return-address stacks, speculative memory writes, and multiple outstanding requests are outside this section.

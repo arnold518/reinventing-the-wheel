@@ -14,6 +14,8 @@ An endpoint/controller knows how to operate its memory device. A CPU requester r
 
 The full requester pin contract and binary C++ state machine remain in [4.3.5. Memory Access](../4.3/memory-access.md). The advanced core instantiates `FETCH_REQUEST` and `DATA_REQUEST`, one per port. A zero-wait request and response can complete on the same edge through the bypass. Once captured, a request's payload stays stable until accepted; acceptance is not the same event as completion. Each accepted store occurs exactly once.
 
+The core's `FETCH` child is `RV32IFetchStage`. In this assembly, `external_next_pc=1` makes `REDIRECT_PC` the PC register's next value from prediction; `PC_REDIRECT` remains on the shared stage interface but does not select a local PC+4 path. `FETCH_VALID` qualifies the outgoing IF/ID packet while `FETCH_PC` and `IMEM_ADDR` expose the stored byte PC. The `MEMORY` child is `RV32IMemoryStage`: it consumes the EX/MEM packet and `DMEM_READ_DATA`/`DMEM_FAULT`, emits the MEM/WB packet and stage-local memory fields, and exposes `LOAD_REQUEST`, `STORE_REQUEST`, faults, and forwarding signals to the coordinator and later stages. Neither child holds a pending memory transaction; the requesters own that state.
+
 ## Pipeline behavior
 
 | Condition | Fetch / IF/ID | ID/EX, EX/MEM, MEM/WB | Register write / training |

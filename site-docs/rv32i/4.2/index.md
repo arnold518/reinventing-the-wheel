@@ -14,7 +14,7 @@ Reference for the workload catalogue, execution contracts, verification equipmen
 | [4.2.4. Generated workloads](workloads/index.md) | Three legacy loops and twelve parameterized workload families |
 | [4.2.5. Compiled workloads](compiled/index.md) | Bare-metal ELF boundary, small fixtures, and nineteen pinned Embench sources |
 | [4.2.6. Verification and equivalence](verification/index.md) | Every benchmark validation suite and the limits of its evidence |
-| [4.2.7. Campaigns and artifacts](campaigns.md) | Presets, reproducibility, commands, output schema, and interpreting results |
+| [4.2.7. Campaigns and artifacts](campaigns.md) | Presets, reproducibility, output schema, and how to compare runs |
 
 ## Terms and inventory
 
@@ -43,4 +43,4 @@ A behavioral single-cycle model calls the ISA oracle internally; comparing those
 
 The shared record and campaign entry point already serve RV32I and memory benchmarks. Memory scenarios are summarized in [architecture](architecture.md#other-domains); their device contracts remain in [chapter 3](../../memory/3.1/index.md). Future cache and accelerator runners can reuse these records, but no cache or accelerator performance result is implied here.
 
-Fixed programs have embedded reference simulations and complete checkpoint tables. Generated and compiled workloads currently use the headless runner. Historical measurements belong in [4.7](../experiments.md), not in the workload definitions.
+Fixed programs have embedded reference simulations and complete checkpoint tables. Generated and compiled workloads currently use the headless runner. This chapter specifies how to run and verify experiments; [§ 4.7](../experiments.md) records dated outcomes and their limits.

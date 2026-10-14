@@ -1,6 +1,6 @@
 # Benchmark system
 
-The complete published reference is now [§ 4.2. Benchmarking and Verification](../site-docs/rv32i/4.2/index.md): execution/fidelity contracts, every fixed/generated workload, compiled sources, verification suites, and campaign artifacts. This file remains a compact developer overview.
+The complete published reference is now [§ 4.2. Benchmarking and Verification](../../site-docs/rv32i/4.2/index.md): execution/fidelity contracts, every fixed/generated workload, compiled sources, verification suites, and campaign artifacts. This file remains a compact developer overview.
 
 The benchmark system uses one result envelope for processor, memory and future
 accelerator measurements. Domain runners retain their own execution rules.

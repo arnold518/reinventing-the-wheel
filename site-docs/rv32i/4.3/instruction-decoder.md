@@ -231,7 +231,7 @@ These helpers are fixed structural implementations, not additional behavioral va
 
 #### Behavioral implementation
 
-`RV32IDecodeControlBehavioral` uses `RV32IDecoder::decode` and `RV32IControl::fromDecoded`, converts their enums to the public pin encodings, and schedules outputs after one abstract delay tick. It is registered under `rv32i.decode-control` alongside the structural implementation.
+`RV32IDecodeControlBehavioral` uses `RV32IDecoder::decode` and `RV32IControl::fromDecoded`, converts their enums to the public pin encodings, and publishes outputs using gate-derived, output-specific delays when selected through the catalog. It is registered under `rv32i.decode-control` alongside the structural implementation.
 
 ### Examples
 

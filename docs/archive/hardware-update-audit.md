@@ -276,7 +276,7 @@ constructed by every structural `FFWord` if no diagnostic depends on its path.
 Do not bypass a gate blindly for `Z` inputs: `Z AND 1` becomes `X`, while an
 identity Rewire preserves `Z`. Preserve the storage contract's defined domain.
 
-Evidence: [Register32](../../src/modules/memory/Register.cpp),
+Evidence: historical `src/modules/memory/Register.cpp` (retired),
 [register file](../../src/modules/rv32i/RegisterFile32x32.cpp),
 [FFWord](../../include/modules/memory/FFWord.hpp).
 
@@ -547,7 +547,7 @@ Evidence: [payloads and transaction forwarding](../../src/modules/memory/MemoryC
 [requester](../../src/modules/rv32i/RV32IMemoryRequest.cpp),
 [FF response path](../../src/modules/memory/MemoryFFController.hpp),
 [endpoint catalog](../../src/modules/memory/MemoryEndpointCatalog.cpp),
-[Register32 family](../../src/modules/memory/Register.cpp),
+historical `src/modules/memory/Register.cpp` family (retired),
 [FF families](../../src/modules/memory/FFMemory.cpp),
 small register file (since retired),
 [FFMemory](../../include/modules/memory/FFMemory.hpp),
@@ -606,7 +606,7 @@ do not suppress unsupported-state diagnostics or just assume the old
 sufficient-clock certificate covers it.
 
 Evidence: [payload construction](../../src/modules/memory/MemoryController.cpp),
-[Register32](../../src/modules/memory/Register.cpp),
+historical `src/modules/memory/Register.cpp` (retired),
 [byte-masked FFWord](../../include/modules/memory/FFWord.hpp),
 [width dispatch](../../src/modules/memory/DigitalMemory.cpp),
 [storage profiles](../../src/modules/rv32i/RV32IBuildProfiles.cpp),
@@ -754,5 +754,5 @@ question warrants it.
 
 Evidence: [experiment profiles](../../src/analysis/RV32IExperiment.cpp),
 [frozen campaign runner](../../tools/benchmarks/run-full-embench-background.py),
-[previous timing optimization](../rv32i-circuit-timing-optimization.md),
-[previous logic optimization](../rv32i-logic-timing-optimization.md).
+[previous timing optimization](rv32i-circuit-timing-optimization.md),
+[previous logic optimization](rv32i-logic-timing-optimization.md).

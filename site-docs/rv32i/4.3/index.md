@@ -30,6 +30,16 @@ There is no separate program-counter block: the stage-wise cores distribute PC s
 
 Each component reference follows the same pattern: **IO pins → behavior and C++ example → structural/behavioral implementation → examples and embedded simulation → tests**. Component tables distinguish registered structural and behavioral implementations. Example tables include all recorded checkpoints and their simulation times.
 
+Catalog-selected behavioral building blocks receive per-path delay tables
+characterized from their structural implementations. Where a delay twin is
+available, actual input values and state can shorten publication to the gate
+list's settling time; otherwise the table supplies a conservative delay.
+Clocked parts also carry clock-to-output and setup information. The register
+file uses its table without a delay twin because its large gate list brought
+no measured timing benefit. These delays are simulator ticks, distinct from
+the certified period of a complete core. Directly created parts without a
+matching table use their constructor delay.
+
 ## Structural organization in the visualizer
 
 | Reference | Organization |

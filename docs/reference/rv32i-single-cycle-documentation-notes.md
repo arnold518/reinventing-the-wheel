@@ -1,6 +1,6 @@
 # Single-cycle core: supporting reference notes
 
-The published stage and core references are now [§4.4](../site-docs/rv32i/4.4/index.md). This working note retains the core-specific material and source markers originally separated from §4.1.4, including the host/reference APIs checked by the documentation tests. The public instruction-level reference remains [§4.1](../site-docs/rv32i/4.1/index.md).
+The published stage and core references are now [§4.4](../../site-docs/rv32i/4.4/index.md). This working note retains the core-specific material and source markers originally separated from §4.1.4, including the host/reference APIs checked by the documentation tests. The public instruction-level reference remains [§4.1](../../site-docs/rv32i/4.1/index.md).
 
 The published core pin table is checked against the implementation by `RV32IReferenceDocumentationTest`. Source markers are retained here for source validation and internal API reference.
 
@@ -43,7 +43,7 @@ The internal `stepWithoutDataMemoryWrite()` variant computes the same instructio
 
 ## Core IO pins
 
-See the authoritative [complete core IO table](../site-docs/rv32i/4.4/core.md#io-pins). Both memory ports use the universal byte-addressed REQ/RSP interface, not the old native word-address pins. Pin values are binary at supported execution checkpoints.
+See the authoritative [complete core IO table](../../site-docs/rv32i/4.4/core.md#io-pins). Both memory ports use the universal byte-addressed REQ/RSP interface, not the old native word-address pins. Pin values are binary at supported execution checkpoints.
 
 Both ports connect to zero-wait FF memory endpoints. Their controllers translate requests to native FF storage operations without adding a memory cycle. CLK is shared; native storage reset is tied low so CPU reset preserves images. Two combinational `RV32IZeroWaitMemoryPort` groups translate the stages' native signals. `RV32IMemoryLanes` handles width/sign extension and byte masks. There is no `RV32IMemoryRequest` or pending transaction state in this core. See [memory integration](rv32i-memory-integration.md).
 
@@ -53,7 +53,7 @@ The compact `RV32ISingleCycleSystem` has only six pins: inputs `CLK`, `RST`, `EN
 
 The core is active only with `RST=0`, `ENABLE=1`, and neither terminal status set. Endpoint responses and all combinational paths must settle before the active edge. For every active access, REQ_READY and RSP_VALID must both be asserted before that edge. This is a zero-wait endpoint contract, not support for stalling on a delayed response. Stores require final commit permission; access/alignment faults suppress stores and ordinary PC/register writes. The universal handshake adds no extra memory cycle here.
 
-The reference computes the instruction result directly on a permitted rising edge, then publishes outputs with its one abstract simulator-delay tick. That tick is **not** gate propagation, a measured hardware latency, or the clock period chosen for a program fixture. Falling edges and input-only reevaluations can update memory request outputs but do not execute another instruction.
+The reference computes the instruction result directly on a permitted rising edge. When selected through the catalog, it publishes outputs using its gate-derived delay table; the complete core is too large for a delay twin, so the table gives conservative output timing. These simulator ticks are **not** calibrated hardware latency or the clock period chosen for a program fixture. Falling edges and input-only reevaluations can update memory request outputs but do not execute another instruction.
 
 The registered whole-core contract is **known-binary, clock-boundary** equivalence. It is not a four-state-equivalent replacement for every internal gate. Unknown/high-impedance control bits are sanitized to unknown; an unknown clock transition is not a recognized LOW→HIGH edge. Unknown instruction data suppresses an ordinary attempt; an asserted instruction-memory fault can still terminate without a valid instruction word. In this behavioral single-cycle reference, a load attempting to consume unknown selected data bits raises a simulator logic error, not an architectural RISC-V exception. Unknown neighboring byte lanes are ignored by byte/halfword loads. Do not interpret gate-level X/Z propagation as part of the binary ISA answer sheet.
 

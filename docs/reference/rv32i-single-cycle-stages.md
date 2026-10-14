@@ -1,6 +1,6 @@
 # Stage-wise non-pipelined RV32I core
 
-Published component references: [§4.4 Single-Cycle Core](../site-docs/rv32i/4.4/index.md).
+Published component references: [§4.4 Single-Cycle Core](../../site-docs/rv32i/4.4/index.md).
 
 `RV32ISingleCycleCore` has six independently selectable datapath stages plus
 `RV32IExecutionControlStatusUnit`. Its native FF memories read asynchronously
@@ -23,8 +23,10 @@ The stage families are `rv32i.single-cycle.fetch`, `.decode`, `.execute`,
 `.memory`, `.writeback`, and `.next-pc`. Structural implementations compose the
 existing tested components. Compact implementations directly model each stage;
 they do not instantiate hidden gates or call the whole-instruction oracle.
-Equivalence is at settled known-binary checkpoints after reset, not transient
-gate delays or arbitrary X/Z controls.
+The documented cross-fidelity checks compare settled known-binary checkpoints
+after reset, not transient gate delays or every X/Z control combination. The
+compact Fetch PC and Decode register file also apply their lower-level
+four-state rules when inputs are uncertain; see their published component pages.
 
 ## Stage interfaces
 
@@ -34,8 +36,8 @@ Inputs: CLK, RST, ISSUE, PC_WRITE, NEXT_PC, IMEM_READ_DATA, IMEM_FAULT.
 Outputs: PC, PC_PLUS_4, INSTRUCTION, DONE, FAULT, PC_MISALIGNED,
 IMEM_WORD_ADDR, IMEM_READ_EN. See the published page for widths.
 
-Register32 owns PC; Adder32 computes PC+4. Direct wiring exposes PC/4 as the
-word index and forwards the memory word/fault. DONE is one; ISSUE enables the
+`Register<32>` owns PC; `IncrementBy4` computes PC+4. Direct wiring exposes
+PC/4 as the word index and forwards the memory word/fault. DONE is one; ISSUE enables the
 read. There is no TAKE input, request capture, or handshake.
 
 ### Decode

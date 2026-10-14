@@ -1,35 +1,34 @@
 # Internal documentation
 
 The public documentation is the MkDocs site in `site-docs/`. This folder holds
-working notes for people changing the code. Finished plans and milestone
-reports are in [`archive/`](archive/); they describe the code as it was when
-they were written.
+maintained guides and reference, a living project status, a changelog, dated
+topic records and historical reports. [AGENTS.md](../AGENTS.md)
+defines when agents update each one as part of their work. Public component
+pages describe current IO, behavior, internals, examples and edge cases.
+Finished plans and milestone reports belong in [`archive/`](archive/); they
+describe the code as it was when they were written.
 
-## Start here
-
-| Document | Use it for |
+| Document | Purpose |
 | --- | --- |
-| [adding-a-component.md](adding-a-component.md) | The current checklist for adding a part |
-| [unified-component-profiles.md](unified-component-profiles.md) | Families, structural/behavioral selection, profiles |
-| [test-organization.md](test-organization.md) | The scenario registry, CTest and browser/WASM checks |
-| [benchmark-system.md](benchmark-system.md) | Workloads, runs, campaigns and equivalence checks |
-| [rv32i-cleanup.md](rv32i-cleanup.md) | What has been retired or renamed, and why |
+| [STATUS.md](STATUS.md) | Current project-wide state, active records and open work |
+| [CHANGELOG.md](CHANGELOG.md) | Meaningful completed changes, verification and limits |
+| [guides/](guides/README.md) | Procedures and guided explanations |
+| [reference/](reference/README.md) | Maintained contracts, architecture and specifications |
+| [records/](records/README.md) | Dated evidence and decisions for substantive topics |
+| [archive/](archive/README.md) | Indexed historical plans, guides and reports |
 
-## Current notes by area
+## Where to put a document
 
-| Area | Documents |
+| Purpose | Location |
 | --- | --- |
-| RV32I cores | [rv32i-single-cycle-stages.md](rv32i-single-cycle-stages.md), [rv32i-single-cycle-documentation-notes.md](rv32i-single-cycle-documentation-notes.md), [rv32i-memory-integration.md](rv32i-memory-integration.md) |
-| Timing and performance | [circuit-timing-analyzer.md](circuit-timing-analyzer.md), [rv32i-circuit-timing-optimization.md](rv32i-circuit-timing-optimization.md), [rv32i-logic-timing-optimization.md](rv32i-logic-timing-optimization.md), [rv32i-core-gap-benchmarks.md](rv32i-core-gap-benchmarks.md), [rv32i-external-benchmark-report.md](rv32i-external-benchmark-report.md) |
-| Visualizer and layout | [visualizer-v2-profile-explorer.md](visualizer-v2-profile-explorer.md), [automatic-layout-refresh.md](automatic-layout-refresh.md), [single-cycle-stage-layout.md](single-cycle-stage-layout.md), [wire-routing-algorithms.md](wire-routing-algorithms.md), [visualizer-quick-test.md](visualizer-quick-test.md) |
-| Site and deployment | [webassembly-github-pages-report.md](webassembly-github-pages-report.md) |
-| Planning | [rv32i-roadmap.md](rv32i-roadmap.md) |
+| How to perform a task or follow an explanation | [guides/](guides/README.md) |
+| Current behavior, contracts, structure or verification specification | [reference/](reference/README.md) |
+| Work in progress, decisions or validation evidence for a dated topic | [records/](records/README.md) |
+| Completed reports, superseded instructions or historical proposals | [archive/](archive/README.md) |
 
-## Kept for reference, describing older code
+## Historical documents
 
-| Document | Note |
-| --- | --- |
-| [complete-circuit-workflow.md](complete-circuit-workflow.md) | Walkthrough of the December 2025 API; superseded by the checklist above |
-| [building-circuits.md](building-circuits.md) | Early quick guide to gates and composites |
-| [behavioral-rv32i-beginners-guide.md](behavioral-rv32i-beginners-guide.md) | Beginner's tour of the behavioral RV32I machine (July 2026) |
-| [general-memory-container.md](general-memory-container.md) | The retired legacy array container; current memory design is site sections 3.1 to 3.3 |
+The [archive index](archive/README.md) lists completed reports, older API
+guides, superseded roadmaps and unimplemented proposals. Treat their dates,
+metrics and paths as historical evidence. Use current source, tests and public
+site pages to establish present behavior.

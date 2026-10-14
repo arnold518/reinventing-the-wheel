@@ -19,6 +19,11 @@ These are complementary, not interchangeable. The behavioral single-cycle implem
 
 The 46 differential **pairs** are not 46 programs, the 37-item native **catalogue** is not the full CTest inventory, and 650 fixed-program **checkpoints** are not 650 pipeline cycles.
 
+CTest registrations cover bounded campaign and recovery checks; larger
+campaigns have separate artifacts and validation scopes. A test registration
+is not a benchmark case or an external program. Dated test and campaign
+outcomes are reported in [§ 4.7](../../experiments.md).
+
 ## Scope
 
 This section documents tests of the benchmark system and the core behavior it relies on. Component pin/truth-table tests remain with [building blocks](../../4.3/index.md), [single-cycle stages](../../4.4/index.md), [baseline stages](../../4.5/index.md), and [advanced pipeline components](../../4.6/index.md). A successful benchmark run does not replace their structural/behavioral contract tests.
@@ -33,3 +38,6 @@ ctest --test-dir build --output-on-failure -j1 \
 ```
 
 Run serially on a memory-constrained host. These include small structural/reference checks but not a full compiled benchmark suite. See each reference for the separate documentation, loader, profile, and timing-unit tests.
+This command selects eight focused tests. To run every currently registered
+benchmark-label test, including campaign recovery and compatibility ELF smoke
+checks, use `ctest --test-dir build -L benchmark --output-on-failure -j1`.

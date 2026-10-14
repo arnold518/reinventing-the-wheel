@@ -14,7 +14,7 @@ implementation reuses `MemoryContainer<W, FlipFlopArrayModel>` and its shared
 `MemoryArray<W, FlipFlopCell>` and `MemoryWord<W, FlipFlopCell>` remain C++
 compatibility entry points. FF display names change, while existing device IDs,
 instance paths, and layout keys remain compatible. The legacy components below
-and their RV32I consumers are not retired. See [the current device contract](../general-memory-container.md)
+and their RV32I consumers are not retired. See [the historical device contract](general-memory-container.md)
 for ports, capacity, fidelity selection, limits, and tests.
 
 ## Status

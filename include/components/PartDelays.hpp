@@ -45,10 +45,12 @@ struct DelayTwin {
 
 // The timing of one evaluated part as seen from outside, in ticks.
 //
-// The simulator publishes an output `maximum` ticks after the input that
-// caused it. The timing analysis reads the same table as the part's contract
-// and also uses `minimum`, the earliest the gate-level form can change, for
-// hold. A part without a table keeps its single constructor delay.
+// The simulator uses `maximum` as the conservative delay for each changed
+// input/output path. An optional DelayTwin can publish at the current gate
+// list's settling time when it agrees with the computed output, without
+// overtaking an earlier pending result. The timing analysis reads the same
+// table as the part's contract and uses `minimum` for hold. A part without
+// a table keeps its single constructor delay.
 struct PartDelays {
     struct Arc {
         std::string input, output;

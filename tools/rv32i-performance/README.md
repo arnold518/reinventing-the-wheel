@@ -39,8 +39,9 @@ for each core and predictor configuration. The campaign records that report in
 `clock_basis: "binary-startup-safe-clock-v1"`. A common explicit `--period` is
 accepted only if it is at least each selected certificate's bound; explicit
 periods remain scheduling choices and have no `modeled_time_ticks` entry. The
-default `--clock-mode safe` uses the `--safe-clock` certificate, which holds for
-every four-state start. The earlier candidate clock is retired.
+default `--clock-mode safe` uses the `--safe-clock` certificate in its
+unrestricted four-state scope under the declared contracts. The earlier
+candidate clock is retired.
 
 The default matrix is single-cycle, baseline and five advanced predictor
 policies, programs 17–22, one host warmup and three measured repetitions.
@@ -81,7 +82,7 @@ ctest --test-dir build -R '^RV32IDifferentialTest$' --output-on-failure -j1
 
 The bounded differential suite compares two such runs at the same certified
 period, reports the first differing cycle/field, and checks the normal final
-signature too. See [coverage and limitations](../../docs/benchmark-system.md#bounded-equivalence-checks).
+signature too. See [coverage and limitations](../../docs/reference/benchmark-system.md#bounded-equivalence-checks).
 Tracing is disabled by default and adds no simulated events, but its host-side
 collection cost is included in execution time: do not use traced runs to compare
 simulator speed. Campaign `--reference-check` remains an aggregate comparison.
@@ -184,26 +185,22 @@ official Embench scores.
 
 - `ExperimentClock` generates absolute rising/falling/sample timestamps.
   Reset and initial settling are excluded from measurements.
-- The common reference expands combinational logic and CPU structure, retaining
-  the same compact FF cells, registers, register file and memory macros for
-  every core. It is a hybrid normalized model, not physical synthesis.
-- The analyzer keeps asynchronous read-address → data paths, separates
-  sequential capture/launch, follows Rewire mappings, and rejects unknown
-  clocked black boxes and combinational cycles.
-- Fall-through endpoint modes are analyzed separately. Constraints are:
-  known-binary legal Read/Write fields, stable reset, payload observed on active
-  reads, ISSUE asserted for access-fault timing, SENT asserted for a held
-  requester response. These are explicit false-path/operating-mode assumptions,
-  not a general four-state protocol timing proof.
-- The maximum path over the four empty/held endpoint combinations selects
-  `period = 2 × (path + floor(path/4) + 2)`. Each half-cycle has a settling
-  margin. This is conservative scheduling, **not an Fmax estimate**.
-- Dynamic oracle/equivalence tests at that period are required. Passing a finite
-  program corpus does not prove every possible path or input pattern.
-- Behavioral cores use the same structural-reference clock; collapsing a core
-  does not earn it a fictitious frequency advantage.
-- Historical visualizer fixture clocks and checkpoint timestamps are preserved.
-  The new experiment harness is the clock authority for performance runs.
+- The common timing reference expands the selected core's structural logic
+  while retaining the documented compact storage and memory macros. The
+  analyzer checks propagation, setup, hold, pulse widths and reachable memory
+  handshake states under its stated contracts.
+- Catalog-selected behavioral parts use gate-derived per-path delay tables.
+  Eligible smaller parts can use a delay twin to follow current input values;
+  complete cores and self-timed memory parts use their tables. Propagation
+  delay can vary during a run even though its chosen CPU period stays fixed.
+- `--safe-clock` supplies sufficient periods under the selected timing
+  contracts: 166 ticks for single-cycle/FF, 80 for baseline/FF, 100 for
+  advanced/FF, and 102 for advanced with SRAM, DRAM, ROM or NOR-flash.
+  The four timed technologies share a limiting request-ready setup path,
+  while their access response latencies differ.
+- Behavioral and structural forms use the same certificate for a selected
+  core, policy and memory. Reference checks compare their completed cycles
+  and state; a finite program corpus does not prove every input history.
 
 No nanoseconds, MHz, physical area, energy or real-chip accuracy is claimed.
 Explicit periods are only scheduling values; `--period auto` reports
@@ -233,48 +230,36 @@ unresolved combinational cycles, incomplete contracts, overflow and resource exh
 fail closed. Custom component contracts are trusted all-state premises, not
 proofs generated from C++ code.
 
-Fused behavioral FF endpoints now have an all-state contract at widths 8/16/32,
-shared by the endpoint and scalable families. It covers all eight combinational
-arcs, rising-edge writes/response storage, and one-tick wire propagation, with
-reset fixed LOW. Timing analysis does not expand the storage by capacity.
-Delayed technology endpoints remain unsupported rather than borrowing the FF
-contract based on matching pins.
+Fused behavioral FF endpoints use their own timing contracts at widths
+8/16/32, including combinational arcs and rising-edge storage. Supported
+larger memories use delay estimates extended from smaller proven geometries;
+the analysis does not expand every storage cell. Timed SRAM, DRAM, ROM and
+NOR-flash endpoints have their own sequenced-state analysis, not an FF
+substitution. Their response timing and phase sequencing remain
+technology-specific.
 
-State-aware analysis enumerates the actual requester control netlist, including
-X/Z decisions: six reachable abstract states and 384 transitions per FF
-interface. It checks all 36 IMEM/DMEM combinations using timed value domains,
-so clock-to-output and gate delays are retained when a control value resolves
-a feedback path. Hold checks keep all original arcs. An always-ready endpoint
-instead has a proven empty response slot after reset. Enumeration defaults to
-a maximum of 64 combined cases; unsupported/mixed-edge cases retain the
-general dependency analysis, and exhausted budgets fail closed. Settling work
-is also bounded (10 million evaluations by default).
+State-aware analysis enumerates the requester and endpoint control netlist,
+including X/Z decisions. FF endpoints use empty/held response states; timed
+endpoints add their reachable sequencer and handshake states. Timed value
+domains retain clock-to-output and gate delays when a control value resolves
+a feedback path. Hold checks keep all original arcs. State and settling
+budgets fail closed when exhausted.
 
-In the default unrestricted four-state scope, the advanced reference core returns `safe-under-contracts` with a
-**212-tick sufficient period**, not an exact minimum or physical Fmax. Per-bit
-joiner/splitter/Rewire propagation and conditional FF validator rules tighten
-the earlier 232-tick bound without changing the cores or assuming binary data.
-Single/baseline still return `unknown` for data-fault/store-operation feedback.
-`MemoryFeedbackTimingTest` now reproduces actual oscillation on both cores:
-`lw x1,0(x0); andi x1,x1,1; sb x0,0(x1); ebreak`, with uninitialized FF data
-memory, produces an unknown byte mask. Read ignores that mask, write rejects
-it, and fault suppression repeatedly changes the operation. The test freezes
-the clock and observes continued toggles. No finite unrestricted settling bound
-exists for this case. Normal experiments clear memory to binary zero, but
-the analyzer does not silently assume or certify that startup invariant.
-`dependency_cycle` names an actual closed pin walk, not downstream blocked
-pins, and is not proof of oscillation. `state_case_count`,
-`checked_state_cases` and `state_evidence` expose the state analysis. Legacy
-mode-specific cuts are not silently imported.
-The earlier 458/320/394 candidate clocks and the `--timing` option are retired.
-Do not reinterpret earlier campaign artifacts as safety certificates.
+The current FF systems certify 166, 80 and 100 ticks for single-cycle,
+baseline and advanced cores in both the unrestricted four-state and
+binary-initialized scopes. The advanced core with each supported timed
+technology certifies 102 ticks in the unrestricted four-state scope. The
+timed-memory proof enumerates reachable requester/endpoint handshake states;
+`state_case_count`, `checked_state_cases` and `state_evidence` expose that
+coverage. A certificate is sufficient under its declared contracts, not an
+exact minimum or physical Fmax. The retired candidate-clock formula and old
+campaign periods are not current timing certificates.
 
 The safe-period function also analyzes supported smaller circuits, including a
-structural FullAdder between compact FF cells. Remaining unknown results need
-resolution of their dependency cycles or contracts for the selected technology;
-another passing benchmark does not close that gap. The new feedback test also
-checks 10,752 four-state validator cases and a provable 26-tick known-address
-byte-store feedback fixture, including recovery after the unknown input clears.
+structural FullAdder between compact FF cells. An unsupported configuration
+still needs its own certificate; another passing benchmark does not close a
+missing timing contract. The feedback tests also exercise four-state
+validator and byte-store cases.
 
 Focused endpoint validation: `MemoryEndpointSafeClockTest` checks all three
 widths, 2,304 state/request cases and 20,805 timed transitions against an
@@ -305,25 +290,26 @@ state enumeration are also explicitly checked binary and timed at the edge.
 Subsequent binary program/data loading is
 permitted; runtime image mutation or X/Z input injection is not. Changing
 external inputs require an explicit `ClockInputConstraint::binary_values`
-promise. Custom replacement contracts and unsupported technologies fail closed.
+promise. Unsupported configurations fail closed. Timed-memory certificates
+currently use the unrestricted four-state analysis rather than this mode.
 
 Generic timed gate implications such as `A OR (A AND B) = A` prove redundant
 enables even when the other input comes from feedback. The controlling signal's
 propagation delay is included; no CPU-specific false-path list is added.
 
-| Reference core | Sufficient period | Control cases | Binary capture checks |
-| --- | ---: | ---: | ---: |
-| Single-cycle | 176 | 1 | 229 |
-| Baseline | 112 | 1 | 1,326 |
-| Advanced, default 16-entry/not-taken configuration | 212 | 4 | 7,288 |
+| Reference core with FF memory | Sufficient period (ticks) |
+| --- | ---: |
+| Single-cycle | 166 |
+| Baseline | 80 |
+| Advanced, default 16-entry/not-taken configuration | 100 |
 
 JSON identifies `analysis_scope: "binary-initialized"` and reports
 `binary_startup_verified`, `binary_capture_bits` (capture/control bit checks
 summed across cases), and `binary_evidence`. Verification is true only on successful proof.
-Plain `--safe-clock` retains `analysis_scope: "unrestricted-four-state"`;
-single/baseline remain unknown in that scope. None of these periods is an exact
-minimum or physical Fmax, and clock defaults remain unchanged. To execute a
-test at the returned bound, pass its value via `--period`.
+Plain `--safe-clock` uses `analysis_scope: "unrestricted-four-state"` and
+certifies the same three FF periods. None of these periods is an exact
+minimum or physical Fmax. To execute a test at the returned bound, use
+`--period auto` or pass its value via `--period`.
 
 The binary CLI regression checks all 22 programs on all three structural
 reference cores at their returned periods, plus a branch workload under all
@@ -370,5 +356,26 @@ build/rv32i_experiment --core advanced --program 21 --memory sram --period auto
 Both ports use the selected technology. Single-cycle/baseline reject delayed
 devices. ROM and NOR flash are not interchangeable writable RAM; choose a
 compatible program. Device latency stays in ticks when the CPU period changes.
-Automatic core timing uses the FF reference, not a fabricated timing model of
-the delayed technology. No caches are involved.
+Automatic core timing uses the selected timed endpoint's own contract. The
+advanced core currently certifies 102 ticks with each supported timed
+technology; their different response latencies can change cycle counts. No
+caches are involved.
+
+## Regenerating the §4.7 result figures
+
+With Matplotlib available, run from the repository root:
+
+```sh
+MPLCONFIGDIR=/tmp/circuitsim-mpl python3 tools/rv32i-performance/plot-current-results.py
+```
+
+The generator pins the completed October 14 measured campaigns and the older
+full Embench campaign. It checks completion, the seven-target grids, oracle
+and structural phases where applicable, source/binary fingerprints, clock
+periods, tick arithmetic, all 133 historical Embench cycle inputs, and 602
+cells in the public §4.7 tables before writing four SVGs. Full Embench remains
+a conditional clock-only projection. Add `--preview-dir /tmp/rv32i-chart-previews`
+to write PNGs for visual inspection; those previews are not site assets.
+The checked-in SVGs were generated with Matplotlib 3.10.3. Their data checks
+are version-independent, but other Matplotlib versions can change SVG bytes
+or spacing; inspect previews after regenerating with a different version.

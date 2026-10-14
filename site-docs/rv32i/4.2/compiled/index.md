@@ -63,6 +63,12 @@ The source lock pins Embench 1.0 at `0466a18e4f6b47e19598d7c6ba72916d54b68f65`. 
 !!! warning "Source catalogue is not a pass list"
     The pinned source tree contains all 19 workloads. The multilib port can build the full collection with RV32I libc/libm/libgcc; the historical CRC-only toolchain does not provide these RV32I runtime libraries. A named source, a built ELF, an instruction-reference preflight, a completed behavioral run and a structural comparison are different evidence levels. Check each campaign's recorded fidelity and completion artifacts. Middle-suite success is not full-suite success.
 
+The [current result coverage](../../experiments.md#completed-campaign-coverage)
+includes the checked-in ELF fixtures. The
+[full Embench section](../../experiments.md#full-embench-conditional-clock-only-projection)
+is a clock-only projection from an older run; the reduced-work middle suite
+has no current-source result in § 4.7.
+
 ## Build and execution
 
 ```sh
@@ -96,4 +102,4 @@ Multiplication, 64-bit arithmetic, and floating point in these C sources execute
 - `src/analysis/RV32IWorkloads.cpp`, `RV32IExperiment.cpp`: preparation and committed-verdict completion.
 - `tools/rv32i-benchmarks/embench.lock`, `build-embench.sh`, `embench/`: provenance and port.
 - [Verification reference](../verification/workloads.md): image rejection, smoke execution, and shared-runner tests.
-- `docs/rv32i-external-benchmark-report.md`: historical CRC32 evidence on an older core revision, not a fresh result.
+- `docs/archive/rv32i-external-benchmark-report.md`: historical CRC32 evidence on an older core revision, not a fresh result.

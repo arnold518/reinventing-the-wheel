@@ -79,7 +79,7 @@ public:
 
 #### Unknown inputs and timing
 
-The behavioral model preserves each selected load bit and its sign extension, including unknown bits. Unknown neighboring bytes do not invalidate a known byte load. Address, size, and store-data integer conversions are binary abstractions; nonbinary controls/store operands are outside equivalence. Fault bits are forwarded. Structural and behavioral delays differ, but neither requires an extra clock. Allow the entire load-to-writeback path to settle.
+The behavioral model preserves each selected load bit and its sign extension, including unknown bits. Unknown neighboring bytes do not invalidate a known byte load. Address, size, and store-data integer conversions are binary abstractions; nonbinary controls/store operands are outside equivalence. Fault bits are forwarded. The catalog-selected stage uses gate-derived output delays; eligible paths can use a delay twin for current values. Neither fidelity adds a clock to this path. Allow the entire load-to-writeback path to settle.
 
 ### Implementation
 

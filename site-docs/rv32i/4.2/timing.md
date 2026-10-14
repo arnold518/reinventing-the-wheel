@@ -1,6 +1,6 @@
 # Clock Analysis Contract
 
-[Execution and measurement](execution.md) · [Timing tests](verification/timing.md) · [Historical development](../4.7/timing-history.md)
+[Execution and measurement](execution.md) · [Timing tests](verification/timing.md) · [Current results](../experiments.md)
 
 ## Three clock choices
 
@@ -53,6 +53,23 @@ The experiment's normal zero-filled memory and binary reset state support a narr
 
 This proof is not specialized to a chosen program's data values. Four-state/X/Z experiments require their own valid scope; binary startup cannot certify them. Caller-supplied or unsupported device timing contracts are not automatically endowed with the built-in binary-state proof.
 
+## Core and memory scope
+
+Request a certificate for each selected core, predictor capacity, endpoint,
+fidelity and analysis scope. The single-cycle and baseline cores use zero-wait
+FF endpoints. The advanced core can also use timed SRAM, DRAM, ROM or NOR-flash
+endpoints. Timed-memory analysis includes requester/endpoint handshake states
+and the compact core's setup needs at its memory pins; the supported timed
+devices have unrestricted four-state certificates, without a separate
+binary-startup certificate. `--period auto` selects the applicable returned
+certificate; an explicit period is only a scheduling choice unless justified
+separately.
+
+The [registered timing regressions](verification/timing.md#timed-memory-handshake-state-regression)
+check observed states for FF, SRAM and DRAM on program 20. Recompute after
+changing a circuit, endpoint or timing contract. Dated certificate values and
+their scope are recorded in [§ 4.7](../experiments.md#current-clock-certificates-2026-10-13).
+
 ## Reproduction
 
 ```sh
@@ -62,8 +79,6 @@ build/rv32i_experiment --core advanced --policy two-bit --entries 16 --safe-cloc
 ```
 
 Recompute after circuit, predictor capacity, endpoint, fidelity or contract changes. Delayed technology latencies are device ticks; they do not automatically rescale with the CPU period. For predictor cycle-efficiency comparisons, use a common safe period. For modeled total time, use and disclose each target's own certified period.
-
-The [historical timing narrative](../4.7/timing-history.md) preserves previous implementation limitations and numeric bounds. It is not the current support table.
 
 ## Source and tests
 

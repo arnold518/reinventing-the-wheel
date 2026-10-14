@@ -8,10 +8,13 @@ answers three questions from the same model and the same engine.
 | --- | --- | --- |
 | Settling | `CircuitTimingAnalyzer::settling` | The last tick at which each output, and each clocked capture, can still change |
 | Clock | `CircuitTimingAnalyzer::safeClock` | A period under which every setup, hold and pulse-width requirement is met, or "unknown" |
-| Part delays | `CircuitTimingAnalyzer::characterize`, `CircuitTimingAnalyzer::delays` | The delays of one part: per output, or as a full table per input-output pair. This is what a compact form of the part must reproduce |
+| Part delays | `CircuitTimingAnalyzer::characterize`, `CircuitTimingAnalyzer::delays` | The delays of one part: per output, or as a full table per input-output pair. The table bounds the compact form; a supported delay twin may time current values within that contract |
 
-All results are simulator ticks, not physical delays. Every answer is an upper
-bound that holds for every input; none is found by trying inputs.
+All results are simulator ticks, not physical delays. Settling and clock
+results are conservative bounds under their stated contracts, rather than
+values found by trying inputs. A part-delay table also records earliest
+delays for hold analysis; an optional delay twin can use current input values
+to time a particular runtime transition.
 
 It replaces three earlier tools: the longest-path estimate with its candidate
 clock, the safe-clock analysis with its own value engine, and the separate
@@ -36,9 +39,11 @@ Each bit carries a fact: from tick `at` on its value lies in a set of
 information and are only tightened, by rules that follow from how parts
 behave:
 
-- A part publishes `f(inputs at t)` at exactly `t + delay`
-  (`BasicComponent::_updateOutputWire`). So an output is settled one delay
-  after all its inputs are.
+- A part publishes `f(inputs at t)` at its scheduled time
+  (`BasicComponent::_updateOutputWire`). A primitive gate has its own fixed
+  delay; a catalog-backed compact part uses a path table and may use a delay
+  twin to time the actual input values. The analysis uses the declared table
+  as a conservative contract.
 - A gate's output set is the image of its input sets. One possible value
   means the bit is settled.
 - A controlling input (0 on AND, 1 on OR) decides the output alone, as soon as
@@ -73,20 +78,26 @@ A compact (behavioral) part may declare a `circuit::PartDelays` table
 and an earliest delay per input-output pair, clock-to-output and setup for
 clocked parts, and optionally one set of pairs per value of a control input.
 
-- **The simulator** publishes each output at the latest delay of the input
-  that caused it. A newer result never overtakes an older one still on its
-  way. A part without a table keeps its single constructor delay.
+- **The simulator** tracks which inputs changed and selects the latest
+  applicable delay for each output, including control-value-specific arcs
+  and clock-to-output launches. A pending result cannot be overtaken by a
+  newer one. Where a delay twin is available and agrees with the computed
+  final value, publication can follow its current-value settling time within
+  the table's bound. A part without a table keeps its constructor delay.
 - **The analyzer** reads the same table as the part's contract, and uses the
   earliest delays for hold.
 - **`CircuitTimingAnalyzer::delays`** generates the table from the gate-level
   form of the part.
 
-The compact part then gives the same values as the gates, never changes
-before the gates have finished, and never after its table allows. It does not
-copy input-by-input timing (an easy input still waits for the worst case) or
-glitches. A circuit built from compact parts is never faster than the same
-circuit in gates. `SettlingBoundTest` checks all of this on `Adder32`; two
-chained adders come to 37 ticks in gates and 38 with compact adders.
+Within the verified value-equivalence scope, a compact output that changes
+does not publish before its gate-level counterpart has settled or after its
+table allows. Table-only timing can wait for a worst-case path even when the
+present data settles sooner; a delay twin can remove that extra wait. The
+compact output does not reproduce intermediate gate glitches by default, so
+an unchanged final output can appear quiet while gates pulse. The optional
+strict-settling mode below exposes X during the unsettled window. In the
+table-only `SettlingBoundTest` example, two chained adders have a 37-tick
+gate-level bound and a 38-tick compact bound.
 
 `delay_estimate_experiment` compares proven delays with real gate-level
 settling times over random input changes, per output, per input pin and per
@@ -97,13 +108,20 @@ control value.
 `tools/timing/PartDelayTables.cpp` (`part_delay_tables`) proves a table for
 every catalog part that has a gate-level form and a single-part compact form,
 and writes them to `src/components/selection/ProvenPartDelays.generated.inc`.
-The catalog gives each compact part its table when it builds it, for the
-default parameters only.
+The catalog attaches a table when the implementation and parameter set have
+a matching entry. Default parameters, selected predictor configurations and
+supported memory geometries have entries; large memory depths use the
+documented estimate below.
 
 ```bash
-build-cleanup/part_delay_tables --write src/components/selection/ProvenPartDelays.generated.inc
-build-cleanup/part_delay_tables --check     # recompute every stored table from the gates
+build-cleanup/part_delay_tables --write src/components/selection/ProvenPartDelays.generated.inc --clocked
+build-cleanup/part_delay_tables --verify src/components/selection/ProvenPartDelays.generated.inc
 ```
+
+`--clocked` is required when replacing the complete generated file;
+`--check` checks compiled default entries, while `--verify` also checks
+parameter variants and the no-gate-list inventory. Rebuild after `--write`
+before verifying, so the catalog reads the new tables.
 
 172 of the 174 compact implementations run on a table (`part_delay_tables
 --coverage` lists every one that does not, with the reason).
@@ -239,11 +257,11 @@ The flip-flop is measured with X and Z data too.
 
 ### Parts built with parameters
 
-Tables are stored for a part's default parameters. A part built with any
-parameter finds a table only where one was proven for that exact combination
-(`variants` in the generator), or through the word-count estimate above. The
-advanced core is proven for each of its five prediction policies at 16
-entries, which is how the experiments and program tests build it.
+Tables are stored for default parameters and selected explicit variants. A
+parameterized part finds a table only for a matching proven combination
+(`variants` in the generator) or a supported geometry estimate. The advanced
+core has separate entries for every prediction policy and predictor-table
+size listed below; an unsupported combination retains its constructor delay.
 
 ### Parts built with other parameters, and delays per operation
 
@@ -289,7 +307,9 @@ the tick each bit last changed, and reads off when every output is final:
 So the time follows the data: a carry that stops after two positions costs
 two positions. The result holds for any earlier history of the inputs, so
 changes that overlap are covered without the single-pin assumption of the
-tables. The part publishes at the earlier of this time and the table's.
+tables. When the twin's final value agrees with the compact value, publication
+may use this time instead of the later table bound; pending older results
+still retain their order.
 
 Parts with a clock have one too. The list then also carries the part's
 flip-flops, and each instance keeps what they hold: at a rising clock edge a
@@ -353,15 +373,16 @@ through the same situations (one pin, X or Z, a few pins, all pins, edge
 patterns, two pins a few ticks apart, clock edges) and compares them output
 by output.
 
-Holds, in every comparison made (138 parts and sizes, about 117,000 situations, 140,000 output changes):
+In the recorded delay-rule comparison (138 parts and sizes, 120,081
+situations and about 140,000 output changes), these checks held:
 
 - a compact output never changes before the gates' output;
-- a compact output on a table changes at exactly the delay the table gives;
-  one timed from its gates changes no later than that;
+- a compact output using only its table changes at that table's applicable
+  delay; a delay twin can publish earlier, within the table's bound;
 - the gates stay within the table, also when several pins change at once or
   a few ticks apart, and also for gate-level parts sitting inside larger parts;
-- the three cores, compact, run at the clock proven on their gates (166, 80,
-  98) with no setup violation, and take exactly the gates' cycle count for
+- the three cores, compact, run at the current FF clock certificates (166,
+  80, 100) with no setup violation, and take exactly the gates' cycle count for
   every program, memory technology and prediction policy compared.
 
 Does not hold, and why:
@@ -519,8 +540,9 @@ run at that clock gives the same cycles in both forms.
 
 Every report lists its premises.
 
-- Parts behave as their code does: output a function of the inputs, one
-  fixed delay later for a gate, the table's delay for a compact part.
+- Parts behave as their code does: a primitive gate has a fixed delay; a
+  compact part follows its table or, when available, the current-value delay
+  twin, within the table's contract.
 - The contracts of non-gate parts are right. Built-in contracts exist for
   gates, the bit adapters, `Rewire`, constants, the compact storage parts and
   the FF endpoint. Anything else without a contract gives no result.
@@ -542,8 +564,9 @@ Every report lists its premises.
   question, including feedback through the memory store path, hold, budgets
   and every fail-closed case. These were written for the earlier engine and
   pass unchanged on this one.
-- The engine merge itself left the certified periods unchanged (94, 58, 78).
-  They are 166, 80 and 98 with storage and memory on their real delays.
+- The current FF-system certificates are 166, 80 and 100 ticks for the
+  single-cycle, baseline and advanced cores. Timed-memory certificates and
+  their scope are recorded in the [RV32I results page](../../site-docs/rv32i/experiments.md#current-clock-certificates-2026-10-13).
 
 - `PartDelayTablesCompleteTest`: every stored table regenerated from the
   gates and compared.

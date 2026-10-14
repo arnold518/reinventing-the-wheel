@@ -52,6 +52,21 @@ The returned number is a sufficient bound under the recorded contract, not an ex
 
 **Source:** `tests/checks/RV32IBinaryClockCLITest.py`. Additional report/advanced state checks live in `RV32IExperimentCLITest`.
 
+## Timed-memory handshake-state regression
+
+`RV32IExperimentCLITest` requests the advanced SRAM safe-clock certificate and
+checks its expected bound and complete timing-state coverage. At each returned
+`--period auto`, it runs program 20 structurally with FF, SRAM and DRAM,
+enabling `--check-handshake-states`. Every observed requester/endpoint state
+must have been included in the timing analysis; the run must verify and report
+zero setup violations. It also rejects the state-check option without a
+structural advanced-core run.
+
+The analyzer supports [certificates](../timing.md#core-and-memory-scope)
+for advanced cores with SRAM, DRAM, ROM and NOR-flash. The registered
+state-coverage regression exercises FF, SRAM and DRAM; the other technology
+and predictor combinations have narrower focused-run evidence.
+
 ## Reproduction
 
 ```sh

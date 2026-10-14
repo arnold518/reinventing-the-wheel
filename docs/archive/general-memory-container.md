@@ -3,9 +3,9 @@
 This is a **historical legacy array-port** implementation report; its generic
 container and old array aliases have been retired. See [cleanup](rv32i-cleanup.md).
 Current controllers and scalable technology models are
-documented in [3.1.6. Scalable Memory Container](../site-docs/memory/3.1.6.md),
-[3.2. Memory Transactions](../site-docs/memory/3.2.md), and
-[3.3. Memory Controllers](../site-docs/memory/3.3.md).
+documented in [3.1.6. Scalable Memory Container](../../site-docs/memory/3.1.6.md),
+[3.2. Memory Transactions](../../site-docs/memory/3.2.md), and
+[3.3. Memory Controllers](../../site-docs/memory/3.3.md).
 Statements below about missing native technologies describe this earlier step.
 
 ## Scope
@@ -306,7 +306,7 @@ port. This does not require future DRAM/flash devices to use that port; their
 technology-specific controllers can implement the client-facing protocol.
 
 The adapter is shared interface/controller documentation, not part of the
-[FF storage construction in §3.1.1](../site-docs/memory/3.1.1.md). Its name does not
+[FF storage construction in §3.1.1](../../site-docs/memory/3.1.1.md). Its name does not
 mean that it supports every memory technology or port:
 
 | Attached memory | Direct compatibility |

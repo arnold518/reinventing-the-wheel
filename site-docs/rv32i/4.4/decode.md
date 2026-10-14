@@ -82,7 +82,7 @@ public:
 
 #### Unknown inputs and timing
 
-Real simulator x1–x31 start unknown until reset; the simplified array is only a post-reset reference. Structural nonbinary behavior follows the decoder and register-file children. The behavioral stage makes all outputs unknown for a nonbinary instruction and does not write a destination in that case; reset can still clear registers. Known enabled writes copy the WB bit vector. Unknown clock/reset/control cases and captured Z behavior are outside binary stage equivalence. Outputs have one abstract delay tick; recorded register history becomes visible at that output time, not retroactively.
+Real simulator x1–x31 start unknown until reset; the simplified array is only a post-reset reference. Structural nonbinary behavior follows the decoder and register-file children. The behavioral stage makes all outputs unknown for a nonbinary instruction, but still updates its register file from instruction bits 11:7, `REGISTER_WRITE`, `WB_VALUE`, reset, and the clock. An uncertain destination can therefore affect multiple candidate registers under the [register-file rules](../4.3/register-file.md#unknown-inputs-and-timing); a known enabled write copies the WB bit vector, with captured `Z` becoming `X`. Only known low-to-high clock transitions capture writes. Binary stage equivalence remains the checked scope. Catalog-selected outputs use gate-derived path and clock-to-output delays; recorded register history becomes visible when the scheduled output is published, not retroactively.
 
 ### Implementation
 

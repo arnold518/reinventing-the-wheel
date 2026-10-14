@@ -1,6 +1,8 @@
 # Timing-analysis history
 
-[Experiment results](../experiments.md) · [Current timing contract](../4.2/timing.md)
+Archived from public §4.7 on 2026-10-14.
+
+[Current experiment results](../../site-docs/rv32i/experiments.md) · [Current timing contract](../../site-docs/rv32i/4.2/timing.md)
 
 This is the preserved development narrative from the former experiment page. **It is historical, not the current support matrix or clock preset.** In particular, statements below about unresolved fixed-cycle feedback and periods such as 176/112/212 describe earlier implementations. Query the current runner and retain its certificate for new experiments. No measurement was rerun for this archive.
 

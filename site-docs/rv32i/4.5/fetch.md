@@ -42,7 +42,7 @@ The examples use the [shared Packet definition](core.md#binary-example-types). F
 
 ### Behavioral implementation
 
-The Fetch branch of `BehavioralStage` stores PC and previous clock, then produces the same native pins and IF/ID packet. Its contract is `rv32i.baseline.fetch`. Equivalence covers settled binary operation after reset, not uninitialized/X-valued PCs.
+The Fetch branch of `BehavioralStage` stores a four-state PC and previous clock, then produces the same native pins and IF/ID packet. It applies the register, incrementer, and redirect mux's four-state rules, so an uninitialized or uncertain PC is not converted to zero. Its contract is `rv32i.baseline.fetch`. The documented cross-fidelity checks cover settled binary operation after reset; they do not establish equivalence for every uninitialized or X-valued PC.
 
 ## Examples
 

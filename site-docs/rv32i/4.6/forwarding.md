@@ -7,6 +7,7 @@ Forwarding supplies an older instruction's result before its register-file write
 | `RV32IForwardingUnit` | Two register comparisons with newest-producer priority | Yes | Yes |
 | `RV32IDecodeStage` | Decode/register read with WB bypass and load-use detection | Yes | Yes |
 | `RV32IExecuteStage` | Forwarded operands around the shared execution datapath | Yes | Yes |
+| `RV32IWritebackBypass` | Internal Decode selector for a matching, valid WB destination | Yes | Via enclosing stage |
 | `RV32IForwardedOperands` | Internal selector and two operand muxes | Yes | Via enclosing stage |
 | `RV32IExecutePacketStatus` | Internal terminal/redirect qualification gates | Yes | Via enclosing stage |
 
@@ -60,7 +61,7 @@ Decode retains `CLK`, `RST`, `WB_RD<5>` and `WB_VALUE<32>`. Its register-file wr
 
 Execute's main groups are `FORWARDED_OPERANDS`, `DATAPATH`, `NEXT_PC`, and `PACKET_STATUS`. `DATAPATH` is the same selectable single-cycle execution component used by the baseline: one ALU32 for arithmetic, address calculation, comparison, and JAL/JALR targets. The separate PC+immediate adder is needed alongside a conditional-branch comparison; PC+4 uses an incrementer. There is no duplicate RS1+immediate target adder.
 
-The forwarding selector uses five-bit equality networks, nonzero checks and priority gates. Muxes select values without storing them. Packet/status rewiring stays separate from the datapath.
+The forwarding selector uses five-bit equality networks, nonzero checks and priority gates. Decode's `WB_BYPASS` child is `RV32IWritebackBypass`: it compares `RS1` and `RS2` with `WB_RD` (five bits each) and asserts its one-bit `SELECT_A`/`SELECT_B` outputs only when `WB_VALID`, `WB_REG_WRITE`, a nonzero destination, and the corresponding match hold. The two 32-bit muxes then select `WB_VALUE`. Muxes select values without storing them. Packet/status rewiring stays separate from the datapath.
 
 ### Behavioral implementation
 

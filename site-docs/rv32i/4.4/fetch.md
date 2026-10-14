@@ -70,7 +70,7 @@ public:
 
 #### Unknown inputs and timing
 
-Equivalence covers binary operation after reset. Instruction/fault bits are forwarded directly. The behavioral PC model recognizes known low-to-high edges; unknown integer inputs fall back to zero and are outside the PC equivalence claim. One behavioral output tick need not equal structural propagation delay. Memory must settle within the CPU period; there is no variable-latency wait mechanism here.
+Equivalence checks cover binary operation after reset. Instruction/fault bits are forwarded directly. The behavioral PC is a four-state register: it starts unknown, resets to zero, and captures `NEXT_PC` on a known low-to-high `CLK` edge when `PC_WRITE` permits it. Captured `Z` bits become `X`; unknown reset or write-enable values follow the register's gate rules described in [4.3.3](../4.3/register.md). `PC_PLUS_4` and alignment also operate on the four-state PC instead of converting unknown bits to zero. Catalog-selected behavioral outputs use the stage’s gate-derived delay table and, where supported, a delay twin for the current input values; individual gate transitions can still differ. Memory must settle within the CPU period; there is no variable-latency wait mechanism here.
 
 ### Implementation
 

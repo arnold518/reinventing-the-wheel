@@ -22,6 +22,55 @@
 
 **Source:** `tests/checks/BenchmarkCampaignCLITest.py`, `tools/benchmarks/run.py`.
 
+## FullEmbenchCampaignTest
+
+**Input:** cycle estimates for five fixed programs, the 19-workload ×
+seven-configuration full-campaign plan, and frozen campaigns made from the
+checked-in tiny ELF smoke image. The middle-profile fixture uses that same
+small image under three names.
+
+**Checks:** baseline cycle estimates against actual short runs; full and middle
+matrix budgets; successful frozen workers and `COMPLETE` markers; structural
+reference phases for the nine-case *fixture* matrix; rejection of changed
+snapshot source; and failure bookkeeping that does not claim completion.
+
+**Boundary:** the test never executes the real 19 Embench workloads or the
+three reduced-work algorithms. [§ 4.7](../../experiments.md#full-embench-conditional-clock-only-projection)
+labels the full-suite clock-only projection; the reduced-work suite has no
+current-source result. Neither follows from this CTest pass.
+
+**Source:** `tests/checks/FullEmbenchCampaignTest.py`,
+`tools/benchmarks/run-full-embench-background.py`.
+
+## BackgroundCampaignResumeTest
+
+**Input:** a synthetic interrupted campaign with one completed case, one
+partial case and one pending case.
+
+**Checks:** recovery preserves the completed result, archives partial files,
+reschedules unfinished jobs with a revised timeout, and rejects a completed
+case missing its `COMPLETE` marker or required reference phase.
+
+**Boundary:** this tests recovery bookkeeping; it does not execute an ELF or
+prove a resumed real campaign has passed.
+
+**Source:** `tests/checks/BackgroundCampaignResumeTest.py`,
+`tools/benchmarks/resume-background.py`.
+
+## RV32IExternalBenchmarkRunnerSmoke
+
+**Input:** the checked-in self-checking ELF through the compatibility
+`rv32i_benchmark_elf` command, selecting both single-cycle and advanced cores.
+
+**Checks:** the behavioral runner loads the image, executes it to its retired
+`tohost` verdict and returns success for both selected cores.
+
+**Boundary:** this is one short external-image smoke test, with no structural
+reference comparison or Embench workload.
+
+**Source:** `tests/CMakeLists.txt`,
+`tools/rv32i-benchmarks/RV32IBenchmarkRunner.cpp`.
+
 ## RV32IExperimentTest
 
 **Input:** an absolute experiment clock, tiny timing circuits, and the shared default workload on all three cores.
@@ -36,11 +85,11 @@ It also checks the common distinction between 51 attempts, 50 successful retirem
 
 ## RV32IExperimentCLITest
 
-**Input:** clock reports, fixed programs, three legacy generated loops, explicit measurement windows, predictor choices, and delayed SRAM on the advanced core.
+**Input:** clock reports, fixed programs, three legacy generated loops, explicit measurement windows, predictor choices, and FF/SRAM/DRAM memory on the advanced core.
 
-**Checks:** valid/unsupported clock reports, model contract evidence, all fixed-program completions on the three core kinds, deterministic predictor observations, ordinary and delayed-memory oracle checks, legacy-loop completion, and retirement-window counts. Delayed instruction/data endpoints must produce response-wait observations.
+**Checks:** valid/unsupported clock reports, model contract evidence, all fixed-program completions on the three core kinds, deterministic predictor observations, ordinary and delayed-memory oracle checks, legacy-loop completion, and retirement-window counts. Delayed instruction/data endpoints must produce response-wait observations. An advanced SRAM clock certificate must match its expected bound; structural program-20 runs with FF, SRAM and DRAM at `--period auto` must encounter only handshake states included in the timing analysis and report zero setup violations.
 
-**Boundary:** the SRAM case validates the advanced wait path. It does not make delayed memory compatible with single-cycle/baseline or claim all technology configurations are timing-certified.
+**Boundary:** the SRAM case validates the advanced wait path, while the state-coverage regression checks FF, SRAM and DRAM. This CTest does not dynamically cover every memory technology and predictor combination. Delayed memory remains unsupported on single-cycle/baseline cores; see the [certificate scope](../timing.md#core-and-memory-scope).
 
 **Source:** `tests/checks/RV32IExperimentCLITest.py`. The [timing test page](timing.md) distinguishes safe certificates from candidate analysis.
 

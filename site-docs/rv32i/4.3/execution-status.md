@@ -123,7 +123,7 @@ public:
 
 #### Unknown inputs and timing
 
-The initial status bits/cause are unknown until reset. The structural implementation follows its gates and FF cells. The behavioral implementation requires binary combinational inputs and known stored halt/trap bits; otherwise its completion/fault decision outputs become `X` and it does not generate a halt/trap event. `FETCH_REQUEST_ACTIVE` depends only on reset, enable, and stored halt/trap bits; it is high only when those explicitly permit execution, and low otherwise. Unknown reset poisons stored status. Its registered equivalence scope is binary behavior after reset, not identical four-state resolution. Inputs must settle before a rising edge; behavioral outputs have one abstract delay tick, while structural outputs include gate delays.
+The initial status bits/cause are unknown until reset. The structural implementation follows its gates and FF cells. The behavioral implementation requires binary combinational inputs and known stored halt/trap bits; otherwise its completion/fault decision outputs become `X` and it does not generate a halt/trap event. `FETCH_REQUEST_ACTIVE` depends only on reset, enable, and stored halt/trap bits; it is high only when those explicitly permit execution, and low otherwise. Unknown reset poisons stored status. Its registered equivalence scope is binary behavior after reset, not identical four-state resolution. Inputs must meet the characterized setup time before a rising edge. Catalog-selected behavioral outputs use gate-derived combinational and clock-to-output delays; structural outputs still expose individual gate events.
 
 ### Implementation
 

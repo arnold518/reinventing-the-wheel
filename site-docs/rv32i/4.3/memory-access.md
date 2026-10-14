@@ -79,7 +79,7 @@ The internal helpers are fixed structural parts with no state and no behavioral 
 
 #### Behavioral implementation
 
-[`RV32IMemoryLanesBehavioral`](https://github.com/arnold518/reinventing-the-wheel/blob/github-pages/src/modules/rv32i/RV32IMemoryLanes.cpp) computes the four outputs with the same lane functions the behavioral cores call (`memoryWordAddress`, `memoryLoadData`, `memoryWriteMask`, and the store shift), with one abstract output-delay tick. It is defined for known binary inputs: if any input bit is `X` or `Z`, every output is unknown. Partial-unknown behavior is specified by the structural gates only.
+[`RV32IMemoryLanesBehavioral`](https://github.com/arnold518/reinventing-the-wheel/blob/github-pages/src/modules/rv32i/RV32IMemoryLanes.cpp) computes the four outputs with the same lane functions the behavioral cores call (`memoryWordAddress`, `memoryLoadData`, `memoryWriteMask`, and the store shift), with gate-derived output timing when selected through the catalog. It is defined for known binary inputs: if any input bit is `X` or `Z`, every output is unknown. Partial-unknown behavior is specified by the structural gates only.
 
 ### Examples
 
@@ -123,7 +123,7 @@ bool misaligned(uint32_t address, unsigned size) {
 
 #### Unknown inputs and timing
 
-Only the low two address bits and both size bits matter. AND with zero and OR with one mask unknowns; other indeterminate gate results become `X`. Both implementations use that equation, including `SIZE=3` and `X`/`Z`. Behavioral timing is one abstract tick; structural timing follows its gates.
+Only the low two address bits and both size bits matter. AND with zero and OR with one mask unknowns; other indeterminate gate results become `X`. Both implementations use that equation, including `SIZE=3` and `X`/`Z`. The registered behavioral checker uses gate-derived per-path delays; structural timing follows its individual gates.
 
 ### Implementation
 
@@ -281,7 +281,7 @@ Response data is wired straight from `BUS_RSP_READ_DATA` to `READ_DATA`; there i
 
 #### Behavioral implementation
 
-[`RV32IMemoryRequestBehavioral`](https://github.com/arnold518/reinventing-the-wheel/blob/github-pages/src/modules/rv32i/RV32IMemoryRequest.cpp) keeps the three state bits and the saved request in one `MemoryRequestState` ([`RV32IMemoryRequestModel.hpp`](https://github.com/arnold518/reinventing-the-wheel/blob/github-pages/src/modules/rv32i/RV32IMemoryRequestModel.hpp)), the same state the behavioral cores keep for their instruction and data requests, so the rule has one owner. Outputs follow with one abstract output-delay tick. It is defined for known binary controls; fault is still the OR of the status bits and response data is passed through unchanged.
+[`RV32IMemoryRequestBehavioral`](https://github.com/arnold518/reinventing-the-wheel/blob/github-pages/src/modules/rv32i/RV32IMemoryRequest.cpp) holds its own four-state `BUSY`, `SENT`, and `ABANDONED` bits and saved request fields. It evaluates the request, response, tag-comparison, and register rules used by the structural requester, including uncertain inputs. The compact cores use the separate binary [`MemoryRequestState`](https://github.com/arnold518/reinventing-the-wheel/blob/github-pages/src/modules/rv32i/RV32IMemoryRequestModel.hpp) for their instruction and data requests. Catalog-selected outputs follow the requester’s characterized combinational or clock-to-output delays. Fault is still the OR of the status bits and response data is passed through unchanged.
 
 Request presence, reset qualification and response validity are prepared before the late `TAKE`/discard decision. This shortens the combinational completion path without adding a cycle or changing when either handshake is accepted.
 

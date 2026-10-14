@@ -117,7 +117,7 @@ it does not construct an unconnected hardware memory. The compact native FF
 device uses private `FFMemoryBehavioral<W>`, tested against the structural
 `FFMemory<W>` contract. Neither host storage nor this direct device adds a
 transaction layer. The superseded `Memory64Kx32` and generic legacy container
-have been removed (see [cleanup](rv32i-cleanup.md)).
+have been removed (see the [cleanup record](../archive/rv32i-cleanup.md)).
 
 ## Current validation
 
@@ -129,10 +129,10 @@ by `NativeMemoryDeviceContractTest`. `RV32IMemoryMigrationTest` covers the
 zero-wait fixed-cycle paths and configurable pipeline endpoints.
 
 Published pin contracts, behavioral examples, diagrams, and embedded rows:
-[3.1](../site-docs/memory/3.1/index.md),
-[3.1.6](../site-docs/memory/3.1.6.md),
-[3.3](../site-docs/memory/3.3.md), and
-[4.3](../site-docs/rv32i/4.4/index.md).
+[3.1](../../site-docs/memory/3.1/index.md),
+[3.1.6](../../site-docs/memory/3.1.6.md),
+[3.3](../../site-docs/memory/3.3.md), and
+[4.3](../../site-docs/rv32i/4.4/index.md).
 
 ## Zero-wait endpoint timing regression
 

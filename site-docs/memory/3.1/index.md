@@ -72,6 +72,16 @@ Structural implementations expose the cells, rows/words, banks, and peripheral l
 
 Behavioral implementations compress an existing lower-level design while preserving its external contract at settled checkpoints. Tests compare small structural and behavioral instances. Internal events and propagation traces need not be identical. A primitive is not given a redundant second implementation with the same code; the component tables state which implementations actually exist.
 
+Catalog-selected behavioral parts use gate-derived delay tables where the
+structural design can be characterized. A supported delay twin can use the
+current data and state to publish sooner than the table's conservative latest
+bound. Self-timed devices use their tables and own phase sequencing; large
+parts without a twin use their tables. Supported large-memory configurations use a documented
+delay estimate derived from smaller proven geometries. A directly created
+part or an unsupported parameter combination without a matching table uses
+its constructor delay. Technology phase durations and wait cycles remain
+separate from these output propagation delays.
+
 Four-state values are `0`, `1`, `X` (unknown), and `Z` (released output). Stored Z becomes X. DRAM models retention, refresh, and destructive reads digitally. ROM and flash retain their values within an instance without refresh; this does not imply persistence after destroying the simulator. Power, process variation, wear, analog bitline contention, and calibrated chip timing are outside these contracts. Simulator ticks are abstract time units.
 
 ## Inspection, layouts, and verification
