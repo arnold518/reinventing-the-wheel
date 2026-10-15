@@ -50,6 +50,9 @@ set(CORE_LOGIC_SOURCES
     src/components/selection/BuildContext.cpp
     src/components/selection/ComponentCatalog.cpp
     src/components/selection/ProvenPartDelays.cpp
+    src/components/selection/ProvenPartDelaysUnit.cpp
+    src/components/selection/ProvenPartDelaysEmbedded.cpp
+    src/components/selection/ProvenPartDelaysDesktop.cpp
     src/components/selection/BuiltinComponentCatalog.cpp
     src/modules/basic/Gate.cpp
     src/modules/basic/Mux.cpp

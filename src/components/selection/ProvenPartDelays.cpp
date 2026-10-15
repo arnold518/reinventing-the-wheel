@@ -9,16 +9,17 @@ namespace {
 
 using Arc = PartDelays::Arc;
 
-// One generated file per timing profile: a table is proven on the gates as
-// they are timed in that profile. A profile without a file has no tables
-// yet; its compact parts then keep their single delay.
+// One generated file per timing profile, each compiled in its own source
+// file (ProvenPartDelaysUnit.cpp and its siblings): together in one file the
+// tables need too much compiler memory for this host. A table is proven on
+// the gates as they are timed in that profile. A profile without a file has
+// no tables; its compact parts then keep their single delay.
 const std::map<std::string, PartDelays>& tables() {
-    static const std::map<std::string, PartDelays> unit = {
-#include "ProvenPartDelays.generated.inc"
-    };
     static const std::map<std::string, PartDelays> none;
     const auto& profile = timing::activeTimingProfile().name;
-    if (profile == "unit") return unit;
+    if (profile == "unit") return provenPartDelaysUnit();
+    if (profile == "embedded") return provenPartDelaysEmbedded();
+    if (profile == "desktop") return provenPartDelaysDesktop();
     return none;
 }
 

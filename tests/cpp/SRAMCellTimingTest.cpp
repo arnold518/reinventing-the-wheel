@@ -17,7 +17,9 @@
 #include <stdexcept>
 
 namespace {
-constexpr size_t QUIET = 24;
+// 24 delays of the slowest part in the cell under the profile being
+// measured (unit: 24 ticks).
+size_t QUIET = 24;
 const std::array<const char*, 4> INPUTS = {"WL", "DRIVE", "BL", "BL_BAR"};
 
 struct Bench {
@@ -55,10 +57,14 @@ struct Bench {
         auto seen = outputs();
         size_t first = 0, last = 0;
         const size_t start = now;
-        for (size_t tick = 0; tick <= QUIET; ++tick) {
-            sim.advanceAndRecord(start + tick);
+        // Outputs change only at events: step from one event time to the next.
+        for (auto next = sim.nextEventTime(); next && *next <= start + QUIET; next = sim.nextEventTime()) {
+            sim.advanceAndRecord(*next);
+            if (*next < start) continue;
+            const size_t tick = *next - start;
             if (outputs() != seen) { if (!first) first = tick; last = tick; seen = outputs(); }
         }
+        sim.advanceAndRecord(start + QUIET);
         now = start + QUIET;
         if (sim.hasPendingEvents()) throw std::runtime_error("The cell did not go quiet: it oscillates");
         return {first, last};
@@ -83,6 +89,11 @@ std::string describe(unsigned vector) {
 
 int main() {
     try {
+      for (const auto& name : circuit::timing::timingProfileNames()) {
+        circuit::timing::setActiveTimingProfile(name);
+        const auto& profile = circuit::timing::activeTimingProfile();
+        QUIET = 24 * std::max(profile.nand_gate, profile.memory_primitive);
+        std::cout << "profile " << name << ":\n";
         Bench bench;
         size_t earliest = QUIET, latest = 0, cases = 0, oscillating = 0;
         // One change of any inputs, from any resting state, in all four values.
@@ -108,7 +119,9 @@ int main() {
         // Too soon, and the latch can be left oscillating or late: find the
         // shortest spacing from which neither ever happens.
         size_t spacing = 1, overlapping = 0, upset = 0;
-        for (size_t gap = 1; gap <= QUIET; ++gap)
+        // Changes further apart than a few settling times cannot interact.
+        const size_t widest = std::min(QUIET, std::max<size_t>(24, 4 * latest));
+        for (size_t gap = 1; gap <= widest; ++gap)
             for (int stored = 0; stored < 2; ++stored) for (unsigned a = 0; a < 16; ++a) for (unsigned b = 0; b < 16; ++b)
                 for (unsigned c = 0; c < 16; ++c) {
                     if (a == b || b == c) continue;
@@ -128,7 +141,8 @@ int main() {
                   << " ticks after the last input change.\n  " << upset << " overlapping changes upset the cell; none does once "
                   << "input changes are at least " << spacing << " ticks apart\n";
         check(earliest == circuit::sram_cell_timing::earliest() && latest == circuit::sram_cell_timing::latest()
-              && spacing == circuit::sram_cell_timing::minimumSpacing(), "The timing profile's SRAM cell contract does not match the cell");
+              && spacing == circuit::sram_cell_timing::minimumSpacing(), "The " + name + " profile's SRAM cell contract does not match the cell");
+      }
         std::cout << "SRAMCellTimingTest passed\n";
         return 0;
     } catch (const std::exception& error) {

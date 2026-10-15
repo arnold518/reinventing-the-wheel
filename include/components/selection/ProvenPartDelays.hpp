@@ -2,6 +2,7 @@
 
 #include "components/PartDelays.hpp"
 #include "components/selection/SelectionTypes.hpp"
+#include <map>
 #include <set>
 #include <string>
 #include <vector>
@@ -30,6 +31,11 @@ const PartDelays* provenPartDelays(const std::string& implementation_id, const P
 // a stored state that is not a flip-flop (see
 // analysis/DelayTwin.hpp), generated into NoGateList.generated.inc.
 const std::set<std::string>& partsWithoutGateList();
+
+// The generated tables of each timing profile, one source file each.
+const std::map<std::string, PartDelays>& provenPartDelaysUnit();
+const std::map<std::string, PartDelays>& provenPartDelaysEmbedded();
+const std::map<std::string, PartDelays>& provenPartDelaysDesktop();
 
 // Every implementation that has a table.
 std::vector<std::string> provenPartDelayImplementations();

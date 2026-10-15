@@ -416,3 +416,12 @@ scalable device so a datasheet row (512 words on a 32-bit bus) can be
 configured; phase 7 raises the cache's 64-set and four-words-per-line limits
 if the cache plan's sizing rule needs it, and decides bursts and banks before
 that experiment freezes its panel.
+
+## 2026-10-16 — Phase 3 acceptance revised during execution
+
+See the [progress log](2026-10-16-realistic-timing-progress.md): under the
+realistic profiles, phase 3 is accepted on contract tests, per-profile delay
+tables verified against the gates, oracle-checked CPU runs (gate-level and
+compact) at certified clocks, and a `DelayRuleTest` sample, instead of every
+scenario test, whose clock phases are hard-coded in ticks. Timed memories are
+excluded under realistic profiles until phases 4–6.

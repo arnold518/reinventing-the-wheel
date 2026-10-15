@@ -15,7 +15,9 @@
 #include <stdexcept>
 
 namespace {
-constexpr size_t WINDOW = 24, QUIET = 60;
+// Search windows, in ticks: 24 and 60 gate delays of the slowest gate in
+// the flip-flop under the profile being measured (unit: 24 and 60 ticks).
+size_t WINDOW = 24, QUIET = 60;
 
 struct Bench {
     std::shared_ptr<IOComponent> root = Component::create<IOComponent>("BENCH");
@@ -78,14 +80,19 @@ Edge edge(Bench& bench, bool stored, LogicValue before, LogicValue after, long o
     bench.sim.advanceAndRecord(at - 1);
     Edge result;
     bool q = bench.high(bench.q), q_bar = bench.high(bench.q_bar);
-    for (size_t tick = 0; tick <= WINDOW + QUIET; ++tick) {
-        bench.sim.advanceAndRecord(at + tick);
+    // Outputs change only at events: step from one event time to the next.
+    const size_t end = at + WINDOW + QUIET;
+    for (auto next = bench.sim.nextEventTime(); next && *next <= end; next = bench.sim.nextEventTime()) {
+        bench.sim.advanceAndRecord(*next);
+        if (*next < at) continue;
         if (bench.high(bench.q) != q || bench.high(bench.q_bar) != q_bar) {
+            const size_t tick = *next - at;
             if (!result.first) result.first = tick;
             result.last = tick;
             q = bench.high(bench.q); q_bar = bench.high(bench.q_bar);
         }
     }
+    bench.sim.advanceAndRecord(end);
     bench.now = at + WINDOW + QUIET;
     bench.sim.advanceAndRecord(bench.now += QUIET);
     result.captured = bench.q->getValueVector()[0];
@@ -100,10 +107,39 @@ Edge edge(Bench& bench, bool stored, LogicValue before, LogicValue after, long o
 void check(bool value, const std::string& message) {
     if (!value) throw std::runtime_error(message);
 }
+
+struct Measured { size_t setup, hold, earliest, latest, minimum_high, minimum_low; };
+Measured measure();
 } // namespace
 
 int main() {
     try {
+        for (const auto& name : circuit::timing::timingProfileNames()) {
+            circuit::timing::setActiveTimingProfile(name);
+            const auto& profile = circuit::timing::activeTimingProfile();
+            const size_t slowest = std::max({profile.not_gate, profile.nand_gate, profile.and_gate, profile.or_gate});
+            WINDOW = 24 * slowest; QUIET = 60 * slowest;
+            const auto m = measure();
+            std::cout << "profile " << name << ": DFlipFlop, every stored value, data value (0, 1, X, Z) and offset within "
+                      << WINDOW << " ticks of the edge:\n"
+                      << "  setup " << m.setup << ", hold " << m.hold << ", clock-to-output " << m.earliest << ".." << m.latest
+                      << ", shortest high " << m.minimum_high << ", shortest low " << m.minimum_low << " ticks\n";
+            namespace t = circuit::dflipflop_timing;
+            check(m.setup == t::setup() && m.hold == t::hold() && m.earliest == t::clockToOutputMinimum()
+                  && m.latest == t::clockToOutputMaximum() && m.minimum_high == t::minimumHigh() && m.minimum_low == t::minimumLow(),
+                  "The " + name + " profile's flip-flop contract does not match the flip-flop");
+        }
+        std::cout << "DFlipFlopTimingTest passed\n";
+        return 0;
+    } catch (const std::exception& error) {
+        std::cerr << "DFlipFlopTimingTest failed: " << error.what() << '\n';
+        return 1;
+    }
+}
+
+namespace {
+Measured measure() {
+    {
         Bench bench;
         bench.set(bench.rst, true, 0); bench.set(bench.clk, false, 0); bench.set(bench.d, false, 0);
         bench.sim.advanceAndRecord(bench.now = QUIET);
@@ -153,19 +189,9 @@ int main() {
                 result = edge(bench, stored, before, data, -static_cast<long>(WINDOW), QUIET, width);
                 if (!result.clean || result.captured != wanted(data) || result.last > latest) minimum_low = width + 1;
             }
-        std::cout << "DFlipFlop, every stored value, data value (0, 1, X, Z) and offset within " << WINDOW << " ticks of the edge:\n"
-                  << "  setup " << setup << ", hold " << hold << ", clock-to-output " << earliest << ".." << latest
-                  << ", shortest high " << minimum_high << ", shortest low " << minimum_low << " ticks\n"
-                  << "  (data arriving later than the setup time can still be captured, with the output as late as tick "
+        std::cout << "  (data arriving later than the setup time can still be captured, with the output as late as tick "
                   << late_capture << ")\n";
-        namespace t = circuit::dflipflop_timing;
-        check(setup == t::setup() && hold == t::hold() && earliest == t::clockToOutputMinimum()
-              && latest == t::clockToOutputMaximum() && minimum_high == t::minimumHigh() && minimum_low == t::minimumLow(),
-              "The timing profile's flip-flop contract does not match the flip-flop");
-        std::cout << "DFlipFlopTimingTest passed\n";
-        return 0;
-    } catch (const std::exception& error) {
-        std::cerr << "DFlipFlopTimingTest failed: " << error.what() << '\n';
-        return 1;
+        return {setup, hold, earliest, latest, minimum_high, minimum_low};
     }
 }
+} // namespace

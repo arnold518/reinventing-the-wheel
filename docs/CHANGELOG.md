@@ -7,6 +7,33 @@ history remains in Git and the archived reports.
 
 ## 2026-10-16
 
+### Timing profiles, inertial gate delay and realistic gate delays (branch `realistic-timing`)
+
+- **Changed:** leaf parts (logic gates, splitter, memory primitives) read
+  their delays from a process-wide timing profile
+  (`include/components/TimingProfile.hpp`), selected by
+  `CIRCUITSIM_TIMING_PROFILE`, the Python `set_timing_profile` or code.
+  Profiles: `unit` (default; unchanged timing), `embedded` (65 nm, FO4 30 ps)
+  and `desktop` (32 nm, FO4 21 ps) with 1 tick = 1 ps and sourced gate ratios.
+  Logic gates use inertial delay (pulses shorter than the delay vanish).
+  Flip-flop and SRAM-cell contracts are measured per profile and stored in
+  it. Delay tables are generated per profile, each in its own source file;
+  `part_delay_tables --profile` and two CTest verify entries were added.
+- **Why:** the owner decided to give leaf parts realistic delays while keeping
+  behavioral parts derived from their gate forms (see the realistic-timing
+  plan and progress records).
+- **Verified:** under `unit`, `part_delay_tables --verify` identical (601
+  entries) and nine CPU runs identical in every field but host time against
+  the baseline binary, with and without inertial delay; 23 scenarios passed.
+  Under `embedded`/`desktop`: tables verified at a fixed point, flip-flop and
+  SRAM-cell tests passed, all three cores certified and ran programs with
+  identical cycles and oracle checks in compact and gate-level form;
+  `DelayRuleTest` sample passed.
+- **Limits:** no full suite. Timed memories (SRAM/DRAM/ROM/NOR) keep
+  tick-based timers and are not valid under realistic profiles until the
+  gate-level memory control phases. Scenario tests stay on `unit`. The public
+  site is unchanged by owner request.
+
 ### Retire the redundant memory container and document test workflows
 
 - **Changed:** scalable endpoints now select each technology's behavioral

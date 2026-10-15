@@ -14,6 +14,12 @@ set_tests_properties(PartDelayTablesTest PROPERTIES LABELS "timing;analysis" TIM
 add_test(NAME PartDelayTablesCompleteTest COMMAND part_delay_tables --verify
     ${CMAKE_SOURCE_DIR}/src/components/selection/ProvenPartDelays.generated.inc)
 set_tests_properties(PartDelayTablesCompleteTest PROPERTIES LABELS "timing;analysis;slow" TIMEOUT 3600)
+# The same for each realistic timing profile (components/TimingProfile.hpp).
+foreach(timing_profile embedded desktop)
+    add_test(NAME PartDelayTablesComplete_${timing_profile}_Test COMMAND part_delay_tables --profile=${timing_profile} --verify
+        ${CMAKE_SOURCE_DIR}/src/components/selection/ProvenPartDelays.${timing_profile}.generated.inc)
+    set_tests_properties(PartDelayTablesComplete_${timing_profile}_Test PROPERTIES LABELS "timing;analysis;slow" TIMEOUT 3600)
+endforeach()
 add_executable(DelayRuleTest cpp/DelayRuleTest.cpp)
 target_link_libraries(DelayRuleTest PRIVATE SimulatorLib)
 add_test(NAME DelayRuleTest COMMAND DelayRuleTest)

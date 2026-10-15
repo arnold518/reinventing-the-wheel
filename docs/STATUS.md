@@ -60,14 +60,16 @@ work state changes. Keep dated decisions and validation results in
 
 ## In progress
 
-- [Realistic leaf delays and gate-level memory control](records/2026-10-16-realistic-timing-plan.md):
-  the owner decided to give all leaf parts (gates, wiring, memory electrical
-  stand-ins) realistic delays, keep behavioral parts derived from their gate
-  forms, and rebuild the memory control now hidden in C++ as gates. It follows
-  the closed [memory timing realism review](records/2026-10-16-memory-timing-realism-review.md),
-  which found memory access time almost entirely uncalibrated C++ timers and
-  guards. Three design choices (gate model, memory timing source,
-  calibration reference) are open; no code has changed. The cache
+- [Realistic leaf delays and gate-level memory control](records/2026-10-16-realistic-timing-plan.md),
+  executed on branch `realistic-timing` with a [progress log](records/2026-10-16-realistic-timing-progress.md):
+  phases 1–3 are done. Leaf delays come from a timing profile (`unit`,
+  today's timing and still the default; `embedded` 65 nm and `desktop` 32 nm,
+  1 tick = 1 ps); gates use inertial delay; per-profile delay tables are
+  generated to a fixed point. Under `unit` every checked result is identical
+  to before. Under the realistic profiles the cores certify at 140–428 MHz
+  with identical cycles and oracle-checked results. Timed memories are not
+  yet valid under realistic profiles; phase 4 (gate-level memory control)
+  is next. Tag `timing-legacy` reproduces published results. The cache
   experiment waits on this work.
 
 - [Future steps plan](records/2026-10-14-future-steps-plan.md): current CPU,
