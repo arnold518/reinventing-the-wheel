@@ -5,6 +5,9 @@
 #include "components/ComponentBuilder.tpp"
 #include "modules/basic/ClockGenerator.hpp"
 #include "modules/rv32i/RV32IMemorySystem.hpp"
+#include "modules/rv32i/RV32IFiveStageCore.hpp"
+#include "modules/memory/TwoPortMemoryArbiter.hpp"
+#include "components/StructuralNetBuilder.hpp"
 #include "simulator/Event.hpp"
 #include "simulator/Simulator.hpp"
 #include <stdexcept>
@@ -53,16 +56,35 @@ RV32IProgramRoot::RV32IProgramRoot(
     const circuit::ComponentFamily& core_family,
     size_t clock_half_period,
     rv32i::MemoryConfiguration instructions,
-    rv32i::MemoryConfiguration data, circuit::ParameterMap core_parameters)
+    rv32i::MemoryConfiguration data, circuit::ParameterMap core_parameters,
+    std::optional<circuit::memory::CacheConfig> instruction_cache,
+    std::optional<circuit::memory::CacheConfig> data_cache, bool unified_memory)
     : IOComponent(std::move(name), initializePins),
       core_family_(core_family),
       core_parameters_(std::move(core_parameters)),
       clock_half_period_(clock_half_period),
-      instruction_config_(std::move(instructions)), data_config_(std::move(data)) {
+      instruction_config_(std::move(instructions)), data_config_(std::move(data)),
+      instruction_cache_config_(std::move(instruction_cache)),
+      data_cache_config_(std::move(data_cache)), unified_memory_(unified_memory) {
     if (clock_half_period_ == 0) {
         throw std::invalid_argument(
             "RV32I program clock half-period must be positive");
     }
+    if ((instruction_cache_config_ || data_cache_config_) &&
+        core_family_.id() != circuit::families::RV32IFiveStageCore.id())
+        throw std::invalid_argument("Caches currently require the advanced five-stage core");
+    if (instruction_cache_config_ && instruction_cache_config_->read_write)
+        throw std::invalid_argument("Instruction cache must be read only");
+    if (data_cache_config_ && !data_cache_config_->read_write)
+        throw std::invalid_argument("Data cache must accept writes");
+    if (unified_memory_ &&
+        (core_family_.id() != circuit::families::RV32IFiveStageCore.id() ||
+         !instruction_cache_config_ || !data_cache_config_ ||
+         instruction_config_.technology != data_config_.technology ||
+         instruction_config_.expanded_endpoint != data_config_.expanded_endpoint ||
+         circuit::memory::endpointParameters(instruction_config_.device) !=
+             circuit::memory::endpointParameters(data_config_.device)))
+        throw std::invalid_argument("Unified memory requires the advanced core, both caches and one matching backing configuration");
 }
 
 void RV32IProgramRoot::buildInternals(ComponentBuilder& builder) {
@@ -72,8 +94,52 @@ void RV32IProgramRoot::buildInternals(ComponentBuilder& builder) {
     const bool fixed_cycle=core_family_.id()=="rv32i.core.educational-single-cycle" || core_family_.id()=="rv32i.core.baseline-pipeline";
     if(fixed_cycle&&(instruction_config_.technology!=circuit::memory::Technology::FF || data_config_.technology!=circuit::memory::Technology::FF))
         throw std::invalid_argument("Fixed-cycle cores require zero-wait FF endpoints");
-    instruction_memory_ = rv32i::buildMemory(builder, *this, "INSTRUCTION_MEMORY", instruction_config_);
-    data_memory_ = rv32i::buildMemory(builder, *this, "DATA_MEMORY", data_config_);
+    if (unified_memory_) {
+        data_memory_ = rv32i::buildMemory(builder, *this, "SHARED_MEMORY", data_config_);
+        instruction_memory_ = data_memory_;
+    } else {
+        instruction_memory_ = rv32i::buildMemory(builder, *this, "INSTRUCTION_MEMORY", instruction_config_);
+        data_memory_ = rv32i::buildMemory(builder, *this, "DATA_MEMORY", data_config_);
+    }
+    auto instruction_port = instruction_memory_;
+    auto data_port = data_memory_;
+    circuit::detail::StructuralWiring cache_wiring(builder);
+    auto make_cache = [&](const std::string& name, const circuit::memory::CacheConfig& config) {
+        auto cache = builder.addNewComponent<circuit::memory::Cache<32>>(name, config);
+        cache_wiring.connect(cache_wiring.constant(name + "_NO_INVALIDATION", false),
+                             cache->getInputPin("INV_VALID"));
+        return std::static_pointer_cast<IOComponent>(cache);
+    };
+    auto connect_backing = [&](const std::shared_ptr<IOComponent>& requester,
+                               const std::shared_ptr<IOComponent>& backing,
+                               const std::string& requester_prefix) {
+        for (const auto& [pin_name, pin] : backing->getAllInputPins())
+            cache_wiring.connect(requester->getOutputPinDynamic(requester_prefix + pin_name), pin);
+        for (const auto& [pin_name, pin] : backing->getAllOutputPins())
+            cache_wiring.connect(pin, requester->getInputPinDynamic(requester_prefix + pin_name));
+    };
+    if (instruction_cache_config_)
+        instruction_port = make_cache("INSTRUCTION_CACHE", *instruction_cache_config_);
+    if (data_cache_config_)
+        data_port = make_cache("DATA_CACHE", *data_cache_config_);
+    if (unified_memory_) {
+        auto arbiter = builder.addNewComponent<circuit::memory::TwoPortMemoryArbiter<32>>("MEMORY_ARBITER");
+        for (const auto& [prefix, cache] :
+             {std::pair<std::string, std::shared_ptr<IOComponent>>{"I_", instruction_port},
+              {"D_", data_port}}) {
+            for (const auto& [name, pin] : arbiter->getAllInputPins())
+                if (name.starts_with(prefix))
+                    cache_wiring.connect(cache->getOutputPinDynamic("MEM_" + name.substr(prefix.size())), pin);
+            for (const auto& [name, pin] : arbiter->getAllOutputPins())
+                if (name.starts_with(prefix))
+                    cache_wiring.connect(pin, cache->getInputPinDynamic("MEM_" + name.substr(prefix.size())));
+        }
+        connect_backing(arbiter, data_memory_, "MEM_");
+    } else {
+        if (instruction_cache_config_) connect_backing(instruction_port, instruction_memory_, "MEM_");
+        if (data_cache_config_) connect_backing(data_port, data_memory_, "MEM_");
+    }
+    cache_wiring.finish();
     state_view_ = std::dynamic_pointer_cast<RV32IStateView>(core_);
     if (auto pipeline = std::dynamic_pointer_cast<RV32IPipelineStateView>(core_)) {
         pipeline_observer_ = std::make_shared<RV32IPipelineObserver>(pipeline);
@@ -87,7 +153,7 @@ void RV32IProgramRoot::buildInternals(ComponentBuilder& builder) {
         instruction_memory_ != nullptr && data_memory_ != nullptr,
         "memories");
 
-    rv32i::wireMemorySystem(builder, core_, instruction_memory_, data_memory_,
+    rv32i::wireMemorySystem(builder, core_, instruction_port, data_port,
         clock_->getOutputPin("CLK_OUT"), getInputPin("RST"));
     builder.addNewWire(
         "ENABLE",

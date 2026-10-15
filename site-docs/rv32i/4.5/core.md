@@ -88,9 +88,9 @@ Program fixtures supply separate [MemoryEndpoint&lt;ff,32&gt;](../../memory/3.3.
 | `MemoryEndpoint<ff,32>`, fused behavioral implementation | Yes; default | Scalable instruction and read/write data storage |
 | `MemoryEndpoint<ff,32>`, visible FF controller plus native device | Yes | Same timing, with the controller/device boundary visible |
 | `MemoryEndpoint<sram,32>`, `<dram,32>`, `<rom,32>`, `<nor-flash,32>` | No, with their current controllers | These endpoints require delayed-response handling |
-| Native `MemoryContainer`, `FFMemory`, or other memory device alone | Not directly | Native pins need the matching controller to form an endpoint |
+| Native `FFMemory` or another memory device alone | Not directly | Native pins need the matching controller to form an endpoint |
 
-The visible FF assembly can use [MemoryContainer&lt;ff,32&gt;](../../memory/3.1.6.md) for scalable storage, or [FFMemory&lt;32&gt;](../../memory/3.1.1.md) for a small cell-expanded circuit. Program-sized images should keep scalable storage. Capacity and fidelity do not change the timing contract. CPU reset clears the endpoint interface, not the stored program/data.
+The visible FF assembly can use [FFMemory&lt;32&gt; at behavioral fidelity](../../memory/3.1.6.md) for scalable storage, or [FFMemory&lt;32&gt;](../../memory/3.1.1.md) for a small cell-expanded circuit. Program-sized images should keep scalable storage. Capacity and fidelity do not change the timing contract. CPU reset clears the endpoint interface, not the stored program/data.
 
 !!! warning "Hazard stalls are not memory-wait support"
 

@@ -17,7 +17,7 @@ template<size_t DataWidth>
 class FFMemoryBehavioral : public BasicComponent, public MemoryDeviceStorage {
 public:
     inline static const std::string TypeName = std::string("FFMemory") + std::to_string(DataWidth);
-    const char* getTypeName() const override { return memoryDisplayType(TypeName.c_str()); }
+    const char* getTypeName() const override { return TypeName.c_str(); }
     FFMemoryBehavioral(std::string name, MemoryConfig config = MemoryConfig{
                         .initial_value = LogicValue::UNKNOWN})
         : BasicComponent(std::move(name), config.read_delay_ticks,

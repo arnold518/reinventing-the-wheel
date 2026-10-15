@@ -7,7 +7,7 @@ enum class Operation : unsigned { Read, Write, Program, EraseBlock };
 enum class Status : unsigned { Ok, Alignment, Range, ReadOnly, Unsupported, Device, InvalidRequest };
 const char* technologyName(Technology);
 // Catalog name of a memory part: memory.<technology>.<what>.<width>, where
-// <what> is for example "device", "scalable-device", "controller",
+// <what> is for example "device", "controller",
 // "endpoint" or "scalable-endpoint".
 std::string memoryContractId(Technology, std::string_view what, size_t width);
 Technology technologyFromName(const std::string&);

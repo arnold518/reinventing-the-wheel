@@ -32,9 +32,9 @@ outstanding requests and holds progress until the response arrives.
 These entries apply to the current controllers, not a claim that SRAM or ROM
 must inherently take multiple CPU cycles. Endpoint fidelity does not change
 compatibility: a fused `BehavioralMemoryEndpoint` and the corresponding visible
-controller/device assembly keep the same contract. An endpoint may contain a
-scalable `MemoryContainer<technology,32>` or a small expanded native device;
-the container's native pins alone are not a drop-in replacement for REQ/RSP.
+controller/device assembly keep the same contract. An endpoint may contain
+a scalable behavioral native device or a small expanded native device;
+the device's native pins alone are not a drop-in replacement for REQ/RSP.
 For FF storage, the small expanded device is `FFMemory<32>`.
 
 The fixed-cycle program roots and `RV32ISingleCycleSystem` reject non-FF
@@ -53,7 +53,7 @@ require new CPU-side hold/completion control, not merely a different controller.
 
 | Component | Responsibility |
 | --- | --- |
-| `MemoryContainer` | Scalable native FF/SRAM/DRAM/ROM/NOR behavior, with that technology's pins |
+| Behavioral native device | Scalable FF/SRAM/DRAM/ROM/NOR behavior, with that technology's pins |
 | `MemoryController` | Map transactions to native pins; FF completes without wait cycles, other technologies sequence operations and hold responses; owns no contents |
 | `MemoryEndpoint` | Controller plus native device behind the common transaction interface |
 | `BehavioralMemoryEndpoint` | Fused behavioral implementation of that assembly |
@@ -61,8 +61,8 @@ require new CPU-side hold/completion control, not merely a different controller.
 | `RV32IMemoryRequest` | Pipeline-side outstanding-request tracking and redirect draining |
 
 Scalable endpoints are `memory.<technology>.scalable-endpoint.<width>` and keep
-the common transaction contract. Native containers are
-`memory.<technology>.scalable-device.<width>`; their schemas are not
+the common transaction contract. Behavioral native devices are
+`memory.<technology>.device.<width>`; their schemas are not
 interchangeable with the endpoint's.
 
 ## Single-cycle path
@@ -124,7 +124,7 @@ have been removed (see the [cleanup record](../archive/rv32i-cleanup.md)).
 All 22 single-cycle program cases enforce at most one clock per instruction.
 Stage tests cover both fidelities; integration covers overlapping source/
 destination operands and the no-reading-back rule. Native memory equivalence,
-controller/scalable-device composition, and 256 MiB sparse devices are covered
+controller/behavioral-device composition, and 256 MiB sparse devices are covered
 by `NativeMemoryDeviceContractTest`. `RV32IMemoryMigrationTest` covers the
 zero-wait fixed-cycle paths and configurable pipeline endpoints.
 
@@ -175,7 +175,7 @@ Load-use and data-port stalls remain zero for these fixtures; flush counts remai
 
 - 62 focused native tests passed, including all 44 programs, both core contracts, endpoint contracts/timing, loaders, the external ELF smoke test, saved-layout checks, Python bindings, and documentation/schema checks.
 - The serial run took 130.55 seconds and peaked at 343,740 KiB RSS (about 336 MiB). This measures the test process tree, not hardware throughput or the memory needed by every possible structural circuit.
-- The expanded integration checks run both core fidelities with containers and expanded ROM/SRAM endpoints, repeatedly pause ENABLE, and load a stored byte while neighboring SRAM bytes remain unknown. The single-cycle behavioral reference checks only the requested load lanes.
+- The expanded integration checks run both core fidelities with behavioral and expanded ROM/SRAM endpoints, repeatedly pause ENABLE, and load a stored byte while neighboring SRAM bytes remain unknown. The single-cycle behavioral reference checks only the requested load lanes.
 - The final native/WASM comparisons passed for single-cycle and pipeline, structural and behavioral: topology, recorded timing/state, and memory inspectors agree.
 - Chrome checks passed for all four core/fidelity combinations, including direct-memory root placement, terminal state, memory inspection, and no backend API requests. Core/requester floorplans are also checked for containment and overlap.
 - The strict MkDocs build passed; all 22 program checkpoint exports were refreshed from the rebuilt WASM engine.

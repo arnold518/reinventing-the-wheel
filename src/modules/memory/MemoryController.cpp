@@ -1,6 +1,6 @@
 #include "modules/memory/MemoryController.hpp"
 #include "modules/basic/DFlipFlop.hpp"
-#include "modules/memory/MemoryContainer.hpp"
+#include "modules/memory/NativeMemoryDevice.hpp"
 #include "modules/memory/BehavioralMemoryEndpoint.hpp"
 #include "modules/memory/MemoryStructuralBuilder.hpp"
 #include "modules/memory/FlipFlopCell.hpp"
@@ -296,10 +296,10 @@ void MemoryController::buildInternals(ComponentBuilder& b) {
     for (auto n : {"BACK_READY", "DONE", "RESULT", "STATUS"}) w.connect(control->getOutputPinDynamic(n), front->getInputPinDynamic(n));
     w.finish();
 }
-MemoryEndpoint::MemoryEndpoint(std::string n, size_t w, Technology t, EndpointConfig c, bool scalable_device)
+MemoryEndpoint::MemoryEndpoint(std::string n, size_t w, Technology t, EndpointConfig c, bool require_behavioral_device)
     : IOComponent(std::move(n), [w](IOComponent* s) { protocolPins(s, w); }), width_(w), technology_(t),
-      config_(c), scalable_device_(scalable_device),
-      type_("MemoryEndpoint<" + std::string(technologyName(t)) + "," + std::to_string(w) + ">") { c.validate(w, t, !scalable_device); }
+      config_(c), require_behavioral_device_(require_behavioral_device),
+      type_("MemoryEndpoint<" + std::string(technologyName(t)) + "," + std::to_string(w) + ">") { c.validate(w, t, !require_behavioral_device); }
 void MemoryEndpoint::buildInternals(ComponentBuilder& b) {
     memory_detail::StructuralWiring w(b);
     // The controller is requested through the catalog, so a profile can show
@@ -307,15 +307,12 @@ void MemoryEndpoint::buildInternals(ComponentBuilder& b) {
     auto controller = memory_device::child(b, *this, memoryContractId(technology_, "controller", width_),
                                            "CONTROLLER", endpointParameters(config_));
     std::shared_ptr<IOComponent> device;
-    if (scalable_device_) {
-        device = memory_device::child(b,*this,memoryContractId(technology_,"scalable-device",width_),
-                                      "MEMORY",endpointParameters(config_));
-    } else {
-        // An expanded device may itself be selected at behavioral fidelity.
-        // Preserve the same storage policy as the compact-device path.
-        const auto request = nativeDeviceRequest(width_, technology_, config_);
-        device = memory_device::child(b, *this, request.contract_id, "MEMORY", request.parameters);
-    }
+    // Both endpoint forms use the same native-device contract. The scalable
+    // form requires its behavioral implementation even under a structural
+    // parent profile; the ordinary form follows the profile's selection.
+    const auto request = nativeDeviceRequest(width_, technology_, config_);
+    device = memory_device::child(b, *this, request.contract_id, "MEMORY", request.parameters,
+                                  require_behavioral_device_ ? std::optional<Fidelity>{Fidelity::Behavioral} : std::nullopt);
     storage_ = std::dynamic_pointer_cast<MemoryStateView>(device);
     for (const auto& [name, pin] : getAllInputPins()) w.connect(pin, controller->getInputPinDynamic(name));
     for (const auto& [name, pin] : getAllOutputPins()) w.connect(controller->getOutputPinDynamic(name), pin);

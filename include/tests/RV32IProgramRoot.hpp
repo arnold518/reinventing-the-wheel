@@ -2,6 +2,7 @@
 
 #include "components/IOComponent.hpp"
 #include "modules/rv32i/RV32IMemorySystem.hpp"
+#include "modules/memory/Cache.hpp"
 #include "components/capabilities/RV32IStateView.hpp"
 #include "components/selection/ComponentFamily.hpp"
 #include "rv32i/RV32IProgram.hpp"
@@ -10,6 +11,7 @@
 #include <cstdint>
 #include <map>
 #include <memory>
+#include <optional>
 #include <vector>
 
 class ClockGenerator;
@@ -33,7 +35,10 @@ public:
         const circuit::ComponentFamily& core_family,
         size_t clock_half_period,
         rv32i::MemoryConfiguration instructions,
-        rv32i::MemoryConfiguration data = {}, circuit::ParameterMap core_parameters = {});
+        rv32i::MemoryConfiguration data = {}, circuit::ParameterMap core_parameters = {},
+        std::optional<circuit::memory::CacheConfig> instruction_cache = std::nullopt,
+        std::optional<circuit::memory::CacheConfig> data_cache = std::nullopt,
+        bool unified_memory = false);
 
     static constexpr const char* TypeName = "RV32IProgramRoot";
     static constexpr const char* RootName = "RV32I_PROGRAM_ROOT";
@@ -92,6 +97,8 @@ private:
     std::shared_ptr<Wire<32>> observed_pc_wire_{};
     std::shared_ptr<IOComponent> instruction_memory_{};
     std::shared_ptr<IOComponent> data_memory_{};
+    std::optional<circuit::memory::CacheConfig> instruction_cache_config_, data_cache_config_;
+    bool unified_memory_ = false;
 
     rv32i::MemoryConfiguration instruction_config_, data_config_;
 };

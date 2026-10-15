@@ -227,6 +227,23 @@ std::string componentLayoutType(const std::shared_ptr<Component>& component) {
             return predicate(child->getName());
         });
     };
+    if (type.starts_with("Cache") && !children.empty()) {
+        std::vector<std::string> names;
+        names.reserve(children.size());
+        for (const auto& child : children) names.push_back(child->getName());
+        std::sort(names.begin(), names.end());
+        uint64_t signature = 0xcbf29ce484222325ULL;
+        for (const auto& name : names) {
+            for (const unsigned char byte : name) {
+                signature = (signature ^ byte) * 0x100000001b3ULL;
+            }
+            signature = (signature ^ 0xffu) * 0x100000001b3ULL;
+        }
+        std::ostringstream key;
+        key << type << "[layout-" << std::hex << std::setw(16)
+            << std::setfill('0') << signature << ']';
+        return key.str();
+    }
     if (type.starts_with("MemoryController<ff,") && !children.empty() &&
         !has_child([](const std::string& name) { return name == "RESPONSE"; }))
         return type.substr(0, type.size() - 1) + ",always-ready>";
@@ -645,6 +662,7 @@ VisualizerSession::VisualizerSession(
     }
 
     test_->setupCircuit();
+    test_->preparePrecomputedSimulation();
     root_ = test_->getRoot();
     if (!root_) throw std::runtime_error("C++ test scenario did not produce a root component");
     simulator_ = test_->getSimulator();

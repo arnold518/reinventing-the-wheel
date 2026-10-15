@@ -191,7 +191,7 @@ void bindModules(py::module_& m) {
         return std::dynamic_pointer_cast<IOComponent>(catalog.createRoot(request,
             circuit::withExactFidelity(circuit::canonicalDefaultProfile(),name,choice)).root);
     };
-    m.def("create_memory_container", [create_endpoint](const std::string& name, const std::string& model,
+    m.def("create_memory_device", [create_endpoint](const std::string& name, const std::string& model,
         size_t width, size_t depth, circuit::ParameterMap parameters) {
         return create_endpoint("device",name,model,width,depth,std::move(parameters),"behavioral");
     }, py::arg("name"), py::arg("model"), py::arg("data_width")=32, py::arg("depth_words")=4096, py::arg("parameters")=circuit::ParameterMap{});

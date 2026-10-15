@@ -1,5 +1,5 @@
 #pragma once
-#include "modules/memory/MemoryContainer.hpp"
+#include "modules/memory/NativeMemoryDevice.hpp"
 #include "components/capabilities/MemoryStateView.hpp"
 #include "components/capabilities/MemoryActivityView.hpp"
 #include <memory>

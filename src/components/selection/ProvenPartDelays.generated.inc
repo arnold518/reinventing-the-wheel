@@ -1206,73 +1206,7 @@
     t.self_timed = true;
     return t;
 }()},
-{"memory.dram.scalable-device.16.behavioral", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.dram.device.16.structural";
-    t.arcs = {
-        Arc{"ADDR", "BUSY", {1, 1}},
-        Arc{"ADDR", "ERROR", {1, 1}},
-        Arc{"ADDR", "READ_DATA", {2, 15}},
-        Arc{"ADDR", "READ_VALID", {1, 1}},
-        Arc{"ADDR", "ROW_OPEN", {1, 1}},
-        Arc{"CLK", "BUSY", {1, 1}},
-        Arc{"CLK", "ERROR", {1, 1}},
-        Arc{"CLK", "READ_DATA", {2, 15}},
-        Arc{"CLK", "READ_VALID", {1, 1}},
-        Arc{"CLK", "ROW_OPEN", {1, 1}},
-        Arc{"CMD", "BUSY", {1, 1}},
-        Arc{"CMD", "ERROR", {1, 1}},
-        Arc{"CMD", "READ_DATA", {2, 15}},
-        Arc{"CMD", "READ_VALID", {1, 1}},
-        Arc{"CMD", "ROW_OPEN", {1, 1}},
-        Arc{"WRITE_DATA", "BUSY", {1, 1}},
-        Arc{"WRITE_DATA", "ERROR", {1, 1}},
-        Arc{"WRITE_DATA", "READ_DATA", {2, 15}},
-        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
-        Arc{"WRITE_DATA", "ROW_OPEN", {1, 1}},
-        Arc{"WRITE_MASK", "BUSY", {1, 1}},
-        Arc{"WRITE_MASK", "ERROR", {1, 1}},
-        Arc{"WRITE_MASK", "READ_DATA", {2, 15}},
-        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
-        Arc{"WRITE_MASK", "ROW_OPEN", {1, 1}},
-    };
-    t.self_timed = true;
-    return t;
-}()},
 {"memory.dram.device.16.behavioral@depth=64", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.dram.device.16.structural";
-    t.arcs = {
-        Arc{"ADDR", "BUSY", {1, 1}},
-        Arc{"ADDR", "ERROR", {1, 1}},
-        Arc{"ADDR", "READ_DATA", {2, 17}},
-        Arc{"ADDR", "READ_VALID", {1, 1}},
-        Arc{"ADDR", "ROW_OPEN", {1, 1}},
-        Arc{"CLK", "BUSY", {1, 1}},
-        Arc{"CLK", "ERROR", {1, 1}},
-        Arc{"CLK", "READ_DATA", {2, 17}},
-        Arc{"CLK", "READ_VALID", {1, 1}},
-        Arc{"CLK", "ROW_OPEN", {1, 1}},
-        Arc{"CMD", "BUSY", {1, 1}},
-        Arc{"CMD", "ERROR", {1, 1}},
-        Arc{"CMD", "READ_DATA", {2, 17}},
-        Arc{"CMD", "READ_VALID", {1, 1}},
-        Arc{"CMD", "ROW_OPEN", {1, 1}},
-        Arc{"WRITE_DATA", "BUSY", {1, 1}},
-        Arc{"WRITE_DATA", "ERROR", {1, 1}},
-        Arc{"WRITE_DATA", "READ_DATA", {2, 17}},
-        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
-        Arc{"WRITE_DATA", "ROW_OPEN", {1, 1}},
-        Arc{"WRITE_MASK", "BUSY", {1, 1}},
-        Arc{"WRITE_MASK", "ERROR", {1, 1}},
-        Arc{"WRITE_MASK", "READ_DATA", {2, 17}},
-        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
-        Arc{"WRITE_MASK", "ROW_OPEN", {1, 1}},
-    };
-    t.self_timed = true;
-    return t;
-}()},
-{"memory.dram.scalable-device.16.behavioral@depth=64", [] {
     PartDelays t;
     t.evidence = "proven on memory.dram.device.16.structural";
     t.arcs = {
@@ -1338,73 +1272,7 @@
     t.self_timed = true;
     return t;
 }()},
-{"memory.dram.scalable-device.16.behavioral@depth=128", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.dram.device.16.structural";
-    t.arcs = {
-        Arc{"ADDR", "BUSY", {1, 1}},
-        Arc{"ADDR", "ERROR", {1, 1}},
-        Arc{"ADDR", "READ_DATA", {2, 17}},
-        Arc{"ADDR", "READ_VALID", {1, 1}},
-        Arc{"ADDR", "ROW_OPEN", {1, 1}},
-        Arc{"CLK", "BUSY", {1, 1}},
-        Arc{"CLK", "ERROR", {1, 1}},
-        Arc{"CLK", "READ_DATA", {2, 17}},
-        Arc{"CLK", "READ_VALID", {1, 1}},
-        Arc{"CLK", "ROW_OPEN", {1, 1}},
-        Arc{"CMD", "BUSY", {1, 1}},
-        Arc{"CMD", "ERROR", {1, 1}},
-        Arc{"CMD", "READ_DATA", {2, 17}},
-        Arc{"CMD", "READ_VALID", {1, 1}},
-        Arc{"CMD", "ROW_OPEN", {1, 1}},
-        Arc{"WRITE_DATA", "BUSY", {1, 1}},
-        Arc{"WRITE_DATA", "ERROR", {1, 1}},
-        Arc{"WRITE_DATA", "READ_DATA", {2, 17}},
-        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
-        Arc{"WRITE_DATA", "ROW_OPEN", {1, 1}},
-        Arc{"WRITE_MASK", "BUSY", {1, 1}},
-        Arc{"WRITE_MASK", "ERROR", {1, 1}},
-        Arc{"WRITE_MASK", "READ_DATA", {2, 17}},
-        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
-        Arc{"WRITE_MASK", "ROW_OPEN", {1, 1}},
-    };
-    t.self_timed = true;
-    return t;
-}()},
 {"memory.dram.device.16.behavioral@rows=1", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.dram.device.16.structural";
-    t.arcs = {
-        Arc{"ADDR", "BUSY", {1, 1}},
-        Arc{"ADDR", "ERROR", {1, 1}},
-        Arc{"ADDR", "READ_DATA", {2, 15}},
-        Arc{"ADDR", "READ_VALID", {1, 1}},
-        Arc{"ADDR", "ROW_OPEN", {1, 1}},
-        Arc{"CLK", "BUSY", {1, 1}},
-        Arc{"CLK", "ERROR", {1, 1}},
-        Arc{"CLK", "READ_DATA", {2, 15}},
-        Arc{"CLK", "READ_VALID", {1, 1}},
-        Arc{"CLK", "ROW_OPEN", {1, 1}},
-        Arc{"CMD", "BUSY", {1, 1}},
-        Arc{"CMD", "ERROR", {1, 1}},
-        Arc{"CMD", "READ_DATA", {2, 15}},
-        Arc{"CMD", "READ_VALID", {1, 1}},
-        Arc{"CMD", "ROW_OPEN", {1, 1}},
-        Arc{"WRITE_DATA", "BUSY", {1, 1}},
-        Arc{"WRITE_DATA", "ERROR", {1, 1}},
-        Arc{"WRITE_DATA", "READ_DATA", {2, 15}},
-        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
-        Arc{"WRITE_DATA", "ROW_OPEN", {1, 1}},
-        Arc{"WRITE_MASK", "BUSY", {1, 1}},
-        Arc{"WRITE_MASK", "ERROR", {1, 1}},
-        Arc{"WRITE_MASK", "READ_DATA", {2, 15}},
-        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
-        Arc{"WRITE_MASK", "ROW_OPEN", {1, 1}},
-    };
-    t.self_timed = true;
-    return t;
-}()},
-{"memory.dram.scalable-device.16.behavioral@rows=1", [] {
     PartDelays t;
     t.evidence = "proven on memory.dram.device.16.structural";
     t.arcs = {
@@ -1470,73 +1338,7 @@
     t.self_timed = true;
     return t;
 }()},
-{"memory.dram.scalable-device.16.behavioral@depth=64@rows=1", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.dram.device.16.structural";
-    t.arcs = {
-        Arc{"ADDR", "BUSY", {1, 1}},
-        Arc{"ADDR", "ERROR", {1, 1}},
-        Arc{"ADDR", "READ_DATA", {2, 16}},
-        Arc{"ADDR", "READ_VALID", {1, 1}},
-        Arc{"ADDR", "ROW_OPEN", {1, 1}},
-        Arc{"CLK", "BUSY", {1, 1}},
-        Arc{"CLK", "ERROR", {1, 1}},
-        Arc{"CLK", "READ_DATA", {2, 16}},
-        Arc{"CLK", "READ_VALID", {1, 1}},
-        Arc{"CLK", "ROW_OPEN", {1, 1}},
-        Arc{"CMD", "BUSY", {1, 1}},
-        Arc{"CMD", "ERROR", {1, 1}},
-        Arc{"CMD", "READ_DATA", {2, 16}},
-        Arc{"CMD", "READ_VALID", {1, 1}},
-        Arc{"CMD", "ROW_OPEN", {1, 1}},
-        Arc{"WRITE_DATA", "BUSY", {1, 1}},
-        Arc{"WRITE_DATA", "ERROR", {1, 1}},
-        Arc{"WRITE_DATA", "READ_DATA", {2, 16}},
-        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
-        Arc{"WRITE_DATA", "ROW_OPEN", {1, 1}},
-        Arc{"WRITE_MASK", "BUSY", {1, 1}},
-        Arc{"WRITE_MASK", "ERROR", {1, 1}},
-        Arc{"WRITE_MASK", "READ_DATA", {2, 16}},
-        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
-        Arc{"WRITE_MASK", "ROW_OPEN", {1, 1}},
-    };
-    t.self_timed = true;
-    return t;
-}()},
 {"memory.dram.device.16.behavioral@depth=128@rows=1", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.dram.device.16.structural";
-    t.arcs = {
-        Arc{"ADDR", "BUSY", {1, 1}},
-        Arc{"ADDR", "ERROR", {1, 1}},
-        Arc{"ADDR", "READ_DATA", {2, 16}},
-        Arc{"ADDR", "READ_VALID", {1, 1}},
-        Arc{"ADDR", "ROW_OPEN", {1, 1}},
-        Arc{"CLK", "BUSY", {1, 1}},
-        Arc{"CLK", "ERROR", {1, 1}},
-        Arc{"CLK", "READ_DATA", {2, 16}},
-        Arc{"CLK", "READ_VALID", {1, 1}},
-        Arc{"CLK", "ROW_OPEN", {1, 1}},
-        Arc{"CMD", "BUSY", {1, 1}},
-        Arc{"CMD", "ERROR", {1, 1}},
-        Arc{"CMD", "READ_DATA", {2, 16}},
-        Arc{"CMD", "READ_VALID", {1, 1}},
-        Arc{"CMD", "ROW_OPEN", {1, 1}},
-        Arc{"WRITE_DATA", "BUSY", {1, 1}},
-        Arc{"WRITE_DATA", "ERROR", {1, 1}},
-        Arc{"WRITE_DATA", "READ_DATA", {2, 16}},
-        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
-        Arc{"WRITE_DATA", "ROW_OPEN", {1, 1}},
-        Arc{"WRITE_MASK", "BUSY", {1, 1}},
-        Arc{"WRITE_MASK", "ERROR", {1, 1}},
-        Arc{"WRITE_MASK", "READ_DATA", {2, 16}},
-        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
-        Arc{"WRITE_MASK", "ROW_OPEN", {1, 1}},
-    };
-    t.self_timed = true;
-    return t;
-}()},
-{"memory.dram.scalable-device.16.behavioral@depth=128@rows=1", [] {
     PartDelays t;
     t.evidence = "proven on memory.dram.device.16.structural";
     t.arcs = {
@@ -1602,73 +1404,7 @@
     t.self_timed = true;
     return t;
 }()},
-{"memory.dram.scalable-device.16.behavioral@rows=4", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.dram.device.16.structural";
-    t.arcs = {
-        Arc{"ADDR", "BUSY", {1, 1}},
-        Arc{"ADDR", "ERROR", {1, 1}},
-        Arc{"ADDR", "READ_DATA", {2, 17}},
-        Arc{"ADDR", "READ_VALID", {1, 1}},
-        Arc{"ADDR", "ROW_OPEN", {1, 1}},
-        Arc{"CLK", "BUSY", {1, 1}},
-        Arc{"CLK", "ERROR", {1, 1}},
-        Arc{"CLK", "READ_DATA", {2, 17}},
-        Arc{"CLK", "READ_VALID", {1, 1}},
-        Arc{"CLK", "ROW_OPEN", {1, 1}},
-        Arc{"CMD", "BUSY", {1, 1}},
-        Arc{"CMD", "ERROR", {1, 1}},
-        Arc{"CMD", "READ_DATA", {2, 17}},
-        Arc{"CMD", "READ_VALID", {1, 1}},
-        Arc{"CMD", "ROW_OPEN", {1, 1}},
-        Arc{"WRITE_DATA", "BUSY", {1, 1}},
-        Arc{"WRITE_DATA", "ERROR", {1, 1}},
-        Arc{"WRITE_DATA", "READ_DATA", {2, 17}},
-        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
-        Arc{"WRITE_DATA", "ROW_OPEN", {1, 1}},
-        Arc{"WRITE_MASK", "BUSY", {1, 1}},
-        Arc{"WRITE_MASK", "ERROR", {1, 1}},
-        Arc{"WRITE_MASK", "READ_DATA", {2, 17}},
-        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
-        Arc{"WRITE_MASK", "ROW_OPEN", {1, 1}},
-    };
-    t.self_timed = true;
-    return t;
-}()},
 {"memory.dram.device.16.behavioral@depth=64@rows=4", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.dram.device.16.structural";
-    t.arcs = {
-        Arc{"ADDR", "BUSY", {1, 1}},
-        Arc{"ADDR", "ERROR", {1, 1}},
-        Arc{"ADDR", "READ_DATA", {2, 18}},
-        Arc{"ADDR", "READ_VALID", {1, 1}},
-        Arc{"ADDR", "ROW_OPEN", {1, 1}},
-        Arc{"CLK", "BUSY", {1, 1}},
-        Arc{"CLK", "ERROR", {1, 1}},
-        Arc{"CLK", "READ_DATA", {2, 18}},
-        Arc{"CLK", "READ_VALID", {1, 1}},
-        Arc{"CLK", "ROW_OPEN", {1, 1}},
-        Arc{"CMD", "BUSY", {1, 1}},
-        Arc{"CMD", "ERROR", {1, 1}},
-        Arc{"CMD", "READ_DATA", {2, 18}},
-        Arc{"CMD", "READ_VALID", {1, 1}},
-        Arc{"CMD", "ROW_OPEN", {1, 1}},
-        Arc{"WRITE_DATA", "BUSY", {1, 1}},
-        Arc{"WRITE_DATA", "ERROR", {1, 1}},
-        Arc{"WRITE_DATA", "READ_DATA", {2, 18}},
-        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
-        Arc{"WRITE_DATA", "ROW_OPEN", {1, 1}},
-        Arc{"WRITE_MASK", "BUSY", {1, 1}},
-        Arc{"WRITE_MASK", "ERROR", {1, 1}},
-        Arc{"WRITE_MASK", "READ_DATA", {2, 18}},
-        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
-        Arc{"WRITE_MASK", "ROW_OPEN", {1, 1}},
-    };
-    t.self_timed = true;
-    return t;
-}()},
-{"memory.dram.scalable-device.16.behavioral@depth=64@rows=4", [] {
     PartDelays t;
     t.evidence = "proven on memory.dram.device.16.structural";
     t.arcs = {
@@ -1734,73 +1470,7 @@
     t.self_timed = true;
     return t;
 }()},
-{"memory.dram.scalable-device.16.behavioral@depth=128@rows=4", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.dram.device.16.structural";
-    t.arcs = {
-        Arc{"ADDR", "BUSY", {1, 1}},
-        Arc{"ADDR", "ERROR", {1, 1}},
-        Arc{"ADDR", "READ_DATA", {2, 18}},
-        Arc{"ADDR", "READ_VALID", {1, 1}},
-        Arc{"ADDR", "ROW_OPEN", {1, 1}},
-        Arc{"CLK", "BUSY", {1, 1}},
-        Arc{"CLK", "ERROR", {1, 1}},
-        Arc{"CLK", "READ_DATA", {2, 18}},
-        Arc{"CLK", "READ_VALID", {1, 1}},
-        Arc{"CLK", "ROW_OPEN", {1, 1}},
-        Arc{"CMD", "BUSY", {1, 1}},
-        Arc{"CMD", "ERROR", {1, 1}},
-        Arc{"CMD", "READ_DATA", {2, 18}},
-        Arc{"CMD", "READ_VALID", {1, 1}},
-        Arc{"CMD", "ROW_OPEN", {1, 1}},
-        Arc{"WRITE_DATA", "BUSY", {1, 1}},
-        Arc{"WRITE_DATA", "ERROR", {1, 1}},
-        Arc{"WRITE_DATA", "READ_DATA", {2, 18}},
-        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
-        Arc{"WRITE_DATA", "ROW_OPEN", {1, 1}},
-        Arc{"WRITE_MASK", "BUSY", {1, 1}},
-        Arc{"WRITE_MASK", "ERROR", {1, 1}},
-        Arc{"WRITE_MASK", "READ_DATA", {2, 18}},
-        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
-        Arc{"WRITE_MASK", "ROW_OPEN", {1, 1}},
-    };
-    t.self_timed = true;
-    return t;
-}()},
 {"memory.dram.device.16.behavioral@depth=64@rows=8", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.dram.device.16.structural";
-    t.arcs = {
-        Arc{"ADDR", "BUSY", {1, 1}},
-        Arc{"ADDR", "ERROR", {1, 1}},
-        Arc{"ADDR", "READ_DATA", {2, 18}},
-        Arc{"ADDR", "READ_VALID", {1, 1}},
-        Arc{"ADDR", "ROW_OPEN", {1, 1}},
-        Arc{"CLK", "BUSY", {1, 1}},
-        Arc{"CLK", "ERROR", {1, 1}},
-        Arc{"CLK", "READ_DATA", {2, 18}},
-        Arc{"CLK", "READ_VALID", {1, 1}},
-        Arc{"CLK", "ROW_OPEN", {1, 1}},
-        Arc{"CMD", "BUSY", {1, 1}},
-        Arc{"CMD", "ERROR", {1, 1}},
-        Arc{"CMD", "READ_DATA", {2, 18}},
-        Arc{"CMD", "READ_VALID", {1, 1}},
-        Arc{"CMD", "ROW_OPEN", {1, 1}},
-        Arc{"WRITE_DATA", "BUSY", {1, 1}},
-        Arc{"WRITE_DATA", "ERROR", {1, 1}},
-        Arc{"WRITE_DATA", "READ_DATA", {2, 18}},
-        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
-        Arc{"WRITE_DATA", "ROW_OPEN", {1, 1}},
-        Arc{"WRITE_MASK", "BUSY", {1, 1}},
-        Arc{"WRITE_MASK", "ERROR", {1, 1}},
-        Arc{"WRITE_MASK", "READ_DATA", {2, 18}},
-        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
-        Arc{"WRITE_MASK", "ROW_OPEN", {1, 1}},
-    };
-    t.self_timed = true;
-    return t;
-}()},
-{"memory.dram.scalable-device.16.behavioral@depth=64@rows=8", [] {
     PartDelays t;
     t.evidence = "proven on memory.dram.device.16.structural";
     t.arcs = {
@@ -1866,73 +1536,7 @@
     t.self_timed = true;
     return t;
 }()},
-{"memory.dram.scalable-device.16.behavioral@depth=128@rows=8", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.dram.device.16.structural";
-    t.arcs = {
-        Arc{"ADDR", "BUSY", {1, 1}},
-        Arc{"ADDR", "ERROR", {1, 1}},
-        Arc{"ADDR", "READ_DATA", {2, 19}},
-        Arc{"ADDR", "READ_VALID", {1, 1}},
-        Arc{"ADDR", "ROW_OPEN", {1, 1}},
-        Arc{"CLK", "BUSY", {1, 1}},
-        Arc{"CLK", "ERROR", {1, 1}},
-        Arc{"CLK", "READ_DATA", {2, 19}},
-        Arc{"CLK", "READ_VALID", {1, 1}},
-        Arc{"CLK", "ROW_OPEN", {1, 1}},
-        Arc{"CMD", "BUSY", {1, 1}},
-        Arc{"CMD", "ERROR", {1, 1}},
-        Arc{"CMD", "READ_DATA", {2, 19}},
-        Arc{"CMD", "READ_VALID", {1, 1}},
-        Arc{"CMD", "ROW_OPEN", {1, 1}},
-        Arc{"WRITE_DATA", "BUSY", {1, 1}},
-        Arc{"WRITE_DATA", "ERROR", {1, 1}},
-        Arc{"WRITE_DATA", "READ_DATA", {2, 19}},
-        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
-        Arc{"WRITE_DATA", "ROW_OPEN", {1, 1}},
-        Arc{"WRITE_MASK", "BUSY", {1, 1}},
-        Arc{"WRITE_MASK", "ERROR", {1, 1}},
-        Arc{"WRITE_MASK", "READ_DATA", {2, 19}},
-        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
-        Arc{"WRITE_MASK", "ROW_OPEN", {1, 1}},
-    };
-    t.self_timed = true;
-    return t;
-}()},
 {"memory.dram.device.16.behavioral@depth=64@rows=16", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.dram.device.16.structural";
-    t.arcs = {
-        Arc{"ADDR", "BUSY", {1, 1}},
-        Arc{"ADDR", "ERROR", {1, 1}},
-        Arc{"ADDR", "READ_DATA", {2, 20}},
-        Arc{"ADDR", "READ_VALID", {1, 1}},
-        Arc{"ADDR", "ROW_OPEN", {1, 1}},
-        Arc{"CLK", "BUSY", {1, 1}},
-        Arc{"CLK", "ERROR", {1, 1}},
-        Arc{"CLK", "READ_DATA", {2, 20}},
-        Arc{"CLK", "READ_VALID", {1, 1}},
-        Arc{"CLK", "ROW_OPEN", {1, 1}},
-        Arc{"CMD", "BUSY", {1, 1}},
-        Arc{"CMD", "ERROR", {1, 1}},
-        Arc{"CMD", "READ_DATA", {2, 20}},
-        Arc{"CMD", "READ_VALID", {1, 1}},
-        Arc{"CMD", "ROW_OPEN", {1, 1}},
-        Arc{"WRITE_DATA", "BUSY", {1, 1}},
-        Arc{"WRITE_DATA", "ERROR", {1, 1}},
-        Arc{"WRITE_DATA", "READ_DATA", {2, 20}},
-        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
-        Arc{"WRITE_DATA", "ROW_OPEN", {1, 1}},
-        Arc{"WRITE_MASK", "BUSY", {1, 1}},
-        Arc{"WRITE_MASK", "ERROR", {1, 1}},
-        Arc{"WRITE_MASK", "READ_DATA", {2, 20}},
-        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
-        Arc{"WRITE_MASK", "ROW_OPEN", {1, 1}},
-    };
-    t.self_timed = true;
-    return t;
-}()},
-{"memory.dram.scalable-device.16.behavioral@depth=64@rows=16", [] {
     PartDelays t;
     t.evidence = "proven on memory.dram.device.16.structural";
     t.arcs = {
@@ -1998,73 +1602,7 @@
     t.self_timed = true;
     return t;
 }()},
-{"memory.dram.scalable-device.16.behavioral@depth=128@rows=16", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.dram.device.16.structural";
-    t.arcs = {
-        Arc{"ADDR", "BUSY", {1, 1}},
-        Arc{"ADDR", "ERROR", {1, 1}},
-        Arc{"ADDR", "READ_DATA", {2, 20}},
-        Arc{"ADDR", "READ_VALID", {1, 1}},
-        Arc{"ADDR", "ROW_OPEN", {1, 1}},
-        Arc{"CLK", "BUSY", {1, 1}},
-        Arc{"CLK", "ERROR", {1, 1}},
-        Arc{"CLK", "READ_DATA", {2, 20}},
-        Arc{"CLK", "READ_VALID", {1, 1}},
-        Arc{"CLK", "ROW_OPEN", {1, 1}},
-        Arc{"CMD", "BUSY", {1, 1}},
-        Arc{"CMD", "ERROR", {1, 1}},
-        Arc{"CMD", "READ_DATA", {2, 20}},
-        Arc{"CMD", "READ_VALID", {1, 1}},
-        Arc{"CMD", "ROW_OPEN", {1, 1}},
-        Arc{"WRITE_DATA", "BUSY", {1, 1}},
-        Arc{"WRITE_DATA", "ERROR", {1, 1}},
-        Arc{"WRITE_DATA", "READ_DATA", {2, 20}},
-        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
-        Arc{"WRITE_DATA", "ROW_OPEN", {1, 1}},
-        Arc{"WRITE_MASK", "BUSY", {1, 1}},
-        Arc{"WRITE_MASK", "ERROR", {1, 1}},
-        Arc{"WRITE_MASK", "READ_DATA", {2, 20}},
-        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
-        Arc{"WRITE_MASK", "ROW_OPEN", {1, 1}},
-    };
-    t.self_timed = true;
-    return t;
-}()},
 {"memory.dram.device.32.behavioral", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.dram.device.32.structural";
-    t.arcs = {
-        Arc{"ADDR", "BUSY", {1, 1}},
-        Arc{"ADDR", "ERROR", {1, 1}},
-        Arc{"ADDR", "READ_DATA", {2, 15}},
-        Arc{"ADDR", "READ_VALID", {1, 1}},
-        Arc{"ADDR", "ROW_OPEN", {1, 1}},
-        Arc{"CLK", "BUSY", {1, 1}},
-        Arc{"CLK", "ERROR", {1, 1}},
-        Arc{"CLK", "READ_DATA", {2, 15}},
-        Arc{"CLK", "READ_VALID", {1, 1}},
-        Arc{"CLK", "ROW_OPEN", {1, 1}},
-        Arc{"CMD", "BUSY", {1, 1}},
-        Arc{"CMD", "ERROR", {1, 1}},
-        Arc{"CMD", "READ_DATA", {2, 15}},
-        Arc{"CMD", "READ_VALID", {1, 1}},
-        Arc{"CMD", "ROW_OPEN", {1, 1}},
-        Arc{"WRITE_DATA", "BUSY", {1, 1}},
-        Arc{"WRITE_DATA", "ERROR", {1, 1}},
-        Arc{"WRITE_DATA", "READ_DATA", {2, 15}},
-        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
-        Arc{"WRITE_DATA", "ROW_OPEN", {1, 1}},
-        Arc{"WRITE_MASK", "BUSY", {1, 1}},
-        Arc{"WRITE_MASK", "ERROR", {1, 1}},
-        Arc{"WRITE_MASK", "READ_DATA", {2, 15}},
-        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
-        Arc{"WRITE_MASK", "ROW_OPEN", {1, 1}},
-    };
-    t.self_timed = true;
-    return t;
-}()},
-{"memory.dram.scalable-device.32.behavioral", [] {
     PartDelays t;
     t.evidence = "proven on memory.dram.device.32.structural";
     t.arcs = {
@@ -2130,73 +1668,7 @@
     t.self_timed = true;
     return t;
 }()},
-{"memory.dram.scalable-device.32.behavioral@depth=64", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.dram.device.32.structural";
-    t.arcs = {
-        Arc{"ADDR", "BUSY", {1, 1}},
-        Arc{"ADDR", "ERROR", {1, 1}},
-        Arc{"ADDR", "READ_DATA", {2, 17}},
-        Arc{"ADDR", "READ_VALID", {1, 1}},
-        Arc{"ADDR", "ROW_OPEN", {1, 1}},
-        Arc{"CLK", "BUSY", {1, 1}},
-        Arc{"CLK", "ERROR", {1, 1}},
-        Arc{"CLK", "READ_DATA", {2, 17}},
-        Arc{"CLK", "READ_VALID", {1, 1}},
-        Arc{"CLK", "ROW_OPEN", {1, 1}},
-        Arc{"CMD", "BUSY", {1, 1}},
-        Arc{"CMD", "ERROR", {1, 1}},
-        Arc{"CMD", "READ_DATA", {2, 17}},
-        Arc{"CMD", "READ_VALID", {1, 1}},
-        Arc{"CMD", "ROW_OPEN", {1, 1}},
-        Arc{"WRITE_DATA", "BUSY", {1, 1}},
-        Arc{"WRITE_DATA", "ERROR", {1, 1}},
-        Arc{"WRITE_DATA", "READ_DATA", {2, 17}},
-        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
-        Arc{"WRITE_DATA", "ROW_OPEN", {1, 1}},
-        Arc{"WRITE_MASK", "BUSY", {1, 1}},
-        Arc{"WRITE_MASK", "ERROR", {1, 1}},
-        Arc{"WRITE_MASK", "READ_DATA", {2, 17}},
-        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
-        Arc{"WRITE_MASK", "ROW_OPEN", {1, 1}},
-    };
-    t.self_timed = true;
-    return t;
-}()},
 {"memory.dram.device.32.behavioral@depth=128", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.dram.device.32.structural";
-    t.arcs = {
-        Arc{"ADDR", "BUSY", {1, 1}},
-        Arc{"ADDR", "ERROR", {1, 1}},
-        Arc{"ADDR", "READ_DATA", {2, 17}},
-        Arc{"ADDR", "READ_VALID", {1, 1}},
-        Arc{"ADDR", "ROW_OPEN", {1, 1}},
-        Arc{"CLK", "BUSY", {1, 1}},
-        Arc{"CLK", "ERROR", {1, 1}},
-        Arc{"CLK", "READ_DATA", {2, 17}},
-        Arc{"CLK", "READ_VALID", {1, 1}},
-        Arc{"CLK", "ROW_OPEN", {1, 1}},
-        Arc{"CMD", "BUSY", {1, 1}},
-        Arc{"CMD", "ERROR", {1, 1}},
-        Arc{"CMD", "READ_DATA", {2, 17}},
-        Arc{"CMD", "READ_VALID", {1, 1}},
-        Arc{"CMD", "ROW_OPEN", {1, 1}},
-        Arc{"WRITE_DATA", "BUSY", {1, 1}},
-        Arc{"WRITE_DATA", "ERROR", {1, 1}},
-        Arc{"WRITE_DATA", "READ_DATA", {2, 17}},
-        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
-        Arc{"WRITE_DATA", "ROW_OPEN", {1, 1}},
-        Arc{"WRITE_MASK", "BUSY", {1, 1}},
-        Arc{"WRITE_MASK", "ERROR", {1, 1}},
-        Arc{"WRITE_MASK", "READ_DATA", {2, 17}},
-        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
-        Arc{"WRITE_MASK", "ROW_OPEN", {1, 1}},
-    };
-    t.self_timed = true;
-    return t;
-}()},
-{"memory.dram.scalable-device.32.behavioral@depth=128", [] {
     PartDelays t;
     t.evidence = "proven on memory.dram.device.32.structural";
     t.arcs = {
@@ -2262,73 +1734,7 @@
     t.self_timed = true;
     return t;
 }()},
-{"memory.dram.scalable-device.32.behavioral@rows=1", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.dram.device.32.structural";
-    t.arcs = {
-        Arc{"ADDR", "BUSY", {1, 1}},
-        Arc{"ADDR", "ERROR", {1, 1}},
-        Arc{"ADDR", "READ_DATA", {2, 15}},
-        Arc{"ADDR", "READ_VALID", {1, 1}},
-        Arc{"ADDR", "ROW_OPEN", {1, 1}},
-        Arc{"CLK", "BUSY", {1, 1}},
-        Arc{"CLK", "ERROR", {1, 1}},
-        Arc{"CLK", "READ_DATA", {2, 15}},
-        Arc{"CLK", "READ_VALID", {1, 1}},
-        Arc{"CLK", "ROW_OPEN", {1, 1}},
-        Arc{"CMD", "BUSY", {1, 1}},
-        Arc{"CMD", "ERROR", {1, 1}},
-        Arc{"CMD", "READ_DATA", {2, 15}},
-        Arc{"CMD", "READ_VALID", {1, 1}},
-        Arc{"CMD", "ROW_OPEN", {1, 1}},
-        Arc{"WRITE_DATA", "BUSY", {1, 1}},
-        Arc{"WRITE_DATA", "ERROR", {1, 1}},
-        Arc{"WRITE_DATA", "READ_DATA", {2, 15}},
-        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
-        Arc{"WRITE_DATA", "ROW_OPEN", {1, 1}},
-        Arc{"WRITE_MASK", "BUSY", {1, 1}},
-        Arc{"WRITE_MASK", "ERROR", {1, 1}},
-        Arc{"WRITE_MASK", "READ_DATA", {2, 15}},
-        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
-        Arc{"WRITE_MASK", "ROW_OPEN", {1, 1}},
-    };
-    t.self_timed = true;
-    return t;
-}()},
 {"memory.dram.device.32.behavioral@depth=64@rows=1", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.dram.device.32.structural";
-    t.arcs = {
-        Arc{"ADDR", "BUSY", {1, 1}},
-        Arc{"ADDR", "ERROR", {1, 1}},
-        Arc{"ADDR", "READ_DATA", {2, 16}},
-        Arc{"ADDR", "READ_VALID", {1, 1}},
-        Arc{"ADDR", "ROW_OPEN", {1, 1}},
-        Arc{"CLK", "BUSY", {1, 1}},
-        Arc{"CLK", "ERROR", {1, 1}},
-        Arc{"CLK", "READ_DATA", {2, 16}},
-        Arc{"CLK", "READ_VALID", {1, 1}},
-        Arc{"CLK", "ROW_OPEN", {1, 1}},
-        Arc{"CMD", "BUSY", {1, 1}},
-        Arc{"CMD", "ERROR", {1, 1}},
-        Arc{"CMD", "READ_DATA", {2, 16}},
-        Arc{"CMD", "READ_VALID", {1, 1}},
-        Arc{"CMD", "ROW_OPEN", {1, 1}},
-        Arc{"WRITE_DATA", "BUSY", {1, 1}},
-        Arc{"WRITE_DATA", "ERROR", {1, 1}},
-        Arc{"WRITE_DATA", "READ_DATA", {2, 16}},
-        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
-        Arc{"WRITE_DATA", "ROW_OPEN", {1, 1}},
-        Arc{"WRITE_MASK", "BUSY", {1, 1}},
-        Arc{"WRITE_MASK", "ERROR", {1, 1}},
-        Arc{"WRITE_MASK", "READ_DATA", {2, 16}},
-        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
-        Arc{"WRITE_MASK", "ROW_OPEN", {1, 1}},
-    };
-    t.self_timed = true;
-    return t;
-}()},
-{"memory.dram.scalable-device.32.behavioral@depth=64@rows=1", [] {
     PartDelays t;
     t.evidence = "proven on memory.dram.device.32.structural";
     t.arcs = {
@@ -2394,73 +1800,7 @@
     t.self_timed = true;
     return t;
 }()},
-{"memory.dram.scalable-device.32.behavioral@depth=128@rows=1", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.dram.device.32.structural";
-    t.arcs = {
-        Arc{"ADDR", "BUSY", {1, 1}},
-        Arc{"ADDR", "ERROR", {1, 1}},
-        Arc{"ADDR", "READ_DATA", {2, 16}},
-        Arc{"ADDR", "READ_VALID", {1, 1}},
-        Arc{"ADDR", "ROW_OPEN", {1, 1}},
-        Arc{"CLK", "BUSY", {1, 1}},
-        Arc{"CLK", "ERROR", {1, 1}},
-        Arc{"CLK", "READ_DATA", {2, 16}},
-        Arc{"CLK", "READ_VALID", {1, 1}},
-        Arc{"CLK", "ROW_OPEN", {1, 1}},
-        Arc{"CMD", "BUSY", {1, 1}},
-        Arc{"CMD", "ERROR", {1, 1}},
-        Arc{"CMD", "READ_DATA", {2, 16}},
-        Arc{"CMD", "READ_VALID", {1, 1}},
-        Arc{"CMD", "ROW_OPEN", {1, 1}},
-        Arc{"WRITE_DATA", "BUSY", {1, 1}},
-        Arc{"WRITE_DATA", "ERROR", {1, 1}},
-        Arc{"WRITE_DATA", "READ_DATA", {2, 16}},
-        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
-        Arc{"WRITE_DATA", "ROW_OPEN", {1, 1}},
-        Arc{"WRITE_MASK", "BUSY", {1, 1}},
-        Arc{"WRITE_MASK", "ERROR", {1, 1}},
-        Arc{"WRITE_MASK", "READ_DATA", {2, 16}},
-        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
-        Arc{"WRITE_MASK", "ROW_OPEN", {1, 1}},
-    };
-    t.self_timed = true;
-    return t;
-}()},
 {"memory.dram.device.32.behavioral@rows=4", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.dram.device.32.structural";
-    t.arcs = {
-        Arc{"ADDR", "BUSY", {1, 1}},
-        Arc{"ADDR", "ERROR", {1, 1}},
-        Arc{"ADDR", "READ_DATA", {2, 17}},
-        Arc{"ADDR", "READ_VALID", {1, 1}},
-        Arc{"ADDR", "ROW_OPEN", {1, 1}},
-        Arc{"CLK", "BUSY", {1, 1}},
-        Arc{"CLK", "ERROR", {1, 1}},
-        Arc{"CLK", "READ_DATA", {2, 17}},
-        Arc{"CLK", "READ_VALID", {1, 1}},
-        Arc{"CLK", "ROW_OPEN", {1, 1}},
-        Arc{"CMD", "BUSY", {1, 1}},
-        Arc{"CMD", "ERROR", {1, 1}},
-        Arc{"CMD", "READ_DATA", {2, 17}},
-        Arc{"CMD", "READ_VALID", {1, 1}},
-        Arc{"CMD", "ROW_OPEN", {1, 1}},
-        Arc{"WRITE_DATA", "BUSY", {1, 1}},
-        Arc{"WRITE_DATA", "ERROR", {1, 1}},
-        Arc{"WRITE_DATA", "READ_DATA", {2, 17}},
-        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
-        Arc{"WRITE_DATA", "ROW_OPEN", {1, 1}},
-        Arc{"WRITE_MASK", "BUSY", {1, 1}},
-        Arc{"WRITE_MASK", "ERROR", {1, 1}},
-        Arc{"WRITE_MASK", "READ_DATA", {2, 17}},
-        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
-        Arc{"WRITE_MASK", "ROW_OPEN", {1, 1}},
-    };
-    t.self_timed = true;
-    return t;
-}()},
-{"memory.dram.scalable-device.32.behavioral@rows=4", [] {
     PartDelays t;
     t.evidence = "proven on memory.dram.device.32.structural";
     t.arcs = {
@@ -2526,73 +1866,7 @@
     t.self_timed = true;
     return t;
 }()},
-{"memory.dram.scalable-device.32.behavioral@depth=64@rows=4", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.dram.device.32.structural";
-    t.arcs = {
-        Arc{"ADDR", "BUSY", {1, 1}},
-        Arc{"ADDR", "ERROR", {1, 1}},
-        Arc{"ADDR", "READ_DATA", {2, 18}},
-        Arc{"ADDR", "READ_VALID", {1, 1}},
-        Arc{"ADDR", "ROW_OPEN", {1, 1}},
-        Arc{"CLK", "BUSY", {1, 1}},
-        Arc{"CLK", "ERROR", {1, 1}},
-        Arc{"CLK", "READ_DATA", {2, 18}},
-        Arc{"CLK", "READ_VALID", {1, 1}},
-        Arc{"CLK", "ROW_OPEN", {1, 1}},
-        Arc{"CMD", "BUSY", {1, 1}},
-        Arc{"CMD", "ERROR", {1, 1}},
-        Arc{"CMD", "READ_DATA", {2, 18}},
-        Arc{"CMD", "READ_VALID", {1, 1}},
-        Arc{"CMD", "ROW_OPEN", {1, 1}},
-        Arc{"WRITE_DATA", "BUSY", {1, 1}},
-        Arc{"WRITE_DATA", "ERROR", {1, 1}},
-        Arc{"WRITE_DATA", "READ_DATA", {2, 18}},
-        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
-        Arc{"WRITE_DATA", "ROW_OPEN", {1, 1}},
-        Arc{"WRITE_MASK", "BUSY", {1, 1}},
-        Arc{"WRITE_MASK", "ERROR", {1, 1}},
-        Arc{"WRITE_MASK", "READ_DATA", {2, 18}},
-        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
-        Arc{"WRITE_MASK", "ROW_OPEN", {1, 1}},
-    };
-    t.self_timed = true;
-    return t;
-}()},
 {"memory.dram.device.32.behavioral@depth=128@rows=4", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.dram.device.32.structural";
-    t.arcs = {
-        Arc{"ADDR", "BUSY", {1, 1}},
-        Arc{"ADDR", "ERROR", {1, 1}},
-        Arc{"ADDR", "READ_DATA", {2, 18}},
-        Arc{"ADDR", "READ_VALID", {1, 1}},
-        Arc{"ADDR", "ROW_OPEN", {1, 1}},
-        Arc{"CLK", "BUSY", {1, 1}},
-        Arc{"CLK", "ERROR", {1, 1}},
-        Arc{"CLK", "READ_DATA", {2, 18}},
-        Arc{"CLK", "READ_VALID", {1, 1}},
-        Arc{"CLK", "ROW_OPEN", {1, 1}},
-        Arc{"CMD", "BUSY", {1, 1}},
-        Arc{"CMD", "ERROR", {1, 1}},
-        Arc{"CMD", "READ_DATA", {2, 18}},
-        Arc{"CMD", "READ_VALID", {1, 1}},
-        Arc{"CMD", "ROW_OPEN", {1, 1}},
-        Arc{"WRITE_DATA", "BUSY", {1, 1}},
-        Arc{"WRITE_DATA", "ERROR", {1, 1}},
-        Arc{"WRITE_DATA", "READ_DATA", {2, 18}},
-        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
-        Arc{"WRITE_DATA", "ROW_OPEN", {1, 1}},
-        Arc{"WRITE_MASK", "BUSY", {1, 1}},
-        Arc{"WRITE_MASK", "ERROR", {1, 1}},
-        Arc{"WRITE_MASK", "READ_DATA", {2, 18}},
-        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
-        Arc{"WRITE_MASK", "ROW_OPEN", {1, 1}},
-    };
-    t.self_timed = true;
-    return t;
-}()},
-{"memory.dram.scalable-device.32.behavioral@depth=128@rows=4", [] {
     PartDelays t;
     t.evidence = "proven on memory.dram.device.32.structural";
     t.arcs = {
@@ -2658,73 +1932,7 @@
     t.self_timed = true;
     return t;
 }()},
-{"memory.dram.scalable-device.32.behavioral@depth=64@rows=8", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.dram.device.32.structural";
-    t.arcs = {
-        Arc{"ADDR", "BUSY", {1, 1}},
-        Arc{"ADDR", "ERROR", {1, 1}},
-        Arc{"ADDR", "READ_DATA", {2, 18}},
-        Arc{"ADDR", "READ_VALID", {1, 1}},
-        Arc{"ADDR", "ROW_OPEN", {1, 1}},
-        Arc{"CLK", "BUSY", {1, 1}},
-        Arc{"CLK", "ERROR", {1, 1}},
-        Arc{"CLK", "READ_DATA", {2, 18}},
-        Arc{"CLK", "READ_VALID", {1, 1}},
-        Arc{"CLK", "ROW_OPEN", {1, 1}},
-        Arc{"CMD", "BUSY", {1, 1}},
-        Arc{"CMD", "ERROR", {1, 1}},
-        Arc{"CMD", "READ_DATA", {2, 18}},
-        Arc{"CMD", "READ_VALID", {1, 1}},
-        Arc{"CMD", "ROW_OPEN", {1, 1}},
-        Arc{"WRITE_DATA", "BUSY", {1, 1}},
-        Arc{"WRITE_DATA", "ERROR", {1, 1}},
-        Arc{"WRITE_DATA", "READ_DATA", {2, 18}},
-        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
-        Arc{"WRITE_DATA", "ROW_OPEN", {1, 1}},
-        Arc{"WRITE_MASK", "BUSY", {1, 1}},
-        Arc{"WRITE_MASK", "ERROR", {1, 1}},
-        Arc{"WRITE_MASK", "READ_DATA", {2, 18}},
-        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
-        Arc{"WRITE_MASK", "ROW_OPEN", {1, 1}},
-    };
-    t.self_timed = true;
-    return t;
-}()},
 {"memory.dram.device.32.behavioral@depth=128@rows=8", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.dram.device.32.structural";
-    t.arcs = {
-        Arc{"ADDR", "BUSY", {1, 1}},
-        Arc{"ADDR", "ERROR", {1, 1}},
-        Arc{"ADDR", "READ_DATA", {2, 19}},
-        Arc{"ADDR", "READ_VALID", {1, 1}},
-        Arc{"ADDR", "ROW_OPEN", {1, 1}},
-        Arc{"CLK", "BUSY", {1, 1}},
-        Arc{"CLK", "ERROR", {1, 1}},
-        Arc{"CLK", "READ_DATA", {2, 19}},
-        Arc{"CLK", "READ_VALID", {1, 1}},
-        Arc{"CLK", "ROW_OPEN", {1, 1}},
-        Arc{"CMD", "BUSY", {1, 1}},
-        Arc{"CMD", "ERROR", {1, 1}},
-        Arc{"CMD", "READ_DATA", {2, 19}},
-        Arc{"CMD", "READ_VALID", {1, 1}},
-        Arc{"CMD", "ROW_OPEN", {1, 1}},
-        Arc{"WRITE_DATA", "BUSY", {1, 1}},
-        Arc{"WRITE_DATA", "ERROR", {1, 1}},
-        Arc{"WRITE_DATA", "READ_DATA", {2, 19}},
-        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
-        Arc{"WRITE_DATA", "ROW_OPEN", {1, 1}},
-        Arc{"WRITE_MASK", "BUSY", {1, 1}},
-        Arc{"WRITE_MASK", "ERROR", {1, 1}},
-        Arc{"WRITE_MASK", "READ_DATA", {2, 19}},
-        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
-        Arc{"WRITE_MASK", "ROW_OPEN", {1, 1}},
-    };
-    t.self_timed = true;
-    return t;
-}()},
-{"memory.dram.scalable-device.32.behavioral@depth=128@rows=8", [] {
     PartDelays t;
     t.evidence = "proven on memory.dram.device.32.structural";
     t.arcs = {
@@ -2790,73 +1998,7 @@
     t.self_timed = true;
     return t;
 }()},
-{"memory.dram.scalable-device.32.behavioral@depth=64@rows=16", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.dram.device.32.structural";
-    t.arcs = {
-        Arc{"ADDR", "BUSY", {1, 1}},
-        Arc{"ADDR", "ERROR", {1, 1}},
-        Arc{"ADDR", "READ_DATA", {2, 20}},
-        Arc{"ADDR", "READ_VALID", {1, 1}},
-        Arc{"ADDR", "ROW_OPEN", {1, 1}},
-        Arc{"CLK", "BUSY", {1, 1}},
-        Arc{"CLK", "ERROR", {1, 1}},
-        Arc{"CLK", "READ_DATA", {2, 20}},
-        Arc{"CLK", "READ_VALID", {1, 1}},
-        Arc{"CLK", "ROW_OPEN", {1, 1}},
-        Arc{"CMD", "BUSY", {1, 1}},
-        Arc{"CMD", "ERROR", {1, 1}},
-        Arc{"CMD", "READ_DATA", {2, 20}},
-        Arc{"CMD", "READ_VALID", {1, 1}},
-        Arc{"CMD", "ROW_OPEN", {1, 1}},
-        Arc{"WRITE_DATA", "BUSY", {1, 1}},
-        Arc{"WRITE_DATA", "ERROR", {1, 1}},
-        Arc{"WRITE_DATA", "READ_DATA", {2, 20}},
-        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
-        Arc{"WRITE_DATA", "ROW_OPEN", {1, 1}},
-        Arc{"WRITE_MASK", "BUSY", {1, 1}},
-        Arc{"WRITE_MASK", "ERROR", {1, 1}},
-        Arc{"WRITE_MASK", "READ_DATA", {2, 20}},
-        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
-        Arc{"WRITE_MASK", "ROW_OPEN", {1, 1}},
-    };
-    t.self_timed = true;
-    return t;
-}()},
 {"memory.dram.device.32.behavioral@depth=128@rows=16", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.dram.device.32.structural";
-    t.arcs = {
-        Arc{"ADDR", "BUSY", {1, 1}},
-        Arc{"ADDR", "ERROR", {1, 1}},
-        Arc{"ADDR", "READ_DATA", {2, 20}},
-        Arc{"ADDR", "READ_VALID", {1, 1}},
-        Arc{"ADDR", "ROW_OPEN", {1, 1}},
-        Arc{"CLK", "BUSY", {1, 1}},
-        Arc{"CLK", "ERROR", {1, 1}},
-        Arc{"CLK", "READ_DATA", {2, 20}},
-        Arc{"CLK", "READ_VALID", {1, 1}},
-        Arc{"CLK", "ROW_OPEN", {1, 1}},
-        Arc{"CMD", "BUSY", {1, 1}},
-        Arc{"CMD", "ERROR", {1, 1}},
-        Arc{"CMD", "READ_DATA", {2, 20}},
-        Arc{"CMD", "READ_VALID", {1, 1}},
-        Arc{"CMD", "ROW_OPEN", {1, 1}},
-        Arc{"WRITE_DATA", "BUSY", {1, 1}},
-        Arc{"WRITE_DATA", "ERROR", {1, 1}},
-        Arc{"WRITE_DATA", "READ_DATA", {2, 20}},
-        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
-        Arc{"WRITE_DATA", "ROW_OPEN", {1, 1}},
-        Arc{"WRITE_MASK", "BUSY", {1, 1}},
-        Arc{"WRITE_MASK", "ERROR", {1, 1}},
-        Arc{"WRITE_MASK", "READ_DATA", {2, 20}},
-        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
-        Arc{"WRITE_MASK", "ROW_OPEN", {1, 1}},
-    };
-    t.self_timed = true;
-    return t;
-}()},
-{"memory.dram.scalable-device.32.behavioral@depth=128@rows=16", [] {
     PartDelays t;
     t.evidence = "proven on memory.dram.device.32.structural";
     t.arcs = {
@@ -2922,73 +2064,7 @@
     t.self_timed = true;
     return t;
 }()},
-{"memory.dram.scalable-device.8.behavioral", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.dram.device.8.structural";
-    t.arcs = {
-        Arc{"ADDR", "BUSY", {1, 1}},
-        Arc{"ADDR", "ERROR", {1, 1}},
-        Arc{"ADDR", "READ_DATA", {2, 15}},
-        Arc{"ADDR", "READ_VALID", {1, 1}},
-        Arc{"ADDR", "ROW_OPEN", {1, 1}},
-        Arc{"CLK", "BUSY", {1, 1}},
-        Arc{"CLK", "ERROR", {1, 1}},
-        Arc{"CLK", "READ_DATA", {2, 15}},
-        Arc{"CLK", "READ_VALID", {1, 1}},
-        Arc{"CLK", "ROW_OPEN", {1, 1}},
-        Arc{"CMD", "BUSY", {1, 1}},
-        Arc{"CMD", "ERROR", {1, 1}},
-        Arc{"CMD", "READ_DATA", {2, 15}},
-        Arc{"CMD", "READ_VALID", {1, 1}},
-        Arc{"CMD", "ROW_OPEN", {1, 1}},
-        Arc{"WRITE_DATA", "BUSY", {1, 1}},
-        Arc{"WRITE_DATA", "ERROR", {1, 1}},
-        Arc{"WRITE_DATA", "READ_DATA", {2, 15}},
-        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
-        Arc{"WRITE_DATA", "ROW_OPEN", {1, 1}},
-        Arc{"WRITE_MASK", "BUSY", {1, 1}},
-        Arc{"WRITE_MASK", "ERROR", {1, 1}},
-        Arc{"WRITE_MASK", "READ_DATA", {2, 15}},
-        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
-        Arc{"WRITE_MASK", "ROW_OPEN", {1, 1}},
-    };
-    t.self_timed = true;
-    return t;
-}()},
 {"memory.dram.device.8.behavioral@depth=64", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.dram.device.8.structural";
-    t.arcs = {
-        Arc{"ADDR", "BUSY", {1, 1}},
-        Arc{"ADDR", "ERROR", {1, 1}},
-        Arc{"ADDR", "READ_DATA", {2, 17}},
-        Arc{"ADDR", "READ_VALID", {1, 1}},
-        Arc{"ADDR", "ROW_OPEN", {1, 1}},
-        Arc{"CLK", "BUSY", {1, 1}},
-        Arc{"CLK", "ERROR", {1, 1}},
-        Arc{"CLK", "READ_DATA", {2, 17}},
-        Arc{"CLK", "READ_VALID", {1, 1}},
-        Arc{"CLK", "ROW_OPEN", {1, 1}},
-        Arc{"CMD", "BUSY", {1, 1}},
-        Arc{"CMD", "ERROR", {1, 1}},
-        Arc{"CMD", "READ_DATA", {2, 17}},
-        Arc{"CMD", "READ_VALID", {1, 1}},
-        Arc{"CMD", "ROW_OPEN", {1, 1}},
-        Arc{"WRITE_DATA", "BUSY", {1, 1}},
-        Arc{"WRITE_DATA", "ERROR", {1, 1}},
-        Arc{"WRITE_DATA", "READ_DATA", {2, 17}},
-        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
-        Arc{"WRITE_DATA", "ROW_OPEN", {1, 1}},
-        Arc{"WRITE_MASK", "BUSY", {1, 1}},
-        Arc{"WRITE_MASK", "ERROR", {1, 1}},
-        Arc{"WRITE_MASK", "READ_DATA", {2, 17}},
-        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
-        Arc{"WRITE_MASK", "ROW_OPEN", {1, 1}},
-    };
-    t.self_timed = true;
-    return t;
-}()},
-{"memory.dram.scalable-device.8.behavioral@depth=64", [] {
     PartDelays t;
     t.evidence = "proven on memory.dram.device.8.structural";
     t.arcs = {
@@ -3054,73 +2130,7 @@
     t.self_timed = true;
     return t;
 }()},
-{"memory.dram.scalable-device.8.behavioral@depth=128", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.dram.device.8.structural";
-    t.arcs = {
-        Arc{"ADDR", "BUSY", {1, 1}},
-        Arc{"ADDR", "ERROR", {1, 1}},
-        Arc{"ADDR", "READ_DATA", {2, 17}},
-        Arc{"ADDR", "READ_VALID", {1, 1}},
-        Arc{"ADDR", "ROW_OPEN", {1, 1}},
-        Arc{"CLK", "BUSY", {1, 1}},
-        Arc{"CLK", "ERROR", {1, 1}},
-        Arc{"CLK", "READ_DATA", {2, 17}},
-        Arc{"CLK", "READ_VALID", {1, 1}},
-        Arc{"CLK", "ROW_OPEN", {1, 1}},
-        Arc{"CMD", "BUSY", {1, 1}},
-        Arc{"CMD", "ERROR", {1, 1}},
-        Arc{"CMD", "READ_DATA", {2, 17}},
-        Arc{"CMD", "READ_VALID", {1, 1}},
-        Arc{"CMD", "ROW_OPEN", {1, 1}},
-        Arc{"WRITE_DATA", "BUSY", {1, 1}},
-        Arc{"WRITE_DATA", "ERROR", {1, 1}},
-        Arc{"WRITE_DATA", "READ_DATA", {2, 17}},
-        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
-        Arc{"WRITE_DATA", "ROW_OPEN", {1, 1}},
-        Arc{"WRITE_MASK", "BUSY", {1, 1}},
-        Arc{"WRITE_MASK", "ERROR", {1, 1}},
-        Arc{"WRITE_MASK", "READ_DATA", {2, 17}},
-        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
-        Arc{"WRITE_MASK", "ROW_OPEN", {1, 1}},
-    };
-    t.self_timed = true;
-    return t;
-}()},
 {"memory.dram.device.8.behavioral@rows=1", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.dram.device.8.structural";
-    t.arcs = {
-        Arc{"ADDR", "BUSY", {1, 1}},
-        Arc{"ADDR", "ERROR", {1, 1}},
-        Arc{"ADDR", "READ_DATA", {2, 15}},
-        Arc{"ADDR", "READ_VALID", {1, 1}},
-        Arc{"ADDR", "ROW_OPEN", {1, 1}},
-        Arc{"CLK", "BUSY", {1, 1}},
-        Arc{"CLK", "ERROR", {1, 1}},
-        Arc{"CLK", "READ_DATA", {2, 15}},
-        Arc{"CLK", "READ_VALID", {1, 1}},
-        Arc{"CLK", "ROW_OPEN", {1, 1}},
-        Arc{"CMD", "BUSY", {1, 1}},
-        Arc{"CMD", "ERROR", {1, 1}},
-        Arc{"CMD", "READ_DATA", {2, 15}},
-        Arc{"CMD", "READ_VALID", {1, 1}},
-        Arc{"CMD", "ROW_OPEN", {1, 1}},
-        Arc{"WRITE_DATA", "BUSY", {1, 1}},
-        Arc{"WRITE_DATA", "ERROR", {1, 1}},
-        Arc{"WRITE_DATA", "READ_DATA", {2, 15}},
-        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
-        Arc{"WRITE_DATA", "ROW_OPEN", {1, 1}},
-        Arc{"WRITE_MASK", "BUSY", {1, 1}},
-        Arc{"WRITE_MASK", "ERROR", {1, 1}},
-        Arc{"WRITE_MASK", "READ_DATA", {2, 15}},
-        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
-        Arc{"WRITE_MASK", "ROW_OPEN", {1, 1}},
-    };
-    t.self_timed = true;
-    return t;
-}()},
-{"memory.dram.scalable-device.8.behavioral@rows=1", [] {
     PartDelays t;
     t.evidence = "proven on memory.dram.device.8.structural";
     t.arcs = {
@@ -3186,73 +2196,7 @@
     t.self_timed = true;
     return t;
 }()},
-{"memory.dram.scalable-device.8.behavioral@depth=64@rows=1", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.dram.device.8.structural";
-    t.arcs = {
-        Arc{"ADDR", "BUSY", {1, 1}},
-        Arc{"ADDR", "ERROR", {1, 1}},
-        Arc{"ADDR", "READ_DATA", {2, 16}},
-        Arc{"ADDR", "READ_VALID", {1, 1}},
-        Arc{"ADDR", "ROW_OPEN", {1, 1}},
-        Arc{"CLK", "BUSY", {1, 1}},
-        Arc{"CLK", "ERROR", {1, 1}},
-        Arc{"CLK", "READ_DATA", {2, 16}},
-        Arc{"CLK", "READ_VALID", {1, 1}},
-        Arc{"CLK", "ROW_OPEN", {1, 1}},
-        Arc{"CMD", "BUSY", {1, 1}},
-        Arc{"CMD", "ERROR", {1, 1}},
-        Arc{"CMD", "READ_DATA", {2, 16}},
-        Arc{"CMD", "READ_VALID", {1, 1}},
-        Arc{"CMD", "ROW_OPEN", {1, 1}},
-        Arc{"WRITE_DATA", "BUSY", {1, 1}},
-        Arc{"WRITE_DATA", "ERROR", {1, 1}},
-        Arc{"WRITE_DATA", "READ_DATA", {2, 16}},
-        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
-        Arc{"WRITE_DATA", "ROW_OPEN", {1, 1}},
-        Arc{"WRITE_MASK", "BUSY", {1, 1}},
-        Arc{"WRITE_MASK", "ERROR", {1, 1}},
-        Arc{"WRITE_MASK", "READ_DATA", {2, 16}},
-        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
-        Arc{"WRITE_MASK", "ROW_OPEN", {1, 1}},
-    };
-    t.self_timed = true;
-    return t;
-}()},
 {"memory.dram.device.8.behavioral@depth=128@rows=1", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.dram.device.8.structural";
-    t.arcs = {
-        Arc{"ADDR", "BUSY", {1, 1}},
-        Arc{"ADDR", "ERROR", {1, 1}},
-        Arc{"ADDR", "READ_DATA", {2, 16}},
-        Arc{"ADDR", "READ_VALID", {1, 1}},
-        Arc{"ADDR", "ROW_OPEN", {1, 1}},
-        Arc{"CLK", "BUSY", {1, 1}},
-        Arc{"CLK", "ERROR", {1, 1}},
-        Arc{"CLK", "READ_DATA", {2, 16}},
-        Arc{"CLK", "READ_VALID", {1, 1}},
-        Arc{"CLK", "ROW_OPEN", {1, 1}},
-        Arc{"CMD", "BUSY", {1, 1}},
-        Arc{"CMD", "ERROR", {1, 1}},
-        Arc{"CMD", "READ_DATA", {2, 16}},
-        Arc{"CMD", "READ_VALID", {1, 1}},
-        Arc{"CMD", "ROW_OPEN", {1, 1}},
-        Arc{"WRITE_DATA", "BUSY", {1, 1}},
-        Arc{"WRITE_DATA", "ERROR", {1, 1}},
-        Arc{"WRITE_DATA", "READ_DATA", {2, 16}},
-        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
-        Arc{"WRITE_DATA", "ROW_OPEN", {1, 1}},
-        Arc{"WRITE_MASK", "BUSY", {1, 1}},
-        Arc{"WRITE_MASK", "ERROR", {1, 1}},
-        Arc{"WRITE_MASK", "READ_DATA", {2, 16}},
-        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
-        Arc{"WRITE_MASK", "ROW_OPEN", {1, 1}},
-    };
-    t.self_timed = true;
-    return t;
-}()},
-{"memory.dram.scalable-device.8.behavioral@depth=128@rows=1", [] {
     PartDelays t;
     t.evidence = "proven on memory.dram.device.8.structural";
     t.arcs = {
@@ -3318,73 +2262,7 @@
     t.self_timed = true;
     return t;
 }()},
-{"memory.dram.scalable-device.8.behavioral@rows=4", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.dram.device.8.structural";
-    t.arcs = {
-        Arc{"ADDR", "BUSY", {1, 1}},
-        Arc{"ADDR", "ERROR", {1, 1}},
-        Arc{"ADDR", "READ_DATA", {2, 17}},
-        Arc{"ADDR", "READ_VALID", {1, 1}},
-        Arc{"ADDR", "ROW_OPEN", {1, 1}},
-        Arc{"CLK", "BUSY", {1, 1}},
-        Arc{"CLK", "ERROR", {1, 1}},
-        Arc{"CLK", "READ_DATA", {2, 17}},
-        Arc{"CLK", "READ_VALID", {1, 1}},
-        Arc{"CLK", "ROW_OPEN", {1, 1}},
-        Arc{"CMD", "BUSY", {1, 1}},
-        Arc{"CMD", "ERROR", {1, 1}},
-        Arc{"CMD", "READ_DATA", {2, 17}},
-        Arc{"CMD", "READ_VALID", {1, 1}},
-        Arc{"CMD", "ROW_OPEN", {1, 1}},
-        Arc{"WRITE_DATA", "BUSY", {1, 1}},
-        Arc{"WRITE_DATA", "ERROR", {1, 1}},
-        Arc{"WRITE_DATA", "READ_DATA", {2, 17}},
-        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
-        Arc{"WRITE_DATA", "ROW_OPEN", {1, 1}},
-        Arc{"WRITE_MASK", "BUSY", {1, 1}},
-        Arc{"WRITE_MASK", "ERROR", {1, 1}},
-        Arc{"WRITE_MASK", "READ_DATA", {2, 17}},
-        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
-        Arc{"WRITE_MASK", "ROW_OPEN", {1, 1}},
-    };
-    t.self_timed = true;
-    return t;
-}()},
 {"memory.dram.device.8.behavioral@depth=64@rows=4", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.dram.device.8.structural";
-    t.arcs = {
-        Arc{"ADDR", "BUSY", {1, 1}},
-        Arc{"ADDR", "ERROR", {1, 1}},
-        Arc{"ADDR", "READ_DATA", {2, 18}},
-        Arc{"ADDR", "READ_VALID", {1, 1}},
-        Arc{"ADDR", "ROW_OPEN", {1, 1}},
-        Arc{"CLK", "BUSY", {1, 1}},
-        Arc{"CLK", "ERROR", {1, 1}},
-        Arc{"CLK", "READ_DATA", {2, 18}},
-        Arc{"CLK", "READ_VALID", {1, 1}},
-        Arc{"CLK", "ROW_OPEN", {1, 1}},
-        Arc{"CMD", "BUSY", {1, 1}},
-        Arc{"CMD", "ERROR", {1, 1}},
-        Arc{"CMD", "READ_DATA", {2, 18}},
-        Arc{"CMD", "READ_VALID", {1, 1}},
-        Arc{"CMD", "ROW_OPEN", {1, 1}},
-        Arc{"WRITE_DATA", "BUSY", {1, 1}},
-        Arc{"WRITE_DATA", "ERROR", {1, 1}},
-        Arc{"WRITE_DATA", "READ_DATA", {2, 18}},
-        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
-        Arc{"WRITE_DATA", "ROW_OPEN", {1, 1}},
-        Arc{"WRITE_MASK", "BUSY", {1, 1}},
-        Arc{"WRITE_MASK", "ERROR", {1, 1}},
-        Arc{"WRITE_MASK", "READ_DATA", {2, 18}},
-        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
-        Arc{"WRITE_MASK", "ROW_OPEN", {1, 1}},
-    };
-    t.self_timed = true;
-    return t;
-}()},
-{"memory.dram.scalable-device.8.behavioral@depth=64@rows=4", [] {
     PartDelays t;
     t.evidence = "proven on memory.dram.device.8.structural";
     t.arcs = {
@@ -3450,73 +2328,7 @@
     t.self_timed = true;
     return t;
 }()},
-{"memory.dram.scalable-device.8.behavioral@depth=128@rows=4", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.dram.device.8.structural";
-    t.arcs = {
-        Arc{"ADDR", "BUSY", {1, 1}},
-        Arc{"ADDR", "ERROR", {1, 1}},
-        Arc{"ADDR", "READ_DATA", {2, 18}},
-        Arc{"ADDR", "READ_VALID", {1, 1}},
-        Arc{"ADDR", "ROW_OPEN", {1, 1}},
-        Arc{"CLK", "BUSY", {1, 1}},
-        Arc{"CLK", "ERROR", {1, 1}},
-        Arc{"CLK", "READ_DATA", {2, 18}},
-        Arc{"CLK", "READ_VALID", {1, 1}},
-        Arc{"CLK", "ROW_OPEN", {1, 1}},
-        Arc{"CMD", "BUSY", {1, 1}},
-        Arc{"CMD", "ERROR", {1, 1}},
-        Arc{"CMD", "READ_DATA", {2, 18}},
-        Arc{"CMD", "READ_VALID", {1, 1}},
-        Arc{"CMD", "ROW_OPEN", {1, 1}},
-        Arc{"WRITE_DATA", "BUSY", {1, 1}},
-        Arc{"WRITE_DATA", "ERROR", {1, 1}},
-        Arc{"WRITE_DATA", "READ_DATA", {2, 18}},
-        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
-        Arc{"WRITE_DATA", "ROW_OPEN", {1, 1}},
-        Arc{"WRITE_MASK", "BUSY", {1, 1}},
-        Arc{"WRITE_MASK", "ERROR", {1, 1}},
-        Arc{"WRITE_MASK", "READ_DATA", {2, 18}},
-        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
-        Arc{"WRITE_MASK", "ROW_OPEN", {1, 1}},
-    };
-    t.self_timed = true;
-    return t;
-}()},
 {"memory.dram.device.8.behavioral@depth=64@rows=8", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.dram.device.8.structural";
-    t.arcs = {
-        Arc{"ADDR", "BUSY", {1, 1}},
-        Arc{"ADDR", "ERROR", {1, 1}},
-        Arc{"ADDR", "READ_DATA", {2, 18}},
-        Arc{"ADDR", "READ_VALID", {1, 1}},
-        Arc{"ADDR", "ROW_OPEN", {1, 1}},
-        Arc{"CLK", "BUSY", {1, 1}},
-        Arc{"CLK", "ERROR", {1, 1}},
-        Arc{"CLK", "READ_DATA", {2, 18}},
-        Arc{"CLK", "READ_VALID", {1, 1}},
-        Arc{"CLK", "ROW_OPEN", {1, 1}},
-        Arc{"CMD", "BUSY", {1, 1}},
-        Arc{"CMD", "ERROR", {1, 1}},
-        Arc{"CMD", "READ_DATA", {2, 18}},
-        Arc{"CMD", "READ_VALID", {1, 1}},
-        Arc{"CMD", "ROW_OPEN", {1, 1}},
-        Arc{"WRITE_DATA", "BUSY", {1, 1}},
-        Arc{"WRITE_DATA", "ERROR", {1, 1}},
-        Arc{"WRITE_DATA", "READ_DATA", {2, 18}},
-        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
-        Arc{"WRITE_DATA", "ROW_OPEN", {1, 1}},
-        Arc{"WRITE_MASK", "BUSY", {1, 1}},
-        Arc{"WRITE_MASK", "ERROR", {1, 1}},
-        Arc{"WRITE_MASK", "READ_DATA", {2, 18}},
-        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
-        Arc{"WRITE_MASK", "ROW_OPEN", {1, 1}},
-    };
-    t.self_timed = true;
-    return t;
-}()},
-{"memory.dram.scalable-device.8.behavioral@depth=64@rows=8", [] {
     PartDelays t;
     t.evidence = "proven on memory.dram.device.8.structural";
     t.arcs = {
@@ -3582,39 +2394,6 @@
     t.self_timed = true;
     return t;
 }()},
-{"memory.dram.scalable-device.8.behavioral@depth=128@rows=8", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.dram.device.8.structural";
-    t.arcs = {
-        Arc{"ADDR", "BUSY", {1, 1}},
-        Arc{"ADDR", "ERROR", {1, 1}},
-        Arc{"ADDR", "READ_DATA", {2, 19}},
-        Arc{"ADDR", "READ_VALID", {1, 1}},
-        Arc{"ADDR", "ROW_OPEN", {1, 1}},
-        Arc{"CLK", "BUSY", {1, 1}},
-        Arc{"CLK", "ERROR", {1, 1}},
-        Arc{"CLK", "READ_DATA", {2, 19}},
-        Arc{"CLK", "READ_VALID", {1, 1}},
-        Arc{"CLK", "ROW_OPEN", {1, 1}},
-        Arc{"CMD", "BUSY", {1, 1}},
-        Arc{"CMD", "ERROR", {1, 1}},
-        Arc{"CMD", "READ_DATA", {2, 19}},
-        Arc{"CMD", "READ_VALID", {1, 1}},
-        Arc{"CMD", "ROW_OPEN", {1, 1}},
-        Arc{"WRITE_DATA", "BUSY", {1, 1}},
-        Arc{"WRITE_DATA", "ERROR", {1, 1}},
-        Arc{"WRITE_DATA", "READ_DATA", {2, 19}},
-        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
-        Arc{"WRITE_DATA", "ROW_OPEN", {1, 1}},
-        Arc{"WRITE_MASK", "BUSY", {1, 1}},
-        Arc{"WRITE_MASK", "ERROR", {1, 1}},
-        Arc{"WRITE_MASK", "READ_DATA", {2, 19}},
-        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
-        Arc{"WRITE_MASK", "ROW_OPEN", {1, 1}},
-    };
-    t.self_timed = true;
-    return t;
-}()},
 {"memory.dram.device.8.behavioral@depth=64@rows=16", [] {
     PartDelays t;
     t.evidence = "proven on memory.dram.device.8.structural";
@@ -3648,73 +2427,7 @@
     t.self_timed = true;
     return t;
 }()},
-{"memory.dram.scalable-device.8.behavioral@depth=64@rows=16", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.dram.device.8.structural";
-    t.arcs = {
-        Arc{"ADDR", "BUSY", {1, 1}},
-        Arc{"ADDR", "ERROR", {1, 1}},
-        Arc{"ADDR", "READ_DATA", {2, 20}},
-        Arc{"ADDR", "READ_VALID", {1, 1}},
-        Arc{"ADDR", "ROW_OPEN", {1, 1}},
-        Arc{"CLK", "BUSY", {1, 1}},
-        Arc{"CLK", "ERROR", {1, 1}},
-        Arc{"CLK", "READ_DATA", {2, 20}},
-        Arc{"CLK", "READ_VALID", {1, 1}},
-        Arc{"CLK", "ROW_OPEN", {1, 1}},
-        Arc{"CMD", "BUSY", {1, 1}},
-        Arc{"CMD", "ERROR", {1, 1}},
-        Arc{"CMD", "READ_DATA", {2, 20}},
-        Arc{"CMD", "READ_VALID", {1, 1}},
-        Arc{"CMD", "ROW_OPEN", {1, 1}},
-        Arc{"WRITE_DATA", "BUSY", {1, 1}},
-        Arc{"WRITE_DATA", "ERROR", {1, 1}},
-        Arc{"WRITE_DATA", "READ_DATA", {2, 20}},
-        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
-        Arc{"WRITE_DATA", "ROW_OPEN", {1, 1}},
-        Arc{"WRITE_MASK", "BUSY", {1, 1}},
-        Arc{"WRITE_MASK", "ERROR", {1, 1}},
-        Arc{"WRITE_MASK", "READ_DATA", {2, 20}},
-        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
-        Arc{"WRITE_MASK", "ROW_OPEN", {1, 1}},
-    };
-    t.self_timed = true;
-    return t;
-}()},
 {"memory.dram.device.8.behavioral@depth=128@rows=16", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.dram.device.8.structural";
-    t.arcs = {
-        Arc{"ADDR", "BUSY", {1, 1}},
-        Arc{"ADDR", "ERROR", {1, 1}},
-        Arc{"ADDR", "READ_DATA", {2, 20}},
-        Arc{"ADDR", "READ_VALID", {1, 1}},
-        Arc{"ADDR", "ROW_OPEN", {1, 1}},
-        Arc{"CLK", "BUSY", {1, 1}},
-        Arc{"CLK", "ERROR", {1, 1}},
-        Arc{"CLK", "READ_DATA", {2, 20}},
-        Arc{"CLK", "READ_VALID", {1, 1}},
-        Arc{"CLK", "ROW_OPEN", {1, 1}},
-        Arc{"CMD", "BUSY", {1, 1}},
-        Arc{"CMD", "ERROR", {1, 1}},
-        Arc{"CMD", "READ_DATA", {2, 20}},
-        Arc{"CMD", "READ_VALID", {1, 1}},
-        Arc{"CMD", "ROW_OPEN", {1, 1}},
-        Arc{"WRITE_DATA", "BUSY", {1, 1}},
-        Arc{"WRITE_DATA", "ERROR", {1, 1}},
-        Arc{"WRITE_DATA", "READ_DATA", {2, 20}},
-        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
-        Arc{"WRITE_DATA", "ROW_OPEN", {1, 1}},
-        Arc{"WRITE_MASK", "BUSY", {1, 1}},
-        Arc{"WRITE_MASK", "ERROR", {1, 1}},
-        Arc{"WRITE_MASK", "READ_DATA", {2, 20}},
-        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
-        Arc{"WRITE_MASK", "ROW_OPEN", {1, 1}},
-    };
-    t.self_timed = true;
-    return t;
-}()},
-{"memory.dram.scalable-device.8.behavioral@depth=128@rows=16", [] {
     PartDelays t;
     t.evidence = "proven on memory.dram.device.8.structural";
     t.arcs = {
@@ -5797,47 +4510,7 @@
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
-{"memory.ff.scalable-device.16.behavioral", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.ff.device.16.structural-slice";
-    t.arcs = {
-        Arc{"READ_EN", "FAULT", {2, 2}},
-        Arc{"READ_EN", "READ_DATA", {2, 2}},
-        Arc{"WE", "FAULT", {2, 2}},
-        Arc{"WORD_ADDR", "FAULT", {8, 9}},
-        Arc{"WORD_ADDR", "READ_DATA", {4, 9}},
-    };
-    t.clock = "CLK";
-    t.launches["READ_DATA"] = {8, 9};
-    t.setup["WE"] = 11;
-    t.setup["WORD_ADDR"] = 19;
-    t.setup["WRITE_DATA"] = 9;
-    t.setup["WRITE_MASK"] = 11;
-    t.internal_period = 12;
-    t.fixed_inputs["RST"] = 0;
-    return t;
-}()},
 {"memory.ff.device.16.behavioral@depth=64", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.ff.device.16.structural-slice";
-    t.arcs = {
-        Arc{"READ_EN", "FAULT", {2, 2}},
-        Arc{"READ_EN", "READ_DATA", {2, 2}},
-        Arc{"WE", "FAULT", {2, 2}},
-        Arc{"WORD_ADDR", "FAULT", {7, 9}},
-        Arc{"WORD_ADDR", "READ_DATA", {4, 15}},
-    };
-    t.clock = "CLK";
-    t.launches["READ_DATA"] = {16, 17};
-    t.setup["WE"] = 11;
-    t.setup["WORD_ADDR"] = 19;
-    t.setup["WRITE_DATA"] = 9;
-    t.setup["WRITE_MASK"] = 11;
-    t.internal_period = 12;
-    t.fixed_inputs["RST"] = 0;
-    return t;
-}()},
-{"memory.ff.scalable-device.16.behavioral@depth=64", [] {
     PartDelays t;
     t.evidence = "proven on memory.ff.device.16.structural-slice";
     t.arcs = {
@@ -5877,47 +4550,7 @@
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
-{"memory.ff.scalable-device.16.behavioral@depth=128", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.ff.device.16.structural-slice";
-    t.arcs = {
-        Arc{"READ_EN", "FAULT", {2, 2}},
-        Arc{"READ_EN", "READ_DATA", {2, 2}},
-        Arc{"WE", "FAULT", {2, 2}},
-        Arc{"WORD_ADDR", "FAULT", {6, 9}},
-        Arc{"WORD_ADDR", "READ_DATA", {4, 17}},
-    };
-    t.clock = "CLK";
-    t.launches["READ_DATA"] = {18, 19};
-    t.setup["WE"] = 11;
-    t.setup["WORD_ADDR"] = 19;
-    t.setup["WRITE_DATA"] = 9;
-    t.setup["WRITE_MASK"] = 11;
-    t.internal_period = 12;
-    t.fixed_inputs["RST"] = 0;
-    return t;
-}()},
 {"memory.ff.device.32.behavioral", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.ff.device.32.structural-slice";
-    t.arcs = {
-        Arc{"READ_EN", "FAULT", {2, 2}},
-        Arc{"READ_EN", "READ_DATA", {2, 2}},
-        Arc{"WE", "FAULT", {2, 2}},
-        Arc{"WORD_ADDR", "FAULT", {8, 9}},
-        Arc{"WORD_ADDR", "READ_DATA", {4, 9}},
-    };
-    t.clock = "CLK";
-    t.launches["READ_DATA"] = {8, 9};
-    t.setup["WE"] = 11;
-    t.setup["WORD_ADDR"] = 19;
-    t.setup["WRITE_DATA"] = 9;
-    t.setup["WRITE_MASK"] = 11;
-    t.internal_period = 12;
-    t.fixed_inputs["RST"] = 0;
-    return t;
-}()},
-{"memory.ff.scalable-device.32.behavioral", [] {
     PartDelays t;
     t.evidence = "proven on memory.ff.device.32.structural-slice";
     t.arcs = {
@@ -5957,47 +4590,7 @@
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
-{"memory.ff.scalable-device.32.behavioral@depth=64", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.ff.device.32.structural-slice";
-    t.arcs = {
-        Arc{"READ_EN", "FAULT", {2, 2}},
-        Arc{"READ_EN", "READ_DATA", {2, 2}},
-        Arc{"WE", "FAULT", {2, 2}},
-        Arc{"WORD_ADDR", "FAULT", {7, 9}},
-        Arc{"WORD_ADDR", "READ_DATA", {4, 15}},
-    };
-    t.clock = "CLK";
-    t.launches["READ_DATA"] = {16, 17};
-    t.setup["WE"] = 11;
-    t.setup["WORD_ADDR"] = 19;
-    t.setup["WRITE_DATA"] = 9;
-    t.setup["WRITE_MASK"] = 11;
-    t.internal_period = 12;
-    t.fixed_inputs["RST"] = 0;
-    return t;
-}()},
 {"memory.ff.device.32.behavioral@depth=128", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.ff.device.32.structural-slice";
-    t.arcs = {
-        Arc{"READ_EN", "FAULT", {2, 2}},
-        Arc{"READ_EN", "READ_DATA", {2, 2}},
-        Arc{"WE", "FAULT", {2, 2}},
-        Arc{"WORD_ADDR", "FAULT", {6, 9}},
-        Arc{"WORD_ADDR", "READ_DATA", {4, 17}},
-    };
-    t.clock = "CLK";
-    t.launches["READ_DATA"] = {18, 19};
-    t.setup["WE"] = 11;
-    t.setup["WORD_ADDR"] = 19;
-    t.setup["WRITE_DATA"] = 9;
-    t.setup["WRITE_MASK"] = 11;
-    t.internal_period = 12;
-    t.fixed_inputs["RST"] = 0;
-    return t;
-}()},
-{"memory.ff.scalable-device.32.behavioral@depth=128", [] {
     PartDelays t;
     t.evidence = "proven on memory.ff.device.32.structural-slice";
     t.arcs = {
@@ -6037,26 +4630,6 @@
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
-{"memory.ff.scalable-device.8.behavioral", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.ff.device.8.structural-slice";
-    t.arcs = {
-        Arc{"READ_EN", "FAULT", {2, 2}},
-        Arc{"READ_EN", "READ_DATA", {2, 2}},
-        Arc{"WE", "FAULT", {2, 2}},
-        Arc{"WORD_ADDR", "FAULT", {8, 9}},
-        Arc{"WORD_ADDR", "READ_DATA", {4, 9}},
-    };
-    t.clock = "CLK";
-    t.launches["READ_DATA"] = {8, 9};
-    t.setup["WE"] = 11;
-    t.setup["WORD_ADDR"] = 19;
-    t.setup["WRITE_DATA"] = 9;
-    t.setup["WRITE_MASK"] = 11;
-    t.internal_period = 12;
-    t.fixed_inputs["RST"] = 0;
-    return t;
-}()},
 {"memory.ff.device.8.behavioral@depth=64", [] {
     PartDelays t;
     t.evidence = "proven on memory.ff.device.8.structural-slice";
@@ -6077,47 +4650,7 @@
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
-{"memory.ff.scalable-device.8.behavioral@depth=64", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.ff.device.8.structural-slice";
-    t.arcs = {
-        Arc{"READ_EN", "FAULT", {2, 2}},
-        Arc{"READ_EN", "READ_DATA", {2, 2}},
-        Arc{"WE", "FAULT", {2, 2}},
-        Arc{"WORD_ADDR", "FAULT", {7, 9}},
-        Arc{"WORD_ADDR", "READ_DATA", {4, 15}},
-    };
-    t.clock = "CLK";
-    t.launches["READ_DATA"] = {16, 17};
-    t.setup["WE"] = 11;
-    t.setup["WORD_ADDR"] = 19;
-    t.setup["WRITE_DATA"] = 9;
-    t.setup["WRITE_MASK"] = 11;
-    t.internal_period = 12;
-    t.fixed_inputs["RST"] = 0;
-    return t;
-}()},
 {"memory.ff.device.8.behavioral@depth=128", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.ff.device.8.structural-slice";
-    t.arcs = {
-        Arc{"READ_EN", "FAULT", {2, 2}},
-        Arc{"READ_EN", "READ_DATA", {2, 2}},
-        Arc{"WE", "FAULT", {2, 2}},
-        Arc{"WORD_ADDR", "FAULT", {6, 9}},
-        Arc{"WORD_ADDR", "READ_DATA", {4, 17}},
-    };
-    t.clock = "CLK";
-    t.launches["READ_DATA"] = {18, 19};
-    t.setup["WE"] = 11;
-    t.setup["WORD_ADDR"] = 19;
-    t.setup["WRITE_DATA"] = 9;
-    t.setup["WRITE_MASK"] = 11;
-    t.internal_period = 12;
-    t.fixed_inputs["RST"] = 0;
-    return t;
-}()},
-{"memory.ff.scalable-device.8.behavioral@depth=128", [] {
     PartDelays t;
     t.evidence = "proven on memory.ff.device.8.structural-slice";
     t.arcs = {
@@ -7889,73 +6422,7 @@
     t.self_timed = true;
     return t;
 }()},
-{"memory.nor-flash.scalable-device.16.behavioral", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.nor-flash.device.16.structural";
-    t.arcs = {
-        Arc{"CLK", "BUSY", {1, 1}},
-        Arc{"CLK", "ERROR", {1, 1}},
-        Arc{"CLK", "READ_DATA", {2, 16}},
-        Arc{"CLK", "READ_VALID", {1, 1}},
-        Arc{"CLK", "WRITE_ENABLED", {1, 1}},
-        Arc{"CMD", "BUSY", {1, 1}},
-        Arc{"CMD", "ERROR", {1, 1}},
-        Arc{"CMD", "READ_DATA", {2, 16}},
-        Arc{"CMD", "READ_VALID", {1, 1}},
-        Arc{"CMD", "WRITE_ENABLED", {1, 1}},
-        Arc{"WORD_ADDR", "BUSY", {1, 1}},
-        Arc{"WORD_ADDR", "ERROR", {1, 1}},
-        Arc{"WORD_ADDR", "READ_DATA", {2, 16}},
-        Arc{"WORD_ADDR", "READ_VALID", {1, 1}},
-        Arc{"WORD_ADDR", "WRITE_ENABLED", {1, 1}},
-        Arc{"WRITE_DATA", "BUSY", {1, 1}},
-        Arc{"WRITE_DATA", "ERROR", {1, 1}},
-        Arc{"WRITE_DATA", "READ_DATA", {2, 16}},
-        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
-        Arc{"WRITE_DATA", "WRITE_ENABLED", {1, 1}},
-        Arc{"WRITE_MASK", "BUSY", {1, 1}},
-        Arc{"WRITE_MASK", "ERROR", {1, 1}},
-        Arc{"WRITE_MASK", "READ_DATA", {2, 16}},
-        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
-        Arc{"WRITE_MASK", "WRITE_ENABLED", {1, 1}},
-    };
-    t.self_timed = true;
-    return t;
-}()},
 {"memory.nor-flash.device.16.behavioral@depth=64", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.nor-flash.device.16.structural";
-    t.arcs = {
-        Arc{"CLK", "BUSY", {1, 1}},
-        Arc{"CLK", "ERROR", {1, 1}},
-        Arc{"CLK", "READ_DATA", {2, 17}},
-        Arc{"CLK", "READ_VALID", {1, 1}},
-        Arc{"CLK", "WRITE_ENABLED", {1, 1}},
-        Arc{"CMD", "BUSY", {1, 1}},
-        Arc{"CMD", "ERROR", {1, 1}},
-        Arc{"CMD", "READ_DATA", {2, 17}},
-        Arc{"CMD", "READ_VALID", {1, 1}},
-        Arc{"CMD", "WRITE_ENABLED", {1, 1}},
-        Arc{"WORD_ADDR", "BUSY", {1, 1}},
-        Arc{"WORD_ADDR", "ERROR", {1, 1}},
-        Arc{"WORD_ADDR", "READ_DATA", {2, 17}},
-        Arc{"WORD_ADDR", "READ_VALID", {1, 1}},
-        Arc{"WORD_ADDR", "WRITE_ENABLED", {1, 1}},
-        Arc{"WRITE_DATA", "BUSY", {1, 1}},
-        Arc{"WRITE_DATA", "ERROR", {1, 1}},
-        Arc{"WRITE_DATA", "READ_DATA", {2, 17}},
-        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
-        Arc{"WRITE_DATA", "WRITE_ENABLED", {1, 1}},
-        Arc{"WRITE_MASK", "BUSY", {1, 1}},
-        Arc{"WRITE_MASK", "ERROR", {1, 1}},
-        Arc{"WRITE_MASK", "READ_DATA", {2, 17}},
-        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
-        Arc{"WRITE_MASK", "WRITE_ENABLED", {1, 1}},
-    };
-    t.self_timed = true;
-    return t;
-}()},
-{"memory.nor-flash.scalable-device.16.behavioral@depth=64", [] {
     PartDelays t;
     t.evidence = "proven on memory.nor-flash.device.16.structural";
     t.arcs = {
@@ -8021,73 +6488,7 @@
     t.self_timed = true;
     return t;
 }()},
-{"memory.nor-flash.scalable-device.16.behavioral@depth=128", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.nor-flash.device.16.structural";
-    t.arcs = {
-        Arc{"CLK", "BUSY", {1, 1}},
-        Arc{"CLK", "ERROR", {1, 1}},
-        Arc{"CLK", "READ_DATA", {2, 17}},
-        Arc{"CLK", "READ_VALID", {1, 1}},
-        Arc{"CLK", "WRITE_ENABLED", {1, 1}},
-        Arc{"CMD", "BUSY", {1, 1}},
-        Arc{"CMD", "ERROR", {1, 1}},
-        Arc{"CMD", "READ_DATA", {2, 17}},
-        Arc{"CMD", "READ_VALID", {1, 1}},
-        Arc{"CMD", "WRITE_ENABLED", {1, 1}},
-        Arc{"WORD_ADDR", "BUSY", {1, 1}},
-        Arc{"WORD_ADDR", "ERROR", {1, 1}},
-        Arc{"WORD_ADDR", "READ_DATA", {2, 17}},
-        Arc{"WORD_ADDR", "READ_VALID", {1, 1}},
-        Arc{"WORD_ADDR", "WRITE_ENABLED", {1, 1}},
-        Arc{"WRITE_DATA", "BUSY", {1, 1}},
-        Arc{"WRITE_DATA", "ERROR", {1, 1}},
-        Arc{"WRITE_DATA", "READ_DATA", {2, 17}},
-        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
-        Arc{"WRITE_DATA", "WRITE_ENABLED", {1, 1}},
-        Arc{"WRITE_MASK", "BUSY", {1, 1}},
-        Arc{"WRITE_MASK", "ERROR", {1, 1}},
-        Arc{"WRITE_MASK", "READ_DATA", {2, 17}},
-        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
-        Arc{"WRITE_MASK", "WRITE_ENABLED", {1, 1}},
-    };
-    t.self_timed = true;
-    return t;
-}()},
 {"memory.nor-flash.device.16.behavioral@rows=1", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.nor-flash.device.16.structural";
-    t.arcs = {
-        Arc{"CLK", "BUSY", {1, 1}},
-        Arc{"CLK", "ERROR", {1, 1}},
-        Arc{"CLK", "READ_DATA", {2, 15}},
-        Arc{"CLK", "READ_VALID", {1, 1}},
-        Arc{"CLK", "WRITE_ENABLED", {1, 1}},
-        Arc{"CMD", "BUSY", {1, 1}},
-        Arc{"CMD", "ERROR", {1, 1}},
-        Arc{"CMD", "READ_DATA", {2, 15}},
-        Arc{"CMD", "READ_VALID", {1, 1}},
-        Arc{"CMD", "WRITE_ENABLED", {1, 1}},
-        Arc{"WORD_ADDR", "BUSY", {1, 1}},
-        Arc{"WORD_ADDR", "ERROR", {1, 1}},
-        Arc{"WORD_ADDR", "READ_DATA", {2, 15}},
-        Arc{"WORD_ADDR", "READ_VALID", {1, 1}},
-        Arc{"WORD_ADDR", "WRITE_ENABLED", {1, 1}},
-        Arc{"WRITE_DATA", "BUSY", {1, 1}},
-        Arc{"WRITE_DATA", "ERROR", {1, 1}},
-        Arc{"WRITE_DATA", "READ_DATA", {2, 15}},
-        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
-        Arc{"WRITE_DATA", "WRITE_ENABLED", {1, 1}},
-        Arc{"WRITE_MASK", "BUSY", {1, 1}},
-        Arc{"WRITE_MASK", "ERROR", {1, 1}},
-        Arc{"WRITE_MASK", "READ_DATA", {2, 15}},
-        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
-        Arc{"WRITE_MASK", "WRITE_ENABLED", {1, 1}},
-    };
-    t.self_timed = true;
-    return t;
-}()},
-{"memory.nor-flash.scalable-device.16.behavioral@rows=1", [] {
     PartDelays t;
     t.evidence = "proven on memory.nor-flash.device.16.structural";
     t.arcs = {
@@ -8153,73 +6554,7 @@
     t.self_timed = true;
     return t;
 }()},
-{"memory.nor-flash.scalable-device.16.behavioral@depth=64@rows=1", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.nor-flash.device.16.structural";
-    t.arcs = {
-        Arc{"CLK", "BUSY", {1, 1}},
-        Arc{"CLK", "ERROR", {1, 1}},
-        Arc{"CLK", "READ_DATA", {2, 16}},
-        Arc{"CLK", "READ_VALID", {1, 1}},
-        Arc{"CLK", "WRITE_ENABLED", {1, 1}},
-        Arc{"CMD", "BUSY", {1, 1}},
-        Arc{"CMD", "ERROR", {1, 1}},
-        Arc{"CMD", "READ_DATA", {2, 16}},
-        Arc{"CMD", "READ_VALID", {1, 1}},
-        Arc{"CMD", "WRITE_ENABLED", {1, 1}},
-        Arc{"WORD_ADDR", "BUSY", {1, 1}},
-        Arc{"WORD_ADDR", "ERROR", {1, 1}},
-        Arc{"WORD_ADDR", "READ_DATA", {2, 16}},
-        Arc{"WORD_ADDR", "READ_VALID", {1, 1}},
-        Arc{"WORD_ADDR", "WRITE_ENABLED", {1, 1}},
-        Arc{"WRITE_DATA", "BUSY", {1, 1}},
-        Arc{"WRITE_DATA", "ERROR", {1, 1}},
-        Arc{"WRITE_DATA", "READ_DATA", {2, 16}},
-        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
-        Arc{"WRITE_DATA", "WRITE_ENABLED", {1, 1}},
-        Arc{"WRITE_MASK", "BUSY", {1, 1}},
-        Arc{"WRITE_MASK", "ERROR", {1, 1}},
-        Arc{"WRITE_MASK", "READ_DATA", {2, 16}},
-        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
-        Arc{"WRITE_MASK", "WRITE_ENABLED", {1, 1}},
-    };
-    t.self_timed = true;
-    return t;
-}()},
 {"memory.nor-flash.device.16.behavioral@depth=128@rows=1", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.nor-flash.device.16.structural";
-    t.arcs = {
-        Arc{"CLK", "BUSY", {1, 1}},
-        Arc{"CLK", "ERROR", {1, 1}},
-        Arc{"CLK", "READ_DATA", {2, 16}},
-        Arc{"CLK", "READ_VALID", {1, 1}},
-        Arc{"CLK", "WRITE_ENABLED", {1, 1}},
-        Arc{"CMD", "BUSY", {1, 1}},
-        Arc{"CMD", "ERROR", {1, 1}},
-        Arc{"CMD", "READ_DATA", {2, 16}},
-        Arc{"CMD", "READ_VALID", {1, 1}},
-        Arc{"CMD", "WRITE_ENABLED", {1, 1}},
-        Arc{"WORD_ADDR", "BUSY", {1, 1}},
-        Arc{"WORD_ADDR", "ERROR", {1, 1}},
-        Arc{"WORD_ADDR", "READ_DATA", {2, 16}},
-        Arc{"WORD_ADDR", "READ_VALID", {1, 1}},
-        Arc{"WORD_ADDR", "WRITE_ENABLED", {1, 1}},
-        Arc{"WRITE_DATA", "BUSY", {1, 1}},
-        Arc{"WRITE_DATA", "ERROR", {1, 1}},
-        Arc{"WRITE_DATA", "READ_DATA", {2, 16}},
-        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
-        Arc{"WRITE_DATA", "WRITE_ENABLED", {1, 1}},
-        Arc{"WRITE_MASK", "BUSY", {1, 1}},
-        Arc{"WRITE_MASK", "ERROR", {1, 1}},
-        Arc{"WRITE_MASK", "READ_DATA", {2, 16}},
-        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
-        Arc{"WRITE_MASK", "WRITE_ENABLED", {1, 1}},
-    };
-    t.self_timed = true;
-    return t;
-}()},
-{"memory.nor-flash.scalable-device.16.behavioral@depth=128@rows=1", [] {
     PartDelays t;
     t.evidence = "proven on memory.nor-flash.device.16.structural";
     t.arcs = {
@@ -8285,73 +6620,7 @@
     t.self_timed = true;
     return t;
 }()},
-{"memory.nor-flash.scalable-device.32.behavioral", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.nor-flash.device.32.structural";
-    t.arcs = {
-        Arc{"CLK", "BUSY", {1, 1}},
-        Arc{"CLK", "ERROR", {1, 1}},
-        Arc{"CLK", "READ_DATA", {2, 16}},
-        Arc{"CLK", "READ_VALID", {1, 1}},
-        Arc{"CLK", "WRITE_ENABLED", {1, 1}},
-        Arc{"CMD", "BUSY", {1, 1}},
-        Arc{"CMD", "ERROR", {1, 1}},
-        Arc{"CMD", "READ_DATA", {2, 16}},
-        Arc{"CMD", "READ_VALID", {1, 1}},
-        Arc{"CMD", "WRITE_ENABLED", {1, 1}},
-        Arc{"WORD_ADDR", "BUSY", {1, 1}},
-        Arc{"WORD_ADDR", "ERROR", {1, 1}},
-        Arc{"WORD_ADDR", "READ_DATA", {2, 16}},
-        Arc{"WORD_ADDR", "READ_VALID", {1, 1}},
-        Arc{"WORD_ADDR", "WRITE_ENABLED", {1, 1}},
-        Arc{"WRITE_DATA", "BUSY", {1, 1}},
-        Arc{"WRITE_DATA", "ERROR", {1, 1}},
-        Arc{"WRITE_DATA", "READ_DATA", {2, 16}},
-        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
-        Arc{"WRITE_DATA", "WRITE_ENABLED", {1, 1}},
-        Arc{"WRITE_MASK", "BUSY", {1, 1}},
-        Arc{"WRITE_MASK", "ERROR", {1, 1}},
-        Arc{"WRITE_MASK", "READ_DATA", {2, 16}},
-        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
-        Arc{"WRITE_MASK", "WRITE_ENABLED", {1, 1}},
-    };
-    t.self_timed = true;
-    return t;
-}()},
 {"memory.nor-flash.device.32.behavioral@depth=64", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.nor-flash.device.32.structural";
-    t.arcs = {
-        Arc{"CLK", "BUSY", {1, 1}},
-        Arc{"CLK", "ERROR", {1, 1}},
-        Arc{"CLK", "READ_DATA", {2, 17}},
-        Arc{"CLK", "READ_VALID", {1, 1}},
-        Arc{"CLK", "WRITE_ENABLED", {1, 1}},
-        Arc{"CMD", "BUSY", {1, 1}},
-        Arc{"CMD", "ERROR", {1, 1}},
-        Arc{"CMD", "READ_DATA", {2, 17}},
-        Arc{"CMD", "READ_VALID", {1, 1}},
-        Arc{"CMD", "WRITE_ENABLED", {1, 1}},
-        Arc{"WORD_ADDR", "BUSY", {1, 1}},
-        Arc{"WORD_ADDR", "ERROR", {1, 1}},
-        Arc{"WORD_ADDR", "READ_DATA", {2, 17}},
-        Arc{"WORD_ADDR", "READ_VALID", {1, 1}},
-        Arc{"WORD_ADDR", "WRITE_ENABLED", {1, 1}},
-        Arc{"WRITE_DATA", "BUSY", {1, 1}},
-        Arc{"WRITE_DATA", "ERROR", {1, 1}},
-        Arc{"WRITE_DATA", "READ_DATA", {2, 17}},
-        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
-        Arc{"WRITE_DATA", "WRITE_ENABLED", {1, 1}},
-        Arc{"WRITE_MASK", "BUSY", {1, 1}},
-        Arc{"WRITE_MASK", "ERROR", {1, 1}},
-        Arc{"WRITE_MASK", "READ_DATA", {2, 17}},
-        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
-        Arc{"WRITE_MASK", "WRITE_ENABLED", {1, 1}},
-    };
-    t.self_timed = true;
-    return t;
-}()},
-{"memory.nor-flash.scalable-device.32.behavioral@depth=64", [] {
     PartDelays t;
     t.evidence = "proven on memory.nor-flash.device.32.structural";
     t.arcs = {
@@ -8417,73 +6686,7 @@
     t.self_timed = true;
     return t;
 }()},
-{"memory.nor-flash.scalable-device.32.behavioral@depth=128", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.nor-flash.device.32.structural";
-    t.arcs = {
-        Arc{"CLK", "BUSY", {1, 1}},
-        Arc{"CLK", "ERROR", {1, 1}},
-        Arc{"CLK", "READ_DATA", {2, 17}},
-        Arc{"CLK", "READ_VALID", {1, 1}},
-        Arc{"CLK", "WRITE_ENABLED", {1, 1}},
-        Arc{"CMD", "BUSY", {1, 1}},
-        Arc{"CMD", "ERROR", {1, 1}},
-        Arc{"CMD", "READ_DATA", {2, 17}},
-        Arc{"CMD", "READ_VALID", {1, 1}},
-        Arc{"CMD", "WRITE_ENABLED", {1, 1}},
-        Arc{"WORD_ADDR", "BUSY", {1, 1}},
-        Arc{"WORD_ADDR", "ERROR", {1, 1}},
-        Arc{"WORD_ADDR", "READ_DATA", {2, 17}},
-        Arc{"WORD_ADDR", "READ_VALID", {1, 1}},
-        Arc{"WORD_ADDR", "WRITE_ENABLED", {1, 1}},
-        Arc{"WRITE_DATA", "BUSY", {1, 1}},
-        Arc{"WRITE_DATA", "ERROR", {1, 1}},
-        Arc{"WRITE_DATA", "READ_DATA", {2, 17}},
-        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
-        Arc{"WRITE_DATA", "WRITE_ENABLED", {1, 1}},
-        Arc{"WRITE_MASK", "BUSY", {1, 1}},
-        Arc{"WRITE_MASK", "ERROR", {1, 1}},
-        Arc{"WRITE_MASK", "READ_DATA", {2, 17}},
-        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
-        Arc{"WRITE_MASK", "WRITE_ENABLED", {1, 1}},
-    };
-    t.self_timed = true;
-    return t;
-}()},
 {"memory.nor-flash.device.32.behavioral@rows=1", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.nor-flash.device.32.structural";
-    t.arcs = {
-        Arc{"CLK", "BUSY", {1, 1}},
-        Arc{"CLK", "ERROR", {1, 1}},
-        Arc{"CLK", "READ_DATA", {2, 15}},
-        Arc{"CLK", "READ_VALID", {1, 1}},
-        Arc{"CLK", "WRITE_ENABLED", {1, 1}},
-        Arc{"CMD", "BUSY", {1, 1}},
-        Arc{"CMD", "ERROR", {1, 1}},
-        Arc{"CMD", "READ_DATA", {2, 15}},
-        Arc{"CMD", "READ_VALID", {1, 1}},
-        Arc{"CMD", "WRITE_ENABLED", {1, 1}},
-        Arc{"WORD_ADDR", "BUSY", {1, 1}},
-        Arc{"WORD_ADDR", "ERROR", {1, 1}},
-        Arc{"WORD_ADDR", "READ_DATA", {2, 15}},
-        Arc{"WORD_ADDR", "READ_VALID", {1, 1}},
-        Arc{"WORD_ADDR", "WRITE_ENABLED", {1, 1}},
-        Arc{"WRITE_DATA", "BUSY", {1, 1}},
-        Arc{"WRITE_DATA", "ERROR", {1, 1}},
-        Arc{"WRITE_DATA", "READ_DATA", {2, 15}},
-        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
-        Arc{"WRITE_DATA", "WRITE_ENABLED", {1, 1}},
-        Arc{"WRITE_MASK", "BUSY", {1, 1}},
-        Arc{"WRITE_MASK", "ERROR", {1, 1}},
-        Arc{"WRITE_MASK", "READ_DATA", {2, 15}},
-        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
-        Arc{"WRITE_MASK", "WRITE_ENABLED", {1, 1}},
-    };
-    t.self_timed = true;
-    return t;
-}()},
-{"memory.nor-flash.scalable-device.32.behavioral@rows=1", [] {
     PartDelays t;
     t.evidence = "proven on memory.nor-flash.device.32.structural";
     t.arcs = {
@@ -8549,73 +6752,7 @@
     t.self_timed = true;
     return t;
 }()},
-{"memory.nor-flash.scalable-device.32.behavioral@depth=64@rows=1", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.nor-flash.device.32.structural";
-    t.arcs = {
-        Arc{"CLK", "BUSY", {1, 1}},
-        Arc{"CLK", "ERROR", {1, 1}},
-        Arc{"CLK", "READ_DATA", {2, 16}},
-        Arc{"CLK", "READ_VALID", {1, 1}},
-        Arc{"CLK", "WRITE_ENABLED", {1, 1}},
-        Arc{"CMD", "BUSY", {1, 1}},
-        Arc{"CMD", "ERROR", {1, 1}},
-        Arc{"CMD", "READ_DATA", {2, 16}},
-        Arc{"CMD", "READ_VALID", {1, 1}},
-        Arc{"CMD", "WRITE_ENABLED", {1, 1}},
-        Arc{"WORD_ADDR", "BUSY", {1, 1}},
-        Arc{"WORD_ADDR", "ERROR", {1, 1}},
-        Arc{"WORD_ADDR", "READ_DATA", {2, 16}},
-        Arc{"WORD_ADDR", "READ_VALID", {1, 1}},
-        Arc{"WORD_ADDR", "WRITE_ENABLED", {1, 1}},
-        Arc{"WRITE_DATA", "BUSY", {1, 1}},
-        Arc{"WRITE_DATA", "ERROR", {1, 1}},
-        Arc{"WRITE_DATA", "READ_DATA", {2, 16}},
-        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
-        Arc{"WRITE_DATA", "WRITE_ENABLED", {1, 1}},
-        Arc{"WRITE_MASK", "BUSY", {1, 1}},
-        Arc{"WRITE_MASK", "ERROR", {1, 1}},
-        Arc{"WRITE_MASK", "READ_DATA", {2, 16}},
-        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
-        Arc{"WRITE_MASK", "WRITE_ENABLED", {1, 1}},
-    };
-    t.self_timed = true;
-    return t;
-}()},
 {"memory.nor-flash.device.32.behavioral@depth=128@rows=1", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.nor-flash.device.32.structural";
-    t.arcs = {
-        Arc{"CLK", "BUSY", {1, 1}},
-        Arc{"CLK", "ERROR", {1, 1}},
-        Arc{"CLK", "READ_DATA", {2, 16}},
-        Arc{"CLK", "READ_VALID", {1, 1}},
-        Arc{"CLK", "WRITE_ENABLED", {1, 1}},
-        Arc{"CMD", "BUSY", {1, 1}},
-        Arc{"CMD", "ERROR", {1, 1}},
-        Arc{"CMD", "READ_DATA", {2, 16}},
-        Arc{"CMD", "READ_VALID", {1, 1}},
-        Arc{"CMD", "WRITE_ENABLED", {1, 1}},
-        Arc{"WORD_ADDR", "BUSY", {1, 1}},
-        Arc{"WORD_ADDR", "ERROR", {1, 1}},
-        Arc{"WORD_ADDR", "READ_DATA", {2, 16}},
-        Arc{"WORD_ADDR", "READ_VALID", {1, 1}},
-        Arc{"WORD_ADDR", "WRITE_ENABLED", {1, 1}},
-        Arc{"WRITE_DATA", "BUSY", {1, 1}},
-        Arc{"WRITE_DATA", "ERROR", {1, 1}},
-        Arc{"WRITE_DATA", "READ_DATA", {2, 16}},
-        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
-        Arc{"WRITE_DATA", "WRITE_ENABLED", {1, 1}},
-        Arc{"WRITE_MASK", "BUSY", {1, 1}},
-        Arc{"WRITE_MASK", "ERROR", {1, 1}},
-        Arc{"WRITE_MASK", "READ_DATA", {2, 16}},
-        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
-        Arc{"WRITE_MASK", "WRITE_ENABLED", {1, 1}},
-    };
-    t.self_timed = true;
-    return t;
-}()},
-{"memory.nor-flash.scalable-device.32.behavioral@depth=128@rows=1", [] {
     PartDelays t;
     t.evidence = "proven on memory.nor-flash.device.32.structural";
     t.arcs = {
@@ -8681,73 +6818,7 @@
     t.self_timed = true;
     return t;
 }()},
-{"memory.nor-flash.scalable-device.8.behavioral", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.nor-flash.device.8.structural";
-    t.arcs = {
-        Arc{"CLK", "BUSY", {1, 1}},
-        Arc{"CLK", "ERROR", {1, 1}},
-        Arc{"CLK", "READ_DATA", {2, 16}},
-        Arc{"CLK", "READ_VALID", {1, 1}},
-        Arc{"CLK", "WRITE_ENABLED", {1, 1}},
-        Arc{"CMD", "BUSY", {1, 1}},
-        Arc{"CMD", "ERROR", {1, 1}},
-        Arc{"CMD", "READ_DATA", {2, 16}},
-        Arc{"CMD", "READ_VALID", {1, 1}},
-        Arc{"CMD", "WRITE_ENABLED", {1, 1}},
-        Arc{"WORD_ADDR", "BUSY", {1, 1}},
-        Arc{"WORD_ADDR", "ERROR", {1, 1}},
-        Arc{"WORD_ADDR", "READ_DATA", {2, 16}},
-        Arc{"WORD_ADDR", "READ_VALID", {1, 1}},
-        Arc{"WORD_ADDR", "WRITE_ENABLED", {1, 1}},
-        Arc{"WRITE_DATA", "BUSY", {1, 1}},
-        Arc{"WRITE_DATA", "ERROR", {1, 1}},
-        Arc{"WRITE_DATA", "READ_DATA", {2, 16}},
-        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
-        Arc{"WRITE_DATA", "WRITE_ENABLED", {1, 1}},
-        Arc{"WRITE_MASK", "BUSY", {1, 1}},
-        Arc{"WRITE_MASK", "ERROR", {1, 1}},
-        Arc{"WRITE_MASK", "READ_DATA", {2, 16}},
-        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
-        Arc{"WRITE_MASK", "WRITE_ENABLED", {1, 1}},
-    };
-    t.self_timed = true;
-    return t;
-}()},
 {"memory.nor-flash.device.8.behavioral@depth=64", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.nor-flash.device.8.structural";
-    t.arcs = {
-        Arc{"CLK", "BUSY", {1, 1}},
-        Arc{"CLK", "ERROR", {1, 1}},
-        Arc{"CLK", "READ_DATA", {2, 17}},
-        Arc{"CLK", "READ_VALID", {1, 1}},
-        Arc{"CLK", "WRITE_ENABLED", {1, 1}},
-        Arc{"CMD", "BUSY", {1, 1}},
-        Arc{"CMD", "ERROR", {1, 1}},
-        Arc{"CMD", "READ_DATA", {2, 17}},
-        Arc{"CMD", "READ_VALID", {1, 1}},
-        Arc{"CMD", "WRITE_ENABLED", {1, 1}},
-        Arc{"WORD_ADDR", "BUSY", {1, 1}},
-        Arc{"WORD_ADDR", "ERROR", {1, 1}},
-        Arc{"WORD_ADDR", "READ_DATA", {2, 17}},
-        Arc{"WORD_ADDR", "READ_VALID", {1, 1}},
-        Arc{"WORD_ADDR", "WRITE_ENABLED", {1, 1}},
-        Arc{"WRITE_DATA", "BUSY", {1, 1}},
-        Arc{"WRITE_DATA", "ERROR", {1, 1}},
-        Arc{"WRITE_DATA", "READ_DATA", {2, 17}},
-        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
-        Arc{"WRITE_DATA", "WRITE_ENABLED", {1, 1}},
-        Arc{"WRITE_MASK", "BUSY", {1, 1}},
-        Arc{"WRITE_MASK", "ERROR", {1, 1}},
-        Arc{"WRITE_MASK", "READ_DATA", {2, 17}},
-        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
-        Arc{"WRITE_MASK", "WRITE_ENABLED", {1, 1}},
-    };
-    t.self_timed = true;
-    return t;
-}()},
-{"memory.nor-flash.scalable-device.8.behavioral@depth=64", [] {
     PartDelays t;
     t.evidence = "proven on memory.nor-flash.device.8.structural";
     t.arcs = {
@@ -8813,73 +6884,7 @@
     t.self_timed = true;
     return t;
 }()},
-{"memory.nor-flash.scalable-device.8.behavioral@depth=128", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.nor-flash.device.8.structural";
-    t.arcs = {
-        Arc{"CLK", "BUSY", {1, 1}},
-        Arc{"CLK", "ERROR", {1, 1}},
-        Arc{"CLK", "READ_DATA", {2, 17}},
-        Arc{"CLK", "READ_VALID", {1, 1}},
-        Arc{"CLK", "WRITE_ENABLED", {1, 1}},
-        Arc{"CMD", "BUSY", {1, 1}},
-        Arc{"CMD", "ERROR", {1, 1}},
-        Arc{"CMD", "READ_DATA", {2, 17}},
-        Arc{"CMD", "READ_VALID", {1, 1}},
-        Arc{"CMD", "WRITE_ENABLED", {1, 1}},
-        Arc{"WORD_ADDR", "BUSY", {1, 1}},
-        Arc{"WORD_ADDR", "ERROR", {1, 1}},
-        Arc{"WORD_ADDR", "READ_DATA", {2, 17}},
-        Arc{"WORD_ADDR", "READ_VALID", {1, 1}},
-        Arc{"WORD_ADDR", "WRITE_ENABLED", {1, 1}},
-        Arc{"WRITE_DATA", "BUSY", {1, 1}},
-        Arc{"WRITE_DATA", "ERROR", {1, 1}},
-        Arc{"WRITE_DATA", "READ_DATA", {2, 17}},
-        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
-        Arc{"WRITE_DATA", "WRITE_ENABLED", {1, 1}},
-        Arc{"WRITE_MASK", "BUSY", {1, 1}},
-        Arc{"WRITE_MASK", "ERROR", {1, 1}},
-        Arc{"WRITE_MASK", "READ_DATA", {2, 17}},
-        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
-        Arc{"WRITE_MASK", "WRITE_ENABLED", {1, 1}},
-    };
-    t.self_timed = true;
-    return t;
-}()},
 {"memory.nor-flash.device.8.behavioral@rows=1", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.nor-flash.device.8.structural";
-    t.arcs = {
-        Arc{"CLK", "BUSY", {1, 1}},
-        Arc{"CLK", "ERROR", {1, 1}},
-        Arc{"CLK", "READ_DATA", {2, 15}},
-        Arc{"CLK", "READ_VALID", {1, 1}},
-        Arc{"CLK", "WRITE_ENABLED", {1, 1}},
-        Arc{"CMD", "BUSY", {1, 1}},
-        Arc{"CMD", "ERROR", {1, 1}},
-        Arc{"CMD", "READ_DATA", {2, 15}},
-        Arc{"CMD", "READ_VALID", {1, 1}},
-        Arc{"CMD", "WRITE_ENABLED", {1, 1}},
-        Arc{"WORD_ADDR", "BUSY", {1, 1}},
-        Arc{"WORD_ADDR", "ERROR", {1, 1}},
-        Arc{"WORD_ADDR", "READ_DATA", {2, 15}},
-        Arc{"WORD_ADDR", "READ_VALID", {1, 1}},
-        Arc{"WORD_ADDR", "WRITE_ENABLED", {1, 1}},
-        Arc{"WRITE_DATA", "BUSY", {1, 1}},
-        Arc{"WRITE_DATA", "ERROR", {1, 1}},
-        Arc{"WRITE_DATA", "READ_DATA", {2, 15}},
-        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
-        Arc{"WRITE_DATA", "WRITE_ENABLED", {1, 1}},
-        Arc{"WRITE_MASK", "BUSY", {1, 1}},
-        Arc{"WRITE_MASK", "ERROR", {1, 1}},
-        Arc{"WRITE_MASK", "READ_DATA", {2, 15}},
-        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
-        Arc{"WRITE_MASK", "WRITE_ENABLED", {1, 1}},
-    };
-    t.self_timed = true;
-    return t;
-}()},
-{"memory.nor-flash.scalable-device.8.behavioral@rows=1", [] {
     PartDelays t;
     t.evidence = "proven on memory.nor-flash.device.8.structural";
     t.arcs = {
@@ -8945,73 +6950,7 @@
     t.self_timed = true;
     return t;
 }()},
-{"memory.nor-flash.scalable-device.8.behavioral@depth=64@rows=1", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.nor-flash.device.8.structural";
-    t.arcs = {
-        Arc{"CLK", "BUSY", {1, 1}},
-        Arc{"CLK", "ERROR", {1, 1}},
-        Arc{"CLK", "READ_DATA", {2, 16}},
-        Arc{"CLK", "READ_VALID", {1, 1}},
-        Arc{"CLK", "WRITE_ENABLED", {1, 1}},
-        Arc{"CMD", "BUSY", {1, 1}},
-        Arc{"CMD", "ERROR", {1, 1}},
-        Arc{"CMD", "READ_DATA", {2, 16}},
-        Arc{"CMD", "READ_VALID", {1, 1}},
-        Arc{"CMD", "WRITE_ENABLED", {1, 1}},
-        Arc{"WORD_ADDR", "BUSY", {1, 1}},
-        Arc{"WORD_ADDR", "ERROR", {1, 1}},
-        Arc{"WORD_ADDR", "READ_DATA", {2, 16}},
-        Arc{"WORD_ADDR", "READ_VALID", {1, 1}},
-        Arc{"WORD_ADDR", "WRITE_ENABLED", {1, 1}},
-        Arc{"WRITE_DATA", "BUSY", {1, 1}},
-        Arc{"WRITE_DATA", "ERROR", {1, 1}},
-        Arc{"WRITE_DATA", "READ_DATA", {2, 16}},
-        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
-        Arc{"WRITE_DATA", "WRITE_ENABLED", {1, 1}},
-        Arc{"WRITE_MASK", "BUSY", {1, 1}},
-        Arc{"WRITE_MASK", "ERROR", {1, 1}},
-        Arc{"WRITE_MASK", "READ_DATA", {2, 16}},
-        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
-        Arc{"WRITE_MASK", "WRITE_ENABLED", {1, 1}},
-    };
-    t.self_timed = true;
-    return t;
-}()},
 {"memory.nor-flash.device.8.behavioral@depth=128@rows=1", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.nor-flash.device.8.structural";
-    t.arcs = {
-        Arc{"CLK", "BUSY", {1, 1}},
-        Arc{"CLK", "ERROR", {1, 1}},
-        Arc{"CLK", "READ_DATA", {2, 16}},
-        Arc{"CLK", "READ_VALID", {1, 1}},
-        Arc{"CLK", "WRITE_ENABLED", {1, 1}},
-        Arc{"CMD", "BUSY", {1, 1}},
-        Arc{"CMD", "ERROR", {1, 1}},
-        Arc{"CMD", "READ_DATA", {2, 16}},
-        Arc{"CMD", "READ_VALID", {1, 1}},
-        Arc{"CMD", "WRITE_ENABLED", {1, 1}},
-        Arc{"WORD_ADDR", "BUSY", {1, 1}},
-        Arc{"WORD_ADDR", "ERROR", {1, 1}},
-        Arc{"WORD_ADDR", "READ_DATA", {2, 16}},
-        Arc{"WORD_ADDR", "READ_VALID", {1, 1}},
-        Arc{"WORD_ADDR", "WRITE_ENABLED", {1, 1}},
-        Arc{"WRITE_DATA", "BUSY", {1, 1}},
-        Arc{"WRITE_DATA", "ERROR", {1, 1}},
-        Arc{"WRITE_DATA", "READ_DATA", {2, 16}},
-        Arc{"WRITE_DATA", "READ_VALID", {1, 1}},
-        Arc{"WRITE_DATA", "WRITE_ENABLED", {1, 1}},
-        Arc{"WRITE_MASK", "BUSY", {1, 1}},
-        Arc{"WRITE_MASK", "ERROR", {1, 1}},
-        Arc{"WRITE_MASK", "READ_DATA", {2, 16}},
-        Arc{"WRITE_MASK", "READ_VALID", {1, 1}},
-        Arc{"WRITE_MASK", "WRITE_ENABLED", {1, 1}},
-    };
-    t.self_timed = true;
-    return t;
-}()},
-{"memory.nor-flash.scalable-device.8.behavioral@depth=128@rows=1", [] {
     PartDelays t;
     t.evidence = "proven on memory.nor-flash.device.8.structural";
     t.arcs = {
@@ -10229,27 +8168,7 @@
     };
     return t;
 }()},
-{"memory.rom.scalable-device.16.behavioral", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.rom.device.16.structural";
-    t.arcs = {
-        Arc{"CE_N", "READ_DATA", {2, 7}},
-        Arc{"OE_N", "READ_DATA", {2, 2}},
-        Arc{"WORD_ADDR", "READ_DATA", {2, 14}},
-    };
-    return t;
-}()},
 {"memory.rom.device.16.behavioral@depth=64", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.rom.device.16.structural";
-    t.arcs = {
-        Arc{"CE_N", "READ_DATA", {2, 9}},
-        Arc{"OE_N", "READ_DATA", {2, 2}},
-        Arc{"WORD_ADDR", "READ_DATA", {2, 16}},
-    };
-    return t;
-}()},
-{"memory.rom.scalable-device.16.behavioral@depth=64", [] {
     PartDelays t;
     t.evidence = "proven on memory.rom.device.16.structural";
     t.arcs = {
@@ -10269,27 +8188,7 @@
     };
     return t;
 }()},
-{"memory.rom.scalable-device.16.behavioral@depth=128", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.rom.device.16.structural";
-    t.arcs = {
-        Arc{"CE_N", "READ_DATA", {2, 9}},
-        Arc{"OE_N", "READ_DATA", {2, 2}},
-        Arc{"WORD_ADDR", "READ_DATA", {2, 16}},
-    };
-    return t;
-}()},
 {"memory.rom.device.16.behavioral@rows=1", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.rom.device.16.structural";
-    t.arcs = {
-        Arc{"CE_N", "READ_DATA", {2, 7}},
-        Arc{"OE_N", "READ_DATA", {2, 2}},
-        Arc{"WORD_ADDR", "READ_DATA", {2, 14}},
-    };
-    return t;
-}()},
-{"memory.rom.scalable-device.16.behavioral@rows=1", [] {
     PartDelays t;
     t.evidence = "proven on memory.rom.device.16.structural";
     t.arcs = {
@@ -10309,27 +8208,7 @@
     };
     return t;
 }()},
-{"memory.rom.scalable-device.16.behavioral@depth=64@rows=1", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.rom.device.16.structural";
-    t.arcs = {
-        Arc{"CE_N", "READ_DATA", {2, 8}},
-        Arc{"OE_N", "READ_DATA", {2, 2}},
-        Arc{"WORD_ADDR", "READ_DATA", {2, 15}},
-    };
-    return t;
-}()},
 {"memory.rom.device.16.behavioral@depth=128@rows=1", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.rom.device.16.structural";
-    t.arcs = {
-        Arc{"CE_N", "READ_DATA", {2, 8}},
-        Arc{"OE_N", "READ_DATA", {2, 2}},
-        Arc{"WORD_ADDR", "READ_DATA", {2, 15}},
-    };
-    return t;
-}()},
-{"memory.rom.scalable-device.16.behavioral@depth=128@rows=1", [] {
     PartDelays t;
     t.evidence = "proven on memory.rom.device.16.structural";
     t.arcs = {
@@ -10349,27 +8228,7 @@
     };
     return t;
 }()},
-{"memory.rom.scalable-device.16.behavioral@rows=4", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.rom.device.16.structural";
-    t.arcs = {
-        Arc{"CE_N", "READ_DATA", {2, 7}},
-        Arc{"OE_N", "READ_DATA", {2, 2}},
-        Arc{"WORD_ADDR", "READ_DATA", {2, 15}},
-    };
-    return t;
-}()},
 {"memory.rom.device.16.behavioral@depth=64@rows=4", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.rom.device.16.structural";
-    t.arcs = {
-        Arc{"CE_N", "READ_DATA", {2, 10}},
-        Arc{"OE_N", "READ_DATA", {2, 2}},
-        Arc{"WORD_ADDR", "READ_DATA", {2, 17}},
-    };
-    return t;
-}()},
-{"memory.rom.scalable-device.16.behavioral@depth=64@rows=4", [] {
     PartDelays t;
     t.evidence = "proven on memory.rom.device.16.structural";
     t.arcs = {
@@ -10389,27 +8248,7 @@
     };
     return t;
 }()},
-{"memory.rom.scalable-device.16.behavioral@depth=128@rows=4", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.rom.device.16.structural";
-    t.arcs = {
-        Arc{"CE_N", "READ_DATA", {2, 10}},
-        Arc{"OE_N", "READ_DATA", {2, 2}},
-        Arc{"WORD_ADDR", "READ_DATA", {2, 17}},
-    };
-    return t;
-}()},
 {"memory.rom.device.16.behavioral@depth=64@rows=8", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.rom.device.16.structural";
-    t.arcs = {
-        Arc{"CE_N", "READ_DATA", {2, 10}},
-        Arc{"OE_N", "READ_DATA", {2, 2}},
-        Arc{"WORD_ADDR", "READ_DATA", {2, 17}},
-    };
-    return t;
-}()},
-{"memory.rom.scalable-device.16.behavioral@depth=64@rows=8", [] {
     PartDelays t;
     t.evidence = "proven on memory.rom.device.16.structural";
     t.arcs = {
@@ -10429,27 +8268,7 @@
     };
     return t;
 }()},
-{"memory.rom.scalable-device.16.behavioral@depth=128@rows=8", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.rom.device.16.structural";
-    t.arcs = {
-        Arc{"CE_N", "READ_DATA", {2, 11}},
-        Arc{"OE_N", "READ_DATA", {2, 2}},
-        Arc{"WORD_ADDR", "READ_DATA", {2, 18}},
-    };
-    return t;
-}()},
 {"memory.rom.device.16.behavioral@depth=64@rows=16", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.rom.device.16.structural";
-    t.arcs = {
-        Arc{"CE_N", "READ_DATA", {2, 11}},
-        Arc{"OE_N", "READ_DATA", {2, 2}},
-        Arc{"WORD_ADDR", "READ_DATA", {2, 18}},
-    };
-    return t;
-}()},
-{"memory.rom.scalable-device.16.behavioral@depth=64@rows=16", [] {
     PartDelays t;
     t.evidence = "proven on memory.rom.device.16.structural";
     t.arcs = {
@@ -10469,27 +8288,7 @@
     };
     return t;
 }()},
-{"memory.rom.scalable-device.16.behavioral@depth=128@rows=16", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.rom.device.16.structural";
-    t.arcs = {
-        Arc{"CE_N", "READ_DATA", {2, 11}},
-        Arc{"OE_N", "READ_DATA", {2, 2}},
-        Arc{"WORD_ADDR", "READ_DATA", {2, 18}},
-    };
-    return t;
-}()},
 {"memory.rom.device.32.behavioral", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.rom.device.32.structural";
-    t.arcs = {
-        Arc{"CE_N", "READ_DATA", {2, 7}},
-        Arc{"OE_N", "READ_DATA", {2, 2}},
-        Arc{"WORD_ADDR", "READ_DATA", {2, 14}},
-    };
-    return t;
-}()},
-{"memory.rom.scalable-device.32.behavioral", [] {
     PartDelays t;
     t.evidence = "proven on memory.rom.device.32.structural";
     t.arcs = {
@@ -10509,27 +8308,7 @@
     };
     return t;
 }()},
-{"memory.rom.scalable-device.32.behavioral@depth=64", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.rom.device.32.structural";
-    t.arcs = {
-        Arc{"CE_N", "READ_DATA", {2, 9}},
-        Arc{"OE_N", "READ_DATA", {2, 2}},
-        Arc{"WORD_ADDR", "READ_DATA", {2, 16}},
-    };
-    return t;
-}()},
 {"memory.rom.device.32.behavioral@depth=128", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.rom.device.32.structural";
-    t.arcs = {
-        Arc{"CE_N", "READ_DATA", {2, 9}},
-        Arc{"OE_N", "READ_DATA", {2, 2}},
-        Arc{"WORD_ADDR", "READ_DATA", {2, 16}},
-    };
-    return t;
-}()},
-{"memory.rom.scalable-device.32.behavioral@depth=128", [] {
     PartDelays t;
     t.evidence = "proven on memory.rom.device.32.structural";
     t.arcs = {
@@ -10549,27 +8328,7 @@
     };
     return t;
 }()},
-{"memory.rom.scalable-device.32.behavioral@rows=1", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.rom.device.32.structural";
-    t.arcs = {
-        Arc{"CE_N", "READ_DATA", {2, 7}},
-        Arc{"OE_N", "READ_DATA", {2, 2}},
-        Arc{"WORD_ADDR", "READ_DATA", {2, 14}},
-    };
-    return t;
-}()},
 {"memory.rom.device.32.behavioral@depth=64@rows=1", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.rom.device.32.structural";
-    t.arcs = {
-        Arc{"CE_N", "READ_DATA", {2, 8}},
-        Arc{"OE_N", "READ_DATA", {2, 2}},
-        Arc{"WORD_ADDR", "READ_DATA", {2, 15}},
-    };
-    return t;
-}()},
-{"memory.rom.scalable-device.32.behavioral@depth=64@rows=1", [] {
     PartDelays t;
     t.evidence = "proven on memory.rom.device.32.structural";
     t.arcs = {
@@ -10589,27 +8348,7 @@
     };
     return t;
 }()},
-{"memory.rom.scalable-device.32.behavioral@depth=128@rows=1", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.rom.device.32.structural";
-    t.arcs = {
-        Arc{"CE_N", "READ_DATA", {2, 8}},
-        Arc{"OE_N", "READ_DATA", {2, 2}},
-        Arc{"WORD_ADDR", "READ_DATA", {2, 15}},
-    };
-    return t;
-}()},
 {"memory.rom.device.32.behavioral@rows=4", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.rom.device.32.structural";
-    t.arcs = {
-        Arc{"CE_N", "READ_DATA", {2, 7}},
-        Arc{"OE_N", "READ_DATA", {2, 2}},
-        Arc{"WORD_ADDR", "READ_DATA", {2, 15}},
-    };
-    return t;
-}()},
-{"memory.rom.scalable-device.32.behavioral@rows=4", [] {
     PartDelays t;
     t.evidence = "proven on memory.rom.device.32.structural";
     t.arcs = {
@@ -10629,27 +8368,7 @@
     };
     return t;
 }()},
-{"memory.rom.scalable-device.32.behavioral@depth=64@rows=4", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.rom.device.32.structural";
-    t.arcs = {
-        Arc{"CE_N", "READ_DATA", {2, 10}},
-        Arc{"OE_N", "READ_DATA", {2, 2}},
-        Arc{"WORD_ADDR", "READ_DATA", {2, 17}},
-    };
-    return t;
-}()},
 {"memory.rom.device.32.behavioral@depth=128@rows=4", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.rom.device.32.structural";
-    t.arcs = {
-        Arc{"CE_N", "READ_DATA", {2, 10}},
-        Arc{"OE_N", "READ_DATA", {2, 2}},
-        Arc{"WORD_ADDR", "READ_DATA", {2, 17}},
-    };
-    return t;
-}()},
-{"memory.rom.scalable-device.32.behavioral@depth=128@rows=4", [] {
     PartDelays t;
     t.evidence = "proven on memory.rom.device.32.structural";
     t.arcs = {
@@ -10669,27 +8388,7 @@
     };
     return t;
 }()},
-{"memory.rom.scalable-device.32.behavioral@depth=64@rows=8", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.rom.device.32.structural";
-    t.arcs = {
-        Arc{"CE_N", "READ_DATA", {2, 10}},
-        Arc{"OE_N", "READ_DATA", {2, 2}},
-        Arc{"WORD_ADDR", "READ_DATA", {2, 17}},
-    };
-    return t;
-}()},
 {"memory.rom.device.32.behavioral@depth=128@rows=8", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.rom.device.32.structural";
-    t.arcs = {
-        Arc{"CE_N", "READ_DATA", {2, 11}},
-        Arc{"OE_N", "READ_DATA", {2, 2}},
-        Arc{"WORD_ADDR", "READ_DATA", {2, 18}},
-    };
-    return t;
-}()},
-{"memory.rom.scalable-device.32.behavioral@depth=128@rows=8", [] {
     PartDelays t;
     t.evidence = "proven on memory.rom.device.32.structural";
     t.arcs = {
@@ -10709,27 +8408,7 @@
     };
     return t;
 }()},
-{"memory.rom.scalable-device.32.behavioral@depth=64@rows=16", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.rom.device.32.structural";
-    t.arcs = {
-        Arc{"CE_N", "READ_DATA", {2, 11}},
-        Arc{"OE_N", "READ_DATA", {2, 2}},
-        Arc{"WORD_ADDR", "READ_DATA", {2, 18}},
-    };
-    return t;
-}()},
 {"memory.rom.device.32.behavioral@depth=128@rows=16", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.rom.device.32.structural";
-    t.arcs = {
-        Arc{"CE_N", "READ_DATA", {2, 11}},
-        Arc{"OE_N", "READ_DATA", {2, 2}},
-        Arc{"WORD_ADDR", "READ_DATA", {2, 18}},
-    };
-    return t;
-}()},
-{"memory.rom.scalable-device.32.behavioral@depth=128@rows=16", [] {
     PartDelays t;
     t.evidence = "proven on memory.rom.device.32.structural";
     t.arcs = {
@@ -10749,27 +8428,7 @@
     };
     return t;
 }()},
-{"memory.rom.scalable-device.8.behavioral", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.rom.device.8.structural";
-    t.arcs = {
-        Arc{"CE_N", "READ_DATA", {2, 7}},
-        Arc{"OE_N", "READ_DATA", {2, 2}},
-        Arc{"WORD_ADDR", "READ_DATA", {2, 14}},
-    };
-    return t;
-}()},
 {"memory.rom.device.8.behavioral@depth=64", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.rom.device.8.structural";
-    t.arcs = {
-        Arc{"CE_N", "READ_DATA", {2, 9}},
-        Arc{"OE_N", "READ_DATA", {2, 2}},
-        Arc{"WORD_ADDR", "READ_DATA", {2, 16}},
-    };
-    return t;
-}()},
-{"memory.rom.scalable-device.8.behavioral@depth=64", [] {
     PartDelays t;
     t.evidence = "proven on memory.rom.device.8.structural";
     t.arcs = {
@@ -10789,27 +8448,7 @@
     };
     return t;
 }()},
-{"memory.rom.scalable-device.8.behavioral@depth=128", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.rom.device.8.structural";
-    t.arcs = {
-        Arc{"CE_N", "READ_DATA", {2, 9}},
-        Arc{"OE_N", "READ_DATA", {2, 2}},
-        Arc{"WORD_ADDR", "READ_DATA", {2, 16}},
-    };
-    return t;
-}()},
 {"memory.rom.device.8.behavioral@rows=1", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.rom.device.8.structural";
-    t.arcs = {
-        Arc{"CE_N", "READ_DATA", {2, 7}},
-        Arc{"OE_N", "READ_DATA", {2, 2}},
-        Arc{"WORD_ADDR", "READ_DATA", {2, 14}},
-    };
-    return t;
-}()},
-{"memory.rom.scalable-device.8.behavioral@rows=1", [] {
     PartDelays t;
     t.evidence = "proven on memory.rom.device.8.structural";
     t.arcs = {
@@ -10829,27 +8468,7 @@
     };
     return t;
 }()},
-{"memory.rom.scalable-device.8.behavioral@depth=64@rows=1", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.rom.device.8.structural";
-    t.arcs = {
-        Arc{"CE_N", "READ_DATA", {2, 8}},
-        Arc{"OE_N", "READ_DATA", {2, 2}},
-        Arc{"WORD_ADDR", "READ_DATA", {2, 15}},
-    };
-    return t;
-}()},
 {"memory.rom.device.8.behavioral@depth=128@rows=1", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.rom.device.8.structural";
-    t.arcs = {
-        Arc{"CE_N", "READ_DATA", {2, 8}},
-        Arc{"OE_N", "READ_DATA", {2, 2}},
-        Arc{"WORD_ADDR", "READ_DATA", {2, 15}},
-    };
-    return t;
-}()},
-{"memory.rom.scalable-device.8.behavioral@depth=128@rows=1", [] {
     PartDelays t;
     t.evidence = "proven on memory.rom.device.8.structural";
     t.arcs = {
@@ -10869,27 +8488,7 @@
     };
     return t;
 }()},
-{"memory.rom.scalable-device.8.behavioral@rows=4", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.rom.device.8.structural";
-    t.arcs = {
-        Arc{"CE_N", "READ_DATA", {2, 7}},
-        Arc{"OE_N", "READ_DATA", {2, 2}},
-        Arc{"WORD_ADDR", "READ_DATA", {2, 15}},
-    };
-    return t;
-}()},
 {"memory.rom.device.8.behavioral@depth=64@rows=4", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.rom.device.8.structural";
-    t.arcs = {
-        Arc{"CE_N", "READ_DATA", {2, 10}},
-        Arc{"OE_N", "READ_DATA", {2, 2}},
-        Arc{"WORD_ADDR", "READ_DATA", {2, 17}},
-    };
-    return t;
-}()},
-{"memory.rom.scalable-device.8.behavioral@depth=64@rows=4", [] {
     PartDelays t;
     t.evidence = "proven on memory.rom.device.8.structural";
     t.arcs = {
@@ -10909,27 +8508,7 @@
     };
     return t;
 }()},
-{"memory.rom.scalable-device.8.behavioral@depth=128@rows=4", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.rom.device.8.structural";
-    t.arcs = {
-        Arc{"CE_N", "READ_DATA", {2, 10}},
-        Arc{"OE_N", "READ_DATA", {2, 2}},
-        Arc{"WORD_ADDR", "READ_DATA", {2, 17}},
-    };
-    return t;
-}()},
 {"memory.rom.device.8.behavioral@depth=64@rows=8", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.rom.device.8.structural";
-    t.arcs = {
-        Arc{"CE_N", "READ_DATA", {2, 10}},
-        Arc{"OE_N", "READ_DATA", {2, 2}},
-        Arc{"WORD_ADDR", "READ_DATA", {2, 17}},
-    };
-    return t;
-}()},
-{"memory.rom.scalable-device.8.behavioral@depth=64@rows=8", [] {
     PartDelays t;
     t.evidence = "proven on memory.rom.device.8.structural";
     t.arcs = {
@@ -10949,16 +8528,6 @@
     };
     return t;
 }()},
-{"memory.rom.scalable-device.8.behavioral@depth=128@rows=8", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.rom.device.8.structural";
-    t.arcs = {
-        Arc{"CE_N", "READ_DATA", {2, 11}},
-        Arc{"OE_N", "READ_DATA", {2, 2}},
-        Arc{"WORD_ADDR", "READ_DATA", {2, 18}},
-    };
-    return t;
-}()},
 {"memory.rom.device.8.behavioral@depth=64@rows=16", [] {
     PartDelays t;
     t.evidence = "proven on memory.rom.device.8.structural";
@@ -10969,27 +8538,7 @@
     };
     return t;
 }()},
-{"memory.rom.scalable-device.8.behavioral@depth=64@rows=16", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.rom.device.8.structural";
-    t.arcs = {
-        Arc{"CE_N", "READ_DATA", {2, 11}},
-        Arc{"OE_N", "READ_DATA", {2, 2}},
-        Arc{"WORD_ADDR", "READ_DATA", {2, 18}},
-    };
-    return t;
-}()},
 {"memory.rom.device.8.behavioral@depth=128@rows=16", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.rom.device.8.structural";
-    t.arcs = {
-        Arc{"CE_N", "READ_DATA", {2, 11}},
-        Arc{"OE_N", "READ_DATA", {2, 2}},
-        Arc{"WORD_ADDR", "READ_DATA", {2, 18}},
-    };
-    return t;
-}()},
-{"memory.rom.scalable-device.8.behavioral@depth=128@rows=16", [] {
     PartDelays t;
     t.evidence = "proven on memory.rom.device.8.structural";
     t.arcs = {
@@ -14946,35 +12495,7 @@
     t.self_timed = true;
     return t;
 }()},
-{"memory.sram.scalable-device.16.behavioral", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.sram.device.16.structural";
-    t.arcs = {
-        Arc{"CE_N", "READ_DATA", {1, 18}},
-        Arc{"OE_N", "READ_DATA", {1, 18}},
-        Arc{"WE_N", "READ_DATA", {1, 18}},
-        Arc{"WORD_ADDR", "READ_DATA", {1, 18}},
-        Arc{"WRITE_DATA", "READ_DATA", {1, 18}},
-        Arc{"WRITE_MASK", "READ_DATA", {1, 18}},
-    };
-    t.self_timed = true;
-    return t;
-}()},
 {"memory.sram.device.16.behavioral@depth=64", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.sram.device.16.structural";
-    t.arcs = {
-        Arc{"CE_N", "READ_DATA", {1, 20}},
-        Arc{"OE_N", "READ_DATA", {1, 20}},
-        Arc{"WE_N", "READ_DATA", {1, 20}},
-        Arc{"WORD_ADDR", "READ_DATA", {1, 20}},
-        Arc{"WRITE_DATA", "READ_DATA", {1, 20}},
-        Arc{"WRITE_MASK", "READ_DATA", {1, 20}},
-    };
-    t.self_timed = true;
-    return t;
-}()},
-{"memory.sram.scalable-device.16.behavioral@depth=64", [] {
     PartDelays t;
     t.evidence = "proven on memory.sram.device.16.structural";
     t.arcs = {
@@ -15002,35 +12523,7 @@
     t.self_timed = true;
     return t;
 }()},
-{"memory.sram.scalable-device.16.behavioral@depth=128", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.sram.device.16.structural";
-    t.arcs = {
-        Arc{"CE_N", "READ_DATA", {1, 20}},
-        Arc{"OE_N", "READ_DATA", {1, 20}},
-        Arc{"WE_N", "READ_DATA", {1, 20}},
-        Arc{"WORD_ADDR", "READ_DATA", {1, 20}},
-        Arc{"WRITE_DATA", "READ_DATA", {1, 20}},
-        Arc{"WRITE_MASK", "READ_DATA", {1, 20}},
-    };
-    t.self_timed = true;
-    return t;
-}()},
 {"memory.sram.device.16.behavioral@rows=1", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.sram.device.16.structural";
-    t.arcs = {
-        Arc{"CE_N", "READ_DATA", {1, 18}},
-        Arc{"OE_N", "READ_DATA", {1, 18}},
-        Arc{"WE_N", "READ_DATA", {1, 18}},
-        Arc{"WORD_ADDR", "READ_DATA", {1, 18}},
-        Arc{"WRITE_DATA", "READ_DATA", {1, 18}},
-        Arc{"WRITE_MASK", "READ_DATA", {1, 18}},
-    };
-    t.self_timed = true;
-    return t;
-}()},
-{"memory.sram.scalable-device.16.behavioral@rows=1", [] {
     PartDelays t;
     t.evidence = "proven on memory.sram.device.16.structural";
     t.arcs = {
@@ -15058,35 +12551,7 @@
     t.self_timed = true;
     return t;
 }()},
-{"memory.sram.scalable-device.16.behavioral@depth=64@rows=1", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.sram.device.16.structural";
-    t.arcs = {
-        Arc{"CE_N", "READ_DATA", {1, 19}},
-        Arc{"OE_N", "READ_DATA", {1, 19}},
-        Arc{"WE_N", "READ_DATA", {1, 19}},
-        Arc{"WORD_ADDR", "READ_DATA", {1, 19}},
-        Arc{"WRITE_DATA", "READ_DATA", {1, 19}},
-        Arc{"WRITE_MASK", "READ_DATA", {1, 19}},
-    };
-    t.self_timed = true;
-    return t;
-}()},
 {"memory.sram.device.16.behavioral@depth=128@rows=1", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.sram.device.16.structural";
-    t.arcs = {
-        Arc{"CE_N", "READ_DATA", {1, 19}},
-        Arc{"OE_N", "READ_DATA", {1, 19}},
-        Arc{"WE_N", "READ_DATA", {1, 19}},
-        Arc{"WORD_ADDR", "READ_DATA", {1, 19}},
-        Arc{"WRITE_DATA", "READ_DATA", {1, 19}},
-        Arc{"WRITE_MASK", "READ_DATA", {1, 19}},
-    };
-    t.self_timed = true;
-    return t;
-}()},
-{"memory.sram.scalable-device.16.behavioral@depth=128@rows=1", [] {
     PartDelays t;
     t.evidence = "proven on memory.sram.device.16.structural";
     t.arcs = {
@@ -15114,35 +12579,7 @@
     t.self_timed = true;
     return t;
 }()},
-{"memory.sram.scalable-device.16.behavioral@rows=4", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.sram.device.16.structural";
-    t.arcs = {
-        Arc{"CE_N", "READ_DATA", {1, 19}},
-        Arc{"OE_N", "READ_DATA", {1, 19}},
-        Arc{"WE_N", "READ_DATA", {1, 19}},
-        Arc{"WORD_ADDR", "READ_DATA", {1, 19}},
-        Arc{"WRITE_DATA", "READ_DATA", {1, 19}},
-        Arc{"WRITE_MASK", "READ_DATA", {1, 19}},
-    };
-    t.self_timed = true;
-    return t;
-}()},
 {"memory.sram.device.16.behavioral@depth=64@rows=4", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.sram.device.16.structural";
-    t.arcs = {
-        Arc{"CE_N", "READ_DATA", {1, 22}},
-        Arc{"OE_N", "READ_DATA", {1, 22}},
-        Arc{"WE_N", "READ_DATA", {1, 22}},
-        Arc{"WORD_ADDR", "READ_DATA", {1, 22}},
-        Arc{"WRITE_DATA", "READ_DATA", {1, 22}},
-        Arc{"WRITE_MASK", "READ_DATA", {1, 22}},
-    };
-    t.self_timed = true;
-    return t;
-}()},
-{"memory.sram.scalable-device.16.behavioral@depth=64@rows=4", [] {
     PartDelays t;
     t.evidence = "proven on memory.sram.device.16.structural";
     t.arcs = {
@@ -15170,35 +12607,7 @@
     t.self_timed = true;
     return t;
 }()},
-{"memory.sram.scalable-device.16.behavioral@depth=128@rows=4", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.sram.device.16.structural";
-    t.arcs = {
-        Arc{"CE_N", "READ_DATA", {1, 22}},
-        Arc{"OE_N", "READ_DATA", {1, 22}},
-        Arc{"WE_N", "READ_DATA", {1, 22}},
-        Arc{"WORD_ADDR", "READ_DATA", {1, 22}},
-        Arc{"WRITE_DATA", "READ_DATA", {1, 22}},
-        Arc{"WRITE_MASK", "READ_DATA", {1, 22}},
-    };
-    t.self_timed = true;
-    return t;
-}()},
 {"memory.sram.device.16.behavioral@depth=64@rows=8", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.sram.device.16.structural";
-    t.arcs = {
-        Arc{"CE_N", "READ_DATA", {1, 23}},
-        Arc{"OE_N", "READ_DATA", {1, 23}},
-        Arc{"WE_N", "READ_DATA", {1, 23}},
-        Arc{"WORD_ADDR", "READ_DATA", {1, 23}},
-        Arc{"WRITE_DATA", "READ_DATA", {1, 23}},
-        Arc{"WRITE_MASK", "READ_DATA", {1, 23}},
-    };
-    t.self_timed = true;
-    return t;
-}()},
-{"memory.sram.scalable-device.16.behavioral@depth=64@rows=8", [] {
     PartDelays t;
     t.evidence = "proven on memory.sram.device.16.structural";
     t.arcs = {
@@ -15226,35 +12635,7 @@
     t.self_timed = true;
     return t;
 }()},
-{"memory.sram.scalable-device.16.behavioral@depth=128@rows=8", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.sram.device.16.structural";
-    t.arcs = {
-        Arc{"CE_N", "READ_DATA", {1, 24}},
-        Arc{"OE_N", "READ_DATA", {1, 24}},
-        Arc{"WE_N", "READ_DATA", {1, 24}},
-        Arc{"WORD_ADDR", "READ_DATA", {1, 24}},
-        Arc{"WRITE_DATA", "READ_DATA", {1, 24}},
-        Arc{"WRITE_MASK", "READ_DATA", {1, 24}},
-    };
-    t.self_timed = true;
-    return t;
-}()},
 {"memory.sram.device.16.behavioral@depth=64@rows=16", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.sram.device.16.structural";
-    t.arcs = {
-        Arc{"CE_N", "READ_DATA", {1, 25}},
-        Arc{"OE_N", "READ_DATA", {1, 25}},
-        Arc{"WE_N", "READ_DATA", {1, 25}},
-        Arc{"WORD_ADDR", "READ_DATA", {1, 25}},
-        Arc{"WRITE_DATA", "READ_DATA", {1, 25}},
-        Arc{"WRITE_MASK", "READ_DATA", {1, 25}},
-    };
-    t.self_timed = true;
-    return t;
-}()},
-{"memory.sram.scalable-device.16.behavioral@depth=64@rows=16", [] {
     PartDelays t;
     t.evidence = "proven on memory.sram.device.16.structural";
     t.arcs = {
@@ -15282,35 +12663,7 @@
     t.self_timed = true;
     return t;
 }()},
-{"memory.sram.scalable-device.16.behavioral@depth=128@rows=16", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.sram.device.16.structural";
-    t.arcs = {
-        Arc{"CE_N", "READ_DATA", {1, 25}},
-        Arc{"OE_N", "READ_DATA", {1, 25}},
-        Arc{"WE_N", "READ_DATA", {1, 25}},
-        Arc{"WORD_ADDR", "READ_DATA", {1, 25}},
-        Arc{"WRITE_DATA", "READ_DATA", {1, 25}},
-        Arc{"WRITE_MASK", "READ_DATA", {1, 25}},
-    };
-    t.self_timed = true;
-    return t;
-}()},
 {"memory.sram.device.32.behavioral", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.sram.device.32.structural";
-    t.arcs = {
-        Arc{"CE_N", "READ_DATA", {1, 18}},
-        Arc{"OE_N", "READ_DATA", {1, 18}},
-        Arc{"WE_N", "READ_DATA", {1, 18}},
-        Arc{"WORD_ADDR", "READ_DATA", {1, 18}},
-        Arc{"WRITE_DATA", "READ_DATA", {1, 18}},
-        Arc{"WRITE_MASK", "READ_DATA", {1, 18}},
-    };
-    t.self_timed = true;
-    return t;
-}()},
-{"memory.sram.scalable-device.32.behavioral", [] {
     PartDelays t;
     t.evidence = "proven on memory.sram.device.32.structural";
     t.arcs = {
@@ -15338,35 +12691,7 @@
     t.self_timed = true;
     return t;
 }()},
-{"memory.sram.scalable-device.32.behavioral@depth=64", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.sram.device.32.structural";
-    t.arcs = {
-        Arc{"CE_N", "READ_DATA", {1, 20}},
-        Arc{"OE_N", "READ_DATA", {1, 20}},
-        Arc{"WE_N", "READ_DATA", {1, 20}},
-        Arc{"WORD_ADDR", "READ_DATA", {1, 20}},
-        Arc{"WRITE_DATA", "READ_DATA", {1, 20}},
-        Arc{"WRITE_MASK", "READ_DATA", {1, 20}},
-    };
-    t.self_timed = true;
-    return t;
-}()},
 {"memory.sram.device.32.behavioral@depth=128", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.sram.device.32.structural";
-    t.arcs = {
-        Arc{"CE_N", "READ_DATA", {1, 20}},
-        Arc{"OE_N", "READ_DATA", {1, 20}},
-        Arc{"WE_N", "READ_DATA", {1, 20}},
-        Arc{"WORD_ADDR", "READ_DATA", {1, 20}},
-        Arc{"WRITE_DATA", "READ_DATA", {1, 20}},
-        Arc{"WRITE_MASK", "READ_DATA", {1, 20}},
-    };
-    t.self_timed = true;
-    return t;
-}()},
-{"memory.sram.scalable-device.32.behavioral@depth=128", [] {
     PartDelays t;
     t.evidence = "proven on memory.sram.device.32.structural";
     t.arcs = {
@@ -15394,35 +12719,7 @@
     t.self_timed = true;
     return t;
 }()},
-{"memory.sram.scalable-device.32.behavioral@rows=1", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.sram.device.32.structural";
-    t.arcs = {
-        Arc{"CE_N", "READ_DATA", {1, 18}},
-        Arc{"OE_N", "READ_DATA", {1, 18}},
-        Arc{"WE_N", "READ_DATA", {1, 18}},
-        Arc{"WORD_ADDR", "READ_DATA", {1, 18}},
-        Arc{"WRITE_DATA", "READ_DATA", {1, 18}},
-        Arc{"WRITE_MASK", "READ_DATA", {1, 18}},
-    };
-    t.self_timed = true;
-    return t;
-}()},
 {"memory.sram.device.32.behavioral@depth=64@rows=1", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.sram.device.32.structural";
-    t.arcs = {
-        Arc{"CE_N", "READ_DATA", {1, 19}},
-        Arc{"OE_N", "READ_DATA", {1, 19}},
-        Arc{"WE_N", "READ_DATA", {1, 19}},
-        Arc{"WORD_ADDR", "READ_DATA", {1, 19}},
-        Arc{"WRITE_DATA", "READ_DATA", {1, 19}},
-        Arc{"WRITE_MASK", "READ_DATA", {1, 19}},
-    };
-    t.self_timed = true;
-    return t;
-}()},
-{"memory.sram.scalable-device.32.behavioral@depth=64@rows=1", [] {
     PartDelays t;
     t.evidence = "proven on memory.sram.device.32.structural";
     t.arcs = {
@@ -15450,35 +12747,7 @@
     t.self_timed = true;
     return t;
 }()},
-{"memory.sram.scalable-device.32.behavioral@depth=128@rows=1", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.sram.device.32.structural";
-    t.arcs = {
-        Arc{"CE_N", "READ_DATA", {1, 19}},
-        Arc{"OE_N", "READ_DATA", {1, 19}},
-        Arc{"WE_N", "READ_DATA", {1, 19}},
-        Arc{"WORD_ADDR", "READ_DATA", {1, 19}},
-        Arc{"WRITE_DATA", "READ_DATA", {1, 19}},
-        Arc{"WRITE_MASK", "READ_DATA", {1, 19}},
-    };
-    t.self_timed = true;
-    return t;
-}()},
 {"memory.sram.device.32.behavioral@rows=4", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.sram.device.32.structural";
-    t.arcs = {
-        Arc{"CE_N", "READ_DATA", {1, 19}},
-        Arc{"OE_N", "READ_DATA", {1, 19}},
-        Arc{"WE_N", "READ_DATA", {1, 19}},
-        Arc{"WORD_ADDR", "READ_DATA", {1, 19}},
-        Arc{"WRITE_DATA", "READ_DATA", {1, 19}},
-        Arc{"WRITE_MASK", "READ_DATA", {1, 19}},
-    };
-    t.self_timed = true;
-    return t;
-}()},
-{"memory.sram.scalable-device.32.behavioral@rows=4", [] {
     PartDelays t;
     t.evidence = "proven on memory.sram.device.32.structural";
     t.arcs = {
@@ -15506,35 +12775,7 @@
     t.self_timed = true;
     return t;
 }()},
-{"memory.sram.scalable-device.32.behavioral@depth=64@rows=4", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.sram.device.32.structural";
-    t.arcs = {
-        Arc{"CE_N", "READ_DATA", {1, 22}},
-        Arc{"OE_N", "READ_DATA", {1, 22}},
-        Arc{"WE_N", "READ_DATA", {1, 22}},
-        Arc{"WORD_ADDR", "READ_DATA", {1, 22}},
-        Arc{"WRITE_DATA", "READ_DATA", {1, 22}},
-        Arc{"WRITE_MASK", "READ_DATA", {1, 22}},
-    };
-    t.self_timed = true;
-    return t;
-}()},
 {"memory.sram.device.32.behavioral@depth=128@rows=4", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.sram.device.32.structural";
-    t.arcs = {
-        Arc{"CE_N", "READ_DATA", {1, 22}},
-        Arc{"OE_N", "READ_DATA", {1, 22}},
-        Arc{"WE_N", "READ_DATA", {1, 22}},
-        Arc{"WORD_ADDR", "READ_DATA", {1, 22}},
-        Arc{"WRITE_DATA", "READ_DATA", {1, 22}},
-        Arc{"WRITE_MASK", "READ_DATA", {1, 22}},
-    };
-    t.self_timed = true;
-    return t;
-}()},
-{"memory.sram.scalable-device.32.behavioral@depth=128@rows=4", [] {
     PartDelays t;
     t.evidence = "proven on memory.sram.device.32.structural";
     t.arcs = {
@@ -15562,35 +12803,7 @@
     t.self_timed = true;
     return t;
 }()},
-{"memory.sram.scalable-device.32.behavioral@depth=64@rows=8", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.sram.device.32.structural";
-    t.arcs = {
-        Arc{"CE_N", "READ_DATA", {1, 23}},
-        Arc{"OE_N", "READ_DATA", {1, 23}},
-        Arc{"WE_N", "READ_DATA", {1, 23}},
-        Arc{"WORD_ADDR", "READ_DATA", {1, 23}},
-        Arc{"WRITE_DATA", "READ_DATA", {1, 23}},
-        Arc{"WRITE_MASK", "READ_DATA", {1, 23}},
-    };
-    t.self_timed = true;
-    return t;
-}()},
 {"memory.sram.device.32.behavioral@depth=128@rows=8", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.sram.device.32.structural";
-    t.arcs = {
-        Arc{"CE_N", "READ_DATA", {1, 24}},
-        Arc{"OE_N", "READ_DATA", {1, 24}},
-        Arc{"WE_N", "READ_DATA", {1, 24}},
-        Arc{"WORD_ADDR", "READ_DATA", {1, 24}},
-        Arc{"WRITE_DATA", "READ_DATA", {1, 24}},
-        Arc{"WRITE_MASK", "READ_DATA", {1, 24}},
-    };
-    t.self_timed = true;
-    return t;
-}()},
-{"memory.sram.scalable-device.32.behavioral@depth=128@rows=8", [] {
     PartDelays t;
     t.evidence = "proven on memory.sram.device.32.structural";
     t.arcs = {
@@ -15618,35 +12831,7 @@
     t.self_timed = true;
     return t;
 }()},
-{"memory.sram.scalable-device.32.behavioral@depth=64@rows=16", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.sram.device.32.structural";
-    t.arcs = {
-        Arc{"CE_N", "READ_DATA", {1, 25}},
-        Arc{"OE_N", "READ_DATA", {1, 25}},
-        Arc{"WE_N", "READ_DATA", {1, 25}},
-        Arc{"WORD_ADDR", "READ_DATA", {1, 25}},
-        Arc{"WRITE_DATA", "READ_DATA", {1, 25}},
-        Arc{"WRITE_MASK", "READ_DATA", {1, 25}},
-    };
-    t.self_timed = true;
-    return t;
-}()},
 {"memory.sram.device.32.behavioral@depth=128@rows=16", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.sram.device.32.structural";
-    t.arcs = {
-        Arc{"CE_N", "READ_DATA", {1, 25}},
-        Arc{"OE_N", "READ_DATA", {1, 25}},
-        Arc{"WE_N", "READ_DATA", {1, 25}},
-        Arc{"WORD_ADDR", "READ_DATA", {1, 25}},
-        Arc{"WRITE_DATA", "READ_DATA", {1, 25}},
-        Arc{"WRITE_MASK", "READ_DATA", {1, 25}},
-    };
-    t.self_timed = true;
-    return t;
-}()},
-{"memory.sram.scalable-device.32.behavioral@depth=128@rows=16", [] {
     PartDelays t;
     t.evidence = "proven on memory.sram.device.32.structural";
     t.arcs = {
@@ -15674,35 +12859,7 @@
     t.self_timed = true;
     return t;
 }()},
-{"memory.sram.scalable-device.8.behavioral", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.sram.device.8.structural";
-    t.arcs = {
-        Arc{"CE_N", "READ_DATA", {1, 18}},
-        Arc{"OE_N", "READ_DATA", {1, 18}},
-        Arc{"WE_N", "READ_DATA", {1, 18}},
-        Arc{"WORD_ADDR", "READ_DATA", {1, 18}},
-        Arc{"WRITE_DATA", "READ_DATA", {1, 18}},
-        Arc{"WRITE_MASK", "READ_DATA", {1, 18}},
-    };
-    t.self_timed = true;
-    return t;
-}()},
 {"memory.sram.device.8.behavioral@depth=64", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.sram.device.8.structural";
-    t.arcs = {
-        Arc{"CE_N", "READ_DATA", {1, 20}},
-        Arc{"OE_N", "READ_DATA", {1, 20}},
-        Arc{"WE_N", "READ_DATA", {1, 20}},
-        Arc{"WORD_ADDR", "READ_DATA", {1, 20}},
-        Arc{"WRITE_DATA", "READ_DATA", {1, 20}},
-        Arc{"WRITE_MASK", "READ_DATA", {1, 20}},
-    };
-    t.self_timed = true;
-    return t;
-}()},
-{"memory.sram.scalable-device.8.behavioral@depth=64", [] {
     PartDelays t;
     t.evidence = "proven on memory.sram.device.8.structural";
     t.arcs = {
@@ -15730,35 +12887,7 @@
     t.self_timed = true;
     return t;
 }()},
-{"memory.sram.scalable-device.8.behavioral@depth=128", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.sram.device.8.structural";
-    t.arcs = {
-        Arc{"CE_N", "READ_DATA", {1, 20}},
-        Arc{"OE_N", "READ_DATA", {1, 20}},
-        Arc{"WE_N", "READ_DATA", {1, 20}},
-        Arc{"WORD_ADDR", "READ_DATA", {1, 20}},
-        Arc{"WRITE_DATA", "READ_DATA", {1, 20}},
-        Arc{"WRITE_MASK", "READ_DATA", {1, 20}},
-    };
-    t.self_timed = true;
-    return t;
-}()},
 {"memory.sram.device.8.behavioral@rows=1", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.sram.device.8.structural";
-    t.arcs = {
-        Arc{"CE_N", "READ_DATA", {1, 18}},
-        Arc{"OE_N", "READ_DATA", {1, 18}},
-        Arc{"WE_N", "READ_DATA", {1, 18}},
-        Arc{"WORD_ADDR", "READ_DATA", {1, 18}},
-        Arc{"WRITE_DATA", "READ_DATA", {1, 18}},
-        Arc{"WRITE_MASK", "READ_DATA", {1, 18}},
-    };
-    t.self_timed = true;
-    return t;
-}()},
-{"memory.sram.scalable-device.8.behavioral@rows=1", [] {
     PartDelays t;
     t.evidence = "proven on memory.sram.device.8.structural";
     t.arcs = {
@@ -15786,35 +12915,7 @@
     t.self_timed = true;
     return t;
 }()},
-{"memory.sram.scalable-device.8.behavioral@depth=64@rows=1", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.sram.device.8.structural";
-    t.arcs = {
-        Arc{"CE_N", "READ_DATA", {1, 19}},
-        Arc{"OE_N", "READ_DATA", {1, 19}},
-        Arc{"WE_N", "READ_DATA", {1, 19}},
-        Arc{"WORD_ADDR", "READ_DATA", {1, 19}},
-        Arc{"WRITE_DATA", "READ_DATA", {1, 19}},
-        Arc{"WRITE_MASK", "READ_DATA", {1, 19}},
-    };
-    t.self_timed = true;
-    return t;
-}()},
 {"memory.sram.device.8.behavioral@depth=128@rows=1", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.sram.device.8.structural";
-    t.arcs = {
-        Arc{"CE_N", "READ_DATA", {1, 19}},
-        Arc{"OE_N", "READ_DATA", {1, 19}},
-        Arc{"WE_N", "READ_DATA", {1, 19}},
-        Arc{"WORD_ADDR", "READ_DATA", {1, 19}},
-        Arc{"WRITE_DATA", "READ_DATA", {1, 19}},
-        Arc{"WRITE_MASK", "READ_DATA", {1, 19}},
-    };
-    t.self_timed = true;
-    return t;
-}()},
-{"memory.sram.scalable-device.8.behavioral@depth=128@rows=1", [] {
     PartDelays t;
     t.evidence = "proven on memory.sram.device.8.structural";
     t.arcs = {
@@ -15842,35 +12943,7 @@
     t.self_timed = true;
     return t;
 }()},
-{"memory.sram.scalable-device.8.behavioral@rows=4", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.sram.device.8.structural";
-    t.arcs = {
-        Arc{"CE_N", "READ_DATA", {1, 19}},
-        Arc{"OE_N", "READ_DATA", {1, 19}},
-        Arc{"WE_N", "READ_DATA", {1, 19}},
-        Arc{"WORD_ADDR", "READ_DATA", {1, 19}},
-        Arc{"WRITE_DATA", "READ_DATA", {1, 19}},
-        Arc{"WRITE_MASK", "READ_DATA", {1, 19}},
-    };
-    t.self_timed = true;
-    return t;
-}()},
 {"memory.sram.device.8.behavioral@depth=64@rows=4", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.sram.device.8.structural";
-    t.arcs = {
-        Arc{"CE_N", "READ_DATA", {1, 22}},
-        Arc{"OE_N", "READ_DATA", {1, 22}},
-        Arc{"WE_N", "READ_DATA", {1, 22}},
-        Arc{"WORD_ADDR", "READ_DATA", {1, 22}},
-        Arc{"WRITE_DATA", "READ_DATA", {1, 22}},
-        Arc{"WRITE_MASK", "READ_DATA", {1, 22}},
-    };
-    t.self_timed = true;
-    return t;
-}()},
-{"memory.sram.scalable-device.8.behavioral@depth=64@rows=4", [] {
     PartDelays t;
     t.evidence = "proven on memory.sram.device.8.structural";
     t.arcs = {
@@ -15898,35 +12971,7 @@
     t.self_timed = true;
     return t;
 }()},
-{"memory.sram.scalable-device.8.behavioral@depth=128@rows=4", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.sram.device.8.structural";
-    t.arcs = {
-        Arc{"CE_N", "READ_DATA", {1, 22}},
-        Arc{"OE_N", "READ_DATA", {1, 22}},
-        Arc{"WE_N", "READ_DATA", {1, 22}},
-        Arc{"WORD_ADDR", "READ_DATA", {1, 22}},
-        Arc{"WRITE_DATA", "READ_DATA", {1, 22}},
-        Arc{"WRITE_MASK", "READ_DATA", {1, 22}},
-    };
-    t.self_timed = true;
-    return t;
-}()},
 {"memory.sram.device.8.behavioral@depth=64@rows=8", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.sram.device.8.structural";
-    t.arcs = {
-        Arc{"CE_N", "READ_DATA", {1, 23}},
-        Arc{"OE_N", "READ_DATA", {1, 23}},
-        Arc{"WE_N", "READ_DATA", {1, 23}},
-        Arc{"WORD_ADDR", "READ_DATA", {1, 23}},
-        Arc{"WRITE_DATA", "READ_DATA", {1, 23}},
-        Arc{"WRITE_MASK", "READ_DATA", {1, 23}},
-    };
-    t.self_timed = true;
-    return t;
-}()},
-{"memory.sram.scalable-device.8.behavioral@depth=64@rows=8", [] {
     PartDelays t;
     t.evidence = "proven on memory.sram.device.8.structural";
     t.arcs = {
@@ -15954,20 +12999,6 @@
     t.self_timed = true;
     return t;
 }()},
-{"memory.sram.scalable-device.8.behavioral@depth=128@rows=8", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.sram.device.8.structural";
-    t.arcs = {
-        Arc{"CE_N", "READ_DATA", {1, 24}},
-        Arc{"OE_N", "READ_DATA", {1, 24}},
-        Arc{"WE_N", "READ_DATA", {1, 24}},
-        Arc{"WORD_ADDR", "READ_DATA", {1, 24}},
-        Arc{"WRITE_DATA", "READ_DATA", {1, 24}},
-        Arc{"WRITE_MASK", "READ_DATA", {1, 24}},
-    };
-    t.self_timed = true;
-    return t;
-}()},
 {"memory.sram.device.8.behavioral@depth=64@rows=16", [] {
     PartDelays t;
     t.evidence = "proven on memory.sram.device.8.structural";
@@ -15982,35 +13013,7 @@
     t.self_timed = true;
     return t;
 }()},
-{"memory.sram.scalable-device.8.behavioral@depth=64@rows=16", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.sram.device.8.structural";
-    t.arcs = {
-        Arc{"CE_N", "READ_DATA", {1, 25}},
-        Arc{"OE_N", "READ_DATA", {1, 25}},
-        Arc{"WE_N", "READ_DATA", {1, 25}},
-        Arc{"WORD_ADDR", "READ_DATA", {1, 25}},
-        Arc{"WRITE_DATA", "READ_DATA", {1, 25}},
-        Arc{"WRITE_MASK", "READ_DATA", {1, 25}},
-    };
-    t.self_timed = true;
-    return t;
-}()},
 {"memory.sram.device.8.behavioral@depth=128@rows=16", [] {
-    PartDelays t;
-    t.evidence = "proven on memory.sram.device.8.structural";
-    t.arcs = {
-        Arc{"CE_N", "READ_DATA", {1, 25}},
-        Arc{"OE_N", "READ_DATA", {1, 25}},
-        Arc{"WE_N", "READ_DATA", {1, 25}},
-        Arc{"WORD_ADDR", "READ_DATA", {1, 25}},
-        Arc{"WRITE_DATA", "READ_DATA", {1, 25}},
-        Arc{"WRITE_MASK", "READ_DATA", {1, 25}},
-    };
-    t.self_timed = true;
-    return t;
-}()},
-{"memory.sram.scalable-device.8.behavioral@depth=128@rows=16", [] {
     PartDelays t;
     t.evidence = "proven on memory.sram.device.8.structural";
     t.arcs = {

@@ -1,5 +1,4 @@
 #include "modules/memory/MemoryController.hpp"
-#include "modules/memory/MemoryContainer.hpp"
 #include "modules/memory/BehavioralMemoryEndpoint.hpp"
 
 namespace circuit::memory {
@@ -24,7 +23,7 @@ void add(ComponentCatalog& c, const std::string& id, const std::string& type,
         // A controller owns no storage, so it has no memory state to show.
         if (f == Fidelity::Behavioral && id.find(".controller.") == std::string::npos)
             impl.capabilities = {"memory-state-view"};
-        impl.evidence = {VerificationStatus::Verified, {"FF transaction registers plus native structural device"},
+        impl.evidence = {VerificationStatus::Verified, {"FF transaction registers plus the selected native device"},
             {test}, {"MemoryEndpointContractTest"}, {"MemoryEndpointTimingTest"}, "four-state", "transaction-completion-v2"};
         if (id.find(".controller.") != std::string::npos) {
             // One logical component test owns the controller contract. Device
@@ -133,23 +132,6 @@ void registerMemoryEndpoints(ComponentCatalog& c) {
                         // controller view, never millions of cells
                         return Component::createWithContext<MemoryEndpoint>(ctx,n,width,t,endpointConfig(p),true);
                     }, compact, "ScalableMemoryEndpointTest");
-            {
-                auto nativeSchema = [=](const ParameterMap& p) {
-                    auto config = endpointConfig(p);
-                    config.refresh_interval_ticks = 0;
-                    config.validate(width,t);
-                    return memory_device::describe([=](IOComponent* s) {
-                        nativePins(s,width,t,false);
-                        if (t == Technology::DRAM) s->addPin("ROW_OPEN",PinType::OUTPUT);
-                        if (t == Technology::NORFlash) s->addPin("WRITE_ENABLED",PinType::OUTPUT);
-                    });
-                };
-                memory_device::registerBlock(c,"memory." + name + ".scalable-device." + suffix,
-                    "MemoryContainer" + dims,nativeSchema,{},
-                    [=](const std::string& n,const ParameterMap& p,const std::shared_ptr<BuildContext>& ctx) {
-                        return createMemoryContainer(n,width,t,endpointConfig(p),ctx);
-                    },"NativeMemoryContainerTest");
-            }
         }
     }
 }

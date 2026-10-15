@@ -11,6 +11,7 @@
 #include "tests/SRAMTests.hpp"
 #include "tests/MemoryDeviceTests.hpp"
 #include "tests/MemoryEndpointTests.hpp"
+#include "tests/CacheTests.hpp"
 #include "tests/ALU32LowerLevelSliceTests.hpp"
 #include "tests/RV32IBlockStandaloneTests.hpp"
 #include "tests/RV32IMemoryAccessTests.hpp"
@@ -89,7 +90,7 @@ RegisteredTestKind componentKind(
     }
     const bool memory_part = contract_id != "memory.ff.cell" &&
         std::ranges::any_of(std::initializer_list<std::string_view>{"memory.ff.", "memory.sram.", "memory.dram.",
-            "memory.rom.", "memory.nor-flash.", "memory.shared."},
+            "memory.rom.", "memory.nor-flash.", "memory.shared.", "memory.cache."},
             [&](std::string_view prefix) { return contract_id.starts_with(prefix); });
     if (memory.count(contract_id) != 0 || memory_part) {
         return RegisteredTestKind::Memory;
@@ -176,6 +177,11 @@ void attachNonComponentMetadata(
             "RV32IInstructionLockstepMismatchDetectionTest",
         },
         RegisteredTestKind::Semantic);
+    classify(
+        entries,
+        {"NativeMemoryDeviceTest", "CacheDirectMappedScenarioTest", "CacheScalableScenarioTest",
+         "CacheTwoLevelScenarioTest"},
+        RegisteredTestKind::Memory);
     for (auto& entry : entries) {
         if (entry.kind == RegisteredTestKind::Infrastructure) {
             appendUnique(entry.labels, "infrastructure");
@@ -192,9 +198,14 @@ void markVisualizable(
         "RV32IProgramLoaderTest",
         "FFAlwaysReadyControllerTest",
         "RegisterTest",
+        "NativeMemoryDeviceTest",
+        "CacheDirectMappedScenarioTest",
+        "CacheScalableScenarioTest",
+        "CacheTwoLevelScenarioTest",
     };
     static const std::set<std::string> headless{
         "RegisterWidthsTest", "ClockedStateBitTest", "Decoder5to32X0UnusedTest",
+        "CacheReadTest",
     };
     for (auto& entry : entries) {
         if (headless.count(entry.name) != 0) {
@@ -267,10 +278,15 @@ const std::vector<TestRegistryEntry>& getTestRegistry() {
         entry<MemoryEndpointROMTest>("MemoryEndpointROMTest"),
         entry<MemoryEndpointFlashTest>("MemoryEndpointFlashTest"),
         entry<ScalableMemoryEndpointTest>("ScalableMemoryEndpointTest"),
-        entry<NativeMemoryContainerTest>("NativeMemoryContainerTest"),
+        entry<NativeMemoryDeviceTest>("NativeMemoryDeviceTest"),
         entry<NativeMemoryDeviceContractTest>("NativeMemoryDeviceContractTest"),
         entry<MemoryEndpointContractTest>("MemoryEndpointContractTest"),
         entry<MemoryEndpointTimingTest>("MemoryEndpointTimingTest"),
+        entry<CacheReadTest>("CacheReadTest"),
+        entry<CacheComponentScenarioTest>("CacheComponentScenarioTest"),
+        entry<CacheDirectMappedScenarioTest>("CacheDirectMappedScenarioTest"),
+        entry<CacheScalableScenarioTest>("CacheScalableScenarioTest"),
+        entry<CacheTwoLevelScenarioTest>("CacheTwoLevelScenarioTest"),
         entry<FFMemoryTest>("FFMemoryTest"),
         entry<FFWordTest>("FFWordTest"),
         entry<FFWordContractTest>("FFWordContractTest"),

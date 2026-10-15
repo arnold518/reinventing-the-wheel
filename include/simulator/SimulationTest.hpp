@@ -58,6 +58,9 @@ public:
         };
     }
     virtual bool isSimulationPrecomputed() const { return false; }
+    // Optional playback work after topology-only setupCircuit(). Layout tools
+    // call setupCircuit() alone and must not advance the simulator.
+    virtual void preparePrecomputedSimulation() {}
     virtual size_t getRunDuration() const { return 100; }
     virtual bool supportsBuildProfile() const { return false; }
     virtual circuit::BuildProfile getBuildProfile() const {

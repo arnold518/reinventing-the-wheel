@@ -123,7 +123,7 @@ build-cleanup/part_delay_tables --verify src/components/selection/ProvenPartDela
 parameter variants and the no-gate-list inventory. Rebuild after `--write`
 before verifying, so the catalog reads the new tables.
 
-172 of the 174 compact implementations run on a table (`part_delay_tables
+157 of the 159 compact implementations run on a table (`part_delay_tables
 --coverage` lists every one that does not, with the reason).
 
 - Unclocked logic: the adders, muxes, decoders, shifters, the composite logic

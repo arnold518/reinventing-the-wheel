@@ -10,10 +10,10 @@ const source = (await Promise.all(['3.2','3.3','3.1.6'].map(s =>
   readFile(new URL(`../../site-docs/memory/${s}.md`, import.meta.url),'utf8')))).join('\n');
 let count = 0;
 for (const [, scenario, test] of source.matchAll(/<!-- simulator-examples: (\S+) (\S+) -->/g)) {
-  const modes = ['scalable-memory-container','native-memory-container'].includes(scenario) ? ['behavioral'] :
+  const modes = ['scalable-memory-container','native-memory-container','native-memory-device'].includes(scenario) ? ['behavioral'] :
     scenario.startsWith('memory-endpoint-') ? ['structural','behavioral','device'] : ['structural'];
   for (const mode of modes) {
-    const overrides = [[scenario === 'native-memory-container' ? 'MEMORY_CONTAINER_ROOT' : 'MEMORY_ENDPOINT_ROOT', mode === 'behavioral' ? mode : 'structural']];
+    const overrides = [[['native-memory-container','native-memory-device'].includes(scenario) ? 'MEMORY_CONTAINER_ROOT' : 'MEMORY_ENDPOINT_ROOT', mode === 'behavioral' ? mode : 'structural']];
     if (mode === 'device') overrides.push(['MEMORY_ENDPOINT_ROOT.MEMORY','behavioral']);
     const native = (...args) => JSON.parse(execFileSync(probePath,
       [...args,...overrides.flatMap(([p,f])=>['--override',p,f])], {encoding:'utf8',maxBuffer:32*1024*1024}));

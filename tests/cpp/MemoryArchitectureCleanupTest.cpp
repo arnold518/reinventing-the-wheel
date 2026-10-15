@@ -1,6 +1,6 @@
 #include "components/selection/BuiltinComponentCatalog.hpp"
 #include "components/selection/StandardProfiles.hpp"
-#include "modules/memory/MemoryContainer.hpp"
+#include "modules/memory/NativeMemoryDevice.hpp"
 #include "modules/memory/MemoryStorage.hpp"
 #include "rv32i/RV32IInstructionOracle.hpp"
 #include "rv32i/RV32IProgram.hpp"
@@ -37,7 +37,8 @@ int main() {
                 {"memory.register.32", "storage.register.32"}, {"memory.register.1", "storage.register.1"},
                 {"memory.clocked-state-bit", "storage.state-bit"},
                 {"memory.ff-storage-bank.16", "memory.ff.bank.16"}, {"memory.container.ff.32", "memory.ff.device.32"},
-                {"memory.device.dram.8", "memory.dram.scalable-device.8"},
+                {"memory.device.dram.8", "memory.dram.device.8"},
+                {"memory.dram.scalable-device.8", "memory.dram.device.8"},
                 {"memory.controller.nor-flash.16", "memory.nor-flash.controller.16"},
                 {"memory.endpoint.sram.32", "memory.sram.endpoint.32"},
                 {"memory.scalable.rom.8", "memory.rom.scalable-endpoint.8"},
@@ -54,16 +55,26 @@ int main() {
             // These IDs remain valid for saved fidelity profiles.
             check(catalog.implementation(id + ".behavioral").contract_id == id, "Lost FF behavioral ID");
             check(catalog.implementation(id + ".structural-slice").contract_id == id, "Lost FF structural ID");
+            for (const auto* technology : {"ff", "sram", "dram", "rom", "nor-flash"}) {
+                const auto legacy = "memory." + std::string(technology) + ".scalable-device." + std::to_string(width);
+                const auto native = "memory." + std::string(technology) + ".device." + std::to_string(width);
+                check(catalog.contract(legacy).id == native, "Retired device ID did not resolve to native device");
+            }
         }
-        for (const auto& contract : catalog.contracts())
-        for (const auto& implementation : catalog.implementationsFor(contract.id)) {
-            for (const auto& test : implementation.evidence.contract_tests)
-                check(bool(createTestByName(test)), "Catalog evidence points to a removed scenario");
+        for (const auto& contract : catalog.contracts()) {
+            check(contract.id.find(".scalable-device.") == std::string::npos,
+                  "Scalable device remains a separate contract");
+            for (const auto& implementation : catalog.implementationsFor(contract.id)) {
+                check(implementation.concrete_type_name.find("MemoryContainer") == std::string::npos,
+                      "Container remains a concrete implementation");
+                for (const auto& test : implementation.evidence.contract_tests)
+                    check(bool(createTestByName(test)), "Catalog evidence points to a removed scenario");
+            }
         }
 
         // Provision real current devices through the generic capability. The last
         // byte is legal; crossing the boundary is not. No legacy memory class.
-        auto device = createMemoryContainer<32, circuit::memory::FFModel>("M",
+        auto device = createBehavioralMemoryDevice("M",32,circuit::memory::Technology::FF,
             circuit::memory::EndpointConfig{.depth_words = 4});
         auto view = std::dynamic_pointer_cast<MemoryStateView>(device);
         view->clearMemoryImage();

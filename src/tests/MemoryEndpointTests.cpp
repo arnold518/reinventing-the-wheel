@@ -1,10 +1,11 @@
 #include "tests/MemoryEndpointTests.hpp"
 #include "modules/memory/MemoryController.hpp"
-#include "modules/memory/MemoryContainer.hpp"
+#include "modules/memory/NativeMemoryDevice.hpp"
 #include "modules/memory/MemoryStorage.hpp"
 #include "tests/FFMemoryTests.hpp"
 #include "tests/MemoryDeviceTests.hpp"
 #include "tests/SRAMTests.hpp"
+#include <algorithm>
 #include <random>
 using namespace circuit;
 using namespace circuit::test;
@@ -289,10 +290,10 @@ MemoryEndpointROMTest::MemoryEndpointROMTest() : ComponentScenarioTest(endpointS
 MemoryEndpointFlashTest::MemoryEndpointFlashTest() : ComponentScenarioTest(endpointSpec(Technology::NORFlash)) {}
 ScalableMemoryEndpointTest::ScalableMemoryEndpointTest() : ComponentScenarioTest(endpointSpec(Technology::SRAM,8,true)) {}
 namespace {
-ComponentTestSpec nativeContainerSpec() {
+ComponentTestSpec nativeDeviceSpec() {
     auto spec=ffMemorySpec(8,4);
-    spec.id="NativeMemoryContainerTest";
-    spec.contract_id="memory.ff.scalable-device.8";
+    spec.id="NativeMemoryDeviceTest";
+    spec.contract_id="memory.ff.device.8";
     spec.instance_name="MEMORY_CONTAINER_ROOT";
     return spec;
 }
@@ -305,6 +306,8 @@ void verifyEndpointStoragePolicy(Technology technology) {
             mode == 2 ? Fidelity::Behavioral : Fidelity::Structural);
         if (mode == 0)
             profile = withExactFidelity(profile, "POLICY_ROOT.MEMORY", Fidelity::Behavioral);
+        if (mode == 1)
+            profile = withExactFidelity(profile, "POLICY_ROOT.MEMORY", Fidelity::Structural);
         ParameterMap policy{{"depth_words", "4"}, {"words_per_row", "2"}, {"block_words", "2"},
             {"record_history", "0"},
             {"paged", "0"}, {"max_resident_bytes", "64"}, {"max_history_bytes", "1"}};
@@ -313,6 +316,14 @@ void verifyEndpointStoragePolicy(Technology technology) {
             auto root = builtinComponentCatalog().createRoot(
                 {memoryContractId(technology, mode == 1 ? "scalable-endpoint" : "endpoint", 8),
                  "POLICY_ROOT", policy, {}, {}, {}}, profile).root;
+            if (mode == 1) {
+                const auto& children = root->getChildren();
+                const auto device = std::find_if(children.begin(), children.end(),
+                    [](const auto& child) { return child->getName() == "MEMORY"; });
+                require(device != children.end() && (*device)->getSelectedFidelity() == "behavioral" &&
+                    (*device)->getContractId() == memoryContractId(technology, "device", 8),
+                    context + ": scalable endpoint did not require its behavioral native device");
+            }
             auto view = std::dynamic_pointer_cast<MemoryStateView>(root);
             require(bool(view), context + ": missing memory state view");
             return view;
@@ -410,17 +421,19 @@ void verifyEndpointWriteHistory(Technology technology, size_t width) {
     }
 }
 }
-NativeMemoryContainerTest::NativeMemoryContainerTest() : ComponentScenarioTest(nativeContainerSpec()) {}
+NativeMemoryDeviceTest::NativeMemoryDeviceTest()
+    : ComponentScenarioTest(nativeDeviceSpec(), {},
+        withExactFidelity(canonicalDefaultProfile(), "MEMORY_CONTAINER_ROOT", Fidelity::Behavioral)) {}
 void NativeMemoryDeviceContractTest::verifyResults() {
     ComponentTestRunner runner;
     auto compare=[&](ComponentTestSpec spec,Technology t,size_t width) {
         for (const auto& scenario:spec.scenarios) {
-            auto expanded=runner.run(spec,scenario);
-            auto native=spec;
-            native.contract_id=memoryContractId(t,"scalable-device",width);
-            auto compact=runner.run(native,scenario);
+            auto expanded=runner.run(spec,scenario,
+                withExactFidelity(canonicalDefaultProfile(),spec.instance_name,Fidelity::Structural));
+            auto compact=runner.run(spec,scenario,
+                withExactFidelity(canonicalDefaultProfile(),spec.instance_name,Fidelity::Behavioral));
             runner.compare(expanded,compact);
-            require(compact.root->getChildren().empty(),"Native container must be a leaf without controller state");
+            require(compact.root->getChildren().empty(),"Behavioral native device must be a leaf");
         }
     };
     for (size_t width:{8,16,32}) {
@@ -453,7 +466,7 @@ void NativeMemoryDeviceContractTest::verifyResults() {
                         "Endpoint did not build the behavioral controller");
         EndpointConfig config;config.depth_words=1u<<28;config.record_history=false;
         config.max_resident_bytes=16384;config.max_history_bytes=0;config.refresh_interval_ticks=0;
-        auto huge=std::dynamic_pointer_cast<MemoryDeviceStorage>(createMemoryContainer("HUGE",8,t,config));
+        auto huge=std::dynamic_pointer_cast<MemoryDeviceStorage>(createBehavioralMemoryDevice("HUGE",8,t,config));
         require(huge->memoryStorage().capacityBytes()==1u<<28,"Wrong large capacity");
         require(huge->memoryStorage().allocatedDataBytes()==0,"Eager content allocation");
         huge->initializeBytes((1u<<28)-1,{0x42});
@@ -502,10 +515,10 @@ void MemoryEndpointContractTest::verifyResults() {
     MemoryStorage bounded(16,8,LogicValue::LOW,true,{true,16384,1});
     rejects([&]{bounded.writeLogic(1,0,logicBits(8,1));});
     EndpointConfig config; config.depth_words=1u<<28; config.record_history=false;
-    auto root=createMemoryContainer<8,circuit::memory::SRAMModel>("LARGE",config);
+    auto root=createBehavioralMemoryDevice("LARGE",8,Technology::SRAM,config);
     auto large=std::dynamic_pointer_cast<MemoryDeviceStorage>(root);
-    require(large->memoryStorage().capacityBytes()==1u<<28 && root->getChildren().empty(),"Container not compact");
-    require(large->memoryStorage().allocatedDataBytes()==0,"Container allocated untouched capacity");
+    require(large->memoryStorage().capacityBytes()==1u<<28 && root->getChildren().empty(),"Behavioral device not compact");
+    require(large->memoryStorage().allocatedDataBytes()==0,"Behavioral device allocated untouched capacity");
     config.retention_ticks=1024;
     rejects([&]{config.validate(8,Technology::DRAM);});
 }

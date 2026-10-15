@@ -42,6 +42,10 @@
       "title": "Memory / Controllers and endpoints"
     },
     {
+      "id": "memory-cache",
+      "title": "Memory / Caches"
+    },
+    {
       "id": "registers",
       "title": "RV32I / Registers"
     },
@@ -118,6 +122,10 @@
     "FFAlwaysReadyControllerTest": [
       "ff-always-ready-controller"
     ],
+    "NativeMemoryDeviceTest": [
+      "native-memory-device",
+      "native-memory-container"
+    ],
     "FFMemoryTest": [
       "ff-memory-container",
       "ff-memory"
@@ -125,6 +133,18 @@
     "ScalableMemoryEndpointTest": [
       "scalable-memory-container",
       "scalable-memory-endpoint"
+    ],
+    "CacheComponentScenarioTest": [
+      "cache-read-hit"
+    ],
+    "CacheDirectMappedScenarioTest": [
+      "cache-direct-mapped"
+    ],
+    "CacheScalableScenarioTest": [
+      "cache-scalable-two-way"
+    ],
+    "CacheTwoLevelScenarioTest": [
+      "cache-two-level"
     ],
     "FlipFlopCellTest": [
       "flip-flop-cell",
@@ -445,8 +465,24 @@
       "title": "Scalable memory endpoint",
       "group": "memory-interface"
     },
-    "NativeMemoryContainerTest": {
-      "title": "Memory container / FF device",
+    "CacheComponentScenarioTest": {
+      "title": "Cache lines, replacement and writes",
+      "group": "memory-cache"
+    },
+    "CacheDirectMappedScenarioTest": {
+      "title": "Direct-mapped cache and conflict miss",
+      "group": "memory-cache"
+    },
+    "CacheScalableScenarioTest": {
+      "title": "Scalable two-way cache and line fills",
+      "group": "memory-cache"
+    },
+    "CacheTwoLevelScenarioTest": {
+      "title": "Two cache levels over RAM",
+      "group": "memory-cache"
+    },
+    "NativeMemoryDeviceTest": {
+      "title": "Native FF memory device",
       "group": "memory-interface"
     },
     "FFMemoryTest": {

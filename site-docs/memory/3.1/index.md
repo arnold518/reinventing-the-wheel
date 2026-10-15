@@ -1,6 +1,6 @@
 # § 3.1. Memory Devices
 
-This section defines the storage side of the memory architecture: cells, words or rows, banks, native devices, and the scalable `MemoryContainer`. Each technology keeps its own storage rules and native pins. A common transaction interface is introduced separately in [3.2](../3.2.md), and controllers connecting that interface to devices are documented in [3.3](../3.3.md).
+This section defines the storage side of the memory architecture: cells, words or rows, banks, and native devices. Each technology has a structural device for small geometries and a scalable behavioral form with the same native pins. A common transaction interface is introduced separately in [3.2](../3.2.md), and controllers connecting that interface to devices are documented in [3.3](../3.3.md).
 
 Shared addressing and output circuitry is documented in [3.1.0. Helper Components](../3.1.0.md). The technology references below describe cells, banks, native access control, and complete devices.
 
@@ -13,9 +13,9 @@ Shared addressing and output circuitry is documented in [3.1.0. Helper Component
 | [3.1.3. DRAM](../3.1.3.md) | `DRAMCell` → `DRAMRow` → `DRAMStorageBank<W>` → `DRAM<W>` | ACTIVATE row, READ/WRITE column, PRECHARGE, REFRESH | Destructive sampling, row buffer, restoration, retention |
 | [3.1.4. ROM](../3.1.4.md) | `ROMCell` → `ROMRow` → `ROMStorageBank<W>` → `ROM<W>` | Asynchronous read only | Immutable construction-time image |
 | [3.1.5. NOR flash](../3.1.5.md) | `NORFlashCell` → `NORFlashRow` → `NORFlashStorageBank<W>` → `NORFlash<W>` | Clocked read/program/erase commands | Program 1→0; block erase to 1; no refresh |
-| [3.1.6. Scalable memory container](../3.1.6.md) | `MemoryContainer<Model,W>` | Selected technology's native pins | Scalable behavioral device; no transaction buffering |
+| [3.1.6. Scalable native devices](../3.1.6.md) | Behavioral form of each device above | Same native pins | Large logical capacity; no transaction buffering |
 
-`MemoryContainer` is not a sixth physical technology. It is the scalable representation of a native device. Its model determines both the storage behavior and the native interface. A controller is optional for direct-device users and required when converting a native interface to transactions.
+Behavioral fidelity is a scalable representation of each existing native device. It keeps that technology's storage rules and native pins. A controller is optional for direct-device users and required when converting a native interface to transactions.
 
 ## Storage layers
 
@@ -48,15 +48,15 @@ For word address A, `row = A / K`, `slot = A % K`; bit b occupies physical colum
 
 Do not confuse **word address**, **row address**, and **byte address**. Native FF/SRAM/ROM use word addresses; native DRAM's command selects whether its address means row or column slot. The transaction port and memory inspector use byte addresses. A W-bit aligned transaction at byte address B accesses word `B / (W/8)`; the controller performs the native mapping.
 
-Expanded devices and pin-expanded banks are limited to **4,096 cells**. Behavioral banks keep their many row/column pins and therefore keep those limits. Behavioral native devices and containers remove internal pin expansion and use paged storage within 32-bit byte-capacity and host-resource limits. A large device does not require a large controller: the controller's payload registers depend on port width, not memory depth. See [3.1.6](../3.1.6.md#configuration).
+Expanded devices and pin-expanded banks are limited to **4,096 cells**. Behavioral banks keep their many row/column pins and therefore keep those limits. Behavioral native devices remove internal pin expansion and use paged storage within 32-bit byte-capacity and host-resource limits. A large device does not require a large controller: the controller's payload registers depend on port width, not memory depth. See [3.1.6](../3.1.6.md#configuration).
 
 ## Device and transaction boundaries
 
 <!-- diagram: memory-endpoints -->
 
-`MemoryEndpoint` contains a `MemoryController` and one native memory device. The controller translates transactions into native operations, retaining state only when required by timing or backpressure; the device owns the stored contents and technology-specific behavior. The two boxes inside the device are **alternative representations**, not two memories connected at once: an expanded implementation or a scalable `MemoryContainer`.
+`MemoryEndpoint` contains a `MemoryController` and one native memory device. The controller translates transactions into native operations, retaining state only when required by timing or backpressure; the device owns the stored contents and technology-specific behavior. The two boxes inside the device are **alternative representations**, not two memories connected at once: an expanded implementation or a scalable behavioral native device.
 
-For a selected technology, both representations keep the same native interface. Direct-device users connect there and omit the controller. Transaction requesters connect one level above, through the common REQ/RSP interface. `BehavioralMemoryEndpoint` is the fused behavioral implementation of the whole assembly, not another name for `MemoryContainer`.
+For a selected technology, both representations keep the same native interface. Direct-device users connect there and omit the controller. Transaction requesters connect one level above, through the common REQ/RSP interface. `BehavioralMemoryEndpoint` is the fused behavioral implementation of the whole assembly, a separate contract from the native device.
 
 The universal interface does not require multiple cycles. An FF controller exposes a combinational response and writes on the shared clock; other controllers sequence their native device's timing. Empty response buffers bypass their registers.
 

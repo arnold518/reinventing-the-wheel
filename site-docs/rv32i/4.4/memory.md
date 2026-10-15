@@ -39,7 +39,7 @@ DONE is constant one because this port has no handshake; it does not detect sett
 
 #### Memory compatibility
 
-The connected core requires `MemoryEndpoint<ff,32>`: either the fused behavioral form or an FF controller with native FF storage. `MemoryContainer<ff,32>` supplies scalable storage behind that controller; `FFMemory<32>` supplies a small expanded circuit. Native devices are not wired directly to the core's universal pins. See the [complete-core memory table](core.md#memory-integration).
+The connected core requires `MemoryEndpoint<ff,32>`: either the fused behavioral form or an FF controller with native FF storage. `FFMemory<32>` at behavioral fidelity supplies scalable storage behind that controller; `FFMemory<32>` supplies a small expanded circuit. Native devices are not wired directly to the core's universal pins. See the [complete-core memory table](core.md#memory-integration).
 
 This stage cannot wait for a delayed response: DONE stays one and there is no pending-request state. The current SRAM, DRAM, ROM, and NOR-flash endpoints therefore require a wait-capable core, not just a controller attached to this stage. Construction guards reject them for the single-cycle system; bypassing those guards can produce incorrect execution rather than additional wait cycles.
 

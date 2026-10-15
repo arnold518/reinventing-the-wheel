@@ -1,5 +1,6 @@
-#include "modules/memory/MemoryContainer.hpp"
+#include "modules/memory/NativeMemoryDevice.hpp"
 #include "components/selection/BuiltinComponentCatalog.hpp"
+#include "components/selection/StandardProfiles.hpp"
 using namespace circuit;
 using namespace circuit::memory;
 NativeDeviceRequest nativeDeviceRequest(size_t width,Technology technology,const EndpointConfig& config) {
@@ -25,19 +26,13 @@ NativeDeviceRequest nativeDeviceRequest(size_t width,Technology technology,const
     id += std::to_string(width);
     return {std::move(id),std::move(p)};
 }
-std::shared_ptr<IOComponent> createMemoryContainer(
-    const std::string& name,size_t width_,Technology technology_,EndpointConfig config_,
-    const std::shared_ptr<BuildContext>& context) {
+std::shared_ptr<IOComponent> createBehavioralMemoryDevice(
+    const std::string& name,size_t width_,Technology technology_,EndpointConfig config_) {
     auto checked=config_;
     checked.refresh_interval_ticks=0; // Refresh policy belongs to a controller.
     checked.validate(width_,technology_);
     const auto [id,p]=nativeDeviceRequest(width_,technology_,config_);
 
-    const auto& implementation=builtinComponentCatalog().implementation(id+".behavioral");
-    if(!implementation.supports(p)) throw std::invalid_argument("Unsupported native memory configuration");
-    auto device=std::dynamic_pointer_cast<IOComponent>(implementation.factory(name,p,context));
-    auto memory=std::dynamic_pointer_cast<MemoryDeviceStorage>(device);
-    if(!memory) throw std::logic_error("Native device lacks scalable memory storage");
-    memory->setContainerDisplayType("MemoryContainer<"+std::string(technologyName(technology_))+","+std::to_string(width_)+">");
-    return device;
+    return std::dynamic_pointer_cast<IOComponent>(builtinComponentCatalog().createRoot(
+        {id,name,p,{},{},{},Fidelity::Behavioral},canonicalDefaultProfile()).root);
 }

@@ -141,7 +141,7 @@ class ROMBankBehavioral : public Primitive {
 };
 class ROMBehavioral : public Primitive, public MemoryDeviceStorage {
   public:
-    const char* getTypeName() const override { return memoryDisplayType(Primitive::getTypeName()); }
+    const char* getTypeName() const override { return Primitive::getTypeName(); }
     ROMBehavioral(std::string n, size_t width, ROMDeviceConfig c)
         : Primitive(std::move(n), "ROM<" + std::to_string(width) + ">",
                     [width](IOComponent *s) { devicePins(s, width); }),

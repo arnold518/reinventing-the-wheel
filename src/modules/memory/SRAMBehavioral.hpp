@@ -84,7 +84,7 @@ public:
         : BasicComponent(std::move(name), 1, defineSRAMPins<W>),
           MemoryDeviceStorage(c.depth_words, W, LogicValue::UNKNOWN, c.record_history, c.storage_limits),
           config_(checked(c)), sequence_(W) {}
-    const char* getTypeName() const override { return memoryDisplayType(SRAM<W>::TypeName.c_str()); }
+    const char* getTypeName() const override { return SRAM<W>::TypeName.c_str(); }
     const MemoryStorage& memoryStorage() const override { return storage_; }
     void loadMemoryBytes(uint32_t address, const std::vector<uint8_t>& bytes) override { initializeMemoryBytes(address, bytes); }
     void evaluate(size_t t, Simulator& sim) override {

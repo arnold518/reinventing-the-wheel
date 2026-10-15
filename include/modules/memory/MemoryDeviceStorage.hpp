@@ -9,8 +9,6 @@ public:
                         MemoryStorage::Limits limits)
         : storage_(words, width, initial, history, limits) {}
     const MemoryStorage& memoryStorage() const override { return storage_; }
-    void setContainerDisplayType(std::string name) { display_type_ = std::move(name); }
-    const char* memoryDisplayType(const char* fallback) const { return display_type_.empty() ? fallback : display_type_.c_str(); }
     void initializeBytes(uint32_t a, const std::vector<uint8_t>& bytes) { initializeMemoryBytes(a,bytes); }
     void loadBytes(uint32_t a, const std::vector<uint8_t>& bytes) { initializeMemoryBytes(a,bytes); }
     void clearContents() { clearMemoryImage(); }
@@ -39,5 +37,4 @@ protected:
     }
     MemoryStorage storage_;
     bool started_ = false;
-    std::string display_type_;
 };

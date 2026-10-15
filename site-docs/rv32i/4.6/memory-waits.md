@@ -92,7 +92,7 @@ The coordinator evaluates the same equations. The behavioral core uses the same 
 | `MemoryEndpoint<rom,32>` | Suitable for instruction/read-only data; writes fault | Not supported with its delayed controller |
 | `MemoryEndpoint<nor-flash,32>` | Protocol-compatible reads; normal stores fail because flash programming is a different operation | Not supported |
 
-Each endpoint may expose controller plus structural device, controller plus scalable native `MemoryContainer`, or a fused behavioral endpoint with the same transaction contract. The core sees the endpoint, not a bare container. Technology timing and supported commands remain the controller's contract in [3.3](../../memory/3.3.md). A huge behavioral device changes capacity and simulation cost, not the bus pins or CPU wait logic.
+Each endpoint may expose controller plus structural device, controller plus native device at behavioral fidelity, or a fused behavioral endpoint with the same transaction contract. The core sees the endpoint, not a bare native device. Technology timing and supported commands remain the controller's contract in [3.3](../../memory/3.3.md). A huge behavioral device changes capacity and simulation cost, not the bus pins or CPU wait logic.
 
 ## Examples and tests
 

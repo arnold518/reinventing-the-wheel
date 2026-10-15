@@ -10,8 +10,8 @@ import unittest
 ROOT = Path(__file__).resolve().parents[2]
 PROBE = str(Path(sys.argv.pop(1)).resolve()) if len(sys.argv) > 1 else str(ROOT / "build/tests/VisualizerSessionProbe")
 sys.path.append(str(ROOT / "visualizer-v2"))
-import server
 import circuit_backend as backend
+import server
 
 CORES = (("rv32i-program3", "RV32ISingleCycleSystemTest/program-03"),
          ("rv32i-five-stage-program3", "RV32IFiveStageCoreProgramTest/program-03"),
@@ -104,7 +104,7 @@ class MemoryInspectorIntegrationTest(unittest.TestCase):
                 cid="RV32I_PROGRAM_ROOT.INSTRUCTION_MEMORY"
                 self.assertEqual({c.get_name() for c in session.component_handles[cid].get_children()}, {"CONTROLLER","MEMORY"})
                 native=session.component_handles[cid+".MEMORY"]
-                self.assertEqual(native.get_type_name(),"MemoryContainer<ff,32>")
+                self.assertEqual(native.get_type_name(),"FFMemory32")
                 self.assertFalse(native.get_children())
                 self.assertEqual(backend.memory_configuration(native)["depth_words"],65536)
                 state=session.component_state_at_index(0,cid+".MEMORY")

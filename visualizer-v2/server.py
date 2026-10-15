@@ -30,6 +30,7 @@ from palette import color_for_layout_type
 from profile_store import ProfileStore, validate_overrides
 import sram_layout
 import memory_device_layout
+import cache_layout
 import rv32i_layout
 import register_file_layout
 from scenario_catalog import CATALOG as SCENARIO_CATALOG, aliases_for, default_alias, scenario_options
@@ -235,6 +236,12 @@ def _pin_width_by_name(component: Any, getter_name: str, pin_name: str) -> int |
 
 def _component_layout_type(component: Any) -> str:
     component_type = _component_type(component)
+    if component_type.startswith("Cache") and component.get_children():
+        signature = 0xCBF29CE484222325
+        for name in sorted(child.get_name() for child in component.get_children()):
+            for byte in name.encode("utf-8") + b"\xff":
+                signature = ((signature ^ byte) * 0x100000001B3) & 0xFFFFFFFFFFFFFFFF
+        return f"{component_type}[layout-{signature:016x}]"
     # The zero-wait FF controller intentionally omits its response buffer.
     # Keep its saved geometry separate from the buffered controller with the
     # same public component type and pins.
@@ -878,6 +885,13 @@ def _custom_child_layout(
     )
     if memory_layout is not None:
         return memory_layout
+    cache_floorplan = cache_layout.placements(
+        _component_type(parent),
+        {child.get_name(): child_aspects[child.get_id()] for child in children},
+        parent_aspect,
+    )
+    if cache_floorplan is not None:
+        return cache_floorplan
 
     if _component_type(parent) == "RV32IProgramRoot":
         program_layout = _rv32i_program_root_layout(
@@ -1336,6 +1350,8 @@ class LayoutManager:
         component_type = _component_type(component)
         component_layout_type = _component_layout_type(component)
         layout = self.get_layout_for(component_type)
+        if component_type.startswith("Cache") and component_layout_type != component_type:
+            layout.pop("children", None)
         if component_type == "Rewire" and component_layout_type != component_type:
             # Legacy shared proportions were enlarged by unrelated Rewires.
             # Retain styling; geometry now belongs to the pin-count variant.
@@ -1445,7 +1461,8 @@ class LayoutManager:
         component_type = _component_layout_type(component)
         layout = self.type_layouts.setdefault(component_type, {})
         defaults = {**COMPONENT_LAYOUT_DEFAULTS.get(component_type, {}), **sram_layout.defaults(component_type),
-                    **memory_device_layout.defaults(component_type), **rv32i_layout.defaults(component_type),
+                    **memory_device_layout.defaults(component_type), **cache_layout.defaults(component_type),
+                    **rv32i_layout.defaults(component_type),
                     **register_file_layout.defaults(component_type)}
         for key, value in defaults.items():
             if key not in layout:
@@ -2052,7 +2069,9 @@ class CircuitSession:
     ) -> dict[str, dict[str, Any]]:
         manager = layout_manager or self.layout_manager
         is_root = depth == 0
-        if memory_device_layout.defaults(_component_type(component)) or rv32i_layout.defaults(_component_type(component)):
+        if (memory_device_layout.defaults(_component_type(component))
+                or cache_layout.defaults(_component_type(component))
+                or rv32i_layout.defaults(_component_type(component))):
             # A bank can be encountered before its row types. Seed their thin
             # matrix proportions before calculating normalized row positions.
             for child in children:
@@ -2099,6 +2118,13 @@ class CircuitSession:
 
         parent_type = _component_layout_type(component)
         is_root = depth == 0
+        current_layout = (self.layout_manager.get_root_layout_for_component(self.layout_key, component)
+                          if is_root else self.layout_manager.get_layout_for_component(component))
+        if current_layout.get("layout_mode") != "manual" and cache_layout.defaults(_component_type(component)):
+            placements = self._default_child_layouts(component, children, depth)
+            self.layout_manager.set_child_layouts(
+                component, placements, scenario_key=self.layout_key, is_root=is_root,
+            )
         missing_children = [
             child
             for child in children

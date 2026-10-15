@@ -393,6 +393,9 @@ function getTypeLayoutFor(component) {
   const typeLayouts = app.layout.type_layouts || {};
   const baseLayout = { ...(typeLayouts[component.type] || {}) };
   const layoutKey = componentLayoutKey(component);
+  if (component.type.startsWith("Cache") && layoutKey !== component.type) {
+    delete baseLayout.children;
+  }
   if (component.type === "Rewire" && layoutKey !== component.type) {
     delete baseLayout.aspect_ratio;
     delete baseLayout.min_aspect_ratio;

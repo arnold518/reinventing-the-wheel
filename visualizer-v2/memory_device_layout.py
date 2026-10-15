@@ -51,7 +51,7 @@ def defaults(kind):
         aspect, pins, title = payload_aspect(int(re.findall(r"\d+", kind)[0])), 5, 0.035
     elif kind == "ClockedStateBit":
         aspect,pins,title=.6,4,.08
-    elif kind.startswith(("MemoryNativeSequencer<", "MemoryContainer<")):
+    elif kind.startswith("MemoryNativeSequencer<"):
         aspect, pins, title = 1.4, 18, 0.06
     elif row:
         cols = int(row[1])

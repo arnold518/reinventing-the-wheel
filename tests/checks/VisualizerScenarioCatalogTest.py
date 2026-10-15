@@ -91,7 +91,7 @@ process.stdout.write(JSON.stringify(options));
         for name in ('MemoryResponseBufferTest', 'RV32IBranchPredictorTest', 'RV32IPredictionPathTest',
                      'RV32IFetchStageTest', 'RV32IBaselineFetchStageTest'):
             self.assertEqual(rows[name]['kind'], 'sequential', name)
-        self.assertEqual(rows['NativeMemoryContainerTest']['kind'], 'memory')
+        self.assertEqual(rows['NativeMemoryDeviceTest']['kind'], 'memory')
         self.assertEqual(rows['RV32IBaselinePipelineCoreTest']['kind'], 'program')
 
     def test_static_layout_variants_match_python_topology(self):

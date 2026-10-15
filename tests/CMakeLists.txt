@@ -179,6 +179,16 @@ add_test(NAME MemoryInspectorIntegrationTest COMMAND ${Python3_EXECUTABLE} ${CMA
 set_tests_properties(MemoryInspectorIntegrationTest PROPERTIES LABELS "memory;visualizer;bindings" TIMEOUT 180)
 add_test(NAME MemoryDeviceDocumentationTest COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/checks/MemoryDeviceDocumentationTest.py $<TARGET_FILE:VisualizerSessionProbe> ${CMAKE_CXX_COMPILER})
 set_tests_properties(MemoryDeviceDocumentationTest PROPERTIES LABELS "memory;new-memory;documentation")
+add_test(NAME CacheDocumentationTest COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/checks/CacheDocumentationTest.py ${CMAKE_CXX_COMPILER})
+set_tests_properties(CacheDocumentationTest PROPERTIES LABELS "memory;cache;documentation")
+add_test(NAME CacheLayoutTest COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/checks/CacheLayoutTest.py $<TARGET_FILE:VisualizerSessionProbe>)
+set_tests_properties(CacheLayoutTest PROPERTIES
+    ENVIRONMENT "PYTHONPATH=${PROJECT_BINARY_DIR}:${PROJECT_SOURCE_DIR}/visualizer-v2"
+    LABELS "memory;cache;visualizer")
+add_executable(TwoPortMemoryArbiterTest cpp/TwoPortMemoryArbiterTest.cpp)
+target_link_libraries(TwoPortMemoryArbiterTest PRIVATE SimulatorLib)
+add_test(NAME TwoPortMemoryArbiterTest COMMAND TwoPortMemoryArbiterTest)
+set_tests_properties(TwoPortMemoryArbiterTest PROPERTIES LABELS "memory;cache;integration")
 
 add_executable(
     VisualizerSessionProbe
@@ -236,10 +246,15 @@ set(SIMULATION_TESTS
     MemoryEndpointROMTest
     MemoryEndpointFlashTest
     ScalableMemoryEndpointTest
-    NativeMemoryContainerTest
+    NativeMemoryDeviceTest
     NativeMemoryDeviceContractTest
     MemoryEndpointContractTest
     MemoryEndpointTimingTest
+    CacheReadTest
+    CacheComponentScenarioTest
+    CacheDirectMappedScenarioTest
+    CacheScalableScenarioTest
+    CacheTwoLevelScenarioTest
     FFMemoryTest
     FFWordTest
     FFWordContractTest

@@ -91,7 +91,8 @@ void registerBlock(ComponentCatalog &catalog, const std::string &id, const std::
                    ComponentFactory structural, ComponentFactory behavioral, const std::string &test,
                    bool terminal = false, ParameterPredicate structural_support = {});
 std::shared_ptr<IOComponent> child(ComponentBuilder &builder, IOComponent &parent, const std::string &id,
-                                   const std::string &name, ParameterMap params = {});
+                                   const std::string &name, ParameterMap params = {},
+                                   std::optional<Fidelity> required_fidelity = {});
 std::shared_ptr<IOComponent> bitAdapter(ComponentBuilder &b, const std::string &name, size_t width,
                                         bool split);
 void registerMatrixComponents(ComponentCatalog &catalog);

@@ -74,6 +74,8 @@ struct ComponentBuildRequest {
     std::vector<std::string> required_capabilities;
     std::string semantic_domain;
     std::string observation;
+    // A parent may require a compact child even when its own profile is structural.
+    std::optional<Fidelity> required_fidelity;
 };
 
 struct ResolvedSelection {

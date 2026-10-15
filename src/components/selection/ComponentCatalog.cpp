@@ -240,16 +240,17 @@ ResolvedSelection ComponentCatalog::resolve(
         }
     }
 
-    if (decision.fidelity) {
+    const auto requested_fidelity = request.required_fidelity ? request.required_fidelity : decision.fidelity;
+    if (requested_fidelity) {
         const auto found = std::find_if(
             candidates.begin(), candidates.end(),
             [&](const auto* candidate) {
-                return candidate->fidelity == *decision.fidelity;
+                return candidate->fidelity == *requested_fidelity;
             });
         selected = found == candidates.end() ? nullptr : *found;
         if (!selected) {
-            if (profile.unavailablePolicy() == UnavailableFidelityPolicy::Error) {
-                throw std::runtime_error("Requested " + toString(*decision.fidelity)
+            if (request.required_fidelity || profile.unavailablePolicy() == UnavailableFidelityPolicy::Error) {
+                throw std::runtime_error("Requested " + toString(*requested_fidelity)
                     + " fidelity is unavailable for '" + request.contract_id
                     + "' at '" + path + "'");
             }
@@ -271,11 +272,13 @@ ResolvedSelection ComponentCatalog::resolve(
         }
     }
 
-    std::string reason = decision.matched_rule
-        ? decision.reason
-        : requested_contract.preferred_fidelity == Fidelity::Behavioral
-            ? "contract default: compact behavioral implementation"
-            : "canonical fallback: structural when available, otherwise behavioral";
+    std::string reason = request.required_fidelity
+        ? "parent-required fidelity"
+        : decision.matched_rule
+            ? decision.reason
+            : requested_contract.preferred_fidelity == Fidelity::Behavioral
+                ? "contract default: compact behavioral implementation"
+                : "canonical fallback: structural when available, otherwise behavioral";
     if (exception) {
         reason += "; unavailable fidelity exception recorded";
     }

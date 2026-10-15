@@ -162,15 +162,14 @@ std::string compactOf(const std::string& contract) {
 }
 
 // Memory devices and endpoints are also proven at 64 and 128 words, the two
-// largest sizes that can be built from gates. Larger memories, and the
-// scalable form of the same memory, are estimated from those two.
+// largest sizes that can be built from gates. Larger memories use those
+// measured device tables; scalable endpoints reuse the endpoint tables.
 size_t sized(const Candidate& candidate, const circuit::PartDelays& standard, size_t budget, std::ostream& body) {
     const auto device = candidate.contract.find(".device."), endpoint = candidate.contract.find(".endpoint.");
     if (candidate.contract.rfind("memory.", 0) != 0 || (device == std::string::npos && endpoint == std::string::npos)) return 0;
     auto scalable = candidate.contract;
-    if (device != std::string::npos) scalable.replace(device, 8, ".scalable-device.");
-    else scalable.replace(endpoint, 10, ".scalable-endpoint.");
-    const auto scalable_implementation = compactOf(scalable);
+    if (endpoint != std::string::npos) scalable.replace(endpoint, 10, ".scalable-endpoint.");
+    const auto scalable_implementation = endpoint != std::string::npos ? compactOf(scalable) : std::string{};
     size_t written = 0;
     // The scalable form with default parameters is the same small memory.
     if (!scalable_implementation.empty()) { body << emit(scalable_implementation, standard); ++written; }

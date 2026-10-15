@@ -38,6 +38,7 @@
 #include "modules/memory/ROM.hpp"
 #include "modules/memory/NORFlash.hpp"
 #include "modules/memory/MemoryProtocol.hpp"
+#include "modules/memory/Cache.hpp"
 #include "modules/memory/FlipFlopCell.hpp"
 #include "modules/storage/Register.hpp"
 #include "modules/rv32i/RegisterFile32x32.hpp"
@@ -950,6 +951,7 @@ std::shared_ptr<ComponentCatalog> createBuiltinComponentCatalog() {
     registerROMComponents(*catalog);
     registerNORFlashComponents(*catalog);
     memory::registerMemoryEndpoints(*catalog);
+    memory::registerCaches(*catalog);
     catalog->freeze();
     return catalog;
 }

@@ -342,7 +342,7 @@ class DRAMBankBehavioral : public Primitive {
 };
 class DRAMBehavioral : public Primitive, public MemoryDeviceStorage {
   public:
-    const char* getTypeName() const override { return memoryDisplayType(Primitive::getTypeName()); }
+    const char* getTypeName() const override { return Primitive::getTypeName(); }
     DRAMBehavioral(std::string n, size_t width, DRAMDeviceConfig c)
         : Primitive(std::move(n), "DRAM<" + std::to_string(width) + ">",
                     [width](IOComponent *s) { devicePins(s, width); }),

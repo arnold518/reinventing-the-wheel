@@ -147,7 +147,7 @@ def memory_storage():
 
 def memory_endpoints():
     f = Figure("memory-endpoints", "Memory architecture: device, controller, endpoint",
-               "MemoryEndpoint contains a MemoryController and one native memory device. The controller exposes the universal transaction interface and connects to the device through technology-specific native pins. The device is either expanded storage or a scalable MemoryContainer, for FF, SRAM, DRAM, ROM, or NOR flash.", 556,
+               "MemoryEndpoint contains a MemoryController and one native memory device. The controller exposes the universal transaction interface and connects to the device through technology-specific native pins. The same device contract selects structural or behavioral fidelity for FF, SRAM, DRAM, ROM, or NOR flash.", 556,
                "<strong>One endpoint = controller + one device.</strong> The two device representations are alternatives, with the same native contract for the selected technology. Lines denote interfaces, not one-way data flow. Direct native access omits the controller. BehavioralMemoryEndpoint is the fused behavioral implementation of the whole assembly.")
     f.rect(24, 112, 592, 420, "zone", node="endpoint")
     f.text(48, 144, "MemoryEndpoint", "name")
@@ -164,8 +164,8 @@ def memory_endpoints():
     f.box("expanded-device", 64, 366, 232, 76,
           "Expanded device", "bank · words / rows · cells")
     f.text(320, 410, "or", "small", "middle")
-    f.box("container", 344, 366, 232, 76,
-          "MemoryContainer", "scalable behavioral storage")
+    f.box("behavioral-device", 344, 366, 232, 76,
+          "Behavioral device", "same native pins · scalable storage")
     f.text(320, 480, "FF · SRAM · DRAM · ROM · NOR flash", "small", "middle")
     return f
 

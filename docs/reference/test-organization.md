@@ -6,6 +6,9 @@ that check loading, timing analysis, campaigns or frontend geometry remain
 separate suites because they exercise software infrastructure rather than one
 recorded component circuit.
 
+For a practical sequence to find, run and publish an existing scenario, use
+the [tests and scenarios guide](../guides/tests-and-scenarios.md).
+
 ## Visualizer catalog
 
 `visualizer-v2/static/scenarios.json` supplies group names, component titles,
@@ -25,6 +28,17 @@ Simulator-history checks and the ALU32 representative-slice verification stay
 in CTest but are excluded from the menu: they do not build a visible root during
 setup. Component examples retain their existing structural and behavioral
 implementations, checkpoint rows and explorer fidelity controls.
+
+Visible multi-component fixtures may extend `SimulationTest` instead of
+`ComponentScenarioTest`. Their `setupCircuit()` must only construct and wire
+the circuit: the Python layout builder calls it without running simulation and
+rejects processed events. A fixture that needs adaptive, precomputed
+transactions can override `preparePrecomputedSimulation()` and return true
+from `isSimulationPrecomputed()`. `VisualizerSession` calls that hook after
+building the topology; the fixture's native `run()` should call the same hook
+before checking results. Such a fixture can publish named timeline
+checkpoints, but generated component example tables require a
+`ComponentScenarioTest` and its declared actions.
 
 The generated and compiled benchmark catalogs remain under §4.2 and the common
 campaign runner. Their large executions are not automatically added to the

@@ -56,7 +56,7 @@ Automatic graph layout is used where it preserves readable signal flow. Repeated
 
 ## Boundaries with other sections
 
-[Chapter 3](../../memory/3.1/index.md) owns memory cells, technology-specific words/rows, banks, devices, and `MemoryContainer`, together with the [transaction protocol](../../memory/3.2.md) and [memory controllers](../../memory/3.3.md). This section introduces `Register<W>` and the register file as RV32I building blocks reusing FF cells. The register file is a CPU operand store, not an interchangeable transaction endpoint. `RV32IMemoryRequest` is the CPU-side requester; it is not a technology-specific memory controller.
+[Chapter 3](../../memory/3.1/index.md) owns memory cells, technology-specific words/rows, banks and devices at both fidelities, together with the [transaction protocol](../../memory/3.2.md) and [memory controllers](../../memory/3.3.md). This section introduces `Register<W>` and the register file as RV32I building blocks reusing FF cells. The register file is a CPU operand store, not an interchangeable transaction endpoint. `RV32IMemoryRequest` is the CPU-side requester; it is not a technology-specific memory controller.
 
 The core sections are:
 

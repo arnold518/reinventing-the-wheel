@@ -25,17 +25,20 @@ class MemoryEndpointIntegrationTest(unittest.TestCase):
     def test_factories_and_limits(self):
         for model in ("ff", "sram", "dram", "rom", "nor-flash"):
             for width in (8, 16, 32):
-                container = backend.create_memory_container("M", model, width, 4096)
-                self.assertFalse(container.get_children())
-                self.assertEqual(container.get_type_name(), f"MemoryContainer<{model},{width}>")
-                self.assertEqual(backend.memory_configuration(container)["capacity_bytes"], 4096 * width // 8)
+                device = backend.create_memory_device("M", model, width, 4096)
+                self.assertFalse(device.get_children())
+                expected = {"ff": f"FFMemory{width}", "sram": f"SRAM<{width}>",
+                            "dram": f"DRAM<{width}>", "rom": f"ROM<{width}>",
+                            "nor-flash": f"NORFlash<{width}>"}
+                self.assertEqual(device.get_type_name(), expected[model])
+                self.assertEqual(backend.memory_configuration(device)["capacity_bytes"], 4096 * width // 8)
                 outputs={"ff":{"READ_DATA","FAULT"},"sram":{"READ_DATA"},"rom":{"READ_DATA"},
                          "dram":{"READ_DATA","BUSY","ERROR","READ_VALID","ROW_OPEN"},
                          "nor-flash":{"READ_DATA","BUSY","ERROR","READ_VALID","WRITE_ENABLED"}}
-                self.assertEqual(set(container.get_output_pins()),outputs[model])
+                self.assertEqual(set(device.get_output_pins()),outputs[model])
                 if model not in ("ff", "sram"):
                     with self.assertRaises(RuntimeError):
-                        backend.load_memory_bytes(container, 0, [0])
+                        backend.load_memory_bytes(device, 0, [0])
                 controller = backend.create_memory_controller("C", model, width)
                 children={c.get_name() for c in controller.get_children()}
                 if model == "ff":
@@ -54,10 +57,10 @@ class MemoryEndpointIntegrationTest(unittest.TestCase):
                            {"max_resident_bytes": "0"}, {"guard_ticks": "1"}):
             # depth_words is a dedicated argument and intentionally overrides the map.
             if "depth_words" in parameters:
-                with self.assertRaises(ValueError): backend.create_memory_container("M", "sram", 8, 0)
+                with self.assertRaises(ValueError): backend.create_memory_device("M", "sram", 8, 0)
             else:
-                with self.assertRaises(ValueError): backend.create_memory_container("M", "sram", parameters=parameters)
-        huge = backend.create_memory_container("HUGE", "sram", 8, 1 << 28,
+                with self.assertRaises(ValueError): backend.create_memory_device("M", "sram", parameters=parameters)
+        huge = backend.create_memory_device("HUGE", "sram", 8, 1 << 28,
                     {"record_history": "0", "max_resident_bytes": "16384"})
         self.assertEqual(backend.memory_configuration(huge)["capacity_bytes"], 1 << 28)
 
@@ -84,7 +87,7 @@ class MemoryEndpointIntegrationTest(unittest.TestCase):
     def test_python_portable_inspector(self):
         for scenario, test in CASES[2:]:
             if not scenario.startswith("memory-endpoint-"): continue
-            if scenario == "native-memory-container": continue
+            if scenario == "native-memory-device": continue
             with tempfile.TemporaryDirectory() as tmp:
                 session = server.CircuitSession(scenario, server.LayoutManager(Path(tmp) / "layout.json"),
                                                profile_overrides={"MEMORY_ENDPOINT_ROOT": "behavioral"})
@@ -99,8 +102,8 @@ class MemoryEndpointIntegrationTest(unittest.TestCase):
                     self.assertIn("RSP_STATUS", state["ports"])
                     self.assertEqual(len(state["windowWords"]), 4)
 
-    def test_native_container_inspector_and_cpp_example(self):
-        scenario, test = "native-memory-container", "NativeMemoryContainerTest"
+    def test_native_device_inspector_and_cpp_example(self):
+        scenario, test = "native-memory-device", "NativeMemoryDeviceTest"
         topology = json.loads(subprocess.check_output([PROBE, "topology", test, scenario], text=True))
         root = topology["rootId"]
         with tempfile.TemporaryDirectory() as tmp:
@@ -201,12 +204,12 @@ class MemoryEndpointIntegrationTest(unittest.TestCase):
     def test_cpp_examples_compile(self):
         port_example = re.findall(r"```cpp\n(.*?)\n```", SOURCES["3.2"], re.S)[0]
         controller, endpoint = re.findall(r"```cpp\n(.*?)\n```", SOURCES["3.3"], re.S)
-        container = re.findall(r"```cpp\n(.*?)\n```", SOURCES["3.1.6"], re.S)[0]
+        native_device = re.findall(r"```cpp\n(.*?)\n```", SOURCES["3.1.6"], re.S)[0]
         snippets = [port_example, "\n".join((port_example, controller)),
                     "\n".join((port_example, controller, endpoint)),
-                    container]
+                    native_device]
         # References must explain sequencing/storage, not delegate to the algorithms under test.
-        for snippet in (controller, container):
+        for snippet in (controller, native_device):
             self.assertNotRegex(snippet, r"\b(?:NativeSequence|DeviceModel|makeDeviceModel|validateRequest)\b")
         with tempfile.TemporaryDirectory() as tmp:
             for i, snippet in enumerate(snippets):
@@ -215,11 +218,11 @@ class MemoryEndpointIntegrationTest(unittest.TestCase):
                                 "-I", str(ROOT / "src/modules/memory"), "-x", "c++", "-fsyntax-only", "-"],
                                input=snippet, text=True, check=True)
 
-    def test_container_cpp_example_behavior(self):
+    def test_compact_endpoint_cpp_example_behavior(self):
         snippets = re.findall(r"```cpp\n(.*?)\n```", SOURCES["3.2"]+SOURCES["3.3"], re.S)
-        harness = (ROOT / "tests/fixtures/memory/container-example.cpp").read_text()
+        harness = (ROOT / "tests/fixtures/memory/compact-endpoint-example.cpp").read_text()
         library = Path(PROBE).resolve().parent.parent / "libSimulatorLib.a"
-        with tempfile.TemporaryDirectory(prefix="memory-container-example-") as tmp:
+        with tempfile.TemporaryDirectory(prefix="memory-device-example-") as tmp:
             binary = Path(tmp) / "example"
             subprocess.run(["c++", "-std=c++20", "-Wall", "-Wextra", "-Werror", "-pedantic",
                             "-I", str(ROOT / "include"), "-I", str(ROOT / "src/modules/memory"),
@@ -243,7 +246,7 @@ class MemoryEndpointIntegrationTest(unittest.TestCase):
 
     def test_documented_public_pin_tables(self):
         for section,scenario,test in (("3.2","memory-transaction-port","MemoryTransactionPortTest"),
-                                      ("3.1.6","native-memory-container","NativeMemoryContainerTest")):
+                                      ("3.1.6","native-memory-device","NativeMemoryDeviceTest")):
             topology=json.loads(subprocess.check_output([PROBE,"topology",test,scenario],text=True))
             pins={p["name"]:(p["type"],p["width"]) for p in topology["pins"] if p["componentId"]==topology["rootId"]}
             documented={}

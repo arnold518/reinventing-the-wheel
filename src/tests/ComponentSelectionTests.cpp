@@ -230,6 +230,12 @@ void ComponentCatalogSelectionTest::verifyResults() {
             "Structural instance metadata is incorrect");
     require(structural.root->getContractId() == root.contract_id,
             "Structural instance contract metadata is incorrect");
+    auto required_behavioral = root;
+    required_behavioral.required_fidelity = circuit::Fidelity::Behavioral;
+    const auto forced = catalog.createRoot(required_behavioral, circuit::strictAllStructural());
+    require(forced.root->getSelectedFidelity() == "behavioral" &&
+            forced.root->getContractId() == root.contract_id,
+            "Explicit child fidelity requirement did not override the profile");
     require(structural.manifest->entries().size() > 1,
             "Structural manifest must include recursively constructed children");
     const auto structural_manifest = structural.manifest->serialize();
@@ -451,13 +457,13 @@ void BuiltinComponentCatalogInventoryTest::verifyResults() {
     };
 
     for (const auto width : {"8", "16", "32"}) {
+        expected_types.insert(std::string("Cache<") + width + ">");
         expected_types.insert(std::string("MemoryTransactionPort<") + width + ">");
         expected_types.insert(std::string("MemoryResponseBuffer<") + width + ">");
         for (const auto technology : {"ff", "sram", "dram", "rom", "nor-flash"}) {
             const std::string suffix = "<" + std::string(technology) + "," + width + ">";
             expected_types.insert("MemoryController" + suffix);
             expected_types.insert("MemoryEndpoint" + suffix);
-            expected_types.insert("MemoryContainer" + suffix);
         }
     }
     for (const auto width : {"1", "2", "3", "4", "5", "8", "16", "32"})

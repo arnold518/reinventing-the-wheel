@@ -9,6 +9,7 @@ explains profile selection; the
 [timing reference](../reference/circuit-timing-analyzer.md) explains the delay
 model. The [older complete workflow](../archive/complete-circuit-workflow.md)
 describes a retired API.
+For finding and running existing coverage, read [running tests and scenarios](tests-and-scenarios.md).
 
 For a small example of the current path, trace `Adder32` from
 `include/modules/composite/Adder32.hpp` and
@@ -206,6 +207,13 @@ its saved layout using `visualizer-v2/recalculate_layouts.py`; preview with
 styling only when the new type needs a distinct appearance. Browser or WASM
 behavior outside the common scenario path gets a focused test under
 `tests/web/` and an entry in `tests/web-tests.json`.
+
+For a demonstration that wires several existing components, a registered
+`SimulationTest` fixture can publish a timeline without adding a new product
+contract. Keep `setupCircuit()` topology-only; put adaptive precomputed
+transactions in `preparePrecomputedSimulation()` and invoke the same method
+from its native `run()`. A page may embed this timeline, while generated
+example tables still require declared `ComponentScenarioTest` actions.
 
 ## 7. Write the public component page
 

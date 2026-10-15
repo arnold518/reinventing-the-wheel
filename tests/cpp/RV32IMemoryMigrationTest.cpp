@@ -1,8 +1,9 @@
 #include "modules/rv32i/RV32IMemoryRequest.hpp"
 #include "modules/rv32i/RV32IMemorySystem.hpp"
-#include "modules/memory/MemoryContainer.hpp"
+#include "modules/memory/NativeMemoryDevice.hpp"
 #include "modules/memory/BehavioralMemoryEndpoint.hpp"
 #include "modules/memory/MemoryController.hpp"
+#include "modules/memory/Cache.hpp"
 #include "components/StructuralNetBuilder.hpp"
 #include "modules/rv32i/RV32ISingleCycleCore.hpp"
 #include "modules/rv32i/RV32IFiveStageCore.hpp"
@@ -12,6 +13,7 @@
 #include "components/selection/StandardProfiles.hpp"
 #include "components/selection/BuildManifest.hpp"
 #include <iostream>
+#include <optional>
 
 using namespace circuit;
 using namespace circuit::memory;
@@ -203,28 +205,54 @@ void checkRequestBackpressure() {
     require(!rig.out("BUS_REQ_VALID") && !rig.out("BUS_RSP_READY"),"reset did not quiesce port");
     std::cout<<"request acceptance, redirect, ABA, response backpressure, and reset passed\n";
 }
-void checkProgram(bool pipeline, bool expanded, bool behavioral, rv32i::PredictionPolicy policy=rv32i::PredictionPolicy::NotTaken, bool branch_program=false) {
+void checkProgram(bool pipeline, bool expanded, bool behavioral,
+                  rv32i::PredictionPolicy policy=rv32i::PredictionPolicy::NotTaken,
+                  bool branch_program=false, bool cached=false, bool unified=false,
+                  Technology shared_technology=Technology::FF) {
     rv32i::MemoryConfiguration instruction, data;
     instruction.technology=pipeline?Technology::ROM:Technology::FF;
     data.technology=pipeline?Technology::SRAM:Technology::FF;
     instruction.expanded_endpoint=pipeline&&expanded;
     instruction.device.depth_words=16;
+    if (unified) {
+        require(pipeline && cached, "unified test requires cached advanced core");
+        instruction.technology = shared_technology;
+        instruction.expanded_endpoint = false;
+        instruction.device.depth_words = 32;
+        data = instruction;
+    }
     // addi x1,x0,8; addi x2,x0,-128; sb x2,0(x1); lb x3,0(x1); ebreak
     const auto program=branch_program
-        ? rv32i::RV32IProgram::fromWords({0x00800093,0xf8000113,0x00208023,0x00008183,
+        ? rv32i::RV32IProgram::fromWords({unified ? 0x04000093U : 0x00800093U,
+            0xf8000113,0x00208023,0x00008183,
             0x00218463,0x00008023,0x00200213,0xfff20213,0xfe021ee3,0x0080006f,0x00000000,0x00008283,0x00100073})
-        : rv32i::RV32IProgram::fromWords({0x00800093,0xf8000113,0x00208023,0x00008183,0x00100073});
+        : rv32i::RV32IProgram::fromWords({unified ? 0x04000093U : 0x00800093U,
+            0xf8000113,0x00208023,0x00008183,0x00100073});
     const char* hex="0123456789abcdef";
-    if(pipeline) for(auto byte:program.bytes()) { instruction.device.image_hex+=hex[byte>>4];instruction.device.image_hex+=hex[byte&15]; }
-    data.device.depth_words=4;data.expanded_endpoint=pipeline&&expanded;
+    if(pipeline && !unified) for(auto byte:program.bytes()) {
+        instruction.device.image_hex+=hex[byte>>4];instruction.device.image_hex+=hex[byte&15];
+    }
+    if (!unified) { data.device.depth_words=4;data.expanded_endpoint=pipeline&&expanded; }
+    std::optional<CacheConfig> instruction_cache, data_cache;
+    if (cached) {
+        require(pipeline, "cached program requires the advanced pipeline");
+        instruction_cache.emplace();
+        instruction_cache->sets = 4;
+        instruction_cache->backing_depth_words = instruction.device.depth_words;
+        data_cache.emplace();
+        data_cache->sets = 2;
+        data_cache->backing_depth_words = data.device.depth_words;
+        data_cache->read_write = true;
+    }
     auto profile=std::make_shared<const BuildProfile>(withExactFidelity(canonicalDefaultProfile(),
         "CPU.CORE",behavioral?Fidelity::Behavioral:Fidelity::Structural));
     auto manifest=std::make_shared<BuildManifest>(profile->name(),profile->fingerprint());
     auto context=BuildContext::rootScope(builtinComponentCatalog(),profile,manifest)->child("CPU",std::nullopt);
     auto root=Component::createWithContext<RV32IProgramRoot>(context,"CPU",
         pipeline?families::RV32IFiveStageCore:families::RV32ISingleCycleCore,2000,instruction,data,
-        pipeline ? rv32i::PredictionConfig{policy,4}.parameters() : ParameterMap{});
-    if(!pipeline) root->loadProgram(program);
+        pipeline ? rv32i::PredictionConfig{policy,4}.parameters() : ParameterMap{},
+        instruction_cache, data_cache, unified);
+    if(!pipeline || unified) root->loadProgram(program);
     std::shared_ptr<IOComponent> core;
     for(auto child:root->getChildren()) if(child->getName()=="CORE") core=std::dynamic_pointer_cast<IOComponent>(child);
     require(core!=nullptr,"missing CPU core");
@@ -261,17 +289,36 @@ void checkProgram(bool pipeline, bool expanded, bool behavioral, rv32i::Predicti
     require(cycles<500,"CPU endpoint program timed out");
     const auto state=root->snapshotArchitecturalState().toKnownState();
     require(state.x[3]==0xffffff80,"CPU endpoint program result");
+    if (unified)
+        require(root->readDataBytes(64, 1) == std::vector<uint8_t>{0x80},
+                "Unified RAM did not receive the data-cache store");
     if(branch_program) {
         require(state.x[4]==0,"predicted loop did not complete");
         require(state.x[5]==0xffffff80,"wrong-path store was not squashed");
     }
-    std::cout << "program " << (pipeline?"pipeline":"single-cycle") << " " << (expanded?"endpoint":"container") << "/" << (behavioral?"behavioral":"structural") << " passed, cycles=" << cycles+1 << "\n";
+    std::cout << "program " << (pipeline?"pipeline":"single-cycle") << " " << (expanded?"endpoint":"container") << "/" << (behavioral?"behavioral":"structural") << (cached?"/cached":"") << (unified?"/unified/"+std::string(technologyName(shared_technology)):"") << " passed, cycles=" << cycles+1 << "\n";
 }
 }
-int main() {
+int main(int argc, char** argv) {
     try {
+        if (argc == 2 && std::string(argv[1]) == "--cached-only") {
+            checkProgram(true,false,true,rv32i::PredictionPolicy::NotTaken,false,true);
+            checkProgram(true,false,false,rv32i::PredictionPolicy::NotTaken,false,true);
+            checkProgram(true,false,true,rv32i::PredictionPolicy::TwoBit,true,true);
+            checkProgram(true,false,false,rv32i::PredictionPolicy::TwoBit,true,true);
+            return 0;
+        }
+        if (argc == 2 && std::string(argv[1]) == "--unified-only") {
+            checkProgram(true,false,true,rv32i::PredictionPolicy::NotTaken,false,true,true);
+            checkProgram(true,false,false,rv32i::PredictionPolicy::NotTaken,false,true,true);
+            checkProgram(true,false,true,rv32i::PredictionPolicy::NotTaken,false,true,true,Technology::SRAM);
+            checkProgram(true,false,false,rv32i::PredictionPolicy::NotTaken,false,true,true,Technology::SRAM);
+            checkProgram(true,false,true,rv32i::PredictionPolicy::TwoBit,true,true,true);
+            checkProgram(true,false,false,rv32i::PredictionPolicy::TwoBit,true,true,true);
+            return 0;
+        }
         {
-            auto root=createMemoryContainer<32,SRAMModel>("IMAGE");
+            auto root=createBehavioralMemoryDevice("IMAGE",32,Technology::SRAM);
             auto memory=std::dynamic_pointer_cast<MemoryDeviceStorage>(root);
             memory->clearContents();memory->initializeBytes(1,{0x80,0xff});
             require(memory->readBytes(0,4)==std::vector<uint8_t>({0,0x80,0xff,0}),"pre-simulation image provisioning");
@@ -288,6 +335,16 @@ int main() {
                              rv32i::PredictionPolicy::OneBit,rv32i::PredictionPolicy::TwoBit})
                 for(bool behavioral:{false,true}) checkProgram(true,expanded,behavioral,policy,true);
         }
+        checkProgram(true,false,true,rv32i::PredictionPolicy::NotTaken,false,true);
+        checkProgram(true,false,false,rv32i::PredictionPolicy::NotTaken,false,true);
+        checkProgram(true,false,true,rv32i::PredictionPolicy::TwoBit,true,true);
+        checkProgram(true,false,false,rv32i::PredictionPolicy::TwoBit,true,true);
+        checkProgram(true,false,true,rv32i::PredictionPolicy::NotTaken,false,true,true);
+        checkProgram(true,false,false,rv32i::PredictionPolicy::NotTaken,false,true,true);
+        checkProgram(true,false,true,rv32i::PredictionPolicy::NotTaken,false,true,true,Technology::SRAM);
+        checkProgram(true,false,false,rv32i::PredictionPolicy::NotTaken,false,true,true,Technology::SRAM);
+        checkProgram(true,false,true,rv32i::PredictionPolicy::TwoBit,true,true,true);
+        checkProgram(true,false,false,rv32i::PredictionPolicy::TwoBit,true,true,true);
         std::cout << "RV32I universal memory integration passed\n";
         return 0;
     } catch(const std::exception& e) { std::cerr << e.what() << '\n';return 1; }

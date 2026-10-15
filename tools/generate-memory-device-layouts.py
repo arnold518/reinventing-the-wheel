@@ -14,7 +14,7 @@ import memory_device_layout
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--reflow", action="store_true", help="Explicitly refresh only new-family matrix placements")
-    parser.add_argument("--transactions", action="store_true", help="Only transaction/controller/container documentation")
+    parser.add_argument("--transactions", action="store_true", help="Only transaction/controller/native-device documentation")
     args = parser.parse_args()
     layout = server.LayoutManager(root / "visualizer-v2/layout.json")
     sections = ("3.2", "3.3", "3.1.6") if args.transactions else ("3.1.0", "3.1.3", "3.1.4", "3.1.5")
@@ -23,7 +23,7 @@ def main():
         overrides = ({"MEMORY_ENDPOINT_ROOT": "behavioral" if scenario == "scalable-memory-container" else "structural"}
                      if args.transactions else {"MEMORY_ROOT": "structural"})
         session = server.CircuitSession(scenario, layout, profile_overrides=overrides)
-        transaction_kind = lambda kind: kind.startswith(("MemoryEndpoint<", "MemoryController<", "MemoryTransactionPort<", "MemoryResponseBuffer<", "MemoryFFRequestCheck", "MemoryPayloadMux", "Register<", "MemoryNativeSequencer<", "MemoryContainer<"))
+        transaction_kind = lambda kind: kind.startswith(("MemoryEndpoint<", "MemoryController<", "MemoryTransactionPort<", "MemoryResponseBuffer<", "MemoryFFRequestCheck", "MemoryPayloadMux", "Register<", "MemoryNativeSequencer<"))
         if args.transactions and args.reflow:
             # Only the newly introduced endpoint families belong to this reflow.
             # Native FF/SRAM/DRAM/ROM/flash layouts may contain user edits.

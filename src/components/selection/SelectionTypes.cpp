@@ -60,7 +60,7 @@ std::string canonicalContractId(std::string_view id) {
     };
     // Old order memory.<what>.<technology>.<width>.
     static constexpr std::pair<std::string_view, std::string_view> layers[] = {
-        {"memory.device.", "scalable-device"},
+        {"memory.device.", "device"},
         {"memory.controller.", "controller"},
         {"memory.endpoint.", "endpoint"},
         {"memory.scalable.", "scalable-endpoint"},
@@ -76,7 +76,13 @@ std::string canonicalContractId(std::string_view id) {
         if (dot == std::string_view::npos) break;
         return "memory." + std::string(rest.substr(0, dot)) + "." + std::string(what) + std::string(rest.substr(dot));
     }
-    return std::string(id);
+    // A saved scalable-device selection now uses the native device contract.
+    const auto legacy = std::string(id);
+    constexpr std::string_view retired_layer = ".scalable-device.";
+    const auto layer = legacy.find(retired_layer);
+    if (layer != std::string::npos)
+        return legacy.substr(0, layer) + ".device." + legacy.substr(layer + retired_layer.size());
+    return legacy;
 }
 
 } // namespace circuit

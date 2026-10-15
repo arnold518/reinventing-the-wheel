@@ -81,6 +81,7 @@ public:
             std::move(required_capabilities),
             std::move(semantic_domain),
             std::move(observation),
+            std::nullopt,
         };
     }
 

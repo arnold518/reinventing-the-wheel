@@ -5,7 +5,296 @@ what changed and why, what was verified, and any limits or deliberate
 omissions. Entries begin with adoption of this recording workflow; older
 history remains in Git and the archived reports.
 
+## 2026-10-16
+
+### Retire the redundant memory container and document test workflows
+
+- **Changed:** scalable endpoints now select each technology's behavioral
+  native device under the existing device contract while keeping the
+  controller visible. Retired container contract IDs map to native devices.
+  Updated memory pages, diagrams, visualizer aliases and examples. Added a
+  test and scenario workflow guide linked from AGENTS.md.
+- **Why:** the container only reselected and relabeled an existing behavioral
+  device; removing it leaves one replaceable native-device contract per
+  technology. The guide makes registry, CTest, scenario and site checks easier
+  to repeat when components change.
+- **Checked:** serial native build, 28 focused CTests, 601 delay-table entries
+  verified, diagram and JSON checks, full local Pages/WASM package with strict
+  MkDocs, and 7/7 focused browser/WASM parity checks passed.
+- **Limits:** the full CTest suite and published URL were not checked. These
+  memory and guide changes remain uncommitted in the local working tree.
+
+### Trigger Pages deployment from alpha
+
+- **Changed:** the Pages workflow push trigger now listens to `alpha`; the
+  workflow-only change was pushed to `origin/alpha`.
+- **Why:** `alpha` is the selected source branch, and no `github-pages` source
+  branch exists.
+- **Checked:** GitHub Actions reported a run in progress for the pushed
+  trigger commit. The full local site package and seven focused web checks
+  passed after the push.
+- **Limits:** the user directed us to treat publication as done while the
+  remote run continued; its final result and live URL were not verified. The
+  local memory and guide changes were not in that pushed commit.
+
+### Fix one technology stack for the cache experiments
+
+- **Changed:** replaced the broad FF/SRAM/DRAM performance sweeps in the open
+  cache record with a complete plan for SRAM L1 and L2 caches over DRAM main
+  memory. Fixed the initial geometry, small structural/scalable check, three
+  standalone paths, five CPU paths, workloads, counters and completion gates;
+  updated status.
+- **Why:** one consistent technology stack tests the intended cache hierarchy
+  without multiplying the campaign by technologies. DRAM is backing memory;
+  the cache's tag/data banks currently support SRAM or FF, not DRAM.
+- **Checked:** reviewed cache and endpoint source, CPU root and experiment
+  runner, benchmark tooling and current documentation; `git diff --check`
+  passed. No benchmark or simulation was run for this planning change.
+- **Limits:** SRAM cache-hit timing, shared CPU bypass/L2 wiring, benchmarks
+  and physical timing calibration remain open. The plan does not claim speedup.
+
+### Focus the planned CPU cache campaign
+
+- **Changed:** reduced the primary CPU matrix from nine variants to five:
+  separate memories, shared uncached memory, both L1s, L2 alone, and both
+  L1s over L2. Kept I-only/D-only runs as targeted follow-ups; updated the
+  open cache record and status.
+- **Why:** the five cases answer the main sharing, L1 and L2 questions while
+  avoiding duplicate `C-0`/shared-uncached runs and a broad ablation sweep.
+- **Checked:** reviewed the existing topology plan and cache contract;
+  `git diff --check` passed. No simulation was run for this planning change.
+- **Limits:** the CPU bypass, shared L2 and benchmark campaign remain to be
+  implemented.
+
+## 2026-10-15
+
+### Refine the advanced-core cache comparison matrix
+
+- **Changed:** specified nine CPU topologies in the open cache record:
+  separate memories, shared uncached memory, I/D L1 combinations, and the
+  same combinations over a shared L2. Added comparisons, workload choices,
+  counters, correctness gates and implementation order; updated status.
+- **Why:** one-level and two-level results need shared-memory controls, and
+  instruction/data cache effects need independent switches.
+- **Checked:** reviewed current CPU root/runner wiring, cache and arbiter
+  contracts, benchmark workload catalogue and memory-wait reference;
+  `git diff --check` passed after the documentation edit.
+- **Limits:** plan only. The shared uncached bypass, CPU-side L2 path and
+  nine-topology campaign have not been implemented or run.
+
+### Specify matched cache experiments
+
+- **Changed:** added an executable experiment protocol to the open cache
+  record and updated status. It defines direct-versus-cache, two-level and
+  advanced-core pairs, workloads, measured boundaries and result gates.
+- **Why:** cache traffic savings, modeled latency, CPU cycles and simulator
+  host cost need separate evidence under matched backing-memory conditions.
+- **Checked:** inspected the cache and memory contracts, current scenario and
+  benchmark runners, CPU topology construction and timing documentation;
+  `git diff --check` passed. No performance experiment was run.
+- **Limits:** this is a plan. No benchmark fixture, timing model or CPU path
+  was changed, and no direct-versus-cached performance run was made.
+
+### Recognize existing memory delay comparisons in the cache plan
+
+- **Changed:** corrected the open cache record and status to account for
+  `DelayRuleTest` and its gate-versus-compact memory timing comparisons.
+- **Why:** the prior timing review overlooked these tests and made a new
+  comparison phase sound necessary before exploratory cache experiments.
+- **Checked:** a focused run of five 8-bit endpoint contracts and an FF
+  variant completed 3,208 situations, with 970 paired output changes and no
+  delay-rule break or unrecorded closeness failure.
+- **Limits:** the self-timed DRAM endpoint yielded no paired output changes
+  in this focused run; exact transaction latency under every request and
+  physical hardware timing remain unverified. No cache speedup was measured.
+
+### Review memory realism before cache performance comparisons
+
+- **Changed:** added a current-source audit and staged comparison design to
+  the open cache record; clarified the outstanding timing work in status.
+- **Why:** structural/behavioral agreement establishes digital model fidelity,
+  while phase choices, controller waits and large-depth estimates still need
+  separate physical plausibility checks before interpreting cache speedups.
+- **Checked:** eight focused memory contract and timing CTests passed in the
+  existing `build-cleanup` binary; inspected cache, native-device, endpoint
+  and delay-table source plus the repository textbook and vendor references.
+- **Limits:** no code or timing model was changed, the test binary was not
+  rebuilt for this review, and no direct-versus-cached latency comparison was
+  run. Vendor specifications do not calibrate simulator ticks by themselves.
+
+### Explain cache parameters through four runnable configurations
+
+- **Changed:** rewrote the cache page's configuration and behavior text within
+  its component template, preserving the C++ reference. Added direct-mapped
+  and scalable single-cache scenarios plus a connected two-level FF-backed
+  scenario, with menu aliases, saved layouts and browser checks. Added an
+  opt-in precomputed-playback hook so the two-level layout can be built
+  without simulating its transactions, and documented that contract in the
+  test guide and reference.
+- **Why:** the original page offered one visual configuration and did not
+  clearly explain word width, sets, ways, line size or backing range.
+- **Checked:** eight focused native CTests passed; the strict Pages/WASM build
+  generated 30, 116 and 58 verified rows for the single-cache examples; the
+  focused memory browser test passed 1/1, including all four cache scenarios.
+  `CacheDocumentationTest` still compiles the unchanged C++ reference.
+- **Limits:** the first three examples script their lower port. The fourth
+  uses one requester and broadcasts invalidation only while both caches are
+  idle. The full native and browser suites were not rerun; these scenarios do
+  not establish cache speedup or coherence.
+
+### Broaden the cache scenario and verify a two-level cache path
+
+- **Changed:** expanded the visual component scenario to two sets, two ways
+  and two-word lines, covering spatial hits, LRU replacement, writes,
+  invalidation and range rejection. Added a headless upper-cache/lower-cache
+  fixture over FF RAM, including idle-time invalidation of both levels;
+  updated the saved layout and public page.
+- **Why:** the original one-line read-only scenario could not demonstrate the
+  cache geometry or whether cache components compose into levels.
+- **Checked:** native scenario and broad cache test passed; focused CTests
+  passed 3/3; the Pages build generated 116 WASM-verified cache rows and
+  passed strict MkDocs; the memory endpoint browser suite passed against
+  port 8893, including the two-way cache layout.
+- **Limits:** the stack is a functional single-requester path. CPU I/D
+  arbitration, MMIO bypass, coordinated invalidation, coherence and clock
+  measurements remain open. The first browser attempt used a venv without
+  Playwright; the installed system Python completed the test.
+
+### Replace the cache construction snippet with a behavioral reference
+
+- **Changed:** the public cache page now gives a compilable C++ reference for
+  lookup, full-line refill, two-way replacement, masked write-through and
+  invalidation. Added a documentation CTest that extracts the exact block.
+- **Why:** neighboring component pages use C++ examples to explain behavior;
+  merely constructing a cache did not explain its algorithm.
+- **Checked:** the new CTest passed 1/1; the strict MkDocs build passed with
+  the current generated cache rows; `git diff --check` passed.
+- **Limits:** the reference covers successful settled binary transactions,
+  not clocked handshakes, four-state behavior or failure statuses. It is not
+  a registered behavioral cache implementation.
+
+### Make the cache scenario runnable in the local WebAssembly visualizer
+
+- **Changed:** activated the cached Emscripten SDK, rebuilt the Pages
+  simulator, and regenerated the cache example from its WASM timeline.
+  Extended the memory browser smoke check to include the cache page and a
+  cache-specific layout assertion. Clarified the separate tag/data stores
+  in the public reference.
+- **Why:** the new cache scenario existed in native tests but the previous
+  local browser package could not load it.
+- **Checked:** serial WASM build, layout packaging, 12 verified cache rows,
+  strict Pages build, and focused `MemoryEndpointBrowserTest` passed. Port
+  8893 serves the new scenario JSON and the byte-identical rebuilt WASM
+  binary; its cache page returned HTTP 200. `git diff --check` passed.
+- **Limits:** the whole browser smoke suite and GitHub Pages deployment were
+  not run; there is still no fused behavioral cache or RV32I integration.
+
+### Restore the local Pages preview after adding the cache example
+
+- **Changed:** placed the native-verified 12-row cache export into the
+  ignored local example bundle used by the port 8893 MkDocs service. Recorded
+  the outage and clarified the cache page's test and fidelity scope.
+- **Why:** the new page requested `cache-read-hit`, but the preview's older
+  generated bundle lacked that scenario; MkDocs aborted its rebuild and
+  left the service unresponsive.
+- **Checked:** the preview's strict MkDocs build passed; its home, cache and
+  simulator pages returned HTTP 200. Both cache tests passed 2/2, including
+  the headless broad test and the recorded component scenario.
+- **Limits:** at that recovery step, the simulator package still predated
+  the cache scenario. The subsequent Pages rebuild above replaced it.
+
+### Add endpoint-backed structural and scalable-storage caches
+
+- **Changed:** added `Cache<W>` for 8/16/32-bit words with structural tag
+  lookup, one/two-way replacement, one/two/four-word fills, all-line
+  invalidation, and optional masked write-through/no-write-allocate. Tag and
+  data banks independently use existing FF or SRAM endpoints. A second
+  catalog form selects scalable endpoint storage while retaining the same
+  public pins and structural controller. Added a registered cold-miss/hit
+  component scenario, visualizer alias and saved layout. Rewrote the public
+  cache reference in the component guide's format, with a generated example.
+- **Why:** build a reusable cache from the existing transaction endpoint
+  contract and memory technologies before wiring one into RV32I.
+- **Checked:** serial `SimulationTestRunner` build; six focused cache,
+  catalog and profile CTests passed. Cache checks include a deterministic
+  independent set/way reference stream and partial-fill fault. The new
+  component scenario passed with 12 checkpoints. A final focused CTest run
+  passed 4/4, including visualizer catalog (8/8) against the rebuilt native
+  backend. Native-generated example rows passed a strict MkDocs build and
+  appeared in the rendered page. The C++ page example compiled; `git diff
+  --check` passed.
+- **Limits:** geometry is explicitly bounded, the standalone fixture does
+  not cover every four-state/fault timing path, and cache timing and
+  advanced-core integration have not been measured. Shared RAM and
+  arbitration remain open in the cache record. The initial Pages attempt
+  lacked an active `emcmake`; the subsequent rebuild above verified the
+  local browser scenario. The published site has not been checked.
+
 ## 2026-10-14
+
+### Define cache geometry as construction parameters
+
+- **Changed:** refined the proposed `Cache<W>` interface: W selects the
+  supported endpoint word-width specialization; textbook sets, ways and
+  block bytes become fixed construction parameters; address width remains
+  32 bits under the current endpoint contract. Derive words per line from
+  block bytes and W instead of exposing both values independently.
+- **Why:** the parameters must shape a structural circuit, while the existing
+  component catalog needs to select geometry without a C++ type for every
+  combination.
+- **Checked:** current memory width templates, construction configuration,
+  endpoint catalog parameters and the local textbook's cache organization;
+  edited Markdown links and whitespace.
+- **Limits:** design clarification only; no cache code, build or test ran.
+
+### Generalize the proposed cache across endpoint word widths
+
+- **Changed:** corrected the cache plan from a 32-bit-only component to one
+  width-parameterized structural blueprint with 8, 16 and 32-bit contracts.
+  Distinguished 32-bit byte addresses from data-word width, kept 32-bit tag
+  endpoints, and added width and geometry proof gates.
+- **Why:** the existing memory endpoints already generalize word width; a
+  reusable cache should match all supported endpoint widths.
+- **Checked:** endpoint catalog registrations, parameter validation, REQ/RSP
+  pin schema, transaction frontend and storage widths; edited Markdown links
+  and whitespace.
+- **Limits:** design correction only; no cache code or width-parity test ran.
+
+### Specify cache components and endpoint wiring
+
+- **Changed:** added an ordered inventory for the proposed `Cache32`
+  assembly, structural tag matcher, line state, controller, reused tag/data
+  endpoints and standalone test root. Clarified exact REQ/RSP port
+  compatibility and the distinct cache-control responsibility.
+- **Why:** memory endpoints supply replaceable storage, while a cache must
+  still map addresses, track valid tags and coordinate refill transactions.
+- **Checked:** current endpoint pin schema and assembly, transaction frontend,
+  gate/splitter/register blocks and an existing structural tag comparator;
+  edited Markdown links and whitespace.
+- **Limits:** planning only; no code, compile or simulation was run.
+
+### Require geometry evidence for the cache plan
+
+- **Changed:** clarified how the textbook's set, way, block-size and address
+  parameters determine the structural circuit. Added one- and two-set checks
+  to the first read-cache gate, followed by separate block-size and way checks.
+- **Why:** a single four-set example cannot demonstrate a general cache.
+- **Checked:** current cache record and local textbook chapter 6; edited
+  Markdown links and whitespace.
+- **Limits:** this is a planning correction; no cache implementation or
+  geometry test was run.
+
+### Scope the first structural-cache deliverable
+
+- **Changed:** specified a standalone four-set, one-way, one-word read-cache
+  slice, its new structural logic, reused endpoint children, a concrete
+  hit/conflict trace and an internal endpoint replacement check.
+- **Why:** the first implementation step now has an observable finish line
+  while keeping memory technologies selectable.
+- **Checked:** current cache record, memory protocol, endpoint classes,
+  transaction frontend, component catalog and structural wiring; edited
+  Markdown links and whitespace.
+- **Limits:** proposed scope only; no cache code or simulator test was run.
 
 ### Detail the standalone structural-cache plan
 

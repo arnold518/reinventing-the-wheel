@@ -1,4 +1,4 @@
-"""Check only the new protocol/controller/container pages, one WASM at a time."""
+"""Check protocol, endpoint, container and cache pages with the WASM simulator."""
 from pathlib import Path
 import re
 import shutil
@@ -47,6 +47,26 @@ def verify_endpoint_layout(page):
     page.evaluate("()=>smoothlyFocusComponent(app.rootId)")
     page.wait_for_function(settled)
 
+
+def verify_cache_layout(page, width, ways):
+    root = page.evaluate("""() => {
+        const cache = app.components.get(app.rootId);
+        return {type: cache.type, fidelity: cache.fidelity,
+            children: cache.childIds.map(id => ({name: app.components.get(id).name,
+                rect: app.components.get(id).rect}))};
+    }""")
+    assert root["type"] == f"Cache<{width}>" and root["fidelity"] == "structural", root
+    children = {child["name"]: child["rect"] for child in root["children"]}
+    assert {"CONTROLLER"} | {f"{kind}_STORE_{way}" for kind in ("TAG", "DATA")
+            for way in range(ways)} <= children.keys(), children
+    assert all(rect and rect["w"] > 0 and rect["h"] > 0 for rect in children.values()), children
+    for way in range(ways):
+        tag, data = children[f"TAG_STORE_{way}"], children[f"DATA_STORE_{way}"]
+        assert tag["x"] + tag["w"] < data["x"], (way, tag, data)
+        assert abs((tag["y"] + tag["h"] / 2) - (data["y"] + data["h"] / 2)) < 0.5, (way, tag, data)
+    if ways == 2:
+        assert children["TAG_STORE_0"]["y"] + children["TAG_STORE_0"]["h"] < children["TAG_STORE_1"]["y"]
+
 root=Path(__file__).resolve().parents[2]
 base=sys.argv[1] if len(sys.argv)>1 else "http://127.0.0.1:8893/"
 screens=Path(sys.argv[2]) if len(sys.argv)>2 else None
@@ -55,13 +75,13 @@ cases=[]
 with sync_playwright() as p:
     browser=p.chromium.launch(executable_path=shutil.which("google-chrome") or shutil.which("chromium"),
                               headless=True,args=["--no-sandbox"])
-    for section in ("3.2","3.3","3.1.6"):
+    for section in ("3.2","3.3","3.1.6","3.4"):
         context=browser.new_context(java_script_enabled=False,viewport={"width":1440,"height":1000})
         page=context.new_page()
         assert page.goto(urljoin(base,f"memory/{section}/"),wait_until="domcontentloaded").ok
         source=(root/f"site-docs/memory/{section}.md").read_text()
         scenarios=re.findall(r"<!-- simulator-examples: (\S+) (\S+) -->",source)
-        assert page.locator(".simulator-embed iframe").count()==len(scenarios)
+        assert page.locator(".simulator-embed iframe").count()==len(scenarios)+(section=="3.4")
         assert page.locator("article table").first.locator("thead th").all_text_contents()==["Component","Description","Structural","Behavioral"]
         for scenario,_ in scenarios:
             block=page.locator(f'.example-table-block[data-scenario="{scenario}"]')
@@ -70,6 +90,20 @@ with sync_playwright() as p:
                 pins:Object.fromEntries([...row.querySelectorAll('td[data-bits]')].filter(c=>c.dataset.bits)
                     .map(c=>[c.dataset.pin,c.dataset.bits]))}))""")
             assert rows,(section,scenario)
+            if scenario == "cache-read-hit":
+                labels = {row["label"] for row in rows}
+                assert {"same-line-response", "replace-lru-response",
+                        "write-hit-response", "write-miss-response",
+                        "refill-after-invalidate-response", "out-of-range-response"} <= labels
+            if scenario == "cache-direct-mapped":
+                labels = {row["label"] for row in rows}
+                assert {"same-word-response", "conflict-response",
+                        "evicted-word-response", "out-of-range-response"} <= labels
+            if scenario == "cache-scalable-two-way":
+                labels = {row["label"] for row in rows}
+                assert {"neighbor-response", "second-way-response",
+                        "third-conflict-response", "retained-way-response",
+                        "evicted-way-response"} <= labels
             cases.append((scenario,block.get_attribute("data-profile"),rows))
         for width in (640,360):
             page.set_viewport_size({"width":width,"height":1000})
@@ -95,7 +129,12 @@ with sync_playwright() as p:
         page.evaluate("() => {app.explorer.setOpen(true,{persist:false});smoothlyFocusComponent(app.rootId);}")
         page.wait_for_function("!app.cameraAnimation && !app.geometryDirty && !app.topologyRequestInFlight && !app.pendingScopeIds.size")
         if screens: page.screenshot(path=str(screens/f"{scenario}.png"))
-        verify_endpoint_layout(page)
+        if scenario in ("cache-read-hit", "cache-direct-mapped", "cache-scalable-two-way"):
+            width,ways = {"cache-read-hit":(8,2),"cache-direct-mapped":(32,1),
+                          "cache-scalable-two-way":(32,2)}[scenario]
+            verify_cache_layout(page,width,ways)
+        else:
+            verify_endpoint_layout(page)
         if scenario=="memory-endpoint-sram":
             page.evaluate("() => smoothlyFocusComponent(app.rootId+'.MEMORY.STORAGE')")
             page.wait_for_function("!app.cameraAnimation && !app.geometryDirty && !app.topologyRequestInFlight && !app.pendingScopeIds.size")
@@ -112,15 +151,15 @@ with sync_playwright() as p:
             page.locator('.explorer-row.selected .explorer-arrow').click()
             page.locator('#apply-profile').click()
             page.wait_for_function("app.components.size===1 && app.components.get(app.rootId).fidelity==='behavioral' && document.querySelector('#loading').classList.contains('hidden')")
-        if scenario in ("scalable-memory-container", "native-memory-container") or scenario.startswith("memory-endpoint-"):
+        if scenario in ("scalable-memory-container", "native-memory-container", "native-memory-device") or scenario.startswith("memory-endpoint-"):
             info=page.evaluate("""async()=>{await setStateIndex(app.timestamps.length-1);return app.componentStates.get(app.rootId);}""")
             assert info and info["supported"] and len(info["windowWords"])==4
-            assert ("FAULT" if scenario == "native-memory-container" else "RSP_STATUS") in info["ports"]
+            assert ("FAULT" if scenario in ("native-memory-container", "native-memory-device") else "RSP_STATUS") in info["ports"]
             labels=page.evaluate("""async()=>{const labels=[],original=ctx.fillText;
                 ctx.fillText=function(text,...args){labels.push(String(text));return original.call(this,text,...args)};
                 try{requestRender();await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)))}
                 finally{ctx.fillText=original}return labels;}""")
-            if scenario == "native-memory-container":
+            if scenario in ("native-memory-container", "native-memory-device"):
                 # A direct FF device has a live word-address port.
                 assert "REQ_VALID" not in info["ports"]
                 assert info["activeAddress"] is not None
@@ -135,4 +174,27 @@ with sync_playwright() as p:
         assert not api,(scenario,api)
         context.close()
         print(f"{scenario}: documentation, WASM, controls and inspector passed",flush=True)
+    context=browser.new_context(viewport={"width":1440,"height":1000})
+    page=context.new_page();errors=[];api=[]
+    page.on("pageerror",lambda e:errors.append(str(e)))
+    page.on("request",lambda r:api.append(r.url) if "/api/" in r.url else None)
+    page.goto(urljoin(base,"simulator/?scenario=cache-two-level"),wait_until="domcontentloaded")
+    page.locator("body[data-circuitsim-status='ready']").wait_for(timeout=90000)
+    assert page.locator("body").get_attribute("data-circuitsim-runtime")=="wasm"
+    page.evaluate("() => {app.explorer.setOpen(true,{persist:false});smoothlyFocusComponent(app.rootId);}")
+    page.wait_for_function("!app.cameraAnimation && !app.geometryDirty && !app.topologyRequestInFlight && !app.pendingScopeIds.size")
+    hierarchy=page.evaluate("""()=>({root:app.components.get(app.rootId).type,
+        children:app.components.get(app.rootId).childIds.map(id=>({name:app.components.get(id).name,
+            rect:app.components.get(id).rect})),labels:app.checkpoints.map(c=>c.label)})""")
+    assert hierarchy["root"]=="CacheFixture",hierarchy
+    assert {"CACHE","LOWER_CACHE","BACKING"}<={c["name"] for c in hierarchy["children"]},hierarchy
+    assert all(c["rect"] and c["rect"]["w"]>0 for c in hierarchy["children"]),hierarchy
+    assert hierarchy["labels"]==["ready","cold-both-levels","l1-hit","l2-hit-neighbor",
+        "l2-hit-first","second-l2-line","write-through","read-after-write",
+        "both-invalidated","refill-after-invalidation"],hierarchy
+    if screens: page.screenshot(path=str(screens/"cache-two-level.png"))
+    assert not errors,errors
+    assert not api,api
+    context.close()
+    print("cache-two-level: connected L1/L2/RAM WASM scenario passed",flush=True)
     browser.close()

@@ -11,7 +11,7 @@ ENDPOINT_TEST(MemoryEndpointDRAMTest)
 ENDPOINT_TEST(MemoryEndpointROMTest)
 ENDPOINT_TEST(MemoryEndpointFlashTest)
 ENDPOINT_TEST(ScalableMemoryEndpointTest)
-ENDPOINT_TEST(NativeMemoryContainerTest)
+ENDPOINT_TEST(NativeMemoryDeviceTest)
 #undef ENDPOINT_TEST
 class RegisterWidthsTest : public StandaloneVerificationTest {
 public: std::string getTestName() const override { return "RegisterWidthsTest"; }

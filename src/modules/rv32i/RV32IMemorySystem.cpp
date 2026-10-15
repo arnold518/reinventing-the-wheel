@@ -35,11 +35,11 @@ void wireMemorySystem(ComponentBuilder& b, const std::shared_ptr<IOComponent>& c
         w.connect(clock,memory->getInputPin("CLK"));
         // CPU reset must not erase the loaded program or data image.
         w.connect(reset,memory->getInputPin("RST"));
-        for (auto& [name,pin] : memory->getAllInputPins()) {
-            if(name=="CLK" || name=="RST") continue;
-            w.connect(core->getOutputPinDynamic(prefix+name),pin);
-        }
-        for (auto& [name,pin] : memory->getAllOutputPins()) w.connect(pin,core->getInputPinDynamic(prefix+name));
+        for (auto name : {"REQ_VALID", "REQ_OP", "REQ_ADDR", "REQ_WRITE_DATA",
+                          "REQ_WRITE_MASK", "RSP_READY"})
+            w.connect(core->getOutputPinDynamic(prefix + name), memory->getInputPinDynamic(name));
+        for (auto name : {"REQ_READY", "RSP_VALID", "RSP_READ_DATA", "RSP_STATUS"})
+            w.connect(memory->getOutputPinDynamic(name), core->getInputPinDynamic(prefix + name));
     }
     w.finish();
 }

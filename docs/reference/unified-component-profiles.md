@@ -41,9 +41,16 @@ fidelities; it is not a third selectable value.
 | `BuildContext` | Carries the one profile during recursive construction |
 | `BuildManifest` | Records what was actually selected at every created node |
 
-The profile selects implementations. It does not describe internal wiring.
+The profile normally selects implementations. It does not describe internal wiring.
 Each structural component still owns its exact child-and-wire blueprint in
 `buildInternals()`.
+
+A parent that cannot use one child fidelity may put `required_fidelity` on its
+`ComponentBuildRequest`. This explicit requirement takes precedence over a
+profile rule and fails if that implementation is unavailable. The structural
+scalable memory endpoint uses it to keep a visible controller while requiring
+the native device's behavioral implementation at any capacity. The manifest
+records the selected native device contract and fidelity.
 
 ## Rule behavior
 

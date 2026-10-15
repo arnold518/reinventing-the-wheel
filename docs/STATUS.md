@@ -1,6 +1,6 @@
 # Status
 
-Updated: 2026-10-14.
+Updated: 2026-10-16.
 
 This is the living project-wide view. Rewrite it when the implementation or
 work state changes. Keep dated decisions and validation results in
@@ -13,8 +13,17 @@ work state changes. Keep dated decisions and validation results in
   component families, memory devices and RV32I cores. The public component
   and simulator reference is the [MkDocs source](../site-docs/index.md).
 - The browser visualizer runs with a native backend or WebAssembly. The
-  `github-pages` workflow builds and tests the combined documentation and
-  simulator site before deployment.
+  `github-pages` workflow now triggers from `alpha` and builds and tests the
+  combined documentation and simulator site before deployment. Its trigger
+  commit was pushed; the final live URL was not checked. See the closed
+  [Pages readiness record](records/2026-10-16-github-pages-readiness.md).
+- Scalable memory endpoints use a visible controller with each technology's
+  behavioral native device. The redundant memory container contract is
+  retired with saved-ID aliases. The [retirement record](records/2026-10-16-native-memory-device-retirement.md)
+  reports 28 focused native and seven local web checks plus the Pages build.
+- The [test and scenario guide](guides/tests-and-scenarios.md) documents the
+  registry, focused checks, visualizer aliases and generated examples; its
+  [record](records/2026-10-16-tests-and-scenarios-guide.md) is closed.
 - Current internal guidance is indexed in [docs/README.md](README.md).
   Historical plans, retired guides and completed reports are listed in the
   [archive index](archive/README.md).
@@ -51,6 +60,16 @@ work state changes. Keep dated decisions and validation results in
 
 ## In progress
 
+- [Realistic leaf delays and gate-level memory control](records/2026-10-16-realistic-timing-plan.md):
+  the owner decided to give all leaf parts (gates, wiring, memory electrical
+  stand-ins) realistic delays, keep behavioral parts derived from their gate
+  forms, and rebuild the memory control now hidden in C++ as gates. It follows
+  the closed [memory timing realism review](records/2026-10-16-memory-timing-realism-review.md),
+  which found memory access time almost entirely uncalibrated C++ timers and
+  guards. Three design choices (gate model, memory timing source,
+  calibration reference) are open; no code has changed. The cache
+  experiment waits on this work.
+
 - [Future steps plan](records/2026-10-14-future-steps-plan.md): current CPU,
   memory and viewer boundaries assessed against interactive games, a
   general-purpose GPU and AI accelerators. The owner chose cache work,
@@ -63,18 +82,43 @@ work state changes. Keep dated decisions and validation results in
   first game is not selected.
 
 - [Cache system plan](records/2026-10-14-cache-system-plan.md): the adopted
-  order is standalone structural cache with one future scalable-cache
-  contract, measured/scoped scalable-memory timing plus one shared RAM image,
-  then equivalent scalable cache components and program studies. The advanced
-  core keeps two request paths; a 2:1 arbiter at one backing port is the
-  proposed first integration. Geometry, write policy, timing extrapolation,
-  code-store visibility and later DMA sharing remain design choices. A
-  source review found that common REQ/RSP endpoints can serve cache tag/data
-  banks and backing memory without a technology-specific pin adapter. Their
-  supported operations and timing still differ. A detailed standalone
-  structural-cache proposal now defines a single external cache contract,
-  independently selectable endpoint banks, build increments and proof gates
-  grounded in the local textbook. No cache or unified-RAM platform exists yet.
+  standalone `Cache<W>` exists for W=8/16/32. It has structural lookup and
+  refill, up to two ways with LRU, invalidation and write-through writes.
+  Expanded and scalable forms share pins and control while selecting FF/SRAM
+  tag and data endpoints independently. Four public examples now cover a
+  direct-mapped cache, a small two-way cache with writes, a larger scalable
+  cache and a connected L1/L2 path over FF RAM. Native scenario, catalog,
+  layout and documentation checks pass. The focused Pages/WASM build produced
+  30, 116 and 58 verified example rows for the three single-cache scenarios;
+  the two-level timeline has ten checkpoints. The focused browser test passed
+  all four examples. The page keeps a compiled binary C++ reference for
+  the cache algorithm. An optional advanced-core test path connects I/D
+  caches through a structural arbiter to one shared RAM; short programs pass.
+  The supported geometry is at most four expanded or 64 scalable sets, two
+  ways and four words per line. No fused behavioral cache, coherence or MMIO
+  bypass exists. The current short ROM/SRAM CPU fixtures show more cycles
+  with caches (28 to 63 and 70 to 161), so no program speedup is established.
+  Small-memory timing calibration and representative workload measurements
+  remain open. The timing-model review distinguishes small structural/compact
+  equivalence from physical calibration. Existing delay-rule comparisons
+  support starting matched direct-versus-cached endpoint experiments now;
+  per-request parity and CPU speed claims still require those measurements.
+  The open record now specifies one focused performance stack: SRAM tag/data
+  banks in separate I/D L1s and a shared L2, over DRAM main memory. It plans
+  a small structural/scalable timing check, three standalone paths and five
+  CPU topologies: two separate memories, shared uncached RAM, both L1s,
+  shared L2 alone, and both L1s over L2. Other technologies and I-only/D-only
+  runs are targeted diagnostics, not full performance panels. The bypass/L2
+  CPU wiring, benchmark fixtures and runs are not yet built. SRAM cache-hit
+  timing and the cached CPU clock still need measurement before performance
+  claims. A 2026-10-16 latency probe (scratch program, not a CTest) measured
+  an SRAM-bank L1 hit at 14 cycles against 4 for a direct DRAM open-row read
+  and 10 for a row conflict at period 102. The planned campaign would almost
+  certainly show every cached path slower. The campaign is deferred until
+  the realistic-timing plan is finished; the record lists what must be
+  restated then (timing profile, DRAM geometry, cache sizes, bursts).
+  The public [cache reference](../site-docs/memory/3.4.md)
+  states the current contract and examples.
 
 - [Behavioral delays and the memory clock-edge rule](records/2026-10-12-behavioral-delays-and-memory-clock-edge.md):
   code and checks are done locally and not pushed. Published results for
@@ -108,5 +152,6 @@ work state changes. Keep dated decisions and validation results in
 - A prior full native suite passed after a clean rebuild at `448e4e3` (451 of
   451). The latest non-Embench native invocation accounted for 450 tests
   across a 449/450 sandbox run and a separate 1/1 retry outside the sandbox.
-  The strict MkDocs build passed with existing generated examples; the
-  WebAssembly package and browser checks have not been rerun since `34abf09`.
+  The current focused Pages/WASM build and memory endpoint browser check pass
+  on the uncommitted cache work. The full native and browser suites have not
+  been rerun for this worktree.

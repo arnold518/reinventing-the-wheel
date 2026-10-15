@@ -34,7 +34,7 @@ MEMORY_STATUS qualifies data errors by operation eligibility. A prior instructio
 
 ### Memory compatibility
 
-Use `MemoryEndpoint<ff,32>`, either fused behavioral or a visible FF controller plus native FF storage. The latter can use scalable `MemoryContainer<ff,32>` or a small cell-expanded `FFMemory<32>`. The [complete-core memory table](core.md#memory-integration) lists the supported assemblies and construction restrictions.
+Use `MemoryEndpoint<ff,32>`, either fused behavioral or a visible FF controller plus native FF storage. The latter can use scalable `FFMemory<32>` at behavioral fidelity or a small cell-expanded `FFMemory<32>`. The [complete-core memory table](core.md#memory-integration) lists the supported assemblies and construction restrictions.
 
 The surrounding EX/MEM and MEM/WB registers do not by themselves add memory-wait support. This baseline's control stalls for register dependencies and branches, not delayed `REQ_READY`/`RSP_VALID`. The current SRAM, DRAM, ROM, and NOR-flash endpoints are therefore unsuitable: a delayed load could reach MEM/WB with stale data if custom wiring bypassed the program root's non-FF guard. Use the transaction-capable `RV32IFiveStageCore` for those endpoints.
 

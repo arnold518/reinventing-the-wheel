@@ -252,7 +252,7 @@ class BankBehavioral : public Primitive {
 };
 class FlashBehavioral : public Primitive, public MemoryDeviceStorage {
   public:
-    const char* getTypeName() const override { return memoryDisplayType(Primitive::getTypeName()); }
+    const char* getTypeName() const override { return Primitive::getTypeName(); }
     FlashBehavioral(std::string n, size_t w, NORFlashConfig c)
         : Primitive(std::move(n), "NORFlash<" + std::to_string(w) + ">",
                     [=](IOComponent *s) { devicePins(s, w, c); }),

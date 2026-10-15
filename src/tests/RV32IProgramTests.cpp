@@ -2,7 +2,7 @@
 
 #include "components/Component.hpp"
 #include "components/selection/BuiltinComponentCatalog.hpp"
-#include "modules/memory/MemoryContainer.hpp"
+#include "modules/memory/NativeMemoryDevice.hpp"
 #include "rv32i/RV32IProgram.hpp"
 #include <cstdint>
 #include <exception>
@@ -106,7 +106,7 @@ void testProgramWordPacking() {
 }
 
 void testMemoryPreloadReadback() {
-    auto component = createMemoryContainer<32, circuit::memory::FFModel>("PROGRAM_MEMORY",
+    auto component = createBehavioralMemoryDevice("PROGRAM_MEMORY",32,circuit::memory::Technology::FF,
         circuit::memory::EndpointConfig{.depth_words = 65536});
     auto memory = std::dynamic_pointer_cast<MemoryStateView>(component);
     memory->clearMemoryImage();
@@ -167,7 +167,7 @@ void RV32IProgramLoaderTest::setupCircuit() {
         circuit::Fidelity::Behavioral,
         "rv32i-program-loader");
     auto build = circuit::builtinComponentCatalog().createRoot(
-        {"memory.ff.scalable-device.32", "RV32I_PROGRAM_LOADER_ROOT", {{"depth_words", "65536"}}, {}, {}, {}},
+        {"memory.ff.device.32", "RV32I_PROGRAM_LOADER_ROOT", {{"depth_words", "65536"}}, {}, {}, {}, circuit::Fidelity::Behavioral},
         std::move(profile));
     root = std::move(build.root);
     builder = std::make_unique<ComponentBuilder>(root);

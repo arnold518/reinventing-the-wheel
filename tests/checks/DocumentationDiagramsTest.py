@@ -78,11 +78,11 @@ class DocumentationDiagramsTest(unittest.TestCase):
 
         for child in ("controller", "native-device"):
             self.assertTrue(contains("endpoint", child))
-        for child in ("expanded-device", "container"):
+        for child in ("expanded-device", "behavioral-device"):
             self.assertTrue(contains("native-device", child))
         self.assertFalse(contains("controller", "native-device"))
         self.assertFalse(contains("endpoint", "transaction-interface"))
-        for label in ("MemoryEndpoint", "MemoryController", "MemoryContainer", "REQ_* / RSP_*",
+        for label in ("MemoryEndpoint", "MemoryController", "Behavioral device", "REQ_* / RSP_*",
                       "FF", "SRAM", "DRAM", "ROM", "NOR flash", "alternatives", "BehavioralMemoryEndpoint"):
             self.assertIn(label, html)
         for processor_term in ("RV32I", "single-cycle", "Single-cycle", "pipeline", "direct-core"):

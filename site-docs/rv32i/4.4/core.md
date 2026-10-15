@@ -198,9 +198,9 @@ The program root supplies a clock, this core, and two [MemoryEndpoint&lt;ff,32&g
 | `MemoryEndpoint<ff,32>`, fused behavioral implementation | Yes; default | Scalable instruction and read/write data storage |
 | `MemoryEndpoint<ff,32>`, visible FF controller plus native device | Yes | Same timing, with the controller/device boundary visible |
 | `MemoryEndpoint<sram,32>`, `<dram,32>`, `<rom,32>`, `<nor-flash,32>` | No, with their current controllers | These endpoints require delayed-response handling |
-| Native `MemoryContainer`, `FFMemory`, or other memory device alone | Not directly | Native pins need the matching controller to form an endpoint |
+| Native `FFMemory` or another memory device alone | Not directly | Native pins need the matching controller to form an endpoint |
 
-The visible FF assembly can use [MemoryContainer&lt;ff,32&gt;](../../memory/3.1.6.md) for scalable storage, or [FFMemory&lt;32&gt;](../../memory/3.1.1.md) for a small cell-expanded circuit. Keep scalable storage for program-sized images; choosing structural visualization does not require expanding every bit into a cell. Neither capacity nor behavioral/structural fidelity changes the zero-wait requirement. CPU reset resets the endpoint interface but does not erase its native storage.
+The visible FF assembly can use [FFMemory&lt;32&gt; at behavioral fidelity](../../memory/3.1.6.md) for scalable storage, or [FFMemory&lt;32&gt;](../../memory/3.1.1.md) for a small cell-expanded circuit. Keep scalable storage for program-sized images; choosing structural visualization does not require expanding every bit into a cell. Neither capacity nor behavioral/structural fidelity changes the zero-wait requirement. CPU reset resets the endpoint interface but does not erase its native storage.
 
 !!! warning "Matching pins do not make delayed memory compatible"
 

@@ -127,8 +127,7 @@ void registerBlock(ComponentCatalog &c, const std::string &id, const std::string
             }
         };
         i.factory = fidelity == Fidelity::Structural ? structural : behavioral;
-        if (fidelity == Fidelity::Behavioral &&
-            (id.find(".device.") != std::string::npos || id.find(".scalable-device.") != std::string::npos))
+        if (fidelity == Fidelity::Behavioral && id.find(".device.") != std::string::npos)
             i.capabilities = {"memory-state-view"};
         i.evidence = {VerificationStatus::Verified,
                       {terminal ? "explicit digital primitive, not transistor physics"
@@ -139,17 +138,18 @@ void registerBlock(ComponentCatalog &c, const std::string &id, const std::string
                       {"MemoryDeviceTimingTest"},
                       "four-state",
                       "stable-after-settle"};
-        if (id.find(".scalable-device.") != std::string::npos)
-            i.evidence.equivalence_tests.push_back("NativeMemoryDeviceContractTest");
         c.registerImplementation(std::move(i));
     }
 }
 std::shared_ptr<IOComponent> child(ComponentBuilder &b, IOComponent &parent, const std::string &id,
-                                   const std::string &name, ParameterMap params) {
+                                   const std::string &name, ParameterMap params,
+                                   std::optional<Fidelity> required_fidelity) {
     if (b.getBuildContext())
-        return b.addByContract({id, name, std::move(params), {}, {}, {}});
-    auto built = builtinComponentCatalog().createRoot({id, name, std::move(params), {}, {}, {}},
-                                                      canonicalDefaultProfile());
+        return b.addByContract({id, name, std::move(params), {}, {}, {}, required_fidelity});
+    auto profile = canonicalDefaultProfile();
+    if (required_fidelity) profile = withExactFidelity(profile, name, *required_fidelity);
+    auto built = builtinComponentCatalog().createRoot({id, name, std::move(params), {}, {}, {}, required_fidelity},
+                                                      profile);
     auto io = std::dynamic_pointer_cast<IOComponent>(built.root);
     parent.addChild(io);
     return io;

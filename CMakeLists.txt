@@ -60,10 +60,12 @@ set(CORE_LOGIC_SOURCES
     src/modules/memory/MemoryStorage.cpp
     src/modules/memory/MemoryProtocol.cpp
     src/modules/memory/MemoryController.cpp
-    src/modules/memory/MemoryContainer.cpp
+    src/modules/memory/NativeMemoryDevice.cpp
     src/modules/memory/BehavioralMemoryEndpoint.cpp
     src/modules/memory/MemoryEndpointEngine.cpp
     src/modules/memory/MemoryEndpointCatalog.cpp
+    src/modules/memory/Cache.cpp
+    src/modules/memory/TwoPortMemoryArbiter.cpp
     src/modules/memory/FFMemoryCatalog.cpp
     src/modules/memory/FFMemory.cpp
     src/modules/memory/MemoryArrayBlocks.cpp
@@ -77,6 +79,7 @@ set(CORE_LOGIC_SOURCES
     src/tests/MemoryDeviceTests.cpp
     src/tests/MemoryHelperTests.cpp
     src/tests/MemoryEndpointTests.cpp
+    src/tests/CacheTests.cpp
     src/tests/FFMemoryTests.cpp
     src/modules/storage/RegisterBehavioral.cpp
     src/modules/rv32i/RegisterFile32x32Behavioral.cpp
