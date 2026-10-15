@@ -48,6 +48,14 @@ const std::vector<TimingProfile>& profiles() {
             profile.memory.rom_settle = ps(3.0);
             profile.memory.rom_column_base = ps(4.0);
             profile.memory.rom_column_per_row = ps(0.1);
+            for (auto* interval : {&profile.memory.dram_wordline, &profile.memory.dram_sense_base, &profile.memory.dram_restore,
+                                   &profile.memory.dram_read, &profile.memory.dram_write_on, &profile.memory.dram_write_off,
+                                   &profile.memory.dram_write_recovery, &profile.memory.dram_close, &profile.memory.dram_precharge,
+                                   &profile.memory.dram_equalize, &profile.memory.nor_read, &profile.memory.nor_pulse_end,
+                                   &profile.memory.nor_recovery})
+                *interval = ps(4.0);
+            profile.memory.dram_sense_per_row = ps(0.1);
+            profile.memory.nor_read_per_row = ps(0.1);
             profile.sources = node_source + "; gate multiples: Harris et al. 1997 FO4 metric paper and logical effort";
             return profile;
         };

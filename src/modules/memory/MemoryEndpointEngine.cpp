@@ -3,6 +3,8 @@
 #include "components/TimingProfile.hpp"
 #include "modules/basic/DFlipFlopTiming.hpp"
 #include "modules/memory/NativeMemoryDevice.hpp"
+#include "DRAMSyncControl.hpp"
+#include "NORSyncControl.hpp"
 #include <algorithm>
 
 namespace circuit::memory {
@@ -33,10 +35,11 @@ std::vector<std::string> nativeActivityInputs(Technology t) {
     return {};
 }
 NativeSequence::NativeSequence(size_t w, Technology technology, EndpointConfig config)
-    : result(w, L), width_(w), technology_(technology), config_(config), work_result_(w, L),
-      word_reg_(32, L), data_reg_(w, L), mask_reg_(w / 8, L) {
-    idlePins();
-    if (technology_ == Technology::SRAM || technology_ == Technology::ROM) staticPins();
+    : result(w, L), width_(w), technology_(technology), config_(config),
+      command_(technology == Technology::DRAM || technology == Technology::NORFlash),
+      word_reg_(32, L), data_reg_(w, L), mask_reg_(w / 8, L), needs_(technology == Technology::DRAM ? 4 : 2, false) {
+    if (command_) { outputs["CLK"] = {L}; commandPins(); }
+    else staticPins();
 }
 void NativeSequence::staticPins() {
     outputs["CE_N"] = {access_ ? L : H};
@@ -45,6 +48,21 @@ void NativeSequence::staticPins() {
     outputs["WORD_ADDR"] = word_reg_;
     outputs["WRITE_DATA"] = data_reg_;
     outputs["WRITE_MASK"] = mask_reg_;
+}
+void NativeSequence::step(size_t, bool clock_edge, bool reset, bool start, const Request& request,
+                          const std::function<Bits(const std::string&, size_t)>& read, bool finish) {
+    if (command_) stepCommand(clock_edge, reset, start, request, read, finish);
+    else stepStatic(clock_edge, reset, start, request, read, finish);
+}
+namespace {
+// The word address register's input: the byte address shifted (wiring, so
+// unknown bits pass).
+Bits wordAddress(const Bits& address, size_t width) {
+    const size_t shift = width == 32 ? 2 : width == 16 ? 1 : 0;
+    Bits word(32, L);
+    for (size_t i = 0; i + shift < 32; ++i) word[i] = address[i + shift];
+    return word;
+}
 }
 // One clock edge of StaticMemorySequencer (MemorySequencers.cpp); every
 // signal here is a state bit, register or gate of that circuit.
@@ -64,10 +82,7 @@ void NativeSequence::stepStatic(bool clock_edge, bool reset, bool start, const R
         const bool next_access = valid_start || (access_ && !complete);
         done = invalid_start || complete || (done && !finish);
         if (start) {
-            // The word address is the byte address shifted: wiring, unknown bits pass.
-            const size_t shift = width_ == 32 ? 2 : width_ == 16 ? 1 : 0;
-            word_reg_.assign(32, L);
-            for (size_t i = 0; i + shift < 32; ++i) word_reg_[i] = request.address[i + shift];
+            word_reg_ = wordAddress(request.address, width_);
             data_reg_ = request.data; mask_reg_ = request.mask;
             writing_ = known(request.op) && number(request.op) == unsigned(Operation::Write);
         }
@@ -79,147 +94,112 @@ void NativeSequence::stepStatic(bool clock_edge, bool reset, bool start, const R
     available = !access_ && sync2_ == L;
     staticPins();
 }
-void NativeSequence::idlePins() {
-    outputs["CLK"] = {L}; outputs["RST"] = {L}; outputs["CMD"] = bits(3, 0);
-    outputs["CE_N"] = outputs["WE_N"] = outputs["OE_N"] = {H};
-    outputs["WE"] = outputs["READ_EN"] = {L};
-    outputs["REQ_VALID"] = outputs["RSP_READY"] = {L};
-    outputs["ADDR"] = outputs["WORD_ADDR"] = outputs["REQ_ADDR"] = bits(32, 0);
-    outputs["WRITE_DATA"] = outputs["REQ_WRITE_DATA"] = Bits(width_, L);
-    outputs["WRITE_MASK"] = outputs["REQ_WRITE_MASK"] = Bits(width_ / 8, L);
-    outputs["REQ_OP"] = bits(3, 0);
+void NativeSequence::commandPins() {
+    const bool dram = technology_ == Technology::DRAM;
+    outputs["CMD"] = bits(3, issuing_ ? current_ : 0);
+    outputs["WRITE_DATA"] = data_reg_;
+    outputs["WRITE_MASK"] = mask_reg_;
+    if (!dram) { outputs["WORD_ADDR"] = word_reg_; return; }
+    // The row for ACTIVATE, the column otherwise.
+    const size_t column_bits = std::countr_zero(config_.words_per_row);
+    Bits field(32, L);
+    if (current_ == 1) for (size_t i = 0; i + column_bits < 32; ++i) field[i] = word_reg_[i + column_bits];
+    else for (size_t i = 0; i < column_bits; ++i) field[i] = word_reg_[i];
+    outputs["ADDR"] = field;
 }
-void NativeSequence::beginCommand(size_t t) {
-    if (commands_.empty()) { finish(t); return; }
-    const auto command = commands_.front();
-    outputs["CLK"] = {L}; outputs["CMD"] = bits(3, command.op);
-    outputs["ADDR"] = outputs["WORD_ADDR"] = bits(32, command.address);
-    phase_ = Phase::CommandRaise; due_ = after(t, config_.guard_ticks);
-}
-void NativeSequence::finish(size_t t) {
-    idlePins(); phase_ = Phase::Release; due_ = after(t, config_.guard_ticks);
-}
-void NativeSequence::step(size_t t, bool clock_edge, bool reset, bool start, const Request& request,
-                         const std::function<Bits(const std::string&, size_t)>& read, bool finish_response) {
-    if (technology_ == Technology::SRAM || technology_ == Technology::ROM) {
-        stepStatic(clock_edge, reset, start, request, read, finish_response);
-        return;
-    }
-    if (reset) aborted_ = true;
-    if (clock_edge && finish_response) done = false;
-    if (phase_ == Phase::Idle) {
-        if (reset) { done = false; finished_ = settling_ = false; available = false; return; }
-        // The device is timed in ticks, but the sequencer speaks to the
-        // transaction port only at a clock edge: a finished operation shows
-        // DONE, its result and BACK_READY at the next edge, like any other
-        // clocked state. Shown the moment the device finishes, they would
-        // reach the requester at any point of its cycle.
-        const bool was_available = !settling_;
-        if (clock_edge) {
-            if (finished_) { done = true; result = work_result_; status = work_status_; finished_ = false; }
-            settling_ = false;
+// One clock edge of CommandMemorySequencer (MemorySequencers.cpp).
+void NativeSequence::stepCommand(bool clock_edge, bool reset, bool start, const Request& request,
+                                 const std::function<Bits(const std::string&, size_t)>& read, bool finish) {
+    const bool dram = technology_ == Technology::DRAM;
+    if (reset) {
+        active_ = issuing_ = waiting_ = done = false;
+        is_write_ = is_program_ = is_erase_ = false;
+        std::fill(needs_.begin(), needs_.end(), false);
+        current_ = 0; row_known_ = refreshing_ = refresh_pending_ = false; open_row_ = 0; refresh_counter_ = 0;
+        word_reg_.assign(32, L); data_reg_.assign(width_, L); mask_reg_.assign(width_ / 8, L);
+        result.assign(width_, L); status = Status::Ok;
+    } else if (clock_edge) {
+        const auto checked = validateRequest(request, width_, technology_, config_);
+        const bool valid_start = start && checked == Status::Ok, invalid_start = start && checked != Status::Ok;
+        const unsigned op = known(request.op) ? number(request.op) : 8;
+        const bool op_write = op == unsigned(Operation::Write), op_program = op == unsigned(Operation::Program),
+                   op_erase = op == unsigned(Operation::EraseBlock);
+        const bool busy = read("BUSY", 1) != Bits{L};
+        const bool step_done = waiting_ && !busy;
+        const bool cur_read = current_ == (dram ? 2u : 1u);
+        const bool fail = step_done && (read("ERROR", 1) != Bits{L} || (cur_read && read("READ_VALID", 1) != Bits{H}));
+        const bool ref_start = dram && refresh_pending_ && !active_ && !start;
+        const size_t column_bits = std::countr_zero(config_.words_per_row);
+        bool hit = false, row_open = false;
+        uint32_t live_row = 0;
+        if (dram) {
+            row_open = read("ROW_OPEN", 1) == Bits{H};
+            const auto live = wordAddress(request.address, width_);
+            live_row = known(live) ? uint32_t(number(live) >> column_bits) : 0;
+            hit = row_open && row_known_ && known(live) && open_row_ == live_row;
         }
-        available = !settling_;
-        if (done || finished_) return;
-        const bool refresh_due = technology_ == Technology::DRAM &&
-                             config_.refresh_interval_ticks && t >= next_refresh_;
-        // A refresh starts only once the backend has been seen ready for an
-        // edge, so a waiting request is never overtaken by one refresh after
-        // another.
-        const bool refresh = refresh_due && clock_edge && !start && was_available;
-        if (!(start && clock_edge) && !refresh) { aborted_ = false; return; }
-        aborted_ = false; maintenance_ = refresh; available = false; settling_ = true;
-        status = work_status_ = Status::Ok; work_result_.assign(width_, L);
-        result.assign(width_, L); commands_.clear();
-        if (refresh) {
-            if (row_open_) commands_.push_back({4, 0});
-            commands_.push_back({5, 0});
-            next_refresh_ = after(t, config_.refresh_interval_ticks);
-            beginCommand(t); return;
-        }
-        request_ = request;
-        work_status_ = validateRequest(request, width_, technology_, config_);
-        if (work_status_ != Status::Ok) { finish(t); return; }
-        const auto op = number(request.op);
-        const auto word = number(request.address) / (width_ / 8);
-        outputs["WORD_ADDR"] = bits(32, word);
-        outputs["WRITE_DATA"] = request.data; outputs["WRITE_MASK"] = request.mask;
-        if (technology_ == Technology::FF) {
-            phase_ = Phase::ArraySetup; due_ = after(t, config_.guard_ticks); return;
-        }
-        if (technology_ == Technology::SRAM || technology_ == Technology::ROM) {
-            outputs["CE_N"] = {L}; outputs["WE_N"] = {op == 1 ? L : H};
-            outputs["OE_N"] = {op == 0 ? L : H};
-            phase_ = Phase::StaticAccess;
-            due_ = after(t, 4 * config_.phase_ticks + 2 * config_.guard_ticks); return;
-        }
-        if (technology_ == Technology::DRAM) {
-            const auto row = word / config_.words_per_row;
-            // An accepted request cannot suppress refresh indefinitely. Perform
-            // due maintenance before its access, using the already latched
-            // request; no second queue or discarded START pulse is needed.
-            if (refresh_due) {
-                if (row_open_) commands_.push_back({4, 0});
-                commands_.push_back({5, 0});
-                next_refresh_ = after(t, config_.refresh_interval_ticks);
-            } else if (row_open_ && row_ != row) commands_.push_back({4, 0});
-            if (refresh_due || !row_open_ || row_ != row) commands_.push_back({1, uint32_t(row)});
-            commands_.push_back({op == 0 ? 2u : 3u, uint32_t(word % config_.words_per_row)});
+        // The planned steps of a new request and of a refresh.
+        std::vector<bool> plan_request, plan_refresh;
+        if (dram) {
+            plan_request = {row_open && !hit, !hit, true, false};
+            plan_refresh = {row_open, false, false, true};
         } else {
-            if (op) commands_.push_back({4, 0});
-            commands_.push_back({op == 0 ? 1u : op == 2 ? 2u : 3u, uint32_t(word)});
+            plan_request = {op_program || op_erase, true};
+            plan_refresh = {false, false};
         }
-        beginCommand(t); return;
-    }
-    available = false;
-    if (!due_ || t < due_) return;
-    due_ = 0;
-    switch (phase_) {
-    case Phase::ArraySetup:
-        outputs["WE"] = {number(request_.op) == 1 ? H : L};
-        outputs["READ_EN"] = {number(request_.op) == 0 ? H : L};
-        phase_ = Phase::ArrayWrite; due_ = after(t, config_.guard_ticks); break;
-    case Phase::ArrayWrite:
-        outputs["CLK"] = {H}; phase_ = Phase::ArrayRead;
-        due_ = after(t, config_.guard_ticks); break;
-    case Phase::ArrayRead:
-        if (read("FAULT", 1) != Bits{L}) work_status_ = Status::Device;
-        if (number(request_.op) == 0) work_result_ = read("READ_DATA", width_);
-        finish(t); break;
-    case Phase::StaticAccess:
-        if (number(request_.op) == 0) work_result_ = read("READ_DATA", width_);
-        finish(t); break;
-    case Phase::CommandRaise:
-        outputs["CLK"] = {H}; phase_ = Phase::CommandLower;
-        due_ = after(t, config_.guard_ticks); break;
-    case Phase::CommandLower: {
-        outputs["CLK"] = {L}; outputs["CMD"] = bits(3, 0);
-        const auto op = commands_.front().op;
-        size_t wait = config_.phase_ticks;
-        if (technology_ == Technology::DRAM) wait *= op == 5 ? 5 : op == 2 ? 1 : 3;
-        else if (op == 2 || op == 3) wait = (op == 2 ? config_.program_ticks : config_.erase_ticks) + 2 * config_.phase_ticks;
-        phase_ = Phase::CommandWait; due_ = after(t, wait + config_.guard_ticks); break;
-    }
-    case Phase::CommandWait: {
-        if (read("BUSY", 1) != Bits{L}) { due_ = after(t, config_.guard_ticks); break; }
-        if (read("ERROR", 1) != Bits{L}) { work_status_ = Status::Device; commands_.clear(); finish(t); break; }
-        const auto command = commands_.front(); commands_.pop_front();
-        if (technology_ == Technology::DRAM) {
-            if (command.op == 1) { row_open_ = true; row_ = command.address; }
-            if (command.op == 4) row_open_ = false;
+        const bool fresh = valid_start || ref_start;
+        std::vector<bool> list(needs_.size());
+        bool any_pending = false;
+        for (size_t k = 0; k < list.size(); ++k) {
+            list[k] = (valid_start && plan_request[k]) || (ref_start && plan_refresh[k]) || (needs_[k] && !fresh);
+            any_pending = any_pending || list[k];
         }
-        if ((technology_ == Technology::DRAM && command.op == 2) ||
-            (technology_ == Technology::NORFlash && command.op == 1)) {
-            if (read("READ_VALID", 1) != Bits{H}) work_status_ = Status::Device;
-            else work_result_ = read("READ_DATA", width_);
+        const bool proceed = step_done && !fail;
+        const bool issue_now = any_pending && (valid_start || ref_start || proceed);
+        size_t selected = list.size();
+        for (size_t k = 0; k < list.size(); ++k) if (list[k]) { selected = k; break; }
+        // On the starting edge the kind comes from the new request.
+        const bool write_kind = valid_start ? op_write : is_write_;
+        const bool program_kind = valid_start ? op_program : is_program_;
+        const bool erase_kind = valid_start ? op_erase : is_erase_;
+        unsigned next_code = 0;
+        if (selected < list.size()) {
+            if (dram) next_code = selected == 0 ? 4 : selected == 1 ? 1 : selected == 2 ? (write_kind ? 3 : 2) : 5;
+            else next_code = selected == 0 ? 4 : (erase_kind ? 3 : program_kind ? 2 : 1);
         }
-        beginCommand(t); break;
+        const bool finish_now = step_done && (fail || !any_pending);
+        const bool request_ends = finish_now && !refreshing_;
+        // Clocked updates, all from the values before the edge.
+        for (size_t k = 0; k < list.size(); ++k)
+            needs_[k] = list[k] && !(issue_now && k == selected) && !fail;
+        const bool opened = step_done && current_ == 1 && !fail && dram;
+        if (step_done && cur_read && !fail) result = read("READ_DATA", width_);
+        else if ((step_done && cur_read) || request_ends || invalid_start) result.assign(width_, L);
+        if (request_ends || invalid_start) status = invalid_start ? checked : fail ? Status::Device : Status::Ok;
+        if (opened) {
+            row_known_ = true;
+            open_row_ = known(word_reg_) ? uint32_t(number(word_reg_) >> column_bits) : 0;
+        }
+        if (dram) {
+            const size_t interval = config_.refresh_interval_cycles;
+            const bool due = interval && refresh_counter_ == interval - 1;
+            if (interval) refresh_counter_ = due ? 0 : refresh_counter_ + 1;
+            refreshing_ = ref_start || (refreshing_ && !finish_now);
+            refresh_pending_ = due || (refresh_pending_ && !ref_start);
+        }
+        if (issue_now) current_ = next_code;
+        done = request_ends || invalid_start || (done && !finish);
+        waiting_ = issuing_ || (waiting_ && !step_done);
+        issuing_ = issue_now;
+        active_ = fresh || (active_ && !finish_now);
+        if (start) {
+            word_reg_ = wordAddress(request.address, width_);
+            data_reg_ = request.data; mask_reg_ = request.mask;
+            is_write_ = op_write; is_program_ = op_program; is_erase_ = op_erase;
+        }
     }
-    case Phase::Release:
-        phase_ = Phase::Idle; finished_ = !maintenance_ && !aborted_; break;
-    default: break;
-    }
-    if (work_status_ != Status::Ok) work_result_.assign(width_, L);
+    available = !active_ && !(dram && refresh_pending_);
+    commandPins();
 }
 
 DeviceModel::DeviceModel(size_t width, EndpointConfig c, LogicValue fill)
@@ -351,97 +331,69 @@ public:
         outputs["READY"] = {ce_ == H ? L : ce_ == L ? H : X};
     }
 };
+// DRAM and NOR flash as the fused endpoint sees them: the gate-level command
+// control cycle for cycle (DRAMSyncControl, NORSyncControl), clocked by the
+// controller's MEM_CLK, with plain storage.
 class DRAMDeviceModel final : public DeviceModel {
-    size_t row_ = 0, col_ = 0, refresh_row_ = 0, op_ = 0, stage_ = 0;
-    bool open_ = false;
+    memory_detail::DRAMSyncControl control_;
+    Bits buffer_;
     std::map<size_t, size_t> closed_;
-    Bits buffer_, data_, mask_;
+    bool wl_ = false, sense_ = false, write_ = false;
 public:
-    DRAMDeviceModel(size_t w, EndpointConfig c) : DeviceModel(w, c, X), buffer_(w * c.words_per_row, X) {
+    DRAMDeviceModel(size_t w, EndpointConfig c)
+        : DeviceModel(w, c, X), control_(w, c.depth_words / c.words_per_row, c.words_per_row), buffer_(w * c.words_per_row, X) {
         outputs["ROW_OPEN"] = {L};
     }
     void update(size_t t, const Signals& s) override {
-        if (due_ && t >= due_) {
-            due_ = 0; ++stage_;
-            const auto start = uint32_t(row_ * config_.words_per_row * (width_ / 8));
-            if (op_ == 1 || op_ == 5) {
-                if (stage_ == 1) {
-                    auto it = closed_.find(row_); size_t closed = it == closed_.end() ? 0 : it->second;
-                    buffer_ = t - closed >= config_.retention_ticks ? Bits(buffer_.size(), X) : storage.readLogic(start, buffer_.size() / 8);
-                    storage.writeLogic(t, start, Bits(buffer_.size(), X));
-                } else if (stage_ == 2) storage.writeLogic(t, start, buffer_);
-                else if (stage_ == 3) {
-                    if (op_ == 1) { open_ = true; outputs["ROW_OPEN"] = {H}; outputs["BUSY"] = {L}; }
-                    else closed_[row_] = t;
-                } else if (stage_ == 5) { refresh_row_ = (refresh_row_ + 1) % (config_.depth_words / config_.words_per_row); outputs["BUSY"] = {L}; }
-            } else if (op_ == 2) {
-                outputs["READ_DATA"] = Bits(buffer_.begin() + col_ * width_, buffer_.begin() + (col_ + 1) * width_);
-                outputs["READ_VALID"] = {H}; outputs["BUSY"] = {L};
-            } else if (op_ == 3) {
-                if (stage_ == 1) {
-                    for (size_t b = 0; b < width_; ++b) if (mask_[b / 8] == H) buffer_[col_ * width_ + b] = stored(data_[b]);
-                    // Report the addressed lanes, not the entire open row:
-                    // neighboring bytes may still be unknown or unmodified.
-                    writeWord(t, row_ * config_.words_per_row + col_, data_, mask_);
-                } else if (stage_ == 3) outputs["BUSY"] = {L};
-            } else if (op_ == 4) {
-                if (stage_ == 1) closed_[row_] = t;
-                if (stage_ == 3) { open_ = false; outputs["ROW_OPEN"] = {L}; outputs["BUSY"] = {L}; }
-            }
-            if (high(outputs, "BUSY")) due_ = after(t, config_.phase_ticks);
+        if (edge(s)) control_.edge(t, signal(s, "CMD", 3), signal(s, "ADDR", 32), signal(s, "WRITE_DATA", width_), signal(s, "WRITE_MASK", width_ / 8));
+        const bool wl = control_.wordline(t), sense = control_.sensing(t), write = control_.writing(t), precharge = control_.precharging(t);
+        const auto start = uint32_t(control_.row * config_.words_per_row * (width_ / 8));
+        if (!wl_ && wl) {
+            auto it = closed_.find(control_.row); size_t closed = it == closed_.end() ? 0 : it->second;
+            buffer_ = t - closed >= config_.retention_ticks ? Bits(buffer_.size(), X) : storage.readLogic(start, buffer_.size() / 8);
+            storage.writeLogic(t, start, Bits(buffer_.size(), X));
         }
-        if (!edge(s)) return;
-        const auto op = number(signal(s, "CMD", 3)), address = number(signal(s, "ADDR", 32));
-        if (!op) return;
-        if (high(outputs, "BUSY")) { outputs["ERROR"] = {H}; return; }
-        outputs["READ_VALID"] = {L}; outputs["READ_DATA"] = Bits(width_, Z);
-        if ((op == 1 && open_) || ((op == 2 || op == 3 || op == 4) && !open_) || (op == 5 && open_)) {
-            outputs["ERROR"] = {H}; return;
+        if (!sense_ && sense) storage.writeLogic(t, start, buffer_);
+        if (!write_ && write) {
+            for (size_t b = 0; b < width_; ++b) if (control_.mask[b / 8] == H) buffer_[control_.column * width_ + b] = stored(control_.data[b]);
+            writeWord(t, control_.row * config_.words_per_row + control_.column, control_.data, control_.mask);
         }
-        outputs["ERROR"] = {L}; outputs["BUSY"] = {H}; op_ = op; stage_ = 0;
-        if (op == 1 || op == 5) row_ = op == 1 ? address : refresh_row_;
-        if (op == 2 || op == 3) col_ = address;
-        if (op == 3) { data_ = signal(s, "WRITE_DATA", width_); mask_ = signal(s, "WRITE_MASK", width_ / 8); }
-        due_ = after(t, config_.phase_ticks);
-        if (closed_.size() > (config_.max_resident_bytes - std::min(config_.max_resident_bytes, storage.allocatedDataBytes())) / 128)
-            throw std::length_error("DRAM row metadata budget exceeded");
+        if (wl_ && !wl) closed_[control_.row] = t;
+        if (precharge) std::fill(buffer_.begin(), buffer_.end(), X);
+        wl_ = wl; sense_ = sense; write_ = write;
+        outputs["BUSY"] = {control_.busy ? H : L};
+        outputs["ERROR"] = {control_.error ? H : L};
+        outputs["READ_VALID"] = {control_.valid ? H : L};
+        outputs["ROW_OPEN"] = {control_.open ? H : L};
+        outputs["READ_DATA"] = control_.valid
+            ? Bits(buffer_.begin() + control_.column * width_, buffer_.begin() + (control_.column + 1) * width_) : Bits(width_, Z);
+        due_ = control_.nextStep(t);
     }
 };
 class NORFlashDeviceModel final : public DeviceModel {
-    size_t op_ = 0, address_ = 0, stage_ = 0;
-    bool enabled_ = false;
-    Bits data_, mask_;
+    memory_detail::NORSyncControl control_;
+    bool program_ = false, erase_ = false;
 public:
-    NORFlashDeviceModel(size_t w, EndpointConfig c) : DeviceModel(w, c, H) {
+    NORFlashDeviceModel(size_t w, EndpointConfig c)
+        : DeviceModel(w, c, H), control_(w, c.depth_words, c.depth_words / c.words_per_row, c.program_ticks, c.erase_ticks) {
         outputs["WRITE_ENABLED"] = {L};
     }
     void update(size_t t, const Signals& s) override {
-        if (due_ && t >= due_) {
-            due_ = 0; ++stage_;
-            if (op_ == 1) {
-                outputs["READ_DATA"] = storage.readLogic(address_ * (width_ / 8), width_ / 8);
-                outputs["READ_VALID"] = {H}; outputs["BUSY"] = {L};
-            } else if (stage_ == 1) {
-                if (op_ == 2) writeWord(t, address_, data_, mask_, true);
-                else {
-                    const auto first = address_ / config_.block_words * config_.block_words;
-                    for (size_t word = first; word < first + config_.block_words; ++word)
-                        storage.writeLogic(t, word * (width_ / 8), Bits(width_, H), true);
-                }
-                due_ = after(t, config_.phase_ticks);
-            } else if (stage_ == 2) due_ = after(t, config_.phase_ticks);
-            else outputs["BUSY"] = {L};
+        if (edge(s)) control_.edge(t, signal(s, "CMD", 3), signal(s, "WORD_ADDR", 32), signal(s, "WRITE_DATA", width_), signal(s, "WRITE_MASK", width_ / 8));
+        const bool program = control_.programPulse(t), erase = control_.erasePulse(t);
+        if (program && !program_) writeWord(t, control_.address, control_.data, control_.mask, true);
+        if (erase && !erase_) {
+            const auto first = control_.address / config_.block_words * config_.block_words;
+            for (size_t word = first; word < first + config_.block_words; ++word)
+                storage.writeLogic(t, word * (width_ / 8), Bits(width_, H), true);
         }
-        if (!edge(s)) return;
-        const auto op = number(signal(s, "CMD", 3));
-        if (!op) return;
-        outputs["ERROR"] = {L}; outputs["READ_VALID"] = {L}; outputs["READ_DATA"] = Bits(width_, Z);
-        if (high(outputs, "BUSY") || ((op == 2 || op == 3) && !enabled_)) { outputs["ERROR"] = {H}; return; }
-        if (op == 4 || op == 5) { enabled_ = op == 4; outputs["WRITE_ENABLED"] = {enabled_ ? H : L}; return; }
-        op_ = op; stage_ = 0; address_ = number(signal(s, "WORD_ADDR", 32));
-        data_ = signal(s, "WRITE_DATA", width_); mask_ = signal(s, "WRITE_MASK", width_ / 8);
-        if (op != 1) { enabled_ = false; outputs["WRITE_ENABLED"] = {L}; }
-        outputs["BUSY"] = {H}; due_ = after(t, op == 1 ? config_.phase_ticks : op == 2 ? config_.program_ticks : config_.erase_ticks);
+        program_ = program; erase_ = erase;
+        outputs["BUSY"] = {control_.busy ? H : L};
+        outputs["ERROR"] = {control_.error ? H : L};
+        outputs["READ_VALID"] = {control_.valid ? H : L};
+        outputs["WRITE_ENABLED"] = {control_.wel ? H : L};
+        outputs["READ_DATA"] = control_.valid ? storage.readLogic(control_.address * (width_ / 8), width_ / 8) : Bits(width_, Z);
+        due_ = control_.nextStep(t);
     }
 };
 std::unique_ptr<DeviceModel> makeDeviceModel(size_t w, Technology t, EndpointConfig c) {

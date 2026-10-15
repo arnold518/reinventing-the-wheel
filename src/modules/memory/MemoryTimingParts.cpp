@@ -56,11 +56,40 @@ void ProtocolStableData::evaluate(size_t time, Simulator& simulator) {
     _updateOutputWireDynamic(simulator, "OUT", getInputPinDynamic("IN")->getValueAsVector(), time);
 }
 
-Synchronizer::Synchronizer(std::string name)
+KnownBits::KnownBits(std::string name, size_t width)
+    : BasicComponent(std::move(name), circuit::timing::leafDelay(circuit::timing::Leaf::MemoryPrimitive), [width](IOComponent* self) {
+          self->addPinDynamic("IN", PinType::INPUT, width);
+          self->addPin("KNOWN", PinType::OUTPUT);
+      }) {}
+
+void KnownBits::evaluate(size_t time, Simulator& simulator) {
+    bool known = true;
+    for (auto bit : getInputPinDynamic("IN")->getValueAsVector()) known = known && (bit == LogicValue::LOW || bit == LogicValue::HIGH);
+    _updateOutputWire(simulator, "KNOWN", known ? LogicValue::HIGH : LogicValue::LOW, time);
+}
+
+PowerOnReset::PowerOnReset(std::string name, size_t width)
+    : BasicComponent(std::move(name), 0, [](IOComponent* self) { self->addPin("OUT", PinType::OUTPUT); }), width_(width) {}
+
+void PowerOnReset::scheduleInitialEvents(Simulator& simulator, size_t time) {
+    auto pin = getOutputPin("OUT");
+    pin->setBit(0, LogicValue::HIGH);
+    if (auto wire = pin->getExternalWire()) {
+        simulator.scheduleEvent(std::make_shared<WireUpdateEvent<>>(time, wire, LogicValue::HIGH));
+        simulator.scheduleEvent(std::make_shared<WireUpdateEvent<>>(time + width_, wire, LogicValue::LOW));
+    }
+    pin->setBit(0, LogicValue::LOW);
+}
+
+void PowerOnReset::evaluate(size_t, Simulator&) {}
+
+Synchronizer::Synchronizer(std::string name, size_t stages)
     : BasicComponent(std::move(name), circuit::dflipflop_timing::clockToOutputMaximum(), [](IOComponent* self) {
           for (const auto* pin : {"CLK", "RST", "D"}) self->addPin(pin, PinType::INPUT);
           self->addPin("Q", PinType::OUTPUT);
-      }) {}
+      }), stages_(stages) {
+    if (stages != 1 && stages != 2) throw std::invalid_argument("A synchronizer has one or two stages");
+}
 
 void Synchronizer::evaluate(size_t time, Simulator& simulator) {
     const auto clock = getInputValue("CLK");
@@ -71,6 +100,7 @@ void Synchronizer::evaluate(size_t time, Simulator& simulator) {
         second_ = first_;
         const auto d = getInputValue("D");
         if (d == LogicValue::LOW || d == LogicValue::HIGH) first_ = d;
+        if (stages_ == 1) second_ = first_;
     } else if (reset != LogicValue::LOW) {
         first_ = second_ = LogicValue::UNKNOWN;
     }

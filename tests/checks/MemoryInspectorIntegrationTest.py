@@ -50,7 +50,7 @@ class MemoryInspectorIntegrationTest(unittest.TestCase):
                 self.assertTrue(held,tech)
                 self.assertIn("READ",operations)
                 if tech in ("dram","flash"):
-                    self.assertTrue({"command-raise","command-lower","command-wait"}<=phases,(tech,phases))
+                    self.assertTrue({"command-issue","command-wait"}<=phases,(tech,phases))
                 if tech=="flash": self.assertTrue({"PROGRAM","ERASE"}<=operations)
                 status_pin={"dram":"ROW_OPEN","flash":"WRITE_ENABLED"}.get(tech)
                 if status_pin: self.assertTrue({(status_pin,"0"),(status_pin,"1")}<=device_states)

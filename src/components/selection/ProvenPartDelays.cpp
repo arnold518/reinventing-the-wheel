@@ -31,7 +31,7 @@ bool sameCircuit(const ParameterMap& parameters) {
     static const std::set<std::string> untimed = {
         "depth_words", "paged", "record_history", "max_resident_bytes", "max_history_bytes",
         "phase_ticks", "guard_ticks", "program_ticks", "erase_ticks", "retention_ticks",
-        "refresh_interval_ticks", "always_ready", "words_per_row", "block_words", "image_hex"};
+        "refresh_interval_ticks", "refresh_interval_cycles", "always_ready", "words_per_row", "block_words", "image_hex"};
     for (const auto& [name, value] : parameters) {
         if (!untimed.contains(name)) return false;
         if (name == "block_words" && value != "2") return false;

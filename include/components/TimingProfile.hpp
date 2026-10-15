@@ -53,6 +53,17 @@ struct TimingProfile {
     struct Memory {
         size_t sram_settle = 32, sram_precharge = 32, sram_bitline_base = 64, sram_bitline_per_row = 0;
         size_t rom_settle = 32, rom_column_base = 96, rom_column_per_row = 0;
+        // DRAM command intervals: ACTIVATE (wordline, sense, restore),
+        // READ (column), WRITE (drive on, drive off, recovery), PRECHARGE
+        // (close, precharge, equalize). REFRESH is ACTIVATE then PRECHARGE.
+        size_t dram_wordline = 32, dram_sense_base = 32, dram_sense_per_row = 0, dram_restore = 32;
+        size_t dram_read = 32, dram_write_on = 32, dram_write_off = 32, dram_write_recovery = 32;
+        size_t dram_close = 32, dram_precharge = 32, dram_equalize = 32;
+        // NOR flash: the read column's sensing time (base and per row) and the
+        // two steps after a program/erase pulse.
+        size_t nor_read = 96, nor_read_per_row = 0, nor_pulse_end = 32, nor_recovery = 32;
+        size_t norRead(size_t rows) const { return nor_read + nor_read_per_row * rows; }
+        size_t dramSense(size_t rows) const { return dram_sense_base + dram_sense_per_row * rows; }
         size_t sramBitline(size_t rows) const { return sram_bitline_base + sram_bitline_per_row * rows; }
         size_t romColumn(size_t rows) const { return rom_column_base + rom_column_per_row * rows; }
     } memory;

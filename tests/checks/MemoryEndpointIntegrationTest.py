@@ -32,7 +32,7 @@ class MemoryEndpointIntegrationTest(unittest.TestCase):
                             "nor-flash": f"NORFlash<{width}>"}
                 self.assertEqual(device.get_type_name(), expected[model])
                 self.assertEqual(backend.memory_configuration(device)["capacity_bytes"], 4096 * width // 8)
-                outputs={"ff":{"READ_DATA","FAULT"},"sram":{"READ_DATA"},"rom":{"READ_DATA"},
+                outputs={"ff":{"READ_DATA","FAULT"},"sram":{"READ_DATA","READY"},"rom":{"READ_DATA","READY"},
                          "dram":{"READ_DATA","BUSY","ERROR","READ_VALID","ROW_OPEN"},
                          "nor-flash":{"READ_DATA","BUSY","ERROR","READ_VALID","WRITE_ENABLED"}}
                 self.assertEqual(set(device.get_output_pins()),outputs[model])

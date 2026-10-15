@@ -1,5 +1,16 @@
 #include "modules/memory/DRAM.hpp"
 #include "modules/memory/MemoryStorage.hpp"
+#include "modules/memory/MemoryTimingParts.hpp"
+#include "modules/memory/MemoryRangeCheck.hpp"
+#include "modules/storage/ClockedStateBit.hpp"
+#include "modules/storage/Register.hpp"
+#include "modules/utility/BitAdapter.hpp"
+#include "modules/basic/Gate.hpp"
+#include "components/StructuralNetBuilder.hpp"
+#include "components/TimingProfile.hpp"
+#include "MemoryHandshakeWiring.hpp"
+#include "DRAMSyncControl.hpp"
+#include <tuple>
 #include <algorithm>
 
 using namespace circuit;
@@ -71,154 +82,210 @@ void devicePins(IOComponent *s, size_t width, bool control = false) {
             s->addPin(p, PinType::OUTPUT);
     }
 }
-// The same finite command sequencer drives the structural control primitive and
-// compact device. Storage/sensing are independently represented below.
-struct Commands {
-    DRAMDeviceConfig config;
-    size_t width, command = 0, stage = 0, due = 0, row = 0, col = 0, refresh_row = 0;
-    bool busy = false, error = false, open = false, precharge = true, sense = false, wl = false,
-         write = false, output = false;
-    LogicValue last_clk = X;
-    Bits data, mask;
-    Commands(size_t w, DRAMDeviceConfig c) : config(c), width(w), data(w, X), mask(w / 8, L) {
-        c.validate(w);
-    }
-    std::optional<size_t> update(const IOComponent &io, size_t t) {
-        auto clk = io.getInputValue("CLK");
-        bool edge = last_clk == L && clk == H;
-        last_clk = clk;
-        // Completion happens before a new command at exactly the deadline.
-        if (due && t >= due) {
-            due = 0;
-            ++stage;
-            if (command == 1) {
-                if (stage == 1)
-                    wl = true;
-                else if (stage == 2)
-                    sense = true;
-                else {
-                    open = true;
-                    busy = false;
-                }
-            }
-            if (command == 2) {
-                output = true;
-                busy = false;
-            }
-            if (command == 3) {
-                if (stage == 1)
-                    write = true;
-                else if (stage == 2)
-                    write = false;
-                else
-                    busy = false;
-            }
-            if (command == 4) {
-                if (stage == 1) {
-                    wl = false;
-                    sense = false;
-                } else if (stage == 2)
-                    precharge = true;
-                else {
-                    open = false;
-                    busy = false;
-                }
-            }
-            if (command == 5) {
-                if (stage == 1)
-                    wl = true;
-                else if (stage == 2)
-                    sense = true;
-                else if (stage == 3) {
-                    wl = false;
-                    sense = false;
-                } else if (stage == 4)
-                    precharge = true;
-                else {
-                    refresh_row = (refresh_row + 1) % config.rows();
-                    busy = false;
-                }
-            }
-            if (busy)
-                due = t + config.phase_ticks;
-        }
-        if (edge) {
-            auto cmd = io.getInputPin<3>("CMD")->getValueAsVector();
-            auto address = io.getInputPin<32>("ADDR")->getValueAsVector();
-            auto m = io.getInputPinDynamic("WRITE_MASK")->getValueAsVector();
-            if (!known(cmd)) {
-                error = true;
-                // An undecodable idle request invalidates the previous read,
-                // just like a reserved binary command. Never cancel an active
-                // command: its scheduled completion still owns the data path.
-                if (!busy)
-                    output = false;
-            } else if (number(cmd) != 0) {
-                auto op = number(cmd);
-                auto a = number(address);
-                if (busy) {
-                    error = true;
-                } else if (op > 5 || ((op == 1 || op == 2 || op == 3) && !known(address)) ||
-                           (op == 1 && (open || a >= config.rows())) ||
-                           ((op == 2 || op == 3) && (!open || a >= config.words_per_row)) ||
-                           (op == 3 && !known(m)) || (op == 4 && !open) || (op == 5 && open)) {
-                    error = true;
-                    output = false;
-                } else {
-                    error = false;
-                    output = false;
-                    busy = true;
-                    command = op;
-                    stage = 0;
-                    due = t + config.phase_ticks;
-                    if (op == 1 || op == 5) {
-                        row = op == 1 ? a : refresh_row;
-                        precharge = false;
-                        wl = false;
-                        sense = false;
-                    }
-                    if (op == 2 || op == 3)
-                        col = a;
-                    if (op == 3) {
-                        data = io.getInputPinDynamic("WRITE_DATA")->getValueAsVector();
-                        mask = m;
-                    }
-                }
-            }
-        }
-        return due ? std::optional<size_t>(due) : std::nullopt;
-    }
-};
-class DRAMCommandControl : public Primitive {
+// The command control of the DRAM device as gates. Synchronous on the
+// device clock: commands, addresses and data are latched on a rising edge;
+// BUSY, ERROR, READ_VALID and ROW_OPEN are state bits. The analog steps of a
+// command run on delay-line chains started by the accepted command; the end
+// of a chain is sampled back into the clock by a one-stage resolving
+// sampler. Completion updates ROW_OPEN, READ_VALID and the refresh row on
+// that edge and releases BUSY one edge later, so wordline and sense never
+// drop between a finishing ACTIVATE and the open row taking over.
+class DRAMCommandControl : public IOComponent {
   public:
     DRAMCommandControl(std::string n, size_t width, DRAMDeviceConfig c)
-        : Primitive(std::move(n), "DRAMCommandControl<" + std::to_string(width) + ">",
-                    [width](IOComponent *s) { devicePins(s, width, true); }),
-          state_(width, c) {}
-    PrimitiveTiming primitiveTiming() const override { return PrimitiveTiming::SelfTimed; }
-    void evaluate(size_t t, Simulator &sim) override {
-        auto previous = state_.due;
-        if (auto due = state_.update(*this, t); due && (*due != previous || t >= previous))
-            wake(sim, *due);
-        for (const auto &[p, v] : std::vector<std::pair<std::string, bool>>{{"BUSY", state_.busy},
-                                                                            {"ERROR", state_.error},
-                                                                            {"READ_VALID", state_.output},
-                                                                            {"ROW_OPEN", state_.open},
-                                                                            {"PRECHARGE", state_.precharge},
-                                                                            {"SENSE", state_.sense},
-                                                                            {"ROW_ENABLE", state_.wl},
-                                                                            {"WRITE_ENABLE", state_.write},
-                                                                            {"OUTPUT_ENABLE", state_.output}})
-            publish(sim, t, p, v ? H : L);
-        publish(sim, t, "ROW_ADDR", bits(32, state_.row));
-        publish(sim, t, "COLUMN_ADDR", bits(32, state_.col));
-        publish(sim, t, "DATA", state_.data);
-        publish(sim, t, "MASK", state_.mask);
+        : IOComponent(std::move(n), [width](IOComponent *s) { devicePins(s, width, true); }), width_(width), config_(c),
+          type_("DRAMCommandControl<" + std::to_string(width) + ">") {
+        c.validate(width);
     }
+    const char *getTypeName() const override { return type_.c_str(); }
+    void buildInternals(ComponentBuilder &b) override;
 
   private:
-    Commands state_;
+    size_t width_;
+    DRAMDeviceConfig config_;
+    std::string type_;
 };
+void DRAMCommandControl::buildInternals(ComponentBuilder &b) {
+    using PinPtr = memory_detail::StructuralWiring::PinPtr;
+    memory_detail::StructuralWiring w(b);
+    const auto &memory = timing::activeTimingProfile().memory;
+    const size_t slowest = std::max({timing::leafDelay(timing::Leaf::Not), timing::leafDelay(timing::Leaf::Nand),
+                                     timing::leafDelay(timing::Leaf::And), timing::leafDelay(timing::Leaf::Or)});
+    auto por = b.addNewComponent<memory::PowerOnReset>("POWER_ON_RESET", 16 * slowest);
+    const auto reset = por->getOutputPin("OUT");
+    auto state = [&](const std::string &name) {
+        auto bit = b.add(families::ClockedStateBit, name);
+        w.connect(getInputPin("CLK"), bit->getInputPin("CLK"));
+        w.connect(reset, bit->getInputPin("RST"));
+        return bit;
+    };
+    auto reg = [&](const std::string &name, size_t bits) {
+        auto r = b.add(families::registerWord(bits), name);
+        w.connect(getInputPin("CLK"), r->getInputPin("CLK"));
+        w.connect(reset, r->getInputPin("RST"));
+        return r;
+    };
+    // Command decode and request checks.
+    auto cmd = bitAdapter(b, "COMMAND_BITS", 3, true);
+    w.connect(getInputPin<3>("CMD"), cmd->getInputPin<3>("IN"));
+    auto known_cmd = b.addNewComponent<memory::KnownBits>("COMMAND_KNOWN", 3);
+    auto known_addr = b.addNewComponent<memory::KnownBits>("ADDRESS_KNOWN", 32);
+    auto known_mask = b.addNewComponent<memory::KnownBits>("MASK_KNOWN", width_ / 8);
+    w.connect(getInputPin<3>("CMD"), known_cmd->getInputPinDynamic("IN"));
+    w.connect(getInputPin<32>("ADDR"), known_addr->getInputPinDynamic("IN"));
+    w.connect(getInputPinDynamic("WRITE_MASK"), known_mask->getInputPinDynamic("IN"));
+    auto c0 = cmd->getOutputPin("OUT_0"), c1 = cmd->getOutputPin("OUT_1"), c2 = cmd->getOutputPin("OUT_2");
+    auto n0 = w.invert("NOT_C0", c0), n1 = w.invert("NOT_C1", c1), n2 = w.invert("NOT_C2", c2);
+    auto is_nop = w.reduce("IS_NOP", {n0, n1, n2}, true);
+    auto is_act = w.reduce("IS_ACTIVATE", {c0, n1, n2}, true);
+    auto is_rd = w.reduce("IS_READ", {n0, c1, n2}, true);
+    auto is_wr = w.reduce("IS_WRITE", {c0, c1, n2}, true);
+    auto is_pre = w.reduce("IS_PRECHARGE", {n0, n1, c2}, true);
+    auto is_ref = w.reduce("IS_REFRESH", {c0, n1, c2}, true);
+    auto address = bitAdapter(b, "ADDRESS_BITS", 32, true);
+    w.connect(getInputPin<32>("ADDR"), address->getInputPin<32>("IN"));
+    std::vector<PinPtr> address_bits;
+    for (size_t i = 0; i < 32; ++i) address_bits.push_back(address->getOutputPin("OUT_" + std::to_string(i)));
+    auto row_ok = memory_detail::addressBelow(w, address_bits, config_.rows(), "ROW_RANGE");
+    auto col_ok = memory_detail::addressBelow(w, address_bits, config_.words_per_row, "COLUMN_RANGE");
+    auto busy = state("BUSY"), error = state("ERROR"), valid = state("READ_VALID"), open = state("ROW_OPEN"),
+         releasing = state("RELEASING");
+    auto c_act = state("COMMAND_ACTIVATE"), c_rd = state("COMMAND_READ"), c_wr = state("COMMAND_WRITE"),
+         c_pre = state("COMMAND_PRECHARGE"), c_ref = state("COMMAND_REFRESH");
+    const auto B = busy->getOutputPin("Q"), OPEN = open->getOutputPin("Q");
+    const auto addr_known = known_addr->getOutputPin("KNOWN");
+    auto legal = w.reduce("LEGAL_COMMAND", {
+        w.reduce("LEGAL_ACTIVATE", {is_act, addr_known, w.invert("CLOSED", OPEN), row_ok}, true),
+        w.reduce("LEGAL_READ", {is_rd, addr_known, OPEN, col_ok}, true),
+        w.reduce("LEGAL_WRITE", {is_wr, addr_known, known_mask->getOutputPin("KNOWN"), OPEN, col_ok}, true),
+        w.both("LEGAL_PRECHARGE", is_pre, OPEN),
+        w.both("LEGAL_REFRESH", is_ref, w.invert("CLOSED_FOR_REFRESH", OPEN))}, false);
+    const auto cmd_known = known_cmd->getOutputPin("KNOWN");
+    auto issued = w.both("ISSUED", cmd_known, w.invert("NOT_NOP", is_nop));
+    auto idle = w.invert("IDLE", B);
+    auto accept = w.reduce("ACCEPT", {issued, legal, idle}, true);
+    auto unknown = w.invert("UNKNOWN_COMMAND", cmd_known);
+    auto refused = w.both("REFUSED", issued, w.either("BUSY_OR_ILLEGAL", B, w.invert("ILLEGAL", legal)));
+    auto error_event = w.either("ERROR_EVENT", unknown, refused);
+    // A refusal while idle, or an unknown command while idle, withdraws the read.
+    auto clear_valid = w.reduce("CLEAR_VALID", {accept, w.both("UNKNOWN_IDLE", unknown, idle),
+                                                w.both("ILLEGAL_IDLE", w.both("ISSUED_IDLE", issued, idle), w.invert("NOT_LEGAL", legal))}, false);
+    // Run signals and the analog step chains, one per command.
+    auto run = [&](const std::shared_ptr<IOComponent> &command, const std::string &name) {
+        return w.both("RUN_" + name, command->getOutputPin("Q"), B);
+    };
+    auto r_act = run(c_act, "ACTIVATE"), r_rd = run(c_rd, "READ"), r_wr = run(c_wr, "WRITE"),
+         r_pre = run(c_pre, "PRECHARGE"), r_ref = run(c_ref, "REFRESH");
+    auto chain = [&](const std::string &name, PinPtr go, std::vector<size_t> intervals) {
+        std::vector<PinPtr> stages;
+        auto previous = go;
+        for (size_t k = 0; k < intervals.size(); ++k) {
+            const auto n = name + "_" + std::to_string(k + 1);
+            auto line = b.addNewComponent<memory::MemoryDelayLine>("STEP_" + n, intervals[k], timing::leafDelay(timing::Leaf::And));
+            w.connect(previous, line->getInputPin("IN"));
+            previous = w.both("STAGE_" + n, line->getOutputPin("OUT"), go);
+            stages.push_back(previous);
+        }
+        return stages;
+    };
+    const size_t rows = config_.rows();
+    auto a = chain("ACTIVATE", r_act, {memory.dram_wordline, memory.dramSense(rows), memory.dram_restore});
+    auto r = chain("READ", r_rd, {memory.dram_read});
+    auto wv = chain("WRITE", r_wr, {memory.dram_write_on, memory.dram_write_off, memory.dram_write_recovery});
+    auto p = chain("PRECHARGE", r_pre, {memory.dram_close, memory.dram_precharge, memory.dram_equalize});
+    auto f = chain("REFRESH", r_ref, {memory.dram_wordline, memory.dramSense(rows), memory.dram_close, memory.dram_precharge,
+                                      memory.dram_equalize});
+    auto done_async = w.reduce("CHAIN_DONE", {a.back(), r.back(), wv.back(), p.back(), f.back()}, false);
+    auto sampler = b.addNewComponent<memory::Synchronizer>("DONE_SAMPLER", 1);
+    w.connect(getInputPin("CLK"), sampler->getInputPin("CLK"));
+    w.connect(reset, sampler->getInputPin("RST"));
+    w.connect(done_async, sampler->getInputPin("D"));
+    const auto R = releasing->getOutputPin("Q");
+    auto complete = w.reduce("COMPLETE", {B, sampler->getOutputPin("Q"), w.invert("NOT_RELEASING", R)}, true);
+    auto keep = [&](const std::shared_ptr<IOComponent> &bit, PinPtr set, PinPtr clear, const std::string &name) {
+        w.connect(w.either("NEXT_" + name, set, w.both("HOLD_" + name, bit->getOutputPin("Q"), w.invert("NO_CLEAR_" + name, clear))),
+                  bit->getInputPin("D"));
+    };
+    keep(error, error_event, accept, "ERROR");
+    w.connect(w.both("NEXT_VALID", w.invert("KEEP_VALID", clear_valid),
+                     w.either("VALID_SOURCE", valid->getOutputPin("Q"), w.both("READ_DONE", complete, c_rd->getOutputPin("Q")))),
+              valid->getInputPin("D"));
+    keep(busy, accept, R, "BUSY");
+    keep(releasing, complete, R, "RELEASING");
+    for (auto [bit, decoded, name] : std::vector<std::tuple<std::shared_ptr<IOComponent>, PinPtr, std::string>>{
+             {c_act, is_act, "C_ACTIVATE"}, {c_rd, is_rd, "C_READ"}, {c_wr, is_wr, "C_WRITE"}, {c_pre, is_pre, "C_PRECHARGE"}, {c_ref, is_ref, "C_REFRESH"}})
+        w.connect(w.either("NEXT_" + name, w.both("LOAD_" + name, accept, decoded),
+                           w.both("HOLD_" + name, bit->getOutputPin("Q"), w.invert("NOT_ACCEPT_" + name, accept))),
+                  bit->getInputPin("D"));
+    keep(open, w.both("OPENED", complete, c_act->getOutputPin("Q")), w.both("CLOSED_NOW", complete, c_pre->getOutputPin("Q")), "OPEN");
+    // The refresh row counter: increments, wrapping at the row count, when a
+    // refresh completes.
+    size_t counter_bits = 1; while ((size_t{1} << counter_bits) < rows) ++counter_bits;
+    counter_bits = memory_detail::supportedWidth(counter_bits);
+    auto counter = reg("REFRESH_ROW", counter_bits);
+    std::vector<PinPtr> q, next;
+    if (counter_bits == 1) q.push_back(counter->getOutputPinDynamic("Q"));
+    else {
+        auto counter_q = bitAdapter(b, "REFRESH_ROW_BITS", counter_bits, true);
+        w.connect(counter->getOutputPinDynamic("Q"), counter_q->getInputPinDynamic("IN"));
+        for (size_t i = 0; i < counter_bits; ++i) q.push_back(counter_q->getOutputPin("OUT_" + std::to_string(i)));
+    }
+    PinPtr carry = w.constant("INCREMENT", true);
+    std::vector<PinPtr> last;
+    for (size_t i = 0; i < counter_bits; ++i) {
+        next.push_back(w.binary<XORGate>("SUM_" + std::to_string(i), q[i], carry));
+        carry = w.both("CARRY_" + std::to_string(i), q[i], carry);
+        last.push_back(((rows - 1) >> i) & 1 ? q[i] : w.invert("ZERO_" + std::to_string(i), q[i]));
+    }
+    auto wrap = w.reduce("LAST_ROW", last, true);
+    std::vector<PinPtr> next_row;
+    for (size_t i = 0; i < counter_bits; ++i)
+        next_row.push_back(w.both("NEXT_ROW_" + std::to_string(i), next[i], w.invert("NOT_WRAP_" + std::to_string(i), wrap)));
+    if (counter_bits == 1) w.connect(next_row[0], counter->getInputPinDynamic("D"));
+    else {
+        auto next_bits = bitAdapter(b, "NEXT_REFRESH_ROW", counter_bits, false);
+        for (size_t i = 0; i < counter_bits; ++i) w.connect(next_row[i], next_bits->getInputPin("IN_" + std::to_string(i)));
+        w.connect(next_bits->getOutputPinDynamic("OUT"), counter->getInputPinDynamic("D"));
+    }
+    w.connect(w.both("REFRESHED", complete, c_ref->getOutputPin("Q")), counter->getInputPin("WE"));
+    // Row, column and write registers.
+    auto row = reg("ROW", 32), col = reg("COLUMN", 32), data = reg("DATA", width_), mask = reg("MASK", width_ / 8);
+    auto refresh_row = bitAdapter(b, "REFRESH_ROW_ADDRESS", 32, false);
+    for (size_t i = 0; i < 32; ++i)
+        w.connect(i < counter_bits ? q[i] : w.constant("ROW_HIGH_" + std::to_string(i), false), refresh_row->getInputPin("IN_" + std::to_string(i)));
+    w.connect(memory_detail::payloadMux(b, w, "ROW_SOURCE", getInputPin<32>("ADDR"), refresh_row->getOutputPinDynamic("OUT"), is_ref),
+              row->getInputPin<32>("D"));
+    w.connect(w.both("LOAD_ROW", accept, w.either("ROW_COMMAND", is_act, is_ref)), row->getInputPin("WE"));
+    w.connect(getInputPin<32>("ADDR"), col->getInputPin<32>("D"));
+    w.connect(w.both("LOAD_COLUMN", accept, w.either("COLUMN_COMMAND", is_rd, is_wr)), col->getInputPin("WE"));
+    w.connect(getInputPinDynamic("WRITE_DATA"), data->getInputPinDynamic("D"));
+    w.connect(getInputPinDynamic("WRITE_MASK"), mask->getInputPinDynamic("D"));
+    auto load_write = w.both("LOAD_WRITE", accept, is_wr);
+    w.connect(load_write, data->getInputPin("WE"));
+    w.connect(load_write, mask->getInputPin("WE"));
+    // Analog controls, from the open row and the running command's steps.
+    auto pre_closing = w.both("PRECHARGE_CLOSING", r_pre, p[0]);
+    auto open_held = w.both("OPEN_HELD", OPEN, w.invert("NOT_CLOSING", pre_closing));
+    w.connect(w.reduce("WORDLINE", {open_held, w.both("ACTIVATE_WORDLINE", r_act, a[0]),
+                                    w.both("REFRESH_WORDLINE", w.both("REFRESH_ROW_ON", r_ref, f[0]), w.invert("REFRESH_ROW_OFF", f[2]))}, false),
+              getOutputPin("ROW_ENABLE"));
+    w.connect(w.reduce("SENSING", {open_held, w.both("ACTIVATE_SENSE", r_act, a[1]),
+                                   w.both("REFRESH_SENSE", w.both("REFRESH_SENSE_ON", r_ref, f[1]), w.invert("REFRESH_SENSE_OFF", f[2]))}, false),
+              getOutputPin("SENSE"));
+    auto closed_idle = w.reduce("CLOSED_IDLE", {w.invert("NOT_OPEN", OPEN), w.invert("NOT_ACTIVATING", r_act),
+                                                w.invert("NOT_REFRESH_SENSING", w.both("REFRESH_BEFORE_PRECHARGE", r_ref, w.invert("BEFORE_PRECHARGE", f[3])))}, true);
+    w.connect(w.either("PRECHARGING", closed_idle, w.both("PRECHARGE_STEP", r_pre, p[1])), getOutputPin("PRECHARGE"));
+    w.connect(w.both("WRITE_PULSE", w.both("WRITE_ON", r_wr, wv[0]), w.invert("WRITE_OFF", wv[1])), getOutputPin("WRITE_ENABLE"));
+    w.connect(B, getOutputPin("BUSY"));
+    w.connect(error->getOutputPin("Q"), getOutputPin("ERROR"));
+    w.connect(valid->getOutputPin("Q"), {getOutputPin("READ_VALID"), getOutputPin("OUTPUT_ENABLE")});
+    w.connect(OPEN, getOutputPin("ROW_OPEN"));
+    w.connect(row->getOutputPin<32>("Q"), getOutputPin<32>("ROW_ADDR"));
+    w.connect(col->getOutputPin<32>("Q"), getOutputPin<32>("COLUMN_ADDR"));
+    w.connect(data->getOutputPinDynamic("Q"), getOutputPinDynamic("DATA"));
+    w.connect(mask->getOutputPinDynamic("Q"), getOutputPinDynamic("MASK"));
+    w.finish();
+}
 // Compact row state: deliberately no flip-flop or SRAM model underneath.
 struct Charge {
     LogicValue q = X, sample = X, last = L;
@@ -340,6 +407,11 @@ class DRAMBankBehavioral : public Primitive {
     bool prepared_ = true, sensed_ = false;
     size_t selected_ = 0;
 };
+// The DRAM device as one part: the gate-level command control cycle for
+// cycle (DRAMSyncControl), and the row buffer and cells as plain storage.
+// A rising wordline samples the row (destructively), rising sense restores
+// it, a write pulse writes the latched lanes, a falling wordline closes the
+// row; precharge clears the row buffer.
 class DRAMBehavioral : public Primitive, public MemoryDeviceStorage {
   public:
     const char* getTypeName() const override { return Primitive::getTypeName(); }
@@ -347,68 +419,74 @@ class DRAMBehavioral : public Primitive, public MemoryDeviceStorage {
         : Primitive(std::move(n), "DRAM<" + std::to_string(width) + ">",
                     [width](IOComponent *s) { devicePins(s, width); }),
           MemoryDeviceStorage(c.depth_words, width, X, c.record_history, c.storage_limits),
-          width_(width), state_(width, c), buffer_(c.columns(width), X) {}
+          width_(width), config_(c), control_(width, c.rows(), c.words_per_row), buffer_(c.columns(width), X) {}
+    PrimitiveTiming primitiveTiming() const override { return PrimitiveTiming::SelfTimed; }
     const MemoryStorage &memoryStorage() const override { return storage_; }
     void loadMemoryBytes(uint32_t, const std::vector<uint8_t> &) override {
         throw std::logic_error("Initialize DRAM through ACT/WRITE commands");
     }
     void evaluate(size_t t, Simulator &sim) override {
         started_ = true;
-        bool old_wl = state_.wl, old_sense = state_.sense, old_write = state_.write;
-        auto previous = state_.due;
-        if (auto due = state_.update(*this, t); due && (*due != previous || t >= previous))
-            wake(sim, *due);
-        auto start = state_.row * state_.config.words_per_row * (width_ / 8);
-        if (!old_wl && state_.wl) {
-            const auto it = closed_.find(state_.row);
+        const auto clk = getInputValue("CLK");
+        if (previous_clock_ == L && clk == H)
+            control_.edge(t, read("CMD"), read("ADDR"), read("WRITE_DATA"), read("WRITE_MASK"));
+        previous_clock_ = clk;
+        const bool wl = control_.wordline(t), sense = control_.sensing(t), write = control_.writing(t),
+                   precharge = control_.precharging(t);
+        auto start = control_.row * config_.words_per_row * (width_ / 8);
+        if (!wl_ && wl) {
+            const auto it = closed_.find(control_.row);
             const size_t closed = it == closed_.end() ? 0 : it->second;
-            buffer_ = t - closed >= state_.config.retention_ticks
+            buffer_ = t - closed >= config_.retention_ticks
                           ? Bits(buffer_.size(), X)
                           : storage_.readLogic(start, buffer_.size() / 8);
             storage_.writeLogic(t, start, Bits(buffer_.size(), X));
         }
-        if (!old_sense && state_.sense)
+        if (!sense_ && sense)
             storage_.writeLogic(t, start, buffer_);
-        if (!old_write && state_.write) {
+        if (!write_ && write) {
             // Only selected byte lanes are logical writes. Sampling and
             // restoring the rest of the row above are internal DRAM activity.
-            for (size_t byte = 0; byte < width_ / 8; ++byte) if (state_.mask[byte] == H) {
+            for (size_t byte = 0; byte < width_ / 8; ++byte) if (control_.mask[byte] == H) {
                 Bits lane(8);
                 for (size_t bit = 0; bit < 8; ++bit) {
                     const auto b = byte * 8 + bit;
-                    lane[bit] = buffer_[state_.col * width_ + b] = stored(state_.data[b]);
+                    lane[bit] = buffer_[control_.column * width_ + b] = stored(control_.data[b]);
                 }
-                storage_.writeLogic(t, start + state_.col * (width_ / 8) + byte, lane, true);
+                storage_.writeLogic(t, start + control_.column * (width_ / 8) + byte, lane, true);
             }
         }
-        if (old_wl && !state_.wl) {
-            const auto budget = state_.config.storage_limits.max_resident_bytes;
-            if (!closed_.contains(state_.row) &&
+        if (wl_ && !wl) {
+            const auto budget = config_.storage_limits.max_resident_bytes;
+            if (!closed_.contains(control_.row) &&
                 (closed_.size() + 1) > (budget - std::min(budget, storage_.allocatedDataBytes())) / 128)
                 throw std::length_error("DRAM row metadata budget exceeded");
-            closed_[state_.row] = t;
+            closed_[control_.row] = t;
         }
-        // Allocating another data page must also respect metadata already held.
-        const auto budget = state_.config.storage_limits.max_resident_bytes;
+        const auto budget = config_.storage_limits.max_resident_bytes;
         if (closed_.size() > (budget - std::min(budget, storage_.allocatedDataBytes())) / 128)
             throw std::length_error("DRAM row metadata budget exceeded");
-        if (state_.precharge)
-            std::fill(buffer_.begin(), buffer_.end(), X);
-        publish(sim, t, "BUSY", state_.busy ? H : L);
-        publish(sim, t, "ERROR", state_.error ? H : L);
-        publish(sim, t, "READ_VALID", state_.output ? H : L);
-        publish(sim, t, "ROW_OPEN", state_.open ? H : L);
+        if (precharge) std::fill(buffer_.begin(), buffer_.end(), X);
+        wl_ = wl; sense_ = sense; write_ = write;
+        if (const auto next = control_.nextStep(t); next > t) wake(sim, next);
+        publish(sim, t, "BUSY", control_.busy ? H : L);
+        publish(sim, t, "ERROR", control_.error ? H : L);
+        publish(sim, t, "READ_VALID", control_.valid ? H : L);
+        publish(sim, t, "ROW_OPEN", control_.open ? H : L);
         publish(sim, t, "READ_DATA",
-                state_.output
-                    ? Bits(buffer_.begin() + state_.col * width_, buffer_.begin() + (state_.col + 1) * width_)
+                control_.valid
+                    ? Bits(buffer_.begin() + control_.column * width_, buffer_.begin() + (control_.column + 1) * width_)
                     : Bits(width_, Z));
     }
 
   private:
     size_t width_;
-    Commands state_;
+    DRAMDeviceConfig config_;
+    memory_detail::DRAMSyncControl control_;
     std::map<size_t, size_t> closed_;
     Bits buffer_;
+    LogicValue previous_clock_ = X;
+    bool wl_ = false, sense_ = false, write_ = false;
 };
 } // namespace
 void DRAMDeviceConfig::validate(size_t width, bool expanded) const {
@@ -483,9 +561,10 @@ void DRAMRow::buildInternals(ComponentBuilder &b) {
     }
     w.finish();
 }
+// Sensing a row takes longer the more cells load the bitline.
 DRAMSenseColumn::DRAMSenseColumn(std::string n, size_t rows)
     : Primitive(std::move(n), "DRAMSenseColumn<" + std::to_string(rows) + ">",
-                [rows](IOComponent *s) { sensePins(s, rows); }),
+                [rows](IOComponent *s) { sensePins(s, rows); }, timing::activeTimingProfile().memory.dramSense(rows)),
       rows_(rows) {
 }
 void DRAMSenseColumn::evaluate(size_t t, Simulator &sim) {
@@ -685,7 +764,7 @@ void registerDRAMComponents(ComponentCatalog &c) {
                 return Component::createWithContext<DRAMCommandControl>(ctx, n, width,
                                                                         dramConfigFromParameters(p));
             },
-            {}, "DRAMCommandControlTest", true);
+            {}, "DRAMCommandControlTest");
         registerBlock(
             c, "memory.dram.device." + suffix, "DRAM<" + suffix + ">",
             [width](const ParameterMap &p) {

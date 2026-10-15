@@ -65,12 +65,18 @@ work state changes. Keep dated decisions and validation results in
   phases 1–3 are done. Leaf delays come from a timing profile (`unit`,
   today's timing and still the default; `embedded` 65 nm and `desktop` 32 nm,
   1 tick = 1 ps); gates use inertial delay; per-profile delay tables are
-  generated to a fixed point. Under `unit` every checked result is identical
-  to before. Under the realistic profiles the cores certify at 140–428 MHz
-  with identical cycles and oracle-checked results. Timed memories are not
-  yet valid under realistic profiles; phase 4 (gate-level memory control)
-  is next. Tag `timing-legacy` reproduces published results. The cache
-  experiment waits on this work.
+  generated to a fixed point. Under the realistic profiles the cores certify
+  at 140–428 MHz with identical cycles and oracle-checked results. Phase 4
+  (gate-level memory control, merged with device self-timing) has steps
+  4.1–4.3 done under `unit`: SRAM/ROM and DRAM/NOR controllers are gates,
+  the devices time themselves, compact forms are cycle-exact copies, and
+  focused memory tests, the delay rule and oracle-checked CPU runs pass.
+  Cycle counts with timed memories grew (synchronizer, clocked command
+  protocol), so published timed-memory results hold only at tag
+  `timing-legacy`. Open: step 4.4 (memory tables for the realistic profiles,
+  CPU runs under all profiles), calibration, the cache experiment, then the
+  public site and visualizer. `MemoryEndpointIntegrationTest` fails two
+  example checks built from `site-docs/` snippets until that site update.
 
 - [Future steps plan](records/2026-10-14-future-steps-plan.md): current CPU,
   memory and viewer boundaries assessed against interactive games, a

@@ -397,3 +397,143 @@ safe clock with SRAM and ROM again certified at 102 ticks (64 state cases).
 The cycle increase comes from the two-stage synchronizer and the release
 before the next access. Realistic-profile tables for these parts are stale
 until regenerated at the end of phase 4.
+
+## 2026-10-16 — Phase 4.3: DRAM and NOR control as gates (in progress)
+
+**Decision change (replaces the command-controller part of "Phase 4
+design").** The design above had the command controller synchronize the
+device's BUSY through a two-stage synchronizer and skip two edges per wait.
+Since the device is clocked by the controller's own clock (MEM_CLK is the
+system clock through a zero-delay bridge), its BUSY, ERROR, READ_VALID and
+ROW_OPEN are registered in the same clock domain, so no synchronizer is
+needed. The asynchronous part is inside the device: its analog command chain
+(delay lines) ends in a one-stage sampler, and BUSY is released one edge after
+the sampled completion. A command therefore costs: ISSUE cycle, device takes
+it at the next edge, three device edges (sampled, complete, released), and the
+controller sees BUSY low at the following edge, about five edges in all.
+
+**Devices.** `DRAMCommandControl` and `FlashControl` are gates: power-on
+reset, command decode and legality, per-command delay-line chains, the
+sampler, a releasing state that keeps BUSY high one more edge, the refresh row
+counter (DRAM) and the write-enable latch and block-erase row decoder (NOR).
+The compact devices and the fused endpoint models run `DRAMSyncControl` and
+`NORSyncControl`, cycle-for-cycle copies with the gates' step times.
+
+**Controller.** `CommandMemorySequencer` (gates) replaces the `NativeSequencer`
+primitive (removed): gate-level request check, request registers, a pending
+step list chosen by priority (DRAM: PRECHARGE, ACTIVATE, READ/WRITE, REFRESH;
+NOR: WREN, then READ/PROGRAM/ERASE), ISSUE and WAIT bits, the command
+register shown for one cycle, open-row knowledge (ROW_KNOWN, OPEN_ROW register
+and comparator together with the device's ROW_OPEN), a refresh cycle counter
+(`refresh_interval_cycles`, default 96) with pending and refreshing bits, and
+result and status registers. A failed command (device ERROR, or a read without
+READ_VALID) ends the request with status Device. `NativeSequence` was rewritten
+as a cycle-exact copy for the compact controller and the fused endpoint.
+
+**Problems found and fixed during bring-up**
+- one-bit bit adapters and unsupported register widths in the refresh
+  counters: widths are rounded to ones that have registers and bit adapters;
+- the compact DRAM woke at the last chain step but not at the chain end
+  reaching the sampler (the OR tree), so at the next edge in a settled test
+  the gates had sampled and the compact part had not: it now wakes at the
+  chain end too;
+- on the starting edge the operation-kind bits still held the previous
+  request's kind, so a read after a write was issued as a WRITE (and on NOR a
+  read after a program as PROGRAM): the kind now comes from the new request
+  on that edge (gates and copy);
+- the fused endpoint let the sequencer read device outputs updated at the
+  same edge; it now reads the device's outputs from before the edge for the
+  clocked devices (static devices unchanged);
+- a refresh interval shorter than one refresh's service starved requests:
+  `refresh_interval_cycles` must be 0 or at least 24 (validated).
+
+**Behavior changes recorded.** A protocol reset now drops a request whose
+device commands have not been issued; a command already issued completes
+(the device has no reset). Refresh is counted in clock cycles, so the
+configuration check against `retention_ticks` (still in ticks) cannot account
+for the clock period; it is a configuration responsibility for now.
+
+**Test changes.** Device scenarios give each command three more clock edges
+(the device is synchronous); `MemoryDeviceTimingTest` drives a free-running
+clock. Endpoint protocol scenarios wait up to 20 cycles and disable DRAM
+refresh (refresh is covered by `MemoryEndpointTimingTest`, now at
+`refresh_interval_cycles=24`, retention 25000). The flash reset check resets
+after the PROGRAM has reached the device. The inspector check expects the
+new phase names `command-issue` and `command-wait`.
+
+**Checks (unit), all passed:** DRAMCommandControlTest, DRAMTest,
+NORFlashCommandControlTest, NORFlashTest, MemoryDeviceTimingTest,
+MemoryDeviceContractTest (includes the DRAM and NOR byte-mask oracles),
+NativeMemoryDeviceTest, NativeMemoryDeviceContractTest, MemoryControllerTest,
+MemoryEndpointFF/SRAM/DRAM/ROM/FlashTest, ScalableMemoryEndpointTest,
+MemoryEndpointContractTest, MemoryEndpointTimingTest, MemoryHelperContractTest.
+Each component scenario runs every fidelity and compares them, so the gate
+controller and its copy agree on every checkpoint.
+
+**Tables (unit).** `part_delay_tables --clocked` regenerated 177 DRAM and NOR
+tables (device, controller, endpoint, scalable endpoint, all widths and
+geometry variants) and they were merged into the unit file. The devices'
+outputs are all registered (0 combinational pairs; BUSY/ERROR/READ_VALID/
+ROW_OPEN launch 3–4 ticks after the clock; DRAM READ_DATA up to 177, taken
+only after READ_VALID through `ProtocolStableData`). The endpoints are clocked
+interfaces (REQ_ADDR setup 35, RSP_READY setup 28 at unit).
+
+**DelayRuleTest (unit)** on DRAM and NOR devices, controllers and endpoints
+(8/16/32): 0 rule breaks over 17,063 situations; every compact output change
+at its table delay, never before the gates. The DRAM controllers answer at
+their table's latest launch after an edge, a few ticks after the gates (worst
+share 64–73 %), the same pattern as the NOR, SRAM and ROM controllers; floors
+were recorded with the LAUNCH reason.
+
+**CPU runs (unit, advanced core, two-bit predictor, oracle-verified).** Safe
+clock: DRAM 106 ticks, NOR 104 (all timed memories certified at 102 before;
+the limit is the instruction endpoint's RSP_READY setup).
+
+| Program | DRAM before (102) | DRAM now (106) | NOR before (102) | NOR now (104) |
+| --- | ---: | ---: | ---: | ---: |
+| 19 | 648 | 1,086 | 403 | 604 |
+| 20 | 507 | 868 | 274 | 436 |
+| 21 | 807 | 1,375 | 471 | 732 |
+| 22 | 655 | 1,108 | — | — |
+
+All runs completed and verified. The cycle growth (about 1.7× DRAM, 1.5×
+NOR) comes from the clocked command protocol: each command costs about five
+edges (issue, device takes it, sampled, complete, released, controller sees
+BUSY low), where the former C++ sequencer polled within a cycle in ticks. Per-request
+latencies were not measured separately in this step.
+
+**Plan check after 4.3.** On track. The per-command edge count is a property
+of this device design (one-stage sampler plus a release edge for
+make-before-break safety), not of physical timing; phase 6 calibrates the
+analog intervals, and the edge overhead is accepted as the model's protocol
+cost. For the cache experiment this makes main memory slower in cycles,
+which favours caches; the experiment will report it as such rather than
+tuning it away. Next: 4.4 (tables to a fixed point for the realistic
+profiles, CPU runs under all profiles), then commit.
+
+**Full unit table check.** `part_delay_tables --verify` on the whole unit
+file first reported differences: the twelve storage-bank tables (SRAM, ROM,
+DRAM, NOR at 8/16/32) were stale since 4.2/4.3, because the bank primitives
+now carry their geometry delays (SRAM bitline 64–131, ROM column 96, NOR read
+97, DRAM sense 32 at unit) while the stored tables still had 1–5; and
+`NoGateList.generated.inc` still described the SRAM/ROM controllers as
+"stored state" instead of self-timed. Both were regenerated; the re-verify
+after the rebuild is identical (601 entries, gate list as stored). The
+phase 4.2 check had regenerated only the device, controller and endpoint
+tables, which is how the banks were missed: from now on the whole file is
+verified at the end of each step.
+
+**Python checks.** `MemoryInspectorTest` and `MemoryInspectorIntegrationTest`
+pass. `MemoryEndpointIntegrationTest`: the device pin-set check was updated
+for the READY output that SRAM and ROM gained in 4.2 (missed then); two
+example checks still fail because they compile reference models from
+`site-docs/memory` code snippets (`memory_example::CompactDevice`,
+`Sequence`) that describe the old tick sequencing. They are rewritten with
+the public pages in phase 8 (site-docs untouched by owner request).
+
+**Final focused run on the committed state (unit), 31 passed:** SRAM cell,
+device and access control; ROM device, address control and bank; DRAM and NOR
+banks, command controls and devices; device contract and timing; native
+device and contract; controller; all five endpoints, scalable endpoint,
+endpoint contract and timing; helper contract; `CacheReadTest` and the four
+cache scenarios.

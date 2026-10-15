@@ -134,7 +134,8 @@ class MatrixWriteDistributor : public IOComponent {
 // Symbolic single-selected-row sensing, not electrical multi-driver resolution.
 class StaticReadColumn : public Primitive {
   public:
-    StaticReadColumn(std::string name, size_t rows);
+    // `delay` 0: the ROM read column's delay for `rows` from the timing profile.
+    StaticReadColumn(std::string name, size_t rows, size_t delay = 0);
     void evaluate(size_t, Simulator &) override;
     bool respondsOnlyToInputs() const override { return true; }
     bool settled(const Values &, Values &, Deciders &) const override;

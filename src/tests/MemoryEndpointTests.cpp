@@ -40,9 +40,10 @@ struct Scenario {
         step(label+"-latched", {{"CLK",logicBit(false)},{"REQ_VALID",logicBit(false)},
             {"REQ_ADDR",logicBits(32,0xffffffff)},{"REQ_WRITE_DATA",logicBits(width,0)}});
         step(label+"-execute", {{"CLK",logicBit(true)}});
-        // Supply enough clocks for the slowest technology; no response is
-        // consumed until RSP_READY.
-        for (size_t cycle = 0; cycle < 5; ++cycle) {
+        // Supply enough clocks for the slowest technology (a DRAM row miss:
+        // PRECHARGE, ACTIVATE and the access, each issued, taken and waited
+        // for about five edges); no response is consumed until RSP_READY.
+        for (size_t cycle = 0; cycle < 20; ++cycle) {
             step(label+"-wait-low-"+std::to_string(cycle), {{"CLK",logicBit(false)}});
             step(label+"-wait-high-"+std::to_string(cycle), {{"CLK",logicBit(true)}});
         }
@@ -68,6 +69,9 @@ std::string testName(Technology t) {
 ComponentTestSpec endpointSpec(Technology t, size_t width = 8, bool container = false, size_t depth = 4, size_t row_words = 1) {
     ParameterMap config{{"depth_words",std::to_string(depth)},{"words_per_row",std::to_string(row_words)},{"block_words",std::to_string(row_words)}};
     if (t == Technology::ROM) config["image_hex"] = "a53c81ff";
+    // The protocol checkpoints expect REQ_READY at fixed edges; a due refresh
+    // would hold it low. Refresh is covered by MemoryEndpointTimingTest.
+    if (t == Technology::DRAM) config["refresh_interval_cycles"] = "0";
     Scenario s(container ? "ScalableMemoryEndpointTest" : testName(t),
         memoryContractId(t, container ? "scalable-endpoint" : "endpoint", width), width, config);
     s.init(); const unsigned mask = (1u << (width/8))-1;
@@ -359,7 +363,7 @@ void verifyEndpointWriteHistory(Technology technology, size_t width) {
     const bool flash = technology == Technology::NORFlash;
     const unsigned write_op = flash ? 2 : 1;
     Scenario s("MemoryEndpointWriteHistory", memoryContractId(technology, "endpoint", width), width, {{"depth_words", "4"}, {"words_per_row", "2"},
-        {"block_words", "2"}, {"refresh_interval_ticks", "0"}});
+        {"block_words", "2"}, {"refresh_interval_ticks", "0"}, {"refresh_interval_cycles", "0"}});
     using Writes = std::map<uint32_t, uint8_t>;
     std::map<std::string, Writes> expected;
     auto transaction = [&](std::string label, unsigned op, uint32_t at, uint32_t data,
@@ -465,7 +469,7 @@ void NativeMemoryDeviceContractTest::verifyResults() {
                 require(child->getSelectedFidelity()=="behavioral" && child->getChildren().empty(),
                         "Endpoint did not build the behavioral controller");
         EndpointConfig config;config.depth_words=1u<<28;config.record_history=false;
-        config.max_resident_bytes=16384;config.max_history_bytes=0;config.refresh_interval_ticks=0;
+        config.max_resident_bytes=16384;config.max_history_bytes=0;config.refresh_interval_ticks=0;config.refresh_interval_cycles=0;
         auto huge=std::dynamic_pointer_cast<MemoryDeviceStorage>(createBehavioralMemoryDevice("HUGE",8,t,config));
         require(huge->memoryStorage().capacityBytes()==1u<<28,"Wrong large capacity");
         require(huge->memoryStorage().allocatedDataBytes()==0,"Eager content allocation");
@@ -569,8 +573,9 @@ void MemoryEndpointTimingTest::verifyResults() {
         void consume() {drive({{"CLK",0},{"RSP_READY",1}});drive({{"CLK",1}});drive({{"CLK",0},{"RSP_READY",0}});}
         void transaction(unsigned op,unsigned address,unsigned value,unsigned expected) {
             start(op,address,value);response();
-            require(out("RSP_STATUS")==logicBits(3,0),"Unexpected transaction error");
-            require(out("RSP_READ_DATA")==logicBits(8,expected),"Timed response data mismatch");consume();
+            const auto where=context+" op="+std::to_string(op)+" address="+std::to_string(address)+" at "+std::to_string(sim.getCurrentTime());
+            require(out("RSP_STATUS")==logicBits(3,0),"Unexpected transaction error: "+where+" status "+formatLogicVector(out("RSP_STATUS")));
+            require(out("RSP_READ_DATA")==logicBits(8,expected),"Timed response data mismatch: "+where+" data "+formatLogicVector(out("RSP_READ_DATA")));consume();
         }
     };
     for (unsigned mode = 0; mode < 3; ++mode) {
@@ -608,8 +613,12 @@ void MemoryEndpointTimingTest::verifyResults() {
         for (int i=0;i<5;++i) {ff.cycle();require(ff.out("RSP_READ_DATA")==logicBits(8,0xa5),"Response changed under backpressure");}
         ff.consume();
         Rig flash(Technology::NORFlash,compact,{{"program_ticks","4000"},{"erase_ticks","5000"}},native_device);
-        flash.start(2,0,0x81);flash.cycle();
-        require(flash.out("RSP_VALID")==logicBit(false),"Flash completed before its program interval");
+        // Reset after the controller has issued WREN and PROGRAM (a few
+        // edges) but long before the program interval ends: the device has
+        // no reset, so the issued program completes. A request whose commands
+        // were not yet issued is dropped by the reset.
+        flash.start(2,0,0x81);
+        for(int i=0;i<8;++i) {flash.cycle();require(flash.out("RSP_VALID")==logicBit(false),"Flash completed before its program interval");}
         flash.drive({{"RST",1}});flash.drive({{"RST",0}});
         for(int i=0;i<35;++i) {flash.cycle();require(flash.out("RSP_VALID")==logicBit(false),"Reset resurrected a response");}
         flash.transaction(0,0,0,0x81); // Issued program drained, never rolled back.
@@ -618,7 +627,7 @@ void MemoryEndpointTimingTest::verifyResults() {
             require(view->memoryStorage().getByteWritesInTimeRange(0, flash.now) ==
                     std::map<uint32_t, uint8_t>{{0, 0x81}}, "Drained flash program missing from write history");
         }
-        Rig dram(Technology::DRAM,compact,{{"retention_ticks","20000"},{"refresh_interval_ticks","1024"}},native_device);
+        Rig dram(Technology::DRAM,compact,{{"retention_ticks","25000"},{"refresh_interval_ticks","1024"},{"refresh_interval_cycles","24"}},native_device);
         dram.transaction(1,0,0x5a,0);
         const auto last_write = dram.now;
         dram.start(0,0);dram.response();

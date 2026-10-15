@@ -66,52 +66,6 @@ void MemoryResponseBuffer::buildInternals(ComponentBuilder& b) {
     w.finish();
 }
 namespace {
-class NativeSequencer : public Primitive, public MemoryActivityView {
-    size_t width_;
-    Technology technology_;
-    NativeSequence sequence_;
-    LogicValue previous_ = X;
-    size_t scheduled_ = 0;
-    bool history_enabled_;
-public:
-    NativeSequencer(std::string n, size_t w, Technology t, EndpointConfig c)
-        : Primitive(std::move(n), "MemoryNativeSequencer<" + std::string(technologyName(t)) + "," + std::to_string(w) + ">",
-            [=](IOComponent* s) {
-                for (auto p : {"CLK", "RST", "START", "FINISH"}) s->addPin(p, PinType::INPUT);
-                for (auto [name, width] : std::vector<std::pair<std::string,size_t>>{{"OP",3},{"ADDR",32},{"DATA",w},{"MASK",w/8}})
-                    s->addPinDynamic(name, PinType::INPUT, width);
-                for (auto p : {"BACK_READY", "DONE"}) s->addPin(p, PinType::OUTPUT);
-                s->addPinDynamic("RESULT", PinType::OUTPUT, w); s->addPin<3>("STATUS", PinType::OUTPUT);
-                nativePins(s, w, t, true);
-            }), width_(w), technology_(t), sequence_(w, t, c), history_enabled_(c.record_history) {}
-    bool selfTimedClockedPart() const override { return true; }
-    void evaluate(size_t time, Simulator& sim) override {
-        if (scheduled_ <= time) scheduled_ = 0;
-        auto clk = getInputValue("CLK"); bool rising = previous_ == L && clk == H; previous_ = clk;
-        Request request{read("OP"), read("ADDR"), read("DATA"), read("MASK")};
-        sequence_.step(time, rising, getInputValue("RST") != L, getInputValue("START") == H, request,
-                       [&](const std::string& pin, size_t) { return read("MEM_" + pin); },getInputValue("FINISH")==H);
-        publish(sim, time, "BACK_READY", sequence_.available ? H : L);
-        publish(sim, time, "DONE", sequence_.done ? H : L);
-        publish(sim, time, "RESULT", sequence_.result);
-        publish(sim, time, "STATUS", bits(3, unsigned(sequence_.status)));
-        for (auto& [name, pin] : getAllOutputPins()) if (name.starts_with("MEM_")) {
-            publish(sim, time, name, signal(sequence_.outputs, name.substr(4), pin->getWidth()));
-        }
-        if (auto due = sequence_.deadline(); due > time && due != scheduled_) { scheduled_ = due; wake(sim, due); }
-        if (history_enabled_ && sim.isHistoryRecordingEnabled()) {
-            MemoryActivity activity{sequence_.phaseName(), sequence_.maintenanceActive(), {}};
-            for (const auto& name : nativeActivityInputs(technology_))
-                activity.signals[name] = sequence_.outputs.at(name);
-            for (auto name : {"BUSY", "ERROR", "READ_VALID"})
-                if (getAllInputPins().contains(std::string("MEM_") + name))
-                    activity.signals[name] = read(std::string("MEM_") + name);
-            recordMemoryActivity(time, std::move(activity));
-        }
-    }
-};
-}
-namespace {
 // The whole controller as one part. It applies the same rules as the three
 // components of the structural form: the transaction port's one pending
 // request, the one-entry response buffer, and the native sequencer (the
@@ -224,8 +178,16 @@ public:
         const auto after = view();
         publish(sim, t, "REQ_READY", after.ready);
         publishResponse(sim, t, reset, after.completion, sequence_.result, bits(3, unsigned(sequence_.status)));
-        for (auto& [name, pin] : getAllOutputPins())
-            if (name.starts_with("MEM_")) publish(sim, t, name, signal(sequence_.outputs, name.substr(4), pin->getWidth()));
+        for (auto& [name, pin] : getAllOutputPins()) {
+            if (!name.starts_with("MEM_")) continue;
+            if (name == "MEM_CLK") {
+                // The gate-level form passes the clock through a zero-delay bridge.
+                pin->setValueFromVector(read("CLK"));
+                if (auto wire = pin->getExternalWireBase()) sim.scheduleEvent(makeWireUpdateEvent(t, wire, read("CLK")));
+                continue;
+            }
+            publish(sim, t, name, signal(sequence_.outputs, name.substr(4), pin->getWidth()));
+        }
         if (auto due = sequence_.deadline(); due > t && due != scheduled_) { scheduled_ = due; wake(sim, due); }
     }
 };
@@ -282,13 +244,13 @@ void MemoryController::buildInternals(ComponentBuilder& b) {
     }
     memory_detail::StructuralWiring w(b);
     auto front = b.addNewComponent<MemoryTransactionPort>("TRANSACTION", width_);
-    // SRAM and ROM: the gate-level static sequencer. DRAM and NOR flash still
-    // use the native sequencer primitive until their gate-level form exists.
+    // SRAM and ROM: the gate-level static sequencer; DRAM and NOR flash: the
+    // gate-level command sequencer.
     std::shared_ptr<IOComponent> control;
     if (technology_ == Technology::SRAM || technology_ == Technology::ROM)
         control = b.addNewComponent<memory_detail::StaticMemorySequencer>("DEVICE_CONTROL", width_, technology_, config_);
     else
-        control = b.addNewComponent<NativeSequencer>("DEVICE_CONTROL", width_, technology_, config_);
+        control = b.addNewComponent<memory_detail::CommandMemorySequencer>("DEVICE_CONTROL", width_, technology_, config_);
     for (const auto& [name, pin] : getAllInputPins()) {
         if (name.starts_with("MEM_")) w.connect(pin, control->getInputPinDynamic(name));
         else {

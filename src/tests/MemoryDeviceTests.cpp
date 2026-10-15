@@ -29,8 +29,17 @@ struct Scenario {
         data["CMD"] = logicBits(3, op);
         data[spec.contract_id.find("dram") != std::string::npos ? "ADDR" : "WORD_ADDR"] = logicBits(32, addr);
         step(label + "-setup", std::move(data), {});
+        // The device is synchronous: the command is taken at this edge, and a
+        // command it runs ends at the third edge after it (sampled, complete,
+        // BUSY released). Each settled step lets the timed steps finish.
+        step(label + "-edge", {{"CLK", logicBit(H)}}, {});
+        step(label + "-command-removed", {{"CLK", logicBit(L)}, {"CMD", logicBits(3, 0)}}, {});
+        for (int edge = 1; edge <= 3; ++edge) {
+            step(label + "-clock-" + std::to_string(edge), {{"CLK", logicBit(H)}}, {});
+            if (edge < 3) step(label + "-clock-" + std::to_string(edge) + "-low", {{"CLK", logicBit(L)}}, {});
+        }
         expected["BUSY"] = logicBit(L);
-        step(label, {{"CLK", logicBit(H)}}, std::move(expected));
+        step(label, {{"CLK", logicBit(L)}}, std::move(expected));
     }
     void rejectUnknownCommand(size_t width, bool control) {
         step("unknown-command-setup", {{"CLK", logicBit(L)}, {"CMD", LogicVector(3, X)}},
@@ -515,12 +524,14 @@ void MemoryDeviceContractTest::verifyResults() {
     compare(s.spec);
 }
 void MemoryDeviceTimingTest::verifyResults() {
-    // Timed inputs are separate from documentation's settled checkpoints.
+    // Timed inputs are separate from documentation's settled checkpoints. A
+    // free-running clock drives the synchronous devices; a command is shown
+    // around one rising edge.
     for (auto fidelity : {Fidelity::Structural, Fidelity::Behavioral})
         for (bool flash : {false, true}) {
             auto id = flash ? "memory.nor-flash.device.8" : "memory.dram.device.8";
             auto built = builtinComponentCatalog().createRoot(
-                {id, "DUT", flash ? ParameterMap{} : ParameterMap{{"retention_ticks", "1024"}}, {}, {}, {}},
+                {id, "DUT", flash ? ParameterMap{} : ParameterMap{{"retention_ticks", "1200"}}, {}, {}, {}},
                 withExactFidelity(canonicalDefaultProfile(), "DUT", fidelity));
             auto io = std::dynamic_pointer_cast<IOComponent>(built.root);
             ComponentBuilder b(io);
@@ -532,11 +543,16 @@ void MemoryDeviceTimingTest::verifyResults() {
             auto set = [&](size_t t, std::string p, TestValue v) {
                 sim.scheduleEvent(makeTestWireUpdate(t, inputs.at(p), v));
             };
-            auto cmd = [&](size_t t, unsigned op, unsigned addr) {
-                set(t, "CLK", L);
-                set(t, "CMD", uint64_t(op));
-                set(t, flash ? "WORD_ADDR" : "ADDR", uint64_t(addr));
-                set(t + 10, "CLK", H);
+            const size_t period = flash ? 400 : 200, first = 100, edges = flash ? 14 : 42;
+            auto edge = [&](size_t k) { return first + k * period; };
+            for (size_t k = 0; k < edges; ++k) {
+                set(edge(k), "CLK", H);
+                set(edge(k) + period / 2, "CLK", L);
+            }
+            auto cmd = [&](size_t k, unsigned op, unsigned addr) {
+                set(edge(k) - period / 4, "CMD", uint64_t(op));
+                set(edge(k) - period / 4, flash ? "WORD_ADDR" : "ADDR", uint64_t(addr));
+                set(edge(k) + period / 4, "CMD", uint64_t(0));
             };
             set(0, "CLK", L);
             set(0, "CMD", uint64_t(0));
@@ -544,39 +560,43 @@ void MemoryDeviceTimingTest::verifyResults() {
             set(0, "WRITE_DATA", uint64_t(0xa5));
             set(0, "WRITE_MASK", H);
             if (flash) {
-                cmd(100, 4, 0);
-                cmd(200, 2, 0);
-                sim.advanceAndRecord(230);
+                cmd(0, 4, 0);
+                cmd(4, 2, 0);
+                sim.advanceAndRecord(edge(4) + 30);
                 require(io->getOutputPin("BUSY")->getValue() == H, "Flash program completed too early");
-                cmd(240, 1, 1);
-                set(245, "WRITE_DATA", uint64_t(0));
-                sim.advanceAndRecord(500);
+                cmd(5, 1, 1);
+                set(edge(4) + 50, "WRITE_DATA", uint64_t(0));
+                sim.advanceAndRecord(edge(5) + 50);
                 require(io->getOutputPin("ERROR")->getValue() == H, "Busy flash command was not rejected");
-                cmd(600, 1, 0);
-                sim.advanceAndRecord(900);
+                cmd(8, 1, 0);
+                sim.advanceAndRecord(edge(12));
                 require(io->getOutputPin<8>("READ_DATA")->getValueAsUInt64() == 0xa5,
                         "Flash request was not latched");
             } else {
-                cmd(100, 1, 0);
-                sim.advanceAndRecord(130);
+                cmd(0, 1, 0);
+                sim.advanceAndRecord(edge(0) + 150);
                 require(io->getOutputPin("BUSY")->getValue() == H &&
                             io->getOutputPin("ROW_OPEN")->getValue() == L,
                         "DRAM activated too early");
-                cmd(300, 3, 0);
-                cmd(500, 4, 0);
-                cmd(800, 5, 0);
-                cmd(1400, 1, 0);
-                cmd(1600, 2, 0);
-                sim.advanceAndRecord(1800);
+                // Write, close (row 0 closed near edge 8), refresh row 0 near
+                // edge 12, reopen at edge 16: more than the retention after
+                // the precharge, less after the refresh.
+                cmd(4, 3, 0);
+                cmd(8, 4, 0);
+                cmd(12, 5, 0);
+                cmd(16, 1, 0);
+                cmd(20, 2, 0);
+                sim.advanceAndRecord(edge(24) - 1);
                 require(io->getOutputPin<8>("READ_DATA")->getValueAsUInt64() == 0xa5,
                         "Refresh failed to restore row before expiry");
-                cmd(1900, 4, 0);
-                cmd(3300, 1, 0);
-                cmd(3500, 2, 0);
-                sim.advanceAndRecord(3800);
+                cmd(24, 4, 0);
+                cmd(32, 1, 0);
+                cmd(36, 2, 0);
+                sim.advanceAndRecord(edge(edges));
                 require(io->getOutputPin<8>("READ_DATA")->getValueAsVector() == LogicVector(8, X),
                         "Expired DRAM row did not become unknown");
             }
+            sim.advanceAndRecord(edge(edges) + 10 * period);
             require(!sim.hasPendingEvents(), "Memory left periodic events running");
         }
 }

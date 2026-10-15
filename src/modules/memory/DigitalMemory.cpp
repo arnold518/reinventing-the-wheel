@@ -286,10 +286,10 @@ void MatrixWriteDistributor::buildInternals(ComponentBuilder &b) {
     w.finish();
 }
 // A read column takes longer to sense the more cells load it.
-StaticReadColumn::StaticReadColumn(std::string n, size_t rows)
+StaticReadColumn::StaticReadColumn(std::string n, size_t rows, size_t delay)
     : Primitive(std::move(n), "StaticReadColumn<" + std::to_string(rows) + ">",
                 [rows](IOComponent *s) { readColumnPins(s, rows); },
-                timing::activeTimingProfile().memory.romColumn(rows)),
+                delay ? delay : timing::activeTimingProfile().memory.romColumn(rows)),
       rows_(rows) {
 }
 void Primitive::publishSettled(Simulator &sim, size_t t) {
@@ -368,10 +368,19 @@ void registerMatrixComponents(ComponentCatalog &c) {
     registerBlock(
         c, "memory.shared.read-column", "StaticReadColumn",
         [count](const ParameterMap &p) {
-            return describe([r = count(p)](IOComponent *s) { readColumnPins(s, r); });
+            ParameterMap rows_only = p;
+            if (const auto t = rows_only.find("technology"); t != rows_only.end()) {
+                if (t->second != "rom" && t->second != "nor-flash") throw std::invalid_argument("Read column technology is rom or nor-flash");
+                rows_only.erase(t);
+            }
+            return describe([r = count(rows_only)](IOComponent *s) { readColumnPins(s, r); });
         },
         [count](const std::string &n, const ParameterMap &p, const std::shared_ptr<BuildContext> &ctx) {
-            return Component::createWithContext<StaticReadColumn>(ctx, n, count(p));
+            // A NOR flash column senses with the NOR read time; ROM's is the default.
+            ParameterMap rows_only = p;
+            const bool nor = rows_only.erase("technology") && p.at("technology") == "nor-flash";
+            const auto r = count(rows_only);
+            return Component::createWithContext<StaticReadColumn>(ctx, n, r, nor ? timing::activeTimingProfile().memory.norRead(r) : 0);
         },
         {}, "StaticReadColumnTest", true);
     for (size_t width : {8, 16, 32}) {

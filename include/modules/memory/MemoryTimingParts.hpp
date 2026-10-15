@@ -58,6 +58,30 @@ public:
     void evaluate(size_t time, Simulator& simulator) override;
 };
 
+// KNOWN is 1 when every bit of IN is 0 or 1. Unknown-value detection is
+// simulator metadata, not a gate (as in the memory request checks).
+class KnownBits : public BasicComponent {
+public:
+    KnownBits(std::string name, size_t width);
+    const char* getTypeName() const override { return "KnownBits"; }
+    PrimitiveTiming primitiveTiming() const override { return PrimitiveTiming::InputsOnly; }
+    void evaluate(size_t time, Simulator& simulator) override;
+};
+
+// A device's power-on reset: OUT is 1 from the start of the simulation for
+// `width` ticks, then 0 for good. It stands for the analog circuit that
+// holds a chip in reset while its supply comes up; a device with no reset pin
+// (DRAM, NOR flash) starts idle through it.
+class PowerOnReset : public BasicComponent {
+public:
+    PowerOnReset(std::string name, size_t width);
+    const char* getTypeName() const override { return "PowerOnReset"; }
+    void scheduleInitialEvents(Simulator& simulator, size_t time) override;
+    void evaluate(size_t time, Simulator& simulator) override;
+private:
+    size_t width_;
+};
+
 // Two clocked stages that bring an asynchronous device signal (READY, BUSY)
 // into the controller's clock. A stage that samples an unknown or changing
 // input keeps its previous value: metastability resolves to 0 or 1 in a real
@@ -65,12 +89,15 @@ public:
 // second stage one flip-flop clock-to-output delay after a rising edge. RST
 // high clears both stages. The timing analysis treats D as an asynchronous
 // capture: no setup or hold check, no path through it.
+// `stages` 1 makes a single resolving sampler (a synchronous device sampling
+// the end of its own analog step), 2 a classic synchronizer.
 class Synchronizer : public BasicComponent {
 public:
-    explicit Synchronizer(std::string name);
+    explicit Synchronizer(std::string name, size_t stages = 2);
     const char* getTypeName() const override { return "Synchronizer"; }
     void evaluate(size_t time, Simulator& simulator) override;
 private:
+    size_t stages_;
     LogicValue first_ = LogicValue::LOW, second_ = LogicValue::LOW, previous_clock_ = LogicValue::UNKNOWN;
 };
 

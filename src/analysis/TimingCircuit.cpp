@@ -86,6 +86,13 @@ std::optional<ClockComponentContract> builtinClockContract(const IOComponent& c)
         stable.stable_outputs = {"OUT"};
         return stable;
     }
+    // Power-on reset is constant during operation (0 after its pulse).
+    if (typeid(c) == typeid(memory::PowerOnReset)) {
+        ClockComponentContract reset;
+        reset.evidence = "power-on reset leaf: 0 after its initial pulse";
+        reset.constant_outputs["OUT"] = 0;
+        return reset;
+    }
     // The synchronizer launches Q like a flip-flop. Its D is an asynchronous
     // capture: read at an edge with no setup or hold requirement, so no path
     // and no check pass through it.

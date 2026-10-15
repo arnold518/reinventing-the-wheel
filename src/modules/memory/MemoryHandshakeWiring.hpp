@@ -49,6 +49,12 @@ inline StructuralWiring::PinPtr payloadMux(ComponentBuilder& b, StructuralWiring
     w.connect(select,mux->getInputPin("SEL"));
     return mux->getOutputPinDynamic("OUT");
 }
+// The narrowest register width holding `bits` bits that also has bit
+// adapters (1 needs none).
+inline size_t supportedWidth(size_t bits) {
+    for (size_t width : {1, 2, 3, 4, 8, 16, 32}) if (width >= bits) return width;
+    throw std::invalid_argument("A counter wider than 32 bits");
+}
 inline StructuralWiring::PinPtr bridge(ComponentBuilder& b, StructuralWiring& w,
     const std::string& name, StructuralWiring::PinPtr source) {
     const auto width=source->getWidth();

@@ -7,6 +7,40 @@ history remains in Git and the archived reports.
 
 ## 2026-10-16
 
+### Gate-level memory control and self-timed memory devices (branch `realistic-timing`, phase 4.1–4.3)
+
+- **Changed:** the memory controllers' sequencing is now gates. SRAM and ROM
+  use `StaticMemorySequencer` (request check, registers, READY through a
+  two-stage synchronizer); DRAM and NOR flash use `CommandMemorySequencer`
+  (pending command list, one-cycle ISSUE, wait for the device's registered
+  BUSY, open-row tracking, a cycle-counted refresh). The C++
+  `NativeSequencer` primitive is removed. The devices time themselves: SRAM
+  and ROM raise READY from replica timing (`MemoryTimer`, delay lines); DRAM
+  and NOR command controls are synchronous gates with analog delay-line
+  chains and a sampler. New timing leaves: `MemoryDelayLine`,
+  `SymbolicDiffer`, `Synchronizer`, `ProtocolStableData`, `KnownBits`,
+  `PowerOnReset`. Compact controllers, compact devices and the fused endpoint
+  are cycle-exact copies (`NativeSequence`, `DRAMSyncControl`,
+  `NORSyncControl`) timed by tables proven on the gates. DRAM refresh is
+  configured in cycles (`refresh_interval_cycles`, default 96; 0 or at least
+  24). The device's open row is visible as ROW_OPEN.
+- **Why:** decision 2A of the realistic-timing plan (devices time themselves
+  and signal completion) and the lower-level-first rule; tick timers in C++
+  could not follow realistic gate delays.
+- **Verified (unit profile):** focused memory scenarios (device, contract,
+  timing, controller, all endpoints, scalable endpoint, cache scenarios) pass
+  with every fidelity compared; `DelayRuleTest` on SRAM/ROM/DRAM/NOR devices,
+  controllers and endpoints: no rule break; oracle-verified CPU runs, e.g.
+  program 21 at 696 (SRAM), 1,375 (DRAM) and 732 (NOR) cycles; safe clock
+  102 (SRAM/ROM), 106 (DRAM), 104 (NOR) ticks. Details in the progress record.
+- **Limits:** cycle counts with timed memories grew (synchronizer and
+  clocked command protocol); published results remain reproducible at tag
+  `timing-legacy`. Realistic-profile tables for the memory parts are stale
+  until step 4.4. `MemoryEndpointIntegrationTest` fails its two C++ example
+  checks because they compile reference models from `site-docs/` snippets
+  that still describe the old sequencing; the public site is updated in
+  phase 8 by owner request. No full suite.
+
 ### Timing profiles, inertial gate delay and realistic gate delays (branch `realistic-timing`)
 
 - **Changed:** leaf parts (logic gates, splitter, memory primitives) read

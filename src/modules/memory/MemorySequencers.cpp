@@ -191,4 +191,257 @@ void StaticMemorySequencer::buildInternals(ComponentBuilder& b) {
     w.finish();
 }
 
+CommandMemorySequencer::CommandMemorySequencer(std::string name, size_t width, Technology technology, circuit::memory::EndpointConfig config)
+    : IOComponent(std::move(name), [width, technology](IOComponent* s) { defineSequencerPins(s, width, technology); }),
+      width_(width), technology_(technology), config_(config), type_(typeName("CommandMemorySequencer", width, technology)) {
+    if (technology != Technology::DRAM && technology != Technology::NORFlash)
+        throw std::invalid_argument("The command sequencer drives DRAM or NOR flash");
+    if (!std::has_single_bit(config.words_per_row))
+        throw std::invalid_argument("The gate-level command sequencer needs power-of-two rows");
+}
+
+void CommandMemorySequencer::buildInternals(ComponentBuilder& b) {
+    StructuralWiring w(b);
+    const bool dram = technology_ == Technology::DRAM;
+    auto check = b.addNewComponent<MemoryRequestCheck>("REQUEST_CHECK", width_, technology_, config_);
+    w.connect(getInputPin<3>("OP"), check->getInputPin<3>("OP"));
+    w.connect(getInputPin<32>("ADDR"), check->getInputPin<32>("ADDR"));
+    w.connect(getInputPinDynamic("MASK"), check->getInputPinDynamic("MASK"));
+    const auto start = getInputPin("START");
+    auto valid_start = w.both("VALID_START", start, check->getOutputPin("ACCEPT"));
+    auto invalid_start = w.both("INVALID_START", start, w.invert("REFUSED", check->getOutputPin("ACCEPT")));
+    auto state = [&](const std::string& name) {
+        auto bit = b.add(circuit::families::ClockedStateBit, name);
+        for (auto p : {"CLK", "RST"}) w.connect(getInputPin(p), bit->getInputPin(p));
+        return bit;
+    };
+    auto reg = [&](const std::string& name, size_t width) {
+        auto r = b.add(circuit::families::registerWord(width), name);
+        for (auto p : {"CLK", "RST"}) w.connect(getInputPin(p), r->getInputPin(p));
+        return r;
+    };
+    auto set_hold = [&](const std::shared_ptr<IOComponent>& bit, PinPtr set, PinPtr clear, const std::string& name) {
+        w.connect(w.either("NEXT_" + name, set, w.both("HOLD_" + name, bit->getOutputPin("Q"), w.invert("NO_CLEAR_" + name, clear))),
+                  bit->getInputPin("D"));
+    };
+    auto active = state("ACTIVE"), issuing = state("ISSUE"), waiting = state("WAIT"), done = state("DONE");
+    const auto A = active->getOutputPin("Q"), I = issuing->getOutputPin("Q"), WT = waiting->getOutputPin("Q");
+    // Request registers.
+    auto word = reg("WORD", 32), data = reg("WRITE_DATA", width_), mask = reg("WRITE_MASK", width_ / 8);
+    for (auto r : {word, data, mask}) w.connect(start, r->getInputPin("WE"));
+    w.connect(check->getOutputPin<32>("WORD_ADDR"), word->getInputPin<32>("D"));
+    w.connect(getInputPinDynamic("DATA"), data->getInputPinDynamic("D"));
+    w.connect(getInputPinDynamic("MASK"), mask->getInputPinDynamic("D"));
+    w.connect(data->getOutputPinDynamic("Q"), getOutputPinDynamic("MEM_WRITE_DATA"));
+    w.connect(mask->getOutputPinDynamic("Q"), getOutputPinDynamic("MEM_WRITE_MASK"));
+    auto op_bit = [&](const std::string& name, PinPtr decoded) {
+        auto bit = state(name);
+        w.connect(w.either("NEXT_" + name, w.both("LOAD_" + name, start, decoded),
+                           w.both("HOLD_" + name, bit->getOutputPin("Q"), w.invert("NO_START_" + name, start))),
+                  bit->getInputPin("D"));
+        return bit->getOutputPin("Q");
+    };
+    const auto is_write = op_bit("IS_WRITE", check->getOutputPin("WRITE"));
+    const auto is_program = op_bit("IS_PROGRAM", check->getOutputPin("PROGRAM"));
+    const auto is_erase = op_bit("IS_ERASE", check->getOutputPin("ERASE"));
+    // Fields of the live and the held word address.
+    const size_t column_bits = std::countr_zero(config_.words_per_row);
+    auto live_bits = memory_device::bitAdapter(b, "LIVE_WORD_BITS", 32, true);
+    auto held_bits = memory_device::bitAdapter(b, "HELD_WORD_BITS", 32, true);
+    w.connect(check->getOutputPin<32>("WORD_ADDR"), live_bits->getInputPin<32>("IN"));
+    w.connect(word->getOutputPin<32>("Q"), held_bits->getInputPin<32>("IN"));
+    std::vector<PinPtr> live, held;
+    for (size_t i = 0; i < 32; ++i) {
+        live.push_back(live_bits->getOutputPin("OUT_" + std::to_string(i)));
+        held.push_back(held_bits->getOutputPin("OUT_" + std::to_string(i)));
+    }
+    const auto low = w.constant("LOW", false);
+    auto field = [&](const std::string& name, const std::vector<PinPtr>& bits, size_t from, size_t count) {
+        auto join = memory_device::bitAdapter(b, name, 32, false);
+        for (size_t i = 0; i < 32; ++i) w.connect(i < count && from + i < 32 ? bits[from + i] : low, join->getInputPin("IN_" + std::to_string(i)));
+        return join->getOutputPinDynamic("OUT");
+    };
+    // The step chosen from the pending steps (a priority list) and its code.
+    std::vector<std::shared_ptr<IOComponent>> needs;
+    std::vector<PinPtr> pending;
+    auto current = reg("COMMAND", 3);
+    auto device_busy = getInputPin("MEM_BUSY");
+    auto step_done = w.both("STEP_DONE", WT, w.invert("DEVICE_IDLE", device_busy));
+    auto cur_bits = memory_device::bitAdapter(b, "COMMAND_BITS", 3, true);
+    w.connect(current->getOutputPin<3>("Q"), cur_bits->getInputPin<3>("IN"));
+    auto code_is = [&](unsigned code, const std::string& name) {
+        std::vector<PinPtr> terms;
+        for (size_t i = 0; i < 3; ++i) {
+            auto bit = cur_bits->getOutputPin("OUT_" + std::to_string(i));
+            terms.push_back((code >> i) & 1 ? bit : w.invert(name + "_NOT_" + std::to_string(i), bit));
+        }
+        return w.reduce(name, terms, true);
+    };
+    auto cur_read = dram ? code_is(2, "CURRENT_READ") : code_is(1, "CURRENT_READ");
+    auto fail = w.both("STEP_FAILED", step_done, w.either("DEVICE_FAULT", getInputPin("MEM_ERROR"),
+        w.both("NO_READ_DATA", cur_read, w.invert("READ_NOT_VALID", getInputPin("MEM_READ_VALID")))));
+    PinPtr refreshing_q = low, pending_refresh = low, ref_start = low;
+    std::shared_ptr<IOComponent> refreshing, refresh_pending, row_known, open_row;
+    PinPtr hit = low;
+    if (dram) {
+        refreshing = state("REFRESHING");
+        refresh_pending = state("REFRESH_PENDING");
+        row_known = state("ROW_KNOWN");
+        open_row = reg("OPEN_ROW", 32);
+        refreshing_q = refreshing->getOutputPin("Q");
+        pending_refresh = refresh_pending->getOutputPin("Q");
+        ref_start = w.reduce("REFRESH_START", {pending_refresh, w.invert("NOT_ACTIVE", A), w.invert("NO_REQUEST", start)}, true);
+        // The requested row is the open one: the controller knows the device's
+        // open row and it matches.
+        auto stored = memory_device::bitAdapter(b, "OPEN_ROW_BITS", 32, true);
+        w.connect(open_row->getOutputPin<32>("Q"), stored->getInputPin<32>("IN"));
+        std::vector<PinPtr> same;
+        for (size_t i = 0; i + column_bits < 32; ++i)
+            same.push_back(w.invert("ROW_SAME_" + std::to_string(i),
+                w.binary<XORGate>("ROW_DIFFER_" + std::to_string(i), stored->getOutputPin("OUT_" + std::to_string(i)), live[i + column_bits])));
+        hit = w.reduce("ROW_HIT", {getInputPin("MEM_ROW_OPEN"), row_known->getOutputPin("Q"), w.reduce("SAME_ROW", same, true)}, true);
+    }
+    // Steps in priority order. DRAM: PRECHARGE, ACTIVATE, READ/WRITE, REFRESH.
+    // NOR: WREN, then the operation.
+    struct Step { std::string name; PinPtr planned_request, planned_refresh; unsigned code; PinPtr code_override; };
+    std::vector<Step> steps;
+    if (dram) {
+        auto row_open = getInputPin("MEM_ROW_OPEN");
+        steps = {{"PRECHARGE", w.both("PLAN_PRECHARGE", row_open, w.invert("MISS", hit)), row_open, 4, nullptr},
+                 {"ACTIVATE", w.invert("PLAN_ACTIVATE", hit), low, 1, nullptr},
+                 {"ACCESS", w.constant("PLAN_ACCESS", true), low, 2, nullptr},
+                 {"REFRESH", low, w.constant("PLAN_REFRESH", true), 5, nullptr}};
+    } else {
+        steps = {{"WREN", w.either("PLAN_WREN", check->getOutputPin("PROGRAM"), check->getOutputPin("ERASE")), low, 4, nullptr},
+                 {"OPERATION", w.constant("PLAN_OPERATION", true), low, 1, nullptr}};
+    }
+    // The pending list in force this cycle: a new request's or a refresh's
+    // plan on the edge that starts it, the held list otherwise.
+    std::vector<PinPtr> list;
+    for (auto& step : steps) {
+        auto need = state("NEED_" + step.name);
+        needs.push_back(need);
+        list.push_back(w.reduce("PENDING_" + step.name, {
+            w.both("FROM_REQUEST_" + step.name, valid_start, step.planned_request),
+            w.both("FROM_REFRESH_" + step.name, ref_start, step.planned_refresh),
+            w.both("HELD_" + step.name, need->getOutputPin("Q"), w.invert("FRESH_" + step.name, w.either("FRESH_PLAN_" + step.name, valid_start, ref_start)))}, false));
+    }
+    auto any_pending = w.reduce("ANY_PENDING", list, false);
+    // Issue now: a fresh plan, or the previous step finished without fault.
+    auto proceed = w.both("PROCEED", step_done, w.invert("NO_FAULT", fail));
+    auto issue_now = w.both("ISSUE_NOW", any_pending, w.reduce("ISSUE_TIME", {valid_start, ref_start, proceed}, false));
+    std::vector<PinPtr> selected;
+    PinPtr earlier = low;
+    for (size_t k = 0; k < steps.size(); ++k) {
+        selected.push_back(w.both("SELECT_" + steps[k].name, list[k], w.invert("NONE_BEFORE_" + steps[k].name, earlier)));
+        earlier = w.either("BEFORE_" + std::to_string(k + 1), earlier, list[k]);
+    }
+    for (size_t k = 0; k < steps.size(); ++k) {
+        // A pending step stays until it is issued; every step clears on a fault or a finished transaction.
+        auto taken = w.both("TAKEN_" + steps[k].name, issue_now, selected[k]);
+        w.connect(w.reduce("NEXT_NEED_" + steps[k].name, {list[k], w.invert("NOT_TAKEN_" + steps[k].name, taken), w.invert("NOT_FAILED_" + steps[k].name, fail)}, true),
+                  needs[k]->getInputPin("D"));
+    }
+    // The command code of the selected step. On the starting edge the kind
+    // comes from the new request (the kind bits still hold the last one's).
+    auto not_starting = w.invert("NOT_STARTING", valid_start);
+    auto kind = [&](const std::string& name, PinPtr held, PinPtr decoded) {
+        return w.either(name + "_KIND", w.both(name + "_HELD", held, not_starting), w.both(name + "_AT_START", valid_start, decoded));
+    };
+    auto code_bit = [&](size_t bit) {
+        std::vector<PinPtr> terms;
+        for (size_t k = 0; k < steps.size(); ++k) {
+            unsigned code = steps[k].code;
+            PinPtr term = (code >> bit) & 1 ? selected[k] : low;
+            if (dram && steps[k].name == "ACCESS" && bit == 0) term = w.both("WRITE_CODE", selected[k], kind("WRITE", is_write, check->getOutputPin("WRITE")));
+            if (!dram && steps[k].name == "OPERATION") {
+                const auto prog = kind("PROGRAM_" + std::to_string(bit), is_program, check->getOutputPin("PROGRAM"));
+                const auto erase = kind("ERASE_" + std::to_string(bit), is_erase, check->getOutputPin("ERASE"));
+                // READ 1, PROGRAM 2, ERASE 3.
+                term = bit == 0 ? w.both("OP_CODE0", selected[k], w.invert("NOT_PROGRAM_CODE", w.both("ONLY_PROGRAM", prog, w.invert("NOT_ERASE_CODE", erase))))
+                     : bit == 1 ? w.both("OP_CODE1", selected[k], w.either("PROGRAM_OR_ERASE", prog, erase)) : low;
+            }
+            terms.push_back(term);
+        }
+        return w.reduce("CODE_BIT_" + std::to_string(bit), terms, false);
+    };
+    auto next_code = memory_device::bitAdapter(b, "NEXT_COMMAND", 3, false);
+    for (size_t bit = 0; bit < 3; ++bit) w.connect(code_bit(bit), next_code->getInputPin("IN_" + std::to_string(bit)));
+    w.connect(next_code->getOutputPinDynamic("OUT"), current->getInputPin<3>("D"));
+    w.connect(issue_now, current->getInputPin("WE"));
+    // Sequence state.
+    auto finish_now = w.both("TRANSACTION_ENDS", step_done, w.either("NOTHING_LEFT", fail, w.invert("NO_MORE", any_pending)));
+    set_hold(issuing, issue_now, w.constant("ISSUE_ONE_CYCLE", true), "ISSUE");
+    w.connect(w.either("NEXT_WAIT", I, w.both("KEEP_WAITING", WT, w.invert("STEP_OVER", step_done))), waiting->getInputPin("D"));
+    set_hold(active, w.either("BEGINS", valid_start, ref_start), finish_now, "ACTIVE");
+    auto request_ends = w.both("REQUEST_ENDS", finish_now, w.invert("NOT_REFRESH", refreshing_q));
+    set_hold(done, w.either("SHOW_RESULT", request_ends, invalid_start), getInputPin("FINISH"), "DONE");
+    // Result and status.
+    auto result = reg("RESULT", width_), status = reg("RESULT_STATUS", 3);
+    auto capture = w.either("CAPTURE", w.both("READ_CAPTURE", step_done, cur_read), w.either("CAPTURE_END", request_ends, invalid_start));
+    w.connect(capture, result->getInputPin("WE"));
+    w.connect(w.either("STATUS_UPDATE", request_ends, invalid_start), status->getInputPin("WE"));
+    auto zero_data = memory_device::bitAdapter(b, "ZERO_DATA", width_, false);
+    for (size_t i = 0; i < width_; ++i) w.connect(low, zero_data->getInputPin("IN_" + std::to_string(i)));
+    // Read data are stable once the device has released BUSY with READ_VALID.
+    auto held_data = b.addNewComponent<circuit::memory::ProtocolStableData>("READ_DATA_HELD", width_);
+    w.connect(getInputPinDynamic("MEM_READ_DATA"), held_data->getInputPinDynamic("IN"));
+    auto keep_data = w.reduce("RETURN_DATA", {step_done, cur_read, w.invert("READ_OK", fail)}, true);
+    w.connect(payloadMux(b, w, "RESULT_SOURCE", zero_data->getOutputPinDynamic("OUT"), held_data->getOutputPinDynamic("OUT"), keep_data),
+              result->getInputPinDynamic("D"));
+    auto device_status = payloadMux(b, w, "DEVICE_STATUS", constant3(b, "OK_CODE", 0), constant3(b, "DEVICE_CODE", unsigned(circuit::memory::Status::Device)), fail);
+    w.connect(payloadMux(b, w, "STATUS_SOURCE", device_status, check->getOutputPin<3>("STATUS"), invalid_start), status->getInputPin<3>("D"));
+    w.connect(result->getOutputPinDynamic("Q"), getOutputPinDynamic("RESULT"));
+    w.connect(status->getOutputPin<3>("Q"), getOutputPin<3>("STATUS"));
+    w.connect(done->getOutputPin("Q"), getOutputPin("DONE"));
+    // Device pins: the command for one cycle, NOP otherwise; the address field
+    // the command needs.
+    auto shown = memory_device::bitAdapter(b, "SHOWN_COMMAND", 3, false);
+    for (size_t bit = 0; bit < 3; ++bit) w.connect(w.both("SHOW_" + std::to_string(bit), I, cur_bits->getOutputPin("OUT_" + std::to_string(bit))), shown->getInputPin("IN_" + std::to_string(bit)));
+    w.connect(shown->getOutputPinDynamic("OUT"), getOutputPin<3>("MEM_CMD"));
+    w.connect(memory_detail::bridge(b, w, "DEVICE_CLOCK", getInputPin("CLK")), getOutputPin("MEM_CLK"));
+    if (dram) {
+        auto row = field("ROW_FIELD", held, column_bits, 32 - column_bits), column = field("COLUMN_FIELD", held, 0, column_bits);
+        w.connect(payloadMux(b, w, "ADDRESS_FIELD", column, row, code_is(1, "CURRENT_ACTIVATE")), getOutputPin<32>("MEM_ADDR"));
+        // Open-row knowledge: an ACTIVATE that succeeds records its row; a reset
+        // forgets it (the device may still hold a row open: precharge first).
+        auto opened = w.reduce("ROW_OPENED", {step_done, code_is(1, "OPENED_BY_ACTIVATE"), w.invert("ACTIVATE_OK", fail)}, true);
+        set_hold(row_known, opened, low, "ROW_KNOWN");
+        w.connect(row, open_row->getInputPin<32>("D"));
+        w.connect(opened, open_row->getInputPin("WE"));
+        // Refresh: a cycle counter and a pending bit.
+        const size_t interval = config_.refresh_interval_cycles;
+        PinPtr due = low;
+        if (interval) {
+            // At least two bits: a one-bit register needs no bit adapters.
+            const size_t bits = supportedWidth(std::max<size_t>(2, std::bit_width(interval - 1)));
+            auto counter = reg("REFRESH_COUNTER", bits);
+            auto q = memory_device::bitAdapter(b, "REFRESH_COUNTER_BITS", bits, true);
+            w.connect(counter->getOutputPinDynamic("Q"), q->getInputPinDynamic("IN"));
+            std::vector<PinPtr> last;
+            PinPtr carry = w.constant("COUNT", true);
+            auto next = memory_device::bitAdapter(b, "NEXT_REFRESH_COUNTER", bits, false);
+            std::vector<PinPtr> sums;
+            for (size_t i = 0; i < bits; ++i) {
+                auto bit = q->getOutputPin("OUT_" + std::to_string(i));
+                sums.push_back(w.binary<XORGate>("COUNT_SUM_" + std::to_string(i), bit, carry));
+                carry = w.both("COUNT_CARRY_" + std::to_string(i), bit, carry);
+                last.push_back(((interval - 1) >> i) & 1 ? bit : w.invert("COUNT_ZERO_" + std::to_string(i), bit));
+            }
+            due = w.reduce("REFRESH_DUE", last, true);
+            for (size_t i = 0; i < bits; ++i)
+                w.connect(w.both("COUNT_NEXT_" + std::to_string(i), sums[i], w.invert("COUNT_WRAP_" + std::to_string(i), due)), next->getInputPin("IN_" + std::to_string(i)));
+            w.connect(next->getOutputPinDynamic("OUT"), counter->getInputPinDynamic("D"));
+            w.connect(w.constant("COUNT_ALWAYS", true), counter->getInputPin("WE"));
+        }
+        set_hold(refresh_pending, due, ref_start, "REFRESH_PENDING");
+        set_hold(refreshing, ref_start, finish_now, "REFRESHING");
+        w.connect(w.reduce("BACK_READY_NOW", {w.invert("IDLE", A), w.invert("NO_REFRESH_DUE", pending_refresh)}, true), getOutputPin("BACK_READY"));
+    } else {
+        w.connect(word->getOutputPin<32>("Q"), getOutputPin<32>("MEM_WORD_ADDR"));
+        w.connect(w.invert("BACK_READY_NOW", A), getOutputPin("BACK_READY"));
+    }
+    w.finish();
+}
+
 } // namespace circuit::memory_detail

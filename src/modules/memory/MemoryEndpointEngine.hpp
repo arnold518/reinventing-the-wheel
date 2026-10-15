@@ -64,53 +64,53 @@ Status validateRequest(const Request&, size_t width, Technology, const EndpointC
 // superset of scratch signals for all technologies.
 std::vector<std::string> nativeActivityInputs(Technology);
 
-// Device-specific sequencing is a timed digital controller primitive. It does
-// not own contents; the same primitive drives either native pins or a compact
-// device model inside the behavioral endpoint.
+// The controller sequencer as one part: the gate-level static sequencer
+// (SRAM, ROM) or command sequencer (DRAM, NOR flash) of MemorySequencers.cpp,
+// cycle for cycle. Every value here is a state bit, register or gate of that
+// circuit; it acts only at clock edges and on reset.
 class NativeSequence {
 public:
     NativeSequence(size_t, Technology, EndpointConfig);
+    // `read` gives the device's outputs as they were before this edge.
     void step(size_t time, bool clock_edge, bool reset, bool start, const Request&,
               const std::function<Bits(const std::string&, size_t)>& read, bool finish = false);
-    size_t deadline() const { return due_; }
+    // The device clock follows the controller clock with no delay.
+    void clock(LogicValue level) { if (command_) outputs["CLK"] = {level}; }
+    size_t deadline() const { return 0; }
     const char* phaseName() const {
-        static constexpr const char* names[]{"idle", "array-setup", "array-write", "array-read", "static-access",
-            "command-raise", "command-lower", "command-wait", "release"};
-        return names[static_cast<size_t>(phase_)];
+        if (!command_) return access_ ? "static-access" : "idle";
+        return issuing_ ? "command-issue" : waiting_ ? "command-wait" : "idle";
     }
-    bool maintenanceActive() const { return maintenance_ && phase_ != Phase::Idle; }
+    bool maintenanceActive() const { return refreshing_ && active_; }
     bool done = false, available = true;
     Bits result;
     Status status = Status::Ok;
     Signals outputs;
 private:
-    enum class Phase { Idle, ArraySetup, ArrayWrite, ArrayRead, StaticAccess,
-                       CommandRaise, CommandLower, CommandWait, Release };
-    struct Command { unsigned op; uint32_t address; };
-    size_t width_, due_ = 0, next_refresh_ = 0;
+    size_t width_;
     Technology technology_;
     EndpointConfig config_;
-    Phase phase_ = Phase::Idle;
-    Request request_;
-    std::deque<Command> commands_;
-    bool aborted_ = false, maintenance_ = false, row_open_ = false;
-    // An operation has ended (finished_: with a response) and the next clock
-    // edge has not yet shown it; work_* hold its result until then.
-    bool finished_ = false, settling_ = false;
-    Bits work_result_;
-    Status work_status_ = Status::Ok;
-    size_t row_ = 0;
-    // The gate-level static sequencer (SRAM, ROM), cycle for cycle: its
-    // ACCESS/DONE/IS_WRITE bits, request registers and two synchronizer stages.
+    bool command_;
+    Bits word_reg_, data_reg_, mask_reg_;
+    // Static sequencer: ACCESS, IS_WRITE and the two synchronizer stages.
     bool access_ = false, writing_ = false;
     LogicValue sync1_ = L, sync2_ = L;
-    Bits word_reg_, data_reg_, mask_reg_;
+    // Command sequencer: sequence bits, the pending steps (DRAM: PRECHARGE,
+    // ACTIVATE, ACCESS, REFRESH; NOR: WREN, OPERATION), the current command
+    // code, the operation kind, open-row knowledge and refresh state.
+    bool active_ = false, issuing_ = false, waiting_ = false;
+    bool is_write_ = false, is_program_ = false, is_erase_ = false;
+    std::vector<bool> needs_;
+    unsigned current_ = 0;
+    bool row_known_ = false, refreshing_ = false, refresh_pending_ = false;
+    uint32_t open_row_ = 0;
+    size_t refresh_counter_ = 0;
     void stepStatic(bool clock_edge, bool reset, bool start, const Request&,
                     const std::function<Bits(const std::string&, size_t)>& read, bool finish);
+    void stepCommand(bool clock_edge, bool reset, bool start, const Request&,
+                     const std::function<Bits(const std::string&, size_t)>& read, bool finish);
     void staticPins();
-    void idlePins();
-    void beginCommand(size_t);
-    void finish(size_t);
+    void commandPins();
 };
 
 class DeviceModel {

@@ -1,5 +1,16 @@
 #include "modules/memory/NORFlash.hpp"
 #include "modules/memory/MemoryStorage.hpp"
+#include "modules/memory/MemoryTimingParts.hpp"
+#include "modules/memory/MemoryRangeCheck.hpp"
+#include "modules/storage/ClockedStateBit.hpp"
+#include "modules/storage/Register.hpp"
+#include "modules/utility/BitAdapter.hpp"
+#include "components/StructuralNetBuilder.hpp"
+#include "components/TimingProfile.hpp"
+#include "MemoryHandshakeWiring.hpp"
+#include "NORSyncControl.hpp"
+#include <bit>
+#include <tuple>
 using namespace circuit;
 using namespace circuit::memory_device;
 namespace {
@@ -76,122 +87,181 @@ void devicePins(IOComponent *s, size_t width, NORFlashConfig c, bool control = f
             s->addPin("ERASE_" + std::to_string(r), PinType::OUTPUT);
     }
 }
-struct Commands {
-    size_t width;
-    NORFlashConfig config;
-    size_t due = 0, op = 0, stage = 0, address = 0;
-    bool busy = false, error = false, wel = false, valid = false, program = false, erase = false,
-         select = false;
-    LogicValue last_clk = X;
-    Bits data, mask;
-    Commands(size_t w, NORFlashConfig c) : width(w), config(c), data(w, X), mask(w / 8, L) { c.validate(w); }
-    void update(const IOComponent &io, size_t t) {
-        if (due && t >= due) {
-            due = 0;
-            ++stage;
-            if (op == 1) {
-                valid = true;
-                busy = false;
-            } else if (stage == 1) {
-                program = op == 2;
-                erase = op == 3;
-                due = t + config.phase_ticks;
-            } else if (stage == 2) {
-                program = false;
-                erase = false;
-                select = false;
-                due = t + config.phase_ticks;
-            } else
-                busy = false;
-        }
-        auto clk = io.getInputValue("CLK");
-        bool edge = last_clk == L && clk == H;
-        last_clk = clk;
-        if (!edge)
-            return;
-        auto cmd = io.getInputPin<3>("CMD")->getValueAsVector();
-        if (!known(cmd)) {
-            error = true;
-            if (!busy)
-                valid = false;
-            return;
-        }
-        auto code = number(cmd);
-        if (code == 0)
-            return;
-        if (busy) {
-            error = true;
-            return;
-        }
-        auto a = io.getInputPin<32>("WORD_ADDR")->getValueAsVector();
-        auto m = io.getInputPinDynamic("WRITE_MASK")->getValueAsVector();
-        if (code > 5 || (code <= 3 && (!known(a) || number(a) >= config.depth_words)) ||
-            ((code == 2 || code == 3) && !wel) || (code == 2 && !known(m))) {
-            error = true;
-            valid = false;
-            return;
-        }
-        error = false;
-        valid = false;
-        select = false;
-        if (code == 4) {
-            wel = true;
-            return;
-        }
-        if (code == 5) {
-            wel = false;
-            return;
-        }
-        op = code;
-        stage = 0;
-        address = number(a);
-        busy = true;
-        select = code != 3;
-        if (code == 1)
-            due = t + config.phase_ticks;
-        else {
-            wel = false;
-            data = io.getInputPinDynamic("WRITE_DATA")->getValueAsVector();
-            mask = m;
-            due = t + (code == 2 ? config.program_ticks : config.erase_ticks);
-        }
-    }
-};
-class FlashControl : public Primitive {
+// The NOR flash command control as gates, synchronous on the device clock
+// like the DRAM command control: commands, address and data are latched on
+// a rising edge; BUSY, ERROR, READ_VALID and WRITE_ENABLED are state bits.
+// READ waits for a replica of the read column; PROGRAM and ERASE run a pulse
+// interval and two recovery steps; the end of each chain is sampled back
+// into the clock, and BUSY is released one edge after completion. WREN and
+// WRDI act on the edge alone. The block-erase row decoder is gates.
+class FlashControl : public IOComponent {
   public:
     FlashControl(std::string n, size_t w, NORFlashConfig c)
-        : Primitive(std::move(n), "NORFlashCommandControl<" + std::to_string(w) + ">",
-                    [=](IOComponent *s) { devicePins(s, w, c, true); }),
-          state_(w, c) {}
-    PrimitiveTiming primitiveTiming() const override { return PrimitiveTiming::SelfTimed; }
-    void evaluate(size_t t, Simulator &sim) override {
-        auto previous = state_.due;
-        state_.update(*this, t);
-        if (state_.due && (state_.due != previous || t >= previous))
-            wake(sim, state_.due);
-        for (const auto &[p, v] :
-             std::vector<std::pair<std::string, bool>>{{"BUSY", state_.busy},
-                                                       {"ERROR", state_.error},
-                                                       {"READ_VALID", state_.valid},
-                                                       {"WRITE_ENABLED", state_.wel},
-                                                       {"ROW_ENABLE", state_.select},
-                                                       {"PROGRAM_ENABLE", state_.program},
-                                                       {"OUTPUT_ENABLE", state_.valid}})
-            publish(sim, t, p, v ? H : L);
-        publish(sim, t, "ROW_ADDR", bits(32, state_.address / state_.config.words_per_row));
-        publish(sim, t, "COLUMN_ADDR", bits(32, state_.address % state_.config.words_per_row));
-        publish(sim, t, "DATA", state_.data);
-        publish(sim, t, "MASK", state_.mask);
-        for (size_t r = 0; r < state_.config.rows(); ++r)
-            publish(sim, t, "ERASE_" + std::to_string(r),
-                    state_.erase && r * state_.config.words_per_row / state_.config.block_words ==
-                                        state_.address / state_.config.block_words
-                        ? H
-                        : L);
+        : IOComponent(std::move(n), [=](IOComponent *s) { devicePins(s, w, c, true); }), width_(w), config_(c),
+          type_("NORFlashCommandControl<" + std::to_string(w) + ">") {
+        if (!std::has_single_bit(c.block_words) || !std::has_single_bit(c.words_per_row))
+            throw std::invalid_argument("The gate-level flash control needs power-of-two erase blocks and rows");
+    }
+    const char *getTypeName() const override { return type_.c_str(); }
+    void buildInternals(ComponentBuilder &b) override {
+        using PinPtr = memory_detail::StructuralWiring::PinPtr;
+        memory_detail::StructuralWiring w(b);
+        const auto &memory = timing::activeTimingProfile().memory;
+        const size_t slowest = std::max({timing::leafDelay(timing::Leaf::Not), timing::leafDelay(timing::Leaf::Nand),
+                                         timing::leafDelay(timing::Leaf::And), timing::leafDelay(timing::Leaf::Or)});
+        const size_t gate = timing::leafDelay(timing::Leaf::And);
+        auto por = b.addNewComponent<memory::PowerOnReset>("POWER_ON_RESET", 16 * slowest);
+        const auto reset = por->getOutputPin("OUT");
+        auto state = [&](const std::string &name) {
+            auto bit = b.add(families::ClockedStateBit, name);
+            w.connect(getInputPin("CLK"), bit->getInputPin("CLK"));
+            w.connect(reset, bit->getInputPin("RST"));
+            return bit;
+        };
+        auto reg = [&](const std::string &name, size_t bits) {
+            auto r = b.add(families::registerWord(bits), name);
+            w.connect(getInputPin("CLK"), r->getInputPin("CLK"));
+            w.connect(reset, r->getInputPin("RST"));
+            return r;
+        };
+        auto cmd = bitAdapter(b, "COMMAND_BITS", 3, true);
+        w.connect(getInputPin<3>("CMD"), cmd->getInputPin<3>("IN"));
+        auto known_cmd = b.addNewComponent<memory::KnownBits>("COMMAND_KNOWN", 3);
+        auto known_addr = b.addNewComponent<memory::KnownBits>("ADDRESS_KNOWN", 32);
+        auto known_mask = b.addNewComponent<memory::KnownBits>("MASK_KNOWN", width_ / 8);
+        w.connect(getInputPin<3>("CMD"), known_cmd->getInputPinDynamic("IN"));
+        w.connect(getInputPin<32>("WORD_ADDR"), known_addr->getInputPinDynamic("IN"));
+        w.connect(getInputPinDynamic("WRITE_MASK"), known_mask->getInputPinDynamic("IN"));
+        auto c0 = cmd->getOutputPin("OUT_0"), c1 = cmd->getOutputPin("OUT_1"), c2 = cmd->getOutputPin("OUT_2");
+        auto n0 = w.invert("NOT_C0", c0), n1 = w.invert("NOT_C1", c1), n2 = w.invert("NOT_C2", c2);
+        auto is_nop = w.reduce("IS_NOP", {n0, n1, n2}, true);
+        auto is_read = w.reduce("IS_READ", {c0, n1, n2}, true);
+        auto is_program = w.reduce("IS_PROGRAM", {n0, c1, n2}, true);
+        auto is_erase = w.reduce("IS_ERASE", {c0, c1, n2}, true);
+        auto is_wren = w.reduce("IS_WREN", {n0, n1, c2}, true);
+        auto is_wrdi = w.reduce("IS_WRDI", {c0, n1, c2}, true);
+        auto address = bitAdapter(b, "ADDRESS_BITS", 32, true);
+        w.connect(getInputPin<32>("WORD_ADDR"), address->getInputPin<32>("IN"));
+        std::vector<PinPtr> address_bits;
+        for (size_t i = 0; i < 32; ++i) address_bits.push_back(address->getOutputPin("OUT_" + std::to_string(i)));
+        auto addr_ok = w.both("ADDRESS_OK", known_addr->getOutputPin("KNOWN"),
+                              memory_detail::addressBelow(w, address_bits, config_.depth_words, "RANGE"));
+        auto busy = state("BUSY"), error = state("ERROR"), valid = state("READ_VALID"), wel = state("WRITE_ENABLED"),
+             releasing = state("RELEASING"), c_read = state("COMMAND_READ"), c_program = state("COMMAND_PROGRAM"),
+             c_erase = state("COMMAND_ERASE");
+        const auto B = busy->getOutputPin("Q"), WEL = wel->getOutputPin("Q"), R = releasing->getOutputPin("Q");
+        auto legal = w.reduce("LEGAL_COMMAND", {
+            w.both("LEGAL_READ", is_read, addr_ok),
+            w.reduce("LEGAL_PROGRAM", {is_program, addr_ok, WEL, known_mask->getOutputPin("KNOWN")}, true),
+            w.reduce("LEGAL_ERASE", {is_erase, addr_ok, WEL}, true), is_wren, is_wrdi}, false);
+        const auto cmd_known = known_cmd->getOutputPin("KNOWN");
+        auto issued = w.both("ISSUED", cmd_known, w.invert("NOT_NOP", is_nop));
+        auto idle = w.invert("IDLE", B);
+        auto accept = w.reduce("ACCEPT", {issued, legal, idle}, true);
+        auto unknown = w.invert("UNKNOWN_COMMAND", cmd_known);
+        auto refused = w.both("REFUSED", issued, w.either("BUSY_OR_ILLEGAL", B, w.invert("ILLEGAL", legal)));
+        auto clear_valid = w.reduce("CLEAR_VALID", {accept, w.both("UNKNOWN_IDLE", unknown, idle),
+                                                    w.both("ILLEGAL_IDLE", w.both("ISSUED_IDLE", issued, idle), w.invert("NOT_LEGAL", legal))}, false);
+        auto starts = w.reduce("STARTS", {is_read, is_program, is_erase}, false);
+        auto start = w.both("START", accept, starts);
+        auto run = [&](const std::shared_ptr<IOComponent> &command, const std::string &name) {
+            return w.both("RUN_" + name, command->getOutputPin("Q"), B);
+        };
+        auto r_read = run(c_read, "READ"), r_program = run(c_program, "PROGRAM"), r_erase = run(c_erase, "ERASE");
+        auto chain = [&](const std::string &name, PinPtr go, std::vector<std::pair<size_t, size_t>> steps) {
+            std::vector<PinPtr> stages;
+            auto previous = go;
+            for (size_t k = 0; k < steps.size(); ++k) {
+                const auto n = name + "_" + std::to_string(k + 1);
+                auto line = b.addNewComponent<memory::MemoryDelayLine>("STEP_" + n, steps[k].first, gate);
+                w.connect(previous, line->getInputPin("IN"));
+                previous = line->getOutputPin("OUT");
+                for (size_t g = 0; g < steps[k].second; ++g) previous = w.both("STAGE_" + n + "_" + std::to_string(g), previous, go);
+                stages.push_back(previous);
+            }
+            return stages;
+        };
+        const size_t rows = config_.rows();
+        // A read lasts the read column's sensing plus a replica of the decoder.
+        size_t row_bits = 0; while ((size_t{1} << row_bits) < rows) ++row_bits;
+        size_t decode_depth = 1; while ((size_t{1} << (decode_depth - 1)) < row_bits + 1) ++decode_depth;
+        auto rd = chain("READ", r_read, {{memory.norRead(rows), decode_depth + 1}});
+        auto pg = chain("PROGRAM", r_program, {{config_.program_ticks, 1}, {memory.nor_pulse_end, 1}, {memory.nor_recovery, 1}});
+        auto er = chain("ERASE", r_erase, {{config_.erase_ticks, 1}, {memory.nor_pulse_end, 1}, {memory.nor_recovery, 1}});
+        auto done_async = w.reduce("CHAIN_DONE", {rd.back(), pg.back(), er.back()}, false);
+        auto sampler = b.addNewComponent<memory::Synchronizer>("DONE_SAMPLER", 1);
+        w.connect(getInputPin("CLK"), sampler->getInputPin("CLK"));
+        w.connect(reset, sampler->getInputPin("RST"));
+        w.connect(done_async, sampler->getInputPin("D"));
+        auto complete = w.reduce("COMPLETE", {B, sampler->getOutputPin("Q"), w.invert("NOT_RELEASING", R)}, true);
+        auto keep = [&](const std::shared_ptr<IOComponent> &bit, PinPtr set, PinPtr clear, const std::string &name) {
+            w.connect(w.either("NEXT_" + name, set, w.both("HOLD_" + name, bit->getOutputPin("Q"), w.invert("NO_CLEAR_" + name, clear))),
+                      bit->getInputPin("D"));
+        };
+        keep(error, w.either("ERROR_EVENT", unknown, refused), accept, "ERROR");
+        w.connect(w.both("NEXT_VALID", w.invert("KEEP_VALID", clear_valid),
+                         w.either("VALID_SOURCE", valid->getOutputPin("Q"), w.both("READ_DONE", complete, c_read->getOutputPin("Q")))),
+                  valid->getInputPin("D"));
+        keep(busy, start, R, "BUSY");
+        keep(releasing, complete, R, "RELEASING");
+        keep(wel, w.both("ENABLE_WRITES", accept, is_wren),
+             w.both("DISABLE_WRITES", accept, w.reduce("WRITES_END", {is_wrdi, is_program, is_erase}, false)), "WEL");
+        for (auto [bit, decoded, name] : std::vector<std::tuple<std::shared_ptr<IOComponent>, PinPtr, std::string>>{
+                 {c_read, is_read, "C_READ"}, {c_program, is_program, "C_PROGRAM"}, {c_erase, is_erase, "C_ERASE"}})
+            w.connect(w.either("NEXT_" + name, w.both("LOAD_" + name, start, decoded),
+                               w.both("HOLD_" + name, bit->getOutputPin("Q"), w.invert("NOT_START_" + name, start))),
+                      bit->getInputPin("D"));
+        auto addr = reg("ADDRESS", 32), data = reg("DATA", width_), mask = reg("MASK", width_ / 8);
+        w.connect(getInputPin<32>("WORD_ADDR"), addr->getInputPin<32>("D"));
+        w.connect(start, addr->getInputPin("WE"));
+        w.connect(getInputPinDynamic("WRITE_DATA"), data->getInputPinDynamic("D"));
+        w.connect(getInputPinDynamic("WRITE_MASK"), mask->getInputPinDynamic("D"));
+        auto load_program = w.both("LOAD_PROGRAM_DATA", accept, is_program);
+        w.connect(load_program, data->getInputPin("WE"));
+        w.connect(load_program, mask->getInputPin("WE"));
+        auto held = bitAdapter(b, "HELD_ADDRESS", 32, true);
+        w.connect(addr->getOutputPin<32>("Q"), held->getInputPin<32>("IN"));
+        std::vector<PinPtr> a;
+        for (size_t i = 0; i < 32; ++i) a.push_back(held->getOutputPin("OUT_" + std::to_string(i)));
+        const size_t column_bits = std::countr_zero(config_.words_per_row), block_bits = std::countr_zero(config_.block_words);
+        const auto low = w.constant("LOW", false);
+        auto row_field = bitAdapter(b, "ROW_FIELD", 32, false), column_field = bitAdapter(b, "COLUMN_FIELD", 32, false);
+        for (size_t i = 0; i < 32; ++i) {
+            w.connect(i + column_bits < 32 ? a[i + column_bits] : low, row_field->getInputPin("IN_" + std::to_string(i)));
+            w.connect(i < column_bits ? a[i] : low, column_field->getInputPin("IN_" + std::to_string(i)));
+        }
+        w.connect(row_field->getOutputPinDynamic("OUT"), getOutputPin<32>("ROW_ADDR"));
+        w.connect(column_field->getOutputPinDynamic("OUT"), getOutputPin<32>("COLUMN_ADDR"));
+        w.connect(data->getOutputPinDynamic("Q"), getOutputPinDynamic("DATA"));
+        w.connect(mask->getOutputPinDynamic("Q"), getOutputPinDynamic("MASK"));
+        // The row stays selected after a read (its word is shown) and during a
+        // program pulse; an erase selects rows through the block decoder.
+        w.connect(w.either("SELECT", c_read->getOutputPin("Q"), w.both("PROGRAM_SELECT", r_program, w.invert("PROGRAM_PULSE_OVER", pg[1]))),
+                  getOutputPin("ROW_ENABLE"));
+        w.connect(w.both("PROGRAM_PULSE", w.both("PROGRAM_ON", r_program, pg[0]), w.invert("PROGRAM_OFF", pg[1])),
+                  getOutputPin("PROGRAM_ENABLE"));
+        auto erase_pulse = w.both("ERASE_PULSE", w.both("ERASE_ON", r_erase, er[0]), w.invert("ERASE_OFF", er[1]));
+        const size_t depth_bits = std::bit_width(config_.depth_words - 1);
+        for (size_t r = 0; r < rows; ++r) {
+            const size_t block = r * config_.words_per_row / config_.block_words;
+            std::vector<PinPtr> match{erase_pulse};
+            for (size_t i = block_bits; i < std::max(depth_bits, block_bits); ++i) {
+                const bool one = (block >> (i - block_bits)) & 1;
+                match.push_back(one ? a[i] : w.invert("BLOCK_" + std::to_string(r) + "_NOT_" + std::to_string(i), a[i]));
+            }
+            w.connect(w.reduce("ERASE_ROW_" + std::to_string(r), match, true), getOutputPin("ERASE_" + std::to_string(r)));
+        }
+        w.connect(B, getOutputPin("BUSY"));
+        w.connect(error->getOutputPin("Q"), getOutputPin("ERROR"));
+        w.connect(valid->getOutputPin("Q"), {getOutputPin("READ_VALID"), getOutputPin("OUTPUT_ENABLE")});
+        w.connect(WEL, getOutputPin("WRITE_ENABLED"));
+        w.finish();
     }
 
   private:
-    Commands state_;
+    size_t width_;
+    NORFlashConfig config_;
+    std::string type_;
 };
 class RowBehavioral : public Primitive {
   public:
@@ -250,52 +320,60 @@ class BankBehavioral : public Primitive {
     Bits values_;
     std::vector<uint8_t> initialized_;
 };
+// The NOR flash device as one part: the gate-level command control cycle
+// for cycle (NORSyncControl) and the cells as plain storage. A program pulse
+// clears the masked bits, an erase pulse sets its block to ones.
 class FlashBehavioral : public Primitive, public MemoryDeviceStorage {
   public:
     const char* getTypeName() const override { return Primitive::getTypeName(); }
     FlashBehavioral(std::string n, size_t w, NORFlashConfig c)
         : Primitive(std::move(n), "NORFlash<" + std::to_string(w) + ">",
                     [=](IOComponent *s) { devicePins(s, w, c); }),
-          MemoryDeviceStorage(c.depth_words, w, H, c.record_history, c.storage_limits), state_(w, c) {}
+          MemoryDeviceStorage(c.depth_words, w, H, c.record_history, c.storage_limits), width_(w), config_(c),
+          control_(w, c.depth_words, c.rows(), c.program_ticks, c.erase_ticks) {}
+    PrimitiveTiming primitiveTiming() const override { return PrimitiveTiming::SelfTimed; }
     const MemoryStorage &memoryStorage() const override { return storage_; }
     void loadMemoryBytes(uint32_t, const std::vector<uint8_t> &) override {
         throw std::logic_error("Initialize flash through WREN/PROGRAM commands");
     }
     void evaluate(size_t t, Simulator &sim) override {
         started_ = true;
-        bool was_program = state_.program, was_erase = state_.erase;
-        auto previous = state_.due;
-        state_.update(*this, t);
-        if (state_.due && (state_.due != previous || t >= previous))
-            wake(sim, state_.due);
-        if (state_.program && !was_program) {
-            auto q = storage_.readLogic(state_.address * (state_.width / 8), state_.width / 8);
-            for (size_t bit = 0; bit < state_.width; ++bit)
-                if (state_.mask[bit / 8] == H)
-                    q[bit] = programBit(q[bit], state_.data[bit]);
-            for (size_t byte = 0; byte < state_.width / 8; ++byte) if (state_.mask[byte] == H)
-                storage_.writeLogic(t, state_.address * (state_.width / 8) + byte,
+        const auto clk = getInputValue("CLK");
+        if (previous_clock_ == L && clk == H)
+            control_.edge(t, read("CMD"), read("WORD_ADDR"), read("WRITE_DATA"), read("WRITE_MASK"));
+        previous_clock_ = clk;
+        const bool program = control_.programPulse(t), erase = control_.erasePulse(t);
+        if (program && !program_) {
+            auto q = storage_.readLogic(control_.address * (width_ / 8), width_ / 8);
+            for (size_t bit = 0; bit < width_; ++bit)
+                if (control_.mask[bit / 8] == H) q[bit] = programBit(q[bit], control_.data[bit]);
+            for (size_t byte = 0; byte < width_ / 8; ++byte) if (control_.mask[byte] == H)
+                storage_.writeLogic(t, control_.address * (width_ / 8) + byte,
                                     Bits(q.begin() + byte * 8, q.begin() + (byte + 1) * 8), true);
         }
-        if (state_.erase && !was_erase) {
-            auto first = state_.address / state_.config.block_words * state_.config.block_words;
-            // Bound temporary storage even for a device-sized erase block.
-            const Bits erased(state_.width, H);
-            for (size_t word = first; word < first + state_.config.block_words; ++word)
-                storage_.writeLogic(t, word * (state_.width / 8), erased, true);
+        if (erase && !erase_) {
+            auto first = control_.address / config_.block_words * config_.block_words;
+            const Bits erased(width_, H);
+            for (size_t word = first; word < first + config_.block_words; ++word)
+                storage_.writeLogic(t, word * (width_ / 8), erased, true);
         }
-        for (const auto &[p, v] : std::vector<std::pair<std::string, bool>>{{"BUSY", state_.busy},
-                                                                            {"ERROR", state_.error},
-                                                                            {"READ_VALID", state_.valid},
-                                                                            {"WRITE_ENABLED", state_.wel}})
+        program_ = program; erase_ = erase;
+        if (const auto next = control_.nextStep(t); next > t) wake(sim, next);
+        for (const auto &[p, v] : std::vector<std::pair<std::string, bool>>{{"BUSY", control_.busy},
+                                                                            {"ERROR", control_.error},
+                                                                            {"READ_VALID", control_.valid},
+                                                                            {"WRITE_ENABLED", control_.wel}})
             publish(sim, t, p, v ? H : L);
         publish(sim, t, "READ_DATA",
-                state_.valid ? storage_.readLogic(state_.address * (state_.width / 8), state_.width / 8)
-                             : Bits(state_.width, Z));
+                control_.valid ? storage_.readLogic(control_.address * (width_ / 8), width_ / 8) : Bits(width_, Z));
     }
 
   private:
-    Commands state_;
+    size_t width_;
+    NORFlashConfig config_;
+    memory_detail::NORSyncControl control_;
+    LogicValue previous_clock_ = X;
+    bool program_ = false, erase_ = false;
 };
 } // namespace
 void NORFlashConfig::validate(size_t w, bool expanded) const {
@@ -374,7 +452,7 @@ void NORFlashBank::buildInternals(ComponentBuilder &b) {
     for (size_t c = 0; c < config_.columns(width_); ++c) {
         auto cn = std::to_string(c);
         auto col = child(b, *this, "memory.shared.read-column", "COLUMN_" + cn,
-                         {{"rows", std::to_string(config_.rows())}});
+                         {{"rows", std::to_string(config_.rows())}, {"technology", "nor-flash"}});
         for (size_t r = 0; r < rows.size(); ++r) {
             auto rn = std::to_string(r);
             w.connect(getInputPin("WL_" + rn), col->getInputPin("WL_" + rn));
@@ -480,7 +558,7 @@ void registerNORFlashComponents(ComponentCatalog &c) {
                 return Component::createWithContext<FlashControl>(ctx, n, width,
                                                                   norFlashConfigFromParameters(p));
             },
-            {}, "NORFlashCommandControlTest", true);
+            {}, "NORFlashCommandControlTest");
         registerBlock(
             c, "memory.nor-flash.device." + suffix, "NORFlash<" + suffix + ">",
             [width](const ParameterMap &p) {

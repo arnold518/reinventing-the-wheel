@@ -97,9 +97,19 @@ void BehavioralMemoryEndpoint::evaluate(size_t t, Simulator& sim) {
     } else {
         // The sequencer starts and finishes only on a clean 1, as its
         // gate-level form does.
+        // Controller and device sample at the same edge: the sequencer reads
+        // the device's outputs from before the edge, the device the
+        // sequencer's.
+        // (The static devices are asynchronous: their READY is read as
+        // updated at this instant.)
+        const bool clocked=s.technology==Technology::DRAM||s.technology==Technology::NORFlash;
+        Signals seen;
+        for (auto name : {"BUSY","ERROR","READ_VALID","ROW_OPEN"}) seen[name]=s.device->read(name,1);
+        seen["READ_DATA"]=s.device->read("READ_DATA",s.width);
+        s.sequence.clock(clk);
         s.device->update(t,s.sequence.outputs);
         s.sequence.step(t,edge,reset!=L,before.accept==H,request,
-            [&](const std::string& pin,size_t width){return s.device->read(pin,width);},before.finish==H);
+            [&](const std::string& pin,size_t width){return clocked?signal(seen,pin,width):s.device->read(pin,width);},before.finish==H);
         s.device->update(t,s.sequence.outputs);
     }
     // Recompute the combinational view after the edge.

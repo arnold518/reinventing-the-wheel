@@ -43,6 +43,27 @@ private:
     std::string type_;
 };
 
+// The controller sequencer of a command-driven device (DRAM, NOR flash), as
+// gates. The device is clocked by the same clock (MEM_CLK) and answers with
+// registered BUSY, ERROR, READ_VALID (and ROW_OPEN for DRAM). A request is
+// planned as a short list of device commands (DRAM: PRECHARGE if another row
+// is open, ACTIVATE if no row is open, then READ or WRITE; NOR: WREN before
+// PROGRAM or ERASE_BLOCK); each command is shown for one ISSUE cycle and
+// waited for until the device's BUSY is low at an edge. DRAM refresh: a
+// cycle counter raises a pending refresh, served from idle (PRECHARGE if a
+// row is open, then REFRESH) while new requests wait.
+class CommandMemorySequencer : public IOComponent {
+public:
+    CommandMemorySequencer(std::string name, size_t width, circuit::memory::Technology, circuit::memory::EndpointConfig);
+    const char* getTypeName() const override { return type_.c_str(); }
+    void buildInternals(ComponentBuilder&) override;
+private:
+    size_t width_;
+    circuit::memory::Technology technology_;
+    circuit::memory::EndpointConfig config_;
+    std::string type_;
+};
+
 void defineSequencerPins(IOComponent* self, size_t width, circuit::memory::Technology technology);
 
 } // namespace circuit::memory_detail

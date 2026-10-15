@@ -40,6 +40,10 @@ void EndpointConfig::validate(size_t width, Technology t, bool expanded_cells) c
             (refresh_interval_ticks && (refresh_interval_ticks <= refresh_service ||
              uint64_t(depth_words / words_per_row) * (refresh_interval_ticks + access_guard) + access_guard >= retention_ticks)))
             throw std::invalid_argument("DRAM refresh schedule cannot meet the configured retention deadline");
+        // A refresh (PRECHARGE and REFRESH) takes about ten cycles; a shorter
+        // interval would leave no cycle for requests.
+        if (refresh_interval_cycles && refresh_interval_cycles < 24)
+            throw std::invalid_argument("DRAM refresh interval must be 0 (off) or at least 24 cycles");
     }
     if (image_hex.size() % 2 || image_hex.size() / 2 > depth_words * (width / 8) ||
         !std::all_of(image_hex.begin(), image_hex.end(), [](unsigned char c) { return std::isxdigit(c); }) ||
@@ -58,13 +62,13 @@ EndpointConfig endpointConfig(const ParameterMap& p) {
     if (p.contains("expanded_storage"))
         throw std::invalid_argument("expanded_storage was removed: request memory.<technology>.scalable-endpoint.<width> for a scalable device behind the controller");
     keys(p, {"depth_words", "words_per_row", "block_words", "phase_ticks", "guard_ticks",
-             "program_ticks", "erase_ticks", "retention_ticks", "refresh_interval_ticks",
+             "program_ticks", "erase_ticks", "retention_ticks", "refresh_interval_ticks", "refresh_interval_cycles",
              "max_resident_bytes", "max_history_bytes", "paged", "record_history", "image_hex", "always_ready"});
     EndpointConfig c;
 #define PARAM(n) c.n = parameter(p, #n, c.n)
     PARAM(depth_words); PARAM(words_per_row); PARAM(block_words); PARAM(phase_ticks); PARAM(guard_ticks);
     PARAM(program_ticks); PARAM(erase_ticks); PARAM(retention_ticks); PARAM(refresh_interval_ticks);
-    PARAM(max_resident_bytes); PARAM(max_history_bytes);
+    PARAM(refresh_interval_cycles); PARAM(max_resident_bytes); PARAM(max_history_bytes);
 #undef PARAM
     auto paged = parameter(p, "paged", 1), history = parameter(p, "record_history", 1);
     auto always_ready = parameter(p,"always_ready",0);
@@ -79,7 +83,7 @@ ParameterMap endpointParameters(const EndpointConfig& c) {
 #define PARAM(n) p[#n] = std::to_string(c.n)
     PARAM(depth_words); PARAM(words_per_row); PARAM(block_words); PARAM(phase_ticks); PARAM(guard_ticks);
     PARAM(program_ticks); PARAM(erase_ticks); PARAM(retention_ticks); PARAM(refresh_interval_ticks);
-    PARAM(max_resident_bytes); PARAM(max_history_bytes); PARAM(paged); PARAM(record_history);
+    PARAM(refresh_interval_cycles); PARAM(max_resident_bytes); PARAM(max_history_bytes); PARAM(paged); PARAM(record_history);
     PARAM(always_ready);
 #undef PARAM
     p["image_hex"] = c.image_hex; return p;
@@ -111,6 +115,8 @@ void nativePins(IOComponent* s, size_t w, Technology t, bool controller) {
     } else {
         add("CLK", 1, command); add("CMD", 3, command);
         for (auto n : {"BUSY", "ERROR", "READ_VALID"}) add(n, 1, result);
+        // The open-row state lives in the device; the controller follows it.
+        if (t == Technology::DRAM) add("ROW_OPEN", 1, result);
     }
 }
 }
