@@ -118,46 +118,6 @@ void BitlineState::update(LogicValue precharge, LogicValue drive, LogicValue wri
     }
 }
 
-AccessSequence::AccessSequence(size_t width)
-    : address(32, X), data(width, X), mask(width / 8, L) {}
-std::optional<size_t> AccessSequence::update(const IOComponent& io, size_t time, size_t ticks) {
-    auto read = [&](const char* pin) { return io.getInputPinDynamic(pin)->getValueAsVector(); };
-    const auto ce = io.getInputValue("CE_N"), we = io.getInputValue("WE_N");
-    Bits next = read("WORD_ADDR");
-    next.push_back(ce); next.push_back(we);
-    // Data/mask are don't-care during reads; OE never starts/restarts an access.
-    if (we == L) {
-        auto d = read("WRITE_DATA"), m = read("WRITE_MASK");
-        next.insert(next.end(), d.begin(), d.end()); next.insert(next.end(), m.begin(), m.end());
-    }
-    std::optional<size_t> schedule;
-    if (next != signature) {
-        signature = std::move(next);
-        precharge = row_enable = write_enable = sense_enable = false;
-        pending_address = read("WORD_ADDR"); pending_data = read("WRITE_DATA"); pending_mask = read("WRITE_MASK");
-        writing = we == L;
-        phase = ce == L && binary(we) ? Phase::Quiet : Phase::Idle;
-        due = phase == Phase::Quiet ? time + ticks : 0;
-        if (due) schedule = due;
-    } else if (due && time >= due) {
-        switch (phase) {
-        case Phase::Quiet:
-            address = pending_address; data = pending_data; mask = pending_mask;
-            precharge = true; phase = Phase::Precharge; break;
-        case Phase::Precharge:
-            precharge = false; write_enable = writing; phase = Phase::Release; break;
-        case Phase::Release:
-            row_enable = true; phase = Phase::Access; break;
-        case Phase::Access:
-            sense_enable = !writing; phase = Phase::Ready; break;
-        default: break;
-        }
-        due = phase == Phase::Ready ? 0 : time + ticks;
-        if (due) schedule = due;
-    }
-    output_enable = phase == Phase::Ready && ce == L && we == H && io.getInputValue("OE_N") == L;
-    return schedule;
-}
 }
 
 SRAMCell::SRAMCell(std::string name) : IOComponent(std::move(name), [](IOComponent* s) {
@@ -195,8 +155,9 @@ void SRAMRow::buildInternals(ComponentBuilder& b) {
     }
     w.finish();
 }
+// A bitline's swing takes longer the more cells load it.
 SRAMBitlinePair::SRAMBitlinePair(std::string name, size_t rows)
-    : BasicComponent(std::move(name), circuit::timing::leafDelay(circuit::timing::Leaf::MemoryPrimitive), [rows](IOComponent* s) {
+    : BasicComponent(std::move(name), circuit::timing::activeTimingProfile().memory.sramBitline(rows), [rows](IOComponent* s) {
         countValid(rows, 512);
         for (const auto* p : {"PRECHARGE", "DRIVE", "WRITE_BL", "WRITE_BL_BAR"}) s->addPin(p, PinType::INPUT);
         for (size_t r = 0; r < rows; ++r) {

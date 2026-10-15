@@ -1,4 +1,5 @@
 #include "modules/memory/MemoryController.hpp"
+#include "MemorySequencers.hpp"
 #include "modules/basic/DFlipFlop.hpp"
 #include "modules/memory/NativeMemoryDevice.hpp"
 #include "modules/memory/BehavioralMemoryEndpoint.hpp"
@@ -281,7 +282,13 @@ void MemoryController::buildInternals(ComponentBuilder& b) {
     }
     memory_detail::StructuralWiring w(b);
     auto front = b.addNewComponent<MemoryTransactionPort>("TRANSACTION", width_);
-    auto control = b.addNewComponent<NativeSequencer>("DEVICE_CONTROL", width_, technology_, config_);
+    // SRAM and ROM: the gate-level static sequencer. DRAM and NOR flash still
+    // use the native sequencer primitive until their gate-level form exists.
+    std::shared_ptr<IOComponent> control;
+    if (technology_ == Technology::SRAM || technology_ == Technology::ROM)
+        control = b.addNewComponent<memory_detail::StaticMemorySequencer>("DEVICE_CONTROL", width_, technology_, config_);
+    else
+        control = b.addNewComponent<NativeSequencer>("DEVICE_CONTROL", width_, technology_, config_);
     for (const auto& [name, pin] : getAllInputPins()) {
         if (name.starts_with("MEM_")) w.connect(pin, control->getInputPinDynamic(name));
         else {

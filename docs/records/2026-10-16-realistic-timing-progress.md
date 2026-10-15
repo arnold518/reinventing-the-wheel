@@ -247,3 +247,153 @@ phases 4–6.
 - Tag `timing-legacy` is placed on the phase 3 commit: it reproduces every
   published result under `unit`, before phase 4 changes memory timing.
 - Phase 4 starts next (gate-level memory control).
+
+## 2026-10-16 — Phase 4 design (assistant decisions)
+
+**Plan change: phases 4 and 5 merge.** Decision 2A makes every device time
+itself and raise a completion signal. Building gate-level control first on
+temporary tick timers and then replacing them with replica timing would do
+the device control twice, so each technology's control logic and its
+self-timing are built together. Phase numbering of the consolidated plan is
+otherwise unchanged (calibration stays phase 6).
+
+**New leaf parts.**
+- `MemoryDelayLine`: an analog interval (bitline precharge, sense
+  development, DRAM restore, flash program and erase pulses) as one leaf whose
+  delay comes from the timing profile and the device geometry. Inertial, so
+  a restarted access withdraws a pending edge. Long intervals are single
+  events, not gate chains (decision 3).
+- `Synchronizer`: two clocked stages capturing an asynchronous device signal;
+  a stage resolves an input that is unknown or changing at the edge to its
+  previous value instead of X (metastability resolution is analog and not
+  modelled). The timing analyzer treats its data input as an asynchronous
+  capture (decision 7).
+
+**Controllers (gates), plugged into the existing gate-level transaction port
+in place of `NativeSequencer`.**
+- Static (SRAM, ROM): request registers loaded on START; one-hot states
+  ACCESS → DONE; CE/WE/OE and address/data driven from the registers; the
+  device's READY passes through the synchronizer; on synchronized READY the
+  result and status registers load and CE is released. `BACK_READY` requires
+  idle and synchronized READY low, which flushes a stale READY before the next
+  access. Invalid requests complete at once with the gate-level request check's
+  status (generalized from `CacheRequestCheck`/`FFRequestCheck` with per-
+  technology permissions).
+- Command (DRAM, NOR): device CLK is the system clock; a command is presented
+  for one ISSUE cycle and the device latches it at the next edge. Each WAIT
+  skips two edges (synchronizer flush, since BUSY is known high from the
+  accepting edge) and then waits for synchronized BUSY low; ERROR, READ_VALID
+  and READ_DATA are stable by then and read directly. DRAM: open-row bit and
+  row register with a comparator choose PRECHARGE/ACTIVATE; a cycle counter
+  (`refresh_interval_cycles`) raises refresh-pending, served from idle while
+  new requests wait. NOR: WREN before PROGRAM/ERASE.
+
+**Devices (gates plus stand-in leaves).**
+- SRAM: address/control change detection (comparators against latched inputs)
+  starts a precharge interval; the wordline enables after it; a replica
+  bitline (the same bitline primitive and row count as the data columns) fires
+  sense enable; READY follows the sense amplifier.
+- ROM: change detection, decode, a replica read column; READY.
+- DRAM: command latch and decoder, legality checks, BUSY/ERROR/ROW_OPEN state
+  bits, refresh-row counter; ACTIVATE waits for a replica sense column, then
+  a restore interval; READ/WRITE and PRECHARGE use intervals; REFRESH is
+  ACTIVATE plus PRECHARGE on the counter row.
+- NOR: write-enable latch, command decoder, block-erase row decoder in gates;
+  READ via replica read column; PROGRAM/ERASE intervals.
+
+**Interval values.** Held in the timing profile per technology. `unit` keeps
+values close to today's phase multiples of 32 ticks so `unit` memory timing
+stays of similar size (exact equality is not required after the
+`timing-legacy` tag); realistic values are placeholders until phase 6.
+
+**Behavioral twins.** `NativeSequence` is rewritten as a cycle-exact model of
+the gate controllers; device models and compact devices follow the new
+self-timing. Equivalence: identical cycles and responses; timing within a
+cycle from regenerated tables.
+
+**Order.** 4.1 leaves and analyzer contracts → 4.2 SRAM/ROM devices and the
+static controller with twins and tests → 4.3 DRAM/NOR devices and the command
+controller with twins and tests → 4.4 core certification model
+(`MemoryTimingState`), tables to a fixed point per profile, CPU runs with timed
+memories. A commit after each step.
+
+## 2026-10-16 — Phase 4.1–4.2: timing leaves, SRAM/ROM control as gates
+
+**New leaves** (`MemoryTimingParts`): `MemoryDelayLine` (analog interval;
+inertial; optional quick fall, used reset-dominant in timer stages),
+`SymbolicDiffer` (the XOR of a transition detector, reading X as a symbol so a
+steady unknown input is steady; XOR delay), `Synchronizer` (two stages,
+resolves an unknown or changing sample to the previous value; asynchronous
+capture in the analyzer), `ProtocolStableData` (a visible multicycle-path
+exception: the controller takes read data only after READY has passed the
+synchronizer). `MemoryTimer` is the gate-level self-timing block: each input
+held through a settle line, transition detection, an OR tree, and stages of
+delay lines and replica AND chains, every stage gated by "started".
+
+**SRAM.** `SRAMAccessControl` is now gates around a `MemoryTimer`: address,
+CE_N and WE_N always restart an access; data and mask only while writing (a
+"conditional" timer input). Precharge for one interval; row enable after a
+replica covering both the row decoder and the release of precharge at the
+bitlines; sense enable and the new READY output after a replica bitline
+interval. The bitline pair's delay is the same profile value
+(`sramBitline(rows)`). Unit intervals: settle 32, precharge 32, bitline 64
+(a full access is 140 ticks, close to the former 4 × 32 + guards).
+
+**ROM.** `ROMAddressControl` is now gates: held address split into row and
+column fields, a gate range check (`addressBelow`, shared helper), enables,
+and READY from a replica decoder plus a replica read column (the read
+column's delay is `romColumn(rows)`).
+
+**Static controller.** `StaticMemorySequencer` (gates) replaces the C++
+sequencer for SRAM and ROM: gate-level request check with the same status
+precedence (`MemoryRequestCheck`), request registers, ACCESS/DONE/IS_WRITE
+bits, CE/WE/OE from the registers, READY through the synchronizer, result
+and status registers. The behavioral controller and the fused endpoint run a
+cycle-exact copy (`NativeSequence::stepStatic`); the fused endpoint's SRAM
+and ROM models time READY from the device and controller tables.
+
+**Compact devices.** SRAM and ROM compact devices time READY and READ_DATA
+from the table proven on the gates, apply each output change at its own time
+(a pin set early would show the result an access too soon in snapshots), drop
+READY at the latest of the changed pins' minimum delays (never before the
+gates), and declare themselves self-timed. The SRAM table is proven per WE_N.
+
+**Problems found and fixed during bring-up**
+- a late rising edge of a stage delay line after a restart (false READY):
+  timer stages now fall within one gate;
+- the row could open while precharge was still asserted at the bitlines for
+  small arrays (replica too short): the replica covers the precharge release;
+- XOR of a steady unknown input gave X forever: `SymbolicDiffer`;
+- compact outputs set on their pins at schedule time looked early in
+  snapshots: timed outputs applied at their times;
+- a duplicate part name (`BAD_MASK`) crashed construction: constants renamed;
+- certification of cores with SRAM lost its handshake model and found a
+  combinational loop plus a 235-tick internal path: the read data path is now
+  a `ProtocolStableData` exception and the state model accepts a clocked
+  interface and the new "released, not yet ready" state.
+
+**Known pessimism (recorded).** The SRAM device's longest data arc (215 at
+unit) runs through a write and back through a cell, which no access takes;
+the SRAM cell contract lets every input reach Q even with its write drive
+off. The compact device follows the table, so its data appear after its
+gates' (allowed); cycles are unaffected because the controller samples data
+two or more edges after READY. A state-dependent cell contract would remove
+it.
+
+**Test changes.** `ROMAddressControlTest`: an out-of-range address now leaves
+the output enabled (the data are X) and an unknown address gives an unknown
+row enable. `DelayRuleTest`: a compact part that declares itself self-timed is
+compared with its gates only.
+
+**Checks (unit).** 19 scenarios passed: SRAM device/contract/timing/access
+control, ROM device and address control, native-device contract, all five
+endpoints, endpoint contract and timing, the four cache scenarios and
+`CacheReadTest`. `DelayRuleTest --report` on SRAM/ROM devices, controllers and
+endpoints (8/16/32): no rule break; the controllers now are ordinary clocked
+parts (their old exceptions kept, floors below measured values).
+`rv32i_experiment` (advanced, oracle verified): program 21 on SRAM 696 cycles
+(was 558), program 22 on SRAM 487 (was 420), program 19 on ROM 472 (was 470);
+safe clock with SRAM and ROM again certified at 102 ticks (64 state cases).
+The cycle increase comes from the two-stage synchronizer and the release
+before the next access. Realistic-profile tables for these parts are stale
+until regenerated at the end of phase 4.

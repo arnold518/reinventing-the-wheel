@@ -100,6 +100,14 @@ private:
     Bits work_result_;
     Status work_status_ = Status::Ok;
     size_t row_ = 0;
+    // The gate-level static sequencer (SRAM, ROM), cycle for cycle: its
+    // ACCESS/DONE/IS_WRITE bits, request registers and two synchronizer stages.
+    bool access_ = false, writing_ = false;
+    LogicValue sync1_ = L, sync2_ = L;
+    Bits word_reg_, data_reg_, mask_reg_;
+    void stepStatic(bool clock_edge, bool reset, bool start, const Request&,
+                    const std::function<Bits(const std::string&, size_t)>& read, bool finish);
+    void staticPins();
     void idlePins();
     void beginCommand(size_t);
     void finish(size_t);

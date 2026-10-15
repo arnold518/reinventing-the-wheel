@@ -3,25 +3,76 @@
 #include "modules/basic/Mux.hpp"
 #include "modules/utility/BitAdapter.hpp"
 #include "modules/memory/MemoryPeripheralWiring.hpp"
+#include "modules/memory/MemoryTimingParts.hpp"
+#include "components/TimingProfile.hpp"
 
 template<size_t W> SRAMAccessControl<W>::SRAMAccessControl(std::string name, SRAMDeviceConfig config)
-    : BasicComponent(std::move(name), 0, [](IOComponent* s) {
+    : IOComponent(std::move(name), [](IOComponent* s) {
         s->addPin<32>("WORD_ADDR", PinType::INPUT);
         s->addPin<W>("WRITE_DATA", PinType::INPUT); s->addPin<W / 8>("WRITE_MASK", PinType::INPUT);
         for (const auto* p : {"CE_N", "WE_N", "OE_N"}) s->addPin(p, PinType::INPUT);
         s->addPin<32>("ADDRESS", PinType::OUTPUT); s->addPin<W>("DATA", PinType::OUTPUT);
         s->addPin<W / 8>("MASK", PinType::OUTPUT);
-        for (const auto* p : {"PRECHARGE", "ROW_ENABLE", "WRITE_ENABLE", "SENSE_ENABLE", "OUTPUT_ENABLE"}) s->addPin(p, PinType::OUTPUT);
+        for (const auto* p : {"PRECHARGE", "ROW_ENABLE", "WRITE_ENABLE", "SENSE_ENABLE", "OUTPUT_ENABLE", "READY"}) s->addPin(p, PinType::OUTPUT);
     }), config_(config) { config.validate(W); }
-template<size_t W> void SRAMAccessControl<W>::evaluate(size_t t, Simulator& sim) {
-    if (auto due = sequence_.update(*this, t, config_.phase_ticks)) sim.scheduleEvent(std::make_shared<ComponentEvalEvent>(*due, shared_from_this()));
-    this->template _updateOutputWire<32>(sim, "ADDRESS", sequence_.address, t);
-    this->template _updateOutputWire<W>(sim, "DATA", sequence_.data, t);
-    this->template _updateOutputWire<W / 8>(sim, "MASK", sequence_.mask, t);
-    for (const auto& [pin, value] : std::vector<std::pair<std::string, bool>>{
-        {"PRECHARGE", sequence_.precharge}, {"ROW_ENABLE", sequence_.row_enable},
-        {"WRITE_ENABLE", sequence_.write_enable}, {"SENSE_ENABLE", sequence_.sense_enable}, {"OUTPUT_ENABLE", sequence_.output_enable}})
-        this->_updateOutputWire(sim, pin, value ? LogicValue::HIGH : LogicValue::LOW, t);
+template<size_t W> void SRAMAccessControl<W>::buildInternals(ComponentBuilder& b) {
+    using circuit::memory_detail::StructuralWiring;
+    StructuralWiring w(b);
+    const auto& timing = circuit::timing::activeTimingProfile().memory;
+    // Inputs in timer order: address, CE_N, WE_N, then data and mask, which
+    // restart the access only during a write (a read ignores them).
+    constexpr size_t inputs = 32 + 2 + W + W / 8;
+    size_t row_bits = 0; while ((size_t{1} << row_bits) < config_.rows()) ++row_bits;
+    // The row decoder ANDs the row bits and the enable in a balanced tree.
+    // The row may open only once both that path and the release of
+    // precharge (inverter, phase AND, distribution AND) have reached the
+    // bitlines: the replica covers the longer of the two plus one gate.
+    size_t decode_depth = 1; while ((size_t{1} << (decode_depth - 1)) < row_bits + 1) ++decode_depth;
+    auto timer = b.addNewComponent<circuit::memory::MemoryTimer>("ACCESS_TIMER", inputs, timing.sram_settle,
+        std::vector<circuit::memory::MemoryTimerStage>{
+            {timing.sram_precharge, 1}, {0, std::max<size_t>(decode_depth, 3) + 1}, {timing.sramBitline(config_.rows()), 1}}, 34);
+    auto address = b.addNewComponent<BitSplitter<32>>("ADDRESS_BITS");
+    auto data = b.addNewComponent<BitSplitter<W>>("DATA_BITS");
+    auto held_address = b.addNewComponent<BitJoiner<32>>("HELD_ADDRESS");
+    auto held_data = b.addNewComponent<BitJoiner<W>>("HELD_DATA");
+    w.connect(this->template getInputPin<32>("WORD_ADDR"), address->template getInputPin<32>("IN"));
+    w.connect(this->template getInputPin<W>("WRITE_DATA"), data->template getInputPin<W>("IN"));
+    size_t index = 0;
+    const auto feed = [&](StructuralWiring::PinPtr source) -> StructuralWiring::PinPtr {
+        const auto n = std::to_string(index++);
+        w.connect(source, timer->getInputPin("IN_" + n));
+        return timer->getOutputPin("HELD_" + n);
+    };
+    for (size_t bit = 0; bit < 32; ++bit)
+        w.connect(feed(address->getOutputPin("OUT_" + std::to_string(bit))), held_address->getInputPin("IN_" + std::to_string(bit)));
+    const auto held_ce_n = feed(this->getInputPin("CE_N"));
+    const auto held_we_n = feed(this->getInputPin("WE_N"));
+    for (size_t bit = 0; bit < W; ++bit)
+        w.connect(feed(data->getOutputPin("OUT_" + std::to_string(bit))), held_data->getInputPin("IN_" + std::to_string(bit)));
+    if constexpr (W == 8) {
+        w.connect(feed(this->getInputPin("WRITE_MASK")), this->getOutputPin("MASK"));
+    } else {
+        auto mask = b.addNewComponent<BitSplitter<W / 8>>("MASK_BITS");
+        auto held_mask = b.addNewComponent<BitJoiner<W / 8>>("HELD_MASK");
+        w.connect(this->template getInputPin<W / 8>("WRITE_MASK"), mask->template getInputPin<W / 8>("IN"));
+        for (size_t bit = 0; bit < W / 8; ++bit)
+            w.connect(feed(mask->getOutputPin("OUT_" + std::to_string(bit))), held_mask->getInputPin("IN_" + std::to_string(bit)));
+        w.connect(held_mask->template getOutputPin<W / 8>("OUT"), this->template getOutputPin<W / 8>("MASK"));
+    }
+    w.connect(held_address->template getOutputPin<32>("OUT"), this->template getOutputPin<32>("ADDRESS"));
+    w.connect(held_data->template getOutputPin<W>("OUT"), this->template getOutputPin<W>("DATA"));
+    w.connect(w.invert("SELECTED", held_ce_n), timer->getInputPin("ENABLE"));
+    const auto writing = w.invert("WRITING", held_we_n);
+    w.connect(writing, timer->getInputPin("CONDITION"));
+    const auto stage = [&](size_t k) { return timer->getOutputPin("STAGE_" + std::to_string(k)); };
+    w.connect(w.both("PRECHARGE_PHASE", stage(0), w.invert("PRECHARGED", stage(1))), this->getOutputPin("PRECHARGE"));
+    w.connect(w.both("WRITE_PHASE", stage(1), writing), this->getOutputPin("WRITE_ENABLE"));
+    w.connect(stage(2), this->getOutputPin("ROW_ENABLE"));
+    w.connect(w.both("SENSE_PHASE", stage(3), held_we_n), this->getOutputPin("SENSE_ENABLE"));
+    w.connect(stage(3), this->getOutputPin("READY"));
+    w.connect(w.reduce("OUTPUT_PHASE", {stage(3), held_we_n, w.invert("OUTPUT_ON", this->getInputPin("OE_N"))}, true),
+              this->getOutputPin("OUTPUT_ENABLE"));
+    w.finish();
 }
 
 template<size_t W> SRAMColumnSelector<W>::SRAMColumnSelector(std::string name, size_t k)
@@ -148,6 +199,7 @@ template<size_t W> void SRAM<W>::buildInternals(ComponentBuilder& b) {
     w.connect(control->template getOutputPin<W>("DATA"), data->template getInputPin<W>("IN"));
     if constexpr (W > 8) w.connect(control->template getOutputPin<W / 8>("MASK"), mask->template getInputPin<W / 8>("IN"));
     w.connect(control->getOutputPin("OUTPUT_ENABLE"), output->getInputPin("ENABLE"));
+    w.connect(control->getOutputPin("READY"), this->getOutputPin("READY"));
     w.connect(read->template getOutputPin<W>("OUT"), output->template getInputPin<W>("DATA"));
     w.connect(output->template getOutputPin<W>("OUT"), this->template getOutputPin<W>("READ_DATA"));
     for (size_t r = 0; r < config_.rows(); ++r) w.connect(decode->getOutputPin("WL_" + std::to_string(r)), storage->getInputPin("WL_" + std::to_string(r)));

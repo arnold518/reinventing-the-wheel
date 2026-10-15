@@ -128,7 +128,9 @@ std::optional<MemoryTimingGroup> sequencedStates(const std::shared_ptr<Behaviora
             if(seq==Done&&now.finish!=H)after={Done};
             else if(seq!=Working) {
                 after={start?Working:Idle};
-                if(refreshes&&!start)after.push_back(Working);
+                // A refresh may start by itself; a released static access shows
+                // not-ready until its READY has passed the synchronizer.
+                if(!start&&(refreshes||seq==Done))after.push_back(Working);
             } else {
                 after={Working};
                 if(pending!=L)after.push_back(Done);
@@ -154,8 +156,10 @@ std::optional<MemoryTimingGroup> memoryTimingStates(
         // gates that says its interface keeps to the clock.
         const bool sequenced=endpoint->technology()!=memory::Technology::FF;
         if(sequenced) {
+            // Either a self-timed endpoint whose interface keeps to the clock, or
+            // a clocked one (the gate-level static sequencer).
             const auto* table=endpoint->getDelays();
-            if(!table||!table->clocked_interface||clock.binary_startup)return std::nullopt;
+            if(!table||clock.binary_startup||(table->self_timed&&!table->clocked_interface)||table->clock.empty())return std::nullopt;
         } else if(typeid(*endpoint)!=typeid(BehavioralMemoryEndpoint)
             &&typeid(*endpoint)!=typeid(CompactMemoryEndpoint<8,memory::FFModel>)
             &&typeid(*endpoint)!=typeid(CompactMemoryEndpoint<16,memory::FFModel>)

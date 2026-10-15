@@ -2,6 +2,8 @@
 #include "modules/memory/SRAM.tpp"
 #include "modules/memory/MemoryStorage.hpp"
 #include "components/capabilities/MemoryStateView.hpp"
+#include "MemoryRestartTiming.hpp"
+#include "components/TimingProfile.hpp"
 
 namespace circuit::sram {
 inline LogicValue writeCell(LogicValue q, LogicValue wl, LogicValue drive, LogicValue bl, LogicValue bar) {
@@ -78,34 +80,108 @@ private:
     std::vector<std::array<LogicValue, 3>> published_; std::string type_;
 };
 
+// The SRAM device as one part. Storage, access rules and completion follow
+// the gate-level device: an access restarts on any change of address, CE_N,
+// WE_N, data or mask, READY and READ_DATA are timed by the table proven on
+// the gates (MemoryRestartTiming.hpp), the write is applied when the access
+// completes, and OE_N only switches the output.
 template<size_t W> class DeviceBehavioral : public BasicComponent, public MemoryDeviceStorage {
 public:
     DeviceBehavioral(std::string name, SRAMDeviceConfig c)
         : BasicComponent(std::move(name), 1, defineSRAMPins<W>),
           MemoryDeviceStorage(c.depth_words, W, LogicValue::UNKNOWN, c.record_history, c.storage_limits),
-          config_(checked(c)), sequence_(W) {}
+          config_(checked(c)), ready_({LogicValue::LOW}), data_(Bits(W, LogicValue::HIGH_Z)) {}
     const char* getTypeName() const override { return SRAM<W>::TypeName.c_str(); }
+    PrimitiveTiming primitiveTiming() const override { return PrimitiveTiming::SelfTimed; }
     const MemoryStorage& memoryStorage() const override { return storage_; }
     void loadMemoryBytes(uint32_t address, const std::vector<uint8_t>& bytes) override { initializeMemoryBytes(address, bytes); }
     void evaluate(size_t t, Simulator& sim) override {
-        started_ = true;
-        const auto previous = sequence_.phase;
-        if (auto due = sequence_.update(*this, t, config_.phase_ticks)) sim.scheduleEvent(std::make_shared<ComponentEvalEvent>(*due, this->shared_from_this()));
-        const auto word = number(sequence_.address);
-        const bool selected = known(sequence_.address) && word < config_.depth_words;
-        if (previous == AccessSequence::Phase::Release && sequence_.phase == AccessSequence::Phase::Access &&
-            sequence_.write_enable && selected) {
-            for (size_t byte = 0; byte < W / 8; ++byte) if (sequence_.mask[byte] == LogicValue::HIGH) {
-                Bits value(sequence_.data.begin() + byte * 8, sequence_.data.begin() + (byte + 1) * 8);
-                storage_.writeLogic(t, word * (W / 8) + byte, value, true);
-            }
+        using namespace circuit::memory_detail;
+        if (complete_at_ && t >= complete_at_) { complete_at_ = 0; finish(t); }
+        const auto read = [&](const char* pin) { return this->getInputPinDynamic(pin)->getValueAsVector(); };
+        Signature now{read("WORD_ADDR"), read("WRITE_DATA"), read("WRITE_MASK"), this->getInputValue("CE_N"), this->getInputValue("WE_N")};
+        const auto oe = this->getInputValue("OE_N");
+        std::vector<std::string> changed;
+        // Data and mask restart an access only while it writes.
+        const bool writing = now.we == LogicValue::LOW || current_.we == LogicValue::LOW;
+        if (!started_ || now.address != current_.address) changed.push_back("WORD_ADDR");
+        if (!started_ || (writing && now.data != current_.data)) changed.push_back("WRITE_DATA");
+        if (!started_ || (writing && now.mask != current_.mask)) changed.push_back("WRITE_MASK");
+        if (!started_ || now.ce != current_.ce) changed.push_back("CE_N");
+        if (!started_ || now.we != current_.we) changed.push_back("WE_N");
+        const bool oe_changed = !started_ || oe != oe_;
+        started_ = true; oe_ = oe;
+        if (changed.empty()) { current_.data = now.data; current_.mask = now.mask; }
+        if (!changed.empty()) {
+            current_ = now;
+            const auto& timing = circuit::timing::activeTimingProfile().memory;
+            const size_t gate = circuit::timing::leafDelay(circuit::timing::Leaf::And);
+            const size_t full = timing.sram_settle + timing.sram_precharge + timing.sramBitline(config_.rows()) + 12 * gate;
+            // The arcs proven for this operation (WE_N), when it is known.
+            // While WE_N itself changes the operation is in transition: the
+            // table's overall arcs apply.
+            const bool switching = std::find(changed.begin(), changed.end(), "WE_N") != changed.end();
+            const auto operation = binary(now.we) && !switching
+                ? std::optional<uint64_t>(now.we == LogicValue::HIGH ? 1 : 0) : std::nullopt;
+            // A new operation costs the output's largest delay over every input.
+            static const std::vector<std::string> every{"WORD_ADDR", "WRITE_DATA", "WRITE_MASK", "CE_N", "WE_N", "OE_N"};
+            const auto& from = switching ? every : changed;
+            auto ready = arcBounds(this->getDelays(), from, "READY", {gate, full}, operation);
+            auto data = arcBounds(this->getDelays(), from, "READ_DATA", {gate, full}, operation);
+            ready.minimum = safeEarliest(this->getDelays(), changed, "READY", gate, switching ? std::nullopt : operation);
+            data.minimum = safeEarliest(this->getDelays(), changed, "READ_DATA", gate, switching ? std::nullopt : operation);
+            // A drop already on its way stays on time: a second change before it
+            // cannot postpone it (the gates drop at the first change).
+            const auto low = ready_.pendingAt({LogicValue::LOW});
+            const auto off = data_.pendingAt(Bits(W, LogicValue::HIGH_Z));
+            ready_.clear(); data_.clear();
+            ready_.at(std::min(t + ready.minimum, low.value_or(t + ready.minimum)), {LogicValue::LOW});
+            ready_.at(t + ready.maximum, {completion()});
+            data_from_ = std::min(t + data.minimum, off.value_or(t + data.minimum));
+            data_.at(data_from_, Bits(W, LogicValue::HIGH_Z));
+            // A read's word cannot change before it completes: no other access runs.
+            data_at_ = t + data.maximum;
+            data_.at(data_at_, output());
+            complete_at_ = t + ready.maximum;
+        } else if (oe_changed) {
+            // OE_N only switches the output buffer; before completion the
+            // buffer still waits for the access.
+            const auto out = arcBounds(this->getDelays(), {"OE_N"}, "READ_DATA", {1, 1});
+            data_.clear();
+            if (t < data_from_) data_.at(data_from_, Bits(W, LogicValue::HIGH_Z));
+            data_.at(std::max(data_at_, t + out.maximum), output());
         }
-        Bits out(W, LogicValue::HIGH_Z);
-        if (sequence_.output_enable) out = selected ? storage_.readLogic(word * (W / 8), W / 8) : Bits(W, LogicValue::UNKNOWN);
-        this->template _updateOutputWire<W>(sim, "READ_DATA", out, t);
+        ready_.apply(sim, this->getOutputPin("READY"), t);
+        data_.apply(sim, this->template getOutputPin<W>("READ_DATA"), t);
+        for (const auto when : {ready_.next(), data_.next(), complete_at_ ? std::optional<size_t>(complete_at_) : std::nullopt})
+            if (when && *when > t) sim.scheduleEvent(std::make_shared<ComponentEvalEvent>(*when, this->shared_from_this()));
     }
 private:
+    struct Signature { Bits address, data, mask; LogicValue ce = LogicValue::UNKNOWN, we = LogicValue::UNKNOWN; };
     static SRAMDeviceConfig checked(SRAMDeviceConfig c) { c.validate(W); return c; }
-    SRAMDeviceConfig config_; AccessSequence sequence_;
+    LogicValue completion() const {
+        if (current_.ce == LogicValue::HIGH) return LogicValue::LOW;
+        // A steady unknown address still completes (its data are unknown).
+        return current_.ce == LogicValue::LOW && binary(current_.we) ? LogicValue::HIGH : LogicValue::UNKNOWN;
+    }
+    bool selected() const { return known(current_.address) && number(current_.address) < config_.depth_words; }
+    Bits output() const {
+        if (current_.ce != LogicValue::LOW || current_.we != LogicValue::HIGH || oe_ != LogicValue::LOW) return Bits(W, LogicValue::HIGH_Z);
+        return selected() ? storage_.readLogic(number(current_.address) * (W / 8), W / 8) : Bits(W, LogicValue::UNKNOWN);
+    }
+    // A write lands when the access completes, as in the gate-level array.
+    void finish(size_t t) {
+        if (current_.ce != LogicValue::LOW || current_.we != LogicValue::LOW || !selected()) return;
+        for (size_t byte = 0; byte < W / 8; ++byte) if (current_.mask[byte] == LogicValue::HIGH) {
+            Bits value(current_.data.begin() + byte * 8, current_.data.begin() + (byte + 1) * 8);
+            storage_.writeLogic(t, number(current_.address) * (W / 8) + byte, value, true);
+        }
+    }
+    SRAMDeviceConfig config_;
+    Signature current_;
+    LogicValue oe_ = LogicValue::UNKNOWN;
+    size_t complete_at_ = 0, data_from_ = 0, data_at_ = 0;
+    circuit::memory_detail::TimedOutput<1> ready_;
+    circuit::memory_detail::TimedOutput<W> data_;
 };
 }

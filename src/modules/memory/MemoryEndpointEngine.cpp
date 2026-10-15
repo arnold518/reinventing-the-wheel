@@ -1,4 +1,8 @@
 #include "MemoryEndpointEngine.hpp"
+#include "components/selection/ProvenPartDelays.hpp"
+#include "components/TimingProfile.hpp"
+#include "modules/basic/DFlipFlopTiming.hpp"
+#include "modules/memory/NativeMemoryDevice.hpp"
 #include <algorithm>
 
 namespace circuit::memory {
@@ -29,7 +33,52 @@ std::vector<std::string> nativeActivityInputs(Technology t) {
     return {};
 }
 NativeSequence::NativeSequence(size_t w, Technology technology, EndpointConfig config)
-    : result(w, L), width_(w), technology_(technology), config_(config), work_result_(w, L) { idlePins(); }
+    : result(w, L), width_(w), technology_(technology), config_(config), work_result_(w, L),
+      word_reg_(32, L), data_reg_(w, L), mask_reg_(w / 8, L) {
+    idlePins();
+    if (technology_ == Technology::SRAM || technology_ == Technology::ROM) staticPins();
+}
+void NativeSequence::staticPins() {
+    outputs["CE_N"] = {access_ ? L : H};
+    outputs["WE_N"] = {access_ && writing_ ? L : H};
+    outputs["OE_N"] = {access_ && !writing_ ? L : H};
+    outputs["WORD_ADDR"] = word_reg_;
+    outputs["WRITE_DATA"] = data_reg_;
+    outputs["WRITE_MASK"] = mask_reg_;
+}
+// One clock edge of StaticMemorySequencer (MemorySequencers.cpp); every
+// signal here is a state bit, register or gate of that circuit.
+void NativeSequence::stepStatic(bool clock_edge, bool reset, bool start, const Request& request,
+                                const std::function<Bits(const std::string&, size_t)>& read, bool finish) {
+    if (reset) {
+        access_ = writing_ = done = false; sync1_ = sync2_ = L;
+        word_reg_.assign(32, L); data_reg_.assign(width_, L); mask_reg_.assign(width_ / 8, L);
+        result.assign(width_, L); status = Status::Ok;
+    } else if (clock_edge) {
+        const bool complete = access_ && sync2_ == H;
+        const auto checked = validateRequest(request, width_, technology_, config_);
+        const bool accept = checked == Status::Ok;
+        const bool valid_start = start && accept, invalid_start = start && !accept;
+        if (complete) { result = writing_ ? Bits(width_, L) : read("READ_DATA", width_); status = Status::Ok; }
+        if (invalid_start) { result.assign(width_, L); status = checked; }
+        const bool next_access = valid_start || (access_ && !complete);
+        done = invalid_start || complete || (done && !finish);
+        if (start) {
+            // The word address is the byte address shifted: wiring, unknown bits pass.
+            const size_t shift = width_ == 32 ? 2 : width_ == 16 ? 1 : 0;
+            word_reg_.assign(32, L);
+            for (size_t i = 0; i + shift < 32; ++i) word_reg_[i] = request.address[i + shift];
+            data_reg_ = request.data; mask_reg_ = request.mask;
+            writing_ = known(request.op) && number(request.op) == unsigned(Operation::Write);
+        }
+        sync2_ = sync1_;
+        const auto ready = read("READY", 1)[0];
+        if (ready == L || ready == H) sync1_ = ready;
+        access_ = next_access;
+    }
+    available = !access_ && sync2_ == L;
+    staticPins();
+}
 void NativeSequence::idlePins() {
     outputs["CLK"] = {L}; outputs["RST"] = {L}; outputs["CMD"] = bits(3, 0);
     outputs["CE_N"] = outputs["WE_N"] = outputs["OE_N"] = {H};
@@ -52,6 +101,10 @@ void NativeSequence::finish(size_t t) {
 }
 void NativeSequence::step(size_t t, bool clock_edge, bool reset, bool start, const Request& request,
                          const std::function<Bits(const std::string&, size_t)>& read, bool finish_response) {
+    if (technology_ == Technology::SRAM || technology_ == Technology::ROM) {
+        stepStatic(clock_edge, reset, start, request, read, finish_response);
+        return;
+    }
     if (reset) aborted_ = true;
     if (clock_edge && finish_response) done = false;
     if (phase_ == Phase::Idle) {
@@ -202,30 +255,100 @@ public:
         outputs["READ_DATA"] = high(s, "READ_EN") ? storage.readLogic(word * (width_ / 8), width_ / 8) : Bits(width_, L);
     }
 };
+// The longest delay an input takes to reach `output` in the table proven on
+// a part's gate-level form, or `fallback` without a table.
+size_t provenMaximum(const std::string& implementation, const ParameterMap& parameters, const std::string& output, size_t fallback) {
+    const auto* table = provenPartDelays(implementation, parameters);
+    if (!table) return fallback;
+    size_t longest = 0;
+    for (const auto& arc : table->arcs) if (arc.output == output) longest = std::max(longest, arc.delay.maximum);
+    return longest ? longest : fallback;
+}
+// When an access by the fused endpoint completes, counted from the clock
+// edge that changes the controller's outputs: the controller's own output
+// delay plus the device's slowest input-to-READY delay, both from the tables
+// proven on their gate-level forms.
+size_t staticAccessTime(size_t width, Technology technology, const EndpointConfig& config) {
+    const auto& memory = timing::activeTimingProfile().memory;
+    const size_t gate = timing::leafDelay(timing::Leaf::And);
+    const size_t flop = circuit::dflipflop_timing::clockToOutputMaximum();
+    const auto device = nativeDeviceRequest(width, technology, config);
+    const size_t rows = config.depth_words / config.words_per_row;
+    const size_t device_fallback = technology == Technology::SRAM
+        ? memory.sram_settle + memory.sram_precharge + memory.sramBitline(rows) + 12 * gate
+        : memory.rom_settle + memory.romColumn(rows) + 8 * gate;
+    const size_t controller = provenMaximum(memoryContractId(technology, "controller", width) + ".behavioral",
+                                            endpointParameters(config), "MEM_CE_N", flop + gate);
+    return controller + provenMaximum(device.contract_id + ".behavioral", device.parameters, "READY", device_fallback);
+}
+
+// SRAM as the fused endpoint sees it: an access restarts on any change of
+// the controller's address, data, mask, CE_N or WE_N; READY and the read word
+// appear one access time later; a write lands then.
 class SRAMDeviceModel final : public DeviceModel {
-    Signals latched_;
-    bool selected_ = false;
+    Bits address_, data_, mask_;
+    LogicValue ce_ = X, we_ = X, oe_ = X;
+    bool seen_ = false;
+    size_t access_time_;
+    bool selected() const { return known(address_) && number(address_) < config_.depth_words; }
+    Bits output() const {
+        if (ce_ != L || we_ != H || oe_ != L) return Bits(width_, Z);
+        return selected() ? storage.readLogic(number(address_) * (width_ / 8), width_ / 8) : Bits(width_, X);
+    }
 public:
-    SRAMDeviceModel(size_t w, EndpointConfig c) : DeviceModel(w, c, X) {}
+    SRAMDeviceModel(size_t w, EndpointConfig c) : DeviceModel(w, c, X), access_time_(staticAccessTime(w, Technology::SRAM, c)) {
+        outputs["READY"] = {L};
+    }
     void update(size_t t, const Signals& s) override {
-        if (high(s, "CE_N")) { selected_ = false; due_ = 0; outputs["READ_DATA"] = Bits(width_, Z); return; }
-        if (!selected_) { selected_ = true; latched_ = s; due_ = after(t, 4 * config_.phase_ticks); }
+        const auto address = signal(s, "WORD_ADDR", 32), data = signal(s, "WRITE_DATA", width_), mask = signal(s, "WRITE_MASK", width_ / 8);
+        const auto ce = signal(s, "CE_N")[0], we = signal(s, "WE_N")[0], oe = signal(s, "OE_N")[0];
+        const bool writing = we == L || we_ == L;
+        if (!seen_ || address != address_ || ce != ce_ || we != we_ || (writing && (data != data_ || mask != mask_))) {
+            seen_ = true; address_ = address; data_ = data; mask_ = mask; ce_ = ce; we_ = we; oe_ = oe;
+            outputs["READY"] = {L}; outputs["READ_DATA"] = Bits(width_, Z);
+            due_ = after(t, access_time_);
+            return;
+        }
+        data_ = data; mask_ = mask;
+        if (oe != oe_) { oe_ = oe; if (!due_) outputs["READ_DATA"] = output(); }
         if (!due_ || t < due_) return;
-        due_ = 0; const auto word = number(signal(latched_, "WORD_ADDR", 32));
-        if (!high(latched_, "WE_N")) writeWord(t, word, signal(latched_, "WRITE_DATA", width_), signal(latched_, "WRITE_MASK", width_ / 8));
-        else outputs["READ_DATA"] = storage.readLogic(word * (width_ / 8), width_ / 8);
+        due_ = 0;
+        if (ce_ == L && we_ == L && selected()) writeWord(t, number(address_), data_, mask_);
+        outputs["READY"] = {ce_ == H ? L : ce_ == L && binary(we_) ? H : X};
+        outputs["READ_DATA"] = output();
     }
 };
+// ROM as the fused endpoint sees it: READY one access time after the last
+// change of address or CE_N; the read word follows OE_N.
 class ROMDeviceModel final : public DeviceModel {
+    Bits address_;
+    LogicValue ce_ = X, oe_ = X;
+    bool seen_ = false;
+    size_t access_time_;
+    Bits output() const {
+        if (ce_ == H || oe_ == H) return Bits(width_, Z);
+        return ce_ == L && oe_ == L && known(address_) && number(address_) < config_.depth_words
+            ? storage.readLogic(number(address_) * (width_ / 8), width_ / 8) : Bits(width_, X);
+    }
 public:
-    ROMDeviceModel(size_t w, EndpointConfig c) : DeviceModel(w, c, L) {
+    ROMDeviceModel(size_t w, EndpointConfig c) : DeviceModel(w, c, L), access_time_(staticAccessTime(w, Technology::ROM, c)) {
         std::vector<uint8_t> image;
         for (size_t i = 0; i < c.image_hex.size(); i += 2) image.push_back(std::stoul(c.image_hex.substr(i, 2), nullptr, 16));
         storage.loadBytes(0, image);
+        outputs["READY"] = {L};
     }
-    void update(size_t, const Signals& s) override {
-        outputs["READ_DATA"] = high(s, "CE_N") || high(s, "OE_N") ? Bits(width_, Z) :
-            storage.readLogic(number(signal(s, "WORD_ADDR", 32)) * (width_ / 8), width_ / 8);
+    void update(size_t t, const Signals& s) override {
+        const auto address = signal(s, "WORD_ADDR", 32);
+        const auto ce = signal(s, "CE_N")[0], oe = signal(s, "OE_N")[0];
+        if (!seen_ || address != address_ || ce != ce_) {
+            seen_ = true; address_ = address; ce_ = ce; oe_ = oe;
+            outputs["READY"] = {L};
+            due_ = after(t, access_time_);
+        } else if (oe != oe_) oe_ = oe;
+        outputs["READ_DATA"] = output();
+        if (!due_ || t < due_) return;
+        due_ = 0;
+        outputs["READY"] = {ce_ == H ? L : ce_ == L ? H : X};
     }
 };
 class DRAMDeviceModel final : public DeviceModel {

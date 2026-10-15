@@ -107,6 +107,7 @@ void nativePins(IOComponent* s, size_t w, Technology t, bool controller) {
     } else if (t == Technology::SRAM || t == Technology::ROM) {
         add("CE_N", 1, command); add("OE_N", 1, command);
         if (t == Technology::SRAM) add("WE_N", 1, command);
+        add("READY", 1, result);
     } else {
         add("CLK", 1, command); add("CMD", 3, command);
         for (auto n : {"BUSY", "ERROR", "READ_VALID"}) add(n, 1, result);

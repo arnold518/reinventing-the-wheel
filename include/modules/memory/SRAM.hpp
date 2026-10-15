@@ -40,20 +40,6 @@ struct BitlineState {
                 LogicValue write_bar, const Bits& wordlines, const Bits& cells);
 };
 
-// Shared sequencing contract, used by the peripheral primitive and compact device.
-// Timers recheck current inputs/deadlines: superseded events cannot finish an old access.
-struct AccessSequence {
-    enum class Phase { Idle, Quiet, Precharge, Release, Access, Ready };
-    Phase phase = Phase::Idle;
-    size_t due = 0;
-    Bits signature, pending_address, pending_data, pending_mask;
-    Bits address, data, mask;
-    bool writing = false, precharge = false, row_enable = false;
-    bool write_enable = false, sense_enable = false, output_enable = false;
-    explicit AccessSequence(size_t width);
-    std::optional<size_t> update(const IOComponent& io, size_t time, size_t ticks);
-};
-
 template<class T, class... Args>
 std::shared_ptr<IOComponent> add(ComponentBuilder& b, const std::string& id,
     const std::string& name, circuit::ParameterMap parameters, Args&&... args) {
@@ -136,19 +122,24 @@ template<size_t W> void defineSRAMPins(IOComponent* self) {
     self->addPin<W / 8>("WRITE_MASK", PinType::INPUT);
     for (const auto* pin : {"CE_N", "WE_N", "OE_N"}) self->addPin(pin, PinType::INPUT);
     self->addPin<W>("READ_DATA", PinType::OUTPUT);
+    // The access has completed: read data valid, or the write done.
+    self->addPin("READY", PinType::OUTPUT);
 }
 
-template<size_t W> class SRAMAccessControl : public BasicComponent {
+// The self-timed access sequence, built from gates around a MemoryTimer:
+// a change of address, CE_N, WE_N, data or mask restarts it; the held inputs
+// drive the array. PRECHARGE for one precharge interval, then WRITE_ENABLE
+// (writes); ROW_ENABLE once a replica of the row-decoder depth has settled;
+// after a replica bitline interval SENSE_ENABLE (reads) and READY. OE_N only
+// gates OUTPUT_ENABLE and does not restart an access.
+template<size_t W> class SRAMAccessControl : public IOComponent {
 public:
     SRAMAccessControl(std::string name, SRAMDeviceConfig config);
     inline static const std::string TypeName = "SRAMAccessControl<" + std::to_string(W) + ">";
     const char* getTypeName() const override { return TypeName.c_str(); }
-    // Steps through the access phases on its own schedule.
-    PrimitiveTiming primitiveTiming() const override { return PrimitiveTiming::SelfTimed; }
-    void evaluate(size_t time, Simulator& simulator) override;
+    void buildInternals(ComponentBuilder& builder) override;
 private:
     SRAMDeviceConfig config_;
-    circuit::sram::AccessSequence sequence_{W};
 };
 
 template<size_t W> class SRAMColumnSelector : public IOComponent {

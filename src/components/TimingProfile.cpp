@@ -40,6 +40,14 @@ const std::vector<TimingProfile>& profiles() {
             profile.xor_gate = ps(4.0);
             profile.splitter = 0;
             profile.memory_primitive = ps(1.0);
+            // Placeholders until calibration against the cited memory sources.
+            profile.memory.sram_settle = ps(3.0);
+            profile.memory.sram_precharge = ps(4.0);
+            profile.memory.sram_bitline_base = ps(3.0);
+            profile.memory.sram_bitline_per_row = ps(0.1);
+            profile.memory.rom_settle = ps(3.0);
+            profile.memory.rom_column_base = ps(4.0);
+            profile.memory.rom_column_per_row = ps(0.1);
             profile.sources = node_source + "; gate multiples: Harris et al. 1997 FO4 metric paper and logical effort";
             return profile;
         };

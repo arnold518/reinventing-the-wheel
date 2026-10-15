@@ -43,6 +43,9 @@ class Primitive : public BasicComponent {
   public:
     Primitive(std::string name, std::string type, PinInitFunction pins)
         : BasicComponent(std::move(name), timing::leafDelay(timing::Leaf::MemoryPrimitive), std::move(pins)), type_(std::move(type)) {}
+    // A primitive whose delay depends on its geometry (a bitline's length).
+    Primitive(std::string name, std::string type, PinInitFunction pins, size_t delay)
+        : BasicComponent(std::move(name), delay, std::move(pins)), type_(std::move(type)) {}
     const char *getTypeName() const override { return type_.c_str(); }
     // True for a primitive whose outputs change only one delay after an
     // input change: it never wakes itself for a later, timed step. The timing

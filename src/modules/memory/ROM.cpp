@@ -1,7 +1,15 @@
 #include "modules/memory/ROM.hpp"
 #include "components/capabilities/MemoryStateView.hpp"
 #include "modules/memory/MemoryStorage.hpp"
+#include "modules/memory/MemoryTimingParts.hpp"
+#include "modules/memory/MemoryRangeCheck.hpp"
+#include "modules/utility/BitAdapter.hpp"
+#include "components/StructuralNetBuilder.hpp"
+#include "components/TimingProfile.hpp"
+#include "MemoryHandshakeWiring.hpp"
+#include "MemoryRestartTiming.hpp"
 #include <algorithm>
+#include <optional>
 
 using namespace circuit;
 using namespace circuit::memory_device;
@@ -44,43 +52,65 @@ void controlPins(IOComponent *s) {
     s->addPin<32>("COLUMN_ADDR", PinType::OUTPUT);
     s->addPin("ROW_ENABLE", PinType::OUTPUT);
     s->addPin("OUTPUT_ENABLE", PinType::OUTPUT);
+    s->addPin("READY", PinType::OUTPUT);
 }
 void devicePins(IOComponent *s, size_t width) {
     s->addPin<32>("WORD_ADDR", PinType::INPUT);
     s->addPin("CE_N", PinType::INPUT);
     s->addPin("OE_N", PinType::INPUT);
     s->addPinDynamic("READ_DATA", PinType::OUTPUT, width);
+    // The selected word has been sensed: READ_DATA is valid.
+    s->addPin("READY", PinType::OUTPUT);
 }
-class ROMAddressControl : public Primitive {
+// Address decode and access timing as gates. A MemoryTimer holds the address
+// and CE_N; the held address is split into row and column fields (wiring),
+// checked against the depth (gates), and drives the decoder and column
+// multiplexer. READY rises once a replica of the decoder depth and a replica
+// read column have settled after the inputs became steady. OE_N only gates
+// the output buffer.
+class ROMAddressControl : public IOComponent {
   public:
     ROMAddressControl(std::string n, ROMDeviceConfig c)
-        : Primitive(std::move(n), "ROMAddressControl", controlPins), config_(std::move(c)) {
+        : IOComponent(std::move(n), controlPins), config_(std::move(c)) {
         config_.validate(8);
     }
-    bool respondsOnlyToInputs() const override { return true; }
-    // The enables do not enter the row and column numbers, and the output
-    // enable does not select a row.
-    bool reaches(const std::string &input, const std::string &output) const override {
-        if (input == "WORD_ADDR") return true;
-        return output == "OUTPUT_ENABLE" || (input == "CE_N" && output == "ROW_ENABLE");
-    }
-    void evaluate(size_t t, Simulator &sim) override { publishSettled(sim, t); }
-    bool settled(const Values &in, Values &out, Deciders &deciders) const override {
-        const auto &a = in.at("WORD_ADDR");
-        bool valid = known(a) && number(a) < config_.depth_words;
-        auto ce = in.at("CE_N")[0], oe = in.at("OE_N")[0];
-        out["ROW_ADDR"] = valid ? bits(32, number(a) / config_.words_per_row) : Bits(32, X);
-        out["COLUMN_ADDR"] = valid ? bits(32, number(a) % config_.words_per_row) : Bits(32, X);
-        out["ROW_ENABLE"] = Bits{ce == L && valid ? H : L};
-        out["OUTPUT_ENABLE"] = Bits{ce == H || oe == H ? L : ce == L && oe == L && valid ? H : X};
-        deciders["ROW_ADDR"] = deciders["COLUMN_ADDR"] = {"WORD_ADDR"};
-        // A chip that is not selected enables no row and no output, whatever the address.
-        deciders["ROW_ENABLE"] = ce != L ? std::set<std::string>{"CE_N"}
-                                 : !valid ? std::set<std::string>{"WORD_ADDR"} : std::set<std::string>{"CE_N", "WORD_ADDR"};
-        deciders["OUTPUT_ENABLE"] = ce == H   ? std::set<std::string>{"CE_N"}
-                                    : oe == H ? std::set<std::string>{"OE_N"}
-                                              : std::set<std::string>{"CE_N", "OE_N", "WORD_ADDR"};
-        return true;
+    const char *getTypeName() const override { return "ROMAddressControl"; }
+    void buildInternals(ComponentBuilder &b) override {
+        memory_detail::StructuralWiring w(b);
+        const auto &timing = timing::activeTimingProfile().memory;
+        size_t row_bits = 0; while ((size_t{1} << row_bits) < config_.rows()) ++row_bits;
+        size_t column_bits = 0; while ((size_t{1} << column_bits) < config_.words_per_row) ++column_bits;
+        size_t decode_depth = 1; while ((size_t{1} << (decode_depth - 1)) < row_bits + 1) ++decode_depth;
+        auto timer = b.addNewComponent<memory::MemoryTimer>("ACCESS_TIMER", 33, timing.rom_settle,
+            std::vector<memory::MemoryTimerStage>{{0, decode_depth}, {timing.romColumn(config_.rows()), 1}});
+        auto address = b.addNewComponent<BitSplitter<32>>("ADDRESS_BITS");
+        w.connect(getInputPin<32>("WORD_ADDR"), address->getInputPin<32>("IN"));
+        std::vector<memory_detail::StructuralWiring::PinPtr> held;
+        for (size_t bit = 0; bit < 32; ++bit) {
+            w.connect(address->getOutputPin("OUT_" + std::to_string(bit)), timer->getInputPin("IN_" + std::to_string(bit)));
+            held.push_back(timer->getOutputPin("HELD_" + std::to_string(bit)));
+        }
+        w.connect(getInputPin("CE_N"), timer->getInputPin("IN_32"));
+        const auto held_ce_n = timer->getOutputPin("HELD_32");
+        const auto selected = w.invert("SELECTED", held_ce_n);
+        w.connect(selected, timer->getInputPin("ENABLE"));
+        const auto low = w.constant("LOW", false);
+        auto row = b.addNewComponent<BitJoiner<32>>("ROW_FIELD");
+        auto column = b.addNewComponent<BitJoiner<32>>("COLUMN_FIELD");
+        for (size_t bit = 0; bit < 32; ++bit) {
+            w.connect(bit + column_bits < 32 ? held[bit + column_bits] : low, row->getInputPin("IN_" + std::to_string(bit)));
+            w.connect(bit < column_bits ? held[bit] : low, column->getInputPin("IN_" + std::to_string(bit)));
+        }
+        w.connect(row->getOutputPin<32>("OUT"), getOutputPin<32>("ROW_ADDR"));
+        w.connect(column->getOutputPin<32>("OUT"), getOutputPin<32>("COLUMN_ADDR"));
+        const auto valid = memory_detail::addressBelow(w, held, config_.depth_words);
+        w.connect(w.both("ROW_ON", selected, valid), getOutputPin("ROW_ENABLE"));
+        // An address beyond the depth selects no row, so the read columns
+        // give X: the output is enabled by the chip and output selects only.
+        w.connect(w.both("OUTPUT_ON", selected, w.invert("OUTPUT_SELECTED", getInputPin("OE_N"))),
+                  getOutputPin("OUTPUT_ENABLE"));
+        w.connect(timer->getOutputPin("STAGE_2"), getOutputPin("READY"));
+        w.finish();
     }
 
   private:
@@ -158,16 +188,44 @@ class ROMBehavioral : public Primitive, public MemoryDeviceStorage {
     void loadMemoryBytes(uint32_t, const std::vector<uint8_t> &) override {
         throw std::logic_error("ROM contents are immutable; supply image_hex at construction");
     }
+    PrimitiveTiming primitiveTiming() const override { return PrimitiveTiming::SelfTimed; }
     void evaluate(size_t t, Simulator &sim) override {
-        started_ = true;
         auto ce = getInputValue("CE_N"), oe = getInputValue("OE_N");
         auto a = read("WORD_ADDR");
-        Bits out(width_, Z);
-        if (ce != H && oe != H)
-            out = ce == L && oe == L && known(a) && number(a) < config_.depth_words
-                      ? storage_.readLogic(number(a) * (width_ / 8), width_ / 8)
-                      : Bits(width_, X);
-        publish(sim, t, "READ_DATA", out);
+        // READY drops on a change of address or CE_N and rises once the access
+        // has settled; the word follows its own table delays. Both are applied
+        // at their times (TimedOutput), as the gate-level ROM shows them.
+        std::vector<std::string> changed;
+        if (!started_ || a != address_) changed.push_back("WORD_ADDR");
+        if (!started_ || ce != ce_) changed.push_back("CE_N");
+        if (!started_ || oe != oe_) changed.push_back("OE_N");
+        if (!changed.empty()) {
+            const bool restart = !started_ || a != address_ || ce != ce_;
+            address_ = a; ce_ = ce; oe_ = oe;
+            const auto &timing = timing::activeTimingProfile().memory;
+            const size_t gate = timing::leafDelay(timing::Leaf::And);
+            const size_t full = timing.rom_settle + timing.romColumn(config_.rows()) + 8 * gate;
+            if (restart) {
+                auto bounds = memory_detail::arcBounds(getDelays(), changed, "READY", {gate, full});
+                bounds.minimum = memory_detail::safeEarliest(getDelays(), changed, "READY", gate);
+                ready_.clear();
+                ready_.at(t + bounds.minimum, {L});
+                ready_.at(t + bounds.maximum, {ce == H ? L : ce == L ? H : X});
+            }
+            Bits out(width_, Z);
+            if (ce != H && oe != H)
+                out = ce == L && oe == L && known(a) && number(a) < config_.depth_words
+                          ? storage_.readLogic(number(a) * (width_ / 8), width_ / 8)
+                          : Bits(width_, X);
+            const auto data = memory_detail::arcBounds(getDelays(), changed, "READ_DATA", {1, full});
+            data_.clear();
+            data_.at(t + data.maximum, out);
+        }
+        started_ = true;
+        ready_.apply(sim, getOutputPin("READY"), t);
+        applyData(sim, t);
+        for (const auto when : {ready_.next(), data_.next()})
+            if (when && *when > t) wake(sim, *when);
     }
 
   private:
@@ -177,6 +235,35 @@ class ROMBehavioral : public Primitive, public MemoryDeviceStorage {
     }
     size_t width_;
     ROMDeviceConfig config_;
+    Bits address_;
+    LogicValue ce_ = X, oe_ = X;
+    memory_detail::TimedOutput<1> ready_{{L}};
+    struct DynamicData {
+        std::vector<std::pair<size_t, Bits>> future;
+        Bits current;
+        bool published = false;
+        void clear() { future.clear(); }
+        void at(size_t time, Bits value) { future.push_back({time, std::move(value)}); }
+        std::optional<size_t> next() const {
+            std::optional<size_t> e;
+            for (const auto &[time, v] : future) if (!e || time < *e) e = time;
+            return e;
+        }
+    } data_;
+    void applyData(Simulator &sim, size_t t) {
+        std::stable_sort(data_.future.begin(), data_.future.end(), [](const auto &a, const auto &b) { return a.first < b.first; });
+        auto value = data_.current;
+        size_t taken = 0;
+        while (taken < data_.future.size() && data_.future[taken].first <= t) value = data_.future[taken++].second;
+        data_.future.erase(data_.future.begin(), data_.future.begin() + taken);
+        if ((value == data_.current && data_.published) || value.empty()) return;
+        data_.current = value; data_.published = true;
+        // The word goes out through the ordinary path with no further delay.
+        auto pin = getOutputPinDynamic("READ_DATA");
+        pin->setValueFromVector(value);
+        if (auto wire = pin->getExternalWireBase()) sim.scheduleEvent(makeWireUpdateEvent(t, wire, value));
+        else sim.recordPinChange(t, pin, value);
+    }
 };
 } // namespace
 void ROMDeviceConfig::validate(size_t width, bool expanded) const {
@@ -292,6 +379,7 @@ void ROMDevice::buildInternals(ComponentBuilder &b) {
     w.connect(mux->getOutputPinDynamic("DATA"), output->getInputPinDynamic("DATA"));
     w.connect(control->getOutputPin("OUTPUT_ENABLE"), output->getInputPin("ENABLE"));
     w.connect(output->getOutputPinDynamic("OUT"), getOutputPinDynamic("READ_DATA"));
+    w.connect(control->getOutputPin("READY"), getOutputPin("READY"));
     w.finish();
 }
 void registerROMComponents(ComponentCatalog &c) {
@@ -338,7 +426,7 @@ void registerROMComponents(ComponentCatalog &c) {
         [](const std::string &n, const ParameterMap &p, const std::shared_ptr<BuildContext> &ctx) {
             return Component::createWithContext<ROMAddressControl>(ctx, n, romConfigFromParameters(p));
         },
-        {}, "ROMAddressControlTest", true);
+        {}, "ROMAddressControlTest");
     for (size_t width : {8, 16, 32}) {
         auto suffix = std::to_string(width);
         registerBlock(

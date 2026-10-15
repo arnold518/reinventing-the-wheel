@@ -64,6 +64,8 @@ set(CORE_LOGIC_SOURCES
     src/modules/memory/MemoryStorage.cpp
     src/modules/memory/MemoryProtocol.cpp
     src/modules/memory/MemoryController.cpp
+    src/modules/memory/MemoryTimingParts.cpp
+    src/modules/memory/MemorySequencers.cpp
     src/modules/memory/NativeMemoryDevice.cpp
     src/modules/memory/BehavioralMemoryEndpoint.cpp
     src/modules/memory/MemoryEndpointEngine.cpp

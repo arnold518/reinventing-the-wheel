@@ -354,7 +354,9 @@ std::optional<Tally> part(const std::string& contract, size_t rounds, bool four_
     // A self-timed part also changes on its own schedule; its delays count
     // from whatever caused the change, which this bench cannot observe. It is
     // compared with its gates only, not with its table.
-    const bool own_pace = table.self_timed;
+    // So does a compact part that declares it times itself (a memory device
+    // whose access restarts: its completion drops at once and rises later).
+    const bool own_pace = table.self_timed || leaf->primitiveTiming() == BasicComponent::PrimitiveTiming::SelfTimed;
     const auto mixed_form = build(contract, circuit::structuralThroughDepth(
         1, circuit::UnavailableFidelityPolicy::UseOnlyAvailableAndRecordException));
 

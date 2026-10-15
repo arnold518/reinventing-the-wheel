@@ -119,12 +119,15 @@ ComponentTestSpec romControl() {
             {"COLUMN_ADDR", logicBits(32, 1)},
             {"ROW_ENABLE", logicBit(H)},
             {"OUTPUT_ENABLE", logicBit(H)}});
+    // Gate-level control: an address beyond the depth opens no row, so the
+    // read columns give X while the output stays enabled.
     s.step("invalid-address", {{"WORD_ADDR", logicBits(32, 4)}},
-           {{"ROW_ENABLE", logicBit(L)}, {"OUTPUT_ENABLE", logicBit(X)}});
+           {{"ROW_ENABLE", logicBit(L)}, {"OUTPUT_ENABLE", logicBit(H)}});
     s.step("output-disabled-row-selected", {{"WORD_ADDR", logicBits(32, 1)}, {"OE_N", logicBit(H)}},
            {{"ROW_ENABLE", logicBit(H)}, {"OUTPUT_ENABLE", logicBit(L)}});
+    // An unknown address leaves the range check, and so the row enable, unknown.
     s.step("unknown-address-disabled", {{"WORD_ADDR", LogicVector(32, X)}},
-           {{"ROW_ENABLE", logicBit(L)}, {"OUTPUT_ENABLE", logicBit(L)}});
+           {{"ROW_ENABLE", logicBit(X)}, {"OUTPUT_ENABLE", logicBit(L)}});
     s.step("unknown-enable", {{"WORD_ADDR", logicBits(32, 1)}, {"OE_N", logicBit(X)}},
            {{"ROW_ENABLE", logicBit(H)}, {"OUTPUT_ENABLE", logicBit(X)}});
     s.step("chip-disable-dominates", {{"CE_N", logicBit(H)}},

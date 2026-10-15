@@ -135,7 +135,11 @@ circuit::PartDelays prove(const Candidate& candidate, size_t budget, std::string
     const auto operation = pins->getInputPinDynamic("OP");
     const bool per_operation = operation && operation->getWidth() <= 5
         && (candidate.contract == "rv32i.alu32" || candidate.contract == "rv32i.alu32-core" || candidate.contract == "alu.width8");
-    auto table = CircuitTimingAnalyzer::delays(gates, options, per_operation ? "OP" : "", &diagnostics);
+    // An SRAM device reads with WE_N=1 and writes with WE_N=0; proven apart,
+    // a read is not charged for a path that runs through a write and back
+    // through a cell.
+    const bool per_write = candidate.contract.rfind("memory.sram.device.", 0) == 0;
+    auto table = CircuitTimingAnalyzer::delays(gates, options, per_operation ? "OP" : per_write ? "WE_N" : "", &diagnostics);
     if (table.empty()) reason = diagnostics.empty() ? "nothing changes" : diagnostics.front();
     return table;
 }

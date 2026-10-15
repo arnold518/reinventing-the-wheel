@@ -285,9 +285,11 @@ void MatrixWriteDistributor::buildInternals(ComponentBuilder &b) {
     }
     w.finish();
 }
+// A read column takes longer to sense the more cells load it.
 StaticReadColumn::StaticReadColumn(std::string n, size_t rows)
     : Primitive(std::move(n), "StaticReadColumn<" + std::to_string(rows) + ">",
-                [rows](IOComponent *s) { readColumnPins(s, rows); }),
+                [rows](IOComponent *s) { readColumnPins(s, rows); },
+                timing::activeTimingProfile().memory.romColumn(rows)),
       rows_(rows) {
 }
 void Primitive::publishSettled(Simulator &sim, size_t t) {

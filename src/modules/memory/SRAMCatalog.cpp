@@ -62,7 +62,7 @@ template<class T> ComponentFactory configured() {
 template<size_t W> Pins devicePins() {
     Pins p; in(p, "WORD_ADDR", 32); in(p, "WRITE_DATA", W); in(p, "WRITE_MASK", W / 8);
     for (const auto* n : {"CE_N", "WE_N", "OE_N"}) in(p, n);
-    out(p, "READ_DATA", W); return p;
+    out(p, "READ_DATA", W); out(p, "READY"); return p;
 }
 template<size_t W> void registerWidth(ComponentCatalog& catalog) {
     const auto suffix = "." + std::to_string(W), typeSuffix = "<" + std::to_string(W) + ">";
@@ -83,11 +83,11 @@ template<size_t W> void registerWidth(ComponentCatalog& catalog) {
     }, configured<SRAMStorageBank<W>>(), configured<sram::BankBehavioral<W>>(), "SRAMStorageBankTest");
     registerBlock(catalog, "access-control" + suffix, "SRAMAccessControl" + typeSuffix, [](const ParameterMap& params) {
         sramConfigFromParameters(params).validate(W);
-        auto p = devicePins<W>(); p.pop_back();
+        auto p = devicePins<W>(); p.pop_back(); p.pop_back();
         out(p, "ADDRESS", 32); out(p, "DATA", W); out(p, "MASK", W / 8);
-        for (const auto* n : {"PRECHARGE", "ROW_ENABLE", "WRITE_ENABLE", "SENSE_ENABLE", "OUTPUT_ENABLE"}) out(p, n);
+        for (const auto* n : {"PRECHARGE", "ROW_ENABLE", "WRITE_ENABLE", "SENSE_ENABLE", "OUTPUT_ENABLE", "READY"}) out(p, n);
         return p;
-    }, configured<SRAMAccessControl<W>>(), {}, "SRAMAccessControlTest", true);
+    }, configured<SRAMAccessControl<W>>(), {}, "SRAMAccessControlTest");
     registerBlock(catalog, "output-buffer" + suffix, "SRAMOutputBuffer" + typeSuffix, [](const ParameterMap& params) {
         empty(params); Pins p; in(p, "DATA", W); in(p, "ENABLE"); out(p, "OUT", W); return p;
     }, simple<SRAMOutputBuffer<W>>(), {}, "SRAMOutputBufferTest", true);

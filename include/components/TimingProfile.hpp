@@ -47,6 +47,15 @@ struct TimingProfile {
     struct SRAMCell {
         size_t earliest = 2, latest = 3, minimum_spacing = 2;
     } sram_cell;
+    // Analog intervals of the memory devices, as delay lines and as the delays
+    // of the electrical stand-in primitives that share them (ticks). A
+    // replica path uses the same value as the path it copies.
+    struct Memory {
+        size_t sram_settle = 32, sram_precharge = 32, sram_bitline_base = 64, sram_bitline_per_row = 0;
+        size_t rom_settle = 32, rom_column_base = 96, rom_column_per_row = 0;
+        size_t sramBitline(size_t rows) const { return sram_bitline_base + sram_bitline_per_row * rows; }
+        size_t romColumn(size_t rows) const { return rom_column_base + rom_column_per_row * rows; }
+    } memory;
     // Where the numbers come from.
     std::string sources;
 

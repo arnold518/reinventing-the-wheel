@@ -17,6 +17,7 @@
 #include "modules/memory/DRAM.hpp"
 #include "modules/memory/SRAM.hpp"
 #include "modules/memory/SRAMCellTiming.hpp"
+#include "modules/memory/MemoryTimingParts.hpp"
 #include "../modules/rv32i/RegisterFile32x32Behavioral.hpp"
 #include <algorithm>
 #include <set>
@@ -68,6 +69,37 @@ std::optional<ClockComponentContract> builtinClockContract(const IOComponent& c)
         flop.minimum_high_ticks = minimumHigh();
         flop.minimum_low_ticks = minimumLow();
         return flop;
+    }
+    // A delay line: its rise takes the whole interval, its fall may be quicker.
+    if (typeid(c) == typeid(memory::MemoryDelayLine)) {
+        const auto& line = static_cast<const memory::MemoryDelayLine&>(c);
+        ClockComponentContract interval;
+        interval.evidence = "memory delay line leaf";
+        interval.arcs.push_back({"IN", "OUT", {line.fallDelay(), line.getDelay()}});
+        return interval;
+    }
+    // A protocol-qualified (multicycle) data path: no path through it.
+    if (typeid(c) == typeid(memory::ProtocolStableData)) {
+        ClockComponentContract stable;
+        stable.evidence = "protocol-stable data: captured only after the synchronized completion signal";
+        stable.unused_inputs = {"IN"};
+        stable.stable_outputs = {"OUT"};
+        return stable;
+    }
+    // The synchronizer launches Q like a flip-flop. Its D is an asynchronous
+    // capture: read at an edge with no setup or hold requirement, so no path
+    // and no check pass through it.
+    if (typeid(c) == typeid(memory::Synchronizer)) {
+        using namespace circuit::dflipflop_timing;
+        ClockComponentContract sync;
+        sync.evidence = "two-stage synchronizer leaf; D captured asynchronously; Q launched like a flip-flop";
+        sync.clock_pin = "CLK";
+        sync.fixed_inputs["RST"] = 0;
+        sync.launches = {{"Q", ClockEdge::Rising, {clockToOutputMinimum(), clockToOutputMaximum()}}};
+        sync.unused_inputs = {"D"};
+        sync.minimum_high_ticks = minimumHigh();
+        sync.minimum_low_ticks = minimumLow();
+        return sync;
     }
     // The gate-level SRAM cell keeps its bit in a latch, also a loop. Every
     // case is tried (SRAMCellTimingTest): each input reaches the outputs in
