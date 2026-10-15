@@ -2,13 +2,14 @@
 
 #include "modules/utility/BitAdapter.hpp"
 #include "simulator/Event.hpp"
+#include "components/TimingProfile.hpp"
 #include <memory>
 #include <utility>
 #include <vector>
 
 template<size_t WIDTH>
 BitSplitter<WIDTH>::BitSplitter(std::string name)
-    : BasicComponent(std::move(name), 1, [](IOComponent* self) {
+    : BasicComponent(std::move(name), circuit::timing::leafDelay(circuit::timing::Leaf::Splitter), [](IOComponent* self) {
           self->addPin<WIDTH>("IN", PinType::INPUT);
           for (size_t i = 0; i < WIDTH; ++i) {
               self->addPin("OUT_" + std::to_string(i), PinType::OUTPUT);

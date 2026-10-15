@@ -1,4 +1,5 @@
 #include "components/selection/ProvenPartDelays.hpp"
+#include "components/TimingProfile.hpp"
 #include <algorithm>
 #include <map>
 #include <set>
@@ -8,11 +9,17 @@ namespace {
 
 using Arc = PartDelays::Arc;
 
+// One generated file per timing profile: a table is proven on the gates as
+// they are timed in that profile. A profile without a file has no tables
+// yet; its compact parts then keep their single delay.
 const std::map<std::string, PartDelays>& tables() {
-    static const std::map<std::string, PartDelays> generated = {
+    static const std::map<std::string, PartDelays> unit = {
 #include "ProvenPartDelays.generated.inc"
     };
-    return generated;
+    static const std::map<std::string, PartDelays> none;
+    const auto& profile = timing::activeTimingProfile().name;
+    if (profile == "unit") return unit;
+    return none;
 }
 
 // Memory parameters that leave the timed circuit as it was proven: host
@@ -102,7 +109,7 @@ const PartDelays* provenPartDelays(const std::string& implementation_id, const P
     // for 128.
     if (depth <= 64) return at64;
     static std::map<std::string, PartDelays> estimated;
-    const auto key = implementation_id + "@depth=" + std::to_string(depth) + variant;
+    const auto key = timing::activeTimingProfile().name + "|" + implementation_id + "@depth=" + std::to_string(depth) + variant;
     auto found = estimated.find(key);
     if (found == estimated.end()) found = estimated.emplace(key, scaled(*at64, *at128, depth)).first;
     return &found->second;

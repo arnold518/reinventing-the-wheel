@@ -58,8 +58,12 @@ void Simulator::recordProcessedEvent(const std::shared_ptr<Event>& event) noexce
     }
 }
 
+void Simulator::dropCancelled() const noexcept {
+    while (!event_queue.empty() && event_queue.top()->cancelled) event_queue.pop();
+}
+
 void Simulator::advanceAndRecord(size_t target_time) {
-    while (!event_queue.empty()) {
+    while (dropCancelled(), !event_queue.empty()) {
         auto event = event_queue.top();
 
         if (event->time > target_time) {
@@ -88,7 +92,7 @@ void Simulator::runAndRecord(size_t max_time) {
 DrainResult Simulator::drainUntilIdle(size_t deadline, size_t max_events) {
     size_t processed_events = 0;
 
-    while (!event_queue.empty()) {
+    while (dropCancelled(), !event_queue.empty()) {
         const auto& event = event_queue.top();
         if (event->time > deadline) {
             return {
@@ -123,10 +127,12 @@ DrainResult Simulator::drainUntilIdle(size_t deadline, size_t max_events) {
 }
 
 bool Simulator::hasPendingEvents() const noexcept {
+    dropCancelled();
     return !event_queue.empty();
 }
 
 std::optional<size_t> Simulator::nextEventTime() const {
+    dropCancelled();
     if (event_queue.empty()) {
         return std::nullopt;
     }

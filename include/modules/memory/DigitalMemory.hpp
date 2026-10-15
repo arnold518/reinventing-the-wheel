@@ -1,6 +1,7 @@
 #pragma once
 
 #include "components/BasicComponent.hpp"
+#include "components/TimingProfile.hpp"
 #include "components/capabilities/MemoryStateView.hpp"
 #include "components/selection/ComponentCatalog.hpp"
 #include "modules/memory/MemoryStructuralBuilder.hpp"
@@ -41,7 +42,7 @@ ParameterMap geometryParameters(const Geometry &geometry);
 class Primitive : public BasicComponent {
   public:
     Primitive(std::string name, std::string type, PinInitFunction pins)
-        : BasicComponent(std::move(name), 1, std::move(pins)), type_(std::move(type)) {}
+        : BasicComponent(std::move(name), timing::leafDelay(timing::Leaf::MemoryPrimitive), std::move(pins)), type_(std::move(type)) {}
     const char *getTypeName() const override { return type_.c_str(); }
     // True for a primitive whose outputs change only one delay after an
     // input change: it never wakes itself for a later, timed step. The timing

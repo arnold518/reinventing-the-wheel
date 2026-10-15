@@ -1,3 +1,4 @@
+#include "components/TimingProfile.hpp"
 #include "components/selection/BuildManifest.hpp"
 #include <algorithm>
 #include <sstream>
@@ -35,6 +36,8 @@ std::string BuildManifest::serialize() const {
     std::ostringstream out;
     out << "profile=" << profile_name_ << '\n';
     out << "fingerprint=" << profile_fingerprint_ << '\n';
+    // Recorded only away from "unit", so earlier manifests stay unchanged.
+    if (!timing::unitTiming()) out << "timing=" << timing::activeTimingProfile().name << '\n';
     for (const auto& entry : entries()) {
         out << entry.path
             << "|depth=" << entry.depth

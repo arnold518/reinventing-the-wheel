@@ -317,6 +317,16 @@ void BasicComponent::scheduleInitialEvents(Simulator& simulator,
     (void)current_time;
 }
 
+namespace {
+bool transportDelayForced() {
+    static const bool forced = [] {
+        const char* value = std::getenv("CIRCUITSIM_TRANSPORT_DELAY");
+        return value && *value && std::string(value) != "0";
+    }();
+    return forced;
+}
+}
+
 void BasicComponent::_updateOutputWire(Simulator& simulator,
                                        const std::string& pin_name,
     LogicValue new_value,
@@ -324,8 +334,33 @@ void BasicComponent::_updateOutputWire(Simulator& simulator,
     if (auto pin = getOutputPin(pin_name)) {
         pin->setBit(0, new_value);
         if (auto wire = pin->getExternalWire()) {
+            const size_t at = publishTime(pin_name, current_sim_time);
+            if (inertialDelay() && !transportDelayForced()) {
+                auto found = std::find_if(pending_changes_.begin(), pending_changes_.end(),
+                    [&](const auto& entry) { return entry.first == pin_name; });
+                if (found == pending_changes_.end()) {
+                    pending_changes_.push_back({pin_name, {}});
+                    found = std::prev(pending_changes_.end());
+                }
+                auto& pending = found->second;
+                // Changes due by now have been published.
+                std::erase_if(pending, [&](const PendingChange& change) { return change.time <= current_sim_time; });
+                // A change that would land after a still-pending one: the
+                // pending one would last less than the delay.
+                if (!pending.empty() && pending.back().time < at) {
+                    if (pending.back().value == new_value) return; // already on its way, sooner
+                    for (auto& change : pending)
+                        if (auto event = change.event.lock()) event->cancelled = true;
+                    pending.clear();
+                    if (wire->getValueVector()[0] == new_value) return; // the pulse is swallowed
+                }
+                std::shared_ptr<Event> event = std::make_shared<WireUpdateEvent<>>(at, wire, new_value);
+                pending.push_back({at, new_value, event});
+                simulator.scheduleEvent(std::move(event));
+                return;
+            }
             simulator.scheduleEvent(std::make_shared<WireUpdateEvent<>>(
-                publishTime(pin_name, current_sim_time), wire, new_value));
+                at, wire, new_value));
         } else {
             simulator.recordPinChange(
                 publishTime(pin_name, current_sim_time), pin, pin->getValueAsVector());

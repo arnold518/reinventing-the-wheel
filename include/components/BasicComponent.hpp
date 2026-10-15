@@ -22,6 +22,12 @@ class BasicComponent : public IOComponent
 {
 protected:
     size_t delay;
+    // Inertial delay: an output change still waiting to be published is
+    // withdrawn when a later evaluation would replace it before it settles,
+    // so a pulse shorter than the delay never appears. Logic gates use it;
+    // under the "unit" profile no pulse can be shorter than one tick, so it
+    // changes nothing there. CIRCUITSIM_TRANSPORT_DELAY=1 turns it off.
+    virtual bool inertialDelay() const { return false; }
     // The tick at which an output computed now is published.
     size_t publishTime(const std::string& output_pin, size_t current_sim_time);
     void _updateOutputWire(Simulator& simulator, const std::string& pin_name,
@@ -98,4 +104,7 @@ public:
 private:
     struct TimedOutputs;
     std::unique_ptr<TimedOutputs> timed_;
+    // Weak: the simulator owns the event; a part must not keep wires alive.
+    struct PendingChange { size_t time; LogicValue value; std::weak_ptr<Event> event; };
+    std::vector<std::pair<std::string, std::vector<PendingChange>>> pending_changes_;
 };

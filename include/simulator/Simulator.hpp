@@ -75,7 +75,9 @@ private:
 
     size_t current_time;
     uint64_t next_scheduling_order = 0;
-    std::priority_queue<std::shared_ptr<Event>, std::vector<std::shared_ptr<Event>>, Event::EventComparator> event_queue;
+    // Mutable so that the const queries can drop withdrawn events first.
+    mutable std::priority_queue<std::shared_ptr<Event>, std::vector<std::shared_ptr<Event>>, Event::EventComparator> event_queue;
+    void dropCancelled() const noexcept;
     HistoryLog _log;
     PinHistoryLog _pin_log;
     PinHistoryLog _headless_pin_state;

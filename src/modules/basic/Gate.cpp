@@ -1,10 +1,11 @@
 #include "modules/basic/Gate.hpp"
 #include "components/PinMacros.hpp"
 #include "simulator/Simulator.hpp"
+#include "components/TimingProfile.hpp"
 
 // ========== NOTGate ==========
 
-BEGIN_BASIC_PINS(NOTGate, 1)
+BEGIN_BASIC_PINS(NOTGate, circuit::timing::leafDelay(circuit::timing::Leaf::Not))
     INPUT_PIN("IN")
     OUTPUT_PIN("OUT")
 END_BASIC_PINS()
@@ -18,7 +19,7 @@ void NOTGate::evaluate(size_t current_time, Simulator& simulator) {
 
 // ========== ANDGate ==========
 
-BEGIN_BASIC_PINS(ANDGate, 1)
+BEGIN_BASIC_PINS(ANDGate, circuit::timing::leafDelay(circuit::timing::Leaf::And))
     INPUT_PIN("A")
     INPUT_PIN("B")
     OUTPUT_PIN("OUT")
@@ -39,7 +40,7 @@ void ANDGate::evaluate(size_t current_time, Simulator& simulator) {
 
 // ========== NANDGate ==========
 
-BEGIN_BASIC_PINS(NANDGate, 1)
+BEGIN_BASIC_PINS(NANDGate, circuit::timing::leafDelay(circuit::timing::Leaf::Nand))
     INPUT_PIN("A")
     INPUT_PIN("B")
     OUTPUT_PIN("OUT")
@@ -60,7 +61,7 @@ void NANDGate::evaluate(size_t current_time, Simulator& simulator) {
 
 // ========== ORGate ==========
 
-BEGIN_BASIC_PINS(ORGate, 1)
+BEGIN_BASIC_PINS(ORGate, circuit::timing::leafDelay(circuit::timing::Leaf::Or))
     INPUT_PIN("A")
     INPUT_PIN("B")
     OUTPUT_PIN("OUT")
@@ -81,7 +82,7 @@ void ORGate::evaluate(size_t current_time, Simulator& simulator) {
 
 // ========== NORGate ==========
 
-BEGIN_BASIC_PINS(NORGate, 1)
+BEGIN_BASIC_PINS(NORGate, circuit::timing::leafDelay(circuit::timing::Leaf::Nor))
     INPUT_PIN("A")
     INPUT_PIN("B")
     OUTPUT_PIN("OUT")
@@ -102,7 +103,7 @@ void NORGate::evaluate(size_t current_time, Simulator& simulator) {
 
 // ========== XORGate ==========
 
-BEGIN_BASIC_PINS(XORGate, 1)
+BEGIN_BASIC_PINS(XORGate, circuit::timing::leafDelay(circuit::timing::Leaf::Xor))
     INPUT_PIN("A")
     INPUT_PIN("B")
     OUTPUT_PIN("OUT")

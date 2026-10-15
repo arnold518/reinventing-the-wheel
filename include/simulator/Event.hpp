@@ -17,6 +17,9 @@ class Event {
 public:
     const size_t time;
     uint64_t scheduling_order = 0;
+    // Set when an inertial-delay gate withdraws an output change it had
+    // scheduled (a pulse shorter than its delay). The simulator drops it.
+    bool cancelled = false;
 
     explicit Event(size_t event_time);
     virtual ~Event() = default;

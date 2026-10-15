@@ -41,6 +41,7 @@ set(CORE_LOGIC_SOURCES
     src/components/Component.cpp
     src/components/IOComponent.cpp
     src/components/BasicComponent.cpp
+    src/components/TimingProfile.cpp
     src/components/ComponentBuilder.cpp
     src/components/selection/SelectionTypes.cpp
     src/components/selection/BuildManifest.cpp

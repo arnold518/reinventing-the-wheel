@@ -1,4 +1,5 @@
 #include "modules/memory/SRAM.hpp"
+#include "components/TimingProfile.hpp"
 #include "modules/memory/MemoryPeripheralWiring.hpp"
 #include "modules/basic/Latch.hpp"
 #include "modules/utility/BitAdapter.hpp"
@@ -19,7 +20,7 @@ size_t addressBits(size_t count) {
 // distinguishes write drive from precharge/read differential; not a transistor.
 class SRAMCellAccess : public BasicComponent {
 public:
-    explicit SRAMCellAccess(std::string name) : BasicComponent(std::move(name), 1, [](IOComponent* s) {
+    explicit SRAMCellAccess(std::string name) : BasicComponent(std::move(name), circuit::timing::leafDelay(circuit::timing::Leaf::MemoryPrimitive), [](IOComponent* s) {
         for (const auto* p : {"WL", "DRIVE", "BL", "BL_BAR"}) s->addPin(p, PinType::INPUT);
         for (const auto* p : {"S_BAR", "R_BAR"}) s->addPin(p, PinType::OUTPUT);
     }) {}
@@ -195,7 +196,7 @@ void SRAMRow::buildInternals(ComponentBuilder& b) {
     w.finish();
 }
 SRAMBitlinePair::SRAMBitlinePair(std::string name, size_t rows)
-    : BasicComponent(std::move(name), 1, [rows](IOComponent* s) {
+    : BasicComponent(std::move(name), circuit::timing::leafDelay(circuit::timing::Leaf::MemoryPrimitive), [rows](IOComponent* s) {
         countValid(rows, 512);
         for (const auto* p : {"PRECHARGE", "DRIVE", "WRITE_BL", "WRITE_BL_BAR"}) s->addPin(p, PinType::INPUT);
         for (size_t r = 0; r < rows; ++r) {
@@ -259,7 +260,7 @@ void SRAMWriteDriver::buildInternals(ComponentBuilder& b) {
     w.connect(w.invert("COMPLEMENT", d), getOutputPin("BL_BAR"));
     w.connect(drive, getOutputPin("DRIVE")); w.finish();
 }
-SRAMSenseAmplifier::SRAMSenseAmplifier(std::string name) : BasicComponent(std::move(name), 1, [](IOComponent* s) {
+SRAMSenseAmplifier::SRAMSenseAmplifier(std::string name) : BasicComponent(std::move(name), circuit::timing::leafDelay(circuit::timing::Leaf::MemoryPrimitive), [](IOComponent* s) {
     for (const auto* p : {"BL", "BL_BAR", "VALID", "ENABLE"}) s->addPin(p, PinType::INPUT);
     s->addPin("Q", PinType::OUTPUT);
 }) {}

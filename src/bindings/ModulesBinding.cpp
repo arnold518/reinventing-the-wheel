@@ -1,3 +1,4 @@
+#include "components/TimingProfile.hpp"
 #include "Bindings.hpp"
 #include "modules/rv32i/RV32IPrediction.hpp"
 #include "visualizer/MemoryInspector.hpp"
@@ -116,6 +117,12 @@ void bindCompositeModule(py::module_& m, const char* name, const char* descripti
 }
 
 void bindModules(py::module_& m) {
+    // The timing profile for circuits built afterwards (components/TimingProfile.hpp).
+    m.def("set_timing_profile", [](const std::string& name) { circuit::timing::setActiveTimingProfile(name); },
+          py::arg("name"), "Select the leaf-delay timing profile for circuits built afterwards");
+    m.def("timing_profile", [] { return circuit::timing::activeTimingProfile().name; },
+          "Name of the active timing profile");
+    m.def("timing_profile_names", &circuit::timing::timingProfileNames, "Names of all timing profiles");
     m.def("memory_activity_timestamps", &circuit::visualizer::memoryActivityTimestamps,
           py::arg("root"));
     py::class_<circuit::visualizer::MemoryInspector>(m, "MemoryInspector")

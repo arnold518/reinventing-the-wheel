@@ -158,10 +158,10 @@ int main() {
                   << ", shortest high " << minimum_high << ", shortest low " << minimum_low << " ticks\n"
                   << "  (data arriving later than the setup time can still be captured, with the output as late as tick "
                   << late_capture << ")\n";
-        using namespace circuit::dflipflop_timing;
-        check(setup == SETUP && hold == HOLD && earliest == CLOCK_TO_OUTPUT_MINIMUM && latest == CLOCK_TO_OUTPUT_MAXIMUM
-              && minimum_high == MINIMUM_HIGH && minimum_low == MINIMUM_LOW,
-              "DFlipFlopTiming.hpp does not match the flip-flop");
+        namespace t = circuit::dflipflop_timing;
+        check(setup == t::setup() && hold == t::hold() && earliest == t::clockToOutputMinimum()
+              && latest == t::clockToOutputMaximum() && minimum_high == t::minimumHigh() && minimum_low == t::minimumLow(),
+              "The timing profile's flip-flop contract does not match the flip-flop");
         std::cout << "DFlipFlopTimingTest passed\n";
         return 0;
     } catch (const std::exception& error) {

@@ -62,11 +62,11 @@ std::optional<ClockComponentContract> builtinClockContract(const IOComponent& c)
         flop.evidence = "gate-level DFlipFlop, every binary case tried (DFlipFlopTimingTest); reset held LOW";
         flop.clock_pin = "CLK";
         flop.fixed_inputs["RST"] = 0;
-        flop.captures = {{"D", ClockEdge::Rising, SETUP, HOLD}};
-        flop.launches = {{"Q", ClockEdge::Rising, {CLOCK_TO_OUTPUT_MINIMUM, CLOCK_TO_OUTPUT_MAXIMUM}},
-                         {"Q_BAR", ClockEdge::Rising, {CLOCK_TO_OUTPUT_MINIMUM, CLOCK_TO_OUTPUT_MAXIMUM}}};
-        flop.minimum_high_ticks = MINIMUM_HIGH;
-        flop.minimum_low_ticks = MINIMUM_LOW;
+        flop.captures = {{"D", ClockEdge::Rising, setup(), hold()}};
+        flop.launches = {{"Q", ClockEdge::Rising, {clockToOutputMinimum(), clockToOutputMaximum()}},
+                         {"Q_BAR", ClockEdge::Rising, {clockToOutputMinimum(), clockToOutputMaximum()}}};
+        flop.minimum_high_ticks = minimumHigh();
+        flop.minimum_low_ticks = minimumLow();
         return flop;
     }
     // The gate-level SRAM cell keeps its bit in a latch, also a loop. Every
@@ -76,9 +76,9 @@ std::optional<ClockComponentContract> builtinClockContract(const IOComponent& c)
         using namespace circuit::sram_cell_timing;
         ClockComponentContract cell;
         cell.evidence = "gate-level SRAMCell, every case tried (SRAMCellTimingTest); input changes at least "
-            + std::to_string(MINIMUM_SPACING) + " ticks apart";
+            + std::to_string(minimumSpacing()) + " ticks apart";
         for (const auto& [i, p] : c.getAllInputPins())
-            for (const auto& [o, q] : c.getAllOutputPins()) cell.arcs.push_back({i, o, {EARLIEST, LATEST}});
+            for (const auto& [o, q] : c.getAllOutputPins()) cell.arcs.push_back({i, o, {earliest(), latest()}});
         return cell;
     }
     // Built-in contracts cover concrete primitive instances, not an arbitrarily

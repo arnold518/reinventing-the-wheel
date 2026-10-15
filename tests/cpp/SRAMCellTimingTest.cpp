@@ -127,8 +127,8 @@ int main() {
                   << " overlapping binary changes; outputs change " << earliest << ".." << latest
                   << " ticks after the last input change.\n  " << upset << " overlapping changes upset the cell; none does once "
                   << "input changes are at least " << spacing << " ticks apart\n";
-        using namespace circuit::sram_cell_timing;
-        check(earliest == EARLIEST && latest == LATEST && spacing == MINIMUM_SPACING, "SRAMCellTiming.hpp does not match the cell");
+        check(earliest == circuit::sram_cell_timing::earliest() && latest == circuit::sram_cell_timing::latest()
+              && spacing == circuit::sram_cell_timing::minimumSpacing(), "The timing profile's SRAM cell contract does not match the cell");
         std::cout << "SRAMCellTimingTest passed\n";
         return 0;
     } catch (const std::exception& error) {

@@ -10,6 +10,8 @@ public:
     static constexpr const char* TypeName = "NOTGate";
     const char* getTypeName() const override { return TypeName; }
     void evaluate(size_t current_time, Simulator& simulator) override;
+protected:
+    bool inertialDelay() const override { return true; }
 };
 
 class ANDGate : public BasicComponent
@@ -19,6 +21,8 @@ public:
     static constexpr const char* TypeName = "ANDGate";
     const char* getTypeName() const override { return TypeName; }
     void evaluate(size_t current_time, Simulator& simulator) override;
+protected:
+    bool inertialDelay() const override { return true; }
 };
 
 class NANDGate : public BasicComponent
@@ -28,6 +32,8 @@ public:
     static constexpr const char* TypeName = "NANDGate";
     const char* getTypeName() const override { return TypeName; }
     void evaluate(size_t current_time, Simulator& simulator) override;
+protected:
+    bool inertialDelay() const override { return true; }
 };
 
 class ORGate : public BasicComponent
@@ -37,6 +43,8 @@ public:
     static constexpr const char* TypeName = "ORGate";
     const char* getTypeName() const override { return TypeName; }
     void evaluate(size_t current_time, Simulator& simulator) override;
+protected:
+    bool inertialDelay() const override { return true; }
 };
 
 class NORGate : public BasicComponent
@@ -46,6 +54,8 @@ public:
     static constexpr const char* TypeName = "NORGate";
     const char* getTypeName() const override { return TypeName; }
     void evaluate(size_t current_time, Simulator& simulator) override;
+protected:
+    bool inertialDelay() const override { return true; }
 };
 
 class XORGate : public BasicComponent
@@ -55,4 +65,6 @@ public:
     static constexpr const char* TypeName = "XORGate";
     const char* getTypeName() const override { return TypeName; }
     void evaluate(size_t current_time, Simulator& simulator) override;
+protected:
+    bool inertialDelay() const override { return true; }
 };

@@ -5,7 +5,10 @@
 // CircuitTimingAnalyzer::delays and the result is written as C++ for
 // src/components/selection/ProvenPartDelays.generated.inc.
 //
-//   part_delay_tables --write FILE [--budget=N] [--clocked] [CONTRACT ...]
+//   part_delay_tables [--profile=NAME] --write FILE [--budget=N] [--clocked] [CONTRACT ...]
+//
+//   --profile chooses the timing profile whose gate delays are analysed
+//   (components/TimingProfile.hpp); the default is the active profile.
 //   part_delay_tables --check      [--budget=N] [CONTRACT ...]
 //   part_delay_tables --coverage
 //   part_delay_tables --verify FILE   (recompute every entry; must equal FILE)
@@ -18,6 +21,7 @@
 #include "analysis/CircuitTimingAnalyzer.hpp"
 #include "analysis/DelayTwin.hpp"
 #include "components/BasicComponent.hpp"
+#include "components/TimingProfile.hpp"
 #include "components/selection/BuiltinComponentCatalog.hpp"
 #include "components/selection/ComponentCatalog.hpp"
 #include "components/selection/ProvenPartDelays.hpp"
@@ -254,6 +258,7 @@ int main(int argc, char** argv) {
             else if (argument == "--clocked") clocked = true;
             else if (argument == "--coverage") coverage = true;
             else if (argument.rfind("--budget=", 0) == 0) budget = std::stoul(argument.substr(9));
+            else if (argument.rfind("--profile=", 0) == 0) circuit::timing::setActiveTimingProfile(argument.substr(10));
             else only.insert(argument);
         }
         if (!gate_lists.empty()) {

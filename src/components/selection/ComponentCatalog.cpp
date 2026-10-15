@@ -1,5 +1,6 @@
 #include "components/BasicComponent.hpp"
 #include "components/selection/ProvenPartDelays.hpp"
+#include "components/TimingProfile.hpp"
 #include "components/selection/ComponentCatalog.hpp"
 #include "components/selection/BuildContext.hpp"
 #include "components/BasicComponent.hpp"
@@ -346,7 +347,8 @@ std::shared_ptr<const DelayTwin> ComponentCatalog::delayTwin(
     if (partsWithoutGateList().contains(request.contract_id)) return nullptr;
     // For measuring what one part's gate list costs: CIRCUITSIM_NO_DELAY_TWIN_FOR=contract-prefix.
     if (const char* skip = std::getenv("CIRCUITSIM_NO_DELAY_TWIN_FOR"); skip && *skip && request.contract_id.rfind(skip, 0) == 0) return nullptr;
-    std::string key = implementation;
+    // Gate delays differ between timing profiles, and so do the gate lists.
+    std::string key = timing::activeTimingProfile().name + "|" + implementation;
     for (const auto& [name, value] : request.parameters) key += "|" + name + "=" + value;
     static std::mutex guard;
     static std::map<std::string, std::shared_ptr<const DelayTwin>> twins;
