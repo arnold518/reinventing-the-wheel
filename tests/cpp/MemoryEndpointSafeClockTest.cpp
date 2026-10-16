@@ -22,8 +22,9 @@ void check(bool value, const std::string& message) {
 const std::vector<std::string> inputs{
     "REQ_VALID", "REQ_OP", "REQ_ADDR", "REQ_WRITE_DATA", "REQ_WRITE_MASK", "RSP_READY"};
 const std::vector<std::string> outputs{"REQ_READY", "RSP_VALID", "RSP_READ_DATA", "RSP_STATUS"};
+// REQ_READY depends on registered state only (no RSP_READY arc).
 const std::set<std::pair<std::string, std::string>> dependencies{
-    {"RSP_READY", "REQ_READY"}, {"REQ_VALID", "RSP_VALID"},
+    {"REQ_VALID", "RSP_VALID"},
     {"REQ_VALID", "RSP_READ_DATA"}, {"REQ_OP", "RSP_READ_DATA"},
     {"REQ_ADDR", "RSP_READ_DATA"}, {"REQ_OP", "RSP_STATUS"},
     {"REQ_ADDR", "RSP_STATUS"}, {"REQ_WRITE_MASK", "RSP_STATUS"}};
@@ -37,7 +38,8 @@ ClockSpecification specification(const IOComponent& c) {
 void safe(const ClockTimingReport& r, size_t period) {
     for (const auto& d : r.diagnostics) std::cerr << d << '\n';
     check(r.status == ClockTimingStatus::SafeUnderContracts && r.safe_period_ticks == period,
-          "Expected safe endpoint period " + std::to_string(period));
+          "Expected safe endpoint period " + std::to_string(period) + ", got " + std::to_string(r.safe_period_ticks.value_or(0))
+          + " (" + r.limiting_constraint + ")");
 }
 void unknown(const ClockTimingReport& r) {
     check(r.status == ClockTimingStatus::Unknown && !r.safe_period_ticks, "Unsupported endpoint must fail closed");
@@ -63,7 +65,8 @@ void staticCoverage() {
             safe(CircuitTimingAnalyzer::safeClock(c,base),2);
             for (size_t i=0;i<inputs.size();++i) {
                 auto s=base; s.inputs[i+1].edge=ClockEdge::Rising; s.inputs[i+1].delay={1,9};
-                safe(CircuitTimingAnalyzer::safeClock(c,s), inputs[i]=="REQ_WRITE_DATA" ? 10 : 12);
+                // Inputs with no combinational path (only captured) need less.
+                safe(CircuitTimingAnalyzer::safeClock(c,s), inputs[i]=="REQ_WRITE_DATA" || inputs[i]=="RSP_READY" ? 10 : 12);
                 for (size_t j=0;j<outputs.size();++j) {
                     auto probe=s; probe.outputs[j].setup=20;
                     safe(CircuitTimingAnalyzer::safeClock(c,probe),dependencies.contains({inputs[i],outputs[j]})?32:22);
@@ -115,7 +118,8 @@ struct Oracle {
         const bool edge=previous==L&&high("CLK"); previous=p.at("CLK")[0];
         const bool reset=p.at("RST")[0]!=L, take=high("RSP_READY"), valid=high("REQ_VALID");
         const auto st=status(p),op=number(p.at("REQ_OP")),addr=number(p.at("REQ_ADDR"));
-        const bool accepted=!reset&&(!full||take)&&valid;
+        // REQ_READY from registered state only: no response held.
+        const bool accepted=!reset&&!full&&valid;
         Bits read(width,L);
         if(st==0&&op==0)read=words[addr/(width/8)];
         if(reset){full=false;saved.assign(width,L);saved_status=0;}
@@ -126,7 +130,7 @@ struct Oracle {
                 for(size_t bit=0;bit<width;++bit)if(p.at("REQ_WRITE_MASK")[bit/8]==H)
                     words[addr/(width/8)][bit]=stored(p.at("REQ_WRITE_DATA")[bit]);
         }
-        return {{"REQ_READY",{!reset&&(!full||take)?H:L}},
+        return {{"REQ_READY",{!reset&&!full?H:L}},
                 {"RSP_VALID",{!reset&&(full||valid)?H:L}},
                 {"RSP_READ_DATA",full?saved:(!reset&&valid?read:Bits(width,L))},
                 {"RSP_STATUS",bits(3,full?saved_status:st)}};

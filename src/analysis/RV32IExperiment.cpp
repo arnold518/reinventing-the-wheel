@@ -139,8 +139,8 @@ RV32IExperimentResult runRV32IExperiment(const RV32IExperimentConfig& config) {
         clock.clock_pin="EXPERIMENT.CLK";
         clock.inputs={{"EXPERIMENT.RST",std::nullopt,{},0},
                       {"EXPERIMENT.CORE.ENABLE",std::nullopt,{},1}};
-        // A memory lets RSP_READY through to REQ_READY late in the cycle.
-        // The gates of the core need that only shortly before the edge in
+        // A memory's response arrives late in the cycle. The gates of the
+        // core need it only shortly before the edge in
         // the states where it happens; the compact core's table cannot tell
         // states apart and asks for more. The period covers both, so a
         // compact run stays inside its setup times.
@@ -230,7 +230,18 @@ RV32IExperimentResult runRV32IExperiment(const RV32IExperimentConfig& config) {
                 else same=same&&(c.full?valid:ready)==LogicValue::HIGH;
                 known=known||same;
             }
-            require(known,"Cycle "+std::to_string(cycle)+": "+e.getID()+" is in a handshake state the clock analysis did not cover");
+            if(!known) {
+                const auto shown=[](LogicValue v){return std::string(1,"01XZ"[unsigned(v)]);};
+                std::string detail=" (REQ_READY "+shown(ready)+", RSP_VALID "+shown(valid)+", RSP_READY "+shown(take)+"; requester";
+                if(!group.cases.empty())for(const auto& [pin,values]:group.cases.front().register_values)detail+=" "+pin->getID()+"="+shown(pin->getBit(0));
+                detail+="; cases with this handshake:";
+                for(const auto& c:group.cases)if(c.sequenced&&valid==c.valid&&ready==c.ready[unsigned(take)]) {
+                    detail+=" {";
+                    for(const auto& [pin,values]:c.register_values)detail+=std::to_string(values);
+                    detail+="}";
+                }
+                require(false,"Cycle "+std::to_string(cycle)+": "+e.getID()+" is in a handshake state the clock analysis did not cover"+detail+")");
+            }
             ++result.handshake_states_checked;
         }
     };

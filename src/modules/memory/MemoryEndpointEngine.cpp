@@ -431,9 +431,9 @@ public:
         wl_ = wl; sense_ = sense; write_ = write;
         outputs["BUSY"] = {control_.busyShown() ? H : L};
         outputs["ERROR"] = {control_.error ? H : L};
-        outputs["READ_VALID"] = {control_.valid ? H : L};
-        outputs["ROW_OPEN"] = {control_.open ? H : L};
-        outputs["READ_DATA"] = control_.valid
+        outputs["READ_VALID"] = {control_.validShown() ? H : L};
+        outputs["ROW_OPEN"] = {control_.openShown() ? H : L};
+        outputs["READ_DATA"] = control_.validShown()
             ? Bits(buffer_.begin() + control_.column * width_, buffer_.begin() + (control_.column + 1) * width_) : Bits(width_, Z);
         due_ = control_.nextStep(t);
     }

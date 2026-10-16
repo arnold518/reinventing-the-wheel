@@ -271,14 +271,14 @@ std::optional<ClockComponentContract> builtinClockContract(const IOComponent& c)
         for (auto o : {"REQ_READY", "RSP_VALID", "RSP_READ_DATA", "RSP_STATUS"})
             m.launches.push_back({o, ClockEdge::Rising, {d, d}});
         // With reset LOW and state held fixed, evaluate() simplifies to:
-        // READY = !full || RSP_READY; VALID = full || REQ_VALID;
+        // READY = !full; VALID = full || REQ_VALID;
         // DATA = full ? saved_data : (REQ_VALID && legal_read ? mem[addr] : 0);
         // STATUS = full ? saved_status : validate(op, addr, mask).
-        // Thus RSP_READY is NOT a combinational dependency of VALID or DATA;
+        // Thus RSP_READY is NOT a combinational dependency of any output;
         // nor are write data/mask dependencies of read DATA. Do not import
         // state-specific cuts from the legacy core timing estimator.
         for (const auto& arc : std::vector<std::pair<std::string, std::string>>{
-                {"RSP_READY", "REQ_READY"}, {"REQ_VALID", "RSP_VALID"},
+                {"REQ_VALID", "RSP_VALID"},
                 {"REQ_VALID", "RSP_READ_DATA"}, {"REQ_OP", "RSP_READ_DATA"},
                 {"REQ_ADDR", "RSP_READ_DATA"}, {"REQ_OP", "RSP_STATUS"},
                 {"REQ_ADDR", "RSP_STATUS"}, {"REQ_WRITE_MASK", "RSP_STATUS"}})

@@ -52,7 +52,7 @@ class ExperimentCLI(unittest.TestCase):
         # certified, and it also covers what the compact core needs.
         safety = run("--core", "advanced", "--memory", "sram", "--safe-clock")["safe_clock"]
         self.assertEqual(safety["status"], "safe-under-contracts")
-        self.assertEqual(safety["safe_period_ticks"], 102)
+        self.assertEqual(safety["safe_period_ticks"], 158)
         self.assertEqual(safety["checked_state_cases"], safety["state_case_count"])
         self.assertTrue(any("timed memory's clocked handshake" in e for e in safety["state_evidence"]))
         timed = run("--core", "advanced", "--memory", "sram", "--program", "20", "--period", "auto")
@@ -69,7 +69,14 @@ class ExperimentCLI(unittest.TestCase):
         run("--core", "advanced", "--program", "20", "--check-handshake-states", okay=False)
         # The candidate-clock mode is retired; its option is refused.
         run("--core", "single", "--timing", okay=False)
-        run("--safe-clock", "--fidelity", "behavioral", okay=False)
+        # The compact core is certified on its proven table. Before the
+        # endpoints' REQ_READY came from registered state only, its table and
+        # the endpoint's RSP_READY -> REQ_READY arc formed a loop and the
+        # analysis failed closed; now it must agree with the gate-level core.
+        compact = run("--safe-clock", "--fidelity", "behavioral")["safe_clock"]
+        gates = run("--safe-clock")["safe_clock"]
+        self.assertEqual(compact["status"], "safe-under-contracts")
+        self.assertEqual(compact["safe_period_ticks"], gates["safe_period_ticks"])
 
     def test_state_aware_prediction_configurations(self):
         for policy in ("not-taken", "taken", "backward-taken", "one-bit", "two-bit"):

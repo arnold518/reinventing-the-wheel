@@ -14,10 +14,11 @@ namespace circuit::memory_detail {
 // bits change at rising clock edges; the analog steps of a command start one
 // flip-flop clock-to-output and one AND gate after the accepting edge, each
 // step taking its interval plus the AND that gates it; the end of the chain
-// reaches the one-stage sampler through a three-level OR tree. Completion
-// updates the open row, READ_VALID and the refresh row and releases BUSY one
-// edge later. The worst-case clock-to-output of the flip-flop is used, so no
-// step is ever earlier than in the gates.
+// reaches the one-stage sampler through a three-level OR tree. A completion
+// is shown at once (BUSY low, READ_VALID, the new open state) and takes
+// effect at the next edge, which may already take the next command. The
+// worst-case clock-to-output of the flip-flop is used, so no step is ever
+// earlier than in the gates.
 // Gates a DRAM step copies so that it outlasts the row decoder (ROW_ENABLE
 // to a wordline, MatrixRowDecoder): the enable AND, the AND tree over the
 // enable and the row bits, and one gate of margin for the control's own
@@ -71,25 +72,27 @@ public:
         const bool nop = cmd_known && code == 0;
         const bool addr_known = known(addr);
         const uint32_t a = addr_known ? number(addr) : 0;
+        const bool complete = completing();
+        const bool open_now = openShown();
         const bool legal = cmd_known && (
-            (code == Activate && addr_known && !open && a < rows_) ||
-            (code == Read && addr_known && open && a < words_per_row_) ||
-            (code == Write && addr_known && known(write_mask) && open && a < words_per_row_) ||
-            (code == Precharge && open) || (code == Refresh && !open));
+            (code == Activate && addr_known && !open_now && a < rows_) ||
+            (code == Read && addr_known && open_now && a < words_per_row_) ||
+            (code == Write && addr_known && known(write_mask) && open_now && a < words_per_row_) ||
+            (code == Precharge && open_now) || (code == Refresh && !open_now));
         const bool issued = cmd_known && !nop;
-        // Taken while idle or in the releasing cycle of the last command.
-        const bool available = !busy || releasing;
+        // Taken while idle, in the completing cycle of the last command, or in
+        // a releasing cycle (a completion no command followed).
+        const bool available = !busy || releasing || complete;
         const bool accept = issued && legal && available;
         const bool unknown = !cmd_known;
         const bool error_event = unknown || (issued && (!available || !legal));
         const bool clear_valid = accept || (unknown && available) || (issued && available && !legal);
         const bool sampled = busy && command != None && t >= chainDone();
-        const bool complete = busy && done_q_ && !releasing && !fresh_;
         const unsigned finished = command;
         error = error_event || (error && !accept);
         valid = !clear_valid && (valid || (complete && finished == Read));
         const bool next_busy = accept || (busy && !releasing);
-        releasing = complete || (releasing && !releasing);
+        releasing = complete && !accept;
         if (complete && finished == Activate) open = true;
         if (complete && finished == Precharge) open = false;
         if (complete && finished == Refresh) refresh_row = refresh_row + 1 >= rows_ ? 0 : refresh_row + 1;
@@ -107,8 +110,18 @@ public:
         done_q_ = sampled;
         fresh_ = accept;
     }
-    // BUSY as the device shows it: low in the releasing cycle.
-    bool busyShown() const { return busy && !releasing; }
+    // The last command's completion, seen by the sampler and not yet in
+    // effect (the gates' COMPLETE).
+    bool completing() const { return busy && done_q_ && !releasing && !fresh_; }
+    // BUSY as the device shows it: low once the completion is seen.
+    bool busyShown() const { return busy && !releasing && !completing(); }
+    // READ_VALID (and the output enable) as shown.
+    bool validShown() const { return valid || (completing() && command == Read); }
+    // The open state as shown: a finishing ACTIVATE opens, a finishing
+    // PRECHARGE closes, already in the completing cycle.
+    bool openShown() const {
+        return (open && !(completing() && command == Precharge)) || (completing() && command == Activate);
+    }
     // Earliest future time at which an analog control may change.
     size_t nextStep(size_t t) const {
         if (!busy || command == None || started_ == NOT_STARTED) return 0;

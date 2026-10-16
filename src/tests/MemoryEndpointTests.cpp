@@ -36,7 +36,13 @@ struct Scenario {
         step(label+"-setup", {{"CLK",logicBit(false)},{"REQ_VALID",logicBit(true)},{"REQ_OP",logicBits(3,op)},
             {"REQ_ADDR",logicBits(32,address)},{"REQ_WRITE_DATA",logicBits(width,data)},
             {"REQ_WRITE_MASK",logicBits(width/8,mask)},{"RSP_READY",logicBit(false)}}, {{"REQ_READY",logicBit(true)}});
-        step(label+"-accept", {{"CLK",logicBit(true)}}, {{"REQ_READY",logicBit(false)}});
+        // A request a native controller rejects finishes in its accepting
+        // cycle, and the next request is taken while that response waits (one
+        // held response and one request in flight). A flip-flop endpoint
+        // answers every request in its accepting cycle and holds it.
+        const bool native = spec.contract_id.rfind("memory.ff.",0)!=0;
+        const bool rejected = status!=Status::Ok && status!=Status::Device;
+        step(label+"-accept", {{"CLK",logicBit(true)}}, {{"REQ_READY",logicBit(native && rejected)}});
         step(label+"-latched", {{"CLK",logicBit(false)},{"REQ_VALID",logicBit(false)},
             {"REQ_ADDR",logicBits(32,0xffffffff)},{"REQ_WRITE_DATA",logicBits(width,0)}});
         step(label+"-execute", {{"CLK",logicBit(true)}});
@@ -51,7 +57,9 @@ struct Scenario {
                              {"RSP_READ_DATA",logicBits(width,result)},{"REQ_READY",logicBit(false)}};
         step(label+"-response", {{"CLK",logicBit(false)}}, response);
         step(label+"-hold", {{"CLK",logicBit(true)}}, response);
-        response["REQ_READY"]=logicBit(true);
+        // An endpoint takes a new request one edge after a held response is
+        // consumed: its REQ_READY never follows this cycle's RSP_READY.
+        response["REQ_READY"]=logicBit(false);
         step(label+"-ready", {{"CLK",logicBit(false)},{"RSP_READY",logicBit(true)}}, response);
         step(label+"-consumed", {{"CLK",logicBit(true)}}, {{"RSP_VALID",logicBit(false)},{"REQ_READY",logicBit(true)}});
     }

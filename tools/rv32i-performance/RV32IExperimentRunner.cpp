@@ -35,7 +35,7 @@ void usage() {
         "  [--size 1..256] [--distance 1|2|4|8] [--seed N] [--branch-spacing WORDS]\n"
         "  [--pattern taken|not-taken|alternating|bursts|irregular]\n"
         "  [--measure-body] [--training-iterations N] (new named benchmarks only)\n"
-        "  [--memory ff|sram|dram|rom|nor-flash] [--phase-ticks N] [--guard-ticks N]\n"
+        "  [--memory ff|sram|sram-async|dram|rom|nor-flash] [--phase-ticks N] [--guard-ticks N]\n"
         "  [--max-cycles N] [--max-events N] [--allow-incomplete] [--progress-cycles N]\n"
         "  [--tohost ADDRESS] [--allocation-limit-mib N]\n"
         "  [--trace-cycles] (requires --max-cycles <= 4096; validation only)\n"

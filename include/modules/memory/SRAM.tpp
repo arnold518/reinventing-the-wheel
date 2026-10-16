@@ -300,17 +300,26 @@ template<size_t W> void SRAMStorageBank<W>::buildInternals(ComponentBuilder& b) 
 template<size_t W> SRAM<W>::SRAM(std::string name, SRAMDeviceConfig config)
     : IOComponent(std::move(name), [clocked = config.clocked](IOComponent* s) { defineSRAMPins<W>(s, clocked); }), config_(config) { config.validate(W, true); }
 // A large array: subarrays of SRAM_SUBARRAY_ROWS rows, each a whole SRAM
-// device with its own self-timing. The high word-address bits select one
-// subarray (its CE_N; in a clocked macro, its WE_N, while every subarray
-// takes the access). Requests reach the subarrays
-// over a global wire (a clocked macro's clock directly), and
-// each subarray drives a shared return bus for data and READY through its
-// own tri-state buffers, enabled by the subarray's select: the live select
-// in an asynchronous part, the select registered at the last access in a
-// clocked one (whose idle subarrays keep their last word). The wire delay
-// grows with the side of the subarray grid. An address beyond the depth goes
-// to subarray 0 with its top bit set, so that subarray answers with X and
-// READY exactly as a single bank does.
+// device with its own self-timing. Requests reach the subarrays over a
+// global wire, and each subarray drives a shared return bus for data and
+// READY through its own tri-state buffers. The wire delay grows with the
+// side of the subarray grid.
+//
+// Asynchronous: the high word-address bits select one subarray (its CE_N),
+// the bus is enabled by the live select, and an address beyond the depth
+// goes to subarray 0 with its top bit set, so that subarray answers with X
+// and READY exactly as a single bank does.
+//
+// Clocked macro: every subarray takes each access (in parallel, so no
+// slower), with CE_N and WE_N ungated. Subarray k sees the address with its
+// select bits inverted where k has a one, so its own range check accepts
+// only addresses meant for it (select field k, upper bits zero): an
+// out-of-range access writes nothing and reads X in every subarray. The bus
+// enables are decoded after the edge from a periphery register holding the
+// raw address (an out-of-range address enables subarray 0). Nothing but the
+// global wire lies between the macro's inputs and its registers, so the
+// setup time is the registers' own; the clock is ideal (the timing analysis
+// takes one undelayed clock).
 template<size_t W> void SRAM<W>::buildSubarrays(ComponentBuilder& b) {
     using namespace circuit::sram;
     using circuit::memory_detail::StructuralWiring;
@@ -333,12 +342,8 @@ template<size_t W> void SRAM<W>::buildSubarrays(ComponentBuilder& b) {
     const auto ce_n = global("CE_WIRE", this->getInputPin("CE_N"));
     const auto we_n = global("WE_WIRE", this->getInputPin("WE_N"));
     const auto oe_n = global("OE_WIRE", this->getInputPin("OE_N"));
-    // The clock is ideal (the timing analysis takes one undelayed clock), so
-    // a clocked macro's request crosses the global wire before the
-    // subarrays register it: the wire is part of the macro's setup time.
     const auto clock = config_.clocked ? PinPtr(this->getInputPin("CLK")) : PinPtr{};
-    // The select field, forced to 0 for an address beyond the depth (from
-    // the periphery's own copy of the address, before the global wire).
+    // The select field, forced to 0 for an address beyond the depth.
     const auto decode = [&](const std::string& prefix, PinPtr source, std::vector<PinPtr>* word_out) {
         auto bits = b.addNewComponent<BitSplitter<32>>(prefix + "ADDRESS_BITS");
         w.connect(source, bits->template getInputPin<32>("IN"));
@@ -356,35 +361,32 @@ template<size_t W> void SRAM<W>::buildSubarrays(ComponentBuilder& b) {
         if (word_out) { *word_out = word; word_out->push_back(w.invert(prefix + "OUT_OF_RANGE", valid)); }
         return chosen;
     };
-    std::vector<PinPtr> word;
-    const auto chosen = decode("", address, &word);
-    const auto invalid = word.back(); word.pop_back();
-    // The bus enables: the live select while CE_N is low, or for a clocked
-    // macro the select registered at each access (CE_N low at the edge),
-    // from the periphery's copy of the address and the clock before the
-    // global wire.
-    std::vector<PinPtr> enables;
-    const auto enabled = w.invert("ENABLED", ce_n);
-    for (size_t k = 0; k < count; ++k) enables.push_back(w.both("BUS_ENABLE_" + std::to_string(k), chosen[k], enabled));
-    if (config_.clocked) {
+    std::vector<PinPtr> word, chosen, enables, inverted;
+    PinPtr invalid;
+    if (!config_.clocked) {
+        chosen = decode("", address, &word);
+        invalid = word.back(); word.pop_back();
+        const auto enabled = w.invert("ENABLED", ce_n);
+        for (size_t k = 0; k < count; ++k) enables.push_back(w.both("BUS_ENABLE_" + std::to_string(k), chosen[k], enabled));
+    } else {
+        auto bits = b.addNewComponent<BitSplitter<32>>("ADDRESS_BITS");
+        w.connect(address, bits->template getInputPin<32>("IN"));
+        for (size_t i = 0; i < 32; ++i) word.push_back(bits->getOutputPin("OUT_" + std::to_string(i)));
+        for (size_t i = 0; i < select_bits; ++i) inverted.push_back(w.invert("FLIPPED_SELECT_" + std::to_string(i), word[low_bits + i]));
+        // The periphery's copy of the address, registered at each access
+        // (CE_N low at the edge), decoded after the edge into the enables.
         using circuit::timing::Leaf;
         using circuit::timing::leafDelay;
         const size_t slowest = std::max({leafDelay(Leaf::Not), leafDelay(Leaf::Nand), leafDelay(Leaf::And), leafDelay(Leaf::Or)});
         auto por = b.addNewComponent<circuit::memory::PowerOnReset>("POWER_ON_RESET", 16 * slowest);
-        const auto here = decode("PERIPHERY_", this->template getInputPin<32>("WORD_ADDR"), nullptr);
-        const auto access = w.invert("ACCESS", this->getInputPin("CE_N"));
-        for (size_t k = 0; k < count; ++k) {
-            const auto n = std::to_string(k);
-            auto state = b.add(circuit::families::ClockedStateBit, "SELECTED_" + n);
-            w.connect(this->getInputPin("CLK"), state->getInputPin("CLK"));
-            w.connect(por->getOutputPin("OUT"), state->getInputPin("RST"));
-            const auto q = state->getOutputPin("Q");
-            w.connect(w.either("SELECTED_NEXT_" + n, w.both("SELECTED_LOAD_" + n, access, here[k]),
-                               w.both("SELECTED_HOLD_" + n, w.invert("SELECTED_IDLE_" + n, access), q)), state->getInputPin("D"));
-            enables[k] = q;
-        }
+        auto held = b.add(circuit::families::registerWord(32), "PERIPHERY_ADDRESS");
+        w.connect(this->getInputPin("CLK"), held->getInputPin("CLK"));
+        w.connect(por->getOutputPin("OUT"), held->getInputPin("RST"));
+        w.connect(w.invert("ACCESS", this->getInputPin("CE_N")), held->getInputPin("WE"));
+        w.connect(this->template getInputPin<32>("WORD_ADDR"), held->getInputPinDynamic("D"));
+        enables = decode("PERIPHERY_", held->getOutputPinDynamic("Q"), nullptr);
     }
-    const auto low = w.constant("LOW", false);
+    const auto low = config_.clocked ? PinPtr{} : w.constant("LOW", false);
     auto data_bus = b.addNewComponent<circuit::memory::MemoryBus>("READ_DATA_BUS", count, W, wire);
     // READY has a pull-down: low while no subarray drives it (deselected,
     // or before a clocked macro's first access), as in a single bank.
@@ -396,22 +398,19 @@ template<size_t W> void SRAM<W>::buildSubarrays(ComponentBuilder& b) {
         sub.depth_words = std::min(sub_words, config_.depth_words - k * sub_words);
         auto part = add<SRAM<W>>(b, "memory.sram.device" + suffix, "SUBARRAY_" + n, sramParameters(sub), sub);
         auto local = b.addNewComponent<BitJoiner<32>>("LOCAL_ADDRESS_" + n);
-        for (size_t i = 0; i < 32; ++i)
-            w.connect(i < low_bits ? word[i] : (k == 0 && i == 31 ? invalid : low), local->getInputPin("IN_" + std::to_string(i)));
+        for (size_t i = 0; i < 32; ++i) {
+            PinPtr bit;
+            if (i < low_bits) bit = word[i];
+            else if (config_.clocked) bit = i < low_bits + select_bits && (k >> (i - low_bits)) & 1 ? inverted[i - low_bits] : word[i];
+            else bit = k == 0 && i == 31 ? invalid : low;
+            w.connect(bit, local->getInputPin("IN_" + std::to_string(i)));
+        }
         w.connect(local->template getOutputPin<32>("OUT"), part->template getInputPin<32>("WORD_ADDR"));
-        // Asynchronous: only the chosen subarray is enabled. Clocked: every
-        // subarray takes each access (in parallel, so no slower) and only
-        // the chosen one may write; an unknown address then leaves only the
-        // write strobe unknown, and the next access starts cleanly.
-        const auto not_chosen = w.invert("NOT_CHOSEN_" + n, chosen[k]);
         if (config_.clocked) {
             w.connect(ce_n, part->getInputPin("CE_N"));
             w.connect(clock, part->getInputPin("CLK"));
-            w.connect(w.either("WE_N_" + n, we_n, not_chosen), part->getInputPin("WE_N"));
-        } else {
-            w.connect(w.either("CE_N_" + n, ce_n, not_chosen), part->getInputPin("CE_N"));
-            w.connect(we_n, part->getInputPin("WE_N"));
-        }
+        } else w.connect(w.either("CE_N_" + n, ce_n, w.invert("NOT_CHOSEN_" + n, chosen[k])), part->getInputPin("CE_N"));
+        w.connect(we_n, part->getInputPin("WE_N"));
         w.connect(oe_n, part->getInputPin("OE_N"));
         w.connect(data, part->template getInputPin<W>("WRITE_DATA"));
         w.connect(mask, part->template getInputPin<W / 8>("WRITE_MASK"));

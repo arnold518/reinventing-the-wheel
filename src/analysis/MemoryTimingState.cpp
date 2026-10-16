@@ -65,18 +65,25 @@ struct Evaluate {
 // a clock edge: idle (ready for a start), working (not ready, no result) or
 // done (result shown). How long the device works is left open, so every
 // number of working cycles is covered, and so is a refresh starting by itself.
+// REQ_READY depends on registered state only (MemoryTransactionPort): a
+// request is taken while idle or as the current one completes, if no earlier
+// response is held; RSP_READY only decides what is finished and kept.
 std::optional<MemoryTimingGroup> sequencedStates(const std::shared_ptr<BehavioralMemoryEndpoint>& endpoint,
     const std::shared_ptr<IOComponent>& request,const std::array<std::shared_ptr<IOComponent>,3>& cells,
     const std::shared_ptr<PinBase>& mismatch) {
-    enum Sequencer:unsigned{Idle,Working,Done};
+    // The sequencer as a phase (Idle: takes a start; Working: a request or a
+    // refresh runs; Blocked: idle with a refresh due, DRAM only) and DONE (a
+    // result shown): sequencer state = DONE * 3 + phase. A DRAM result can
+    // stay shown while a refresh is due or running.
+    enum Phase:unsigned{Idle,Working,Blocked};
     const auto bit=[](bool v){return v?H:L;};
     const auto clean=[](LogicValue v){return v==H||v==L?v:X;};
     struct View{LogicValue ready,valid,accept,finish,full,pending;};
     const auto view=[&](LogicValue pending,LogicValue full,unsigned seq,LogicValue take,LogicValue issue) {
         const auto room=either(inv(full),take);
-        const auto complete=both(pending,bit(seq==Done));
-        const auto slot=both(either(inv(pending),both(complete,take)),bit(seq!=Working));
-        const auto ready=both(room,slot),accept=both(ready,issue),finish=both(complete,room);
+        const auto complete=both(pending,bit(seq/3==1));
+        const auto slot=both(either(inv(pending),complete),bit(seq%3==Idle));
+        const auto ready=both(inv(full),slot),accept=both(ready,issue),finish=both(complete,room);
         const auto capture=both(both(complete,room),either(full,inv(take)));
         return View{ready,either(full,complete),accept,finish,
             either(capture,both(full,inv(take))),either(accept,both(pending,inv(finish)))};
@@ -124,17 +131,25 @@ std::optional<MemoryTimingGroup> sequencedStates(const std::shared_ptr<Behaviora
             next+=27*(unsigned(now.pending)+3*unsigned(now.full));
             // The sequencer starts and finishes only on a clean 1.
             std::vector<unsigned> after;
+            const auto add=[&](unsigned done,unsigned phase){after.push_back(done*3+phase);};
             const bool start=now.accept==H;
-            if(seq==Done&&now.finish!=H)after={Done};
-            else if(seq!=Working) {
-                after={start?Working:Idle};
-                // A refresh may start by itself; a released static access shows
-                // not-ready until its READY has passed the synchronizer.
-                if(!start&&(refreshes||seq==Done))after.push_back(Working);
-            } else {
-                after={Working};
-                if(pending!=L)after.push_back(Done);
-                if(pending!=H)after.push_back(Idle);
+            const unsigned phase=seq%3;
+            // A result not finished at this edge stays shown.
+            const unsigned kept=seq/3==1&&now.finish!=H?1:0;
+            if(start)add(0,Working);
+            else if(phase==Working) {
+                add(kept,Working);
+                // The running work ends: a request's result, or a refresh
+                // (or the first edge after reset); a refresh may be due.
+                if(pending!=L){add(1,Idle);if(refreshes)add(1,Blocked);}
+                if(pending!=H||kept){add(kept,Idle);if(refreshes)add(kept,Blocked);}
+            } else if(phase==Blocked)add(kept,Working);
+            else {
+                add(kept,Idle);
+                // A refresh may fall due or start by itself; a released static
+                // access may show not-ready for a cycle.
+                if(refreshes){add(kept,Blocked);add(kept,Working);}
+                else if(seq/3==1&&!kept)add(0,Working);
             }
             for(const auto s:after) {
                 const unsigned code=next+243*s;
@@ -222,7 +237,8 @@ std::optional<MemoryTimingGroup> memoryTimingStates(
                 e.values[mismatch]=LogicValue(controls/(radix*radix));
                 const bool valid=e.get(request->getOutputPin("BUS_REQ_VALID"))==H;
                 const bool take=e.get(request->getOutputPin("BUS_RSP_READY"))==H;
-                const bool ready=!mode.full||take,accept=valid&&ready;
+                // REQ_READY from registered state only: no response held.
+                const bool ready=!mode.full,accept=valid&&ready;
                 e.values[request->getInputPin("BUS_REQ_READY")]=ready?H:L;
                 e.values[request->getInputPin("BUS_RSP_VALID")]=mode.full||valid?H:L;
                 unsigned next=0,weight=1;

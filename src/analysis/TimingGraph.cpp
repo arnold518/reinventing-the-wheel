@@ -149,8 +149,10 @@ class Builder {
         part.endpoint = endpoint.get();
         part.delay = delayOf(c);
         for (auto& launch : part.launch) launch = part.delay;
-        part.ready_from_ready = part.valid_from_valid = part.data_from_valid = part.data_from_op
+        part.valid_from_valid = part.data_from_valid = part.data_from_op
             = part.data_from_address = part.status_from_op = part.status_from_address = part.status_from_mask = part.delay;
+        // REQ_READY depends on registered state only: no path from RSP_READY.
+        part.ready_from_ready = NEVER;
         // A delay table replaces the fused one-tick timing path by path. The
         // empty/holding behaviour of the endpoint stays the same.
         if (const auto* table = endpoint->getDelays()) {

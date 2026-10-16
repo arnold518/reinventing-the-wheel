@@ -107,7 +107,7 @@ class MemoryControllerBehavioral : public Primitive {
         const bool reading = legal && !o0, writing = legal && o0 && mask_known;
 
         const bool always_ready = config_.always_ready;
-        const auto ready = [&] { return both(no(reset), always_ready ? H : buffer_.room(take)); };
+        const auto ready = [&] { return both(no(reset), always_ready ? H : no(buffer_.full)); };
         const auto accept = both(issue, ready());
         const bool device_fault = (reading || writing) && read("MEM_FAULT") == Bits{H};
         const Bits response_status = bits(3, device_fault ? 5 : status);
@@ -160,8 +160,9 @@ public:
         const auto view = [&] {
             const auto completion = both(pending_, bit(sequence_.done));
             const auto room = both(no(reset), buffer_.room(take));
-            const auto slot = either(no(pending_), both(completion, take));
-            const auto ready = both(both(no(reset), slot), both(bit(sequence_.available), room));
+            // REQ_READY from registered state only (see MemoryTransactionPort).
+            const auto slot = either(no(pending_), completion);
+            const auto ready = both(both(no(reset), slot), both(bit(sequence_.available), no(buffer_.full)));
             return View{completion, both(completion, room), ready, both(ready, issue)};
         };
         const auto before = view();
@@ -213,10 +214,15 @@ void MemoryTransactionPort::buildInternals(ComponentBuilder& b) {
     auto completion=w.both("COMPLETION",pending->getOutputPin("Q"),getInputPin("DONE"));
     auto finish=w.both("FINISH",completion,response->getOutputPin("IN_READY"));
     // Capacity is one outstanding transaction, including a held response.
-    auto response_taken=w.both("RESPONSE_TAKEN",completion,getInputPin("RSP_READY"));
-    auto slot=w.either("REQUEST_SLOT",w.invert("IDLE",pending->getOutputPin("Q")),response_taken);
+    // REQ_READY depends on registered state only, never on this cycle's
+    // RSP_READY: a new request is taken while idle or as the current one
+    // completes, if no earlier response is still held. A completing response
+    // then always has room (the bypass passes it on, or the buffer keeps it),
+    // and the consumer's decision cannot reach the device's request inputs
+    // in the same cycle, as on a real bus.
+    auto slot=w.either("REQUEST_SLOT",w.invert("IDLE",pending->getOutputPin("Q")),completion);
     auto ready=w.reduce("READY",{w.invert("RUNNING",getInputPin("RST")),slot,
-        getInputPin("BACK_READY"),response->getOutputPin("IN_READY")},true);
+        getInputPin("BACK_READY"),w.invert("NOTHING_HELD",response->getOutputPin("FULL"))},true);
     auto accept=w.both("ACCEPT",ready,getInputPin("REQ_VALID"));
     w.connect(w.either("NEXT_PENDING",accept,w.both("KEEP_PENDING",pending->getOutputPin("Q"),
         w.invert("NOT_FINISHED",finish))),pending->getInputPin("D"));

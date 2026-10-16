@@ -113,7 +113,9 @@ inline void buildFFController(ComponentBuilder& b,IOComponent& self,size_t width
         response=b.addNewComponent<MemoryResponseBuffer>("RESPONSE",width);
         for(auto p:{"CLK","RST"})w.connect(self.getInputPin(p),response->getInputPin(p));
         w.connect(self.getInputPin("RSP_READY"),response->getInputPin("OUT_READY"));
-        ready=response->getOutputPin("IN_READY");
+        // REQ_READY from registered state only, as the native endpoints:
+        // a request is taken while no earlier response is held.
+        ready=w.both("READY",w.invert("RUNNING",self.getInputPin("RST")),w.invert("NOTHING_HELD",response->getOutputPin("FULL")));
     }
     auto accept=w.both("ACCEPT",self.getInputPin("REQ_VALID"),ready);
     w.connect(ready,self.getOutputPin("REQ_READY"));

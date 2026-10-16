@@ -62,25 +62,28 @@ work state changes. Keep dated decisions and validation results in
 
 - [Realistic leaf delays and gate-level memory control](records/2026-10-16-realistic-timing-plan.md),
   executed on branch `realistic-timing` with a [progress log](records/2026-10-16-realistic-timing-progress.md):
-  phases 1–6.3 are done. Leaf delays come from a timing profile (`unit`, the
-  default; `embedded` 65 nm and `desktop` 32 nm, 1 tick = 1 ps) with
-  inertial gate delay and per-profile delay tables at a fixed point. All
+  phases 1–6 are done. Leaf delays come from a timing profile (`unit`, the
+  default for tests; `embedded` 65 nm and `desktop` 32 nm, 1 tick = 1 ps)
+  with inertial gate delay and per-profile delay tables at a fixed point. All
   memory controllers are gates, the devices time themselves, and compact
   forms take their timing from the gates; the delay rule passes in the CTest
-  configuration and oracle-checked CPU runs complete with every memory under
-  every profile. External DRAM (SDR SDRAM for `embedded`, DDR4-3200 for
-  `desktop`) and NOR flash use datasheet intervals and DRAM row geometry. The
-  on-chip SRAM used by the experiments (`--memory sram`) is now a clocked
-  macro (the future cache bank); the asynchronous chip remains as
-  `sram-async`. Its access is 3.1× CACTI at 512 B (69 FO4 against 22.4),
-  reported, not tuned (it completes in one cycle at the realistic clocks).
-  Cycle counts with timed memories differ from the published ones, which
-  hold at tag `timing-legacy`. The owner directed realistic memory models
-  that are not tuned to favor caches. Open: the core–endpoint handshake
-  limits every certified clock and is worse with the clocked macro (next,
-  phase 6.4); the delay twin's X timing; tick-driven tests (CacheReadTest,
-  MemoryDeviceTimingTest, MemoryEndpointTimingTest) are `unit`-only. Next:
-  phase 6.4, the cache experiment, then the public site and visualizer.
+  configuration. External DRAM (SDR SDRAM for `embedded`, DDR4-3200 for
+  `desktop`) and NOR flash use datasheet intervals; the experiments' on-chip
+  SRAM (`--memory sram`) is a clocked macro (the future cache bank), with the
+  asynchronous chip kept as `sram-async`. Endpoints take requests from
+  registered state only, so every memory, the FF reference included,
+  certifies at the core's own clock (4,104 ps `embedded`, 2,858 ps
+  `desktop`). A core sweep (all cores, predictors and programs, every memory
+  the cores accept) verified 306 runs. Residuals, reported and not tuned: the
+  clocked macro is 3.1× CACTI at 512 B; DRAM end-to-end latency is +23–33 %
+  over a counted controller (one synchronizer edge per command). Cycle counts
+  differ from the published ones, which hold at tag `timing-legacy`. The owner
+  directed realistic memory models that are not tuned to favor caches.
+  Open: the STM32F7 system check (source not read), the delay twin's X timing,
+  tick-driven tests (CacheReadTest, MemoryDeviceTimingTest,
+  MemoryEndpointTimingTest) are `unit`-only. Next: phase 7 (cache banks on the
+  clocked macro, the cache experiment restated), then phase 8 (public site,
+  visualizer, full suite under `unit` and `embedded`).
   `MemoryEndpointIntegrationTest` fails two example checks built from
   `site-docs/` snippets until that site update.
 

@@ -66,8 +66,9 @@ void BehavioralMemoryEndpoint::evaluate(size_t t, Simulator& sim) {
     const auto view=[&] {
         const auto room=s.buffer.room(take);
         const auto complete=both(s.pending,bit(s.sequence.done));
-        const auto slot=fast?H:both(either(no(s.pending),both(complete,take)),bit(s.sequence.available));
-        const auto ready=both(both(no(reset),room),slot);
+        // REQ_READY comes from registered state only (MemoryTransactionPort).
+        const auto slot=fast?H:both(either(no(s.pending),complete),bit(s.sequence.available));
+        const auto ready=both(both(no(reset),no(s.buffer.full)),slot);
         const auto accept=both(ready,issue);
         return View{complete,both(complete,both(no(reset),room)),ready,accept,fast?accept:complete};
     };

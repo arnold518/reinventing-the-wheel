@@ -7,6 +7,31 @@ history remains in Git and the archived reports.
 
 ## 2026-10-17
 
+### Endpoint handshake from registered state, one DRAM edge per command, core sweep (branch `realistic-timing`, phase 6.4–6.5)
+
+- **Changed:** every memory endpoint (gate-level transaction port and FF
+  controller, compact controller, fused endpoint) takes a new request from
+  registered state only: REQ_READY = !RST & (!PENDING | COMPLETION) &
+  BACK_READY & !FULL, no longer following the same cycle's RSP_READY. A held
+  response and one request in flight can coexist. The clocked SRAM macro
+  has no logic before its registers: subarrays get CE_N and WE_N ungated and
+  their address with the select bits inverted, and the bus enables are
+  decoded after the edge (setup at 512 words 930 → 408 ps). The DRAM device
+  shows a completion as soon as its sampler sees it and takes the next
+  command at that edge (one synchronizer edge per command instead of two).
+  The analysis's handshake models (built-in FF endpoint, declared FF
+  contract, safe-clock state enumeration with DRAM refresh phases) follow.
+- **Why:** the old handshake let the core's stall logic reach the memory's
+  request inputs in one cycle (clocked SRAM certified at 5,236 ps against
+  4,104 now); DRAM was 38–52 % over a real controller's latency.
+- **Verified:** tables at a fixed point and verified in all profiles; delay
+  rule (default) 0 breaks on 53 memory parts in all profiles; CTest subset
+  (endpoint safe clock, experiment and CLI, examples, arbiter, migration,
+  memory state and feedback timing) passes; gate-level handshake-state checks
+  pass for FF, SRAM and DRAM; 66-run panel; core sweep of 306 verified runs.
+- **Limits:** DRAM still +23–33 % over a counted controller; macro 3.1×
+  CACTI; STM32F7 check not done; no full suite.
+
 ### Datasheet DRAM and NOR timing and a clocked on-chip SRAM macro (branch `realistic-timing`, phase 6.3)
 
 - **Changed (6.3a):** the timing profiles hold datasheet intervals for

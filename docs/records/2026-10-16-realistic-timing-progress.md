@@ -13,10 +13,12 @@ any plan changes the assistant made. The public site (`site-docs/`) is
 deliberately not updated until the owner allows it; records, status and the
 changelog are kept current as usual (owner clarification, 2026-10-16).
 
-Current phase: 6.4 next (phases 1–6.3 done and committed). 6.3 gave the external DRAM
-and NOR datasheet timing and a clocked on-chip SRAM macro (the cache bank to
-be); its plan check moved the core–endpoint handshake decoupling to the
-start of 6.4. Open defect for phase 8: the delay twin's X timing.
+Current phase: 7 (phases 1–6 done). Phase 6 gave datasheet DRAM and NOR
+timing, a clocked on-chip SRAM macro, endpoints that take requests from
+registered state only (one certified clock for every memory), one DRAM
+synchronizer edge per command, and a 306-run core sweep. Residuals: macro
+3.1× CACTI, DRAM +23–33 % over a counted controller. Open defect for phase
+8: the delay twin's X timing; STM32F7 check not done.
 
 ## 2026-10-16 — Phase 0: baseline
 
@@ -1450,3 +1452,326 @@ part until quiet) on every part, not only memories.
 `MemoryProtocol`, `RV32IExperiment`, `ProvenPartDelays`, the endpoint tests
 and the generated tables, and the 6.3a checks above were run on the 6.3a
 build before the 6.3b code was compiled.
+
+## 2026-10-17 — Phase 6.4a: handshake decoupling and clocked-macro setup (implemented)
+
+Two changes, made together because each needs a table regeneration:
+
+1. **REQ_READY from registered state only** (native endpoints: SRAM, ROM,
+   DRAM, NOR). Before, the transaction port's READY was
+   `!RST & (!PENDING | (COMPLETION & RSP_READY)) & BACK_READY & IN_READY`,
+   where IN_READY = !FULL | RSP_READY, so the consumer's RSP_READY reached
+   START (and, with the clocked macro, the macro's CE_N) in the same cycle.
+   Now READY = `!RST & (!PENDING | COMPLETION) & BACK_READY & !FULL`. The
+   capacity stays one transaction including a held response, so no protocol
+   scenario changes meaning; streaming is unchanged (a consumer that takes
+   each response as it completes keeps the buffer empty through the bypass);
+   after a held response a new request waits one more cycle. FINISH and the
+   buffer still use RSP_READY, which only updates registered state. Applied
+   identically to the gate-level port (`MemoryTransactionPort`), the compact
+   controller and the fused endpoint. The flip-flop endpoint keeps its
+   pass-through (an ideal test memory whose clock is the core's own, 100 /
+   4,508 ps); this difference is deliberate.
+2. **Clocked macro without logic before its registers.** Above 64 words the
+   periphery's 32-bit range check and the subarray select decode fed the
+   registered selects and a per-subarray WE_N gate before the edge (WORD_ADDR
+   setup 930 ps at 512 words, `embedded`). Now every subarray gets CE_N and
+   WE_N ungated, and subarray k sees the address with its select bits
+   inverted where k has a one (one NOT gate), so its own range check accepts
+   only its addresses; out-of-range accesses write nothing and read X in
+   every subarray, as a single bank does. The bus enables are decoded after
+   the edge from a periphery register holding the raw address (out of range
+   selects subarray 0, keeping the contract's X data with READY high). The
+   decode now runs in the access path in parallel with precharge, as a real
+   macro decodes its bank after the address register. Expected setup: the
+   registers' own plus the global wire.
+
+**Correction to item 1 above (capacity).** The statement "the capacity
+stays one transaction including a held response" is wrong. Accepting a new
+request at the completion edge without looking at RSP_READY means a
+response can stay held while one new request is in flight: the capacity is
+one held response plus one outstanding request. This is correct and keeps
+the order (a second completion waits, with DONE held, until the held
+response is taken, through the existing FINISH backpressure); keeping
+capacity one without RSP_READY would cost a bubble on every streamed access.
+Scenario changes, in the shared endpoint transaction helper: after a held
+response, REQ_READY rises one edge after it is consumed (not in the cycle
+RSP_READY rises); a request rejected by the controller (alignment, range,
+read-only, unsupported, invalid) finishes in its accepting cycle, and
+REQ_READY is high right after that edge. The flip-flop endpoint keeps the
+old expectations.
+
+**Functional checks at `unit` (old tables).** Pass: SRAMClockedTest,
+SRAMClockedSubarrayTest, SRAMSubarrayTest, SRAMContractTest,
+MemoryControllerTest, MemoryEndpointFF/SRAM/DRAM/ROM/FlashTest,
+ScalableMemoryEndpointTest, NativeMemoryDeviceContractTest,
+MemoryEndpointContractTest, MemoryEndpointTimingTest, CacheReadTest and the
+four cache scenarios.
+
+## 2026-10-17 — Phase 6.4a results; endpoint throughput analysed
+
+**Tables after 6.4a:** fixed point after round 2, `--verify` identical in all
+three profiles (649 entries). Clocked macro WORD_ADDR setup at 512 words
+930 → 408 ps (`embedded`), access unchanged (READY 1,982 ps, data 2,082 ps):
+decoding after the edge costs nothing. Endpoint REQ_READY is now a pure
+launch (262–377 ps after the edge); RSP_READY's setup (565 ps) reaches only
+the buffer registers. **Delay rule** (default, 42 memory parts: SRAM, ROM,
+DRAM, NOR devices, controllers, endpoints plus the clocked variants): 0 rule
+breaks, 0 below target, in `unit`, `embedded` and `desktop`.
+
+**CPU panel (SRAM rows; all runs verified):**
+
+| Memory | `unit` | `embedded` | `desktop` |
+| --- | --- | --- | --- |
+| `sram` (clocked) | 220 → 158; 403/274/471/356 (3 access cycles) | 5,236 → 4,104 ps; 269/166/297/228 | 3,680 → 2,858 ps; 269/166/297/228 |
+| `sram-async` | 102 → 92; 470/328/558/420 | 4,608 → 4,104 ps; 336/220/384/292 | 3,210 → 2,858 ps; 336/220/384/292 |
+
+At `embedded` and `desktop` both SRAMs now share one certified clock, and the
+clocked macro is 20 % faster in time (program 19: 1.10 µs against 1.38 µs at
+`embedded`). The flip-flop memory, whose endpoint still passed RSP_READY on,
+became the slowest-clocked (4,508 ps), so it gets the same rule (below).
+
+**CTest subset:** MemoryEndpointSafeClockTest, RV32IExperimentTest,
+MemoryArchitectureCleanupTest, RV32IAdvancedExamplesTest,
+TwoPortMemoryArbiterTest, RV32IMemoryMigrationTest pass;
+RV32IExperimentCLITest failed because it pins `--memory sram` at `unit` to
+102 ticks, a marker from before `sram` became the clocked macro (it was not
+in the 6.3b subsets). Updated to the current certified value, 158.
+
+**Endpoint throughput (6.4b question, measured).** A probe streams reads
+through an endpoint with REQ_VALID and RSP_READY held high (gate and compact
+forms agree):
+
+| Memory | accepts | request to response |
+| --- | --- | --- |
+| flip-flop | every cycle | same cycle |
+| clocked SRAM, 1 access cycle | every 2 cycles | 2 cycles |
+| ROM, 1 access cycle | every 2 cycles | 2 cycles |
+| asynchronous SRAM, 2 access cycles | every 3 cycles | 3 cycles |
+
+A static access costs `access_cycles + 1`: the controller takes the device's
+word into its RESULT register at the counted edge, and the response is used
+one edge later. Program 19 retires 66 instructions: 103 cycles with the
+flip-flop memory (CPI 1.56) and 269 with the clocked SRAM (CPI 4.1).
+Two ways to remove the extra cycle were examined and rejected:
+- *Bypass the device's word to the response at the counted edge.* The word
+  reaches the RESULT register through `ProtocolStableData`, a declared
+  multicycle exception. Bypassing would put a one-cycle path behind that
+  exception: device access (2.1 ns at `embedded`, 3× CACTI) plus the
+  endpoint's multiplexers plus the core's own requirement on RSP_READ_DATA
+  (settled 45 ticks before the edge at `unit`), against a 4.1 ns period. It
+  does not reliably fit, so the registered response is what a real
+  controller facing the same budget would also do (or add a wait state).
+- *Overlap requests in the endpoint (pipelined bus).* The core's requester is
+  one-outstanding (`RV32IMemoryRequest`), so it issues the next request only
+  as it takes the previous response; overlap would gain nothing.
+
+Decision: no change. The extra cycle is the honest data-phase budget with
+this macro's access time and a one-outstanding core, not an artifact. Phase
+7's cache hit path faces the same budget and must be judged by it (it must
+not get a bypass the direct path is denied).
+
+**Flip-flop endpoint, same handshake rule.** Its REQ_READY is now `!RST &
+!FULL` (gate-level controller, compact controller, fused endpoint), so the
+ideal reference memory no longer carries a handshake path the others do not.
+Scenario expectations: after a held response REQ_READY rises one edge after
+it is consumed, as for the native endpoints.
+
+Other memories in the same 6.4a panel (66 runs, all verified): every native
+memory now certifies at 4,104 ps (`embedded`, was 4,608), 2,858 ps
+(`desktop`, was 3,210) and 92 ticks (`unit`, was 102), except the clocked
+SRAM at `unit` (158). Cycles, programs 19/20/21/22: DRAM `embedded`
+752/551/920/682, `desktop` 754/552/922/700; ROM 269/166/297; NOR `embedded`
+2,413/1,894/3,081 (was 2,212/1,732/2,820: the fixed 120 ns read spans more of
+the shorter cycles), `desktop` 3,284/2,596/4,212. FF unchanged at 4,508 /
+3,140 ps (before its handshake change).
+
+## 2026-10-17 — Phase 6.4b: end-to-end latency against datasheets
+
+Probe: one read at a time through the compact endpoint (cycle-exact with the
+gates), refresh off, `access_cycles` chosen as the experiment does, DRAM rows
+from the profile; latency = accepting edge to the edge the response is
+taken, at the 6.4a certified clocks.
+
+| Memory | `embedded` (4,104 ps) | expectation from the datasheet | `desktop` (2,858 ps) | expectation |
+| --- | --- | --- | --- | --- |
+| clocked SRAM | 2 cycles (8.2 ns) | 1 access cycle + registered response | — | — |
+| asynchronous SRAM | 3 cycles | `access_cycles` + 1 | — | — |
+| ROM | 2 cycles | `access_cycles` + 1 | — | — |
+| NOR read | 34 (139.5 ns) | tACC 120 ns ≈ 30 + 1 → 31 (+10 %) | 47 (134 ns) | 43 + 1 → 44 (+7 %) |
+| DRAM row hit | 9 (36.9 ns) | CL ≈ 5 + issue and response ≈ 6.5 (+38 %) | 9 (25.7 ns) | ≈ 6.5 (+38 %) |
+| DRAM, row closed | 16 (65.7 ns) | tRCD + CL ≈ 10 + 1.5 ≈ 11 (+45 %) | 17 (48.6 ns) | ≈ 11.5 (+48 %) |
+| DRAM row miss | 23 (94.4 ns) | tRP + tRCD + CL ≈ 14 + 1.5 ≈ 16 (+44 %) | 25 (71.5 ns) | ≈ 16.5 (+52 %) |
+
+NOR is within the ±25 % tolerance. DRAM is 38–52 % over what a real
+controller spends: about two edges per command beyond the counted
+interval, from the BUSY completion handshake (the device's interval ends
+mid-cycle, the controller samples BUSY low at an edge, releases, then issues
+the next command). Real SDRAM has no BUSY; its controller counts tRCD, CL and
+tRP in cycles. Overstating DRAM latency would make caches look better, so by
+the owner rule it is fixed before phase 7.
+
+**Decision (6.4c): counted DRAM command timing.** The DRAM controller waits a
+counted number of cycles per command, ceil(proven interval / period), taken
+from the device's proven tables exactly as `staticAccessCycles` does for
+SRAM/ROM; the gate-level DRAM device stays self-timed and its completion is
+still checked at the counted edge (a command found not complete ends with
+status Device, as for SRAM's READY). NOR keeps BUSY: real NOR flash reports
+program and erase completion by status polling or RY/BY#, and its read is
+within tolerance.
+
+## 2026-10-17 — Phase 6.4c: one synchronizer edge per DRAM command (implemented)
+
+Where the DRAM edges went (gate-level device, `DRAMCommandControl`): the
+chain's end is sampled at edge e1 (`DONE_SAMPLER`), the command completes at
+e2 (open row, READ_VALID, a releasing cycle), BUSY shows low only after e2,
+and the next command is taken at e3. A real SDRAM takes its next command at
+the first edge after the interval. A fully counted controller would need the
+device to use its chain end at the edge without a sampler (a multicycle path
+the analysis and the 6.1–6.2 FRESH/REPEAT logic were not built for), so the
+revised decision keeps one sampling flip-flop, the synchronizer a
+self-timed completion needs (owner decision 2A), and removes the second
+edge: a completion seen by the sampler is shown at once (BUSY low,
+READ_VALID and the output enable for a read, the new open state) and the
+next command is taken at the completing edge e2. RELEASING is set only when
+no command follows. Legality uses the shown open state. The analog wordline,
+sense and precharge controls keep the registered open bit: on a completing
+ACTIVATE followed at once by a new command, the open bit rises a register
+delay after e2 while the ACTIVATE run term falls two gate levels later, so
+the wordline never drops. Gate form and compact `DRAMSyncControl` changed
+identically. NOR keeps its two edges (its read is within tolerance and real
+NOR reports program and erase completion).
+
+Checks at `unit` (old tables): DRAMCommandControlTest, DRAMTest,
+MemoryDeviceContractTest, MemoryDeviceTimingTest, NativeMemoryDeviceTest,
+MemoryEndpointDRAMTest, NativeMemoryDeviceContractTest,
+MemoryEndpointContractTest, ScalableMemoryEndpointTest pass (no scenario
+expectation needed a change).
+
+Latency probe after the change:
+
+| DRAM read | `embedded` before → after | vs expectation | `desktop` before → after | vs expectation |
+| --- | --- | --- | --- | --- |
+| row hit | 9 → 8 cycles (32.8 ns) | +23 % | 9 → 8 (22.9 ns) | +23 % |
+| row closed | 16 → 14 (57.5 ns) | +27 % | 17 → 15 (42.9 ns) | +30 % |
+| row miss | 23 → 20 (82.1 ns) | +25 % | 25 → 22 (62.9 ns) | +33 % |
+
+The remaining cost over a counted real controller is one synchronizer edge
+per command plus the registered response, reported as the model's residual
+(at or slightly over the ±25 % tolerance; the desktop row miss is +33 %).
+
+## 2026-10-17 — Phase 6.4: tables, checks and the analysis's handshake models
+
+After 6.4c and the flip-flop handshake change: tables at a fixed point after
+round 2, `--verify` identical in all three profiles (649 entries).
+DelayRuleTest (default) on all five technologies' devices, controllers and
+endpoints plus the clocked variants (53 parts): 0 rule breaks, 0 below
+target, in `unit`, `embedded` and `desktop`.
+
+The CTest subset then found that the analysis still held three copies of the
+old handshake rule (REQ_READY following RSP_READY):
+- `MemoryEndpointSafeClockTest` failed ("FF endpoint oracle mismatch:
+  REQ_READY"): the test's independent flip-flop endpoint oracle, its list of
+  combinational dependencies (RSP_READY → REQ_READY), the fused flip-flop
+  endpoint's declared one-tick contract (`TimingCircuit.cpp`) and the
+  analyzer's built-in flip-flop endpoint model (`TimingGraph.cpp`,
+  `TimingEngine.cpp`: REQ_READY followed RSP_READY in the holding state) all
+  still had the arc. All four now say REQ_READY = !FULL; an input with no
+  combinational path (RSP_READY, like REQ_WRITE_DATA) needs a shorter probe
+  period (10, was 12). The test passes: 2,304 state/request cases, all 8
+  arcs witnessed. Its failure message now names the period found and the
+  limiting constraint.
+- `RV32IExperimentCLITest` failed with "EXPERIMENT.IMEM is in a handshake
+  state the clock analysis did not cover" on the gate-level DRAM run. The
+  safe-clock analysis enumerates the endpoint's handshake states
+  (`MemoryTimingState.cpp`, `sequencedStates`); its copy of READY was
+  updated, but a richer diagnostic (now in the failure message: the
+  endpoint's REQ_READY, RSP_VALID, RSP_READY, the requester's register values
+  and the model cases with that handshake) showed a deeper gap: the model's
+  sequencer had three states (idle, working, done), while a DRAM sequencer
+  can show a result while a refresh is due (BACK_READY = !ACTIVE &
+  !REFRESH_PENDING) or already running. With the capacity-two handshake and
+  6.4c's timing this became reachable (the requester was draining an
+  abandoned fetch). The model now keeps DONE and the phase apart (idle,
+  working, blocked by a due refresh; DRAM only), with the real sequencer's
+  transitions. The gate-level checks pass: every cycle's state covered for
+  DRAM (1,144 checks), FF (170) and SRAM (668), all verified with 0 setup
+  violations.
+
+Because the analysis's state model feeds the safe-clock certification, the
+6.4c panel that had started with the old model was stopped and is rerun.
+
+**Further CTest finding.** RV32IExperimentCLITest expected `--safe-clock
+--fidelity behavioral` to be refused. It was refused because the compact
+core's table and the flip-flop endpoint's RSP_READY → REQ_READY arc formed a
+combinational loop, on which the analysis fails closed. With the arc gone the
+compact core certifies at 94 ticks, the same period as the gate-level core
+with the same memory; the test now requires exactly that agreement.
+
+**CPU panel after all of 6.4** (66 runs, all verified):
+
+| Memory | `unit` clock | `embedded` | `desktop` | program 19 cycles (`unit` / `embedded` / `desktop`) |
+| --- | --- | --- | --- | --- |
+| FF | 94 | 4,104 ps | 2,858 ps | 103 / 103 / 103 |
+| SRAM (clocked) | 158 | 4,104 | 2,858 | 403 / 269 / 269 |
+| SRAM (asynchronous) | 92 | 4,104 | 2,858 | 470 / 336 / 336 |
+| DRAM | 92 | 4,104 | 2,858 | 654 / 683 / 685 |
+| ROM | 92 | 4,104 | 2,858 | 336 / 269 / 269 |
+| NOR | 92 | 4,104 | 2,858 | 537 / 2,413 / 3,284 |
+
+Every memory, the flip-flop reference included, now certifies at one clock
+per realistic profile (the core's own limit): the handshake no longer costs
+any memory a longer period. DRAM program 19 at `embedded`: 752 → 683 cycles
+(one edge per command, 6.4c).
+
+## 2026-10-17 — Phase 6.5: core sweep
+
+Script: certify the safe clock per core × memory (program 20), then run
+every program at that clock, oracle-verified. The single-cycle and baseline
+cores accept only zero-wait FF endpoints ("Single-cycle and baseline require
+zero-wait FF endpoints", by design), so they run with FF; the advanced core
+runs with every memory (two-bit predictor), and with the four other
+predictors on the default `sram`. Programs 1–8 and 22 store data; ROM and NOR
+flash are read-only, so those runs end in an oracle mismatch at the first
+store (checked: program 7's mismatch is at PC 16, `sw x3, 0(x1)`) and are not
+counted as failures.
+
+**`embedded`, programs 1–22:** 246 runs verified, 0 failures apart from the 16
+store-on-read-only runs. Certified clocks: single-cycle FF 7,164 ps,
+baseline FF 3,354 ps, advanced 4,104 ps with every memory. **`desktop` and
+`unit`, programs 19–22:** every run verified (30 each); clocks single 4,986 /
+166, baseline 2,334 / 80, advanced 2,858 / 94 (FF), 158 (clocked SRAM, limited
+at `unit` by DMEM REQ_VALID through the macro's setup) and 92 (other memories).
+
+Advanced core, two-bit, `embedded`, cycles per program:
+
+| Program | FF | SRAM | SRAM async | DRAM | ROM | NOR |
+| --- | --- | --- | --- | --- | --- | --- |
+| 1 | 43 | 114 | 146 | 315 | — | — |
+| 7 | 71 | 212 | 276 | 600 | — | — |
+| 9 | 6 | 10 | 12 | 28 | 10 | 74 |
+| 17 | 77 | 223 | 296 | 667 | 223 | 2,559 |
+| 19 | 103 | 269 | 336 | 683 | 269 | 2,413 |
+| 21 | 110 | 297 | 384 | 831 | 297 | 3,081 |
+| 22 | 79 | 228 | 292 | 616 | — | — |
+
+(Full table in the sweep log; every program has the order FF < SRAM ≤ ROM <
+SRAM async < DRAM < NOR.)
+
+## 2026-10-17 — Phase 6 acceptance
+
+| Criterion (plan) | Result |
+| --- | --- |
+| Each technology's times within a stated tolerance of its source | NOR read +7–10 % (±25 % met); DRAM end-to-end +23–33 % over a counted real controller (met at `embedded` within rounding, desktop row miss +33 % not met); clocked SRAM 3.1× CACTI at 512 B (±20 % not met). Both residuals are explained (one synchronizer edge per DRAM command under decision 2A; gate-built registers, access token and serial precharge in the macro) and accepted by the plan checks as reported, not tuned |
+| Order SRAM < DRAM ≤ NOR read | Met: 8.2 / 32.8–82 / 139.5 ns at `embedded` |
+| End-to-end latency against real systems | Done against datasheets (6.4b, 6.4c). The STM32F7 system check was not done: no authoritative table was read (searches found only generic FMC facts); recorded as open, not claimed |
+| Protocol cycles a real controller would not spend | Reviewed: DRAM release edge removed (6.4c); static controller synchronizer removed (6.1–6.2); same-cycle RSP_READY in REQ_READY removed (6.4a); registered response kept (justified, 6.4b); L1 hit latency is phase 7 |
+| CPU runs | 66-run panel and 306-run core sweep, all verified |
+
+Phase 6 is accepted with the residuals above.
+
+**Final check before the 6.4–6.5 commit:** full DelayRuleTest (CTest
+configuration, every part): passed, 146 parts, 155,777 situations, 0 rule
+breaks; the gate and compact cores agree cycle for cycle (advanced program
+20 with SRAM 400 / 400), and the compact advanced core's clock equals the
+gates'. Runtime 995 s.

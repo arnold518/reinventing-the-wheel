@@ -88,9 +88,12 @@ void devicePins(IOComponent *s, size_t width, bool control = false) {
 // BUSY, ERROR, READ_VALID and ROW_OPEN are state bits. The analog steps of a
 // command run on delay-line chains started by the accepted command; the end
 // of a chain is sampled back into the clock by a one-stage resolving
-// sampler. Completion updates ROW_OPEN, READ_VALID and the refresh row on
-// that edge and releases BUSY one edge later, so wordline and sense never
-// drop between a finishing ACTIVATE and the open row taking over.
+// sampler. A completion is shown at once (BUSY low, READ_VALID, the new open
+// state) and takes effect at the next edge, which may already take the next
+// command, as a real SDRAM takes its next command when the interval is over.
+// Wordline and sense never drop between a finishing ACTIVATE and the open
+// row taking over: the open bit rises a register delay after that edge, the
+// finishing command's run signal falls through two more gate levels.
 class DRAMCommandControl : public IOComponent {
   public:
     DRAMCommandControl(std::string n, size_t width, DRAMDeviceConfig c)
@@ -154,19 +157,29 @@ void DRAMCommandControl::buildInternals(ComponentBuilder &b) {
     auto c_act = state("COMMAND_ACTIVATE"), c_rd = state("COMMAND_READ"), c_wr = state("COMMAND_WRITE"),
          c_pre = state("COMMAND_PRECHARGE"), c_ref = state("COMMAND_REFRESH");
     const auto B = busy->getOutputPin("Q"), OPEN = open->getOutputPin("Q");
+    const auto R = releasing->getOutputPin("Q");
+    // The end of the running chain, sampled at each edge (its input is wired
+    // below). The sample taken at the edge that accepts a command still
+    // shows the previous chain's end: FRESH masks it for one cycle.
+    auto sampler = b.addNewComponent<memory::Synchronizer>("DONE_SAMPLER", 1);
+    auto complete = w.reduce("COMPLETE", {B, sampler->getOutputPin("Q"), w.invert("NOT_RELEASING", R),
+                                          w.invert("NOT_FRESH", fresh->getOutputPin("Q"))}, true);
+    // The open state as shown: a finishing ACTIVATE opens, a finishing
+    // PRECHARGE closes, already in the completing cycle.
+    auto shown_open = w.either("OPEN_SHOWN", w.both("OPEN_STAYS", OPEN, w.invert("NOT_CLOSED_NOW", w.both("CLOSED_NOW", complete, c_pre->getOutputPin("Q")))),
+                               w.both("OPENED_NOW", complete, c_act->getOutputPin("Q")));
     const auto addr_known = known_addr->getOutputPin("KNOWN");
     auto legal = w.reduce("LEGAL_COMMAND", {
-        w.reduce("LEGAL_ACTIVATE", {is_act, addr_known, w.invert("CLOSED", OPEN), row_ok}, true),
-        w.reduce("LEGAL_READ", {is_rd, addr_known, OPEN, col_ok}, true),
-        w.reduce("LEGAL_WRITE", {is_wr, addr_known, known_mask->getOutputPin("KNOWN"), OPEN, col_ok}, true),
-        w.both("LEGAL_PRECHARGE", is_pre, OPEN),
-        w.both("LEGAL_REFRESH", is_ref, w.invert("CLOSED_FOR_REFRESH", OPEN))}, false);
+        w.reduce("LEGAL_ACTIVATE", {is_act, addr_known, w.invert("CLOSED", shown_open), row_ok}, true),
+        w.reduce("LEGAL_READ", {is_rd, addr_known, shown_open, col_ok}, true),
+        w.reduce("LEGAL_WRITE", {is_wr, addr_known, known_mask->getOutputPin("KNOWN"), shown_open, col_ok}, true),
+        w.both("LEGAL_PRECHARGE", is_pre, shown_open),
+        w.both("LEGAL_REFRESH", is_ref, w.invert("CLOSED_FOR_REFRESH", shown_open))}, false);
     const auto cmd_known = known_cmd->getOutputPin("KNOWN");
     auto issued = w.both("ISSUED", cmd_known, w.invert("NOT_NOP", is_nop));
-    // A new command is taken while idle or in the releasing cycle of the
-    // last one, whose effects (open row, read data) are already in place.
-    const auto R = releasing->getOutputPin("Q");
-    auto idle = w.either("IDLE", w.invert("NOT_BUSY", B), R);
+    // A new command is taken while idle, in the completing cycle of the last
+    // one, or in a releasing cycle (a completion no command followed).
+    auto idle = w.reduce("IDLE", {w.invert("NOT_BUSY", B), R, complete}, false);
     auto accept = w.reduce("ACCEPT", {issued, legal, idle}, true);
     auto unknown = w.invert("UNKNOWN_COMMAND", cmd_known);
     auto refused = w.both("REFUSED", issued, w.either("BUSY_OR_ILLEGAL", w.invert("NOT_IDLE", idle), w.invert("ILLEGAL", legal)));
@@ -225,14 +238,9 @@ void DRAMCommandControl::buildInternals(ComponentBuilder &b) {
     // The close and precharge steps of REFRESH (after the optional restore).
     const size_t refresh_close = f.size() - 3, refresh_precharge = f.size() - 2;
     auto done_async = w.reduce("CHAIN_DONE", {a.back(), r.back(), wv.back(), p.back(), f.back()}, false);
-    auto sampler = b.addNewComponent<memory::Synchronizer>("DONE_SAMPLER", 1);
     w.connect(getInputPin("CLK"), sampler->getInputPin("CLK"));
     w.connect(reset, sampler->getInputPin("RST"));
     w.connect(done_async, sampler->getInputPin("D"));
-    // The sample taken at the edge that accepts a command still shows the
-    // previous chain's end: FRESH masks it for one cycle.
-    auto complete = w.reduce("COMPLETE", {B, sampler->getOutputPin("Q"), w.invert("NOT_RELEASING", R),
-                                          w.invert("NOT_FRESH", fresh->getOutputPin("Q"))}, true);
     w.connect(accept, fresh->getInputPin("D"));
     auto keep = [&](const std::shared_ptr<IOComponent> &bit, PinPtr set, PinPtr clear, const std::string &name) {
         w.connect(w.either("NEXT_" + name, set, w.both("HOLD_" + name, bit->getOutputPin("Q"), w.invert("NO_CLEAR_" + name, clear))),
@@ -243,7 +251,7 @@ void DRAMCommandControl::buildInternals(ComponentBuilder &b) {
                      w.either("VALID_SOURCE", valid->getOutputPin("Q"), w.both("READ_DONE", complete, c_rd->getOutputPin("Q")))),
               valid->getInputPin("D"));
     keep(busy, accept, R, "BUSY");
-    keep(releasing, complete, R, "RELEASING");
+    keep(releasing, w.both("RELEASE", complete, w.invert("NOTHING_TAKEN", accept)), R, "RELEASING");
     for (auto [bit, decoded, name] : std::vector<std::tuple<std::shared_ptr<IOComponent>, PinPtr, std::string>>{
              {c_act, is_act, "C_ACTIVATE"}, {c_rd, is_rd, "C_READ"}, {c_wr, is_wr, "C_WRITE"}, {c_pre, is_pre, "C_PRECHARGE"}, {c_ref, is_ref, "C_REFRESH"}})
         w.connect(w.either("NEXT_" + name, w.both("LOAD_" + name, accept, decoded),
@@ -308,10 +316,11 @@ void DRAMCommandControl::buildInternals(ComponentBuilder &b) {
                                                 w.invert("NOT_REFRESH_SENSING", w.both("REFRESH_BEFORE_PRECHARGE", r_ref, w.invert("BEFORE_PRECHARGE", f[refresh_precharge])))}, true);
     w.connect(w.either("PRECHARGING", closed_idle, w.both("PRECHARGE_STEP", r_pre, p[1])), getOutputPin("PRECHARGE"));
     w.connect(w.both("WRITE_PULSE", w.both("WRITE_ON", r_wr, wv[0]), w.invert("WRITE_OFF", wv[1])), getOutputPin("WRITE_ENABLE"));
-    w.connect(w.both("BUSY_SHOWN", B, w.invert("NOT_RELEASING_SHOWN", R)), getOutputPin("BUSY"));
+    w.connect(w.reduce("BUSY_SHOWN", {B, w.invert("NOT_RELEASING_SHOWN", R), w.invert("NOT_COMPLETE_SHOWN", complete)}, true), getOutputPin("BUSY"));
     w.connect(error->getOutputPin("Q"), getOutputPin("ERROR"));
-    w.connect(valid->getOutputPin("Q"), {getOutputPin("READ_VALID"), getOutputPin("OUTPUT_ENABLE")});
-    w.connect(OPEN, getOutputPin("ROW_OPEN"));
+    w.connect(w.either("VALID_SHOWN", valid->getOutputPin("Q"), w.both("READ_COMPLETE_SHOWN", complete, c_rd->getOutputPin("Q"))),
+              {getOutputPin("READ_VALID"), getOutputPin("OUTPUT_ENABLE")});
+    w.connect(shown_open, getOutputPin("ROW_OPEN"));
     w.connect(row->getOutputPin<32>("Q"), getOutputPin<32>("ROW_ADDR"));
     w.connect(col->getOutputPin<32>("Q"), getOutputPin<32>("COLUMN_ADDR"));
     w.connect(data->getOutputPinDynamic("Q"), getOutputPinDynamic("DATA"));
@@ -506,10 +515,10 @@ class DRAMBehavioral : public Primitive, public MemoryDeviceStorage {
         if (const auto next = control_.nextStep(t); next > t) wake(sim, next);
         publish(sim, t, "BUSY", control_.busyShown() ? H : L);
         publish(sim, t, "ERROR", control_.error ? H : L);
-        publish(sim, t, "READ_VALID", control_.valid ? H : L);
-        publish(sim, t, "ROW_OPEN", control_.open ? H : L);
+        publish(sim, t, "READ_VALID", control_.validShown() ? H : L);
+        publish(sim, t, "ROW_OPEN", control_.openShown() ? H : L);
         publish(sim, t, "READ_DATA",
-                control_.valid
+                control_.validShown()
                     ? Bits(buffer_.begin() + control_.column * width_, buffer_.begin() + (control_.column + 1) * width_)
                     : Bits(width_, Z));
     }

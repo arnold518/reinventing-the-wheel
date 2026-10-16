@@ -85,9 +85,10 @@ void Engine::refineGate(int n, const Node& x, bool values) {
 }
 
 // The compact FF endpoint. Empty: REQ_READY is 1 and the response follows
-// the request combinationally. Holding a response: RSP_VALID is 1, the saved
-// response is published one delay after the edge, and only REQ_READY follows
-// RSP_READY. Without a mode, every arc of either mode is kept.
+// the request combinationally. Holding a response: RSP_VALID is 1, REQ_READY
+// is 0 (it depends on registered state only) and the saved response is
+// published one delay after the edge. Without a mode, every arc of either
+// mode is kept.
 void Engine::refinePart(int n, const Node& x, bool values) {
     const Part& part = graph_.parts[x.owner];
     const uint8_t mode = case_ && static_cast<size_t>(x.owner) < case_->part_mode.size()
@@ -136,8 +137,8 @@ void Engine::refinePart(int n, const Node& x, bool values) {
     switch (x.output) {
     case Ready:
         if (mode == Empty) { apply(n, values ? HIGH : ANY, launch, launch, -1); break; }
+        if (mode == Full) { apply(n, values ? LOW : ANY, launch, launch, -1); break; }
         arcs({{part.rsp_ready, 1, part.ready_from_ready}});
-        if (mode == Full && values && part.ready_from_ready != NEVER) follows(part.rsp_ready, part.ready_from_ready);
         break;
     case Valid:
         if (mode == Full) { apply(n, values ? HIGH : ANY, launch, launch, -1); break; }

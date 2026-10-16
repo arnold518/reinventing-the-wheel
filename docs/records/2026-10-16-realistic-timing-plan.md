@@ -571,3 +571,57 @@ change the plan:
 The phases otherwise stand: 6.4 (handshake decoupling, then end-to-end
 latency against datasheets and STM32F7), phase 7 (cache on the clocked macro),
 phase 8 (documentation, follow-ups, full suite).
+
+## 2026-10-17 — CPU coverage and test timing (assistant decisions, after an owner question)
+
+The owner asked whether all CPU core experiments run on the new models and
+whether test timings need to change. Facts: each phase so far was checked
+with one CPU configuration (advanced core, two-bit predictor, programs
+19–22, every memory, all three profiles, oracle-verified); the single-cycle
+and baseline cores, the other predictors and the other benchmark programs
+have not been rerun. The test suite runs under `unit` (the code default,
+1-tick gates), so its scenario expectations stay valid; tests with fixed tick
+periods or deadlines (CacheReadTest, MemoryDeviceTimingTest,
+MemoryEndpointTimingTest and possibly others) fail under realistic profiles.
+The plan text says `embedded` is the default and "full tests run on the
+default profile", which does not match the code.
+
+Decisions:
+1. **New step 6.5 (end of phase 6): core sweep.** Every core (single-cycle,
+   baseline pipeline, advanced) × predictor × benchmark program, with every
+   memory, under `embedded` at the certified clocks, oracle-verified; a
+   smaller `desktop` and `unit` sample. Purpose: find breakage now rather than
+   in phase 8. Phase 8 keeps the rerun and restatement of published results.
+2. **Phase 8 test timing:** audit every test for fixed tick periods and
+   deadlines and derive them from the active profile (its certified clock or
+   multiples of proven delays); then the full native suite runs under both
+   `unit` and `embedded`.
+3. **Default profile, corrected:** tests and the code default stay `unit`
+   (fast regression for logic timing); experiments and the published site
+   use `embedded`. This replaces "full tests run on the default profile".
+
+## 2026-10-17 — Plan check after phase 6 (assistant decisions)
+
+Phase 6 ended accepted with stated residuals (progress log, "Phase 6
+acceptance"). What it changes for phase 7:
+1. **The comparison baseline is now fair.** Every memory, the FF reference
+   included, certifies at one clock per realistic profile (4,104 ps
+   `embedded`, 2,858 ps `desktop`), set by the core itself. Cache results
+   can be compared in cycles and in time without one memory paying a
+   handshake penalty the others do not.
+2. **Same rules for the cache path.** The direct path keeps a registered
+   response (6.4b) and one DRAM synchronizer edge per command (6.4c). The
+   cache's core-facing interface must obey the same budget: no response
+   bypass the direct path is denied, REQ_READY from registered state only,
+   and banks on the clocked macro. A cache hit latency of 1–2 cycles must
+   come out of that structure, not be assumed.
+3. **DRAM residual stays visible.** DRAM latency is +23–33 % over a counted
+   controller. The cache experiment will state the DRAM row-hit and row-miss
+   latency it ran with, so a reader can judge the miss penalty. Converting
+   the DRAM controller to counted timing remains an option if phase 7's
+   results turn out sensitive to it (to be measured there, not assumed).
+4. **Open:** STM32F7 system check (source table still unread), the delay
+   twin's X timing, tick-driven tests under realistic profiles (phase 8).
+
+Phase 7 proceeds as planned: cache banks on the clocked macro, then the
+experiment restated with calibrated timing.
