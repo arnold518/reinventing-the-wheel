@@ -150,7 +150,7 @@ void DRAMCommandControl::buildInternals(ComponentBuilder &b) {
     auto row_ok = memory_detail::addressBelow(w, address_bits, config_.rows(), "ROW_RANGE");
     auto col_ok = memory_detail::addressBelow(w, address_bits, config_.words_per_row, "COLUMN_RANGE");
     auto busy = state("BUSY"), error = state("ERROR"), valid = state("READ_VALID"), open = state("ROW_OPEN"),
-         releasing = state("RELEASING");
+         releasing = state("RELEASING"), fresh = state("FRESH"), repeat = state("REPEAT");
     auto c_act = state("COMMAND_ACTIVATE"), c_rd = state("COMMAND_READ"), c_wr = state("COMMAND_WRITE"),
          c_pre = state("COMMAND_PRECHARGE"), c_ref = state("COMMAND_REFRESH");
     const auto B = busy->getOutputPin("Q"), OPEN = open->getOutputPin("Q");
@@ -163,17 +163,27 @@ void DRAMCommandControl::buildInternals(ComponentBuilder &b) {
         w.both("LEGAL_REFRESH", is_ref, w.invert("CLOSED_FOR_REFRESH", OPEN))}, false);
     const auto cmd_known = known_cmd->getOutputPin("KNOWN");
     auto issued = w.both("ISSUED", cmd_known, w.invert("NOT_NOP", is_nop));
-    auto idle = w.invert("IDLE", B);
+    // A new command is taken while idle or in the releasing cycle of the
+    // last one, whose effects (open row, read data) are already in place.
+    const auto R = releasing->getOutputPin("Q");
+    auto idle = w.either("IDLE", w.invert("NOT_BUSY", B), R);
     auto accept = w.reduce("ACCEPT", {issued, legal, idle}, true);
     auto unknown = w.invert("UNKNOWN_COMMAND", cmd_known);
-    auto refused = w.both("REFUSED", issued, w.either("BUSY_OR_ILLEGAL", B, w.invert("ILLEGAL", legal)));
+    auto refused = w.both("REFUSED", issued, w.either("BUSY_OR_ILLEGAL", w.invert("NOT_IDLE", idle), w.invert("ILLEGAL", legal)));
     auto error_event = w.either("ERROR_EVENT", unknown, refused);
     // A refusal while idle, or an unknown command while idle, withdraws the read.
     auto clear_valid = w.reduce("CLEAR_VALID", {accept, w.both("UNKNOWN_IDLE", unknown, idle),
                                                 w.both("ILLEGAL_IDLE", w.both("ISSUED_IDLE", issued, idle), w.invert("NOT_LEGAL", legal))}, false);
     // Run signals and the analog step chains, one per command.
+    // The same command taken again in the releasing cycle: its run signal
+    // drops for one cycle (REPEAT) so its step chain starts over.
+    w.connect(w.reduce("NEXT_REPEAT", {accept, B, w.reduce("SAME_COMMAND", {
+        w.both("SAME_ACTIVATE", c_act->getOutputPin("Q"), is_act), w.both("SAME_READ", c_rd->getOutputPin("Q"), is_rd),
+        w.both("SAME_WRITE", c_wr->getOutputPin("Q"), is_wr), w.both("SAME_PRECHARGE", c_pre->getOutputPin("Q"), is_pre),
+        w.both("SAME_REFRESH", c_ref->getOutputPin("Q"), is_ref)}, false)}, true), repeat->getInputPin("D"));
+    const auto restarting = w.invert("NOT_REPEAT", repeat->getOutputPin("Q"));
     auto run = [&](const std::shared_ptr<IOComponent> &command, const std::string &name) {
-        return w.both("RUN_" + name, command->getOutputPin("Q"), B);
+        return w.reduce("RUN_" + name, {command->getOutputPin("Q"), B, restarting}, true);
     };
     auto r_act = run(c_act, "ACTIVATE"), r_rd = run(c_rd, "READ"), r_wr = run(c_wr, "WRITE"),
          r_pre = run(c_pre, "PRECHARGE"), r_ref = run(c_ref, "REFRESH");
@@ -213,8 +223,11 @@ void DRAMCommandControl::buildInternals(ComponentBuilder &b) {
     w.connect(getInputPin("CLK"), sampler->getInputPin("CLK"));
     w.connect(reset, sampler->getInputPin("RST"));
     w.connect(done_async, sampler->getInputPin("D"));
-    const auto R = releasing->getOutputPin("Q");
-    auto complete = w.reduce("COMPLETE", {B, sampler->getOutputPin("Q"), w.invert("NOT_RELEASING", R)}, true);
+    // The sample taken at the edge that accepts a command still shows the
+    // previous chain's end: FRESH masks it for one cycle.
+    auto complete = w.reduce("COMPLETE", {B, sampler->getOutputPin("Q"), w.invert("NOT_RELEASING", R),
+                                          w.invert("NOT_FRESH", fresh->getOutputPin("Q"))}, true);
+    w.connect(accept, fresh->getInputPin("D"));
     auto keep = [&](const std::shared_ptr<IOComponent> &bit, PinPtr set, PinPtr clear, const std::string &name) {
         w.connect(w.either("NEXT_" + name, set, w.both("HOLD_" + name, bit->getOutputPin("Q"), w.invert("NO_CLEAR_" + name, clear))),
                   bit->getInputPin("D"));
@@ -289,7 +302,7 @@ void DRAMCommandControl::buildInternals(ComponentBuilder &b) {
                                                 w.invert("NOT_REFRESH_SENSING", w.both("REFRESH_BEFORE_PRECHARGE", r_ref, w.invert("BEFORE_PRECHARGE", f[3])))}, true);
     w.connect(w.either("PRECHARGING", closed_idle, w.both("PRECHARGE_STEP", r_pre, p[1])), getOutputPin("PRECHARGE"));
     w.connect(w.both("WRITE_PULSE", w.both("WRITE_ON", r_wr, wv[0]), w.invert("WRITE_OFF", wv[1])), getOutputPin("WRITE_ENABLE"));
-    w.connect(B, getOutputPin("BUSY"));
+    w.connect(w.both("BUSY_SHOWN", B, w.invert("NOT_RELEASING_SHOWN", R)), getOutputPin("BUSY"));
     w.connect(error->getOutputPin("Q"), getOutputPin("ERROR"));
     w.connect(valid->getOutputPin("Q"), {getOutputPin("READ_VALID"), getOutputPin("OUTPUT_ENABLE")});
     w.connect(OPEN, getOutputPin("ROW_OPEN"));
@@ -485,7 +498,7 @@ class DRAMBehavioral : public Primitive, public MemoryDeviceStorage {
         if (precharge) std::fill(buffer_.begin(), buffer_.end(), X);
         wl_ = wl; sense_ = sense; write_ = write;
         if (const auto next = control_.nextStep(t); next > t) wake(sim, next);
-        publish(sim, t, "BUSY", control_.busy ? H : L);
+        publish(sim, t, "BUSY", control_.busyShown() ? H : L);
         publish(sim, t, "ERROR", control_.error ? H : L);
         publish(sim, t, "READ_VALID", control_.valid ? H : L);
         publish(sim, t, "ROW_OPEN", control_.open ? H : L);

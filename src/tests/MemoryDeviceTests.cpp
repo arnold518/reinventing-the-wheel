@@ -41,6 +41,27 @@ struct Scenario {
         expected["BUSY"] = logicBit(L);
         step(label, {{"CLK", logicBit(L)}}, std::move(expected));
     }
+    // Two commands back to back: the second is shown in the first one's
+    // releasing cycle (BUSY low again), which the device takes at once; a
+    // repeated command restarts its step chain.
+    void cmdPair(std::string label, unsigned op1, unsigned addr1, unsigned op2, unsigned addr2, NamedValues expected = {}) {
+        const auto address = spec.contract_id.find("dram") != std::string::npos ? "ADDR" : "WORD_ADDR";
+        step(label + "-first-setup", {{"CLK", logicBit(L)}, {"CMD", logicBits(3, op1)}, {address, logicBits(32, addr1)}}, {});
+        step(label + "-first-taken", {{"CLK", logicBit(H)}}, {});
+        step(label + "-first-removed", {{"CLK", logicBit(L)}, {"CMD", logicBits(3, 0)}}, {});
+        step(label + "-sampled", {{"CLK", logicBit(H)}}, {});
+        step(label + "-sampled-low", {{"CLK", logicBit(L)}}, {});
+        step(label + "-releasing", {{"CLK", logicBit(H)}}, {{"BUSY", logicBit(L)}});
+        step(label + "-second-setup", {{"CLK", logicBit(L)}, {"CMD", logicBits(3, op2)}, {address, logicBits(32, addr2)}}, {});
+        step(label + "-second-taken", {{"CLK", logicBit(H)}}, {{"BUSY", logicBit(H)}, {"ERROR", logicBit(L)}});
+        step(label + "-second-removed", {{"CLK", logicBit(L)}, {"CMD", logicBits(3, 0)}}, {});
+        for (int edge = 1; edge <= 3; ++edge) {
+            step(label + "-clock-" + std::to_string(edge), {{"CLK", logicBit(H)}}, {});
+            if (edge < 3) step(label + "-clock-" + std::to_string(edge) + "-low", {{"CLK", logicBit(L)}}, {});
+        }
+        expected["BUSY"] = logicBit(L);
+        step(label, {{"CLK", logicBit(L)}}, std::move(expected));
+    }
     void rejectUnknownCommand(size_t width, bool control) {
         step("unknown-command-setup", {{"CLK", logicBit(L)}, {"CMD", LogicVector(3, X)}},
              {{"READ_VALID", logicBit(H)}});
@@ -271,6 +292,8 @@ ComponentTestSpec dramDevice(size_t width = 8, size_t depth = 4, size_t k = 2, b
           {{"WRITE_MASK", logicBits(width / 8, 1)}, {"WRITE_DATA", logicBits(width, 0x5a)}});
     s.cmd("read-masked-word", 2, 0,
           control ? NamedValues{} : NamedValues{{"READ_DATA", logicBits(width, 0xa53c965a)}});
+    s.cmdPair("back-to-back-reads", 2, 1, 2, 0,
+              control ? NamedValues{} : NamedValues{{"READ_DATA", logicBits(width, 0xa53c965a)}, {"READ_VALID", logicBit(H)}});
     s.rejectUnknownCommand(width, control);
     s.cmd("bad-column", 2, k, {{"ERROR", logicBit(H)}});
     s.cmd("precharge", 4, 0, {{"ERROR", logicBit(L)}, {"ROW_OPEN", logicBit(L)}});
@@ -360,6 +383,7 @@ ComponentTestSpec flashDevice(size_t width = 8, size_t depth = 4, size_t k = 2, 
     s.cmd("erase-block-zero", 3, 0, {{"WRITE_ENABLED", logicBit(L)}});
     s.cmd("read-erased-again", 1, 0, value(0xffffffff));
     s.cmd("other-block-survives", 1, k, value(0x12345678));
+    s.cmdPair("back-to-back-reads", 1, 0, 1, k, value(0x12345678));
     s.rejectUnknownCommand(width, control);
     s.cmd("invalid-address", 1, depth, {{"ERROR", logicBit(H)}});
     s.cmd("reserved-command", 7, 0, {{"ERROR", logicBit(H)}});

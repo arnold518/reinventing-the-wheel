@@ -7,6 +7,26 @@ history remains in Git and the archived reports.
 
 ## 2026-10-16
 
+### Memory controller protocols closer to real controllers (branch `realistic-timing`, phase 6.1–6.2)
+
+- **Changed:** DRAM and NOR devices take the next command during the
+  releasing cycle (BUSY shown low there), with FRESH and REPEAT state so a
+  stale sample or a repeated command cannot complete early; the command
+  sequencer shows the next command combinationally when the device is idle
+  and fault-free. SRAM/ROM controllers count `access_cycles` (new endpoint
+  parameter, chosen from the proven access time at the clock by
+  `staticAccessCycles`) instead of synchronizing READY; READY is checked at
+  the capturing edge (status Device if not high).
+- **Why:** owner rule that memories be realistic, not cache-favouring: the
+  removed cycles (about three per DRAM/NOR command, two per SRAM/ROM
+  access) are not spent by real controllers.
+- **Verified:** DRAM/NOR/SRAM/ROM device, controller, endpoint and cache
+  scenarios (with a new back-to-back command case); tables at a fixed point
+  in all profiles; delay rule under `unit` and `embedded`; 54
+  oracle-verified CPU runs at re-certified clocks.
+- **Limits:** realistic memory intervals still placeholders (6.3); no full
+  suite.
+
 ### On-chip SRAM geometry and READY after data (branch `realistic-timing`, phase 5)
 
 - **Changed:** SRAM and ROM devices raise READY only after the read data are

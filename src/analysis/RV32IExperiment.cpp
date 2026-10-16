@@ -103,6 +103,11 @@ RV32IExperimentResult runRV32IExperiment(const RV32IExperimentConfig& config) {
     auto core=b.add(family,"CORE",config.core=="advanced"?config.prediction.parameters():circuit::ParameterMap{});
     auto memory_config=config.memory;
     memory_config.device.record_history=false;
+    // SRAM/ROM wait states for this clock, from the proven access time (as a
+    // real system sets its flash latency from the clock frequency).
+    if((memory_config.technology==circuit::memory::Technology::SRAM||memory_config.technology==circuit::memory::Technology::ROM)
+        &&!config.safe_clock_only&&config.period)
+        memory_config.device.access_cycles=circuit::memory::staticAccessCycles(32,memory_config.technology,memory_config.device,config.period);
     auto imem=rv32i::buildMemory(b,*root,"IMEM",memory_config);
     auto dmem=rv32i::buildMemory(b,*root,"DMEM",memory_config);
     rv32i::wireMemorySystem(b,core,imem,dmem,root->getInputPin("CLK"),root->getInputPin("RST"));

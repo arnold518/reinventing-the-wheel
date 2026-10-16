@@ -196,6 +196,8 @@ int main(int argc,char** argv) {
             <<",\"benchmark_expected_result\":"<<(r.benchmark_expected_result?std::to_string(*r.benchmark_expected_result):"null")
             <<",\"benchmark_result\":"<<(r.benchmark_result?std::to_string(*r.benchmark_result):"null")
             <<",\"phase_ticks\":"<<c.memory.device.phase_ticks<<",\"guard_ticks\":"<<c.memory.device.guard_ticks
+            <<",\"access_cycles\":"<<((c.memory.technology==circuit::memory::Technology::SRAM||c.memory.technology==circuit::memory::Technology::ROM)&&c.period
+                ?circuit::memory::staticAccessCycles(32,c.memory.technology,c.memory.device,c.period):0)
             <<",\"history\":false,\"predictor_start\":\"cold\",\"window\":"<<quote(r.measurement_start_pc?"retirement-PC-region":"whole-program")
             <<",\"start_pc\":"<<(r.measurement_start_pc?std::to_string(*r.measurement_start_pc):"null")
             <<",\"stop_pc\":"<<(r.measurement_stop_pc?std::to_string(*r.measurement_stop_pc):"null")

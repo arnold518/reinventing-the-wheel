@@ -20,6 +20,8 @@ Technology technologyFromName(const std::string& n) {
     throw std::invalid_argument("Unknown memory technology: " + n);
 }
 void EndpointConfig::validate(size_t width, Technology t, bool expanded_cells) const {
+    if (!access_cycles || access_cycles > 255)
+        throw std::invalid_argument("access_cycles must be 1..255");
     if (always_ready && t != Technology::FF)
         throw std::invalid_argument("Always-ready endpoint mode is FF-only");
     if ((width != 8 && width != 16 && width != 32) || !depth_words ||
@@ -62,13 +64,13 @@ EndpointConfig endpointConfig(const ParameterMap& p) {
     if (p.contains("expanded_storage"))
         throw std::invalid_argument("expanded_storage was removed: request memory.<technology>.scalable-endpoint.<width> for a scalable device behind the controller");
     keys(p, {"depth_words", "words_per_row", "block_words", "phase_ticks", "guard_ticks",
-             "program_ticks", "erase_ticks", "retention_ticks", "refresh_interval_ticks", "refresh_interval_cycles",
+             "program_ticks", "erase_ticks", "retention_ticks", "refresh_interval_ticks", "refresh_interval_cycles", "access_cycles",
              "max_resident_bytes", "max_history_bytes", "paged", "record_history", "image_hex", "always_ready"});
     EndpointConfig c;
 #define PARAM(n) c.n = parameter(p, #n, c.n)
     PARAM(depth_words); PARAM(words_per_row); PARAM(block_words); PARAM(phase_ticks); PARAM(guard_ticks);
     PARAM(program_ticks); PARAM(erase_ticks); PARAM(retention_ticks); PARAM(refresh_interval_ticks);
-    PARAM(refresh_interval_cycles); PARAM(max_resident_bytes); PARAM(max_history_bytes);
+    PARAM(refresh_interval_cycles); PARAM(access_cycles); PARAM(max_resident_bytes); PARAM(max_history_bytes);
 #undef PARAM
     auto paged = parameter(p, "paged", 1), history = parameter(p, "record_history", 1);
     auto always_ready = parameter(p,"always_ready",0);
@@ -83,7 +85,7 @@ ParameterMap endpointParameters(const EndpointConfig& c) {
 #define PARAM(n) p[#n] = std::to_string(c.n)
     PARAM(depth_words); PARAM(words_per_row); PARAM(block_words); PARAM(phase_ticks); PARAM(guard_ticks);
     PARAM(program_ticks); PARAM(erase_ticks); PARAM(retention_ticks); PARAM(refresh_interval_ticks);
-    PARAM(refresh_interval_cycles); PARAM(max_resident_bytes); PARAM(max_history_bytes); PARAM(paged); PARAM(record_history);
+    PARAM(refresh_interval_cycles); PARAM(access_cycles); PARAM(max_resident_bytes); PARAM(max_history_bytes); PARAM(paged); PARAM(record_history);
     PARAM(always_ready);
 #undef PARAM
     p["image_hex"] = c.image_hex; return p;

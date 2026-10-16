@@ -110,6 +110,8 @@ void BehavioralMemoryEndpoint::evaluate(size_t t, Simulator& sim) {
         s.device->update(t,s.sequence.outputs);
         s.sequence.step(t,edge,reset!=L,before.accept==H,request,
             [&](const std::string& pin,size_t width){return clocked?signal(seen,pin,width):s.device->read(pin,width);},before.finish==H);
+        // The next command is shown from the device's outputs after the edge.
+        if (clocked) s.sequence.present([&](const std::string& pin,size_t width){return s.device->read(pin,width);});
         s.device->update(t,s.sequence.outputs);
     }
     // Recompute the combinational view after the edge.

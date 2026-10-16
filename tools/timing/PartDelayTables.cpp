@@ -202,7 +202,12 @@ size_t sized(const Candidate& candidate, const circuit::PartDelays& standard, si
         }
         for (const bool always_ready : {false, true}) {
             if (always_ready && !ready_variant) break;
-            for (const size_t depth : {size_t{64}, size_t{128}}) {
+            // On-chip SRAM is also proven at 256 and 512 words (4 and 8
+            // subarrays), where it fits the gate-level limit: the subarray
+            // formula is fitted at 1, 2 and 4 and checked at 8.
+            const bool subarrays = standard_layout && !always_ready && candidate.contract.rfind("memory.sram.", 0) == 0;
+            for (const size_t depth : {size_t{64}, size_t{128}, size_t{256}, size_t{512}}) {
+                if (depth > 128 && !subarrays) break;
                 circuit::ParameterMap parameters{{"depth_words", std::to_string(depth)}};
                 if (!standard_layout) parameters["words_per_row"] = layout;
                 if (always_ready) parameters["always_ready"] = "1";

@@ -27,10 +27,11 @@ private:
 // on one side (START, FINISH, request fields; BACK_READY, DONE, RESULT,
 // STATUS) and the device's native pins with MEM_ on the other. START loads the
 // request registers; a valid request enters ACCESS, which drives CE/WE/OE and
-// the held fields until the device's READY, brought into the clock by a
-// Synchronizer, loads the result and status and raises DONE. FINISH clears
-// DONE. A new request needs the access released and the synchronized READY
-// low again. An invalid request completes at once with its status.
+// the held fields for access_cycles edges (counted wait states chosen from
+// the device's proven access time); the last edge loads the result and
+// status and raises DONE, with status Device if the device's READY is not
+// high then. FINISH clears DONE. An invalid request completes at once with
+// its status.
 class StaticMemorySequencer : public IOComponent {
 public:
     StaticMemorySequencer(std::string name, size_t width, circuit::memory::Technology, circuit::memory::EndpointConfig);
@@ -48,8 +49,9 @@ private:
 // registered BUSY, ERROR, READ_VALID (and ROW_OPEN for DRAM). A request is
 // planned as a short list of device commands (DRAM: PRECHARGE if another row
 // is open, ACTIVATE if no row is open, then READ or WRITE; NOR: WREN before
-// PROGRAM or ERASE_BLOCK); each command is shown for one ISSUE cycle and
-// waited for until the device's BUSY is low at an edge. DRAM refresh: a
+// PROGRAM or ERASE_BLOCK), registered at the starting edge. The next command
+// is shown combinationally whenever the device is idle and the previous one
+// ended without fault, and the device takes it at the next edge. DRAM refresh: a
 // cycle counter raises a pending refresh, served from idle (PRECHARGE if a
 // row is open, then REFRESH) while new requests wait.
 class CommandMemorySequencer : public IOComponent {

@@ -37,7 +37,8 @@ public:
           mask(width / 8, LogicValue::LOW) {
         const auto& m = timing::activeTimingProfile().memory;
         const size_t gate = timing::leafDelay(timing::Leaf::And);
-        launch_ = dflipflop_timing::clockToOutputMaximum() + gate;
+        // The run signal is a three-input AND (command, busy, not repeat): two levels.
+        launch_ = dflipflop_timing::clockToOutputMaximum() + 2 * gate;
         or_tree_ = 3 * timing::leafDelay(timing::Leaf::Or);
         const auto steps = [&](std::vector<size_t> intervals) {
             std::vector<size_t> at; size_t sum = 0;
@@ -59,6 +60,8 @@ public:
     void edge(size_t t, const Bits& cmd, const Bits& addr, const Bits& write_data, const Bits& write_mask) {
         using memory_device::known;
         using memory_device::number;
+        // A repeated command's chain starts one edge after it was taken.
+        if (delayed_start_) { started_ = t; delayed_start_ = false; }
         const bool cmd_known = known(cmd);
         const unsigned code = cmd_known ? number(cmd) : 0;
         const bool nop = cmd_known && code == 0;
@@ -70,12 +73,14 @@ public:
             (code == Write && addr_known && known(write_mask) && open && a < words_per_row_) ||
             (code == Precharge && open) || (code == Refresh && !open));
         const bool issued = cmd_known && !nop;
-        const bool accept = issued && legal && !busy;
+        // Taken while idle or in the releasing cycle of the last command.
+        const bool available = !busy || releasing;
+        const bool accept = issued && legal && available;
         const bool unknown = !cmd_known;
-        const bool error_event = unknown || (issued && (busy || !legal));
-        const bool clear_valid = accept || (unknown && !busy) || (issued && !busy && !legal);
+        const bool error_event = unknown || (issued && (!available || !legal));
+        const bool clear_valid = accept || (unknown && available) || (issued && available && !legal);
         const bool sampled = busy && command != None && t >= chainDone();
-        const bool complete = busy && done_q_ && !releasing;
+        const bool complete = busy && done_q_ && !releasing && !fresh_;
         const unsigned finished = command;
         error = error_event || (error && !accept);
         valid = !clear_valid && (valid || (complete && finished == Read));
@@ -84,6 +89,7 @@ public:
         if (complete && finished == Activate) open = true;
         if (complete && finished == Precharge) open = false;
         if (complete && finished == Refresh) refresh_row = refresh_row + 1 >= rows_ ? 0 : refresh_row + 1;
+        const bool repeated = accept && busy && code == command;
         if (accept) {
             command = code;
             if (code == Activate) row = a;
@@ -91,13 +97,17 @@ public:
             if (code == Read || code == Write) column = a;
             if (code == Write) { data = write_data; mask = write_mask; }
             started_ = t;
+            if (repeated) { started_ = NOT_STARTED; delayed_start_ = true; }
         }
         busy = next_busy;
         done_q_ = sampled;
+        fresh_ = accept;
     }
+    // BUSY as the device shows it: low in the releasing cycle.
+    bool busyShown() const { return busy && !releasing; }
     // Earliest future time at which an analog control may change.
     size_t nextStep(size_t t) const {
-        if (!busy || command == None) return 0;
+        if (!busy || command == None || started_ == NOT_STARTED) return 0;
         for (auto at : stages_.at(command)) if (started_ + launch_ + at > t) return started_ + launch_ + at;
         // The chain's end reaching the sampler (the gates' OR tree).
         if (const size_t end = chainDone(); end > t) return end;
@@ -138,7 +148,8 @@ private:
     }
     size_t width_, rows_, words_per_row_;
     size_t launch_ = 0, or_tree_ = 0, started_ = 0;
-    bool done_q_ = false;
+    static constexpr size_t NOT_STARTED = static_cast<size_t>(-1) / 2;
+    bool done_q_ = false, fresh_ = false, delayed_start_ = false;
     std::map<unsigned, std::vector<size_t>> stages_;
 };
 

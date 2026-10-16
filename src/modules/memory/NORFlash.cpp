@@ -147,7 +147,7 @@ class FlashControl : public IOComponent {
         auto addr_ok = w.both("ADDRESS_OK", known_addr->getOutputPin("KNOWN"),
                               memory_detail::addressBelow(w, address_bits, config_.depth_words, "RANGE"));
         auto busy = state("BUSY"), error = state("ERROR"), valid = state("READ_VALID"), wel = state("WRITE_ENABLED"),
-             releasing = state("RELEASING"), c_read = state("COMMAND_READ"), c_program = state("COMMAND_PROGRAM"),
+             releasing = state("RELEASING"), fresh = state("FRESH"), repeat = state("REPEAT"), c_read = state("COMMAND_READ"), c_program = state("COMMAND_PROGRAM"),
              c_erase = state("COMMAND_ERASE");
         const auto B = busy->getOutputPin("Q"), WEL = wel->getOutputPin("Q"), R = releasing->getOutputPin("Q");
         auto legal = w.reduce("LEGAL_COMMAND", {
@@ -156,16 +156,22 @@ class FlashControl : public IOComponent {
             w.reduce("LEGAL_ERASE", {is_erase, addr_ok, WEL}, true), is_wren, is_wrdi}, false);
         const auto cmd_known = known_cmd->getOutputPin("KNOWN");
         auto issued = w.both("ISSUED", cmd_known, w.invert("NOT_NOP", is_nop));
-        auto idle = w.invert("IDLE", B);
+        // Commands are taken while idle or in the releasing cycle (DRAM.cpp).
+        auto idle = w.either("IDLE", w.invert("NOT_BUSY", B), R);
         auto accept = w.reduce("ACCEPT", {issued, legal, idle}, true);
         auto unknown = w.invert("UNKNOWN_COMMAND", cmd_known);
-        auto refused = w.both("REFUSED", issued, w.either("BUSY_OR_ILLEGAL", B, w.invert("ILLEGAL", legal)));
+        auto refused = w.both("REFUSED", issued, w.either("BUSY_OR_ILLEGAL", w.invert("NOT_IDLE", idle), w.invert("ILLEGAL", legal)));
         auto clear_valid = w.reduce("CLEAR_VALID", {accept, w.both("UNKNOWN_IDLE", unknown, idle),
                                                     w.both("ILLEGAL_IDLE", w.both("ISSUED_IDLE", issued, idle), w.invert("NOT_LEGAL", legal))}, false);
         auto starts = w.reduce("STARTS", {is_read, is_program, is_erase}, false);
         auto start = w.both("START", accept, starts);
+        // A repeated command taken in the releasing cycle restarts its chain (DRAM.cpp).
+        w.connect(w.reduce("NEXT_REPEAT", {start, B, w.reduce("SAME_COMMAND", {
+            w.both("SAME_READ", c_read->getOutputPin("Q"), is_read), w.both("SAME_PROGRAM", c_program->getOutputPin("Q"), is_program),
+            w.both("SAME_ERASE", c_erase->getOutputPin("Q"), is_erase)}, false)}, true), repeat->getInputPin("D"));
+        const auto restarting = w.invert("NOT_REPEAT", repeat->getOutputPin("Q"));
         auto run = [&](const std::shared_ptr<IOComponent> &command, const std::string &name) {
-            return w.both("RUN_" + name, command->getOutputPin("Q"), B);
+            return w.reduce("RUN_" + name, {command->getOutputPin("Q"), B, restarting}, true);
         };
         auto r_read = run(c_read, "READ"), r_program = run(c_program, "PROGRAM"), r_erase = run(c_erase, "ERASE");
         auto chain = [&](const std::string &name, PinPtr go, std::vector<std::pair<size_t, size_t>> steps) {
@@ -193,7 +199,9 @@ class FlashControl : public IOComponent {
         w.connect(getInputPin("CLK"), sampler->getInputPin("CLK"));
         w.connect(reset, sampler->getInputPin("RST"));
         w.connect(done_async, sampler->getInputPin("D"));
-        auto complete = w.reduce("COMPLETE", {B, sampler->getOutputPin("Q"), w.invert("NOT_RELEASING", R)}, true);
+        auto complete = w.reduce("COMPLETE", {B, sampler->getOutputPin("Q"), w.invert("NOT_RELEASING", R),
+                                              w.invert("NOT_FRESH", fresh->getOutputPin("Q"))}, true);
+        w.connect(accept, fresh->getInputPin("D"));
         auto keep = [&](const std::shared_ptr<IOComponent> &bit, PinPtr set, PinPtr clear, const std::string &name) {
             w.connect(w.either("NEXT_" + name, set, w.both("HOLD_" + name, bit->getOutputPin("Q"), w.invert("NO_CLEAR_" + name, clear))),
                       bit->getInputPin("D"));
@@ -251,7 +259,7 @@ class FlashControl : public IOComponent {
             }
             w.connect(w.reduce("ERASE_ROW_" + std::to_string(r), match, true), getOutputPin("ERASE_" + std::to_string(r)));
         }
-        w.connect(B, getOutputPin("BUSY"));
+        w.connect(w.both("BUSY_SHOWN", B, w.invert("NOT_RELEASING_SHOWN", R)), getOutputPin("BUSY"));
         w.connect(error->getOutputPin("Q"), getOutputPin("ERROR"));
         w.connect(valid->getOutputPin("Q"), {getOutputPin("READ_VALID"), getOutputPin("OUTPUT_ENABLE")});
         w.connect(WEL, getOutputPin("WRITE_ENABLED"));
@@ -359,7 +367,7 @@ class FlashBehavioral : public Primitive, public MemoryDeviceStorage {
         }
         program_ = program; erase_ = erase;
         if (const auto next = control_.nextStep(t); next > t) wake(sim, next);
-        for (const auto &[p, v] : std::vector<std::pair<std::string, bool>>{{"BUSY", control_.busy},
+        for (const auto &[p, v] : std::vector<std::pair<std::string, bool>>{{"BUSY", control_.busyShown()},
                                                                             {"ERROR", control_.error},
                                                                             {"READ_VALID", control_.valid},
                                                                             {"WRITE_ENABLED", control_.wel}})

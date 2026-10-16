@@ -21,6 +21,9 @@ struct EndpointConfig {
     // The gate-level DRAM controller counts clock cycles between refreshes;
     // 0 disables refresh.
     size_t refresh_interval_cycles = 96;
+    // SRAM/ROM controller: edges from START to the capturing edge (counted
+    // wait states plus one), 1..255.
+    size_t access_cycles = 2;
     size_t max_resident_bytes = 64 * 1024 * 1024;
     size_t max_history_bytes = 16 * 1024 * 1024;
     bool paged = true, record_history = true;
@@ -35,5 +38,9 @@ EndpointConfig endpointConfig(const ParameterMap&);
 ParameterMap endpointParameters(const EndpointConfig&);
 void protocolPins(IOComponent*, size_t width, const std::string& prefix = {}, bool requester = false);
 void nativePins(IOComponent*, size_t width, Technology, bool controller);
+// The access_cycles an SRAM/ROM endpoint needs at a clock period: the proven
+// controller launch plus device access time plus a capture margin, in whole
+// periods.
+size_t staticAccessCycles(size_t width, Technology, const EndpointConfig&, size_t period_ticks);
 void registerMemoryEndpoints(ComponentCatalog&);
 }

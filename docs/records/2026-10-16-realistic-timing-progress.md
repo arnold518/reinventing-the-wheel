@@ -770,3 +770,108 @@ six cycles per access, where a real on-chip SRAM at this clock runs with
 zero or a fixed few wait states. That is the protocol artifact named in the
 owner rule; phase 6 addresses it together with the DRAM command protocol
 (see the plan record).
+
+## 2026-10-16 — Phase 6 design: protocol realism, then calibration (assistant decisions)
+
+Phase 5 was committed as `93bc5d0`. Under the owner's rule (realistic
+memories, not cache-favouring ones), the protocol cycles that real
+controllers do not spend are removed before the analog intervals are
+calibrated, so calibration measures technology, not protocol overhead.
+
+**6.1 DRAM/NOR command protocol.** Today a command costs, after its analog
+chain ends: the sampler edge, a COMPLETE edge, a RELEASING edge, an edge at
+which the controller sees BUSY low and registers the next command, and the
+edge at which the device takes it (4–5 edges). The RELEASING edge stays: it
+sets the open-row state before the running command's signal drops, so the
+wordline never glitches (a glitch would read the row destructively). Changes:
+- device: BUSY is reported low, and a new command accepted, during the
+  RELEASING cycle; a FRESH bit (set at acceptance) keeps the new command from
+  seeing the previous chain's stale sampled "done";
+- controller: the next command is presented combinationally in the cycle the
+  device is seen idle without a fault (device outputs are registered, so this
+  is an ordinary single-cycle path), rather than registered first.
+Result: about two edges after the chain (sampler, releasing) instead of four
+or five. NOR program/erase keep BUSY polling (the real RY/BY# pin).
+
+**6.2 SRAM/ROM counted access.** The two-stage READY synchronizer and the
+handshake make every SRAM/ROM access cost four to six cycles; a real on-chip
+SRAM at this clock runs with zero wait states, on-chip flash with a fixed
+count chosen from the clock (STM32 LATENCY), external parts through
+programmed FMC timing. The static controller instead counts
+`access_cycles` (edges from START to capture, an endpoint parameter) and
+captures the data at the last; it samples the device's READY at that edge as
+a completion check (status Device if READY is not high), so devices still
+signal completion (decision 2A) and a too-short count is caught in
+simulation. The analyzer treats the device path as a multicycle path
+(`ProtocolStableData`), and the required count at a clock period is
+computed from the proven tables (controller launch + device access + capture
+setup); experiments set it after certification.
+
+**6.3 Calibration** of the realistic intervals from the PDF-checked tables
+(external devices absolute, per-row terms 0), on-chip SRAM against CACTI
+trends, refresh interval from tREF.
+
+**6.4 Measurements:** end-to-end request-to-data latency per technology in
+cycles and ns at the certified clocks, compared with the datasheets and
+the STM32F7 ratios.
+
+## 2026-10-16 — Phase 6.1–6.2 implemented
+
+**6.1 DRAM/NOR command protocol.** Devices: a command is taken while idle or
+during the releasing cycle (`IDLE = !BUSY | RELEASING`), BUSY is shown low in
+that cycle, FRESH masks the stale sample for one cycle after acceptance, and
+REPEAT (the same command taken during releasing) holds the command's run
+signal low for one cycle so its step chain restarts; the run signal is now a
+three-input AND, and the copies count two gate levels at launch. Controller:
+the pending steps are registered at the starting edge; the selected step's
+command is shown combinationally while the device is idle and the last
+command ended without fault, the device takes it at the next edge, and the
+command register records it. The cycle-exact copy recomputes its command
+from the device's outputs after each edge (fused endpoint: `present`).
+New scenario step `back-to-back-reads` takes the second read in the first
+one's releasing cycle (DRAM and NOR, both fidelities compared).
+
+**6.2 SRAM/ROM counted access.** `StaticMemorySequencer` counts
+`access_cycles` edges (8-bit counter, so the circuit and its tables do not
+depend on the value) and captures at the last; READY, read through a
+`ProtocolStableData`, sets status Device if it is not high then. The
+synchronizer and the "READY low before the next access" condition are gone.
+`staticAccessCycles(width, technology, config, period)` gives the count
+from the proven controller launch + device READY time + flip-flop setup and
+two gates; the RV32I experiment sets it from its period and reports it
+(`access_cycles` in the JSON). Endpoint parameter `access_cycles` (default 2,
+1–255).
+
+**First checks (unit, before table regeneration), all passed:** DRAM/NOR
+device and command-control scenarios (with back-to-back reads),
+MemoryDeviceTimingTest, MemoryDeviceContractTest, DRAM/NOR/SRAM/ROM
+endpoints, MemoryControllerTest, scalable endpoint, endpoint contract and
+timing, NativeMemoryDeviceContractTest, CacheReadTest and the four cache
+scenarios. CPU runs (advanced, two-bit, oracle-verified, period 102/106/104,
+old tables): SRAM programs 19/20/21 470/328/558 cycles (phase 5: 606/489/786;
+4 counted cycles for the 256 KiB array), ROM 336/220/384 (472/381/612),
+DRAM 818/651/1043 (1086/868/1375), NOR 537/382/645 (604/436/732).
+
+**6.1–6.2 checks on regenerated tables (all passed).** Tables: three
+profiles at a fixed point after round 2, `--verify` identical (610 entries;
+the gate-list file changed). `DelayRuleTest` on the 36 DRAM/NOR/SRAM/ROM
+devices, controllers and endpoints: default run under `unit` and `--report`
+under `embedded`, 0 rule breaks, no part below target. Certified clocks:
+DRAM and NOR now match SRAM/ROM (`unit` 102, was 106 and 104; `embedded`
+4608 ps, was 4808 and 4726; `desktop` 3210 ps, was 3348 and 3290); every
+timed memory is limited by IMEM REQ_READY full-cycle setup. CPU panel,
+advanced core, two-bit, oracle-verified, at those clocks (54 runs, all
+verified; `access_cycles` chosen by `staticAccessCycles`):
+
+| Memory | `unit` p19/20/21/22 | `embedded` | `desktop` |
+| --- | --- | --- | --- |
+| FF | 103/61/110/79 | 103/61/110/79 | 103/61/110/79 |
+| SRAM | 470/328/558/420 (4 cycles) | 336/220/384/292 (2) | 336/220/384/292 (2) |
+| DRAM | 818/651/1043/840 | 2801/1857/3238/2597 | 2620/1747/2653/2488 |
+| ROM | 336/220/384 (2) | 269/166/297 (1) | 269/166/297 (1) |
+| NOR | 537/382/645 | 1877/1462/2385 | 1810/1408/2298 |
+
+The `unit` SRAM cycles equal the published pre-phase-4 values (a
+coincidence of four counted cycles matching the old sequencer's timing,
+not a reuse). Realistic DRAM/NOR remain dominated by the placeholder
+per-row terms over 32,768 rows; 6.3 replaces them.

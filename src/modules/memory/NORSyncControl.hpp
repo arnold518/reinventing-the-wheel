@@ -22,7 +22,8 @@ public:
         : depth_(depth), data(width, LogicValue::LOW), mask(width / 8, LogicValue::LOW) {
         const auto& m = timing::activeTimingProfile().memory;
         const size_t gate = timing::leafDelay(timing::Leaf::And);
-        launch_ = dflipflop_timing::clockToOutputMaximum() + gate;
+        // The run signal is a three-input AND (command, busy, not repeat): two levels.
+        launch_ = dflipflop_timing::clockToOutputMaximum() + 2 * gate;
         or_tree_ = 2 * timing::leafDelay(timing::Leaf::Or);
         size_t row_bits = 0; while ((size_t{1} << row_bits) < rows) ++row_bits;
         size_t decode_depth = 1; while ((size_t{1} << (decode_depth - 1)) < row_bits + 1) ++decode_depth;
@@ -37,6 +38,8 @@ public:
     void edge(size_t t, const Bits& cmd, const Bits& addr, const Bits& write_data, const Bits& write_mask) {
         using memory_device::known;
         using memory_device::number;
+        // A repeated command's chain starts one edge after it was taken.
+        if (delayed_start_) { started_ = t; delayed_start_ = false; }
         const bool cmd_known = known(cmd);
         const unsigned code = cmd_known ? number(cmd) : 0;
         const bool addr_ok = known(addr) && number(addr) < depth_;
@@ -44,27 +47,32 @@ public:
             (code == Program && addr_ok && wel && known(write_mask)) || (code == Erase && addr_ok && wel) ||
             code == WriteEnable || code == WriteDisable);
         const bool issued = cmd_known && code != 0;
-        const bool accept = issued && legal && !busy;
+        const bool available = !busy || releasing;
+        const bool accept = issued && legal && available;
         const bool unknown = !cmd_known;
-        const bool clear_valid = accept || (unknown && !busy) || (issued && !busy && !legal);
+        const bool clear_valid = accept || (unknown && available) || (issued && available && !legal);
         const bool start = accept && (code == Read || code == Program || code == Erase);
         const bool sampled = busy && command != None && t >= started_ + launch_ + stages_.at(command).back() + or_tree_;
-        const bool complete = busy && done_q_ && !releasing;
-        error = unknown || (issued && (busy || !legal)) || (error && !accept);
+        const bool complete = busy && done_q_ && !releasing && !fresh_;
+        error = unknown || (issued && (!available || !legal)) || (error && !accept);
         valid = !clear_valid && (valid || (complete && command == Read));
         wel = (accept && code == WriteEnable) ||
               (wel && !(accept && (code == WriteDisable || code == Program || code == Erase)));
         const bool next_busy = start || (busy && !releasing);
         releasing = complete;
+        const bool repeated = start && busy && code == command;
         if (start) {
-            command = code; address = number(addr); started_ = t;
+            command = code; address = number(addr); started_ = repeated ? NOT_STARTED : t;
+            delayed_start_ = repeated;
             if (code == Program) { data = write_data; mask = write_mask; }
         }
         busy = next_busy;
         done_q_ = sampled;
+        fresh_ = accept;
     }
+    bool busyShown() const { return busy && !releasing; }
     size_t nextStep(size_t t) const {
-        if (!busy || command == None) return 0;
+        if (!busy || command == None || started_ == NOT_STARTED) return 0;
         for (auto at : stages_.at(command)) if (started_ + launch_ + at > t) return started_ + launch_ + at;
         // The chain's end reaching the sampler (the gates' OR tree).
         if (const size_t end = started_ + launch_ + stages_.at(command).back() + or_tree_; end > t) return end;
@@ -85,7 +93,8 @@ private:
         return stage < at.size() && t >= started_ + launch_ + at[stage];
     }
     size_t depth_, launch_ = 0, or_tree_ = 0, started_ = 0;
-    bool done_q_ = false;
+    static constexpr size_t NOT_STARTED = static_cast<size_t>(-1) / 2;
+    bool done_q_ = false, fresh_ = false, delayed_start_ = false;
     std::map<unsigned, std::vector<size_t>> stages_;
 };
 

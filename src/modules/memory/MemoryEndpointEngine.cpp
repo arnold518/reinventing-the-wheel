@@ -39,7 +39,10 @@ NativeSequence::NativeSequence(size_t w, Technology technology, EndpointConfig c
     : result(w, L), width_(w), technology_(technology), config_(config),
       command_(technology == Technology::DRAM || technology == Technology::NORFlash),
       word_reg_(32, L), data_reg_(w, L), mask_reg_(w / 8, L), needs_(technology == Technology::DRAM ? 4 : 2, false) {
-    if (command_) { outputs["CLK"] = {L}; commandPins(); }
+    if (command_) {
+        outputs["CLK"] = {L};
+        commandPins([](const std::string& pin, size_t width) { return pin == "READ_DATA" ? Bits(width, Z) : Bits(width, L); });
+    }
     else staticPins();
 }
 void NativeSequence::staticPins() {
@@ -70,41 +73,61 @@ Bits wordAddress(const Bits& address, size_t width) {
 void NativeSequence::stepStatic(bool clock_edge, bool reset, bool start, const Request& request,
                                 const std::function<Bits(const std::string&, size_t)>& read, bool finish) {
     if (reset) {
-        access_ = writing_ = done = false; sync1_ = sync2_ = L;
+        access_ = writing_ = done = false; wait_count_ = 0;
         word_reg_.assign(32, L); data_reg_.assign(width_, L); mask_reg_.assign(width_ / 8, L);
         result.assign(width_, L); status = Status::Ok;
     } else if (clock_edge) {
-        const bool complete = access_ && sync2_ == H;
+        const bool complete = access_ && wait_count_ == 0;
         const auto checked = validateRequest(request, width_, technology_, config_);
         const bool accept = checked == Status::Ok;
         const bool valid_start = start && accept, invalid_start = start && !accept;
-        if (complete) { result = writing_ ? Bits(width_, L) : read("READ_DATA", width_); status = Status::Ok; }
+        // READY at the counted edge checks the access (a multicycle path).
+        const bool ready = read("READY", 1) == Bits{H};
+        if (complete) {
+            result = !writing_ && ready ? read("READ_DATA", width_) : Bits(width_, L);
+            status = ready ? Status::Ok : Status::Device;
+        }
         if (invalid_start) { result.assign(width_, L); status = checked; }
         const bool next_access = valid_start || (access_ && !complete);
         done = invalid_start || complete || (done && !finish);
+        wait_count_ = start ? config_.access_cycles - 1 : access_ && !complete ? wait_count_ - 1 : 0;
         if (start) {
             word_reg_ = wordAddress(request.address, width_);
             data_reg_ = request.data; mask_reg_ = request.mask;
             writing_ = known(request.op) && number(request.op) == unsigned(Operation::Write);
         }
-        sync2_ = sync1_;
-        const auto ready = read("READY", 1)[0];
-        if (ready == L || ready == H) sync1_ = ready;
         access_ = next_access;
     }
-    available = !access_ && sync2_ == L;
+    available = !access_;
     staticPins();
 }
-void NativeSequence::commandPins() {
+std::optional<size_t> NativeSequence::shownStep(const std::function<Bits(const std::string&, size_t)>& read) const {
     const bool dram = technology_ == Technology::DRAM;
-    outputs["CMD"] = bits(3, issuing_ ? current_ : 0);
+    const bool idle = read("BUSY", 1) == Bits{L};
+    const bool cur_read = current_ == (dram ? 2u : 1u);
+    const bool fault = read("ERROR", 1) != Bits{L} || (cur_read && read("READ_VALID", 1) != Bits{H});
+    if (!active_ || !idle || (waiting_ && fault)) return std::nullopt;
+    for (size_t k = 0; k < needs_.size(); ++k) if (needs_[k]) return k;
+    return std::nullopt;
+}
+unsigned NativeSequence::stepCode(size_t step) const {
+    if (technology_ == Technology::DRAM) return step == 0 ? 4 : step == 1 ? 1 : step == 2 ? (is_write_ ? 3 : 2) : 5;
+    return step == 0 ? 4 : (is_erase_ ? 3 : is_program_ ? 2 : 1);
+}
+void NativeSequence::commandPins(const std::function<Bits(const std::string&, size_t)>& read) {
+    const bool dram = technology_ == Technology::DRAM;
+    const auto shown = shownStep(read);
+    presenting_ = shown.has_value();
+    outputs["CMD"] = bits(3, shown ? stepCode(*shown) : 0);
     outputs["WRITE_DATA"] = data_reg_;
     outputs["WRITE_MASK"] = mask_reg_;
     if (!dram) { outputs["WORD_ADDR"] = word_reg_; return; }
-    // The row for ACTIVATE, the column otherwise.
+    // The row while ACTIVATE is the selected step, the column otherwise.
     const size_t column_bits = std::countr_zero(config_.words_per_row);
+    bool activate = false;
+    for (size_t k = 0; k < needs_.size(); ++k) if (needs_[k]) { activate = k == 1; break; }
     Bits field(32, L);
-    if (current_ == 1) for (size_t i = 0; i + column_bits < 32; ++i) field[i] = word_reg_[i + column_bits];
+    if (activate) for (size_t i = 0; i + column_bits < 32; ++i) field[i] = word_reg_[i + column_bits];
     else for (size_t i = 0; i < column_bits; ++i) field[i] = word_reg_[i];
     outputs["ADDR"] = field;
 }
@@ -113,7 +136,7 @@ void NativeSequence::stepCommand(bool clock_edge, bool reset, bool start, const 
                                  const std::function<Bits(const std::string&, size_t)>& read, bool finish) {
     const bool dram = technology_ == Technology::DRAM;
     if (reset) {
-        active_ = issuing_ = waiting_ = done = false;
+        active_ = waiting_ = done = false;
         is_write_ = is_program_ = is_erase_ = false;
         std::fill(needs_.begin(), needs_.end(), false);
         current_ = 0; row_known_ = refreshing_ = refresh_pending_ = false; open_row_ = 0; refresh_counter_ = 0;
@@ -125,21 +148,22 @@ void NativeSequence::stepCommand(bool clock_edge, bool reset, bool start, const 
         const unsigned op = known(request.op) ? number(request.op) : 8;
         const bool op_write = op == unsigned(Operation::Write), op_program = op == unsigned(Operation::Program),
                    op_erase = op == unsigned(Operation::EraseBlock);
-        const bool busy = read("BUSY", 1) != Bits{L};
-        const bool step_done = waiting_ && !busy;
+        const bool idle = read("BUSY", 1) == Bits{L};
+        const bool step_done = waiting_ && idle;
         const bool cur_read = current_ == (dram ? 2u : 1u);
-        const bool fail = step_done && (read("ERROR", 1) != Bits{L} || (cur_read && read("READ_VALID", 1) != Bits{H}));
+        const bool fault = read("ERROR", 1) != Bits{L} || (cur_read && read("READ_VALID", 1) != Bits{H});
+        const bool fail = step_done && fault;
+        const auto shown = shownStep(read);
+        const bool present = shown.has_value();
         const bool ref_start = dram && refresh_pending_ && !active_ && !start;
         const size_t column_bits = std::countr_zero(config_.words_per_row);
         bool hit = false, row_open = false;
-        uint32_t live_row = 0;
         if (dram) {
             row_open = read("ROW_OPEN", 1) == Bits{H};
             const auto live = wordAddress(request.address, width_);
-            live_row = known(live) ? uint32_t(number(live) >> column_bits) : 0;
+            const uint32_t live_row = known(live) ? uint32_t(number(live) >> column_bits) : 0;
             hit = row_open && row_known_ && known(live) && open_row_ == live_row;
         }
-        // The planned steps of a new request and of a refresh.
         std::vector<bool> plan_request, plan_refresh;
         if (dram) {
             plan_request = {row_open && !hit, !hit, true, false};
@@ -148,36 +172,23 @@ void NativeSequence::stepCommand(bool clock_edge, bool reset, bool start, const 
             plan_request = {op_program || op_erase, true};
             plan_refresh = {false, false};
         }
-        const bool fresh = valid_start || ref_start;
-        std::vector<bool> list(needs_.size());
         bool any_pending = false;
-        for (size_t k = 0; k < list.size(); ++k) {
-            list[k] = (valid_start && plan_request[k]) || (ref_start && plan_refresh[k]) || (needs_[k] && !fresh);
-            any_pending = any_pending || list[k];
-        }
-        const bool proceed = step_done && !fail;
-        const bool issue_now = any_pending && (valid_start || ref_start || proceed);
-        size_t selected = list.size();
-        for (size_t k = 0; k < list.size(); ++k) if (list[k]) { selected = k; break; }
-        // On the starting edge the kind comes from the new request.
-        const bool write_kind = valid_start ? op_write : is_write_;
-        const bool program_kind = valid_start ? op_program : is_program_;
-        const bool erase_kind = valid_start ? op_erase : is_erase_;
-        unsigned next_code = 0;
-        if (selected < list.size()) {
-            if (dram) next_code = selected == 0 ? 4 : selected == 1 ? 1 : selected == 2 ? (write_kind ? 3 : 2) : 5;
-            else next_code = selected == 0 ? 4 : (erase_kind ? 3 : program_kind ? 2 : 1);
-        }
-        const bool finish_now = step_done && (fail || !any_pending);
+        for (bool need : needs_) any_pending = any_pending || need;
+        const bool finish_now = step_done && (fault || !any_pending);
         const bool request_ends = finish_now && !refreshing_;
+        const bool plan = valid_start || ref_start;
         // Clocked updates, all from the values before the edge.
-        for (size_t k = 0; k < list.size(); ++k)
-            needs_[k] = list[k] && !(issue_now && k == selected) && !fail;
-        const bool opened = step_done && current_ == 1 && !fail && dram;
-        if (step_done && cur_read && !fail) result = read("READ_DATA", width_);
+        const unsigned before = current_;
+        if (present) current_ = stepCode(*shown);
+        for (size_t k = 0; k < needs_.size(); ++k) {
+            const bool held = needs_[k] && !(present && k == *shown) && !fail;
+            needs_[k] = (valid_start && plan_request[k]) || (ref_start && plan_refresh[k]) || (held && !plan);
+        }
+        if (step_done && cur_read && !fault) result = read("READ_DATA", width_);
         else if ((step_done && cur_read) || request_ends || invalid_start) result.assign(width_, L);
-        if (request_ends || invalid_start) status = invalid_start ? checked : fail ? Status::Device : Status::Ok;
-        if (opened) {
+        if (request_ends || invalid_start) status = invalid_start ? checked : fault ? Status::Device : Status::Ok;
+        // An ACTIVATE that ended without fault records its row.
+        if (dram && step_done && !fault && before == 1) {
             row_known_ = true;
             open_row_ = known(word_reg_) ? uint32_t(number(word_reg_) >> column_bits) : 0;
         }
@@ -188,11 +199,9 @@ void NativeSequence::stepCommand(bool clock_edge, bool reset, bool start, const 
             refreshing_ = ref_start || (refreshing_ && !finish_now);
             refresh_pending_ = due || (refresh_pending_ && !ref_start);
         }
-        if (issue_now) current_ = next_code;
         done = request_ends || invalid_start || (done && !finish);
-        waiting_ = issuing_ || (waiting_ && !step_done);
-        issuing_ = issue_now;
-        active_ = fresh || (active_ && !finish_now);
+        waiting_ = present || (waiting_ && !idle);
+        active_ = plan || (active_ && !finish_now);
         if (start) {
             word_reg_ = wordAddress(request.address, width_);
             data_reg_ = request.data; mask_reg_ = request.mask;
@@ -200,7 +209,7 @@ void NativeSequence::stepCommand(bool clock_edge, bool reset, bool start, const 
         }
     }
     available = !active_ && !(dram && refresh_pending_);
-    commandPins();
+    commandPins(read);
 }
 
 DeviceModel::DeviceModel(size_t width, EndpointConfig c, LogicValue fill)
@@ -249,6 +258,16 @@ size_t provenMaximum(const std::string& implementation, const ParameterMap& para
 // edge that changes the controller's outputs: the controller's own output
 // delay plus the device's slowest input-to-READY delay, both from the tables
 // proven on their gate-level forms.
+size_t staticAccessTime(size_t width, Technology technology, const EndpointConfig& config);
+// Launch from the controller's edge, the device's access to READY (READY
+// follows the data), and a capture margin: the flip-flop setup and the
+// result multiplexers (two gates).
+size_t staticAccessCycles(size_t width, Technology technology, const EndpointConfig& config, size_t period) {
+    if (!period) throw std::invalid_argument("staticAccessCycles needs a period");
+    const size_t margin = circuit::dflipflop_timing::setup() + 2 * timing::leafDelay(timing::Leaf::And);
+    const size_t needed = staticAccessTime(width, technology, config) + margin;
+    return std::clamp<size_t>((needed + period - 1) / period, 1, 255);
+}
 size_t staticAccessTime(size_t width, Technology technology, const EndpointConfig& config) {
     const auto& memory = timing::activeTimingProfile().memory;
     const size_t gate = timing::leafDelay(timing::Leaf::And);
@@ -362,7 +381,7 @@ public:
         if (wl_ && !wl) closed_[control_.row] = t;
         if (precharge) std::fill(buffer_.begin(), buffer_.end(), X);
         wl_ = wl; sense_ = sense; write_ = write;
-        outputs["BUSY"] = {control_.busy ? H : L};
+        outputs["BUSY"] = {control_.busyShown() ? H : L};
         outputs["ERROR"] = {control_.error ? H : L};
         outputs["READ_VALID"] = {control_.valid ? H : L};
         outputs["ROW_OPEN"] = {control_.open ? H : L};
@@ -389,7 +408,7 @@ public:
                 storage.writeLogic(t, word * (width_ / 8), Bits(width_, H), true);
         }
         program_ = program; erase_ = erase;
-        outputs["BUSY"] = {control_.busy ? H : L};
+        outputs["BUSY"] = {control_.busyShown() ? H : L};
         outputs["ERROR"] = {control_.error ? H : L};
         outputs["READ_VALID"] = {control_.valid ? H : L};
         outputs["WRITE_ENABLED"] = {control_.wel ? H : L};

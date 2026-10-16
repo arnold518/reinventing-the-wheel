@@ -4,6 +4,7 @@
 #include <deque>
 #include <functional>
 #include <memory>
+#include <optional>
 
 namespace circuit::memory {
 using namespace memory_device;
@@ -76,10 +77,13 @@ public:
               const std::function<Bits(const std::string&, size_t)>& read, bool finish = false);
     // The device clock follows the controller clock with no delay.
     void clock(LogicValue level) { if (command_) outputs["CLK"] = {level}; }
+    // The command sequencer shows its next command combinationally from the
+    // device's (registered) outputs: recompute the pins from them.
+    void present(const std::function<Bits(const std::string&, size_t)>& read) { if (command_) commandPins(read); }
     size_t deadline() const { return 0; }
     const char* phaseName() const {
         if (!command_) return access_ ? "static-access" : "idle";
-        return issuing_ ? "command-issue" : waiting_ ? "command-wait" : "idle";
+        return presenting_ ? "command-issue" : waiting_ ? "command-wait" : "idle";
     }
     bool maintenanceActive() const { return refreshing_ && active_; }
     bool done = false, available = true;
@@ -92,13 +96,13 @@ private:
     EndpointConfig config_;
     bool command_;
     Bits word_reg_, data_reg_, mask_reg_;
-    // Static sequencer: ACCESS, IS_WRITE and the two synchronizer stages.
+    // Static sequencer: ACCESS, IS_WRITE and the wait counter.
     bool access_ = false, writing_ = false;
-    LogicValue sync1_ = L, sync2_ = L;
+    size_t wait_count_ = 0;
     // Command sequencer: sequence bits, the pending steps (DRAM: PRECHARGE,
     // ACTIVATE, ACCESS, REFRESH; NOR: WREN, OPERATION), the current command
     // code, the operation kind, open-row knowledge and refresh state.
-    bool active_ = false, issuing_ = false, waiting_ = false;
+    bool active_ = false, waiting_ = false, presenting_ = false;
     bool is_write_ = false, is_program_ = false, is_erase_ = false;
     std::vector<bool> needs_;
     unsigned current_ = 0;
@@ -110,7 +114,10 @@ private:
     void stepCommand(bool clock_edge, bool reset, bool start, const Request&,
                      const std::function<Bits(const std::string&, size_t)>& read, bool finish);
     void staticPins();
-    void commandPins();
+    void commandPins(const std::function<Bits(const std::string&, size_t)>& read);
+    // The shown step this cycle (an index into the pending steps), if any.
+    std::optional<size_t> shownStep(const std::function<Bits(const std::string&, size_t)>& read) const;
+    unsigned stepCode(size_t step) const;
 };
 
 class DeviceModel {

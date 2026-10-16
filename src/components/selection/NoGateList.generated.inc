@@ -19,18 +19,6 @@
 "memory.nor-flash.endpoint.32", // more than one clock, or a part that times itself
 "memory.nor-flash.endpoint.8", // more than one clock, or a part that times itself
 "memory.nor-flash.row", // more than one clock, or a part that times itself
-"memory.rom.controller.16", // stored state that is not a plain flip-flop
-"memory.rom.controller.32", // stored state that is not a plain flip-flop
-"memory.rom.controller.8", // stored state that is not a plain flip-flop
-"memory.rom.endpoint.16", // stored state that is not a plain flip-flop
-"memory.rom.endpoint.32", // stored state that is not a plain flip-flop
-"memory.rom.endpoint.8", // stored state that is not a plain flip-flop
-"memory.sram.controller.16", // stored state that is not a plain flip-flop
-"memory.sram.controller.32", // stored state that is not a plain flip-flop
-"memory.sram.controller.8", // stored state that is not a plain flip-flop
-"memory.sram.endpoint.16", // stored state that is not a plain flip-flop
-"memory.sram.endpoint.32", // stored state that is not a plain flip-flop
-"memory.sram.endpoint.8", // stored state that is not a plain flip-flop
 "rv32i.core.baseline-pipeline", // 105121 gate nodes
 "rv32i.core.educational-five-stage", // 121327 gate nodes
 "rv32i.core.educational-single-cycle", // 82765 gate nodes
