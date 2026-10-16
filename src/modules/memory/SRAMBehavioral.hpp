@@ -4,6 +4,7 @@
 #include "components/capabilities/MemoryStateView.hpp"
 #include "MemoryRestartTiming.hpp"
 #include "components/TimingProfile.hpp"
+#include "modules/memory/MemoryTimingParts.hpp"
 
 namespace circuit::sram {
 inline LogicValue writeCell(LogicValue q, LogicValue wl, LogicValue drive, LogicValue bl, LogicValue bar) {
@@ -116,7 +117,7 @@ public:
             current_ = now;
             const auto& timing = circuit::timing::activeTimingProfile().memory;
             const size_t gate = circuit::timing::leafDelay(circuit::timing::Leaf::And);
-            const size_t full = timing.sram_settle + timing.sram_precharge + timing.sramBitline(config_.rows()) + 12 * gate;
+            const size_t full = circuit::memory::memoryTimerSettle(timing.sram_settle, 34 + W + W / 8, true) + timing.sram_precharge + timing.sramBitline(config_.rows()) + 12 * gate;
             // The arcs proven for this operation (WE_N), when it is known.
             // While WE_N itself changes the operation is in transition: the
             // table's overall arcs apply.

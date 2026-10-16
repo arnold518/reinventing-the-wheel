@@ -17,8 +17,9 @@ using namespace circuit;
 using namespace circuit::memory_device;
 namespace {
 void retentionValid(size_t t) {
-    if (t < 1024 || t > 1000000000)
-        throw std::invalid_argument("retention_ticks must be 1024..1000000000");
+    // Up to 1 s at 1 tick = 1 ps (realistic retention is 64 ms).
+    if (t < 1024 || t > 1'000'000'000'000ull)
+        throw std::invalid_argument("retention_ticks must be 1024..10^12");
 }
 void cellPins(IOComponent *s) {
     for (const auto *n : {"WL", "RESTORE", "D"})
@@ -176,25 +177,37 @@ void DRAMCommandControl::buildInternals(ComponentBuilder &b) {
     };
     auto r_act = run(c_act, "ACTIVATE"), r_rd = run(c_rd, "READ"), r_wr = run(c_wr, "WRITE"),
          r_pre = run(c_pre, "PRECHARGE"), r_ref = run(c_ref, "REFRESH");
-    auto chain = [&](const std::string &name, PinPtr go, std::vector<size_t> intervals) {
+    // A step: its interval, then gates that copy a path it must outlast.
+    struct Step { size_t interval, replica = 0; };
+    auto chain = [&](const std::string &name, PinPtr go, std::vector<Step> steps) {
         std::vector<PinPtr> stages;
         auto previous = go;
-        for (size_t k = 0; k < intervals.size(); ++k) {
+        for (size_t k = 0; k < steps.size(); ++k) {
             const auto n = name + "_" + std::to_string(k + 1);
-            auto line = b.addNewComponent<memory::MemoryDelayLine>("STEP_" + n, intervals[k], timing::leafDelay(timing::Leaf::And));
+            auto line = b.addNewComponent<memory::MemoryDelayLine>("STEP_" + n, steps[k].interval, timing::leafDelay(timing::Leaf::And));
             w.connect(previous, line->getInputPin("IN"));
             previous = w.both("STAGE_" + n, line->getOutputPin("OUT"), go);
+            for (size_t g = 0; g < steps[k].replica; ++g)
+                previous = w.both("STAGE_" + n + "_REPLICA_" + std::to_string(g), previous, go);
             stages.push_back(previous);
         }
         return stages;
     };
     const size_t rows = config_.rows();
-    auto a = chain("ACTIVATE", r_act, {memory.dram_wordline, memory.dramSense(rows), memory.dram_restore});
-    auto r = chain("READ", r_rd, {memory.dram_read});
-    auto wv = chain("WRITE", r_wr, {memory.dram_write_on, memory.dram_write_off, memory.dram_write_recovery});
-    auto p = chain("PRECHARGE", r_pre, {memory.dram_close, memory.dram_precharge, memory.dram_equalize});
-    auto f = chain("REFRESH", r_ref, {memory.dram_wordline, memory.dramSense(rows), memory.dram_close, memory.dram_precharge,
-                                      memory.dram_equalize});
+    // Sensing starts once the wordline has risen through the row decoder and
+    // the cells' samples have reached the sense columns; precharge starts
+    // once the wordline has fallen through the decoder (dramDecodeReplica).
+    // The wordline follows the first ACTIVATE step and sensing the second, so
+    // the second carries the decoder replica and the cell's delay; the
+    // wordline falls after the close step and precharge follows the next.
+    const auto sense_step = Step{memory.dramSense(rows) + timing::leafDelay(timing::Leaf::MemoryPrimitive), memory_detail::dramDecodeReplica(rows)};
+    const auto precharge_step = Step{memory.dram_precharge, memory_detail::dramDecodeReplica(rows)};
+    auto a = chain("ACTIVATE", r_act, {{memory.dram_wordline}, sense_step, {memory.dram_restore}});
+    auto r = chain("READ", r_rd, {{memory.dram_read}});
+    auto wv = chain("WRITE", r_wr, {{memory.dram_write_on}, {memory.dram_write_off}, {memory.dram_write_recovery}});
+    auto p = chain("PRECHARGE", r_pre, {{memory.dram_close}, precharge_step, {memory.dram_equalize}});
+    auto f = chain("REFRESH", r_ref, {{memory.dram_wordline}, sense_step, {memory.dram_close}, precharge_step,
+                                      {memory.dram_equalize}});
     auto done_async = w.reduce("CHAIN_DONE", {a.back(), r.back(), wv.back(), p.back(), f.back()}, false);
     auto sampler = b.addNewComponent<memory::Synchronizer>("DONE_SAMPLER", 1);
     w.connect(getInputPin("CLK"), sampler->getInputPin("CLK"));
@@ -440,7 +453,10 @@ class DRAMBehavioral : public Primitive, public MemoryDeviceStorage {
             buffer_ = t - closed >= config_.retention_ticks
                           ? Bits(buffer_.size(), X)
                           : storage_.readLogic(start, buffer_.size() / 8);
-            storage_.writeLogic(t, start, Bits(buffer_.size(), X));
+            // The read is destructive in the cells, but sensing always
+            // restores the row before the wordline closes: the row buffer
+            // carries the open row and storage keeps the row's logical
+            // contents (an expired row becomes X when it is restored).
         }
         if (!sense_ && sense)
             storage_.writeLogic(t, start, buffer_);
@@ -501,7 +517,7 @@ DRAMDeviceConfig dramConfigFromParameters(const ParameterMap &p) {
     DRAMDeviceConfig c;
     readGeometry(p, c);
     c.phase_ticks = parameter(p, "phase_ticks", 32);
-    c.retention_ticks = parameter(p, "retention_ticks", 100000);
+    c.retention_ticks = parameter(p, "retention_ticks", timing::activeTimingProfile().memory.dram_device_retention);
     return c;
 }
 ParameterMap dramParameters(const DRAMDeviceConfig &c) {
@@ -692,7 +708,7 @@ void DRAMDevice::buildInternals(ComponentBuilder &b) {
 void registerDRAMComponents(ComponentCatalog &c) {
     auto retention = [](const ParameterMap &p) {
         keys(p, {"retention_ticks"});
-        auto t = parameter(p, "retention_ticks", 100000);
+        auto t = parameter(p, "retention_ticks", timing::activeTimingProfile().memory.dram_device_retention);
         retentionValid(t);
         return t;
     };
@@ -708,7 +724,7 @@ void registerDRAMComponents(ComponentCatalog &c) {
         {}, "DRAMCellTest", true);
     auto row = [](const ParameterMap &p) {
         keys(p, {"columns", "retention_ticks"});
-        return std::pair{parameter(p, "columns", 4), parameter(p, "retention_ticks", 100000)};
+        return std::pair{parameter(p, "columns", 4), parameter(p, "retention_ticks", timing::activeTimingProfile().memory.dram_device_retention)};
     };
     registerBlock(
         c, "memory.dram.row", "DRAMRow",

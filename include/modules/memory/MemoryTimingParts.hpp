@@ -117,6 +117,16 @@ struct MemoryTimerStage {
     size_t delay_ticks = 0;  // a delay line first, 0 for none
     size_t replica_gates = 1; // then this many AND gates (at least one)
 };
+// The settle interval a MemoryTimer actually uses. An input's change is seen
+// as a pulse as long as the settle line (input against its held copy), and
+// the held copy must not change before that pulse has reset the stages. The
+// line is therefore at least the detection path (change detector, the
+// condition gate if any, the OR tree, STEADY, STARTED and a stage's reset
+// gate) plus one gate, like an address-transition detector sized against its
+// own logic; below that the configured value would lose changes under
+// inertial delay or let held inputs reach a still-running access.
+size_t memoryTimerSettle(size_t configured, size_t inputs, bool conditional);
+
 class MemoryTimer : public IOComponent {
 public:
     // Inputs from `conditional_from` on restart the access only while the

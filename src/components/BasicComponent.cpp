@@ -284,6 +284,10 @@ size_t BasicComponent::publishTime(const std::string& output_pin, size_t current
     const bool value_changes = value != t.published[out];
     // Never later than the table, earlier wherever the data cuts a path short.
     bool by_gates = t.twin && t.fresh && t.twin_answered && t.settled[out] >= 0 && t.twin_value[out].size() == value.size();
+    // Gates that settled before now cannot explain a change made now: the
+    // gate list's state has drifted from the part's (after X or Z inputs);
+    // the table times the change instead.
+    if (value_changes && t.settled[out] <= static_cast<long long>(current_sim_time) && !t.worst.empty() && t.worst[out] > 0) by_gates = false;
     for (size_t bit = 0; by_gates && bit < value.size(); ++bit) {
         const uint8_t level = value[bit] == LogicValue::LOW ? 0 : value[bit] == LogicValue::HIGH ? 1 : 2;
         // 3: a bit the gate list times without knowing its value.

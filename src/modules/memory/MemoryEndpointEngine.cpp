@@ -5,6 +5,7 @@
 #include "modules/memory/NativeMemoryDevice.hpp"
 #include "DRAMSyncControl.hpp"
 #include "NORSyncControl.hpp"
+#include "modules/memory/MemoryTimingParts.hpp"
 #include <algorithm>
 
 namespace circuit::memory {
@@ -255,8 +256,8 @@ size_t staticAccessTime(size_t width, Technology technology, const EndpointConfi
     const auto device = nativeDeviceRequest(width, technology, config);
     const size_t rows = config.depth_words / config.words_per_row;
     const size_t device_fallback = technology == Technology::SRAM
-        ? memory.sram_settle + memory.sram_precharge + memory.sramBitline(rows) + 12 * gate
-        : memory.rom_settle + memory.romColumn(rows) + 8 * gate;
+        ? memoryTimerSettle(memory.sram_settle, 34 + width + width / 8, true) + memory.sram_precharge + memory.sramBitline(rows) + 12 * gate
+        : memoryTimerSettle(memory.rom_settle, 33, false) + memory.romColumn(rows) + 8 * gate;
     const size_t controller = provenMaximum(memoryContractId(technology, "controller", width) + ".behavioral",
                                             endpointParameters(config), "MEM_CE_N", flop + gate);
     return controller + provenMaximum(device.contract_id + ".behavioral", device.parameters, "READY", device_fallback);
@@ -350,8 +351,8 @@ public:
         const auto start = uint32_t(control_.row * config_.words_per_row * (width_ / 8));
         if (!wl_ && wl) {
             auto it = closed_.find(control_.row); size_t closed = it == closed_.end() ? 0 : it->second;
+            // Storage keeps the logical row while it is open (DRAMBehavioral).
             buffer_ = t - closed >= config_.retention_ticks ? Bits(buffer_.size(), X) : storage.readLogic(start, buffer_.size() / 8);
-            storage.writeLogic(t, start, Bits(buffer_.size(), X));
         }
         if (!sense_ && sense) storage.writeLogic(t, start, buffer_);
         if (!write_ && write) {

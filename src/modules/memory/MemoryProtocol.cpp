@@ -36,7 +36,7 @@ void EndpointConfig::validate(size_t width, Technology t, bool expanded_cells) c
     if (t == Technology::DRAM) {
         const uint64_t refresh_service = 5 * phase_ticks + 4 * guard_ticks;
         const uint64_t access_guard = 9 * phase_ticks + 12 * guard_ticks;
-        if (retention_ticks < 1024 || retention_ticks > 1000000000 ||
+        if (retention_ticks < 1024 || retention_ticks > 1'000'000'000'000ull ||
             (refresh_interval_ticks && (refresh_interval_ticks <= refresh_service ||
              uint64_t(depth_words / words_per_row) * (refresh_interval_ticks + access_guard) + access_guard >= retention_ticks)))
             throw std::invalid_argument("DRAM refresh schedule cannot meet the configured retention deadline");

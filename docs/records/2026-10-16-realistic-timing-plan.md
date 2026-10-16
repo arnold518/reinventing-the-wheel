@@ -425,3 +425,68 @@ tables verified against the gates, oracle-checked CPU runs (gate-level and
 compact) at certified clocks, and a `DelayRuleTest` sample, instead of every
 scenario test, whose clock phases are hard-coded in ticks. Timed memories are
 excluded under realistic profiles until phases 4–6.
+
+## 2026-10-16 — Datasheet values read from the primary PDFs (for phase 6)
+
+Read with `pdftotext` from the manufacturer documents on this date (copies
+kept only in the session scratch area). These replace the summary-table
+values of "Reference sources for calibration" where they differ.
+
+| Device | Document | Values |
+| --- | --- | --- |
+| SDR SDRAM, `embedded` | Micron 256Mb SDRAM MT48LC16M16A2, Rev. M 1/09, Table 19 (-6A) | tCK(3) 6 ns, CL 3 (18 ns), tAC(3) 5.4 ns, tRCD 18 ns, tRP 18 ns, tRAS 42 ns min, tRC 60 ns, tRFC 60 ns, tWR 1 CLK + 6 ns (12 ns), tREF 64 ms for 8,192 rows (7.8 µs per row, derived). x16 bank: 8,192 rows × 512 columns × 16 bits |
+| NOR flash | Infineon GL-S MirrorBit S29GL01GS/512S/256S/128S, **military-temperature edition** (−55 °C to +125 °C), Table 16 and Table 57 | 256 Mb: tACC 120 ns, tCE 120 ns, tOE 25 ns, tPACC 15 ns (full VCC = VIO). Single-word program 150 µs typ / 400 µs max; 512-byte buffer program 420 µs typ / 1,050 µs max (1.64 µs per word effective); 128 KB sector erase 410 ms typ / 1,100 ms max |
+| Asynchronous SRAM | Infineon/Cypress CY7C1069G/GE, doc 001-81539 Rev. *I (G family; the GN listing is the same 10 ns grade) | tRC 10 ns, tAA 10 ns, tACE 10 ns, tDOE 5 ns, tWC 10 ns, tSCE 7 ns, tAW 7 ns, tPWE 7 ns, tSD 5 ns |
+
+Not yet read: the DDR4 MT40A1G8 table for `desktop`, and the STM32F7 latency
+table. The NOR program and erase times are 10^8 to 10^11 ps: simulating them
+literally would cost about 30,000 to 85 million clock cycles per operation at
+the `embedded` clock. Phase 6 must decide how program/erase are treated
+(literal with explicit budgets, or a labeled time scale), and
+`program_ticks`/`erase_ticks` limits must widen if literal.
+
+## 2026-10-16 — Plan check after phase 4 (assistant decisions)
+
+Observations from phase 4 (see the progress log) and what they change:
+
+1. **External devices do not scale with the modeled depth.** The placeholder
+   per-row terms (sense, read column, bitline) made a 64 Ki-word experiment
+   memory (32,768 rows at two words per row) take about 100 ns per DRAM
+   activate and NOR read, tripling cycles. A real SDRAM, NOR flash or
+   asynchronous SRAM chip has a fixed internal geometry; its datasheet times
+   do not depend on how many words a program uses. **Decision:** for the
+   external technologies (DRAM, NOR flash, and SRAM when it models an external
+   chip) the realistic intervals are absolute values calibrated so the
+   device's command timings equal the datasheet (per-row terms 0 in the
+   realistic profiles). Geometry scaling (subarrays plus global wiring,
+   decision 8) applies to **on-chip** arrays: SRAM used as cache tag/data
+   banks and on-chip ROM. This narrows phase 5's structural multi-subarray
+   work to on-chip SRAM, which is what the cache experiment needs.
+2. **Device completion must follow data.** SRAM READY rises before the sense
+   and output path (210 ps at `embedded`). Phase 5 extends the READY replica
+   over that path, because phase 7 drives cache banks directly.
+3. **Unequal delays find real races.** Three races hid under `unit`
+   (change-detector pulse, DRAM sense vs wordline, DRAM precharge vs
+   wordline). From now on each structural change is checked under `embedded`
+   as well as `unit` before it is accepted.
+4. **NOR program and erase are 10^8–10^11 ps.** **Decision:** keep them
+   literal in the profile (150 µs program, 410 ms erase from the cited
+   datasheet), widen `program_ticks`/`erase_ticks` limits accordingly, and
+   give experiments that program or erase explicit cycle budgets. No hidden
+   time scale. CPU workloads only read NOR, so the panels are unaffected.
+5. **Command protocol cost.** Each DRAM/NOR command costs about five clock
+   edges in this device design. Accepted as the model's protocol cost; the
+   calibration targets the analog times, and results report cycles and
+   modeled time separately.
+6. **Delay twins can drift after X/Z.** A gate list that claimed an output
+   settled before the change was published made a compact controller answer
+   0 ticks after a clock edge. Fixed generally: such a contradiction falls
+   back to the proven table (never earlier than the gates).
+
+Revised phases 5–6 (replace the corresponding rows of the consolidated
+table):
+
+| Phase | Work | Acceptance gate |
+| --- | --- | --- |
+| 5. On-chip geometry and completion | READY replica over sense and output; structural multi-subarray on-chip SRAM (subarrays of at most 64 rows plus a global wire leaf); size formula fitted on 1, 2 and 4 subarrays and checked on a held-out 8; scalable on-chip SRAM uses it | Structural and compact agree at every structural size; held-out size within ±10 % of the formula; access grows with size; checks pass under `unit` and `embedded` |
+| 6. Calibration | Realistic intervals from the PDF-checked tables (SDRAM tRCD/CL/tRP/tRAS/tWR/tREF, NOR tACC/program/erase, SRAM tAA/tWC) with per-row terms 0 for external devices; on-chip SRAM against CACTI 6.5 trends; refresh interval 7.8 µs in cycles at the certified clock | Each external parameter within ±10 % of its datasheet; on-chip within ±20 % of CACTI; SRAM < DRAM ≤ NOR read order holds |

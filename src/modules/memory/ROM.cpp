@@ -204,7 +204,7 @@ class ROMBehavioral : public Primitive, public MemoryDeviceStorage {
             address_ = a; ce_ = ce; oe_ = oe;
             const auto &timing = timing::activeTimingProfile().memory;
             const size_t gate = timing::leafDelay(timing::Leaf::And);
-            const size_t full = timing.rom_settle + timing.romColumn(config_.rows()) + 8 * gate;
+            const size_t full = memory::memoryTimerSettle(timing.rom_settle, 33, false) + timing.romColumn(config_.rows()) + 8 * gate;
             if (restart) {
                 auto bounds = memory_detail::arcBounds(getDelays(), changed, "READY", {gate, full});
                 bounds.minimum = memory_detail::safeEarliest(getDelays(), changed, "READY", gate);

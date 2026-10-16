@@ -62,6 +62,9 @@ struct TimingProfile {
         // NOR flash: the read column's sensing time (base and per row) and the
         // two steps after a program/erase pulse.
         size_t nor_read = 96, nor_read_per_row = 0, nor_pulse_end = 32, nor_recovery = 32;
+        // DRAM cell retention defaults: the device's (ticks a row keeps its
+        // charge unrefreshed) and the scalable endpoint's.
+        size_t dram_device_retention = 100000, dram_endpoint_retention = 1000000000;
         size_t norRead(size_t rows) const { return nor_read + nor_read_per_row * rows; }
         size_t dramSense(size_t rows) const { return dram_sense_base + dram_sense_per_row * rows; }
         size_t sramBitline(size_t rows) const { return sram_bitline_base + sram_bitline_per_row * rows; }

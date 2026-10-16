@@ -7,6 +7,26 @@ history remains in Git and the archived reports.
 
 ## 2026-10-16
 
+### Memory timing under realistic profiles (branch `realistic-timing`, phase 4.4)
+
+- **Changed:** the SRAM/ROM timer's settle line is sized from its own
+  change-detection path (`memoryTimerSettle`); DRAM sense and precharge steps
+  wait for a row-decoder replica (`dramDecodeReplica`) in the gates and the
+  cycle-exact copy; compact and fused DRAM models keep storage as the row's
+  logical contents while a row is open; DRAM retention defaults are timing
+  profile values (64 ms in the realistic profiles, `unit` unchanged) with the
+  limit widened to 10^12 ticks; a compact part whose gate list contradicts a
+  change is timed by its table; delay tables regenerated for all profiles.
+- **Why:** the realistic profiles exposed races hidden by one-tick gates
+  (lost change pulse, sensing before the wordline, precharge before the
+  wordline close) and a 100 ns retention left over from tick-era defaults.
+- **Verified:** tables at a fixed point and `--verify` identical for all three
+  profiles; 18 memory scenarios each under `embedded` and `desktop` and the
+  affected `unit` scenarios pass; full `DelayRuleTest` passes; 54
+  oracle-verified CPU runs (five memories, three profiles).
+- **Limits:** realistic memory intervals are placeholders until phase 6;
+  tick-driven timing tests remain `unit` tests; no full suite.
+
 ### Gate-level memory control and self-timed memory devices (branch `realistic-timing`, phase 4.1–4.3)
 
 - **Changed:** the memory controllers' sequencing is now gates. SRAM and ROM

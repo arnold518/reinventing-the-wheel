@@ -56,6 +56,8 @@ const std::vector<TimingProfile>& profiles() {
                 *interval = ps(4.0);
             profile.memory.dram_sense_per_row = ps(0.1);
             profile.memory.nor_read_per_row = ps(0.1);
+            // 64 ms (8,192 rows per refresh period, Micron MT48LC16M16A2 tREF).
+            profile.memory.dram_device_retention = profile.memory.dram_endpoint_retention = 64'000'000'000ull;
             profile.sources = node_source + "; gate multiples: Harris et al. 1997 FO4 metric paper and logical effort";
             return profile;
         };

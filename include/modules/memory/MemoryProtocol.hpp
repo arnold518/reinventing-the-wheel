@@ -17,7 +17,7 @@ struct EndpointConfig {
     size_t depth_words = 4, words_per_row = 2, block_words = 2;
     size_t phase_ticks = 32, guard_ticks = 64;
     size_t program_ticks = 128, erase_ticks = 256;
-    size_t retention_ticks = 1000000000, refresh_interval_ticks = 10000;
+    size_t retention_ticks = timing::activeTimingProfile().memory.dram_endpoint_retention, refresh_interval_ticks = 10000;
     // The gate-level DRAM controller counts clock cycles between refreshes;
     // 0 disables refresh.
     size_t refresh_interval_cycles = 96;

@@ -13,7 +13,7 @@ any plan changes the assistant made. The public site (`site-docs/`) is
 deliberately not updated until the owner allows it; records, status and the
 changelog are kept current as usual (owner clarification, 2026-10-16).
 
-Current phase: 4 (gate-level memory control).
+Current phase: 5 (on-chip geometry and completion; phases 1–4 done).
 
 ## 2026-10-16 — Phase 0: baseline
 
@@ -537,3 +537,132 @@ banks, command controls and devices; device contract and timing; native
 device and contract; controller; all five endpoints, scalable endpoint,
 endpoint contract and timing; helper contract; `CacheReadTest` and the four
 cache scenarios.
+
+## 2026-10-16 — Phase 4.4: realistic profiles (in progress)
+
+Phase 4.3 was committed as `7bdb4fd`. Step 4.4 regenerated the `embedded`
+and `desktop` tables (only memory parts changed, 429 entries each; fixed point
+in one step) and ran the timed-memory CPU panel and the memory scenarios
+under all three profiles.
+
+**First panel (before the fixes below).** All `unit` runs and all FF, SRAM,
+ROM and NOR runs under `embedded`/`desktop` completed and verified. Two DRAM
+runs (embedded program 20, desktop program 22) stopped with "Cannot read
+unknown memory byte": the experiment's final memory readout landed while a
+row was open. The DRAM models wrote X into storage while a row was open
+(the cells' destructive read) until sensing restored it, and with realistic
+sensing of a 32,768-row array (the placeholder's per-row term, about 100 ns)
+that window is long. Since sensing always restores the row before the
+wordline closes, the compact and fused DRAM models now keep storage as the
+row's logical contents and carry the open row only in the row buffer (an
+expired row still becomes X when it is restored). Both runs then verified;
+DRAM tests passed again under `unit`.
+
+**Memory scenarios under the realistic profiles** found two real design
+faults in the gate-level devices (the `unit` profile hid both because every
+gate takes one tick):
+
+1. *SRAM change detection lost its pulse.* The timer sees an input change as
+   the XOR of the input and its settle-delayed copy, a pulse as long as the
+   settle line. The placeholder settle (3 FO4, 90 ps) was shorter than the
+   XOR (120 ps), so inertial delay swallowed the pulse and a read after a
+   write never restarted the access (probe: READY and ROW_ENABLE stayed high,
+   READ_DATA X). The held inputs must also not change before the pulse has
+   reset the stages. Fix: `memoryTimerSettle` sizes the settle line to at
+   least the detection path (XOR, condition AND, OR tree, STEADY, STARTED,
+   stage reset gate), as an address-transition detector is sized against its
+   own logic; `unit` is unchanged (path 11–12 ticks < 32).
+2. *DRAM sensing raced the wordline.* The wordline reaches the cells through
+   the row decoder while SENSE and PRECHARGE go to the bank directly. With
+   three rows the decoder is three ANDs (150 ps), which tied the sense
+   step, so a reopened row was sensed before its samples arrived and read X
+   (16-bit oracle and endpoint scenarios). Fix: the sense step and the
+   precharge-after-close step carry a decoder replica
+   (`dramDecodeReplica`: enable AND, AND tree, one gate margin) and the
+   sense step also the cell's delay; the cycle-exact copy follows. This
+   changes DRAM timing under `unit` slightly.
+
+**Observation kept for phase 5/7.** SRAM READY rises at the last timer stage,
+before the sense amplifier and output buffer have produced the data (about
+210 ps at `embedded`, a few ticks at `unit`). The controller's synchronizer
+and `ProtocolStableData` cover it, but a cache bank driven directly
+(phase 7) needs READY after data; the READY replica must then include the
+sense and output path.
+
+**Tests that drive fixed tick times** (`MemoryDeviceTimingTest`,
+`MemoryEndpointTimingTest`, `CacheReadTest` with 100-tick half-cycles) fail
+under realistic profiles as expected; they stay `unit` tests under the phase
+3 rule until their periods are derived from the profile (phase 8 bookkeeping).
+
+**State at pause (2026-10-16, uncommitted on top of `7bdb4fd`).** Done since
+the section above: the timer settle and DRAM decoder-replica fixes; DRAM
+retention became a profile value (`dram_device_retention`,
+`dram_endpoint_retention`: `unit` 100,000 and 10^9 ticks as before;
+realistic 64 ms per the Micron tREF) with the limit widened to 10^12 ticks;
+all three table files regenerated to a fixed point and verified identical
+(before the retention change, which does not affect timing). Checks on that
+state: 30 `unit` memory/cache scenarios passed; under `embedded` and
+`desktop` all realistic memory scenarios passed except the DRAM 16-bit mask
+oracle, which failed on the old 100 ns retention (the reason for the
+retention change; not yet rerun). Open before committing 4.4:
+1. `DelayRuleTest` at `unit` reports 2 rule breaks: compact
+   `memory.nor-flash.controller.8/16` change REQ_READY 0 ticks after a clock
+   edge where the gates take 7. Not yet investigated (likely the compact
+   controller's handshake timing after the regenerated tables).
+   `memory.sram.controller.16` is below target with no floor; the ROM
+   controller floors can be removed.
+2. Rerun the realistic memory scenarios and the CPU panel under all profiles
+   on the current build.
+3. Then commit, update STATUS and CHANGELOG, and do the plan check before
+   phase 5/6.
+
+## 2026-10-16 — Phase 4.4 results and acceptance
+
+**NOR controller delay-rule break, resolved.** The gate-level DRAM/NOR
+controllers have gate lists (delay twins) since 4.3 (the regenerated
+gate-list file dropped them). For the NOR controllers at 8/16 bits the twin,
+after X or Z inputs in the rule's samples, claimed REQ_READY had settled
+before the edge at which the compact part changed it, so the compact part
+published 0 ticks after the clock where the gates take 7. Fix in
+`BasicComponent::publishTime`: a change that the gate list says settled
+before now is timed by the table instead (never earlier than the gates).
+Floors: `memory.sram.controller.16` recorded (worst share 86 %, LAUNCH),
+`memory.rom.controller.8` removed (meets the targets).
+
+**Checks on the final 4.4 state (all passed):**
+- `unit`: DRAMTest, MemoryDeviceContractTest, MemoryEndpointDRAMTest,
+  MemoryEndpointTimingTest, MemoryDeviceTimingTest,
+  NativeMemoryDeviceContractTest, CacheReadTest (the other 23 focused unit
+  memory/cache scenarios passed earlier on the same timing; the retention and
+  twin changes do not alter `unit` behavior of those parts).
+- `embedded` and `desktop`, 18 memory scenarios each: SRAM, SRAM access
+  control, ROM, ROM address control, DRAM, DRAM command control, NOR, NOR
+  command control, device contract (including the 16-bit DRAM and NOR mask
+  oracles), native device and contract, controller, the four timed
+  endpoints, scalable endpoint, endpoint contract.
+- `DelayRuleTest` over every part (default run): 0 rule breaks, 0 parts below
+  target without a recorded exception, 6 with one.
+- Tables: all three profiles at a fixed point, `--verify` identical.
+
+**CPU panel (advanced core, two-bit, oracle-verified, period = certified
+safe clock rounded to even):**
+
+| Memory | `unit` (ticks) p19/20/21/22 cycles | `embedded` (ps) | `desktop` (ps) |
+| --- | --- | --- | --- |
+| FF | 100: 103/61/110/79 | 4508: 103/61/110/79 | 3140: 103/61/110/79 |
+| SRAM | 102: 472/381/612/459 | 4608: 405/327/525/395 | 3210: 405/327/525/395 |
+| DRAM | 106: 1086/868/1375/1108 | 4808: 3139/2219/3721/2817 | 3348: 3110/2046/3449/2704 |
+| ROM | 102: 472/381/612/— | 4608: 405/327/525/— | 3210: 405/327/525/— |
+| NOR | 104: 604/436/732/— | 4726: 1877/1462/2385/— | 3290: 1877/1462/2385/— |
+
+All 54 runs completed and verified. The realistic DRAM and NOR numbers use
+placeholder intervals with a per-row term over 32,768 rows (about 100 ns per
+activate or read) and are not physical results; per the plan check after
+phase 4 the external devices get absolute datasheet timing in phase 6.
+
+**Phase 4 acceptance.** Memory contract, timing and endpoint tests pass on
+all profiles (tick-driven timing tests on `unit`, per the phase 3 rule); the
+self-timed delay-rule exceptions of the old C++ controllers are gone (the
+remaining LAUNCH floors are documented clocked-interface shares). Phase 4 is
+complete. Next: phase 5 as revised in the plan record (READY after data,
+structural multi-subarray on-chip SRAM and its size formula).

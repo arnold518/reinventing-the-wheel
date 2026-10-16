@@ -18,6 +18,16 @@ namespace circuit::memory_detail {
 // updates the open row, READ_VALID and the refresh row and releases BUSY one
 // edge later. The worst-case clock-to-output of the flip-flop is used, so no
 // step is ever earlier than in the gates.
+// Gates a DRAM step copies so that it outlasts the row decoder (ROW_ENABLE
+// to a wordline, MatrixRowDecoder): the enable AND, the AND tree over the
+// enable and the row bits, and one gate of margin for the control's own
+// wordline and sense formulas.
+inline size_t dramDecodeReplica(size_t rows) {
+    size_t row_bits = 0; while ((size_t{1} << row_bits) < rows) ++row_bits;
+    size_t tree = 0; while ((size_t{1} << tree) < row_bits + 1) ++tree;
+    return 1 + tree + 1;
+}
+
 class DRAMSyncControl {
 public:
     enum Command : unsigned { None = 0, Activate = 1, Read = 2, Write = 3, Precharge = 4, Refresh = 5 };
@@ -34,11 +44,15 @@ public:
             for (auto i : intervals) { sum += i + gate; at.push_back(sum); }
             return at;
         };
-        stages_[Activate] = steps({m.dram_wordline, m.dramSense(rows), m.dram_restore});
+        // The sense and precharge steps carry the decoder replica (DRAM.cpp).
+        const size_t replica = dramDecodeReplica(rows) * gate;
+        const size_t sense = m.dramSense(rows) + timing::leafDelay(timing::Leaf::MemoryPrimitive) + replica;
+        const size_t precharge = m.dram_precharge + replica;
+        stages_[Activate] = steps({m.dram_wordline, sense, m.dram_restore});
         stages_[Read] = steps({m.dram_read});
         stages_[Write] = steps({m.dram_write_on, m.dram_write_off, m.dram_write_recovery});
-        stages_[Precharge] = steps({m.dram_close, m.dram_precharge, m.dram_equalize});
-        stages_[Refresh] = steps({m.dram_wordline, m.dramSense(rows), m.dram_close, m.dram_precharge, m.dram_equalize});
+        stages_[Precharge] = steps({m.dram_close, precharge, m.dram_equalize});
+        stages_[Refresh] = steps({m.dram_wordline, sense, m.dram_close, precharge, m.dram_equalize});
     }
 
     // A rising edge at time `t` with the inputs as sampled there.

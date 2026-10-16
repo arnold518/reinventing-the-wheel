@@ -3,7 +3,7 @@
 
 struct DRAMDeviceConfig : circuit::memory_device::Geometry {
     size_t phase_ticks = 32;
-    size_t retention_ticks = 100000;
+    size_t retention_ticks = circuit::timing::activeTimingProfile().memory.dram_device_retention;
     void validate(size_t width, bool expanded = false) const;
 };
 DRAMDeviceConfig dramConfigFromParameters(const circuit::ParameterMap &);
@@ -13,7 +13,7 @@ void registerDRAMComponents(circuit::ComponentCatalog &);
 // Digital charge storage is a primitive, not a flip-flop made to look like DRAM.
 class DRAMCell : public circuit::memory_device::Primitive {
   public:
-    DRAMCell(std::string name, size_t retention_ticks = 100000);
+    DRAMCell(std::string name, size_t retention_ticks = circuit::timing::activeTimingProfile().memory.dram_device_retention);
     void evaluate(size_t, Simulator &) override;
     PrimitiveTiming primitiveTiming() const override { return PrimitiveTiming::SelfTimed; }
 
@@ -24,7 +24,7 @@ class DRAMCell : public circuit::memory_device::Primitive {
 };
 class DRAMRow : public IOComponent {
   public:
-    DRAMRow(std::string name, size_t columns = 4, size_t retention_ticks = 100000);
+    DRAMRow(std::string name, size_t columns = 4, size_t retention_ticks = circuit::timing::activeTimingProfile().memory.dram_device_retention);
     const char *getTypeName() const override { return type_.c_str(); }
     void buildInternals(ComponentBuilder &) override;
 

@@ -108,6 +108,15 @@ void Synchronizer::evaluate(size_t time, Simulator& simulator) {
     _updateOutputWire(simulator, "Q", second_, time);
 }
 
+size_t memoryTimerSettle(size_t configured, size_t inputs, bool conditional) {
+    using circuit::timing::Leaf;
+    using circuit::timing::leafDelay;
+    size_t levels = 0; while ((size_t{1} << levels) < inputs) ++levels;
+    const size_t detection = leafDelay(Leaf::Xor) + (conditional ? leafDelay(Leaf::And) : 0) + levels * leafDelay(Leaf::Or)
+        + leafDelay(Leaf::Not) + 3 * leafDelay(Leaf::And);
+    return std::max(configured, detection);
+}
+
 MemoryTimer::MemoryTimer(std::string name, size_t inputs, size_t settle_ticks, std::vector<MemoryTimerStage> stages,
                          size_t conditional_from)
     : IOComponent(std::move(name), [inputs, count = stages.size(), conditional_from](IOComponent* self) {
@@ -120,8 +129,9 @@ MemoryTimer::MemoryTimer(std::string name, size_t inputs, size_t settle_ticks, s
           }
           for (size_t k = 0; k <= count; ++k) self->addPin("STAGE_" + std::to_string(k), PinType::OUTPUT);
       }),
-      inputs_(inputs), settle_(settle_ticks), conditional_from_(conditional_from), stages_(std::move(stages)) {
-    if (!settle_) throw std::invalid_argument("A memory timer needs a positive settle delay");
+      inputs_(inputs), settle_(memoryTimerSettle(settle_ticks, inputs, conditional_from < inputs)),
+      conditional_from_(conditional_from), stages_(std::move(stages)) {
+    if (!settle_ticks) throw std::invalid_argument("A memory timer needs a positive settle delay");
     for (const auto& stage : stages_)
         if (!stage.replica_gates) throw std::invalid_argument("Every timer stage needs at least one gate");
     type_ = "MemoryTimer<" + std::to_string(inputs_) + "," + std::to_string(stages_.size()) + ">";

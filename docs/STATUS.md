@@ -62,21 +62,20 @@ work state changes. Keep dated decisions and validation results in
 
 - [Realistic leaf delays and gate-level memory control](records/2026-10-16-realistic-timing-plan.md),
   executed on branch `realistic-timing` with a [progress log](records/2026-10-16-realistic-timing-progress.md):
-  phases 1–3 are done. Leaf delays come from a timing profile (`unit`,
-  today's timing and still the default; `embedded` 65 nm and `desktop` 32 nm,
-  1 tick = 1 ps); gates use inertial delay; per-profile delay tables are
-  generated to a fixed point. Under the realistic profiles the cores certify
-  at 140–428 MHz with identical cycles and oracle-checked results. Phase 4
-  (gate-level memory control, merged with device self-timing) has steps
-  4.1–4.3 done under `unit`: SRAM/ROM and DRAM/NOR controllers are gates,
-  the devices time themselves, compact forms are cycle-exact copies, and
-  focused memory tests, the delay rule and oracle-checked CPU runs pass.
-  Cycle counts with timed memories grew (synchronizer, clocked command
-  protocol), so published timed-memory results hold only at tag
-  `timing-legacy`. Open: step 4.4 (memory tables for the realistic profiles,
-  CPU runs under all profiles), calibration, the cache experiment, then the
-  public site and visualizer. `MemoryEndpointIntegrationTest` fails two
-  example checks built from `site-docs/` snippets until that site update.
+  phases 1–4 are done. Leaf delays come from a timing profile (`unit`, the
+  default; `embedded` 65 nm and `desktop` 32 nm, 1 tick = 1 ps) with
+  inertial gate delay and per-profile delay tables at a fixed point. All
+  memory controllers are gates, the devices time themselves, and compact
+  forms are cycle-exact copies; memory scenarios pass under all three
+  profiles, the delay rule passes for every part, and oracle-checked CPU
+  runs complete with every memory under every profile. Realistic memory
+  timings are still placeholders (DRAM/NOR results not physical) until
+  calibration (phase 6). Cycle counts with timed memories differ from the
+  published ones, which hold at tag `timing-legacy`. Next: phase 5 (READY
+  after data, multi-subarray on-chip SRAM), calibration, the cache
+  experiment, then the public site and visualizer.
+  `MemoryEndpointIntegrationTest` fails two example checks built from
+  `site-docs/` snippets until that site update.
 
 - [Future steps plan](records/2026-10-14-future-steps-plan.md): current CPU,
   memory and viewer boundaries assessed against interactive games, a
