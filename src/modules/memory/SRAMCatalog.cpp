@@ -59,15 +59,15 @@ template<class T> ComponentFactory configured() {
         return Component::createWithContext<T>(c, name, sramConfigFromParameters(p));
     };
 }
-template<size_t W> Pins devicePins() {
-    Pins p; in(p, "WORD_ADDR", 32); in(p, "WRITE_DATA", W); in(p, "WRITE_MASK", W / 8);
+template<size_t W> Pins devicePins(bool clocked) {
+    Pins p; if (clocked) in(p, "CLK"); in(p, "WORD_ADDR", 32); in(p, "WRITE_DATA", W); in(p, "WRITE_MASK", W / 8);
     for (const auto* n : {"CE_N", "WE_N", "OE_N"}) in(p, n);
     out(p, "READ_DATA", W); out(p, "READY"); return p;
 }
 template<size_t W> void registerWidth(ComponentCatalog& catalog) {
     const auto suffix = "." + std::to_string(W), typeSuffix = "<" + std::to_string(W) + ">";
     registerBlock(catalog, "device" + suffix, "SRAM" + typeSuffix, [](const ParameterMap& p) {
-        sramConfigFromParameters(p).validate(W); return devicePins<W>();
+        const auto c = sramConfigFromParameters(p); c.validate(W); return devicePins<W>(c.clocked);
     }, configured<SRAM<W>>(), configured<sram::DeviceBehavioral<W>>(), "SRAMTest", false,
     [](const ParameterMap& p) { sramConfigFromParameters(p).validate(W, true); return true; });
     registerBlock(catalog, "bank" + suffix, "SRAMStorageBank" + typeSuffix, [](const ParameterMap& params) {
@@ -82,8 +82,8 @@ template<size_t W> void registerWidth(ComponentCatalog& catalog) {
         return p;
     }, configured<SRAMStorageBank<W>>(), configured<sram::BankBehavioral<W>>(), "SRAMStorageBankTest");
     registerBlock(catalog, "access-control" + suffix, "SRAMAccessControl" + typeSuffix, [](const ParameterMap& params) {
-        sramConfigFromParameters(params).validate(W);
-        auto p = devicePins<W>(); p.pop_back(); p.pop_back();
+        const auto c = sramConfigFromParameters(params); c.validate(W);
+        auto p = devicePins<W>(c.clocked); p.pop_back(); p.pop_back();
         out(p, "ADDRESS", 32); out(p, "DATA", W); out(p, "MASK", W / 8);
         for (const auto* n : {"PRECHARGE", "ROW_ENABLE", "WRITE_ENABLE", "SENSE_ENABLE", "OUTPUT_ENABLE", "READY"}) out(p, n);
         return p;

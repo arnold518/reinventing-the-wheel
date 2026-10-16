@@ -46,9 +46,10 @@ void keys(const ParameterMap &p, std::initializer_list<const char *> allowed) {
 }
 void Geometry::validate(size_t width, bool expanded) const {
     if ((width != 8 && width != 16 && width != 32) || !depth_words || depth_words > UINT32_MAX / (width / 8) ||
-        !words_per_row || words_per_row > 16 || (words_per_row & (words_per_row - 1)) ||
+        // Datasheet DRAM rows reach 1,024 words; gate-level arrays keep 16.
+        !words_per_row || words_per_row > (expanded ? 16u : 1024u) || (words_per_row & (words_per_row - 1)) ||
         depth_words % words_per_row)
-        throw std::invalid_argument("Memory requires W=8/16/32, 32-bit byte capacity, power-of-two K<=16 dividing N");
+        throw std::invalid_argument("Memory requires W=8/16/32, 32-bit byte capacity, power-of-two K dividing N (K<=16 gate-level, K<=1024 compact)");
     if (expanded && depth_words > 4096 / width)
         throw std::invalid_argument("Expanded memory is limited to 4096 cells");
 }
@@ -328,7 +329,8 @@ bool StaticReadColumn::settled(const Values &in, Values &out, Deciders &deciders
     return true;
 }
 static void outputPins(IOComponent *s, size_t width) {
-    Geometry{}.validate(width);
+    // A data word, or one status line (READY on a shared return bus).
+    if (width != 1) Geometry{}.validate(width);
     s->addPinDynamic("DATA", PinType::INPUT, width);
     s->addPin("ENABLE", PinType::INPUT);
     s->addPinDynamic("OUT", PinType::OUTPUT, width);

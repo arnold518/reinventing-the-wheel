@@ -8,15 +8,17 @@ uncommitted cache and memory-container-retirement work in the worktree.
 Follows the closed [memory timing realism review](2026-10-16-memory-timing-realism-review.md).
 The owner decided to give every **leaf** part realistic delays, with every
 behavioral part still taking its timing from its structural form, and to
-rebuild the memory control now hidden in C++ as gates. Decisions so far: one
-fixed delay per gate type (1A), self-timed memory devices signalling
-completion (2A), delays held in a C++ timing-profile file with `unit`,
-`embedded` (default) and `desktop` profiles, and the delegated decisions
-listed below. The current plan is the nine-phase table in the latest
-section. All decisions are made (65 nm `embedded`, 32 nm `desktop`, ±10 %
-datasheet and ±20 % CACTI tolerances, old endpoint timing settings rejected
-or migrated, published results preserved by a `timing-legacy` tag). Phase 0
-waits for the concurrent sessions. No code has changed.
+rebuild the memory control now hidden in C++ as gates. Owner decisions: one
+fixed delay per gate type (1A) and self-timed memory devices signalling
+completion (2A); every other decision was delegated and is recorded below.
+Profiles `unit`, `embedded` (65 nm, default) and `desktop` (32 nm) live in a
+C++ timing-profile file. Execution is on branch `realistic-timing` and
+reported in the [progress log](2026-10-16-realistic-timing-progress.md).
+Phases 1–6.3 are done (6.3: external DRAM and NOR from datasheets, clocked
+on-chip SRAM macro). The latest plan check (2026-10-17) moves the
+core–endpoint handshake decoupling to the start of 6.4 and stops macro
+calibration at the reported residual; phases 7 (cache) and 8
+(documentation, follow-ups, full suite) follow.
 
 ## 2026-10-16 — Scope and plan
 
@@ -522,3 +524,50 @@ effective; model the memory technologies realistically. This governs phases
    from the gate-level circuits; a result that favors or disfavors caches is
    reported as found, with its protocol and timing causes, and is never a
    reason to change a parameter.
+
+## 2026-10-17 — Plan check after phase 6.3 (assistant decisions)
+
+Evidence is in the progress log (6.3a and 6.3b sections). Findings that
+change the plan:
+
+1. **The core–endpoint handshake limits every certified clock, and the
+   clocked macro makes it worse.** All timed memories were already limited by
+   the IMEM handshake (REQ_READY full-cycle setup). With the clocked macro the
+   endpoint presents an accepted request straight to the macro, so the
+   core's stall and forwarding logic → RSP_READY → acceptance → the macro's
+   CE_N setup becomes one path: certified clock `unit` 220 ticks against 102
+   for the asynchronous chip, `embedded` 5,236 ps against 4,608, `desktop`
+   3,680 against 3,210. In cycles the macro is better (programs 19–22:
+   269/166/297/228 against 336/220/384/292 at `embedded`); in time it is
+   9 % faster at `embedded` and `desktop` and 54 % slower at `unit`. A real
+   bus does not do this: an AHB master cannot hold off read data, so an SRAM
+   enable never waits for the core's decision to consume the previous
+   response in the same cycle. **Decision: phase 6.4 starts with decoupling
+   request acceptance from the same-cycle RSP_READY** (a two-entry response
+   buffer, the standard skid buffer, for every technology), then measures
+   the certified clocks again. The clocked macro stays the default `sram`.
+2. **Macro calibration stops at the honest residual.** The clocked macro's
+   proven access (edge to data, `embedded`) is 54 FO4 at 4 bytes and 69 FO4
+   at 512 bytes, against CACTI 65 nm LOP 22.4 FO4 at 512 bytes (3.1×; 4.5×
+   with the input setup, which holds the 32-bit range check and the gate-built
+   register setup). The known artifacts are the gate-built flip-flops
+   (clock-to-Q up to 231 ps), the access token's change detection (about
+   300 ps), precharge in the access path, the replica margins, and the 32-bit
+   address range check. At the realistic clocks (about 150–175 FO4 per
+   cycle) the macro already completes in one cycle at every proven size, so
+   a faster macro would change no cycle count and no certified clock. It is
+   reported as found and not tuned. Revisit only if phase 7 cache banks
+   (tag compare and way select after the array) become cycle-critical.
+3. **New phase 8 items:** the delay twin's X timing (a gate-level flip-flop
+   carries an X one tick later than the twin's binary clock-to-output;
+   reached by the 30-round sample of `memory.sram.endpoint.16`, not by the
+   CTest run), and CacheReadTest with a profile-derived period (with the
+   other tick-driven tests already listed).
+4. Test equipment fixed on the way, kept: DelayRuleTest steps from event to
+   event and follows a part until it goes quiet (100× faster under the
+   realistic profiles; the six DRAM/NOR endpoints it used to skip are now
+   compared).
+
+The phases otherwise stand: 6.4 (handshake decoupling, then end-to-end
+latency against datasheets and STM32F7), phase 7 (cache on the clocked macro),
+phase 8 (documentation, follow-ups, full suite).

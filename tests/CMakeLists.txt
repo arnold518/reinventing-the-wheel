@@ -285,6 +285,8 @@ set(SIMULATION_TESTS
     SRAMStorageBankTest
     SRAMTest
     SRAMSubarrayTest
+    SRAMClockedTest
+    SRAMClockedSubarrayTest
     SRAMContractTest
     SRAMTimingTest
     MatrixRowDecoderTest

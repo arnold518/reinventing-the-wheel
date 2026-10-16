@@ -3,7 +3,9 @@
 
 struct NORFlashConfig : circuit::memory_device::Geometry {
     size_t block_words = 2;
-    size_t phase_ticks = 32, program_ticks = 128, erase_ticks = 256;
+    size_t phase_ticks = 32;
+    size_t program_ticks = circuit::timing::activeTimingProfile().memory.nor_program;
+    size_t erase_ticks = circuit::timing::activeTimingProfile().memory.nor_erase;
     void validate(size_t width, bool expanded = false) const;
 };
 NORFlashConfig norFlashConfigFromParameters(const circuit::ParameterMap &);

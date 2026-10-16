@@ -115,8 +115,8 @@ void registerMemoryEndpoints(ComponentCatalog& c) {
             };
             add(c, "memory." + name + ".controller." + suffix, "MemoryController" + dims,
                 [=](const ParameterMap& p) {
-                    endpointConfig(p).validate(width,t);
-                    return memory_device::describe([=](IOComponent* s) { protocolPins(s,width); nativePins(s,width,t,true); });
+                    const auto config = endpointConfig(p); config.validate(width,t);
+                    return memory_device::describe([=](IOComponent* s) { protocolPins(s,width); nativePins(s,width,t,true,config.clocked); });
                 }, [=](const std::string& n, const ParameterMap& p, const std::shared_ptr<BuildContext>& ctx) {
                     return Component::createWithContext<MemoryController>(ctx,n,width,t,endpointConfig(p));
                 }, [=](const std::string& n, const ParameterMap& p, const std::shared_ptr<BuildContext>& ctx) {

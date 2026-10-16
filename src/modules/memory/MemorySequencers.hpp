@@ -32,6 +32,12 @@ private:
 // status and raises DONE, with status Device if the device's READY is not
 // high then. FINISH clears DONE. An invalid request completes at once with
 // its status.
+//
+// For a clocked SRAM macro the request is shown to the device
+// combinationally while START is high (CE_N and WE_N low for that cycle only,
+// address, data and mask straight from the request), the macro registers it
+// at the starting edge, MEM_CLK passes the clock, and access_cycles counts
+// from that edge to the capture; OE_N stays low through a read's access.
 class StaticMemorySequencer : public IOComponent {
 public:
     StaticMemorySequencer(std::string name, size_t width, circuit::memory::Technology, circuit::memory::EndpointConfig);
@@ -66,6 +72,6 @@ private:
     std::string type_;
 };
 
-void defineSequencerPins(IOComponent* self, size_t width, circuit::memory::Technology technology);
+void defineSequencerPins(IOComponent* self, size_t width, circuit::memory::Technology technology, bool clocked = false);
 
 } // namespace circuit::memory_detail

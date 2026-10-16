@@ -24,15 +24,18 @@ void EndpointConfig::validate(size_t width, Technology t, bool expanded_cells) c
         throw std::invalid_argument("access_cycles must be 1..255");
     if (always_ready && t != Technology::FF)
         throw std::invalid_argument("Always-ready endpoint mode is FF-only");
+    if (clocked && t != Technology::SRAM)
+        throw std::invalid_argument("Only SRAM has a clocked (on-chip macro) form");
     if ((width != 8 && width != 16 && width != 32) || !depth_words ||
         depth_words > std::numeric_limits<uint32_t>::max() / (width / 8))
         throw std::invalid_argument("Memory endpoint requires W=8/16/32 and nonzero 32-bit-addressable capacity");
     if (t != Technology::FF && (phase_ticks < 32 || phase_ticks > 10000 || guard_ticks < 64 || guard_ticks > 1000000 ||
-        program_ticks < phase_ticks || program_ticks > 1000000 || erase_ticks < program_ticks || erase_ticks > 10000000))
+        program_ticks < phase_ticks || program_ticks > 1'000'000'000'000ull || erase_ticks < program_ticks ||
+        erase_ticks > 10'000'000'000'000ull))
         throw std::invalid_argument("Invalid endpoint timing; guards must allow structural signals to settle");
     if (t != Technology::FF &&
-        (!words_per_row || words_per_row > 16 || (words_per_row & (words_per_row - 1)) || depth_words % words_per_row))
-        throw std::invalid_argument("Native matrix geometry requires K=1/2/4/8/16 dividing depth");
+        (!words_per_row || words_per_row > (expanded_cells ? 16u : 1024u) || (words_per_row & (words_per_row - 1)) || depth_words % words_per_row))
+        throw std::invalid_argument("Native matrix geometry requires power-of-two K dividing depth (K<=16 gate-level, K<=1024 compact)");
     if (t == Technology::NORFlash && (!block_words || block_words > depth_words || depth_words % block_words || block_words % words_per_row))
         throw std::invalid_argument("Flash blocks must contain whole rows and divide depth");
     if (t == Technology::DRAM) {
@@ -65,7 +68,7 @@ EndpointConfig endpointConfig(const ParameterMap& p) {
         throw std::invalid_argument("expanded_storage was removed: request memory.<technology>.scalable-endpoint.<width> for a scalable device behind the controller");
     keys(p, {"depth_words", "words_per_row", "block_words", "phase_ticks", "guard_ticks",
              "program_ticks", "erase_ticks", "retention_ticks", "refresh_interval_ticks", "refresh_interval_cycles", "access_cycles",
-             "max_resident_bytes", "max_history_bytes", "paged", "record_history", "image_hex", "always_ready"});
+             "max_resident_bytes", "max_history_bytes", "paged", "record_history", "image_hex", "always_ready", "clocked"});
     EndpointConfig c;
 #define PARAM(n) c.n = parameter(p, #n, c.n)
     PARAM(depth_words); PARAM(words_per_row); PARAM(block_words); PARAM(phase_ticks); PARAM(guard_ticks);
@@ -73,10 +76,10 @@ EndpointConfig endpointConfig(const ParameterMap& p) {
     PARAM(refresh_interval_cycles); PARAM(access_cycles); PARAM(max_resident_bytes); PARAM(max_history_bytes);
 #undef PARAM
     auto paged = parameter(p, "paged", 1), history = parameter(p, "record_history", 1);
-    auto always_ready = parameter(p,"always_ready",0);
-    if (paged > 1 || history > 1 || always_ready > 1) throw std::invalid_argument("Memory booleans must be 0 or 1");
+    auto always_ready = parameter(p,"always_ready",0), clocked = parameter(p,"clocked",0);
+    if (paged > 1 || history > 1 || always_ready > 1 || clocked > 1) throw std::invalid_argument("Memory booleans must be 0 or 1");
     c.paged = paged; c.record_history = history;
-    c.always_ready = always_ready;
+    c.always_ready = always_ready; c.clocked = clocked;
     if (auto i = p.find("image_hex"); i != p.end()) c.image_hex = i->second;
     return c;
 }
@@ -88,6 +91,8 @@ ParameterMap endpointParameters(const EndpointConfig& c) {
     PARAM(refresh_interval_cycles); PARAM(access_cycles); PARAM(max_resident_bytes); PARAM(max_history_bytes); PARAM(paged); PARAM(record_history);
     PARAM(always_ready);
 #undef PARAM
+    // Named only for a clocked macro, so every other part keeps its parameters.
+    if (c.clocked) p["clocked"] = "1";
     p["image_hex"] = c.image_hex; return p;
 }
 void protocolPins(IOComponent* s, size_t w, const std::string& prefix, bool requester) {
@@ -100,7 +105,7 @@ void protocolPins(IOComponent* s, size_t w, const std::string& prefix, bool requ
     add("REQ_READY", 1, output); add("RSP_VALID", 1, output);
     add("RSP_STATUS", 3, output); add("RSP_READ_DATA", w, output);
 }
-void nativePins(IOComponent* s, size_t w, Technology t, bool controller) {
+void nativePins(IOComponent* s, size_t w, Technology t, bool controller, bool clocked) {
     auto command = controller ? PinType::OUTPUT : PinType::INPUT;
     auto result = controller ? PinType::INPUT : PinType::OUTPUT;
     auto add = [&](const char* n, size_t width, PinType d) { s->addPinDynamic(std::string(controller ? "MEM_" : "") + n, d, width); };
@@ -111,6 +116,7 @@ void nativePins(IOComponent* s, size_t w, Technology t, bool controller) {
         for (auto n : {"CLK", "RST", "WE", "READ_EN"}) add(n, 1, command);
         add("FAULT", 1, result);
     } else if (t == Technology::SRAM || t == Technology::ROM) {
+        if (clocked) add("CLK", 1, command);
         add("CE_N", 1, command); add("OE_N", 1, command);
         if (t == Technology::SRAM) add("WE_N", 1, command);
         add("READY", 1, result);

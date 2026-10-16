@@ -80,6 +80,7 @@ const std::map<std::string, Floor> FLOORS = {
     {"memory.nor-flash.bank.32", {65, -1, CELLS}},
     {"memory.nor-flash.bank.8", {65, -1, CELLS}},
     {"memory.nor-flash.controller.16", {57, -1, LAUNCH}},
+    {"memory.nor-flash.device.16", {69, -1, SAMPLE}},
     {"memory.nor-flash.controller.32", {66, -1, LAUNCH}},
     {"memory.nor-flash.controller.8", {60, -1, LAUNCH}},
     {"memory.nor-flash.endpoint.16", {58, -1, LAUNCH}},
@@ -142,16 +143,28 @@ struct Bench {
             if (!late.contains(name)) sim.scheduleEvent(makeWireUpdateEvent(now, inputs.at(name), bits));
         for (const auto& [name, bits] : late) sim.scheduleEvent(makeWireUpdateEvent(now + offset, inputs.at(name), bits));
         std::map<std::string, size_t> last;
-        for (size_t tick = 0; tick <= watch; ++tick) {
+        // Values move only at event times: step from one event to the next
+        // (a realistic profile counts picoseconds, and a flash erase lasts
+        // 4 x 10^11 of them). Past the watch window the part may still be
+        // busy inside (an endpoint's device finishing an access its table
+        // does not show); it is followed until it goes quiet, and an output
+        // that moves meanwhile counts as late. Only a part still busy after
+        // SETTLE ticks or SETTLE_EVENTS events is restless.
+        constexpr size_t SETTLE = 10'000'000'000'000ull, SETTLE_EVENTS = 1'000'000;
+        size_t tick = 0, steps = 0;
+        for (; tick <= watch + SETTLE && steps < SETTLE_EVENTS; ++steps) {
             sim.advanceAndRecord(now + tick);
             if (each_tick) each_tick(tick);
             for (const auto& [name, wire] : outputs) {
                 auto current = wire->getValueVector();
                 if (current != seen[name]) { last[name] = tick; seen[name] = std::move(current); }
             }
+            const auto next = sim.nextEventTime();
+            if (!next || *next > now + watch + SETTLE) break;
+            tick = std::max(tick + 1, *next - now);
         }
         restless = sim.hasPendingEvents();
-        now += watch;
+        now += std::max(tick, watch);
         return last;
     }
 };
@@ -317,6 +330,12 @@ const std::vector<std::pair<std::string, circuit::ParameterMap>> VARIANTS = {
     {"memory.rom.device.8", {{"depth_words", "128"}, {"words_per_row", "4"}}},
     {"memory.ff.device.8", {{"depth_words", "64"}}},
     {"memory.ff.endpoint.8", {{"depth_words", "64"}, {"always_ready", "1"}}},
+    // The clocked on-chip SRAM macro: one bank, one full bank, subarrays.
+    {"memory.sram.device.8", {{"clocked", "1"}}},
+    {"memory.sram.device.8", {{"depth_words", "64"}, {"clocked", "1"}}},
+    {"memory.sram.device.8", {{"depth_words", "256"}, {"clocked", "1"}}},
+    {"memory.sram.controller.8", {{"clocked", "1"}}},
+    {"memory.sram.endpoint.8", {{"clocked", "1"}}},
 };
 
 std::shared_ptr<IOComponent> build(const std::string& contract, const circuit::BuildProfile& profile) {

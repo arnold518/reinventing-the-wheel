@@ -388,8 +388,9 @@ void NORFlashConfig::validate(size_t w, bool expanded) const {
     Geometry::validate(w, expanded);
     if (!block_words || block_words > depth_words || block_words % words_per_row || depth_words % block_words)
         throw std::invalid_argument("Flash erase blocks must contain whole rows and divide capacity");
-    if (phase_ticks < 32 || phase_ticks > 10000 || program_ticks < phase_ticks || program_ticks > 1000000 ||
-        erase_ticks < program_ticks || erase_ticks > 10000000)
+    // Program and erase up to 1 s and 10 s at 1 tick = 1 ps (literal datasheet times).
+    if (phase_ticks < 32 || phase_ticks > 10000 || program_ticks < phase_ticks || program_ticks > 1'000'000'000'000ull ||
+        erase_ticks < program_ticks || erase_ticks > 10'000'000'000'000ull)
         throw std::invalid_argument("Invalid flash timing");
 }
 NORFlashConfig norFlashConfigFromParameters(const ParameterMap &p) {

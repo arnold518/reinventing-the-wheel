@@ -306,6 +306,8 @@ const std::vector<TestRegistryEntry>& getTestRegistry() {
         entry<SRAMStorageBankTest>("SRAMStorageBankTest"),
         entry<SRAMTest>("SRAMTest"),
         entry<SRAMSubarrayTest>("SRAMSubarrayTest"),
+        entry<SRAMClockedTest>("SRAMClockedTest"),
+        entry<SRAMClockedSubarrayTest>("SRAMClockedSubarrayTest"),
         entry<SRAMContractTest>("SRAMContractTest"),
         entry<SRAMTimingTest>("SRAMTimingTest"),
         entry<MatrixRowDecoderTest>("MatrixRowDecoderTest"),

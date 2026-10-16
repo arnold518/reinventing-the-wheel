@@ -13,7 +13,10 @@ any plan changes the assistant made. The public site (`site-docs/`) is
 deliberately not updated until the owner allows it; records, status and the
 changelog are kept current as usual (owner clarification, 2026-10-16).
 
-Current phase: 6 (calibration and protocol realism; phases 1–5 done).
+Current phase: 6.4 next (phases 1–6.3 done and committed). 6.3 gave the external DRAM
+and NOR datasheet timing and a clocked on-chip SRAM macro (the cache bank to
+be); its plan check moved the core–endpoint handshake decoupling to the
+start of 6.4. Open defect for phase 8: the delay twin's X timing.
 
 ## 2026-10-16 — Phase 0: baseline
 
@@ -875,3 +878,575 @@ The `unit` SRAM cycles equal the published pre-phase-4 values (a
 coincidence of four counted cycles matching the old sequencer's timing,
 not a reuse). Realistic DRAM/NOR remain dominated by the placeholder
 per-row terms over 32,768 rows; 6.3 replaces them.
+
+## 2026-10-16 — Phase 6.3 reference data and decisions
+
+Phase 6.1–6.2 was committed as `b30744a`.
+
+**CACTI 7 (HewlettPackard/cacti, commit 1ffd8df, built locally).** Plain RAM
+("ram" type, no tag), one bank, direct, 4-byte block, 32-bit I/O,
+itrs-hp cells and periphery, delay-weighted objective:
+
+| Size | 65 nm access / cycle (ns) | 32 nm access / cycle (ns) |
+| --- | --- | --- |
+| 512 B | 0.336 / 0.251 | 0.141 / 0.106 |
+| 2 KiB | 0.370 / 0.303 | 0.157 / 0.131 |
+| 8 KiB | 0.485 / 0.416 | 0.215 / 0.194 |
+| 32 KiB | 0.672 / 0.681 | 0.375 / 0.298 |
+| 128 KiB | 1.374 / 1.029 | 0.614 / 0.650 |
+| 256 KiB | 1.863 / 1.029 | 0.835 / 0.650 |
+
+**Findings.**
+1. The gate-level asynchronous SRAM is about ten times slower than CACTI
+   (`embedded`, 512 B: 3.37 ns address to data). The address-transition
+   detector alone (XOR, a six-level OR tree over 43 inputs, STEADY, STARTED)
+   is about 560 ps, more than CACTI's whole access; the rest are replica
+   chains of FO4-scaled ANDs and placeholder intervals. This is the
+   structure of an asynchronous (ATD) SRAM, which real external chips use
+   (10 ns tAA for the cited CY7C1069G), not of an on-chip macro.
+2. CACTI's 32 nm/65 nm ratio is about 0.45, while the profiles' FO4 ratio is
+   0.70 (21/30 ps). The `desktop` FO4 interpolation is slow relative to
+   CACTI's ITRS-HP 32 nm devices; recorded for a later look at the
+   `desktop` gate delays, not changed now (the `embedded` profile is the
+   default realistic one).
+
+**Decisions (assistant, under the owner's realism rule).**
+- **Two SRAM roles.** The existing asynchronous device models an external
+  asynchronous SRAM chip; it is calibrated to its datasheet (tAA 10 ns),
+  with the off-chip pad and board delay as a leaf (plan decision 3). An
+  **on-chip SRAM** is a clocked macro: inputs registered at the rising edge,
+  wordline and sensing self-timed from the clock in the high phase,
+  precharge in the low phase, an output latch holding the data and READY
+  until the next access. No transition detector. It is selected by a
+  `clocked` device parameter (pins add CLK); the on-chip array is compared
+  with CACTI (±20 %). The CPU panel's `sram` and the cache banks use the
+  on-chip macro; this is what real microcontrollers (on-chip SRAM, zero wait
+  states) and caches do.
+- **Order.** 6.3a external devices (SDRAM, NOR, asynchronous SRAM) from the
+  PDF tables, absolute intervals, per-row terms 0, literal NOR
+  program/erase, DRAM rows up to datasheet size; 6.3b the clocked on-chip
+  SRAM and its CACTI calibration; 6.4 latency measurements.
+
+## 2026-10-16 — Phase 6.3a: external devices from datasheets (implemented)
+
+DDR4 values were read from the Micron MT40A1G8 datasheet (Table 159
+DDR4-3200 speed bins, Table 51 refresh): tAA = tRCD = tRP = 13.75 ns, tRAS
+32 ns, tWR 15 ns, tRFC1 350 ns (8 Gb), tREFI 7.8125 µs, 1 KB page per x8
+chip. Profile values (ps):
+
+| Interval | `embedded` (SDR -6A) | `desktop` (DDR4-3200) | target |
+| --- | --- | --- | --- |
+| ACTIVATE: wordline + sense + restore | 3000 + 12000 + 3000 | 2500 + 9000 + 2250 | tRCD |
+| READ | 18000 | 13750 | CL / tAA |
+| WRITE: on + off + recovery | 6000 + 3000 + 3000 | 7500 + 3750 + 3750 | tWR |
+| PRECHARGE: close + precharge + equalize | 3000 + 12000 + 3000 | 2500 + 9000 + 2250 | tRP |
+| REFRESH extra restore (+ rest of tRFC) | 27000 (+0) | 20500 (+304250) | tRFC |
+| tREFI per REFRESH | 7,812,500 | 7,812,500 | tREF/8192 |
+| row of a 32-bit channel | 512 words (2 x16) | 1,024 words (4 x8) | page size |
+
+DRAM sense and NOR read per-row terms are 0 (external devices, plan check
+after phase 4). NOR (both): tACC 120 ns, program 150 µs, erase 410 ms
+(typical values; literal, limits widened to 1 s and 10 s). REFRESH gains an
+optional full-restore step (to tRAS), so SDR's tRFC = activate to tRAS +
+tRP = 60 ns exactly; DDR4's REFRESH covers many rows per command, which the
+extra 304 ns stands for (our REFRESH refreshes one row; with 128 or 64 rows
+per 256 KiB experiment memory every row is refreshed every 1 ms or 0.5 ms,
+well inside 64 ms). Row geometry up to 1,024 words is allowed for compact
+devices (16 for gate-level); rows longer than 16 use the 16-word layout's
+proven tables (only the address-field wiring and a shorter open-row
+comparator differ). The RV32I experiment takes the DRAM row size and the
+refresh rate (cycles = tREFI / period, at least 24) from the profile; `unit`
+keeps its 2-word rows and 96-cycle refresh. Under the realistic profiles
+each REFRESH-busy fraction is tRFC/tREFI (0.8 % SDR, 4.5 % DDR4).
+
+Known model limits kept: one DRAM bank (the parts have 4 or 16); tRAS is
+approximated (ACTIVATE completes at tRCD with a short restore; only REFRESH
+waits for the full restore), which can make a PRECHARGE closely after an
+ACTIVATE up to tRAS − tRCD − CL early; NOR page mode not modeled.
+
+## 2026-10-16 — Phase 6.3b design: clocked on-chip SRAM (assistant decisions)
+
+CACTI 7 breakdown at 65 nm (ns): 512 B: decoder + wordline 0.217, H-tree
+output 0.031, rest (bitline, sense, mux) about 0.09, total 0.336; 8 KiB:
+0.305, 0.052, about 0.13, total 0.485; 256 KiB: H-tree input 0.320, decoder +
+wordline 0.376, H-tree output 0.985, rest about 0.18, total 1.863 (32 mats).
+
+Compared with the gate-level SRAM at `embedded`: the row decoder (about
+0.2 ns) is close to CACTI's decoder + wordline, and the global wire per
+subarray side is of the same order as CACTI's H-tree per mat. Two costs are
+artifacts of our structure, not of the technology:
+1. the address-transition detector (about 560 ps), which an on-chip clocked
+   macro does not have;
+2. the phase-5 return path, a binary 2:1 multiplexer tree adding about 150
+   ps per doubling of subarrays, where CACTI's decoder grows by 0.16 ns from
+   512 B to 256 KiB and large arrays grow by wire. Real arrays drive a
+   shared data bus from the selected mat.
+
+Decisions:
+- **Clocked mode** (`clocked=1` on the SRAM device and endpoint): no change
+  detector and no settle lines; inputs come from the controller's registers
+  and are stable before the edge; a rising-edge pulse generator (CLK and a
+  delayed inverted copy) starts each access and covers precharge; the stage
+  chain (row enable after the decoder replica, sense after the bitline
+  interval, READY after the sense and output path) runs until the next edge,
+  so data and READY hold for the controller's capture at the next edge
+  (`access_cycles` = 2 for a macro whose access fits a period).
+- **Shared return bus**: subarray outputs drive a tri-state bus
+  (`MemoryBus` leaf: the single driven input, X on conflict, delay of the
+  wire) instead of the multiplexer tree; the subarray formula is refitted
+  and rechecked at the held-out size.
+- **Calibration**: `sram_wire_per_side` against CACTI's H-tree, precharge and
+  bitline intervals against CACTI's remainder; compared quantity is
+  edge-to-data array time against CACTI access time; the residual at each
+  size is reported (target ±20 %; a structural floor of gate-level replica
+  timing may keep the smallest arrays above it, which will be stated, not
+  hidden).
+
+## 2026-10-16 — Phase 6.3a checks
+
+Build and tables: full rebuild, three profiles regenerated to a fixed point
+after round 2, `--verify` identical for `unit`, `embedded` and `desktop` (610
+entries each; the DRAM REFRESH chain and the memory leaf values changed the
+`embedded`/`desktop` files).
+
+DRAM/NOR test subset (cell, row, sense column, storage bank, command control,
+device, NOR cell/row/bank/command control/device, MemoryDeviceContractTest,
+MemoryDeviceTimingTest, NativeMemoryDeviceContractTest, DRAM and flash
+endpoints, endpoint contract and timing, scalable endpoint): all 19 pass
+under `unit`. Under `embedded` the first run found:
+- MemoryEndpointFlashTest failed (`write-first-wait-high-0` not idle before
+  its deadline) and NativeMemoryDeviceContractTest and
+  MemoryEndpointContractTest ran past a 900 s limit. Cause: literal flash
+  times. A 150 µs program or 410 ms erase is longer than a scenario action's
+  drain deadline, and clock-driven checks would need about 32,500 (program)
+  or 89 million (erase) cycles at 4.6 ns. These tests check the protocol, not
+  the datasheet times.
+- Decision: the functional flash endpoint scenarios (`endpointSpec`, the
+  write-history check) set explicit 4,000/5,000-tick pulses, as the endpoint
+  timing rig already did. The profile defaults stay literal; the literal
+  values are checked as profile data and by the CPU panel, which only reads
+  flash.
+- After the change all three pass under `embedded` and `unit`.
+  MemoryDeviceTimingTest and MemoryEndpointTimingTest remain tick-driven
+  `unit`-only tests (known limit; profile-derived periods are phase 8 work).
+
+## 2026-10-16 — Phase 6.3b implementation decisions (assistant)
+
+Made while implementing the clocked macro designed above:
+- **Combinational presentation.** With `clocked=1` the static sequencer shows
+  the request to the macro while START is high: CE_N and WE_N low for that
+  cycle only, and address, data and mask taken straight from the request. The
+  macro registers it at the starting edge. `access_cycles` still counts edges
+  from START to the capture, so a macro whose access fits one period answers
+  with one counted cycle. This is how an on-chip SRAM sits in a pipeline: the
+  address is formed before the edge and the data is used in the next cycle.
+  The asynchronous path keeps its registered request.
+- **Access token instead of an address-transition detector.** The clocked
+  control registers address, data, mask and WE_N at an edge with CE_N low and
+  toggles a token bit. The MemoryTimer watches only the token: a new
+  `detected` parameter means the first N inputs are watched and the rest are
+  only held through the settle lines. The registered inputs therefore reach
+  the array only after the previous access has been cleared, which avoids a
+  wordline glitch under a still-active write strobe. The stages hold
+  (data and READY too) until the next access; READY stays low before the
+  first one. Power-on reset clears the registers (the macro has no reset
+  pin).
+- **Return bus for both forms.** Subarray outputs drive a `MemoryBus` leaf
+  (one driver passes, disagreeing drivers give X, none gives Z, delay of the
+  global wire) through per-subarray tri-state buffers. The buffers are
+  enabled by the live select (asynchronous) or by the select registered at
+  each access (clocked: idle subarrays keep their last word). The mux tree
+  and the global output buffer are gone. The clock reaches the subarrays
+  over the same global wire as the address.
+- **Wider arrays.** 16- and 32-bit arrays of four or more subarrays exceed
+  the gate-level limit, and the panel's 32-bit SRAM had been using the
+  generic per-doubling extrapolation (found while reading the lookup, not the
+  subarray formula). Larger 32-bit tables now take their own two-subarray
+  table plus the 8-bit array's growth from two subarrays (`widerArray`).
+  Decoder, wires and bus do not depend on the word width.
+- **Proven variant.** `clocked=1` is a parameter of the SRAM device, its
+  controller and the endpoints, named only when set, so asynchronous keys are
+  unchanged. Its tables are `...@clocked` and `...@depth=N@clocked` (N = 64 to
+  512), generated by `part_delay_tables`. The device is not split per WE_N:
+  its paths start at the clock.
+- **Experiment.** `--memory sram` is now the clocked on-chip macro;
+  `--memory sram-async` keeps the external asynchronous chip, reported as
+  `sram-async`. Cache banks move to the macro in phase 7 (not yet).
+- **CACTI reference matched to the profile's devices.** The first CACTI runs
+  used ITRS high-performance (HP) cells and periphery. A microcontroller
+  process is low-power, so CACTI was rerun with `itrs-lop` (and
+  `itrs-lstp` cells). Access times (ns), size 512 B / 2 KiB / 8 KiB / 32 KiB /
+  128 KiB / 256 KiB:
+  - 65 nm HP: 0.336 / 0.370 / 0.485 / 0.672 / 1.374 / 1.863
+  - 65 nm LOP: 0.685 / 0.752 / 0.993 / 1.482 / 2.316 / 2.749
+  - 65 nm LSTP cells, LOP periphery: 0.702 / 0.771 / 0.894 / 1.687 / 2.328 / 2.962
+  - 32 nm LOP: 0.297 / 0.325 / 0.392 / 0.707 / 1.014 / 1.335
+
+  The comparison will be made in FO4 multiples, using CACTI's own FO4 per
+  device type (to be printed from a patched CACTI build), so that a process
+  mismatch is not read as a structural error.
+
+**CACTI FO4 per device type** (patched CACTI 7 printing `g_tp.FO4`): 65 nm
+HP 14.8 ps, LOP 30.6 ps, LSTP 54.5 ps; 32 nm HP 6.1 ps, LOP 11.7 ps. The
+`embedded` profile's 30 ps FO4 is CACTI's 65 nm LOP device, so that is the
+like-for-like reference. `desktop`'s 21 ps matches no CACTI 32 nm device; it
+is compared in FO4 multiples. CACTI access in FO4:
+
+| Size | 65 nm HP | 65 nm LOP | 32 nm HP | 32 nm LOP |
+| --- | --- | --- | --- | --- |
+| 512 B | 22.7 | 22.4 | 23.0 | 25.3 |
+| 2 KiB | 25.0 | 24.6 | 25.7 | 27.7 |
+| 8 KiB | 32.7 | 32.5 | 35.1 | 33.4 |
+| 32 KiB | 45.3 | 48.5 | 61.3 | 60.3 |
+| 128 KiB | 92.7 | 75.7 | 100.3 | 86.4 |
+| 256 KiB | 125.7 | 89.9 | 136.4 | 113.8 |
+
+In FO4 units the small arrays agree across processes (22 to 25 FO4 at
+512 B); large arrays are wire-dominated and vary with how wires scale. The
+earlier finding of "about ten times CACTI" compared a 30 ps-FO4 profile with
+14.8 ps-FO4 HP devices; against LOP the asynchronous SRAM is 96 FO4 at 512 B
+(2.89 ns address to READY, 8-bit, 512 words), 4.3 times CACTI.
+
+## 2026-10-16 — Phase 6.3a CPU panel and delay-rule run
+
+**CPU panel** on the 6.3a binaries (advanced core, two-bit predictor,
+oracle-verified; 54 runs, all completed and verified). Certified clocks are
+unchanged from 6.1–6.2 (`unit` 102, `embedded` 4608 ps, `desktop` 3210 ps;
+FF 100 / 4508 / 3140). Cycles for programs 19/20/21/22, 6.1–6.2 → 6.3a:
+
+| Memory | `embedded` | `desktop` |
+| --- | --- | --- |
+| DRAM | 2801/1857/3238/2597 → 752/551/920/674 | 2620/1747/2653/2488 → 752/551/920/690 |
+| NOR | 1877/1462/2385 → 2212/1732/2820 | 1810/1408/2298 → 2949/2326/3777 |
+| SRAM, ROM, FF | unchanged | unchanged |
+
+`unit` is unchanged everywhere (it keeps 2-word rows, 96-cycle refresh and
+its NOR values).
+
+Reading:
+- DRAM falls by 3.4–3.7× because the experiment's DRAM now has a real page
+  (512 or 1,024 words instead of 2): sequential instruction fetches and
+  stack accesses hit the open row. Before, almost every access paid
+  PRECHARGE + ACTIVATE. This is a realism fix in the memory's favour, but
+  it is the datasheet geometry, not tuning. The remaining DRAM cost is the
+  CAS latency and the clocked command protocol (tAA 18 ns = 4 cycles at
+  4.6 ns; 13.75 ns = 5 cycles at 3.2 ns). Embedded and desktop come out
+  almost equal in cycles because the shorter DDR4 latency is spent at a
+  faster clock; program 22 shows DDR4's larger refresh share (4.5 % against
+  0.8 %).
+- NOR grows because tACC is now the 120 ns datasheet value (26 cycles at
+  4.6 ns, 38 at 3.2 ns). A real MCU hides this with a prefetch buffer or
+  flash accelerator, which this model does not have (phase 7 cache work).
+- Note for 6.4: `embedded` DRAM (752 cycles) is now below `unit` DRAM (818),
+  because `unit` keeps its 2-word rows on purpose (fast functional tests).
+
+**Delay-rule run under the realistic profiles did not finish.**
+`DelayRuleTest --report --rounds=30` on the 18 DRAM/NOR parts hit its
+3,600 s timeout under `embedded` without printing a summary; the `desktop`
+run was stopped. The same set finished under `unit`. Investigation below.
+
+**Cause: the bench stepped one tick at a time.** `DelayRuleTest`'s bench
+advanced the simulator tick by tick over a window of 3 × (the longest table
+delay) + 56 after each change. At `unit` that is a few hundred steps; under
+the realistic profiles a tick is 1 ps, a DRAM window is about 200,000 steps
+(`memory.dram.device.8` alone took 106 s at 3 rounds) and a NOR window holds
+the 410 ms erase launch (about 10^12 steps, never finishing). Fix (test
+equipment only): the bench jumps from one pending event to the next, since
+outputs and inner parts change only at event times. Check: the old and new
+bench give byte-identical reports under `unit` on
+`memory.dram.controller.8` and `memory.nor-flash.device.8` (10 rounds;
+3.3 s → 1.1 s). The fixed bench was compiled against the 6.3a library for
+the runs below.
+
+**Second bench defect: endpoints were skipped as "restless".** With the
+event-stepping bench, 12 of the 18 parts were compared; the six DRAM and NOR
+endpoints were not. A temporary trace showed the gate form still had events
+pending after the watch window, so the bench took it for a part with its own
+clock. The endpoint's table covers only its edge-to-output launches (83
+ticks at `unit`, 1,337 ps at `embedded`), while its device finishes an
+access later (NOR read 96 ticks at `unit`; DRAM ACTIVATE 18 ns at
+`embedded`). The NOR endpoints had been skipped like this before this
+branch, even at `unit`; 6.3a's datasheet times extended it to the DRAM
+endpoints. Fix (test equipment): after the watch window the bench follows
+the part until it goes quiet (budget 10^13 ticks or 10^6 events), and any
+output change in that time is checked against the table as late. A truly
+free-running part still exhausts the budget and is skipped.
+
+Result, `DelayRuleTest --report --rounds=30` on the 18 DRAM/NOR devices,
+controllers and endpoints (8/16/32), bench built against the 6.3b library
+(6.3b changes no DRAM/NOR part):
+
+| Profile | Parts compared | Situations | Rule breaks | Time |
+| --- | --- | --- | --- | --- |
+| `unit` | 18 | 7,553 | 0 | 33 s |
+| `embedded` | 18 | 7,553 | 0 | 33 s |
+| `desktop` | 18 | 7,553 | 0 | 34 s |
+
+The endpoints are now compared (11–16 output changes each, 100 % of the
+compact delay in every kind). `memory.nor-flash.device.16` is at 69 %
+typical share in all three profiles, just under the 70 % target. It is a
+self-timed device compared only with its gates; the 6.1–6.2 default run
+(100 rounds) had it above target, so this 30-round sample does not reach
+its slowest case. A floor of 69 with the SAMPLE reason was added.
+
+## 2026-10-16 — Phase 6.3b first build and fixes
+
+The 6.3b code built without errors on the first try. First tests at `unit`
+(before table regeneration):
+- **SRAMSubarrayTest threw** "Memory requires W=8/16/32 ...". The new
+  1-bit READY driver onto the return bus used `MemoryOutputBuffer`, whose
+  pins validated the width as a memory word. Fix: the buffer accepts one
+  status line (width 1) as well; its behaviour does not depend on width.
+- **SRAMClockedTest failed** at `readback-0`: word 0 read 0 after an
+  out-of-range write. A probe traced it. The bitline pair delivers all its
+  outputs after the bitline interval (about 62 ticks at `unit`), including
+  the removal of the write drive and the precharge result. In the clocked
+  macro the next access's wordline opened 42 ticks after the edge
+  (precharge 34 + decoder), so the cell still saw the previous write's
+  drive and data, and the read rewrote word 0 with them. The asynchronous
+  control hides this race behind its settle window. Decision: in clocked
+  mode the precharge stage lasts max(precharge, bitline interval), because
+  in this model restoring a fully swung bitline takes its swing time. Under
+  `embedded` this changes nothing for small arrays (precharge 120 ps ≥
+  bitline 96 ps at 2 rows) and adds up to 66 ps for 32-row subarrays.
+  The behavioural and fused-engine fallbacks use the same expression. A
+  self-reset precharge after each access (precharge off the access path, as
+  in real macros) remains a candidate for the calibration step.
+- **Return-bus fixes found by SRAMClockedSubarrayTest and SRAMSubarrayTest:**
+  - READY read Z before a clocked macro's first access (no subarray
+    selected yet), and an asynchronous array with CE_N high and an unknown
+    address drove X onto the data bus (the buffer enables were the live
+    select alone; the old global output buffer had been gated by chip
+    enable). Fixes: asynchronous bus enables are select AND chip enable;
+    the READY line has a pull-down (`MemoryBus` option `pulled_low`), so it
+    reads 0 while no subarray drives it, as a single bank's READY does.
+  - After a clocked read at an unknown address, the subarrays never
+    recovered: their CE_N (CE_N OR not chosen) was X at the edge, which
+    loaded X into each subarray's toggling access token, and a token XOR'd
+    with X stays X. Real hardware holds 0 or 1 here; the model must not
+    lock up. Decision: in the clocked macro every subarray takes each
+    access (they run in parallel, so no slower) and only WE_N is gated by
+    the select. An unknown address then makes only the write strobe
+    unknown (a pessimistic write, which is right), and the next access
+    starts cleanly. The asynchronous array keeps its per-subarray CE_N.
+  - A test expectation error: in the one-word geometry the last word is
+    word 0, which `write-unknown` had just made unknown.
+
+**6.3b functional checks at `unit` (before table regeneration; old tables,
+`@clocked` lookups fall back to formulas).** All pass: SRAMClockedTest,
+SRAMClockedSubarrayTest (256 words, 4 subarrays), SRAMTest,
+SRAMSubarrayTest, SRAMContractTest (now also the clocked macro, gates
+against compact, widths 8/16/32, geometries 1×1, 4×2, 8×4),
+SRAMAccessControlTest, MemoryControllerTest, MemoryEndpointSRAMTest,
+MemoryEndpointTimingTest, ScalableMemoryEndpointTest, NativeMemoryDeviceTest,
+NativeMemoryDeviceContractTest (35 s), MemoryEndpointContractTest (161 s),
+CacheReadTest (238 s), and the component, direct-mapped, scalable and
+two-level cache scenarios.
+
+**Table regeneration (first attempt, stopped) found two more problems.**
+- *No clocked tables above 64 words.* The generator reported "derived,
+  gated or undriven clock is unsupported" for 128–512 words: the clock
+  reached the subarrays through the global wire, and the timing analysis
+  takes only one undelayed clock. Supporting a delayed clock (an arrival
+  offset per clocked leaf, through the static graph and the self-timed
+  memory analysis) is too deep for this phase. Decision: the clock reaches
+  the subarrays directly (ideal clock, the usual STA convention), and the
+  request still crosses the global wire before the subarray registers. The
+  wire therefore counts in the macro's input setup time, not in its
+  edge-to-data access. The total per access is unchanged; it moves into the
+  cycle that forms the request. The CACTI comparison will use setup +
+  access. Single-bank sizes (up to 64 words) have no global wire.
+- *READY before the data.* In the round-1 tables READ_DATA's latest launch
+  (2,007 ps at 64 words, `embedded`) was later than READY's (1,557 ps). A
+  probe of the gate form with 400 random accesses confirmed it: data
+  settled 52 ps after READY at 4 words (idle → read) and 152 ps after at
+  64 words (write → read). The earlier `unit` trace showed the same one
+  tick. A trace of the sense path (embedded, 4 words, edge at 0): bitline
+  VALID at +1,104 ps, sense enable at +1,200 (one replica gate after the
+  bitline interval), the selected column's VALID through the column
+  multiplexer only at +1,302, READY at +1,310, data at +1,362. The replica
+  did not cover the column multiplexer (a 2:1 tree: AND 50 ps + OR 52 ps
+  per level at `embedded`). The asynchronous control has the same chain.
+  Fix in both: the sense stage's replica adds
+  ceil(levels × (AND + OR) / AND) gates (one pass gate for one word per
+  row), so sense enable and READY follow the selected column. This is a
+  correctness fix: the controllers capture data at READY.
+- The same trace also measures the token window: precharge starts 684 ps
+  after the edge (flip-flop clock-to-Q up to 231 ps, then the timer's change
+  detection, XOR + NOT + 3 AND ≈ 300 ps). This is the expected artifact
+  of about 14–20 FO4, to be weighed in the calibration step.
+- *Second part of the READY fix.* After adding the column multiplexer the
+  64-word array still settled data 2 ps after READY (embedded, write →
+  read). A trace showed the bitline stage starts at ROW_ENABLE, but the
+  wordline rises only after the decoder's enable path (the enable AND and
+  the balanced AND tree over the row bits, `decode_depth` gates, about
+  200 ps at 32 rows). The sense replica now also covers that path, as the
+  dummy row of a replica-bitline scheme does. The probe now compares data
+  and READY within each read (400 random accesses per run). Worst data −
+  READY gap after the fix, clocked macro:
+
+  | Profile | 4 words | 64 words | 256 words (4 subarrays) |
+  | --- | --- | --- | --- |
+  | `unit` | −1 | −1 | −1 |
+  | `embedded` | −30 ps | −30 ps | −30 ps |
+  | `desktop` | −21 ps | −21 ps | −21 ps |
+
+  Data now always settles one primitive delay before READY. Latest READY
+  after the edge (gate form, embedded): 1,599 ps at 4 words, 1,905 at 64,
+  1,965 at 256 (setup not included).
+- *Static data bound.* With the fix, the regenerated tables give READY
+  launches matching the probe (1,907 ps at 64 words, embedded; probe
+  1,905), but READ_DATA's static worst launch is still about 100 ps later
+  (2,007 ps), while the probe saw data settle 30 ps before READY in every
+  read. The static analysis bounds the data path more loosely than the
+  replica chain. Decision: a clocked macro's access time for choosing
+  `access_cycles` (and for the fused endpoint) is the later of the two
+  proven launches. This is conservative and consistent with the safe-clock
+  checks, which already use the data launch.
+
+## 2026-10-17 — Phase 6.3b tables
+
+**Regeneration with the clocked macro** (after the READY and ideal-clock
+fixes): fixed point after round 2, `--verify` identical for `unit`,
+`embedded` and `desktop`, 648 entries each (610 before: the `@clocked`
+device, endpoint and scalable-endpoint tables at the default size and 64 to
+512 words). As planned, 16- and 32-bit arrays above the gate-level limit
+have no clocked table and use `widerArray`.
+
+**Analyzer defect found: no clocked table for `memory.sram.controller.8`**
+("TRANSACTION.REQUEST_MASK.output.OUT: clock used as data"). When the
+timing graph classified the root's outputs, it traced each one back
+through zero-delay pass-throughs to find clock outputs, and marked every
+part it passed as a clock carrier before knowing whether the origin was a
+clock. The 8-bit clocked controller passes its one-bit write mask straight
+to MEM_WRITE_MASK, so the mask path was marked a clock carrier and then
+reported as "clock used as data". Wider masks stop the trace at once, so
+only width 8 failed. Fix (`TimingGraph.cpp`): marks from an output that does
+not trace to a clock root are taken back. This can add tables for other
+parts that failed the same way, so the tables are regenerated again.
+
+**Post-regeneration checks (first pass).** Rebuild clean.
+SRAMSubarrayFormulaTest: 48 delays compared at 8 subarrays, largest
+deviation 0 % (with the shared bus, nothing in the structure but the wire
+grows with the subarray count, so the fitted formula is exact here).
+`DelayRuleTest --report --rounds=30` on SRAM/ROM devices, controllers and
+endpoints (8/16/32) plus the new clocked variants, at `unit` and `embedded`:
+24 parts, 8,591 situations each, **4 rule breaks**:
+- *Clocked device (default, 64 and 256 words).* The compact part withdrew
+  its old word at the table's minimum READ_DATA launch (8 ticks at `unit`,
+  342 ps at `embedded`), before the gates (10 / 514 ps; 15 / 574 ps with
+  subarrays). The static minimum comes from a shorter path than the one a
+  withdrawal takes. Fix, as for the asynchronous compact SRAM in phase 5:
+  READY and the word are withdrawn no earlier than the gates' withdrawal
+  path (token clock-to-Q, change detector XOR, STEADY NOT, STARTED and stage
+  reset ANDs; for the word also the output-enable ANDs and the buffer; with
+  subarrays also the bus driver and the global wire).
+- *`memory.sram.endpoint.16` (asynchronous).* After the bench set
+  RSP_READY to X, RSP_VALID ended X in both forms; the compact part, timed
+  by its gate twin, went X at 6 ticks, the gates at 7 (embedded: 277 ps vs
+  325 ps). The twin moves a flip-flop's output after the binary
+  clock-to-output; the gate-level flip-flop carries an X through its latch
+  loops a little later. This is a gap in the twin's X timing, reached by a
+  protocol-violating X input, not caused by 6.3b; the regenerated tables
+  changed the seeded sample, which now reaches it. Recorded as an open
+  defect. If the default (CTest) run reaches it, it is fixed now; otherwise
+  it goes to the phase 8 list.
+
+Clocked controller and endpoint: 0 breaks (controller typical 99 %, worst
+99 %; endpoint 88–90 % / 93–94 %).
+- *Withdrawal, second pass.* With the token path alone (clock-to-Q
+  minimum) the compact part still withdrew 2 ticks early (10 vs 12 at
+  `unit`, 512 vs 514 ps at `embedded`): on a write after a read the gates
+  turn the output off through the registered WE_N's settle line, and the
+  registers' clock-to-Q varies. The compact part now waits for the longest
+  withdrawal path (clock-to-Q maximum, then the longer of the token reset and
+  the WE_N settle line, the output-enable ANDs and the buffer, plus the bus
+  and wire with subarrays). Late is allowed by the rule; early is not.
+
+**Delay-rule results after the fixes** (SRAM/ROM devices, controllers and
+endpoints, 8/16/32, plus the clocked device at default, 64 and 256 words,
+clocked controller and endpoint; 24 parts):
+
+| Run | `unit` | `embedded` | `desktop` |
+| --- | --- | --- | --- |
+| default (CTest, 100 rounds) | 27,070 situations, 0 breaks | 28,580, 0 breaks | 28,580, 0 breaks |
+| `--report --rounds=30` | 8,591, 1 break | 8,591, 1 break | not run |
+
+The one break in the 30-round sample is `memory.sram.endpoint.16`, the
+twin's X timing described above; the default runs do not reach it. Per the
+decision above it goes to the phase 8 list. Clocked parts (embedded,
+default run): device 94 % typical / 96 % worst (64 words 93/96, 256 words
+82/87), controller 99/100, endpoint 89/92; all "timed from its gates".
+
+**Embedded functional tests:** SRAMClockedTest, SRAMClockedSubarrayTest,
+SRAMTest, SRAMSubarrayTest, SRAMContractTest, MemoryEndpointSRAMTest,
+MemoryControllerTest, NativeMemoryDeviceContractTest,
+MemoryEndpointContractTest pass. CacheReadTest fails its fixed 100-tick
+deadline under `embedded`, as recorded in phase 4; it is a `unit` test
+until phase 8 derives its periods from the profile (it passes at `unit`).
+
+## 2026-10-17 — Phase 6.3b results and acceptance
+
+**CPU panel** (advanced core, two-bit predictor, programs 19–22, all 66
+runs completed and oracle-verified). `sram` is now the clocked on-chip
+macro; `sram-async` is the external asynchronous chip used before. Other
+memories are unchanged from 6.3a.
+
+| Memory | `unit` clock, cycles | `embedded` clock, cycles | `desktop` clock, cycles |
+| --- | --- | --- | --- |
+| `sram` (clocked) | 220; 336/220/384/292 (2 access cycles) | 5,236 ps; 269/166/297/228 (1) | 3,680 ps; 269/166/297/228 (1) |
+| `sram-async` | 102; 470/328/558/420 (4) | 4,608 ps; 336/220/384/292 (2) | 3,210 ps; 336/220/384/292 (2) |
+
+Program 19 run time: `embedded` 1.41 µs clocked against 1.55 µs
+asynchronous (9 % faster); `desktop` 0.99 against 1.08 µs (8 % faster);
+`unit` 73,920 against 47,940 ticks (54 % slower). The clocked macro's
+certified clock is limited by `IMEM.RSP_READY` full-cycle setup: the core's
+stall and forwarding logic, then the endpoint's acceptance, then the macro's
+CE_N setup, in one cycle (the asynchronous chip is limited by `IMEM.REQ_READY`
+from the same core path). See the plan check.
+
+**Clocked macro against CACTI** (proven tables; edge to data = the later of
+the READY and READ_DATA launches; setup = the latest input setup):
+
+| Size (8-bit words) | `embedded` edge to data | setup | FO4 (30 ps): access / with setup | CACTI 65 nm LOP |
+| --- | --- | --- | --- | --- |
+| 4 B (4 words) | 1,611 ps | 393 ps | 54 / 67 | — |
+| 64 B | 2,007 | 393 | 67 / 80 | — |
+| 128 B (2 subarrays) | 2,067 | 815 | 69 / 96 | — |
+| 256 B (4) | 2,067 | 865 | 69 / 98 | — |
+| 512 B (8) | 2,082 | 930 | 69 / 100 | 22.4 FO4 (685 ps) |
+
+`desktop` at 512 B: 1,445 ps access, 648 ps setup = 69 / 100 FO4 (21 ps), the
+same multiples. The asynchronous chip at 512 B was 96 FO4 address to READY.
+The clocked access is therefore 3.1× CACTI at 512 B (4.5× with setup). From
+the traces and the structure, roughly half of the access is non-physical or
+serial overhead: gate-built flip-flop clock-to-Q (up to 231 ps), the access
+token's change detection (XOR 120 + NOT 30 + three ANDs, about 300 ps),
+precharge in the access path (120–186 ps), and replica margins (the sense
+replica now covers the wordline path and the column multiplexer, about
+400 ps at 32 rows). The large setup at 128 words and above is the
+periphery's 32-bit address range check feeding the registered subarray
+select, which a real macro (with only the address bits it needs) does not
+have. Decision (plan check): reported as found, not tuned, because at the
+realistic clocks the macro completes in one cycle at every proven size.
+
+**Acceptance of 6.3b:** the clocked macro works in both forms across widths
+and geometries (contract tests), its tables are proven and verified in all
+three profiles, the delay rule holds in the CTest configuration (0 breaks),
+READY follows the data in every read probed, and the CPU runs verify. Not
+met: the CACTI ±20 % target (3.1× residual, explained above), accepted as an
+honest residual by the plan check.
+
+**Full DelayRuleTest (CTest configuration, `unit`, every part)** on the
+final 6.3 state: passed, 146 parts, 155,777 situations, 0 rule breaks,
+every gate-level change inside larger parts within its own table; the gate
+and compact CPU cross-checks agree cycle for cycle (for example program 20
+with SRAM 400 and 400 cycles). Runtime 1,217 s. The scalable endpoints and
+scalable caches are "not compared" as before (their storage has no gate
+form). This also confirms the bench changes (event stepping, following a
+part until quiet) on every part, not only memories.
+
+**Commit.** 6.3a and 6.3b are committed together: they share
+`MemoryProtocol`, `RV32IExperiment`, `ProvenPartDelays`, the endpoint tests
+and the generated tables, and the 6.3a checks above were run on the 6.3a
+build before the 6.3b code was compiled.

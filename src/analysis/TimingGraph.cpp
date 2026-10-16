@@ -427,11 +427,20 @@ class Builder {
             else if (request_.check_clocks) fail(pin->getID() + ": derived, gated or undriven clock is unsupported");
         }
         // A root output that only passes a clock on is not a data output.
-        if (!root_is_leaf_) for (const auto& [name, pin] : root_io_->getAllOutputPins())
+        // clockSource marks what it passes through; an output that traces back
+        // to a data input (a one-bit write mask passed on unchanged) is not a
+        // clock, so its marks are taken back.
+        if (!root_is_leaf_) for (const auto& [name, pin] : root_io_->getAllOutputPins()) {
+            const auto sinks = clock_sinks_;
+            const auto carriers = clock_carriers_;
             if (const auto origin = clockSource(pin); origin && clock_roots_.contains(origin.get())) {
                 clock_outputs_.insert(pin.get());
                 graph_.clock_outputs.push_back(name);
+            } else {
+                clock_sinks_ = sinks;
+                clock_carriers_ = carriers;
             }
+        }
         if (!request_.check_clocks) return;
         for (const auto& [sink, source] : driver_)
             if ((clock_roots_.contains(source.get()) || clock_carriers_.contains(source.get()))

@@ -122,6 +122,30 @@ void MemoryWire::evaluate(size_t time, Simulator& simulator) {
     _updateOutputWireDynamic(simulator, "OUT", getInputPinDynamic("IN")->getValueAsVector(), time);
 }
 
+MemoryBus::MemoryBus(std::string name, size_t drivers, size_t width, size_t delay, bool pulled_low)
+    : BasicComponent(std::move(name), delay, [drivers, width](IOComponent* self) {
+          if (!drivers || !width || width > 32) throw std::invalid_argument("A memory bus needs drivers and 1 to 32 bits");
+          for (size_t i = 0; i < drivers; ++i) self->addPinDynamic("IN_" + std::to_string(i), PinType::INPUT, width);
+          self->addPinDynamic("OUT", PinType::OUTPUT, width);
+      }),
+      drivers_(drivers), width_(width), pulled_low_(pulled_low),
+      type_("MemoryBus<" + std::to_string(drivers) + "," + std::to_string(width) + (pulled_low ? ",pulled-low" : "") + ">") {
+    if (!delay) throw std::invalid_argument("A memory bus needs a positive delay");
+}
+
+void MemoryBus::evaluate(size_t time, Simulator& simulator) {
+    std::vector<LogicValue> out(width_, LogicValue::HIGH_Z);
+    for (size_t i = 0; i < drivers_; ++i) {
+        const auto value = getInputPinDynamic("IN_" + std::to_string(i))->getValueAsVector();
+        for (size_t bit = 0; bit < width_; ++bit) {
+            if (value[bit] == LogicValue::HIGH_Z) continue;
+            out[bit] = out[bit] == LogicValue::HIGH_Z || out[bit] == value[bit] ? value[bit] : LogicValue::UNKNOWN;
+        }
+    }
+    if (pulled_low_) for (auto& bit : out) if (bit == LogicValue::HIGH_Z) bit = LogicValue::LOW;
+    _updateOutputWireDynamic(simulator, "OUT", out, time);
+}
+
 size_t memoryTimerSettle(size_t configured, size_t inputs, bool conditional) {
     using circuit::timing::Leaf;
     using circuit::timing::leafDelay;
@@ -132,7 +156,7 @@ size_t memoryTimerSettle(size_t configured, size_t inputs, bool conditional) {
 }
 
 MemoryTimer::MemoryTimer(std::string name, size_t inputs, size_t settle_ticks, std::vector<MemoryTimerStage> stages,
-                         size_t conditional_from)
+                         size_t conditional_from, size_t detected)
     : IOComponent(std::move(name), [inputs, count = stages.size(), conditional_from](IOComponent* self) {
           if (!inputs || !count) throw std::invalid_argument("A memory timer needs inputs and stages");
           self->addPin("ENABLE", PinType::INPUT);
@@ -143,12 +167,14 @@ MemoryTimer::MemoryTimer(std::string name, size_t inputs, size_t settle_ticks, s
           }
           for (size_t k = 0; k <= count; ++k) self->addPin("STAGE_" + std::to_string(k), PinType::OUTPUT);
       }),
-      inputs_(inputs), settle_(memoryTimerSettle(settle_ticks, inputs, conditional_from < inputs)),
-      conditional_from_(conditional_from), stages_(std::move(stages)) {
+      inputs_(inputs), settle_(memoryTimerSettle(settle_ticks, std::min(inputs, detected), conditional_from < std::min(inputs, detected))),
+      conditional_from_(conditional_from), detected_(std::min(inputs, detected)), stages_(std::move(stages)) {
     if (!settle_ticks) throw std::invalid_argument("A memory timer needs a positive settle delay");
+    if (!detected_) throw std::invalid_argument("A memory timer must watch at least one input");
     for (const auto& stage : stages_)
         if (!stage.replica_gates) throw std::invalid_argument("Every timer stage needs at least one gate");
-    type_ = "MemoryTimer<" + std::to_string(inputs_) + "," + std::to_string(stages_.size()) + ">";
+    type_ = "MemoryTimer<" + std::to_string(inputs_) + "," + std::to_string(stages_.size()) +
+            (detected_ < inputs_ ? "," + std::to_string(detected_) : std::string()) + ">";
 }
 
 void MemoryTimer::buildInternals(ComponentBuilder& b) {
@@ -159,6 +185,7 @@ void MemoryTimer::buildInternals(ComponentBuilder& b) {
         auto held = b.addNewComponent<MemoryDelayLine>("SETTLE_" + n, settle_);
         w.connect(getInputPin("IN_" + n), held->getInputPin("IN"));
         w.connect(held->getOutputPin("OUT"), getOutputPin("HELD_" + n));
+        if (i >= detected_) continue;
         auto differ = b.addNewComponent<SymbolicDiffer>("CHANGED_" + n);
         w.connect(getInputPin("IN_" + n), differ->getInputPin("A"));
         w.connect(held->getOutputPin("OUT"), differ->getInputPin("B"));

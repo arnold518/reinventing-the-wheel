@@ -205,6 +205,66 @@ circuit::test::ComponentTestSpec sramDeviceSpec(size_t width, size_t depth, size
     return s.spec;
 }
 
+// The clocked on-chip macro: inputs change while CLK is low, a rising edge
+// with CE_N low registers them and starts the access, data and READY hold
+// through idle edges and input changes until the next access. Every
+// checkpoint follows an edge or an input change.
+circuit::test::ComponentTestSpec clockedSRAMSpec(size_t width, size_t depth, size_t k) {
+    Scenario s("SRAMClockedTest", "device." + std::to_string(width),
+        {{"depth_words", std::to_string(depth)}, {"words_per_row", std::to_string(k)}, {"clocked", "1"}},
+        {{"CLK", logicBit(L)}, {"WORD_ADDR", logicBits(32, 0)}, {"WRITE_DATA", logicBits(width, 0)},
+         {"WRITE_MASK", logicBits(width / 8, (1u << (width / 8)) - 1)}, {"CE_N", logicBit(H)}, {"WE_N", logicBit(H)}, {"OE_N", logicBit(L)}});
+    const LogicVector z(width, Z), x(width, X);
+    const auto ready = [](bool high) { return logicBit(high ? H : L); };
+    // One access: inputs while CLK is low (the last access still shown), then the edge.
+    LogicVector shown = z;
+    const auto access = [&](const std::string& label, NamedValues inputs, LogicVector result) {
+        inputs["CLK"] = logicBit(L);
+        s.step(label + "-setup", inputs, {{"READ_DATA", shown}});
+        s.step(label, {{"CLK", logicBit(H)}}, {{"READ_DATA", result}, {"READY", ready(true)}});
+        shown = result;
+    };
+    s.step("startup", {}, {{"READ_DATA", z}, {"READY", ready(false)}});
+    s.step("idle-edge-before-any-access", {{"CLK", logicBit(H)}}, {{"READ_DATA", z}, {"READY", ready(false)}});
+    access("unwritten-read", {{"CE_N", logicBit(L)}}, x);
+    std::vector<uint32_t> words(depth);
+    for (size_t word = 0; word < depth; ++word) {
+        words[word] = (0xa53c9681u ^ (uint32_t(word) * 0x17234567u));
+        access("write-word-" + std::to_string(word), {{"CE_N", logicBit(L)}, {"WE_N", logicBit(L)}, {"WORD_ADDR", logicBits(32, word)},
+               {"WRITE_DATA", logicBits(width, words[word])}}, z);
+        access("read-word-" + std::to_string(word), {{"WE_N", logicBit(H)}}, logicBits(width, words[word]));
+    }
+    // The last word holds through idle edges and through input changes.
+    s.step("idle-setup", {{"CLK", logicBit(L)}, {"CE_N", logicBit(H)}, {"WORD_ADDR", logicBits(32, 0)}, {"WE_N", logicBit(L)}}, {{"READ_DATA", shown}});
+    s.step("idle-edge-holds", {{"CLK", logicBit(H)}}, {{"READ_DATA", shown}, {"READY", ready(true)}});
+    s.step("inputs-ignored-between-edges", {{"WRITE_DATA", x}, {"WORD_ADDR", LogicVector(32, X)}}, {{"READ_DATA", shown}, {"READY", ready(true)}});
+    s.step("output-disabled", {{"OE_N", logicBit(H)}}, {{"READ_DATA", z}});
+    s.step("output-enabled", {{"OE_N", logicBit(L)}}, {{"READ_DATA", shown}});
+    s.step("idle-low", {{"CLK", logicBit(L)}, {"WE_N", logicBit(H)}, {"WRITE_DATA", logicBits(width, 0)}, {"WORD_ADDR", logicBits(32, 0)}}, {{"READ_DATA", shown}});
+    for (size_t mask = 0; mask < (size_t{1} << (width / 8)); ++mask) {
+        const size_t word = mask % depth;
+        const uint32_t data = 0x76543210u ^ uint32_t(mask * 0x11223345u);
+        for (size_t byte = 0; byte < width / 8; ++byte) if (mask & (size_t{1} << byte)) { auto m = 0xffu << (byte * 8); words[word] = (words[word] & ~m) | (data & m); }
+        access("masked-write-" + std::to_string(mask), {{"CE_N", logicBit(L)}, {"WE_N", logicBit(L)}, {"WORD_ADDR", logicBits(32, word)},
+               {"WRITE_DATA", logicBits(width, data)}, {"WRITE_MASK", logicBits(width / 8, mask)}}, z);
+        access("masked-read-" + std::to_string(mask), {{"WE_N", logicBit(H)}}, logicBits(width, words[word]));
+    }
+    access("invalid-read", {{"WORD_ADDR", logicBits(32, depth)}}, x);
+    access("invalid-write", {{"WE_N", logicBit(L)}, {"WRITE_DATA", logicBits(width, 0)}, {"WRITE_MASK", logicBits(width / 8, (1u << (width / 8)) - 1)}}, z);
+    for (size_t word = 0; word < depth; ++word)
+        access("readback-" + std::to_string(word), {{"WE_N", logicBit(H)}, {"WORD_ADDR", logicBits(32, word)}}, logicBits(width, words[word]));
+    access("write-unknown", {{"WE_N", logicBit(L)}, {"WORD_ADDR", logicBits(32, 0)}, {"WRITE_DATA", x}}, z);
+    access("read-unknown", {{"WE_N", logicBit(H)}}, x);
+    // An unknown address: unknown data (and, over subarrays, an unknown
+    // select leaves READY unknown too).
+    s.step("read-unknown-address-setup", {{"CLK", logicBit(L)}, {"WORD_ADDR", LogicVector(32, X)}}, {{"READ_DATA", shown}});
+    s.step("read-unknown-address", {{"CLK", logicBit(H)}}, {{"READ_DATA", x}});
+    shown = x;
+    // The last word, unless it is word 0, which `write-unknown` made unknown.
+    access("read-after-unknown", {{"WORD_ADDR", logicBits(32, depth - 1)}}, depth == 1 ? x : logicBits(width, words.back()));
+    return s.spec;
+}
+
 SRAMCellTest::SRAMCellTest() : ComponentScenarioTest(cellSpec()) {}
 SRAMRowTest::SRAMRowTest() : ComponentScenarioTest(rowSpec()) {}
 SRAMBitlinePairTest::SRAMBitlinePairTest() : ComponentScenarioTest(bitlineSpec()) {}
@@ -224,8 +284,24 @@ SRAMSubarrayTest::SRAMSubarrayTest() : ComponentScenarioTest([] {
     return spec;
 }()) {}
 
+SRAMClockedTest::SRAMClockedTest() : ComponentScenarioTest(clockedSRAMSpec(8, 4, 2)) {}
+// The clocked macro over four subarrays: the registered select drives the
+// return bus, so idle subarrays' last words stay off it.
+SRAMClockedSubarrayTest::SRAMClockedSubarrayTest() : ComponentScenarioTest([] {
+    auto spec = clockedSRAMSpec(8, 256, 2);
+    spec.id = "SRAMClockedSubarrayTest";
+    return spec;
+}()) {}
+
 void SRAMContractTest::verifyResults() {
     ComponentTestRunner runner;
+    // The clocked macro in both forms, for each width and geometry.
+    for (size_t width : {8, 16, 32}) for (const auto& [depth, k] : std::vector<std::pair<size_t, size_t>>{{1,1}, {4,2}, {8,4}}) {
+        auto spec = clockedSRAMSpec(width, depth, k);
+        auto results = runner.runAll(spec, spec.scenarios.front());
+        require(results.targets.size() == 2, "Clocked SRAM must have both fidelities");
+        runner.compare(results.targets[0], results.targets[1]);
+    }
     for (size_t width : {8, 16, 32}) for (const auto& [depth, k] : std::vector<std::pair<size_t, size_t>>{{1,1}, {4,2}, {6,2}, {8,4}}) {
         for (auto spec : {sramDeviceSpec(width, depth, k), bankSpec(width, depth, k)}) {
             auto results = runner.runAll(spec, spec.scenarios.front());

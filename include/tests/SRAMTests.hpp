@@ -15,6 +15,8 @@ SRAM_SCENARIO_TEST(SRAMOutputBufferTest)
 SRAM_SCENARIO_TEST(SRAMStorageBankTest)
 SRAM_SCENARIO_TEST(SRAMTest)
 SRAM_SCENARIO_TEST(SRAMSubarrayTest)
+SRAM_SCENARIO_TEST(SRAMClockedTest)
+SRAM_SCENARIO_TEST(SRAMClockedSubarrayTest)
 #undef SRAM_SCENARIO_TEST
 class SRAMContractTest : public StandaloneVerificationTest {
 public: std::string getTestName() const override { return "SRAMContractTest"; }
@@ -25,3 +27,4 @@ public: std::string getTestName() const override { return "SRAMTimingTest"; }
 protected: void verifyResults() override;
 };
 circuit::test::ComponentTestSpec sramDeviceSpec(size_t width, size_t depth, size_t words_per_row);
+circuit::test::ComponentTestSpec clockedSRAMSpec(size_t width, size_t depth, size_t words_per_row);

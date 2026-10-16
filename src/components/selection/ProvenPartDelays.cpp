@@ -31,7 +31,9 @@ bool sameCircuit(const ParameterMap& parameters) {
     static const std::set<std::string> untimed = {
         "depth_words", "paged", "record_history", "max_resident_bytes", "max_history_bytes",
         "phase_ticks", "guard_ticks", "program_ticks", "erase_ticks", "retention_ticks",
-        "refresh_interval_ticks", "refresh_interval_cycles", "access_cycles", "always_ready", "words_per_row", "block_words", "image_hex"};
+        "refresh_interval_ticks", "refresh_interval_cycles", "access_cycles", "always_ready", "words_per_row", "block_words", "image_hex",
+        // A clocked SRAM macro is its own proven variant (the "@clocked" key).
+        "clocked"};
     for (const auto& [name, value] : parameters) {
         if (!untimed.contains(name)) return false;
         if (name == "block_words" && value != "2") return false;
@@ -65,6 +67,36 @@ PartDelays scaled(const PartDelays& at64, const PartDelays& at128, size_t depth)
     if (doublings)
         table.evidence = "ESTIMATE for " + std::to_string(depth) + " words: proven at 64 and 128 words, growth per doubling continued ("
             + at128.evidence + ")";
+    return table;
+}
+
+// A wider array's table from its own two-subarray table plus the growth of
+// the 8-bit array from two subarrays to `grown`: the subarray decoder, the
+// global wires and the return bus do not depend on the word width (the bits
+// travel side by side), and a 16- or 32-bit array of four subarrays exceeds
+// the gate-level limit.
+PartDelays widerArray(const PartDelays& two, const PartDelays& narrow_two, const PartDelays& grown, size_t subarrays) {
+    PartDelays table = two;
+    const auto growth = [](size_t from, size_t to) { return to > from ? to - from : size_t{0}; };
+    const auto find_arc = [](const PartDelays& t, const PartDelays::Arc& arc) -> const PartDelays::Arc* {
+        for (const auto& candidate : t.arcs) if (candidate.input == arc.input && candidate.output == arc.output) return &candidate;
+        return nullptr;
+    };
+    for (auto& arc : table.arcs) {
+        const auto *from = find_arc(narrow_two, arc), *to = find_arc(grown, arc);
+        if (from && to) arc.delay.maximum += growth(from->delay.maximum, to->delay.maximum);
+    }
+    for (auto& [output, range] : table.launches) {
+        const auto from = narrow_two.launches.find(output), to = grown.launches.find(output);
+        if (from != narrow_two.launches.end() && to != grown.launches.end()) range.maximum += growth(from->second.maximum, to->second.maximum);
+    }
+    for (auto& [input, setup] : table.setup) {
+        const auto from = narrow_two.setup.find(input), to = grown.setup.find(input);
+        if (from != narrow_two.setup.end() && to != grown.setup.end()) setup += growth(from->second, to->second);
+    }
+    table.internal_period += growth(narrow_two.internal_period, grown.internal_period);
+    table.evidence = "ESTIMATE for " + std::to_string(subarrays) + " subarrays: proven at two subarrays, the 8-bit array's growth from two ("
+        + two.evidence + ")";
     return table;
 }
 
@@ -127,12 +159,19 @@ const PartDelays* provenPartDelays(const std::string& implementation_id, const P
     // which has none. Each layout other than the default is proven on its own.
     std::string rows;
     if (const auto layout = parameters.find("words_per_row");
-        layout != parameters.end() && layout->second != "2" && implementation_id.find(".ff.") == std::string::npos)
+        layout != parameters.end() && layout->second != "2" && implementation_id.find(".ff.") == std::string::npos) {
         rows = "@rows=" + layout->second;
+        // Rows longer than gates can build (datasheet DRAM rows): the
+        // 16-word layout's table. The longer row only changes the address
+        // fields' wiring and shortens the open-row comparator.
+        try { if (std::stoull(layout->second) > 16) rows = "@rows=16"; } catch (const std::exception&) {}
+    }
+    const auto clocked_parameter = parameters.find("clocked");
+    const std::string clocked = clocked_parameter != parameters.end() && clocked_parameter->second == "1" ? "@clocked" : "";
     // No word count: the default size, as proven.
     if (!parameters.contains("depth_words")) {
         const auto ready_default = parameters.find("always_ready");
-        return ready_default != parameters.end() && ready_default->second == "1" ? nullptr : exact(implementation_id + rows);
+        return ready_default != parameters.end() && ready_default->second == "1" ? nullptr : exact(implementation_id + rows + clocked);
     }
     // A flip-flop endpoint whose consumer is always ready is a different
     // circuit (no response is kept), proven separately.
@@ -141,7 +180,7 @@ const PartDelays* provenPartDelays(const std::string& implementation_id, const P
     // Only the endpoint is built differently for an always-ready consumer;
     // a device inside it is the same circuit either way.
     if (!variant.empty() && !exact(implementation_id + "@depth=64" + variant)) variant.clear();
-    variant = rows + variant;
+    variant = rows + variant + clocked;
     const auto* at64 = exact(implementation_id + "@depth=64" + variant);
     const auto* at128 = exact(implementation_id + "@depth=128" + variant);
     if (!at64 || !at128) return nullptr;
@@ -159,11 +198,21 @@ const PartDelays* provenPartDelays(const std::string& implementation_id, const P
         // On-chip SRAM in the default layout (two words per row): 64, 128 and
         // 256 words are 1, 2 and 4 subarrays of SRAM_SUBARRAY_ROWS rows.
         const auto* at256 = exact(implementation_id + "@depth=256" + variant);
-        if (implementation_id.rfind("memory.sram.", 0) == 0 && rows.empty() && at256) {
-            const size_t subarrays = (depth / 2 + 31) / 32;
-            found = estimated.emplace(key, sramSubarrayEstimate(*at64, *at128, *at256, subarrays,
-                timing::activeTimingProfile().memory.sram_wire_per_side)).first;
-        } else found = estimated.emplace(key, scaled(*at64, *at128, depth)).first;
+        const bool sram = implementation_id.rfind("memory.sram.", 0) == 0 && rows.empty();
+        const size_t subarrays = (depth / 2 + 31) / 32;
+        const size_t wire = timing::activeTimingProfile().memory.sram_wire_per_side;
+        // The same part 8 bits wide, for a wider array's growth.
+        std::string narrow = implementation_id;
+        for (const char* width : {".16.", ".32."})
+            if (const auto at = narrow.find(width); at != std::string::npos) narrow.replace(at, std::string(width).size(), ".8.");
+        const auto* narrow64 = exact(narrow + "@depth=64" + variant);
+        const auto* narrow128 = exact(narrow + "@depth=128" + variant);
+        const auto* narrow256 = exact(narrow + "@depth=256" + variant);
+        if (sram && at256) found = estimated.emplace(key, sramSubarrayEstimate(*at64, *at128, *at256, subarrays, wire)).first;
+        else if (sram && narrow != implementation_id && narrow64 && narrow128 && narrow256)
+            found = estimated.emplace(key, widerArray(*at128, *narrow128,
+                sramSubarrayEstimate(*narrow64, *narrow128, *narrow256, std::max<size_t>(subarrays, 4), wire), subarrays)).first;
+        else found = estimated.emplace(key, scaled(*at64, *at128, depth)).first;
     }
     return &found->second;
 }

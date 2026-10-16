@@ -5,6 +5,7 @@
 #include "MemoryRestartTiming.hpp"
 #include "components/TimingProfile.hpp"
 #include "modules/memory/MemoryTimingParts.hpp"
+#include "modules/basic/DFlipFlopTiming.hpp"
 
 namespace circuit::sram {
 inline LogicValue writeCell(LogicValue q, LogicValue wl, LogicValue drive, LogicValue bl, LogicValue bar) {
@@ -89,7 +90,7 @@ private:
 template<size_t W> class DeviceBehavioral : public BasicComponent, public MemoryDeviceStorage {
 public:
     DeviceBehavioral(std::string name, SRAMDeviceConfig c)
-        : BasicComponent(std::move(name), 1, defineSRAMPins<W>),
+        : BasicComponent(std::move(name), 1, [clocked = c.clocked](IOComponent* s) { defineSRAMPins<W>(s, clocked); }),
           MemoryDeviceStorage(c.depth_words, W, LogicValue::UNKNOWN, c.record_history, c.storage_limits),
           config_(checked(c)), ready_({LogicValue::LOW}), data_(Bits(W, LogicValue::HIGH_Z)) {}
     const char* getTypeName() const override { return SRAM<W>::TypeName.c_str(); }
@@ -99,6 +100,7 @@ public:
     void evaluate(size_t t, Simulator& sim) override {
         using namespace circuit::memory_detail;
         if (complete_at_ && t >= complete_at_) { complete_at_ = 0; finish(t); }
+        if (config_.clocked) { evaluateClocked(t, sim); return; }
         const auto read = [&](const char* pin) { return this->getInputPinDynamic(pin)->getValueAsVector(); };
         Signature now{read("WORD_ADDR"), read("WRITE_DATA"), read("WRITE_MASK"), this->getInputValue("CE_N"), this->getInputValue("WE_N")};
         const auto oe = this->getInputValue("OE_N");
@@ -176,6 +178,88 @@ public:
             if (when && *when > t) sim.scheduleEvent(std::make_shared<ComponentEvalEvent>(*when, this->shared_from_this()));
     }
 private:
+    // The clocked macro (SRAMAccessControl::buildClocked): a rising edge with
+    // CE_N low registers the inputs and starts an access, timed from the edge
+    // by the launches proven on the gates; an edge with CE_N high leaves the
+    // last access, its data and READY as they are. An unknown CE_N at an edge
+    // makes the access token, and so READY and the data, unknown. OE_N only
+    // switches the output.
+    void evaluateClocked(size_t t, Simulator& sim) {
+        using namespace circuit::memory_detail;
+        const auto clock = this->getInputValue("CLK");
+        const bool edge = clock_ == LogicValue::LOW && clock == LogicValue::HIGH;
+        clock_ = clock;
+        const auto oe = this->getInputValue("OE_N");
+        const bool oe_changed = !started_ || oe != oe_;
+        started_ = true; oe_ = oe;
+        const auto ce = this->getInputValue("CE_N");
+        if (edge && ce != LogicValue::HIGH) {
+            const auto read = [&](const char* pin) { return this->getInputPinDynamic(pin)->getValueAsVector(); };
+            current_ = Signature{read("WORD_ADDR"), read("WRITE_DATA"), read("WRITE_MASK"), ce, this->getInputValue("WE_N")};
+            accessed_ = true;
+            const auto [ready, data] = clockedLaunches();
+            const auto [ready_off, data_off] = clockedWithdrawal();
+            ready_.clear(); data_.clear();
+            ready_.at(t + std::min(ready.maximum, std::max(ready.minimum, ready_off)), {LogicValue::LOW});
+            ready_.at(t + ready.maximum, {completion()});
+            data_from_ = t + std::min(data.maximum, std::max(data.minimum, data_off));
+            data_.at(data_from_, Bits(W, LogicValue::HIGH_Z));
+            data_at_ = t + data.maximum;
+            data_.at(data_at_, output());
+            complete_at_ = t + ready.maximum;
+        } else if (oe_changed && accessed_) {
+            const auto out = arcBounds(this->getDelays(), {"OE_N"}, "READ_DATA", {1, 1});
+            data_.clear();
+            if (t < data_from_) data_.at(data_from_, Bits(W, LogicValue::HIGH_Z));
+            data_.at(std::max(data_at_, t + out.maximum), output());
+        }
+        ready_.apply(sim, this->getOutputPin("READY"), t);
+        data_.apply(sim, this->template getOutputPin<W>("READ_DATA"), t);
+        for (const auto when : {ready_.next(), data_.next(), complete_at_ ? std::optional<size_t>(complete_at_) : std::nullopt})
+            if (when && *when > t) sim.scheduleEvent(std::make_shared<ComponentEvalEvent>(*when, this->shared_from_this()));
+    }
+    // The latest the gates take READY and the old word away after an edge:
+    // the registers' clock-to-Q (at most), then for READY the token's change
+    // detector (XOR), STEADY (NOT), STARTED and a stage's reset gate (two
+    // ANDs); for the word the registered WE_N's settle line (a write turns
+    // the output off once it is through), the output-enable tree (two ANDs)
+    // and the output buffer. Every subarray takes each access, so an array of
+    // subarrays adds the bus driver and the global wire. A table's minimum
+    // comes from a shorter path than a withdrawal can take, so the compact
+    // part waits for the longest one (late is allowed, early is not).
+    std::pair<size_t, size_t> clockedWithdrawal() const {
+        using circuit::timing::Leaf;
+        using circuit::timing::leafDelay;
+        const size_t flop = circuit::dflipflop_timing::clockToOutputMaximum();
+        const size_t reset = flop + leafDelay(Leaf::Xor) + leafDelay(Leaf::Not) + 2 * leafDelay(Leaf::And);
+        const size_t held = flop + circuit::memory::memoryTimerSettle(1, 1, false);
+        size_t bus = 0;
+        if (const size_t count = sramSubarrays(config_); count > 1) {
+            size_t side = 1; while (side * side < count) ++side;
+            bus = leafDelay(Leaf::MemoryPrimitive) + circuit::timing::activeTimingProfile().memory.sram_wire_per_side * side;
+        }
+        return {reset + bus, std::max(reset, held) + 2 * leafDelay(Leaf::And) + leafDelay(Leaf::MemoryPrimitive) + bus};
+    }
+    // READY and READ_DATA after the edge: the proven launches, or the
+    // structure's own sum where no table applies (the register, the settle
+    // window, the stages and their gates).
+    std::pair<DelayRange, DelayRange> clockedLaunches() const {
+        using circuit::timing::Leaf;
+        using circuit::timing::leafDelay;
+        const auto* table = this->getDelays();
+        const auto launch = [&](const char* pin) -> std::optional<DelayRange> {
+            if (!table) return std::nullopt;
+            const auto found = table->launches.find(pin);
+            return found == table->launches.end() ? std::nullopt : std::optional<DelayRange>(found->second);
+        };
+        const auto& timing = circuit::timing::activeTimingProfile().memory;
+        const size_t gate = leafDelay(Leaf::And);
+        const size_t fallback = circuit::dflipflop_timing::clockToOutputMaximum() + circuit::memory::memoryTimerSettle(1, 1, false)
+            + std::max(timing.sram_precharge, timing.sramBitline(config_.rows())) + timing.sramBitline(config_.rows())
+            + 2 * leafDelay(Leaf::MemoryPrimitive) + 14 * gate;
+        const DelayRange guess{gate, fallback};
+        return {launch("READY").value_or(guess), launch("READ_DATA").value_or(guess)};
+    }
     struct Signature { Bits address, data, mask; LogicValue ce = LogicValue::UNKNOWN, we = LogicValue::UNKNOWN; };
     static SRAMDeviceConfig checked(SRAMDeviceConfig c) { c.validate(W); return c; }
     LogicValue completion() const {
@@ -193,6 +277,8 @@ private:
     }
     bool selected() const { return known(current_.address) && number(current_.address) < config_.depth_words; }
     Bits output() const {
+        // A clocked macro's unknown access token leaves its output enable unknown.
+        if (config_.clocked && !binary(current_.ce) && oe_ != LogicValue::HIGH) return Bits(W, LogicValue::UNKNOWN);
         if (current_.ce != LogicValue::LOW || current_.we != LogicValue::HIGH || oe_ != LogicValue::LOW) return Bits(W, LogicValue::HIGH_Z);
         return selected() ? storage_.readLogic(number(current_.address) * (W / 8), W / 8) : Bits(W, LogicValue::UNKNOWN);
     }
@@ -206,7 +292,8 @@ private:
     }
     SRAMDeviceConfig config_;
     Signature current_;
-    LogicValue oe_ = LogicValue::UNKNOWN;
+    LogicValue oe_ = LogicValue::UNKNOWN, clock_ = LogicValue::UNKNOWN;
+    bool accessed_ = false;
     size_t complete_at_ = 0, data_from_ = 0, data_at_ = 0;
     circuit::memory_detail::TimedOutput<1> ready_;
     circuit::memory_detail::TimedOutput<W> data_;

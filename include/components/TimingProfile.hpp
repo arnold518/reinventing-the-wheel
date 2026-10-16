@@ -68,6 +68,17 @@ struct TimingProfile {
         // DRAM cell retention defaults: the device's (ticks a row keeps its
         // charge unrefreshed) and the scalable endpoint's.
         size_t dram_device_retention = 100000, dram_endpoint_retention = 1000000000;
+        // REFRESH: the full restore after sensing (to tRAS) and the rest of
+        // the part's tRFC (a real REFRESH covers several rows); 0 leaves the
+        // step out.
+        size_t dram_refresh_restore = 0, dram_refresh_extra = 0;
+        // The reference system's DRAM: refresh period per REFRESH command
+        // (tREFI, ticks; 0 keeps the endpoint's own cycle count) and words
+        // per row of a 32-bit channel. Experiments take their geometry and
+        // refresh rate from these.
+        size_t dram_refresh_interval = 0, dram_row_words = 2;
+        // NOR flash program and erase pulses (EndpointConfig defaults).
+        size_t nor_program = 128, nor_erase = 256;
         size_t norRead(size_t rows) const { return nor_read + nor_read_per_row * rows; }
         size_t dramSense(size_t rows) const { return dram_sense_base + dram_sense_per_row * rows; }
         size_t sramBitline(size_t rows) const { return sram_bitline_base + sram_bitline_per_row * rows; }

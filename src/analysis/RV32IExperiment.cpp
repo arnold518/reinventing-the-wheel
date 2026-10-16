@@ -1,6 +1,7 @@
 #include "modules/memory/BehavioralMemoryEndpoint.hpp"
 #include "MemoryTimingState.hpp"
 #include "components/selection/ProvenPartDelays.hpp"
+#include "components/TimingProfile.hpp"
 #include "analysis/RV32IExperiment.hpp"
 #include "analysis/ExperimentClock.hpp"
 #include "analysis/RV32IWorkloads.hpp"
@@ -103,6 +104,14 @@ RV32IExperimentResult runRV32IExperiment(const RV32IExperimentConfig& config) {
     auto core=b.add(family,"CORE",config.core=="advanced"?config.prediction.parameters():circuit::ParameterMap{});
     auto memory_config=config.memory;
     memory_config.device.record_history=false;
+    // DRAM geometry and refresh rate of the profile's reference chip (row of a
+    // 32-bit channel, one REFRESH per tREFI at this clock).
+    if(memory_config.technology==circuit::memory::Technology::DRAM) {
+        const auto& reference=circuit::timing::activeTimingProfile().memory;
+        memory_config.device.words_per_row=reference.dram_row_words;
+        if(reference.dram_refresh_interval&&config.period&&!config.safe_clock_only)
+            memory_config.device.refresh_interval_cycles=std::max<size_t>(24,reference.dram_refresh_interval/config.period);
+    }
     // SRAM/ROM wait states for this clock, from the proven access time (as a
     // real system sets its flash latency from the clock frequency).
     if((memory_config.technology==circuit::memory::Technology::SRAM||memory_config.technology==circuit::memory::Technology::ROM)
@@ -394,7 +403,8 @@ RV32IExperimentResult runRV32IExperiment(const RV32IExperimentConfig& config) {
     result.benchmark_run.workload=prepared.descriptor;
     result.benchmark_run.target={"rv32i/"+config.core,"rv32i",{
         {"core",config.core},{"fidelity",config.fidelity},
-        {"memory",circuit::memory::technologyName(config.memory.technology)},
+        {"memory",std::string(circuit::memory::technologyName(config.memory.technology))
+            +(config.memory.technology==circuit::memory::Technology::SRAM&&!config.memory.device.clocked?"-async":"")},
         {"prediction",rv32i::predictionPolicyName(config.prediction.policy)},
         {"prediction_entries",std::to_string(config.prediction.entries)},
         {"period_ticks",std::to_string(config.period)}}};

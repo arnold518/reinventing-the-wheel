@@ -6,9 +6,13 @@
 #include "modules/memory/MemoryTimingParts.hpp"
 #include "modules/memory/MemoryRangeCheck.hpp"
 #include "components/TimingProfile.hpp"
+#include "modules/storage/ClockedStateBit.hpp"
+#include "modules/storage/Register.hpp"
+#include "modules/basic/Gate.hpp"
 
 template<size_t W> SRAMAccessControl<W>::SRAMAccessControl(std::string name, SRAMDeviceConfig config)
-    : IOComponent(std::move(name), [](IOComponent* s) {
+    : IOComponent(std::move(name), [clocked = config.clocked](IOComponent* s) {
+        if (clocked) s->addPin("CLK", PinType::INPUT);
         s->addPin<32>("WORD_ADDR", PinType::INPUT);
         s->addPin<W>("WRITE_DATA", PinType::INPUT); s->addPin<W / 8>("WRITE_MASK", PinType::INPUT);
         for (const auto* p : {"CE_N", "WE_N", "OE_N"}) s->addPin(p, PinType::INPUT);
@@ -16,8 +20,26 @@ template<size_t W> SRAMAccessControl<W>::SRAMAccessControl(std::string name, SRA
         s->addPin<W / 8>("MASK", PinType::OUTPUT);
         for (const auto* p : {"PRECHARGE", "ROW_ENABLE", "WRITE_ENABLE", "SENSE_ENABLE", "OUTPUT_ENABLE", "READY"}) s->addPin(p, PinType::OUTPUT);
     }), config_(config) { config.validate(W); }
+namespace circuit::sram {
+// Replica gates for the sense stage after the wordline path (the row
+// decoder's enable AND and its balanced tree, `decode_depth` gates, added by
+// the caller): one gate, plus the column multiplexer the selected bitline
+// pair crosses before the sense amplifier (an AND and an OR per level of the
+// 2:1 tree; one pass gate for one word per row), so the sense enable and
+// READY never come before the selected column is valid.
+inline size_t senseReplicaGates(size_t words_per_row) {
+    using circuit::timing::Leaf;
+    using circuit::timing::leafDelay;
+    size_t levels = 0; while ((size_t{1} << levels) < words_per_row) ++levels;
+    const size_t gate = std::max<size_t>(1, leafDelay(Leaf::And));
+    const size_t column = levels ? levels * (leafDelay(Leaf::And) + leafDelay(Leaf::Or)) : leafDelay(Leaf::And);
+    return 1 + (column + gate - 1) / gate;
+}
+}
+
 template<size_t W> void SRAMAccessControl<W>::buildInternals(ComponentBuilder& b) {
     using circuit::memory_detail::StructuralWiring;
+    if (config_.clocked) { buildClocked(b); return; }
     StructuralWiring w(b);
     const auto& timing = circuit::timing::activeTimingProfile().memory;
     // Inputs in timer order: address, CE_N, WE_N, then data and mask, which
@@ -31,7 +53,8 @@ template<size_t W> void SRAMAccessControl<W>::buildInternals(ComponentBuilder& b
     size_t decode_depth = 1; while ((size_t{1} << (decode_depth - 1)) < row_bits + 1) ++decode_depth;
     auto timer = b.addNewComponent<circuit::memory::MemoryTimer>("ACCESS_TIMER", inputs, timing.sram_settle,
         std::vector<circuit::memory::MemoryTimerStage>{
-            {timing.sram_precharge, 1}, {0, std::max<size_t>(decode_depth, 3) + 1}, {timing.sramBitline(config_.rows()), 1},
+            {timing.sram_precharge, 1}, {0, std::max<size_t>(decode_depth, 3) + 1},
+            {timing.sramBitline(config_.rows()), decode_depth + circuit::sram::senseReplicaGates(config_.words_per_row)},
             // READY after the data: the sense enable gate, the sense
             // amplifier and the output buffer, plus one gate.
             {2 * circuit::timing::leafDelay(circuit::timing::Leaf::MemoryPrimitive), 2}}, 34);
@@ -68,6 +91,103 @@ template<size_t W> void SRAMAccessControl<W>::buildInternals(ComponentBuilder& b
     w.connect(w.invert("SELECTED", held_ce_n), timer->getInputPin("ENABLE"));
     const auto writing = w.invert("WRITING", held_we_n);
     w.connect(writing, timer->getInputPin("CONDITION"));
+    const auto stage = [&](size_t k) { return timer->getOutputPin("STAGE_" + std::to_string(k)); };
+    w.connect(w.both("PRECHARGE_PHASE", stage(0), w.invert("PRECHARGED", stage(1))), this->getOutputPin("PRECHARGE"));
+    w.connect(w.both("WRITE_PHASE", stage(1), writing), this->getOutputPin("WRITE_ENABLE"));
+    w.connect(stage(2), this->getOutputPin("ROW_ENABLE"));
+    w.connect(w.both("SENSE_PHASE", stage(3), held_we_n), this->getOutputPin("SENSE_ENABLE"));
+    w.connect(stage(4), this->getOutputPin("READY"));
+    w.connect(w.reduce("OUTPUT_PHASE", {stage(3), held_we_n, w.invert("OUTPUT_ON", this->getInputPin("OE_N"))}, true),
+              this->getOutputPin("OUTPUT_ENABLE"));
+    w.finish();
+}
+
+template<size_t W> void SRAMAccessControl<W>::buildClocked(ComponentBuilder& b) {
+    using circuit::memory_detail::StructuralWiring;
+    using PinPtr = StructuralWiring::PinPtr;
+    using circuit::timing::Leaf;
+    using circuit::timing::leafDelay;
+    StructuralWiring w(b);
+    const auto& timing = circuit::timing::activeTimingProfile().memory;
+    size_t row_bits = 0; while ((size_t{1} << row_bits) < config_.rows()) ++row_bits;
+    size_t decode_depth = 1; while ((size_t{1} << (decode_depth - 1)) < row_bits + 1) ++decode_depth;
+    // The macro has no reset pin: its registers clear at power-on.
+    const size_t slowest = std::max({leafDelay(Leaf::Not), leafDelay(Leaf::Nand), leafDelay(Leaf::And), leafDelay(Leaf::Or)});
+    auto por = b.addNewComponent<circuit::memory::PowerOnReset>("POWER_ON_RESET", 16 * slowest);
+    const auto reset = por->getOutputPin("OUT");
+    const auto clock = this->getInputPin("CLK");
+    const auto selected = w.invert("SELECTED", this->getInputPin("CE_N"));
+    // A state bit loaded at an edge with CE_N low and held otherwise.
+    const auto bit = [&](const std::string& name, PinPtr d) {
+        auto state = b.add(circuit::families::ClockedStateBit, name);
+        w.connect(clock, state->getInputPin("CLK"));
+        w.connect(reset, state->getInputPin("RST"));
+        const auto q = state->getOutputPin("Q");
+        w.connect(w.either(name + "_NEXT", w.both(name + "_LOAD", selected, d), w.both(name + "_HOLD", w.invert(name + "_IDLE", selected), q)),
+                  state->getInputPin("D"));
+        return q;
+    };
+    // A register word loaded at an edge with CE_N low, as single bits.
+    const auto word = [&](const std::string& name, PinPtr source, size_t bits) {
+        std::vector<PinPtr> out;
+        if (bits == 1) { out.push_back(bit(name, source)); return out; }
+        auto r = b.add(circuit::families::registerWord(bits), name);
+        w.connect(clock, r->getInputPin("CLK"));
+        w.connect(reset, r->getInputPin("RST"));
+        w.connect(selected, r->getInputPin("WE"));
+        w.connect(source, r->getInputPinDynamic("D"));
+        auto split = circuit::memory_device::bitAdapter(b, name + "_BITS", bits, true);
+        w.connect(r->getOutputPinDynamic("Q"), split->getInputPinDynamic("IN"));
+        for (size_t i = 0; i < bits; ++i) out.push_back(split->getOutputPin("OUT_" + std::to_string(i)));
+        return out;
+    };
+    // The access token toggles at every access; the timer watches it alone.
+    auto token = b.add(circuit::families::ClockedStateBit, "ACCESS_TOKEN");
+    w.connect(clock, token->getInputPin("CLK"));
+    w.connect(reset, token->getInputPin("RST"));
+    w.connect(w.binary<XORGate>("TOKEN_NEXT", token->getOutputPin("Q"), selected), token->getInputPin("D"));
+    // Accessed at least once since power-on.
+    auto started = b.add(circuit::families::ClockedStateBit, "STARTED");
+    w.connect(clock, started->getInputPin("CLK"));
+    w.connect(reset, started->getInputPin("RST"));
+    w.connect(w.either("STARTED_NEXT", started->getOutputPin("Q"), selected), started->getInputPin("D"));
+
+    const auto address = word("ADDRESS_REGISTER", this->template getInputPin<32>("WORD_ADDR"), 32);
+    const auto we_n = bit("WE_N_REGISTER", this->getInputPin("WE_N"));
+    const auto data = word("DATA_REGISTER", this->template getInputPin<W>("WRITE_DATA"), W);
+    const auto mask = word("MASK_REGISTER", this->template getInputPin<W / 8>("WRITE_MASK"), W / 8);
+    constexpr size_t inputs = 1 + 32 + 1 + W + W / 8;
+    // The same stages as the asynchronous access, started one register
+    // delay after the edge; the settle window clears the previous access
+    // before the registered inputs reach the array. With no settle window
+    // in front, the precharge itself must cover a bitline the last access
+    // swung fully (a write): restoring it takes the bitline's swing time,
+    // and until then the write drive still reaches the cells.
+    const size_t bitline = timing.sramBitline(config_.rows());
+    auto timer = b.addNewComponent<circuit::memory::MemoryTimer>("ACCESS_TIMER", inputs, 1,
+        std::vector<circuit::memory::MemoryTimerStage>{
+            {std::max(timing.sram_precharge, bitline), 1}, {0, std::max<size_t>(decode_depth, 3) + 1},
+            {bitline, decode_depth + circuit::sram::senseReplicaGates(config_.words_per_row)},
+            {2 * leafDelay(Leaf::MemoryPrimitive), 2}}, static_cast<size_t>(-1), 1);
+    size_t index = 0;
+    const auto feed = [&](PinPtr source) -> PinPtr {
+        const auto n = std::to_string(index++);
+        w.connect(source, timer->getInputPin("IN_" + n));
+        return timer->getOutputPin("HELD_" + n);
+    };
+    feed(token->getOutputPin("Q"));
+    const auto join = [&](const std::string& name, const std::vector<PinPtr>& bits, std::shared_ptr<PinBase> target) {
+        if (bits.size() == 1) { w.connect(feed(bits.front()), target); return; }
+        auto joined = circuit::memory_device::bitAdapter(b, name, bits.size(), false);
+        for (size_t i = 0; i < bits.size(); ++i) w.connect(feed(bits[i]), joined->getInputPin("IN_" + std::to_string(i)));
+        w.connect(joined->getOutputPinDynamic("OUT"), target);
+    };
+    join("HELD_ADDRESS", address, this->template getOutputPin<32>("ADDRESS"));
+    const auto held_we_n = feed(we_n);
+    join("HELD_DATA", data, this->template getOutputPin<W>("DATA"));
+    join("HELD_MASK", mask, this->template getOutputPin<W / 8>("MASK"));
+    w.connect(started->getOutputPin("Q"), timer->getInputPin("ENABLE"));
+    const auto writing = w.invert("WRITING", held_we_n);
     const auto stage = [&](size_t k) { return timer->getOutputPin("STAGE_" + std::to_string(k)); };
     w.connect(w.both("PRECHARGE_PHASE", stage(0), w.invert("PRECHARGED", stage(1))), this->getOutputPin("PRECHARGE"));
     w.connect(w.both("WRITE_PHASE", stage(1), writing), this->getOutputPin("WRITE_ENABLE"));
@@ -178,15 +298,19 @@ template<size_t W> void SRAMStorageBank<W>::buildInternals(ComponentBuilder& b) 
 }
 
 template<size_t W> SRAM<W>::SRAM(std::string name, SRAMDeviceConfig config)
-    : IOComponent(std::move(name), defineSRAMPins<W>), config_(config) { config.validate(W, true); }
+    : IOComponent(std::move(name), [clocked = config.clocked](IOComponent* s) { defineSRAMPins<W>(s, clocked); }), config_(config) { config.validate(W, true); }
 // A large array: subarrays of SRAM_SUBARRAY_ROWS rows, each a whole SRAM
 // device with its own self-timing. The high word-address bits select one
-// subarray (its CE_N); the others stay idle. Requests reach the subarrays
-// over a global wire and the selected subarray's data and READY come back
-// over another, through a multiplexer tree on the same select bits. The wire
-// delay grows with the side of the subarray grid. An address beyond the
-// depth goes to subarray 0 with its top bit set, so that subarray answers
-// with X and READY exactly as a single bank does.
+// subarray (its CE_N; in a clocked macro, its WE_N, while every subarray
+// takes the access). Requests reach the subarrays
+// over a global wire (a clocked macro's clock directly), and
+// each subarray drives a shared return bus for data and READY through its
+// own tri-state buffers, enabled by the subarray's select: the live select
+// in an asynchronous part, the select registered at the last access in a
+// clocked one (whose idle subarrays keep their last word). The wire delay
+// grows with the side of the subarray grid. An address beyond the depth goes
+// to subarray 0 with its top bit set, so that subarray answers with X and
+// READY exactly as a single bank does.
 template<size_t W> void SRAM<W>::buildSubarrays(ComponentBuilder& b) {
     using namespace circuit::sram;
     using circuit::memory_detail::StructuralWiring;
@@ -209,21 +333,62 @@ template<size_t W> void SRAM<W>::buildSubarrays(ComponentBuilder& b) {
     const auto ce_n = global("CE_WIRE", this->getInputPin("CE_N"));
     const auto we_n = global("WE_WIRE", this->getInputPin("WE_N"));
     const auto oe_n = global("OE_WIRE", this->getInputPin("OE_N"));
-    auto bits = b.addNewComponent<BitSplitter<32>>("ADDRESS_BITS");
-    w.connect(address, bits->template getInputPin<32>("IN"));
+    // The clock is ideal (the timing analysis takes one undelayed clock), so
+    // a clocked macro's request crosses the global wire before the
+    // subarrays register it: the wire is part of the macro's setup time.
+    const auto clock = config_.clocked ? PinPtr(this->getInputPin("CLK")) : PinPtr{};
+    // The select field, forced to 0 for an address beyond the depth (from
+    // the periphery's own copy of the address, before the global wire).
+    const auto decode = [&](const std::string& prefix, PinPtr source, std::vector<PinPtr>* word_out) {
+        auto bits = b.addNewComponent<BitSplitter<32>>(prefix + "ADDRESS_BITS");
+        w.connect(source, bits->template getInputPin<32>("IN"));
+        std::vector<PinPtr> word;
+        for (size_t i = 0; i < 32; ++i) word.push_back(bits->getOutputPin("OUT_" + std::to_string(i)));
+        const auto valid = circuit::memory_detail::addressBelow(w, word, config_.depth_words, prefix + "IN_RANGE");
+        std::vector<PinPtr> select, select_bar;
+        for (size_t i = 0; i < select_bits; ++i) {
+            select.push_back(w.both(prefix + "SELECT_" + std::to_string(i), word[low_bits + i], valid));
+            select_bar.push_back(w.invert(prefix + "NOT_SELECT_" + std::to_string(i), select.back()));
+        }
+        std::vector<PinPtr> chosen;
+        for (size_t k = 0; k < count; ++k)
+            chosen.push_back(circuit::memory_detail::decodeMatch(w, prefix + "CHOSEN_" + std::to_string(k), select, select_bar, k));
+        if (word_out) { *word_out = word; word_out->push_back(w.invert(prefix + "OUT_OF_RANGE", valid)); }
+        return chosen;
+    };
     std::vector<PinPtr> word;
-    for (size_t i = 0; i < 32; ++i) word.push_back(bits->getOutputPin("OUT_" + std::to_string(i)));
-    const auto valid = circuit::memory_detail::addressBelow(w, word, config_.depth_words, "IN_RANGE");
-    const auto invalid = w.invert("OUT_OF_RANGE", valid);
-    // The select field, forced to 0 for an address beyond the depth.
-    std::vector<PinPtr> select, select_bar;
-    for (size_t i = 0; i < select_bits; ++i) {
-        select.push_back(w.both("SELECT_" + std::to_string(i), word[low_bits + i], valid));
-        select_bar.push_back(w.invert("NOT_SELECT_" + std::to_string(i), select.back()));
+    const auto chosen = decode("", address, &word);
+    const auto invalid = word.back(); word.pop_back();
+    // The bus enables: the live select while CE_N is low, or for a clocked
+    // macro the select registered at each access (CE_N low at the edge),
+    // from the periphery's copy of the address and the clock before the
+    // global wire.
+    std::vector<PinPtr> enables;
+    const auto enabled = w.invert("ENABLED", ce_n);
+    for (size_t k = 0; k < count; ++k) enables.push_back(w.both("BUS_ENABLE_" + std::to_string(k), chosen[k], enabled));
+    if (config_.clocked) {
+        using circuit::timing::Leaf;
+        using circuit::timing::leafDelay;
+        const size_t slowest = std::max({leafDelay(Leaf::Not), leafDelay(Leaf::Nand), leafDelay(Leaf::And), leafDelay(Leaf::Or)});
+        auto por = b.addNewComponent<circuit::memory::PowerOnReset>("POWER_ON_RESET", 16 * slowest);
+        const auto here = decode("PERIPHERY_", this->template getInputPin<32>("WORD_ADDR"), nullptr);
+        const auto access = w.invert("ACCESS", this->getInputPin("CE_N"));
+        for (size_t k = 0; k < count; ++k) {
+            const auto n = std::to_string(k);
+            auto state = b.add(circuit::families::ClockedStateBit, "SELECTED_" + n);
+            w.connect(this->getInputPin("CLK"), state->getInputPin("CLK"));
+            w.connect(por->getOutputPin("OUT"), state->getInputPin("RST"));
+            const auto q = state->getOutputPin("Q");
+            w.connect(w.either("SELECTED_NEXT_" + n, w.both("SELECTED_LOAD_" + n, access, here[k]),
+                               w.both("SELECTED_HOLD_" + n, w.invert("SELECTED_IDLE_" + n, access), q)), state->getInputPin("D"));
+            enables[k] = q;
+        }
     }
     const auto low = w.constant("LOW", false);
-    std::vector<PinPtr> data_out, ready_out;
-    std::vector<std::vector<PinPtr>> data_bits(W);
+    auto data_bus = b.addNewComponent<circuit::memory::MemoryBus>("READ_DATA_BUS", count, W, wire);
+    // READY has a pull-down: low while no subarray drives it (deselected,
+    // or before a clocked macro's first access), as in a single bank.
+    auto ready_bus = b.addNewComponent<circuit::memory::MemoryBus>("READY_BUS", count, 1, wire, true);
     const auto suffix = "." + std::to_string(W);
     for (size_t k = 0; k < count; ++k) {
         const auto n = std::to_string(k);
@@ -234,30 +399,33 @@ template<size_t W> void SRAM<W>::buildSubarrays(ComponentBuilder& b) {
         for (size_t i = 0; i < 32; ++i)
             w.connect(i < low_bits ? word[i] : (k == 0 && i == 31 ? invalid : low), local->getInputPin("IN_" + std::to_string(i)));
         w.connect(local->template getOutputPin<32>("OUT"), part->template getInputPin<32>("WORD_ADDR"));
-        const auto chosen = circuit::memory_detail::decodeMatch(w, "CHOSEN_" + n, select, select_bar, k);
-        w.connect(w.either("CE_N_" + n, ce_n, w.invert("NOT_CHOSEN_" + n, chosen)), part->getInputPin("CE_N"));
-        w.connect(we_n, part->getInputPin("WE_N"));
+        // Asynchronous: only the chosen subarray is enabled. Clocked: every
+        // subarray takes each access (in parallel, so no slower) and only
+        // the chosen one may write; an unknown address then leaves only the
+        // write strobe unknown, and the next access starts cleanly.
+        const auto not_chosen = w.invert("NOT_CHOSEN_" + n, chosen[k]);
+        if (config_.clocked) {
+            w.connect(ce_n, part->getInputPin("CE_N"));
+            w.connect(clock, part->getInputPin("CLK"));
+            w.connect(w.either("WE_N_" + n, we_n, not_chosen), part->getInputPin("WE_N"));
+        } else {
+            w.connect(w.either("CE_N_" + n, ce_n, not_chosen), part->getInputPin("CE_N"));
+            w.connect(we_n, part->getInputPin("WE_N"));
+        }
         w.connect(oe_n, part->getInputPin("OE_N"));
         w.connect(data, part->template getInputPin<W>("WRITE_DATA"));
         w.connect(mask, part->template getInputPin<W / 8>("WRITE_MASK"));
-        auto out = b.addNewComponent<BitSplitter<W>>("READ_BITS_" + n);
-        w.connect(part->template getOutputPin<W>("READ_DATA"), out->template getInputPin<W>("IN"));
-        for (size_t bit = 0; bit < W; ++bit) data_bits[bit].push_back(out->getOutputPin("OUT_" + std::to_string(bit)));
-        ready_out.push_back(part->getOutputPin("READY"));
+        auto drive = add<SRAMOutputBuffer<W>>(b, "memory.sram.output-buffer" + suffix, "BUS_DRIVER_" + n, {});
+        w.connect(part->template getOutputPin<W>("READ_DATA"), drive->template getInputPin<W>("DATA"));
+        w.connect(enables[k], drive->getInputPin("ENABLE"));
+        w.connect(drive->template getOutputPin<W>("OUT"), data_bus->getInputPinDynamic("IN_" + n));
+        auto ready_drive = b.addNewComponent<circuit::memory_device::MemoryOutputBuffer>("READY_DRIVER_" + n, 1);
+        w.connect(part->getOutputPin("READY"), ready_drive->getInputPinDynamic("DATA"));
+        w.connect(enables[k], ready_drive->getInputPin("ENABLE"));
+        w.connect(ready_drive->getOutputPinDynamic("OUT"), ready_bus->getInputPinDynamic("IN_" + n));
     }
-    auto joined = b.addNewComponent<BitJoiner<W>>("READ_DATA_BITS");
-    for (size_t bit = 0; bit < W; ++bit)
-        w.connect(circuit::memory_detail::selectMuxTree(w, b, "RETURN_" + std::to_string(bit), data_bits[bit], select, data_bits[bit].front()),
-                  joined->getInputPin("IN_" + std::to_string(bit)));
-    const auto ready = circuit::memory_detail::selectMuxTree(w, b, "READY_RETURN", ready_out, select, ready_out.front());
-    // The multiplexers pass no high impedance: a global output buffer drives
-    // the data while the selected subarray is ready from a read with the chip
-    // and its output selected, as a single bank's buffer does once settled.
-    auto output = add<SRAMOutputBuffer<W>>(b, "memory.sram.output-buffer" + suffix, "OUTPUT", {});
-    w.connect(joined->template getOutputPin<W>("OUT"), output->template getInputPin<W>("DATA"));
-    w.connect(w.reduce("DRIVE_OUTPUT", {ready, w.invert("CHIP_ON", ce_n), w.invert("OUTPUT_ON", oe_n), we_n}, true), output->getInputPin("ENABLE"));
-    w.connect(global("READ_DATA_WIRE", output->template getOutputPin<W>("OUT")), this->template getOutputPin<W>("READ_DATA"));
-    w.connect(global("READY_WIRE", ready), this->getOutputPin("READY"));
+    w.connect(data_bus->getOutputPinDynamic("OUT"), this->template getOutputPin<W>("READ_DATA"));
+    w.connect(ready_bus->getOutputPinDynamic("OUT"), this->getOutputPin("READY"));
     w.finish();
 }
 

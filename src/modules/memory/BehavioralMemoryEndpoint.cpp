@@ -106,12 +106,15 @@ void BehavioralMemoryEndpoint::evaluate(size_t t, Simulator& sim) {
         Signals seen;
         for (auto name : {"BUSY","ERROR","READ_VALID","ROW_OPEN"}) seen[name]=s.device->read(name,1);
         seen["READ_DATA"]=s.device->read("READ_DATA",s.width);
+        // A clocked SRAM macro registers the request shown before the edge.
+        s.sequence.presentRequest(before.accept==H,request);
         s.sequence.clock(clk);
         s.device->update(t,s.sequence.outputs);
         s.sequence.step(t,edge,reset!=L,before.accept==H,request,
             [&](const std::string& pin,size_t width){return clocked?signal(seen,pin,width):s.device->read(pin,width);},before.finish==H);
         // The next command is shown from the device's outputs after the edge.
         if (clocked) s.sequence.present([&](const std::string& pin,size_t width){return s.device->read(pin,width);});
+        s.sequence.presentRequest(view().accept==H,request);
         s.device->update(t,s.sequence.outputs);
     }
     // Recompute the combinational view after the edge.

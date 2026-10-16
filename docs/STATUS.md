@@ -62,23 +62,25 @@ work state changes. Keep dated decisions and validation results in
 
 - [Realistic leaf delays and gate-level memory control](records/2026-10-16-realistic-timing-plan.md),
   executed on branch `realistic-timing` with a [progress log](records/2026-10-16-realistic-timing-progress.md):
-  phases 1–5 are done. Leaf delays come from a timing profile (`unit`, the
+  phases 1–6.3 are done. Leaf delays come from a timing profile (`unit`, the
   default; `embedded` 65 nm and `desktop` 32 nm, 1 tick = 1 ps) with
   inertial gate delay and per-profile delay tables at a fixed point. All
   memory controllers are gates, the devices time themselves, and compact
-  forms are cycle-exact copies; memory scenarios pass under all three
-  profiles, the delay rule passes for every part, and oracle-checked CPU
-  runs complete with every memory under every profile. Realistic memory
-  timings are still placeholders (DRAM/NOR results not physical) until
-  calibration (phase 6). Cycle counts with timed memories differ from the
-  published ones, which hold at tag `timing-legacy`. Phase 5 made device
-  READY follow the data and builds large on-chip SRAMs from 32-row
-  subarrays with a global decoder and wires; larger sizes use a formula
-  matching the gate-level array exactly at a held-out size. The owner
-  directed realistic memory models that are not tuned to favor caches.
-  Next: phase 6 (datasheet calibration and removal of protocol cycles real
-  controllers do not spend), the cache experiment, then the public site and
-  visualizer.
+  forms take their timing from the gates; the delay rule passes in the CTest
+  configuration and oracle-checked CPU runs complete with every memory under
+  every profile. External DRAM (SDR SDRAM for `embedded`, DDR4-3200 for
+  `desktop`) and NOR flash use datasheet intervals and DRAM row geometry. The
+  on-chip SRAM used by the experiments (`--memory sram`) is now a clocked
+  macro (the future cache bank); the asynchronous chip remains as
+  `sram-async`. Its access is 3.1× CACTI at 512 B (69 FO4 against 22.4),
+  reported, not tuned (it completes in one cycle at the realistic clocks).
+  Cycle counts with timed memories differ from the published ones, which
+  hold at tag `timing-legacy`. The owner directed realistic memory models
+  that are not tuned to favor caches. Open: the core–endpoint handshake
+  limits every certified clock and is worse with the clocked macro (next,
+  phase 6.4); the delay twin's X timing; tick-driven tests (CacheReadTest,
+  MemoryDeviceTimingTest, MemoryEndpointTimingTest) are `unit`-only. Next:
+  phase 6.4, the cache experiment, then the public site and visualizer.
   `MemoryEndpointIntegrationTest` fails two example checks built from
   `site-docs/` snippets until that site update.
 

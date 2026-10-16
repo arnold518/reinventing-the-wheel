@@ -53,7 +53,11 @@ public:
         stages_[Read] = steps({m.dram_read});
         stages_[Write] = steps({m.dram_write_on, m.dram_write_off, m.dram_write_recovery});
         stages_[Precharge] = steps({m.dram_close, precharge, m.dram_equalize});
-        stages_[Refresh] = steps({m.dram_wordline, sense, m.dram_close, precharge, m.dram_equalize});
+        std::vector<size_t> refresh{m.dram_wordline, sense};
+        if (m.dram_refresh_restore + m.dram_refresh_extra) refresh.push_back(m.dram_refresh_restore + m.dram_refresh_extra);
+        for (auto step : {m.dram_close, precharge, m.dram_equalize}) refresh.push_back(step);
+        refresh_close_ = refresh.size() - 3;
+        stages_[Refresh] = steps(refresh);
     }
 
     // A rising edge at time `t` with the inputs as sampled there.
@@ -116,14 +120,14 @@ public:
     // The analog controls at time `t` (the gates' formulas).
     bool wordline(size_t t) const {
         return (open && !(running(Precharge) && reached(0, t))) || (running(Activate) && reached(0, t)) ||
-               (running(Refresh) && reached(0, t) && !reached(2, t));
+               (running(Refresh) && reached(0, t) && !reached(refresh_close_, t));
     }
     bool sensing(size_t t) const {
         return (open && !(running(Precharge) && reached(0, t))) || (running(Activate) && reached(1, t)) ||
-               (running(Refresh) && reached(1, t) && !reached(2, t));
+               (running(Refresh) && reached(1, t) && !reached(refresh_close_, t));
     }
     bool precharging(size_t t) const {
-        return (!open && !running(Activate) && !(running(Refresh) && !reached(3, t))) || (running(Precharge) && reached(1, t));
+        return (!open && !running(Activate) && !(running(Refresh) && !reached(refresh_close_ + 1, t))) || (running(Precharge) && reached(1, t));
     }
     bool writing(size_t t) const { return running(Write) && reached(0, t) && !reached(1, t); }
 
@@ -149,6 +153,7 @@ private:
     size_t width_, rows_, words_per_row_;
     size_t launch_ = 0, or_tree_ = 0, started_ = 0;
     static constexpr size_t NOT_STARTED = static_cast<size_t>(-1) / 2;
+    size_t refresh_close_ = 2;
     bool done_q_ = false, fresh_ = false, delayed_start_ = false;
     std::map<unsigned, std::vector<size_t>> stages_;
 };

@@ -16,7 +16,8 @@ Technology technologyFromName(const std::string&);
 struct EndpointConfig {
     size_t depth_words = 4, words_per_row = 2, block_words = 2;
     size_t phase_ticks = 32, guard_ticks = 64;
-    size_t program_ticks = 128, erase_ticks = 256;
+    size_t program_ticks = timing::activeTimingProfile().memory.nor_program;
+    size_t erase_ticks = timing::activeTimingProfile().memory.nor_erase;
     size_t retention_ticks = timing::activeTimingProfile().memory.dram_endpoint_retention, refresh_interval_ticks = 10000;
     // The gate-level DRAM controller counts clock cycles between refreshes;
     // 0 disables refresh.
@@ -30,6 +31,11 @@ struct EndpointConfig {
     // FF-only contract: the consumer holds RSP_READY high, so no response
     // needs to be retained after the accepting edge.
     bool always_ready = false;
+    // SRAM-only: an on-chip clocked macro instead of an asynchronous chip.
+    // The controller shows each request to the macro combinationally on
+    // START, the macro registers it at that edge, and access_cycles counts
+    // from there to the capturing edge.
+    bool clocked = false;
     std::string image_hex;
     // expanded_cells: the caller builds one component per stored cell.
     void validate(size_t width, Technology, bool expanded_cells = false) const;
@@ -37,10 +43,10 @@ struct EndpointConfig {
 EndpointConfig endpointConfig(const ParameterMap&);
 ParameterMap endpointParameters(const EndpointConfig&);
 void protocolPins(IOComponent*, size_t width, const std::string& prefix = {}, bool requester = false);
-void nativePins(IOComponent*, size_t width, Technology, bool controller);
+void nativePins(IOComponent*, size_t width, Technology, bool controller, bool clocked = false);
 // The access_cycles an SRAM/ROM endpoint needs at a clock period: the proven
 // controller launch plus device access time plus a capture margin, in whole
-// periods.
+// periods. A clocked SRAM macro's access counts from the edge itself.
 size_t staticAccessCycles(size_t width, Technology, const EndpointConfig&, size_t period_ticks);
 void registerMemoryEndpoints(ComponentCatalog&);
 }

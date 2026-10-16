@@ -12,6 +12,11 @@ struct SRAMDeviceConfig {
     size_t words_per_row = 2;
     size_t phase_ticks = 32;
     bool record_history = true;
+    // An on-chip clocked macro (CLK pin): the inputs are registered at a
+    // rising edge with CE_N low and the access runs from that edge; data and
+    // READY hold until the next access. Otherwise an asynchronous SRAM chip
+    // that restarts on any input change.
+    bool clocked = false;
     MemoryStorage::Limits storage_limits{true, 64 * 1024 * 1024, 16 * 1024 * 1024};
     void validate(size_t width, bool structural = false) const;
     size_t rows() const { return depth_words / words_per_row; }
@@ -120,8 +125,9 @@ public:
     void evaluate(size_t time, Simulator& simulator) override;
 };
 
-template<size_t W> void defineSRAMPins(IOComponent* self) {
+template<size_t W> void defineSRAMPins(IOComponent* self, bool clocked = false) {
     static_assert(W == 8 || W == 16 || W == 32);
+    if (clocked) self->addPin("CLK", PinType::INPUT);
     self->addPin<32>("WORD_ADDR", PinType::INPUT);
     self->addPin<W>("WRITE_DATA", PinType::INPUT);
     self->addPin<W / 8>("WRITE_MASK", PinType::INPUT);
@@ -137,6 +143,14 @@ template<size_t W> void defineSRAMPins(IOComponent* self) {
 // (writes); ROW_ENABLE once a replica of the row-decoder depth has settled;
 // after a replica bitline interval SENSE_ENABLE (reads) and READY. OE_N only
 // gates OUTPUT_ENABLE and does not restart an access.
+//
+// Clocked (on-chip macro): no change detector over the inputs. Address,
+// data, mask and WE_N are registered at a rising edge with CE_N low, and an
+// access token toggles; the timer watches the token alone, so the stages
+// restart one register delay after the edge and run as above (the registered
+// inputs reach the array through the timer's settle lines, after the previous
+// access has been cleared). The stages then hold, and with them the data and
+// READY, until the next access. Before the first access READY is low.
 template<size_t W> class SRAMAccessControl : public IOComponent {
 public:
     SRAMAccessControl(std::string name, SRAMDeviceConfig config);
@@ -144,6 +158,7 @@ public:
     const char* getTypeName() const override { return TypeName.c_str(); }
     void buildInternals(ComponentBuilder& builder) override;
 private:
+    void buildClocked(ComponentBuilder& builder);
     SRAMDeviceConfig config_;
 };
 

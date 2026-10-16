@@ -143,7 +143,7 @@ class MemoryControllerBehavioral : public Primitive {
 public:
     MemoryControllerBehavioral(std::string n, size_t w, Technology t, EndpointConfig c)
         : Primitive(std::move(n), "MemoryController<" + std::string(technologyName(t)) + "," + std::to_string(w) + ">",
-            [=](IOComponent* s) { protocolPins(s, w); nativePins(s, w, t, true); }),
+            [=](IOComponent* s) { protocolPins(s, w); nativePins(s, w, t, true, c.clocked); }),
           width_(w), technology_(t), config_(c), sequence_(w, t, c), buffer_(w) {
         c.validate(w, t);
     }
@@ -176,6 +176,7 @@ public:
                        [&](const std::string& pin, size_t) { return read("MEM_" + pin); }, before.finish == H);
 
         const auto after = view();
+        sequence_.presentRequest(after.accept == H, request);
         publish(sim, t, "REQ_READY", after.ready);
         publishResponse(sim, t, reset, after.completion, sequence_.result, bits(3, unsigned(sequence_.status)));
         for (auto& [name, pin] : getAllOutputPins()) {
@@ -235,7 +236,7 @@ void MemoryTransactionPort::buildInternals(ComponentBuilder& b) {
     w.finish();
 }
 MemoryController::MemoryController(std::string n, size_t w, Technology t, EndpointConfig c)
-    : IOComponent(std::move(n), [=](IOComponent* s) { protocolPins(s, w); nativePins(s, w, t, true); }),
+    : IOComponent(std::move(n), [=](IOComponent* s) { protocolPins(s, w); nativePins(s, w, t, true, c.clocked); }),
       width_(w), technology_(t), config_(c), type_("MemoryController<" + std::string(technologyName(t)) + "," + std::to_string(w) + ">") { c.validate(w, t); }
 void MemoryController::buildInternals(ComponentBuilder& b) {
     if (technology_ == Technology::FF) {

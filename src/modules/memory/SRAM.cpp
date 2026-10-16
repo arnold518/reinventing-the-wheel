@@ -63,6 +63,10 @@ SRAMDeviceConfig sramConfigFromParameters(const circuit::ParameterMap& p) {
         if (key == "depth_words") c.depth_words = n;
         else if (key == "words_per_row") c.words_per_row = n;
         else if (key == "phase_ticks") c.phase_ticks = n;
+        else if (key == "clocked") {
+            if (n > 1) throw std::invalid_argument("SRAM clocked must be 0 or 1");
+            c.clocked = n == 1;
+        }
         else throw std::invalid_argument("Unknown SRAM parameter: " + key);
     }
     return c;
@@ -71,6 +75,9 @@ circuit::ParameterMap sramParameters(const SRAMDeviceConfig& c) {
     auto p = circuit::memory_device::storageParameters(c.storage_limits);
     p.insert({{"depth_words", std::to_string(c.depth_words)}, {"words_per_row", std::to_string(c.words_per_row)},
               {"phase_ticks", std::to_string(c.phase_ticks)}, {"record_history", c.record_history ? "1" : "0"}});
+    // Only a clocked macro names the parameter: the asynchronous part keeps
+    // the parameters (and proven tables) it always had.
+    if (c.clocked) p["clocked"] = "1";
     return p;
 }
 

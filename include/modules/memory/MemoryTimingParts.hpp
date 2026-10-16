@@ -44,6 +44,26 @@ private:
     std::string type_;
 };
 
+// A shared on-chip bus between the subarrays of a large array and its
+// periphery: each subarray drives it through its own tri-state buffer, and
+// OUT follows the single driver after the wire's delay (an electrical
+// stand-in leaf like MemoryWire). Per bit: no driver gives Z (0 on a line
+// with a pull-down), drivers that agree give their value, disagreeing
+// drivers give X. Width 1 to 32.
+class MemoryBus : public BasicComponent {
+public:
+    // `pulled_low`: a line with a pull-down reads 0 when no driver is on
+    // (a status line such as READY); otherwise it floats (Z).
+    MemoryBus(std::string name, size_t drivers, size_t width, size_t delay, bool pulled_low = false);
+    const char* getTypeName() const override { return type_.c_str(); }
+    PrimitiveTiming primitiveTiming() const override { return PrimitiveTiming::InputsOnly; }
+    void evaluate(size_t time, Simulator& simulator) override;
+private:
+    size_t drivers_, width_;
+    bool pulled_low_;
+    std::string type_;
+};
+
 // The XOR of an address-transition detector, with the simulator's unknown
 // value read as a symbol: OUT is 1 when A and B differ (0, 1, X and Z as four
 // symbols), 0 when they are equal. A steady unknown input is steady; a
@@ -144,13 +164,16 @@ size_t memoryTimerSettle(size_t configured, size_t inputs, bool conditional);
 class MemoryTimer : public IOComponent {
 public:
     // Inputs from `conditional_from` on restart the access only while the
-    // CONDITION input is 1 (an SRAM's write data during a write).
+    // CONDITION input is 1 (an SRAM's write data during a write). Inputs from
+    // `detected` on are only held, never watched: a clocked macro starts on
+    // its access token alone, while its registered address and data still
+    // reach the array only once the previous access has been cleared.
     MemoryTimer(std::string name, size_t inputs, size_t settle_ticks, std::vector<MemoryTimerStage> stages,
-                size_t conditional_from = static_cast<size_t>(-1));
+                size_t conditional_from = static_cast<size_t>(-1), size_t detected = static_cast<size_t>(-1));
     const char* getTypeName() const override { return type_.c_str(); }
     void buildInternals(ComponentBuilder& builder) override;
 private:
-    size_t inputs_, settle_, conditional_from_;
+    size_t inputs_, settle_, conditional_from_, detected_;
     std::vector<MemoryTimerStage> stages_;
     std::string type_;
 };

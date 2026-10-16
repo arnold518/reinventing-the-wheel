@@ -66,12 +66,19 @@ std::string testName(Technology t) {
     }
     throw std::invalid_argument("Unknown memory technology");
 }
-ComponentTestSpec endpointSpec(Technology t, size_t width = 8, bool container = false, size_t depth = 4, size_t row_words = 1) {
+ComponentTestSpec endpointSpec(Technology t, size_t width = 8, bool container = false, size_t depth = 4, size_t row_words = 1,
+                               bool clocked = false) {
     ParameterMap config{{"depth_words",std::to_string(depth)},{"words_per_row",std::to_string(row_words)},{"block_words",std::to_string(row_words)}};
+    // The on-chip clocked SRAM macro behind the same controller.
+    if (clocked) config["clocked"] = "1";
     if (t == Technology::ROM) config["image_hex"] = "a53c81ff";
     // The protocol checkpoints expect REQ_READY at fixed edges; a due refresh
     // would hold it low. Refresh is covered by MemoryEndpointTimingTest.
     if (t == Technology::DRAM) config["refresh_interval_cycles"] = "0";
+    // Functional checks: short program and erase pulses. A realistic
+    // profile's literal flash times (150 us, 410 ms) would need tens of
+    // thousands to millions of clocked actions.
+    if (t == Technology::NORFlash) { config["program_ticks"] = "4000"; config["erase_ticks"] = "5000"; }
     Scenario s(container ? "ScalableMemoryEndpointTest" : testName(t),
         memoryContractId(t, container ? "scalable-endpoint" : "endpoint", width), width, config);
     s.init(); const unsigned mask = (1u << (width/8))-1;
@@ -364,6 +371,8 @@ void verifyEndpointWriteHistory(Technology technology, size_t width) {
     const unsigned write_op = flash ? 2 : 1;
     Scenario s("MemoryEndpointWriteHistory", memoryContractId(technology, "endpoint", width), width, {{"depth_words", "4"}, {"words_per_row", "2"},
         {"block_words", "2"}, {"refresh_interval_ticks", "0"}, {"refresh_interval_cycles", "0"}});
+    // Short flash pulses, as in endpointSpec.
+    if (flash) { s.spec.parameters["program_ticks"] = "4000"; s.spec.parameters["erase_ticks"] = "5000"; }
     using Writes = std::map<uint32_t, uint8_t>;
     std::map<std::string, Writes> expected;
     auto transaction = [&](std::string label, unsigned op, uint32_t at, uint32_t data,
@@ -468,6 +477,14 @@ void NativeMemoryDeviceContractTest::verifyResults() {
             if (child->getName()=="CONTROLLER")
                 require(child->getSelectedFidelity()=="behavioral" && child->getChildren().empty(),
                         "Endpoint did not build the behavioral controller");
+        if (t==Technology::SRAM) {
+            // The clocked macro's controller: gates against its compact form,
+            // and a compact macro behind the gates.
+            auto clocked=endpointSpec(t,8,false,4,1,true);
+            auto gates=runner.run(clocked,clocked.scenarios[0],withExactFidelity(structural_endpoint,controller_path,Fidelity::Structural));
+            runner.compare(gates,runner.run(clocked,clocked.scenarios[0],withExactFidelity(structural_endpoint,controller_path,Fidelity::Behavioral)));
+            runner.compare(gates,runner.run(clocked,clocked.scenarios[0],withExactFidelity(structural_endpoint,clocked.instance_name+".MEMORY",Fidelity::Behavioral)));
+        }
         EndpointConfig config;config.depth_words=1u<<28;config.record_history=false;
         config.max_resident_bytes=16384;config.max_history_bytes=0;config.refresh_interval_ticks=0;config.refresh_interval_cycles=0;
         auto huge=std::dynamic_pointer_cast<MemoryDeviceStorage>(createBehavioralMemoryDevice("HUGE",8,t,config));
@@ -497,6 +514,20 @@ void MemoryEndpointContractTest::verifyResults() {
         }
     for (auto t : {Technology::SRAM,Technology::DRAM,Technology::ROM,Technology::NORFlash}) {
         auto spec=endpointSpec(t,16,false,6,2);
+        auto result=runner.runAll(spec,spec.scenarios[0]);
+        runner.compare(result.targets[0],result.targets[1]);
+    }
+    // The clocked SRAM macro: gate-level and fused endpoints, every width,
+    // with one and with two counted access cycles, and over two subarrays.
+    for (size_t width : {8,16,32}) for (const char* cycles : {"1","2"}) {
+        auto spec=endpointSpec(Technology::SRAM,width,false,4,1,true);
+        spec.parameters["access_cycles"]=cycles;
+        auto result=runner.runAll(spec,spec.scenarios[0]);
+        require(result.targets.size()==2,"Missing clocked SRAM endpoint fidelity");
+        runner.compare(result.targets[0],result.targets[1]);
+    }
+    {
+        auto spec=endpointSpec(Technology::SRAM,8,false,128,2,true);
         auto result=runner.runAll(spec,spec.scenarios[0]);
         runner.compare(result.targets[0],result.targets[1]);
     }

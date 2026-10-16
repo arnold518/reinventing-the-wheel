@@ -35,10 +35,22 @@ std::vector<std::string> nativeActivityInputs(Technology t) {
     }
     return {};
 }
+namespace {
+// The word address register's input: the byte address shifted (wiring, so
+// unknown bits pass).
+Bits wordAddress(const Bits& address, size_t width) {
+    const size_t shift = width == 32 ? 2 : width == 16 ? 1 : 0;
+    Bits word(32, L);
+    for (size_t i = 0; i + shift < 32; ++i) word[i] = address[i + shift];
+    return word;
+}
+}
 NativeSequence::NativeSequence(size_t w, Technology technology, EndpointConfig config)
     : result(w, L), width_(w), technology_(technology), config_(config),
       command_(technology == Technology::DRAM || technology == Technology::NORFlash),
-      word_reg_(32, L), data_reg_(w, L), mask_reg_(w / 8, L), needs_(technology == Technology::DRAM ? 4 : 2, false) {
+      word_reg_(32, L), data_reg_(w, L), mask_reg_(w / 8, L),
+      shown_{Bits(3, L), Bits(32, L), Bits(w, L), Bits(w / 8, L)}, needs_(technology == Technology::DRAM ? 4 : 2, false) {
+    if (config_.clocked) outputs["CLK"] = {L};
     if (command_) {
         outputs["CLK"] = {L};
         commandPins([](const std::string& pin, size_t width) { return pin == "READ_DATA" ? Bits(width, Z) : Bits(width, L); });
@@ -46,6 +58,19 @@ NativeSequence::NativeSequence(size_t w, Technology technology, EndpointConfig c
     else staticPins();
 }
 void NativeSequence::staticPins() {
+    if (config_.clocked) {
+        // StaticMemorySequencer's clocked form: CE_N and WE_N from START and
+        // the request check, the fields straight from the request.
+        const bool valid = shown_start_ && validateRequest(shown_, width_, technology_, config_) == Status::Ok;
+        const bool write = valid && number(shown_.op) == unsigned(Operation::Write);
+        outputs["CE_N"] = {valid ? L : H};
+        outputs["WE_N"] = {write ? L : H};
+        outputs["OE_N"] = {access_ && !writing_ ? L : H};
+        outputs["WORD_ADDR"] = wordAddress(shown_.address, width_);
+        outputs["WRITE_DATA"] = shown_.data;
+        outputs["WRITE_MASK"] = shown_.mask;
+        return;
+    }
     outputs["CE_N"] = {access_ ? L : H};
     outputs["WE_N"] = {access_ && writing_ ? L : H};
     outputs["OE_N"] = {access_ && !writing_ ? L : H};
@@ -57,16 +82,6 @@ void NativeSequence::step(size_t, bool clock_edge, bool reset, bool start, const
                           const std::function<Bits(const std::string&, size_t)>& read, bool finish) {
     if (command_) stepCommand(clock_edge, reset, start, request, read, finish);
     else stepStatic(clock_edge, reset, start, request, read, finish);
-}
-namespace {
-// The word address register's input: the byte address shifted (wiring, so
-// unknown bits pass).
-Bits wordAddress(const Bits& address, size_t width) {
-    const size_t shift = width == 32 ? 2 : width == 16 ? 1 : 0;
-    Bits word(32, L);
-    for (size_t i = 0; i + shift < 32; ++i) word[i] = address[i + shift];
-    return word;
-}
 }
 // One clock edge of StaticMemorySequencer (MemorySequencers.cpp); every
 // signal here is a state bit, register or gate of that circuit.
@@ -277,6 +292,18 @@ size_t staticAccessTime(size_t width, Technology technology, const EndpointConfi
     const size_t device_fallback = technology == Technology::SRAM
         ? memoryTimerSettle(memory.sram_settle, 34 + width + width / 8, true) + memory.sram_precharge + memory.sramBitline(rows) + 2 * timing::leafDelay(timing::Leaf::MemoryPrimitive) + 14 * gate
         : memoryTimerSettle(memory.rom_settle, 33, false) + memory.romColumn(rows) + timing::leafDelay(timing::Leaf::MemoryPrimitive) + 14 * gate;
+    // A clocked macro registers the request at the edge itself: its access
+    // is the later of the proven launches from CLK to READY and to the data
+    // (the static analysis bounds the data path more loosely than READY).
+    if (config.clocked) {
+        const size_t fallback = flop + memoryTimerSettle(1, 1, false) + std::max(memory.sram_precharge, memory.sramBitline(rows)) + memory.sramBitline(rows)
+            + 2 * timing::leafDelay(timing::Leaf::MemoryPrimitive) + 14 * gate;
+        const auto* table = provenPartDelays(device.contract_id + ".behavioral", device.parameters);
+        if (!table) return fallback;
+        const auto ready = table->launches.find("READY"), data = table->launches.find("READ_DATA");
+        if (ready == table->launches.end()) return fallback;
+        return std::max(ready->second.maximum, data == table->launches.end() ? size_t{0} : data->second.maximum);
+    }
     const size_t controller = provenMaximum(memoryContractId(technology, "controller", width) + ".behavioral",
                                             endpointParameters(config), "MEM_CE_N", flop + gate);
     return controller + provenMaximum(device.contract_id + ".behavioral", device.parameters, "READY", device_fallback);
@@ -287,7 +314,7 @@ size_t staticAccessTime(size_t width, Technology technology, const EndpointConfi
 // appear one access time later; a write lands then.
 class SRAMDeviceModel final : public DeviceModel {
     Bits address_, data_, mask_;
-    LogicValue ce_ = X, we_ = X, oe_ = X;
+    LogicValue ce_ = X, we_ = X, oe_ = X, clock_ = X;
     bool seen_ = false;
     size_t access_time_;
     bool selected() const { return known(address_) && number(address_) < config_.depth_words; }
@@ -299,7 +326,28 @@ public:
     SRAMDeviceModel(size_t w, EndpointConfig c) : DeviceModel(w, c, X), access_time_(staticAccessTime(w, Technology::SRAM, c)) {
         outputs["READY"] = {L};
     }
+    // A clocked macro: an edge with CE_N low registers the request; READY and
+    // the word one access time after the edge, held until the next access.
+    void updateClocked(size_t t, const Signals& s) {
+        const auto clock = signal(s, "CLK")[0], ce = signal(s, "CE_N")[0], oe = signal(s, "OE_N")[0];
+        const bool edge = clock_ == L && clock == H;
+        clock_ = clock;
+        if (edge && ce != H) {
+            address_ = signal(s, "WORD_ADDR", 32); data_ = signal(s, "WRITE_DATA", width_); mask_ = signal(s, "WRITE_MASK", width_ / 8);
+            ce_ = ce; we_ = signal(s, "WE_N")[0]; oe_ = oe; seen_ = true;
+            outputs["READY"] = {L}; outputs["READ_DATA"] = Bits(width_, Z);
+            due_ = after(t, access_time_);
+            return;
+        }
+        if (oe != oe_) { oe_ = oe; if (!due_ && seen_) outputs["READ_DATA"] = output(); }
+        if (!due_ || t < due_) return;
+        due_ = 0;
+        if (ce_ == L && we_ == L && selected()) writeWord(t, number(address_), data_, mask_);
+        outputs["READY"] = {ce_ == L && binary(we_) ? H : X};
+        outputs["READ_DATA"] = output();
+    }
     void update(size_t t, const Signals& s) override {
+        if (config_.clocked) { updateClocked(t, s); return; }
         const auto address = signal(s, "WORD_ADDR", 32), data = signal(s, "WRITE_DATA", width_), mask = signal(s, "WRITE_MASK", width_ / 8);
         const auto ce = signal(s, "CE_N")[0], we = signal(s, "WE_N")[0], oe = signal(s, "OE_N")[0];
         const bool writing = we == L || we_ == L;

@@ -5,6 +5,47 @@ what changed and why, what was verified, and any limits or deliberate
 omissions. Entries begin with adoption of this recording workflow; older
 history remains in Git and the archived reports.
 
+## 2026-10-17
+
+### Datasheet DRAM and NOR timing and a clocked on-chip SRAM macro (branch `realistic-timing`, phase 6.3)
+
+- **Changed (6.3a):** the timing profiles hold datasheet intervals for
+  external DRAM (`embedded` SDR SDRAM -6A, `desktop` DDR4-3200: tRCD, CL, tWR,
+  tRP, tRFC, tREFI, page size) and NOR flash (tACC 120 ns, program 150 µs,
+  erase 410 ms). DRAM REFRESH can include the full restore; DRAM rows up to
+  1,024 words are allowed for compact devices (gate-level stays at 16); the
+  RV32I experiment takes DRAM row size and refresh rate from the profile.
+  Functional flash endpoint scenarios set short program and erase pulses.
+- **Changed (6.3b):** SRAM devices, controllers and endpoints accept
+  `clocked=1`: a synchronous macro with input registers, an access token in
+  place of the address-transition detector, and the same self-timed stages.
+  Large arrays drive a shared return bus (`MemoryBus` leaf, READY pulled
+  low) instead of a multiplexer tree; in a clocked array every subarray takes
+  each access and only WE_N is gated by the select, and the clock is ideal
+  (the global wire counts in the setup). The sense replica now covers the
+  wordline path and the column multiplexer, so READY follows the data (also
+  for the asynchronous SRAM); in clocked mode precharge covers a fully swung
+  bitline. `--memory sram` is now the clocked macro and `--memory sram-async`
+  the external chip. Delay tables gain `@clocked` entries (649 per profile).
+- **Fixed on the way:** the timing graph marked a one-bit write mask as a
+  clock carrier ("clock used as data"); `MemoryOutputBuffer` rejected one-bit
+  status lines; `DelayRuleTest` stepped one tick at a time (it now steps from
+  event to event, about 100× faster with picosecond ticks) and skipped the
+  DRAM/NOR endpoints as restless (it now follows a part until it goes quiet).
+- **Why:** owner rule that memories be realistic, not cache-favouring; the
+  clocked macro is the bank the cache phase will use.
+- **Verified:** tables at a fixed point and `--verify` identical in all three
+  profiles; delay rule in the CTest configuration on DRAM/NOR/SRAM/ROM plus the
+  clocked variants, 0 breaks in all three profiles; SRAM, endpoint, controller,
+  native-device and cache tests at `unit` and the SRAM/endpoint set at
+  `embedded`; a probe of 400 random accesses per size shows READY after the
+  data in every read; 66 oracle-verified CPU runs.
+- **Limits:** the clocked macro is 3.1× CACTI at 512 B (reported, not tuned);
+  its integration makes the core–endpoint handshake longer (certified clock
+  `embedded` 5,236 ps against 4,608 ps), to be decoupled in 6.4; a 30-round
+  delay-rule sample reaches a known gap in the delay twin's X timing; no full
+  suite; CacheReadTest and the other tick-driven tests stay `unit`-only.
+
 ## 2026-10-16
 
 ### Memory controller protocols closer to real controllers (branch `realistic-timing`, phase 6.1–6.2)

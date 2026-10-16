@@ -216,8 +216,14 @@ void DRAMCommandControl::buildInternals(ComponentBuilder &b) {
     auto r = chain("READ", r_rd, {{memory.dram_read}});
     auto wv = chain("WRITE", r_wr, {{memory.dram_write_on}, {memory.dram_write_off}, {memory.dram_write_recovery}});
     auto p = chain("PRECHARGE", r_pre, {{memory.dram_close}, precharge_step, {memory.dram_equalize}});
-    auto f = chain("REFRESH", r_ref, {{memory.dram_wordline}, sense_step, {memory.dram_close}, precharge_step,
-                                      {memory.dram_equalize}});
+    // REFRESH: open and sense the row, restore it fully (and spend the rest
+    // of the part's tRFC), close and precharge.
+    std::vector<Step> refresh_steps{{memory.dram_wordline}, sense_step};
+    if (memory.dram_refresh_restore + memory.dram_refresh_extra) refresh_steps.push_back({memory.dram_refresh_restore + memory.dram_refresh_extra});
+    for (auto step : {Step{memory.dram_close}, precharge_step, Step{memory.dram_equalize}}) refresh_steps.push_back(step);
+    auto f = chain("REFRESH", r_ref, refresh_steps);
+    // The close and precharge steps of REFRESH (after the optional restore).
+    const size_t refresh_close = f.size() - 3, refresh_precharge = f.size() - 2;
     auto done_async = w.reduce("CHAIN_DONE", {a.back(), r.back(), wv.back(), p.back(), f.back()}, false);
     auto sampler = b.addNewComponent<memory::Synchronizer>("DONE_SAMPLER", 1);
     w.connect(getInputPin("CLK"), sampler->getInputPin("CLK"));
@@ -293,13 +299,13 @@ void DRAMCommandControl::buildInternals(ComponentBuilder &b) {
     auto pre_closing = w.both("PRECHARGE_CLOSING", r_pre, p[0]);
     auto open_held = w.both("OPEN_HELD", OPEN, w.invert("NOT_CLOSING", pre_closing));
     w.connect(w.reduce("WORDLINE", {open_held, w.both("ACTIVATE_WORDLINE", r_act, a[0]),
-                                    w.both("REFRESH_WORDLINE", w.both("REFRESH_ROW_ON", r_ref, f[0]), w.invert("REFRESH_ROW_OFF", f[2]))}, false),
+                                    w.both("REFRESH_WORDLINE", w.both("REFRESH_ROW_ON", r_ref, f[0]), w.invert("REFRESH_ROW_OFF", f[refresh_close]))}, false),
               getOutputPin("ROW_ENABLE"));
     w.connect(w.reduce("SENSING", {open_held, w.both("ACTIVATE_SENSE", r_act, a[1]),
-                                   w.both("REFRESH_SENSE", w.both("REFRESH_SENSE_ON", r_ref, f[1]), w.invert("REFRESH_SENSE_OFF", f[2]))}, false),
+                                   w.both("REFRESH_SENSE", w.both("REFRESH_SENSE_ON", r_ref, f[1]), w.invert("REFRESH_SENSE_OFF", f[refresh_close]))}, false),
               getOutputPin("SENSE"));
     auto closed_idle = w.reduce("CLOSED_IDLE", {w.invert("NOT_OPEN", OPEN), w.invert("NOT_ACTIVATING", r_act),
-                                                w.invert("NOT_REFRESH_SENSING", w.both("REFRESH_BEFORE_PRECHARGE", r_ref, w.invert("BEFORE_PRECHARGE", f[3])))}, true);
+                                                w.invert("NOT_REFRESH_SENSING", w.both("REFRESH_BEFORE_PRECHARGE", r_ref, w.invert("BEFORE_PRECHARGE", f[refresh_precharge])))}, true);
     w.connect(w.either("PRECHARGING", closed_idle, w.both("PRECHARGE_STEP", r_pre, p[1])), getOutputPin("PRECHARGE"));
     w.connect(w.both("WRITE_PULSE", w.both("WRITE_ON", r_wr, wv[0]), w.invert("WRITE_OFF", wv[1])), getOutputPin("WRITE_ENABLE"));
     w.connect(w.both("BUSY_SHOWN", B, w.invert("NOT_RELEASING_SHOWN", R)), getOutputPin("BUSY"));

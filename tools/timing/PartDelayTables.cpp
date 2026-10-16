@@ -138,7 +138,10 @@ circuit::PartDelays prove(const Candidate& candidate, size_t budget, std::string
     // An SRAM device reads with WE_N=1 and writes with WE_N=0; proven apart,
     // a read is not charged for a path that runs through a write and back
     // through a cell.
-    const bool per_write = candidate.contract.rfind("memory.sram.device.", 0) == 0;
+    // (A clocked macro registers WE_N; its paths start at the clock.)
+    const auto clocked = parameters.find("clocked");
+    const bool per_write = candidate.contract.rfind("memory.sram.device.", 0) == 0
+        && (clocked == parameters.end() || clocked->second != "1");
     auto table = CircuitTimingAnalyzer::delays(gates, options, per_operation ? "OP" : per_write ? "WE_N" : "", &diagnostics);
     if (table.empty()) reason = diagnostics.empty() ? "nothing changes" : diagnostics.front();
     return table;
@@ -172,8 +175,34 @@ std::string compactOf(const std::string& contract) {
 // Memory devices and endpoints are also proven at 64 and 128 words, the two
 // largest sizes that can be built from gates. Larger memories use those
 // measured device tables; scalable endpoints reuse the endpoint tables.
+// The clocked on-chip SRAM macro ("@clocked"): its controller, and its
+// device and endpoints at the default size and at 64 to 512 words, in the
+// default row layout.
+size_t clockedSRAM(const Candidate& candidate, const std::string& scalable_implementation, size_t budget, std::ostream& body) {
+    if (candidate.contract.rfind("memory.sram.", 0) != 0) return 0;
+    const bool controller = candidate.contract.find(".controller.") != std::string::npos;
+    size_t written = 0;
+    const auto write = [&](const std::string& suffix, const circuit::PartDelays& table) {
+        body << emit(candidate.implementation + suffix, table); ++written;
+        if (!scalable_implementation.empty()) { body << emit(scalable_implementation + suffix, table); ++written; }
+    };
+    std::string reason;
+    const auto table = prove(candidate, budget, reason, {{"clocked", "1"}});
+    if (table.empty()) std::cerr << "  no clocked table for " << candidate.contract << ": " << reason << '\n';
+    else write("@clocked", table);
+    if (controller) return written;
+    for (const size_t depth : {size_t{64}, size_t{128}, size_t{256}, size_t{512}}) {
+        std::string sized_reason;
+        const auto at = prove(candidate, budget, sized_reason, {{"depth_words", std::to_string(depth)}, {"clocked", "1"}});
+        if (at.empty()) { std::cerr << "  no clocked " << depth << "-word table for " << candidate.contract << ": " << sized_reason << '\n'; continue; }
+        write("@depth=" + std::to_string(depth) + "@clocked", at);
+    }
+    return written;
+}
+
 size_t sized(const Candidate& candidate, const circuit::PartDelays& standard, size_t budget, std::ostream& body) {
     const auto device = candidate.contract.find(".device."), endpoint = candidate.contract.find(".endpoint.");
+    if (candidate.contract.rfind("memory.sram.controller.", 0) == 0) return clockedSRAM(candidate, {}, budget, body);
     if (candidate.contract.rfind("memory.", 0) != 0 || (device == std::string::npos && endpoint == std::string::npos)) return 0;
     auto scalable = candidate.contract;
     if (endpoint != std::string::npos) scalable.replace(endpoint, 10, ".scalable-endpoint.");
@@ -221,7 +250,7 @@ size_t sized(const Candidate& candidate, const circuit::PartDelays& standard, si
             }
         }
     }
-    return written;
+    return written + clockedSRAM(candidate, scalable_implementation, budget, body);
 }
 
 // The parts whose gate-level form gives no gate list (too large, a loop, a

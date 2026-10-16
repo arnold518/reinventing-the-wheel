@@ -76,10 +76,16 @@ public:
     void step(size_t time, bool clock_edge, bool reset, bool start, const Request&,
               const std::function<Bits(const std::string&, size_t)>& read, bool finish = false);
     // The device clock follows the controller clock with no delay.
-    void clock(LogicValue level) { if (command_) outputs["CLK"] = {level}; }
+    void clock(LogicValue level) { if (command_ || config_.clocked) outputs["CLK"] = {level}; }
     // The command sequencer shows its next command combinationally from the
     // device's (registered) outputs: recompute the pins from them.
     void present(const std::function<Bits(const std::string&, size_t)>& read) { if (command_) commandPins(read); }
+    // A clocked SRAM macro is shown the request combinationally while START
+    // is high (the transaction port's acceptance).
+    void presentRequest(bool start, const Request& request) {
+        if (command_ || !config_.clocked) return;
+        shown_start_ = start; shown_ = request; staticPins();
+    }
     size_t deadline() const { return 0; }
     const char* phaseName() const {
         if (!command_) return access_ ? "static-access" : "idle";
@@ -96,8 +102,10 @@ private:
     EndpointConfig config_;
     bool command_;
     Bits word_reg_, data_reg_, mask_reg_;
-    // Static sequencer: ACCESS, IS_WRITE and the wait counter.
-    bool access_ = false, writing_ = false;
+    // Static sequencer: ACCESS, IS_WRITE and the wait counter; for a clocked
+    // macro the request shown this cycle.
+    bool access_ = false, writing_ = false, shown_start_ = false;
+    Request shown_;
     size_t wait_count_ = 0;
     // Command sequencer: sequence bits, the pending steps (DRAM: PRECHARGE,
     // ACTIVATE, ACCESS, REFRESH; NOR: WREN, OPERATION), the current command

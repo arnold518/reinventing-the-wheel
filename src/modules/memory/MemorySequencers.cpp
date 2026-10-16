@@ -21,14 +21,14 @@ std::string typeName(const char* kind, size_t width, Technology t) {
 }
 }
 
-void defineSequencerPins(IOComponent* s, size_t w, Technology t) {
+void defineSequencerPins(IOComponent* s, size_t w, Technology t, bool clocked) {
     for (auto p : {"CLK", "RST", "START", "FINISH"}) s->addPin(p, PinType::INPUT);
     for (auto [name, width] : std::vector<std::pair<std::string, size_t>>{{"OP", 3}, {"ADDR", 32}, {"DATA", w}, {"MASK", w / 8}})
         s->addPinDynamic(name, PinType::INPUT, width);
     for (auto p : {"BACK_READY", "DONE"}) s->addPin(p, PinType::OUTPUT);
     s->addPinDynamic("RESULT", PinType::OUTPUT, w);
     s->addPin<3>("STATUS", PinType::OUTPUT);
-    circuit::memory::nativePins(s, w, t, true);
+    circuit::memory::nativePins(s, w, t, true, clocked);
 }
 
 MemoryRequestCheck::MemoryRequestCheck(std::string name, size_t width, Technology technology, circuit::memory::EndpointConfig config)
@@ -104,7 +104,7 @@ void MemoryRequestCheck::buildInternals(ComponentBuilder& b) {
 }
 
 StaticMemorySequencer::StaticMemorySequencer(std::string name, size_t width, Technology technology, circuit::memory::EndpointConfig config)
-    : IOComponent(std::move(name), [width, technology](IOComponent* s) { defineSequencerPins(s, width, technology); }),
+    : IOComponent(std::move(name), [width, technology, clocked = config.clocked](IOComponent* s) { defineSequencerPins(s, width, technology, clocked); }),
       width_(width), technology_(technology), config_(config), type_(typeName("StaticMemorySequencer", width, technology)) {
     if (technology != Technology::SRAM && technology != Technology::ROM)
         throw std::invalid_argument("The static sequencer drives SRAM or ROM");
@@ -179,6 +179,15 @@ void StaticMemorySequencer::buildInternals(ComponentBuilder& b) {
               writing->getInputPin("D"));
     const auto is_write = writing->getOutputPin("Q");
 
+    if (config_.clocked) {
+        // The macro registers the request itself at the starting edge.
+        w.connect(bridge(b, w, "DEVICE_CLOCK", getInputPin("CLK")), getOutputPin("MEM_CLK"));
+        w.connect(check->getOutputPin<32>("WORD_ADDR"), getOutputPin<32>("MEM_WORD_ADDR"));
+        w.connect(bridge(b, w, "SHOWN_DATA", getInputPinDynamic("DATA")), getOutputPinDynamic("MEM_WRITE_DATA"));
+        w.connect(bridge(b, w, "SHOWN_MASK", getInputPinDynamic("MASK")), getOutputPinDynamic("MEM_WRITE_MASK"));
+        w.connect(w.invert("CHIP_SELECT", valid_start), getOutputPin("MEM_CE_N"));
+        w.connect(w.invert("WRITE_STROBE", w.both("WRITE_START", valid_start, check->getOutputPin("WRITE"))), getOutputPin("MEM_WE_N"));
+    } else {
     auto word = reg("WORD_ADDRESS", 32);
     w.connect(start, word->getInputPin("WE"));
     w.connect(check->getOutputPin<32>("WORD_ADDR"), word->getInputPin<32>("D"));
@@ -194,6 +203,7 @@ void StaticMemorySequencer::buildInternals(ComponentBuilder& b) {
         w.connect(w.invert("WRITE_STROBE", w.both("WRITE_ACCESS", active, is_write)), getOutputPin("MEM_WE_N"));
     }
     w.connect(w.invert("CHIP_SELECT", active), getOutputPin("MEM_CE_N"));
+    }
     w.connect(w.invert("OUTPUT_STROBE", w.both("READ_ACCESS", active, w.invert("IS_READ", is_write))), getOutputPin("MEM_OE_N"));
 
     auto result = reg("RESULT", width_);

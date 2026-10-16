@@ -104,7 +104,12 @@ int main(int argc,char** argv) {
             else if(key=="--max-events")c.max_events=number(value);
             else if(key=="--progress-cycles")c.progress_interval_cycles=number(value);
             else if(key=="--tohost"){auto n=number(value);if(n>UINT32_MAX)throw std::invalid_argument("tohost exceeds RV32");c.tohost=uint32_t(n);}
-            else if(key=="--memory")c.memory.technology=circuit::memory::technologyFromName(value);
+            // "sram" is the on-chip clocked macro; "sram-async" an external
+            // asynchronous SRAM chip.
+            else if(key=="--memory"){
+                c.memory.technology=circuit::memory::technologyFromName(value=="sram-async"?"sram":value);
+                c.memory.device.clocked=value=="sram";
+            }
             else if(key=="--phase-ticks")c.memory.device.phase_ticks=number(value);
             else if(key=="--guard-ticks")c.memory.device.guard_ticks=number(value);
             else if(key=="--allocation-limit-mib")rss_mib=number(value);
@@ -157,7 +162,7 @@ int main(int argc,char** argv) {
             std::cout<<"{\"schema\":1,\"core\":"<<quote(c.core)
                 <<",\"policy\":"<<quote(rv32i::predictionPolicyName(c.prediction.policy))
                 <<",\"entries\":"<<c.prediction.entries
-                <<",\"memory\":"<<quote(circuit::memory::technologyName(c.memory.technology))
+                <<",\"memory\":"<<quote(std::string(circuit::memory::technologyName(c.memory.technology))+(c.memory.technology==circuit::memory::Technology::SRAM&&!c.memory.device.clocked?"-async":""))
                 <<",\"clock_basis\":\"safe-clock-contracts-v1\",\"analysis_scope\":"
                 <<quote(c.binary_startup?"binary-initialized":"unrestricted-four-state")
                 <<",\"safe_clock\":{\"status\":"
@@ -187,7 +192,7 @@ int main(int argc,char** argv) {
             <<",\"program\":"<<c.program<<",\"elf\":"<<quote(c.elf)
             <<",\"fidelity\":"<<quote(c.fidelity)<<",\"policy\":"<<quote(rv32i::predictionPolicyName(c.prediction.policy))
             <<",\"entries\":"<<c.prediction.entries<<",\"period_ticks\":"<<c.period
-            <<",\"memory\":"<<quote(circuit::memory::technologyName(c.memory.technology))
+            <<",\"memory\":"<<quote(std::string(circuit::memory::technologyName(c.memory.technology))+(c.memory.technology==circuit::memory::Technology::SRAM&&!c.memory.device.clocked?"-async":""))
             <<",\"workload\":"<<quote(c.workload)<<",\"iterations\":"<<c.iterations
             <<",\"size\":"<<c.benchmark.size<<",\"distance\":"<<c.benchmark.distance
             <<",\"pattern\":"<<quote(c.benchmark.pattern)<<",\"branch_spacing\":"<<c.benchmark.branch_spacing
