@@ -81,9 +81,12 @@ work state changes. Keep dated decisions and validation results in
   directed realistic memory models that are not tuned to favor caches.
   Open: the STM32F7 system check (source not read), the delay twin's X timing,
   tick-driven tests (CacheReadTest, MemoryDeviceTimingTest,
-  MemoryEndpointTimingTest) are `unit`-only. Next: phase 7 (cache banks on the
-  clocked macro, the cache experiment restated), then phase 8 (public site,
-  visualizer, full suite under `unit` and `embedded`).
+  MemoryEndpointTimingTest) are `unit`-only. Phase 7a is done: the cache
+  looks up every way at once in directly driven banks (L1 hit two cycles).
+  Next: phase 7b (burst reads for line fills, since word-by-word fills made
+  an L1 miss cost about five DRAM reads), the cache plan's Step 1 again, then
+  the cache experiment; then phase 8 (public site, visualizer, full suite
+  under `unit` and `embedded`).
   `MemoryEndpointIntegrationTest` fails two example checks built from
   `site-docs/` snippets until that site update.
 

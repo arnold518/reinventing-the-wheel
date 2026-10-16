@@ -40,13 +40,15 @@ ComponentTestSpec cacheScenarioSpec() {
             step({}, {{"CLK", logicBit(true)}}, {}, false);
         }
     };
+    // A request the cache rejects finishes in its accepting cycle; the next
+    // request is then taken while that response waits.
     auto request = [&](const std::string& id, unsigned op, uint32_t address,
-                       uint8_t data = 0, unsigned mask = 0) {
+                       uint8_t data = 0, unsigned mask = 0, bool rejected = false) {
         step(id + "-setup", {{"CLK", logicBit(false)}, {"REQ_VALID", logicBit(true)},
             {"REQ_OP", logicBits(3, op)}, {"REQ_ADDR", logicBits(32, address)},
             {"REQ_WRITE_DATA", logicBits(8, data)}, {"REQ_WRITE_MASK", logicBits(1, mask)}},
             {{"REQ_READY", logicBit(true)}});
-        step(id + "-accepted", {{"CLK", logicBit(true)}}, {{"REQ_READY", logicBit(false)}});
+        step(id + "-accepted", {{"CLK", logicBit(true)}}, {{"REQ_READY", logicBit(rejected)}});
         step({}, {{"CLK", logicBit(false)}, {"REQ_VALID", logicBit(false)}}, {}, false);
     };
     auto lower = [&](const std::string& id, unsigned op, uint32_t address,
@@ -126,7 +128,7 @@ ComponentTestSpec cacheScenarioSpec() {
     step({}, {{"CLK", logicBit(false)}, {"INV_VALID", logicBit(false)}}, {}, false);
     miss("refill-after-invalidate", 4, 4, 0x5c, 0xa5);
 
-    request("out-of-range", 0, 16);
+    request("out-of-range", 0, 16, 0, 0, true);
     response("out-of-range", 0, Status::Range);
     return spec;
 }
@@ -169,12 +171,13 @@ struct ScriptedCacheExample {
         step("reset", {}, {{"REQ_READY", logicBit(false)}});
         step("ready", {{"RST", logicBit(false)}}, {{"REQ_READY", logicBit(true)}});
     }
-    void request(const std::string& id, uint32_t address) {
+    // A rejected request finishes in its accepting cycle (REQ_READY high again).
+    void request(const std::string& id, uint32_t address, bool rejected = false) {
         step(id + "-setup", {{"CLK", logicBit(false)}, {"REQ_VALID", logicBit(true)},
             {"REQ_OP", logicBits(3, 0)}, {"REQ_ADDR", logicBits(32, address)}},
             {{"REQ_READY", logicBit(true)}});
         step(id + "-accepted", {{"CLK", logicBit(true)}},
-            {{"REQ_READY", logicBit(false)}});
+            {{"REQ_READY", logicBit(rejected)}});
         step({}, {{"CLK", logicBit(false)}, {"REQ_VALID", logicBit(false)}}, {}, false);
     }
     void lowerRead(const std::string& id, uint32_t address, uint32_t value) {
@@ -233,7 +236,7 @@ ComponentTestSpec directMappedCacheScenarioSpec() {
     example.hit("same-word", 0, 0xa3a2a1a0);
     example.miss("conflict", 8, {{8, 0xabaaa9a8}}, 0xabaaa9a8);
     example.miss("evicted-word", 0, {{0, 0xa3a2a1a0}}, 0xa3a2a1a0);
-    example.request("out-of-range", 64);
+    example.request("out-of-range", 64, true);
     example.response("out-of-range", 0, Status::Range);
     return std::move(example.spec);
 }

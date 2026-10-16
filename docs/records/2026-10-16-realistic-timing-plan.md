@@ -625,3 +625,17 @@ acceptance"). What it changes for phase 7:
 
 Phase 7 proceeds as planned: cache banks on the clocked macro, then the
 experiment restated with calibrated timing.
+
+## 2026-10-17 — Plan change in phase 7: bursts before the campaign (assistant decision)
+
+Phase 7a (direct banks) brought the L1 hit to two cycles, but the cache
+plan's Step 1 order check failed because line fills move word by word (L1
+miss 38 cycles against an 8-cycle DRAM read; L2 hit 14). The phase 7 row
+listed bursts "if measured traffic justifies"; the measurement justifies
+them. Phase 7b adds burst reads (op 4, `block_words` words per request) to
+the backing interface: DRAM streams the next columns of the open row one
+per clock after CL, static memories stream at `access_cycles` per word,
+caches fill with bursts and serve them as the next level. Then Step 1 is
+measured again, and the campaign follows only if the order holds. The Step 1
+expectation "DRAM tens of cycles" is corrected for an MCU clock (an SDRAM row
+hit is under ten cycles at 216–244 MHz).

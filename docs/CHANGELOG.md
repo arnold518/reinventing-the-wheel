@@ -7,6 +7,26 @@ history remains in Git and the archived reports.
 
 ## 2026-10-17
 
+### Cache with directly driven banks (branch `realistic-timing`, phase 7a)
+
+- **Changed:** `Cache<W>` looks a request up in every way at once in one
+  cycle: per way a tag bank and a data bank are native devices driven
+  directly (`sram` = the clocked macro, `ff` = the flip-flop device), the
+  hit way's word is taken into the result register at the next edge, and the
+  response is used one edge later (a two-cycle hit). A read miss writes each
+  fill word into the victim's data bank as it arrives and takes the requested
+  word as it passes; writes stay write-through, no-allocate. The serial
+  endpoint-store phase machine is replaced (`CacheLookupPhases`,
+  `CacheBankController`); bank names `TAG_STORE_k`/`DATA_STORE_k` are kept.
+- **Why:** the old controller made every phase a whole endpoint transaction
+  (a 14-cycle L1 hit); the timing plan's phase 7 rebuilds the hit path.
+- **Verified:** cache component, direct-mapped, scalable and two-level
+  scenarios, CacheReadTest and RV32IMemoryMigrationTest at `unit`; a latency
+  probe at `embedded` (L1 hit 2 cycles).
+- **Limits:** line fills still move word by word (L1 miss 38 cycles against
+  an 8-cycle DRAM read); burst reads follow (phase 7b) before the cache
+  experiment. Public cache pages and examples are not yet updated (phase 8).
+
 ### Endpoint handshake from registered state, one DRAM edge per command, core sweep (branch `realistic-timing`, phase 6.4–6.5)
 
 - **Changed:** every memory endpoint (gate-level transaction port and FF

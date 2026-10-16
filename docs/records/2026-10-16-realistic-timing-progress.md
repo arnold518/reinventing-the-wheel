@@ -1775,3 +1775,91 @@ configuration, every part): passed, 146 parts, 155,777 situations, 0 rule
 breaks; the gate and compact cores agree cycle for cycle (advanced program
 20 with SRAM 400 / 400), and the compact advanced core's clock equals the
 gates'. Runtime 995 s.
+
+## 2026-10-17 — Phase 7 design: cache banks driven directly (assistant decisions)
+
+The current `Cache<W>` controller is a serial phase machine (TAG_SEND,
+TAG_WAIT, DECIDE, DATA_SEND, DATA_WAIT, DONE; a second serial tag pass for
+way 1; fill word by word; then a replayed data read). Its tag and data
+stores are full memory endpoints, so each phase is a whole request/response
+transaction; that is why the 2026-10-16 probe measured a 14-cycle L1 hit.
+Decisions for the rebuild:
+- **Banks.** Per way a tag bank (one 32-bit word per set) and a data bank
+  (sets × words per line), driven directly as native devices: `sram`
+  technology is the clocked macro (compact automatically above the
+  gate-level cell limit), `ff` the flip-flop device. Valid bits and the LRU
+  bit stay in flip-flops, as now.
+- **Lookup in one cycle, both ways in parallel.** The banks' address is the
+  front end's address in the accepting cycle and the held request address
+  after it: the macro registers it at the accepting edge, a flip-flop bank
+  reads it combinationally after that edge. The next edge compares both
+  ways' tags, takes the hit way's word into the result register, and the
+  response is used one edge later: a two-cycle hit, the same budget as the
+  direct SRAM endpoint (registered response, no bypass, REQ_READY from
+  registered state). The path from the banks through the compare and the way
+  select to the result register is ordinary logic seen by the timing
+  analysis, so a certified clock covers it.
+- **Miss.** The victim line's valid bit is cleared at the miss decision;
+  each fill word returning over the backing endpoint (MEM_ port, unchanged)
+  is written into the victim's data bank at the edge it arrives; the
+  requested word is taken into the result register as it passes (no replayed
+  read); the tag write, valid bit and LRU update go with the last word.
+- **Write.** Write-through, no-allocate as now: memory first; on success a
+  hit way's data bank is updated with the byte mask at the completing edge.
+- **Statuses.** The banks have no error responses (their index is always in
+  range); request errors and backing-memory errors keep their codes.
+- **Scope.** One cache architecture (the endpoint-store design is replaced,
+  not kept beside it); public examples and pages are regenerated in phase 8.
+
+## 2026-10-17 — Phase 7a: direct-bank cache implemented; Step 1 measured
+
+The direct-bank cache (design above) replaced the endpoint-store design in
+`Cache.cpp` (new `CacheLookupPhases` and `CacheBankController`; banks keep
+the names `TAG_STORE_k`/`DATA_STORE_k`, the state machine is the
+controller's `PHASES` child, so layout checks keep their anchors). Checks at
+`unit`: CacheComponentScenarioTest, CacheDirectMappedScenarioTest,
+CacheScalableScenarioTest, CacheTwoLevelScenarioTest, CacheReadTest (77 s,
+was 148 s) and RV32IMemoryMigrationTest (the cached CPU path) pass. Two
+scenarios needed the 6.4a expectation for a rejected request (REQ_READY high
+right after the accepting edge).
+
+**Cache plan Step 1, `embedded` at 4,104 ps** (probe: one read at a time,
+L1 = 8 sets × 2 ways × 16-byte lines, L2 = 64 sets × 2 ways × 16 B, SRAM banks,
+DRAM backing with 512-word rows, refresh off; cycles from the accepting edge
+to the edge the response is taken):
+
+| Path | cycles |
+| --- | --- |
+| direct DRAM | 14 cold (row closed), 8 for every later read (open row) |
+| L1 hit | 2 (the 2026-10-16 probe: 14) |
+| L1 miss, line of 4 words from DRAM | 38 |
+| L1 miss, L2 hit | 14 |
+| L1 and L2 miss | 50 |
+
+The hit path meets its target (two cycles, the direct SRAM's budget). The
+Step 1 order check fails: an L2 hit (14) is slower than a direct DRAM read
+(8), and an L1 miss costs almost five DRAM reads. Cause: every line fill
+moves word by word, each word a whole single-word request and response,
+from DRAM or from the L2. Real caches fill a line in one burst (SDRAM bursts
+of 4 or 8; a Cortex-M7 refills its L1 over 64-bit AXI bursts; an L2 hands
+the L1 a line in one access). Word-by-word fills are protocol cycles a real
+system does not spend, against the cache; by the owner rule ("in either
+direction") they are a model defect, not a result.
+
+Also measured: DRAM is 8 cycles (33 ns) at the 244 MHz `embedded` clock, not
+"tens of cycles": the Step 1 expectation was written for desktop-class
+clocks. At an MCU clock (STM32F7: 216 MHz) an SDRAM row hit of a few tens of
+nanoseconds is indeed under ten cycles; the expectation is corrected, not
+the model.
+
+**Decision (phase 7b): burst reads on the backing interface.** A burst read
+request (op 4) returns `block_words` words of an aligned block as successive
+responses. DRAM: one READ, then the next columns of the open row one per
+clock, as SDRAM does after CL (the column multiplexer from the latched row,
+under one cycle). Static memories (SRAM/ROM/FF): successive words every
+`access_cycles` without a handshake per word. Cache: fills use bursts; a
+cache serving as the next level streams a line from its data bank after one
+lookup. Each layer in gate, compact and fused form with the existing
+equivalence tests, and the analysis's handshake models extended to the
+burst states. The campaign waits for 7b (cache plan rule: a Step 1 violation
+goes back to the timing plan).
