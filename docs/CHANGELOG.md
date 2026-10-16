@@ -7,6 +7,27 @@ history remains in Git and the archived reports.
 
 ## 2026-10-16
 
+### On-chip SRAM geometry and READY after data (branch `realistic-timing`, phase 5)
+
+- **Changed:** SRAM and ROM devices raise READY only after the read data are
+  valid (an extra timer stage copying the sense and output path). A gate-level
+  SRAM above 32 rows is built from 32-row subarrays with a global decoder,
+  global wires (new `MemoryWire` leaf, `sram_wire_per_side` in the profile)
+  and a return multiplexer and output buffer; the contract is unchanged. SRAM
+  tables are proven up to 512 words; larger SRAMs use `sramSubarrayEstimate`
+  (per-level growth fitted at 2 and 4 subarrays, wire term from the profile).
+  The compact SRAM withdraws its data no sooner than the gates' path for that
+  transition. New tests: `SRAMSubarrayTest`, `SRAMSubarrayFormulaTest`.
+- **Why:** realistic on-chip arrays are divided into short-bitline subarrays;
+  cache banks driven directly need READY after data; the delay rule under the
+  realistic profile found the early withdrawal.
+- **Verified:** held-out 8-subarray tables matched exactly in all three
+  profiles; SRAM/ROM/endpoint/cache scenarios under `unit` and `embedded`;
+  delay rule for SRAM/ROM parts under all profiles; tables verified.
+- **Limits:** `SRAMTimingTest` remains a `unit` test (tick-driven); realistic
+  memory intervals are still placeholders; SRAM CPU cycles rose with
+  READY-after-data; no full suite.
+
 ### Memory timing under realistic profiles (branch `realistic-timing`, phase 4.4)
 
 - **Changed:** the SRAM/ROM timer's settle line is sized from its own

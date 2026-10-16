@@ -30,6 +30,20 @@ private:
     std::vector<std::weak_ptr<Event>> pending_;
 };
 
+// A global on-chip wire carrying a bus between the subarrays of a large
+// array and its periphery (an electrical stand-in leaf, decision 3 of the
+// timing plan): OUT follows IN after the wire's delay, which grows with its
+// length. Width 1 to 32.
+class MemoryWire : public BasicComponent {
+public:
+    MemoryWire(std::string name, size_t width, size_t delay);
+    const char* getTypeName() const override { return type_.c_str(); }
+    PrimitiveTiming primitiveTiming() const override { return PrimitiveTiming::InputsOnly; }
+    void evaluate(size_t time, Simulator& simulator) override;
+private:
+    std::string type_;
+};
+
 // The XOR of an address-transition detector, with the simulator's unknown
 // value read as a symbol: OUT is 1 when A and B differ (0, 1, X and Z as four
 // symbols), 0 when they are equal. A steady unknown input is steady; a

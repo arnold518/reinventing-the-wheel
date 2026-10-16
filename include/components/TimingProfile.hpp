@@ -53,6 +53,9 @@ struct TimingProfile {
     struct Memory {
         size_t sram_settle = 32, sram_precharge = 32, sram_bitline_base = 64, sram_bitline_per_row = 0;
         size_t rom_settle = 32, rom_column_base = 96, rom_column_per_row = 0;
+        // Global wire of a multi-subarray on-chip SRAM, per subarray of grid
+        // side it crosses (each way).
+        size_t sram_wire_per_side = 2;
         // DRAM command intervals: ACTIVATE (wordline, sense, restore),
         // READ (column), WRITE (drive on, drive off, recovery), PRECHARGE
         // (close, precharge, equalize). REFRESH is ACTIVATE then PRECHARGE.

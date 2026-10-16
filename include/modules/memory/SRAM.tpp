@@ -4,6 +4,7 @@
 #include "modules/utility/BitAdapter.hpp"
 #include "modules/memory/MemoryPeripheralWiring.hpp"
 #include "modules/memory/MemoryTimingParts.hpp"
+#include "modules/memory/MemoryRangeCheck.hpp"
 #include "components/TimingProfile.hpp"
 
 template<size_t W> SRAMAccessControl<W>::SRAMAccessControl(std::string name, SRAMDeviceConfig config)
@@ -30,7 +31,10 @@ template<size_t W> void SRAMAccessControl<W>::buildInternals(ComponentBuilder& b
     size_t decode_depth = 1; while ((size_t{1} << (decode_depth - 1)) < row_bits + 1) ++decode_depth;
     auto timer = b.addNewComponent<circuit::memory::MemoryTimer>("ACCESS_TIMER", inputs, timing.sram_settle,
         std::vector<circuit::memory::MemoryTimerStage>{
-            {timing.sram_precharge, 1}, {0, std::max<size_t>(decode_depth, 3) + 1}, {timing.sramBitline(config_.rows()), 1}}, 34);
+            {timing.sram_precharge, 1}, {0, std::max<size_t>(decode_depth, 3) + 1}, {timing.sramBitline(config_.rows()), 1},
+            // READY after the data: the sense enable gate, the sense
+            // amplifier and the output buffer, plus one gate.
+            {2 * circuit::timing::leafDelay(circuit::timing::Leaf::MemoryPrimitive), 2}}, 34);
     auto address = b.addNewComponent<BitSplitter<32>>("ADDRESS_BITS");
     auto data = b.addNewComponent<BitSplitter<W>>("DATA_BITS");
     auto held_address = b.addNewComponent<BitJoiner<32>>("HELD_ADDRESS");
@@ -69,7 +73,7 @@ template<size_t W> void SRAMAccessControl<W>::buildInternals(ComponentBuilder& b
     w.connect(w.both("WRITE_PHASE", stage(1), writing), this->getOutputPin("WRITE_ENABLE"));
     w.connect(stage(2), this->getOutputPin("ROW_ENABLE"));
     w.connect(w.both("SENSE_PHASE", stage(3), held_we_n), this->getOutputPin("SENSE_ENABLE"));
-    w.connect(stage(3), this->getOutputPin("READY"));
+    w.connect(stage(4), this->getOutputPin("READY"));
     w.connect(w.reduce("OUTPUT_PHASE", {stage(3), held_we_n, w.invert("OUTPUT_ON", this->getInputPin("OE_N"))}, true),
               this->getOutputPin("OUTPUT_ENABLE"));
     w.finish();
@@ -175,9 +179,92 @@ template<size_t W> void SRAMStorageBank<W>::buildInternals(ComponentBuilder& b) 
 
 template<size_t W> SRAM<W>::SRAM(std::string name, SRAMDeviceConfig config)
     : IOComponent(std::move(name), defineSRAMPins<W>), config_(config) { config.validate(W, true); }
+// A large array: subarrays of SRAM_SUBARRAY_ROWS rows, each a whole SRAM
+// device with its own self-timing. The high word-address bits select one
+// subarray (its CE_N); the others stay idle. Requests reach the subarrays
+// over a global wire and the selected subarray's data and READY come back
+// over another, through a multiplexer tree on the same select bits. The wire
+// delay grows with the side of the subarray grid. An address beyond the
+// depth goes to subarray 0 with its top bit set, so that subarray answers
+// with X and READY exactly as a single bank does.
+template<size_t W> void SRAM<W>::buildSubarrays(ComponentBuilder& b) {
+    using namespace circuit::sram;
+    using circuit::memory_detail::StructuralWiring;
+    using PinPtr = StructuralWiring::PinPtr;
+    StructuralWiring w(b);
+    const auto& timing = circuit::timing::activeTimingProfile().memory;
+    const size_t sub_words = SRAM_SUBARRAY_ROWS * config_.words_per_row, count = sramSubarrays(config_);
+    size_t low_bits = 0; while ((size_t{1} << low_bits) < sub_words) ++low_bits;
+    size_t select_bits = 0; while ((size_t{1} << select_bits) < count) ++select_bits;
+    size_t side = 1; while (side * side < count) ++side;
+    const size_t wire = timing.sram_wire_per_side * side;
+    const auto global = [&](const std::string& name, PinPtr source) {
+        auto line = b.addNewComponent<circuit::memory::MemoryWire>(name, source->getWidth(), wire);
+        w.connect(source, line->getInputPinDynamic("IN"));
+        return line->getOutputPinDynamic("OUT");
+    };
+    const auto address = global("ADDRESS_WIRE", this->template getInputPin<32>("WORD_ADDR"));
+    const auto data = global("DATA_WIRE", this->template getInputPin<W>("WRITE_DATA"));
+    const auto mask = global("MASK_WIRE", this->template getInputPin<W / 8>("WRITE_MASK"));
+    const auto ce_n = global("CE_WIRE", this->getInputPin("CE_N"));
+    const auto we_n = global("WE_WIRE", this->getInputPin("WE_N"));
+    const auto oe_n = global("OE_WIRE", this->getInputPin("OE_N"));
+    auto bits = b.addNewComponent<BitSplitter<32>>("ADDRESS_BITS");
+    w.connect(address, bits->template getInputPin<32>("IN"));
+    std::vector<PinPtr> word;
+    for (size_t i = 0; i < 32; ++i) word.push_back(bits->getOutputPin("OUT_" + std::to_string(i)));
+    const auto valid = circuit::memory_detail::addressBelow(w, word, config_.depth_words, "IN_RANGE");
+    const auto invalid = w.invert("OUT_OF_RANGE", valid);
+    // The select field, forced to 0 for an address beyond the depth.
+    std::vector<PinPtr> select, select_bar;
+    for (size_t i = 0; i < select_bits; ++i) {
+        select.push_back(w.both("SELECT_" + std::to_string(i), word[low_bits + i], valid));
+        select_bar.push_back(w.invert("NOT_SELECT_" + std::to_string(i), select.back()));
+    }
+    const auto low = w.constant("LOW", false);
+    std::vector<PinPtr> data_out, ready_out;
+    std::vector<std::vector<PinPtr>> data_bits(W);
+    const auto suffix = "." + std::to_string(W);
+    for (size_t k = 0; k < count; ++k) {
+        const auto n = std::to_string(k);
+        SRAMDeviceConfig sub = config_;
+        sub.depth_words = std::min(sub_words, config_.depth_words - k * sub_words);
+        auto part = add<SRAM<W>>(b, "memory.sram.device" + suffix, "SUBARRAY_" + n, sramParameters(sub), sub);
+        auto local = b.addNewComponent<BitJoiner<32>>("LOCAL_ADDRESS_" + n);
+        for (size_t i = 0; i < 32; ++i)
+            w.connect(i < low_bits ? word[i] : (k == 0 && i == 31 ? invalid : low), local->getInputPin("IN_" + std::to_string(i)));
+        w.connect(local->template getOutputPin<32>("OUT"), part->template getInputPin<32>("WORD_ADDR"));
+        const auto chosen = circuit::memory_detail::decodeMatch(w, "CHOSEN_" + n, select, select_bar, k);
+        w.connect(w.either("CE_N_" + n, ce_n, w.invert("NOT_CHOSEN_" + n, chosen)), part->getInputPin("CE_N"));
+        w.connect(we_n, part->getInputPin("WE_N"));
+        w.connect(oe_n, part->getInputPin("OE_N"));
+        w.connect(data, part->template getInputPin<W>("WRITE_DATA"));
+        w.connect(mask, part->template getInputPin<W / 8>("WRITE_MASK"));
+        auto out = b.addNewComponent<BitSplitter<W>>("READ_BITS_" + n);
+        w.connect(part->template getOutputPin<W>("READ_DATA"), out->template getInputPin<W>("IN"));
+        for (size_t bit = 0; bit < W; ++bit) data_bits[bit].push_back(out->getOutputPin("OUT_" + std::to_string(bit)));
+        ready_out.push_back(part->getOutputPin("READY"));
+    }
+    auto joined = b.addNewComponent<BitJoiner<W>>("READ_DATA_BITS");
+    for (size_t bit = 0; bit < W; ++bit)
+        w.connect(circuit::memory_detail::selectMuxTree(w, b, "RETURN_" + std::to_string(bit), data_bits[bit], select, data_bits[bit].front()),
+                  joined->getInputPin("IN_" + std::to_string(bit)));
+    const auto ready = circuit::memory_detail::selectMuxTree(w, b, "READY_RETURN", ready_out, select, ready_out.front());
+    // The multiplexers pass no high impedance: a global output buffer drives
+    // the data while the selected subarray is ready from a read with the chip
+    // and its output selected, as a single bank's buffer does once settled.
+    auto output = add<SRAMOutputBuffer<W>>(b, "memory.sram.output-buffer" + suffix, "OUTPUT", {});
+    w.connect(joined->template getOutputPin<W>("OUT"), output->template getInputPin<W>("DATA"));
+    w.connect(w.reduce("DRIVE_OUTPUT", {ready, w.invert("CHIP_ON", ce_n), w.invert("OUTPUT_ON", oe_n), we_n}, true), output->getInputPin("ENABLE"));
+    w.connect(global("READ_DATA_WIRE", output->template getOutputPin<W>("OUT")), this->template getOutputPin<W>("READ_DATA"));
+    w.connect(global("READY_WIRE", ready), this->getOutputPin("READY"));
+    w.finish();
+}
+
 template<size_t W> void SRAM<W>::buildInternals(ComponentBuilder& b) {
     using namespace circuit::sram;
     using circuit::memory_detail::StructuralWiring;
+    if (config_.rows() > SRAM_SUBARRAY_ROWS) { buildSubarrays(b); return; }
     StructuralWiring w(b);
     const auto params = sramParameters(config_);
     const auto suffix = "." + std::to_string(W);

@@ -108,6 +108,20 @@ void Synchronizer::evaluate(size_t time, Simulator& simulator) {
     _updateOutputWire(simulator, "Q", second_, time);
 }
 
+MemoryWire::MemoryWire(std::string name, size_t width, size_t delay)
+    : BasicComponent(std::move(name), delay, [width](IOComponent* self) {
+          if (!width || width > 32) throw std::invalid_argument("A memory wire carries 1 to 32 bits");
+          self->addPinDynamic("IN", PinType::INPUT, width);
+          self->addPinDynamic("OUT", PinType::OUTPUT, width);
+      }),
+      type_("MemoryWire<" + std::to_string(width) + ">") {
+    if (!delay) throw std::invalid_argument("A memory wire needs a positive delay");
+}
+
+void MemoryWire::evaluate(size_t time, Simulator& simulator) {
+    _updateOutputWireDynamic(simulator, "OUT", getInputPinDynamic("IN")->getValueAsVector(), time);
+}
+
 size_t memoryTimerSettle(size_t configured, size_t inputs, bool conditional) {
     using circuit::timing::Leaf;
     using circuit::timing::leafDelay;

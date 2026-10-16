@@ -18,6 +18,11 @@ struct SRAMDeviceConfig {
     size_t columns(size_t width) const { return width * words_per_row; }
 };
 SRAMDeviceConfig sramConfigFromParameters(const circuit::ParameterMap& parameters);
+// A gate-level SRAM keeps each bitline to at most this many rows: a larger
+// array is built from subarrays of this many rows, a global decoder, global
+// wires and a return multiplexer, the way real on-chip arrays are divided.
+inline constexpr size_t SRAM_SUBARRAY_ROWS = 32;
+inline size_t sramSubarrays(const SRAMDeviceConfig& c) { return (c.rows() + SRAM_SUBARRAY_ROWS - 1) / SRAM_SUBARRAY_ROWS; }
 circuit::ParameterMap sramParameters(const SRAMDeviceConfig& config);
 void registerSRAMComponents(circuit::ComponentCatalog& catalog);
 
@@ -178,6 +183,7 @@ public:
     explicit SRAM(std::string name, SRAMDeviceConfig config = {});
     void buildInternals(ComponentBuilder& builder) override;
 private:
+    void buildSubarrays(ComponentBuilder& builder);
     SRAMDeviceConfig config_;
 };
 

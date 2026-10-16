@@ -217,6 +217,12 @@ SRAMAccessControlTest::SRAMAccessControlTest() : ComponentScenarioTest(controlSp
 SRAMOutputBufferTest::SRAMOutputBufferTest() : ComponentScenarioTest(outputSpec()) {}
 SRAMStorageBankTest::SRAMStorageBankTest() : ComponentScenarioTest(bankSpec()) {}
 SRAMTest::SRAMTest() : ComponentScenarioTest(sramDeviceSpec(8, 4, 2)) {}
+// 256 words in two-word rows: 128 rows, four subarrays of SRAM_SUBARRAY_ROWS.
+SRAMSubarrayTest::SRAMSubarrayTest() : ComponentScenarioTest([] {
+    auto spec = sramDeviceSpec(8, 256, 2);
+    spec.id = "SRAMSubarrayTest";
+    return spec;
+}()) {}
 
 void SRAMContractTest::verifyResults() {
     ComponentTestRunner runner;

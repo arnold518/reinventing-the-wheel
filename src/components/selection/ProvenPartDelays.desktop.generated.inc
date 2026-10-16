@@ -7232,10 +7232,10 @@
     PartDelays t;
     t.evidence = "proven on memory.rom.device.16.structural";
     t.arcs = {
-        Arc{"CE_N", "READY", {211, 795}},
+        Arc{"CE_N", "READY", {211, 921}},
         Arc{"CE_N", "READ_DATA", {503, 732}},
         Arc{"OE_N", "READ_DATA", {77, 77}},
-        Arc{"WORD_ADDR", "READY", {391, 975}},
+        Arc{"WORD_ADDR", "READY", {391, 1101}},
         Arc{"WORD_ADDR", "READ_DATA", {553, 912}},
     };
     return t;
@@ -7244,10 +7244,10 @@
     PartDelays t;
     t.evidence = "proven on memory.rom.device.16.structural";
     t.arcs = {
-        Arc{"CE_N", "READY", {211, 925}},
+        Arc{"CE_N", "READY", {211, 1051}},
         Arc{"CE_N", "READ_DATA", {503, 862}},
         Arc{"OE_N", "READ_DATA", {77, 77}},
-        Arc{"WORD_ADDR", "READY", {391, 1105}},
+        Arc{"WORD_ADDR", "READY", {391, 1231}},
         Arc{"WORD_ADDR", "READ_DATA", {553, 1042}},
     };
     return t;
@@ -7256,10 +7256,10 @@
     PartDelays t;
     t.evidence = "proven on memory.rom.device.16.structural";
     t.arcs = {
-        Arc{"CE_N", "READY", {211, 989}},
+        Arc{"CE_N", "READY", {211, 1115}},
         Arc{"CE_N", "READ_DATA", {503, 926}},
         Arc{"OE_N", "READ_DATA", {77, 77}},
-        Arc{"WORD_ADDR", "READY", {391, 1169}},
+        Arc{"WORD_ADDR", "READY", {391, 1295}},
         Arc{"WORD_ADDR", "READ_DATA", {553, 1106}},
     };
     return t;
@@ -7268,10 +7268,10 @@
     PartDelays t;
     t.evidence = "proven on memory.rom.device.16.structural";
     t.arcs = {
-        Arc{"CE_N", "READY", {211, 834}},
+        Arc{"CE_N", "READY", {211, 925}},
         Arc{"CE_N", "READ_DATA", {503, 735}},
         Arc{"OE_N", "READ_DATA", {77, 77}},
-        Arc{"WORD_ADDR", "READY", {391, 1014}},
+        Arc{"WORD_ADDR", "READY", {391, 1105}},
         Arc{"WORD_ADDR", "READ_DATA", {609, 915}},
     };
     return t;
@@ -7280,10 +7280,10 @@
     PartDelays t;
     t.evidence = "proven on memory.rom.device.16.structural";
     t.arcs = {
-        Arc{"CE_N", "READY", {211, 989}},
+        Arc{"CE_N", "READY", {211, 1080}},
         Arc{"CE_N", "READ_DATA", {503, 890}},
         Arc{"OE_N", "READ_DATA", {77, 77}},
-        Arc{"WORD_ADDR", "READY", {391, 1169}},
+        Arc{"WORD_ADDR", "READY", {391, 1260}},
         Arc{"WORD_ADDR", "READ_DATA", {764, 1070}},
     };
     return t;
@@ -7292,10 +7292,10 @@
     PartDelays t;
     t.evidence = "proven on memory.rom.device.16.structural";
     t.arcs = {
-        Arc{"CE_N", "READY", {211, 1117}},
+        Arc{"CE_N", "READY", {211, 1208}},
         Arc{"CE_N", "READ_DATA", {503, 1018}},
         Arc{"OE_N", "READ_DATA", {77, 77}},
-        Arc{"WORD_ADDR", "READY", {391, 1297}},
+        Arc{"WORD_ADDR", "READY", {391, 1388}},
         Arc{"WORD_ADDR", "READ_DATA", {927, 1198}},
     };
     return t;
@@ -7304,10 +7304,10 @@
     PartDelays t;
     t.evidence = "proven on memory.rom.device.16.structural";
     t.arcs = {
-        Arc{"CE_N", "READY", {211, 758}},
+        Arc{"CE_N", "READY", {211, 919}},
         Arc{"CE_N", "READ_DATA", {503, 731}},
         Arc{"OE_N", "READ_DATA", {77, 77}},
-        Arc{"WORD_ADDR", "READY", {391, 938}},
+        Arc{"WORD_ADDR", "READY", {391, 1099}},
         Arc{"WORD_ADDR", "READ_DATA", {589, 911}},
     };
     return t;
@@ -7316,10 +7316,10 @@
     PartDelays t;
     t.evidence = "proven on memory.rom.device.16.structural";
     t.arcs = {
-        Arc{"CE_N", "READY", {211, 893}},
+        Arc{"CE_N", "READY", {211, 1054}},
         Arc{"CE_N", "READ_DATA", {503, 866}},
         Arc{"OE_N", "READ_DATA", {77, 77}},
-        Arc{"WORD_ADDR", "READY", {391, 1073}},
+        Arc{"WORD_ADDR", "READY", {391, 1234}},
         Arc{"WORD_ADDR", "READ_DATA", {589, 1046}},
     };
     return t;
@@ -7328,10 +7328,10 @@
     PartDelays t;
     t.evidence = "proven on memory.rom.device.16.structural";
     t.arcs = {
-        Arc{"CE_N", "READY", {211, 925}},
+        Arc{"CE_N", "READY", {211, 1086}},
         Arc{"CE_N", "READ_DATA", {503, 898}},
         Arc{"OE_N", "READ_DATA", {77, 77}},
-        Arc{"WORD_ADDR", "READY", {391, 1105}},
+        Arc{"WORD_ADDR", "READY", {391, 1266}},
         Arc{"WORD_ADDR", "READ_DATA", {589, 1078}},
     };
     return t;
@@ -7340,10 +7340,10 @@
     PartDelays t;
     t.evidence = "proven on memory.rom.device.16.structural";
     t.arcs = {
-        Arc{"CE_N", "READY", {211, 842}},
+        Arc{"CE_N", "READY", {211, 1038}},
         Arc{"CE_N", "READ_DATA", {503, 851}},
         Arc{"OE_N", "READ_DATA", {77, 77}},
-        Arc{"WORD_ADDR", "READY", {391, 1022}},
+        Arc{"WORD_ADDR", "READY", {391, 1218}},
         Arc{"WORD_ADDR", "READ_DATA", {660, 1031}},
     };
     return t;
@@ -7352,10 +7352,10 @@
     PartDelays t;
     t.evidence = "proven on memory.rom.device.16.structural";
     t.arcs = {
-        Arc{"CE_N", "READY", {211, 893}},
+        Arc{"CE_N", "READY", {211, 1089}},
         Arc{"CE_N", "READ_DATA", {503, 902}},
         Arc{"OE_N", "READ_DATA", {77, 77}},
-        Arc{"WORD_ADDR", "READY", {391, 1073}},
+        Arc{"WORD_ADDR", "READY", {391, 1269}},
         Arc{"WORD_ADDR", "READ_DATA", {660, 1082}},
     };
     return t;
@@ -7364,10 +7364,10 @@
     PartDelays t;
     t.evidence = "proven on memory.rom.device.16.structural";
     t.arcs = {
-        Arc{"CE_N", "READY", {211, 834}},
+        Arc{"CE_N", "READY", {211, 1065}},
         Arc{"CE_N", "READ_DATA", {503, 879}},
         Arc{"OE_N", "READ_DATA", {77, 77}},
-        Arc{"WORD_ADDR", "READY", {391, 1014}},
+        Arc{"WORD_ADDR", "READY", {391, 1245}},
         Arc{"WORD_ADDR", "READ_DATA", {661, 1059}},
     };
     return t;
@@ -7376,10 +7376,10 @@
     PartDelays t;
     t.evidence = "proven on memory.rom.device.16.structural";
     t.arcs = {
-        Arc{"CE_N", "READY", {211, 842}},
+        Arc{"CE_N", "READY", {211, 1073}},
         Arc{"CE_N", "READ_DATA", {503, 887}},
         Arc{"OE_N", "READ_DATA", {77, 77}},
-        Arc{"WORD_ADDR", "READY", {391, 1022}},
+        Arc{"WORD_ADDR", "READY", {391, 1253}},
         Arc{"WORD_ADDR", "READ_DATA", {661, 1067}},
     };
     return t;
@@ -7388,10 +7388,10 @@
     PartDelays t;
     t.evidence = "proven on memory.rom.device.32.structural";
     t.arcs = {
-        Arc{"CE_N", "READY", {211, 795}},
+        Arc{"CE_N", "READY", {211, 921}},
         Arc{"CE_N", "READ_DATA", {503, 732}},
         Arc{"OE_N", "READ_DATA", {77, 77}},
-        Arc{"WORD_ADDR", "READY", {391, 975}},
+        Arc{"WORD_ADDR", "READY", {391, 1101}},
         Arc{"WORD_ADDR", "READ_DATA", {553, 912}},
     };
     return t;
@@ -7400,10 +7400,10 @@
     PartDelays t;
     t.evidence = "proven on memory.rom.device.32.structural";
     t.arcs = {
-        Arc{"CE_N", "READY", {211, 925}},
+        Arc{"CE_N", "READY", {211, 1051}},
         Arc{"CE_N", "READ_DATA", {503, 862}},
         Arc{"OE_N", "READ_DATA", {77, 77}},
-        Arc{"WORD_ADDR", "READY", {391, 1105}},
+        Arc{"WORD_ADDR", "READY", {391, 1231}},
         Arc{"WORD_ADDR", "READ_DATA", {553, 1042}},
     };
     return t;
@@ -7412,10 +7412,10 @@
     PartDelays t;
     t.evidence = "proven on memory.rom.device.32.structural";
     t.arcs = {
-        Arc{"CE_N", "READY", {211, 989}},
+        Arc{"CE_N", "READY", {211, 1115}},
         Arc{"CE_N", "READ_DATA", {503, 926}},
         Arc{"OE_N", "READ_DATA", {77, 77}},
-        Arc{"WORD_ADDR", "READY", {391, 1169}},
+        Arc{"WORD_ADDR", "READY", {391, 1295}},
         Arc{"WORD_ADDR", "READ_DATA", {553, 1106}},
     };
     return t;
@@ -7424,10 +7424,10 @@
     PartDelays t;
     t.evidence = "proven on memory.rom.device.32.structural";
     t.arcs = {
-        Arc{"CE_N", "READY", {211, 834}},
+        Arc{"CE_N", "READY", {211, 925}},
         Arc{"CE_N", "READ_DATA", {503, 735}},
         Arc{"OE_N", "READ_DATA", {77, 77}},
-        Arc{"WORD_ADDR", "READY", {391, 1014}},
+        Arc{"WORD_ADDR", "READY", {391, 1105}},
         Arc{"WORD_ADDR", "READ_DATA", {609, 915}},
     };
     return t;
@@ -7436,10 +7436,10 @@
     PartDelays t;
     t.evidence = "proven on memory.rom.device.32.structural";
     t.arcs = {
-        Arc{"CE_N", "READY", {211, 989}},
+        Arc{"CE_N", "READY", {211, 1080}},
         Arc{"CE_N", "READ_DATA", {503, 890}},
         Arc{"OE_N", "READ_DATA", {77, 77}},
-        Arc{"WORD_ADDR", "READY", {391, 1169}},
+        Arc{"WORD_ADDR", "READY", {391, 1260}},
         Arc{"WORD_ADDR", "READ_DATA", {764, 1070}},
     };
     return t;
@@ -7448,10 +7448,10 @@
     PartDelays t;
     t.evidence = "proven on memory.rom.device.32.structural";
     t.arcs = {
-        Arc{"CE_N", "READY", {211, 1117}},
+        Arc{"CE_N", "READY", {211, 1208}},
         Arc{"CE_N", "READ_DATA", {503, 1018}},
         Arc{"OE_N", "READ_DATA", {77, 77}},
-        Arc{"WORD_ADDR", "READY", {391, 1297}},
+        Arc{"WORD_ADDR", "READY", {391, 1388}},
         Arc{"WORD_ADDR", "READ_DATA", {927, 1198}},
     };
     return t;
@@ -7460,10 +7460,10 @@
     PartDelays t;
     t.evidence = "proven on memory.rom.device.32.structural";
     t.arcs = {
-        Arc{"CE_N", "READY", {211, 758}},
+        Arc{"CE_N", "READY", {211, 919}},
         Arc{"CE_N", "READ_DATA", {503, 731}},
         Arc{"OE_N", "READ_DATA", {77, 77}},
-        Arc{"WORD_ADDR", "READY", {391, 938}},
+        Arc{"WORD_ADDR", "READY", {391, 1099}},
         Arc{"WORD_ADDR", "READ_DATA", {589, 911}},
     };
     return t;
@@ -7472,10 +7472,10 @@
     PartDelays t;
     t.evidence = "proven on memory.rom.device.32.structural";
     t.arcs = {
-        Arc{"CE_N", "READY", {211, 893}},
+        Arc{"CE_N", "READY", {211, 1054}},
         Arc{"CE_N", "READ_DATA", {503, 866}},
         Arc{"OE_N", "READ_DATA", {77, 77}},
-        Arc{"WORD_ADDR", "READY", {391, 1073}},
+        Arc{"WORD_ADDR", "READY", {391, 1234}},
         Arc{"WORD_ADDR", "READ_DATA", {589, 1046}},
     };
     return t;
@@ -7484,10 +7484,10 @@
     PartDelays t;
     t.evidence = "proven on memory.rom.device.32.structural";
     t.arcs = {
-        Arc{"CE_N", "READY", {211, 925}},
+        Arc{"CE_N", "READY", {211, 1086}},
         Arc{"CE_N", "READ_DATA", {503, 898}},
         Arc{"OE_N", "READ_DATA", {77, 77}},
-        Arc{"WORD_ADDR", "READY", {391, 1105}},
+        Arc{"WORD_ADDR", "READY", {391, 1266}},
         Arc{"WORD_ADDR", "READ_DATA", {589, 1078}},
     };
     return t;
@@ -7496,10 +7496,10 @@
     PartDelays t;
     t.evidence = "proven on memory.rom.device.32.structural";
     t.arcs = {
-        Arc{"CE_N", "READY", {211, 842}},
+        Arc{"CE_N", "READY", {211, 1038}},
         Arc{"CE_N", "READ_DATA", {503, 851}},
         Arc{"OE_N", "READ_DATA", {77, 77}},
-        Arc{"WORD_ADDR", "READY", {391, 1022}},
+        Arc{"WORD_ADDR", "READY", {391, 1218}},
         Arc{"WORD_ADDR", "READ_DATA", {660, 1031}},
     };
     return t;
@@ -7508,10 +7508,10 @@
     PartDelays t;
     t.evidence = "proven on memory.rom.device.32.structural";
     t.arcs = {
-        Arc{"CE_N", "READY", {211, 893}},
+        Arc{"CE_N", "READY", {211, 1089}},
         Arc{"CE_N", "READ_DATA", {503, 902}},
         Arc{"OE_N", "READ_DATA", {77, 77}},
-        Arc{"WORD_ADDR", "READY", {391, 1073}},
+        Arc{"WORD_ADDR", "READY", {391, 1269}},
         Arc{"WORD_ADDR", "READ_DATA", {660, 1082}},
     };
     return t;
@@ -7520,10 +7520,10 @@
     PartDelays t;
     t.evidence = "proven on memory.rom.device.32.structural";
     t.arcs = {
-        Arc{"CE_N", "READY", {211, 834}},
+        Arc{"CE_N", "READY", {211, 1065}},
         Arc{"CE_N", "READ_DATA", {503, 879}},
         Arc{"OE_N", "READ_DATA", {77, 77}},
-        Arc{"WORD_ADDR", "READY", {391, 1014}},
+        Arc{"WORD_ADDR", "READY", {391, 1245}},
         Arc{"WORD_ADDR", "READ_DATA", {661, 1059}},
     };
     return t;
@@ -7532,10 +7532,10 @@
     PartDelays t;
     t.evidence = "proven on memory.rom.device.32.structural";
     t.arcs = {
-        Arc{"CE_N", "READY", {211, 842}},
+        Arc{"CE_N", "READY", {211, 1073}},
         Arc{"CE_N", "READ_DATA", {503, 887}},
         Arc{"OE_N", "READ_DATA", {77, 77}},
-        Arc{"WORD_ADDR", "READY", {391, 1022}},
+        Arc{"WORD_ADDR", "READY", {391, 1253}},
         Arc{"WORD_ADDR", "READ_DATA", {661, 1067}},
     };
     return t;
@@ -7544,10 +7544,10 @@
     PartDelays t;
     t.evidence = "proven on memory.rom.device.8.structural";
     t.arcs = {
-        Arc{"CE_N", "READY", {211, 795}},
+        Arc{"CE_N", "READY", {211, 921}},
         Arc{"CE_N", "READ_DATA", {503, 732}},
         Arc{"OE_N", "READ_DATA", {77, 77}},
-        Arc{"WORD_ADDR", "READY", {391, 975}},
+        Arc{"WORD_ADDR", "READY", {391, 1101}},
         Arc{"WORD_ADDR", "READ_DATA", {553, 912}},
     };
     return t;
@@ -7556,10 +7556,10 @@
     PartDelays t;
     t.evidence = "proven on memory.rom.device.8.structural";
     t.arcs = {
-        Arc{"CE_N", "READY", {211, 925}},
+        Arc{"CE_N", "READY", {211, 1051}},
         Arc{"CE_N", "READ_DATA", {503, 862}},
         Arc{"OE_N", "READ_DATA", {77, 77}},
-        Arc{"WORD_ADDR", "READY", {391, 1105}},
+        Arc{"WORD_ADDR", "READY", {391, 1231}},
         Arc{"WORD_ADDR", "READ_DATA", {553, 1042}},
     };
     return t;
@@ -7568,10 +7568,10 @@
     PartDelays t;
     t.evidence = "proven on memory.rom.device.8.structural";
     t.arcs = {
-        Arc{"CE_N", "READY", {211, 989}},
+        Arc{"CE_N", "READY", {211, 1115}},
         Arc{"CE_N", "READ_DATA", {503, 926}},
         Arc{"OE_N", "READ_DATA", {77, 77}},
-        Arc{"WORD_ADDR", "READY", {391, 1169}},
+        Arc{"WORD_ADDR", "READY", {391, 1295}},
         Arc{"WORD_ADDR", "READ_DATA", {553, 1106}},
     };
     return t;
@@ -7580,10 +7580,10 @@
     PartDelays t;
     t.evidence = "proven on memory.rom.device.8.structural";
     t.arcs = {
-        Arc{"CE_N", "READY", {211, 834}},
+        Arc{"CE_N", "READY", {211, 925}},
         Arc{"CE_N", "READ_DATA", {503, 735}},
         Arc{"OE_N", "READ_DATA", {77, 77}},
-        Arc{"WORD_ADDR", "READY", {391, 1014}},
+        Arc{"WORD_ADDR", "READY", {391, 1105}},
         Arc{"WORD_ADDR", "READ_DATA", {609, 915}},
     };
     return t;
@@ -7592,10 +7592,10 @@
     PartDelays t;
     t.evidence = "proven on memory.rom.device.8.structural";
     t.arcs = {
-        Arc{"CE_N", "READY", {211, 989}},
+        Arc{"CE_N", "READY", {211, 1080}},
         Arc{"CE_N", "READ_DATA", {503, 890}},
         Arc{"OE_N", "READ_DATA", {77, 77}},
-        Arc{"WORD_ADDR", "READY", {391, 1169}},
+        Arc{"WORD_ADDR", "READY", {391, 1260}},
         Arc{"WORD_ADDR", "READ_DATA", {764, 1070}},
     };
     return t;
@@ -7604,10 +7604,10 @@
     PartDelays t;
     t.evidence = "proven on memory.rom.device.8.structural";
     t.arcs = {
-        Arc{"CE_N", "READY", {211, 1117}},
+        Arc{"CE_N", "READY", {211, 1208}},
         Arc{"CE_N", "READ_DATA", {503, 1018}},
         Arc{"OE_N", "READ_DATA", {77, 77}},
-        Arc{"WORD_ADDR", "READY", {391, 1297}},
+        Arc{"WORD_ADDR", "READY", {391, 1388}},
         Arc{"WORD_ADDR", "READ_DATA", {927, 1198}},
     };
     return t;
@@ -7616,10 +7616,10 @@
     PartDelays t;
     t.evidence = "proven on memory.rom.device.8.structural";
     t.arcs = {
-        Arc{"CE_N", "READY", {211, 758}},
+        Arc{"CE_N", "READY", {211, 919}},
         Arc{"CE_N", "READ_DATA", {503, 731}},
         Arc{"OE_N", "READ_DATA", {77, 77}},
-        Arc{"WORD_ADDR", "READY", {391, 938}},
+        Arc{"WORD_ADDR", "READY", {391, 1099}},
         Arc{"WORD_ADDR", "READ_DATA", {589, 911}},
     };
     return t;
@@ -7628,10 +7628,10 @@
     PartDelays t;
     t.evidence = "proven on memory.rom.device.8.structural";
     t.arcs = {
-        Arc{"CE_N", "READY", {211, 893}},
+        Arc{"CE_N", "READY", {211, 1054}},
         Arc{"CE_N", "READ_DATA", {503, 866}},
         Arc{"OE_N", "READ_DATA", {77, 77}},
-        Arc{"WORD_ADDR", "READY", {391, 1073}},
+        Arc{"WORD_ADDR", "READY", {391, 1234}},
         Arc{"WORD_ADDR", "READ_DATA", {589, 1046}},
     };
     return t;
@@ -7640,10 +7640,10 @@
     PartDelays t;
     t.evidence = "proven on memory.rom.device.8.structural";
     t.arcs = {
-        Arc{"CE_N", "READY", {211, 925}},
+        Arc{"CE_N", "READY", {211, 1086}},
         Arc{"CE_N", "READ_DATA", {503, 898}},
         Arc{"OE_N", "READ_DATA", {77, 77}},
-        Arc{"WORD_ADDR", "READY", {391, 1105}},
+        Arc{"WORD_ADDR", "READY", {391, 1266}},
         Arc{"WORD_ADDR", "READ_DATA", {589, 1078}},
     };
     return t;
@@ -7652,10 +7652,10 @@
     PartDelays t;
     t.evidence = "proven on memory.rom.device.8.structural";
     t.arcs = {
-        Arc{"CE_N", "READY", {211, 842}},
+        Arc{"CE_N", "READY", {211, 1038}},
         Arc{"CE_N", "READ_DATA", {503, 851}},
         Arc{"OE_N", "READ_DATA", {77, 77}},
-        Arc{"WORD_ADDR", "READY", {391, 1022}},
+        Arc{"WORD_ADDR", "READY", {391, 1218}},
         Arc{"WORD_ADDR", "READ_DATA", {660, 1031}},
     };
     return t;
@@ -7664,10 +7664,10 @@
     PartDelays t;
     t.evidence = "proven on memory.rom.device.8.structural";
     t.arcs = {
-        Arc{"CE_N", "READY", {211, 893}},
+        Arc{"CE_N", "READY", {211, 1089}},
         Arc{"CE_N", "READ_DATA", {503, 902}},
         Arc{"OE_N", "READ_DATA", {77, 77}},
-        Arc{"WORD_ADDR", "READY", {391, 1073}},
+        Arc{"WORD_ADDR", "READY", {391, 1269}},
         Arc{"WORD_ADDR", "READ_DATA", {660, 1082}},
     };
     return t;
@@ -7676,10 +7676,10 @@
     PartDelays t;
     t.evidence = "proven on memory.rom.device.8.structural";
     t.arcs = {
-        Arc{"CE_N", "READY", {211, 834}},
+        Arc{"CE_N", "READY", {211, 1065}},
         Arc{"CE_N", "READ_DATA", {503, 879}},
         Arc{"OE_N", "READ_DATA", {77, 77}},
-        Arc{"WORD_ADDR", "READY", {391, 1014}},
+        Arc{"WORD_ADDR", "READY", {391, 1245}},
         Arc{"WORD_ADDR", "READ_DATA", {661, 1059}},
     };
     return t;
@@ -7688,10 +7688,10 @@
     PartDelays t;
     t.evidence = "proven on memory.rom.device.8.structural";
     t.arcs = {
-        Arc{"CE_N", "READY", {211, 842}},
+        Arc{"CE_N", "READY", {211, 1073}},
         Arc{"CE_N", "READ_DATA", {503, 887}},
         Arc{"OE_N", "READ_DATA", {77, 77}},
-        Arc{"WORD_ADDR", "READY", {391, 1022}},
+        Arc{"WORD_ADDR", "READY", {391, 1253}},
         Arc{"WORD_ADDR", "READ_DATA", {661, 1067}},
     };
     return t;
@@ -11393,819 +11393,882 @@
     PartDelays t;
     t.evidence = "proven on memory.sram.device.16.structural";
     t.arcs = {
-        Arc{"CE_N", "READY", {391, 1178}},
+        Arc{"CE_N", "READY", {391, 1290}},
         Arc{"CE_N", "READ_DATA", {468, 1470}},
         Arc{"OE_N", "READ_DATA", {77, 77}},
-        Arc{"WE_N", "READY", {391, 1178}},
+        Arc{"WE_N", "READY", {391, 1290}},
         Arc{"WE_N", "READ_DATA", {468, 1470}},
-        Arc{"WORD_ADDR", "READY", {391, 1178}},
+        Arc{"WORD_ADDR", "READY", {391, 1290}},
         Arc{"WORD_ADDR", "READ_DATA", {468, 1470}},
-        Arc{"WRITE_DATA", "READY", {354, 1213}},
+        Arc{"WRITE_DATA", "READY", {354, 1325}},
         Arc{"WRITE_DATA", "READ_DATA", {431, 1505}},
-        Arc{"WRITE_MASK", "READY", {354, 1141}},
+        Arc{"WRITE_MASK", "READY", {354, 1253}},
         Arc{"WRITE_MASK", "READ_DATA", {431, 1433}},
     };
     t.control = "WE_N";
-    t.arcs_by_control[0] = {{"WE_N", "READY", {391, 1178}}, {"WE_N", "READ_DATA", {468, 1470}}, {"CE_N", "READY", {391, 1178}}, {"CE_N", "READ_DATA", {468, 1470}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {391, 1178}}, {"WORD_ADDR", "READ_DATA", {468, 1470}}, {"WRITE_DATA", "READY", {354, 1213}}, {"WRITE_DATA", "READ_DATA", {431, 1505}}, {"WRITE_MASK", "READY", {354, 1141}}, {"WRITE_MASK", "READ_DATA", {431, 1433}}, };
-    t.arcs_by_control[1] = {{"WE_N", "READY", {391, 1178}}, {"WE_N", "READ_DATA", {468, 1470}}, {"CE_N", "READY", {391, 1178}}, {"CE_N", "READ_DATA", {468, 1470}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {391, 1178}}, {"WORD_ADDR", "READ_DATA", {468, 1470}}, {"WRITE_DATA", "READY", {354, 1213}}, {"WRITE_DATA", "READ_DATA", {431, 1505}}, {"WRITE_MASK", "READY", {354, 1141}}, {"WRITE_MASK", "READ_DATA", {431, 1433}}, };
+    t.arcs_by_control[0] = {{"WE_N", "READY", {391, 1290}}, {"WE_N", "READ_DATA", {468, 1470}}, {"CE_N", "READY", {391, 1290}}, {"CE_N", "READ_DATA", {468, 1470}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {391, 1290}}, {"WORD_ADDR", "READ_DATA", {468, 1470}}, {"WRITE_DATA", "READY", {354, 1325}}, {"WRITE_DATA", "READ_DATA", {431, 1505}}, {"WRITE_MASK", "READY", {354, 1253}}, {"WRITE_MASK", "READ_DATA", {431, 1433}}, };
+    t.arcs_by_control[1] = {{"WE_N", "READY", {391, 1290}}, {"WE_N", "READ_DATA", {468, 1470}}, {"CE_N", "READY", {391, 1290}}, {"CE_N", "READ_DATA", {468, 1470}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {391, 1290}}, {"WORD_ADDR", "READ_DATA", {468, 1470}}, {"WRITE_DATA", "READY", {354, 1325}}, {"WRITE_DATA", "READ_DATA", {431, 1505}}, {"WRITE_MASK", "READY", {354, 1253}}, {"WRITE_MASK", "READ_DATA", {431, 1433}}, };
     return t;
 }()},
 {"memory.sram.device.16.behavioral@depth=64", [] {
     PartDelays t;
     t.evidence = "proven on memory.sram.device.16.structural";
     t.arcs = {
-        Arc{"CE_N", "READY", {391, 1273}},
+        Arc{"CE_N", "READY", {391, 1385}},
         Arc{"CE_N", "READ_DATA", {468, 1695}},
         Arc{"OE_N", "READ_DATA", {77, 77}},
-        Arc{"WE_N", "READY", {391, 1273}},
+        Arc{"WE_N", "READY", {391, 1385}},
         Arc{"WE_N", "READ_DATA", {468, 1695}},
-        Arc{"WORD_ADDR", "READY", {391, 1273}},
+        Arc{"WORD_ADDR", "READY", {391, 1385}},
         Arc{"WORD_ADDR", "READ_DATA", {468, 1695}},
-        Arc{"WRITE_DATA", "READY", {354, 1308}},
+        Arc{"WRITE_DATA", "READY", {354, 1420}},
         Arc{"WRITE_DATA", "READ_DATA", {431, 1730}},
-        Arc{"WRITE_MASK", "READY", {354, 1236}},
+        Arc{"WRITE_MASK", "READY", {354, 1348}},
         Arc{"WRITE_MASK", "READ_DATA", {431, 1658}},
     };
     t.control = "WE_N";
-    t.arcs_by_control[0] = {{"WE_N", "READY", {391, 1273}}, {"WE_N", "READ_DATA", {468, 1695}}, {"CE_N", "READY", {391, 1273}}, {"CE_N", "READ_DATA", {468, 1695}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {391, 1273}}, {"WORD_ADDR", "READ_DATA", {468, 1695}}, {"WRITE_DATA", "READY", {354, 1308}}, {"WRITE_DATA", "READ_DATA", {431, 1730}}, {"WRITE_MASK", "READY", {354, 1236}}, {"WRITE_MASK", "READ_DATA", {431, 1658}}, };
-    t.arcs_by_control[1] = {{"WE_N", "READY", {391, 1273}}, {"WE_N", "READ_DATA", {468, 1695}}, {"CE_N", "READY", {391, 1273}}, {"CE_N", "READ_DATA", {468, 1695}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {391, 1273}}, {"WORD_ADDR", "READ_DATA", {468, 1695}}, {"WRITE_DATA", "READY", {354, 1308}}, {"WRITE_DATA", "READ_DATA", {431, 1730}}, {"WRITE_MASK", "READY", {354, 1236}}, {"WRITE_MASK", "READ_DATA", {431, 1658}}, };
+    t.arcs_by_control[0] = {{"WE_N", "READY", {391, 1385}}, {"WE_N", "READ_DATA", {468, 1695}}, {"CE_N", "READY", {391, 1385}}, {"CE_N", "READ_DATA", {468, 1695}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {391, 1385}}, {"WORD_ADDR", "READ_DATA", {468, 1695}}, {"WRITE_DATA", "READY", {354, 1420}}, {"WRITE_DATA", "READ_DATA", {431, 1730}}, {"WRITE_MASK", "READY", {354, 1348}}, {"WRITE_MASK", "READ_DATA", {431, 1658}}, };
+    t.arcs_by_control[1] = {{"WE_N", "READY", {391, 1385}}, {"WE_N", "READ_DATA", {468, 1695}}, {"CE_N", "READY", {391, 1385}}, {"CE_N", "READ_DATA", {468, 1695}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {391, 1385}}, {"WORD_ADDR", "READ_DATA", {468, 1695}}, {"WRITE_DATA", "READY", {354, 1420}}, {"WRITE_DATA", "READ_DATA", {431, 1730}}, {"WRITE_MASK", "READY", {354, 1348}}, {"WRITE_MASK", "READ_DATA", {431, 1658}}, };
     return t;
 }()},
 {"memory.sram.device.16.behavioral@depth=128", [] {
     PartDelays t;
     t.evidence = "proven on memory.sram.device.16.structural";
     t.arcs = {
-        Arc{"CE_N", "READY", {391, 1337}},
-        Arc{"CE_N", "READ_DATA", {468, 1823}},
-        Arc{"OE_N", "READ_DATA", {77, 77}},
-        Arc{"WE_N", "READY", {391, 1337}},
-        Arc{"WE_N", "READ_DATA", {468, 1823}},
-        Arc{"WORD_ADDR", "READY", {391, 1337}},
-        Arc{"WORD_ADDR", "READ_DATA", {468, 1823}},
-        Arc{"WRITE_DATA", "READY", {354, 1372}},
-        Arc{"WRITE_DATA", "READ_DATA", {431, 1858}},
-        Arc{"WRITE_MASK", "READY", {354, 1300}},
-        Arc{"WRITE_MASK", "READ_DATA", {431, 1786}},
+        Arc{"CE_N", "READY", {542, 1536}},
+        Arc{"CE_N", "READ_DATA", {156, 1867}},
+        Arc{"OE_N", "READ_DATA", {156, 213}},
+        Arc{"WE_N", "READY", {506, 1500}},
+        Arc{"WE_N", "READ_DATA", {135, 1831}},
+        Arc{"WORD_ADDR", "READY", {150, 1814}},
+        Arc{"WORD_ADDR", "READ_DATA", {171, 2145}},
+        Arc{"WRITE_DATA", "READY", {469, 1535}},
+        Arc{"WRITE_DATA", "READ_DATA", {560, 1866}},
+        Arc{"WRITE_MASK", "READY", {469, 1463}},
+        Arc{"WRITE_MASK", "READ_DATA", {560, 1794}},
     };
     t.control = "WE_N";
-    t.arcs_by_control[0] = {{"WE_N", "READY", {391, 1337}}, {"WE_N", "READ_DATA", {468, 1823}}, {"CE_N", "READY", {391, 1337}}, {"CE_N", "READ_DATA", {468, 1823}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {391, 1337}}, {"WORD_ADDR", "READ_DATA", {468, 1823}}, {"WRITE_DATA", "READY", {354, 1372}}, {"WRITE_DATA", "READ_DATA", {431, 1858}}, {"WRITE_MASK", "READY", {354, 1300}}, {"WRITE_MASK", "READ_DATA", {431, 1786}}, };
-    t.arcs_by_control[1] = {{"WE_N", "READY", {391, 1337}}, {"WE_N", "READ_DATA", {468, 1823}}, {"CE_N", "READY", {391, 1337}}, {"CE_N", "READ_DATA", {468, 1823}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {391, 1337}}, {"WORD_ADDR", "READ_DATA", {468, 1823}}, {"WRITE_DATA", "READY", {354, 1372}}, {"WRITE_DATA", "READ_DATA", {431, 1858}}, {"WRITE_MASK", "READY", {354, 1300}}, {"WRITE_MASK", "READ_DATA", {431, 1786}}, };
+    t.arcs_by_control[0] = {{"WE_N", "READY", {506, 1500}}, {"WE_N", "READ_DATA", {135, 1831}}, {"CE_N", "READY", {542, 1536}}, {"CE_N", "READ_DATA", {156, 1867}}, {"OE_N", "READ_DATA", {156, 213}}, {"WORD_ADDR", "READY", {150, 1814}}, {"WORD_ADDR", "READ_DATA", {171, 2145}}, {"WRITE_DATA", "READY", {469, 1535}}, {"WRITE_DATA", "READ_DATA", {560, 1866}}, {"WRITE_MASK", "READY", {469, 1463}}, {"WRITE_MASK", "READ_DATA", {560, 1794}}, };
+    t.arcs_by_control[1] = {{"WE_N", "READY", {506, 1500}}, {"WE_N", "READ_DATA", {135, 1831}}, {"CE_N", "READY", {542, 1536}}, {"CE_N", "READ_DATA", {156, 1867}}, {"OE_N", "READ_DATA", {156, 213}}, {"WORD_ADDR", "READY", {150, 1814}}, {"WORD_ADDR", "READ_DATA", {171, 2145}}, {"WRITE_DATA", "READY", {469, 1535}}, {"WRITE_DATA", "READ_DATA", {560, 1866}}, {"WRITE_MASK", "READY", {469, 1463}}, {"WRITE_MASK", "READ_DATA", {560, 1794}}, };
+    return t;
+}()},
+{"memory.sram.device.16.behavioral@depth=256", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.device.16.structural";
+    t.arcs = {
+        Arc{"CE_N", "READY", {613, 1607}},
+        Arc{"CE_N", "READ_DATA", {156, 1938}},
+        Arc{"OE_N", "READ_DATA", {156, 284}},
+        Arc{"WE_N", "READY", {577, 1571}},
+        Arc{"WE_N", "READ_DATA", {135, 1902}},
+        Arc{"WORD_ADDR", "READY", {150, 1920}},
+        Arc{"WORD_ADDR", "READ_DATA", {171, 2251}},
+        Arc{"WRITE_DATA", "READY", {540, 1606}},
+        Arc{"WRITE_DATA", "READ_DATA", {631, 1937}},
+        Arc{"WRITE_MASK", "READY", {540, 1534}},
+        Arc{"WRITE_MASK", "READ_DATA", {631, 1865}},
+    };
+    t.control = "WE_N";
+    t.arcs_by_control[0] = {{"WE_N", "READY", {577, 1571}}, {"WE_N", "READ_DATA", {135, 1902}}, {"CE_N", "READY", {613, 1607}}, {"CE_N", "READ_DATA", {156, 1938}}, {"OE_N", "READ_DATA", {156, 284}}, {"WORD_ADDR", "READY", {150, 1920}}, {"WORD_ADDR", "READ_DATA", {171, 2251}}, {"WRITE_DATA", "READY", {540, 1606}}, {"WRITE_DATA", "READ_DATA", {631, 1937}}, {"WRITE_MASK", "READY", {540, 1534}}, {"WRITE_MASK", "READ_DATA", {631, 1865}}, };
+    t.arcs_by_control[1] = {{"WE_N", "READY", {577, 1571}}, {"WE_N", "READ_DATA", {135, 1902}}, {"CE_N", "READY", {613, 1607}}, {"CE_N", "READ_DATA", {156, 1938}}, {"OE_N", "READ_DATA", {156, 284}}, {"WORD_ADDR", "READY", {150, 1920}}, {"WORD_ADDR", "READ_DATA", {171, 2251}}, {"WRITE_DATA", "READY", {540, 1606}}, {"WRITE_DATA", "READ_DATA", {631, 1937}}, {"WRITE_MASK", "READY", {540, 1534}}, {"WRITE_MASK", "READ_DATA", {631, 1865}}, };
     return t;
 }()},
 {"memory.sram.device.16.behavioral@rows=1", [] {
     PartDelays t;
     t.evidence = "proven on memory.sram.device.16.structural";
     t.arcs = {
-        Arc{"CE_N", "READY", {391, 1182}},
+        Arc{"CE_N", "READY", {391, 1294}},
         Arc{"CE_N", "READ_DATA", {468, 1477}},
         Arc{"OE_N", "READ_DATA", {77, 77}},
-        Arc{"WE_N", "READY", {391, 1182}},
+        Arc{"WE_N", "READY", {391, 1294}},
         Arc{"WE_N", "READ_DATA", {468, 1477}},
-        Arc{"WORD_ADDR", "READY", {391, 1182}},
+        Arc{"WORD_ADDR", "READY", {391, 1294}},
         Arc{"WORD_ADDR", "READ_DATA", {468, 1477}},
-        Arc{"WRITE_DATA", "READY", {354, 1217}},
+        Arc{"WRITE_DATA", "READY", {354, 1329}},
         Arc{"WRITE_DATA", "READ_DATA", {431, 1512}},
-        Arc{"WRITE_MASK", "READY", {354, 1145}},
+        Arc{"WRITE_MASK", "READY", {354, 1257}},
         Arc{"WRITE_MASK", "READ_DATA", {431, 1440}},
     };
     t.control = "WE_N";
-    t.arcs_by_control[0] = {{"WE_N", "READY", {391, 1182}}, {"WE_N", "READ_DATA", {468, 1477}}, {"CE_N", "READY", {391, 1182}}, {"CE_N", "READ_DATA", {468, 1477}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {391, 1182}}, {"WORD_ADDR", "READ_DATA", {468, 1477}}, {"WRITE_DATA", "READY", {354, 1217}}, {"WRITE_DATA", "READ_DATA", {431, 1512}}, {"WRITE_MASK", "READY", {354, 1145}}, {"WRITE_MASK", "READ_DATA", {431, 1440}}, };
-    t.arcs_by_control[1] = {{"WE_N", "READY", {391, 1182}}, {"WE_N", "READ_DATA", {468, 1477}}, {"CE_N", "READY", {391, 1182}}, {"CE_N", "READ_DATA", {468, 1477}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {391, 1182}}, {"WORD_ADDR", "READ_DATA", {468, 1477}}, {"WRITE_DATA", "READY", {354, 1217}}, {"WRITE_DATA", "READ_DATA", {431, 1512}}, {"WRITE_MASK", "READY", {354, 1145}}, {"WRITE_MASK", "READ_DATA", {431, 1440}}, };
+    t.arcs_by_control[0] = {{"WE_N", "READY", {391, 1294}}, {"WE_N", "READ_DATA", {468, 1477}}, {"CE_N", "READY", {391, 1294}}, {"CE_N", "READ_DATA", {468, 1477}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {391, 1294}}, {"WORD_ADDR", "READ_DATA", {468, 1477}}, {"WRITE_DATA", "READY", {354, 1329}}, {"WRITE_DATA", "READ_DATA", {431, 1512}}, {"WRITE_MASK", "READY", {354, 1257}}, {"WRITE_MASK", "READ_DATA", {431, 1440}}, };
+    t.arcs_by_control[1] = {{"WE_N", "READY", {391, 1294}}, {"WE_N", "READ_DATA", {468, 1477}}, {"CE_N", "READY", {391, 1294}}, {"CE_N", "READ_DATA", {468, 1477}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {391, 1294}}, {"WORD_ADDR", "READ_DATA", {468, 1477}}, {"WRITE_DATA", "READY", {354, 1329}}, {"WRITE_DATA", "READ_DATA", {431, 1512}}, {"WRITE_MASK", "READY", {354, 1257}}, {"WRITE_MASK", "READ_DATA", {431, 1440}}, };
     return t;
 }()},
 {"memory.sram.device.16.behavioral@depth=64@rows=1", [] {
     PartDelays t;
     t.evidence = "proven on memory.sram.device.16.structural";
     t.arcs = {
-        Arc{"CE_N", "READY", {391, 1337}},
-        Arc{"CE_N", "READ_DATA", {468, 1787}},
-        Arc{"OE_N", "READ_DATA", {77, 77}},
-        Arc{"WE_N", "READY", {391, 1337}},
-        Arc{"WE_N", "READ_DATA", {468, 1787}},
-        Arc{"WORD_ADDR", "READY", {391, 1337}},
-        Arc{"WORD_ADDR", "READ_DATA", {468, 1787}},
-        Arc{"WRITE_DATA", "READY", {354, 1372}},
-        Arc{"WRITE_DATA", "READ_DATA", {431, 1822}},
-        Arc{"WRITE_MASK", "READY", {354, 1300}},
-        Arc{"WRITE_MASK", "READ_DATA", {431, 1750}},
+        Arc{"CE_N", "READY", {542, 1536}},
+        Arc{"CE_N", "READ_DATA", {156, 1831}},
+        Arc{"OE_N", "READ_DATA", {156, 213}},
+        Arc{"WE_N", "READY", {506, 1500}},
+        Arc{"WE_N", "READ_DATA", {135, 1795}},
+        Arc{"WORD_ADDR", "READY", {150, 1814}},
+        Arc{"WORD_ADDR", "READ_DATA", {171, 2109}},
+        Arc{"WRITE_DATA", "READY", {469, 1535}},
+        Arc{"WRITE_DATA", "READ_DATA", {560, 1830}},
+        Arc{"WRITE_MASK", "READY", {469, 1463}},
+        Arc{"WRITE_MASK", "READ_DATA", {560, 1758}},
     };
     t.control = "WE_N";
-    t.arcs_by_control[0] = {{"WE_N", "READY", {391, 1337}}, {"WE_N", "READ_DATA", {468, 1787}}, {"CE_N", "READY", {391, 1337}}, {"CE_N", "READ_DATA", {468, 1787}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {391, 1337}}, {"WORD_ADDR", "READ_DATA", {468, 1787}}, {"WRITE_DATA", "READY", {354, 1372}}, {"WRITE_DATA", "READ_DATA", {431, 1822}}, {"WRITE_MASK", "READY", {354, 1300}}, {"WRITE_MASK", "READ_DATA", {431, 1750}}, };
-    t.arcs_by_control[1] = {{"WE_N", "READY", {391, 1337}}, {"WE_N", "READ_DATA", {468, 1787}}, {"CE_N", "READY", {391, 1337}}, {"CE_N", "READ_DATA", {468, 1787}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {391, 1337}}, {"WORD_ADDR", "READ_DATA", {468, 1787}}, {"WRITE_DATA", "READY", {354, 1372}}, {"WRITE_DATA", "READ_DATA", {431, 1822}}, {"WRITE_MASK", "READY", {354, 1300}}, {"WRITE_MASK", "READ_DATA", {431, 1750}}, };
+    t.arcs_by_control[0] = {{"WE_N", "READY", {506, 1500}}, {"WE_N", "READ_DATA", {135, 1795}}, {"CE_N", "READY", {542, 1536}}, {"CE_N", "READ_DATA", {156, 1831}}, {"OE_N", "READ_DATA", {156, 213}}, {"WORD_ADDR", "READY", {150, 1814}}, {"WORD_ADDR", "READ_DATA", {171, 2109}}, {"WRITE_DATA", "READY", {469, 1535}}, {"WRITE_DATA", "READ_DATA", {560, 1830}}, {"WRITE_MASK", "READY", {469, 1463}}, {"WRITE_MASK", "READ_DATA", {560, 1758}}, };
+    t.arcs_by_control[1] = {{"WE_N", "READY", {506, 1500}}, {"WE_N", "READ_DATA", {135, 1795}}, {"CE_N", "READY", {542, 1536}}, {"CE_N", "READ_DATA", {156, 1831}}, {"OE_N", "READ_DATA", {156, 213}}, {"WORD_ADDR", "READY", {150, 1814}}, {"WORD_ADDR", "READ_DATA", {171, 2109}}, {"WRITE_DATA", "READY", {469, 1535}}, {"WRITE_DATA", "READ_DATA", {560, 1830}}, {"WRITE_MASK", "READY", {469, 1463}}, {"WRITE_MASK", "READ_DATA", {560, 1758}}, };
     return t;
 }()},
 {"memory.sram.device.16.behavioral@depth=128@rows=1", [] {
     PartDelays t;
     t.evidence = "proven on memory.sram.device.16.structural";
     t.arcs = {
-        Arc{"CE_N", "READY", {391, 1465}},
-        Arc{"CE_N", "READ_DATA", {468, 2043}},
-        Arc{"OE_N", "READ_DATA", {77, 77}},
-        Arc{"WE_N", "READY", {391, 1465}},
-        Arc{"WE_N", "READ_DATA", {468, 2043}},
-        Arc{"WORD_ADDR", "READY", {391, 1465}},
-        Arc{"WORD_ADDR", "READ_DATA", {468, 2043}},
-        Arc{"WRITE_DATA", "READY", {354, 1500}},
-        Arc{"WRITE_DATA", "READ_DATA", {431, 2078}},
-        Arc{"WRITE_MASK", "READY", {354, 1428}},
-        Arc{"WRITE_MASK", "READ_DATA", {431, 2006}},
+        Arc{"CE_N", "READY", {613, 1607}},
+        Arc{"CE_N", "READ_DATA", {156, 1902}},
+        Arc{"OE_N", "READ_DATA", {156, 284}},
+        Arc{"WE_N", "READY", {577, 1571}},
+        Arc{"WE_N", "READ_DATA", {135, 1866}},
+        Arc{"WORD_ADDR", "READY", {150, 1920}},
+        Arc{"WORD_ADDR", "READ_DATA", {171, 2215}},
+        Arc{"WRITE_DATA", "READY", {540, 1606}},
+        Arc{"WRITE_DATA", "READ_DATA", {631, 1901}},
+        Arc{"WRITE_MASK", "READY", {540, 1534}},
+        Arc{"WRITE_MASK", "READ_DATA", {631, 1829}},
     };
     t.control = "WE_N";
-    t.arcs_by_control[0] = {{"WE_N", "READY", {391, 1465}}, {"WE_N", "READ_DATA", {468, 2043}}, {"CE_N", "READY", {391, 1465}}, {"CE_N", "READ_DATA", {468, 2043}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {391, 1465}}, {"WORD_ADDR", "READ_DATA", {468, 2043}}, {"WRITE_DATA", "READY", {354, 1500}}, {"WRITE_DATA", "READ_DATA", {431, 2078}}, {"WRITE_MASK", "READY", {354, 1428}}, {"WRITE_MASK", "READ_DATA", {431, 2006}}, };
-    t.arcs_by_control[1] = {{"WE_N", "READY", {391, 1465}}, {"WE_N", "READ_DATA", {468, 2043}}, {"CE_N", "READY", {391, 1465}}, {"CE_N", "READ_DATA", {468, 2043}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {391, 1465}}, {"WORD_ADDR", "READ_DATA", {468, 2043}}, {"WRITE_DATA", "READY", {354, 1500}}, {"WRITE_DATA", "READ_DATA", {431, 2078}}, {"WRITE_MASK", "READY", {354, 1428}}, {"WRITE_MASK", "READ_DATA", {431, 2006}}, };
+    t.arcs_by_control[0] = {{"WE_N", "READY", {577, 1571}}, {"WE_N", "READ_DATA", {135, 1866}}, {"CE_N", "READY", {613, 1607}}, {"CE_N", "READ_DATA", {156, 1902}}, {"OE_N", "READ_DATA", {156, 284}}, {"WORD_ADDR", "READY", {150, 1920}}, {"WORD_ADDR", "READ_DATA", {171, 2215}}, {"WRITE_DATA", "READY", {540, 1606}}, {"WRITE_DATA", "READ_DATA", {631, 1901}}, {"WRITE_MASK", "READY", {540, 1534}}, {"WRITE_MASK", "READ_DATA", {631, 1829}}, };
+    t.arcs_by_control[1] = {{"WE_N", "READY", {577, 1571}}, {"WE_N", "READ_DATA", {135, 1866}}, {"CE_N", "READY", {613, 1607}}, {"CE_N", "READ_DATA", {156, 1902}}, {"OE_N", "READ_DATA", {156, 284}}, {"WORD_ADDR", "READY", {150, 1920}}, {"WORD_ADDR", "READ_DATA", {171, 2215}}, {"WRITE_DATA", "READY", {540, 1606}}, {"WRITE_DATA", "READ_DATA", {631, 1901}}, {"WRITE_MASK", "READY", {540, 1534}}, {"WRITE_MASK", "READ_DATA", {631, 1829}}, };
     return t;
 }()},
 {"memory.sram.device.16.behavioral@rows=4", [] {
     PartDelays t;
     t.evidence = "proven on memory.sram.device.16.structural";
     t.arcs = {
-        Arc{"CE_N", "READY", {391, 1176}},
+        Arc{"CE_N", "READY", {391, 1288}},
         Arc{"CE_N", "READ_DATA", {468, 1502}},
         Arc{"OE_N", "READ_DATA", {77, 77}},
-        Arc{"WE_N", "READY", {391, 1176}},
+        Arc{"WE_N", "READY", {391, 1288}},
         Arc{"WE_N", "READ_DATA", {468, 1502}},
-        Arc{"WORD_ADDR", "READY", {391, 1176}},
+        Arc{"WORD_ADDR", "READY", {391, 1288}},
         Arc{"WORD_ADDR", "READ_DATA", {468, 1502}},
-        Arc{"WRITE_DATA", "READY", {354, 1211}},
+        Arc{"WRITE_DATA", "READY", {354, 1323}},
         Arc{"WRITE_DATA", "READ_DATA", {431, 1537}},
-        Arc{"WRITE_MASK", "READY", {354, 1139}},
+        Arc{"WRITE_MASK", "READY", {354, 1251}},
         Arc{"WRITE_MASK", "READ_DATA", {431, 1465}},
     };
     t.control = "WE_N";
-    t.arcs_by_control[0] = {{"WE_N", "READY", {391, 1176}}, {"WE_N", "READ_DATA", {468, 1502}}, {"CE_N", "READY", {391, 1176}}, {"CE_N", "READ_DATA", {468, 1502}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {391, 1176}}, {"WORD_ADDR", "READ_DATA", {468, 1502}}, {"WRITE_DATA", "READY", {354, 1211}}, {"WRITE_DATA", "READ_DATA", {431, 1537}}, {"WRITE_MASK", "READY", {354, 1139}}, {"WRITE_MASK", "READ_DATA", {431, 1465}}, };
-    t.arcs_by_control[1] = {{"WE_N", "READY", {391, 1176}}, {"WE_N", "READ_DATA", {468, 1502}}, {"CE_N", "READY", {391, 1176}}, {"CE_N", "READ_DATA", {468, 1502}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {391, 1176}}, {"WORD_ADDR", "READ_DATA", {468, 1502}}, {"WRITE_DATA", "READY", {354, 1211}}, {"WRITE_DATA", "READ_DATA", {431, 1537}}, {"WRITE_MASK", "READY", {354, 1139}}, {"WRITE_MASK", "READ_DATA", {431, 1465}}, };
+    t.arcs_by_control[0] = {{"WE_N", "READY", {391, 1288}}, {"WE_N", "READ_DATA", {468, 1502}}, {"CE_N", "READY", {391, 1288}}, {"CE_N", "READ_DATA", {468, 1502}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {391, 1288}}, {"WORD_ADDR", "READ_DATA", {468, 1502}}, {"WRITE_DATA", "READY", {354, 1323}}, {"WRITE_DATA", "READ_DATA", {431, 1537}}, {"WRITE_MASK", "READY", {354, 1251}}, {"WRITE_MASK", "READ_DATA", {431, 1465}}, };
+    t.arcs_by_control[1] = {{"WE_N", "READY", {391, 1288}}, {"WE_N", "READ_DATA", {468, 1502}}, {"CE_N", "READY", {391, 1288}}, {"CE_N", "READ_DATA", {468, 1502}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {391, 1288}}, {"WORD_ADDR", "READ_DATA", {468, 1502}}, {"WRITE_DATA", "READY", {354, 1323}}, {"WRITE_DATA", "READ_DATA", {431, 1537}}, {"WRITE_MASK", "READY", {354, 1251}}, {"WRITE_MASK", "READ_DATA", {431, 1465}}, };
     return t;
 }()},
 {"memory.sram.device.16.behavioral@depth=64@rows=4", [] {
     PartDelays t;
     t.evidence = "proven on memory.sram.device.16.structural";
     t.arcs = {
-        Arc{"CE_N", "READY", {391, 1241}},
+        Arc{"CE_N", "READY", {391, 1353}},
         Arc{"CE_N", "READ_DATA", {468, 1702}},
         Arc{"OE_N", "READ_DATA", {77, 77}},
-        Arc{"WE_N", "READY", {391, 1241}},
+        Arc{"WE_N", "READY", {391, 1353}},
         Arc{"WE_N", "READ_DATA", {468, 1702}},
-        Arc{"WORD_ADDR", "READY", {391, 1241}},
+        Arc{"WORD_ADDR", "READY", {391, 1353}},
         Arc{"WORD_ADDR", "READ_DATA", {468, 1702}},
-        Arc{"WRITE_DATA", "READY", {354, 1276}},
+        Arc{"WRITE_DATA", "READY", {354, 1388}},
         Arc{"WRITE_DATA", "READ_DATA", {431, 1737}},
-        Arc{"WRITE_MASK", "READY", {354, 1204}},
+        Arc{"WRITE_MASK", "READY", {354, 1316}},
         Arc{"WRITE_MASK", "READ_DATA", {431, 1665}},
     };
     t.control = "WE_N";
-    t.arcs_by_control[0] = {{"WE_N", "READY", {391, 1241}}, {"WE_N", "READ_DATA", {468, 1702}}, {"CE_N", "READY", {391, 1241}}, {"CE_N", "READ_DATA", {468, 1702}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {391, 1241}}, {"WORD_ADDR", "READ_DATA", {468, 1702}}, {"WRITE_DATA", "READY", {354, 1276}}, {"WRITE_DATA", "READ_DATA", {431, 1737}}, {"WRITE_MASK", "READY", {354, 1204}}, {"WRITE_MASK", "READ_DATA", {431, 1665}}, };
-    t.arcs_by_control[1] = {{"WE_N", "READY", {391, 1241}}, {"WE_N", "READ_DATA", {468, 1702}}, {"CE_N", "READY", {391, 1241}}, {"CE_N", "READ_DATA", {468, 1702}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {391, 1241}}, {"WORD_ADDR", "READ_DATA", {468, 1702}}, {"WRITE_DATA", "READY", {354, 1276}}, {"WRITE_DATA", "READ_DATA", {431, 1737}}, {"WRITE_MASK", "READY", {354, 1204}}, {"WRITE_MASK", "READ_DATA", {431, 1665}}, };
+    t.arcs_by_control[0] = {{"WE_N", "READY", {391, 1353}}, {"WE_N", "READ_DATA", {468, 1702}}, {"CE_N", "READY", {391, 1353}}, {"CE_N", "READ_DATA", {468, 1702}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {391, 1353}}, {"WORD_ADDR", "READ_DATA", {468, 1702}}, {"WRITE_DATA", "READY", {354, 1388}}, {"WRITE_DATA", "READ_DATA", {431, 1737}}, {"WRITE_MASK", "READY", {354, 1316}}, {"WRITE_MASK", "READ_DATA", {431, 1665}}, };
+    t.arcs_by_control[1] = {{"WE_N", "READY", {391, 1353}}, {"WE_N", "READ_DATA", {468, 1702}}, {"CE_N", "READY", {391, 1353}}, {"CE_N", "READ_DATA", {468, 1702}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {391, 1353}}, {"WORD_ADDR", "READ_DATA", {468, 1702}}, {"WRITE_DATA", "READY", {354, 1388}}, {"WRITE_DATA", "READ_DATA", {431, 1737}}, {"WRITE_MASK", "READY", {354, 1316}}, {"WRITE_MASK", "READ_DATA", {431, 1665}}, };
     return t;
 }()},
 {"memory.sram.device.16.behavioral@depth=128@rows=4", [] {
     PartDelays t;
     t.evidence = "proven on memory.sram.device.16.structural";
     t.arcs = {
-        Arc{"CE_N", "READY", {391, 1273}},
+        Arc{"CE_N", "READY", {391, 1385}},
         Arc{"CE_N", "READ_DATA", {468, 1766}},
         Arc{"OE_N", "READ_DATA", {77, 77}},
-        Arc{"WE_N", "READY", {391, 1273}},
+        Arc{"WE_N", "READY", {391, 1385}},
         Arc{"WE_N", "READ_DATA", {468, 1766}},
-        Arc{"WORD_ADDR", "READY", {391, 1273}},
+        Arc{"WORD_ADDR", "READY", {391, 1385}},
         Arc{"WORD_ADDR", "READ_DATA", {468, 1766}},
-        Arc{"WRITE_DATA", "READY", {354, 1308}},
+        Arc{"WRITE_DATA", "READY", {354, 1420}},
         Arc{"WRITE_DATA", "READ_DATA", {431, 1801}},
-        Arc{"WRITE_MASK", "READY", {354, 1236}},
+        Arc{"WRITE_MASK", "READY", {354, 1348}},
         Arc{"WRITE_MASK", "READ_DATA", {431, 1729}},
     };
     t.control = "WE_N";
-    t.arcs_by_control[0] = {{"WE_N", "READY", {391, 1273}}, {"WE_N", "READ_DATA", {468, 1766}}, {"CE_N", "READY", {391, 1273}}, {"CE_N", "READ_DATA", {468, 1766}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {391, 1273}}, {"WORD_ADDR", "READ_DATA", {468, 1766}}, {"WRITE_DATA", "READY", {354, 1308}}, {"WRITE_DATA", "READ_DATA", {431, 1801}}, {"WRITE_MASK", "READY", {354, 1236}}, {"WRITE_MASK", "READ_DATA", {431, 1729}}, };
-    t.arcs_by_control[1] = {{"WE_N", "READY", {391, 1273}}, {"WE_N", "READ_DATA", {468, 1766}}, {"CE_N", "READY", {391, 1273}}, {"CE_N", "READ_DATA", {468, 1766}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {391, 1273}}, {"WORD_ADDR", "READ_DATA", {468, 1766}}, {"WRITE_DATA", "READY", {354, 1308}}, {"WRITE_DATA", "READ_DATA", {431, 1801}}, {"WRITE_MASK", "READY", {354, 1236}}, {"WRITE_MASK", "READ_DATA", {431, 1729}}, };
+    t.arcs_by_control[0] = {{"WE_N", "READY", {391, 1385}}, {"WE_N", "READ_DATA", {468, 1766}}, {"CE_N", "READY", {391, 1385}}, {"CE_N", "READ_DATA", {468, 1766}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {391, 1385}}, {"WORD_ADDR", "READ_DATA", {468, 1766}}, {"WRITE_DATA", "READY", {354, 1420}}, {"WRITE_DATA", "READ_DATA", {431, 1801}}, {"WRITE_MASK", "READY", {354, 1348}}, {"WRITE_MASK", "READ_DATA", {431, 1729}}, };
+    t.arcs_by_control[1] = {{"WE_N", "READY", {391, 1385}}, {"WE_N", "READ_DATA", {468, 1766}}, {"CE_N", "READY", {391, 1385}}, {"CE_N", "READ_DATA", {468, 1766}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {391, 1385}}, {"WORD_ADDR", "READ_DATA", {468, 1766}}, {"WRITE_DATA", "READY", {354, 1420}}, {"WRITE_DATA", "READ_DATA", {431, 1801}}, {"WRITE_MASK", "READY", {354, 1348}}, {"WRITE_MASK", "READ_DATA", {431, 1729}}, };
     return t;
 }()},
 {"memory.sram.device.16.behavioral@depth=64@rows=8", [] {
     PartDelays t;
     t.evidence = "proven on memory.sram.device.16.structural";
     t.arcs = {
-        Arc{"CE_N", "READY", {391, 1190}},
+        Arc{"CE_N", "READY", {391, 1302}},
         Arc{"CE_N", "READ_DATA", {468, 1671}},
         Arc{"OE_N", "READ_DATA", {77, 77}},
-        Arc{"WE_N", "READY", {391, 1190}},
+        Arc{"WE_N", "READY", {391, 1302}},
         Arc{"WE_N", "READ_DATA", {468, 1671}},
-        Arc{"WORD_ADDR", "READY", {391, 1190}},
+        Arc{"WORD_ADDR", "READY", {391, 1302}},
         Arc{"WORD_ADDR", "READ_DATA", {468, 1671}},
-        Arc{"WRITE_DATA", "READY", {354, 1225}},
+        Arc{"WRITE_DATA", "READY", {354, 1337}},
         Arc{"WRITE_DATA", "READ_DATA", {431, 1706}},
-        Arc{"WRITE_MASK", "READY", {354, 1153}},
+        Arc{"WRITE_MASK", "READY", {354, 1265}},
         Arc{"WRITE_MASK", "READ_DATA", {431, 1634}},
     };
     t.control = "WE_N";
-    t.arcs_by_control[0] = {{"WE_N", "READY", {391, 1190}}, {"WE_N", "READ_DATA", {468, 1671}}, {"CE_N", "READY", {391, 1190}}, {"CE_N", "READ_DATA", {468, 1671}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {391, 1190}}, {"WORD_ADDR", "READ_DATA", {468, 1671}}, {"WRITE_DATA", "READY", {354, 1225}}, {"WRITE_DATA", "READ_DATA", {431, 1706}}, {"WRITE_MASK", "READY", {354, 1153}}, {"WRITE_MASK", "READ_DATA", {431, 1634}}, };
-    t.arcs_by_control[1] = {{"WE_N", "READY", {391, 1190}}, {"WE_N", "READ_DATA", {468, 1671}}, {"CE_N", "READY", {391, 1190}}, {"CE_N", "READ_DATA", {468, 1671}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {391, 1190}}, {"WORD_ADDR", "READ_DATA", {468, 1671}}, {"WRITE_DATA", "READY", {354, 1225}}, {"WRITE_DATA", "READ_DATA", {431, 1706}}, {"WRITE_MASK", "READY", {354, 1153}}, {"WRITE_MASK", "READ_DATA", {431, 1634}}, };
+    t.arcs_by_control[0] = {{"WE_N", "READY", {391, 1302}}, {"WE_N", "READ_DATA", {468, 1671}}, {"CE_N", "READY", {391, 1302}}, {"CE_N", "READ_DATA", {468, 1671}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {391, 1302}}, {"WORD_ADDR", "READ_DATA", {468, 1671}}, {"WRITE_DATA", "READY", {354, 1337}}, {"WRITE_DATA", "READ_DATA", {431, 1706}}, {"WRITE_MASK", "READY", {354, 1265}}, {"WRITE_MASK", "READ_DATA", {431, 1634}}, };
+    t.arcs_by_control[1] = {{"WE_N", "READY", {391, 1302}}, {"WE_N", "READ_DATA", {468, 1671}}, {"CE_N", "READY", {391, 1302}}, {"CE_N", "READ_DATA", {468, 1671}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {391, 1302}}, {"WORD_ADDR", "READ_DATA", {468, 1671}}, {"WRITE_DATA", "READY", {354, 1337}}, {"WRITE_DATA", "READ_DATA", {431, 1706}}, {"WRITE_MASK", "READY", {354, 1265}}, {"WRITE_MASK", "READ_DATA", {431, 1634}}, };
     return t;
 }()},
 {"memory.sram.device.16.behavioral@depth=128@rows=8", [] {
     PartDelays t;
     t.evidence = "proven on memory.sram.device.16.structural";
     t.arcs = {
-        Arc{"CE_N", "READY", {391, 1241}},
+        Arc{"CE_N", "READY", {391, 1353}},
         Arc{"CE_N", "READ_DATA", {468, 1773}},
         Arc{"OE_N", "READ_DATA", {77, 77}},
-        Arc{"WE_N", "READY", {391, 1241}},
+        Arc{"WE_N", "READY", {391, 1353}},
         Arc{"WE_N", "READ_DATA", {468, 1773}},
-        Arc{"WORD_ADDR", "READY", {391, 1241}},
+        Arc{"WORD_ADDR", "READY", {391, 1353}},
         Arc{"WORD_ADDR", "READ_DATA", {468, 1773}},
-        Arc{"WRITE_DATA", "READY", {354, 1276}},
+        Arc{"WRITE_DATA", "READY", {354, 1388}},
         Arc{"WRITE_DATA", "READ_DATA", {431, 1808}},
-        Arc{"WRITE_MASK", "READY", {354, 1204}},
+        Arc{"WRITE_MASK", "READY", {354, 1316}},
         Arc{"WRITE_MASK", "READ_DATA", {431, 1736}},
     };
     t.control = "WE_N";
-    t.arcs_by_control[0] = {{"WE_N", "READY", {391, 1241}}, {"WE_N", "READ_DATA", {468, 1773}}, {"CE_N", "READY", {391, 1241}}, {"CE_N", "READ_DATA", {468, 1773}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {391, 1241}}, {"WORD_ADDR", "READ_DATA", {468, 1773}}, {"WRITE_DATA", "READY", {354, 1276}}, {"WRITE_DATA", "READ_DATA", {431, 1808}}, {"WRITE_MASK", "READY", {354, 1204}}, {"WRITE_MASK", "READ_DATA", {431, 1736}}, };
-    t.arcs_by_control[1] = {{"WE_N", "READY", {391, 1241}}, {"WE_N", "READ_DATA", {468, 1773}}, {"CE_N", "READY", {391, 1241}}, {"CE_N", "READ_DATA", {468, 1773}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {391, 1241}}, {"WORD_ADDR", "READ_DATA", {468, 1773}}, {"WRITE_DATA", "READY", {354, 1276}}, {"WRITE_DATA", "READ_DATA", {431, 1808}}, {"WRITE_MASK", "READY", {354, 1204}}, {"WRITE_MASK", "READ_DATA", {431, 1736}}, };
+    t.arcs_by_control[0] = {{"WE_N", "READY", {391, 1353}}, {"WE_N", "READ_DATA", {468, 1773}}, {"CE_N", "READY", {391, 1353}}, {"CE_N", "READ_DATA", {468, 1773}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {391, 1353}}, {"WORD_ADDR", "READ_DATA", {468, 1773}}, {"WRITE_DATA", "READY", {354, 1388}}, {"WRITE_DATA", "READ_DATA", {431, 1808}}, {"WRITE_MASK", "READY", {354, 1316}}, {"WRITE_MASK", "READ_DATA", {431, 1736}}, };
+    t.arcs_by_control[1] = {{"WE_N", "READY", {391, 1353}}, {"WE_N", "READ_DATA", {468, 1773}}, {"CE_N", "READY", {391, 1353}}, {"CE_N", "READ_DATA", {468, 1773}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {391, 1353}}, {"WORD_ADDR", "READ_DATA", {468, 1773}}, {"WRITE_DATA", "READY", {354, 1388}}, {"WRITE_DATA", "READ_DATA", {431, 1808}}, {"WRITE_MASK", "READY", {354, 1316}}, {"WRITE_MASK", "READ_DATA", {431, 1736}}, };
     return t;
 }()},
 {"memory.sram.device.16.behavioral@depth=64@rows=16", [] {
     PartDelays t;
     t.evidence = "proven on memory.sram.device.16.structural";
     t.arcs = {
-        Arc{"CE_N", "READY", {391, 1182}},
+        Arc{"CE_N", "READY", {391, 1294}},
         Arc{"CE_N", "READ_DATA", {468, 1726}},
         Arc{"OE_N", "READ_DATA", {77, 77}},
-        Arc{"WE_N", "READY", {391, 1182}},
+        Arc{"WE_N", "READY", {391, 1294}},
         Arc{"WE_N", "READ_DATA", {468, 1726}},
-        Arc{"WORD_ADDR", "READY", {391, 1182}},
+        Arc{"WORD_ADDR", "READY", {391, 1294}},
         Arc{"WORD_ADDR", "READ_DATA", {468, 1726}},
-        Arc{"WRITE_DATA", "READY", {354, 1217}},
+        Arc{"WRITE_DATA", "READY", {354, 1329}},
         Arc{"WRITE_DATA", "READ_DATA", {431, 1761}},
-        Arc{"WRITE_MASK", "READY", {354, 1145}},
+        Arc{"WRITE_MASK", "READY", {354, 1257}},
         Arc{"WRITE_MASK", "READ_DATA", {431, 1689}},
     };
     t.control = "WE_N";
-    t.arcs_by_control[0] = {{"WE_N", "READY", {391, 1182}}, {"WE_N", "READ_DATA", {468, 1726}}, {"CE_N", "READY", {391, 1182}}, {"CE_N", "READ_DATA", {468, 1726}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {391, 1182}}, {"WORD_ADDR", "READ_DATA", {468, 1726}}, {"WRITE_DATA", "READY", {354, 1217}}, {"WRITE_DATA", "READ_DATA", {431, 1761}}, {"WRITE_MASK", "READY", {354, 1145}}, {"WRITE_MASK", "READ_DATA", {431, 1689}}, };
-    t.arcs_by_control[1] = {{"WE_N", "READY", {391, 1182}}, {"WE_N", "READ_DATA", {468, 1726}}, {"CE_N", "READY", {391, 1182}}, {"CE_N", "READ_DATA", {468, 1726}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {391, 1182}}, {"WORD_ADDR", "READ_DATA", {468, 1726}}, {"WRITE_DATA", "READY", {354, 1217}}, {"WRITE_DATA", "READ_DATA", {431, 1761}}, {"WRITE_MASK", "READY", {354, 1145}}, {"WRITE_MASK", "READ_DATA", {431, 1689}}, };
+    t.arcs_by_control[0] = {{"WE_N", "READY", {391, 1294}}, {"WE_N", "READ_DATA", {468, 1726}}, {"CE_N", "READY", {391, 1294}}, {"CE_N", "READ_DATA", {468, 1726}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {391, 1294}}, {"WORD_ADDR", "READ_DATA", {468, 1726}}, {"WRITE_DATA", "READY", {354, 1329}}, {"WRITE_DATA", "READ_DATA", {431, 1761}}, {"WRITE_MASK", "READY", {354, 1257}}, {"WRITE_MASK", "READ_DATA", {431, 1689}}, };
+    t.arcs_by_control[1] = {{"WE_N", "READY", {391, 1294}}, {"WE_N", "READ_DATA", {468, 1726}}, {"CE_N", "READY", {391, 1294}}, {"CE_N", "READ_DATA", {468, 1726}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {391, 1294}}, {"WORD_ADDR", "READ_DATA", {468, 1726}}, {"WRITE_DATA", "READY", {354, 1329}}, {"WRITE_DATA", "READ_DATA", {431, 1761}}, {"WRITE_MASK", "READY", {354, 1257}}, {"WRITE_MASK", "READ_DATA", {431, 1689}}, };
     return t;
 }()},
 {"memory.sram.device.16.behavioral@depth=128@rows=16", [] {
     PartDelays t;
     t.evidence = "proven on memory.sram.device.16.structural";
     t.arcs = {
-        Arc{"CE_N", "READY", {391, 1190}},
+        Arc{"CE_N", "READY", {391, 1302}},
         Arc{"CE_N", "READ_DATA", {468, 1742}},
         Arc{"OE_N", "READ_DATA", {77, 77}},
-        Arc{"WE_N", "READY", {391, 1190}},
+        Arc{"WE_N", "READY", {391, 1302}},
         Arc{"WE_N", "READ_DATA", {468, 1742}},
-        Arc{"WORD_ADDR", "READY", {391, 1190}},
+        Arc{"WORD_ADDR", "READY", {391, 1302}},
         Arc{"WORD_ADDR", "READ_DATA", {468, 1742}},
-        Arc{"WRITE_DATA", "READY", {354, 1225}},
+        Arc{"WRITE_DATA", "READY", {354, 1337}},
         Arc{"WRITE_DATA", "READ_DATA", {431, 1777}},
-        Arc{"WRITE_MASK", "READY", {354, 1153}},
+        Arc{"WRITE_MASK", "READY", {354, 1265}},
         Arc{"WRITE_MASK", "READ_DATA", {431, 1705}},
     };
     t.control = "WE_N";
-    t.arcs_by_control[0] = {{"WE_N", "READY", {391, 1190}}, {"WE_N", "READ_DATA", {468, 1742}}, {"CE_N", "READY", {391, 1190}}, {"CE_N", "READ_DATA", {468, 1742}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {391, 1190}}, {"WORD_ADDR", "READ_DATA", {468, 1742}}, {"WRITE_DATA", "READY", {354, 1225}}, {"WRITE_DATA", "READ_DATA", {431, 1777}}, {"WRITE_MASK", "READY", {354, 1153}}, {"WRITE_MASK", "READ_DATA", {431, 1705}}, };
-    t.arcs_by_control[1] = {{"WE_N", "READY", {391, 1190}}, {"WE_N", "READ_DATA", {468, 1742}}, {"CE_N", "READY", {391, 1190}}, {"CE_N", "READ_DATA", {468, 1742}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {391, 1190}}, {"WORD_ADDR", "READ_DATA", {468, 1742}}, {"WRITE_DATA", "READY", {354, 1225}}, {"WRITE_DATA", "READ_DATA", {431, 1777}}, {"WRITE_MASK", "READY", {354, 1153}}, {"WRITE_MASK", "READ_DATA", {431, 1705}}, };
+    t.arcs_by_control[0] = {{"WE_N", "READY", {391, 1302}}, {"WE_N", "READ_DATA", {468, 1742}}, {"CE_N", "READY", {391, 1302}}, {"CE_N", "READ_DATA", {468, 1742}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {391, 1302}}, {"WORD_ADDR", "READ_DATA", {468, 1742}}, {"WRITE_DATA", "READY", {354, 1337}}, {"WRITE_DATA", "READ_DATA", {431, 1777}}, {"WRITE_MASK", "READY", {354, 1265}}, {"WRITE_MASK", "READ_DATA", {431, 1705}}, };
+    t.arcs_by_control[1] = {{"WE_N", "READY", {391, 1302}}, {"WE_N", "READ_DATA", {468, 1742}}, {"CE_N", "READY", {391, 1302}}, {"CE_N", "READ_DATA", {468, 1742}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {391, 1302}}, {"WORD_ADDR", "READ_DATA", {468, 1742}}, {"WRITE_DATA", "READY", {354, 1337}}, {"WRITE_DATA", "READ_DATA", {431, 1777}}, {"WRITE_MASK", "READY", {354, 1265}}, {"WRITE_MASK", "READ_DATA", {431, 1705}}, };
     return t;
 }()},
 {"memory.sram.device.32.behavioral", [] {
     PartDelays t;
     t.evidence = "proven on memory.sram.device.32.structural";
     t.arcs = {
-        Arc{"CE_N", "READY", {427, 1250}},
+        Arc{"CE_N", "READY", {427, 1362}},
         Arc{"CE_N", "READ_DATA", {504, 1542}},
         Arc{"OE_N", "READ_DATA", {77, 77}},
-        Arc{"WE_N", "READY", {427, 1250}},
+        Arc{"WE_N", "READY", {427, 1362}},
         Arc{"WE_N", "READ_DATA", {504, 1542}},
-        Arc{"WORD_ADDR", "READY", {427, 1250}},
+        Arc{"WORD_ADDR", "READY", {427, 1362}},
         Arc{"WORD_ADDR", "READ_DATA", {504, 1542}},
-        Arc{"WRITE_DATA", "READY", {354, 1285}},
+        Arc{"WRITE_DATA", "READY", {354, 1397}},
         Arc{"WRITE_DATA", "READ_DATA", {431, 1577}},
-        Arc{"WRITE_MASK", "READY", {318, 1177}},
+        Arc{"WRITE_MASK", "READY", {318, 1289}},
         Arc{"WRITE_MASK", "READ_DATA", {395, 1469}},
     };
     t.control = "WE_N";
-    t.arcs_by_control[0] = {{"WE_N", "READY", {427, 1250}}, {"WE_N", "READ_DATA", {504, 1542}}, {"CE_N", "READY", {427, 1250}}, {"CE_N", "READ_DATA", {504, 1542}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {427, 1250}}, {"WORD_ADDR", "READ_DATA", {504, 1542}}, {"WRITE_DATA", "READY", {354, 1285}}, {"WRITE_DATA", "READ_DATA", {431, 1577}}, {"WRITE_MASK", "READY", {318, 1177}}, {"WRITE_MASK", "READ_DATA", {395, 1469}}, };
-    t.arcs_by_control[1] = {{"WE_N", "READY", {427, 1250}}, {"WE_N", "READ_DATA", {504, 1542}}, {"CE_N", "READY", {427, 1250}}, {"CE_N", "READ_DATA", {504, 1542}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {427, 1250}}, {"WORD_ADDR", "READ_DATA", {504, 1542}}, {"WRITE_DATA", "READY", {354, 1285}}, {"WRITE_DATA", "READ_DATA", {431, 1577}}, {"WRITE_MASK", "READY", {318, 1177}}, {"WRITE_MASK", "READ_DATA", {395, 1469}}, };
+    t.arcs_by_control[0] = {{"WE_N", "READY", {427, 1362}}, {"WE_N", "READ_DATA", {504, 1542}}, {"CE_N", "READY", {427, 1362}}, {"CE_N", "READ_DATA", {504, 1542}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {427, 1362}}, {"WORD_ADDR", "READ_DATA", {504, 1542}}, {"WRITE_DATA", "READY", {354, 1397}}, {"WRITE_DATA", "READ_DATA", {431, 1577}}, {"WRITE_MASK", "READY", {318, 1289}}, {"WRITE_MASK", "READ_DATA", {395, 1469}}, };
+    t.arcs_by_control[1] = {{"WE_N", "READY", {427, 1362}}, {"WE_N", "READ_DATA", {504, 1542}}, {"CE_N", "READY", {427, 1362}}, {"CE_N", "READ_DATA", {504, 1542}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {427, 1362}}, {"WORD_ADDR", "READ_DATA", {504, 1542}}, {"WRITE_DATA", "READY", {354, 1397}}, {"WRITE_DATA", "READ_DATA", {431, 1577}}, {"WRITE_MASK", "READY", {318, 1289}}, {"WRITE_MASK", "READ_DATA", {395, 1469}}, };
     return t;
 }()},
 {"memory.sram.device.32.behavioral@depth=64", [] {
     PartDelays t;
     t.evidence = "proven on memory.sram.device.32.structural";
     t.arcs = {
-        Arc{"CE_N", "READY", {427, 1345}},
+        Arc{"CE_N", "READY", {427, 1457}},
         Arc{"CE_N", "READ_DATA", {504, 1767}},
         Arc{"OE_N", "READ_DATA", {77, 77}},
-        Arc{"WE_N", "READY", {427, 1345}},
+        Arc{"WE_N", "READY", {427, 1457}},
         Arc{"WE_N", "READ_DATA", {504, 1767}},
-        Arc{"WORD_ADDR", "READY", {427, 1345}},
+        Arc{"WORD_ADDR", "READY", {427, 1457}},
         Arc{"WORD_ADDR", "READ_DATA", {504, 1767}},
-        Arc{"WRITE_DATA", "READY", {354, 1380}},
+        Arc{"WRITE_DATA", "READY", {354, 1492}},
         Arc{"WRITE_DATA", "READ_DATA", {431, 1802}},
-        Arc{"WRITE_MASK", "READY", {318, 1272}},
+        Arc{"WRITE_MASK", "READY", {318, 1384}},
         Arc{"WRITE_MASK", "READ_DATA", {395, 1694}},
     };
     t.control = "WE_N";
-    t.arcs_by_control[0] = {{"WE_N", "READY", {427, 1345}}, {"WE_N", "READ_DATA", {504, 1767}}, {"CE_N", "READY", {427, 1345}}, {"CE_N", "READ_DATA", {504, 1767}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {427, 1345}}, {"WORD_ADDR", "READ_DATA", {504, 1767}}, {"WRITE_DATA", "READY", {354, 1380}}, {"WRITE_DATA", "READ_DATA", {431, 1802}}, {"WRITE_MASK", "READY", {318, 1272}}, {"WRITE_MASK", "READ_DATA", {395, 1694}}, };
-    t.arcs_by_control[1] = {{"WE_N", "READY", {427, 1345}}, {"WE_N", "READ_DATA", {504, 1767}}, {"CE_N", "READY", {427, 1345}}, {"CE_N", "READ_DATA", {504, 1767}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {427, 1345}}, {"WORD_ADDR", "READ_DATA", {504, 1767}}, {"WRITE_DATA", "READY", {354, 1380}}, {"WRITE_DATA", "READ_DATA", {431, 1802}}, {"WRITE_MASK", "READY", {318, 1272}}, {"WRITE_MASK", "READ_DATA", {395, 1694}}, };
+    t.arcs_by_control[0] = {{"WE_N", "READY", {427, 1457}}, {"WE_N", "READ_DATA", {504, 1767}}, {"CE_N", "READY", {427, 1457}}, {"CE_N", "READ_DATA", {504, 1767}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {427, 1457}}, {"WORD_ADDR", "READ_DATA", {504, 1767}}, {"WRITE_DATA", "READY", {354, 1492}}, {"WRITE_DATA", "READ_DATA", {431, 1802}}, {"WRITE_MASK", "READY", {318, 1384}}, {"WRITE_MASK", "READ_DATA", {395, 1694}}, };
+    t.arcs_by_control[1] = {{"WE_N", "READY", {427, 1457}}, {"WE_N", "READ_DATA", {504, 1767}}, {"CE_N", "READY", {427, 1457}}, {"CE_N", "READ_DATA", {504, 1767}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {427, 1457}}, {"WORD_ADDR", "READ_DATA", {504, 1767}}, {"WRITE_DATA", "READY", {354, 1492}}, {"WRITE_DATA", "READ_DATA", {431, 1802}}, {"WRITE_MASK", "READY", {318, 1384}}, {"WRITE_MASK", "READ_DATA", {395, 1694}}, };
     return t;
 }()},
 {"memory.sram.device.32.behavioral@depth=128", [] {
     PartDelays t;
     t.evidence = "proven on memory.sram.device.32.structural";
     t.arcs = {
-        Arc{"CE_N", "READY", {427, 1409}},
-        Arc{"CE_N", "READ_DATA", {504, 1895}},
-        Arc{"OE_N", "READ_DATA", {77, 77}},
-        Arc{"WE_N", "READY", {427, 1409}},
-        Arc{"WE_N", "READ_DATA", {504, 1895}},
-        Arc{"WORD_ADDR", "READY", {427, 1409}},
-        Arc{"WORD_ADDR", "READ_DATA", {504, 1895}},
-        Arc{"WRITE_DATA", "READY", {354, 1444}},
-        Arc{"WRITE_DATA", "READ_DATA", {431, 1930}},
-        Arc{"WRITE_MASK", "READY", {318, 1336}},
-        Arc{"WRITE_MASK", "READ_DATA", {395, 1822}},
+        Arc{"CE_N", "READY", {578, 1608}},
+        Arc{"CE_N", "READ_DATA", {156, 1939}},
+        Arc{"OE_N", "READ_DATA", {156, 213}},
+        Arc{"WE_N", "READY", {542, 1572}},
+        Arc{"WE_N", "READ_DATA", {135, 1903}},
+        Arc{"WORD_ADDR", "READY", {150, 1886}},
+        Arc{"WORD_ADDR", "READ_DATA", {171, 2217}},
+        Arc{"WRITE_DATA", "READY", {469, 1607}},
+        Arc{"WRITE_DATA", "READ_DATA", {560, 1938}},
+        Arc{"WRITE_MASK", "READY", {433, 1499}},
+        Arc{"WRITE_MASK", "READ_DATA", {524, 1830}},
     };
     t.control = "WE_N";
-    t.arcs_by_control[0] = {{"WE_N", "READY", {427, 1409}}, {"WE_N", "READ_DATA", {504, 1895}}, {"CE_N", "READY", {427, 1409}}, {"CE_N", "READ_DATA", {504, 1895}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {427, 1409}}, {"WORD_ADDR", "READ_DATA", {504, 1895}}, {"WRITE_DATA", "READY", {354, 1444}}, {"WRITE_DATA", "READ_DATA", {431, 1930}}, {"WRITE_MASK", "READY", {318, 1336}}, {"WRITE_MASK", "READ_DATA", {395, 1822}}, };
-    t.arcs_by_control[1] = {{"WE_N", "READY", {427, 1409}}, {"WE_N", "READ_DATA", {504, 1895}}, {"CE_N", "READY", {427, 1409}}, {"CE_N", "READ_DATA", {504, 1895}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {427, 1409}}, {"WORD_ADDR", "READ_DATA", {504, 1895}}, {"WRITE_DATA", "READY", {354, 1444}}, {"WRITE_DATA", "READ_DATA", {431, 1930}}, {"WRITE_MASK", "READY", {318, 1336}}, {"WRITE_MASK", "READ_DATA", {395, 1822}}, };
+    t.arcs_by_control[0] = {{"WE_N", "READY", {542, 1572}}, {"WE_N", "READ_DATA", {135, 1903}}, {"CE_N", "READY", {578, 1608}}, {"CE_N", "READ_DATA", {156, 1939}}, {"OE_N", "READ_DATA", {156, 213}}, {"WORD_ADDR", "READY", {150, 1886}}, {"WORD_ADDR", "READ_DATA", {171, 2217}}, {"WRITE_DATA", "READY", {469, 1607}}, {"WRITE_DATA", "READ_DATA", {560, 1938}}, {"WRITE_MASK", "READY", {433, 1499}}, {"WRITE_MASK", "READ_DATA", {524, 1830}}, };
+    t.arcs_by_control[1] = {{"WE_N", "READY", {542, 1572}}, {"WE_N", "READ_DATA", {135, 1903}}, {"CE_N", "READY", {578, 1608}}, {"CE_N", "READ_DATA", {156, 1939}}, {"OE_N", "READ_DATA", {156, 213}}, {"WORD_ADDR", "READY", {150, 1886}}, {"WORD_ADDR", "READ_DATA", {171, 2217}}, {"WRITE_DATA", "READY", {469, 1607}}, {"WRITE_DATA", "READ_DATA", {560, 1938}}, {"WRITE_MASK", "READY", {433, 1499}}, {"WRITE_MASK", "READ_DATA", {524, 1830}}, };
     return t;
 }()},
 {"memory.sram.device.32.behavioral@rows=1", [] {
     PartDelays t;
     t.evidence = "proven on memory.sram.device.32.structural";
     t.arcs = {
-        Arc{"CE_N", "READY", {427, 1254}},
+        Arc{"CE_N", "READY", {427, 1366}},
         Arc{"CE_N", "READ_DATA", {504, 1549}},
         Arc{"OE_N", "READ_DATA", {77, 77}},
-        Arc{"WE_N", "READY", {427, 1254}},
+        Arc{"WE_N", "READY", {427, 1366}},
         Arc{"WE_N", "READ_DATA", {504, 1549}},
-        Arc{"WORD_ADDR", "READY", {427, 1254}},
+        Arc{"WORD_ADDR", "READY", {427, 1366}},
         Arc{"WORD_ADDR", "READ_DATA", {504, 1549}},
-        Arc{"WRITE_DATA", "READY", {354, 1289}},
+        Arc{"WRITE_DATA", "READY", {354, 1401}},
         Arc{"WRITE_DATA", "READ_DATA", {431, 1584}},
-        Arc{"WRITE_MASK", "READY", {318, 1181}},
+        Arc{"WRITE_MASK", "READY", {318, 1293}},
         Arc{"WRITE_MASK", "READ_DATA", {395, 1476}},
     };
     t.control = "WE_N";
-    t.arcs_by_control[0] = {{"WE_N", "READY", {427, 1254}}, {"WE_N", "READ_DATA", {504, 1549}}, {"CE_N", "READY", {427, 1254}}, {"CE_N", "READ_DATA", {504, 1549}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {427, 1254}}, {"WORD_ADDR", "READ_DATA", {504, 1549}}, {"WRITE_DATA", "READY", {354, 1289}}, {"WRITE_DATA", "READ_DATA", {431, 1584}}, {"WRITE_MASK", "READY", {318, 1181}}, {"WRITE_MASK", "READ_DATA", {395, 1476}}, };
-    t.arcs_by_control[1] = {{"WE_N", "READY", {427, 1254}}, {"WE_N", "READ_DATA", {504, 1549}}, {"CE_N", "READY", {427, 1254}}, {"CE_N", "READ_DATA", {504, 1549}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {427, 1254}}, {"WORD_ADDR", "READ_DATA", {504, 1549}}, {"WRITE_DATA", "READY", {354, 1289}}, {"WRITE_DATA", "READ_DATA", {431, 1584}}, {"WRITE_MASK", "READY", {318, 1181}}, {"WRITE_MASK", "READ_DATA", {395, 1476}}, };
+    t.arcs_by_control[0] = {{"WE_N", "READY", {427, 1366}}, {"WE_N", "READ_DATA", {504, 1549}}, {"CE_N", "READY", {427, 1366}}, {"CE_N", "READ_DATA", {504, 1549}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {427, 1366}}, {"WORD_ADDR", "READ_DATA", {504, 1549}}, {"WRITE_DATA", "READY", {354, 1401}}, {"WRITE_DATA", "READ_DATA", {431, 1584}}, {"WRITE_MASK", "READY", {318, 1293}}, {"WRITE_MASK", "READ_DATA", {395, 1476}}, };
+    t.arcs_by_control[1] = {{"WE_N", "READY", {427, 1366}}, {"WE_N", "READ_DATA", {504, 1549}}, {"CE_N", "READY", {427, 1366}}, {"CE_N", "READ_DATA", {504, 1549}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {427, 1366}}, {"WORD_ADDR", "READ_DATA", {504, 1549}}, {"WRITE_DATA", "READY", {354, 1401}}, {"WRITE_DATA", "READ_DATA", {431, 1584}}, {"WRITE_MASK", "READY", {318, 1293}}, {"WRITE_MASK", "READ_DATA", {395, 1476}}, };
     return t;
 }()},
 {"memory.sram.device.32.behavioral@depth=64@rows=1", [] {
     PartDelays t;
     t.evidence = "proven on memory.sram.device.32.structural";
     t.arcs = {
-        Arc{"CE_N", "READY", {427, 1409}},
-        Arc{"CE_N", "READ_DATA", {504, 1859}},
-        Arc{"OE_N", "READ_DATA", {77, 77}},
-        Arc{"WE_N", "READY", {427, 1409}},
-        Arc{"WE_N", "READ_DATA", {504, 1859}},
-        Arc{"WORD_ADDR", "READY", {427, 1409}},
-        Arc{"WORD_ADDR", "READ_DATA", {504, 1859}},
-        Arc{"WRITE_DATA", "READY", {354, 1444}},
-        Arc{"WRITE_DATA", "READ_DATA", {431, 1894}},
-        Arc{"WRITE_MASK", "READY", {318, 1336}},
-        Arc{"WRITE_MASK", "READ_DATA", {395, 1786}},
+        Arc{"CE_N", "READY", {578, 1608}},
+        Arc{"CE_N", "READ_DATA", {156, 1903}},
+        Arc{"OE_N", "READ_DATA", {156, 213}},
+        Arc{"WE_N", "READY", {542, 1572}},
+        Arc{"WE_N", "READ_DATA", {135, 1867}},
+        Arc{"WORD_ADDR", "READY", {150, 1886}},
+        Arc{"WORD_ADDR", "READ_DATA", {171, 2181}},
+        Arc{"WRITE_DATA", "READY", {469, 1607}},
+        Arc{"WRITE_DATA", "READ_DATA", {560, 1902}},
+        Arc{"WRITE_MASK", "READY", {433, 1499}},
+        Arc{"WRITE_MASK", "READ_DATA", {524, 1794}},
     };
     t.control = "WE_N";
-    t.arcs_by_control[0] = {{"WE_N", "READY", {427, 1409}}, {"WE_N", "READ_DATA", {504, 1859}}, {"CE_N", "READY", {427, 1409}}, {"CE_N", "READ_DATA", {504, 1859}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {427, 1409}}, {"WORD_ADDR", "READ_DATA", {504, 1859}}, {"WRITE_DATA", "READY", {354, 1444}}, {"WRITE_DATA", "READ_DATA", {431, 1894}}, {"WRITE_MASK", "READY", {318, 1336}}, {"WRITE_MASK", "READ_DATA", {395, 1786}}, };
-    t.arcs_by_control[1] = {{"WE_N", "READY", {427, 1409}}, {"WE_N", "READ_DATA", {504, 1859}}, {"CE_N", "READY", {427, 1409}}, {"CE_N", "READ_DATA", {504, 1859}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {427, 1409}}, {"WORD_ADDR", "READ_DATA", {504, 1859}}, {"WRITE_DATA", "READY", {354, 1444}}, {"WRITE_DATA", "READ_DATA", {431, 1894}}, {"WRITE_MASK", "READY", {318, 1336}}, {"WRITE_MASK", "READ_DATA", {395, 1786}}, };
+    t.arcs_by_control[0] = {{"WE_N", "READY", {542, 1572}}, {"WE_N", "READ_DATA", {135, 1867}}, {"CE_N", "READY", {578, 1608}}, {"CE_N", "READ_DATA", {156, 1903}}, {"OE_N", "READ_DATA", {156, 213}}, {"WORD_ADDR", "READY", {150, 1886}}, {"WORD_ADDR", "READ_DATA", {171, 2181}}, {"WRITE_DATA", "READY", {469, 1607}}, {"WRITE_DATA", "READ_DATA", {560, 1902}}, {"WRITE_MASK", "READY", {433, 1499}}, {"WRITE_MASK", "READ_DATA", {524, 1794}}, };
+    t.arcs_by_control[1] = {{"WE_N", "READY", {542, 1572}}, {"WE_N", "READ_DATA", {135, 1867}}, {"CE_N", "READY", {578, 1608}}, {"CE_N", "READ_DATA", {156, 1903}}, {"OE_N", "READ_DATA", {156, 213}}, {"WORD_ADDR", "READY", {150, 1886}}, {"WORD_ADDR", "READ_DATA", {171, 2181}}, {"WRITE_DATA", "READY", {469, 1607}}, {"WRITE_DATA", "READ_DATA", {560, 1902}}, {"WRITE_MASK", "READY", {433, 1499}}, {"WRITE_MASK", "READ_DATA", {524, 1794}}, };
     return t;
 }()},
 {"memory.sram.device.32.behavioral@depth=128@rows=1", [] {
     PartDelays t;
     t.evidence = "proven on memory.sram.device.32.structural";
     t.arcs = {
-        Arc{"CE_N", "READY", {427, 1537}},
-        Arc{"CE_N", "READ_DATA", {504, 2115}},
-        Arc{"OE_N", "READ_DATA", {77, 77}},
-        Arc{"WE_N", "READY", {427, 1537}},
-        Arc{"WE_N", "READ_DATA", {504, 2115}},
-        Arc{"WORD_ADDR", "READY", {427, 1537}},
-        Arc{"WORD_ADDR", "READ_DATA", {504, 2115}},
-        Arc{"WRITE_DATA", "READY", {354, 1572}},
-        Arc{"WRITE_DATA", "READ_DATA", {431, 2150}},
-        Arc{"WRITE_MASK", "READY", {318, 1464}},
-        Arc{"WRITE_MASK", "READ_DATA", {395, 2042}},
+        Arc{"CE_N", "READY", {649, 1679}},
+        Arc{"CE_N", "READ_DATA", {156, 1974}},
+        Arc{"OE_N", "READ_DATA", {156, 284}},
+        Arc{"WE_N", "READY", {613, 1643}},
+        Arc{"WE_N", "READ_DATA", {135, 1938}},
+        Arc{"WORD_ADDR", "READY", {150, 1992}},
+        Arc{"WORD_ADDR", "READ_DATA", {171, 2287}},
+        Arc{"WRITE_DATA", "READY", {540, 1678}},
+        Arc{"WRITE_DATA", "READ_DATA", {631, 1973}},
+        Arc{"WRITE_MASK", "READY", {504, 1570}},
+        Arc{"WRITE_MASK", "READ_DATA", {595, 1865}},
     };
     t.control = "WE_N";
-    t.arcs_by_control[0] = {{"WE_N", "READY", {427, 1537}}, {"WE_N", "READ_DATA", {504, 2115}}, {"CE_N", "READY", {427, 1537}}, {"CE_N", "READ_DATA", {504, 2115}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {427, 1537}}, {"WORD_ADDR", "READ_DATA", {504, 2115}}, {"WRITE_DATA", "READY", {354, 1572}}, {"WRITE_DATA", "READ_DATA", {431, 2150}}, {"WRITE_MASK", "READY", {318, 1464}}, {"WRITE_MASK", "READ_DATA", {395, 2042}}, };
-    t.arcs_by_control[1] = {{"WE_N", "READY", {427, 1537}}, {"WE_N", "READ_DATA", {504, 2115}}, {"CE_N", "READY", {427, 1537}}, {"CE_N", "READ_DATA", {504, 2115}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {427, 1537}}, {"WORD_ADDR", "READ_DATA", {504, 2115}}, {"WRITE_DATA", "READY", {354, 1572}}, {"WRITE_DATA", "READ_DATA", {431, 2150}}, {"WRITE_MASK", "READY", {318, 1464}}, {"WRITE_MASK", "READ_DATA", {395, 2042}}, };
+    t.arcs_by_control[0] = {{"WE_N", "READY", {613, 1643}}, {"WE_N", "READ_DATA", {135, 1938}}, {"CE_N", "READY", {649, 1679}}, {"CE_N", "READ_DATA", {156, 1974}}, {"OE_N", "READ_DATA", {156, 284}}, {"WORD_ADDR", "READY", {150, 1992}}, {"WORD_ADDR", "READ_DATA", {171, 2287}}, {"WRITE_DATA", "READY", {540, 1678}}, {"WRITE_DATA", "READ_DATA", {631, 1973}}, {"WRITE_MASK", "READY", {504, 1570}}, {"WRITE_MASK", "READ_DATA", {595, 1865}}, };
+    t.arcs_by_control[1] = {{"WE_N", "READY", {613, 1643}}, {"WE_N", "READ_DATA", {135, 1938}}, {"CE_N", "READY", {649, 1679}}, {"CE_N", "READ_DATA", {156, 1974}}, {"OE_N", "READ_DATA", {156, 284}}, {"WORD_ADDR", "READY", {150, 1992}}, {"WORD_ADDR", "READ_DATA", {171, 2287}}, {"WRITE_DATA", "READY", {540, 1678}}, {"WRITE_DATA", "READ_DATA", {631, 1973}}, {"WRITE_MASK", "READY", {504, 1570}}, {"WRITE_MASK", "READ_DATA", {595, 1865}}, };
     return t;
 }()},
 {"memory.sram.device.32.behavioral@rows=4", [] {
     PartDelays t;
     t.evidence = "proven on memory.sram.device.32.structural";
     t.arcs = {
-        Arc{"CE_N", "READY", {427, 1248}},
+        Arc{"CE_N", "READY", {427, 1360}},
         Arc{"CE_N", "READ_DATA", {504, 1574}},
         Arc{"OE_N", "READ_DATA", {77, 77}},
-        Arc{"WE_N", "READY", {427, 1248}},
+        Arc{"WE_N", "READY", {427, 1360}},
         Arc{"WE_N", "READ_DATA", {504, 1574}},
-        Arc{"WORD_ADDR", "READY", {427, 1248}},
+        Arc{"WORD_ADDR", "READY", {427, 1360}},
         Arc{"WORD_ADDR", "READ_DATA", {504, 1574}},
-        Arc{"WRITE_DATA", "READY", {354, 1283}},
+        Arc{"WRITE_DATA", "READY", {354, 1395}},
         Arc{"WRITE_DATA", "READ_DATA", {431, 1609}},
-        Arc{"WRITE_MASK", "READY", {318, 1175}},
+        Arc{"WRITE_MASK", "READY", {318, 1287}},
         Arc{"WRITE_MASK", "READ_DATA", {395, 1501}},
     };
     t.control = "WE_N";
-    t.arcs_by_control[0] = {{"WE_N", "READY", {427, 1248}}, {"WE_N", "READ_DATA", {504, 1574}}, {"CE_N", "READY", {427, 1248}}, {"CE_N", "READ_DATA", {504, 1574}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {427, 1248}}, {"WORD_ADDR", "READ_DATA", {504, 1574}}, {"WRITE_DATA", "READY", {354, 1283}}, {"WRITE_DATA", "READ_DATA", {431, 1609}}, {"WRITE_MASK", "READY", {318, 1175}}, {"WRITE_MASK", "READ_DATA", {395, 1501}}, };
-    t.arcs_by_control[1] = {{"WE_N", "READY", {427, 1248}}, {"WE_N", "READ_DATA", {504, 1574}}, {"CE_N", "READY", {427, 1248}}, {"CE_N", "READ_DATA", {504, 1574}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {427, 1248}}, {"WORD_ADDR", "READ_DATA", {504, 1574}}, {"WRITE_DATA", "READY", {354, 1283}}, {"WRITE_DATA", "READ_DATA", {431, 1609}}, {"WRITE_MASK", "READY", {318, 1175}}, {"WRITE_MASK", "READ_DATA", {395, 1501}}, };
+    t.arcs_by_control[0] = {{"WE_N", "READY", {427, 1360}}, {"WE_N", "READ_DATA", {504, 1574}}, {"CE_N", "READY", {427, 1360}}, {"CE_N", "READ_DATA", {504, 1574}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {427, 1360}}, {"WORD_ADDR", "READ_DATA", {504, 1574}}, {"WRITE_DATA", "READY", {354, 1395}}, {"WRITE_DATA", "READ_DATA", {431, 1609}}, {"WRITE_MASK", "READY", {318, 1287}}, {"WRITE_MASK", "READ_DATA", {395, 1501}}, };
+    t.arcs_by_control[1] = {{"WE_N", "READY", {427, 1360}}, {"WE_N", "READ_DATA", {504, 1574}}, {"CE_N", "READY", {427, 1360}}, {"CE_N", "READ_DATA", {504, 1574}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {427, 1360}}, {"WORD_ADDR", "READ_DATA", {504, 1574}}, {"WRITE_DATA", "READY", {354, 1395}}, {"WRITE_DATA", "READ_DATA", {431, 1609}}, {"WRITE_MASK", "READY", {318, 1287}}, {"WRITE_MASK", "READ_DATA", {395, 1501}}, };
     return t;
 }()},
 {"memory.sram.device.32.behavioral@depth=64@rows=4", [] {
     PartDelays t;
     t.evidence = "proven on memory.sram.device.32.structural";
     t.arcs = {
-        Arc{"CE_N", "READY", {427, 1313}},
+        Arc{"CE_N", "READY", {427, 1425}},
         Arc{"CE_N", "READ_DATA", {504, 1774}},
         Arc{"OE_N", "READ_DATA", {77, 77}},
-        Arc{"WE_N", "READY", {427, 1313}},
+        Arc{"WE_N", "READY", {427, 1425}},
         Arc{"WE_N", "READ_DATA", {504, 1774}},
-        Arc{"WORD_ADDR", "READY", {427, 1313}},
+        Arc{"WORD_ADDR", "READY", {427, 1425}},
         Arc{"WORD_ADDR", "READ_DATA", {504, 1774}},
-        Arc{"WRITE_DATA", "READY", {354, 1348}},
+        Arc{"WRITE_DATA", "READY", {354, 1460}},
         Arc{"WRITE_DATA", "READ_DATA", {431, 1809}},
-        Arc{"WRITE_MASK", "READY", {318, 1240}},
+        Arc{"WRITE_MASK", "READY", {318, 1352}},
         Arc{"WRITE_MASK", "READ_DATA", {395, 1701}},
     };
     t.control = "WE_N";
-    t.arcs_by_control[0] = {{"WE_N", "READY", {427, 1313}}, {"WE_N", "READ_DATA", {504, 1774}}, {"CE_N", "READY", {427, 1313}}, {"CE_N", "READ_DATA", {504, 1774}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {427, 1313}}, {"WORD_ADDR", "READ_DATA", {504, 1774}}, {"WRITE_DATA", "READY", {354, 1348}}, {"WRITE_DATA", "READ_DATA", {431, 1809}}, {"WRITE_MASK", "READY", {318, 1240}}, {"WRITE_MASK", "READ_DATA", {395, 1701}}, };
-    t.arcs_by_control[1] = {{"WE_N", "READY", {427, 1313}}, {"WE_N", "READ_DATA", {504, 1774}}, {"CE_N", "READY", {427, 1313}}, {"CE_N", "READ_DATA", {504, 1774}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {427, 1313}}, {"WORD_ADDR", "READ_DATA", {504, 1774}}, {"WRITE_DATA", "READY", {354, 1348}}, {"WRITE_DATA", "READ_DATA", {431, 1809}}, {"WRITE_MASK", "READY", {318, 1240}}, {"WRITE_MASK", "READ_DATA", {395, 1701}}, };
+    t.arcs_by_control[0] = {{"WE_N", "READY", {427, 1425}}, {"WE_N", "READ_DATA", {504, 1774}}, {"CE_N", "READY", {427, 1425}}, {"CE_N", "READ_DATA", {504, 1774}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {427, 1425}}, {"WORD_ADDR", "READ_DATA", {504, 1774}}, {"WRITE_DATA", "READY", {354, 1460}}, {"WRITE_DATA", "READ_DATA", {431, 1809}}, {"WRITE_MASK", "READY", {318, 1352}}, {"WRITE_MASK", "READ_DATA", {395, 1701}}, };
+    t.arcs_by_control[1] = {{"WE_N", "READY", {427, 1425}}, {"WE_N", "READ_DATA", {504, 1774}}, {"CE_N", "READY", {427, 1425}}, {"CE_N", "READ_DATA", {504, 1774}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {427, 1425}}, {"WORD_ADDR", "READ_DATA", {504, 1774}}, {"WRITE_DATA", "READY", {354, 1460}}, {"WRITE_DATA", "READ_DATA", {431, 1809}}, {"WRITE_MASK", "READY", {318, 1352}}, {"WRITE_MASK", "READ_DATA", {395, 1701}}, };
     return t;
 }()},
 {"memory.sram.device.32.behavioral@depth=128@rows=4", [] {
     PartDelays t;
     t.evidence = "proven on memory.sram.device.32.structural";
     t.arcs = {
-        Arc{"CE_N", "READY", {427, 1345}},
+        Arc{"CE_N", "READY", {427, 1457}},
         Arc{"CE_N", "READ_DATA", {504, 1838}},
         Arc{"OE_N", "READ_DATA", {77, 77}},
-        Arc{"WE_N", "READY", {427, 1345}},
+        Arc{"WE_N", "READY", {427, 1457}},
         Arc{"WE_N", "READ_DATA", {504, 1838}},
-        Arc{"WORD_ADDR", "READY", {427, 1345}},
+        Arc{"WORD_ADDR", "READY", {427, 1457}},
         Arc{"WORD_ADDR", "READ_DATA", {504, 1838}},
-        Arc{"WRITE_DATA", "READY", {354, 1380}},
+        Arc{"WRITE_DATA", "READY", {354, 1492}},
         Arc{"WRITE_DATA", "READ_DATA", {431, 1873}},
-        Arc{"WRITE_MASK", "READY", {318, 1272}},
+        Arc{"WRITE_MASK", "READY", {318, 1384}},
         Arc{"WRITE_MASK", "READ_DATA", {395, 1765}},
     };
     t.control = "WE_N";
-    t.arcs_by_control[0] = {{"WE_N", "READY", {427, 1345}}, {"WE_N", "READ_DATA", {504, 1838}}, {"CE_N", "READY", {427, 1345}}, {"CE_N", "READ_DATA", {504, 1838}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {427, 1345}}, {"WORD_ADDR", "READ_DATA", {504, 1838}}, {"WRITE_DATA", "READY", {354, 1380}}, {"WRITE_DATA", "READ_DATA", {431, 1873}}, {"WRITE_MASK", "READY", {318, 1272}}, {"WRITE_MASK", "READ_DATA", {395, 1765}}, };
-    t.arcs_by_control[1] = {{"WE_N", "READY", {427, 1345}}, {"WE_N", "READ_DATA", {504, 1838}}, {"CE_N", "READY", {427, 1345}}, {"CE_N", "READ_DATA", {504, 1838}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {427, 1345}}, {"WORD_ADDR", "READ_DATA", {504, 1838}}, {"WRITE_DATA", "READY", {354, 1380}}, {"WRITE_DATA", "READ_DATA", {431, 1873}}, {"WRITE_MASK", "READY", {318, 1272}}, {"WRITE_MASK", "READ_DATA", {395, 1765}}, };
+    t.arcs_by_control[0] = {{"WE_N", "READY", {427, 1457}}, {"WE_N", "READ_DATA", {504, 1838}}, {"CE_N", "READY", {427, 1457}}, {"CE_N", "READ_DATA", {504, 1838}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {427, 1457}}, {"WORD_ADDR", "READ_DATA", {504, 1838}}, {"WRITE_DATA", "READY", {354, 1492}}, {"WRITE_DATA", "READ_DATA", {431, 1873}}, {"WRITE_MASK", "READY", {318, 1384}}, {"WRITE_MASK", "READ_DATA", {395, 1765}}, };
+    t.arcs_by_control[1] = {{"WE_N", "READY", {427, 1457}}, {"WE_N", "READ_DATA", {504, 1838}}, {"CE_N", "READY", {427, 1457}}, {"CE_N", "READ_DATA", {504, 1838}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {427, 1457}}, {"WORD_ADDR", "READ_DATA", {504, 1838}}, {"WRITE_DATA", "READY", {354, 1492}}, {"WRITE_DATA", "READ_DATA", {431, 1873}}, {"WRITE_MASK", "READY", {318, 1384}}, {"WRITE_MASK", "READ_DATA", {395, 1765}}, };
     return t;
 }()},
 {"memory.sram.device.32.behavioral@depth=64@rows=8", [] {
     PartDelays t;
     t.evidence = "proven on memory.sram.device.32.structural";
     t.arcs = {
-        Arc{"CE_N", "READY", {427, 1262}},
+        Arc{"CE_N", "READY", {427, 1374}},
         Arc{"CE_N", "READ_DATA", {504, 1743}},
         Arc{"OE_N", "READ_DATA", {77, 77}},
-        Arc{"WE_N", "READY", {427, 1262}},
+        Arc{"WE_N", "READY", {427, 1374}},
         Arc{"WE_N", "READ_DATA", {504, 1743}},
-        Arc{"WORD_ADDR", "READY", {427, 1262}},
+        Arc{"WORD_ADDR", "READY", {427, 1374}},
         Arc{"WORD_ADDR", "READ_DATA", {504, 1743}},
-        Arc{"WRITE_DATA", "READY", {354, 1297}},
+        Arc{"WRITE_DATA", "READY", {354, 1409}},
         Arc{"WRITE_DATA", "READ_DATA", {431, 1778}},
-        Arc{"WRITE_MASK", "READY", {318, 1189}},
+        Arc{"WRITE_MASK", "READY", {318, 1301}},
         Arc{"WRITE_MASK", "READ_DATA", {395, 1670}},
     };
     t.control = "WE_N";
-    t.arcs_by_control[0] = {{"WE_N", "READY", {427, 1262}}, {"WE_N", "READ_DATA", {504, 1743}}, {"CE_N", "READY", {427, 1262}}, {"CE_N", "READ_DATA", {504, 1743}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {427, 1262}}, {"WORD_ADDR", "READ_DATA", {504, 1743}}, {"WRITE_DATA", "READY", {354, 1297}}, {"WRITE_DATA", "READ_DATA", {431, 1778}}, {"WRITE_MASK", "READY", {318, 1189}}, {"WRITE_MASK", "READ_DATA", {395, 1670}}, };
-    t.arcs_by_control[1] = {{"WE_N", "READY", {427, 1262}}, {"WE_N", "READ_DATA", {504, 1743}}, {"CE_N", "READY", {427, 1262}}, {"CE_N", "READ_DATA", {504, 1743}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {427, 1262}}, {"WORD_ADDR", "READ_DATA", {504, 1743}}, {"WRITE_DATA", "READY", {354, 1297}}, {"WRITE_DATA", "READ_DATA", {431, 1778}}, {"WRITE_MASK", "READY", {318, 1189}}, {"WRITE_MASK", "READ_DATA", {395, 1670}}, };
+    t.arcs_by_control[0] = {{"WE_N", "READY", {427, 1374}}, {"WE_N", "READ_DATA", {504, 1743}}, {"CE_N", "READY", {427, 1374}}, {"CE_N", "READ_DATA", {504, 1743}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {427, 1374}}, {"WORD_ADDR", "READ_DATA", {504, 1743}}, {"WRITE_DATA", "READY", {354, 1409}}, {"WRITE_DATA", "READ_DATA", {431, 1778}}, {"WRITE_MASK", "READY", {318, 1301}}, {"WRITE_MASK", "READ_DATA", {395, 1670}}, };
+    t.arcs_by_control[1] = {{"WE_N", "READY", {427, 1374}}, {"WE_N", "READ_DATA", {504, 1743}}, {"CE_N", "READY", {427, 1374}}, {"CE_N", "READ_DATA", {504, 1743}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {427, 1374}}, {"WORD_ADDR", "READ_DATA", {504, 1743}}, {"WRITE_DATA", "READY", {354, 1409}}, {"WRITE_DATA", "READ_DATA", {431, 1778}}, {"WRITE_MASK", "READY", {318, 1301}}, {"WRITE_MASK", "READ_DATA", {395, 1670}}, };
     return t;
 }()},
 {"memory.sram.device.32.behavioral@depth=128@rows=8", [] {
     PartDelays t;
     t.evidence = "proven on memory.sram.device.32.structural";
     t.arcs = {
-        Arc{"CE_N", "READY", {427, 1313}},
+        Arc{"CE_N", "READY", {427, 1425}},
         Arc{"CE_N", "READ_DATA", {504, 1845}},
         Arc{"OE_N", "READ_DATA", {77, 77}},
-        Arc{"WE_N", "READY", {427, 1313}},
+        Arc{"WE_N", "READY", {427, 1425}},
         Arc{"WE_N", "READ_DATA", {504, 1845}},
-        Arc{"WORD_ADDR", "READY", {427, 1313}},
+        Arc{"WORD_ADDR", "READY", {427, 1425}},
         Arc{"WORD_ADDR", "READ_DATA", {504, 1845}},
-        Arc{"WRITE_DATA", "READY", {354, 1348}},
+        Arc{"WRITE_DATA", "READY", {354, 1460}},
         Arc{"WRITE_DATA", "READ_DATA", {431, 1880}},
-        Arc{"WRITE_MASK", "READY", {318, 1240}},
+        Arc{"WRITE_MASK", "READY", {318, 1352}},
         Arc{"WRITE_MASK", "READ_DATA", {395, 1772}},
     };
     t.control = "WE_N";
-    t.arcs_by_control[0] = {{"WE_N", "READY", {427, 1313}}, {"WE_N", "READ_DATA", {504, 1845}}, {"CE_N", "READY", {427, 1313}}, {"CE_N", "READ_DATA", {504, 1845}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {427, 1313}}, {"WORD_ADDR", "READ_DATA", {504, 1845}}, {"WRITE_DATA", "READY", {354, 1348}}, {"WRITE_DATA", "READ_DATA", {431, 1880}}, {"WRITE_MASK", "READY", {318, 1240}}, {"WRITE_MASK", "READ_DATA", {395, 1772}}, };
-    t.arcs_by_control[1] = {{"WE_N", "READY", {427, 1313}}, {"WE_N", "READ_DATA", {504, 1845}}, {"CE_N", "READY", {427, 1313}}, {"CE_N", "READ_DATA", {504, 1845}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {427, 1313}}, {"WORD_ADDR", "READ_DATA", {504, 1845}}, {"WRITE_DATA", "READY", {354, 1348}}, {"WRITE_DATA", "READ_DATA", {431, 1880}}, {"WRITE_MASK", "READY", {318, 1240}}, {"WRITE_MASK", "READ_DATA", {395, 1772}}, };
+    t.arcs_by_control[0] = {{"WE_N", "READY", {427, 1425}}, {"WE_N", "READ_DATA", {504, 1845}}, {"CE_N", "READY", {427, 1425}}, {"CE_N", "READ_DATA", {504, 1845}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {427, 1425}}, {"WORD_ADDR", "READ_DATA", {504, 1845}}, {"WRITE_DATA", "READY", {354, 1460}}, {"WRITE_DATA", "READ_DATA", {431, 1880}}, {"WRITE_MASK", "READY", {318, 1352}}, {"WRITE_MASK", "READ_DATA", {395, 1772}}, };
+    t.arcs_by_control[1] = {{"WE_N", "READY", {427, 1425}}, {"WE_N", "READ_DATA", {504, 1845}}, {"CE_N", "READY", {427, 1425}}, {"CE_N", "READ_DATA", {504, 1845}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {427, 1425}}, {"WORD_ADDR", "READ_DATA", {504, 1845}}, {"WRITE_DATA", "READY", {354, 1460}}, {"WRITE_DATA", "READ_DATA", {431, 1880}}, {"WRITE_MASK", "READY", {318, 1352}}, {"WRITE_MASK", "READ_DATA", {395, 1772}}, };
     return t;
 }()},
 {"memory.sram.device.32.behavioral@depth=64@rows=16", [] {
     PartDelays t;
     t.evidence = "proven on memory.sram.device.32.structural";
     t.arcs = {
-        Arc{"CE_N", "READY", {427, 1254}},
+        Arc{"CE_N", "READY", {427, 1366}},
         Arc{"CE_N", "READ_DATA", {504, 1798}},
         Arc{"OE_N", "READ_DATA", {77, 77}},
-        Arc{"WE_N", "READY", {427, 1254}},
+        Arc{"WE_N", "READY", {427, 1366}},
         Arc{"WE_N", "READ_DATA", {504, 1798}},
-        Arc{"WORD_ADDR", "READY", {427, 1254}},
+        Arc{"WORD_ADDR", "READY", {427, 1366}},
         Arc{"WORD_ADDR", "READ_DATA", {504, 1798}},
-        Arc{"WRITE_DATA", "READY", {354, 1289}},
+        Arc{"WRITE_DATA", "READY", {354, 1401}},
         Arc{"WRITE_DATA", "READ_DATA", {431, 1833}},
-        Arc{"WRITE_MASK", "READY", {318, 1181}},
+        Arc{"WRITE_MASK", "READY", {318, 1293}},
         Arc{"WRITE_MASK", "READ_DATA", {395, 1725}},
     };
     t.control = "WE_N";
-    t.arcs_by_control[0] = {{"WE_N", "READY", {427, 1254}}, {"WE_N", "READ_DATA", {504, 1798}}, {"CE_N", "READY", {427, 1254}}, {"CE_N", "READ_DATA", {504, 1798}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {427, 1254}}, {"WORD_ADDR", "READ_DATA", {504, 1798}}, {"WRITE_DATA", "READY", {354, 1289}}, {"WRITE_DATA", "READ_DATA", {431, 1833}}, {"WRITE_MASK", "READY", {318, 1181}}, {"WRITE_MASK", "READ_DATA", {395, 1725}}, };
-    t.arcs_by_control[1] = {{"WE_N", "READY", {427, 1254}}, {"WE_N", "READ_DATA", {504, 1798}}, {"CE_N", "READY", {427, 1254}}, {"CE_N", "READ_DATA", {504, 1798}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {427, 1254}}, {"WORD_ADDR", "READ_DATA", {504, 1798}}, {"WRITE_DATA", "READY", {354, 1289}}, {"WRITE_DATA", "READ_DATA", {431, 1833}}, {"WRITE_MASK", "READY", {318, 1181}}, {"WRITE_MASK", "READ_DATA", {395, 1725}}, };
+    t.arcs_by_control[0] = {{"WE_N", "READY", {427, 1366}}, {"WE_N", "READ_DATA", {504, 1798}}, {"CE_N", "READY", {427, 1366}}, {"CE_N", "READ_DATA", {504, 1798}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {427, 1366}}, {"WORD_ADDR", "READ_DATA", {504, 1798}}, {"WRITE_DATA", "READY", {354, 1401}}, {"WRITE_DATA", "READ_DATA", {431, 1833}}, {"WRITE_MASK", "READY", {318, 1293}}, {"WRITE_MASK", "READ_DATA", {395, 1725}}, };
+    t.arcs_by_control[1] = {{"WE_N", "READY", {427, 1366}}, {"WE_N", "READ_DATA", {504, 1798}}, {"CE_N", "READY", {427, 1366}}, {"CE_N", "READ_DATA", {504, 1798}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {427, 1366}}, {"WORD_ADDR", "READ_DATA", {504, 1798}}, {"WRITE_DATA", "READY", {354, 1401}}, {"WRITE_DATA", "READ_DATA", {431, 1833}}, {"WRITE_MASK", "READY", {318, 1293}}, {"WRITE_MASK", "READ_DATA", {395, 1725}}, };
     return t;
 }()},
 {"memory.sram.device.32.behavioral@depth=128@rows=16", [] {
     PartDelays t;
     t.evidence = "proven on memory.sram.device.32.structural";
     t.arcs = {
-        Arc{"CE_N", "READY", {427, 1262}},
+        Arc{"CE_N", "READY", {427, 1374}},
         Arc{"CE_N", "READ_DATA", {504, 1814}},
         Arc{"OE_N", "READ_DATA", {77, 77}},
-        Arc{"WE_N", "READY", {427, 1262}},
+        Arc{"WE_N", "READY", {427, 1374}},
         Arc{"WE_N", "READ_DATA", {504, 1814}},
-        Arc{"WORD_ADDR", "READY", {427, 1262}},
+        Arc{"WORD_ADDR", "READY", {427, 1374}},
         Arc{"WORD_ADDR", "READ_DATA", {504, 1814}},
-        Arc{"WRITE_DATA", "READY", {354, 1297}},
+        Arc{"WRITE_DATA", "READY", {354, 1409}},
         Arc{"WRITE_DATA", "READ_DATA", {431, 1849}},
-        Arc{"WRITE_MASK", "READY", {318, 1189}},
+        Arc{"WRITE_MASK", "READY", {318, 1301}},
         Arc{"WRITE_MASK", "READ_DATA", {395, 1741}},
     };
     t.control = "WE_N";
-    t.arcs_by_control[0] = {{"WE_N", "READY", {427, 1262}}, {"WE_N", "READ_DATA", {504, 1814}}, {"CE_N", "READY", {427, 1262}}, {"CE_N", "READ_DATA", {504, 1814}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {427, 1262}}, {"WORD_ADDR", "READ_DATA", {504, 1814}}, {"WRITE_DATA", "READY", {354, 1297}}, {"WRITE_DATA", "READ_DATA", {431, 1849}}, {"WRITE_MASK", "READY", {318, 1189}}, {"WRITE_MASK", "READ_DATA", {395, 1741}}, };
-    t.arcs_by_control[1] = {{"WE_N", "READY", {427, 1262}}, {"WE_N", "READ_DATA", {504, 1814}}, {"CE_N", "READY", {427, 1262}}, {"CE_N", "READ_DATA", {504, 1814}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {427, 1262}}, {"WORD_ADDR", "READ_DATA", {504, 1814}}, {"WRITE_DATA", "READY", {354, 1297}}, {"WRITE_DATA", "READ_DATA", {431, 1849}}, {"WRITE_MASK", "READY", {318, 1189}}, {"WRITE_MASK", "READ_DATA", {395, 1741}}, };
+    t.arcs_by_control[0] = {{"WE_N", "READY", {427, 1374}}, {"WE_N", "READ_DATA", {504, 1814}}, {"CE_N", "READY", {427, 1374}}, {"CE_N", "READ_DATA", {504, 1814}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {427, 1374}}, {"WORD_ADDR", "READ_DATA", {504, 1814}}, {"WRITE_DATA", "READY", {354, 1409}}, {"WRITE_DATA", "READ_DATA", {431, 1849}}, {"WRITE_MASK", "READY", {318, 1301}}, {"WRITE_MASK", "READ_DATA", {395, 1741}}, };
+    t.arcs_by_control[1] = {{"WE_N", "READY", {427, 1374}}, {"WE_N", "READ_DATA", {504, 1814}}, {"CE_N", "READY", {427, 1374}}, {"CE_N", "READ_DATA", {504, 1814}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {427, 1374}}, {"WORD_ADDR", "READ_DATA", {504, 1814}}, {"WRITE_DATA", "READY", {354, 1409}}, {"WRITE_DATA", "READ_DATA", {431, 1849}}, {"WRITE_MASK", "READY", {318, 1301}}, {"WRITE_MASK", "READ_DATA", {395, 1741}}, };
     return t;
 }()},
 {"memory.sram.device.8.behavioral", [] {
     PartDelays t;
     t.evidence = "proven on memory.sram.device.8.structural";
     t.arcs = {
-        Arc{"CE_N", "READY", {355, 1142}},
+        Arc{"CE_N", "READY", {355, 1254}},
         Arc{"CE_N", "READ_DATA", {432, 1434}},
         Arc{"OE_N", "READ_DATA", {77, 77}},
-        Arc{"WE_N", "READY", {355, 1142}},
+        Arc{"WE_N", "READY", {355, 1254}},
         Arc{"WE_N", "READ_DATA", {432, 1434}},
-        Arc{"WORD_ADDR", "READY", {391, 1178}},
+        Arc{"WORD_ADDR", "READY", {391, 1290}},
         Arc{"WORD_ADDR", "READ_DATA", {468, 1470}},
-        Arc{"WRITE_DATA", "READY", {354, 1177}},
+        Arc{"WRITE_DATA", "READY", {354, 1289}},
         Arc{"WRITE_DATA", "READ_DATA", {431, 1469}},
-        Arc{"WRITE_MASK", "READY", {318, 1105}},
+        Arc{"WRITE_MASK", "READY", {318, 1217}},
         Arc{"WRITE_MASK", "READ_DATA", {395, 1397}},
     };
     t.control = "WE_N";
-    t.arcs_by_control[0] = {{"WE_N", "READY", {355, 1142}}, {"WE_N", "READ_DATA", {432, 1434}}, {"CE_N", "READY", {355, 1142}}, {"CE_N", "READ_DATA", {432, 1434}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {391, 1178}}, {"WORD_ADDR", "READ_DATA", {468, 1470}}, {"WRITE_DATA", "READY", {354, 1177}}, {"WRITE_DATA", "READ_DATA", {431, 1469}}, {"WRITE_MASK", "READY", {318, 1105}}, {"WRITE_MASK", "READ_DATA", {395, 1397}}, };
-    t.arcs_by_control[1] = {{"WE_N", "READY", {355, 1142}}, {"WE_N", "READ_DATA", {432, 1434}}, {"CE_N", "READY", {355, 1142}}, {"CE_N", "READ_DATA", {432, 1434}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {391, 1178}}, {"WORD_ADDR", "READ_DATA", {468, 1470}}, {"WRITE_DATA", "READY", {354, 1177}}, {"WRITE_DATA", "READ_DATA", {431, 1469}}, {"WRITE_MASK", "READY", {318, 1105}}, {"WRITE_MASK", "READ_DATA", {395, 1397}}, };
+    t.arcs_by_control[0] = {{"WE_N", "READY", {355, 1254}}, {"WE_N", "READ_DATA", {432, 1434}}, {"CE_N", "READY", {355, 1254}}, {"CE_N", "READ_DATA", {432, 1434}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {391, 1290}}, {"WORD_ADDR", "READ_DATA", {468, 1470}}, {"WRITE_DATA", "READY", {354, 1289}}, {"WRITE_DATA", "READ_DATA", {431, 1469}}, {"WRITE_MASK", "READY", {318, 1217}}, {"WRITE_MASK", "READ_DATA", {395, 1397}}, };
+    t.arcs_by_control[1] = {{"WE_N", "READY", {355, 1254}}, {"WE_N", "READ_DATA", {432, 1434}}, {"CE_N", "READY", {355, 1254}}, {"CE_N", "READ_DATA", {432, 1434}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {391, 1290}}, {"WORD_ADDR", "READ_DATA", {468, 1470}}, {"WRITE_DATA", "READY", {354, 1289}}, {"WRITE_DATA", "READ_DATA", {431, 1469}}, {"WRITE_MASK", "READY", {318, 1217}}, {"WRITE_MASK", "READ_DATA", {395, 1397}}, };
     return t;
 }()},
 {"memory.sram.device.8.behavioral@depth=64", [] {
     PartDelays t;
     t.evidence = "proven on memory.sram.device.8.structural";
     t.arcs = {
-        Arc{"CE_N", "READY", {355, 1237}},
+        Arc{"CE_N", "READY", {355, 1349}},
         Arc{"CE_N", "READ_DATA", {432, 1659}},
         Arc{"OE_N", "READ_DATA", {77, 77}},
-        Arc{"WE_N", "READY", {355, 1237}},
+        Arc{"WE_N", "READY", {355, 1349}},
         Arc{"WE_N", "READ_DATA", {432, 1659}},
-        Arc{"WORD_ADDR", "READY", {391, 1273}},
+        Arc{"WORD_ADDR", "READY", {391, 1385}},
         Arc{"WORD_ADDR", "READ_DATA", {468, 1695}},
-        Arc{"WRITE_DATA", "READY", {354, 1272}},
+        Arc{"WRITE_DATA", "READY", {354, 1384}},
         Arc{"WRITE_DATA", "READ_DATA", {431, 1694}},
-        Arc{"WRITE_MASK", "READY", {318, 1200}},
+        Arc{"WRITE_MASK", "READY", {318, 1312}},
         Arc{"WRITE_MASK", "READ_DATA", {395, 1622}},
     };
     t.control = "WE_N";
-    t.arcs_by_control[0] = {{"WE_N", "READY", {355, 1237}}, {"WE_N", "READ_DATA", {432, 1659}}, {"CE_N", "READY", {355, 1237}}, {"CE_N", "READ_DATA", {432, 1659}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {391, 1273}}, {"WORD_ADDR", "READ_DATA", {468, 1695}}, {"WRITE_DATA", "READY", {354, 1272}}, {"WRITE_DATA", "READ_DATA", {431, 1694}}, {"WRITE_MASK", "READY", {318, 1200}}, {"WRITE_MASK", "READ_DATA", {395, 1622}}, };
-    t.arcs_by_control[1] = {{"WE_N", "READY", {355, 1237}}, {"WE_N", "READ_DATA", {432, 1659}}, {"CE_N", "READY", {355, 1237}}, {"CE_N", "READ_DATA", {432, 1659}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {391, 1273}}, {"WORD_ADDR", "READ_DATA", {468, 1695}}, {"WRITE_DATA", "READY", {354, 1272}}, {"WRITE_DATA", "READ_DATA", {431, 1694}}, {"WRITE_MASK", "READY", {318, 1200}}, {"WRITE_MASK", "READ_DATA", {395, 1622}}, };
+    t.arcs_by_control[0] = {{"WE_N", "READY", {355, 1349}}, {"WE_N", "READ_DATA", {432, 1659}}, {"CE_N", "READY", {355, 1349}}, {"CE_N", "READ_DATA", {432, 1659}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {391, 1385}}, {"WORD_ADDR", "READ_DATA", {468, 1695}}, {"WRITE_DATA", "READY", {354, 1384}}, {"WRITE_DATA", "READ_DATA", {431, 1694}}, {"WRITE_MASK", "READY", {318, 1312}}, {"WRITE_MASK", "READ_DATA", {395, 1622}}, };
+    t.arcs_by_control[1] = {{"WE_N", "READY", {355, 1349}}, {"WE_N", "READ_DATA", {432, 1659}}, {"CE_N", "READY", {355, 1349}}, {"CE_N", "READ_DATA", {432, 1659}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {391, 1385}}, {"WORD_ADDR", "READ_DATA", {468, 1695}}, {"WRITE_DATA", "READY", {354, 1384}}, {"WRITE_DATA", "READ_DATA", {431, 1694}}, {"WRITE_MASK", "READY", {318, 1312}}, {"WRITE_MASK", "READ_DATA", {395, 1622}}, };
     return t;
 }()},
 {"memory.sram.device.8.behavioral@depth=128", [] {
     PartDelays t;
     t.evidence = "proven on memory.sram.device.8.structural";
     t.arcs = {
-        Arc{"CE_N", "READY", {355, 1301}},
-        Arc{"CE_N", "READ_DATA", {432, 1787}},
-        Arc{"OE_N", "READ_DATA", {77, 77}},
-        Arc{"WE_N", "READY", {355, 1301}},
-        Arc{"WE_N", "READ_DATA", {432, 1787}},
-        Arc{"WORD_ADDR", "READY", {391, 1337}},
-        Arc{"WORD_ADDR", "READ_DATA", {468, 1823}},
-        Arc{"WRITE_DATA", "READY", {354, 1336}},
-        Arc{"WRITE_DATA", "READ_DATA", {431, 1822}},
-        Arc{"WRITE_MASK", "READY", {318, 1264}},
-        Arc{"WRITE_MASK", "READ_DATA", {395, 1750}},
+        Arc{"CE_N", "READY", {506, 1500}},
+        Arc{"CE_N", "READ_DATA", {156, 1831}},
+        Arc{"OE_N", "READ_DATA", {156, 213}},
+        Arc{"WE_N", "READY", {470, 1464}},
+        Arc{"WE_N", "READ_DATA", {135, 1795}},
+        Arc{"WORD_ADDR", "READY", {150, 1778}},
+        Arc{"WORD_ADDR", "READ_DATA", {171, 2109}},
+        Arc{"WRITE_DATA", "READY", {469, 1499}},
+        Arc{"WRITE_DATA", "READ_DATA", {560, 1830}},
+        Arc{"WRITE_MASK", "READY", {433, 1427}},
+        Arc{"WRITE_MASK", "READ_DATA", {524, 1758}},
     };
     t.control = "WE_N";
-    t.arcs_by_control[0] = {{"WE_N", "READY", {355, 1301}}, {"WE_N", "READ_DATA", {432, 1787}}, {"CE_N", "READY", {355, 1301}}, {"CE_N", "READ_DATA", {432, 1787}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {391, 1337}}, {"WORD_ADDR", "READ_DATA", {468, 1823}}, {"WRITE_DATA", "READY", {354, 1336}}, {"WRITE_DATA", "READ_DATA", {431, 1822}}, {"WRITE_MASK", "READY", {318, 1264}}, {"WRITE_MASK", "READ_DATA", {395, 1750}}, };
-    t.arcs_by_control[1] = {{"WE_N", "READY", {355, 1301}}, {"WE_N", "READ_DATA", {432, 1787}}, {"CE_N", "READY", {355, 1301}}, {"CE_N", "READ_DATA", {432, 1787}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {391, 1337}}, {"WORD_ADDR", "READ_DATA", {468, 1823}}, {"WRITE_DATA", "READY", {354, 1336}}, {"WRITE_DATA", "READ_DATA", {431, 1822}}, {"WRITE_MASK", "READY", {318, 1264}}, {"WRITE_MASK", "READ_DATA", {395, 1750}}, };
+    t.arcs_by_control[0] = {{"WE_N", "READY", {470, 1464}}, {"WE_N", "READ_DATA", {135, 1795}}, {"CE_N", "READY", {506, 1500}}, {"CE_N", "READ_DATA", {156, 1831}}, {"OE_N", "READ_DATA", {156, 213}}, {"WORD_ADDR", "READY", {150, 1778}}, {"WORD_ADDR", "READ_DATA", {171, 2109}}, {"WRITE_DATA", "READY", {469, 1499}}, {"WRITE_DATA", "READ_DATA", {560, 1830}}, {"WRITE_MASK", "READY", {433, 1427}}, {"WRITE_MASK", "READ_DATA", {524, 1758}}, };
+    t.arcs_by_control[1] = {{"WE_N", "READY", {470, 1464}}, {"WE_N", "READ_DATA", {135, 1795}}, {"CE_N", "READY", {506, 1500}}, {"CE_N", "READ_DATA", {156, 1831}}, {"OE_N", "READ_DATA", {156, 213}}, {"WORD_ADDR", "READY", {150, 1778}}, {"WORD_ADDR", "READ_DATA", {171, 2109}}, {"WRITE_DATA", "READY", {469, 1499}}, {"WRITE_DATA", "READ_DATA", {560, 1830}}, {"WRITE_MASK", "READY", {433, 1427}}, {"WRITE_MASK", "READ_DATA", {524, 1758}}, };
+    return t;
+}()},
+{"memory.sram.device.8.behavioral@depth=256", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.device.8.structural";
+    t.arcs = {
+        Arc{"CE_N", "READY", {577, 1571}},
+        Arc{"CE_N", "READ_DATA", {156, 1902}},
+        Arc{"OE_N", "READ_DATA", {156, 284}},
+        Arc{"WE_N", "READY", {541, 1535}},
+        Arc{"WE_N", "READ_DATA", {135, 1866}},
+        Arc{"WORD_ADDR", "READY", {150, 1884}},
+        Arc{"WORD_ADDR", "READ_DATA", {171, 2215}},
+        Arc{"WRITE_DATA", "READY", {540, 1570}},
+        Arc{"WRITE_DATA", "READ_DATA", {631, 1901}},
+        Arc{"WRITE_MASK", "READY", {504, 1498}},
+        Arc{"WRITE_MASK", "READ_DATA", {595, 1829}},
+    };
+    t.control = "WE_N";
+    t.arcs_by_control[0] = {{"WE_N", "READY", {541, 1535}}, {"WE_N", "READ_DATA", {135, 1866}}, {"CE_N", "READY", {577, 1571}}, {"CE_N", "READ_DATA", {156, 1902}}, {"OE_N", "READ_DATA", {156, 284}}, {"WORD_ADDR", "READY", {150, 1884}}, {"WORD_ADDR", "READ_DATA", {171, 2215}}, {"WRITE_DATA", "READY", {540, 1570}}, {"WRITE_DATA", "READ_DATA", {631, 1901}}, {"WRITE_MASK", "READY", {504, 1498}}, {"WRITE_MASK", "READ_DATA", {595, 1829}}, };
+    t.arcs_by_control[1] = {{"WE_N", "READY", {541, 1535}}, {"WE_N", "READ_DATA", {135, 1866}}, {"CE_N", "READY", {577, 1571}}, {"CE_N", "READ_DATA", {156, 1902}}, {"OE_N", "READ_DATA", {156, 284}}, {"WORD_ADDR", "READY", {150, 1884}}, {"WORD_ADDR", "READ_DATA", {171, 2215}}, {"WRITE_DATA", "READY", {540, 1570}}, {"WRITE_DATA", "READ_DATA", {631, 1901}}, {"WRITE_MASK", "READY", {504, 1498}}, {"WRITE_MASK", "READ_DATA", {595, 1829}}, };
+    return t;
+}()},
+{"memory.sram.device.8.behavioral@depth=512", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.device.8.structural";
+    t.arcs = {
+        Arc{"CE_N", "READY", {670, 1664}},
+        Arc{"CE_N", "READ_DATA", {178, 1995}},
+        Arc{"OE_N", "READ_DATA", {178, 377}},
+        Arc{"WE_N", "READY", {634, 1628}},
+        Arc{"WE_N", "READ_DATA", {157, 1959}},
+        Arc{"WORD_ADDR", "READY", {172, 2012}},
+        Arc{"WORD_ADDR", "READ_DATA", {193, 2343}},
+        Arc{"WRITE_DATA", "READY", {633, 1663}},
+        Arc{"WRITE_DATA", "READ_DATA", {724, 1994}},
+        Arc{"WRITE_MASK", "READY", {597, 1591}},
+        Arc{"WRITE_MASK", "READ_DATA", {688, 1922}},
+    };
+    t.control = "WE_N";
+    t.arcs_by_control[0] = {{"WE_N", "READY", {634, 1628}}, {"WE_N", "READ_DATA", {157, 1959}}, {"CE_N", "READY", {670, 1664}}, {"CE_N", "READ_DATA", {178, 1995}}, {"OE_N", "READ_DATA", {178, 377}}, {"WORD_ADDR", "READY", {172, 2012}}, {"WORD_ADDR", "READ_DATA", {193, 2343}}, {"WRITE_DATA", "READY", {633, 1663}}, {"WRITE_DATA", "READ_DATA", {724, 1994}}, {"WRITE_MASK", "READY", {597, 1591}}, {"WRITE_MASK", "READ_DATA", {688, 1922}}, };
+    t.arcs_by_control[1] = {{"WE_N", "READY", {634, 1628}}, {"WE_N", "READ_DATA", {157, 1959}}, {"CE_N", "READY", {670, 1664}}, {"CE_N", "READ_DATA", {178, 1995}}, {"OE_N", "READ_DATA", {178, 377}}, {"WORD_ADDR", "READY", {172, 2012}}, {"WORD_ADDR", "READ_DATA", {193, 2343}}, {"WRITE_DATA", "READY", {633, 1663}}, {"WRITE_DATA", "READ_DATA", {724, 1994}}, {"WRITE_MASK", "READY", {597, 1591}}, {"WRITE_MASK", "READ_DATA", {688, 1922}}, };
     return t;
 }()},
 {"memory.sram.device.8.behavioral@rows=1", [] {
     PartDelays t;
     t.evidence = "proven on memory.sram.device.8.structural";
     t.arcs = {
-        Arc{"CE_N", "READY", {355, 1146}},
+        Arc{"CE_N", "READY", {355, 1258}},
         Arc{"CE_N", "READ_DATA", {432, 1441}},
         Arc{"OE_N", "READ_DATA", {77, 77}},
-        Arc{"WE_N", "READY", {355, 1146}},
+        Arc{"WE_N", "READY", {355, 1258}},
         Arc{"WE_N", "READ_DATA", {432, 1441}},
-        Arc{"WORD_ADDR", "READY", {391, 1182}},
+        Arc{"WORD_ADDR", "READY", {391, 1294}},
         Arc{"WORD_ADDR", "READ_DATA", {468, 1477}},
-        Arc{"WRITE_DATA", "READY", {354, 1181}},
+        Arc{"WRITE_DATA", "READY", {354, 1293}},
         Arc{"WRITE_DATA", "READ_DATA", {431, 1476}},
-        Arc{"WRITE_MASK", "READY", {318, 1109}},
+        Arc{"WRITE_MASK", "READY", {318, 1221}},
         Arc{"WRITE_MASK", "READ_DATA", {395, 1404}},
     };
     t.control = "WE_N";
-    t.arcs_by_control[0] = {{"WE_N", "READY", {355, 1146}}, {"WE_N", "READ_DATA", {432, 1441}}, {"CE_N", "READY", {355, 1146}}, {"CE_N", "READ_DATA", {432, 1441}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {391, 1182}}, {"WORD_ADDR", "READ_DATA", {468, 1477}}, {"WRITE_DATA", "READY", {354, 1181}}, {"WRITE_DATA", "READ_DATA", {431, 1476}}, {"WRITE_MASK", "READY", {318, 1109}}, {"WRITE_MASK", "READ_DATA", {395, 1404}}, };
-    t.arcs_by_control[1] = {{"WE_N", "READY", {355, 1146}}, {"WE_N", "READ_DATA", {432, 1441}}, {"CE_N", "READY", {355, 1146}}, {"CE_N", "READ_DATA", {432, 1441}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {391, 1182}}, {"WORD_ADDR", "READ_DATA", {468, 1477}}, {"WRITE_DATA", "READY", {354, 1181}}, {"WRITE_DATA", "READ_DATA", {431, 1476}}, {"WRITE_MASK", "READY", {318, 1109}}, {"WRITE_MASK", "READ_DATA", {395, 1404}}, };
+    t.arcs_by_control[0] = {{"WE_N", "READY", {355, 1258}}, {"WE_N", "READ_DATA", {432, 1441}}, {"CE_N", "READY", {355, 1258}}, {"CE_N", "READ_DATA", {432, 1441}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {391, 1294}}, {"WORD_ADDR", "READ_DATA", {468, 1477}}, {"WRITE_DATA", "READY", {354, 1293}}, {"WRITE_DATA", "READ_DATA", {431, 1476}}, {"WRITE_MASK", "READY", {318, 1221}}, {"WRITE_MASK", "READ_DATA", {395, 1404}}, };
+    t.arcs_by_control[1] = {{"WE_N", "READY", {355, 1258}}, {"WE_N", "READ_DATA", {432, 1441}}, {"CE_N", "READY", {355, 1258}}, {"CE_N", "READ_DATA", {432, 1441}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {391, 1294}}, {"WORD_ADDR", "READ_DATA", {468, 1477}}, {"WRITE_DATA", "READY", {354, 1293}}, {"WRITE_DATA", "READ_DATA", {431, 1476}}, {"WRITE_MASK", "READY", {318, 1221}}, {"WRITE_MASK", "READ_DATA", {395, 1404}}, };
     return t;
 }()},
 {"memory.sram.device.8.behavioral@depth=64@rows=1", [] {
     PartDelays t;
     t.evidence = "proven on memory.sram.device.8.structural";
     t.arcs = {
-        Arc{"CE_N", "READY", {355, 1301}},
-        Arc{"CE_N", "READ_DATA", {432, 1751}},
-        Arc{"OE_N", "READ_DATA", {77, 77}},
-        Arc{"WE_N", "READY", {355, 1301}},
-        Arc{"WE_N", "READ_DATA", {432, 1751}},
-        Arc{"WORD_ADDR", "READY", {391, 1337}},
-        Arc{"WORD_ADDR", "READ_DATA", {468, 1787}},
-        Arc{"WRITE_DATA", "READY", {354, 1336}},
-        Arc{"WRITE_DATA", "READ_DATA", {431, 1786}},
-        Arc{"WRITE_MASK", "READY", {318, 1264}},
-        Arc{"WRITE_MASK", "READ_DATA", {395, 1714}},
+        Arc{"CE_N", "READY", {506, 1500}},
+        Arc{"CE_N", "READ_DATA", {156, 1795}},
+        Arc{"OE_N", "READ_DATA", {156, 213}},
+        Arc{"WE_N", "READY", {470, 1464}},
+        Arc{"WE_N", "READ_DATA", {135, 1759}},
+        Arc{"WORD_ADDR", "READY", {150, 1778}},
+        Arc{"WORD_ADDR", "READ_DATA", {171, 2073}},
+        Arc{"WRITE_DATA", "READY", {469, 1499}},
+        Arc{"WRITE_DATA", "READ_DATA", {560, 1794}},
+        Arc{"WRITE_MASK", "READY", {433, 1427}},
+        Arc{"WRITE_MASK", "READ_DATA", {524, 1722}},
     };
     t.control = "WE_N";
-    t.arcs_by_control[0] = {{"WE_N", "READY", {355, 1301}}, {"WE_N", "READ_DATA", {432, 1751}}, {"CE_N", "READY", {355, 1301}}, {"CE_N", "READ_DATA", {432, 1751}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {391, 1337}}, {"WORD_ADDR", "READ_DATA", {468, 1787}}, {"WRITE_DATA", "READY", {354, 1336}}, {"WRITE_DATA", "READ_DATA", {431, 1786}}, {"WRITE_MASK", "READY", {318, 1264}}, {"WRITE_MASK", "READ_DATA", {395, 1714}}, };
-    t.arcs_by_control[1] = {{"WE_N", "READY", {355, 1301}}, {"WE_N", "READ_DATA", {432, 1751}}, {"CE_N", "READY", {355, 1301}}, {"CE_N", "READ_DATA", {432, 1751}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {391, 1337}}, {"WORD_ADDR", "READ_DATA", {468, 1787}}, {"WRITE_DATA", "READY", {354, 1336}}, {"WRITE_DATA", "READ_DATA", {431, 1786}}, {"WRITE_MASK", "READY", {318, 1264}}, {"WRITE_MASK", "READ_DATA", {395, 1714}}, };
+    t.arcs_by_control[0] = {{"WE_N", "READY", {470, 1464}}, {"WE_N", "READ_DATA", {135, 1759}}, {"CE_N", "READY", {506, 1500}}, {"CE_N", "READ_DATA", {156, 1795}}, {"OE_N", "READ_DATA", {156, 213}}, {"WORD_ADDR", "READY", {150, 1778}}, {"WORD_ADDR", "READ_DATA", {171, 2073}}, {"WRITE_DATA", "READY", {469, 1499}}, {"WRITE_DATA", "READ_DATA", {560, 1794}}, {"WRITE_MASK", "READY", {433, 1427}}, {"WRITE_MASK", "READ_DATA", {524, 1722}}, };
+    t.arcs_by_control[1] = {{"WE_N", "READY", {470, 1464}}, {"WE_N", "READ_DATA", {135, 1759}}, {"CE_N", "READY", {506, 1500}}, {"CE_N", "READ_DATA", {156, 1795}}, {"OE_N", "READ_DATA", {156, 213}}, {"WORD_ADDR", "READY", {150, 1778}}, {"WORD_ADDR", "READ_DATA", {171, 2073}}, {"WRITE_DATA", "READY", {469, 1499}}, {"WRITE_DATA", "READ_DATA", {560, 1794}}, {"WRITE_MASK", "READY", {433, 1427}}, {"WRITE_MASK", "READ_DATA", {524, 1722}}, };
     return t;
 }()},
 {"memory.sram.device.8.behavioral@depth=128@rows=1", [] {
     PartDelays t;
     t.evidence = "proven on memory.sram.device.8.structural";
     t.arcs = {
-        Arc{"CE_N", "READY", {355, 1429}},
-        Arc{"CE_N", "READ_DATA", {432, 2007}},
-        Arc{"OE_N", "READ_DATA", {77, 77}},
-        Arc{"WE_N", "READY", {355, 1429}},
-        Arc{"WE_N", "READ_DATA", {432, 2007}},
-        Arc{"WORD_ADDR", "READY", {391, 1465}},
-        Arc{"WORD_ADDR", "READ_DATA", {468, 2043}},
-        Arc{"WRITE_DATA", "READY", {354, 1464}},
-        Arc{"WRITE_DATA", "READ_DATA", {431, 2042}},
-        Arc{"WRITE_MASK", "READY", {318, 1392}},
-        Arc{"WRITE_MASK", "READ_DATA", {395, 1970}},
+        Arc{"CE_N", "READY", {577, 1571}},
+        Arc{"CE_N", "READ_DATA", {156, 1866}},
+        Arc{"OE_N", "READ_DATA", {156, 284}},
+        Arc{"WE_N", "READY", {541, 1535}},
+        Arc{"WE_N", "READ_DATA", {135, 1830}},
+        Arc{"WORD_ADDR", "READY", {150, 1884}},
+        Arc{"WORD_ADDR", "READ_DATA", {171, 2179}},
+        Arc{"WRITE_DATA", "READY", {540, 1570}},
+        Arc{"WRITE_DATA", "READ_DATA", {631, 1865}},
+        Arc{"WRITE_MASK", "READY", {504, 1498}},
+        Arc{"WRITE_MASK", "READ_DATA", {595, 1793}},
     };
     t.control = "WE_N";
-    t.arcs_by_control[0] = {{"WE_N", "READY", {355, 1429}}, {"WE_N", "READ_DATA", {432, 2007}}, {"CE_N", "READY", {355, 1429}}, {"CE_N", "READ_DATA", {432, 2007}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {391, 1465}}, {"WORD_ADDR", "READ_DATA", {468, 2043}}, {"WRITE_DATA", "READY", {354, 1464}}, {"WRITE_DATA", "READ_DATA", {431, 2042}}, {"WRITE_MASK", "READY", {318, 1392}}, {"WRITE_MASK", "READ_DATA", {395, 1970}}, };
-    t.arcs_by_control[1] = {{"WE_N", "READY", {355, 1429}}, {"WE_N", "READ_DATA", {432, 2007}}, {"CE_N", "READY", {355, 1429}}, {"CE_N", "READ_DATA", {432, 2007}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {391, 1465}}, {"WORD_ADDR", "READ_DATA", {468, 2043}}, {"WRITE_DATA", "READY", {354, 1464}}, {"WRITE_DATA", "READ_DATA", {431, 2042}}, {"WRITE_MASK", "READY", {318, 1392}}, {"WRITE_MASK", "READ_DATA", {395, 1970}}, };
+    t.arcs_by_control[0] = {{"WE_N", "READY", {541, 1535}}, {"WE_N", "READ_DATA", {135, 1830}}, {"CE_N", "READY", {577, 1571}}, {"CE_N", "READ_DATA", {156, 1866}}, {"OE_N", "READ_DATA", {156, 284}}, {"WORD_ADDR", "READY", {150, 1884}}, {"WORD_ADDR", "READ_DATA", {171, 2179}}, {"WRITE_DATA", "READY", {540, 1570}}, {"WRITE_DATA", "READ_DATA", {631, 1865}}, {"WRITE_MASK", "READY", {504, 1498}}, {"WRITE_MASK", "READ_DATA", {595, 1793}}, };
+    t.arcs_by_control[1] = {{"WE_N", "READY", {541, 1535}}, {"WE_N", "READ_DATA", {135, 1830}}, {"CE_N", "READY", {577, 1571}}, {"CE_N", "READ_DATA", {156, 1866}}, {"OE_N", "READ_DATA", {156, 284}}, {"WORD_ADDR", "READY", {150, 1884}}, {"WORD_ADDR", "READ_DATA", {171, 2179}}, {"WRITE_DATA", "READY", {540, 1570}}, {"WRITE_DATA", "READ_DATA", {631, 1865}}, {"WRITE_MASK", "READY", {504, 1498}}, {"WRITE_MASK", "READ_DATA", {595, 1793}}, };
     return t;
 }()},
 {"memory.sram.device.8.behavioral@rows=4", [] {
     PartDelays t;
     t.evidence = "proven on memory.sram.device.8.structural";
     t.arcs = {
-        Arc{"CE_N", "READY", {355, 1140}},
+        Arc{"CE_N", "READY", {355, 1252}},
         Arc{"CE_N", "READ_DATA", {432, 1466}},
         Arc{"OE_N", "READ_DATA", {77, 77}},
-        Arc{"WE_N", "READY", {355, 1140}},
+        Arc{"WE_N", "READY", {355, 1252}},
         Arc{"WE_N", "READ_DATA", {432, 1466}},
-        Arc{"WORD_ADDR", "READY", {391, 1176}},
+        Arc{"WORD_ADDR", "READY", {391, 1288}},
         Arc{"WORD_ADDR", "READ_DATA", {468, 1502}},
-        Arc{"WRITE_DATA", "READY", {354, 1175}},
+        Arc{"WRITE_DATA", "READY", {354, 1287}},
         Arc{"WRITE_DATA", "READ_DATA", {431, 1501}},
-        Arc{"WRITE_MASK", "READY", {318, 1103}},
+        Arc{"WRITE_MASK", "READY", {318, 1215}},
         Arc{"WRITE_MASK", "READ_DATA", {395, 1429}},
     };
     t.control = "WE_N";
-    t.arcs_by_control[0] = {{"WE_N", "READY", {355, 1140}}, {"WE_N", "READ_DATA", {432, 1466}}, {"CE_N", "READY", {355, 1140}}, {"CE_N", "READ_DATA", {432, 1466}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {391, 1176}}, {"WORD_ADDR", "READ_DATA", {468, 1502}}, {"WRITE_DATA", "READY", {354, 1175}}, {"WRITE_DATA", "READ_DATA", {431, 1501}}, {"WRITE_MASK", "READY", {318, 1103}}, {"WRITE_MASK", "READ_DATA", {395, 1429}}, };
-    t.arcs_by_control[1] = {{"WE_N", "READY", {355, 1140}}, {"WE_N", "READ_DATA", {432, 1466}}, {"CE_N", "READY", {355, 1140}}, {"CE_N", "READ_DATA", {432, 1466}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {391, 1176}}, {"WORD_ADDR", "READ_DATA", {468, 1502}}, {"WRITE_DATA", "READY", {354, 1175}}, {"WRITE_DATA", "READ_DATA", {431, 1501}}, {"WRITE_MASK", "READY", {318, 1103}}, {"WRITE_MASK", "READ_DATA", {395, 1429}}, };
+    t.arcs_by_control[0] = {{"WE_N", "READY", {355, 1252}}, {"WE_N", "READ_DATA", {432, 1466}}, {"CE_N", "READY", {355, 1252}}, {"CE_N", "READ_DATA", {432, 1466}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {391, 1288}}, {"WORD_ADDR", "READ_DATA", {468, 1502}}, {"WRITE_DATA", "READY", {354, 1287}}, {"WRITE_DATA", "READ_DATA", {431, 1501}}, {"WRITE_MASK", "READY", {318, 1215}}, {"WRITE_MASK", "READ_DATA", {395, 1429}}, };
+    t.arcs_by_control[1] = {{"WE_N", "READY", {355, 1252}}, {"WE_N", "READ_DATA", {432, 1466}}, {"CE_N", "READY", {355, 1252}}, {"CE_N", "READ_DATA", {432, 1466}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {391, 1288}}, {"WORD_ADDR", "READ_DATA", {468, 1502}}, {"WRITE_DATA", "READY", {354, 1287}}, {"WRITE_DATA", "READ_DATA", {431, 1501}}, {"WRITE_MASK", "READY", {318, 1215}}, {"WRITE_MASK", "READ_DATA", {395, 1429}}, };
     return t;
 }()},
 {"memory.sram.device.8.behavioral@depth=64@rows=4", [] {
     PartDelays t;
     t.evidence = "proven on memory.sram.device.8.structural";
     t.arcs = {
-        Arc{"CE_N", "READY", {355, 1205}},
+        Arc{"CE_N", "READY", {355, 1317}},
         Arc{"CE_N", "READ_DATA", {432, 1666}},
         Arc{"OE_N", "READ_DATA", {77, 77}},
-        Arc{"WE_N", "READY", {355, 1205}},
+        Arc{"WE_N", "READY", {355, 1317}},
         Arc{"WE_N", "READ_DATA", {432, 1666}},
-        Arc{"WORD_ADDR", "READY", {391, 1241}},
+        Arc{"WORD_ADDR", "READY", {391, 1353}},
         Arc{"WORD_ADDR", "READ_DATA", {468, 1702}},
-        Arc{"WRITE_DATA", "READY", {354, 1240}},
+        Arc{"WRITE_DATA", "READY", {354, 1352}},
         Arc{"WRITE_DATA", "READ_DATA", {431, 1701}},
-        Arc{"WRITE_MASK", "READY", {318, 1168}},
+        Arc{"WRITE_MASK", "READY", {318, 1280}},
         Arc{"WRITE_MASK", "READ_DATA", {395, 1629}},
     };
     t.control = "WE_N";
-    t.arcs_by_control[0] = {{"WE_N", "READY", {355, 1205}}, {"WE_N", "READ_DATA", {432, 1666}}, {"CE_N", "READY", {355, 1205}}, {"CE_N", "READ_DATA", {432, 1666}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {391, 1241}}, {"WORD_ADDR", "READ_DATA", {468, 1702}}, {"WRITE_DATA", "READY", {354, 1240}}, {"WRITE_DATA", "READ_DATA", {431, 1701}}, {"WRITE_MASK", "READY", {318, 1168}}, {"WRITE_MASK", "READ_DATA", {395, 1629}}, };
-    t.arcs_by_control[1] = {{"WE_N", "READY", {355, 1205}}, {"WE_N", "READ_DATA", {432, 1666}}, {"CE_N", "READY", {355, 1205}}, {"CE_N", "READ_DATA", {432, 1666}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {391, 1241}}, {"WORD_ADDR", "READ_DATA", {468, 1702}}, {"WRITE_DATA", "READY", {354, 1240}}, {"WRITE_DATA", "READ_DATA", {431, 1701}}, {"WRITE_MASK", "READY", {318, 1168}}, {"WRITE_MASK", "READ_DATA", {395, 1629}}, };
+    t.arcs_by_control[0] = {{"WE_N", "READY", {355, 1317}}, {"WE_N", "READ_DATA", {432, 1666}}, {"CE_N", "READY", {355, 1317}}, {"CE_N", "READ_DATA", {432, 1666}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {391, 1353}}, {"WORD_ADDR", "READ_DATA", {468, 1702}}, {"WRITE_DATA", "READY", {354, 1352}}, {"WRITE_DATA", "READ_DATA", {431, 1701}}, {"WRITE_MASK", "READY", {318, 1280}}, {"WRITE_MASK", "READ_DATA", {395, 1629}}, };
+    t.arcs_by_control[1] = {{"WE_N", "READY", {355, 1317}}, {"WE_N", "READ_DATA", {432, 1666}}, {"CE_N", "READY", {355, 1317}}, {"CE_N", "READ_DATA", {432, 1666}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {391, 1353}}, {"WORD_ADDR", "READ_DATA", {468, 1702}}, {"WRITE_DATA", "READY", {354, 1352}}, {"WRITE_DATA", "READ_DATA", {431, 1701}}, {"WRITE_MASK", "READY", {318, 1280}}, {"WRITE_MASK", "READ_DATA", {395, 1629}}, };
     return t;
 }()},
 {"memory.sram.device.8.behavioral@depth=128@rows=4", [] {
     PartDelays t;
     t.evidence = "proven on memory.sram.device.8.structural";
     t.arcs = {
-        Arc{"CE_N", "READY", {355, 1237}},
+        Arc{"CE_N", "READY", {355, 1349}},
         Arc{"CE_N", "READ_DATA", {432, 1730}},
         Arc{"OE_N", "READ_DATA", {77, 77}},
-        Arc{"WE_N", "READY", {355, 1237}},
+        Arc{"WE_N", "READY", {355, 1349}},
         Arc{"WE_N", "READ_DATA", {432, 1730}},
-        Arc{"WORD_ADDR", "READY", {391, 1273}},
+        Arc{"WORD_ADDR", "READY", {391, 1385}},
         Arc{"WORD_ADDR", "READ_DATA", {468, 1766}},
-        Arc{"WRITE_DATA", "READY", {354, 1272}},
+        Arc{"WRITE_DATA", "READY", {354, 1384}},
         Arc{"WRITE_DATA", "READ_DATA", {431, 1765}},
-        Arc{"WRITE_MASK", "READY", {318, 1200}},
+        Arc{"WRITE_MASK", "READY", {318, 1312}},
         Arc{"WRITE_MASK", "READ_DATA", {395, 1693}},
     };
     t.control = "WE_N";
-    t.arcs_by_control[0] = {{"WE_N", "READY", {355, 1237}}, {"WE_N", "READ_DATA", {432, 1730}}, {"CE_N", "READY", {355, 1237}}, {"CE_N", "READ_DATA", {432, 1730}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {391, 1273}}, {"WORD_ADDR", "READ_DATA", {468, 1766}}, {"WRITE_DATA", "READY", {354, 1272}}, {"WRITE_DATA", "READ_DATA", {431, 1765}}, {"WRITE_MASK", "READY", {318, 1200}}, {"WRITE_MASK", "READ_DATA", {395, 1693}}, };
-    t.arcs_by_control[1] = {{"WE_N", "READY", {355, 1237}}, {"WE_N", "READ_DATA", {432, 1730}}, {"CE_N", "READY", {355, 1237}}, {"CE_N", "READ_DATA", {432, 1730}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {391, 1273}}, {"WORD_ADDR", "READ_DATA", {468, 1766}}, {"WRITE_DATA", "READY", {354, 1272}}, {"WRITE_DATA", "READ_DATA", {431, 1765}}, {"WRITE_MASK", "READY", {318, 1200}}, {"WRITE_MASK", "READ_DATA", {395, 1693}}, };
+    t.arcs_by_control[0] = {{"WE_N", "READY", {355, 1349}}, {"WE_N", "READ_DATA", {432, 1730}}, {"CE_N", "READY", {355, 1349}}, {"CE_N", "READ_DATA", {432, 1730}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {391, 1385}}, {"WORD_ADDR", "READ_DATA", {468, 1766}}, {"WRITE_DATA", "READY", {354, 1384}}, {"WRITE_DATA", "READ_DATA", {431, 1765}}, {"WRITE_MASK", "READY", {318, 1312}}, {"WRITE_MASK", "READ_DATA", {395, 1693}}, };
+    t.arcs_by_control[1] = {{"WE_N", "READY", {355, 1349}}, {"WE_N", "READ_DATA", {432, 1730}}, {"CE_N", "READY", {355, 1349}}, {"CE_N", "READ_DATA", {432, 1730}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {391, 1385}}, {"WORD_ADDR", "READ_DATA", {468, 1766}}, {"WRITE_DATA", "READY", {354, 1384}}, {"WRITE_DATA", "READ_DATA", {431, 1765}}, {"WRITE_MASK", "READY", {318, 1312}}, {"WRITE_MASK", "READ_DATA", {395, 1693}}, };
     return t;
 }()},
 {"memory.sram.device.8.behavioral@depth=64@rows=8", [] {
     PartDelays t;
     t.evidence = "proven on memory.sram.device.8.structural";
     t.arcs = {
-        Arc{"CE_N", "READY", {355, 1154}},
+        Arc{"CE_N", "READY", {355, 1266}},
         Arc{"CE_N", "READ_DATA", {432, 1635}},
         Arc{"OE_N", "READ_DATA", {77, 77}},
-        Arc{"WE_N", "READY", {355, 1154}},
+        Arc{"WE_N", "READY", {355, 1266}},
         Arc{"WE_N", "READ_DATA", {432, 1635}},
-        Arc{"WORD_ADDR", "READY", {391, 1190}},
+        Arc{"WORD_ADDR", "READY", {391, 1302}},
         Arc{"WORD_ADDR", "READ_DATA", {468, 1671}},
-        Arc{"WRITE_DATA", "READY", {354, 1189}},
+        Arc{"WRITE_DATA", "READY", {354, 1301}},
         Arc{"WRITE_DATA", "READ_DATA", {431, 1670}},
-        Arc{"WRITE_MASK", "READY", {318, 1117}},
+        Arc{"WRITE_MASK", "READY", {318, 1229}},
         Arc{"WRITE_MASK", "READ_DATA", {395, 1598}},
     };
     t.control = "WE_N";
-    t.arcs_by_control[0] = {{"WE_N", "READY", {355, 1154}}, {"WE_N", "READ_DATA", {432, 1635}}, {"CE_N", "READY", {355, 1154}}, {"CE_N", "READ_DATA", {432, 1635}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {391, 1190}}, {"WORD_ADDR", "READ_DATA", {468, 1671}}, {"WRITE_DATA", "READY", {354, 1189}}, {"WRITE_DATA", "READ_DATA", {431, 1670}}, {"WRITE_MASK", "READY", {318, 1117}}, {"WRITE_MASK", "READ_DATA", {395, 1598}}, };
-    t.arcs_by_control[1] = {{"WE_N", "READY", {355, 1154}}, {"WE_N", "READ_DATA", {432, 1635}}, {"CE_N", "READY", {355, 1154}}, {"CE_N", "READ_DATA", {432, 1635}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {391, 1190}}, {"WORD_ADDR", "READ_DATA", {468, 1671}}, {"WRITE_DATA", "READY", {354, 1189}}, {"WRITE_DATA", "READ_DATA", {431, 1670}}, {"WRITE_MASK", "READY", {318, 1117}}, {"WRITE_MASK", "READ_DATA", {395, 1598}}, };
+    t.arcs_by_control[0] = {{"WE_N", "READY", {355, 1266}}, {"WE_N", "READ_DATA", {432, 1635}}, {"CE_N", "READY", {355, 1266}}, {"CE_N", "READ_DATA", {432, 1635}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {391, 1302}}, {"WORD_ADDR", "READ_DATA", {468, 1671}}, {"WRITE_DATA", "READY", {354, 1301}}, {"WRITE_DATA", "READ_DATA", {431, 1670}}, {"WRITE_MASK", "READY", {318, 1229}}, {"WRITE_MASK", "READ_DATA", {395, 1598}}, };
+    t.arcs_by_control[1] = {{"WE_N", "READY", {355, 1266}}, {"WE_N", "READ_DATA", {432, 1635}}, {"CE_N", "READY", {355, 1266}}, {"CE_N", "READ_DATA", {432, 1635}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {391, 1302}}, {"WORD_ADDR", "READ_DATA", {468, 1671}}, {"WRITE_DATA", "READY", {354, 1301}}, {"WRITE_DATA", "READ_DATA", {431, 1670}}, {"WRITE_MASK", "READY", {318, 1229}}, {"WRITE_MASK", "READ_DATA", {395, 1598}}, };
     return t;
 }()},
 {"memory.sram.device.8.behavioral@depth=128@rows=8", [] {
     PartDelays t;
     t.evidence = "proven on memory.sram.device.8.structural";
     t.arcs = {
-        Arc{"CE_N", "READY", {355, 1205}},
+        Arc{"CE_N", "READY", {355, 1317}},
         Arc{"CE_N", "READ_DATA", {432, 1737}},
         Arc{"OE_N", "READ_DATA", {77, 77}},
-        Arc{"WE_N", "READY", {355, 1205}},
+        Arc{"WE_N", "READY", {355, 1317}},
         Arc{"WE_N", "READ_DATA", {432, 1737}},
-        Arc{"WORD_ADDR", "READY", {391, 1241}},
+        Arc{"WORD_ADDR", "READY", {391, 1353}},
         Arc{"WORD_ADDR", "READ_DATA", {468, 1773}},
-        Arc{"WRITE_DATA", "READY", {354, 1240}},
+        Arc{"WRITE_DATA", "READY", {354, 1352}},
         Arc{"WRITE_DATA", "READ_DATA", {431, 1772}},
-        Arc{"WRITE_MASK", "READY", {318, 1168}},
+        Arc{"WRITE_MASK", "READY", {318, 1280}},
         Arc{"WRITE_MASK", "READ_DATA", {395, 1700}},
     };
     t.control = "WE_N";
-    t.arcs_by_control[0] = {{"WE_N", "READY", {355, 1205}}, {"WE_N", "READ_DATA", {432, 1737}}, {"CE_N", "READY", {355, 1205}}, {"CE_N", "READ_DATA", {432, 1737}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {391, 1241}}, {"WORD_ADDR", "READ_DATA", {468, 1773}}, {"WRITE_DATA", "READY", {354, 1240}}, {"WRITE_DATA", "READ_DATA", {431, 1772}}, {"WRITE_MASK", "READY", {318, 1168}}, {"WRITE_MASK", "READ_DATA", {395, 1700}}, };
-    t.arcs_by_control[1] = {{"WE_N", "READY", {355, 1205}}, {"WE_N", "READ_DATA", {432, 1737}}, {"CE_N", "READY", {355, 1205}}, {"CE_N", "READ_DATA", {432, 1737}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {391, 1241}}, {"WORD_ADDR", "READ_DATA", {468, 1773}}, {"WRITE_DATA", "READY", {354, 1240}}, {"WRITE_DATA", "READ_DATA", {431, 1772}}, {"WRITE_MASK", "READY", {318, 1168}}, {"WRITE_MASK", "READ_DATA", {395, 1700}}, };
+    t.arcs_by_control[0] = {{"WE_N", "READY", {355, 1317}}, {"WE_N", "READ_DATA", {432, 1737}}, {"CE_N", "READY", {355, 1317}}, {"CE_N", "READ_DATA", {432, 1737}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {391, 1353}}, {"WORD_ADDR", "READ_DATA", {468, 1773}}, {"WRITE_DATA", "READY", {354, 1352}}, {"WRITE_DATA", "READ_DATA", {431, 1772}}, {"WRITE_MASK", "READY", {318, 1280}}, {"WRITE_MASK", "READ_DATA", {395, 1700}}, };
+    t.arcs_by_control[1] = {{"WE_N", "READY", {355, 1317}}, {"WE_N", "READ_DATA", {432, 1737}}, {"CE_N", "READY", {355, 1317}}, {"CE_N", "READ_DATA", {432, 1737}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {391, 1353}}, {"WORD_ADDR", "READ_DATA", {468, 1773}}, {"WRITE_DATA", "READY", {354, 1352}}, {"WRITE_DATA", "READ_DATA", {431, 1772}}, {"WRITE_MASK", "READY", {318, 1280}}, {"WRITE_MASK", "READ_DATA", {395, 1700}}, };
     return t;
 }()},
 {"memory.sram.device.8.behavioral@depth=64@rows=16", [] {
     PartDelays t;
     t.evidence = "proven on memory.sram.device.8.structural";
     t.arcs = {
-        Arc{"CE_N", "READY", {355, 1146}},
+        Arc{"CE_N", "READY", {355, 1258}},
         Arc{"CE_N", "READ_DATA", {432, 1690}},
         Arc{"OE_N", "READ_DATA", {77, 77}},
-        Arc{"WE_N", "READY", {355, 1146}},
+        Arc{"WE_N", "READY", {355, 1258}},
         Arc{"WE_N", "READ_DATA", {432, 1690}},
-        Arc{"WORD_ADDR", "READY", {391, 1182}},
+        Arc{"WORD_ADDR", "READY", {391, 1294}},
         Arc{"WORD_ADDR", "READ_DATA", {468, 1726}},
-        Arc{"WRITE_DATA", "READY", {354, 1181}},
+        Arc{"WRITE_DATA", "READY", {354, 1293}},
         Arc{"WRITE_DATA", "READ_DATA", {431, 1725}},
-        Arc{"WRITE_MASK", "READY", {318, 1109}},
+        Arc{"WRITE_MASK", "READY", {318, 1221}},
         Arc{"WRITE_MASK", "READ_DATA", {395, 1653}},
     };
     t.control = "WE_N";
-    t.arcs_by_control[0] = {{"WE_N", "READY", {355, 1146}}, {"WE_N", "READ_DATA", {432, 1690}}, {"CE_N", "READY", {355, 1146}}, {"CE_N", "READ_DATA", {432, 1690}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {391, 1182}}, {"WORD_ADDR", "READ_DATA", {468, 1726}}, {"WRITE_DATA", "READY", {354, 1181}}, {"WRITE_DATA", "READ_DATA", {431, 1725}}, {"WRITE_MASK", "READY", {318, 1109}}, {"WRITE_MASK", "READ_DATA", {395, 1653}}, };
-    t.arcs_by_control[1] = {{"WE_N", "READY", {355, 1146}}, {"WE_N", "READ_DATA", {432, 1690}}, {"CE_N", "READY", {355, 1146}}, {"CE_N", "READ_DATA", {432, 1690}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {391, 1182}}, {"WORD_ADDR", "READ_DATA", {468, 1726}}, {"WRITE_DATA", "READY", {354, 1181}}, {"WRITE_DATA", "READ_DATA", {431, 1725}}, {"WRITE_MASK", "READY", {318, 1109}}, {"WRITE_MASK", "READ_DATA", {395, 1653}}, };
+    t.arcs_by_control[0] = {{"WE_N", "READY", {355, 1258}}, {"WE_N", "READ_DATA", {432, 1690}}, {"CE_N", "READY", {355, 1258}}, {"CE_N", "READ_DATA", {432, 1690}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {391, 1294}}, {"WORD_ADDR", "READ_DATA", {468, 1726}}, {"WRITE_DATA", "READY", {354, 1293}}, {"WRITE_DATA", "READ_DATA", {431, 1725}}, {"WRITE_MASK", "READY", {318, 1221}}, {"WRITE_MASK", "READ_DATA", {395, 1653}}, };
+    t.arcs_by_control[1] = {{"WE_N", "READY", {355, 1258}}, {"WE_N", "READ_DATA", {432, 1690}}, {"CE_N", "READY", {355, 1258}}, {"CE_N", "READ_DATA", {432, 1690}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {391, 1294}}, {"WORD_ADDR", "READ_DATA", {468, 1726}}, {"WRITE_DATA", "READY", {354, 1293}}, {"WRITE_DATA", "READ_DATA", {431, 1725}}, {"WRITE_MASK", "READY", {318, 1221}}, {"WRITE_MASK", "READ_DATA", {395, 1653}}, };
     return t;
 }()},
 {"memory.sram.device.8.behavioral@depth=128@rows=16", [] {
     PartDelays t;
     t.evidence = "proven on memory.sram.device.8.structural";
     t.arcs = {
-        Arc{"CE_N", "READY", {355, 1154}},
+        Arc{"CE_N", "READY", {355, 1266}},
         Arc{"CE_N", "READ_DATA", {432, 1706}},
         Arc{"OE_N", "READ_DATA", {77, 77}},
-        Arc{"WE_N", "READY", {355, 1154}},
+        Arc{"WE_N", "READY", {355, 1266}},
         Arc{"WE_N", "READ_DATA", {432, 1706}},
-        Arc{"WORD_ADDR", "READY", {391, 1190}},
+        Arc{"WORD_ADDR", "READY", {391, 1302}},
         Arc{"WORD_ADDR", "READ_DATA", {468, 1742}},
-        Arc{"WRITE_DATA", "READY", {354, 1189}},
+        Arc{"WRITE_DATA", "READY", {354, 1301}},
         Arc{"WRITE_DATA", "READ_DATA", {431, 1741}},
-        Arc{"WRITE_MASK", "READY", {318, 1117}},
+        Arc{"WRITE_MASK", "READY", {318, 1229}},
         Arc{"WRITE_MASK", "READ_DATA", {395, 1669}},
     };
     t.control = "WE_N";
-    t.arcs_by_control[0] = {{"WE_N", "READY", {355, 1154}}, {"WE_N", "READ_DATA", {432, 1706}}, {"CE_N", "READY", {355, 1154}}, {"CE_N", "READ_DATA", {432, 1706}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {391, 1190}}, {"WORD_ADDR", "READ_DATA", {468, 1742}}, {"WRITE_DATA", "READY", {354, 1189}}, {"WRITE_DATA", "READ_DATA", {431, 1741}}, {"WRITE_MASK", "READY", {318, 1117}}, {"WRITE_MASK", "READ_DATA", {395, 1669}}, };
-    t.arcs_by_control[1] = {{"WE_N", "READY", {355, 1154}}, {"WE_N", "READ_DATA", {432, 1706}}, {"CE_N", "READY", {355, 1154}}, {"CE_N", "READ_DATA", {432, 1706}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {391, 1190}}, {"WORD_ADDR", "READ_DATA", {468, 1742}}, {"WRITE_DATA", "READY", {354, 1189}}, {"WRITE_DATA", "READ_DATA", {431, 1741}}, {"WRITE_MASK", "READY", {318, 1117}}, {"WRITE_MASK", "READ_DATA", {395, 1669}}, };
+    t.arcs_by_control[0] = {{"WE_N", "READY", {355, 1266}}, {"WE_N", "READ_DATA", {432, 1706}}, {"CE_N", "READY", {355, 1266}}, {"CE_N", "READ_DATA", {432, 1706}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {391, 1302}}, {"WORD_ADDR", "READ_DATA", {468, 1742}}, {"WRITE_DATA", "READY", {354, 1301}}, {"WRITE_DATA", "READ_DATA", {431, 1741}}, {"WRITE_MASK", "READY", {318, 1229}}, {"WRITE_MASK", "READ_DATA", {395, 1669}}, };
+    t.arcs_by_control[1] = {{"WE_N", "READY", {355, 1266}}, {"WE_N", "READ_DATA", {432, 1706}}, {"CE_N", "READY", {355, 1266}}, {"CE_N", "READ_DATA", {432, 1706}}, {"OE_N", "READ_DATA", {77, 77}}, {"WORD_ADDR", "READY", {391, 1302}}, {"WORD_ADDR", "READ_DATA", {468, 1742}}, {"WRITE_DATA", "READY", {354, 1301}}, {"WRITE_DATA", "READ_DATA", {431, 1741}}, {"WRITE_MASK", "READY", {318, 1229}}, {"WRITE_MASK", "READ_DATA", {395, 1669}}, };
     return t;
 }()},
 {"memory.sram.endpoint.16.behavioral", [] {
@@ -12314,6 +12377,48 @@
     return t;
 }()},
 {"memory.sram.scalable-endpoint.16.behavioral@depth=128", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.endpoint.16.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {141, 141}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {217, 296};
+    t.launches["RSP_READ_DATA"] = {162, 212};
+    t.launches["RSP_STATUS"] = {162, 212};
+    t.launches["RSP_VALID"] = {162, 226};
+    t.setup["REQ_ADDR"] = 900;
+    t.setup["REQ_OP"] = 855;
+    t.setup["REQ_VALID"] = 372;
+    t.setup["REQ_WRITE_DATA"] = 231;
+    t.setup["REQ_WRITE_MASK"] = 613;
+    t.setup["RSP_READY"] = 513;
+    t.internal_period = 668;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.sram.endpoint.16.behavioral@depth=256", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.endpoint.16.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {141, 141}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {217, 296};
+    t.launches["RSP_READ_DATA"] = {162, 212};
+    t.launches["RSP_STATUS"] = {162, 212};
+    t.launches["RSP_VALID"] = {162, 226};
+    t.setup["REQ_ADDR"] = 900;
+    t.setup["REQ_OP"] = 855;
+    t.setup["REQ_VALID"] = 372;
+    t.setup["REQ_WRITE_DATA"] = 231;
+    t.setup["REQ_WRITE_MASK"] = 613;
+    t.setup["RSP_READY"] = 513;
+    t.internal_period = 668;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.sram.scalable-endpoint.16.behavioral@depth=256", [] {
     PartDelays t;
     t.evidence = "proven on memory.sram.endpoint.16.structural";
     t.arcs = {
@@ -13406,6 +13511,90 @@
     return t;
 }()},
 {"memory.sram.scalable-endpoint.8.behavioral@depth=128", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.endpoint.8.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {141, 141}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {217, 296};
+    t.launches["RSP_READ_DATA"] = {162, 212};
+    t.launches["RSP_STATUS"] = {162, 212};
+    t.launches["RSP_VALID"] = {162, 226};
+    t.setup["REQ_ADDR"] = 900;
+    t.setup["REQ_OP"] = 855;
+    t.setup["REQ_VALID"] = 372;
+    t.setup["REQ_WRITE_DATA"] = 231;
+    t.setup["REQ_WRITE_MASK"] = 613;
+    t.setup["RSP_READY"] = 513;
+    t.internal_period = 668;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.sram.endpoint.8.behavioral@depth=256", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.endpoint.8.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {141, 141}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {217, 296};
+    t.launches["RSP_READ_DATA"] = {162, 212};
+    t.launches["RSP_STATUS"] = {162, 212};
+    t.launches["RSP_VALID"] = {162, 226};
+    t.setup["REQ_ADDR"] = 900;
+    t.setup["REQ_OP"] = 855;
+    t.setup["REQ_VALID"] = 372;
+    t.setup["REQ_WRITE_DATA"] = 231;
+    t.setup["REQ_WRITE_MASK"] = 613;
+    t.setup["RSP_READY"] = 513;
+    t.internal_period = 668;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.sram.scalable-endpoint.8.behavioral@depth=256", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.endpoint.8.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {141, 141}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {217, 296};
+    t.launches["RSP_READ_DATA"] = {162, 212};
+    t.launches["RSP_STATUS"] = {162, 212};
+    t.launches["RSP_VALID"] = {162, 226};
+    t.setup["REQ_ADDR"] = 900;
+    t.setup["REQ_OP"] = 855;
+    t.setup["REQ_VALID"] = 372;
+    t.setup["REQ_WRITE_DATA"] = 231;
+    t.setup["REQ_WRITE_MASK"] = 613;
+    t.setup["RSP_READY"] = 513;
+    t.internal_period = 668;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.sram.endpoint.8.behavioral@depth=512", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.endpoint.8.structural";
+    t.arcs = {
+        Arc{"RSP_READY", "REQ_READY", {141, 141}},
+    };
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {217, 296};
+    t.launches["RSP_READ_DATA"] = {162, 212};
+    t.launches["RSP_STATUS"] = {162, 212};
+    t.launches["RSP_VALID"] = {162, 226};
+    t.setup["REQ_ADDR"] = 900;
+    t.setup["REQ_OP"] = 855;
+    t.setup["REQ_VALID"] = 372;
+    t.setup["REQ_WRITE_DATA"] = 231;
+    t.setup["REQ_WRITE_MASK"] = 613;
+    t.setup["RSP_READY"] = 513;
+    t.internal_period = 668;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.sram.scalable-endpoint.8.behavioral@depth=512", [] {
     PartDelays t;
     t.evidence = "proven on memory.sram.endpoint.8.structural";
     t.arcs = {

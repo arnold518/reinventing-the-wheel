@@ -45,6 +45,7 @@ const std::vector<TimingProfile>& profiles() {
             profile.memory.sram_precharge = ps(4.0);
             profile.memory.sram_bitline_base = ps(3.0);
             profile.memory.sram_bitline_per_row = ps(0.1);
+            profile.memory.sram_wire_per_side = ps(0.5);
             profile.memory.rom_settle = ps(3.0);
             profile.memory.rom_column_base = ps(4.0);
             profile.memory.rom_column_per_row = ps(0.1);

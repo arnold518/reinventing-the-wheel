@@ -256,8 +256,8 @@ size_t staticAccessTime(size_t width, Technology technology, const EndpointConfi
     const auto device = nativeDeviceRequest(width, technology, config);
     const size_t rows = config.depth_words / config.words_per_row;
     const size_t device_fallback = technology == Technology::SRAM
-        ? memoryTimerSettle(memory.sram_settle, 34 + width + width / 8, true) + memory.sram_precharge + memory.sramBitline(rows) + 12 * gate
-        : memoryTimerSettle(memory.rom_settle, 33, false) + memory.romColumn(rows) + 8 * gate;
+        ? memoryTimerSettle(memory.sram_settle, 34 + width + width / 8, true) + memory.sram_precharge + memory.sramBitline(rows) + 2 * timing::leafDelay(timing::Leaf::MemoryPrimitive) + 14 * gate
+        : memoryTimerSettle(memory.rom_settle, 33, false) + memory.romColumn(rows) + timing::leafDelay(timing::Leaf::MemoryPrimitive) + 14 * gate;
     const size_t controller = provenMaximum(memoryContractId(technology, "controller", width) + ".behavioral",
                                             endpointParameters(config), "MEM_CE_N", flop + gate);
     return controller + provenMaximum(device.contract_id + ".behavioral", device.parameters, "READY", device_fallback);

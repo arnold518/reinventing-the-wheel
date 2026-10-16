@@ -490,3 +490,35 @@ table):
 | --- | --- | --- |
 | 5. On-chip geometry and completion | READY replica over sense and output; structural multi-subarray on-chip SRAM (subarrays of at most 64 rows plus a global wire leaf); size formula fitted on 1, 2 and 4 subarrays and checked on a held-out 8; scalable on-chip SRAM uses it | Structural and compact agree at every structural size; held-out size within ±10 % of the formula; access grows with size; checks pass under `unit` and `embedded` |
 | 6. Calibration | Realistic intervals from the PDF-checked tables (SDRAM tRCD/CL/tRP/tRAS/tWR/tREF, NOR tACC/program/erase, SRAM tAA/tWC) with per-row terms 0 for external devices; on-chip SRAM against CACTI 6.5 trends; refresh interval 7.8 µs in cycles at the certified clock | Each external parameter within ±10 % of its datasheet; on-chip within ±20 % of CACTI; SRAM < DRAM ≤ NOR read order holds |
+
+## 2026-10-16 — Owner rule: realistic memories, not cache-favouring ones
+
+The owner directed: do not shape memory behavior so that caches look
+effective; model the memory technologies realistically. This governs phases
+5–7 and the cache experiment. Consequences, decided by the assistant:
+
+1. **Calibrate end-to-end latency, not only analog intervals.** Phase 6
+   acceptance adds request-to-data latency in clock cycles at the certified
+   clock, compared with real systems: SDRAM row hit about CL plus controller
+   overhead, row miss about tRP + tRCD + CL (Micron -6A: 18 + 18 + 18 ns);
+   NOR random read about tACC; asynchronous SRAM about tAA; and the
+   STM32F7 FMC/flash wait-state figures as the system plausibility check
+   (±25 %). Where the model's protocol adds cycles a real controller would
+   not spend, that is a model defect to fix, not a result.
+2. **Known protocol artifacts to review against real controllers.** (a) The
+   DRAM/NOR command protocol costs about five edges per command (sampler,
+   completion, release, controller sees BUSY). Real SDRAM has no BUSY: the
+   controller counts tRCD/CL/tRP cycles. Phase 6 either justifies each edge
+   or moves the DRAM controller to counted timing from the calibrated
+   intervals, keeping the gate-level device. (b) The static controller's
+   two-stage synchronizer adds two cycles to every SRAM/ROM access; that is
+   right for an asynchronous external chip but not for an on-chip SRAM
+   clocked with the core. (c) The 2026-10-16 latency probe measured a 14-cycle
+   L1 hit against 4 cycles for a DRAM open-row read; a real small L1 hits in
+   1–2 cycles. Phase 7 must bring cache hit latency to a physically justified
+   value (synchronous on-chip banks driven directly), and the record must
+   state the remaining cycle costs and why.
+3. **No tuning toward an outcome.** Parameters come from cited sources or
+   from the gate-level circuits; a result that favors or disfavors caches is
+   reported as found, with its protocol and timing causes, and is never a
+   reason to change a parameter.

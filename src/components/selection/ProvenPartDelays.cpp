@@ -68,7 +68,48 @@ PartDelays scaled(const PartDelays& at64, const PartDelays& at128, size_t depth)
     return table;
 }
 
+size_t gridSide(size_t subarrays) { size_t side = 1; while (side * side < subarrays) ++side; return side; }
+size_t log2Ceil(size_t n) { size_t bits = 0; while ((size_t{1} << bits) < n) ++bits; return bits; }
+
 } // namespace
+
+PartDelays sramSubarrayEstimate(const PartDelays& one, const PartDelays& two, const PartDelays& four, size_t subarrays,
+                                size_t wire_per_side) {
+    PartDelays table = four;
+    const long long levels = static_cast<long long>(log2Ceil(subarrays)) - 2;
+    const long long sides = static_cast<long long>(gridSide(subarrays)) - static_cast<long long>(gridSide(4));
+    const auto grow = [&](size_t d4, size_t d2, size_t d1) {
+        if (d4 == d2 && d2 == d1) return d4;
+        const long long a = std::max<long long>(0, static_cast<long long>(d4) - static_cast<long long>(d2));
+        const long long wire = 2 * static_cast<long long>(wire_per_side);
+        return static_cast<size_t>(std::max<long long>(static_cast<long long>(d4), static_cast<long long>(d4) + a * levels + wire * sides));
+    };
+    const auto find_arc = [](const PartDelays& t, const PartDelays::Arc& arc) -> const PartDelays::Arc* {
+        for (const auto& candidate : t.arcs) if (candidate.input == arc.input && candidate.output == arc.output) return &candidate;
+        return nullptr;
+    };
+    for (auto& arc : table.arcs) {
+        const auto* at2 = find_arc(two, arc);
+        const auto* at1 = find_arc(one, arc);
+        arc.delay.maximum = grow(arc.delay.maximum, at2 ? at2->delay.maximum : arc.delay.maximum, at1 ? at1->delay.maximum : (at2 ? at2->delay.maximum : arc.delay.maximum));
+        if (at1) arc.delay.minimum = std::min(arc.delay.minimum, at1->delay.minimum);
+    }
+    for (auto& [output, range] : table.launches) {
+        const auto at2 = two.launches.find(output), at1 = one.launches.find(output);
+        const size_t d2 = at2 != two.launches.end() ? at2->second.maximum : range.maximum;
+        range.maximum = grow(range.maximum, d2, at1 != one.launches.end() ? at1->second.maximum : d2);
+        if (at1 != one.launches.end()) range.minimum = std::min(range.minimum, at1->second.minimum);
+    }
+    for (auto& [input, setup] : table.setup) {
+        const auto at2 = two.setup.find(input), at1 = one.setup.find(input);
+        const size_t d2 = at2 != two.setup.end() ? at2->second : setup;
+        setup = grow(setup, d2, at1 != one.setup.end() ? at1->second : d2);
+    }
+    table.internal_period = grow(four.internal_period, two.internal_period, one.internal_period);
+    table.evidence = "ESTIMATE for " + std::to_string(subarrays) + " subarrays: per-level growth fitted at 2 and 4 subarrays, global wire from the profile ("
+        + four.evidence + ")";
+    return table;
+}
 
 const PartDelays* provenPartDelays(const std::string& implementation_id, const ParameterMap& parameters) {
     const auto exact = [&](const std::string& key) -> const PartDelays* {
@@ -109,10 +150,21 @@ const PartDelays* provenPartDelays(const std::string& implementation_id, const P
     // 64 words or fewer: the table proven at 64 words, not the looser one
     // for 128.
     if (depth <= 64) return at64;
+    // A size proven exactly (on-chip SRAM is proven up to 512 words).
+    if (const auto* proven = exact(implementation_id + "@depth=" + std::to_string(depth) + variant)) return proven;
     static std::map<std::string, PartDelays> estimated;
     const auto key = timing::activeTimingProfile().name + "|" + implementation_id + "@depth=" + std::to_string(depth) + variant;
     auto found = estimated.find(key);
-    if (found == estimated.end()) found = estimated.emplace(key, scaled(*at64, *at128, depth)).first;
+    if (found == estimated.end()) {
+        // On-chip SRAM in the default layout (two words per row): 64, 128 and
+        // 256 words are 1, 2 and 4 subarrays of SRAM_SUBARRAY_ROWS rows.
+        const auto* at256 = exact(implementation_id + "@depth=256" + variant);
+        if (implementation_id.rfind("memory.sram.", 0) == 0 && rows.empty() && at256) {
+            const size_t subarrays = (depth / 2 + 31) / 32;
+            found = estimated.emplace(key, sramSubarrayEstimate(*at64, *at128, *at256, subarrays,
+                timing::activeTimingProfile().memory.sram_wire_per_side)).first;
+        } else found = estimated.emplace(key, scaled(*at64, *at128, depth)).first;
+    }
     return &found->second;
 }
 

@@ -305,6 +305,7 @@ const std::vector<TestRegistryEntry>& getTestRegistry() {
         entry<SRAMOutputBufferTest>("SRAMOutputBufferTest"),
         entry<SRAMStorageBankTest>("SRAMStorageBankTest"),
         entry<SRAMTest>("SRAMTest"),
+        entry<SRAMSubarrayTest>("SRAMSubarrayTest"),
         entry<SRAMContractTest>("SRAMContractTest"),
         entry<SRAMTimingTest>("SRAMTimingTest"),
         entry<MatrixRowDecoderTest>("MatrixRowDecoderTest"),

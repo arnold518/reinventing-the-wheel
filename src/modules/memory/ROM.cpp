@@ -82,7 +82,10 @@ class ROMAddressControl : public IOComponent {
         size_t column_bits = 0; while ((size_t{1} << column_bits) < config_.words_per_row) ++column_bits;
         size_t decode_depth = 1; while ((size_t{1} << (decode_depth - 1)) < row_bits + 1) ++decode_depth;
         auto timer = b.addNewComponent<memory::MemoryTimer>("ACCESS_TIMER", 33, timing.rom_settle,
-            std::vector<memory::MemoryTimerStage>{{0, decode_depth}, {timing.romColumn(config_.rows()), 1}});
+            std::vector<memory::MemoryTimerStage>{{0, decode_depth}, {timing.romColumn(config_.rows()), 1},
+                // READY after the data: the column multiplexer (select AND,
+                // OR tree) and the output buffer, plus one gate.
+                {timing::leafDelay(timing::Leaf::MemoryPrimitive), column_bits + 2}});
         auto address = b.addNewComponent<BitSplitter<32>>("ADDRESS_BITS");
         w.connect(getInputPin<32>("WORD_ADDR"), address->getInputPin<32>("IN"));
         std::vector<memory_detail::StructuralWiring::PinPtr> held;
@@ -109,7 +112,7 @@ class ROMAddressControl : public IOComponent {
         // give X: the output is enabled by the chip and output selects only.
         w.connect(w.both("OUTPUT_ON", selected, w.invert("OUTPUT_SELECTED", getInputPin("OE_N"))),
                   getOutputPin("OUTPUT_ENABLE"));
-        w.connect(timer->getOutputPin("STAGE_2"), getOutputPin("READY"));
+        w.connect(timer->getOutputPin("STAGE_3"), getOutputPin("READY"));
         w.finish();
     }
 
@@ -204,7 +207,7 @@ class ROMBehavioral : public Primitive, public MemoryDeviceStorage {
             address_ = a; ce_ = ce; oe_ = oe;
             const auto &timing = timing::activeTimingProfile().memory;
             const size_t gate = timing::leafDelay(timing::Leaf::And);
-            const size_t full = memory::memoryTimerSettle(timing.rom_settle, 33, false) + timing.romColumn(config_.rows()) + 8 * gate;
+            const size_t full = memory::memoryTimerSettle(timing.rom_settle, 33, false) + timing.romColumn(config_.rows()) + timing::leafDelay(timing::Leaf::MemoryPrimitive) + 14 * gate;
             if (restart) {
                 auto bounds = memory_detail::arcBounds(getDelays(), changed, "READY", {gate, full});
                 bounds.minimum = memory_detail::safeEarliest(getDelays(), changed, "READY", gate);

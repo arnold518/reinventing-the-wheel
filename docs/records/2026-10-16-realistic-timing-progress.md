@@ -13,7 +13,7 @@ any plan changes the assistant made. The public site (`site-docs/`) is
 deliberately not updated until the owner allows it; records, status and the
 changelog are kept current as usual (owner clarification, 2026-10-16).
 
-Current phase: 5 (on-chip geometry and completion; phases 1–4 done).
+Current phase: 6 (calibration and protocol realism; phases 1–5 done).
 
 ## 2026-10-16 — Phase 0: baseline
 
@@ -666,3 +666,107 @@ self-timed delay-rule exceptions of the old C++ controllers are gone (the
 remaining LAUNCH floors are documented clocked-interface shares). Phase 4 is
 complete. Next: phase 5 as revised in the plan record (READY after data,
 structural multi-subarray on-chip SRAM and its size formula).
+
+## 2026-10-16 — Phase 5: on-chip geometry and completion (in progress)
+
+Phase 4.4 was committed as `ecee655`.
+
+**5.1 READY after data.** The SRAM timer gains a fourth stage (two memory
+primitive delays for the sense amplifier and output buffer, two gates for
+the sense-enable AND and margin) and READY comes from it; the ROM timer gains
+a third stage (one memory primitive for the output buffer, column-mux depth
+plus two gates). READY no longer precedes READ_DATA, which phase 7 needs for
+directly driven cache banks. The compact fallbacks follow.
+
+**5.2 Multi-subarray on-chip SRAM (assistant decisions).**
+- The gate-level SRAM device keeps every bitline to at most
+  `SRAM_SUBARRAY_ROWS` = 32 rows. A larger device builds subarrays, each an
+  ordinary SRAM device with its own self-timing, plus a global decoder on the
+  high word-address bits (CE_N per subarray), global wires
+  (`MemoryWire`, a bus delay leaf; `sram_wire_per_side` per subarray of grid
+  side, `unit` 2 ticks, realistic 0.5 FO4 placeholder) and a multiplexer
+  tree returning READ_DATA and READY. Out-of-range addresses go to subarray
+  0 with its top address bit set, so it answers X with READY like a single
+  bank. The public contract (`memory.sram.device.W`) and pins are unchanged.
+  32 rows rather than 64 so that the 4,096-cell gate-level limit still
+  reaches 8 subarrays (512 words at W=8) for the held-out check.
+- Size formula (`sramSubarrayEstimate`): each delay d(N) = d1 + a log2 N +
+  b (side(N) − 1), side = ceil(sqrt N); a and b fitted exactly from the tables
+  proven at 1, 2 and 4 subarrays (64, 128, 256 words in the default two-word
+  layout). SRAM device and endpoint tables are now also proven at 256 and
+  512 words; an exact table is used wherever it exists, the formula beyond
+  (other layouts keep the per-doubling estimate). `SRAMSubarrayFormulaTest`
+  (new CTest) checks the 8-subarray prediction against the 512-word table in
+  all three profiles within ±10 %. `SRAMSubarrayTest` (new scenario) runs a
+  256-word, four-subarray device in both fidelities.
+
+## 2026-10-16 — Phase 5 results and acceptance
+
+**Formula correction (replaces the formula stated in the design section
+above).** The first fit, d(N) = d1 + a log2 N + b (side − 1) with a and b
+fitted at 2 and 4 subarrays, overshot the held-out 8-subarray table by up to
+13 % on the main paths (embedded WORD_ADDR→READY: formula 3266 ps, proven
+2886) and 26 % on a short `unit` path: it read the one-time partition cost
+(1 → 2 subarrays: decoder, output buffer; +562 ps of the series 1990, 2552,
+2704, 2886) as wire growth. Every path through the array crosses exactly two
+global wires, whose delay is a profile value, so the wire term is no longer
+fitted: d(N) = d(4) + a (log2 N − 2) + 2 sram_wire_per_side (side(N) −
+side(4)), a = d(4) − d(2), unchanged where the delay does not depend on the
+array. `SRAMSubarrayFormulaTest`: 48 delays at 8 subarrays in all three
+profiles, largest deviation 0 %. The exact match says the formula reproduces
+how the gate-level array grows; whether that array is physically realistic
+is the CACTI comparison of phase 6.
+
+**Compact SRAM withdrawal fixed.** Under `embedded`, `DelayRuleTest` found the
+compact SRAM device withdrawing its old word (to Z) at the table's minimum
+CE_N/WE_N→READ_DATA delay, 20 ps before the gates in some transitions: a
+transition-specific path can be slower than the table's minimum. Holding the
+word until the final value broke `SRAMTimingTest` (a superseded access must
+withdraw promptly). The compact part now withdraws at the later of the
+table minimum and the full gate path of that withdrawal in
+`SRAMAccessControl` (restart: change detector, condition gate, OR tree,
+STEADY, STARTED, stage reset, output-enable tree, buffer; deselect: the CE_N
+settle line). The same kind of fix may be needed elsewhere when a compact
+part acts at a table minimum; the full `DelayRuleTest` under `embedded` is
+the check (memory parts now pass under all three profiles).
+
+**Partitioned SRAM bring-up.** Deselected outputs read X (multiplexers pass no
+high impedance): a global output buffer, enabled by the selected subarray's
+READY with chip select, output enable and not writing, now drives the data.
+An unknown select bit makes the gates' READY unknown; the compact model
+follows (READY X for an unknown address above the subarray bits).
+
+**Checks, all passed unless noted.**
+- Tables: all three profiles at a fixed point, `--verify` identical, 610
+  entries (9 new: SRAM device, endpoint and scalable endpoint at 256 and 512
+  words where they fit 4,096 cells).
+- `unit` and `embedded`: SRAMTest, SRAMSubarrayTest (256 words, four
+  subarrays, both fidelities compared), SRAMAccessControlTest,
+  SRAMStorageBankTest, SRAMContractTest, ROMTest, ROMAddressControlTest,
+  MemoryDeviceContractTest, NativeMemoryDeviceTest and contract,
+  MemoryControllerTest, SRAM and ROM endpoints, scalable endpoint, endpoint
+  contract. `unit`: SRAMTimingTest, MemoryEndpointTimingTest, CacheReadTest,
+  four cache scenarios. `SRAMTimingTest` fails under `embedded` as expected
+  (10-tick pulses; tick-driven test).
+- `DelayRuleTest`: SRAM/ROM devices, controllers and endpoints, default run
+  passed (4 recorded floors); SRAM device and endpoint `--report` under all
+  three profiles: no breaks.
+- CPU runs (advanced, two-bit, oracle-verified, before the withdrawal fix,
+  which does not touch the fused endpoint): `unit` SRAM programs 19/20/21 at
+  606/489/786 cycles (period 102; were 472/381/612 before READY-after-data),
+  ROM 472/381/612 (unchanged); `embedded` SRAM 472/381/612 (period 4608),
+  ROM 405/327/525.
+
+**Phase 5 acceptance (revised gate):** structural and compact agree at every
+structural size tested (64-word and 256-word scenarios, contract tests);
+held-out size within ±10 % (0 %); access grows with size (embedded
+WORD_ADDR→READY 1990 → 2886 ps from 1 to 8 subarrays); checks pass under
+`unit` and `embedded`. Phase 5 is complete.
+
+**Plan check after phase 5.** On track; one observation for phase 6. The
+CPU panel's SRAM memory (256 KiB) is a 1,024-subarray on-chip array by this
+model, and the static controller's synchronizer and handshake cost four to
+six cycles per access, where a real on-chip SRAM at this clock runs with
+zero or a fixed few wait states. That is the protocol artifact named in the
+owner rule; phase 6 addresses it together with the DRAM command protocol
+(see the plan record).

@@ -20,6 +20,11 @@ foreach(timing_profile embedded desktop)
         ${CMAKE_SOURCE_DIR}/src/components/selection/ProvenPartDelays.${timing_profile}.generated.inc)
     set_tests_properties(PartDelayTablesComplete_${timing_profile}_Test PROPERTIES LABELS "timing;analysis;slow" TIMEOUT 3600)
 endforeach()
+add_executable(SRAMSubarrayFormulaTest cpp/SRAMSubarrayFormulaTest.cpp)
+target_link_libraries(SRAMSubarrayFormulaTest PRIVATE SimulatorLib)
+add_test(NAME SRAMSubarrayFormulaTest COMMAND SRAMSubarrayFormulaTest)
+set_tests_properties(SRAMSubarrayFormulaTest PROPERTIES LABELS "timing;memory")
+
 add_executable(DelayRuleTest cpp/DelayRuleTest.cpp)
 target_link_libraries(DelayRuleTest PRIVATE SimulatorLib)
 add_test(NAME DelayRuleTest COMMAND DelayRuleTest)
@@ -279,6 +284,7 @@ set(SIMULATION_TESTS
     SRAMOutputBufferTest
     SRAMStorageBankTest
     SRAMTest
+    SRAMSubarrayTest
     SRAMContractTest
     SRAMTimingTest
     MatrixRowDecoderTest

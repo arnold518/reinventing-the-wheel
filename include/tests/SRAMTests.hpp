@@ -14,6 +14,7 @@ SRAM_SCENARIO_TEST(SRAMAccessControlTest)
 SRAM_SCENARIO_TEST(SRAMOutputBufferTest)
 SRAM_SCENARIO_TEST(SRAMStorageBankTest)
 SRAM_SCENARIO_TEST(SRAMTest)
+SRAM_SCENARIO_TEST(SRAMSubarrayTest)
 #undef SRAM_SCENARIO_TEST
 class SRAMContractTest : public StandaloneVerificationTest {
 public: std::string getTestName() const override { return "SRAMContractTest"; }

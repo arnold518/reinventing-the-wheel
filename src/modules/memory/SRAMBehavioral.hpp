@@ -117,7 +117,7 @@ public:
             current_ = now;
             const auto& timing = circuit::timing::activeTimingProfile().memory;
             const size_t gate = circuit::timing::leafDelay(circuit::timing::Leaf::And);
-            const size_t full = circuit::memory::memoryTimerSettle(timing.sram_settle, 34 + W + W / 8, true) + timing.sram_precharge + timing.sramBitline(config_.rows()) + 12 * gate;
+            const size_t full = circuit::memory::memoryTimerSettle(timing.sram_settle, 34 + W + W / 8, true) + timing.sram_precharge + timing.sramBitline(config_.rows()) + 2 * circuit::timing::leafDelay(circuit::timing::Leaf::MemoryPrimitive) + 14 * gate;
             // The arcs proven for this operation (WE_N), when it is known.
             // While WE_N itself changes the operation is in transition: the
             // table's overall arcs apply.
@@ -131,6 +131,24 @@ public:
             auto data = arcBounds(this->getDelays(), from, "READ_DATA", {gate, full}, operation);
             ready.minimum = safeEarliest(this->getDelays(), changed, "READY", gate, switching ? std::nullopt : operation);
             data.minimum = safeEarliest(this->getDelays(), changed, "READ_DATA", gate, switching ? std::nullopt : operation);
+            // The gates withdraw the old word when the output enable falls. A
+            // transition can take longer than the table's minimum (unequal
+            // gate delays), so the withdrawal waits for the whole path it
+            // takes in SRAMAccessControl: for a restart, the change detector,
+            // the condition gate, the OR tree, STEADY, STARTED, a stage's reset
+            // gate, the output-enable tree and the output buffer; for a
+            // deselect, the CE_N settle line instead of the detector.
+            {
+                using circuit::timing::Leaf;
+                using circuit::timing::leafDelay;
+                constexpr size_t inputs = 34 + W + W / 8;
+                size_t levels = 0; while ((size_t{1} << levels) < inputs) ++levels;
+                const size_t tail = leafDelay(Leaf::Not) + 4 * leafDelay(Leaf::And) + leafDelay(Leaf::MemoryPrimitive);
+                const size_t restart = leafDelay(Leaf::Xor) + leafDelay(Leaf::And) + levels * leafDelay(Leaf::Or) + tail;
+                const size_t deselect = circuit::memory::memoryTimerSettle(timing.sram_settle, inputs, true) + tail;
+                const bool deselecting = std::find(changed.begin(), changed.end(), "CE_N") != changed.end() && now.ce != LogicValue::LOW;
+                data.minimum = std::min(data.maximum, std::max(data.minimum, deselecting ? std::max(restart, deselect) : restart));
+            }
             // A drop already on its way stays on time: a second change before it
             // cannot postpone it (the gates drop at the first change).
             const auto low = ready_.pendingAt({LogicValue::LOW});
@@ -162,6 +180,14 @@ private:
     static SRAMDeviceConfig checked(SRAMDeviceConfig c) { c.validate(W); return c; }
     LogicValue completion() const {
         if (current_.ce == LogicValue::HIGH) return LogicValue::LOW;
+        // In an array of subarrays an unknown select bit leaves the subarray,
+        // and so READY, unknown (the gates' global decoder).
+        if (sramSubarrays(config_) > 1) {
+            size_t low_bits = 0; while ((size_t{1} << low_bits) < SRAM_SUBARRAY_ROWS * config_.words_per_row) ++low_bits;
+            const bool power_of_two = (config_.depth_words & (config_.depth_words - 1)) == 0;
+            for (size_t bit = power_of_two ? low_bits : 0; bit < current_.address.size(); ++bit)
+                if (!binary(current_.address[bit])) return LogicValue::UNKNOWN;
+        }
         // A steady unknown address still completes (its data are unknown).
         return current_.ce == LogicValue::LOW && binary(current_.we) ? LogicValue::HIGH : LogicValue::UNKNOWN;
     }
