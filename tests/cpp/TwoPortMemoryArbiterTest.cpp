@@ -13,8 +13,8 @@ void require(bool condition, const char* message) {
 template<size_t Width>
 class Rig {
 public:
-    Rig() {
-        root_ = Component::create<TwoPortMemoryArbiter<Width>>("ARBITER");
+    explicit Rig(size_t block_words = 2) {
+        root_ = Component::create<TwoPortMemoryArbiter<Width>>("ARBITER", block_words);
         ComponentBuilder builder(root_);
         for (const auto& [name, pin] : root_->getAllInputPins())
             inputs_[name] = builder.addNewWireDynamic("IN_" + name, pin->getWidth(), nullptr, {pin});
@@ -66,34 +66,41 @@ void exercise() {
     require(rig.out("I_REQ_READY") == 1 && rig.out("D_REQ_READY") == 0,
             "Initial tie must grant I");
     rig.cycle();
-    rig.drive({{"I_REQ_VALID", 0}});
+    rig.drive({{"I_REQ_VALID", 0}, {"MEM_REQ_READY", 0}});
     require(rig.out("MEM_REQ_VALID") == 0, "Arbiter accepted another request while busy");
+    // I's response leaves the bus into I's buffer although I is not ready.
     rig.drive({{"MEM_RSP_VALID", 1}, {"MEM_RSP_READ_DATA", 0xa5}, {"MEM_RSP_STATUS", 0}});
     require(rig.out("I_RSP_VALID") == 1 && rig.out("D_RSP_VALID") == 0 &&
-            rig.out("I_RSP_READ_DATA") == 0xa5 && rig.out("D_RSP_READ_DATA") == 0 &&
-            rig.out("MEM_RSP_READY") == 0, "Response was not held for I alone");
-    rig.cycle();
-    require(rig.out("I_RSP_VALID") == 1 && rig.out("MEM_REQ_VALID") == 0,
-            "Held response allowed a replay");
-    rig.drive({{"I_RSP_READY", 1}});
-    rig.cycle();
-    rig.drive({{"MEM_RSP_VALID", 0}, {"I_REQ_VALID", 1}});
-    require(rig.out("MEM_REQ_VALID") == 1 && rig.out("MEM_REQ_ADDR") == 4 &&
-            rig.out("MEM_REQ_OP") == 1 && rig.out("MEM_REQ_WRITE_DATA") ==
-                (Width == 8 ? 0x5a : 0x12345678) &&
-            rig.out("D_REQ_READY") == 1 && rig.out("I_REQ_READY") == 0,
-            "Round-robin tie did not grant D");
-    rig.cycle();
-    rig.drive({{"D_REQ_VALID", 0}, {"MEM_RSP_VALID", 1},
-               {"MEM_RSP_READ_DATA", 0x55}, {"MEM_RSP_STATUS", 5}});
-    require(rig.out("D_RSP_VALID") == 1 && rig.out("I_RSP_VALID") == 0 &&
-            rig.out("D_RSP_STATUS") == 5 && rig.out("I_RSP_STATUS") == 0 &&
-            rig.out("MEM_RSP_READY") == 0, "D response leaked to I");
-    rig.drive({{"D_RSP_READY", 1}});
+            rig.out("I_RSP_READ_DATA") == 0xa5 && rig.out("MEM_RSP_READY") == 1,
+            "Response not offered to I alone, or not taken into its buffer");
     rig.cycle();
     rig.drive({{"MEM_RSP_VALID", 0}});
+    require(rig.out("I_RSP_VALID") == 1 && rig.out("I_RSP_READ_DATA") == 0xa5,
+            "Held response lost");
+    // The bus is free: D, still waiting, is offered next.
+    require(rig.out("MEM_REQ_VALID") == 1 && rig.out("MEM_REQ_ADDR") == 4 &&
+            rig.out("MEM_REQ_OP") == 1 && rig.out("MEM_REQ_WRITE_DATA") ==
+                (Width == 8 ? 0x5a : 0x12345678) && rig.out("D_REQ_READY") == 0,
+            "D not offered while I's response is held");
+    rig.drive({{"MEM_REQ_READY", 1}});
+    require(rig.out("D_REQ_READY") == 1 && rig.out("I_REQ_READY") == 0, "D not granted");
+    rig.cycle();
+    rig.drive({{"D_REQ_VALID", 0}, {"I_RSP_READY", 1}});
+    rig.cycle();
+    rig.drive({{"I_RSP_READY", 0}});
+    require(rig.out("I_RSP_VALID") == 0, "I's held response not taken");
+    rig.drive({{"MEM_RSP_VALID", 1}, {"MEM_RSP_READ_DATA", 0x55}, {"MEM_RSP_STATUS", 5}});
+    require(rig.out("D_RSP_VALID") == 1 && rig.out("I_RSP_VALID") == 0 &&
+            rig.out("D_RSP_STATUS") == 5, "D response misrouted");
+    rig.drive({{"D_RSP_READY", 1}});
+    rig.cycle();
+    rig.drive({{"MEM_RSP_VALID", 0}, {"D_RSP_READY", 0}});
+    require(rig.out("D_RSP_VALID") == 0, "D response not taken");
+    // Round robin: after D, a tie goes to I.
+    rig.drive({{"I_REQ_VALID", 1}, {"D_REQ_VALID", 1}});
     require(rig.out("MEM_REQ_ADDR") == 0 && rig.out("I_REQ_READY") == 1,
             "Round-robin priority did not return to I");
+    rig.drive({{"D_REQ_VALID", 0}});
     rig.cycle();
     rig.drive({{"I_REQ_VALID", 0}, {"I_RST", 1}, {"D_RST", 1}});
     rig.cycle();
@@ -103,13 +110,42 @@ void exercise() {
     require(rig.out("I_RSP_VALID") == 0 && rig.out("D_RSP_VALID") == 0,
             "Late lower response was delivered after reset");
 }
+// A granted burst read (op 4) keeps the arbiter until its last word: the
+// other port waits, every word goes to the burst's owner.
+template<size_t Width>
+void exerciseBurst(size_t block_words) {
+    Rig<Width> rig(block_words);
+    rig.drive({{"D_REQ_VALID", 1}, {"D_REQ_OP", 4}, {"D_REQ_ADDR", 8}, {"MEM_REQ_READY", 1},
+               {"D_RSP_READY", 1}, {"I_RSP_READY", 1}});
+    require(rig.out("D_REQ_READY") == 1 && rig.out("MEM_REQ_OP") == 4, "Burst not offered");
+    rig.cycle();
+    rig.drive({{"D_REQ_VALID", 0}, {"I_REQ_VALID", 1}, {"I_REQ_OP", 0}, {"I_REQ_ADDR", 0}});
+    for (size_t word = 0; word < block_words; ++word) {
+        require(rig.out("MEM_REQ_VALID") == 0 && rig.out("I_REQ_READY") == 0, "Request granted during a burst");
+        rig.drive({{"MEM_RSP_VALID", 1}, {"MEM_RSP_READ_DATA", 0x10 + word}});
+        require(rig.out("D_RSP_VALID") == 1 && rig.out("I_RSP_VALID") == 0 &&
+                rig.out("D_RSP_READ_DATA") == 0x10 + word, "Burst word not passed to its owner");
+        rig.cycle();
+        rig.drive({{"MEM_RSP_VALID", 0}});
+    }
+    require(rig.out("MEM_REQ_VALID") == 1 && rig.out("I_REQ_READY") == 1, "Arbiter not free after the burst's last word");
+    rig.cycle();
+    rig.drive({{"I_REQ_VALID", 0}, {"MEM_RSP_VALID", 1}, {"MEM_RSP_READ_DATA", 0x77}});
+    require(rig.out("I_RSP_VALID") == 1 && rig.out("D_RSP_VALID") == 0, "Single read after a burst misrouted");
+    rig.cycle();
+    rig.drive({{"MEM_RSP_VALID", 0}});
+    require(rig.out("MEM_REQ_VALID") == 0 && rig.out("I_RSP_VALID") == 0, "Single read did not end at its word");
+}
 } // namespace
 
 int main() {
     try {
         exercise<8>();
         exercise<32>();
-        std::cout << "Two-port structural arbitration passed at W=8 and W=32\n";
+        exerciseBurst<32>(4);
+        exerciseBurst<8>(2);
+        exerciseBurst<32>(1);
+        std::cout << "Two-port structural arbitration passed at W=8 and W=32, with bursts of 1, 2 and 4 words\n";
         return 0;
     } catch (const std::exception& error) {
         std::cerr << error.what() << '\n';

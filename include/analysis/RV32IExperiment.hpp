@@ -2,6 +2,7 @@
 #include "analysis/CircuitTimingAnalyzer.hpp"
 #include "analysis/RV32IBenchmarks.hpp"
 #include "benchmark/Benchmark.hpp"
+#include "modules/memory/Cache.hpp"
 #include "modules/rv32i/RV32IMemorySystem.hpp"
 #include "rv32i/RV32IPrediction.hpp"
 #include "rv32i/RV32IState.hpp"
@@ -18,12 +19,30 @@ struct RV32IExperimentProgress {
     size_t retired_instructions = 0;
     double host_seconds = 0.0;
 };
+// A cache of the memory-topology campaign: `sets` sets of two ways and
+// 16-byte lines, SRAM tags and data, scalable storage, burst fills.
+inline circuit::memory::CacheConfig campaignCache(size_t sets, bool writable) {
+    circuit::memory::CacheConfig c;
+    c.sets=sets;c.ways=2;c.block_bytes=16;c.backing_depth_words=65536;c.read_write=writable;
+    c.tag_technology=c.data_technology=circuit::memory::Technology::SRAM;
+    c.scalable_storage=true;c.burst_fill=true;
+    return c;
+}
+
 struct RV32IExperimentConfig {
     std::string core="advanced"; // single, baseline, advanced
     std::string fidelity="behavioral"; // behavioral or reference (shared structural profile)
     size_t program=20, period=4000, max_cycles=100000, max_events=100000000;
     rv32i::PredictionConfig prediction{};
     rv32i::MemoryConfiguration memory{};
+    // Memory topology (advanced core): empty = the two separate memories
+    // with each image part in its own memory; "A" = two separate memories,
+    // each with the whole image; "B" = both ports through the two-port
+    // arbiter to one memory; "C-ID" = an L1 per port, then the arbiter;
+    // "D-0" = the arbiter, then a shared L2; "D-ID" = L1s, arbiter, L2.
+    std::string topology;
+    circuit::memory::CacheConfig instruction_l1=campaignCache(8,false), data_l1=campaignCache(8,true),
+        l2=campaignCache(64,true);
     std::string elf;
     std::string workload; // legacy loops or rv32iBenchmarkNames(); empty selects program/ELF
     size_t iterations=128;

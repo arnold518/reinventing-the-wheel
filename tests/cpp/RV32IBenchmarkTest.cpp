@@ -53,7 +53,8 @@ int main() {
         std::sort(a.begin(),a.end());std::sort(b.begin(),b.end());check(a==b,"Paired instruction multiset differs");
         rejects([&]{buildRV32IBenchmark("unknown",1,o);});
         rejects([&]{buildRV32IBenchmark("independent",0,o);});
-        rejects([&]{auto p=o;p.size=257;buildRV32IBenchmark("sort",1,p);});
+        rejects([&]{auto p=o;p.size=1025;buildRV32IBenchmark("sort",1,p);});
+        rejects([&]{auto p=o;p.size=513;buildRV32IBenchmark("pointer-chase",1,p);});
         rejects([&]{auto p=o;p.distance=3;buildRV32IBenchmark("dependency",1,p);});
         rejects([&]{auto p=o;p.seed=0;buildRV32IBenchmark("scan",1,p);});
         rejects([&]{auto p=o;p.training_iterations=1;buildRV32IBenchmark("scan",1,p);});

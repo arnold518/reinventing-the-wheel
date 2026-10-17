@@ -83,7 +83,7 @@ class BenchmarkCLI(unittest.TestCase):
                     self.assertEqual(region["retired_instructions"], 3 * 66)
 
     def test_invalid_options(self):
-        for args in (("--size", 0), ("--size", 257), ("--distance", 3), ("--seed", 0),
+        for args in (("--size", 0), ("--size", 1025), ("--distance", 3), ("--seed", 0),
                      ("--seed", 0x100000000), ("--training-iterations", 1),
                      ("--measure-body", "--start-pc", 0), ("--branch-spacing", 3)):
             run("--workload", "dependency", *args, okay=False)

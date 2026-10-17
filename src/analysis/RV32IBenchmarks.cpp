@@ -85,7 +85,9 @@ void validateRV32IBenchmark(const std::string& name,size_t iterations,const RV32
     require(isRV32IBenchmark(name),"Unknown benchmark");
     require(iterations>0&&iterations<=1000000&&o.training_iterations<=1000000-iterations,
         "Total benchmark iterations must be 1..1000000");
-    require(o.size>=1&&o.size<=256,"Benchmark size must be 1..256");
+    // The data layout bounds the size: input at 0x1000 and output at 0x2000
+    // hold 1024 words each; pointer-chase nodes take two words.
+    require(o.size>=1&&o.size<=(name=="pointer-chase"?512u:1024u),"Benchmark size must be 1..1024 (pointer-chase 1..512)");
     require(o.distance==1||o.distance==2||o.distance==4||o.distance==8,"Dependency distance must be 1,2,4,8");
     require(o.branch_spacing>=4&&o.branch_spacing<=256&&(o.branch_spacing&(o.branch_spacing-1))==0,
         "Branch spacing must be a power of two in 4..256 words");

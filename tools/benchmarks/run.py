@@ -16,6 +16,7 @@ MEMORY_BINARIES = (
     "MemoryEndpointBenchmark",
     "FFMemoryBenchmark",
     "SRAMBenchmark",
+    "CachePerformanceBenchmark",
 )
 
 

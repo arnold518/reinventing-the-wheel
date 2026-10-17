@@ -32,10 +32,11 @@ void usage() {
         "  [--binary-startup] (with --safe-clock: checked binary-initialized contract)\n"
         "  [--workload NAME] [--iterations N] [--list-workloads | --list-benchmark-catalog]\n"
         "  [--start-pc PC --stop-pc PC]\n"
-        "  [--size 1..256] [--distance 1|2|4|8] [--seed N] [--branch-spacing WORDS]\n"
+        "  [--size 1..1024] [--distance 1|2|4|8] [--seed N] [--branch-spacing WORDS]\n"
         "  [--pattern taken|not-taken|alternating|bursts|irregular]\n"
         "  [--measure-body] [--training-iterations N] (new named benchmarks only)\n"
         "  [--memory ff|sram|sram-async|dram|rom|nor-flash] [--phase-ticks N] [--guard-ticks N]\n"
+        "  [--topology A|B|C-ID|D-0|D-ID] (advanced core: shared memory, arbiter, L1s, L2)\n"
         "  [--max-cycles N] [--max-events N] [--allow-incomplete] [--progress-cycles N]\n"
         "  [--tohost ADDRESS] [--allocation-limit-mib N]\n"
         "  [--trace-cycles] (requires --max-cycles <= 4096; validation only)\n"
@@ -110,6 +111,7 @@ int main(int argc,char** argv) {
                 c.memory.technology=circuit::memory::technologyFromName(value=="sram-async"?"sram":value);
                 c.memory.device.clocked=value=="sram";
             }
+            else if(key=="--topology")c.topology=value;
             else if(key=="--phase-ticks")c.memory.device.phase_ticks=number(value);
             else if(key=="--guard-ticks")c.memory.device.guard_ticks=number(value);
             else if(key=="--allocation-limit-mib")rss_mib=number(value);

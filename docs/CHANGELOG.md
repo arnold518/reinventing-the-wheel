@@ -7,6 +7,38 @@ history remains in Git and the archived reports.
 
 ## 2026-10-17
 
+### Cache experiment: topologies, standalone benchmark, arbiter fixes (branch `realistic-timing`, phase 7c)
+
+- **Changed:** `rv32i_experiment --topology A|B|C-ID|D-0|D-ID` builds the
+  campaign's five memory systems (two memories; one memory behind the
+  two-port arbiter; L1s, a shared L2, or both) with the frozen geometry
+  (`campaignCache`: 8 or 64 sets, two ways, 16-byte lines, SRAM banks, burst
+  fills), whole-image loading and boundary counters. `TwoPortMemoryArbiter`
+  takes a burst length and keeps a granted burst to its last word, and has
+  a one-entry response buffer per port: a response leaves the bus into its
+  owner's buffer, so a core stalled on its other port no longer deadlocks
+  the shared bus. New `CachePerformanceBenchmark` (S0–S2 standalone traces,
+  in the memory benchmark runner). A clocked SRAM macro no longer gets a
+  delay twin (it changed nothing but cost a cached CPU 3–40× run time). The
+  generated benchmarks accept up to the data layout's 1024 words.
+- **Why:** the cache plan's Step 2 and Step 3 infrastructure; the arbiter
+  defects were found by the new topology test.
+- **Verified:** Step 1 in both profiles (L1 hit 2, L2 hit 8, DRAM 8–22
+  cycles); `RV32ITopologyTest` (new: all five topologies verify a sort, plus
+  a program through D-ID over SRAM), `TwoPortMemoryArbiterTest` (rewritten,
+  burst cases), cache scenario tests, `CacheReadTest`,
+  `RV32IMemoryMigrationTest`, `RV32IExperimentCLITest`, the benchmark tests;
+  DelayRuleTest on the SRAM parts without the twin in all three profiles;
+  the standalone benchmark in `embedded` and `desktop`, every read verified.
+- **Limits:** cached and arbitrated roots are not certified by the analyzer
+  (no all-state contract for an endpoint behind them); they run at the
+  core's certified clock, measured to be at least 37 % (`embedded`) and 43 %
+  (`desktop`) above their failure point, and below that point they fail
+  silently (the cache's state bits have no setup check). Open defect: the
+  gate-level clocked SRAM macro corrupts a row neighbour when driven by the
+  cache; compact banks (the campaign profile) are correct. The CPU panel is
+  not yet run.
+
 ### Burst reads and burst-filled cache lines (branch `realistic-timing`, phase 7b)
 
 - **Changed:** a burst read (op 4, `Operation::ReadBurst`) returns the

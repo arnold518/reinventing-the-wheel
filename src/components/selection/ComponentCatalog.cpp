@@ -345,6 +345,14 @@ std::shared_ptr<const DelayTwin> ComponentCatalog::delayTwin(
     // that out means building all their gates, which a run of a compact
     // core must not pay for.
     if (partsWithoutGateList().contains(request.contract_id)) return nullptr;
+    // A clocked SRAM macro changes its outputs only after its clock edge,
+    // which its table's launches from CLK time. Its gate list would be
+    // settled again at every change of its data inputs (a cache's fill words
+    // pass its write data every cycle) for no gain: measured, a cached CPU
+    // ran 3 to 40 times slower with it.
+    if (request.contract_id.rfind("memory.sram.device.", 0) == 0)
+        if (const auto clocked = request.parameters.find("clocked"); clocked != request.parameters.end() && clocked->second == "1")
+            return nullptr;
     // For measuring what one part's gate list costs: CIRCUITSIM_NO_DELAY_TWIN_FOR=contract-prefix.
     if (const char* skip = std::getenv("CIRCUITSIM_NO_DELAY_TWIN_FOR"); skip && *skip && request.contract_id.rfind(skip, 0) == 0) return nullptr;
     // Gate delays differ between timing profiles, and so do the gate lists.

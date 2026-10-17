@@ -1,4 +1,6 @@
 #include "modules/memory/BehavioralMemoryEndpoint.hpp"
+#include "modules/memory/TwoPortMemoryArbiter.hpp"
+#include "components/StructuralNetBuilder.hpp"
 #include "MemoryTimingState.hpp"
 #include "components/selection/ProvenPartDelays.hpp"
 #include "components/TimingProfile.hpp"
@@ -66,6 +68,10 @@ void RV32IExperimentConfig::validate() const {
     require(core=="advanced" || memory.technology==circuit::memory::Technology::FF,
         "Single-cycle and baseline require zero-wait FF endpoints");
     require(!binary_startup || safe_clock_only,"Binary startup requires safe-clock analysis");
+    require(topology.empty()||topology=="A"||topology=="B"||topology=="C-ID"||topology=="D-0"||topology=="D-ID","Unknown memory topology");
+    require(topology.empty()||core=="advanced","Memory topologies require the advanced core");
+    require(topology.empty()||topology=="A"||!check_handshake_states,"Handshake states are checked on memories wired directly to the core");
+    require(!instruction_l1.read_write&&data_l1.read_write&&l2.read_write,"The instruction L1 is read-only, the data L1 and L2 writable");
     memory.device.validate(32,memory.technology);
     require(memory.device.depth_words<=65536,"Experiment memory is limited to 256 KiB for bounded oracle checking");
     require((tohost&3)==0,"tohost must be word aligned");
@@ -92,7 +98,8 @@ RV32IExperimentResult runRV32IExperiment(const RV32IExperimentConfig& config) {
     // Shared macro boundary: large zero-wait FF memory is compact for EVERY core.
     profile=circuit::withProfileOverrides(std::move(profile),{
         circuit::preferFidelity(circuit::Fidelity::Behavioral,circuit::ProfileSelector::exactPath("EXPERIMENT.IMEM"),"shared memory macro"),
-        circuit::preferFidelity(circuit::Fidelity::Behavioral,circuit::ProfileSelector::exactPath("EXPERIMENT.DMEM"),"shared memory macro")});
+        circuit::preferFidelity(circuit::Fidelity::Behavioral,circuit::ProfileSelector::exactPath("EXPERIMENT.DMEM"),"shared memory macro"),
+        circuit::preferFidelity(circuit::Fidelity::Behavioral,circuit::ProfileSelector::exactPath("EXPERIMENT.MEM"),"shared memory macro")});
     auto manifest=std::make_shared<circuit::BuildManifest>(profile.name(),profile.fingerprint());
     auto context=circuit::BuildContext::rootScope(catalog,std::make_shared<const circuit::BuildProfile>(profile),manifest)->child("EXPERIMENT",std::nullopt);
     auto root=Component::createWithContext<IOComponent>(context,"EXPERIMENT",[](IOComponent* s){
@@ -117,9 +124,69 @@ RV32IExperimentResult runRV32IExperiment(const RV32IExperimentConfig& config) {
     if((memory_config.technology==circuit::memory::Technology::SRAM||memory_config.technology==circuit::memory::Technology::ROM)
         &&!config.safe_clock_only&&config.period)
         memory_config.device.access_cycles=circuit::memory::staticAccessCycles(32,memory_config.technology,memory_config.device,config.period);
-    auto imem=rv32i::buildMemory(b,*root,"IMEM",memory_config);
-    auto dmem=rv32i::buildMemory(b,*root,"DMEM",memory_config);
-    rv32i::wireMemorySystem(b,core,imem,dmem,root->getInputPin("CLK"),root->getInputPin("RST"));
+    // Bursts of a cache line, where caches sit above the memory.
+    const bool topology=!config.topology.empty();
+    const bool shared=topology&&config.topology!="A";
+    const bool l1s=config.topology=="C-ID"||config.topology=="D-ID",l2=config.topology=="D-0"||config.topology=="D-ID";
+    const bool bursts=memory_config.technology==circuit::memory::Technology::SRAM||memory_config.technology==circuit::memory::Technology::DRAM;
+    if(topology&&bursts) {
+        memory_config.device.block_words=config.l2.block_bytes/4;
+        // A DRAM burst stays in one row: the `unit` profile's two-word
+        // stand-in row becomes the 16-word layout (datasheet rows are longer).
+        if(memory_config.technology==circuit::memory::Technology::DRAM&&memory_config.device.words_per_row<memory_config.device.block_words)
+            memory_config.device.words_per_row=16;
+    }
+    std::shared_ptr<IOComponent> imem,dmem;
+    // Request boundaries counted in the measured window: name, component,
+    // pin prefix of its requests downward.
+    std::vector<std::tuple<std::string,std::shared_ptr<IOComponent>,std::string>> boundaries;
+    std::shared_ptr<IOComponent> arbiter;
+    if(!shared) {
+        imem=rv32i::buildMemory(b,*root,"IMEM",memory_config);
+        dmem=rv32i::buildMemory(b,*root,"DMEM",memory_config);
+        rv32i::wireMemorySystem(b,core,imem,dmem,root->getInputPin("CLK"),root->getInputPin("RST"));
+    } else {
+        imem=dmem=rv32i::buildMemory(b,*root,"MEM",memory_config);
+        circuit::detail::StructuralWiring w(b);
+        // Upper's requests (`up` prefix, outputs REQ_*, RSP_READY) to lower's
+        // inputs (`down` prefix), and back.
+        const auto link=[&](const std::shared_ptr<IOComponent>& upper,const std::string& up,
+                            const std::shared_ptr<IOComponent>& lower,const std::string& down) {
+            for(auto name:{"REQ_VALID","REQ_OP","REQ_ADDR","REQ_WRITE_DATA","REQ_WRITE_MASK","RSP_READY"})
+                w.connect(upper->getOutputPinDynamic(up+name),lower->getInputPinDynamic(down+name));
+            for(auto name:{"REQ_READY","RSP_VALID","RSP_READ_DATA","RSP_STATUS"})
+                w.connect(lower->getOutputPinDynamic(down+name),upper->getInputPinDynamic(up+name));
+        };
+        const auto clocked=[&](const std::shared_ptr<IOComponent>& part,const std::string& prefix) {
+            w.connect(root->getInputPin("CLK"),part->getInputPin(prefix+"CLK"));
+            w.connect(root->getInputPin("RST"),part->getInputPin(prefix+"RST"));
+        };
+        const auto cache=[&](const std::string& name,const circuit::memory::CacheConfig& settings,bool burst_backing) {
+            auto c=settings;c.burst_fill=c.burst_fill&&burst_backing;
+            auto part=b.addNewComponent<circuit::memory::Cache<32>>(name,c);
+            w.connect(w.constant(name+"_NO_INVALIDATION",false),part->getInputPin("INV_VALID"));
+            clocked(part,"");
+            boundaries.push_back({name,part,"MEM_"});
+            return std::static_pointer_cast<IOComponent>(part);
+        };
+        w.connect(root->getInputPin("CLK"),core->getInputPin("CLK"));
+        w.connect(root->getInputPin("RST"),core->getInputPin("RST"));
+        arbiter=b.addNewComponent<circuit::memory::TwoPortMemoryArbiter<32>>("ARBITER",config.l2.block_bytes/4);
+        clocked(arbiter,"I_");clocked(arbiter,"D_");
+        boundaries.push_back({"ARBITER",arbiter,"MEM_"});
+        // An L1 under which a cache answers bursts fills with bursts.
+        const bool lower_bursts=bursts||l2;
+        for(const auto& [port,prefix,settings]:{std::tuple{"IMEM_","I_",config.instruction_l1},{"DMEM_","D_",config.data_l1}}) {
+            if(l1s) {
+                auto l1=cache(prefix==std::string("I_")?"IL1":"DL1",settings,lower_bursts);
+                link(core,port,l1,"");link(l1,"MEM_",arbiter,prefix);
+            } else link(core,port,arbiter,prefix);
+        }
+        std::shared_ptr<IOComponent> above_memory=arbiter;
+        if(l2) {auto shared_l2=cache("L2",config.l2,bursts);link(arbiter,"MEM_",shared_l2,"");above_memory=shared_l2;}
+        link(above_memory,"MEM_",imem,"");clocked(imem,"");
+        w.finish();
+    }
     auto clk=b.addNewWire("CLOCK",nullptr,{root->getInputPin("CLK")});
     auto rst=b.addNewWire("RESET",nullptr,{root->getInputPin("RST")});
     auto enable=b.addNewWire("ENABLE",nullptr,{core->getInputPin("ENABLE")});
@@ -160,7 +227,14 @@ RV32IExperimentResult runRV32IExperiment(const RV32IExperimentConfig& config) {
     const size_t capacity=memory_config.device.depth_words*4;
     rv32i::RV32IFunctionalMemory oracle_imem(capacity),oracle_dmem(capacity);
     rv32i::RV32IState oracle;
+    // A topology gives every memory the whole image (one store when shared).
     auto load=[&](bool instruction,uint32_t address,const std::vector<uint8_t>& bytes) {
+        if(topology) {
+            iv->initializeMemoryBytes(address,bytes);
+            if(dv!=iv)dv->initializeMemoryBytes(address,bytes);
+            oracle_imem.loadBytes(address,bytes);oracle_dmem.loadBytes(address,bytes);
+            return;
+        }
         (instruction?iv:dv)->initializeMemoryBytes(address,bytes);
         (instruction?oracle_imem:oracle_dmem).loadBytes(address,bytes);
     };
@@ -324,6 +398,22 @@ RV32IExperimentResult runRV32IExperiment(const RV32IExperimentConfig& config) {
             pending=(pending&&(!complete||accept))||(!pending&&accept&&!complete);
         };
         observePort("IMEM_",instruction_pending);observePort("DMEM_",data_pending);
+        // Requests taken at each boundary below the core (pre-edge values):
+        // reads, burst reads and writes sent down, and response words.
+        if(measuring) {
+            const auto bit=[](const std::shared_ptr<IOComponent>& part,const std::string& pin,bool input) {
+                const auto p=input?part->getInputPinDynamic(pin):part->getOutputPinDynamic(pin);
+                return p&&p->getWidth()==1&&p->getBit(0)==LogicValue::HIGH;
+            };
+            for(const auto& [name,part,prefix]:boundaries) {
+                if(bit(part,prefix+"REQ_VALID",false)&&bit(part,prefix+"REQ_READY",true)) {
+                    const auto op=part->getOutputPinDynamic(prefix+"REQ_OP")->getValueAsUInt64();
+                    ++result.observations[name+(op==1?"_WRITES":op==4?"_BURST_READS":"_READS")];
+                }
+                result.observations[name+"_RESPONSE_WORDS"]+=bit(part,prefix+"RSP_VALID",true)&&bit(part,prefix+"RSP_READY",false);
+            }
+            if(arbiter)result.observations["ARBITER_BOTH_REQUESTING"]+=bit(arbiter,"I_REQ_VALID",true)&&bit(arbiter,"D_REQ_VALID",true);
+        }
         if(measuring) {
         for(auto name:{"LOAD_USE_STALL","MEMORY_STALL","DATA_PORT_STALL","PIPELINE_FLUSH",
                       "DATA_STALL","BRANCH_WAIT","BRANCH_RESOLVED","BRANCH_MISS","PREDICTION_RECOVERY",
@@ -391,6 +481,8 @@ RV32IExperimentResult runRV32IExperiment(const RV32IExperimentConfig& config) {
         // Compare the entire data image, catching wrong-path or duplicate stores,
         // including writes to locations not touched by the oracle.
         if(done)require(actual_memory==oracle_dmem.readBytes(0,capacity),"Final data memory image mismatch");
+        if(done&&topology&&iv!=dv)require(iv->memoryStorage().readBytes(0,capacity)==oracle_imem.readBytes(0,capacity),
+            "Instruction memory copy changed");
         result.prefix_verified=true;
         if(done&&prepared.expected_result) {
             require(result.final_state.halted&&!result.final_state.trapped,"Benchmark must halt normally");
@@ -418,7 +510,8 @@ RV32IExperimentResult runRV32IExperiment(const RV32IExperimentConfig& config) {
             +(config.memory.technology==circuit::memory::Technology::SRAM&&!config.memory.device.clocked?"-async":"")},
         {"prediction",rv32i::predictionPolicyName(config.prediction.policy)},
         {"prediction_entries",std::to_string(config.prediction.entries)},
-        {"period_ticks",std::to_string(config.period)}}};
+        {"period_ticks",std::to_string(config.period)},
+        {"topology",config.topology.empty()?"separate":config.topology}}};
     result.benchmark_run.status=done?benchmark::RunStatus::Completed:benchmark::RunStatus::Incomplete;
     result.benchmark_run.validated=result.verified;
     result.benchmark_run.simulated_ticks=result.cycles*config.period;

@@ -102,7 +102,7 @@ def main():
                     or a.measure_body or a.training_iterations or a.distance != 1
                     or a.branch_spacing != 16 or a.pattern != "alternating"):
         parser.error("Suite owns workload/region options; configure iterations, size and seed instead")
-    if not (1 <= a.iterations <= 1000000 and 1 <= a.size <= 256 and 1 <= a.seed <= 0xffffffff):
+    if not (1 <= a.iterations <= 1000000 and 1 <= a.size <= 1024 and 1 <= a.seed <= 0xffffffff):
         parser.error("Invalid iterations, size or seed")
     workloads = [(f"program-{n:02}", ["--program", n]) for n in programs]
     if a.suite:

@@ -85,12 +85,17 @@ work state changes. Keep dated decisions and validation results in
   up every way at once in directly driven banks (L1 hit two cycles, 7a), and
   burst reads (op 4) exist end to end (7b): SRAM, ROM and DRAM endpoints
   return a line from the requested word, and the cache fills lines with one
-  burst (`fill=burst`), forwards a burst miss and streams a burst hit. With
-  burst fills an L1 miss costs the DRAM access plus six cycles and an L2 hit
-  is no slower than a DRAM row hit (cache plan Step 1, `embedded`). Next: the
-  cache experiment (S0–S2 standalone, then the five CPU topologies,
-  `embedded` then `desktop`); then phase 8 (public site, visualizer, full
-  suite under `unit` and `embedded`). Failing until phase 8:
+  burst (`fill=burst`). The cache experiment is under way: Step 1 holds in
+  both profiles (L1 hit 2, L2 hit 8, DRAM 8–22 cycles), the setup is frozen,
+  the five CPU topologies run in `rv32i_experiment --topology` (the two-port
+  arbiter now counts burst beats and buffers each port's response), and the
+  standalone S0–S2 benchmark ran in both profiles. Next: the five-topology
+  CPU panel, `embedded` then `desktop`. Cached roots cannot be certified by
+  the analyzer yet; they run at the core's certified clock, at least 37 % /
+  43 % above their measured failure point, labelled exploratory.
+  Open defect: the gate-level clocked SRAM macro corrupts a row neighbour
+  when driven by the cache (compact banks, used by the campaign, are
+  correct); not yet explained. Failing until phase 8:
   `MemoryDeviceDocumentationTest` and three `MemoryEndpointIntegrationTest`
   checks (`site-docs/` snippets and pin tables), and `CacheLayoutTest`'s
   saved-layout comparison (layouts predate 7a).

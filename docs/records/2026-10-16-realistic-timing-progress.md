@@ -2063,3 +2063,233 @@ pass except the documentation and saved-layout checks listed last.
   `embedded` (4104 ps) and `desktop` (2858 ps) clocks and every cycle count
   are unchanged; program 19 at `embedded`: FF 103, SRAM 269, asynchronous
   SRAM 336, DRAM 683, ROM 269, NOR 2413 cycles.
+
+## 2026-10-17 — Cache campaign: Step 1 per profile and frozen setup
+
+**Step 1** (`probe/cache_latency.cpp`; L1 8 sets × 2 ways × 16-byte lines,
+L2 64 sets × 2 ways × 16-byte lines, clocked SRAM banks, `fill=burst`; DRAM
+with the profile's row length and `block_words` = 4; cycles from the request
+edge to RSP_VALID at each profile's certified clock; the refresh case is 400
+open-row reads with refresh at the profile's tREFI):
+
+| Read | `embedded` (4104 ps) | `desktop` (2858 ps) |
+| --- | ---: | ---: |
+| L1 hit | 2 | 2 |
+| L2 hit after an L1 miss | 8 | 8 |
+| DRAM open row | 8 | 8 |
+| DRAM closed row (first access) | 14 | 15 |
+| DRAM row change | 20 | 22 |
+| refresh-delayed read (1 of 400) | 14 | 15 |
+| L1 miss, DRAM open / closed row | 14 / 20 | 14 / 21 |
+| L1 + L2 miss, open / closed row | 17 / 23 | 17 / 24 |
+
+The order holds in both profiles. The cache plan expected DRAM "tens of
+cycles" under `embedded`; with datasheet DRAM it is 8–22 cycles at these
+clocks, so an L2 hit only ties a DRAM open-row hit and beats closed-row and
+row-change reads. This corrects the expectation, it is not a violation; no
+delay is changed.
+
+**Frozen for the campaign** (decided before any campaign run):
+
+- I-L1 (read-only) and D-L1 (read/write, write-through, no-write-allocate):
+  each 8 sets × 2 ways × 16-byte lines (256 B), SRAM tags and data, scalable
+  storage, `fill=burst`.
+- Shared L2: 64 sets × 2 ways × 16-byte lines (2 KiB), read/write, SRAM,
+  scalable, `fill=burst`.
+- Main memory: one DRAM endpoint, 65,536 words, the profile's row length and
+  refresh interval, `block_words` = 4; A has two such stores, each with the
+  whole image.
+- Clock: the profile's certified core clock (4104 / 2858 ps). The analyzer
+  certifies only RV32I requesters directly on an endpoint, so cached and
+  arbitrated roots run at that clock as *exploratory*, with zero setup
+  violations required and a check at a nearby longer period.
+- Workloads: `calls`, `sort` with 64 words (512 B working set: input and
+  output, above the 256-B L1 and below the 2-KiB L2), and `stream` with 1024
+  words (8 KiB, above the L2). Iteration counts are set by the pilot.
+- Standalone traces (S0–S2), relative to these sizes: 32 words read
+  repeatedly (half the L1), 128 words for two passes (twice the L1, a
+  quarter of the L2; half the L2 would be 256 words, kept as the plan's
+  bound), a 2048-word stream (four times the L2), and masked stores and reads
+  in the first region with one write miss.
+
+**Found while preparing the topologies:** the two-port arbiter frees itself
+after one response, and the external protocol has no LAST signal, so an L1's
+burst fill through it would release it after the first word. Decision: the
+arbiter gets a `block_words` parameter and counts a granted burst's beats,
+as an interconnect does with a last-beat signal.
+
+## 2026-10-17 — Cache campaign: topology builder, first runs, clock evidence
+
+- **Topologies in the experiment runner.** `RV32IExperimentConfig::topology`
+  (`--topology A|B|C-ID|D-0|D-ID`, advanced core): A = two memories, each
+  with the whole image; B = both ports through the two-port arbiter to one
+  memory; C-ID = an I-L1 and a D-L1 above the arbiter; D-0 = the arbiter
+  above a shared L2; D-ID = both. Caches use the frozen geometry
+  (`campaignCache`), fill with bursts when the memory below answers them
+  (SRAM, DRAM, or an L2), and the memory's `block_words` is the line (4).
+  With a topology every memory and both oracle memories get the whole image;
+  the final data image is compared as before, and A's instruction copy must
+  be unchanged. The `unit` profile's two-word DRAM stand-in row becomes the
+  16-word layout in topologies (a burst stays in its row). Boundary counters
+  per cache and the arbiter, in the measured window: reads, burst reads and
+  writes sent down, response words, and cycles with both arbiter ports
+  requesting.
+- **Arbiter bursts.** `TwoPortMemoryArbiter(name, block_words)`: a granted
+  op-4 request holds the arbiter until its `block_words`-th response word
+  (BURST state, BEAT counter, reset at each grant). `TwoPortMemoryArbiterTest`
+  gained burst cases (4 words at W=32, 2 at W=8, 1 at W=32): the other port
+  waits, every word goes to the owner, a single read after a burst ends at
+  its word.
+- **Run time: the clocked SRAM macro's delay twin.** C-ID ran 20 cycles in
+  9.5 s with FF memory and 0.74 s with SRAM (B: 0.06 s). A temporary counter
+  (reverted) showed one 13,383-gate twin settled 14,575 times in 20 cycles:
+  the cache banks are small clocked macros with gate lists, and each change
+  of their inputs (a fill word passes the data banks' write data) re-settled
+  the whole list. Decision: a clocked SRAM device gets no delay twin (its
+  outputs change only after its clock edge, timed by its table's CLK
+  launches). Without it: 0.23 s and 0.24 s. DelayRuleTest on the SRAM
+  device, controller and endpoint is rerun to confirm the rule and targets
+  (below).
+- **First runs** (program 20): A, B with SRAM and FF verified at `unit`;
+  C-ID verified at `embedded` (4104 ps) with SRAM (214 cycles) and DRAM (232).
+  At `unit` with period 94, C-ID deadlocked on its first fetch: the I-L1 got
+  all four burst words and never answered.
+- **Cached roots and the clock.** The analyzer reports *unknown* for B and
+  C-ID ("no all-state timing contract" for an endpoint whose requester is
+  the arbiter or a cache). The deadlock above is a clock too short for the
+  cache, not a logic fault: C-ID completes at `unit` 400, deadlocks at 200;
+  completes at `embedded` 3000, deadlocks at 2400; completes at `desktop`
+  2000, deadlocks at 1600 — every time with **zero** setup violations
+  reported. The cache's state bits are storage parts with no proven table,
+  so no setup check sees them: below its limit a cached root fails silently
+  (a deadlock or, in principle, wrong data that the oracle would catch).
+  Consequences for the campaign: (1) cached and arbitrated runs use the
+  profile's certified core clock (4104 / 2858 ps), at least 37 % / 43 % above
+  the last failing period measured for C-ID, labelled exploratory as the
+  cache plan requires; (2) every run must verify against the oracle; (3) a
+  nearby-period check is replaced by this measured failure point, rechecked
+  for D-ID; (4) the gap — storage parts without setup checks in structural
+  caches — is recorded for phase 8 (the analysis should take the cache, or
+  the storage parts need tables).
+- **Delay rule without the clocked macro's twin** (SRAM device, controller
+  and endpoint with their variants, 9 parts): `unit` 10,361 situations,
+  `embedded` and `desktop` 11,871 each; 0 parts break the rule, 0 miss the
+  targets, no exception needed.
+- **Shared-bus deadlock (B and D-0).** `RV32ITopologyTest` (new: a sort of
+  eight words through all five topologies at `embedded`, plus program 20
+  through D-ID over SRAM) found B and D-0 deadlocked; A, C-ID and D-ID
+  passed. Trace: the arbiter took an instruction fetch; the core then issued
+  a load and stalled on it; the fetch's response arrived but the core, stalled
+  on memory, held the fetch port's RSP_READY low; the arbiter stayed with the
+  fetch until it was taken, so the load was never granted. With L1s (or
+  separate memories) the response lands in a per-port buffer. Decision: the
+  arbiter has a one-entry response buffer per port (the bypass
+  `MemoryResponseBuffer`, no added latency when the requester is ready); a
+  response leaves the bus into its owner's buffer whenever that buffer is
+  empty (registered FULL), as an interconnect moves a response into the
+  master's response register and frees the bus. The requester's RSP_READY
+  then no longer reaches the memory in the same cycle (the 6.4a rule).
+  `TwoPortMemoryArbiterTest` was rewritten for this contract (a held
+  response frees the bus, the waiting port is granted next; non-owner data
+  is no longer forced to zero, as payload without VALID has no contract).
+- **Standalone benchmark (`CachePerformanceBenchmark`, new).** S0 (DRAM),
+  S1 (L1, DRAM), S2 (L1, L2, DRAM) on fresh, identical images; one request
+  at a time, so every path sees the same trace; every read checked against
+  a reference memory and the final DRAM image compared; boundary counters at
+  the DRAM and below each cache. Traces as frozen. Registered with the
+  memory benchmark runner (`tools/benchmarks/run.py memory`). The benchmark
+  size cap was raised from 256 to the data layout's 1024 words (512 for
+  pointer-chase) so that `stream` can exceed the L2 (`RV32IBenchmarkTest`,
+  `RV32IBenchmarkCLITest` updated, both pass).
+- **Open defect: the gate-level clocked SRAM macro inside the cache.** The
+  first benchmark run (parts from the default profile, so gate-level banks)
+  failed S2 `stream` at word 636 with a stale word; reduced to S1 reading the
+  first word of 24 successive lines: line 23 hits on set 7, way 0, whose tag
+  reads 0x102 (line 22's tag, just written to set 6, the same row of the
+  two-word-per-row tag bank); a later read of line 7 then misses, so the
+  stored tag of set 7 is really lost. The same cache with compact banks
+  (the campaign's profile) is correct, with zero setup violations at the
+  banks. The macro alone, in both forms, passes the same access sequence
+  (read 6, idle, write 6, idle, read 7), including the cache's timing.
+  Not yet explained; the leading hypothesis is a hold hazard: the cache's
+  write strobe and select fall shortly after the edge, which the gate-level
+  input registers may capture while the compact ones cannot. This breaks
+  the lower-level-first chain for cache banks and needs its own
+  investigation before results are published; the campaign uses compact
+  banks (the plan's primary profile), and the benchmark now builds its parts
+  with that profile (`strictAllBehavioral`, as the CPU runs). With it, the
+  160-line reproduction passes in S1 and S2.
+
+## 2026-10-17 — Cache campaign Step 2: standalone results
+
+`CachePerformanceBenchmark` with the campaign profile (compact banks,
+structural cache controllers), one request at a time, all reads and the
+final DRAM images verified; 63–64 s per profile. Cycles per request (DRAM
+burst reads / single reads / writes in parentheses for S0 ; S1 ; S2):
+
+`embedded`:
+
+```
+trace/phase                req | S0 cyc/req      S1      S2 | DRAM bursts/reads/writes S0 ; S1 ; S2
+small-region/cold           32 |       8.19    5.19    5.94 | 0/32/0 ; 8/0/0 ; 8/0/0
+small-region/warm           64 |       8.00    2.00    2.00 | 0/64/0 ; 0/0/0 ; 0/0/0
+medium-region/cold         128 |       8.05    5.05    5.80 | 0/128/0 ; 32/0/0 ; 32/0/0
+medium-region/warm         128 |       8.05    5.00    3.50 | 0/128/0 ; 32/0/0 ; 0/0/0
+stream/cold               2048 |       8.05    5.08    5.83 | 0/2048/0 ; 512/0/0 ; 512/0/0
+masked-stores/mixed         16 |      10.94    7.06    8.29 | 0/13/4 ; 3/0/4 ; 3/0/4
+```
+
+`desktop`:
+
+```
+trace/phase                req | S0 cyc/req      S1      S2 | DRAM bursts/reads/writes S0 ; S1 ; S2
+small-region/cold           32 |       8.22    5.22    5.97 | 0/32/0 ; 8/0/0 ; 8/0/0
+small-region/warm           64 |       8.00    2.00    2.00 | 0/64/0 ; 0/0/0 ; 0/0/0
+medium-region/cold         128 |       8.05    5.05    5.80 | 0/128/0 ; 32/0/0 ; 32/0/0
+medium-region/warm         128 |       8.00    5.00    3.50 | 0/128/0 ; 32/0/0 ; 0/0/0
+stream/cold               2048 |       8.03    5.26    6.07 | 0/2048/0 ; 512/0/0 ; 512/0/0
+masked-stores/mixed         16 |      11.94    7.71    8.94 | 0/13/4 ; 3/0/4 ; 3/0/4
+```
+
+Reading:
+
+- An L1 hit costs 2 cycles against 8 for an open-row DRAM read; a cold or
+  streaming L1 costs about 5 cycles per word (one 14-cycle burst fill per
+  four words, three hits). The streaming gain is the burst: a line costs
+  about two single DRAM reads. S0 reads one word per request, as a plain
+  requester on the bus would.
+- The L2 adds about 0.75 cycles per request when it misses too (cold
+  phases, stream) and saves when the L1 is exceeded but the L2 is not: the
+  medium region's warm pass is 3.50 cycles per request in S2 against 5.00 in
+  S1, with no DRAM traffic.
+- Write-through: every store reaches DRAM in every path (4 writes); the
+  write miss does not allocate.
+- Traffic matches the expected classification exactly (one burst per L1
+  miss; no L2 burst to DRAM on an L2 hit).
+- `desktop` differs only slightly (DRAM rows and clocks); the stream's S1/S2
+  is 0.2 cycles per request slower there.
+
+## 2026-10-17 — Cache campaign: pilot and frozen workload inputs
+
+Pilot (`embedded`, 4104 ps, two iterations, whole program, every run
+verified against the oracle):
+
+| Workload | B cycles | D-ID cycles | B host | D-ID host |
+| --- | ---: | ---: | ---: | ---: |
+| calls, size 16 | 839 | 441 | 0.3 s | 1.7 s |
+| sort, 64 words | 280,003 | 77,826 | 58 s | 275 s |
+| stream, 1024 words | 283,877 | 100,681 | 56 s | 338 s |
+
+D-ID costs about 3.4 ms of host time per simulated cycle, B about 0.2 ms.
+
+**Frozen before the panel:** `--measure-body --training-iterations 1`
+with 4 measured iterations for `sort` (64 words) and `stream` (1024 words)
+and 256 for `calls` (size 16; one iteration is about 24 instructions). One
+run then gives the warm window (`cycles`, the measured iterations after one
+warm-up) and the whole cold run (`whole_program_cycles`, warm-up included).
+Seeds and other options are the generator defaults. Estimated cost: about
+an hour per profile for the five topologies.
+
+Checks after the arbiter change: `RV32IExperimentTest`,
+`RV32IExperimentCLITest`, `RV32IMemoryLayoutTest` pass; `CacheLayoutTest`
+fails only its saved-layout comparison (phase 8, as before).
