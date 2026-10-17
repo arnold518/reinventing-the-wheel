@@ -7,6 +7,30 @@ history remains in Git and the archived reports.
 
 ## 2026-10-17
 
+### Clocked SRAM macro: no write disturb on the next access (branch `realistic-timing`, phase 8)
+
+- **Changed:** the gate-level clocked SRAM macro's settle line (how long its
+  registered address and data are held back when an access starts) now
+  covers the row decoder's enable path and the write drivers' turn-off
+  (`circuit::sram::clockedSettle`); the compact macro's withdrawal and the
+  fallback access times use the same value. Tables regenerated.
+- **Why:** a finished write left its drivers and word line on; at the next
+  access the new address and data reached the array 50 ps before the old
+  word line closed (`embedded`), writing the new word into the old row
+  (writing word 0 changed word 4, and so on). Found as stale tags in a cache
+  bank; compact banks were not affected. A first fix that ended the write
+  drive at READY was withdrawn: it added a 0.7-ns false path to the proven
+  read-data launch.
+- **Verified:** a write-after-write disturbance test (0 pairs in all three
+  profiles; 4 at `embedded` before), the SRAM device tests, tables at a fixed
+  point and recomputed identically, DelayRuleTest on the SRAM parts in all
+  three profiles, the on-chip-SRAM CPU panel (unchanged), the CLI test, the
+  standalone cache benchmark (identical to the campaign run).
+- **Limits:** every clocked SRAM access starts about 310 ps later at
+  `embedded` (a real decoder-reset delay); certified CPU clocks and cycle
+  counts did not change. Cached roots now fail below 3300 / 2300 ps
+  (`embedded` / `desktop`), leaving 24 % margin at the campaign clocks.
+
 ### Cache experiment runs and locality traces (branch `realistic-timing`, phase 7d)
 
 - **Changed:** `CachePerformanceBenchmark` gained `stride-line` and

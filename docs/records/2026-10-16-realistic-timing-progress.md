@@ -2487,3 +2487,76 @@ same points as C-ID. The campaign clocks (4104 / 2858 ps) keep at least
   for the experiment; the cached-root clock evidence; the test-timing audit
   and full suites; the visualizer; the public site only when the owner
   allows documentation updates.
+
+## 2026-10-17 — Phase 8: gate-level clocked SRAM macro write disturb (found and fixed)
+
+- **Localised.** Watching the 64 cells of row 3 in the cache's way-0 tag
+  bank showed word 7 changing whenever word 4 was written. On the macro
+  alone (`probe/macro_rw.cpp`): write word w, then word v, read w, for every
+  pair. At `embedded` the gate-level macro disturbed four pairs (writing
+  word 0, 1, 2 or 3 changed word 4, 5, 6 or 7, the previous access's row,
+  same column); `unit` and the compact form, none. The earlier isolated
+  tests had always written the disturbed word last.
+- **Cause** (`probe/macro_trace.cpp`, 5-ps steps through the write of word 0
+  after word 4, `embedded`): before the edge, the finished write of word 4
+  still had WRITE_ENABLE = 1, ROW_ENABLE = 1 and word line 2 on — the clocked
+  macro never ended its write phase. At +425 ps ROW_ENABLE fell, at +475 ps
+  the held address and data switched to the new access, at +525 ps word
+  line 2 closed: for 50 ps the still-enabled drivers wrote the new word into
+  the old row. The clocked macro's settle window is the minimum (its timer
+  starts on the access token), shorter than the word line's turn-off; the
+  asynchronous macro has a long settle window and is not affected.
+- **Fix** (`SRAM.tpp`, clocked macro only): the write drive ends once the
+  write is through, WRITE_ENABLE = stage 1 · writing · ¬READY, as a real
+  macro ends its write pulse. Trace after: WRITE_ENABLE is already 0 at the
+  next access; the write keeps about 540 ps with its word line on.
+- **Checks:** the disturbance test finds 0 pairs in `unit`, `embedded` and
+  `desktop`; `SRAMClockedTest`, `SRAMClockedSubarrayTest`,
+  `SRAMContractTest`, `SRAMTest` pass; the standalone cache benchmark with
+  **gate-level banks** (`CACHE_BENCH_GATE_BANKS`, default profile,
+  `embedded`, 7,606 s) completes all 24 traces verified, with cycle counts
+  and traffic identical to the compact-bank run. The campaign's compact-bank
+  results therefore agree with the lower-level form in the standalone
+  benchmark. Tables are being regenerated and the delay rule rerun.
+
+## 2026-10-17 — Phase 8: macro fix revised (replaces the write-pulse fix above)
+
+- **The write-pulse fix was withdrawn before commit.** Its regeneration
+  showed only the clocked SRAM device tables changing, but their latest
+  READ_DATA launch grew by 640–730 ps at `embedded` (for example 1611 →
+  2247 ps): the analysis followed CLK → READY → write enable off → bitlines
+  → sense → READ_DATA, a path that cannot carry a change (a write disables
+  the output) but has no state cut in the analysis. The compact macro would
+  then show read data up to 0.7 ns late, cycles real hardware would not
+  spend. The partial regeneration was stopped and the tables restored.
+- **Revised fix:** the macro's settle line, which its own comment says must
+  clear the previous access before the registered inputs reach the array, is
+  now sized for that (`circuit::sram::clockedSettle(rows)`): the timer's
+  detection path plus (decode depth + 3) slowest gate delays — the stage
+  gate, the row decoder's enable path (enable AND and balanced tree), and the
+  write phase AND and driver. The compact macro's withdrawal and the
+  fallback access times use the same function. The write phase is unchanged
+  (it stays on until the next access, as before).
+- **Checks:** trace at `embedded`: the old write drive off at +475 ps, word
+  line 2 closed at +575, the new address at the array at +785 (210 ps
+  margin); every access now starts about 310 ps later (word line 0 at +1505
+  instead of +1195). Disturbance test 0 pairs in all three profiles;
+  `SRAMClockedTest`, `SRAMClockedSubarrayTest`, `SRAMContractTest`,
+  `SRAMTest` pass. Tables regenerating; delay rule, the gate-level-bank
+  cache benchmark and the affected clocks and cycle counts follow.
+- **Results of the revised fix:** tables at a fixed point after round 2 and
+  recomputed identically in all three profiles; only the clocked SRAM
+  device's launches moved (READY and READ_DATA 260–364 ps later at
+  `embedded`). DelayRuleTest on the SRAM device, controller and endpoint (9
+  parts): no break, no target missed, in `unit`, `embedded` and `desktop`.
+  CPU panel with on-chip SRAM unchanged (clocks 174 / 4104 / 2858 ps, every
+  cycle count identical); `RV32IExperimentCLITest` passes. The standalone
+  cache benchmark (compact banks) is identical to the campaign run in both
+  profiles, so the campaign's cycle counts stand.
+- **Cached roots' failure point moved:** C-ID completes at `embedded` 3300
+  ps and deadlocks at 3000 (was 3000 / 2400); `desktop` 2300 / 2000 (was 2000
+  / 1600). The campaign clocks are now 24 % above the shortest working
+  period in both profiles (were 37 % and 43 %; an earlier line in this log
+  called those figures margins "above the failure point", they were above
+  the last working period).
+- The gate-level-bank standalone benchmark is being rerun with this fix.

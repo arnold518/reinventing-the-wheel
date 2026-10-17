@@ -93,11 +93,12 @@ work state changes. Keep dated decisions and validation results in
   pointer-chase, all 40 runs verified: the L1 pair is 3–4× faster than the
   shared uncached bus, the L2 alone nearly as fast, and the L2 under the L1s
   2–8 % slower (write-through through two levels). Cached roots run at the
-  core's certified clock, at least 37 % / 43 % above their measured failure
-  point; the analyzer cannot certify them yet. Next: phase 8.
-  Open defect: the gate-level clocked SRAM macro corrupts a row neighbour
-  when driven by the cache (compact banks, used by the campaign, are
-  correct); not yet explained. Failing until phase 8:
+  core's certified clock, 24 % above their shortest working period; the
+  analyzer cannot certify them yet. Phase 8 under way: the gate-level clocked
+  SRAM macro's write disturb (a finished write's drivers and word line still
+  on when the next access's address arrived) is fixed by sizing its settle
+  line; compact and gate-level banks agree again.
+  Failing until phase 8:
   `MemoryDeviceDocumentationTest` and three `MemoryEndpointIntegrationTest`
   checks (`site-docs/` snippets and pin tables), and `CacheLayoutTest`'s
   saved-layout comparison (layouts predate 7a).

@@ -232,7 +232,7 @@ private:
         using circuit::timing::leafDelay;
         const size_t flop = circuit::dflipflop_timing::clockToOutputMaximum();
         const size_t reset = flop + leafDelay(Leaf::Xor) + leafDelay(Leaf::Not) + 2 * leafDelay(Leaf::And);
-        const size_t held = flop + circuit::memory::memoryTimerSettle(1, 1, false);
+        const size_t held = flop + circuit::sram::clockedSettle(config_.rows());
         size_t bus = 0;
         if (const size_t count = sramSubarrays(config_); count > 1) {
             size_t side = 1; while (side * side < count) ++side;
@@ -254,7 +254,7 @@ private:
         };
         const auto& timing = circuit::timing::activeTimingProfile().memory;
         const size_t gate = leafDelay(Leaf::And);
-        const size_t fallback = circuit::dflipflop_timing::clockToOutputMaximum() + circuit::memory::memoryTimerSettle(1, 1, false)
+        const size_t fallback = circuit::dflipflop_timing::clockToOutputMaximum() + circuit::sram::clockedSettle(config_.rows())
             + std::max(timing.sram_precharge, timing.sramBitline(config_.rows())) + timing.sramBitline(config_.rows())
             + 2 * leafDelay(Leaf::MemoryPrimitive) + 14 * gate;
         const DelayRange guess{gate, fallback};

@@ -35,6 +35,23 @@ inline size_t senseReplicaGates(size_t words_per_row) {
     const size_t column = levels ? levels * (leafDelay(Leaf::And) + leafDelay(Leaf::Or)) : leafDelay(Leaf::And);
     return 1 + (column + gate - 1) / gate;
 }
+// The clocked macro's settle line: how long its registered address and data
+// are held back after an access starts. A finished write leaves its row's
+// word line and the write drivers on; they must be off before the new
+// address and data reach the array, or the drivers write the new word into
+// the old row. Beyond the timer's own detection path, the line covers the
+// stage gate, the row decoder's enable path (its enable AND and balanced
+// tree, `decode_depth` gates) and the write driver's turn-off (the write
+// phase AND and the driver), each at the slowest gate delay.
+inline size_t clockedSettle(size_t rows) {
+    using circuit::timing::Leaf;
+    using circuit::timing::leafDelay;
+    const size_t control_rows = std::min(rows, SRAM_SUBARRAY_ROWS);
+    size_t row_bits = 0; while ((size_t{1} << row_bits) < control_rows) ++row_bits;
+    size_t decode_depth = 1; while ((size_t{1} << (decode_depth - 1)) < row_bits + 1) ++decode_depth;
+    const size_t slowest = std::max({leafDelay(Leaf::Not), leafDelay(Leaf::Nand), leafDelay(Leaf::And), leafDelay(Leaf::Or)});
+    return circuit::memory::memoryTimerSettle(1, 1, false) + (decode_depth + 3) * slowest;
+}
 }
 
 template<size_t W> void SRAMAccessControl<W>::buildInternals(ComponentBuilder& b) {
@@ -164,7 +181,7 @@ template<size_t W> void SRAMAccessControl<W>::buildClocked(ComponentBuilder& b) 
     // swung fully (a write): restoring it takes the bitline's swing time,
     // and until then the write drive still reaches the cells.
     const size_t bitline = timing.sramBitline(config_.rows());
-    auto timer = b.addNewComponent<circuit::memory::MemoryTimer>("ACCESS_TIMER", inputs, 1,
+    auto timer = b.addNewComponent<circuit::memory::MemoryTimer>("ACCESS_TIMER", inputs, circuit::sram::clockedSettle(config_.rows()),
         std::vector<circuit::memory::MemoryTimerStage>{
             {std::max(timing.sram_precharge, bitline), 1}, {0, std::max<size_t>(decode_depth, 3) + 1},
             {bitline, decode_depth + circuit::sram::senseReplicaGates(config_.words_per_row)},

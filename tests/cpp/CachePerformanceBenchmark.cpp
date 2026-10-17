@@ -220,7 +220,11 @@ int main(int argc, char** argv) {
                 auto profile = std::make_shared<const BuildProfile>(strictAllBehavioral());
                 auto manifest = std::make_shared<BuildManifest>(profile->name(), profile->fingerprint());
                 auto context = BuildContext::rootScope(builtinComponentCatalog(), profile, manifest)->child("CACHE_BENCH", std::nullopt);
-                auto root = Component::createWithContext<Path>(context, "CACHE_BENCH", path.l1, path.l2, memory);
+                // CACHE_BENCH_GATE_BANKS: the default profile instead, with
+                // gate-level banks (a check of the lower-level form).
+                auto root = std::getenv("CACHE_BENCH_GATE_BANKS")
+                    ? Component::create<Path>("CACHE_BENCH", path.l1, path.l2, memory)
+                    : Component::createWithContext<Path>(context, "CACHE_BENCH", path.l1, path.l2, memory);
                 std::vector<uint8_t> image(Words * 4);
                 for (uint32_t word = 0; word < Words; ++word)
                     for (unsigned byte = 0; byte < 4; ++byte) image[word * 4 + byte] = uint8_t(initialWord(word) >> (8 * byte));

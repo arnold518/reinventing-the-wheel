@@ -6,6 +6,7 @@
 #include "DRAMSyncControl.hpp"
 #include "NORSyncControl.hpp"
 #include "modules/memory/MemoryTimingParts.hpp"
+#include "modules/memory/SRAM.tpp"
 #include <algorithm>
 
 namespace circuit::memory {
@@ -328,7 +329,7 @@ size_t staticAccessTime(size_t width, Technology technology, const EndpointConfi
     // is the later of the proven launches from CLK to READY and to the data
     // (the static analysis bounds the data path more loosely than READY).
     if (config.clocked) {
-        const size_t fallback = flop + memoryTimerSettle(1, 1, false) + std::max(memory.sram_precharge, memory.sramBitline(rows)) + memory.sramBitline(rows)
+        const size_t fallback = flop + circuit::sram::clockedSettle(rows) + std::max(memory.sram_precharge, memory.sramBitline(rows)) + memory.sramBitline(rows)
             + 2 * timing::leafDelay(timing::Leaf::MemoryPrimitive) + 14 * gate;
         const auto* table = provenPartDelays(device.contract_id + ".behavioral", device.parameters);
         if (!table) return fallback;
