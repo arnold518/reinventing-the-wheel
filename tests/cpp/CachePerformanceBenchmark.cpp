@@ -80,13 +80,28 @@ std::vector<Access> reads(uint32_t first_word, size_t count, size_t passes = 1) 
     return out;
 }
 
-std::vector<Trace> traces() {
+// The same number of reads as the stream with poorer locality: one word per
+// line (every cache access a miss, the DRAM row still open), and one word per
+// DRAM row (every DRAM access a row change), wrapping within the memory.
+std::vector<Access> strided(uint32_t first_word, size_t count, size_t stride_words) {
+    std::vector<Access> out;
+    const size_t rows = Words / stride_words;
+    for (size_t i = 0; i < count; ++i) {
+        const size_t word = first_word + (i % rows) * stride_words + (i / rows) * 4;
+        out.push_back({false, uint32_t((word % Words) * 4), 0, 0});
+    }
+    return out;
+}
+
+std::vector<Trace> traces(size_t row_words) {
     std::vector<Trace> t;
     t.push_back({"small-region", "32 words (half the L1) read once cold, then twice warm",
         {{"cold", reads(0, 32)}, {"warm", reads(0, 32, 2)}}});
     t.push_back({"medium-region", "128 words (twice the L1, a quarter of the L2), two passes",
         {{"cold", reads(4096, 128)}, {"warm", reads(4096, 128)}}});
     t.push_back({"stream", "2048 successive words (four times the L2) read once", {{"cold", reads(8192, 2048)}}});
+    t.push_back({"stride-line", "2048 reads, one word per 16-byte line", {{"cold", strided(16384, 2048, 4)}}});
+    t.push_back({"stride-row", "2048 reads, one word per DRAM row (every read changes row)", {{"cold", strided(0, 2048, row_words)}}});
     // Masked stores in the small region: a hit after a read, a byte, a half
     // word, a write miss (no allocation), each read back.
     std::vector<Access> stores = reads(0, 8);
@@ -196,7 +211,7 @@ int main(int argc, char** argv) {
         const auto l1 = analysis::campaignCache(8, true), l2 = analysis::campaignCache(64, true);
         struct PathSpec { std::string id; std::optional<CacheConfig> l1, l2; };
         const std::vector<PathSpec> paths = {{"S0", std::nullopt, std::nullopt}, {"S1", l1, std::nullopt}, {"S2", l1, l2}};
-        for (const auto& trace : traces()) {
+        for (const auto& trace : traces(memory.words_per_row)) {
             if (!only_trace.empty() && trace.id != only_trace) continue;
             for (const auto& path : paths) {
                 if (!only_path.empty() && path.id != only_path) continue;

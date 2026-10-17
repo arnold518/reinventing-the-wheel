@@ -7,6 +7,26 @@ history remains in Git and the archived reports.
 
 ## 2026-10-17
 
+### Cache experiment runs and locality traces (branch `realistic-timing`, phase 7d)
+
+- **Changed:** `CachePerformanceBenchmark` gained `stride-line` and
+  `stride-row` traces (the same 2048 reads with one word per line, or per
+  DRAM row) and builds its parts with the campaign profile (compact banks,
+  as the CPU runs); diagnostic options run one trace/path or chosen
+  addresses. No model or timing change.
+- **Why:** the cache plan's Step 2 and Step 3, and the owner's question
+  whether locality-friendly code is faster.
+- **Verified (results, not tests):** standalone traces in `embedded` and
+  `desktop`, every read and the final DRAM image checked; the five-topology
+  CPU panel (calls, sort, stream) and pointer-chase in both profiles, 40
+  runs, all verified against the oracle. Key figures and the counter-based
+  explanations are in the realistic-timing progress log.
+- **Limits:** exploratory: cached roots are not certified (run at the core's
+  clock with a measured margin); the campaign used compact banks while the
+  gate-level macro has an open defect inside the cache; DRAM row changes and
+  refreshes are not counted in the CPU runs, so the shared-memory slowdown's
+  row explanation is an inference. Results are not published.
+
 ### Cache experiment: topologies, standalone benchmark, arbiter fixes (branch `realistic-timing`, phase 7c)
 
 - **Changed:** `rv32i_experiment --topology A|B|C-ID|D-0|D-ID` builds the

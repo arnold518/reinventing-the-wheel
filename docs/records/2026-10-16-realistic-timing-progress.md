@@ -2293,3 +2293,197 @@ an hour per profile for the five topologies.
 Checks after the arbiter change: `RV32IExperimentTest`,
 `RV32IExperimentCLITest`, `RV32IMemoryLayoutTest` pass; `CacheLayoutTest`
 fails only its saved-layout comparison (phase 8, as before).
+
+## 2026-10-17 — Cache campaign: locality experiments added (owner request)
+
+The owner asked whether any experiment shows locality-friendly code running
+faster. Existing evidence shows the mechanisms (DRAM open row 8 vs row
+change 20 cycles; L1 re-reads 2 vs DRAM 8; bursts making a stream about 5
+cycles per word), but no experiment varies locality for the same work: all
+standalone traces are sequential, and the three CPU workloads are not
+locality variants of one another. Added, with no timing change:
+
+- Standalone traces `stride-line` (2048 reads, one word per 16-byte line:
+  every cache access misses while the DRAM row stays open) and `stride-row`
+  (2048 reads, one word per DRAM row, wrapping within the memory: every DRAM
+  access changes row), next to `stream` (2048 sequential reads), through S0,
+  S1 and S2 in both profiles.
+- `pointer-chase` with 512 nodes (4 KiB, the size of `stream`'s 1024-word
+  input; the most the data layout allows for two-word nodes) through all
+  five topologies in both profiles, same `--measure-body
+  --training-iterations 1`, 4 measured iterations; frozen before running.
+
+## 2026-10-17 — Cache campaign Step 3: CPU panel results (exploratory clock)
+
+Advanced core (behavioral, two-bit predictor default), DRAM main memory,
+frozen geometry and inputs, the profile's certified core clock (4104 /
+2858 ps; exploratory for cached and arbitrated roots, see above). All 30
+runs completed and verified against the oracle (registers, final memory
+image, expected result; A's instruction copy unchanged); zero setup
+violations reported (which, as recorded, does not cover the cache's state
+bits). `window` = the 4 (calls: 256) measured iterations after one warm-up;
+`whole` = the whole run. Per-run JSON (manifest, counters) kept in the
+scratch directory; the key figures are copied here.
+
+`embedded` (CPI, speed against B, port waits, boundary traffic in the window):
+
+```
+
+calls:
+top      window   CPI   vs B     whole | I wait  D wait | IL1 bursts DL1 bursts/writes | ARB rd/burst/wr  both | L2 bursts/wr
+A         62529 12.21  1.51x     62882 |  53438   7872 |          0      0/0      |     0/0/0     0 | 0/0
+B         94309 18.42  1.00x     94793 |  65582  19920 |          0      0/0      |  7167/0/512    44 | 0/0
+C-ID      26321  5.14  3.58x     26627 |  13310   6356 |          0      0/512    |     0/0/512     0 | 0/0
+D-0       27296  5.33  3.46x     27609 |  13310   6307 |          0      0/0      |  7167/0/512     0 | 0/512
+D-ID      27820  5.43  3.39x     28156 |  13310   7855 |          0      0/512    |     0/0/512     0 | 0/512
+
+sort:
+top      window   CPI   vs B     whole | I wait  D wait | IL1 bursts DL1 bursts/writes | ARB rd/burst/wr  both | L2 bursts/wr
+A        281202 10.14  1.99x    351546 | 228848  75692 |          0      0/0      |     0/0/0     0 | 0/0
+B        559942 20.19  1.00x    699939 | 337748 177776 |          0      0/0      | 33319/0/4316  1347 | 0/0
+C-ID     142446  5.14  3.93x    178363 |  56990  56961 |          0    128/4316   |     0/128/4316     0 | 0/0
+D-0      150892  5.44  3.71x    189009 |  57537  55719 |          0      0/0      | 33319/0/4316     0 | 95/4316
+D-ID     153511  5.54  3.65x    192759 |  56990  68026 |          0    128/4316   |     0/128/4316     0 | 8/4316
+
+stream:
+top      window   CPI   vs B     whole | I wait  D wait | IL1 bursts DL1 bursts/writes | ARB rd/burst/wr  both | L2 bursts/wr
+A        410643 14.31  1.38x    513325 | 263688 158448 |          0      0/0      |     0/0/0     0 | 0/0
+B        567601 19.77  1.00x    709582 | 360588 159144 |          0      0/0      | 36895/0/4096  1662 | 0/0
+C-ID     185577  6.47  3.06x    232127 |  65598  87180 |          0   1024/4096   |     0/1024/4096     0 | 0/0
+D-0      194892  6.79  2.91x    243780 |  65717  88183 |          0      0/0      | 36895/0/4096     0 | 1030/4096
+D-ID     201013  7.00  2.82x    251439 |  65598 102616 |          0   1024/4096   |     0/1024/4096     0 | 1024/4096
+
+```
+
+`desktop` (CPI, speed against B, port waits, boundary traffic in the window):
+
+```
+
+calls:
+top      window   CPI   vs B     whole | I wait  D wait | IL1 bursts DL1 bursts/writes | ARB rd/burst/wr  both | L2 bursts/wr
+A         65944 12.88  1.57x     66299 |  53408   8872 |          0      0/0      |     0/0/0     0 | 0/0
+B        103331 20.18  1.00x    103840 |  67751  23012 |          0      0/0      |  7167/0/512   524 | 0/0
+C-ID      28499  5.57  3.63x     28810 |  13310   8534 |          0      0/512    |     0/0/512     0 | 0/0
+D-0       29144  5.69  3.55x     29462 |  13310   8155 |          0      0/0      |  7167/0/512     0 | 0/512
+D-ID      29665  5.79  3.48x     30006 |  13310   9700 |          0      0/512    |     0/0/512     0 | 0/512
+
+sort:
+top      window   CPI   vs B     whole | I wait  D wait | IL1 bursts DL1 bursts/writes | ARB rd/burst/wr  both | L2 bursts/wr
+A        302048 10.89  2.08x    377524 | 228737  85255 |          0      0/0      |     0/0/0     0 | 0/0
+B        628588 22.67  1.00x    785739 | 355878 204696 |          0      0/0      | 33319/0/4316  8257 | 0/0
+C-ID     157293  5.67  4.00x    196962 |  56990  71808 |          0    128/4316   |     0/128/4316     0 | 0/0
+D-0      165890  5.98  3.79x    207712 |  57536  70718 |          0      0/0      | 33319/0/4316     0 | 94/4316
+D-ID     168220  6.07  3.74x    211319 |  56990  82735 |          0    128/4316   |     0/128/4316     0 | 8/4316
+
+stream:
+top      window   CPI   vs B     whole | I wait  D wait | IL1 bursts DL1 bursts/writes | ARB rd/burst/wr  both | L2 bursts/wr
+A        451632 15.73  1.40x    564592 | 263547 183165 |          0      0/0      |     0/0/0     0 | 0/0
+B        632355 22.03  1.00x    790430 | 376870 183858 |          0      0/0      | 36895/0/4096  7994 | 0/0
+C-ID     205977  7.18  3.07x    257523 |  65598 107580 |          0   1024/4096   |     0/1024/4096     0 | 0/0
+D-0      215278  7.50  2.94x    269152 |  65723 108563 |          0      0/0      | 36895/0/4096     0 | 1030/4096
+D-ID     222082  7.74  2.85x    277767 |  65598 123685 |          0   1024/4096   |     0/1024/4096     0 | 1024/4096
+```
+
+Comparisons (warm window, `embedded`; `desktop` within a few percent):
+
+| Comparison | calls | sort | stream | Reading |
+| --- | ---: | ---: | ---: | --- |
+| A → B (one shared DRAM) | 1.51× slower | 1.99× | 1.38× | little arbitration conflict (both ports requesting in 0.05–0.3 % of cycles); most likely DRAM row changes between interleaved instruction and data accesses (not counted, see below) |
+| B → C-ID (L1 pair) | 3.58× faster | 3.93× | 3.06× | the code fits the I-L1 (no I-L1 burst in the window); the data L1 holds `sort`'s working set only partly (128 bursts) |
+| B → D-0 (L2 alone) | 3.46× | 3.71× | 2.91× | a single-word L2 hit costs about an L1 hit, so the L2 alone recovers almost all of the gain |
+| C-ID → D-ID (L2 under the L1s) | 5.7 % slower | 7.8 % slower | 8.3 % slower | negative: every store is written through two levels (D-L1, L2, DRAM) and the core waits for each write response; D-ID's data waits are 11,065 cycles above C-ID in `sort` (4,316 writes, about 2.6 cycles each), while serving the 128 D-L1 misses from the L2 saves about 770 |
+| D-0 → D-ID (L1s over the L2) | 1.9 % slower | 1.7 % slower | 3.1 % slower | same write-through cost; the L1s add a level for stores |
+
+The CPI floor with caches is about 5: one outstanding fetch per port and a
+two-cycle L1 hit give at least two cycles per instruction from fetch alone,
+plus load and store waits. The L2's value in this core is limited by
+write-through without a write buffer; that is a property of the cache design
+as built (write-through, no-write-allocate, one outstanding request), not
+of the memory timing, and it is reported, not tuned.
+
+**Standalone locality** (owner request; the same 2048 reads, cycles per
+read; `embedded` / `desktop`):
+
+| Access pattern | S0 DRAM | S1 L1 | S2 L1+L2 |
+| --- | ---: | ---: | ---: |
+| sequential (`stream`) | 8.05 / 8.03 | 5.08 / 5.26 | 5.83 / 6.07 |
+| one word per line (`stride-line`) | 8.12 / 8.08 | 14.29 / 14.79 | 17.32 / 17.97 |
+| one word per DRAM row (`stride-row`) | 19.93 / 21.94 | 26.20 / 29.31 | 29.19 / 32.46 |
+
+Locality-friendly access is 2.5× faster with no cache at all (DRAM row
+locality: 8 vs 20–22 cycles) and about 5× faster with an L1 (5.1 vs 26.2).
+Caches make access with no spatial locality slower (one word per line: 14.3
+with an L1 against 8.1 without), since every miss fetches four words to use
+one.
+
+**Gaps:** the panel does not count DRAM row changes or refreshes (the plan
+asked for them), so the A → B row-change explanation is an inference from
+Step 1 and the stride-row trace, not a measurement in the CPU runs. The
+D-ID failure-point recheck is still to do.
+
+## 2026-10-17 — Cache campaign: pointer-chase, clock recheck, plan check
+
+`pointer-chase`, 512 nodes (4 KiB), all ten runs verified:
+
+`embedded`:
+
+```
+pointer-chase:
+top      window   CPI   vs B     whole | I wait  D wait | IL1 bursts DL1 bursts/writes | ARB rd/burst/wr  both | L2 bursts/wr
+A        134203 13.06  1.85x    167864 |  98978  46178 |          0      0/0      |     0/0/0     0 | 0/0
+B        248769 24.22  1.00x    311042 | 147656  81674 |          0      0/0      | 16415/0/0   861 | 0/0
+C-ID      82295  8.01  3.02x    102981 |  24638  45338 |          0   2000/0      |     0/2000/0     0 | 0/0
+D-0       75971  7.40  3.27x     95528 |  24817  34738 |          0      0/0      | 16415/0/0     0 | 1454/0
+D-ID      79289  7.72  3.14x     99664 |  24638  42332 |          0   2000/0      |     0/2000/0     0 | 1440/0
+```
+
+`desktop`:
+
+```
+pointer-chase:
+top      window   CPI   vs B     whole | I wait  D wait | IL1 bursts DL1 bursts/writes | ARB rd/burst/wr  both | L2 bursts/wr
+A        125641 12.23  2.19x    157069 |  98874  33090 |          0      0/0      |     0/0/0     0 | 0/0
+B        275375 26.81  1.00x    344320 | 155889  89867 |          0      0/0      | 16415/0/0  3145 | 0/0
+C-ID      72584  7.07  3.79x     90804 |  24638  35627 |          0   2000/0      |     0/2000/0     0 | 0/0
+D-0       69702  6.79  3.95x     87477 |  24825  28461 |          0      0/0      | 16415/0/0     0 | 1454/0
+D-ID      73041  7.11  3.77x     91772 |  24638  36084 |          0   2000/0      |     0/2000/0     0 | 1440/0
+```
+
+- Random dependent loads miss the D-L1 on almost every node (2,000 burst
+  fills for 2,048 nodes, one miss per two loads; `stream` misses once per
+  four loads). The L2 alone beats the L1 pair here (D-0 75,971 against C-ID
+  82,295 cycles at `embedded`; 69,702 against 72,584 at `desktop`): the
+  256-B L1 rarely holds a node and each miss fetches a whole line, while the
+  2-KiB L2 holds part of the 4-KiB array and answers a single word as fast
+  as an L1 hit. Whole-program CPI is not a clean locality comparison with
+  `stream` (different instruction mix; `stream` stores every word); the
+  standalone stride traces are the direct evidence.
+- `desktop` runs `pointer-chase` in fewer cycles than `embedded` with caches:
+  its DRAM rows are 4 KiB, so the whole node array sits in one open row.
+
+**Clock recheck for D-ID** (program 20): completes at `embedded` 3000 ps and
+deadlocks at 2400; completes at `desktop` 2000 and deadlocks at 1600 — the
+same points as C-ID. The campaign clocks (4104 / 2858 ps) keep at least
+37 % / 43 % margin for every cached topology measured.
+
+**Plan check after the cache campaign (assistant):**
+
+- The campaign's completion rule is met: every declared run verified (30
+  panel runs, 10 pointer-chase runs, the standalone traces in both
+  profiles), and the B/C/D comparisons have explanations supported by the
+  counters (L1 pair 3–4× over the shared uncached bus; L2 alone close to
+  it; L2 under the L1s 2–8 % slower because of write-through through two
+  levels; random access favours the larger L2). One explanation, A → B, is
+  an inference (DRAM row changes are not counted); recorded as a gap.
+- Results stay exploratory and unpublished until (1) the gate-level clocked
+  macro defect inside the cache is explained (the campaign used compact
+  banks), and (2) the clock for cached roots has stronger evidence than a
+  measured failure point (the cache's state bits have no setup check).
+- Not tuned: no memory interval, cache latency or policy was changed after
+  seeing results. The write-through cost is a property of the cache as
+  built; a write buffer or write-back cache would be a new, separately
+  tested design, not a fix to these results.
+- Next: phase 8, in this order: the macro defect; DRAM row/refresh counters
+  for the experiment; the cached-root clock evidence; the test-timing audit
+  and full suites; the visualizer; the public site only when the owner
+  allows documentation updates.

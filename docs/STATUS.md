@@ -85,14 +85,16 @@ work state changes. Keep dated decisions and validation results in
   up every way at once in directly driven banks (L1 hit two cycles, 7a), and
   burst reads (op 4) exist end to end (7b): SRAM, ROM and DRAM endpoints
   return a line from the requested word, and the cache fills lines with one
-  burst (`fill=burst`). The cache experiment is under way: Step 1 holds in
-  both profiles (L1 hit 2, L2 hit 8, DRAM 8–22 cycles), the setup is frozen,
-  the five CPU topologies run in `rv32i_experiment --topology` (the two-port
-  arbiter now counts burst beats and buffers each port's response), and the
-  standalone S0–S2 benchmark ran in both profiles. Next: the five-topology
-  CPU panel, `embedded` then `desktop`. Cached roots cannot be certified by
-  the analyzer yet; they run at the core's certified clock, at least 37 % /
-  43 % above their measured failure point, labelled exploratory.
+  burst (`fill=burst`). The cache experiment has run (exploratory, not
+  published): Step 1 holds in both profiles (L1 hit 2, L2 hit 8, DRAM 8–22
+  cycles); standalone S0–S2 and locality traces (sequential access 2.5×
+  faster than row-hopping without caches, about 5× with an L1; caches slow
+  down access with no spatial locality); the five-topology CPU panel and
+  pointer-chase, all 40 runs verified: the L1 pair is 3–4× faster than the
+  shared uncached bus, the L2 alone nearly as fast, and the L2 under the L1s
+  2–8 % slower (write-through through two levels). Cached roots run at the
+  core's certified clock, at least 37 % / 43 % above their measured failure
+  point; the analyzer cannot certify them yet. Next: phase 8.
   Open defect: the gate-level clocked SRAM macro corrupts a row neighbour
   when driven by the cache (compact banks, used by the campaign, are
   correct); not yet explained. Failing until phase 8:
