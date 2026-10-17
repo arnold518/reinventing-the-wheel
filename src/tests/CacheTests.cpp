@@ -252,7 +252,8 @@ ComponentTestSpec scalableCacheScenarioSpec() {
     config.scalable_storage = true;
     ScriptedCacheExample example("CacheScalableScenarioTest", 32, config);
     example.begin();
-    example.miss("cold", 4, {{0, 0xa3a2a1a0}, {4, 0xa7a6a5a4}}, 0xa7a6a5a4);
+    // A fill starts at the requested word and wraps within the line.
+    example.miss("cold", 4, {{4, 0xa7a6a5a4}, {0, 0xa3a2a1a0}}, 0xa7a6a5a4);
     example.hit("neighbor", 0, 0xa3a2a1a0);
     example.miss("second-way", 64, {{64, 0xe3e2e1e0}, {68, 0xe7e6e5e4}}, 0xe3e2e1e0);
     example.hit("touch-first-way", 4, 0xa7a6a5a4);
@@ -301,7 +302,10 @@ public:
         EndpointConfig backing_config;
         backing_config.depth_words = backing_depth_override_ ? backing_depth_override_ : config_.backing_depth_words;
         backing_config.words_per_row = 1;
-        backing_config.block_words = 1;
+        // A burst-filling cache needs a backing memory whose bursts are its
+        // lines.
+        const auto& filler = lower_cache_config_ ? *lower_cache_config_ : config_;
+        backing_config.block_words = filler.burst_fill ? filler.block_bytes / (Width / 8) : 1;
         std::shared_ptr<IOComponent> backing;
         if (backing_technology_ == Technology::ROM) {
             for (size_t i = 0; i < backing_config.depth_words * (Width / 8); ++i) {
@@ -390,12 +394,16 @@ public:
         sim_.advanceAndRecord(now_);
     }
     LogicVector out(const char* pin) const { return root_->getOutputPinDynamic(pin)->getValueAsVector(); }
-    void cycle() {
-        drive({{"CLK", 0}});
+    // A backing request taken at the coming edge.
+    void countLower() {
         if (out("LOWER_REQ_VALID") == logicBit(true) && out("LOWER_REQ_READY") == logicBit(true)) {
-            if (out("LOWER_REQ_OP") == logicBits(3, 0)) ++lower_reads_;
+            if (out("LOWER_REQ_OP") == logicBits(3, 0) || out("LOWER_REQ_OP") == logicBits(3, 4)) ++lower_reads_;
             else if (out("LOWER_REQ_OP") == logicBits(3, 1)) ++lower_writes_;
         }
+    }
+    void cycle() {
+        drive({{"CLK", 0}});
+        countLower();
         drive({{"CLK", 1}});
     }
     unsigned lowerReads() const { return lower_reads_; }
@@ -422,6 +430,40 @@ public:
         drive({{"CLK", 0}, {"RSP_READY", 1}});
         drive({{"CLK", 1}});
         drive({{"CLK", 0}, {"RSP_READY", 0}});
+    }
+    // A burst read (op 4): the words of the line from `address` on,
+    // wrapping. The consumer holds back every `stall`-th word for a cycle.
+    void burst(uint32_t address, size_t words_per_line, unsigned expected_reads, size_t stall = 0) {
+        drive({{"CLK", 0}, {"REQ_VALID", 0}, {"REQ_OP", 4}, {"REQ_ADDR", address},
+               {"REQ_WRITE_DATA", 0}, {"REQ_WRITE_MASK", 0}, {"RSP_READY", 0}});
+        for (size_t i = 0; out("REQ_READY") != logicBit(true) && i < 100; ++i) cycle();
+        require(out("REQ_READY") == logicBit(true), context_ + ": no burst request capacity");
+        drive({{"CLK", 0}, {"REQ_VALID", 1}});
+        drive({{"CLK", 1}});
+        drive({{"CLK", 0}, {"REQ_VALID", 0}, {"REQ_ADDR", 0xffffffff}, {"REQ_OP", 0}});
+        const uint32_t bytes = uint32_t(Width / 8), line = uint32_t(words_per_line) * bytes;
+        for (size_t k = 0; k < words_per_line; ++k) {
+            for (size_t i = 0; out("RSP_VALID") != logicBit(true) && i < 100; ++i) cycle();
+            const auto word = (address & ~(line - 1)) | ((address + uint32_t(k) * bytes) & (line - 1));
+            const auto where = context_ + ": burst from " + std::to_string(address) + " word " + std::to_string(k);
+            require(out("RSP_VALID") == logicBit(true), where + ": response deadline exceeded");
+            require(out("RSP_STATUS") == logicBits(3, 0), where + ": nonzero status");
+            require(out("RSP_READ_DATA") == logicBits(Width, imageWord<Width>(word)),
+                    where + ": got " + formatLogicVector(out("RSP_READ_DATA")));
+            if (stall && k % stall == 0) {
+                cycle();
+                require(out("RSP_VALID") == logicBit(true) && out("RSP_READ_DATA") == logicBits(Width, imageWord<Width>(word)),
+                        where + ": response changed under backpressure");
+            }
+            drive({{"CLK", 0}, {"RSP_READY", 1}});
+            countLower();
+            drive({{"CLK", 1}});
+            drive({{"CLK", 0}, {"RSP_READY", 0}});
+        }
+        for (size_t i = 0; i < 3; ++i) cycle();
+        require(out("RSP_VALID") != logicBit(true), context_ + ": burst gave more words than its line");
+        require(lower_reads_ == expected_reads, context_ + ": wrong lower read count after burst from " +
+                std::to_string(address) + ": got " + std::to_string(lower_reads_) + ", expected " + std::to_string(expected_reads));
     }
     void write(uint32_t address, uint32_t data, unsigned mask, Status expected_status,
                unsigned expected_reads, unsigned expected_writes) {
@@ -559,6 +601,32 @@ void exerciseWays(size_t sets, size_t words_per_line) {
     rig.read(c, imageWord<Width>(c), 3 * reads);
     rig.read(0, imageWord<Width>(0), 3 * reads);
     rig.read(b, imageWord<Width>(b), 4 * reads);
+}
+
+// Burst reads (op 4) and burst fills: a burst miss forwards the fill, a burst
+// hit streams the line from the data bank; a word fill and a burst fill bring
+// the same line.
+template<size_t Width>
+void exerciseBursts(size_t words_per_line, bool burst_fill, size_t ways, Technology data) {
+    CacheConfig config;
+    config.sets = 2;
+    config.ways = ways;
+    config.block_bytes = words_per_line * (Width / 8);
+    config.backing_depth_words = 64;
+    config.burst_fill = burst_fill;
+    config.data_technology = data;
+    Rig<Width> rig(config);
+    const auto per_miss = unsigned(burst_fill ? 1 : words_per_line);
+    const auto bytes = uint32_t(Width / 8), line = uint32_t(config.block_bytes);
+    const auto last = line - bytes, conflict = uint32_t(config.sets) * line;
+    rig.burst(last, words_per_line, per_miss);                 // miss, forwarded
+    rig.burst(0, words_per_line, per_miss, 2);                 // hit, streamed with backpressure
+    rig.read(bytes % line, imageWord<Width>(bytes % line), per_miss);
+    rig.burst(conflict + bytes % line, words_per_line, 2 * per_miss, 1);
+    rig.read(conflict, imageWord<Width>(conflict), 2 * per_miss);
+    const auto expected = ways == 2 ? 2 * per_miss : 3 * per_miss;
+    rig.burst(line - bytes, words_per_line, expected);         // a way-0 hit, or a refill
+    rig.read(line, imageWord<Width>(line), expected + per_miss);  // the other set
 }
 
 template<size_t Width>
@@ -948,6 +1016,24 @@ void CacheReadTest::verifyResults() {
     }
     exerciseWays<8>(4, 2);
     exerciseWays<32>(4, 2);
+    for (bool burst_fill : {false, true})
+        for (auto data : {Technology::FF, Technology::SRAM}) {
+            exerciseBursts<8>(4, burst_fill, 1, data);
+            exerciseBursts<32>(2, burst_fill, 2, data);
+            exerciseBursts<16>(1, burst_fill, 2, data);
+        }
+    for (size_t sets : {1u, 4u}) {
+        CacheConfig config;
+        config.sets = sets;
+        config.block_bytes = 4;
+        config.backing_depth_words = 32;
+        config.burst_fill = true;
+        Rig<8> rig(config);
+        rig.read(3, imageWord<8>(3), 1);
+        rig.read(0, imageWord<8>(0), 1);
+        rig.read(uint32_t(4 * sets + 2), imageWord<8>(uint32_t(4 * sets + 2)), 2);
+        rig.read(1, imageWord<8>(1), 3);
+    }
     {
         CacheConfig config;
         config.read_write = true;

@@ -15,6 +15,10 @@ struct CacheConfig {
     Technology tag_technology = Technology::FF;
     Technology data_technology = Technology::FF;
     bool scalable_storage = false;
+    // A miss fills the line with one burst read from the requested word
+    // (the backing memory must answer bursts of a line) instead of one read
+    // per word.
+    bool burst_fill = false;
 
     void validate(size_t width) const;
 };

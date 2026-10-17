@@ -22,10 +22,12 @@ std::string typeName(const char* kind, size_t width, Technology t) {
 }
 
 void defineSequencerPins(IOComponent* s, size_t w, Technology t, bool clocked) {
-    for (auto p : {"CLK", "RST", "START", "FINISH"}) s->addPin(p, PinType::INPUT);
+    // SPACE: the transaction port holds no response (registered); LAST: the
+    // result shown is the transaction's last (burst words before it are not).
+    for (auto p : {"CLK", "RST", "START", "FINISH", "SPACE"}) s->addPin(p, PinType::INPUT);
     for (auto [name, width] : std::vector<std::pair<std::string, size_t>>{{"OP", 3}, {"ADDR", 32}, {"DATA", w}, {"MASK", w / 8}})
         s->addPinDynamic(name, PinType::INPUT, width);
-    for (auto p : {"BACK_READY", "DONE"}) s->addPin(p, PinType::OUTPUT);
+    for (auto p : {"BACK_READY", "DONE", "LAST"}) s->addPin(p, PinType::OUTPUT);
     s->addPinDynamic("RESULT", PinType::OUTPUT, w);
     s->addPin<3>("STATUS", PinType::OUTPUT);
     circuit::memory::nativePins(s, w, t, true, clocked);
@@ -36,7 +38,7 @@ MemoryRequestCheck::MemoryRequestCheck(std::string name, size_t width, Technolog
           s->addPin<3>("OP", PinType::INPUT);
           s->addPin<32>("ADDR", PinType::INPUT);
           s->addPinDynamic("MASK", PinType::INPUT, width / 8);
-          for (auto p : {"ACCEPT", "READ", "WRITE", "PROGRAM", "ERASE"}) s->addPin(p, PinType::OUTPUT);
+          for (auto p : {"ACCEPT", "READ", "WRITE", "PROGRAM", "ERASE", "BURST"}) s->addPin(p, PinType::OUTPUT);
           s->addPin<3>("STATUS", PinType::OUTPUT);
           s->addPin<32>("WORD_ADDR", PinType::OUTPUT);
       }),
@@ -59,6 +61,10 @@ void MemoryRequestCheck::buildInternals(ComponentBuilder& b) {
     auto write = w.reduce("WRITE_OP", {o0, n1, n2}, true);
     auto program = w.reduce("PROGRAM_OP", {n0, o1, n2}, true);
     auto erase = w.reduce("ERASE_OP", {o0, o1, n2}, true);
+    // A burst read (op 4): the static and DRAM devices.
+    const bool bursts = technology_ == Technology::SRAM || technology_ == Technology::ROM ||
+                        (technology_ == Technology::DRAM && config_.block_words <= config_.words_per_row);
+    auto burst = bursts ? w.reduce("BURST_OP", {n0, n1, o2}, true) : w.constant("NO_BURST", false);
     const size_t shift = std::countr_zero(width_ / 8);
     std::vector<PinPtr> low, word;
     for (size_t i = 0; i < 32; ++i) (i < shift ? low : word).push_back(addr->getOutputPin("OUT_" + std::to_string(i)));
@@ -70,7 +76,7 @@ void MemoryRequestCheck::buildInternals(ComponentBuilder& b) {
     PinPtr refused = w.constant("ALLOWED", false);
     PinPtr status = constant3(b, "OK_CODE", unsigned(circuit::memory::Status::Ok));
     if (technology_ == Technology::ROM) {
-        refused = w.invert("NOT_READ", read);
+        refused = w.invert("NOT_READ", w.either("READ_OR_BURST", read, burst));
         status = payloadMux(b, w, "READ_ONLY_STATUS", status, constant3(b, "READ_ONLY_CODE", unsigned(circuit::memory::Status::ReadOnly)), refused);
     } else if (technology_ == Technology::NORFlash) {
         std::vector<PinPtr> block_low;
@@ -87,14 +93,15 @@ void MemoryRequestCheck::buildInternals(ComponentBuilder& b) {
     status = payloadMux(b, w, "RANGE_STATUS", status, constant3(b, "RANGE_CODE", unsigned(circuit::memory::Status::Range)), out_of_range);
     status = payloadMux(b, w, "ALIGN_STATUS", status, constant3(b, "ALIGNMENT_CODE", unsigned(circuit::memory::Status::Alignment)), unaligned);
     status = payloadMux(b, w, "MASK_STATUS", status, constant3(b, "BAD_MASK_CODE", unsigned(circuit::memory::Status::InvalidRequest)), bad_mask);
-    status = payloadMux(b, w, "RESERVED_STATUS", status, constant3(b, "RESERVED_CODE", unsigned(circuit::memory::Status::Unsupported)), o2);
+    auto reserved = w.both("RESERVED_OP", o2, w.invert("NOT_BURST", burst));
+    status = payloadMux(b, w, "RESERVED_STATUS", status, constant3(b, "RESERVED_CODE", unsigned(circuit::memory::Status::Unsupported)), reserved);
     status = payloadMux(b, w, "KNOWN_STATUS", constant3(b, "UNKNOWN_CODE", unsigned(circuit::memory::Status::InvalidRequest)), status,
                         known->getOutputPin("FIELDS_KNOWN"));
     w.connect(status, getOutputPin<3>("STATUS"));
-    w.connect(w.reduce("ACCEPTED", {known->getOutputPin("FIELDS_KNOWN"), n2, w.invert("MASK_OK", bad_mask),
+    w.connect(w.reduce("ACCEPTED", {known->getOutputPin("FIELDS_KNOWN"), w.invert("NOT_RESERVED", reserved), w.invert("MASK_OK", bad_mask),
                                     w.invert("ALIGNED", unaligned), in_range, w.invert("PERMITTED", refused)}, true),
               getOutputPin("ACCEPT"));
-    for (auto [name, signal] : std::vector<std::pair<const char*, PinPtr>>{{"READ", read}, {"WRITE", write}, {"PROGRAM", program}, {"ERASE", erase}})
+    for (auto [name, signal] : std::vector<std::pair<const char*, PinPtr>>{{"READ", read}, {"WRITE", write}, {"PROGRAM", program}, {"ERASE", erase}, {"BURST", burst}})
         w.connect(signal, getOutputPin(name));
     auto shifted = b.addNewComponent<BitJoiner<32>>("WORD_INDEX");
     const auto zero = w.constant("ZERO", false);
@@ -148,7 +155,21 @@ void StaticMemorySequencer::buildInternals(ComponentBuilder& b) {
         count_zero.push_back(w.invert("COUNT_LOW_" + std::to_string(i), count.back()));
     }
     const auto expired = w.reduce("COUNT_EXPIRED", count_zero, true);
-    auto complete = w.both("COMPLETE", active, expired);
+    // A burst: BURST and the words still to come; each word is taken at its
+    // counted edge, but only while the last one has left the RESULT register
+    // or will at this edge (SPACE: the transaction port holds no response,
+    // registered, so the device's inputs never wait on this cycle's RSP_READY).
+    auto burst = state("BURST");
+    const size_t burst_words = config_.block_words ? config_.block_words : 1;
+    const size_t beat_bits = std::max<size_t>(1, std::countr_zero(burst_words));
+    std::vector<std::shared_ptr<IOComponent>> beats;
+    std::vector<PinPtr> beat_q;
+    for (size_t i = 0; i < beat_bits; ++i) { beats.push_back(state(("BEATS_LEFT_" + std::to_string(i)).c_str())); beat_q.push_back(beats.back()->getOutputPin("Q")); }
+    auto more = w.both("MORE_WORDS", burst->getOutputPin("Q"), w.reduce("WORDS_LEFT", beat_q, false));
+    auto complete = w.reduce("COMPLETE", {active, expired, w.either("RESULT_FREE", w.invert("NOTHING_SHOWN", done->getOutputPin("Q")),
+                                                                      getInputPin("SPACE"))}, true);
+    auto beat_next = w.both("NEXT_WORD", complete, more);
+    auto reload = w.either("RELOAD_COUNT", start, beat_next);
     // Next count: access_cycles - 1 on START, one less each edge while waiting.
     const unsigned load = unsigned(config_.access_cycles - 1);
     auto next = memory_device::bitAdapter(b, "NEXT_WAIT_COUNT", 8, false);
@@ -158,7 +179,7 @@ void StaticMemorySequencer::buildInternals(ComponentBuilder& b) {
         auto less = w.binary<XORGate>("COUNT_LESS_" + n, count[i], borrow);
         borrow = w.both("COUNT_BORROW_" + n, count_zero[i], borrow);
         auto waiting = w.both("COUNT_KEEP_" + n, w.both("COUNT_WAITING_" + n, active, w.invert("COUNT_RUNNING_" + n, expired)), less);
-        w.connect(w.either("COUNT_NEXT_" + n, w.both("COUNT_LOAD_" + n, start, w.constant("LOAD_" + n, (load >> i) & 1)), waiting),
+        w.connect(w.either("COUNT_NEXT_" + n, w.both("COUNT_LOAD_" + n, reload, w.constant("LOAD_" + n, (load >> i) & 1)), waiting),
                   next->getInputPin("IN_" + std::to_string(i)));
     }
     w.connect(next->getOutputPinDynamic("OUT"), counter->getInputPin<8>("D"));
@@ -168,8 +189,52 @@ void StaticMemorySequencer::buildInternals(ComponentBuilder& b) {
     auto ready_seen = b.addNewComponent<circuit::memory::ProtocolStableData>("READY_HELD", 1);
     w.connect(getInputPin("MEM_READY"), ready_seen->getInputPinDynamic("IN"));
     const auto ready = ready_seen->getOutputPinDynamic("OUT");
-    w.connect(w.either("NEXT_ACCESS", valid_start, w.both("STAY_ACCESS", active, w.invert("NOT_COMPLETE", complete))),
+    w.connect(w.reduce("NEXT_ACCESS", {valid_start, w.both("STAY_ACCESS", active, w.invert("NOT_COMPLETE", complete)), beat_next}, false),
               access->getInputPin("D"));
+    // BURST and the word count: loaded on START (block_words - 1 words to
+    // follow), one less with each further word.
+    w.connect(w.either("NEXT_BURST", w.both("LOAD_BURST", start, check->getOutputPin("BURST")),
+                       w.both("HOLD_BURST", burst->getOutputPin("Q"), w.invert("NO_NEW_BURST", start))), burst->getInputPin("D"));
+    {
+        PinPtr borrow = w.constant("WORD_DECREMENT", true);
+        for (size_t i = 0; i < beat_bits; ++i) {
+            const auto n = std::to_string(i);
+            auto less = w.binary<XORGate>("WORDS_LESS_" + n, beat_q[i], borrow);
+            borrow = w.both("WORDS_BORROW_" + n, w.invert("WORDS_ZERO_" + n, beat_q[i]), borrow);
+            const bool load_bit = burst_words > 1 && (((burst_words - 1) >> i) & 1);
+            auto loaded = w.both("WORDS_LOAD_" + n, w.both("BURST_START_" + n, start, check->getOutputPin("BURST")), w.constant("WORDS_INITIAL_" + n, load_bit));
+            auto kept = w.both("WORDS_KEEP_" + n, w.invert("NOT_STARTING_" + n, start),
+                               w.either("WORDS_STEP_" + n, w.both("WORDS_DOWN_" + n, beat_next, less),
+                                        w.both("WORDS_HOLD_" + n, w.invert("NO_WORD_STEP_" + n, beat_next), beat_q[i])));
+            w.connect(w.either("WORDS_NEXT_" + n, loaded, kept), beats[i]->getInputPin("D"));
+        }
+    }
+    // The word shown is the transaction's last unless more burst words follow.
+    auto last = state("LAST");
+    w.connect(w.either("NEXT_LAST", w.either("SHOW_LAST", invalid_start, w.both("LAST_WORD_TAKEN", complete, w.invert("NO_MORE_WORDS", more))),
+                       w.both("HOLD_LAST", last->getOutputPin("Q"), w.invert("NOT_A_WORD", complete))), last->getInputPin("D"));
+    w.connect(last->getOutputPin("Q"), getOutputPin("LAST"));
+    // The word address: the request's on START, the next word of the block
+    // (wrapping within it) with each further burst word.
+    auto beat_address = reg("WORD_ADDRESS", 32);
+    w.connect(reload, beat_address->getInputPin("WE"));
+    auto next_word = [&] {
+        auto split = memory_device::bitAdapter(b, "WORD_ADDRESS_BITS", 32, true);
+        w.connect(beat_address->getOutputPin<32>("Q"), split->getInputPin<32>("IN"));
+        auto join = memory_device::bitAdapter(b, "NEXT_WORD_ADDRESS", 32, false);
+        PinPtr carry = w.constant("WORD_STEP", true);
+        const size_t block_bits = std::countr_zero(burst_words);
+        for (size_t i = 0; i < 32; ++i) {
+            auto bit = split->getOutputPin("OUT_" + std::to_string(i));
+            if (i < block_bits) {
+                w.connect(w.binary<XORGate>("WORD_SUM_" + std::to_string(i), bit, carry), join->getInputPin("IN_" + std::to_string(i)));
+                carry = w.both("WORD_CARRY_" + std::to_string(i), bit, carry);
+            } else w.connect(bit, join->getInputPin("IN_" + std::to_string(i)));
+        }
+        return join->getOutputPinDynamic("OUT");
+    }();
+    w.connect(payloadMux(b, w, "WORD_ADDRESS_SOURCE", next_word, check->getOutputPin<32>("WORD_ADDR"), start),
+              beat_address->getInputPin<32>("D"));
     auto finished = w.either("FINISHED", invalid_start, complete);
     w.connect(w.either("NEXT_DONE", finished, w.both("KEEP_DONE", done->getOutputPin("Q"), w.invert("NOT_FINISH", getInputPin("FINISH")))),
               done->getInputPin("D"));
@@ -182,16 +247,16 @@ void StaticMemorySequencer::buildInternals(ComponentBuilder& b) {
     if (config_.clocked) {
         // The macro registers the request itself at the starting edge.
         w.connect(bridge(b, w, "DEVICE_CLOCK", getInputPin("CLK")), getOutputPin("MEM_CLK"));
-        w.connect(check->getOutputPin<32>("WORD_ADDR"), getOutputPin<32>("MEM_WORD_ADDR"));
+        // The request's address while it is taken, the next burst word's
+        // while that one starts.
+        w.connect(payloadMux(b, w, "SHOWN_WORD_ADDRESS", next_word, check->getOutputPin<32>("WORD_ADDR"), valid_start),
+                  getOutputPin<32>("MEM_WORD_ADDR"));
         w.connect(bridge(b, w, "SHOWN_DATA", getInputPinDynamic("DATA")), getOutputPinDynamic("MEM_WRITE_DATA"));
         w.connect(bridge(b, w, "SHOWN_MASK", getInputPinDynamic("MASK")), getOutputPinDynamic("MEM_WRITE_MASK"));
-        w.connect(w.invert("CHIP_SELECT", valid_start), getOutputPin("MEM_CE_N"));
+        w.connect(w.invert("CHIP_SELECT", w.either("ACCESS_STARTS", valid_start, beat_next)), getOutputPin("MEM_CE_N"));
         w.connect(w.invert("WRITE_STROBE", w.both("WRITE_START", valid_start, check->getOutputPin("WRITE"))), getOutputPin("MEM_WE_N"));
     } else {
-    auto word = reg("WORD_ADDRESS", 32);
-    w.connect(start, word->getInputPin("WE"));
-    w.connect(check->getOutputPin<32>("WORD_ADDR"), word->getInputPin<32>("D"));
-    w.connect(word->getOutputPin<32>("Q"), getOutputPin<32>("MEM_WORD_ADDR"));
+    w.connect(beat_address->getOutputPin<32>("Q"), getOutputPin<32>("MEM_WORD_ADDR"));
     if (sram) {
         auto data = reg("WRITE_DATA", width_);
         auto mask = reg("WRITE_MASK", width_ / 8);
@@ -282,6 +347,7 @@ void CommandMemorySequencer::buildInternals(ComponentBuilder& b) {
     const auto is_write = op_bit("IS_WRITE", check->getOutputPin("WRITE"));
     const auto is_program = op_bit("IS_PROGRAM", check->getOutputPin("PROGRAM"));
     const auto is_erase = op_bit("IS_ERASE", check->getOutputPin("ERASE"));
+    const auto is_burst = op_bit("IS_BURST", check->getOutputPin("BURST"));
     // Fields of the live and the held word address.
     const size_t column_bits = std::countr_zero(config_.words_per_row);
     auto live_bits = memory_device::bitAdapter(b, "LIVE_WORD_BITS", 32, true);
@@ -316,7 +382,10 @@ void CommandMemorySequencer::buildInternals(ComponentBuilder& b) {
         }
         return w.reduce(name, terms, true);
     };
-    auto cur_read = dram ? code_is(2, "CURRENT_READ") : code_is(1, "CURRENT_READ");
+    auto cur_burst = dram ? code_is(6, "CURRENT_READ_BURST") : low;
+    auto cur_read = dram ? w.either("CURRENT_ANY_READ", code_is(2, "CURRENT_READ"), cur_burst) : code_is(1, "CURRENT_READ");
+    // A burst word before the last: the device still busy, the word shown.
+    auto burst_word = dram ? w.reduce("BURST_WORD", {WT, cur_burst, getInputPin("MEM_BUSY"), getInputPin("MEM_READ_VALID")}, true) : low;
     auto fault = w.either("DEVICE_FAULT", getInputPin("MEM_ERROR"),
         w.both("NO_READ_DATA", cur_read, w.invert("READ_NOT_VALID", getInputPin("MEM_READ_VALID"))));
     auto fail = w.both("STEP_FAILED", step_done, fault);
@@ -393,6 +462,7 @@ void CommandMemorySequencer::buildInternals(ComponentBuilder& b) {
             unsigned code = steps[k].code;
             PinPtr term = (code >> bit) & 1 ? selected[k] : low;
             if (dram && steps[k].name == "ACCESS" && bit == 0) term = w.both("WRITE_CODE", selected[k], is_write);
+            if (dram && steps[k].name == "ACCESS" && bit == 2) term = w.both("BURST_CODE", selected[k], is_burst);
             if (!dram && steps[k].name == "OPERATION") {
                 // READ 1, PROGRAM 2, ERASE 3.
                 term = bit == 0 ? w.both("OP_CODE0", selected[k], w.invert("NOT_PROGRAM_CODE", w.both("ONLY_PROGRAM", is_program, w.invert("NOT_ERASE_CODE", is_erase))))
@@ -415,18 +485,18 @@ void CommandMemorySequencer::buildInternals(ComponentBuilder& b) {
     w.connect(w.either("NEXT_WAIT", present, w.both("KEEP_WAITING", WT, w.invert("STEP_OVER", device_idle))), waiting->getInputPin("D"));
     set_hold(active, plan, finish_now, "ACTIVE");
     auto request_ends = w.both("REQUEST_ENDS", finish_now, w.invert("NOT_REFRESH", refreshing_q));
-    set_hold(done, w.either("SHOW_RESULT", request_ends, invalid_start), getInputPin("FINISH"), "DONE");
+    set_hold(done, w.reduce("SHOW_RESULT", {request_ends, invalid_start, burst_word}, false), getInputPin("FINISH"), "DONE");
     // Result and status.
     auto result = reg("RESULT", width_), status = reg("RESULT_STATUS", 3);
-    auto capture = w.either("CAPTURE", w.both("READ_CAPTURE", step_done, cur_read), w.either("CAPTURE_END", request_ends, invalid_start));
+    auto capture = w.reduce("CAPTURE", {w.both("READ_CAPTURE", step_done, cur_read), request_ends, invalid_start, burst_word}, false);
     w.connect(capture, result->getInputPin("WE"));
-    w.connect(w.either("STATUS_UPDATE", request_ends, invalid_start), status->getInputPin("WE"));
+    w.connect(w.reduce("STATUS_UPDATE", {request_ends, invalid_start, burst_word}, false), status->getInputPin("WE"));
     auto zero_data = memory_device::bitAdapter(b, "ZERO_DATA", width_, false);
     for (size_t i = 0; i < width_; ++i) w.connect(low, zero_data->getInputPin("IN_" + std::to_string(i)));
     // Read data are stable once the device has released BUSY with READ_VALID.
     auto held_data = b.addNewComponent<circuit::memory::ProtocolStableData>("READ_DATA_HELD", width_);
     w.connect(getInputPinDynamic("MEM_READ_DATA"), held_data->getInputPinDynamic("IN"));
-    auto keep_data = w.reduce("RETURN_DATA", {step_done, cur_read, w.invert("READ_OK", fail)}, true);
+    auto keep_data = w.either("RETURN_WORD", burst_word, w.reduce("RETURN_DATA", {step_done, cur_read, w.invert("READ_OK", fail)}, true));
     w.connect(payloadMux(b, w, "RESULT_SOURCE", zero_data->getOutputPinDynamic("OUT"), held_data->getOutputPinDynamic("OUT"), keep_data),
               result->getInputPinDynamic("D"));
     auto device_status = payloadMux(b, w, "DEVICE_STATUS", constant3(b, "OK_CODE", 0), constant3(b, "DEVICE_CODE", unsigned(circuit::memory::Status::Device)), fail);
@@ -434,6 +504,11 @@ void CommandMemorySequencer::buildInternals(ComponentBuilder& b) {
     w.connect(result->getOutputPinDynamic("Q"), getOutputPinDynamic("RESULT"));
     w.connect(status->getOutputPin<3>("Q"), getOutputPin<3>("STATUS"));
     w.connect(done->getOutputPin("Q"), getOutputPin("DONE"));
+    // LAST: set by the response that ends a request, cleared by a burst word
+    // before the last.
+    auto last = state("LAST");
+    set_hold(last, w.either("ENDS_REQUEST", request_ends, invalid_start), burst_word, "LAST");
+    w.connect(last->getOutputPin("Q"), getOutputPin("LAST"));
     // Device pins: the shown command, NOP otherwise; the address field the
     // shown command needs.
     auto shown = memory_device::bitAdapter(b, "SHOWN_COMMAND", 3, false);

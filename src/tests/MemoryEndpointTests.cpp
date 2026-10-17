@@ -63,6 +63,28 @@ struct Scenario {
         step(label+"-ready", {{"CLK",logicBit(false)},{"RSP_READY",logicBit(true)}}, response);
         step(label+"-consumed", {{"CLK",logicBit(true)}}, {{"RSP_VALID",logicBit(false)},{"REQ_READY",logicBit(true)}});
     }
+    // A burst read (op 4): the words of the block from `address` on,
+    // wrapping. With RSP_READY low the first word waits in the response
+    // buffer and the next in the result register; then one word per clock.
+    void burst(std::string label, uint32_t address, const std::vector<uint32_t>& words) {
+        step(label+"-setup", {{"CLK",logicBit(false)},{"REQ_VALID",logicBit(true)},{"REQ_OP",logicBits(3,4)},
+            {"REQ_ADDR",logicBits(32,address)},{"REQ_WRITE_DATA",logicBits(width,0)},
+            {"REQ_WRITE_MASK",logicBits(width/8,0)},{"RSP_READY",logicBit(false)}}, {{"REQ_READY",logicBit(true)}});
+        step(label+"-accept", {{"CLK",logicBit(true)}}, {{"REQ_READY",logicBit(false)}});
+        step(label+"-latched", {{"CLK",logicBit(false)},{"REQ_VALID",logicBit(false)},{"REQ_ADDR",logicBits(32,0xffffffff)}});
+        step(label+"-execute", {{"CLK",logicBit(true)}});
+        for (size_t cycle = 0; cycle < 20; ++cycle) {
+            step(label+"-wait-low-"+std::to_string(cycle), {{"CLK",logicBit(false)}});
+            step(label+"-wait-high-"+std::to_string(cycle), {{"CLK",logicBit(true)}});
+        }
+        for (size_t i = 0; i < words.size(); ++i) {
+            step(label+"-word-"+std::to_string(i), {{"CLK",logicBit(false)},{"RSP_READY",logicBit(true)}},
+                 {{"RSP_VALID",logicBit(true)},{"RSP_READ_DATA",logicBits(width,words[i])},{"RSP_STATUS",logicBits(3,0)},
+                  {"REQ_READY",logicBit(false)}});
+            step(label+"-word-"+std::to_string(i)+"-taken", {{"CLK",logicBit(true)}});
+        }
+        step(label+"-done", {{"CLK",logicBit(false)},{"RSP_READY",logicBit(false)}}, {{"RSP_VALID",logicBit(false)},{"REQ_READY",logicBit(true)}});
+    }
 };
 std::string testName(Technology t) {
     switch(t) {
@@ -76,7 +98,9 @@ std::string testName(Technology t) {
 }
 ComponentTestSpec endpointSpec(Technology t, size_t width = 8, bool container = false, size_t depth = 4, size_t row_words = 1,
                                bool clocked = false) {
-    ParameterMap config{{"depth_words",std::to_string(depth)},{"words_per_row",std::to_string(row_words)},{"block_words",std::to_string(row_words)}};
+    // SRAM and ROM bursts read blocks of two words.
+    const size_t block = t == Technology::SRAM || t == Technology::ROM ? std::min<size_t>(2, depth) : row_words;
+    ParameterMap config{{"depth_words",std::to_string(depth)},{"words_per_row",std::to_string(row_words)},{"block_words",std::to_string(block)}};
     // The on-chip clocked SRAM macro behind the same controller.
     if (clocked) config["clocked"] = "1";
     if (t == Technology::ROM) config["image_hex"] = "a53c81ff";
@@ -94,6 +118,16 @@ ComponentTestSpec endpointSpec(Technology t, size_t width = 8, bool container = 
         const uint32_t expected = width == 8 ? 0xa5 : width == 16 ? 0x3ca5 : 0xff813ca5;
         s.transaction("read-image",0,0,0,0,expected);
         s.transaction("reject-write",1,0,0,mask,0,Status::ReadOnly);
+        if (block == 2) {
+            // Words 1 and 0 of the image (little-endian bytes a5 3c 81 ff, zeros after).
+            const uint8_t image[] = {0xa5, 0x3c, 0x81, 0xff};
+            const auto word = [&](size_t index) {
+                uint32_t value = 0;
+                for (size_t b = 0; b < width / 8; ++b) { const size_t at = index * (width / 8) + b; if (at < 4) value |= uint32_t(image[at]) << (8 * b); }
+                return value;
+            };
+            s.burst("burst-wraps", width / 8, {word(1), word(0)});
+        }
     } else {
         const unsigned write = t == Technology::NORFlash ? 2 : 1;
         const uint32_t first = uint32_t(0xa5a53c81ull & ((uint64_t(1)<<width)-1));
@@ -106,6 +140,10 @@ ComponentTestSpec endpointSpec(Technology t, size_t width = 8, bool container = 
         if (t != Technology::NORFlash) {
             s.transaction("masked-low-byte",1,0,0x5a,1,0);
             s.transaction("read-masked-byte",0,0,0,0,(first & ~0xffu)|0x5a);
+        }
+        if ((t == Technology::SRAM || t == Technology::DRAM) && block == 2) {
+            s.transaction("write-second",1,width/8,0x77,mask,0);
+            s.burst("burst-wraps",width/8,{0x77,(first & ~0xffu)|0x5a});
         }
         if (t == Technology::NORFlash) {
             s.transaction("cannot-program-ones",2,0,0xffffffff,mask,0);
@@ -146,7 +184,7 @@ ComponentTestSpec endpointSpec(Technology t, size_t width = 8, bool container = 
 }
 ComponentTestSpec frontendSpec() {
     Scenario s("MemoryTransactionPortTest","memory.shared.transaction-port.8",8);
-    s.state["BACK_READY"] = logicBit(true); s.state["DONE"] = logicBit(false);
+    s.state["BACK_READY"] = logicBit(true); s.state["DONE"] = logicBit(false); s.state["LAST"] = logicBit(true);
     s.state["RESULT"] = logicBits(8,0xa5); s.state["STATUS"] = logicBits(3,0);
     s.init(); s.step("request",{{"REQ_VALID",logicBit(true)},{"REQ_ADDR",logicBits(32,12)}});
     s.step("accept",{{"CLK",logicBit(true)}},{{"REQ_READY",logicBit(false)},{"ADDR",logicBits(32,12)}});
@@ -633,13 +671,18 @@ void MemoryEndpointTimingTest::verifyResults() {
             ff.drive({{"CLK",1}});
         }
         ff.drive({{"CLK",0},{"REQ_VALID",0},{"RSP_READY",0}});
-        // Consume a held read while accepting another: old response wins on
-        // that edge, the new response must be retained for the following one.
+        // A held read blocks the next request (REQ_READY from registered
+        // state only): it leaves first; the next request is then taken, and
+        // its response is kept while the consumer is not ready.
         ff.start(0,0);ff.response();
         ff.drive({{"CLK",0},{"RSP_READY",1},{"REQ_VALID",1},{"REQ_OP",0},{"REQ_ADDR",1}});
-        require(ff.out("REQ_READY")==logicBit(true)&&ff.out("RSP_READ_DATA")==logicBits(8,0x40),"Held response was overtaken");
+        require(ff.out("REQ_READY")==logicBit(false)&&ff.out("RSP_READ_DATA")==logicBits(8,0x40),"Request taken over a held response");
         ff.drive({{"CLK",1}});
-        ff.drive({{"CLK",0},{"REQ_VALID",0},{"RSP_READY",0}});
+        ff.drive({{"CLK",0},{"RSP_READY",0}});
+        require(ff.out("REQ_READY")==logicBit(true)&&ff.out("RSP_VALID")==logicBit(true)&&ff.out("RSP_READ_DATA")==logicBits(8,0x41),
+                "Next request not taken after the held response left");
+        ff.drive({{"CLK",1}});
+        ff.drive({{"CLK",0},{"REQ_VALID",0}});
         require(ff.out("RSP_VALID")==logicBit(true)&&ff.out("RSP_READ_DATA")==logicBits(8,0x41),"Replacement response lost");
         ff.consume();
         ff.transaction(1,0,0xa5,0);ff.transaction(0,0,0,0xa5);

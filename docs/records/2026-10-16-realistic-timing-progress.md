@@ -17,8 +17,12 @@ Current phase: 7 (phases 1–6 done). Phase 6 gave datasheet DRAM and NOR
 timing, a clocked on-chip SRAM macro, endpoints that take requests from
 registered state only (one certified clock for every memory), one DRAM
 synchronizer edge per command, and a 306-run core sweep. Residuals: macro
-3.1× CACTI, DRAM +23–33 % over a counted controller. Open defect for phase
-8: the delay twin's X timing; STM32F7 check not done.
+3.1× CACTI, DRAM +23–33 % over a counted controller. Phase 7a gave the
+direct-bank cache (two-cycle hit); 7b gave burst reads end to end and
+burst-filled cache lines (L1 miss = DRAM + 6 cycles at `embedded`), and the
+cache plan's Step 1 order now holds. Next: the cache experiment. Open for
+phase 8: the delay twin's X timing; STM32F7 check not done; documentation
+checks and the cache's saved layouts.
 
 ## 2026-10-16 — Phase 0: baseline
 
@@ -1863,3 +1867,199 @@ lookup. Each layer in gate, compact and fused form with the existing
 equivalence tests, and the analysis's handshake models extended to the
 burst states. The campaign waits for 7b (cache plan rule: a Step 1 violation
 goes back to the timing plan).
+
+## 2026-10-17 — Phase 7b, stages 1–3: burst protocol and static-memory bursts
+
+- **Protocol.** `Operation::ReadBurst` (op 4): the `block_words` words of
+  the aligned block holding the address, from that word on and wrapping, as
+  successive responses. Accepted by SRAM and ROM (DRAM in stage 4); other
+  memories report Unsupported. The gate request check decodes BURST and no
+  longer treats op 4 as reserved for those memories.
+- **Transaction port, multi-word.** The sequencer reports LAST (the result
+  shown is the transaction's last); PENDING clears, and a new request may be
+  taken, only with the last word. The port tells the sequencer SPACE (no
+  response held, registered). Gate port, compact controller and fused
+  endpoint changed alike; the cache front end and the command sequencer
+  report LAST = 1.
+- **Static sequencer bursts.** BURST, a words-left counter and a word
+  address that steps within the block; each word is taken at its counted
+  edge (`access_cycles` per word, no handshake per word), only while the
+  previous word has left the RESULT register or will at this edge
+  (`!DONE | SPACE`). Using the port's FINISH there would have brought this
+  cycle's RSP_READY back to the device's inputs (removed in 6.4a); under
+  backpressure a word waits one cycle instead. The clocked macro is shown the
+  next word's address as it starts (CE_N for a starting burst word too).
+- **Analysis.** The safe-clock handshake model has LAST as a state dimension
+  for burst-capable endpoints (taken both ways, an over-approximation), with
+  the next burst word working or already shown after a non-last word.
+- **Found on the way:** the fused endpoint updated a clocked SRAM macro's
+  model before its sequence read READY (correct for asynchronous devices); a
+  burst starts the macro's next access at the edge that takes a word, so the
+  macro's outputs are now read as they were before the edge, as for command
+  devices.
+- **Checks (`unit`):** new burst scenarios (SRAM asynchronous and clocked,
+  ROM, scalable SRAM: two-word blocks, the first word waiting in the
+  response buffer, then one word per clock, wrapping order) and the existing
+  endpoint, controller, native-device contract, endpoint contract and cache
+  tests pass.
+- **Tables:** `block_words` other than 2 has no proven table (the burst
+  logic is structure that depends on it). Decision: a `@block_words=4`
+  variant (16-byte lines of 32-bit words) is proven for the burst-capable
+  devices, controllers and endpoints.
+
+## 2026-10-17 — Phase 7b, stages 4–6: DRAM bursts, burst-filling cache, tables
+
+- **DRAM bursts (stages 4–5).** The command control takes READ_BURST (code
+  6) when `block_words` ≤ `words_per_row`: one ACTIVATE (if needed), then one
+  READ per word, the column stepping within the block (wrapping) with no
+  new row check, as a DRAM burst stays in its open row. A words-left counter
+  ends the burst; IDLE, RELEASE and BUSY follow the final word. The compact
+  mirror (`DRAMSyncControl`) does the same. `block_words` reaches the device
+  only when it is not the default 2. Checks (`unit`): DRAM device contract
+  and endpoint burst scenarios (block 2), passed.
+- **Cache (stage 6).** The controller's sequence is now five plain state
+  bits (LOOKUP, MEMORY_SEND, MEMORY_WAIT, STREAM, DONE, still under the
+  `PHASES` name for saved layouts); all decisions are in the controller.
+  - The request check accepts op 4 (burst read of the line, from the
+    requested word, wrapping); program, erase and the other codes stay
+    reserved.
+  - A burst hit answers the first word at the normal hit time, then streams
+    one word per cycle from the hit way's data bank (STREAM_OFFSET counter).
+    A clocked SRAM data bank is given the second word in the lookup cycle and
+    then the next word as each is taken, or the same word again under
+    backpressure (its output is only valid for the word it was last given).
+  - A burst miss forwards each fill word as it arrives. The backing
+    response is taken only when the result register has room (no response
+    shown, or SPACE), so backpressure reaches the backing memory instead of
+    dropping words.
+  - New parameter `fill` = `words` (default) | `burst`. A burst fill issues
+    one op-4 request at the requested address and writes each arriving word
+    at `(requested + count) mod line`.
+  - **Decision: a word-by-word fill now also starts at the requested word
+    and wraps** (it was word 0 first). A burst miss can then forward a word
+    fill in burst order, and both fill modes bring a line in the same order.
+    This is the usual critical-word-first order. The response is still given
+    only when the whole line is in (no early restart): the cache takes no
+    new request during a fill anyway, and early restart would only favour
+    the cache. `CacheScalableScenarioTest`'s cold miss now expects word 4,
+    then word 0.
+  - Checks (`unit`): `CacheComponentScenarioTest`,
+    `CacheDirectMappedScenarioTest`, `CacheScalableScenarioTest`,
+    `CacheTwoLevelScenarioTest` and `CacheReadTest` pass. `CacheReadTest`
+    gained burst cases for 8/16/32-bit words, 1/2/4-word lines, one and two
+    ways, FF and SRAM data banks, both fill modes: a forwarded burst miss, a
+    streamed hit with the consumer holding back every other word, a refill
+    after eviction, and burst-filled single reads (one backing request per
+    miss). The rig now counts backing requests taken at every edge, not only
+    in its idle cycles (a forwarded burst issues further fill requests while
+    the consumer takes words).
+- **Tables.** `block_words` ≠ 2 now selects an `@block=N` variant in
+  `provenPartDelays`, after the row layout. The generator proves `@block=4`
+  for every non-FF device and endpoint at the default size, 64 and 128
+  words, in the default layout and the 16-word one (the long-row DRAM case).
+  DRAM in the default two-word layout has none (a four-word burst would leave
+  its row). NOR flash also received block-4 tables though it rejects bursts;
+  they are harmless and will be dropped at the next regeneration. Regenerated:
+  fixed point after round 2, 754 entries per profile (was 649), and
+  `--verify` recomputed every entry identically in `unit`, `embedded` and
+  `desktop`. `DelayRuleTest` gained block-4 variants (SRAM and ROM endpoints,
+  DRAM device and endpoint at 16-word rows).
+- **Delay rule** (14 memory contracts plus their variants, 24 parts, default
+  rounds): `unit` 29,905 situations, `embedded` and `desktop` 31,415 each;
+  0 parts break the rule and 0 miss the 70 %/90 % targets in every profile,
+  with no recorded exception needed.
+- **Cache plan Step 1, rerun** (`probe/cache_latency.cpp`, `embedded`,
+  4104 ps; L1 8 sets × 2 ways × 16-byte lines, L2 64 sets, both clocked SRAM
+  banks; SDR DRAM backing (-6A) with `block_words` = 4; cycles from the
+  request edge to RSP_VALID):
+
+  | Path | word fill | burst fill |
+  | --- | ---: | ---: |
+  | direct DRAM, cold / open row | 14 / 8 | 14 / 8 |
+  | L1 hit | 2 | 2 |
+  | L1 miss, DRAM open row | 38 | 14 |
+  | L1 miss, DRAM cold | 44 | 20 |
+  | L2 hit after an L1 miss | 14 | 8 |
+  | L1 + L2 miss (open row) | 50 | 17 |
+
+  With bursts an L1 miss costs the DRAM access plus six cycles (lookup,
+  request, three further beats, capture), and an L2 hit is no slower than a
+  DRAM row hit and faster than a closed or missed row. Word fills were 4.75×
+  slower per miss, a protocol artefact rather than a technology property.
+
+## 2026-10-17 — Plan check after phase 7b (assistant)
+
+- Step 1's order now holds: L1 hit < L2 hit ≤ DRAM row hit < L1 miss <
+  L1+L2 miss. The defect that stopped the campaign (word-by-word fills) is
+  removed without tuning any memory timing; DRAM, SRAM and ROM intervals are
+  unchanged since phase 6.
+- **Decision:** the cache campaign uses `fill=burst` with the backing
+  memory's `block_words` equal to the line's words (four 32-bit words), as
+  real caches fill lines with bursts. The `words` fill stays the default
+  parameter (it needs no burst-capable backing) and remains available for
+  comparison.
+- **Decision:** no early restart (critical-word-first response before the
+  line is in). It would favour the cache; it can be studied later as an
+  explicit variant if wanted.
+- Next: freeze the geometry and run the campaign as planned (S0–S2
+  standalone, then the five CPU topologies, `embedded` then `desktop`).
+
+## 2026-10-17 — Phase 7b: CTest subset, fixes found
+
+Subset (`build-cleanup`, `unit`, 42 tests: table checks, timing and safe-clock
+tests, memory endpoint/controller/device/contract tests, cache tests and
+layout/documentation checks): 37 passed at first; after the fixes below all
+pass except the documentation and saved-layout checks listed last.
+
+- **Safe-clock state model.** The LAST dimension added in stages 1–3 was
+  taken for every burst-capable memory, though the analysis only covers RV32I
+  requesters, which never ask for bursts. Fixed: LAST is taken both ways
+  only when the requester's op bit 2 is not a constant 0 (`mayBurst`; the
+  request block's op is followed to its constant or bit joiner). Both CPU
+  requesters are recognised as never bursting; the evidence line says so.
+  A first version crashed on the read-only fetch request (no OP input);
+  guarded.
+- **`RV32IExperimentCLITest`: advanced core, clocked SRAM, `unit` safe clock
+  158 → 174.** Not the state model (the period stayed 174 after the fix).
+  The limit is the data write mask's setup at the SRAM endpoint, whose
+  65,536-word table is an estimate for 1024 subarrays from the proven 64,
+  128 and 256-word tables. Since stages 1–3 the clocked sequencer's
+  request-to-CE_N path has the burst OR (`valid_start | next_word`) and the
+  next-word address multiplexer, and the mask reaches it through write
+  validity: REQ_WRITE_MASK setup is now 24 / 26 / 26 at 64 / 128 / 256 words
+  (was 24 / 24 / 24), REQ_VALID 14 / 20 / 20 (was 14 / 17 / 17). The
+  subarray estimate keeps an input whose setup does not change with size off
+  the global wires, and charges one that does the per-side wire for a 32×32
+  grid, hence +16. The new value is a real cost (one more gate, and the mask
+  now reaches the subarray registers over the global wires); the old value
+  relied on the mask path not reaching the subarrays. Re-pinned with that
+  explanation. The embedded and desktop effect is in the panel below.
+- **`MemoryEndpointTimingTest`** (failing since 6.4a, not run then): it
+  expected a request to be taken over a held response in the same edge. Since
+  6.4a REQ_READY comes from registered state only and a held response blocks
+  new requests; the test now expects the held response to leave first and
+  the next request to be taken in the following cycle, its response kept
+  under backpressure.
+- **`MemoryTransactionPortTest`** scenario did not drive the new LAST input
+  (its examples were rejected as not explicitly driven); it now drives LAST
+  = 1.
+- **`CacheLayoutTest`** (failing since 7a, not run then): the cache
+  floorplan accepts only top-level helpers named `TAG_…`/`DATA_…`; 7a's bank
+  wiring added `LOW`/`HIGH` constants and `TAG0_…` gates. Each bank's
+  helpers are now named after it (`TAG_0_SELECT`, `DATA_1_READ_ENABLED`,
+  …) and the floorplan is found again. The saved layouts in
+  `visualizer-v2/layout.json` predate 7a's controller and no longer match
+  (`rel_pos` missing): regenerating them belongs to phase 8's visualizer
+  work.
+- **Still failing, documentation (phase 8):** `MemoryDeviceDocumentationTest`
+  (ROM pin lists without READY, a device snippet) and three
+  `MemoryEndpointIntegrationTest` checks: two `site-docs/` code snippets (as
+  before) and the transaction port's public pin table, which lacks LAST and
+  SPACE.
+- **CPU panel** (advanced core, two-bit predictor, programs 19–22, six
+  memories, three profiles; certified clock, then each program at it): all
+  66 runs verified and completed. Against the phase 6.4 panel the only
+  change is the `unit` clocked-SRAM clock, 158 → 174 ps (same cycle counts).
+  `embedded` (4104 ps) and `desktop` (2858 ps) clocks and every cycle count
+  are unchanged; program 19 at `embedded`: FF 103, SRAM 269, asynchronous
+  SRAM 336, DRAM 683, ROM 269, NOR 2413 cycles.

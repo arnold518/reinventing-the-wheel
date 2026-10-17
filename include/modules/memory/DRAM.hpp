@@ -4,6 +4,8 @@
 struct DRAMDeviceConfig : circuit::memory_device::Geometry {
     size_t phase_ticks = 32;
     size_t retention_ticks = circuit::timing::activeTimingProfile().memory.dram_device_retention;
+    // READ_BURST: this many columns (a power of two within a row), parameter block_words.
+    size_t burst_words = 2;
     void validate(size_t width, bool expanded = false) const;
 };
 DRAMDeviceConfig dramConfigFromParameters(const circuit::ParameterMap &);

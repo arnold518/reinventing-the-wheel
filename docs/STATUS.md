@@ -81,14 +81,19 @@ work state changes. Keep dated decisions and validation results in
   directed realistic memory models that are not tuned to favor caches.
   Open: the STM32F7 system check (source not read), the delay twin's X timing,
   tick-driven tests (CacheReadTest, MemoryDeviceTimingTest,
-  MemoryEndpointTimingTest) are `unit`-only. Phase 7a is done: the cache
-  looks up every way at once in directly driven banks (L1 hit two cycles).
-  Next: phase 7b (burst reads for line fills, since word-by-word fills made
-  an L1 miss cost about five DRAM reads), the cache plan's Step 1 again, then
-  the cache experiment; then phase 8 (public site, visualizer, full suite
-  under `unit` and `embedded`).
-  `MemoryEndpointIntegrationTest` fails two example checks built from
-  `site-docs/` snippets until that site update.
+  MemoryEndpointTimingTest) are `unit`-only. Phase 7 so far: the cache looks
+  up every way at once in directly driven banks (L1 hit two cycles, 7a), and
+  burst reads (op 4) exist end to end (7b): SRAM, ROM and DRAM endpoints
+  return a line from the requested word, and the cache fills lines with one
+  burst (`fill=burst`), forwards a burst miss and streams a burst hit. With
+  burst fills an L1 miss costs the DRAM access plus six cycles and an L2 hit
+  is no slower than a DRAM row hit (cache plan Step 1, `embedded`). Next: the
+  cache experiment (S0–S2 standalone, then the five CPU topologies,
+  `embedded` then `desktop`); then phase 8 (public site, visualizer, full
+  suite under `unit` and `embedded`). Failing until phase 8:
+  `MemoryDeviceDocumentationTest` and three `MemoryEndpointIntegrationTest`
+  checks (`site-docs/` snippets and pin tables), and `CacheLayoutTest`'s
+  saved-layout comparison (layouts predate 7a).
 
 - [Future steps plan](records/2026-10-14-future-steps-plan.md): current CPU,
   memory and viewer boundaries assessed against interactive games, a

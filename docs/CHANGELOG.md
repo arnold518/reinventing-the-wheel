@@ -7,6 +7,45 @@ history remains in Git and the archived reports.
 
 ## 2026-10-17
 
+### Burst reads and burst-filled cache lines (branch `realistic-timing`, phase 7b)
+
+- **Changed:** a burst read (op 4, `Operation::ReadBurst`) returns the
+  `block_words` words of the aligned block from the requested word,
+  wrapping, one response per word. The transaction port reports and uses
+  LAST (a burst holds the port until its last word) and SPACE; the static
+  sequencer steps a word address within the block (the clocked macro is
+  given the next word as one is taken); the DRAM command control issues one
+  READ per word in the open row (`block_words` ≤ `words_per_row`). The cache
+  accepts op 4 (a hit streams the line from its data bank, a miss forwards
+  the fill), has `fill=words|burst` (one op-4 request per miss), and fills a
+  line from the requested word in both modes; its response still waits for
+  the whole line. `block_words` = 4 has its own proven delay tables
+  (`@block=4`). The safe-clock handshake model takes the multi-word states
+  only for requesters that can ask for bursts. Fixed on the way: the
+  transaction-port scenario's undriven LAST, the cache's top-level helper
+  names (the floorplan rejected them since 7a), and MemoryEndpointTimingTest's
+  pre-6.4a expectation that a request is taken over a held response.
+- **Why:** word-by-word fills made an L1 miss cost about five DRAM reads (38
+  cycles against an 8-cycle row hit), a protocol defect against caches. With
+  bursts the cache plan's Step 1 order holds at `embedded`: L1 hit 2, L2 hit
+  8, L1 miss 14 (DRAM open row 8), L1+L2 miss 17 cycles. No memory interval
+  was changed.
+- **Verified:** tables regenerated to a fixed point (754 entries per
+  profile) and recomputed identically in all three profiles; DelayRuleTest
+  on 14 memory contracts with their variants (24 parts) in `unit`,
+  `embedded` and `desktop`: no rule break, no target missed; a 42-test
+  CTest subset at `unit` (tables, timing, safe clock, memory endpoints,
+  controllers, devices, contracts, caches); the CPU panel (66 runs, all
+  verified): unchanged at `embedded` and `desktop`.
+- **Limits:** the advanced core's `unit` safe clock with clocked SRAM rose
+  158 → 174 ps: the burst gates on the macro's request-to-CE_N path,
+  extrapolated to 1024 subarrays (recorded in the progress log); `embedded`
+  and `desktop` clocks did not change. Documentation checks
+  (`MemoryDeviceDocumentationTest`, three `MemoryEndpointIntegrationTest`
+  checks) and CacheLayoutTest's saved layouts fail until phase 8. NOR flash
+  received unused `@block=4` tables (it rejects bursts); they go at the next
+  regeneration. The full suite was not run.
+
 ### Cache with directly driven banks (branch `realistic-timing`, phase 7a)
 
 - **Changed:** `Cache<W>` looks a request up in every way at once in one

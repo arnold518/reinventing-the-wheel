@@ -67,7 +67,8 @@ void BehavioralMemoryEndpoint::evaluate(size_t t, Simulator& sim) {
         const auto room=s.buffer.room(take);
         const auto complete=both(s.pending,bit(s.sequence.done));
         // REQ_READY comes from registered state only (MemoryTransactionPort).
-        const auto slot=fast?H:both(either(no(s.pending),complete),bit(s.sequence.available));
+        // A burst's transaction ends with its last word.
+        const auto slot=fast?H:both(either(no(s.pending),both(complete,bit(s.sequence.last))),bit(s.sequence.available));
         const auto ready=both(both(no(reset),no(s.buffer.full)),slot);
         const auto accept=both(ready,issue);
         return View{complete,both(complete,both(no(reset),room)),ready,accept,fast?accept:complete};
@@ -82,12 +83,15 @@ void BehavioralMemoryEndpoint::evaluate(size_t t, Simulator& sim) {
         return word;
     };
     const auto before=view();
+    // SPACE and LAST as registered before this edge.
+    s.sequence.space=s.buffer.full==L;
+    const auto last_before=fast?H:bit(s.sequence.last);
     if(!s.config.always_ready||!fast)
         s.buffer.clock(reset,edge,before.incoming,take,fast?fastData(before.accept):s.sequence.result,
             bits(3,unsigned(fast?fastStatus:s.sequence.status)));
     if(reset==H) s.pending=L;
     else if(reset!=L) fade(s.pending);
-    else if(edge&&!fast) s.pending=either(before.accept,both(s.pending,no(before.finish)));
+    else if(edge&&!fast) s.pending=either(before.accept,both(s.pending,no(both(before.finish,last_before))));
     if(fast) {
         // Writes are triggered once, by acceptance on the shared edge.
         const bool writing=fastStatus==Status::Ok&&number(request.op)==1;
@@ -101,11 +105,12 @@ void BehavioralMemoryEndpoint::evaluate(size_t t, Simulator& sim) {
         // Controller and device sample at the same edge: the sequencer reads
         // the device's outputs from before the edge, the device the
         // sequencer's.
-        // (The static devices are asynchronous: their READY is read as
-        // updated at this instant.)
-        const bool clocked=s.technology==Technology::DRAM||s.technology==Technology::NORFlash;
+        // (The asynchronous static devices' READY is read as updated at this
+        // instant; a clocked SRAM macro's, like a command device's, as it was
+        // before the edge, which may already start the macro's next access.)
+        const bool clocked=s.technology==Technology::DRAM||s.technology==Technology::NORFlash||s.config.clocked;
         Signals seen;
-        for (auto name : {"BUSY","ERROR","READ_VALID","ROW_OPEN"}) seen[name]=s.device->read(name,1);
+        for (auto name : {"BUSY","ERROR","READ_VALID","ROW_OPEN","READY"}) seen[name]=s.device->read(name,1);
         seen["READ_DATA"]=s.device->read("READ_DATA",s.width);
         // A clocked SRAM macro registers the request shown before the edge.
         s.sequence.presentRequest(before.accept==H,request);
@@ -115,6 +120,7 @@ void BehavioralMemoryEndpoint::evaluate(size_t t, Simulator& sim) {
             [&](const std::string& pin,size_t width){return clocked?signal(seen,pin,width):s.device->read(pin,width);},before.finish==H);
         // The next command is shown from the device's outputs after the edge.
         if (clocked) s.sequence.present([&](const std::string& pin,size_t width){return s.device->read(pin,width);});
+        s.sequence.space=s.buffer.full==L;
         s.sequence.presentRequest(view().accept==H,request);
         s.device->update(t,s.sequence.outputs);
     }

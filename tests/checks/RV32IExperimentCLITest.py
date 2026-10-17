@@ -52,7 +52,10 @@ class ExperimentCLI(unittest.TestCase):
         # certified, and it also covers what the compact core needs.
         safety = run("--core", "advanced", "--memory", "sram", "--safe-clock")["safe_clock"]
         self.assertEqual(safety["status"], "safe-under-contracts")
-        self.assertEqual(safety["safe_period_ticks"], 158)
+        # The data write mask's setup at the clocked macro's subarrays (its
+        # request-to-CE_N path, global wires included, estimated for 1024
+        # subarrays) limits the clock.
+        self.assertEqual(safety["safe_period_ticks"], 174)
         self.assertEqual(safety["checked_state_cases"], safety["state_case_count"])
         self.assertTrue(any("timed memory's clocked handshake" in e for e in safety["state_evidence"]))
         timed = run("--core", "advanced", "--memory", "sram", "--program", "20", "--period", "auto")

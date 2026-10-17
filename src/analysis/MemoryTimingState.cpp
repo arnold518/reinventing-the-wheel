@@ -4,6 +4,7 @@
 #include "modules/rv32i/RV32IMemoryRequest.hpp"
 #include "modules/basic/Gate.hpp"
 #include "modules/utility/Constant.hpp"
+#include "modules/utility/BitAdapter.hpp"
 #include <array>
 #include <set>
 #include <stdexcept>
@@ -28,6 +29,27 @@ std::shared_ptr<IOComponent> child(const std::shared_ptr<Component>& c,const std
         break;
     }
     throw std::runtime_error("Missing control state component");
+}
+// Whether the requester can ask for a burst (op 4): not when the op's bit 2
+// is a constant 0, as the RV32I cores wire it (they read and write words,
+// never bursts). Anything else is taken as able to.
+bool mayBurst(const std::shared_ptr<IOComponent>& request) {
+    const auto zero_bit2=[](const std::shared_ptr<PinBase>& p) {
+        const auto c=p?p->getOwner():nullptr;
+        if(!c)return false;
+        if(typeid(*c)==typeid(ConstantValue<3>))return (static_cast<const ConstantValue<3>&>(*c).getConstantValue()&4)==0;
+        if(typeid(*c)==typeid(ConstantValue<1>))return (static_cast<const ConstantValue<1>&>(*c).getConstantValue()&1)==0;
+        return false;
+    };
+    // A read-only request block has no OP input: its op is a constant.
+    if(const auto out=request->getOutputPinDynamic("BUS_REQ_OP"))if(zero_bit2(source(out)))return false;
+    const auto input=request->getInputPinDynamic("OP");
+    if(!input)return true;
+    const auto op=source(input);
+    if(zero_bit2(op))return false;
+    if(typeid(*op->getOwner())==typeid(BitJoiner<3>))
+        return !zero_bit2(source(std::dynamic_pointer_cast<IOComponent>(op->getOwner())->getInputPin("IN_2")));
+    return true;
 }
 LogicValue inv(LogicValue a) {return a==L?H:a==H?L:X;}
 LogicValue both(LogicValue a,LogicValue b) {return a==L||b==L?L:a==H&&b==H?H:X;}
@@ -73,26 +95,35 @@ std::optional<MemoryTimingGroup> sequencedStates(const std::shared_ptr<Behaviora
     const std::shared_ptr<PinBase>& mismatch) {
     // The sequencer as a phase (Idle: takes a start; Working: a request or a
     // refresh runs; Blocked: idle with a refresh due, DRAM only) and DONE (a
-    // result shown): sequencer state = DONE * 3 + phase. A DRAM result can
-    // stay shown while a refresh is due or running.
+    // result shown) and LAST (the result shown is the transaction's last;
+    // burst words before it are not): sequencer state = LAST * 6 + DONE * 3 +
+    // phase. A DRAM result can stay shown while a refresh is due or running.
     enum Phase:unsigned{Idle,Working,Blocked};
     const auto bit=[](bool v){return v?H:L;};
     const auto clean=[](LogicValue v){return v==H||v==L?v:X;};
     struct View{LogicValue ready,valid,accept,finish,full,pending;};
     const auto view=[&](LogicValue pending,LogicValue full,unsigned seq,LogicValue take,LogicValue issue) {
         const auto room=either(inv(full),take);
-        const auto complete=both(pending,bit(seq/3==1));
-        const auto slot=both(either(inv(pending),complete),bit(seq%3==Idle));
+        const auto complete=both(pending,bit(seq%6/3==1));
+        const auto last=bit(seq/6==1);
+        const auto slot=both(either(inv(pending),both(complete,last)),bit(seq%3==Idle));
         const auto ready=both(inv(full),slot),accept=both(ready,issue),finish=both(complete,room);
         const auto capture=both(both(complete,room),either(full,inv(take)));
         return View{ready,either(full,complete),accept,finish,
-            either(capture,both(full,inv(take))),either(accept,both(pending,inv(finish)))};
+            either(capture,both(full,inv(take))),either(accept,both(pending,inv(both(finish,last))))};
     };
     MemoryTimingGroup group;group.endpoint=endpoint;
     const bool refreshes=endpoint->technology()==memory::Technology::DRAM;
+    // Burst reads: static and DRAM devices, when the requester can ask for
+    // one. Every state is then also taken with LAST either way (an
+    // over-approximation); otherwise LAST is 1.
+    const auto technology=endpoint->technology();
+    const bool bursts=(technology==memory::Technology::SRAM||technology==memory::Technology::ROM||technology==memory::Technology::DRAM)
+        &&mayBurst(request);
     // code = registers (27) + 27 * (pending + 3 * full + 9 * sequencer)
     // After reset the sequencer is not ready until its first edge.
-    std::vector<unsigned> queue{0,243*Working};std::set<unsigned> seen{0,243*Working};size_t transitions=0;
+    const unsigned single=bursts?0:6;
+    std::vector<unsigned> queue{243*single,243*(single+Working)};std::set<unsigned> seen(queue.begin(),queue.end());size_t transitions=0;
     std::map<std::array<unsigned,4>,size_t> shown;
     for(size_t index=0;index<queue.size();++index) {
         unsigned digits=queue[index];
@@ -131,11 +162,17 @@ std::optional<MemoryTimingGroup> sequencedStates(const std::shared_ptr<Behaviora
             next+=27*(unsigned(now.pending)+3*unsigned(now.full));
             // The sequencer starts and finishes only on a clean 1.
             std::vector<unsigned> after;
-            const auto add=[&](unsigned done,unsigned phase){after.push_back(done*3+phase);};
+            const auto add=[&](unsigned done,unsigned phase){
+                after.push_back(done*3+phase+single);
+                if(bursts)after.push_back(done*3+phase+6);
+            };
             const bool start=now.accept==H;
             const unsigned phase=seq%3;
             // A result not finished at this edge stays shown.
-            const unsigned kept=seq/3==1&&now.finish!=H?1:0;
+            const unsigned kept=seq%6/3==1&&now.finish!=H?1:0;
+            // A burst word finished, not the last: the next one runs, or is
+            // already shown at this edge (one access cycle per word).
+            if(bursts&&seq%6/3==1&&seq/6==0&&now.finish==H&&!start){add(1,Idle);add(0,Working);}
             if(start)add(0,Working);
             else if(phase==Working) {
                 add(kept,Working);
@@ -149,7 +186,7 @@ std::optional<MemoryTimingGroup> sequencedStates(const std::shared_ptr<Behaviora
                 // A refresh may fall due or start by itself; a released static
                 // access may show not-ready for a cycle.
                 if(refreshes){add(kept,Blocked);add(kept,Working);}
-                else if(seq/3==1&&!kept)add(0,Working);
+                else if(seq%6/3==1&&!kept)add(0,Working);
             }
             for(const auto s:after) {
                 const unsigned code=next+243*s;
@@ -160,7 +197,8 @@ std::optional<MemoryTimingGroup> sequencedStates(const std::shared_ptr<Behaviora
     }
     group.evidence=endpoint->getID()+" + "+request->getID()+": exhaustive actual control-netlist reachability with the timed memory's clocked handshake; "
         +std::to_string(queue.size())+" states, "+std::to_string(group.cases.size())+" timing cases, "
-        +std::to_string(transitions)+" four-state transitions";
+        +std::to_string(transitions)+" four-state transitions"
+        +(bursts?"; bursts possible (LAST taken both ways)":"; no bursts (the requester's op bit 2 is a constant 0)");
     return group;
 }
 }

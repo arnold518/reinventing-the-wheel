@@ -31,10 +31,12 @@ inline size_t dramDecodeReplica(size_t rows) {
 
 class DRAMSyncControl {
 public:
-    enum Command : unsigned { None = 0, Activate = 1, Read = 2, Write = 3, Precharge = 4, Refresh = 5 };
+    // ReadBurst (code 6) runs as Read; its completion is followed by the next
+    // columns of the block, one per edge.
+    enum Command : unsigned { None = 0, Activate = 1, Read = 2, Write = 3, Precharge = 4, Refresh = 5, ReadBurst = 6 };
     using Bits = std::vector<LogicValue>;
-    DRAMSyncControl(size_t width, size_t rows, size_t words_per_row)
-        : width_(width), rows_(rows), words_per_row_(words_per_row), data(width, LogicValue::LOW),
+    DRAMSyncControl(size_t width, size_t rows, size_t words_per_row, size_t burst_words = 2)
+        : width_(width), rows_(rows), words_per_row_(words_per_row), burst_words_(burst_words), data(width, LogicValue::LOW),
           mask(width / 8, LogicValue::LOW) {
         const auto& m = timing::activeTimingProfile().memory;
         const size_t gate = timing::leafDelay(timing::Leaf::And);
@@ -68,11 +70,15 @@ public:
         // A repeated command's chain starts one edge after it was taken.
         if (delayed_start_) { started_ = t; delayed_start_ = false; }
         const bool cmd_known = known(cmd);
-        const unsigned code = cmd_known ? number(cmd) : 0;
+        const unsigned raw = cmd_known ? number(cmd) : 0;
+        // (A burst longer than a row cannot be taken: an unknown code.)
+        const bool burst_command = raw == ReadBurst && burst_words_ <= words_per_row_;
+        const unsigned code = burst_command ? unsigned(Read) : raw == ReadBurst ? 7u : raw;
         const bool nop = cmd_known && code == 0;
         const bool addr_known = known(addr);
         const uint32_t a = addr_known ? number(addr) : 0;
         const bool complete = completing();
+        const bool more = moreColumns(), final_complete = complete && !more;
         const bool open_now = openShown();
         const bool legal = cmd_known && (
             (code == Activate && addr_known && !open_now && a < rows_) ||
@@ -82,7 +88,7 @@ public:
         const bool issued = cmd_known && !nop;
         // Taken while idle, in the completing cycle of the last command, or in
         // a releasing cycle (a completion no command followed).
-        const bool available = !busy || releasing || complete;
+        const bool available = !busy || releasing || final_complete;
         const bool accept = issued && legal && available;
         const bool unknown = !cmd_known;
         const bool error_event = unknown || (issued && (!available || !legal));
@@ -92,7 +98,13 @@ public:
         error = error_event || (error && !accept);
         valid = !clear_valid && (valid || (complete && finished == Read));
         const bool next_busy = accept || (busy && !releasing);
-        releasing = complete && !accept;
+        releasing = final_complete && !accept;
+        // The next column of the block during a burst.
+        if (complete && more) {
+            const uint32_t mask = uint32_t(burst_words_ - 1);
+            column = (column & ~mask) | ((column + 1) & mask);
+            --burst_left_;
+        }
         if (complete && finished == Activate) open = true;
         if (complete && finished == Precharge) open = false;
         if (complete && finished == Refresh) refresh_row = refresh_row + 1 >= rows_ ? 0 : refresh_row + 1;
@@ -102,6 +114,8 @@ public:
             if (code == Activate) row = a;
             if (code == Refresh) row = refresh_row_before(complete && finished == Refresh);
             if (code == Read || code == Write) column = a;
+            burst_ = burst_command;
+            burst_left_ = burst_command && burst_words_ > 1 ? burst_words_ - 1 : 0;
             if (code == Write) { data = write_data; mask = write_mask; }
             started_ = t;
             if (repeated) { started_ = NOT_STARTED; delayed_start_ = true; }
@@ -113,8 +127,10 @@ public:
     // The last command's completion, seen by the sampler and not yet in
     // effect (the gates' COMPLETE).
     bool completing() const { return busy && done_q_ && !releasing && !fresh_; }
-    // BUSY as the device shows it: low once the completion is seen.
-    bool busyShown() const { return busy && !releasing && !completing(); }
+    // Columns of a burst still to come (the gates' MORE_COLUMNS).
+    bool moreColumns() const { return burst_ && burst_left_ > 0; }
+    // BUSY as the device shows it: low once the final completion is seen.
+    bool busyShown() const { return busy && !releasing && !(completing() && !moreColumns()); }
     // READ_VALID (and the output enable) as shown.
     bool validShown() const { return valid || (completing() && command == Read); }
     // The open state as shown: a finishing ACTIVATE opens, a finishing
@@ -168,6 +184,9 @@ private:
     static constexpr size_t NOT_STARTED = static_cast<size_t>(-1) / 2;
     size_t refresh_close_ = 2;
     bool done_q_ = false, fresh_ = false, delayed_start_ = false;
+    size_t burst_words_;
+    bool burst_ = false;
+    size_t burst_left_ = 0;
     std::map<unsigned, std::vector<size_t>> stages_;
 };
 

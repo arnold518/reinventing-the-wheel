@@ -23,8 +23,11 @@ using namespace circuit::memory;
 using namespace circuit::memory_device;
 void defineMemoryTransactionPortPins(IOComponent* s, size_t w) {
     protocolPins(s, w);
-    for (auto n : {"BACK_READY", "DONE"}) s->addPin(n, PinType::INPUT);
-    for (auto p : {"START", "FINISH"}) s->addPin(p, PinType::OUTPUT);
+    // LAST: the response shown is the transaction's last (always, except
+    // between the words of a burst). SPACE: no response is held, so the one
+    // shown now leaves at the next edge whatever RSP_READY does.
+    for (auto n : {"BACK_READY", "DONE", "LAST"}) s->addPin(n, PinType::INPUT);
+    for (auto p : {"START", "FINISH", "SPACE"}) s->addPin(p, PinType::OUTPUT);
     for (auto [name, width] : std::vector<std::pair<std::string,size_t>>{{"OP",3},{"ADDR",32},{"DATA",w},{"MASK",w/8}})
         s->addPinDynamic(name, PinType::OUTPUT, width);
     s->addPinDynamic("RESULT", PinType::INPUT, w); s->addPin<3>("STATUS", PinType::INPUT);
@@ -160,23 +163,28 @@ public:
         const auto view = [&] {
             const auto completion = both(pending_, bit(sequence_.done));
             const auto room = both(no(reset), buffer_.room(take));
-            // REQ_READY from registered state only (see MemoryTransactionPort).
-            const auto slot = either(no(pending_), completion);
+            // REQ_READY from registered state only (see MemoryTransactionPort);
+            // a burst's transaction ends with its last word.
+            const auto slot = either(no(pending_), both(completion, bit(sequence_.last)));
             const auto ready = both(both(no(reset), slot), both(bit(sequence_.available), no(buffer_.full)));
             return View{completion, both(completion, room), ready, both(ready, issue)};
         };
         const auto before = view();
         const Request request{read("REQ_OP"), read("REQ_ADDR"), read("REQ_WRITE_DATA"), read("REQ_WRITE_MASK")};
+        // SPACE and LAST as registered before this edge.
+        sequence_.space = buffer_.full == L;
+        const auto last_before = bit(sequence_.last);
         buffer_.clock(reset, edge, before.completion, take, sequence_.result, bits(3, unsigned(sequence_.status)));
         if (reset == H) pending_ = L;
         else if (reset != L) fade(pending_);
-        else if (edge) pending_ = either(before.accept, both(pending_, no(before.finish)));
+        else if (edge) pending_ = either(before.accept, both(pending_, no(both(before.finish, last_before))));
         // The sequencer is the same part in the gate-level form; like there,
         // it starts and finishes only on a clean 1.
         sequence_.step(t, edge, reset != L, before.accept == H, request,
                        [&](const std::string& pin, size_t) { return read("MEM_" + pin); }, before.finish == H);
 
         const auto after = view();
+        sequence_.space = buffer_.full == L;
         sequence_.presentRequest(after.accept == H, request);
         publish(sim, t, "REQ_READY", after.ready);
         publishResponse(sim, t, reset, after.completion, sequence_.result, bits(3, unsigned(sequence_.status)));
@@ -220,12 +228,15 @@ void MemoryTransactionPort::buildInternals(ComponentBuilder& b) {
     // then always has room (the bypass passes it on, or the buffer keeps it),
     // and the consumer's decision cannot reach the device's request inputs
     // in the same cycle, as on a real bus.
-    auto slot=w.either("REQUEST_SLOT",w.invert("IDLE",pending->getOutputPin("Q")),completion);
+    auto final_completion=w.both("FINAL_COMPLETION",completion,getInputPin("LAST"));
+    auto slot=w.either("REQUEST_SLOT",w.invert("IDLE",pending->getOutputPin("Q")),final_completion);
     auto ready=w.reduce("READY",{w.invert("RUNNING",getInputPin("RST")),slot,
         getInputPin("BACK_READY"),w.invert("NOTHING_HELD",response->getOutputPin("FULL"))},true);
     auto accept=w.both("ACCEPT",ready,getInputPin("REQ_VALID"));
+    // A burst's transaction ends with its last word.
     w.connect(w.either("NEXT_PENDING",accept,w.both("KEEP_PENDING",pending->getOutputPin("Q"),
-        w.invert("NOT_FINISHED",finish))),pending->getInputPin("D"));
+        w.invert("NOT_FINISHED",w.both("FINISH_LAST",finish,getInputPin("LAST"))))),pending->getInputPin("D"));
+    w.connect(w.invert("NO_RESPONSE_HELD",response->getOutputPin("FULL")),getOutputPin("SPACE"));
     w.connect(ready,getOutputPin("REQ_READY"));
     w.connect(accept,getOutputPin("START"));
     w.connect(finish,getOutputPin("FINISH"));
@@ -269,7 +280,8 @@ void MemoryController::buildInternals(ComponentBuilder& b) {
         w.connect((name.starts_with("MEM_") ? control : std::static_pointer_cast<IOComponent>(front))->getOutputPinDynamic(name), pin);
     }
     for (auto n : {"START", "FINISH", "OP", "ADDR", "DATA", "MASK"}) w.connect(front->getOutputPinDynamic(n), control->getInputPinDynamic(n));
-    for (auto n : {"BACK_READY", "DONE", "RESULT", "STATUS"}) w.connect(control->getOutputPinDynamic(n), front->getInputPinDynamic(n));
+    for (auto n : {"BACK_READY", "DONE", "LAST", "RESULT", "STATUS"}) w.connect(control->getOutputPinDynamic(n), front->getInputPinDynamic(n));
+    w.connect(front->getOutputPin("SPACE"), control->getInputPin("SPACE"));
     w.finish();
 }
 MemoryEndpoint::MemoryEndpoint(std::string n, size_t w, Technology t, EndpointConfig c, bool require_behavioral_device)

@@ -1091,14 +1091,14 @@
     t.clock = "CLK";
     t.clock_outputs.push_back("MEM_CLK");
     t.launches["MEM_ADDR"] = {162, 304};
-    t.launches["MEM_CMD"] = {196, 443};
+    t.launches["MEM_CMD"] = {196, 479};
     t.launches["MEM_WRITE_DATA"] = {91, 120};
     t.launches["MEM_WRITE_MASK"] = {91, 120};
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
-    t.setup["MEM_BUSY"] = 464;
+    t.setup["MEM_BUSY"] = 485;
     t.setup["MEM_ERROR"] = 519;
     t.setup["MEM_READ_VALID"] = 575;
     t.setup["MEM_ROW_OPEN"] = 393;
@@ -1108,7 +1108,7 @@
     t.setup["REQ_WRITE_DATA"] = 231;
     t.setup["REQ_WRITE_MASK"] = 613;
     t.setup["RSP_READY"] = 393;
-    t.internal_period = 765;
+    t.internal_period = 801;
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
@@ -1123,14 +1123,14 @@
     t.clock = "CLK";
     t.clock_outputs.push_back("MEM_CLK");
     t.launches["MEM_ADDR"] = {162, 304};
-    t.launches["MEM_CMD"] = {196, 443};
+    t.launches["MEM_CMD"] = {196, 479};
     t.launches["MEM_WRITE_DATA"] = {91, 120};
     t.launches["MEM_WRITE_MASK"] = {91, 120};
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
-    t.setup["MEM_BUSY"] = 464;
+    t.setup["MEM_BUSY"] = 485;
     t.setup["MEM_ERROR"] = 519;
     t.setup["MEM_READ_VALID"] = 575;
     t.setup["MEM_ROW_OPEN"] = 393;
@@ -1140,7 +1140,7 @@
     t.setup["REQ_WRITE_DATA"] = 231;
     t.setup["REQ_WRITE_MASK"] = 613;
     t.setup["RSP_READY"] = 393;
-    t.internal_period = 765;
+    t.internal_period = 801;
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
@@ -1155,14 +1155,14 @@
     t.clock = "CLK";
     t.clock_outputs.push_back("MEM_CLK");
     t.launches["MEM_ADDR"] = {162, 304};
-    t.launches["MEM_CMD"] = {196, 443};
+    t.launches["MEM_CMD"] = {196, 479};
     t.launches["MEM_WRITE_DATA"] = {91, 120};
     t.launches["MEM_WRITE_MASK"] = {91, 120};
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
-    t.setup["MEM_BUSY"] = 464;
+    t.setup["MEM_BUSY"] = 485;
     t.setup["MEM_ERROR"] = 519;
     t.setup["MEM_READ_VALID"] = 575;
     t.setup["MEM_ROW_OPEN"] = 393;
@@ -1172,7 +1172,7 @@
     t.setup["REQ_WRITE_DATA"] = 231;
     t.setup["REQ_WRITE_MASK"] = 613;
     t.setup["RSP_READY"] = 393;
-    t.internal_period = 765;
+    t.internal_period = 801;
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
@@ -1180,670 +1180,772 @@
     PartDelays t;
     t.evidence = "proven on memory.dram.device.16.structural";
     t.clock = "CLK";
-    t.launches["BUSY"] = {161, 267};
+    t.launches["BUSY"] = {161, 302};
     t.launches["ERROR"] = {91, 120};
     t.launches["READ_DATA"] = {148, 357586};
     t.launches["READ_VALID"] = {127, 282};
     t.launches["ROW_OPEN"] = {162, 338};
-    t.setup["ADDR"] = 737;
-    t.setup["CMD"] = 641;
+    t.setup["ADDR"] = 807;
+    t.setup["CMD"] = 733;
     t.setup["WRITE_DATA"] = 231;
-    t.setup["WRITE_MASK"] = 592;
+    t.setup["WRITE_MASK"] = 662;
     t.self_timed = true;
-    t.internal_period = 909;
+    t.internal_period = 979;
     return t;
 }()},
 {"memory.dram.device.16.behavioral@depth=64", [] {
     PartDelays t;
     t.evidence = "proven on memory.dram.device.16.structural";
     t.clock = "CLK";
-    t.launches["BUSY"] = {161, 267};
+    t.launches["BUSY"] = {161, 302};
     t.launches["ERROR"] = {91, 120};
     t.launches["READ_DATA"] = {148, 357726};
     t.launches["READ_VALID"] = {127, 282};
     t.launches["ROW_OPEN"] = {162, 338};
-    t.setup["ADDR"] = 737;
-    t.setup["CMD"] = 641;
+    t.setup["ADDR"] = 807;
+    t.setup["CMD"] = 733;
     t.setup["WRITE_DATA"] = 231;
-    t.setup["WRITE_MASK"] = 592;
+    t.setup["WRITE_MASK"] = 662;
     t.self_timed = true;
-    t.internal_period = 909;
+    t.internal_period = 979;
     return t;
 }()},
 {"memory.dram.device.16.behavioral@depth=128", [] {
     PartDelays t;
     t.evidence = "proven on memory.dram.device.16.structural";
     t.clock = "CLK";
-    t.launches["BUSY"] = {161, 267};
+    t.launches["BUSY"] = {161, 302};
     t.launches["ERROR"] = {91, 120};
     t.launches["READ_DATA"] = {148, 357726};
     t.launches["READ_VALID"] = {127, 282};
     t.launches["ROW_OPEN"] = {162, 338};
-    t.setup["ADDR"] = 737;
-    t.setup["CMD"] = 641;
+    t.setup["ADDR"] = 807;
+    t.setup["CMD"] = 733;
     t.setup["WRITE_DATA"] = 231;
-    t.setup["WRITE_MASK"] = 592;
+    t.setup["WRITE_MASK"] = 662;
     t.self_timed = true;
-    t.internal_period = 909;
+    t.internal_period = 979;
     return t;
 }()},
 {"memory.dram.device.16.behavioral@rows=1", [] {
     PartDelays t;
     t.evidence = "proven on memory.dram.device.16.structural";
     t.clock = "CLK";
-    t.launches["BUSY"] = {161, 267};
+    t.launches["BUSY"] = {161, 302};
     t.launches["ERROR"] = {91, 120};
     t.launches["READ_DATA"] = {148, 357620};
     t.launches["READ_VALID"] = {127, 282};
     t.launches["ROW_OPEN"] = {162, 338};
-    t.setup["ADDR"] = 737;
-    t.setup["CMD"] = 641;
+    t.setup["ADDR"] = 807;
+    t.setup["CMD"] = 733;
     t.setup["WRITE_DATA"] = 231;
-    t.setup["WRITE_MASK"] = 592;
+    t.setup["WRITE_MASK"] = 662;
     t.self_timed = true;
-    t.internal_period = 909;
+    t.internal_period = 979;
     return t;
 }()},
 {"memory.dram.device.16.behavioral@depth=64@rows=1", [] {
     PartDelays t;
     t.evidence = "proven on memory.dram.device.16.structural";
     t.clock = "CLK";
-    t.launches["BUSY"] = {161, 267};
+    t.launches["BUSY"] = {161, 302};
     t.launches["ERROR"] = {91, 120};
     t.launches["READ_DATA"] = {148, 357690};
     t.launches["READ_VALID"] = {127, 282};
     t.launches["ROW_OPEN"] = {162, 338};
-    t.setup["ADDR"] = 737;
-    t.setup["CMD"] = 641;
+    t.setup["ADDR"] = 807;
+    t.setup["CMD"] = 733;
     t.setup["WRITE_DATA"] = 231;
-    t.setup["WRITE_MASK"] = 592;
+    t.setup["WRITE_MASK"] = 662;
     t.self_timed = true;
-    t.internal_period = 909;
+    t.internal_period = 979;
     return t;
 }()},
 {"memory.dram.device.16.behavioral@depth=128@rows=1", [] {
     PartDelays t;
     t.evidence = "proven on memory.dram.device.16.structural";
     t.clock = "CLK";
-    t.launches["BUSY"] = {161, 267};
+    t.launches["BUSY"] = {161, 302};
     t.launches["ERROR"] = {91, 120};
     t.launches["READ_DATA"] = {148, 357690};
     t.launches["READ_VALID"] = {127, 282};
     t.launches["ROW_OPEN"] = {162, 338};
-    t.setup["ADDR"] = 737;
-    t.setup["CMD"] = 641;
+    t.setup["ADDR"] = 807;
+    t.setup["CMD"] = 733;
     t.setup["WRITE_DATA"] = 231;
-    t.setup["WRITE_MASK"] = 592;
+    t.setup["WRITE_MASK"] = 662;
     t.self_timed = true;
-    t.internal_period = 909;
+    t.internal_period = 979;
     return t;
 }()},
 {"memory.dram.device.16.behavioral@rows=4", [] {
     PartDelays t;
     t.evidence = "proven on memory.dram.device.16.structural";
     t.clock = "CLK";
-    t.launches["BUSY"] = {161, 267};
+    t.launches["BUSY"] = {161, 302};
     t.launches["ERROR"] = {91, 120};
     t.launches["READ_DATA"] = {148, 357552};
     t.launches["READ_VALID"] = {127, 282};
     t.launches["ROW_OPEN"] = {162, 338};
-    t.setup["ADDR"] = 737;
-    t.setup["CMD"] = 641;
+    t.setup["ADDR"] = 807;
+    t.setup["CMD"] = 733;
     t.setup["WRITE_DATA"] = 231;
-    t.setup["WRITE_MASK"] = 592;
+    t.setup["WRITE_MASK"] = 662;
     t.self_timed = true;
-    t.internal_period = 909;
+    t.internal_period = 979;
     return t;
 }()},
 {"memory.dram.device.16.behavioral@depth=64@rows=4", [] {
     PartDelays t;
     t.evidence = "proven on memory.dram.device.16.structural";
     t.clock = "CLK";
-    t.launches["BUSY"] = {161, 267};
+    t.launches["BUSY"] = {161, 302};
     t.launches["ERROR"] = {91, 120};
     t.launches["READ_DATA"] = {148, 357762};
     t.launches["READ_VALID"] = {127, 282};
     t.launches["ROW_OPEN"] = {162, 338};
-    t.setup["ADDR"] = 737;
-    t.setup["CMD"] = 641;
+    t.setup["ADDR"] = 807;
+    t.setup["CMD"] = 733;
     t.setup["WRITE_DATA"] = 231;
-    t.setup["WRITE_MASK"] = 592;
+    t.setup["WRITE_MASK"] = 662;
     t.self_timed = true;
-    t.internal_period = 909;
+    t.internal_period = 979;
     return t;
 }()},
 {"memory.dram.device.16.behavioral@depth=128@rows=4", [] {
     PartDelays t;
     t.evidence = "proven on memory.dram.device.16.structural";
     t.clock = "CLK";
-    t.launches["BUSY"] = {161, 267};
+    t.launches["BUSY"] = {161, 302};
     t.launches["ERROR"] = {91, 120};
     t.launches["READ_DATA"] = {148, 357762};
     t.launches["READ_VALID"] = {127, 282};
     t.launches["ROW_OPEN"] = {162, 338};
-    t.setup["ADDR"] = 737;
-    t.setup["CMD"] = 641;
+    t.setup["ADDR"] = 807;
+    t.setup["CMD"] = 733;
     t.setup["WRITE_DATA"] = 231;
-    t.setup["WRITE_MASK"] = 592;
+    t.setup["WRITE_MASK"] = 662;
     t.self_timed = true;
-    t.internal_period = 909;
+    t.internal_period = 979;
     return t;
 }()},
 {"memory.dram.device.16.behavioral@depth=64@rows=8", [] {
     PartDelays t;
     t.evidence = "proven on memory.dram.device.16.structural";
     t.clock = "CLK";
-    t.launches["BUSY"] = {161, 267};
+    t.launches["BUSY"] = {161, 302};
     t.launches["ERROR"] = {91, 120};
     t.launches["READ_DATA"] = {148, 357728};
     t.launches["READ_VALID"] = {127, 282};
     t.launches["ROW_OPEN"] = {162, 338};
-    t.setup["ADDR"] = 737;
-    t.setup["CMD"] = 641;
+    t.setup["ADDR"] = 807;
+    t.setup["CMD"] = 733;
     t.setup["WRITE_DATA"] = 231;
-    t.setup["WRITE_MASK"] = 592;
+    t.setup["WRITE_MASK"] = 662;
     t.self_timed = true;
-    t.internal_period = 909;
+    t.internal_period = 979;
     return t;
 }()},
 {"memory.dram.device.16.behavioral@depth=128@rows=8", [] {
     PartDelays t;
     t.evidence = "proven on memory.dram.device.16.structural";
     t.clock = "CLK";
-    t.launches["BUSY"] = {161, 267};
+    t.launches["BUSY"] = {161, 302};
     t.launches["ERROR"] = {91, 120};
     t.launches["READ_DATA"] = {148, 357798};
     t.launches["READ_VALID"] = {127, 282};
     t.launches["ROW_OPEN"] = {162, 338};
-    t.setup["ADDR"] = 737;
-    t.setup["CMD"] = 641;
+    t.setup["ADDR"] = 807;
+    t.setup["CMD"] = 733;
     t.setup["WRITE_DATA"] = 231;
-    t.setup["WRITE_MASK"] = 592;
+    t.setup["WRITE_MASK"] = 662;
     t.self_timed = true;
-    t.internal_period = 909;
+    t.internal_period = 979;
+    return t;
+}()},
+{"memory.dram.device.16.behavioral@depth=64@rows=16@block=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.device.16.structural";
+    t.clock = "CLK";
+    t.launches["BUSY"] = {161, 303};
+    t.launches["ERROR"] = {91, 120};
+    t.launches["READ_DATA"] = {148, 357764};
+    t.launches["READ_VALID"] = {127, 282};
+    t.launches["ROW_OPEN"] = {162, 338};
+    t.setup["ADDR"] = 807;
+    t.setup["CMD"] = 733;
+    t.setup["WRITE_DATA"] = 231;
+    t.setup["WRITE_MASK"] = 662;
+    t.self_timed = true;
+    t.internal_period = 979;
+    return t;
+}()},
+{"memory.dram.device.16.behavioral@depth=128@rows=16@block=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.device.16.structural";
+    t.clock = "CLK";
+    t.launches["BUSY"] = {161, 303};
+    t.launches["ERROR"] = {91, 120};
+    t.launches["READ_DATA"] = {148, 357764};
+    t.launches["READ_VALID"] = {127, 282};
+    t.launches["ROW_OPEN"] = {162, 338};
+    t.setup["ADDR"] = 807;
+    t.setup["CMD"] = 733;
+    t.setup["WRITE_DATA"] = 231;
+    t.setup["WRITE_MASK"] = 662;
+    t.self_timed = true;
+    t.internal_period = 979;
     return t;
 }()},
 {"memory.dram.device.16.behavioral@depth=64@rows=16", [] {
     PartDelays t;
     t.evidence = "proven on memory.dram.device.16.structural";
     t.clock = "CLK";
-    t.launches["BUSY"] = {161, 267};
+    t.launches["BUSY"] = {161, 302};
     t.launches["ERROR"] = {91, 120};
     t.launches["READ_DATA"] = {148, 357764};
     t.launches["READ_VALID"] = {127, 282};
     t.launches["ROW_OPEN"] = {162, 338};
-    t.setup["ADDR"] = 737;
-    t.setup["CMD"] = 641;
+    t.setup["ADDR"] = 807;
+    t.setup["CMD"] = 733;
     t.setup["WRITE_DATA"] = 231;
-    t.setup["WRITE_MASK"] = 592;
+    t.setup["WRITE_MASK"] = 662;
     t.self_timed = true;
-    t.internal_period = 909;
+    t.internal_period = 979;
     return t;
 }()},
 {"memory.dram.device.16.behavioral@depth=128@rows=16", [] {
     PartDelays t;
     t.evidence = "proven on memory.dram.device.16.structural";
     t.clock = "CLK";
-    t.launches["BUSY"] = {161, 267};
+    t.launches["BUSY"] = {161, 302};
     t.launches["ERROR"] = {91, 120};
     t.launches["READ_DATA"] = {148, 357764};
     t.launches["READ_VALID"] = {127, 282};
     t.launches["ROW_OPEN"] = {162, 338};
-    t.setup["ADDR"] = 737;
-    t.setup["CMD"] = 641;
+    t.setup["ADDR"] = 807;
+    t.setup["CMD"] = 733;
     t.setup["WRITE_DATA"] = 231;
-    t.setup["WRITE_MASK"] = 592;
+    t.setup["WRITE_MASK"] = 662;
     t.self_timed = true;
-    t.internal_period = 909;
+    t.internal_period = 979;
     return t;
 }()},
 {"memory.dram.device.32.behavioral", [] {
     PartDelays t;
     t.evidence = "proven on memory.dram.device.32.structural";
     t.clock = "CLK";
-    t.launches["BUSY"] = {161, 267};
+    t.launches["BUSY"] = {161, 302};
     t.launches["ERROR"] = {91, 120};
     t.launches["READ_DATA"] = {148, 357586};
     t.launches["READ_VALID"] = {127, 282};
     t.launches["ROW_OPEN"] = {162, 338};
-    t.setup["ADDR"] = 737;
-    t.setup["CMD"] = 641;
+    t.setup["ADDR"] = 807;
+    t.setup["CMD"] = 733;
     t.setup["WRITE_DATA"] = 231;
-    t.setup["WRITE_MASK"] = 592;
+    t.setup["WRITE_MASK"] = 662;
     t.self_timed = true;
-    t.internal_period = 909;
+    t.internal_period = 979;
     return t;
 }()},
 {"memory.dram.device.32.behavioral@depth=64", [] {
     PartDelays t;
     t.evidence = "proven on memory.dram.device.32.structural";
     t.clock = "CLK";
-    t.launches["BUSY"] = {161, 267};
+    t.launches["BUSY"] = {161, 302};
     t.launches["ERROR"] = {91, 120};
     t.launches["READ_DATA"] = {148, 357726};
     t.launches["READ_VALID"] = {127, 282};
     t.launches["ROW_OPEN"] = {162, 338};
-    t.setup["ADDR"] = 737;
-    t.setup["CMD"] = 641;
+    t.setup["ADDR"] = 807;
+    t.setup["CMD"] = 733;
     t.setup["WRITE_DATA"] = 231;
-    t.setup["WRITE_MASK"] = 592;
+    t.setup["WRITE_MASK"] = 662;
     t.self_timed = true;
-    t.internal_period = 909;
+    t.internal_period = 979;
     return t;
 }()},
 {"memory.dram.device.32.behavioral@depth=128", [] {
     PartDelays t;
     t.evidence = "proven on memory.dram.device.32.structural";
     t.clock = "CLK";
-    t.launches["BUSY"] = {161, 267};
+    t.launches["BUSY"] = {161, 302};
     t.launches["ERROR"] = {91, 120};
     t.launches["READ_DATA"] = {148, 357726};
     t.launches["READ_VALID"] = {127, 282};
     t.launches["ROW_OPEN"] = {162, 338};
-    t.setup["ADDR"] = 737;
-    t.setup["CMD"] = 641;
+    t.setup["ADDR"] = 807;
+    t.setup["CMD"] = 733;
     t.setup["WRITE_DATA"] = 231;
-    t.setup["WRITE_MASK"] = 592;
+    t.setup["WRITE_MASK"] = 662;
     t.self_timed = true;
-    t.internal_period = 909;
+    t.internal_period = 979;
     return t;
 }()},
 {"memory.dram.device.32.behavioral@rows=1", [] {
     PartDelays t;
     t.evidence = "proven on memory.dram.device.32.structural";
     t.clock = "CLK";
-    t.launches["BUSY"] = {161, 267};
+    t.launches["BUSY"] = {161, 302};
     t.launches["ERROR"] = {91, 120};
     t.launches["READ_DATA"] = {148, 357620};
     t.launches["READ_VALID"] = {127, 282};
     t.launches["ROW_OPEN"] = {162, 338};
-    t.setup["ADDR"] = 737;
-    t.setup["CMD"] = 641;
+    t.setup["ADDR"] = 807;
+    t.setup["CMD"] = 733;
     t.setup["WRITE_DATA"] = 231;
-    t.setup["WRITE_MASK"] = 592;
+    t.setup["WRITE_MASK"] = 662;
     t.self_timed = true;
-    t.internal_period = 909;
+    t.internal_period = 979;
     return t;
 }()},
 {"memory.dram.device.32.behavioral@depth=64@rows=1", [] {
     PartDelays t;
     t.evidence = "proven on memory.dram.device.32.structural";
     t.clock = "CLK";
-    t.launches["BUSY"] = {161, 267};
+    t.launches["BUSY"] = {161, 302};
     t.launches["ERROR"] = {91, 120};
     t.launches["READ_DATA"] = {148, 357690};
     t.launches["READ_VALID"] = {127, 282};
     t.launches["ROW_OPEN"] = {162, 338};
-    t.setup["ADDR"] = 737;
-    t.setup["CMD"] = 641;
+    t.setup["ADDR"] = 807;
+    t.setup["CMD"] = 733;
     t.setup["WRITE_DATA"] = 231;
-    t.setup["WRITE_MASK"] = 592;
+    t.setup["WRITE_MASK"] = 662;
     t.self_timed = true;
-    t.internal_period = 909;
+    t.internal_period = 979;
     return t;
 }()},
 {"memory.dram.device.32.behavioral@depth=128@rows=1", [] {
     PartDelays t;
     t.evidence = "proven on memory.dram.device.32.structural";
     t.clock = "CLK";
-    t.launches["BUSY"] = {161, 267};
+    t.launches["BUSY"] = {161, 302};
     t.launches["ERROR"] = {91, 120};
     t.launches["READ_DATA"] = {148, 357690};
     t.launches["READ_VALID"] = {127, 282};
     t.launches["ROW_OPEN"] = {162, 338};
-    t.setup["ADDR"] = 737;
-    t.setup["CMD"] = 641;
+    t.setup["ADDR"] = 807;
+    t.setup["CMD"] = 733;
     t.setup["WRITE_DATA"] = 231;
-    t.setup["WRITE_MASK"] = 592;
+    t.setup["WRITE_MASK"] = 662;
     t.self_timed = true;
-    t.internal_period = 909;
+    t.internal_period = 979;
     return t;
 }()},
 {"memory.dram.device.32.behavioral@rows=4", [] {
     PartDelays t;
     t.evidence = "proven on memory.dram.device.32.structural";
     t.clock = "CLK";
-    t.launches["BUSY"] = {161, 267};
+    t.launches["BUSY"] = {161, 302};
     t.launches["ERROR"] = {91, 120};
     t.launches["READ_DATA"] = {148, 357552};
     t.launches["READ_VALID"] = {127, 282};
     t.launches["ROW_OPEN"] = {162, 338};
-    t.setup["ADDR"] = 737;
-    t.setup["CMD"] = 641;
+    t.setup["ADDR"] = 807;
+    t.setup["CMD"] = 733;
     t.setup["WRITE_DATA"] = 231;
-    t.setup["WRITE_MASK"] = 592;
+    t.setup["WRITE_MASK"] = 662;
     t.self_timed = true;
-    t.internal_period = 909;
+    t.internal_period = 979;
     return t;
 }()},
 {"memory.dram.device.32.behavioral@depth=64@rows=4", [] {
     PartDelays t;
     t.evidence = "proven on memory.dram.device.32.structural";
     t.clock = "CLK";
-    t.launches["BUSY"] = {161, 267};
+    t.launches["BUSY"] = {161, 302};
     t.launches["ERROR"] = {91, 120};
     t.launches["READ_DATA"] = {148, 357762};
     t.launches["READ_VALID"] = {127, 282};
     t.launches["ROW_OPEN"] = {162, 338};
-    t.setup["ADDR"] = 737;
-    t.setup["CMD"] = 641;
+    t.setup["ADDR"] = 807;
+    t.setup["CMD"] = 733;
     t.setup["WRITE_DATA"] = 231;
-    t.setup["WRITE_MASK"] = 592;
+    t.setup["WRITE_MASK"] = 662;
     t.self_timed = true;
-    t.internal_period = 909;
+    t.internal_period = 979;
     return t;
 }()},
 {"memory.dram.device.32.behavioral@depth=128@rows=4", [] {
     PartDelays t;
     t.evidence = "proven on memory.dram.device.32.structural";
     t.clock = "CLK";
-    t.launches["BUSY"] = {161, 267};
+    t.launches["BUSY"] = {161, 302};
     t.launches["ERROR"] = {91, 120};
     t.launches["READ_DATA"] = {148, 357762};
     t.launches["READ_VALID"] = {127, 282};
     t.launches["ROW_OPEN"] = {162, 338};
-    t.setup["ADDR"] = 737;
-    t.setup["CMD"] = 641;
+    t.setup["ADDR"] = 807;
+    t.setup["CMD"] = 733;
     t.setup["WRITE_DATA"] = 231;
-    t.setup["WRITE_MASK"] = 592;
+    t.setup["WRITE_MASK"] = 662;
     t.self_timed = true;
-    t.internal_period = 909;
+    t.internal_period = 979;
     return t;
 }()},
 {"memory.dram.device.32.behavioral@depth=64@rows=8", [] {
     PartDelays t;
     t.evidence = "proven on memory.dram.device.32.structural";
     t.clock = "CLK";
-    t.launches["BUSY"] = {161, 267};
+    t.launches["BUSY"] = {161, 302};
     t.launches["ERROR"] = {91, 120};
     t.launches["READ_DATA"] = {148, 357728};
     t.launches["READ_VALID"] = {127, 282};
     t.launches["ROW_OPEN"] = {162, 338};
-    t.setup["ADDR"] = 737;
-    t.setup["CMD"] = 641;
+    t.setup["ADDR"] = 807;
+    t.setup["CMD"] = 733;
     t.setup["WRITE_DATA"] = 231;
-    t.setup["WRITE_MASK"] = 592;
+    t.setup["WRITE_MASK"] = 662;
     t.self_timed = true;
-    t.internal_period = 909;
+    t.internal_period = 979;
     return t;
 }()},
 {"memory.dram.device.32.behavioral@depth=128@rows=8", [] {
     PartDelays t;
     t.evidence = "proven on memory.dram.device.32.structural";
     t.clock = "CLK";
-    t.launches["BUSY"] = {161, 267};
+    t.launches["BUSY"] = {161, 302};
     t.launches["ERROR"] = {91, 120};
     t.launches["READ_DATA"] = {148, 357798};
     t.launches["READ_VALID"] = {127, 282};
     t.launches["ROW_OPEN"] = {162, 338};
-    t.setup["ADDR"] = 737;
-    t.setup["CMD"] = 641;
+    t.setup["ADDR"] = 807;
+    t.setup["CMD"] = 733;
     t.setup["WRITE_DATA"] = 231;
-    t.setup["WRITE_MASK"] = 592;
+    t.setup["WRITE_MASK"] = 662;
     t.self_timed = true;
-    t.internal_period = 909;
+    t.internal_period = 979;
+    return t;
+}()},
+{"memory.dram.device.32.behavioral@depth=64@rows=16@block=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.device.32.structural";
+    t.clock = "CLK";
+    t.launches["BUSY"] = {161, 303};
+    t.launches["ERROR"] = {91, 120};
+    t.launches["READ_DATA"] = {148, 357764};
+    t.launches["READ_VALID"] = {127, 282};
+    t.launches["ROW_OPEN"] = {162, 338};
+    t.setup["ADDR"] = 807;
+    t.setup["CMD"] = 733;
+    t.setup["WRITE_DATA"] = 231;
+    t.setup["WRITE_MASK"] = 662;
+    t.self_timed = true;
+    t.internal_period = 979;
+    return t;
+}()},
+{"memory.dram.device.32.behavioral@depth=128@rows=16@block=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.device.32.structural";
+    t.clock = "CLK";
+    t.launches["BUSY"] = {161, 303};
+    t.launches["ERROR"] = {91, 120};
+    t.launches["READ_DATA"] = {148, 357764};
+    t.launches["READ_VALID"] = {127, 282};
+    t.launches["ROW_OPEN"] = {162, 338};
+    t.setup["ADDR"] = 807;
+    t.setup["CMD"] = 733;
+    t.setup["WRITE_DATA"] = 231;
+    t.setup["WRITE_MASK"] = 662;
+    t.self_timed = true;
+    t.internal_period = 979;
     return t;
 }()},
 {"memory.dram.device.32.behavioral@depth=64@rows=16", [] {
     PartDelays t;
     t.evidence = "proven on memory.dram.device.32.structural";
     t.clock = "CLK";
-    t.launches["BUSY"] = {161, 267};
+    t.launches["BUSY"] = {161, 302};
     t.launches["ERROR"] = {91, 120};
     t.launches["READ_DATA"] = {148, 357764};
     t.launches["READ_VALID"] = {127, 282};
     t.launches["ROW_OPEN"] = {162, 338};
-    t.setup["ADDR"] = 737;
-    t.setup["CMD"] = 641;
+    t.setup["ADDR"] = 807;
+    t.setup["CMD"] = 733;
     t.setup["WRITE_DATA"] = 231;
-    t.setup["WRITE_MASK"] = 592;
+    t.setup["WRITE_MASK"] = 662;
     t.self_timed = true;
-    t.internal_period = 909;
+    t.internal_period = 979;
     return t;
 }()},
 {"memory.dram.device.32.behavioral@depth=128@rows=16", [] {
     PartDelays t;
     t.evidence = "proven on memory.dram.device.32.structural";
     t.clock = "CLK";
-    t.launches["BUSY"] = {161, 267};
+    t.launches["BUSY"] = {161, 302};
     t.launches["ERROR"] = {91, 120};
     t.launches["READ_DATA"] = {148, 357764};
     t.launches["READ_VALID"] = {127, 282};
     t.launches["ROW_OPEN"] = {162, 338};
-    t.setup["ADDR"] = 737;
-    t.setup["CMD"] = 641;
+    t.setup["ADDR"] = 807;
+    t.setup["CMD"] = 733;
     t.setup["WRITE_DATA"] = 231;
-    t.setup["WRITE_MASK"] = 592;
+    t.setup["WRITE_MASK"] = 662;
     t.self_timed = true;
-    t.internal_period = 909;
+    t.internal_period = 979;
     return t;
 }()},
 {"memory.dram.device.8.behavioral", [] {
     PartDelays t;
     t.evidence = "proven on memory.dram.device.8.structural";
     t.clock = "CLK";
-    t.launches["BUSY"] = {161, 267};
+    t.launches["BUSY"] = {161, 302};
     t.launches["ERROR"] = {91, 120};
     t.launches["READ_DATA"] = {148, 357586};
     t.launches["READ_VALID"] = {127, 282};
     t.launches["ROW_OPEN"] = {162, 338};
-    t.setup["ADDR"] = 737;
-    t.setup["CMD"] = 641;
+    t.setup["ADDR"] = 807;
+    t.setup["CMD"] = 733;
     t.setup["WRITE_DATA"] = 231;
-    t.setup["WRITE_MASK"] = 592;
+    t.setup["WRITE_MASK"] = 662;
     t.self_timed = true;
-    t.internal_period = 909;
+    t.internal_period = 979;
     return t;
 }()},
 {"memory.dram.device.8.behavioral@depth=64", [] {
     PartDelays t;
     t.evidence = "proven on memory.dram.device.8.structural";
     t.clock = "CLK";
-    t.launches["BUSY"] = {161, 267};
+    t.launches["BUSY"] = {161, 302};
     t.launches["ERROR"] = {91, 120};
     t.launches["READ_DATA"] = {148, 357726};
     t.launches["READ_VALID"] = {127, 282};
     t.launches["ROW_OPEN"] = {162, 338};
-    t.setup["ADDR"] = 737;
-    t.setup["CMD"] = 641;
+    t.setup["ADDR"] = 807;
+    t.setup["CMD"] = 733;
     t.setup["WRITE_DATA"] = 231;
-    t.setup["WRITE_MASK"] = 592;
+    t.setup["WRITE_MASK"] = 662;
     t.self_timed = true;
-    t.internal_period = 909;
+    t.internal_period = 979;
     return t;
 }()},
 {"memory.dram.device.8.behavioral@depth=128", [] {
     PartDelays t;
     t.evidence = "proven on memory.dram.device.8.structural";
     t.clock = "CLK";
-    t.launches["BUSY"] = {161, 267};
+    t.launches["BUSY"] = {161, 302};
     t.launches["ERROR"] = {91, 120};
     t.launches["READ_DATA"] = {148, 357726};
     t.launches["READ_VALID"] = {127, 282};
     t.launches["ROW_OPEN"] = {162, 338};
-    t.setup["ADDR"] = 737;
-    t.setup["CMD"] = 641;
+    t.setup["ADDR"] = 807;
+    t.setup["CMD"] = 733;
     t.setup["WRITE_DATA"] = 231;
-    t.setup["WRITE_MASK"] = 592;
+    t.setup["WRITE_MASK"] = 662;
     t.self_timed = true;
-    t.internal_period = 909;
+    t.internal_period = 979;
     return t;
 }()},
 {"memory.dram.device.8.behavioral@rows=1", [] {
     PartDelays t;
     t.evidence = "proven on memory.dram.device.8.structural";
     t.clock = "CLK";
-    t.launches["BUSY"] = {161, 267};
+    t.launches["BUSY"] = {161, 302};
     t.launches["ERROR"] = {91, 120};
     t.launches["READ_DATA"] = {148, 357620};
     t.launches["READ_VALID"] = {127, 282};
     t.launches["ROW_OPEN"] = {162, 338};
-    t.setup["ADDR"] = 737;
-    t.setup["CMD"] = 641;
+    t.setup["ADDR"] = 807;
+    t.setup["CMD"] = 733;
     t.setup["WRITE_DATA"] = 231;
-    t.setup["WRITE_MASK"] = 592;
+    t.setup["WRITE_MASK"] = 662;
     t.self_timed = true;
-    t.internal_period = 909;
+    t.internal_period = 979;
     return t;
 }()},
 {"memory.dram.device.8.behavioral@depth=64@rows=1", [] {
     PartDelays t;
     t.evidence = "proven on memory.dram.device.8.structural";
     t.clock = "CLK";
-    t.launches["BUSY"] = {161, 267};
+    t.launches["BUSY"] = {161, 302};
     t.launches["ERROR"] = {91, 120};
     t.launches["READ_DATA"] = {148, 357690};
     t.launches["READ_VALID"] = {127, 282};
     t.launches["ROW_OPEN"] = {162, 338};
-    t.setup["ADDR"] = 737;
-    t.setup["CMD"] = 641;
+    t.setup["ADDR"] = 807;
+    t.setup["CMD"] = 733;
     t.setup["WRITE_DATA"] = 231;
-    t.setup["WRITE_MASK"] = 592;
+    t.setup["WRITE_MASK"] = 662;
     t.self_timed = true;
-    t.internal_period = 909;
+    t.internal_period = 979;
     return t;
 }()},
 {"memory.dram.device.8.behavioral@depth=128@rows=1", [] {
     PartDelays t;
     t.evidence = "proven on memory.dram.device.8.structural";
     t.clock = "CLK";
-    t.launches["BUSY"] = {161, 267};
+    t.launches["BUSY"] = {161, 302};
     t.launches["ERROR"] = {91, 120};
     t.launches["READ_DATA"] = {148, 357690};
     t.launches["READ_VALID"] = {127, 282};
     t.launches["ROW_OPEN"] = {162, 338};
-    t.setup["ADDR"] = 737;
-    t.setup["CMD"] = 641;
+    t.setup["ADDR"] = 807;
+    t.setup["CMD"] = 733;
     t.setup["WRITE_DATA"] = 231;
-    t.setup["WRITE_MASK"] = 592;
+    t.setup["WRITE_MASK"] = 662;
     t.self_timed = true;
-    t.internal_period = 909;
+    t.internal_period = 979;
     return t;
 }()},
 {"memory.dram.device.8.behavioral@rows=4", [] {
     PartDelays t;
     t.evidence = "proven on memory.dram.device.8.structural";
     t.clock = "CLK";
-    t.launches["BUSY"] = {161, 267};
+    t.launches["BUSY"] = {161, 302};
     t.launches["ERROR"] = {91, 120};
     t.launches["READ_DATA"] = {148, 357552};
     t.launches["READ_VALID"] = {127, 282};
     t.launches["ROW_OPEN"] = {162, 338};
-    t.setup["ADDR"] = 737;
-    t.setup["CMD"] = 641;
+    t.setup["ADDR"] = 807;
+    t.setup["CMD"] = 733;
     t.setup["WRITE_DATA"] = 231;
-    t.setup["WRITE_MASK"] = 592;
+    t.setup["WRITE_MASK"] = 662;
     t.self_timed = true;
-    t.internal_period = 909;
+    t.internal_period = 979;
     return t;
 }()},
 {"memory.dram.device.8.behavioral@depth=64@rows=4", [] {
     PartDelays t;
     t.evidence = "proven on memory.dram.device.8.structural";
     t.clock = "CLK";
-    t.launches["BUSY"] = {161, 267};
+    t.launches["BUSY"] = {161, 302};
     t.launches["ERROR"] = {91, 120};
     t.launches["READ_DATA"] = {148, 357762};
     t.launches["READ_VALID"] = {127, 282};
     t.launches["ROW_OPEN"] = {162, 338};
-    t.setup["ADDR"] = 737;
-    t.setup["CMD"] = 641;
+    t.setup["ADDR"] = 807;
+    t.setup["CMD"] = 733;
     t.setup["WRITE_DATA"] = 231;
-    t.setup["WRITE_MASK"] = 592;
+    t.setup["WRITE_MASK"] = 662;
     t.self_timed = true;
-    t.internal_period = 909;
+    t.internal_period = 979;
     return t;
 }()},
 {"memory.dram.device.8.behavioral@depth=128@rows=4", [] {
     PartDelays t;
     t.evidence = "proven on memory.dram.device.8.structural";
     t.clock = "CLK";
-    t.launches["BUSY"] = {161, 267};
+    t.launches["BUSY"] = {161, 302};
     t.launches["ERROR"] = {91, 120};
     t.launches["READ_DATA"] = {148, 357762};
     t.launches["READ_VALID"] = {127, 282};
     t.launches["ROW_OPEN"] = {162, 338};
-    t.setup["ADDR"] = 737;
-    t.setup["CMD"] = 641;
+    t.setup["ADDR"] = 807;
+    t.setup["CMD"] = 733;
     t.setup["WRITE_DATA"] = 231;
-    t.setup["WRITE_MASK"] = 592;
+    t.setup["WRITE_MASK"] = 662;
     t.self_timed = true;
-    t.internal_period = 909;
+    t.internal_period = 979;
     return t;
 }()},
 {"memory.dram.device.8.behavioral@depth=64@rows=8", [] {
     PartDelays t;
     t.evidence = "proven on memory.dram.device.8.structural";
     t.clock = "CLK";
-    t.launches["BUSY"] = {161, 267};
+    t.launches["BUSY"] = {161, 302};
     t.launches["ERROR"] = {91, 120};
     t.launches["READ_DATA"] = {148, 357728};
     t.launches["READ_VALID"] = {127, 282};
     t.launches["ROW_OPEN"] = {162, 338};
-    t.setup["ADDR"] = 737;
-    t.setup["CMD"] = 641;
+    t.setup["ADDR"] = 807;
+    t.setup["CMD"] = 733;
     t.setup["WRITE_DATA"] = 231;
-    t.setup["WRITE_MASK"] = 592;
+    t.setup["WRITE_MASK"] = 662;
     t.self_timed = true;
-    t.internal_period = 909;
+    t.internal_period = 979;
     return t;
 }()},
 {"memory.dram.device.8.behavioral@depth=128@rows=8", [] {
     PartDelays t;
     t.evidence = "proven on memory.dram.device.8.structural";
     t.clock = "CLK";
-    t.launches["BUSY"] = {161, 267};
+    t.launches["BUSY"] = {161, 302};
     t.launches["ERROR"] = {91, 120};
     t.launches["READ_DATA"] = {148, 357798};
     t.launches["READ_VALID"] = {127, 282};
     t.launches["ROW_OPEN"] = {162, 338};
-    t.setup["ADDR"] = 737;
-    t.setup["CMD"] = 641;
+    t.setup["ADDR"] = 807;
+    t.setup["CMD"] = 733;
     t.setup["WRITE_DATA"] = 231;
-    t.setup["WRITE_MASK"] = 592;
+    t.setup["WRITE_MASK"] = 662;
     t.self_timed = true;
-    t.internal_period = 909;
+    t.internal_period = 979;
+    return t;
+}()},
+{"memory.dram.device.8.behavioral@depth=64@rows=16@block=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.device.8.structural";
+    t.clock = "CLK";
+    t.launches["BUSY"] = {161, 303};
+    t.launches["ERROR"] = {91, 120};
+    t.launches["READ_DATA"] = {148, 357764};
+    t.launches["READ_VALID"] = {127, 282};
+    t.launches["ROW_OPEN"] = {162, 338};
+    t.setup["ADDR"] = 807;
+    t.setup["CMD"] = 733;
+    t.setup["WRITE_DATA"] = 231;
+    t.setup["WRITE_MASK"] = 662;
+    t.self_timed = true;
+    t.internal_period = 979;
+    return t;
+}()},
+{"memory.dram.device.8.behavioral@depth=128@rows=16@block=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.device.8.structural";
+    t.clock = "CLK";
+    t.launches["BUSY"] = {161, 303};
+    t.launches["ERROR"] = {91, 120};
+    t.launches["READ_DATA"] = {148, 357764};
+    t.launches["READ_VALID"] = {127, 282};
+    t.launches["ROW_OPEN"] = {162, 338};
+    t.setup["ADDR"] = 807;
+    t.setup["CMD"] = 733;
+    t.setup["WRITE_DATA"] = 231;
+    t.setup["WRITE_MASK"] = 662;
+    t.self_timed = true;
+    t.internal_period = 979;
     return t;
 }()},
 {"memory.dram.device.8.behavioral@depth=64@rows=16", [] {
     PartDelays t;
     t.evidence = "proven on memory.dram.device.8.structural";
     t.clock = "CLK";
-    t.launches["BUSY"] = {161, 267};
+    t.launches["BUSY"] = {161, 302};
     t.launches["ERROR"] = {91, 120};
     t.launches["READ_DATA"] = {148, 357764};
     t.launches["READ_VALID"] = {127, 282};
     t.launches["ROW_OPEN"] = {162, 338};
-    t.setup["ADDR"] = 737;
-    t.setup["CMD"] = 641;
+    t.setup["ADDR"] = 807;
+    t.setup["CMD"] = 733;
     t.setup["WRITE_DATA"] = 231;
-    t.setup["WRITE_MASK"] = 592;
+    t.setup["WRITE_MASK"] = 662;
     t.self_timed = true;
-    t.internal_period = 909;
+    t.internal_period = 979;
     return t;
 }()},
 {"memory.dram.device.8.behavioral@depth=128@rows=16", [] {
     PartDelays t;
     t.evidence = "proven on memory.dram.device.8.structural";
     t.clock = "CLK";
-    t.launches["BUSY"] = {161, 267};
+    t.launches["BUSY"] = {161, 302};
     t.launches["ERROR"] = {91, 120};
     t.launches["READ_DATA"] = {148, 357764};
     t.launches["READ_VALID"] = {127, 282};
     t.launches["ROW_OPEN"] = {162, 338};
-    t.setup["ADDR"] = 737;
-    t.setup["CMD"] = 641;
+    t.setup["ADDR"] = 807;
+    t.setup["CMD"] = 733;
     t.setup["WRITE_DATA"] = 231;
-    t.setup["WRITE_MASK"] = 592;
+    t.setup["WRITE_MASK"] = 662;
     t.self_timed = true;
-    t.internal_period = 909;
+    t.internal_period = 979;
     return t;
 }()},
 {"memory.dram.endpoint.16.behavioral", [] {
     PartDelays t;
     t.evidence = "proven on memory.dram.endpoint.16.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -1855,7 +1957,7 @@
     t.setup["RSP_READY"] = 393;
     t.self_timed = true;
     t.clocked_interface = true;
-    t.internal_period = 1176;
+    t.internal_period = 1268;
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
@@ -1863,7 +1965,7 @@
     PartDelays t;
     t.evidence = "proven on memory.dram.endpoint.16.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -1875,7 +1977,7 @@
     t.setup["RSP_READY"] = 393;
     t.self_timed = true;
     t.clocked_interface = true;
-    t.internal_period = 1176;
+    t.internal_period = 1268;
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
@@ -1883,7 +1985,7 @@
     PartDelays t;
     t.evidence = "proven on memory.dram.endpoint.16.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -1895,7 +1997,7 @@
     t.setup["RSP_READY"] = 393;
     t.self_timed = true;
     t.clocked_interface = true;
-    t.internal_period = 1176;
+    t.internal_period = 1268;
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
@@ -1903,7 +2005,7 @@
     PartDelays t;
     t.evidence = "proven on memory.dram.endpoint.16.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -1915,7 +2017,7 @@
     t.setup["RSP_READY"] = 393;
     t.self_timed = true;
     t.clocked_interface = true;
-    t.internal_period = 1176;
+    t.internal_period = 1268;
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
@@ -1923,7 +2025,7 @@
     PartDelays t;
     t.evidence = "proven on memory.dram.endpoint.16.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -1935,7 +2037,7 @@
     t.setup["RSP_READY"] = 393;
     t.self_timed = true;
     t.clocked_interface = true;
-    t.internal_period = 1176;
+    t.internal_period = 1268;
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
@@ -1943,7 +2045,7 @@
     PartDelays t;
     t.evidence = "proven on memory.dram.endpoint.16.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -1955,7 +2057,7 @@
     t.setup["RSP_READY"] = 393;
     t.self_timed = true;
     t.clocked_interface = true;
-    t.internal_period = 1176;
+    t.internal_period = 1268;
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
@@ -1963,7 +2065,7 @@
     PartDelays t;
     t.evidence = "proven on memory.dram.endpoint.16.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -1975,7 +2077,7 @@
     t.setup["RSP_READY"] = 393;
     t.self_timed = true;
     t.clocked_interface = true;
-    t.internal_period = 1176;
+    t.internal_period = 1268;
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
@@ -1983,7 +2085,7 @@
     PartDelays t;
     t.evidence = "proven on memory.dram.endpoint.16.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -1995,7 +2097,7 @@
     t.setup["RSP_READY"] = 393;
     t.self_timed = true;
     t.clocked_interface = true;
-    t.internal_period = 1176;
+    t.internal_period = 1268;
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
@@ -2003,7 +2105,7 @@
     PartDelays t;
     t.evidence = "proven on memory.dram.endpoint.16.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -2015,7 +2117,7 @@
     t.setup["RSP_READY"] = 393;
     t.self_timed = true;
     t.clocked_interface = true;
-    t.internal_period = 1176;
+    t.internal_period = 1268;
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
@@ -2023,7 +2125,7 @@
     PartDelays t;
     t.evidence = "proven on memory.dram.endpoint.16.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -2035,7 +2137,7 @@
     t.setup["RSP_READY"] = 393;
     t.self_timed = true;
     t.clocked_interface = true;
-    t.internal_period = 1176;
+    t.internal_period = 1268;
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
@@ -2043,7 +2145,7 @@
     PartDelays t;
     t.evidence = "proven on memory.dram.endpoint.16.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -2055,7 +2157,7 @@
     t.setup["RSP_READY"] = 393;
     t.self_timed = true;
     t.clocked_interface = true;
-    t.internal_period = 1176;
+    t.internal_period = 1268;
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
@@ -2063,7 +2165,7 @@
     PartDelays t;
     t.evidence = "proven on memory.dram.endpoint.16.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -2075,7 +2177,7 @@
     t.setup["RSP_READY"] = 393;
     t.self_timed = true;
     t.clocked_interface = true;
-    t.internal_period = 1176;
+    t.internal_period = 1268;
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
@@ -2083,7 +2185,7 @@
     PartDelays t;
     t.evidence = "proven on memory.dram.endpoint.16.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -2095,7 +2197,7 @@
     t.setup["RSP_READY"] = 393;
     t.self_timed = true;
     t.clocked_interface = true;
-    t.internal_period = 1176;
+    t.internal_period = 1268;
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
@@ -2103,7 +2205,7 @@
     PartDelays t;
     t.evidence = "proven on memory.dram.endpoint.16.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -2115,7 +2217,7 @@
     t.setup["RSP_READY"] = 393;
     t.self_timed = true;
     t.clocked_interface = true;
-    t.internal_period = 1176;
+    t.internal_period = 1268;
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
@@ -2123,7 +2225,7 @@
     PartDelays t;
     t.evidence = "proven on memory.dram.endpoint.16.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -2135,7 +2237,7 @@
     t.setup["RSP_READY"] = 393;
     t.self_timed = true;
     t.clocked_interface = true;
-    t.internal_period = 1176;
+    t.internal_period = 1268;
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
@@ -2143,7 +2245,7 @@
     PartDelays t;
     t.evidence = "proven on memory.dram.endpoint.16.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -2155,7 +2257,7 @@
     t.setup["RSP_READY"] = 393;
     t.self_timed = true;
     t.clocked_interface = true;
-    t.internal_period = 1176;
+    t.internal_period = 1268;
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
@@ -2163,7 +2265,7 @@
     PartDelays t;
     t.evidence = "proven on memory.dram.endpoint.16.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -2175,7 +2277,7 @@
     t.setup["RSP_READY"] = 393;
     t.self_timed = true;
     t.clocked_interface = true;
-    t.internal_period = 1176;
+    t.internal_period = 1268;
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
@@ -2183,7 +2285,7 @@
     PartDelays t;
     t.evidence = "proven on memory.dram.endpoint.16.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -2195,7 +2297,7 @@
     t.setup["RSP_READY"] = 393;
     t.self_timed = true;
     t.clocked_interface = true;
-    t.internal_period = 1176;
+    t.internal_period = 1268;
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
@@ -2203,7 +2305,7 @@
     PartDelays t;
     t.evidence = "proven on memory.dram.endpoint.16.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -2215,7 +2317,7 @@
     t.setup["RSP_READY"] = 393;
     t.self_timed = true;
     t.clocked_interface = true;
-    t.internal_period = 1176;
+    t.internal_period = 1268;
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
@@ -2223,7 +2325,7 @@
     PartDelays t;
     t.evidence = "proven on memory.dram.endpoint.16.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -2235,7 +2337,7 @@
     t.setup["RSP_READY"] = 393;
     t.self_timed = true;
     t.clocked_interface = true;
-    t.internal_period = 1176;
+    t.internal_period = 1268;
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
@@ -2243,7 +2345,7 @@
     PartDelays t;
     t.evidence = "proven on memory.dram.endpoint.16.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -2255,7 +2357,7 @@
     t.setup["RSP_READY"] = 393;
     t.self_timed = true;
     t.clocked_interface = true;
-    t.internal_period = 1176;
+    t.internal_period = 1268;
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
@@ -2263,7 +2365,7 @@
     PartDelays t;
     t.evidence = "proven on memory.dram.endpoint.16.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -2275,7 +2377,87 @@
     t.setup["RSP_READY"] = 393;
     t.self_timed = true;
     t.clocked_interface = true;
-    t.internal_period = 1176;
+    t.internal_period = 1268;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.dram.endpoint.16.behavioral@depth=64@rows=16@block=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.endpoint.16.structural";
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {182, 296};
+    t.launches["RSP_READ_DATA"] = {162, 212};
+    t.launches["RSP_STATUS"] = {162, 212};
+    t.launches["RSP_VALID"] = {162, 226};
+    t.setup["REQ_ADDR"] = 900;
+    t.setup["REQ_OP"] = 855;
+    t.setup["REQ_VALID"] = 394;
+    t.setup["REQ_WRITE_DATA"] = 231;
+    t.setup["REQ_WRITE_MASK"] = 613;
+    t.setup["RSP_READY"] = 393;
+    t.self_timed = true;
+    t.clocked_interface = true;
+    t.internal_period = 1268;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.dram.scalable-endpoint.16.behavioral@depth=64@rows=16@block=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.endpoint.16.structural";
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {182, 296};
+    t.launches["RSP_READ_DATA"] = {162, 212};
+    t.launches["RSP_STATUS"] = {162, 212};
+    t.launches["RSP_VALID"] = {162, 226};
+    t.setup["REQ_ADDR"] = 900;
+    t.setup["REQ_OP"] = 855;
+    t.setup["REQ_VALID"] = 394;
+    t.setup["REQ_WRITE_DATA"] = 231;
+    t.setup["REQ_WRITE_MASK"] = 613;
+    t.setup["RSP_READY"] = 393;
+    t.self_timed = true;
+    t.clocked_interface = true;
+    t.internal_period = 1268;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.dram.endpoint.16.behavioral@depth=128@rows=16@block=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.endpoint.16.structural";
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {182, 296};
+    t.launches["RSP_READ_DATA"] = {162, 212};
+    t.launches["RSP_STATUS"] = {162, 212};
+    t.launches["RSP_VALID"] = {162, 226};
+    t.setup["REQ_ADDR"] = 900;
+    t.setup["REQ_OP"] = 855;
+    t.setup["REQ_VALID"] = 394;
+    t.setup["REQ_WRITE_DATA"] = 231;
+    t.setup["REQ_WRITE_MASK"] = 613;
+    t.setup["RSP_READY"] = 393;
+    t.self_timed = true;
+    t.clocked_interface = true;
+    t.internal_period = 1268;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.dram.scalable-endpoint.16.behavioral@depth=128@rows=16@block=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.endpoint.16.structural";
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {182, 296};
+    t.launches["RSP_READ_DATA"] = {162, 212};
+    t.launches["RSP_STATUS"] = {162, 212};
+    t.launches["RSP_VALID"] = {162, 226};
+    t.setup["REQ_ADDR"] = 900;
+    t.setup["REQ_OP"] = 855;
+    t.setup["REQ_VALID"] = 394;
+    t.setup["REQ_WRITE_DATA"] = 231;
+    t.setup["REQ_WRITE_MASK"] = 613;
+    t.setup["RSP_READY"] = 393;
+    t.self_timed = true;
+    t.clocked_interface = true;
+    t.internal_period = 1268;
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
@@ -2283,7 +2465,7 @@
     PartDelays t;
     t.evidence = "proven on memory.dram.endpoint.16.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -2295,7 +2477,7 @@
     t.setup["RSP_READY"] = 393;
     t.self_timed = true;
     t.clocked_interface = true;
-    t.internal_period = 1176;
+    t.internal_period = 1268;
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
@@ -2303,7 +2485,7 @@
     PartDelays t;
     t.evidence = "proven on memory.dram.endpoint.16.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -2315,7 +2497,7 @@
     t.setup["RSP_READY"] = 393;
     t.self_timed = true;
     t.clocked_interface = true;
-    t.internal_period = 1176;
+    t.internal_period = 1268;
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
@@ -2323,7 +2505,7 @@
     PartDelays t;
     t.evidence = "proven on memory.dram.endpoint.16.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -2335,7 +2517,7 @@
     t.setup["RSP_READY"] = 393;
     t.self_timed = true;
     t.clocked_interface = true;
-    t.internal_period = 1176;
+    t.internal_period = 1268;
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
@@ -2343,7 +2525,7 @@
     PartDelays t;
     t.evidence = "proven on memory.dram.endpoint.16.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -2355,7 +2537,7 @@
     t.setup["RSP_READY"] = 393;
     t.self_timed = true;
     t.clocked_interface = true;
-    t.internal_period = 1176;
+    t.internal_period = 1268;
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
@@ -2363,7 +2545,7 @@
     PartDelays t;
     t.evidence = "proven on memory.dram.endpoint.32.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -2375,7 +2557,7 @@
     t.setup["RSP_READY"] = 393;
     t.self_timed = true;
     t.clocked_interface = true;
-    t.internal_period = 1176;
+    t.internal_period = 1268;
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
@@ -2383,7 +2565,7 @@
     PartDelays t;
     t.evidence = "proven on memory.dram.endpoint.32.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -2395,7 +2577,7 @@
     t.setup["RSP_READY"] = 393;
     t.self_timed = true;
     t.clocked_interface = true;
-    t.internal_period = 1176;
+    t.internal_period = 1268;
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
@@ -2403,7 +2585,7 @@
     PartDelays t;
     t.evidence = "proven on memory.dram.endpoint.32.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -2415,7 +2597,7 @@
     t.setup["RSP_READY"] = 393;
     t.self_timed = true;
     t.clocked_interface = true;
-    t.internal_period = 1176;
+    t.internal_period = 1268;
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
@@ -2423,7 +2605,7 @@
     PartDelays t;
     t.evidence = "proven on memory.dram.endpoint.32.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -2435,7 +2617,7 @@
     t.setup["RSP_READY"] = 393;
     t.self_timed = true;
     t.clocked_interface = true;
-    t.internal_period = 1176;
+    t.internal_period = 1268;
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
@@ -2443,7 +2625,7 @@
     PartDelays t;
     t.evidence = "proven on memory.dram.endpoint.32.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -2455,7 +2637,7 @@
     t.setup["RSP_READY"] = 393;
     t.self_timed = true;
     t.clocked_interface = true;
-    t.internal_period = 1176;
+    t.internal_period = 1268;
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
@@ -2463,7 +2645,7 @@
     PartDelays t;
     t.evidence = "proven on memory.dram.endpoint.32.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -2475,7 +2657,7 @@
     t.setup["RSP_READY"] = 393;
     t.self_timed = true;
     t.clocked_interface = true;
-    t.internal_period = 1176;
+    t.internal_period = 1268;
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
@@ -2483,7 +2665,7 @@
     PartDelays t;
     t.evidence = "proven on memory.dram.endpoint.32.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -2495,7 +2677,7 @@
     t.setup["RSP_READY"] = 393;
     t.self_timed = true;
     t.clocked_interface = true;
-    t.internal_period = 1176;
+    t.internal_period = 1268;
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
@@ -2503,7 +2685,7 @@
     PartDelays t;
     t.evidence = "proven on memory.dram.endpoint.32.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -2515,7 +2697,7 @@
     t.setup["RSP_READY"] = 393;
     t.self_timed = true;
     t.clocked_interface = true;
-    t.internal_period = 1176;
+    t.internal_period = 1268;
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
@@ -2523,7 +2705,7 @@
     PartDelays t;
     t.evidence = "proven on memory.dram.endpoint.32.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -2535,7 +2717,7 @@
     t.setup["RSP_READY"] = 393;
     t.self_timed = true;
     t.clocked_interface = true;
-    t.internal_period = 1176;
+    t.internal_period = 1268;
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
@@ -2543,7 +2725,7 @@
     PartDelays t;
     t.evidence = "proven on memory.dram.endpoint.32.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -2555,7 +2737,7 @@
     t.setup["RSP_READY"] = 393;
     t.self_timed = true;
     t.clocked_interface = true;
-    t.internal_period = 1176;
+    t.internal_period = 1268;
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
@@ -2563,7 +2745,7 @@
     PartDelays t;
     t.evidence = "proven on memory.dram.endpoint.32.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -2575,7 +2757,7 @@
     t.setup["RSP_READY"] = 393;
     t.self_timed = true;
     t.clocked_interface = true;
-    t.internal_period = 1176;
+    t.internal_period = 1268;
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
@@ -2583,7 +2765,7 @@
     PartDelays t;
     t.evidence = "proven on memory.dram.endpoint.32.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -2595,7 +2777,7 @@
     t.setup["RSP_READY"] = 393;
     t.self_timed = true;
     t.clocked_interface = true;
-    t.internal_period = 1176;
+    t.internal_period = 1268;
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
@@ -2603,7 +2785,7 @@
     PartDelays t;
     t.evidence = "proven on memory.dram.endpoint.32.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -2615,7 +2797,7 @@
     t.setup["RSP_READY"] = 393;
     t.self_timed = true;
     t.clocked_interface = true;
-    t.internal_period = 1176;
+    t.internal_period = 1268;
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
@@ -2623,7 +2805,7 @@
     PartDelays t;
     t.evidence = "proven on memory.dram.endpoint.32.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -2635,7 +2817,7 @@
     t.setup["RSP_READY"] = 393;
     t.self_timed = true;
     t.clocked_interface = true;
-    t.internal_period = 1176;
+    t.internal_period = 1268;
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
@@ -2643,7 +2825,7 @@
     PartDelays t;
     t.evidence = "proven on memory.dram.endpoint.32.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -2655,7 +2837,7 @@
     t.setup["RSP_READY"] = 393;
     t.self_timed = true;
     t.clocked_interface = true;
-    t.internal_period = 1176;
+    t.internal_period = 1268;
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
@@ -2663,7 +2845,7 @@
     PartDelays t;
     t.evidence = "proven on memory.dram.endpoint.32.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -2675,7 +2857,7 @@
     t.setup["RSP_READY"] = 393;
     t.self_timed = true;
     t.clocked_interface = true;
-    t.internal_period = 1176;
+    t.internal_period = 1268;
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
@@ -2683,7 +2865,7 @@
     PartDelays t;
     t.evidence = "proven on memory.dram.endpoint.32.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -2695,7 +2877,7 @@
     t.setup["RSP_READY"] = 393;
     t.self_timed = true;
     t.clocked_interface = true;
-    t.internal_period = 1176;
+    t.internal_period = 1268;
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
@@ -2703,7 +2885,7 @@
     PartDelays t;
     t.evidence = "proven on memory.dram.endpoint.32.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -2715,7 +2897,7 @@
     t.setup["RSP_READY"] = 393;
     t.self_timed = true;
     t.clocked_interface = true;
-    t.internal_period = 1176;
+    t.internal_period = 1268;
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
@@ -2723,7 +2905,7 @@
     PartDelays t;
     t.evidence = "proven on memory.dram.endpoint.32.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -2735,7 +2917,7 @@
     t.setup["RSP_READY"] = 393;
     t.self_timed = true;
     t.clocked_interface = true;
-    t.internal_period = 1176;
+    t.internal_period = 1268;
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
@@ -2743,7 +2925,7 @@
     PartDelays t;
     t.evidence = "proven on memory.dram.endpoint.32.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -2755,7 +2937,7 @@
     t.setup["RSP_READY"] = 393;
     t.self_timed = true;
     t.clocked_interface = true;
-    t.internal_period = 1176;
+    t.internal_period = 1268;
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
@@ -2763,7 +2945,7 @@
     PartDelays t;
     t.evidence = "proven on memory.dram.endpoint.32.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -2775,7 +2957,7 @@
     t.setup["RSP_READY"] = 393;
     t.self_timed = true;
     t.clocked_interface = true;
-    t.internal_period = 1176;
+    t.internal_period = 1268;
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
@@ -2783,7 +2965,7 @@
     PartDelays t;
     t.evidence = "proven on memory.dram.endpoint.32.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -2795,7 +2977,87 @@
     t.setup["RSP_READY"] = 393;
     t.self_timed = true;
     t.clocked_interface = true;
-    t.internal_period = 1176;
+    t.internal_period = 1268;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.dram.endpoint.32.behavioral@depth=64@rows=16@block=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.endpoint.32.structural";
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {182, 296};
+    t.launches["RSP_READ_DATA"] = {162, 212};
+    t.launches["RSP_STATUS"] = {162, 212};
+    t.launches["RSP_VALID"] = {162, 226};
+    t.setup["REQ_ADDR"] = 900;
+    t.setup["REQ_OP"] = 855;
+    t.setup["REQ_VALID"] = 394;
+    t.setup["REQ_WRITE_DATA"] = 231;
+    t.setup["REQ_WRITE_MASK"] = 613;
+    t.setup["RSP_READY"] = 393;
+    t.self_timed = true;
+    t.clocked_interface = true;
+    t.internal_period = 1268;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.dram.scalable-endpoint.32.behavioral@depth=64@rows=16@block=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.endpoint.32.structural";
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {182, 296};
+    t.launches["RSP_READ_DATA"] = {162, 212};
+    t.launches["RSP_STATUS"] = {162, 212};
+    t.launches["RSP_VALID"] = {162, 226};
+    t.setup["REQ_ADDR"] = 900;
+    t.setup["REQ_OP"] = 855;
+    t.setup["REQ_VALID"] = 394;
+    t.setup["REQ_WRITE_DATA"] = 231;
+    t.setup["REQ_WRITE_MASK"] = 613;
+    t.setup["RSP_READY"] = 393;
+    t.self_timed = true;
+    t.clocked_interface = true;
+    t.internal_period = 1268;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.dram.endpoint.32.behavioral@depth=128@rows=16@block=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.endpoint.32.structural";
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {182, 296};
+    t.launches["RSP_READ_DATA"] = {162, 212};
+    t.launches["RSP_STATUS"] = {162, 212};
+    t.launches["RSP_VALID"] = {162, 226};
+    t.setup["REQ_ADDR"] = 900;
+    t.setup["REQ_OP"] = 855;
+    t.setup["REQ_VALID"] = 394;
+    t.setup["REQ_WRITE_DATA"] = 231;
+    t.setup["REQ_WRITE_MASK"] = 613;
+    t.setup["RSP_READY"] = 393;
+    t.self_timed = true;
+    t.clocked_interface = true;
+    t.internal_period = 1268;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.dram.scalable-endpoint.32.behavioral@depth=128@rows=16@block=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.endpoint.32.structural";
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {182, 296};
+    t.launches["RSP_READ_DATA"] = {162, 212};
+    t.launches["RSP_STATUS"] = {162, 212};
+    t.launches["RSP_VALID"] = {162, 226};
+    t.setup["REQ_ADDR"] = 900;
+    t.setup["REQ_OP"] = 855;
+    t.setup["REQ_VALID"] = 394;
+    t.setup["REQ_WRITE_DATA"] = 231;
+    t.setup["REQ_WRITE_MASK"] = 613;
+    t.setup["RSP_READY"] = 393;
+    t.self_timed = true;
+    t.clocked_interface = true;
+    t.internal_period = 1268;
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
@@ -2803,7 +3065,7 @@
     PartDelays t;
     t.evidence = "proven on memory.dram.endpoint.32.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -2815,7 +3077,7 @@
     t.setup["RSP_READY"] = 393;
     t.self_timed = true;
     t.clocked_interface = true;
-    t.internal_period = 1176;
+    t.internal_period = 1268;
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
@@ -2823,7 +3085,7 @@
     PartDelays t;
     t.evidence = "proven on memory.dram.endpoint.32.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -2835,7 +3097,7 @@
     t.setup["RSP_READY"] = 393;
     t.self_timed = true;
     t.clocked_interface = true;
-    t.internal_period = 1176;
+    t.internal_period = 1268;
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
@@ -2843,7 +3105,7 @@
     PartDelays t;
     t.evidence = "proven on memory.dram.endpoint.32.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -2855,7 +3117,7 @@
     t.setup["RSP_READY"] = 393;
     t.self_timed = true;
     t.clocked_interface = true;
-    t.internal_period = 1176;
+    t.internal_period = 1268;
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
@@ -2863,7 +3125,7 @@
     PartDelays t;
     t.evidence = "proven on memory.dram.endpoint.32.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -2875,7 +3137,7 @@
     t.setup["RSP_READY"] = 393;
     t.self_timed = true;
     t.clocked_interface = true;
-    t.internal_period = 1176;
+    t.internal_period = 1268;
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
@@ -2883,7 +3145,7 @@
     PartDelays t;
     t.evidence = "proven on memory.dram.endpoint.8.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -2895,7 +3157,7 @@
     t.setup["RSP_READY"] = 393;
     t.self_timed = true;
     t.clocked_interface = true;
-    t.internal_period = 1176;
+    t.internal_period = 1268;
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
@@ -2903,7 +3165,7 @@
     PartDelays t;
     t.evidence = "proven on memory.dram.endpoint.8.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -2915,7 +3177,7 @@
     t.setup["RSP_READY"] = 393;
     t.self_timed = true;
     t.clocked_interface = true;
-    t.internal_period = 1176;
+    t.internal_period = 1268;
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
@@ -2923,7 +3185,7 @@
     PartDelays t;
     t.evidence = "proven on memory.dram.endpoint.8.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -2935,7 +3197,7 @@
     t.setup["RSP_READY"] = 393;
     t.self_timed = true;
     t.clocked_interface = true;
-    t.internal_period = 1176;
+    t.internal_period = 1268;
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
@@ -2943,7 +3205,7 @@
     PartDelays t;
     t.evidence = "proven on memory.dram.endpoint.8.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -2955,7 +3217,7 @@
     t.setup["RSP_READY"] = 393;
     t.self_timed = true;
     t.clocked_interface = true;
-    t.internal_period = 1176;
+    t.internal_period = 1268;
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
@@ -2963,7 +3225,7 @@
     PartDelays t;
     t.evidence = "proven on memory.dram.endpoint.8.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -2975,7 +3237,7 @@
     t.setup["RSP_READY"] = 393;
     t.self_timed = true;
     t.clocked_interface = true;
-    t.internal_period = 1176;
+    t.internal_period = 1268;
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
@@ -2983,7 +3245,7 @@
     PartDelays t;
     t.evidence = "proven on memory.dram.endpoint.8.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -2995,7 +3257,7 @@
     t.setup["RSP_READY"] = 393;
     t.self_timed = true;
     t.clocked_interface = true;
-    t.internal_period = 1176;
+    t.internal_period = 1268;
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
@@ -3003,7 +3265,7 @@
     PartDelays t;
     t.evidence = "proven on memory.dram.endpoint.8.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -3015,7 +3277,7 @@
     t.setup["RSP_READY"] = 393;
     t.self_timed = true;
     t.clocked_interface = true;
-    t.internal_period = 1176;
+    t.internal_period = 1268;
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
@@ -3023,7 +3285,7 @@
     PartDelays t;
     t.evidence = "proven on memory.dram.endpoint.8.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -3035,7 +3297,7 @@
     t.setup["RSP_READY"] = 393;
     t.self_timed = true;
     t.clocked_interface = true;
-    t.internal_period = 1176;
+    t.internal_period = 1268;
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
@@ -3043,7 +3305,7 @@
     PartDelays t;
     t.evidence = "proven on memory.dram.endpoint.8.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -3055,7 +3317,7 @@
     t.setup["RSP_READY"] = 393;
     t.self_timed = true;
     t.clocked_interface = true;
-    t.internal_period = 1176;
+    t.internal_period = 1268;
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
@@ -3063,7 +3325,7 @@
     PartDelays t;
     t.evidence = "proven on memory.dram.endpoint.8.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -3075,7 +3337,7 @@
     t.setup["RSP_READY"] = 393;
     t.self_timed = true;
     t.clocked_interface = true;
-    t.internal_period = 1176;
+    t.internal_period = 1268;
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
@@ -3083,7 +3345,7 @@
     PartDelays t;
     t.evidence = "proven on memory.dram.endpoint.8.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -3095,7 +3357,7 @@
     t.setup["RSP_READY"] = 393;
     t.self_timed = true;
     t.clocked_interface = true;
-    t.internal_period = 1176;
+    t.internal_period = 1268;
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
@@ -3103,7 +3365,7 @@
     PartDelays t;
     t.evidence = "proven on memory.dram.endpoint.8.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -3115,7 +3377,7 @@
     t.setup["RSP_READY"] = 393;
     t.self_timed = true;
     t.clocked_interface = true;
-    t.internal_period = 1176;
+    t.internal_period = 1268;
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
@@ -3123,7 +3385,7 @@
     PartDelays t;
     t.evidence = "proven on memory.dram.endpoint.8.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -3135,7 +3397,7 @@
     t.setup["RSP_READY"] = 393;
     t.self_timed = true;
     t.clocked_interface = true;
-    t.internal_period = 1176;
+    t.internal_period = 1268;
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
@@ -3143,7 +3405,7 @@
     PartDelays t;
     t.evidence = "proven on memory.dram.endpoint.8.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -3155,7 +3417,7 @@
     t.setup["RSP_READY"] = 393;
     t.self_timed = true;
     t.clocked_interface = true;
-    t.internal_period = 1176;
+    t.internal_period = 1268;
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
@@ -3163,7 +3425,7 @@
     PartDelays t;
     t.evidence = "proven on memory.dram.endpoint.8.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -3175,7 +3437,7 @@
     t.setup["RSP_READY"] = 393;
     t.self_timed = true;
     t.clocked_interface = true;
-    t.internal_period = 1176;
+    t.internal_period = 1268;
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
@@ -3183,7 +3445,7 @@
     PartDelays t;
     t.evidence = "proven on memory.dram.endpoint.8.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -3195,7 +3457,7 @@
     t.setup["RSP_READY"] = 393;
     t.self_timed = true;
     t.clocked_interface = true;
-    t.internal_period = 1176;
+    t.internal_period = 1268;
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
@@ -3203,7 +3465,7 @@
     PartDelays t;
     t.evidence = "proven on memory.dram.endpoint.8.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -3215,7 +3477,7 @@
     t.setup["RSP_READY"] = 393;
     t.self_timed = true;
     t.clocked_interface = true;
-    t.internal_period = 1176;
+    t.internal_period = 1268;
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
@@ -3223,7 +3485,7 @@
     PartDelays t;
     t.evidence = "proven on memory.dram.endpoint.8.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -3235,7 +3497,7 @@
     t.setup["RSP_READY"] = 393;
     t.self_timed = true;
     t.clocked_interface = true;
-    t.internal_period = 1176;
+    t.internal_period = 1268;
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
@@ -3243,7 +3505,7 @@
     PartDelays t;
     t.evidence = "proven on memory.dram.endpoint.8.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -3255,7 +3517,7 @@
     t.setup["RSP_READY"] = 393;
     t.self_timed = true;
     t.clocked_interface = true;
-    t.internal_period = 1176;
+    t.internal_period = 1268;
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
@@ -3263,7 +3525,7 @@
     PartDelays t;
     t.evidence = "proven on memory.dram.endpoint.8.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -3275,7 +3537,7 @@
     t.setup["RSP_READY"] = 393;
     t.self_timed = true;
     t.clocked_interface = true;
-    t.internal_period = 1176;
+    t.internal_period = 1268;
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
@@ -3283,7 +3545,7 @@
     PartDelays t;
     t.evidence = "proven on memory.dram.endpoint.8.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -3295,7 +3557,7 @@
     t.setup["RSP_READY"] = 393;
     t.self_timed = true;
     t.clocked_interface = true;
-    t.internal_period = 1176;
+    t.internal_period = 1268;
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
@@ -3303,7 +3565,7 @@
     PartDelays t;
     t.evidence = "proven on memory.dram.endpoint.8.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -3315,7 +3577,87 @@
     t.setup["RSP_READY"] = 393;
     t.self_timed = true;
     t.clocked_interface = true;
-    t.internal_period = 1176;
+    t.internal_period = 1268;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.dram.endpoint.8.behavioral@depth=64@rows=16@block=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.endpoint.8.structural";
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {182, 296};
+    t.launches["RSP_READ_DATA"] = {162, 212};
+    t.launches["RSP_STATUS"] = {162, 212};
+    t.launches["RSP_VALID"] = {162, 226};
+    t.setup["REQ_ADDR"] = 900;
+    t.setup["REQ_OP"] = 855;
+    t.setup["REQ_VALID"] = 394;
+    t.setup["REQ_WRITE_DATA"] = 231;
+    t.setup["REQ_WRITE_MASK"] = 613;
+    t.setup["RSP_READY"] = 393;
+    t.self_timed = true;
+    t.clocked_interface = true;
+    t.internal_period = 1268;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.dram.scalable-endpoint.8.behavioral@depth=64@rows=16@block=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.endpoint.8.structural";
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {182, 296};
+    t.launches["RSP_READ_DATA"] = {162, 212};
+    t.launches["RSP_STATUS"] = {162, 212};
+    t.launches["RSP_VALID"] = {162, 226};
+    t.setup["REQ_ADDR"] = 900;
+    t.setup["REQ_OP"] = 855;
+    t.setup["REQ_VALID"] = 394;
+    t.setup["REQ_WRITE_DATA"] = 231;
+    t.setup["REQ_WRITE_MASK"] = 613;
+    t.setup["RSP_READY"] = 393;
+    t.self_timed = true;
+    t.clocked_interface = true;
+    t.internal_period = 1268;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.dram.endpoint.8.behavioral@depth=128@rows=16@block=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.endpoint.8.structural";
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {182, 296};
+    t.launches["RSP_READ_DATA"] = {162, 212};
+    t.launches["RSP_STATUS"] = {162, 212};
+    t.launches["RSP_VALID"] = {162, 226};
+    t.setup["REQ_ADDR"] = 900;
+    t.setup["REQ_OP"] = 855;
+    t.setup["REQ_VALID"] = 394;
+    t.setup["REQ_WRITE_DATA"] = 231;
+    t.setup["REQ_WRITE_MASK"] = 613;
+    t.setup["RSP_READY"] = 393;
+    t.self_timed = true;
+    t.clocked_interface = true;
+    t.internal_period = 1268;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.dram.scalable-endpoint.8.behavioral@depth=128@rows=16@block=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.dram.endpoint.8.structural";
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {182, 296};
+    t.launches["RSP_READ_DATA"] = {162, 212};
+    t.launches["RSP_STATUS"] = {162, 212};
+    t.launches["RSP_VALID"] = {162, 226};
+    t.setup["REQ_ADDR"] = 900;
+    t.setup["REQ_OP"] = 855;
+    t.setup["REQ_VALID"] = 394;
+    t.setup["REQ_WRITE_DATA"] = 231;
+    t.setup["REQ_WRITE_MASK"] = 613;
+    t.setup["RSP_READY"] = 393;
+    t.self_timed = true;
+    t.clocked_interface = true;
+    t.internal_period = 1268;
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
@@ -3323,7 +3665,7 @@
     PartDelays t;
     t.evidence = "proven on memory.dram.endpoint.8.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -3335,7 +3677,7 @@
     t.setup["RSP_READY"] = 393;
     t.self_timed = true;
     t.clocked_interface = true;
-    t.internal_period = 1176;
+    t.internal_period = 1268;
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
@@ -3343,7 +3685,7 @@
     PartDelays t;
     t.evidence = "proven on memory.dram.endpoint.8.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -3355,7 +3697,7 @@
     t.setup["RSP_READY"] = 393;
     t.self_timed = true;
     t.clocked_interface = true;
-    t.internal_period = 1176;
+    t.internal_period = 1268;
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
@@ -3363,7 +3705,7 @@
     PartDelays t;
     t.evidence = "proven on memory.dram.endpoint.8.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -3375,7 +3717,7 @@
     t.setup["RSP_READY"] = 393;
     t.self_timed = true;
     t.clocked_interface = true;
-    t.internal_period = 1176;
+    t.internal_period = 1268;
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
@@ -3383,7 +3725,7 @@
     PartDelays t;
     t.evidence = "proven on memory.dram.endpoint.8.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -3395,7 +3737,7 @@
     t.setup["RSP_READY"] = 393;
     t.self_timed = true;
     t.clocked_interface = true;
-    t.internal_period = 1176;
+    t.internal_period = 1268;
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},
@@ -5371,11 +5713,11 @@
     t.launches["MEM_WORD_ADDR"] = {91, 120};
     t.launches["MEM_WRITE_DATA"] = {91, 120};
     t.launches["MEM_WRITE_MASK"] = {91, 120};
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
-    t.setup["MEM_BUSY"] = 464;
+    t.setup["MEM_BUSY"] = 485;
     t.setup["MEM_ERROR"] = 519;
     t.setup["MEM_READ_VALID"] = 575;
     t.setup["REQ_ADDR"] = 900;
@@ -5402,11 +5744,11 @@
     t.launches["MEM_WORD_ADDR"] = {91, 120};
     t.launches["MEM_WRITE_DATA"] = {91, 120};
     t.launches["MEM_WRITE_MASK"] = {91, 120};
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
-    t.setup["MEM_BUSY"] = 464;
+    t.setup["MEM_BUSY"] = 485;
     t.setup["MEM_ERROR"] = 519;
     t.setup["MEM_READ_VALID"] = 575;
     t.setup["REQ_ADDR"] = 900;
@@ -5433,11 +5775,11 @@
     t.launches["MEM_WORD_ADDR"] = {91, 120};
     t.launches["MEM_WRITE_DATA"] = {91, 120};
     t.launches["MEM_WRITE_MASK"] = {91, 120};
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
-    t.setup["MEM_BUSY"] = 464;
+    t.setup["MEM_BUSY"] = 485;
     t.setup["MEM_ERROR"] = 519;
     t.setup["MEM_READ_VALID"] = 575;
     t.setup["REQ_ADDR"] = 900;
@@ -5457,6 +5799,57 @@
     t.launches["BUSY"] = {126, 176};
     t.launches["ERROR"] = {91, 120};
     t.launches["READ_DATA"] = {112, 120804};
+    t.launches["READ_VALID"] = {91, 120};
+    t.launches["WRITE_ENABLED"] = {91, 120};
+    t.setup["CMD"] = 627;
+    t.setup["WORD_ADDR"] = 772;
+    t.setup["WRITE_DATA"] = 231;
+    t.setup["WRITE_MASK"] = 557;
+    t.self_timed = true;
+    t.internal_period = 656;
+    return t;
+}()},
+{"memory.nor-flash.device.16.behavioral@block=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.nor-flash.device.16.structural";
+    t.clock = "CLK";
+    t.launches["BUSY"] = {126, 176};
+    t.launches["ERROR"] = {91, 120};
+    t.launches["READ_DATA"] = {112, 120769};
+    t.launches["READ_VALID"] = {91, 120};
+    t.launches["WRITE_ENABLED"] = {91, 120};
+    t.setup["CMD"] = 627;
+    t.setup["WORD_ADDR"] = 772;
+    t.setup["WRITE_DATA"] = 231;
+    t.setup["WRITE_MASK"] = 557;
+    t.self_timed = true;
+    t.internal_period = 656;
+    return t;
+}()},
+{"memory.nor-flash.device.16.behavioral@depth=64@block=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.nor-flash.device.16.structural";
+    t.clock = "CLK";
+    t.launches["BUSY"] = {126, 176};
+    t.launches["ERROR"] = {91, 120};
+    t.launches["READ_DATA"] = {112, 120874};
+    t.launches["READ_VALID"] = {91, 120};
+    t.launches["WRITE_ENABLED"] = {91, 120};
+    t.setup["CMD"] = 627;
+    t.setup["WORD_ADDR"] = 772;
+    t.setup["WRITE_DATA"] = 231;
+    t.setup["WRITE_MASK"] = 557;
+    t.self_timed = true;
+    t.internal_period = 656;
+    return t;
+}()},
+{"memory.nor-flash.device.16.behavioral@depth=128@block=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.nor-flash.device.16.structural";
+    t.clock = "CLK";
+    t.launches["BUSY"] = {126, 176};
+    t.launches["ERROR"] = {91, 120};
+    t.launches["READ_DATA"] = {112, 120874};
     t.launches["READ_VALID"] = {91, 120};
     t.launches["WRITE_ENABLED"] = {91, 120};
     t.setup["CMD"] = 627;
@@ -5569,6 +5962,57 @@
     t.internal_period = 656;
     return t;
 }()},
+{"memory.nor-flash.device.32.behavioral@block=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.nor-flash.device.32.structural";
+    t.clock = "CLK";
+    t.launches["BUSY"] = {126, 176};
+    t.launches["ERROR"] = {91, 120};
+    t.launches["READ_DATA"] = {112, 120769};
+    t.launches["READ_VALID"] = {91, 120};
+    t.launches["WRITE_ENABLED"] = {91, 120};
+    t.setup["CMD"] = 627;
+    t.setup["WORD_ADDR"] = 772;
+    t.setup["WRITE_DATA"] = 231;
+    t.setup["WRITE_MASK"] = 557;
+    t.self_timed = true;
+    t.internal_period = 656;
+    return t;
+}()},
+{"memory.nor-flash.device.32.behavioral@depth=64@block=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.nor-flash.device.32.structural";
+    t.clock = "CLK";
+    t.launches["BUSY"] = {126, 176};
+    t.launches["ERROR"] = {91, 120};
+    t.launches["READ_DATA"] = {112, 120874};
+    t.launches["READ_VALID"] = {91, 120};
+    t.launches["WRITE_ENABLED"] = {91, 120};
+    t.setup["CMD"] = 627;
+    t.setup["WORD_ADDR"] = 772;
+    t.setup["WRITE_DATA"] = 231;
+    t.setup["WRITE_MASK"] = 557;
+    t.self_timed = true;
+    t.internal_period = 656;
+    return t;
+}()},
+{"memory.nor-flash.device.32.behavioral@depth=128@block=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.nor-flash.device.32.structural";
+    t.clock = "CLK";
+    t.launches["BUSY"] = {126, 176};
+    t.launches["ERROR"] = {91, 120};
+    t.launches["READ_DATA"] = {112, 120874};
+    t.launches["READ_VALID"] = {91, 120};
+    t.launches["WRITE_ENABLED"] = {91, 120};
+    t.setup["CMD"] = 627;
+    t.setup["WORD_ADDR"] = 772;
+    t.setup["WRITE_DATA"] = 231;
+    t.setup["WRITE_MASK"] = 557;
+    t.self_timed = true;
+    t.internal_period = 656;
+    return t;
+}()},
 {"memory.nor-flash.device.32.behavioral@depth=64", [] {
     PartDelays t;
     t.evidence = "proven on memory.nor-flash.device.32.structural";
@@ -5671,6 +6115,57 @@
     t.internal_period = 656;
     return t;
 }()},
+{"memory.nor-flash.device.8.behavioral@block=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.nor-flash.device.8.structural";
+    t.clock = "CLK";
+    t.launches["BUSY"] = {126, 176};
+    t.launches["ERROR"] = {91, 120};
+    t.launches["READ_DATA"] = {112, 120769};
+    t.launches["READ_VALID"] = {91, 120};
+    t.launches["WRITE_ENABLED"] = {91, 120};
+    t.setup["CMD"] = 627;
+    t.setup["WORD_ADDR"] = 772;
+    t.setup["WRITE_DATA"] = 231;
+    t.setup["WRITE_MASK"] = 557;
+    t.self_timed = true;
+    t.internal_period = 656;
+    return t;
+}()},
+{"memory.nor-flash.device.8.behavioral@depth=64@block=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.nor-flash.device.8.structural";
+    t.clock = "CLK";
+    t.launches["BUSY"] = {126, 176};
+    t.launches["ERROR"] = {91, 120};
+    t.launches["READ_DATA"] = {112, 120874};
+    t.launches["READ_VALID"] = {91, 120};
+    t.launches["WRITE_ENABLED"] = {91, 120};
+    t.setup["CMD"] = 627;
+    t.setup["WORD_ADDR"] = 772;
+    t.setup["WRITE_DATA"] = 231;
+    t.setup["WRITE_MASK"] = 557;
+    t.self_timed = true;
+    t.internal_period = 656;
+    return t;
+}()},
+{"memory.nor-flash.device.8.behavioral@depth=128@block=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.nor-flash.device.8.structural";
+    t.clock = "CLK";
+    t.launches["BUSY"] = {126, 176};
+    t.launches["ERROR"] = {91, 120};
+    t.launches["READ_DATA"] = {112, 120874};
+    t.launches["READ_VALID"] = {91, 120};
+    t.launches["WRITE_ENABLED"] = {91, 120};
+    t.setup["CMD"] = 627;
+    t.setup["WORD_ADDR"] = 772;
+    t.setup["WRITE_DATA"] = 231;
+    t.setup["WRITE_MASK"] = 557;
+    t.self_timed = true;
+    t.internal_period = 656;
+    return t;
+}()},
 {"memory.nor-flash.device.8.behavioral@depth=64", [] {
     PartDelays t;
     t.evidence = "proven on memory.nor-flash.device.8.structural";
@@ -5760,7 +6255,7 @@
     PartDelays t;
     t.evidence = "proven on memory.nor-flash.endpoint.16.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -5780,7 +6275,127 @@
     PartDelays t;
     t.evidence = "proven on memory.nor-flash.endpoint.16.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
+    t.launches["RSP_READ_DATA"] = {162, 212};
+    t.launches["RSP_STATUS"] = {162, 212};
+    t.launches["RSP_VALID"] = {162, 226};
+    t.setup["REQ_ADDR"] = 900;
+    t.setup["REQ_OP"] = 904;
+    t.setup["REQ_VALID"] = 394;
+    t.setup["REQ_WRITE_DATA"] = 231;
+    t.setup["REQ_WRITE_MASK"] = 613;
+    t.setup["RSP_READY"] = 393;
+    t.self_timed = true;
+    t.clocked_interface = true;
+    t.internal_period = 1070;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.nor-flash.endpoint.16.behavioral@block=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.nor-flash.endpoint.16.structural";
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {182, 296};
+    t.launches["RSP_READ_DATA"] = {162, 212};
+    t.launches["RSP_STATUS"] = {162, 212};
+    t.launches["RSP_VALID"] = {162, 226};
+    t.setup["REQ_ADDR"] = 900;
+    t.setup["REQ_OP"] = 904;
+    t.setup["REQ_VALID"] = 394;
+    t.setup["REQ_WRITE_DATA"] = 231;
+    t.setup["REQ_WRITE_MASK"] = 613;
+    t.setup["RSP_READY"] = 393;
+    t.self_timed = true;
+    t.clocked_interface = true;
+    t.internal_period = 1070;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.nor-flash.scalable-endpoint.16.behavioral@block=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.nor-flash.endpoint.16.structural";
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {182, 296};
+    t.launches["RSP_READ_DATA"] = {162, 212};
+    t.launches["RSP_STATUS"] = {162, 212};
+    t.launches["RSP_VALID"] = {162, 226};
+    t.setup["REQ_ADDR"] = 900;
+    t.setup["REQ_OP"] = 904;
+    t.setup["REQ_VALID"] = 394;
+    t.setup["REQ_WRITE_DATA"] = 231;
+    t.setup["REQ_WRITE_MASK"] = 613;
+    t.setup["RSP_READY"] = 393;
+    t.self_timed = true;
+    t.clocked_interface = true;
+    t.internal_period = 1070;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.nor-flash.endpoint.16.behavioral@depth=64@block=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.nor-flash.endpoint.16.structural";
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {182, 296};
+    t.launches["RSP_READ_DATA"] = {162, 212};
+    t.launches["RSP_STATUS"] = {162, 212};
+    t.launches["RSP_VALID"] = {162, 226};
+    t.setup["REQ_ADDR"] = 900;
+    t.setup["REQ_OP"] = 904;
+    t.setup["REQ_VALID"] = 394;
+    t.setup["REQ_WRITE_DATA"] = 231;
+    t.setup["REQ_WRITE_MASK"] = 613;
+    t.setup["RSP_READY"] = 393;
+    t.self_timed = true;
+    t.clocked_interface = true;
+    t.internal_period = 1070;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.nor-flash.scalable-endpoint.16.behavioral@depth=64@block=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.nor-flash.endpoint.16.structural";
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {182, 296};
+    t.launches["RSP_READ_DATA"] = {162, 212};
+    t.launches["RSP_STATUS"] = {162, 212};
+    t.launches["RSP_VALID"] = {162, 226};
+    t.setup["REQ_ADDR"] = 900;
+    t.setup["REQ_OP"] = 904;
+    t.setup["REQ_VALID"] = 394;
+    t.setup["REQ_WRITE_DATA"] = 231;
+    t.setup["REQ_WRITE_MASK"] = 613;
+    t.setup["RSP_READY"] = 393;
+    t.self_timed = true;
+    t.clocked_interface = true;
+    t.internal_period = 1070;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.nor-flash.endpoint.16.behavioral@depth=128@block=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.nor-flash.endpoint.16.structural";
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {182, 296};
+    t.launches["RSP_READ_DATA"] = {162, 212};
+    t.launches["RSP_STATUS"] = {162, 212};
+    t.launches["RSP_VALID"] = {162, 226};
+    t.setup["REQ_ADDR"] = 900;
+    t.setup["REQ_OP"] = 904;
+    t.setup["REQ_VALID"] = 394;
+    t.setup["REQ_WRITE_DATA"] = 231;
+    t.setup["REQ_WRITE_MASK"] = 613;
+    t.setup["RSP_READY"] = 393;
+    t.self_timed = true;
+    t.clocked_interface = true;
+    t.internal_period = 1070;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.nor-flash.scalable-endpoint.16.behavioral@depth=128@block=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.nor-flash.endpoint.16.structural";
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -5800,7 +6415,7 @@
     PartDelays t;
     t.evidence = "proven on memory.nor-flash.endpoint.16.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -5820,7 +6435,7 @@
     PartDelays t;
     t.evidence = "proven on memory.nor-flash.endpoint.16.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -5840,7 +6455,7 @@
     PartDelays t;
     t.evidence = "proven on memory.nor-flash.endpoint.16.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -5860,7 +6475,7 @@
     PartDelays t;
     t.evidence = "proven on memory.nor-flash.endpoint.16.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -5880,7 +6495,7 @@
     PartDelays t;
     t.evidence = "proven on memory.nor-flash.endpoint.16.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -5900,7 +6515,7 @@
     PartDelays t;
     t.evidence = "proven on memory.nor-flash.endpoint.16.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -5920,7 +6535,7 @@
     PartDelays t;
     t.evidence = "proven on memory.nor-flash.endpoint.16.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -5940,7 +6555,7 @@
     PartDelays t;
     t.evidence = "proven on memory.nor-flash.endpoint.16.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -5960,7 +6575,7 @@
     PartDelays t;
     t.evidence = "proven on memory.nor-flash.endpoint.16.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -5980,7 +6595,7 @@
     PartDelays t;
     t.evidence = "proven on memory.nor-flash.endpoint.16.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -6000,7 +6615,7 @@
     PartDelays t;
     t.evidence = "proven on memory.nor-flash.endpoint.32.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -6020,7 +6635,127 @@
     PartDelays t;
     t.evidence = "proven on memory.nor-flash.endpoint.32.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
+    t.launches["RSP_READ_DATA"] = {162, 212};
+    t.launches["RSP_STATUS"] = {162, 212};
+    t.launches["RSP_VALID"] = {162, 226};
+    t.setup["REQ_ADDR"] = 900;
+    t.setup["REQ_OP"] = 904;
+    t.setup["REQ_VALID"] = 394;
+    t.setup["REQ_WRITE_DATA"] = 231;
+    t.setup["REQ_WRITE_MASK"] = 613;
+    t.setup["RSP_READY"] = 393;
+    t.self_timed = true;
+    t.clocked_interface = true;
+    t.internal_period = 1070;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.nor-flash.endpoint.32.behavioral@block=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.nor-flash.endpoint.32.structural";
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {182, 296};
+    t.launches["RSP_READ_DATA"] = {162, 212};
+    t.launches["RSP_STATUS"] = {162, 212};
+    t.launches["RSP_VALID"] = {162, 226};
+    t.setup["REQ_ADDR"] = 900;
+    t.setup["REQ_OP"] = 904;
+    t.setup["REQ_VALID"] = 394;
+    t.setup["REQ_WRITE_DATA"] = 231;
+    t.setup["REQ_WRITE_MASK"] = 613;
+    t.setup["RSP_READY"] = 393;
+    t.self_timed = true;
+    t.clocked_interface = true;
+    t.internal_period = 1070;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.nor-flash.scalable-endpoint.32.behavioral@block=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.nor-flash.endpoint.32.structural";
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {182, 296};
+    t.launches["RSP_READ_DATA"] = {162, 212};
+    t.launches["RSP_STATUS"] = {162, 212};
+    t.launches["RSP_VALID"] = {162, 226};
+    t.setup["REQ_ADDR"] = 900;
+    t.setup["REQ_OP"] = 904;
+    t.setup["REQ_VALID"] = 394;
+    t.setup["REQ_WRITE_DATA"] = 231;
+    t.setup["REQ_WRITE_MASK"] = 613;
+    t.setup["RSP_READY"] = 393;
+    t.self_timed = true;
+    t.clocked_interface = true;
+    t.internal_period = 1070;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.nor-flash.endpoint.32.behavioral@depth=64@block=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.nor-flash.endpoint.32.structural";
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {182, 296};
+    t.launches["RSP_READ_DATA"] = {162, 212};
+    t.launches["RSP_STATUS"] = {162, 212};
+    t.launches["RSP_VALID"] = {162, 226};
+    t.setup["REQ_ADDR"] = 900;
+    t.setup["REQ_OP"] = 904;
+    t.setup["REQ_VALID"] = 394;
+    t.setup["REQ_WRITE_DATA"] = 231;
+    t.setup["REQ_WRITE_MASK"] = 613;
+    t.setup["RSP_READY"] = 393;
+    t.self_timed = true;
+    t.clocked_interface = true;
+    t.internal_period = 1070;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.nor-flash.scalable-endpoint.32.behavioral@depth=64@block=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.nor-flash.endpoint.32.structural";
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {182, 296};
+    t.launches["RSP_READ_DATA"] = {162, 212};
+    t.launches["RSP_STATUS"] = {162, 212};
+    t.launches["RSP_VALID"] = {162, 226};
+    t.setup["REQ_ADDR"] = 900;
+    t.setup["REQ_OP"] = 904;
+    t.setup["REQ_VALID"] = 394;
+    t.setup["REQ_WRITE_DATA"] = 231;
+    t.setup["REQ_WRITE_MASK"] = 613;
+    t.setup["RSP_READY"] = 393;
+    t.self_timed = true;
+    t.clocked_interface = true;
+    t.internal_period = 1070;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.nor-flash.endpoint.32.behavioral@depth=128@block=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.nor-flash.endpoint.32.structural";
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {182, 296};
+    t.launches["RSP_READ_DATA"] = {162, 212};
+    t.launches["RSP_STATUS"] = {162, 212};
+    t.launches["RSP_VALID"] = {162, 226};
+    t.setup["REQ_ADDR"] = 900;
+    t.setup["REQ_OP"] = 904;
+    t.setup["REQ_VALID"] = 394;
+    t.setup["REQ_WRITE_DATA"] = 231;
+    t.setup["REQ_WRITE_MASK"] = 613;
+    t.setup["RSP_READY"] = 393;
+    t.self_timed = true;
+    t.clocked_interface = true;
+    t.internal_period = 1070;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.nor-flash.scalable-endpoint.32.behavioral@depth=128@block=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.nor-flash.endpoint.32.structural";
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -6040,7 +6775,7 @@
     PartDelays t;
     t.evidence = "proven on memory.nor-flash.endpoint.32.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -6060,7 +6795,7 @@
     PartDelays t;
     t.evidence = "proven on memory.nor-flash.endpoint.32.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -6080,7 +6815,7 @@
     PartDelays t;
     t.evidence = "proven on memory.nor-flash.endpoint.32.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -6100,7 +6835,7 @@
     PartDelays t;
     t.evidence = "proven on memory.nor-flash.endpoint.32.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -6120,7 +6855,7 @@
     PartDelays t;
     t.evidence = "proven on memory.nor-flash.endpoint.32.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -6140,7 +6875,7 @@
     PartDelays t;
     t.evidence = "proven on memory.nor-flash.endpoint.32.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -6160,7 +6895,7 @@
     PartDelays t;
     t.evidence = "proven on memory.nor-flash.endpoint.32.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -6180,7 +6915,7 @@
     PartDelays t;
     t.evidence = "proven on memory.nor-flash.endpoint.32.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -6200,7 +6935,7 @@
     PartDelays t;
     t.evidence = "proven on memory.nor-flash.endpoint.32.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -6220,7 +6955,7 @@
     PartDelays t;
     t.evidence = "proven on memory.nor-flash.endpoint.32.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -6240,7 +6975,7 @@
     PartDelays t;
     t.evidence = "proven on memory.nor-flash.endpoint.8.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -6260,7 +6995,127 @@
     PartDelays t;
     t.evidence = "proven on memory.nor-flash.endpoint.8.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
+    t.launches["RSP_READ_DATA"] = {162, 212};
+    t.launches["RSP_STATUS"] = {162, 212};
+    t.launches["RSP_VALID"] = {162, 226};
+    t.setup["REQ_ADDR"] = 900;
+    t.setup["REQ_OP"] = 904;
+    t.setup["REQ_VALID"] = 394;
+    t.setup["REQ_WRITE_DATA"] = 231;
+    t.setup["REQ_WRITE_MASK"] = 613;
+    t.setup["RSP_READY"] = 393;
+    t.self_timed = true;
+    t.clocked_interface = true;
+    t.internal_period = 1070;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.nor-flash.endpoint.8.behavioral@block=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.nor-flash.endpoint.8.structural";
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {182, 296};
+    t.launches["RSP_READ_DATA"] = {162, 212};
+    t.launches["RSP_STATUS"] = {162, 212};
+    t.launches["RSP_VALID"] = {162, 226};
+    t.setup["REQ_ADDR"] = 900;
+    t.setup["REQ_OP"] = 904;
+    t.setup["REQ_VALID"] = 394;
+    t.setup["REQ_WRITE_DATA"] = 231;
+    t.setup["REQ_WRITE_MASK"] = 613;
+    t.setup["RSP_READY"] = 393;
+    t.self_timed = true;
+    t.clocked_interface = true;
+    t.internal_period = 1070;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.nor-flash.scalable-endpoint.8.behavioral@block=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.nor-flash.endpoint.8.structural";
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {182, 296};
+    t.launches["RSP_READ_DATA"] = {162, 212};
+    t.launches["RSP_STATUS"] = {162, 212};
+    t.launches["RSP_VALID"] = {162, 226};
+    t.setup["REQ_ADDR"] = 900;
+    t.setup["REQ_OP"] = 904;
+    t.setup["REQ_VALID"] = 394;
+    t.setup["REQ_WRITE_DATA"] = 231;
+    t.setup["REQ_WRITE_MASK"] = 613;
+    t.setup["RSP_READY"] = 393;
+    t.self_timed = true;
+    t.clocked_interface = true;
+    t.internal_period = 1070;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.nor-flash.endpoint.8.behavioral@depth=64@block=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.nor-flash.endpoint.8.structural";
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {182, 296};
+    t.launches["RSP_READ_DATA"] = {162, 212};
+    t.launches["RSP_STATUS"] = {162, 212};
+    t.launches["RSP_VALID"] = {162, 226};
+    t.setup["REQ_ADDR"] = 900;
+    t.setup["REQ_OP"] = 904;
+    t.setup["REQ_VALID"] = 394;
+    t.setup["REQ_WRITE_DATA"] = 231;
+    t.setup["REQ_WRITE_MASK"] = 613;
+    t.setup["RSP_READY"] = 393;
+    t.self_timed = true;
+    t.clocked_interface = true;
+    t.internal_period = 1070;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.nor-flash.scalable-endpoint.8.behavioral@depth=64@block=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.nor-flash.endpoint.8.structural";
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {182, 296};
+    t.launches["RSP_READ_DATA"] = {162, 212};
+    t.launches["RSP_STATUS"] = {162, 212};
+    t.launches["RSP_VALID"] = {162, 226};
+    t.setup["REQ_ADDR"] = 900;
+    t.setup["REQ_OP"] = 904;
+    t.setup["REQ_VALID"] = 394;
+    t.setup["REQ_WRITE_DATA"] = 231;
+    t.setup["REQ_WRITE_MASK"] = 613;
+    t.setup["RSP_READY"] = 393;
+    t.self_timed = true;
+    t.clocked_interface = true;
+    t.internal_period = 1070;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.nor-flash.endpoint.8.behavioral@depth=128@block=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.nor-flash.endpoint.8.structural";
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {182, 296};
+    t.launches["RSP_READ_DATA"] = {162, 212};
+    t.launches["RSP_STATUS"] = {162, 212};
+    t.launches["RSP_VALID"] = {162, 226};
+    t.setup["REQ_ADDR"] = 900;
+    t.setup["REQ_OP"] = 904;
+    t.setup["REQ_VALID"] = 394;
+    t.setup["REQ_WRITE_DATA"] = 231;
+    t.setup["REQ_WRITE_MASK"] = 613;
+    t.setup["RSP_READY"] = 393;
+    t.self_timed = true;
+    t.clocked_interface = true;
+    t.internal_period = 1070;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.nor-flash.scalable-endpoint.8.behavioral@depth=128@block=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.nor-flash.endpoint.8.structural";
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -6280,7 +7135,7 @@
     PartDelays t;
     t.evidence = "proven on memory.nor-flash.endpoint.8.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -6300,7 +7155,7 @@
     PartDelays t;
     t.evidence = "proven on memory.nor-flash.endpoint.8.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -6320,7 +7175,7 @@
     PartDelays t;
     t.evidence = "proven on memory.nor-flash.endpoint.8.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -6340,7 +7195,7 @@
     PartDelays t;
     t.evidence = "proven on memory.nor-flash.endpoint.8.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -6360,7 +7215,7 @@
     PartDelays t;
     t.evidence = "proven on memory.nor-flash.endpoint.8.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -6380,7 +7235,7 @@
     PartDelays t;
     t.evidence = "proven on memory.nor-flash.endpoint.8.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -6400,7 +7255,7 @@
     PartDelays t;
     t.evidence = "proven on memory.nor-flash.endpoint.8.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -6420,7 +7275,7 @@
     PartDelays t;
     t.evidence = "proven on memory.nor-flash.endpoint.8.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -6440,7 +7295,7 @@
     PartDelays t;
     t.evidence = "proven on memory.nor-flash.endpoint.8.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -6460,7 +7315,7 @@
     PartDelays t;
     t.evidence = "proven on memory.nor-flash.endpoint.8.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -6752,12 +7607,12 @@
     t.launches["MEM_CE_N"] = {112, 141};
     t.launches["MEM_OE_N"] = {147, 197};
     t.launches["MEM_WORD_ADDR"] = {91, 120};
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
     t.setup["REQ_ADDR"] = 900;
-    t.setup["REQ_OP"] = 840;
+    t.setup["REQ_OP"] = 876;
     t.setup["REQ_VALID"] = 393;
     t.setup["REQ_WRITE_MASK"] = 613;
     t.setup["RSP_READY"] = 393;
@@ -6772,12 +7627,12 @@
     t.launches["MEM_CE_N"] = {112, 141};
     t.launches["MEM_OE_N"] = {147, 197};
     t.launches["MEM_WORD_ADDR"] = {91, 120};
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
     t.setup["REQ_ADDR"] = 900;
-    t.setup["REQ_OP"] = 840;
+    t.setup["REQ_OP"] = 876;
     t.setup["REQ_VALID"] = 393;
     t.setup["REQ_WRITE_MASK"] = 613;
     t.setup["RSP_READY"] = 393;
@@ -6792,12 +7647,12 @@
     t.launches["MEM_CE_N"] = {112, 141};
     t.launches["MEM_OE_N"] = {147, 197};
     t.launches["MEM_WORD_ADDR"] = {91, 120};
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
     t.setup["REQ_ADDR"] = 900;
-    t.setup["REQ_OP"] = 840;
+    t.setup["REQ_OP"] = 876;
     t.setup["REQ_VALID"] = 393;
     t.setup["REQ_WRITE_MASK"] = 613;
     t.setup["RSP_READY"] = 393;
@@ -7277,12 +8132,12 @@
     PartDelays t;
     t.evidence = "proven on memory.rom.endpoint.16.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
     t.setup["REQ_ADDR"] = 900;
-    t.setup["REQ_OP"] = 840;
+    t.setup["REQ_OP"] = 876;
     t.setup["REQ_VALID"] = 393;
     t.setup["REQ_WRITE_MASK"] = 613;
     t.setup["RSP_READY"] = 393;
@@ -7294,12 +8149,114 @@
     PartDelays t;
     t.evidence = "proven on memory.rom.endpoint.16.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
     t.setup["REQ_ADDR"] = 900;
-    t.setup["REQ_OP"] = 840;
+    t.setup["REQ_OP"] = 876;
+    t.setup["REQ_VALID"] = 393;
+    t.setup["REQ_WRITE_MASK"] = 613;
+    t.setup["RSP_READY"] = 393;
+    t.internal_period = 772;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.rom.endpoint.16.behavioral@block=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.endpoint.16.structural";
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {182, 296};
+    t.launches["RSP_READ_DATA"] = {162, 212};
+    t.launches["RSP_STATUS"] = {162, 212};
+    t.launches["RSP_VALID"] = {162, 226};
+    t.setup["REQ_ADDR"] = 900;
+    t.setup["REQ_OP"] = 876;
+    t.setup["REQ_VALID"] = 393;
+    t.setup["REQ_WRITE_MASK"] = 613;
+    t.setup["RSP_READY"] = 393;
+    t.internal_period = 772;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.rom.scalable-endpoint.16.behavioral@block=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.endpoint.16.structural";
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {182, 296};
+    t.launches["RSP_READ_DATA"] = {162, 212};
+    t.launches["RSP_STATUS"] = {162, 212};
+    t.launches["RSP_VALID"] = {162, 226};
+    t.setup["REQ_ADDR"] = 900;
+    t.setup["REQ_OP"] = 876;
+    t.setup["REQ_VALID"] = 393;
+    t.setup["REQ_WRITE_MASK"] = 613;
+    t.setup["RSP_READY"] = 393;
+    t.internal_period = 772;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.rom.endpoint.16.behavioral@depth=64@block=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.endpoint.16.structural";
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {182, 296};
+    t.launches["RSP_READ_DATA"] = {162, 212};
+    t.launches["RSP_STATUS"] = {162, 212};
+    t.launches["RSP_VALID"] = {162, 226};
+    t.setup["REQ_ADDR"] = 900;
+    t.setup["REQ_OP"] = 876;
+    t.setup["REQ_VALID"] = 393;
+    t.setup["REQ_WRITE_MASK"] = 613;
+    t.setup["RSP_READY"] = 393;
+    t.internal_period = 772;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.rom.scalable-endpoint.16.behavioral@depth=64@block=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.endpoint.16.structural";
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {182, 296};
+    t.launches["RSP_READ_DATA"] = {162, 212};
+    t.launches["RSP_STATUS"] = {162, 212};
+    t.launches["RSP_VALID"] = {162, 226};
+    t.setup["REQ_ADDR"] = 900;
+    t.setup["REQ_OP"] = 876;
+    t.setup["REQ_VALID"] = 393;
+    t.setup["REQ_WRITE_MASK"] = 613;
+    t.setup["RSP_READY"] = 393;
+    t.internal_period = 772;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.rom.endpoint.16.behavioral@depth=128@block=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.endpoint.16.structural";
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {182, 296};
+    t.launches["RSP_READ_DATA"] = {162, 212};
+    t.launches["RSP_STATUS"] = {162, 212};
+    t.launches["RSP_VALID"] = {162, 226};
+    t.setup["REQ_ADDR"] = 900;
+    t.setup["REQ_OP"] = 876;
+    t.setup["REQ_VALID"] = 393;
+    t.setup["REQ_WRITE_MASK"] = 613;
+    t.setup["RSP_READY"] = 393;
+    t.internal_period = 772;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.rom.scalable-endpoint.16.behavioral@depth=128@block=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.endpoint.16.structural";
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {182, 296};
+    t.launches["RSP_READ_DATA"] = {162, 212};
+    t.launches["RSP_STATUS"] = {162, 212};
+    t.launches["RSP_VALID"] = {162, 226};
+    t.setup["REQ_ADDR"] = 900;
+    t.setup["REQ_OP"] = 876;
     t.setup["REQ_VALID"] = 393;
     t.setup["REQ_WRITE_MASK"] = 613;
     t.setup["RSP_READY"] = 393;
@@ -7311,12 +8268,12 @@
     PartDelays t;
     t.evidence = "proven on memory.rom.endpoint.16.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
     t.setup["REQ_ADDR"] = 900;
-    t.setup["REQ_OP"] = 840;
+    t.setup["REQ_OP"] = 876;
     t.setup["REQ_VALID"] = 393;
     t.setup["REQ_WRITE_MASK"] = 613;
     t.setup["RSP_READY"] = 393;
@@ -7328,12 +8285,12 @@
     PartDelays t;
     t.evidence = "proven on memory.rom.endpoint.16.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
     t.setup["REQ_ADDR"] = 900;
-    t.setup["REQ_OP"] = 840;
+    t.setup["REQ_OP"] = 876;
     t.setup["REQ_VALID"] = 393;
     t.setup["REQ_WRITE_MASK"] = 613;
     t.setup["RSP_READY"] = 393;
@@ -7345,12 +8302,12 @@
     PartDelays t;
     t.evidence = "proven on memory.rom.endpoint.16.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
     t.setup["REQ_ADDR"] = 900;
-    t.setup["REQ_OP"] = 840;
+    t.setup["REQ_OP"] = 876;
     t.setup["REQ_VALID"] = 393;
     t.setup["REQ_WRITE_MASK"] = 613;
     t.setup["RSP_READY"] = 393;
@@ -7362,12 +8319,12 @@
     PartDelays t;
     t.evidence = "proven on memory.rom.endpoint.16.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
     t.setup["REQ_ADDR"] = 900;
-    t.setup["REQ_OP"] = 840;
+    t.setup["REQ_OP"] = 876;
     t.setup["REQ_VALID"] = 393;
     t.setup["REQ_WRITE_MASK"] = 613;
     t.setup["RSP_READY"] = 393;
@@ -7379,12 +8336,12 @@
     PartDelays t;
     t.evidence = "proven on memory.rom.endpoint.16.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
     t.setup["REQ_ADDR"] = 900;
-    t.setup["REQ_OP"] = 840;
+    t.setup["REQ_OP"] = 876;
     t.setup["REQ_VALID"] = 393;
     t.setup["REQ_WRITE_MASK"] = 613;
     t.setup["RSP_READY"] = 393;
@@ -7396,12 +8353,12 @@
     PartDelays t;
     t.evidence = "proven on memory.rom.endpoint.16.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
     t.setup["REQ_ADDR"] = 900;
-    t.setup["REQ_OP"] = 840;
+    t.setup["REQ_OP"] = 876;
     t.setup["REQ_VALID"] = 393;
     t.setup["REQ_WRITE_MASK"] = 613;
     t.setup["RSP_READY"] = 393;
@@ -7413,12 +8370,12 @@
     PartDelays t;
     t.evidence = "proven on memory.rom.endpoint.16.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
     t.setup["REQ_ADDR"] = 900;
-    t.setup["REQ_OP"] = 840;
+    t.setup["REQ_OP"] = 876;
     t.setup["REQ_VALID"] = 393;
     t.setup["REQ_WRITE_MASK"] = 613;
     t.setup["RSP_READY"] = 393;
@@ -7430,12 +8387,12 @@
     PartDelays t;
     t.evidence = "proven on memory.rom.endpoint.16.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
     t.setup["REQ_ADDR"] = 900;
-    t.setup["REQ_OP"] = 840;
+    t.setup["REQ_OP"] = 876;
     t.setup["REQ_VALID"] = 393;
     t.setup["REQ_WRITE_MASK"] = 613;
     t.setup["RSP_READY"] = 393;
@@ -7447,12 +8404,12 @@
     PartDelays t;
     t.evidence = "proven on memory.rom.endpoint.16.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
     t.setup["REQ_ADDR"] = 900;
-    t.setup["REQ_OP"] = 840;
+    t.setup["REQ_OP"] = 876;
     t.setup["REQ_VALID"] = 393;
     t.setup["REQ_WRITE_MASK"] = 613;
     t.setup["RSP_READY"] = 393;
@@ -7464,12 +8421,12 @@
     PartDelays t;
     t.evidence = "proven on memory.rom.endpoint.16.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
     t.setup["REQ_ADDR"] = 900;
-    t.setup["REQ_OP"] = 840;
+    t.setup["REQ_OP"] = 876;
     t.setup["REQ_VALID"] = 393;
     t.setup["REQ_WRITE_MASK"] = 613;
     t.setup["RSP_READY"] = 393;
@@ -7481,12 +8438,12 @@
     PartDelays t;
     t.evidence = "proven on memory.rom.endpoint.16.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
     t.setup["REQ_ADDR"] = 900;
-    t.setup["REQ_OP"] = 840;
+    t.setup["REQ_OP"] = 876;
     t.setup["REQ_VALID"] = 393;
     t.setup["REQ_WRITE_MASK"] = 613;
     t.setup["RSP_READY"] = 393;
@@ -7498,12 +8455,12 @@
     PartDelays t;
     t.evidence = "proven on memory.rom.endpoint.16.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
     t.setup["REQ_ADDR"] = 900;
-    t.setup["REQ_OP"] = 840;
+    t.setup["REQ_OP"] = 876;
     t.setup["REQ_VALID"] = 393;
     t.setup["REQ_WRITE_MASK"] = 613;
     t.setup["RSP_READY"] = 393;
@@ -7515,12 +8472,12 @@
     PartDelays t;
     t.evidence = "proven on memory.rom.endpoint.16.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
     t.setup["REQ_ADDR"] = 900;
-    t.setup["REQ_OP"] = 840;
+    t.setup["REQ_OP"] = 876;
     t.setup["REQ_VALID"] = 393;
     t.setup["REQ_WRITE_MASK"] = 613;
     t.setup["RSP_READY"] = 393;
@@ -7532,12 +8489,12 @@
     PartDelays t;
     t.evidence = "proven on memory.rom.endpoint.16.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
     t.setup["REQ_ADDR"] = 900;
-    t.setup["REQ_OP"] = 840;
+    t.setup["REQ_OP"] = 876;
     t.setup["REQ_VALID"] = 393;
     t.setup["REQ_WRITE_MASK"] = 613;
     t.setup["RSP_READY"] = 393;
@@ -7549,12 +8506,12 @@
     PartDelays t;
     t.evidence = "proven on memory.rom.endpoint.16.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
     t.setup["REQ_ADDR"] = 900;
-    t.setup["REQ_OP"] = 840;
+    t.setup["REQ_OP"] = 876;
     t.setup["REQ_VALID"] = 393;
     t.setup["REQ_WRITE_MASK"] = 613;
     t.setup["RSP_READY"] = 393;
@@ -7566,12 +8523,12 @@
     PartDelays t;
     t.evidence = "proven on memory.rom.endpoint.16.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
     t.setup["REQ_ADDR"] = 900;
-    t.setup["REQ_OP"] = 840;
+    t.setup["REQ_OP"] = 876;
     t.setup["REQ_VALID"] = 393;
     t.setup["REQ_WRITE_MASK"] = 613;
     t.setup["RSP_READY"] = 393;
@@ -7583,12 +8540,12 @@
     PartDelays t;
     t.evidence = "proven on memory.rom.endpoint.16.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
     t.setup["REQ_ADDR"] = 900;
-    t.setup["REQ_OP"] = 840;
+    t.setup["REQ_OP"] = 876;
     t.setup["REQ_VALID"] = 393;
     t.setup["REQ_WRITE_MASK"] = 613;
     t.setup["RSP_READY"] = 393;
@@ -7600,12 +8557,12 @@
     PartDelays t;
     t.evidence = "proven on memory.rom.endpoint.16.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
     t.setup["REQ_ADDR"] = 900;
-    t.setup["REQ_OP"] = 840;
+    t.setup["REQ_OP"] = 876;
     t.setup["REQ_VALID"] = 393;
     t.setup["REQ_WRITE_MASK"] = 613;
     t.setup["RSP_READY"] = 393;
@@ -7617,12 +8574,12 @@
     PartDelays t;
     t.evidence = "proven on memory.rom.endpoint.16.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
     t.setup["REQ_ADDR"] = 900;
-    t.setup["REQ_OP"] = 840;
+    t.setup["REQ_OP"] = 876;
     t.setup["REQ_VALID"] = 393;
     t.setup["REQ_WRITE_MASK"] = 613;
     t.setup["RSP_READY"] = 393;
@@ -7634,12 +8591,80 @@
     PartDelays t;
     t.evidence = "proven on memory.rom.endpoint.16.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
     t.setup["REQ_ADDR"] = 900;
-    t.setup["REQ_OP"] = 840;
+    t.setup["REQ_OP"] = 876;
+    t.setup["REQ_VALID"] = 393;
+    t.setup["REQ_WRITE_MASK"] = 613;
+    t.setup["RSP_READY"] = 393;
+    t.internal_period = 772;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.rom.endpoint.16.behavioral@depth=64@rows=16@block=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.endpoint.16.structural";
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {182, 296};
+    t.launches["RSP_READ_DATA"] = {162, 212};
+    t.launches["RSP_STATUS"] = {162, 212};
+    t.launches["RSP_VALID"] = {162, 226};
+    t.setup["REQ_ADDR"] = 900;
+    t.setup["REQ_OP"] = 876;
+    t.setup["REQ_VALID"] = 393;
+    t.setup["REQ_WRITE_MASK"] = 613;
+    t.setup["RSP_READY"] = 393;
+    t.internal_period = 772;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.rom.scalable-endpoint.16.behavioral@depth=64@rows=16@block=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.endpoint.16.structural";
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {182, 296};
+    t.launches["RSP_READ_DATA"] = {162, 212};
+    t.launches["RSP_STATUS"] = {162, 212};
+    t.launches["RSP_VALID"] = {162, 226};
+    t.setup["REQ_ADDR"] = 900;
+    t.setup["REQ_OP"] = 876;
+    t.setup["REQ_VALID"] = 393;
+    t.setup["REQ_WRITE_MASK"] = 613;
+    t.setup["RSP_READY"] = 393;
+    t.internal_period = 772;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.rom.endpoint.16.behavioral@depth=128@rows=16@block=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.endpoint.16.structural";
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {182, 296};
+    t.launches["RSP_READ_DATA"] = {162, 212};
+    t.launches["RSP_STATUS"] = {162, 212};
+    t.launches["RSP_VALID"] = {162, 226};
+    t.setup["REQ_ADDR"] = 900;
+    t.setup["REQ_OP"] = 876;
+    t.setup["REQ_VALID"] = 393;
+    t.setup["REQ_WRITE_MASK"] = 613;
+    t.setup["RSP_READY"] = 393;
+    t.internal_period = 772;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.rom.scalable-endpoint.16.behavioral@depth=128@rows=16@block=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.endpoint.16.structural";
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {182, 296};
+    t.launches["RSP_READ_DATA"] = {162, 212};
+    t.launches["RSP_STATUS"] = {162, 212};
+    t.launches["RSP_VALID"] = {162, 226};
+    t.setup["REQ_ADDR"] = 900;
+    t.setup["REQ_OP"] = 876;
     t.setup["REQ_VALID"] = 393;
     t.setup["REQ_WRITE_MASK"] = 613;
     t.setup["RSP_READY"] = 393;
@@ -7651,12 +8676,12 @@
     PartDelays t;
     t.evidence = "proven on memory.rom.endpoint.16.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
     t.setup["REQ_ADDR"] = 900;
-    t.setup["REQ_OP"] = 840;
+    t.setup["REQ_OP"] = 876;
     t.setup["REQ_VALID"] = 393;
     t.setup["REQ_WRITE_MASK"] = 613;
     t.setup["RSP_READY"] = 393;
@@ -7668,12 +8693,12 @@
     PartDelays t;
     t.evidence = "proven on memory.rom.endpoint.16.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
     t.setup["REQ_ADDR"] = 900;
-    t.setup["REQ_OP"] = 840;
+    t.setup["REQ_OP"] = 876;
     t.setup["REQ_VALID"] = 393;
     t.setup["REQ_WRITE_MASK"] = 613;
     t.setup["RSP_READY"] = 393;
@@ -7685,12 +8710,12 @@
     PartDelays t;
     t.evidence = "proven on memory.rom.endpoint.16.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
     t.setup["REQ_ADDR"] = 900;
-    t.setup["REQ_OP"] = 840;
+    t.setup["REQ_OP"] = 876;
     t.setup["REQ_VALID"] = 393;
     t.setup["REQ_WRITE_MASK"] = 613;
     t.setup["RSP_READY"] = 393;
@@ -7702,12 +8727,12 @@
     PartDelays t;
     t.evidence = "proven on memory.rom.endpoint.16.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
     t.setup["REQ_ADDR"] = 900;
-    t.setup["REQ_OP"] = 840;
+    t.setup["REQ_OP"] = 876;
     t.setup["REQ_VALID"] = 393;
     t.setup["REQ_WRITE_MASK"] = 613;
     t.setup["RSP_READY"] = 393;
@@ -7719,12 +8744,12 @@
     PartDelays t;
     t.evidence = "proven on memory.rom.endpoint.32.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
     t.setup["REQ_ADDR"] = 900;
-    t.setup["REQ_OP"] = 840;
+    t.setup["REQ_OP"] = 876;
     t.setup["REQ_VALID"] = 393;
     t.setup["REQ_WRITE_MASK"] = 613;
     t.setup["RSP_READY"] = 393;
@@ -7736,12 +8761,114 @@
     PartDelays t;
     t.evidence = "proven on memory.rom.endpoint.32.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
     t.setup["REQ_ADDR"] = 900;
-    t.setup["REQ_OP"] = 840;
+    t.setup["REQ_OP"] = 876;
+    t.setup["REQ_VALID"] = 393;
+    t.setup["REQ_WRITE_MASK"] = 613;
+    t.setup["RSP_READY"] = 393;
+    t.internal_period = 772;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.rom.endpoint.32.behavioral@block=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.endpoint.32.structural";
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {182, 296};
+    t.launches["RSP_READ_DATA"] = {162, 212};
+    t.launches["RSP_STATUS"] = {162, 212};
+    t.launches["RSP_VALID"] = {162, 226};
+    t.setup["REQ_ADDR"] = 900;
+    t.setup["REQ_OP"] = 876;
+    t.setup["REQ_VALID"] = 393;
+    t.setup["REQ_WRITE_MASK"] = 613;
+    t.setup["RSP_READY"] = 393;
+    t.internal_period = 772;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.rom.scalable-endpoint.32.behavioral@block=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.endpoint.32.structural";
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {182, 296};
+    t.launches["RSP_READ_DATA"] = {162, 212};
+    t.launches["RSP_STATUS"] = {162, 212};
+    t.launches["RSP_VALID"] = {162, 226};
+    t.setup["REQ_ADDR"] = 900;
+    t.setup["REQ_OP"] = 876;
+    t.setup["REQ_VALID"] = 393;
+    t.setup["REQ_WRITE_MASK"] = 613;
+    t.setup["RSP_READY"] = 393;
+    t.internal_period = 772;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.rom.endpoint.32.behavioral@depth=64@block=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.endpoint.32.structural";
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {182, 296};
+    t.launches["RSP_READ_DATA"] = {162, 212};
+    t.launches["RSP_STATUS"] = {162, 212};
+    t.launches["RSP_VALID"] = {162, 226};
+    t.setup["REQ_ADDR"] = 900;
+    t.setup["REQ_OP"] = 876;
+    t.setup["REQ_VALID"] = 393;
+    t.setup["REQ_WRITE_MASK"] = 613;
+    t.setup["RSP_READY"] = 393;
+    t.internal_period = 772;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.rom.scalable-endpoint.32.behavioral@depth=64@block=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.endpoint.32.structural";
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {182, 296};
+    t.launches["RSP_READ_DATA"] = {162, 212};
+    t.launches["RSP_STATUS"] = {162, 212};
+    t.launches["RSP_VALID"] = {162, 226};
+    t.setup["REQ_ADDR"] = 900;
+    t.setup["REQ_OP"] = 876;
+    t.setup["REQ_VALID"] = 393;
+    t.setup["REQ_WRITE_MASK"] = 613;
+    t.setup["RSP_READY"] = 393;
+    t.internal_period = 772;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.rom.endpoint.32.behavioral@depth=128@block=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.endpoint.32.structural";
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {182, 296};
+    t.launches["RSP_READ_DATA"] = {162, 212};
+    t.launches["RSP_STATUS"] = {162, 212};
+    t.launches["RSP_VALID"] = {162, 226};
+    t.setup["REQ_ADDR"] = 900;
+    t.setup["REQ_OP"] = 876;
+    t.setup["REQ_VALID"] = 393;
+    t.setup["REQ_WRITE_MASK"] = 613;
+    t.setup["RSP_READY"] = 393;
+    t.internal_period = 772;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.rom.scalable-endpoint.32.behavioral@depth=128@block=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.endpoint.32.structural";
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {182, 296};
+    t.launches["RSP_READ_DATA"] = {162, 212};
+    t.launches["RSP_STATUS"] = {162, 212};
+    t.launches["RSP_VALID"] = {162, 226};
+    t.setup["REQ_ADDR"] = 900;
+    t.setup["REQ_OP"] = 876;
     t.setup["REQ_VALID"] = 393;
     t.setup["REQ_WRITE_MASK"] = 613;
     t.setup["RSP_READY"] = 393;
@@ -7753,12 +8880,12 @@
     PartDelays t;
     t.evidence = "proven on memory.rom.endpoint.32.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
     t.setup["REQ_ADDR"] = 900;
-    t.setup["REQ_OP"] = 840;
+    t.setup["REQ_OP"] = 876;
     t.setup["REQ_VALID"] = 393;
     t.setup["REQ_WRITE_MASK"] = 613;
     t.setup["RSP_READY"] = 393;
@@ -7770,12 +8897,12 @@
     PartDelays t;
     t.evidence = "proven on memory.rom.endpoint.32.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
     t.setup["REQ_ADDR"] = 900;
-    t.setup["REQ_OP"] = 840;
+    t.setup["REQ_OP"] = 876;
     t.setup["REQ_VALID"] = 393;
     t.setup["REQ_WRITE_MASK"] = 613;
     t.setup["RSP_READY"] = 393;
@@ -7787,12 +8914,12 @@
     PartDelays t;
     t.evidence = "proven on memory.rom.endpoint.32.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
     t.setup["REQ_ADDR"] = 900;
-    t.setup["REQ_OP"] = 840;
+    t.setup["REQ_OP"] = 876;
     t.setup["REQ_VALID"] = 393;
     t.setup["REQ_WRITE_MASK"] = 613;
     t.setup["RSP_READY"] = 393;
@@ -7804,12 +8931,12 @@
     PartDelays t;
     t.evidence = "proven on memory.rom.endpoint.32.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
     t.setup["REQ_ADDR"] = 900;
-    t.setup["REQ_OP"] = 840;
+    t.setup["REQ_OP"] = 876;
     t.setup["REQ_VALID"] = 393;
     t.setup["REQ_WRITE_MASK"] = 613;
     t.setup["RSP_READY"] = 393;
@@ -7821,12 +8948,12 @@
     PartDelays t;
     t.evidence = "proven on memory.rom.endpoint.32.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
     t.setup["REQ_ADDR"] = 900;
-    t.setup["REQ_OP"] = 840;
+    t.setup["REQ_OP"] = 876;
     t.setup["REQ_VALID"] = 393;
     t.setup["REQ_WRITE_MASK"] = 613;
     t.setup["RSP_READY"] = 393;
@@ -7838,12 +8965,12 @@
     PartDelays t;
     t.evidence = "proven on memory.rom.endpoint.32.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
     t.setup["REQ_ADDR"] = 900;
-    t.setup["REQ_OP"] = 840;
+    t.setup["REQ_OP"] = 876;
     t.setup["REQ_VALID"] = 393;
     t.setup["REQ_WRITE_MASK"] = 613;
     t.setup["RSP_READY"] = 393;
@@ -7855,12 +8982,12 @@
     PartDelays t;
     t.evidence = "proven on memory.rom.endpoint.32.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
     t.setup["REQ_ADDR"] = 900;
-    t.setup["REQ_OP"] = 840;
+    t.setup["REQ_OP"] = 876;
     t.setup["REQ_VALID"] = 393;
     t.setup["REQ_WRITE_MASK"] = 613;
     t.setup["RSP_READY"] = 393;
@@ -7872,12 +8999,12 @@
     PartDelays t;
     t.evidence = "proven on memory.rom.endpoint.32.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
     t.setup["REQ_ADDR"] = 900;
-    t.setup["REQ_OP"] = 840;
+    t.setup["REQ_OP"] = 876;
     t.setup["REQ_VALID"] = 393;
     t.setup["REQ_WRITE_MASK"] = 613;
     t.setup["RSP_READY"] = 393;
@@ -7889,12 +9016,12 @@
     PartDelays t;
     t.evidence = "proven on memory.rom.endpoint.32.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
     t.setup["REQ_ADDR"] = 900;
-    t.setup["REQ_OP"] = 840;
+    t.setup["REQ_OP"] = 876;
     t.setup["REQ_VALID"] = 393;
     t.setup["REQ_WRITE_MASK"] = 613;
     t.setup["RSP_READY"] = 393;
@@ -7906,12 +9033,12 @@
     PartDelays t;
     t.evidence = "proven on memory.rom.endpoint.32.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
     t.setup["REQ_ADDR"] = 900;
-    t.setup["REQ_OP"] = 840;
+    t.setup["REQ_OP"] = 876;
     t.setup["REQ_VALID"] = 393;
     t.setup["REQ_WRITE_MASK"] = 613;
     t.setup["RSP_READY"] = 393;
@@ -7923,12 +9050,12 @@
     PartDelays t;
     t.evidence = "proven on memory.rom.endpoint.32.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
     t.setup["REQ_ADDR"] = 900;
-    t.setup["REQ_OP"] = 840;
+    t.setup["REQ_OP"] = 876;
     t.setup["REQ_VALID"] = 393;
     t.setup["REQ_WRITE_MASK"] = 613;
     t.setup["RSP_READY"] = 393;
@@ -7940,12 +9067,12 @@
     PartDelays t;
     t.evidence = "proven on memory.rom.endpoint.32.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
     t.setup["REQ_ADDR"] = 900;
-    t.setup["REQ_OP"] = 840;
+    t.setup["REQ_OP"] = 876;
     t.setup["REQ_VALID"] = 393;
     t.setup["REQ_WRITE_MASK"] = 613;
     t.setup["RSP_READY"] = 393;
@@ -7957,12 +9084,12 @@
     PartDelays t;
     t.evidence = "proven on memory.rom.endpoint.32.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
     t.setup["REQ_ADDR"] = 900;
-    t.setup["REQ_OP"] = 840;
+    t.setup["REQ_OP"] = 876;
     t.setup["REQ_VALID"] = 393;
     t.setup["REQ_WRITE_MASK"] = 613;
     t.setup["RSP_READY"] = 393;
@@ -7974,12 +9101,12 @@
     PartDelays t;
     t.evidence = "proven on memory.rom.endpoint.32.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
     t.setup["REQ_ADDR"] = 900;
-    t.setup["REQ_OP"] = 840;
+    t.setup["REQ_OP"] = 876;
     t.setup["REQ_VALID"] = 393;
     t.setup["REQ_WRITE_MASK"] = 613;
     t.setup["RSP_READY"] = 393;
@@ -7991,12 +9118,12 @@
     PartDelays t;
     t.evidence = "proven on memory.rom.endpoint.32.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
     t.setup["REQ_ADDR"] = 900;
-    t.setup["REQ_OP"] = 840;
+    t.setup["REQ_OP"] = 876;
     t.setup["REQ_VALID"] = 393;
     t.setup["REQ_WRITE_MASK"] = 613;
     t.setup["RSP_READY"] = 393;
@@ -8008,12 +9135,12 @@
     PartDelays t;
     t.evidence = "proven on memory.rom.endpoint.32.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
     t.setup["REQ_ADDR"] = 900;
-    t.setup["REQ_OP"] = 840;
+    t.setup["REQ_OP"] = 876;
     t.setup["REQ_VALID"] = 393;
     t.setup["REQ_WRITE_MASK"] = 613;
     t.setup["RSP_READY"] = 393;
@@ -8025,12 +9152,12 @@
     PartDelays t;
     t.evidence = "proven on memory.rom.endpoint.32.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
     t.setup["REQ_ADDR"] = 900;
-    t.setup["REQ_OP"] = 840;
+    t.setup["REQ_OP"] = 876;
     t.setup["REQ_VALID"] = 393;
     t.setup["REQ_WRITE_MASK"] = 613;
     t.setup["RSP_READY"] = 393;
@@ -8042,12 +9169,12 @@
     PartDelays t;
     t.evidence = "proven on memory.rom.endpoint.32.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
     t.setup["REQ_ADDR"] = 900;
-    t.setup["REQ_OP"] = 840;
+    t.setup["REQ_OP"] = 876;
     t.setup["REQ_VALID"] = 393;
     t.setup["REQ_WRITE_MASK"] = 613;
     t.setup["RSP_READY"] = 393;
@@ -8059,12 +9186,12 @@
     PartDelays t;
     t.evidence = "proven on memory.rom.endpoint.32.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
     t.setup["REQ_ADDR"] = 900;
-    t.setup["REQ_OP"] = 840;
+    t.setup["REQ_OP"] = 876;
     t.setup["REQ_VALID"] = 393;
     t.setup["REQ_WRITE_MASK"] = 613;
     t.setup["RSP_READY"] = 393;
@@ -8076,12 +9203,80 @@
     PartDelays t;
     t.evidence = "proven on memory.rom.endpoint.32.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
     t.setup["REQ_ADDR"] = 900;
-    t.setup["REQ_OP"] = 840;
+    t.setup["REQ_OP"] = 876;
+    t.setup["REQ_VALID"] = 393;
+    t.setup["REQ_WRITE_MASK"] = 613;
+    t.setup["RSP_READY"] = 393;
+    t.internal_period = 772;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.rom.endpoint.32.behavioral@depth=64@rows=16@block=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.endpoint.32.structural";
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {182, 296};
+    t.launches["RSP_READ_DATA"] = {162, 212};
+    t.launches["RSP_STATUS"] = {162, 212};
+    t.launches["RSP_VALID"] = {162, 226};
+    t.setup["REQ_ADDR"] = 900;
+    t.setup["REQ_OP"] = 876;
+    t.setup["REQ_VALID"] = 393;
+    t.setup["REQ_WRITE_MASK"] = 613;
+    t.setup["RSP_READY"] = 393;
+    t.internal_period = 772;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.rom.scalable-endpoint.32.behavioral@depth=64@rows=16@block=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.endpoint.32.structural";
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {182, 296};
+    t.launches["RSP_READ_DATA"] = {162, 212};
+    t.launches["RSP_STATUS"] = {162, 212};
+    t.launches["RSP_VALID"] = {162, 226};
+    t.setup["REQ_ADDR"] = 900;
+    t.setup["REQ_OP"] = 876;
+    t.setup["REQ_VALID"] = 393;
+    t.setup["REQ_WRITE_MASK"] = 613;
+    t.setup["RSP_READY"] = 393;
+    t.internal_period = 772;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.rom.endpoint.32.behavioral@depth=128@rows=16@block=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.endpoint.32.structural";
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {182, 296};
+    t.launches["RSP_READ_DATA"] = {162, 212};
+    t.launches["RSP_STATUS"] = {162, 212};
+    t.launches["RSP_VALID"] = {162, 226};
+    t.setup["REQ_ADDR"] = 900;
+    t.setup["REQ_OP"] = 876;
+    t.setup["REQ_VALID"] = 393;
+    t.setup["REQ_WRITE_MASK"] = 613;
+    t.setup["RSP_READY"] = 393;
+    t.internal_period = 772;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.rom.scalable-endpoint.32.behavioral@depth=128@rows=16@block=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.endpoint.32.structural";
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {182, 296};
+    t.launches["RSP_READ_DATA"] = {162, 212};
+    t.launches["RSP_STATUS"] = {162, 212};
+    t.launches["RSP_VALID"] = {162, 226};
+    t.setup["REQ_ADDR"] = 900;
+    t.setup["REQ_OP"] = 876;
     t.setup["REQ_VALID"] = 393;
     t.setup["REQ_WRITE_MASK"] = 613;
     t.setup["RSP_READY"] = 393;
@@ -8093,12 +9288,12 @@
     PartDelays t;
     t.evidence = "proven on memory.rom.endpoint.32.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
     t.setup["REQ_ADDR"] = 900;
-    t.setup["REQ_OP"] = 840;
+    t.setup["REQ_OP"] = 876;
     t.setup["REQ_VALID"] = 393;
     t.setup["REQ_WRITE_MASK"] = 613;
     t.setup["RSP_READY"] = 393;
@@ -8110,12 +9305,12 @@
     PartDelays t;
     t.evidence = "proven on memory.rom.endpoint.32.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
     t.setup["REQ_ADDR"] = 900;
-    t.setup["REQ_OP"] = 840;
+    t.setup["REQ_OP"] = 876;
     t.setup["REQ_VALID"] = 393;
     t.setup["REQ_WRITE_MASK"] = 613;
     t.setup["RSP_READY"] = 393;
@@ -8127,12 +9322,12 @@
     PartDelays t;
     t.evidence = "proven on memory.rom.endpoint.32.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
     t.setup["REQ_ADDR"] = 900;
-    t.setup["REQ_OP"] = 840;
+    t.setup["REQ_OP"] = 876;
     t.setup["REQ_VALID"] = 393;
     t.setup["REQ_WRITE_MASK"] = 613;
     t.setup["RSP_READY"] = 393;
@@ -8144,12 +9339,12 @@
     PartDelays t;
     t.evidence = "proven on memory.rom.endpoint.32.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
     t.setup["REQ_ADDR"] = 900;
-    t.setup["REQ_OP"] = 840;
+    t.setup["REQ_OP"] = 876;
     t.setup["REQ_VALID"] = 393;
     t.setup["REQ_WRITE_MASK"] = 613;
     t.setup["RSP_READY"] = 393;
@@ -8161,12 +9356,12 @@
     PartDelays t;
     t.evidence = "proven on memory.rom.endpoint.8.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
     t.setup["REQ_ADDR"] = 900;
-    t.setup["REQ_OP"] = 840;
+    t.setup["REQ_OP"] = 876;
     t.setup["REQ_VALID"] = 393;
     t.setup["REQ_WRITE_MASK"] = 613;
     t.setup["RSP_READY"] = 393;
@@ -8178,12 +9373,114 @@
     PartDelays t;
     t.evidence = "proven on memory.rom.endpoint.8.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
     t.setup["REQ_ADDR"] = 900;
-    t.setup["REQ_OP"] = 840;
+    t.setup["REQ_OP"] = 876;
+    t.setup["REQ_VALID"] = 393;
+    t.setup["REQ_WRITE_MASK"] = 613;
+    t.setup["RSP_READY"] = 393;
+    t.internal_period = 772;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.rom.endpoint.8.behavioral@block=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.endpoint.8.structural";
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {182, 296};
+    t.launches["RSP_READ_DATA"] = {162, 212};
+    t.launches["RSP_STATUS"] = {162, 212};
+    t.launches["RSP_VALID"] = {162, 226};
+    t.setup["REQ_ADDR"] = 900;
+    t.setup["REQ_OP"] = 876;
+    t.setup["REQ_VALID"] = 393;
+    t.setup["REQ_WRITE_MASK"] = 613;
+    t.setup["RSP_READY"] = 393;
+    t.internal_period = 772;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.rom.scalable-endpoint.8.behavioral@block=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.endpoint.8.structural";
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {182, 296};
+    t.launches["RSP_READ_DATA"] = {162, 212};
+    t.launches["RSP_STATUS"] = {162, 212};
+    t.launches["RSP_VALID"] = {162, 226};
+    t.setup["REQ_ADDR"] = 900;
+    t.setup["REQ_OP"] = 876;
+    t.setup["REQ_VALID"] = 393;
+    t.setup["REQ_WRITE_MASK"] = 613;
+    t.setup["RSP_READY"] = 393;
+    t.internal_period = 772;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.rom.endpoint.8.behavioral@depth=64@block=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.endpoint.8.structural";
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {182, 296};
+    t.launches["RSP_READ_DATA"] = {162, 212};
+    t.launches["RSP_STATUS"] = {162, 212};
+    t.launches["RSP_VALID"] = {162, 226};
+    t.setup["REQ_ADDR"] = 900;
+    t.setup["REQ_OP"] = 876;
+    t.setup["REQ_VALID"] = 393;
+    t.setup["REQ_WRITE_MASK"] = 613;
+    t.setup["RSP_READY"] = 393;
+    t.internal_period = 772;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.rom.scalable-endpoint.8.behavioral@depth=64@block=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.endpoint.8.structural";
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {182, 296};
+    t.launches["RSP_READ_DATA"] = {162, 212};
+    t.launches["RSP_STATUS"] = {162, 212};
+    t.launches["RSP_VALID"] = {162, 226};
+    t.setup["REQ_ADDR"] = 900;
+    t.setup["REQ_OP"] = 876;
+    t.setup["REQ_VALID"] = 393;
+    t.setup["REQ_WRITE_MASK"] = 613;
+    t.setup["RSP_READY"] = 393;
+    t.internal_period = 772;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.rom.endpoint.8.behavioral@depth=128@block=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.endpoint.8.structural";
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {182, 296};
+    t.launches["RSP_READ_DATA"] = {162, 212};
+    t.launches["RSP_STATUS"] = {162, 212};
+    t.launches["RSP_VALID"] = {162, 226};
+    t.setup["REQ_ADDR"] = 900;
+    t.setup["REQ_OP"] = 876;
+    t.setup["REQ_VALID"] = 393;
+    t.setup["REQ_WRITE_MASK"] = 613;
+    t.setup["RSP_READY"] = 393;
+    t.internal_period = 772;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.rom.scalable-endpoint.8.behavioral@depth=128@block=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.endpoint.8.structural";
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {182, 296};
+    t.launches["RSP_READ_DATA"] = {162, 212};
+    t.launches["RSP_STATUS"] = {162, 212};
+    t.launches["RSP_VALID"] = {162, 226};
+    t.setup["REQ_ADDR"] = 900;
+    t.setup["REQ_OP"] = 876;
     t.setup["REQ_VALID"] = 393;
     t.setup["REQ_WRITE_MASK"] = 613;
     t.setup["RSP_READY"] = 393;
@@ -8195,12 +9492,12 @@
     PartDelays t;
     t.evidence = "proven on memory.rom.endpoint.8.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
     t.setup["REQ_ADDR"] = 900;
-    t.setup["REQ_OP"] = 840;
+    t.setup["REQ_OP"] = 876;
     t.setup["REQ_VALID"] = 393;
     t.setup["REQ_WRITE_MASK"] = 613;
     t.setup["RSP_READY"] = 393;
@@ -8212,12 +9509,12 @@
     PartDelays t;
     t.evidence = "proven on memory.rom.endpoint.8.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
     t.setup["REQ_ADDR"] = 900;
-    t.setup["REQ_OP"] = 840;
+    t.setup["REQ_OP"] = 876;
     t.setup["REQ_VALID"] = 393;
     t.setup["REQ_WRITE_MASK"] = 613;
     t.setup["RSP_READY"] = 393;
@@ -8229,12 +9526,12 @@
     PartDelays t;
     t.evidence = "proven on memory.rom.endpoint.8.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
     t.setup["REQ_ADDR"] = 900;
-    t.setup["REQ_OP"] = 840;
+    t.setup["REQ_OP"] = 876;
     t.setup["REQ_VALID"] = 393;
     t.setup["REQ_WRITE_MASK"] = 613;
     t.setup["RSP_READY"] = 393;
@@ -8246,12 +9543,12 @@
     PartDelays t;
     t.evidence = "proven on memory.rom.endpoint.8.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
     t.setup["REQ_ADDR"] = 900;
-    t.setup["REQ_OP"] = 840;
+    t.setup["REQ_OP"] = 876;
     t.setup["REQ_VALID"] = 393;
     t.setup["REQ_WRITE_MASK"] = 613;
     t.setup["RSP_READY"] = 393;
@@ -8263,12 +9560,12 @@
     PartDelays t;
     t.evidence = "proven on memory.rom.endpoint.8.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
     t.setup["REQ_ADDR"] = 900;
-    t.setup["REQ_OP"] = 840;
+    t.setup["REQ_OP"] = 876;
     t.setup["REQ_VALID"] = 393;
     t.setup["REQ_WRITE_MASK"] = 613;
     t.setup["RSP_READY"] = 393;
@@ -8280,12 +9577,12 @@
     PartDelays t;
     t.evidence = "proven on memory.rom.endpoint.8.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
     t.setup["REQ_ADDR"] = 900;
-    t.setup["REQ_OP"] = 840;
+    t.setup["REQ_OP"] = 876;
     t.setup["REQ_VALID"] = 393;
     t.setup["REQ_WRITE_MASK"] = 613;
     t.setup["RSP_READY"] = 393;
@@ -8297,12 +9594,12 @@
     PartDelays t;
     t.evidence = "proven on memory.rom.endpoint.8.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
     t.setup["REQ_ADDR"] = 900;
-    t.setup["REQ_OP"] = 840;
+    t.setup["REQ_OP"] = 876;
     t.setup["REQ_VALID"] = 393;
     t.setup["REQ_WRITE_MASK"] = 613;
     t.setup["RSP_READY"] = 393;
@@ -8314,12 +9611,12 @@
     PartDelays t;
     t.evidence = "proven on memory.rom.endpoint.8.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
     t.setup["REQ_ADDR"] = 900;
-    t.setup["REQ_OP"] = 840;
+    t.setup["REQ_OP"] = 876;
     t.setup["REQ_VALID"] = 393;
     t.setup["REQ_WRITE_MASK"] = 613;
     t.setup["RSP_READY"] = 393;
@@ -8331,12 +9628,12 @@
     PartDelays t;
     t.evidence = "proven on memory.rom.endpoint.8.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
     t.setup["REQ_ADDR"] = 900;
-    t.setup["REQ_OP"] = 840;
+    t.setup["REQ_OP"] = 876;
     t.setup["REQ_VALID"] = 393;
     t.setup["REQ_WRITE_MASK"] = 613;
     t.setup["RSP_READY"] = 393;
@@ -8348,12 +9645,12 @@
     PartDelays t;
     t.evidence = "proven on memory.rom.endpoint.8.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
     t.setup["REQ_ADDR"] = 900;
-    t.setup["REQ_OP"] = 840;
+    t.setup["REQ_OP"] = 876;
     t.setup["REQ_VALID"] = 393;
     t.setup["REQ_WRITE_MASK"] = 613;
     t.setup["RSP_READY"] = 393;
@@ -8365,12 +9662,12 @@
     PartDelays t;
     t.evidence = "proven on memory.rom.endpoint.8.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
     t.setup["REQ_ADDR"] = 900;
-    t.setup["REQ_OP"] = 840;
+    t.setup["REQ_OP"] = 876;
     t.setup["REQ_VALID"] = 393;
     t.setup["REQ_WRITE_MASK"] = 613;
     t.setup["RSP_READY"] = 393;
@@ -8382,12 +9679,12 @@
     PartDelays t;
     t.evidence = "proven on memory.rom.endpoint.8.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
     t.setup["REQ_ADDR"] = 900;
-    t.setup["REQ_OP"] = 840;
+    t.setup["REQ_OP"] = 876;
     t.setup["REQ_VALID"] = 393;
     t.setup["REQ_WRITE_MASK"] = 613;
     t.setup["RSP_READY"] = 393;
@@ -8399,12 +9696,12 @@
     PartDelays t;
     t.evidence = "proven on memory.rom.endpoint.8.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
     t.setup["REQ_ADDR"] = 900;
-    t.setup["REQ_OP"] = 840;
+    t.setup["REQ_OP"] = 876;
     t.setup["REQ_VALID"] = 393;
     t.setup["REQ_WRITE_MASK"] = 613;
     t.setup["RSP_READY"] = 393;
@@ -8416,12 +9713,12 @@
     PartDelays t;
     t.evidence = "proven on memory.rom.endpoint.8.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
     t.setup["REQ_ADDR"] = 900;
-    t.setup["REQ_OP"] = 840;
+    t.setup["REQ_OP"] = 876;
     t.setup["REQ_VALID"] = 393;
     t.setup["REQ_WRITE_MASK"] = 613;
     t.setup["RSP_READY"] = 393;
@@ -8433,12 +9730,12 @@
     PartDelays t;
     t.evidence = "proven on memory.rom.endpoint.8.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
     t.setup["REQ_ADDR"] = 900;
-    t.setup["REQ_OP"] = 840;
+    t.setup["REQ_OP"] = 876;
     t.setup["REQ_VALID"] = 393;
     t.setup["REQ_WRITE_MASK"] = 613;
     t.setup["RSP_READY"] = 393;
@@ -8450,12 +9747,12 @@
     PartDelays t;
     t.evidence = "proven on memory.rom.endpoint.8.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
     t.setup["REQ_ADDR"] = 900;
-    t.setup["REQ_OP"] = 840;
+    t.setup["REQ_OP"] = 876;
     t.setup["REQ_VALID"] = 393;
     t.setup["REQ_WRITE_MASK"] = 613;
     t.setup["RSP_READY"] = 393;
@@ -8467,12 +9764,12 @@
     PartDelays t;
     t.evidence = "proven on memory.rom.endpoint.8.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
     t.setup["REQ_ADDR"] = 900;
-    t.setup["REQ_OP"] = 840;
+    t.setup["REQ_OP"] = 876;
     t.setup["REQ_VALID"] = 393;
     t.setup["REQ_WRITE_MASK"] = 613;
     t.setup["RSP_READY"] = 393;
@@ -8484,12 +9781,12 @@
     PartDelays t;
     t.evidence = "proven on memory.rom.endpoint.8.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
     t.setup["REQ_ADDR"] = 900;
-    t.setup["REQ_OP"] = 840;
+    t.setup["REQ_OP"] = 876;
     t.setup["REQ_VALID"] = 393;
     t.setup["REQ_WRITE_MASK"] = 613;
     t.setup["RSP_READY"] = 393;
@@ -8501,12 +9798,12 @@
     PartDelays t;
     t.evidence = "proven on memory.rom.endpoint.8.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
     t.setup["REQ_ADDR"] = 900;
-    t.setup["REQ_OP"] = 840;
+    t.setup["REQ_OP"] = 876;
     t.setup["REQ_VALID"] = 393;
     t.setup["REQ_WRITE_MASK"] = 613;
     t.setup["RSP_READY"] = 393;
@@ -8518,12 +9815,80 @@
     PartDelays t;
     t.evidence = "proven on memory.rom.endpoint.8.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
     t.setup["REQ_ADDR"] = 900;
-    t.setup["REQ_OP"] = 840;
+    t.setup["REQ_OP"] = 876;
+    t.setup["REQ_VALID"] = 393;
+    t.setup["REQ_WRITE_MASK"] = 613;
+    t.setup["RSP_READY"] = 393;
+    t.internal_period = 772;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.rom.endpoint.8.behavioral@depth=64@rows=16@block=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.endpoint.8.structural";
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {182, 296};
+    t.launches["RSP_READ_DATA"] = {162, 212};
+    t.launches["RSP_STATUS"] = {162, 212};
+    t.launches["RSP_VALID"] = {162, 226};
+    t.setup["REQ_ADDR"] = 900;
+    t.setup["REQ_OP"] = 876;
+    t.setup["REQ_VALID"] = 393;
+    t.setup["REQ_WRITE_MASK"] = 613;
+    t.setup["RSP_READY"] = 393;
+    t.internal_period = 772;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.rom.scalable-endpoint.8.behavioral@depth=64@rows=16@block=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.endpoint.8.structural";
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {182, 296};
+    t.launches["RSP_READ_DATA"] = {162, 212};
+    t.launches["RSP_STATUS"] = {162, 212};
+    t.launches["RSP_VALID"] = {162, 226};
+    t.setup["REQ_ADDR"] = 900;
+    t.setup["REQ_OP"] = 876;
+    t.setup["REQ_VALID"] = 393;
+    t.setup["REQ_WRITE_MASK"] = 613;
+    t.setup["RSP_READY"] = 393;
+    t.internal_period = 772;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.rom.endpoint.8.behavioral@depth=128@rows=16@block=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.endpoint.8.structural";
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {182, 296};
+    t.launches["RSP_READ_DATA"] = {162, 212};
+    t.launches["RSP_STATUS"] = {162, 212};
+    t.launches["RSP_VALID"] = {162, 226};
+    t.setup["REQ_ADDR"] = 900;
+    t.setup["REQ_OP"] = 876;
+    t.setup["REQ_VALID"] = 393;
+    t.setup["REQ_WRITE_MASK"] = 613;
+    t.setup["RSP_READY"] = 393;
+    t.internal_period = 772;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.rom.scalable-endpoint.8.behavioral@depth=128@rows=16@block=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.rom.endpoint.8.structural";
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {182, 296};
+    t.launches["RSP_READ_DATA"] = {162, 212};
+    t.launches["RSP_STATUS"] = {162, 212};
+    t.launches["RSP_VALID"] = {162, 226};
+    t.setup["REQ_ADDR"] = 900;
+    t.setup["REQ_OP"] = 876;
     t.setup["REQ_VALID"] = 393;
     t.setup["REQ_WRITE_MASK"] = 613;
     t.setup["RSP_READY"] = 393;
@@ -8535,12 +9900,12 @@
     PartDelays t;
     t.evidence = "proven on memory.rom.endpoint.8.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
     t.setup["REQ_ADDR"] = 900;
-    t.setup["REQ_OP"] = 840;
+    t.setup["REQ_OP"] = 876;
     t.setup["REQ_VALID"] = 393;
     t.setup["REQ_WRITE_MASK"] = 613;
     t.setup["RSP_READY"] = 393;
@@ -8552,12 +9917,12 @@
     PartDelays t;
     t.evidence = "proven on memory.rom.endpoint.8.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
     t.setup["REQ_ADDR"] = 900;
-    t.setup["REQ_OP"] = 840;
+    t.setup["REQ_OP"] = 876;
     t.setup["REQ_VALID"] = 393;
     t.setup["REQ_WRITE_MASK"] = 613;
     t.setup["RSP_READY"] = 393;
@@ -8569,12 +9934,12 @@
     PartDelays t;
     t.evidence = "proven on memory.rom.endpoint.8.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
     t.setup["REQ_ADDR"] = 900;
-    t.setup["REQ_OP"] = 840;
+    t.setup["REQ_OP"] = 876;
     t.setup["REQ_VALID"] = 393;
     t.setup["REQ_WRITE_MASK"] = 613;
     t.setup["RSP_READY"] = 393;
@@ -8586,12 +9951,12 @@
     PartDelays t;
     t.evidence = "proven on memory.rom.endpoint.8.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
     t.setup["REQ_ADDR"] = 900;
-    t.setup["REQ_OP"] = 840;
+    t.setup["REQ_OP"] = 876;
     t.setup["REQ_VALID"] = 393;
     t.setup["REQ_WRITE_MASK"] = 613;
     t.setup["RSP_READY"] = 393;
@@ -10661,7 +12026,7 @@
     t.launches["MEM_WORD_ADDR"] = {91, 120};
     t.launches["MEM_WRITE_DATA"] = {91, 120};
     t.launches["MEM_WRITE_MASK"] = {91, 120};
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -10679,24 +12044,28 @@
     PartDelays t;
     t.evidence = "proven on memory.sram.controller.16.structural";
     t.arcs = {
-        Arc{"REQ_ADDR", "MEM_CE_N", {182, 327}},
+        Arc{"REQ_ADDR", "MEM_CE_N", {218, 363}},
         Arc{"REQ_ADDR", "MEM_WE_N", {217, 362}},
-        Arc{"REQ_ADDR", "MEM_WORD_ADDR", {0, 0}},
-        Arc{"REQ_OP", "MEM_CE_N", {182, 344}},
+        Arc{"REQ_ADDR", "MEM_WORD_ADDR", {71, 398}},
+        Arc{"REQ_OP", "MEM_CE_N", {218, 380}},
         Arc{"REQ_OP", "MEM_WE_N", {112, 379}},
-        Arc{"REQ_VALID", "MEM_CE_N", {91, 91}},
+        Arc{"REQ_OP", "MEM_WORD_ADDR", {232, 415}},
+        Arc{"REQ_VALID", "MEM_CE_N", {127, 127}},
         Arc{"REQ_VALID", "MEM_WE_N", {126, 126}},
+        Arc{"REQ_VALID", "MEM_WORD_ADDR", {141, 162}},
         Arc{"REQ_WRITE_DATA", "MEM_WRITE_DATA", {0, 0}},
-        Arc{"REQ_WRITE_MASK", "MEM_CE_N", {182, 259}},
+        Arc{"REQ_WRITE_MASK", "MEM_CE_N", {218, 295}},
         Arc{"REQ_WRITE_MASK", "MEM_WE_N", {217, 294}},
+        Arc{"REQ_WRITE_MASK", "MEM_WORD_ADDR", {232, 330}},
         Arc{"REQ_WRITE_MASK", "MEM_WRITE_MASK", {0, 0}},
     };
     t.clock = "CLK";
     t.clock_outputs.push_back("MEM_CLK");
-    t.launches["MEM_CE_N"] = {273, 352};
+    t.launches["MEM_CE_N"] = {218, 423};
     t.launches["MEM_OE_N"] = {147, 197};
-    t.launches["MEM_WE_N"] = {308, 387};
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["MEM_WE_N"] = {308, 422};
+    t.launches["MEM_WORD_ADDR"] = {162, 458};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -10719,7 +12088,7 @@
     t.launches["MEM_WORD_ADDR"] = {91, 120};
     t.launches["MEM_WRITE_DATA"] = {91, 120};
     t.launches["MEM_WRITE_MASK"] = {91, 120};
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -10737,24 +12106,28 @@
     PartDelays t;
     t.evidence = "proven on memory.sram.controller.32.structural";
     t.arcs = {
-        Arc{"REQ_ADDR", "MEM_CE_N", {182, 327}},
+        Arc{"REQ_ADDR", "MEM_CE_N", {218, 363}},
         Arc{"REQ_ADDR", "MEM_WE_N", {217, 362}},
-        Arc{"REQ_ADDR", "MEM_WORD_ADDR", {0, 0}},
-        Arc{"REQ_OP", "MEM_CE_N", {182, 344}},
+        Arc{"REQ_ADDR", "MEM_WORD_ADDR", {71, 398}},
+        Arc{"REQ_OP", "MEM_CE_N", {218, 380}},
         Arc{"REQ_OP", "MEM_WE_N", {112, 379}},
-        Arc{"REQ_VALID", "MEM_CE_N", {91, 91}},
+        Arc{"REQ_OP", "MEM_WORD_ADDR", {232, 415}},
+        Arc{"REQ_VALID", "MEM_CE_N", {127, 127}},
         Arc{"REQ_VALID", "MEM_WE_N", {126, 126}},
+        Arc{"REQ_VALID", "MEM_WORD_ADDR", {141, 162}},
         Arc{"REQ_WRITE_DATA", "MEM_WRITE_DATA", {0, 0}},
-        Arc{"REQ_WRITE_MASK", "MEM_CE_N", {182, 259}},
+        Arc{"REQ_WRITE_MASK", "MEM_CE_N", {218, 295}},
         Arc{"REQ_WRITE_MASK", "MEM_WE_N", {217, 294}},
+        Arc{"REQ_WRITE_MASK", "MEM_WORD_ADDR", {232, 330}},
         Arc{"REQ_WRITE_MASK", "MEM_WRITE_MASK", {0, 0}},
     };
     t.clock = "CLK";
     t.clock_outputs.push_back("MEM_CLK");
-    t.launches["MEM_CE_N"] = {273, 352};
+    t.launches["MEM_CE_N"] = {218, 423};
     t.launches["MEM_OE_N"] = {147, 197};
-    t.launches["MEM_WE_N"] = {308, 387};
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["MEM_WE_N"] = {308, 422};
+    t.launches["MEM_WORD_ADDR"] = {162, 458};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -10777,7 +12150,7 @@
     t.launches["MEM_WORD_ADDR"] = {91, 120};
     t.launches["MEM_WRITE_DATA"] = {91, 120};
     t.launches["MEM_WRITE_MASK"] = {91, 120};
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -10795,24 +12168,28 @@
     PartDelays t;
     t.evidence = "proven on memory.sram.controller.8.structural";
     t.arcs = {
-        Arc{"REQ_ADDR", "MEM_CE_N", {182, 327}},
+        Arc{"REQ_ADDR", "MEM_CE_N", {218, 363}},
         Arc{"REQ_ADDR", "MEM_WE_N", {217, 362}},
-        Arc{"REQ_ADDR", "MEM_WORD_ADDR", {0, 0}},
-        Arc{"REQ_OP", "MEM_CE_N", {182, 344}},
+        Arc{"REQ_ADDR", "MEM_WORD_ADDR", {71, 398}},
+        Arc{"REQ_OP", "MEM_CE_N", {218, 380}},
         Arc{"REQ_OP", "MEM_WE_N", {112, 379}},
-        Arc{"REQ_VALID", "MEM_CE_N", {91, 91}},
+        Arc{"REQ_OP", "MEM_WORD_ADDR", {232, 415}},
+        Arc{"REQ_VALID", "MEM_CE_N", {127, 127}},
         Arc{"REQ_VALID", "MEM_WE_N", {126, 126}},
+        Arc{"REQ_VALID", "MEM_WORD_ADDR", {141, 162}},
         Arc{"REQ_WRITE_DATA", "MEM_WRITE_DATA", {0, 0}},
-        Arc{"REQ_WRITE_MASK", "MEM_CE_N", {182, 259}},
+        Arc{"REQ_WRITE_MASK", "MEM_CE_N", {218, 295}},
         Arc{"REQ_WRITE_MASK", "MEM_WE_N", {217, 294}},
+        Arc{"REQ_WRITE_MASK", "MEM_WORD_ADDR", {232, 330}},
         Arc{"REQ_WRITE_MASK", "MEM_WRITE_MASK", {0, 0}},
     };
     t.clock = "CLK";
     t.clock_outputs.push_back("MEM_CLK");
-    t.launches["MEM_CE_N"] = {273, 352};
+    t.launches["MEM_CE_N"] = {218, 423};
     t.launches["MEM_OE_N"] = {147, 197};
-    t.launches["MEM_WE_N"] = {308, 387};
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["MEM_WE_N"] = {308, 422};
+    t.launches["MEM_WORD_ADDR"] = {162, 458};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -11915,7 +13292,7 @@
     PartDelays t;
     t.evidence = "proven on memory.sram.endpoint.16.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -11933,7 +13310,115 @@
     PartDelays t;
     t.evidence = "proven on memory.sram.endpoint.16.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
+    t.launches["RSP_READ_DATA"] = {162, 212};
+    t.launches["RSP_STATUS"] = {162, 212};
+    t.launches["RSP_VALID"] = {162, 226};
+    t.setup["REQ_ADDR"] = 900;
+    t.setup["REQ_OP"] = 855;
+    t.setup["REQ_VALID"] = 393;
+    t.setup["REQ_WRITE_DATA"] = 231;
+    t.setup["REQ_WRITE_MASK"] = 613;
+    t.setup["RSP_READY"] = 393;
+    t.internal_period = 772;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.sram.endpoint.16.behavioral@block=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.endpoint.16.structural";
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {182, 296};
+    t.launches["RSP_READ_DATA"] = {162, 212};
+    t.launches["RSP_STATUS"] = {162, 212};
+    t.launches["RSP_VALID"] = {162, 226};
+    t.setup["REQ_ADDR"] = 900;
+    t.setup["REQ_OP"] = 855;
+    t.setup["REQ_VALID"] = 393;
+    t.setup["REQ_WRITE_DATA"] = 231;
+    t.setup["REQ_WRITE_MASK"] = 613;
+    t.setup["RSP_READY"] = 393;
+    t.internal_period = 772;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.sram.scalable-endpoint.16.behavioral@block=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.endpoint.16.structural";
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {182, 296};
+    t.launches["RSP_READ_DATA"] = {162, 212};
+    t.launches["RSP_STATUS"] = {162, 212};
+    t.launches["RSP_VALID"] = {162, 226};
+    t.setup["REQ_ADDR"] = 900;
+    t.setup["REQ_OP"] = 855;
+    t.setup["REQ_VALID"] = 393;
+    t.setup["REQ_WRITE_DATA"] = 231;
+    t.setup["REQ_WRITE_MASK"] = 613;
+    t.setup["RSP_READY"] = 393;
+    t.internal_period = 772;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.sram.endpoint.16.behavioral@depth=64@block=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.endpoint.16.structural";
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {182, 296};
+    t.launches["RSP_READ_DATA"] = {162, 212};
+    t.launches["RSP_STATUS"] = {162, 212};
+    t.launches["RSP_VALID"] = {162, 226};
+    t.setup["REQ_ADDR"] = 900;
+    t.setup["REQ_OP"] = 855;
+    t.setup["REQ_VALID"] = 393;
+    t.setup["REQ_WRITE_DATA"] = 231;
+    t.setup["REQ_WRITE_MASK"] = 613;
+    t.setup["RSP_READY"] = 393;
+    t.internal_period = 772;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.sram.scalable-endpoint.16.behavioral@depth=64@block=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.endpoint.16.structural";
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {182, 296};
+    t.launches["RSP_READ_DATA"] = {162, 212};
+    t.launches["RSP_STATUS"] = {162, 212};
+    t.launches["RSP_VALID"] = {162, 226};
+    t.setup["REQ_ADDR"] = 900;
+    t.setup["REQ_OP"] = 855;
+    t.setup["REQ_VALID"] = 393;
+    t.setup["REQ_WRITE_DATA"] = 231;
+    t.setup["REQ_WRITE_MASK"] = 613;
+    t.setup["RSP_READY"] = 393;
+    t.internal_period = 772;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.sram.endpoint.16.behavioral@depth=128@block=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.endpoint.16.structural";
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {182, 296};
+    t.launches["RSP_READ_DATA"] = {162, 212};
+    t.launches["RSP_STATUS"] = {162, 212};
+    t.launches["RSP_VALID"] = {162, 226};
+    t.setup["REQ_ADDR"] = 900;
+    t.setup["REQ_OP"] = 855;
+    t.setup["REQ_VALID"] = 393;
+    t.setup["REQ_WRITE_DATA"] = 231;
+    t.setup["REQ_WRITE_MASK"] = 613;
+    t.setup["RSP_READY"] = 393;
+    t.internal_period = 772;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.sram.scalable-endpoint.16.behavioral@depth=128@block=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.endpoint.16.structural";
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -11951,7 +13436,7 @@
     PartDelays t;
     t.evidence = "proven on memory.sram.endpoint.16.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -11969,7 +13454,7 @@
     PartDelays t;
     t.evidence = "proven on memory.sram.endpoint.16.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -11987,7 +13472,7 @@
     PartDelays t;
     t.evidence = "proven on memory.sram.endpoint.16.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -12005,7 +13490,7 @@
     PartDelays t;
     t.evidence = "proven on memory.sram.endpoint.16.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -12023,7 +13508,7 @@
     PartDelays t;
     t.evidence = "proven on memory.sram.endpoint.16.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -12041,7 +13526,7 @@
     PartDelays t;
     t.evidence = "proven on memory.sram.endpoint.16.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -12059,7 +13544,7 @@
     PartDelays t;
     t.evidence = "proven on memory.sram.endpoint.16.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -12077,7 +13562,7 @@
     PartDelays t;
     t.evidence = "proven on memory.sram.endpoint.16.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -12095,7 +13580,7 @@
     PartDelays t;
     t.evidence = "proven on memory.sram.endpoint.16.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -12113,7 +13598,7 @@
     PartDelays t;
     t.evidence = "proven on memory.sram.endpoint.16.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -12131,7 +13616,7 @@
     PartDelays t;
     t.evidence = "proven on memory.sram.endpoint.16.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -12149,7 +13634,7 @@
     PartDelays t;
     t.evidence = "proven on memory.sram.endpoint.16.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -12167,7 +13652,7 @@
     PartDelays t;
     t.evidence = "proven on memory.sram.endpoint.16.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -12185,7 +13670,7 @@
     PartDelays t;
     t.evidence = "proven on memory.sram.endpoint.16.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -12203,7 +13688,7 @@
     PartDelays t;
     t.evidence = "proven on memory.sram.endpoint.16.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -12221,7 +13706,7 @@
     PartDelays t;
     t.evidence = "proven on memory.sram.endpoint.16.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -12239,7 +13724,7 @@
     PartDelays t;
     t.evidence = "proven on memory.sram.endpoint.16.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -12257,7 +13742,7 @@
     PartDelays t;
     t.evidence = "proven on memory.sram.endpoint.16.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -12275,7 +13760,7 @@
     PartDelays t;
     t.evidence = "proven on memory.sram.endpoint.16.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -12293,7 +13778,7 @@
     PartDelays t;
     t.evidence = "proven on memory.sram.endpoint.16.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -12311,7 +13796,7 @@
     PartDelays t;
     t.evidence = "proven on memory.sram.endpoint.16.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -12329,7 +13814,79 @@
     PartDelays t;
     t.evidence = "proven on memory.sram.endpoint.16.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
+    t.launches["RSP_READ_DATA"] = {162, 212};
+    t.launches["RSP_STATUS"] = {162, 212};
+    t.launches["RSP_VALID"] = {162, 226};
+    t.setup["REQ_ADDR"] = 900;
+    t.setup["REQ_OP"] = 855;
+    t.setup["REQ_VALID"] = 393;
+    t.setup["REQ_WRITE_DATA"] = 231;
+    t.setup["REQ_WRITE_MASK"] = 613;
+    t.setup["RSP_READY"] = 393;
+    t.internal_period = 772;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.sram.endpoint.16.behavioral@depth=64@rows=16@block=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.endpoint.16.structural";
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {182, 296};
+    t.launches["RSP_READ_DATA"] = {162, 212};
+    t.launches["RSP_STATUS"] = {162, 212};
+    t.launches["RSP_VALID"] = {162, 226};
+    t.setup["REQ_ADDR"] = 900;
+    t.setup["REQ_OP"] = 855;
+    t.setup["REQ_VALID"] = 393;
+    t.setup["REQ_WRITE_DATA"] = 231;
+    t.setup["REQ_WRITE_MASK"] = 613;
+    t.setup["RSP_READY"] = 393;
+    t.internal_period = 772;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.sram.scalable-endpoint.16.behavioral@depth=64@rows=16@block=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.endpoint.16.structural";
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {182, 296};
+    t.launches["RSP_READ_DATA"] = {162, 212};
+    t.launches["RSP_STATUS"] = {162, 212};
+    t.launches["RSP_VALID"] = {162, 226};
+    t.setup["REQ_ADDR"] = 900;
+    t.setup["REQ_OP"] = 855;
+    t.setup["REQ_VALID"] = 393;
+    t.setup["REQ_WRITE_DATA"] = 231;
+    t.setup["REQ_WRITE_MASK"] = 613;
+    t.setup["RSP_READY"] = 393;
+    t.internal_period = 772;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.sram.endpoint.16.behavioral@depth=128@rows=16@block=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.endpoint.16.structural";
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {182, 296};
+    t.launches["RSP_READ_DATA"] = {162, 212};
+    t.launches["RSP_STATUS"] = {162, 212};
+    t.launches["RSP_VALID"] = {162, 226};
+    t.setup["REQ_ADDR"] = 900;
+    t.setup["REQ_OP"] = 855;
+    t.setup["REQ_VALID"] = 393;
+    t.setup["REQ_WRITE_DATA"] = 231;
+    t.setup["REQ_WRITE_MASK"] = 613;
+    t.setup["RSP_READY"] = 393;
+    t.internal_period = 772;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.sram.scalable-endpoint.16.behavioral@depth=128@rows=16@block=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.endpoint.16.structural";
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -12347,7 +13904,7 @@
     PartDelays t;
     t.evidence = "proven on memory.sram.endpoint.16.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -12365,7 +13922,7 @@
     PartDelays t;
     t.evidence = "proven on memory.sram.endpoint.16.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -12383,7 +13940,7 @@
     PartDelays t;
     t.evidence = "proven on memory.sram.endpoint.16.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -12401,7 +13958,7 @@
     PartDelays t;
     t.evidence = "proven on memory.sram.endpoint.16.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -12419,13 +13976,13 @@
     PartDelays t;
     t.evidence = "proven on memory.sram.endpoint.16.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
     t.setup["REQ_ADDR"] = 900;
     t.setup["REQ_OP"] = 855;
-    t.setup["REQ_VALID"] = 393;
+    t.setup["REQ_VALID"] = 400;
     t.setup["REQ_WRITE_DATA"] = 231;
     t.setup["REQ_WRITE_MASK"] = 613;
     t.setup["RSP_READY"] = 393;
@@ -12437,13 +13994,13 @@
     PartDelays t;
     t.evidence = "proven on memory.sram.endpoint.16.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
     t.setup["REQ_ADDR"] = 900;
     t.setup["REQ_OP"] = 855;
-    t.setup["REQ_VALID"] = 393;
+    t.setup["REQ_VALID"] = 400;
     t.setup["REQ_WRITE_DATA"] = 231;
     t.setup["REQ_WRITE_MASK"] = 613;
     t.setup["RSP_READY"] = 393;
@@ -12455,13 +14012,13 @@
     PartDelays t;
     t.evidence = "proven on memory.sram.endpoint.16.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
     t.setup["REQ_ADDR"] = 900;
     t.setup["REQ_OP"] = 855;
-    t.setup["REQ_VALID"] = 393;
+    t.setup["REQ_VALID"] = 400;
     t.setup["REQ_WRITE_DATA"] = 231;
     t.setup["REQ_WRITE_MASK"] = 613;
     t.setup["RSP_READY"] = 393;
@@ -12473,13 +14030,13 @@
     PartDelays t;
     t.evidence = "proven on memory.sram.endpoint.16.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
     t.setup["REQ_ADDR"] = 900;
     t.setup["REQ_OP"] = 855;
-    t.setup["REQ_VALID"] = 393;
+    t.setup["REQ_VALID"] = 400;
     t.setup["REQ_WRITE_DATA"] = 231;
     t.setup["REQ_WRITE_MASK"] = 613;
     t.setup["RSP_READY"] = 393;
@@ -12491,13 +14048,13 @@
     PartDelays t;
     t.evidence = "proven on memory.sram.endpoint.16.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
     t.setup["REQ_ADDR"] = 900;
     t.setup["REQ_OP"] = 855;
-    t.setup["REQ_VALID"] = 393;
+    t.setup["REQ_VALID"] = 436;
     t.setup["REQ_WRITE_DATA"] = 253;
     t.setup["REQ_WRITE_MASK"] = 613;
     t.setup["RSP_READY"] = 393;
@@ -12509,13 +14066,13 @@
     PartDelays t;
     t.evidence = "proven on memory.sram.endpoint.16.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
     t.setup["REQ_ADDR"] = 900;
     t.setup["REQ_OP"] = 855;
-    t.setup["REQ_VALID"] = 393;
+    t.setup["REQ_VALID"] = 436;
     t.setup["REQ_WRITE_DATA"] = 253;
     t.setup["REQ_WRITE_MASK"] = 613;
     t.setup["RSP_READY"] = 393;
@@ -12527,13 +14084,13 @@
     PartDelays t;
     t.evidence = "proven on memory.sram.endpoint.16.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
     t.setup["REQ_ADDR"] = 900;
     t.setup["REQ_OP"] = 855;
-    t.setup["REQ_VALID"] = 393;
+    t.setup["REQ_VALID"] = 436;
     t.setup["REQ_WRITE_DATA"] = 253;
     t.setup["REQ_WRITE_MASK"] = 613;
     t.setup["RSP_READY"] = 393;
@@ -12545,13 +14102,13 @@
     PartDelays t;
     t.evidence = "proven on memory.sram.endpoint.16.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
     t.setup["REQ_ADDR"] = 900;
     t.setup["REQ_OP"] = 855;
-    t.setup["REQ_VALID"] = 393;
+    t.setup["REQ_VALID"] = 436;
     t.setup["REQ_WRITE_DATA"] = 253;
     t.setup["REQ_WRITE_MASK"] = 613;
     t.setup["RSP_READY"] = 393;
@@ -12563,7 +14120,7 @@
     PartDelays t;
     t.evidence = "proven on memory.sram.endpoint.32.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -12581,7 +14138,115 @@
     PartDelays t;
     t.evidence = "proven on memory.sram.endpoint.32.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
+    t.launches["RSP_READ_DATA"] = {162, 212};
+    t.launches["RSP_STATUS"] = {162, 212};
+    t.launches["RSP_VALID"] = {162, 226};
+    t.setup["REQ_ADDR"] = 900;
+    t.setup["REQ_OP"] = 855;
+    t.setup["REQ_VALID"] = 393;
+    t.setup["REQ_WRITE_DATA"] = 231;
+    t.setup["REQ_WRITE_MASK"] = 613;
+    t.setup["RSP_READY"] = 393;
+    t.internal_period = 772;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.sram.endpoint.32.behavioral@block=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.endpoint.32.structural";
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {182, 296};
+    t.launches["RSP_READ_DATA"] = {162, 212};
+    t.launches["RSP_STATUS"] = {162, 212};
+    t.launches["RSP_VALID"] = {162, 226};
+    t.setup["REQ_ADDR"] = 900;
+    t.setup["REQ_OP"] = 855;
+    t.setup["REQ_VALID"] = 393;
+    t.setup["REQ_WRITE_DATA"] = 231;
+    t.setup["REQ_WRITE_MASK"] = 613;
+    t.setup["RSP_READY"] = 393;
+    t.internal_period = 772;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.sram.scalable-endpoint.32.behavioral@block=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.endpoint.32.structural";
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {182, 296};
+    t.launches["RSP_READ_DATA"] = {162, 212};
+    t.launches["RSP_STATUS"] = {162, 212};
+    t.launches["RSP_VALID"] = {162, 226};
+    t.setup["REQ_ADDR"] = 900;
+    t.setup["REQ_OP"] = 855;
+    t.setup["REQ_VALID"] = 393;
+    t.setup["REQ_WRITE_DATA"] = 231;
+    t.setup["REQ_WRITE_MASK"] = 613;
+    t.setup["RSP_READY"] = 393;
+    t.internal_period = 772;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.sram.endpoint.32.behavioral@depth=64@block=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.endpoint.32.structural";
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {182, 296};
+    t.launches["RSP_READ_DATA"] = {162, 212};
+    t.launches["RSP_STATUS"] = {162, 212};
+    t.launches["RSP_VALID"] = {162, 226};
+    t.setup["REQ_ADDR"] = 900;
+    t.setup["REQ_OP"] = 855;
+    t.setup["REQ_VALID"] = 393;
+    t.setup["REQ_WRITE_DATA"] = 231;
+    t.setup["REQ_WRITE_MASK"] = 613;
+    t.setup["RSP_READY"] = 393;
+    t.internal_period = 772;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.sram.scalable-endpoint.32.behavioral@depth=64@block=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.endpoint.32.structural";
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {182, 296};
+    t.launches["RSP_READ_DATA"] = {162, 212};
+    t.launches["RSP_STATUS"] = {162, 212};
+    t.launches["RSP_VALID"] = {162, 226};
+    t.setup["REQ_ADDR"] = 900;
+    t.setup["REQ_OP"] = 855;
+    t.setup["REQ_VALID"] = 393;
+    t.setup["REQ_WRITE_DATA"] = 231;
+    t.setup["REQ_WRITE_MASK"] = 613;
+    t.setup["RSP_READY"] = 393;
+    t.internal_period = 772;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.sram.endpoint.32.behavioral@depth=128@block=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.endpoint.32.structural";
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {182, 296};
+    t.launches["RSP_READ_DATA"] = {162, 212};
+    t.launches["RSP_STATUS"] = {162, 212};
+    t.launches["RSP_VALID"] = {162, 226};
+    t.setup["REQ_ADDR"] = 900;
+    t.setup["REQ_OP"] = 855;
+    t.setup["REQ_VALID"] = 393;
+    t.setup["REQ_WRITE_DATA"] = 231;
+    t.setup["REQ_WRITE_MASK"] = 613;
+    t.setup["RSP_READY"] = 393;
+    t.internal_period = 772;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.sram.scalable-endpoint.32.behavioral@depth=128@block=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.endpoint.32.structural";
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -12599,7 +14264,7 @@
     PartDelays t;
     t.evidence = "proven on memory.sram.endpoint.32.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -12617,7 +14282,7 @@
     PartDelays t;
     t.evidence = "proven on memory.sram.endpoint.32.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -12635,7 +14300,7 @@
     PartDelays t;
     t.evidence = "proven on memory.sram.endpoint.32.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -12653,7 +14318,7 @@
     PartDelays t;
     t.evidence = "proven on memory.sram.endpoint.32.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -12671,7 +14336,7 @@
     PartDelays t;
     t.evidence = "proven on memory.sram.endpoint.32.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -12689,7 +14354,7 @@
     PartDelays t;
     t.evidence = "proven on memory.sram.endpoint.32.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -12707,7 +14372,7 @@
     PartDelays t;
     t.evidence = "proven on memory.sram.endpoint.32.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -12725,7 +14390,7 @@
     PartDelays t;
     t.evidence = "proven on memory.sram.endpoint.32.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -12743,7 +14408,7 @@
     PartDelays t;
     t.evidence = "proven on memory.sram.endpoint.32.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -12761,7 +14426,7 @@
     PartDelays t;
     t.evidence = "proven on memory.sram.endpoint.32.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -12779,7 +14444,7 @@
     PartDelays t;
     t.evidence = "proven on memory.sram.endpoint.32.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -12797,7 +14462,7 @@
     PartDelays t;
     t.evidence = "proven on memory.sram.endpoint.32.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -12815,7 +14480,7 @@
     PartDelays t;
     t.evidence = "proven on memory.sram.endpoint.32.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -12833,7 +14498,7 @@
     PartDelays t;
     t.evidence = "proven on memory.sram.endpoint.32.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -12851,7 +14516,7 @@
     PartDelays t;
     t.evidence = "proven on memory.sram.endpoint.32.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -12869,7 +14534,7 @@
     PartDelays t;
     t.evidence = "proven on memory.sram.endpoint.32.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -12887,7 +14552,7 @@
     PartDelays t;
     t.evidence = "proven on memory.sram.endpoint.32.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -12905,7 +14570,7 @@
     PartDelays t;
     t.evidence = "proven on memory.sram.endpoint.32.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -12923,7 +14588,7 @@
     PartDelays t;
     t.evidence = "proven on memory.sram.endpoint.32.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -12941,7 +14606,79 @@
     PartDelays t;
     t.evidence = "proven on memory.sram.endpoint.32.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
+    t.launches["RSP_READ_DATA"] = {162, 212};
+    t.launches["RSP_STATUS"] = {162, 212};
+    t.launches["RSP_VALID"] = {162, 226};
+    t.setup["REQ_ADDR"] = 900;
+    t.setup["REQ_OP"] = 855;
+    t.setup["REQ_VALID"] = 393;
+    t.setup["REQ_WRITE_DATA"] = 231;
+    t.setup["REQ_WRITE_MASK"] = 613;
+    t.setup["RSP_READY"] = 393;
+    t.internal_period = 772;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.sram.endpoint.32.behavioral@depth=64@rows=16@block=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.endpoint.32.structural";
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {182, 296};
+    t.launches["RSP_READ_DATA"] = {162, 212};
+    t.launches["RSP_STATUS"] = {162, 212};
+    t.launches["RSP_VALID"] = {162, 226};
+    t.setup["REQ_ADDR"] = 900;
+    t.setup["REQ_OP"] = 855;
+    t.setup["REQ_VALID"] = 393;
+    t.setup["REQ_WRITE_DATA"] = 231;
+    t.setup["REQ_WRITE_MASK"] = 613;
+    t.setup["RSP_READY"] = 393;
+    t.internal_period = 772;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.sram.scalable-endpoint.32.behavioral@depth=64@rows=16@block=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.endpoint.32.structural";
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {182, 296};
+    t.launches["RSP_READ_DATA"] = {162, 212};
+    t.launches["RSP_STATUS"] = {162, 212};
+    t.launches["RSP_VALID"] = {162, 226};
+    t.setup["REQ_ADDR"] = 900;
+    t.setup["REQ_OP"] = 855;
+    t.setup["REQ_VALID"] = 393;
+    t.setup["REQ_WRITE_DATA"] = 231;
+    t.setup["REQ_WRITE_MASK"] = 613;
+    t.setup["RSP_READY"] = 393;
+    t.internal_period = 772;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.sram.endpoint.32.behavioral@depth=128@rows=16@block=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.endpoint.32.structural";
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {182, 296};
+    t.launches["RSP_READ_DATA"] = {162, 212};
+    t.launches["RSP_STATUS"] = {162, 212};
+    t.launches["RSP_VALID"] = {162, 226};
+    t.setup["REQ_ADDR"] = 900;
+    t.setup["REQ_OP"] = 855;
+    t.setup["REQ_VALID"] = 393;
+    t.setup["REQ_WRITE_DATA"] = 231;
+    t.setup["REQ_WRITE_MASK"] = 613;
+    t.setup["RSP_READY"] = 393;
+    t.internal_period = 772;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.sram.scalable-endpoint.32.behavioral@depth=128@rows=16@block=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.endpoint.32.structural";
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -12959,7 +14696,7 @@
     PartDelays t;
     t.evidence = "proven on memory.sram.endpoint.32.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -12977,7 +14714,7 @@
     PartDelays t;
     t.evidence = "proven on memory.sram.endpoint.32.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -12995,7 +14732,7 @@
     PartDelays t;
     t.evidence = "proven on memory.sram.endpoint.32.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -13013,7 +14750,7 @@
     PartDelays t;
     t.evidence = "proven on memory.sram.endpoint.32.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -13031,13 +14768,13 @@
     PartDelays t;
     t.evidence = "proven on memory.sram.endpoint.32.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
     t.setup["REQ_ADDR"] = 900;
     t.setup["REQ_OP"] = 855;
-    t.setup["REQ_VALID"] = 393;
+    t.setup["REQ_VALID"] = 400;
     t.setup["REQ_WRITE_DATA"] = 231;
     t.setup["REQ_WRITE_MASK"] = 613;
     t.setup["RSP_READY"] = 393;
@@ -13049,13 +14786,13 @@
     PartDelays t;
     t.evidence = "proven on memory.sram.endpoint.32.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
     t.setup["REQ_ADDR"] = 900;
     t.setup["REQ_OP"] = 855;
-    t.setup["REQ_VALID"] = 393;
+    t.setup["REQ_VALID"] = 400;
     t.setup["REQ_WRITE_DATA"] = 231;
     t.setup["REQ_WRITE_MASK"] = 613;
     t.setup["RSP_READY"] = 393;
@@ -13067,13 +14804,13 @@
     PartDelays t;
     t.evidence = "proven on memory.sram.endpoint.32.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
     t.setup["REQ_ADDR"] = 900;
     t.setup["REQ_OP"] = 855;
-    t.setup["REQ_VALID"] = 393;
+    t.setup["REQ_VALID"] = 400;
     t.setup["REQ_WRITE_DATA"] = 231;
     t.setup["REQ_WRITE_MASK"] = 613;
     t.setup["RSP_READY"] = 393;
@@ -13085,13 +14822,13 @@
     PartDelays t;
     t.evidence = "proven on memory.sram.endpoint.32.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
     t.setup["REQ_ADDR"] = 900;
     t.setup["REQ_OP"] = 855;
-    t.setup["REQ_VALID"] = 393;
+    t.setup["REQ_VALID"] = 400;
     t.setup["REQ_WRITE_DATA"] = 231;
     t.setup["REQ_WRITE_MASK"] = 613;
     t.setup["RSP_READY"] = 393;
@@ -13103,13 +14840,13 @@
     PartDelays t;
     t.evidence = "proven on memory.sram.endpoint.32.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
     t.setup["REQ_ADDR"] = 900;
     t.setup["REQ_OP"] = 855;
-    t.setup["REQ_VALID"] = 393;
+    t.setup["REQ_VALID"] = 436;
     t.setup["REQ_WRITE_DATA"] = 253;
     t.setup["REQ_WRITE_MASK"] = 613;
     t.setup["RSP_READY"] = 393;
@@ -13121,13 +14858,13 @@
     PartDelays t;
     t.evidence = "proven on memory.sram.endpoint.32.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
     t.setup["REQ_ADDR"] = 900;
     t.setup["REQ_OP"] = 855;
-    t.setup["REQ_VALID"] = 393;
+    t.setup["REQ_VALID"] = 436;
     t.setup["REQ_WRITE_DATA"] = 253;
     t.setup["REQ_WRITE_MASK"] = 613;
     t.setup["RSP_READY"] = 393;
@@ -13139,7 +14876,7 @@
     PartDelays t;
     t.evidence = "proven on memory.sram.endpoint.8.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -13157,7 +14894,115 @@
     PartDelays t;
     t.evidence = "proven on memory.sram.endpoint.8.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
+    t.launches["RSP_READ_DATA"] = {162, 212};
+    t.launches["RSP_STATUS"] = {162, 212};
+    t.launches["RSP_VALID"] = {162, 226};
+    t.setup["REQ_ADDR"] = 900;
+    t.setup["REQ_OP"] = 855;
+    t.setup["REQ_VALID"] = 393;
+    t.setup["REQ_WRITE_DATA"] = 231;
+    t.setup["REQ_WRITE_MASK"] = 613;
+    t.setup["RSP_READY"] = 393;
+    t.internal_period = 772;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.sram.endpoint.8.behavioral@block=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.endpoint.8.structural";
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {182, 296};
+    t.launches["RSP_READ_DATA"] = {162, 212};
+    t.launches["RSP_STATUS"] = {162, 212};
+    t.launches["RSP_VALID"] = {162, 226};
+    t.setup["REQ_ADDR"] = 900;
+    t.setup["REQ_OP"] = 855;
+    t.setup["REQ_VALID"] = 393;
+    t.setup["REQ_WRITE_DATA"] = 231;
+    t.setup["REQ_WRITE_MASK"] = 613;
+    t.setup["RSP_READY"] = 393;
+    t.internal_period = 772;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.sram.scalable-endpoint.8.behavioral@block=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.endpoint.8.structural";
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {182, 296};
+    t.launches["RSP_READ_DATA"] = {162, 212};
+    t.launches["RSP_STATUS"] = {162, 212};
+    t.launches["RSP_VALID"] = {162, 226};
+    t.setup["REQ_ADDR"] = 900;
+    t.setup["REQ_OP"] = 855;
+    t.setup["REQ_VALID"] = 393;
+    t.setup["REQ_WRITE_DATA"] = 231;
+    t.setup["REQ_WRITE_MASK"] = 613;
+    t.setup["RSP_READY"] = 393;
+    t.internal_period = 772;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.sram.endpoint.8.behavioral@depth=64@block=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.endpoint.8.structural";
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {182, 296};
+    t.launches["RSP_READ_DATA"] = {162, 212};
+    t.launches["RSP_STATUS"] = {162, 212};
+    t.launches["RSP_VALID"] = {162, 226};
+    t.setup["REQ_ADDR"] = 900;
+    t.setup["REQ_OP"] = 855;
+    t.setup["REQ_VALID"] = 393;
+    t.setup["REQ_WRITE_DATA"] = 231;
+    t.setup["REQ_WRITE_MASK"] = 613;
+    t.setup["RSP_READY"] = 393;
+    t.internal_period = 772;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.sram.scalable-endpoint.8.behavioral@depth=64@block=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.endpoint.8.structural";
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {182, 296};
+    t.launches["RSP_READ_DATA"] = {162, 212};
+    t.launches["RSP_STATUS"] = {162, 212};
+    t.launches["RSP_VALID"] = {162, 226};
+    t.setup["REQ_ADDR"] = 900;
+    t.setup["REQ_OP"] = 855;
+    t.setup["REQ_VALID"] = 393;
+    t.setup["REQ_WRITE_DATA"] = 231;
+    t.setup["REQ_WRITE_MASK"] = 613;
+    t.setup["RSP_READY"] = 393;
+    t.internal_period = 772;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.sram.endpoint.8.behavioral@depth=128@block=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.endpoint.8.structural";
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {182, 296};
+    t.launches["RSP_READ_DATA"] = {162, 212};
+    t.launches["RSP_STATUS"] = {162, 212};
+    t.launches["RSP_VALID"] = {162, 226};
+    t.setup["REQ_ADDR"] = 900;
+    t.setup["REQ_OP"] = 855;
+    t.setup["REQ_VALID"] = 393;
+    t.setup["REQ_WRITE_DATA"] = 231;
+    t.setup["REQ_WRITE_MASK"] = 613;
+    t.setup["RSP_READY"] = 393;
+    t.internal_period = 772;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.sram.scalable-endpoint.8.behavioral@depth=128@block=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.endpoint.8.structural";
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -13175,7 +15020,7 @@
     PartDelays t;
     t.evidence = "proven on memory.sram.endpoint.8.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -13193,7 +15038,7 @@
     PartDelays t;
     t.evidence = "proven on memory.sram.endpoint.8.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -13211,7 +15056,7 @@
     PartDelays t;
     t.evidence = "proven on memory.sram.endpoint.8.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -13229,7 +15074,7 @@
     PartDelays t;
     t.evidence = "proven on memory.sram.endpoint.8.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -13247,7 +15092,7 @@
     PartDelays t;
     t.evidence = "proven on memory.sram.endpoint.8.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -13265,7 +15110,7 @@
     PartDelays t;
     t.evidence = "proven on memory.sram.endpoint.8.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -13283,7 +15128,7 @@
     PartDelays t;
     t.evidence = "proven on memory.sram.endpoint.8.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -13301,7 +15146,7 @@
     PartDelays t;
     t.evidence = "proven on memory.sram.endpoint.8.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -13319,7 +15164,7 @@
     PartDelays t;
     t.evidence = "proven on memory.sram.endpoint.8.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -13337,7 +15182,7 @@
     PartDelays t;
     t.evidence = "proven on memory.sram.endpoint.8.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -13355,7 +15200,7 @@
     PartDelays t;
     t.evidence = "proven on memory.sram.endpoint.8.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -13373,7 +15218,7 @@
     PartDelays t;
     t.evidence = "proven on memory.sram.endpoint.8.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -13391,7 +15236,7 @@
     PartDelays t;
     t.evidence = "proven on memory.sram.endpoint.8.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -13409,7 +15254,7 @@
     PartDelays t;
     t.evidence = "proven on memory.sram.endpoint.8.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -13427,7 +15272,7 @@
     PartDelays t;
     t.evidence = "proven on memory.sram.endpoint.8.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -13445,7 +15290,7 @@
     PartDelays t;
     t.evidence = "proven on memory.sram.endpoint.8.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -13463,7 +15308,7 @@
     PartDelays t;
     t.evidence = "proven on memory.sram.endpoint.8.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -13481,7 +15326,7 @@
     PartDelays t;
     t.evidence = "proven on memory.sram.endpoint.8.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -13499,7 +15344,7 @@
     PartDelays t;
     t.evidence = "proven on memory.sram.endpoint.8.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -13517,7 +15362,7 @@
     PartDelays t;
     t.evidence = "proven on memory.sram.endpoint.8.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -13535,7 +15380,7 @@
     PartDelays t;
     t.evidence = "proven on memory.sram.endpoint.8.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -13553,7 +15398,7 @@
     PartDelays t;
     t.evidence = "proven on memory.sram.endpoint.8.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -13571,7 +15416,7 @@
     PartDelays t;
     t.evidence = "proven on memory.sram.endpoint.8.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -13589,7 +15434,79 @@
     PartDelays t;
     t.evidence = "proven on memory.sram.endpoint.8.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
+    t.launches["RSP_READ_DATA"] = {162, 212};
+    t.launches["RSP_STATUS"] = {162, 212};
+    t.launches["RSP_VALID"] = {162, 226};
+    t.setup["REQ_ADDR"] = 900;
+    t.setup["REQ_OP"] = 855;
+    t.setup["REQ_VALID"] = 393;
+    t.setup["REQ_WRITE_DATA"] = 231;
+    t.setup["REQ_WRITE_MASK"] = 613;
+    t.setup["RSP_READY"] = 393;
+    t.internal_period = 772;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.sram.endpoint.8.behavioral@depth=64@rows=16@block=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.endpoint.8.structural";
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {182, 296};
+    t.launches["RSP_READ_DATA"] = {162, 212};
+    t.launches["RSP_STATUS"] = {162, 212};
+    t.launches["RSP_VALID"] = {162, 226};
+    t.setup["REQ_ADDR"] = 900;
+    t.setup["REQ_OP"] = 855;
+    t.setup["REQ_VALID"] = 393;
+    t.setup["REQ_WRITE_DATA"] = 231;
+    t.setup["REQ_WRITE_MASK"] = 613;
+    t.setup["RSP_READY"] = 393;
+    t.internal_period = 772;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.sram.scalable-endpoint.8.behavioral@depth=64@rows=16@block=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.endpoint.8.structural";
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {182, 296};
+    t.launches["RSP_READ_DATA"] = {162, 212};
+    t.launches["RSP_STATUS"] = {162, 212};
+    t.launches["RSP_VALID"] = {162, 226};
+    t.setup["REQ_ADDR"] = 900;
+    t.setup["REQ_OP"] = 855;
+    t.setup["REQ_VALID"] = 393;
+    t.setup["REQ_WRITE_DATA"] = 231;
+    t.setup["REQ_WRITE_MASK"] = 613;
+    t.setup["RSP_READY"] = 393;
+    t.internal_period = 772;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.sram.endpoint.8.behavioral@depth=128@rows=16@block=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.endpoint.8.structural";
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {182, 296};
+    t.launches["RSP_READ_DATA"] = {162, 212};
+    t.launches["RSP_STATUS"] = {162, 212};
+    t.launches["RSP_VALID"] = {162, 226};
+    t.setup["REQ_ADDR"] = 900;
+    t.setup["REQ_OP"] = 855;
+    t.setup["REQ_VALID"] = 393;
+    t.setup["REQ_WRITE_DATA"] = 231;
+    t.setup["REQ_WRITE_MASK"] = 613;
+    t.setup["RSP_READY"] = 393;
+    t.internal_period = 772;
+    t.fixed_inputs["RST"] = 0;
+    return t;
+}()},
+{"memory.sram.scalable-endpoint.8.behavioral@depth=128@rows=16@block=4", [] {
+    PartDelays t;
+    t.evidence = "proven on memory.sram.endpoint.8.structural";
+    t.clock = "CLK";
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -13607,7 +15524,7 @@
     PartDelays t;
     t.evidence = "proven on memory.sram.endpoint.8.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -13625,7 +15542,7 @@
     PartDelays t;
     t.evidence = "proven on memory.sram.endpoint.8.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -13643,7 +15560,7 @@
     PartDelays t;
     t.evidence = "proven on memory.sram.endpoint.8.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -13661,7 +15578,7 @@
     PartDelays t;
     t.evidence = "proven on memory.sram.endpoint.8.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
@@ -13679,13 +15596,13 @@
     PartDelays t;
     t.evidence = "proven on memory.sram.endpoint.8.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
     t.setup["REQ_ADDR"] = 900;
     t.setup["REQ_OP"] = 855;
-    t.setup["REQ_VALID"] = 393;
+    t.setup["REQ_VALID"] = 400;
     t.setup["REQ_WRITE_DATA"] = 231;
     t.setup["REQ_WRITE_MASK"] = 613;
     t.setup["RSP_READY"] = 393;
@@ -13697,13 +15614,13 @@
     PartDelays t;
     t.evidence = "proven on memory.sram.endpoint.8.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
     t.setup["REQ_ADDR"] = 900;
     t.setup["REQ_OP"] = 855;
-    t.setup["REQ_VALID"] = 393;
+    t.setup["REQ_VALID"] = 400;
     t.setup["REQ_WRITE_DATA"] = 231;
     t.setup["REQ_WRITE_MASK"] = 613;
     t.setup["RSP_READY"] = 393;
@@ -13715,13 +15632,13 @@
     PartDelays t;
     t.evidence = "proven on memory.sram.endpoint.8.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
     t.setup["REQ_ADDR"] = 900;
     t.setup["REQ_OP"] = 855;
-    t.setup["REQ_VALID"] = 393;
+    t.setup["REQ_VALID"] = 400;
     t.setup["REQ_WRITE_DATA"] = 231;
     t.setup["REQ_WRITE_MASK"] = 613;
     t.setup["RSP_READY"] = 393;
@@ -13733,13 +15650,13 @@
     PartDelays t;
     t.evidence = "proven on memory.sram.endpoint.8.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
     t.setup["REQ_ADDR"] = 900;
     t.setup["REQ_OP"] = 855;
-    t.setup["REQ_VALID"] = 393;
+    t.setup["REQ_VALID"] = 400;
     t.setup["REQ_WRITE_DATA"] = 231;
     t.setup["REQ_WRITE_MASK"] = 613;
     t.setup["RSP_READY"] = 393;
@@ -13751,13 +15668,13 @@
     PartDelays t;
     t.evidence = "proven on memory.sram.endpoint.8.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
     t.setup["REQ_ADDR"] = 900;
     t.setup["REQ_OP"] = 855;
-    t.setup["REQ_VALID"] = 393;
+    t.setup["REQ_VALID"] = 436;
     t.setup["REQ_WRITE_DATA"] = 253;
     t.setup["REQ_WRITE_MASK"] = 613;
     t.setup["RSP_READY"] = 393;
@@ -13769,13 +15686,13 @@
     PartDelays t;
     t.evidence = "proven on memory.sram.endpoint.8.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
     t.setup["REQ_ADDR"] = 900;
     t.setup["REQ_OP"] = 855;
-    t.setup["REQ_VALID"] = 393;
+    t.setup["REQ_VALID"] = 436;
     t.setup["REQ_WRITE_DATA"] = 253;
     t.setup["REQ_WRITE_MASK"] = 613;
     t.setup["RSP_READY"] = 393;
@@ -13787,13 +15704,13 @@
     PartDelays t;
     t.evidence = "proven on memory.sram.endpoint.8.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
     t.setup["REQ_ADDR"] = 900;
     t.setup["REQ_OP"] = 855;
-    t.setup["REQ_VALID"] = 393;
+    t.setup["REQ_VALID"] = 436;
     t.setup["REQ_WRITE_DATA"] = 253;
     t.setup["REQ_WRITE_MASK"] = 613;
     t.setup["RSP_READY"] = 393;
@@ -13805,13 +15722,13 @@
     PartDelays t;
     t.evidence = "proven on memory.sram.endpoint.8.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
     t.setup["REQ_ADDR"] = 900;
     t.setup["REQ_OP"] = 855;
-    t.setup["REQ_VALID"] = 393;
+    t.setup["REQ_VALID"] = 436;
     t.setup["REQ_WRITE_DATA"] = 253;
     t.setup["REQ_WRITE_MASK"] = 613;
     t.setup["RSP_READY"] = 393;
@@ -13823,15 +15740,15 @@
     PartDelays t;
     t.evidence = "proven on memory.sram.endpoint.8.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
     t.setup["REQ_ADDR"] = 900;
     t.setup["REQ_OP"] = 855;
-    t.setup["REQ_VALID"] = 397;
+    t.setup["REQ_VALID"] = 447;
     t.setup["REQ_WRITE_DATA"] = 264;
-    t.setup["REQ_WRITE_MASK"] = 613;
+    t.setup["REQ_WRITE_MASK"] = 615;
     t.setup["RSP_READY"] = 393;
     t.internal_period = 772;
     t.fixed_inputs["RST"] = 0;
@@ -13841,15 +15758,15 @@
     PartDelays t;
     t.evidence = "proven on memory.sram.endpoint.8.structural";
     t.clock = "CLK";
-    t.launches["REQ_READY"] = {182, 261};
+    t.launches["REQ_READY"] = {182, 296};
     t.launches["RSP_READ_DATA"] = {162, 212};
     t.launches["RSP_STATUS"] = {162, 212};
     t.launches["RSP_VALID"] = {162, 226};
     t.setup["REQ_ADDR"] = 900;
     t.setup["REQ_OP"] = 855;
-    t.setup["REQ_VALID"] = 397;
+    t.setup["REQ_VALID"] = 447;
     t.setup["REQ_WRITE_DATA"] = 264;
-    t.setup["REQ_WRITE_MASK"] = 613;
+    t.setup["REQ_WRITE_MASK"] = 615;
     t.setup["RSP_READY"] = 393;
     t.internal_period = 772;
     t.fixed_inputs["RST"] = 0;

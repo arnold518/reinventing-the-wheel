@@ -229,6 +229,24 @@ size_t sized(const Candidate& candidate, const circuit::PartDelays& standard, si
                 if (!scalable_implementation.empty()) { body << emit(scalable_implementation + rows, table); ++written; }
             }
         }
+        // Four-word bursts (a cache line of four words), in the default
+        // layout and the long-row one; a memory whose bursts may not be that
+        // long in this layout (DRAM bursts stay in one row) has none.
+        if (!flip_flop && (standard_layout || std::string(layout) == "16")) {
+            const std::string block = rows + "@block=4";
+            for (const size_t depth : {size_t{0}, size_t{64}, size_t{128}}) {
+                circuit::ParameterMap parameters{{"block_words", "4"}};
+                if (!standard_layout) parameters["words_per_row"] = layout;
+                if (depth) parameters["depth_words"] = std::to_string(depth);
+                std::string reason;
+                const auto table = prove(candidate, budget, reason, parameters);
+                if (table.empty()) { std::cerr << "  no four-word-burst " << depth << "-word table for " << candidate.contract << rows << ": " << reason << '\n'; continue; }
+                const auto suffix = (depth ? "@depth=" + std::to_string(depth) : std::string{}) + block;
+                body << emit(candidate.implementation + suffix, table);
+                ++written;
+                if (!scalable_implementation.empty()) { body << emit(scalable_implementation + suffix, table); ++written; }
+            }
+        }
         for (const bool always_ready : {false, true}) {
             if (always_ready && !ready_variant) break;
             // On-chip SRAM is also proven at 256 and 512 words (4 and 8

@@ -168,10 +168,25 @@ void DRAMCommandControl::buildInternals(ComponentBuilder &b) {
     // PRECHARGE closes, already in the completing cycle.
     auto shown_open = w.either("OPEN_SHOWN", w.both("OPEN_STAYS", OPEN, w.invert("NOT_CLOSED_NOW", w.both("CLOSED_NOW", complete, c_pre->getOutputPin("Q")))),
                                w.both("OPENED_NOW", complete, c_act->getOutputPin("Q")));
+    // READ_BURST (code 6): a READ whose completion is followed by the next
+    // columns of the block, one per edge (BURST and the columns still to
+    // come). The command completes for good with its last column.
+    // (A burst longer than a row cannot be taken.)
+    auto is_rdb = config_.burst_words <= config_.words_per_row ? w.reduce("IS_READ_BURST", {n0, c1, c2}, true)
+                                                               : w.constant("NO_READ_BURST", false);
+    auto is_read_any = w.either("IS_ANY_READ", is_rd, is_rdb);
+    auto burst = state("BURST");
+    const size_t burst_bits = std::max<size_t>(1, std::countr_zero(config_.burst_words));
+    std::vector<std::shared_ptr<IOComponent>> burst_left;
+    std::vector<PinPtr> burst_q;
+    for (size_t i = 0; i < burst_bits; ++i) { burst_left.push_back(state("BURST_LEFT_" + std::to_string(i))); burst_q.push_back(burst_left.back()->getOutputPin("Q")); }
+    auto more_columns = w.both("MORE_COLUMNS", burst->getOutputPin("Q"), w.reduce("COLUMNS_LEFT", burst_q, false));
+    auto column_step = w.both("NEXT_COLUMN", complete, more_columns);
+    auto final_complete = w.both("FINAL_COMPLETE", complete, w.invert("NO_MORE_COLUMNS", more_columns));
     const auto addr_known = known_addr->getOutputPin("KNOWN");
     auto legal = w.reduce("LEGAL_COMMAND", {
         w.reduce("LEGAL_ACTIVATE", {is_act, addr_known, w.invert("CLOSED", shown_open), row_ok}, true),
-        w.reduce("LEGAL_READ", {is_rd, addr_known, shown_open, col_ok}, true),
+        w.reduce("LEGAL_READ", {is_read_any, addr_known, shown_open, col_ok}, true),
         w.reduce("LEGAL_WRITE", {is_wr, addr_known, known_mask->getOutputPin("KNOWN"), shown_open, col_ok}, true),
         w.both("LEGAL_PRECHARGE", is_pre, shown_open),
         w.both("LEGAL_REFRESH", is_ref, w.invert("CLOSED_FOR_REFRESH", shown_open))}, false);
@@ -179,7 +194,7 @@ void DRAMCommandControl::buildInternals(ComponentBuilder &b) {
     auto issued = w.both("ISSUED", cmd_known, w.invert("NOT_NOP", is_nop));
     // A new command is taken while idle, in the completing cycle of the last
     // one, or in a releasing cycle (a completion no command followed).
-    auto idle = w.reduce("IDLE", {w.invert("NOT_BUSY", B), R, complete}, false);
+    auto idle = w.reduce("IDLE", {w.invert("NOT_BUSY", B), R, final_complete}, false);
     auto accept = w.reduce("ACCEPT", {issued, legal, idle}, true);
     auto unknown = w.invert("UNKNOWN_COMMAND", cmd_known);
     auto refused = w.both("REFUSED", issued, w.either("BUSY_OR_ILLEGAL", w.invert("NOT_IDLE", idle), w.invert("ILLEGAL", legal)));
@@ -191,7 +206,7 @@ void DRAMCommandControl::buildInternals(ComponentBuilder &b) {
     // The same command taken again in the releasing cycle: its run signal
     // drops for one cycle (REPEAT) so its step chain starts over.
     w.connect(w.reduce("NEXT_REPEAT", {accept, B, w.reduce("SAME_COMMAND", {
-        w.both("SAME_ACTIVATE", c_act->getOutputPin("Q"), is_act), w.both("SAME_READ", c_rd->getOutputPin("Q"), is_rd),
+        w.both("SAME_ACTIVATE", c_act->getOutputPin("Q"), is_act), w.both("SAME_READ", c_rd->getOutputPin("Q"), is_read_any),
         w.both("SAME_WRITE", c_wr->getOutputPin("Q"), is_wr), w.both("SAME_PRECHARGE", c_pre->getOutputPin("Q"), is_pre),
         w.both("SAME_REFRESH", c_ref->getOutputPin("Q"), is_ref)}, false)}, true), repeat->getInputPin("D"));
     const auto restarting = w.invert("NOT_REPEAT", repeat->getOutputPin("Q"));
@@ -251,9 +266,27 @@ void DRAMCommandControl::buildInternals(ComponentBuilder &b) {
                      w.either("VALID_SOURCE", valid->getOutputPin("Q"), w.both("READ_DONE", complete, c_rd->getOutputPin("Q")))),
               valid->getInputPin("D"));
     keep(busy, accept, R, "BUSY");
-    keep(releasing, w.both("RELEASE", complete, w.invert("NOTHING_TAKEN", accept)), R, "RELEASING");
+    keep(releasing, w.both("RELEASE", final_complete, w.invert("NOTHING_TAKEN", accept)), R, "RELEASING");
+    // BURST and the column count: loaded when READ_BURST is taken (block - 1
+    // columns to follow), one less with each further column.
+    w.connect(w.either("NEXT_BURST", w.both("LOAD_BURST", accept, is_rdb),
+                       w.both("HOLD_BURST", burst->getOutputPin("Q"), w.invert("NO_NEW_COMMAND", accept))), burst->getInputPin("D"));
+    {
+        PinPtr borrow = w.constant("COLUMN_DECREMENT", true);
+        for (size_t i = 0; i < burst_bits; ++i) {
+            const auto n = std::to_string(i);
+            auto less = w.binary<XORGate>("COLUMNS_LESS_" + n, burst_q[i], borrow);
+            borrow = w.both("COLUMNS_BORROW_" + n, w.invert("COLUMNS_ZERO_" + n, burst_q[i]), borrow);
+            const bool load_bit = config_.burst_words > 1 && (((config_.burst_words - 1) >> i) & 1);
+            auto loaded = w.both("COLUMNS_LOAD_" + n, w.both("BURST_TAKEN_" + n, accept, is_rdb), w.constant("COLUMNS_INITIAL_" + n, load_bit));
+            auto kept = w.both("COLUMNS_KEEP_" + n, w.invert("NOT_TAKING_" + n, accept),
+                               w.either("COLUMNS_STEP_" + n, w.both("COLUMNS_DOWN_" + n, column_step, less),
+                                        w.both("COLUMNS_HOLD_" + n, w.invert("NO_COLUMN_STEP_" + n, column_step), burst_q[i])));
+            w.connect(w.either("COLUMNS_NEXT_" + n, loaded, kept), burst_left[i]->getInputPin("D"));
+        }
+    }
     for (auto [bit, decoded, name] : std::vector<std::tuple<std::shared_ptr<IOComponent>, PinPtr, std::string>>{
-             {c_act, is_act, "C_ACTIVATE"}, {c_rd, is_rd, "C_READ"}, {c_wr, is_wr, "C_WRITE"}, {c_pre, is_pre, "C_PRECHARGE"}, {c_ref, is_ref, "C_REFRESH"}})
+             {c_act, is_act, "C_ACTIVATE"}, {c_rd, is_read_any, "C_READ"}, {c_wr, is_wr, "C_WRITE"}, {c_pre, is_pre, "C_PRECHARGE"}, {c_ref, is_ref, "C_REFRESH"}})
         w.connect(w.either("NEXT_" + name, w.both("LOAD_" + name, accept, decoded),
                            w.both("HOLD_" + name, bit->getOutputPin("Q"), w.invert("NOT_ACCEPT_" + name, accept))),
                   bit->getInputPin("D"));
@@ -296,8 +329,25 @@ void DRAMCommandControl::buildInternals(ComponentBuilder &b) {
     w.connect(memory_detail::payloadMux(b, w, "ROW_SOURCE", getInputPin<32>("ADDR"), refresh_row->getOutputPinDynamic("OUT"), is_ref),
               row->getInputPin<32>("D"));
     w.connect(w.both("LOAD_ROW", accept, w.either("ROW_COMMAND", is_act, is_ref)), row->getInputPin("WE"));
-    w.connect(getInputPin<32>("ADDR"), col->getInputPin<32>("D"));
-    w.connect(w.both("LOAD_COLUMN", accept, w.either("COLUMN_COMMAND", is_rd, is_wr)), col->getInputPin("WE"));
+    // The column: the command's, or the next of the block during a burst.
+    auto next_column = [&] {
+        auto split = bitAdapter(b, "COLUMN_BITS", 32, true);
+        w.connect(col->getOutputPin<32>("Q"), split->getInputPin<32>("IN"));
+        auto join = bitAdapter(b, "NEXT_COLUMN_ADDRESS", 32, false);
+        PinPtr carry = w.constant("COLUMN_INCREMENT", true);
+        const size_t block_bits = std::countr_zero(config_.burst_words);
+        for (size_t i = 0; i < 32; ++i) {
+            auto bit = split->getOutputPin("OUT_" + std::to_string(i));
+            if (i < block_bits) {
+                w.connect(w.binary<XORGate>("COLUMN_SUM_" + std::to_string(i), bit, carry), join->getInputPin("IN_" + std::to_string(i)));
+                carry = w.both("COLUMN_CARRY_" + std::to_string(i), bit, carry);
+            } else w.connect(bit, join->getInputPin("IN_" + std::to_string(i)));
+        }
+        return join->getOutputPinDynamic("OUT");
+    }();
+    auto load_column = w.both("LOAD_COLUMN", accept, w.either("COLUMN_COMMAND", is_read_any, is_wr));
+    w.connect(memory_detail::payloadMux(b, w, "COLUMN_SOURCE", next_column, getInputPin<32>("ADDR"), load_column), col->getInputPin<32>("D"));
+    w.connect(w.either("COLUMN_UPDATE", load_column, column_step), col->getInputPin("WE"));
     w.connect(getInputPinDynamic("WRITE_DATA"), data->getInputPinDynamic("D"));
     w.connect(getInputPinDynamic("WRITE_MASK"), mask->getInputPinDynamic("D"));
     auto load_write = w.both("LOAD_WRITE", accept, is_wr);
@@ -316,7 +366,7 @@ void DRAMCommandControl::buildInternals(ComponentBuilder &b) {
                                                 w.invert("NOT_REFRESH_SENSING", w.both("REFRESH_BEFORE_PRECHARGE", r_ref, w.invert("BEFORE_PRECHARGE", f[refresh_precharge])))}, true);
     w.connect(w.either("PRECHARGING", closed_idle, w.both("PRECHARGE_STEP", r_pre, p[1])), getOutputPin("PRECHARGE"));
     w.connect(w.both("WRITE_PULSE", w.both("WRITE_ON", r_wr, wv[0]), w.invert("WRITE_OFF", wv[1])), getOutputPin("WRITE_ENABLE"));
-    w.connect(w.reduce("BUSY_SHOWN", {B, w.invert("NOT_RELEASING_SHOWN", R), w.invert("NOT_COMPLETE_SHOWN", complete)}, true), getOutputPin("BUSY"));
+    w.connect(w.reduce("BUSY_SHOWN", {B, w.invert("NOT_RELEASING_SHOWN", R), w.invert("NOT_COMPLETE_SHOWN", final_complete)}, true), getOutputPin("BUSY"));
     w.connect(error->getOutputPin("Q"), getOutputPin("ERROR"));
     w.connect(w.either("VALID_SHOWN", valid->getOutputPin("Q"), w.both("READ_COMPLETE_SHOWN", complete, c_rd->getOutputPin("Q"))),
               {getOutputPin("READ_VALID"), getOutputPin("OUTPUT_ENABLE")});
@@ -460,7 +510,7 @@ class DRAMBehavioral : public Primitive, public MemoryDeviceStorage {
         : Primitive(std::move(n), "DRAM<" + std::to_string(width) + ">",
                     [width](IOComponent *s) { devicePins(s, width); }),
           MemoryDeviceStorage(c.depth_words, width, X, c.record_history, c.storage_limits),
-          width_(width), config_(c), control_(width, c.rows(), c.words_per_row), buffer_(c.columns(width), X) {}
+          width_(width), config_(c), control_(width, c.rows(), c.words_per_row, c.burst_words), buffer_(c.columns(width), X) {}
     PrimitiveTiming primitiveTiming() const override { return PrimitiveTiming::SelfTimed; }
     const MemoryStorage &memoryStorage() const override { return storage_; }
     void loadMemoryBytes(uint32_t, const std::vector<uint8_t> &) override {
@@ -538,13 +588,16 @@ void DRAMDeviceConfig::validate(size_t width, bool expanded) const {
     retentionValid(retention_ticks);
     if (phase_ticks < 32 || phase_ticks > 10000 || retention_ticks <= 8 * phase_ticks)
         throw std::invalid_argument("DRAM phase_ticks=32..10000 and retention_ticks>8*phase_ticks required");
+    if (!std::has_single_bit(burst_words) || burst_words > std::max<size_t>(words_per_row, 2) || burst_words > 16)
+        throw std::invalid_argument("DRAM block_words (burst) must be a power of two up to the row and 16");
 }
 DRAMDeviceConfig dramConfigFromParameters(const ParameterMap &p) {
     keys(p, {"depth_words", "words_per_row", "phase_ticks", "retention_ticks", "record_history",
-             "paged", "max_resident_bytes", "max_history_bytes"});
+             "paged", "max_resident_bytes", "max_history_bytes", "block_words"});
     DRAMDeviceConfig c;
     readGeometry(p, c);
     c.phase_ticks = parameter(p, "phase_ticks", 32);
+    c.burst_words = parameter(p, "block_words", 2);
     c.retention_ticks = parameter(p, "retention_ticks", timing::activeTimingProfile().memory.dram_device_retention);
     return c;
 }
@@ -552,6 +605,7 @@ ParameterMap dramParameters(const DRAMDeviceConfig &c) {
     auto p = geometryParameters(c);
     p.insert({{"phase_ticks", std::to_string(c.phase_ticks)},
             {"retention_ticks", std::to_string(c.retention_ticks)}});
+    if (c.burst_words != 2) p["block_words"] = std::to_string(c.burst_words);
     return p;
 }
 DRAMCell::DRAMCell(std::string n, size_t retention)

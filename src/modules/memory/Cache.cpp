@@ -35,7 +35,7 @@ void CacheConfig::validate(size_t width) const {
 
 CacheConfig cacheConfig(const ParameterMap& p) {
     memory_device::keys(p, {"sets", "ways", "block_bytes", "backing_depth_words", "mode", "storage_form",
-                            "tag_technology", "data_technology"});
+                            "tag_technology", "data_technology", "fill"});
     CacheConfig c;
     c.sets = memory_device::parameter(p, "sets", c.sets);
     c.ways = memory_device::parameter(p, "ways", c.ways);
@@ -53,6 +53,11 @@ CacheConfig cacheConfig(const ParameterMap& p) {
     }
     if (auto it = p.find("tag_technology"); it != p.end()) c.tag_technology = technologyFromName(it->second);
     if (auto it = p.find("data_technology"); it != p.end()) c.data_technology = technologyFromName(it->second);
+    if (auto it = p.find("fill"); it != p.end()) {
+        if (it->second == "words") c.burst_fill = false;
+        else if (it->second == "burst") c.burst_fill = true;
+        else throw std::invalid_argument("Cache fill must be words or burst");
+    }
     return c;
 }
 
@@ -63,7 +68,8 @@ ParameterMap cacheParameters(const CacheConfig& c) {
             {"mode", c.read_write ? "read_write" : "read_only"},
             {"storage_form", c.scalable_storage ? "scalable" : "expanded"},
             {"tag_technology", technologyName(c.tag_technology)},
-            {"data_technology", technologyName(c.data_technology)}};
+            {"data_technology", technologyName(c.data_technology)},
+            {"fill", c.burst_fill ? "burst" : "words"}};
 }
 
 void cachePins(IOComponent* self, size_t width) {
@@ -105,6 +111,7 @@ public:
               self->addPinDynamic("MASK", PinType::INPUT, width / 8);
               self->addPin("READ", PinType::OUTPUT);
               self->addPin("WRITE", PinType::OUTPUT);
+              self->addPin("BURST", PinType::OUTPUT);
               self->addPin("ACCEPT", PinType::OUTPUT);
               self->addPin<3>("STATUS", PinType::OUTPUT);
           }), width_(width), depth_(depth), writable_(writable),
@@ -121,10 +128,14 @@ public:
         auto o0 = op->getOutputPin("OUT_0");
         auto o1 = op->getOutputPin("OUT_1");
         auto o2 = op->getOutputPin("OUT_2");
-        auto reserved = w.either("RESERVED_OPCODE", o1, o2);
-        auto read_opcode = w.reduce("READ_OPCODE", {w.invert("NOT_WRITE", o0),
-            w.invert("NOT_RESERVED", reserved)}, true);
+        // Read (0), write (1) and burst read (4); program, erase and the
+        // other codes are reserved here.
+        auto reserved = w.either("RESERVED_OPCODE", o1, w.both("NOT_A_CACHE_OPCODE", o2, o0));
+        auto not_o1 = w.invert("NOT_OP_BIT_1", o1);
+        auto read_opcode = w.reduce("READ_OPCODE", {w.invert("NOT_WRITE", o0), not_o1,
+            w.invert("NOT_BURST_OPCODE", o2)}, true);
         auto write_opcode = w.both("WRITE_OPCODE", o0, w.invert("WRITE_NOT_RESERVED", reserved));
+        auto burst_opcode = w.reduce("BURST_OPCODE", {w.invert("BURST_NOT_WRITE", o0), not_o1, o2}, true);
         std::vector<PinPtr> low;
         for (size_t i = 0; i < std::countr_zero(width_ / 8); ++i)
             low.push_back(addr->getOutputPin("OUT_" + std::to_string(i)));
@@ -141,7 +152,9 @@ public:
             known->getOutputPin("MASK_KNOWN"), w.constant("WRITABLE", writable_)}, true);
         w.connect(read, getOutputPin("READ"));
         w.connect(write, getOutputPin("WRITE"));
-        w.connect(w.either("ACCEPT", read, write), getOutputPin("ACCEPT"));
+        auto burst = w.both("VALID_BURST", valid, burst_opcode);
+        w.connect(burst, getOutputPin("BURST"));
+        w.connect(w.reduce("ACCEPT", {read, write, burst}, false), getOutputPin("ACCEPT"));
         auto constant = [&](const std::string& name, unsigned value) -> PinPtr {
             return builder.addNewComponent<ConstantValue<3>>(name, value)->getOutputPin<3>("OUT");
         };
@@ -374,82 +387,39 @@ private:
     std::string type_;
 };
 
-// The controller's sequence, one state bit each: LOOKUP (the cycle after a
-// request is taken: every way's tag and data arrive and are compared),
-// MEMORY_SEND and MEMORY_WAIT (a backing-memory request: a fill word for a
-// read miss, or the write of a write-through) and DONE (the response is
-// shown until the front end finishes it).
+// The controller's state bits: LOOKUP (the cycle after a request is taken:
+// every way's tag and data arrive and are compared), MEMORY_SEND and
+// MEMORY_WAIT (a backing-memory request: a fill, or the write of a
+// write-through), STREAM (the further words of a burst read that hit) and
+// DONE (a response is shown until the front end finishes it). The
+// controller computes each bit's next value.
 class CacheLookupPhases : public IOComponent {
 public:
+    static constexpr std::array<const char*, 5> names = {"LOOKUP", "MEMORY_SEND", "MEMORY_WAIT", "STREAM", "DONE"};
     explicit CacheLookupPhases(std::string name)
         : IOComponent(std::move(name), [](IOComponent* self) {
-              for (auto pin : {"CLK", "RST", "START", "REQUEST_OK", "FINISH", "IS_WRITE", "HIT",
-                               "MEM_REQ_READY", "MEM_RSP_VALID", "MEM_OK", "LAST_FILL_WORD"})
-                  self->addPin(pin, PinType::INPUT);
-              for (auto pin : {"LOOKUP", "MEMORY_SEND", "MEMORY_WAIT", "DONE", "WORKING",
-                               "INVALID_REQUEST", "READ_HIT", "READ_MISS", "WRITE_LOOKUP",
-                               "FILL_DONE", "FILL_SUCCESS", "FILL_FAILURE", "FILL_COMPLETE",
-                               "WRITE_DONE", "WRITE_OK"})
-                  self->addPin(pin, PinType::OUTPUT);
+              for (auto pin : {"CLK", "RST"}) self->addPin(pin, PinType::INPUT);
+              for (auto name : names) {
+                  self->addPin(std::string("NEXT_") + name, PinType::INPUT);
+                  self->addPin(name, PinType::OUTPUT);
+              }
           }) {}
     const char* getTypeName() const override { return "CacheLookupPhases"; }
     void buildInternals(ComponentBuilder& builder) override {
         StructuralWiring w(builder);
-        auto state = [&](const char* name) {
+        for (auto name : names) {
             auto bit = builder.add(circuit::families::ClockedStateBit, name);
             for (auto pin : {"CLK", "RST"}) w.connect(getInputPin(pin), bit->getInputPin(pin));
-            return bit;
-        };
-        auto lookup = state("LOOKUP"), send = state("MEMORY_SEND"), wait = state("MEMORY_WAIT"), done = state("DONE");
-        const auto L = lookup->getOutputPin("Q"), MS = send->getOutputPin("Q"), MW = wait->getOutputPin("Q"),
-                   D = done->getOutputPin("Q");
-        auto start = getInputPin("START");
-        auto ok = getInputPin("REQUEST_OK");
-        auto is_write = getInputPin("IS_WRITE");
-        auto is_read = w.invert("IS_READ", is_write);
-        auto hit = getInputPin("HIT");
-        auto valid_start = w.both("VALID_START", start, ok);
-        auto invalid = w.both("INVALID_REQUEST", start, w.invert("REQUEST_REJECTED", ok));
-        auto read_hit = w.reduce("READ_HIT", {L, is_read, hit}, true);
-        auto read_miss = w.reduce("READ_MISS", {L, is_read, w.invert("NOT_HIT", hit)}, true);
-        auto write_lookup = w.both("WRITE_LOOKUP", L, is_write);
-        // The backing-memory request: accepted while MEMORY_SEND, answered
-        // then or later.
-        auto sent = w.both("MEMORY_SENT", MS, getInputPin("MEM_REQ_READY"));
-        auto rsp = getInputPin("MEM_RSP_VALID");
-        auto mem_done = w.both("MEMORY_DONE", w.either("MEMORY_ACTIVE", sent, MW), rsp);
-        auto mem_ok = getInputPin("MEM_OK");
-        auto fill_done = w.both("FILL_DONE", mem_done, is_read);
-        auto fill_success = w.both("FILL_SUCCESS", fill_done, mem_ok);
-        auto fill_failure = w.both("FILL_FAILURE", fill_done, w.invert("FILL_NOT_OK", mem_ok));
-        auto last = getInputPin("LAST_FILL_WORD");
-        auto fill_complete = w.both("FILL_COMPLETE", fill_success, last);
-        auto more = w.both("MORE_FILL_WORDS", fill_success, w.invert("NOT_LAST_FILL_WORD", last));
-        auto write_done = w.both("WRITE_DONE", mem_done, is_write);
-        auto write_ok = w.both("WRITE_OK", write_done, mem_ok);
-        w.connect(valid_start, lookup->getInputPin("D"));
-        w.connect(w.reduce("NEXT_MEMORY_SEND", {read_miss, write_lookup, more,
-            w.both("STAY_MEMORY_SEND", MS, w.invert("NOT_SENT", getInputPin("MEM_REQ_READY")))}, false),
-            send->getInputPin("D"));
-        auto no_response = w.invert("NO_MEMORY_RESPONSE", rsp);
-        w.connect(w.both("NEXT_MEMORY_WAIT", w.either("WAITING", sent, MW), no_response), wait->getInputPin("D"));
-        w.connect(w.reduce("NEXT_DONE", {invalid, read_hit, fill_failure, fill_complete, write_done,
-            w.both("STAY_DONE", D, w.invert("NOT_FINISHED", getInputPin("FINISH")))}, false), done->getInputPin("D"));
-        for (const auto& [name, signal] : std::vector<std::pair<const char*, PinPtr>>{
-                 {"LOOKUP", L}, {"MEMORY_SEND", MS}, {"MEMORY_WAIT", MW}, {"DONE", D},
-                 {"WORKING", w.reduce("WORKING_NOW", {L, MS, MW}, false)},
-                 {"INVALID_REQUEST", invalid}, {"READ_HIT", read_hit}, {"READ_MISS", read_miss},
-                 {"WRITE_LOOKUP", write_lookup}, {"FILL_DONE", fill_done}, {"FILL_SUCCESS", fill_success},
-                 {"FILL_FAILURE", fill_failure}, {"FILL_COMPLETE", fill_complete},
-                 {"WRITE_DONE", write_done}, {"WRITE_OK", write_ok}})
-            w.connect(signal, getOutputPin(name));
+            w.connect(getInputPin(std::string("NEXT_") + name), bit->getInputPin("D"));
+            w.connect(bit->getOutputPin("Q"), getOutputPin(name));
+        }
         w.finish();
     }
 };
 
 // Bank pins of one way's tag or data bank, as the controller drives them:
-// READ (read at the next edge, every way at once), WRITE (write at the next
-// edge), WORD_ADDR, WRITE_DATA, WRITE_MASK; READ_DATA comes back.
+// READ (read at the next edge), WRITE (write at the next edge), WORD_ADDR,
+// WRITE_DATA, WRITE_MASK; READ_DATA comes back.
 void bankPins(IOComponent* self, const std::string& prefix, size_t width) {
     self->addPin(prefix + "READ", PinType::OUTPUT);
     self->addPin(prefix + "WRITE", PinType::OUTPUT);
@@ -460,9 +430,12 @@ void bankPins(IOComponent* self, const std::string& prefix, size_t width) {
 }
 
 // The cache controller: a request is looked up in every way at once (one
-// cycle), a read miss fills the victim line word by word from the backing
-// memory, a write goes through to the backing memory. The banks are native
-// devices driven directly (Cache<Width>::buildInternals).
+// cycle); a read miss fills the victim line from the backing memory (word
+// by word, or in one burst); a write goes through to the backing memory. A
+// burst read (op 4) is answered with the words of the line from the
+// requested one on, wrapping: from the data bank one word per cycle after a
+// hit, or forwarded as the fill brings them after a miss. The banks are
+// native devices driven directly (Cache<Width>::buildInternals).
 template<size_t Width>
 class CacheBankController : public IOComponent {
 public:
@@ -485,15 +458,18 @@ template<size_t Width>
 void CacheBankController<Width>::buildInternals(ComponentBuilder& builder) {
     StructuralWiring w(builder);
     auto low = w.constant("LOW", false);
+    auto high = w.constant("HIGH", true);
     auto zero_data = builder.addNewComponent<ConstantValue<Width>>("ZERO_DATA", 0)->template getOutputPin<Width>("OUT");
     auto zero3 = builder.addNewComponent<ConstantValue<3>>("ZERO_STATUS", 0)->getOutputPin<3>("OUT");
-    auto read_op = builder.addNewComponent<ConstantValue<3>>("READ_OP", 0)->getOutputPin<3>("OUT");
+    auto read_op = builder.addNewComponent<ConstantValue<3>>("READ_OP", config_.burst_fill ? 4 : 0)->getOutputPin<3>("OUT");
     auto write_op = builder.addNewComponent<ConstantValue<3>>("WRITE_OP", 1)->getOutputPin<3>("OUT");
     auto full_tag_mask = builder.addNewComponent<ConstantValue<4>>("FULL_TAG_MASK", 15)->getOutputPin<4>("OUT");
     auto full_data_mask = builder.addNewComponent<ConstantValue<Width / 8>>("FULL_DATA_MASK", (1u << (Width / 8)) - 1)
                               ->template getOutputPin<Width / 8>("OUT");
     auto zero_mask = builder.addNewComponent<ConstantValue<Width / 8>>("ZERO_MASK", 0)
                          ->template getOutputPin<Width / 8>("OUT");
+    const size_t words_per_line = config_.block_bytes / (Width / 8);
+    const bool streams = words_per_line > 1;
 
     auto front = builder.addNewComponent<MemoryTransactionPort>("FRONTEND", Width);
     for (auto pin : {"CLK", "RST", "REQ_VALID", "REQ_OP", "REQ_ADDR", "REQ_WRITE_DATA",
@@ -507,6 +483,8 @@ void CacheBankController<Width>::buildInternals(ComponentBuilder& builder) {
     w.connect(front->getOutputPin<32>("ADDR"), check->getInputPin<32>("ADDR"));
     w.connect(front->getOutputPinDynamic("MASK"), check->getInputPinDynamic("MASK"));
     auto start = front->getOutputPin("START");
+    auto valid_start = w.both("VALID_START", start, check->getOutputPin("ACCEPT"));
+    auto invalid = w.both("INVALID_REQUEST", start, w.invert("REQUEST_REJECTED", check->getOutputPin("ACCEPT")));
 
     auto addr_reg = builder.add(circuit::families::registerWord(32), "REQUEST_ADDRESS");
     auto result_reg = builder.add(circuit::families::registerWord(Width), "READ_RESULT");
@@ -519,16 +497,21 @@ void CacheBankController<Width>::buildInternals(ComponentBuilder& builder) {
     w.connect(front->getOutputPin<32>("ADDR"), addr_reg->getInputPin<32>("D"));
     w.connect(front->getOutputPinDynamic("DATA"), write_data_reg->getInputPinDynamic("D"));
     w.connect(front->getOutputPinDynamic("MASK"), write_mask_reg->getInputPinDynamic("D"));
-    auto state_bit = [&](const char* name) {
+    auto state_bit = [&](const std::string& name) {
         auto bit = builder.add(circuit::families::ClockedStateBit, name);
         for (auto pin : {"CLK", "RST"}) w.connect(getInputPin(pin), bit->getInputPin(pin));
         return bit;
     };
-    // A clocked state bit has no enable: hold the operation while busy.
-    auto write_bit = state_bit("IS_WRITE");
-    w.connect(w.either("NEXT_WRITE", w.both("ACCEPT_WRITE", start, check->getOutputPin("WRITE")),
-        w.both("HOLD_WRITE", write_bit->getOutputPin("Q"), w.invert("NOT_NEW_REQUEST", start))), write_bit->getInputPin("D"));
-    auto is_write = write_bit->getOutputPin("Q");
+    // The request's kind, held while it is served (a clocked state bit has
+    // no enable).
+    auto held = [&](const std::string& name, PinPtr decoded) {
+        auto bit = state_bit(name);
+        w.connect(w.either("NEXT_" + name, w.both("ACCEPT_" + name, start, decoded),
+            w.both("HOLD_" + name, bit->getOutputPin("Q"), w.invert("NOT_NEW_" + name, start))), bit->getInputPin("D"));
+        return bit->getOutputPin("Q");
+    };
+    auto is_write = held("IS_WRITE", check->getOutputPin("WRITE"));
+    auto is_burst = held("IS_BURST", check->getOutputPin("BURST"));
     auto is_read = w.invert("IS_READ", is_write);
     auto child_clock = memory_detail::bridge(builder, w, "CHILD_CLOCK", getInputPin("CLK"));
     auto child_reset = memory_detail::bridge(builder, w, "CHILD_RESET", getInputPin("RST"));
@@ -538,32 +521,54 @@ void CacheBankController<Width>::buildInternals(ComponentBuilder& builder) {
     const size_t offset = std::countr_zero(config_.block_bytes);
     const size_t set_bits = std::countr_zero(config_.sets);
     const size_t word_shift = std::countr_zero(Width / 8);
+    const size_t line_bits = offset - word_shift;
     auto address_path = builder.addNewComponent<CacheAddressPath<Width>>("ADDRESS_PATH", config_);
     for (auto pin : {"CLK", "RST"}) w.connect(getInputPin(pin), address_path->getInputPin(pin));
     w.connect(addr_reg->getOutputPin<32>("Q"), address_path->template getInputPin<32>("REQUEST_ADDRESS"));
     auto tag_value = address_path->template getOutputPin<32>("TAG_VALUE");
-    // A 32-bit field `count` bits wide from bit `from` of `source`, moved to bit 0.
-    auto field = [&](const std::string& name, PinPtr source, size_t from, size_t count) -> PinPtr {
-        auto split = builder.addNewComponent<BitSplitter<32>>(name + "_BITS");
+    auto bits_of = [&](const std::string& name, PinPtr source) {
+        auto split = builder.addNewComponent<BitSplitter<32>>(name);
         w.connect(source, split->getInputPin<32>("IN"));
-        auto join = builder.addNewComponent<BitJoiner<32>>(name);
-        for (size_t bit = 0; bit < 32; ++bit)
-            w.connect(bit < count ? PinPtr(split->getOutputPin("OUT_" + std::to_string(from + bit))) : low,
-                      join->getInputPin("IN_" + std::to_string(bit)));
-        return join->getOutputPin<32>("OUT");
+        std::vector<PinPtr> out;
+        for (size_t bit = 0; bit < 32; ++bit) out.push_back(split->getOutputPin("OUT_" + std::to_string(bit)));
+        return out;
     };
-    // Bank word addresses: the set (tag bank) and the set and word in the
-    // line (data bank), from the front end's address in the accepting cycle
-    // (a clocked bank registers it there) and from the held address after it
-    // (a flip-flop bank reads it then).
+    auto join = [&](const std::string& name, const std::vector<PinPtr>& bits) -> PinPtr {
+        auto j = builder.addNewComponent<BitJoiner<32>>(name);
+        for (size_t bit = 0; bit < 32; ++bit) w.connect(bit < bits.size() ? bits[bit] : low, j->getInputPin("IN_" + std::to_string(bit)));
+        return j->getOutputPin<32>("OUT");
+    };
+    // The sum of two line-word offsets, wrapping within the line.
+    auto add_offsets = [&](const std::string& name, const std::vector<PinPtr>& a, const std::vector<PinPtr>& b) {
+        std::vector<PinPtr> sum;
+        PinPtr carry = low;
+        for (size_t i = 0; i < line_bits; ++i) {
+            const auto n = name + "_" + std::to_string(i);
+            auto half = w.binary<XORGate>(n + "_HALF", a[i], b[i]);
+            sum.push_back(w.binary<XORGate>(n + "_SUM", half, carry));
+            carry = w.either(n + "_CARRY", w.both(n + "_BOTH", a[i], b[i]), w.both(n + "_PASS", half, carry));
+        }
+        return sum;
+    };
+    auto request_bits = bits_of("REQUEST_ADDRESS_BITS", addr_reg->getOutputPin<32>("Q"));
+    std::vector<PinPtr> wanted_word(request_bits.begin() + word_shift, request_bits.begin() + offset);
+    std::vector<PinPtr> set_index(request_bits.begin() + offset, request_bits.begin() + offset + set_bits);
+    // A data-bank word address: the set and a word of the line.
+    auto data_address = [&](const std::string& name, const std::vector<PinPtr>& word) {
+        std::vector<PinPtr> bits = word;
+        bits.insert(bits.end(), set_index.begin(), set_index.end());
+        return join(name, bits);
+    };
+    // The banks' addresses for a lookup: the front end's address in the
+    // accepting cycle (a clocked bank registers it there), the held address
+    // after it (a flip-flop bank reads it then).
     auto read_address = memory_detail::payloadMux(builder, w, "READ_ADDRESS",
         addr_reg->getOutputPin<32>("Q"), front->getOutputPin<32>("ADDR"), start);
-    auto tag_read_index = field("TAG_READ_INDEX", read_address, offset, set_bits);
-    auto data_read_index = field("DATA_READ_INDEX", read_address, word_shift, offset + set_bits - word_shift);
-    auto tag_index = field("TAG_INDEX", addr_reg->getOutputPin<32>("Q"), offset, set_bits);
-    auto data_index = field("DATA_INDEX", addr_reg->getOutputPin<32>("Q"), word_shift, offset + set_bits - word_shift);
-    auto fill_index = field("FILL_INDEX", address_path->template getOutputPin<32>("FILL_DATA_ADDRESS"),
-                            word_shift, offset + set_bits - word_shift);
+    auto read_bits = bits_of("READ_ADDRESS_BITS", read_address);
+    auto tag_read_index = join("TAG_READ_INDEX", std::vector<PinPtr>(read_bits.begin() + offset, read_bits.begin() + offset + set_bits));
+    auto lookup_index = join("DATA_READ_INDEX", std::vector<PinPtr>(read_bits.begin() + word_shift, read_bits.begin() + offset + set_bits));
+    auto tag_index = join("TAG_INDEX", set_index);
+    auto data_index = data_address("DATA_INDEX", wanted_word);
 
     std::vector<std::shared_ptr<CacheLineState>> lines;
     std::vector<PinPtr> matches;
@@ -591,68 +596,164 @@ void CacheBankController<Width>::buildInternals(ComponentBuilder& builder) {
                 w.invert("WAY_ONE_INVALID", lines[1]->getOutputPin("VALID")),
                 w.invert("WAY_ONE_LRU", replacement->getOutputPin("MRU"))));
     }
-
     auto status_ok = [&](const std::string& name, PinPtr status) -> PinPtr {
         auto split = builder.addNewComponent<BitSplitter<3>>(name + "_BITS");
         w.connect(status, split->getInputPin<3>("IN"));
         return w.invert(name + "_OK", w.reduce(name + "_ERROR", {split->getOutputPin("OUT_0"),
             split->getOutputPin("OUT_1"), split->getOutputPin("OUT_2")}, false));
     };
+
     auto phases = builder.addNewComponent<CacheLookupPhases>("PHASES");
     for (auto pin : {"CLK", "RST"}) w.connect(getInputPin(pin), phases->getInputPin(pin));
-    w.connect(start, phases->getInputPin("START"));
-    w.connect(check->getOutputPin("ACCEPT"), phases->getInputPin("REQUEST_OK"));
-    w.connect(front->getOutputPin("FINISH"), phases->getInputPin("FINISH"));
-    w.connect(is_write, phases->getInputPin("IS_WRITE"));
-    w.connect(hit, phases->getInputPin("HIT"));
-    w.connect(getInputPin("MEM_REQ_READY"), phases->getInputPin("MEM_REQ_READY"));
-    w.connect(getInputPin("MEM_RSP_VALID"), phases->getInputPin("MEM_RSP_VALID"));
-    w.connect(status_ok("MEMORY_STATUS", getInputPin<3>("MEM_RSP_STATUS")), phases->getInputPin("MEM_OK"));
-    w.connect(address_path->getOutputPin("LAST_FILL_WORD"), phases->getInputPin("LAST_FILL_WORD"));
-    auto signal = [&](const char* name) -> PinPtr { return phases->getOutputPin(name); };
-    auto read_hit = signal("READ_HIT"), read_miss = signal("READ_MISS"), write_lookup = signal("WRITE_LOOKUP");
-    auto fill_success = signal("FILL_SUCCESS"), fill_failure = signal("FILL_FAILURE"), fill_complete = signal("FILL_COMPLETE");
-    auto write_done = signal("WRITE_DONE"), write_ok = signal("WRITE_OK"), invalid = signal("INVALID_REQUEST");
+    const auto L = phases->getOutputPin("LOOKUP"), MS = phases->getOutputPin("MEMORY_SEND"),
+               MW = phases->getOutputPin("MEMORY_WAIT"), ST = phases->getOutputPin("STREAM"), D = phases->getOutputPin("DONE");
+    auto lookup_read = w.both("LOOKUP_READ", L, is_read);
+    auto read_hit = w.both("READ_HIT", lookup_read, hit);
+    auto read_miss = w.both("READ_MISS", lookup_read, w.invert("NOT_HIT", hit));
+    auto write_lookup = w.both("WRITE_LOOKUP", L, is_write);
+    auto burst_hit = w.both("BURST_HIT", read_hit, is_burst);
+    // Backing memory: accepted while MEMORY_SEND; answered then or later, a
+    // burst fill one word per response.
+    auto sent = w.both("MEMORY_SENT", MS, getInputPin("MEM_REQ_READY"));
+    // A response leaves the result register as the front end finishes it
+    // (no response held: SPACE, registered); a burst's next word is taken
+    // only then. A burst miss forwards each fill word, so its backing
+    // responses wait for that room too.
+    auto room = w.either("RESULT_ROOM", w.invert("NOTHING_SHOWN", D), front->getOutputPin("SPACE"));
+    auto rsp_ready = w.both("MEMORY_RESPONSE_READY", w.either("MEMORY_PHASE", MS, MW),
+        w.either("FORWARD_ROOM", w.invert("NOT_FORWARDING", is_burst), room));
+    auto rsp = w.both("MEMORY_RESPONSE_TAKEN", getInputPin("MEM_RSP_VALID"), rsp_ready);
+    auto mem_done = w.both("MEMORY_DONE", w.either("MEMORY_ACTIVE", sent, MW), rsp);
+    auto mem_ok = status_ok("MEMORY_STATUS", getInputPin<3>("MEM_RSP_STATUS"));
+    auto fill_done = w.both("FILL_DONE", mem_done, is_read);
+    auto fill_success = w.both("FILL_SUCCESS", fill_done, mem_ok);
+    auto fill_failure = w.both("FILL_FAILURE", fill_done, w.invert("FILL_NOT_OK", mem_ok));
+    auto last_fill = address_path->getOutputPin("LAST_FILL_WORD");
+    auto fill_complete = w.both("FILL_COMPLETE", fill_success, last_fill);
+    auto more_fill = w.both("MORE_FILL_WORDS", fill_success, w.invert("NOT_LAST_FILL_WORD", last_fill));
+    auto write_done = w.both("WRITE_DONE", mem_done, is_write);
+    auto write_ok = w.both("WRITE_OK", write_done, mem_ok);
+    // A burst hit's further words: STREAM_OFFSET counts the words from the
+    // requested one; one is taken when there is room.
+    std::vector<std::shared_ptr<IOComponent>> stream_count;
+    std::vector<PinPtr> stream_q;
+    for (size_t i = 0; i < line_bits; ++i) { stream_count.push_back(state_bit("STREAM_OFFSET_" + std::to_string(i))); stream_q.push_back(stream_count.back()->getOutputPin("Q")); }
+    auto stream_take = w.both("STREAM_TAKE", ST, room);
+    std::vector<PinPtr> stream_last_terms;
+    for (size_t i = 0; i < line_bits; ++i) stream_last_terms.push_back(stream_q[i]);
+    auto stream_last = streams ? w.reduce("STREAM_LAST_WORD", stream_last_terms, true) : high;
+    // STREAM_OFFSET: 1 when a burst hit starts streaming, one more per word taken.
+    {
+        PinPtr carry = high;
+        for (size_t i = 0; i < line_bits; ++i) {
+            const auto n = std::to_string(i);
+            auto sum = w.binary<XORGate>("STREAM_SUM_" + n, stream_q[i], carry);
+            carry = w.both("STREAM_CARRY_" + n, stream_q[i], carry);
+            auto stepped = w.either("STREAM_NEXT_" + n, w.both("STREAM_STEP_" + n, stream_take, sum),
+                                    w.both("STREAM_KEEP_" + n, w.invert("STREAM_NO_STEP_" + n, stream_take), stream_q[i]));
+            auto start_value = w.both("STREAM_START_" + n, burst_hit, w.constant("STREAM_FIRST_" + n, i == 0));
+            w.connect(w.either("STREAM_OFFSET_NEXT_" + n, start_value, w.both("STREAM_HOLD_" + n, w.invert("STREAM_NOT_STARTING_" + n, burst_hit), stepped)),
+                      stream_count[i]->getInputPin("D"));
+        }
+    }
+    // A fill brings the line from the requested word on, wrapping (as a
+    // burst does, and word by word in the same order): the fill word's
+    // offset is the requested one plus the address path's count, and the
+    // requested word is the first.
+    auto fill_bits = bits_of("FILL_COUNT_BITS", address_path->template getOutputPin<32>("FILL_BACKING_ADDRESS"));
+    std::vector<PinPtr> fill_count(fill_bits.begin() + word_shift, fill_bits.begin() + offset);
+    auto fill_word = add_offsets("FILL_WORD", wanted_word, fill_count);
+    auto fill_index = data_address("FILL_INDEX", fill_word);
+    PinPtr requested = high;
+    if (streams) {
+        std::vector<PinPtr> first;
+        for (size_t i = 0; i < line_bits; ++i) first.push_back(w.invert("FIRST_FILL_WORD_" + std::to_string(i), fill_count[i]));
+        requested = w.reduce("REQUESTED_WORD", first, true);
+    }
 
-    // The way a fill or a write-through targets: the victim of a read miss,
-    // the hit way of a write; and whether that write hit.
+    // Responses. Each sets DONE, LAST (this one ends the transaction) and the
+    // result and status registers.
+    auto forward = w.both("FORWARD_FILL_WORD", fill_success, is_burst);
+    auto read_answered = w.both("READ_ANSWERED", fill_complete, w.invert("NOT_A_BURST", is_burst));
+    auto respond = w.reduce("RESPOND", {invalid, read_hit, stream_take, forward, read_answered, fill_failure, write_done}, false);
+    auto ends = w.reduce("RESPONSE_ENDS", {invalid, w.both("SINGLE_WORD_HIT", read_hit, streams ? w.invert("HIT_NOT_BURST", is_burst) : high),
+        w.both("LAST_STREAM_WORD", stream_take, stream_last), w.both("LAST_FORWARDED", forward, last_fill),
+        read_answered, fill_failure, write_done}, false);
+    auto last_bit = state_bit("LAST");
+    w.connect(w.either("NEXT_LAST", w.both("NEW_LAST", respond, ends),
+        w.both("HOLD_LAST", last_bit->getOutputPin("Q"), w.invert("NO_NEW_RESPONSE", respond))), last_bit->getInputPin("D"));
+    w.connect(last_bit->getOutputPin("Q"), front->getInputPin("LAST"));
+    w.connect(D, front->getInputPin("DONE"));
+
+    // Next states.
+    w.connect(valid_start, phases->getInputPin("NEXT_LOOKUP"));
+    w.connect(w.reduce("NEXT_MEMORY_SEND_VALUE", {read_miss, write_lookup,
+        config_.burst_fill ? low : more_fill,
+        w.both("STAY_MEMORY_SEND", MS, w.invert("NOT_SENT", getInputPin("MEM_REQ_READY")))}, false),
+        phases->getInputPin("NEXT_MEMORY_SEND"));
+    auto waiting = w.both("STILL_WAITING", w.either("WAITING", sent, MW), w.invert("NO_MEMORY_RESPONSE", rsp));
+    w.connect(config_.burst_fill ? w.either("NEXT_MEMORY_WAIT_VALUE", waiting, more_fill) : waiting, phases->getInputPin("NEXT_MEMORY_WAIT"));
+    w.connect(streams ? w.either("NEXT_STREAM_VALUE", burst_hit, w.both("STAY_STREAM", ST, w.invert("STREAM_ENDS", w.both("STREAM_DONE", stream_take, stream_last))))
+                      : low, phases->getInputPin("NEXT_STREAM"));
+    w.connect(w.either("NEXT_DONE_VALUE", respond, w.both("STAY_DONE", D, w.invert("NOT_FINISHED", front->getOutputPin("FINISH")))),
+              phases->getInputPin("NEXT_DONE"));
+
+    // The way a fill, a write-through or a stream uses: the victim of a read
+    // miss, the hit way of a write or a burst hit; and whether that write hit.
     std::shared_ptr<IOComponent> current_way;
     PinPtr way_one = low;
     if (config_.ways == 2) {
         current_way = state_bit("CURRENT_WAY");
         way_one = current_way->getOutputPin("Q");
-        auto choose = w.either("CHOOSE_WAY", read_miss, write_lookup);
+        auto choose = w.reduce("CHOOSE_WAY", {read_miss, write_lookup, burst_hit}, false);
         auto chosen_one = w.either("CHOSEN_WAY_ONE", w.both("VICTIM_IS_ONE", read_miss, victim_one),
-                                   w.both("WRITE_HIT_ONE", write_lookup, hit_one));
+                                   w.both("HIT_WAY_ONE", w.either("WRITE_OR_BURST_HIT", write_lookup, burst_hit), hit_one));
         w.connect(w.either("NEXT_CURRENT_WAY", chosen_one, w.both("HOLD_CURRENT_WAY", way_one, w.invert("NOT_CHOOSING", choose))),
                   current_way->getInputPin("D"));
     }
     auto write_hit_bit = state_bit("WRITE_HIT");
     w.connect(w.either("NEXT_WRITE_HIT", w.both("WRITE_HIT_NOW", write_lookup, hit),
-        w.both("HOLD_WRITE_HIT", write_hit_bit->getOutputPin("Q"), w.invert("NOT_LOOKING_UP", signal("LOOKUP")))),
+        w.both("HOLD_WRITE_HIT", write_hit_bit->getOutputPin("Q"), w.invert("NOT_LOOKING_UP", L))),
         write_hit_bit->getInputPin("D"));
     auto update_written = w.both("UPDATE_WRITTEN_LINE", write_ok, write_hit_bit->getOutputPin("Q"));
 
-    // Banks: every way read when a request is taken; the current way's data
-    // bank written with a fill word or a write hit, its tag bank with the
-    // last fill word.
-    auto valid_start = w.both("VALID_START", start, check->getOutputPin("ACCEPT"));
+    // Data-bank reads during a burst hit. A flip-flop bank is read in the
+    // cycle its word is taken. A clocked bank shows at an edge the word it
+    // was given before it: the second word is given in the lookup cycle,
+    // then the next word as one is taken, or the same word again.
+    auto stream_word = add_offsets("STREAM_WORD", wanted_word, stream_q);
+    const bool clocked_data = config_.data_technology == Technology::SRAM;
+    PinPtr stream_index = data_address("STREAM_INDEX", stream_word);
+    auto lookup_burst = streams ? w.both("LOOKUP_BURST", L, is_burst) : low;
+    PinPtr data_read = valid_start, reading_stream = ST;
+    if (clocked_data && streams) {
+        std::vector<PinPtr> one_bits(line_bits, low);
+        one_bits[0] = high;
+        auto next_index = data_address("NEXT_STREAM_INDEX", add_offsets("NEXT_STREAM_WORD", stream_word, one_bits));
+        stream_index = memory_detail::payloadMux(builder, w, "STREAM_HOLD_OR_NEXT", stream_index, next_index, stream_take);
+        stream_index = memory_detail::payloadMux(builder, w, "STREAM_OR_SECOND_INDEX", stream_index,
+            data_address("SECOND_INDEX", add_offsets("SECOND_WORD", wanted_word, one_bits)), L);
+        auto stream_read = w.both("STREAM_READ", ST, w.invert("STREAM_FINISHING", w.both("STREAM_LAST_TAKEN", stream_take, stream_last)));
+        data_read = w.reduce("DATA_READ_NOW", {valid_start, lookup_burst, stream_read}, false);
+        reading_stream = w.either("READING_STREAM", lookup_burst, ST);
+    }
+
     auto data_write_word = memory_detail::payloadMux(builder, w, "DATA_WRITE_WORD",
         getInputPinDynamic("MEM_RSP_READ_DATA"), write_data_reg->getOutputPinDynamic("Q"), is_write);
     auto data_write_mask = memory_detail::payloadMux(builder, w, "DATA_WRITE_MASK_SOURCE",
         full_data_mask, write_mask_reg->getOutputPinDynamic("Q"), is_write);
     auto data_write_index = memory_detail::payloadMux(builder, w, "DATA_WRITE_INDEX", fill_index, data_index, is_write);
     auto data_writing = w.either("DATA_WRITING", fill_success, update_written);
+    auto data_read_index = memory_detail::payloadMux(builder, w, "DATA_LOOKUP_OR_STREAM", lookup_index, stream_index, reading_stream);
     for (size_t way = 0; way < config_.ways; ++way) {
         const auto n = std::to_string(way);
         auto this_way = way == 0 ? w.invert("CURRENT_WAY_ZERO", way_one) : way_one;
         auto data_write = w.both("DATA_WRITE_" + n, data_writing, this_way);
         auto tag_write = w.both("TAG_WRITE_" + n, fill_complete, this_way);
-        for (auto [bank, write] : std::vector<std::pair<std::string, PinPtr>>{{"TAG", tag_write}, {"DATA", data_write}}) {
-            const auto p = bank + n + "_";
-            w.connect(valid_start, getOutputPin(p + "READ"));
-            w.connect(write, getOutputPin(p + "WRITE"));
-        }
+        w.connect(valid_start, getOutputPin("TAG" + n + "_READ"));
+        w.connect(tag_write, getOutputPin("TAG" + n + "_WRITE"));
+        w.connect(data_read, getOutputPin("DATA" + n + "_READ"));
+        w.connect(data_write, getOutputPin("DATA" + n + "_WRITE"));
         w.connect(memory_detail::payloadMux(builder, w, "TAG_ADDRESS_" + n, tag_read_index, tag_index, tag_write),
                   getOutputPin<32>("TAG" + n + "_WORD_ADDR"));
         w.connect(tag_value, getOutputPin<32>("TAG" + n + "_WRITE_DATA"));
@@ -661,16 +762,15 @@ void CacheBankController<Width>::buildInternals(ComponentBuilder& builder) {
                   getOutputPin<32>("DATA" + n + "_WORD_ADDR"));
         w.connect(data_write_word, getOutputPinDynamic("DATA" + n + "_WRITE_DATA"));
         w.connect(data_write_mask, getOutputPinDynamic("DATA" + n + "_WRITE_MASK"));
-        // Line state: evicted at the miss decision, marked with the last fill word.
         auto victim = way == 0 ? w.invert("VICTIM_ZERO", victim_one) : victim_one;
         w.connect(w.both("EVICT_LINE_" + n, read_miss, victim), lines[way]->getInputPin("CLEAR"));
         w.connect(tag_write, lines[way]->getInputPin("MARK"));
     }
 
-    // Idle: no lookup and no backing-memory request; a shown response
-    // still lets the front end take the next request as it is finished.
-    auto working = signal("WORKING");
-    auto idle = w.both("IDLE", w.invert("NOT_WORKING", working), w.invert("NOT_DONE", signal("DONE")));
+    // Idle: no lookup, backing request or stream; a shown response still lets
+    // the front end take the next request as it is finished.
+    auto working = w.reduce("WORKING", {L, MS, MW, ST}, false);
+    auto idle = w.both("IDLE", w.invert("NOT_WORKING", working), w.invert("NOT_DONE", D));
     w.connect(w.both("AVAILABLE", w.invert("NO_WORK", working), w.invert("NO_INVALIDATION", getInputPin("INV_VALID"))),
               front->getInputPin("BACK_READY"));
     w.connect(idle, getOutputPin("INV_READY"));
@@ -681,30 +781,23 @@ void CacheBankController<Width>::buildInternals(ComponentBuilder& builder) {
         w.connect(w.reduce("TOUCH_REPLACEMENT", {read_hit, fill_complete, update_written}, false), replacement->getInputPin("TOUCH"));
         w.connect(memory_detail::payloadMux(builder, w, "TOUCHED_WAY", way_one, hit_one, read_hit), replacement->getInputPin("TOUCH_WAY"));
     }
-    w.connect(signal("DONE"), front->getInputPin("DONE"));
 
-    // Result: the hit way's word, or the requested word as the fill passes it.
+    // Result: the hit way's word, a streamed word of the current way, or a
+    // backing-memory word as it passes (the requested one, or every word of
+    // a burst miss).
     auto hit_word = config_.ways == 1 ? PinPtr(getInputPinDynamic("DATA0_READ_DATA"))
         : memory_detail::payloadMux(builder, w, "HIT_WORD", getInputPinDynamic("DATA0_READ_DATA"),
                                     getInputPinDynamic("DATA1_READ_DATA"), hit_one);
-    PinPtr requested = w.constant("ONE_WORD_LINE", true);
-    if (offset > word_shift) {
-        auto fill_bits = builder.addNewComponent<BitSplitter<32>>("FILL_WORD_BITS");
-        auto want_bits = builder.addNewComponent<BitSplitter<32>>("WANTED_WORD_BITS");
-        w.connect(address_path->template getOutputPin<32>("FILL_BACKING_ADDRESS"), fill_bits->getInputPin<32>("IN"));
-        w.connect(addr_reg->getOutputPin<32>("Q"), want_bits->getInputPin<32>("IN"));
-        std::vector<PinPtr> same;
-        for (size_t bit = word_shift; bit < offset; ++bit)
-            same.push_back(w.invert("SAME_WORD_" + std::to_string(bit), w.binary<XORGate>("WORD_DIFFERS_" + std::to_string(bit),
-                fill_bits->getOutputPin("OUT_" + std::to_string(bit)), want_bits->getOutputPin("OUT_" + std::to_string(bit)))));
-        requested = w.reduce("REQUESTED_WORD", same, true);
-    }
-    w.connect(w.either("CAPTURE_READ_RESULT", read_hit, w.both("CAPTURE_FILL_WORD", fill_success, requested)),
-              result_reg->getInputPin("WE"));
-    w.connect(memory_detail::payloadMux(builder, w, "READ_DATA_SOURCE", getInputPinDynamic("MEM_RSP_READ_DATA"), hit_word, read_hit),
-              result_reg->getInputPinDynamic("D"));
-    w.connect(w.reduce("CAPTURE_STATUS", {invalid, read_hit, fill_failure, fill_complete, write_done}, false),
-              status_reg->getInputPin("WE"));
+    auto current_word = config_.ways == 1 ? PinPtr(getInputPinDynamic("DATA0_READ_DATA"))
+        : memory_detail::payloadMux(builder, w, "CURRENT_WAY_WORD", getInputPinDynamic("DATA0_READ_DATA"),
+                                    getInputPinDynamic("DATA1_READ_DATA"), way_one);
+    auto bank_word = memory_detail::payloadMux(builder, w, "BANK_WORD", current_word, hit_word, read_hit);
+    w.connect(w.reduce("CAPTURE_READ_RESULT", {read_hit, stream_take, forward,
+        w.reduce("CAPTURE_FILL_WORD", {fill_success, requested, w.invert("NOT_BURST_REQUEST", is_burst)}, true)}, false),
+        result_reg->getInputPin("WE"));
+    w.connect(memory_detail::payloadMux(builder, w, "READ_DATA_SOURCE", getInputPinDynamic("MEM_RSP_READ_DATA"), bank_word,
+        w.either("FROM_BANK", read_hit, stream_take)), result_reg->getInputPinDynamic("D"));
+    w.connect(respond, status_reg->getInputPin("WE"));
     auto status = memory_detail::payloadMux(builder, w, "STATUS_FROM_MEMORY", zero3, getInputPin<3>("MEM_RSP_STATUS"),
                                             w.either("MEMORY_STATUS_SELECTED", fill_failure, write_done));
     status = memory_detail::payloadMux(builder, w, "STATUS_FROM_REQUEST", status, check->getOutputPin<3>("STATUS"), invalid);
@@ -714,21 +807,25 @@ void CacheBankController<Width>::buildInternals(ComponentBuilder& builder) {
     w.connect(memory_detail::payloadMux(builder, w, "ZERO_FAILED_RESULT", zero_data, result_reg->getOutputPinDynamic("Q"), return_read_data),
               front->getInputPinDynamic("RESULT"));
 
-    // Backing memory: fill words for a read miss, the write of a write-through.
+    // Backing memory: the fill (word by word, or one burst from the requested
+    // word), or the write of a write-through.
     w.connect(read_miss, address_path->getInputPin("READ_MISS"));
-    w.connect(signal("FILL_DONE"), address_path->getInputPin("FILL_DATA_DONE"));
+    w.connect(fill_done, address_path->getInputPin("FILL_DATA_DONE"));
     w.connect(fill_success, address_path->getInputPin("FILL_DATA_SUCCESS"));
     w.connect(fill_failure, address_path->getInputPin("MEMORY_FAILURE"));
-    w.connect(memory_detail::payloadMux(builder, w, "LOWER_ADDRESS", address_path->template getOutputPin<32>("FILL_BACKING_ADDRESS"),
-        addr_reg->getOutputPin<32>("Q"), is_write), getOutputPin<32>("MEM_REQ_ADDR"));
+    std::vector<PinPtr> fill_address_bits(request_bits.begin(), request_bits.end());
+    for (size_t i = 0; i < word_shift; ++i) fill_address_bits[i] = low;
+    for (size_t i = 0; i < line_bits; ++i) fill_address_bits[word_shift + i] = fill_word[i];
+    auto fill_address = config_.burst_fill ? PinPtr(addr_reg->getOutputPin<32>("Q")) : join("FILL_ADDRESS", fill_address_bits);
+    w.connect(memory_detail::payloadMux(builder, w, "LOWER_ADDRESS", fill_address, addr_reg->getOutputPin<32>("Q"), is_write),
+              getOutputPin<32>("MEM_REQ_ADDR"));
     w.connect(memory_detail::payloadMux(builder, w, "LOWER_OP", read_op, write_op, is_write), getOutputPin<3>("MEM_REQ_OP"));
     w.connect(memory_detail::payloadMux(builder, w, "LOWER_WRITE_DATA", zero_data, write_data_reg->getOutputPinDynamic("Q"), is_write),
               getOutputPinDynamic("MEM_REQ_WRITE_DATA"));
     w.connect(memory_detail::payloadMux(builder, w, "LOWER_WRITE_MASK", zero_mask, write_mask_reg->getOutputPinDynamic("Q"), is_write),
               getOutputPinDynamic("MEM_REQ_WRITE_MASK"));
-    w.connect(signal("MEMORY_SEND"), getOutputPin("MEM_REQ_VALID"));
-    w.connect(w.either("MEMORY_RESPONSE_READY", signal("MEMORY_SEND"), signal("MEMORY_WAIT")), getOutputPin("MEM_RSP_READY"));
-    (void)is_read;
+    w.connect(MS, getOutputPin("MEM_REQ_VALID"));
+    w.connect(rsp_ready, getOutputPin("MEM_RSP_READY"));
     w.finish();
 }
 
@@ -752,9 +849,9 @@ void Cache<Width>::buildInternals(ComponentBuilder& builder) {
     auto controller = builder.addNewComponent<CacheBankController<Width>>("CONTROLLER", config_);
     for (const auto& [name, pin] : getAllInputPins()) w.connect(pin, controller->getInputPinDynamic(name));
     for (const auto& [name, pin] : getAllOutputPins()) w.connect(controller->getOutputPinDynamic(name), pin);
-    auto low = w.constant("LOW", false);
-    auto high = w.constant("HIGH", true);
     const size_t words_per_line = config_.block_bytes / (Width / 8);
+    // Each bank's helpers are named after it (TAG_0_..., DATA_1_...), so
+    // that the floorplan places them under their bank.
     for (size_t way = 0; way < config_.ways; ++way) {
         for (const bool tag : {true, false}) {
             const auto n = std::to_string(way);
@@ -770,15 +867,16 @@ void Cache<Width>::buildInternals(ComponentBuilder& builder) {
             auto bank = memory_device::child(builder, *this, memoryContractId(technology, "device", width),
                                              std::string(tag ? "TAG_STORE_" : "DATA_STORE_") + n, parameters);
             auto read = controller->getOutputPin(prefix + "READ"), write = controller->getOutputPin(prefix + "WRITE");
+            const auto helper = std::string(tag ? "TAG_" : "DATA_") + n + "_";
             if (technology == Technology::SRAM) {
                 w.connect(getInputPin("CLK"), bank->getInputPin("CLK"));
-                w.connect(w.invert(prefix + "SELECT", w.either(prefix + "ACCESS", read, write)), bank->getInputPin("CE_N"));
-                w.connect(w.invert(prefix + "WRITE_STROBE", write), bank->getInputPin("WE_N"));
-                w.connect(low, bank->getInputPin("OE_N"));
+                w.connect(w.invert(helper + "SELECT", w.either(helper + "ACCESS", read, write)), bank->getInputPin("CE_N"));
+                w.connect(w.invert(helper + "WRITE_STROBE", write), bank->getInputPin("WE_N"));
+                w.connect(w.constant(helper + "OUTPUT_ENABLED", false), bank->getInputPin("OE_N"));
             } else {
                 for (auto pin : {"CLK", "RST"}) w.connect(getInputPin(pin), bank->getInputPin(pin));
                 w.connect(write, bank->getInputPin("WE"));
-                w.connect(high, bank->getInputPin("READ_EN"));
+                w.connect(w.constant(helper + "READ_ENABLED", true), bank->getInputPin("READ_EN"));
             }
             w.connect(controller->getOutputPinDynamic(prefix + "WORD_ADDR"), bank->getInputPinDynamic("WORD_ADDR"));
             w.connect(controller->getOutputPinDynamic(prefix + "WRITE_DATA"), bank->getInputPinDynamic("WRITE_DATA"));

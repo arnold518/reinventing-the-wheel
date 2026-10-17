@@ -38,6 +38,11 @@ void EndpointConfig::validate(size_t width, Technology t, bool expanded_cells) c
         throw std::invalid_argument("Native matrix geometry requires power-of-two K dividing depth (K<=16 gate-level, K<=1024 compact)");
     if (t == Technology::NORFlash && (!block_words || block_words > depth_words || depth_words % block_words || block_words % words_per_row))
         throw std::invalid_argument("Flash blocks must contain whole rows and divide depth");
+    // Burst reads move one block of block_words words (DRAM: within a row).
+    if ((t == Technology::SRAM || t == Technology::ROM || t == Technology::DRAM) &&
+        (!block_words || !std::has_single_bit(block_words) || block_words > 16 || depth_words % block_words ||
+         (t == Technology::DRAM && block_words > std::max<size_t>(words_per_row, 2))))
+        throw std::invalid_argument("Burst blocks must be a power of two up to 16 words dividing depth (DRAM: within a row)");
     if (t == Technology::DRAM) {
         const uint64_t refresh_service = 5 * phase_ticks + 4 * guard_ticks;
         const uint64_t access_guard = 9 * phase_ticks + 12 * guard_ticks;

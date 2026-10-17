@@ -14,11 +14,12 @@ completion (2A); every other decision was delegated and is recorded below.
 Profiles `unit`, `embedded` (65 nm, default) and `desktop` (32 nm) live in a
 C++ timing-profile file. Execution is on branch `realistic-timing` and
 reported in the [progress log](2026-10-16-realistic-timing-progress.md).
-Phases 1–6.3 are done (6.3: external DRAM and NOR from datasheets, clocked
-on-chip SRAM macro). The latest plan check (2026-10-17) moves the
-core–endpoint handshake decoupling to the start of 6.4 and stops macro
-calibration at the reported residual; phases 7 (cache) and 8
-(documentation, follow-ups, full suite) follow.
+Phases 1–6 and 7a–7b are done (7b added burst reads so that cache lines
+fill in one burst, a change made in phase 7 after the cache plan's Step 1
+showed word-by-word fills). The latest plan check (2026-10-17, in the
+progress log) found Step 1's order holding with burst fills; the cache
+experiment comes next, using `fill=burst`, then phase 8 (documentation,
+follow-ups, full suite).
 
 ## 2026-10-16 — Scope and plan
 

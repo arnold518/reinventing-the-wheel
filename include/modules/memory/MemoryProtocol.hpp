@@ -3,7 +3,9 @@
 
 namespace circuit::memory {
 enum class Technology { FF, SRAM, DRAM, ROM, NORFlash };
-enum class Operation : unsigned { Read, Write, Program, EraseBlock };
+// ReadBurst: `block_words` words of the aligned block holding the address,
+// from that word on and wrapping within the block, as successive responses.
+enum class Operation : unsigned { Read, Write, Program, EraseBlock, ReadBurst };
 enum class Status : unsigned { Ok, Alignment, Range, ReadOnly, Unsupported, Device, InvalidRequest };
 const char* technologyName(Technology);
 // Catalog name of a memory part: memory.<technology>.<what>.<width>, where

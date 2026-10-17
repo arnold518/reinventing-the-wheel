@@ -93,6 +93,10 @@ public:
     }
     bool maintenanceActive() const { return refreshing_ && active_; }
     bool done = false, available = true;
+    // LAST: the result shown is the transaction's last (burst words before it
+    // are not). `space`: the transaction port holds no response (set by the
+    // owner before each step and presentation).
+    bool last = false, space = true;
     Bits result;
     Status status = Status::Ok;
     Signals outputs;
@@ -105,13 +109,21 @@ private:
     // Static sequencer: ACCESS, IS_WRITE and the wait counter; for a clocked
     // macro the request shown this cycle.
     bool access_ = false, writing_ = false, shown_start_ = false;
+    // A burst: BURST, the words still to come.
+    bool burst_ = false;
+    size_t beats_left_ = 0;
+    // Whether the current access completes at this edge, and starts a
+    // further burst word (StaticMemorySequencer's COMPLETE and NEXT_WORD).
+    bool staticComplete() const { return access_ && wait_count_ == 0 && (!done || space); }
+    bool nextWord() const { return staticComplete() && burst_ && beats_left_ > 0; }
+    Bits nextWordAddress() const;
     Request shown_;
     size_t wait_count_ = 0;
     // Command sequencer: sequence bits, the pending steps (DRAM: PRECHARGE,
     // ACTIVATE, ACCESS, REFRESH; NOR: WREN, OPERATION), the current command
     // code, the operation kind, open-row knowledge and refresh state.
     bool active_ = false, waiting_ = false, presenting_ = false;
-    bool is_write_ = false, is_program_ = false, is_erase_ = false;
+    bool is_write_ = false, is_program_ = false, is_erase_ = false, is_burst_ = false;
     std::vector<bool> needs_;
     unsigned current_ = 0;
     bool row_known_ = false, refreshing_ = false, refresh_pending_ = false;

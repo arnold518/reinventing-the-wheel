@@ -336,6 +336,11 @@ const std::vector<std::pair<std::string, circuit::ParameterMap>> VARIANTS = {
     {"memory.sram.device.8", {{"depth_words", "256"}, {"clocked", "1"}}},
     {"memory.sram.controller.8", {{"clocked", "1"}}},
     {"memory.sram.endpoint.8", {{"clocked", "1"}}},
+    // Four-word bursts (cache lines of four words).
+    {"memory.sram.endpoint.8", {{"block_words", "4"}}},
+    {"memory.rom.endpoint.8", {{"block_words", "4"}}},
+    {"memory.dram.device.8", {{"words_per_row", "16"}, {"block_words", "4"}}},
+    {"memory.dram.endpoint.8", {{"words_per_row", "16"}, {"block_words", "4"}}},
 };
 
 std::shared_ptr<IOComponent> build(const std::string& contract, const circuit::BuildProfile& profile) {

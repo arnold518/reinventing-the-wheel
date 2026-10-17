@@ -17,7 +17,11 @@ NativeDeviceRequest nativeDeviceRequest(size_t width,Technology technology,const
         if (technology != Technology::ROM) p["phase_ticks"] = std::to_string(config.phase_ticks);
         if (config.clocked) p["clocked"] = "1";
         if (technology == Technology::ROM) p["image_hex"] = config.image_hex;
-        if (technology == Technology::DRAM) p["retention_ticks"] = std::to_string(config.retention_ticks);
+        if (technology == Technology::DRAM) {
+            p["retention_ticks"] = std::to_string(config.retention_ticks);
+            // The burst length of READ_BURST.
+            if (config.block_words != 2) p["block_words"] = std::to_string(config.block_words);
+        }
         if (technology == Technology::NORFlash) {
             p["block_words"] = std::to_string(config.block_words);
             p["program_ticks"] = std::to_string(config.program_ticks);

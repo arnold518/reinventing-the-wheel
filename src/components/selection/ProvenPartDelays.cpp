@@ -24,9 +24,10 @@ const std::map<std::string, PartDelays>& tables() {
 }
 
 // Memory parameters that leave the timed circuit as it was proven: host
-// budgets and device phase timings do not touch the gate paths, the row
-// geometry must be the default one, and a ROM image only sets constants
-// behind the read column (the tables are the same for every image).
+// budgets and device phase timings do not touch the gate paths, and a ROM
+// image only sets constants behind the read column (the tables are the same
+// for every image). The row layout and the burst block are proven variants
+// (below).
 bool sameCircuit(const ParameterMap& parameters) {
     static const std::set<std::string> untimed = {
         "depth_words", "paged", "record_history", "max_resident_bytes", "max_history_bytes",
@@ -34,10 +35,8 @@ bool sameCircuit(const ParameterMap& parameters) {
         "refresh_interval_ticks", "refresh_interval_cycles", "access_cycles", "always_ready", "words_per_row", "block_words", "image_hex",
         // A clocked SRAM macro is its own proven variant (the "@clocked" key).
         "clocked"};
-    for (const auto& [name, value] : parameters) {
+    for (const auto& [name, value] : parameters)
         if (!untimed.contains(name)) return false;
-        if (name == "block_words" && value != "2") return false;
-    }
     return true;
 }
 
@@ -166,6 +165,11 @@ const PartDelays* provenPartDelays(const std::string& implementation_id, const P
         // fields' wiring and shortens the open-row comparator.
         try { if (std::stoull(layout->second) > 16) rows = "@rows=16"; } catch (const std::exception&) {}
     }
+    // A burst block other than the default two words changes the burst
+    // counters: proven on its own (four words, in the default layout and in
+    // the 16-word one that long rows use).
+    if (const auto block = parameters.find("block_words"); block != parameters.end() && block->second != "2")
+        rows += "@block=" + block->second;
     const auto clocked_parameter = parameters.find("clocked");
     const std::string clocked = clocked_parameter != parameters.end() && clocked_parameter->second == "1" ? "@clocked" : "";
     // No word count: the default size, as proven.
