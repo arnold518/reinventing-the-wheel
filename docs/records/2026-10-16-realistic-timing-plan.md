@@ -755,3 +755,42 @@ the memory chapter, under the same owner permission for `site-docs/`:
 
 Status: only the generator for item 2 exists (`tools/mkdocs_timing.py`,
 tested). Nothing else is written yet.
+
+## 2026-10-19 — Plan addition: diagrams and plots across the whole site (owner)
+
+The owner installed the diagram-design plugin and asked for a review of the
+entire `site-docs/`, adding plots or diagrams wherever they help readers
+understand the project, in the site's own design and colors. This runs with
+the documentation phase, after all testing.
+
+- **Design to follow** (from the site, not diagram-design's defaults):
+  Material theme, indigo primary and accent; Noto Sans for text and Ubuntu
+  Mono for code; the figure tokens already used by the 12 diagrams in
+  `site-docs/assets/diagrams/` — `--dg-paper` / `--dg-ink` from the page,
+  `--dg-muted` #566174, `--dg-rule` #c8ced8, `--dg-surface` #f5f6f9,
+  `--dg-accent` #4051b5, `--dg-tint` #eef0fc, and their dark values
+  (#b4bdd0, #4b5569, #262c38, #acb7ff …) under
+  `[data-md-color-scheme="slate"]`. diagram-design's own rules that do not
+  conflict stay (one accent for one or two focal elements, 1 px hairlines,
+  no shadows, a grid of 4).
+- **How:** a diagram-design brand profile holding these tokens (its profile
+  feature) before the first diagram; each diagram delivered in the existing
+  figure format (`<!-- diagram:start -->` … `<!-- diagram:end -->`, a
+  `data-diagram` ID, theme variables instead of fixed colors) so that
+  `tools/mkdocs_diagrams.py` inlines it and dark mode works. Plots of
+  measured data are generated from recorded results by scripts (as
+  `tools/rv32i-performance/plot-current-results.py` does for the 4 charts on
+  the experiments page), in the same palette, never drawn by hand.
+- **Review pass:** every page of `site-docs/` (index, ALU8, memory, RV32I,
+  visualizer) is read for places where a figure would carry the idea better
+  than prose or tables, for example: the timing-profile ladder (gate delay
+  multiples per profile), how an access time is built (decode → wordline →
+  bitline → sense → wire), DRAM command timelines (hit, closed row,
+  conflict, refresh), the transaction handshake, controller sequencing,
+  delay-table ranges (minimum–maximum bars), latency per technology and
+  profile, certified clocks per core and profile, the cache topologies and
+  the CPI panel (when caches are documented). Each candidate is listed in
+  the rewrite record with a keep or drop reason before it is drawn.
+- **Checks:** strict MkDocs build and `tools/build-pages.sh`; figures in
+  light and dark; a test that every `diagram:` marker resolves (the hook
+  already fails the build on a bad marker).
