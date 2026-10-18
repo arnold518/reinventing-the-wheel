@@ -114,6 +114,12 @@ work state changes. Keep dated decisions and validation results in
   `MemoryEndpointIntegrationTest` checks (`site-docs/` snippets, pages and
   pin tables).
 
+- [Memory chapter rewrite](records/2026-10-18-memory-docs-rewrite.md): the
+  owner asked for a complete rewrite of `site-docs/memory/` (caches excluded
+  for now). Survey and comparison with the code are done; a timing-aware page
+  template is proposed (shared "Time and delay" page, generated per-profile
+  delay and latency tables). No public page changed yet.
+
 - [Future steps plan](records/2026-10-14-future-steps-plan.md): current CPU,
   memory and viewer boundaries assessed against interactive games, a
   general-purpose GPU and AI accelerators. The owner chose cache work,
