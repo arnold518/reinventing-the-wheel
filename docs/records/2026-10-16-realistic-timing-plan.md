@@ -681,3 +681,45 @@ nanoseconds under realistic profiles, the chosen profile shown with the
 scenario, and browser/WASM tests for both paths. It runs after the
 published-result reruns and before the final full suite. Public pages that
 describe the visualizer wait for the owner, like the rest of `site-docs/`.
+
+## 2026-10-18 — Plan addition: memory chapter rewrite (owner)
+
+The owner asked for a complete rewrite of the public memory chapter
+(`site-docs/memory/`, caches excluded for now), done **after all testing is
+finished** (the reruns, the visualizer profile work and the final full
+suite). Survey, comparison with the code and the page template are in the
+[memory chapter rewrite record](2026-10-18-memory-docs-rewrite.md).
+
+- **Structure (owner):** the technologies are subsections of one section,
+  not separate top-level sections. Working outline:
+  1. 3.1 How memories work here (layers, addressing, timing profiles and
+     what a tick is, fidelity and scale).
+  2. 3.2 Shared building blocks (decoders, muxes, write distribution,
+     sensing, output; timers, delay lines, synchronizers, request checks,
+     sequencers).
+  3. **3.3 Memory technologies**, with subsections 3.3.1 flip-flop storage,
+     3.3.2 SRAM (asynchronous and clocked macro), 3.3.3 DRAM, 3.3.4 ROM,
+     3.3.5 NOR flash, 3.3.6 scalable native devices.
+  4. 3.4 Transaction protocol (including burst reads).
+  5. 3.5 Controllers and endpoints (access cycles, refresh, certified
+     clocks).
+  6. 3.6 Measured timing per profile.
+  Caches keep their current page until their own rewrite; the numbering is
+  settled when the chapter is written (`RegisterFileDocumentationTest`'s
+  check on `memory/3.4.md` is updated with it).
+- **Template:** the timing-aware template of the rewrite record: a shared
+  "Time and delay" page, `Unknown inputs` and `Timing` as separate sections,
+  generated delay tables (`<!-- timing-table: KEY -->`, already built),
+  generated access-latency tables per profile, profile-named example tables.
+- **Diagrams (owner):** every new diagram is drawn with diagram-design
+  (github.com/cathrynlavery/diagram-design, MIT): one self-contained HTML +
+  SVG file per diagram, exported to SVG for the site, following its style
+  rules (one accent color for one or two focal elements, 1 px hairlines, no
+  shadows, coordinates on a grid of 4). The existing `<!-- diagram: … -->`
+  markers (`tools/mkdocs_diagrams.py`) are replaced or fed by these files.
+  The plugin is installed in Claude Code with
+  `/plugin marketplace add cathrynlavery/diagram-design` and
+  `/plugin install diagram-design@diagram-design`.
+- **Checks:** strict MkDocs build, `tools/build-pages.sh`, the documentation
+  tests rewritten for the new pages, browser and WebAssembly tests for the
+  embedded simulations.

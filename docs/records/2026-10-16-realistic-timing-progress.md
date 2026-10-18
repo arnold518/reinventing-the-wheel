@@ -2892,3 +2892,52 @@ The remaining failures after (1) decide the split; rerun in progress.
      Browser: a profile choice beside the fidelity profile, timelines in ps,
      ns or µs when the profile's tick is 1 ps, and the profile shown with
      the scenario. Browser and WASM tests for both paths.
+
+## 2026-10-18 — Phase 8: published-result reruns, fixtures and visualizer profiles (in progress)
+
+- **Reruns of the published RV32I campaigns** (binary-safe clocks, structural
+  reference check on every case, warmups 0 and one repetition, since modeled
+  ticks do not depend on host time):
+  - `embedded` finished and verified: 22 fixed programs × 7 targets (154),
+    5 longer branch patterns × 7 (35), predictor capacity 8/16/32 (3), the 2
+    ELF fixtures × 7 (14).
+  - The generated-family and core-gap panels first stopped at the default
+    100 M event budget: the structural reference makes far more events under
+    realistic gate delays (inputs reach each gate at different times). No
+    fault; rerun with 4 G events.
+  - **Process correction:** the campaign driver fingerprints every tracked
+    source file and the binary, and refuses to mark a run complete if either
+    changes. Worktree edits made during the runs invalidated the runs in
+    progress (`desktop programs` failed with "Source or binary changed").
+    The remaining runs restarted from a frozen snapshot (`git archive HEAD`
+    plus the built binary, `--source-snapshot`); `git diff c7935d8 HEAD`
+    shows no C++ change, so the snapshot sources match the binary. The 11
+    finished `embedded` steps stay valid. Running: `embedded` generated and
+    core-gap; all `desktop` steps.
+- **Visualizer timing profiles, implementation (not yet built):**
+  - `analysis::CERTIFIED_CORE_PERIODS` (`ExperimentClock.hpp`): the
+    certified FF-memory clock per core and profile; `rv32i_experiment
+    --list-certified-periods`; `RV32IProfileSweepTest` checks every entry
+    against `--period auto`.
+  - `rv32iFixtureTimeScale(core, unit_cycle)`: program fixtures keep their
+    `unit` times; under another profile every time (half-period, cycle step,
+    clock start, reset release, sampling point) is multiplied by the smallest
+    whole factor that makes the cycle at least the certified one (five-stage
+    100 → 4,200 ps in `embedded`; single-cycle 4,000 → 8,000 ps; baseline
+    stays 4,000 ps, above 3,354).
+  - `CacheTwoLevelScenarioTest`: stimulus spacing in inverter delays;
+    `FullCircuitTest`: all times multiplied by the profile's slowest gate.
+    Both unchanged under `unit`.
+  - Server: sessions carry a timing profile; `active_timing()` sets it under
+    one lock while a session is built and simulated (the whole run happens
+    then; scrubbing reads history) and restores it; sessions are keyed by
+    scenario and profile; `timing` in the circuit, state and apply requests;
+    the topology response includes the profile (name, description, tick
+    length). New binding `timing_profile_info`. WebAssembly:
+    `setTimingProfile`, `timingProfileJson`; the worker passes `timing`.
+    Browser: a Timing selector (kept in the URL as `?timing=`), times shown
+    in ps / ns / µs when the tick has a length, otherwise ticks.
+  - **Build stopped:** the first build of these changes was stopped by Claude
+    Code for low memory while compiling the Python module; nothing was
+    committed. Decision: build the C++ targets first (test runner and
+    experiment CLI) in the foreground, the Python module after the reruns.
