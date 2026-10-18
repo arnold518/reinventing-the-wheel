@@ -3055,9 +3055,11 @@ fixtures (14) and the generated-family spot check (15, advanced two-bit,
   | `desktop` Adv 2b | 1,531.9 | 1,703.4 | 1,794.8 | 1,691.9 | 1,789.1 |
 
   The per-pattern winners among the advanced predictors are the published
-  ones (cycles are unchanged); the single-cycle core now loses to every
-  advanced predictor on every pattern except advanced not-taken on taken
-  branches in `embedded` (3,201 vs 3,281 ns: advanced still faster).
+  ones (cycles are unchanged). One ordering changes: in `unit` the
+  single-cycle core beat advanced not-taken on the taken pattern (76,028 vs
+  78,000 ticks); in `embedded` and `desktop` advanced not-taken is faster
+  (3,201 vs 3,281 ns; 2,229 vs 2,284 ns), so every advanced predictor now
+  beats single-cycle on every pattern.
 - **ELF fixtures, modeled time in ns** (single / baseline / NT / T / BT /
   1b / 2b): `embedded` compiled.elf 458.5 / 556.8 / 352.9 / 385.8 / 352.9 /
   361.2 / 361.2, self-check.elf 136.1 / 187.8 / 106.7 / 131.3 / 106.7 /
