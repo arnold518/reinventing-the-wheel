@@ -2963,3 +2963,24 @@ The remaining failures after (1) decide the split; rerun in progress.
   - The baseline program and core scenarios under `desktop`: pass.
   - `RV32IProfileSweepTest` (new case: every stored certified period equals
     `--period auto` in `unit`, `embedded` and `desktop`): passed, 197 s.
+
+## 2026-10-19 — Phase 8: rerun scope reduced (decision)
+
+- **Measured pace:** with structural-reference checks, the generated-family
+  panel advanced one case per ten minutes per profile (host: 4 cores, load
+  11–12 from other users' work; each rerun process got about half a core).
+  Generated (105 cases) and core-gap (161) would take about 40 hours per
+  profile.
+- **Decision:** the generated and core-gap panels run with the instruction
+  oracle and final-memory checks only (the behavioral runs are seconds per
+  case). The structural-reference check stays on the fixed programs (154
+  per profile), the branch patterns (35), predictor capacity (3) and the ELF
+  fixtures (14), and a spot check covers the generated families on the
+  advanced two-bit core in `embedded` (15). Compact-versus-gate timing is
+  covered independently by DelayRuleTest in every profile. The restated
+  results will say which rows had a reference check.
+- **Incident:** stopping the runs, `pkill -f` matched the calling shell (the
+  script name appeared later in the same command; exit 144) and the edit in
+  that command did not run. The runs were then stopped by process ID and the
+  edit made in a separate command. Finished steps kept: `embedded` programs,
+  branches, capacity, fixtures; `desktop` programs (frozen snapshot).
