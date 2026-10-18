@@ -7,6 +7,21 @@ history remains in Git and the archived reports.
 
 ## 2026-10-18
 
+### Delay twin: a flip-flop stuck at X is timed from every edge (branch `realistic-timing`, phase 8)
+
+- **Changed:** `DelayTwin.cpp` renews a flip-flop's launch time at every
+  clock edge (and unknown reset) while its value is X, not only when the
+  held value changes.
+- **Why:** the strict-settling delay rule failed on five memory
+  controllers. Traced on `memory.rom.controller.32`: an earlier situation
+  left the twin's state X while the gates resolved; X looked unchanging, so
+  paths from DONE and LAST counted as quiet and REQ_READY settled one tick
+  earlier in the compact part than in the gates.
+- **Verified:** DelayRuleTest `--strict-settling` on the five controllers in
+  `unit`, `embedded` and `desktop` (0 breaks, 0 target misses); full suite
+  under `unit`, 461 / 467 (the six failures are the known documentation
+  and visualizer-data checks).
+
 ### Test timing audit: realistic profiles covered by their own tests (branch `realistic-timing`, phase 8)
 
 - **Changed:** new `RV32IProfileSweepTest` runs every core on programs 1,

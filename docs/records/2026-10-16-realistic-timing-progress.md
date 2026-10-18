@@ -2688,3 +2688,38 @@ The remaining failures after (1) decide the split; rerun in progress.
   `unit`; and the remaining tick-arithmetic tests are only meaningful in
   `unit`. The harness change and its helper were reverted. The tests guide
   (`docs/guides/tests-and-scenarios.md`) now states this.
+
+## 2026-10-18 — Phase 8: delay-twin X timing (strict-settling break explained)
+
+- **Method:** a net-tracing copy of DelayRuleTest (`probe/dr_nets.cpp`)
+  linked with a logging copy of `DelayTwin.cpp` (node names kept, settle
+  times and flip-flop captures logged), on `memory.rom.controller.32` in
+  the failing situation.
+- **Finding:** at the failing clock edge the twin's flip-flops (PENDING,
+  DONE, LAST, the response buffer's OCCUPIED) all held X, their data inputs
+  X since long before; the gates' state was known (DONE and LAST went 0 → 1
+  at 2 ticks). An earlier situation with X inputs had left the twin's state
+  unknown while the gates resolved. A flip-flop whose value stayed X was
+  treated as not changing (`held_since` renewed only when the held value
+  changed), so every path from DONE and LAST looked quiet and the twin timed
+  REQ_READY from the one flip-flop that visibly changed (OCCUPIED, 0 → X):
+  final at 7 where the gates settled at 8. This is the open "delay twin's X
+  timing" defect.
+- **Fix** (`DelayTwin.cpp`): an unknown flip-flop may switch at any edge, so
+  its outputs are timed from every edge (and from an unknown reset), not
+  only when the held value changes. This only makes the twin later, which
+  the delay rule allows.
+- **Check:** DelayRuleTest `--strict-settling` on the five affected
+  controllers (ROM/SRAM 32-bit and 8-bit, DRAM 32-bit, with variants) in
+  `unit`, `embedded` and `desktop`: 0 parts break the rule, 0 miss the
+  targets, 0 outputs moved only in the gates (were 2, 5 and 5 parts broken).
+- **Full suite under `unit`** (467 tests with `RV32IProfileSweepTest`):
+  461 pass in 10,678 s on a loaded host (load about 6 from other jobs;
+  DelayRuleTest alone took 2,372 s). The six failures are the known
+  documentation and visualizer-data checks (RegisterFileDocumentationTest,
+  MemoryEndpointIntegrationTest, MemoryDeviceDocumentationTest,
+  CacheLayoutTest, VisualizerAutomaticLayoutTest, VisualizerColorPaletteTest).
+  DelayRuleTest and DelayRuleStrictSettlingTest both pass, so the twin
+  change made no part's compact timing earlier than its gates.
+- **Decision:** the delay-twin X-timing defect is closed. Phase 8 continues
+  with the visualizer data and clock evidence for cached roots.

@@ -183,7 +183,9 @@ public:
                 const uint8_t reset = f.reset >= 0 ? memory->value[f.reset] : 0;
                 const bool quiet = memory->time[f.d] == NEVER || memory->time[f.d] + Tick(circuit::dflipflop_timing::setup()) <= now;
                 const uint8_t next = reset == 0 ? (quiet ? std::min(memory->value[f.d], UNKNOWN) : UNKNOWN) : reset == 1 ? 0 : UNKNOWN;
-                if (next != memory->held[flop]) { memory->held[flop] = next; memory->held_since[flop] = now + f.launch; }
+                // An unknown bit may switch at any edge: its outputs are timed
+                // from this edge too, not only when the held value changes.
+                if (next != memory->held[flop] || next == UNKNOWN) { memory->held[flop] = next; memory->held_since[flop] = now + f.launch; }
             }
             memory->clock = clock;
         }
@@ -251,7 +253,7 @@ public:
                 if (reset == 0) continue;
                 answered = false;
                 const uint8_t next = reset == 1 ? 0 : UNKNOWN;
-                if (next != memory->held[flop]) { memory->held[flop] = next; memory->held_since[flop] = now; }
+                if (next != memory->held[flop] || next == UNKNOWN) { memory->held[flop] = next; memory->held_since[flop] = now; }
             }
             memory->value = value;
             memory->time = time;

@@ -79,8 +79,7 @@ work state changes. Keep dated decisions and validation results in
   over a counted controller (one synchronizer edge per command). Cycle counts
   differ from the published ones, which hold at tag `timing-legacy`. The owner
   directed realistic memory models that are not tuned to favor caches.
-  Open: the STM32F7 system check (source not read), the delay twin's X timing,
-  tick-driven tests (CacheReadTest, MemoryDeviceTimingTest,
+  Open: the STM32F7 system check (source not read); tick-driven tests (CacheReadTest, MemoryDeviceTimingTest,
   MemoryEndpointTimingTest) are `unit`-only. Phase 7 so far: the cache looks
   up every way at once in directly driven banks (L1 hit two cycles, 7a), and
   burst reads (op 4) exist end to end (7b): SRAM, ROM and DRAM endpoints
@@ -98,9 +97,9 @@ work state changes. Keep dated decisions and validation results in
   SRAM macro's write disturb (a finished write's drivers and word line still
   on when the next access's address arrived) is fixed by sizing its settle
   line; compact and gate-level banks agree again. Full suite under `unit`:
-  459 of 466 pass (six documentation and visualizer-data checks, and the
-  strict-settling delay rule, which found an open delay-twin defect in five
-  memory controllers; the normal delay rule passes). The suite is a `unit`
+  461 of 467 pass (six documentation and visualizer-data checks). The
+  strict-settling delay rule passes since the delay twin times a flip-flop
+  stuck at X from every clock edge. The suite is a `unit`
   suite by design; realistic profiles are covered by `RV32IProfileSweepTest`
   and other profile-selecting tests.
   Failing until phase 8:
