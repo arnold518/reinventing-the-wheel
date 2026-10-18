@@ -65,6 +65,7 @@ protected:
 private:
     size_t program_number_;
     bool baseline_ = false;
+    size_t timeScale() const;
     std::optional<rv32i::PredictionConfig> prediction_;
     circuit::BuildProfile profile_ =
         circuit::canonicalDefaultProfile();

@@ -7,6 +7,7 @@
 #include "components/selection/ComponentFamily.hpp"
 #include "rv32i/RV32IProgram.hpp"
 #include "rv32i/RV32IPipelineObserver.hpp"
+#include <string_view>
 #include <cstddef>
 #include <cstdint>
 #include <map>
@@ -15,6 +16,13 @@
 #include <vector>
 
 class ClockGenerator;
+
+// The program fixtures' times (clock half-period, reset release, cycle step,
+// sampling points) are written for the `unit` profile. Under another
+// profile they are all multiplied by this factor: the smallest whole number
+// that makes the fixture's cycle at least the clock the analysis certifies
+// for `core` ("single", "baseline", "advanced") in that profile. 1 in `unit`.
+size_t rv32iFixtureTimeScale(std::string_view core, size_t unit_cycle_ticks);
 class Simulator;
 template<size_t WIDTH> class Wire;
 

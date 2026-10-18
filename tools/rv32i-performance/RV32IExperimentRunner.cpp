@@ -30,7 +30,7 @@ void usage() {
         "  [--fidelity behavioral|reference] [--policy not-taken|taken|backward-taken|one-bit|two-bit]\n"
         "  [--entries N] [--period EVEN_TICKS|auto] [--safe-clock] [--no-verify]\n"
         "  [--binary-startup] (with --safe-clock: checked binary-initialized contract)\n"
-        "  [--workload NAME] [--iterations N] [--list-workloads | --list-benchmark-catalog]\n"
+        "  [--workload NAME] [--iterations N] [--list-workloads | --list-benchmark-catalog | --list-certified-periods]\n"
         "  [--start-pc PC --stop-pc PC]\n"
         "  [--size 1..1024] [--distance 1|2|4|8] [--seed N] [--branch-spacing WORDS]\n"
         "  [--pattern taken|not-taken|alternating|bursts|irregular]\n"
@@ -57,6 +57,17 @@ int main(int argc,char** argv) {
                 for(const auto& name:rv32iGeneratedWorkloadNames()) {
                     if(!first)std::cout<<',';
                     first=false;std::cout<<quote(name);
+                }
+                std::cout<<"]\n";return 0;
+            }
+            if(key=="--list-certified-periods") {
+                std::cout<<'[';
+                bool first=true;
+                for(const auto& entry:circuit::analysis::CERTIFIED_CORE_PERIODS) {
+                    if(!first)std::cout<<',';
+                    first=false;
+                    std::cout<<"{\"profile\":"<<quote(std::string(entry.profile))<<",\"core\":"
+                             <<quote(std::string(entry.core))<<",\"period_ticks\":"<<entry.period<<'}';
                 }
                 std::cout<<"]\n";return 0;
             }

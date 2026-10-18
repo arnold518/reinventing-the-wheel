@@ -4,6 +4,10 @@
 #include "components/ComponentBuilder.hpp"
 #include "components/ComponentBuilder.tpp"
 #include "modules/basic/ClockGenerator.hpp"
+#include "analysis/ExperimentClock.hpp"
+#include "components/TimingProfile.hpp"
+#include <stdexcept>
+#include <string>
 #include "modules/rv32i/RV32IMemorySystem.hpp"
 #include "modules/rv32i/RV32IFiveStageCore.hpp"
 #include "modules/memory/TwoPortMemoryArbiter.hpp"
@@ -265,4 +269,14 @@ rv32i::RV32IArchitecturalState
 RV32IProgramRoot::snapshotArchitecturalState() const {
     requireBuilt(state_view_ != nullptr, "architectural state");
     return state_view_->snapshotArchitecturalState();
+}
+
+size_t rv32iFixtureTimeScale(std::string_view core, size_t unit_cycle_ticks) {
+    const auto& profile = circuit::timing::activeTimingProfile();
+    if (profile.name == "unit") return 1;
+    const auto period = circuit::analysis::certifiedCorePeriod(profile.name, core);
+    if (!period || unit_cycle_ticks == 0)
+        throw std::runtime_error("No certified clock for the " + std::string(core)
+            + " core under timing profile " + profile.name);
+    return std::max<size_t>(1, (*period + unit_cycle_ticks - 1) / unit_cycle_ticks);
 }

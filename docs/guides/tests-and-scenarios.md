@@ -62,6 +62,18 @@ experiment and benchmark runners. A new test of timing under realistic
 delays should set its profile itself and derive clocks from the analyzer's
 certified period, not from tick constants.
 
+The visualizer scenarios are an exception: they also run under the
+realistic profiles. Component scenarios mostly use settled checkpoints.
+The RV32I program fixtures keep their `unit` times and, under another
+profile, multiply every time by `rv32iFixtureTimeScale(core, unit_cycle)`,
+the smallest whole factor that brings their cycle up to the certified clock
+stored in `analysis::CERTIFIED_CORE_PERIODS` (`RV32IProfileSweepTest` checks
+that table against `--period auto`). Fixed-time scenarios scale by gate
+delays (`FullCircuitTest` by the slowest gate, `CacheTwoLevelScenarioTest`
+by an inverter). To check them:
+`CIRCUITSIM_TIMING_PROFILE=embedded ctest --test-dir build-cleanup -R "/program-|FullCircuitTest|CacheTwoLevelScenarioTest|RV32IBaselinePipelineCoreTest"`
+(179 tests). A changed certified clock means updating the stored table.
+
 ## Connect a scenario to the visualizer and site
 
 The registry name identifies the test. `visualizer-v2/static/scenarios.json`

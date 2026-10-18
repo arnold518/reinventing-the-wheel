@@ -1,3 +1,4 @@
+#include "components/TimingProfile.hpp"
 #include "tests/CacheTests.hpp"
 #include "tests/ComponentTestModel.hpp"
 #include "modules/memory/Cache.hpp"
@@ -793,7 +794,10 @@ void CacheTwoLevelScenarioTest::preparePrecomputedSimulation() {
     auto fixture = std::dynamic_pointer_cast<CacheFixture<8>>(root);
     require(fixture != nullptr && sim != nullptr,
             "Two-level scenario must be set up before playback");
-    size_t now = 100;
+    // Times are written in gate delays: one inverter is 1 tick in `unit`
+    // and one FO4 in a realistic profile, so every profile settles alike.
+    const size_t gate = circuit::timing::leafDelay(circuit::timing::Leaf::Not);
+    size_t now = 100 * gate;
     for (const auto& [name, wire] : inputs_)
         sim->scheduleEvent(makeTestWireUpdate(0, wire,
             TestValue(uint64_t(name == "RST"))));
@@ -803,7 +807,7 @@ void CacheTwoLevelScenarioTest::preparePrecomputedSimulation() {
         const auto at = now + 1;
         for (const auto& [name, value] : values)
             sim->scheduleEvent(makeTestWireUpdate(at, inputs_.at(name), TestValue(value)));
-        now = at + 200;
+        now = at + 200 * gate;
         sim->advanceAndRecord(now);
     };
     auto output = [&](const char* pin) {

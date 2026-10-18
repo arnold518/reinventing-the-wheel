@@ -2941,3 +2941,25 @@ The remaining failures after (1) decide the split; rerun in progress.
     Code for low memory while compiling the Python module; nothing was
     committed. Decision: build the C++ targets first (test runner and
     experiment CLI) in the foreground, the Python module after the reruns.
+
+## 2026-10-18 — Phase 8: program fixtures under every profile (verified)
+
+- **Built** (C++ targets only: `SimulatorLib`, `SimulationTestRunner`,
+  `rv32i_experiment`; foreground, one job, address space 3 GiB; the Python
+  module waits for the reruns to end).
+- **Baseline fixture correction:** it still failed under `embedded`
+  (instruction 0: PC 0, expected 4) although its 4,000-tick cycle is above
+  the certified 3,354 ps, and the core verified at 3,354 and 4,000 ps
+  through the CLI. Cause: the fixture releases reset on a falling edge,
+  half a cycle before its first working edge, so half a cycle (2,000 ps) is
+  what the circuit has to settle from reset. Its scale is now computed on
+  the half cycle (`rv32iFixtureTimeScale("baseline", 2000)`): 8,000 ps
+  cycles in `embedded` and `desktop`, `unit` unchanged.
+- **Checks:**
+  - 179 tests (`/program-` scenarios of all cores and predictors,
+    `FullCircuitTest`, `CacheTwoLevelScenarioTest`,
+    `RV32IBaselinePipelineCoreTest`) under `embedded`: 179 / 179 (were
+    1 / 179 on 2026-10-18 before the change); under `unit`: 179 / 179.
+  - The baseline program and core scenarios under `desktop`: pass.
+  - `RV32IProfileSweepTest` (new case: every stored certified period equals
+    `--period auto` in `unit`, `embedded` and `desktop`): passed, 197 s.

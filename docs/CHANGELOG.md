@@ -7,6 +7,25 @@ history remains in Git and the archived reports.
 
 ## 2026-10-18
 
+### Program fixtures and fixed-time scenarios under every timing profile (branch `realistic-timing`, phase 8)
+
+- **Changed:** `analysis::CERTIFIED_CORE_PERIODS` stores the certified FF
+  clock of each core per profile (`rv32i_experiment
+  --list-certified-periods`). The RV32I program fixtures keep their `unit`
+  times and multiply them, under another profile, by the smallest whole
+  factor that reaches the certified clock (`rv32iFixtureTimeScale`; the
+  baseline fixture on its half cycle, since it releases reset half a cycle
+  before its first edge). `FullCircuitTest` and `CacheTwoLevelScenarioTest`
+  scale their times by gate delays.
+- **Why:** the visualizer is to offer the realistic profiles; every program
+  scenario failed under `embedded` because its times were `unit` ticks.
+- **Verified:** the 179 program and fixed-time scenarios under `embedded`
+  and `unit` (all pass; under `embedded` 1 passed before); baseline
+  scenarios under `desktop`; `RV32IProfileSweepTest` with the new check
+  that the stored periods equal the analysis.
+- **Limits:** the full native suite was not rerun for this change yet (it
+  runs once more at the end of phase 8).
+
 ### Clock certified for cached and shared roots (branch `realistic-timing`, phase 8)
 
 - **Changed:** the two-port arbiter is clocked by I_CLK instead of an AND

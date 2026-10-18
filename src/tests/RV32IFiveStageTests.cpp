@@ -146,7 +146,7 @@ void RV32IFiveStageCoreProgramTest::setupCircuit() {
         root_context,
         RV32IProgramRoot::RootName,
         baseline_ ? circuit::families::RV32IBaselinePipelineCore : circuit::families::RV32IFiveStageCore,
-        baseline_ ? 2000 : 50, prediction_ ? prediction_->parameters() : circuit::ParameterMap{});
+        (baseline_ ? 2000 : 50) * timeScale(), prediction_ ? prediction_->parameters() : circuit::ParameterMap{});
     root = program_root_;
     builder = std::make_unique<ComponentBuilder>(
         root, root_context);
@@ -173,6 +173,14 @@ void RV32IFiveStageCoreProgramTest::setBuildProfile(
     simulation_precomputed_ = false;
 }
 
+size_t RV32IFiveStageCoreProgramTest::timeScale() const {
+    // The baseline fixture releases reset on a falling edge, half a cycle
+    // before its first working edge, so half its cycle (2000 in `unit`)
+    // must cover the certified clock; the advanced fixture releases just
+    // after a rising edge and needs a whole cycle (100 in `unit`).
+    return rv32iFixtureTimeScale(baseline_ ? "baseline" : "advanced", baseline_ ? 2000 : 100);
+}
+
 RV32ISystemProgramCase
 RV32IFiveStageCoreProgramTest::getCase() const {
     auto c=fiveStageProgramCase(program_number_);
@@ -185,6 +193,7 @@ RV32IFiveStageCoreProgramTest::getCase() const {
             "/program-"+std::string(program_number_<10?"0":"")+std::to_string(program_number_);
         c.expected_five_stage.defined=false; // Policy-specific timing is compared across fidelities, not to the old sequential-fetch counts.
     }
+    c.cycle_time_step*=timeScale();
     return c;
 }
 
@@ -281,13 +290,13 @@ initializeComponentForLockstep(
     program_root_->initializeFixedInputs(*sim, 0);
     drive(*sim, 0, rst_wire_, true);
     drive(*sim, 0, enable_wire_, true);
-    const size_t scale=baseline_?40:1;
+    const size_t scale=(baseline_?40:1)*timeScale();
     program_root_->startClock(*sim, 20*scale);
     // Release reset just after the first rising edge, not half a cycle
     // later: the circuit then has a whole cycle to settle before the first
     // working edge. Compact parts answer at their real delays, and half of
     // the advanced core's 100-tick cycle is not enough for that.
-    const size_t release = baseline_ ? 70*scale : 21;
+    const size_t release = baseline_ ? 70*scale : 21*timeScale();
     sim->advanceAndRecord(release);
     drive(*sim, release, rst_wire_, false);
     // advanceAndRecord stops at the last event, not the requested deadline.
@@ -336,7 +345,7 @@ void RV32IFiveStageCoreProgramTest::clockComponentOneCycle(
         ++observed_retirements_;
         retired_memory_ = observation.memory;
     }
-    program_root_->observeRetirementBeforeEdge(*sim, cycle_start_time + 20 * (baseline_ ? 40 : 1));
+    program_root_->observeRetirementBeforeEdge(*sim, cycle_start_time + 20 * (baseline_ ? 40 : 1) * timeScale());
 }
 
 rv32i::RV32IState

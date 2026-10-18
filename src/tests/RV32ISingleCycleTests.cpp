@@ -56,7 +56,7 @@ RV32ISystemProgramCase singleCycleProgramCase(size_t number) {
     auto test_case = rv32iProgramCase(number);
     test_case.name = rv32iProgramScenarioName(number);
     test_case.max_cycles_per_instruction = 1;
-    test_case.cycle_time_step = 4000;
+    test_case.cycle_time_step = 4000 * rv32iFixtureTimeScale("single", 4000);
     return test_case;
 }
 
@@ -185,7 +185,7 @@ void RV32ISystemProfileRun::setupCircuit() {
         root_context,
         RV32IProgramRoot::RootName,
         circuit::families::RV32ISingleCycleCore,
-        2000);
+        2000 * rv32iFixtureTimeScale("single", 4000));
     root = program_root_;
     builder = std::make_unique<ComponentBuilder>(
         root, root_context);
@@ -283,10 +283,11 @@ void RV32ISystemProfileRun::initializeComponentForLockstep(
     program_root_->initializeFixedInputs(*sim, 0);
     drive(*sim, 0, rst_wire_, true);
     drive(*sim, 0, enable_wire_, true);
-    program_root_->startClock(*sim, 1000);
-    sim->advanceAndRecord(3000);
-    drive(*sim, 3000, rst_wire_, false);
-    sim->advanceAndRecord(4000);
+    const size_t scale = rv32iFixtureTimeScale("single", 4000);
+    program_root_->startClock(*sim, 1000 * scale);
+    sim->advanceAndRecord(3000 * scale);
+    drive(*sim, 3000 * scale, rst_wire_, false);
+    sim->advanceAndRecord(4000 * scale);
     visual_time_origin_ = sim->getCurrentTime();
     visual_run_duration_ = visual_time_origin_
                          + test_case.expected_result.instruction_count * test_case.cycle_time_step;
