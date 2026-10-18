@@ -1,4 +1,5 @@
 #pragma once
+#include <array>
 #include "modules/memory/DigitalMemory.hpp"
 #include "components/TimingProfile.hpp"
 #include "modules/basic/DFlipFlopTiming.hpp"
@@ -110,6 +111,7 @@ public:
         if (complete && finished == Refresh) refresh_row = refresh_row + 1 >= rows_ ? 0 : refresh_row + 1;
         const bool repeated = accept && busy && code == command;
         if (accept) {
+            if (code < accepted.size()) ++accepted[code];
             command = code;
             if (code == Activate) row = a;
             if (code == Refresh) row = refresh_row_before(complete && finished == Refresh);
@@ -164,6 +166,8 @@ public:
     unsigned command = None;
     uint32_t row = 0, column = 0;
     size_t refresh_row = 0;
+    // Commands accepted, by code (instrumentation, not control state).
+    std::array<uint64_t, 7> accepted{};
     Bits data, mask;
 
 private:

@@ -445,6 +445,10 @@ public:
         : DeviceModel(w, c, X), control_(w, c.depth_words / c.words_per_row, c.words_per_row, c.block_words), buffer_(w * c.words_per_row, X) {
         outputs["ROW_OPEN"] = {L};
     }
+    std::map<std::string, uint64_t> commandCounts() const override {
+        const auto& a = control_.accepted;
+        return {{"activate", a[1]}, {"read", a[2]}, {"write", a[3]}, {"precharge", a[4]}, {"refresh", a[5]}, {"read_burst", a[6]}};
+    }
     void update(size_t t, const Signals& s) override {
         if (edge(s)) control_.edge(t, signal(s, "CMD", 3), signal(s, "ADDR", 32), signal(s, "WRITE_DATA", width_), signal(s, "WRITE_MASK", width_ / 8));
         const bool wl = control_.wordline(t), sense = control_.sensing(t), write = control_.writing(t), precharge = control_.precharging(t);

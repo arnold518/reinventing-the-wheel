@@ -275,6 +275,22 @@ RV32IExperimentResult runRV32IExperiment(const RV32IExperimentConfig& config) {
     const auto execution_started=Clock::now();
     result.setup_seconds=seconds(started,execution_started);
     bool done=false;
+    // Device commands of the memories (DRAM rows opened, refreshes, ...),
+    // counted over the measured window: memory name and command.
+    const auto commandsNow=[&] {
+        std::map<std::string,uint64_t> all;
+        std::vector<std::pair<std::string,std::shared_ptr<IOComponent>>> memories{{"IMEM",imem}};
+        if(dmem!=imem)memories.push_back({"DMEM",dmem});
+        else memories.front().first="MEM";
+        for(const auto& [name,memory]:memories)
+            if(auto endpoint=std::dynamic_pointer_cast<BehavioralMemoryEndpoint>(memory))
+                for(const auto& [command,count]:endpoint->commandCounts())all[name+"_"+command]=count;
+        return all;
+    };
+    std::map<std::string,uint64_t> window_commands=commandsNow();
+    const auto recordCommands=[&] {
+        for(const auto& [name,count]:commandsNow())result.observations["DEVICE_"+name]=count-window_commands[name];
+    };
     bool measuring=!start_pc,window_started=measuring,window_stopped=false;
     size_t start_visits=0;
     size_t total_attempts=0;
@@ -379,9 +395,11 @@ RV32IExperimentResult runRV32IExperiment(const RV32IExperimentConfig& config) {
         if(attempt&&!window_started&&start_pc&&pc==*start_pc
             &&start_visits++>=prepared.training_iterations) {
             measuring=window_started=true;sim.resetPerformanceCounters();
+            window_commands=commandsNow();
         }
         if(attempt&&measuring&&stop_pc&&pc==*stop_pc) {
             measuring=false;window_stopped=true;result.simulator=sim.getPerformanceCounters();
+            recordCommands();
         }
         // Observe both ports even before the ROI so its first cycle inherits
         // the correct outstanding-request state. Zero-wait transfers never
@@ -468,7 +486,7 @@ RV32IExperimentResult runRV32IExperiment(const RV32IExperimentConfig& config) {
         if(measuring)result.execution_seconds+=seconds(cycle_started,Clock::now())-verification;
         if(done)break;
     }
-    if(measuring)result.simulator=sim.getPerformanceCounters();
+    if(measuring){result.simulator=sim.getPerformanceCounters();recordCommands();}
     result.completed=done;
     if(!done&&!config.allow_incomplete)require(false,"Experiment cycle budget exceeded");
     require(window_started,"Measurement start PC was never retired");
@@ -519,8 +537,12 @@ RV32IExperimentResult runRV32IExperiment(const RV32IExperimentConfig& config) {
     benchmark::addMetric(result.benchmark_run,"cycles",double(result.cycles),"cycles");
     benchmark::addMetric(result.benchmark_run,"retired_instructions",double(result.retired),"instructions");
     benchmark::addMetric(result.benchmark_run,"processed_events",double(result.simulator.processed_events),"events");
-    for(const auto& [name,value]:result.observations)
-        benchmark::addMetric(result.benchmark_run,name,double(value),"cycles");
+    for(const auto& [name,value]:result.observations) {
+        const auto ends=[&](const char* suffix){const std::string x=suffix;return name.size()>=x.size()&&name.compare(name.size()-x.size(),x.size(),x)==0;};
+        const char* unit=name.rfind("DEVICE_",0)==0?"commands":ends("_RESPONSE_WORDS")?"words"
+            :ends("_READS")||ends("_WRITES")?"requests":"cycles";
+        benchmark::addMetric(result.benchmark_run,name,double(value),unit);
+    }
     result.benchmark_run.fingerprints={{"workload_fnv1a64",result.workload_fingerprint},
         {"final_state_fnv1a64",result.state_fingerprint}};
     if(config.progress_interval_cycles)

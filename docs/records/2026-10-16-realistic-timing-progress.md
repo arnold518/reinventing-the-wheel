@@ -2560,3 +2560,29 @@ same points as C-ID. The campaign clocks (4104 / 2858 ps) keep at least
   called those figures margins "above the failure point", they were above
   the last working period).
 - The gate-level-bank standalone benchmark is being rerun with this fix.
+
+## 2026-10-18 — Phase 8: gate-level banks confirm the campaign; DRAM command counters
+
+- **Gate-level banks, revised fix:** the standalone cache benchmark with
+  gate-level banks (`CACHE_BENCH_GATE_BANKS`, `embedded`, 7,661 s) completes
+  all 24 traces verified, with cycle counts and traffic identical to the
+  compact banks. The campaign's standalone results are confirmed by the
+  lower-level form.
+- **DRAM command counters (instrumentation):** the compact DRAM control
+  counts the commands it accepts (activate, read, write, precharge,
+  refresh, read_burst); `BehavioralMemoryEndpoint::commandCounts()` reports
+  them and the experiment adds `DEVICE_<memory>_<command>` per measured
+  window. Observation units in the benchmark record are now labelled
+  (requests, words, commands, cycles; all were "cycles").
+- **A → B explained by measurement** (`sort`, `embedded`, same window as the
+  panel, cycle counts unchanged by the counters): A opens DRAM rows 148
+  times in the instruction memory (one per refresh: the code stays in one
+  row) and 648 times in the data memory (input and output are in different
+  2-KiB rows); B's shared DRAM opens rows 18,377 times — 23× A's 796 —
+  because instruction fetches and data accesses interleave on one DRAM.
+  At about 12 extra cycles per row change, the extra 17,600 activations
+  account for roughly 211,000 of B's 278,700 extra cycles; most of the rest
+  is the shared bus. This replaces the inference recorded with the panel
+  results. Checks: `RV32IExperimentTest`, `RV32IExperimentCLITest`,
+  `RV32ITopologyTest`, `MemoryEndpointDRAMTest`,
+  `NativeMemoryDeviceContractTest` pass.

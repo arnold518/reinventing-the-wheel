@@ -145,6 +145,9 @@ public:
     DeviceModel(size_t width, EndpointConfig config, LogicValue fill);
     virtual ~DeviceModel() = default;
     virtual void update(size_t, const Signals&) = 0;
+    // Device commands accepted so far, by name (DRAM: activate, precharge,
+    // refresh, read, write, read_burst); empty for devices without commands.
+    virtual std::map<std::string, uint64_t> commandCounts() const { return {}; }
     Bits read(const std::string& name, size_t width) const { return signal(outputs, name, width); }
     size_t deadline() const { return due_; }
     MemoryStorage storage;

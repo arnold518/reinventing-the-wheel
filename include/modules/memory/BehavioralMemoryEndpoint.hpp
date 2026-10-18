@@ -11,6 +11,9 @@ public:
     ~BehavioralMemoryEndpoint();
     circuit::memory::Technology technology() const noexcept;
     bool hasStarted() const noexcept;
+    // The device's accepted commands (DRAM: activate, precharge, refresh,
+    // read, write, read_burst); instrumentation for experiments.
+    std::map<std::string, uint64_t> commandCounts() const;
     void evaluate(size_t, Simulator&) override;
     const MemoryStorage& memoryStorage() const override;
     void loadMemoryBytes(uint32_t, const std::vector<uint8_t>&) override;

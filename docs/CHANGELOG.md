@@ -5,6 +5,24 @@ what changed and why, what was verified, and any limits or deliberate
 omissions. Entries begin with adoption of this recording workflow; older
 history remains in Git and the archived reports.
 
+## 2026-10-18
+
+### DRAM command counters in the experiments (branch `realistic-timing`, phase 8)
+
+- **Changed:** the compact DRAM control counts the commands it accepts;
+  `BehavioralMemoryEndpoint::commandCounts()` reports them and
+  `rv32i_experiment` adds `DEVICE_<memory>_<command>` per measured window.
+  Benchmark-record units for observations are now requests, words,
+  commands or cycles (all were cycles).
+- **Why:** the cache campaign's shared-memory slowdown was explained by DRAM
+  row changes without measuring them. Measured: B's shared DRAM opens rows
+  23× as often as A's two memories in `sort`.
+- **Verified:** the A and B `sort` runs (cycle counts unchanged),
+  `RV32IExperimentTest`, `RV32IExperimentCLITest`, `RV32ITopologyTest`,
+  `MemoryEndpointDRAMTest`, `NativeMemoryDeviceContractTest`. The standalone
+  cache benchmark with gate-level banks matched the compact banks exactly
+  after the SRAM macro fix.
+
 ## 2026-10-17
 
 ### Clocked SRAM macro: no write disturb on the next access (branch `realistic-timing`, phase 8)

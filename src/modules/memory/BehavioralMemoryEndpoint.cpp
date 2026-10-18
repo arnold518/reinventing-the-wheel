@@ -27,6 +27,7 @@ BehavioralMemoryEndpoint::BehavioralMemoryEndpoint(std::string n, size_t w, Tech
 BehavioralMemoryEndpoint::~BehavioralMemoryEndpoint() = default;
 Technology BehavioralMemoryEndpoint::technology() const noexcept { return state_->technology; }
 bool BehavioralMemoryEndpoint::hasStarted() const noexcept { return state_->started; }
+std::map<std::string, uint64_t> BehavioralMemoryEndpoint::commandCounts() const { return state_->device->commandCounts(); }
 const MemoryStorage& BehavioralMemoryEndpoint::memoryStorage() const { return state_->device->storage; }
 void BehavioralMemoryEndpoint::loadMemoryBytes(uint32_t, const std::vector<uint8_t>&) {
     throw std::logic_error("Use ROM image_hex at construction or the memory transaction port");
