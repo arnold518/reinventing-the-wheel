@@ -655,3 +655,15 @@ own profile and use certified clocks (`RV32IProfileSweepTest`,
 the phase 6.5 core sweep. Phase 8's remaining work: the delay-twin defect
 found by the strict-settling check, clock evidence for cached roots, the
 visualizer data, and the public site when the owner allows it.
+
+## 2026-10-18 — Phase 8: cached-root clock evidence settled (assistant)
+
+The plan asked for either analyzer support for cached roots or proven
+timing for the cache's state bits. Evidence (progress log, 2026-10-18): the
+state bits already have proven tables and setup checks; the analyzer's only
+objections were a gated clock in the arbiter (a design fault, fixed) and the
+caches' zero-delay clock wires (accepted, as in the delay-table analyzer).
+No new memory-contract model was needed. All five topologies are certified
+at the core's clock in both realistic profiles. Remaining phase 8 work: the
+public site when the owner allows it, the documentation checks that read
+it, the STM32F7 check and reruns of published results.

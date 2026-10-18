@@ -59,8 +59,23 @@ struct Fixture {
     std::shared_ptr<TestRegister> launch = b.addNewComponent<TestRegister>("L");
     std::shared_ptr<TestRegister> capture = b.addNewComponent<TestRegister>("C");
     ClockSpecification clock;
-    Fixture(bool reconverge = false) {
-        b.addNewWire("clk", root->getInputPin("CLK"), {launch->getInputPin("CLK"), capture->getInputPin("CLK")});
+    // `clock_wires`: the capture register's clock comes through that many
+    // zero-delay one-bit Rewires in a chain (a composite handing its clock on).
+    Fixture(bool reconverge = false, unsigned clock_wires = 0) {
+        std::vector<std::shared_ptr<Pin<>>> clocked{launch->getInputPin("CLK")};
+        if (!clock_wires) clocked.push_back(capture->getInputPin("CLK"));
+        std::shared_ptr<Pin<>> clock_source = root->getInputPin("CLK");
+        for (unsigned i = 0; i < clock_wires; ++i) {
+            auto wire = b.addNewComponent<Rewire>("CLOCK_WIRE_" + std::to_string(i),
+                std::vector<Rewire::WireSpec>{{"IN", 1}}, std::vector<Rewire::WireSpec>{{"OUT", 1}},
+                std::vector<Rewire::BitMap>{{"IN", 0, "OUT", 0}});
+            auto in = wire->getInputPin("IN");
+            if (i == 0) clocked.push_back(in);
+            else b.addNewWire("clock_wire_" + std::to_string(i), clock_source, {in});
+            clock_source = wire->getOutputPin("OUT");
+        }
+        b.addNewWire("clk", root->getInputPin("CLK"), clocked);
+        if (clock_wires) b.addNewWire("clock_last", clock_source, {capture->getInputPin("CLK")});
         b.addNewWire("data", root->getInputPin("DATA"), {launch->getInputPin("D")});
         auto merge = reconverge ? b.addNewComponent<ORGate>("MERGE") : nullptr;
         auto previous = launch->getOutputPin("Q");
@@ -182,6 +197,14 @@ void cyclesAndClocks() {
     gated.b.addNewWire("clock_data", gated.root->getInputPin("CLK"), {gate->getInputPin("IN")});
     gated.b.addNewWire("gated", gate->getOutputPin("OUT"), {gated.capture->getInputPin("CLK")});
     unknown(CircuitTimingAnalyzer::safeClock(gated.root, gated.clock, registerContracts()), "clock");
+
+    // A clock handed on through zero-delay one-bit wires is the clock itself.
+    Fixture wired(false, 2);
+    const auto carried = CircuitTimingAnalyzer::safeClock(wired.root, wired.clock, registerContracts());
+    safe(carried, 10);
+    bool noted = false;
+    for (const auto& a : carried.assumptions) noted |= a.find("2 zero-delay one-bit Rewire(s)") != std::string::npos;
+    check(noted, "Clock wires must be stated as an assumption");
 
     Fixture physical;
     physical.b.addNewComponent<DFlipFlop>("GATE_DFF");

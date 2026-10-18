@@ -13,16 +13,18 @@ any plan changes the assistant made. The public site (`site-docs/`) is
 deliberately not updated until the owner allows it; records, status and the
 changelog are kept current as usual (owner clarification, 2026-10-16).
 
-Current phase: 7 (phases 1–6 done). Phase 6 gave datasheet DRAM and NOR
+Current phase: 8 (phases 1–7 done). Phase 6 gave datasheet DRAM and NOR
 timing, a clocked on-chip SRAM macro, endpoints that take requests from
-registered state only (one certified clock for every memory), one DRAM
-synchronizer edge per command, and a 306-run core sweep. Residuals: macro
-3.1× CACTI, DRAM +23–33 % over a counted controller. Phase 7a gave the
-direct-bank cache (two-cycle hit); 7b gave burst reads end to end and
-burst-filled cache lines (L1 miss = DRAM + 6 cycles at `embedded`), and the
-cache plan's Step 1 order now holds. Next: the cache experiment. Open for
-phase 8: the delay twin's X timing; STM32F7 check not done; documentation
-checks and the cache's saved layouts.
+registered state only, one DRAM synchronizer edge per command, and a 306-run
+core sweep. Phase 7 gave the direct-bank cache (two-cycle hit), burst reads
+and burst line fills, and the cache experiment (Step 1, standalone traces,
+locality traces, five-topology CPU panel; exploratory, unpublished). Phase 8
+so far: the clocked macro's write disturb fixed; DRAM command counters; the
+native suite kept as a `unit` suite with a realistic-profile sweep; the
+delay twin's X timing fixed; visualizer data refreshed; cached and shared
+roots certified by the safe-clock analyzer at the core's clock. Open: the
+public site (`site-docs/`, waiting for the owner) and the documentation
+checks that read it; the STM32F7 check; reruns of published results.
 
 ## 2026-10-16 — Phase 0: baseline
 
@@ -2771,3 +2773,65 @@ The remaining failures after (1) decide the split; rerun in progress.
   checks that read `site-docs/` (MemoryDeviceDocumentationTest,
   RegisterFileDocumentationTest, MemoryEndpointIntegrationTest), which wait
   for the owner's permission to update the public pages.
+
+## 2026-10-18 — Phase 8: clock evidence for cached and shared roots
+
+- **Correction** (replaces the 2026-10-17 statement that a cached root
+  below its limit fails "with zero setup violations reported"): in the
+  current build, C-ID program 20 at `embedded` 3300 ps completes and
+  verifies but reports 389 setup violations (the first at
+  `IL1.CONTROLLER.READ_RESULT` D, 163 ticks before the edge where 333 are
+  needed); at 3000 ps it exceeds its cycle budget. The cache's registers are
+  compact parts with proven tables, so their setup checks run. Why the
+  earlier runs reported none was not re-established (they predate the
+  clocked-macro fix and the later table regenerations).
+- **Analyzer diagnostics for C-ID at 4104 ps** (`--safe-clock`): status
+  unknown, and not because of memory contracts. Two kinds of message:
+  (1) the arbiter's state bits are clocked by `SHARED_CLOCK`, an AND of
+  I_CLK and D_CLK ("derived, gated, or different clock"); (2) each cache
+  controller hands its clock to the banks through `CHILD_CLOCK`, a
+  zero-delay one-bit Rewire ("clock used as data").
+- **Decision 1 (design):** the arbiter's AND in the clock path is a design
+  fault, not an analyzer limit: in simulation it delays the arbiter's edge
+  by one gate delay behind its requesters (clock skew). The arbiter is now
+  clocked by I_CLK; D_CLK must carry the same clock and is not read
+  (header comment). The pins are unchanged (they follow the memory
+  protocol's per-port CLK/RST); the arbiter has no public page and no saved
+  layout.
+- **Decision 2 (analyzer):** `SafeClockTiming` accepts a zero-delay Rewire
+  with one input bit and one output bit, fed by the root clock (or by such
+  a wire), as part of the clock net: its output is the clock with no skew.
+  This is the rule the delay-table analyzer (`TimingGraph::clockSource`)
+  already applies. The report states it as an assumption ("N zero-delay
+  one-bit Rewire(s) pass the clock on unchanged"). Gates and any other part
+  in the clock path stay refused.
+- **Results** (`--safe-clock`, program 20, DRAM): every topology is
+  `safe-under-contracts` with no diagnostics, at 4104 ps (`embedded`) and
+  2858 ps (`desktop`). The core's own memory-port setup demands
+  (`also_captured`, from the compact core's table) set that period in every
+  topology, so no cache or arbiter path needs more than the core's clock.
+  The analyzer gives a sufficient period, not a minimum; the cache's own
+  shortest safe clock is not computed. Endpoints behind a cache or the
+  arbiter are taken with all their arcs (no handshake-state cuts), which is
+  conservative.
+- **End to end:** `--period auto` (structural reference certified, then
+  simulated) now works for cached roots: C-ID 232 cycles and D-ID 238
+  cycles at 4104 ps, both verified, 0 setup violations (C-ID's 232 equals
+  the 2026-10-17 run).
+- **Campaign unchanged by the arbiter change:** B and D-ID `sort` (64
+  words, `embedded`) rerun: identical window and whole-program cycles
+  (559,942 / 699,939 and 153,511 / 192,759) and identical boundary counters;
+  verified, 0 setup violations.
+- **Tests:** SafeClockTimingTest gains a case with the clock through a chain
+  of two Rewires (safe at the same period, the assumption stated);
+  RV32ITopologyTest gains `test_cached_and_shared_roots_have_a_certified_clock`
+  (B and D-ID). Run and passed: SafeClockTimingTest,
+  MemoryEndpointSafeClockTest, RV32IExperimentTest, RV32IExperimentCLITest,
+  RV32IProfileSweepTest, RV32ITopologyTest, TwoPortMemoryArbiterTest,
+  CacheReadTest.
+- **Consequence for the campaign's status:** the two conditions set on
+  2026-10-17 for leaving "exploratory" are met: the gate-level macro defect
+  is explained and fixed (compact and gate-level banks agree), and the
+  cached roots' clock is certified by the analyzer rather than by a
+  measured failure point. The results stay unpublished until the owner
+  allows the public site to be updated.

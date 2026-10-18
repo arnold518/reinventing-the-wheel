@@ -51,6 +51,20 @@ class Topologies(unittest.TestCase):
                 if topology in ("C-ID", "D-ID"):
                     self.assertEqual(seen.get("ARBITER_READS", 0), 0)
 
+    def test_cached_and_shared_roots_have_a_certified_clock(self):
+        # B covers the arbiter; D-ID covers both L1s, the arbiter and the L2.
+        # The analysis certifies them at the core's clock: the caches hand
+        # their clock on through zero-delay wires, the arbiter takes it
+        # straight from its I port (no gate in the clock path).
+        for topology in ("B", "D-ID"):
+            with self.subTest(topology=topology):
+                clock = run(topology, "dram", "--program", "20", "--safe-clock")["safe_clock"]
+                self.assertEqual(clock["status"], "safe-under-contracts", clock["diagnostics"])
+                self.assertEqual(clock["safe_period_ticks"], 4104)
+                self.assertEqual(clock["diagnostics"], [])
+                carried = [a for a in clock["assumptions"] if "Rewire(s) pass the clock on" in a]
+                self.assertEqual(len(carried), 1)
+
     def test_program_through_sram_memory(self):
         result = run("D-ID", "sram")
         self.assertTrue(result["verified"])

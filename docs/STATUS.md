@@ -91,9 +91,12 @@ work state changes. Keep dated decisions and validation results in
   down access with no spatial locality); the five-topology CPU panel and
   pointer-chase, all 40 runs verified: the L1 pair is 3–4× faster than the
   shared uncached bus, the L2 alone nearly as fast, and the L2 under the L1s
-  2–8 % slower (write-through through two levels). Cached roots run at the
-  core's certified clock, 24 % above their shortest working period; the
-  analyzer cannot certify them yet. Phase 8 under way: the gate-level clocked
+  2–8 % slower (write-through through two levels). The safe-clock analyzer
+  now certifies every topology (A, B, C-ID, D-0, D-ID) at the core's clock
+  (4104 / 2858 ps), the clock the campaign used: the caches hand their clock
+  on through zero-delay wires, which the analyzer accepts, and the arbiter
+  no longer gates its clock. Below that clock the setup checks report the
+  cache's late inputs (389 at `embedded` 3300 ps for C-ID). Phase 8 under way: the gate-level clocked
   SRAM macro's write disturb (a finished write's drivers and word line still
   on when the next access's address arrived) is fixed by sizing its settle
   line; compact and gate-level banks agree again. Full suite under `unit`:

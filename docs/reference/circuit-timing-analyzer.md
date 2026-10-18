@@ -547,7 +547,11 @@ Every report lists its premises.
   gates, the bit adapters, `Rewire`, constants, the compact storage parts and
   the FF endpoint. Anything else without a contract gives no result.
 - Start-up has passed.
-- One clock, taken straight from a root input.
+- One clock, taken straight from a root input. In the clock analysis a
+  zero-delay one-bit `Rewire` fed by that clock (a composite handing its
+  clock to a child, as the cache does for its banks) is part of the clock
+  net and is listed as an assumption; any gate or other part in a clock
+  path is refused as a derived or gated clock.
 - Only with `binary_sources` (settling) or `binary_startup` (clock): changing
   sources end at 0 or 1. Without it, a case split is possible only where the
   circuit itself proves a bit binary.

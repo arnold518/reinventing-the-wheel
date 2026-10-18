@@ -7,6 +7,28 @@ history remains in Git and the archived reports.
 
 ## 2026-10-18
 
+### Clock certified for cached and shared roots (branch `realistic-timing`, phase 8)
+
+- **Changed:** the two-port arbiter is clocked by I_CLK instead of an AND
+  of both port clocks (D_CLK must carry the same clock; pins unchanged).
+  The safe-clock analyzer treats a zero-delay one-bit Rewire fed by the
+  clock as part of the clock net and states it as an assumption.
+- **Why:** the analyzer refused every cached or arbitrated root. The
+  arbiter's gate put one gate delay of skew on its clock; the caches hand
+  their clock to the banks through zero-delay wires, which the delay-table
+  analyzer already accepted.
+- **Verified:** `--safe-clock` on A, B, C-ID, D-0 and D-ID in `embedded`
+  and `desktop`: all safe at the core's clock (4104 / 2858 ps), no
+  diagnostics; `--period auto` runs C-ID and D-ID verified with 0 setup
+  violations; B and D-ID `sort` reruns match the campaign exactly. Tests:
+  SafeClockTimingTest (new clock-wire case), RV32ITopologyTest (new
+  certified-clock case), MemoryEndpointSafeClockTest, RV32IExperimentTest,
+  RV32IExperimentCLITest, RV32IProfileSweepTest, TwoPortMemoryArbiterTest,
+  CacheReadTest.
+- **Limits:** the period is the core's (its port setups dominate); the
+  caches' own shortest safe clock is not computed. Endpoints behind caches
+  are analysed with all arcs, without handshake-state cuts.
+
 ### Visualizer data for the cache and memory timing parts (branch `realistic-timing`, phase 8)
 
 - **Changed:** `layout.json` drops entries of removed parts and stale cache

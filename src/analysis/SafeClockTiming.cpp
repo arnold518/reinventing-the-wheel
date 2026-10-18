@@ -234,13 +234,36 @@ class Analysis {
                 report.assumptions.push_back(input.pin + " fixed at " + std::to_string(input.fixed_value));
             }
         }
+        // A zero-delay Rewire with one bit in and one bit out that passes the
+        // root clock on is a clock wire, not logic (a composite handing its
+        // clock to a child): its output is the clock itself, with no skew.
+        std::set<size_t> clock_wires{clock_node};
+        size_t carriers = 0;
+        for (bool grown = true; grown;) {
+            grown = false;
+            for (const auto& leaf : leaves) {
+                const auto& c = leaf.component;
+                if (!leaf.builtin_rules || typeid(*c) != typeid(Rewire)
+                    || static_cast<const BasicComponent&>(*c).getDelay() != 0
+                    || c->getAllInputPins().size() != 1 || c->getAllOutputPins().size() != 1) continue;
+                const auto& in = c->getAllInputPins().begin()->second;
+                const auto& out = c->getAllOutputPins().begin()->second;
+                const auto& maps = static_cast<const Rewire&>(*c).getBitMappings();
+                if (in->getWidth() != 1 || out->getWidth() != 1 || maps.size() != 1) continue;
+                const auto o = node(out);
+                if (clock_wires.contains(o) || !clock_wires.contains(node(source(in)))) continue;
+                clock_wires.insert(o); unused.insert(node(in)); ++carriers; grown = true;
+            }
+        }
+        if (carriers) report.assumptions.push_back(std::to_string(carriers)
+            + " zero-delay one-bit Rewire(s) pass the clock on unchanged");
         for (const auto& leaf : leaves) for (const auto& [name, p] : leaf.component->getAllInputPins()) {
             const auto n = node(p);
             if (unused.contains(n)) continue;
             const auto src = source(p); const auto s = node(src);
             if (clock_nodes.contains(n)) {
-                if (s != clock_node) diagnostic(p->getID() + ": derived, gated, or different clock is unsupported");
-            } else if (s == clock_node) diagnostic(p->getID() + ": clock used as data requires an explicit clock-as-data model");
+                if (!clock_wires.contains(s)) diagnostic(p->getID() + ": derived, gated, or different clock is unsupported");
+            } else if (clock_wires.contains(s)) diagnostic(p->getID() + ": clock used as data requires an explicit clock-as-data model");
             else if (s != n) connect(s, n, {0, 0}, true);
             else if (!declared.contains(s)) diagnostic(p->getID() + ": unconstrained external/undriven input");
         }

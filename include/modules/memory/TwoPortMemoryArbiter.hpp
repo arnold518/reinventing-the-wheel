@@ -5,6 +5,9 @@
 
 namespace circuit::memory {
 
+// Two requester ports (I_, D_) sharing one lower memory (MEM_). Both
+// requesters run on one clock: the arbiter is clocked by I_CLK, and D_CLK
+// must carry the same clock (it is not read).
 template<size_t Width>
 class TwoPortMemoryArbiter : public IOComponent {
 public:

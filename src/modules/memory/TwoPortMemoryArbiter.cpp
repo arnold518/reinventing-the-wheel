@@ -29,8 +29,11 @@ void TwoPortMemoryArbiter<Width>::buildInternals(ComponentBuilder& builder) {
     auto busy = builder.add(circuit::families::ClockedStateBit, "BUSY");
     auto owner_d = builder.add(circuit::families::ClockedStateBit, "OWNER_D");
     auto prefer_d = builder.add(circuit::families::ClockedStateBit, "PREFER_D");
-    // The simulator has one clock domain; both requester clocks advance together.
-    auto shared_clock = w.both("SHARED_CLOCK", getInputPin("I_CLK"), getInputPin("D_CLK"));
+    // Both requesters run on one clock. The state is clocked straight from
+    // I_CLK: a gate in the clock path (such as an AND of both clocks) would
+    // delay this part's edge behind the requesters' (clock skew). D_CLK must
+    // carry the same clock and is not read.
+    auto shared_clock = getInputPin("I_CLK");
     auto reset = w.either("RESET", getInputPin("I_RST"), getInputPin("D_RST"));
     for (auto state : {busy, owner_d, prefer_d}) {
         w.connect(shared_clock, state->getInputPin("CLK"));
