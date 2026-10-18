@@ -2984,3 +2984,36 @@ The remaining failures after (1) decide the split; rerun in progress.
   that command did not run. The runs were then stopped by process ID and the
   edit made in a separate command. Finished steps kept: `embedded` programs,
   branches, capacity, fixtures; `desktop` programs (frozen snapshot).
+
+## 2026-10-19 — Phase 8: rerun results, first comparison
+
+- **Done and complete (frozen snapshot or earlier valid runs):** `embedded`
+  and `desktop` fixed programs (154 each, all structurally checked),
+  generated families (105 each) and core-gap cases (161 each, oracle and
+  memory checks); `embedded` branch patterns, capacity and fixtures.
+  Running: `desktop` branch patterns, capacity, fixtures; then the
+  `embedded` generated-family spot check with structural reference.
+- **Cycles do not depend on the profile:** every one of the 420 FF cases
+  has the same cycle count in `embedded` and `desktop`; only the clock
+  differs (single 7,164 / 4,986 ps, baseline 3,354 / 2,334, advanced
+  4,104 / 2,858).
+- **Same cycles as published:** the longer branch patterns reproduce the
+  published `unit` ticks exactly (cycles × 166 / 80 / 100) for taken,
+  not-taken, alternating and bursts. The irregular row differed because the
+  rerun used `--size 16`; the published row is reproduced exactly with
+  `--size 8` (checked for all seven targets), so the published campaign used
+  size 8 for that pattern. The irregular pattern is rerun at size 8 in both
+  profiles.
+- **Conclusions per profile** (fastest of single, baseline and
+  advanced/two-bit; geometric mean of advanced/two-bit time over
+  single-cycle time):
+
+  | Panel | `unit` (published clocks) | `embedded` | `desktop` |
+  | --- | --- | --- | --- |
+  | Fixed programs (22, traps included) | advanced 11, single 10, baseline 1; 1.044 | advanced 13, single 8, baseline 1; 0.993 | advanced 13, single 8, baseline 1; 0.994 |
+  | Generated families (15) | advanced 14, baseline 1; 0.707 | same; 0.672 | same; 0.673 |
+  | Core-gap cases (23) | advanced 20, baseline 3; 0.690 | same; 0.656 | same; 0.657 |
+
+  The advanced core gains about 5 % over single-cycle in the realistic
+  profiles (its clock is relatively shorter: single/advanced 1.66 in `unit`,
+  1.75 in `embedded`); the published orderings otherwise hold.
