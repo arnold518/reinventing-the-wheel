@@ -2859,3 +2859,36 @@ The remaining failures after (1) decide the split; rerun in progress.
 - **Verdict:** plausible, with the DRAM overstatement already known and
   recorded; no change to the model. The check rests on secondary sources and
   arithmetic, not on the RM0385 tables, and is stated so.
+
+## 2026-10-18 — Phase 8: visualizer timing profiles, findings and design
+
+- **How the profile is held:** one active profile per process
+  (`setActiveTimingProfile`). It is read when parts are built and, for some
+  memory models, while they run (`SRAMBehavioral` access timing,
+  `DRAMSyncControl`, `staticAccessTime`). The layout fingerprint
+  (`BuildProfile::fingerprint`) does not include it, so saved layouts carry
+  over between profiles. The native server is threaded (up to two
+  sessions); the WebAssembly worker has one session.
+- **Which scenarios work under `embedded` today** (the 2026-10-18 full
+  `embedded` suite): 160 of the 163 visualizer component scenarios pass
+  (they mostly use settled checkpoints, so the profile does not matter).
+  Failing: `FullCircuitTest`, `CacheTwoLevelScenarioTest`,
+  `RV32IBaselinePipelineCoreTest`. Every program scenario fails (175 of 176
+  runs): the program fixtures hard-code clock half-periods (2000 single and
+  baseline, 50 five-stage) and about 30 tick constants (clock start, reset
+  release, first enable) chosen for `unit`.
+- **Design:**
+  1. A stored table of certified core periods per profile
+     (`rv32i::certifiedCorePeriod(core, profile)`), checked against the
+     safe-clock analysis like the delay tables (`--period auto` in
+     `RV32IProfileSweepTest` must return the stored value).
+  2. Program fixtures: under `unit` unchanged (recorded tables stay the
+     same); under a realistic profile the clock period is the certified one
+     and the fixture's tick constants scale by the same factor.
+  3. The three failing component scenarios are investigated one by one.
+  4. Native server: each session holds a timing profile; a module-level lock
+     makes it the active profile for every build, step and scrub of that
+     session. WebAssembly: a binding sets the profile before building.
+     Browser: a profile choice beside the fidelity profile, timelines in ps,
+     ns or µs when the profile's tick is 1 ps, and the profile shown with
+     the scenario. Browser and WASM tests for both paths.
