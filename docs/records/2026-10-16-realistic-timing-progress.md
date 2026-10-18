@@ -3017,3 +3017,59 @@ The remaining failures after (1) decide the split; rerun in progress.
   The advanced core gains about 5 % over single-cycle in the realistic
   profiles (its clock is relatively shorter: single/advanced 1.66 in `unit`,
   1.75 in `embedded`); the published orderings otherwise hold.
+
+## 2026-10-19 — Phase 8: published-result reruns complete
+
+Every rerun step finished and wrote COMPLETE (frozen snapshot of `61b2027`
+sources with the binary built from `c7935d8`; the earlier valid `embedded`
+programs, branches, capacity and fixtures runs kept). Checks per row:
+instruction oracle and final memory always; structural reference on the
+fixed programs (154 per profile), branch patterns (35), capacity (3),
+fixtures (14) and the generated-family spot check (15, advanced two-bit,
+`embedded`). All passed, zero setup violations (binary-safe certificates).
+
+- **Irregular branch pattern at size 8** (the published setting): rerun in
+  both profiles, structurally checked; its cycles × 166 / 80 / 100 equal the
+  published `unit` row exactly.
+- **Predictor capacity:** cycles 1,363 / 1,363 / 1,239 and next-PC misses
+  67 / 67 / 5 for 8 / 16 / 32 entries, identical to the published values;
+  modeled time 5,593.8 / 5,593.8 / 5,084.9 ns (`embedded`), 3,895.5 /
+  3,895.5 / 3,541.1 ns (`desktop`).
+- **Longer branch patterns, modeled time in ns** (64 iterations):
+
+  | Target | taken | not-taken | alternating | bursts | irregular |
+  | --- | ---: | ---: | ---: | ---: | ---: |
+  | `embedded` Single | 3,281.1 | 3,739.6 | 3,510.4 | 3,510.4 | 3,496.0 |
+  | `embedded` Baseline | 5,034.4 | 5,249.0 | 5,141.7 | 5,141.7 | 5,135.0 |
+  | `embedded` Adv NT | 3,201.1 | 2,938.5 | 3,069.8 | 3,069.8 | 3,078.0 |
+  | `embedded` Adv T | 2,166.9 | 2,954.9 | 2,560.9 | 2,560.9 | 2,536.3 |
+  | `embedded` Adv BT | 2,692.2 | 2,429.6 | 2,560.9 | 2,560.9 | 2,569.1 |
+  | `embedded` Adv 1b | 2,183.3 | 2,437.8 | 2,823.6 | 2,363.9 | 2,569.1 |
+  | `embedded` Adv 2b | 2,199.7 | 2,446.0 | 2,577.3 | 2,429.6 | 2,569.1 |
+  | `desktop` Single | 2,283.6 | 2,602.7 | 2,443.1 | 2,443.1 | 2,433.2 |
+  | `desktop` Baseline | 3,503.3 | 3,652.7 | 3,578.0 | 3,578.0 | 3,573.4 |
+  | `desktop` Adv NT | 2,229.2 | 2,046.3 | 2,137.8 | 2,137.8 | 2,143.5 |
+  | `desktop` Adv T | 1,509.0 | 2,057.8 | 1,783.4 | 1,783.4 | 1,766.2 |
+  | `desktop` Adv BT | 1,874.8 | 1,691.9 | 1,783.4 | 1,783.4 | 1,789.1 |
+  | `desktop` Adv 1b | 1,520.5 | 1,697.7 | 1,966.3 | 1,646.2 | 1,789.1 |
+  | `desktop` Adv 2b | 1,531.9 | 1,703.4 | 1,794.8 | 1,691.9 | 1,789.1 |
+
+  The per-pattern winners among the advanced predictors are the published
+  ones (cycles are unchanged); the single-cycle core now loses to every
+  advanced predictor on every pattern except advanced not-taken on taken
+  branches in `embedded` (3,201 vs 3,281 ns: advanced still faster).
+- **ELF fixtures, modeled time in ns** (single / baseline / NT / T / BT /
+  1b / 2b): `embedded` compiled.elf 458.5 / 556.8 / 352.9 / 385.8 / 352.9 /
+  361.2 / 361.2, self-check.elf 136.1 / 187.8 / 106.7 / 131.3 / 106.7 /
+  106.7 / 106.7; `desktop` compiled.elf 319.1 / 387.4 / 245.8 / 268.7 /
+  245.8 / 251.5 / 251.5, self-check.elf 94.7 / 130.7 / 74.3 / 91.5 / 74.3 /
+  74.3 / 74.3.
+- **Not rerun:** the memory-endpoint follow-up and the program-20
+  default-policy pairs with timed memories (the phase 6.5 sweep covers the
+  advanced core with every memory, oracle-checked, in `embedded`), and the
+  Embench projection (a projection, not a measurement). Raw outputs are in
+  the session scratch directory; the tables above are the record.
+- **Plan check:** the reruns change no published ordering except the
+  fixed-program win count (advanced 11 → 13 of 22) and add about 5 % for
+  the advanced core over single-cycle. Nothing in the timing plan needs to
+  change; the results wait for the documentation phase.
