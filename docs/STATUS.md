@@ -79,8 +79,11 @@ work state changes. Keep dated decisions and validation results in
   over a counted controller (one synchronizer edge per command). Cycle counts
   differ from the published ones, which hold at tag `timing-legacy`. The owner
   directed realistic memory models that are not tuned to favor caches.
-  Open: the STM32F7 system check (source not read); tick-driven tests (CacheReadTest, MemoryDeviceTimingTest,
-  MemoryEndpointTimingTest) are `unit`-only. Phase 7 so far: the cache looks
+  The STM32F7 system check is a plausibility estimate from secondary
+  sources (RM0385 itself could not be read here): the DRAM row hit fits,
+  closed and conflicting rows are 1–5 cycles high, as already recorded.
+  Tick-driven tests (CacheReadTest, MemoryDeviceTimingTest,
+  MemoryEndpointTimingTest) are `unit`-only. Phase 7: the cache looks
   up every way at once in directly driven banks (L1 hit two cycles, 7a), and
   burst reads (op 4) exist end to end (7b): SRAM, ROM and DRAM endpoints
   return a line from the requested word, and the cache fills lines with one

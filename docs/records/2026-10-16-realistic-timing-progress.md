@@ -2835,3 +2835,27 @@ The remaining failures after (1) decide the split; rerun in progress.
   cached roots' clock is certified by the analyzer rather than by a
   measured failure point. The results stay unpublished until the owner
   allows the public site to be updated.
+
+## 2026-10-18 — Phase 8: STM32F7 system check (closed as a plausibility estimate)
+
+- **Sources tried:** RM0385 (STM32F75x/74x reference manual) is the
+  authority; its flash wait-state table is Table 5, p. 80 in Rev 9 (Table 4,
+  p. 75 in Rev 2), but the PDF could not be read from this host (direct
+  downloads are blocked; the web fetch of ST's FMC training PDF timed out).
+  Secondary sources agree on 7 flash wait states at 216 MHz (8 CPU cycles
+  per uncached flash access) for 2.7–3.6 V. For the FMC SDRAM controller:
+  SDCLK at most HCLK/2, CAS latency 1–3 SDCLK (2 in most published F7
+  set-ups), a read pipe delay of 0–2 HCLK cycles. No source gave an
+  end-to-end SDRAM read latency in CPU cycles.
+- **Estimate** (HCLK 216 MHz, SDCLK 108 MHz, CL 2, tRCD and tRP 2 SDCLK at
+  about 18 ns): row hit ≈ command 2 + CAS 4 + read pipe 0–1 + return 1–2
+  ≈ 7–9 HCLK; closed row + tRCD 4 ≈ 11–13; row conflict + tRP 4 ≈ 15–17.
+- **Model at `embedded`** (4,104 ps ≈ 244 MHz, Step 1 of the cache plan):
+  open row 8, closed 14–15, row change 20–22 cycles. The row hit is inside
+  the estimate; closed and conflicting rows are 1–5 cycles above it, which
+  matches the residual recorded in 6.4c (one synchronizer edge per DRAM
+  command). On-chip flash has no counterpart in the model (the model's NOR
+  is external, 34 cycles against a 120 ns tACC datasheet part).
+- **Verdict:** plausible, with the DRAM overstatement already known and
+  recorded; no change to the model. The check rests on secondary sources and
+  arithmetic, not on the RM0385 tables, and is stated so.
