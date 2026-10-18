@@ -13,6 +13,7 @@ hooks:
   - tools/mkdocs_examples.py
   - tools/mkdocs_rv32i.py
   - tools/mkdocs_diagrams.py
+  - tools/mkdocs_timing.py
 
 theme:
   name: material

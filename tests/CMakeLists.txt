@@ -623,6 +623,9 @@ add_test(
         $<TARGET_FILE:VisualizerSessionProbe> ${CMAKE_CXX_COMPILER}
 )
 set_tests_properties(DocumentationExamplesTest PROPERTIES LABELS "documentation;visualizer")
+add_test(NAME TimingTableDocumentationTest
+    COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/checks/TimingTableDocumentationTest.py)
+set_tests_properties(TimingTableDocumentationTest PROPERTIES LABELS "documentation;timing;unit")
 add_executable(RV32IReferenceProbe cpp/RV32IReferenceProbe.cpp)
 target_link_libraries(RV32IReferenceProbe PRIVATE SimulatorLib)
 add_test(

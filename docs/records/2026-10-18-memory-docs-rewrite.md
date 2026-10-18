@@ -130,3 +130,28 @@ renumbering.
 shared "Time and delay" page with it. ALU8 and RV32I pages keep their content
 and get the same `Timing` section afterwards (a mechanical change once the
 generator exists). Open until the owner confirms the template.
+
+## 2026-10-18 — Delay-table generator (implemented)
+
+- `tools/mkdocs_timing.py`, a MkDocs hook registered in `mkdocs.yml`:
+  `<!-- timing-table: KEY -->` becomes one table of the stored proven delays
+  of KEY (a name from `part_delay_tables`, for example
+  `arithmetic.adder.width8.behavioral.direct` or
+  `memory.sram.device.32.behavioral@depth=64`). Rows: every input → output
+  path (merged over control values, with a note), clock → output launches,
+  setup per input, the internal clock period. Columns: `unit` (ticks),
+  `embedded` (ps), `desktop` (ps), minimum–maximum. A generated line names
+  the evidence, held inputs (such as `RST` = 0), self-timing, and whether a
+  delay twin is attached (from `NoGateList.generated.inc`).
+- The hook parses the three generated table files directly; no build or
+  WebAssembly export is needed, and the numbers are the ones the simulator
+  uses.
+- `TimingTableDocumentationTest` (CTest, labels documentation, timing,
+  unit): all 754 stored tables render with the same paths in every profile;
+  known values (8-bit adder A → Cout: 3–18 ticks, 102–936 ps, 71–652 ps);
+  clocked parts show launches, setup and internal period; every marker in
+  `site-docs/` names a stored table; an unknown name is refused. Passed
+  (run directly; the CTest registration takes effect at the next configure).
+- Not yet: no page uses the marker; the latency tables for memory access and
+  the delay-rule tightness line need their own data (latency probes, a
+  `DelayRuleTest --report` export).
