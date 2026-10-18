@@ -5,6 +5,26 @@ what changed and why, what was verified, and any limits or deliberate
 omissions. Entries begin with adoption of this recording workflow; older
 history remains in Git and the archived reports.
 
+## 2026-10-19
+
+### Visualizer: choose the timing profile (branch `realistic-timing`, phase 8)
+
+- **Changed:** a Timing selector (`unit`, `embedded`, `desktop`) beside the
+  scenario, kept in the URL as `?timing=`; the circuit is built and
+  simulated under it and times are shown in ps, ns, µs or ms when the
+  profile's tick has a length. Native server: sessions per scenario and
+  profile, the library's profile set under one lock while a session is
+  built and restored afterwards; `timing` accepted by the circuit, state
+  and apply requests; the topology response names the profile. Python
+  binding `timing_profile_info`; WebAssembly `setTimingProfile` and
+  `timingProfileJson`.
+- **Why:** the realistic profiles were reachable only from the command line.
+- **Verified:** `VisualizerTimingProfileTest` (new),
+  `VisualizerReferenceProfileTest` (extended), the visualizer CTest group
+  (only the known `site-docs/` check fails).
+- **Limits:** the WebAssembly build and browser checks were not yet run
+  when this was committed.
+
 ## 2026-10-18
 
 ### Program fixtures and fixed-time scenarios under every timing profile (branch `realistic-timing`, phase 8)

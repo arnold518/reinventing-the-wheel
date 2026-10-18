@@ -699,6 +699,16 @@ if(CIRCUITSIM_NODE_EXECUTABLE)
         PROPERTIES LABELS "visualizer;unit"
     )
 endif()
+add_test(
+    NAME VisualizerTimingProfileTest
+    COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/checks/VisualizerTimingProfileTest.py
+)
+set_tests_properties(
+    VisualizerTimingProfileTest
+    PROPERTIES
+        ENVIRONMENT "PYTHONPATH=${PROJECT_BINARY_DIR}:${PROJECT_SOURCE_DIR}/visualizer-v2"
+        LABELS "visualizer;system;timing"
+)
 set_tests_properties(
     VisualizerProfileStoreTest
     PROPERTIES

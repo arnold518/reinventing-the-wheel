@@ -68,6 +68,7 @@ const ui = {
   programControls: document.getElementById('program-controls'),
   programCore: document.getElementById('program-core'),
   programPolicy: document.getElementById('program-policy'),
+  timing: document.getElementById('timing-select'),
   slider: document.getElementById("time-slider"),
   checkpointMarks: document.getElementById("checkpoint-marks"),
   playPause: document.getElementById("play-pause"),
@@ -3944,13 +3945,23 @@ function renderCheckpointMarks() {
   updateCheckpointControls();
 }
 
+// Simulation time as the profile defines it: picoseconds (shown in ps, ns,
+// us or ms) when its tick has a length, otherwise abstract ticks.
+function formatSimulationTime(time) {
+  const picoseconds = Number(app.timing?.tickPicoseconds || 0);
+  if (!picoseconds) return `${Number(time).toLocaleString()} ticks`;
+  const ps = Number(time) * picoseconds;
+  const [scale, unit] = ps >= 1e9 ? [1e9, "ms"] : ps >= 1e6 ? [1e6, "µs"] : ps >= 1e3 ? [1e3, "ns"] : [1, "ps"];
+  return `${(ps / scale).toLocaleString(undefined, { maximumFractionDigits: scale === 1 ? 0 : 3 })} ${unit}`;
+}
+
 function setTimeLabel(state) {
   const checkpoint = checkpointForIndex(state.index);
   if (checkpoint) {
-    ui.timeLabel.textContent = `Time: ${state.time} | ${checkpoint.label}`;
+    ui.timeLabel.textContent = `Time: ${formatSimulationTime(state.time)} | ${checkpoint.label}`;
     ui.timeLabel.title = checkpoint.detail || checkpoint.label;
   } else {
-    ui.timeLabel.textContent = `Time: ${state.time}`;
+    ui.timeLabel.textContent = `Time: ${formatSimulationTime(state.time)}`;
     ui.timeLabel.title = "";
   }
 }
@@ -4290,6 +4301,11 @@ function scheduleVisibleTopology() {
 
 function buildLocalModel(payload) {
   app.scenario = payload.scenario;
+  app.timing = payload.timing || { name: "unit", tickPicoseconds: 0, available: ["unit"] };
+  if (ui.timing) {
+    ui.timing.value = app.timing.name;
+    ui.timing.title = app.timing.description || "";
+  }
   app.sessionId = payload.sessionId;
   app.profile = payload.profile || {
     editable: false,
@@ -4440,6 +4456,7 @@ async function loadCircuit(scenario) {
   setPlaying(false);
   await nextPaint();
   const query = new URLSearchParams({ scenario });
+  query.set("timing", (ui.timing && ui.timing.value) || "unit");
   // Documentation can choose the initial core without overwriting a saved
   // explorer profile. Explicit Apply remains the only profile write.
   const coreFidelity = new URLSearchParams(window.location.search).get("core_fidelity");
@@ -4482,6 +4499,7 @@ async function applyExplorerProfile(request) {
         scenario: app.scenario,
         revision: request.revision,
         exactOverrides: request.exactOverrides,
+        timing: app.timing?.name || "unit",
       }),
     });
     if (!response.ok) throw new Error(await response.text());
@@ -4571,6 +4589,19 @@ ui.scenario.addEventListener("change", () => {
   const chosen = option.workload ? scenarioCatalogApi.resolveProgram(scenarioOptions,
     option.workload, ui.programCore.value, ui.programPolicy.value) : option;
   selectScenario(chosen.key);
+});
+// The timing profile: kept in the URL like the scenario, so a link or an
+// embedded page can open a circuit under a chosen profile.
+{
+  const requested = new URLSearchParams(window.location.search).get("timing");
+  if (requested && [...ui.timing.options].some(o => o.value === requested)) ui.timing.value = requested;
+}
+ui.timing.addEventListener("change", () => {
+  const url = new URL(window.location);
+  if (ui.timing.value === "unit") url.searchParams.delete("timing");
+  else url.searchParams.set("timing", ui.timing.value);
+  window.history.replaceState({}, "", url);
+  if (app.scenario) loadCircuit(app.scenario).catch(showError);
 });
 for (const control of [ui.programCore, ui.programPolicy]) control.addEventListener('change', () => {
   const option = scenarioOptions.find(o => o.key === ui.scenario.value);

@@ -30,6 +30,12 @@
           <option value="two-bit">Two-bit</option>
         </select>
       </div>
+      <label for="timing-select" title="Gate and memory delays the circuit is built and simulated with">Timing</label>
+      <select id="timing-select">
+        <option value="unit">unit (1 tick per gate)</option>
+        <option value="embedded">embedded (65 nm, ps)</option>
+        <option value="desktop">desktop (32 nm, ps)</option>
+      </select>
     </div>
     <div class="timeline-track">
       <input id="time-slider" type="range" min="0" max="0" value="0" list="checkpoint-marks" aria-label="Simulation timeline">

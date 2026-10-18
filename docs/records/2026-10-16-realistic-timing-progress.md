@@ -3075,3 +3075,25 @@ fixtures (14) and the generated-family spot check (15, advanced two-bit,
   fixed-program win count (advanced 11 → 13 of 22) and add about 5 % for
   the advanced core over single-cycle. Nothing in the timing plan needs to
   change; the results wait for the documentation phase.
+
+## 2026-10-19 — Phase 8: visualizer timing profiles (native verified)
+
+- **Python module built** with a lower address-space cap (2.5 GiB, one job)
+  on the owner's instruction to proceed without waiting for memory; the
+  compile of `ModulesBinding.cpp` peaked at about 1.7 GB and finished.
+- **New test `VisualizerTimingProfileTest`** (labels visualizer, system,
+  timing): profile names and tick lengths; unknown profile refused; the same
+  scenario under `unit` and `embedded` has the same checkpoints, the
+  `embedded` one later times and a 1 ps tick; a program scenario
+  (`rv32i-program1`) builds and records under `embedded`; the library's
+  profile is back to `unit` after each build; sessions are kept per
+  scenario and profile. Passed.
+- **`VisualizerReferenceProfileTest`** (Node, runs the worker's real
+  `loadScenario` against a stand-in bridge) needed the two new bridge
+  functions; it now also checks that the profile is set before building and
+  reported with the payload. Passed.
+- **Visualizer group** (CTest label `visualizer`, 30 tests): 28 passed
+  before the Node test fix; the remaining failure is the known
+  `MemoryEndpointIntegrationTest` (`site-docs/`). `layout.json` unchanged.
+- **Pending:** the WebAssembly build and the browser checks
+  (`tools/build-pages.sh`, `tools/run-web-tests.py`), running now.

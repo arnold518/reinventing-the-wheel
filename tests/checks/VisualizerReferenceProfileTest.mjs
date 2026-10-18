@@ -13,6 +13,7 @@ const saved = { schema_version: 1, scenarios: { 'rv32i-program9': {
 } } };
 const before = JSON.stringify(saved);
 let selected = {};
+let timing = 'unit';
 const sandbox = {
   normalizeScenario: key => ({ key, name: 'RV32ISingleCycleSystemTest/program-09' }),
   profileStore: async () => saved,
@@ -20,6 +21,8 @@ const sandbox = {
     clearProfileOverrides: () => { selected = {}; },
     setProfileOverride: (path, fidelity) => { selected[path] = fidelity; },
     loadScenario: (name, key, revision) => JSON.stringify({ revision, overrides: selected }),
+    setTimingProfile: name => { timing = name; },
+    timingProfileJson: () => JSON.stringify({ name: timing, tickPicoseconds: timing === 'unit' ? 0 : 1 }),
   },
   defaultLayout: {}, LAYOUT_KEY: 'layout', loadStored: async () => ({}),
   mergeLayoutStores: () => ({}), enrichPayload: payload => payload,
@@ -34,7 +37,15 @@ result = await sandbox.loadScenario('rv32i-program9');
 assert.equal(result.overrides['RV32I_PROGRAM_ROOT.CORE'], 'structural');
 await assert.rejects(sandbox.loadScenario('adder8', null, null, 'behavioral'), /core_fidelity/);
 await assert.rejects(sandbox.loadScenario('rv32i-program9', null, null, 'automatic'), /core_fidelity/);
-console.log('PASS: temporary core fidelity, normal reload, validation, and saved profile preservation');
+// The timing profile is set before building and reported with the payload;
+// it defaults to unit.
+result = await sandbox.loadScenario('rv32i-program9', null, null, null, 'embedded');
+assert.equal(timing, 'embedded');
+assert.equal(result.timing.name, 'embedded');
+assert.equal(result.timing.tickPicoseconds, 1);
+result = await sandbox.loadScenario('rv32i-program9');
+assert.equal(result.timing.name, 'unit');
+console.log('PASS: temporary core fidelity, timing profile, normal reload, validation, and saved profile preservation');
 
 // A compact parent hides its descendants, but must not discard their saved
 // fidelity choices. Exercise the actual worker apply route with a hidden word.

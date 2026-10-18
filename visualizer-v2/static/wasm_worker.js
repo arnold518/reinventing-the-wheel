@@ -318,8 +318,10 @@ async function localProfileStore() {
   ));
 }
 
-async function loadScenario(scenarioValue, requestedOverrides = null, requestedRevision = null, coreFidelity = null) {
+async function loadScenario(scenarioValue, requestedOverrides = null, requestedRevision = null, coreFidelity = null, timing = null) {
   const descriptor = normalizeScenario(scenarioValue);
+  // The timing profile the circuit is built and simulated under.
+  bridge.setTimingProfile(timing || "unit");
   if (coreFidelity && (!/^rv32i-(?:(?:five-stage|baseline)-|predict-[a-z-]+-)?program[0-9]+$/.test(descriptor.key)
       || !["structural", "behavioral"].includes(coreFidelity))) {
     throw new TypeError("core_fidelity requires an RV32I program and structural or behavioral");
@@ -337,6 +339,7 @@ async function loadScenario(scenarioValue, requestedOverrides = null, requestedR
   currentLayout = mergeLayoutStores(defaultLayout, await loadStored(LAYOUT_KEY, defaultLayout));
   currentScenario = descriptor;
   currentPayload = enrichPayload(payload, currentLayout);
+  currentPayload.timing = JSON.parse(bridge.timingProfileJson());
   return currentPayload;
 }
 
@@ -405,7 +408,7 @@ async function handleRequest(message) {
     });
   }
   if (message.method === "GET" && path === "/api/circuit") {
-    return JSON.stringify(await loadScenario(query.get("scenario") || "adder8", null, null, query.get("core_fidelity")));
+    return JSON.stringify(await loadScenario(query.get("scenario") || "adder8", null, null, query.get("core_fidelity"), query.get("timing")));
   }
   if (message.method === "GET" && path === "/api/state") {
     if (query.get("session") && query.get("session") !== currentPayload?.sessionId) {
@@ -480,7 +483,7 @@ async function handleRequest(message) {
       }
     }
     const revision = Number(saved.revision || 0) + 1;
-    const payload = await loadScenario(descriptor.key, overrides, revision);
+    const payload = await loadScenario(descriptor.key, overrides, revision, null, body.timing || currentPayload?.timing?.name);
     localStore.scenarios[descriptor.key] = { revision, exact_overrides: clone(overrides) };
     await saveStored(PROFILE_KEY, localStore);
     return JSON.stringify(payload);

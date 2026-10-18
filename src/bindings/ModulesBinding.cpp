@@ -123,6 +123,14 @@ void bindModules(py::module_& m) {
     m.def("timing_profile", [] { return circuit::timing::activeTimingProfile().name; },
           "Name of the active timing profile");
     m.def("timing_profile_names", &circuit::timing::timingProfileNames, "Names of all timing profiles");
+    m.def("timing_profile_info", [](const std::string& name) {
+              const auto& profile = circuit::timing::timingProfile(name);
+              py::dict info;
+              info["name"] = profile.name;
+              info["description"] = profile.description;
+              info["tick_picoseconds"] = profile.tick_picoseconds;
+              return info;
+          }, py::arg("name"), "Name, description and tick length in picoseconds (0: an abstract tick)");
     m.def("memory_activity_timestamps", &circuit::visualizer::memoryActivityTimestamps,
           py::arg("root"));
     py::class_<circuit::visualizer::MemoryInspector>(m, "MemoryInspector")

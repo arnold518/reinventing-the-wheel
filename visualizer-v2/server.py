@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import argparse
 from collections import OrderedDict, defaultdict, deque
+import contextlib
 import copy
 import gzip
 import json
@@ -1694,6 +1695,42 @@ SCENARIO_ALIASES_TO_CANONICAL = _scenario_aliases_to_canonical()
 DEFAULT_SCENARIO = "adder8" if "adder8" in SCENARIOS else SCENARIO_OPTIONS[0]["key"]
 
 
+# The timing profile is one setting of the whole C++ library. A session sets
+# it while its circuit is built and simulated (the whole run happens then;
+# scrubbing reads the recorded history), under one lock shared by every
+# session, and restores the previous value afterwards.
+TIMING_LOCK = threading.RLock()
+
+
+def timing_profile_names() -> list[str]:
+    return list(circuit_backend.timing_profile_names())
+
+
+def normalize_timing(name: str | None) -> str:
+    name = name or "unit"
+    if name not in timing_profile_names():
+        raise ValueError(f"Unknown timing profile '{name}'")
+    return name
+
+
+def timing_profile_info(name: str) -> dict[str, Any]:
+    """Name, description and tick length (picoseconds; 0 = abstract tick)."""
+    info = dict(circuit_backend.timing_profile_info(name))
+    return {"name": info["name"], "description": info["description"],
+            "tickPicoseconds": int(info["tick_picoseconds"]), "available": timing_profile_names()}
+
+
+@contextlib.contextmanager
+def active_timing(name: str):
+    with TIMING_LOCK:
+        previous = circuit_backend.timing_profile()
+        circuit_backend.set_timing_profile(name)
+        try:
+            yield
+        finally:
+            circuit_backend.set_timing_profile(previous)
+
+
 class CircuitSession:
     def __init__(
         self,
@@ -1702,7 +1739,13 @@ class CircuitSession:
         *,
         profile_revision: int = 0,
         profile_overrides: dict[str, str] | None = None,
+        timing: str = "unit",
     ):
+        self.timing = normalize_timing(timing)
+        with active_timing(self.timing):
+            self._build(scenario_key, layout_manager, profile_revision, profile_overrides)
+
+    def _build(self, scenario_key, layout_manager, profile_revision, profile_overrides):
         self.scenario_key = normalize_scenario(scenario_key)
         self.layout_manager = layout_manager
         self.lock = threading.RLock()
@@ -2222,6 +2265,7 @@ class CircuitSession:
             "layout": self.layout_manager.to_jsonable(),
             "state": self.state_at_index(0),
             "stateEncoding": "indexed-v1",
+            "timing": timing_profile_info(self.timing),
             "profile": {
                 "editable": self.profile_editable,
                 "revision": self.profile_revision,
@@ -2356,7 +2400,7 @@ class SessionStore:
 
     def _remember(self, session: CircuitSession) -> CircuitSession:
         self.sessions[session.session_id] = session
-        self.active_sessions[session.scenario_key] = session.session_id
+        self.active_sessions[(session.scenario_key, session.timing)] = session.session_id
         self.sessions.move_to_end(session.session_id)
         while len(self.sessions) > self.max_sessions:
             expired_id, _ = self.sessions.popitem(last=False)
@@ -2370,6 +2414,7 @@ class SessionStore:
     def _new_for_saved_profile(
         self,
         scenario_key: str,
+        timing: str = "unit",
     ) -> CircuitSession:
         revision, overrides = self.profile_store.get(scenario_key)
         return self._remember(CircuitSession(
@@ -2377,10 +2422,12 @@ class SessionStore:
             self.layout_manager,
             profile_revision=revision,
             profile_overrides=overrides,
+            timing=timing,
         ))
 
-    def get(self, scenario: str, core_fidelity: str | None = None) -> CircuitSession:
+    def get(self, scenario: str, core_fidelity: str | None = None, timing: str | None = None) -> CircuitSession:
         scenario_key = normalize_scenario(scenario)
+        timing = normalize_timing(timing)
         if core_fidelity and (
             not re.fullmatch(r"rv32i-(?:(?:five-stage|baseline)-|predict-[a-z-]+-)?program[0-9]+", scenario_key)
             or core_fidelity not in ("structural", "behavioral")
@@ -2388,7 +2435,7 @@ class SessionStore:
             raise ValueError("core_fidelity requires an RV32I program and structural or behavioral")
         with self.lock:
             self._reload_layout_if_changed()
-            session_id = self.active_sessions.get(scenario_key)
+            session_id = self.active_sessions.get((scenario_key, timing))
             session = self.sessions.get(session_id or "")
             revision, overrides = self.profile_store.get(scenario_key)
             if core_fidelity:
@@ -2399,10 +2446,11 @@ class SessionStore:
                 or session.profile_overrides != overrides
             ):
                 if not core_fidelity:
-                    return self._new_for_saved_profile(scenario_key)
+                    return self._new_for_saved_profile(scenario_key, timing)
                 return self._remember(CircuitSession(
                     scenario_key, self.layout_manager,
                     profile_revision=revision, profile_overrides=overrides,
+                    timing=timing,
                 ))
             self.sessions.move_to_end(session.session_id)
             return session
@@ -2422,12 +2470,13 @@ class SessionStore:
         scenario: str,
         expected_revision: int,
         overrides: dict[str, str],
+        timing: str | None = None,
     ) -> CircuitSession:
         scenario_key = normalize_scenario(scenario)
         normalized = validate_overrides(overrides)
         with self.lock:
             self._reload_layout_if_changed()
-            current = self.get(scenario_key)
+            current = self.get(scenario_key, timing=timing)
             current_revision, saved = self.profile_store.get(
                 scenario_key
             )
@@ -2463,6 +2512,7 @@ class SessionStore:
                 self.layout_manager,
                 profile_revision=current_revision + 1,
                 profile_overrides=normalized,
+                timing=current.timing,
             )
             next_revision = self.profile_store.replace(
                 scenario_key,
@@ -2573,7 +2623,8 @@ class VisualizerHandler(SimpleHTTPRequestHandler):
             elif path == "/api/circuit":
                 scenario = query.get("scenario", [DEFAULT_SCENARIO])[0]
                 core_fidelity = query.get("core_fidelity", [None])[0]
-                json_response(self, STORE.get(scenario, core_fidelity).topology_response())
+                timing = query.get("timing", [None])[0]
+                json_response(self, STORE.get(scenario, core_fidelity, timing).topology_response())
             elif path == "/api/state":
                 index = int(query.get("index", [0])[0])
                 session_id = query.get("session", [""])[0]
@@ -2584,7 +2635,7 @@ class VisualizerHandler(SimpleHTTPRequestHandler):
                         query.get(
                             "scenario",
                             [DEFAULT_SCENARIO],
-                        )[0])
+                        )[0], timing=query.get("timing", [None])[0])
                 )
                 json_response(self, session.state_at_index(index))
             elif path == "/api/component-state":
@@ -2600,7 +2651,7 @@ class VisualizerHandler(SimpleHTTPRequestHandler):
                         query.get(
                             "scenario",
                             [DEFAULT_SCENARIO],
-                        )[0])
+                        )[0], timing=query.get("timing", [None])[0])
                 )
                 json_response(
                     self,
@@ -2657,10 +2708,14 @@ class VisualizerHandler(SimpleHTTPRequestHandler):
                     raise ValueError(
                         "POST /api/circuit/apply requires a "
                         "non-negative revision")
+                timing = payload.get("timing")
+                if timing is not None and not isinstance(timing, str):
+                    raise ValueError("timing must be a profile name")
                 session = STORE.apply_profile(
                     scenario,
                     revision,
                     validate_overrides(overrides),
+                    timing,
                 )
                 json_response(
                     self,

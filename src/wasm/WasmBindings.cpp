@@ -1,4 +1,5 @@
 #include "visualizer/VisualizerSession.hpp"
+#include "components/TimingProfile.hpp"
 
 #include <emscripten/bind.h>
 #include <emscripten/val.h>
@@ -28,6 +29,28 @@ public:
                 "Fidelity must be structural or behavioral");
         }
         exact_overrides_[component_path] = fidelity;
+    }
+
+    // The timing profile for the next loadScenario (the whole library's
+    // setting; this worker holds one session at a time).
+    void setTimingProfile(const std::string& name) { circuit::timing::setActiveTimingProfile(name); }
+
+    std::string timingProfileJson() const {
+        const auto quote = [](const std::string& text) {
+            std::string out = "\"";
+            for (const char c : text) {
+                if (c == '"' || c == '\\') out += '\\';
+                out += c;
+            }
+            return out + "\"";
+        };
+        const auto& profile = circuit::timing::activeTimingProfile();
+        std::string available = "[";
+        for (const auto& name : circuit::timing::timingProfileNames())
+            available += (available.size() > 1 ? "," : "") + quote(name);
+        return "{\"name\":" + quote(profile.name) + ",\"description\":" + quote(profile.description)
+            + ",\"tickPicoseconds\":" + std::to_string(profile.tick_picoseconds)
+            + ",\"available\":" + available + "]}";
     }
 
     std::string loadScenario(
@@ -93,6 +116,8 @@ EMSCRIPTEN_BINDINGS(circuitsim_visualizer) {
         .function("visualizableTestsJson", &WasmVisualizer::visualizableTestsJson)
         .function("clearProfileOverrides", &WasmVisualizer::clearProfileOverrides)
         .function("setProfileOverride", &WasmVisualizer::setProfileOverride)
+        .function("setTimingProfile", &WasmVisualizer::setTimingProfile)
+        .function("timingProfileJson", &WasmVisualizer::timingProfileJson)
         .function("loadScenario", &WasmVisualizer::loadScenario)
         .function("stateJson", &WasmVisualizer::stateJson)
         .function("exampleRowsJson", &WasmVisualizer::exampleRowsJson)
