@@ -97,15 +97,16 @@ work state changes. Keep dated decisions and validation results in
   SRAM macro's write disturb (a finished write's drivers and word line still
   on when the next access's address arrived) is fixed by sizing its settle
   line; compact and gate-level banks agree again. Full suite under `unit`:
-  461 of 467 pass (six documentation and visualizer-data checks). The
-  strict-settling delay rule passes since the delay twin times a flip-flop
-  stuck at X from every clock edge. The suite is a `unit`
-  suite by design; realistic profiles are covered by `RV32IProfileSweepTest`
-  and other profile-selecting tests.
-  Failing until phase 8:
-  `MemoryDeviceDocumentationTest` and three `MemoryEndpointIntegrationTest`
-  checks (`site-docs/` snippets and pin tables), and `CacheLayoutTest`'s
-  saved-layout comparison (layouts predate 7a).
+  461 of 467 passed. The strict-settling delay rule passes since the delay
+  twin times a flip-flop stuck at X from every clock edge. The visualizer
+  data is refreshed (cache floorplans, defaults for the new memory timing
+  parts, palette colors, removed parts dropped); the visualizer tests pass.
+  The suite is a `unit` suite by design; realistic profiles are covered by
+  `RV32IProfileSweepTest` and other profile-selecting tests.
+  Failing until the owner allows `site-docs/` updates:
+  `MemoryDeviceDocumentationTest`, `RegisterFileDocumentationTest` and three
+  `MemoryEndpointIntegrationTest` checks (`site-docs/` snippets, pages and
+  pin tables).
 
 - [Future steps plan](records/2026-10-14-future-steps-plan.md): current CPU,
   memory and viewer boundaries assessed against interactive games, a

@@ -7,6 +7,21 @@ history remains in Git and the archived reports.
 
 ## 2026-10-18
 
+### Visualizer data for the cache and memory timing parts (branch `realistic-timing`, phase 8)
+
+- **Changed:** `layout.json` drops entries of removed parts and stale cache
+  variants, rebuilds the three cache scenario floorplans for the direct
+  banks, and adds default layouts for new parts (memory timers, sequencers,
+  request checks, cache bank controller). `palette.json` colors the cache
+  family and the memory timing parts.
+- **Why:** three visualizer tests failed on layouts saved before phase 7a
+  and on new types without colors.
+- **Verified:** CTest label `visualizer`, 28 / 29 (the failure is the
+  unchanged `site-docs/` checks of MemoryEndpointIntegrationTest).
+- **Limits:** a full automatic refresh would also move saved children of
+  nine entries this branch did not touch; they were left unchanged. Browser
+  and WebAssembly checks were not run.
+
 ### Delay twin: a flip-flop stuck at X is timed from every edge (branch `realistic-timing`, phase 8)
 
 - **Changed:** `DelayTwin.cpp` renews a flip-flop's launch time at every

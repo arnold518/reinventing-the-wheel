@@ -2723,3 +2723,51 @@ The remaining failures after (1) decide the split; rerun in progress.
   change made no part's compact timing earlier than its gates.
 - **Decision:** the delay-twin X-timing defect is closed. Phase 8 continues
   with the visualizer data and clock evidence for cached roots.
+
+## 2026-10-18 — Phase 8: visualizer data
+
+- **Failures before:** VisualizerColorPaletteTest (38 cache and memory
+  timing layout types had no palette color), VisualizerAutomaticLayoutTest
+  `test_selective_refresh` (a refresh of the SRAM scenario added layout
+  types that were not saved: SymbolicDiffer, MemoryTimer<43,4>,
+  MemoryDelayLine), CacheLayoutTest (the three cache scenarios' saved root
+  layouts still named the bank helpers from before 7a, such as
+  TAG_SELECT_ZERO; the cache now has TAG_0_READ_ENABLED and so on).
+- **Changes to `visualizer-v2/layout.json`:**
+  1. Removed type and profile entries of parts no longer in the source
+     (CachePhaseSequencer, CacheReadController, MemoryContainer,
+     MemoryNativeSequencer; 17 type entries, 8 profile entries) and five
+     hashed cache variants (`Cache<8>[layout-…]`, `CacheRequestCheck<…>[…]`)
+     whose child structure no scenario builds any more.
+     `tools/prune-retired-layouts.py` was not used for this: it reads a
+     `[layout-…]` suffix as part of the type name and flagged the live cache
+     scenario roots, so it would have deleted live entries.
+  2. The three cache scenario floorplans were rebuilt with
+     `recalculate_layouts.py --fill-missing cache-read-hit cache-direct-mapped
+     cache-scalable-two-way --reflow-types 'Cache<8>' 'Cache<32>'` (the
+     cache's own floorplan, `cache_layout.py`).
+  3. A full `--automatic-only` refresh ran on a copy (276 representative
+     topologies, 1.83 M components, 6.5 min, 182 MB peak). It changed 60
+     scopes: 51 had no saved children (new parts and new profile variants;
+     these defaults were taken), and 9 would have moved saved children of
+     parts this branch did not change (ZeroDetect8, the baseline fetch stage,
+     the single-cycle next-PC and memory roots, ALU8ControlDecoder,
+     ALU8ResultSelector). No visualizer code or those parts changed on the
+     branch, so that drift predates it; those entries were left as they
+     were. 37 new type and profile entries were added.
+- **Palette** (`visualizer-v2/palette.json`): colors for the cache family
+  (the cache, bank controller, lookup phases, request check, address path,
+  tag match, line state, replacement state, fixture) and for the memory
+  timing parts (static and command sequencers, request checks, timers, delay
+  line, symbolic differ, protocol-stable data, known bits, power-on reset,
+  synchronizer), in the hues of their existing families. The retired
+  MemoryNativeSequencer prefix is replaced.
+- **Check:** CTest label `visualizer` (29 tests): 28 pass; the failure is
+  MemoryEndpointIntegrationTest's three `site-docs/` checks, unchanged.
+  VisualizerColorPaletteTest, VisualizerAutomaticLayoutTest and
+  CacheLayoutTest pass; `layout.json` was unchanged by the run. The browser
+  and WebAssembly checks (`tools/run-web-tests.py`) were not run.
+- **Remaining failures in the full suite** are only the documentation
+  checks that read `site-docs/` (MemoryDeviceDocumentationTest,
+  RegisterFileDocumentationTest, MemoryEndpointIntegrationTest), which wait
+  for the owner's permission to update the public pages.
