@@ -2586,3 +2586,105 @@ same points as C-ID. The campaign clocks (4104 / 2858 ps) keep at least
   results. Checks: `RV32IExperimentTest`, `RV32IExperimentCLITest`,
   `RV32ITopologyTest`, `MemoryEndpointDRAMTest`,
   `NativeMemoryDeviceContractTest` pass.
+
+## 2026-10-18 — Phase 8: full suite under `unit`
+
+`ctest -j1` on `build-cleanup` at `ebde0d9` (466 tests, 4,996 s): 459 pass,
+7 fail.
+
+| Failing test | Cause | Since |
+| --- | --- | --- |
+| `RegisterFileDocumentationTest` | asserts that `site-docs/memory/3.4.md` does not exist; the page has existed since the branch baseline | before this branch (documentation) |
+| `VisualizerColorPaletteTest` | the palette has no entry for the cache's types and still lists retired ones (`MemoryContainer`, `CacheReadController`) | baseline era (visualizer data) |
+| `VisualizerAutomaticLayoutTest`, `CacheLayoutTest` | saved layouts are stale (cache controller since 7a, arbiter since 7c) | this branch (visualizer data) |
+| `MemoryEndpointIntegrationTest`, `MemoryDeviceDocumentationTest` | `site-docs/` snippets and pin tables | this branch (documentation) |
+| `DelayRuleStrictSettlingTest` | `memory.rom.controller.32` and `memory.sram.controller.32`: under strict settling the compact REQ_READY changed 7 ticks after the clock edge, the gates 8 (tables identical across widths: REQ_READY launches 6–9) | not run in this branch before; investigated below |
+
+The six documentation and visualizer failures belong to phase 8's
+visualizer and site work (the site waits for the owner). The strict-settling
+break is a delay-twin defect candidate: each twin flip-flop kept one launch
+delay for both Q and Q_BAR, overwritten by whichever output the builder met
+last, so paths from the other output can be timed a gate early. Changed to
+a launch delay per output; rechecking.
+- **Per-output launch delays: not the cause.** With each twin flip-flop
+  given separate Q and Q_BAR launch delays, the strict check still broke
+  both controllers the same way (7 against 8 ticks); the normal delay rule
+  passed on them before and after. The change was reverted (not committed)
+  so that only verified changes remain. The visualizer test run had written
+  four entries into `visualizer-v2/layout.json`; restored (a test side
+  effect, recorded for phase 8's visualizer work).
+- **Strict settling: an open delay-twin defect, not a unit artefact.**
+  Reproduced with a net-tracing copy of the test (`probe/dr_nets.cpp`): at
+  a clock edge with REQ_OP = 011 (reserved), REQ_VALID = 1, the gates'
+  sequencer DONE and LAST state bits switch 2 ticks after the edge, then
+  COMPLETION (3), FINAL_COMPLETION (4), REQUEST_SLOT (5), the READY tree
+  (6, 7) and the output pin (8); the compact form said 7. In `embedded`
+  and `desktop` the same check breaks five controllers: REQ_READY of the
+  32-bit ROM/SRAM controllers (305 against 386 ps embedded), RSP_VALID of
+  the 8-bit ROM/SRAM and clocked SRAM controllers (277 against 286 ps). The
+  twin's flip-flops launch at the contract's maximum clock-to-output (3–4
+  ticks at `unit`, above the gates' 2), so the twin must be timing a shorter
+  path downstream than the gates take; the cause is in the twin's settle
+  evaluation for these controllers and needs its own session.
+  Scope: the normal delay rule passes in all three profiles (the proven
+  tables cover the gates), and the experiments use the fused endpoint, not
+  compact controllers with twins, so no recorded result depends on it. It
+  stays open in phase 8; the embedded full suite proceeds.
+
+## 2026-10-18 — Phase 8: full suite under `embedded`; test-timing audit
+
+`CIRCUITSIM_TIMING_PROFILE=embedded ctest -j1` at the same state (3,182 s):
+249 pass, 217 fail. Nearly all fail within hundredths of a second, for one
+reason: the tests are written in `unit` ticks. Two kinds:
+
+- **Tick arithmetic** — the test asserts exact tick counts or certified
+  periods ("Three inverters take three ticks"; "Expected safe period 10, got
+  96"; timestamp checks in `FullCircuitTest`; pinned clocks in the CLI
+  tests; the `unit` table file in `PartDelayTablesCompleteTest`). These are
+  correct only in `unit` by design.
+- **Fixed clocks** — a clock half period in ticks sized for `unit` (the CPU
+  program harness: 50 ticks for the five-stage core, 2,000 for single-cycle
+  and baseline; the cache and memory protocol rigs), far shorter than a gate
+  chain at 1 ps per tick: programs compute nothing or never commit. About
+  180 RV32I program tests (three cores, five predictors, 22 programs) and
+  the visualizer tests that build programs are in this group.
+
+**Plan revision (assistant).** The plan's decision 2 asked to derive every
+test timing from the active profile and pass the full suite in both
+profiles; phase 3 had already rejected rewriting hundreds of tick-based
+scenarios. Now, with evidence:
+
+1. The CPU program harness derives its clock from the profile:
+   `RV32IProgramRoot` multiplies its `unit` half period by
+   `timing::logicScale()` (the largest ratio, active profile against `unit`,
+   over the logic gates and a flip-flop's clock-to-output and setup: 1,
+   120 and 84 for `unit`, `embedded`, `desktop`). Same cycles, longer ticks;
+   `unit` unchanged.
+2. Tests of tick arithmetic are pinned to `unit` explicitly (per-test
+   `CIRCUITSIM_TIMING_PROFILE=unit`), so a suite run under another profile
+   still runs them, correctly.
+3. Tick-clocked memory and cache protocol rigs are scaled the same way
+   where cheap, otherwise pinned and named here.
+The remaining failures after (1) decide the split; rerun in progress.
+- **Harness scaling tried and withdrawn.** Multiplying the program
+  harness's clock by the profile's logic scale (120 for `embedded`) fixed
+  none of the 217: the CPU harnesses also step and sample in `unit` ticks
+  (`cycle_time_step` 100 or 4,000, reset releases at 21 or 2,800, sampling
+  20 ticks before each edge, a 100-tick observation origin), about 30
+  constants across five harness files. A rerun after the reboot-like
+  session interruption (the host stayed up; the session's jobs and one
+  compile were killed; the build was resumed) confirmed it.
+- **Decision, replacing the plan's decision 2 of 2026-10-17:** the native
+  suite stays a `unit` suite; a whole-suite run under `embedded` is not a
+  valid check and is dropped. Realistic profiles are covered by tests that
+  set their own profile: new `RV32IProfileSweepTest` (single-cycle and
+  baseline with FF memory, advanced with FF, on-chip SRAM and DRAM;
+  programs 1, 9, 16, 19, 20; `embedded` and `desktop`; each at the
+  analyzer's certified clock; oracle-verified; no setup violation: 50 runs,
+  113 s, pass), `RV32ITopologyTest`, the per-profile table checks and the
+  CLI checks. Reasons: the program tests under `embedded` would duplicate
+  the phase 6.5 core sweep (every core, predictor and program at
+  `embedded`, oracle-checked); phase 3 already kept tick-based tests on
+  `unit`; and the remaining tick-arithmetic tests are only meaningful in
+  `unit`. The harness change and its helper were reverted. The tests guide
+  (`docs/guides/tests-and-scenarios.md`) now states this.

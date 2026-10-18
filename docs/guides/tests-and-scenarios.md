@@ -46,6 +46,22 @@ scenario rows alone check final values. Long benchmark campaigns are explicit
 `tools/benchmarks/run.py` runs; a passing bounded benchmark CTest does not
 stand in for a full campaign.
 
+### Timing profiles
+
+The native suite runs under the `unit` timing profile (the code default:
+one tick per gate). Its scenarios and timing tests are written in `unit`
+ticks — clock half periods, reset releases, exact edge times — so running
+the whole suite with `CIRCUITSIM_TIMING_PROFILE=embedded` is not a valid
+check: most of it then fails for that reason alone. Realistic profiles are
+covered by tests that choose their own profile: `RV32IProfileSweepTest`
+(every core on a sample of programs at its certified `embedded` and
+`desktop` clock, oracle-checked), `RV32ITopologyTest` (the cache campaign's
+memory systems at `embedded`), the per-profile table checks
+(`PartDelayTablesComplete_embedded_Test`, `..._desktop_Test`), and the
+experiment and benchmark runners. A new test of timing under realistic
+delays should set its profile itself and derive clocks from the analyzer's
+certified period, not from tick constants.
+
 ## Connect a scenario to the visualizer and site
 
 The registry name identifies the test. `visualizer-v2/static/scenarios.json`

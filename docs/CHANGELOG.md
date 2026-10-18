@@ -7,6 +7,23 @@ history remains in Git and the archived reports.
 
 ## 2026-10-18
 
+### Test timing audit: realistic profiles covered by their own tests (branch `realistic-timing`, phase 8)
+
+- **Changed:** new `RV32IProfileSweepTest` runs every core on programs 1,
+  9, 16, 19 and 20 under `embedded` and `desktop` at the analyzer's
+  certified clock (single-cycle and baseline with FF memory; advanced with
+  FF, on-chip SRAM and DRAM), oracle-verified, no setup violation. The tests
+  guide states that the native suite is a `unit` suite.
+- **Why:** under `embedded` 217 of 466 tests fail because they are written
+  in `unit` ticks (exact tick counts, or clocks and sampling points in
+  ticks); rewriting them would duplicate the phase 6.5 core sweep. A
+  harness-only scaling attempt fixed none and was withdrawn.
+- **Verified:** full suite under `unit` (459 / 466; the failures are six
+  documentation or visualizer-data checks and the strict-settling delay
+  rule, recorded as an open delay-twin defect); full suite under `embedded`
+  (249 / 466, recorded as the evidence); `RV32IProfileSweepTest` (50 runs,
+  113 s).
+
 ### DRAM command counters in the experiments (branch `realistic-timing`, phase 8)
 
 - **Changed:** the compact DRAM control counts the commands it accepts;

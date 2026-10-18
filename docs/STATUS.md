@@ -97,7 +97,12 @@ work state changes. Keep dated decisions and validation results in
   analyzer cannot certify them yet. Phase 8 under way: the gate-level clocked
   SRAM macro's write disturb (a finished write's drivers and word line still
   on when the next access's address arrived) is fixed by sizing its settle
-  line; compact and gate-level banks agree again.
+  line; compact and gate-level banks agree again. Full suite under `unit`:
+  459 of 466 pass (six documentation and visualizer-data checks, and the
+  strict-settling delay rule, which found an open delay-twin defect in five
+  memory controllers; the normal delay rule passes). The suite is a `unit`
+  suite by design; realistic profiles are covered by `RV32IProfileSweepTest`
+  and other profile-selecting tests.
   Failing until phase 8:
   `MemoryDeviceDocumentationTest` and three `MemoryEndpointIntegrationTest`
   checks (`site-docs/` snippets and pin tables), and `CacheLayoutTest`'s

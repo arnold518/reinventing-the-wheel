@@ -640,3 +640,18 @@ caches fill with bursts and serve them as the next level. Then Step 1 is
 measured again, and the campaign follows only if the order holds. The Step 1
 expectation "DRAM tens of cycles" is corrected for an MCU clock (an SDRAM row
 hit is under ten cycles at 216–244 MHz).
+
+## 2026-10-18 — Plan change in phase 8: test timing (assistant)
+
+Replaces decision 2 of "CPU coverage and test timing" (2026-10-17), which
+asked to derive every test timing from the active profile and to pass the
+whole native suite under both `unit` and `embedded`. Evidence (progress log,
+2026-10-18): under `embedded` 217 of 466 tests fail because they are written
+in `unit` ticks, and the CPU harnesses alone hold about 30 tick constants;
+scaling the clock without them fixed none. Decision: the native suite stays
+a `unit` suite; realistic profiles are covered by tests that choose their
+own profile and use certified clocks (`RV32IProfileSweepTest`,
+`RV32ITopologyTest`, per-profile table checks, the CLI checks), together with
+the phase 6.5 core sweep. Phase 8's remaining work: the delay-twin defect
+found by the strict-settling check, clock evidence for cached roots, the
+visualizer data, and the public site when the owner allows it.
