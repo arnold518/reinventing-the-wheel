@@ -723,3 +723,35 @@ suite). Survey, comparison with the code and the page template are in the
 - **Checks:** strict MkDocs build, `tools/build-pages.sh`, the documentation
   tests rewritten for the new pages, browser and WebAssembly tests for the
   embedded simulations.
+
+## 2026-10-18 — Plan addition: timing in the rest of the site (assistant)
+
+The memory rewrite is not the only public text that describes delays and
+clocks in the old way (survey: [memory chapter rewrite record](2026-10-18-memory-docs-rewrite.md)).
+These pages get the same timing-aware treatment, after all testing and with
+the memory chapter, under the same owner permission for `site-docs/`:
+
+1. **Shared "Time and delay" page** (new): profiles and what a tick is,
+   gate delays and the inertial rule, structural and behavioral timing,
+   proven tables, delay twins and the delay rule's measured tightness,
+   clocked parts (clock-to-output, setup, measured flip-flop contract,
+   setup checks in simulation), large-geometry estimates, the safe-clock
+   analysis. Every per-page "abstract ticks" disclaimer becomes a link.
+2. **ALU8 (2.1–2.6) and RV32I building blocks and cores (4.3–4.5):**
+   `Unknown inputs and timing` split into `Unknown inputs` and `Timing`;
+   generated delay tables (`<!-- timing-table: KEY -->`); hand-typed tick
+   counts ("one-tick delay", "three ticks") and "no declared latency"
+   sentences replaced; example tables name their profile.
+3. **Clock analysis and execution (4.2 `timing.md`, `execution.md`,
+   verification/timing):** certificates per profile (the stored
+   `CERTIFIED_CORE_PERIODS`), cached and shared-memory roots, the
+   clock-wire rule; the retired 166 / 80 / 100 / 102 table replaced.
+4. **Experiments page (§ 4.7):** results restated from the reruns, per
+   profile, with the profile named in every table.
+5. **Visualizer page:** the Timing selector, time units, `?timing=` links.
+6. **Internal guides and references** already follow the code
+   (`docs/reference/circuit-timing-analyzer.md`, the tests guide); they are
+   reviewed again with the site.
+
+Status: only the generator for item 2 exists (`tools/mkdocs_timing.py`,
+tested). Nothing else is written yet.
