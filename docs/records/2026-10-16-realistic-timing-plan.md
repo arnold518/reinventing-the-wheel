@@ -667,3 +667,17 @@ No new memory-contract model was needed. All five topologies are certified
 at the core's clock in both realistic profiles. Remaining phase 8 work: the
 public site when the owner allows it, the documentation checks that read
 it, the STM32F7 check and reruns of published results.
+
+## 2026-10-18 — Phase 8: visualizer profile selection added (assistant)
+
+Gap 10 of the plan review named visualizer, WebAssembly and Python profile
+selection and time units in the timeline; the consolidated phase 8 row kept
+only "visualizer time units". Current state: the Python binding can set the
+active profile (`set_timing_profile`), but the native visualizer server and
+the WebAssembly session always build under the code default (`unit`) and
+show bare ticks. Decision: phase 8 adds a profile choice to the visualizer
+(native and WebAssembly, same control), timelines in picoseconds or
+nanoseconds under realistic profiles, the chosen profile shown with the
+scenario, and browser/WASM tests for both paths. It runs after the
+published-result reruns and before the final full suite. Public pages that
+describe the visualizer wait for the owner, like the rest of `site-docs/`.
