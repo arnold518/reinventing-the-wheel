@@ -7,6 +7,21 @@ history remains in Git and the archived reports.
 
 ## 2026-10-19
 
+### Static visualizer: complete layouts, compact Timing control, layout check (branch `realistic-timing`, phase 8)
+
+- **Changed:** `layout.json` gains the 13 child placements the static site
+  lacked (FF controller RUNNING/READY/NOTHING_HELD, a memory timer stage,
+  the two-level cache's L1 variant); the compact view places the Timing
+  selector beside the scenario; new `tools/check-static-layouts.py`
+  (CTest `VisualizerStaticLayoutTest`) replays the browser's layout lookup
+  for every scenario; new browser check `VisualizerTimingProfileBrowserTest`.
+- **Why:** the endpoint scenarios stopped in the WebAssembly site on a
+  missing placement, and the compact view hid the scenario selector.
+- **Verified:** the Pages build (WebAssembly, example rows, strict MkDocs);
+  browser checks `VisualizerWasmBrowserTest`,
+  `VisualizerTimingProfileBrowserTest`, `MemoryEndpointBrowserTest`; the
+  layout check over 339 scenarios (0 missing).
+
 ### Visualizer: choose the timing profile (branch `realistic-timing`, phase 8)
 
 - **Changed:** a Timing selector (`unit`, `embedded`, `desktop`) beside the

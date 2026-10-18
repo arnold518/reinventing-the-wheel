@@ -3097,3 +3097,47 @@ fixtures (14) and the generated-family spot check (15, advanced two-bit,
   `MemoryEndpointIntegrationTest` (`site-docs/`). `layout.json` unchanged.
 - **Pending:** the WebAssembly build and the browser checks
   (`tools/build-pages.sh`, `tools/run-web-tests.py`), running now.
+
+## 2026-10-19 — Phase 8: WebAssembly and browser checks for the timing selector
+
+- **Pages build** (`tools/build-pages.sh`, Emscripten from
+  `~/.cache/circuitsim-emsdk`, MkDocs from `/home/arnold/venv`): the
+  WebAssembly module rebuilt; example rows regenerated from every scenario;
+  strict MkDocs build passed. A first attempt failed in the layout
+  validator because the address-space cap put on the whole script also
+  limited Node, and WebAssembly reserves a large virtual block at start;
+  the packaging step was rerun without the cap.
+- **New browser check `VisualizerTimingProfileBrowserTest`** (suite
+  browser): `?timing=embedded` selects the profile, the worker reports a
+  1 ps tick, the time label reads ns, not ticks; switching to `unit`
+  reloads, removes `timing=` from the URL and shows ticks. Passed.
+- **Smoke suite, first run:** 11 of 13 passed. Two failures, both fixed:
+  1. `VisualizerWasmBrowserTest`: in the compact (embedded) layout the new
+     Timing label and selector added rows to the 32 px scenario row and
+     pushed the scenario selector off screen. The compact view now hides the
+     Timing label and puts the selector beside the scenario selector.
+  2. `MemoryEndpointBrowserTest`: the static site stopped on
+     "Missing layout for profile_layouts.d57a5ed1eeab12fc.MemoryController<ff,8>.children.RUNNING".
+     The FF controller's gate-level form has new children (RUNNING, READY,
+     NOTHING_HELD) that its saved profile layout lacked; the native server
+     fills such gaps when it builds a session, the static site cannot. The
+     2026-10-18 layout refresh had added only whole missing entries, not
+     missing children inside existing ones.
+- **New check `tools/check-static-layouts.py`** (CTest
+  `VisualizerStaticLayoutTest`, labels visualizer, layout): replays the
+  browser's layout lookup (`getLayoutFor` / `getChildLayout`) on
+  `layout.json` for every component of every visualizable scenario
+  (topologies only). Found 13 missing placements in 5 of 339 scenarios
+  (the FF controller in two scopes, the memory-controller root,
+  `MemoryTimer<33,3>` in the ROM scenarios, the two-level cache's
+  `Cache<8>` variant). Filled by building those five scenarios once through
+  the native server (`_ensure_child_defaults` adds only missing children):
+  only additions, no saved placement moved; the server also raised
+  `ROMAddressControl`'s aspect ratio 0.725 → 0.84 so its pins fit (its
+  gate-level form has more pins). Recheck: 0 missing.
+- **Reruns after the fixes** (one at a time, load watched):
+  `VisualizerWasmBrowserTest`, `VisualizerTimingProfileBrowserTest`,
+  `MemoryEndpointBrowserTest`: all passed, load about 4–5.
+- **Incident:** the session ended while the endpoint check was hanging on
+  the missing layout (the host's load average had reached about 136 over
+  15 minutes; no reboot). Nothing was left running.

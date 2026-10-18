@@ -814,9 +814,13 @@ body.compact-view.program-view #topbar {
 
 body.compact-view .scenario-control {
   grid-area: scenario;
-  grid-template-columns: minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) auto;
 }
 body.compact-view .scenario-label { display: none; }
+/* The timing choice sits beside the scenario, without its label. */
+body.compact-view .scenario-control label[for="timing-select"] { display: none; }
+body.compact-view #timing-select { grid-column: 2; grid-row: 1; max-width: 9.5em; }
+body.compact-view #program-controls { grid-column: 1 / -1; }
 body.compact-view .timeline-track { grid-area: timeline; }
 body.compact-view .timeline-controls { grid-area: controls; gap: 4px; }
 body.compact-view .timeline-readouts { grid-area: readouts; height: auto; }

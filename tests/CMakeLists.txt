@@ -699,6 +699,19 @@ if(CIRCUITSIM_NODE_EXECUTABLE)
         PROPERTIES LABELS "visualizer;unit"
     )
 endif()
+# The static (WebAssembly) site cannot compute a missing child placement:
+# every child of every scenario must have one in layout.json.
+add_test(
+    NAME VisualizerStaticLayoutTest
+    COMMAND ${Python3_EXECUTABLE} ${PROJECT_SOURCE_DIR}/tools/check-static-layouts.py
+)
+set_tests_properties(
+    VisualizerStaticLayoutTest
+    PROPERTIES
+        ENVIRONMENT "PYTHONPATH=${PROJECT_BINARY_DIR}:${PROJECT_SOURCE_DIR}/visualizer-v2"
+        LABELS "visualizer;layout"
+        TIMEOUT 3600
+)
 add_test(
     NAME VisualizerTimingProfileTest
     COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/checks/VisualizerTimingProfileTest.py

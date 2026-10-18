@@ -432,6 +432,18 @@
         "smoke"
       ],
       "timeout": 120
+    },
+    {
+      "name": "VisualizerTimingProfileBrowserTest",
+      "file": "VisualizerTimingProfileBrowserTest.py",
+      "kind": "browser",
+      "args": [
+        "{simulator}"
+      ],
+      "suites": [
+        "browser"
+      ],
+      "timeout": 600
     }
   ]
 }

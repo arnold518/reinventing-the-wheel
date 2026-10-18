@@ -38653,8 +38653,8 @@
             }
         },
         "ROMAddressControl": {
-            "min_aspect_ratio": 0.725,
-            "aspect_ratio": 0.725,
+            "min_aspect_ratio": 0.84,
+            "aspect_ratio": 0.84,
             "automatic_layout_history": [{"revision":null, "children":{}}],
             "children": {
                 "LOW": {
@@ -83977,6 +83977,10 @@
                 "STAGE_3_GATE_1": {
                     "rel_pos": [0.9174298965632298, 0.5151619761354275],
                     "rel_width": 0.026132799466132797
+                },
+                "STAGE_3_GATE_2": {
+                    "rel_pos": [0.9174298965632298, 0.5151619761354275],
+                    "rel_width": 0.026132799466132797
                 }
             },
             "automatic_layout_revision": "automatic-stub-clearance-v1:60b747cf7bf7",
@@ -86963,7 +86967,29 @@
             "aspect_ratio_floor": 0.08,
             "title_bar_ratio": 0.04,
             "pin_size_ratio": 0.006,
-            "boundary_area_ratio": 0.035
+            "boundary_area_ratio": 0.035,
+            "children": {
+                "CONTROLLER": {
+                    "rel_pos": [0.060300000000000006, 0.22921761363636362],
+                    "rel_width": 0.3094
+                },
+                "TAG_STORE_0": {
+                    "rel_pos": [0.44027499999999997, 0.28785184659090907],
+                    "rel_width": 0.20445
+                },
+                "DATA_STORE_0": {
+                    "rel_pos": [0.710275, 0.28785184659090907],
+                    "rel_width": 0.20445
+                },
+                "TAG_0_READ_ENABLED": {
+                    "rel_pos": [0.5532736842105264, 0.7669],
+                    "rel_width": 0.28345263157894734
+                },
+                "DATA_0_READ_ENABLED": {
+                    "rel_pos": [0.5532736842105264, 0.8769],
+                    "rel_width": 0.28345263157894734
+                }
+            }
         }
     },
     "profile_layouts": {
@@ -97435,7 +97461,21 @@
                 "aspect_ratio_floor": 0.08,
                 "title_bar_ratio": 0.04,
                 "pin_size_ratio": 0.02364739130434782,
-                "boundary_area_ratio": 0.035
+                "boundary_area_ratio": 0.035,
+                "children": {
+                    "NOTHING_HELD": {
+                        "rel_pos": [0.3604666666666667, 0.6887274143302181],
+                        "rel_width": 0.12573333333333334
+                    },
+                    "RUNNING": {
+                        "rel_pos": [0.05380000000000001, 0.5309704049844236],
+                        "rel_width": 0.12573333333333334
+                    },
+                    "READY": {
+                        "rel_pos": [0.20713333333333336, 0.5225245327102803],
+                        "rel_width": 0.12573333333333334
+                    }
+                }
             },
             "MemoryEndpoint<ff,8>": {
                 "aspect_ratio": 0.8,
@@ -163158,6 +163198,18 @@
                 },
                 "WRITE_MASK": {
                     "rel_pos": [0.05380000000000001, 0.8464844236760125],
+                    "rel_width": 0.12573333333333334
+                },
+                "NOTHING_HELD": {
+                    "rel_pos": [0.3604666666666667, 0.6887274143302181],
+                    "rel_width": 0.12573333333333334
+                },
+                "RUNNING": {
+                    "rel_pos": [0.05380000000000001, 0.5309704049844236],
+                    "rel_width": 0.12573333333333334
+                },
+                "READY": {
+                    "rel_pos": [0.20713333333333336, 0.5225245327102803],
                     "rel_width": 0.12573333333333334
                 }
             },
