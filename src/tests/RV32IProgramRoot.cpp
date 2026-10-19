@@ -212,11 +212,13 @@ void RV32IProgramRoot::startClock(
 
 void RV32IProgramRoot::clearInstructionMemory() {
     requireBuilt(instruction_memory_ != nullptr, "clear instruction memory");
+    unified_image_.clear();
     rv32i::memoryView(instruction_memory_)->clearMemoryImage();
 }
 
 void RV32IProgramRoot::clearDataMemory() {
     requireBuilt(data_memory_ != nullptr, "clear data memory");
+    unified_image_.clear();
     rv32i::memoryView(data_memory_)->clearMemoryImage();
 }
 
@@ -224,13 +226,26 @@ void RV32IProgramRoot::loadProgram(
     const rv32i::RV32IProgram& program,
     uint32_t base_address) {
     requireBuilt(instruction_memory_ != nullptr, "load program");
+    placeUnified(base_address, program.bytes());
     rv32i::memoryView(instruction_memory_)->initializeMemoryBytes(base_address, program.bytes());
+}
+
+void RV32IProgramRoot::placeUnified(uint32_t base_address, const std::vector<uint8_t>& bytes) {
+    if (!unified_memory_) return;
+    for (size_t i = 0; i < bytes.size(); ++i) {
+        const uint32_t address = base_address + uint32_t(i);
+        const auto [placed, inserted] = unified_image_.emplace(address, bytes[i]);
+        if (!inserted && placed->second != bytes[i])
+            throw std::invalid_argument("Instruction and data images overlap at byte address "
+                + std::to_string(address) + "; a unified memory needs them apart");
+    }
 }
 
 void RV32IProgramRoot::loadInstructionBytes(
     uint32_t base_address,
     const std::vector<uint8_t>& bytes) {
     requireBuilt(instruction_memory_ != nullptr, "load instruction bytes");
+    placeUnified(base_address, bytes);
     rv32i::memoryView(instruction_memory_)->initializeMemoryBytes(base_address, bytes);
 }
 
@@ -238,6 +253,7 @@ void RV32IProgramRoot::loadDataBytes(
     uint32_t base_address,
     const std::vector<uint8_t>& bytes) {
     requireBuilt(data_memory_ != nullptr, "load data bytes");
+    placeUnified(base_address, bytes);
     rv32i::memoryView(data_memory_)->initializeMemoryBytes(base_address, bytes);
 }
 

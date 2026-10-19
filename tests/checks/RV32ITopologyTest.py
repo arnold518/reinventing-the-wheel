@@ -23,6 +23,21 @@ def run(topology, memory="dram", *workload):
 
 
 class Topologies(unittest.TestCase):
+    def test_overlapping_images_are_refused(self):
+        # One shared memory holds code and data at their own addresses; a
+        # workload whose code and data collide must not run (program 19's
+        # code reaches 0x108 and its data starts at 0x100; load-use unrolls
+        # its loads, so 340 elements of code reach its input at 0x1000).
+        env = dict(os.environ, CIRCUITSIM_TIMING_PROFILE="embedded")
+        for topology in ("A", "B"):
+            for workload in (("--program", "19"), ("--workload", "load-use", "--size", "340", "--iterations", "1")):
+                with self.subTest(topology=topology, workload=workload):
+                    p = subprocess.run([BINARY, "--core", "advanced", *workload, "--memory", "dram",
+                                        "--topology", topology, "--period", "4104", "--allocation-limit-mib", "2048"],
+                                       capture_output=True, text=True, timeout=300, env=env)
+                    self.assertNotEqual(p.returncode, 0)
+                    self.assertIn("overlap at byte address", p.stderr)
+
     def test_every_topology_verifies(self):
         # A sort of eight words: loads, stores and a loop, through every path.
         for topology in ("A", "B", "C-ID", "D-0", "D-ID"):

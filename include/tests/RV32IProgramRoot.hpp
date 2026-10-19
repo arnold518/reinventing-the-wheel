@@ -107,6 +107,10 @@ private:
     std::shared_ptr<IOComponent> data_memory_{};
     std::optional<circuit::memory::CacheConfig> instruction_cache_config_, data_cache_config_;
     bool unified_memory_ = false;
+    // Bytes placed in the one shared memory: instruction and data images must
+    // not put different bytes at one address.
+    std::map<uint32_t, uint8_t> unified_image_;
+    void placeUnified(uint32_t base_address, const std::vector<uint8_t>& bytes);
 
     rv32i::MemoryConfiguration instruction_config_, data_config_;
 };

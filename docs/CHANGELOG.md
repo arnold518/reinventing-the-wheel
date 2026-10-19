@@ -7,6 +7,21 @@ history remains in Git and the archived reports.
 
 ## 2026-10-19
 
+### Shared memory: refuse overlapping instruction and data images (branch `realistic-timing`)
+
+- **Changed:** a topology run (`--topology`, every arrangement, since A loads
+  the whole image into both DRAMs) and the program root's unified memory now
+  stop when an instruction and a data block put different bytes at one
+  address. Program 19 (code to 0x108, data from 0x100) and `load-use` /
+  `load-scheduled` at 340–341 elements (code reaching the input at 0x1000;
+  larger sizes already fail on branch range) are refused; before, the merged
+  image silently held a different program.
+- **Why:** the owner asked where I and D sit in one memory; code starts at 0
+  and data at its fixed addresses, with nothing checking for collisions. No
+  published result is affected (the cache campaign used `calls`, `sort`,
+  `stream`, `pointer-chase`; fixed programs ran with separate memories).
+- **Verified:** `RV32ITopologyTest` with a new refusal case (A and B).
+
 ### Two-port memory arbiter: catalog, scenario, structure and page 3.5.3 (branch `realistic-timing`)
 
 - **Changed:** `TwoPortMemoryArbiter<W>` gets catalog contracts

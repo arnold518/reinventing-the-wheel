@@ -7,6 +7,7 @@
 #include "analysis/RV32IExperiment.hpp"
 #include "analysis/ExperimentClock.hpp"
 #include "analysis/RV32IWorkloads.hpp"
+#include <map>
 #include "components/ComponentBuilder.hpp"
 #include "components/ComponentBuilder.tpp"
 #include "components/capabilities/RV32IRetirementView.hpp"
@@ -227,9 +228,17 @@ RV32IExperimentResult runRV32IExperiment(const RV32IExperimentConfig& config) {
     const size_t capacity=memory_config.device.depth_words*4;
     rv32i::RV32IFunctionalMemory oracle_imem(capacity),oracle_dmem(capacity);
     rv32i::RV32IState oracle;
-    // A topology gives every memory the whole image (one store when shared).
+    // A topology gives every memory the whole image (one store when shared),
+    // so instruction and data blocks must not put different bytes at one
+    // address. (An ELF loads each segment as both: the same bytes.)
+    std::map<uint32_t,uint8_t> whole_image;
     auto load=[&](bool instruction,uint32_t address,const std::vector<uint8_t>& bytes) {
         if(topology) {
+            for(size_t i=0;i<bytes.size();++i) {
+                const auto [placed,inserted]=whole_image.emplace(address+uint32_t(i),bytes[i]);
+                require(inserted||placed->second==bytes[i],"Instruction and data images overlap at byte address "+
+                    std::to_string(address+i)+"; this workload needs separate memories (no --topology)");
+            }
             iv->initializeMemoryBytes(address,bytes);
             if(dv!=iv)dv->initializeMemoryBytes(address,bytes);
             oracle_imem.loadBytes(address,bytes);oracle_dmem.loadBytes(address,bytes);
