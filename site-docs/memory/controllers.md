@@ -3,12 +3,14 @@
 A controller turns [transactions](transactions.md) into the native interface
 of one technology from [3.3](technologies/index.md). It owns request and
 response state, never memory contents. An endpoint is a controller and one
-device of the same technology and geometry.
+device of the same technology and geometry. An arbiter lets two requesters
+share one endpoint (or cache).
 
 | Component | Description | Structural | Behavioral |
 | --- | --- | :---: | :---: |
 | `MemoryController<T,W>` | Zero-wait flip-flop path, or the clocked sequencing of a delayed technology | Yes | Yes |
 | `MemoryEndpoint<T,W>` | Controller plus native device, or one fused behavioral endpoint | Yes | Yes |
+| `TwoPortMemoryArbiter<W>` | Two requesters sharing one lower memory, one request at a time | Yes | No |
 
 T is `ff`, `sram`, `dram`, `rom` or `nor-flash`; W is 8, 16 or 32. The angle
 brackets name dimensions in visualizer labels; the C++ constructors take width
@@ -394,3 +396,188 @@ Programs `0x81` and `0x3C` into separate blocks, demonstrates that programming o
 `MemoryInspectorTest`, `MemoryInspectorIntegrationTest.py`, and `MemoryInspectorBrowserTest.py` check accepted-request tracking, same-edge completion, rewind, native/Python/WASM agreement, fetched-instruction and data-access highlights, and address paging. These are observation tests, separate from the hardware contract tests above.
 
 [`MemoryEndpointIntegrationTest`](https://github.com/arnold518/reinventing-the-wheel/blob/github-pages/tests/MemoryEndpointIntegrationTest.py) also compiles the exact documentation snippets and runs the [reference checks](https://github.com/arnold518/reinventing-the-wheel/blob/github-pages/tests/fixtures/memory/transaction-controller-examples.cpp): the transaction port at W=8/16/32, the request check against the production check, and the endpoint reference's reads, writes, bursts, programs and erases.
+
+## 3.5.3. `TwoPortMemoryArbiter<W>`
+
+Lets two requesters, called I and D (a processor's instruction and data
+ports), share one lower memory: an endpoint or a cache. It passes on one
+request at a time and returns each response to the port that asked.
+
+### IO pins
+
+Three [transaction ports](transactions.md#protocol-rules) of width W:
+
+| Pins | Direction | Width | Description |
+| --- | --- | ---: | --- |
+| `I_CLK`, `I_RST`, `D_CLK`, `D_RST` | Input | 1 each | Both requesters' clock and reset. Both run on one clock: the arbiter is clocked by `I_CLK`, and `D_CLK` must carry the same clock (it is not read). Either reset resets the arbiter |
+| `I_REQ_VALID`, `I_REQ_OP`, `I_REQ_ADDR`, `I_REQ_WRITE_DATA`, `I_REQ_WRITE_MASK`, `I_RSP_READY` | Input | 1, 3, 32, W, W/8, 1 | Port I's request and its readiness for a response |
+| `I_REQ_READY`, `I_RSP_VALID`, `I_RSP_READ_DATA`, `I_RSP_STATUS` | Output | 1, 1, W, 3 | Port I's handshake and response |
+| `D_…` | Input / Output | as for I | Port D, the same pins |
+| `MEM_CLK`, `MEM_RST` | Output | 1 each | The shared clock and reset, passed on to the lower memory |
+| `MEM_REQ_VALID`, `MEM_REQ_OP`, `MEM_REQ_ADDR`, `MEM_REQ_WRITE_DATA`, `MEM_REQ_WRITE_MASK`, `MEM_RSP_READY` | Output | 1, 3, 32, W, W/8, 1 | The selected request, and readiness for its response |
+| `MEM_REQ_READY`, `MEM_RSP_VALID`, `MEM_RSP_READ_DATA`, `MEM_RSP_STATUS` | Input | 1, 1, W, 3 | The lower memory's handshake and response |
+
+The construction parameter `block_words` (a power of two up to 16, default 2)
+is the number of words the lower memory returns for a burst read.
+
+### Behavior
+
+- **One request at a time.** While idle, the arbiter offers one port's
+  request to the lower memory; it is busy from the edge the lower memory
+  accepts it until its response arrives. A burst read (operation 4) keeps it
+  busy until the last of its `block_words` words.
+- **Who goes first.** If only one port asks, it is offered. If both ask, the
+  port that was not granted last goes first (round robin); after reset, I
+  goes first. A port's `REQ_READY` is high only when its request is the one
+  offered and the lower memory is ready.
+- **Responses.** Each response goes to the port that owns the current
+  request. Each port has a one-entry response buffer: a response leaves the
+  lower memory as soon as its owner's buffer is empty, even if that port is
+  not ready to take it, so a port that is busy elsewhere (a processor stalled
+  on its other port) cannot hold the lower memory. A port that is ready takes
+  the response straight through, in the same cycle.
+- **Reset** clears the busy, owner, priority and burst state and both buffers,
+  and is passed on as `MEM_RST`. A response that arrives after reset is not
+  delivered.
+
+#### C++ example
+
+The arbiter as a function of its inputs, one call per settled state. It
+updates its state when `I_CLK` rises; outputs follow the current inputs and
+state. Values are binary.
+
+```cpp
+#include <cstdint>
+namespace arbiter_example {
+using U = std::uint32_t;
+struct Port { U REQ_VALID = 0, REQ_OP = 0, REQ_ADDR = 0, REQ_WRITE_DATA = 0,
+              REQ_WRITE_MASK = 0, RSP_READY = 0; };
+struct Inputs { U I_CLK = 0, I_RST = 0, D_RST = 0; Port I, D;
+                U MEM_REQ_READY = 0, MEM_RSP_VALID = 0, MEM_RSP_READ_DATA = 0,
+                  MEM_RSP_STATUS = 0; };
+struct Response { U VALID = 0, READ_DATA = 0, STATUS = 0; };
+struct Outputs { U I_REQ_READY = 0, D_REQ_READY = 0, MEM_REQ_VALID = 0, MEM_REQ_OP = 0,
+                   MEM_REQ_ADDR = 0, MEM_REQ_WRITE_DATA = 0, MEM_REQ_WRITE_MASK = 0,
+                   MEM_RSP_READY = 0, MEM_CLK = 0, MEM_RST = 0;
+                 Response I, D; };
+class Arbiter {
+public:
+    explicit Arbiter(U block_words) : block_(block_words) {}
+    Outputs evaluate(const Inputs& in) {
+        const bool reset = in.I_RST || in.D_RST;
+        if (reset) state_ = {};
+        else if (in.I_CLK && !clock_) edge(in, combine(in));
+        clock_ = in.I_CLK;
+        return combine(in);
+    }
+private:
+    struct Buffer { bool full = false; U data = 0, status = 0; };
+    struct State { bool busy = false, owner_d = false, prefer_d = false, burst = false;
+                   U beat = 0; Buffer i, d; } state_;
+    U block_;
+    bool clock_ = false;
+    Outputs combine(const Inputs& in) const {
+        Outputs out;
+        const bool idle = !state_.busy;
+        const bool select_d = in.D.REQ_VALID && (state_.prefer_d || !in.I.REQ_VALID);
+        const Port& chosen = select_d ? in.D : in.I;
+        out.MEM_REQ_VALID = idle && (in.I.REQ_VALID || in.D.REQ_VALID);
+        out.MEM_REQ_OP = chosen.REQ_OP;
+        out.MEM_REQ_ADDR = chosen.REQ_ADDR;
+        out.MEM_REQ_WRITE_DATA = chosen.REQ_WRITE_DATA;
+        out.MEM_REQ_WRITE_MASK = chosen.REQ_WRITE_MASK;
+        out.I_REQ_READY = idle && !select_d && in.MEM_REQ_READY;
+        out.D_REQ_READY = idle && select_d && in.MEM_REQ_READY;
+        const Buffer& owner = state_.owner_d ? state_.d : state_.i;
+        out.MEM_RSP_READY = state_.busy && !owner.full;
+        const bool arriving = out.MEM_RSP_READY && in.MEM_RSP_VALID;
+        auto respond = [&](const Buffer& held, bool mine) {
+            const bool incoming = arriving && mine;
+            return Response{held.full || incoming, held.full ? held.data : in.MEM_RSP_READ_DATA,
+                            held.full ? held.status : in.MEM_RSP_STATUS};
+        };
+        out.I = respond(state_.i, !state_.owner_d);
+        out.D = respond(state_.d, state_.owner_d);
+        out.MEM_CLK = in.I_CLK;
+        out.MEM_RST = in.I_RST || in.D_RST;
+        return out;
+    }
+    void edge(const Inputs& in, const Outputs& out) {
+        const bool select_d = in.D.REQ_VALID && (state_.prefer_d || !in.I.REQ_VALID);
+        const bool accept = out.MEM_REQ_VALID && in.MEM_REQ_READY;
+        const bool complete = out.MEM_RSP_READY && in.MEM_RSP_VALID;
+        const bool last = state_.beat == block_ - 1;
+        const bool finished = complete && (!state_.burst || last);
+        auto keep = [&](Buffer& buffer, const Response& shown, bool mine, U ready) {
+            if (buffer.full) { if (ready) buffer.full = false; }
+            else if (complete && mine && !ready) buffer = {true, shown.READ_DATA, shown.STATUS};
+        };
+        keep(state_.i, out.I, !state_.owner_d, in.I.RSP_READY);
+        keep(state_.d, out.D, state_.owner_d, in.D.RSP_READY);
+        if (accept) {
+            state_.busy = true; state_.owner_d = select_d; state_.prefer_d = !select_d;
+            state_.burst = out.MEM_REQ_OP == 4; state_.beat = 0;
+        } else {
+            if (finished) state_.busy = false;
+            if (complete && state_.burst) state_.beat = (state_.beat + 1) % block_;
+        }
+    }
+};
+} // namespace arbiter_example
+```
+
+#### Unknown inputs
+
+The handshake inputs must be binary. An unknown `REQ_VALID` makes the grant
+unknown, and with it the readiness outputs and the selected request fields.
+Request fields and responses are passed through unchanged: an unknown address
+or read-data bit stays unknown on the other side. An unknown reset can make
+the arbiter's state unknown.
+
+### Implementation
+
+#### Structural implementation
+
+<!-- diagram: memory-arbiter -->
+
+| Part | Responsibility |
+| --- | --- |
+| `GRANT` | Chooses the port to offer (D if it asks and has priority or I is not asking), offers it while idle, and drives `I_REQ_READY`, `D_REQ_READY` and the accept signal |
+| `SELECT_REQ_OP`, `SELECT_REQ_ADDR`, `SELECT_REQ_WRITE_DATA`, `SELECT_REQ_WRITE_MASK` | One multiplexer per request field, switched by the grant |
+| `STATE` | Clocked bits: busy, owner (I or D), priority, burst, and a burst word counter of log₂(`block_words`) bits, with their next-state logic |
+| `RESPONSE_ROUTE` | Takes a response while the owner's buffer is empty and steers it to that buffer; signals completion to `STATE` |
+| `I_RESPONSE`, `D_RESPONSE` | One [`MemoryResponseBuffer`](transactions.md#342-memoryresponsebufferw) per port |
+| `RESET`, `LOWER_CLOCK`, `LOWER_RESET` | The shared reset, and the clock and reset passed on to the lower memory |
+
+All state is clocked straight from `I_CLK`: a gate in the clock path, such as
+an AND of both clocks, would delay the arbiter's edge behind the requesters'.
+There is no behavioral form; the arbiter is small, and the experiments
+simulate it as gates.
+
+### Examples
+
+<!-- simulator-examples: memory-arbiter MemoryArbiterTest -->
+
+Both ports ask while the lower memory is busy; the tie goes to I. I's response
+goes into I's buffer although I is not ready, so D is offered at once. D's
+write is granted and its response returns with its status. After that grant,
+a tie goes to I again. A two-word burst read for D then holds the arbiter
+while I waits; I is offered as soon as the last word has gone. The lower
+memory's responses are driven by the scenario.
+
+#### Embedded simulation
+
+<div class="simulator-embed">
+  <iframe src="../../simulator/?scenario=memory-arbiter" title="TwoPortMemoryArbiter recorded simulation" loading="lazy" allowfullscreen></iframe>
+</div>
+
+<a href="../../simulator/?scenario=memory-arbiter" class="md-button">Open TwoPortMemoryArbiter in the simulator</a>
+
+### Source and tests
+
+- [Public interface: `TwoPortMemoryArbiter.hpp`](https://github.com/arnold518/reinventing-the-wheel/blob/github-pages/include/modules/memory/TwoPortMemoryArbiter.hpp)
+- [Structural wiring and catalog: `TwoPortMemoryArbiter.cpp`](https://github.com/arnold518/reinventing-the-wheel/blob/github-pages/src/modules/memory/TwoPortMemoryArbiter.cpp)
+- `MemoryArbiterTest` in [MemoryEndpointTests.cpp](https://github.com/arnold518/reinventing-the-wheel/blob/github-pages/src/tests/MemoryEndpointTests.cpp) records the example above in every timing profile.
+- [`TwoPortMemoryArbiterTest`](https://github.com/arnold518/reinventing-the-wheel/blob/github-pages/src/tests/TwoPortMemoryArbiterTests.cpp) checks widths 8, 16 and 32 and bursts of 1, 2 and 4 words.
+- `MemoryEndpointIntegrationTest` runs every checkpoint of the example through the C++ reference above.
+- `RV32ITopologyTest` runs a program through the arbiter in every shared-memory topology of the [cache experiments](cache-experiments.md).

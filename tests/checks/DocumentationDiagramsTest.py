@@ -22,6 +22,7 @@ PAGES = {
     "memory/technologies/flip-flop.md": ["ff-memory"],
     "memory/technologies/sram.md": ["sram-device"],
     "memory/transactions.md": ["transaction-handshake"],
+    "memory/controllers.md": ["memory-arbiter"],
     "memory/timing.md": ["sram-access-chain", "dram-commands", "memory-latency"],
     "rv32i/4.3/register.md": ["register32"],
     "rv32i/4.3/register-file.md": ["register-file"],

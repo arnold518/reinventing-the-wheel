@@ -556,3 +556,50 @@ includes 3.8, diagram placement moved); `render_documentation_diagrams.py
 notices); built page inspected: the collapsed block holds its four tables and
 the three figures are inlined; screenshots of both page tops and both charts
 were reviewed. Browser checks wait for the memory-gated run.
+
+## 2026-10-19 — Two-port memory arbiter documented in 3.5 (owner request)
+
+**Before.** `TwoPortMemoryArbiter<W>` existed and was tested by a separate
+C++ program, but had no catalog contract, no scenario and no page; it was
+mentioned only in passing.
+
+**Changes.**
+- Catalog: contracts `memory.arbiter.8/16/32` (structural only, parameter
+  `block_words`), registered after the caches; the inventory check lists the
+  new type.
+- Structure: the arbiter was flat (64 gates and state bits at its top). It
+  is now split like the cache into `GRANT`, `STATE` and `RESPONSE_ROUTE`,
+  with the four request multiplexers and the two response buffers at the
+  top: 12 parts. The gates and their connections are unchanged; behavior
+  and timing are the same (see checks).
+- Scenario `MemoryArbiterTest` (`memory-arbiter`, 32 checkpoints): a tie
+  granted to I, I's response buffered while I is not ready so D is offered,
+  D's write and status, round robin after a D grant, a two-word burst for D
+  holding off I, reset. Every expected value was derived from the gate
+  equations before the first run; it passes in `unit`, `embedded` and
+  `desktop`.
+- The C++ program became the registry test `TwoPortMemoryArbiterTest`
+  (headless), now also at width 16 (its 16-bit data value was fixed to fit
+  the port); it is the contract test of the 16- and 32-bit contracts and the
+  supporting test of the 8-bit one.
+- Visualizer: a floorplan (`visualizer-v2/arbiter_layout.py`) with the
+  request path in the upper half and the response path in the lower half;
+  saved layouts regenerated (only this scenario contains an arbiter).
+- Page § 3.5.3: pins, behavior, a C++ reference of the whole arbiter,
+  unknown inputs, structure with a new `memory-arbiter` figure, the recorded
+  example and embedded simulator, sources and tests. The page intro and the
+  component table name the arbiter.
+- `MemoryEndpointIntegrationTest` now runs every recorded checkpoint of the
+  scenario through the page's C++ reference (53 expected values) and compiles
+  it with the other snippets.
+
+**Checks.** 28 CTest checks pass, including all documentation and layout
+checks, `VisualizerStaticLayoutTest`, `ComponentCatalogSelectionTest`,
+`BuiltinComponentCatalogInventoryTest`, `MemoryArchitectureCleanupTest`,
+both arbiter tests and `RV32ITopologyTest` (all five topologies verified at
+the certified `embedded` clock after the restructure); `DelayRuleTest` and
+`SettlingBoundTest` skip the arbiter contracts as intended (no compact form,
+clocked). Strict MkDocs passes with a preview rows bundle that adds the
+probe's rows for the new scenario; the published rows come from the
+WebAssembly build in the memory-gated run, which also runs the browser
+checks.

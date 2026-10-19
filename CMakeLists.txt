@@ -85,6 +85,7 @@ set(CORE_LOGIC_SOURCES
     src/tests/MemoryDeviceTests.cpp
     src/tests/MemoryHelperTests.cpp
     src/tests/MemoryEndpointTests.cpp
+    src/tests/TwoPortMemoryArbiterTests.cpp
     src/tests/CacheTests.cpp
     src/tests/FFMemoryTests.cpp
     src/modules/storage/RegisterBehavioral.cpp

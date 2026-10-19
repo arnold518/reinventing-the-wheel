@@ -312,6 +312,94 @@ void ClockedStateBitTest::verifyResults() {
 }
 MemoryControllerTest::MemoryControllerTest() : ComponentScenarioTest(controllerSpec()) {}
 namespace {
+// Two requesters, I and D, share one scripted lower memory: a tie, a held
+// response that frees the bus, round-robin priority and a burst grant.
+ComponentTestSpec arbiterSpec() {
+    ComponentTestSpec spec{"MemoryArbiterTest", "memory.arbiter.8", "ARBITER", {{"block_words", "2"}},
+                           {{"arbitration", {}, {}, {100'000, 500'000}}}};
+    auto& actions = spec.scenarios[0].actions;
+    NamedValues state{{"MEM_REQ_READY", logicBit(false)}, {"MEM_RSP_VALID", logicBit(false)},
+                      {"MEM_RSP_READ_DATA", logicBits(8, 0)}, {"MEM_RSP_STATUS", logicBits(3, 0)}};
+    for (const std::string port : {"I_", "D_"}) {
+        state[port + "CLK"] = logicBit(false);
+        state[port + "RST"] = logicBit(true);
+        state[port + "REQ_VALID"] = logicBit(false);
+        state[port + "REQ_OP"] = logicBits(3, 0);
+        state[port + "REQ_ADDR"] = logicBits(32, 0);
+        state[port + "REQ_WRITE_DATA"] = logicBits(8, 0);
+        state[port + "REQ_WRITE_MASK"] = logicBits(1, 0);
+        state[port + "RSP_READY"] = logicBit(false);
+    }
+    auto step = [&](std::string label, NamedValues changes = {}, NamedValues expected = {}) {
+        for (auto& [name, value] : changes) state[name] = value;
+        actions.push_back({std::move(label), CheckpointKind::Settled, state, std::move(expected), true, {}});
+    };
+    auto clock = [&](std::string label, NamedValues changes = {}, NamedValues expected = {}) {
+        changes["I_CLK"] = logicBit(true);
+        changes["D_CLK"] = logicBit(true);
+        step(std::move(label), std::move(changes), std::move(expected));
+    };
+    auto low = [&](std::string label, NamedValues changes = {}, NamedValues expected = {}) {
+        changes["I_CLK"] = logicBit(false);
+        changes["D_CLK"] = logicBit(false);
+        step(std::move(label), std::move(changes), std::move(expected));
+    };
+    const auto H = logicBit(true), L = logicBit(false);
+    step("reset", {}, {{"I_REQ_READY", L}, {"D_REQ_READY", L}, {"MEM_REQ_VALID", L}, {"MEM_RST", H}});
+    clock("reset-edge");
+    low("release-reset", {{"I_RST", L}, {"D_RST", L}}, {{"MEM_RST", L}});
+    step("both-request-lower-busy", {{"I_REQ_VALID", H}, {"I_REQ_OP", logicBits(3, 0)}, {"I_REQ_ADDR", logicBits(32, 0)},
+        {"D_REQ_VALID", H}, {"D_REQ_OP", logicBits(3, 1)}, {"D_REQ_ADDR", logicBits(32, 4)},
+        {"D_REQ_WRITE_DATA", logicBits(8, 0x5a)}, {"D_REQ_WRITE_MASK", logicBits(1, 1)}},
+        {{"MEM_REQ_VALID", H}, {"MEM_REQ_ADDR", logicBits(32, 0)}, {"I_REQ_READY", L}, {"D_REQ_READY", L}});
+    step("lower-ready-tie-to-i", {{"MEM_REQ_READY", H}}, {{"I_REQ_READY", H}, {"D_REQ_READY", L}});
+    clock("grant-i");
+    low("busy", {{"I_REQ_VALID", L}, {"MEM_REQ_READY", L}}, {{"MEM_REQ_VALID", L}});
+    step("i-response-to-buffer", {{"MEM_RSP_VALID", H}, {"MEM_RSP_READ_DATA", logicBits(8, 0xa5)}},
+        {{"I_RSP_VALID", H}, {"I_RSP_READ_DATA", logicBits(8, 0xa5)}, {"D_RSP_VALID", L}, {"MEM_RSP_READY", H}});
+    clock("i-response-taken");
+    low("d-offered-i-held", {{"MEM_RSP_VALID", L}},
+        {{"I_RSP_VALID", H}, {"I_RSP_READ_DATA", logicBits(8, 0xa5)}, {"MEM_REQ_VALID", H},
+         {"MEM_REQ_ADDR", logicBits(32, 4)}, {"MEM_REQ_OP", logicBits(3, 1)},
+         {"MEM_REQ_WRITE_DATA", logicBits(8, 0x5a)}, {"D_REQ_READY", L}});
+    step("lower-ready-d", {{"MEM_REQ_READY", H}}, {{"D_REQ_READY", H}, {"I_REQ_READY", L}});
+    clock("grant-d");
+    low("i-takes-held-response", {{"D_REQ_VALID", L}, {"MEM_REQ_READY", L}, {"I_RSP_READY", H}}, {{"I_RSP_VALID", H}});
+    clock("i-response-consumed");
+    low("i-buffer-empty", {{"I_RSP_READY", L}}, {{"I_RSP_VALID", L}});
+    step("d-response", {{"MEM_RSP_VALID", H}, {"MEM_RSP_READ_DATA", logicBits(8, 0)}, {"MEM_RSP_STATUS", logicBits(3, 5)}},
+        {{"D_RSP_VALID", H}, {"I_RSP_VALID", L}, {"D_RSP_STATUS", logicBits(3, 5)}});
+    step("d-ready", {{"D_RSP_READY", H}}, {{"D_RSP_VALID", H}});
+    clock("d-response-consumed");
+    low("idle", {{"MEM_RSP_VALID", L}, {"MEM_RSP_STATUS", logicBits(3, 0)}, {"D_RSP_READY", L}},
+        {{"D_RSP_VALID", L}, {"MEM_REQ_VALID", L}});
+    step("tie-after-d-goes-to-i", {{"I_REQ_VALID", H}, {"D_REQ_VALID", H}, {"MEM_REQ_READY", H}},
+        {{"MEM_REQ_ADDR", logicBits(32, 0)}, {"I_REQ_READY", H}, {"D_REQ_READY", L}});
+    clock("grant-i-again");
+    low("i-served", {{"I_REQ_VALID", L}, {"MEM_REQ_READY", L}, {"MEM_RSP_VALID", H},
+        {"MEM_RSP_READ_DATA", logicBits(8, 0x11)}, {"I_RSP_READY", H}}, {{"I_RSP_VALID", H}});
+    clock("i-done");
+    low("d-burst-offered", {{"MEM_RSP_VALID", L}, {"I_RSP_READY", L}, {"D_REQ_OP", logicBits(3, 4)},
+        {"D_REQ_ADDR", logicBits(32, 8)}, {"MEM_REQ_READY", H}, {"D_RSP_READY", H}},
+        {{"MEM_REQ_OP", logicBits(3, 4)}, {"D_REQ_READY", H}});
+    clock("grant-d-burst");
+    low("i-waits-during-burst", {{"D_REQ_VALID", L}, {"I_REQ_VALID", H}, {"I_REQ_OP", logicBits(3, 0)},
+        {"I_REQ_ADDR", logicBits(32, 0)}, {"MEM_REQ_READY", L}}, {{"MEM_REQ_VALID", L}, {"I_REQ_READY", L}});
+    step("burst-word-0", {{"MEM_RSP_VALID", H}, {"MEM_RSP_READ_DATA", logicBits(8, 0x20)}},
+        {{"D_RSP_VALID", H}, {"D_RSP_READ_DATA", logicBits(8, 0x20)}, {"I_RSP_VALID", L}});
+    clock("burst-word-0-taken");
+    low("burst-word-1", {{"MEM_RSP_READ_DATA", logicBits(8, 0x21)}},
+        {{"D_RSP_VALID", H}, {"D_RSP_READ_DATA", logicBits(8, 0x21)}, {"MEM_REQ_VALID", L}});
+    clock("burst-last-word-taken");
+    low("free-after-burst", {{"MEM_RSP_VALID", L}, {"MEM_REQ_READY", H}},
+        {{"MEM_REQ_VALID", H}, {"I_REQ_READY", H}});
+    step("reset-again", {{"I_REQ_VALID", L}, {"MEM_REQ_READY", L}, {"I_RST", H}, {"D_RST", H}},
+        {{"I_RSP_VALID", L}, {"D_RSP_VALID", L}, {"MEM_RST", H}, {"MEM_REQ_VALID", L}});
+    return spec;
+}
+}
+MemoryArbiterTest::MemoryArbiterTest() : ComponentScenarioTest(arbiterSpec()) {}
+namespace {
 ComponentTestSpec alwaysReadyControllerSpec() {
     Scenario s("FFAlwaysReadyControllerTest","memory.ff.controller.8",8,
         {{"depth_words","4"},{"always_ready","1"}});

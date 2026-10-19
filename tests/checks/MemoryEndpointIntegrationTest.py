@@ -66,7 +66,7 @@ class MemoryEndpointIntegrationTest(unittest.TestCase):
         self.assertEqual(backend.memory_configuration(huge)["capacity_bytes"], 1 << 28)
 
     def test_documents_and_exported_rows(self):
-        self.assertEqual(len(CASES), 9)
+        self.assertEqual(len(CASES), 10)
         for source in SOURCES.values():
             self.assertIn("| Component | Description | Structural | Behavioral |", source)
             for section in re.split(r"(?m)^## [\d.]+ `", source)[1:]:
@@ -204,9 +204,9 @@ class MemoryEndpointIntegrationTest(unittest.TestCase):
 
     def test_cpp_examples_compile(self):
         port_example = re.findall(r"```cpp\n(.*?)\n```", SOURCES["transactions"], re.S)[0]
-        check, endpoint = re.findall(r"```cpp\n(.*?)\n```", SOURCES["controllers"], re.S)
+        check, endpoint, arbiter = re.findall(r"```cpp\n(.*?)\n```", SOURCES["controllers"], re.S)
         native_device = re.findall(r"```cpp\n(.*?)\n```", SOURCES["scalable"], re.S)[0]
-        snippets = [port_example, check, "\n".join((check, endpoint)), native_device]
+        snippets = [port_example, check, "\n".join((check, endpoint)), native_device, arbiter]
         # References must state the rules, not call the code under test.
         for snippet in (check, endpoint, native_device):
             self.assertNotRegex(snippet, r"\b(?:NativeSequence|DeviceModel|makeDeviceModel|validateRequest)\b")
@@ -215,6 +215,43 @@ class MemoryEndpointIntegrationTest(unittest.TestCase):
             subprocess.run(["c++", "-std=c++20", "-I", str(ROOT / "include"),
                             "-I", str(ROOT / "src/modules/memory"), "-x", "c++", "-fsyntax-only", "-"],
                            input=snippet, text=True, check=True)
+
+    def test_arbiter_cpp_example_follows_the_recorded_scenario(self):
+        # Every checkpoint of the arbiter scenario through the C++ reference.
+        scenario, test = "memory-arbiter", "MemoryArbiterTest"
+        example = re.findall(r"```cpp\n(.*?)\n```", SOURCES["controllers"], re.S)[2]
+        rows = json.loads(subprocess.check_output([PROBE, "examples", test, scenario], text=True))["rows"]
+        self.assertGreater(len(rows), 30)
+        def field(name):  # pin name -> C++ member
+            if name in ("I_REQ_READY", "D_REQ_READY"):
+                return name
+            for port in ("I", "D"):
+                if name.startswith(port + "_") and name[2:] not in ("CLK", "RST"):
+                    rest = name[2:]
+                    return f"{port}.{rest[4:] if rest.startswith('RSP_') and rest != 'RSP_READY' else rest}"
+            return name
+        lines = [example, "#include <cassert>", "#include <string>",
+                 "static unsigned parse(const std::string& s) { unsigned v = 0; for (char c : s) v = v * 2 + (c == '1'); return v; }",
+                 "int main() { arbiter_example::Arbiter model(2); arbiter_example::Inputs in;"]
+        checked = 0
+        for row in rows:
+            for name, value in row["inputs"].items():
+                if name == "D_CLK":
+                    continue
+                self.assertNotRegex(value, "[XZ]", (row["checkpoint"], name))
+                lines.append(f'in.{field(name)} = parse("{value}");')
+            lines.append("{ auto out = model.evaluate(in); (void)out;")
+            for name, value in row["expectedOutputs"].items():
+                lines.append(f'assert(out.{field(name)} == parse("{value}") && "{row["checkpoint"]} {name}");')
+                checked += 1
+            lines.append("}")
+        lines.append("}")
+        self.assertGreater(checked, 50)
+        with tempfile.TemporaryDirectory() as tmp:
+            binary = Path(tmp) / "arbiter-example"
+            subprocess.run(["c++", "-std=c++20", "-Wall", "-Wextra", "-Werror", "-x", "c++", "-", "-o", str(binary)],
+                           input="\n".join(lines), text=True, check=True, timeout=120)
+            subprocess.run([str(binary)], check=True, timeout=30)
 
     def run_fixture(self, fixture, sections):
         snippets = re.findall(r"```cpp\n(.*?)\n```", "\n".join(SOURCES[s] for s in sections), re.S)

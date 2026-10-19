@@ -7,6 +7,50 @@ history remains in Git and the archived reports.
 
 ## 2026-10-19
 
+### Two-port memory arbiter: catalog, scenario, structure and page 3.5.3 (branch `realistic-timing`)
+
+- **Changed:** `TwoPortMemoryArbiter<W>` gets catalog contracts
+  `memory.arbiter.<W>`, a recorded scenario (`memory-arbiter`), a floorplan,
+  a figure and a component section in 3.5. Its flat gate list is grouped into
+  `GRANT`, `STATE` and `RESPONSE_ROUTE` with unchanged gates. The separate C++
+  test program became the registry test `TwoPortMemoryArbiterTest`, now also
+  at width 16.
+- **Why:** the owner asked to document the arbiter in 3.5; it had no page,
+  scenario or contract.
+- **Verified:** 28 CTest checks (documentation, layout, catalog, both arbiter
+  tests, `RV32ITopologyTest`), the scenario in all three profiles, the page's
+  C++ reference against all 53 recorded values, strict MkDocs with preview
+  rows. WebAssembly rows and browser checks pending in the memory-gated run.
+
+### Live interaction and real-time execution design
+
+- **Changed:** extended the [device/game record](records/2026-10-19-device-io-games-plan.md)
+  with a persistent session, queued input, current-state observation,
+  cooperative execution and wall-clock pacing proposal. The proposed order
+  now proves live operation before MMIO/display integration.
+- **Why:** the owner asked how to move from recorded playback to real
+  interaction. Source inspection confirms forward execution already exists;
+  it also identifies past-event acceptance, partial-timestamp yields and
+  wasm32 `size_t` time range as work for a live runtime.
+- **Reviewed:** simulator, component/clock/memory state, viewer/worker and
+  WASM build metadata; official Emscripten and ns-3 references. The 4.29 ms
+  range at 1 ps is inferred from 32-bit time, not a reproduced failure.
+  No code, test, benchmark or browser run was performed.
+
+### Device I/O and games planning resumed
+
+- **Changed:** added a focused [planning record](records/2026-10-19-device-io-games-plan.md)
+  and linked it from status and the existing future-steps record. It records
+  the current shared-memory/cache foundations, missing device/live-runtime
+  contracts and proposed stages toward guest-executed Pong and Tetris.
+- **Why:** the owner considers the primary cache implementation ready and
+  wants to discuss the next milestone. Architecture, first game, ISA choice
+  and performance targets remain proposals or open decisions.
+- **Reviewed:** current source, test sources, public references and earlier
+  records; official RISC-V ordering and arithmetic-extension specifications.
+  No build, tests, benchmarks or live play check was run. Existing source
+  and visualizer changes were preserved.
+
 ### Cache experiments page; RV32I results rewritten (branch `realistic-timing`)
 
 - **Changed:** new § 3.8 Cache Experiments in the memory chapter: the cache

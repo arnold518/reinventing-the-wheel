@@ -5,6 +5,7 @@ ENDPOINT_TEST(MemoryTransactionPortTest)
 ENDPOINT_TEST(MemoryResponseBufferTest)
 ENDPOINT_TEST(MemoryControllerTest)
 ENDPOINT_TEST(FFAlwaysReadyControllerTest)
+ENDPOINT_TEST(MemoryArbiterTest)
 ENDPOINT_TEST(MemoryEndpointFFTest)
 ENDPOINT_TEST(MemoryEndpointSRAMTest)
 ENDPOINT_TEST(MemoryEndpointDRAMTest)
@@ -15,6 +16,10 @@ ENDPOINT_TEST(NativeMemoryDeviceTest)
 #undef ENDPOINT_TEST
 class RegisterWidthsTest : public StandaloneVerificationTest {
 public: std::string getTestName() const override { return "RegisterWidthsTest"; }
+protected: void verifyResults() override;
+};
+class TwoPortMemoryArbiterTest : public StandaloneVerificationTest {
+public: std::string getTestName() const override { return "TwoPortMemoryArbiterTest"; }
 protected: void verifyResults() override;
 };
 class ClockedStateBitTest : public StandaloneVerificationTest {

@@ -458,6 +458,7 @@ void BuiltinComponentCatalogInventoryTest::verifyResults() {
 
     for (const auto width : {"8", "16", "32"}) {
         expected_types.insert(std::string("Cache<") + width + ">");
+        expected_types.insert(std::string("TwoPortMemoryArbiter<") + width + ">");
         expected_types.insert(std::string("MemoryTransactionPort<") + width + ">");
         expected_types.insert(std::string("MemoryResponseBuffer<") + width + ">");
         for (const auto technology : {"ff", "sram", "dram", "rom", "nor-flash"}) {

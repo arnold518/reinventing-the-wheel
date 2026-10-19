@@ -32,6 +32,7 @@ from profile_store import ProfileStore, validate_overrides
 import sram_layout
 import memory_device_layout
 import cache_layout
+import arbiter_layout
 import rv32i_layout
 import register_file_layout
 from scenario_catalog import CATALOG as SCENARIO_CATALOG, aliases_for, default_alias, scenario_options
@@ -906,6 +907,13 @@ def _custom_child_layout(
     )
     if memory_layout is not None:
         return memory_layout
+    arbiter_floorplan = arbiter_layout.placements(
+        _component_type(parent),
+        {child.get_name(): child_aspects[child.get_id()] for child in children},
+        parent_aspect,
+    )
+    if arbiter_floorplan is not None:
+        return arbiter_floorplan
     cache_floorplan = cache_layout.placements(
         _component_type(parent),
         {child.get_name(): child_aspects[child.get_id()] for child in children},

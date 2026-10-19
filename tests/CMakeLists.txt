@@ -209,10 +209,6 @@ add_test(NAME CacheLayoutTest COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOUR
 set_tests_properties(CacheLayoutTest PROPERTIES
     ENVIRONMENT "PYTHONPATH=${PROJECT_BINARY_DIR}:${PROJECT_SOURCE_DIR}/visualizer-v2"
     LABELS "memory;cache;visualizer")
-add_executable(TwoPortMemoryArbiterTest cpp/TwoPortMemoryArbiterTest.cpp)
-target_link_libraries(TwoPortMemoryArbiterTest PRIVATE SimulatorLib)
-add_test(NAME TwoPortMemoryArbiterTest COMMAND TwoPortMemoryArbiterTest)
-set_tests_properties(TwoPortMemoryArbiterTest PROPERTIES LABELS "memory;cache;integration")
 
 add_executable(
     VisualizerSessionProbe
@@ -263,6 +259,8 @@ set(SIMULATION_TESTS
     RegisterWidthsTest
     ClockedStateBitTest
     MemoryControllerTest
+    MemoryArbiterTest
+    TwoPortMemoryArbiterTest
     FFAlwaysReadyControllerTest
     MemoryEndpointFFTest
     MemoryEndpointSRAMTest

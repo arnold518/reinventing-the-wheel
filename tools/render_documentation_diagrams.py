@@ -625,6 +625,37 @@ def cache_topologies():
     return f
 
 
+def memory_arbiter():
+    f = Figure("memory-arbiter", "Two-port memory arbiter",
+               "Requests from ports I and D pass the grant and one multiplexer per field to the lower memory; responses pass the response route into one buffer per port; the state block holds busy, owner, priority and burst bits.",
+               328,
+               "<strong>Request path above, response path below.</strong> The grant chooses I or D and switches the request "
+               "multiplexers; the state remembers who owns the request in flight and who goes first next. A response goes into "
+               "its owner's buffer, so a port that is not ready cannot hold the lower memory.")
+    f.box("ports", 40, 56, 96, 120, "I, D", "ports")
+    f.box("grant", 200, 56, 168, 48, "GRANT", None, "focus")
+    f.box("select", 200, 128, 168, 48, "SELECT_REQ_*", None)
+    f.box("state", 432, 56, 168, 48, "STATE", None, "store")
+    f.box("mem", 432, 128, 168, 104, "MEM_", "endpoint or cache", "store")
+    f.box("route", 200, 256, 168, 48, "RESPONSE_ROUTE", None)
+    f.box("buffers", 40, 256, 96, 48, "Buffers", None, "store")
+    f.line(136, 80, 200, 80, True)
+    f.line(136, 152, 200, 152, True)
+    f.line(284, 104, 284, 128, True)
+    f.line(368, 72, 432, 72, True)
+    f.line(432, 92, 368, 92, True)
+    f.line(368, 152, 432, 152, True)
+    f.path([(480, 232), (480, 280), (368, 280)], arrow=True)
+    f.line(200, 280, 136, 280, True)
+    f.line(88, 256, 88, 176, True)
+    f.text(400, 64, "ACCEPT", "tag", "middle")
+    f.text(400, 112, "BUSY", "tag", "middle")
+    f.text(400, 144, "REQ", "tag", "middle")
+    f.text(492, 260, "RESPONSE", "tag")
+    f.text(100, 220, "RSP", "tag")
+    return f
+
+
 CACHE_PAGE = ROOT / "site-docs/memory/cache-experiments.md"
 
 
@@ -699,7 +730,7 @@ def figures():
                             core_next_pc, core_completion, baseline_pipeline, advanced_prediction,
                             timing_profile_gates, sram_access_chain, dram_commands, transaction_handshake,
                             sram_device, alu8_datapath, memory_latency, cache_topologies,
-                            cache_access_patterns, cache_speedup)]
+                            cache_access_patterns, cache_speedup, memory_arbiter)]
 
 
 def main():

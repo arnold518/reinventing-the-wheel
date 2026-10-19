@@ -205,7 +205,7 @@ void markVisualizable(
     };
     static const std::set<std::string> headless{
         "RegisterWidthsTest", "ClockedStateBitTest", "Decoder5to32X0UnusedTest",
-        "CacheReadTest",
+        "CacheReadTest", "TwoPortMemoryArbiterTest",
     };
     for (auto& entry : entries) {
         if (headless.count(entry.name) != 0) {
@@ -271,6 +271,8 @@ const std::vector<TestRegistryEntry>& getTestRegistry() {
         entry<RegisterWidthsTest>("RegisterWidthsTest"),
         entry<ClockedStateBitTest>("ClockedStateBitTest"),
         entry<MemoryControllerTest>("MemoryControllerTest"),
+        entry<MemoryArbiterTest>("MemoryArbiterTest"),
+        entry<TwoPortMemoryArbiterTest>("TwoPortMemoryArbiterTest"),
         entry<FFAlwaysReadyControllerTest>("FFAlwaysReadyControllerTest"),
         entry<MemoryEndpointFFTest>("MemoryEndpointFFTest"),
         entry<MemoryEndpointSRAMTest>("MemoryEndpointSRAMTest"),

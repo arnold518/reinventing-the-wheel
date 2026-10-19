@@ -1,9 +1,12 @@
+#include "tests/MemoryEndpointTests.hpp"
 #include "modules/memory/TwoPortMemoryArbiter.hpp"
 #include "tests/TestHelpers.hpp"
-#include <iostream>
 #include <map>
 #include <stdexcept>
 
+// Two-port arbitration at every width: grant, held responses, round robin,
+// reset and burst grants of 1, 2 and 4 words. The recorded example is
+// MemoryArbiterTest.
 using circuit::memory::TwoPortMemoryArbiter;
 
 namespace {
@@ -50,10 +53,11 @@ private:
 
 template<size_t Width>
 void exercise() {
+    const uint64_t data = Width == 8 ? 0x5a : Width == 16 ? 0x1234 : 0x12345678;
     Rig<Width> rig;
     rig.drive({{"I_REQ_VALID", 1}, {"I_REQ_OP", 0}, {"I_REQ_ADDR", 0},
                {"D_REQ_VALID", 1}, {"D_REQ_OP", 1}, {"D_REQ_ADDR", 4},
-               {"D_REQ_WRITE_DATA", Width == 8 ? 0x5a : 0x12345678},
+               {"D_REQ_WRITE_DATA", data},
                {"D_REQ_WRITE_MASK", (1u << (Width / 8)) - 1},
                {"MEM_REQ_READY", 0}});
     for (int i = 0; i < 3; ++i) {
@@ -79,8 +83,7 @@ void exercise() {
             "Held response lost");
     // The bus is free: D, still waiting, is offered next.
     require(rig.out("MEM_REQ_VALID") == 1 && rig.out("MEM_REQ_ADDR") == 4 &&
-            rig.out("MEM_REQ_OP") == 1 && rig.out("MEM_REQ_WRITE_DATA") ==
-                (Width == 8 ? 0x5a : 0x12345678) && rig.out("D_REQ_READY") == 0,
+            rig.out("MEM_REQ_OP") == 1 && rig.out("MEM_REQ_WRITE_DATA") == data && rig.out("D_REQ_READY") == 0,
             "D not offered while I's response is held");
     rig.drive({{"MEM_REQ_READY", 1}});
     require(rig.out("D_REQ_READY") == 1 && rig.out("I_REQ_READY") == 0, "D not granted");
@@ -138,17 +141,13 @@ void exerciseBurst(size_t block_words) {
 }
 } // namespace
 
-int main() {
-    try {
-        exercise<8>();
-        exercise<32>();
-        exerciseBurst<32>(4);
-        exerciseBurst<8>(2);
-        exerciseBurst<32>(1);
-        std::cout << "Two-port structural arbitration passed at W=8 and W=32, with bursts of 1, 2 and 4 words\n";
-        return 0;
-    } catch (const std::exception& error) {
-        std::cerr << error.what() << '\n';
-        return 1;
-    }
+
+void TwoPortMemoryArbiterTest::verifyResults() {
+    exercise<8>();
+    exercise<16>();
+    exercise<32>();
+    exerciseBurst<32>(4);
+    exerciseBurst<16>(2);
+    exerciseBurst<8>(2);
+    exerciseBurst<32>(1);
 }

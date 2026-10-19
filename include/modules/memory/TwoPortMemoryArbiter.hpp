@@ -23,4 +23,8 @@ private:
     std::string type_;
 };
 
+// Contracts memory.arbiter.<8|16|32> (structural only); parameter
+// `block_words` (default 2).
+void registerArbiters(ComponentCatalog&);
+
 } // namespace circuit::memory

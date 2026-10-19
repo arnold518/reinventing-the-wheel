@@ -441,6 +441,10 @@
       "title": "FF memory controller",
       "group": "memory-interface"
     },
+    "MemoryArbiterTest": {
+      "title": "Two-port memory arbiter",
+      "group": "memory-interface"
+    },
     "MemoryEndpointFFTest": {
       "title": "Memory Endpoint FF",
       "group": "memory-interface"

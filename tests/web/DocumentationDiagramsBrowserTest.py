@@ -22,6 +22,7 @@ PAGES = {
     "memory/technologies/flip-flop/": 1,
     "memory/technologies/sram/": 1,
     "memory/transactions/": 1,
+    "memory/controllers/": 1,
     "memory/timing/": 3,
     "rv32i/4.3/register/": 1,
     "rv32i/4.3/register-file/": 1,

@@ -39,6 +39,7 @@
 #include "modules/memory/NORFlash.hpp"
 #include "modules/memory/MemoryProtocol.hpp"
 #include "modules/memory/Cache.hpp"
+#include "modules/memory/TwoPortMemoryArbiter.hpp"
 #include "modules/memory/FlipFlopCell.hpp"
 #include "modules/storage/Register.hpp"
 #include "modules/rv32i/RegisterFile32x32.hpp"
@@ -952,6 +953,7 @@ std::shared_ptr<ComponentCatalog> createBuiltinComponentCatalog() {
     registerNORFlashComponents(*catalog);
     memory::registerMemoryEndpoints(*catalog);
     memory::registerCaches(*catalog);
+    memory::registerArbiters(*catalog);
     catalog->freeze();
     return catalog;
 }
