@@ -28,17 +28,18 @@ ALU32's internal units belong within its reference rather than becoming separate
 
 There is no separate program-counter block: the stage-wise cores distribute PC storage, branch decisions and next-PC selection across Fetch, Execute, and Next PC ([4.4](../4.4/index.md)), allowing JAL/JALR targets to reuse the main ALU.
 
-Each component reference follows the same pattern: **IO pins → behavior and C++ example → structural/behavioral implementation → examples and embedded simulation → tests**. Component tables distinguish registered structural and behavioral implementations. Example tables include all recorded checkpoints and their simulation times.
+Each component reference follows the same pattern: **IO pins → behavior and C++ example → structural/behavioral implementation → timing → examples and embedded simulation → tests**. Component tables distinguish registered structural and behavioral implementations. Example tables include all recorded checkpoints and their simulation times.
 
-Catalog-selected behavioral building blocks receive per-path delay tables
-characterized from their structural implementations. Where a delay twin is
-available, actual input values and state can shorten publication to the gate
-list's settling time; otherwise the table supplies a conservative delay.
-Clocked parts also carry clock-to-output and setup information. The register
-file uses its table without a delay twin because its large gate list brought
-no measured timing benefit. These delays are simulator ticks, distinct from
-the certified period of a complete core. Directly created parts without a
-matching table use their constructor delay.
+Each component's **Timing** section shows its proven delays in every timing
+profile. A behavioral building block selected through the catalog runs on that
+table; where it has a delay twin, the current input values and state can
+shorten publication to the gate list's settling time. Clocked parts also carry
+clock-to-output and setup times. The register file uses its table without a
+delay twin, because its large gate list brought no measured timing benefit.
+How tables, twins and profiles work is explained once in
+[§ 1 Time and Delay](../../timing.md); the certified clock of a complete core
+is in [4.2](../4.2/timing.md). Directly created parts without a matching table
+use their constructor delay.
 
 ## Structural organization in the visualizer
 
@@ -56,7 +57,7 @@ Automatic graph layout is used where it preserves readable signal flow. Repeated
 
 ## Boundaries with other sections
 
-[Chapter 3](../../memory/3.1/index.md) owns memory cells, technology-specific words/rows, banks and devices at both fidelities, together with the [transaction protocol](../../memory/3.2.md) and [memory controllers](../../memory/3.3.md). This section introduces `Register<W>` and the register file as RV32I building blocks reusing FF cells. The register file is a CPU operand store, not an interchangeable transaction endpoint. `RV32IMemoryRequest` is the CPU-side requester; it is not a technology-specific memory controller.
+[Chapter 3](../../memory/architecture.md) owns memory cells, technology-specific words/rows, banks and devices at both fidelities, together with the [transaction protocol](../../memory/transactions.md) and [memory controllers](../../memory/controllers.md). This section introduces `Register<W>` and the register file as RV32I building blocks reusing FF cells. The register file is a CPU operand store, not an interchangeable transaction endpoint. `RV32IMemoryRequest` is the CPU-side requester; it is not a technology-specific memory controller.
 
 The core sections are:
 

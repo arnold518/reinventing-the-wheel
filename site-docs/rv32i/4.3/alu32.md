@@ -50,7 +50,7 @@ Arithmetic addsub(uint32_t a, uint32_t b, bool sub) {
 }
 ```
 
-#### Unknown inputs and timing
+#### Unknown inputs
 
 Each bit follows XOR/AND/OR full-adder logic. A known controlling zero or one can mask an unknown; the entire word is not automatically discarded. Structural carries propagate through a prefix network. The catalog-selected behavioral implementation uses gate-derived path delays; a supported delay twin can time how far the carry propagates for the current operands.
 
@@ -67,6 +67,12 @@ The default layout follows connectivity. Prefix levels are expandable groups rat
 #### Behavioral implementation
 
 `AddSub32Behavioral` evaluates that same full-adder recurrence with four-state bit values, without constructing its internal gates.
+
+### Timing
+
+The gate-level form settles through its gates; the compact form publishes within the proven bounds below ([Time and Delay](../../timing.md#compact-parts) explains tables, delay twins and clocked parts).
+
+<!-- timing-table: arithmetic.add-sub.width32.behavioral.direct -->
 
 ### Examples
 
@@ -104,7 +110,7 @@ Logic logic(uint32_t a, uint32_t b) { return {a & b, a | b, a ^ b}; }
 }
 ```
 
-#### Unknown inputs and timing
+#### Unknown inputs
 
 AND with zero produces zero; OR with one produces one. Other indeterminate cases produce `X`, including XOR with `X` or `Z`. Operations are independent per bit.
 
@@ -117,6 +123,12 @@ Two splitters, 32 gates of each operation, and three joiners provide three paral
 #### Behavioral implementation
 
 `Logic32Behavioral` applies the same four-state gate rules per bit and publishes when the gate-level form would have settled for the same inputs.
+
+### Timing
+
+The gate-level form settles through its gates; the compact form publishes within the proven bounds below ([Time and Delay](../../timing.md#compact-parts) explains tables, delay twins and clocked parts).
+
+<!-- timing-table: logic.combined.width32.behavioral.direct -->
 
 ### Examples
 
@@ -162,7 +174,7 @@ uint32_t shift(uint32_t a, uint32_t b, bool left, bool arithmetic) {
 }
 ```
 
-#### Unknown inputs and timing
+#### Unknown inputs
 
 `B[31:5]` are unused, even when unknown. The remaining bits follow the gate-based mux network; an unknown selector does not necessarily preserve equal one-valued mux inputs. Left shifting disables sign fill. The structural path includes five selectable shift stages.
 
@@ -175,6 +187,12 @@ A shared right-shift network selects distances 1, 2, 4, 8, and 16. Input/output 
 #### Behavioral implementation
 
 `Shifter32Behavioral` reproduces the reversal, each mux stage, and fill logic using four-state values. Catalog construction gives it gate-derived output delays, with a delay twin where supported to time the current shift and data.
+
+### Timing
+
+The gate-level form settles through its gates; the compact form publishes within the proven bounds below ([Time and Delay](../../timing.md#compact-parts) explains tables, delay twins and clocked parts).
+
+<!-- timing-table: shift.barrel.width32.behavioral.direct -->
 
 ### Examples
 
@@ -223,7 +241,7 @@ Control control(unsigned op) { // OP is a five-bit input.
 }
 ```
 
-#### Unknown inputs and timing
+#### Unknown inputs
 
 Rewired selector bits preserve `X`/`Z`; logic-derived controls follow their gates. Outputs are combinational and need time to settle.
 
@@ -232,6 +250,10 @@ Rewired selector bits preserve `X`/`Z`; logic-derived controls follow their gate
 #### Structural implementation
 
 A splitter and selector joiner expose opcode bits; NOT/AND/OR gates derive the enables. No behavioral implementation is registered for this helper.
+
+### Timing
+
+Built from gates and smaller parts with no compact form of its own, so it has no delay table: its outputs settle through its gates under the [gate delays of the active profile](../../timing.md#timing-profiles). Its delay is part of the proven tables of the parts built on it.
 
 ### Examples
 
@@ -276,7 +298,7 @@ Compare compare(uint32_t diff, bool carry, bool overflow, bool enable) {
 }
 ```
 
-#### Unknown inputs and timing
+#### Unknown inputs
 
 Disabled AND outputs mask unknown arithmetic inputs. Enabled flags use four-state zero-detection, XOR, and inversion. Upper Boolean-result bits remain constant zero.
 
@@ -285,6 +307,10 @@ Disabled AND outputs mask unknown arithmetic inputs. Enabled flags use four-stat
 #### Structural implementation
 
 `ZeroDetect32` forms equality; a sign splitter, XOR, NOT, and AND gates form less-than flags. Joiners extend those flags to words. No behavioral implementation is registered for this helper.
+
+### Timing
+
+Built from gates and smaller parts with no compact form of its own, so it has no delay table: its outputs settle through its gates under the [gate delays of the active profile](../../timing.md#timing-profiles). Its delay is part of the proven tables of the parts built on it.
 
 ### Examples
 
@@ -331,7 +357,7 @@ uint32_t select(uint32_t arithmetic, uint32_t and_result, uint32_t or_result,
 }
 ```
 
-#### Unknown inputs and timing
+#### Unknown inputs
 
 Known controls mask unselected paths; unknown controls follow the original mux gate equations. The decoded AND/OR network preserves those equations, including repeated arithmetic/shift choices with unknown selector bits. Outputs settle after gate propagation.
 
@@ -342,6 +368,10 @@ Known controls mask unselected paths; unknown controls follow the original mux g
 Parallel opcode minterms qualify nine result sources. `BIT_0` through `BIT_31` are expandable `ALU32ResultBit` slices: each masks the nine source bits and combines them with a balanced OR tree. Invalid operations select no source and produce zero. Selection has no serial mux chain or stored state. No behavioral implementation is registered for this helper.
 
 `RV32ILogicOptimizationTest` compares this circuit with the former mux tree across all 1,024 four-state selector combinations, each with four data patterns (4,096 rows).
+
+### Timing
+
+Built from gates and smaller parts with no compact form of its own, so it has no delay table: its outputs settle through its gates under the [gate delays of the active profile](../../timing.md#timing-profiles). Its delay is part of the proven tables of the parts built on it.
 
 ### Examples
 
@@ -383,7 +413,7 @@ Flags flags(uint32_t result, bool enable, bool carry, bool overflow) {
 }
 ```
 
-#### Unknown inputs and timing
+#### Unknown inputs
 
 Negative directly exposes result bit 31, including `Z`; zero uses a gate reduction. Disabled carry/overflow are zero even if their arithmetic inputs are unknown.
 
@@ -392,6 +422,10 @@ Negative directly exposes result bit 31, including `Z`; zero uses a gate reducti
 #### Structural implementation
 
 `ZeroDetect32`, a `SIGN_BIT` rewire, and two AND gates implement the block. The rewire has one 32-bit input (`RESULT`) and one 1-bit output (`SIGN`), mapping only `RESULT[31]` to `NEGATIVE`; it does not expose 31 unused outputs. This is zero-delay routing, including for `X` and `Z`, rather than a logic gate. No behavioral implementation is registered for this helper.
+
+### Timing
+
+Built from gates and smaller parts with no compact form of its own, so it has no delay table: its outputs settle through its gates under the [gate delays of the active profile](../../timing.md#timing-profiles). Its delay is part of the proven tables of the parts built on it.
 
 ### Examples
 
@@ -463,7 +497,7 @@ Result alu(uint32_t a, uint32_t b, unsigned op) {
 }
 ```
 
-#### Unknown inputs and timing
+#### Unknown inputs
 
 Structural gates can mask unused/unknown inputs. `ALU32Behavioral` instead makes **all outputs unknown if any bit of A, B, or OP is nonbinary**, including an unused operand. Its equivalence claim is settled **binary** behavior, not full four-state or transient equivalence. There is no clock: wait for propagation before sampling.
 
@@ -476,6 +510,12 @@ The root contains `CONTROL`, `ARITHMETIC`, `LOGIC`, `SHIFT`, `COMPARE`, `RESULT_
 #### Behavioral implementation
 
 `ALU32Behavioral` computes the selected operation and flags directly. When its delay twin agrees with that result, the catalog-selected part can use the current operands' gate-list settling time within its per-operation delay-table bound; an older pending result still retains publication order. If the twin cannot answer, the table supplies the timing. The registered contract is `rv32i.alu32`; structural remains available. Inside a structural ALU the arithmetic, logic, shift, and zero-detect units are always built from gates; each keeps its own behavioral form when used standalone.
+
+### Timing
+
+The gate-level form settles through its gates; the compact form publishes within the proven bounds below ([Time and Delay](../../timing.md#compact-parts) explains tables, delay twins and clocked parts).
+
+<!-- timing-table: rv32i.alu32.behavioral.direct -->
 
 ### Examples
 
@@ -521,7 +561,7 @@ CoreResult core(uint32_t a, uint32_t b, unsigned op) {
 }
 ```
 
-#### Unknown inputs and timing
+#### Unknown inputs
 
 The structural form may mask unknown values in unused logic; the behavioral form returns unknown outputs if any bit of `A`, `B`, or `OP` is nonbinary. Their equivalence claim covers settled binary inputs. The unit is combinational and has no clock.
 
@@ -534,6 +574,12 @@ The `CONTROL`, `ARITHMETIC`, `LOGIC`, `SHIFT`, `COMPARE`, and `RESULT_SELECT` gr
 #### Behavioral implementation
 
 The `rv32i.alu32-core` family uses `ALU32Behavioral` in its reduced-interface mode. It computes the same result and comparisons as the general behavioral ALU but does not expose the four omitted flags.
+
+### Timing
+
+The gate-level form settles through its gates; the compact form publishes within the proven bounds below ([Time and Delay](../../timing.md#compact-parts) explains tables, delay twins and clocked parts).
+
+<!-- timing-table: rv32i.alu32-core.behavioral.direct -->
 
 ### Examples
 

@@ -47,8 +47,8 @@ class DocumentationExamplesTest(unittest.TestCase):
         # Keep this legacy ALU/FF/SRAM suite bounded. New technologies have their
         # own MemoryDeviceDocumentationTest and sequential browser checks.
         paths = [*(REPOSITORY / "site-docs/alu8").glob("*.md"),
-                 REPOSITORY / "site-docs/memory/3.1.1.md",
-                 REPOSITORY / "site-docs/memory/3.1.2.md"]
+                 REPOSITORY / "site-docs/memory/technologies/flip-flop.md",
+                 REPOSITORY / "site-docs/memory/technologies/sram.md"]
         for path in sorted(paths):
             source = path.read_text()
             markers = MARKER.findall(source)
@@ -177,7 +177,7 @@ class DocumentationExamplesTest(unittest.TestCase):
         self.assertIn('not checked', render_table(data, "alu8", "ALU8Test"))
 
     def test_component_documentation_pattern(self):
-        expected = ["IO pins", "Behavior", "Implementation", "Examples", "Source and tests"]
+        expected = ["IO pins", "Behavior", "Implementation", "Timing", "Examples", "Source and tests"]
         component_count = 0
         for path, source in self.sources.items():
             sections = re.split(r"(?m)^## [23]\.\d+\.\d+\.", source)[1:]
@@ -188,11 +188,11 @@ class DocumentationExamplesTest(unittest.TestCase):
                 with self.subTest(page=path.name, component=component):
                     self.assertEqual(re.findall(r"(?m)^### (.+)$", section), expected)
                     behavior = section.split("### Behavior\n", 1)[1].split("### Implementation\n", 1)[0]
-                    implementation = section.split("### Implementation\n", 1)[1].split("### Examples\n", 1)[0]
+                    implementation = section.split("### Implementation\n", 1)[1].split("### Timing\n", 1)[0]
                     behavior_headings = re.findall(r"(?m)^#### (.+)$", behavior)
                     implementation_headings = re.findall(r"(?m)^#### (.+)$", implementation)
                     # Operation/flag tables may have their own subheadings.
-                    self.assertEqual(behavior_headings[-2:], ["C++ example", "Unknown inputs and timing"])
+                    self.assertEqual(behavior_headings[-2:], ["C++ example", "Unknown inputs"])
                     self.assertEqual(behavior_headings.count("C++ example"), 1)
                     self.assertEqual(implementation_headings[0], "Structural implementation")
                     has_behavioral = component not in {"HalfAdder", "FullAdder", "SRLatch", "GatedDLatch", "DFlipFlop",
@@ -203,7 +203,7 @@ class DocumentationExamplesTest(unittest.TestCase):
                         self.assertEqual(implementation_headings[-1], "Behavioral implementation")
                     else:
                         self.assertEqual(implementation_headings, ["Structural implementation"])
-                    example = behavior.split("#### C++ example\n", 1)[1].split("#### Unknown inputs and timing\n", 1)[0]
+                    example = behavior.split("#### C++ example\n", 1)[1].split("#### Unknown inputs\n", 1)[0]
                     self.assertEqual(example.count("```cpp\n"), 1)
                     self.assertEqual(section.count("```cpp\n"), 1)
                     self.assertNotIn("#### Binary behavioral reference", section)
@@ -223,7 +223,7 @@ class DocumentationExamplesTest(unittest.TestCase):
             self.assertIn(f'<a id="{anchor}"></a>\n\n## 2.1.{number}. `{component}`', source)
 
     def test_sram_cpp_examples_compile_and_match_binary_device_rows(self):
-        source = (REPOSITORY / "site-docs/memory/3.1.2.md").read_text()
+        source = (REPOSITORY / "site-docs/memory/technologies/sram.md").read_text()
         snippets = re.findall(r"```cpp\n(.*?)\n```", source, re.S)
         self.assertEqual(len(snippets), 12)
         checks = []
@@ -235,8 +235,7 @@ class DocumentationExamplesTest(unittest.TestCase):
             if not all(set(inputs[p]) <= {"0", "1"} for p in pins):
                 break
             values = [str(int(inputs[p], 2)) + ("u" if i < 3 else "") for i, p in enumerate(pins)]
-            checks.append("in = {" + ",".join(values) + "}; device.update(++time, 32, in);")
-            checks.append("while (device.control.due) { time = device.control.due; device.update(time, 32, in); }")
+            checks.append("in = {" + ",".join(values) + "}; device.update(control, 1000000, in);")
             result = row["expectedOutputs"].get("READ_DATA")
             if result is not None:
                 checks.append(f'assert(word_text(device.read_data, device.high_z) == "{result}");')
@@ -245,7 +244,8 @@ class DocumentationExamplesTest(unittest.TestCase):
         program = "\n".join(snippets) + harness + '''
 int main() {
     check_sram_references();
-    SRAMReference<8> device(4); SRAMControlReference::Inputs in; std::size_t time = 0;
+    SRAMControlReference control{32, 32, 4, 64, 8};
+    SRAMReference<8> device(4); SRAMReference<8>::Inputs in;
 ''' + "\n".join(checks) + "\n}\n"
         with tempfile.TemporaryDirectory(prefix="circuitsim-sram-examples-") as directory:
             path = Path(directory) / "reference.cpp"
@@ -341,7 +341,7 @@ int main() {
                 self.assertEqual(structural_row[field], behavioral_row[field])
 
     def test_storage_binary_references_compile_and_run(self):
-        source = self.sources[REPOSITORY / "site-docs/memory/3.1.1.md"]
+        source = self.sources[REPOSITORY / "site-docs/memory/technologies/flip-flop.md"]
         snippets = re.findall(r"```cpp\n(.*?)\n```", source, re.S)
         self.assertEqual(len(snippets), 7)
         program = "\n".join(snippets) + r'''

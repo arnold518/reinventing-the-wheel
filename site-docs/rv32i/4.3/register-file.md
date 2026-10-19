@@ -2,7 +2,7 @@
 
 `RegisterFile32x32` provides the RV32I core's two source-register reads and one destination-register write. It uses the [whole-word FF register](register.md), with register-address decoding and two read selectors around a shared bank. Its words are registers, not byte-masked memory words, because a register is only ever written whole ([storage and memory](register.md#storage-and-memory)). It is not a transaction memory endpoint: register operands are read directly, without requests, responses, or a memory controller.
 
-Its fixed register count, two-read/one-write interface, and hardwired x0 make it an RV32I-oriented building block. The FF cells are described in [3.1.1](../../memory/3.1.1.md), and the whole-word register family in [4.3.1](register.md); this page defines the CPU-facing organization built around them.
+Its fixed register count, two-read/one-write interface, and hardwired x0 make it an RV32I-oriented building block. The FF cells are described in [3.3.1](../../memory/technologies/flip-flop.md), and the whole-word register family in [4.3.1](register.md); this page defines the CPU-facing organization built around them.
 
 The [single-cycle Decode stage](../4.4/decode.md) owns this component at `CORE.DECODE.REGISTER_FILE`. Writeback only selects its input value; it does not own a second register file. Execution status qualifies the actual write enable.
 
@@ -127,7 +127,7 @@ public:
 } // namespace register_file_example
 ```
 
-#### Unknown inputs and timing
+#### Unknown inputs
 
 Captured `Z` data becomes `X`. An uncertain reset preserves stored zeros and makes other bits unknown. An uncertain destination address can affect multiple candidate registers; known address bits exclude nonmatching registers. A definitely disabled write does not modify any register.
 
@@ -157,6 +157,12 @@ The bank contains **992 writable bits**, not 1,024: x0 does not need flip-flops.
 [`RegisterFile32x32Behavioral`](https://github.com/arnold518/reinventing-the-wheel/blob/github-pages/src/modules/rv32i/RegisterFile32x32Behavioral.cpp) stores 32 logic-vector words, keeps x0 zero, and implements the same decoder/write/read rules without child gates. Catalog-selected read outputs use the register file’s gate-derived per-path delay table. The register file uses that table without a delay twin because its large gate list added simulation cost without improving its measured timing shares. Register snapshots support the visualizer's register table and timeline scrubbing.
 
 The structural register file can select behavioral `Register<32>` words or their `FlipFlopCell` children. The external pins and register numbering do not change. Its register-state inspector reads the bank's WORD outputs after the simulator restores the requested time.
+
+### Timing
+
+The gate-level form settles through its gates; the compact form publishes within the proven bounds below ([Time and Delay](../../timing.md#compact-parts) explains tables, delay twins and clocked parts).
+
+<!-- timing-table: rv32i.register-file.behavioral.direct -->
 
 ### Examples
 

@@ -15,8 +15,8 @@ from render_documentation_diagrams import DESTINATION, figures
 DOCS = ROOT / "site-docs"
 NS = "{http://www.w3.org/2000/svg}"
 PAGES = {
-    "memory/3.1/index.md": ["memory-storage", "memory-endpoints"],
-    "memory/3.1.1.md": ["ff-memory"],
+    "memory/architecture.md": ["memory-storage", "memory-endpoints"],
+    "memory/technologies/flip-flop.md": ["ff-memory"],
     "rv32i/4.3/register.md": ["register32"],
     "rv32i/4.3/register-file.md": ["register-file"],
     "rv32i/4.3/memory-access.md": ["memory-access"],

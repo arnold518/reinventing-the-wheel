@@ -39,7 +39,7 @@ bool match(uint32_t input, uint32_t mask, uint32_t value) {
 }
 ```
 
-#### Unknown inputs and timing
+#### Unknown inputs
 
 Unmasked bits cannot affect `MATCH`. A known mismatch can mask an unknown selected bit. Selected zero-valued pattern bits use NOT gates; their `X`/`Z` inputs become `X`. With exactly one selected bit whose expected value is one, the output is a direct wire and can retain `Z`. Multi-term matches pass through AND gates. Timing depends on the number of selected terms.
 
@@ -48,6 +48,10 @@ Unmasked bits cannot affect `MATCH`. A known mismatch can mask an unknown select
 #### Structural implementation
 
 `INPUT_SPLIT` exposes the bits, NOT gates invert selected zero-pattern terms, and an AND chain combines them. There is no registered behavioral implementation.
+
+### Timing
+
+Built from gates and smaller parts with no compact form of its own, so it has no delay table: its outputs settle through its gates under the [gate delays of the active profile](../../timing.md#timing-profiles). Its delay is part of the proven tables of the parts built on it.
 
 ### Examples
 
@@ -185,7 +189,7 @@ Decoded decode(uint32_t w) {
 }
 ```
 
-#### Unknown inputs and timing
+#### Unknown inputs
 
 The structural decoder handles each predicate and rewired field separately: unknown unused bits need not destroy recognition, and known register bits can remain visible. `RV32IDecodeControlBehavioral` is deliberately conservative: any nonbinary instruction bit makes **all outputs `X`**. Its registered equivalence scope is binary, settled output values. No instruction is latched here; downstream state must wait for decoding to settle.
 
@@ -232,6 +236,12 @@ These helpers are fixed structural implementations, not additional behavioral va
 #### Behavioral implementation
 
 `RV32IDecodeControlBehavioral` uses `RV32IDecoder::decode` and `RV32IControl::fromDecoded`, converts their enums to the public pin encodings, and publishes outputs using gate-derived, output-specific delays when selected through the catalog. It is registered under `rv32i.decode-control` alongside the structural implementation.
+
+### Timing
+
+The gate-level form settles through its gates; the compact form publishes within the proven bounds below ([Time and Delay](../../timing.md#compact-parts) explains tables, delay twins and clocked parts).
+
+<!-- timing-table: rv32i.decode-control.behavioral.direct -->
 
 ### Examples
 

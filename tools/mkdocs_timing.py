@@ -22,7 +22,7 @@ PROFILES = (
 )
 MARKER = re.compile(r"<!-- timing-table: ([A-Za-z0-9_.@=-]+) -->")
 LATENCY_MARKER = re.compile(r"<!-- latency-table: ([a-z,-]+) -->")
-PROFILE_MARKER = re.compile(r"<!-- profile-table: (gates|flip-flop|sram-cell|clocks) -->")
+PROFILE_MARKER = re.compile(r"<!-- profile-table: (gates|flip-flop|sram-cell|clocks|memory-sram|memory-rom|memory-dram|memory-nor) -->")
 LATENCIES = REPOSITORY / "tools/timing/documentation-timing.generated.json"
 MEMORY_NAMES = {
     "ff": "Flip-flop", "sram": "SRAM (asynchronous chip)", "sram-clocked": "SRAM (clocked on-chip macro)",
@@ -169,7 +169,8 @@ def duration(ticks, tick_picoseconds):
     for unit, size in (("ms", 10**9), ("µs", 10**6), ("ns", 10**3)):
         if ps >= size:
             value = ps / size
-            return f"{value:,.1f} {unit}" if value < 100 else f"{value:,.0f} {unit}"
+            text = f"{value:,.2f}".rstrip("0").rstrip(".") if value < 100 else f"{value:,.0f}"
+            return f"{text} {unit}"
     return f"{ps:,} ps"
 
 
@@ -232,6 +233,26 @@ PROFILE_TABLES = {
         "minimum_spacing": "Shortest spacing between writes"}),
     "clocks": ("certified_periods", "Core", "Certified clock period of each core with flip-flop memory", {
         "single": "Single-cycle", "baseline": "Baseline pipeline", "advanced": "Advanced pipeline"}),
+    "memory-sram": ("memory_intervals", "SRAM interval", "Analog intervals of the SRAM devices", {
+        "sram_settle": "Address-change settle", "sram_precharge": "Bitline precharge",
+        "sram_bitline_base": "Bitline development, base", "sram_bitline_per_row": "Bitline development, per row",
+        "sram_wire_per_side": "Global wire, per subarray crossed"}),
+    "memory-rom": ("memory_intervals", "ROM interval", "Analog intervals of the ROM devices", {
+        "rom_settle": "Address-change settle", "rom_column_base": "Read column, base",
+        "rom_column_per_row": "Read column, per row"}),
+    "memory-dram": ("memory_intervals", "DRAM interval", "Analog intervals of the DRAM devices", {
+        "dram_wordline": "ACTIVATE: wordline", "dram_sense_base": "ACTIVATE: sense, base",
+        "dram_sense_per_row": "ACTIVATE: sense, per row", "dram_restore": "ACTIVATE: restore",
+        "dram_read": "READ: column to data", "dram_write_on": "WRITE: drive on", "dram_write_off": "WRITE: drive off",
+        "dram_write_recovery": "WRITE: recovery", "dram_close": "PRECHARGE: close row",
+        "dram_precharge": "PRECHARGE: precharge", "dram_equalize": "PRECHARGE: equalize",
+        "dram_refresh_restore": "REFRESH: full restore", "dram_refresh_extra": "REFRESH: rest of the refresh cycle",
+        "dram_refresh_interval": "Refresh interval (0: the controller's own count)",
+        "dram_device_retention": "Cell retention"}),
+    "memory-nor": ("memory_intervals", "NOR-flash interval", "Analog intervals of the NOR-flash devices", {
+        "nor_read": "Read column, base", "nor_read_per_row": "Read column, per row",
+        "nor_program": "Program pulse", "nor_erase": "Erase pulse", "nor_pulse_end": "End of a pulse",
+        "nor_recovery": "Recovery after a pulse"}),
 }
 
 
@@ -239,7 +260,8 @@ def render_profile_table(kind):
     """One timing number per row, one column per profile."""
     field, heading, description, labels = PROFILE_TABLES[kind]
     profiles = json.loads(LATENCIES.read_text(encoding="utf-8"))["profiles"]
-    keys = list(profiles[0][field])
+    keys = list(labels) if labels else list(profiles[0][field])
+    timed = kind.startswith("memory-")
     html = ['<div class="timing-table-block" data-profile-table="' + kind + '">',
             f'<p class="timing-table-description">{description}, per timing profile.</p>',
             '<div class="example-table-scroll" role="region" tabindex="0" aria-label="' + escape(description) + '">'
@@ -249,6 +271,8 @@ def render_profile_table(kind):
                                                                else f"× {profile['tick_picoseconds']} ps")
         if kind == "clocks" and profile["tick_picoseconds"]:
             unit = "ps (MHz)"
+        if timed:
+            unit = "time" if profile["tick_picoseconds"] else "ticks"
         html.append(f'<th scope="col"><code>{escape(profile["name"])}</code><small>{unit}</small></th>')
     html.append("</tr></thead><tbody>")
     for key in keys:
@@ -257,7 +281,8 @@ def render_profile_table(kind):
         html.append(f'<tr><th scope="row">{name}</th>')
         for profile in profiles:
             value = profile[field][key]
-            text = f"{value:,}"
+            text = (duration(value, profile["tick_picoseconds"]) if profile["tick_picoseconds"] else f"{value:,}") \
+                if timed else f"{value:,}"
             if kind == "clocks" and profile["tick_picoseconds"]:
                 text += f" <small>({1e6 / (value * profile['tick_picoseconds']):,.0f})</small>"
             html.append(f"<td>{text}</td>")

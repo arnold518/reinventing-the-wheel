@@ -1,8 +1,8 @@
-# § 3.1.1. Flip-Flop Storage
+# § 3.3.1. Flip-Flop Storage
 
 This section specifies flip-flop storage from feedback gates to an addressable memory. An SR latch leads to a gated D latch, an edge-triggered flip-flop, and a write-enabled cell. Cells form words, words form a storage bank, and address/control/read circuitry completes the memory device. These components store state; their outputs depend on earlier inputs as well as the current inputs.
 
-The word, bank, and device here are memory components: a word has a write mask per byte and is reached through an address. The whole-word registers and state bits used by the RV32I circuitry are built from the same cell but are storage, not memory; they have no address or byte mask and are documented in [4.3.1](../rv32i/4.3/register.md#storage-and-memory).
+The word, bank, and device here are memory components: a word has a write mask per byte and is reached through an address. The whole-word registers and state bits used by the RV32I circuitry are built from the same cell but are storage, not memory; they have no address or byte mask and are documented in [4.3.1](../../rv32i/4.3/register.md#storage-and-memory).
 
 | Component | Description | Structural | Behavioral |
 | --- | --- | :---: | :---: |
@@ -16,7 +16,7 @@ The word, bank, and device here are memory components: a word has a write mask p
 
 These columns indicate actual simulator implementations; the simplified C++ examples below are not counted. Cells, words, banks, and complete FF memories each support structural and behavioral selection. Structural remains the default.
 
-The [FF memory controller](3.3.md) connects this native device to the [shared transaction protocol](3.2.md). FF storage itself does not require a controller.
+The [FF memory controller](../controllers.md) connects this native device to the [shared transaction protocol](../transactions.md). FF storage itself does not require a controller.
 
 ## Conventions
 
@@ -24,13 +24,13 @@ The [FF memory controller](3.3.md) connects this native device to the [shared tr
 - `S_BAR` and `R_BAR` are active-low. The other components' `RST` is active-high and asynchronous: asserting it clears state without waiting for a clock edge, after gate propagation.
 - State is not guaranteed to start at zero. Establish a known state with set/reset before relying on it. Every recorded scenario below starts with reset.
 - Behavior tables describe settled outputs. A rising edge means `CLK` changes from `0` to `1`; a sustained high level is not another edge. Keep data and control inputs stable around the edge and allow propagation to finish.
-- These are digital timing models, not analog metastability or transistor-voltage models. Their delays are simulator units, not calibrated device timings.
+- These are digital models, not analog metastability or transistor-voltage models. Their delays come from the [timing profile](../../timing.md); the flip-flop's setup, hold and clock-to-output times are measured on its gates in each profile ([3.3.1.3](#3313-dflipflop)).
 
 The simplified **C++ examples** describe binary behavior, not the simulator implementation. They assume reset has already established zero storage and, for clocked components, `CLK = 0`. Call `update` for each input change, including falling clock edges. They omit propagation delays and `X`/`Z` handling and can be compiled together in the order shown.
 
 Each examples table contains **every recorded checkpoint** of its embedded scenario, with a zero-based number, the timeline label, and the absolute simulator time. Inputs are the values in effect at that checkpoint, including retained values. Preparation actions between checkpoints are replayed by the simulator; a table is not a sequence of independent truth-table inputs. Each component has its own standalone scenario, including the bank.
 
-## 3.1.1.1. `SRLatch`
+## 3.3.1.1. `SRLatch`
 
 `SRLatch` stores one bit using feedback between two NAND gates. It has no clock or data input: set and reset directly select the stored state.
 
@@ -81,7 +81,7 @@ struct SRLatchReference {
 
 The exception is a guard in this example only. The simulator runs the actual NAND feedback circuit instead.
 
-#### Unknown inputs and timing
+#### Unknown inputs
 
 The two NAND gates apply their normal four-state rules. Outputs are not automatically complementary during propagation, invalid input combinations, or unknown states. The recorded `high-z-set-input` checkpoint drives `S_BAR = Z` after a known reset state with `R_BAR = 1`; both outputs become `X`. `recover-from-high-z` demonstrates recovery through reset.
 
@@ -104,6 +104,10 @@ $$
 
 These are feedback equations, not two ordinary C++ assignments evaluated once. Gate events propagate until the circuit settles.
 
+### Timing
+
+A loop of two cross-coupled NAND gates. Path analysis cannot bound a loop, so the latch has no delay table; each output follows its inputs through the NAND gates under the [profile's gate delays](../../timing.md#timing-profiles). Its timing as a storage element is measured as part of the [D flip-flop](#3313-dflipflop).
+
 ### Examples
 
 <!-- simulator-examples: sr-latch SRLatchTest -->
@@ -116,14 +120,14 @@ These are feedback equations, not two ordinary C++ assignments evaluated once. G
 
 <div class="simulator-embed">
   <iframe
-    src="../../simulator/?scenario=sr-latch"
+    src="../../../simulator/?scenario=sr-latch"
     title="SRLatch component and recorded state sequence"
     loading="lazy"
     allowfullscreen>
   </iframe>
 </div>
 
-<a href="../../simulator/?scenario=sr-latch" class="md-button">Open SRLatch in the simulator</a>
+<a href="../../../simulator/?scenario=sr-latch" class="md-button">Open SRLatch in the simulator</a>
 
 ### Source and tests
 
@@ -134,7 +138,7 @@ These are feedback equations, not two ordinary C++ assignments evaluated once. G
 | --- | --- |
 | [`SRLatchTest` / `srLatchSpec()`](https://github.com/arnold518/reinventing-the-wheel/blob/github-pages/src/tests/CorePrimitiveTests.cpp) | Eight checkpoints: reset, hold, set, invalid inputs, explicit recovery, and high-impedance input propagation |
 
-## 3.1.1.2. `GatedDLatch`
+## 3.3.1.2. `GatedDLatch`
 
 `GatedDLatch` adds a data input and an enable input to `SRLatch`. With `EN = 1`, it is transparent: changing `D` changes the stored value after propagation. With `EN = 0`, it holds its state.
 
@@ -176,7 +180,7 @@ struct GatedDLatchReference {
 };
 ```
 
-#### Unknown inputs and timing
+#### Unknown inputs
 
 The implementation evaluates the actual gates. For a known enabled latch with reset inactive, `D = X` or `D = Z` can make both outputs unknown. Asserting reset restores `Q = 0`, `Q_BAR = 1`, including after these unknown-data cases. The binary table does not specify every combination of unknown enable/reset inputs.
 
@@ -203,6 +207,10 @@ $$
 
 For settled binary inputs, the gating prevents data and enable from requesting set and reset simultaneously.
 
+### Timing
+
+Built from gates around an `SRLatch`, so it has no delay table: `Q` follows `D` through the input gating and the latch while `EN` is high. Its timing as a storage element is measured as part of the [D flip-flop](#3313-dflipflop).
+
 ### Examples
 
 <!-- simulator-examples: gated-d-latch GatedDLatchTest -->
@@ -211,18 +219,18 @@ For settled binary inputs, the gating prevents data and enable from requesting s
 
 #### Embedded simulation
 
-`GatedDLatchTest` has 12 checkpoints, including transparent `X`/`Z` inputs and reset recovery. Expand `STATE` to inspect the same `SRLatch` from 3.1.1.1 inside the input gating.
+`GatedDLatchTest` has 12 checkpoints, including transparent `X`/`Z` inputs and reset recovery. Expand `STATE` to inspect the same `SRLatch` from 3.3.1.1 inside the input gating.
 
 <div class="simulator-embed">
   <iframe
-    src="../../simulator/?scenario=gated-d-latch"
+    src="../../../simulator/?scenario=gated-d-latch"
     title="GatedDLatch component and recorded enable sequence"
     loading="lazy"
     allowfullscreen>
   </iframe>
 </div>
 
-<a href="../../simulator/?scenario=gated-d-latch" class="md-button">Open GatedDLatch in the simulator</a>
+<a href="../../../simulator/?scenario=gated-d-latch" class="md-button">Open GatedDLatch in the simulator</a>
 
 ### Source and tests
 
@@ -233,7 +241,7 @@ For settled binary inputs, the gating prevents data and enable from requesting s
 | --- | --- |
 | [`GatedDLatchTest` / `gatedDLatchSpec()`](https://github.com/arnold518/reinventing-the-wheel/blob/github-pages/src/tests/CorePrimitiveTests.cpp) | 12 checkpoints: reset, disabled retention, enabled data changes, re-enable, and unknown/high-impedance data with reset recovery |
 
-## 3.1.1.3. `DFlipFlop`
+## 3.3.1.3. `DFlipFlop`
 
 `DFlipFlop` combines two gated D latches to capture data on the rising clock edge. Unlike `GatedDLatch`, it does not keep following `D` throughout a high clock level.
 
@@ -275,9 +283,9 @@ struct DFlipFlopReference {
 };
 ```
 
-#### Unknown inputs and timing
+#### Unknown inputs
 
-The recorded sequence captures `X` and `Z` data as unknown state and then recovers through reset. This does not establish analog setup/hold limits or define every ambiguous clock transition. Preparing data, allowing it to settle with `CLK = 0`, and then raising the clock is the sequence used by the tests.
+The recorded sequence captures `X` and `Z` data as unknown state and then recovers through reset. Preparing data, allowing it to settle with `CLK = 0`, and then raising the clock is the sequence used by the tests; the setup and hold limits are in the Timing section below.
 
 ### Implementation
 
@@ -295,6 +303,14 @@ The recorded sequence captures `X` and `Z` data as unknown state and then recove
 
 `RST` connects to both latches. The clock inverter and latch gates have propagation delays; this is a structural digital model, not an ideal zero-delay edge detector.
 
+### Timing
+
+Path analysis cannot bound a loop, so the flip-flop's contract is **measured**: every combination of data change, clock edge and reset is simulated under the profile's gate delays, and the results become the contract the rest of the project relies on (`DFlipFlopTimingTest` checks them). Every clocked part, from the register cell to the cores, is timed from these numbers.
+
+<!-- profile-table: flip-flop -->
+
+Setup and hold are measured from the rising clock edge: data that changes inside that window may be captured as either value or as X.
+
 ### Examples
 
 <!-- simulator-examples: dff DFlipFlopTest -->
@@ -307,14 +323,14 @@ The recorded sequence captures `X` and `Z` data as unknown state and then recove
 
 <div class="simulator-embed">
   <iframe
-    src="../../simulator/?scenario=dff"
+    src="../../../simulator/?scenario=dff"
     title="DFlipFlop component and recorded clock-edge sequence"
     loading="lazy"
     allowfullscreen>
   </iframe>
 </div>
 
-<a href="../../simulator/?scenario=dff" class="md-button">Open DFlipFlop in the simulator</a>
+<a href="../../../simulator/?scenario=dff" class="md-button">Open DFlipFlop in the simulator</a>
 
 ### Source and tests
 
@@ -325,7 +341,7 @@ The recorded sequence captures `X` and `Z` data as unknown state and then recove
 | --- | --- |
 | [`DFlipFlopTest` / `dFlipFlopSpec()`](https://github.com/arnold518/reinventing-the-wheel/blob/github-pages/src/tests/CorePrimitiveTests.cpp) | 14 checkpoints: reset, input preparation, rising-edge capture, high-level and falling-edge retention, and `X`/`Z` capture with reset recovery |
 
-## 3.1.1.4. `FlipFlopCell`
+## 3.3.1.4. `FlipFlopCell`
 
 `FlipFlopCell` is a one-bit, write-enabled register. It combines `DFlipFlop` with a multiplexer that chooses between new data and the currently stored bit. `FFWord<W>` groups these cells into independently enabled byte lanes.
 
@@ -365,7 +381,7 @@ struct FlipFlopCellReference {
 };
 ```
 
-#### Unknown inputs and timing
+#### Unknown inputs
 
 The recorded contract includes the following cases in both registered implementations:
 
@@ -399,11 +415,15 @@ The clock is not gated by `WE`. The flip-flop still captures on a disabled risin
 
 #### Behavioral implementation
 
-[`FlipFlopCellBehavioral`](https://github.com/arnold518/reinventing-the-wheel/blob/github-pages/src/modules/memory/FlipFlopCellBehavioral.cpp) stores one `LogicValue` and the preceding clock value, both initially unknown. It retains the `FlipFlopCell` public type and pins without internal gates. When built through the catalog, `Q` uses gate-derived clock-to-output timing rather than a fixed one-tick publication delay.
+[`FlipFlopCellBehavioral`](https://github.com/arnold518/reinventing-the-wheel/blob/github-pages/src/modules/memory/FlipFlopCellBehavioral.cpp) stores one `LogicValue` and the preceding clock value, both initially unknown. It retains the `FlipFlopCell` public type and pins without internal gates. When built through the catalog, `Q` uses the clock-to-output delay proven on the gates.
 
 Each evaluation gives reset priority. With reset low, a known `CLK = 0 → 1` transition captures `D` when `WE = 1` and retains the stored value when `WE = 0`. Captured `X` or `Z` becomes `X`. On that edge, an unknown write enable follows the structural AND/OR feedback mux: only an old zero and a new zero preserve zero; every other combination produces `X`, including two ones. An unknown reset merges the stored value with zero. The evaluator remembers the current clock after every evaluation.
 
 `FlipFlopCellTest` runs the same state sequence against the structural and behavioral implementations and compares their checkpoint outputs. This validates the recorded sequences, not every possible four-state history. Checkpoint times can differ, so the table below describes the default structural run.
+
+### Timing
+
+<!-- timing-table: memory.ff.cell.behavioral.direct -->
 
 ### Examples
 
@@ -417,14 +437,14 @@ Each evaluation gives reset priority. With reset low, a known `CLK = 0 → 1` tr
 
 <div class="simulator-embed">
   <iframe
-    src="../../simulator/?scenario=flip-flop-cell"
+    src="../../../simulator/?scenario=flip-flop-cell"
     title="FlipFlopCell component and recorded write-enable sequence"
     loading="lazy"
     allowfullscreen>
   </iframe>
 </div>
 
-<a href="../../simulator/?scenario=flip-flop-cell" class="md-button">Open FlipFlopCell in the simulator</a>
+<a href="../../../simulator/?scenario=flip-flop-cell" class="md-button">Open FlipFlopCell in the simulator</a>
 
 ### Source and tests
 
@@ -436,7 +456,7 @@ Each evaluation gives reset priority. With reset low, a known `CLK = 0 → 1` tr
 | --- | --- |
 | [`FlipFlopCellTest` / `flipFlopCellSpec()`](https://github.com/arnold518/reinventing-the-wheel/blob/github-pages/src/tests/MemoryComponentTests.cpp) | 13 checkpoints run against structural and behavioral implementations: reset, enabled capture, disabled retention, no high-level capture, and selected `X`/`Z` cases |
 
-## 3.1.1.5. `FFWord<W>`
+## 3.3.1.5. `FFWord<W>`
 
 `FFWord<W>` stores one word using `W` instances of `FlipFlopCell`. All cells share the clock and reset. Byte write enables decide which groups of eight cells capture new data. There is no address input because this component stores only one word.
 
@@ -492,7 +512,7 @@ struct FFWordReference {
 
 Only the lowest W data bits and W/8 mask bits participate, matching the hardware pin widths. Unlike the simulator's unknown power-up state, this binary example starts after reset.
 
-#### Unknown inputs and timing
+#### Unknown inputs
 
 Structural words inherit each cell's unknown-state behavior and gate delays. The behavioral word also starts unknown and stores captured `X`/`Z` data as `X`. Reset restores known zero. `FFWordContractTest` checks unknown startup and captured unknown data as well as binary operation.
 
@@ -511,13 +531,17 @@ The structural/behavioral equivalence guarantee is for known-binary controls at 
 | `BitJoiner<W>` | 1 | `OUTPUT` packs the stored bits into `Q` |
 | `ConstantValue<1>` | 1 | `ZERO` is a retained compatibility node; it does not drive FF storage |
 
-Input splitters have their existing one-tick delay. Output packing is zero-delay wiring. This grouping adds no pipeline stage. Structural words may contain behavioral cells without changing the word's pins.
+Input splitters take the profile's splitter delay (one tick in `unit`, none in the realistic profiles). Output packing is wiring with no delay. This grouping adds no pipeline stage. Structural words may contain behavioral cells without changing the word's pins.
 
 #### Behavioral implementation
 
 [`FFWordBehavioral<W>`](https://github.com/arnold518/reinventing-the-wheel/blob/github-pages/src/modules/memory/FFWordBehavioral.hpp) stores W logic values and the previous clock, initially unknown. Reset clears all bits; an enabled known rising edge replaces the enabled byte lanes. It has no child cells; a catalog-selected word schedules `Q` using the delay table characterized from its structural counterpart.
 
 When neither the write enable nor the byte mask definitely disables a lane, an ambiguous enable follows the cell's AND/OR feedback mux: only old zero/new zero stays zero; every other combination becomes `X`. Unknown reset merges each stored bit with zero. Equivalence is checked at settled checkpoints, not during gate propagation.
+
+### Timing
+
+<!-- timing-table: memory.ff.word.8.behavioral.direct -->
 
 ### Examples
 
@@ -531,14 +555,14 @@ The embedded word is **16 bits**, so its four masks are `00`, `01`, `10`, and `1
 
 <div class="simulator-embed">
   <iframe
-    src="../../simulator/?scenario=ff-word"
+    src="../../../simulator/?scenario=ff-word"
     title="FFWord 16-bit masked writes and reset"
     loading="lazy"
     allowfullscreen>
   </iframe>
 </div>
 
-<a href="../../simulator/?scenario=ff-word" class="md-button">Open FFWord in the simulator</a>
+<a href="../../../simulator/?scenario=ff-word" class="md-button">Open FFWord in the simulator</a>
 
 ### Source and tests
 
@@ -551,7 +575,7 @@ The embedded word is **16 bits**, so its four masks are `00`, `01`, `10`, and `1
 | [`FFWordTest` / `wordSpec()`](https://github.com/arnold518/reinventing-the-wheel/blob/github-pages/src/tests/FFMemoryTests.cpp) | 30 checkpoints for a 16-bit word, covering all four byte masks, hold behavior, and reset |
 | [`FFWordContractTest`](https://github.com/arnold518/reinventing-the-wheel/blob/github-pages/src/tests/FFMemoryTests.cpp) | All masks at widths 8/16/32; structural and behavioral words; structural words containing behavioral cells; unknown startup and captured unknown data |
 
-## 3.1.1.6. `FFStorageBank<W>`
+## 3.3.1.6. `FFStorageBank<W>`
 
 `FFStorageBank<W>` groups N words. It distributes common write data, byte mask, clock, and reset, while keeping a separate write enable and output for each word. It does not decode an address, choose a read word, or implement a bus protocol. Here, “bank” is a storage grouping, not a DRAM command/timing model.
 
@@ -570,7 +594,7 @@ N is a construction-time word count, not another template parameter. The family 
 
 ### Behavior
 
-Each word follows §3.1.1.5 with `WE = WRITE_n`. A rising edge updates the enabled byte lanes of every word whose `WRITE_n = 1`; all other lanes hold. All `WORD_n` outputs are continuously available.
+Each word follows §3.3.1.5 with `WE = WRITE_n`. A rising edge updates the enabled byte lanes of every word whose `WRITE_n = 1`; all other lanes hold. All `WORD_n` outputs are continuously available.
 
 The bank does **not** enforce a one-hot write selection. Multiple high enables would write the same input data to multiple words. In `FFMemory`, address decoding and access control produce at most one high word enable for a known valid address. Reset clears every word regardless of those enables.
 
@@ -601,7 +625,7 @@ struct FFStorageBankReference {
 
 `words[n].q` corresponds to `WORD_n`. The exceptions guard construction and the example's vector representation; the simulator exposes a fixed set of pins after construction.
 
-#### Unknown inputs and timing
+#### Unknown inputs
 
 The structural bank adds no scheduling algorithm of its own: unknown-state behavior and capture timing belong to its words and their selected implementations. Common clock/reset fan out to all words. The behavioral bank starts with unknown bits and clock, captures `X`/`Z` data as `X`, and uses gate-derived output and clock-to-output delays when selected through the catalog.
 
@@ -625,6 +649,10 @@ Its uncertain-control rules match the behavioral word: for a lane that is not de
 
 The registered contract is `memory.ff.bank.W`. Its pin schema is generated from `depth_words`, so construction validates all N enables and outputs for both implementations. Selecting behavioral fidelity for `FFMemory.STORAGE` hides only the bank's words and cells; `ADDRESS_DECODE`, `ACCESS_CONTROL`, and `READ_SELECT` remain structural and visible.
 
+### Timing
+
+<!-- timing-table: memory.ff.bank.8.behavioral.direct -->
+
 ### Examples
 
 <!-- simulator-examples: ff-storage-bank FFStorageBankTest -->
@@ -641,14 +669,14 @@ Each selection/mask pair has four checkpoints: `setup` prepares inputs with a lo
 
 <div class="simulator-embed">
   <iframe
-    src="../../simulator/?scenario=ff-storage-bank"
+    src="../../../simulator/?scenario=ff-storage-bank"
     title="FFStorageBank three-word enables, byte masks, and reset"
     loading="lazy"
     allowfullscreen>
   </iframe>
 </div>
 
-<a href="../../simulator/?scenario=ff-storage-bank" class="md-button">Open FFStorageBank in the simulator</a>
+<a href="../../../simulator/?scenario=ff-storage-bank" class="md-button">Open FFStorageBank in the simulator</a>
 
 ### Source and tests
 
@@ -663,9 +691,9 @@ Each selection/mask pair has four checkpoints: `setup` prepares inputs with a lo
 | [`FFMemoryFidelityTest`](https://github.com/arnold518/reinventing-the-wheel/blob/github-pages/src/tests/FFMemoryTests.cpp) | Bank-level behavioral selection inside structural devices, alongside word/cell/device selections |
 | [`DocumentationExamplesTest`](https://github.com/arnold518/reinventing-the-wheel/blob/github-pages/tests/DocumentationExamplesTest.py) | Compiles the binary bank example, replays every standalone bank row, and also checks internal bank signals in the complete memory scenario |
 
-## 3.1.1.7. `FFMemory<W>`
+## 3.3.1.7. `FFMemory<W>`
 
-`FFMemory<W>` is the complete addressable FF device. It adds one shared word address, access checking, and a read multiplexer to `FFStorageBank<W>`. The structural implementation exposes those blocks; the behavioral implementation keeps the same device pins without expanding words or cells. Its decoder and read selector reuse the gate-construction routines described in [3.1.0. Helper Components](3.1.0.md#reuse-boundaries), without changing their FF-specific pins, range checks, or zero-on-disabled-read behavior.
+`FFMemory<W>` is the complete addressable FF device. It adds one shared word address, access checking, and a read multiplexer to `FFStorageBank<W>`. The structural implementation exposes those blocks; the behavioral implementation keeps the same device pins without expanding words or cells. Its decoder and read selector reuse the gate-construction routines described in [3.2 Shared Building Blocks](../building-blocks.md#reuse-boundaries), without changing their FF-specific pins, range checks, or zero-on-disabled-read behavior.
 
 ### IO pins
 
@@ -736,7 +764,7 @@ struct FFMemoryReference {
 
 This example exposes the binary composition: decode one write enable, update the bank, then select the read result. It uses the preceding small bank's depth guard. The scalable simulator implementation does not allocate this vector of word components.
 
-#### Unknown inputs and timing
+#### Unknown inputs
 
 Unwritten storage is initially `X`; asserting reset establishes zero. Gate-level propagation determines structural intermediate values. The behavioral device suppresses writes with ambiguous controls, address, or mask; an unknown read enable or enabled unknown address produces unknown read data. Ambiguous active access controls/address/mask can produce unknown `FAULT`. Captured `Z` is stored as `X`; an unknown reset makes the behavioral storage unknown.
 
@@ -752,7 +780,7 @@ The shared equivalence contract is settled binary behavior, not all four-state h
 | --- | --- | --- |
 | `MemoryAddressDecoder` | `WORD_ADDR` → `IN_RANGE`, `VALID_n`, `SELECT_b` | Validate the full 32-bit index, identify each valid word, and supply read-mux address bits |
 | `MemoryAccessControl` | `IN_RANGE`, `VALID_n`, `WE`, `READ_EN` → `WRITE_n`, `READ_VALID`, `FAULT` | Gate each word write enable, permit valid reads, and flag active out-of-range accesses |
-| `FFStorageBank<W>` | Shared data/mask/clock/reset and `WRITE_n` → `WORD_n` | Hold exactly N words as specified in §3.1.1.6 |
+| `FFStorageBank<W>` | Shared data/mask/clock/reset and `WRITE_n` → `WORD_n` | Hold exactly N words as specified in §3.3.1.6 |
 | `MemoryReadSelector<W>` | `WORD_n`, `SELECT_b`, `READ_VALID` → `READ_DATA` | Select the addressed word through mux trees and gate the result |
 
 The decoder checks high address bits as well as the bits used for selection: an invalid index must not alias a valid word. Non-power-of-two depths have no extra storage cells; missing read-mux leaves are zero. A one-word device needs range checking but no word-selection decoder gates or read-selection muxes. These three address/control/read helper blocks are structural only; the bank's word/cell children remain selectable.
@@ -765,28 +793,32 @@ The behavioral `FFMemory` implementation and `MemoryStorage` is its host-side ba
 
 Fidelity can be selected at four boundaries: the whole device, its bank, individual words, or individual cells. `FFMemoryFidelityTest` compares these combinations at settled checkpoints. Collapsing a parent removes its visible children; saved child choices remain available when structural expansion is restored.
 
+### Timing
+
+<!-- timing-table: memory.ff.device.8.behavioral -->
+
 ### Examples
 
 <a id="ff-memory-examples"></a>
 
 <!-- simulator-examples: ff-memory-container FFMemoryTest -->
 
-The embedded device is **8 bits wide with four words**. Its 52 checkpoints write `0x81`, `0x80`, `0x83`, and `0x82`, read all words back, attempt out-of-range reads/writes, and verify that rejected writes did not corrupt valid words. `masked-read` returns `0x78`; at W = 8 the one-byte mask covers the whole word, so use §3.1.1.5 for partial-word masking. `reset-retention` confirms that FF memory clears to zero rather than retaining its contents.
+The embedded device is **8 bits wide with four words**. Its 52 checkpoints write `0x81`, `0x80`, `0x83`, and `0x82`, read all words back, attempt out-of-range reads/writes, and verify that rejected writes did not corrupt valid words. `masked-read` returns `0x78`; at W = 8 the one-byte mask covers the whole word, so use §3.3.1.5 for partial-word masking. `reset-retention` confirms that FF memory clears to zero rather than retaining its contents.
 
 #### Embedded simulation
 
-Inspect the four root blocks, then open `STORAGE` to see the bank structure described in §3.1.1.6. This device uses four 8-bit words rather than the standalone bank example's three 16-bit words. Changing `WORD_ADDR` affects the decoder and read selection, while the stored words remain in place. The full table uses the default structural profile; choosing a behavioral implementation can change checkpoint times.
+Inspect the four root blocks, then open `STORAGE` to see the bank structure described in §3.3.1.6. This device uses four 8-bit words rather than the standalone bank example's three 16-bit words. Changing `WORD_ADDR` affects the decoder and read selection, while the stored words remain in place. The full table uses the default structural profile; choosing a behavioral implementation can change checkpoint times.
 
 <div class="simulator-embed">
   <iframe
-    src="../../simulator/?scenario=ff-memory-container"
+    src="../../../simulator/?scenario=ff-memory-container"
     title="FFMemory four-word device addressing, faults, and reset"
     loading="lazy"
     allowfullscreen>
   </iframe>
 </div>
 
-<a href="../../simulator/?scenario=ff-memory-container" class="md-button">Open FFMemory in the simulator</a>
+<a href="../../../simulator/?scenario=ff-memory-container" class="md-button">Open FFMemory in the simulator</a>
 
 ### Source and tests
 

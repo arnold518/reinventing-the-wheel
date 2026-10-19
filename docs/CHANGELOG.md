@@ -7,6 +7,46 @@ history remains in Git and the archived reports.
 
 ## 2026-10-19
 
+### Memory chapter rewritten; timing sections on every component page (branch `realistic-timing`, documentation phase)
+
+- **Changed:** `site-docs/memory/` restructured and rewritten against the
+  current code: 3.1 Memory Architecture, 3.2 Shared Building Blocks (with the
+  timing and control parts), 3.3 Memory Technologies (3.3.1–3.3.6 as
+  subsections), 3.4 Transaction Protocol (READ_BURST, registered
+  `REQ_READY`, `LAST`/`SPACE`), 3.5 Controllers and Endpoints (gate-level
+  sequencers, current configuration), 3.6 Memory Timing (new), 3.7 Caches.
+  New top-level "§ 1. Time and Delay". The memory, ALU8 and RV32I 4.3–4.4
+  component pages split "Unknown inputs and timing" into "Unknown inputs"
+  and a "Timing" section with generated delay, interval and clock tables;
+  the abstract-tick disclaimers are gone. Long controller and endpoint C++
+  listings are replaced by a request check and an endpoint response
+  function. Links from the RV32I pages follow the new addresses.
+- **Why:** the owner asked for a complete memory rewrite after testing, with
+  the technologies under one section, and for the site to state timing from
+  the code (profiles, proven tables, measured latency).
+- **Verified:** strict MkDocs build; `MemoryDeviceDocumentationTest`,
+  `MemoryEndpointIntegrationTest` (the documented request check equals the
+  production check in every case), `DocumentationExamplesTest`,
+  `RV32IBuildingBlocksDocumentationTest`, `RV32ISingleCycleDocumentationTest`,
+  `RegisterFileDocumentationTest`, `RegisterDocumentationTest`,
+  `CacheDocumentationTest`, `DocumentationDiagramsTest`,
+  `TimingTableDocumentationTest`.
+- **Not yet:** browser tests that open the old memory URLs, the diagram
+  review, 4.2/4.7/visualizer pages, the Pages build.
+
+### Documentation timing data (branch `realistic-timing`, phase 8)
+
+- **Changed:** new tool `documentation_timing_data` writes
+  `tools/timing/documentation-timing.generated.json` (leaf delays, measured
+  flip-flop and SRAM-cell contracts, certified periods, memory intervals,
+  access latency of each technology at the advanced core's clock); new
+  markers `profile-table` and `latency-table` in `tools/mkdocs_timing.py`.
+- **Why:** no timing number on the site is typed by hand.
+- **Verified:** `DocumentationTimingDataTest` (measured again, equal) and
+  `MemoryLatencyGatesTest` (compact and gate-level endpoints take the same
+  cycles in all three profiles, 38 of 38). Latencies equal the phase-6
+  records.
+
 ### Static visualizer: complete layouts, compact Timing control, layout check (branch `realistic-timing`, phase 8)
 
 - **Changed:** `layout.json` gains the 13 child placements the static site

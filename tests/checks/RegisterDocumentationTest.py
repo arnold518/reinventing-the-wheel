@@ -22,19 +22,19 @@ nav = unescape((ROOT / "mkdocs.yml").read_text())
 assert nav.index("4.3.1. Register<W>:") < nav.index("4.3.2. Register File:")
 index = (ROOT / "site-docs/rv32i/4.3/index.md").read_text()
 assert "4.3.1. Register&lt;W&gt;" in index
-memory = (ROOT / "site-docs/memory/3.1.1.md").read_text()
+memory = (ROOT / "site-docs/memory/technologies/flip-flop.md").read_text()
 assert "Register<" not in memory
 assert "register32" not in memory
-assert "## 3.1.1.5. `FFWord<W>`" in memory
-assert "## 3.1.1.6. `FFStorageBank<W>`" in memory
-assert "## 3.1.1.7. `FFMemory<W>`" in memory
+assert "## 3.3.1.5. `FFWord<W>`" in memory
+assert "## 3.3.1.6. `FFStorageBank<W>`" in memory
+assert "## 3.3.1.7. `FFMemory<W>`" in memory
 for page in (ROOT / "site-docs/memory").rglob("*.md"):
     text = page.read_text()
     assert not re.search(r"(?m)^#+ .*`Register<", text), page
     assert "| `Register<W>` |" not in text, page
     assert "<!-- simulator-examples: register32 " not in text, page
     assert "register_example" not in text, page
-assert "../rv32i/4.3/register.md" in (ROOT / "site-docs/memory/3.2.md").read_text()
+assert "../rv32i/4.3/register.md" in (ROOT / "site-docs/memory/transactions.md").read_text()
 
 # Component identifiers, not substrings of still-current file names:
 # MemoryArrayBlocks.hpp remains a real resource.

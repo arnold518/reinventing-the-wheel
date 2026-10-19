@@ -6,6 +6,8 @@
      "gates": {"NOT": 1, "NAND": 1, "NOR": 1, "AND": 1, "OR": 1, "XOR": 1, "splitter": 1, "memory primitive": 1},
      "flip_flop": {"setup": 6, "hold": 1, "clock_to_output_minimum": 3, "clock_to_output_maximum": 4, "minimum_high": 2, "minimum_low": 6},
      "sram_cell": {"earliest": 2, "latest": 3, "minimum_spacing": 2},
+     "memory_intervals": {"sram_settle": 32, "sram_precharge": 32, "sram_bitline_base": 64, "sram_bitline_per_row": 0, "sram_wire_per_side": 2, "rom_settle": 32, "rom_column_base": 96, "rom_column_per_row": 0, "dram_wordline": 32, "dram_sense_base": 32, "dram_sense_per_row": 0, "dram_restore": 32, "dram_read": 32, "dram_write_on": 32, "dram_write_off": 32, "dram_write_recovery": 32, "dram_close": 32, "dram_precharge": 32, "dram_equalize": 32, "dram_refresh_restore": 0, "dram_refresh_extra": 0, "dram_refresh_interval": 0, "dram_device_retention": 100000, "nor_read": 96, "nor_read_per_row": 0, "nor_pulse_end": 32, "nor_recovery": 32, "nor_program": 128, "nor_erase": 256},
+     "dram_row_words": 2,
      "certified_periods": {"single": 166, "baseline": 80, "advanced": 94},
      "period_ticks": 94, "accesses": [
       {"memory": "ff", "operation": "write", "simulated": true, "cycles": 0},
@@ -27,6 +29,8 @@
      "gates": {"NOT": 30, "NAND": 41, "NOR": 47, "AND": 50, "OR": 52, "XOR": 120, "splitter": 0, "memory primitive": 30},
      "flip_flop": {"setup": 231, "hold": 0, "clock_to_output_minimum": 132, "clock_to_output_maximum": 175, "minimum_high": 52, "minimum_low": 231},
      "sram_cell": {"earliest": 71, "latest": 112, "minimum_spacing": 42},
+     "memory_intervals": {"sram_settle": 90, "sram_precharge": 120, "sram_bitline_base": 90, "sram_bitline_per_row": 3, "sram_wire_per_side": 15, "rom_settle": 90, "rom_column_base": 120, "rom_column_per_row": 3, "dram_wordline": 3000, "dram_sense_base": 12000, "dram_sense_per_row": 0, "dram_restore": 3000, "dram_read": 18000, "dram_write_on": 6000, "dram_write_off": 3000, "dram_write_recovery": 3000, "dram_close": 3000, "dram_precharge": 12000, "dram_equalize": 3000, "dram_refresh_restore": 27000, "dram_refresh_extra": 0, "dram_refresh_interval": 7812500, "dram_device_retention": 64000000000, "nor_read": 120000, "nor_read_per_row": 0, "nor_pulse_end": 120, "nor_recovery": 120, "nor_program": 150000000, "nor_erase": 410000000000},
+     "dram_row_words": 512,
      "certified_periods": {"single": 7164, "baseline": 3354, "advanced": 4104},
      "period_ticks": 4104, "accesses": [
       {"memory": "ff", "operation": "write", "simulated": true, "cycles": 0},
@@ -48,6 +52,8 @@
      "gates": {"NOT": 21, "NAND": 28, "NOR": 33, "AND": 35, "OR": 36, "XOR": 84, "splitter": 0, "memory primitive": 21},
      "flip_flop": {"setup": 160, "hold": 0, "clock_to_output_minimum": 91, "clock_to_output_maximum": 120, "minimum_high": 36, "minimum_low": 160},
      "sram_cell": {"earliest": 49, "latest": 77, "minimum_spacing": 29},
+     "memory_intervals": {"sram_settle": 63, "sram_precharge": 84, "sram_bitline_base": 63, "sram_bitline_per_row": 2, "sram_wire_per_side": 11, "rom_settle": 63, "rom_column_base": 84, "rom_column_per_row": 2, "dram_wordline": 2500, "dram_sense_base": 9000, "dram_sense_per_row": 0, "dram_restore": 2250, "dram_read": 13750, "dram_write_on": 7500, "dram_write_off": 3750, "dram_write_recovery": 3750, "dram_close": 2500, "dram_precharge": 9000, "dram_equalize": 2250, "dram_refresh_restore": 20500, "dram_refresh_extra": 304250, "dram_refresh_interval": 7812500, "dram_device_retention": 64000000000, "nor_read": 120000, "nor_read_per_row": 0, "nor_pulse_end": 84, "nor_recovery": 84, "nor_program": 150000000, "nor_erase": 410000000000},
+     "dram_row_words": 1024,
      "certified_periods": {"single": 4986, "baseline": 2334, "advanced": 2858},
      "period_ticks": 2858, "accesses": [
       {"memory": "ff", "operation": "write", "simulated": true, "cycles": 0},

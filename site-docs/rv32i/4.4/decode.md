@@ -80,9 +80,9 @@ public:
 }
 ```
 
-#### Unknown inputs and timing
+#### Unknown inputs
 
-Real simulator x1–x31 start unknown until reset; the simplified array is only a post-reset reference. Structural nonbinary behavior follows the decoder and register-file children. The behavioral stage makes all outputs unknown for a nonbinary instruction, but still updates its register file from instruction bits 11:7, `REGISTER_WRITE`, `WB_VALUE`, reset, and the clock. An uncertain destination can therefore affect multiple candidate registers under the [register-file rules](../4.3/register-file.md#unknown-inputs-and-timing); a known enabled write copies the WB bit vector, with captured `Z` becoming `X`. Only known low-to-high clock transitions capture writes. Binary stage equivalence remains the checked scope. Catalog-selected outputs use gate-derived path and clock-to-output delays; recorded register history becomes visible when the scheduled output is published, not retroactively.
+Real simulator x1–x31 start unknown until reset; the simplified array is only a post-reset reference. Structural nonbinary behavior follows the decoder and register-file children. The behavioral stage makes all outputs unknown for a nonbinary instruction, but still updates its register file from instruction bits 11:7, `REGISTER_WRITE`, `WB_VALUE`, reset, and the clock. An uncertain destination can therefore affect multiple candidate registers under the [register-file rules](../4.3/register-file.md#unknown-inputs); a known enabled write copies the WB bit vector, with captured `Z` becoming `X`. Only known low-to-high clock transitions capture writes. Binary stage equivalence remains the checked scope. Catalog-selected outputs use gate-derived path and clock-to-output delays; recorded register history becomes visible when the scheduled output is published, not retroactively.
 
 ### Implementation
 
@@ -93,6 +93,12 @@ Real simulator x1–x31 start unknown until reset; the simplified array is only 
 #### Behavioral implementation
 
 `BehavioralDecodeStage` uses the direct stage evaluator, a 32-word four-state register vector, and timestamped register snapshots. It computes controls through `RV32IDecoder`/`RV32IControl` and implements writes on known rising edges. Both implementations expose `register-state-view` so the visualizer can inspect registers without depending on the internal hierarchy. The family is `rv32i.single-cycle.decode`.
+
+### Timing
+
+The gate-level form settles through its gates; the compact form publishes within the proven bounds below ([Time and Delay](../../timing.md#compact-parts) explains tables, delay twins and clocked parts).
+
+<!-- timing-table: rv32i.single-cycle.decode.behavioral -->
 
 ### Examples
 

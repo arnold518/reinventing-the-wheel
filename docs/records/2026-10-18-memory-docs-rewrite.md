@@ -212,3 +212,87 @@ the owner scheduled it. Decisions made without asking, as the goal requires:
   file; 2 s) and `MemoryLatencyGatesTest` (the same accesses through the
   gate-level endpoints on a 64-word memory in all three profiles: 38 of 38
   equal; 17 s); `TimingTableDocumentationTest` passes.
+
+## 2026-10-19 — Memory chapter rewritten; timing template on ALU8 and RV32I pages
+
+**New chapter** (`site-docs/memory/`): 3.1 Memory Architecture (new text:
+layers, geometry, devices/controllers/endpoints, two forms, time in
+memories, unknown values, inspection, page organization); 3.2 Shared
+Building Blocks (the five shared helpers plus a new 3.2.6 on the timing and
+control parts: `MemoryDelayLine`, `MemoryTimer`, `SymbolicDiffer`,
+`KnownBits`, `Synchronizer`, `PowerOnReset`, `ProtocolStableData`,
+`MemoryWire`/`MemoryBus`, `MemoryRequestCheck` and the two sequencers);
+3.3 Memory Technologies with 3.3.1–3.3.6 as subsections (new overview);
+3.4 Transaction Protocol; 3.5 Controllers and Endpoints; 3.6 Memory Timing
+(new: how an access time is built per technology, DRAM datasheet intervals,
+the generated latency table, large-memory estimates, where timing is
+checked); 3.7 Caches (content kept; numbering and a timing note only).
+New shared page "§ 1. Time and Delay" (`timing.md`).
+
+**Corrected against the code** (each checked in the source or with
+`VisualizerSessionProbe`):
+- SRAM: access control is a `MemoryTimer` of gates and delay lines with a
+  `READY` output (stage order settle → precharge → decoder replica → row →
+  bitline → sense → READY; writes drive from the end of precharge);
+  the device has `READY`; the clocked macro (`clocked=1`, `CLK`); 32-row
+  subarrays with global wires and a return bus. The `P/2P/3P/4P` phase
+  table is gone.
+- DRAM: command control as gates (flip-flops, delay-line chains, a
+  one-stage sampler, power-on reset); a command can be taken in the
+  completing cycle; READ_BURST is code 6; the ACTIVATE steps sum to tRCD,
+  READ is CL, the PRECHARGE steps sum to tRP (checked: 18 ns / 13.75 ns).
+- ROM: `ROMAddressControl` holds the address in a `MemoryTimer`, outputs
+  row/slot bit fields (not X for out-of-range addresses), `OUTPUT_ENABLE`
+  without an address check, and `READY`; the device has `READY`.
+- NOR flash: command control as gates; the program/erase pulse lengths are
+  `program_ticks`/`erase_ticks` from the profile (S29GL256S in the
+  realistic profiles); BUSY falls one edge after the chain's end is sampled.
+- Transactions: READ_BURST (op 4) for SRAM/ROM/DRAM; REQ_READY from
+  registered state only; the port's `LAST` and `SPACE` pins; the
+  validation order including bursts.
+- Controllers: the configuration table (`access_cycles`,
+  `refresh_interval_cycles`, `clocked`, `block_words` for bursts;
+  `phase_ticks`, `guard_ticks`, `refresh_interval_ticks` only
+  range-checked); the gate-level sequencers instead of a "terminal timed
+  sequencer"; `MEM_READY` and `MEM_ROW_OPEN`.
+- A first draft said the NOR controller synchronizes `BUSY` in two stages;
+  the code has no controller-side synchronizer (the devices sample their
+  own chains in one stage). Corrected on three pages before commit.
+
+**Template applied:** every component on the memory, ALU8 (2.1–2.6) and
+RV32I building-block and single-cycle (4.3, 4.4) pages has
+`#### Unknown inputs` and a `### Timing` section: a generated
+`timing-table` for parts with a compact form (52 markers site-wide), a short statement
+for gate-only parts and memory primitives (which interval or primitive delay
+applies), and generated profile tables (`memory-sram`, `memory-rom`,
+`memory-dram`, `memory-nor`, `flip-flop`, `sram-cell`, `gates`, `clocks`).
+The "abstract ticks" disclaimers and hand-typed tick counts are gone from
+these pages (the full-adder path comparison is stated per profile: carry
+longer in `unit`, sum longer in the realistic profiles, 240 vs 222 ps and
+168 vs 155 ps).
+
+**C++ references:** SRAM control and device rewritten as settled stage
+functions; ROM address reference updated; the two 250-line controller and
+endpoint listings replaced by a request-check function and an endpoint
+response function; the transaction-port reference gains `LAST`, `SPACE`
+and the registered `REQ_READY`. DRAM and NOR references keep a placeholder
+step duration and say so.
+
+**Tests updated:** `MemoryDeviceDocumentationTest` (new pages, Timing
+section, navigation and titles, no abstract-tick wording; the C++ replay
+applies but does not assert the rows taken mid-command, which test the
+device's pipelined acceptance), `MemoryEndpointIntegrationTest` (new
+sections; fixtures rewritten: the documented request check equals the
+production `validateRequest` over every operation × address × known-field
+case for all technologies, widths and geometries; endpoint reference reads,
+writes, bursts, programs, erases; port reference with held responses and
+bursts at W = 8/16/32), `DocumentationExamplesTest`,
+`RV32IBuildingBlocksDocumentationTest`,
+`RV32ISingleCycleDocumentationTest`, `RegisterFileDocumentationTest` (the
+3.4 assertion dropped), `RegisterDocumentationTest`,
+`CacheDocumentationTest`, `DocumentationDiagramsTest`; SRAM and ROM
+fixtures. All pass; strict MkDocs build passes.
+
+**Not yet:** the browser tests and tools that open the old memory URLs; the
+diagram review and the diagrams' section numbers; 4.2 certificates, 4.7
+results and the visualizer page; the Pages build.

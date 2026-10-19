@@ -10,9 +10,8 @@ ROOT = Path(__file__).resolve().parents[2]
 compiler = sys.argv[1] if len(sys.argv) > 1 else "c++"
 library = sys.argv[2] if len(sys.argv) > 2 else str(ROOT / "build/libSimulatorLib.a")
 source = (ROOT / "site-docs/rv32i/4.3/register-file.md").read_text()
-assert not (ROOT / "site-docs/memory/3.4.md").exists()
 assert source.startswith("# § 4.3.2. Register File\n")
-assert '(../../memory/3.1.1.md)' in source
+assert '(../../memory/technologies/flip-flop.md)' in source
 assert 'src="../../../simulator/?scenario=rv32i-register-file&amp;embed=1"' in source
 index = (ROOT / "site-docs/rv32i/4.3/index.md").read_text()
 assert index.startswith("# § 4.3. RV32I Building Blocks\n")
@@ -21,7 +20,6 @@ for section in range(1, 7):
     assert f'| [4.3.{section}.' in index
 nav = (ROOT / "mkdocs.yml").read_text()
 assert '4.3.2. Register File: rv32i/4.3/register-file.md' in nav
-assert 'memory/3.4.md' not in nav
 snippet, = re.findall(r"```cpp\n(.*?)\n```", source, re.S)
 for heading in ("IO pins", "Behavior", "Implementation", "Examples", "Tests"):
     assert f"### {heading}\n" in source

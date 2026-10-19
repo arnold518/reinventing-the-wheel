@@ -1,4 +1,4 @@
-# § 3.1.6. Scalable native devices
+# § 3.3.6. Scalable Native Devices
 
 Each FF, SRAM, DRAM, ROM and NOR-flash native device has a structural form and a scalable behavioral form under the **same device contract**. Both have the technology's native pins and behavior. A standalone device has no request queue or response register.
 
@@ -6,7 +6,7 @@ Each FF, SRAM, DRAM, ROM and NOR-flash native device has a structural form and a
 | --- | --- | :---: | :---: |
 | `FFMemory<W>`, `SRAM<W>`, `DRAM<W>`, `ROM<W>`, `NORFlash<W>` | Native device; structural form for small geometries, behavioral form for scalable capacity | Yes | Yes |
 
-The technology pages document the structural cells and complete native interfaces. A [MemoryController](3.3.md) can drive either fidelity of the same device contract.
+The technology pages document the structural cells and complete native interfaces. A [memory controller](../controllers.md) can drive either form of the same device contract.
 
 ## Configuration
 
@@ -20,7 +20,7 @@ W fixes the data-pin width: 8, 16, or 32 bits. N=`depth_words` is selected at co
 | `record_history` | 1 | Record memory-content history |
 | `max_history_bytes` | 16,777,216 | Fail-fast history budget; no silent eviction |
 
-Geometry and native timing parameters follow the selected device. `guard_ticks` and `refresh_interval_ticks` belong to controller/assembly configuration; they do not add behavior to a standalone device. In particular, a DRAM device **does not refresh itself**.
+Geometry parameters follow the selected device; its timing comes from the active profile. Refresh is a controller's job: a DRAM device **does not refresh itself**.
 
 Host pages cover 4096 simulated bytes and store value/known masks. Untouched capacity does not allocate content pages. DRAM keeps metadata only for visited rows, and ROM parses only the supplied image prefix. Budgets are not a process-RSS cap: event history, objects, temporary buffers, and allocator overhead also consume memory. Disable memory and simulator histories separately for long performance runs.
 
@@ -35,7 +35,7 @@ memory = circuit_backend.create_memory_device(
 
 The C++ helper is `createBehavioralMemoryDevice("MEMORY", 32, Technology::FF, config)`. The catalog ID is `memory.<technology>.device.<width>` at both fidelities. For a transaction interface, request `memory.<technology>.scalable-endpoint.<width>`; its structural form contains a controller and requires the native device's behavioral fidelity.
 
-## 3.1.6.1. `FFMemory<W>` and other behavioral native devices
+## 3.3.6.1. `FFMemory<W>` and other behavioral native devices
 
 The selected technology fixes the native pin schema. Changing capacity does not change the pins; changing technology may.
 
@@ -53,16 +53,16 @@ The following table is the FF-model interface used by the embedded example and s
 | `READ_DATA` | Output | W | Selected word, or zero when disabled/out of range |
 | `FAULT` | Output | 1 | Invalid active access; X for unknown required controls |
 
-Other models expose the complete interfaces in [SRAM](3.1.2.md), [DRAM](3.1.3.md), [ROM](3.1.4.md), and [NOR flash](3.1.5.md), including DRAM `ROW_OPEN` and flash `WRITE_ENABLED`. They do not expose REQ/RSP pins. A universal requester connects to a matching technology controller, not directly to these native pins.
+Other models expose the complete interfaces in [SRAM](sram.md), [DRAM](dram.md), [ROM](rom.md), and [NOR flash](nor-flash.md), including DRAM `ROW_OPEN` and flash `WRITE_ENABLED`. They do not expose REQ/RSP pins. A universal requester connects to a matching technology controller, not directly to these native pins.
 
 ### Behavior
 
 | Model | Access and storage rules | Direct single-cycle CPU suitability |
 | --- | --- | --- |
 | FF | Asynchronous read; masked write on LOW→HIGH CLK; native reset clears all words | Yes, with sufficient combinational settling time |
-| SRAM | Asynchronous CE/WE/OE; address/data changes restart timed access phases | Reads can settle within a long cycle; writes need deliberate clock-boundary integration |
+| SRAM | Asynchronous CE/WE/OE (a change restarts the access, `READY` reports completion), or a clocked macro | Needs wait cycles from a controller; the clocked macro fits a clocked system directly |
 | DRAM | ACT, column READ/WRITE, PRECHARGE, REFRESH; destructive sampling, restore, retention | Requires command sequencing; not an instantaneous RAM |
-| ROM | Asynchronous read; construction image with zero-filled tail; no runtime write | Read-only access can settle within a cycle |
+| ROM | Asynchronous read with `READY`; construction image with zero-filled tail; no runtime write | Needs wait cycles from a controller when the read is longer than a cycle |
 | NOR flash | WREN, timed PROGRAM/ERASE, READ; programming clears bits and erase restores ones | Requires command sequencing for modifications |
 
 The strict single-cycle system currently uses the FF model for both instruction and data storage. It ties native memory RST low so resetting the CPU preserves its images. PC, registers, and data-memory writes use the same edge. Capacity affects host storage, not a mandatory number of CPU cycles.
@@ -116,15 +116,28 @@ public:
 }
 ```
 
-#### Unknown inputs and timing
+#### Unknown inputs
 
-Stored Z becomes X. The FF model reads without any clock edge and writes only on a known LOW→HIGH transition. Unknown reset makes FF contents unknown; unknown required access controls produce FAULT=X. Its output propagation takes simulator ticks, so “single-cycle” does not mean zero delay. Native SRAM phases and DRAM/flash deadlines remain active; they are not converted into CPU-clock waits or removed by selecting a large capacity.
+Stored Z becomes X. The FF model reads without any clock edge and writes only on a known LOW→HIGH transition. Unknown reset makes FF contents unknown; unknown required access controls produce FAULT=X. Reads still take time to settle, so “single-cycle” does not mean zero delay. The SRAM, DRAM and flash timing stays in force at any capacity; a large capacity does not remove it or turn it into CPU wait cycles.
 
 ### Implementation
 
-The native device contract selects its tested behavioral implementation at scalable capacity. FF reuses the FF-array behavior; SRAM reuses the complete access-sequence model; DRAM/ROM/NOR reuse their native command/read models. All share host allocation/provisioning support, not one universal cell algorithm.
+The native device contract selects its tested behavioral implementation at scalable capacity. Each technology keeps its own rules (the FF array, the SRAM access, the DRAM and NOR command controls edge for edge, the ROM read); they share host allocation and provisioning, not one universal cell algorithm.
 
-For a visible transaction wrapper, request `memory.<technology>.scalable-endpoint.<width>`: its structural controller drives the native device at behavioral fidelity. The endpoint's fused behavioral alternative is `BehavioralMemoryEndpoint`, documented in 3.3.
+For a visible transaction wrapper, request `memory.<technology>.scalable-endpoint.<width>`: its structural controller drives the native device at behavioral fidelity. The endpoint's fused behavioral alternative is `BehavioralMemoryEndpoint`, documented in [3.5](../controllers.md).
+
+### Timing
+
+A device too large to build from gates cannot have delays proven on its own
+gates. Every device is therefore also proven at 64 and 128 words, and a larger
+device gets a table in which each delay keeps growing per doubling as it did
+between those two sizes; its evidence line says it is an estimate. The FF
+device at the scenario's size:
+
+<!-- timing-table: memory.ff.device.8.behavioral -->
+
+The other technologies' tables are on their pages; [3.6](../timing.md) gives
+measured access latencies of 256 KiB memories.
 
 ### Examples
 
@@ -134,9 +147,9 @@ The FF scenario starts with behavioral fidelity and can switch to the structural
 
 #### Embedded simulation
 
-<div class="simulator-embed"><iframe src="../../simulator/?scenario=native-memory-device" title="Native FF memory device" loading="lazy" allowfullscreen></iframe></div>
+<div class="simulator-embed"><iframe src="../../../simulator/?scenario=native-memory-device" title="Native FF memory device" loading="lazy" allowfullscreen></iframe></div>
 
-<a href="../../simulator/?scenario=native-memory-device" class="md-button">Open native FF device</a>
+<a href="../../../simulator/?scenario=native-memory-device" class="md-button">Open native FF device</a>
 
 ### Source and tests
 

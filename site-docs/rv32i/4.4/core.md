@@ -153,7 +153,7 @@ public:
 }
 ```
 
-#### Unknown inputs and timing
+#### Unknown inputs
 
 Use known clock/control signals, reset before execution, and allow structural paths to settle before an edge. The example models the supported binary boundary only; it omits X/Z, simulator histories, and propagation events. Structural and behavioral forms can have different transient outputs and absolute checkpoint times. There is one active edge per instruction, with no inter-stage registers or protocol-only clocks.
 
@@ -168,6 +168,12 @@ The visualizer places `FETCH → DECODE → EXECUTE → MEMORY → WRITEBACK` le
 #### Behavioral implementation
 
 The core-level family `rv32i.core.educational-single-cycle` selects `RV32IReferenceCore` for behavioral fidelity. It maintains compact architectural state and applies the instruction reference transition at each enabled rising edge. It is not six hidden behavioral-stage instances. By contrast, keeping the core structural and selecting all six stages behavioral retains the six public boundaries and shared status wiring; both configurations are tested.
+
+### Timing
+
+The gate-level form settles through its gates; the compact form publishes within the proven bounds below ([Time and Delay](../../timing.md#compact-parts) explains tables, delay twins and clocked parts).
+
+<!-- timing-table: rv32i.core.educational-single-cycle.behavioral -->
 
 ### Examples
 
@@ -191,7 +197,7 @@ This is [program 3](../4.2/programs/program-03.md), with signed/unsigned loads a
 
 #### Memory integration
 
-The program root supplies a clock, this core, and two [MemoryEndpoint&lt;ff,32&gt;](../../memory/3.3.md) instances for instructions and data, each 65,536 words (256 KiB) by default. Both use the universal REQ/RSP interface. Reads and response status settle before the next rising edge; a permitted store commits on that edge together with PC and register updates. Zero-wait means **no extra clock cycle**, not zero propagation delay.
+The program root supplies a clock, this core, and two [MemoryEndpoint&lt;ff,32&gt;](../../memory/controllers.md) instances for instructions and data, each 65,536 words (256 KiB) by default. Both use the universal REQ/RSP interface. Reads and response status settle before the next rising edge; a permitted store commits on that edge together with PC and register updates. Zero-wait means **no extra clock cycle**, not zero propagation delay.
 
 | Memory component or assembly | Suitable for this core? | Use |
 | --- | --- | --- |
@@ -200,7 +206,7 @@ The program root supplies a clock, this core, and two [MemoryEndpoint&lt;ff,32&g
 | `MemoryEndpoint<sram,32>`, `<dram,32>`, `<rom,32>`, `<nor-flash,32>` | No, with their current controllers | These endpoints require delayed-response handling |
 | Native `FFMemory` or another memory device alone | Not directly | Native pins need the matching controller to form an endpoint |
 
-The visible FF assembly can use [FFMemory&lt;32&gt; at behavioral fidelity](../../memory/3.1.6.md) for scalable storage, or [FFMemory&lt;32&gt;](../../memory/3.1.1.md) for a small cell-expanded circuit. Keep scalable storage for program-sized images; choosing structural visualization does not require expanding every bit into a cell. Neither capacity nor behavioral/structural fidelity changes the zero-wait requirement. CPU reset resets the endpoint interface but does not erase its native storage.
+The visible FF assembly can use [FFMemory&lt;32&gt; at behavioral fidelity](../../memory/technologies/scalable.md) for scalable storage, or [FFMemory&lt;32&gt;](../../memory/technologies/flip-flop.md) for a small cell-expanded circuit. Keep scalable storage for program-sized images; choosing structural visualization does not require expanding every bit into a cell. Neither capacity nor behavioral/structural fidelity changes the zero-wait requirement. CPU reset resets the endpoint interface but does not erase its native storage.
 
 !!! warning "Matching pins do not make delayed memory compatible"
 

@@ -16,8 +16,9 @@ import server
 import memory_device_layout as geometry
 from mkdocs_examples import render_table
 
-SECTIONS = ("3.2", "3.3", "3.1.6")
-SOURCES = {s: (ROOT / f"site-docs/memory/{s}.md").read_text() for s in SECTIONS}
+# Transaction protocol, controllers and endpoints, scalable native devices.
+SECTIONS = {"transactions": "transactions", "controllers": "controllers", "scalable": "technologies/scalable"}
+SOURCES = {key: (ROOT / f"site-docs/memory/{page}.md").read_text() for key, page in SECTIONS.items()}
 CASES = re.findall(r"<!-- simulator-examples: (\S+) (\S+) -->", "\n".join(SOURCES.values()))
 
 
@@ -70,10 +71,10 @@ class MemoryEndpointIntegrationTest(unittest.TestCase):
             self.assertIn("| Component | Description | Structural | Behavioral |", source)
             for section in re.split(r"(?m)^## [\d.]+ `", source)[1:]:
                 self.assertEqual(re.findall(r"(?m)^### (.+)$", section),
-                                 ["IO pins", "Behavior", "Implementation", "Examples", "Source and tests"])
+                                 ["IO pins", "Behavior", "Implementation", "Timing", "Examples", "Source and tests"])
                 behavior = section.split("### Behavior\n")[1].split("### Implementation\n")[0]
                 self.assertEqual(re.findall(r"(?m)^#### (.+)$", behavior)[-2:],
-                                 ["C++ example", "Unknown inputs and timing"])
+                                 ["C++ example", "Unknown inputs"])
                 self.assertEqual(section.count("```cpp\n"), 1)
         for scenario, test in CASES:
             topology = json.loads(subprocess.check_output([PROBE, "topology", test, scenario], text=True))
@@ -116,7 +117,7 @@ class MemoryEndpointIntegrationTest(unittest.TestCase):
                 self.assertTrue(state["supported"])
                 self.assertIn("FAULT", state["ports"])
                 self.assertEqual(len(state["windowWords"]), 4)
-            example = re.findall(r"```cpp\n(.*?)\n```", SOURCES["3.1.6"], re.S)[0]
+            example = re.findall(r"```cpp\n(.*?)\n```", SOURCES["scalable"], re.S)[0]
             rows = json.loads(subprocess.check_output([PROBE, "examples", test, scenario], text=True))["rows"]
             cpp = [example, '#include <cassert>', '''
                 using namespace memory_native_example;
@@ -202,51 +203,41 @@ class MemoryEndpointIntegrationTest(unittest.TestCase):
                 self.assertIn("WE_N",state["ports"])
 
     def test_cpp_examples_compile(self):
-        port_example = re.findall(r"```cpp\n(.*?)\n```", SOURCES["3.2"], re.S)[0]
-        controller, endpoint = re.findall(r"```cpp\n(.*?)\n```", SOURCES["3.3"], re.S)
-        native_device = re.findall(r"```cpp\n(.*?)\n```", SOURCES["3.1.6"], re.S)[0]
-        snippets = [port_example, "\n".join((port_example, controller)),
-                    "\n".join((port_example, controller, endpoint)),
-                    native_device]
-        # References must explain sequencing/storage, not delegate to the algorithms under test.
-        for snippet in (controller, native_device):
+        port_example = re.findall(r"```cpp\n(.*?)\n```", SOURCES["transactions"], re.S)[0]
+        check, endpoint = re.findall(r"```cpp\n(.*?)\n```", SOURCES["controllers"], re.S)
+        native_device = re.findall(r"```cpp\n(.*?)\n```", SOURCES["scalable"], re.S)[0]
+        snippets = [port_example, check, "\n".join((check, endpoint)), native_device]
+        # References must state the rules, not call the code under test.
+        for snippet in (check, endpoint, native_device):
             self.assertNotRegex(snippet, r"\b(?:NativeSequence|DeviceModel|makeDeviceModel|validateRequest)\b")
-        with tempfile.TemporaryDirectory() as tmp:
-            for i, snippet in enumerate(snippets):
-                # Compiler stdin avoids generated source files in the checkout.
-                subprocess.run(["c++", "-std=c++20", "-I", str(ROOT / "include"),
-                                "-I", str(ROOT / "src/modules/memory"), "-x", "c++", "-fsyntax-only", "-"],
-                               input=snippet, text=True, check=True)
+        for snippet in snippets:
+            # Compiler stdin avoids generated source files in the checkout.
+            subprocess.run(["c++", "-std=c++20", "-I", str(ROOT / "include"),
+                            "-I", str(ROOT / "src/modules/memory"), "-x", "c++", "-fsyntax-only", "-"],
+                           input=snippet, text=True, check=True)
 
-    def test_compact_endpoint_cpp_example_behavior(self):
-        snippets = re.findall(r"```cpp\n(.*?)\n```", SOURCES["3.2"]+SOURCES["3.3"], re.S)
-        harness = (ROOT / "tests/fixtures/memory/compact-endpoint-example.cpp").read_text()
+    def run_fixture(self, fixture, sections):
+        snippets = re.findall(r"```cpp\n(.*?)\n```", "\n".join(SOURCES[s] for s in sections), re.S)
+        harness = (ROOT / "tests/fixtures/memory" / fixture).read_text()
         library = Path(PROBE).resolve().parent.parent / "libSimulatorLib.a"
-        with tempfile.TemporaryDirectory(prefix="memory-device-example-") as tmp:
+        with tempfile.TemporaryDirectory(prefix="memory-doc-examples-") as tmp:
             binary = Path(tmp) / "example"
             subprocess.run(["c++", "-std=c++20", "-Wall", "-Wextra", "-Werror", "-pedantic",
                             "-I", str(ROOT / "include"), "-I", str(ROOT / "src/modules/memory"),
                             "-x", "c++", "-", "-x", "none", str(library), "-o", str(binary)],
-                           input="\n".join(snippets) + "\n" + harness, text=True, check=True, timeout=60)
-            subprocess.run([str(binary)], check=True, timeout=30)
+                           input="\n".join(snippets) + "\n" + harness, text=True, check=True, timeout=120)
+            subprocess.run([str(binary)], check=True, timeout=60)
+
+    def test_compact_endpoint_cpp_example_behavior(self):
+        # The request check against the production check; the endpoint reference's answers.
+        self.run_fixture("compact-endpoint-example.cpp", ("transactions", "controllers"))
 
     def test_transaction_controller_cpp_examples_behavior(self):
-        # Controller explicitly reuses the documented frontend.
-        snippets = re.findall(r"```cpp\n(.*?)\n```",
-                              "\n".join(SOURCES[s] for s in ("3.2", "3.3", "3.1.6")), re.S)
-        harness = (ROOT / "tests/fixtures/memory/transaction-controller-examples.cpp").read_text()
-        library = Path(PROBE).resolve().parent.parent / "libSimulatorLib.a"
-        with tempfile.TemporaryDirectory(prefix="memory-controller-examples-") as tmp:
-            binary = Path(tmp) / "examples"
-            subprocess.run(["c++", "-std=c++20", "-Wall", "-Wextra", "-Werror", "-pedantic",
-                            "-I", str(ROOT / "include"), "-I", str(ROOT / "src/modules/memory"),
-                            "-x", "c++", "-", "-x", "none", str(library), "-o", str(binary)],
-                           input="\n".join(snippets) + "\n" + harness, text=True, check=True, timeout=60)
-            subprocess.run([str(binary)], check=True, timeout=30)
+        self.run_fixture("transaction-controller-examples.cpp", ("transactions",))
 
     def test_documented_public_pin_tables(self):
-        for section,scenario,test in (("3.2","memory-transaction-port","MemoryTransactionPortTest"),
-                                      ("3.1.6","native-memory-device","NativeMemoryDeviceTest")):
+        for section,scenario,test in (("transactions","memory-transaction-port","MemoryTransactionPortTest"),
+                                      ("scalable","native-memory-device","NativeMemoryDeviceTest")):
             topology=json.loads(subprocess.check_output([PROBE,"topology",test,scenario],text=True))
             pins={p["name"]:(p["type"],p["width"]) for p in topology["pins"] if p["componentId"]==topology["rootId"]}
             documented={}

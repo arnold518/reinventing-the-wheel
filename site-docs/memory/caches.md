@@ -1,8 +1,8 @@
-# § 3.4. Caches
+# § 3.7. Caches
 
 A cache keeps copies of recently read words. A requester connects to its
-upper [transaction port](3.2.md); the `MEM_` port connects to a separate
-lower [memory endpoint](3.3.md) or another cache. The cache does not own the
+upper [transaction port](transactions.md); the `MEM_` port connects to a separate
+lower [memory endpoint](controllers.md) or another cache. The cache does not own the
 backing memory or its initial contents.
 
 | Component | Description | Structural | Behavioral |
@@ -47,7 +47,7 @@ stores also obey the 4,096-cell limit of their memory components. The cache
 parameters do not choose the lower memory technology; connect any compatible
 lower endpoint to `MEM_`.
 
-## 3.4.1. `Cache<W>`
+## 3.7.1. `Cache<W>`
 
 ### IO pins
 
@@ -228,7 +228,7 @@ WRITE sends one backing WRITE and changes a cached word only if that line is
 present. The example assumes successful backing and internal transactions;
 the simulator also handles held responses and failure statuses.
 
-#### Unknown inputs and timing
+#### Unknown inputs
 
 Unknown operation or address bits return `InvalidRequest`; an unknown byte
 mask on a WRITE does likewise. Read requests ignore write payload and mask.
@@ -259,6 +259,10 @@ select behavioral storage through the build profile; the cache control and
 per-line metadata remain structural. A whole-cache behavioral form would
 need its own transaction-equivalence and timing evidence before it could be
 registered as another fidelity of this contract.
+
+### Timing
+
+The cache has only a structural form, so it has no delay table of its own: its controller runs on its gates and its tag and data stores on their own proven delays (SRAM or flip-flop endpoints, [3.5](controllers.md)). This page is not yet rewritten for the timing profiles; the cache's own documentation follows separately.
 
 ### Examples
 

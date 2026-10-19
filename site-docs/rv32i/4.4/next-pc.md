@@ -46,7 +46,7 @@ NextPCOutputs next_pc(const NextPCInputs& i) {
 }
 ```
 
-#### Unknown inputs and timing
+#### Unknown inputs
 
 The structural implementation follows its OR/AND gates, mux, and alignment checker. The behavioral implementation emits X on both outputs if JUMP_TYPE or BRANCH_TAKEN is nonbinary. With known controls it forwards the selected data vector; TARGET_MISALIGNED is zero for an unselected transfer, or X if the selected target word contains any nonbinary bit. Structural alignment only depends on the low two target bits. Equivalence is binary settled behavior, not identical X/Z resolution or path timing. There is no stored state.
 
@@ -59,6 +59,12 @@ The structural implementation follows its OR/AND gates, mux, and alignment check
 #### Behavioral implementation
 
 `BehavioralStage`'s NextPC branch computes selection and qualified alignment directly. Catalog selection attaches output delays characterized from the structural selection and alignment circuit. The family is `rv32i.single-cycle.next-pc`.
+
+### Timing
+
+The gate-level form settles through its gates; the compact form publishes within the proven bounds below ([Time and Delay](../../timing.md#compact-parts) explains tables, delay twins and clocked parts).
+
+<!-- timing-table: rv32i.single-cycle.next-pc.behavioral -->
 
 ### Examples
 

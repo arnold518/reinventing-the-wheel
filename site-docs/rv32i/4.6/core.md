@@ -29,7 +29,7 @@
 | `IF_ID_PC`, `ID_EX_PC`, `EX_MEM_PC`, `MEM_WB_PC` | Output | 32 each | PC of each packet, meaningful when valid |
 | `BRANCH_RESOLVED`, `BRANCH_MISS`, `PREDICTION_RECOVERY` | Output | 1 each | Qualified conditional resolution, conditional next-PC miss, all-instruction correction |
 
-Requests follow [3.2](../../memory/3.2.md). The core emits ordinary reads/writes only, not DRAM refresh or flash program/erase commands. See [memory compatibility](memory-waits.md#suitable-memories).
+Requests follow [3.4](../../memory/transactions.md). The core emits ordinary reads/writes only, not DRAM refresh or flash program/erase commands. See [memory compatibility](memory-waits.md#suitable-memories).
 
 ## Configuration
 

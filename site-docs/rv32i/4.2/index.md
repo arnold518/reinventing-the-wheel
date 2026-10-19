@@ -41,6 +41,6 @@ A behavioral single-cycle model calls the ISA oracle internally; comparing those
 
 ## Scope
 
-The shared record and campaign entry point already serve RV32I and memory benchmarks. Memory scenarios are summarized in [architecture](architecture.md#other-domains); their device contracts remain in [chapter 3](../../memory/3.1/index.md). Future cache and accelerator runners can reuse these records, but no cache or accelerator performance result is implied here.
+The shared record and campaign entry point already serve RV32I and memory benchmarks. Memory scenarios are summarized in [architecture](architecture.md#other-domains); their device contracts remain in [chapter 3](../../memory/architecture.md). Future cache and accelerator runners can reuse these records, but no cache or accelerator performance result is implied here.
 
 Fixed programs have embedded reference simulations and complete checkpoint tables. Generated and compiled workloads currently use the headless runner. This chapter specifies how to run and verify experiments; [§ 4.7](../experiments.md) records dated outcomes and their limits.

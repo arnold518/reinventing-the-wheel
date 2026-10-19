@@ -1,6 +1,6 @@
 # § 4.3.1. `Register<W>`
 
-`Register<W>` is the width-parametric, whole-word register used by the RV32I circuitry. It groups W [FlipFlopCell](../../memory/3.1.1.md) storage bits under one write enable. RV32I uses it for the program counter, pipeline payloads, register-file words, request payloads, and compact control/status fields. It has no register addressing, byte mask, or memory transaction interface.
+`Register<W>` is the width-parametric, whole-word register used by the RV32I circuitry. It groups W [FlipFlopCell](../../memory/technologies/flip-flop.md) storage bits under one write enable. RV32I uses it for the program counter, pipeline payloads, register-file words, request payloads, and compact control/status fields. It has no register addressing, byte mask, or memory transaction interface.
 
 Supported widths are **1, 2, 3, 4, 5, 8, 16, and 32 bits**. W is the number of bits in one stored value, not the number of registers; other widths are not registered. The embedded simulation uses `Register<32>` as a representative instance.
 
@@ -14,7 +14,7 @@ Supported widths are **1, 2, 3, 4, 5, 8, 16, and 32 bits**. W is the number of b
 
 The RV32I circuitry keeps state in two different kinds of component.
 
-| | Storage (this section) | Memory ([chapter 3](../../memory/3.1/index.md)) |
+| | Storage (this section) | Memory ([chapter 3](../../memory/architecture.md)) |
 | --- | --- | --- |
 | Access | Every bit is used every cycle, in parallel | One word at a time, chosen by an address |
 | Width | Any supported width, including 1 to 5 bits | Whole bytes: 8, 16, or 32 bits |
@@ -92,7 +92,7 @@ public:
 } // namespace register_example
 ```
 
-#### Unknown inputs and timing
+#### Unknown inputs
 
 Captured `Z` data becomes `X`. An uncertain reset (`X` or `Z`) preserves stored zeros and makes other bits unknown. With reset inactive, an uncertain write enable follows the FF cell's AND/OR feedback mux: old zero/new zero stays zero; every other pair becomes `X`, including old one/new one. This is intentionally not an optimistic merge of two candidate values.
 
@@ -112,7 +112,7 @@ The behavioral implementation recognizes only known `CLK = 0 → 1` edges. Ambig
 
 W=1 connects `D` and `Q` directly to `BIT_0`, without a splitter or joiner. There is no nested register wrapper: expanding any structural register directly reveals its W resettable FF cells. Selecting behavioral fidelity keeps one word-level state object.
 
-Unlike [FFWord&lt;W&gt;](../../memory/3.1.1.md), this register has no byte mask or byte-enable gates. `WE` updates every bit together, including for sub-byte control fields. Both components reuse the same FF cell; they provide different write interfaces, not different storage technologies.
+Unlike [FFWord&lt;W&gt;](../../memory/technologies/flip-flop.md), this register has no byte mask or byte-enable gates. `WE` updates every bit together, including for sub-byte control fields. Both components reuse the same FF cell; they provide different write interfaces, not different storage technologies.
 
 #### Behavioral implementation
 
@@ -130,6 +130,12 @@ Unlike [FFWord&lt;W&gt;](../../memory/3.1.1.md), this register has no byte mask 
 | Register file | 31 instances of `Register<32>`, one for each writable architectural register |
 
 Users select `circuit::families::registerWord(W)`, registered as `storage.register.W` with W replaced by the supported width. The component is introduced here as an RV32I building block; its implementation is also reused by response buffers. Neither use changes its pins or adds a transaction protocol. The standalone structural source is [`Register.hpp`](https://github.com/arnold518/reinventing-the-wheel/blob/github-pages/include/modules/storage/Register.hpp) and [`Register.cpp`](https://github.com/arnold518/reinventing-the-wheel/blob/github-pages/src/modules/storage/Register.cpp).
+
+### Timing
+
+The gate-level form settles through its gates; the compact form publishes within the proven bounds below ([Time and Delay](../../timing.md#compact-parts) explains tables, delay twins and clocked parts).
+
+<!-- timing-table: storage.register.32.behavioral.word -->
 
 ### Examples
 
@@ -196,10 +202,16 @@ One `DFlipFlop` named `STATE`, with `D`, `CLK`, and `RST` wired straight in and 
 | Consumer | State bits |
 | --- | --- |
 | [Memory requesters](memory-access.md) | `BUSY`, `SENT`, `ABANDONED` |
-| [`MemoryTransactionPort`](../../memory/3.2.md) | `PENDING` |
-| [`MemoryResponseBuffer`](../../memory/3.2.md) | `OCCUPIED` |
+| [`MemoryTransactionPort`](../../memory/transactions.md) | `PENDING` |
+| [`MemoryResponseBuffer`](../../memory/transactions.md) | `OCCUPIED` |
 
 Users select `circuit::families::ClockedStateBit`, registered as `storage.state-bit`.
+
+### Timing
+
+The gate-level form settles through its gates; the compact form publishes within the proven bounds below ([Time and Delay](../../timing.md#compact-parts) explains tables, delay twins and clocked parts).
+
+<!-- timing-table: storage.state-bit.behavioral.direct -->
 
 ### Examples
 

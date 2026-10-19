@@ -1,35 +1,35 @@
-# § 3.1.5. NOR Flash
+# § 3.3.5. NOR Flash
 
-Digital **NOR-style flash** following the [common device architecture](3.1/index.md). Programming clears selected bits; block erase restores ones. It is not SRAM with a longer write delay, and it is not a NAND page/block controller.
+Digital **NOR-style flash** following the [common device architecture](../architecture.md). Programming clears selected bits; block erase restores ones. It is not SRAM with a longer write delay, and it is not a NAND page/block controller.
 
 | Component | Description | Structural | Behavioral |
 | --- | --- | :---: | :---: |
 | `NORFlashCell` | Nonvolatile digital bit, program 1→0, erase to 1 | Yes | No |
 | `NORFlashRow<C>` | Shared row selection/erase and per-column programming | Yes | Yes |
 | `NORFlashStorageBank<W>` | Cell rows and selected-row column sensing | Yes | Yes |
-| `NORFlashCommandControl<W>` | Write-enable latch and timed command phases | Yes | No |
+| `NORFlashCommandControl<W>` | Write-enable latch and the timing chains of each command, as gates and delay lines | Yes | No |
 | `NORFlash<W>` | Complete word-read/program, block-erase device | Yes | Yes |
 
-The write-enable latch, busy interval, one-way programming, and block erase are recognizable NOR-flash behaviors. The [Winbond W25Q80BV data sheet](https://www.winbond.com/upload/technical-support/f0f72951-b845-42ea-9010-faaeab26872f.pdf) is a real-device reference, **not this component's pin/command specification**: this simulator uses a parallel educational command port, not SPI opcodes or the data sheet's page-program protocol.
+The write-enable latch, busy interval, one-way programming and block erase are recognizable NOR-flash behaviors; in the realistic profiles the read, program and erase times are those of the Infineon S29GL256S (tACC 120 ns, 150 µs per word, 410 ms per block). The [Winbond W25Q80BV data sheet](https://www.winbond.com/upload/technical-support/f0f72951-b845-42ea-9010-faaeab26872f.pdf) is a real-device reference, **not this component's pin/command specification**: this simulator uses a parallel educational command port, not SPI opcodes or the data sheet's page-program protocol.
 
 ## Configuration
 
-Width W, capacity N, and words-per-row K follow [3.1](3.1/index.md#width-capacity-and-geometry).
+Width W, capacity N, and words-per-row K follow [3.1](../architecture.md#width-capacity-and-geometry).
 
 | Parameter | Default | Meaning / constraints |
 | --- | ---: | --- |
-| `block_words` (B) | 2 | Erase granularity; whole rows, divides N, B≤N |
-| `phase_ticks` (P) | 32 | Phase spacing, 32…10,000 |
-| `program_ticks` | 128 | Delay before program pulse; P…1,000,000 |
-| `erase_ticks` | 256 | Delay before erase pulse; at least program_ticks, at most 10,000,000 |
+| `block_words` (B) | 2 | Erase granularity; whole rows, divides N, B ≤ N |
+| `program_ticks` | From the profile | Program pulse; at least `phase_ticks`, at most 10¹² |
+| `erase_ticks` | From the profile | Erase pulse; at least `program_ticks`, at most 10¹³ |
+| `phase_ticks` | 32 | Accepted (32…10,000) for compatibility; it no longer sets any timing |
 
 The default simulation starts with every bit erased to one. This is an explicit initial-image assumption; it is not a claim that an arbitrary physical flash chip always contains ones when powered up. No per-cell refresh is required. Persistence across simulator recreation/file storage, wear, disturb, power-loss behavior, and erase/program voltage generation are outside this model.
 
-The references below follow the FF/SRAM pattern. Compile the C++ examples in page order: larger references compose the earlier ones. They cover binary controls, state, outputs, and operation deadlines without gate propagation or analog behavior; they are not registered simulator implementations. Construction parameters must satisfy the documented geometry/timing constraints. Every recorded test checkpoint is included with its number and absolute time.
+Compile the C++ examples in page order: larger references compose the earlier ones. They cover binary controls, state and outputs; their steps use a placeholder duration, `ticks`, plus the program and erase pulses, where the device uses the profile's intervals (see [Timing](#timing-intervals)). They do not model gate propagation or analog behavior.
 
 The configuration type is `NORFlashConfig`. Catalog contracts are `memory.nor-flash.cell`, `row`, `bank.W`, `command-control.W`, and `device.W` under the `memory.nor-flash.` prefix. A standalone row takes `columns`; banks, controllers, and devices take the geometry/timing configuration. The cell has no parameters. Only public bank/device wrappers are C++ width templates; the command controller is catalog-created.
 
-## 3.1.5.1. `NORFlashCell`
+## 3.3.5.1. `NORFlashCell`
 
 One digital nonvolatile bit with separate program and erase operations.
 
@@ -67,9 +67,9 @@ struct NORFlashCellReference {
 };
 ```
 
-#### Unknown inputs and timing
+#### Unknown inputs
 
-Unknown program data cannot undo Q=0; it makes Q=1 unknown. An unknown erase loses certainty. Unknown WL/PROGRAM conservatively make a possible write unknown unless a known zero enable excludes it or Q is already zero. Z is treated as unknown, not retained charge. At startup, the erased value is held until the first fully binary WL/PROGRAM/ERASE tuple; later unknown controls are not ignored. Output delay is one primitive tick.
+Unknown program data cannot undo Q=0; it makes Q=1 unknown. An unknown erase loses certainty. Unknown WL/PROGRAM conservatively make a possible write unknown unless a known zero enable excludes it or Q is already zero. Z is treated as unknown, not retained charge. At startup, the erased value is held until the first fully binary WL/PROGRAM/ERASE tuple; later unknown controls are not ignored.
 
 ### Implementation
 
@@ -78,6 +78,10 @@ Unknown program data cannot undo Q=0; it makes Q=1 unknown. An unknown erase los
 Terminal digital nonvolatile-charge primitive. Program and erase transitions represent storage rules, not floating-gate voltage, tunneling, wear, or disturb. A second behavioral-fidelity copy is not registered.
 
 The visualizer shows the recorded stored bit Q and WL/PROGRAM/ERASE indicators. These are cell signals, not the device controller's busy state, and update when scrubbing backward or forward.
+
+### Timing
+
+A memory primitive: `Q` follows its inputs after one memory-primitive delay (one FO4 inverter delay in the realistic profiles). How long a program or erase takes is set by the pulse the command control applies, not by the cell.
 
 ### Examples
 
@@ -90,10 +94,10 @@ Checks erased one, programming zero, the inability to program that zero back to 
 The standalone `NORFlashCellTest` opens this component as `MEMORY_ROOT`. This component has one registered structural implementation.
 
 <div class="simulator-embed">
-  <iframe src="../../simulator/?scenario=nor-flash-cell" title="NORFlashCell recorded simulation" loading="lazy" allowfullscreen></iframe>
+  <iframe src="../../../simulator/?scenario=nor-flash-cell" title="NORFlashCell recorded simulation" loading="lazy" allowfullscreen></iframe>
 </div>
 
-<a href="../../simulator/?scenario=nor-flash-cell" class="md-button">Open NORFlashCell in the simulator</a>
+<a href="../../../simulator/?scenario=nor-flash-cell" class="md-button">Open NORFlashCell in the simulator</a>
 
 ### Source and tests
 
@@ -105,7 +109,7 @@ The standalone `NORFlashCellTest` opens this component as `MEMORY_ROOT`. This co
 | [`NORFlashCellTest`](https://github.com/arnold518/reinventing-the-wheel/blob/github-pages/src/tests/MemoryDeviceTests.cpp) | The complete standalone sequence shown above |
 | `MemoryDeviceContractTest` | Integration in the new structural devices and comparison with their compact implementations |
 
-## 3.1.5.2. `NORFlashRow<C>`
+## 3.3.5.2. `NORFlashRow<C>`
 
 C flash cells sharing row selection and row erase.
 
@@ -139,7 +143,7 @@ void flash_row_update(std::array<Cell, C>& cells, bool wl, bool erase,
 }
 ```
 
-#### Unknown inputs and timing
+#### Unknown inputs
 
 Initial state, startup qualification, conflicts, and X/Z handling are per-cell. Unknown shared erase can affect the whole row. Outputs settle after each cell update; there is no row-level program-latency timer.
 
@@ -153,6 +157,10 @@ Initial state, startup qualification, conflicts, and X/Z handling are per-cell. 
 
 Stores C four-state values and per-cell startup-qualification flags. It applies the same charge transition rule directly; it is not freely writable RAM.
 
+### Timing
+
+<!-- timing-table: memory.nor-flash.row.behavioral -->
+
 ### Examples
 
 <!-- simulator-examples: nor-flash-row NORFlashRowTest -->
@@ -164,10 +172,10 @@ The two-column row starts erased, programs only column zero while preserving col
 The standalone `NORFlashRowTest` opens this component as `MEMORY_ROOT`. Use the explorer to compare structural and behavioral implementations.
 
 <div class="simulator-embed">
-  <iframe src="../../simulator/?scenario=nor-flash-row" title="NORFlashRow<C> recorded simulation" loading="lazy" allowfullscreen></iframe>
+  <iframe src="../../../simulator/?scenario=nor-flash-row" title="NORFlashRow<C> recorded simulation" loading="lazy" allowfullscreen></iframe>
 </div>
 
-<a href="../../simulator/?scenario=nor-flash-row" class="md-button">Open NORFlashRow&lt;C&gt; in the simulator</a>
+<a href="../../../simulator/?scenario=nor-flash-row" class="md-button">Open NORFlashRow&lt;C&gt; in the simulator</a>
 
 ### Source and tests
 
@@ -179,7 +187,7 @@ The standalone `NORFlashRowTest` opens this component as `MEMORY_ROOT`. Use the 
 | [`NORFlashRowTest`](https://github.com/arnold518/reinventing-the-wheel/blob/github-pages/src/tests/MemoryDeviceTests.cpp) | The complete standalone sequence shown above |
 | `MemoryDeviceContractTest` | Structural/behavioral agreement at settled checkpoints, including mixed hierarchy selection |
 
-## 3.1.5.3. `NORFlashStorageBank<W>`
+## 3.3.5.3. `NORFlashStorageBank<W>`
 
 Flash rows with shared read sensing and independent row erase lines.
 
@@ -198,7 +206,7 @@ Exactly one binary WL selects a row for reading. Each cell programs only when it
 
 #### C++ example
 
-The whole bank composes the cell reference and the [static read-column rule](3.1.0.md#3104-staticreadcolumnr). It updates every program/erase input and publishes every column, including invalid row selection.
+The whole bank composes the cell reference and the [static read-column rule](../building-blocks.md#324-staticreadcolumnr). It updates every program/erase input and publishes every column, including invalid row selection.
 
 ```cpp
 #include <vector>
@@ -225,7 +233,7 @@ struct FlashBankReference {
 };
 ```
 
-#### Unknown inputs and timing
+#### Unknown inputs
 
 No selected row, conflicting selections, or unknown WL yields X on COL. Cell writes/erase retain their own conservative X/Z rules. Both bank fidelities retain scalar row/column pins and the 4,096-cell limit; large-capacity use belongs at device level.
 
@@ -239,6 +247,10 @@ No selected row, conflicting selections, or unknown WL yields X on COL. Cell wri
 
 Uses a bounded bit vector and startup flags, applying cell transitions before selecting the read columns. Read selection and storage mutation remain separate, matching the expanded bank.
 
+### Timing
+
+<!-- timing-table: memory.nor-flash.bank.8.behavioral -->
+
 ### Examples
 
 <!-- simulator-examples: nor-flash-storage-bank NORFlashStorageBankTest -->
@@ -250,10 +262,10 @@ Reads an erased row, programs column zero, checks another row remains erased, er
 The standalone `NORFlashStorageBankTest` opens this component as `MEMORY_ROOT`. Use the explorer to compare structural and behavioral implementations.
 
 <div class="simulator-embed">
-  <iframe src="../../simulator/?scenario=nor-flash-storage-bank" title="NORFlashStorageBank<W> recorded simulation" loading="lazy" allowfullscreen></iframe>
+  <iframe src="../../../simulator/?scenario=nor-flash-storage-bank" title="NORFlashStorageBank<W> recorded simulation" loading="lazy" allowfullscreen></iframe>
 </div>
 
-<a href="../../simulator/?scenario=nor-flash-storage-bank" class="md-button">Open NORFlashStorageBank&lt;W&gt; in the simulator</a>
+<a href="../../../simulator/?scenario=nor-flash-storage-bank" class="md-button">Open NORFlashStorageBank&lt;W&gt; in the simulator</a>
 
 ### Source and tests
 
@@ -265,9 +277,9 @@ The standalone `NORFlashStorageBankTest` opens this component as `MEMORY_ROOT`. 
 | [`NORFlashStorageBankTest`](https://github.com/arnold518/reinventing-the-wheel/blob/github-pages/src/tests/MemoryDeviceTests.cpp) | The complete standalone sequence shown above |
 | `MemoryDeviceContractTest` | Structural/behavioral agreement at settled checkpoints, including mixed hierarchy selection |
 
-## 3.1.5.4. `NORFlashCommandControl<W>`
+## 3.3.5.4. `NORFlashCommandControl<W>`
 
-Write-enable latch, request capture, and program/erase sequencing.
+Takes a command at a rising clock edge, keeps the write-enable latch, and runs the command's timing chain of gates and delay lines.
 
 ### IO pins
 
@@ -287,11 +299,11 @@ Write-enable latch, request capture, and program/erase sequencing.
 
 ### Behavior
 
-Implements the command table in NORFlash<W> below without storing array data. WREN sets the write-enable latch (WEL); WRDI clears it. An accepted PROGRAM or ERASE consumes WEL immediately, including a zero-mask program. A rejected request preserves WEL. Latched address/data/mask remain stable while busy.
+Carries out the [command table](#commands-and-timing) of `NORFlash<W>` without storing array data. WREN sets the write-enable latch (WEL); WRDI clears it. An accepted PROGRAM or ERASE consumes WEL at once, including a zero-mask program; a rejected request keeps it. The latched address, data and mask stay stable while busy. A READ runs a replica of the read column; PROGRAM and ERASE run their pulse, a pulse end and a recovery step. A one-stage sampler brings the end of the chain into the clock, and `BUSY` falls one edge after that.
 
 #### C++ example
 
-All binary commands and control outputs are represented. Geometry and positive timing parameters are prevalidated. Call on input changes and every `due`; `valid` drives both READ_VALID and OUTPUT_ENABLE, `wel` drives WRITE_ENABLED, and `select` drives ROW_ENABLE. There is no reset pin.
+All binary commands and control outputs are represented; geometry is prevalidated. Call on input changes and at every `due`. `valid` drives READ_VALID and OUTPUT_ENABLE, `wel` drives WRITE_ENABLED, and `select` drives ROW_ENABLE. There is no reset pin; the device starts idle through a power-on reset.
 
 ```cpp
 #include <cstdint>
@@ -353,15 +365,19 @@ template<std::size_t W> struct FlashControlReference {
 };
 ```
 
-#### Unknown inputs and timing
+#### Unknown inputs
 
-Only 0→1 CLK is an edge. Unknown CMD is rejected; address must be binary for READ/PROGRAM/ERASE and mask must be binary for PROGRAM. Unknown data is permitted. NOP/WREN/WRDI ignore address/data/mask; ERASE ignores data/mask. Idle rejection invalidates old read data. Busy rejection sets ERROR without replacing the scheduled operation. Completion is processed before an edge at the same internal deadline.
+Only 0→1 CLK is an edge. An unknown CMD is rejected; the address must be binary for READ, PROGRAM and ERASE, and the mask for PROGRAM. Unknown data is permitted. NOP, WREN and WRDI ignore address, data and mask; ERASE ignores data and mask. A rejection while idle clears old read data; a rejection while busy sets ERROR without replacing the running operation.
 
 ### Implementation
 
 #### Structural implementation
 
-Terminal digital FSM with write-enable state and timed pulses, not a gate-expanded sequencer. ERASE_r covers the rows whose words belong to `WORD_ADDR / block_words`. Because it exposes one erase pin per row, this standalone controller retains the expanded geometry limit. Compact complete devices use internal state without those pins.
+Flip-flops hold the command, address, payload, WEL and status bits; gates decide legality and the next state. The READ chain is a `MemoryDelayLine` with the NOR read interval and a replica of the row decoder; PROGRAM and ERASE chains are the pulse and two recovery delay lines. A one-stage `Synchronizer` samples each chain's end, and a `PowerOnReset` starts the device idle. A gate-level block decoder drives `ERASE_r` for the rows of block `WORD_ADDR / block_words`; because it exposes one erase pin per row, this standalone control keeps the expanded geometry limit. The compact device keeps the same state without those pins (`NORSyncControl`, edge for edge).
+
+### Timing
+
+Built from gates, flip-flops and delay lines, so it has no delay table of its own. Its intervals are the NOR-flash intervals listed under the device's [Timing](#timing-intervals); the device table includes it.
 
 ### Examples
 
@@ -374,10 +390,10 @@ The control example follows the full device command stream, checking write-enabl
 The standalone `NORFlashCommandControlTest` opens this component as `MEMORY_ROOT`. This component has one registered structural implementation.
 
 <div class="simulator-embed">
-  <iframe src="../../simulator/?scenario=nor-flash-command-control" title="NORFlashCommandControl<W> recorded simulation" loading="lazy" allowfullscreen></iframe>
+  <iframe src="../../../simulator/?scenario=nor-flash-command-control" title="NORFlashCommandControl<W> recorded simulation" loading="lazy" allowfullscreen></iframe>
 </div>
 
-<a href="../../simulator/?scenario=nor-flash-command-control" class="md-button">Open NORFlashCommandControl&lt;W&gt; in the simulator</a>
+<a href="../../../simulator/?scenario=nor-flash-command-control" class="md-button">Open NORFlashCommandControl&lt;W&gt; in the simulator</a>
 
 ### Source and tests
 
@@ -389,7 +405,7 @@ The standalone `NORFlashCommandControlTest` opens this component as `MEMORY_ROOT
 | [`NORFlashCommandControlTest`](https://github.com/arnold518/reinventing-the-wheel/blob/github-pages/src/tests/MemoryDeviceTests.cpp) | The complete standalone sequence shown above |
 | `MemoryDeviceTimingTest` | Intermediate BUSY, busy-command rejection, and latched program payload in both complete-device fidelities |
 
-## 3.1.5.5. `NORFlash<W>`
+## 3.3.5.5. `NORFlash<W>`
 
 Complete word-read/program, block-erase NOR-style device.
 
@@ -414,23 +430,33 @@ Reads are word-addressed. Programming only clears bits within enabled bytes. Era
 
 #### Commands and timing
 
-| CMD | Operation | Preconditions / effect | Sequencer completion |
+A command is taken at a rising `CLK` edge while the device is idle. The steps
+use the profile's NOR-flash intervals (listed under [Timing](#timing-intervals)).
+
+| CMD | Operation | Legal when / effect | Steps |
 | ---: | --- | --- | --- |
-| 0 | NOP | Ignore other inputs; preserve status | None |
-| 1 | READ | Valid word address | P ticks |
-| 2 | PROGRAM | Valid address, WEL=1, binary mask; consume WEL | program_ticks + 2P |
-| 3 | ERASE | Valid address, WEL=1; consume WEL; erase containing B-word block | erase_ticks + 2P |
-| 4 | WREN | Set WEL; address/data/mask ignored | Accepted edge |
-| 5 | WRDI | Clear WEL; address/data/mask ignored | Accepted edge |
-| 6–7 | Reserved | Reject | ERROR |
+| 0 | NOP | Other inputs ignored; status kept | None |
+| 1 | READ | Valid word address | Read column (with a decoder replica); then `READ_VALID` |
+| 2 | PROGRAM | Valid address, WEL = 1, binary mask; consumes WEL | Program pulse, pulse end, recovery |
+| 3 | ERASE | Valid address, WEL = 1; consumes WEL; erases the containing B-word block | Erase pulse, pulse end, recovery |
+| 4 | WREN | Sets WEL; address, data and mask ignored | At the edge |
+| 5 | WRDI | Clears WEL; address, data and mask ignored | At the edge |
+| 6–7 | Reserved | Rejected | `ERROR` |
 
-Program/erase wait their configured delay, assert the corresponding pulse for P ticks, then release it and wait P more ticks before clearing BUSY. Read waits P. Output wire propagation and structural gate settling add to sequencer deadlines. These are model ticks, not chip performance claims.
+The end of each chain is sampled at the next edge and `BUSY` falls one edge
+later, as a controller polling a real chip's status sees it.
 
-Requests are latched at acceptance. Non-NOP commands while BUSY are rejected; they neither cancel nor replace the active operation. WREN is required again after every accepted PROGRAM or ERASE, including a zero-mask program. A rejected command does not consume WEL. NOP preserves status; an accepted non-NOP clears the previous ERROR and read-valid state. A read remains valid until superseded or invalidated. Initial unknown clock followed by high does not count as a rising edge.
+Requests are latched when taken. Commands other than NOP while busy are
+rejected; they neither cancel nor replace the running operation. WREN is
+needed again after every accepted PROGRAM or ERASE, including a zero-mask
+program, and a rejected command does not consume WEL. NOP keeps the status;
+an accepted command clears the previous `ERROR` and read-valid state. A read
+stays valid until superseded or invalidated. An initial unknown clock
+followed by high is not a rising edge.
 
 #### C++ example
 
-The native device composes the bank and command control above. W is 8/16/32; capacity, row width, erase-block size, and timing are construction parameters. This includes reads, WREN/WRDI, errors, zero masks, delayed program/erase, and stable state while busy—not merely the final array mutation.
+The native device composes the bank and command control above. W is 8/16/32; capacity, row width, erase-block size and the step durations are construction parameters. It covers reads, WREN and WRDI, errors, zero masks, delayed program and erase, and stable state while busy, not only the final array change.
 
 ```cpp
 #include <cstdint>
@@ -466,7 +492,7 @@ template<std::size_t W> struct FlashReference {
 };
 ```
 
-#### Unknown inputs and timing
+#### Unknown inputs
 
 Command validation follows NORFlashCommandControl. Enabled program data bits may become X; an already-zero bit remains zero. Masked-off bytes ignore data, including X/Z. NOP preserves status; unknown idle commands invalidate previous read-valid like reserved codes. Wait for BUSY and propagation to settle. Timing parameters are abstract simulator units, not manufacturer performance figures.
 
@@ -480,6 +506,19 @@ Command validation follows NORFlashCommandControl. Enabled program data bits may
 
 Uses initially erased packed MemoryStorage and the same command sequencer, with a separately implemented storage data path. Program applies four-state AND within enabled bytes; erase writes ones one word at a time to bound temporary allocation. Read-only inspector history can be disabled for scale; debug loading cannot bypass WREN/PROGRAM/ERASE.
 
+### Timing
+
+<a id="timing-intervals"></a>The command chains use these intervals; in the
+realistic profiles the read, program and erase times are the datasheet's:
+
+<!-- profile-table: memory-nor -->
+
+The compact device's proven delays. The device times itself, so no clock can
+be certified around it alone; its controller synchronizes `BUSY` into its
+clock (see [3.6 Memory Timing](../timing.md#nor-flash)).
+
+<!-- timing-table: memory.nor-flash.device.8.behavioral -->
+
 ### Examples
 
 <!-- simulator-examples: nor-flash NORFlashTest -->
@@ -491,10 +530,10 @@ Rejects programming without WREN, programs `0x81`, confirms programming `0xFF` c
 The standalone `NORFlashTest` opens this component as `MEMORY_ROOT`. Use the explorer to compare structural and behavioral implementations.
 
 <div class="simulator-embed">
-  <iframe src="../../simulator/?scenario=nor-flash" title="NORFlash<W> recorded simulation" loading="lazy" allowfullscreen></iframe>
+  <iframe src="../../../simulator/?scenario=nor-flash" title="NORFlash<W> recorded simulation" loading="lazy" allowfullscreen></iframe>
 </div>
 
-<a href="../../simulator/?scenario=nor-flash" class="md-button">Open NORFlash&lt;W&gt; in the simulator</a>
+<a href="../../../simulator/?scenario=nor-flash" class="md-button">Open NORFlash&lt;W&gt; in the simulator</a>
 
 ### Source and tests
 

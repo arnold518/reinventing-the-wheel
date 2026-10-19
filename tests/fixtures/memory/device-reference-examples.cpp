@@ -168,9 +168,11 @@ void check_device_references() {
     assert(word_text(rom_bank(8, 2, {}, {true,true})) == std::string(16, 'X'));
     assert(word_text(rom_bank(8, 2, {0xa5}, {false,true})) == std::string(16, '0'));
     auto a = rom_address(3,4,2,false,false);
-    assert(a.row == 1 && a.slot == 1 && a.row_enable && a.output_enable == true);
-    assert(!rom_address(4,4,2,false,false).output_enable);
-    assert(rom_address(4,4,2,true,false).output_enable == false);
+    assert(a.row == 1 && a.slot == 1 && a.row_enable && a.output_enable && a.ready);
+    // An address beyond the depth selects no row; the output stays enabled.
+    assert(!rom_address(4,4,2,false,false).row_enable && rom_address(4,4,2,false,false).output_enable);
+    assert(!rom_address(1,4,2,false,true).output_enable && rom_address(1,4,2,false,true).row_enable);
+    assert(!rom_address(4,4,2,true,false).output_enable && !rom_address(4,4,2,true,false).ready);
     assert(rom_read<32>({0x78,0x56,0x34,0x12},2,0,false,false).data == 0x12345678);
     assert(rom_read<16>({0x78},2,0,false,false).data == 0x78);
     assert(rom_read({},2,1,false,false).data == 0);

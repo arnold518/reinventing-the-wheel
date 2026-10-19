@@ -1,26 +1,26 @@
-# § 3.1.4. ROM
+# § 3.3.4. ROM
 
-Immutable read-only storage following the [common cell/row/bank/device architecture](3.1/index.md). This is a digital mask-ROM-style model, not a writable EEPROM.
+Immutable read-only storage following the [common cell/row/bank/device architecture](../architecture.md). This is a digital mask-ROM-style model, not a writable EEPROM.
 
 | Component | Description | Structural | Behavioral |
 | --- | --- | :---: | :---: |
 | `ROMCell` | One fixed construction-time bit | Yes | Yes |
 | `ROMRow<C>` | C fixed bits in column order | Yes | Yes |
 | `ROMStorageBank<W>` | Rows plus one selected-row sensor per column | Yes | Yes |
-| `ROMAddressControl` | Decode address and chip/output enables | Yes | No |
+| `ROMAddressControl` | Holds the address, splits it into row and slot, times the read and raises `READY` | Yes | No |
 | `ROM<W>` | Complete asynchronous read-only device | Yes | Yes |
 
 ## Configuration
 
-Width W, capacity N, and words-per-row K follow [3.1](3.1/index.md#width-capacity-and-geometry). `image_hex` contains consecutive bytes as pairs of hexadecimal digits, starting at byte address zero. No spaces or prefixes are accepted. The remaining capacity is initialized to zero; an odd-length, non-hex, or oversized image is rejected.
+Width W, capacity N, and words-per-row K follow [3.1](../architecture.md#width-capacity-and-geometry). `image_hex` contains consecutive bytes as pairs of hexadecimal digits, starting at byte address zero. No spaces or prefixes are accepted. The remaining capacity is initialized to zero; an odd-length, non-hex, or oversized image is rejected.
 
 For example, `image_hex="a53c81ff"` gives four 8-bit words `A5, 3C, 81, FF`, two 16-bit words `3CA5, FF81`, or one 32-bit word `FF813CA5`. This is **little-endian byte packing**. Device pins use word addresses, not byte addresses. Contents cannot be altered by reset, write commands, or a debug load after construction.
 
-ROM uses the same component-reference pattern as FF and SRAM. The C++ examples describe binary pin behavior for validated construction parameters, including invalid addresses and disabled outputs, without simulator event scheduling. They are not registered simulator implementations. Compile in page order; tables contain every recorded checkpoint, with its number and time.
+The C++ examples describe settled binary pin behavior for validated construction parameters, including invalid addresses and disabled outputs. Compile them in page order.
 
 The cell's catalog parameter is `value`; a standalone row uses `contents`. Banks and devices use `ROMDeviceConfig` (`depth_words`, `words_per_row`, `image_hex`, `record_history`). The address controller accepts only geometry parameters; it has no image or history. Register names are `memory.rom.cell`, `row`, `address-control`, `bank.W`, and `device.W` under the `memory.rom.` prefix. Only the public bank/device wrappers are C++ width templates; row dimensions are runtime values.
 
-## 3.1.4.1. `ROMCell`
+## 3.3.4.1. `ROMCell`
 
 One immutable construction-time bit.
 
@@ -36,8 +36,6 @@ The `value` parameter is 0 or 1 (default 0). It cannot be changed by an input, c
 
 #### C++ example
 
-Simplified binary behavior; simulation scheduling and four-state handling are described below.
-
 ```cpp
 struct ROMCellReference {
     const bool value;
@@ -45,7 +43,7 @@ struct ROMCellReference {
 };
 ```
 
-#### Unknown inputs and timing
+#### Unknown inputs
 
 The output starts unresolved until the initial simulation event propagates, then is always the configured binary value. Both implementations schedule their first output even though there are no inputs.
 
@@ -61,6 +59,10 @@ A terminal constant-output component publishes the configured value without the 
 
 The behavioral cell's visualizer shows Q as the **programmed bit**, using its recorded value. Selecting the structural implementation shows the fixed connection instead.
 
+### Timing
+
+No inputs, so no delays: the outputs take their configured values once, when the simulation starts.
+
 ### Examples
 
 <!-- simulator-examples: rom-cell ROMCellTest -->
@@ -72,10 +74,10 @@ The example constructs `value=1` and checks Q. Zero-valued cells also occur in t
 The standalone `ROMCellTest` opens this component as `MEMORY_ROOT`. Use the explorer to compare structural and behavioral implementations.
 
 <div class="simulator-embed">
-  <iframe src="../../simulator/?scenario=rom-cell" title="ROMCell recorded simulation" loading="lazy" allowfullscreen></iframe>
+  <iframe src="../../../simulator/?scenario=rom-cell" title="ROMCell recorded simulation" loading="lazy" allowfullscreen></iframe>
 </div>
 
-<a href="../../simulator/?scenario=rom-cell" class="md-button">Open ROMCell in the simulator</a>
+<a href="../../../simulator/?scenario=rom-cell" class="md-button">Open ROMCell in the simulator</a>
 
 ### Source and tests
 
@@ -87,7 +89,7 @@ The standalone `ROMCellTest` opens this component as `MEMORY_ROOT`. Use the expl
 | [`ROMCellTest`](https://github.com/arnold518/reinventing-the-wheel/blob/github-pages/src/tests/MemoryDeviceTests.cpp) | The complete standalone sequence shown above |
 | `MemoryDeviceContractTest` | Structural/behavioral agreement at settled checkpoints, including mixed hierarchy selection |
 
-## 3.1.4.2. `ROMRow<C>`
+## 3.3.4.2. `ROMRow<C>`
 
 C fixed cells ordered by physical column.
 
@@ -103,8 +105,6 @@ The `contents` parameter contains 1–512 characters, each `0` or `1`; default `
 
 #### C++ example
 
-Simplified binary behavior; simulation scheduling and four-state handling are described below.
-
 ```cpp
 #include <string>
 #include <vector>
@@ -115,7 +115,7 @@ std::vector<bool> rom_row(const std::string& contents) {
 }
 ```
 
-#### Unknown inputs and timing
+#### Unknown inputs
 
 Invalid characters, an empty row, or more than 512 columns are rejected at construction. Outputs settle from their initial events; valid ROM contents do not acquire X during reads.
 
@@ -129,6 +129,10 @@ Contains `CELL_0` through `CELL_(C−1)`, each a registered `ROMCell`. Cells are
 
 Retains the construction string and publishes each column directly, with the same startup and ordering contract.
 
+### Timing
+
+No inputs, so no delays: the outputs take their configured values once, when the simulation starts.
+
 ### Examples
 
 <!-- simulator-examples: rom-row ROMRowTest -->
@@ -140,10 +144,10 @@ The four-column example uses `contents="1010"` and checks every output in the in
 The standalone `ROMRowTest` opens this component as `MEMORY_ROOT`. Use the explorer to compare structural and behavioral implementations.
 
 <div class="simulator-embed">
-  <iframe src="../../simulator/?scenario=rom-row" title="ROMRow<C> recorded simulation" loading="lazy" allowfullscreen></iframe>
+  <iframe src="../../../simulator/?scenario=rom-row" title="ROMRow<C> recorded simulation" loading="lazy" allowfullscreen></iframe>
 </div>
 
-<a href="../../simulator/?scenario=rom-row" class="md-button">Open ROMRow&lt;C&gt; in the simulator</a>
+<a href="../../../simulator/?scenario=rom-row" class="md-button">Open ROMRow&lt;C&gt; in the simulator</a>
 
 ### Source and tests
 
@@ -155,7 +159,7 @@ The standalone `ROMRowTest` opens this component as `MEMORY_ROOT`. Use the explo
 | [`ROMRowTest`](https://github.com/arnold518/reinventing-the-wheel/blob/github-pages/src/tests/MemoryDeviceTests.cpp) | The complete standalone sequence shown above |
 | `MemoryDeviceContractTest` | Structural/behavioral agreement at settled checkpoints, including mixed hierarchy selection |
 
-## 3.1.4.3. `ROMStorageBank<W>`
+## 3.3.4.3. `ROMStorageBank<W>`
 
 Immutable rows with shared selected-row sensing.
 
@@ -193,7 +197,7 @@ std::vector<std::optional<bool>> rom_bank(unsigned width, unsigned slots,
 }
 ```
 
-#### Unknown inputs and timing
+#### Unknown inputs
 
 An unknown wordline invalidates the entire selection; it is not treated as zero. Unselected cell values do not affect a valid selection. Scalar row/column interfaces limit standalone banks of either fidelity to 4,096 cells. The structural sensing path adds propagation delay.
 
@@ -207,6 +211,10 @@ An unknown wordline invalidates the entire selection; it is not treated as zero.
 
 Reads the fixed image bits directly after validating one-hot selection. It keeps the same expanded pins, geometry limits, and image interpretation.
 
+### Timing
+
+<!-- timing-table: memory.rom.bank.8.behavioral -->
+
 ### Examples
 
 <!-- simulator-examples: rom-storage-bank ROMStorageBankTest -->
@@ -218,10 +226,10 @@ The image is `A5 3C 81 FF`. The test first selects no row, then selects row zero
 The standalone `ROMStorageBankTest` opens this component as `MEMORY_ROOT`. Use the explorer to compare structural and behavioral implementations.
 
 <div class="simulator-embed">
-  <iframe src="../../simulator/?scenario=rom-storage-bank" title="ROMStorageBank<W> recorded simulation" loading="lazy" allowfullscreen></iframe>
+  <iframe src="../../../simulator/?scenario=rom-storage-bank" title="ROMStorageBank<W> recorded simulation" loading="lazy" allowfullscreen></iframe>
 </div>
 
-<a href="../../simulator/?scenario=rom-storage-bank" class="md-button">Open ROMStorageBank&lt;W&gt; in the simulator</a>
+<a href="../../../simulator/?scenario=rom-storage-bank" class="md-button">Open ROMStorageBank&lt;W&gt; in the simulator</a>
 
 ### Source and tests
 
@@ -233,9 +241,11 @@ The standalone `ROMStorageBankTest` opens this component as `MEMORY_ROOT`. Use t
 | [`ROMStorageBankTest`](https://github.com/arnold518/reinventing-the-wheel/blob/github-pages/src/tests/MemoryDeviceTests.cpp) | The complete standalone sequence shown above |
 | `MemoryDeviceContractTest` | Structural/behavioral agreement at settled checkpoints, including mixed hierarchy selection |
 
-## 3.1.4.4. `ROMAddressControl`
+## 3.3.4.4. `ROMAddressControl`
 
-Address decomposition and active-low read qualification.
+Holds the address while a read is in progress, splits it into a row and a
+word slot, qualifies the row and output, and reports when the data is
+valid.
 
 ### IO pins
 
@@ -244,63 +254,80 @@ Address decomposition and active-low read qualification.
 | `WORD_ADDR` | Input | 32 | Word address A |
 | `CE_N` | Input | 1 | Active-low chip enable |
 | `OE_N` | Input | 1 | Active-low output enable |
-| `ROW_ADDR` | Output | 32 | A/K for a valid address, otherwise X |
-| `COLUMN_ADDR` | Output | 32 | A%K for a valid address, otherwise X |
-| `ROW_ENABLE` | Output | 1 | CE_N=0 and valid address; independent of OE_N |
-| `OUTPUT_ENABLE` | Output | 1 | Qualified read, disabled output, or X |
+| `ROW_ADDR` | Output | 32 | Row field of the held address, A / K |
+| `COLUMN_ADDR` | Output | 32 | Slot field of the held address, A % K |
+| `ROW_ENABLE` | Output | 1 | `CE_N` low and the held address below N |
+| `OUTPUT_ENABLE` | Output | 1 | `CE_N` and `OE_N` both low |
+| `READY` | Output | 1 | The read has settled since the address or `CE_N` last changed |
 
 ### Behavior
 
-For a binary address in [0,N), compute its row and word slot. Chip deselection disables the row. OE_N only controls publication: a valid selected row can remain active with its output disabled. A high CE_N or OE_N dominates other unknown inputs and releases the device output.
+The address and `CE_N` pass through the settle copies of a
+[`MemoryTimer`](../building-blocks.md#memorytimer), so the decoder sees a new
+address only once it has been steady. K is a power of two, so the row and
+slot are bit fields of the held address; an address at or above N enables no
+row, and the read columns then give X. `OE_N` only controls the output: a
+valid row can stay selected with its output disabled. `READY` rises after a
+replica of the decoder, the read-column interval and the output path, and
+falls as soon as the address or `CE_N` changes.
 
 #### C++ example
 
-Binary address/enables; `nullopt` represents an unknown output-enable or address.
+Settled binary values; `ready` is the value once the read has had time to
+complete.
 
 ```cpp
 #include <cstdint>
-#include <optional>
 struct ROMAddressReference {
-    std::optional<std::uint32_t> row, slot;
-    bool row_enable;
-    std::optional<bool> output_enable;
+    std::uint32_t row, slot;
+    bool row_enable, output_enable, ready;
 };
 ROMAddressReference rom_address(std::uint32_t a, unsigned n, unsigned k,
                                 bool ce_n, bool oe_n) {
-    const bool valid = a < n; // n and k are validated geometry.
-    return {valid ? std::optional(a / k) : std::nullopt,
-            valid ? std::optional(a % k) : std::nullopt,
-            !ce_n && valid,
-            ce_n || oe_n ? std::optional(false)
-                        : valid ? std::optional(true) : std::nullopt};
+    // k is a validated power of two: the slot is the low address bits.
+    return {a / k, a % k, !ce_n && a < n, !ce_n && !oe_n, !ce_n};
 }
 ```
 
-#### Unknown inputs and timing
+#### Unknown inputs
 
-Unknown or out-of-range addresses never wrap. They produce X row/column addresses and a low ROW_ENABLE. OUTPUT_ENABLE is low if either enable is high, high only if both are low and the address is valid, otherwise X. This is a one-tick digital primitive.
+Unknown address bits give unknown row or slot bits and an unknown
+`ROW_ENABLE` (unless `CE_N` is high, which forces it low). `OUTPUT_ENABLE` is
+low if either enable is high and unknown if one is unknown and the other low.
+An unknown address or `CE_N` makes `READY` unknown.
 
 ### Implementation
 
 #### Structural implementation
 
-A terminal combinational primitive computes selection and decomposes the address. It stores no image and has no clock. The row decoder and output buffer are separate components in the complete device.
+A `MemoryTimer` with 33 inputs (the address bits and `CE_N`) and three stages:
+a replica chain as deep as the row decoder, the ROM read-column interval, and
+the column multiplexer and output path. Wiring splits the held address into
+the row and slot fields; gates compare it with the depth and qualify the row
+and output enables. It stores no image and has no clock. The row decoder,
+read columns and output buffer are separate components of the complete
+device.
+
+### Timing
+
+Built from gates and delay lines, so it has no delay table of its own; its
+intervals are the ROM intervals below. The device table includes it.
 
 ### Examples
 
 <!-- simulator-examples: rom-address-control ROMAddressControlTest -->
 
-The sequence checks chip deselection, the last word (A=3 → row 1, slot 1), and the first invalid address A=4. Additional cases exercise OE_N independently and unknown controls.
+The sequence checks chip deselection, the last word (A=3 → row 1, slot 1), and the first invalid address A=4 (no row, output still enabled). Further cases exercise `OE_N` on its own and unknown controls.
 
 #### Embedded simulation
 
-The standalone `ROMAddressControlTest` opens this component as `MEMORY_ROOT`. This component has one registered structural implementation.
+The standalone `ROMAddressControlTest` opens this component as `MEMORY_ROOT`. Expand `ACCESS_TIMER` to follow the read.
 
 <div class="simulator-embed">
-  <iframe src="../../simulator/?scenario=rom-address-control" title="ROMAddressControl recorded simulation" loading="lazy" allowfullscreen></iframe>
+  <iframe src="../../../simulator/?scenario=rom-address-control" title="ROMAddressControl recorded simulation" loading="lazy" allowfullscreen></iframe>
 </div>
 
-<a href="../../simulator/?scenario=rom-address-control" class="md-button">Open ROMAddressControl in the simulator</a>
+<a href="../../../simulator/?scenario=rom-address-control" class="md-button">Open ROMAddressControl in the simulator</a>
 
 ### Source and tests
 
@@ -312,7 +339,7 @@ The standalone `ROMAddressControlTest` opens this component as `MEMORY_ROOT`. Th
 | [`ROMAddressControlTest`](https://github.com/arnold518/reinventing-the-wheel/blob/github-pages/src/tests/MemoryDeviceTests.cpp) | The complete standalone sequence shown above |
 | `MemoryDeviceContractTest` | Integration in the new structural devices and comparison with their compact implementations |
 
-## 3.1.4.5. `ROM<W>`
+## 3.3.4.5. `ROM<W>`
 
 Complete asynchronous, word-addressed read-only device.
 
@@ -324,10 +351,11 @@ Complete asynchronous, word-addressed read-only device.
 | `CE_N` | Input | 1 | Active-low chip enable |
 | `OE_N` | Input | 1 | Active-low output enable |
 | `READ_DATA` | Output | W | Selected immutable word, X, or Z |
+| `READY` | Output | 1 | The read has finished |
 
 ### Behavior
 
-No clock or command is required. With both enables low and a valid word address, publish the corresponding little-endian word. Either enable high releases the output. There are no write pins or reset operation.
+No clock or command is required. With both enables low and a valid word address, the device publishes the corresponding little-endian word and raises `READY` once the read has settled; any change of the address or `CE_N` lowers `READY` until the new read is done. Either enable high releases the output. There are no write pins or reset operation.
 
 #### C++ example
 
@@ -356,9 +384,9 @@ ROMReadReference rom_read(const std::vector<std::uint8_t>& image, std::size_t wo
 }
 ```
 
-#### Unknown inputs and timing
+#### Unknown inputs
 
-Enabled reads with an unknown address/control or an out-of-range address return X. A known disabled enable still returns Z. Read after the combinational paths settle; structural and compact propagation times differ. Image validation occurs before building the device.
+Enabled reads with an unknown address or control, or an out-of-range address, return X. A known disabled enable still returns Z. Image validation occurs before building the device.
 
 ### Implementation
 
@@ -368,7 +396,18 @@ Enabled reads with an unknown address/control or an out-of-range address return 
 
 #### Behavioral implementation
 
-Uses packed, zero-initialized `MemoryStorage` with the construction image prefix loaded once. The memory inspector is read-only; `loadMemoryBytes` rejects changes. This implementation supports large capacities without expanding cells. `record_history=0` disables backing-store history, not wire history.
+Uses packed, zero-initialized `MemoryStorage` with the construction image prefix loaded once, and publishes the data and `READY` at the delays proven on the gate-level device. The memory inspector is read-only; `loadMemoryBytes` rejects changes. This implementation supports large capacities without expanding cells. `record_history=0` disables backing-store history, not wire history.
+
+### Timing
+
+<a id="timing-intervals"></a>The read's analog steps use these intervals
+(the read column grows with the number of rows):
+
+<!-- profile-table: memory-rom -->
+
+The compact device's proven delays:
+
+<!-- timing-table: memory.rom.device.8.behavioral -->
 
 ### Examples
 
@@ -381,10 +420,10 @@ The example reads all four bytes of `A5 3C 81 FF`, checks out-of-range and unkno
 The standalone `ROMTest` opens this component as `MEMORY_ROOT`. Use the explorer to compare structural and behavioral implementations.
 
 <div class="simulator-embed">
-  <iframe src="../../simulator/?scenario=rom" title="ROM<W> recorded simulation" loading="lazy" allowfullscreen></iframe>
+  <iframe src="../../../simulator/?scenario=rom" title="ROM<W> recorded simulation" loading="lazy" allowfullscreen></iframe>
 </div>
 
-<a href="../../simulator/?scenario=rom" class="md-button">Open ROM&lt;W&gt; in the simulator</a>
+<a href="../../../simulator/?scenario=rom" class="md-button">Open ROM&lt;W&gt; in the simulator</a>
 
 ### Source and tests
 

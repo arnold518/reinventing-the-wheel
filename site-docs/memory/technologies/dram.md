@@ -1,6 +1,6 @@
-# § 3.1.3. DRAM
+# § 3.3.3. DRAM
 
-One-bank digital DRAM with explicit activation, a sensed row buffer, restoration, precharge, and refresh. It follows the [common device architecture](3.1/index.md), but does not reuse FF/SRAM cell semantics.
+One-bank digital DRAM with explicit activation, a sensed row buffer, restoration, precharge, and refresh. It follows the [common device architecture](../architecture.md), but does not reuse FF/SRAM cell semantics.
 
 | Component | Description | Structural | Behavioral |
 | --- | --- | :---: | :---: |
@@ -8,27 +8,28 @@ One-bank digital DRAM with explicit activation, a sensed row buffer, restoration
 | `DRAMRow<C>` | C cells sharing a wordline | Yes | Yes |
 | `DRAMSenseColumn<R>` | One row-buffer bit and restoration signal | Yes | No |
 | `DRAMStorageBank<W>` | Rows connected to shared sense columns | Yes | Yes |
-| `DRAMCommandControl<W>` | Command latch and timed phase sequencer | Yes | No |
+| `DRAMCommandControl<W>` | Clocked command acceptance and the timing chains of each command, as gates and delay lines | Yes | No |
 | `DRAM<W>` | Complete single-bank device | Yes | Yes |
 
-Real DRAM controllers track open rows, issue precharge/activate commands, and respect device timing. This model keeps those distinctions with abstract ticks, not a pin-compatible DDR interface. See [Microchip's SDRAM controller description](https://onlinedocs.microchip.com/oxy/GUID-B822915F-C375-4172-91BD-AB6F326EB783-en-US-1/GUID-A9CFAA65-9F00-4E1D-AB82-84F228BBF5B6.html).
+Real DRAM controllers track open rows, issue precharge and activate commands, and respect the device's intervals. This device keeps those distinctions, with intervals from the active [timing profile](../../timing.md): in `embedded` an SDR SDRAM (Micron MT48LC16M16A2), in `desktop` a DDR4 part (Micron MT40A1G8). It is not a pin-compatible SDRAM or DDR interface. See [Microchip's SDRAM controller description](https://onlinedocs.microchip.com/oxy/GUID-B822915F-C375-4172-91BD-AB6F326EB783-en-US-1/GUID-A9CFAA65-9F00-4E1D-AB82-84F228BBF5B6.html).
 
 ## Configuration
 
-W, N, and K follow [3.1](3.1/index.md#width-capacity-and-geometry). Defaults are W=8 in examples, N=4, K=2.
+W, N, and K follow [3.1](../architecture.md#width-capacity-and-geometry). Defaults are W=8 in examples, N=4, K=2.
 
 | Parameter | Default | Meaning / constraints |
 | --- | ---: | --- |
-| `phase_ticks` (P) | 32 | Internal phase spacing, 32…10,000 ticks |
-| `retention_ticks` | 100,000 | Maximum modeled closed-row retention; 1,024…1,000,000,000 and greater than 8P |
+| `retention_ticks` | From the profile | How long a closed row keeps its charge; 1,024 … 10¹². In the realistic profiles 64 ms (tREF) |
+| `block_words` | 2 | Columns read by one READ_BURST: a power of two, at most the row's words and 16 |
+| `phase_ticks` | 32 | Accepted (32…10,000) for compatibility; it no longer sets any timing |
 
 Storage starts `X`. Retention is checked **lazily at the next activation**, avoiding periodic decay events for every cell. A cell closed for at least `retention_ticks` samples `X`; refresh after expiry cannot recover its old data. While a row is open, the enabled sense amplifiers restore it. A displayed idle cell Q is not a continuously updated analog charge measurement.
 
-The component references use the same IO, behavior, implementation, examples, and source/test sections as FF and SRAM. Compile the C++ examples in page order: larger references compose the earlier ones. They cover binary controls, stored state, outputs, and operation deadlines, not gate propagation or analog behavior. Construction parameters must satisfy the documented geometry/timing constraints. Every recorded checkpoint appears in a scrollable table.
+Compile the C++ examples in page order: larger references compose the earlier ones. They cover binary controls, stored state and outputs. Their command steps use one placeholder duration, `ticks`, where the device uses the profile's intervals (see [Timing](#timing-intervals)); they do not model gate propagation or analog behavior.
 
 Configuration is `DRAMDeviceConfig`. Catalog contracts are `memory.dram.cell`, `memory.dram.row`, `memory.dram.sense-column`, `memory.dram.bank.W`, `memory.dram.command-control.W`, and `memory.dram.device.W`. Standalone rows use `columns` and `retention_ticks`; sense columns use `rows`. Only the public bank/device wrappers are C++ width templates. The command controller is catalog-created, not a public C++ template.
 
-## 3.1.3.1. `DRAMCell`
+## 3.3.3.1. `DRAMCell`
 
 One digital charge bit with destructive sampling and restoration.
 
@@ -76,9 +77,9 @@ struct DRAMCellReference {
 };
 ```
 
-#### Unknown inputs and timing
+#### Unknown inputs
 
-Starts X. Unknown WL makes charge and sample unknown; unknown RESTORE while selected makes charge unknown. D=Z stores X. WL=0 ignores restore/data. `retention_ticks` accepts 1,024–1,000,000,000. Expiry has no periodic event: the next activation observes loss. Output propagation takes one primitive tick.
+Starts X. Unknown WL makes charge and sample unknown; unknown RESTORE while selected makes charge unknown. D=Z stores X. WL=0 ignores restore/data. `retention_ticks` accepts 1,024–10¹². Expiry has no periodic event: the next activation observes loss.
 
 ### Implementation
 
@@ -87,6 +88,10 @@ Starts X. Unknown WL makes charge and sample unknown; unknown RESTORE while sele
 Terminal digital charge primitive, not a flip-flop or an RC electrical simulation. Q and SAMPLE make the storage/sensing distinction explicit. No redundant behavioral-fidelity replacement is registered.
 
 The visualizer displays separate **charge (Q)** and **read sample (SAMPLE)** panels, with WL/RESTORE indicators, using recorded pin values at the selected time. It does not invent an analog charge level or retention countdown; expiry is checked on activation as described above.
+
+### Timing
+
+A memory primitive: its outputs follow its inputs after one memory-primitive delay (one FO4 inverter delay in the realistic profiles). Retention is a time, `retention_ticks`, not a delay: a row closed for that long samples X.
 
 ### Examples
 
@@ -99,10 +104,10 @@ The sequence starts unknown, restores one, closes, samples that one destructivel
 The standalone `DRAMCellTest` opens this component as `MEMORY_ROOT`. This component has one registered structural implementation.
 
 <div class="simulator-embed">
-  <iframe src="../../simulator/?scenario=dram-cell" title="DRAMCell recorded simulation" loading="lazy" allowfullscreen></iframe>
+  <iframe src="../../../simulator/?scenario=dram-cell" title="DRAMCell recorded simulation" loading="lazy" allowfullscreen></iframe>
 </div>
 
-<a href="../../simulator/?scenario=dram-cell" class="md-button">Open DRAMCell in the simulator</a>
+<a href="../../../simulator/?scenario=dram-cell" class="md-button">Open DRAMCell in the simulator</a>
 
 ### Source and tests
 
@@ -114,7 +119,7 @@ The standalone `DRAMCellTest` opens this component as `MEMORY_ROOT`. This compon
 | [`DRAMCellTest`](https://github.com/arnold518/reinventing-the-wheel/blob/github-pages/src/tests/MemoryDeviceTests.cpp) | The complete standalone sequence shown above |
 | `MemoryDeviceTimingTest` | Retention, refresh before expiry, and loss after expiry through structural and compact devices |
 
-## 3.1.3.2. `DRAMRow<C>`
+## 3.3.3.2. `DRAMRow<C>`
 
 C charge cells sharing one wordline.
 
@@ -149,7 +154,7 @@ void dram_row_update(std::array<Cell, C>& cells, std::size_t now,
 }
 ```
 
-#### Unknown inputs and timing
+#### Unknown inputs
 
 Each column applies the cell's X/Z and lazy-retention rules independently. An unknown shared WL affects every cell. Use separate settled activation and restoration steps; this is not an instantaneous atomic row read.
 
@@ -163,6 +168,10 @@ Each column applies the cell's X/Z and lazy-retention rules independently. An un
 
 Stores C charge records and applies sampling, restoration, close timestamps, and expiry directly. It preserves expanded row pins but removes the cell objects.
 
+### Timing
+
+<!-- timing-table: memory.dram.row.behavioral -->
+
 ### Examples
 
 <!-- simulator-examples: dram-row DRAMRowTest -->
@@ -174,10 +183,10 @@ The two-column example restores one and zero, closes the row, then reactivates i
 The standalone `DRAMRowTest` opens this component as `MEMORY_ROOT`. Use the explorer to compare structural and behavioral implementations.
 
 <div class="simulator-embed">
-  <iframe src="../../simulator/?scenario=dram-row" title="DRAMRow<C> recorded simulation" loading="lazy" allowfullscreen></iframe>
+  <iframe src="../../../simulator/?scenario=dram-row" title="DRAMRow<C> recorded simulation" loading="lazy" allowfullscreen></iframe>
 </div>
 
-<a href="../../simulator/?scenario=dram-row" class="md-button">Open DRAMRow&lt;C&gt; in the simulator</a>
+<a href="../../../simulator/?scenario=dram-row" class="md-button">Open DRAMRow&lt;C&gt; in the simulator</a>
 
 ### Source and tests
 
@@ -189,7 +198,7 @@ The standalone `DRAMRowTest` opens this component as `MEMORY_ROOT`. Use the expl
 | [`DRAMRowTest`](https://github.com/arnold518/reinventing-the-wheel/blob/github-pages/src/tests/MemoryDeviceTests.cpp) | The complete standalone sequence shown above |
 | `MemoryDeviceContractTest` | Structural/behavioral agreement at settled checkpoints, including mixed hierarchy selection |
 
-## 3.1.3.3. `DRAMSenseColumn<R>`
+## 3.3.3.3. `DRAMSenseColumn<R>`
 
 One shared column's row-buffer bit and restoration control.
 
@@ -248,15 +257,19 @@ struct DRAMSenseReference {
 };
 ```
 
-#### Unknown inputs and timing
+#### Unknown inputs
 
-Starts prepared with Q=X. Unknown wordlines, more than one selected row, unknown SENSE, or invalid precharge conditions invalidate preparation and Q. Unknown WRITE during sensing makes Q unknown. PRECHARGE=1 with all wordlines low prepares regardless of SENSE. It is a one-tick digital primitive; samples must settle before SENSE.
+Starts prepared with Q=X. Unknown wordlines, more than one selected row, unknown SENSE, or invalid precharge conditions invalidate preparation and Q. Unknown WRITE during sensing makes Q unknown. PRECHARGE=1 with all wordlines low prepares regardless of SENSE. It is a memory primitive; samples must settle before SENSE.
 
 ### Implementation
 
 #### Structural implementation
 
 Terminal stateful sense primitive. Its latched Q forms one bit of the bank's row buffer; RESTORE feeds the selected cells. It models the result of sensing/restoration, not voltage differences or transistor gain.
+
+### Timing
+
+A memory primitive: its outputs follow its inputs after one sense interval, the profile's base value plus a per-row term for its R rows; see the DRAM intervals under the device's [Timing](#timing-intervals).
 
 ### Examples
 
@@ -269,10 +282,10 @@ Precharge, activate row zero, sense one, change SAMPLE to X while retaining the 
 The standalone `DRAMSenseColumnTest` opens this component as `MEMORY_ROOT`. This component has one registered structural implementation.
 
 <div class="simulator-embed">
-  <iframe src="../../simulator/?scenario=dram-sense-column" title="DRAMSenseColumn<R> recorded simulation" loading="lazy" allowfullscreen></iframe>
+  <iframe src="../../../simulator/?scenario=dram-sense-column" title="DRAMSenseColumn<R> recorded simulation" loading="lazy" allowfullscreen></iframe>
 </div>
 
-<a href="../../simulator/?scenario=dram-sense-column" class="md-button">Open DRAMSenseColumn&lt;R&gt; in the simulator</a>
+<a href="../../../simulator/?scenario=dram-sense-column" class="md-button">Open DRAMSenseColumn&lt;R&gt; in the simulator</a>
 
 ### Source and tests
 
@@ -284,7 +297,7 @@ The standalone `DRAMSenseColumnTest` opens this component as `MEMORY_ROOT`. This
 | [`DRAMSenseColumnTest`](https://github.com/arnold518/reinventing-the-wheel/blob/github-pages/src/tests/MemoryDeviceTests.cpp) | The complete standalone sequence shown above |
 | `MemoryDeviceContractTest` | Integration in the new structural devices and comparison with their compact implementations |
 
-## 3.1.3.4. `DRAMStorageBank<W>`
+## 3.3.3.4. `DRAMStorageBank<W>`
 
 A matrix of charge cells connected to a shared row buffer.
 
@@ -331,9 +344,9 @@ struct DRAMBankReference {
 };
 ```
 
-#### Unknown inputs and timing
+#### Unknown inputs
 
-Selection conflicts and unknown controls follow DRAMSenseColumn; individual charge records follow DRAMCell. Closing without valid restoration can lose data. Both bank fidelities retain scalar pins and the 4,096-cell limit. Compare settled phases, not transient gate waveforms or exact retention-threshold ticks across fidelities.
+Selection conflicts and unknown controls follow DRAMSenseColumn; individual charge records follow DRAMCell. Closing without valid restoration can lose data. Both bank fidelities retain scalar pins and the 4,096-cell limit. Compare settled checkpoints, not transient gate waveforms or the exact retention boundary, across fidelities.
 
 ### Implementation
 
@@ -344,6 +357,10 @@ Selection conflicts and unknown controls follow DRAMSenseColumn; individual char
 #### Behavioral implementation
 
 Uses charge records plus a row-buffer vector, with independent selection/preparation state. It preserves destructive sampling, restoration, precharge, per-column writes, and retention without expanding the cells.
+
+### Timing
+
+<!-- timing-table: memory.dram.bank.8.behavioral -->
 
 ### Examples
 
@@ -356,10 +373,10 @@ Writes alternating bits across row zero, releases write drive, closes/precharges
 The standalone `DRAMStorageBankTest` opens this component as `MEMORY_ROOT`. Use the explorer to compare structural and behavioral implementations.
 
 <div class="simulator-embed">
-  <iframe src="../../simulator/?scenario=dram-storage-bank" title="DRAMStorageBank<W> recorded simulation" loading="lazy" allowfullscreen></iframe>
+  <iframe src="../../../simulator/?scenario=dram-storage-bank" title="DRAMStorageBank<W> recorded simulation" loading="lazy" allowfullscreen></iframe>
 </div>
 
-<a href="../../simulator/?scenario=dram-storage-bank" class="md-button">Open DRAMStorageBank&lt;W&gt; in the simulator</a>
+<a href="../../../simulator/?scenario=dram-storage-bank" class="md-button">Open DRAMStorageBank&lt;W&gt; in the simulator</a>
 
 ### Source and tests
 
@@ -371,34 +388,45 @@ The standalone `DRAMStorageBankTest` opens this component as `MEMORY_ROOT`. Use 
 | [`DRAMStorageBankTest`](https://github.com/arnold518/reinventing-the-wheel/blob/github-pages/src/tests/MemoryDeviceTests.cpp) | The complete standalone sequence shown above |
 | `MemoryDeviceContractTest` | Structural/behavioral agreement at settled checkpoints, including mixed hierarchy selection |
 
-## 3.1.3.5. `DRAMCommandControl<W>`
+## 3.3.3.5. `DRAMCommandControl<W>`
 
-Clocked command acceptance and timed internal phase generation.
+Takes a command at a rising clock edge and runs that command's timing chain
+of gates and delay lines.
 
 ### IO pins
 
 | Pin | Direction | Width | Description |
 | --- | --- | ---: | --- |
-| `CLK` | Input | 1 | Strict 0→1 command edge |
-| `CMD` | Input | 3 | NOP, ACT, READ, WRITE, PRECHARGE, REFRESH |
-| `ADDR` | Input | 32 | Row for ACT, slot for READ/WRITE |
+| `CLK` | Input | 1 | Rising edge takes a command |
+| `CMD` | Input | 3 | NOP, ACTIVATE, READ, WRITE, PRECHARGE, REFRESH, READ_BURST |
+| `ADDR` | Input | 32 | Row for ACTIVATE, word slot for READ, WRITE and READ_BURST |
 | `WRITE_DATA` | Input | W | Write payload |
 | `WRITE_MASK` | Input | W/8 | Byte enables |
 | `BUSY`, `ERROR`, `READ_VALID`, `ROW_OPEN` | Output | 1 each | Device status |
 | `ROW_ADDR`, `COLUMN_ADDR` | Output | 32 each | Latched row and word slot |
 | `DATA` | Output | W | Latched write payload |
 | `MASK` | Output | W/8 | Latched write byte enables |
-| `PRECHARGE`, `SENSE` | Output | 1 each | Column phase controls |
-| `ROW_ENABLE`, `WRITE_ENABLE` | Output | 1 each | Row and write phases |
-| `OUTPUT_ENABLE` | Output | 1 | Completed read publication |
+| `PRECHARGE`, `SENSE` | Output | 1 each | Column controls |
+| `ROW_ENABLE`, `WRITE_ENABLE` | Output | 1 each | Row and write controls |
+| `OUTPUT_ENABLE` | Output | 1 | A finished read's data is on the output |
 
 ### Behavior
 
-Implements the command table in DRAM<W> below without storing array data. On a legal command edge, latch required inputs, clear old error/read-valid state, assert BUSY, then advance finite scheduled phases. NOP preserves status. Invalid idle requests clear read-valid and report ERROR; requests rejected while busy do not cancel or replace the active operation.
+Carries out the [command table](#commands-and-timing) of `DRAM<W>` without
+storing array data. A legal command at a rising edge latches what it needs,
+clears an old error and read-valid state, raises `BUSY`, and starts its
+chain: each step of the command is a delay line from the profile, gated by
+the command's run signal. The end of the chain is sampled at the next rising
+edge by a one-stage sampler; the completion is then shown at once (`BUSY`
+low, `READ_VALID` for a read, the new `ROW_OPEN` state) and takes effect at
+the following edge, which may already take the next command, as a real SDRAM
+takes its next command when the interval is over. NOP keeps the status. An
+illegal command while idle reports `ERROR`; a command while busy reports
+`ERROR` without disturbing the running operation.
 
 #### C++ example
 
-Binary pin values; geometry and positive timing parameters are prevalidated. Call on input changes and every nonzero `due`, including when CLK is stopped. Fields below name every output: `output` supplies both READ_VALID and OUTPUT_ENABLE; `wl` supplies ROW_ENABLE. This is a standalone reference algorithm, not the simulator's sequencer.
+Binary pin values; geometry is prevalidated. Call on input changes and at every nonzero `due`. `output` supplies both READ_VALID and OUTPUT_ENABLE; `wl` supplies ROW_ENABLE. Every step takes the same placeholder `ticks`, and a new command waits until the previous one has finished (the device can take it in the completing cycle). READ_BURST is not modelled here.
 
 ```cpp
 #include <cstdint>
@@ -480,15 +508,30 @@ template<std::size_t W> struct DRAMControlReference {
 };
 ```
 
-#### Unknown inputs and timing
+#### Unknown inputs
 
-Only CLK=0 followed by CLK=1 accepts a command; X/Z→1 is not an edge. Unknown CMD is rejected. ACT/READ/WRITE require binary ADDR; WRITE also requires a binary mask. Payload X is allowed and becomes unknown storage in enabled bytes. Inputs unused by a command are ignored. Completion is processed before a command edge at the same internal deadline.
+Only CLK=0 followed by CLK=1 takes a command; X/Z→1 is not an edge. An unknown CMD reports `ERROR`. ACTIVATE, READ and WRITE need a binary ADDR; WRITE also needs a binary mask. Unknown payload bits become unknown storage in the enabled bytes. Inputs a command does not use are ignored.
 
 ### Implementation
 
 #### Structural implementation
 
-Terminal digital finite-state sequencer with latched request and round-robin refresh cursor. Its outputs drive separate gates and storage in the structural device. It is not a gate-expanded FSM. The complete behavioral device reuses this sequencer, so equivalence checks independently validate the data path, not an independent controller algorithm.
+Flip-flops hold the command, row, column, payload and status bits; gates
+decide legality and the next state at each edge. Each command's steps are
+`MemoryDelayLine`s in a chain (ACTIVATE: wordline, sense, restore; READ:
+column; WRITE: drive on, drive off, recovery; PRECHARGE: close, precharge,
+equalize; REFRESH: an activation and a precharge of the next refresh row,
+plus the refresh cycle's remaining time in the realistic profiles). The sense
+and precharge steps also carry a replica of the row decoder, so they outlast
+it in every profile. A one-stage `Synchronizer` samples the end of the chain;
+a round-robin counter chooses the refresh row. A device with no reset pin
+starts idle through a `PowerOnReset`.
+
+### Timing
+
+Built from gates, flip-flops and delay lines, so it has no delay table of its
+own. Its intervals are the DRAM intervals listed under the device's
+[Timing](#timing-intervals); the device table below includes it.
 
 ### Examples
 
@@ -498,13 +541,13 @@ The sequence checks a read while closed, activation, write/read, byte mask, unkn
 
 #### Embedded simulation
 
-The standalone `DRAMCommandControlTest` opens this component as `MEMORY_ROOT`. This component has one registered structural implementation.
+The standalone `DRAMCommandControlTest` opens this component as `MEMORY_ROOT`. Expand it to follow the command chains.
 
 <div class="simulator-embed">
-  <iframe src="../../simulator/?scenario=dram-command-control" title="DRAMCommandControl<W> recorded simulation" loading="lazy" allowfullscreen></iframe>
+  <iframe src="../../../simulator/?scenario=dram-command-control" title="DRAMCommandControl<W> recorded simulation" loading="lazy" allowfullscreen></iframe>
 </div>
 
-<a href="../../simulator/?scenario=dram-command-control" class="md-button">Open DRAMCommandControl&lt;W&gt; in the simulator</a>
+<a href="../../../simulator/?scenario=dram-command-control" class="md-button">Open DRAMCommandControl&lt;W&gt; in the simulator</a>
 
 ### Source and tests
 
@@ -514,9 +557,9 @@ The standalone `DRAMCommandControlTest` opens this component as `MEMORY_ROOT`. T
 | Test | Coverage |
 | --- | --- |
 | [`DRAMCommandControlTest`](https://github.com/arnold518/reinventing-the-wheel/blob/github-pages/src/tests/MemoryDeviceTests.cpp) | The complete standalone sequence shown above |
-| `MemoryDeviceTimingTest` | Intermediate BUSY/ROW_OPEN and device-level scheduled phase behavior |
+| `MemoryDeviceTimingTest` | Intermediate BUSY and ROW_OPEN, and the command chains in the device |
 
-## 3.1.3.6. `DRAM<W>`
+## 3.3.3.6. `DRAM<W>`
 
 Complete single-bank command-addressed DRAM device.
 
@@ -541,25 +584,37 @@ Commands operate on one open row at a time. A word's linear index is `row*K + sl
 
 #### Commands and timing
 
-Let t be the accepted command edge and P=`phase_ticks`. The listed times are **sequencer deadlines**; output wire propagation and structural logic require additional settling.
+A command is taken at a rising `CLK` edge while the device is idle, or in the
+cycle the previous command completes. Each step lasts one of the profile's
+DRAM intervals (listed under [Timing](#timing-intervals)).
 
-| CMD | Operation | Preconditions / ADDR | Phases after t |
+| CMD | Operation | Legal when / ADDR | Steps |
 | ---: | --- | --- | --- |
-| 0 | NOP | Inputs ignored | No change |
-| 1 | ACT | Closed; `ADDR < N/K` | P: select row; 2P: sense/restore; 3P: ready, row open |
-| 2 | READ | Open; `ADDR < K` | P: read valid, ready |
-| 3 | WRITE | Open; `ADDR < K`; binary mask | P: write on; 2P: write off; 3P: ready |
-| 4 | PRECHARGE | Open; ADDR ignored | P: close wordline/sense; 2P: precharge; 3P: ready, closed |
-| 5 | REFRESH | Closed; ADDR ignored | P: select internal refresh row; 2P: sense/restore; 3P: close; 4P: precharge; 5P: ready |
-| 6–7 | Reserved | Always rejected | ERROR; no storage operation |
+| 0 | NOP | Inputs ignored | None; status kept |
+| 1 | ACTIVATE | No row open; `ADDR < N/K` | Wordline, sense, restore; then the row is open |
+| 2 | READ | Row open; `ADDR < K` | Column read; then `READ_VALID` |
+| 3 | WRITE | Row open; `ADDR < K`; binary mask | Drive on, drive off, recovery |
+| 4 | PRECHARGE | Row open; ADDR ignored | Close, precharge, equalize; then no row is open |
+| 5 | REFRESH | No row open; ADDR ignored | Activation and precharge of the next refresh row (and the rest of tRFC) |
+| 6 | READ_BURST | Row open; `ADDR < K` | As READ; then the next columns of the aligned `block_words` block, wrapping within it, one per edge |
+| 7 | Reserved | Always rejected | `ERROR`; no storage operation |
 
-REFRESH services **one row** at an internal round-robin cursor starting at zero. N/K refresh commands cover a bank. The native device has no automatic/background self-refresh; the [DRAM memory controller](3.3.md) issues refresh while its bus clock runs. Direct native-device users must issue it themselves. Refresh samples an expired row as `X` and cannot repair it.
+REFRESH services **one row** at an internal round-robin cursor starting at
+zero; N/K refresh commands cover the bank. The device does not refresh
+itself; the [DRAM controller](../controllers.md) issues REFRESH, and a direct
+user must do the same. Refresh samples an expired row as X and cannot repair
+it.
 
-Write data/address/mask are latched at acceptance. A zero mask is a valid no-op write. Unknown payload bits become unknown storage only in enabled byte lanes. Initial `CLK=X` followed by high is not an edge. Do not overlap commands: wait for BUSY to settle low before the next edge. `ROW_OPEN` remains high during precharge until completion; BUSY prevents premature access. A completed read remains valid until another accepted command or an idle rejected non-NOP invalidates it.
+Write data, address and mask are latched when the command is taken. A zero
+mask is a valid write that changes nothing. Unknown payload bits become
+unknown storage only in enabled byte lanes. An initial `CLK=X` followed by
+high is not an edge. `ROW_OPEN` stays high during a precharge until it
+completes. A finished read stays valid until another command is taken or an
+idle illegal command clears it.
 
 #### C++ example
 
-Complete native-port reference composed from the command control and bank above, for W=8/16/32. It includes command rejection, timed phases, refresh, retention, destructive sampling/restoration, byte writes, status, and disabled read output. Binary inputs and validated geometry are assumed; empty data optionals preserve unknown stored bits.
+Complete native-port reference composed from the command control and bank above, for W=8/16/32: command rejection, refresh, retention, destructive sampling and restoration, byte writes, status and disabled read output, with the placeholder step duration. Binary inputs and validated geometry are assumed; empty data optionals preserve unknown stored bits.
 
 ```cpp
 #include <cstddef>
@@ -596,9 +651,9 @@ template<std::size_t W> struct DRAMReference {
 };
 ```
 
-#### Unknown inputs and timing
+#### Unknown inputs
 
-Command/control validation follows DRAMCommandControl. A rejected unknown idle command invalidates an earlier read just like a reserved command; rejection while busy leaves the operation running. Masked-off bytes ignore unknown payload. Stable status and data require output/gate settling beyond sequencer deadlines. Retention is measured at each implementation's modeled cell activation/close, so avoid treating the propagation-sized threshold boundary as fidelity-independent calibrated time.
+Command validation follows `DRAMCommandControl`. A rejected unknown idle command clears an earlier read just like a reserved command; a command rejected while busy leaves the operation running. Masked-off bytes ignore unknown payload. Retention is measured from when a row closes to its next activation.
 
 ### Implementation
 
@@ -608,7 +663,22 @@ Command/control validation follows DRAMCommandControl. A rejected unknown idle c
 
 #### Behavioral implementation
 
-Uses packed MemoryStorage, per-row closed timestamps, and a W×K buffer. Activation destructively samples storage, sensing restores it, and writes merge enabled bytes into the buffer and storage. The sequencer is shared with structural control; the storage/sense data path is separately implemented. Compact history is read-only; initialize through ACT/WRITE. History may be disabled for large runs.
+Uses packed `MemoryStorage`, per-row close times and a W×K row buffer. Activation samples the row destructively, sensing restores it, and writes merge enabled bytes into the buffer and storage. Its command control (`DRAMSyncControl`) follows the gate-level control edge for edge, with the same chain lengths, so it takes the same cycles; the storage and sense data path is implemented separately. History is read-only; initialize through ACTIVATE and WRITE, and disable history for large runs.
+
+### Timing
+
+<a id="timing-intervals"></a>The steps of each command are delay lines with
+these intervals. In the realistic profiles they reproduce the datasheet's
+tRCD, CL and tRP (the ACTIVATE steps add up to tRCD, the READ step is CL,
+the PRECHARGE steps add up to tRP):
+
+<!-- profile-table: memory-dram -->
+
+The compact device's proven delays. The device times itself, so no clock can
+be certified around it alone; its controller samples it at the controller's
+clock (see [3.6 Memory Timing](../timing.md#dram)).
+
+<!-- timing-table: memory.dram.device.8.behavioral -->
 
 ### Examples
 
@@ -621,10 +691,10 @@ The W=8 device writes `0x81`, changes its enabled byte to `0x5A`, exercises inva
 The standalone `DRAMTest` opens this component as `MEMORY_ROOT`. Use the explorer to compare structural and behavioral implementations.
 
 <div class="simulator-embed">
-  <iframe src="../../simulator/?scenario=dram" title="DRAM<W> recorded simulation" loading="lazy" allowfullscreen></iframe>
+  <iframe src="../../../simulator/?scenario=dram" title="DRAM<W> recorded simulation" loading="lazy" allowfullscreen></iframe>
 </div>
 
-<a href="../../simulator/?scenario=dram" class="md-button">Open DRAM&lt;W&gt; in the simulator</a>
+<a href="../../../simulator/?scenario=dram" class="md-button">Open DRAM&lt;W&gt; in the simulator</a>
 
 ### Source and tests
 

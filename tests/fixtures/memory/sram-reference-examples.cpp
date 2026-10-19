@@ -58,30 +58,33 @@ void check_sram_references() {
     assert(selected.drive_bl[0] == false && selected.drive_bl[2] == false);
     assert(!sram_output_ref(5, false) && sram_output_ref(5, true) == 5);
 
+    // Stage durations: settle 32, precharge 32, decode 4, bitline 64, output 8.
+    SRAMControlReference control{32, 32, 4, 64, 8};
+    assert(!control.at(10, false, true, false).precharge);
+    auto stage = control.at(40, false, false, false);
+    assert(stage.precharge && !stage.write_enable);
+    stage = control.at(66, false, false, false);
+    assert(stage.write_enable && !stage.row_enable && !stage.ready);
+    stage = control.at(200, false, true, false);
+    assert(stage.sense_enable && stage.output_enable && stage.ready && !stage.write_enable);
+    assert(!control.at(200, false, true, true).output_enable);
+    assert(!control.at(200, true, true, false).ready);
+
     SRAMReference<32> device(2);
-    SRAMControlReference::Inputs in{0, 0x12345678, 15, false, false, false};
-    device.update(0, 32, in);
-    device.update(32, 32, in); assert(device.control.precharge && device.high_z);
-    device.update(64, 32, in); assert(device.control.write_enable && !device.control.row_enable);
-    in.ce_n = true; device.update(95, 32, in);
-    device.update(96, 32, in); assert(word_text(device.words[0]) == std::string(32, 'X'));
-    in.ce_n = false; device.update(100, 32, in);
-    for (auto t : {132, 164, 196, 228}) device.update(t, 32, in);
+    SRAMReference<32>::Inputs in{0, 0x12345678, 15, false, false, false};
+    device.update(control, 66, in); // Interrupted before the row opened: no write.
+    assert(device.high_z && word_text(device.words[0]) == std::string(32, 'X'));
+    device.update(control, 1000, in);
+    assert(device.ready && device.high_z);
     assert(word_text(device.words[0]) == "00010010001101000101011001111000");
-    in.data = 0xaabbccdd; in.mask = 5; device.update(229, 32, in);
-    for (auto t : {261, 293, 325, 357}) device.update(t, 32, in);
-    in.we_n = true; device.update(358, 32, in);
-    for (auto t : {390, 422, 454, 486}) device.update(t, 32, in);
+    in.data = 0xaabbccdd; in.mask = 5; device.update(control, 1000, in);
+    in.we_n = true; device.update(control, 1000, in);
     assert(!device.high_z && word_text(device.read_data) == "00010010101110110101011011011101");
-    in.data = 0; in.mask = 0; device.update(487, 32, in);
-    assert(!device.control.due && !device.high_z); // Read-mode payload is ignored.
-    in.oe_n = true; device.update(488, 32, in); assert(device.high_z && !device.control.due);
-    in.oe_n = false; device.update(489, 32, in); assert(!device.high_z && !device.control.due);
-    in.address = 2; device.update(490, 32, in);
-    for (auto t : {522, 554, 586, 618}) device.update(t, 32, in);
+    in.data = 0; in.mask = 0; device.update(control, 1000, in); // Read-mode payload is ignored.
+    assert(!device.high_z && word_text(device.read_data) == "00010010101110110101011011011101");
+    in.oe_n = true; device.update(control, 1000, in); assert(device.high_z);
+    in.oe_n = false; in.address = 2; device.update(control, 1000, in);
     assert(!device.high_z && word_text(device.read_data) == std::string(32, 'X'));
-    // Input change at the deadline wins over the old timer.
-    in.address = 0; device.update(620, 32, in);
-    in.address = 1; device.update(652, 32, in);
-    assert(device.control.phase == SRAMControlReference::Phase::Quiet && device.control.due == 684);
+    device.update(control, 100, in); // Still accessing: no data, not ready.
+    assert(!device.ready && device.high_z);
 }

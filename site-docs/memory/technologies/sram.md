@@ -1,6 +1,6 @@
-# § 3.1.2. SRAM
+# § 3.3.2. SRAM
 
-This section specifies a single-port asynchronous SRAM, from a one-bit cell to an addressable device. It separates word storage, physical row/column organization, symbolic bitline behavior, and access circuitry. Shared decoding/selection construction and output-enable behavior are described in [3.1.0. Helper Components](3.1.0.md); the SRAM-specific bitline and access contracts remain distinct.
+A single-port SRAM, from a one-bit cell to an addressable device, in two forms: an **asynchronous chip** that times its own access and raises `READY`, and a **clocked on-chip macro** that registers each request at a clock edge. Shared decoding, selection and output-enable circuits are described in [3.2 Shared Building Blocks](../building-blocks.md); the SRAM-specific bitline and access circuits are here.
 
 | Component | Description | Structural | Behavioral |
 | --- | --- | :---: | :---: |
@@ -13,19 +13,21 @@ This section specifies a single-port asynchronous SRAM, from a one-bit cell to a
 | `SRAMWriteDriver` | Generates one bit's complementary write values and masked drive enable | Yes | No |
 | `SRAMSenseAmplifier` | Digital primitive that accepts a valid symbolic read differential | Yes | No |
 | `SRAMColumnSelector<W>` | Routes one word's read pairs and write enables among K column groups | Yes | No |
-| `SRAMAccessControl<W>` | Timed digital primitive sequencing an asynchronous access | Yes | No |
+| `SRAMAccessControl<W>` | Sequences an access with gates and delay lines and raises `READY` | Yes | No |
 | `SRAMOutputBuffer<W>` | Compatibility wrapper around the common output-enable primitive | Yes | No |
-| `SRAM<W>` | Complete word-addressed asynchronous SRAM device | Yes | Yes |
+| `SRAM<W>` | Complete word-addressed SRAM device, asynchronous or clocked | Yes | Yes |
 
-“Structural” includes explicitly identified **terminal digital primitives** for bitlines, sensing, output enable, and timing. Those primitives have directly evaluated behavior, but no separate behavioral-fidelity replacement. Only cells, rows, banks, and devices currently have both registered implementations. Structural remains the default for supported small geometries.
+“Structural” includes named **memory primitives** for the bitline pair, the sense amplifier and the output enable: they stand for electrical circuits and evaluate their digital contract directly, with a delay from the timing profile. The access sequencing is built from gates and delay lines. Cells, rows, banks and devices also have a behavioral form; structural remains the default for small geometries.
 
-Compile the C++ examples in page order. They describe settled binary-control behavior, including state and operation deadlines; empty data optionals represent unknown bits. Construction geometry is assumed valid. Gate propagation and X/Z control-input rules remain in each component's “Unknown inputs and timing” section. These references are not additional simulator components.
+Compile the C++ examples in page order. They describe settled binary-control behavior; empty data optionals represent unknown bits, and construction geometry is assumed valid. X/Z rules are in each component's “Unknown inputs” section and delays in its “Timing” section.
 
 ## Geometry and interface conventions
 
 - `W` is the word width: 8, 16, or 32 bits, fixed by the template.
 - `N = depth_words` is the number of addressable words, supplied at construction.
 - `K = words_per_row` is a power of two from 1 through 64 that divides N. Non-power-of-two depths such as N=6, K=2 are supported.
+- A gate-level array keeps each bitline to at most 32 rows. A larger array is built from 32-row **subarrays**, each a complete SRAM with its own timing, joined by a global decoder, global wires (`MemoryWire`) and a shared return bus (`MemoryBus`), as real on-chip arrays are divided.
+- `clocked=1` selects the on-chip macro: the device gains a `CLK` input, registers its inputs at a rising edge with `CE_N` low, and holds its data and `READY` until the next access.
 - There are `R = N/K` physical rows and `C = W*K` bit columns. Capacity is `N*W/8` bytes. A word is not necessarily a whole row.
 - Word address a selects row `a/K` and slot `a%K`. Slot j occupies columns `j*W` through `j*W+W−1` in this model.
 - `SRAM<32>` with N=1024, K=4 has 256 rows, 128 columns, 1024 four-byte words, and 4096 bytes. Use behavioral device fidelity for that capacity rather than expanding 32,768 cells.
@@ -58,21 +60,40 @@ Factories reject unsupported widths, invalid geometry, unknown parameters, and u
 
 ## Access timing
 
-The device is asynchronous: no external clock is required. A selected address/control change starts a finite internal event sequence. Let P be `phase_ticks` (default 32, permitted 32–10000 simulator ticks).
+**Asynchronous chip.** No clock is needed. `SRAMAccessControl` watches the
+address, `CE_N`, `WE_N`, and during a write the data and mask. Any change
+restarts the access; when the inputs have been steady for the settle
+interval, a chain of stages runs (each started by the previous one):
 
-| Time from a new request | Phase | Action |
+| Stage | What happens | Ends after |
 | --- | --- | --- |
-| 0 | Quiet | Disable old wordlines, write drive, sensing, and output; keep old staged buses stable |
-| P | Precharge | Stage the new address/data/mask and precharge all bitline pairs |
-| 2P | Release | Release precharge; establish write drive if this is a write |
-| 3P | Access | Activate the selected wordline; cells write or develop a read differential |
-| 4P | Ready | Enable sensing and, for a read with OE active, the output buffer |
+| Settle | The new inputs are copied to the held buses the array reads; old values stay there until now | Settle interval (never shorter than the change detector's own path) |
+| Precharge | All bitline pairs are precharged | Precharge interval |
+| Decode | The row decoder settles; a write starts driving its bitlines | A replica chain of gates as deep as the decoder |
+| Bitline | The selected row opens; cells are written, or develop a read differential | Bitline interval, base plus a per-row term |
+| Sense and ready | Sensing and, for a read with `OE_N` low, the output enable; then `READY` | Two memory-primitive delays and a few gates |
 
-Internal paths add propagation delays. Tests compare **settled checkpoints**, not equal transient waveforms between fidelities. A canceled request cannot be completed by a stale timer. A write canceled before row activation does not change storage; canceling after activation can leave a completed write and does not roll it back. Hold inputs stable for a complete access. These delays are deliberately conservative simulator units, **not calibrated nanoseconds or a vendor setup/hold specification**. No automatic cache-latency claim follows from them.
+Hold the inputs steady until `READY` rises. A change before the row opens
+cancels the access without writing; a change after the row has opened can
+leave a finished write, which is not rolled back. `OE_N` only gates the
+output and does not restart the access.
 
-All component examples follow the same IO/behavior/implementation/test pattern as §3.1.1. The C++ references describe each component's binary-control contract, rather than only one selected operation. Example tables are generated from every recorded test checkpoint, include checkpoint number and absolute time, and scroll within the page.
+**Clocked macro.** The inputs are registered at a rising `CLK` edge with
+`CE_N` low, and the same stages run from that edge, with no change detection
+and no settle interval. Data and `READY` then hold until the next access, so a
+controller can capture them at a later edge. The controller counts the cycles
+an access needs at its clock ([3.6](../timing.md#clocked-sram-macro)).
 
-## 3.1.2.1. `SRAMCell`
+The intervals come from the active profile. In the realistic profiles they
+are multiples of the FO4 delay, compared against the CACTI SRAM model:
+
+<!-- profile-table: memory-sram -->
+
+<a id="timing-intervals"></a>The compact device and endpoint publish at the
+delays proven on this gate-level sequence. Tests compare settled checkpoints,
+not equal transient waveforms between the two forms.
+
+## 3.3.2.1. `SRAMCell`
 
 Stores one bit using a feedback latch and symbolic write access.
 
@@ -106,9 +127,9 @@ struct SRAMCellReference {
 };
 ```
 
-#### Unknown inputs and timing
+#### Unknown inputs
 
-Starts unknown. An enabled noncomplementary or X/Z write pair makes storage unknown; a later valid write restores a known bit. Unknown enables can poison state when a write is possible. The structural access primitive has one tick of delay, followed by NAND-latch propagation.
+Starts unknown. An enabled noncomplementary or X/Z write pair makes storage unknown; a later valid write restores a known bit. Unknown enables can poison state when a write is possible. The structural access primitive takes one memory-primitive delay, followed by the latch's gate delays.
 
 ### Implementation
 
@@ -122,6 +143,10 @@ A stored four-state value implements the same settled cell contract without the 
 
 The behavioral cell's visualizer displays recorded `Q` and `Q_BAR` values, with `WL` and `DRIVE` indicators. These follow timeline scrubbing; the structural view continues to show its access circuit and latch.
 
+### Timing
+
+<!-- timing-table: memory.sram.cell.behavioral -->
+
 ### Examples
 
 <!-- simulator-examples: sram-cell SRAMCellTest -->
@@ -133,10 +158,10 @@ The sequence establishes zero, holds it, selects the cell for a read without wri
 The standalone `SRAMCellTest` opens this component as `SRAM_ROOT`. Use the explorer to compare structural and behavioral fidelity.
 
 <div class="simulator-embed">
-  <iframe src="../../simulator/?scenario=sram-cell" title="SRAMCell recorded simulation" loading="lazy" allowfullscreen></iframe>
+  <iframe src="../../../simulator/?scenario=sram-cell" title="SRAMCell recorded simulation" loading="lazy" allowfullscreen></iframe>
 </div>
 
-<a href="../../simulator/?scenario=sram-cell" class="md-button">Open SRAMCell in the simulator</a>
+<a href="../../../simulator/?scenario=sram-cell" class="md-button">Open SRAMCell in the simulator</a>
 
 ### Source and tests
 
@@ -148,9 +173,10 @@ The standalone `SRAMCellTest` opens this component as `SRAM_ROOT`. Use the explo
 | Test | Coverage |
 | --- | --- |
 | [`SRAMCellTest`](https://github.com/arnold518/reinventing-the-wheel/blob/github-pages/src/tests/SRAMTests.cpp) | The complete standalone sequence shown above |
+| `SRAMClockedTest`, `SRAMClockedSubarrayTest` | The clocked macro, small and split into subarrays, against its compact form |
 | `SRAMContractTest` | Structural/behavioral equivalence; device and bank widths 8/16/32, multiple geometries and byte masks, mixed bank selection, and invalid configuration rejection |
 
-## 3.1.2.2. `SRAMRow`
+## 3.3.2.2. `SRAMRow`
 
 Groups C cells sharing one wordline.
 
@@ -185,7 +211,7 @@ struct SRAMRowReference {
 };
 ```
 
-#### Unknown inputs and timing
+#### Unknown inputs
 
 Startup and enabled unknown writes follow `SRAMCell`. `columns` accepts 1–4096; this is a simulator expansion limit, not a physical row-size claim. Inputs must settle before expecting the row's outputs to settle.
 
@@ -199,6 +225,10 @@ Contains `CELL_0` through `CELL_(C−1)`. Cells are registered families, so a st
 
 Stores C four-state values and applies the per-column write controls directly. It keeps the same expanded pin interface.
 
+### Timing
+
+<!-- timing-table: memory.sram.row.behavioral -->
+
 ### Examples
 
 <!-- simulator-examples: sram-row SRAMRowTest -->
@@ -210,10 +240,10 @@ The two-column example writes different bits, deselects the row, then changes on
 The standalone `SRAMRowTest` opens this component as `SRAM_ROOT`. Use the explorer to compare structural and behavioral fidelity.
 
 <div class="simulator-embed">
-  <iframe src="../../simulator/?scenario=sram-row" title="SRAMRow recorded simulation" loading="lazy" allowfullscreen></iframe>
+  <iframe src="../../../simulator/?scenario=sram-row" title="SRAMRow recorded simulation" loading="lazy" allowfullscreen></iframe>
 </div>
 
-<a href="../../simulator/?scenario=sram-row" class="md-button">Open SRAMRow in the simulator</a>
+<a href="../../../simulator/?scenario=sram-row" class="md-button">Open SRAMRow in the simulator</a>
 
 ### Source and tests
 
@@ -225,9 +255,10 @@ The standalone `SRAMRowTest` opens this component as `SRAM_ROOT`. Use the explor
 | Test | Coverage |
 | --- | --- |
 | [`SRAMRowTest`](https://github.com/arnold518/reinventing-the-wheel/blob/github-pages/src/tests/SRAMTests.cpp) | The complete standalone sequence shown above |
+| `SRAMClockedTest`, `SRAMClockedSubarrayTest` | The clocked macro, small and split into subarrays, against its compact form |
 | `SRAMContractTest` | Structural/behavioral equivalence; device and bank widths 8/16/32, multiple geometries and byte masks, mixed bank selection, and invalid configuration rejection |
 
-## 3.1.2.3. `SRAMBitlinePair`
+## 3.3.2.3. `SRAMBitlinePair`
 
 Digital primitive for one shared column's precharge, sensing, and write excitation.
 
@@ -290,15 +321,19 @@ struct SRAMBitlineReference {
 };
 ```
 
-#### Unknown inputs and timing
+#### Unknown inputs
 
-The pair starts `(X,X)`. The example covers all binary control combinations, including conflicts, and uses empty optionals for unknown data. X/Z control inputs additionally invalidate the pair. Outputs have a one-tick delay, omitted from the settled reference.
+The pair starts `(X,X)`. The example covers all binary control combinations, including conflicts, and uses empty optionals for unknown data. X/Z control inputs additionally invalidate the pair. Outputs follow after one bitline interval, omitted from the settled reference.
 
 ### Implementation
 
 #### Structural implementation
 
-A registered **terminal digital primitive**. It is the explicit abstraction boundary for shared bitline behavior, with state recording through ordinary output wires. There is no multi-driver net resolver, capacitance, voltage, transistor strength, or leakage model. No separate compact implementation is registered because this primitive already performs direct evaluation.
+A **memory primitive**: the explicit abstraction boundary for shared bitline behavior, with state recording through ordinary output wires. There is no multi-driver net resolver, capacitance, voltage, transistor strength, or leakage model. No separate compact implementation is registered because this primitive already performs direct evaluation.
+
+### Timing
+
+A memory primitive: its outputs follow a change of its inputs after one bitline interval, the profile's base value plus a per-row term for its R rows (a longer bitline is slower; see the [access timing](#access-timing) table).
 
 ### Examples
 
@@ -308,13 +343,13 @@ The sequence includes precharge, retained charge, reads from both rows, a missin
 
 #### Embedded simulation
 
-The standalone `SRAMBitlinePairTest` opens this component as `SRAM_ROOT`. Expand the component where it has structural children; a terminal digital primitive is intentionally a leaf.
+The standalone `SRAMBitlinePairTest` opens this component as `SRAM_ROOT`.
 
 <div class="simulator-embed">
-  <iframe src="../../simulator/?scenario=sram-bitline-pair" title="SRAMBitlinePair recorded simulation" loading="lazy" allowfullscreen></iframe>
+  <iframe src="../../../simulator/?scenario=sram-bitline-pair" title="SRAMBitlinePair recorded simulation" loading="lazy" allowfullscreen></iframe>
 </div>
 
-<a href="../../simulator/?scenario=sram-bitline-pair" class="md-button">Open SRAMBitlinePair in the simulator</a>
+<a href="../../../simulator/?scenario=sram-bitline-pair" class="md-button">Open SRAMBitlinePair in the simulator</a>
 
 ### Source and tests
 
@@ -326,7 +361,7 @@ The standalone `SRAMBitlinePairTest` opens this component as `SRAM_ROOT`. Expand
 | --- | --- |
 | [`SRAMBitlinePairTest`](https://github.com/arnold518/reinventing-the-wheel/blob/github-pages/src/tests/SRAMTests.cpp) | The complete standalone sequence shown above |
 
-## 3.1.2.4. `SRAMStorageBank<W>`
+## 3.3.2.4. `SRAMStorageBank<W>`
 
 Assembles R rows and C shared bitline pairs.
 
@@ -371,7 +406,7 @@ struct SRAMBankReference {
 };
 ```
 
-#### Unknown inputs and timing
+#### Unknown inputs
 
 The example composes the cell and bitline references, including unknown startup, precharge, reads, writes, and binary control conflicts. It assumes controls are settled and binary; X/Z controls follow the rules above. Both bank implementations are limited to 4096 cells because their interface exposes every row and column. A large compact **device** uses the word-address port instead.
 
@@ -385,6 +420,10 @@ The example composes the cell and bitline references, including unknown startup,
 
 A flat four-state cell array plus per-column bitline state replaces the rows and cells. The same digital bitline primitive rules are reused. This proves equivalence to the documented abstraction, not independently to analog SRAM physics. Bank replacement leaves the surrounding decoder, precharge, drivers, selector, and sense amplifiers visible.
 
+### Timing
+
+<!-- timing-table: memory.sram.bank.8.behavioral -->
+
 ### Examples
 
 <!-- simulator-examples: sram-storage-bank SRAMStorageBankTest -->
@@ -396,10 +435,10 @@ The 4×8 bank is arranged as two rows of 16 cells. Every cell is written in a ro
 The standalone `SRAMStorageBankTest` opens this component as `SRAM_ROOT`. Use the explorer to compare structural and behavioral fidelity.
 
 <div class="simulator-embed">
-  <iframe src="../../simulator/?scenario=sram-storage-bank" title="SRAMStorageBank&lt;W&gt; recorded simulation" loading="lazy" allowfullscreen></iframe>
+  <iframe src="../../../simulator/?scenario=sram-storage-bank" title="SRAMStorageBank&lt;W&gt; recorded simulation" loading="lazy" allowfullscreen></iframe>
 </div>
 
-<a href="../../simulator/?scenario=sram-storage-bank" class="md-button">Open SRAMStorageBank&lt;W&gt; in the simulator</a>
+<a href="../../../simulator/?scenario=sram-storage-bank" class="md-button">Open SRAMStorageBank&lt;W&gt; in the simulator</a>
 
 ### Source and tests
 
@@ -411,9 +450,10 @@ The standalone `SRAMStorageBankTest` opens this component as `SRAM_ROOT`. Use th
 | Test | Coverage |
 | --- | --- |
 | [`SRAMStorageBankTest`](https://github.com/arnold518/reinventing-the-wheel/blob/github-pages/src/tests/SRAMTests.cpp) | The complete standalone sequence shown above |
+| `SRAMClockedTest`, `SRAMClockedSubarrayTest` | The clocked macro, small and split into subarrays, against its compact form |
 | `SRAMContractTest` | Structural/behavioral equivalence; device and bank widths 8/16/32, multiple geometries and byte masks, mixed bank selection, and invalid configuration rejection |
 
-## 3.1.2.5. `SRAMRowDecoder`
+## 3.3.2.5. `SRAMRowDecoder`
 
 Decodes the row portion of a word address.
 
@@ -443,7 +483,7 @@ std::vector<bool> sram_rows_ref(std::uint32_t address, bool enable,
 }
 ```
 
-#### Unknown inputs and timing
+#### Unknown inputs
 
 Unknown address bits propagate through the gates and may produce unknown wordlines; the bitline model then suppresses writes. A known low `ENABLE` deselects all rows even with an unknown address. The structural decoder accepts up to 512 words; complete structural devices apply the stricter W-dependent cell limit.
 
@@ -451,7 +491,11 @@ Unknown address bits propagate through the gates and may produce unknown wordlin
 
 #### Structural implementation
 
-An address splitter, complemented address bits, and balanced AND trees implement the row matches. The shared `decodeMatch` construction routine builds those trees after this wrapper extracts the row-address bits. No storage or direct host indexing is used; gate names and hierarchy remain unchanged. See [helper reuse boundaries](3.1.0.md#reuse-boundaries).
+An address splitter, complemented address bits, and balanced AND trees implement the row matches. The shared `decodeMatch` construction routine builds those trees after this wrapper extracts the row-address bits. No storage or direct host indexing is used; gate names and hierarchy remain unchanged. See [helper reuse boundaries](../building-blocks.md#reuse-boundaries).
+
+### Timing
+
+Built from gates only, so it has no delay table of its own: each output settles when the gates on its path do, under the [gate delays of the active profile](../../timing.md#timing-profiles). Its delay is part of the proven tables of the bank and device built on it.
 
 ### Examples
 
@@ -461,13 +505,13 @@ Six words arranged two per row demonstrate both word slots in each of three rows
 
 #### Embedded simulation
 
-The standalone `SRAMRowDecoderTest` opens this component as `SRAM_ROOT`. Expand the component where it has structural children; a terminal digital primitive is intentionally a leaf.
+The standalone `SRAMRowDecoderTest` opens this component as `SRAM_ROOT`.
 
 <div class="simulator-embed">
-  <iframe src="../../simulator/?scenario=sram-row-decoder" title="SRAMRowDecoder recorded simulation" loading="lazy" allowfullscreen></iframe>
+  <iframe src="../../../simulator/?scenario=sram-row-decoder" title="SRAMRowDecoder recorded simulation" loading="lazy" allowfullscreen></iframe>
 </div>
 
-<a href="../../simulator/?scenario=sram-row-decoder" class="md-button">Open SRAMRowDecoder in the simulator</a>
+<a href="../../../simulator/?scenario=sram-row-decoder" class="md-button">Open SRAMRowDecoder in the simulator</a>
 
 ### Source and tests
 
@@ -479,7 +523,7 @@ The standalone `SRAMRowDecoderTest` opens this component as `SRAM_ROOT`. Expand 
 | --- | --- |
 | [`SRAMRowDecoderTest`](https://github.com/arnold518/reinventing-the-wheel/blob/github-pages/src/tests/SRAMTests.cpp) | The complete standalone sequence shown above |
 
-## 3.1.2.6. `SRAMPrecharge`
+## 3.3.2.6. `SRAMPrecharge`
 
 Distributes precharge control to the physical columns.
 
@@ -504,15 +548,19 @@ std::vector<bool> sram_precharge_ref(bool enable, std::size_t columns) {
 }
 ```
 
-#### Unknown inputs and timing
+#### Unknown inputs
 
-Each buffer propagates X/Z as unknown logic. Outputs settle one gate tick after the input. Precharge completion in the complete device includes the downstream bitline delay.
+Each buffer propagates X/Z as unknown logic. Outputs settle one gate delay after the input. Precharge completion in the complete device includes the downstream bitline delay.
 
 ### Implementation
 
 #### Structural implementation
 
 One AND buffer with a constant-high input per column. These outputs actually drive the bitline primitives; the block is not a visual-only grouping.
+
+### Timing
+
+Built from gates only, so it has no delay table of its own: each output settles when the gates on its path do, under the [gate delays of the active profile](../../timing.md#timing-profiles). Its delay is part of the proven tables of the bank and device built on it.
 
 ### Examples
 
@@ -522,13 +570,13 @@ The two-column example asserts and releases precharge and shows an unknown contr
 
 #### Embedded simulation
 
-The standalone `SRAMPrechargeTest` opens this component as `SRAM_ROOT`. Expand the component where it has structural children; a terminal digital primitive is intentionally a leaf.
+The standalone `SRAMPrechargeTest` opens this component as `SRAM_ROOT`.
 
 <div class="simulator-embed">
-  <iframe src="../../simulator/?scenario=sram-precharge" title="SRAMPrecharge recorded simulation" loading="lazy" allowfullscreen></iframe>
+  <iframe src="../../../simulator/?scenario=sram-precharge" title="SRAMPrecharge recorded simulation" loading="lazy" allowfullscreen></iframe>
 </div>
 
-<a href="../../simulator/?scenario=sram-precharge" class="md-button">Open SRAMPrecharge in the simulator</a>
+<a href="../../../simulator/?scenario=sram-precharge" class="md-button">Open SRAMPrecharge in the simulator</a>
 
 ### Source and tests
 
@@ -540,7 +588,7 @@ The standalone `SRAMPrechargeTest` opens this component as `SRAM_ROOT`. Expand t
 | --- | --- |
 | [`SRAMPrechargeTest`](https://github.com/arnold518/reinventing-the-wheel/blob/github-pages/src/tests/SRAMTests.cpp) | The complete standalone sequence shown above |
 
-## 3.1.2.7. `SRAMWriteDriver`
+## 3.3.2.7. `SRAMWriteDriver`
 
 Generates one bit's complementary write values and masked drive enable.
 
@@ -567,7 +615,7 @@ SRAMDriveReference sram_drive_ref(bool data, bool enable, bool mask) {
 }
 ```
 
-#### Unknown inputs and timing
+#### Unknown inputs
 
 Unknown data produces an unknown pair. Unknown drive control is rejected by the bitline primitive and does not authorize a write. Complement generation includes its own gate delay; the access sequencer establishes write drive before activating the row.
 
@@ -577,6 +625,10 @@ Unknown data produces an unknown pair. Unknown drive control is rejected by the 
 
 `ENABLED_BYTE` is an AND gate, `DATA` is a buffer, and `COMPLEMENT` is a NOT gate. No electrical drive strength is calculated.
 
+### Timing
+
+Built from gates only, so it has no delay table of its own: each output settles when the gates on its path do, under the [gate delays of the active profile](../../timing.md#timing-profiles). Its delay is part of the proven tables of the bank and device built on it.
+
 ### Examples
 
 <!-- simulator-examples: sram-write-driver SRAMWriteDriverTest -->
@@ -585,13 +637,13 @@ All eight binary combinations of data, enable, and byte mask are included.
 
 #### Embedded simulation
 
-The standalone `SRAMWriteDriverTest` opens this component as `SRAM_ROOT`. Expand the component where it has structural children; a terminal digital primitive is intentionally a leaf.
+The standalone `SRAMWriteDriverTest` opens this component as `SRAM_ROOT`.
 
 <div class="simulator-embed">
-  <iframe src="../../simulator/?scenario=sram-write-driver" title="SRAMWriteDriver recorded simulation" loading="lazy" allowfullscreen></iframe>
+  <iframe src="../../../simulator/?scenario=sram-write-driver" title="SRAMWriteDriver recorded simulation" loading="lazy" allowfullscreen></iframe>
 </div>
 
-<a href="../../simulator/?scenario=sram-write-driver" class="md-button">Open SRAMWriteDriver in the simulator</a>
+<a href="../../../simulator/?scenario=sram-write-driver" class="md-button">Open SRAMWriteDriver in the simulator</a>
 
 ### Source and tests
 
@@ -603,7 +655,7 @@ The standalone `SRAMWriteDriverTest` opens this component as `SRAM_ROOT`. Expand
 | --- | --- |
 | [`SRAMWriteDriverTest`](https://github.com/arnold518/reinventing-the-wheel/blob/github-pages/src/tests/SRAMTests.cpp) | The complete standalone sequence shown above |
 
-## 3.1.2.8. `SRAMSenseAmplifier`
+## 3.3.2.8. `SRAMSenseAmplifier`
 
 Digital primitive that accepts a valid symbolic read differential.
 
@@ -630,15 +682,19 @@ std::optional<bool> sram_sense_ref(bool bl, bool bar, bool valid, bool enable) {
 }
 ```
 
-#### Unknown inputs and timing
+#### Unknown inputs
 
-X/Z or a noncomplementary pair cannot produce a known bit. Output delay is one tick. This model does not calculate differential voltage, gain, noise, or sense-amplifier offset.
+X/Z or a noncomplementary pair cannot produce a known bit. This model does not calculate differential voltage, gain, noise, or sense-amplifier offset.
 
 ### Implementation
 
 #### Structural implementation
 
-A registered terminal digital primitive. It provides the sensing boundary used by the structural device; there is no separate behavioral replacement.
+A memory primitive. It provides the sensing boundary used by the structural device; there is no separate behavioral replacement.
+
+### Timing
+
+A memory primitive: `Q` and `VALID` follow their inputs after one memory-primitive delay (one FO4 inverter delay in the realistic profiles; see the [leaf delays](../../timing.md#timing-profiles)).
 
 ### Examples
 
@@ -648,13 +704,13 @@ Disabled sensing, the equalized pair, both valid bit values, and an invalid pair
 
 #### Embedded simulation
 
-The standalone `SRAMSenseAmplifierTest` opens this component as `SRAM_ROOT`. Expand the component where it has structural children; a terminal digital primitive is intentionally a leaf.
+The standalone `SRAMSenseAmplifierTest` opens this component as `SRAM_ROOT`.
 
 <div class="simulator-embed">
-  <iframe src="../../simulator/?scenario=sram-sense-amplifier" title="SRAMSenseAmplifier recorded simulation" loading="lazy" allowfullscreen></iframe>
+  <iframe src="../../../simulator/?scenario=sram-sense-amplifier" title="SRAMSenseAmplifier recorded simulation" loading="lazy" allowfullscreen></iframe>
 </div>
 
-<a href="../../simulator/?scenario=sram-sense-amplifier" class="md-button">Open SRAMSenseAmplifier in the simulator</a>
+<a href="../../../simulator/?scenario=sram-sense-amplifier" class="md-button">Open SRAMSenseAmplifier in the simulator</a>
 
 ### Source and tests
 
@@ -666,7 +722,7 @@ The standalone `SRAMSenseAmplifierTest` opens this component as `SRAM_ROOT`. Exp
 | --- | --- |
 | [`SRAMSenseAmplifierTest`](https://github.com/arnold518/reinventing-the-wheel/blob/github-pages/src/tests/SRAMTests.cpp) | The complete standalone sequence shown above |
 
-## 3.1.2.9. `SRAMColumnSelector<W>`
+## 3.3.2.9. `SRAMColumnSelector<W>`
 
 Routes one word's read pairs and write enables among K column groups.
 
@@ -715,7 +771,7 @@ SRAMColumnReference sram_select_ref(std::uint32_t address, std::size_t width,
 }
 ```
 
-#### Unknown inputs and timing
+#### Unknown inputs
 
 Unknown slot bits follow the gate/multiplexer rules. Full-address range checking belongs to the row decoder, not this selector. `K = 1` uses buffered pass-through paths rather than a multiplexer tree.
 
@@ -725,6 +781,10 @@ Unknown slot bits follow the gate/multiplexer rules. Full-address range checking
 
 A low-bit slot decoder gates write excitation. Separate mux trees select `BL`, `BL_BAR`, and `VALID` for each read lane. The shared `selectMuxTree` construction routine creates those existing trees; it does not replace them with host indexing or a post-sense word mux. Buffers carry write values to the column groups.
 
+### Timing
+
+Built from gates only, so it has no delay table of its own: each output settles when the gates on its path do, under the [gate delays of the active profile](../../timing.md#timing-profiles). Its delay is part of the proven tables of the bank and device built on it.
+
 ### Examples
 
 <!-- simulator-examples: sram-column-selector SRAMColumnSelectorTest -->
@@ -733,13 +793,13 @@ Two word slots contain opposite bit patterns. The example verifies every selecte
 
 #### Embedded simulation
 
-The standalone `SRAMColumnSelectorTest` opens this component as `SRAM_ROOT`. Expand the component where it has structural children; a terminal digital primitive is intentionally a leaf.
+The standalone `SRAMColumnSelectorTest` opens this component as `SRAM_ROOT`.
 
 <div class="simulator-embed">
-  <iframe src="../../simulator/?scenario=sram-column-selector" title="SRAMColumnSelector&lt;W&gt; recorded simulation" loading="lazy" allowfullscreen></iframe>
+  <iframe src="../../../simulator/?scenario=sram-column-selector" title="SRAMColumnSelector&lt;W&gt; recorded simulation" loading="lazy" allowfullscreen></iframe>
 </div>
 
-<a href="../../simulator/?scenario=sram-column-selector" class="md-button">Open SRAMColumnSelector&lt;W&gt; in the simulator</a>
+<a href="../../../simulator/?scenario=sram-column-selector" class="md-button">Open SRAMColumnSelector&lt;W&gt; in the simulator</a>
 
 ### Source and tests
 
@@ -751,9 +811,10 @@ The standalone `SRAMColumnSelectorTest` opens this component as `SRAM_ROOT`. Exp
 | --- | --- |
 | [`SRAMColumnSelectorTest`](https://github.com/arnold518/reinventing-the-wheel/blob/github-pages/src/tests/SRAMTests.cpp) | The complete standalone sequence shown above |
 
-## 3.1.2.10. `SRAMAccessControl<W>`
+## 3.3.2.10. `SRAMAccessControl<W>`
 
-Timed digital primitive sequencing an asynchronous access.
+Sequences an asynchronous access with gates and delay lines, and reports
+when the data is valid.
 
 ### IO pins
 
@@ -762,91 +823,100 @@ Timed digital primitive sequencing an asynchronous access.
 | `WORD_ADDR` | Input | 32 | Requested word index |
 | `WRITE_DATA` | Input | W | Write data |
 | `WRITE_MASK` | Input | W/8 | Byte write enables |
-| `CE_N, WE_N, OE_N` | Input | 1 each | Active-low chip, write, and output enables |
-| `ADDRESS, DATA, MASK` | Output | 32, W, W/8 | Staged address and write signals |
-| `PRECHARGE, ROW_ENABLE, WRITE_ENABLE, SENSE_ENABLE, OUTPUT_ENABLE` | Output | 1 each | Internal phase controls |
+| `CE_N`, `WE_N`, `OE_N` | Input | 1 each | Active-low chip, write and output enables |
+| `ADDRESS` | Output | 32 | Held word address |
+| `DATA` | Output | W | Held write data |
+| `MASK` | Output | W/8 | Held byte mask |
+| `PRECHARGE`, `ROW_ENABLE`, `WRITE_ENABLE`, `SENSE_ENABLE`, `OUTPUT_ENABLE` | Output | 1 each | Stage controls for the bank and periphery |
+| `READY` | Output | 1 | The access has finished: read data is valid, or the write is done |
 
 ### Behavior
 
-A selected operation follows the timing sequence described above. Address changes, CE/WE changes, and write data/mask changes during a write restart it safely. Old address/data remain staged while the previous row is being disabled. OE only gates the completed read output; it does not restart the access. Write data/mask changes during a read are ignored.
+The stages of the [access timing](#access-timing) table, as outputs:
 
-Queued timer events recheck the current deadline and phase. Canceling or replacing a request prevents an old timer from completing that previous request.
+| Output | High while |
+| --- | --- |
+| `PRECHARGE` | Settled and selected, until the precharge interval has passed |
+| `WRITE_ENABLE` | After precharge, for a write (`WE_N` low) |
+| `ROW_ENABLE` | After the decoder replica |
+| `SENSE_ENABLE` | After the bitline interval, for a read |
+| `OUTPUT_ENABLE` | Sensing, for a read, with `OE_N` low |
+| `READY` | After sensing and the output path |
+
+A change of the address, `CE_N` or `WE_N`, or of the data or mask during a
+write, clears every stage at once; the sequence restarts when the inputs are
+steady again. The held buses keep the old values until the new inputs have
+settled, so the array never sees a change in progress. Data and mask changes
+during a read are ignored. `CE_N` high deselects: every stage stays low.
 
 #### C++ example
 
+The stage outputs as a function of how long the inputs have been steady,
+for stage durations taken from the profile (gate delays inside each stage
+are left out).
+
 ```cpp
 #include <cstddef>
-#include <cstdint>
-#include <optional>
-#include <tuple>
 struct SRAMControlReference {
-    enum class Phase { Idle, Quiet, Precharge, Release, Access, Ready };
-    Phase phase = Phase::Idle;
-    struct Inputs {
-        std::uint32_t address = 0, data = 0;
-        unsigned mask = 0;
-        bool ce_n = true, we_n = true, oe_n = true;
+    // Settle, precharge, decode replica, bitline and sense, output path.
+    std::size_t settle, precharge, decode, bitline, output;
+    struct Outputs {
+        bool precharge = false, write_enable = false, row_enable = false;
+        bool sense_enable = false, output_enable = false, ready = false;
     };
-    using Signature = std::tuple<std::uint32_t, bool, bool, std::uint32_t, unsigned>;
-    std::optional<Signature> signature;
-    Inputs pending;
-    std::size_t due = 0;
-    std::uint32_t address = 0, data = 0;
-    unsigned mask = 0;
-    bool precharge = false, row_enable = false, write_enable = false;
-    bool sense_enable = false, output_enable = false;
-    void update(std::size_t now, std::size_t ticks, const Inputs& in) {
-        Signature next{in.address, in.ce_n, in.we_n,
-                       in.we_n ? 0 : in.data, in.we_n ? 0 : in.mask};
-        if (signature != next) { // OE and read-mode write buses do not restart.
-            signature = next; pending = in;
-            precharge = row_enable = write_enable = sense_enable = false;
-            phase = in.ce_n ? Phase::Idle : Phase::Quiet;
-            due = in.ce_n ? 0 : now + ticks;
-        } else if (due && now >= due) {
-            switch (phase) {
-            case Phase::Quiet:
-                address = pending.address; data = pending.data; mask = pending.mask;
-                precharge = true; phase = Phase::Precharge; break;
-            case Phase::Precharge:
-                precharge = false; write_enable = !pending.we_n;
-                phase = Phase::Release; break;
-            case Phase::Release: row_enable = true; phase = Phase::Access; break;
-            case Phase::Access: sense_enable = pending.we_n; phase = Phase::Ready; break;
-            default: break;
-            }
-            due = phase == Phase::Ready ? 0 : now + ticks;
-        }
-        output_enable = phase == Phase::Ready && !in.ce_n && in.we_n && !in.oe_n;
+    // `steady`: ticks since the address, CE_N, WE_N (and, during a write,
+    // the data or mask) last changed.
+    Outputs at(std::size_t steady, bool ce_n, bool we_n, bool oe_n) const {
+        if (ce_n) return {};
+        const std::size_t s1 = settle + precharge, s2 = s1 + decode,
+                          s3 = s2 + bitline, s4 = s3 + output;
+        const bool reading = we_n;
+        return {steady >= settle && steady < s1, steady >= s1 && !reading,
+                steady >= s2, steady >= s3 && reading,
+                steady >= s3 && reading && !oe_n, steady >= s4};
     }
 };
 ```
 
-#### Unknown inputs and timing
+#### Unknown inputs
 
-Call `update` on input changes and at every nonzero `due`; a superseded deadline is harmless because the current request owns `due`. Inputs changing exactly at a deadline restart the access before that old phase can advance. Unknown CE/WE suppress operation; unknown OE disables output. Unknown addresses are passed through and handled by the row/bitline circuitry. The example assumes binary inputs and valid positive `ticks`. This is a conservative digital timing contract, not a specific vendor's timing model.
+An unknown address, `CE_N` or `WE_N` makes the stages, and so the controls
+and `READY`, unknown. Unknown `OE_N` makes `OUTPUT_ENABLE` unknown.
 
 ### Implementation
 
 #### Structural implementation
 
-A registered terminal timing primitive implemented by `AccessSequence`. It schedules future evaluations in the existing simulator. No global clock, wire change, or new engine event type is required.
+A [`MemoryTimer`](../building-blocks.md#memorytimer) with one input per
+address, data and mask bit plus `CE_N` and `WE_N`. Data and mask restart the
+access only while the held `WE_N` is low (the timer's condition input). Its
+stages are: the precharge delay line; a replica of the row decoder (the
+longer of the decoder and the precharge release, plus one gate); the bitline
+delay line with a replica of the sense path; and the output path. A few
+gates turn the stages into the six controls in the table above. The settle
+copies of the inputs drive `ADDRESS`, `DATA` and `MASK`.
+
+### Timing
+
+Built from gates and delay lines, so it has no delay table of its own; its
+stages use the SRAM intervals of the [access timing](#access-timing) table.
+The SRAM device's table below includes it.
 
 ### Examples
 
 <!-- simulator-examples: sram-access-control SRAMAccessControlTest -->
 
-The standalone checkpoints show deselection, completed read, OE-only disable, completed write, and deselection. Intermediate precharge/release/access phases remain visible on the timeline. `SRAMTimingTest` additionally checks partial accesses and stale timers.
+The standalone checkpoints show deselection, a completed read, an `OE_N`-only disable, a completed write, and deselection. The stages in between are visible on the timeline. `SRAMTimingTest` also checks interrupted accesses.
 
 #### Embedded simulation
 
-The standalone `SRAMAccessControlTest` opens this component as `SRAM_ROOT`. Expand the component where it has structural children; a terminal digital primitive is intentionally a leaf.
+The standalone `SRAMAccessControlTest` opens this component as `SRAM_ROOT`. Expand `ACCESS_TIMER` to follow the stages.
 
 <div class="simulator-embed">
-  <iframe src="../../simulator/?scenario=sram-access-control" title="SRAMAccessControl&lt;W&gt; recorded simulation" loading="lazy" allowfullscreen></iframe>
+  <iframe src="../../../simulator/?scenario=sram-access-control" title="SRAMAccessControl&lt;W&gt; recorded simulation" loading="lazy" allowfullscreen></iframe>
 </div>
 
-<a href="../../simulator/?scenario=sram-access-control" class="md-button">Open SRAMAccessControl&lt;W&gt; in the simulator</a>
+<a href="../../../simulator/?scenario=sram-access-control" class="md-button">Open SRAMAccessControl&lt;W&gt; in the simulator</a>
 
 ### Source and tests
 
@@ -857,9 +927,9 @@ The standalone `SRAMAccessControlTest` opens this component as `SRAM_ROOT`. Expa
 | Test | Coverage |
 | --- | --- |
 | [`SRAMAccessControlTest`](https://github.com/arnold518/reinventing-the-wheel/blob/github-pages/src/tests/SRAMTests.cpp) | The complete standalone sequence shown above |
-| `SRAMTimingTest` | Canceled short writes, incomplete reads, superseded address requests, and eventual event-queue quiescence |
+| `SRAMTimingTest` | Interrupted writes and reads, superseded addresses, and a quiet event queue afterwards |
 
-## 3.1.2.11. `SRAMOutputBuffer<W>`
+## 3.3.2.11. `SRAMOutputBuffer<W>`
 
 Digital output-enable primitive with high-impedance disabled output.
 
@@ -886,15 +956,19 @@ std::optional<std::uint32_t> sram_output_ref(std::uint32_t data, bool enable) {
 }
 ```
 
-#### Unknown inputs and timing
+#### Unknown inputs
 
-An unknown/Z enable produces X rather than choosing between driving and disconnecting. Enabled data preserves its four-state values. Output delay is one tick.
+An unknown/Z enable produces X rather than choosing between driving and disconnecting. Enabled data preserves its four-state values.
 
 ### Implementation
 
 #### Structural implementation
 
-A compatibility wrapper inheriting the common [MemoryOutputBuffer implementation](3.1.0.md#3105-memoryoutputbufferw). It retains the SRAM catalog ID, display name, pins, and one-tick delay without adding a child component. The implementation is a terminal digital primitive because ordinary Boolean gates cannot produce the required Z output. There is no separate behavioral replacement.
+A compatibility wrapper inheriting the common [MemoryOutputBuffer implementation](../building-blocks.md#325-memoryoutputbufferw). It retains the SRAM catalog ID, display name, pins and delay without adding a child component. It is a memory primitive because ordinary Boolean gates cannot produce the required Z output. There is no separate behavioral replacement.
+
+### Timing
+
+The same primitive as [`MemoryOutputBuffer`](../building-blocks.md#325-memoryoutputbufferw): one memory-primitive delay.
 
 ### Examples
 
@@ -904,13 +978,13 @@ The example checks disabled Z, enabled data, unknown enable, and returning to di
 
 #### Embedded simulation
 
-The standalone `SRAMOutputBufferTest` opens this component as `SRAM_ROOT`. Expand the component where it has structural children; a terminal digital primitive is intentionally a leaf.
+The standalone `SRAMOutputBufferTest` opens this component as `SRAM_ROOT`.
 
 <div class="simulator-embed">
-  <iframe src="../../simulator/?scenario=sram-output-buffer" title="SRAMOutputBuffer&lt;W&gt; recorded simulation" loading="lazy" allowfullscreen></iframe>
+  <iframe src="../../../simulator/?scenario=sram-output-buffer" title="SRAMOutputBuffer&lt;W&gt; recorded simulation" loading="lazy" allowfullscreen></iframe>
 </div>
 
-<a href="../../simulator/?scenario=sram-output-buffer" class="md-button">Open SRAMOutputBuffer&lt;W&gt; in the simulator</a>
+<a href="../../../simulator/?scenario=sram-output-buffer" class="md-button">Open SRAMOutputBuffer&lt;W&gt; in the simulator</a>
 
 ### Source and tests
 
@@ -922,9 +996,10 @@ The standalone `SRAMOutputBufferTest` opens this component as `SRAM_ROOT`. Expan
 | --- | --- |
 | [`SRAMOutputBufferTest`](https://github.com/arnold518/reinventing-the-wheel/blob/github-pages/src/tests/SRAMTests.cpp) | The complete standalone sequence shown above |
 
-## 3.1.2.12. `SRAM<W>`
+## 3.3.2.12. `SRAM<W>`
 
-Complete word-addressed asynchronous SRAM device.
+Complete word-addressed SRAM device: an asynchronous chip, or with
+`clocked=1` an on-chip clocked macro.
 
 ### IO pins
 
@@ -936,15 +1011,32 @@ Complete word-addressed asynchronous SRAM device.
 | `CE_N` | Input | 1 | Low selects the device |
 | `WE_N` | Input | 1 | Low requests writing; high requests reading |
 | `OE_N` | Input | 1 | Low enables a completed read output |
-| `READ_DATA` | Output | W | Read result, or Z while disabled/writing/accessing |
+| `CLK` | Input | 1 | Clocked macro only: inputs are registered at its rising edge |
+| `READ_DATA` | Output | W | Read result, or Z while disabled, writing or accessing |
+| `READY` | Output | 1 | The access has finished |
 
 ### Behavior
 
-`CE_N = 1` disables access without clearing memory. With `CE_N = 0`, `WE_N = 0` writes the enabled bytes after the access phases; `WE_N = 1` reads. OE controls only read output. A zero write mask changes no bits. Reads are nondestructive. There is no clock, reset, refresh command, READY handshake, or hardware FAULT pin.
+`CE_N = 1` disables access without clearing memory. With `CE_N = 0`, `WE_N = 0`
+writes the enabled bytes once the selected row opens; `WE_N = 1` reads. `READY`
+rises when the read data is valid or the write is done, and falls when a new
+access starts. `OE_N` controls only the read output. A zero write mask changes
+no bits. Reads are nondestructive. There is no reset or refresh, and no
+fault pin: a known out-of-range read returns X and an out-of-range write
+changes no cells.
 
-A known out-of-range read returns X after access; an out-of-range write changes no cells. Unknown address/control handling is a simulator rule, not a hardware exception mechanism. Use the SRAM-specific [memory controller](3.3.md) to connect this native port to the shared transaction protocol.
+The asynchronous chip starts an access whenever its inputs change and have
+settled ([access timing](#access-timing)). The clocked macro registers its
+inputs at a rising `CLK` edge with `CE_N` low and holds the result until the
+next access. The SRAM [memory controller](../controllers.md) connects either
+form to the transaction protocol.
 
 #### C++ example
+
+One access whose inputs have been steady for `steady` ticks, with the stage
+durations of [`SRAMControlReference`](#33210-sramaccesscontrolw). A write lands
+once the row is open with the write enabled, so an access interrupted earlier
+writes nothing.
 
 ```cpp
 #include <cstddef>
@@ -954,56 +1046,68 @@ A known out-of-range read returns X after access; an out-of-range write changes 
 template<std::size_t W> struct SRAMReference {
     static_assert(W == 8 || W == 16 || W == 32);
     using Word = std::vector<std::optional<bool>>;
+    struct Inputs {
+        std::uint32_t address = 0, data = 0;
+        unsigned mask = 0;
+        bool ce_n = true, we_n = true, oe_n = true;
+    };
     std::vector<Word> words;
-    SRAMControlReference control;
     Word read_data = Word(W);
-    bool high_z = true;
+    bool high_z = true, ready = false;
     explicit SRAMReference(std::size_t count) : words(count, Word(W)) {}
-    void update(std::size_t now, std::size_t ticks, const SRAMControlReference::Inputs& in) {
-        const auto previous = control.phase;
-        control.update(now, ticks, in);
-        const bool valid = control.address < words.size();
-        if (previous == SRAMControlReference::Phase::Release &&
-            control.phase == SRAMControlReference::Phase::Access && control.write_enable && valid) {
+    void update(const SRAMControlReference& control, std::size_t steady, const Inputs& in) {
+        const auto stage = control.at(steady, in.ce_n, in.we_n, in.oe_n);
+        const bool valid = in.address < words.size();
+        if (stage.write_enable && stage.row_enable && valid)
             for (unsigned b = 0; b < W; ++b)
-                if (control.mask & (1u << (b / 8)))
-                    words[control.address][b] = bool((control.data >> b) & 1u);
-        }
-        high_z = !control.output_enable;
-        read_data = !high_z && valid ? words[control.address] : Word(W);
+                if (in.mask & (1u << (b / 8)))
+                    words[in.address][b] = bool((in.data >> b) & 1u);
+        ready = stage.ready;
+        high_z = !stage.output_enable;
+        read_data = !high_z && valid ? words[in.address] : Word(W);
     }
 };
 ```
 
-#### Unknown inputs and timing
+#### Unknown inputs
 
-The example includes unknown startup, partial initialization, byte masks, output disable, invalid addresses, request cancellation, and access deadlines. `high_z` distinguishes a disabled output from an enabled unknown word. Its inputs are binary and geometry is prevalidated; unknown write data additionally makes only enabled bits unknown, and unknown byte enables suppress writes to those lanes. Call at input changes and every `control.due`. Gate propagation is omitted; use at least `4*phase_ticks + 32` ticks for a conservative simulator settling budget.
+Storage starts unknown. Unknown write data makes only the enabled bits
+unknown; an unknown byte enable suppresses writes to that lane. An unknown
+address, `CE_N` or `WE_N` makes the stages unknown, so `READY` and the output
+are unknown. `high_z` in the example distinguishes a released output from an
+enabled unknown word.
 
 ### Implementation
 
 #### Structural implementation
 
-Combines `ACCESS_CONTROL`, `ROW_DECODE`, `PRECHARGE`, `STORAGE`, `COLUMN_SELECT`, W `WRITE_DRIVER_b` and `SENSE_b` instances, bus wiring, and `OUTPUT`. Each `SRAMWriteDriver` retains its own write-enable/mask gate and complementary data pair: the drive and bitline paths must keep their tested relative timing. Precharge control and repeated column-select complements are shared, while each bitline pair and sense amplifier remains visible. The device expands at most 4096 cells. The default 4×8 example has two rows, 16 bitline pairs, and 32 cells.
+Combines `ACCESS_CONTROL`, `ROW_DECODE`, `PRECHARGE`, `STORAGE`, `COLUMN_SELECT`, W `WRITE_DRIVER_b` and `SENSE_b` instances, bus wiring, and `OUTPUT`. Each `SRAMWriteDriver` keeps its own write-enable and mask gate and complementary data pair, so the drive and bitline paths keep their relative timing. Precharge control and repeated column-select complements are shared, while each bitline pair and sense amplifier remains visible. The default 4×8 example has two rows, 16 bitline pairs and 32 cells.
+
+An array of more than 32 rows is built from 32-row subarrays, each a complete `SRAM<W>` with its own access control. The asynchronous form sends the address over a global wire and lets the high address bits select one subarray; the clocked form lets every subarray take each access in parallel. Each subarray drives a shared return bus for `READ_DATA` and `READY` (`READY` is pulled low while no subarray drives it). The wire and bus delays grow with the side of the subarray grid. Gate-level devices are limited to 4,096 cells in all.
 
 #### Behavioral implementation
 
-The same access sequencer controls a packed, optionally paged `MemoryStorage`. It preserves native pins and unknown startup without expanding rows/cells. Capacity is bounded by 32-bit byte addressing and explicit allocation/history budgets. Setup image loading is allowed only before simulation starts. Selecting behavioral fidelity at `STORAGE` instead retains the complete device's visible peripheral circuitry and its small-bank geometry limit.
+The compact device keeps the native pins and unknown startup with a packed, optionally paged `MemoryStorage` instead of rows and cells, and publishes `READY` and the data at the delays proven on the gate-level device. Capacity is bounded by 32-bit byte addressing and the allocation and history budgets. An image can be loaded only before simulation starts. Selecting behavioral fidelity at `STORAGE` instead keeps the device's visible peripheral circuits and its small-bank limit.
+
+### Timing
+
+<!-- timing-table: memory.sram.device.8.behavioral -->
 
 ### Examples
 
 <!-- simulator-examples: sram SRAMTest -->
 
-Every recorded row is included: unknown startup, all four addresses, both 8-bit masks, OE disable, ignored read-mode write inputs, invalid accesses, retention readback, unknown writes, and unknown addressing. Wider 16/32-bit masks and other geometries are covered by the contract test.
+Every recorded row is included: unknown startup, all four addresses, both 8-bit masks, `OE_N` disable, ignored read-mode write inputs, invalid accesses, retention readback, unknown writes and unknown addressing. Wider 16/32-bit masks, other geometries and the clocked macro are covered by the contract and clocked tests.
 
 #### Embedded simulation
 
 The standalone `SRAMTest` opens this component as `SRAM_ROOT`. Use the explorer to compare structural and behavioral fidelity.
 
 <div class="simulator-embed">
-  <iframe src="../../simulator/?scenario=sram" title="SRAM&lt;W&gt; recorded simulation" loading="lazy" allowfullscreen></iframe>
+  <iframe src="../../../simulator/?scenario=sram" title="SRAM&lt;W&gt; recorded simulation" loading="lazy" allowfullscreen></iframe>
 </div>
 
-<a href="../../simulator/?scenario=sram" class="md-button">Open SRAM&lt;W&gt; in the simulator</a>
+<a href="../../../simulator/?scenario=sram" class="md-button">Open SRAM&lt;W&gt; in the simulator</a>
 
 ### Source and tests
 
@@ -1015,6 +1119,7 @@ The standalone `SRAMTest` opens this component as `SRAM_ROOT`. Use the explorer 
 | Test | Coverage |
 | --- | --- |
 | [`SRAMTest`](https://github.com/arnold518/reinventing-the-wheel/blob/github-pages/src/tests/SRAMTests.cpp) | The complete standalone sequence shown above |
+| `SRAMClockedTest`, `SRAMClockedSubarrayTest` | The clocked macro, small and split into subarrays, against its compact form |
 | `SRAMContractTest` | Structural/behavioral equivalence; device and bank widths 8/16/32, multiple geometries and byte masks, mixed bank selection, and invalid configuration rejection |
-| `SRAMTimingTest` | Canceled short writes, incomplete reads, superseded address requests, and eventual event-queue quiescence |
-| [`DocumentationExamplesTest`](https://github.com/arnold518/reinventing-the-wheel/blob/github-pages/tests/DocumentationExamplesTest.py) | Compile the exact page snippets; exercise cell/bitline conflicts, bank reads/writes, column routing, masks, cancellation, and deadlines; replay the device scenario's uninterrupted binary-input prefix against recorded outputs |
+| `SRAMTimingTest` | Interrupted writes and reads, superseded addresses, and a quiet event queue afterwards |
+| [`DocumentationExamplesTest`](https://github.com/arnold518/reinventing-the-wheel/blob/github-pages/tests/DocumentationExamplesTest.py) | Compile the exact page snippets; exercise cell/bitline conflicts, bank reads and writes, column routing, masks and interrupted accesses; replay the device scenario's binary-input prefix against recorded outputs |

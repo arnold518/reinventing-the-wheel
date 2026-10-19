@@ -108,6 +108,7 @@ copyright: Copyright &copy; 2026 Jaemin Park
 
 nav:
   - Home: index.md
+  - Time and Delay: timing.md
   - ALU8:
       - 2.1. Arithmetic Components: alu8/2.1.md
       - 2.2. Logic Operations: alu8/2.2.md
@@ -116,18 +117,20 @@ nav:
       - 2.5. Flags: alu8/2.5.md
       - 2.6. Complete ALU8: alu8/2.6.md
   - Memories:
-      - 3.1. Memory Devices:
-          - memory/3.1/index.md
-          - 3.1.0. Helper Components: memory/3.1.0.md
-          - 3.1.1. Flip-Flop Storage: memory/3.1.1.md
-          - 3.1.2. SRAM: memory/3.1.2.md
-          - 3.1.3. DRAM: memory/3.1.3.md
-          - 3.1.4. ROM: memory/3.1.4.md
-          - 3.1.5. NOR Flash: memory/3.1.5.md
-          - 3.1.6. Scalable native devices: memory/3.1.6.md
-      - 3.2. Memory Transactions: memory/3.2.md
-      - 3.3. Memory Controllers: memory/3.3.md
-      - 3.4. Caches: memory/3.4.md
+      - 3.1. Memory Architecture: memory/architecture.md
+      - 3.2. Shared Building Blocks: memory/building-blocks.md
+      - 3.3. Memory Technologies:
+          - memory/technologies/index.md
+          - 3.3.1. Flip-Flop Storage: memory/technologies/flip-flop.md
+          - 3.3.2. SRAM: memory/technologies/sram.md
+          - 3.3.3. DRAM: memory/technologies/dram.md
+          - 3.3.4. ROM: memory/technologies/rom.md
+          - 3.3.5. NOR Flash: memory/technologies/nor-flash.md
+          - 3.3.6. Scalable Native Devices: memory/technologies/scalable.md
+      - 3.4. Transaction Protocol: memory/transactions.md
+      - 3.5. Controllers and Endpoints: memory/controllers.md
+      - 3.6. Memory Timing: memory/timing.md
+      - 3.7. Caches: memory/caches.md
   - RV32I:
       - 4.1. RV32I Reference:
           - rv32i/4.1/index.md

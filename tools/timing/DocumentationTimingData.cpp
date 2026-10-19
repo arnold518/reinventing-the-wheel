@@ -256,6 +256,25 @@ std::string json() {
             << ", \"minimum_high\": " << ff.minimum_high << ", \"minimum_low\": " << ff.minimum_low << "},\n"
             << "     \"sram_cell\": {\"earliest\": " << cell.earliest << ", \"latest\": " << cell.latest
             << ", \"minimum_spacing\": " << cell.minimum_spacing << "},\n"
+            << "     \"memory_intervals\": {";
+        const auto& m = profile.memory;
+        const std::vector<std::pair<const char*, size_t>> intervals = {
+            {"sram_settle", m.sram_settle}, {"sram_precharge", m.sram_precharge},
+            {"sram_bitline_base", m.sram_bitline_base}, {"sram_bitline_per_row", m.sram_bitline_per_row},
+            {"sram_wire_per_side", m.sram_wire_per_side}, {"rom_settle", m.rom_settle},
+            {"rom_column_base", m.rom_column_base}, {"rom_column_per_row", m.rom_column_per_row},
+            {"dram_wordline", m.dram_wordline}, {"dram_sense_base", m.dram_sense_base},
+            {"dram_sense_per_row", m.dram_sense_per_row}, {"dram_restore", m.dram_restore},
+            {"dram_read", m.dram_read}, {"dram_write_on", m.dram_write_on}, {"dram_write_off", m.dram_write_off},
+            {"dram_write_recovery", m.dram_write_recovery}, {"dram_close", m.dram_close},
+            {"dram_precharge", m.dram_precharge}, {"dram_equalize", m.dram_equalize},
+            {"dram_refresh_restore", m.dram_refresh_restore}, {"dram_refresh_extra", m.dram_refresh_extra},
+            {"dram_refresh_interval", m.dram_refresh_interval}, {"dram_device_retention", m.dram_device_retention},
+            {"nor_read", m.nor_read}, {"nor_read_per_row", m.nor_read_per_row}, {"nor_pulse_end", m.nor_pulse_end},
+            {"nor_recovery", m.nor_recovery}, {"nor_program", m.nor_program}, {"nor_erase", m.nor_erase}};
+        for (size_t i = 0; i < intervals.size(); ++i)
+            out << (i ? ", " : "") << quoted(intervals[i].first) << ": " << intervals[i].second;
+        out << "},\n     \"dram_row_words\": " << m.dram_row_words << ",\n"
             << "     \"certified_periods\": {";
         bool first_core = true;
         for (const char* core : {"single", "baseline", "advanced"}) {

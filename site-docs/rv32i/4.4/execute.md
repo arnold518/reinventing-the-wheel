@@ -82,7 +82,7 @@ ExecuteOutputs execute(const ExecuteInputs& i) {
 }
 ```
 
-#### Unknown inputs and timing
+#### Unknown inputs
 
 Structural muxes/gates may isolate unused unknown data. The behavioral stage instead sets all three outputs to X if **any input bit** is nonbinary, even an unused operand or selector. Equivalence therefore covers settled binary inputs only. There is no clock or stored state. The catalog-selected compact stage uses gate-derived delays, while its settled-value computation does not reproduce intermediate gate glitches.
 
@@ -95,6 +95,12 @@ Structural muxes/gates may isolate unused unknown data. The behavioral stage ins
 #### Behavioral implementation
 
 `BehavioralStage`'s Execute branch computes the selected operation, comparison qualification, branch mux, and target selection directly, without gate objects or an instruction oracle. The family is `rv32i.single-cycle.execute`.
+
+### Timing
+
+The gate-level form settles through its gates; the compact form publishes within the proven bounds below ([Time and Delay](../../timing.md#compact-parts) explains tables, delay twins and clocked parts).
+
+<!-- timing-table: rv32i.single-cycle.execute.behavioral -->
 
 ### Examples
 

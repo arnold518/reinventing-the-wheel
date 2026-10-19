@@ -77,7 +77,7 @@ public:
 }
 ```
 
-#### Unknown inputs and timing
+#### Unknown inputs
 
 The behavioral model preserves each selected load bit and its sign extension, including unknown bits. Unknown neighboring bytes do not invalidate a known byte load. Address, size, and store-data integer conversions are binary abstractions; nonbinary controls/store operands are outside equivalence. Fault bits are forwarded. The catalog-selected stage uses gate-derived output delays; eligible paths can use a delay twin for current values. Neither fidelity adds a clock to this path. Allow the entire load-to-writeback path to settle.
 
@@ -90,6 +90,12 @@ LANES performs byte-lane formatting without constructing an unused guarded word-
 #### Behavioral implementation
 
 BehavioralStage's Memory branch evaluates the same combinational logic without MemoryRequestState or owned contents. Both implementations are registered as `rv32i.single-cycle.memory`.
+
+### Timing
+
+The gate-level form settles through its gates; the compact form publishes within the proven bounds below ([Time and Delay](../../timing.md#compact-parts) explains tables, delay twins and clocked parts).
+
+<!-- timing-table: rv32i.single-cycle.memory.behavioral -->
 
 ### Examples
 

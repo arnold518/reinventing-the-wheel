@@ -1,6 +1,6 @@
 # Status
 
-Updated: 2026-10-16.
+Updated: 2026-10-19.
 
 This is the living project-wide view. Rewrite it when the implementation or
 work state changes. Keep dated decisions and validation results in
@@ -102,23 +102,25 @@ work state changes. Keep dated decisions and validation results in
   cache's late inputs (389 at `embedded` 3300 ps for C-ID). Phase 8 under way: the gate-level clocked
   SRAM macro's write disturb (a finished write's drivers and word line still
   on when the next access's address arrived) is fixed by sizing its settle
-  line; compact and gate-level banks agree again. Full suite under `unit`:
-  461 of 467 passed. The strict-settling delay rule passes since the delay
-  twin times a flip-flop stuck at X from every clock edge. The visualizer
-  data is refreshed (cache floorplans, defaults for the new memory timing
-  parts, palette colors, removed parts dropped); the visualizer tests pass.
-  The suite is a `unit` suite by design; realistic profiles are covered by
-  `RV32IProfileSweepTest` and other profile-selecting tests.
-  Failing until the owner allows `site-docs/` updates:
-  `MemoryDeviceDocumentationTest`, `RegisterFileDocumentationTest` and three
-  `MemoryEndpointIntegrationTest` checks (`site-docs/` snippets, pages and
-  pin tables).
+  line; compact and gate-level banks agree again. The visualizer chooses the
+  timing profile (native and WebAssembly). Final full native suite under
+  `unit` at `dff56d5`: 467 of 470 (the three `site-docs` checks, since
+  rewritten); all 13 browser smoke checks pass (run one at a time in a
+  memory-capped scope). The suite is a `unit` suite by design; realistic
+  profiles are covered by `RV32IProfileSweepTest` and other profile-selecting
+  tests. The documentation phase is under way (below).
 
-- [Memory chapter rewrite](records/2026-10-18-memory-docs-rewrite.md): the
-  owner asked for a complete rewrite of `site-docs/memory/` (caches excluded
-  for now). Survey and comparison with the code are done; a timing-aware page
-  template is proposed (shared "Time and delay" page, generated per-profile
-  delay and latency tables). No public page changed yet.
+- [Memory chapter rewrite](records/2026-10-18-memory-docs-rewrite.md):
+  `site-docs/memory/` is rewritten (3.1 architecture, 3.2 shared building
+  blocks with the timing and control parts, 3.3 technologies with
+  3.3.1–3.3.6 as subsections, 3.4 protocol, 3.5 controllers and endpoints,
+  3.6 memory timing, 3.7 caches kept for their own rewrite) and a shared
+  "§ 1. Time and Delay" page added. Every component on the memory, ALU8 and
+  RV32I 4.3–4.4 pages has a Timing section with generated tables
+  (`tools/mkdocs_timing.py`; data from `documentation_timing_data`). The
+  native documentation checks pass; strict MkDocs passes. Open: browser
+  tests that open the old URLs, the diagram and plot review, 4.2
+  certificates, 4.7 results, the visualizer page, the Pages build.
 
 - [Future steps plan](records/2026-10-14-future-steps-plan.md): current CPU,
   memory and viewer boundaries assessed against interactive games, a

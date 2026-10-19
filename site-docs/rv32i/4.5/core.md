@@ -81,7 +81,7 @@ This connected-core scenario fills all four pipeline registers with independent 
 
 ### Memory integration
 
-Program fixtures supply separate [MemoryEndpoint&lt;ff,32&gt;](../../memory/3.3.md) instances for instructions and data, each 65,536 words (256 KiB) by default. Both ports require zero-wait timing: instruction/data reads and response status settle within the current cycle, and authorized stores use the shared rising edge. Fetch captures the instruction into IF/ID and Memory forwards a load into MEM/WB without an extra memory-wait cycle.
+Program fixtures supply separate [MemoryEndpoint&lt;ff,32&gt;](../../memory/controllers.md) instances for instructions and data, each 65,536 words (256 KiB) by default. Both ports require zero-wait timing: instruction/data reads and response status settle within the current cycle, and authorized stores use the shared rising edge. Fetch captures the instruction into IF/ID and Memory forwards a load into MEM/WB without an extra memory-wait cycle.
 
 | Memory component or assembly | Suitable for this core? | Use |
 | --- | --- | --- |
@@ -90,7 +90,7 @@ Program fixtures supply separate [MemoryEndpoint&lt;ff,32&gt;](../../memory/3.3.
 | `MemoryEndpoint<sram,32>`, `<dram,32>`, `<rom,32>`, `<nor-flash,32>` | No, with their current controllers | These endpoints require delayed-response handling |
 | Native `FFMemory` or another memory device alone | Not directly | Native pins need the matching controller to form an endpoint |
 
-The visible FF assembly can use [FFMemory&lt;32&gt; at behavioral fidelity](../../memory/3.1.6.md) for scalable storage, or [FFMemory&lt;32&gt;](../../memory/3.1.1.md) for a small cell-expanded circuit. Program-sized images should keep scalable storage. Capacity and fidelity do not change the timing contract. CPU reset clears the endpoint interface, not the stored program/data.
+The visible FF assembly can use [FFMemory&lt;32&gt; at behavioral fidelity](../../memory/technologies/scalable.md) for scalable storage, or [FFMemory&lt;32&gt;](../../memory/technologies/flip-flop.md) for a small cell-expanded circuit. Program-sized images should keep scalable storage. Capacity and fidelity do not change the timing contract. CPU reset clears the endpoint interface, not the stored program/data.
 
 !!! warning "Hazard stalls are not memory-wait support"
 

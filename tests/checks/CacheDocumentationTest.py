@@ -8,7 +8,7 @@ import tempfile
 
 ROOT = Path(__file__).resolve().parents[2]
 COMPILER = sys.argv[1] if len(sys.argv) > 1 else "c++"
-source = (ROOT / "site-docs/memory/3.4.md").read_text()
+source = (ROOT / "site-docs/memory/caches.md").read_text()
 snippet, = re.findall(r"```cpp\n(.*?)\n```", source, re.S)
 
 harness = r'''

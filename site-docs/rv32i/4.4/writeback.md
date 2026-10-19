@@ -46,7 +46,7 @@ WritebackOutputs writeback(const WritebackInputs& i) {
 }
 ```
 
-#### Unknown inputs and timing
+#### Unknown inputs
 
 For a known selector, the behavioral model copies the selected bit vector (or emits zero for selector 0), preserving selected X/Z bits. An unknown selector makes its output X. Structural mux logic can resolve or transform X/Z differently; the registered equivalence scope is settled binary values. Neither implementation stores a result. A catalog-selected behavioral output uses the mux tree’s characterized delay, shortened to its actual settling time when a delay twin can answer. Structural fidelity exposes each mux transition.
 
@@ -59,6 +59,12 @@ For a known selector, the behavioral model copies the selected bit vector (or em
 #### Behavioral implementation
 
 `BehavioralStage`'s Writeback branch selects the same input vector directly. The family is `rv32i.single-cycle.writeback`.
+
+### Timing
+
+The gate-level form settles through its gates; the compact form publishes within the proven bounds below ([Time and Delay](../../timing.md#compact-parts) explains tables, delay twins and clocked parts).
+
+<!-- timing-table: rv32i.single-cycle.writeback.behavioral -->
 
 ### Examples
 
