@@ -155,3 +155,60 @@ generator exists). Open until the owner confirms the template.
 - Not yet: no page uses the marker; the latency tables for memory access and
   the delay-rule tightness line need their own data (latency probes, a
   `DelayRuleTest --report` export).
+
+## 2026-10-19 — Documentation phase starts (testing finished)
+
+Testing finished (full native suite 467 of 470 with the three known
+`site-docs` checks; all 13 browser smoke checks), so the rewrite proceeds as
+the owner scheduled it. Decisions made without asking, as the goal requires:
+
+- **File layout:** descriptive file names under numbered titles, so a later
+  renumbering (for example when caches are rewritten) does not change the
+  addresses again: `memory/architecture.md` (3.1),
+  `memory/building-blocks.md` (3.2), `memory/technologies/` (3.3 and
+  3.3.1–3.3.6: `flip-flop`, `sram`, `dram`, `rom`, `nor-flash`,
+  `scalable`), `memory/transactions.md` (3.4), `memory/controllers.md`
+  (3.5), `memory/timing.md` (3.6), `memory/caches.md` (3.7, content kept
+  for its own rewrite). The shared page is `timing.md`, "§ 1. Time and
+  Delay", a top-level entry after Home.
+- **Old pages as a guide:** a one-off script moved each old page to its new
+  place (renumbering, links and anchors, the split of "Unknown inputs and
+  timing", a Timing section per component); every section is then
+  rewritten by hand against the current code (pins and forms of all 52
+  memory scenarios taken from `VisualizerSessionProbe`).
+- **Timing and control parts** (`MemoryTimer`, `MemoryDelayLine`,
+  `Synchronizer`, the request check and sequencers, …) are private parts
+  with no scenarios of their own. They are documented in 3.2 as the
+  building blocks the devices and controllers are made of, with their
+  contracts and where they are used, not as separate components with
+  embedded simulations; they can be explored inside the device and
+  controller scenarios.
+- **No hand-typed results:** every timing number on the new pages comes
+  from a generated marker.
+
+## 2026-10-19 — Generated timing data for the site
+
+- New tool `documentation_timing_data`
+  (`tools/timing/DocumentationTimingData.cpp`) writes
+  `tools/timing/documentation-timing.generated.json`: per profile the leaf
+  delays, the measured flip-flop and SRAM-cell contracts, the stored
+  certified core periods, and the access latency of each technology.
+  Latency: one access at a time through the catalog-built compact endpoint
+  (proven tables), 65,536 words (the experiment's 256 KiB), datasheet rows,
+  refresh off, SRAM/ROM wait states from `staticAccessCycles`, at the
+  advanced core's certified period; cycles from the accepting edge to the
+  edge that takes the response. NOR erase in the realistic profiles (410 ms,
+  about 10^8 cycles) is listed as its configured interval, not simulated.
+- `tools/mkdocs_timing.py` gains `<!-- latency-table: all|MEMORY,… -->` and
+  `<!-- profile-table: gates|flip-flop|sram-cell|clocks -->`.
+- **Measured** (`embedded` / `desktop`, cycles): flip-flop 0 / 0 (same
+  edge); asynchronous SRAM 3 / 3; clocked SRAM macro 2 / 2; ROM 2 / 2; DRAM
+  row hit 8 / 8, row closed 14 / 15, row conflict 20 / 22, write hit 7 / 9;
+  NOR read 34 / 47, program 36,555 / 52,490. These equal the phase-6
+  records (6.4b, 6.4c). A first run on a 64-word memory gave `desktop`
+  DRAM 14 / 20: the shorter decode of a two-row memory; the table now uses
+  the experiment's size.
+- **Checks:** `DocumentationTimingDataTest` (measures again, must equal the
+  file; 2 s) and `MemoryLatencyGatesTest` (the same accesses through the
+  gate-level endpoints on a 64-word memory in all three profiles: 38 of 38
+  equal; 17 s); `TimingTableDocumentationTest` passes.

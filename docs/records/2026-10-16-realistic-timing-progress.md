@@ -3141,3 +3141,45 @@ fixtures (14) and the generated-family spot check (15, advanced two-bit,
 - **Incident:** the session ended while the endpoint check was hanging on
   the missing layout (the host's load average had reached about 136 over
   15 minutes; no reboot). Nothing was left running.
+
+## 2026-10-19 — Phase 8: final full native suite
+
+- **Run:** `ctest --test-dir build-cleanup -j1` at `dff56d5` (isolated
+  build, `unit` profile, address space capped at 3.5 GiB), 8,741 s.
+- **Result:** 467 of 470 passed. The three failures are the expected
+  documentation checks that read the old `site-docs/` memory pages, which
+  wait for the memory chapter rewrite:
+  `RegisterFileDocumentationTest` (asserts `site-docs/memory/3.4.md` does
+  not exist; the cache page is there since the cache work),
+  `MemoryEndpointIntegrationTest` (the published pin tables and two C++
+  listings) and `MemoryDeviceDocumentationTest` (ROM and ROM address
+  control pin tables, the C++ listings, the page numbering).
+- `layout.json` was unchanged by the run (guard copy compared).
+
+## 2026-10-19 — Phase 8: browser smoke suite, one check at a time
+
+- **Two session losses explained.** Both happened while
+  `MemoryEndpointBrowserTest` ran. The host's 4 GiB swap was full (3.9–4.0
+  GiB used; a code-server file watcher and two `mkdocs serve` processes of
+  the owner hold about 2 GiB), so Chrome's growth pushed the machine into
+  swapping; the check then hung to its 1,200 s timeout (exit 124) and the
+  session ended with it. A first serial attempt also failed in 1 s per check
+  because the PATH set for the Pages build put a Python without Playwright
+  first; the checks were rerun with the system Python.
+- **Safeguard (decision):** each browser check now runs in its own systemd
+  user scope with `MemoryMax=2G` and `MemorySwapMax=0`, a 600–900 s
+  watchdog, and memory and load sampled every 15 s; a load gate (< 8) runs
+  between checks. Chrome's peak was 1.1–1.8 GiB; nothing reached the cap.
+- **Result:** all 13 smoke checks pass on the site built at `dff56d5`
+  (layouts, `app.js`, `styles.css`, `index.html`, `wasm_worker.js` compared
+  with the sources): `FFMemoryBrowserTest`,
+  `MemoryDocumentationBrowserTest` (uncapped, before the incident),
+  `MemoryEndpointBrowserTest` (140 s capped; 1,229 s timeout uncapped),
+  `RV32IBuildingBlocksBrowserTest`, `RV32IDocumentationBrowserTest`,
+  `RV32IMemoryBrowserTest`, `RV32ISingleCycleDocumentationBrowserTest`,
+  `SRAMDocumentationBrowserTest`, `SRAMLayoutBrowserTest`,
+  `VisualizerScenarioBrowserTest`, `VisualizerWasmBrowserTest`,
+  `VisualizerWasmRuntimeTest`, `ALU8WasmRuntimeSmoke`.
+- **Testing phase complete.** With the full native suite (467 of 470, the
+  three known `site-docs` checks) the documentation phase starts, as the
+  owner scheduled it.

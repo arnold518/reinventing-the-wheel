@@ -20,6 +20,13 @@ foreach(timing_profile embedded desktop)
         ${CMAKE_SOURCE_DIR}/src/components/selection/ProvenPartDelays.${timing_profile}.generated.inc)
     set_tests_properties(PartDelayTablesComplete_${timing_profile}_Test PROPERTIES LABELS "timing;analysis;slow" TIMEOUT 3600)
 endforeach()
+# The documentation's timing numbers (profiles, clocks, access latency) (tools/timing/DocumentationTimingData.cpp):
+# measured again in every profile, and the compact endpoints against the gates.
+add_test(NAME DocumentationTimingDataTest COMMAND documentation_timing_data --check
+    ${CMAKE_SOURCE_DIR}/tools/timing/documentation-timing.generated.json)
+set_tests_properties(DocumentationTimingDataTest PROPERTIES LABELS "timing;memory;documentation" TIMEOUT 1800)
+add_test(NAME MemoryLatencyGatesTest COMMAND documentation_timing_data --compare-gates)
+set_tests_properties(MemoryLatencyGatesTest PROPERTIES LABELS "timing;memory" TIMEOUT 1800)
 add_executable(SRAMSubarrayFormulaTest cpp/SRAMSubarrayFormulaTest.cpp)
 target_link_libraries(SRAMSubarrayFormulaTest PRIVATE SimulatorLib)
 add_test(NAME SRAMSubarrayFormulaTest COMMAND SRAMSubarrayFormulaTest)

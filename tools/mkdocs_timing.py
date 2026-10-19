@@ -10,6 +10,7 @@ table files, so a page cannot drift from the code.
 
 from html import escape
 from pathlib import Path
+import json
 import re
 
 REPOSITORY = Path(__file__).resolve().parent.parent
@@ -20,6 +21,13 @@ PROFILES = (
     ("desktop", "ProvenPartDelays.desktop.generated.inc", "ps"),
 )
 MARKER = re.compile(r"<!-- timing-table: ([A-Za-z0-9_.@=-]+) -->")
+LATENCY_MARKER = re.compile(r"<!-- latency-table: ([a-z,-]+) -->")
+PROFILE_MARKER = re.compile(r"<!-- profile-table: (gates|flip-flop|sram-cell|clocks) -->")
+LATENCIES = REPOSITORY / "tools/timing/documentation-timing.generated.json"
+MEMORY_NAMES = {
+    "ff": "Flip-flop", "sram": "SRAM (asynchronous chip)", "sram-clocked": "SRAM (clocked on-chip macro)",
+    "rom": "ROM", "dram": "DRAM", "nor": "NOR flash",
+}
 ENTRY = re.compile(r'^\{"([^"]+)", \[\] \{$')
 ARC = re.compile(r'\{"([^"]+)", "([^"]+)", \{(\d+), (\d+)\}\}')
 _cache = {}
@@ -153,5 +161,112 @@ def render(key):
     return "".join(html)
 
 
+def duration(ticks, tick_picoseconds):
+    """A tick count as a readable time in a profile with a tick length."""
+    if not tick_picoseconds:
+        return f"{ticks:,} ticks"
+    ps = ticks * tick_picoseconds
+    for unit, size in (("ms", 10**9), ("µs", 10**6), ("ns", 10**3)):
+        if ps >= size:
+            value = ps / size
+            return f"{value:,.1f} {unit}" if value < 100 else f"{value:,.0f} {unit}"
+    return f"{ps:,} ps"
+
+
+def render_latency(selection):
+    """Measured access latency per profile (tools/timing/DocumentationTimingData.cpp)."""
+    data = json.loads(LATENCIES.read_text(encoding="utf-8"))
+    profiles = data["profiles"]
+    wanted = None if selection == "all" else selection.split(",")
+    unknown = [name for name in (wanted or []) if name not in MEMORY_NAMES]
+    if unknown:
+        raise ValueError(f"Unknown memory {', '.join(unknown)} in latency-table marker")
+    order = [(a["memory"], a["operation"]) for a in profiles[0]["accesses"]
+             if wanted is None or a["memory"] in wanted]
+    if not order:
+        raise ValueError(f"No measured access for latency-table {selection!r}")
+    cells = {}
+    for profile in profiles:
+        if [(a["memory"], a["operation"]) for a in profile["accesses"]
+                if wanted is None or a["memory"] in wanted] != order:
+            raise ValueError(f"Latency table rows differ in profile {profile['name']}")
+        for a in profile["accesses"]:
+            key = (a["memory"], a["operation"])
+            if a["simulated"]:
+                time = duration(a["cycles"] * profile["period_ticks"], profile["tick_picoseconds"])
+                text = f"{a['cycles']:,}" + (f" <small>({time})</small>" if a["cycles"] else " <small>(same edge)</small>")
+            else:
+                text = (f"≈ {-(-a['interval_ticks'] // profile['period_ticks']):,} "
+                        f"<small>({duration(a['interval_ticks'], profile['tick_picoseconds'])}, configured)</small>")
+            cells[(profile["name"], key)] = text
+    html = ['<div class="timing-table-block" data-latency="' + escape(selection) + '">']
+    clocks = ", ".join(f"<code>{escape(p['name'])}</code> {duration(p['period_ticks'], p['tick_picoseconds'])}"
+                       for p in profiles)
+    html.append('<p class="timing-table-description">Measured latency in clock cycles, from the edge that '
+                'accepts a request to the edge that takes its response, through the compact endpoint of a 256 KiB '
+                f"memory at the advanced core's certified clock ({clocks}). Refresh is off. “Configured” rows are too long to "
+                "simulate and show the device interval instead.</p>")
+    html.append('<div class="example-table-scroll" role="region" tabindex="0" aria-label="Measured memory access '
+                'latency"><table class="example-table"><thead><tr><th scope="col">Memory</th>'
+                '<th scope="col">Access</th>')
+    for profile in profiles:
+        html.append(f'<th scope="col"><code>{escape(profile["name"])}</code><small>cycles</small></th>')
+    html.append("</tr></thead><tbody>")
+    for memory, operation in order:
+        html.append(f'<tr><th scope="row">{escape(MEMORY_NAMES[memory])}</th><td>{escape(operation)}</td>')
+        for profile in profiles:
+            html.append(f"<td>{cells[(profile['name'], (memory, operation))]}</td>")
+        html.append("</tr>")
+    html.append("</tbody></table></div></div>")
+    return "".join(html)
+
+
+PROFILE_TABLES = {
+    "gates": ("gates", "Leaf part", "Delay of each leaf part (the parts with no gate-level form)", None),
+    "flip-flop": ("flip_flop", "Flip-flop contract", "Measured contract of the gate-level D flip-flop", {
+        "setup": "Setup before the rising edge", "hold": "Hold after the rising edge",
+        "clock_to_output_minimum": "Clock to Q, earliest", "clock_to_output_maximum": "Clock to Q, latest",
+        "minimum_high": "Shortest clock high phase", "minimum_low": "Shortest clock low phase"}),
+    "sram-cell": ("sram_cell", "SRAM cell contract", "Measured contract of the gate-level SRAM cell", {
+        "earliest": "Earliest output change after a write", "latest": "Latest output change after a write",
+        "minimum_spacing": "Shortest spacing between writes"}),
+    "clocks": ("certified_periods", "Core", "Certified clock period of each core with flip-flop memory", {
+        "single": "Single-cycle", "baseline": "Baseline pipeline", "advanced": "Advanced pipeline"}),
+}
+
+
+def render_profile_table(kind):
+    """One timing number per row, one column per profile."""
+    field, heading, description, labels = PROFILE_TABLES[kind]
+    profiles = json.loads(LATENCIES.read_text(encoding="utf-8"))["profiles"]
+    keys = list(profiles[0][field])
+    html = ['<div class="timing-table-block" data-profile-table="' + kind + '">',
+            f'<p class="timing-table-description">{description}, per timing profile.</p>',
+            '<div class="example-table-scroll" role="region" tabindex="0" aria-label="' + escape(description) + '">'
+            '<table class="example-table"><thead><tr><th scope="col">' + escape(heading) + "</th>"]
+    for profile in profiles:
+        unit = "ps" if profile["tick_picoseconds"] == 1 else ("ticks" if not profile["tick_picoseconds"]
+                                                               else f"× {profile['tick_picoseconds']} ps")
+        if kind == "clocks" and profile["tick_picoseconds"]:
+            unit = "ps (MHz)"
+        html.append(f'<th scope="col"><code>{escape(profile["name"])}</code><small>{unit}</small></th>')
+    html.append("</tr></thead><tbody>")
+    for key in keys:
+        name = labels[key] if labels else (f"<code>{escape(key)}</code>" if key in ("NOT", "NAND", "NOR", "AND", "OR", "XOR")
+                                            else escape(key.capitalize()))
+        html.append(f'<tr><th scope="row">{name}</th>')
+        for profile in profiles:
+            value = profile[field][key]
+            text = f"{value:,}"
+            if kind == "clocks" and profile["tick_picoseconds"]:
+                text += f" <small>({1e6 / (value * profile['tick_picoseconds']):,.0f})</small>"
+            html.append(f"<td>{text}</td>")
+        html.append("</tr>")
+    html.append("</tbody></table></div></div>")
+    return "".join(html)
+
+
 def on_page_markdown(markdown, page, config, files):
-    return MARKER.sub(lambda match: render(match.group(1)), markdown)
+    markdown = MARKER.sub(lambda match: render(match.group(1)), markdown)
+    markdown = PROFILE_MARKER.sub(lambda match: render_profile_table(match.group(1)), markdown)
+    return LATENCY_MARKER.sub(lambda match: render_latency(match.group(1)), markdown)
