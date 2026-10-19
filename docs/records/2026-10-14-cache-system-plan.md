@@ -2177,3 +2177,11 @@ copies. The C-ID → D-ID statement is limited to `calls`, `sort` and
 `stream` (4–8 % slower); `pointer-chase` gains from the L2 under the L1s in
 `embedded`. A topology figure (`cache-topologies`) is added. Spot checks of
 the panel at the current code are recorded in the documentation record.
+
+## 2026-10-19 — Follow-up: general cache plan
+
+The owner asked whether the cache could support its fixed limits as
+parameters (write buffer, write-back, write-allocate, more ways and sets).
+That plan is a new topic, recorded in
+[the general cache plan](2026-10-19-general-cache-plan.md); it is deferred
+and not started.

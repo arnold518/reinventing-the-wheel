@@ -139,44 +139,25 @@ work state changes. Keep dated decisions and validation results in
   references for 2048, Snake, Pong and Tetris have been shortlisted; the
   first game is not selected.
 
-- [Cache system plan](records/2026-10-14-cache-system-plan.md): the adopted
-  standalone `Cache<W>` exists for W=8/16/32. It has structural lookup and
-  refill, up to two ways with LRU, invalidation and write-through writes.
-  Expanded and scalable forms share pins and control while selecting FF/SRAM
-  tag and data endpoints independently. Four public examples now cover a
-  direct-mapped cache, a small two-way cache with writes, a larger scalable
-  cache and a connected L1/L2 path over FF RAM. Native scenario, catalog,
-  layout and documentation checks pass. The focused Pages/WASM build produced
-  30, 116 and 58 verified example rows for the three single-cache scenarios;
-  the two-level timeline has ten checkpoints. The focused browser test passed
-  all four examples. The page keeps a compiled binary C++ reference for
-  the cache algorithm. An optional advanced-core test path connects I/D
-  caches through a structural arbiter to one shared RAM; short programs pass.
-  The supported geometry is at most four expanded or 64 scalable sets, two
-  ways and four words per line. No fused behavioral cache, coherence or MMIO
-  bypass exists. The current short ROM/SRAM CPU fixtures show more cycles
-  with caches (28 to 63 and 70 to 161), so no program speedup is established.
-  Small-memory timing calibration and representative workload measurements
-  remain open. The timing-model review distinguishes small structural/compact
-  equivalence from physical calibration. Existing delay-rule comparisons
-  support starting matched direct-versus-cached endpoint experiments now;
-  per-request parity and CPU speed claims still require those measurements.
-  The open record now specifies one focused performance stack: SRAM tag/data
-  banks in separate I/D L1s and a shared L2, over DRAM main memory. It plans
-  a small structural/scalable timing check, three standalone paths and five
-  CPU topologies: two separate memories, shared uncached RAM, both L1s,
-  shared L2 alone, and both L1s over L2. Other technologies and I-only/D-only
-  runs are targeted diagnostics, not full performance panels. The bypass/L2
-  CPU wiring, benchmark fixtures and runs are not yet built. SRAM cache-hit
-  timing and the cached CPU clock still need measurement before performance
-  claims. A 2026-10-16 latency probe (scratch program, not a CTest) measured
-  an SRAM-bank L1 hit at 14 cycles against 4 for a direct DRAM open-row read
-  and 10 for a row conflict at period 102. The planned campaign would almost
-  certainly show every cached path slower. The campaign is deferred until
-  the realistic-timing plan is finished; the record lists what must be
-  restated then (timing profile, DRAM geometry, cache sizes, bursts).
-  The public [cache reference](../site-docs/memory/3.4.md)
-  states the current contract and examples.
+- [Cache system plan](records/2026-10-14-cache-system-plan.md): the
+  standalone `Cache<W>` exists for W=8/16/32: structural lookup and refill,
+  up to two ways with LRU, invalidation, write-through no-allocate writes, at
+  most four expanded or 64 scalable sets and four words per line, FF or SRAM
+  tag and data stores. No behavioral cache, coherence or MMIO bypass exists.
+  The cache campaign (advanced core over DRAM, five topologies, four
+  workloads, `embedded` and `desktop`) is published in
+  [4.7](../site-docs/rv32i/experiments.md#memory-topologies-and-caches): the
+  L1 pair gives 3–4× over shared uncached DRAM; adding the L2 under the L1s
+  is 4–8 % slower in three of four workloads (write-through to two levels).
+  The public [cache page](../site-docs/memory/caches.md) still awaits its own
+  rewrite (deferred by the owner).
+
+- [General cache plan](records/2026-10-19-general-cache-plan.md): plan only,
+  deferred by the owner. Make the cache's behavior parameters too (write
+  buffer, write-back, write-allocate, 4/8 ways with a choice of replacement,
+  up to about 1,024 sets, optional prefetch); non-blocking caches and
+  multi-bank DRAM are separate projects. First step when resumed: the write
+  buffer.
 
 - [Behavioral delays and the memory clock-edge rule](records/2026-10-12-behavioral-delays-and-memory-clock-edge.md):
   code and checks are done locally and not pushed. Published results for
