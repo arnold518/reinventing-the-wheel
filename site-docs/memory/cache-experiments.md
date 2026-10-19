@@ -119,6 +119,22 @@ The four programs differ in how they use memory:
 
 Each measurement starts after one warm-up iteration.
 
+**Where code and data sit.** With separate memories (A) each port's DRAM
+holds the whole program image; in the shared arrangements the one DRAM holds
+it once. Every block keeps its own address, so code and data share one
+address space at the bottom of the 256 KiB memory:
+
+| Bytes | Contents |
+| --- | --- |
+| from `0x0000` | Program code (all four programs fit well below `0x1000`) |
+| `0x1000` | Input data or pointer-chase nodes (up to 4 KiB) |
+| `0x2000` | Output data |
+| `0x3000` | Result word |
+| below `0x4000` | Stack, growing down (`calls`) |
+
+A workload whose code and data would put different bytes at one address is
+refused in every arrangement rather than run as a different program.
+
 **Speed against the shared, uncached arrangement B** (higher is faster;
 `embedded`, with `desktop` in brackets):
 
