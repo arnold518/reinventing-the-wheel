@@ -77,3 +77,33 @@
 .md-typeset .reference-table-scroll table { margin: 0; white-space: nowrap; }
 .md-typeset .reference-table-scroll thead th { position: sticky; top: 0; z-index: 2; background: var(--md-code-bg-color); }
 .md-typeset .reference-table-scroll tbody td:first-child { position: sticky; left: 0; z-index: 1; background: var(--md-default-bg-color); }
+
+/* Generated timing tables (tools/mkdocs_timing.py): the example-table look,
+   with their own class so example checkpoint counts stay separate. */
+.timing-table-block { min-width: 0; max-width: 100%; margin: 1rem 0; }
+.md-typeset .timing-table-description { font-size: 0.7rem; color: var(--md-default-fg-color--light); }
+.md-typeset .timing-table {
+  border-collapse: separate;
+  border-spacing: 0;
+  width: max-content;
+  min-width: 100%;
+  margin: 0;
+  font-size: 0.7rem;
+  line-height: 1.4;
+}
+.md-typeset .timing-table th,
+.md-typeset .timing-table td {
+  padding: 0.4rem 0.55rem;
+  white-space: nowrap;
+  text-align: right;
+  border-bottom: 1px solid var(--md-default-fg-color--lightest);
+  background: var(--md-default-bg-color);
+}
+.md-typeset .timing-table td.text { text-align: left; }
+.md-typeset .timing-table thead th { position: sticky; top: 0; z-index: 2; background: var(--md-code-bg-color); }
+.md-typeset .timing-table small { display: block; font-weight: normal; font-size: 0.6rem; }
+.md-typeset .timing-table td small { display: inline; color: var(--md-default-fg-color--light); }
+.md-typeset .timing-table tr > :first-child { position: sticky; left: 0; z-index: 1; text-align: left; border-right: 1px solid var(--md-default-fg-color--lightest); }
+.md-typeset .timing-table thead tr > :first-child { z-index: 3; }
+.md-typeset .timing-table tbody tr:nth-child(even) > * { background: var(--md-code-bg-color); }
+.md-typeset .timing-table code { font-size: inherit; padding: 0; background: none; }

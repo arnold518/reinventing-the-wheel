@@ -3,75 +3,78 @@
 [Experiment setup](4.2/index.md) · [Fixed programs](4.2/programs/index.md) · [Generated workloads](4.2/workloads/index.md) · [Compiled workloads](4.2/compiled/index.md)
 
 This report answers one question: **how do the single-cycle, baseline pipeline,
-and advanced pipeline execute the workload groups defined in § 4.2?** For FF
-memory, the advanced core is tested with five branch-prediction policies, so
-each full comparison has **seven targets across three cores**. The measured
-campaigns completed on October 14, 2026. The full Embench section is clearly
-labeled as a projection from older cycles; it was not rerun on this source.
+and advanced pipeline execute the workload groups defined in § 4.2?** For
+flip-flop (FF) memory, the advanced core is tested with five branch-prediction
+policies, so each full comparison has **seven targets across three cores**.
+
+The tables give **cycle counts**. They are the same in every
+[timing profile](../timing.md#timing-profiles): the campaigns were run in
+`unit` (October 14, 2026) and again in `embedded` and `desktop` (October 19),
+and every case took the same number of cycles. What changes between profiles
+is the length of a cycle, the core's certified clock, so modeled time is
+**cycles × certified period**, and a shorter clock can beat fewer cycles. The
+summaries below are given per profile. The full Embench section is labeled as a
+projection from older cycles; it was not rerun.
 
 Read the [comparison rules](#how-to-read-the-results), then follow the groups
 in § 4.2 order: [fixed programs](#fixed-programs),
 [generated families](#generated-families),
 [controlled core-gap cases](#controlled-core-gap-cases), and
 [compiled workloads](#compiled-fixtures). The [cross-group comparison](#cross-group-comparison)
-brings the measured FF panels together.
+brings the measured FF panels together, and
+[memory topologies and caches](#memory-topologies-and-caches) runs the advanced
+core over DRAM with and without caches.
 
 ## Completed campaign coverage
 
-All **497 current-source case/target rows** completed their intended program
-or fixture verdict, matched the instruction oracle where applicable, and
-passed a structural-reference comparison at the reported clock period. They
-reported zero setup violations. The three broad FF campaigns also had a
-separate measurement phase. This counts panel rows, **not unique programs**:
-some workload/target definitions recur in more than one panel.
+The `unit` campaign completed **497 case/target rows**, each matching the
+instruction oracle or fixture verdict and a structural-reference comparison
+at its clock, with zero setup violations. The `embedded` and `desktop` reruns
+repeated the FF panels: every row matched the oracle and its final memory;
+the fixed programs (154), longer branch patterns (35), predictor capacity (3)
+and compiled fixtures (14) were also compared with the structural reference,
+and the generated families with a structural spot check (15 advanced two-bit
+cases, `embedded`). All reported zero setup violations. Rows count panel
+entries, **not unique programs**: some workload/target definitions recur in
+more than one panel.
 
-| § 4.2 workload group / follow-up | Current measured cases | Structural checks | Where to read the results |
-| --- | ---: | ---: | --- |
-| 22 fixed programs × 7 FF targets | 154 | 154 | [Fixed programs](#fixed-programs) |
-| 15 generated families × 7 FF targets | 105 | 105 | [Generated families](#generated-families) |
-| 23 core-gap settings × 7 FF targets | 161 | 161 | [Controlled core-gap cases](#controlled-core-gap-cases) |
-| 5 longer branch patterns × 7 FF targets | 35 | 35 | [Longer branch patterns](#longer-branch-patterns) |
-| Compatible advanced/two-bit FF and timed-memory pairs | 18 | 18 | [Memory endpoint follow-up](#memory-endpoint-follow-up) |
-| Separate program-20 default-policy core/memory pairs | 7 | 7 | [Default-policy program-20 check](#default-policy-program-20-check) |
-| Predictor capacity settings, advanced/two-bit | 3 | 3 | [Predictor capacity](#predictor-capacity) |
-| 2 checked-in ELF fixtures × 7 FF targets | 14 | 14 | [Compiled fixtures](#compiled-fixtures) |
-| **Total measured panel rows** | **497** | **497** | |
+| § 4.2 workload group / follow-up | Cases per profile | Where to read the results |
+| --- | ---: | --- |
+| 22 fixed programs × 7 FF targets | 154 | [Fixed programs](#fixed-programs) |
+| 15 generated families × 7 FF targets | 105 | [Generated families](#generated-families) |
+| 23 core-gap settings × 7 FF targets | 161 | [Controlled core-gap cases](#controlled-core-gap-cases) |
+| 5 longer branch patterns × 7 FF targets | 35 | [Longer branch patterns](#longer-branch-patterns) |
+| Predictor capacity settings, advanced/two-bit | 3 | [Predictor capacity](#predictor-capacity) |
+| 2 checked-in ELF fixtures × 7 FF targets | 14 | [Compiled fixtures](#compiled-fixtures) |
+| 4 workloads × 5 memory topologies, advanced core over DRAM (`embedded`, `desktop` only) | 20 | [Memory topologies and caches](#memory-topologies-and-caches) |
 
 The [full Embench projection](#full-embench-conditional-clock-only-projection)
-is outside this measured total. The reduced-work Embench middle suite also has
-no current-source result here.
+is outside these measured totals. The timed-memory rows of the October 14
+campaign used the memory controllers from before the realistic-timing work and
+were not rerun; see [Memory endpoints](#memory-endpoint-follow-up).
 
 ## How to read the results
 
-The wide tables report **modeled execution ticks** for the same case across
-the seven FF targets. Columns `Adv NT`, `Adv T`, `Adv BT`, `Adv 1b`, and
-`Adv 2b` mean the advanced core with static not-taken, static taken,
-backward-taken, one-bit, and two-bit prediction. Single-cycle and baseline
-use their only not-taken setting. Unless a section says otherwise, predictors
-have 16 entries. A lower tick count means less **simulated time for that
-case**, not less host time or a higher physical clock rate.
+The wide tables report **cycles** for the same case across the seven FF
+targets. Columns `Adv NT`, `Adv T`, `Adv BT`, `Adv 1b`, and `Adv 2b` mean the
+advanced core with static not-taken, static taken, backward-taken, one-bit,
+and two-bit prediction. Single-cycle and baseline use their only not-taken
+setting. Unless a section says otherwise, predictors have 16 entries. Fewer
+cycles mean fewer clock edges, not less time: multiply by the target's period
+in the chosen profile to compare cores.
 
-## Current clock certificates, 2026-10-13
+## Clock certificates
 
-The current experiment binary's ten clock analyses were rechecked on October
-14; all reported `safe-under-contracts`. The FF results use binary-startup
-certificates; the FF configurations also have unrestricted four-state analyses. The timed
-endpoints have unrestricted four-state analyses only.
+Every target runs at its core's certified clock in the chosen profile (the
+advanced core's period is the same for all five policies). The FF results use
+binary-startup certificates; the configurations also have unrestricted
+four-state analyses ([4.2 Clock analysis](4.2/timing.md)).
 
-| Target and endpoint | Certified ticks per CPU cycle |
-| --- | ---: |
-| Single-cycle, zero-wait FF | **166** |
-| Baseline five-stage, zero-wait FF | **80** |
-| Advanced five-stage, zero-wait FF (all five policies) | **100** |
-| Advanced five-stage, SRAM / DRAM / ROM / NOR-flash | **102** |
+<!-- profile-table: clocks -->
 
-**Ticks = completed CPU cycles × that run's period.** Divide any FF table
-cell by its column's period to recover the exact cycle count. Periods are
-fixed within a run; behavioral propagation delays and memory response waits
-can vary with the work. The four timed endpoints share a sufficient 102-tick
-period because the present instruction-request ready path limits all four
-configurations, despite their different access sequences and response waits.
-These are modeled clock periods, not physical frequency measurements.
+The October 14 `unit` campaign ran the advanced core at 100 ticks, the
+certificate then; the current `unit` certificate is 94. Its cycles are
+unchanged, so the summaries below use 94.
 
 The behavioral run is checked against an instruction oracle or fixture
 verdict and a structural CPU reference using the same period. That reference
@@ -79,23 +82,28 @@ keeps scalable storage and memory abstractions; it is not a fully expanded
 transistor-level machine. § 4.2 describes the [execution contract](4.2/execution.md)
 and [equivalence checks](4.2/verification/equivalence.md).
 
+<a id="current-clock-certificates-2026-10-13"></a>
+
 ## Results in brief
 
-- With advanced prediction fixed to two-bit, it has the lowest modeled ticks
-  among the three cores on **11/14 nontrap fixed programs, 14/15 generated
-  families, 20/23 core-gap settings, and all five longer branch patterns**.
-  Baseline still wins selected independent-work cases with its shorter clock.
+- With advanced prediction fixed to two-bit, it takes the least time among
+  the three cores on **13/14 nontrap fixed programs, 14/15 generated
+  families, 20/23 core-gap settings, all five longer branch patterns and
+  both compiled fixtures**, in every profile. Baseline still wins selected
+  independent-work cases with its shorter clock.
+- The advanced core's clock is relatively shorter than when first published:
+  single-cycle period / advanced period is 1.77 in `unit` (current
+  certificate), 1.75 in `embedded` and 1.74 in `desktop`, against 1.66 with
+  the October 14 certificate, so its lead over single-cycle is a little
+  larger.
 - The best advanced predictor changes with the branch pattern. Two-bit is a
   stable fixed choice in the longer branch panel, but static taken,
   backward-taken, or one-bit wins individual patterns.
-- Timed memory changes the advanced core's **cycle count** as well as its
-  clock period. The full Embench comparison below remains a **projection**,
-  so it is not included in these measured conclusions.
 
-![Five measured FF workload groups, each displaying single-cycle, baseline, and all five advanced policies as modeled-tick ratios to the visible single-cycle reference](4.7/measured-ff-overview.svg)
+![Five measured FF workload groups, each displaying single-cycle, baseline, and all five advanced policies as modeled-time ratios to the visible single-cycle reference at the embedded clocks](4.7/measured-ff-overview.svg)
 
 *Measured FF group overview.* Each point is an unweighted geometric mean of
-matched casewise `target ticks / single-cycle ticks`; lower is faster. The
+matched casewise `target time / single-cycle time` at the `embedded` profile's certified clocks; lower is faster. The
 fixed-program panel excludes eight expected traps. The generated and core-gap
 groups overlap, so their summaries are separate descriptions, not inputs to
 one combined score. The two-fixture panel is deliberately small.
@@ -105,94 +113,66 @@ one combined score. The two-fixture panel is deliberately small.
 The [22 fixed programs](4.2/programs/index.md) test instruction behavior,
 expected traps, and six short workloads. All 154 FF target cases completed and
 passed the stated checks. Programs 09–16 are **expected trap or fault
-outcomes**: their small tick totals test precise stopping, not throughput.
+outcomes**: their small totals test precise stopping, not throughput.
 The other 14 programs provide a short, matched performance comparison.
 
-**Modeled ticks, complete 22 × 7 FF panel:**
+**Cycles, complete 22 × 7 FF panel:**
 
 | Case | Single | Baseline | Adv NT | Adv T | Adv BT | Adv 1b | Adv 2b |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| [program-01](4.2/programs/program-01.md) | 4,814 | 5,760 | 4,300 | 3,900 | 3,900 | 4,100 | 4,300 |
-| [program-02](4.2/programs/program-02.md) | 5,810 | 4,000 | 3,900 | 3,900 | 3,900 | 3,900 | 3,900 |
-| [program-03](4.2/programs/program-03.md) | 2,822 | 2,160 | 2,100 | 2,100 | 2,100 | 2,100 | 2,100 |
-| [program-04](4.2/programs/program-04.md) | 3,984 | 4,480 | 4,000 | 3,000 | 4,000 | 4,000 | 4,000 |
-| [program-05](4.2/programs/program-05.md) | 1,826 | 2,000 | 1,900 | 1,900 | 1,900 | 1,900 | 1,900 |
-| [program-06](4.2/programs/program-06.md) | 1,660 | 1,600 | 1,400 | 1,400 | 1,400 | 1,400 | 1,400 |
-| [program-07](4.2/programs/program-07.md) | 10,126 | 9,840 | 7,900 | 6,700 | 6,700 | 6,900 | 7,100 |
-| [program-08](4.2/programs/program-08.md) | 6,972 | 7,120 | 5,900 | 5,300 | 5,300 | 5,500 | 5,700 |
-| [program-09](4.2/programs/program-09.md) | 332 | 480 | 600 | 600 | 600 | 600 | 600 |
-| [program-10](4.2/programs/program-10.md) | 332 | 480 | 600 | 600 | 600 | 600 | 600 |
-| [program-11](4.2/programs/program-11.md) | 332 | 720 | 600 | 600 | 600 | 600 | 600 |
-| [program-12](4.2/programs/program-12.md) | 498 | 800 | 700 | 700 | 700 | 700 | 700 |
-| [program-13](4.2/programs/program-13.md) | 332 | 720 | 600 | 600 | 600 | 600 | 600 |
-| [program-14](4.2/programs/program-14.md) | 498 | 800 | 700 | 700 | 700 | 700 | 700 |
-| [program-15](4.2/programs/program-15.md) | 332 | 720 | 600 | 600 | 600 | 600 | 600 |
-| [program-16](4.2/programs/program-16.md) | 498 | 960 | 900 | 900 | 900 | 900 | 900 |
-| [program-17](4.2/programs/program-17.md) | 12,118 | 6,160 | 7,700 | 7,700 | 7,700 | 7,700 | 7,700 |
-| [program-18](4.2/programs/program-18.md) | 10,956 | 20,960 | 7,000 | 7,000 | 7,000 | 7,000 | 7,000 |
-| [program-19](4.2/programs/program-19.md) | 11,122 | 13,520 | 10,300 | 10,300 | 10,300 | 10,300 | 10,300 |
-| [program-20](4.2/programs/program-20.md) | 8,466 | 11,040 | 8,500 | 5,700 | 5,700 | 5,900 | 6,100 |
-| [program-21](4.2/programs/program-21.md) | 13,944 | 17,360 | 13,400 | 10,600 | 10,600 | 10,800 | 11,000 |
-| [program-22](4.2/programs/program-22.md) | 10,126 | 10,320 | 8,700 | 7,500 | 7,500 | 7,700 | 7,900 |
+| [program-01](4.2/programs/program-01.md) | 29 | 72 | 43 | 39 | 39 | 41 | 43 |
+| [program-02](4.2/programs/program-02.md) | 35 | 50 | 39 | 39 | 39 | 39 | 39 |
+| [program-03](4.2/programs/program-03.md) | 17 | 27 | 21 | 21 | 21 | 21 | 21 |
+| [program-04](4.2/programs/program-04.md) | 24 | 56 | 40 | 30 | 40 | 40 | 40 |
+| [program-05](4.2/programs/program-05.md) | 11 | 25 | 19 | 19 | 19 | 19 | 19 |
+| [program-06](4.2/programs/program-06.md) | 10 | 20 | 14 | 14 | 14 | 14 | 14 |
+| [program-07](4.2/programs/program-07.md) | 61 | 123 | 79 | 67 | 67 | 69 | 71 |
+| [program-08](4.2/programs/program-08.md) | 42 | 89 | 59 | 53 | 53 | 55 | 57 |
+| [program-09](4.2/programs/program-09.md) | 2 | 6 | 6 | 6 | 6 | 6 | 6 |
+| [program-10](4.2/programs/program-10.md) | 2 | 6 | 6 | 6 | 6 | 6 | 6 |
+| [program-11](4.2/programs/program-11.md) | 2 | 9 | 6 | 6 | 6 | 6 | 6 |
+| [program-12](4.2/programs/program-12.md) | 3 | 10 | 7 | 7 | 7 | 7 | 7 |
+| [program-13](4.2/programs/program-13.md) | 2 | 9 | 6 | 6 | 6 | 6 | 6 |
+| [program-14](4.2/programs/program-14.md) | 3 | 10 | 7 | 7 | 7 | 7 | 7 |
+| [program-15](4.2/programs/program-15.md) | 2 | 9 | 6 | 6 | 6 | 6 | 6 |
+| [program-16](4.2/programs/program-16.md) | 3 | 12 | 9 | 9 | 9 | 9 | 9 |
+| [program-17](4.2/programs/program-17.md) | 73 | 77 | 77 | 77 | 77 | 77 | 77 |
+| [program-18](4.2/programs/program-18.md) | 66 | 262 | 70 | 70 | 70 | 70 | 70 |
+| [program-19](4.2/programs/program-19.md) | 67 | 169 | 103 | 103 | 103 | 103 | 103 |
+| [program-20](4.2/programs/program-20.md) | 51 | 138 | 85 | 57 | 57 | 59 | 61 |
+| [program-21](4.2/programs/program-21.md) | 84 | 217 | 134 | 106 | 106 | 108 | 110 |
+| [program-22](4.2/programs/program-22.md) | 61 | 129 | 87 | 75 | 75 | 77 | 79 |
 
-Among the 14 nontrap programs, advanced/two-bit has the fewest ticks on 11
-when comparing only single-cycle, baseline, and that fixed advanced policy;
-single-cycle wins two and baseline wins one. This is not a claim that two-bit
-is the best predictor on each program. On program 20, advanced/taken and
-advanced/backward-taken each need 5,700 ticks, versus 6,100 for two-bit and
-8,500 for advanced/not-taken. On program 17, the baseline's 6,160 ticks beat
-advanced/two-bit's 7,700 because the baseline period is shorter. Program 04
-is nearly tied between single-cycle (3,984) and advanced/two-bit (4,000).
-Including the eight tiny trap cases reverses the single/advanced geometric
-mean, because fixed pipeline startup costs dominate those cases; they remain
-in the complete table but outside the 14-program performance summary.
+Among the 14 nontrap programs, advanced/two-bit takes the least time on 13 in
+every profile when comparing only single-cycle, baseline and that fixed
+advanced policy; baseline wins the other. (With the October 14 `unit`
+certificate of 100 ticks, single-cycle won two of them.) This is not a claim
+that two-bit is the best predictor on each program. On program 20,
+advanced/taken and advanced/backward-taken each need 57 cycles, versus 61 for
+two-bit and 85 for advanced/not-taken; single-cycle needs 51 longer cycles
+(in `embedded` 365 ns, against 234 ns for advanced/taken). On program 17 the
+baseline's 77 cycles beat advanced/two-bit's 77 because the baseline clock is
+shorter (258 ns against 316 ns in `embedded`). Program 04 is close: 24
+single-cycle cycles against 40 advanced/two-bit cycles (172 ns against 164 ns
+in `embedded`). Including the eight tiny trap cases brings single-cycle to
+within 2 % of advanced/two-bit in geometric mean, because fixed pipeline
+startup costs dominate those cases; they remain in the complete table but
+outside the 14-program performance summary.
 
 ### Memory endpoint follow-up
 
-The advanced/two-bit core also ran fixed programs 19–22 with both instruction
-and data memory set to the same endpoint. A cell is **cycles / modeled ticks**;
-the FF column uses period 100 and timed columns use 102. All 18 selected
-pairs passed the oracle, structural comparison, final-state and observed
-handshake checks.
+The October 14 campaign also ran the advanced/two-bit core on programs 19–22,
+and program 20 with the default not-taken policy, with SRAM, DRAM, ROM or
+NOR-flash endpoints. Those memories have since been rebuilt from gates with
+datasheet timing (wait cycles chosen from the clock, counted DRAM commands),
+so the old rows no longer describe the current design and were not rerun;
+they remain in the repository history at tag `timing-legacy`. The current
+memory access latencies of every technology and profile are in
+[3.6 Memory Timing](../memory/timing.md#measured-latency), and the advanced
+core has been run with every memory in `embedded` (all runs oracle-checked)
+as part of the realistic-timing work.
 
-| Program | FF (100) | SRAM (102) | DRAM (102) | ROM (102) | NOR-flash (102) |
-| --- | ---: | ---: | ---: | ---: | ---: |
-| [program-19](4.2/programs/program-19.md) | 103 / 10,300 | 470 / 47,940 | 648 / 66,096 | 470 / 47,940 | 403 / 41,106 |
-| [program-20](4.2/programs/program-20.md) | 61 / 6,100 | 328 / 33,456 | 507 / 51,714 | 328 / 33,456 | 274 / 27,948 |
-| [program-21](4.2/programs/program-21.md) | 110 / 11,000 | 558 / 56,916 | 807 / 82,314 | 558 / 56,916 | 471 / 48,042 |
-| [program-22](4.2/programs/program-22.md) | 79 / 7,900 | 420 / 42,840 | 655 / 66,810 | — | — |
-
-Programs 19–21 support all five endpoints.
-Program 22 writes data, so read-only ROM and NOR-flash were not selected for
-it. Both instruction and data endpoints change together; program 20 has no
-data-memory access and therefore isolates instruction-fetch behavior in this
-panel. For program 21, all five modes retire 83 instructions and reach the
-same final state, but FF needs 11,000 ticks, SRAM and ROM 56,916, NOR-flash
-48,042, and DRAM 82,314. The timed modes share a clock period while their
-cycle counts differ. These small inputs do not establish a general ranking
-of memory technologies. Overlapping wait counters cannot be added into a
-single stall total.
-
-### Default-policy program-20 check
-
-A separate seven-pair check used the advanced core's **default not-taken**
-policy, rather than the two-bit policy in the memory panel. Its three FF rows
-also occur in the complete fixed-program table. Keeping this small check
-separate avoids conflating predictor and memory changes.
-
-| Core | Memory | Period | Cycles | Modeled ticks |
-| --- | ---: | ---: | ---: | ---: |
-| single | FF | 166 | 51 | 8,466 |
-| baseline | FF | 80 | 138 | 11,040 |
-| advanced | FF | 100 | 85 | 8,500 |
-| advanced | sram | 102 | 400 | 40,800 |
-| advanced | dram | 102 | 583 | 59,466 |
-| advanced | rom | 102 | 400 | 40,800 |
-| advanced | nor-flash | 102 | 334 | 34,068 |
-
-At FF timing, single-cycle takes 8,466 ticks and advanced/not-taken takes
-8,500, a 34-tick near tie. Timed endpoints add request and response waits to
-the advanced run, not merely two ticks to each old FF cycle.
+<a id="default-policy-program-20-check"></a>
 
 ## Generated families
 
@@ -203,36 +183,37 @@ the other twelve use eight iterations, size eight and seed one, with sort
 and CRC32 capped at two iterations. A family name is not a claim about all
 of its possible parameter values.
 
-**Modeled ticks, complete 15 × 7 FF panel:**
+**Cycles, complete 15 × 7 FF panel:**
 
 | Case | Single | Baseline | Adv NT | Adv T | Adv BT | Adv 1b | Adv 2b |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| [dependent](4.2/workloads/dependent.md) | 7,304 | 11,360 | 6,200 | 5,000 | 5,000 | 5,200 | 5,400 |
-| [alternating](4.2/workloads/alternating.md) | 6,640 | 10,400 | 6,600 | 5,400 | 5,400 | 6,400 | 5,800 |
-| [nested](4.2/workloads/nested.md) | 36,520 | 48,240 | 35,000 | 24,200 | 24,200 | 26,000 | 25,000 |
-| [independent](4.2/workloads/independent.md) | 91,466 | 50,000 | 56,900 | 55,700 | 55,700 | 55,900 | 56,100 |
-| [dependency](4.2/workloads/dependency.md) | 91,466 | 170,960 | 56,900 | 55,700 | 55,700 | 55,900 | 56,100 |
-| [load-use](4.2/workloads/load-use.md) | 36,188 | 37,440 | 30,000 | 28,800 | 28,800 | 29,000 | 29,200 |
-| [load-scheduled](4.2/workloads/load-scheduled.md) | 36,188 | 32,320 | 23,600 | 22,400 | 22,400 | 22,600 | 22,800 |
-| [branch-pattern](4.2/workloads/branch-pattern.md) | 11,620 | 17,360 | 10,400 | 9,200 | 9,200 | 10,000 | 9,600 |
-| [branch-alias](4.2/workloads/branch-alias.md) | 26,726 | 44,640 | 19,500 | 18,300 | 18,300 | 20,100 | 18,700 |
-| [calls](4.2/workloads/calls.md) | 28,220 | 34,720 | 26,800 | 25,600 | 25,600 | 25,800 | 26,000 |
-| [stream](4.2/workloads/stream.md) | 86,154 | 92,480 | 71,300 | 60,500 | 60,500 | 62,300 | 61,300 |
-| [pointer-chase](4.2/workloads/pointer-chase.md) | 64,906 | 97,600 | 64,900 | 54,100 | 54,100 | 55,900 | 54,900 |
-| [sort](4.2/workloads/sort.md) | 75,198 | 93,280 | 61,500 | 67,900 | 56,700 | 59,300 | 58,500 |
-| [crc32](4.2/workloads/crc32.md) | 136,618 | 174,320 | 123,300 | 100,100 | 101,700 | 105,700 | 103,900 |
-| [scan](4.2/workloads/scan.md) | 72,874 | 99,520 | 63,300 | 52,500 | 52,500 | 54,300 | 53,300 |
+| [dependent](4.2/workloads/dependent.md) | 44 | 142 | 62 | 50 | 50 | 52 | 54 |
+| [alternating](4.2/workloads/alternating.md) | 40 | 130 | 66 | 54 | 54 | 64 | 58 |
+| [nested](4.2/workloads/nested.md) | 220 | 603 | 350 | 242 | 242 | 260 | 250 |
+| [independent](4.2/workloads/independent.md) | 551 | 625 | 569 | 557 | 557 | 559 | 561 |
+| [dependency](4.2/workloads/dependency.md) | 551 | 2,137 | 569 | 557 | 557 | 559 | 561 |
+| [load-use](4.2/workloads/load-use.md) | 218 | 468 | 300 | 288 | 288 | 290 | 292 |
+| [load-scheduled](4.2/workloads/load-scheduled.md) | 218 | 404 | 236 | 224 | 224 | 226 | 228 |
+| [branch-pattern](4.2/workloads/branch-pattern.md) | 70 | 217 | 104 | 92 | 92 | 100 | 96 |
+| [branch-alias](4.2/workloads/branch-alias.md) | 161 | 558 | 195 | 183 | 183 | 201 | 187 |
+| [calls](4.2/workloads/calls.md) | 170 | 434 | 268 | 256 | 256 | 258 | 260 |
+| [stream](4.2/workloads/stream.md) | 519 | 1,156 | 713 | 605 | 605 | 623 | 613 |
+| [pointer-chase](4.2/workloads/pointer-chase.md) | 391 | 1,220 | 649 | 541 | 541 | 559 | 549 |
+| [sort](4.2/workloads/sort.md) | 453 | 1,166 | 615 | 679 | 567 | 593 | 585 |
+| [crc32](4.2/workloads/crc32.md) | 823 | 2,179 | 1,233 | 1,001 | 1,017 | 1,057 | 1,039 |
+| [scan](4.2/workloads/scan.md) | 439 | 1,244 | 633 | 525 | 525 | 543 | 533 |
 
-With advanced fixed to two-bit, it has the fewest ticks of the three cores
-on 14/15 cases. `independent` is the exception: baseline takes 50,000 ticks
-and advanced/two-bit 56,100. The `dependency` case keeps the same
-single-cycle 91,466 ticks as `independent`, while baseline rises from 50,000
-to 170,960; advanced/two-bit stays at 56,100. This is the intended
+With advanced fixed to two-bit, it takes the least time of the three cores
+on 14/15 cases in every profile. `independent` is the exception: baseline
+needs 625 cycles and advanced/two-bit 561, but the baseline clock is shorter
+(2.10 µs against 2.30 µs in `embedded`). The `dependency` case keeps the same
+551 single-cycle cycles as `independent`, while baseline rises from 625 to
+2,137; advanced/two-bit stays at 561. This is the intended
 dependency/forwarding contrast. Scheduling the load-use work lowers
-advanced/two-bit from 29,200 to 22,800 ticks and removes the observed 64
-load-use stalls without changing the intended computation. Taken and
-backward-taken often outperform two-bit on these short cases; the full table
-shows every policy instead of selecting a winner after each run.
+advanced/two-bit from 292 to 228 cycles and removes the observed 64 load-use
+stalls without changing the intended computation. Taken and backward-taken
+often outperform two-bit on these short cases; the full table shows every
+policy instead of selecting a winner after each run.
 
 ## Controlled core-gap cases
 
@@ -245,70 +226,69 @@ whole-program cases use eight iterations, size eight and seed one.
 
 ### Dependencies and load scheduling
 
-**Modeled ticks, eight controlled settings:**
+**Cycles, eight controlled settings:**
 
 | Case | Single | Baseline | Adv NT | Adv T | Adv BT | Adv 1b | Adv 2b |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| independent-short | 14,774 | 10,240 | 9,300 | 9,500 | 9,500 | 9,300 | 9,300 |
-| independent-long | 91,466 | 50,000 | 56,900 | 55,700 | 55,700 | 55,900 | 56,100 |
-| dependency-d1 | 91,466 | 170,960 | 56,900 | 55,700 | 55,700 | 55,900 | 56,100 |
-| dependency-d2 | 91,466 | 89,680 | 56,900 | 55,700 | 55,700 | 55,900 | 56,100 |
-| dependency-d4 | 91,466 | 50,000 | 56,900 | 55,700 | 55,700 | 55,900 | 56,100 |
-| dependency-d8 | 91,466 | 50,000 | 56,900 | 55,700 | 55,700 | 55,900 | 56,100 |
-| load-use | 36,188 | 37,440 | 30,000 | 28,800 | 28,800 | 29,000 | 29,200 |
-| load-scheduled | 36,188 | 32,320 | 23,600 | 22,400 | 22,400 | 22,600 | 22,800 |
+| independent-short | 89 | 128 | 93 | 95 | 95 | 93 | 93 |
+| independent-long | 551 | 625 | 569 | 557 | 557 | 559 | 561 |
+| dependency-d1 | 551 | 2,137 | 569 | 557 | 557 | 559 | 561 |
+| dependency-d2 | 551 | 1,121 | 569 | 557 | 557 | 559 | 561 |
+| dependency-d4 | 551 | 625 | 569 | 557 | 557 | 559 | 561 |
+| dependency-d8 | 551 | 625 | 569 | 557 | 557 | 559 | 561 |
+| load-use | 218 | 468 | 300 | 288 | 288 | 290 | 292 |
+| load-scheduled | 218 | 404 | 236 | 224 | 224 | 226 | 228 |
 
-The distance-one dependency makes baseline take 2,137 cycles / 170,960 ticks
-while advanced/two-bit takes 561 / 56,100. At distance four or eight,
-baseline falls to 625 / 50,000 and beats advanced/two-bit in ticks despite
-using more cycles, because its period is 80 rather than 100. On the immediate
-load-use case, advanced/two-bit takes 292 cycles / 29,200 ticks and records
-64 load-use stalls. Scheduling the same work takes 228 / 22,800 with zero
-such stalls. These pairs identify the intended hazard; they do not isolate
-every cause in a compiled program.
+The distance-one dependency makes baseline take 2,137 cycles while
+advanced/two-bit takes 561. At distance four or eight, baseline falls to 625
+cycles and beats advanced/two-bit in time despite using more cycles, because
+its clock is shorter in every profile. On the immediate load-use case,
+advanced/two-bit takes 292 cycles and records 64 load-use stalls. Scheduling
+the same work takes 228 with zero such stalls. These pairs identify the
+intended hazard; they do not isolate every cause in a compiled program.
 
 ![Two measured FF contrasts, dependency against independent work and load-use against scheduled loads, with all seven targets visible in each](4.7/measured-core-gap-contrasts.svg)
 
 *Matched controlled contrasts.* A value above one means the stressed case
-takes more modeled ticks than its paired control. Both panels show the three
+takes more cycles than its paired control. Both panels show the three
 cores and every advanced prediction mode; they compare selected workload
 settings rather than attributing all costs in compiled programs.
 
 ### Branch direction, aliasing, and training
 
-**Modeled ticks, nine controlled settings:**
+**Cycles, nine controlled settings:**
 
 | Case | Single | Baseline | Adv NT | Adv T | Adv BT | Adv 1b | Adv 2b |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| branch-taken | 10,956 | 17,040 | 10,800 | 8,000 | 9,600 | 8,400 | 8,800 |
-| branch-not-taken | 12,284 | 17,680 | 10,000 | 10,400 | 8,800 | 9,000 | 9,200 |
-| branch-alternating | 11,620 | 17,360 | 10,400 | 9,200 | 9,200 | 10,000 | 9,600 |
-| branch-bursts | 12,284 | 17,680 | 10,000 | 10,400 | 8,800 | 9,000 | 9,200 |
-| branch-irregular | 11,454 | 17,280 | 10,500 | 8,900 | 9,300 | 9,500 | 9,900 |
-| alias-spacing8 | 16,102 | 24,160 | 13,100 | 11,900 | 11,900 | 10,700 | 11,100 |
-| alias-spacing16 | 26,726 | 44,640 | 19,500 | 18,300 | 18,300 | 20,100 | 18,700 |
-| branch-body-training0 | 9,296 | 14,720 | 9,400 | 6,600 | 8,200 | 7,000 | 7,400 |
-| branch-body-training32 | 9,296 | 14,720 | 9,400 | 6,600 | 8,200 | 6,600 | 6,600 |
+| branch-taken | 66 | 213 | 108 | 80 | 96 | 84 | 88 |
+| branch-not-taken | 74 | 221 | 100 | 104 | 88 | 90 | 92 |
+| branch-alternating | 70 | 217 | 104 | 92 | 92 | 100 | 96 |
+| branch-bursts | 74 | 221 | 100 | 104 | 88 | 90 | 92 |
+| branch-irregular | 69 | 216 | 105 | 89 | 93 | 95 | 99 |
+| alias-spacing8 | 97 | 302 | 131 | 119 | 119 | 107 | 111 |
+| alias-spacing16 | 161 | 558 | 195 | 183 | 183 | 201 | 187 |
+| branch-body-training0 | 56 | 184 | 94 | 66 | 82 | 70 | 74 |
+| branch-body-training32 | 56 | 184 | 94 | 66 | 82 | 66 | 66 |
 
 Changing branch direction alters which advanced policy wins. The
 body-window training pair measures the same branch body after zero or 32
-real prefix iterations. Advanced/two-bit drops from 74 cycles / 7,400 ticks
-to 66 / 6,600, and observed next-PC misses fall from five to one. The
+real prefix iterations. Advanced/two-bit drops from 74 cycles
+to 66, and observed next-PC misses fall from five to one. The
 training prefix is executed and verified but lies outside the measured body;
 these rows are not whole-program time comparisons.
 
 ### Calls, memory kernels, sort, and CRC32
 
-**Modeled ticks, six controlled settings:**
+**Cycles, six controlled settings:**
 
 | Case | Single | Baseline | Adv NT | Adv T | Adv BT | Adv 1b | Adv 2b |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| calls | 28,220 | 34,720 | 26,800 | 25,600 | 25,600 | 25,800 | 26,000 |
-| stream | 86,154 | 92,480 | 71,300 | 60,500 | 60,500 | 62,300 | 61,300 |
-| pointer-chase | 64,906 | 97,600 | 64,900 | 54,100 | 54,100 | 55,900 | 54,900 |
-| scan | 72,874 | 99,520 | 63,300 | 52,500 | 52,500 | 54,300 | 53,300 |
-| sort | 75,198 | 93,280 | 61,500 | 67,900 | 56,700 | 59,300 | 58,500 |
-| crc32 | 136,618 | 174,320 | 123,300 | 100,100 | 101,700 | 105,700 | 103,900 |
+| calls | 170 | 434 | 268 | 256 | 256 | 258 | 260 |
+| stream | 519 | 1,156 | 713 | 605 | 605 | 623 | 613 |
+| pointer-chase | 391 | 1,220 | 649 | 541 | 541 | 559 | 549 |
+| scan | 439 | 1,244 | 633 | 525 | 525 | 543 | 533 |
+| sort | 453 | 1,166 | 615 | 679 | 567 | 593 | 585 |
+| crc32 | 823 | 2,179 | 1,233 | 1,001 | 1,017 | 1,057 | 1,039 |
 
 This last cluster tests calls and data-heavy kernels under the same seven
 targets. It supplies workload diversity to the 23-case panel, but a
@@ -319,43 +299,47 @@ two-iteration sort or CRC32 row is still only its declared generated input.
 The separate 64-iteration [branch-pattern](4.2/workloads/branch-pattern.md)
 campaign extends the five direction patterns beyond the short core-gap cases.
 All 35 cases completed with 16 predictor entries and the same FF clocks.
-Each cell below is **modeled ticks**.
+Each cell below is **cycles**; the record lists the modeled time of every cell in `embedded` and `desktop`.
 
 | Target | taken | not-taken | alternating | bursts | irregular |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| Single | 76,028 | 86,652 | 81,340 | 81,340 | 81,008 |
-| Baseline | 120,080 | 125,200 | 122,640 | 122,640 | 122,480 |
-| Adv NT | 78,000 | 71,600 | 74,800 | 74,800 | 75,000 |
-| Adv T | 52,800 | 72,000 | 62,400 | 62,400 | 61,800 |
-| Adv BT | 65,600 | 59,200 | 62,400 | 62,400 | 62,600 |
-| Adv 1b | 53,200 | 59,400 | 68,800 | 57,600 | 62,600 |
-| Adv 2b | 53,600 | 59,600 | 62,800 | 59,200 | 62,600 |
+| Single | 458 | 522 | 490 | 490 | 488 |
+| Baseline | 1,501 | 1,565 | 1,533 | 1,533 | 1,531 |
+| Adv NT | 780 | 716 | 748 | 748 | 750 |
+| Adv T | 528 | 720 | 624 | 624 | 618 |
+| Adv BT | 656 | 592 | 624 | 624 | 626 |
+| Adv 1b | 532 | 594 | 688 | 576 | 626 |
+| Adv 2b | 536 | 596 | 628 | 592 | 626 |
 
-![Measured modeled ticks for five longer branch patterns across all seven targets, with each row's fastest value outlined](4.7/measured-long-branches.svg)
+![Measured modeled time for five longer branch patterns across all seven targets, with each row's fastest value outlined](4.7/measured-long-branches.svg)
 
-*Longer branch patterns, 64 iterations each.* Cell labels are absolute
-modeled ticks. Color shows each value divided by the fastest target in the
+*Longer branch patterns, 64 iterations each.* Cell labels are modeled time at the
+`embedded` profile's certified clocks. Color shows each value divided by the fastest target in the
 same pattern; outlines mark the fastest value or ties. Compare targets within
 a row, since branch patterns can execute different amounts of work.
 
 Advanced/two-bit is faster than single-cycle and baseline on all five
-matched patterns, yet it is **not** the fastest advanced policy on every
-pattern. Taken wins always-taken and irregular; backward-taken wins
-always-not-taken; taken and backward-taken tie on alternating; one-bit wins
-bursts. Two-bit remains within 2.8% of each pattern's best and has the
-lowest unweighted geometric-mean ticks across these five advanced-policy
-rows. That is a result for these patterns, not a universal predictor choice.
+matched patterns in every profile, yet it is **not** the fastest advanced
+policy on every pattern. Taken wins always-taken and irregular;
+backward-taken wins always-not-taken; taken and backward-taken tie on
+alternating; one-bit wins bursts. Two-bit remains within 2.8 % of each
+pattern's best and has the lowest unweighted geometric mean across these
+five advanced-policy rows. One ordering differs from the first publication:
+with the October 14 certificate single-cycle beat advanced/not-taken on the
+taken pattern (458 against 780 cycles at 166 and 100 ticks); with the current
+certificates every advanced policy beats single-cycle on every pattern. That
+is a result for these patterns, not a universal predictor choice.
 
 ### Predictor capacity
 
 A separate 64-iteration aliasing case varied only the advanced/two-bit
-predictor's entry count, at the same 100-tick FF period:
+predictor's entry count:
 
-| Entries | Cycles | Modeled ticks | Next-PC misses |
-| ---: | ---: | ---: | ---: |
-| 8 | 1,363 | 136,300 | 67 |
-| 16 | 1,363 | 136,300 | 67 |
-| 32 | 1,239 | 123,900 | 5 |
+| Entries | Cycles | Next-PC misses |
+| ---: | ---: | ---: |
+| 8 | 1,363 | 67 |
+| 16 | 1,363 | 67 |
+| 32 | 1,239 | 5 |
 
 For this spacing-16 address pattern, 32 entries reduce modeled time by
 9.1% relative to 8 or 16. This capacity experiment is not part of the
@@ -368,15 +352,15 @@ test external loading and compiler-produced RV32I code without a full
 Embench workload. Both passed their verdict, oracle and structural checks
 on all seven FF targets: 14/14 measured cases.
 
-**Modeled ticks, complete 2 × 7 FF panel:**
+**Cycles, complete 2 × 7 FF panel:**
 
 | Case | Single | Baseline | Adv NT | Adv T | Adv BT | Adv 1b | Adv 2b |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| self-check.elf | 3,154 | 4,480 | 2,600 | 3,200 | 2,600 | 2,600 | 2,600 |
-| compiled.elf | 10,624 | 13,280 | 8,600 | 9,400 | 8,600 | 8,800 | 8,800 |
+| self-check.elf | 19 | 56 | 26 | 32 | 26 | 26 | 26 |
+| compiled.elf | 64 | 166 | 86 | 94 | 86 | 88 | 88 |
 
-Advanced/two-bit has the fewest ticks among the three fixed core choices on
-both small fixtures. These images are dominated by startup and control work;
+Advanced/two-bit takes the least time among the three fixed core choices on
+both small fixtures, in every profile. These images are dominated by startup and control work;
 they do not measure the full applications in the next section. The
 reduced-work Embench middle suite has no current-source result in this
 report.
@@ -386,90 +370,215 @@ report.
 The previously completed full campaign covered **19 Embench workloads ×
 seven targets** with original verifiers and instruction-oracle checks, but
 **without structural-reference checks**. It used an older source snapshot.
-These full workloads were **not rerun** for this report. Each value below is
-its historical cycle count multiplied by the current FF period (166 for
-single-cycle, 80 for baseline, 100 for advanced). Every cell is therefore
-**projected ticks, not a current-source measurement**.
+These full workloads were **not rerun** for this report. The cells below are
+those **historical cycle counts**, so any modeled time derived from them is a
+**projection, not a current-source measurement**.
 
-**Conditional projected ticks, all 19 × 7 target cells:**
+**Historical cycles, all 19 × 7 target cells:**
 
 | Workload | Single | Baseline | Adv NT | Adv T | Adv BT | Adv 1b | Adv 2b |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| [aha-mont64](4.2/compiled/aha-mont64.md) | 1,896,633,332 | 1,339,124,800 | 1,401,946,600 | 1,235,783,200 | 1,256,469,800 | 1,238,070,400 | 1,231,201,600 |
-| [crc32](4.2/compiled/crc32.md) | 1,017,653,538 | 1,597,307,680 | 735,689,100 | 700,703,900 | 700,703,300 | 700,737,500 | 700,703,900 |
-| [cubic](4.2/compiled/cubic.md) | 5,027,784,760 | 5,711,966,960 | 4,259,061,500 | 3,750,531,700 | 3,729,660,900 | 3,713,034,300 | 3,651,384,700 |
-| [edn](4.2/compiled/edn.md) | 12,472,462,456 | 15,284,812,640 | 11,191,020,600 | 9,273,386,400 | 8,905,101,600 | 8,363,109,800 | 8,351,850,000 |
-| [huffbench](4.2/compiled/huffbench.md) | 447,196,032 | 459,991,280 | 336,573,700 | 321,545,700 | 292,274,300 | 296,350,500 | 294,047,500 |
-| [matmult-int](4.2/compiled/matmult-int.md) | 4,898,069,538 | 5,954,113,680 | 4,417,715,700 | 3,656,464,300 | 3,601,549,500 | 3,716,036,700 | 3,640,760,500 |
-| [minver](4.2/compiled/minver.md) | 2,116,768,754 | 2,325,192,880 | 1,798,753,100 | 1,616,513,900 | 1,576,249,300 | 1,530,637,900 | 1,522,743,700 |
-| [nbody](4.2/compiled/nbody.md) | 4,522,991,210 | 5,243,280,880 | 3,886,884,100 | 3,365,917,300 | 3,293,952,300 | 3,313,207,300 | 3,282,622,900 |
-| [nettle-aes](4.2/compiled/nettle-aes.md) | 798,011,800 | 470,050,720 | 504,453,000 | 504,609,000 | 495,713,000 | 499,820,600 | 494,087,000 |
-| [nettle-sha256](4.2/compiled/nettle-sha256.md) | 680,434,166 | 417,576,640 | 420,662,700 | 417,711,700 | 415,807,100 | 416,853,900 | 416,096,100 |
-| [nsichneu](4.2/compiled/nsichneu.md) | 371,628,350 | 524,960,720 | 337,960,800 | 417,551,200 | 337,717,400 | 340,671,400 | 335,496,400 |
-| [picojpeg](4.2/compiled/picojpeg.md) | 870,133,156 | 945,516,160 | 612,915,800 | 559,175,000 | 576,847,400 | 553,709,000 | 551,999,400 |
-| [qrduino](4.2/compiled/qrduino.md) | 1,001,327,106 | 1,213,551,200 | 794,840,600 | 754,335,200 | 737,435,600 | 755,631,000 | 731,785,000 |
-| [sglib-combined](4.2/compiled/sglib-combined.md) | 493,939,972 | 552,543,280 | 382,867,700 | 406,356,100 | 380,880,500 | 369,897,100 | 363,784,700 |
-| [slre](4.2/compiled/slre.md) | 420,608,642 | 458,624,160 | 310,469,600 | 345,258,400 | 310,448,200 | 306,161,600 | 296,970,200 |
-| [st](4.2/compiled/st.md) | 2,970,614,986 | 3,439,302,960 | 2,545,823,900 | 2,245,396,700 | 2,159,090,100 | 2,185,002,500 | 2,148,420,900 |
-| [statemate](4.2/compiled/statemate.md) | 279,640,612 | 241,864,160 | 193,824,300 | 187,538,500 | 191,455,500 | 188,702,900 | 185,562,700 |
-| [ud](4.2/compiled/ud.md) | 1,124,021,026 | 1,174,970,400 | 896,616,100 | 905,194,500 | 865,849,100 | 886,851,300 | 853,131,100 |
-| [wikisort](4.2/compiled/wikisort.md) | 1,047,470,624 | 1,131,400,320 | 895,912,600 | 814,907,400 | 792,668,600 | 764,454,400 | 755,291,600 |
+| [aha-mont64](4.2/compiled/aha-mont64.md) | 11,425,502 | 16,739,060 | 14,019,466 | 12,357,832 | 12,564,698 | 12,380,704 | 12,312,016 |
+| [crc32](4.2/compiled/crc32.md) | 6,130,443 | 19,966,346 | 7,356,891 | 7,007,039 | 7,007,033 | 7,007,375 | 7,007,039 |
+| [cubic](4.2/compiled/cubic.md) | 30,287,860 | 71,399,587 | 42,590,615 | 37,505,317 | 37,296,609 | 37,130,343 | 36,513,847 |
+| [edn](4.2/compiled/edn.md) | 75,135,316 | 191,060,158 | 111,910,206 | 92,733,864 | 89,051,016 | 83,631,098 | 83,518,500 |
+| [huffbench](4.2/compiled/huffbench.md) | 2,693,952 | 5,749,891 | 3,365,737 | 3,215,457 | 2,922,743 | 2,963,505 | 2,940,475 |
+| [matmult-int](4.2/compiled/matmult-int.md) | 29,506,443 | 74,426,421 | 44,177,157 | 36,564,643 | 36,015,495 | 37,160,367 | 36,407,605 |
+| [minver](4.2/compiled/minver.md) | 12,751,619 | 29,064,911 | 17,987,531 | 16,165,139 | 15,762,493 | 15,306,379 | 15,227,437 |
+| [nbody](4.2/compiled/nbody.md) | 27,246,935 | 65,541,011 | 38,868,841 | 33,659,173 | 32,939,523 | 33,132,073 | 32,826,229 |
+| [nettle-aes](4.2/compiled/nettle-aes.md) | 4,807,300 | 5,875,634 | 5,044,530 | 5,046,090 | 4,957,130 | 4,998,206 | 4,940,870 |
+| [nettle-sha256](4.2/compiled/nettle-sha256.md) | 4,099,001 | 5,219,708 | 4,206,627 | 4,177,117 | 4,158,071 | 4,168,539 | 4,160,961 |
+| [nsichneu](4.2/compiled/nsichneu.md) | 2,238,725 | 6,562,009 | 3,379,608 | 4,175,512 | 3,377,174 | 3,406,714 | 3,354,964 |
+| [picojpeg](4.2/compiled/picojpeg.md) | 5,241,766 | 11,818,952 | 6,129,158 | 5,591,750 | 5,768,474 | 5,537,090 | 5,519,994 |
+| [qrduino](4.2/compiled/qrduino.md) | 6,032,091 | 15,169,390 | 7,948,406 | 7,543,352 | 7,374,356 | 7,556,310 | 7,317,850 |
+| [sglib-combined](4.2/compiled/sglib-combined.md) | 2,975,542 | 6,906,791 | 3,828,677 | 4,063,561 | 3,808,805 | 3,698,971 | 3,637,847 |
+| [slre](4.2/compiled/slre.md) | 2,533,787 | 5,732,802 | 3,104,696 | 3,452,584 | 3,104,482 | 3,061,616 | 2,969,702 |
+| [st](4.2/compiled/st.md) | 17,895,271 | 42,991,287 | 25,458,239 | 22,453,967 | 21,590,901 | 21,850,025 | 21,484,209 |
+| [statemate](4.2/compiled/statemate.md) | 1,684,582 | 3,023,302 | 1,938,243 | 1,875,385 | 1,914,555 | 1,887,029 | 1,855,627 |
+| [ud](4.2/compiled/ud.md) | 6,771,211 | 14,687,130 | 8,966,161 | 9,051,945 | 8,658,491 | 8,868,513 | 8,531,311 |
+| [wikisort](4.2/compiled/wikisort.md) | 6,310,064 | 14,142,504 | 8,959,126 | 8,149,074 | 7,926,686 | 7,644,544 | 7,552,916 |
 
 ![Conditional full Embench projection for 19 workloads and all seven targets, using older cycles multiplied by current FF periods rather than a current-source rerun](4.7/conditional-embench-projection.svg)
 
-*Conditional full Embench projection, not a current-source measurement.* Each
-cell shows projected `target ticks / single-cycle ticks` for that workload;
-the single-cycle reference is visible at 1.0. The table above gives all
-projected tick counts. These relative colors are conditional on the older
+*Conditional full Embench projection, not a current-source measurement* (`embedded` clocks). Each
+cell shows projected `target time / single-cycle time` for that workload;
+the single-cycle reference is visible at 1.0. The table above gives the
+historical cycle counts. These relative colors are conditional on the older
 cycle counts remaining unchanged.
 
-If the old cycle counts were unchanged, advanced/two-bit would have the
-fewest projected ticks among the three fixed core choices on 18/19 workloads;
-baseline would lead `nettle-aes`. The unweighted geometric-mean projected
-ratios to advanced/two-bit are 1.425× for single-cycle and 1.488× for
-baseline. This arithmetic is conditional and is **not** a newly validated
-full Embench comparison, an official normalized Embench score, or evidence
-that the current source retains the old cycle counts. The full run includes
-startup, in-program warmup, repetitions and verification; the small checked-in
-fixtures and reduced middle suite do not replace it.
+If the old cycle counts were unchanged, advanced/two-bit would take the least
+projected time among the three fixed core choices on all 19 workloads in
+`unit` and on 18/19 in `embedded` and `desktop`, where baseline would lead
+`nettle-aes`. The unweighted geometric-mean projected ratios to
+advanced/two-bit are 1.52× (`unit`), 1.50× (`embedded`, `desktop`) for
+single-cycle and 1.58×, 1.52× and 1.52× for baseline. This arithmetic is
+conditional and is **not** a newly validated full Embench comparison, an
+official normalized Embench score, or evidence that the current source
+retains the old cycle counts. The full run includes startup, in-program
+warmup, repetitions and verification; the small checked-in fixtures and
+reduced middle suite do not replace it.
 
 ## Cross-group comparison
 
 For a consistent three-core comparison on **measured FF results**, hold
-advanced prediction at two-bit and compare exactly the same cases within
-each group. The ratios are unweighted geometric means of
-`other core ticks / advanced two-bit ticks`; values above one favor advanced.
-The winner counts also compare just those three fixed targets. The eight tiny
-expected-trap programs are omitted from the first performance summary, though
-their results remain in the fixed-program table.
+advanced prediction at two-bit and compare exactly the same cases within each
+group. The ratios are unweighted geometric means of
+`other core time / advanced two-bit time` (time = cycles × the profile's
+certified period); values above one favor advanced. The winner counts
+compare just those three fixed targets. The eight tiny expected-trap programs
+are omitted from the first summary, though their results remain in the
+fixed-program table.
 
-| Measured group | Matched cases | Lowest ticks: single / baseline / advanced 2b | Single / advanced 2b | Baseline / advanced 2b |
+| Measured group | Matched cases | Least time: single / baseline / advanced 2b | Single / advanced 2b: `unit`, `embedded`, `desktop` | Baseline / advanced 2b: `unit`, `embedded`, `desktop` |
 | --- | ---: | ---: | ---: | ---: |
-| Fixed programs excluding expected traps | 14 | 2 / 1 / 11 | 1.264× | 1.298× |
-| Generated families | 15 | 0 / 1 / 14 | 1.345× | 1.696× |
-| Core-gap settings | 23 | 0 / 3 / 20 | 1.382× | 1.618× |
-| Longer branch patterns | 5 | 0 / 0 / 5 | 1.366× | 2.062× |
+| Fixed programs excluding expected traps | 14 | 0 / 1 / 13 | 1.345×, 1.329×, 1.329× | 1.381×, 1.326×, 1.325× |
+| Generated families | 15 | 0 / 1 / 14 | 1.431×, 1.414×, 1.414× | 1.805×, 1.733×, 1.732× |
+| Core-gap settings | 23 | 0 / 3 / 20 | 1.470×, 1.453×, 1.453× | 1.722×, 1.653×, 1.652× |
+| Longer branch patterns | 5 | 0 / 0 / 5 | 1.453×, 1.436×, 1.435× | 2.193×, 2.106×, 2.105× |
 
-The advanced pipeline usually compensates for its 100-tick period by saving
-cycles through forwarding and prediction. The baseline's 80-tick period can
-still win on independent work, while dependency and branch stalls can erase
-that clock advantage. Across these groups, there is **no single winner for
-every workload or advanced predictor policy**. Groups overlap in generated
-definitions, so these four ratios are separate descriptions, not four
-independent benchmark scores to average together. Timed-memory rows change
-the endpoint and are not part of this FF-only core comparison.
+The winner counts are the same in all three profiles. The advanced pipeline
+usually compensates for its longer clock by saving cycles through forwarding
+and prediction. The baseline's shorter clock can still win on independent
+work, while dependency and branch stalls can erase that advantage; the
+baseline's relative clock is a little better in the realistic profiles, so
+its ratios are lower there. Across these groups, there is **no single winner
+for every workload or advanced predictor policy**. Groups overlap in
+generated definitions, so these ratios are separate descriptions, not
+independent benchmark scores to average together.
+
+## Memory topologies and caches
+
+Does the advanced core run faster with [caches](../memory/caches.md) between
+it and DRAM main memory, and which arrangement helps? The same core, with the
+same DRAM, was connected in five ways and run in both realistic profiles at
+its certified clock (`embedded` 4,104 ps, `desktop` 2,858 ps; the
+[clock analysis](4.2/timing.md#certified-clocks) certifies every topology at
+that clock).
+
+<!-- diagram: cache-topologies -->
+
+**Setup**, fixed before any run: the instruction and data L1s are 8 sets × 2
+ways × 16-byte lines (256 B each), the shared L2 64 sets × 2 ways × 16-byte
+lines (2 KiB), all with SRAM tag and data stores; lines are filled with one
+burst; the data caches write through and do not allocate on a write miss.
+Main memory is one DRAM of 65,536 words with the profile's datasheet rows
+(512 words in `embedded`, 1,024 in `desktop`) and refresh. The workloads are
+`calls` (size 16, 256 measured iterations), `sort` (64 words: its 512-byte
+working set is larger than an L1 and smaller than the L2, 4 iterations),
+`stream` (1,024 words, larger than the L2, 4 iterations) and `pointer-chase`
+(512 nodes, 4 KiB, random dependent loads, 4 iterations); each window starts
+after one warm-up iteration. Every run matched the instruction oracle and the
+expected final memory, with zero setup violations.
+
+**Latency of one read** (cycles at the certified clock; [3.6](../memory/timing.md)
+gives the memory alone):
+
+| Read | `embedded` | `desktop` |
+| --- | ---: | ---: |
+| L1 hit | 2 | 2 |
+| L2 hit after an L1 miss | 8 | 8 |
+| DRAM, row open | 8 | 8 |
+| DRAM, row closed | 14 | 15 |
+| DRAM, other row open | 20 | 22 |
+| L1 miss to DRAM, row open / closed | 14 / 20 | 14 / 21 |
+| L1 and L2 miss to DRAM, row open / closed | 17 / 23 | 17 / 24 |
+
+**Cycles in the measured window**, with cycles per instruction and the speed
+against the shared, uncached topology B:
+
+**calls**
+
+| Topology | `embedded` cycles | CPI | vs B | `desktop` cycles | CPI | vs B |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| A | 62,529 | 12.21 | 1.51× | 65,944 | 12.88 | 1.57× |
+| B | 94,309 | 18.42 | 1.00× | 103,331 | 20.18 | 1.00× |
+| C-ID | 26,321 | 5.14 | 3.58× | 28,499 | 5.57 | 3.63× |
+| D-0 | 27,296 | 5.33 | 3.46× | 29,144 | 5.69 | 3.55× |
+| D-ID | 27,820 | 5.43 | 3.39× | 29,665 | 5.79 | 3.48× |
+
+**sort**
+
+| Topology | `embedded` cycles | CPI | vs B | `desktop` cycles | CPI | vs B |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| A | 281,202 | 10.14 | 1.99× | 302,048 | 10.89 | 2.08× |
+| B | 559,942 | 20.19 | 1.00× | 628,588 | 22.67 | 1.00× |
+| C-ID | 142,446 | 5.14 | 3.93× | 157,293 | 5.67 | 4.00× |
+| D-0 | 150,892 | 5.44 | 3.71× | 165,890 | 5.98 | 3.79× |
+| D-ID | 153,511 | 5.54 | 3.65× | 168,220 | 6.07 | 3.74× |
+
+**stream**
+
+| Topology | `embedded` cycles | CPI | vs B | `desktop` cycles | CPI | vs B |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| A | 410,643 | 14.31 | 1.38× | 451,632 | 15.73 | 1.40× |
+| B | 567,601 | 19.77 | 1.00× | 632,355 | 22.03 | 1.00× |
+| C-ID | 185,577 | 6.47 | 3.06× | 205,977 | 7.18 | 3.07× |
+| D-0 | 194,892 | 6.79 | 2.91× | 215,278 | 7.50 | 2.94× |
+| D-ID | 201,013 | 7.00 | 2.82× | 222,082 | 7.74 | 2.85× |
+
+**pointer-chase**
+
+| Topology | `embedded` cycles | CPI | vs B | `desktop` cycles | CPI | vs B |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| A | 134,203 | 13.06 | 1.85× | 125,641 | 12.23 | 2.19× |
+| B | 248,769 | 24.22 | 1.00× | 275,375 | 26.81 | 1.00× |
+| C-ID | 82,295 | 8.01 | 3.02× | 72,584 | 7.07 | 3.79× |
+| D-0 | 75,971 | 7.40 | 3.27× | 69,702 | 6.79 | 3.95× |
+| D-ID | 79,289 | 7.72 | 3.14× | 73,041 | 7.11 | 3.77× |
+
+**What the counters show:**
+
+- **Sharing one DRAM (A → B) costs 1.4–2.2×.** The two ports rarely request
+  in the same cycle; the cost is DRAM row changes. In `sort` (`embedded`),
+  A opens 796 rows in its two memories, B's shared DRAM 18,377, because
+  instruction fetches and data accesses interleave on one device; at about
+  twelve cycles per row change that accounts for most of B's extra cycles.
+- **The L1 pair (B → C-ID) gives 3–4×.** The code fits the instruction L1;
+  the data L1 holds part of `sort`'s working set.
+- **The L2 alone (B → D-0) gives almost as much**, because an L2 hit of one
+  word costs about as much as an L1 hit at these clocks.
+- **Both levels (C-ID → D-ID) are 4–8 % slower than the L1s alone** in
+  `calls`, `sort` and `stream`. Every store is written through two levels
+  and the core waits for each write; serving the data L1's misses from the
+  L2 saves less than that costs. Only `pointer-chase`, which misses the L1
+  on almost every load, gains from the L2 under the L1s in `embedded`. This
+  is a property of the caches as built (write-through, one outstanding
+  request, no write buffer), not of the memory timing.
+- **Random access favors the larger cache.** In `pointer-chase` the 256-byte
+  L1 rarely holds a node and each miss fetches a whole line, so the L2 alone
+  (D-0) is fastest. In `desktop` the whole 4 KiB array sits in one DRAM row.
+
+**Locality, without a CPU** (2,048 reads, cycles per read, `embedded` /
+`desktop`; S0 reads DRAM directly, S1 through an L1, S2 through an L1 and
+the L2):
+
+| Access pattern | S0 DRAM | S1 L1 | S2 L1 + L2 |
+| --- | ---: | ---: | ---: |
+| Sequential | 8.05 / 8.03 | 5.08 / 5.26 | 5.83 / 6.07 |
+| One word per cache line | 8.12 / 8.08 | 14.29 / 14.79 | 17.32 / 17.97 |
+| One word per DRAM row | 19.93 / 21.94 | 26.20 / 29.31 | 29.19 / 32.46 |
+
+Sequential access is 2.5× faster than row-hopping with no cache at all and
+about 5× faster with an L1. A cache makes access with no spatial locality
+slower (one word per line: 14.3 cycles through an L1 against 8.1 without),
+since every miss fetches four words to use one.
+
+These results cover the stated geometry, policies and inputs. They are not
+a general cache ranking: a write-back cache, a write buffer, more
+outstanding requests or a multi-bank DRAM would be new designs with their
+own results. No memory interval or cache policy was changed after seeing
+results.
 
 ## Interpretation and evidence limits
 
 The measured tables above record the selected inputs and target settings,
 not every possible RV32I program, predictor size, or memory/core pairing.
-Single-cycle and baseline were tested only with FF memory; timed-memory
-results cover advanced/two-bit plus the separate default-policy program-20
-check. The structural reference checks an affordable CPU datapath and
+Single-cycle and baseline were tested only with FF memory; the current
+timed memories are described by their measured latencies in 3.6. The structural reference checks an affordable CPU datapath and
 scalable memory abstractions. It does not turn a finite campaign into a
 proof of every implementation state.
 
-All displayed times are simulated ticks. Host execution seconds were
+All displayed results are cycles or simulated time. Host execution seconds were
 recorded with only one measurement and no host warmup, so they are not a
 stable host-speed ranking. The full Embench section remains a projection
 until its complete ELFs are rerun on the current source. Changes to

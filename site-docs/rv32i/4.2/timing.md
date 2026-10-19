@@ -14,6 +14,29 @@ The earlier candidate clock, `2 * (D + floor(D / 4) + 2)` over a longest-path es
 
 `CircuitTimingAnalyzer::safeClock` is a non-mutating analysis. A successful result is sufficient **under explicit simulator contracts**, not a physical frequency, exact minimum clock, or proof of ISA correctness. Both fidelities use the clock from the same structural reference profile.
 
+## Certified clocks
+
+The analysis runs in the active [timing profile](../../timing.md#timing-profiles)
+(`CIRCUITSIM_TIMING_PROFILE`), on every gate or on the proven table of every
+compact part. The certified periods of the three cores with flip-flop memory,
+as stored in `CERTIFIED_CORE_PERIODS` (`include/analysis/ExperimentClock.hpp`)
+and checked against the analysis by `RV32IProfileSweepTest`:
+
+<!-- profile-table: clocks -->
+
+The advanced core with cached or shared memory (one or two L1 caches, a
+shared L2, the two-port arbiter) is certified at the same clock as with
+flip-flop memory. The caches pass their clock on through zero-delay one-bit
+wires; the analysis accepts such a wire as the clock itself and lists how
+many it followed among its assumptions. `rv32i_experiment
+--list-certified-periods` prints the stored table.
+
+Two kinds of path are exceptions by design, each a named part the analysis
+recognizes: a `Synchronizer` input is an asynchronous capture (no setup check,
+no path through it), and `ProtocolStableData` marks data the protocol holds
+stable for more than one cycle before it is captured
+([3.2.6](../../memory/building-blocks.md#326-timing-and-control-parts)).
+
 ## Sufficient-period calculation
 
 The analyzer follows combinational arcs between clocked launches and captures, retaining earliest and latest arrival bounds. Asynchronous register/memory reads remain combinational paths. An explicit component contract describes arcs, captures, launches, fixed inputs and pulse-width requirements.
@@ -68,7 +91,7 @@ separately.
 The [registered timing regressions](verification/timing.md#timed-memory-handshake-state-regression)
 check observed states for FF, SRAM and DRAM on program 20. Recompute after
 changing a circuit, endpoint or timing contract. Dated certificate values and
-their scope are recorded in [§ 4.7](../experiments.md#current-clock-certificates-2026-10-13).
+their scope are recorded in [§ 4.7](../experiments.md).
 
 ## Reproduction
 
@@ -78,7 +101,7 @@ build/rv32i_experiment --core baseline --safe-clock --binary-startup --allocatio
 build/rv32i_experiment --core advanced --policy two-bit --entries 16 --safe-clock --binary-startup --allocation-limit-mib 512
 ```
 
-Recompute after circuit, predictor capacity, endpoint, fidelity or contract changes. Delayed technology latencies are device ticks; they do not automatically rescale with the CPU period. For predictor cycle-efficiency comparisons, use a common safe period. For modeled total time, use and disclose each target's own certified period.
+Set `CIRCUITSIM_TIMING_PROFILE` to choose the profile. Recompute after circuit, predictor capacity, endpoint, fidelity or contract changes. The memories follow the clock: SRAM and ROM wait cycles are chosen from the proven access time at the period, DRAM commands wait their datasheet intervals in whole cycles, and NOR flash reports `BUSY` ([3.6](../../memory/timing.md)). For predictor cycle-efficiency comparisons, use a common safe period. For modeled total time, use and disclose each target's own certified period.
 
 ## Source and tests
 

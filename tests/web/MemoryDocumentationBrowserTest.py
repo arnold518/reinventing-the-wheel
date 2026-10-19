@@ -32,9 +32,9 @@ def main():
         page.on("request", lambda request: api_requests.append(request.url) if "/api/" in request.url else None)
         page.on("request", lambda request: reload_frames.append(request.frame.parent_frame is not None)
                 if "/livereload/" in request.url else None)
-        response = page.goto(urljoin(base, "memory/3.1.1/"), wait_until="domcontentloaded")
+        response = page.goto(urljoin(base, "memory/technologies/flip-flop/"), wait_until="domcontentloaded")
         assert response and response.ok
-        assert "§ 3.1.1. Flip-Flop Storage" in page.locator("h1").inner_text()
+        assert "§ 3.3.1. Flip-Flop Storage" in page.locator("h1").inner_text()
         assert "Register<W>" not in page.locator("article").inner_text()
         assert page.locator('iframe[src*="scenario=register32"]').count() == 0
         overview = page.locator("article table").first
@@ -50,11 +50,11 @@ def main():
         assert page.locator(".simulator-embed iframe").count() == 7
         headings = page.locator("article h3").evaluate_all(
             "nodes => nodes.map(n => n.firstChild.textContent.trim())")
-        assert headings == ["IO pins", "Behavior", "Implementation", "Examples", "Source and tests"] * 7
+        assert headings == ["IO pins", "Behavior", "Implementation", "Timing", "Examples", "Source and tests"] * 7
         subsections = page.locator("article h4").evaluate_all(
             "nodes => nodes.map(n => n.firstChild.textContent.trim())")
         assert subsections == [heading for _, behavioral in components for heading in
-                               (["C++ example", "Unknown inputs and timing", "Structural implementation"]
+                               (["C++ example", "Unknown inputs", "Structural implementation"]
                                 + (["Behavioral implementation"] if behavioral else []) + ["Embedded simulation"])]
         behavioral = page.locator("article h4").filter(has_text="Behavioral implementation")
         assert behavioral.count() == 4
@@ -182,7 +182,7 @@ def main():
         # The reference and all its rows remain readable without JavaScript.
         static = browser.new_context(java_script_enabled=False)
         static_page = static.new_page()
-        static_page.goto(urljoin(base, "memory/3.1.1/"), wait_until="domcontentloaded")
+        static_page.goto(urljoin(base, "memory/technologies/flip-flop/"), wait_until="domcontentloaded")
         assert static_page.locator(".example-table tbody tr").count() == 263
         static.close()
         browser.close()

@@ -1081,6 +1081,8 @@ enabled unknown word.
 
 #### Structural implementation
 
+<!-- diagram: sram-device -->
+
 Combines `ACCESS_CONTROL`, `ROW_DECODE`, `PRECHARGE`, `STORAGE`, `COLUMN_SELECT`, W `WRITE_DRIVER_b` and `SENSE_b` instances, bus wiring, and `OUTPUT`. Each `SRAMWriteDriver` keeps its own write-enable and mask gate and complementary data pair, so the drive and bitline paths keep their relative timing. Precharge control and repeated column-select complements are shared, while each bitline pair and sense amplifier remains visible. The default 4×8 example has two rows, 16 bitline pairs and 32 cells.
 
 An array of more than 32 rows is built from 32-row subarrays, each a complete `SRAM<W>` with its own access control. The asynchronous form sends the address over a global wire and lets the high address bits select one subarray; the clocked form lets every subarray take each access in parallel. Each subarray drives a shared return bus for `READ_DATA` and `READY` (`READY` is pulled low while no subarray drives it). The wire and bus delays grow with the side of the subarray grid. Gate-level devices are limited to 4,096 cells in all.

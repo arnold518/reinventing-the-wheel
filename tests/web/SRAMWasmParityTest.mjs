@@ -7,7 +7,7 @@ import { pathToFileURL } from 'node:url';
 const [modulePath, wasmPath, probePath] = process.argv.slice(2);
 const factory = (await import(pathToFileURL(resolve(modulePath)))).default;
 const module = await factory({wasmBinary: await readFile(wasmPath)});
-const docs = await readFile(new URL('../../site-docs/memory/3.1.2.md', import.meta.url), 'utf8');
+const docs = await readFile(new URL('../../site-docs/memory/technologies/sram.md', import.meta.url), 'utf8');
 let comparisons = 0;
 for (const [, scenario, test] of docs.matchAll(/<!-- simulator-examples: (\S+) (\S+) -->/g)) {
   const modes = ['structural'];

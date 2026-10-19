@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en" class="diagram-standalone">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>DRAM reads by row state</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;600&amp;family=Ubuntu+Mono&amp;display=swap" rel="stylesheet"/>
+<style>body { margin: 24px auto; max-width: 688px; padding: 0 16px; } * { box-sizing: border-box; }</style>
+</head>
+<body>
+<!-- diagram:start -->
+<figure class="circuit-figure" data-diagram="dram-commands">
+<div class="diagram-viewport" role="region" aria-label="DRAM reads by row state" tabindex="0">
+<svg viewBox="0 0 640 288" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="dram-commands-title dram-commands-desc">
+<title id="dram-commands-title">DRAM reads by row state</title>
+<desc id="dram-commands-desc">Three DRAM reads in the embedded profile: a row hit needs one READ, a closed row an ACTIVATE then a READ, and a row conflict a PRECHARGE, an ACTIVATE and a READ; each bar is labeled with the measured cycles.</desc>
+<style>.circuit-figure {
+  --dg-paper: var(--md-default-bg-color, #fff);
+  --dg-ink: var(--md-default-fg-color, #202735);
+  --dg-muted: #566174;
+  --dg-rule: #c8ced8;
+  --dg-surface: #f5f6f9;
+  --dg-accent: #4051b5;
+  --dg-tint: #eef0fc;
+  margin: 1.5rem 0; max-width: 100%; text-align: left;
+  font-family: var(--md-text-font-family, 'Noto Sans', sans-serif);
+}
+[data-md-color-scheme="slate"] .circuit-figure {
+  --dg-muted: #b4bdd0; --dg-rule: #4b5569; --dg-surface: #262c38;
+  --dg-accent: #acb7ff; --dg-tint: #303853;
+}
+@media (prefers-color-scheme: dark) {
+  .diagram-standalone .circuit-figure {
+    --dg-paper: #1e2129; --dg-ink: #e4e7ef; --dg-muted: #b4bdd0;
+    --dg-rule: #4b5569; --dg-surface: #262c38;
+    --dg-accent: #acb7ff; --dg-tint: #303853;
+  }
+  .diagram-standalone body { background: #1e2129; color: #e4e7ef; }
+}
+.circuit-figure .diagram-viewport {
+  max-width: 100%; overflow: auto; overscroll-behavior-x: contain;
+}
+.circuit-figure .diagram-viewport:focus-visible {
+  outline: 2px solid var(--dg-accent); outline-offset: 3px;
+}
+.circuit-figure svg { display: block; width: 640px; min-width: 640px; max-width: none; margin: 0 auto; }
+.circuit-figure figcaption {
+  display: block; margin: .6rem 0 0; max-width: none; text-align: left;
+  color: var(--dg-muted); font-style: normal; font-size: 14px; line-height: 1.6;
+}
+.circuit-figure figcaption strong { color: var(--dg-ink); font-weight: 600; }
+.circuit-figure .dg-zone { fill: var(--dg-paper); stroke: var(--dg-rule); stroke-width: 1.2; }
+.circuit-figure .dg-box { fill: var(--dg-paper); stroke: var(--dg-rule); stroke-width: 1.2; }
+.circuit-figure .dg-store { fill: var(--dg-surface); stroke: var(--dg-rule); stroke-width: 1.2; }
+.circuit-figure .dg-focus { fill: var(--dg-tint); stroke: var(--dg-accent); stroke-width: 1.4; }
+.circuit-figure .dg-label { fill: var(--dg-paper); stroke: none; }
+.circuit-figure text { fill: var(--dg-ink); font-family: var(--md-text-font-family, 'Noto Sans', sans-serif); font-size: 16px; }
+.circuit-figure .dg-name { font-weight: 600; }
+.circuit-figure .dg-small { font-size: 14px; fill: var(--dg-muted); }
+.circuit-figure .dg-code { font-family: var(--md-code-font-family, 'Ubuntu Mono', monospace); font-size: 14px; fill: var(--dg-muted); }
+.circuit-figure .dg-tag { font-size: 12px; font-weight: 600; letter-spacing: .06em; fill: var(--dg-muted); }
+.circuit-figure .dg-edge { fill: none; stroke: var(--dg-muted); stroke-width: 1.5; }
+.circuit-figure .dg-marker { fill: var(--dg-muted); }
+.circuit-figure .dg-marker-accent { fill: var(--dg-accent); }
+.circuit-figure .dg-rule { stroke: var(--dg-rule); stroke-width: 1; }
+.circuit-figure .dg-wave { fill: none; stroke: var(--dg-ink); stroke-width: 1.5; }
+.circuit-figure .dg-wave-focus { fill: none; stroke: var(--dg-accent); stroke-width: 2; }</style>
+<defs>
+<marker id="dram-commands-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><path d="M 0 0 L 8 3 L 0 6 Z" class="dg-marker"/></marker>
+<marker id="dram-commands-arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><path d="M 0 0 L 8 3 L 0 6 Z" class="dg-marker-accent"/></marker>
+<marker id="dram-commands-arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><path d="M 0 0 L 8 3 L 0 6 Z" class="dg-marker"/></marker>
+</defs>
+<rect width="640" height="288" fill="var(--dg-paper)"/>
+<text x="40" y="76" class="dg-name" text-anchor="start">Row open (hit)</text>
+<rect x="216" y="48" width="100" height="44" rx="4" class="dg-focus"/>
+<text x="266.0" y="75" class="dg-small" text-anchor="middle">READ</text>
+<text x="328" y="75" class="dg-code" text-anchor="start">8 cycles</text>
+<text x="40" y="148" class="dg-name" text-anchor="start">Row closed</text>
+<rect x="216" y="120" width="100" height="44" rx="4" class="dg-box"/>
+<text x="266.0" y="147" class="dg-small" text-anchor="middle">ACTIVATE</text>
+<rect x="316" y="120" width="100" height="44" rx="4" class="dg-focus"/>
+<text x="366.0" y="147" class="dg-small" text-anchor="middle">READ</text>
+<text x="428" y="147" class="dg-code" text-anchor="start">14 cycles</text>
+<text x="40" y="220" class="dg-name" text-anchor="start">Other row open</text>
+<rect x="216" y="192" width="100" height="44" rx="4" class="dg-box"/>
+<text x="266.0" y="219" class="dg-small" text-anchor="middle">PRECHARGE</text>
+<rect x="316" y="192" width="100" height="44" rx="4" class="dg-box"/>
+<text x="366.0" y="219" class="dg-small" text-anchor="middle">ACTIVATE</text>
+<rect x="416" y="192" width="100" height="44" rx="4" class="dg-focus"/>
+<text x="466.0" y="219" class="dg-small" text-anchor="middle">READ</text>
+<text x="528" y="219" class="dg-code" text-anchor="start">20 cycles</text>
+<path class="dg-edge" d="M 40 264 L 600 264"/>
+</svg>
+</div>
+<figcaption><strong>The row state decides the cost.</strong> Each command lasts its datasheet interval (tRP, tRCD, CL: 18, 18 and 18 ns for the <code>embedded</code> SDRAM); the controller waits whole cycles and adds the request and response edges. Measured cycles are the generated latencies of 3.6.</figcaption>
+</figure>
+<!-- diagram:end -->
+</body>
+</html>

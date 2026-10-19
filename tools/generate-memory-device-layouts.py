@@ -17,7 +17,8 @@ def main():
     parser.add_argument("--transactions", action="store_true", help="Only transaction/controller/native-device documentation")
     args = parser.parse_args()
     layout = server.LayoutManager(root / "visualizer-v2/layout.json")
-    sections = ("3.2", "3.3", "3.1.6") if args.transactions else ("3.1.0", "3.1.3", "3.1.4", "3.1.5")
+    sections = (("transactions", "controllers", "technologies/scalable") if args.transactions else
+                ("building-blocks", "technologies/dram", "technologies/rom", "technologies/nor-flash"))
     source = "\n".join((root / "site-docs/memory" / f"{section}.md").read_text() for section in sections)
     for scenario, _ in re.findall(r"<!-- simulator-examples: (\S+) (\S+) -->", source):
         overrides = ({"MEMORY_ENDPOINT_ROOT": "behavioral" if scenario == "scalable-memory-container" else "structural"}

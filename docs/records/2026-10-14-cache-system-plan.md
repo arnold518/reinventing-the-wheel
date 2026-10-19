@@ -2155,3 +2155,25 @@ the cache.
    before publishing.
 
 No code changed and nothing was run for this update.
+
+## 2026-10-19 — Campaign results published (assistant decision)
+
+The campaign planned above ran during phase 7 of the
+[realistic-timing work](2026-10-16-realistic-timing-progress.md) (Step 1,
+standalone S0–S2 with locality traces, the five-topology CPU panel and
+pointer-chase, in `embedded` and `desktop`; every run verified). It stayed
+"exploratory and unpublished" for two reasons, both resolved in phase 8: the
+gate-level clocked SRAM macro inside the cache (explained and fixed; the
+standalone benchmark with gate-level banks gives identical cycles and
+traffic) and the cached roots' clock (now certified by the analyzer at the
+core's clock, the clock the campaign used). The remaining condition was the
+owner allowing site updates, which came with the documentation phase.
+
+**Decision:** publish the results as a section of § 4.7 ("Memory topologies
+and caches"), not on the cache component page, whose rewrite the owner
+deferred. The tables are generated from the raw run records (checked:
+verified, completed, zero setup violations) and equal the progress-record
+copies. The C-ID → D-ID statement is limited to `calls`, `sort` and
+`stream` (4–8 % slower); `pointer-chase` gains from the L2 under the L1s in
+`embedded`. A topology figure (`cache-topologies`) is added. Spot checks of
+the panel at the current code are recorded in the documentation record.

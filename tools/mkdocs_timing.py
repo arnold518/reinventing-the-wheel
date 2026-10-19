@@ -147,7 +147,7 @@ def render(key):
                  else "No delay twin: the compact part uses the maximum.")
     html.append('<p class="timing-table-description">' + " ".join(notes) + "</p>")
     html.append('<div class="example-table-scroll" role="region" tabindex="0" '
-                f'aria-label="Proven delays of {escape(key)}"><table class="example-table"><thead><tr>'
+                f'aria-label="Proven delays of {escape(key)}"><table class="timing-table"><thead><tr>'
                 '<th scope="col">Path</th>')
     for name, (_, unit) in data.items():
         html.append(f'<th scope="col"><code>{escape(name)}</code><small>{unit}, minimum–maximum</small></th>')
@@ -208,13 +208,13 @@ def render_latency(selection):
                 f"memory at the advanced core's certified clock ({clocks}). Refresh is off. “Configured” rows are too long to "
                 "simulate and show the device interval instead.</p>")
     html.append('<div class="example-table-scroll" role="region" tabindex="0" aria-label="Measured memory access '
-                'latency"><table class="example-table"><thead><tr><th scope="col">Memory</th>'
+                'latency"><table class="timing-table"><thead><tr><th scope="col">Memory</th>'
                 '<th scope="col">Access</th>')
     for profile in profiles:
         html.append(f'<th scope="col"><code>{escape(profile["name"])}</code><small>cycles</small></th>')
     html.append("</tr></thead><tbody>")
     for memory, operation in order:
-        html.append(f'<tr><th scope="row">{escape(MEMORY_NAMES[memory])}</th><td>{escape(operation)}</td>')
+        html.append(f'<tr><th scope="row">{escape(MEMORY_NAMES[memory])}</th><td class="text">{escape(operation)}</td>')
         for profile in profiles:
             html.append(f"<td>{cells[(profile['name'], (memory, operation))]}</td>")
         html.append("</tr>")
@@ -265,7 +265,7 @@ def render_profile_table(kind):
     html = ['<div class="timing-table-block" data-profile-table="' + kind + '">',
             f'<p class="timing-table-description">{description}, per timing profile.</p>',
             '<div class="example-table-scroll" role="region" tabindex="0" aria-label="' + escape(description) + '">'
-            '<table class="example-table"><thead><tr><th scope="col">' + escape(heading) + "</th>"]
+            '<table class="timing-table"><thead><tr><th scope="col">' + escape(heading) + "</th>"]
     for profile in profiles:
         unit = "ps" if profile["tick_picoseconds"] == 1 else ("ticks" if not profile["tick_picoseconds"]
                                                                else f"× {profile['tick_picoseconds']} ps")

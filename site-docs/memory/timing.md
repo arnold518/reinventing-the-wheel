@@ -50,6 +50,8 @@ frequency:
 At the capturing edge it checks `READY` and reports status `Device` if the
 device was not done.
 
+<!-- diagram: sram-access-chain -->
+
 ### Clocked SRAM macro
 
 An on-chip SRAM is usually a clocked macro: it registers the address, data
@@ -86,6 +88,8 @@ on the row state:
 - **Row closed**: ACTIVATE, then READ.
 - **Row conflict** (another row is open): PRECHARGE, ACTIVATE, READ.
 
+<!-- diagram: dram-commands -->
+
 The controller keeps the row open after an access (an open-page policy). It
 counts cycles between refreshes and, when one is due, closes the open row and
 issues REFRESH while new requests wait; the interval is tREFI divided by the
@@ -118,6 +122,8 @@ them in every profile on a memory small enough to build from gates. The numbers 
 by `documentation_timing_data` and checked by the test suite.
 
 <!-- latency-table: all -->
+
+<!-- diagram: memory-latency -->
 
 These latencies include one cost a real controller does not have: the
 response is registered, so the requester sees it one edge after the data is

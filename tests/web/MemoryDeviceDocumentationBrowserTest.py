@@ -73,23 +73,23 @@ def main():
                                     headless=True, args=["--no-sandbox"])
         cases = []
         # Check static pages/tables first with scripts disabled: no background WASM instances.
-        for section in ("3.1", "3.1.0", "3.1.3", "3.1.4", "3.1.5"):
-            source = (root / "site-docs/memory" / ("3.1/index.md" if section == "3.1" else f"{section}.md")).read_text()
+        for section, number in (("architecture", "3.1"), ("building-blocks", "3.2"), ("technologies/dram", "3.3.3"),
+                                ("technologies/rom", "3.3.4"), ("technologies/nor-flash", "3.3.5")):
+            source = (root / "site-docs/memory" / f"{section}.md").read_text()
             scenarios = re.findall(r"<!-- simulator-examples: (\S+) (\S+) -->", source)
             context = browser.new_context(java_script_enabled=False, viewport={"width": 1440, "height": 1000})
             page = context.new_page()
             response = page.goto(urljoin(base, f"memory/{section}/"), wait_until="domcontentloaded")
             assert response.ok
-            if section == "3.1":
-                nav = page.locator('.md-nav--primary a.md-nav__link').filter(has_text="3.1. Memory Devices")
-                assert nav.count() == 1 and nav.get_attribute("href").rstrip("/") in (".", "../3.1"), nav.all_text_contents()
-                assert not page.locator('.md-nav--primary a.md-nav__link').filter(has_text=re.compile(r'^\s*Architecture\s*$')).count()
+            if section == "architecture":
+                nav = page.locator('.md-nav--primary a.md-nav__link').filter(has_text="3.1. Memory Architecture")
+                assert nav.count() == 1 and nav.get_attribute("href").rstrip("/") in (".", "../architecture", "./"), nav.all_text_contents()
                 assert not scenarios and not page.locator(".simulator-embed").count()
-                helpers = page.locator('article a').filter(has_text="3.1.0. Helper Components")
-                assert helpers.count() == 1 and helpers.get_attribute("href").rstrip("/") == "../3.1.0"
-            assert f"§ {section}." in page.locator("h1").inner_text()
+                helpers = page.locator('article a').filter(has_text="3.2 Shared Building Blocks")
+                assert helpers.count() == 1 and helpers.get_attribute("href").rstrip("/") == "../building-blocks"
+            assert f"§ {number}." in page.locator("h1").inner_text()
             assert page.locator(".simulator-embed iframe").count() == len(scenarios)
-            if section != "3.1":
+            if section != "architecture":
                 assert page.locator("article table").first.locator("thead th").all_text_contents() == ["Component", "Description", "Structural", "Behavioral"]
             for scenario, _ in scenarios:
                 block = page.locator(f'.example-table-block[data-scenario="{scenario}"]')
@@ -184,7 +184,7 @@ def main():
             context.close()
         # Real document embeds, not only their full-screen counterparts. Other
         # frames receive inert HTML so only one WASM heap exists per context.
-        for section, scenario in (("3.1.3", "dram"), ("3.1.4", "rom"), ("3.1.5", "nor-flash")):
+        for section, scenario in (("technologies/dram", "dram"), ("technologies/rom", "rom"), ("technologies/nor-flash", "nor-flash")):
             context = browser.new_context(viewport={"width": 1440, "height": 1000})
             def isolate(route):
                 if route.request.url.endswith("?scenario=" + scenario):

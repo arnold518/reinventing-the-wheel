@@ -6,7 +6,7 @@ import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 const [modulePath, wasmPath, probePath] = process.argv.slice(2);
 const module = await (await import(pathToFileURL(resolve(modulePath)))).default({wasmBinary: await readFile(wasmPath)});
-const source = (await Promise.all(['3.2','3.3','3.1.6'].map(s =>
+const source = (await Promise.all(['transactions','controllers','technologies/scalable'].map(s =>
   readFile(new URL(`../../site-docs/memory/${s}.md`, import.meta.url),'utf8')))).join('\n');
 let count = 0;
 for (const [, scenario, test] of source.matchAll(/<!-- simulator-examples: (\S+) (\S+) -->/g)) {

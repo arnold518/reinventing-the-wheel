@@ -10,7 +10,7 @@ answers three questions from the same model and the same engine.
 | Clock | `CircuitTimingAnalyzer::safeClock` | A period under which every setup, hold and pulse-width requirement is met, or "unknown" |
 | Part delays | `CircuitTimingAnalyzer::characterize`, `CircuitTimingAnalyzer::delays` | The delays of one part: per output, or as a full table per input-output pair. The table bounds the compact form; a supported delay twin may time current values within that contract |
 
-All results are simulator ticks, not physical delays. Settling and clock
+All results are in ticks of the active timing profile (`unit`: one tick per gate; `embedded`, `desktop`: 1 tick = 1 ps; see `include/components/TimingProfile.hpp`). Settling and clock
 results are conservative bounds under their stated contracts, rather than
 values found by trying inputs. A part-delay table also records earliest
 delays for hold analysis; an optional delay twin can use current input values
@@ -201,10 +201,13 @@ memory with a non-default row layout, get no table.
 The memory endpoint keeps its empty/holding behaviour in the analysis and
 takes its delays path by path from its table.
 
-With the cores' real memory sizes the certified periods are 166
-(single-cycle), 80 (baseline) and 100 (advanced) ticks. The advanced core's
-98 became 100 when the compact core's setup needs at its memory pins were
-added to the analysis (see "Memories that time themselves").
+With the cores' real memory sizes the certified periods (FF memory) are
+stored per profile in `CERTIFIED_CORE_PERIODS`
+(`include/analysis/ExperimentClock.hpp`) and checked by
+`RV32IProfileSweepTest`: `unit` 166 / 80 / 94, `embedded` 7,164 / 3,354 /
+4,104 ps, `desktop` 4,986 / 2,334 / 2,858 ps (single-cycle, baseline,
+advanced). Earlier `unit` values of the advanced core (98, then 100) are
+history in the realistic-timing progress record.
 
 ### How the analysis reaches memory parts
 
@@ -381,8 +384,8 @@ situations and about 140,000 output changes), these checks held:
   delay; a delay twin can publish earlier, within the table's bound;
 - the gates stay within the table, also when several pins change at once or
   a few ticks apart, and also for gate-level parts sitting inside larger parts;
-- the three cores, compact, run at the current FF clock certificates (166,
-  80, 100) with no setup violation, and take exactly the gates' cycle count for
+- the three cores, compact, run at the FF clock certificates with no setup
+  violation, and take exactly the gates' cycle count for
   every program, memory technology and prediction policy compared.
 
 Does not hold, and why:
@@ -568,9 +571,9 @@ Every report lists its premises.
   question, including feedback through the memory store path, hold, budgets
   and every fail-closed case. These were written for the earlier engine and
   pass unchanged on this one.
-- The current FF-system certificates are 166, 80 and 100 ticks for the
-  single-cycle, baseline and advanced cores. Timed-memory certificates and
-  their scope are recorded in the [RV32I results page](../../site-docs/rv32i/experiments.md#current-clock-certificates-2026-10-13).
+- The FF-system certificates per profile are listed under "Memories larger
+  than can be built" above and on the public clock-analysis page
+  (`site-docs/rv32i/4.2/timing.md`).
 
 - `PartDelayTablesCompleteTest`: every stored table regenerated from the
   gates and compared.

@@ -116,11 +116,14 @@ work state changes. Keep dated decisions and validation results in
   3.3.1–3.3.6 as subsections, 3.4 protocol, 3.5 controllers and endpoints,
   3.6 memory timing, 3.7 caches kept for their own rewrite) and a shared
   "§ 1. Time and Delay" page added. Every component on the memory, ALU8 and
-  RV32I 4.3–4.4 pages has a Timing section with generated tables
-  (`tools/mkdocs_timing.py`; data from `documentation_timing_data`). The
-  native documentation checks pass; strict MkDocs passes. Open: browser
-  tests that open the old URLs, the diagram and plot review, 4.2
-  certificates, 4.7 results, the visualizer page, the Pages build.
+  RV32I 4.3–4.4 pages has a Timing section with generated tables; 4.2 has
+  per-profile certificates; 4.7 states results in cycles with per-profile
+  summaries and now publishes the cache campaign; eight new figures and the
+  four 4.7 plots follow the site palette. Native documentation checks,
+  strict MkDocs and the Pages build pass. **Open:** 15 of 19 browser and
+  parity checks were not run (the host ran low on memory and the run was
+  stopped; restart waits for the owner); a Pages rebuild with the caches
+  section; the cache component page's own rewrite (deferred by the owner).
 
 - [Future steps plan](records/2026-10-14-future-steps-plan.md): current CPU,
   memory and viewer boundaries assessed against interactive games, a

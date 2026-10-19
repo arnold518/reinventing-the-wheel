@@ -15,8 +15,14 @@ from playwright.sync_api import sync_playwright
 
 
 PAGES = {
-    "memory/3.1/": 2,
-    "memory/3.1.1/": 1,
+    "timing/": 1,
+    "rv32i/experiments/": 1,
+    "alu8/2.6/": 1,
+    "memory/architecture/": 2,
+    "memory/technologies/flip-flop/": 1,
+    "memory/technologies/sram/": 1,
+    "memory/transactions/": 1,
+    "memory/timing/": 3,
     "rv32i/4.3/register/": 1,
     "rv32i/4.3/register-file/": 1,
     "rv32i/4.3/memory-access/": 1,
@@ -161,10 +167,10 @@ with sync_playwright() as playwright:
 
     # Keep the diagram contract across site navigation. MkDocs may replace the
     # document even when navigation.instant is configured in this local build.
-    link = page.locator('.md-tabs__link[href$="/memory/3.1/"]').first
+    link = page.locator('.md-tabs__link[href$="/memory/architecture/"]').first
     assert link.count(), "Memory navigation link not found"
     link.click()
-    page.wait_for_url(urljoin(BASE, "memory/3.1/"))
+    page.wait_for_url(urljoin(BASE, "memory/architecture/"))
     wait_for_diagrams(page, 2)
     for scheme in ("default", "slate"):
         page.locator(f'input[data-md-color-scheme="{scheme}"]').evaluate("el => el.click()")

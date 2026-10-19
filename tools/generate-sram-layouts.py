@@ -34,7 +34,7 @@ def main():
     parser.add_argument("--layout", type=Path, default=root / "visualizer-v2/layout.json")
     args = parser.parse_args()
     layout = server.LayoutManager(args.layout)
-    source = (root / "site-docs/memory/3.1.2.md").read_text()
+    source = (root / "site-docs/memory/technologies/sram.md").read_text()
     if args.reflow:
         # Apply proportions before sessions compute pin-safe minima and layouts.
         for types in [layout.type_layouts, *layout.profile_layouts.values()]:

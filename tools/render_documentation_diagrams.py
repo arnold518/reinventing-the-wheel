@@ -6,11 +6,24 @@ only the marked figure, so rendering needs neither Mermaid nor an iframe.
 """
 
 import argparse
+import json
 from html import escape
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 DESTINATION = ROOT / "site-docs/assets/diagrams"
+# Timing numbers measured by documentation_timing_data; charts read them, so a
+# figure cannot drift from the code (DocumentationDiagramsTest re-renders).
+TIMING = ROOT / "tools/timing/documentation-timing.generated.json"
+
+
+def timing_profiles():
+    return {p["name"]: p for p in json.loads(TIMING.read_text(encoding="utf-8"))["profiles"]}
+
+
+def grid(value):
+    """Round a coordinate to the 4 px grid."""
+    return int(round(value / 4.0)) * 4
 
 STYLE = """
 .circuit-figure {
@@ -62,6 +75,8 @@ STYLE = """
 .circuit-figure .dg-marker { fill: var(--dg-muted); }
 .circuit-figure .dg-marker-accent { fill: var(--dg-accent); }
 .circuit-figure .dg-rule { stroke: var(--dg-rule); stroke-width: 1; }
+.circuit-figure .dg-wave { fill: none; stroke: var(--dg-ink); stroke-width: 1.5; }
+.circuit-figure .dg-wave-focus { fill: none; stroke: var(--dg-accent); stroke-width: 2; }
 """.strip()
 
 
@@ -82,6 +97,14 @@ class Figure:
         assert x1 == x2 or y1 == y2, "Connectors must be orthogonal"
         marker = f' marker-end="url(#{self.slug}-arrow)"' if arrow else ""
         self.parts.append(f'<path class="dg-edge" d="M {x1} {y1} L {x2} {y2}"{marker}/>')
+
+    def path(self, points, kind="edge", arrow=False):
+        """An orthogonal polyline (each segment horizontal or vertical)."""
+        for (x1, y1), (x2, y2) in zip(points, points[1:]):
+            assert x1 == x2 or y1 == y2, "Connectors must be orthogonal"
+        marker = f' marker-end="url(#{self.slug}-arrow)"' if arrow else ""
+        d = " ".join(("M" if i == 0 else "L") + f" {x} {y}" for i, (x, y) in enumerate(points))
+        self.parts.append(f'<path class="dg-{kind}" d="{d}"{marker}/>')
 
     def box(self, key, x, y, width, height, title, subtitle=None, kind="box"):
         self.rect(x, y, width, height, kind, node=key)
@@ -153,14 +176,14 @@ def memory_endpoints():
     f.text(48, 144, "MemoryEndpoint", "name")
     f.line(320, 88, 320, 176)
     f.box("transaction-interface", 64, 24, 512, 64,
-          "Universal transaction interface", "REQ_* / RSP_* · 3.2", "focus")
+          "Universal transaction interface", "REQ_* / RSP_* · 3.4", "focus")
     f.box("controller", 64, 176, 512, 64,
           "MemoryController", "FF bypass · timed native control · response retention")
     f.line(320, 240, 320, 254)
     f.text(320, 278, "Technology-specific native pins", "small", "middle")
     f.line(320, 288, 320, 312)
     f.rect(48, 312, 544, 196, "store", node="native-device")
-    f.text(320, 340, "Native memory device · 3.1", "name", "middle")
+    f.text(320, 340, "Native memory device · 3.3", "name", "middle")
     f.box("expanded-device", 64, 366, 232, 76,
           "Expanded device", "bank · words / rows · cells")
     f.text(320, 410, "or", "small", "middle")
@@ -369,10 +392,245 @@ def advanced_prediction():
     return f
 
 
+def timing_profile_gates():
+    data = timing_profiles()
+    gates = ("NOT", "NAND", "NOR", "AND", "OR", "XOR")
+    f = Figure("timing-profile-gates", "Gate delays in the realistic profiles",
+               "Bars give each logic gate's delay in the embedded and desktop timing profiles, in picoseconds; the unit profile gives every gate one tick.", 404,
+               "<strong>One inverter driving four copies of itself (FO4) is the unit.</strong> Each gate is a fixed multiple of it, from the logical-effort method; "
+               "<code>unit</code> gives every gate one tick instead. Values from the generated timing data.")
+    top, row, scale = 48, 48, 3.2
+    f.text(40, 28, "PICOSECONDS PER GATE", "tag")
+    for i, gate in enumerate(gates):
+        y = top + i * row
+        f.text(96, y + 22, gate, "code", "end")
+        for k, (profile, kind) in enumerate((("embedded", "focus"), ("desktop", "store"))):
+            value = data[profile]["gates"][gate]
+            width = grid(value * scale)
+            f.rect(112, y + k * 20, width, 16, kind, radius=2)
+            f.text(112 + width + 8, y + k * 20 + 13, f"{value} ps", "small")
+    y = top + len(gates) * row + 16
+    f.line(40, y, 600, y)
+    f.rect(40, y + 20, 16, 12, "focus", radius=2); f.text(64, y + 31, "embedded (65 nm, FO4 30 ps)", "small")
+    f.rect(320, y + 20, 16, 12, "store", radius=2); f.text(344, y + 31, "desktop (32 nm, FO4 21 ps)", "small")
+    return f
+
+
+def sram_access_chain():
+    stages = (("Settle", "settle interval"), ("Precharge", "precharge interval"), ("Decode", "decoder replica"),
+              ("Bitline", "bitline interval"), ("Sense, output", "sense + output"))
+    f = Figure("sram-access-chain", "How an asynchronous SRAM access spends its time",
+               "The stages of an asynchronous SRAM access in order: settle, precharge, decode, bitline development, and sense and output, after which READY rises.", 200,
+               "<strong>Each stage starts when the previous one ends.</strong> Any change of the inputs clears every stage at once and the chain restarts. "
+               "The intervals come from the timing profile (the bitline grows with the number of rows); the decode and output stages are replica gate chains as deep as the paths they copy. "
+               "Widths are not to scale. The controller counts whole clock cycles around this, chosen from the proven access time.")
+    f.text(40, 40, "INPUTS STEADY", "tag")
+    f.text(600, 40, "READY", "tag", "end")
+    for i, (name, source) in enumerate(stages):
+        x = 40 + i * 112
+        f.rect(x, 72, 112, 48, "focus" if name == "Bitline" else "box", radius=4, node=name.lower())
+        f.text(x + 56, 102, name, "small", "middle")
+        f.text(x + 56, 148, source, "code", "middle")
+    f.line(40, 176, 600, 176)
+    return f
+
+
+def dram_commands():
+    data = timing_profiles()["embedded"]
+    m, period = data["memory_intervals"], data["period_ticks"]
+    measured = {a["operation"]: a["cycles"] for a in data["accesses"] if a["memory"] == "dram"}
+    trp = m["dram_close"] + m["dram_precharge"] + m["dram_equalize"]
+    trcd = m["dram_wordline"] + m["dram_sense_base"] + m["dram_restore"]
+    cl = m["dram_read"]
+    cases = (("Row open (hit)", [("READ", cl)], "read, row open (hit)"),
+             ("Row closed", [("ACTIVATE", trcd), ("READ", cl)], "read, row closed"),
+             ("Other row open", [("PRECHARGE", trp), ("ACTIVATE", trcd), ("READ", cl)], "read, other row open (conflict)"))
+    f = Figure("dram-commands", "DRAM reads by row state",
+               "Three DRAM reads in the embedded profile: a row hit needs one READ, a closed row an ACTIVATE then a READ, and a row conflict a PRECHARGE, an ACTIVATE and a READ; each bar is labeled with the measured cycles.", 288,
+               "<strong>The row state decides the cost.</strong> Each command lasts its datasheet interval (tRP, tRCD, CL: "
+               f"{trp // 1000}, {trcd // 1000} and {cl // 1000} ns for the <code>embedded</code> SDRAM); the controller waits whole cycles and adds the request and response edges. "
+               "Measured cycles are the generated latencies of 3.6.")
+    scale = 5.6 / 1000
+    for i, (label, commands, key) in enumerate(cases):
+        y = 48 + i * 72
+        f.text(40, y + 28, label, "name")
+        x = 216
+        for name, value in commands:
+            w = grid(value * scale)
+            f.rect(x, y, w, 44, "focus" if name == "READ" else "box", radius=4)
+            f.text(x + w / 2, y + 27, name, "small", "middle")
+            x += w
+        f.text(x + 12, y + 27, f"{measured[key]} cycles", "code")
+    f.line(40, 264, 600, 264)
+    return f
+
+
+def transaction_handshake():
+    f = Figure("transaction-handshake", "A delayed read through the transaction port",
+               "Signal levels across six clock cycles: the request transfers at the first edge, the response appears later, waits for RSP_READY, and transfers at the edge where RSP_READY is high; REQ_READY never depends on RSP_READY in the same cycle.", 360,
+               "<strong>Transfers happen at rising edges where VALID and READY are both high</strong> (marked). "
+               "<code>REQ_READY</code> follows registered state only: it is high again in the cycle the response appears, since a new request may start as the old one completes, "
+               "and low while the response is held because the requester keeps <code>RSP_READY</code> low.")
+    signals = ("CLK", "REQ_VALID", "REQ_READY", "RSP_VALID", "RSP_READY")
+    x0, step = 160, 72
+    levels = {  # value per half cycle, 12 halves
+        "REQ_VALID": [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "REQ_READY": [1, 1, 0, 0, 0, 0, 1, 1, 0, 0, 1, 1],
+        "RSP_VALID": [0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0],
+        "RSP_READY": [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1],
+    }
+    for edge in range(1, 6):
+        f.line(x0 + edge * step, 36, x0 + edge * step, 316)
+    for i, name in enumerate(signals):
+        y = 56 + i * 52
+        f.text(144, y + 16, name, "code", "end")
+        if name == "CLK":
+            pts = [(x0, y + 24)]
+            for c in range(6):  # Rising edges on the edge lines.
+                xa, xb, xc = x0 + c * step, x0 + c * step + step // 2, x0 + (c + 1) * step
+                pts += [(xa, y), (xb, y), (xb, y + 24), (xc, y + 24)]
+            f.path(pts, "wave")
+            continue
+        vals, pts = levels[name], []
+        for h, v in enumerate(vals):
+            xa, xb, yy = x0 + h * step // 2, x0 + (h + 1) * step // 2, (y if v else y + 24)
+            if pts and pts[-1][1] != yy:
+                pts.append((xa, yy))
+            elif not pts:
+                pts.append((xa, yy))
+            pts.append((xb, yy))
+        f.path(pts, "wave-focus" if name in ("REQ_READY",) else "wave")
+    for edge, label in ((1, "request"), (5, "response")):
+        f.rect(x0 + edge * step - 40, 316, 80, 24, "label", radius=0)
+        f.text(x0 + edge * step, 332, label, "tag", "middle")
+    return f
+
+
+def sram_device():
+    f = Figure("sram-device", "Inside the SRAM device",
+               "The SRAM device: access control and the row decoder on the left drive the storage bank's wordlines, precharge sits above the bank, and column selection, write drivers and sense amplifiers sit below it, ending in the output buffer.", 440,
+               "<strong>Rows across, bitline pairs down.</strong> <code>ACCESS_CONTROL</code> times each access and raises <code>READY</code>; "
+               "the decoder opens one row; each column's bitline pair is precharged above the bank and sensed or driven below it. "
+               "An array of more than 32 rows repeats this block as subarrays joined by global wires.")
+    f.box("ACCESS_CONTROL", 40, 48, 144, 72, "ACCESS_CONTROL", "timing · READY", "focus")
+    f.box("ROW_DECODE", 40, 180, 144, 112, "ROW_DECODE", "one wordline")
+    f.box("PRECHARGE", 240, 48, 360, 48, "PRECHARGE", None)
+    f.rect(240, 116, 360, 176, "store", node="STORAGE")
+    f.text(256, 144, "STORAGE", "name")
+    f.text(256, 168, "SRAMStorageBank: rows × bitline pairs", "code")
+    for k in range(3):
+        f.rect(256, 188 + k * 32, 328, 20, "box", radius=2)
+    f.box("COLUMN_SELECT", 240, 312, 168, 48, "COLUMN_SELECT", None)
+    f.box("WRITE_SENSE", 432, 312, 168, 48, "WRITE / SENSE", None)
+    f.box("OUTPUT", 432, 380, 168, 40, "OUTPUT", None)
+    f.line(184, 236, 240, 236, True)
+    f.line(112, 120, 112, 180, True)
+    f.line(184, 72, 240, 72, True)
+    f.line(516, 360, 516, 380, True)
+    f.line(408, 336, 432, 336, True)
+    f.line(324, 292, 324, 312)
+    f.line(516, 292, 516, 312)
+    return f
+
+
+def alu8_datapath():
+    f = Figure("alu8-datapath", "Inside ALU8",
+               "ALU8: the control decoder turns the opcode into local selectors; the arithmetic, logic, shifter and compare-select units compute in parallel; the result selector picks one word and the flag unit derives the flags.", 400,
+               "<strong>Every unit computes; one result is selected.</strong> For comparisons the arithmetic unit's subtraction feeds "
+               "<code>COMPARE_SELECT</code>, so there is no second subtractor. <code>A</code> and <code>B</code> can also pass straight to the result.")
+    f.box("CONTROL", 40, 40, 144, 64, "CONTROL", "OP → selectors", "store")
+    units = (("ARITHMETIC", "add · sub · neg"), ("LOGIC", "and · or · xor"), ("SHIFTER", "shift · rotate"), ("COMPARE_SELECT", "slt · min · max"))
+    rows = [40 + i * 76 for i in range(4)]
+    # Selectors from the decoder to every unit.
+    f.path([(184, 72), (216, 72), (216, 300)])
+    for y in rows:
+        f.line(216, y + 30, 248, y + 30, True)
+    for (name, sub), y in zip(units, rows):
+        f.box(name, 248, y, 184, 60, name, sub)
+    # Unit results to the result selector.
+    f.path([(432, 70), (456, 70), (456, 300), (432, 300)])
+    for y in rows[1:3]:
+        f.line(432, y + 30, 456, y + 30)
+    f.line(456, 168, 480, 168, True)
+    f.box("RESULT_SELECT", 480, 132, 120, 72, "RESULT", "select", "focus")
+    f.box("FLAGS", 480, 252, 120, 64, "FLAGS", "Z · N · C · V")
+    f.line(540, 204, 540, 252, True)
+    f.text(40, 360, "A, B and OP reach every unit; the decoder enables one result source.", "small")
+    return f
+
+
+def memory_latency():
+    data = timing_profiles()
+    names = {"ff": "Flip-flop", "sram": "SRAM chip", "sram-clocked": "SRAM macro", "rom": "ROM",
+             "nor": "NOR flash"}
+    rows = []
+    for a in data["embedded"]["accesses"]:
+        if not a["simulated"] or not a["operation"].startswith("read"):
+            continue
+        label = names.get(a["memory"], "DRAM " + a["operation"].split(", ", 1)[1].split(" (")[0]) if a["memory"] == "dram" else names[a["memory"]]
+        desktop = next(b for b in data["desktop"]["accesses"] if (b["memory"], b["operation"]) == (a["memory"], a["operation"]))
+        rows.append((label, a["cycles"], desktop["cycles"]))
+    f = Figure("memory-latency", "Read latency by memory technology",
+               "Bars give the measured read latency of each memory technology, in clock cycles of the advanced core, in the embedded and desktop profiles.", 96 + len(rows) * 44,
+               "<strong>Cycles from the accepting edge to the edge that takes the response</strong>, for a 256 KiB memory at the advanced core's certified clock "
+               f"(<code>embedded</code> {data['embedded']['period_ticks']:,} ps, <code>desktop</code> {data['desktop']['period_ticks']:,} ps). The flip-flop memory answers at the accepting edge. Values from the generated timing data; the table in 3.6 also gives writes, programs and erases.")
+    scale = 8
+    f.text(40, 28, "CYCLES", "tag")
+    for i, (label, embedded, desktop) in enumerate(rows):
+        y = 44 + i * 44
+        f.text(176, y + 22, label, "small", "end")
+        for k, (value, kind) in enumerate(((embedded, "focus"), (desktop, "store"))):
+            width = max(grid(value * scale), 4)
+            f.rect(192, y + k * 18, width, 14, kind, radius=2)
+            f.text(192 + width + 8, y + k * 18 + 12, str(value), "small")
+    y = 44 + len(rows) * 44 + 8
+    f.line(40, y, 600, y)
+    f.rect(40, y + 16, 16, 12, "focus", radius=2); f.text(64, y + 27, "embedded", "small")
+    f.rect(200, y + 16, 16, 12, "store", radius=2); f.text(224, y + 27, "desktop", "small")
+    return f
+
+
+def cache_topologies():
+    f = Figure("cache-topologies", "Five memory topologies for the advanced core",
+               "Five ways to connect the advanced core's instruction and data ports to DRAM main memory: two separate memories, one shared memory through an arbiter, private level-1 caches above the arbiter, a shared level-2 cache below it, and both.", 336,
+               "<strong>Same core, same DRAM, five connections.</strong> A gives each port its own copy of memory; B shares one DRAM through the two-port arbiter; "
+               "C-ID adds an instruction and a data L1 (256 B each) above the arbiter; D-0 puts a shared 2 KiB L2 below it; D-ID has both. Caches fill a line with one burst; the data caches write through.")
+    xs = [40, 160, 280, 400, 520]
+    names = ["A", "B", "C-ID", "D-0", "D-ID"]
+    for x, name in zip(xs, names):
+        f.text(x + 40, 32, name, "name", "middle")
+        f.rect(x, 48, 36, 28, "box", radius=4); f.text(x + 18, 67, "I", "code", "middle")
+        f.rect(x + 44, 48, 36, 28, "box", radius=4); f.text(x + 62, 67, "D", "code", "middle")
+        y = 76
+        if name == "A":
+            f.line(x + 18, 76, x + 18, 252, True); f.line(x + 62, 76, x + 62, 252, True)
+            f.rect(x, 252, 36, 40, "store", radius=4); f.text(x + 18, 276, "DRAM", "code", "middle")
+            f.rect(x + 44, 252, 36, 40, "store", radius=4); f.text(x + 62, 276, "DRAM", "code", "middle")
+            continue
+        if name in ("C-ID", "D-ID"):
+            f.line(x + 18, 76, x + 18, 100, True); f.line(x + 62, 76, x + 62, 100, True)
+            f.rect(x, 100, 36, 28, "focus", radius=4); f.text(x + 18, 119, "L1", "code", "middle")
+            f.rect(x + 44, 100, 36, 28, "focus", radius=4); f.text(x + 62, 119, "L1", "code", "middle")
+            y = 128
+        f.line(x + 18, y, x + 18, 152, True); f.line(x + 62, y, x + 62, 152, True)
+        f.rect(x, 152, 80, 28, "box", radius=4); f.text(x + 40, 171, "ARB", "code", "middle")
+        y = 180
+        if name in ("D-0", "D-ID"):
+            f.line(x + 40, 180, x + 40, 204, True)
+            f.rect(x, 204, 80, 28, "focus", radius=4); f.text(x + 40, 223, "L2", "code", "middle")
+            y = 232
+        f.line(x + 40, y, x + 40, 252, True)
+        f.rect(x, 252, 80, 40, "store", radius=4); f.text(x + 40, 276, "DRAM", "code", "middle")
+    f.text(40, 320, "I, D: the core's instruction and data ports. ARB: two-port arbiter. A: each DRAM holds the whole image.", "small")
+    return f
+
+
 def figures():
     return [fn() for fn in (memory_storage, memory_endpoints, ff_memory, register32,
                             register_file, memory_access, core_stages, core_writeback,
-                            core_next_pc, core_completion, baseline_pipeline, advanced_prediction)]
+                            core_next_pc, core_completion, baseline_pipeline, advanced_prediction,
+                            timing_profile_gates, sram_access_chain, dram_commands, transaction_handshake,
+                            sram_device, alu8_datapath, memory_latency, cache_topologies)]
 
 
 def main():

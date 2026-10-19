@@ -10,7 +10,7 @@ from playwright.sync_api import sync_playwright
 def main():
     base = sys.argv[1].rstrip("/") + "/"
     root = Path(__file__).resolve().parents[2]
-    source = (root / "site-docs/memory/3.1.2.md").read_text()
+    source = (root / "site-docs/memory/technologies/sram.md").read_text()
     scenarios = re.findall(r"<!-- simulator-examples: (\S+) (\S+) -->", source)
     screenshots = Path(sys.argv[2]) if len(sys.argv) > 2 else None
     if screenshots:
@@ -23,9 +23,9 @@ def main():
         errors, api = [], []
         page.on("pageerror", lambda error: errors.append(str(error)))
         page.on("request", lambda request: api.append(request.url) if "/api/" in request.url else None)
-        response = page.goto(urljoin(base, "memory/3.1.2/"), wait_until="domcontentloaded")
+        response = page.goto(urljoin(base, "memory/technologies/sram/"), wait_until="domcontentloaded")
         assert response and response.ok
-        assert "§ 3.1.2. SRAM" in page.locator("h1").inner_text()
+        assert "§ 3.3.2. SRAM" in page.locator("h1").inner_text()
         assert page.locator(".simulator-embed iframe").count() == 12
         assert page.locator(".example-table tbody tr").count() == 115
         assert page.locator("article table").first.locator("thead th").all_text_contents() == ["Component", "Description", "Structural", "Behavioral"]
@@ -83,7 +83,7 @@ def main():
         assert not api, api
         static = browser.new_context(java_script_enabled=False)
         static_page = static.new_page()
-        static_page.goto(urljoin(base, "memory/3.1.2/"), wait_until="domcontentloaded")
+        static_page.goto(urljoin(base, "memory/technologies/sram/"), wait_until="domcontentloaded")
         assert static_page.locator(".example-table tbody tr").count() == 115
         browser.close()
     print("SRAM documentation: 12 embeds, 115 checkpoints, fidelity toggle, mobile and no-JS reference passed")

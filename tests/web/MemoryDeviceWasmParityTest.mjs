@@ -8,7 +8,7 @@ import { pathToFileURL } from 'node:url';
 const [modulePath, wasmPath, probePath] = process.argv.slice(2);
 const factory = (await import(pathToFileURL(resolve(modulePath)))).default;
 const module = await factory({ wasmBinary: await readFile(wasmPath) });
-const documents = await Promise.all(['3.1.0', '3.1.3', '3.1.4', '3.1.5'].map(section =>
+const documents = await Promise.all(['building-blocks', 'technologies/dram', 'technologies/rom', 'technologies/nor-flash'].map(section =>
   readFile(new URL(`../../site-docs/memory/${section}.md`, import.meta.url), 'utf8')));
 const behavioral = new Set(['rom-cell', 'rom-row', 'rom-storage-bank', 'rom',
   'dram-row', 'dram-storage-bank', 'dram', 'nor-flash-row', 'nor-flash-storage-bank', 'nor-flash']);

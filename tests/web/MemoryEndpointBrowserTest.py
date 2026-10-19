@@ -75,13 +75,13 @@ cases=[]
 with sync_playwright() as p:
     browser=p.chromium.launch(executable_path=shutil.which("google-chrome") or shutil.which("chromium"),
                               headless=True,args=["--no-sandbox"])
-    for section in ("3.2","3.3","3.1.6","3.4"):
+    for section in ("transactions","controllers","technologies/scalable","caches"):
         context=browser.new_context(java_script_enabled=False,viewport={"width":1440,"height":1000})
         page=context.new_page()
         assert page.goto(urljoin(base,f"memory/{section}/"),wait_until="domcontentloaded").ok
         source=(root/f"site-docs/memory/{section}.md").read_text()
         scenarios=re.findall(r"<!-- simulator-examples: (\S+) (\S+) -->",source)
-        assert page.locator(".simulator-embed iframe").count()==len(scenarios)+(section=="3.4")
+        assert page.locator(".simulator-embed iframe").count()==len(scenarios)+(section=="caches")
         assert page.locator("article table").first.locator("thead th").all_text_contents()==["Component","Description","Structural","Behavioral"]
         for scenario,_ in scenarios:
             block=page.locator(f'.example-table-block[data-scenario="{scenario}"]')

@@ -36,6 +36,8 @@ had.
 
 <!-- profile-table: gates -->
 
+<!-- diagram: timing-profile-gates -->
+
 One profile is active for a whole run. Programs and tools read it from the
 environment variable `CIRCUITSIM_TIMING_PROFILE` (default `unit`). The
 [interactive simulator](visualizer.md) has a **Timing** selector beside the

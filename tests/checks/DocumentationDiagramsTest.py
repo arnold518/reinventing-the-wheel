@@ -15,8 +15,14 @@ from render_documentation_diagrams import DESTINATION, figures
 DOCS = ROOT / "site-docs"
 NS = "{http://www.w3.org/2000/svg}"
 PAGES = {
+    "timing.md": ["timing-profile-gates"],
+    "rv32i/experiments.md": ["cache-topologies"],
+    "alu8/2.6.md": ["alu8-datapath"],
     "memory/architecture.md": ["memory-storage", "memory-endpoints"],
     "memory/technologies/flip-flop.md": ["ff-memory"],
+    "memory/technologies/sram.md": ["sram-device"],
+    "memory/transactions.md": ["transaction-handshake"],
+    "memory/timing.md": ["sram-access-chain", "dram-commands", "memory-latency"],
     "rv32i/4.3/register.md": ["register32"],
     "rv32i/4.3/register-file.md": ["register-file"],
     "rv32i/4.3/memory-access.md": ["memory-access"],

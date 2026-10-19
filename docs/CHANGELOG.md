@@ -7,6 +7,36 @@ history remains in Git and the archived reports.
 
 ## 2026-10-19
 
+### Timing across the site: clock certificates, results per profile, figures and plots (branch `realistic-timing`, documentation phase)
+
+- **Changed:** 4.2 gains per-profile certified clocks (generated) and the
+  cached-root and clock-wire rules; 4.7 states its results in cycles with
+  per-profile summaries from the current certificates (advanced two-bit
+  now leads 13/14 nontrap fixed programs); the timed-memory rows of the old
+  memory design are replaced by a pointer to 3.6; the visualizer page
+  describes the Timing selector; the home page gets an overview. Seven new
+  figures in the site's figure format and colors (gate delays per profile,
+  the SRAM access chain, DRAM reads by row state, read latency by
+  technology, the transaction handshake, the SRAM device, the ALU8
+  datapath), charts drawn from the generated timing data; the four § 4.7
+  plots regenerated at the `embedded` clocks in the site palette. A
+  diagram-design profile (`circuitsim`) holds the site tokens; the project
+  marker `.diagram-design` selects it. Browser and parity tests follow the
+  new memory URLs.
+- **Why:** the owner asked for timing-aware pages, a site-wide figure
+  review with diagram-design in the site's design, and no hand-typed
+  timing numbers.
+- **Verified:** strict MkDocs build; `DocumentationDiagramsTest`,
+  `RV32IBenchmarkDocumentationTest`, `MemoryDeviceDocumentationTest`,
+  `TimingTableDocumentationTest`, `DocumentationTimingDataTest`; the plot
+  script validated all 602 cycle cells against the campaign data; figures
+  inspected in light and dark; `tools/build-pages.sh` (before the caches
+  section). Browser checks: 4 of 19 passed before the run was stopped for low
+  host memory; the other 15 are not run.
+- **Also:** § 4.7 publishes the cache campaign (five memory topologies,
+  four workloads, both realistic profiles, standalone locality traces),
+  tables generated from the run records, with a topology figure.
+
 ### Memory chapter rewritten; timing sections on every component page (branch `realistic-timing`, documentation phase)
 
 - **Changed:** `site-docs/memory/` restructured and rewritten against the

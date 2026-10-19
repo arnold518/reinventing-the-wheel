@@ -9,7 +9,8 @@ from playwright.sync_api import sync_playwright
 
 ROOT = Path(__file__).resolve().parents[2]
 base = sys.argv[1] if len(sys.argv) > 1 else "http://127.0.0.1:8893/"
-sections = ("3.1.0", "3.1.1", "3.1.2", "3.1.3", "3.1.4", "3.1.5", "3.1.6", "3.2", "3.3")
+sections = ("building-blocks", "technologies/flip-flop", "technologies/sram", "technologies/dram",
+            "technologies/rom", "technologies/nor-flash", "technologies/scalable", "transactions", "controllers")
 count = 0
 with sync_playwright() as p:
     browser = p.chromium.launch(executable_path=shutil.which("google-chrome") or shutil.which("chromium"),

@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en" class="diagram-standalone">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Gate delays in the realistic profiles</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;600&amp;family=Ubuntu+Mono&amp;display=swap" rel="stylesheet"/>
+<style>body { margin: 24px auto; max-width: 688px; padding: 0 16px; } * { box-sizing: border-box; }</style>
+</head>
+<body>
+<!-- diagram:start -->
+<figure class="circuit-figure" data-diagram="timing-profile-gates">
+<div class="diagram-viewport" role="region" aria-label="Gate delays in the realistic profiles" tabindex="0">
+<svg viewBox="0 0 640 404" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="timing-profile-gates-title timing-profile-gates-desc">
+<title id="timing-profile-gates-title">Gate delays in the realistic profiles</title>
+<desc id="timing-profile-gates-desc">Bars give each logic gate&#x27;s delay in the embedded and desktop timing profiles, in picoseconds; the unit profile gives every gate one tick.</desc>
+<style>.circuit-figure {
+  --dg-paper: var(--md-default-bg-color, #fff);
+  --dg-ink: var(--md-default-fg-color, #202735);
+  --dg-muted: #566174;
+  --dg-rule: #c8ced8;
+  --dg-surface: #f5f6f9;
+  --dg-accent: #4051b5;
+  --dg-tint: #eef0fc;
+  margin: 1.5rem 0; max-width: 100%; text-align: left;
+  font-family: var(--md-text-font-family, 'Noto Sans', sans-serif);
+}
+[data-md-color-scheme="slate"] .circuit-figure {
+  --dg-muted: #b4bdd0; --dg-rule: #4b5569; --dg-surface: #262c38;
+  --dg-accent: #acb7ff; --dg-tint: #303853;
+}
+@media (prefers-color-scheme: dark) {
+  .diagram-standalone .circuit-figure {
+    --dg-paper: #1e2129; --dg-ink: #e4e7ef; --dg-muted: #b4bdd0;
+    --dg-rule: #4b5569; --dg-surface: #262c38;
+    --dg-accent: #acb7ff; --dg-tint: #303853;
+  }
+  .diagram-standalone body { background: #1e2129; color: #e4e7ef; }
+}
+.circuit-figure .diagram-viewport {
+  max-width: 100%; overflow: auto; overscroll-behavior-x: contain;
+}
+.circuit-figure .diagram-viewport:focus-visible {
+  outline: 2px solid var(--dg-accent); outline-offset: 3px;
+}
+.circuit-figure svg { display: block; width: 640px; min-width: 640px; max-width: none; margin: 0 auto; }
+.circuit-figure figcaption {
+  display: block; margin: .6rem 0 0; max-width: none; text-align: left;
+  color: var(--dg-muted); font-style: normal; font-size: 14px; line-height: 1.6;
+}
+.circuit-figure figcaption strong { color: var(--dg-ink); font-weight: 600; }
+.circuit-figure .dg-zone { fill: var(--dg-paper); stroke: var(--dg-rule); stroke-width: 1.2; }
+.circuit-figure .dg-box { fill: var(--dg-paper); stroke: var(--dg-rule); stroke-width: 1.2; }
+.circuit-figure .dg-store { fill: var(--dg-surface); stroke: var(--dg-rule); stroke-width: 1.2; }
+.circuit-figure .dg-focus { fill: var(--dg-tint); stroke: var(--dg-accent); stroke-width: 1.4; }
+.circuit-figure .dg-label { fill: var(--dg-paper); stroke: none; }
+.circuit-figure text { fill: var(--dg-ink); font-family: var(--md-text-font-family, 'Noto Sans', sans-serif); font-size: 16px; }
+.circuit-figure .dg-name { font-weight: 600; }
+.circuit-figure .dg-small { font-size: 14px; fill: var(--dg-muted); }
+.circuit-figure .dg-code { font-family: var(--md-code-font-family, 'Ubuntu Mono', monospace); font-size: 14px; fill: var(--dg-muted); }
+.circuit-figure .dg-tag { font-size: 12px; font-weight: 600; letter-spacing: .06em; fill: var(--dg-muted); }
+.circuit-figure .dg-edge { fill: none; stroke: var(--dg-muted); stroke-width: 1.5; }
+.circuit-figure .dg-marker { fill: var(--dg-muted); }
+.circuit-figure .dg-marker-accent { fill: var(--dg-accent); }
+.circuit-figure .dg-rule { stroke: var(--dg-rule); stroke-width: 1; }
+.circuit-figure .dg-wave { fill: none; stroke: var(--dg-ink); stroke-width: 1.5; }
+.circuit-figure .dg-wave-focus { fill: none; stroke: var(--dg-accent); stroke-width: 2; }</style>
+<defs>
+<marker id="timing-profile-gates-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><path d="M 0 0 L 8 3 L 0 6 Z" class="dg-marker"/></marker>
+<marker id="timing-profile-gates-arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><path d="M 0 0 L 8 3 L 0 6 Z" class="dg-marker-accent"/></marker>
+<marker id="timing-profile-gates-arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><path d="M 0 0 L 8 3 L 0 6 Z" class="dg-marker"/></marker>
+</defs>
+<rect width="640" height="404" fill="var(--dg-paper)"/>
+<text x="40" y="28" class="dg-tag" text-anchor="start">PICOSECONDS PER GATE</text>
+<text x="96" y="70" class="dg-code" text-anchor="end">NOT</text>
+<rect x="112" y="48" width="96" height="16" rx="2" class="dg-focus"/>
+<text x="216" y="61" class="dg-small" text-anchor="start">30 ps</text>
+<rect x="112" y="68" width="68" height="16" rx="2" class="dg-store"/>
+<text x="188" y="81" class="dg-small" text-anchor="start">21 ps</text>
+<text x="96" y="118" class="dg-code" text-anchor="end">NAND</text>
+<rect x="112" y="96" width="132" height="16" rx="2" class="dg-focus"/>
+<text x="252" y="109" class="dg-small" text-anchor="start">41 ps</text>
+<rect x="112" y="116" width="88" height="16" rx="2" class="dg-store"/>
+<text x="208" y="129" class="dg-small" text-anchor="start">28 ps</text>
+<text x="96" y="166" class="dg-code" text-anchor="end">NOR</text>
+<rect x="112" y="144" width="152" height="16" rx="2" class="dg-focus"/>
+<text x="272" y="157" class="dg-small" text-anchor="start">47 ps</text>
+<rect x="112" y="164" width="104" height="16" rx="2" class="dg-store"/>
+<text x="224" y="177" class="dg-small" text-anchor="start">33 ps</text>
+<text x="96" y="214" class="dg-code" text-anchor="end">AND</text>
+<rect x="112" y="192" width="160" height="16" rx="2" class="dg-focus"/>
+<text x="280" y="205" class="dg-small" text-anchor="start">50 ps</text>
+<rect x="112" y="212" width="112" height="16" rx="2" class="dg-store"/>
+<text x="232" y="225" class="dg-small" text-anchor="start">35 ps</text>
+<text x="96" y="262" class="dg-code" text-anchor="end">OR</text>
+<rect x="112" y="240" width="168" height="16" rx="2" class="dg-focus"/>
+<text x="288" y="253" class="dg-small" text-anchor="start">52 ps</text>
+<rect x="112" y="260" width="116" height="16" rx="2" class="dg-store"/>
+<text x="236" y="273" class="dg-small" text-anchor="start">36 ps</text>
+<text x="96" y="310" class="dg-code" text-anchor="end">XOR</text>
+<rect x="112" y="288" width="384" height="16" rx="2" class="dg-focus"/>
+<text x="504" y="301" class="dg-small" text-anchor="start">120 ps</text>
+<rect x="112" y="308" width="268" height="16" rx="2" class="dg-store"/>
+<text x="388" y="321" class="dg-small" text-anchor="start">84 ps</text>
+<path class="dg-edge" d="M 40 352 L 600 352"/>
+<rect x="40" y="372" width="16" height="12" rx="2" class="dg-focus"/>
+<text x="64" y="383" class="dg-small" text-anchor="start">embedded (65 nm, FO4 30 ps)</text>
+<rect x="320" y="372" width="16" height="12" rx="2" class="dg-store"/>
+<text x="344" y="383" class="dg-small" text-anchor="start">desktop (32 nm, FO4 21 ps)</text>
+</svg>
+</div>
+<figcaption><strong>One inverter driving four copies of itself (FO4) is the unit.</strong> Each gate is a fixed multiple of it, from the logical-effort method; <code>unit</code> gives every gate one tick instead. Values from the generated timing data.</figcaption>
+</figure>
+<!-- diagram:end -->
+</body>
+</html>

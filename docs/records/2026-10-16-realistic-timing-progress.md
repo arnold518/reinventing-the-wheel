@@ -18,13 +18,17 @@ timing, a clocked on-chip SRAM macro, endpoints that take requests from
 registered state only, one DRAM synchronizer edge per command, and a 306-run
 core sweep. Phase 7 gave the direct-bank cache (two-cycle hit), burst reads
 and burst line fills, and the cache experiment (Step 1, standalone traces,
-locality traces, five-topology CPU panel; exploratory, unpublished). Phase 8
-so far: the clocked macro's write disturb fixed; DRAM command counters; the
-native suite kept as a `unit` suite with a realistic-profile sweep; the
-delay twin's X timing fixed; visualizer data refreshed; cached and shared
-roots certified by the safe-clock analyzer at the core's clock. Open: the
-public site (`site-docs/`, waiting for the owner) and the documentation
-checks that read it; the STM32F7 check; reruns of published results.
+locality traces, five-topology CPU panel; exploratory, unpublished). Phase 8:
+the clocked macro's write disturb fixed; DRAM command counters; the native
+suite kept as a `unit` suite with a realistic-profile sweep; the delay
+twin's X timing fixed; visualizer data refreshed; cached and shared roots
+certified at the core's clock; the STM32F7 check (plausibility estimate);
+the published results rerun in both realistic profiles (same cycles); the
+visualizer's timing-profile selector; the final full native suite (467 of
+470) and browser smoke suite (13 of 13). The documentation phase that
+followed (memory chapter rewrite, timing on every component page, figures
+and plots) is recorded in the
+[memory chapter rewrite record](2026-10-18-memory-docs-rewrite.md).
 
 ## 2026-10-16 — Phase 0: baseline
 

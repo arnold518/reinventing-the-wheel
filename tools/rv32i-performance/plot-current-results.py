@@ -1,5 +1,12 @@
 #!/usr/bin/env python3
-"""Rebuild the four §4.7 figures from the completed October 2026 campaigns."""
+"""Rebuild the four §4.7 figures from the completed October 2026 campaigns.
+
+The campaign results are checked as published (ticks at the October 14
+`unit` periods 166 / 80 / 100), converted to cycles, which every timing
+profile shares, and compared with the cycle tables of the report. The
+figures show modeled time at one profile's certified clocks (--profile,
+default embedded; periods from tools/timing/documentation-timing.generated.json).
+"""
 
 from __future__ import annotations
 
@@ -15,7 +22,7 @@ import matplotlib
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-from matplotlib.colors import Normalize, TwoSlopeNorm
+from matplotlib.colors import LinearSegmentedColormap, Normalize, TwoSlopeNorm
 from matplotlib.patches import Rectangle
 
 
@@ -24,6 +31,7 @@ EXPERIMENTS = ROOT / "build/experiments"
 CURRENT = EXPERIMENTS / "20261014-nonembench-full"
 HISTORICAL = EXPERIMENTS / "20260927-full-embench"
 REPORT = ROOT / "site-docs/rv32i/experiments.md"
+TIMING = ROOT / "tools/timing/documentation-timing.generated.json"
 OUTPUT = ROOT / "site-docs/rv32i/4.7"
 
 SOURCE_SHA256 = "4da38232d8dd68278bf56f27d587a25728aca0bf12b8e7591acb48f67c8213e2"
@@ -176,6 +184,29 @@ def load_projection(path: Path) -> dict[str, dict[tuple[str, str], int]]:
     return dict(grid)
 
 
+def to_cycles(grid: dict) -> dict:
+    """Published ticks to cycles (exact: each run's ticks are cycles × its period)."""
+    out = {}
+    for case, row in grid.items():
+        out[case] = {}
+        for target, ticks in row.items():
+            require(ticks % PERIODS[target] == 0, f"ticks not a whole cycle count: {case}, {target}")
+            out[case][target] = ticks // PERIODS[target]
+    return out
+
+
+def profile_periods(name: str) -> tuple[dict, int]:
+    """Certified periods of a timing profile per target, and its tick length in ps."""
+    profiles = {p["name"]: p for p in json.loads(TIMING.read_text())["profiles"]}
+    require(name in profiles, f"unknown timing profile: {name}")
+    certified = profiles[name]["certified_periods"]
+    return {target: certified[target[0]] for target in TARGET_KEYS}, profiles[name]["tick_picoseconds"]
+
+
+def timed(grid: dict, periods: dict) -> dict:
+    return {case: {target: cycles * periods[target] for target, cycles in row.items()} for case, row in grid.items()}
+
+
 def markdown_table(report: str, marker: str) -> tuple[list[str], dict[str, list[int]]]:
     require(marker in report, f"missing report marker: {marker}")
     lines = report[report.index(marker) + len(marker):].splitlines()
@@ -198,13 +229,13 @@ def markdown_table(report: str, marker: str) -> tuple[list[str], dict[str, list[
 
 def verify_public_tables(report: str, panels: dict[str, dict], projection: dict) -> int:
     definitions = (
-        ("fixed", "**Modeled ticks, complete 22 × 7 FF panel:**"),
-        ("generated", "**Modeled ticks, complete 15 × 7 FF panel:**"),
-        ("core-gap-dependencies", "**Modeled ticks, eight controlled settings:**"),
-        ("core-gap-branches", "**Modeled ticks, nine controlled settings:**"),
-        ("core-gap-other", "**Modeled ticks, six controlled settings:**"),
-        ("fixtures", "**Modeled ticks, complete 2 × 7 FF panel:**"),
-        ("projection", "**Conditional projected ticks, all 19 × 7 target cells:**"),
+        ("fixed", "**Cycles, complete 22 × 7 FF panel:**"),
+        ("generated", "**Cycles, complete 15 × 7 FF panel:**"),
+        ("core-gap-dependencies", "**Cycles, eight controlled settings:**"),
+        ("core-gap-branches", "**Cycles, nine controlled settings:**"),
+        ("core-gap-other", "**Cycles, six controlled settings:**"),
+        ("fixtures", "**Cycles, complete 2 × 7 FF panel:**"),
+        ("projection", "**Historical cycles, all 19 × 7 target cells:**"),
     )
     core_gap_rows: dict[str, list[int]] = {}
     checked = 0
@@ -229,7 +260,7 @@ def verify_public_tables(report: str, panels: dict[str, dict], projection: dict)
             checked += len(values)
     require(set(core_gap_rows) == set(panels["core-gap"]), "core-gap report rows incomplete")
 
-    headings, rows = markdown_table(report, "Each cell below is **modeled ticks**.")
+    headings, rows = markdown_table(report, "Each cell below is **cycles**;")
     require(headings == ["Target", *PATTERNS] and set(rows) == set(SHORT_NAMES),
             "long-branch report grid changed")
     for name, values in rows.items():
@@ -240,25 +271,32 @@ def verify_public_tables(report: str, panels: dict[str, dict], projection: dict)
     return checked
 
 
+# The site's figure palette (tools/render_documentation_diagrams.py): ink,
+# muted slate, hairline rule, indigo accent and its tint.
+INK, MUTED, RULE, ACCENT, TINT = "#202735", "#566174", "#c8ced8", "#4051b5", "#eef0fc"
+SEQUENTIAL = LinearSegmentedColormap.from_list("site-sequential", [TINT, "#9aa5e0", ACCENT, "#1f2a6b"])
+DIVERGING = LinearSegmentedColormap.from_list("site-diverging", [ACCENT, TINT, "#ffffff", "#e3e6eb", MUTED])
+
+
 def appearance(target: tuple[str, str]) -> tuple[str, str]:
     if target[0] == "single":
-        return "#2563a6", "o"
+        return MUTED, "o"
     if target[0] == "baseline":
-        return "#b96113", "s"
-    return "#087e72", "D"
+        return "#8a94a6", "s"
+    return ACCENT, "D"
 
 
 def draw_rows(ax, values: list[float], xlim: tuple[float, float], *, digits: int = 3) -> None:
-    ax.axvline(1, color="#65737e", lw=1, ls="--", zorder=0)
+    ax.axvline(1, color=MUTED, lw=1, ls="--", zorder=0)
     for y, (target, value) in enumerate(zip(TARGET_KEYS, values)):
         color, marker = appearance(target)
         ax.scatter(value, y, s=52, color=color, marker=marker, zorder=3)
         ax.text(value + (xlim[1] - xlim[0]) * 0.014, y, f"{value:.{digits}f}×",
-                va="center", fontsize=8.6, color="#1d2932")
+                va="center", fontsize=8.6, color=INK)
     ax.set_yticks(range(len(TARGETS)), SHORT_NAMES)
     ax.set_ylim(len(TARGETS) - 0.5, -0.5)
     ax.set_xlim(*xlim)
-    ax.grid(axis="x", color="#e3e7ea", lw=0.8)
+    ax.grid(axis="x", color=RULE, lw=0.8)
     ax.set_axisbelow(True)
     ax.spines[["top", "right", "left"]].set_visible(False)
     ax.tick_params(axis="y", length=0)
@@ -274,7 +312,7 @@ def save(fig, path: Path, title: str, description: str, preview_dir: Path | None
     plt.close(fig)
 
 
-def plot_overview(panels: dict[str, dict], output: Path, preview_dir: Path | None) -> None:
+def plot_overview(panels: dict[str, dict], output: Path, preview_dir: Path | None, profile: str) -> None:
     groups = (
         ("Fixed programs without expected traps", "fixed", tuple(f"program-{i:02d}" for i in (*range(1, 9), *range(17, 23)))),
         ("Generated families", "generated", GENERATED_CASES),
@@ -290,14 +328,14 @@ def plot_overview(panels: dict[str, dict], output: Path, preview_dir: Path | Non
         draw_rows(ax, values, (0.55, 1.75))
         ax.set_title(f"{title}  ·  {len(cases)} matched cases", loc="left", fontsize=11.5,
                      fontweight="bold", pad=9)
-    fig.suptitle("Measured FF timing across workload groups", fontsize=17, fontweight="bold", y=0.995)
-    fig.supxlabel("Geometric mean of modeled ticks / single-cycle modeled ticks  ·  lower is faster", y=0.022)
+    fig.suptitle(f"Measured FF timing across workload groups · {profile} clocks", fontsize=17, fontweight="bold", y=0.995)
+    fig.supxlabel("Geometric mean of modeled time / single-cycle modeled time  ·  lower is faster", y=0.022)
     fig.subplots_adjust(left=0.13, right=0.96, top=0.963, bottom=0.055, hspace=0.34)
     save(fig, output / "measured-ff-overview.svg", "Measured FF timing across workload groups",
-         "Five groups, seven visible targets each. Values are unweighted geometric means of casewise modeled-tick ratios to single-cycle. The groups are not combined.", preview_dir)
+         f"Five groups, seven visible targets each. Values are unweighted geometric means of casewise modeled-time ratios to single-cycle at the {profile} profile's certified clocks. The groups are not combined.", preview_dir)
 
 
-def plot_contrasts(core_gap: dict, output: Path, preview_dir: Path | None) -> None:
+def plot_contrasts(core_gap: dict, output: Path, preview_dir: Path | None, profile: str) -> None:
     contrasts = (
         ("Distance-one dependency / independent long", "dependency-d1", "independent-long", (0.88, 3.82)),
         ("Load-use / scheduled loads", "load-use", "load-scheduled", (0.96, 1.48)),
@@ -307,18 +345,18 @@ def plot_contrasts(core_gap: dict, output: Path, preview_dir: Path | None) -> No
         values = [core_gap[stressed][target] / core_gap[control][target] for target in TARGET_KEYS]
         draw_rows(ax, values, xlim)
         ax.set_title(title, loc="left", fontsize=12, fontweight="bold", pad=10)
-        ax.set_xlabel("Stressed case ticks / control case ticks  ·  above 1 means more time")
-    fig.suptitle("Matched workload contrasts · measured FF timing", fontsize=16, fontweight="bold", y=0.997)
+        ax.set_xlabel("Stressed case cycles / control case cycles  ·  above 1 means more time")
+    fig.suptitle("Matched workload contrasts · measured FF cycles", fontsize=16, fontweight="bold", y=0.997)
     fig.subplots_adjust(left=0.15, right=0.96, top=0.92, bottom=0.08, hspace=0.39)
     save(fig, output / "measured-core-gap-contrasts.svg", "Matched workload contrasts",
          "Two measured FF contrasts, each showing all seven targets. The distance-one dependency affects baseline most; scheduling loads reduces time on the pipelines.", preview_dir)
 
 
-def plot_branches(branches: dict, output: Path, preview_dir: Path | None) -> None:
+def plot_branches(branches: dict, output: Path, preview_dir: Path | None, profile: str, tick_ps: int) -> None:
     ticks = [[branches[pattern][target] for target in TARGET_KEYS] for pattern in PATTERNS]
     ratios = [[value / min(row) for value in row] for row in ticks]
     fig, ax = plt.subplots(figsize=(11.4, 5.8))
-    image = ax.imshow(ratios, cmap="YlGnBu", norm=Normalize(vmin=1, vmax=2.2), aspect="auto")
+    image = ax.imshow(ratios, cmap=SEQUENTIAL, norm=Normalize(vmin=1, vmax=2.2), aspect="auto")
     ax.set_xticks(range(len(TARGETS)), SHORT_NAMES)
     ax.set_yticks(range(len(PATTERNS)), PATTERNS)
     ax.xaxis.tick_top()
@@ -326,27 +364,28 @@ def plot_branches(branches: dict, output: Path, preview_dir: Path | None) -> Non
     for y, row in enumerate(ticks):
         minimum = min(row)
         for x, value in enumerate(row):
-            ax.text(x, y, f"{value:,}", ha="center", va="center", fontsize=9,
-                    color="white" if ratios[y][x] > 1.56 else "#17232e",
+            label = f"{value * tick_ps / 1000:,.0f} ns" if tick_ps else f"{value:,}"
+            ax.text(x, y, label, ha="center", va="center", fontsize=9,
+                    color="white" if ratios[y][x] > 1.56 else INK,
                     fontweight="bold" if value == minimum else "normal")
             if value == minimum:
                 ax.add_patch(Rectangle((x - 0.47, y - 0.45), 0.94, 0.9,
-                                       fill=False, edgecolor="#17232e", linewidth=2))
-    ax.set_title("Longer branch patterns · measured modeled ticks", loc="left", pad=44,
+                                       fill=False, edgecolor=INK, linewidth=2))
+    ax.set_title(f"Longer branch patterns · modeled time, {profile} clocks", loc="left", pad=44,
                  fontsize=15, fontweight="bold")
     bar = fig.colorbar(image, ax=ax, fraction=0.025, pad=0.025)
-    bar.set_label("Ticks / fastest target within pattern")
+    bar.set_label("Time / fastest target within pattern")
     fig.subplots_adjust(left=0.13, right=0.94, top=0.72, bottom=0.08)
     save(fig, output / "measured-long-branches.svg", "Longer branch patterns",
-         "Five 64-iteration patterns by seven targets. Each cell prints absolute modeled ticks; color compares it with the fastest target in that row. Outlines mark winners and ties.", preview_dir)
+         f"Five 64-iteration patterns by seven targets. Each cell prints modeled time at the {profile} clocks; color compares it with the fastest target in that row. Outlines mark winners and ties.", preview_dir)
 
 
-def plot_projection(projection: dict, output: Path, preview_dir: Path | None) -> None:
+def plot_projection(projection: dict, output: Path, preview_dir: Path | None, profile: str) -> None:
     names = sorted(projection)
     ratios = [[projection[name][target] / projection[name][TARGET_KEYS[0]]
                for target in TARGET_KEYS] for name in names]
     fig, ax = plt.subplots(figsize=(11.4, 10.7))
-    image = ax.imshow(ratios, cmap="RdBu_r", norm=TwoSlopeNorm(vmin=0.55, vcenter=1, vmax=1.6),
+    image = ax.imshow(ratios, cmap=DIVERGING, norm=TwoSlopeNorm(vmin=0.55, vcenter=1, vmax=1.6),
                       aspect="auto")
     ax.set_xticks(range(len(TARGETS)), SHORT_NAMES)
     ax.set_yticks(range(len(names)), names)
@@ -355,22 +394,23 @@ def plot_projection(projection: dict, output: Path, preview_dir: Path | None) ->
     for y, row in enumerate(ratios):
         for x, value in enumerate(row):
             ax.text(x, y, f"{value:.2f}×", ha="center", va="center", fontsize=8.5,
-                    color="white" if value < 0.74 or value > 1.35 else "#17232e")
+                    color="white" if value < 0.64 or value > 1.45 else INK)
     fig.suptitle("FULL EMBENCH · CONDITIONAL PROJECTION", x=0.17, y=0.992,
-                 ha="left", fontsize=15, fontweight="bold", color="#96302b")
-    fig.text(0.17, 0.964, "Older cycles × current FF periods; no current-source rerun",
-             fontsize=10.5, color="#96302b", fontweight="bold")
+                 ha="left", fontsize=15, fontweight="bold", color=INK)
+    fig.text(0.17, 0.964, f"Older cycles × {profile} certified periods; no current-source rerun",
+             fontsize=10.5, color=MUTED, fontweight="bold")
     bar = fig.colorbar(image, ax=ax, fraction=0.025, pad=0.025)
-    bar.set_label("Projected ticks / projected single-cycle ticks")
+    bar.set_label("Projected time / projected single-cycle time")
     fig.subplots_adjust(left=0.17, right=0.94, top=0.895, bottom=0.035)
     save(fig, output / "conditional-embench-projection.svg", "Full Embench conditional projection",
-         "Nineteen workloads by seven targets. Ratios are projected from historical cycle counts and current FF clock periods; they are not current-source measurements.", preview_dir)
+         f"Nineteen workloads by seven targets. Ratios are projected from historical cycle counts and the {profile} certified clock periods; they are not current-source measurements.", preview_dir)
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output-dir", type=Path, default=OUTPUT)
     parser.add_argument("--preview-dir", type=Path, help="also write PNG previews for visual inspection")
+    parser.add_argument("--profile", default="embedded", help="timing profile whose certified clocks the figures use")
     args = parser.parse_args()
 
     panels = {
@@ -387,14 +427,16 @@ def main() -> None:
         directory = EXPERIMENTS / f"20261014-branch64-structural-{pattern}"
         panel = load_campaign(directory, ("branch-pattern",))
         panels["branches"][pattern] = panel["branch-pattern"]
-    projection = load_projection(CURRENT / "embench-clock-projection.csv")
+    projection = to_cycles(load_projection(CURRENT / "embench-clock-projection.csv"))
+    panels = {group: to_cycles(grid) for group, grid in panels.items()}
     checked = verify_public_tables(REPORT.read_text(), panels, projection)
 
+    periods, tick_ps = profile_periods(args.profile)
     output = args.output_dir
-    plot_overview(panels, output, args.preview_dir)
-    plot_contrasts(panels["core-gap"], output, args.preview_dir)
-    plot_branches(panels["branches"], output, args.preview_dir)
-    plot_projection(projection, output, args.preview_dir)
+    plot_overview({group: timed(grid, periods) for group, grid in panels.items()}, output, args.preview_dir, args.profile)
+    plot_contrasts(panels["core-gap"], output, args.preview_dir, args.profile)
+    plot_branches(timed(panels["branches"], periods), output, args.preview_dir, args.profile, tick_ps)
+    plot_projection(timed(projection, periods), output, args.preview_dir, args.profile)
     print(f"Validated {checked} public table cells and generated four SVG figures in {output}")
 
 

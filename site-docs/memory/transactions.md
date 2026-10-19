@@ -25,6 +25,8 @@ no earlier response is still held. It never depends on the same cycle's
 the same cycle, as on a real bus. A zero-wait endpoint (flip-flop storage) may
 present its response in the request cycle and transfer both at the same edge.
 
+<!-- diagram: transaction-handshake -->
+
 Addresses are **byte addresses** aligned to W/8. Reads return a full word.
 Writes and programs use positioned byte lanes; mask bit b enables byte b. ISA
 load sizes, sign extension, unaligned splitting, atomics, arbitration and
