@@ -422,3 +422,14 @@ pages (`MemoryDeviceWasmParityTest`, `SRAMWasmParityTest`,
   cycles, D-ID `sort` 153,511 / 192,759, both verified with zero setup
   violations, identical to the published panel (the campaign ran before the
   phase-8 arbiter clock change and analyzer work).
+
+## 2026-10-19 — Remaining checks: memory-gated run (assistant decision)
+
+The goal asks for decisions without the owner, and the remaining checks are
+part of finishing it; the earlier stop was a memory guard. Decision: run
+the Pages rebuild and the 15 remaining browser and parity checks only when
+the host has room: each step waits until at least 2.6 GB is available and
+the load is below 6, then runs in its own user scope capped at the available
+memory less 1 GB (at most 2 GiB), one step at a time. At the start only
+1.4 GB was available (swap full), so the run waits until memory frees.
+Results are added below when it finishes.
