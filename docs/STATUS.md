@@ -146,7 +146,7 @@ work state changes. Keep dated decisions and validation results in
   tag and data stores. No behavioral cache, coherence or MMIO bypass exists.
   The cache campaign (advanced core over DRAM, five topologies, four
   workloads, `embedded` and `desktop`) is published in
-  [4.7](../site-docs/rv32i/experiments.md#memory-topologies-and-caches): the
+  [3.8](../site-docs/memory/cache-experiments.md): the
   L1 pair gives 3–4× over shared uncached DRAM; adding the L2 under the L1s
   is 4–8 % slower in three of four workloads (write-through to two levels).
   The public [cache page](../site-docs/memory/caches.md) still awaits its own

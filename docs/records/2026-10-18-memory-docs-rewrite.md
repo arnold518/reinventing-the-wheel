@@ -512,3 +512,47 @@ a 1.2 GiB scope). A second memory-gated run (`gated_finish2.sh`) rebuilds the
 site and runs `SRAMDocumentationBrowserTest` (2 GiB scope),
 `MemoryDocumentationBrowserTest`, the 10 checks never run, and again the 4
 that passed on the old pages. Results follow when it finishes.
+Strict MkDocs build (700 MiB scope): passed in 43 s; the one link it
+reported (`#2112-fulladder`, a wrong anchor in the new `Adder8` paragraph)
+was corrected to `#212-fulladder` before the commit.
+
+## 2026-10-19 — Cache experiments page and RV32I results rewrite (owner request)
+
+**Request.** A cache experiment section describing the cache performance
+experiment without RV32I, and a complete rewrite of the RV32I experiment
+page, organized and easier to understand.
+
+**Cache page (new § 3.8 `memory/cache-experiments.md`).** The cache results
+moved out of § 4.7 into the memory chapter. Order: question, short answer,
+setup (cache geometry and policy, DRAM, clock, checks), single-read latency,
+experiment 1 (access patterns S0/S1/S2, no processor) first, then
+experiment 2 (four programs over five arrangements; the advanced pipeline is
+named once, as the source of requests), what each shows, and limits. The
+full cycle and CPI tables sit in a collapsed block. Two new charts drawn by
+`tools/render_documentation_diagrams.py` from the page's own tables
+(`cache-access-patterns`, `cache-speedup`); the `cache-topologies` figure
+moved here and no longer names the RV32I core. Wording checked against the
+numbers: sequential reads 1.58× faster through an L1, one word per line
+1.76× slower, S2 slower than S1 in every pattern, `sort` row counts (B's
+extra rows at ~12 cycles account for 76 % of its extra cycles). One earlier
+draft sentence (the reason D-0 does well) was wrong and was replaced by the
+campaign's own explanation (an L2 hit costs about as much as an L1 hit).
+
+**RV32I page (§ 4.7 rewritten).** New order: question; the answer in short;
+how to read (the seven targets in one table, cycles and time with the clock
+table, how runs were checked with the case counts); one summary table across
+groups (`embedded` ratios, with the statement that `desktop` matches within
+0.001 and `unit` is 1–4 % higher); each group as what it tests → table →
+what it shows; limits (memory, other inputs, host speed, the October 14
+publication). All tables kept cell for cell; the plot script still validates
+602 cells (its long-branch marker follows the new lead-in). Every time quoted
+in the text was recomputed from cycles × period. Earlier anchors are kept as
+hidden anchors so inbound links still resolve. The overview plot's group
+labels follow the new names.
+
+**Checks.** All 18 CTest `documentation` checks pass (memory navigation now
+includes 3.8, diagram placement moved); `render_documentation_diagrams.py
+--check` passes; strict MkDocs build passes (only the existing simulator-link
+notices); built page inspected: the collapsed block holds its four tables and
+the three figures are inlined; screenshots of both page tops and both charts
+were reviewed. Browser checks wait for the memory-gated run.

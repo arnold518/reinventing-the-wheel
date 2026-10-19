@@ -16,7 +16,7 @@ DOCS = ROOT / "site-docs"
 NS = "{http://www.w3.org/2000/svg}"
 PAGES = {
     "timing.md": ["timing-profile-gates"],
-    "rv32i/experiments.md": ["cache-topologies"],
+    "memory/cache-experiments.md": ["cache-access-patterns", "cache-topologies", "cache-speedup"],
     "alu8/2.6.md": ["alu8-datapath"],
     "memory/architecture.md": ["memory-storage", "memory-endpoints"],
     "memory/technologies/flip-flop.md": ["ff-memory"],

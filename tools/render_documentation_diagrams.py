@@ -591,9 +591,9 @@ def memory_latency():
 
 
 def cache_topologies():
-    f = Figure("cache-topologies", "Five memory topologies for the advanced core",
-               "Five ways to connect the advanced core's instruction and data ports to DRAM main memory: two separate memories, one shared memory through an arbiter, private level-1 caches above the arbiter, a shared level-2 cache below it, and both.", 336,
-               "<strong>Same core, same DRAM, five connections.</strong> A gives each port its own copy of memory; B shares one DRAM through the two-port arbiter; "
+    f = Figure("cache-topologies", "Five memory arrangements over one DRAM",
+               "Five ways to connect a processor's instruction and data ports to DRAM main memory: two separate memories, one shared memory through an arbiter, private level-1 caches above the arbiter, a shared level-2 cache below it, and both.", 336,
+               "<strong>Same requests, same DRAM, five connections.</strong> A gives each port its own copy of memory; B shares one DRAM through the two-port arbiter; "
                "C-ID adds an instruction and a data L1 (256 B each) above the arbiter; D-0 puts a shared 2 KiB L2 below it; D-ID has both. Caches fill a line with one burst; the data caches write through.")
     xs = [40, 160, 280, 400, 520]
     names = ["A", "B", "C-ID", "D-0", "D-ID"]
@@ -621,7 +621,75 @@ def cache_topologies():
             y = 232
         f.line(x + 40, y, x + 40, 252, True)
         f.rect(x, 252, 80, 40, "store", radius=4); f.text(x + 40, 276, "DRAM", "code", "middle")
-    f.text(40, 320, "I, D: the core's instruction and data ports. ARB: two-port arbiter. A: each DRAM holds the whole image.", "small")
+    f.text(40, 320, "I, D: instruction and data ports. ARB: two-port arbiter. A: each DRAM holds the whole image.", "small")
+    return f
+
+
+CACHE_PAGE = ROOT / "site-docs/memory/cache-experiments.md"
+
+
+def cache_table(after, indent=""):
+    """Rows of the first Markdown table after a line, as lists of cells."""
+    lines = CACHE_PAGE.read_text(encoding="utf-8").splitlines()
+    start = lines.index(after) + 1
+    rows = []
+    for line in lines[start:]:
+        text = line[len(indent):] if line.startswith(indent) else line
+        if text.startswith("| "):
+            rows.append([cell.strip() for cell in text.strip().strip("|").split("|")])
+        elif rows:
+            break
+    return rows[2:]  # without the heading and rule rows
+
+
+def cache_access_patterns():
+    rows = [(r[0], [float(c.split(" / ")[0]) for c in r[1:]]) for r in cache_table("**Cycles per read** (`embedded` / `desktop`):")]
+    f = Figure("cache-access-patterns", "Cycles per read by access pattern and path",
+               "Bars give the cycles per read of three access patterns, read straight from DRAM, through one level-1 cache, and through a level-1 and a level-2 cache, in the embedded profile.",
+               44 + len(rows) * 84 + 4,
+               "<strong>Cycles per read, <code>embedded</code>, 2,048 reads.</strong> A cache helps sequential reads and slows down reads "
+               "that use one word of each line; the second level adds a lookup to every miss. Values from the table above.")
+    scale = 12
+    paths = (("S0 DRAM", "store"), ("S1 L1", "focus"), ("S2 L1 + L2", "box"))
+    f.text(40, 28, "CYCLES PER READ", "tag")
+    for i, (label, values) in enumerate(rows):
+        y = 44 + i * 84
+        f.text(40, y + 14, label, "name")
+        for k, (value, (path, kind)) in enumerate(zip(values, paths)):
+            top = y + 24 + k * 18
+            f.text(176, top + 12, path, "small", "end")
+            width = max(grid(value * scale), 4)
+            f.rect(192, top, width, 14, kind, radius=2)
+            f.text(192 + width + 8, top + 12, f"{value:.2f}", "small")
+    return f
+
+
+def cache_speedup():
+    programs = ("calls", "sort", "stream", "pointer-chase")
+    groups = []
+    for name in programs:
+        rows = {r[0]: int(r[1].replace(",", "")) for r in cache_table(f"    **{name}**", "    ")}
+        groups.append((name, [(a, rows["B"] / rows[a]) for a in ("A", "C-ID", "D-0", "D-ID")]))
+    f = Figure("cache-speedup", "Speed of four memory arrangements against shared uncached DRAM",
+               "For four programs, bars give the speed of separate memories, two level-1 caches, a shared level-2 cache, and both levels, relative to one shared uncached DRAM, in the embedded profile.",
+               44 + len(groups) * 116 + 4,
+               "<strong>Speed against B, one shared DRAM with no cache, <code>embedded</code>.</strong> "
+               "The line marks B; the fastest arrangement of each program is highlighted. Values from the cycle tables below.")
+    scale, left = 96, 192
+    f.text(40, 28, "SPEED AGAINST B (B = 1)", "tag")
+    for i, (name, bars) in enumerate(groups):
+        y = 44 + i * 116
+        f.text(40, y + 14, name, "name")
+        best = max(value for _, value in bars)
+        for k, (arrangement, value) in enumerate(bars):
+            top = y + 24 + k * 20
+            f.text(176, top + 12, arrangement, "code", "end")
+            width = grid(value * scale)
+            f.rect(left, top, width, 14, "focus" if value == best else "store", radius=2)
+            f.text(left + width + 8, top + 12, f"{value:.2f}×", "small")
+    # B's level, drawn over the bars so it reads as one line.
+    f.line(left + scale, 52, left + scale, 44 + len(groups) * 116 - 12)
+    f.text(left + scale + 6, 48, "B", "code")
     return f
 
 
@@ -630,7 +698,8 @@ def figures():
                             register_file, memory_access, core_stages, core_writeback,
                             core_next_pc, core_completion, baseline_pipeline, advanced_prediction,
                             timing_profile_gates, sram_access_chain, dram_commands, transaction_handshake,
-                            sram_device, alu8_datapath, memory_latency, cache_topologies)]
+                            sram_device, alu8_datapath, memory_latency, cache_topologies,
+                            cache_access_patterns, cache_speedup)]
 
 
 def main():

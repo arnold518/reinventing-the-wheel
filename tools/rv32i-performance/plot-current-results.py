@@ -260,7 +260,7 @@ def verify_public_tables(report: str, panels: dict[str, dict], projection: dict)
             checked += len(values)
     require(set(core_gap_rows) == set(panels["core-gap"]), "core-gap report rows incomplete")
 
-    headings, rows = markdown_table(report, "Each cell below is **cycles**;")
+    headings, rows = markdown_table(report, "**Cycles, 64 iterations of each pattern:**")
     require(headings == ["Target", *PATTERNS] and set(rows) == set(SHORT_NAMES),
             "long-branch report grid changed")
     for name, values in rows.items():
@@ -315,8 +315,8 @@ def save(fig, path: Path, title: str, description: str, preview_dir: Path | None
 def plot_overview(panels: dict[str, dict], output: Path, preview_dir: Path | None, profile: str) -> None:
     groups = (
         ("Fixed programs without expected traps", "fixed", tuple(f"program-{i:02d}" for i in (*range(1, 9), *range(17, 23)))),
-        ("Generated families", "generated", GENERATED_CASES),
-        ("Controlled core-gap settings", "core-gap", CORE_GAP_CASES),
+        ("Generated workloads", "generated", GENERATED_CASES),
+        ("Controlled tests", "core-gap", CORE_GAP_CASES),
         ("Longer branch patterns", "branches", PATTERNS),
         ("Checked-in ELF fixtures", "fixtures", ("self-check.elf", "compiled.elf")),
     )

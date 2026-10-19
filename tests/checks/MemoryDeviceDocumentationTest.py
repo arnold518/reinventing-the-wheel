@@ -165,7 +165,8 @@ class MemoryDeviceDocumentationTest(unittest.TestCase):
                  ("transactions", "3.4", "Transaction Protocol", 6),
                  ("controllers", "3.5", "Controllers and Endpoints", 6),
                  ("timing", "3.6", "Memory Timing", 6),
-                 ("caches", "3.7", "Caches", 6))
+                 ("caches", "3.7", "Caches", 6),
+                 ("cache-experiments", "3.8", "Cache Experiments", 6))
         for page, number, title, indent in pages:
             source = (ROOT / f"site-docs/memory/{page}.md").read_text()
             self.assertTrue(source.startswith(f"# § {number}. {title}\n"), page)

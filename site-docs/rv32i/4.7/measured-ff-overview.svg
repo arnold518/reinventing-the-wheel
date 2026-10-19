@@ -12,7 +12,7 @@
     <dc:format>image/svg+xml</dc:format>
     <dc:creator>
      <cc:Agent>
-      <dc:title>Matplotlib v3.10.6, https://matplotlib.org/</dc:title>
+      <dc:title>Matplotlib v3.10.3, https://matplotlib.org/</dc:title>
      </cc:Agent>
     </dc:creator>
    </cc:Work>
@@ -455,7 +455,7 @@ L 760.930438 421.744483
     <text style="font-size: 8.6px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #202735" x="163.022274" y="412.810376" transform="rotate(-0 163.022274 412.810376)">0.707×</text>
    </g>
    <g id="text_30">
-    <text style="font-weight: 700; font-size: 11.5px; font-family: 'DejaVu Sans'; text-anchor: start" x="61.738438" y="254.444106" transform="rotate(-0 61.738438 254.444106)">Generated families  ·  15 matched cases</text>
+    <text style="font-weight: 700; font-size: 11.5px; font-family: 'DejaVu Sans'; text-anchor: start" x="61.738438" y="254.444106" transform="rotate(-0 61.738438 254.444106)">Generated workloads  ·  15 matched cases</text>
    </g>
   </g>
   <g id="axes_3">
@@ -652,7 +652,7 @@ L 760.930438 633.866989
     <text style="font-size: 8.6px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #202735" x="151.931666" y="624.932881" transform="rotate(-0 151.931666 624.932881)">0.688×</text>
    </g>
    <g id="text_45">
-    <text style="font-weight: 700; font-size: 11.5px; font-family: 'DejaVu Sans'; text-anchor: start" x="61.738438" y="466.566611" transform="rotate(-0 61.738438 466.566611)">Controlled core-gap settings  ·  23 matched cases</text>
+    <text style="font-weight: 700; font-size: 11.5px; font-family: 'DejaVu Sans'; text-anchor: start" x="61.738438" y="466.566611" transform="rotate(-0 61.738438 466.566611)">Controlled tests  ·  23 matched cases</text>
    </g>
   </g>
   <g id="axes_4">

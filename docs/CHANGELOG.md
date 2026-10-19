@@ -7,6 +7,22 @@ history remains in Git and the archived reports.
 
 ## 2026-10-19
 
+### Cache experiments page; RV32I results rewritten (branch `realistic-timing`)
+
+- **Changed:** new § 3.8 Cache Experiments in the memory chapter: the cache
+  campaign presented as a memory-system study (access patterns with no
+  processor first, then programs over five arrangements), with two new charts
+  drawn from the page's tables and the arrangements figure moved there. § 4.7
+  rewritten: short answer, how to read (targets, cycles and time, checks), one
+  summary table, then each workload group as what it tests, its table and
+  what it shows; the cache section is gone from it. Tables unchanged cell for
+  cell; old anchors kept.
+- **Why:** the owner asked for a cache experiment section without RV32I and
+  a complete, easier rewrite of the RV32I experiment page.
+- **Verified:** 18 documentation checks, the plot script's validation of 602
+  table cells, figure check, strict MkDocs build, screenshots of both pages and
+  charts. Browser checks pending in the memory-gated run.
+
 ### Visualizer: one saved floorplan per internal structure (branch `realistic-timing`)
 
 - **Changed:** SRAM and FF memory devices get layout keys that include their

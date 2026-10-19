@@ -15,6 +15,7 @@ sit above the transaction port, have their [own section](caches.md).
 | [3.5 Controllers and Endpoints](controllers.md) | The controller that turns transactions into native device operations, and the endpoint that pairs it with a device |
 | [3.6 Memory Timing](timing.md) | How access times are built, and measured latencies in every timing profile |
 | [3.7 Caches](caches.md) | Caches above the transaction port |
+| [3.8 Cache Experiments](cache-experiments.md) | What caches do for access patterns and programs over DRAM |
 
 ## Storage layers
 

@@ -131,6 +131,7 @@ nav:
       - 3.5. Controllers and Endpoints: memory/controllers.md
       - 3.6. Memory Timing: memory/timing.md
       - 3.7. Caches: memory/caches.md
+      - 3.8. Cache Experiments: memory/cache-experiments.md
   - RV32I:
       - 4.1. RV32I Reference:
           - rv32i/4.1/index.md

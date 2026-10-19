@@ -3,17 +3,17 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Five memory topologies for the advanced core</title>
+<title>Five memory arrangements over one DRAM</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;600&amp;family=Ubuntu+Mono&amp;display=swap" rel="stylesheet"/>
 <style>body { margin: 24px auto; max-width: 688px; padding: 0 16px; } * { box-sizing: border-box; }</style>
 </head>
 <body>
 <!-- diagram:start -->
 <figure class="circuit-figure" data-diagram="cache-topologies">
-<div class="diagram-viewport" role="region" aria-label="Five memory topologies for the advanced core" tabindex="0">
+<div class="diagram-viewport" role="region" aria-label="Five memory arrangements over one DRAM" tabindex="0">
 <svg viewBox="0 0 640 336" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="cache-topologies-title cache-topologies-desc">
-<title id="cache-topologies-title">Five memory topologies for the advanced core</title>
-<desc id="cache-topologies-desc">Five ways to connect the advanced core&#x27;s instruction and data ports to DRAM main memory: two separate memories, one shared memory through an arbiter, private level-1 caches above the arbiter, a shared level-2 cache below it, and both.</desc>
+<title id="cache-topologies-title">Five memory arrangements over one DRAM</title>
+<desc id="cache-topologies-desc">Five ways to connect a processor&#x27;s instruction and data ports to DRAM main memory: two separate memories, one shared memory through an arbiter, private level-1 caches above the arbiter, a shared level-2 cache below it, and both.</desc>
 <style>.circuit-figure {
   --dg-paper: var(--md-default-bg-color, #fff);
   --dg-ink: var(--md-default-fg-color, #202735);
@@ -148,10 +148,10 @@
 <path class="dg-edge" d="M 560 232 L 560 252" marker-end="url(#cache-topologies-arrow)"/>
 <rect x="520" y="252" width="80" height="40" rx="4" class="dg-store"/>
 <text x="560" y="276" class="dg-code" text-anchor="middle">DRAM</text>
-<text x="40" y="320" class="dg-small" text-anchor="start">I, D: the core&#x27;s instruction and data ports. ARB: two-port arbiter. A: each DRAM holds the whole image.</text>
+<text x="40" y="320" class="dg-small" text-anchor="start">I, D: instruction and data ports. ARB: two-port arbiter. A: each DRAM holds the whole image.</text>
 </svg>
 </div>
-<figcaption><strong>Same core, same DRAM, five connections.</strong> A gives each port its own copy of memory; B shares one DRAM through the two-port arbiter; C-ID adds an instruction and a data L1 (256 B each) above the arbiter; D-0 puts a shared 2 KiB L2 below it; D-ID has both. Caches fill a line with one burst; the data caches write through.</figcaption>
+<figcaption><strong>Same requests, same DRAM, five connections.</strong> A gives each port its own copy of memory; B shares one DRAM through the two-port arbiter; C-ID adds an instruction and a data L1 (256 B each) above the arbiter; D-0 puts a shared 2 KiB L2 below it; D-ID has both. Caches fill a line with one burst; the data caches write through.</figcaption>
 </figure>
 <!-- diagram:end -->
 </body>

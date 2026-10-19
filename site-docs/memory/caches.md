@@ -3,7 +3,8 @@
 A cache keeps copies of recently read words. A requester connects to its
 upper [transaction port](transactions.md); the `MEM_` port connects to a separate
 lower [memory endpoint](controllers.md) or another cache. The cache does not own the
-backing memory or its initial contents.
+backing memory or its initial contents. [3.8 Cache Experiments](cache-experiments.md)
+measures what these caches do for access patterns and programs over DRAM.
 
 | Component | Description | Structural | Behavioral |
 | --- | --- | :---: | :---: |
