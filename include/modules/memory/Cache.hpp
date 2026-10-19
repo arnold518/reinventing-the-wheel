@@ -31,6 +31,12 @@ struct CacheConfig {
     bool write_back = false;
     // Write-allocate (read-write caches): a write miss fills its line first.
     bool write_allocate = false;
+    // Where the valid, dirty and replacement bits are kept: flip-flops in the
+    // controller (false; up to 4 expanded or 64 scalable sets), or a line-state
+    // store, one word per set in a memory bank beside the tags (true; up to
+    // 128 expanded or 4,096 scalable sets). The store is cleared set by set
+    // after reset and on invalidation.
+    bool line_store = false;
 
     void validate(size_t width) const;
 };

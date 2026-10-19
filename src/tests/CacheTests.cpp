@@ -419,7 +419,7 @@ public:
     void read(uint32_t address, uint32_t expected, unsigned expected_reads) {
         drive({{"CLK", 0}, {"REQ_VALID", 0}, {"REQ_OP", 0}, {"REQ_ADDR", address},
                {"REQ_WRITE_DATA", 0}, {"REQ_WRITE_MASK", 0}, {"RSP_READY", 0}});
-        for (size_t i = 0; out("REQ_READY") != logicBit(true) && i < 100; ++i) cycle();
+        for (size_t i = 0; out("REQ_READY") != logicBit(true) && i < 5000; ++i) cycle();
         require(out("REQ_READY") == logicBit(true), context_ + ": no request capacity");
         drive({{"CLK", 0}, {"REQ_VALID", 1}});
         drive({{"CLK", 1}});
@@ -441,7 +441,7 @@ public:
     void burst(uint32_t address, size_t words_per_line, unsigned expected_reads, size_t stall = 0) {
         drive({{"CLK", 0}, {"REQ_VALID", 0}, {"REQ_OP", 4}, {"REQ_ADDR", address},
                {"REQ_WRITE_DATA", 0}, {"REQ_WRITE_MASK", 0}, {"RSP_READY", 0}});
-        for (size_t i = 0; out("REQ_READY") != logicBit(true) && i < 100; ++i) cycle();
+        for (size_t i = 0; out("REQ_READY") != logicBit(true) && i < 5000; ++i) cycle();
         require(out("REQ_READY") == logicBit(true), context_ + ": no burst request capacity");
         drive({{"CLK", 0}, {"REQ_VALID", 1}});
         drive({{"CLK", 1}});
@@ -473,7 +473,7 @@ public:
                unsigned expected_reads, unsigned expected_writes) {
         drive({{"CLK", 0}, {"REQ_VALID", 0}, {"REQ_OP", 1}, {"REQ_ADDR", address},
                {"REQ_WRITE_DATA", data}, {"REQ_WRITE_MASK", mask}, {"RSP_READY", 0}});
-        for (size_t i = 0; out("REQ_READY") != logicBit(true) && i < 100; ++i) cycle();
+        for (size_t i = 0; out("REQ_READY") != logicBit(true) && i < 5000; ++i) cycle();
         require(out("REQ_READY") == logicBit(true), context_ + ": no write request capacity");
         drive({{"CLK", 0}, {"REQ_VALID", 1}});
         drive({{"CLK", 1}});
@@ -501,7 +501,7 @@ public:
     void postedWrite(uint32_t address, uint32_t data, unsigned mask) {
         drive({{"CLK", 0}, {"REQ_VALID", 0}, {"REQ_OP", 1}, {"REQ_ADDR", address},
                {"REQ_WRITE_DATA", data}, {"REQ_WRITE_MASK", mask}, {"RSP_READY", 0}});
-        for (size_t i = 0; out("REQ_READY") != logicBit(true) && i < 100; ++i) cycle();
+        for (size_t i = 0; out("REQ_READY") != logicBit(true) && i < 5000; ++i) cycle();
         require(out("REQ_READY") == logicBit(true), context_ + ": no buffered-write capacity");
         drive({{"CLK", 0}, {"REQ_VALID", 1}});
         drive({{"CLK", 1}});
@@ -520,7 +520,7 @@ public:
     void writeOk(uint32_t address, uint32_t data, unsigned mask) {
         drive({{"CLK", 0}, {"REQ_VALID", 0}, {"REQ_OP", 1}, {"REQ_ADDR", address},
                {"REQ_WRITE_DATA", data}, {"REQ_WRITE_MASK", mask}, {"RSP_READY", 0}});
-        for (size_t i = 0; out("REQ_READY") != logicBit(true) && i < 100; ++i) cycle();
+        for (size_t i = 0; out("REQ_READY") != logicBit(true) && i < 5000; ++i) cycle();
         require(out("REQ_READY") == logicBit(true), context_ + ": no write capacity");
         drive({{"CLK", 0}, {"REQ_VALID", 1}});
         drive({{"CLK", 1}});
@@ -536,7 +536,7 @@ public:
         const auto before_reads = lower_reads_, before_writes = lower_writes_;
         drive({{"CLK", 0}, {"REQ_VALID", 0}, {"REQ_OP", op}, {"REQ_ADDR", address},
                {"REQ_WRITE_DATA", 0}, {"REQ_WRITE_MASK", 0}, {"RSP_READY", 0}});
-        for (size_t i = 0; out("REQ_READY") != logicBit(true) && i < 100; ++i) cycle();
+        for (size_t i = 0; out("REQ_READY") != logicBit(true) && i < 5000; ++i) cycle();
         require(out("REQ_READY") == logicBit(true), context_ + ": no rejected-request capacity");
         drive({{"CLK", 0}, {"REQ_VALID", 1}});
         drive({{"CLK", 1}});
@@ -756,7 +756,7 @@ void exerciseReferenceStream() {
 // later, in order; a read always sees the latest write (a hit reads the
 // updated line, a miss waits for the queue to drain first).
 template<size_t Width>
-void exerciseWriteBuffer(size_t entries, size_t ways, Technology data) {
+void exerciseWriteBuffer(size_t entries, size_t ways, Technology data, bool store = false) {
     constexpr size_t sets = 4, words_per_line = 2;
     constexpr size_t word_bytes = Width / 8, block_bytes = words_per_line * word_bytes;
     CacheConfig config;
@@ -767,6 +767,7 @@ void exerciseWriteBuffer(size_t entries, size_t ways, Technology data) {
     config.read_write = true;
     config.write_buffer = entries;
     config.data_technology = data;
+    config.line_store = store;
     Rig<Width> rig(config, Technology::FF);
     struct Line { bool valid = false; size_t tag = 0, age = 0; std::vector<uint8_t> bytes = std::vector<uint8_t>(block_bytes); };
     std::vector<std::vector<Line>> lines(sets, std::vector<Line>(ways));
@@ -833,14 +834,16 @@ void exerciseWriteBuffer(size_t entries, size_t ways, Technology data) {
 // fills, then (after a flush by invalidation) the backing bytes and the number
 // of backing writes.
 template<size_t Width>
-void exerciseWritePolicy(bool back, bool allocate, size_t ways, Technology data) {
-    constexpr size_t sets = 4, words_per_line = 2;
+void exerciseWritePolicy(bool back, bool allocate, size_t ways, Technology data, bool store = false, size_t sets = 4) {
+    constexpr size_t words_per_line = 2;
     constexpr size_t word_bytes = Width / 8, block_bytes = words_per_line * word_bytes;
     CacheConfig config;
     config.sets = sets;
     config.ways = ways;
     config.block_bytes = block_bytes;
-    config.backing_depth_words = 64;
+    config.backing_depth_words = std::max<size_t>(64, 4 * sets * words_per_line);
+    config.line_store = store;
+    config.scalable_storage = sets > 4;
     config.read_write = true;
     config.write_back = back;
     config.write_allocate = allocate;
@@ -1160,6 +1163,12 @@ void CacheReadTest::verifyResults() {
     exerciseWritePolicy<32>(true, true, 2, Technology::FF);    // write-back, write-allocate
     exerciseWritePolicy<32>(true, true, 2, Technology::SRAM);
     exerciseWritePolicy<16>(true, false, 2, Technology::SRAM);
+    // The line-state store: the same streams, and a cache too large for flip-flop line state.
+    exerciseWritePolicy<8>(false, false, 1, Technology::FF, true);
+    exerciseWritePolicy<32>(true, true, 2, Technology::SRAM, true);
+    exerciseWritePolicy<16>(true, false, 2, Technology::FF, true);
+    exerciseWritePolicy<32>(true, true, 2, Technology::SRAM, true, 256);
+    exerciseWriteBuffer<32>(2, 2, Technology::SRAM, true);
     exerciseWriteBuffer<8>(1, 1, Technology::FF);
     exerciseWriteBuffer<32>(2, 2, Technology::SRAM);
     exerciseWriteBuffer<16>(4, 2, Technology::FF);
@@ -1169,6 +1178,10 @@ void CacheReadTest::verifyResults() {
         config.read_write = true; config.write_buffer = 3; invalid(config, 8);
         config.write_buffer = 2; config.write_back = true; invalid(config, 8);   // back has no buffer
         config.write_buffer = 0; config.read_write = false; invalid(config, 8);  // back needs read-write
+        config = CacheConfig{}; config.scalable_storage = true; config.sets = 128; config.backing_depth_words = 1024;
+        invalid(config, 8);  // registers: 64
+        config.line_store = true; config.validate(8);
+        config.sets = 8192; invalid(config, 8);
     }
     {
         CacheConfig config;

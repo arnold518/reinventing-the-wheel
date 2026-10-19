@@ -7,6 +7,18 @@ history remains in Git and the archived reports.
 
 ## 2026-10-20
 
+### Cache: line-state store for large caches (branch `realistic-timing`)
+
+- **Changed:** `line_state=store` keeps the valid, dirty and replacement
+  bits in a memory bank (one word per set) instead of controller flip-flops,
+  lifting the set limit to 128 (gate-level) or 4,096 (scalable); the store
+  is cleared set by set after reset and on invalidation. The default
+  (`registers`) is unchanged.
+- **Why:** step 3 of the general cache plan, revised from "bits in the tag
+  words" to keep existing caches and results unchanged (see the record).
+- **Verified:** `CacheReadTest` (store-mode streams including 256 sets), the
+  cache scenarios, `RV32ITopologyTest`, a store-mode D-ID run.
+
 ### Cache: write-back and write-allocate (branch `realistic-timing`)
 
 - **Changed:** caches take `write_policy=back` (dirty bits, write-back of a

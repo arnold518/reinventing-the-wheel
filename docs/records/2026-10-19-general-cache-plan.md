@@ -251,3 +251,38 @@ writes all match. `RV32ITopologyTest` (now also write-back with allocate),
 2-entry buffers, 4,796 write-back with allocate, 5,006 write-back without;
 all verified. The clock analysis certifies D-ID at 4,104 ps in all three
 variants (limit unchanged: the instruction L1's front end).
+
+## 2026-10-20 — Step 3 done, revised: a line-state store
+
+**Plan change.** The plan said to keep the valid, dirty and replacement bits
+in the tag words. That would rewrite a tag word on every hit (replacement)
+and change the timing of every existing cache, including the published
+campaign. Revised: the bits move to a separate **line-state store** (one
+32-bit word per set in an ordinary memory device beside the tags), selected
+by a new setting `line_state=store`; the default `registers` keeps the
+flip-flop line state and every existing cache unchanged.
+
+**Design.**
+- Word layout: bits 0..7 valid per way, 8..15 dirty per way, 16 most
+  recently used way (room for eight ways in step 4).
+- The word is read with the tags (at the accepting edge, after a refill, and
+  in the flush walk) and kept in `LINE_WORD`; each change the flip-flop
+  version makes (eviction, fill, touch, write-back write, completed
+  write-back) is applied to the copy and written to the store at the same
+  edge. No write coincides with a read, so clocked banks are safe.
+- The store's contents are unknown at power-up: after reset the controller
+  writes an empty word to every set (`CLEAR_INDEX`, one set per cycle)
+  before it accepts a request. An invalidation becomes the same clearing
+  walk (after the flush walk in write-back); `INV_READY` rises when it is
+  done.
+- The controller no longer grows with the sets: up to 128 sets with
+  gate-level stores, 4,096 with scalable ones (registers: 4 and 64).
+- The bank is `LINE_STORE` (helpers `META_`), of the tag banks' technology.
+  Its floorplan follows in step 4 with the floorplan for more ways.
+
+**Checks.** `CacheReadTest` runs the write-policy and write-buffer streams in
+store mode too, and a 256-set write-back cache with SRAM stores (scalable),
+all against the reference model; the flip-flop mode and its tests are
+unchanged. The cache scenarios and `RV32ITopologyTest` pass. A D-ID run with
+store-mode write-back caches (L2 with 256 sets) verifies, `sort` in 5,050
+cycles.
