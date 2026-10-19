@@ -7,6 +7,7 @@
 #include "modules/storage/ClockedStateBit.hpp"
 #include "MemoryHandshakeWiring.hpp"
 #include <bit>
+#include <functional>
 #include <array>
 #include <limits>
 #include <tuple>
@@ -22,11 +23,13 @@ void CacheConfig::validate(size_t width) const {
     const size_t bytes = block_bytes ? block_bytes : width / 8;
     const size_t words_per_line = bytes / (width / 8);
     if (!std::has_single_bit(sets) || sets > (line_store ? (scalable_storage ? 4096 : 128) : (scalable_storage ? 64 : 4)) ||
-        (ways != 1 && ways != 2) ||
+        (ways != 1 && ways != 2 && ways != 4 && ways != 8) ||
         !std::has_single_bit(bytes) || bytes < width / 8 ||
         words_per_line > 4 || (!scalable_storage && sets * words_per_line > 4096 / width))
         throw std::invalid_argument("Cache supports power-of-two sets (flip-flop line state: up to 4 expanded or 64 scalable; "
-                                    "line-state store: 128 or 4096), one or two ways and 1/2/4 words per line");
+                                    "line-state store: 128 or 4096), 1/2/4/8 ways and 1/2/4 words per line");
+    if (replacement == CacheReplacement::LRU && ways > 2)
+        throw std::invalid_argument("Exact LRU replacement is built for one or two ways; choose plru, fifo or random");
     if (!std::has_single_bit(backing_depth_words) || backing_depth_words < sets * words_per_line ||
         backing_depth_words > std::numeric_limits<uint32_t>::max() / (width / 8))
         throw std::invalid_argument("Cache backing depth must be a sufficient power of two");
@@ -46,7 +49,7 @@ void CacheConfig::validate(size_t width) const {
 CacheConfig cacheConfig(const ParameterMap& p) {
     memory_device::keys(p, {"sets", "ways", "block_bytes", "backing_depth_words", "mode", "storage_form",
                             "tag_technology", "data_technology", "fill", "write_buffer", "write_policy", "write_miss",
-                            "line_state"});
+                            "line_state", "replacement"});
     CacheConfig c;
     c.sets = memory_device::parameter(p, "sets", c.sets);
     c.ways = memory_device::parameter(p, "ways", c.ways);
@@ -62,6 +65,15 @@ CacheConfig cacheConfig(const ParameterMap& p) {
         if (it->second == "registers") c.line_store = false;
         else if (it->second == "store") c.line_store = true;
         else throw std::invalid_argument("Cache line_state must be registers or store");
+    }
+    if (auto it = p.find("replacement"); it != p.end()) {
+        if (it->second == "lru") c.replacement = CacheReplacement::LRU;
+        else if (it->second == "plru") c.replacement = CacheReplacement::PLRU;
+        else if (it->second == "fifo") c.replacement = CacheReplacement::FIFO;
+        else if (it->second == "random") c.replacement = CacheReplacement::Random;
+        else throw std::invalid_argument("Cache replacement must be lru, plru, fifo or random");
+    } else if (c.ways > 2) {
+        c.replacement = CacheReplacement::PLRU;  // exact LRU stops at two ways
     }
     if (auto it = p.find("write_miss"); it != p.end()) {
         if (it->second == "no-allocate") c.write_allocate = false;
@@ -100,7 +112,17 @@ ParameterMap cacheParameters(const CacheConfig& c) {
             {"write_buffer", std::to_string(c.write_buffer)},
             {"write_policy", c.write_back ? "back" : "through"},
             {"write_miss", c.write_allocate ? "allocate" : "no-allocate"},
-            {"line_state", c.line_store ? "store" : "registers"}};
+            {"line_state", c.line_store ? "store" : "registers"},
+            {"replacement", cacheReplacementName(c.replacement)}};
+}
+
+const char* cacheReplacementName(CacheReplacement r) {
+    switch (r) {
+    case CacheReplacement::PLRU: return "plru";
+    case CacheReplacement::FIFO: return "fifo";
+    case CacheReplacement::Random: return "random";
+    default: return "lru";
+    }
 }
 
 void cachePins(IOComponent* self, size_t width) {
@@ -348,6 +370,59 @@ public:
     }
 private:
     size_t sets_, offset_;
+};
+
+// The replacement bits of every set (pseudo-LRU tree bits or a FIFO
+// pointer), for the set selected by ADDRESS: BIT_i shows them, UPDATE loads
+// NEXT_i into them at the edge. Reset and invalidation clear them.
+class CachePolicyBits : public IOComponent {
+public:
+    CachePolicyBits(std::string name, size_t sets, size_t address_offset, size_t bits)
+        : IOComponent(std::move(name), [bits](IOComponent* self) {
+              for (auto pin : {"CLK", "RST", "INVALIDATE", "UPDATE"}) self->addPin(pin, PinType::INPUT);
+              self->addPin<32>("ADDRESS", PinType::INPUT);
+              for (size_t i = 0; i < bits; ++i) {
+                  self->addPin("NEXT_" + std::to_string(i), PinType::INPUT);
+                  self->addPin("BIT_" + std::to_string(i), PinType::OUTPUT);
+              }
+          }), sets_(sets), offset_(address_offset), bits_(bits),
+          type_("CachePolicyBits<" + std::to_string(sets) + "," + std::to_string(bits) + ">") {}
+    const char* getTypeName() const override { return type_.c_str(); }
+    void buildInternals(ComponentBuilder& builder) override {
+        StructuralWiring w(builder);
+        auto addr = builder.addNewComponent<BitSplitter<32>>("ADDRESS_BITS");
+        w.connect(getInputPin<32>("ADDRESS"), addr->getInputPin<32>("IN"));
+        auto reset = w.either("RESET", getInputPin("RST"), getInputPin("INVALIDATE"));
+        auto low = w.constant("LOW", false);
+        std::vector<std::vector<PinPtr>> shown(bits_);
+        for (size_t set = 0; set < sets_; ++set) {
+            const auto n = std::to_string(set);
+            std::vector<PinPtr> index;
+            for (size_t i = 0; i < std::countr_zero(sets_); ++i) {
+                auto bit = addr->getOutputPin("OUT_" + std::to_string(offset_ + i));
+                index.push_back((set & (size_t{1} << i)) ? bit : w.invert("NOT_SET_" + n + "_" + std::to_string(i), bit));
+            }
+            auto selected = index.empty() ? w.invert("SELECT_ZERO", low) : w.reduce("SELECT_" + n, index, true);
+            auto update = w.both("UPDATE_" + n, getInputPin("UPDATE"), selected);
+            auto keep = w.invert("KEEP_" + n, update);
+            for (size_t i = 0; i < bits_; ++i) {
+                const auto b = n + "_" + std::to_string(i);
+                auto cell = builder.add(circuit::families::ClockedStateBit, "BIT_" + b);
+                w.connect(getInputPin("CLK"), cell->getInputPin("CLK"));
+                w.connect(reset, cell->getInputPin("RST"));
+                w.connect(w.either("NEXT_" + b, w.both("HOLD_" + b, cell->getOutputPin("Q"), keep),
+                                   w.both("LOAD_" + b, update, getInputPin("NEXT_" + std::to_string(i)))),
+                          cell->getInputPin("D"));
+                shown[i].push_back(w.both("SELECTED_" + b, selected, cell->getOutputPin("Q")));
+            }
+        }
+        for (size_t i = 0; i < bits_; ++i)
+            w.connect(w.reduce("SHOWN_" + std::to_string(i), shown[i], false), getOutputPin("BIT_" + std::to_string(i)));
+        w.finish();
+    }
+private:
+    size_t sets_, offset_, bits_;
+    std::string type_;
 };
 
 template<size_t Width>
@@ -725,7 +800,7 @@ void CacheBankController<Width>::buildInternals(ComponentBuilder& builder) {
     // the walk is complete. REFILLED_WRITE: a write-allocate fill just ended,
     // the write is looked up again.
     const bool back = config_.write_back, allocate = config_.write_allocate;
-    const size_t way_bits = config_.ways == 2 ? 1 : 0;
+    const size_t way_bits = std::countr_zero(config_.ways);
     std::shared_ptr<IOComponent> evict_read_bit, evict_send_bit, evict_wait_bit, evict_flush_bit,
         flush_read_bit, flush_check_bit, flushed_bit, refilled_bit;
     std::vector<std::shared_ptr<IOComponent>> evict_word_bits, flush_index_bits;
@@ -775,16 +850,24 @@ void CacheBankController<Width>::buildInternals(ComponentBuilder& builder) {
         for (size_t i = 0; i < set_bits; ++i) walked[offset + i] = flush_set[i];
         line_address = memory_detail::payloadMux(builder, w, "LINE_ADDRESS", line_address, join("FLUSH_ADDRESS", walked), flushing);
     }
-    // Each way's valid and dirty bit and the set's most-recently-used way,
-    // for the set being looked up or walked: from flip-flops (CacheLineState,
-    // CacheReplacementState), or from the line-state store, whose word for the
-    // set is read with the tags and kept in LINE_WORD while a request lasts
-    // (bits 0..7 valid, 8..15 dirty, 16 most recently used way).
+    // Each way's valid and dirty bit and the set's replacement bits, for the
+    // set being looked up or walked: from flip-flops (CacheLineState, and
+    // CacheReplacementState or CachePolicyBits), or from the line-state store,
+    // whose word for the set is read with the tags and kept in LINE_WORD while
+    // a request lasts (bits 0..7 valid, 8..15 dirty, 16 on replacement bits).
+    // Replacement bits: two-way lru, the most recently used way; plru, the
+    // tree (node n's children are 2n+1 and 2n+2; the root decides the way
+    // index's top bit, 1 pointing to the upper half); fifo, the pointer.
+    // random keeps one LFSR for all sets instead.
     const bool store = config_.line_store;
+    const auto policy = config_.replacement;
+    const bool two_way_lru = config_.ways == 2 && policy == CacheReplacement::LRU;
+    const size_t policy_bits = config_.ways == 1 ? 0 : two_way_lru ? 1
+        : policy == CacheReplacement::PLRU ? config_.ways - 1 : policy == CacheReplacement::FIFO ? way_bits : 0;
     std::vector<std::shared_ptr<CacheLineState>> lines;
     std::shared_ptr<CacheReplacementState> replacement;
-    std::vector<PinPtr> way_valid, way_dirty;
-    PinPtr mru = low;
+    std::shared_ptr<CachePolicyBits> policy_store;
+    std::vector<PinPtr> way_valid, way_dirty, policy_state;
     std::shared_ptr<IOComponent> line_word_reg;
     std::vector<PinPtr> old_line_bits;
     if (store) {
@@ -798,7 +881,7 @@ void CacheBankController<Width>::buildInternals(ComponentBuilder& builder) {
             way_valid.push_back(old_line_bits[way]);
             way_dirty.push_back(back ? old_line_bits[8 + way] : low);
         }
-        mru = config_.ways == 2 ? old_line_bits[16] : low;
+        for (size_t i = 0; i < policy_bits; ++i) policy_state.push_back(old_line_bits[16 + i]);
     } else {
         for (size_t way = 0; way < config_.ways; ++way) {
             auto line = builder.addNewComponent<CacheLineState>("LINE_STATE_" + std::to_string(way), config_.sets, offset, back);
@@ -808,13 +891,23 @@ void CacheBankController<Width>::buildInternals(ComponentBuilder& builder) {
             way_valid.push_back(line->getOutputPin("VALID"));
             way_dirty.push_back(back ? PinPtr(line->getOutputPin("DIRTY")) : low);
         }
-        if (config_.ways == 2) {
+        if (two_way_lru) {
             replacement = builder.addNewComponent<CacheReplacementState>("REPLACEMENT", config_.sets, offset);
             for (auto pin : {"CLK", "RST"}) w.connect(getInputPin(pin), replacement->getInputPin(pin));
             w.connect(addr_reg->getOutputPin<32>("Q"), replacement->getInputPin<32>("ADDRESS"));
-            mru = replacement->getOutputPin("MRU");
+            policy_state.push_back(replacement->getOutputPin("MRU"));
+        } else if (policy_bits) {
+            policy_store = builder.addNewComponent<CachePolicyBits>("REPLACEMENT", config_.sets, offset, policy_bits);
+            for (auto pin : {"CLK", "RST"}) w.connect(getInputPin(pin), policy_store->getInputPin(pin));
+            w.connect(addr_reg->getOutputPin<32>("Q"), policy_store->getInputPin<32>("ADDRESS"));
+            for (size_t i = 0; i < policy_bits; ++i) policy_state.push_back(policy_store->getOutputPin("BIT_" + std::to_string(i)));
         }
     }
+    // random: a 16-bit LFSR (the XNOR of bits 15, 14, 12 and 3 shifted in at
+    // bit 0), stepped by every completed fill; its low bits name the victim.
+    std::vector<std::shared_ptr<IOComponent>> random_bits;
+    if (policy == CacheReplacement::Random && config_.ways > 1)
+        for (size_t i = 0; i < 16; ++i) random_bits.push_back(state_bit("RANDOM_" + std::to_string(i)));
     std::vector<PinPtr> matches;
     for (size_t way = 0; way < config_.ways; ++way) {
         auto match = builder.addNewComponent<CacheTagMatch32>("TAG_MATCH_" + std::to_string(way));
@@ -823,12 +916,82 @@ void CacheBankController<Width>::buildInternals(ComponentBuilder& builder) {
         w.connect(way_valid[way], match->getInputPin("VALID"));
         matches.push_back(match->getOutputPin("HIT"));
     }
-    auto hit = config_.ways == 1 ? matches[0] : w.either("HIT", matches[0], matches[1]);
-    auto hit_one = config_.ways == 1 ? low : matches[1];
-    PinPtr victim_one = low;
-    if (config_.ways == 2)
-        victim_one = w.both("VICTIM_WAY_ONE", way_valid[0],
-            w.either("WAY_ONE_INVALID_OR_LRU", w.invert("WAY_ONE_INVALID", way_valid[1]), w.invert("WAY_ONE_LRU", mru)));
+    auto hit = config_.ways == 1 ? matches[0] : config_.ways == 2 ? w.either("HIT", matches[0], matches[1])
+                                                                 : w.reduce("HIT", matches, false);
+    // Way indexes are vectors of way_bits bits, least significant first. The
+    // hit way's index (at most one tag matches):
+    std::vector<PinPtr> hit_way;
+    for (size_t b = 0; b < way_bits; ++b) {
+        std::vector<PinPtr> terms;
+        for (size_t way = 0; way < config_.ways; ++way) if ((way >> b) & 1) terms.push_back(matches[way]);
+        hit_way.push_back(w.reduce("HIT_WAY_BIT_" + std::to_string(b), terms, false));
+    }
+    // values[i] for the way index `index`: a tree of multiplexers.
+    std::function<PinPtr(const std::string&, const std::vector<PinPtr>&, const std::vector<PinPtr>&)> select =
+        [&](const std::string& name, const std::vector<PinPtr>& values, const std::vector<PinPtr>& index) -> PinPtr {
+            if (values.size() == 1) return values[0];
+            if (values.size() == 2) return memory_detail::payloadMux(builder, w, name, values[0], values[1], index[0]);
+            const auto half = values.size() / 2;
+            const std::vector<PinPtr> lower(index.begin(), index.end() - 1);
+            return memory_detail::payloadMux(builder, w, name,
+                select(name + "_LOW", std::vector<PinPtr>(values.begin(), values.begin() + half), lower),
+                select(name + "_HIGH", std::vector<PinPtr>(values.begin() + half, values.end()), lower), index.back());
+        };
+    // One line per way, high for the way an index names.
+    auto decode = [&](const std::string& zero_name, const std::string& prefix, const std::vector<PinPtr>& index) -> std::vector<PinPtr> {
+        if (index.empty()) return {high};
+        if (index.size() == 1) return {w.invert(zero_name, index[0]), index[0]};
+        std::vector<PinPtr> inverted, out;
+        for (size_t b = 0; b < index.size(); ++b) inverted.push_back(w.invert(prefix + "_NOT_" + std::to_string(b), index[b]));
+        for (size_t way = 0; way < config_.ways; ++way) {
+            std::vector<PinPtr> terms;
+            for (size_t b = 0; b < index.size(); ++b) terms.push_back(((way >> b) & 1) ? index[b] : inverted[b]);
+            out.push_back(w.reduce(prefix + "_" + std::to_string(way), terms, true));
+        }
+        return out;
+    };
+    // A name per index bit: the two-way name as it was, else with _BIT and the bit.
+    auto bit_name = [&](std::string base, size_t b) {
+        if (way_bits == 1) return base;
+        if (auto at = base.find("_ONE"); at != std::string::npos) base.replace(at, 4, "_BIT");
+        return base + "_" + std::to_string(b);
+    };
+    // The victim of a miss: the first invalid way, else the policy's way.
+    std::vector<PinPtr> victim_way;
+    if (two_way_lru) {
+        victim_way.push_back(w.both("VICTIM_WAY_ONE", way_valid[0],
+            w.either("WAY_ONE_INVALID_OR_LRU", w.invert("WAY_ONE_INVALID", way_valid[1]), w.invert("WAY_ONE_LRU", policy_state[0]))));
+    } else if (config_.ways > 1) {
+        std::vector<PinPtr> chosen;
+        if (policy == CacheReplacement::PLRU) {
+            std::vector<PinPtr> path;  // the decisions from the root: the index's top bit first
+            for (size_t level = 0; level < way_bits; ++level) {
+                const size_t first = (size_t{1} << level) - 1;
+                path.push_back(select("PLRU_LEVEL_" + std::to_string(level),
+                    std::vector<PinPtr>(policy_state.begin() + first, policy_state.begin() + 2 * first + 1),
+                    std::vector<PinPtr>(path.rbegin(), path.rend())));
+            }
+            chosen.assign(path.rbegin(), path.rend());
+        } else if (policy == CacheReplacement::FIFO) {
+            chosen = policy_state;
+        } else {
+            for (size_t b = 0; b < way_bits; ++b) chosen.push_back(random_bits[b]->getOutputPin("Q"));
+        }
+        PinPtr valid_so_far = way_valid[0];
+        std::vector<PinPtr> first_invalid{w.invert("WAY_0_INVALID", way_valid[0])};
+        for (size_t way = 1; way < config_.ways; ++way) {
+            const auto n = std::to_string(way);
+            first_invalid.push_back(w.both("FIRST_INVALID_" + n, w.invert("WAY_" + n + "_INVALID", way_valid[way]), valid_so_far));
+            valid_so_far = w.both("VALID_UP_TO_" + n, valid_so_far, way_valid[way]);
+        }
+        auto some_invalid = w.invert("SOME_WAY_INVALID", valid_so_far);
+        for (size_t b = 0; b < way_bits; ++b) {
+            std::vector<PinPtr> terms;
+            for (size_t way = 0; way < config_.ways; ++way) if ((way >> b) & 1) terms.push_back(first_invalid[way]);
+            victim_way.push_back(memory_detail::payloadMux(builder, w, "VICTIM_WAY_BIT_" + std::to_string(b), chosen[b],
+                w.reduce("FIRST_INVALID_BIT_" + std::to_string(b), terms, false), some_invalid));
+        }
+    }
     auto status_ok = [&](const std::string& name, PinPtr status) -> PinPtr {
         auto split = builder.addNewComponent<BitSplitter<3>>(name + "_BITS");
         w.connect(status, split->getInputPin<3>("IN"));
@@ -878,22 +1041,20 @@ void CacheBankController<Width>::buildInternals(ComponentBuilder& builder) {
     // Write-back: a dirty victim is written back, word by word, before the
     // fill; the flush walk writes back every dirty line before invalidation.
     PinPtr needs_evict = low, evict_last_done = low, evict_rsp_ready = low, flush_found = low,
-           flush_way_one = low, evict_address = low, flush_step = low, flush_last = low;
+           evict_address = low, flush_step = low, flush_last = low;
+    const std::vector<PinPtr> flush_way(flush_index.begin(), flush_index.begin() + std::min(way_bits, flush_index.size()));
     std::shared_ptr<IOComponent> victim_index_reg;
     if (back) {
-        auto way_signal = [&](const std::string& name, const std::string& pin, PinPtr one) -> PinPtr {
-            const auto& bits = pin == "VALID" ? way_valid : way_dirty;
-            return config_.ways == 1 ? bits[0] : memory_detail::payloadMux(builder, w, name, bits[0], bits[1], one);
+        auto way_signal = [&](const std::string& name, const std::string& pin, const std::vector<PinPtr>& index) -> PinPtr {
+            return select(name, pin == "VALID" ? way_valid : way_dirty, index);
         };
-        auto way_tag = [&](const std::string& name, PinPtr one) -> PinPtr {
-            return config_.ways == 1 ? PinPtr(getInputPinDynamic("TAG0_READ_DATA"))
-                : memory_detail::payloadMux(builder, w, name, getInputPinDynamic("TAG0_READ_DATA"), getInputPinDynamic("TAG1_READ_DATA"), one);
-        };
-        needs_evict = w.reduce("NEEDS_EVICTION", {read_miss, way_signal("VICTIM_VALID", "VALID", victim_one),
-                                                  way_signal("VICTIM_DIRTY", "DIRTY", victim_one)}, true);
-        flush_way_one = way_bits ? flush_index[0] : low;
-        auto flush_dirty = w.both("WALKED_LINE_DIRTY", way_signal("WALKED_VALID", "VALID", flush_way_one),
-                                  way_signal("WALKED_DIRTY", "DIRTY", flush_way_one));
+        std::vector<PinPtr> tags;
+        for (size_t way = 0; way < config_.ways; ++way) tags.push_back(getInputPinDynamic("TAG" + std::to_string(way) + "_READ_DATA"));
+        auto way_tag = [&](const std::string& name, const std::vector<PinPtr>& index) -> PinPtr { return select(name, tags, index); };
+        needs_evict = w.reduce("NEEDS_EVICTION", {read_miss, way_signal("VICTIM_VALID", "VALID", victim_way),
+                                                  way_signal("VICTIM_DIRTY", "DIRTY", victim_way)}, true);
+        auto flush_dirty = w.both("WALKED_LINE_DIRTY", way_signal("WALKED_VALID", "VALID", flush_way),
+                                  way_signal("WALKED_DIRTY", "DIRTY", flush_way));
         flush_found = w.both("FLUSH_FOUND", FC, flush_dirty);
         auto flush_skip = w.both("FLUSH_SKIP", FC, w.invert("WALKED_LINE_CLEAN", flush_dirty));
         auto start_evict = w.either("START_EVICTION", needs_evict, flush_found);
@@ -904,8 +1065,8 @@ void CacheBankController<Width>::buildInternals(ComponentBuilder& builder) {
             for (auto pin : {"CLK", "RST"}) w.connect(getInputPin(pin), reg->getInputPin(pin));
             w.connect(start_evict, reg->getInputPin("WE"));
         }
-        w.connect(memory_detail::payloadMux(builder, w, "VICTIM_TAG_SOURCE", way_tag("VICTIM_TAG_NOW", victim_one),
-                                            way_tag("WALKED_TAG", flush_way_one), flush_found), victim_tag_reg->getInputPin<32>("D"));
+        w.connect(memory_detail::payloadMux(builder, w, "VICTIM_TAG_SOURCE", way_tag("VICTIM_TAG_NOW", victim_way),
+                                            way_tag("WALKED_TAG", flush_way), flush_found), victim_tag_reg->getInputPin<32>("D"));
         w.connect(memory_detail::payloadMux(builder, w, "VICTIM_SET_SOURCE", join("REQUEST_SET", set_index),
                                             join("WALKED_SET", flush_set), flush_found), victim_index_reg->getInputPin<32>("D"));
         auto evict_sent = w.both("EVICT_SENT", ES, getInputPin("MEM_REQ_READY"));
@@ -1064,17 +1225,21 @@ void CacheBankController<Width>::buildInternals(ComponentBuilder& builder) {
 
     // The way a fill, a write-through or a stream uses: the victim of a read
     // miss, the hit way of a write or a burst hit; and whether that write hit.
-    std::shared_ptr<IOComponent> current_way;
-    PinPtr way_one = low;
-    if (config_.ways == 2) {
-        current_way = state_bit("CURRENT_WAY");
-        way_one = current_way->getOutputPin("Q");
+    std::vector<PinPtr> current_way;
+    if (way_bits) {
         auto choose = w.reduce("CHOOSE_WAY", {read_miss, write_now, burst_hit, flush_found}, false);
-        auto chosen_one = w.reduce("CHOSEN_WAY_ONE", {w.both("VICTIM_IS_ONE", read_miss, victim_one),
-                                   w.both("HIT_WAY_ONE", w.either("WRITE_OR_BURST_HIT", write_now, burst_hit), hit_one),
-                                   w.both("WALKED_WAY_ONE", flush_found, flush_way_one)}, false);
-        w.connect(w.either("NEXT_CURRENT_WAY", chosen_one, w.both("HOLD_CURRENT_WAY", way_one, w.invert("NOT_CHOOSING", choose))),
-                  current_way->getInputPin("D"));
+        auto hit_choice = w.either("WRITE_OR_BURST_HIT", write_now, burst_hit);
+        auto not_choosing = w.invert("NOT_CHOOSING", choose);
+        for (size_t b = 0; b < way_bits; ++b) {
+            auto bit = state_bit(bit_name("CURRENT_WAY", b));
+            PinPtr q = bit->getOutputPin("Q");
+            std::vector<PinPtr> chosen{w.both(bit_name("VICTIM_IS_ONE", b), read_miss, victim_way[b]),
+                                       w.both(bit_name("HIT_WAY_ONE", b), hit_choice, hit_way[b])};
+            if (back) chosen.push_back(w.both(bit_name("WALKED_WAY_ONE", b), flush_found, flush_way[b]));
+            w.connect(w.either(bit_name("NEXT_CURRENT_WAY", b), w.reduce(bit_name("CHOSEN_WAY_ONE", b), chosen, false),
+                               w.both(bit_name("HOLD_CURRENT_WAY", b), q, not_choosing)), bit->getInputPin("D"));
+            current_way.push_back(q);
+        }
     }
     auto write_hit_bit = state_bit("WRITE_HIT");
     w.connect(w.either("NEXT_WRITE_HIT", w.both("WRITE_HIT_NOW", write_lookup, hit),
@@ -1112,8 +1277,14 @@ void CacheBankController<Width>::buildInternals(ComponentBuilder& builder) {
     auto data_write_index = memory_detail::payloadMux(builder, w, "DATA_WRITE_INDEX", fill_index, data_index, write_update);
     auto data_writing = w.reduce("DATA_WRITING", {fill_success, update_written, lookup_update}, false);
     // A queued or write-back write updates its line in the lookup cycle, in the hit way.
-    auto write_way_one = (buffered || back) && config_.ways == 2
-        ? memory_detail::payloadMux(builder, w, "UPDATE_WAY", way_one, hit_one, lookup_update) : way_one;
+    auto write_way = current_way;
+    if (buffered || back)
+        for (size_t b = 0; b < way_bits; ++b)
+            write_way[b] = memory_detail::payloadMux(builder, w, bit_name("UPDATE_WAY", b), current_way[b], hit_way[b], lookup_update);
+    const auto current_ways = decode("CURRENT_WAY_ZERO", "CURRENT_WAY_IS", current_way);
+    const auto write_ways = decode("WRITE_WAY_ZERO", "WRITE_WAY_IS", write_way);
+    const auto victim_ways = decode("VICTIM_ZERO", "VICTIM_IS", victim_way);
+    const auto walked_ways = decode("WALKED_WAY_ZERO", "WALKED_WAY_IS", flush_way);
     auto data_read_index = memory_detail::payloadMux(builder, w, "DATA_LOOKUP_OR_STREAM", lookup_index, stream_index, reading_stream);
     if (back) {
         // A write-back reads the victim's words from its set.
@@ -1125,9 +1296,8 @@ void CacheBankController<Width>::buildInternals(ComponentBuilder& builder) {
     }
     for (size_t way = 0; way < config_.ways; ++way) {
         const auto n = std::to_string(way);
-        auto this_way = way == 0 ? w.invert("CURRENT_WAY_ZERO", way_one) : way_one;
-        auto write_way = way == 0 ? w.invert("WRITE_WAY_ZERO", write_way_one) : write_way_one;
-        auto data_write = w.both("DATA_WRITE_" + n, data_writing, write_way);
+        auto this_way = current_ways[way];
+        auto data_write = w.both("DATA_WRITE_" + n, data_writing, write_ways[way]);
         auto tag_write = w.both("TAG_WRITE_" + n, fill_complete, this_way);
         w.connect(w.reduce("TAG_READ_" + n, {valid_start, REFILLED, FR}, false), getOutputPin("TAG" + n + "_READ"));
         w.connect(tag_write, getOutputPin("TAG" + n + "_WRITE"));
@@ -1143,15 +1313,12 @@ void CacheBankController<Width>::buildInternals(ComponentBuilder& builder) {
                   getOutputPin<32>("DATA" + n + "_WORD_ADDR"));
         w.connect(data_write_word, getOutputPinDynamic("DATA" + n + "_WRITE_DATA"));
         w.connect(data_write_mask, getOutputPinDynamic("DATA" + n + "_WRITE_MASK"));
-        auto victim = way == 0 ? w.invert("VICTIM_ZERO", victim_one) : victim_one;
         if (store) continue;
-        w.connect(w.both("EVICT_LINE_" + n, read_miss, victim), lines[way]->getInputPin("CLEAR"));
+        w.connect(w.both("EVICT_LINE_" + n, read_miss, victim_ways[way]), lines[way]->getInputPin("CLEAR"));
         w.connect(tag_write, lines[way]->getInputPin("MARK"));
         if (back) {
-            w.connect(w.both("MARK_DIRTY_" + n, back_write, way == 0 ? w.invert("HIT_WAY_ZERO_" + n, hit_one) : hit_one),
-                      lines[way]->getInputPin("SET_DIRTY"));
-            w.connect(w.reduce("WRITTEN_BACK_" + n, {evict_last_done, EF,
-                          way == 0 ? w.invert("WALKED_WAY_ZERO_" + n, flush_way_one) : flush_way_one}, true),
+            w.connect(w.both("MARK_DIRTY_" + n, back_write, matches[way]), lines[way]->getInputPin("SET_DIRTY"));
+            w.connect(w.reduce("WRITTEN_BACK_" + n, {evict_last_done, EF, walked_ways[way]}, true),
                       lines[way]->getInputPin("CLEAN"));
         }
     }
@@ -1174,35 +1341,80 @@ void CacheBankController<Width>::buildInternals(ComponentBuilder& builder) {
     if (back) w.connect(w.either("NEXT_FLUSHED", w.both("WALK_COMPLETE", flush_step, flush_last),
                                  w.both("STAY_FLUSHED", FLUSHED, w.invert("NOT_INVALIDATED", invalidate))), flushed_bit->getInputPin("D"));
     for (const auto& line : lines) w.connect(invalidate, line->getInputPin("INVALIDATE"));
+    // Replacement updates: lru and plru follow every access to a line (a read
+    // hit, a completed fill, a write into it), fifo and random every completed
+    // fill. policy_next: the set's bits after the update.
+    PinPtr touch = low, policy_update = low;
+    std::vector<PinPtr> touched_way, policy_next;
+    if (config_.ways > 1 || store)
+        touch = w.reduce("TOUCH_REPLACEMENT", {read_hit, fill_complete, update_written, lookup_update}, false);
+    if (config_.ways > 1) {
+        auto hit_touch = w.either("HIT_TOUCH", read_hit, lookup_update);
+        for (size_t b = 0; b < way_bits; ++b)
+            touched_way.push_back(memory_detail::payloadMux(builder, w, bit_name("TOUCHED_WAY", b), current_way[b], hit_way[b], hit_touch));
+        const bool by_fill = policy == CacheReplacement::FIFO || policy == CacheReplacement::Random;
+        policy_update = by_fill ? fill_complete : touch;
+        if (two_way_lru) {
+            policy_next = touched_way;
+        } else if (policy == CacheReplacement::PLRU) {
+            // The nodes on the touched way's path point away from it.
+            std::vector<PinPtr> away;
+            for (size_t level = 0; level < way_bits; ++level)
+                away.push_back(w.invert("PLRU_AWAY_" + std::to_string(level), touched_way[way_bits - 1 - level]));
+            for (size_t level = 0; level < way_bits; ++level) {
+                const size_t first = (size_t{1} << level) - 1;
+                for (size_t j = 0; j <= first; ++j) {
+                    const auto node = std::to_string(first + j);
+                    if (level == 0) { policy_next.push_back(away[0]); continue; }
+                    std::vector<PinPtr> on_path;  // the touched way's top `level` bits are j
+                    for (size_t i = 0; i < level; ++i)
+                        on_path.push_back(((j >> (level - 1 - i)) & 1) ? touched_way[way_bits - 1 - i] : away[i]);
+                    policy_next.push_back(memory_detail::payloadMux(builder, w, "PLRU_NEXT_" + node, policy_state[first + j],
+                        away[level], w.reduce("PLRU_ON_PATH_" + node, on_path, true)));
+                }
+            }
+        } else if (policy == CacheReplacement::FIFO) {
+            PinPtr carry = high;
+            for (size_t b = 0; b < way_bits; ++b) {
+                const auto n = std::to_string(b);
+                policy_next.push_back(w.binary<XORGate>("FIFO_NEXT_" + n, policy_state[b], carry));
+                carry = w.both("FIFO_CARRY_" + n, policy_state[b], carry);
+            }
+        } else {
+            auto q = [&](size_t i) -> PinPtr { return random_bits[i]->getOutputPin("Q"); };
+            auto feedback = w.invert("RANDOM_FEEDBACK", w.binary<XORGate>("RANDOM_TAPS",
+                w.binary<XORGate>("RANDOM_TAPS_HIGH", q(15), q(14)), w.binary<XORGate>("RANDOM_TAPS_LOW", q(12), q(3))));
+            for (size_t i = 0; i < 16; ++i)
+                w.connect(memory_detail::payloadMux(builder, w, "RANDOM_NEXT_" + std::to_string(i), q(i), i == 0 ? feedback : q(i - 1),
+                                                    fill_complete), random_bits[i]->getInputPin("D"));
+        }
+    }
     if (store) {
         // The line-state word of the set: each change the flip-flop version
         // makes is applied to the kept copy and written to the store at the same
         // edge. Valid: cleared for an evicted way, set by a completed fill.
         // Dirty: set by a write-back write, cleared by a fill, an eviction or a
         // completed write-back. Most recently used way: every touch.
-        auto touch = w.reduce("LINE_TOUCH", {read_hit, fill_complete, update_written, lookup_update}, false);
-        auto touched_one = memory_detail::payloadMux(builder, w, "TOUCHED_WAY", way_one, hit_one, w.either("HIT_TOUCH", read_hit, lookup_update));
-        auto way_is = [&](const std::string& name, PinPtr one, size_t way) -> PinPtr {
-            return config_.ways == 1 ? high : way == 0 ? w.invert(name, one) : one;
-        };
         std::vector<PinPtr> next(32, low);
         PinPtr changes = w.reduce("LINE_WORD_CHANGES", {read_miss, fill_complete, touch, back_write,
             back ? w.both("WRITE_BACK_ENDS", evict_last_done, EF) : low}, false);
         for (size_t way = 0; way < config_.ways; ++way) {
             const auto n = std::to_string(way);
-            auto evicted = w.both("WORD_EVICTS_" + n, read_miss, way_is("VICTIM_NOT_ONE_" + n, victim_one, way));
-            auto filled = w.both("WORD_FILLS_" + n, fill_complete, way_is("FILL_NOT_ONE_" + n, way_one, way));
+            auto evicted = w.both("WORD_EVICTS_" + n, read_miss, victim_ways[way]);
+            auto filled = w.both("WORD_FILLS_" + n, fill_complete, current_ways[way]);
             next[way] = w.either("NEXT_WORD_VALID_" + n, w.both("WORD_KEEPS_VALID_" + n, way_valid[way],
                 w.invert("WORD_NOT_EVICTED_" + n, evicted)), filled);
             if (back) {
                 auto cleaned = w.reduce("WORD_CLEANED_" + n, {evicted, filled, w.reduce("WORD_WRITTEN_BACK_" + n, {evict_last_done, EF,
-                                         way_is("WALKED_NOT_ONE_" + n, flush_way_one, way)}, true)}, false);
-                auto dirtied = w.both("WORD_DIRTIED_" + n, back_write, way_is("HIT_NOT_ONE_" + n, hit_one, way));
+                                         walked_ways[way]}, true)}, false);
+                auto dirtied = w.both("WORD_DIRTIED_" + n, back_write, matches[way]);
                 next[8 + way] = w.either("NEXT_WORD_DIRTY_" + n, dirtied,
                     w.both("WORD_KEEPS_DIRTY_" + n, way_dirty[way], w.invert("WORD_NOT_CLEANED_" + n, cleaned)));
             }
         }
-        if (config_.ways == 2) next[16] = memory_detail::payloadMux(builder, w, "NEXT_WORD_MRU", mru, touched_one, touch);
+        for (size_t i = 0; i < policy_bits; ++i)
+            next[16 + i] = memory_detail::payloadMux(builder, w, two_way_lru ? std::string("NEXT_WORD_MRU") : "NEXT_WORD_POLICY_" + std::to_string(i),
+                                                     policy_state[i], policy_next[i], policy_update);
         auto changed_word = join("CHANGED_LINE_WORD", next);
         auto zero_word = builder.addNewComponent<ConstantValue<32>>("EMPTY_LINE_WORD", 0)->getOutputPin<32>("OUT");
         auto meta_write = w.either("LINE_WORD_WRITE", clearing, changes);
@@ -1244,20 +1456,22 @@ void CacheBankController<Width>::buildInternals(ComponentBuilder& builder) {
     }
     if (replacement) {
         w.connect(invalidate, replacement->getInputPin("INVALIDATE"));
-        w.connect(w.reduce("TOUCH_REPLACEMENT", {read_hit, fill_complete, update_written, lookup_update}, false), replacement->getInputPin("TOUCH"));
-        w.connect(memory_detail::payloadMux(builder, w, "TOUCHED_WAY", way_one, hit_one, w.either("HIT_TOUCH", read_hit, lookup_update)),
-                  replacement->getInputPin("TOUCH_WAY"));
+        w.connect(touch, replacement->getInputPin("TOUCH"));
+        w.connect(touched_way[0], replacement->getInputPin("TOUCH_WAY"));
+    }
+    if (policy_store) {
+        w.connect(invalidate, policy_store->getInputPin("INVALIDATE"));
+        w.connect(policy_update, policy_store->getInputPin("UPDATE"));
+        for (size_t i = 0; i < policy_bits; ++i) w.connect(policy_next[i], policy_store->getInputPin("NEXT_" + std::to_string(i)));
     }
 
     // Result: the hit way's word, a streamed word of the current way, or a
     // backing-memory word as it passes (the requested one, or every word of
     // a burst miss).
-    auto hit_word = config_.ways == 1 ? PinPtr(getInputPinDynamic("DATA0_READ_DATA"))
-        : memory_detail::payloadMux(builder, w, "HIT_WORD", getInputPinDynamic("DATA0_READ_DATA"),
-                                    getInputPinDynamic("DATA1_READ_DATA"), hit_one);
-    auto current_word = config_.ways == 1 ? PinPtr(getInputPinDynamic("DATA0_READ_DATA"))
-        : memory_detail::payloadMux(builder, w, "CURRENT_WAY_WORD", getInputPinDynamic("DATA0_READ_DATA"),
-                                    getInputPinDynamic("DATA1_READ_DATA"), way_one);
+    std::vector<PinPtr> data_words;
+    for (size_t way = 0; way < config_.ways; ++way) data_words.push_back(getInputPinDynamic("DATA" + std::to_string(way) + "_READ_DATA"));
+    auto hit_word = select("HIT_WORD", data_words, hit_way);
+    auto current_word = select("CURRENT_WAY_WORD", data_words, current_way);
     auto bank_word = memory_detail::payloadMux(builder, w, "BANK_WORD", current_word, hit_word, read_hit);
     w.connect(w.reduce("CAPTURE_READ_RESULT", {read_hit, stream_take, forward,
         w.reduce("CAPTURE_FILL_WORD", {fill_success, requested, w.invert("NOT_BURST_REQUEST", is_burst)}, true)}, false),

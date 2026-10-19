@@ -6,9 +6,18 @@
 
 namespace circuit::memory {
 
+// Which way of a full set a miss replaces (an invalid way always goes first).
+// lru: the least recently used way, exact (one or two ways). plru: a tree of
+// ways-1 bits per set, each pointing to the half that holds the victim; every
+// access points the bits on its path away from its way. fifo: a pointer per
+// set to the oldest filled way. random: the low bits of a 16-bit LFSR shared
+// by all sets, stepped by every fill.
+enum class CacheReplacement { LRU, PLRU, FIFO, Random };
+const char* cacheReplacementName(CacheReplacement);
+
 struct CacheConfig {
     size_t sets = 4;
-    size_t ways = 1;
+    size_t ways = 1;  // 1, 2, 4 or 8
     size_t block_bytes = 0; // 0 selects one word at the chosen endpoint width.
     size_t backing_depth_words = 16;
     bool read_write = false;
@@ -37,6 +46,9 @@ struct CacheConfig {
     // 128 expanded or 4,096 scalable sets). The store is cleared set by set
     // after reset and on invalidation.
     bool line_store = false;
+    // Exact LRU is built for one or two ways; four and eight ways use plru,
+    // fifo or random.
+    CacheReplacement replacement = CacheReplacement::LRU;
 
     void validate(size_t width) const;
 };

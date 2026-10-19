@@ -128,6 +128,9 @@ int main(int argc,char** argv) {
                 // Override catalog settings of one cache: KEY=VALUE pairs, comma separated.
                 auto& cache=key=="--il1"?c.instruction_l1:key=="--dl1"?c.data_l1:c.l2;
                 auto parameters=circuit::memory::cacheParameters(cache);
+                parameters.erase("replacement");  // unless given: lru up to two ways, plru beyond
+                if(cache.replacement!=circuit::memory::CacheReplacement::LRU)
+                    parameters["replacement"]=circuit::memory::cacheReplacementName(cache.replacement);
                 std::stringstream pairs(value);
                 for(std::string pair;std::getline(pairs,pair,',');){
                     const auto equals=pair.find('=');

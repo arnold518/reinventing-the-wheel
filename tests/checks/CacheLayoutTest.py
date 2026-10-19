@@ -36,34 +36,34 @@ class CacheLayoutTest(unittest.TestCase):
 
     def test_parameterized_bank_alignment(self):
         for word_width in (8, 16, 32):
-            for ways in (1, 2):
-                for parent_aspect in (0.8, 1.76, 3.0):
-                    for tag_aspect, data_aspect in ((0.8, 0.8), (0.8, 1.4), (1.4, 0.8)):
-                        aspects = {"CONTROLLER": 3.715}
-                        for way in range(ways):
-                            aspects[f"TAG_STORE_{way}"] = tag_aspect
-                            aspects[f"DATA_STORE_{way}"] = data_aspect
-                        if ways == 2:
-                            for prefix in ("TAG", "DATA"):
-                                aspects[f"{prefix}_SELECT_ZERO"] = 0.38
-                                for kind in ("REQ_VALID", "RSP_READY"):
-                                    for way in range(2):
-                                        aspects[f"{prefix}_{kind}_WAY_{way}"] = 0.495
-                                for field in ("REQ_READY", "RSP_READ_DATA", "RSP_STATUS", "RSP_VALID"):
-                                    aspects[f"{prefix}_RESPONSE_{field}"] = 0.8
-                        else:
-                            aspects.update({"TAG_SELECT_ZERO": 0.38, "DATA_SELECT_ZERO": 0.38})
-                        layout = cache_layout.placements(f"Cache<{word_width}>", aspects, parent_aspect)
-                        self.assertIsNotNone(layout)
-                        boxes = self.assert_geometry(layout, aspects, parent_aspect)
-                        for way in range(ways):
-                            tag = boxes[f"TAG_STORE_{way}"]
-                            data = boxes[f"DATA_STORE_{way}"]
-                            self.assertAlmostEqual(tag[1] + tag[3] / 2, data[1] + data[3] / 2)
-                            self.assertLess(tag[0] + tag[2], data[0])
-                        if ways == 2:
-                            self.assertLess(boxes["TAG_STORE_0"][1] + boxes["TAG_STORE_0"][3],
-                                            boxes["TAG_STORE_1"][1])
+            for ways in (1, 2, 4, 8):
+                for line_store in (False, True):
+                    for parent_aspect in (0.8, 1.76, 3.0):
+                        for tag_aspect, data_aspect in ((0.8, 0.8), (0.8, 1.4), (1.4, 0.8)):
+                            aspects = {"CONTROLLER": 3.715}
+                            for way in range(ways):
+                                aspects[f"TAG_STORE_{way}"] = tag_aspect
+                                aspects[f"DATA_STORE_{way}"] = data_aspect
+                                for prefix in ("TAG", "DATA"):
+                                    for helper in ("SELECT", "ACCESS", "WRITE_STROBE", "OUTPUT_ENABLED"):
+                                        aspects[f"{prefix}_{way}_{helper}"] = 0.38
+                            if line_store:
+                                aspects["LINE_STORE"] = tag_aspect
+                                aspects.update({"META_SELECT": 0.38, "META_ACCESS": 0.38})
+                            layout = cache_layout.placements(f"Cache<{word_width}>", aspects, parent_aspect)
+                            self.assertIsNotNone(layout, (ways, line_store))
+                            boxes = self.assert_geometry(layout, aspects, parent_aspect)
+                            for way in range(ways):
+                                tag = boxes[f"TAG_STORE_{way}"]
+                                data = boxes[f"DATA_STORE_{way}"]
+                                self.assertAlmostEqual(tag[1] + tag[3] / 2, data[1] + data[3] / 2)
+                                self.assertLess(tag[0] + tag[2], data[0])
+                                if way:
+                                    above = boxes[f"TAG_STORE_{way - 1}"]
+                                    self.assertLess(above[1] + above[3], tag[1])
+                            if line_store:
+                                last = boxes[f"TAG_STORE_{ways - 1}"]
+                                self.assertLess(last[1] + last[3], boxes["LINE_STORE"][1])
 
     def test_registered_scenario_uses_cache_floorplan(self):
         manager = server.LayoutManager(ROOT / "visualizer-v2/layout.json")

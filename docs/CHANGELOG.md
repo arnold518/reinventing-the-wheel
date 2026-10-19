@@ -7,6 +7,28 @@ history remains in Git and the archived reports.
 
 ## 2026-10-20
 
+### Cache: 4 and 8 ways, a choice of replacement (branch `realistic-timing`)
+
+- **Changed:** caches take 1, 2, 4 or 8 ways and `replacement=lru|plru|fifo|random`.
+  Exact lru works for up to two ways; with more ways the default is plru.
+  The controller carries way indexes instead of one way bit. The two-way lru
+  structure is unchanged, and the new policy bits sit in flip-flops
+  (`CachePolicyBits`) or in the line-state word. The cache floorplan takes up
+  to eight way rows and the line-state store. The cache test rig no longer
+  records wire history.
+- **Why:** step 4 of the general cache plan. Next-line prefetch (step 5) is
+  deferred, because the controller serves one request at a time (see the
+  record).
+- **Verified:** `CacheReadTest` passes, with eight new reference-model streams
+  covering every policy at 2, 4 and 8 ways, in flip-flop and store modes.
+  `RV32ITopologyTest`, `RV32IBinaryClockCLITest` and the cache scenarios pass.
+  D-ID cycle counts are unchanged for the existing caches (6,481 and 4,796),
+  and the 4- and 8-way variants verify. 4,104 ps is certified with 4- and
+  8-way caches.
+- **Not run:** the Python module was not rebuilt (too little free memory),
+  so the full `CacheLayoutTest`, `VisualizerStaticLayoutTest` and the browser
+  checks are pending.
+
 ### Cache: line-state store for large caches (branch `realistic-timing`)
 
 - **Changed:** `line_state=store` keeps the valid, dirty and replacement

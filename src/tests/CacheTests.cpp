@@ -6,6 +6,8 @@
 #include "modules/memory/BehavioralMemoryEndpoint.hpp"
 #include "components/StructuralNetBuilder.hpp"
 #include "simulator/Event.hpp"
+#include <algorithm>
+#include <bit>
 #include <initializer_list>
 #include <iostream>
 #include <map>
@@ -376,6 +378,7 @@ public:
         root_ = Component::create<CacheFixture<Width>>("CACHE_FIXTURE", config,
             backing_technology, backing_depth_override, std::move(lower_cache_config));
         root_->initializeBacking();
+        sim_.setHistoryRecordingEnabled(false);  // the rig checks present values only
         ComponentBuilder builder(root_);
         for (const auto& [name, pin] : root_->getAllInputPins())
             inputs_[name] = builder.addNewWireDynamic("IN_" + name, pin->getWidth(), nullptr, {pin});
@@ -830,31 +833,97 @@ void exerciseWriteBuffer(size_t entries, size_t ways, Technology data, bool stor
     require(rig.backingBytes(0, backing.size()) == backing, "Write buffer: final backing bytes differ");
 }
 
+// The controller's choice of victim, for the reference models: the first
+// invalid way, else by policy (lru: the oldest access, from the lines' ages).
+struct ReplacementModel {
+    CacheReplacement policy;
+    size_t ways, sets;
+    std::vector<std::vector<bool>> tree;  // plru: ways-1 bits per set
+    std::vector<size_t> pointer;          // fifo
+    uint16_t lfsr = 0;                    // random: shared, stepped by every fill
+    ReplacementModel(CacheReplacement p, size_t w, size_t s)
+        : policy(p), ways(w), sets(s), tree(s, std::vector<bool>(w > 1 ? w - 1 : 0)), pointer(s) {}
+    size_t bits() const { return size_t(std::countr_zero(ways)); }
+    template<class Line>
+    size_t victim(size_t set, const std::vector<Line>& lines) const {
+        for (size_t way = 0; way < ways; ++way) if (!lines[way].valid) return way;
+        if (ways == 1) return 0;
+        switch (policy) {
+        case CacheReplacement::PLRU: {
+            size_t node = 0, way = 0;
+            for (size_t level = 0; level < bits(); ++level) {
+                const size_t d = tree[set][node];
+                way = 2 * way + d;
+                node = 2 * node + 1 + d;
+            }
+            return way;
+        }
+        case CacheReplacement::FIFO: return pointer[set];
+        case CacheReplacement::Random: return lfsr & (ways - 1);
+        default: {
+            size_t oldest = 0;
+            for (size_t way = 1; way < ways; ++way) if (lines[way].age < lines[oldest].age) oldest = way;
+            return oldest;
+        }
+        }
+    }
+    void touch(size_t set, size_t way) {  // an access to a line (plru points its path away)
+        if (policy != CacheReplacement::PLRU || ways == 1) return;
+        size_t node = 0;
+        for (size_t level = 0; level < bits(); ++level) {
+            const size_t bit = (way >> (bits() - 1 - level)) & 1;
+            tree[set][node] = !bit;
+            node = 2 * node + 1 + bit;
+        }
+    }
+    void filled(size_t set) {
+        if (ways == 1) return;
+        if (policy == CacheReplacement::FIFO) pointer[set] = (pointer[set] + 1) % ways;
+        if (policy == CacheReplacement::Random) {
+            const unsigned feedback = !(((lfsr >> 15) ^ (lfsr >> 14) ^ (lfsr >> 12) ^ (lfsr >> 3)) & 1);
+            lfsr = uint16_t((lfsr << 1) | feedback);
+        }
+    }
+    void invalidate() {  // clears the per-set bits, not the shared LFSR
+        for (auto& bits : tree) std::fill(bits.begin(), bits.end(), false);
+        std::fill(pointer.begin(), pointer.end(), 0);
+    }
+};
+
 // Write-back and write-allocate against a reference model: read values and
 // fills, then (after a flush by invalidation) the backing bytes and the number
-// of backing writes.
+// of backing writes. More than two ways: a wider stream, so that sets fill up.
 template<size_t Width>
-void exerciseWritePolicy(bool back, bool allocate, size_t ways, Technology data, bool store = false, size_t sets = 4) {
+void exerciseWritePolicy(bool back, bool allocate, size_t ways, Technology data, bool store = false, size_t sets = 4,
+                         CacheReplacement replacement = CacheReplacement::LRU) {
     constexpr size_t words_per_line = 2;
     constexpr size_t word_bytes = Width / 8, block_bytes = words_per_line * word_bytes;
     CacheConfig config;
     config.sets = sets;
     config.ways = ways;
     config.block_bytes = block_bytes;
-    config.backing_depth_words = std::max<size_t>(64, 4 * sets * words_per_line);
+    const size_t stream_words = ways > 2 ? 3 * ways * sets * words_per_line : 40;
+    config.backing_depth_words = std::bit_ceil(std::max<size_t>({64, 4 * sets * words_per_line, stream_words + 8}));
     config.line_store = store;
     config.scalable_storage = sets > 4;
     config.read_write = true;
     config.write_back = back;
     config.write_allocate = allocate;
     config.data_technology = data;
+    config.replacement = replacement;
     Rig<Width> rig(config, Technology::FF);
     struct Line { bool valid = false, dirty = false; size_t tag = 0, age = 0; std::vector<uint8_t> bytes = std::vector<uint8_t>(block_bytes); };
     std::vector<std::vector<Line>> lines(sets, std::vector<Line>(ways));
+    ReplacementModel model(replacement, ways, sets);
     std::vector<uint8_t> backing(config.backing_depth_words * word_bytes);
     for (size_t i = 0; i < backing.size(); ++i) backing[i] = uint8_t(0xa0 + i);
     size_t age = 0;
     unsigned reads = 0, writes = 0;
+    auto touch = [&](Line& line, size_t address) {
+        const auto set = (address / block_bytes) % sets;
+        line.age = ++age;
+        model.touch(set, size_t(&line - lines[set].data()));
+    };
     auto find = [&](size_t address) -> Line* {
         const auto set = (address / block_bytes) % sets, tag = (address / block_bytes) / sets;
         for (auto& line : lines[set]) if (line.valid && line.tag == tag) return &line;
@@ -868,24 +937,21 @@ void exerciseWritePolicy(bool back, bool allocate, size_t ways, Technology data,
     };
     auto fill = [&](size_t address) -> Line& {
         const auto set = (address / block_bytes) % sets, base = address - address % block_bytes;
-        Line* line = &lines[set][0];
-        for (auto& candidate : lines[set]) {
-            if (!candidate.valid) { line = &candidate; break; }
-            if (line->valid && candidate.age < line->age) line = &candidate;
-        }
+        Line* line = &lines[set][model.victim(set, lines[set])];
         if (line->valid && line->dirty) write_back(*line, set);
         line->valid = true;
         line->dirty = false;
         line->tag = (address / block_bytes) / sets;
         for (size_t i = 0; i < block_bytes; ++i) line->bytes[i] = backing[base + i];
         reads += words_per_line;
-        line->age = ++age;
+        touch(*line, address);
+        model.filled(set);
         return *line;
     };
     auto read = [&](size_t address) {
         auto* line = find(address);
         if (!line) line = &fill(address);
-        else line->age = ++age;
+        else touch(*line, address);
         uint32_t value = 0;
         for (size_t i = 0; i < word_bytes; ++i) value |= uint32_t(line->bytes[address % block_bytes + i]) << (8 * i);
         rig.read(uint32_t(address), value, reads);
@@ -898,7 +964,7 @@ void exerciseWritePolicy(bool back, bool allocate, size_t ways, Technology data,
             if (line) line->bytes[address % block_bytes + i] = uint8_t(value >> (8 * i));
             if (!back || !line) backing[address + i] = uint8_t(value >> (8 * i));
         }
-        if (line) { line->age = ++age; if (back) line->dirty = true; }
+        if (line) { touch(*line, address); if (back) line->dirty = true; }
         if (!back || !line) ++writes;
         rig.writeOk(uint32_t(address), value, mask);
     };
@@ -913,15 +979,16 @@ void exerciseWritePolicy(bool back, bool allocate, size_t ways, Technology data,
     write(3 * conflict, 0x01020304u, all);      // a write miss
     read(3 * conflict);
     uint32_t random = 0xcafe0042;
-    for (size_t i = 0; i < 30; ++i) {
+    for (size_t i = 0; i < (ways > 2 ? 30 + 8 * ways : 30); ++i) {
         random = 1664525u * random + 1013904223u;
-        const auto address = size_t((random >> 16) % 40) * word_bytes;
+        const auto address = size_t((random >> 16) % stream_words) * word_bytes;
         if (i % 2 == 0) write(address, random ^ 0x5a5a1234u, unsigned((random >> 8) & all));
         else read(address);
     }
     rig.invalidate();
     for (size_t set = 0; set < sets; ++set)
         for (auto& line : lines[set]) { if (line.valid && line.dirty) write_back(line, set); line.valid = false; }
+    model.invalidate();
     require(rig.backingBytes(0, backing.size()) == backing, "Write policy: final backing bytes differ");
     require(rig.lowerWrites() == writes, "Write policy: wrong number of backing writes: got " +
             std::to_string(rig.lowerWrites()) + ", expected " + std::to_string(writes));
@@ -1168,6 +1235,15 @@ void CacheReadTest::verifyResults() {
     exerciseWritePolicy<32>(true, true, 2, Technology::SRAM, true);
     exerciseWritePolicy<16>(true, false, 2, Technology::FF, true);
     exerciseWritePolicy<32>(true, true, 2, Technology::SRAM, true, 256);
+    // Four and eight ways, each replacement policy, in flip-flops and in the store.
+    exerciseWritePolicy<8>(true, true, 2, Technology::FF, false, 4, CacheReplacement::PLRU);  // = lru for two ways
+    exerciseWritePolicy<32>(true, true, 4, Technology::FF, false, 2, CacheReplacement::PLRU);
+    exerciseWritePolicy<8>(false, false, 8, Technology::SRAM, true, 2, CacheReplacement::FIFO);
+    exerciseWritePolicy<16>(true, false, 4, Technology::SRAM, true, 4, CacheReplacement::Random);
+    exerciseWritePolicy<32>(false, true, 8, Technology::FF, false, 1, CacheReplacement::PLRU);
+    exerciseWritePolicy<8>(true, true, 4, Technology::FF, false, 4, CacheReplacement::FIFO);
+    exerciseWritePolicy<32>(false, false, 4, Technology::FF, false, 2, CacheReplacement::Random);
+    exerciseWritePolicy<16>(true, true, 8, Technology::FF, true, 2, CacheReplacement::PLRU);
     exerciseWriteBuffer<32>(2, 2, Technology::SRAM, true);
     exerciseWriteBuffer<8>(1, 1, Technology::FF);
     exerciseWriteBuffer<32>(2, 2, Technology::SRAM);
@@ -1191,6 +1267,14 @@ void CacheReadTest::verifyResults() {
         config.sets = 128; invalid(config, 8);
         config.sets = 4;
         config.ways = 3; invalid(config, 8);
+        config.ways = 16; invalid(config, 8);
+        config.ways = 4; invalid(config, 8);   // exact lru stops at two ways
+        config.replacement = CacheReplacement::FIFO; config.validate(8);
+        require(cacheConfig(cacheParameters(config)).replacement == CacheReplacement::FIFO,
+                "Cache replacement did not round-trip through catalog parameters");
+        require(cacheConfig({{"ways", "8"}}).replacement == CacheReplacement::PLRU,
+                "Eight ways without a replacement setting must choose plru");
+        config.replacement = CacheReplacement::LRU;
         config.ways = 1;
         config.block_bytes = 3; invalid(config, 8);
         config.block_bytes = 4;

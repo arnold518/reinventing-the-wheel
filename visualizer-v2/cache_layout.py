@@ -18,10 +18,11 @@ def placements(kind, aspects, parent_aspect):
         return None
     way_ids = sorted(int(m.group(1)) for name in aspects
                      if (m := re.fullmatch(r"TAG_STORE_(\d+)", name)))
-    if way_ids not in ([0], [0, 1]):
+    if way_ids not in ([0], [0, 1], [0, 1, 2, 3], list(range(8))):
         return None
     if any(f"DATA_STORE_{way}" not in aspects for way in way_ids):
         return None
+    line_store = "LINE_STORE" in aspects
 
     result = {}
 
@@ -34,20 +35,34 @@ def placements(kind, aspects, parent_aspect):
                         "rel_width": child_width}
 
     box("CONTROLLER", 0.045, 0.13, 0.34, 0.71, 0.91)
+    # One row per way (tag store, data store); the line-state store, if any,
+    # gets a row of its own under the tag stores.
+    rows = len(way_ids) + (1 if line_store else 0)
+    if rows <= 2 and not line_store:
+        centers = [0.35] if rows == 1 else [0.245, 0.535]
+        height = 0.22
+    else:
+        pitch = 0.66 / rows
+        centers = [0.06 + pitch * (row + 0.5) for row in range(rows)]
+        height = min(0.22, pitch * 0.92)
     for row, way in enumerate(way_ids):
-        center = 0.35 if len(way_ids) == 1 else 0.245 + row * 0.29
         for name, x in ((f"TAG_STORE_{way}", 0.425),
                         (f"DATA_STORE_{way}", 0.695)):
-            box(name, x, center - 0.11, 0.235, 0.22, 0.87)
+            box(name, x, centers[row] - height / 2, 0.235, height, 0.87)
+    if line_store:
+        box("LINE_STORE", 0.425, centers[-1] - height / 2, 0.235, height, 0.87)
 
     helpers = set(aspects) - set(result)
-    if any(not name.startswith(("TAG_", "DATA_")) for name in helpers):
+    if any(not name.startswith(("TAG_", "DATA_", "META_")) for name in helpers):
         return None
-    for prefix, y in (("TAG_", 0.755), ("DATA_", 0.865)):
+    helper_rows = ((("TAG_", 0.745), ("DATA_", 0.825), ("META_", 0.905), 0.07) if line_store
+                   else (("TAG_", 0.755), ("DATA_", 0.865), 0.085))
+    *helper_rows, row_height = helper_rows
+    for prefix, y in helper_rows:
         names = sorted(name for name in helpers if name.startswith(prefix))
         if not names:
             continue
         pitch = 0.54 / len(names)
         for index, name in enumerate(names):
-            box(name, 0.425 + index * pitch, y, pitch, 0.085, 0.72)
+            box(name, 0.425 + index * pitch, y, pitch, row_height, 0.72)
     return result if set(result) == set(aspects) else None

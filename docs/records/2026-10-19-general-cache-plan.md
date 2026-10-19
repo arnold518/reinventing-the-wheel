@@ -5,18 +5,17 @@ Started: 2026-10-19. Status: open (implementation in progress since
 
 ## Summary
 
-The current `Cache<W>` is general in geometry (word width, sets, ways, line
-size, FF or SRAM stores, burst fill) but fixed in behavior: write-through,
-no-write-allocate, one request at a time, no write buffer, two-way LRU at
-most, at most 4 expanded or 64 scalable sets. This record plans making the
-behavior parameters too: write buffer, write-back, write-allocate, more ways
-with a choice of replacement, many more sets, optionally next-line prefetch,
-and then a behavioral (compact) cache proven equivalent to the structural
-one, for simulation speed: games need millions of cycles, and the gate-level
-cache controller runs at a few hundred cycles per second. Several requests in
-flight and multi-bank DRAM are out of scope for the cache itself. The owner
-asked to record the plan and not to start it now. Next step when resumed:
-the write buffer.
+`Cache<W>` was general in geometry but fixed in behavior. This record plans
+and carries out making the behavior parameters too, then a behavioral
+(compact) cache proven equivalent to the structural one, for simulation speed
+(games need millions of cycles). Done so far (2026-10-20): write buffer
+(step 1), write-back and write-allocate (step 2), a line-state store for up
+to 4,096 sets (step 3, revised), 4 and 8 ways with lru, plru, fifo or random
+replacement (step 4). Next-line prefetch (step 5) is deferred: see the
+step-4 decision. Next: the behavioral cache (step 6), then the campaign rerun
+(step 7). Visualizer and browser checks of steps 1–4 wait for a
+memory-gated run. Several requests in flight and multi-bank DRAM stay out of
+scope.
 
 ## 2026-10-19 — Starting point
 
@@ -286,3 +285,72 @@ all against the reference model; the flip-flop mode and its tests are
 unchanged. The cache scenarios and `RV32ITopologyTest` pass. A D-ID run with
 store-mode write-back caches (L2 with 256 sets) verifies, `sort` in 5,050
 cycles.
+
+## 2026-10-20 — Step 4 done: 4 and 8 ways, a choice of replacement
+
+**Design.**
+- `ways` takes 1, 2, 4 or 8. New setting `replacement`: `lru` (exact, one
+  or two ways; the default there), `plru` (tree of ways−1 bits per set; the
+  default for four and eight ways), `fifo` (a pointer per set, advanced by
+  every completed fill) and `random` (the low bits of a 16-bit XNOR LFSR,
+  taps 16, 15, 13, 4, shared by all sets and stepped by every completed fill,
+  so runs stay deterministic). An invalid way is always the victim first.
+  `lru` with more than two ways is refused.
+- pseudo-LRU: node n's children are 2n+1 and 2n+2; the root decides the way
+  index's top bit; each bit points to the half that holds the victim; every
+  access (read hit, completed fill, write into a line) points the nodes on
+  its way's path away from it. For two ways it chooses as `lru` does.
+- The controller now carries way indexes (log2 ways bits) instead of one
+  "way one" bit: the hit way (encoded from the tag matches), the victim, the
+  current way (`CURRENT_WAY_b`), the write way, the walked way of the flush;
+  tags, data words and line bits are chosen by a multiplexer tree, and a
+  decoder turns an index into one line per way. The two-way `lru` structure
+  is kept as it was (the existing `CacheReplacementState`); other policies in
+  flip-flop mode use a new per-set `CachePolicyBits<S,B>`; in store mode the
+  bits sit in the line word from bit 16 (up to 7 bits).
+- The cache floorplan (`visualizer-v2/cache_layout.py`) takes 1, 2, 4 or 8
+  way rows and places `LINE_STORE` in a row under the tag stores with its
+  `META_` helpers in a third helper row.
+- Experiment tool: `--dl1 ways=4` without `replacement` chooses `plru`.
+- Test rig: wire history is now disabled (the rig reads present values
+  only). With history, `CacheReadTest` with the new eight-way cases was
+  killed by its 1.5 GB memory cap.
+
+**Checks.**
+- `CacheReadTest` passes (6 min 18 s). It adds eight write-policy streams
+  against the reference model, which now models each policy: 2-way plru; 4-way
+  plru, fifo and random; 8-way fifo (store, SRAM data), plru (one set) and
+  plru (store, write-back). Also the validation of ways and replacement, and
+  the round trip through catalog parameters.
+- ctest `RV32ITopologyTest`, `RV32IBinaryClockCLITest` and the four cache
+  scenarios: 6/6 pass.
+- D-ID `sort` (16 words, 2 iterations, `embedded`, 4,104 ps), all verified:
+  - write-through, default caches: 6,481 cycles, unchanged;
+  - write-back with allocate: 4,796, unchanged;
+  - data L1 with 4 ways × 4 sets (plru, or fifo): 6,481;
+  - data L1 with 8 ways × 2 sets, random, store mode: 6,481;
+  - 4-way write-back data L1 and an 8-way, 8-set plru L2 in store mode: 4,802.
+
+  The small sort fits either geometry, so the equal counts are expected.
+- Clock analysis, D-ID program 20: 4,104 ps certified for the default caches,
+  and for a 4-way data L1 with an 8-way fifo store-mode L2. The limit is
+  unchanged (the instruction L1's front end).
+- The geometry part of `CacheLayoutTest` passes for 1/2/4/8 ways, with and
+  without the line store, run directly in Python.
+
+**Not run yet.** The Python module and probe were not rebuilt: `TestsBinding.cpp`
+includes the cache header and needs about 2.8 GB to compile, and only 1.2 GB
+was free. So these checks wait for a memory-gated run: the full
+`CacheLayoutTest`, `VisualizerStaticLayoutTest` and the browser checks. The
+saved layouts of cache controllers probably need regenerating: their keys
+hash child names, and steps 1–4 added children (for example `SENDING_WRITE`).
+That run will show it.
+
+**Decision: next-line prefetch deferred.** The controller serves one request
+at a time. A prefetch would hold the controller and the lower port right
+when the core's next request comes, and a sequential stream already gets
+the next words from the line itself (and a burst fill). A useful prefetch
+needs a request that can be served while the prefetch runs, which is the
+"several requests in flight" item this plan leaves out. Step 5 is dropped
+from this plan; a later record can take it up together with that item.
+Next: step 6, the behavioral cache.
