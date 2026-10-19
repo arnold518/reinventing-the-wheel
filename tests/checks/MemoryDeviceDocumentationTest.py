@@ -69,7 +69,7 @@ class MemoryDeviceDocumentationTest(unittest.TestCase):
         for scenario, test, section, page in self.components:
             with self.subTest(scenario=scenario):
                 self.assertEqual(re.findall(r"(?m)^### (.+)$", section),
-                                 ["IO pins", "Behavior", "Implementation", "Timing", "Examples", "Source and tests"])
+                                 ["IO pins", "Behavior", "Implementation", "Examples", "Source and tests"])
                 behavior = section.split("### Behavior\n")[1].split("### Implementation\n")[0]
                 self.assertEqual(re.findall(r"(?m)^#### (.+)$", behavior)[-2:],
                                  ["C++ example", "Unknown inputs"])
@@ -77,11 +77,9 @@ class MemoryDeviceDocumentationTest(unittest.TestCase):
                 self.assertIn("#### Embedded simulation\n", section)
                 up = "../" * (page.count("/") + 2)
                 self.assertIn(f'href="{up}simulator/?scenario={scenario}" class="md-button"', section)
-                timing = section.split("### Timing\n")[1].split("### Examples\n")[0]
-                self.assertTrue(timing.strip())
                 topology = self.topologies[scenario]
                 root = next(c for c in topology["components"] if c["id"] == topology["rootId"])
-                implementation = section.split("### Implementation\n")[1].split("### Timing\n")[0]
+                implementation = section.split("### Implementation\n")[1].split("### Examples\n")[0]
                 expected = ["Structural implementation"]
                 if "behavioral" in root["availableFidelities"]:
                     expected.append("Behavioral implementation")

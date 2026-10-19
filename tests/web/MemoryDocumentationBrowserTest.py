@@ -50,7 +50,7 @@ def main():
         assert page.locator(".simulator-embed iframe").count() == 7
         headings = page.locator("article h3").evaluate_all(
             "nodes => nodes.map(n => n.firstChild.textContent.trim())")
-        assert headings == ["IO pins", "Behavior", "Implementation", "Timing", "Examples", "Source and tests"] * 7
+        assert headings == ["IO pins", "Behavior", "Implementation", "Examples", "Source and tests"] * 7
         subsections = page.locator("article h4").evaluate_all(
             "nodes => nodes.map(n => n.firstChild.textContent.trim())")
         assert subsections == [heading for _, behavioral in components for heading in

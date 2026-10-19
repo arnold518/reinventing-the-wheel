@@ -70,10 +70,6 @@ Gate-level four-state propagation applies. ENABLE=0 forces every WL low even if 
 
 `ADDRESS_BITS` splits the address. One shared high-bit validation term rejects addresses outside the decoder's low row-index bits; `decodeMatch` combines that term with each row's low-bit pattern and ENABLE. SRAM and FF use the same construction utility behind their distinct address interfaces. No address truncation or behavioral decoder substitutes for those gates.
 
-### Timing
-
-Built from gates only, so it has no delay table of its own: each output settles when the gates on its path do, under the [gate delays of the active profile](../timing.md#timing-profiles). Its delay is part of the proven tables of the devices built on it.
-
 ### Examples
 
 <!-- simulator-examples: matrix-row-decoder MatrixRowDecoderTest -->
@@ -142,10 +138,6 @@ AND/OR gate rules determine partial X propagation from unknown slot or selected 
 #### Structural implementation
 
 `SELECT` is a MatrixRowDecoder, held enabled by `ENABLED`. `SELECT_slot_bit` gates choose each candidate column; `BIT_bit_*` OR trees combine candidates. `DATA_BITS` joins the result into W bits.
-
-### Timing
-
-Built from gates only, so it has no delay table of its own: each output settles when the gates on its path do, under the [gate delays of the active profile](../timing.md#timing-profiles). Its delay is part of the proven tables of the devices built on it.
 
 ### Examples
 
@@ -216,10 +208,6 @@ A known disabled enable or masked-off lane forces drive low even with uncertain 
 #### Structural implementation
 
 `SELECT` decodes slot and ENABLE. `DATA_BITS` splits W data bits. Wider words use `MASK_BITS`; W=8 connects its one-bit mask directly, without a width-one splitter. One `WRITE_slot_byte` gate qualifies each selected byte and fans out to its eight physical columns.
-
-### Timing
-
-Built from gates only, so it has no delay table of its own: each output settles when the gates on its path do, under the [gate delays of the active profile](../timing.md#timing-profiles). Its delay is part of the proven tables of the devices built on it.
 
 ### Examples
 
@@ -293,10 +281,6 @@ Any unknown wordline makes OUT=X, even if another row is known selected. Selecte
 
 Terminal digital selected-row sensing primitive. Its inputs represent cell states and wordlines; it does not simulate an analog shared bitline or multi-driver voltage resolution.
 
-### Timing
-
-A memory primitive: `OUT` follows a change of a selected wordline or stored bit after one read-column interval, the profile's base value plus a per-row term for R rows (a longer column is slower). ROM uses the ROM read-column interval and NOR flash its own read interval; both are listed on the [ROM](technologies/rom.md#timing-intervals) and [NOR-flash](technologies/nor-flash.md#timing-intervals) pages.
-
 ### Examples
 
 <!-- simulator-examples: static-read-column StaticReadColumnTest -->
@@ -360,10 +344,6 @@ Enabled data preserves every bit, including X or Z. Unknown enable produces all 
 #### Structural implementation
 
 Terminal digital output-enable primitive. Device control drives ENABLE; the word selector drives DATA. `SRAMOutputBuffer<W>` inherits this same implementation while preserving its existing SRAM-facing identity; DRAM/ROM/NOR instantiate it directly. No separate behavioral replacement is registered.
-
-### Timing
-
-A memory primitive: `OUT` follows `DATA` or `ENABLE` after one memory-primitive delay (one FO4 inverter delay in the realistic profiles; see the [leaf delays](../timing.md#timing-profiles)).
 
 ### Examples
 

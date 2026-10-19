@@ -158,11 +158,18 @@ The bank contains **992 writable bits**, not 1,024: x0 does not need flip-flops.
 
 The structural register file can select behavioral `Register<32>` words or their `FlipFlopCell` children. The external pins and register numbering do not change. Its register-state inspector reads the bank's WORD outputs after the simulator restores the requested time.
 
-### Timing
+**Timing.** A read is combinational: the address selects one of 32 words through five
+levels of multiplexers. A write takes effect at the edge. `RD_ADDR` needs the
+longest setup, because it must first pass the 5-to-32 decoder to enable one
+register. There is no bypass: a value written at an edge reaches a read port
+one clock-to-output delay and one read selection after that edge.
 
-The gate-level form settles through its gates; the compact form publishes within the proven bounds below ([Time and Delay](../../timing.md#compact-parts) explains tables, delay twins and clocked parts).
-
-<!-- timing-table: rv32i.register-file.behavioral.direct -->
+<!-- timing-rows
+Read address to data | rv32i.register-file.behavioral.direct | RS1_ADDR → RS1_DATA
+Edge to newly written value | rv32i.register-file.behavioral.direct | CLK ↑ → RS1_DATA
+Destination address, setup | rv32i.register-file.behavioral.direct | RD_ADDR before CLK ↑
+Write data, setup | rv32i.register-file.behavioral.direct | WRITE_DATA before CLK ↑
+-->
 
 ### Examples
 

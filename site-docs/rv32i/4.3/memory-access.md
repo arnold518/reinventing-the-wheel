@@ -81,12 +81,6 @@ The internal helpers are fixed structural parts with no state and no behavioral 
 
 [`RV32IMemoryLanesBehavioral`](https://github.com/arnold518/reinventing-the-wheel/blob/github-pages/src/modules/rv32i/RV32IMemoryLanes.cpp) computes the four outputs with the same lane functions the behavioral cores call (`memoryWordAddress`, `memoryLoadData`, `memoryWriteMask`, and the store shift), with gate-derived output timing when selected through the catalog. It is defined for known binary inputs: if any input bit is `X` or `Z`, every output is unknown. Partial-unknown behavior is specified by the structural gates only.
 
-### Timing
-
-The gate-level form settles through its gates; the compact form publishes within the proven bounds below ([Time and Delay](../../timing.md#compact-parts) explains tables, delay twins and clocked parts).
-
-<!-- timing-table: rv32i.memory-lanes.behavioral -->
-
 ### Examples
 
 <!-- simulator-examples: rv32i-memory-lanes RV32IMemoryLanesTest -->
@@ -140,12 +134,6 @@ Two splitters, two AND gates, and two OR gates evaluate the predicate. It is reg
 #### Behavioral implementation
 
 `RV32IMemoryAlignmentBehavioral` evaluates the same four-state gate expression without internal components. It does not coerce unknown bits into a binary integer.
-
-### Timing
-
-The gate-level form settles through its gates; the compact form publishes within the proven bounds below ([Time and Delay](../../timing.md#compact-parts) explains tables, delay twins and clocked parts).
-
-<!-- timing-table: rv32i.pipeline.memory-alignment.behavioral.direct -->
 
 ### Examples
 
@@ -296,12 +284,6 @@ Response data is wired straight from `BUS_RSP_READ_DATA` to `READ_DATA`; there i
 [`RV32IMemoryRequestBehavioral`](https://github.com/arnold518/reinventing-the-wheel/blob/github-pages/src/modules/rv32i/RV32IMemoryRequest.cpp) holds its own four-state `BUSY`, `SENT`, and `ABANDONED` bits and saved request fields. It evaluates the request, response, tag-comparison, and register rules used by the structural requester, including uncertain inputs. The compact cores use the separate binary [`MemoryRequestState`](https://github.com/arnold518/reinventing-the-wheel/blob/github-pages/src/modules/rv32i/RV32IMemoryRequestModel.hpp) for their instruction and data requests. Catalog-selected outputs follow the requester’s characterized combinational or clock-to-output delays. Fault is still the OR of the status bits and response data is passed through unchanged.
 
 Request presence, reset qualification and response validity are prepared before the late `TAKE`/discard decision. This shortens the combinational completion path without adding a cycle or changing when either handshake is accepted.
-
-### Timing
-
-The gate-level form settles through its gates; the compact form publishes within the proven bounds below ([Time and Delay](../../timing.md#compact-parts) explains tables, delay twins and clocked parts).
-
-<!-- timing-table: rv32i.memory-request.behavioral -->
 
 ### Examples
 

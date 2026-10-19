@@ -60,12 +60,6 @@ For a known selector, the behavioral model copies the selected bit vector (or em
 
 `BehavioralStage`'s Writeback branch selects the same input vector directly. The family is `rv32i.single-cycle.writeback`.
 
-### Timing
-
-The gate-level form settles through its gates; the compact form publishes within the proven bounds below ([Time and Delay](../../timing.md#compact-parts) explains tables, delay twins and clocked parts).
-
-<!-- timing-table: rv32i.single-cycle.writeback.behavioral -->
-
 ### Examples
 
 The four selections use distinct ALU/load/link patterns so a swapped source cannot pass by coincidence. The initial setup row is also included.

@@ -28,18 +28,19 @@ ALU32's internal units belong within its reference rather than becoming separate
 
 There is no separate program-counter block: the stage-wise cores distribute PC storage, branch decisions and next-PC selection across Fetch, Execute, and Next PC ([4.4](../4.4/index.md)), allowing JAL/JALR targets to reuse the main ALU.
 
-Each component reference follows the same pattern: **IO pins → behavior and C++ example → structural/behavioral implementation → timing → examples and embedded simulation → tests**. Component tables distinguish registered structural and behavioral implementations. Example tables include all recorded checkpoints and their simulation times.
+Each component reference follows the same pattern: **IO pins → behavior and C++ example → structural/behavioral implementation → examples and embedded simulation → tests**. Component tables distinguish registered structural and behavioral implementations. Example tables include all recorded checkpoints and their simulation times.
 
-Each component's **Timing** section shows its proven delays in every timing
-profile. A behavioral building block selected through the catalog runs on that
-table; where it has a delay twin, the current input values and state can
+A behavioral building block selected through the catalog runs on the delays
+proven on its gates; where it has a delay twin, the current input values and state can
 shorten publication to the gate list's settling time. Clocked parts also carry
 clock-to-output and setup times. The register file uses its table without a
 delay twin, because its large gate list brought no measured timing benefit.
 How tables, twins and profiles work is explained once in
 [§ 1 Time and Delay](../../timing.md); the certified clock of a complete core
 is in [4.2](../4.2/timing.md). Directly created parts without a matching table
-use their constructor delay.
+use their constructor delay. Where a block's timing has something to show (the
+adder's prefix network, the register file's read and write), its behavioral
+implementation ends with a **Timing** paragraph and the paths that matter.
 
 ## Structural organization in the visualizer
 

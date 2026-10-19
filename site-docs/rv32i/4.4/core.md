@@ -169,11 +169,30 @@ The visualizer places `FETCH → DECODE → EXECUTE → MEMORY → WRITEBACK` le
 
 The core-level family `rv32i.core.educational-single-cycle` selects `RV32IReferenceCore` for behavioral fidelity. It maintains compact architectural state and applies the instruction reference transition at each enabled rising edge. It is not six hidden behavioral-stage instances. By contrast, keeping the core structural and selecting all six stages behavioral retains the six public boundaries and shared status wiring; both configurations are tested.
 
-### Timing
+**Timing.** Nothing is captured between the stages, so one clock period has to cover the
+instruction read, decode, execute, and the data access that the instruction
+asks for, in series. The stages' slowest paths show where the core's own
+share goes; Execute, with the 32-bit ALU and the branch comparison, is the
+longest.
 
-The gate-level form settles through its gates; the compact form publishes within the proven bounds below ([Time and Delay](../../timing.md#compact-parts) explains tables, delay twins and clocked parts).
+<!-- timing-rows
+Fetch: PC + 4 | rv32i.single-cycle.fetch.behavioral | CLK ↑ → PC_PLUS_4
+Decode: immediate | rv32i.single-cycle.decode.behavioral | INSTRUCTION → IMM
+Decode: register read | rv32i.single-cycle.decode.behavioral | INSTRUCTION → RS1_VALUE
+Execute: ALU result | rv32i.single-cycle.execute.behavioral | IMM → ALU_RESULT
+Execute: branch target | rv32i.single-cycle.execute.behavioral | ALU_B_SEL → CONTROL_TARGET
+Memory: load lanes | rv32i.single-cycle.memory.behavioral | ADDR → READ_DATA
+Writeback: select | rv32i.single-cycle.writeback.behavioral | READ_DATA → WB_VALUE
+Next PC: select | rv32i.single-cycle.next-pc.behavioral | CONTROL_TARGET → NEXT_PC
+Core: instruction word to data address | rv32i.core.educational-single-cycle.behavioral | IMEM_RSP_READ_DATA → DMEM_REQ_ADDR
+Core: instruction word, setup | rv32i.core.educational-single-cycle.behavioral | IMEM_RSP_READ_DATA before CLK ↑
+-->
 
-<!-- timing-table: rv32i.core.educational-single-cycle.behavioral -->
+The certified period of the whole core adds the two memory accesses to this
+share; the pipelines split the same work over five shorter periods. With
+flip-flop memory:
+
+<!-- profile-table: clocks -->
 
 ### Examples
 

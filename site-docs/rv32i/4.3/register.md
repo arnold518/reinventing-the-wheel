@@ -118,6 +118,22 @@ Unlike [FFWord&lt;W&gt;](../../memory/technologies/flip-flop.md), this register 
 
 [`RegisterBehavioral`](https://github.com/arnold518/reinventing-the-wheel/blob/github-pages/src/modules/storage/RegisterBehavioral.cpp) stores one W-bit logic vector and the previous clock value, applying the rules above. Catalog construction attaches gate-derived clock-to-output and setup timing; a supported delay twin can time the current state and inputs. The structural register can instead select behavioral `FlipFlopCell` children. Both choices retain the same external pins. Simulator output history supplies `Q` when scrubbing the timeline.
 
+**Timing.** A register costs every clock period two delays on top of the logic it feeds
+and is fed by: its output changes up to `CLK ↑ → Q` after the edge, and its
+input must be stable a setup time before the next one. `WE` needs a little
+longer than `D`, because in every cell it selects between the new bit and the
+held one. A pipeline pays this once per stage, one reason five stages do not
+run five times faster than one.
+
+<!-- timing-rows
+Clock to output | storage.register.32.behavioral.word | CLK ↑ → Q
+Data, setup | storage.register.32.behavioral.word | D before CLK ↑
+Write enable, setup | storage.register.32.behavioral.word | WE before CLK ↑
+ClockedStateBit, data setup | storage.state-bit.behavioral.direct | D before CLK ↑
+-->
+
+`ClockedStateBit` has no write enable, so its setup is the flip-flop's own.
+
 #### RV32I integration
 
 | Consumer | Width / use |
@@ -130,12 +146,6 @@ Unlike [FFWord&lt;W&gt;](../../memory/technologies/flip-flop.md), this register 
 | Register file | 31 instances of `Register<32>`, one for each writable architectural register |
 
 Users select `circuit::families::registerWord(W)`, registered as `storage.register.W` with W replaced by the supported width. The component is introduced here as an RV32I building block; its implementation is also reused by response buffers. Neither use changes its pins or adds a transaction protocol. The standalone structural source is [`Register.hpp`](https://github.com/arnold518/reinventing-the-wheel/blob/github-pages/include/modules/storage/Register.hpp) and [`Register.cpp`](https://github.com/arnold518/reinventing-the-wheel/blob/github-pages/src/modules/storage/Register.cpp).
-
-### Timing
-
-The gate-level form settles through its gates; the compact form publishes within the proven bounds below ([Time and Delay](../../timing.md#compact-parts) explains tables, delay twins and clocked parts).
-
-<!-- timing-table: storage.register.32.behavioral.word -->
 
 ### Examples
 
@@ -206,12 +216,6 @@ One `DFlipFlop` named `STATE`, with `D`, `CLK`, and `RST` wired straight in and 
 | [`MemoryResponseBuffer`](../../memory/transactions.md) | `OCCUPIED` |
 
 Users select `circuit::families::ClockedStateBit`, registered as `storage.state-bit`.
-
-### Timing
-
-The gate-level form settles through its gates; the compact form publishes within the proven bounds below ([Time and Delay](../../timing.md#compact-parts) explains tables, delay twins and clocked parts).
-
-<!-- timing-table: storage.state-bit.behavioral.direct -->
 
 ### Examples
 

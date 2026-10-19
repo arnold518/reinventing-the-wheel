@@ -71,7 +71,7 @@ class MemoryEndpointIntegrationTest(unittest.TestCase):
             self.assertIn("| Component | Description | Structural | Behavioral |", source)
             for section in re.split(r"(?m)^## [\d.]+ `", source)[1:]:
                 self.assertEqual(re.findall(r"(?m)^### (.+)$", section),
-                                 ["IO pins", "Behavior", "Implementation", "Timing", "Examples", "Source and tests"])
+                                 ["IO pins", "Behavior", "Implementation", "Examples", "Source and tests"])
                 behavior = section.split("### Behavior\n")[1].split("### Implementation\n")[0]
                 self.assertEqual(re.findall(r"(?m)^#### (.+)$", behavior)[-2:],
                                  ["C++ example", "Unknown inputs"])

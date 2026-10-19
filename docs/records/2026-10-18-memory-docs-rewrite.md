@@ -433,3 +433,82 @@ the load is below 6, then runs in its own user scope capped at the available
 memory less 1 GB (at most 2 GiB), one step at a time. At the start only
 1.4 GB was available (swap full), so the run waits until memory frees.
 Results are added below when it finishes.
+
+## 2026-10-19 — First memory-gated run: partial results
+
+The run of the previous section started at 19:34 once memory freed:
+- Pages build (2 GiB scope): passed, 183 s.
+- Passed: `RV32IDocumentationBrowserTest` (241 s),
+  `RV32IMemoryBrowserTest` (22 s),
+  `RV32ISingleCycleDocumentationBrowserTest` (38 s),
+  `SRAMLayoutBrowserTest` (14 s).
+- `SRAMDocumentationBrowserTest`: stopped after 22 s inside its 1.67 GiB
+  scope (exit 143, scope memory 1.3 GiB at the last sample). This is a
+  memory stop, not a test failure; it gets a 2 GiB scope next time.
+- The run then waited for memory for half an hour and was stopped
+  deliberately for the page change below, because the remaining checks
+  would have tested the old pages.
+
+## 2026-10-19 — Component Timing sections: kept only where they say something (owner request)
+
+**Request.** The owner found the per-component Timing sections
+disappointing and allowed removing them where there is nothing to say. They
+then asked that kept sections not send the reader to the large timing
+chapters, and suggested merging timing into the behavioral implementation
+subsection.
+
+**Finding.** Of 84 Timing sections, 67 had one of three stock sentences
+("built from gates, so it has no delay table…", "the compact form publishes
+within the proven bounds below…", "a memory primitive…") followed either by
+nothing or by the complete path table, up to 288 rows (SRAM bank). Only
+`FullAdder` (carry against sum path per profile) and `DFlipFlop` (measured
+contract) said something specific.
+
+**Decisions.**
+- Remove the 67 stock sections. Keep timing for the 17 components where it
+  has something of its own to show: `FullAdder`, `Adder8` (ripple chain),
+  `ALU8` (OP is the slowest input, ZERO the last output), `AddSub32` (prefix
+  network: faster than the 8-bit ripple unit in the realistic profiles,
+  about equal in `unit`), `ALU32`, `DFlipFlop`, `FFMemory` (reads need no
+  clock), `SRAM` (address restarts the chain; deeper is slower; `OE_N` is
+  one buffer), `ROM`, `DRAM` and `NOR flash` (interval tables and latency
+  through the controller), the scalable devices (growth from 64 to 128
+  words), `MemoryController` (address check and setup), `MemoryEndpoint`
+  (latency table), `Register<W>` (clock-to-output and setup), the register
+  file (combinational read, decoded write), and the single-cycle core
+  (slowest path of each stage, certified clocks).
+- Show only the paths that matter, through a new generated marker
+  `<!-- timing-rows … -->` (`tools/mkdocs_timing.py`, `render_rows`): one
+  line `label | table | path` per row, the latest change in each profile.
+  No number in the prose is typed by hand; every claim was checked against
+  the tables (for example ALU8 `OP → ZERO` minus `OP → OUT` equals the 8-bit
+  zero detection exactly in all three profiles, and the `OP` lead over `A`
+  matches one control-decoder pass to within one or two gate delays).
+- Merge (owner's suggestion, adopted): no `### Timing` heading; a
+  paragraph opening with **Timing.** ends the "Behavioral implementation"
+  subsection, because the proven table is the compact form's delay
+  contract. `FullAdder` and `DFlipFlop` have no behavioral form, so theirs
+  ends the structural implementation. Component pages are back to five
+  headings: IO pins, Behavior, Implementation, Examples, Source and tests.
+- The timing paragraphs do not link to § 1, § 3.6 or the 4.2 certificate
+  section; what they used to point at is stated inline or shown as the
+  generated table itself (DRAM and NOR latency rows, the core's certified
+  clocks). Links to neighbouring components remain.
+- The pages that described the template (§ 1, ALU8 conventions, 4.3
+  overview, 3.1 page organization) now describe the Timing paragraph.
+
+**Tests.** The six heading checks (`RV32IBuildingBlocksDocumentationTest`,
+`RV32ISingleCycleDocumentationTest`, `MemoryEndpointIntegrationTest`,
+`MemoryDeviceDocumentationTest`, `DocumentationExamplesTest`, and the
+browser tests `MemoryDocumentationBrowserTest`,
+`VisualizerWasmBrowserTest`) expect five headings.
+`TimingTableDocumentationTest` gains checks of the new marker (known value,
+refused bad path and bad line, every marker on the site renders) and a
+guard: no `### Timing` heading anywhere, exactly 17 Timing paragraphs, none
+linking to the timing chapters.
+
+**Verification.** All 18 CTest `documentation` checks pass (one at a time in
+a 1.2 GiB scope). A second memory-gated run (`gated_finish2.sh`) rebuilds the
+site and runs `SRAMDocumentationBrowserTest` (2 GiB scope),
+`MemoryDocumentationBrowserTest`, the 10 checks never run, and again the 4
+that passed on the old pages. Results follow when it finishes.

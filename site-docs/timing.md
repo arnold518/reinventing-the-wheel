@@ -3,8 +3,9 @@
 Every part in CircuitSim changes its outputs some time after its inputs
 change. This page explains where those delays come from, what one unit of
 simulated time means, and how the rest of the site states timing. Component
-pages do not repeat it; their **Timing** sections show the numbers for one
-part and link here.
+pages do not repeat it. Where a part's timing has something of its own to
+show (a carry chain, a setup time, an access chain), its page ends the
+implementation with a **Timing** paragraph and the few paths that matter.
 
 ## Simulated time
 
@@ -72,8 +73,8 @@ change. A part with a control input (an ALU's operation, for example) has
 one set of paths per control value. A clocked part adds clock → output
 times, a setup time for each input, and the shortest clock period it can
 take internally. The tables are generated for every profile by
-`part_delay_tables` and checked against the gates; component pages show them
-in their Timing section, for example the 8-bit adder:
+`part_delay_tables` and checked against the gates. The full table of the
+8-bit adder, for example:
 
 <!-- timing-table: arithmetic.adder.width8.behavioral.direct -->
 

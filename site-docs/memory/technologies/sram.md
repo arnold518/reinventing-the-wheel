@@ -143,10 +143,6 @@ A stored four-state value implements the same settled cell contract without the 
 
 The behavioral cell's visualizer displays recorded `Q` and `Q_BAR` values, with `WL` and `DRIVE` indicators. These follow timeline scrubbing; the structural view continues to show its access circuit and latch.
 
-### Timing
-
-<!-- timing-table: memory.sram.cell.behavioral -->
-
 ### Examples
 
 <!-- simulator-examples: sram-cell SRAMCellTest -->
@@ -224,10 +220,6 @@ Contains `CELL_0` through `CELL_(C−1)`. Cells are registered families, so a st
 #### Behavioral implementation
 
 Stores C four-state values and applies the per-column write controls directly. It keeps the same expanded pin interface.
-
-### Timing
-
-<!-- timing-table: memory.sram.row.behavioral -->
 
 ### Examples
 
@@ -331,10 +323,6 @@ The pair starts `(X,X)`. The example covers all binary control combinations, inc
 
 A **memory primitive**: the explicit abstraction boundary for shared bitline behavior, with state recording through ordinary output wires. There is no multi-driver net resolver, capacitance, voltage, transistor strength, or leakage model. No separate compact implementation is registered because this primitive already performs direct evaluation.
 
-### Timing
-
-A memory primitive: its outputs follow a change of its inputs after one bitline interval, the profile's base value plus a per-row term for its R rows (a longer bitline is slower; see the [access timing](#access-timing) table).
-
 ### Examples
 
 <!-- simulator-examples: sram-bitline-pair SRAMBitlinePairTest -->
@@ -420,10 +408,6 @@ The example composes the cell and bitline references, including unknown startup,
 
 A flat four-state cell array plus per-column bitline state replaces the rows and cells. The same digital bitline primitive rules are reused. This proves equivalence to the documented abstraction, not independently to analog SRAM physics. Bank replacement leaves the surrounding decoder, precharge, drivers, selector, and sense amplifiers visible.
 
-### Timing
-
-<!-- timing-table: memory.sram.bank.8.behavioral -->
-
 ### Examples
 
 <!-- simulator-examples: sram-storage-bank SRAMStorageBankTest -->
@@ -493,10 +477,6 @@ Unknown address bits propagate through the gates and may produce unknown wordlin
 
 An address splitter, complemented address bits, and balanced AND trees implement the row matches. The shared `decodeMatch` construction routine builds those trees after this wrapper extracts the row-address bits. No storage or direct host indexing is used; gate names and hierarchy remain unchanged. See [helper reuse boundaries](../building-blocks.md#reuse-boundaries).
 
-### Timing
-
-Built from gates only, so it has no delay table of its own: each output settles when the gates on its path do, under the [gate delays of the active profile](../../timing.md#timing-profiles). Its delay is part of the proven tables of the bank and device built on it.
-
 ### Examples
 
 <!-- simulator-examples: sram-row-decoder SRAMRowDecoderTest -->
@@ -557,10 +537,6 @@ Each buffer propagates X/Z as unknown logic. Outputs settle one gate delay after
 #### Structural implementation
 
 One AND buffer with a constant-high input per column. These outputs actually drive the bitline primitives; the block is not a visual-only grouping.
-
-### Timing
-
-Built from gates only, so it has no delay table of its own: each output settles when the gates on its path do, under the [gate delays of the active profile](../../timing.md#timing-profiles). Its delay is part of the proven tables of the bank and device built on it.
 
 ### Examples
 
@@ -625,10 +601,6 @@ Unknown data produces an unknown pair. Unknown drive control is rejected by the 
 
 `ENABLED_BYTE` is an AND gate, `DATA` is a buffer, and `COMPLEMENT` is a NOT gate. No electrical drive strength is calculated.
 
-### Timing
-
-Built from gates only, so it has no delay table of its own: each output settles when the gates on its path do, under the [gate delays of the active profile](../../timing.md#timing-profiles). Its delay is part of the proven tables of the bank and device built on it.
-
 ### Examples
 
 <!-- simulator-examples: sram-write-driver SRAMWriteDriverTest -->
@@ -691,10 +663,6 @@ X/Z or a noncomplementary pair cannot produce a known bit. This model does not c
 #### Structural implementation
 
 A memory primitive. It provides the sensing boundary used by the structural device; there is no separate behavioral replacement.
-
-### Timing
-
-A memory primitive: `Q` and `VALID` follow their inputs after one memory-primitive delay (one FO4 inverter delay in the realistic profiles; see the [leaf delays](../../timing.md#timing-profiles)).
 
 ### Examples
 
@@ -780,10 +748,6 @@ Unknown slot bits follow the gate/multiplexer rules. Full-address range checking
 #### Structural implementation
 
 A low-bit slot decoder gates write excitation. Separate mux trees select `BL`, `BL_BAR`, and `VALID` for each read lane. The shared `selectMuxTree` construction routine creates those existing trees; it does not replace them with host indexing or a post-sense word mux. Buffers carry write values to the column groups.
-
-### Timing
-
-Built from gates only, so it has no delay table of its own: each output settles when the gates on its path do, under the [gate delays of the active profile](../../timing.md#timing-profiles). Its delay is part of the proven tables of the bank and device built on it.
 
 ### Examples
 
@@ -896,12 +860,6 @@ delay line with a replica of the sense path; and the output path. A few
 gates turn the stages into the six controls in the table above. The settle
 copies of the inputs drive `ADDRESS`, `DATA` and `MASK`.
 
-### Timing
-
-Built from gates and delay lines, so it has no delay table of its own; its
-stages use the SRAM intervals of the [access timing](#access-timing) table.
-The SRAM device's table below includes it.
-
 ### Examples
 
 <!-- simulator-examples: sram-access-control SRAMAccessControlTest -->
@@ -965,10 +923,6 @@ An unknown/Z enable produces X rather than choosing between driving and disconne
 #### Structural implementation
 
 A compatibility wrapper inheriting the common [MemoryOutputBuffer implementation](../building-blocks.md#325-memoryoutputbufferw). It retains the SRAM catalog ID, display name, pins and delay without adding a child component. It is a memory primitive because ordinary Boolean gates cannot produce the required Z output. There is no separate behavioral replacement.
-
-### Timing
-
-The same primitive as [`MemoryOutputBuffer`](../building-blocks.md#325-memoryoutputbufferw): one memory-primitive delay.
 
 ### Examples
 
@@ -1091,9 +1045,19 @@ An array of more than 32 rows is built from 32-row subarrays, each a complete `S
 
 The compact device keeps the native pins and unknown startup with a packed, optionally paged `MemoryStorage` instead of rows and cells, and publishes `READY` and the data at the delays proven on the gate-level device. Capacity is bounded by 32-bit byte addressing and the allocation and history budgets. An image can be loaded only before simulation starts. Selecting behavioral fidelity at `STORAGE` instead keeps the device's visible peripheral circuits and its small-bank limit.
 
-### Timing
+**Timing.** An address change restarts the device's whole access chain (settling,
+precharge, row decode, bitline development, sensing and the output), so the
+address is the slowest input,
+and a deeper array is slower because its bitlines are longer. `OE_N` only
+enables the output buffer: a requester that keeps the address and toggles
+`OE_N` gets the data back after one primitive delay.
 
-<!-- timing-table: memory.sram.device.8.behavioral -->
+<!-- timing-rows
+Address to data, 4 words | memory.sram.device.8.behavioral | WORD_ADDR → READ_DATA
+Address to data, 64 words | memory.sram.device.8.behavioral@depth=64 | WORD_ADDR → READ_DATA
+Address to data, 128 words | memory.sram.device.8.behavioral@depth=128 | WORD_ADDR → READ_DATA
+Output enable to data | memory.sram.device.8.behavioral | OE_N → READ_DATA
+-->
 
 ### Examples
 

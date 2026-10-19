@@ -7,6 +7,30 @@ history remains in Git and the archived reports.
 
 ## 2026-10-19
 
+### Component timing: only where it says something, inside the implementation (branch `realistic-timing`)
+
+- **Changed:** 67 stock per-component Timing sections removed (a fixed
+  sentence plus, at most, the full path table). The 17 components whose
+  timing has something of its own to show (adders and ALUs, flip-flop,
+  register, register file, memory devices, controller, endpoint,
+  single-cycle core) end their implementation with a **Timing** paragraph:
+  what sets the delay, and a generated table of only the paths that matter
+  in every profile, through the new `<!-- timing-rows -->` marker. The
+  paragraph ends "Behavioral implementation" (structural for `FullAdder`
+  and `DFlipFlop`, which have no compact form), so component pages have five
+  headings again. The paragraphs state facts inline instead of linking to
+  § 1, § 3.6 or the 4.2 certificates; DRAM and NOR show their latency rows
+  and the core its certified clocks directly. The template descriptions on
+  § 1, the ALU8 conventions, 4.3 and 3.1 follow.
+- **Why:** the owner found the sections disappointing and asked to remove
+  those with nothing to say, not to send readers to the timing chapters,
+  and suggested merging timing into the behavioral implementation.
+- **Verified:** all 18 CTest `documentation` checks, including the updated
+  heading checks and `TimingTableDocumentationTest` with the new marker and
+  a guard against `### Timing` headings and timing-chapter links. The Pages
+  rebuild and the browser checks run in a memory-gated run; see
+  [the record](records/2026-10-18-memory-docs-rewrite.md).
+
 ### Timing across the site: clock certificates, results per profile, figures and plots (branch `realistic-timing`, documentation phase)
 
 - **Changed:** 4.2 gains per-profile certified clocks (generated) and the

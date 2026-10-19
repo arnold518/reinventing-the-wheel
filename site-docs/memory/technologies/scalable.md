@@ -126,18 +126,19 @@ The native device contract selects its tested behavioral implementation at scala
 
 For a visible transaction wrapper, request `memory.<technology>.scalable-endpoint.<width>`: its structural controller drives the native device at behavioral fidelity. The endpoint's fused behavioral alternative is `BehavioralMemoryEndpoint`, documented in [3.5](../controllers.md).
 
-### Timing
-
-A device too large to build from gates cannot have delays proven on its own
+**Timing.** A device too large to build from gates cannot have delays proven on its own
 gates. Every device is therefore also proven at 64 and 128 words, and a larger
 device gets a table in which each delay keeps growing per doubling as it did
-between those two sizes; its evidence line says it is an estimate. The FF
-device at the scenario's size:
+between those two sizes; its evidence line says it is an estimate. The
+read path of two technologies at the proven sizes:
 
-<!-- timing-table: memory.ff.device.8.behavioral -->
-
-The other technologies' tables are on their pages; [3.6](../timing.md) gives
-measured access latencies of 256 KiB memories.
+<!-- timing-rows
+FF, scenario size | memory.ff.device.8.behavioral | WORD_ADDR → READ_DATA
+FF, 64 words | memory.ff.device.8.behavioral@depth=64 | WORD_ADDR → READ_DATA
+FF, 128 words | memory.ff.device.8.behavioral@depth=128 | WORD_ADDR → READ_DATA
+SRAM, 64 words | memory.sram.device.8.behavioral@depth=64 | WORD_ADDR → READ_DATA
+SRAM, 128 words | memory.sram.device.8.behavioral@depth=128 | WORD_ADDR → READ_DATA
+-->
 
 ### Examples
 

@@ -137,12 +137,6 @@ Each `PRIORITY_*` child is a fixed structural `RV32IStatusPriority` with one-bit
 
 `RV32IExecutionStatusBehavioral` computes the same priority decision, updates four-state stored status at reset/edges, and recomputes outputs. Both forms are registered as `rv32i.execution-status`.
 
-### Timing
-
-The gate-level form settles through its gates; the compact form publishes within the proven bounds below ([Time and Delay](../../timing.md#compact-parts) explains tables, delay twins and clocked parts).
-
-<!-- timing-table: rv32i.execution-status.behavioral.direct -->
-
 ### Examples
 
 <!-- simulator-examples: rv32i-execution-status RV32IExecutionControlStatusUnitTest -->

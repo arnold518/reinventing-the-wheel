@@ -60,12 +60,6 @@ The structural implementation follows its OR/AND gates, mux, and alignment check
 
 `BehavioralStage`'s NextPC branch computes selection and qualified alignment directly. Catalog selection attaches output delays characterized from the structural selection and alignment circuit. The family is `rv32i.single-cycle.next-pc`.
 
-### Timing
-
-The gate-level form settles through its gates; the compact form publishes within the proven bounds below ([Time and Delay](../../timing.md#compact-parts) explains tables, delay twins and clocked parts).
-
-<!-- timing-table: rv32i.single-cycle.next-pc.behavioral -->
-
 ### Examples
 
 All four jump codes, both branch values, and three targets are combined into 24 rows. In particular, target `0x102` faults only when selected; `0x100` and `0xFFFFFFFC` are aligned.

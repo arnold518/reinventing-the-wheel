@@ -260,10 +260,6 @@ per-line metadata remain structural. A whole-cache behavioral form would
 need its own transaction-equivalence and timing evidence before it could be
 registered as another fidelity of this contract.
 
-### Timing
-
-The cache has only a structural form, so it has no delay table of its own: its controller runs on its gates and its tag and data stores on their own proven delays (SRAM or flip-flop endpoints, [3.5](controllers.md)). This page is not yet rewritten for the timing profiles; the cache's own documentation follows separately.
-
 ### Examples
 
 Each example names its geometry and shows the corresponding circuit in the

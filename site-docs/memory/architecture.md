@@ -134,9 +134,11 @@ raises `READY` when the data is valid. The clocked devices (flip-flop storage,
 the on-chip SRAM macro, DRAM, NOR flash) take commands on clock edges. The
 controller counts the cycles an access needs at the clock it runs on.
 
-Each component's **Timing** section shows its proven delays in every
-profile. [3.6 Memory Timing](timing.md) explains how an access time is built
-and gives the measured latency of every technology.
+Where a component's timing has something of its own to show (a device's
+access chain, a controller's setup times), its implementation ends with a
+**Timing** paragraph and the paths that matter, in every profile.
+[3.6 Memory Timing](timing.md) explains how an access time is built and gives
+the measured latency of every technology.
 
 ## Unknown values
 
@@ -170,14 +172,13 @@ Each component on the following pages has the same sections:
 2. **Behavior**: what the part does, a short C++ reference of its values,
    and how it treats unknown inputs.
 3. **Implementation**: the structural form and, where it exists, the
-   behavioral form.
-4. **Timing**: the proven delays in every profile, generated from the delay
-   tables the simulator uses.
-5. **Examples**: every checkpoint of its scenario, recorded in the `unit`
+   behavioral form, ending with the part's timing where it has something of
+   its own to show.
+4. **Examples**: every checkpoint of its scenario, recorded in the `unit`
    profile, an embedded simulator, and a link to open it full size. "Not
    checked" in a table means the scenario makes no assertion on that pin at
    that checkpoint, not that its value is zero.
-6. **Source and tests**.
+5. **Source and tests**.
 
 The C++ references describe settled binary values only. They are not
 simulator implementations and do not model time.

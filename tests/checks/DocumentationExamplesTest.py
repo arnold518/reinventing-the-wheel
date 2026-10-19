@@ -177,7 +177,7 @@ class DocumentationExamplesTest(unittest.TestCase):
         self.assertIn('not checked', render_table(data, "alu8", "ALU8Test"))
 
     def test_component_documentation_pattern(self):
-        expected = ["IO pins", "Behavior", "Implementation", "Timing", "Examples", "Source and tests"]
+        expected = ["IO pins", "Behavior", "Implementation", "Examples", "Source and tests"]
         component_count = 0
         for path, source in self.sources.items():
             sections = re.split(r"(?m)^## [23]\.\d+\.\d+\.", source)[1:]
@@ -188,7 +188,7 @@ class DocumentationExamplesTest(unittest.TestCase):
                 with self.subTest(page=path.name, component=component):
                     self.assertEqual(re.findall(r"(?m)^### (.+)$", section), expected)
                     behavior = section.split("### Behavior\n", 1)[1].split("### Implementation\n", 1)[0]
-                    implementation = section.split("### Implementation\n", 1)[1].split("### Timing\n", 1)[0]
+                    implementation = section.split("### Implementation\n", 1)[1].split("### Examples\n", 1)[0]
                     behavior_headings = re.findall(r"(?m)^#### (.+)$", behavior)
                     implementation_headings = re.findall(r"(?m)^#### (.+)$", implementation)
                     # Operation/flag tables may have their own subheadings.

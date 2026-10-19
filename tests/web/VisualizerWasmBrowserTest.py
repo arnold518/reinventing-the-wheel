@@ -21,7 +21,7 @@ def check_component_documentation_pattern(page, components: tuple[tuple[str, boo
                             for name, behavioral in components], availability
     headings = page.locator("article h3").evaluate_all(
         "nodes => nodes.map(node => node.childNodes[0].textContent.trim())")
-    assert headings == ["IO pins", "Behavior", "Implementation", "Timing", "Examples", "Source and tests"] * component_count
+    assert headings == ["IO pins", "Behavior", "Implementation", "Examples", "Source and tests"] * component_count
     subheadings = page.locator("article h4").evaluate_all("""nodes => nodes.map(node => {
       let parent = node.previousElementSibling;
       while (parent && parent.tagName !== 'H3') parent = parent.previousElementSibling;

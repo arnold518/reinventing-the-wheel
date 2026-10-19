@@ -28,7 +28,7 @@ for number,page in enumerate(("alu32","instruction-decoder","memory-access","exe
     assert len(components)==len(parts)==document.count('class="simulator-embed"')
     snippets+=re.findall(r"```cpp\n(.*?)\n```",document,re.S)
     for (name,structural,behavioral),part in zip(components,parts):
-        for heading in ("IO pins","Behavior","Implementation","Timing","Examples","Tests"):
+        for heading in ("IO pins","Behavior","Implementation","Examples","Tests"):
             assert f"### {heading}\n" in part,(name,heading)
         assert "#### C++ example\n" in part and "#### Unknown inputs\n" in part
         alias,test=re.findall(r"<!-- simulator-examples: (\S+) (\S+) -->",part)[0]

@@ -104,10 +104,6 @@ $$
 
 These are feedback equations, not two ordinary C++ assignments evaluated once. Gate events propagate until the circuit settles.
 
-### Timing
-
-A loop of two cross-coupled NAND gates. Path analysis cannot bound a loop, so the latch has no delay table; each output follows its inputs through the NAND gates under the [profile's gate delays](../../timing.md#timing-profiles). Its timing as a storage element is measured as part of the [D flip-flop](#3313-dflipflop).
-
 ### Examples
 
 <!-- simulator-examples: sr-latch SRLatchTest -->
@@ -207,10 +203,6 @@ $$
 
 For settled binary inputs, the gating prevents data and enable from requesting set and reset simultaneously.
 
-### Timing
-
-Built from gates around an `SRLatch`, so it has no delay table: `Q` follows `D` through the input gating and the latch while `EN` is high. Its timing as a storage element is measured as part of the [D flip-flop](#3313-dflipflop).
-
 ### Examples
 
 <!-- simulator-examples: gated-d-latch GatedDLatchTest -->
@@ -285,7 +277,7 @@ struct DFlipFlopReference {
 
 #### Unknown inputs
 
-The recorded sequence captures `X` and `Z` data as unknown state and then recovers through reset. Preparing data, allowing it to settle with `CLK = 0`, and then raising the clock is the sequence used by the tests; the setup and hold limits are in the Timing section below.
+The recorded sequence captures `X` and `Z` data as unknown state and then recovers through reset. Preparing data, allowing it to settle with `CLK = 0`, and then raising the clock is the sequence used by the tests; the setup and hold limits are at the end of the Implementation section below.
 
 ### Implementation
 
@@ -303,9 +295,7 @@ The recorded sequence captures `X` and `Z` data as unknown state and then recove
 
 `RST` connects to both latches. The clock inverter and latch gates have propagation delays; this is a structural digital model, not an ideal zero-delay edge detector.
 
-### Timing
-
-Path analysis cannot bound a loop, so the flip-flop's contract is **measured**: every combination of data change, clock edge and reset is simulated under the profile's gate delays, and the results become the contract the rest of the project relies on (`DFlipFlopTimingTest` checks them). Every clocked part, from the register cell to the cores, is timed from these numbers.
+**Timing.** Path analysis cannot bound a loop, so the flip-flop's contract is **measured**: every combination of data change, clock edge and reset is simulated under the profile's gate delays, and the results become the contract the rest of the project relies on (`DFlipFlopTimingTest` checks them). Every clocked part, from the register cell to the cores, is timed from these numbers.
 
 <!-- profile-table: flip-flop -->
 
@@ -421,10 +411,6 @@ Each evaluation gives reset priority. With reset low, a known `CLK = 0 → 1` tr
 
 `FlipFlopCellTest` runs the same state sequence against the structural and behavioral implementations and compares their checkpoint outputs. This validates the recorded sequences, not every possible four-state history. Checkpoint times can differ, so the table below describes the default structural run.
 
-### Timing
-
-<!-- timing-table: memory.ff.cell.behavioral.direct -->
-
 ### Examples
 
 <!-- simulator-examples: flip-flop-cell FlipFlopCellTest -->
@@ -539,10 +525,6 @@ Input splitters take the profile's splitter delay (one tick in `unit`, none in t
 
 When neither the write enable nor the byte mask definitely disables a lane, an ambiguous enable follows the cell's AND/OR feedback mux: only old zero/new zero stays zero; every other combination becomes `X`. Unknown reset merges each stored bit with zero. Equivalence is checked at settled checkpoints, not during gate propagation.
 
-### Timing
-
-<!-- timing-table: memory.ff.word.8.behavioral.direct -->
-
 ### Examples
 
 <!-- simulator-examples: ff-word FFWordTest -->
@@ -648,10 +630,6 @@ Each child receives the shared inputs, its own `WRITE_n`, and drives its matchin
 Its uncertain-control rules match the behavioral word: for a lane that is not definitely disabled, ambiguous write enables or mask bits preserve zero only for old zero/new zero, following the cell's gate mux. Other combinations become `X`. Unknown reset merges stored bits with zero. A definite reset clears every word regardless of enable or mask.
 
 The registered contract is `memory.ff.bank.W`. Its pin schema is generated from `depth_words`, so construction validates all N enables and outputs for both implementations. Selecting behavioral fidelity for `FFMemory.STORAGE` hides only the bank's words and cells; `ADDRESS_DECODE`, `ACCESS_CONTROL`, and `READ_SELECT` remain structural and visible.
-
-### Timing
-
-<!-- timing-table: memory.ff.bank.8.behavioral.direct -->
 
 ### Examples
 
@@ -793,9 +771,20 @@ The behavioral `FFMemory` implementation and `MemoryStorage` is its host-side ba
 
 Fidelity can be selected at four boundaries: the whole device, its bank, individual words, or individual cells. `FFMemoryFidelityTest` compares these combinations at settled checkpoints. Collapsing a parent removes its visible children; saved child choices remain available when structural expansion is restored.
 
-### Timing
+**Timing.** Reads need no clock: the read multiplexers deliver the addressed word after
+an address change, which is why a flip-flop memory answers in the same
+cycle. Writes are captured at the rising edge.
+The address needs the longest setup, because it must pass the decoder and the
+access control to reach the right word's write enable. A word written while
+it is being read shows its new value one clock-to-output delay and one read
+selection after the edge.
 
-<!-- timing-table: memory.ff.device.8.behavioral -->
+<!-- timing-rows
+Address to read data | memory.ff.device.8.behavioral | WORD_ADDR → READ_DATA
+Edge to new read data | memory.ff.device.8.behavioral | CLK ↑ → READ_DATA
+Address, setup | memory.ff.device.8.behavioral | WORD_ADDR before CLK ↑
+Write data, setup | memory.ff.device.8.behavioral | WRITE_DATA before CLK ↑
+-->
 
 ### Examples
 

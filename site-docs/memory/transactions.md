@@ -204,10 +204,6 @@ CLK, reset, VALID and READY must be binary and meet the flip-flops' setup and ho
 
 `PENDING` is one `ClockedStateBit`. `RESPONSE` is a `MemoryResponseBuffer<W>` with an occupancy state bit, data/status registers, and bypass multiplexers; its reused register component is defined in [4.3.1](../rv32i/4.3/register.md). Live request fields cross the scope boundary through zero-delay rewires. The layout separates request forwarding, handshake control and response retention.
 
-### Timing
-
-Built from gates and flip-flops only, so it has no delay table of its own: outputs settle through its gates under the [profile's gate delays](../timing.md#timing-profiles), and its registers launch one flip-flop clock-to-output delay after the edge. Its delays are part of the proven tables of the controllers and endpoints built on it.
-
 ### Examples
 
 <!-- simulator-examples: memory-transaction-port MemoryTransactionPortTest -->
@@ -281,10 +277,6 @@ Controls must be known binary values. Payload flip-flops preserve unknown data b
 An empty buffer bypasses this storage; a blocked response needs it to remain
 stable. Selecting compact storage or a behavioral enclosing endpoint changes
 simulation detail, not the number of logical storage bits or the response contract.
-
-### Timing
-
-Built from gates and flip-flops only, so it has no delay table of its own: outputs settle through its gates under the [profile's gate delays](../timing.md#timing-profiles), and its registers launch one flip-flop clock-to-output delay after the edge. Its delays are part of the proven tables of the controllers and endpoints built on it.
 
 ### Examples
 

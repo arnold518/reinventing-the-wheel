@@ -291,7 +291,50 @@ def render_profile_table(kind):
     return "".join(html)
 
 
+def render_rows(spec):
+    """Chosen paths of one or more stored tables, latest change per profile.
+
+    Each line of the marker is ``label | table key | path``, where path is a
+    row label of that table as ``rows_of`` names it (``A → Cout``,
+    ``CLK ↑ → Q``, ``D before CLK ↑``).
+    """
+    data = profiles()
+    rows = []
+    for line in filter(None, (line.strip() for line in spec.strip().splitlines())):
+        parts = [part.strip() for part in line.split("|")]
+        if len(parts) != 3:
+            raise ValueError(f"timing-rows line needs 'label | key | path': {line!r}")
+        label, key, path = parts
+        cells = []
+        for name, (tables, _) in data.items():
+            if key not in tables:
+                raise ValueError(f"No stored delay table {key!r} in profile {name}")
+            found = [high for _, row, _, high in rows_of(tables[key]) if row == path]
+            if not found:
+                raise ValueError(f"Delay table {key!r} has no path {path!r} in profile {name}")
+            cells.append(found[0])
+        rows.append((label, path, cells))
+    html = ['<div class="timing-table-block" data-timing-rows="' + escape(";".join(r[0] for r in rows)) + '">',
+            '<p class="timing-table-description">Latest time each path can still change after its input '
+            '(for a setup row: how long before the edge the input must be stable), proven on the gate-level form.</p>',
+            '<div class="example-table-scroll" role="region" tabindex="0" aria-label="Selected proven delays">'
+            '<table class="timing-table"><thead><tr><th scope="col">Path</th>']
+    for name, (_, unit) in data.items():
+        html.append(f'<th scope="col"><code>{escape(name)}</code><small>{unit}</small></th>')
+    html.append("</tr></thead><tbody>")
+    for label, path, cells in rows:
+        html.append(f'<tr><th scope="row">{escape(label)} <small><code>{escape(path)}</code></small></th>')
+        html.extend(f"<td>{value:,}</td>" for value in cells)
+        html.append("</tr>")
+    html.append("</tbody></table></div></div>")
+    return "".join(html)
+
+
+ROWS_MARKER = re.compile(r"<!-- timing-rows\n(.*?)\n-->", re.DOTALL)
+
+
 def on_page_markdown(markdown, page, config, files):
+    markdown = ROWS_MARKER.sub(lambda match: render_rows(match.group(1)), markdown)
     markdown = MARKER.sub(lambda match: render(match.group(1)), markdown)
     markdown = PROFILE_MARKER.sub(lambda match: render_profile_table(match.group(1)), markdown)
     return LATENCY_MARKER.sub(lambda match: render_latency(match.group(1)), markdown)

@@ -96,12 +96,6 @@ Structural muxes/gates may isolate unused unknown data. The behavioral stage ins
 
 `BehavioralStage`'s Execute branch computes the selected operation, comparison qualification, branch mux, and target selection directly, without gate objects or an instruction oracle. The family is `rv32i.single-cycle.execute`.
 
-### Timing
-
-The gate-level form settles through its gates; the compact form publishes within the proven bounds below ([Time and Delay](../../timing.md#compact-parts) explains tables, delay twins and clocked parts).
-
-<!-- timing-table: rv32i.single-cycle.execute.behavioral -->
-
 ### Examples
 
 The recorded run covers all 32 ALU opcodes for a fixed operand pair, all eight branch selectors, signed versus unsigned comparison, equality, wrapped targets, JAL sharing, and JALR masking. For JALR, `0x101+4` yields ALU result `0x105` but target `0x104`.

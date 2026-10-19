@@ -68,11 +68,21 @@ The default layout follows connectivity. Prefix levels are expandable groups rat
 
 `AddSub32Behavioral` evaluates that same full-adder recurrence with four-state bit values, without constructing its internal gates.
 
-### Timing
+**Timing.** The carry crosses 32 bits in five prefix levels instead of 32 ripple stages,
+so the depth grows with log₂ of the width rather than with the width. In the
+realistic profiles the 32-bit unit settles sooner than the 8-bit
+[ripple unit](../../alu8/2.1.md#214-addsub8) of the ALU8, a quarter of its
+width; in `unit`, where every gate costs one tick, the two are about equal.
 
-The gate-level form settles through its gates; the compact form publishes within the proven bounds below ([Time and Delay](../../timing.md#compact-parts) explains tables, delay twins and clocked parts).
+<!-- timing-rows
+AddSub32, slowest (prefix) | arithmetic.add-sub.width32.behavioral.direct | B → OVERFLOW
+AddSub8, slowest (ripple) | arithmetic.add-sub.width8.behavioral.direct | B → OVERFLOW
+AddSub32, carry out | arithmetic.add-sub.width32.behavioral.direct | A → CARRY_OUT
+AddSub8, carry out | arithmetic.add-sub.width8.behavioral.direct | A → CARRY_OUT
+-->
 
-<!-- timing-table: arithmetic.add-sub.width32.behavioral.direct -->
+`ArithmeticTimingOptimizationTest` compares the prefix and ripple structures
+of the 32-bit unit.
 
 ### Examples
 
@@ -123,12 +133,6 @@ Two splitters, 32 gates of each operation, and three joiners provide three paral
 #### Behavioral implementation
 
 `Logic32Behavioral` applies the same four-state gate rules per bit and publishes when the gate-level form would have settled for the same inputs.
-
-### Timing
-
-The gate-level form settles through its gates; the compact form publishes within the proven bounds below ([Time and Delay](../../timing.md#compact-parts) explains tables, delay twins and clocked parts).
-
-<!-- timing-table: logic.combined.width32.behavioral.direct -->
 
 ### Examples
 
@@ -188,12 +192,6 @@ A shared right-shift network selects distances 1, 2, 4, 8, and 16. Input/output 
 
 `Shifter32Behavioral` reproduces the reversal, each mux stage, and fill logic using four-state values. Catalog construction gives it gate-derived output delays, with a delay twin where supported to time the current shift and data.
 
-### Timing
-
-The gate-level form settles through its gates; the compact form publishes within the proven bounds below ([Time and Delay](../../timing.md#compact-parts) explains tables, delay twins and clocked parts).
-
-<!-- timing-table: shift.barrel.width32.behavioral.direct -->
-
 ### Examples
 
 <!-- simulator-examples: shifter32 Shifter32Test -->
@@ -251,10 +249,6 @@ Rewired selector bits preserve `X`/`Z`; logic-derived controls follow their gate
 
 A splitter and selector joiner expose opcode bits; NOT/AND/OR gates derive the enables. No behavioral implementation is registered for this helper.
 
-### Timing
-
-Built from gates and smaller parts with no compact form of its own, so it has no delay table: its outputs settle through its gates under the [gate delays of the active profile](../../timing.md#timing-profiles). Its delay is part of the proven tables of the parts built on it.
-
 ### Examples
 
 <!-- simulator-examples: alu32-control ALU32ControlDecoderTest -->
@@ -307,10 +301,6 @@ Disabled AND outputs mask unknown arithmetic inputs. Enabled flags use four-stat
 #### Structural implementation
 
 `ZeroDetect32` forms equality; a sign splitter, XOR, NOT, and AND gates form less-than flags. Joiners extend those flags to words. No behavioral implementation is registered for this helper.
-
-### Timing
-
-Built from gates and smaller parts with no compact form of its own, so it has no delay table: its outputs settle through its gates under the [gate delays of the active profile](../../timing.md#timing-profiles). Its delay is part of the proven tables of the parts built on it.
 
 ### Examples
 
@@ -369,10 +359,6 @@ Parallel opcode minterms qualify nine result sources. `BIT_0` through `BIT_31` a
 
 `RV32ILogicOptimizationTest` compares this circuit with the former mux tree across all 1,024 four-state selector combinations, each with four data patterns (4,096 rows).
 
-### Timing
-
-Built from gates and smaller parts with no compact form of its own, so it has no delay table: its outputs settle through its gates under the [gate delays of the active profile](../../timing.md#timing-profiles). Its delay is part of the proven tables of the parts built on it.
-
 ### Examples
 
 <!-- simulator-examples: alu32-result-selector ALU32ResultSelectorTest -->
@@ -422,10 +408,6 @@ Negative directly exposes result bit 31, including `Z`; zero uses a gate reducti
 #### Structural implementation
 
 `ZeroDetect32`, a `SIGN_BIT` rewire, and two AND gates implement the block. The rewire has one 32-bit input (`RESULT`) and one 1-bit output (`SIGN`), mapping only `RESULT[31]` to `NEGATIVE`; it does not expose 31 unused outputs. This is zero-delay routing, including for `X` and `Z`, rather than a logic gate. No behavioral implementation is registered for this helper.
-
-### Timing
-
-Built from gates and smaller parts with no compact form of its own, so it has no delay table: its outputs settle through its gates under the [gate delays of the active profile](../../timing.md#timing-profiles). Its delay is part of the proven tables of the parts built on it.
 
 ### Examples
 
@@ -511,11 +493,19 @@ The root contains `CONTROL`, `ARITHMETIC`, `LOGIC`, `SHIFT`, `COMPARE`, `RESULT_
 
 `ALU32Behavioral` computes the selected operation and flags directly. When its delay twin agrees with that result, the catalog-selected part can use the current operands' gate-list settling time within its per-operation delay-table bound; an older pending result still retains publication order. If the twin cannot answer, the table supplies the timing. The registered contract is `rv32i.alu32`; structural remains available. Inside a structural ALU the arithmetic, logic, shift, and zero-detect units are always built from gates; each keeps its own behavioral form when used standalone.
 
-### Timing
+**Timing.** As in the ALU8, `OP` is the slowest input and `ZERO` the last output, one
+32-bit zero detection after `OUT`. The prefix adder keeps the whole unit
+faster than the 8-bit teaching ALU. Execute uses [`ALU32Core`](#4339-alu32core),
+which has the same result and comparison paths but no flags, so the `ZERO`
+path is not in the core's cycle.
 
-The gate-level form settles through its gates; the compact form publishes within the proven bounds below ([Time and Delay](../../timing.md#compact-parts) explains tables, delay twins and clocked parts).
-
-<!-- timing-table: rv32i.alu32.behavioral.direct -->
+<!-- timing-rows
+ALU32, operation to ZERO | rv32i.alu32.behavioral.direct | OP → ZERO
+ALU32, operation to result | rv32i.alu32.behavioral.direct | OP → OUT
+ALU32, operand to result | rv32i.alu32.behavioral.direct | A → OUT
+ALU32Core, operation to result | rv32i.alu32-core.behavioral.direct | OP → OUT
+ALU8, operation to ZERO | alu.width8.behavioral.direct | OP → ZERO
+-->
 
 ### Examples
 
@@ -574,12 +564,6 @@ The `CONTROL`, `ARITHMETIC`, `LOGIC`, `SHIFT`, `COMPARE`, and `RESULT_SELECT` gr
 #### Behavioral implementation
 
 The `rv32i.alu32-core` family uses `ALU32Behavioral` in its reduced-interface mode. It computes the same result and comparisons as the general behavioral ALU but does not expose the four omitted flags.
-
-### Timing
-
-The gate-level form settles through its gates; the compact form publishes within the proven bounds below ([Time and Delay](../../timing.md#compact-parts) explains tables, delay twins and clocked parts).
-
-<!-- timing-table: rv32i.alu32-core.behavioral.direct -->
 
 ### Examples
 

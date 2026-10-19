@@ -91,12 +91,6 @@ LANES performs byte-lane formatting without constructing an unused guarded word-
 
 BehavioralStage's Memory branch evaluates the same combinational logic without MemoryRequestState or owned contents. Both implementations are registered as `rv32i.single-cycle.memory`.
 
-### Timing
-
-The gate-level form settles through its gates; the compact form publishes within the proven bounds below ([Time and Delay](../../timing.md#compact-parts) explains tables, delay twins and clocked parts).
-
-<!-- timing-table: rv32i.single-cycle.memory.behavioral -->
-
 ### Examples
 
 Eleven accesses cover signed/unsigned loads, every store width, invalid size, misalignment, and native faults. Each checks direct outputs, commit permission, changed store data without any edge, and disabled access.

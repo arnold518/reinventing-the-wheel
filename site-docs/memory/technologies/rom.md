@@ -59,10 +59,6 @@ A terminal constant-output component publishes the configured value without the 
 
 The behavioral cell's visualizer shows Q as the **programmed bit**, using its recorded value. Selecting the structural implementation shows the fixed connection instead.
 
-### Timing
-
-No inputs, so no delays: the outputs take their configured values once, when the simulation starts.
-
 ### Examples
 
 <!-- simulator-examples: rom-cell ROMCellTest -->
@@ -128,10 +124,6 @@ Contains `CELL_0` through `CELL_(C−1)`, each a registered `ROMCell`. Cells are
 #### Behavioral implementation
 
 Retains the construction string and publishes each column directly, with the same startup and ordering contract.
-
-### Timing
-
-No inputs, so no delays: the outputs take their configured values once, when the simulation starts.
 
 ### Examples
 
@@ -210,10 +202,6 @@ An unknown wordline invalidates the entire selection; it is not treated as zero.
 #### Behavioral implementation
 
 Reads the fixed image bits directly after validating one-hot selection. It keeps the same expanded pins, geometry limits, and image interpretation.
-
-### Timing
-
-<!-- timing-table: memory.rom.bank.8.behavioral -->
 
 ### Examples
 
@@ -308,11 +296,6 @@ and output enables. It stores no image and has no clock. The row decoder,
 read columns and output buffer are separate components of the complete
 device.
 
-### Timing
-
-Built from gates and delay lines, so it has no delay table of its own; its
-intervals are the ROM intervals below. The device table includes it.
-
 ### Examples
 
 <!-- simulator-examples: rom-address-control ROMAddressControlTest -->
@@ -398,16 +381,20 @@ Enabled reads with an unknown address or control, or an out-of-range address, re
 
 Uses packed, zero-initialized `MemoryStorage` with the construction image prefix loaded once, and publishes the data and `READY` at the delays proven on the gate-level device. The memory inspector is read-only; `loadMemoryBytes` rejects changes. This implementation supports large capacities without expanding cells. `record_history=0` disables backing-store history, not wire history.
 
-### Timing
-
-<a id="timing-intervals"></a>The read's analog steps use these intervals
-(the read column grows with the number of rows):
+<a id="timing-intervals"></a>**Timing.** A read waits for the address to settle, then for
+the selected read column to discharge; the column is longer, and slower, the
+more rows it has:
 
 <!-- profile-table: memory-rom -->
 
-The compact device's proven delays:
+`READY` rises once the data is certainly valid, so it is the slowest output.
+As in SRAM, `OE_N` only enables the output buffer.
 
-<!-- timing-table: memory.rom.device.8.behavioral -->
+<!-- timing-rows
+Address to READY | memory.rom.device.8.behavioral | WORD_ADDR → READY
+Address to data | memory.rom.device.8.behavioral | WORD_ADDR → READ_DATA
+Output enable to data | memory.rom.device.8.behavioral | OE_N → READ_DATA
+-->
 
 ### Examples
 

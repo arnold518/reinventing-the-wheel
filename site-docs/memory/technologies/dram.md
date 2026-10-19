@@ -89,10 +89,6 @@ Terminal digital charge primitive, not a flip-flop or an RC electrical simulatio
 
 The visualizer displays separate **charge (Q)** and **read sample (SAMPLE)** panels, with WL/RESTORE indicators, using recorded pin values at the selected time. It does not invent an analog charge level or retention countdown; expiry is checked on activation as described above.
 
-### Timing
-
-A memory primitive: its outputs follow its inputs after one memory-primitive delay (one FO4 inverter delay in the realistic profiles). Retention is a time, `retention_ticks`, not a delay: a row closed for that long samples X.
-
 ### Examples
 
 <!-- simulator-examples: dram-cell DRAMCellTest -->
@@ -167,10 +163,6 @@ Each column applies the cell's X/Z and lazy-retention rules independently. An un
 #### Behavioral implementation
 
 Stores C charge records and applies sampling, restoration, close timestamps, and expiry directly. It preserves expanded row pins but removes the cell objects.
-
-### Timing
-
-<!-- timing-table: memory.dram.row.behavioral -->
 
 ### Examples
 
@@ -267,10 +259,6 @@ Starts prepared with Q=X. Unknown wordlines, more than one selected row, unknown
 
 Terminal stateful sense primitive. Its latched Q forms one bit of the bank's row buffer; RESTORE feeds the selected cells. It models the result of sensing/restoration, not voltage differences or transistor gain.
 
-### Timing
-
-A memory primitive: its outputs follow its inputs after one sense interval, the profile's base value plus a per-row term for its R rows; see the DRAM intervals under the device's [Timing](#timing-intervals).
-
 ### Examples
 
 <!-- simulator-examples: dram-sense-column DRAMSenseColumnTest -->
@@ -357,10 +345,6 @@ Selection conflicts and unknown controls follow DRAMSenseColumn; individual char
 #### Behavioral implementation
 
 Uses charge records plus a row-buffer vector, with independent selection/preparation state. It preserves destructive sampling, restoration, precharge, per-column writes, and retention without expanding the cells.
-
-### Timing
-
-<!-- timing-table: memory.dram.bank.8.behavioral -->
 
 ### Examples
 
@@ -527,12 +511,6 @@ it in every profile. A one-stage `Synchronizer` samples the end of the chain;
 a round-robin counter chooses the refresh row. A device with no reset pin
 starts idle through a `PowerOnReset`.
 
-### Timing
-
-Built from gates, flip-flops and delay lines, so it has no delay table of its
-own. Its intervals are the DRAM intervals listed under the device's
-[Timing](#timing-intervals); the device table below includes it.
-
 ### Examples
 
 <!-- simulator-examples: dram-command-control DRAMCommandControlTest -->
@@ -665,20 +643,20 @@ Command validation follows `DRAMCommandControl`. A rejected unknown idle command
 
 Uses packed `MemoryStorage`, per-row close times and a W×K row buffer. Activation samples the row destructively, sensing restores it, and writes merge enabled bytes into the buffer and storage. Its command control (`DRAMSyncControl`) follows the gate-level control edge for edge, with the same chain lengths, so it takes the same cycles; the storage and sense data path is implemented separately. History is read-only; initialize through ACTIVATE and WRITE, and disable history for large runs.
 
-### Timing
-
-<a id="timing-intervals"></a>The steps of each command are delay lines with
+<a id="timing-intervals"></a>**Timing.** The steps of each command are delay lines with
 these intervals. In the realistic profiles they reproduce the datasheet's
 tRCD, CL and tRP (the ACTIVATE steps add up to tRCD, the READ step is CL,
 the PRECHARGE steps add up to tRP):
 
 <!-- profile-table: memory-dram -->
 
-The compact device's proven delays. The device times itself, so no clock can
-be certified around it alone; its controller samples it at the controller's
-clock (see [3.6 Memory Timing](../timing.md#dram)).
+A command is issued in one clock cycle, but the device then works through
+these intervals on its own time and reports `BUSY` until it is done. No clock
+can be certified around the device alone; its controller counts the cycles
+each command needs at the controller's clock. Through the controller, at
+256 KiB:
 
-<!-- timing-table: memory.dram.device.8.behavioral -->
+<!-- latency-table: dram -->
 
 ### Examples
 

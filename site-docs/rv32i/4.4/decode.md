@@ -94,12 +94,6 @@ Real simulator x1–x31 start unknown until reset; the simplified array is only 
 
 `BehavioralDecodeStage` uses the direct stage evaluator, a 32-word four-state register vector, and timestamped register snapshots. It computes controls through `RV32IDecoder`/`RV32IControl` and implements writes on known rising edges. Both implementations expose `register-state-view` so the visualizer can inspect registers without depending on the internal hierarchy. The family is `rv32i.single-cycle.decode`.
 
-### Timing
-
-The gate-level form settles through its gates; the compact form publishes within the proven bounds below ([Time and Delay](../../timing.md#compact-parts) explains tables, delay twins and clocked parts).
-
-<!-- timing-table: rv32i.single-cycle.decode.behavioral -->
-
 ### Examples
 
 The scenario reuses every decoder vector, then checks register setup without bypass, edge-only capture, high/falling-clock holds, ignored x0 writes, and reset. For example, setting `WB_VALUE=7` and write enable does not change x1 until the capture edge.

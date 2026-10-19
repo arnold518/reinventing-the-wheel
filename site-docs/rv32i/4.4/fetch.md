@@ -82,12 +82,6 @@ Equivalence checks cover binary operation after reset. Instruction/fault bits ar
 
 The Fetch branch of BehavioralStage stores PC and previous clock, then publishes the same direct outputs. Both forms are registered as `rv32i.single-cycle.fetch`.
 
-### Timing
-
-The gate-level form settles through its gates; the compact form publishes within the proven bounds below ([Time and Delay](../../timing.md#compact-parts) explains tables, delay twins and clocked parts).
-
-<!-- timing-table: rv32i.single-cycle.fetch.behavioral -->
-
 ### Examples
 
 The scenario reads without a clock, holds PC before commit, captures NEXT_PC once per rising edge, checks enable/fault forwarding, and resets PC.

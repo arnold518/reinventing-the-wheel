@@ -161,17 +161,22 @@ falls.
 
 [`MemoryControllerBehavioral`](https://github.com/arnold518/reinventing-the-wheel/blob/github-pages/src/modules/memory/MemoryController.cpp) is the whole controller as one part. It keeps the same state as the structural form (one pending request, one held response, the sequencer's state) and the same rules, so its native pin activity is the same cycle for cycle; it owns no device and no storage. An endpoint requests its controller through the catalog, so a profile can show it as gates or as this one part; `MemoryEndpointContractTest` compares the two in front of the same device for all five technologies.
 
-### Timing
+**Timing.** Everything the controller drives to the device and back to the requester
+comes from its registers, one clock-to-output delay after the edge; every
+request field must be stable a setup time before the edge. The address needs
+the longest setup, because the controller checks it (in range, aligned) before
+the edge decides; `REQ_ADDR → RSP_STATUS` is that check. The flip-flop
+controller also passes a read straight through in the same cycle, so it has a
+path from the address to the read data.
 
-The controller's proven delays: clock → output for everything it drives from
-its registers, setup times for its inputs. The flip-flop controller of the
-scenario below:
-
-<!-- timing-table: memory.ff.controller.8.behavioral -->
-
-The SRAM controller's, which counts wait cycles:
-
-<!-- timing-table: memory.sram.controller.8.behavioral -->
+<!-- timing-rows
+FF: address check | memory.ff.controller.8.behavioral | REQ_ADDR → RSP_STATUS
+FF: address to read data | memory.ff.controller.8.behavioral | REQ_ADDR → RSP_READ_DATA
+FF: address, setup | memory.ff.controller.8.behavioral | REQ_ADDR before CLK ↑
+SRAM: address, setup | memory.sram.controller.8.behavioral | REQ_ADDR before CLK ↑
+SRAM: edge to chip enable | memory.sram.controller.8.behavioral | CLK ↑ → MEM_CE_N
+SRAM: edge to response | memory.sram.controller.8.behavioral | CLK ↑ → RSP_VALID
+-->
 
 ### Examples
 
@@ -298,6 +303,12 @@ image can be provided before simulation; Python exposes this as
 `initialize_memory_bytes(component, byte_address, bytes)`. Runtime writes must
 use the protocol.
 
+**Timing.** An endpoint's latency in clock cycles depends on its technology and, for
+DRAM, on the row state. Measured on 256 KiB memories at the advanced core's
+clock:
+
+<!-- latency-table: all -->
+
 #### Visualization and inspection
 
 The memory table is a read-only view of recorded storage and signal history. Python and WebAssembly use the same inspector. Inspection and timeline scrubbing do not send transactions or advance the device.
@@ -319,15 +330,6 @@ simulated registers, events, or memory latency.
 The observer samples handshake and payload signals **before the rising edge**, as required by the synchronous interface. It handles a request and response completing on the same edge without inventing a pending cycle. For a delayed response, later changes to `REQ_ADDR`, `REQ_OP`, or write data do not change the displayed accepted request. Reset drops that transaction context, not the stored image. In a CPU instruction memory, the highlight identifies the **fetch address**, not the retired instruction or every occupied pipeline stage.
 
 `Follow access` centers the table on the active word. Manual row scrolling suspends centering. The inspector's byte-address field, `Previous page`, and `Next page` browse the entire device; they read history directly without performing a hardware read. Address pages contain at most 256 words per request (64 by default). The sparse touched-word summary is limited to 256 entries, but this does **not** limit address browsing. Unknown/unwritten values remain visible according to the device's storage model.
-
-### Timing
-
-The endpoint's latency in cycles depends on the technology and, for DRAM, on
-the row state; [3.6 Memory Timing](timing.md#measured-latency) gives it for
-every technology and profile. The proven delays of the flip-flop endpoint in
-the first scenario below:
-
-<!-- timing-table: memory.ff.endpoint.8.behavioral -->
 
 ### Examples
 

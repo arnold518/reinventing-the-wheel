@@ -30,7 +30,7 @@ for number, (slug, stage) in enumerate((*STAGES, ("core", "Core")), 1):
     assert document.startswith(f"# § 4.4.{number}.")
     assert f"rv32i/4.4/{slug}.md" in navigation and f"({slug}.md)" in index
     assert "| Component | Description | Structural | Behavioral |" in document
-    for heading in ("IO pins", "Behavior", "Implementation", "Timing", "Examples", "Tests"):
+    for heading in ("IO pins", "Behavior", "Implementation", "Examples", "Tests"):
         assert f"### {heading}\n" in document, (slug, heading)
     for heading in ("C++ example", "Unknown inputs", "Structural implementation",
                     "Behavioral implementation", "Embedded simulation"):

@@ -79,10 +79,6 @@ Terminal digital nonvolatile-charge primitive. Program and erase transitions rep
 
 The visualizer shows the recorded stored bit Q and WL/PROGRAM/ERASE indicators. These are cell signals, not the device controller's busy state, and update when scrubbing backward or forward.
 
-### Timing
-
-A memory primitive: `Q` follows its inputs after one memory-primitive delay (one FO4 inverter delay in the realistic profiles). How long a program or erase takes is set by the pulse the command control applies, not by the cell.
-
 ### Examples
 
 <!-- simulator-examples: nor-flash-cell NORFlashCellTest -->
@@ -156,10 +152,6 @@ Initial state, startup qualification, conflicts, and X/Z handling are per-cell. 
 #### Behavioral implementation
 
 Stores C four-state values and per-cell startup-qualification flags. It applies the same charge transition rule directly; it is not freely writable RAM.
-
-### Timing
-
-<!-- timing-table: memory.nor-flash.row.behavioral -->
 
 ### Examples
 
@@ -246,10 +238,6 @@ No selected row, conflicting selections, or unknown WL yields X on COL. Cell wri
 #### Behavioral implementation
 
 Uses a bounded bit vector and startup flags, applying cell transitions before selecting the read columns. Read selection and storage mutation remain separate, matching the expanded bank.
-
-### Timing
-
-<!-- timing-table: memory.nor-flash.bank.8.behavioral -->
 
 ### Examples
 
@@ -374,10 +362,6 @@ Only 0→1 CLK is an edge. An unknown CMD is rejected; the address must be binar
 #### Structural implementation
 
 Flip-flops hold the command, address, payload, WEL and status bits; gates decide legality and the next state. The READ chain is a `MemoryDelayLine` with the NOR read interval and a replica of the row decoder; PROGRAM and ERASE chains are the pulse and two recovery delay lines. A one-stage `Synchronizer` samples each chain's end, and a `PowerOnReset` starts the device idle. A gate-level block decoder drives `ERASE_r` for the rows of block `WORD_ADDR / block_words`; because it exposes one erase pin per row, this standalone control keeps the expanded geometry limit. The compact device keeps the same state without those pins (`NORSyncControl`, edge for edge).
-
-### Timing
-
-Built from gates, flip-flops and delay lines, so it has no delay table of its own. Its intervals are the NOR-flash intervals listed under the device's [Timing](#timing-intervals); the device table includes it.
 
 ### Examples
 
@@ -506,18 +490,17 @@ Command validation follows NORFlashCommandControl. Enabled program data bits may
 
 Uses initially erased packed MemoryStorage and the same command sequencer, with a separately implemented storage data path. Program applies four-state AND within enabled bytes; erase writes ones one word at a time to bound temporary allocation. Read-only inspector history can be disabled for scale; debug loading cannot bypass WREN/PROGRAM/ERASE.
 
-### Timing
-
-<a id="timing-intervals"></a>The command chains use these intervals; in the
+<a id="timing-intervals"></a>**Timing.** The command chains use these intervals; in the
 realistic profiles the read, program and erase times are the datasheet's:
 
 <!-- profile-table: memory-nor -->
 
-The compact device's proven delays. The device times itself, so no clock can
-be certified around it alone; its controller synchronizes `BUSY` into its
-clock (see [3.6 Memory Timing](../timing.md#nor-flash)).
+Programming and erasing take microseconds to milliseconds, thousands to
+millions of clock cycles. The device works through them on its own time and
+reports `BUSY`; its controller synchronizes `BUSY` into its clock instead of
+counting cycles. Through the controller, at 256 KiB:
 
-<!-- timing-table: memory.nor-flash.device.8.behavioral -->
+<!-- latency-table: nor -->
 
 ### Examples
 
