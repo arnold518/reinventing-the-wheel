@@ -10,10 +10,13 @@ size, FF or SRAM stores, burst fill) but fixed in behavior: write-through,
 no-write-allocate, one request at a time, no write buffer, two-way LRU at
 most, at most 4 expanded or 64 scalable sets. This record plans making the
 behavior parameters too: write buffer, write-back, write-allocate, more ways
-with a choice of replacement, many more sets, optionally next-line prefetch.
-Several requests in flight and multi-bank DRAM are out of scope for the
-cache itself. The owner asked to record the plan and not to start it now.
-Next step when resumed: the write buffer.
+with a choice of replacement, many more sets, optionally next-line prefetch,
+and then a behavioral (compact) cache proven equivalent to the structural
+one, for simulation speed: games need millions of cycles, and the gate-level
+cache controller runs at a few hundred cycles per second. Several requests in
+flight and multi-bank DRAM are out of scope for the cache itself. The owner
+asked to record the plan and not to start it now. Next step when resumed:
+the write buffer.
 
 ## 2026-10-19 — Starting point
 
@@ -111,3 +114,61 @@ accept any combination.
    unchanged memory timing, and rewrite the public cache page.
 
 Each step gets its tests, clock certification and a dated section here.
+
+## 2026-10-19 — Addition: a behavioral cache (owner request)
+
+**Why.** Interactive games need large caches and millions of simulated
+cycles. Size and speed are separate needs:
+
+- **Size** needs no behavioral form. The scalable cache already uses compact
+  SRAM stores for tags and data; its limit (64 sets, 2 KiB per cache at two
+  ways and 16-byte lines) comes from the valid and replacement bits kept as
+  flip-flops in the structural controller. Step 3 above (metadata in the tag
+  store) lifts it.
+- **Speed** does. The controller is simulated gate by gate on every access.
+  In the cache campaign (spot checks at the current code, `embedded`), a run
+  without caches simulated about 4,700 cycles per second (topology B,
+  `calls`: 94,793 cycles in 20 s), and a run with both cache levels about 290
+  (D-ID, `sort`: 192,759 cycles in 671 s). At 290 cycles per second, ten
+  million cycles take about ten hours.
+
+**What it is.** A `CacheBehavioral<W>` registered as the behavioral
+implementation of the existing contracts `memory.cache.<W>` and
+`memory.cache.scalable.<W>`: the same pins, the same transaction and status
+rules, the same cycle on which every request is accepted and every response
+appears, for every parameter combination the structural cache supports at
+that point (geometry and the behavior parameters of steps 1–5). It keeps
+tags, valid, dirty and replacement state and data in host storage
+(`MemoryStorage`, like the compact memory devices) and drives its lower port
+as the structural cache does.
+
+**Rules (lower-level first).**
+
+- It comes **after** the structural cache is complete for the parameters it
+  claims; it is an abstraction of that cache, not a replacement for it.
+- An equivalence test runs the same request sequences (the recorded cache
+  scenarios, the standalone traces S0–S2 and the five CPU topologies) on both
+  forms and requires the same upper and lower transactions cycle for cycle
+  and the same final memory, including four-state cases where the structural
+  cache defines them.
+- Its timing comes from the structural cache's proven delay table, like
+  every compact part (`part_delay_tables`); the clock analysis must certify
+  the same period with either form.
+- It does not change any cache result: rerunning a campaign case with the
+  behavioral cache must give the same cycles.
+
+**Order.** Inserted as step 6, before the campaign rerun, which becomes step
+7:
+
+1. Write buffer.
+2. Write-back and write-allocate.
+3. Metadata in the tag store.
+4. 4 and 8 ways with a choice of replacement.
+5. Next-line prefetch (optional).
+6. **Behavioral cache**, equivalent to the structural cache for every
+   supported parameter combination, with a measured simulation speedup.
+7. Rerun the cache campaign over chosen combinations and rewrite the public
+   cache page; the long runs may use the behavioral cache once equivalence
+   holds.
+
+This section replaces the order given in the plan section above.
