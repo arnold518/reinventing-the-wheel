@@ -5,6 +5,22 @@ what changed and why, what was verified, and any limits or deliberate
 omissions. Entries begin with adoption of this recording workflow; older
 history remains in Git and the archived reports.
 
+## 2026-10-20
+
+### Cache: write buffer (branch `realistic-timing`)
+
+- **Changed:** caches take a `write_buffer` of 1, 2 or 4 entries: writes are
+  answered in their lookup cycle and drained to the backing memory in order
+  while no fill needs the lower port; a read miss waits for the drain. New
+  structural part `CacheWriteQueue<W>`. The experiment tool takes per-cache
+  settings (`--il1/--dl1/--l2 KEY=VALUE`) and drains buffers before checking
+  memory.
+- **Why:** step 1 of the general cache plan; write-through to two levels was
+  the measured cost of the L2 under the L1s.
+- **Verified:** `CacheReadTest` with a new reference-model stream, the four
+  cache scenarios, `RV32ITopologyTest` (buffered D-ID `sort`: 4,765 cycles
+  against 6,481, verified).
+
 ## 2026-10-19
 
 ### Visualizer: unified memory view and a shared-memory RV32I scenario (branch `realistic-timing`)

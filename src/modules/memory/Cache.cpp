@@ -9,6 +9,7 @@
 #include <bit>
 #include <array>
 #include <limits>
+#include <tuple>
 #include <vector>
 
 namespace circuit::memory {
@@ -31,16 +32,21 @@ void CacheConfig::validate(size_t width) const {
     for (auto technology : {tag_technology, data_technology})
         if (technology != Technology::FF && technology != Technology::SRAM)
             throw std::invalid_argument("Cache tag/data banks require writable FF or SRAM endpoints");
+    if (write_buffer != 0 && write_buffer != 1 && write_buffer != 2 && write_buffer != 4)
+        throw std::invalid_argument("Cache write buffer must have 0, 1, 2 or 4 entries");
+    if (write_buffer && !read_write)
+        throw std::invalid_argument("A write buffer needs a read-write cache");
 }
 
 CacheConfig cacheConfig(const ParameterMap& p) {
     memory_device::keys(p, {"sets", "ways", "block_bytes", "backing_depth_words", "mode", "storage_form",
-                            "tag_technology", "data_technology", "fill"});
+                            "tag_technology", "data_technology", "fill", "write_buffer"});
     CacheConfig c;
     c.sets = memory_device::parameter(p, "sets", c.sets);
     c.ways = memory_device::parameter(p, "ways", c.ways);
     c.block_bytes = memory_device::parameter(p, "block_bytes", c.block_bytes);
     c.backing_depth_words = memory_device::parameter(p, "backing_depth_words", c.backing_depth_words);
+    c.write_buffer = memory_device::parameter(p, "write_buffer", c.write_buffer);
     if (auto it = p.find("mode"); it != p.end()) {
         if (it->second == "read_only") c.read_write = false;
         else if (it->second == "read_write") c.read_write = true;
@@ -69,7 +75,8 @@ ParameterMap cacheParameters(const CacheConfig& c) {
             {"storage_form", c.scalable_storage ? "scalable" : "expanded"},
             {"tag_technology", technologyName(c.tag_technology)},
             {"data_technology", technologyName(c.data_technology)},
-            {"fill", c.burst_fill ? "burst" : "words"}};
+            {"fill", c.burst_fill ? "burst" : "words"},
+            {"write_buffer", std::to_string(c.write_buffer)}};
 }
 
 void cachePins(IOComponent* self, size_t width) {
@@ -417,6 +424,98 @@ public:
     }
 };
 
+// The write buffer: `entries` slots filled from slot 0, each a valid bit and
+// the write's address, data and mask. Slot 0 is the oldest; it is sent to the
+// backing memory while GRANT is high (no fill uses the lower port), and when
+// its response arrives every slot moves down one. A new write enters the first
+// free slot after that move, so one write can enter and one leave at an edge.
+// The backing memory's status for a buffered write is not returned.
+template<size_t Width>
+class CacheWriteQueue : public IOComponent {
+public:
+    CacheWriteQueue(std::string name, size_t entries)
+        : IOComponent(std::move(name), [](IOComponent* self) {
+              for (auto pin : {"CLK", "RST", "ENQUEUE", "GRANT", "MEM_REQ_READY", "MEM_RSP_VALID"})
+                  self->addPin(pin, PinType::INPUT);
+              self->addPin<32>("ADDR", PinType::INPUT);
+              self->addPinDynamic("DATA", PinType::INPUT, Width);
+              self->addPinDynamic("MASK", PinType::INPUT, Width / 8);
+              for (auto pin : {"FULL", "IDLE", "REQ_VALID", "RSP_READY"})
+                  self->addPin(pin, PinType::OUTPUT);
+              self->addPin<32>("REQ_ADDR", PinType::OUTPUT);
+              self->addPinDynamic("REQ_DATA", PinType::OUTPUT, Width);
+              self->addPinDynamic("REQ_MASK", PinType::OUTPUT, Width / 8);
+          }), entries_(entries), type_("CacheWriteQueue<" + std::to_string(Width) + ">") {}
+    const char* getTypeName() const override { return type_.c_str(); }
+    void buildInternals(ComponentBuilder& builder) override {
+        StructuralWiring w(builder);
+        auto low = w.constant("LOW", false);
+        auto state_bit = [&](const std::string& name) {
+            auto bit = builder.add(circuit::families::ClockedStateBit, name);
+            for (auto pin : {"CLK", "RST"}) w.connect(getInputPin(pin), bit->getInputPin(pin));
+            return bit;
+        };
+        auto reg = [&](const std::string& name, size_t width) {
+            auto r = builder.add(circuit::families::registerWord(width), name);
+            for (auto pin : {"CLK", "RST"}) w.connect(getInputPin(pin), r->getInputPin(pin));
+            return r;
+        };
+        struct Slot { std::shared_ptr<IOComponent> valid, addr, data, mask; };
+        std::vector<Slot> slots;
+        for (size_t i = 0; i < entries_; ++i) {
+            const auto n = std::to_string(i);
+            slots.push_back({state_bit("VALID_" + n), reg("ADDRESS_" + n, 32), reg("DATA_" + n, Width),
+                             reg("MASK_" + n, Width / 8)});
+        }
+        auto waiting = state_bit("WAITING");
+        auto oldest = slots[0].valid->getOutputPin("Q");
+        auto request = w.reduce("SEND", {oldest, w.invert("NOT_WAITING", waiting->getOutputPin("Q")),
+                                         getInputPin("GRANT")}, true);
+        auto sent = w.both("SENT", request, getInputPin("MEM_REQ_READY"));
+        auto response_ready = w.either("RESPONSE_READY", sent, waiting->getOutputPin("Q"));
+        auto done = w.both("DONE", response_ready, getInputPin("MEM_RSP_VALID"));
+        w.connect(w.both("STILL_WAITING", response_ready, w.invert("NOT_DONE", done)), waiting->getInputPin("D"));
+        // After the move (done): what each slot would hold, then where the new write goes.
+        std::vector<PinPtr> moved_valid;
+        for (size_t i = 0; i < entries_; ++i) {
+            const auto n = std::to_string(i);
+            auto above = i + 1 < entries_ ? PinPtr(slots[i + 1].valid->getOutputPin("Q")) : low;
+            moved_valid.push_back(memory_detail::payloadMux(builder, w, "MOVED_VALID_" + n,
+                slots[i].valid->getOutputPin("Q"), above, done));
+        }
+        for (size_t i = 0; i < entries_; ++i) {
+            const auto n = std::to_string(i);
+            auto first_free = w.both("FIRST_FREE_" + n, w.invert("FREE_" + n, moved_valid[i]),
+                                     i == 0 ? w.constant("BOTTOM", true) : moved_valid[i - 1]);
+            auto put = w.both("PUT_" + n, getInputPin("ENQUEUE"), first_free);
+            w.connect(w.either("NEXT_VALID_" + n, moved_valid[i], put), slots[i].valid->getInputPin("D"));
+            auto load = w.either("LOAD_" + n, done, put);
+            const auto& upper = i + 1 < entries_ ? slots[i + 1] : slots[i];
+            for (auto [field, source, input] : {std::tuple{slots[i].addr, upper.addr, PinPtr(this->template getInputPin<32>("ADDR"))},
+                                                std::tuple{slots[i].data, upper.data, PinPtr(getInputPinDynamic("DATA"))},
+                                                std::tuple{slots[i].mask, upper.mask, PinPtr(getInputPinDynamic("MASK"))}}) {
+                auto moved = memory_detail::payloadMux(builder, w, field->getName() + "_MOVED",
+                    field->getOutputPinDynamic("Q"), source->getOutputPinDynamic("Q"), done);
+                w.connect(memory_detail::payloadMux(builder, w, field->getName() + "_NEXT", moved, input, put),
+                          field->getInputPinDynamic("D"));
+                w.connect(load, field->getInputPin("WE"));
+            }
+        }
+        w.connect(slots.back().valid->getOutputPin("Q"), getOutputPin("FULL"));
+        w.connect(w.both("IDLE", w.invert("EMPTY", oldest), w.invert("NOT_SENDING", waiting->getOutputPin("Q"))),
+                  getOutputPin("IDLE"));
+        w.connect(request, getOutputPin("REQ_VALID"));
+        w.connect(response_ready, getOutputPin("RSP_READY"));
+        w.connect(slots[0].addr->template getOutputPin<32>("Q"), this->template getOutputPin<32>("REQ_ADDR"));
+        w.connect(slots[0].data->getOutputPinDynamic("Q"), getOutputPinDynamic("REQ_DATA"));
+        w.connect(slots[0].mask->getOutputPinDynamic("Q"), getOutputPinDynamic("REQ_MASK"));
+        w.finish();
+    }
+private:
+    size_t entries_;
+    std::string type_;
+};
+
 // Bank pins of one way's tag or data bank, as the controller drives them:
 // READ (read at the next edge), WRITE (write at the next edge), WORD_ADDR,
 // WRITE_DATA, WRITE_MASK; READ_DATA comes back.
@@ -607,11 +706,39 @@ void CacheBankController<Width>::buildInternals(ComponentBuilder& builder) {
     for (auto pin : {"CLK", "RST"}) w.connect(getInputPin(pin), phases->getInputPin(pin));
     const auto L = phases->getOutputPin("LOOKUP"), MS = phases->getOutputPin("MEMORY_SEND"),
                MW = phases->getOutputPin("MEMORY_WAIT"), ST = phases->getOutputPin("STREAM"), D = phases->getOutputPin("DONE");
+    // The write buffer (write_buffer > 0): a write is queued in its lookup
+    // cycle; a read miss waits (MISS_WAIT) until the queue has sent everything.
+    const bool buffered = config_.write_buffer > 0;
+    std::shared_ptr<IOComponent> queue, miss_wait_bit;
+    PinPtr drained = high, queue_full = low, miss_wait = low;
+    if (buffered) {
+        queue = builder.addNewComponent<CacheWriteQueue<Width>>("WRITE_QUEUE", config_.write_buffer);
+        for (auto pin : {"CLK", "RST"}) w.connect(getInputPin(pin), queue->getInputPin(pin));
+        w.connect(w.invert("LOWER_PORT_FREE", w.either("FILL_USES_LOWER_PORT", MS, MW)), queue->getInputPin("GRANT"));
+        w.connect(getInputPin("MEM_REQ_READY"), queue->getInputPin("MEM_REQ_READY"));
+        w.connect(getInputPin("MEM_RSP_VALID"), queue->getInputPin("MEM_RSP_VALID"));
+        w.connect(addr_reg->getOutputPin<32>("Q"), queue->getInputPin<32>("ADDR"));
+        w.connect(write_data_reg->getOutputPinDynamic("Q"), queue->getInputPinDynamic("DATA"));
+        w.connect(write_mask_reg->getOutputPinDynamic("Q"), queue->getInputPinDynamic("MASK"));
+        drained = queue->getOutputPin("IDLE");
+        queue_full = queue->getOutputPin("FULL");
+        miss_wait_bit = state_bit("MISS_WAIT");
+        miss_wait = miss_wait_bit->getOutputPin("Q");
+    }
     auto lookup_read = w.both("LOOKUP_READ", L, is_read);
     auto read_hit = w.both("READ_HIT", lookup_read, hit);
     auto read_miss = w.both("READ_MISS", lookup_read, w.invert("NOT_HIT", hit));
     auto write_lookup = w.both("WRITE_LOOKUP", L, is_write);
     auto burst_hit = w.both("BURST_HIT", read_hit, is_burst);
+    auto queued_write = buffered ? write_lookup : low;
+    auto queued_update = buffered ? w.both("QUEUED_WRITE_HIT", write_lookup, hit) : low;
+    // A fill starts once the queue is drained.
+    auto fill_start = buffered ? w.both("FILL_START", w.either("MISS_OR_WAITING", read_miss, miss_wait), drained) : read_miss;
+    if (buffered) {
+        w.connect(queued_write, queue->getInputPin("ENQUEUE"));
+        w.connect(w.both("NEXT_MISS_WAIT", w.either("MISS_STILL_WAITING", read_miss, miss_wait),
+                         w.invert("NOT_DRAINED", drained)), miss_wait_bit->getInputPin("D"));
+    }
     // Backing memory: accepted while MEMORY_SEND; answered then or later, a
     // burst fill one word per response.
     auto sent = w.both("MEMORY_SENT", MS, getInputPin("MEM_REQ_READY"));
@@ -675,10 +802,11 @@ void CacheBankController<Width>::buildInternals(ComponentBuilder& builder) {
     // result and status registers.
     auto forward = w.both("FORWARD_FILL_WORD", fill_success, is_burst);
     auto read_answered = w.both("READ_ANSWERED", fill_complete, w.invert("NOT_A_BURST", is_burst));
-    auto respond = w.reduce("RESPOND", {invalid, read_hit, stream_take, forward, read_answered, fill_failure, write_done}, false);
+    auto respond = w.reduce("RESPOND", {invalid, read_hit, stream_take, forward, read_answered, fill_failure, write_done,
+                                        queued_write}, false);
     auto ends = w.reduce("RESPONSE_ENDS", {invalid, w.both("SINGLE_WORD_HIT", read_hit, streams ? w.invert("HIT_NOT_BURST", is_burst) : high),
         w.both("LAST_STREAM_WORD", stream_take, stream_last), w.both("LAST_FORWARDED", forward, last_fill),
-        read_answered, fill_failure, write_done}, false);
+        read_answered, fill_failure, write_done, queued_write}, false);
     auto last_bit = state_bit("LAST");
     w.connect(w.either("NEXT_LAST", w.both("NEW_LAST", respond, ends),
         w.both("HOLD_LAST", last_bit->getOutputPin("Q"), w.invert("NO_NEW_RESPONSE", respond))), last_bit->getInputPin("D"));
@@ -687,7 +815,7 @@ void CacheBankController<Width>::buildInternals(ComponentBuilder& builder) {
 
     // Next states.
     w.connect(valid_start, phases->getInputPin("NEXT_LOOKUP"));
-    w.connect(w.reduce("NEXT_MEMORY_SEND_VALUE", {read_miss, write_lookup,
+    w.connect(w.reduce("NEXT_MEMORY_SEND_VALUE", {fill_start, buffered ? low : write_lookup,
         config_.burst_fill ? low : more_fill,
         w.both("STAY_MEMORY_SEND", MS, w.invert("NOT_SENT", getInputPin("MEM_REQ_READY")))}, false),
         phases->getInputPin("NEXT_MEMORY_SEND"));
@@ -743,12 +871,16 @@ void CacheBankController<Width>::buildInternals(ComponentBuilder& builder) {
     auto data_write_mask = memory_detail::payloadMux(builder, w, "DATA_WRITE_MASK_SOURCE",
         full_data_mask, write_mask_reg->getOutputPinDynamic("Q"), is_write);
     auto data_write_index = memory_detail::payloadMux(builder, w, "DATA_WRITE_INDEX", fill_index, data_index, is_write);
-    auto data_writing = w.either("DATA_WRITING", fill_success, update_written);
+    auto data_writing = w.reduce("DATA_WRITING", {fill_success, update_written, queued_update}, false);
+    // A queued write updates its line in the lookup cycle, in the hit way.
+    auto write_way_one = buffered && config_.ways == 2
+        ? memory_detail::payloadMux(builder, w, "UPDATE_WAY", way_one, hit_one, queued_update) : way_one;
     auto data_read_index = memory_detail::payloadMux(builder, w, "DATA_LOOKUP_OR_STREAM", lookup_index, stream_index, reading_stream);
     for (size_t way = 0; way < config_.ways; ++way) {
         const auto n = std::to_string(way);
         auto this_way = way == 0 ? w.invert("CURRENT_WAY_ZERO", way_one) : way_one;
-        auto data_write = w.both("DATA_WRITE_" + n, data_writing, this_way);
+        auto write_way = way == 0 ? w.invert("WRITE_WAY_ZERO", write_way_one) : write_way_one;
+        auto data_write = w.both("DATA_WRITE_" + n, data_writing, write_way);
         auto tag_write = w.both("TAG_WRITE_" + n, fill_complete, this_way);
         w.connect(valid_start, getOutputPin("TAG" + n + "_READ"));
         w.connect(tag_write, getOutputPin("TAG" + n + "_WRITE"));
@@ -769,17 +901,21 @@ void CacheBankController<Width>::buildInternals(ComponentBuilder& builder) {
 
     // Idle: no lookup, backing request or stream; a shown response still lets
     // the front end take the next request as it is finished.
-    auto working = w.reduce("WORKING", {L, MS, MW, ST}, false);
-    auto idle = w.both("IDLE", w.invert("NOT_WORKING", working), w.invert("NOT_DONE", D));
-    w.connect(w.both("AVAILABLE", w.invert("NO_WORK", working), w.invert("NO_INVALIDATION", getInputPin("INV_VALID"))),
+    auto working = w.reduce("WORKING", {L, MS, MW, ST, miss_wait}, false);
+    // Invalidation waits for the write buffer too: afterwards the backing
+    // memory holds every write.
+    auto idle = w.reduce("IDLE", {w.invert("NOT_WORKING", working), w.invert("NOT_DONE", D), drained}, true);
+    w.connect(w.reduce("AVAILABLE", {w.invert("NO_WORK", working), w.invert("NO_INVALIDATION", getInputPin("INV_VALID")),
+                                     w.invert("QUEUE_NOT_FULL", queue_full)}, true),
               front->getInputPin("BACK_READY"));
     w.connect(idle, getOutputPin("INV_READY"));
     auto invalidate = w.both("ACCEPT_INVALIDATION", getInputPin("INV_VALID"), idle);
     for (const auto& line : lines) w.connect(invalidate, line->getInputPin("INVALIDATE"));
     if (replacement) {
         w.connect(invalidate, replacement->getInputPin("INVALIDATE"));
-        w.connect(w.reduce("TOUCH_REPLACEMENT", {read_hit, fill_complete, update_written}, false), replacement->getInputPin("TOUCH"));
-        w.connect(memory_detail::payloadMux(builder, w, "TOUCHED_WAY", way_one, hit_one, read_hit), replacement->getInputPin("TOUCH_WAY"));
+        w.connect(w.reduce("TOUCH_REPLACEMENT", {read_hit, fill_complete, update_written, queued_update}, false), replacement->getInputPin("TOUCH"));
+        w.connect(memory_detail::payloadMux(builder, w, "TOUCHED_WAY", way_one, hit_one, w.either("HIT_TOUCH", read_hit, queued_update)),
+                  replacement->getInputPin("TOUCH_WAY"));
     }
 
     // Result: the hit way's word, a streamed word of the current way, or a
@@ -817,15 +953,27 @@ void CacheBankController<Width>::buildInternals(ComponentBuilder& builder) {
     for (size_t i = 0; i < word_shift; ++i) fill_address_bits[i] = low;
     for (size_t i = 0; i < line_bits; ++i) fill_address_bits[word_shift + i] = fill_word[i];
     auto fill_address = config_.burst_fill ? PinPtr(addr_reg->getOutputPin<32>("Q")) : join("FILL_ADDRESS", fill_address_bits);
-    w.connect(memory_detail::payloadMux(builder, w, "LOWER_ADDRESS", fill_address, addr_reg->getOutputPin<32>("Q"), is_write),
-              getOutputPin<32>("MEM_REQ_ADDR"));
-    w.connect(memory_detail::payloadMux(builder, w, "LOWER_OP", read_op, write_op, is_write), getOutputPin<3>("MEM_REQ_OP"));
-    w.connect(memory_detail::payloadMux(builder, w, "LOWER_WRITE_DATA", zero_data, write_data_reg->getOutputPinDynamic("Q"), is_write),
-              getOutputPinDynamic("MEM_REQ_WRITE_DATA"));
-    w.connect(memory_detail::payloadMux(builder, w, "LOWER_WRITE_MASK", zero_mask, write_mask_reg->getOutputPinDynamic("Q"), is_write),
-              getOutputPinDynamic("MEM_REQ_WRITE_MASK"));
-    w.connect(MS, getOutputPin("MEM_REQ_VALID"));
-    w.connect(rsp_ready, getOutputPin("MEM_RSP_READY"));
+    auto lower_address = memory_detail::payloadMux(builder, w, "LOWER_ADDRESS", fill_address, addr_reg->getOutputPin<32>("Q"), is_write);
+    auto lower_op = memory_detail::payloadMux(builder, w, "LOWER_OP", read_op, write_op, is_write);
+    auto lower_data = memory_detail::payloadMux(builder, w, "LOWER_WRITE_DATA", zero_data, write_data_reg->getOutputPinDynamic("Q"), is_write);
+    auto lower_mask = memory_detail::payloadMux(builder, w, "LOWER_WRITE_MASK", zero_mask, write_mask_reg->getOutputPinDynamic("Q"), is_write);
+    PinPtr lower_valid = MS, lower_ready = rsp_ready;
+    if (buffered) {
+        // With a write buffer, MEMORY_SEND is always a fill; otherwise the
+        // queue's oldest write uses the lower port.
+        lower_address = memory_detail::payloadMux(builder, w, "LOWER_ADDRESS_OR_QUEUE", queue->getOutputPin<32>("REQ_ADDR"), fill_address, MS);
+        lower_op = memory_detail::payloadMux(builder, w, "LOWER_OP_OR_QUEUE", write_op, read_op, MS);
+        lower_data = memory_detail::payloadMux(builder, w, "LOWER_DATA_OR_QUEUE", queue->getOutputPinDynamic("REQ_DATA"), zero_data, MS);
+        lower_mask = memory_detail::payloadMux(builder, w, "LOWER_MASK_OR_QUEUE", queue->getOutputPinDynamic("REQ_MASK"), zero_mask, MS);
+        lower_valid = w.either("LOWER_REQUEST", MS, queue->getOutputPin("REQ_VALID"));
+        lower_ready = w.either("LOWER_RESPONSE_READY", rsp_ready, queue->getOutputPin("RSP_READY"));
+    }
+    w.connect(lower_address, getOutputPin<32>("MEM_REQ_ADDR"));
+    w.connect(lower_op, getOutputPin<3>("MEM_REQ_OP"));
+    w.connect(lower_data, getOutputPinDynamic("MEM_REQ_WRITE_DATA"));
+    w.connect(lower_mask, getOutputPinDynamic("MEM_REQ_WRITE_MASK"));
+    w.connect(lower_valid, getOutputPin("MEM_REQ_VALID"));
+    w.connect(lower_ready, getOutputPin("MEM_RSP_READY"));
     w.finish();
 }
 

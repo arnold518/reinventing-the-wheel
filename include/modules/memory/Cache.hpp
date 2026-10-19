@@ -19,6 +19,12 @@ struct CacheConfig {
     // (the backing memory must answer bursts of a line) instead of one read
     // per word.
     bool burst_fill = false;
+    // Entries of the write buffer (0, 1, 2 or 4; read-write caches only). A
+    // buffered write is answered in its lookup cycle and reaches the backing
+    // memory later, oldest first, whenever no fill uses the lower port; a
+    // read miss waits until the buffer is empty. 0: write-through, answered
+    // when the backing memory completes the write.
+    size_t write_buffer = 0;
 
     void validate(size_t width) const;
 };

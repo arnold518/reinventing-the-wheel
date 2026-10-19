@@ -1,7 +1,7 @@
 # General cache: policies and sizes as parameters
 
-Started: 2026-10-19. Status: open (plan only, deferred by the owner; no work
-started). Code state: branch `realistic-timing` at `f2d3108`.
+Started: 2026-10-19. Status: open (implementation in progress since
+2026-10-20). Code state: branch `realistic-timing` at `f2d3108`.
 
 ## Summary
 
@@ -172,3 +172,40 @@ as the structural cache does.
    holds.
 
 This section replaces the order given in the plan section above.
+
+## 2026-10-20 — Step 1 done: write buffer
+
+The owner asked to implement the plan in full, with minimal tests along the
+way.
+
+**Design.**
+- `CacheConfig::write_buffer` (catalog parameter `write_buffer`): 0, 1, 2 or
+  4 entries, read-write caches only; 0 keeps write-through exactly as
+  before.
+- `CacheWriteQueue<W>` (structural): per slot a valid bit and address, data
+  and mask registers; slot 0 is the oldest. It sends slot 0 to the lower
+  port while no fill uses it (`GRANT`), and every slot moves down when the
+  response arrives; a new write enters the first free slot after the move,
+  so one write can enter and one leave at an edge.
+- Controller: a write is queued in its lookup cycle and answered then (like a
+  read hit), its line updated in that cycle in the hit way if present. A
+  read miss waits in the new `MISS_WAIT` state until the queue is idle, so a
+  fill always reads up-to-date memory. A full queue blocks new requests.
+  Invalidation waits for the queue to drain, so afterwards the backing
+  memory holds every write.
+- Posted writes: the backing memory's status for a buffered write is not
+  returned; a reset discards queued writes.
+- Experiment tool: `--il1`, `--dl1`, `--l2` take `KEY=VALUE,…` overrides of a
+  cache's catalog settings. After the program stops, the run clocks on,
+  uncounted, until every write queue has been idle for two cycles, then
+  checks memory.
+
+**Checks.** `CacheReadTest` gains a write-buffer stream against a reference
+model (1, 2 and 4 entries; W = 8, 16, 32; one and two ways; FF and SRAM data
+stores): every read value and read count matches, a buffered write is
+answered within two cycles of acceptance, every write reaches the backing
+memory exactly once and the final bytes match. The rig now counts lower
+requests at every rising edge it drives. `RV32ITopologyTest` gains a
+buffered D-ID run: `sort` (16 words, 2 iterations, `embedded`) verifies in
+4,765 cycles against 6,481 without buffers (4 entries: also 4,765). The four
+cache scenarios pass unchanged.

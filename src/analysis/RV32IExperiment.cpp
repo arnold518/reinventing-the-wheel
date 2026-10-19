@@ -496,6 +496,30 @@ RV32IExperimentResult runRV32IExperiment(const RV32IExperimentConfig& config) {
         if(done)break;
     }
     if(measuring){result.simulator=sim.getPerformanceCounters();recordCommands();}
+    // Writes still queued in a cache's write buffer reach memory after the
+    // program stops: clock on, uncounted, until every queue has been idle for
+    // two cycles (an L1's last write may be queued again in the L2).
+    if(done&&topology) {
+        std::vector<std::shared_ptr<PinBase>> idle_pins;
+        for(const auto& [name,part,prefix]:boundaries) {
+            (void)name;(void)prefix;
+            if(!std::string(part->getTypeName()).starts_with("Cache<"))continue;
+            for(const auto& child:part->getChildren())
+                if(child->getName()=="CONTROLLER")
+                    for(const auto& inner:child->getChildren())
+                        if(inner->getName()=="WRITE_QUEUE")
+                            idle_pins.push_back(std::dynamic_pointer_cast<IOComponent>(inner)->getOutputPin("IDLE"));
+        }
+        size_t next=result.whole_program_cycles,quiet=0;
+        for(size_t extra=0;!idle_pins.empty()&&quiet<2&&extra<100000;++extra,++next) {
+            bool all=true;
+            for(const auto& pin:idle_pins)all=all&&pin->getValueAsUInt64()==1;
+            quiet=all?quiet+1:0;
+            drive(sim,clock.edge(next),clk,true);drive(sim,clock.falling(next),clk,false);
+            advance(clock.end(next));
+        }
+        require(idle_pins.empty()||quiet>=2,"Cache write buffers did not drain");
+    }
     result.completed=done;
     if(!done&&!config.allow_incomplete)require(false,"Experiment cycle budget exceeded");
     require(window_started,"Measurement start PC was never retired");

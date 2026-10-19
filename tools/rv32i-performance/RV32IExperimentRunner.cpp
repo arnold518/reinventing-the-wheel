@@ -37,6 +37,7 @@ void usage() {
         "  [--measure-body] [--training-iterations N] (new named benchmarks only)\n"
         "  [--memory ff|sram|sram-async|dram|rom|nor-flash] [--phase-ticks N] [--guard-ticks N]\n"
         "  [--topology A|B|C-ID|D-0|D-ID] (advanced core: shared memory, arbiter, L1s, L2)\n"
+        "  [--il1|--dl1|--l2 KEY=VALUE,...] (cache settings of a topology, e.g. write_buffer=2)\n"
         "  [--max-cycles N] [--max-events N] [--allow-incomplete] [--progress-cycles N]\n"
         "  [--tohost ADDRESS] [--allocation-limit-mib N]\n"
         "  [--trace-cycles] (requires --max-cycles <= 4096; validation only)\n"
@@ -123,6 +124,18 @@ int main(int argc,char** argv) {
                 c.memory.device.clocked=value=="sram";
             }
             else if(key=="--topology")c.topology=value;
+            else if(key=="--il1"||key=="--dl1"||key=="--l2"){
+                // Override catalog settings of one cache: KEY=VALUE pairs, comma separated.
+                auto& cache=key=="--il1"?c.instruction_l1:key=="--dl1"?c.data_l1:c.l2;
+                auto parameters=circuit::memory::cacheParameters(cache);
+                std::stringstream pairs(value);
+                for(std::string pair;std::getline(pairs,pair,',');){
+                    const auto equals=pair.find('=');
+                    if(equals==std::string::npos)throw std::invalid_argument(key+" needs KEY=VALUE pairs");
+                    parameters[pair.substr(0,equals)]=pair.substr(equals+1);
+                }
+                cache=circuit::memory::cacheConfig(parameters);
+            }
             else if(key=="--phase-ticks")c.memory.device.phase_ticks=number(value);
             else if(key=="--guard-ticks")c.memory.device.guard_ticks=number(value);
             else if(key=="--allocation-limit-mib")rss_mib=number(value);

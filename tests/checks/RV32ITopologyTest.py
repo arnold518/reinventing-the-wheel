@@ -23,6 +23,15 @@ def run(topology, memory="dram", *workload):
 
 
 class Topologies(unittest.TestCase):
+    def test_write_buffers(self):
+        # Buffered writes reach memory after the program stops; the run must
+        # still match the oracle and the final memory, in fewer cycles.
+        plain = run("D-ID", "dram", "--workload", "sort", "--size", "16", "--iterations", "2")
+        buffered = run("D-ID", "dram", "--workload", "sort", "--size", "16", "--iterations", "2",
+                       "--dl1", "write_buffer=2", "--l2", "write_buffer=2")
+        self.assertTrue(plain["verified"] and buffered["verified"])
+        self.assertLess(buffered["whole_program_cycles"], plain["whole_program_cycles"])
+
     def test_overlapping_images_are_refused(self):
         # One shared memory holds code and data at their own addresses; a
         # workload whose code and data collide must not run (program 19's

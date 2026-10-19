@@ -388,6 +388,11 @@ public:
         drive({{"RST", 0}});
     }
     void drive(const std::map<std::string, uint64_t>& values, size_t wait = 200) {
+        // Every rising edge this rig drives: count the backing request it takes.
+        if (auto clk = values.find("CLK"); clk != values.end()) {
+            if (clk->second == 1 && !clock_high_) countLower();
+            clock_high_ = clk->second == 1;
+        }
         const auto at = now_ + 1;
         for (const auto& [name, value] : values)
             sim_.scheduleEvent(makeTestWireUpdate(at, inputs_.at(name), TestValue(value)));
@@ -404,7 +409,6 @@ public:
     }
     void cycle() {
         drive({{"CLK", 0}});
-        countLower();
         drive({{"CLK", 1}});
     }
     unsigned lowerReads() const { return lower_reads_; }
@@ -457,7 +461,6 @@ public:
                         where + ": response changed under backpressure");
             }
             drive({{"CLK", 0}, {"RSP_READY", 1}});
-            countLower();
             drive({{"CLK", 1}});
             drive({{"CLK", 0}, {"RSP_READY", 0}});
         }
@@ -493,6 +496,26 @@ public:
         drive({{"CLK", 1}});
         drive({{"CLK", 0}, {"RSP_READY", 0}});
     }
+    // A buffered write: answered OK within a few cycles of being taken,
+    // whatever the backing memory is doing; its lower write comes later.
+    void postedWrite(uint32_t address, uint32_t data, unsigned mask) {
+        drive({{"CLK", 0}, {"REQ_VALID", 0}, {"REQ_OP", 1}, {"REQ_ADDR", address},
+               {"REQ_WRITE_DATA", data}, {"REQ_WRITE_MASK", mask}, {"RSP_READY", 0}});
+        for (size_t i = 0; out("REQ_READY") != logicBit(true) && i < 100; ++i) cycle();
+        require(out("REQ_READY") == logicBit(true), context_ + ": no buffered-write capacity");
+        drive({{"CLK", 0}, {"REQ_VALID", 1}});
+        drive({{"CLK", 1}});
+        drive({{"CLK", 0}, {"REQ_VALID", 0}, {"REQ_ADDR", 0xffffffff}, {"REQ_WRITE_DATA", 0}, {"REQ_WRITE_MASK", 0}});
+        size_t waited = 0;
+        for (; out("RSP_VALID") != logicBit(true) && waited < 100; ++waited) cycle();
+        require(out("RSP_VALID") == logicBit(true) && waited <= 2,
+                context_ + ": buffered write not answered promptly at " + std::to_string(address));
+        require(out("RSP_STATUS") == logicBits(3, 0), context_ + ": buffered write status not OK");
+        drive({{"CLK", 0}, {"RSP_READY", 1}});
+        drive({{"CLK", 1}});
+        drive({{"CLK", 0}, {"RSP_READY", 0}});
+    }
+    void idle(size_t cycles) { for (size_t i = 0; i < cycles; ++i) cycle(); }
     void reject(uint32_t address, unsigned op, Status expected_status) {
         const auto before_reads = lower_reads_, before_writes = lower_writes_;
         drive({{"CLK", 0}, {"REQ_VALID", 0}, {"REQ_OP", op}, {"REQ_ADDR", address},
@@ -559,6 +582,7 @@ private:
     std::string context_;
     unsigned lower_reads_ = 0;
     unsigned lower_writes_ = 0;
+    bool clock_high_ = false;
 };
 
 template<size_t Width>
@@ -708,6 +732,83 @@ void exerciseReferenceStream() {
     read(0);
     require(rig.backingBytes(0, backing.size()) == backing,
             "Reference stream final backing bytes differ");
+}
+
+// The write buffer: writes are answered at once and reach the backing memory
+// later, in order; a read always sees the latest write (a hit reads the
+// updated line, a miss waits for the queue to drain first).
+template<size_t Width>
+void exerciseWriteBuffer(size_t entries, size_t ways, Technology data) {
+    constexpr size_t sets = 4, words_per_line = 2;
+    constexpr size_t word_bytes = Width / 8, block_bytes = words_per_line * word_bytes;
+    CacheConfig config;
+    config.sets = sets;
+    config.ways = ways;
+    config.block_bytes = block_bytes;
+    config.backing_depth_words = 64;
+    config.read_write = true;
+    config.write_buffer = entries;
+    config.data_technology = data;
+    Rig<Width> rig(config, Technology::FF);
+    struct Line { bool valid = false; size_t tag = 0, age = 0; std::vector<uint8_t> bytes = std::vector<uint8_t>(block_bytes); };
+    std::vector<std::vector<Line>> lines(sets, std::vector<Line>(ways));
+    std::vector<uint8_t> backing(config.backing_depth_words * word_bytes);
+    for (size_t i = 0; i < backing.size(); ++i) backing[i] = uint8_t(0xa0 + i);
+    size_t age = 0;
+    unsigned reads = 0, writes = 0;
+    auto find = [&](size_t address) -> Line* {
+        const auto set = (address / block_bytes) % sets, tag = (address / block_bytes) / sets;
+        for (auto& line : lines[set]) if (line.valid && line.tag == tag) return &line;
+        return nullptr;
+    };
+    auto read = [&](size_t address) {
+        auto* line = find(address);
+        if (!line) {
+            const auto set = (address / block_bytes) % sets, base = address - address % block_bytes;
+            line = &lines[set][0];
+            for (auto& candidate : lines[set]) {
+                if (!candidate.valid) { line = &candidate; break; }
+                if (line->valid && candidate.age < line->age) line = &candidate;
+            }
+            line->valid = true;
+            line->tag = (address / block_bytes) / sets;
+            for (size_t i = 0; i < block_bytes; ++i) line->bytes[i] = backing[base + i];
+            reads += words_per_line;
+        }
+        line->age = ++age;
+        uint32_t value = 0;
+        for (size_t i = 0; i < word_bytes; ++i) value |= uint32_t(line->bytes[address % block_bytes + i]) << (8 * i);
+        rig.read(uint32_t(address), value, reads);
+    };
+    auto write = [&](size_t address, uint32_t value, unsigned mask) {
+        ++writes;
+        auto* line = find(address);
+        for (size_t i = 0; i < word_bytes; ++i) {
+            if (!(mask & (1u << i))) continue;
+            backing[address + i] = uint8_t(value >> (8 * i));
+            if (line) line->bytes[address % block_bytes + i] = uint8_t(value >> (8 * i));
+        }
+        if (line) line->age = ++age;
+        rig.postedWrite(uint32_t(address), value, mask);
+    };
+    const auto all = (1u << word_bytes) - 1;
+    write(0, 0x11223344u, all);                         // not cached: queued only
+    read(0);                                            // the miss drains the queue first
+    write(0, 0x55667788u, all);                         // cached: the line and the queue
+    read(0);                                            // a hit, no backing read
+    for (size_t i = 0; i < entries + 2; ++i)            // more writes than slots
+        write((i % 3) * word_bytes + sets * block_bytes, 0x01010101u * uint32_t(i + 1), all);
+    read(sets * block_bytes);
+    uint32_t random = 0x5eed1234;
+    for (size_t i = 0; i < 24; ++i) {
+        random = 1664525u * random + 1013904223u;
+        const auto address = size_t((random >> 16) % 24) * word_bytes;
+        if (i % 2 == 0) write(address, random ^ 0x0badf00du, unsigned((random >> 8) & all));
+        else read(address);
+    }
+    rig.idle(40);
+    require(rig.lowerWrites() == writes, "Write buffer: each write must reach the backing memory once");
+    require(rig.backingBytes(0, backing.size()) == backing, "Write buffer: final backing bytes differ");
 }
 } // namespace
 
@@ -940,6 +1041,14 @@ void CacheReadTest::verifyResults() {
         catch (const std::invalid_argument&) { return; }
         throw std::runtime_error("Invalid cache geometry or technology was accepted");
     };
+    exerciseWriteBuffer<8>(1, 1, Technology::FF);
+    exerciseWriteBuffer<32>(2, 2, Technology::SRAM);
+    exerciseWriteBuffer<16>(4, 2, Technology::FF);
+    {
+        CacheConfig config;
+        config.write_buffer = 1; invalid(config, 8);   // read-only cache
+        config.read_write = true; config.write_buffer = 3; invalid(config, 8);
+    }
     {
         CacheConfig config;
         config.sets = 0; invalid(config, 8);
