@@ -794,3 +794,31 @@ the documentation phase, after all testing.
 - **Checks:** strict MkDocs build and `tools/build-pages.sh`; figures in
   light and dark; a test that every `diagram:` marker resolves (the hook
   already fails the build on a bad marker).
+
+## 2026-10-19 — Plan check after the documentation phase (assistant)
+
+- **Phases 0–8 done:** realistic leaf delays and gate-level memory control
+  (0–6), the direct-bank cache, bursts and the cache campaign (7), the
+  phase-8 fixes, certificates for cached roots, the reruns of the published
+  results, the visualizer's profile selector, the final full native suite
+  (467 of 470, the three old page checks) and the browser smoke suite
+  (13 of 13).
+- **Documentation phase** (owner-scheduled after testing): memory chapter
+  rewritten with the technologies under one section, Time and Delay page,
+  Timing sections with generated tables, 4.2 and 4.7 per profile, the cache
+  campaign published in 4.7, eight figures with diagram-design in the site's
+  tokens, plots regenerated. Native documentation checks, strict MkDocs and
+  the Pages build pass.
+- **Changes to the plan made during this phase:** the cache results are
+  published in § 4.7 rather than on the cache component page (its rewrite
+  stays deferred, as the owner asked); timing helper parts are documented as
+  building blocks instead of separate scenario components; the experiment
+  tables are in cycles because cycles are profile-independent (verified:
+  identical across profiles; 602 cells checked against the campaign data);
+  the documented latency uses the experiment's 256 KiB memory (a 64-word
+  memory gave a shorter decode and fewer `desktop` DRAM cycles).
+- **Remaining:** 15 browser and parity checks against a rebuilt site (the
+  first run was stopped by Claude Code for low host memory; its rule forbids
+  restarting without the owner's request); then the record can be closed.
+  Optional future work recorded elsewhere: a cache with write-back or a write
+  buffer, multi-bank DRAM, and the cache component page's rewrite.
