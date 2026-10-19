@@ -215,6 +215,19 @@ The fingerprint describes topology-affecting policy. Human-facing profile
 names and rule reasons are excluded, so renaming a profile does not duplicate
 layouts.
 
+A type and profile key must name **one internal structure**, because the
+static site draws only saved placements. Types whose children change with a
+setting the type name does not carry get a structure key
+(`_component_layout_type` in `visualizer-v2/server.py`, kept identical to
+`componentLayoutType` in `src/visualizer/VisualizerSession.cpp`): SRAM and FF
+memory devices append their storage bank (`SRAM<32>[SRAMStorageBank<32,8,2>]`,
+`FFArray8[MemoryStorageBank<FFArray,8,4>]`); caches, predictor tables and
+entries, the branch predictor and memory timers append a hash of their child
+names (`…[layout-<16 hex>]`). Placements saved under the bare type do not
+apply to a structure key. `tools/check-static-layouts.py`
+(`VisualizerStaticLayoutTest`) fails when a key is shared by parts with
+different children or when an SRAM floorplan is squeezed into a narrow strip.
+
 Regenerate layouts after topology, profile, or layout-algorithm changes:
 
 ```bash

@@ -390,11 +390,21 @@ function componentLayoutKey(component) {
   return component.layoutType || component.type;
 }
 
+// The layout key names one internal structure (memory geometry or policy
+// variant), so placements saved under the bare type do not apply. Keep in step
+// with _structure_keyed in visualizer-v2/server.py.
+function structureKeyed(type, layoutKey) {
+  if (layoutKey === type) return false;
+  return type.startsWith("Cache") || type.startsWith("SRAM<") || type.startsWith("FFMemory")
+    || type.startsWith("RV32IPredictionTable<") || type.startsWith("MemoryTimer<")
+    || type === "RV32IPredictionEntry" || type === "RV32IBranchPredictor";
+}
+
 function getTypeLayoutFor(component) {
   const typeLayouts = app.layout.type_layouts || {};
   const baseLayout = { ...(typeLayouts[component.type] || {}) };
   const layoutKey = componentLayoutKey(component);
-  if (component.type.startsWith("Cache") && layoutKey !== component.type) {
+  if (structureKeyed(component.type, layoutKey)) {
     delete baseLayout.children;
   }
   if (component.type === "Rewire" && layoutKey !== component.type) {

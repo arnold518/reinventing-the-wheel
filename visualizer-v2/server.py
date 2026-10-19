@@ -235,9 +235,29 @@ def _pin_width_by_name(component: Any, getter_name: str, pin_name: str) -> int |
     return _signal_width(pin) if pin else None
 
 
+# A saved floorplan belongs to one internal structure. Parts whose children
+# change with a setting their type name does not carry get it in the key:
+# memory devices their storage bank (geometry), policy variants the names of
+# their children. Keep in step with src/visualizer/VisualizerSession.cpp.
+def _named_variant_type(component_type: str) -> bool:
+    return (component_type.startswith(("Cache", "RV32IPredictionTable<", "MemoryTimer<"))
+            or component_type in ("RV32IPredictionEntry", "RV32IBranchPredictor"))
+
+
+def _structure_keyed(component_type: str, layout_type: str) -> bool:
+    """The key names one structure: placements of the bare type do not apply."""
+    return layout_type != component_type and (
+        _named_variant_type(component_type) or component_type.startswith(("SRAM<", "FFMemory")))
+
+
 def _component_layout_type(component: Any) -> str:
     component_type = _component_type(component)
-    if component_type.startswith("Cache") and component.get_children():
+    if component_type.startswith(("SRAM<", "FFMemory")) and component.get_children():
+        storage = next((child for child in component.get_children() if child.get_name() == "STORAGE"), None)
+        if storage is not None:
+            base = "FFArray" + component_type[len("FFMemory"):] if component_type.startswith("FFMemory") else component_type
+            return f"{base}[{_component_layout_type(storage)}]"
+    if _named_variant_type(component_type) and component.get_children():
         signature = 0xCBF29CE484222325
         for name in sorted(child.get_name() for child in component.get_children()):
             for byte in name.encode("utf-8") + b"\xff":
@@ -1351,7 +1371,7 @@ class LayoutManager:
         component_type = _component_type(component)
         component_layout_type = _component_layout_type(component)
         layout = self.get_layout_for(component_type)
-        if component_type.startswith("Cache") and component_layout_type != component_type:
+        if _structure_keyed(component_type, component_layout_type):
             layout.pop("children", None)
         if component_type == "Rewire" and component_layout_type != component_type:
             # Legacy shared proportions were enlarged by unrelated Rewires.
@@ -1461,10 +1481,14 @@ class LayoutManager:
     ) -> None:
         component_type = _component_layout_type(component)
         layout = self.type_layouts.setdefault(component_type, {})
-        defaults = {**COMPONENT_LAYOUT_DEFAULTS.get(component_type, {}), **sram_layout.defaults(component_type),
-                    **memory_device_layout.defaults(component_type), **cache_layout.defaults(component_type),
-                    **rv32i_layout.defaults(component_type),
-                    **register_file_layout.defaults(component_type)}
+        defaults = {}
+        # A structure-keyed type ("SRAM<8>[SRAMStorageBank<8,4,2>]") takes the
+        # proportions of its bare type, then any of its own.
+        for kind in dict.fromkeys((re.sub(r"\[[^\]]*\]$", "", component_type), component_type)):
+            defaults.update({**COMPONENT_LAYOUT_DEFAULTS.get(kind, {}), **sram_layout.defaults(kind),
+                             **memory_device_layout.defaults(kind), **cache_layout.defaults(kind),
+                             **rv32i_layout.defaults(kind),
+                             **register_file_layout.defaults(kind)})
         for key, value in defaults.items():
             if key not in layout:
                 layout[key] = value
@@ -1615,10 +1639,12 @@ class LayoutManager:
         pretty = json.dumps(self.to_jsonable(), indent=4)
 
         def format_list_content(match: re.Match[str]) -> str:
+            if match.group(1) is None:  # a string, such as a key with brackets: unchanged
+                return match.group(0)
             compact = re.sub(r"\s+", "", match.group(1)).replace(",", ", ")
             return f"[{compact}]"
 
-        final = re.sub(r"\[(.*?)\]", format_list_content, pretty, flags=re.DOTALL)
+        final = re.sub(r'"(?:\\.|[^"\\])*"|\[(.*?)\]', format_list_content, pretty, flags=re.DOTALL)
         self.filepath.write_text(final)
         self.loaded_mtime = self._current_mtime()
         self.is_dirty = False
@@ -2113,6 +2139,7 @@ class CircuitSession:
         manager = layout_manager or self.layout_manager
         is_root = depth == 0
         if (memory_device_layout.defaults(_component_type(component))
+                or sram_layout.defaults(_component_type(component))
                 or cache_layout.defaults(_component_type(component))
                 or rv32i_layout.defaults(_component_type(component))):
             # A bank can be encountered before its row types. Seed their thin

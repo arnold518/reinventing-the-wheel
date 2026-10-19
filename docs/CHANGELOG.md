@@ -7,6 +7,25 @@ history remains in Git and the archived reports.
 
 ## 2026-10-19
 
+### Visualizer: one saved floorplan per internal structure (branch `realistic-timing`)
+
+- **Changed:** SRAM and FF memory devices get layout keys that include their
+  storage bank; caches, predictor tables and entries, the branch predictor and
+  memory timers keep their child-name hash key (Python server and C++ session
+  alike). SRAM floorplans seed their children's proportions before placing
+  them. The layout file's formatter no longer rewrites bracketed text inside
+  strings. `layout.json` gains the 19 new keys with regenerated placements;
+  the squeezed 8-row SRAM bank is recomputed; 10 unread profile entries are
+  removed. `tools/check-static-layouts.py` fails on a key shared by parts
+  with different children and on squeezed SRAM floorplans.
+- **Why:** the owner found the scalable cache's `TAG_STORE_1` drawn broken;
+  all four of its SRAM stores were squeezed into a 2 % strip, and six more
+  keys were shared by different structures.
+- **Verified:** 13 native layout and visualizer checks, including
+  `VisualizerStaticLayoutTest` (0 problems in 339 scenarios) and C++/Python
+  key agreement. WebAssembly rebuild and browser checks pending; see
+  [the record](records/2026-10-19-shared-layout-keys.md).
+
 ### Component timing: only where it says something, inside the implementation (branch `realistic-timing`)
 
 - **Changed:** 67 stock per-component Timing sections removed (a fixed

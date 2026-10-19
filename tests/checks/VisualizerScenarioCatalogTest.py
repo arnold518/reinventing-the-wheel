@@ -101,6 +101,10 @@ process.stdout.write(JSON.stringify(options));
             ('FFAlwaysReadyControllerTest', ',always-ready>'),
             ('RegisterFile32x32Test', '<x0-unused>'),
             ('RV32IBaselinePipelineCoreTest', '<compact>'),
+            # Structure-keyed floorplans: memory geometry and policy variants.
+            ('CacheScalableScenarioTest', '[SRAMStorageBank<32,8,2>]'),
+            ('FFMemoryTest', '[MemoryStorageBank<FFArray,8,4>]'),
+            ('RV32IBranchPredictorTest', ']'),
         ):
             with self.subTest(name=name):
                 root = backend.create_layout_topology(name)

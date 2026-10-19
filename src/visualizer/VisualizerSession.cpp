@@ -227,7 +227,22 @@ std::string componentLayoutType(const std::shared_ptr<Component>& component) {
             return predicate(child->getName());
         });
     };
-    if (type.starts_with("Cache") && !children.empty()) {
+    // A saved floorplan belongs to one internal structure. Parts whose
+    // children change with a setting their type name does not carry get it in
+    // the key: memory devices their storage bank (geometry), policy variants
+    // the names of their children. Keep in step with visualizer-v2/server.py.
+    if ((type.starts_with("SRAM<") || type.starts_with("FFMemory")) && !children.empty()) {
+        const auto storage = std::find_if(children.begin(), children.end(),
+            [](const auto& child) { return child->getName() == "STORAGE"; });
+        if (storage != children.end()) {
+            const std::string base = type.starts_with("FFMemory") ? "FFArray" + type.substr(8) : type;
+            return base + "[" + componentLayoutType(*storage) + "]";
+        }
+    }
+    const bool named_variants = type.starts_with("Cache") || type == "RV32IPredictionEntry" ||
+                                type.starts_with("RV32IPredictionTable<") || type == "RV32IBranchPredictor" ||
+                                type.starts_with("MemoryTimer<");
+    if (named_variants && !children.empty()) {
         std::vector<std::string> names;
         names.reserve(children.size());
         for (const auto& child : children) names.push_back(child->getName());

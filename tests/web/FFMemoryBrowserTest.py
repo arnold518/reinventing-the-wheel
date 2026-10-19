@@ -39,7 +39,7 @@ with sync_playwright() as playwright:
                 const c = app.components.get(app.rootId + suffix);
                 return [c.type, c.layoutType];
             })""")
-            assert names == [["FFMemory8", "FFArray8"],
+            assert names == [["FFMemory8", "FFArray8[MemoryStorageBank<FFArray,8,4>]"],
                              ["FFStorageBank<8,4>", "MemoryStorageBank<FFArray,8,4>"],
                              ["FFWord<8>", "MemoryWord<FFArray,8>"]], names
         if type_name == "FFMemory8":

@@ -152,6 +152,16 @@ work state changes. Keep dated decisions and validation results in
   The public [cache page](../site-docs/memory/caches.md) still awaits its own
   rewrite (deferred by the owner).
 
+- [Shared visualizer layout keys](records/2026-10-19-shared-layout-keys.md):
+  saved floorplans were shared by parts of different internal structure
+  (8- and 16-row SRAMs, FF stores of different depth, predictor policy
+  variants, memory timers), and SRAM floorplans were placed before their
+  children's proportions were known (the scalable cache's stores were drawn
+  in a 2 % strip). Fixed with structure keys in the Python server and the C++
+  session, a seeding fix, regenerated placements and a guard in
+  `VisualizerStaticLayoutTest`; 13 native layout checks pass. **Open:** the
+  WebAssembly rebuild and browser checks.
+
 - [General cache plan](records/2026-10-19-general-cache-plan.md): plan only,
   deferred by the owner. Make the cache's behavior parameters too (write
   buffer, write-back, write-allocate, 4/8 ways with a choice of replacement,

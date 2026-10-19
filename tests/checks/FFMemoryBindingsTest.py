@@ -47,7 +47,7 @@ probe = Path(sys.argv[1]).resolve()
 for width in (8, 16, 32):
     device = backend.create_ff_memory("FF", width, 3)
     assert device.get_type_name() == f"FFMemory{width}"
-    assert server._component_layout_type(device) == f"FFArray{width}"
+    assert server._component_layout_type(device) == f"FFArray{width}[MemoryStorageBank<FFArray,{width},3>]"
     bank = next(c for c in device.get_children() if c.get_name() == "STORAGE")
     assert bank.get_type_name() == f"FFStorageBank<{width},3>"
     assert server._component_layout_type(bank) == f"MemoryStorageBank<FFArray,{width},3>"
