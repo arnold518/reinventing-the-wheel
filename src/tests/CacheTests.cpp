@@ -516,6 +516,22 @@ public:
         drive({{"CLK", 0}, {"RSP_READY", 0}});
     }
     void idle(size_t cycles) { for (size_t i = 0; i < cycles; ++i) cycle(); }
+    // A write whose lower traffic is checked by the caller's model: answered OK.
+    void writeOk(uint32_t address, uint32_t data, unsigned mask) {
+        drive({{"CLK", 0}, {"REQ_VALID", 0}, {"REQ_OP", 1}, {"REQ_ADDR", address},
+               {"REQ_WRITE_DATA", data}, {"REQ_WRITE_MASK", mask}, {"RSP_READY", 0}});
+        for (size_t i = 0; out("REQ_READY") != logicBit(true) && i < 100; ++i) cycle();
+        require(out("REQ_READY") == logicBit(true), context_ + ": no write capacity");
+        drive({{"CLK", 0}, {"REQ_VALID", 1}});
+        drive({{"CLK", 1}});
+        drive({{"CLK", 0}, {"REQ_VALID", 0}, {"REQ_ADDR", 0xffffffff}, {"REQ_WRITE_DATA", 0}, {"REQ_WRITE_MASK", 0}});
+        for (size_t i = 0; out("RSP_VALID") != logicBit(true) && i < 200; ++i) cycle();
+        require(out("RSP_VALID") == logicBit(true) && out("RSP_STATUS") == logicBits(3, 0),
+                context_ + ": write not answered OK at " + std::to_string(address));
+        drive({{"CLK", 0}, {"RSP_READY", 1}});
+        drive({{"CLK", 1}});
+        drive({{"CLK", 0}, {"RSP_READY", 0}});
+    }
     void reject(uint32_t address, unsigned op, Status expected_status) {
         const auto before_reads = lower_reads_, before_writes = lower_writes_;
         drive({{"CLK", 0}, {"REQ_VALID", 0}, {"REQ_OP", op}, {"REQ_ADDR", address},
@@ -554,7 +570,9 @@ public:
         drive({{"CLK", 0}, {"RSP_READY", 0}});
     }
     void invalidate() {
-        for (size_t i = 0; out("INV_READY") != logicBit(true) && i < 10; ++i) cycle();
+        // A write-back cache first walks its lines and writes the dirty ones back.
+        drive({{"CLK", 0}, {"INV_VALID", 1}});
+        for (size_t i = 0; out("INV_READY") != logicBit(true) && i < 5000; ++i) cycle();
         require(out("INV_READY") == logicBit(true), context_ + ": no invalidation capacity");
         drive({{"CLK", 0}, {"INV_VALID", 1}});
         drive({{"CLK", 1}});
@@ -810,6 +828,102 @@ void exerciseWriteBuffer(size_t entries, size_t ways, Technology data) {
     require(rig.lowerWrites() == writes, "Write buffer: each write must reach the backing memory once");
     require(rig.backingBytes(0, backing.size()) == backing, "Write buffer: final backing bytes differ");
 }
+
+// Write-back and write-allocate against a reference model: read values and
+// fills, then (after a flush by invalidation) the backing bytes and the number
+// of backing writes.
+template<size_t Width>
+void exerciseWritePolicy(bool back, bool allocate, size_t ways, Technology data) {
+    constexpr size_t sets = 4, words_per_line = 2;
+    constexpr size_t word_bytes = Width / 8, block_bytes = words_per_line * word_bytes;
+    CacheConfig config;
+    config.sets = sets;
+    config.ways = ways;
+    config.block_bytes = block_bytes;
+    config.backing_depth_words = 64;
+    config.read_write = true;
+    config.write_back = back;
+    config.write_allocate = allocate;
+    config.data_technology = data;
+    Rig<Width> rig(config, Technology::FF);
+    struct Line { bool valid = false, dirty = false; size_t tag = 0, age = 0; std::vector<uint8_t> bytes = std::vector<uint8_t>(block_bytes); };
+    std::vector<std::vector<Line>> lines(sets, std::vector<Line>(ways));
+    std::vector<uint8_t> backing(config.backing_depth_words * word_bytes);
+    for (size_t i = 0; i < backing.size(); ++i) backing[i] = uint8_t(0xa0 + i);
+    size_t age = 0;
+    unsigned reads = 0, writes = 0;
+    auto find = [&](size_t address) -> Line* {
+        const auto set = (address / block_bytes) % sets, tag = (address / block_bytes) / sets;
+        for (auto& line : lines[set]) if (line.valid && line.tag == tag) return &line;
+        return nullptr;
+    };
+    auto write_back = [&](Line& line, size_t set) {
+        const auto base = (line.tag * sets + set) * block_bytes;
+        for (size_t i = 0; i < block_bytes; ++i) backing[base + i] = line.bytes[i];
+        writes += words_per_line;
+        line.dirty = false;
+    };
+    auto fill = [&](size_t address) -> Line& {
+        const auto set = (address / block_bytes) % sets, base = address - address % block_bytes;
+        Line* line = &lines[set][0];
+        for (auto& candidate : lines[set]) {
+            if (!candidate.valid) { line = &candidate; break; }
+            if (line->valid && candidate.age < line->age) line = &candidate;
+        }
+        if (line->valid && line->dirty) write_back(*line, set);
+        line->valid = true;
+        line->dirty = false;
+        line->tag = (address / block_bytes) / sets;
+        for (size_t i = 0; i < block_bytes; ++i) line->bytes[i] = backing[base + i];
+        reads += words_per_line;
+        line->age = ++age;
+        return *line;
+    };
+    auto read = [&](size_t address) {
+        auto* line = find(address);
+        if (!line) line = &fill(address);
+        else line->age = ++age;
+        uint32_t value = 0;
+        for (size_t i = 0; i < word_bytes; ++i) value |= uint32_t(line->bytes[address % block_bytes + i]) << (8 * i);
+        rig.read(uint32_t(address), value, reads);
+    };
+    auto write = [&](size_t address, uint32_t value, unsigned mask) {
+        auto* line = find(address);
+        if (!line && allocate) line = &fill(address);
+        for (size_t i = 0; i < word_bytes; ++i) {
+            if (!(mask & (1u << i))) continue;
+            if (line) line->bytes[address % block_bytes + i] = uint8_t(value >> (8 * i));
+            if (!back || !line) backing[address + i] = uint8_t(value >> (8 * i));
+        }
+        if (line) { line->age = ++age; if (back) line->dirty = true; }
+        if (!back || !line) ++writes;
+        rig.writeOk(uint32_t(address), value, mask);
+    };
+    const auto all = (1u << word_bytes) - 1;
+    const auto conflict = sets * block_bytes;
+    read(0);
+    write(0, 0x11223344u, all);                 // a hit
+    write(word_bytes, 0x55667788u, all);        // the same line
+    read(conflict);                             // another line of set 0
+    read(2 * conflict);                         // evicts (two ways: the older line)
+    read(0);
+    write(3 * conflict, 0x01020304u, all);      // a write miss
+    read(3 * conflict);
+    uint32_t random = 0xcafe0042;
+    for (size_t i = 0; i < 30; ++i) {
+        random = 1664525u * random + 1013904223u;
+        const auto address = size_t((random >> 16) % 40) * word_bytes;
+        if (i % 2 == 0) write(address, random ^ 0x5a5a1234u, unsigned((random >> 8) & all));
+        else read(address);
+    }
+    rig.invalidate();
+    for (size_t set = 0; set < sets; ++set)
+        for (auto& line : lines[set]) { if (line.valid && line.dirty) write_back(line, set); line.valid = false; }
+    require(rig.backingBytes(0, backing.size()) == backing, "Write policy: final backing bytes differ");
+    require(rig.lowerWrites() == writes, "Write policy: wrong number of backing writes: got " +
+            std::to_string(rig.lowerWrites()) + ", expected " + std::to_string(writes));
+    read(0);
+}
 } // namespace
 
 namespace {
@@ -1041,6 +1155,11 @@ void CacheReadTest::verifyResults() {
         catch (const std::invalid_argument&) { return; }
         throw std::runtime_error("Invalid cache geometry or technology was accepted");
     };
+    exerciseWritePolicy<8>(false, true, 1, Technology::FF);    // write-through, write-allocate
+    exerciseWritePolicy<8>(true, false, 1, Technology::FF);    // write-back, write-around
+    exerciseWritePolicy<32>(true, true, 2, Technology::FF);    // write-back, write-allocate
+    exerciseWritePolicy<32>(true, true, 2, Technology::SRAM);
+    exerciseWritePolicy<16>(true, false, 2, Technology::SRAM);
     exerciseWriteBuffer<8>(1, 1, Technology::FF);
     exerciseWriteBuffer<32>(2, 2, Technology::SRAM);
     exerciseWriteBuffer<16>(4, 2, Technology::FF);
@@ -1048,6 +1167,8 @@ void CacheReadTest::verifyResults() {
         CacheConfig config;
         config.write_buffer = 1; invalid(config, 8);   // read-only cache
         config.read_write = true; config.write_buffer = 3; invalid(config, 8);
+        config.write_buffer = 2; config.write_back = true; invalid(config, 8);   // back has no buffer
+        config.write_buffer = 0; config.read_write = false; invalid(config, 8);  // back needs read-write
     }
     {
         CacheConfig config;

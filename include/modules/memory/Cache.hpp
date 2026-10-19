@@ -25,6 +25,12 @@ struct CacheConfig {
     // read miss waits until the buffer is empty. 0: write-through, answered
     // when the backing memory completes the write.
     size_t write_buffer = 0;
+    // Write-back (read-write caches, no write buffer): a write hit only marks
+    // its line dirty; a dirty victim is written back before its set is
+    // refilled; invalidation writes back every dirty line first.
+    bool write_back = false;
+    // Write-allocate (read-write caches): a write miss fills its line first.
+    bool write_allocate = false;
 
     void validate(size_t width) const;
 };

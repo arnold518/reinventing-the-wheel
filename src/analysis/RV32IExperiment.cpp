@@ -7,6 +7,7 @@
 #include "analysis/RV32IExperiment.hpp"
 #include "analysis/ExperimentClock.hpp"
 #include "analysis/RV32IWorkloads.hpp"
+#include <algorithm>
 #include <map>
 #include "components/ComponentBuilder.hpp"
 #include "components/ComponentBuilder.tpp"
@@ -103,8 +104,11 @@ RV32IExperimentResult runRV32IExperiment(const RV32IExperimentConfig& config) {
         circuit::preferFidelity(circuit::Fidelity::Behavioral,circuit::ProfileSelector::exactPath("EXPERIMENT.MEM"),"shared memory macro")});
     auto manifest=std::make_shared<circuit::BuildManifest>(profile.name(),profile.fingerprint());
     auto context=circuit::BuildContext::rootScope(catalog,std::make_shared<const circuit::BuildProfile>(profile),manifest)->child("EXPERIMENT",std::nullopt);
+    // FLUSH_L1/FLUSH_L2: the caches' invalidation (a write-back cache writes
+    // its dirty lines back first), driven after the program stops.
     auto root=Component::createWithContext<IOComponent>(context,"EXPERIMENT",[](IOComponent* s){
         s->addPin("CLK",PinType::INPUT);s->addPin("RST",PinType::INPUT);
+        s->addPin("FLUSH_L1",PinType::INPUT);s->addPin("FLUSH_L2",PinType::INPUT);
     });
     ComponentBuilder b(root,context);
     const auto& family=config.core=="single"?circuit::families::RV32ISingleCycleCore:
@@ -165,7 +169,7 @@ RV32IExperimentResult runRV32IExperiment(const RV32IExperimentConfig& config) {
         const auto cache=[&](const std::string& name,const circuit::memory::CacheConfig& settings,bool burst_backing) {
             auto c=settings;c.burst_fill=c.burst_fill&&burst_backing;
             auto part=b.addNewComponent<circuit::memory::Cache<32>>(name,c);
-            w.connect(w.constant(name+"_NO_INVALIDATION",false),part->getInputPin("INV_VALID"));
+            w.connect(root->getInputPin(name=="L2"?"FLUSH_L2":"FLUSH_L1"),part->getInputPin("INV_VALID"));
             clocked(part,"");
             boundaries.push_back({name,part,"MEM_"});
             return std::static_pointer_cast<IOComponent>(part);
@@ -191,6 +195,8 @@ RV32IExperimentResult runRV32IExperiment(const RV32IExperimentConfig& config) {
     auto clk=b.addNewWire("CLOCK",nullptr,{root->getInputPin("CLK")});
     auto rst=b.addNewWire("RESET",nullptr,{root->getInputPin("RST")});
     auto enable=b.addNewWire("ENABLE",nullptr,{core->getInputPin("ENABLE")});
+    auto flush_l1=b.addNewWire("FLUSH_L1_IN",nullptr,{root->getInputPin("FLUSH_L1")});
+    auto flush_l2=b.addNewWire("FLUSH_L2_IN",nullptr,{root->getInputPin("FLUSH_L2")});
     result.manifest=manifest->serialize();
     if(config.safe_clock_only) {
         ClockSpecification clock;
@@ -206,7 +212,8 @@ RV32IExperimentResult runRV32IExperiment(const RV32IExperimentConfig& config) {
         clock.maximum_state_cases=256;
         clock.clock_pin="EXPERIMENT.CLK";
         clock.inputs={{"EXPERIMENT.RST",std::nullopt,{},0},
-                      {"EXPERIMENT.CORE.ENABLE",std::nullopt,{},1}};
+                      {"EXPERIMENT.CORE.ENABLE",std::nullopt,{},1},
+                      {"EXPERIMENT.FLUSH_L1",std::nullopt,{},0},{"EXPERIMENT.FLUSH_L2",std::nullopt,{},0}};
         // A memory's response arrives late in the cycle. The gates of the
         // core need it only shortly before the edge in
         // the states where it happens; the compact core's table cannot tell
@@ -278,6 +285,7 @@ RV32IExperimentResult runRV32IExperiment(const RV32IExperimentConfig& config) {
     ExperimentClock clock(config.period);
     SimulationTest::scheduleInitialEventsForTree(root,sim,0);
     drive(sim,0,clk,false);drive(sim,0,rst,true);drive(sim,0,enable,true);
+    drive(sim,0,flush_l1,false);drive(sim,0,flush_l2,false);
     advance(clock.resetRelease()-1);
     drive(sim,clock.resetRelease(),rst,false);advance(clock.origin());
     sim.resetPerformanceCounters();
@@ -496,29 +504,33 @@ RV32IExperimentResult runRV32IExperiment(const RV32IExperimentConfig& config) {
         if(done)break;
     }
     if(measuring){result.simulator=sim.getPerformanceCounters();recordCommands();}
-    // Writes still queued in a cache's write buffer reach memory after the
-    // program stops: clock on, uncounted, until every queue has been idle for
-    // two cycles (an L1's last write may be queued again in the L2).
+    // After the program stops, flush the caches (uncounted): the L1s, then the
+    // L2. A cache takes the invalidation once its write buffer is drained and,
+    // write-back, once its dirty lines are written back.
     if(done&&topology) {
-        std::vector<std::shared_ptr<PinBase>> idle_pins;
-        for(const auto& [name,part,prefix]:boundaries) {
-            (void)name;(void)prefix;
-            if(!std::string(part->getTypeName()).starts_with("Cache<"))continue;
-            for(const auto& child:part->getChildren())
-                if(child->getName()=="CONTROLLER")
-                    for(const auto& inner:child->getChildren())
-                        if(inner->getName()=="WRITE_QUEUE")
-                            idle_pins.push_back(std::dynamic_pointer_cast<IOComponent>(inner)->getOutputPin("IDLE"));
-        }
-        size_t next=result.whole_program_cycles,quiet=0;
-        for(size_t extra=0;!idle_pins.empty()&&quiet<2&&extra<100000;++extra,++next) {
-            bool all=true;
-            for(const auto& pin:idle_pins)all=all&&pin->getValueAsUInt64()==1;
-            quiet=all?quiet+1:0;
+        size_t next=result.whole_program_cycles;
+        for(const auto& [level,wire]:{std::pair<std::string,std::shared_ptr<Wire<>>>{"L1",flush_l1},{"L2",flush_l2}}) {
+            std::vector<std::shared_ptr<IOComponent>> caches;
+            for(const auto& [name,part,prefix]:boundaries) {
+                (void)prefix;
+                if(std::string(part->getTypeName()).starts_with("Cache<")&&(name=="L2")==(level=="L2"))caches.push_back(part);
+            }
+            if(caches.empty())continue;
+            drive(sim,clock.edge(next)-1,wire,true);
+            std::vector<bool> taken(caches.size(),false);
+            for(size_t extra=0;extra<200000&&std::find(taken.begin(),taken.end(),false)!=taken.end();++extra,++next) {
+                advance(clock.edge(next)-1);
+                for(size_t i=0;i<caches.size();++i)
+                    taken[i]=taken[i]||caches[i]->getOutputPin("INV_READY")->getValueAsUInt64()==1;
+                drive(sim,clock.edge(next),clk,true);drive(sim,clock.falling(next),clk,false);
+                advance(clock.end(next));
+            }
+            require(std::find(taken.begin(),taken.end(),false)==taken.end(),"Cache flush did not finish: "+level);
+            drive(sim,clock.edge(next)-1,wire,false);
+            advance(clock.edge(next)-1);
             drive(sim,clock.edge(next),clk,true);drive(sim,clock.falling(next),clk,false);
-            advance(clock.end(next));
+            advance(clock.end(next));++next;
         }
-        require(idle_pins.empty()||quiet>=2,"Cache write buffers did not drain");
     }
     result.completed=done;
     if(!done&&!config.allow_incomplete)require(false,"Experiment cycle budget exceeded");

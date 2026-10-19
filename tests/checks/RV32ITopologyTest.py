@@ -31,6 +31,12 @@ class Topologies(unittest.TestCase):
                        "--dl1", "write_buffer=2", "--l2", "write_buffer=2")
         self.assertTrue(plain["verified"] and buffered["verified"])
         self.assertLess(buffered["whole_program_cycles"], plain["whole_program_cycles"])
+        # Write-back with write-allocate: dirty lines are flushed after the
+        # program stops; the memory must still match the oracle.
+        back = run("D-ID", "dram", "--workload", "sort", "--size", "16", "--iterations", "2",
+                   "--dl1", "write_policy=back,write_miss=allocate", "--l2", "write_policy=back,write_miss=allocate")
+        self.assertTrue(back["verified"])
+        self.assertLess(back["whole_program_cycles"], plain["whole_program_cycles"])
 
     def test_overlapping_images_are_refused(self):
         # One shared memory holds code and data at their own addresses; a

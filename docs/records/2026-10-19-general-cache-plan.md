@@ -209,3 +209,45 @@ requests at every rising edge it drives. `RV32ITopologyTest` gains a
 buffered D-ID run: `sort` (16 words, 2 iterations, `embedded`) verifies in
 4,765 cycles against 6,481 without buffers (4 entries: also 4,765). The four
 cache scenarios pass unchanged.
+
+## 2026-10-20 — Step 2 done: write-back and write-allocate
+
+**Design.**
+- Settings `write_policy` (`through` | `back`) and `write_miss`
+  (`no-allocate` | `allocate`), read-write caches only; write-back takes no
+  write buffer.
+- Dirty bits: `CacheLineState` with `dirty` (type `CacheDirtyLineState<S>`)
+  keeps one per line beside the valid bit; a fill leaves the line clean, a
+  write-back write hit sets it, a completed write-back clears it.
+- A write hit in write-back updates its line in the lookup cycle and is
+  answered then. A write miss without allocation goes around the cache
+  (backing write, answered when it completes). With allocation a write miss
+  fills its line like a read miss and is looked up again (`REFILLED_WRITE`,
+  one cycle later so a clocked bank is not read and written at one edge).
+- Eviction: a miss whose victim is valid and dirty first writes the victim
+  back word by word (`EVICT_READ` reads the word from the data bank,
+  `EVICT_SEND`/`EVICT_WAIT` write it to the backing memory); the victim's
+  tag and set are captured at the lookup. The backing status of a
+  write-back is not returned.
+- Flush: an invalidation request starts a walk over every line
+  (`FLUSH_READ` reads the tag and line state, `FLUSH_CHECK` writes a dirty
+  line back); `INV_READY` rises once the walk is complete.
+- Found by the reference test and fixed: the lower port's fields were chosen
+  by the request's kind, so a write-allocate fill was sent as a write; a new
+  state bit `SENDING_WRITE` now says what MEMORY_SEND is doing, and the data
+  bank's write source is chosen by whether a write updates the line.
+- Experiment: inputs `FLUSH_L1` and `FLUSH_L2` (held low, fixed in the clock
+  analysis) drive the caches' invalidation; after the program stops the run
+  flushes the L1s, then the L2, uncounted, and only then checks memory. This
+  replaces the step-1 drain loop.
+
+**Checks.** `CacheReadTest` gains a write-policy stream against a reference
+model with dirty lines (write-through with allocate; write-back with and
+without allocate; W = 8, 16, 32; one and two ways; FF and SRAM data): read
+values, fills, final backing bytes after the flush and the number of backing
+writes all match. `RV32ITopologyTest` (now also write-back with allocate),
+`RV32IBinaryClockCLITest` and the four cache scenarios pass. D-ID `sort`
+(16 words, 2 iterations, `embedded`): 6,481 cycles write-through, 4,765 with
+2-entry buffers, 4,796 write-back with allocate, 5,006 write-back without;
+all verified. The clock analysis certifies D-ID at 4,104 ps in all three
+variants (limit unchanged: the instruction L1's front end).

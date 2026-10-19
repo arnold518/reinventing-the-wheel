@@ -36,17 +36,31 @@ void CacheConfig::validate(size_t width) const {
         throw std::invalid_argument("Cache write buffer must have 0, 1, 2 or 4 entries");
     if (write_buffer && !read_write)
         throw std::invalid_argument("A write buffer needs a read-write cache");
+    if ((write_back || write_allocate) && !read_write)
+        throw std::invalid_argument("Write-back and write-allocate need a read-write cache");
+    if (write_back && write_buffer)
+        throw std::invalid_argument("A write-back cache has no write buffer");
 }
 
 CacheConfig cacheConfig(const ParameterMap& p) {
     memory_device::keys(p, {"sets", "ways", "block_bytes", "backing_depth_words", "mode", "storage_form",
-                            "tag_technology", "data_technology", "fill", "write_buffer"});
+                            "tag_technology", "data_technology", "fill", "write_buffer", "write_policy", "write_miss"});
     CacheConfig c;
     c.sets = memory_device::parameter(p, "sets", c.sets);
     c.ways = memory_device::parameter(p, "ways", c.ways);
     c.block_bytes = memory_device::parameter(p, "block_bytes", c.block_bytes);
     c.backing_depth_words = memory_device::parameter(p, "backing_depth_words", c.backing_depth_words);
     c.write_buffer = memory_device::parameter(p, "write_buffer", c.write_buffer);
+    if (auto it = p.find("write_policy"); it != p.end()) {
+        if (it->second == "through") c.write_back = false;
+        else if (it->second == "back") c.write_back = true;
+        else throw std::invalid_argument("Cache write_policy must be through or back");
+    }
+    if (auto it = p.find("write_miss"); it != p.end()) {
+        if (it->second == "no-allocate") c.write_allocate = false;
+        else if (it->second == "allocate") c.write_allocate = true;
+        else throw std::invalid_argument("Cache write_miss must be no-allocate or allocate");
+    }
     if (auto it = p.find("mode"); it != p.end()) {
         if (it->second == "read_only") c.read_write = false;
         else if (it->second == "read_write") c.read_write = true;
@@ -76,7 +90,9 @@ ParameterMap cacheParameters(const CacheConfig& c) {
             {"tag_technology", technologyName(c.tag_technology)},
             {"data_technology", technologyName(c.data_technology)},
             {"fill", c.burst_fill ? "burst" : "words"},
-            {"write_buffer", std::to_string(c.write_buffer)}};
+            {"write_buffer", std::to_string(c.write_buffer)},
+            {"write_policy", c.write_back ? "back" : "through"},
+            {"write_miss", c.write_allocate ? "allocate" : "no-allocate"}};
 }
 
 void cachePins(IOComponent* self, size_t width) {
@@ -216,16 +232,24 @@ public:
     }
 };
 
+// The valid bit of every line of one way, and with `dirty` its dirty bit (a
+// write-back cache): CLEAR (eviction) and MARK (a completed fill) act on the
+// set selected by ADDRESS; MARK leaves the line clean, SET_DIRTY (a write
+// into it) and CLEAN (it was written back) change only its dirty bit.
 class CacheLineState : public IOComponent {
 public:
-    CacheLineState(std::string name, size_t sets, size_t address_offset)
-        : IOComponent(std::move(name), [](IOComponent* self) {
+    CacheLineState(std::string name, size_t sets, size_t address_offset, bool dirty = false)
+        : IOComponent(std::move(name), [dirty](IOComponent* self) {
               for (auto pin : {"CLK", "RST", "INVALIDATE", "CLEAR", "MARK"})
                   self->addPin(pin, PinType::INPUT);
               self->addPin<32>("ADDRESS", PinType::INPUT);
               self->addPin("VALID", PinType::OUTPUT);
-          }), sets_(sets), offset_(address_offset),
-          type_("CacheLineState<" + std::to_string(sets) + ">") {}
+              if (dirty) {
+                  for (auto pin : {"SET_DIRTY", "CLEAN"}) self->addPin(pin, PinType::INPUT);
+                  self->addPin("DIRTY", PinType::OUTPUT);
+              }
+          }), sets_(sets), offset_(address_offset), dirty_(dirty),
+          type_(std::string(dirty ? "CacheDirtyLineState<" : "CacheLineState<") + std::to_string(sets) + ">") {}
     const char* getTypeName() const override { return type_.c_str(); }
     void buildInternals(ComponentBuilder& builder) override {
         StructuralWiring w(builder);
@@ -233,32 +257,44 @@ public:
         w.connect(getInputPin<32>("ADDRESS"), addr->getInputPin<32>("IN"));
         auto clear_all = w.either("RESET_OR_INVALIDATE", getInputPin("RST"), getInputPin("INVALIDATE"));
         auto low = w.constant("LOW", false);
-        std::vector<PinPtr> selected_valid;
+        std::vector<PinPtr> selected_valid, selected_dirty;
         for (size_t set = 0; set < sets_; ++set) {
+            const auto n = std::to_string(set);
             std::vector<PinPtr> bits;
             for (size_t i = 0; i < std::countr_zero(sets_); ++i) {
                 auto bit = addr->getOutputPin("OUT_" + std::to_string(offset_ + i));
                 bits.push_back((set & (size_t{1} << i)) ? bit :
-                    w.invert("NOT_SET_" + std::to_string(set) + "_" + std::to_string(i), bit));
+                    w.invert("NOT_SET_" + n + "_" + std::to_string(i), bit));
             }
             auto selected = bits.empty() ? w.invert("SELECT_ZERO", low)
-                                         : w.reduce("SELECT_" + std::to_string(set), bits, true);
-            auto cell = builder.add(circuit::families::ClockedStateBit, "VALID_" + std::to_string(set));
+                                         : w.reduce("SELECT_" + n, bits, true);
+            auto cell = builder.add(circuit::families::ClockedStateBit, "VALID_" + n);
             w.connect(getInputPin("CLK"), cell->getInputPin("CLK"));
             w.connect(clear_all, cell->getInputPin("RST"));
-            auto clear = w.both("CLEAR_" + std::to_string(set), getInputPin("CLEAR"), selected);
-            auto mark = w.both("MARK_" + std::to_string(set), getInputPin("MARK"), selected);
-            auto keep = w.both("KEEP_" + std::to_string(set), cell->getOutputPin("Q"),
-                               w.invert("NOT_CLEAR_" + std::to_string(set), clear));
-            w.connect(w.either("NEXT_" + std::to_string(set), keep, mark), cell->getInputPin("D"));
-            selected_valid.push_back(w.both("SELECTED_VALID_" + std::to_string(set),
-                                              selected, cell->getOutputPin("Q")));
+            auto clear = w.both("CLEAR_" + n, getInputPin("CLEAR"), selected);
+            auto mark = w.both("MARK_" + n, getInputPin("MARK"), selected);
+            auto keep = w.both("KEEP_" + n, cell->getOutputPin("Q"), w.invert("NOT_CLEAR_" + n, clear));
+            w.connect(w.either("NEXT_" + n, keep, mark), cell->getInputPin("D"));
+            selected_valid.push_back(w.both("SELECTED_VALID_" + n, selected, cell->getOutputPin("Q")));
+            if (dirty_) {
+                auto bit = builder.add(circuit::families::ClockedStateBit, "DIRTY_" + n);
+                w.connect(getInputPin("CLK"), bit->getInputPin("CLK"));
+                w.connect(clear_all, bit->getInputPin("RST"));
+                auto clean = w.reduce("CLEANED_" + n, {w.either("CLEAN_OR_REFILL_" + n,
+                    w.either("CLEAN_OR_CLEAR_" + n, getInputPin("CLEAN"), getInputPin("CLEAR")), getInputPin("MARK")), selected}, true);
+                auto set_dirty = w.both("SET_DIRTY_" + n, getInputPin("SET_DIRTY"), selected);
+                w.connect(w.either("NEXT_DIRTY_" + n, set_dirty,
+                    w.both("KEEP_DIRTY_" + n, bit->getOutputPin("Q"), w.invert("NOT_CLEANED_" + n, clean))), bit->getInputPin("D"));
+                selected_dirty.push_back(w.both("SELECTED_DIRTY_" + n, selected, bit->getOutputPin("Q")));
+            }
         }
         w.connect(w.reduce("VALID", selected_valid, false), getOutputPin("VALID"));
+        if (dirty_) w.connect(w.reduce("DIRTY", selected_dirty, false), getOutputPin("DIRTY"));
         w.finish();
     }
 private:
     size_t sets_, offset_;
+    bool dirty_;
     std::string type_;
 };
 
@@ -669,12 +705,52 @@ void CacheBankController<Width>::buildInternals(ComponentBuilder& builder) {
     auto tag_index = join("TAG_INDEX", set_index);
     auto data_index = data_address("DATA_INDEX", wanted_word);
 
+    // Write-back and write-allocate state. EVICT_READ/SEND/WAIT write a dirty
+    // victim back word by word (EVICT_WORD counts the words; EVICT_FLUSH: the
+    // eviction belongs to the flush walk). FLUSH_READ and FLUSH_CHECK walk
+    // every line (FLUSH_INDEX: way, then set) for invalidation; FLUSHED says
+    // the walk is complete. REFILLED_WRITE: a write-allocate fill just ended,
+    // the write is looked up again.
+    const bool back = config_.write_back, allocate = config_.write_allocate;
+    const size_t way_bits = config_.ways == 2 ? 1 : 0;
+    std::shared_ptr<IOComponent> evict_read_bit, evict_send_bit, evict_wait_bit, evict_flush_bit,
+        flush_read_bit, flush_check_bit, flushed_bit, refilled_bit;
+    std::vector<std::shared_ptr<IOComponent>> evict_word_bits, flush_index_bits;
+    PinPtr ER = low, ES = low, EW = low, EF = low, FR = low, FC = low, FLUSHED = low, REFILLED = low;
+    std::vector<PinPtr> evict_word, flush_index;
+    if (allocate) { refilled_bit = state_bit("REFILLED_WRITE"); REFILLED = refilled_bit->getOutputPin("Q"); }
+    if (back) {
+        evict_read_bit = state_bit("EVICT_READ"); ER = evict_read_bit->getOutputPin("Q");
+        evict_send_bit = state_bit("EVICT_SEND"); ES = evict_send_bit->getOutputPin("Q");
+        evict_wait_bit = state_bit("EVICT_WAIT"); EW = evict_wait_bit->getOutputPin("Q");
+        evict_flush_bit = state_bit("EVICT_FLUSH"); EF = evict_flush_bit->getOutputPin("Q");
+        flush_read_bit = state_bit("FLUSH_READ"); FR = flush_read_bit->getOutputPin("Q");
+        flush_check_bit = state_bit("FLUSH_CHECK"); FC = flush_check_bit->getOutputPin("Q");
+        flushed_bit = state_bit("FLUSHED"); FLUSHED = flushed_bit->getOutputPin("Q");
+        for (size_t i = 0; i < line_bits; ++i) {
+            evict_word_bits.push_back(state_bit("EVICT_WORD_" + std::to_string(i)));
+            evict_word.push_back(evict_word_bits.back()->getOutputPin("Q"));
+        }
+        for (size_t i = 0; i < way_bits + set_bits; ++i) {
+            flush_index_bits.push_back(state_bit("FLUSH_INDEX_" + std::to_string(i)));
+            flush_index.push_back(flush_index_bits.back()->getOutputPin("Q"));
+        }
+    }
+    const std::vector<PinPtr> flush_set(flush_index.begin() + std::min(way_bits, flush_index.size()), flush_index.end());
+    auto flushing = back ? w.reduce("FLUSHING", {FR, FC, EF}, false) : low;
+    // The line state reads the request's set, or the walked set while flushing.
+    PinPtr line_address = addr_reg->getOutputPin<32>("Q");
+    if (back) {
+        std::vector<PinPtr> walked(32, low);
+        for (size_t i = 0; i < set_bits; ++i) walked[offset + i] = flush_set[i];
+        line_address = memory_detail::payloadMux(builder, w, "LINE_ADDRESS", line_address, join("FLUSH_ADDRESS", walked), flushing);
+    }
     std::vector<std::shared_ptr<CacheLineState>> lines;
     std::vector<PinPtr> matches;
     for (size_t way = 0; way < config_.ways; ++way) {
-        auto line = builder.addNewComponent<CacheLineState>("LINE_STATE_" + std::to_string(way), config_.sets, offset);
+        auto line = builder.addNewComponent<CacheLineState>("LINE_STATE_" + std::to_string(way), config_.sets, offset, back);
         for (auto pin : {"CLK", "RST"}) w.connect(getInputPin(pin), line->getInputPin(pin));
-        w.connect(addr_reg->getOutputPin<32>("Q"), line->getInputPin<32>("ADDRESS"));
+        w.connect(line_address, line->getInputPin<32>("ADDRESS"));
         lines.push_back(line);
         auto match = builder.addNewComponent<CacheTagMatch32>("TAG_MATCH_" + std::to_string(way));
         w.connect(tag_value, match->getInputPin<32>("EXPECTED"));
@@ -727,13 +803,112 @@ void CacheBankController<Width>::buildInternals(ComponentBuilder& builder) {
     }
     auto lookup_read = w.both("LOOKUP_READ", L, is_read);
     auto read_hit = w.both("READ_HIT", lookup_read, hit);
-    auto read_miss = w.both("READ_MISS", lookup_read, w.invert("NOT_HIT", hit));
+    auto read_only_miss = w.both("READ_MISS", lookup_read, w.invert("NOT_HIT", hit));
     auto write_lookup = w.both("WRITE_LOOKUP", L, is_write);
     auto burst_hit = w.both("BURST_HIT", read_hit, is_burst);
-    auto queued_write = buffered ? write_lookup : low;
-    auto queued_update = buffered ? w.both("QUEUED_WRITE_HIT", write_lookup, hit) : low;
-    // A fill starts once the queue is drained.
-    auto fill_start = buffered ? w.both("FILL_START", w.either("MISS_OR_WAITING", read_miss, miss_wait), drained) : read_miss;
+    // A miss that fills its line: a read miss, or with write-allocate a write
+    // miss (the write is looked up again once the line is in).
+    auto read_miss = allocate ? w.either("FILL_MISS", read_only_miss,
+        w.both("WRITE_MISS_ALLOCATES", write_lookup, w.invert("WRITE_NOT_HIT", hit))) : read_only_miss;
+    // A write that goes ahead now: every write, or with write-allocate a hit.
+    auto write_now = allocate ? w.both("WRITE_GOES_AHEAD", write_lookup, hit) : write_lookup;
+    auto queued_write = buffered ? write_now : low;
+    auto queued_update = buffered ? w.both("QUEUED_WRITE_HIT", write_now, hit) : low;
+    // Write-back: a write hit updates its line, marks it dirty and is answered now.
+    auto back_write = back ? w.both("WRITE_BACK_HIT", write_now, hit) : low;
+    auto lookup_update = w.either("LOOKUP_UPDATE", queued_update, back_write);
+    // A write sent to the backing memory now: write-through, or a write-back
+    // write miss without allocation (write-around).
+    auto write_to_lower = buffered ? low : back ? w.both("WRITE_AROUND", write_now, w.invert("AROUND_MISS", hit)) : write_now;
+
+    // Write-back: a dirty victim is written back, word by word, before the
+    // fill; the flush walk writes back every dirty line before invalidation.
+    PinPtr needs_evict = low, evict_last_done = low, evict_rsp_ready = low, flush_found = low,
+           flush_way_one = low, evict_address = low, flush_step = low, flush_last = low;
+    std::shared_ptr<IOComponent> victim_index_reg;
+    if (back) {
+        auto way_signal = [&](const std::string& name, const std::string& pin, PinPtr one) -> PinPtr {
+            return config_.ways == 1 ? PinPtr(lines[0]->getOutputPin(pin))
+                : memory_detail::payloadMux(builder, w, name, lines[0]->getOutputPin(pin), lines[1]->getOutputPin(pin), one);
+        };
+        auto way_tag = [&](const std::string& name, PinPtr one) -> PinPtr {
+            return config_.ways == 1 ? PinPtr(getInputPinDynamic("TAG0_READ_DATA"))
+                : memory_detail::payloadMux(builder, w, name, getInputPinDynamic("TAG0_READ_DATA"), getInputPinDynamic("TAG1_READ_DATA"), one);
+        };
+        needs_evict = w.reduce("NEEDS_EVICTION", {read_miss, way_signal("VICTIM_VALID", "VALID", victim_one),
+                                                  way_signal("VICTIM_DIRTY", "DIRTY", victim_one)}, true);
+        flush_way_one = way_bits ? flush_index[0] : low;
+        auto flush_dirty = w.both("WALKED_LINE_DIRTY", way_signal("WALKED_VALID", "VALID", flush_way_one),
+                                  way_signal("WALKED_DIRTY", "DIRTY", flush_way_one));
+        flush_found = w.both("FLUSH_FOUND", FC, flush_dirty);
+        auto flush_skip = w.both("FLUSH_SKIP", FC, w.invert("WALKED_LINE_CLEAN", flush_dirty));
+        auto start_evict = w.either("START_EVICTION", needs_evict, flush_found);
+        // The victim's tag and set: from the lookup, or from the walk.
+        auto victim_tag_reg = builder.add(circuit::families::registerWord(32), "VICTIM_TAG");
+        victim_index_reg = builder.add(circuit::families::registerWord(32), "VICTIM_SET");
+        for (const auto& reg : {victim_tag_reg, victim_index_reg}) {
+            for (auto pin : {"CLK", "RST"}) w.connect(getInputPin(pin), reg->getInputPin(pin));
+            w.connect(start_evict, reg->getInputPin("WE"));
+        }
+        w.connect(memory_detail::payloadMux(builder, w, "VICTIM_TAG_SOURCE", way_tag("VICTIM_TAG_NOW", victim_one),
+                                            way_tag("WALKED_TAG", flush_way_one), flush_found), victim_tag_reg->getInputPin<32>("D"));
+        w.connect(memory_detail::payloadMux(builder, w, "VICTIM_SET_SOURCE", join("REQUEST_SET", set_index),
+                                            join("WALKED_SET", flush_set), flush_found), victim_index_reg->getInputPin<32>("D"));
+        auto evict_sent = w.both("EVICT_SENT", ES, getInputPin("MEM_REQ_READY"));
+        evict_rsp_ready = w.either("EVICT_RESPONSE_READY", ES, EW);
+        auto evict_done = w.both("EVICT_WORD_DONE", w.either("EVICT_ACTIVE", evict_sent, EW), getInputPin("MEM_RSP_VALID"));
+        auto evict_last = line_bits ? w.reduce("EVICT_LAST_WORD", evict_word, true) : high;
+        evict_last_done = w.both("EVICTION_DONE", evict_done, evict_last);
+        w.connect(w.either("NEXT_EVICT_READ", start_evict, w.both("EVICT_NEXT_WORD", evict_done, w.invert("EVICT_MORE", evict_last))),
+                  evict_read_bit->getInputPin("D"));
+        w.connect(w.either("NEXT_EVICT_SEND", ER, w.both("EVICT_STILL_SENDING", ES, w.invert("EVICT_NOT_TAKEN", getInputPin("MEM_REQ_READY")))),
+                  evict_send_bit->getInputPin("D"));
+        w.connect(w.both("NEXT_EVICT_WAIT", w.either("EVICT_IN_FLIGHT", evict_sent, EW), w.invert("EVICT_NO_RESPONSE", evict_done)),
+                  evict_wait_bit->getInputPin("D"));
+        w.connect(w.either("NEXT_EVICT_FLUSH", flush_found, w.both("EVICT_FLUSH_HOLD", EF, w.invert("EVICT_FLUSH_ENDS", evict_last_done))),
+                  evict_flush_bit->getInputPin("D"));
+        // EVICT_WORD: 0 when an eviction starts, one more per word written back.
+        PinPtr carry = high;
+        for (size_t i = 0; i < line_bits; ++i) {
+            const auto n = std::to_string(i);
+            auto sum = w.binary<XORGate>("EVICT_WORD_SUM_" + n, evict_word[i], carry);
+            carry = w.both("EVICT_WORD_CARRY_" + n, evict_word[i], carry);
+            auto stepped = memory_detail::payloadMux(builder, w, "EVICT_WORD_STEP_" + n, evict_word[i], sum, evict_done);
+            w.connect(w.both("NEXT_EVICT_WORD_" + n, stepped, w.invert("EVICT_WORD_RESTART_" + n, start_evict)),
+                      evict_word_bits[i]->getInputPin("D"));
+        }
+        // The victim word's backing address: its tag, its set, the word.
+        auto victim_set_bits = bits_of("VICTIM_SET_BITS", victim_index_reg->getOutputPin<32>("Q"));
+        auto victim_tag_bits = bits_of("VICTIM_TAG_BITS", victim_tag_reg->getOutputPin<32>("Q"));
+        std::vector<PinPtr> address(32, low);
+        for (size_t i = 0; i < line_bits; ++i) address[word_shift + i] = evict_word[i];
+        for (size_t i = 0; i < set_bits; ++i) address[offset + i] = victim_set_bits[i];
+        for (size_t i = 0; offset + set_bits + i < 32; ++i) address[offset + set_bits + i] = victim_tag_bits[i];
+        evict_address = join("EVICT_ADDRESS", address);
+        // The walk: the next line after a clean one or a finished write-back.
+        flush_step = w.either("FLUSH_STEP", flush_skip, w.both("FLUSH_EVICTED", evict_last_done, EF));
+        flush_last = flush_index.empty() ? high : w.reduce("FLUSH_LAST_LINE", flush_index, true);
+        auto busy = w.reduce("CONTROLLER_BUSY", {L, MS, MW, ST, ER, ES, EW, FR, FC, REFILLED, D}, false);
+        auto flush_begin = w.reduce("FLUSH_BEGIN", {getInputPin("INV_VALID"), w.invert("CONTROLLER_FREE", busy),
+                                                    w.invert("NOT_FLUSHED", FLUSHED)}, true);
+        w.connect(w.either("NEXT_FLUSH_READ", flush_begin, w.both("FLUSH_CONTINUES", flush_step, w.invert("FLUSH_MORE", flush_last))),
+                  flush_read_bit->getInputPin("D"));
+        w.connect(FR, flush_check_bit->getInputPin("D"));
+        carry = high;
+        for (size_t i = 0; i < flush_index.size(); ++i) {
+            const auto n = std::to_string(i);
+            auto sum = w.binary<XORGate>("FLUSH_INDEX_SUM_" + n, flush_index[i], carry);
+            carry = w.both("FLUSH_INDEX_CARRY_" + n, flush_index[i], carry);
+            auto stepped = memory_detail::payloadMux(builder, w, "FLUSH_INDEX_STEP_" + n, flush_index[i], sum, flush_step);
+            w.connect(w.both("NEXT_FLUSH_INDEX_" + n, stepped, w.invert("FLUSH_INDEX_RESTART_" + n, flush_begin)),
+                      flush_index_bits[i]->getInputPin("D"));
+        }
+    }
+    auto miss_fills = back ? w.both("MISS_FILLS_NOW", read_miss, w.invert("MISS_EVICTS_FIRST", needs_evict)) : read_miss;
+    auto fill_after_eviction = back ? w.both("FILL_AFTER_EVICTION", evict_last_done, w.invert("NOT_A_FLUSH", EF)) : low;
+    // A fill starts once the queue is drained, or once the victim is written back.
+    auto fill_start = buffered ? w.both("FILL_START", w.either("MISS_OR_WAITING", read_miss, miss_wait), drained)
+                               : back ? w.either("FILL_START", miss_fills, fill_after_eviction) : read_miss;
     if (buffered) {
         w.connect(queued_write, queue->getInputPin("ENQUEUE"));
         w.connect(w.both("NEXT_MISS_WAIT", w.either("MISS_STILL_WAITING", read_miss, miss_wait),
@@ -741,6 +916,10 @@ void CacheBankController<Width>::buildInternals(ComponentBuilder& builder) {
     }
     // Backing memory: accepted while MEMORY_SEND; answered then or later, a
     // burst fill one word per response.
+    // What MEMORY_SEND/WAIT is doing: a write (write-through or write-around),
+    // or a fill (also of a write-allocate miss).
+    auto sending_write_bit = state_bit("SENDING_WRITE");
+    auto sending_write = sending_write_bit->getOutputPin("Q");
     auto sent = w.both("MEMORY_SENT", MS, getInputPin("MEM_REQ_READY"));
     // A response leaves the result register as the front end finishes it
     // (no response held: SPACE, registered); a burst's next word is taken
@@ -752,13 +931,15 @@ void CacheBankController<Width>::buildInternals(ComponentBuilder& builder) {
     auto rsp = w.both("MEMORY_RESPONSE_TAKEN", getInputPin("MEM_RSP_VALID"), rsp_ready);
     auto mem_done = w.both("MEMORY_DONE", w.either("MEMORY_ACTIVE", sent, MW), rsp);
     auto mem_ok = status_ok("MEMORY_STATUS", getInputPin<3>("MEM_RSP_STATUS"));
-    auto fill_done = w.both("FILL_DONE", mem_done, is_read);
+    w.connect(w.either("NEXT_SENDING_WRITE", write_to_lower, w.reduce("STILL_SENDING_WRITE", {sending_write,
+        w.either("WRITE_IN_MEMORY_PHASE", MS, MW), w.invert("WRITE_NOT_DONE", mem_done)}, true)), sending_write_bit->getInputPin("D"));
+    auto fill_done = w.both("FILL_DONE", mem_done, w.invert("NOT_SENDING_WRITE", sending_write));
     auto fill_success = w.both("FILL_SUCCESS", fill_done, mem_ok);
     auto fill_failure = w.both("FILL_FAILURE", fill_done, w.invert("FILL_NOT_OK", mem_ok));
     auto last_fill = address_path->getOutputPin("LAST_FILL_WORD");
     auto fill_complete = w.both("FILL_COMPLETE", fill_success, last_fill);
     auto more_fill = w.both("MORE_FILL_WORDS", fill_success, w.invert("NOT_LAST_FILL_WORD", last_fill));
-    auto write_done = w.both("WRITE_DONE", mem_done, is_write);
+    auto write_done = w.both("WRITE_DONE", mem_done, sending_write);
     auto write_ok = w.both("WRITE_OK", write_done, mem_ok);
     // A burst hit's further words: STREAM_OFFSET counts the words from the
     // requested one; one is taken when there is room.
@@ -801,12 +982,12 @@ void CacheBankController<Width>::buildInternals(ComponentBuilder& builder) {
     // Responses. Each sets DONE, LAST (this one ends the transaction) and the
     // result and status registers.
     auto forward = w.both("FORWARD_FILL_WORD", fill_success, is_burst);
-    auto read_answered = w.both("READ_ANSWERED", fill_complete, w.invert("NOT_A_BURST", is_burst));
+    auto read_answered = w.reduce("READ_ANSWERED", {fill_complete, w.invert("NOT_A_BURST", is_burst), is_read}, true);
     auto respond = w.reduce("RESPOND", {invalid, read_hit, stream_take, forward, read_answered, fill_failure, write_done,
-                                        queued_write}, false);
+                                        queued_write, back_write}, false);
     auto ends = w.reduce("RESPONSE_ENDS", {invalid, w.both("SINGLE_WORD_HIT", read_hit, streams ? w.invert("HIT_NOT_BURST", is_burst) : high),
         w.both("LAST_STREAM_WORD", stream_take, stream_last), w.both("LAST_FORWARDED", forward, last_fill),
-        read_answered, fill_failure, write_done, queued_write}, false);
+        read_answered, fill_failure, write_done, queued_write, back_write}, false);
     auto last_bit = state_bit("LAST");
     w.connect(w.either("NEXT_LAST", w.both("NEW_LAST", respond, ends),
         w.both("HOLD_LAST", last_bit->getOutputPin("Q"), w.invert("NO_NEW_RESPONSE", respond))), last_bit->getInputPin("D"));
@@ -814,8 +995,9 @@ void CacheBankController<Width>::buildInternals(ComponentBuilder& builder) {
     w.connect(D, front->getInputPin("DONE"));
 
     // Next states.
-    w.connect(valid_start, phases->getInputPin("NEXT_LOOKUP"));
-    w.connect(w.reduce("NEXT_MEMORY_SEND_VALUE", {fill_start, buffered ? low : write_lookup,
+    if (allocate) w.connect(w.both("WRITE_LINE_FILLED", fill_complete, is_write), refilled_bit->getInputPin("D"));
+    w.connect(allocate ? w.either("NEXT_LOOKUP_VALUE", valid_start, REFILLED) : valid_start, phases->getInputPin("NEXT_LOOKUP"));
+    w.connect(w.reduce("NEXT_MEMORY_SEND_VALUE", {fill_start, write_to_lower,
         config_.burst_fill ? low : more_fill,
         w.both("STAY_MEMORY_SEND", MS, w.invert("NOT_SENT", getInputPin("MEM_REQ_READY")))}, false),
         phases->getInputPin("NEXT_MEMORY_SEND"));
@@ -833,9 +1015,10 @@ void CacheBankController<Width>::buildInternals(ComponentBuilder& builder) {
     if (config_.ways == 2) {
         current_way = state_bit("CURRENT_WAY");
         way_one = current_way->getOutputPin("Q");
-        auto choose = w.reduce("CHOOSE_WAY", {read_miss, write_lookup, burst_hit}, false);
-        auto chosen_one = w.either("CHOSEN_WAY_ONE", w.both("VICTIM_IS_ONE", read_miss, victim_one),
-                                   w.both("HIT_WAY_ONE", w.either("WRITE_OR_BURST_HIT", write_lookup, burst_hit), hit_one));
+        auto choose = w.reduce("CHOOSE_WAY", {read_miss, write_now, burst_hit, flush_found}, false);
+        auto chosen_one = w.reduce("CHOSEN_WAY_ONE", {w.both("VICTIM_IS_ONE", read_miss, victim_one),
+                                   w.both("HIT_WAY_ONE", w.either("WRITE_OR_BURST_HIT", write_now, burst_hit), hit_one),
+                                   w.both("WALKED_WAY_ONE", flush_found, flush_way_one)}, false);
         w.connect(w.either("NEXT_CURRENT_WAY", chosen_one, w.both("HOLD_CURRENT_WAY", way_one, w.invert("NOT_CHOOSING", choose))),
                   current_way->getInputPin("D"));
     }
@@ -853,7 +1036,7 @@ void CacheBankController<Width>::buildInternals(ComponentBuilder& builder) {
     const bool clocked_data = config_.data_technology == Technology::SRAM;
     PinPtr stream_index = data_address("STREAM_INDEX", stream_word);
     auto lookup_burst = streams ? w.both("LOOKUP_BURST", L, is_burst) : low;
-    PinPtr data_read = valid_start, reading_stream = ST;
+    PinPtr data_read = w.reduce("DATA_READ_START", {valid_start, REFILLED, ER}, false), reading_stream = ST;
     if (clocked_data && streams) {
         std::vector<PinPtr> one_bits(line_bits, low);
         one_bits[0] = high;
@@ -862,32 +1045,44 @@ void CacheBankController<Width>::buildInternals(ComponentBuilder& builder) {
         stream_index = memory_detail::payloadMux(builder, w, "STREAM_OR_SECOND_INDEX", stream_index,
             data_address("SECOND_INDEX", add_offsets("SECOND_WORD", wanted_word, one_bits)), L);
         auto stream_read = w.both("STREAM_READ", ST, w.invert("STREAM_FINISHING", w.both("STREAM_LAST_TAKEN", stream_take, stream_last)));
-        data_read = w.reduce("DATA_READ_NOW", {valid_start, lookup_burst, stream_read}, false);
+        data_read = w.reduce("DATA_READ_NOW", {valid_start, lookup_burst, stream_read, REFILLED, ER}, false);
         reading_stream = w.either("READING_STREAM", lookup_burst, ST);
     }
 
+    // A data-bank write: the requester's word (a write into the line) or a fill word.
+    auto write_update = w.either("WRITE_UPDATE", update_written, lookup_update);
     auto data_write_word = memory_detail::payloadMux(builder, w, "DATA_WRITE_WORD",
-        getInputPinDynamic("MEM_RSP_READ_DATA"), write_data_reg->getOutputPinDynamic("Q"), is_write);
+        getInputPinDynamic("MEM_RSP_READ_DATA"), write_data_reg->getOutputPinDynamic("Q"), write_update);
     auto data_write_mask = memory_detail::payloadMux(builder, w, "DATA_WRITE_MASK_SOURCE",
-        full_data_mask, write_mask_reg->getOutputPinDynamic("Q"), is_write);
-    auto data_write_index = memory_detail::payloadMux(builder, w, "DATA_WRITE_INDEX", fill_index, data_index, is_write);
-    auto data_writing = w.reduce("DATA_WRITING", {fill_success, update_written, queued_update}, false);
-    // A queued write updates its line in the lookup cycle, in the hit way.
-    auto write_way_one = buffered && config_.ways == 2
-        ? memory_detail::payloadMux(builder, w, "UPDATE_WAY", way_one, hit_one, queued_update) : way_one;
+        full_data_mask, write_mask_reg->getOutputPinDynamic("Q"), write_update);
+    auto data_write_index = memory_detail::payloadMux(builder, w, "DATA_WRITE_INDEX", fill_index, data_index, write_update);
+    auto data_writing = w.reduce("DATA_WRITING", {fill_success, update_written, lookup_update}, false);
+    // A queued or write-back write updates its line in the lookup cycle, in the hit way.
+    auto write_way_one = (buffered || back) && config_.ways == 2
+        ? memory_detail::payloadMux(builder, w, "UPDATE_WAY", way_one, hit_one, lookup_update) : way_one;
     auto data_read_index = memory_detail::payloadMux(builder, w, "DATA_LOOKUP_OR_STREAM", lookup_index, stream_index, reading_stream);
+    if (back) {
+        // A write-back reads the victim's words from its set.
+        auto victim_set_bits = bits_of("EVICT_SET_BITS", victim_index_reg->getOutputPin<32>("Q"));
+        std::vector<PinPtr> index = evict_word;
+        index.insert(index.end(), victim_set_bits.begin(), victim_set_bits.begin() + set_bits);
+        data_read_index = memory_detail::payloadMux(builder, w, "DATA_READ_OR_EVICT", data_read_index, join("EVICT_INDEX", index),
+                                                    w.reduce("EVICTING", {ER, ES, EW}, false));
+    }
     for (size_t way = 0; way < config_.ways; ++way) {
         const auto n = std::to_string(way);
         auto this_way = way == 0 ? w.invert("CURRENT_WAY_ZERO", way_one) : way_one;
         auto write_way = way == 0 ? w.invert("WRITE_WAY_ZERO", write_way_one) : write_way_one;
         auto data_write = w.both("DATA_WRITE_" + n, data_writing, write_way);
         auto tag_write = w.both("TAG_WRITE_" + n, fill_complete, this_way);
-        w.connect(valid_start, getOutputPin("TAG" + n + "_READ"));
+        w.connect(w.reduce("TAG_READ_" + n, {valid_start, REFILLED, FR}, false), getOutputPin("TAG" + n + "_READ"));
         w.connect(tag_write, getOutputPin("TAG" + n + "_WRITE"));
         w.connect(data_read, getOutputPin("DATA" + n + "_READ"));
         w.connect(data_write, getOutputPin("DATA" + n + "_WRITE"));
-        w.connect(memory_detail::payloadMux(builder, w, "TAG_ADDRESS_" + n, tag_read_index, tag_index, tag_write),
-                  getOutputPin<32>("TAG" + n + "_WORD_ADDR"));
+        auto tag_address = memory_detail::payloadMux(builder, w, "TAG_ADDRESS_" + n, tag_read_index, tag_index, tag_write);
+        if (back) tag_address = memory_detail::payloadMux(builder, w, "TAG_OR_WALKED_" + n, tag_address,
+            join("WALKED_TAG_INDEX_" + n, flush_set), w.either("WALK_READS_TAG_" + n, FR, FC));
+        w.connect(tag_address, getOutputPin<32>("TAG" + n + "_WORD_ADDR"));
         w.connect(tag_value, getOutputPin<32>("TAG" + n + "_WRITE_DATA"));
         w.connect(full_tag_mask, getOutputPin<4>("TAG" + n + "_WRITE_MASK"));
         w.connect(memory_detail::payloadMux(builder, w, "DATA_ADDRESS_" + n, data_read_index, data_write_index, data_write),
@@ -897,24 +1092,36 @@ void CacheBankController<Width>::buildInternals(ComponentBuilder& builder) {
         auto victim = way == 0 ? w.invert("VICTIM_ZERO", victim_one) : victim_one;
         w.connect(w.both("EVICT_LINE_" + n, read_miss, victim), lines[way]->getInputPin("CLEAR"));
         w.connect(tag_write, lines[way]->getInputPin("MARK"));
+        if (back) {
+            w.connect(w.both("MARK_DIRTY_" + n, back_write, way == 0 ? w.invert("HIT_WAY_ZERO_" + n, hit_one) : hit_one),
+                      lines[way]->getInputPin("SET_DIRTY"));
+            w.connect(w.reduce("WRITTEN_BACK_" + n, {evict_last_done, EF,
+                          way == 0 ? w.invert("WALKED_WAY_ZERO_" + n, flush_way_one) : flush_way_one}, true),
+                      lines[way]->getInputPin("CLEAN"));
+        }
     }
 
     // Idle: no lookup, backing request or stream; a shown response still lets
     // the front end take the next request as it is finished.
-    auto working = w.reduce("WORKING", {L, MS, MW, ST, miss_wait}, false);
+    auto working = w.reduce("WORKING", {L, MS, MW, ST, miss_wait, ER, ES, EW, FR, FC, REFILLED}, false);
     // Invalidation waits for the write buffer too: afterwards the backing
     // memory holds every write.
     auto idle = w.reduce("IDLE", {w.invert("NOT_WORKING", working), w.invert("NOT_DONE", D), drained}, true);
     w.connect(w.reduce("AVAILABLE", {w.invert("NO_WORK", working), w.invert("NO_INVALIDATION", getInputPin("INV_VALID")),
                                      w.invert("QUEUE_NOT_FULL", queue_full)}, true),
               front->getInputPin("BACK_READY"));
-    w.connect(idle, getOutputPin("INV_READY"));
-    auto invalidate = w.both("ACCEPT_INVALIDATION", getInputPin("INV_VALID"), idle);
+    // A write-back cache takes an invalidation once its walk has written
+    // every dirty line back.
+    auto inv_ready = back ? w.both("INVALIDATION_READY", idle, FLUSHED) : idle;
+    w.connect(inv_ready, getOutputPin("INV_READY"));
+    auto invalidate = w.both("ACCEPT_INVALIDATION", getInputPin("INV_VALID"), inv_ready);
+    if (back) w.connect(w.either("NEXT_FLUSHED", w.both("WALK_COMPLETE", flush_step, flush_last),
+                                 w.both("STAY_FLUSHED", FLUSHED, w.invert("NOT_INVALIDATED", invalidate))), flushed_bit->getInputPin("D"));
     for (const auto& line : lines) w.connect(invalidate, line->getInputPin("INVALIDATE"));
     if (replacement) {
         w.connect(invalidate, replacement->getInputPin("INVALIDATE"));
-        w.connect(w.reduce("TOUCH_REPLACEMENT", {read_hit, fill_complete, update_written, queued_update}, false), replacement->getInputPin("TOUCH"));
-        w.connect(memory_detail::payloadMux(builder, w, "TOUCHED_WAY", way_one, hit_one, w.either("HIT_TOUCH", read_hit, queued_update)),
+        w.connect(w.reduce("TOUCH_REPLACEMENT", {read_hit, fill_complete, update_written, lookup_update}, false), replacement->getInputPin("TOUCH"));
+        w.connect(memory_detail::payloadMux(builder, w, "TOUCHED_WAY", way_one, hit_one, w.either("HIT_TOUCH", read_hit, lookup_update)),
                   replacement->getInputPin("TOUCH_WAY"));
     }
 
@@ -953,10 +1160,10 @@ void CacheBankController<Width>::buildInternals(ComponentBuilder& builder) {
     for (size_t i = 0; i < word_shift; ++i) fill_address_bits[i] = low;
     for (size_t i = 0; i < line_bits; ++i) fill_address_bits[word_shift + i] = fill_word[i];
     auto fill_address = config_.burst_fill ? PinPtr(addr_reg->getOutputPin<32>("Q")) : join("FILL_ADDRESS", fill_address_bits);
-    auto lower_address = memory_detail::payloadMux(builder, w, "LOWER_ADDRESS", fill_address, addr_reg->getOutputPin<32>("Q"), is_write);
-    auto lower_op = memory_detail::payloadMux(builder, w, "LOWER_OP", read_op, write_op, is_write);
-    auto lower_data = memory_detail::payloadMux(builder, w, "LOWER_WRITE_DATA", zero_data, write_data_reg->getOutputPinDynamic("Q"), is_write);
-    auto lower_mask = memory_detail::payloadMux(builder, w, "LOWER_WRITE_MASK", zero_mask, write_mask_reg->getOutputPinDynamic("Q"), is_write);
+    auto lower_address = memory_detail::payloadMux(builder, w, "LOWER_ADDRESS", fill_address, addr_reg->getOutputPin<32>("Q"), sending_write);
+    auto lower_op = memory_detail::payloadMux(builder, w, "LOWER_OP", read_op, write_op, sending_write);
+    auto lower_data = memory_detail::payloadMux(builder, w, "LOWER_WRITE_DATA", zero_data, write_data_reg->getOutputPinDynamic("Q"), sending_write);
+    auto lower_mask = memory_detail::payloadMux(builder, w, "LOWER_WRITE_MASK", zero_mask, write_mask_reg->getOutputPinDynamic("Q"), sending_write);
     PinPtr lower_valid = MS, lower_ready = rsp_ready;
     if (buffered) {
         // With a write buffer, MEMORY_SEND is always a fill; otherwise the
@@ -967,6 +1174,15 @@ void CacheBankController<Width>::buildInternals(ComponentBuilder& builder) {
         lower_mask = memory_detail::payloadMux(builder, w, "LOWER_MASK_OR_QUEUE", queue->getOutputPinDynamic("REQ_MASK"), zero_mask, MS);
         lower_valid = w.either("LOWER_REQUEST", MS, queue->getOutputPin("REQ_VALID"));
         lower_ready = w.either("LOWER_RESPONSE_READY", rsp_ready, queue->getOutputPin("RSP_READY"));
+    }
+    if (back) {
+        // A write-back word: the victim word from the data bank.
+        lower_address = memory_detail::payloadMux(builder, w, "LOWER_ADDRESS_OR_EVICT", lower_address, evict_address, ES);
+        lower_op = memory_detail::payloadMux(builder, w, "LOWER_OP_OR_EVICT", lower_op, write_op, ES);
+        lower_data = memory_detail::payloadMux(builder, w, "LOWER_DATA_OR_EVICT", lower_data, current_word, ES);
+        lower_mask = memory_detail::payloadMux(builder, w, "LOWER_MASK_OR_EVICT", lower_mask, full_data_mask, ES);
+        lower_valid = w.either("LOWER_REQUEST_OR_EVICT", lower_valid, ES);
+        lower_ready = w.either("LOWER_RESPONSE_OR_EVICT", lower_ready, evict_rsp_ready);
     }
     w.connect(lower_address, getOutputPin<32>("MEM_REQ_ADDR"));
     w.connect(lower_op, getOutputPin<3>("MEM_REQ_OP"));

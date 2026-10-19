@@ -7,6 +7,18 @@ history remains in Git and the archived reports.
 
 ## 2026-10-20
 
+### Cache: write-back and write-allocate (branch `realistic-timing`)
+
+- **Changed:** caches take `write_policy=back` (dirty bits, write-back of a
+  dirty victim before its refill, a flush walk before invalidation) and
+  `write_miss=allocate` (a write miss fills its line, then writes into it).
+  The experiment tool flushes the L1s, then the L2, after the program stops
+  (new inputs `FLUSH_L1`, `FLUSH_L2`, fixed low for the clock analysis).
+- **Why:** step 2 of the general cache plan.
+- **Verified:** `CacheReadTest` with a write-policy reference stream,
+  `RV32ITopologyTest`, `RV32IBinaryClockCLITest`, the cache scenarios; D-ID
+  certified at 4,104 ps with write-back caches.
+
 ### Cache: write buffer (branch `realistic-timing`)
 
 - **Changed:** caches take a `write_buffer` of 1, 2 or 4 entries: writes are
