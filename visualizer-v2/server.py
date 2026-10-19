@@ -259,8 +259,10 @@ def _component_layout_type(component: Any) -> str:
             base = "FFArray" + component_type[len("FFMemory"):] if component_type.startswith("FFMemory") else component_type
             return f"{base}[{_component_layout_type(storage)}]"
     if _named_variant_type(component_type) and component.get_children():
+        # Child names and types: a 4-set and a 2-set cache controller share
+        # every name but not every type.
         signature = 0xCBF29CE484222325
-        for name in sorted(child.get_name() for child in component.get_children()):
+        for name in sorted(child.get_name() + "\x1f" + _component_type(child) for child in component.get_children()):
             for byte in name.encode("utf-8") + b"\xff":
                 signature = ((signature ^ byte) * 0x100000001B3) & 0xFFFFFFFFFFFFFFFF
         return f"{component_type}[layout-{signature:016x}]"
@@ -773,6 +775,30 @@ def _rv32i_program_root_layout(
     five-stage core share the same outside organization without distortion.
     """
     child_by_name = {child.get_name(): child for child in children}
+    unified = {"CLOCK", "CORE", "INSTRUCTION_CACHE", "DATA_CACHE", "INSTRUCTION_CACHE_NO_INVALIDATION",
+               "DATA_CACHE_NO_INVALIDATION", "MEMORY_ARBITER", "SHARED_MEMORY"}
+    if set(child_by_name) == unified:
+        # Core, then the two caches, the arbiter and one shared memory, left
+        # to right. The memory is large enough for its two-panel view.
+        top = title_fraction
+        height = max(0.1, 1.0 - top)
+        placements: dict[str, dict[str, Any]] = {}
+
+        def put(name: str, x: float, centre_y: float, width: float, height_budget: float) -> None:
+            aspect = child_aspects[child_by_name[name].get_id()]
+            width = min(width, height_budget * parent_aspect / max(aspect, 0.01))
+            box_height = width * aspect / max(parent_aspect, 0.01)
+            placements[name] = {"rel_pos": [x, centre_y - box_height / 2], "rel_width": width}
+
+        put("CORE", 0.05, top + height * 0.45, 0.36, height * 0.70)
+        put("INSTRUCTION_CACHE", 0.46, top + height * 0.27, 0.12, height * 0.30)
+        put("DATA_CACHE", 0.46, top + height * 0.63, 0.12, height * 0.30)
+        put("INSTRUCTION_CACHE_NO_INVALIDATION", 0.46, top + height * 0.07, 0.05, height * 0.06)
+        put("DATA_CACHE_NO_INVALIDATION", 0.46, top + height * 0.87, 0.05, height * 0.06)
+        put("MEMORY_ARBITER", 0.62, top + height * 0.45, 0.08, height * 0.50)
+        put("SHARED_MEMORY", 0.74, top + height * 0.45, 0.23, height * 0.80)
+        put("CLOCK", 0.05, top + height * 0.90, 0.10, height * 0.12)
+        return placements
     required = {
         "CLOCK",
         "CORE",

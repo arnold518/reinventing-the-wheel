@@ -243,9 +243,11 @@ std::string componentLayoutType(const std::shared_ptr<Component>& component) {
                                 type.starts_with("RV32IPredictionTable<") || type == "RV32IBranchPredictor" ||
                                 type.starts_with("MemoryTimer<");
     if (named_variants && !children.empty()) {
+        // Child names and types: a 4-set and a 2-set cache controller share
+        // every name but not every type.
         std::vector<std::string> names;
         names.reserve(children.size());
-        for (const auto& child : children) names.push_back(child->getName());
+        for (const auto& child : children) names.push_back(child->getName() + "\x1f" + child->getTypeName());
         std::sort(names.begin(), names.end());
         uint64_t signature = 0xcbf29ce484222325ULL;
         for (const auto& name : names) {
@@ -395,6 +397,14 @@ MemoryInspector::MemoryInspector(std::shared_ptr<Component> component, const Sim
             break;
         }
     }
+    for (auto current = component; current; current = current->getParent()) {
+        if (current->getName() != "SHARED_MEMORY") continue;
+        if (auto parent = current->getParent())
+            for (const auto& sibling : parent->getChildren())
+                if (std::string(sibling->getTypeName()).starts_with("TwoPortMemoryArbiter<"))
+                    arbiter_ = std::dynamic_pointer_cast<IOComponent>(sibling);
+        break;
+    }
 }
 
 std::shared_ptr<PinBase> MemoryInspector::pin(const std::shared_ptr<IOComponent>& io, const std::string& name) const {
@@ -417,6 +427,7 @@ void MemoryInspector::rebuildTransactions() {
     if (!endpoint_ || revision_ == simulator_.historyRevision()) return;
     revision_ = simulator_.historyRevision();
     edges_.clear();
+    accesses_.clear();
     std::set<size_t> times;
     for (const auto& name : {"CLK", "RST"})
         for (const auto& [time, bits] : simulator_.signalHistory(pin(endpoint_, name))) {
@@ -443,6 +454,9 @@ void MemoryInspector::rebuildTransactions() {
             if (accept) {
                 if (consume && !older) completed = time; // zero-wait bypass
                 else pending = time;                    // held/delayed response
+                uint64_t address = 0;
+                if (arbiter_ && binaryValue(value(endpoint_, "REQ_ADDR", time - 1), address))
+                    accesses_.push_back({time, value(arbiter_, "D_REQ_READY", time - 1) == "1", address});
             }
         } else continue;
         if (edges_.empty() || edges_.back().pending != pending || edges_.back().completed != completed)
@@ -470,10 +484,11 @@ std::string MemoryInspector::stateJson(size_t index, size_t time, const std::str
     object.boolean("supported", true);
     std::string role = scenario == "rv32i-program-loader" ? "instruction" : "generic";
     for (std::shared_ptr<Component> current = component_; current; current = current->getParent()) {
+        if (current->getName() == "SHARED_MEMORY" && arbiter_) { role = "unified"; break; }
         if (current->getName() == "INSTRUCTION_MEMORY") { role = "instruction"; break; }
         if (current->getName() == "DATA_MEMORY") { role = "data"; break; }
     }
-    if (memory.wordBits() != 32 && role == "instruction") role = "generic";
+    if (memory.wordBits() != 32 && (role == "instruction" || role == "unified")) role = "generic";
     const size_t word_bytes = memory.wordBits() / 8;
     bool has_address = false, active = false;
     uint64_t active_address = 0;
@@ -557,6 +572,33 @@ std::string MemoryInspector::stateJson(size_t index, size_t time, const std::str
     object.raw("touchedWords", arrayJson(touched, render));
     object.raw("windowWords", arrayJson(memory.getWordsAtTime(time, page_address, page_count), render));
     object.raw("transaction", transaction);
+    if (role == "unified") {
+        // The latest instruction fetch and data access accepted by now, each
+        // with the 16-word page around it: two views of one memory.
+        rebuildTransactions();
+        const auto side = [&](bool data) {
+            std::optional<uint64_t> latest;
+            for (const auto& access : accesses_) {
+                if (access.time > time) break;
+                if (access.data == data) latest = access.address;
+            }
+            std::string part;
+            JsonObject panel(part);
+            const size_t page_words = 16, page_span = page_words * word_bytes;
+            const uint64_t page = latest && *latest < memory.capacityBytes() ? *latest / page_span * page_span : 0;
+            if (latest) panel.number("address", *latest); else panel.null("address");
+            panel.number("pageAddress", page);
+            const size_t words = std::min(page_words, size_t((memory.capacityBytes() - page) / word_bytes));
+            panel.raw("words", latest || !data
+                ? arrayJson(memory.getWordsAtTime(time, uint32_t(page), words),
+                            [&](const auto& word) { return memoryWordJson(word.first, word.second, !data); })
+                : std::string("[]"));
+            panel.end();
+            return part;
+        };
+        object.raw("instructionSide", side(false));
+        object.raw("dataSide", side(true));
+    }
     std::shared_ptr<MemoryActivityView> activity_view = std::dynamic_pointer_cast<MemoryActivityView>(endpoint_);
     if (!activity_view && endpoint_) {
         for (const auto& controller : endpoint_->getChildren())

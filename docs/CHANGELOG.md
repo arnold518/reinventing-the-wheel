@@ -7,6 +7,19 @@ history remains in Git and the archived reports.
 
 ## 2026-10-19
 
+### Visualizer: unified memory view and a shared-memory RV32I scenario (branch `realistic-timing`)
+
+- **Changed:** a memory shared by instruction fetches and data accesses is
+  drawn as two panels (instructions disassembled, data words), each around
+  its latest access, telling the two apart by the arbiter's grant. New
+  scenario `rv32i-shared-memory` (program 21, advanced core, two caches, one
+  memory behind the arbiter) with its own floorplan. The structure hash of
+  cache and predictor layout keys now includes child types; layouts migrated.
+- **Why:** the owner asked for a two-panel view of unified memory.
+- **Verified:** ten focused checks (layouts in all 341 scenarios, catalog,
+  inspector parity including the new unified check, the scenario itself).
+  Browser checks pending.
+
 ### Shared memory: refuse overlapping instruction and data images (branch `realistic-timing`)
 
 - **Changed:** a topology run (`--topology`, every arrangement, since A loads

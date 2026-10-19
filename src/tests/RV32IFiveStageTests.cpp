@@ -87,9 +87,11 @@ std::string rv32iFiveStageProgramScenarioName(
 }
 
 RV32IFiveStageCoreProgramTest::
-RV32IFiveStageCoreProgramTest(size_t program_number, bool baseline, std::optional<rv32i::PredictionConfig> prediction)
+RV32IFiveStageCoreProgramTest(size_t program_number, bool baseline, std::optional<rv32i::PredictionConfig> prediction,
+                              bool shared_memory)
     : program_number_(program_number),
       baseline_(baseline),
+      shared_memory_(shared_memory),
       prediction_(prediction),
       profile_(fiveStageStructuralCoreProfile()) {
     (void)rv32iFiveStageProgramScenarioName(program_number_);
@@ -142,7 +144,21 @@ void RV32IFiveStageCoreProgramTest::setupCircuit() {
         manifest);
     auto root_context = scope->child(
         RV32IProgramRoot::RootName, std::nullopt);
-    program_root_ = Component::createWithContext<RV32IProgramRoot>(
+    if (shared_memory_) {
+        require(!baseline_, "a shared memory needs the advanced core");
+        const rv32i::MemoryConfiguration memory;
+        circuit::memory::CacheConfig instruction_cache, data_cache;
+        instruction_cache.sets = 4;
+        instruction_cache.backing_depth_words = memory.device.depth_words;
+        data_cache.sets = 4;
+        data_cache.backing_depth_words = memory.device.depth_words;
+        data_cache.read_write = true;
+        program_root_ = Component::createWithContext<RV32IProgramRoot>(
+            root_context, RV32IProgramRoot::RootName, circuit::families::RV32IFiveStageCore,
+            50 * timeScale(), memory, memory,
+            prediction_ ? prediction_->parameters() : circuit::ParameterMap{},
+            instruction_cache, data_cache, true);
+    } else program_root_ = Component::createWithContext<RV32IProgramRoot>(
         root_context,
         RV32IProgramRoot::RootName,
         baseline_ ? circuit::families::RV32IBaselinePipelineCore : circuit::families::RV32IFiveStageCore,
@@ -400,7 +416,9 @@ lastDataMemoryWrites() const {
 void RV32IFiveStageCoreProgramTest::verifyResults() {
     RV32IInstructionLockstepTest::verifyResults();
     const auto& expected = getCase().expected_five_stage;
-    if (expected.defined && !baseline_) {
+    // The recorded counts are those of separate zero-wait memories; a shared
+    // memory behind caches takes its own cycles (checked against the oracle).
+    if (expected.defined && !baseline_ && !shared_memory_) {
         require(totalCycles() == expected.cycles,
                 getTestName() + ": five-stage cycle count changed");
         require(load_use_stall_cycles_

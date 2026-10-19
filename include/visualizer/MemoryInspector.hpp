@@ -29,10 +29,19 @@ private:
         size_t time;
         std::optional<size_t> pending, completed;
     };
-    std::shared_ptr<IOComponent> component_, endpoint_;
+    // One memory shared by instruction fetches and data accesses: the two-port
+    // arbiter in front of it tells, at each accepting edge, which port the
+    // request came from.
+    struct Access {
+        size_t time;
+        bool data;
+        uint64_t address;
+    };
+    std::shared_ptr<IOComponent> component_, endpoint_, arbiter_;
     const Simulator& simulator_;
     size_t revision_ = size_t(-1);
     std::vector<Edge> edges_;
+    std::vector<Access> accesses_;
     std::shared_ptr<PinBase> pin(const std::shared_ptr<IOComponent>&, const std::string&) const;
     std::string value(const std::shared_ptr<IOComponent>&, const std::string&, size_t) const;
     void rebuildTransactions();

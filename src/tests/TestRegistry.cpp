@@ -547,6 +547,12 @@ const std::vector<TestRegistryEntry>& getTestRegistry() {
                     [n,policy]{return std::make_unique<RV32IFiveStageCoreProgramTest>(n,false,rv32i::PredictionConfig{policy,16});},true});
             }
         }
+        // The advanced core over one shared memory (two caches, the arbiter):
+        // the unified memory view of the visualizer.
+        entries.push_back({"RV32ISharedMemoryProgramTest", "RV32ISharedMemoryProgramTest",
+            RegisteredTestKind::Program, {}, "program-21",
+            {"simulation","integration","program","rv32i","pipeline","cache","memory","slow"},
+            []{return std::make_unique<RV32IFiveStageCoreProgramTest>(21,false,std::nullopt,true);},true});
         attachComponentMetadata(entries);
         attachNonComponentMetadata(entries);
         markVisualizable(entries);

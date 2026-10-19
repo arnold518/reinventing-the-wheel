@@ -131,4 +131,26 @@ class MemoryInspectorIntegrationTest(unittest.TestCase):
             with self.assertRaises(ValueError): inspector.state_json(0,0,"",0,count)
 
 
+    def test_unified_memory_shows_instructions_and_data(self):
+        # One memory behind the two-port arbiter: the inspector tells fetches
+        # from data accesses and gives a page around the latest of each.
+        scenario, test = "rv32i-shared-memory", "RV32ISharedMemoryProgramTest"
+        with tempfile.TemporaryDirectory() as tmp:
+            session = server.CircuitSession(scenario, server.LayoutManager(Path(tmp) / "layout.json"))
+            component = next(c["id"] for c in session.components if c["name"] == "SHARED_MEMORY")
+            index = len(session.timestamps) - 1
+            state = session.component_state_at_index(index, component)
+            native = json.loads(subprocess.check_output(
+                [PROBE, "component", test, scenario, str(index), component], text=True))
+            self.assertEqual(state, native)
+            self.assertEqual(state["memoryRole"], "unified")
+            code, data = state["instructionSide"], state["dataSide"]
+            self.assertLess(code["address"], 0x100)        # program 21: code from 0
+            self.assertGreaterEqual(data["address"], 0x100)  # data from 0x100
+            self.assertEqual(code["words"][0]["instructionText"], "addi x1, x0, 256")
+            self.assertEqual([w["hex"] for w in data["words"][:3]], ["0x00000001", "0x00000002", "0x00000003"])
+            del session
+            gc.collect()
+
+
 if __name__ == "__main__": unittest.main()

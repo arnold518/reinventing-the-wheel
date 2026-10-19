@@ -2600,9 +2600,80 @@ function drawMemoryScrollControls(componentId, controlRect, offset, maxOffset, s
   app.memoryScrollControls.push({ componentId, direction: "down", rect: downRect, enabled: downEnabled, maxOffset, step });
 }
 
+// One memory shared by instruction fetches and data accesses: two panels,
+// instructions on the left (disassembled, around the latest fetch) and data on
+// the right (around the latest data access).
+function drawUnifiedMemoryContents(component, parts, state) {
+  const screenRect = rectToScreenRect(parts.bodyRect);
+  const clipped = clipScreenRect(screenRect, 0);
+  if (!clipped || screenRect.w < 200 || screenRect.h < 86) return;
+  const inset = Math.min(screenRect.w * 0.12, Math.max(screenRect.w * 0.06,
+    component.rect.w * component.boundaryRatio * app.camera.zoom));
+  const padY = screenRect.h * 0.055;
+  const area = {x: screenRect.x + inset, y: screenRect.y + padY,
+                w: screenRect.w - inset * 2, h: screenRect.h - padY * 2};
+  const gap = area.w * 0.04;
+  const panelW = (area.w - gap) / 2;
+  if (panelW < 90 || area.h < 62) return;
+  const transactionStyle = window.CircuitMemoryView.transactionStyle(state);
+  const modeColor = transactionStyle?.color ?? "rgba(238, 244, 255, 0.65)";
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(clipped.x, clipped.y, clipped.w, clipped.h);
+  ctx.clip();
+  [["INSTRUCTIONS", state.instructionSide, true], ["DATA", state.dataSide, false]].forEach(([title, side, code], panel) => {
+    const rect = {x: area.x + panel * (panelW + gap), y: area.y, w: panelW, h: area.h};
+    const headerH = rect.h * 0.16;
+    const address = side && side.address != null ? side.address : null;
+    const activeBase = address == null ? null : address - address % 4;
+    drawScreenRoundedRect({x: rect.x, y: rect.y, w: rect.w, h: headerH}, "rgba(8, 12, 18, 0.54)",
+      "rgba(238, 244, 255, 0.18)", 1, 4);
+    const headerFont = Math.min(headerH * 0.42, rect.w * 0.07, MAX_COMPONENT_FONT_PX);
+    ctx.font = `700 ${Math.floor(headerFont)}px ui-monospace, SFMono-Regular, Consolas, monospace`;
+    ctx.textBaseline = "middle";
+    ctx.textAlign = "left";
+    ctx.fillStyle = "rgba(238, 244, 255, 0.84)";
+    ctx.fillText(title, rect.x + 7, rect.y + headerH / 2);
+    ctx.textAlign = "right";
+    ctx.fillStyle = address == null ? "rgba(238, 244, 255, 0.45)" : modeColor;
+    ctx.fillText(address == null ? "NO ACCESS" : address.toString(16).toUpperCase().padStart(8, "0"),
+      rect.x + rect.w - 7, rect.y + headerH / 2);
+    const words = (side && side.words) || [];
+    const tableY = rect.y + headerH + rect.h * 0.02;
+    const tableH = rect.y + rect.h - tableY;
+    const visible = Math.min(words.length, MEMORY_WORD_WINDOW_ROWS);
+    const centre = Math.max(0, words.findIndex(row => row.address === activeBase));
+    const first = Math.max(0, Math.min(centre - Math.floor(visible / 2), words.length - visible));
+    const rowH = visible ? tableH / visible : tableH;
+    const rowFont = Math.min(rowH * 0.46, rect.w * 0.06, MAX_COMPONENT_FONT_PX);
+    const addressW = rect.w * (code ? 0.3 : 0.45);
+    words.slice(first, first + visible).forEach((row, index) => {
+      const rowRect = {x: rect.x, y: tableY + index * rowH, w: rect.w, h: Math.max(0, rowH * 0.88)};
+      const active = row.address === activeBase;
+      drawScreenRoundedRect(rowRect, active ? "rgba(21, 42, 64, 0.78)" : "rgba(8, 12, 18, 0.42)",
+        active ? modeColor : "rgba(238, 244, 255, 0.13)", active ? 1.5 : 0.7, 3);
+      ctx.font = `700 ${Math.floor(rowFont)}px ui-monospace, SFMono-Regular, Consolas, monospace`;
+      ctx.textBaseline = "middle";
+      ctx.textAlign = "left";
+      ctx.fillStyle = "rgba(238, 244, 255, 0.62)";
+      ctx.fillText((row.addressHex || "0x????????").replace(/^0x/i, ""), rowRect.x + 6, rowRect.y + rowRect.h / 2);
+      const value = code && row.instructionText ? row.instructionText : registerWordDisplay(row);
+      ctx.fillStyle = `rgb(${valueColor(row.bits || "X").join(",")})`;
+      ctx.textAlign = code ? "left" : "right";
+      const fitted = ellipsizeText(value, Math.max(0, rect.w - addressW - 12));
+      if (fitted) ctx.fillText(fitted, code ? rowRect.x + addressW + 4 : rowRect.x + rowRect.w - 6, rowRect.y + rowRect.h / 2);
+    });
+  });
+  ctx.restore();
+}
+
 function drawMemoryContents(component, parts) {
   const state = app.componentStates.get(component.id);
   if (!state || !state.supported) return;
+  if (state.memoryRole === "unified" && state.instructionSide && state.dataSide) {
+    drawUnifiedMemoryContents(component, parts, state);
+    return;
+  }
 
   const screenRect = rectToScreenRect(parts.bodyRect);
   const clipped = clipScreenRect(screenRect, 0);

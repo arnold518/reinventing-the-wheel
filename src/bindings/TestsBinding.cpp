@@ -59,6 +59,23 @@ void bindTests(py::module_& m) {
                 baseline ? circuit::families::RV32IBaselinePipelineCore : (pipeline || prediction) ? circuit::families::RV32IFiveStageCore : circuit::families::RV32ISingleCycleCore,
                 (pipeline || prediction) ? 50 : 2000, parameters);
         }
+        if (name == "RV32ISharedMemoryProgramTest") {
+            // As the scenario builds it: two caches over one shared memory.
+            const auto profile = std::make_shared<const circuit::BuildProfile>(test->getBuildProfile());
+            const auto manifest = std::make_shared<circuit::BuildManifest>(profile->name(), profile->fingerprint());
+            const auto context = circuit::BuildContext::rootScope(circuit::builtinComponentCatalog(), profile, manifest)
+                ->child(RV32IProgramRoot::RootName, std::nullopt);
+            const rv32i::MemoryConfiguration memory;
+            circuit::memory::CacheConfig instruction_cache, data_cache;
+            instruction_cache.sets = 4;
+            instruction_cache.backing_depth_words = memory.device.depth_words;
+            data_cache.sets = 4;
+            data_cache.backing_depth_words = memory.device.depth_words;
+            data_cache.read_write = true;
+            return Component::createWithContext<RV32IProgramRoot>(context, RV32IProgramRoot::RootName,
+                circuit::families::RV32IFiveStageCore, 50, memory, memory, circuit::ParameterMap{},
+                instruction_cache, data_cache, true);
+        }
         // Legacy fixture setup builds/preloads only; reject future exceptions
         // instead of silently treating an executed scenario as topology-only.
         test->setupCircuit();

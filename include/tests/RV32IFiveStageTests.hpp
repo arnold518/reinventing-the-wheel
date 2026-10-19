@@ -31,7 +31,8 @@ class RV32IFiveStageCoreProgramTest
 public:
     explicit RV32IFiveStageCoreProgramTest(
         size_t program_number = 9, bool baseline = false,
-        std::optional<rv32i::PredictionConfig> prediction = std::nullopt);
+        std::optional<rv32i::PredictionConfig> prediction = std::nullopt,
+        bool shared_memory = false);
 
     bool run() override;
     void setupCircuit() override;
@@ -65,6 +66,9 @@ protected:
 private:
     size_t program_number_;
     bool baseline_ = false;
+    // One memory behind the two-port arbiter, with an instruction and a data
+    // cache in front of it (the advanced core only).
+    bool shared_memory_ = false;
     size_t timeScale() const;
     std::optional<rv32i::PredictionConfig> prediction_;
     circuit::BuildProfile profile_ =

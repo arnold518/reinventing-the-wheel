@@ -83,3 +83,37 @@ formatter fix, regenerated placements and a regression guard.
   examples); they join the memory-gated run. The live `visualizer-v2`
   backend module was not rebuilt (isolated build only); the native server's
   keys come from Python and do not need it.
+
+## 2026-10-19 — Unified memory view and a stricter structure hash
+
+**Request.** A visualizer view for one memory shared by instruction fetches
+and data accesses: two panels, instructions left and data right.
+
+**Changes.**
+- Scenario `RV32ISharedMemoryProgramTest` (`rv32i-shared-memory`): program 21
+  on the advanced core with an instruction and a data cache (4 sets each)
+  over one buffered FF memory behind the two-port arbiter. The advanced-core
+  program test gained a shared-memory option; the recorded cycle counts of
+  separate zero-wait memories do not apply to it, the oracle and final-state
+  checks do. A topology-only branch builds it for layouts.
+- Inspector (`MemoryInspector`, shared by the native server and WebAssembly):
+  a memory named `SHARED_MEMORY` with an arbiter beside it gets the role
+  `unified`; each accepted request is classified by the arbiter's grant
+  (`D_REQ_READY` at the accepting edge), and the state carries
+  `instructionSide` and `dataSide`, each the latest address and its 16-word
+  page (instructions disassembled).
+- `app.js` draws such a memory as two panels side by side.
+- Program root floorplan for the unified case: core, the two caches, the
+  arbiter and a large shared memory, left to right.
+- The structure hash of named variants (caches, predictor parts, memory
+  timers) now covers child types as well as names: the guard had found the
+  4-set and 2-set cache controllers sharing a key. Layouts were migrated
+  (37 keys created, 45 unused removed) and the branch-predictor root filled.
+
+**Checks.** `VisualizerStaticLayoutTest` (0 problems in 341 scenarios),
+`VisualizerScenarioCatalogTest`, `MemoryInspectorIntegrationTest` (new
+unified check: role, both windows, native and Python identical),
+`CacheLayoutTest`, `VisualizerAutomaticLayoutTest`, `VisualizerSessionContractTest`,
+`CacheDocumentationTest`, `RV32ITopologyTest`, `RV32ISharedMemoryProgramTest`,
+`RV32IFiveStageCoreProgramTest/program-21` pass. Browser checks of the drawing
+are pending with the memory-gated run.

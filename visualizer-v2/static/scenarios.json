@@ -146,6 +146,9 @@
     "CacheTwoLevelScenarioTest": [
       "cache-two-level"
     ],
+    "RV32ISharedMemoryProgramTest": [
+      "rv32i-shared-memory"
+    ],
     "FlipFlopCellTest": [
       "flip-flop-cell",
       "flipflopcell"
@@ -444,6 +447,10 @@
     "MemoryArbiterTest": {
       "title": "Two-port memory arbiter",
       "group": "memory-interface"
+    },
+    "RV32ISharedMemoryProgramTest": {
+      "title": "RV32I over one shared memory (program 21)",
+      "group": "memory-cache"
     },
     "MemoryEndpointFFTest": {
       "title": "Memory Endpoint FF",
