@@ -760,6 +760,26 @@ def _five_stage_pipeline_layout(
     return placements if set(placements) == names else None
 
 
+def _content_placer(child_by_name, child_aspects, parent_aspect, title_fraction, boundary_fraction):
+    """Placement in a parent's content area: below the title bar and inside
+    the side margins where the pins are drawn. Positions and widths are given
+    on a 0..1 scale across the content width; a child keeps its aspect and
+    shrinks to its height budget; it stays inside the content box."""
+    left, span = boundary_fraction, max(0.1, 1.0 - 2 * boundary_fraction)
+    top = title_fraction
+    height = max(0.1, 1.0 - top)
+
+    def put(name: str, x: float, centre_y: float, width: float, height_budget: float) -> None:
+        aspect = child_aspects[child_by_name[name].get_id()]
+        width = min(width * span, height_budget * parent_aspect / max(aspect, 0.01))
+        box_height = width * aspect / max(parent_aspect, 0.01)
+        y = min(max(centre_y - box_height / 2, top), 1.0 - box_height)
+        put.placements[name] = {"rel_pos": [left + x * span, y], "rel_width": width}
+
+    put.placements = {}
+    return top, height, put
+
+
 def _rv32i_program_root_layout(
     children: list[Any],
     parent_aspect: float,
@@ -780,15 +800,8 @@ def _rv32i_program_root_layout(
     if set(child_by_name) == unified:
         # Core, then the two caches, the arbiter and one shared memory, left
         # to right. The memory is large enough for its two-panel view.
-        top = title_fraction
-        height = max(0.1, 1.0 - top)
-        placements: dict[str, dict[str, Any]] = {}
-
-        def put(name: str, x: float, centre_y: float, width: float, height_budget: float) -> None:
-            aspect = child_aspects[child_by_name[name].get_id()]
-            width = min(width, height_budget * parent_aspect / max(aspect, 0.01))
-            box_height = width * aspect / max(parent_aspect, 0.01)
-            placements[name] = {"rel_pos": [x, centre_y - box_height / 2], "rel_width": width}
+        top, height, put = _content_placer(child_by_name, child_aspects, parent_aspect, title_fraction, boundary_fraction)
+        placements = put.placements
 
         put("CORE", 0.05, top + height * 0.45, 0.36, height * 0.70)
         put("INSTRUCTION_CACHE", 0.46, top + height * 0.27, 0.12, height * 0.30)
@@ -806,15 +819,8 @@ def _rv32i_program_root_layout(
     base = {"CLOCK", "CORE", "MEMORY_ARBITER", "SHARED_MEMORY"}
     names = set(child_by_name)
     if base <= names and names - base in (set(), l1, l2, l1 | l2):
-        top = title_fraction
-        height = max(0.1, 1.0 - top)
-        placements = {}
-
-        def put(name: str, x: float, centre_y: float, width: float, height_budget: float) -> None:
-            aspect = child_aspects[child_by_name[name].get_id()]
-            width = min(width, height_budget * parent_aspect / max(aspect, 0.01))
-            box_height = width * aspect / max(parent_aspect, 0.01)
-            placements[name] = {"rel_pos": [x, centre_y - box_height / 2], "rel_width": width}
+        top, height, put = _content_placer(child_by_name, child_aspects, parent_aspect, title_fraction, boundary_fraction)
+        placements = put.placements
 
         put("CORE", 0.04, top + height * 0.45, 0.34, height * 0.70)
         put("CLOCK", 0.04, top + height * 0.90, 0.10, height * 0.12)
@@ -824,14 +830,14 @@ def _rv32i_program_root_layout(
             put("DATA_CACHE", x, top + height * 0.63, 0.11, height * 0.30)
             put("INSTRUCTION_CACHE_NO_INVALIDATION", x, top + height * 0.07, 0.05, height * 0.06)
             put("DATA_CACHE_NO_INVALIDATION", x, top + height * 0.87, 0.05, height * 0.06)
-            x += 0.15
+            x += 0.14
         put("MEMORY_ARBITER", x, top + height * 0.45, 0.07, height * 0.50)
-        x += 0.11
+        x += 0.10
         if l2 <= names:
             put("SHARED_CACHE", x, top + height * 0.45, 0.11, height * 0.30)
             put("SHARED_CACHE_NO_INVALIDATION", x, top + height * 0.25, 0.05, height * 0.06)
-            x += 0.15
-        put("SHARED_MEMORY", x, top + height * 0.45, min(0.25, 0.97 - x), height * 0.80)
+            x += 0.14
+        put("SHARED_MEMORY", x, top + height * 0.45, min(0.25, 1.0 - x), height * 0.80)
         return placements
     required = {
         "CLOCK",

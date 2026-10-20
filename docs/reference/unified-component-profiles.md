@@ -225,8 +225,14 @@ memory devices append their storage bank (`SRAM<32>[SRAMStorageBank<32,8,2>]`,
 entries, the branch predictor and memory timers append a hash of their child
 names (`…[layout-<16 hex>]`). Placements saved under the bare type do not
 apply to a structure key. `tools/check-static-layouts.py`
-(`VisualizerStaticLayoutTest`) fails when a key is shared by parts with
-different children or when an SRAM floorplan is squeezed into a narrow strip.
+(`VisualizerStaticLayoutTest`) fails when a child placement is missing, when
+a key is shared by parts with different children, when an SRAM floorplan is
+squeezed into a narrow strip, or when a child lies outside its parent's
+content area. The content area is what `contentRect` in `app.js` leaves: below
+the title bar (`title_bar_ratio` of the parent's width) and inside the side
+margins (`boundary_area_ratio`) where pins are drawn. Floorplans written for
+a parent should place children inside it (`_content_placer` in
+`visualizer-v2/server.py`).
 
 Regenerate layouts after topology, profile, or layout-algorithm changes:
 

@@ -7,6 +7,21 @@ history remains in Git and the archived reports.
 
 ## 2026-10-21
 
+### Visualizer: children kept inside their parent's content area (branch `realistic-timing`)
+
+- **Changed:**
+  - The shared-memory program-root floorplans place children inside the
+    content area (below the title bar, inside the pin margins), and the four
+    roots are recomputed. One `mux2to1-32bit` placement is moved below its
+    title bar.
+  - `VisualizerStaticLayoutTest` now fails on any placement outside a
+    content area.
+- **Why:** the owner saw parts over title bars in the new arrangement
+  scenarios. A check found 11 such placements in five layouts.
+- **Verified:** the static layout check over every scenario (0 problems, and
+  it reports the old placements); five layout tests; Pages build; browser
+  screenshots of the four scenarios.
+
 ### RV32I memory systems section; cache experiments split (branch `realistic-timing`)
 
 - **Changed:**
