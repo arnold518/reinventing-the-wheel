@@ -1,6 +1,6 @@
 # Visualizer layouts shared by parts of different structure
 
-Started: 2026-10-19. Status: open (browser checks pending). Code state: branch `realistic-timing` at
+Started: 2026-10-19. Status: closed (2026-10-20). Code state: branch `realistic-timing` at
 `06f44ca`.
 
 ## Summary
@@ -117,3 +117,15 @@ unified check: role, both windows, native and Python identical),
 `CacheDocumentationTest`, `RV32ITopologyTest`, `RV32ISharedMemoryProgramTest`,
 `RV32IFiveStageCoreProgramTest/program-21` pass. Browser checks of the drawing
 are pending with the memory-gated run.
+
+## 2026-10-20 — Browser checks; record closed
+
+With the WebAssembly module rebuilt (`tools/build-pages.sh`), the checks that
+draw the structure-keyed layouts pass: `FFMemoryBrowserTest`,
+`SRAMLayoutBrowserTest`, `MemoryEndpointBrowserTest` (the cache examples),
+`MemoryInspectorBrowserTest`, `VisualizerScenarioBrowserTest`. The unified
+view was checked in the browser on `rv32i-shared-memory`: the shared memory's
+role is `unified`, and its drawing shows an INSTRUCTIONS panel (disassembled,
+at 0x24) beside a DATA panel (at 0x13C). The cache controller placements that
+the general cache plan made stale were regenerated there (see its record).
+Record closed.

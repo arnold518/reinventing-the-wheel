@@ -58,6 +58,22 @@ work state changes. Keep dated decisions and validation results in
   quantifies the completed 133-case historical full suite and nine reduced
   structural cases; the full suite has not been rerun at final clocks.
 
+- The closed [general cache plan](records/2026-10-19-general-cache-plan.md)
+  made the cache's behavior configurable: write buffer, write-back and
+  write-allocate, a line-state store (up to 4,096 sets), and 1/2/4/8 ways
+  with lru, plru, fifo or random replacement. `controller=behavioral` runs
+  the controller's own gate list as one compact part, cycle-identical and
+  4–7× faster. A 96-run behavior campaign is published as §3.8 experiment 3:
+  a two-entry write buffer gives 1.18–1.57× and removes most of the L2
+  penalty. Prefetch is deferred (one request at a time).
+- The closed [memory chapter rewrite](records/2026-10-18-memory-docs-rewrite.md)
+  covers `site-docs/memory/` (3.1–3.8). Its site build, browser and parity
+  checks pass after deterministic gate order in the memory controllers
+  (native and WebAssembly had listed parts differently) and figure label
+  fixes. The closed [shared layout keys record](records/2026-10-19-shared-layout-keys.md)
+  gave each internal structure its own saved floorplan; cache controller
+  placements were regenerated.
+
 ## In progress
 
 - [Realistic leaf delays and gate-level memory control](records/2026-10-16-realistic-timing-plan.md),
@@ -108,25 +124,7 @@ work state changes. Keep dated decisions and validation results in
   rewritten); all 13 browser smoke checks pass (run one at a time in a
   memory-capped scope). The suite is a `unit` suite by design; realistic
   profiles are covered by `RV32IProfileSweepTest` and other profile-selecting
-  tests. The documentation phase is under way (below).
-
-- [Memory chapter rewrite](records/2026-10-18-memory-docs-rewrite.md):
-  `site-docs/memory/` is rewritten (3.1 architecture, 3.2 shared building
-  blocks with the timing and control parts, 3.3 technologies with
-  3.3.1–3.3.6 as subsections, 3.4 protocol, 3.5 controllers and endpoints,
-  3.6 memory timing, 3.7 caches kept for their own rewrite) and a shared
-  "§ 1. Time and Delay" page added. Components whose timing has something
-  of its own to show (17: adders, ALUs, flip-flop, register, register file,
-  memory devices, controller, endpoint, single-cycle core) end their
-  implementation with a **Timing** paragraph and a generated table of the
-  paths that matter; the stock Timing sections of the other 67 were
-  removed; 4.2 has per-profile certificates; 4.7 states results in cycles
-  with per-profile summaries and publishes the cache campaign; eight new
-  figures and the four 4.7 plots follow the site palette. All 18 native
-  documentation checks pass. The cache pages (3.7, 3.8) are rewritten with
-  the general cache plan below. **Open:** a memory-gated run to rebuild the
-  site and run the browser and parity checks still owed on the current pages
-  (results go in the record).
+  tests. The documentation phase is done (the memory chapter record above).
 
 - [Future steps plan](records/2026-10-14-future-steps-plan.md): current CPU,
   memory and viewer boundaries assessed against interactive games, a
@@ -144,35 +142,9 @@ work state changes. Keep dated decisions and validation results in
   published in [3.8](../site-docs/memory/cache-experiments.md). The L1 pair
   gives 3–4× over shared uncached DRAM; with write-through caches, adding the
   L2 under the L1s is 4–8 % slower in three of four workloads. The cache's
-  current settings are those of the general cache plan below. No coherence or
+  current settings are those of the general cache plan above. No coherence or
   MMIO bypass exists. The two-port arbiter is documented in §3.5.3, and
   shared code and data images that overlap are refused.
-
-- [Shared visualizer layout keys](records/2026-10-19-shared-layout-keys.md):
-  saved floorplans were shared by parts of different internal structure
-  (8- and 16-row SRAMs, FF stores of different depth, predictor policy
-  variants, memory timers), and SRAM floorplans were placed before their
-  children's proportions were known (the scalable cache's stores were drawn
-  in a 2 % strip). Fixed with structure keys in the Python server and the C++
-  session, a seeding fix, regenerated placements and a guard in
-  `VisualizerStaticLayoutTest`; 13 native layout checks pass. **Open:** the
-  WebAssembly rebuild and browser checks.
-
-- [General cache plan](records/2026-10-19-general-cache-plan.md): implemented
-  on branch `realistic-timing` (not pushed).
-  - The cache gained a write buffer, write-back and write-allocate, a
-    line-state store (up to 4,096 sets), and 1/2/4/8 ways with lru, plru, fifo
-    or random replacement.
-  - `controller=behavioral` runs the controller's own gate list as one
-    compact part: cycle-identical in a lockstep test, the standalone traces
-    and CPU runs, and 4–7× faster.
-  - A 96-run behavior campaign (all verified, certified at 4,104 / 2,858 ps)
-    is published as §3.8 experiment 3: a two-entry write buffer gives
-    1.18–1.57× and removes most of the L2 penalty.
-  - Prefetch is deferred (one request at a time).
-  - **Open:** visualizer and browser checks (saved cache-controller layouts
-    may need regenerating), waiting for a memory-gated rebuild.
-
 - [Behavioral delays and the memory clock-edge rule](records/2026-10-12-behavioral-delays-and-memory-clock-edge.md):
   code and checks are done locally and not pushed. Published results for
   the selected SRAM, DRAM, ROM and NOR-flash workloads have been rerun; other

@@ -188,7 +188,7 @@ def memory_endpoints():
           "Expanded device", "bank · words / rows · cells")
     f.text(320, 410, "or", "small", "middle")
     f.box("behavioral-device", 344, 366, 232, 76,
-          "Behavioral device", "same native pins · scalable storage")
+          "Behavioral device", "same pins · scalable storage")
     f.text(320, 480, "FF · SRAM · DRAM · ROM · NOR flash", "small", "middle")
     return f
 
@@ -430,8 +430,10 @@ def sram_access_chain():
         x = 40 + i * 112
         f.rect(x, 72, 112, 48, "focus" if name == "Bitline" else "box", radius=4, node=name.lower())
         f.text(x + 56, 102, name, "small", "middle")
-        f.text(x + 56, 148, source, "code", "middle")
-    f.line(40, 176, 600, 176)
+        first, rest = source.split(" ", 1)
+        f.text(x + 56, 144, first, "code", "middle")
+        f.text(x + 56, 162, rest, "code", "middle")
+    f.line(40, 184, 600, 184)
     return f
 
 
@@ -501,7 +503,7 @@ def transaction_handshake():
             pts.append((xb, yy))
         f.path(pts, "wave-focus" if name in ("REQ_READY",) else "wave")
     for edge, label in ((1, "request"), (5, "response")):
-        f.rect(x0 + edge * step - 40, 316, 80, 24, "label", radius=0)
+        f.rect(x0 + edge * step - 52, 314, 104, 28, "label", radius=0)
         f.text(x0 + edge * step, 332, label, "tag", "middle")
     return f
 
@@ -512,8 +514,8 @@ def sram_device():
                "<strong>Rows across, bitline pairs down.</strong> <code>ACCESS_CONTROL</code> times each access and raises <code>READY</code>; "
                "the decoder opens one row; each column's bitline pair is precharged above the bank and sensed or driven below it. "
                "An array of more than 32 rows repeats this block as subarrays joined by global wires.")
-    f.box("ACCESS_CONTROL", 40, 48, 144, 72, "ACCESS_CONTROL", "timing · READY", "focus")
-    f.box("ROW_DECODE", 40, 180, 144, 112, "ROW_DECODE", "one wordline")
+    f.box("ACCESS_CONTROL", 32, 48, 176, 72, "ACCESS_CONTROL", "timing · READY", "focus")
+    f.box("ROW_DECODE", 32, 180, 176, 112, "ROW_DECODE", "one wordline")
     f.box("PRECHARGE", 240, 48, 360, 48, "PRECHARGE", None)
     f.rect(240, 116, 360, 176, "store", node="STORAGE")
     f.text(256, 144, "STORAGE", "name")
@@ -523,9 +525,9 @@ def sram_device():
     f.box("COLUMN_SELECT", 240, 312, 168, 48, "COLUMN_SELECT", None)
     f.box("WRITE_SENSE", 432, 312, 168, 48, "WRITE / SENSE", None)
     f.box("OUTPUT", 432, 380, 168, 40, "OUTPUT", None)
-    f.line(184, 236, 240, 236, True)
-    f.line(112, 120, 112, 180, True)
-    f.line(184, 72, 240, 72, True)
+    f.line(208, 236, 240, 236, True)
+    f.line(120, 120, 120, 180, True)
+    f.line(208, 104, 240, 104, True)
     f.line(516, 360, 516, 380, True)
     f.line(408, 336, 432, 336, True)
     f.line(324, 292, 324, 312)
@@ -571,19 +573,19 @@ def memory_latency():
         desktop = next(b for b in data["desktop"]["accesses"] if (b["memory"], b["operation"]) == (a["memory"], a["operation"]))
         rows.append((label, a["cycles"], desktop["cycles"]))
     f = Figure("memory-latency", "Read latency by memory technology",
-               "Bars give the measured read latency of each memory technology, in clock cycles of the advanced core, in the embedded and desktop profiles.", 96 + len(rows) * 44,
+               "Bars give the measured read latency of each memory technology, in clock cycles of the advanced core, in the embedded and desktop profiles.", 96 + len(rows) * 48,
                "<strong>Cycles from the accepting edge to the edge that takes the response</strong>, for a 256 KiB memory at the advanced core's certified clock "
                f"(<code>embedded</code> {data['embedded']['period_ticks']:,} ps, <code>desktop</code> {data['desktop']['period_ticks']:,} ps). The flip-flop memory answers at the accepting edge. Values from the generated timing data; the table in 3.6 also gives writes, programs and erases.")
     scale = 8
     f.text(40, 28, "CYCLES", "tag")
     for i, (label, embedded, desktop) in enumerate(rows):
-        y = 44 + i * 44
-        f.text(176, y + 22, label, "small", "end")
+        y = 44 + i * 48
+        f.text(176, y + 24, label, "small", "end")
         for k, (value, kind) in enumerate(((embedded, "focus"), (desktop, "store"))):
             width = max(grid(value * scale), 4)
-            f.rect(192, y + k * 18, width, 14, kind, radius=2)
-            f.text(192 + width + 8, y + k * 18 + 12, str(value), "small")
-    y = 44 + len(rows) * 44 + 8
+            f.rect(192, y + k * 20, width, 14, kind, radius=2)
+            f.text(192 + width + 8, y + k * 20 + 12, str(value), "small")
+    y = 44 + len(rows) * 48 + 8
     f.line(40, y, 600, y)
     f.rect(40, y + 16, 16, 12, "focus", radius=2); f.text(64, y + 27, "embedded", "small")
     f.rect(200, y + 16, 16, 12, "store", radius=2); f.text(224, y + 27, "desktop", "small")
@@ -592,7 +594,7 @@ def memory_latency():
 
 def cache_topologies():
     f = Figure("cache-topologies", "Five memory arrangements over one DRAM",
-               "Five ways to connect a processor's instruction and data ports to DRAM main memory: two separate memories, one shared memory through an arbiter, private level-1 caches above the arbiter, a shared level-2 cache below it, and both.", 336,
+               "Five ways to connect a processor's instruction and data ports to DRAM main memory: two separate memories, one shared memory through an arbiter, private level-1 caches above the arbiter, a shared level-2 cache below it, and both.", 360,
                "<strong>Same requests, same DRAM, five connections.</strong> A gives each port its own copy of memory; B shares one DRAM through the two-port arbiter; "
                "C-ID adds an instruction and a data L1 (256 B each) above the arbiter; D-0 puts a shared 2 KiB L2 below it; D-ID has both. Caches fill a line with one burst; the data caches write through.")
     xs = [40, 160, 280, 400, 520]
@@ -604,8 +606,9 @@ def cache_topologies():
         y = 76
         if name == "A":
             f.line(x + 18, 76, x + 18, 252, True); f.line(x + 62, 76, x + 62, 252, True)
-            f.rect(x, 252, 36, 40, "store", radius=4); f.text(x + 18, 276, "DRAM", "code", "middle")
-            f.rect(x + 44, 252, 36, 40, "store", radius=4); f.text(x + 62, 276, "DRAM", "code", "middle")
+            # Each port's own DRAM, wide enough for its label.
+            f.rect(x - 8, 252, 48, 40, "store", radius=4); f.text(x + 16, 276, "DRAM", "code", "middle")
+            f.rect(x + 44, 252, 48, 40, "store", radius=4); f.text(x + 68, 276, "DRAM", "code", "middle")
             continue
         if name in ("C-ID", "D-ID"):
             f.line(x + 18, 76, x + 18, 100, True); f.line(x + 62, 76, x + 62, 100, True)
@@ -621,7 +624,8 @@ def cache_topologies():
             y = 232
         f.line(x + 40, y, x + 40, 252, True)
         f.rect(x, 252, 80, 40, "store", radius=4); f.text(x + 40, 276, "DRAM", "code", "middle")
-    f.text(40, 320, "I, D: instruction and data ports. ARB: two-port arbiter. A: each DRAM holds the whole image.", "small")
+    f.text(40, 320, "I, D: instruction and data ports. ARB: two-port arbiter.", "small")
+    f.text(40, 342, "A: each DRAM holds the whole image.", "small")
     return f
 
 
@@ -677,17 +681,17 @@ def cache_access_patterns():
     rows = [(r[0], [float(c.split(" / ")[0]) for c in r[1:]]) for r in cache_table("**Cycles per read** (`embedded` / `desktop`):")]
     f = Figure("cache-access-patterns", "Cycles per read by access pattern and path",
                "Bars give the cycles per read of three access patterns, read straight from DRAM, through one level-1 cache, and through a level-1 and a level-2 cache, in the embedded profile.",
-               44 + len(rows) * 84 + 4,
+               44 + len(rows) * 90 + 4,
                "<strong>Cycles per read, <code>embedded</code>, 2,048 reads.</strong> A cache helps sequential reads and slows down reads "
                "that use one word of each line; the second level adds a lookup to every miss. Values from the table above.")
     scale = 12
     paths = (("S0 DRAM", "store"), ("S1 L1", "focus"), ("S2 L1 + L2", "box"))
     f.text(40, 28, "CYCLES PER READ", "tag")
     for i, (label, values) in enumerate(rows):
-        y = 44 + i * 84
+        y = 44 + i * 90
         f.text(40, y + 14, label, "name")
         for k, (value, (path, kind)) in enumerate(zip(values, paths)):
-            top = y + 24 + k * 18
+            top = y + 24 + k * 20
             f.text(176, top + 12, path, "small", "end")
             width = max(grid(value * scale), 4)
             f.rect(192, top, width, 14, kind, radius=2)

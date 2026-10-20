@@ -9,6 +9,17 @@ Every scenario on this site runs here, in the browser, on the same
 simulation engine as the tests. Pick a scenario, follow the signals on the
 circuit, scrub through time, and open any part to see what it is built from.
 
+<div class="simulator-embed">
+  <iframe
+    src="../simulator/"
+    title="CircuitSim interactive visualizer"
+    loading="lazy"
+    allowfullscreen>
+  </iframe>
+</div>
+
+<a href="../simulator/" class="md-button md-button--primary">Open the simulator in a full page</a>
+
 - **Scenario**: the circuits and programs of chapters 2–4, grouped as in the
   documentation.
 - **Timing**: the [timing profile](timing.md#timing-profiles) the circuit is
@@ -21,22 +32,13 @@ circuit, scrub through time, and open any part to see what it is built from.
 - **Explorer**: the component tree; switching a part between its structural
   and behavioral form rebuilds the circuit with that choice.
 - **Memory inspector**: the contents of a memory, read from its recorded
-  history without performing an access. One memory shared by a processor's
-  instruction fetches and data accesses through the
-  [two-port arbiter](memory/controllers.md) is shown as two panels:
-  instructions on the left (disassembled) and data on the right, each at the
-  latest address its side used. The `rv32i-shared-memory` scenario shows it.
+  history without performing an access.
 
 The example tables on component pages are recorded in `unit`, so a scenario
 opened in another profile shows the same values at different times.
 
-<div class="simulator-embed">
-  <iframe
-    src="../simulator/"
-    title="CircuitSim interactive visualizer"
-    loading="lazy"
-    allowfullscreen>
-  </iframe>
-</div>
-
-<a href="../simulator/" class="md-button md-button--primary">Open the simulator in a full page</a>
+One memory shared by a processor's instruction fetches and data accesses
+through the [two-port arbiter](memory/controllers.md) is shown in the memory
+inspector as two panels: instructions on the left (disassembled) and data on
+the right, each at the latest address its side used. The
+`rv32i-shared-memory` scenario shows it.

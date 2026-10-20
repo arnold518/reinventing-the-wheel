@@ -166,8 +166,10 @@ void DRAMCommandControl::buildInternals(ComponentBuilder &b) {
                                           w.invert("NOT_FRESH", fresh->getOutputPin("Q"))}, true);
     // The open state as shown: a finishing ACTIVATE opens, a finishing
     // PRECHARGE closes, already in the completing cycle.
-    auto shown_open = w.either("OPEN_SHOWN", w.both("OPEN_STAYS", OPEN, w.invert("NOT_CLOSED_NOW", w.both("CLOSED_NOW", complete, c_pre->getOutputPin("Q")))),
-                               w.both("OPENED_NOW", complete, c_act->getOutputPin("Q")));
+    auto opened_now = w.both("OPENED_NOW", complete, c_act->getOutputPin("Q"));
+    auto closed_now = w.both("CLOSED_NOW", complete, c_pre->getOutputPin("Q"));
+    auto open_stays = w.both("OPEN_STAYS", OPEN, w.invert("NOT_CLOSED_NOW", closed_now));
+    auto shown_open = w.either("OPEN_SHOWN", open_stays, opened_now);
     // READ_BURST (code 6): a READ whose completion is followed by the next
     // columns of the block, one per edge (BURST and the columns still to
     // come). The command completes for good with its last column.
@@ -197,11 +199,15 @@ void DRAMCommandControl::buildInternals(ComponentBuilder &b) {
     auto idle = w.reduce("IDLE", {w.invert("NOT_BUSY", B), R, final_complete}, false);
     auto accept = w.reduce("ACCEPT", {issued, legal, idle}, true);
     auto unknown = w.invert("UNKNOWN_COMMAND", cmd_known);
-    auto refused = w.both("REFUSED", issued, w.either("BUSY_OR_ILLEGAL", w.invert("NOT_IDLE", idle), w.invert("ILLEGAL", legal)));
+    auto illegal = w.invert("ILLEGAL", legal);
+    auto not_idle = w.invert("NOT_IDLE", idle);
+    auto refused = w.both("REFUSED", issued, w.either("BUSY_OR_ILLEGAL", not_idle, illegal));
     auto error_event = w.either("ERROR_EVENT", unknown, refused);
     // A refusal while idle, or an unknown command while idle, withdraws the read.
-    auto clear_valid = w.reduce("CLEAR_VALID", {accept, w.both("UNKNOWN_IDLE", unknown, idle),
-                                                w.both("ILLEGAL_IDLE", w.both("ISSUED_IDLE", issued, idle), w.invert("NOT_LEGAL", legal))}, false);
+    auto unknown_idle = w.both("UNKNOWN_IDLE", unknown, idle);
+    auto not_legal = w.invert("NOT_LEGAL", legal);
+    auto issued_idle = w.both("ISSUED_IDLE", issued, idle);
+    auto clear_valid = w.reduce("CLEAR_VALID", {accept, unknown_idle, w.both("ILLEGAL_IDLE", issued_idle, not_legal)}, false);
     // Run signals and the analog step chains, one per command.
     // The same command taken again in the releasing cycle: its run signal
     // drops for one cycle (REPEAT) so its step chain starts over.
@@ -262,15 +268,19 @@ void DRAMCommandControl::buildInternals(ComponentBuilder &b) {
                   bit->getInputPin("D"));
     };
     keep(error, error_event, accept, "ERROR");
-    w.connect(w.both("NEXT_VALID", w.invert("KEEP_VALID", clear_valid),
-                     w.either("VALID_SOURCE", valid->getOutputPin("Q"), w.both("READ_DONE", complete, c_rd->getOutputPin("Q")))),
-              valid->getInputPin("D"));
+    {
+        auto source = w.either("VALID_SOURCE", valid->getOutputPin("Q"), w.both("READ_DONE", complete, c_rd->getOutputPin("Q")));
+        w.connect(w.both("NEXT_VALID", w.invert("KEEP_VALID", clear_valid), source), valid->getInputPin("D"));
+    }
     keep(busy, accept, R, "BUSY");
     keep(releasing, w.both("RELEASE", final_complete, w.invert("NOTHING_TAKEN", accept)), R, "RELEASING");
     // BURST and the column count: loaded when READ_BURST is taken (block - 1
     // columns to follow), one less with each further column.
-    w.connect(w.either("NEXT_BURST", w.both("LOAD_BURST", accept, is_rdb),
-                       w.both("HOLD_BURST", burst->getOutputPin("Q"), w.invert("NO_NEW_COMMAND", accept))), burst->getInputPin("D"));
+    {
+        auto hold = w.both("HOLD_BURST", burst->getOutputPin("Q"), w.invert("NO_NEW_COMMAND", accept));
+        auto load = w.both("LOAD_BURST", accept, is_rdb);
+        w.connect(w.either("NEXT_BURST", load, hold), burst->getInputPin("D"));
+    }
     {
         PinPtr borrow = w.constant("COLUMN_DECREMENT", true);
         for (size_t i = 0; i < burst_bits; ++i) {
@@ -278,19 +288,26 @@ void DRAMCommandControl::buildInternals(ComponentBuilder &b) {
             auto less = w.binary<XORGate>("COLUMNS_LESS_" + n, burst_q[i], borrow);
             borrow = w.both("COLUMNS_BORROW_" + n, w.invert("COLUMNS_ZERO_" + n, burst_q[i]), borrow);
             const bool load_bit = config_.burst_words > 1 && (((config_.burst_words - 1) >> i) & 1);
-            auto loaded = w.both("COLUMNS_LOAD_" + n, w.both("BURST_TAKEN_" + n, accept, is_rdb), w.constant("COLUMNS_INITIAL_" + n, load_bit));
-            auto kept = w.both("COLUMNS_KEEP_" + n, w.invert("NOT_TAKING_" + n, accept),
-                               w.either("COLUMNS_STEP_" + n, w.both("COLUMNS_DOWN_" + n, column_step, less),
-                                        w.both("COLUMNS_HOLD_" + n, w.invert("NO_COLUMN_STEP_" + n, column_step), burst_q[i])));
+            auto initial = w.constant("COLUMNS_INITIAL_" + n, load_bit);
+            auto loaded = w.both("COLUMNS_LOAD_" + n, w.both("BURST_TAKEN_" + n, accept, is_rdb), initial);
+            auto hold = w.both("COLUMNS_HOLD_" + n, w.invert("NO_COLUMN_STEP_" + n, column_step), burst_q[i]);
+            auto step = w.either("COLUMNS_STEP_" + n, w.both("COLUMNS_DOWN_" + n, column_step, less), hold);
+            auto kept = w.both("COLUMNS_KEEP_" + n, w.invert("NOT_TAKING_" + n, accept), step);
             w.connect(w.either("COLUMNS_NEXT_" + n, loaded, kept), burst_left[i]->getInputPin("D"));
         }
     }
     for (auto [bit, decoded, name] : std::vector<std::tuple<std::shared_ptr<IOComponent>, PinPtr, std::string>>{
              {c_act, is_act, "C_ACTIVATE"}, {c_rd, is_read_any, "C_READ"}, {c_wr, is_wr, "C_WRITE"}, {c_pre, is_pre, "C_PRECHARGE"}, {c_ref, is_ref, "C_REFRESH"}})
-        w.connect(w.either("NEXT_" + name, w.both("LOAD_" + name, accept, decoded),
-                           w.both("HOLD_" + name, bit->getOutputPin("Q"), w.invert("NOT_ACCEPT_" + name, accept))),
-                  bit->getInputPin("D"));
-    keep(open, w.both("OPENED", complete, c_act->getOutputPin("Q")), w.both("CLOSED_NOW", complete, c_pre->getOutputPin("Q")), "OPEN");
+    {
+        auto hold = w.both("HOLD_" + name, bit->getOutputPin("Q"), w.invert("NOT_ACCEPT_" + name, accept));
+        auto load = w.both("LOAD_" + name, accept, decoded);
+        w.connect(w.either("NEXT_" + name, load, hold), bit->getInputPin("D"));
+    }
+    {
+        auto closed_now = w.both("CLOSED_NOW", complete, c_pre->getOutputPin("Q"));
+        auto opened = w.both("OPENED", complete, c_act->getOutputPin("Q"));
+        keep(open, opened, closed_now, "OPEN");
+    }
     // The refresh row counter: increments, wrapping at the row count, when a
     // refresh completes.
     size_t counter_bits = 1; while ((size_t{1} << counter_bits) < rows) ++counter_bits;
@@ -356,16 +373,26 @@ void DRAMCommandControl::buildInternals(ComponentBuilder &b) {
     // Analog controls, from the open row and the running command's steps.
     auto pre_closing = w.both("PRECHARGE_CLOSING", r_pre, p[0]);
     auto open_held = w.both("OPEN_HELD", OPEN, w.invert("NOT_CLOSING", pre_closing));
-    w.connect(w.reduce("WORDLINE", {open_held, w.both("ACTIVATE_WORDLINE", r_act, a[0]),
-                                    w.both("REFRESH_WORDLINE", w.both("REFRESH_ROW_ON", r_ref, f[0]), w.invert("REFRESH_ROW_OFF", f[refresh_close]))}, false),
-              getOutputPin("ROW_ENABLE"));
-    w.connect(w.reduce("SENSING", {open_held, w.both("ACTIVATE_SENSE", r_act, a[1]),
-                                   w.both("REFRESH_SENSE", w.both("REFRESH_SENSE_ON", r_ref, f[1]), w.invert("REFRESH_SENSE_OFF", f[refresh_close]))}, false),
-              getOutputPin("SENSE"));
+    {
+        auto activate = w.both("ACTIVATE_WORDLINE", r_act, a[0]);
+        auto row_off = w.invert("REFRESH_ROW_OFF", f[refresh_close]);
+        auto row_on = w.both("REFRESH_ROW_ON", r_ref, f[0]);
+        w.connect(w.reduce("WORDLINE", {open_held, activate, w.both("REFRESH_WORDLINE", row_on, row_off)}, false),
+                  getOutputPin("ROW_ENABLE"));
+        auto sense = w.both("ACTIVATE_SENSE", r_act, a[1]);
+        auto sense_off = w.invert("REFRESH_SENSE_OFF", f[refresh_close]);
+        auto sense_on = w.both("REFRESH_SENSE_ON", r_ref, f[1]);
+        w.connect(w.reduce("SENSING", {open_held, sense, w.both("REFRESH_SENSE", sense_on, sense_off)}, false),
+                  getOutputPin("SENSE"));
+    }
     auto closed_idle = w.reduce("CLOSED_IDLE", {w.invert("NOT_OPEN", OPEN), w.invert("NOT_ACTIVATING", r_act),
                                                 w.invert("NOT_REFRESH_SENSING", w.both("REFRESH_BEFORE_PRECHARGE", r_ref, w.invert("BEFORE_PRECHARGE", f[refresh_precharge])))}, true);
     w.connect(w.either("PRECHARGING", closed_idle, w.both("PRECHARGE_STEP", r_pre, p[1])), getOutputPin("PRECHARGE"));
-    w.connect(w.both("WRITE_PULSE", w.both("WRITE_ON", r_wr, wv[0]), w.invert("WRITE_OFF", wv[1])), getOutputPin("WRITE_ENABLE"));
+    {
+        auto write_off = w.invert("WRITE_OFF", wv[1]);
+        auto write_on = w.both("WRITE_ON", r_wr, wv[0]);
+        w.connect(w.both("WRITE_PULSE", write_on, write_off), getOutputPin("WRITE_ENABLE"));
+    }
     w.connect(w.reduce("BUSY_SHOWN", {B, w.invert("NOT_RELEASING_SHOWN", R), w.invert("NOT_COMPLETE_SHOWN", final_complete)}, true), getOutputPin("BUSY"));
     w.connect(error->getOutputPin("Q"), getOutputPin("ERROR"));
     w.connect(w.either("VALID_SHOWN", valid->getOutputPin("Q"), w.both("READ_COMPLETE_SHOWN", complete, c_rd->getOutputPin("Q"))),

@@ -1,7 +1,6 @@
 # General cache: policies and sizes as parameters
 
-Started: 2026-10-19. Status: open (implementation in progress since
-2026-10-20). Code state: branch `realistic-timing` at `f2d3108`.
+Started: 2026-10-19. Status: closed (2026-10-20). Code state: branch `realistic-timing` at `f2d3108`.
 
 ## Summary
 
@@ -20,10 +19,10 @@ simulation speed. Done (2026-10-20):
   9–21 % on `stream`.
 
 Next-line prefetch (step 5) is deferred: see the step-4 decision. The public
-pages §3.7 and §3.8 are rewritten. **Open:** the visualizer and browser
-checks of these steps (cache controller layouts may need regenerating),
-which wait for a memory-gated rebuild. Several requests in flight and
-multi-bank DRAM stay out of scope.
+pages §3.7 and §3.8 are rewritten. The visualizer layouts are regenerated,
+and the site build, browser and parity checks pass. Several requests in
+flight, prefetch and multi-bank DRAM stay out of scope for a later record.
+Closed 2026-10-20.
 
 ## 2026-10-19 — Starting point
 
@@ -583,3 +582,29 @@ and 2 stay as published: their caches are the `WT` row.
   `BuiltinComponentCatalogInventoryTest`, `MemoryDeviceDocumentationTest`
   (its earlier failure came from the stale probe) and
   `CacheDocumentationTest`.
+
+## 2026-10-20 — Site and browser checks; record closed
+
+The site was rebuilt and the owed browser and parity checks pass; the
+details are in the
+[memory chapter record](2026-10-18-memory-docs-rewrite.md), last section.
+They needed fixes outside the cache:
+- deterministic gate creation order in the memory controllers, sequencers,
+  DRAM, NOR flash and the arbiter (native and WebAssembly listed parts in a
+  different order);
+- label spacing in seven figures;
+- the simulator page's embed placed before its explanation;
+- one browser test's table count.
+
+The unified memory view was checked in the browser on
+`rv32i-shared-memory`. A final run of all eight cache tests passes after
+these changes: `CacheReadTest` (5 min 35 s), `CacheControllerLockstepTest`,
+the four cache scenarios, `CacheLayoutTest` and `CacheDocumentationTest`.
+Not run in this record: `PartDelayTablesCompleteTest` (an hour; the
+generator skips the cache controller) and the full native suite.
+
+Possible follow-ups, not part of this plan:
+- The same gate-list model could run the arbiter and other glue logic, the
+  next cost once the controllers are compact.
+- Several requests in flight with prefetch.
+- Multi-bank DRAM.

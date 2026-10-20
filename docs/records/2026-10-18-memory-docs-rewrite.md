@@ -1,16 +1,18 @@
 # Memory chapter rewrite and the timing-aware page template
 
-Started: 2026-10-18. Status: open. Code state: branch `realistic-timing` at
+Started: 2026-10-18. Status: closed (2026-10-20). Code state: branch `realistic-timing` at
 `5d7ddc5` (phase 8 of the [realistic-timing plan](2026-10-16-realistic-timing-plan.md)).
 
 ## Summary
 
-The owner asked for a complete rewrite of the public memory chapter
-(`site-docs/memory/`, caches excluded for now), using the current pages only
-as a guide, and for a page template that reflects the timing work: profiles,
-proven delays, behavioral delays. This record holds the survey of the current
-pages, the comparison with the code, and the template design. No public page
-has been changed yet.
+The owner asked for a complete rewrite of the public memory chapter and a
+page template that reflects the timing work. Done: `site-docs/memory/` is
+rewritten (3.1–3.6, with the cache pages 3.7 and 3.8 rewritten under the
+[general cache plan](2026-10-19-general-cache-plan.md)). Components whose
+timing says something end their implementation with a Timing paragraph and
+a generated table. The figures follow the site palette. The site build,
+browser and parity checks pass after the fixes of the last section. Closed
+2026-10-20.
 
 ## 2026-10-18 — Survey of the current pages
 
@@ -603,3 +605,63 @@ clocked). Strict MkDocs passes with a preview rows bundle that adds the
 probe's rows for the new scenario; the published rows come from the
 WebAssembly build in the memory-gated run, which also runs the browser
 checks.
+
+## 2026-10-20 — Pages build and browser checks complete; record closed
+
+The memory-gated run of the general cache plan rebuilt the site
+(`tools/build-pages.sh`, 140–150 s, every example row regenerated and
+verified, strict MkDocs). It ran the owed checks one at a time in
+memory-capped scopes, after these fixes:
+
+- **Native/WebAssembly component order.** `MemoryEndpointWasmParityTest` and
+  `MemoryDeviceWasmParityTest` found the same parts listed in a different
+  order. Several gate expressions built two or more gates inside one call's
+  arguments, whose order C++ leaves open, and GCC (native) and clang
+  (WebAssembly) differ. A script compared both builds' component order in
+  every scenario of the memory pages; a scan found the remaining
+  expressions. All of them in `MemoryFFController.hpp`, `DRAM.cpp`,
+  `NORFlash.cpp`, `MemorySequencers.cpp` and `TwoPortMemoryArbiter.cpp` now
+  create their gates in explicit statements, in the order the native build
+  used. After the fix every scenario has the same order in both builds.
+- **The parity checks used a stale probe.** `tools/run-web-tests.py` defaults
+  to `build/`, whose probe dates from September. The run used
+  `--build-dir build-cleanup`.
+- **Figures.** `DocumentationDiagramsBrowserTest` found overlapping or
+  clipped labels in seven figures; spacing, box widths and two-line labels
+  fix them:
+  - `cache-access-patterns`, `cache-topologies` and `memory-endpoints`;
+  - `sram-device`, `transaction-handshake`, `sram-access-chain` and
+    `memory-latency`.
+- **Simulator page.** The rewritten introduction had pushed the embedded
+  simulator below a 900 px window, so `VisualizerWasmBrowserTest` could not
+  click its controls. The embed now follows the first paragraph.
+- **`MemoryDeviceDocumentationBrowserTest`** counted every
+  `.example-table-scroll`. The timing tables share that wrapper, so it now
+  counts those inside example blocks.
+
+**Results (all pass):**
+- Browser checks: `MemoryInspectorBrowserTest`, `SRAMDocumentationBrowserTest`
+  (2.3 GB scope), `MemoryDocumentationBrowserTest`, `FFMemoryBrowserTest`,
+  `SRAMLayoutBrowserTest`, `RV32IAdvancedBrowserTest`,
+  `RV32ICoreLayoutBrowserTest`, `MemoryEndpointBrowserTest`,
+  `VisualizerScenarioBrowserTest`, `VisualizerRewireBrowserTest`,
+  `VisualizerWasmBrowserTest`, `DocumentationDiagramsBrowserTest`,
+  `MemoryDeviceDocumentationBrowserTest`, `MemoryReferenceExamplesBrowserTest`,
+  `RV32IDocumentationBrowserTest` (2.3 GB scope), `RV32IMemoryBrowserTest`,
+  `RV32ISingleCycleDocumentationBrowserTest`.
+- WebAssembly runtime checks: `VisualizerWasmRuntimeTest`,
+  `ALU8WasmRuntimeSmoke`.
+- Parity checks: `MemoryInspectorWasmParityTest`, `RV32IMemoryWasmParityTest`,
+  `VisualizerScenarioWasmParityTest`, `MemoryDeviceWasmParityTest`,
+  `SRAMWasmParityTest`, `MemoryEndpointWasmParityTest`,
+  `FFMemoryWasmParityTest`.
+- Native, after the order fixes: all 30 `memory`-labelled tests (the two long
+  cache tests excluded), 48 further memory, endpoint, DRAM, NOR, ROM and
+  arbiter tests, `VisualizerStaticLayoutTest`, `VisualizerScenarioCatalogTest`
+  and `DocumentationDiagramsTest`.
+
+The memory checks after the order fixes that also ran before them are the
+four browser checks that exercise the changed parts (endpoint, memory pages,
+inspector, RV32I memory); the others ran on the WebAssembly build of the same
+day before the order fix. The cache page rewrite, the last open item here,
+was done with the general cache plan. Record closed.

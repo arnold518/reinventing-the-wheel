@@ -70,8 +70,8 @@ void MemoryRequestCheck::buildInternals(ComponentBuilder& b) {
     for (size_t i = 0; i < 32; ++i) (i < shift ? low : word).push_back(addr->getOutputPin("OUT_" + std::to_string(i)));
     auto unaligned = w.reduce("UNALIGNED", low, false);
     auto in_range = addressBelow(w, word, config_.depth_words, "RANGE");
-    auto bad_mask = w.both("BAD_MASK", w.either("MASK_NEEDED", write, program),
-                           w.invert("MASK_UNKNOWN", known->getOutputPin("MASK_KNOWN")));
+    auto mask_unknown = w.invert("MASK_UNKNOWN", known->getOutputPin("MASK_KNOWN"));
+    auto bad_mask = w.both("BAD_MASK", w.either("MASK_NEEDED", write, program), mask_unknown);
     // Technology permission, checked after alignment and range.
     PinPtr refused = w.constant("ALLOWED", false);
     PinPtr status = constant3(b, "OK_CODE", unsigned(circuit::memory::Status::Ok));
@@ -193,8 +193,11 @@ void StaticMemorySequencer::buildInternals(ComponentBuilder& b) {
               access->getInputPin("D"));
     // BURST and the word count: loaded on START (block_words - 1 words to
     // follow), one less with each further word.
-    w.connect(w.either("NEXT_BURST", w.both("LOAD_BURST", start, check->getOutputPin("BURST")),
-                       w.both("HOLD_BURST", burst->getOutputPin("Q"), w.invert("NO_NEW_BURST", start))), burst->getInputPin("D"));
+    {
+        auto hold = w.both("HOLD_BURST", burst->getOutputPin("Q"), w.invert("NO_NEW_BURST", start));
+        auto load = w.both("LOAD_BURST", start, check->getOutputPin("BURST"));
+        w.connect(w.either("NEXT_BURST", load, hold), burst->getInputPin("D"));
+    }
     {
         PinPtr borrow = w.constant("WORD_DECREMENT", true);
         for (size_t i = 0; i < beat_bits; ++i) {
@@ -202,17 +205,21 @@ void StaticMemorySequencer::buildInternals(ComponentBuilder& b) {
             auto less = w.binary<XORGate>("WORDS_LESS_" + n, beat_q[i], borrow);
             borrow = w.both("WORDS_BORROW_" + n, w.invert("WORDS_ZERO_" + n, beat_q[i]), borrow);
             const bool load_bit = burst_words > 1 && (((burst_words - 1) >> i) & 1);
-            auto loaded = w.both("WORDS_LOAD_" + n, w.both("BURST_START_" + n, start, check->getOutputPin("BURST")), w.constant("WORDS_INITIAL_" + n, load_bit));
-            auto kept = w.both("WORDS_KEEP_" + n, w.invert("NOT_STARTING_" + n, start),
-                               w.either("WORDS_STEP_" + n, w.both("WORDS_DOWN_" + n, beat_next, less),
-                                        w.both("WORDS_HOLD_" + n, w.invert("NO_WORD_STEP_" + n, beat_next), beat_q[i])));
+            auto initial = w.constant("WORDS_INITIAL_" + n, load_bit);
+            auto loaded = w.both("WORDS_LOAD_" + n, w.both("BURST_START_" + n, start, check->getOutputPin("BURST")), initial);
+            auto hold = w.both("WORDS_HOLD_" + n, w.invert("NO_WORD_STEP_" + n, beat_next), beat_q[i]);
+            auto step = w.either("WORDS_STEP_" + n, w.both("WORDS_DOWN_" + n, beat_next, less), hold);
+            auto kept = w.both("WORDS_KEEP_" + n, w.invert("NOT_STARTING_" + n, start), step);
             w.connect(w.either("WORDS_NEXT_" + n, loaded, kept), beats[i]->getInputPin("D"));
         }
     }
     // The word shown is the transaction's last unless more burst words follow.
     auto last = state("LAST");
-    w.connect(w.either("NEXT_LAST", w.either("SHOW_LAST", invalid_start, w.both("LAST_WORD_TAKEN", complete, w.invert("NO_MORE_WORDS", more))),
-                       w.both("HOLD_LAST", last->getOutputPin("Q"), w.invert("NOT_A_WORD", complete))), last->getInputPin("D"));
+    {
+        auto hold = w.both("HOLD_LAST", last->getOutputPin("Q"), w.invert("NOT_A_WORD", complete));
+        auto show = w.either("SHOW_LAST", invalid_start, w.both("LAST_WORD_TAKEN", complete, w.invert("NO_MORE_WORDS", more)));
+        w.connect(w.either("NEXT_LAST", show, hold), last->getInputPin("D"));
+    }
     w.connect(last->getOutputPin("Q"), getOutputPin("LAST"));
     // The word address: the request's on START, the next word of the block
     // (wrapping within it) with each further burst word.
@@ -239,9 +246,11 @@ void StaticMemorySequencer::buildInternals(ComponentBuilder& b) {
     w.connect(w.either("NEXT_DONE", finished, w.both("KEEP_DONE", done->getOutputPin("Q"), w.invert("NOT_FINISH", getInputPin("FINISH")))),
               done->getInputPin("D"));
     // A clocked state bit has no enable: load the operation on START, hold it otherwise.
-    w.connect(w.either("NEXT_WRITE", w.both("LOAD_WRITE", start, check->getOutputPin("WRITE")),
-                       w.both("HOLD_WRITE", writing->getOutputPin("Q"), w.invert("NO_START", start))),
-              writing->getInputPin("D"));
+    {
+        auto hold = w.both("HOLD_WRITE", writing->getOutputPin("Q"), w.invert("NO_START", start));
+        auto load = w.both("LOAD_WRITE", start, check->getOutputPin("WRITE"));
+        w.connect(w.either("NEXT_WRITE", load, hold), writing->getInputPin("D"));
+    }
     const auto is_write = writing->getOutputPin("Q");
 
     if (config_.clocked) {
@@ -283,8 +292,9 @@ void StaticMemorySequencer::buildInternals(ComponentBuilder& b) {
     w.connect(getInputPinDynamic("MEM_READ_DATA"), held->getInputPinDynamic("IN"));
     w.connect(payloadMux(b, w, "RESULT_SOURCE", zero_data->getOutputPinDynamic("OUT"), held->getOutputPinDynamic("OUT"), returns_data),
               result->getInputPinDynamic("D"));
-    auto device_status = payloadMux(b, w, "DEVICE_STATUS", constant3(b, "DEVICE_CODE", unsigned(circuit::memory::Status::Device)),
-                                    constant3(b, "OK_CODE", 0), ready);
+    auto device_code = constant3(b, "DEVICE_CODE", unsigned(circuit::memory::Status::Device));
+    auto ok_code = constant3(b, "OK_CODE", 0);
+    auto device_status = payloadMux(b, w, "DEVICE_STATUS", device_code, ok_code, ready);
     w.connect(payloadMux(b, w, "STATUS_SOURCE", device_status, check->getOutputPin<3>("STATUS"), invalid_start),
               status->getInputPin<3>("D"));
     w.connect(result->getOutputPinDynamic("Q"), getOutputPinDynamic("RESULT"));
@@ -339,9 +349,9 @@ void CommandMemorySequencer::buildInternals(ComponentBuilder& b) {
     w.connect(mask->getOutputPinDynamic("Q"), getOutputPinDynamic("MEM_WRITE_MASK"));
     auto op_bit = [&](const std::string& name, PinPtr decoded) {
         auto bit = state(name);
-        w.connect(w.either("NEXT_" + name, w.both("LOAD_" + name, start, decoded),
-                           w.both("HOLD_" + name, bit->getOutputPin("Q"), w.invert("NO_START_" + name, start))),
-                  bit->getInputPin("D"));
+        auto hold = w.both("HOLD_" + name, bit->getOutputPin("Q"), w.invert("NO_START_" + name, start));
+        auto load = w.both("LOAD_" + name, start, decoded);
+        w.connect(w.either("NEXT_" + name, load, hold), bit->getInputPin("D"));
         return bit->getOutputPin("Q");
     };
     const auto is_write = op_bit("IS_WRITE", check->getOutputPin("WRITE"));
@@ -499,7 +509,9 @@ void CommandMemorySequencer::buildInternals(ComponentBuilder& b) {
     auto keep_data = w.either("RETURN_WORD", burst_word, w.reduce("RETURN_DATA", {step_done, cur_read, w.invert("READ_OK", fail)}, true));
     w.connect(payloadMux(b, w, "RESULT_SOURCE", zero_data->getOutputPinDynamic("OUT"), held_data->getOutputPinDynamic("OUT"), keep_data),
               result->getInputPinDynamic("D"));
-    auto device_status = payloadMux(b, w, "DEVICE_STATUS", constant3(b, "OK_CODE", 0), constant3(b, "DEVICE_CODE", unsigned(circuit::memory::Status::Device)), fail);
+    auto device_code = constant3(b, "DEVICE_CODE", unsigned(circuit::memory::Status::Device));
+    auto ok_code = constant3(b, "OK_CODE", 0);
+    auto device_status = payloadMux(b, w, "DEVICE_STATUS", ok_code, device_code, fail);
     w.connect(payloadMux(b, w, "STATUS_SOURCE", device_status, check->getOutputPin<3>("STATUS"), invalid_start), status->getInputPin<3>("D"));
     w.connect(result->getOutputPinDynamic("Q"), getOutputPinDynamic("RESULT"));
     w.connect(status->getOutputPin<3>("Q"), getOutputPin<3>("STATUS"));

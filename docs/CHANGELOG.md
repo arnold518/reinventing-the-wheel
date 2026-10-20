@@ -7,6 +7,33 @@ history remains in Git and the archived reports.
 
 ## 2026-10-20
 
+### Site checks: deterministic gate order, figure fixes, records closed (branch `realistic-timing`)
+
+- **Changed:**
+  - Gates that were built inside one call's arguments are now created in
+    explicit statements, in the native build's order. The affected files are
+    `MemoryFFController.hpp`, `DRAM.cpp`, `NORFlash.cpp`,
+    `MemorySequencers.cpp` and `TwoPortMemoryArbiter.cpp`. C++ leaves that
+    order open, so GCC and clang (WebAssembly) had listed the same parts
+    differently.
+  - Seven figures get label spacing fixes: cache access patterns, cache
+    topologies, memory endpoints, SRAM device, transaction handshake, SRAM
+    access chain, memory latency.
+  - The simulator page shows its embed before its explanation.
+  - `MemoryDeviceDocumentationBrowserTest` counts example tables only.
+  - The general cache plan, memory chapter and shared layout keys records are
+    closed, and STATUS is updated.
+- **Why:** the owed site build and browser/parity checks, run once the
+  general cache plan settled.
+- **Verified:**
+  - Pages build passes, with every example row verified.
+  - 26 browser, WebAssembly-runtime and parity checks pass; the parity checks
+    used the fresh native probe in `build-cleanup`.
+  - Native: 30 memory-labelled tests, 48 further memory tests, the layout and
+    catalog checks, and all eight cache tests (including `CacheReadTest`).
+  - The unified memory view checked in the browser.
+- **Not run:** `PartDelayTablesCompleteTest` and the full native suite.
+
 ### Visualizer: cache controller layouts regenerated (branch `realistic-timing`)
 
 - **Changed:**

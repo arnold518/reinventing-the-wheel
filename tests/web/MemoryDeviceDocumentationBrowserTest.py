@@ -102,7 +102,8 @@ def main():
             for width in (640, 360):
                 page.set_viewport_size({"width": width, "height": 1000})
                 assert page.evaluate("document.documentElement.scrollWidth <= innerWidth+1"), section
-                assert page.locator(".example-table-scroll").count() == len(scenarios)
+                # Timing tables share the scroll wrapper; count the example tables only.
+                assert page.locator(".example-table-block .example-table-scroll").count() == len(scenarios)
             context.close()
         for scenario, profile, rows in cases:
             context = browser.new_context(viewport={"width": 1440, "height": 1000})

@@ -75,20 +75,25 @@
 <text x="600" y="40" class="dg-tag" text-anchor="end">READY</text>
 <rect data-node="settle" x="40" y="72" width="112" height="48" rx="4" class="dg-box"/>
 <text x="96" y="102" class="dg-small" text-anchor="middle">Settle</text>
-<text x="96" y="148" class="dg-code" text-anchor="middle">settle interval</text>
+<text x="96" y="144" class="dg-code" text-anchor="middle">settle</text>
+<text x="96" y="162" class="dg-code" text-anchor="middle">interval</text>
 <rect data-node="precharge" x="152" y="72" width="112" height="48" rx="4" class="dg-box"/>
 <text x="208" y="102" class="dg-small" text-anchor="middle">Precharge</text>
-<text x="208" y="148" class="dg-code" text-anchor="middle">precharge interval</text>
+<text x="208" y="144" class="dg-code" text-anchor="middle">precharge</text>
+<text x="208" y="162" class="dg-code" text-anchor="middle">interval</text>
 <rect data-node="decode" x="264" y="72" width="112" height="48" rx="4" class="dg-box"/>
 <text x="320" y="102" class="dg-small" text-anchor="middle">Decode</text>
-<text x="320" y="148" class="dg-code" text-anchor="middle">decoder replica</text>
+<text x="320" y="144" class="dg-code" text-anchor="middle">decoder</text>
+<text x="320" y="162" class="dg-code" text-anchor="middle">replica</text>
 <rect data-node="bitline" x="376" y="72" width="112" height="48" rx="4" class="dg-focus"/>
 <text x="432" y="102" class="dg-small" text-anchor="middle">Bitline</text>
-<text x="432" y="148" class="dg-code" text-anchor="middle">bitline interval</text>
+<text x="432" y="144" class="dg-code" text-anchor="middle">bitline</text>
+<text x="432" y="162" class="dg-code" text-anchor="middle">interval</text>
 <rect data-node="sense, output" x="488" y="72" width="112" height="48" rx="4" class="dg-box"/>
 <text x="544" y="102" class="dg-small" text-anchor="middle">Sense, output</text>
-<text x="544" y="148" class="dg-code" text-anchor="middle">sense + output</text>
-<path class="dg-edge" d="M 40 176 L 600 176"/>
+<text x="544" y="144" class="dg-code" text-anchor="middle">sense</text>
+<text x="544" y="162" class="dg-code" text-anchor="middle">+ output</text>
+<path class="dg-edge" d="M 40 184 L 600 184"/>
 </svg>
 </div>
 <figcaption><strong>Each stage starts when the previous one ends.</strong> Any change of the inputs clears every stage at once and the chain restarts. The intervals come from the timing profile (the bitline grows with the number of rows); the decode and output stages are replica gate chains as deep as the paths they copy. Widths are not to scale. The controller counts whole clock cycles around this, chosen from the proven access time.</figcaption>

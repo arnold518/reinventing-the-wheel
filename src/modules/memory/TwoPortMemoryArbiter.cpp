@@ -106,8 +106,11 @@ public:
         auto last_beat = beat_width ? w.reduce("LAST_BEAT", beat, true) : w.constant("ONE_BEAT", true);
         auto final_complete = w.both("FINAL_COMPLETE", complete,
             w.either("SINGLE_OR_LAST", w.invert("NOT_BURST", burst->getOutputPin("Q")), last_beat));
-        w.connect(w.either("NEXT_BURST", w.both("ACCEPT_BURST", accepted, burst_request),
-            w.both("HOLD_BURST", burst->getOutputPin("Q"), w.invert("NOT_ACCEPTING", accepted))), burst->getInputPin("D"));
+        {
+            auto hold = w.both("HOLD_BURST", burst->getOutputPin("Q"), w.invert("NOT_ACCEPTING", accepted));
+            auto load = w.both("ACCEPT_BURST", accepted, burst_request);
+            w.connect(w.either("NEXT_BURST", load, hold), burst->getInputPin("D"));
+        }
         // BEAT counts completions of a burst and returns to 0 with its last word.
         PinPtr carry = w.both("BEAT_STEP", complete, burst->getOutputPin("Q"));
         for (size_t i = 0; i < beat_width; ++i) {
@@ -118,11 +121,16 @@ public:
         }
         w.connect(w.either("NEXT_BUSY", accepted,
             w.both("HOLD_BUSY", active, w.invert("NOT_COMPLETE", final_complete))), busy->getInputPin("D"));
-        w.connect(w.either("NEXT_OWNER_D", w.both("ACCEPT_D", accepted, select_d),
-            w.both("HOLD_OWNER_D", owner_d->getOutputPin("Q"), w.invert("NOT_ACCEPT", accepted))), owner_d->getInputPin("D"));
-        w.connect(w.either("NEXT_PREFER_D", w.both("ACCEPT_I", accepted, select_i),
-            w.both("HOLD_PREFER_D", prefer_d->getOutputPin("Q"),
-                   w.invert("NOT_ACCEPT_FOR_PRIORITY", accepted))), prefer_d->getInputPin("D"));
+        {
+            auto hold = w.both("HOLD_OWNER_D", owner_d->getOutputPin("Q"), w.invert("NOT_ACCEPT", accepted));
+            auto load = w.both("ACCEPT_D", accepted, select_d);
+            w.connect(w.either("NEXT_OWNER_D", load, hold), owner_d->getInputPin("D"));
+        }
+        {
+            auto hold = w.both("HOLD_PREFER_D", prefer_d->getOutputPin("Q"), w.invert("NOT_ACCEPT_FOR_PRIORITY", accepted));
+            auto load = w.both("ACCEPT_I", accepted, select_i);
+            w.connect(w.either("NEXT_PREFER_D", load, hold), prefer_d->getInputPin("D"));
+        }
         w.connect(active, getOutputPin("BUSY"));
         w.connect(owner_d->getOutputPin("Q"), getOutputPin("OWNER_D"));
         w.connect(prefer_d->getOutputPin("Q"), getOutputPin("PREFER_D"));
@@ -150,9 +158,9 @@ public:
         StructuralWiring w(builder);
         auto owner_d = getInputPin("OWNER_D");
         auto valid = getInputPin("MEM_RSP_VALID");
-        auto owner_empty = memory_detail::payloadMux(builder, w, "OWNER_BUFFER_EMPTY",
-            w.invert("I_BUFFER_EMPTY", getInputPin("I_FULL")),
-            w.invert("D_BUFFER_EMPTY", getInputPin("D_FULL")), owner_d);
+        auto d_empty = w.invert("D_BUFFER_EMPTY", getInputPin("D_FULL"));
+        auto i_empty = w.invert("I_BUFFER_EMPTY", getInputPin("I_FULL"));
+        auto owner_empty = memory_detail::payloadMux(builder, w, "OWNER_BUFFER_EMPTY", i_empty, d_empty, owner_d);
         auto ready = w.both("LOWER_RESPONSE_READY", getInputPin("BUSY"), owner_empty);
         w.connect(ready, getOutputPin("MEM_RSP_READY"));
         w.connect(w.both("COMPLETE", ready, valid), getOutputPin("COMPLETE"));

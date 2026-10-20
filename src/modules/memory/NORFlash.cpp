@@ -160,9 +160,13 @@ class FlashControl : public IOComponent {
         auto idle = w.either("IDLE", w.invert("NOT_BUSY", B), R);
         auto accept = w.reduce("ACCEPT", {issued, legal, idle}, true);
         auto unknown = w.invert("UNKNOWN_COMMAND", cmd_known);
-        auto refused = w.both("REFUSED", issued, w.either("BUSY_OR_ILLEGAL", w.invert("NOT_IDLE", idle), w.invert("ILLEGAL", legal)));
-        auto clear_valid = w.reduce("CLEAR_VALID", {accept, w.both("UNKNOWN_IDLE", unknown, idle),
-                                                    w.both("ILLEGAL_IDLE", w.both("ISSUED_IDLE", issued, idle), w.invert("NOT_LEGAL", legal))}, false);
+        auto illegal = w.invert("ILLEGAL", legal);
+        auto not_idle = w.invert("NOT_IDLE", idle);
+        auto refused = w.both("REFUSED", issued, w.either("BUSY_OR_ILLEGAL", not_idle, illegal));
+        auto unknown_idle = w.both("UNKNOWN_IDLE", unknown, idle);
+        auto not_legal = w.invert("NOT_LEGAL", legal);
+        auto issued_idle = w.both("ISSUED_IDLE", issued, idle);
+        auto clear_valid = w.reduce("CLEAR_VALID", {accept, unknown_idle, w.both("ILLEGAL_IDLE", issued_idle, not_legal)}, false);
         auto starts = w.reduce("STARTS", {is_read, is_program, is_erase}, false);
         auto start = w.both("START", accept, starts);
         // A repeated command taken in the releasing cycle restarts its chain (DRAM.cpp).
@@ -207,18 +211,24 @@ class FlashControl : public IOComponent {
                       bit->getInputPin("D"));
         };
         keep(error, w.either("ERROR_EVENT", unknown, refused), accept, "ERROR");
-        w.connect(w.both("NEXT_VALID", w.invert("KEEP_VALID", clear_valid),
-                         w.either("VALID_SOURCE", valid->getOutputPin("Q"), w.both("READ_DONE", complete, c_read->getOutputPin("Q")))),
-                  valid->getInputPin("D"));
+        {
+            auto source = w.either("VALID_SOURCE", valid->getOutputPin("Q"), w.both("READ_DONE", complete, c_read->getOutputPin("Q")));
+            w.connect(w.both("NEXT_VALID", w.invert("KEEP_VALID", clear_valid), source), valid->getInputPin("D"));
+        }
         keep(busy, start, R, "BUSY");
         keep(releasing, complete, R, "RELEASING");
-        keep(wel, w.both("ENABLE_WRITES", accept, is_wren),
-             w.both("DISABLE_WRITES", accept, w.reduce("WRITES_END", {is_wrdi, is_program, is_erase}, false)), "WEL");
+        {
+            auto disable = w.both("DISABLE_WRITES", accept, w.reduce("WRITES_END", {is_wrdi, is_program, is_erase}, false));
+            auto enable = w.both("ENABLE_WRITES", accept, is_wren);
+            keep(wel, enable, disable, "WEL");
+        }
         for (auto [bit, decoded, name] : std::vector<std::tuple<std::shared_ptr<IOComponent>, PinPtr, std::string>>{
                  {c_read, is_read, "C_READ"}, {c_program, is_program, "C_PROGRAM"}, {c_erase, is_erase, "C_ERASE"}})
-            w.connect(w.either("NEXT_" + name, w.both("LOAD_" + name, start, decoded),
-                               w.both("HOLD_" + name, bit->getOutputPin("Q"), w.invert("NOT_START_" + name, start))),
-                      bit->getInputPin("D"));
+        {
+            auto hold = w.both("HOLD_" + name, bit->getOutputPin("Q"), w.invert("NOT_START_" + name, start));
+            auto load = w.both("LOAD_" + name, start, decoded);
+            w.connect(w.either("NEXT_" + name, load, hold), bit->getInputPin("D"));
+        }
         auto addr = reg("ADDRESS", 32), data = reg("DATA", width_), mask = reg("MASK", width_ / 8);
         w.connect(getInputPin<32>("WORD_ADDR"), addr->getInputPin<32>("D"));
         w.connect(start, addr->getInputPin("WE"));
@@ -246,9 +256,14 @@ class FlashControl : public IOComponent {
         // program pulse; an erase selects rows through the block decoder.
         w.connect(w.either("SELECT", c_read->getOutputPin("Q"), w.both("PROGRAM_SELECT", r_program, w.invert("PROGRAM_PULSE_OVER", pg[1]))),
                   getOutputPin("ROW_ENABLE"));
-        w.connect(w.both("PROGRAM_PULSE", w.both("PROGRAM_ON", r_program, pg[0]), w.invert("PROGRAM_OFF", pg[1])),
-                  getOutputPin("PROGRAM_ENABLE"));
-        auto erase_pulse = w.both("ERASE_PULSE", w.both("ERASE_ON", r_erase, er[0]), w.invert("ERASE_OFF", er[1]));
+        {
+            auto program_off = w.invert("PROGRAM_OFF", pg[1]);
+            auto program_on = w.both("PROGRAM_ON", r_program, pg[0]);
+            w.connect(w.both("PROGRAM_PULSE", program_on, program_off), getOutputPin("PROGRAM_ENABLE"));
+        }
+        auto erase_off = w.invert("ERASE_OFF", er[1]);
+        auto erase_on = w.both("ERASE_ON", r_erase, er[0]);
+        auto erase_pulse = w.both("ERASE_PULSE", erase_on, erase_off);
         const size_t depth_bits = std::bit_width(config_.depth_words - 1);
         for (size_t r = 0; r < rows; ++r) {
             const size_t block = r * config_.words_per_row / config_.block_words;
