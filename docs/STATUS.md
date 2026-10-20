@@ -1,6 +1,6 @@
 # Status
 
-Updated: 2026-10-19.
+Updated: 2026-10-20.
 
 This is the living project-wide view. Rewrite it when the implementation or
 work state changes. Keep dated decisions and validation results in
@@ -123,10 +123,10 @@ work state changes. Keep dated decisions and validation results in
   removed; 4.2 has per-profile certificates; 4.7 states results in cycles
   with per-profile summaries and publishes the cache campaign; eight new
   figures and the four 4.7 plots follow the site palette. All 18 native
-  documentation checks pass. **Open:** a memory-gated run is rebuilding the
-  site and running the 16 browser and parity checks still owed on the
-  current pages (results go in the record); the cache component page's own
-  rewrite (deferred by the owner).
+  documentation checks pass. The cache pages (3.7, 3.8) are rewritten with
+  the general cache plan below. **Open:** a memory-gated run to rebuild the
+  site and run the browser and parity checks still owed on the current pages
+  (results go in the record).
 
 - [Future steps plan](records/2026-10-14-future-steps-plan.md): current CPU,
   memory and viewer boundaries assessed against interactive games, a
@@ -140,17 +140,13 @@ work state changes. Keep dated decisions and validation results in
   first game is not selected.
 
 - [Cache system plan](records/2026-10-14-cache-system-plan.md): the
-  standalone `Cache<W>` exists for W=8/16/32: structural lookup and refill,
-  up to two ways with LRU, invalidation, write-through no-allocate writes, at
-  most four expanded or 64 scalable sets and four words per line, FF or SRAM
-  tag and data stores. No behavioral cache, coherence or MMIO bypass exists.
-  The cache campaign (advanced core over DRAM, five topologies, four
-  workloads, `embedded` and `desktop`) is published in
-  [3.8](../site-docs/memory/cache-experiments.md): the
-  L1 pair gives 3–4× over shared uncached DRAM; adding the L2 under the L1s
-  is 4–8 % slower in three of four workloads (write-through to two levels).
-  The public [cache page](../site-docs/memory/caches.md) still awaits its own
-  rewrite (deferred by the owner).
+  standalone `Cache<W>` for W=8/16/32 and the five-topology cache campaign,
+  published in [3.8](../site-docs/memory/cache-experiments.md). The L1 pair
+  gives 3–4× over shared uncached DRAM; with write-through caches, adding the
+  L2 under the L1s is 4–8 % slower in three of four workloads. The cache's
+  current settings are those of the general cache plan below. No coherence or
+  MMIO bypass exists. The two-port arbiter is documented in §3.5.3, and
+  shared code and data images that overlap are refused.
 
 - [Shared visualizer layout keys](records/2026-10-19-shared-layout-keys.md):
   saved floorplans were shared by parts of different internal structure
@@ -162,12 +158,20 @@ work state changes. Keep dated decisions and validation results in
   `VisualizerStaticLayoutTest`; 13 native layout checks pass. **Open:** the
   WebAssembly rebuild and browser checks.
 
-- [General cache plan](records/2026-10-19-general-cache-plan.md): plan only,
-  deferred by the owner. Make the cache's behavior parameters too (write
-  buffer, write-back, write-allocate, 4/8 ways with a choice of replacement,
-  up to about 1,024 sets, optional prefetch); non-blocking caches and
-  multi-bank DRAM are separate projects. First step when resumed: the write
-  buffer.
+- [General cache plan](records/2026-10-19-general-cache-plan.md): implemented
+  on branch `realistic-timing` (not pushed).
+  - The cache gained a write buffer, write-back and write-allocate, a
+    line-state store (up to 4,096 sets), and 1/2/4/8 ways with lru, plru, fifo
+    or random replacement.
+  - `controller=behavioral` runs the controller's own gate list as one
+    compact part: cycle-identical in a lockstep test, the standalone traces
+    and CPU runs, and 4–7× faster.
+  - A 96-run behavior campaign (all verified, certified at 4,104 / 2,858 ps)
+    is published as §3.8 experiment 3: a two-entry write buffer gives
+    1.18–1.57× and removes most of the L2 penalty.
+  - Prefetch is deferred (one request at a time).
+  - **Open:** visualizer and browser checks (saved cache-controller layouts
+    may need regenerating), waiting for a memory-gated rebuild.
 
 - [Behavioral delays and the memory clock-edge rule](records/2026-10-12-behavioral-delays-and-memory-clock-edge.md):
   code and checks are done locally and not pushed. Published results for

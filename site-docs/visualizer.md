@@ -21,7 +21,11 @@ circuit, scrub through time, and open any part to see what it is built from.
 - **Explorer**: the component tree; switching a part between its structural
   and behavioral form rebuilds the circuit with that choice.
 - **Memory inspector**: the contents of a memory, read from its recorded
-  history without performing an access.
+  history without performing an access. One memory shared by a processor's
+  instruction fetches and data accesses through the
+  [two-port arbiter](memory/controllers.md) is shown as two panels:
+  instructions on the left (disassembled) and data on the right, each at the
+  latest address its side used. The `rv32i-shared-memory` scenario shows it.
 
 The example tables on component pages are recorded in `unit`, so a scenario
 opened in another profile shows the same values at different times.

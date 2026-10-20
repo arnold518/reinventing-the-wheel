@@ -210,6 +210,8 @@ RV32IExperimentResult runRV32IExperiment(const RV32IExperimentConfig& config) {
         }
         // Two timed memories: up to 8 handshake cases each (DRAM), 64 together.
         clock.maximum_state_cases=256;
+        // Three four-way caches with their banks exceed the default pin budget.
+        clock.maximum_nodes=2000000;clock.maximum_edges=8000000;
         clock.clock_pin="EXPERIMENT.CLK";
         clock.inputs={{"EXPERIMENT.RST",std::nullopt,{},0},
                       {"EXPERIMENT.CORE.ENABLE",std::nullopt,{},1},

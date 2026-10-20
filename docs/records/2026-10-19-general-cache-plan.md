@@ -5,18 +5,25 @@ Started: 2026-10-19. Status: open (implementation in progress since
 
 ## Summary
 
-`Cache<W>` was general in geometry but fixed in behavior. This record plans
-and carries out making the behavior parameters too, then a behavioral
-(compact) cache proven equivalent to the structural one, for simulation speed
-(games need millions of cycles). Done so far (2026-10-20): write buffer
-(step 1), write-back and write-allocate (step 2), a line-state store for up
-to 4,096 sets (step 3, revised), 4 and 8 ways with lru, plru, fifo or random
-replacement (step 4), and a compact cache controller that runs the
-controller's own gate list, cycle-identical and 4–7 times faster (step 6,
-revised). Next-line prefetch (step 5) is deferred: see the step-4 decision.
-Next: the campaign rerun (step 7). Visualizer and browser checks of steps 1–4 wait for a
-memory-gated run. Several requests in flight and multi-bank DRAM stay out of
-scope.
+`Cache<W>` was general in geometry but fixed in behavior. This record planned
+and carried out making the behavior parameters, then a compact form for
+simulation speed. Done (2026-10-20):
+- write buffer (step 1);
+- write-back and write-allocate (step 2);
+- a line-state store for up to 4,096 sets (step 3, revised);
+- 4 and 8 ways with lru, plru, fifo or random replacement (step 4);
+- a compact cache controller that runs the controller's own gate list:
+  cycle-identical, 4–7 times faster (step 6, revised);
+- the behavior campaign, 96 runs, all verified and certified (step 7). A
+  two-entry write buffer gives 1.18–1.57× on programs with stores and
+  removes most of the published L2 penalty; write-back gains less and costs
+  9–21 % on `stream`.
+
+Next-line prefetch (step 5) is deferred: see the step-4 decision. The public
+pages §3.7 and §3.8 are rewritten. **Open:** the visualizer and browser
+checks of these steps (cache controller layouts may need regenerating),
+which wait for a memory-gated rebuild. Several requests in flight and
+multi-bank DRAM stay out of scope.
 
 ## 2026-10-19 — Starting point
 
@@ -444,3 +451,110 @@ owner), and the banks stay the native devices they are.
 skip above keeps unchanged. Visualizer and browser checks are pending, as
 before. A compact controller in the visualizer would draw as one box; no
 scenario selects it.
+
+## 2026-10-20 — Step 7 plan, frozen before any run
+
+**Question.** The published campaign (§3.8) found the L2 made three of four
+programs 4–8 % slower, because every store goes through both write-through
+levels while the program waits. Do a write buffer, write-back, or more ways
+change that?
+
+**Variants** (memory timing, geometry and capacities as published: L1s
+8 sets × 2 ways × 16 B, L2 64 sets × 2 ways, SRAM stores, burst fills):
+1. `WT`: write-through, no write-allocate (the published caches).
+2. `BUF`: `WT` with a 2-entry write buffer in the data L1 and the L2.
+3. `WB`: write-back with write-allocate in the data L1 and the L2.
+4. `WB4`: `WB` with 4 ways (plru) in all three caches at the same capacity
+   (L1 4 sets × 4 ways, L2 32 sets × 4 ways).
+
+**Runs.** The arrangements with caches (C-ID, D-0, D-ID); the four programs
+with the published sizes and windows: `calls` 16 × 256, `sort` 64 × 4,
+`stream` 1024 × 4, `pointer-chase` 512 × 4, all with `--measure-body
+--training-iterations 1`. Both profiles at their published clocks (4,104 /
+2,858 ps), 96 runs, all with compact controllers (`--cache-controller
+behavioral`). Step 6 found them cycle-identical to the gate-level ones.
+`WT` must reproduce the published cycle counts exactly, a check of the whole
+chain. Every run must verify, with zero setup violations. Each new variant
+gets a clock analysis per arrangement and profile. A write-back run is
+measured as before: its final flush happens after the window, uncounted.
+Nothing is changed after seeing results.
+
+
+## 2026-10-20 — Step 7 done: cache behavior campaign
+
+**Runs.** All 96 runs of the frozen plan completed: 2.6 host hours, one at a
+time, compact controllers, driven by
+`tools/rv32i-performance/cache_policy_campaign.py`.
+- Every run verified, with zero setup violations.
+- The 24 `WT` runs reproduce the published campaign's cycle counts exactly in
+  both profiles.
+- The clock analysis certifies all 24 combinations (4 behaviors × 3
+  arrangements × 2 profiles) at the published clocks: 4,104 ps in `embedded`,
+  2,858 ps in `desktop`. The limit is the instruction L1 controller's
+  RSP_READY setup; in D-0 it is the arbiter's response register.
+- The experiment's clock analysis needed a larger budget for three four-way
+  caches: 2,000,000 nodes and 8,000,000 edges, up from the default 500,000
+  and 2,000,000. The default had stopped it with "pin budget exhausted".
+
+`embedded` (4,104 ps), cycles in the measured window (speed against `WT`):
+| Program | Arr. | WT | BUF | WB | WB4 |
+| --- | --- | ---: | ---: | ---: | ---: |
+| `calls` | C-ID | 26,321 | 22,013 (1.20×) | 22,013 (1.20×) | 22,013 (1.20×) |
+| `calls` | D-0 | 27,296 | 23,037 (1.18×) | 23,037 (1.18×) | 23,037 (1.18×) |
+| `calls` | D-ID | 27,820 | 22,013 (1.26×) | 22,013 (1.26×) | 22,013 (1.26×) |
+| `sort` | C-ID | 142,446 | 106,133 (1.34×) | 110,966 (1.28×) | 111,805 (1.27×) |
+| `sort` | D-0 | 150,892 | 114,917 (1.31×) | 118,369 (1.27×) | 112,905 (1.34×) |
+| `sort` | D-ID | 153,511 | 104,677 (1.47×) | 106,455 (1.44×) | 106,733 (1.44×) |
+| `stream` | C-ID | 185,577 | 139,373 (1.33×) | 204,311 (0.91×) | 204,283 (0.91×) |
+| `stream` | D-0 | 194,892 | 147,831 (1.32×) | 235,072 (0.83×) | 217,533 (0.90×) |
+| `stream` | D-ID | 201,013 | 142,679 (1.41×) | 232,090 (0.87×) | 231,943 (0.87×) |
+| `pointer-chase` | C-ID | 82,295 | 82,295 (1.00×) | 82,295 (1.00×) | 81,986 (1.00×) |
+| `pointer-chase` | D-0 | 75,971 | 75,971 (1.00×) | 75,971 (1.00×) | 76,561 (0.99×) |
+| `pointer-chase` | D-ID | 79,289 | 79,289 (1.00×) | 79,289 (1.00×) | 79,579 (1.00×) |
+
+`desktop` (2,858 ps):
+| Program | Arr. | WT | BUF | WB | WB4 |
+| --- | --- | ---: | ---: | ---: | ---: |
+| `calls` | C-ID | 28,499 | 22,547 (1.26×) | 22,013 (1.29×) | 22,013 (1.29×) |
+| `calls` | D-0 | 29,144 | 23,671 (1.23×) | 23,037 (1.27×) | 23,037 (1.27×) |
+| `calls` | D-ID | 29,665 | 22,031 (1.35×) | 22,013 (1.35×) | 22,013 (1.35×) |
+| `sort` | C-ID | 157,293 | 109,953 (1.43×) | 112,528 (1.40×) | 113,327 (1.39×) |
+| `sort` | D-0 | 165,890 | 119,720 (1.39×) | 119,422 (1.39×) | 112,905 (1.47×) |
+| `sort` | D-ID | 168,220 | 107,166 (1.57×) | 106,450 (1.58×) | 106,733 (1.58×) |
+| `stream` | C-ID | 205,977 | 147,303 (1.40×) | 223,893 (0.92×) | 223,893 (0.92×) |
+| `stream` | D-0 | 215,278 | 156,029 (1.38×) | 251,407 (0.86×) | 233,148 (0.92×) |
+| `stream` | D-ID | 222,082 | 149,043 (1.49×) | 246,895 (0.90×) | 246,895 (0.90×) |
+| `pointer-chase` | C-ID | 72,584 | 72,584 (1.00×) | 72,584 (1.00×) | 72,334 (1.00×) |
+| `pointer-chase` | D-0 | 69,702 | 69,702 (1.00×) | 69,702 (1.00×) | 70,069 (0.99×) |
+| `pointer-chase` | D-ID | 73,041 | 73,041 (1.00×) | 73,041 (1.00×) | 73,208 (1.00×) |
+
+**Findings.**
+1. **A two-entry write buffer is the largest gain.** `calls`, `sort` and
+   `stream` run 1.18–1.57× faster in every arrangement, because the program
+   no longer waits for each store to reach DRAM. `pointer-chase` keeps
+   exactly its cycles: no store in its window waits.
+2. **It removes most of the L2 penalty.** With write-through, D-ID was 4–8 %
+   slower than C-ID in three programs. With buffers, D-ID is the fastest
+   arrangement for `sort` (both profiles) and for `calls` in `desktop`, and
+   equal for `calls` in `embedded`. It is within 1–2.4 % of C-ID for `stream`.
+3. **Write-back with allocate helps less, or hurts.**
+   - `calls`: equal to the buffer, or 2 % better (`desktop`).
+   - `sort`: within 5 % of the buffer, sometimes slightly better.
+   - `stream`: 9–21 % more cycles than write-through. The output array is
+     written once, so allocation fetches each output line only to overwrite
+     it, and every dirty line is written back later.
+4. **Four ways at the same capacity change little.** `WB4` is within 1 % of
+   `WB` except in D-0. There the 4-way L2 takes 5 % fewer cycles in `sort` and
+   7 % fewer in `stream`.
+
+**Speed against B** (best per program, `embedded`):
+
+| Program | Published best | Best now |
+| --- | ---: | ---: |
+| `calls` | 3.58× | 4.28× (buffer or write-back; C-ID or D-ID) |
+| `sort` | 3.93× | 5.35× (D-ID with buffers) |
+| `stream` | 3.06× | 4.07× (C-ID with buffers) |
+| `pointer-chase` | 3.27× | 3.27× (D-0, unchanged) |
+
+**Decision.** The results go into §3.8 as a third experiment. Experiments 1
+and 2 stay as published: their caches are the `WT` row.

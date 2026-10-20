@@ -7,6 +7,37 @@ history remains in Git and the archived reports.
 
 ## 2026-10-20
 
+### Cache behavior campaign and rewritten cache pages (branch `realistic-timing`)
+
+- **Changed:**
+  - §3.7 (`site-docs/memory/caches.md`) is rewritten: every setting (write
+    policy, write miss, write buffer, replacement, fill, line state,
+    controller), burst reads, invalidation with flush, the line-state store,
+    the controller's parts and the compact controller.
+  - §3.8 gains experiment 3, cache behaviors: write-through, a two-entry write
+    buffer, write-back with allocate, and write-back with four ways, on C-ID,
+    D-0 and D-ID, four programs and both profiles.
+  - The simulator page describes the unified memory view.
+  - New `tools/rv32i-performance/cache_policy_campaign.py`, and the tools
+    README covers cache options.
+  - The experiment's clock analysis has a larger node budget (three four-way
+    caches exceeded the default).
+- **Why:** step 7 of the general cache plan, and the owner's request to update
+  the site docs once the plan was done.
+- **Verified:**
+  - 96 of 96 runs verified, with zero setup violations.
+  - The 24 write-through runs reproduce the published campaign exactly.
+  - The clock analysis certifies all 24 combinations at 4,104 / 2,858 ps.
+  - Strict MkDocs build, `CacheDocumentationTest` and
+    `DocumentationDiagramsTest` pass.
+- **Results:** a write buffer gives 1.18–1.57× on programs with stores and
+  removes most of the L2 penalty; write-back gains less and costs 9–21 % on
+  `stream`; four ways change little except for the L2 alone.
+- **Not run:** the Pages package, the browser checks and
+  `MemoryDeviceDocumentationTest`. The last fails on the ROM page's `READY`
+  pin with the stale native probe in `build-cleanup`, and is to be rechecked
+  after the rebuild.
+
 ### Cache: compact controller running the gate list (branch `realistic-timing`)
 
 - **Changed:** the cache controller is now a catalog contract,

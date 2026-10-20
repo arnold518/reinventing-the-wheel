@@ -361,6 +361,33 @@ advanced core currently certifies 102 ticks with each supported timed
 technology; their different response latencies can change cycle counts. No
 caches are involved.
 
+## Caches and shared memory
+
+`--topology A|B|C-ID|D-0|D-ID` (advanced core) connects the two ports to
+separate memories, one shared memory through the arbiter, instruction and
+data L1s above it, a shared L2 below it, or both (§3.8). Each cache takes
+the settings of `Cache<W>` (§3.7) as `KEY=VALUE` pairs:
+
+```sh
+build-cleanup/rv32i_experiment --core advanced --memory dram --topology D-ID \
+  --workload sort --size 64 --iterations 4 --period 4104 \
+  --dl1 write_policy=back,write_miss=allocate --l2 ways=4,sets=32 \
+  --cache-controller behavioral
+```
+
+`ways` above two without `replacement` selects `plru`. A write-back
+cache is flushed after the program stops (L1s, then L2), outside the counted
+cycles. `--cache-controller behavioral` runs every cache's controller as the
+compact part that executes the gate-level controller's own gate list: the
+same cycles, about five times faster (general cache plan record, step 6).
+
+`cache_policy_campaign.py OUT.jsonl` runs the cache behavior campaign
+(write-through, write buffer, write-back, write-back with four ways; C-ID,
+D-0, D-ID; four programs; both profiles) one run at a time and appends each
+result as it finishes, so an interrupted campaign continues. `--clock` runs
+the clock analysis of every combination instead. Run it under
+`CIRCUITSIM_TIMING_PROFILE` unset; it sets each profile itself.
+
 ## Regenerating the §4.7 result figures
 
 With Matplotlib available, run from the repository root:
