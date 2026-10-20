@@ -399,10 +399,18 @@ MemoryInspector::MemoryInspector(std::shared_ptr<Component> component, const Sim
     }
     for (auto current = component; current; current = current->getParent()) {
         if (current->getName() != "SHARED_MEMORY") continue;
-        if (auto parent = current->getParent())
-            for (const auto& sibling : parent->getChildren())
+        // Requests are told apart by the arbiter's grant only when the
+        // arbiter drives the memory itself: a shared cache between them
+        // fills lines for both sides, and the memory is shown as one.
+        if (auto parent = current->getParent()) {
+            bool shared_cache = false;
+            for (const auto& sibling : parent->getChildren()) {
                 if (std::string(sibling->getTypeName()).starts_with("TwoPortMemoryArbiter<"))
                     arbiter_ = std::dynamic_pointer_cast<IOComponent>(sibling);
+                shared_cache = shared_cache || sibling->getName() == "SHARED_CACHE";
+            }
+            if (shared_cache) arbiter_.reset();
+        }
         break;
     }
 }

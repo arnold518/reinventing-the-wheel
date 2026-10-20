@@ -549,11 +549,19 @@ const std::vector<TestRegistryEntry>& getTestRegistry() {
             }
         }
         // The advanced core over one shared memory (two caches, the arbiter):
-        // the unified memory view of the visualizer.
+        // arrangement C-ID of §4.7, and the unified memory view of the visualizer.
         entries.push_back({"RV32ISharedMemoryProgramTest", "RV32ISharedMemoryProgramTest",
             RegisteredTestKind::Program, {}, "program-21",
             {"simulation","integration","program","rv32i","pipeline","cache","memory","slow"},
-            []{return std::make_unique<RV32IFiveStageCoreProgramTest>(21,false,std::nullopt,true);},true});
+            []{return std::make_unique<RV32IFiveStageCoreProgramTest>(21,false,std::nullopt,RV32IMemoryArrangement::SharedL1);},true});
+        // The other shared arrangements of §4.7 (A is the advanced core's own
+        // program scenario): no caches, a shared cache, both.
+        for (auto arrangement : {RV32IMemoryArrangement::Shared, RV32IMemoryArrangement::SharedL2, RV32IMemoryArrangement::SharedL1L2}) {
+            const auto name = rv32iMemoryArrangementTestName(arrangement);
+            entries.push_back({name, name, RegisteredTestKind::Program, {}, "program-21",
+                {"simulation","integration","program","rv32i","pipeline","cache","memory","slow"},
+                [arrangement]{return std::make_unique<RV32IFiveStageCoreProgramTest>(21,false,std::nullopt,arrangement);},true});
+        }
         attachComponentMetadata(entries);
         attachNonComponentMetadata(entries);
         markVisualizable(entries);

@@ -65,7 +65,7 @@ This is complete-program aggregate equivalence, **not a cycle-by-cycle wire-trac
 The [current result coverage](../../experiments.md#completed-campaign-coverage)
 separates the checked-in ELF fixtures from the projected full Embench suite.
 This reduced-work middle suite has not been rerun on the current source, so
-§ 4.7 does not present its older measurements as current results.
+§ 4.8 does not present its older measurements as current results.
 
 ## Measurement and running
 

@@ -152,5 +152,24 @@ class MemoryInspectorIntegrationTest(unittest.TestCase):
             del session
             gc.collect()
 
+    def test_shared_memory_roles_of_the_arrangements(self):
+        # Two panels where the arbiter drives the memory (B); one where a
+        # shared cache between them fills lines for both sides (D-0, D-ID).
+        for test, scenario, role in (("RV32IMemoryArrangementBTest", "rv32i-memory-b", "unified"),
+                                     ("RV32IMemoryArrangementD0Test", "rv32i-memory-d0", "generic"),
+                                     ("RV32IMemoryArrangementDIDTest", "rv32i-memory-did", "generic")):
+            with self.subTest(scenario=scenario), tempfile.TemporaryDirectory() as tmp:
+                session = server.CircuitSession(scenario, server.LayoutManager(Path(tmp) / "layout.json"))
+                component = next(c["id"] for c in session.components if c["name"] == "SHARED_MEMORY")
+                index = len(session.timestamps) - 1
+                state = session.component_state_at_index(index, component)
+                native = json.loads(subprocess.check_output(
+                    [PROBE, "component", test, scenario, str(index), component], text=True))
+                self.assertEqual(state, native)
+                self.assertEqual(state["memoryRole"], role)
+                self.assertEqual("instructionSide" in state, role == "unified")
+                del session
+                gc.collect()
+
 
 if __name__ == "__main__": unittest.main()

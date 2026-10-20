@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Rebuild the four §4.7 figures from the completed October 2026 campaigns.
+"""Rebuild the four §4.8 figures from the completed October 2026 campaigns.
 
 The campaign results are checked as published (ticks at the October 14
 `unit` periods 166 / 80 / 100), converted to cycles, which every timing
@@ -32,7 +32,7 @@ CURRENT = EXPERIMENTS / "20261014-nonembench-full"
 HISTORICAL = EXPERIMENTS / "20260927-full-embench"
 REPORT = ROOT / "site-docs/rv32i/experiments.md"
 TIMING = ROOT / "tools/timing/documentation-timing.generated.json"
-OUTPUT = ROOT / "site-docs/rv32i/4.7"
+OUTPUT = ROOT / "site-docs/rv32i/results"
 
 SOURCE_SHA256 = "4da38232d8dd68278bf56f27d587a25728aca0bf12b8e7591acb48f67c8213e2"
 BINARY_SHA256 = "e8ae5aa55e7a60bcf842eb7013d67becae25278c9d1dcfdf08ab9dcd2857b0f1"

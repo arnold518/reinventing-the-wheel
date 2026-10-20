@@ -580,4 +580,4 @@ memory's responses are driven by the scenario.
 - `MemoryArbiterTest` in [MemoryEndpointTests.cpp](https://github.com/arnold518/reinventing-the-wheel/blob/github-pages/src/tests/MemoryEndpointTests.cpp) records the example above in every timing profile.
 - [`TwoPortMemoryArbiterTest`](https://github.com/arnold518/reinventing-the-wheel/blob/github-pages/src/tests/TwoPortMemoryArbiterTests.cpp) checks widths 8, 16 and 32 and bursts of 1, 2 and 4 words.
 - `MemoryEndpointIntegrationTest` runs every checkpoint of the example through the C++ reference above.
-- `RV32ITopologyTest` runs a program through the arbiter in every shared-memory topology of the [cache experiments](cache-experiments.md).
+- `RV32ITopologyTest` runs a program through the arbiter in every shared-memory arrangement of [§ 4.7](../rv32i/memory-systems.md).

@@ -16,7 +16,9 @@ from playwright.sync_api import sync_playwright
 
 PAGES = {
     "timing/": 1,
-    "memory/cache-experiments/": 3,
+    "memory/cache-experiments/": 1,
+    "rv32i/memory-systems/": 1,
+    "rv32i/experiments/": 1,
     "alu8/2.6/": 1,
     "memory/architecture/": 2,
     "memory/technologies/flip-flop/": 1,

@@ -596,7 +596,7 @@ def cache_topologies():
     f = Figure("cache-topologies", "Five memory arrangements over one DRAM",
                "Five ways to connect a processor's instruction and data ports to DRAM main memory: two separate memories, one shared memory through an arbiter, private level-1 caches above the arbiter, a shared level-2 cache below it, and both.", 360,
                "<strong>Same requests, same DRAM, five connections.</strong> A gives each port its own copy of memory; B shares one DRAM through the two-port arbiter; "
-               "C-ID adds an instruction and a data L1 (256 B each) above the arbiter; D-0 puts a shared 2 KiB L2 below it; D-ID has both. Caches fill a line with one burst; the data caches write through.")
+               "C-ID adds an instruction and a data L1 above the arbiter; D-0 puts a shared L2 below it; D-ID has both.")
     xs = [40, 160, 280, 400, 520]
     names = ["A", "B", "C-ID", "D-0", "D-ID"]
     for x, name in zip(xs, names):
@@ -661,11 +661,12 @@ def memory_arbiter():
 
 
 CACHE_PAGE = ROOT / "site-docs/memory/cache-experiments.md"
+RESULTS_PAGE = ROOT / "site-docs/rv32i/experiments.md"
 
 
-def cache_table(after, indent=""):
+def cache_table(after, indent="", page=None):
     """Rows of the first Markdown table after a line, as lists of cells."""
-    lines = CACHE_PAGE.read_text(encoding="utf-8").splitlines()
+    lines = (page or CACHE_PAGE).read_text(encoding="utf-8").splitlines()
     start = lines.index(after) + 1
     rows = []
     for line in lines[start:]:
@@ -703,14 +704,16 @@ def cache_speedup():
     programs = ("calls", "sort", "stream", "pointer-chase")
     groups = []
     for name in programs:
-        rows = {r[0]: int(r[1].replace(",", "")) for r in cache_table(f"    **{name}**", "    ")}
-        groups.append((name, [(a, rows["B"] / rows[a]) for a in ("A", "C-ID", "D-0", "D-ID")]))
+        rows = {(r[0], r[1]): int(r[2].replace(",", "")) for r in cache_table(f"    **{name}**", "    ", RESULTS_PAGE)}
+        base = rows[("B", "none")]
+        groups.append((name, [("A", base / rows[("A", "none")])] +
+                       [(a, base / rows[(a, "Write buffer")]) for a in ("C-ID", "D-0", "D-ID")]))
     f = Figure("cache-speedup", "Speed of four memory arrangements against shared uncached DRAM",
-               "For four programs, bars give the speed of separate memories, two level-1 caches, a shared level-2 cache, and both levels, relative to one shared uncached DRAM, in the embedded profile.",
+               "For four programs, bars give the speed of separate memories, two level-1 caches, a shared level-2 cache, and both levels, the caches with a write buffer, relative to one shared uncached DRAM, in the embedded profile.",
                44 + len(groups) * 116 + 4,
-               "<strong>Speed against B, one shared DRAM with no cache, <code>embedded</code>.</strong> "
-               "The line marks B; the fastest arrangement of each program is highlighted. Values from the cycle tables below.")
-    scale, left = 96, 192
+               "<strong>Speed against B, one shared DRAM with no cache, <code>embedded</code>; caches with a two-entry write buffer.</strong> "
+               "The line marks B; the fastest arrangement of each program is highlighted. Every behavior is in the table above.")
+    scale, left = 72, 192
     f.text(40, 28, "SPEED AGAINST B (B = 1)", "tag")
     for i, (name, bars) in enumerate(groups):
         y = 44 + i * 116

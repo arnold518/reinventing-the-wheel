@@ -5,6 +5,31 @@ what changed and why, what was verified, and any limits or deliberate
 omissions. Entries begin with adoption of this recording workflow; older
 history remains in Git and the archived reports.
 
+## 2026-10-21
+
+### RV32I memory systems section; cache experiments split (branch `realistic-timing`)
+
+- **Changed:**
+  - New §4.7 Memory Systems: the five memory arrangements of the advanced
+    core, each with an embedded scenario (new: `rv32i-memory-b`, `-d0`,
+    `-did`).
+  - The results page is now §4.8, with a memory-systems section that merges
+    the former §3.8 experiments 2 and 3 as final results. §3.8 keeps the
+    cache-alone experiment.
+  - `RV32IProgramRoot` builds every shared arrangement, including an L2, and
+    the inspector shows one panel behind a shared cache.
+  - New floorplan and saved layouts, and a figure rescaled.
+- **Why:** the owner pointed out that §3.8 read as history and that the
+  arrangement experiment belongs to the RV32I chapter. The owner also wanted
+  a scenario per arrangement to show how the arbiter is connected.
+- **Verified:**
+  - The four arrangement scenarios against the instruction-set reference.
+  - Inspector, layout, catalog, topology and clock checks; 18 documentation
+    checks; the plot validation (602 cells).
+  - Strict Pages build, and 11 browser/parity checks plus a browser load of
+    each new scenario.
+- **Not run:** the full native suite.
+
 ## 2026-10-20
 
 ### Site checks: deterministic gate order, figure fixes, records closed (branch `realistic-timing`)

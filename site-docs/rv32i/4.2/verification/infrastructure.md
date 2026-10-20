@@ -35,7 +35,7 @@ reference phases for the nine-case *fixture* matrix; rejection of changed
 snapshot source; and failure bookkeeping that does not claim completion.
 
 **Boundary:** the test never executes the real 19 Embench workloads or the
-three reduced-work algorithms. [§ 4.7](../../experiments.md#full-embench-conditional-clock-only-projection)
+three reduced-work algorithms. [§ 4.8](../../experiments.md#full-embench-conditional-clock-only-projection)
 labels the full-suite clock-only projection; the reduced-work suite has no
 current-source result. Neither follows from this CTest pass.
 

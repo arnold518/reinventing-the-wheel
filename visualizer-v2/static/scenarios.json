@@ -74,6 +74,10 @@
       "title": "RV32I / Branch prediction"
     },
     {
+      "id": "memory-systems",
+      "title": "RV32I / Memory systems"
+    },
+    {
       "id": "examples",
       "title": "RV32I programs / Functional examples"
     },
@@ -377,6 +381,15 @@
       "rv32i-program-loader",
       "rv32i-program",
       "program-loader"
+    ],
+    "RV32IMemoryArrangementBTest": [
+      "rv32i-memory-b"
+    ],
+    "RV32IMemoryArrangementD0Test": [
+      "rv32i-memory-d0"
+    ],
+    "RV32IMemoryArrangementDIDTest": [
+      "rv32i-memory-did"
     ]
   },
   "components": {
@@ -449,8 +462,8 @@
       "group": "memory-interface"
     },
     "RV32ISharedMemoryProgramTest": {
-      "title": "RV32I over one shared memory (program 21)",
-      "group": "memory-cache"
+      "title": "C-ID · L1 caches over one shared memory (program 21)",
+      "group": "memory-systems"
     },
     "MemoryEndpointFFTest": {
       "title": "Memory Endpoint FF",
@@ -1039,6 +1052,18 @@
     "RV32IBaselinePipelineCoreTest": {
       "title": "Baseline pipeline core",
       "group": "baseline"
+    },
+    "RV32IMemoryArrangementBTest": {
+      "title": "B · One shared memory, no caches (program 21)",
+      "group": "memory-systems"
+    },
+    "RV32IMemoryArrangementD0Test": {
+      "title": "D-0 · Shared L2 cache below the arbiter (program 21)",
+      "group": "memory-systems"
+    },
+    "RV32IMemoryArrangementDIDTest": {
+      "title": "D-ID · L1 caches and a shared L2 (program 21)",
+      "group": "memory-systems"
     }
   },
   "programs": [

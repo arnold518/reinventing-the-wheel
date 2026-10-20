@@ -81,7 +81,7 @@ Compare the same image, input, measurement window, memory configuration, and sta
 A missing `COMPLETE`, timeout, budget exhaustion, or failed verifier is an incomplete campaign. Existing artifacts remain useful for diagnosis but are not a complete result set. Increase budgets deliberately after a small run; do not parallelize large structural builds/runs on a memory-constrained host.
 
 Completed campaign coverage, measured values, clock certificates and their
-source snapshots are reported in [§ 4.7](../experiments.md). Keep the
+source snapshots are reported in [§ 4.8](../experiments.md). Keep the
 recorded fidelity and completion artifacts with each run when applying this
 setup to a new checkout.
 

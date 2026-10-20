@@ -262,6 +262,9 @@ set(SIMULATION_TESTS
     MemoryArbiterTest
     TwoPortMemoryArbiterTest
     RV32ISharedMemoryProgramTest
+    RV32IMemoryArrangementBTest
+    RV32IMemoryArrangementD0Test
+    RV32IMemoryArrangementDIDTest
     FFAlwaysReadyControllerTest
     MemoryEndpointFFTest
     MemoryEndpointSRAMTest
@@ -477,6 +480,9 @@ set(INTEGRATION_TESTS
 
 set(SLOW_SIMULATION_TESTS
     RV32ISharedMemoryProgramTest
+    RV32IMemoryArrangementBTest
+    RV32IMemoryArrangementD0Test
+    RV32IMemoryArrangementDIDTest
     ALU32Test
     ALU32CoreTest
     FFMemoryContractTest

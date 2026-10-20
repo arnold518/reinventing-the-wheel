@@ -120,7 +120,7 @@ are retirement-based, so in-flight instructions can influence boundary counters.
 The campaign enforces identical images, final results and retired counts across
 cores. `obs_*` summary columns overlap; they are not additive CPI attribution.
 
-See §4.7 (`site-docs/rv32i/experiments.md`) for every workload's exact contract.
+See §4.8 (`site-docs/rv32i/experiments.md`) for every workload's exact contract.
 
 ```sh
 build/rv32i_experiment --core advanced --policy one-bit --workload alternating --iterations 128 --period auto
@@ -388,7 +388,7 @@ result as it finishes, so an interrupted campaign continues. `--clock` runs
 the clock analysis of every combination instead. Run it under
 `CIRCUITSIM_TIMING_PROFILE` unset; it sets each profile itself.
 
-## Regenerating the §4.7 result figures
+## Regenerating the §4.8 result figures
 
 With Matplotlib available, run from the repository root:
 
@@ -400,7 +400,7 @@ The generator pins the completed October 14 measured campaigns and the older
 full Embench campaign. It checks completion, the seven-target grids, oracle
 and structural phases where applicable, source/binary fingerprints, clock
 periods, tick arithmetic, all 133 historical Embench cycle inputs, and 602
-cells in the public §4.7 tables before writing four SVGs. Full Embench remains
+cells in the public §4.8 tables before writing four SVGs. Full Embench remains
 a conditional clock-only projection. Add `--preview-dir /tmp/rv32i-chart-previews`
 to write PNGs for visual inspection; those previews are not site assets.
 The checked-in SVGs were generated with Matplotlib 3.10.3. Their data checks

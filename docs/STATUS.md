@@ -1,6 +1,6 @@
 # Status
 
-Updated: 2026-10-20.
+Updated: 2026-10-21.
 
 This is the living project-wide view. Rewrite it when the implementation or
 work state changes. Keep dated decisions and validation results in
@@ -73,6 +73,13 @@ work state changes. Keep dated decisions and validation results in
   fixes. The closed [shared layout keys record](records/2026-10-19-shared-layout-keys.md)
   gave each internal structure its own saved floorplan; cache controller
   placements were regenerated.
+
+- The closed [memory systems record](records/2026-10-20-memory-systems-section.md)
+  added §4.7 Memory Systems: the advanced core's five memory arrangements
+  (separate, shared through the arbiter, L1s, L2, both), each with a
+  visualizer scenario. The results page is now §4.8, with one memory-systems
+  section (arrangements × cache behaviors). §3.8 keeps the cache-alone
+  access-pattern experiment.
 
 ## In progress
 

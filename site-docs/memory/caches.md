@@ -4,7 +4,9 @@ A cache keeps copies of recently read words. A requester connects to its
 upper [transaction port](transactions.md); the `MEM_` port connects to a separate
 lower [memory endpoint](controllers.md) or another cache. The cache does not own the
 backing memory or its initial contents. [3.8 Cache Experiments](cache-experiments.md)
-measures what these caches do for access patterns and programs over DRAM.
+measures what these caches do for access patterns over DRAM;
+[§ 4.7](../rv32i/memory-systems.md) connects them to a processor and
+[§ 4.8](../rv32i/experiments.md#memory-systems) measures programs through them.
 
 | Component | Description | Structural | Behavioral |
 | --- | --- | :---: | :---: |
@@ -289,7 +291,7 @@ mask on a WRITE does likewise. Read requests ignore write payload and mask.
 The cache validates alignment and the configured backing range before a
 lower request. Its backing depth must contain complete lines. Lower
 endpoint technology and profile affect the time spent on fills and writes.
-In the processor arrangements of [3.8 Cache Experiments](cache-experiments.md),
+In the processor arrangements of [§ 4.8](../rv32i/experiments.md#memory-systems),
 the clock analysis certifies the caches at the profile's core clock (4,104 ps
 in `embedded`, 2,858 ps in `desktop`), with either controller.
 

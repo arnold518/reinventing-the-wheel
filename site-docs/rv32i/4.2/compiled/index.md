@@ -67,7 +67,7 @@ The [current result coverage](../../experiments.md#completed-campaign-coverage)
 includes the checked-in ELF fixtures. The
 [full Embench section](../../experiments.md#full-embench-conditional-clock-only-projection)
 is a clock-only projection from an older run; the reduced-work middle suite
-has no current-source result in § 4.7.
+has no current-source result in § 4.8.
 
 ## Build and execution
 
