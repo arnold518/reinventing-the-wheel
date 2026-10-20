@@ -29,6 +29,7 @@ set(CORE_LOGIC_SOURCES
     src/analysis/CircuitTimingAnalyzer.cpp
     src/analysis/TimingGraph.cpp
     src/analysis/DelayTwin.cpp
+    src/analysis/GateListModel.cpp
     src/analysis/TimingEngine.cpp
     src/analysis/TimingCircuit.cpp
     src/analysis/MemoryTimingState.cpp

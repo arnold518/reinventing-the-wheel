@@ -38,6 +38,7 @@ void usage() {
         "  [--memory ff|sram|sram-async|dram|rom|nor-flash] [--phase-ticks N] [--guard-ticks N]\n"
         "  [--topology A|B|C-ID|D-0|D-ID] (advanced core: shared memory, arbiter, L1s, L2)\n"
         "  [--il1|--dl1|--l2 KEY=VALUE,...] (cache settings of a topology, e.g. write_buffer=2)\n"
+        "  [--cache-controller structural|behavioral] (every cache: gate-level controller, or the compact one)\n"
         "  [--max-cycles N] [--max-events N] [--allow-incomplete] [--progress-cycles N]\n"
         "  [--tohost ADDRESS] [--allocation-limit-mib N]\n"
         "  [--trace-cycles] (requires --max-cycles <= 4096; validation only)\n"
@@ -124,6 +125,11 @@ int main(int argc,char** argv) {
                 c.memory.device.clocked=value=="sram";
             }
             else if(key=="--topology")c.topology=value;
+            else if(key=="--cache-controller"){
+                // Every cache's controller: gates, or the compact part running their list.
+                if(value!="structural"&&value!="behavioral")throw std::invalid_argument("--cache-controller takes structural or behavioral");
+                for(auto* cache:{&c.instruction_l1,&c.data_l1,&c.l2})cache->compact_controller=value=="behavioral";
+            }
             else if(key=="--il1"||key=="--dl1"||key=="--l2"){
                 // Override catalog settings of one cache: KEY=VALUE pairs, comma separated.
                 auto& cache=key=="--il1"?c.instruction_l1:key=="--dl1"?c.data_l1:c.l2;

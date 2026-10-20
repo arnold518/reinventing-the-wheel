@@ -208,7 +208,10 @@ int main(int argc, char** argv) {
         memory.refresh_interval_cycles = reference.dram_refresh_interval ? std::max<size_t>(24, reference.dram_refresh_interval / period) : 0;
         memory.record_history = false;
         if (std::getenv("CACHE_BENCH_NO_REFRESH")) memory.refresh_interval_cycles = 0;  // diagnosis only
-        const auto l1 = analysis::campaignCache(8, true), l2 = analysis::campaignCache(64, true);
+        auto l1 = analysis::campaignCache(8, true), l2 = analysis::campaignCache(64, true);
+        // CACHE_BENCH_COMPACT_CONTROLLER: the compact cache controllers, which
+        // must give the same cycles.
+        if (std::getenv("CACHE_BENCH_COMPACT_CONTROLLER")) l1.compact_controller = l2.compact_controller = true;
         struct PathSpec { std::string id; std::optional<CacheConfig> l1, l2; };
         const std::vector<PathSpec> paths = {{"S0", std::nullopt, std::nullopt}, {"S1", l1, std::nullopt}, {"S2", l1, l2}};
         for (const auto& trace : traces(memory.words_per_row)) {
@@ -216,7 +219,7 @@ int main(int argc, char** argv) {
             for (const auto& path : paths) {
                 if (!only_path.empty() && path.id != only_path) continue;
                 // The CPU campaign's profile: compact parts wherever one exists
-                // (the cache banks), the cache controllers structural.
+                // (the cache banks); the cache controllers as the setting says.
                 auto profile = std::make_shared<const BuildProfile>(strictAllBehavioral());
                 auto manifest = std::make_shared<BuildManifest>(profile->name(), profile->fingerprint());
                 auto context = BuildContext::rootScope(builtinComponentCatalog(), profile, manifest)->child("CACHE_BENCH", std::nullopt);

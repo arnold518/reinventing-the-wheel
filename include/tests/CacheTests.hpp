@@ -12,6 +12,15 @@ protected:
     void verifyResults() override;
 };
 
+// The compact cache controller against the gate-level one: the same request
+// streams give the same upper and lower port values at every step.
+class CacheControllerEquivalenceTest : public StandaloneVerificationTest {
+public:
+    std::string getTestName() const override { return "CacheControllerEquivalenceTest"; }
+protected:
+    void verifyResults() override;
+};
+
 class CacheComponentScenarioTest : public circuit::test::ComponentScenarioTest {
 public:
     CacheComponentScenarioTest();

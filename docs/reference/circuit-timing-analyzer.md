@@ -126,6 +126,17 @@ before verifying, so the catalog reads the new tables.
 157 of the 159 compact implementations run on a table (`part_delay_tables
 --coverage` lists every one that does not, with the reason).
 
+The compact cache controller (`memory.cache.controller.<W>`, selected by the
+cache setting `controller=behavioral`) is not in the generated file: a cache
+has too many parameter combinations to store. When it is built it builds its
+gate-level controller (compact storage, as above), runs that gate list
+(`GateListModel`), and proves its table on the same gates with
+`CircuitTimingAnalyzer::delays`, holding RST and INV_VALID at 0, as a run's
+clock analysis does. Results are kept per width, parameters and timing
+profile. `part_delay_tables` skips the contract. A contract's clock outputs
+are not data outputs, so an unread passed-on clock such as MEM_CLK needs no
+arc.
+
 - Unclocked logic: the adders, muxes, decoders, shifters, the composite logic
   units, the ALU and its units, the 8-bit ALU parts, decode control,
   forwarding, hazard detection, the predictor parts and the unclocked stages.

@@ -7,6 +7,7 @@
 #include "components/StructuralNetBuilder.hpp"
 #include "simulator/Event.hpp"
 #include <algorithm>
+#include <chrono>
 #include <bit>
 #include <initializer_list>
 #include <iostream>
@@ -366,6 +367,13 @@ private:
 template<size_t Width>
 uint32_t imageWord(uint32_t address);
 
+// Lockstep runs: the controller every rig builds, and a record of the
+// fixture's outputs after every step.
+struct ControllerTrace {
+    static inline bool compact = false;
+    static inline std::vector<std::string>* record = nullptr;
+};
+
 template<size_t Width>
 class Rig {
 public:
@@ -375,6 +383,8 @@ public:
         : context_("W=" + std::to_string(Width) + " S=" + std::to_string(config.sets) +
                    " tag=" + technologyName(config.tag_technology) +
                    " data=" + technologyName(config.data_technology)) {
+        config.compact_controller = ControllerTrace::compact;
+        if (lower_cache_config) lower_cache_config->compact_controller = ControllerTrace::compact;
         root_ = Component::create<CacheFixture<Width>>("CACHE_FIXTURE", config,
             backing_technology, backing_depth_override, std::move(lower_cache_config));
         root_->initializeBacking();
@@ -401,6 +411,15 @@ public:
             sim_.scheduleEvent(makeTestWireUpdate(at, inputs_.at(name), TestValue(value)));
         now_ = at + wait;
         sim_.advanceAndRecord(now_);
+        if (ControllerTrace::record) {
+            std::string line = std::to_string(now_);
+            for (const auto& [name, pin] : root_->getAllOutputPins()) {
+                line += ' ' + name + '=';
+                for (const auto value : pin->getValueAsVector())
+                    line += value == LogicValue::LOW ? '0' : value == LogicValue::HIGH ? '1' : value == LogicValue::HIGH_Z ? 'z' : 'x';
+            }
+            ControllerTrace::record->push_back(std::move(line));
+        }
     }
     LogicVector out(const char* pin) const { return root_->getOutputPinDynamic(pin)->getValueAsVector(); }
     // A backing request taken at the coming edge.
@@ -1575,3 +1594,72 @@ void CacheReadTest::verifyResults() {
     exerciseReferenceStream<8>();
     exerciseReferenceStream<32>();
 }
+
+namespace {
+// One stream run twice, with gate-level and with compact controllers; the
+// fixture's outputs must agree after every step.
+template<class Run>
+void sameWithCompactController(const std::string& name, Run run) {
+    std::vector<std::string> gates, compact;
+    const auto timed = [&](bool compact_controller, std::vector<std::string>& record) {
+        ControllerTrace::record = &record;
+        ControllerTrace::compact = compact_controller;
+        const auto start = std::chrono::steady_clock::now();
+        try { run(); } catch (...) { ControllerTrace::record = nullptr; ControllerTrace::compact = false; throw; }
+        ControllerTrace::record = nullptr;
+        ControllerTrace::compact = false;
+        return std::chrono::duration<double>(std::chrono::steady_clock::now() - start).count();
+    };
+    const auto gate_seconds = timed(false, gates);
+    const auto compact_seconds = timed(true, compact);
+    std::cout << "  " << name << ": " << gates.size() << " steps, gates " << gate_seconds << " s, compact "
+              << compact_seconds << " s\n";
+    for (size_t step = 0; step < std::min(gates.size(), compact.size()); ++step)
+        if (gates[step] != compact[step])
+            throw std::runtime_error(name + ": compact controller differs at step " + std::to_string(step) +
+                                     "\n  gates:   " + gates[step] + "\n  compact: " + compact[step]);
+    require(gates.size() == compact.size(), name + ": compact controller took a different number of steps");
+    require(!gates.empty(), name + ": nothing was recorded");
+}
+} // namespace
+
+void CacheControllerEquivalenceTest::verifyResults() {
+    {
+        // The setting really selects the compact part.
+        CacheConfig config;
+        config.compact_controller = true;
+        auto cache = Component::create<Cache<8>>("CACHE", config);
+        std::shared_ptr<Component> controller;
+        for (const auto& child : cache->getChildren()) if (child->getName() == "CONTROLLER") controller = child;
+        require(std::dynamic_pointer_cast<BasicComponent>(controller) != nullptr, "controller=behavioral did not build the compact controller");
+        require(std::dynamic_pointer_cast<BasicComponent>(controller)->getDelays() != nullptr &&
+                !std::dynamic_pointer_cast<BasicComponent>(controller)->getDelays()->empty(),
+                "The compact controller has no delay table");
+        config.compact_controller = false;
+        cache = Component::create<Cache<8>>("CACHE", config);
+        for (const auto& child : cache->getChildren()) if (child->getName() == "CONTROLLER") controller = child;
+        require(std::dynamic_pointer_cast<BasicComponent>(controller) == nullptr, "controller=structural must build gates");
+    }
+    sameWithCompactController("read-only, one way", [] {
+        for (size_t sets : {1u, 4u}) exerciseWays<8>(sets, 1);
+        exerciseLines<32>(4, 4);
+    });
+    sameWithCompactController("bursts", [] {
+        exerciseBursts<8>(4, false, 1, Technology::FF);
+        exerciseBursts<32>(2, true, 2, Technology::SRAM);
+    });
+    sameWithCompactController("reference stream", [] { exerciseReferenceStream<16>(); });
+    sameWithCompactController("write policies", [] {
+        exerciseWritePolicy<8>(false, true, 1, Technology::FF);
+        exerciseWritePolicy<32>(true, true, 2, Technology::SRAM);
+        exerciseWritePolicy<16>(true, false, 4, Technology::SRAM, true, 4, CacheReplacement::Random);
+        exerciseWritePolicy<32>(false, true, 8, Technology::FF, false, 1, CacheReplacement::PLRU);
+        exerciseWritePolicy<16>(true, true, 8, Technology::FF, true, 2, CacheReplacement::PLRU);
+        exerciseWritePolicy<8>(true, true, 4, Technology::FF, false, 4, CacheReplacement::FIFO);
+    });
+    sameWithCompactController("write buffers", [] {
+        exerciseWriteBuffer<32>(2, 2, Technology::SRAM);
+        exerciseWriteBuffer<16>(4, 2, Technology::FF, true);
+    });
+}
+

@@ -317,6 +317,9 @@ class Builder {
             }
             if (std::find(m.stable_outputs.begin(), m.stable_outputs.end(), name) != m.stable_outputs.end())
                 continue;
+            // A clock passed on carries no data, also where nothing reads it.
+            if (std::find(m.clock_outputs.begin(), m.clock_outputs.end(), name) != m.clock_outputs.end())
+                continue;
             Hub hub;
             hub.binary_with_inputs = leaf.builtin_rules && typeid(c) == typeid(RegisterFile32x32Behavioral);
             bool launched = false;

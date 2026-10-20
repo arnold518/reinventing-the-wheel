@@ -91,6 +91,9 @@ std::vector<Candidate> candidates(const std::set<std::string>& only) {
         if (!only.empty() && !only.contains(contract.id)) continue;
         if ((contract.id.rfind("memory.", 0) == 0 && !storage(contract.id))
             || contract.id.rfind("sequential.", 0) == 0 || contract.id.rfind("utility.", 0) == 0) continue;
+        // The compact cache controller proves its table when it is built, for
+        // the parameters it is built with (src/modules/memory/Cache.cpp).
+        if (contract.id.rfind("memory.cache.controller.", 0) == 0) continue;
         std::string compact;
         bool gates = false;
         for (const auto& implementation : catalog.implementationsFor(contract.id)) {

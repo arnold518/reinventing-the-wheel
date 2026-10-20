@@ -7,6 +7,34 @@ history remains in Git and the archived reports.
 
 ## 2026-10-20
 
+### Cache: compact controller running the gate list (branch `realistic-timing`)
+
+- **Changed:** the cache controller is now a catalog contract,
+  `memory.cache.controller.<W>`. The cache setting
+  `controller=structural|behavioral` picks gates (the default) or a compact
+  part.
+  - The compact part runs the gate-level controller's own gate list
+    (`GateListModel`: four-state gates, compact state rules, only the bits a
+    change reaches).
+  - It proves its delay table on the same gates when built.
+  - Experiment tool option `--cache-controller`.
+  - New `CacheControllerEquivalenceTest`.
+  - The timing graph no longer treats a passed-on clock as a data output.
+  - `part_delay_tables` skips the contract.
+- **Why:** step 6 of the general cache plan, revised from a hand-written
+  behavioral cache. The controller is the slow part, and running its gate
+  list keeps every cache rule in one place (see the record).
+- **Verified:**
+  - Lockstep equivalence test: 8,561 steps identical.
+  - S0–S2 traces: 24 of 24 records identical; cache paths 6.3 times faster.
+  - CPU runs on C-ID, D-0 and D-ID, including write-back, store-mode, 4/8-way
+    and buffered caches: identical cycles and final state, with no setup
+    violations. D-ID `sort`: 325 → 1,646 cycles per second.
+  - 4,104 ps certified with either controller.
+  - Catalog, profile, topology and cache scenario tests pass.
+- **Not run:** `PartDelayTablesCompleteTest`, and the visualizer and browser
+  checks (pending).
+
 ### Cache: 4 and 8 ways, a choice of replacement (branch `realistic-timing`)
 
 - **Changed:** caches take 1, 2, 4 or 8 ways and `replacement=lru|plru|fifo|random`.

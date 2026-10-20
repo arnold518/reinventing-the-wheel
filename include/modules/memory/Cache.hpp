@@ -49,6 +49,9 @@ struct CacheConfig {
     // Exact LRU is built for one or two ways; four and eight ways use plru,
     // fifo or random.
     CacheReplacement replacement = CacheReplacement::LRU;
+    // The controller as gates (false), or as one compact part that runs the
+    // same gates' list (true): the same cycles, many times faster.
+    bool compact_controller = false;
 
     void validate(size_t width) const;
 };

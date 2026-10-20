@@ -6,6 +6,12 @@
 #include "modules/storage/Register.hpp"
 #include "modules/storage/ClockedStateBit.hpp"
 #include "MemoryHandshakeWiring.hpp"
+#include "analysis/CircuitTimingAnalyzer.hpp"
+#include "analysis/GateListModel.hpp"
+#include "components/TimingProfile.hpp"
+#include "components/selection/BuiltinComponentCatalog.hpp"
+#include "components/selection/StandardProfiles.hpp"
+#include <mutex>
 #include <bit>
 #include <functional>
 #include <array>
@@ -49,7 +55,7 @@ void CacheConfig::validate(size_t width) const {
 CacheConfig cacheConfig(const ParameterMap& p) {
     memory_device::keys(p, {"sets", "ways", "block_bytes", "backing_depth_words", "mode", "storage_form",
                             "tag_technology", "data_technology", "fill", "write_buffer", "write_policy", "write_miss",
-                            "line_state", "replacement"});
+                            "line_state", "replacement", "controller"});
     CacheConfig c;
     c.sets = memory_device::parameter(p, "sets", c.sets);
     c.ways = memory_device::parameter(p, "ways", c.ways);
@@ -65,6 +71,11 @@ CacheConfig cacheConfig(const ParameterMap& p) {
         if (it->second == "registers") c.line_store = false;
         else if (it->second == "store") c.line_store = true;
         else throw std::invalid_argument("Cache line_state must be registers or store");
+    }
+    if (auto it = p.find("controller"); it != p.end()) {
+        if (it->second == "structural") c.compact_controller = false;
+        else if (it->second == "behavioral") c.compact_controller = true;
+        else throw std::invalid_argument("Cache controller must be structural or behavioral");
     }
     if (auto it = p.find("replacement"); it != p.end()) {
         if (it->second == "lru") c.replacement = CacheReplacement::LRU;
@@ -113,7 +124,8 @@ ParameterMap cacheParameters(const CacheConfig& c) {
             {"write_policy", c.write_back ? "back" : "through"},
             {"write_miss", c.write_allocate ? "allocate" : "no-allocate"},
             {"line_state", c.line_store ? "store" : "registers"},
-            {"replacement", cacheReplacementName(c.replacement)}};
+            {"replacement", cacheReplacementName(c.replacement)},
+            {"controller", c.compact_controller ? "behavioral" : "structural"}};
 }
 
 const char* cacheReplacementName(CacheReplacement r) {
@@ -146,6 +158,14 @@ public:
               self->addPin("MASK_KNOWN", PinType::OUTPUT);
           }) {}
     bool respondsOnlyToInputs() const override { return true; }
+    bool settled(const Values& in, Values& out, Deciders& deciders) const override {
+        out["FIELDS_KNOWN"] = {memory_device::known(in.at("OP")) && memory_device::known(in.at("ADDR"))
+            ? memory_device::H : memory_device::L};
+        out["MASK_KNOWN"] = {memory_device::known(in.at("MASK")) ? memory_device::H : memory_device::L};
+        deciders["FIELDS_KNOWN"] = {"OP", "ADDR"};
+        deciders["MASK_KNOWN"] = {"MASK"};
+        return true;
+    }
     void evaluate(size_t time, Simulator& simulator) override {
         publish(simulator, time, "FIELDS_KNOWN",
                 memory_device::known(read("OP")) && memory_device::known(read("ADDR"))
@@ -654,18 +674,21 @@ void bankPins(IOComponent* self, const std::string& prefix, size_t width) {
 // requested one on, wrapping: from the data bank one word per cycle after a
 // hit, or forwarded as the fill brings them after a miss. The banks are
 // native devices driven directly (Cache<Width>::buildInternals).
+void controllerPins(IOComponent* self, size_t width, const CacheConfig& config) {
+    cachePins(self, width);
+    for (size_t way = 0; way < config.ways; ++way) {
+        bankPins(self, "TAG" + std::to_string(way) + "_", 32);
+        bankPins(self, "DATA" + std::to_string(way) + "_", width);
+    }
+    if (config.line_store) bankPins(self, "META_", 32);
+}
+
 template<size_t Width>
 class CacheBankController : public IOComponent {
 public:
     CacheBankController(std::string name, CacheConfig config)
-        : IOComponent(std::move(name), [config](IOComponent* self) {
-              cachePins(self, Width);
-              for (size_t way = 0; way < config.ways; ++way) {
-                  bankPins(self, "TAG" + std::to_string(way) + "_", 32);
-                  bankPins(self, "DATA" + std::to_string(way) + "_", Width);
-              }
-              if (config.line_store) bankPins(self, "META_", 32);
-          }), config_(config), type_("CacheBankController<" + std::to_string(Width) + ">") {}
+        : IOComponent(std::move(name), [config](IOComponent* self) { controllerPins(self, Width, config); }),
+          config_(config), type_("CacheBankController<" + std::to_string(Width) + ">") {}
     const char* getTypeName() const override { return type_.c_str(); }
     void buildInternals(ComponentBuilder& builder) override;
 private:
@@ -1531,6 +1554,93 @@ void CacheBankController<Width>::buildInternals(ComponentBuilder& builder) {
     w.finish();
 }
 
+// The gate-level controller of one parameter set as the compact form runs it:
+// its gate list and the delay table proven on the same gates. Built once per
+// width, parameters and timing profile. Storage inside stays compact, as in
+// every structural view of a core (and as the delay tables are proven).
+struct CompactControllerProgram {
+    std::shared_ptr<const circuit::analysis::GateListProgram> gates;
+    PartDelays delays;
+};
+
+BuildProfile controllerGateProfile() {
+    std::vector<ProfileRule> rules{preferFidelity(Fidelity::Behavioral, ProfileSelector::contract("storage.state-bit"),
+                                                  "compact state bits")};
+    for (size_t width : {1, 2, 3, 4, 5, 8, 16, 32})
+        rules.push_back(preferFidelity(Fidelity::Behavioral, ProfileSelector::contract("storage.register." + std::to_string(width)),
+                                       "compact registers"));
+    return withProfileOverrides(maximallyStructural(), std::move(rules), "cache-controller-gates-v1");
+}
+
+std::shared_ptr<const CompactControllerProgram> compactControllerProgram(size_t width, const ParameterMap& parameters) {
+    std::string key = timing::activeTimingProfile().name + "|" + std::to_string(width);
+    for (const auto& [name, value] : parameters) if (name != "controller") key += "|" + name + "=" + value;
+    static std::mutex guard;
+    static std::map<std::string, std::shared_ptr<const CompactControllerProgram>> programs;
+    {
+        const std::lock_guard<std::mutex> lock(guard);
+        if (const auto found = programs.find(key); found != programs.end()) return found->second;
+    }
+    auto gate_parameters = parameters;
+    gate_parameters["controller"] = "structural";
+    const auto gates = builtinComponentCatalog().createRoot(
+        {"memory.cache.controller." + std::to_string(width), "GATES", gate_parameters}, controllerGateProfile()).root;
+    std::string why;
+    auto program = std::make_shared<CompactControllerProgram>();
+    program->gates = circuit::analysis::GateListModel::compile(gates, &why);
+    if (!program->gates) throw std::runtime_error("Cache controller gate list: " + why);
+    // RST and INV_VALID are held at 0, as in the clock analysis of a run
+    // (the invalidation clears line state through the flip-flops' reset).
+    circuit::analysis::SettlingOptions options;
+    options.fixed_inputs["RST"] = 0;
+    options.fixed_inputs["INV_VALID"] = 0;
+    std::vector<std::string> diagnostics;
+    program->delays = circuit::analysis::CircuitTimingAnalyzer::delays(gates, options, "", &diagnostics);
+    if (program->delays.empty())
+        throw std::runtime_error("Cache controller delays: " + (diagnostics.empty() ? std::string("none") : diagnostics.front()));
+    program->delays.evidence = "proven at build time on the gate-level CacheBankController<" + std::to_string(width) + ">";
+    const std::lock_guard<std::mutex> lock(guard);
+    return programs.emplace(key, std::move(program)).first->second;
+}
+
+// The compact cache controller: one part that runs the gate-level
+// controller's own gate list (GateListModel) on the delays proven on it.
+template<size_t Width>
+class CacheControllerBehavioral : public memory_device::Primitive {
+public:
+    CacheControllerBehavioral(std::string name, CacheConfig config, const ParameterMap& parameters)
+        : Primitive(std::move(name), "CacheBankController<" + std::to_string(Width) + ">",
+                    [config](IOComponent* self) { controllerPins(self, Width, config); }),
+          program_(compactControllerProgram(Width, parameters)), model_(program_->gates) {}
+    // Pins exist once the part is created: then its delay table applies.
+    void attachDelays() { setDelays(program_->delays); }
+    void evaluate(size_t time, Simulator& simulator) override {
+        if (input_pins_.empty()) {
+            for (const auto& [name, width] : model_.inputs()) input_pins_.push_back(getInputPinDynamic(name));
+            values_.resize(input_pins_.size());
+        }
+        for (size_t pin = 0; pin < input_pins_.size(); ++pin) values_[pin] = input_pins_[pin]->getValueAsVector();
+        model_.step(values_);
+        const auto& outputs = model_.outputs();
+        for (size_t pin = 0; pin < outputs.size(); ++pin) {
+            const auto& name = outputs[pin].first;
+            if (model_.passesClock(pin)) {
+                // The gates pass the clock on through a zero-delay bridge.
+                const auto clock = getOutputPinDynamic(name);
+                clock->setValueFromVector(read("CLK"));
+                if (auto wire = clock->getExternalWireBase()) simulator.scheduleEvent(makeWireUpdateEvent(time, wire, read("CLK")));
+                continue;
+            }
+            publish(simulator, time, name, model_.output(pin));
+        }
+    }
+private:
+    std::shared_ptr<const CompactControllerProgram> program_;
+    circuit::analysis::GateListModel model_;
+    std::vector<std::shared_ptr<PinBase>> input_pins_;
+    std::vector<std::vector<LogicValue>> values_;
+};
+
 } // namespace
 
 template<size_t Width>
@@ -1548,7 +1658,9 @@ Cache<Width>::Cache(std::string name, CacheConfig config)
 template<size_t Width>
 void Cache<Width>::buildInternals(ComponentBuilder& builder) {
     StructuralWiring w(builder);
-    auto controller = builder.addNewComponent<CacheBankController<Width>>("CONTROLLER", config_);
+    // The controller: gates, or the compact part that runs their list.
+    auto controller = memory_device::child(builder, *this, "memory.cache.controller." + std::to_string(Width), "CONTROLLER",
+        cacheParameters(config_), config_.compact_controller ? Fidelity::Behavioral : Fidelity::Structural);
     for (const auto& [name, pin] : getAllInputPins()) w.connect(pin, controller->getInputPinDynamic(name));
     for (const auto& [name, pin] : getAllOutputPins()) w.connect(controller->getOutputPinDynamic(name), pin);
     const size_t words_per_line = config_.block_bytes / (Width / 8);
@@ -1596,6 +1708,54 @@ template class Cache<16>;
 template class Cache<32>;
 
 void registerCaches(ComponentCatalog& catalog) {
+    // The controller of a cache: the cache's own parameters (every setting
+    // changes its pins or its gates); `controller` picks the implementation.
+    for (size_t width : {8, 16, 32}) {
+        const auto id = "memory.cache.controller." + std::to_string(width);
+        const auto config_of = [width](const ParameterMap& parameters) {
+            auto config = cacheConfig(parameters);
+            if (!config.block_bytes) config.block_bytes = width / 8;
+            config.validate(width);
+            return config;
+        };
+        auto schema = [width, config_of](const ParameterMap& parameters) {
+            const auto config = config_of(parameters);
+            return memory_device::describe([width, config](IOComponent* self) { controllerPins(self, width, config); });
+        };
+        catalog.registerContract({id, 1, "CacheBankController<" + std::to_string(width) + ">",
+            schema(cacheParameters(CacheConfig{})), {}, "four-state", "transaction-completion-v2", schema});
+        for (auto fidelity : {Fidelity::Structural, Fidelity::Behavioral}) {
+            ImplementationDescriptor implementation;
+            const bool compact = fidelity == Fidelity::Behavioral;
+            implementation.id = id + (compact ? ".behavioral" : ".structural");
+            implementation.contract_id = id;
+            implementation.fidelity = fidelity;
+            implementation.concrete_type_name = "CacheBankController<" + std::to_string(width) + ">";
+            implementation.supports = [schema](const ParameterMap& parameters) {
+                try { schema(parameters); return true; }
+                catch (const std::exception&) { return false; }
+            };
+            implementation.factory = [width, compact, config_of](const std::string& name, const ParameterMap& parameters,
+                                                                const std::shared_ptr<BuildContext>& context) -> std::shared_ptr<Component> {
+                const auto config = config_of(parameters);
+                if (compact) {
+                    const auto made = [&](auto part) -> std::shared_ptr<Component> { part->attachDelays(); return part; };
+                    if (width == 8) return made(Component::createWithContext<CacheControllerBehavioral<8>>(context, name, config, parameters));
+                    if (width == 16) return made(Component::createWithContext<CacheControllerBehavioral<16>>(context, name, config, parameters));
+                    return made(Component::createWithContext<CacheControllerBehavioral<32>>(context, name, config, parameters));
+                }
+                if (width == 8) return Component::createWithContext<CacheBankController<8>>(context, name, config);
+                if (width == 16) return Component::createWithContext<CacheBankController<16>>(context, name, config);
+                return Component::createWithContext<CacheBankController<32>>(context, name, config);
+            };
+            implementation.evidence = {VerificationStatus::Characterized,
+                {compact ? "runs the gate-level controller's own gate list; delays proven on it at build time"
+                         : "gate-level cache controller"},
+                {"CacheReadTest"}, compact ? std::vector<std::string>{"CacheControllerEquivalenceTest"} : std::vector<std::string>{},
+                {}, "four-state", "transaction-completion-v2"};
+            catalog.registerImplementation(std::move(implementation));
+        }
+    }
     for (size_t width : {8, 16, 32}) {
         for (bool scalable : {false, true}) {
             const auto id = std::string(scalable ? "memory.cache.scalable." : "memory.cache.") +

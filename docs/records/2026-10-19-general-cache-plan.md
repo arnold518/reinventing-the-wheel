@@ -11,9 +11,10 @@ and carries out making the behavior parameters too, then a behavioral
 (games need millions of cycles). Done so far (2026-10-20): write buffer
 (step 1), write-back and write-allocate (step 2), a line-state store for up
 to 4,096 sets (step 3, revised), 4 and 8 ways with lru, plru, fifo or random
-replacement (step 4). Next-line prefetch (step 5) is deferred: see the
-step-4 decision. Next: the behavioral cache (step 6), then the campaign rerun
-(step 7). Visualizer and browser checks of steps 1–4 wait for a
+replacement (step 4), and a compact cache controller that runs the
+controller's own gate list, cycle-identical and 4–7 times faster (step 6,
+revised). Next-line prefetch (step 5) is deferred: see the step-4 decision.
+Next: the campaign rerun (step 7). Visualizer and browser checks of steps 1–4 wait for a
 memory-gated run. Several requests in flight and multi-bank DRAM stay out of
 scope.
 
@@ -354,3 +355,92 @@ needs a request that can be served while the prefetch runs, which is the
 "several requests in flight" item this plan leaves out. Step 5 is dropped
 from this plan; a later record can take it up together with that item.
 Next: step 6, the behavioral cache.
+
+## 2026-10-20 — Step 6 done, revised: a compact cache controller
+
+**Plan change.** The plan was a whole behavioral cache (`CacheBehavioral<W>`
+for `memory.cache.<W>`, tags and data in host storage). Two findings changed
+it:
+- The banks already have compact forms, which the campaign uses. The
+  gate-level controller is what is slow: about 2,600 gates per cache, timed
+  event by event.
+- A hand-written copy of the controller would restate every rule of the
+  cache: four-state handling, write buffer, write-back, the line-state store,
+  replacement. Each later change would then need making twice.
+
+Revised: the compact form is of the **controller** only, a new contract
+`memory.cache.controller.<W>` whose compact implementation runs the
+gate-level controller's own gate list. The rules stay with the gates (one
+owner), and the banks stay the native devices they are.
+
+**Design.**
+- `GateListModel` (`src/analysis/GateListModel.{hpp,cpp}`) compiles a part's
+  timing graph into a bit-level program. The program has:
+  - four-state gates as built;
+  - the compact state bit's and register's own rules (level reset that clears
+    at once, rising-edge capture with enable, unknown start);
+  - primitives that describe themselves (`settled`, newly given to the cache's
+    request-known primitive).
+
+  A step recomputes only the bits a change reaches, in graph order. A rising
+  edge captures the values that stood before the inputs given with it, so the
+  setup time is assumed met; the delay table's setup check counts any run
+  that breaks it.
+- `CacheControllerBehavioral<W>`: one `Primitive` with the controller's pins.
+  Per width, parameters and timing profile it builds the gate-level controller
+  once (compact storage, as every delay table is proven) and compiles it. It
+  proves the delay table on the same gates with
+  `CircuitTimingAnalyzer::delays`, holding RST and INV_VALID at 0, as the
+  clock analysis of a run does. MEM_CLK is passed on with no delay, as the
+  gates' bridge does.
+- Cache setting `controller=structural|behavioral` (default structural).
+  `Cache<W>` requests its controller from the catalog with that fidelity
+  required, so no existing profile changes what it builds.
+- Experiment tool: `--cache-controller behavioral` sets it for every cache.
+  `CachePerformanceBenchmark`: `CACHE_BENCH_COMPACT_CONTROLLER=1`.
+- `part_delay_tables` skips the controller contract (it proves its table
+  when built). The timing graph skips a contract's clock outputs as data:
+  an unread MEM_CLK was otherwise refused as "absent from the timing contract".
+- Tests: `CacheControllerEquivalenceTest` (new, registered) runs streams twice,
+  once with gate-level and once with compact controllers, and requires the
+  fixture's outputs (upper port, lower port, INV_READY) to be identical after
+  every step. The streams cover one-way reads, lines, bursts, the reference
+  stream, write policies at 1/2/4/8 ways with every replacement policy in
+  both line-state modes, and write buffers. It also checks that the setting
+  selects the compact part and that the part has its table.
+  `BuiltinComponentCatalogInventoryTest` lists `CacheBankController<W>`.
+
+**Checks.**
+- `CacheControllerEquivalenceTest` passes: 8,561 steps identical, 4 min 12 s.
+  It gains little speed itself, because the rig's time is in its gate-level
+  banks and backing.
+- Standalone traces S0–S2 (`CachePerformanceBenchmark`, `embedded`):
+  - all 24 records identical in cycles, simulated ticks and response
+    fingerprints;
+  - cache paths 262 s with gate-level controllers, 42 s compact.
+- CPU runs (`embedded`, 4,104 ps), gate-level against compact: identical
+  cycles, verification and final-state hash in every case.
+  - program 20 on C-ID, D-0, D-ID;
+  - `sort` on D-ID with write-back caches and a 256-set store-mode L2;
+  - `sort` with a buffered 4-way data L1 and an 8-way random L2;
+  - `sort` with a 4-way fifo instruction L1 (C-ID);
+  - `sort` on D-0 with SRAM memory.
+
+  No setup violations in any run.
+- Speed, D-ID `sort` (64 words, 4 iterations, 154,468 cycles): 476 s with
+  gate-level controllers (325 cycles/s, 602 M events), 94 s compact
+  (1,646 cycles/s, 44 M events), identical results. With the controllers
+  compact, the arbiter and other glue logic, still gate-level, are the next
+  cost; the same model could run them (a follow-up, not part of this plan).
+- Clock analysis, D-ID program 20: 4,104 ps certified with compact
+  controllers (limit: the instruction L1 controller's RSP_READY setup), and
+  still 4,104 ps with gate-level ones (limit unchanged).
+- ctest: `PartDelayTablesTest`, `RV32ITopologyTest`, `RV32IBinaryClockCLITest`,
+  `BuildProfileTest`, `ComponentCatalogSelectionTest`,
+  `BuiltinComponentCatalogInventoryTest` (after adding the type),
+  `RecursiveBuildProfileTest` and the four cache scenarios pass.
+
+**Not run.** `PartDelayTablesCompleteTest` (an hour, slow label), which the
+skip above keeps unchanged. Visualizer and browser checks are pending, as
+before. A compact controller in the visualizer would draw as one box; no
+scenario selects it.
