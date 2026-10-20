@@ -119,11 +119,15 @@ program.
 
 ## Seeing both sides of one memory
 
-The [memory inspector](../visualizer.md) shows the shared memory of B and
-C-ID as two panels: instructions on the left (disassembled) and data on the
-right, each at the latest address its side used. It tells the sides apart by
-the arbiter's grant when the memory takes a request. In D-0 and D-ID the
-shared cache fills lines for both sides, so their memory is shown as one.
+The [memory inspector](../visualizer.md) shows the shared memory of every
+shared arrangement as two panels: instructions on the left (disassembled) and
+data on the right, each at the latest address its side used. In B and C-ID
+it tells the sides apart by the arbiter's grant when the memory takes a
+request. In D-0 and D-ID the shared cache sits in between; it serves one
+request at a time, so each memory access it makes belongs to the request the
+arbiter has in flight, whose side the arbiter's `OWNER_D` bit names. A line
+the shared cache brought in for one side can later serve the other without
+a memory access.
 
 ## Tests
 

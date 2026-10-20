@@ -7,6 +7,22 @@ history remains in Git and the archived reports.
 
 ## 2026-10-21
 
+### Visualizer: two memory panels and one floorplan for every shared arrangement (branch `realistic-timing`)
+
+- **Changed:**
+  - Behind a shared cache (D-0, D-ID) the memory inspector tells the sides
+    apart by the arbiter's owner bit for the request in flight, so these
+    memories show two panels too.
+  - One floorplan for all four shared arrangements: core and memory in the
+    same place, middle parts spread evenly, constants by their caches, and
+    the memory wide enough for its panels. §4.7 is updated.
+- **Why:** the owner found D-0 and D-ID oddly laid out and without the
+  two-panel view.
+- **Verified:** inspector integration (two panels in B, D-0 and D-ID, sides
+  at the right addresses), static layouts with the content guard, four other
+  layout and catalog tests; Pages build; four browser and parity checks and
+  screenshots.
+
 ### Visualizer: children kept inside their parent's content area (branch `realistic-timing`)
 
 - **Changed:**

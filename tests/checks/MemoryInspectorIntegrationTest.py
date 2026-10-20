@@ -153,11 +153,12 @@ class MemoryInspectorIntegrationTest(unittest.TestCase):
             gc.collect()
 
     def test_shared_memory_roles_of_the_arrangements(self):
-        # Two panels where the arbiter drives the memory (B); one where a
-        # shared cache between them fills lines for both sides (D-0, D-ID).
+        # Two panels in every shared arrangement: told apart by the arbiter's
+        # grant (B), or by the side whose request the arbiter has in flight
+        # when a shared cache sits in between (D-0, D-ID).
         for test, scenario, role in (("RV32IMemoryArrangementBTest", "rv32i-memory-b", "unified"),
-                                     ("RV32IMemoryArrangementD0Test", "rv32i-memory-d0", "generic"),
-                                     ("RV32IMemoryArrangementDIDTest", "rv32i-memory-did", "generic")):
+                                     ("RV32IMemoryArrangementD0Test", "rv32i-memory-d0", "unified"),
+                                     ("RV32IMemoryArrangementDIDTest", "rv32i-memory-did", "unified")):
             with self.subTest(scenario=scenario), tempfile.TemporaryDirectory() as tmp:
                 session = server.CircuitSession(scenario, server.LayoutManager(Path(tmp) / "layout.json"))
                 component = next(c["id"] for c in session.components if c["name"] == "SHARED_MEMORY")
@@ -167,7 +168,10 @@ class MemoryInspectorIntegrationTest(unittest.TestCase):
                     [PROBE, "component", test, scenario, str(index), component], text=True))
                 self.assertEqual(state, native)
                 self.assertEqual(state["memoryRole"], role)
-                self.assertEqual("instructionSide" in state, role == "unified")
+                code, data = state["instructionSide"], state["dataSide"]
+                self.assertLess(code["address"], 0x100)          # program 21: code from 0
+                self.assertGreaterEqual(data["address"], 0x100)  # data from 0x100
+                self.assertTrue(code["words"][0]["instructionText"])
                 del session
                 gc.collect()
 
