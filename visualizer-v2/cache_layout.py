@@ -39,7 +39,7 @@ def placements(kind, aspects, parent_aspect):
     # gets a row of its own under the tag stores.
     rows = len(way_ids) + (1 if line_store else 0)
     if rows <= 2 and not line_store:
-        centers = [0.35] if rows == 1 else [0.245, 0.535]
+        centers = [0.35] if rows == 1 else [0.245 + row * 0.29 for row in range(2)]
         height = 0.22
     else:
         pitch = 0.66 / rows

@@ -7,6 +7,25 @@ history remains in Git and the archived reports.
 
 ## 2026-10-20
 
+### Visualizer: cache controller layouts regenerated (branch `realistic-timing`)
+
+- **Changed:**
+  - The saved placements of the five cache controllers the scenarios use are
+    regenerated, and six unused entries are removed. Their layout keys follow
+    the controller's children, which the general cache plan changed.
+  - The cache floorplan keeps its old row arithmetic.
+  - `CacheControllerEquivalenceTest` is renamed `CacheControllerLockstepTest`:
+    registered test names may not contain "Equivalence".
+- **Why:** `VisualizerStaticLayoutTest` reported 1,351 problems once the
+  Python module was rebuilt.
+- **Verified:** `VisualizerStaticLayoutTest` (0 problems), `CacheLayoutTest`,
+  `VisualizerScenarioCatalogTest`, `RV32IMemoryLayoutTest`,
+  `MemoryInspectorIntegrationTest`, `VisualizerSessionContractTest`,
+  `VisualizerAutomaticLayoutTest`, `VisualizerModuleBindingsTest`,
+  `BuiltinComponentCatalogInventoryTest`, `MemoryDeviceDocumentationTest`.
+- **Not run yet:** the Pages package and browser checks (a memory-gated run
+  is in progress).
+
 ### Cache behavior campaign and rewritten cache pages (branch `realistic-timing`)
 
 - **Changed:**

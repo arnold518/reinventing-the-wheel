@@ -274,7 +274,7 @@ set(SIMULATION_TESTS
     MemoryEndpointContractTest
     MemoryEndpointTimingTest
     CacheReadTest
-    CacheControllerEquivalenceTest
+    CacheControllerLockstepTest
     CacheComponentScenarioTest
     CacheDirectMappedScenarioTest
     CacheScalableScenarioTest

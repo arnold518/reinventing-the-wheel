@@ -558,3 +558,28 @@ time, compact controllers, driven by
 
 **Decision.** The results go into §3.8 as a third experiment. Experiments 1
 and 2 stay as published: their caches are the `WT` row.
+
+## 2026-10-20 — Visualizer checks and saved layouts
+
+- With the Python module and probe rebuilt, `VisualizerStaticLayoutTest`
+  found 1,351 problems: the saved placements of every cache controller were
+  stale. Their layout keys hash the controller's child names, and steps 1–4
+  added children (for example `SENDING_WRITE`, the write-way decoders). The
+  structure-key migration of the shared-layout-keys record, rerun unchanged,
+  created the five controller placements the scenarios use
+  (`cache-direct-mapped`, `cache-read-hit`, `cache-scalable-two-way`,
+  `cache-two-level`, `rv32i-shared-memory`). It also removed six entries
+  nothing reads any more.
+- `CacheLayoutTest` then differed from the saved cache floorplans in the last
+  digit of the second way row's position. The step-4 floorplan had written
+  the old sum `0.245 + 0.29` as `0.535`; the sum is restored.
+- `VisualizerModuleBindingsTest` forbids "Equivalence" in registered test
+  names, so the step-6 test is renamed `CacheControllerLockstepTest`. That
+  name replaces `CacheControllerEquivalenceTest` in the step-6 section above.
+- Pass after these changes: `VisualizerStaticLayoutTest` (0 problems),
+  `CacheLayoutTest`, `VisualizerScenarioCatalogTest`, `RV32IMemoryLayoutTest`,
+  `MemoryInspectorIntegrationTest`, `VisualizerSessionContractTest`,
+  `VisualizerAutomaticLayoutTest`, `VisualizerModuleBindingsTest`,
+  `BuiltinComponentCatalogInventoryTest`, `MemoryDeviceDocumentationTest`
+  (its earlier failure came from the stale probe) and
+  `CacheDocumentationTest`.

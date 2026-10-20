@@ -446,7 +446,7 @@ policy, the write buffer, both line-state modes (including 256 sets) and
 every replacement policy. It checks read values, lower reads, the number
 of lower writes and the final backing bytes after invalidation.
 
-`CacheControllerEquivalenceTest` runs such streams twice, with the
+`CacheControllerLockstepTest` runs such streams twice, with the
 gate-level and with the compact controller. It requires the same upper port,
 lower port and `INV_READY` values after every step.
 

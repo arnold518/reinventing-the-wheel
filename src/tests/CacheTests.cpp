@@ -1623,7 +1623,7 @@ void sameWithCompactController(const std::string& name, Run run) {
 }
 } // namespace
 
-void CacheControllerEquivalenceTest::verifyResults() {
+void CacheControllerLockstepTest::verifyResults() {
     {
         // The setting really selects the compact part.
         CacheConfig config;

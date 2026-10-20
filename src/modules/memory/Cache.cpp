@@ -1751,7 +1751,7 @@ void registerCaches(ComponentCatalog& catalog) {
             implementation.evidence = {VerificationStatus::Characterized,
                 {compact ? "runs the gate-level controller's own gate list; delays proven on it at build time"
                          : "gate-level cache controller"},
-                {"CacheReadTest"}, compact ? std::vector<std::string>{"CacheControllerEquivalenceTest"} : std::vector<std::string>{},
+                {"CacheReadTest"}, compact ? std::vector<std::string>{"CacheControllerLockstepTest"} : std::vector<std::string>{},
                 {}, "four-state", "transaction-completion-v2"};
             catalog.registerImplementation(std::move(implementation));
         }
