@@ -1,16 +1,17 @@
 # RV32IM milestone wrap and branch integration
 
-Started: 2026-10-22. Status: open.
-Code state: checkpoint `8c90c1f`, integrating `alpha` at `0d498c7`; the primary `realistic-timing` checkout remains at `0d498c7`.
+Started: 2026-10-22. Status: closed (merged into alpha).
+Code state: `alpha` merge `ede4dd1`; tested integration `c4f6837`; primary `realistic-timing` remains at `0d498c7`.
 
 ## Summary
 
-The owner requested wrapping the current worktree and merging it back to
-the `alpha` branch. The owner merged the newer visualizer work into `alpha`,
-which now matches the primary committed head. Preserve the primary
-checkout's pending planning files and four newer visualizer/documentation
-commits. Phase 6 acceptance remains open; phase 7 has not started. This wrap
-must preserve those boundaries rather than label interactive play complete.
+The RV32IM/device/scripted-game checkpoint is merged into `alpha`, retaining
+its newer visualizer work. The primary dirty checkout is unchanged. Serial
+native and WASM builds, 80 of 81 selected native/Python checks, 13 Node checks,
+four portable checks, bounded device/time parity and strict site packaging
+pass. Cache-layout and browser/full-topology scopes remain resource limited;
+full revised-game acceptance is incomplete. Phase 6 stays open and phase 7
+has not started. Nothing was pushed or deployed.
 
 ## 2026-10-22 — Integration inventory and scope
 
@@ -162,3 +163,28 @@ on `realistic-timing`, with its pending files preserved. Outstanding phase-6
 gates include the resource-limited cache/SRAM checks, full current topology/
 example/browser scope, revised ten-game fidelity/quantum/repetition/performance
 and compiled-game native/WASM comparisons. Phase 7 is unimplemented.
+
+## 2026-10-22 — Merged; wrap closed
+
+- Feature checkpoint: `8c90c1f`. Integration with the four newer `alpha`
+  commits: `c4f6837`. Requested merge into `alpha`: `ede4dd1`.
+- The merge tree is exactly the tested integration tree (both tree IDs are
+  `c25b0f4c48686aa2b7cb80b773c1168d66be8c4a`). This closing change updates
+  documentation only. All 366 scenario layouts pass; all pre-existing
+  `alpha` layout values are preserved and 52 device entries are added.
+- Primary `realistic-timing` remains at `0d498c7`. All 13 pending planning/
+  audit/tool files, the exact primary diff and status still match the initial
+  snapshot. No stash/reset/cleanup or deployed-module replacement occurred.
+- `alpha` is available in `.worktrees/alpha-integration`; feature build and
+  evidence directories remain in `.worktrees/rv32im-phase3`. No push or
+  deployment was requested or performed.
+- Local evidence is retained under the feature worktree's `build-rv32im/`:
+  `alpha-native-aggregate.json`, `alpha-native-individual/`,
+  `alpha-inspector-compact.xml`, `alpha-js.xml`, `alpha-portable-focused/`,
+  `alpha-web-parity/`, `alpha-web-device-time/`, the browser-attempt folders,
+  `wrap-layout-merge.json` and `wrap-primary-snapshot/`. The local packaged
+  site is `build-wasm-phase3/site`. Key results and limitations are copied
+  into this tracked record; generated files are not the only evidence.
+
+Continue acceptance in the open phase 4–6 and parameter/visual records. The
+wrap is complete; neither phase 6 nor interactive phase 7 is declared done.

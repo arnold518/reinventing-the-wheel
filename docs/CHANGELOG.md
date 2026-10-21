@@ -9,7 +9,7 @@ history remains in Git and the archived reports.
 
 ### RV32IM milestone checkpoint and bounded build tooling
 
-- **Changed:** prepare the RV32IM/device/scripted-game work for `alpha`,
+- **Changed:** merged the RV32IM/device/scripted-game checkpoint into `alpha`,
   retaining the newer visualizer work and original playability audit tools.
   Optional WASM link optimization and isolated example generation reduce
   peak memory without changing their defaults. Inspector parity releases its
@@ -21,9 +21,15 @@ history remains in Git and the archived reports.
   additions. Strict site packaging passes with 22 current new example groups
   and 135 retained legacy exports. Complete timing snapshots match in native
   and WASM; all 808 entries per profile verify.
+- **Integrated checks:** serial native/WASM builds; 80 of 81 selected
+  native/Python checks (one resource-limited cache-layout case); all 13 Node
+  checks; four portable core/system/input checks; five device parity cases;
+  exact-time and old memory parity; complete native/WASM timing identity;
+  all 366 static layouts. Strict packaging refreshes five device groups and
+  retains 152 earlier exports. Primary pending files remain byte-identical.
 - **Limits:** full legacy example regeneration and a large SRAM retry stop
-  safely at the host-memory guard. The full browser run also stops there
-  after four M sessions. Revised full-game/fidelity/quantum/performance and
+  safely at the host-memory guard. Current full-topology and browser
+  attempts also stop there; no current browser appearance pass is claimed. Revised full-game/fidelity/quantum/performance and
   compiled-game WASM comparisons remain follow-up work. Phase 6 acceptance
   is open; phase 7 has not started. Integration results are recorded in the
   [wrap record](records/2026-10-22-rv32im-milestone-wrap-and-integration.md).
