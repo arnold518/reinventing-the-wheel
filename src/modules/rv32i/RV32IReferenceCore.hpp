@@ -1,4 +1,6 @@
 #pragma once
+
+#include "simulator/SimulationTime.hpp"
 // Private factory implementation; callers use families::RV32ISingleCycleCore.
 
 #include "components/BasicComponent.hpp"
@@ -16,7 +18,7 @@ public:
     RV32IReferenceCore(std::string name);
     static constexpr const char* TypeName = "RV32ISingleCycleCore";
     const char* getTypeName() const override { return TypeName; }
-    void evaluate(size_t current_time, Simulator& simulator) override;
+    void evaluate(SimulationTime current_time, Simulator& simulator) override;
 
     void setInitialPC(uint32_t pc);
     void setRegister(uint8_t index, uint32_t value);
@@ -34,5 +36,5 @@ private:
     std::map<uint32_t, uint8_t> last_data_memory_writes_{};
     LogicValue previous_clk_ = LogicValue::UNKNOWN;
 
-    void publishOutputs(Simulator& simulator, size_t current_time);
+    void publishOutputs(Simulator& simulator, SimulationTime current_time);
 };

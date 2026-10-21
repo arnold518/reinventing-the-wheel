@@ -34,12 +34,12 @@ public:
         }
     }
     const char* getTypeName() const override {return family(stage_).typeName().data();}
-    std::vector<Bits> registerStateAtTime(size_t time) const {
+    std::vector<Bits> registerStateAtTime(SimulationTime time) const {
         if(history_.empty()) return {};
         auto it=history_.upper_bound(time);
         return it==history_.begin()?it->second:std::prev(it)->second;
     }
-    void evaluate(size_t time,Simulator& sim) override {
+    void evaluate(SimulationTime time,Simulator& sim) override {
         switch(stage_) {
             case Stage::Fetch:fetch(time,sim);break;
             case Stage::Decode:decode(time,sim);break;
@@ -69,7 +69,7 @@ private:
     Bits pc_=Bits(32,LogicValue::UNKNOWN);
     LogicValue previous_clock_=LogicValue::UNKNOWN;
     std::vector<Bits> registers_;
-    std::map<size_t,std::vector<Bits>> history_;
+    std::map<SimulationTime,std::vector<Bits>> history_;
     std::optional<uint32_t> known(const std::string& name) const {
         uint32_t result=0;const auto b=getInputPinDynamic(name)->getValueAsVector();
         for(size_t i=0;i<b.size();++i) {
@@ -85,10 +85,10 @@ private:
         bool rise=previous_clock_==LogicValue::LOW&&clk==LogicValue::HIGH;
         previous_clock_=clk;return rise;
     }
-    void emit(const std::string& name,uint32_t value,size_t t,Simulator& s) {
+    void emit(const std::string& name,uint32_t value,SimulationTime t,Simulator& s) {
         emit(name,bits(getOutputPinDynamic(name)->getWidth(),value),t,s);
     }
-    void emit(const std::string& name,const Bits& value,size_t t,Simulator& s) {
+    void emit(const std::string& name,const Bits& value,SimulationTime t,Simulator& s) {
         switch(value.size()) {
             case 1:_updateOutputWire<1>(s,name,value,t);break;
             case 2:_updateOutputWire<2>(s,name,value,t);break;
@@ -99,11 +99,11 @@ private:
             default:throw std::logic_error("Unsupported single-cycle stage output width");
         }
     }
-    void unknownOutputs(size_t t,Simulator& s) {
+    void unknownOutputs(SimulationTime t,Simulator& s) {
         for(auto& [name,pin]:getAllOutputPins()) emit(name,Bits(pin->getWidth(),LogicValue::UNKNOWN),t,s);
     }
     // A register, an incrementer and wires, each by its own four-state rule.
-    void fetch(size_t t,Simulator& s) {
+    void fetch(SimulationTime t,Simulator& s) {
         using namespace circuit::logic_values;
         registerStep(pc_,previous_clock_,getInputValue("RST"),getInputValue("CLK"),getInputValue("PC_WRITE"),
             getInputPin<32>("NEXT_PC")->getValueAsVector());
@@ -115,7 +115,7 @@ private:
         emit("IMEM_WORD_ADDR",word_address,t,s);emit("IMEM_READ_EN",getInputPin("ISSUE")->getValueAsVector(),t,s);
         emit("DONE",1,t,s);emit("FAULT",getInputPin("IMEM_FAULT")->getValueAsVector(),t,s);
     }
-    void decode(size_t t,Simulator& s) {
+    void decode(SimulationTime t,Simulator& s) {
         auto raw=known("INSTRUCTION");
         const auto d=RV32IDecoder::decode(raw.value_or(0));
         auto old=registers_;
@@ -123,7 +123,7 @@ private:
         rv32i::register_file::step(registers_,previous_clock_,getInputValue("RST"),getInputValue("CLK"),
             getInputValue("REGISTER_WRITE"),Bits(instruction.begin()+7,instruction.begin()+12),
             getInputPin<32>("WB_VALUE")->getValueAsVector());
-        if(old!=registers_) history_[t+delay]=registers_;
+        if(old!=registers_) history_[checkedTimeAdd(t,delay)]=registers_;
         if(!raw) {unknownOutputs(t,s);return;}
         const auto c=RV32IControl::fromDecoded(d);
         using namespace component_encoding;
@@ -138,7 +138,7 @@ private:
         for(auto& [name,v]:values) emit(name,v,t,s);
         emit("RS1_VALUE",registers_[d.rs1],t,s);emit("RS2_VALUE",registers_[d.rs2],t,s);
     }
-    void execute(size_t t,Simulator& s) {
+    void execute(SimulationTime t,Simulator& s) {
         for(auto& [name,pin]:getAllInputPins()) if(!known(name)) {unknownOutputs(t,s);return;}
         const auto as=value("ALU_A_SEL"),bs=value("ALU_B_SEL");
         const auto a=as==0?value("RS1_VALUE"):as==1?value("PC"):0;
@@ -150,7 +150,7 @@ private:
         emit("ALU_RESULT",result,t,s);emit("BRANCH_TAKEN",conditions[value("BRANCH_TYPE")],t,s);
         emit("CONTROL_TARGET",jump==0?value("PC")+value("IMM"):jump==1?result:jump==2?result&~uint32_t{1}:0,t,s);
     }
-    void memory(size_t t,Simulator& s) {
+    void memory(SimulationTime t,Simulator& s) {
         const auto addr=value("ADDR"),size=value("SIZE");
         const bool bad=size==3||(size==1&&(addr&1))||(size==2&&(addr&3));
         emit("MISALIGNED",bad,t,s);emit("DONE",1,t,s);
@@ -173,7 +173,7 @@ private:
 class BehavioralDecodeStage final : public BehavioralStage, public RegisterStateView {
 public:
     explicit BehavioralDecodeStage(std::string name):BehavioralStage(std::move(name),Stage::Decode) {}
-    std::vector<Bits> getRegisterStateAtTime(size_t time) const override { return registerStateAtTime(time); }
+    std::vector<Bits> getRegisterStateAtTime(SimulationTime time) const override { return registerStateAtTime(time); }
 };
 }
 std::shared_ptr<IOComponent> directStage(Stage stage,const std::string& name,

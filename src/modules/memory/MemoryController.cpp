@@ -83,15 +83,15 @@ class MemoryControllerBehavioral : public Primitive {
     LogicValue pending_ = L;
     ResponseBuffer buffer_;
     LogicValue previous_ = X;
-    size_t scheduled_ = 0;
+    SimulationTime scheduled_ = 0;
 
-    void publishResponse(Simulator& sim, size_t t, LogicValue reset, LogicValue offered, const Bits& data, const Bits& status) {
+    void publishResponse(Simulator& sim, SimulationTime t, LogicValue reset, LogicValue offered, const Bits& data, const Bits& status) {
         publish(sim, t, "RSP_VALID", buffer_.valid(reset, offered));
         publish(sim, t, "RSP_READ_DATA", buffer_.select(data, buffer_.data));
         publish(sim, t, "RSP_STATUS", buffer_.select(status, buffer_.status));
     }
 
-    void evaluateFlipFlop(size_t t, Simulator& sim, LogicValue reset, bool edge, LogicValue take, LogicValue issue) {
+    void evaluateFlipFlop(SimulationTime t, Simulator& sim, LogicValue reset, bool edge, LogicValue take, LogicValue issue) {
         const auto op = read("REQ_OP"), address = read("REQ_ADDR"), mask = read("REQ_WRITE_MASK");
         const bool fields_known = known(op) && known(address), mask_known = known(mask);
         const bool o0 = op[0] == H, o1 = op[1] == H, o2 = op[2] == H;
@@ -150,7 +150,18 @@ public:
           width_(w), technology_(t), config_(c), sequence_(w, t, c), buffer_(w) {
         c.validate(w, t);
     }
-    void evaluate(size_t t, Simulator& sim) override {
+    void scheduleInitialEvents(Simulator& sim,SimulationTime time) override {
+        if(technology_==Technology::FF){
+            // The structural controller ties native reset directly to a
+            // zero-delay constant. Seed that constant before the native FF
+            // device's first evaluation, preserving preloaded image bytes.
+            const auto pin=getOutputPin("MEM_RST");pin->setValueFromVector({L});
+            if(auto wire=pin->getExternalWireBase())sim.scheduleEvent(makeWireUpdateEvent(time,wire,{L}));
+            else sim.recordPinChange(time,pin,{L});
+        }
+        Primitive::scheduleInitialEvents(sim,time);
+    }
+    void evaluate(SimulationTime t, Simulator& sim) override {
         if (scheduled_ <= t) scheduled_ = 0;
         const auto clk = getInputValue("CLK");
         const bool edge = previous_ == L && clk == H;

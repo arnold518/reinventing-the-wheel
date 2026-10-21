@@ -146,7 +146,7 @@ std::optional<ClockComponentContract> builtinClockContract(const IOComponent& c)
         }
         // The longest path between its own registers needs this much clock.
         if (!table->clock.empty())
-            declared.minimum_high_ticks = declared.minimum_low_ticks = std::max<size_t>(1, (table->internal_period + 2) / 2);
+            declared.minimum_high_ticks = declared.minimum_low_ticks = std::max<SimulationTime>(1, checkedTimeAdd(table->internal_period, 2) / 2);
         declared.clock_outputs = table->clock_outputs;
         // Self-timed inside only: from outside it is an ordinary clocked part.
         declared.self_timed = table->self_timed && !table->clocked_interface;

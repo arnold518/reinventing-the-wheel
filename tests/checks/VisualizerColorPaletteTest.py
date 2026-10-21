@@ -57,6 +57,13 @@ def main() -> None:
         ("FFStorageBank<8,4>", "FFWord<8>"),
         ("SRAM8", "GatedDLatch"),
         ("RV32IFiveStageCore", "RV32IExecuteStage"),
+        ("RV32IMFiveStageCore", "RV32IMExecuteStage"),
+        ("RV32IMExecuteStage", "MulDivUnit32"),
+        ("MulDivUnit32", "Multiplier32"),
+        ("MulDivUnit32", "Divider32"),
+        ("RV32IMDeviceSystem", "RV32IMFiveStageCore"),
+        ("TimerDevice32", "ClockedCounter<32>"),
+        ("FramebufferDisplay32", "IndexedPixelSelector32"),
     ):
         assert effective_color(parent) != effective_color(child)
 
@@ -98,7 +105,15 @@ def main() -> None:
     assert color_for_layout_type(
         "RV32IBitPatternMatcher<mask=0xffffffff,value=0x00000073>"
     ) == [20, 184, 166, 190]
+    for family in ("MultiplyStep", "DivideStep", "ClockedCounter", "SynchronousFifo", "TwoPortMemoryArbiter"):
+        assert color_for_layout_type(f"{family}<4>[layout-example]") == color_for_layout_type(f"{family}<32>")
+        assert color_for_layout_type(f"{family}<32>") != list(DEFAULT_COMPONENT_COLOR)
+    for family in ("RV32IBranchPredictor", "RV32IPredictionEntry"):
+        assert color_for_layout_type(family+'[layout-example]') == color_for_layout_type(family)
 
 
 if __name__ == "__main__":
     main()
+
+for kind in ("AddressRouter32", "FramebufferDisplay32"):
+    assert color_for_layout_type(kind+"[config-test]") == color_for_layout_type(kind)

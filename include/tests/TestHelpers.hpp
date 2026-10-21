@@ -1,5 +1,7 @@
 #pragma once
 
+#include "simulator/SimulationTime.hpp"
+
 #include "basic/PinBase.hpp"
 #include "basic/SupportedWidths.hpp"
 #include "basic/Wire.hpp"
@@ -84,8 +86,8 @@ inline std::string testRowCheckpointDetail(const TestRow& row) {
 }
 
 struct RunRowsOptions {
-    std::optional<size_t> time_step = std::nullopt;
-    size_t probe_time_limit = 100000;
+    std::optional<SimulationTime> time_step = std::nullopt;
+    SimulationTime probe_time_limit = 100000;
 };
 
 template<typename... Args>
@@ -104,7 +106,7 @@ public:
         setInitialState();
     }
 
-    size_t getRunDuration() const override {
+    SimulationTime getRunDuration() const override {
         return 0;
     }
 
@@ -113,7 +115,7 @@ protected:
     void setInitialState() override {}
 };
 
-inline std::shared_ptr<Event> makeTestWireUpdate(size_t time, const std::shared_ptr<WireBase>& wire, const TestValue& value) {
+inline std::shared_ptr<Event> makeTestWireUpdate(SimulationTime time, const std::shared_ptr<WireBase>& wire, const TestValue& value) {
     if (value.hasLogicVector()) {
         if (value.values.size() != wire->getWidth()) {
             return nullptr;
@@ -188,19 +190,19 @@ inline bool checkExpectedOutputs(const std::shared_ptr<IOComponent>& io,
 
 struct RunRowsProbeResult {
     bool passed = true;
-    size_t max_delay = 0;
+    SimulationTime max_delay = 0;
 };
 
 using TestComponentFactory =
     std::function<std::shared_ptr<Component>(const std::string&)>;
 
-inline size_t secondSmallestPowerOfTenGreaterThan(size_t value) {
-    size_t result = 1;
+inline SimulationTime secondSmallestPowerOfTenGreaterThan(SimulationTime value) {
+    SimulationTime result = 1;
     while (result <= value) {
-        assert(result <= static_cast<size_t>(-1) / 10 && "runRows time_step overflow");
+        assert(result <= MAX_SIMULATION_TIME / 10 && "runRows time_step overflow");
         result *= 10;
     }
-    assert(result <= static_cast<size_t>(-1) / 10 && "runRows time_step overflow");
+    assert(result <= MAX_SIMULATION_TIME / 10 && "runRows time_step overflow");
     return result * 10;
 }
 
@@ -235,7 +237,7 @@ inline RunRowsProbeResult probeIsolatedRowsWithFactory(
         SimulationTest::scheduleInitialEventsForTree(root, sim, 0);
         sim.runAndRecord(options.probe_time_limit);
         const auto timestamps = sim.getUniqueTimestamps();
-        const size_t row_delay = timestamps.empty() ? 0 : timestamps.back();
+        const SimulationTime row_delay = timestamps.empty() ? 0 : timestamps.back();
         if (row_delay >= options.probe_time_limit) {
             std::cerr << "isolated row " << row_index
                       << ": measured delay reached probe_time_limit " << options.probe_time_limit
@@ -277,7 +279,7 @@ bool runRowsWithOptions(const std::vector<TestRow>& rows, const RunRowsOptions& 
     if (!probe.passed) {
         return false;
     }
-    const size_t time_step = options.time_step.value_or(secondSmallestPowerOfTenGreaterThan(probe.max_delay));
+    const SimulationTime time_step = options.time_step.value_or(secondSmallestPowerOfTenGreaterThan(probe.max_delay));
     if (time_step <= probe.max_delay) {
         std::cerr << "runRows time_step " << time_step
                   << " must be greater than measured max row delay "
@@ -285,7 +287,7 @@ bool runRowsWithOptions(const std::vector<TestRow>& rows, const RunRowsOptions& 
         assert(false && "runRows time_step must be greater than max row delay");
         return false;
     }
-    assert(rows.size() <= static_cast<size_t>(-1) / time_step && "runRows duration overflow");
+    assert(rows.size() <= MAX_SIMULATION_TIME / time_step && "runRows duration overflow");
 
     Simulator sim;
     auto root = Component::create<ComponentT>("ROOT", args...);
@@ -340,7 +342,7 @@ bool runRowsWithOptions(const std::vector<TestRow>& rows, const RunRowsOptions& 
 }
 
 template<typename ComponentT, typename... Args>
-bool runRowsBatched(const std::vector<TestRow>& rows, size_t time_step, Args&&... args) {
+bool runRowsBatched(const std::vector<TestRow>& rows, SimulationTime time_step, Args&&... args) {
     RunRowsOptions options;
     options.time_step = time_step;
     return runRowsWithOptions<ComponentT>(rows, options, std::forward<Args>(args)...);

@@ -1,4 +1,5 @@
 #include "visualizer/VisualizerSession.hpp"
+#include "runtime/RecordedGuestFixtures.hpp"
 #include "components/TimingProfile.hpp"
 
 #include <emscripten/bind.h>
@@ -15,6 +16,10 @@ namespace {
 
 class WasmVisualizer {
 public:
+    std::string runRecordedGuestJson(const std::string& name, bool caches, bool dram, unsigned max_cycles) {
+        return circuit::runtime::runRecordedGuestFixtureJson(name,caches,dram,max_cycles);
+    }
+
     std::string visualizableTestsJson() const {
         return circuit::visualizer::VisualizerSession::visualizableTestsJson();
     }
@@ -113,6 +118,7 @@ private:
 EMSCRIPTEN_BINDINGS(circuitsim_visualizer) {
     emscripten::class_<WasmVisualizer>("WasmVisualizer")
         .constructor<>()
+        .function("runRecordedGuestJson", &WasmVisualizer::runRecordedGuestJson)
         .function("visualizableTestsJson", &WasmVisualizer::visualizableTestsJson)
         .function("clearProfileOverrides", &WasmVisualizer::clearProfileOverrides)
         .function("setProfileOverride", &WasmVisualizer::setProfileOverride)

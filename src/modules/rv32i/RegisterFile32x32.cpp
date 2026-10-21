@@ -132,7 +132,7 @@ void RegisterFile32x32::buildInternals(ComponentBuilder& builder) {
 }
 
 std::vector<std::vector<LogicValue>> RegisterFile32x32::getRegisterStateAtTime(
-    size_t target_time) const {
+    SimulationTime target_time) const {
     (void)target_time;
     std::vector<std::vector<LogicValue>> result(
         RegisterCount, std::vector<LogicValue>(32, LogicValue::LOW));

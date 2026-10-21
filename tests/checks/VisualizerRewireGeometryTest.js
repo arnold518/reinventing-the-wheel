@@ -306,7 +306,7 @@ for (const source of [appSource, workerSource]) {
   const c = { type: "Rewire", layoutType: "Rewire<in=1,out=8>", depth: 1, profileFingerprint: "explicit" };
   const sandbox = vm.createContext({ app: { layout } });
   const isApp = source === appSource;
-  for (const name of isApp ? ["mergeLayout", "componentLayoutKey", "getTypeLayoutFor"] : ["mergeLayout", "componentLayout"])
+  for (const name of isApp ? ["mergeLayout", "componentLayoutKey", "structureKeyed", "getTypeLayoutFor"] : ["mergeLayout", "componentLayout"])
     vm.runInContext(extract(source, name), sandbox);
   const get = () => isApp ? sandbox.getTypeLayoutFor(c) : sandbox.componentLayout(c, layout, "test");
   assert.equal(get().aspect_ratio, undefined);

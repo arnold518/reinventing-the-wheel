@@ -1,4 +1,6 @@
 #pragma once
+
+#include "simulator/SimulationTime.hpp"
 #include "modules/memory/MemoryProtocol.hpp"
 #include "modules/memory/MemoryStorage.hpp"
 #include <deque>
@@ -13,9 +15,8 @@ inline Bits signal(const Signals& s, const std::string& key, size_t width = 1) {
     auto it = s.find(key); return it == s.end() ? Bits(width, L) : it->second;
 }
 inline bool high(const Signals& s, const std::string& key) { return signal(s, key) == Bits{H}; }
-inline size_t after(size_t t, size_t delay) {
-    if (delay > size_t(-1) - t) throw std::overflow_error("Memory event time overflow");
-    return t + delay;
+inline SimulationTime after(SimulationTime t, SimulationTime delay) {
+    return checkedTimeAdd(t, delay);
 }
 // The handshake gates as four-state functions, for the compact controller and
 // endpoint: an unknown reset, request or response-ready bit leaves X where
@@ -73,7 +74,7 @@ class NativeSequence {
 public:
     NativeSequence(size_t, Technology, EndpointConfig);
     // `read` gives the device's outputs as they were before this edge.
-    void step(size_t time, bool clock_edge, bool reset, bool start, const Request&,
+    void step(SimulationTime time, bool clock_edge, bool reset, bool start, const Request&,
               const std::function<Bits(const std::string&, size_t)>& read, bool finish = false);
     // The device clock follows the controller clock with no delay.
     void clock(LogicValue level) { if (command_ || config_.clocked) outputs["CLK"] = {level}; }
@@ -86,7 +87,7 @@ public:
         if (command_ || !config_.clocked) return;
         shown_start_ = start; shown_ = request; staticPins();
     }
-    size_t deadline() const { return 0; }
+    SimulationTime deadline() const { return 0; }
     const char* phaseName() const {
         if (!command_) return access_ ? "static-access" : "idle";
         return presenting_ ? "command-issue" : waiting_ ? "command-wait" : "idle";
@@ -144,22 +145,23 @@ class DeviceModel {
 public:
     DeviceModel(size_t width, EndpointConfig config, LogicValue fill);
     virtual ~DeviceModel() = default;
-    virtual void update(size_t, const Signals&) = 0;
+    virtual void update(SimulationTime, const Signals&) = 0;
     // Device commands accepted so far, by name (DRAM: activate, precharge,
     // refresh, read, write, read_burst); empty for devices without commands.
     virtual std::map<std::string, uint64_t> commandCounts() const { return {}; }
     Bits read(const std::string& name, size_t width) const { return signal(outputs, name, width); }
-    size_t deadline() const { return due_; }
+    SimulationTime deadline() const { return due_; }
     MemoryStorage storage;
 protected:
-    size_t width_, due_ = 0;
+    size_t width_;
+    SimulationTime due_ = 0;
     EndpointConfig config_;
     Signals outputs;
     LogicValue previous_clock_ = X;
     bool edge(const Signals&);
     // `enable` is the word's write enable: on an unknown enable or mask bit a
     // stored bit stays 0 only where the old and the new bit are both 0.
-    void writeWord(size_t, uint32_t, const Bits&, const Bits&, bool program = false, LogicValue enable = H);
+    void writeWord(SimulationTime, uint32_t, const Bits&, const Bits&, bool program = false, LogicValue enable = H);
 };
 std::unique_ptr<DeviceModel> makeDeviceModel(size_t, Technology, EndpointConfig);
 }

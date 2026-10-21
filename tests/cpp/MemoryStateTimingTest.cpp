@@ -55,7 +55,7 @@ struct Fixture {
             clock.inputs.push_back({"ROOT."+n,n=="RST"?std::optional<ClockEdge>{}:ClockEdge::Rising,{1,1},0});
         for(const auto& [n,p]:root->getAllOutputPins())clock.outputs.push_back({"ROOT."+n,ClockEdge::Rising,0,0});
     }
-    void drive(const std::string& n,size_t t,const Bits& v) {
+    void drive(const std::string& n,SimulationTime t,const Bits& v) {
         const auto& w=inputs.at(n);
         auto add=[&]<size_t W>(){sim.scheduleEvent(std::make_shared<WireUpdateEvent<W>>(t,std::dynamic_pointer_cast<Wire<W>>(w),v));};
         switch(v.size()){case 1:add.template operator()<1>();break;case 3:add.template operator()<3>();break;
@@ -69,7 +69,7 @@ struct Fixture {
             for(const auto& child:c->getChildren())self(self,child);
         };init(init,root);sim.runAndRecord(4000);drive("RST",4001,{L});sim.runAndRecord(8000);
     }
-    std::vector<Bits> frame(size_t period,unsigned controls,unsigned serial) {
+    std::vector<Bits> frame(SimulationTime period,unsigned controls,unsigned serial) {
         drive("CLK",base,{H});drive("CLK",base+period/2,{L});
         drive("ISSUE",base+1,{LogicValue(controls%4)});drive("TAKE",base+1,{LogicValue((controls/4)%4)});
         auto tag=bits(32,serial%3);if(controls/16==2)tag.assign(32,X);if(controls/16==3)tag.assign(32,Z);

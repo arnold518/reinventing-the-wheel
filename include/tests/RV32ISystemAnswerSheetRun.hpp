@@ -1,5 +1,7 @@
 #pragma once
 
+#include "simulator/SimulationTime.hpp"
+
 #include "basic/Wire.hpp"
 #include "tests/RV32IInstructionLockstepTests.hpp"
 #include <cstddef>
@@ -20,7 +22,7 @@ public:
     explicit RV32ISystemAnswerSheetRun(size_t program_number);
 
     void setupCircuit() override;
-    size_t getRunDuration() const override;
+    SimulationTime getRunDuration() const override;
 
 protected:
     void buildCircuit() override;
@@ -29,7 +31,7 @@ protected:
         const RV32ISystemProgramCase& test_case) override;
     void clockComponentOneCycle(
         size_t cycle_index,
-        size_t cycle_start_time) override;
+        SimulationTime cycle_start_time) override;
     rv32i::RV32IState snapshotComponentState() const override;
     rv32i::RV32IMemoryTrace lastDataMemoryAccess() const override;
     std::map<uint32_t, uint8_t> lastDataMemoryWrites() const override;
@@ -41,7 +43,7 @@ private:
     std::shared_ptr<Wire<>> clk_wire_{};
     std::shared_ptr<Wire<>> rst_wire_{};
     std::shared_ptr<Wire<>> enable_wire_{};
-    size_t visual_run_duration_ = 0;
+    SimulationTime visual_run_duration_ = 0;
     uint64_t committed_instruction_count_ = 0;
     mutable std::map<uint32_t, uint8_t> observed_bus_writes_{};
 };

@@ -1,4 +1,6 @@
 #pragma once
+
+#include "simulator/SimulationTime.hpp"
 // Private factory implementation; callers use families::FlipFlopCell.
 
 #include "components/BasicComponent.hpp"
@@ -8,7 +10,7 @@ public:
     FlipFlopCellBehavioral(std::string name);
     static constexpr const char* TypeName = "FlipFlopCell";
     const char* getTypeName() const override { return TypeName; }
-    void evaluate(size_t current_time, Simulator& simulator) override;
+    void evaluate(SimulationTime current_time, Simulator& simulator) override;
 
 private:
     LogicValue stored_value;

@@ -28,7 +28,7 @@ void registerStep(std::vector<LogicValue>& stored, LogicValue& previous_clock, L
     previous_clock = clock;
 }
 
-void RegisterBehavioral::evaluate(size_t time, Simulator& simulator) {
+void RegisterBehavioral::evaluate(SimulationTime time, Simulator& simulator) {
     registerStep(stored_, previous_clock_, getInputValue("RST"), getInputValue("CLK"), getInputValue("WE"),
                  getInputPinDynamic("D")->getValueAsVector());
     _updateOutputWireDynamic(simulator, "Q", stored_, time);

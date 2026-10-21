@@ -1,5 +1,6 @@
 #include "visualizer/VisualizerSession.hpp"
 #include "visualizer/MemoryInspector.hpp"
+#include "visualizer/DeviceInspector.hpp"
 
 #include "basic/LogicValue.hpp"
 #include "basic/PinBase.hpp"
@@ -81,9 +82,13 @@ public:
         key(name);
         appendEscaped(out_, value);
     }
-    void number(const std::string& name, size_t value) {
+    void number(const std::string& name, uint64_t value) {
         key(name);
         out_ += std::to_string(value);
+    }
+    void tick(const std::string& name, SimulationTime value) {
+        if (value <= MAX_EXACT_JSON_TIME) number(name, value);
+        else string(name, std::to_string(value));
     }
     void integer(const std::string& name, int64_t value) {
         key(name);
@@ -221,6 +226,7 @@ std::string normalizedProfileFingerprint(
 std::string componentLayoutType(const std::shared_ptr<Component>& component) {
     const std::string type = component ? component->getTypeName() : "Component";
     if (!component) return type;
+    if(const auto variant=componentLayoutVariant(component);!variant.empty())return type+"[config-"+variant+"]";
     const auto& children = component->getChildren();
     auto has_child = [&](const auto& predicate) {
         return std::any_of(children.begin(), children.end(), [&](const auto& child) {
@@ -241,7 +247,7 @@ std::string componentLayoutType(const std::shared_ptr<Component>& component) {
     }
     const bool named_variants = type.starts_with("Cache") || type == "RV32IPredictionEntry" ||
                                 type.starts_with("RV32IPredictionTable<") || type == "RV32IBranchPredictor" ||
-                                type.starts_with("MemoryTimer<");
+                                type.starts_with("MemoryTimer<") || type.starts_with("ClockedCounter<");
     if (named_variants && !children.empty()) {
         // Child names and types: a 4-set and a 2-set cache controller share
         // every name but not every type.
@@ -373,8 +379,8 @@ std::string memoryWordJson(
 
 } // namespace
 
-std::vector<size_t> memoryActivityTimestamps(const std::shared_ptr<Component>& root) {
-    std::vector<size_t> times;
+std::vector<SimulationTime> memoryActivityTimestamps(const std::shared_ptr<Component>& root) {
+    std::vector<SimulationTime> times;
     const auto visit = [&](auto&& self, const std::shared_ptr<Component>& component) -> void {
         if (auto view = std::dynamic_pointer_cast<MemoryActivityView>(component))
             view->appendMemoryActivityTimes(times);
@@ -431,12 +437,12 @@ std::shared_ptr<PinBase> MemoryInspector::pin(const std::shared_ptr<IOComponent>
     return {};
 }
 
-std::string MemoryInspector::value(const std::shared_ptr<IOComponent>& io, const std::string& name, size_t time) const {
+std::string MemoryInspector::value(const std::shared_ptr<IOComponent>& io, const std::string& name, SimulationTime time) const {
     auto p = pin(io, name);
     if (!p) return {};
     const auto& history = simulator_.signalHistory(p);
     auto it = std::upper_bound(history.begin(), history.end(), time,
-        [](size_t t, const auto& entry) { return t < entry.first; });
+        [](SimulationTime t, const auto& entry) { return t < entry.first; });
     return it == history.begin() ? std::string(p->getWidth(), 'X') : logicVectorValue(std::prev(it)->second);
 }
 
@@ -445,13 +451,13 @@ void MemoryInspector::rebuildTransactions() {
     revision_ = simulator_.historyRevision();
     edges_.clear();
     accesses_.clear();
-    std::set<size_t> times;
+    std::set<SimulationTime> times;
     for (const auto& name : {"CLK", "RST"})
         for (const auto& [time, bits] : simulator_.signalHistory(pin(endpoint_, name))) {
             (void)bits;
             times.insert(time);
         }
-    std::optional<size_t> pending, completed;
+    std::optional<SimulationTime> pending, completed;
     for (const auto time : times) {
         // The interface is synchronous: request/ready and response/ready must
         // be stable before the edge. Reading post-edge pins can instead see the
@@ -482,13 +488,13 @@ void MemoryInspector::rebuildTransactions() {
     }
 }
 
-std::string MemoryInspector::stateJson(size_t index, size_t time, const std::string& scenario,
+std::string MemoryInspector::stateJson(size_t index, SimulationTime time, const std::string& scenario,
                                       int64_t address, size_t count) {
     if (address < -1 || address > int64_t(UINT32_MAX) || count == 0 || count > 256)
         throw std::invalid_argument("Memory page requires a 32-bit byte address and 1..256 words");
     std::string out;
     JsonObject object(out);
-    object.number("index", index); object.number("time", time);
+    object.number("index", index); object.tick("time", time);
     object.string("componentId", component_->getID()); object.string("type", component_->getTypeName());
     auto view = std::dynamic_pointer_cast<MemoryStateView>(component_);
     if (!view) { object.boolean("supported", false); object.end(); return out; }
@@ -514,10 +520,10 @@ std::string MemoryInspector::stateJson(size_t index, size_t time, const std::str
     if (endpoint_) {
         rebuildTransactions();
         auto it = std::upper_bound(edges_.begin(), edges_.end(), time,
-            [](size_t t, const Edge& edge) { return t < edge.time; });
+            [](SimulationTime t, const Edge& edge) { return t < edge.time; });
         const Edge* edge = it == edges_.begin() ? nullptr : &*std::prev(it);
-        auto accepted = edge ? edge->pending : std::optional<size_t>{};
-        const auto completed = edge ? edge->completed : std::optional<size_t>{};
+        auto accepted = edge ? edge->pending : std::optional<SimulationTime>{};
+        const auto completed = edge ? edge->completed : std::optional<SimulationTime>{};
         const bool reset = value(endpoint_, "RST", time) != "0";
         const bool request = value(endpoint_, "REQ_VALID", time) == "1";
         const bool ready = value(endpoint_, "REQ_READY", time) == "1";
@@ -528,7 +534,7 @@ std::string MemoryInspector::stateJson(size_t index, size_t time, const std::str
         const bool completing = !reset && !accepted && !live && response && completed.has_value();
         if (completing) accepted = completed;
         active = !reset && (accepted.has_value() || live);
-        const size_t sample_time = accepted ? *accepted - 1 : time;
+        const SimulationTime sample_time = accepted ? *accepted - 1 : time;
         const auto operation_bits = value(endpoint_, "REQ_OP", sample_time);
         uint64_t operation = 0, status = 0;
         const bool known_op = binaryValue(operation_bits, operation);
@@ -545,8 +551,8 @@ std::string MemoryInspector::stateJson(size_t index, size_t time, const std::str
         tx.string("operation", active ? operation_name : "");
         tx.string("operationBits", active ? operation_bits : "");
         if (has_address) tx.number("address", active_address); else tx.null("address");
-        if (accepted) tx.number("acceptedTime", *accepted); else tx.null("acceptedTime");
-        if (completed) tx.number("lastCompletedRequestTime", *completed); else tx.null("lastCompletedRequestTime");
+        if (accepted) tx.tick("acceptedTime", *accepted); else tx.null("acceptedTime");
+        if (completed) tx.tick("lastCompletedRequestTime", *completed); else tx.null("lastCompletedRequestTime");
         tx.string("writeData", active ? value(endpoint_, "REQ_WRITE_DATA", sample_time) : "");
         tx.string("writeMask", active ? value(endpoint_, "REQ_WRITE_MASK", sample_time) : "");
         tx.string("status", !response ? "" : known_status && status < statuses.size() ? statuses[status] : "UNKNOWN");
@@ -845,7 +851,7 @@ std::string VisualizerSession::exampleRowsJson() const {
         item.number("actionIndex", action_index);
         item.string("kind", kind);
         item.string("detail", action.detail);
-        item.number("time", checkpoint.actual_time);
+        item.tick("time", checkpoint.actual_time);
         item.number("timelineIndex", static_cast<size_t>(std::distance(timestamps_.begin(), time)));
         item.raw("inputs", namedValues(inputs));
         item.raw("drivenInputs", namedValues(action.inputs));
@@ -1089,7 +1095,7 @@ std::string VisualizerSession::stateJson(size_t index) {
     JsonObject object(out);
     object.string("encoding", "indexed-v1");
     object.number("index", index);
-    object.number("time", timestamp);
+    object.tick("time", timestamp);
     object.raw("pins", stringArray(pin_values));
     object.raw("wires", stringArray(wire_values));
     object.end();
@@ -1146,9 +1152,12 @@ std::string VisualizerSession::componentStateJson(
     std::string out;
     JsonObject object(out);
     object.number("index", index);
-    object.number("time", timestamp);
+    object.tick("time", timestamp);
     object.string("componentId", component_id);
     object.string("type", component.type);
+
+    if (supportsDeviceView(component.handle))
+        return deviceStateJson(component.handle,*simulator_,index,timestamp);
 
     if (component.type == "RegisterFile32x32") {
         const auto registers = std::dynamic_pointer_cast<RegisterStateView>(component.handle);
@@ -1250,7 +1259,7 @@ std::string VisualizerSession::topologyResponseJson() {
         const auto found = std::lower_bound(timestamps_.begin(), timestamps_.end(), checkpoint.time);
         std::string out;
         JsonObject item(out);
-        item.number("time", checkpoint.time);
+        item.tick("time", checkpoint.time);
         item.string("label", checkpoint.label);
         item.string("detail", checkpoint.detail);
         item.number("rowIndex", checkpoint.row_index);
@@ -1269,8 +1278,9 @@ std::string VisualizerSession::topologyResponseJson() {
         item.end();
         return out;
     });
-    const auto timestamp_json = arrayJson(timestamps_, [](size_t value) {
-        return std::to_string(value);
+    const auto timestamp_json = arrayJson(timestamps_, [](SimulationTime value) {
+        const auto decimal = std::to_string(value);
+        return value <= MAX_EXACT_JSON_TIME ? decimal : "\"" + decimal + "\"";
     });
     std::string overrides_json;
     JsonObject overrides(overrides_json);

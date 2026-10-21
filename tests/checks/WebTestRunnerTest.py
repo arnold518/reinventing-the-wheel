@@ -16,7 +16,7 @@ class WebTestRunnerTest(unittest.TestCase):
     def test_manifest_covers_every_external_browser_and_wasm_script(self):
         rows = runner.test_inventory()
         files = {r['file'] for r in rows}
-        expected = {p.name for pattern in ('*BrowserTest.py', '*WasmParityTest.mjs', '*WasmRuntimeTest.mjs')
+        expected = {p.name for pattern in ('*BrowserTest.py', '*WasmParityTest.mjs', '*WasmRuntimeTest.mjs', '*WasmTest.mjs')
                     for p in (ROOT / 'tests').rglob(pattern)}
         self.assertEqual(files, expected)
         self.assertTrue(all(r['timeout'] > 0 for r in rows))
@@ -40,6 +40,13 @@ class WebTestRunnerTest(unittest.TestCase):
         browser = runner.command_for(next(r for r in rows if r['name'] == 'VisualizerScenarioBrowserTest'), args, 'http://test/')
         self.assertEqual(browser[0], '/chosen/python')
         self.assertEqual(browser[-1], 'http://test/simulator/')
+        time_check = runner.command_for(next(r for r in rows if r['name'] == 'SimulationTimeWasmTest'), args, 'http://test/')
+        self.assertEqual(time_check[2:], [
+            '/chosen/wasm/pages/simulator/circuitsim_wasm.js',
+            '/chosen/wasm/pages/simulator/circuitsim_wasm.wasm',
+            '/chosen/native/tests/VisualizerSessionProbe', '/chosen/wasm/circuitsim_verification.js'])
+        guest_check = runner.command_for(next(r for r in rows if r['name'] == 'RecordedGuestWasmParityTest'), args, 'http://test/')
+        self.assertEqual(guest_check[-1], '/chosen/native/tests/RecordedGuestProbe')
 
     def test_failed_and_timed_out_checks_are_failures(self):
         with tempfile.TemporaryDirectory() as directory:

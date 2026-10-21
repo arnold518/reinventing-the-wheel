@@ -106,7 +106,7 @@ size_t Rewire::getTotalOutputBits() const {
     return total;
 }
 
-void Rewire::evaluate(size_t current_time, Simulator& simulator) {
+void Rewire::evaluate(SimulationTime current_time, Simulator& simulator) {
     std::map<std::string, std::vector<LogicValue>> output_values;
     for (const auto& output : outputs) {
         output_values[output.name] = std::vector<LogicValue>(output.width, getUnmappedValue());
@@ -130,11 +130,11 @@ void Rewire::evaluate(size_t current_time, Simulator& simulator) {
         const auto& values = output_values[output.name];
         output_pin->setValueFromVector(values);
         if (auto wire = output_pin->getExternalWireBase()) {
-            if (auto event = makeWireUpdateEvent(current_time + getDelay(), wire, values)) {
+            if (auto event = makeWireUpdateEvent(checkedTimeAdd(current_time, getDelay()), wire, values)) {
                 simulator.scheduleEvent(event);
             }
         } else {
-            simulator.recordPinChange(current_time + getDelay(), output_pin, values);
+            simulator.recordPinChange(checkedTimeAdd(current_time, getDelay()), output_pin, values);
         }
     }
 }

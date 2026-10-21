@@ -122,7 +122,7 @@ class ROMAddressControl : public IOComponent {
 class ROMCellBehavioral : public Primitive {
   public:
     ROMCellBehavioral(std::string n, bool v) : Primitive(std::move(n), "ROMCell", cellPins), value_(v ? H : L) {}
-    void evaluate(size_t t, Simulator &sim) override { publish(sim, t, "Q", value_); }
+    void evaluate(SimulationTime t, Simulator &sim) override { publish(sim, t, "Q", value_); }
 
   private:
     LogicValue value_;
@@ -133,7 +133,7 @@ class ROMRowBehavioral : public Primitive {
         : Primitive(std::move(n), "ROMRow<" + std::to_string(contents.size()) + ">",
                     [contents](IOComponent *s) { rowPins(s, contents); }),
           contents_(std::move(contents)) {}
-    void evaluate(size_t t, Simulator &sim) override {
+    void evaluate(SimulationTime t, Simulator &sim) override {
         for (size_t c = 0; c < contents_.size(); ++c)
             publish(sim, t, "Q_" + std::to_string(c), contents_[c] == '1' ? H : L);
     }
@@ -149,7 +149,7 @@ class ROMBankBehavioral : public Primitive {
                         std::to_string(c.words_per_row) + ">",
                     [=](IOComponent *s) { bankPins(s, width, c); }),
           width_(width), config_(c), image_(c.image(width)) {}
-    void evaluate(size_t t, Simulator &sim) override {
+    void evaluate(SimulationTime t, Simulator &sim) override {
         size_t count = 0, row = 0;
         bool valid = true;
         for (size_t r = 0; r < config_.rows(); ++r) {
@@ -192,7 +192,7 @@ class ROMBehavioral : public Primitive, public MemoryDeviceStorage {
         throw std::logic_error("ROM contents are immutable; supply image_hex at construction");
     }
     PrimitiveTiming primitiveTiming() const override { return PrimitiveTiming::SelfTimed; }
-    void evaluate(size_t t, Simulator &sim) override {
+    void evaluate(SimulationTime t, Simulator &sim) override {
         auto ce = getInputValue("CE_N"), oe = getInputValue("OE_N");
         auto a = read("WORD_ADDR");
         // READY drops on a change of address or CE_N and rises once the access
@@ -206,14 +206,14 @@ class ROMBehavioral : public Primitive, public MemoryDeviceStorage {
             const bool restart = !started_ || a != address_ || ce != ce_;
             address_ = a; ce_ = ce; oe_ = oe;
             const auto &timing = timing::activeTimingProfile().memory;
-            const size_t gate = timing::leafDelay(timing::Leaf::And);
-            const size_t full = memory::memoryTimerSettle(timing.rom_settle, 33, false) + timing.romColumn(config_.rows()) + timing::leafDelay(timing::Leaf::MemoryPrimitive) + 14 * gate;
+            const SimulationTime gate = timing::leafDelay(timing::Leaf::And);
+            const SimulationTime full = memory::memoryTimerSettle(timing.rom_settle, 33, false) + timing.romColumn(config_.rows()) + timing::leafDelay(timing::Leaf::MemoryPrimitive) + 14 * gate;
             if (restart) {
                 auto bounds = memory_detail::arcBounds(getDelays(), changed, "READY", {gate, full});
                 bounds.minimum = memory_detail::safeEarliest(getDelays(), changed, "READY", gate);
                 ready_.clear();
-                ready_.at(t + bounds.minimum, {L});
-                ready_.at(t + bounds.maximum, {ce == H ? L : ce == L ? H : X});
+                ready_.at(checkedTimeAdd(t, bounds.minimum), {L});
+                ready_.at(checkedTimeAdd(t, bounds.maximum), {ce == H ? L : ce == L ? H : X});
             }
             Bits out(width_, Z);
             if (ce != H && oe != H)
@@ -222,7 +222,7 @@ class ROMBehavioral : public Primitive, public MemoryDeviceStorage {
                           : Bits(width_, X);
             const auto data = memory_detail::arcBounds(getDelays(), changed, "READ_DATA", {1, full});
             data_.clear();
-            data_.at(t + data.maximum, out);
+            data_.at(checkedTimeAdd(t, data.maximum), out);
         }
         started_ = true;
         ready_.apply(sim, getOutputPin("READY"), t);
@@ -242,18 +242,18 @@ class ROMBehavioral : public Primitive, public MemoryDeviceStorage {
     LogicValue ce_ = X, oe_ = X;
     memory_detail::TimedOutput<1> ready_{{L}};
     struct DynamicData {
-        std::vector<std::pair<size_t, Bits>> future;
+        std::vector<std::pair<SimulationTime, Bits>> future;
         Bits current;
         bool published = false;
         void clear() { future.clear(); }
-        void at(size_t time, Bits value) { future.push_back({time, std::move(value)}); }
-        std::optional<size_t> next() const {
-            std::optional<size_t> e;
+        void at(SimulationTime time, Bits value) { future.push_back({time, std::move(value)}); }
+        std::optional<SimulationTime> next() const {
+            std::optional<SimulationTime> e;
             for (const auto &[time, v] : future) if (!e || time < *e) e = time;
             return e;
         }
     } data_;
-    void applyData(Simulator &sim, size_t t) {
+    void applyData(Simulator &sim, SimulationTime t) {
         std::stable_sort(data_.future.begin(), data_.future.end(), [](const auto &a, const auto &b) { return a.first < b.first; });
         auto value = data_.current;
         size_t taken = 0;

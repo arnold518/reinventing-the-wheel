@@ -1,5 +1,7 @@
 #pragma once
 
+#include "simulator/SimulationTime.hpp"
+
 #include "components/BasicComponent.hpp"
 #include "components/selection/ComponentCatalog.hpp"
 #include "modules/memory/MemoryStructuralBuilder.hpp"
@@ -10,7 +12,7 @@
 struct SRAMDeviceConfig {
     size_t depth_words = 4;
     size_t words_per_row = 2;
-    size_t phase_ticks = 32;
+    SimulationTime phase_ticks = 32;
     bool record_history = true;
     // An on-chip clocked macro (CLK pin): the inputs are registered at a
     // rising edge with CE_N low and the access runs from that edge; data and
@@ -81,7 +83,7 @@ public:
     SRAMBitlinePair(std::string name, size_t rows);
     const char* getTypeName() const override { return type_.c_str(); }
     PrimitiveTiming primitiveTiming() const override { return PrimitiveTiming::InputsOnly; }
-    void evaluate(size_t time, Simulator& simulator) override;
+    void evaluate(SimulationTime time, Simulator& simulator) override;
 private:
     size_t rows_;
     std::string type_;
@@ -122,7 +124,7 @@ public:
     const char* getTypeName() const override { return TypeName; }
     PrimitiveTiming primitiveTiming() const override { return PrimitiveTiming::InputsOnly; }
     explicit SRAMSenseAmplifier(std::string name);
-    void evaluate(size_t time, Simulator& simulator) override;
+    void evaluate(SimulationTime time, Simulator& simulator) override;
 };
 
 template<size_t W> void defineSRAMPins(IOComponent* self, bool clocked = false) {

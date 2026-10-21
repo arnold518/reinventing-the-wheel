@@ -1,5 +1,7 @@
 #pragma once
 
+#include "simulator/SimulationTime.hpp"
+
 #include "components/BasicComponent.hpp"
 #include "components/TimingProfile.hpp"
 #include "components/capabilities/MemoryStateView.hpp"
@@ -19,6 +21,7 @@ bool known(const Bits &bits);
 uint32_t number(const Bits &bits);
 Bits bits(size_t width, uint32_t value);
 LogicValue stored(LogicValue value);
+SimulationTime timeParameter(const ParameterMap&, const std::string&, SimulationTime);
 size_t parameter(const ParameterMap &params, const std::string &key, size_t fallback);
 void keys(const ParameterMap &params, std::initializer_list<const char *> allowed);
 bool historyParameter(const ParameterMap &params);
@@ -44,7 +47,7 @@ class Primitive : public BasicComponent {
     Primitive(std::string name, std::string type, PinInitFunction pins)
         : BasicComponent(std::move(name), timing::leafDelay(timing::Leaf::MemoryPrimitive), std::move(pins)), type_(std::move(type)) {}
     // A primitive whose delay depends on its geometry (a bitline's length).
-    Primitive(std::string name, std::string type, PinInitFunction pins, size_t delay)
+    Primitive(std::string name, std::string type, PinInitFunction pins, SimulationTime delay)
         : BasicComponent(std::move(name), delay, std::move(pins)), type_(std::move(type)) {}
     const char *getTypeName() const override { return type_.c_str(); }
     // True for a primitive whose outputs change only one delay after an
@@ -69,20 +72,20 @@ class Primitive : public BasicComponent {
     // True for a clocked primitive that also wakes itself between clock
     // edges and may change any output one delay after either.
     virtual bool selfTimedClockedPart() const { return false; }
-    void scheduleInitialEvents(Simulator &sim, size_t time) override {
+    void scheduleInitialEvents(Simulator &sim, SimulationTime time) override {
         if (getAllInputPins().empty())
             wake(sim, time);
     }
 
   protected:
     Bits read(const std::string &pin) const { return getInputPinDynamic(pin)->getValueAsVector(); }
-    void publish(Simulator &sim, size_t time, const std::string &pin, const Bits &value);
-    void publish(Simulator &sim, size_t time, const std::string &pin, LogicValue value) {
+    void publish(Simulator &sim, SimulationTime time, const std::string &pin, const Bits &value);
+    void publish(Simulator &sim, SimulationTime time, const std::string &pin, LogicValue value) {
         publish(sim, time, pin, Bits{value});
     }
-    void wake(Simulator &sim, size_t time);
+    void wake(Simulator &sim, SimulationTime time);
     // Publishes what settled() gives for the values now on the input pins.
-    void publishSettled(Simulator &sim, size_t time);
+    void publishSettled(Simulator &sim, SimulationTime time);
 
   private:
     std::string type_;
@@ -135,8 +138,8 @@ class MatrixWriteDistributor : public IOComponent {
 class StaticReadColumn : public Primitive {
   public:
     // `delay` 0: the ROM read column's delay for `rows` from the timing profile.
-    StaticReadColumn(std::string name, size_t rows, size_t delay = 0);
-    void evaluate(size_t, Simulator &) override;
+    StaticReadColumn(std::string name, size_t rows, SimulationTime delay = 0);
+    void evaluate(SimulationTime, Simulator &) override;
     bool respondsOnlyToInputs() const override { return true; }
     bool settled(const Values &, Values &, Deciders &) const override;
 
@@ -146,7 +149,7 @@ class StaticReadColumn : public Primitive {
 class MemoryOutputBuffer : public Primitive {
   public:
     MemoryOutputBuffer(std::string name, size_t width);
-    void evaluate(size_t, Simulator &) override;
+    void evaluate(SimulationTime, Simulator &) override;
     bool respondsOnlyToInputs() const override { return true; }
     bool settled(const Values &, Values &, Deciders &) const override;
 

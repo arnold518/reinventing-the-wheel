@@ -9,6 +9,7 @@
 #include "modules/rv32i/RV32ISingleCycleStages.hpp"
 #include "modules/utility/BitAdapter.hpp"
 #include "RV32IPipelineStagesInternal.hpp"
+#include "RV32IExtensionAssembly.hpp"
 
 using namespace rv32i::pipeline_stages;
 
@@ -77,9 +78,14 @@ public:
     }
 };
 }
+namespace rv32i::detail {
+std::shared_ptr<IOComponent> addForwardedOperands(ComponentBuilder& b,const std::string& name) {
+    return b.addNewComponent<ForwardedOperands>(name);
+}
+}
 void RV32IExecuteStage::buildInternals(ComponentBuilder& b) {
     circuit::detail::StructuralWiring w(b);
-    auto forward=b.addNewComponent<ForwardedOperands>("FORWARDED_OPERANDS");
+    auto forward=rv32i::detail::addForwardedOperands(b,"FORWARDED_OPERANDS");
     auto datapath=b.add(circuit::families::RV32ISingleCycleExecuteStage,"DATAPATH");
     auto next=b.add(circuit::families::RV32ISingleCycleNextPCStage,"NEXT_PC");
     auto pc4=b.addNewComponent<IncrementBy4>("PC_PLUS_4");

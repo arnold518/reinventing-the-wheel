@@ -1,5 +1,7 @@
 #pragma once
 
+#include "simulator/SimulationTime.hpp"
+
 #include "basic/LogicValue.hpp"
 #include "components/selection/BuildManifest.hpp"
 #include "components/selection/BuildProfile.hpp"
@@ -39,12 +41,12 @@ struct PinSnapshot {
 struct RunCheckpoint {
     std::string id;
     CheckpointKind kind = CheckpointKind::Settled;
-    size_t actual_time = 0;
+    SimulationTime actual_time = 0;
     PinSnapshot pins;
 };
 
 struct RunLimits {
-    size_t max_time_per_action = 1'000'000;
+    SimulationTime max_time_per_action = 1'000'000;
     size_t max_events_per_action = 2'000'000;
 };
 
@@ -135,7 +137,7 @@ public:
     std::string getTestName() const override;
     void setupCircuit() override;
     bool run() override;
-    size_t getRunDuration() const override;
+    SimulationTime getRunDuration() const override;
     std::vector<SimulationCheckpoint> getCheckpoints() const override;
     bool isSimulationPrecomputed() const override { return true; }
 

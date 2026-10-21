@@ -564,10 +564,10 @@ void MemoryDeviceTimingTest::verifyResults() {
             for (auto &[n, p] : io->getAllInputPins())
                 inputs[n] = b.addNewWireDynamic("IN_" + n, p->getWidth(), nullptr, {p});
             SimulationTest::scheduleInitialEventsForTree(io, sim, 0);
-            auto set = [&](size_t t, std::string p, TestValue v) {
+            auto set = [&](SimulationTime t, std::string p, TestValue v) {
                 sim.scheduleEvent(makeTestWireUpdate(t, inputs.at(p), v));
             };
-            const size_t period = flash ? 400 : 200, first = 100, edges = flash ? 14 : 42;
+            const SimulationTime period = flash ? 400 : 200, first = 100; const size_t edges = flash ? 14 : 42;
             auto edge = [&](size_t k) { return first + k * period; };
             for (size_t k = 0; k < edges; ++k) {
                 set(edge(k), "CLK", H);

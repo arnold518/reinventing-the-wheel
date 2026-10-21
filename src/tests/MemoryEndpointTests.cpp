@@ -555,7 +555,7 @@ void verifyEndpointWriteHistory(Technology technology, size_t width) {
         auto run = runner.run(spec, spec.scenarios[0], profile);
         auto view = std::dynamic_pointer_cast<MemoryStateView>(run.root);
         require(bool(view), "Write-history endpoint has no memory state view");
-        size_t previous = 0, checked = 0;
+        SimulationTime previous = 0; size_t checked = 0;
         for (const auto& checkpoint : run.checkpoints) if (auto it = expected.find(checkpoint.id); it != expected.end()) {
             const auto context = std::string(technologyName(technology)) + "/" + std::to_string(width) +
                 "/mode-" + std::to_string(mode) + "/" + checkpoint.id;
@@ -695,7 +695,7 @@ void MemoryEndpointTimingTest::verifyResults() {
     struct Rig {
         std::shared_ptr<IOComponent> root;
         Simulator sim;
-        size_t now = 100;
+        SimulationTime now = 100;
         std::map<std::string,std::shared_ptr<WireBase>> wires;
         std::string context;
         explicit Rig(Technology t, bool compact, ParameterMap config = {}, bool native_device = false) {

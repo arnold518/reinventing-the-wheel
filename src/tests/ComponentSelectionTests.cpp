@@ -470,6 +470,11 @@ void BuiltinComponentCatalogInventoryTest::verifyResults() {
     }
     for (const auto width : {"1", "2", "3", "4", "5", "8", "16", "32"})
         expected_types.insert(std::string("Register<") + width + ">");
+    for(const auto* type:{"MultiplyStep<4>","MultiplyStep<32>","DivideStep<4>","DivideStep<32>",
+        "Multiplier32","Divider32","MulDivUnit32","RV32IMDecodeControlUnit","RV32IMDecodeStage","RV32IMExecuteStage",
+        "RV32IMPipelineCoordinator","RV32IMFiveStageCore","DeviceRegisterPort32","BusErrorTarget32","AddressRouter32",
+        "InstructionAccessGuard32","ClockedCounter<4>","ClockedCounter<32>","SynchronousFifo<8>","SynchronousFifo<32>",
+        "ConsoleDevice32","TimerDevice32","ButtonDevice32","IndexedPixelSelector32","FramebufferDisplay32","RV32IMDeviceSystem"})expected_types.insert(type);
     for (const auto& type : expected_types)
         require(registered_types.count(type) != 0,
                 "Built-in catalog is missing production module TypeName: " + type);

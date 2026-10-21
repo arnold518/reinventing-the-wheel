@@ -166,7 +166,7 @@ public:
         deciders["MASK_KNOWN"] = {"MASK"};
         return true;
     }
-    void evaluate(size_t time, Simulator& simulator) override {
+    void evaluate(SimulationTime time, Simulator& simulator) override {
         publish(simulator, time, "FIELDS_KNOWN",
                 memory_device::known(read("OP")) && memory_device::known(read("ADDR"))
                     ? memory_device::H : memory_device::L);
@@ -1614,7 +1614,7 @@ public:
           program_(compactControllerProgram(Width, parameters)), model_(program_->gates) {}
     // Pins exist once the part is created: then its delay table applies.
     void attachDelays() { setDelays(program_->delays); }
-    void evaluate(size_t time, Simulator& simulator) override {
+    void evaluate(SimulationTime time, Simulator& simulator) override {
         if (input_pins_.empty()) {
             for (const auto& [name, width] : model_.inputs()) input_pins_.push_back(getInputPinDynamic(name));
             values_.resize(input_pins_.size());

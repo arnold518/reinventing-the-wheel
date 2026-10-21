@@ -56,7 +56,7 @@ ALU32Behavioral::ALU32Behavioral(std::string name,bool full_flags)
                      full_flags?circuit::families::ALU32.pinInitializer():circuit::families::ALU32Core.pinInitializer()),
       full_flags_(full_flags) {}
 
-void ALU32Behavioral::evaluate(size_t current_time, Simulator& simulator) {
+void ALU32Behavioral::evaluate(SimulationTime current_time, Simulator& simulator) {
     const auto a_bits = getInputPin<32>("A")->getValueAsVector();
     const auto b_bits = getInputPin<32>("B")->getValueAsVector();
     const auto op_bits = getInputPin<5>("OP")->getValueAsVector();

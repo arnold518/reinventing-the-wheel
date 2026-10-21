@@ -39,6 +39,16 @@ size_t parameter(const ParameterMap &p, const std::string &key, size_t fallback)
         throw std::invalid_argument("Invalid memory parameter: " + key);
     return value;
 }
+SimulationTime timeParameter(const ParameterMap &p, const std::string &key, SimulationTime fallback) {
+    auto it = p.find(key);
+    if (it == p.end())
+        return fallback;
+    SimulationTime value = 0;
+    auto r = std::from_chars(it->second.data(), it->second.data() + it->second.size(), value);
+    if (r.ec != std::errc{} || r.ptr != it->second.data() + it->second.size())
+        throw std::invalid_argument("Invalid memory parameter: " + key);
+    return value;
+}
 void keys(const ParameterMap &p, std::initializer_list<const char *> allowed) {
     for (const auto &[key, value] : p)
         if (std::none_of(allowed.begin(), allowed.end(), [&](const char *s) { return key == s; }))
@@ -85,14 +95,14 @@ ParameterMap geometryParameters(const Geometry &g) {
               {"words_per_row", std::to_string(g.words_per_row)}});
     return p;
 }
-void Primitive::publish(Simulator &sim, size_t t, const std::string &pin, const Bits &value) {
+void Primitive::publish(Simulator &sim, SimulationTime t, const std::string &pin, const Bits &value) {
     auto it = published_.find(pin);
     if (it != published_.end() && it->second == value)
         return;
     published_[pin] = value;
     _updateOutputWireDynamic(sim, pin, value, t);
 }
-void Primitive::wake(Simulator &sim, size_t t) {
+void Primitive::wake(Simulator &sim, SimulationTime t) {
     sim.scheduleEvent(std::make_shared<ComponentEvalEvent>(t, shared_from_this()));
 }
 std::vector<PinDescriptor> describe(IOComponent::PinInitFunction pins) {
@@ -287,13 +297,13 @@ void MatrixWriteDistributor::buildInternals(ComponentBuilder &b) {
     w.finish();
 }
 // A read column takes longer to sense the more cells load it.
-StaticReadColumn::StaticReadColumn(std::string n, size_t rows, size_t delay)
+StaticReadColumn::StaticReadColumn(std::string n, size_t rows, SimulationTime delay)
     : Primitive(std::move(n), "StaticReadColumn<" + std::to_string(rows) + ">",
                 [rows](IOComponent *s) { readColumnPins(s, rows); },
                 delay ? delay : timing::activeTimingProfile().memory.romColumn(rows)),
       rows_(rows) {
 }
-void Primitive::publishSettled(Simulator &sim, size_t t) {
+void Primitive::publishSettled(Simulator &sim, SimulationTime t) {
     Values inputs, outputs;
     Deciders deciders;
     for (const auto &[name, pin] : getAllInputPins())
@@ -303,7 +313,7 @@ void Primitive::publishSettled(Simulator &sim, size_t t) {
     for (const auto &[name, value] : outputs)
         publish(sim, t, name, value);
 }
-void StaticReadColumn::evaluate(size_t t, Simulator &sim) {
+void StaticReadColumn::evaluate(SimulationTime t, Simulator &sim) {
     publishSettled(sim, t);
 }
 bool StaticReadColumn::settled(const Values &in, Values &out, Deciders &deciders) const {
@@ -340,7 +350,7 @@ MemoryOutputBuffer::MemoryOutputBuffer(std::string n, size_t width)
                 [width](IOComponent *s) { outputPins(s, width); }),
       width_(width) {
 }
-void MemoryOutputBuffer::evaluate(size_t t, Simulator &sim) {
+void MemoryOutputBuffer::evaluate(SimulationTime t, Simulator &sim) {
     publishSettled(sim, t);
 }
 bool MemoryOutputBuffer::settled(const Values &in, Values &out, Deciders &deciders) const {

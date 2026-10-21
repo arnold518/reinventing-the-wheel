@@ -99,7 +99,7 @@ void NativeSequence::staticPins() {
     outputs["WRITE_DATA"] = data_reg_;
     outputs["WRITE_MASK"] = mask_reg_;
 }
-void NativeSequence::step(size_t, bool clock_edge, bool reset, bool start, const Request& request,
+void NativeSequence::step(SimulationTime, bool clock_edge, bool reset, bool start, const Request& request,
                           const std::function<Bits(const std::string&, size_t)>& read, bool finish) {
     if (command_) stepCommand(clock_edge, reset, start, request, read, finish);
     else stepStatic(clock_edge, reset, start, request, read, finish);
@@ -270,7 +270,7 @@ bool DeviceModel::edge(const Signals& s) {
     const auto clk = signal(s, "CLK")[0];
     const bool edge = previous_clock_ == L && clk == H; previous_clock_ = clk; return edge;
 }
-void DeviceModel::writeWord(size_t t, uint32_t word, const Bits& data, const Bits& mask, bool program, LogicValue enable) {
+void DeviceModel::writeWord(SimulationTime t, uint32_t word, const Bits& data, const Bits& mask, bool program, LogicValue enable) {
     auto old = storage.readLogic(word * (width_ / 8), width_ / 8);
     for (size_t byte = 0; byte < width_ / 8; ++byte) if (const auto on = both(enable, mask[byte]); on != L) {
         Bits lane(8);
@@ -286,7 +286,7 @@ void DeviceModel::writeWord(size_t t, uint32_t word, const Bits& data, const Bit
 class FFDeviceModel final : public DeviceModel {
 public:
     FFDeviceModel(size_t w, EndpointConfig c) : DeviceModel(w, c, X) {}
-    void update(size_t t, const Signals& s) override {
+    void update(SimulationTime t, const Signals& s) override {
         const bool rising = edge(s); const auto word = number(signal(s, "WORD_ADDR", 32));
         if (rising && signal(s, "WE") != Bits{L})
             writeWord(t, word, signal(s, "WRITE_DATA", width_), signal(s, "WRITE_MASK", width_ / 8), false, clean(signal(s, "WE")[0]));
@@ -295,10 +295,10 @@ public:
 };
 // The longest delay an input takes to reach `output` in the table proven on
 // a part's gate-level form, or `fallback` without a table.
-size_t provenMaximum(const std::string& implementation, const ParameterMap& parameters, const std::string& output, size_t fallback) {
+SimulationTime provenMaximum(const std::string& implementation, const ParameterMap& parameters, const std::string& output, SimulationTime fallback) {
     const auto* table = provenPartDelays(implementation, parameters);
     if (!table) return fallback;
-    size_t longest = 0;
+    SimulationTime longest = 0;
     for (const auto& arc : table->arcs) if (arc.output == output) longest = std::max(longest, arc.delay.maximum);
     return longest ? longest : fallback;
 }
@@ -306,38 +306,38 @@ size_t provenMaximum(const std::string& implementation, const ParameterMap& para
 // edge that changes the controller's outputs: the controller's own output
 // delay plus the device's slowest input-to-READY delay, both from the tables
 // proven on their gate-level forms.
-size_t staticAccessTime(size_t width, Technology technology, const EndpointConfig& config);
+SimulationTime staticAccessTime(size_t width, Technology technology, const EndpointConfig& config);
 // Launch from the controller's edge, the device's access to READY (READY
 // follows the data), and a capture margin: the flip-flop setup and the
 // result multiplexers (two gates).
-size_t staticAccessCycles(size_t width, Technology technology, const EndpointConfig& config, size_t period) {
+size_t staticAccessCycles(size_t width, Technology technology, const EndpointConfig& config, SimulationTime period) {
     if (!period) throw std::invalid_argument("staticAccessCycles needs a period");
-    const size_t margin = circuit::dflipflop_timing::setup() + 2 * timing::leafDelay(timing::Leaf::And);
-    const size_t needed = staticAccessTime(width, technology, config) + margin;
-    return std::clamp<size_t>((needed + period - 1) / period, 1, 255);
+    const SimulationTime margin = circuit::dflipflop_timing::setup() + 2 * timing::leafDelay(timing::Leaf::And);
+    const SimulationTime needed = staticAccessTime(width, technology, config) + margin;
+    return static_cast<size_t>(std::clamp<SimulationTime>(needed / period + (needed % period != 0), 1, 255));
 }
-size_t staticAccessTime(size_t width, Technology technology, const EndpointConfig& config) {
+SimulationTime staticAccessTime(size_t width, Technology technology, const EndpointConfig& config) {
     const auto& memory = timing::activeTimingProfile().memory;
-    const size_t gate = timing::leafDelay(timing::Leaf::And);
-    const size_t flop = circuit::dflipflop_timing::clockToOutputMaximum();
+    const SimulationTime gate = timing::leafDelay(timing::Leaf::And);
+    const SimulationTime flop = circuit::dflipflop_timing::clockToOutputMaximum();
     const auto device = nativeDeviceRequest(width, technology, config);
     const size_t rows = config.depth_words / config.words_per_row;
-    const size_t device_fallback = technology == Technology::SRAM
+    const SimulationTime device_fallback = technology == Technology::SRAM
         ? memoryTimerSettle(memory.sram_settle, 34 + width + width / 8, true) + memory.sram_precharge + memory.sramBitline(rows) + 2 * timing::leafDelay(timing::Leaf::MemoryPrimitive) + 14 * gate
         : memoryTimerSettle(memory.rom_settle, 33, false) + memory.romColumn(rows) + timing::leafDelay(timing::Leaf::MemoryPrimitive) + 14 * gate;
     // A clocked macro registers the request at the edge itself: its access
     // is the later of the proven launches from CLK to READY and to the data
     // (the static analysis bounds the data path more loosely than READY).
     if (config.clocked) {
-        const size_t fallback = flop + circuit::sram::clockedSettle(rows) + std::max(memory.sram_precharge, memory.sramBitline(rows)) + memory.sramBitline(rows)
+        const SimulationTime fallback = flop + circuit::sram::clockedSettle(rows) + std::max(memory.sram_precharge, memory.sramBitline(rows)) + memory.sramBitline(rows)
             + 2 * timing::leafDelay(timing::Leaf::MemoryPrimitive) + 14 * gate;
         const auto* table = provenPartDelays(device.contract_id + ".behavioral", device.parameters);
         if (!table) return fallback;
         const auto ready = table->launches.find("READY"), data = table->launches.find("READ_DATA");
         if (ready == table->launches.end()) return fallback;
-        return std::max(ready->second.maximum, data == table->launches.end() ? size_t{0} : data->second.maximum);
+        return std::max(ready->second.maximum, data == table->launches.end() ? SimulationTime{0} : data->second.maximum);
     }
-    const size_t controller = provenMaximum(memoryContractId(technology, "controller", width) + ".behavioral",
+    const SimulationTime controller = provenMaximum(memoryContractId(technology, "controller", width) + ".behavioral",
                                             endpointParameters(config), "MEM_CE_N", flop + gate);
     return controller + provenMaximum(device.contract_id + ".behavioral", device.parameters, "READY", device_fallback);
 }
@@ -349,7 +349,7 @@ class SRAMDeviceModel final : public DeviceModel {
     Bits address_, data_, mask_;
     LogicValue ce_ = X, we_ = X, oe_ = X, clock_ = X;
     bool seen_ = false;
-    size_t access_time_;
+    SimulationTime access_time_;
     bool selected() const { return known(address_) && number(address_) < config_.depth_words; }
     Bits output() const {
         if (ce_ != L || we_ != H || oe_ != L) return Bits(width_, Z);
@@ -361,7 +361,7 @@ public:
     }
     // A clocked macro: an edge with CE_N low registers the request; READY and
     // the word one access time after the edge, held until the next access.
-    void updateClocked(size_t t, const Signals& s) {
+    void updateClocked(SimulationTime t, const Signals& s) {
         const auto clock = signal(s, "CLK")[0], ce = signal(s, "CE_N")[0], oe = signal(s, "OE_N")[0];
         const bool edge = clock_ == L && clock == H;
         clock_ = clock;
@@ -379,7 +379,7 @@ public:
         outputs["READY"] = {ce_ == L && binary(we_) ? H : X};
         outputs["READ_DATA"] = output();
     }
-    void update(size_t t, const Signals& s) override {
+    void update(SimulationTime t, const Signals& s) override {
         if (config_.clocked) { updateClocked(t, s); return; }
         const auto address = signal(s, "WORD_ADDR", 32), data = signal(s, "WRITE_DATA", width_), mask = signal(s, "WRITE_MASK", width_ / 8);
         const auto ce = signal(s, "CE_N")[0], we = signal(s, "WE_N")[0], oe = signal(s, "OE_N")[0];
@@ -405,7 +405,7 @@ class ROMDeviceModel final : public DeviceModel {
     Bits address_;
     LogicValue ce_ = X, oe_ = X;
     bool seen_ = false;
-    size_t access_time_;
+    SimulationTime access_time_;
     Bits output() const {
         if (ce_ == H || oe_ == H) return Bits(width_, Z);
         return ce_ == L && oe_ == L && known(address_) && number(address_) < config_.depth_words
@@ -418,7 +418,7 @@ public:
         storage.loadBytes(0, image);
         outputs["READY"] = {L};
     }
-    void update(size_t t, const Signals& s) override {
+    void update(SimulationTime t, const Signals& s) override {
         const auto address = signal(s, "WORD_ADDR", 32);
         const auto ce = signal(s, "CE_N")[0], oe = signal(s, "OE_N")[0];
         if (!seen_ || address != address_ || ce != ce_) {
@@ -438,7 +438,7 @@ public:
 class DRAMDeviceModel final : public DeviceModel {
     memory_detail::DRAMSyncControl control_;
     Bits buffer_;
-    std::map<size_t, size_t> closed_;
+    std::map<size_t, SimulationTime> closed_;
     bool wl_ = false, sense_ = false, write_ = false;
 public:
     DRAMDeviceModel(size_t w, EndpointConfig c)
@@ -449,12 +449,12 @@ public:
         const auto& a = control_.accepted;
         return {{"activate", a[1]}, {"read", a[2]}, {"write", a[3]}, {"precharge", a[4]}, {"refresh", a[5]}, {"read_burst", a[6]}};
     }
-    void update(size_t t, const Signals& s) override {
+    void update(SimulationTime t, const Signals& s) override {
         if (edge(s)) control_.edge(t, signal(s, "CMD", 3), signal(s, "ADDR", 32), signal(s, "WRITE_DATA", width_), signal(s, "WRITE_MASK", width_ / 8));
         const bool wl = control_.wordline(t), sense = control_.sensing(t), write = control_.writing(t), precharge = control_.precharging(t);
         const auto start = uint32_t(control_.row * config_.words_per_row * (width_ / 8));
         if (!wl_ && wl) {
-            auto it = closed_.find(control_.row); size_t closed = it == closed_.end() ? 0 : it->second;
+            auto it = closed_.find(control_.row); SimulationTime closed = it == closed_.end() ? 0 : it->second;
             // Storage keeps the logical row while it is open (DRAMBehavioral).
             buffer_ = t - closed >= config_.retention_ticks ? Bits(buffer_.size(), X) : storage.readLogic(start, buffer_.size() / 8);
         }
@@ -483,7 +483,7 @@ public:
         : DeviceModel(w, c, H), control_(w, c.depth_words, c.depth_words / c.words_per_row, c.program_ticks, c.erase_ticks) {
         outputs["WRITE_ENABLED"] = {L};
     }
-    void update(size_t t, const Signals& s) override {
+    void update(SimulationTime t, const Signals& s) override {
         if (edge(s)) control_.edge(t, signal(s, "CMD", 3), signal(s, "WORD_ADDR", 32), signal(s, "WRITE_DATA", width_), signal(s, "WRITE_MASK", width_ / 8));
         const bool program = control_.programPulse(t), erase = control_.erasePulse(t);
         if (program && !program_) writeWord(t, control_.address, control_.data, control_.mask, true);

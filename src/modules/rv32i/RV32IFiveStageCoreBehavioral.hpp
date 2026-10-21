@@ -1,5 +1,7 @@
 #pragma once
 
+#include "simulator/SimulationTime.hpp"
+
 #include "components/BasicComponent.hpp"
 #include "RV32IMemoryRequestModel.hpp"
 #include "components/capabilities/RV32IPipelineStateView.hpp"
@@ -25,7 +27,7 @@ public:
     static constexpr const char* TypeName = "RV32IFiveStageCore";
     const char* getTypeName() const override { return TypeName; }
 
-    void evaluate(size_t current_time, Simulator& simulator) override;
+    void evaluate(SimulationTime current_time, Simulator& simulator) override;
     rv32i::RV32IArchitecturalState
     snapshotPipelineState(uint32_t observed_pc) const override;
 
@@ -109,7 +111,7 @@ private:
 
     void resetState();
     void advanceOneCycle();
-    void driveOutputs(size_t current_time, Simulator& simulator);
+    void driveOutputs(SimulationTime current_time, Simulator& simulator);
 
     DecodeExecuteState decode(
         const FetchDecodeState& state,

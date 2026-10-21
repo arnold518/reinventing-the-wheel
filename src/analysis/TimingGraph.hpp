@@ -25,6 +25,12 @@ using Tick = long long;
 inline constexpr Tick NEVER = -1;
 // "No bound established."
 inline constexpr Tick OPEN = std::numeric_limits<Tick>::max();
+// Relative timing analysis reserves OPEN; reject unrepresentable contracts.
+inline Tick checkedTick(SimulationTime ticks) {
+    if (ticks >= static_cast<SimulationTime>(OPEN))
+        throw std::overflow_error("Timing contract exceeds signed analysis range");
+    return static_cast<Tick>(ticks);
+}
 // Sets of the four logic values, as bits.
 inline constexpr uint8_t LOW = 1, HIGH = 2, X = 4, Z = 8, BINARY = 3, ANY = 15;
 

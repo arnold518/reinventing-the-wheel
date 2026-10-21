@@ -1,4 +1,6 @@
 #pragma once
+
+#include "simulator/SimulationTime.hpp"
 // Private factory implementation; callers use families::RV32ISingleCycleSystem.
 
 #include "components/BasicComponent.hpp"
@@ -25,7 +27,7 @@ public:
     explicit RV32IReferenceSystem(std::string name);
     static constexpr const char* TypeName = "RV32ISingleCycleSystem";
     const char* getTypeName() const override { return TypeName; }
-    void evaluate(size_t current_time, Simulator& simulator) override;
+    void evaluate(SimulationTime current_time, Simulator& simulator) override;
 
     std::shared_ptr<MemoryStorage> instructionMemory() const {
         return instruction_memory_;
@@ -73,12 +75,12 @@ public:
     }
     std::map<uint32_t, uint8_t>
     dataMemoryWritesInTimeRange(
-        size_t start_time,
-        size_t end_time) const override;
+        SimulationTime start_time,
+        SimulationTime end_time) const override;
 
 private:
     struct DataMemoryWrite {
-        size_t time = 0;
+        SimulationTime time = 0;
         uint32_t address = 0;
         uint8_t value = 0;
     };
@@ -92,6 +94,6 @@ private:
     std::vector<DataMemoryWrite> data_memory_write_history_{};
     LogicValue previous_clk_ = LogicValue::UNKNOWN;
 
-    void applyDataMemoryWrite(size_t current_time);
-    void publishOutputs(Simulator& simulator, size_t current_time);
+    void applyDataMemoryWrite(SimulationTime current_time);
+    void publishOutputs(Simulator& simulator, SimulationTime current_time);
 };

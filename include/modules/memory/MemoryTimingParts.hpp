@@ -1,5 +1,7 @@
 #pragma once
 
+#include "simulator/SimulationTime.hpp"
+
 #include "components/BasicComponent.hpp"
 #include "components/IOComponent.hpp"
 #include <cstddef>
@@ -20,13 +22,13 @@ namespace circuit::memory {
 // so a restarted sequence never sees a late edge of the previous one.
 class MemoryDelayLine : public BasicComponent {
 public:
-    MemoryDelayLine(std::string name, size_t delay, size_t fall_delay = static_cast<size_t>(-1));
+    MemoryDelayLine(std::string name, SimulationTime delay, SimulationTime fall_delay = MAX_SIMULATION_TIME);
     const char* getTypeName() const override { return "MemoryDelayLine"; }
     PrimitiveTiming primitiveTiming() const override { return PrimitiveTiming::InputsOnly; }
-    void evaluate(size_t time, Simulator& simulator) override;
-    size_t fallDelay() const { return fall_delay_; }
+    void evaluate(SimulationTime time, Simulator& simulator) override;
+    SimulationTime fallDelay() const { return fall_delay_; }
 private:
-    size_t fall_delay_;
+    SimulationTime fall_delay_;
     std::vector<std::weak_ptr<Event>> pending_;
 };
 
@@ -36,10 +38,10 @@ private:
 // length. Width 1 to 32.
 class MemoryWire : public BasicComponent {
 public:
-    MemoryWire(std::string name, size_t width, size_t delay);
+    MemoryWire(std::string name, size_t width, SimulationTime delay);
     const char* getTypeName() const override { return type_.c_str(); }
     PrimitiveTiming primitiveTiming() const override { return PrimitiveTiming::InputsOnly; }
-    void evaluate(size_t time, Simulator& simulator) override;
+    void evaluate(SimulationTime time, Simulator& simulator) override;
 private:
     std::string type_;
 };
@@ -54,10 +56,10 @@ class MemoryBus : public BasicComponent {
 public:
     // `pulled_low`: a line with a pull-down reads 0 when no driver is on
     // (a status line such as READY); otherwise it floats (Z).
-    MemoryBus(std::string name, size_t drivers, size_t width, size_t delay, bool pulled_low = false);
+    MemoryBus(std::string name, size_t drivers, size_t width, SimulationTime delay, bool pulled_low = false);
     const char* getTypeName() const override { return type_.c_str(); }
     PrimitiveTiming primitiveTiming() const override { return PrimitiveTiming::InputsOnly; }
-    void evaluate(size_t time, Simulator& simulator) override;
+    void evaluate(SimulationTime time, Simulator& simulator) override;
 private:
     size_t drivers_, width_;
     bool pulled_low_;
@@ -73,7 +75,7 @@ public:
     explicit SymbolicDiffer(std::string name);
     const char* getTypeName() const override { return "SymbolicDiffer"; }
     PrimitiveTiming primitiveTiming() const override { return PrimitiveTiming::InputsOnly; }
-    void evaluate(size_t time, Simulator& simulator) override;
+    void evaluate(SimulationTime time, Simulator& simulator) override;
 protected:
     bool inertialDelay() const override { return true; }
 };
@@ -89,7 +91,7 @@ public:
     ProtocolStableData(std::string name, size_t width);
     const char* getTypeName() const override { return "ProtocolStableData"; }
     PrimitiveTiming primitiveTiming() const override { return PrimitiveTiming::InputsOnly; }
-    void evaluate(size_t time, Simulator& simulator) override;
+    void evaluate(SimulationTime time, Simulator& simulator) override;
 };
 
 // KNOWN is 1 when every bit of IN is 0 or 1. Unknown-value detection is
@@ -99,7 +101,7 @@ public:
     KnownBits(std::string name, size_t width);
     const char* getTypeName() const override { return "KnownBits"; }
     PrimitiveTiming primitiveTiming() const override { return PrimitiveTiming::InputsOnly; }
-    void evaluate(size_t time, Simulator& simulator) override;
+    void evaluate(SimulationTime time, Simulator& simulator) override;
 };
 
 // A device's power-on reset: OUT is 1 from the start of the simulation for
@@ -108,12 +110,12 @@ public:
 // (DRAM, NOR flash) starts idle through it.
 class PowerOnReset : public BasicComponent {
 public:
-    PowerOnReset(std::string name, size_t width);
+    PowerOnReset(std::string name, SimulationTime width);
     const char* getTypeName() const override { return "PowerOnReset"; }
-    void scheduleInitialEvents(Simulator& simulator, size_t time) override;
-    void evaluate(size_t time, Simulator& simulator) override;
+    void scheduleInitialEvents(Simulator& simulator, SimulationTime time) override;
+    void evaluate(SimulationTime time, Simulator& simulator) override;
 private:
-    size_t width_;
+    SimulationTime width_;
 };
 
 // Two clocked stages that bring an asynchronous device signal (READY, BUSY)
@@ -129,7 +131,7 @@ class Synchronizer : public BasicComponent {
 public:
     explicit Synchronizer(std::string name, size_t stages = 2);
     const char* getTypeName() const override { return "Synchronizer"; }
-    void evaluate(size_t time, Simulator& simulator) override;
+    void evaluate(SimulationTime time, Simulator& simulator) override;
 private:
     size_t stages_;
     LogicValue first_ = LogicValue::LOW, second_ = LogicValue::LOW, previous_clock_ = LogicValue::UNKNOWN;
@@ -148,7 +150,7 @@ private:
 // decoder) so the stage ends when that path has settled, in every timing
 // profile. Unknown inputs make the stages unknown.
 struct MemoryTimerStage {
-    size_t delay_ticks = 0;  // a delay line first, 0 for none
+    SimulationTime delay_ticks = 0;  // a delay line first, 0 for none
     size_t replica_gates = 1; // then this many AND gates (at least one)
 };
 // The settle interval a MemoryTimer actually uses. An input's change is seen
@@ -159,7 +161,7 @@ struct MemoryTimerStage {
 // gate) plus one gate, like an address-transition detector sized against its
 // own logic; below that the configured value would lose changes under
 // inertial delay or let held inputs reach a still-running access.
-size_t memoryTimerSettle(size_t configured, size_t inputs, bool conditional);
+SimulationTime memoryTimerSettle(SimulationTime configured, size_t inputs, bool conditional);
 
 class MemoryTimer : public IOComponent {
 public:
@@ -168,12 +170,13 @@ public:
     // `detected` on are only held, never watched: a clocked macro starts on
     // its access token alone, while its registered address and data still
     // reach the array only once the previous access has been cleared.
-    MemoryTimer(std::string name, size_t inputs, size_t settle_ticks, std::vector<MemoryTimerStage> stages,
+    MemoryTimer(std::string name, size_t inputs, SimulationTime settle_ticks, std::vector<MemoryTimerStage> stages,
                 size_t conditional_from = static_cast<size_t>(-1), size_t detected = static_cast<size_t>(-1));
     const char* getTypeName() const override { return type_.c_str(); }
     void buildInternals(ComponentBuilder& builder) override;
 private:
-    size_t inputs_, settle_, conditional_from_, detected_;
+    size_t inputs_, conditional_from_, detected_;
+    SimulationTime settle_;
     std::vector<MemoryTimerStage> stages_;
     std::string type_;
 };

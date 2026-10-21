@@ -17,7 +17,7 @@ BitSplitter<WIDTH>::BitSplitter(std::string name)
       }) {}
 
 template<size_t WIDTH>
-void BitSplitter<WIDTH>::evaluate(size_t current_time, Simulator& simulator) {
+void BitSplitter<WIDTH>::evaluate(SimulationTime current_time, Simulator& simulator) {
     auto input = getInputPin<WIDTH>("IN");
     if (!input) {
         return;
@@ -38,7 +38,7 @@ BitJoiner<WIDTH>::BitJoiner(std::string name)
       }) {}
 
 template<size_t WIDTH>
-void BitJoiner<WIDTH>::evaluate(size_t current_time, Simulator& simulator) {
+void BitJoiner<WIDTH>::evaluate(SimulationTime current_time, Simulator& simulator) {
     std::vector<LogicValue> values(WIDTH, LogicValue::UNKNOWN);
     for (size_t i = 0; i < WIDTH; ++i) {
         if (auto input = getInputPin("IN_" + std::to_string(i))) {
@@ -53,8 +53,8 @@ void BitJoiner<WIDTH>::evaluate(size_t current_time, Simulator& simulator) {
 
     output->setValueFromVector(values);
     if (auto wire = output->getExternalWire()) {
-        simulator.scheduleEvent(std::make_shared<WireUpdateEvent<WIDTH>>(current_time + getDelay(), wire, values));
+        simulator.scheduleEvent(std::make_shared<WireUpdateEvent<WIDTH>>(checkedTimeAdd(current_time, getDelay()), wire, values));
     } else {
-        simulator.recordPinChange(current_time + getDelay(), output, values);
+        simulator.recordPinChange(checkedTimeAdd(current_time, getDelay()), output, values);
     }
 }

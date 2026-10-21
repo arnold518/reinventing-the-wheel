@@ -76,8 +76,8 @@ EndpointConfig endpointConfig(const ParameterMap& p) {
              "max_resident_bytes", "max_history_bytes", "paged", "record_history", "image_hex", "always_ready", "clocked"});
     EndpointConfig c;
 #define PARAM(n) c.n = parameter(p, #n, c.n)
-    PARAM(depth_words); PARAM(words_per_row); PARAM(block_words); PARAM(phase_ticks); PARAM(guard_ticks);
-    PARAM(program_ticks); PARAM(erase_ticks); PARAM(retention_ticks); PARAM(refresh_interval_ticks);
+    PARAM(depth_words); PARAM(words_per_row); PARAM(block_words); c.phase_ticks = timeParameter(p, "phase_ticks", c.phase_ticks); c.guard_ticks = timeParameter(p, "guard_ticks", c.guard_ticks);
+    c.program_ticks = timeParameter(p, "program_ticks", c.program_ticks); c.erase_ticks = timeParameter(p, "erase_ticks", c.erase_ticks); c.retention_ticks = timeParameter(p, "retention_ticks", c.retention_ticks); c.refresh_interval_ticks = timeParameter(p, "refresh_interval_ticks", c.refresh_interval_ticks);
     PARAM(refresh_interval_cycles); PARAM(access_cycles); PARAM(max_resident_bytes); PARAM(max_history_bytes);
 #undef PARAM
     auto paged = parameter(p, "paged", 1), history = parameter(p, "record_history", 1);

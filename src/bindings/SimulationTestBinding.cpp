@@ -18,7 +18,7 @@ public:
     void verifyResults() override { PYBIND11_OVERRIDE_PURE(void, SimulationTest, verifyResults); }
     
     // Use PYBIND11_OVERRIDE for non-pure virtual methods if you want them to be overridable in Python.
-    size_t getRunDuration() const override { PYBIND11_OVERRIDE(size_t, SimulationTest, getRunDuration); }
+    SimulationTime getRunDuration() const override { PYBIND11_OVERRIDE(SimulationTime, SimulationTest, getRunDuration); }
     std::vector<SimulationTest::SimulationCheckpoint> getCheckpoints() const override {
         PYBIND11_OVERRIDE(std::vector<SimulationTest::SimulationCheckpoint>, SimulationTest, getCheckpoints);
     }

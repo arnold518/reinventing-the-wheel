@@ -176,7 +176,7 @@ void RV32ISingleCycleDecodeStage::buildInternals(ComponentBuilder& b) {
     out(w,*this,registers_,"RS2_DATA","RS2_VALUE");
     w.finish();
 }
-std::vector<std::vector<LogicValue>> RV32ISingleCycleDecodeStage::getRegisterStateAtTime(size_t t) const {
+std::vector<std::vector<LogicValue>> RV32ISingleCycleDecodeStage::getRegisterStateAtTime(SimulationTime t) const {
     auto view=std::dynamic_pointer_cast<RegisterStateView>(registers_);
     if(!view) throw std::logic_error("Decode register-state capability missing");
     return view->getRegisterStateAtTime(t);

@@ -1,9 +1,10 @@
 // Export only scenarios requested by documentation, from the published WASM
 // engine. Expectations come from C++ test actions, never from observed output.
 import assert from 'node:assert/strict';
-import { readFile, readdir, writeFile, rename } from 'node:fs/promises';
-import { resolve, join } from 'node:path';
-import { pathToFileURL } from 'node:url';
+import { readFile, readdir, writeFile, rename, mkdtemp, rm } from 'node:fs/promises';
+import { resolve, join, dirname } from 'node:path';
+import { pathToFileURL, fileURLToPath } from 'node:url';
+import { spawn } from 'node:child_process';
 
 const [modulePath, wasmPath, docsPath, outputPath, filterText, previousPath] = process.argv.slice(2);
 // Focused regeneration preserves older verified exports without rerunning their
@@ -32,6 +33,49 @@ async function discover(directory) {
 }
 await discover(resolve(docsPath));
 assert(requested.size > 0, 'No documentation example scenarios found');
+// Compact circuit programs and WASM linear memory retain their high-water
+// allocation. A constrained build can regenerate every requested group in a
+// fresh process, retaining the same row/state assertions in each child.
+if (process.env.CIRCUITSIM_EXAMPLES_ISOLATE === '1') {
+  const destination = resolve(outputPath);
+  const temporaryDirectory = await mkdtemp(join(dirname(destination), '.example-rows-'));
+  const staged = join(temporaryDirectory, 'rows.json');
+  try {
+    await writeFile(staged, JSON.stringify(filter ? previous : {schemaVersion:1,scenarios:{},programs:{}}));
+    const selected = [...new Set([...requested, ...requestedPrograms]
+      .filter(([, test]) => !filter || filter.test(test)).map(([, test]) => test))];
+    for (const test of selected) {
+      const pattern = '^' + test.replace(/[.*+?^{}$()|[\]\\]/g, '\\$&') + '$';
+      await new Promise((accept, reject) => {
+        const child = spawn(process.execPath, [fileURLToPath(import.meta.url),
+          modulePath, wasmPath, docsPath, staged, pattern, staged], {
+          stdio:'inherit', env:{...process.env,CIRCUITSIM_EXAMPLES_ISOLATE:'0'},
+        });
+        child.once('error', reject);
+        child.once('exit', (code, signal) => code === 0 ? accept() :
+          reject(new Error('Example group ' + test + ' failed: ' + (signal || code))));
+      });
+    }
+    const completed = JSON.parse(await readFile(staged, 'utf8'));
+    const scenarios = filter ? {...previous.scenarios} : {};
+    const programs = filter ? {...previous.programs} : {};
+    for (const [source, target, exported] of [
+      [requested, scenarios, completed.scenarios], [requestedPrograms, programs, completed.programs],
+    ]) {
+      for (const [alias, test] of source) {
+        if (filter && !filter.test(test)) continue;
+        assert(Object.hasOwn(exported, alias), 'Missing isolated export: ' + alias);
+        target[alias] = exported[alias];
+      }
+    }
+    await writeFile(staged, JSON.stringify({schemaVersion:1,scenarios,programs}, null, 2) + '\n');
+    await rename(staged, destination);
+    console.log('Verified ' + selected.length + ' example groups in separate processes');
+  } finally {
+    await rm(temporaryDirectory, {recursive:true,force:true});
+  }
+  process.exit(0);
+}
 const imported = await import(pathToFileURL(resolve(modulePath)));
 const module = await imported.default({ wasmBinary: await readFile(wasmPath) });
 const scenarios = filter ? { ...previous.scenarios } : {};

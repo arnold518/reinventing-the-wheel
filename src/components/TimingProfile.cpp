@@ -31,7 +31,7 @@ const std::vector<TimingProfile>& profiles() {
             profile.name = std::move(name);
             profile.description = std::move(description);
             profile.tick_picoseconds = 1;
-            const auto ps = [fo4](double multiple) { return static_cast<size_t>(multiple * fo4 + 0.5); };
+            const auto ps = [fo4](double multiple) { return static_cast<SimulationTime>(multiple * fo4 + 0.5); };
             profile.not_gate = ps(1.0);
             profile.nand_gate = ps(1.35);
             profile.nor_gate = ps(1.55);
@@ -117,7 +117,7 @@ const TimingProfile* active = nullptr;
 
 } // namespace
 
-size_t TimingProfile::delay(Leaf leaf) const {
+SimulationTime TimingProfile::delay(Leaf leaf) const {
     switch (leaf) {
     case Leaf::Not: return not_gate;
     case Leaf::And: return and_gate;

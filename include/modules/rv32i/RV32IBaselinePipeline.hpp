@@ -1,5 +1,7 @@
 #pragma once
 
+#include "simulator/SimulationTime.hpp"
+
 #include "components/IOComponent.hpp"
 #include "components/capabilities/RegisterStateView.hpp"
 #include "components/capabilities/RV32IPipelineStateView.hpp"
@@ -64,7 +66,7 @@ public:
     static constexpr const char* TypeName = "RV32IBaselineDecodeStage";
     const char* getTypeName() const override { return TypeName; }
     void buildInternals(ComponentBuilder&) override;
-    std::vector<std::vector<LogicValue>> getRegisterStateAtTime(size_t time) const override;
+    std::vector<std::vector<LogicValue>> getRegisterStateAtTime(SimulationTime time) const override;
 private:
     std::shared_ptr<IOComponent> registers_;
 };

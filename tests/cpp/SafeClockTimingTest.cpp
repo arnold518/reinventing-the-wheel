@@ -26,7 +26,7 @@ bool mentions(const ClockTimingReport& r, const std::string& text) {
     for (const auto& d : r.diagnostics) if (d.find(text) != std::string::npos) return true;
     return false;
 }
-void safe(const ClockTimingReport& r, size_t period) {
+void safe(const ClockTimingReport& r, SimulationTime period) {
     for (const auto& d : r.diagnostics) std::cerr << d << '\n';
     check(r.status == ClockTimingStatus::SafeUnderContracts && r.safe_period_ticks == period,
           "Expected safe period " + std::to_string(period) + ", got "
@@ -44,12 +44,12 @@ public:
     TestRegister(std::string name) : BasicComponent(std::move(name), 2, [](IOComponent* c) {
         c->addPin("CLK", PinType::INPUT); c->addPin("D", PinType::INPUT); c->addPin("Q", PinType::OUTPUT);
     }) {}
-    void evaluate(size_t, Simulator&) override {}
+    void evaluate(SimulationTime, Simulator&) override {}
 };
 class UnmodeledGate : public NOTGate {
 public:
     using NOTGate::NOTGate;
-    void evaluate(size_t, Simulator&) override {}
+    void evaluate(SimulationTime, Simulator&) override {}
 };
 struct Fixture {
     std::shared_ptr<IOComponent> root = Component::create<IOComponent>("ROOT", [](IOComponent* c) {
@@ -295,7 +295,7 @@ void structuralAdder() {
     auto rst=b.addNewWire("reset_drive",nullptr,{root->getInputPin("RST")});
     std::vector<std::shared_ptr<Wire<>>> data;
     for(const auto& n:names)data.push_back(b.addNewWire("drive"+n,nullptr,{root->getInputPin(n)}));
-    auto drive=[&](const auto& wire,size_t t,bool v){sim.scheduleEvent(std::make_shared<WireUpdateEvent<>>(t,wire,v?LogicValue::HIGH:LogicValue::LOW));};
+    auto drive=[&](const auto& wire,SimulationTime t,bool v){sim.scheduleEvent(std::make_shared<WireUpdateEvent<>>(t,wire,v?LogicValue::HIGH:LogicValue::LOW));};
     one->scheduleInitialEvents(sim,0);drive(clk,0,false);drive(rst,0,true);
     for(const auto& w:data)drive(w,0,false);
     sim.runAndRecord(4*period);drive(rst,4*period+1,false);sim.runAndRecord(8*period);

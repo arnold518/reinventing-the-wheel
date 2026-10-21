@@ -12,10 +12,10 @@
 namespace circuit::sram_cell_timing {
 
 inline const timing::TimingProfile::SRAMCell& contract() { return timing::activeTimingProfile().sram_cell; }
-inline size_t earliest() { return contract().earliest; }              // first change of Q or Q_BAR after an input change
-inline size_t latest() { return contract().latest; }                  // last change
+inline SimulationTime earliest() { return contract().earliest; }              // first change of Q or Q_BAR after an input change
+inline SimulationTime latest() { return contract().latest; }                  // last change
 // Input changes closer together than this can leave the latch oscillating.
 // The SRAM access control spaces its phases far wider.
-inline size_t minimumSpacing() { return contract().minimum_spacing; }
+inline SimulationTime minimumSpacing() { return contract().minimum_spacing; }
 
 } // namespace circuit::sram_cell_timing

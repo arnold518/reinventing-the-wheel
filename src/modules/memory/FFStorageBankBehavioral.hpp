@@ -1,5 +1,7 @@
 #pragma once
 
+#include "simulator/SimulationTime.hpp"
+
 #include "components/BasicComponent.hpp"
 #include "modules/memory/FFStorageBank.hpp"
 #include <array>
@@ -15,7 +17,7 @@ public:
         for (auto& word : words_) word.fill(LogicValue::UNKNOWN);
     }
     const char* getTypeName() const override { return type_.c_str(); }
-    void evaluate(size_t time, Simulator& sim) override {
+    void evaluate(SimulationTime time, Simulator& sim) override {
         const auto reset = getInputValue("RST"), clock = getInputValue("CLK");
         const auto data = this->template getInputPin<Width>("WRITE_DATA")->getValueAsVector();
         const auto mask = this->template getInputPin<Width / 8>("WRITE_MASK")->getValueAsVector();

@@ -92,6 +92,14 @@
     {
       "id": "developer",
       "title": "Developer circuits"
+    },
+    {
+      "id": "rv32im",
+      "title": "RV32IM / Integer multiply and divide"
+    },
+    {
+      "id": "device-io",
+      "title": "Device I/O / Recorded components"
     }
   ],
   "aliases": {
@@ -390,6 +398,72 @@
     ],
     "RV32IMemoryArrangementDIDTest": [
       "rv32i-memory-did"
+    ],
+    "MultiplyStepScenarioTest": [
+      "multiply-step"
+    ],
+    "DivideStepScenarioTest": [
+      "divide-step"
+    ],
+    "Multiplier32ScenarioTest": [
+      "multiplier32"
+    ],
+    "Divider32ScenarioTest": [
+      "divider32"
+    ],
+    "MulDivUnit32ScenarioTest": [
+      "mul-div-unit32"
+    ],
+    "RV32IMDecodeControlScenarioTest": [
+      "rv32im-decode-control"
+    ],
+    "RV32IMDecodeStageScenarioTest": [
+      "rv32im-decode-stage"
+    ],
+    "RV32IMExecuteStageScenarioTest": [
+      "rv32im-execute-stage"
+    ],
+    "RV32IMPipelineCoordinatorScenarioTest": [
+      "rv32im-coordinator"
+    ],
+    "RV32IMFiveStageCoreScenarioTest": [
+      "rv32im-core"
+    ],
+    "ClockedCounterScenarioTest": [
+      "clocked-counter"
+    ],
+    "SynchronousFifoScenarioTest": [
+      "synchronous-fifo"
+    ],
+    "DeviceRegisterPort32ScenarioTest": [
+      "device-register-port32"
+    ],
+    "BusErrorTarget32ScenarioTest": [
+      "bus-error-target32"
+    ],
+    "AddressRouter32ScenarioTest": [
+      "address-router32"
+    ],
+    "InstructionAccessGuard32ScenarioTest": [
+      "instruction-access-guard32"
+    ],
+    "ConsoleDevice32ScenarioTest": [
+      "console-device32"
+    ],
+    "TimerDevice32ScenarioTest": [
+      "timer-device32"
+    ],
+    "ButtonDevice32ScenarioTest": [
+      "button-device32"
+    ],
+    "IndexedPixelSelector32ScenarioTest": [
+      "indexed-pixel-selector32"
+    ],
+    "FramebufferDisplay32ScenarioTest": [
+      "framebuffer-display32"
+    ],
+    "RV32IMDeviceSystemScenarioTest": [
+      "rv32im-device-system"
     ]
   },
   "components": {
@@ -462,7 +536,7 @@
       "group": "memory-interface"
     },
     "RV32ISharedMemoryProgramTest": {
-      "title": "C-ID · L1 caches over one shared memory (program 21)",
+      "title": "C-ID \u00b7 L1 caches over one shared memory (program 21)",
       "group": "memory-systems"
     },
     "MemoryEndpointFFTest": {
@@ -1054,16 +1128,104 @@
       "group": "baseline"
     },
     "RV32IMemoryArrangementBTest": {
-      "title": "B · One shared memory, no caches (program 21)",
+      "title": "B \u00b7 One shared memory, no caches (program 21)",
       "group": "memory-systems"
     },
     "RV32IMemoryArrangementD0Test": {
-      "title": "D-0 · Shared L2 cache below the arbiter (program 21)",
+      "title": "D-0 \u00b7 Shared L2 cache below the arbiter (program 21)",
       "group": "memory-systems"
     },
     "RV32IMemoryArrangementDIDTest": {
-      "title": "D-ID · L1 caches and a shared L2 (program 21)",
+      "title": "D-ID \u00b7 L1 caches and a shared L2 (program 21)",
       "group": "memory-systems"
+    },
+    "MultiplyStepScenarioTest": {
+      "title": "MultiplyStep",
+      "group": "rv32im"
+    },
+    "DivideStepScenarioTest": {
+      "title": "DivideStep",
+      "group": "rv32im"
+    },
+    "Multiplier32ScenarioTest": {
+      "title": "Multiplier32",
+      "group": "rv32im"
+    },
+    "Divider32ScenarioTest": {
+      "title": "Divider32",
+      "group": "rv32im"
+    },
+    "MulDivUnit32ScenarioTest": {
+      "title": "MulDivUnit32",
+      "group": "rv32im"
+    },
+    "RV32IMDecodeControlScenarioTest": {
+      "title": "RV32IMDecodeControl",
+      "group": "rv32im"
+    },
+    "RV32IMDecodeStageScenarioTest": {
+      "title": "RV32IMDecodeStage",
+      "group": "rv32im"
+    },
+    "RV32IMExecuteStageScenarioTest": {
+      "title": "RV32IMExecuteStage",
+      "group": "rv32im"
+    },
+    "RV32IMPipelineCoordinatorScenarioTest": {
+      "title": "RV32IMPipelineCoordinator",
+      "group": "rv32im"
+    },
+    "RV32IMFiveStageCoreScenarioTest": {
+      "title": "RV32IMFiveStageCore",
+      "group": "rv32im"
+    },
+    "ClockedCounterScenarioTest": {
+      "title": "ClockedCounter",
+      "group": "device-io"
+    },
+    "SynchronousFifoScenarioTest": {
+      "title": "SynchronousFifo",
+      "group": "device-io"
+    },
+    "DeviceRegisterPort32ScenarioTest": {
+      "title": "DeviceRegisterPort32",
+      "group": "device-io"
+    },
+    "BusErrorTarget32ScenarioTest": {
+      "title": "BusErrorTarget32",
+      "group": "device-io"
+    },
+    "AddressRouter32ScenarioTest": {
+      "title": "AddressRouter32",
+      "group": "device-io"
+    },
+    "InstructionAccessGuard32ScenarioTest": {
+      "title": "InstructionAccessGuard32",
+      "group": "device-io"
+    },
+    "ConsoleDevice32ScenarioTest": {
+      "title": "ConsoleDevice32",
+      "group": "device-io"
+    },
+    "TimerDevice32ScenarioTest": {
+      "title": "TimerDevice32",
+      "group": "device-io"
+    },
+    "ButtonDevice32ScenarioTest": {
+      "title": "ButtonDevice32",
+      "group": "device-io"
+    },
+    "IndexedPixelSelector32ScenarioTest": {
+      "title": "IndexedPixelSelector32",
+      "group": "device-io"
+    },
+    "FramebufferDisplay32ScenarioTest": {
+      "title": "FramebufferDisplay32",
+      "group": "device-io"
+    },
+    "RV32IMDeviceSystemScenarioTest": {
+      "title": "RV32IMDeviceSystem",
+      "group": "device-io"
     }
   },
   "programs": [

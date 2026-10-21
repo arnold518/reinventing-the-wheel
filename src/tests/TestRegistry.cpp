@@ -1,4 +1,7 @@
 #include "tests/TestRegistry.hpp"
+#include "tests/RV32IMPhase3Tests.hpp"
+#include "tests/SimulationTimeTests.hpp"
+#include "tests/RV32IMRecordedTests.hpp"
 
 #include "tests/ArithmeticLogicTests.hpp"
 #include "tests/ALU8Tests.hpp"
@@ -83,9 +86,13 @@ RegisteredTestKind componentKind(
         "rv32i.core.educational-five-stage",
         "rv32i.system.educational-single-cycle",
         "rv32i.core.baseline-pipeline",
+        "rv32im.core.educational-five-stage",
     };
     if (sequential.count(contract_id) != 0 || contract_id.starts_with("memory.ff.word.") ||
-        contract_id.starts_with("storage.register.")) {
+        contract_id.starts_with("storage.register.") || contract_id.starts_with("device.") ||
+        contract_id.starts_with("bus.") || contract_id == "arithmetic.multiplier.32" ||
+        contract_id == "arithmetic.divider.32" || contract_id == "rv32im.mul-div.32" ||
+        contract_id == "rv32im.pipeline.stage.decode" || contract_id == "rv32im.pipeline.stage.execute") {
         return RegisteredTestKind::Sequential;
     }
     const bool memory_part = contract_id != "memory.ff.cell" &&
@@ -562,9 +569,18 @@ const std::vector<TestRegistryEntry>& getTestRegistry() {
                 {"simulation","integration","program","rv32i","pipeline","cache","memory","slow"},
                 [arrangement]{return std::make_unique<RV32IFiveStageCoreProgramTest>(21,false,std::nullopt,arrangement);},true});
         }
+        appendRV32IMPhase3Tests(entries);
+        appendSimulationTimeTests(entries);
+        appendRV32IMRecordedTests(entries);
         attachComponentMetadata(entries);
         attachNonComponentMetadata(entries);
         markVisualizable(entries);
+        for (auto& entry : entries)
+            if (std::ranges::find(entry.labels,"phase4") != entry.labels.end()) entry.visualizable=false;
+        for (auto& entry : entries)
+            if (entry.name == "SimulationTimeTest" || entry.name == "SimulationTimePlaybackTest")
+                entry.visualizable = false;
+        for(auto& entry:entries) if(std::ranges::find(entry.labels,"phase3")!=entry.labels.end()) entry.visualizable=false;
         return entries;
     }();
     return registry;

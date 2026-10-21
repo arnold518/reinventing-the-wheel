@@ -24,7 +24,7 @@ struct Bench {
     std::shared_ptr<DFlipFlop> flop;
     std::shared_ptr<Wire<>> d, clk, rst, q, q_bar;
     Simulator sim;
-    size_t now = 0;
+    SimulationTime now = 0;
     Bench() {
         ComponentBuilder b(root);
         flop = b.addNewComponent<DFlipFlop>("FLOP");

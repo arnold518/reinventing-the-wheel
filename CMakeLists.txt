@@ -8,6 +8,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 option(CIRCUITSIM_BUILD_PYTHON "Build the native pybind11 visualizer backend" ON)
 option(CIRCUITSIM_BUILD_TESTS "Build the native CTest suite" ON)
 option(CIRCUITSIM_DEPLOY_PYTHON "Copy the native module to the frontend directories" ON)
+option(CIRCUITSIM_SPLIT_DELAY_TABLES "Compile generated delay tables in smaller units (requires Python)" OFF)
 
 if(EMSCRIPTEN)
     set(CIRCUITSIM_BUILD_PYTHON OFF CACHE BOOL "" FORCE)
@@ -42,6 +43,7 @@ set(CORE_LOGIC_SOURCES
     src/components/Component.cpp
     src/components/IOComponent.cpp
     src/components/BasicComponent.cpp
+    src/components/GateListPartBehavioral.cpp
     src/components/TimingProfile.cpp
     src/components/ComponentBuilder.cpp
     src/components/selection/SelectionTypes.cpp
@@ -161,6 +163,23 @@ set(CORE_LOGIC_SOURCES
     src/modules/utility/Rewire.cpp
     src/modules/utility/BitAdapter.cpp
     src/modules/utility/Constant.cpp
+    src/rv32im/RV32IMInstruction.cpp
+    src/modules/rv32im/MulDiv.cpp
+    src/modules/rv32im/MulDivBehavioral.cpp
+    src/modules/rv32im/RV32IMCore.cpp
+    src/modules/rv32im/RV32IMCoreBehavioral.cpp
+    src/modules/rv32im/RV32IMDeviceSystem.cpp
+    src/modules/rv32i/RV32IFiveStageBlueprint.cpp
+    src/modules/rv32i/RV32IDecodeBlueprint.cpp
+    src/modules/device/DeviceBus.cpp
+    src/modules/device/DeviceState.cpp
+    src/modules/device/DeviceDisplay.cpp
+    src/tests/RV32IMPhase3Tests.cpp
+    src/tests/RV32IMPhase3Scenarios.cpp
+    src/tests/SimulationTimeTests.cpp
+    src/tests/RV32IMRecordedTests.cpp
+    src/runtime/RecordedGuest.cpp
+    src/runtime/RecordedGuestFixtures.cpp
     src/rv32i/RV32IDecoder.cpp
     src/rv32i/RV32IControl.cpp
     src/rv32i/RV32IElfImage.cpp
@@ -169,6 +188,7 @@ set(CORE_LOGIC_SOURCES
     src/rv32i/RV32IInstructionOracle.cpp
     src/simulator/Event.cpp
     src/simulator/Simulator.cpp
+    src/visualizer/DeviceInspector.cpp
     src/visualizer/VisualizerSession.cpp
     src/tests/FullCircuitTest.cpp
     src/tests/ComponentTestModel.cpp
@@ -209,10 +229,43 @@ set(BINDING_SOURCES
     src/bindings/PinBinding.cpp
     src/bindings/WireBinding.cpp
     src/bindings/ModulesBinding.cpp
+    src/bindings/BasicModulesBinding.cpp
+    src/bindings/StorageModulesBinding.cpp
+    src/bindings/PipelineModulesBinding.cpp
+    src/bindings/CpuModulesBinding.cpp
+    src/bindings/ArithmeticModulesBinding.cpp
+    src/bindings/UtilityModulesBinding.cpp
     src/bindings/SimulationTestBinding.cpp
     src/bindings/SimulatorBinding.cpp
     src/bindings/TestsBinding.cpp
+    src/bindings/RecordedGuestBinding.cpp
 )
+
+# Optional compiler-memory reduction. Preserve the canonical generated tables
+# and unsplit source path; only whole initializer entries are partitioned.
+if(CIRCUITSIM_SPLIT_DELAY_TABLES)
+    find_package(Python3 COMPONENTS Interpreter REQUIRED)
+    set(_delay_source "${PROJECT_SOURCE_DIR}/src/components/selection")
+    set(_delay_output "${PROJECT_BINARY_DIR}/generated-part-delays")
+    set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
+        "${PROJECT_SOURCE_DIR}/tools/build/split-delay-tables.py"
+        "${_delay_source}/ProvenPartDelays.generated.inc"
+        "${_delay_source}/ProvenPartDelays.embedded.generated.inc"
+        "${_delay_source}/ProvenPartDelays.desktop.generated.inc")
+    execute_process(COMMAND "${Python3_EXECUTABLE}"
+        "${PROJECT_SOURCE_DIR}/tools/build/split-delay-tables.py" --output "${_delay_output}"
+        RESULT_VARIABLE _delay_result)
+    if(NOT _delay_result EQUAL 0)
+        message(FATAL_ERROR "Cannot partition the generated delay tables")
+    endif()
+    foreach(_profile Unit Embedded Desktop)
+        list(REMOVE_ITEM CORE_LOGIC_SOURCES "src/components/selection/ProvenPartDelays${_profile}.cpp")
+        list(APPEND CORE_LOGIC_SOURCES "${_delay_output}/provenPartDelays${_profile}.cpp")
+        foreach(_chunk RANGE 0 7)
+            list(APPEND CORE_LOGIC_SOURCES "${_delay_output}/provenPartDelays${_profile}Chunk${_chunk}.cpp")
+        endforeach()
+    endforeach()
+endif()
 
 # ===================================================================
 # Target 1: The Core Logic Library (SimulatorLib)
@@ -270,13 +323,55 @@ endif()
 # Target 2b: Browser WebAssembly adapter
 # ===================================================================
 if(EMSCRIPTEN)
+    set(CIRCUITSIM_WASM_LINK_OPTIMIZATION "3" CACHE STRING
+        "Emscripten final link optimization level (0, 1, 2, 3, s or z)")
+    set_property(CACHE CIRCUITSIM_WASM_LINK_OPTIMIZATION PROPERTY STRINGS 0 1 2 3 s z)
+    if(NOT CIRCUITSIM_WASM_LINK_OPTIMIZATION MATCHES "^[0123sz]$")
+        message(FATAL_ERROR "Invalid CIRCUITSIM_WASM_LINK_OPTIMIZATION")
+    endif()
+    add_executable(circuitsim_memory_startup EXCLUDE_FROM_ALL tests/cpp/MemoryProvisioningStartupTest.cpp)
+    target_link_libraries(circuitsim_memory_startup PRIVATE SimulatorLib)
+    target_compile_options(circuitsim_memory_startup PRIVATE -fexceptions)
+    target_link_options(circuitsim_memory_startup PRIVATE -fexceptions -sENVIRONMENT=node -sALLOW_MEMORY_GROWTH=1 -sSTACK_SIZE=8388608 -sDISABLE_EXCEPTION_CATCHING=0 -sEXIT_RUNTIME=1 -sFILESYSTEM=0)
+    set_target_properties(circuitsim_memory_startup PROPERTIES SUFFIX ".js")
+    add_executable(circuitsim_system_timing EXCLUDE_FROM_ALL tests/cpp/RV32IMDeviceSystemTimingTest.cpp)
+    target_link_libraries(circuitsim_system_timing PRIVATE SimulatorLib)
+    target_compile_options(circuitsim_system_timing PRIVATE -fexceptions)
+    target_link_options(circuitsim_system_timing PRIVATE -fexceptions -sENVIRONMENT=node -sALLOW_MEMORY_GROWTH=1 -sSTACK_SIZE=8388608 -sDISABLE_EXCEPTION_CATCHING=0 -sEXIT_RUNTIME=1 -sFILESYSTEM=0)
+    set_target_properties(circuitsim_system_timing PROPERTIES SUFFIX ".js")
+    add_executable(circuitsim_gate_list_test EXCLUDE_FROM_ALL tests/cpp/GateListObservationTest.cpp)
+    target_link_libraries(circuitsim_gate_list_test PRIVATE SimulatorLib)
+    target_compile_options(circuitsim_gate_list_test PRIVATE -fexceptions)
+    target_link_options(circuitsim_gate_list_test PRIVATE -fexceptions -sENVIRONMENT=node -sALLOW_MEMORY_GROWTH=1 -sSTACK_SIZE=8388608 -sDISABLE_EXCEPTION_CATCHING=0 -sEXIT_RUNTIME=1 -sFILESYSTEM=0)
+    set_target_properties(circuitsim_gate_list_test PROPERTIES SUFFIX ".js")
+    add_executable(circuitsim_delay_snapshot EXCLUDE_FROM_ALL tests/cpp/DelayTableSnapshot.cpp)
+    target_link_libraries(circuitsim_delay_snapshot PRIVATE SimulatorLib)
+    target_compile_options(circuitsim_delay_snapshot PRIVATE -fexceptions)
+    target_link_options(circuitsim_delay_snapshot PRIVATE -fexceptions -sENVIRONMENT=node -sALLOW_MEMORY_GROWTH=1 -sSTACK_SIZE=8388608 -sDISABLE_EXCEPTION_CATCHING=0 -sEXIT_RUNTIME=1 -sFILESYSTEM=0)
+    set_target_properties(circuitsim_delay_snapshot PROPERTIES SUFFIX ".js")
+    add_executable(circuitsim_recorded_guest EXCLUDE_FROM_ALL tests/cpp/RecordedGuestProbe.cpp)
+    target_link_libraries(circuitsim_recorded_guest PRIVATE SimulatorLib)
+    target_compile_options(circuitsim_recorded_guest PRIVATE -fexceptions)
+    target_link_options(circuitsim_recorded_guest PRIVATE
+        -fexceptions -sENVIRONMENT=node -sALLOW_MEMORY_GROWTH=1
+        -sSTACK_SIZE=8388608 -sDISABLE_EXCEPTION_CATCHING=0
+        -sEXIT_RUNTIME=1 -sFILESYSTEM=0)
+    set_target_properties(circuitsim_recorded_guest PROPERTIES SUFFIX ".js")
+    add_executable(circuitsim_verification EXCLUDE_FROM_ALL tests/cpp/SimulationTestRunner.cpp)
+    target_link_libraries(circuitsim_verification PRIVATE SimulatorLib)
+    target_compile_options(circuitsim_verification PRIVATE -fexceptions)
+    target_link_options(circuitsim_verification PRIVATE
+        -fexceptions -sENVIRONMENT=node -sALLOW_MEMORY_GROWTH=1
+        -sSTACK_SIZE=8388608 -sDISABLE_EXCEPTION_CATCHING=0
+        -sEXIT_RUNTIME=1 -sFILESYSTEM=0)
+    set_target_properties(circuitsim_verification PROPERTIES SUFFIX ".js")
     add_executable(circuitsim_wasm src/wasm/WasmBindings.cpp)
     target_link_libraries(circuitsim_wasm PRIVATE SimulatorLib)
     target_compile_options(SimulatorLib PRIVATE -fexceptions)
     target_compile_options(circuitsim_wasm PRIVATE -O3 -fexceptions)
     target_link_options(circuitsim_wasm PRIVATE
         --bind
-        -O3
+        -O${CIRCUITSIM_WASM_LINK_OPTIMIZATION}
         -fexceptions
         -sMODULARIZE=1
         -sEXPORT_ES6=1

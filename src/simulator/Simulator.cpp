@@ -27,7 +27,7 @@ void restorePinsFromWire(const std::shared_ptr<WireBase>& wire, const std::vecto
 
 Simulator::Simulator() : current_time(0) {}
 
-size_t Simulator::getCurrentTime() const { return current_time; }
+SimulationTime Simulator::getCurrentTime() const { return current_time; }
 
 void Simulator::scheduleEvent(std::shared_ptr<Event> event) {
     if (!event) {
@@ -62,7 +62,7 @@ void Simulator::dropCancelled() const noexcept {
     while (!event_queue.empty() && event_queue.top()->cancelled) event_queue.pop();
 }
 
-void Simulator::advanceAndRecord(size_t target_time) {
+void Simulator::advanceAndRecord(SimulationTime target_time) {
     while (dropCancelled(), !event_queue.empty()) {
         auto event = event_queue.top();
 
@@ -81,7 +81,7 @@ void Simulator::advanceAndRecord(size_t target_time) {
     }
 }
 
-void Simulator::runAndRecord(size_t max_time) {
+void Simulator::runAndRecord(SimulationTime max_time) {
     ++history_revision_;
     _log.clear();
     _pin_log.clear();
@@ -89,7 +89,7 @@ void Simulator::runAndRecord(size_t max_time) {
     advanceAndRecord(max_time);
 }
 
-DrainResult Simulator::drainUntilIdle(size_t deadline, size_t max_events) {
+DrainResult Simulator::drainUntilIdle(SimulationTime deadline, size_t max_events) {
     size_t processed_events = 0;
 
     while (dropCancelled(), !event_queue.empty()) {
@@ -131,7 +131,7 @@ bool Simulator::hasPendingEvents() const noexcept {
     return !event_queue.empty();
 }
 
-std::optional<size_t> Simulator::nextEventTime() const {
+std::optional<SimulationTime> Simulator::nextEventTime() const {
     dropCancelled();
     if (event_queue.empty()) {
         return std::nullopt;
@@ -139,14 +139,14 @@ std::optional<size_t> Simulator::nextEventTime() const {
     return event_queue.top()->time;
 }
 
-void Simulator::setCircuitStateAtTime(size_t target_time) {
+void Simulator::setCircuitStateAtTime(SimulationTime target_time) {
     if (!history_recording_enabled_) {
         throw std::logic_error(
             "Cannot time-travel while simulator history recording is disabled");
     }
     for (const auto& [wire, history] : _log) {
         auto it = std::upper_bound(history.begin(), history.end(), target_time,
-            [](size_t time, const auto& pair) {
+            [](SimulationTime time, const auto& pair) {
                 return time < pair.first;
             });
 
@@ -162,7 +162,7 @@ void Simulator::setCircuitStateAtTime(size_t target_time) {
     }
     for (const auto& [pin, history] : _pin_log) {
         auto it = std::upper_bound(history.begin(), history.end(), target_time,
-            [](size_t time, const auto& pair) {
+            [](SimulationTime time, const auto& pair) {
                 return time < pair.first;
             });
 
@@ -175,8 +175,8 @@ void Simulator::setCircuitStateAtTime(size_t target_time) {
     current_time = target_time;
 }
 
-std::vector<size_t> Simulator::getUniqueTimestamps() const {
-    std::set<size_t> timestamps;
+std::vector<SimulationTime> Simulator::getUniqueTimestamps() const {
+    std::set<SimulationTime> timestamps;
     timestamps.insert(0);
     for (const auto& [_, history] : _log) {
         for (const auto& [time, value] : history) {
@@ -193,7 +193,7 @@ std::vector<size_t> Simulator::getUniqueTimestamps() const {
     return {timestamps.begin(), timestamps.end()};
 }
 
-void Simulator::recordChange(size_t time, std::shared_ptr<WireBase> wire, const std::vector<LogicValue>& value) {
+void Simulator::recordChange(SimulationTime time, std::shared_ptr<WireBase> wire, const std::vector<LogicValue>& value) {
     if (!wire) {
         return;
     }
@@ -212,11 +212,11 @@ void Simulator::recordChange(size_t time, std::shared_ptr<WireBase> wire, const 
     }
 }
 
-void Simulator::recordChange(size_t time, std::shared_ptr<Wire<>> wire, LogicValue value) {
+void Simulator::recordChange(SimulationTime time, std::shared_ptr<Wire<>> wire, LogicValue value) {
     recordChange(time, std::static_pointer_cast<WireBase>(std::move(wire)), std::vector<LogicValue>{value});
 }
 
-void Simulator::recordPinChange(size_t time, std::shared_ptr<PinBase> pin, const std::vector<LogicValue>& value) {
+void Simulator::recordPinChange(SimulationTime time, std::shared_ptr<PinBase> pin, const std::vector<LogicValue>& value) {
     if (!pin) {
         return;
     }

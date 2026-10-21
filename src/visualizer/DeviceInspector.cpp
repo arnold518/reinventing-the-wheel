@@ -1,0 +1,104 @@
+#include "visualizer/DeviceInspector.hpp"
+#include "components/IOComponent.hpp"
+#include "components/capabilities/MemoryStateView.hpp"
+#include "modules/device/DeviceComponents.hpp"
+#include "simulator/Simulator.hpp"
+#include <algorithm>
+#include <sstream>
+#include <stdexcept>
+
+namespace circuit::visualizer {
+namespace {
+std::shared_ptr<IOComponent> child(const std::shared_ptr<Component>& root,const std::string& name) {
+    for(const auto& c:root->getChildren())if(c->getName()==name)return std::dynamic_pointer_cast<IOComponent>(c);
+    throw std::logic_error("Missing observed device child: "+name);
+}
+std::vector<LogicValue> signal(const std::shared_ptr<PinBase>& pin,const Simulator& sim,SimulationTime time) {
+    if(!pin)throw std::logic_error("Missing observed device pin");
+    const auto& history=sim.signalHistory(pin);
+    const auto end=std::upper_bound(history.begin(),history.end(),time,
+        [](SimulationTime t,const auto& item){return t<item.first;});
+    return end==history.begin()?std::vector<LogicValue>(pin->getWidth(),LogicValue::UNKNOWN):std::prev(end)->second;
+}
+std::string quotedBits(const std::vector<LogicValue>& bits) {
+    std::string result="\"";
+    for(auto it=bits.rbegin();it!=bits.rend();++it)
+        result+=*it==LogicValue::LOW?'0':*it==LogicValue::HIGH?'1':*it==LogicValue::HIGH_Z?'Z':'X';
+    return result+'"';
+}
+std::string hex(const std::vector<uint8_t>& bytes){
+    constexpr char digits[]="0123456789abcdef";std::string result;result.reserve(2*bytes.size());
+    for(auto b:bytes){result+=digits[b>>4];result+=digits[b&15];}return result;
+}
+void appendPixels(std::vector<uint8_t>& pixels,std::vector<uint8_t>& known,const std::vector<LogicValue>& bits,size_t limit) {
+    for(size_t i=0;i<bits.size()&&pixels.size()<limit;i+=8){
+        uint8_t value=0,mask=0;
+        for(size_t b=0;b<8;++b){auto v=bits.at(i+b);if(v==LogicValue::HIGH)value|=1u<<b;if(v==LogicValue::HIGH||v==LogicValue::LOW)mask|=1u<<b;}
+        pixels.push_back(value);known.push_back(mask);
+    }
+}
+std::shared_ptr<IOComponent> wordBank(const std::shared_ptr<Component>& node) {
+    if(std::string(node->getTypeName()).starts_with("FFStorageBank<32,"))return std::dynamic_pointer_cast<IOComponent>(node);
+    for(const auto& c:node->getChildren())if(auto bank=wordBank(c))return bank;
+    return {};
+}
+}
+std::string componentLayoutVariant(const std::shared_ptr<Component>& component) {
+    if(auto view=std::dynamic_pointer_cast<ComponentLayoutView>(component))return view->componentLayoutVariant();
+    return {};
+}
+bool supportsDeviceView(const std::shared_ptr<Component>& component) {
+    const std::string type=component->getTypeName();
+    return type=="FramebufferDisplay32"||type=="ButtonDevice32"||type=="ConsoleDevice32"||type=="TimerDevice32"
+        ||type=="SynchronousFifo<8>"||type=="SynchronousFifo<32>";
+}
+std::string deviceStateJson(const std::shared_ptr<Component>& component,const Simulator& sim,size_t index,SimulationTime time) {
+    if(!supportsDeviceView(component))throw std::invalid_argument("Unsupported device view");
+    const auto io=std::dynamic_pointer_cast<IOComponent>(component);
+    std::ostringstream out;out<<"{\"index\":"<<index<<",\"time\":";
+    if(time>MAX_EXACT_JSON_TIME)out<<'"'<<time<<'"';else out<<time;
+    // Instance names may be supplied by callers.
+    const auto quote=[](const std::string& value){
+        constexpr char digits[]="0123456789abcdef";std::string result="\"";
+        for(unsigned char c:value){if(c=='"'||c=='\\'){result+='\\';result+=c;}else if(c<32){result+="\\u00";result+=digits[c>>4];result+=digits[c&15];}else result+=c;}
+        return result+'"';
+    };
+    out<<",\"componentId\":"<<quote(component->getID())<<",\"type\":"<<quote(component->getTypeName());
+    if(!sim.isHistoryRecordingEnabled()){out<<",\"supported\":false,\"reason\":\"Device history is disabled\"}";return out.str();}
+    const auto field=[&](const char* name,const std::shared_ptr<IOComponent>& part,const char* pin){
+        out<<",\""<<name<<"\":"<<quotedBits(signal(part->getOutputPinDynamic(pin),sim,time));
+    };
+    if(auto display=std::dynamic_pointer_cast<FramebufferDisplay32>(component)) {
+        const auto geometry=display->configuration();const auto count=geometry.width*geometry.height;
+        std::vector<uint8_t> pixels,known;pixels.reserve(count);known.reserve(count);
+        const auto storage=child(component,"PIXELS");bool snapshot=false;
+        if(auto view=std::dynamic_pointer_cast<MemoryStateView>(storage)){
+            const MemoryStorage* memory=nullptr;
+            try{memory=&view->memoryStorage();}catch(const std::logic_error&){} // fully expanded cells
+            if(memory){
+                if(!memory->isHistoryRecordingEnabled()){out<<",\"supported\":false,\"reason\":\"Pixel history is disabled\"}";return out.str();}
+                for(const auto& word:memory->getWordsAtTime(time,0,(count+3)/4))appendPixels(pixels,known,word.second,count);
+                snapshot=true;
+            }
+        }
+        if(!snapshot){
+            auto bank=wordBank(storage);if(!bank)throw std::logic_error("Display has no observable pixel words");
+            for(size_t word=0;pixels.size()<count;++word)
+                appendPixels(pixels,known,signal(bank->getOutputPinDynamic("WORD_"+std::to_string(word)),sim,time),count);
+        }
+        out<<",\"kind\":\"display\",\"width\":"<<geometry.width<<",\"height\":"<<geometry.height
+           <<",\"stride\":"<<geometry.width<<",\"format\":\"rgb332\",\"pixels\":\""<<hex(pixels)<<"\",\"known\":\""<<hex(known)<<'"';
+        field("sequence",io,"FRAME_SEQUENCE");field("present",io,"PRESENT");
+    } else if(std::string(component->getTypeName())=="ButtonDevice32") {
+        out<<",\"kind\":\"keyboard\"";field("levels",child(component,"LEVELS"),"Q");
+        const auto fifo=child(component,"EVENTS");field("count",fifo,"COUNT");field("head",fifo,"DATA");field("overflow",fifo,"OVERFLOW");
+    } else if(std::string(component->getTypeName())=="ConsoleDevice32") {
+        out<<",\"kind\":\"console\"";field("valid",io,"TX_VALID");field("data",io,"TX_DATA");field("count",child(component,"TX_FIFO"),"COUNT");
+    } else if(std::string(component->getTypeName())=="TimerDevice32") {
+        out<<",\"kind\":\"timer\"";field("count",child(component,"COUNTER"),"COUNT");
+    } else {
+        out<<",\"kind\":\"queue\"";field("count",io,"COUNT");field("head",io,"DATA");field("full",io,"FULL");field("overflow",io,"OVERFLOW");
+    }
+    out<<",\"supported\":true}";return out.str();
+}
+}

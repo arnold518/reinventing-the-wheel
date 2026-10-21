@@ -194,7 +194,7 @@ public:
     Decoder5to32Behavioral(std::string name, bool zero_output_unused)
         : BasicComponent(std::move(name), 1, addDecoderPins<5>), zero_output_unused_(zero_output_unused) {}
     const char* getTypeName() const override { return Decoder5to32::TypeName; }
-    void evaluate(size_t current_time, Simulator& simulator) override {
+    void evaluate(SimulationTime current_time, Simulator& simulator) override {
         using namespace circuit::logic_values;
         const auto address = getInputPin<5>("ADDR")->getValueAsVector();
         const auto enable = getInputPin("ENABLE")->getValue();

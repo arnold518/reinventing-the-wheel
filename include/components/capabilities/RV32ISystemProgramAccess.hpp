@@ -1,5 +1,7 @@
 #pragma once
 
+#include "simulator/SimulationTime.hpp"
+
 #include "components/capabilities/RV32IStateView.hpp"
 #include "rv32i/RV32IInstructionTrace.hpp"
 #include "rv32i/RV32IProgram.hpp"
@@ -39,6 +41,6 @@ public:
     lastCommittedDataMemoryAccess() const = 0;
     virtual std::map<uint32_t, uint8_t>
     dataMemoryWritesInTimeRange(
-        size_t start_time,
-        size_t end_time) const = 0;
+        SimulationTime start_time,
+        SimulationTime end_time) const = 0;
 };

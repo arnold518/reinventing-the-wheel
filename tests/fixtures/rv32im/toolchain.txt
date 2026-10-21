@@ -1,0 +1,5 @@
+riscv-none-elf-gcc (xPack GNU RISC-V Embedded GCC x86_64) 12.4.0
+compiler SHA256: 4520744a5adb8c745f5e2da4a487ff76026de3bccd62670b2c0997400e03ef74
+multilib: rv32im/ilp32
+flags: -march=rv32im -mabi=ilp32 -msmall-data-limit=0 -mno-relax -O1 -ffreestanding -fno-builtin -nostdlib -nostartfiles -Wl,--no-relax -Wl,--build-id=none -T link.ld
+text instructions: 81

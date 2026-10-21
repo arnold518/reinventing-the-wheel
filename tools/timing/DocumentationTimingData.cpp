@@ -53,13 +53,13 @@ struct Measurement {
     std::string memory, operation, note;
     size_t cycles = 0;
     bool simulated = true;
-    size_t interval_ticks = 0; // the configured device interval when not simulated
+    SimulationTime interval_ticks = 0; // the configured device interval when not simulated
 };
 
 // One memory endpoint with its transaction port on the root's pins.
 class Rig {
 public:
-    Rig(Technology technology, const EndpointConfig& config, bool gates, size_t period) : half_(period / 2) {
+    Rig(Technology technology, const EndpointConfig& config, bool gates, SimulationTime period) : half_(period / 2) {
         const auto& catalog = circuit::builtinComponentCatalog();
         auto profile = gates ? circuit::maximallyStructural() : circuit::strictAllBehavioral();
         auto manifest = std::make_shared<circuit::BuildManifest>(profile.name(), profile.fingerprint());
@@ -166,7 +166,7 @@ EndpointConfig baseConfig(bool full_size) {
 }
 
 // Every measured access of one profile at one clock period.
-std::vector<Measurement> measure(size_t period, bool gates, bool reference_rows = true) {
+std::vector<Measurement> measure(SimulationTime period, bool gates, bool reference_rows = true) {
     const auto& reference = circuit::timing::activeTimingProfile().memory;
     std::vector<Measurement> rows;
     const auto add = [&](std::string memory, std::string operation, size_t cycles, std::string note = {}) {

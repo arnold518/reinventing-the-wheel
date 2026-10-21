@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstddef>
+#include "simulator/SimulationTime.hpp"
 #include <cstdint>
 #include <map>
 #include <memory>
@@ -73,7 +74,7 @@ private:
     std::unique_ptr<SimulationTest> test_;
     std::shared_ptr<Component> root_;
     Simulator* simulator_ = nullptr;
-    std::vector<size_t> timestamps_;
+    std::vector<SimulationTime> timestamps_;
 
     std::vector<ComponentRecord> components_;
     std::vector<PinRecord> pins_;

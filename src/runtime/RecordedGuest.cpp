@@ -1,0 +1,304 @@
+#include "runtime/RecordedGuest.hpp"
+#include "components/BasicComponent.hpp"
+#include "components/ComponentBuilder.tpp"
+#include "components/selection/StandardProfiles.hpp"
+#include "components/selection/BuiltinComponentCatalog.hpp"
+#include "components/selection/BuildManifest.hpp"
+#include "rv32im/RV32IMInstruction.hpp"
+#include "simulator/SimulationTest.hpp"
+#include "basic/PinBase.hpp"
+#include "basic/WireBase.hpp"
+#include "simulator/Event.hpp"
+#include <algorithm>
+#include <chrono>
+#include <deque>
+#include <map>
+#include <optional>
+#include <sstream>
+#include <iomanip>
+#include <stdexcept>
+
+namespace circuit::runtime {
+namespace {
+using Clock = std::chrono::steady_clock;
+void demand(bool condition,const std::string& why) { if(!condition)throw std::runtime_error(why); }
+uint32_t signal(const std::shared_ptr<PinBase>& p) {
+    auto wire=p->getExternalWireBase();if(!wire)wire=p->getInternalWireBase();
+    const auto bits=wire?wire->getValueVector():p->getValueAsVector();uint32_t value=0;
+    for(size_t i=0;i<bits.size();++i){demand(bits[i]==LogicValue::LOW||bits[i]==LogicValue::HIGH,"Unknown signal "+p->getID());if(bits[i]==LogicValue::HIGH)value|=uint32_t{1}<<i;}
+    return value;
+}
+uint32_t out(const std::shared_ptr<IOComponent>& p,const std::string& n){return signal(p->getOutputPinDynamic(n));}
+uint32_t in(const std::shared_ptr<IOComponent>& p,const std::string& n){return signal(p->getInputPinDynamic(n));}
+std::shared_ptr<IOComponent> child(const std::shared_ptr<IOComponent>& p,const std::string& name) {
+    for(const auto& c:p->getChildren())if(c->getName()==name)return std::dynamic_pointer_cast<IOComponent>(c);
+    throw std::logic_error("Missing child "+name);
+}
+std::vector<LogicValue> bits(size_t width,uint64_t value){std::vector<LogicValue> result(width,LogicValue::LOW);for(size_t i=0;i<width;++i)if((value>>i)&1)result[i]=LogicValue::HIGH;return result;}
+struct Transaction {
+    uint32_t address=0,op=0,data=0,mask=0,value=0,status=0;
+    bool sampled=false;
+};
+struct Devices {
+    uint32_t timer=0,divider=0,levels=0,sequence=0;
+    bool overflow=false;
+    std::deque<uint32_t> buttons;
+    std::deque<uint8_t> console;
+    std::vector<uint8_t> video, known;
+    explicit Devices(size_t bytes):video(bytes),known(bytes,255) {}
+    uint32_t read(uint32_t address,const rv32im::DeviceSystemConfig& c) const {
+        switch(address){
+        case 0x10000004:return console.size()<c.console_depth;case 0x10000008:return console.size();
+        case 0x10001000:return timer;case 0x10001004:return c.timer_divisor;case 0x10001008:return c.timer_frequency_hz;
+        case 0x10002000:return levels;case 0x10002004:return buttons.empty()?0:buttons.front();
+        case 0x10002008:return buttons.size();case 0x1000200c:return (!buttons.empty())|(uint32_t(overflow)<<1);
+        case 0x10003000:return c.width;case 0x10003004:return c.height;case 0x10003008:return c.width;
+        case 0x1000300c:return 1;case 0x10003010:return sequence;
+        default:throw std::runtime_error("Unmapped device read in recorded guest");
+        }
+    }
+};
+bool registers(uint32_t a) {
+    for(uint32_t base:{0x10000000u,0x10001000u,0x10002000u,0x10003000u})
+        if(a>=base&&a<base+0x100u)return true;
+    return false;
+}
+bool video(uint32_t a,size_t bytes) {return a>=0x20000000&&uint64_t(a)<0x20000000ull+bytes;}
+uint32_t laneValue(uint32_t word,uint32_t address,uint32_t funct3) {
+    const unsigned bytes=1u<<(funct3&3);const unsigned shift=8*(address&3);
+    uint32_t value=word>>shift;
+    if(bytes<4){const auto mask=(1u<<(8*bytes))-1;value&=mask;if(!(funct3&4)&&(value&(1u<<(8*bytes-1))))value|=~mask;}
+    return value;
+}
+// MMIO loads/stores are the only extra ISA reference boundary. Ordinary I/M
+// instructions continue through the independent existing instruction oracle.
+rv32i::RV32IInstructionTrace step(rv32i::RV32IState& state,rv32i::RV32IFunctionalMemory& ram,
+                                std::deque<Transaction>& completed) {
+    if(state.halted||state.trapped||(state.pc&3u)||!ram.canAccess(state.pc,4))
+        return rv32im::step(state,ram,ram).base;
+    const auto raw=ram.readU32(state.pc);const auto decoded=rv32im::decode(raw);
+    const auto opcode=raw&127u;const bool load=opcode==3,store=opcode==35;
+    uint32_t address=0;Transaction transaction;
+    if(decoded.legal()&&(load||store)) {
+        const auto rs1=(raw>>15)&31,rs2=(raw>>20)&31;
+        address=state.x[rs1]+uint32_t(load?rv32i::RV32IDecoder::immediateI(raw):rv32i::RV32IDecoder::immediateS(raw));
+        const auto size=1u<<((raw>>12)&3);
+        if(address&(size-1))return rv32im::step(state,ram,ram).base;
+        demand(!completed.empty(),"Memory instruction retired without a completed bus transaction");
+        transaction=completed.front();completed.pop_front();
+        const uint32_t expected_mask=((1u<<size)-1)<<(address&3);
+        demand(transaction.address==(address&~3u)&&transaction.op==(store?1u:0u),"ISA/bus address or operation mismatch");
+        if(store){
+            uint32_t byte_mask=0;for(unsigned byte=0;byte<4;++byte)if(expected_mask&(1u<<byte))byte_mask|=0xffu<<(8*byte);
+            demand(transaction.mask==expected_mask&&(transaction.data&byte_mask)==((state.x[rs2]<<(8*(address&3)))&byte_mask),"ISA/bus store lanes mismatch");
+        }
+    }
+    if(!decoded.legal()||(!load&&!store)||address<0x40000) return rv32im::step(state,ram,ram).base;
+    rv32i::RV32IInstructionTrace trace;trace.pc_before=state.pc;trace.raw_instruction=raw;trace.decoded=decoded.base;
+    trace.instruction_index=state.instruction_count;trace.rs1=(raw>>15)&31;trace.rs2=(raw>>20)&31;trace.rd=(raw>>7)&31;
+    trace.rs1_value=state.x[trace.rs1];trace.rs2_value=state.x[trace.rs2];
+    const uint32_t f=(raw>>12)&7,size=1u<<(f&3);
+    trace.memory.kind=store?rv32i::RV32IMemoryAccessKind::Write:rv32i::RV32IMemoryAccessKind::Read;
+    trace.memory.address=address;trace.memory.size=size==1?rv32i::RV32IMemorySize::Byte:size==2?rv32i::RV32IMemorySize::Halfword:rv32i::RV32IMemorySize::Word;
+    // Only LB/LH extend a narrow sign; LW has no extension in RV32.
+    trace.memory.sign_extend=load&&f<2;trace.memory.write_data=store?trace.rs2_value:0;
+    if(transaction.status){state.trapped=true;state.trap_cause=store?rv32i::RV32IExecutionTrapCause::StoreAccessFault:rv32i::RV32IExecutionTrapCause::LoadAccessFault;trace.memory.fault=true;}
+    else {
+        if(load){trace.memory.read_data=laneValue(transaction.value,address,f);state.writeRegister(trace.rd,trace.memory.read_data);trace.writeback={true,trace.rd,trace.memory.read_data,trace.rd==0};}
+        state.pc+=4;
+    }
+    ++state.instruction_count;state.forceX0();trace.pc_after=state.pc;trace.trapped=state.trapped;trace.trap_cause=state.trap_cause;return trace;
+}
+std::string hex(const std::vector<uint8_t>& data){static constexpr char digits[]="0123456789abcdef";std::string out;out.reserve(2*data.size());for(auto b:data){out+=digits[b>>4];out+=digits[b&15];}return out;}
+std::string quoted(const std::string& s){std::string r="\"";for(unsigned char c:s){if(c=='"'||c=='\\'){r+='\\';r+=c;}else if(c<32||c>=127){r+="\\u00";r+=hex({c});}else r+=c;}return r+'"';}
+void tick(std::ostream& s,SimulationTime t){if(t>MAX_EXACT_JSON_TIME)s<<'"'<<t<<'"';else s<<t;}
+}
+RecordedGuestResult runRecordedGuest(const std::vector<uint8_t>& elf_bytes,const std::vector<ButtonInput>& input,const RecordedGuestOptions& o) {
+    const auto setup_start=Clock::now();
+    o.machine.validate();
+    demand(input.size()<=65536,"Script input budget exhausted");
+    demand(o.period>=100&&!(o.period&1)&&o.reset_release>=checkedTimeAdd(o.start_time,checkedTimeMultiply(o.period,2))&&o.origin>=checkedTimeAdd(o.reset_release,o.period),"Invalid recorded clock boundary");
+    demand(o.max_cycles&&o.max_cycles<=10000000&&o.max_instructions&&o.max_instructions<=10000000&&o.max_frames<=1024&&o.quantum_events&&o.quantum_events<=1000000,"Invalid recorded guest limits");
+    demand(o.max_console_bytes&&o.max_console_bytes<=65536&&o.max_device_reads&&o.max_device_reads<=65536,"Invalid recording evidence limits");
+    for(size_t i=0;i<input.size();++i){const auto&e=input[i];
+        demand(e.button<32&&e.tick>o.origin&&e.sequence>0,"Invalid scripted input");
+        demand((e.tick-o.origin)%o.period==o.period/2+1,"Input must follow a falling edge by one tick");
+        if(i)demand(e.tick>input[i-1].tick&&e.sequence>input[i-1].sequence,"Input ticks/sequences must increase");
+    }
+    const auto elf=rv32i::RV32IElfImage::fromBytes(elf_bytes);elf.requireFitsMemory(0x40000);demand(elf.entryPoint()==0,"Guest entry must be zero");
+    auto profile=o.compact_children?circuit::BuildProfileBuilder("recorded-device-compact-children").addRule(circuit::preferFidelity(circuit::Fidelity::Behavioral,circuit::ProfileSelector::any())).unavailablePolicy(circuit::UnavailableFidelityPolicy::UseOnlyAvailableAndRecordException).build():circuit::strictAllStructural();
+    if(o.compact_children&&o.expanded_core)profile=circuit::withProfileOverrides(std::move(profile),{
+        circuit::preferFidelity(circuit::Fidelity::Structural,
+            circuit::ProfileSelector::contract("rv32im.core.educational-five-stage"),
+            "expand CPU assembly for recorded comparison")},"recorded-device-expanded-core");
+    circuit::ParameterMap parameters{{"caches",o.machine.caches?"1":"0"},{"dram",o.machine.dram?"1":"0"},{"width",std::to_string(o.machine.width)},{"height",std::to_string(o.machine.height)},
+      {"timer_divisor",std::to_string(o.machine.timer_divisor)},{"timer_frequency_hz",std::to_string(o.machine.timer_frequency_hz)}};
+    if(o.machine.video_bytes)parameters["video_bytes"]=std::to_string(o.machine.video_bytes);
+    if(o.machine.console_depth!=4)parameters["console_depth"]=std::to_string(o.machine.console_depth);
+    if(o.machine.button_depth!=4)parameters["button_depth"]=std::to_string(o.machine.button_depth);
+    auto built=circuit::builtinComponentCatalog().createRoot(circuit::families::RV32IMDeviceSystem.request("MACHINE",parameters),profile);
+    auto machine=std::dynamic_pointer_cast<RV32IMDeviceSystem>(built.root);machine->setMemoryHistoryRecordingEnabled(false);machine->loadElf(elf);
+    Simulator sim;sim.setHistoryRecordingEnabled(false);ComponentBuilder b(machine);
+    std::map<std::string,std::shared_ptr<WireBase>> inputs;
+    for(const auto&[n,p]:machine->getAllInputPins())inputs[n]=b.addNewWireDynamic("HOST_"+n,p->getWidth(),nullptr,{p});
+    for(const auto&[n,p]:machine->getAllOutputPins())b.addNewWireDynamic("HOST_"+n,p->getWidth(),p,{});
+    auto drive=[&](SimulationTime t,const std::string& n,uint64_t value){sim.scheduleEvent(makeWireUpdateEvent(t,inputs.at(n),bits(inputs.at(n)->getWidth(),value)));};
+    auto advance = [&](SimulationTime target) {
+        for (;;) {
+            const auto processed=sim.getPerformanceCounters().processed_events;
+            demand(processed<o.max_events,"Simulation event budget exhausted");
+            const auto count=static_cast<size_t>(std::min<uint64_t>(o.quantum_events,o.max_events-processed));
+            const auto result=sim.drainUntilIdle(target,count);
+            if(result.status!=DrainStatus::EventLimitReached)break;
+        }
+    };
+    BasicComponent::resetSetupViolations();SimulationTest::scheduleInitialEventsForTree(machine,sim,o.start_time);
+    for(const auto&[n,p]:inputs)drive(o.start_time,n,n=="RST"||n=="ENABLE"||n=="TX_READY");
+    drive(o.reset_release,"RST",0);
+    rv32i::RV32IFunctionalMemory reference(0x40000),bus_ram(0x40000);
+    for(const auto&s:elf.segments()){reference.loadBytes(s.address,s.bytes);bus_ram.loadBytes(s.address,s.bytes);}
+    rv32i::RV32IState state;Devices device(o.machine.videoCapacityBytes());RecordedGuestResult result;
+    std::optional<Transaction> pending;std::deque<Transaction> completed;
+    std::map<uint32_t,uint8_t> ram_writes;
+    std::map<std::string,std::shared_ptr<IOComponent>> ports;
+    for(auto n:{"console","timer","buttons","display"})ports[n]=child(machine->peripheral(n),"PORT");
+    auto core=machine->core();size_t event_index=0,sampled_event_index=0;const auto start=Clock::now();
+    result.setup_seconds=std::chrono::duration<double>(start-setup_start).count();
+    result.profile_name=profile.name();result.profile_fingerprint=built.manifest->profileFingerprint();result.configuration=o.machine;
+    result.period=o.period;result.start_time=o.start_time;result.quantum_events=o.quantum_events;
+    std::vector<uint8_t> previous_pixels,previous_known;
+    for(size_t cycle=0;cycle<o.max_cycles;++cycle){
+        const auto edge=checkedTimeAdd(o.origin,checkedTimeMultiply(o.period,cycle));
+        // Reset gets real clock edges too; the origin marks the first loop edge.
+        if(!cycle){for(SimulationTime e=checkedTimeAdd(o.start_time,o.period/2);e<o.reset_release;e=checkedTimeAdd(e,o.period)){drive(e,"CLK",1);drive(checkedTimeAdd(e,o.period/2),"CLK",0);} }
+        const auto fall=checkedTimeAdd(edge,o.period/2),end=checkedTimeAdd(edge,o.period-1);
+        drive(edge,"CLK",1);drive(fall,"CLK",0);
+        // Explicitly define the upcoming safe input boundary (including no event).
+        const auto boundary=checkedTimeAdd(fall,1);bool inject=event_index<input.size()&&input[event_index].tick==boundary;
+        drive(boundary,"INPUT_VALID",inject);
+        if(inject){drive(boundary,"INPUT_BUTTON",input[event_index].button);drive(boundary,"INPUT_DOWN",input[event_index].down);++event_index;}
+        advance(edge-1);
+        const bool reset=in(machine,"RST");
+        const bool response=out(core,"DMEM_RSP_READY")&&in(core,"DMEM_RSP_VALID");
+        const bool request=out(core,"DMEM_REQ_VALID")&&in(core,"DMEM_REQ_READY");
+        if(request){demand(!pending,"More than one data request outstanding");pending=Transaction{out(core,"DMEM_REQ_ADDR"),out(core,"DMEM_REQ_OP"),out(core,"DMEM_REQ_WRITE_DATA"),out(core,"DMEM_REQ_WRITE_MASK")};
+            auto&t=*pending;if(t.address<0x40000){t.value=t.op?0:bus_ram.readU32(t.address);t.sampled=true;}
+            else if(video(t.address,o.machine.videoCapacityBytes())){t.value=0;for(unsigned i=0;i<4;++i){if(!t.op)demand(device.known[t.address-0x20000000+i]==255,"Guest read an unwritten pixel byte");t.value|=uint32_t(device.video[t.address-0x20000000+i])<<(8*i);}if(t.op)t.value=0;t.sampled=true;}
+            else if(!registers(t.address)){t.status=2;t.sampled=true;}
+        }
+        bool pop=false,clear=false,push_console=false,presentation=false;uint8_t tx=0;
+        for(const auto&[name,port]:ports){
+            const bool fire=out(port,"READ_STROBE")||out(port,"WRITE_STROBE");if(!fire)continue;
+            demand(pending.has_value(),"Device executed without CPU ownership");auto&t=*pending;
+            const uint32_t base=name=="console"?0x10000000:name=="timer"?0x10001000:name=="buttons"?0x10002000:0x10003000;
+            demand(t.address>=base&&t.address<base+0x100&&out(port,"ADDRESS")==t.address-base,"Device route/address mismatch");
+            t.value=t.op?0:device.read(t.address,o.machine);t.sampled=true;
+            demand(in(port,"BACK_STATUS")==0,"Valid guest device request rejected");
+            if(!t.op){demand(in(port,"BACK_READ_DATA")==t.value,"Device sample mismatch at "+std::to_string(t.address));demand(result.device_reads.size()<std::min(o.max_instructions,o.max_device_reads),"Device sample budget exhausted");result.device_reads.push_back({edge,t.address,t.value});}
+            else if(t.mask){demand(t.mask==15,"Partial command from guest");
+                if(name=="console"){push_console=true;tx=t.data;demand(t.data<=255,"Invalid console byte");}
+                else {demand(t.data==1,"Invalid device command");if(name=="buttons"){pop=t.address==0x10002010;clear=t.address==0x10002014;demand(pop||clear,"Invalid button write");}
+                    else if(name=="display"){demand(t.address==0x10003014,"Invalid display write");presentation=true;}
+                    else throw std::runtime_error("Guest wrote read-only timer");}
+            }
+        }
+        if(response){demand(pending&&pending->sampled,"Data response before modeled execution");auto&t=*pending;
+            demand(in(core,"DMEM_RSP_STATUS")==t.status&&in(core,"DMEM_RSP_READ_DATA")==t.value,"CPU response differs from independent device/RAM model");
+            if(t.op==1&&!t.status)for(unsigned i=0;i<4;++i)if(t.mask&(1u<<i)){
+                const uint8_t value=t.data>>(8*i);
+                if(t.address<0x40000){bus_ram.writeU8(t.address+i,value);ram_writes[t.address+i]=value;}
+                else if(video(t.address,o.machine.videoCapacityBytes())){device.video[t.address-0x20000000+i]=value;device.known[t.address-0x20000000+i]=255;}
+            }
+            completed.push_back(t);demand(completed.size()<8,"Retirement fell behind data transactions");pending.reset();
+        }
+        const bool commit=out(machine,"COMMIT_VALID");
+        if(commit){const auto actual=machine->pendingRetirement();auto expected=step(state,reference,completed);
+            demand(actual.pc==expected.pc_before&&actual.instruction==expected.raw_instruction&&actual.terminal==(expected.halted||expected.trapped)&&(actual.terminal||actual.next_pc==expected.pc_after),"Guest ISA retirement mismatch at "+std::to_string(actual.pc));
+            demand(actual.memory.kind==expected.memory.kind,"Guest memory retirement kind mismatch");
+            if(expected.memory.kind!=rv32i::RV32IMemoryAccessKind::None)
+                demand(actual.memory.address==expected.memory.address&&actual.memory.size==expected.memory.size&&
+                    actual.memory.sign_extend==expected.memory.sign_extend&&actual.memory.write_data==expected.memory.write_data&&
+                    actual.memory.read_data==expected.memory.read_data&&actual.memory.fault==expected.memory.fault,
+                    "Guest memory retirement mismatch at PC "+std::to_string(actual.pc)+
+                    " address "+std::to_string(actual.memory.address)+"/"+std::to_string(expected.memory.address)+
+                    " size "+std::to_string(unsigned(actual.memory.size))+"/"+std::to_string(unsigned(expected.memory.size))+
+                    " sign "+std::to_string(actual.memory.sign_extend)+"/"+std::to_string(expected.memory.sign_extend)+
+                    " write "+std::to_string(actual.memory.write_data)+"/"+std::to_string(expected.memory.write_data)+
+                    " read "+std::to_string(actual.memory.read_data)+"/"+std::to_string(expected.memory.read_data)+
+                    " fault "+std::to_string(actual.memory.fault)+"/"+std::to_string(expected.memory.fault));
+        }
+        if(reset){device=Devices(o.machine.videoCapacityBytes());}
+        else {
+            demand(out(machine,"TX_VALID")==!device.console.empty(),"Console valid mismatch");
+            if(!device.console.empty()){demand(out(machine,"TX_DATA")==device.console.front(),"Console byte mismatch");demand(result.console.size()<o.max_console_bytes,"Console byte budget exhausted");result.console+=char(device.console.front());device.console.pop_front();}
+            if(push_console)device.console.push_back(tx);
+            const bool was_full=device.buttons.size()==o.machine.button_depth,was_empty=device.buttons.empty();
+            const bool push=in(machine,"INPUT_VALID");const uint32_t id=in(machine,"INPUT_BUTTON"),down=in(machine,"INPUT_DOWN");
+            if(clear)device.overflow=false;if(pop&&!was_empty)device.buttons.pop_front();
+            if(push){
+                demand(sampled_event_index<input.size(),"Device sampled input without a scripted event");
+                const auto& applied=input[sampled_event_index++];
+                demand(applied.tick==checkedTimeAdd(edge-o.period/2,1)&&applied.button==id&&applied.down==bool(down),"Sampled input differs from its scheduled transition");
+                result.applied_inputs.push_back(applied);device.levels=(device.levels&~(1u<<id))|(down<<id);if(was_full)device.overflow=true;else device.buttons.push_back(id|(down<<8));}
+            if(++device.divider==o.machine.timer_divisor){device.divider=0;++device.timer;}
+            if(presentation)++device.sequence;
+        }
+        advance(fall-1);
+        if(commit){const auto actual=machine->snapshotPipelineState(state.pc).toKnownState();demand(actual.x==state.x&&actual.halted==state.halted&&actual.trapped==state.trapped&&actual.trap_cause==state.trap_cause,"Guest register/terminal state differs from ISA reference");}
+        if(presentation){demand(out(machine,"FRAME_SEQUENCE")==device.sequence,"Presentation sequence mismatch");const auto capture_start=Clock::now();auto frame=machine->captureFrame(fall-1);
+            for(size_t i=0;i<frame.pixels.size();++i)
+                demand(frame.pixels[i]==device.video[i]&&frame.known[i]==device.known[i],
+                    "Frame differs from ordered guest pixel writes at byte "+std::to_string(i)+
+                    ": actual="+std::to_string(frame.pixels[i])+"/"+std::to_string(frame.known[i])+
+                    " expected="+std::to_string(device.video[i])+"/"+std::to_string(device.known[i]));
+            demand(result.presentations<o.max_frames,"Presentation budget exhausted");
+            ++result.presentations;
+            if(frame.pixels!=previous_pixels||frame.known!=previous_known)++result.changed_frames;
+            previous_pixels=frame.pixels;previous_known=frame.known;
+            const auto buttons=machine->peripheral("buttons"),fifo=child(buttons,"EVENTS");
+            const auto levels=out(child(buttons,"LEVELS"),"Q"),count=out(fifo,"COUNT"),head=out(fifo,"DATA"),overflow=out(fifo,"OVERFLOW");
+            demand(levels==device.levels&&count==device.buttons.size()&&head==(device.buttons.empty()?0:device.buttons.front())&&overflow==device.overflow,"Presented input state differs from device model");
+            result.frame_inputs.push_back({levels,count,head,bool(overflow)});
+            result.frame_cycles.push_back(cycle+1);result.frame_instructions.push_back(state.instruction_count);
+            result.frame_seconds.push_back(std::chrono::duration<double>(Clock::now()-start).count());
+            if(o.capture_frames){demand(result.frames.size()<o.max_frames,"Frame capture budget exhausted");
+                demand(frame.pixels.size()<=circuit::device::MaxCapturedPixelBytes/(result.frames.size()+1),"Captured pixel byte budget exhausted");result.frames.push_back(std::move(frame));}
+            result.capture_seconds+=std::chrono::duration<double>(Clock::now()-capture_start).count();
+        }
+        advance(end);result.cycles=cycle+1;
+        if(o.progress&&result.cycles%4096==0)o.progress(result.cycles,state.instruction_count,result.presentations);
+        demand(sim.getPerformanceCounters().processed_events<=o.max_events,"Simulation event budget exhausted");
+        demand(state.instruction_count<=o.max_instructions,"Guest instruction budget exhausted");
+        if(state.halted||state.trapped){demand(!pending&&completed.empty(),"Guest stopped with unfinished transactions");demand(state.halted&&!state.trapped,"Guest trapped");
+            demand(device.console.empty(),"Guest stopped before console output drained");
+            demand(event_index==input.size()&&sampled_event_index==input.size(),"Guest stopped before scripted input was sampled");
+            for(const auto&[address,value]:ram_writes)demand(machine->ramStorage().readBytes(address,1)[0]==value&&reference.readU8(address)==value,"Final RAM state mismatch");
+            const auto report=machine->ramStorage().readLogic(0x3f000,36);result.report.resize(36);result.report_known.resize(36);
+            for(size_t i=0;i<report.size();++i){if(report[i]==LogicValue::HIGH)result.report[i/8]|=1u<<(i%8);if(report[i]==LogicValue::HIGH||report[i]==LogicValue::LOW)result.report_known[i/8]|=1u<<(i%8);}
+            result.state=state;result.instructions=state.instruction_count;result.events=sim.getPerformanceCounters();
+            result.ram_allocated_bytes=machine->ramStorage().allocatedDataBytes();result.video_allocated_bytes=machine->videoStorage().allocatedDataBytes();
+            result.setup_violations=BasicComponent::setupViolations();demand(!result.setup_violations,"Guest run observed setup violations");
+            result.execution_seconds=std::chrono::duration<double>(Clock::now()-start).count();return result;
+        }
+    }
+    throw std::runtime_error("Guest cycle budget exhausted");
+}
+std::string recordedGuestJson(const RecordedGuestResult& r){
+    std::ostringstream s;s<<std::setprecision(10);s<<"{\"version\":1,\"cycles\":"<<r.cycles<<",\"instructions\":"<<r.instructions<<",\"setupViolations\":"<<r.setup_violations
+      <<",\"setupSeconds\":"<<r.setup_seconds<<",\"executionSeconds\":"<<r.execution_seconds<<",\"captureSeconds\":"<<r.capture_seconds<<",\"ramAllocatedBytes\":"<<r.ram_allocated_bytes
+      <<",\"videoAllocatedBytes\":"<<r.video_allocated_bytes<<",\"presentations\":"<<r.presentations<<",\"changedFrames\":"<<r.changed_frames<<",\"profileName\":"<<quoted(r.profile_name)<<",\"profileFingerprint\":"<<quoted(r.profile_fingerprint)<<",\"console\":"<<quoted(r.console)<<",\"report\":"<<quoted(hex(r.report))<<",\"reportKnown\":"<<quoted(hex(r.report_known))<<",\"frames\":[";
+    const auto binary=[](uint32_t value,size_t width){std::string text(width,'0');for(size_t bit=0;bit<width;++bit)if((value>>bit)&1)text[width-bit-1]='1';return text;};
+    for(size_t i=0;i<r.frames.size();++i){if(i)s<<',';const auto&f=r.frames[i];s<<"{\"time\":";tick(s,f.time);s<<",\"epoch\":0,\"cycle\":"<<r.frame_cycles.at(i)<<",\"instructions\":"<<r.frame_instructions.at(i)<<",\"hostSeconds\":"<<r.frame_seconds.at(i)<<",\"sequence\":"<<f.sequence<<",\"width\":"<<f.width<<",\"height\":"<<f.height<<",\"stride\":"<<f.stride<<",\"format\":\"rgb332\",\"pixels\":"<<quoted(hex(f.pixels))<<",\"known\":"<<quoted(hex(f.known));const auto& input=r.frame_inputs.at(i);
+        s<<",\"input\":{\"supported\":true,\"kind\":\"keyboard\",\"levels\":"<<quoted(binary(input.levels,32))<<",\"count\":"<<quoted(binary(input.count,3))<<",\"head\":"<<quoted(binary(input.head,32))<<",\"overflow\":"<<quoted(input.overflow?"1":"0")<<"}}";}
+    s<<"],\"inputs\":[";for(size_t i=0;i<r.applied_inputs.size();++i){if(i)s<<',';const auto& input=r.applied_inputs[i];s<<"{\"time\":";tick(s,input.tick);s<<",\"sequence\":";tick(s,input.sequence);s<<",\"button\":"<<unsigned(input.button)<<",\"down\":"<<(input.down?"true":"false")<<'}';}
+    s<<"],\"deviceReads\":[";for(size_t i=0;i<r.device_reads.size();++i){if(i)s<<',';const auto&d=r.device_reads[i];s<<"{\"time\":";tick(s,d.tick);s<<",\"address\":"<<d.address<<",\"value\":"<<d.value<<'}';}
+    s<<"],\"configuration\":{\"caches\":"<<(r.configuration.caches?"true":"false")<<",\"dram\":"<<(r.configuration.dram?"true":"false")
+      <<",\"width\":"<<r.configuration.width<<",\"height\":"<<r.configuration.height<<",\"timerDivisor\":"<<r.configuration.timer_divisor
+      <<",\"videoBytes\":"<<r.configuration.videoCapacityBytes()<<",\"consoleDepth\":"<<r.configuration.console_depth<<",\"buttonDepth\":"<<r.configuration.button_depth
+      <<",\"timerFrequencyHz\":"<<r.configuration.timer_frequency_hz<<",\"quantumEvents\":"<<r.quantum_events<<",\"period\":";tick(s,r.period);s<<",\"startTime\":";tick(s,r.start_time);
+    s<<"},\"events\":{\"processed\":"<<r.events.processed_events<<",\"scheduled\":"<<r.events.scheduled_events<<",\"maximumQueue\":"<<r.events.maximum_event_queue_depth
+      <<",\"processedWireUpdates\":"<<r.events.processed_wire_updates<<",\"processedEvaluations\":"<<r.events.processed_component_evaluations
+      <<",\"scheduledWireUpdates\":"<<r.events.scheduled_wire_updates<<",\"scheduledEvaluations\":"<<r.events.scheduled_component_evaluations
+      <<",\"wireChanges\":"<<r.events.effective_wire_changes<<",\"pinChanges\":"<<r.events.effective_pin_changes<<"}}";return s.str();
+}
+}

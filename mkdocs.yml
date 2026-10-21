@@ -269,6 +269,33 @@ nav:
           - 4.6.6. Complete Advanced Core: rv32i/4.6/core.md
       - 4.7. Memory Systems: rv32i/memory-systems.md
       - 4.8. Experiment Results: rv32i/experiments.md
+  - RV32IM:
+      - rv32im/index.md
+      - MultiplyStep: rv32im/multiply-step.md
+      - DivideStep: rv32im/divide-step.md
+      - Multiplier32: rv32im/multiplier.md
+      - Divider32: rv32im/divider.md
+      - MulDivUnit32: rv32im/muldiv.md
+      - RV32IMDecodeControl: rv32im/decode-control.md
+      - RV32IMDecodeStage: rv32im/decode-stage.md
+      - RV32IMExecuteStage: rv32im/execute-stage.md
+      - RV32IMPipelineCoordinator: rv32im/coordinator.md
+      - RV32IMFiveStageCore: rv32im/core.md
+      - RV32IMDeviceSystem: rv32im/device-system.md
+      - Recorded games: rv32im/recorded-games.md
+  - Device I/O:
+      - device-io/index.md
+      - AddressRouter32: device-io/address-router.md
+      - BusErrorTarget32: device-io/error-target.md
+      - InstructionAccessGuard32: device-io/instruction-guard.md
+      - DeviceRegisterPort32: device-io/register-port.md
+      - ClockedCounter: device-io/counter.md
+      - SynchronousFifo: device-io/fifo.md
+      - ConsoleDevice32: device-io/console.md
+      - TimerDevice32: device-io/timer.md
+      - ButtonDevice32: device-io/buttons.md
+      - IndexedPixelSelector32: device-io/pixel-selector.md
+      - FramebufferDisplay32: device-io/framebuffer.md
   - Blog:
       - blog/index.md
   - Simulator: visualizer.md

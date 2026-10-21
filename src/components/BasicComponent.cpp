@@ -4,11 +4,12 @@
 #include <cstdlib>
 #include <iostream>
 #include <limits>
+#include <optional>
 #include <stdexcept>
 #include <unordered_map>
 
 namespace {
-constexpr size_t NO_ARC = std::numeric_limits<size_t>::max();
+constexpr SimulationTime NO_ARC = MAX_SIMULATION_TIME;
 size_t setup_violations = 0;
 }
 
@@ -18,7 +19,7 @@ void BasicComponent::resetSetupViolations() { setup_violations = 0; }
 // The delay table, prepared for use while simulating.
 struct BasicComponent::TimedOutputs {
     // [output][input] -> ticks, or NO_ARC.
-    using Matrix = std::vector<std::vector<size_t>>;
+    using Matrix = std::vector<std::vector<SimulationTime>>;
     circuit::PartDelays table;
     std::vector<std::shared_ptr<PinBase>> inputs;
     std::vector<std::vector<LogicValue>> last;
@@ -26,14 +27,14 @@ struct BasicComponent::TimedOutputs {
     std::unordered_map<std::string, size_t> output_index;
     Matrix arcs;
     std::map<uint64_t, Matrix> arcs_by_control;
-    std::vector<size_t> worst, pending;
+    std::vector<SimulationTime> worst, pending;
     // Setup watching: the clock input, the watched inputs with their setup
     // ticks, the inputs that must sit at a fixed value (reset low), and when
     // each input last changed.
     int clock = -1;
-    std::vector<std::pair<size_t, size_t>> watched;
+    std::vector<std::pair<size_t, SimulationTime>> watched;
     std::vector<std::pair<size_t, uint64_t>> fixed;
-    std::vector<size_t> changed_at;
+    std::vector<std::optional<SimulationTime>> changed_at;
     int control = -1;
     bool first = true, fresh = false;
     std::vector<bool> explained;
@@ -45,7 +46,7 @@ struct BasicComponent::TimedOutputs {
     bool twin_answered = false;
     std::vector<std::vector<long long>> bit_changed;
     std::vector<long long> settled;
-    std::vector<size_t> released, before;
+    std::vector<SimulationTime> released, before;
     // Strict settling (CIRCUITSIM_STRICT_SETTLING=1), for parts with a twin:
     // an output that may still move shows X from the earliest moment it can
     // until it is final, also when it ends on the value it had. The gates can
@@ -53,7 +54,7 @@ struct BasicComponent::TimedOutputs {
     bool strict = false;
     Matrix soonest;                       // [output][input] -> earliest ticks, or NO_ARC
     std::vector<bool> disturbed, published_now;
-    std::vector<size_t> window_start, released_before;
+    std::vector<SimulationTime> window_start, released_before;
     // Each output pin and the value last handed out for it.
     std::vector<std::shared_ptr<PinBase>> outputs;
     std::vector<std::vector<LogicValue>> published;
@@ -71,12 +72,12 @@ struct BasicComponent::TimedOutputs {
     }
 };
 
-BasicComponent::BasicComponent(std::string name, size_t delay_val, PinInitFunction initializer)
+BasicComponent::BasicComponent(std::string name, SimulationTime delay_val, PinInitFunction initializer)
     : IOComponent(std::move(name), std::move(initializer)), delay(delay_val) {}
 
 BasicComponent::~BasicComponent() = default;
 
-size_t BasicComponent::getDelay() const {
+SimulationTime BasicComponent::getDelay() const {
     return delay;
 }
 
@@ -100,8 +101,8 @@ void BasicComponent::setDelays(circuit::PartDelays delays) {
     }
     const size_t outputs = timed->output_index.size(), inputs = timed->inputs.size();
     const auto matrix = [&](const std::vector<circuit::PartDelays::Arc>& arcs) {
-        TimedOutputs::Matrix result(outputs, std::vector<size_t>(inputs, NO_ARC));
-        const auto set = [&](const std::string& input, const std::string& output, size_t ticks) {
+        TimedOutputs::Matrix result(outputs, std::vector<SimulationTime>(inputs, NO_ARC));
+        const auto set = [&](const std::string& input, const std::string& output, SimulationTime ticks) {
             const auto in = input_index.find(input);
             const auto out = timed->output_index.find(output);
             if (in == input_index.end() || out == timed->output_index.end())
@@ -115,7 +116,7 @@ void BasicComponent::setDelays(circuit::PartDelays delays) {
         return result;
     };
     timed->arcs = matrix(delays.arcs);
-    timed->soonest.assign(outputs, std::vector<size_t>(inputs, NO_ARC));
+    timed->soonest.assign(outputs, std::vector<SimulationTime>(inputs, NO_ARC));
     for (const auto& arc : delays.arcs) {
         const auto in = input_index.find(arc.input);
         const auto out = timed->output_index.find(arc.output);
@@ -132,7 +133,7 @@ void BasicComponent::setDelays(circuit::PartDelays delays) {
             }
     for (const auto& [value, arcs] : delays.arcs_by_control) timed->arcs_by_control.emplace(value, matrix(arcs));
     timed->worst.assign(outputs, 0);
-    for (size_t out = 0; out < outputs; ++out) for (const size_t ticks : timed->arcs[out])
+    for (size_t out = 0; out < outputs; ++out) for (const SimulationTime ticks : timed->arcs[out])
         if (ticks != NO_ARC) timed->worst[out] = std::max(timed->worst[out], ticks);
     timed->pending.assign(outputs, 0);
     timed->explained.assign(outputs, false);
@@ -141,7 +142,7 @@ void BasicComponent::setDelays(circuit::PartDelays delays) {
         if (const auto found = input_index.find(input); found != input_index.end() && ticks) timed->watched.emplace_back(found->second, ticks);
     for (const auto& [input, value] : delays.fixed_inputs)
         if (const auto found = input_index.find(input); found != input_index.end()) timed->fixed.emplace_back(found->second, value);
-    timed->changed_at.assign(inputs, 0);
+    timed->changed_at.assign(inputs, std::nullopt);
     timed->last.resize(inputs);
     timed->changed.assign(inputs, true);
     // The twin is used only if it describes exactly these pins.
@@ -177,16 +178,26 @@ void BasicComponent::setDelays(circuit::PartDelays delays) {
     timed_ = std::move(timed);
 }
 
-void BasicComponent::evaluateAt(size_t current_time, Simulator& simulator) {
+void BasicComponent::evaluateAt(SimulationTime current_time, Simulator& simulator) {
     if (timed_) {
         const bool started = !timed_->first;
         const bool was_low = timed_->clock >= 0 && started && timed_->last[timed_->clock] == std::vector<LogicValue>{LogicValue::LOW};
+        // The optional twin has signed internal times and -1 sentinels. Its
+        // proven table remains valid outside that refinement's range.
+        const auto twin_limit = static_cast<SimulationTime>(std::numeric_limits<long long>::max());
+        bool twin_time_fits = current_time <= twin_limit;
+        if (twin_time_fits) {
+            const auto room = twin_limit - current_time;
+            twin_time_fits = timed_->table.internal_period <= room
+                && std::all_of(timed_->worst.begin(), timed_->worst.end(),
+                               [room](SimulationTime delay) { return delay <= room; });
+        }
         for (size_t i = 0; i < timed_->inputs.size(); ++i) {
             auto now = timed_->inputs[i]->getValueAsVector();
             timed_->changed[i] = timed_->first || now != timed_->last[i];
-            if (timed_->twin && timed_->changed[i]) for (size_t bit = 0; bit < now.size(); ++bit)
+            if (timed_->twin && twin_time_fits && timed_->changed[i]) for (size_t bit = 0; bit < now.size(); ++bit)
                 if (timed_->first || now[bit] != timed_->last[i][bit]) timed_->bit_changed[i][bit] = static_cast<long long>(current_time);
-            if (timed_->changed[i] && started && static_cast<int>(i) != timed_->clock) timed_->changed_at[i] = current_time + 1;
+            if (timed_->changed[i] && started && static_cast<int>(i) != timed_->clock) timed_->changed_at[i] = current_time;
             timed_->last[i] = std::move(now);
         }
         // A rising clock edge: was every watched input quiet for its setup time?
@@ -198,11 +209,10 @@ void BasicComponent::evaluateAt(size_t current_time, Simulator& simulator) {
                     operating = operating && bits[bit] == (((value >> bit) & 1) ? LogicValue::HIGH : LogicValue::LOW);
             }
             if (operating) for (const auto& [input, ticks] : timed_->watched)
-                // changed_at holds the tick after the change; 0 means never.
-                if (timed_->changed_at[input] && current_time + 1 - timed_->changed_at[input] < ticks) {
+                if (timed_->changed_at[input] && current_time - *timed_->changed_at[input] < ticks) {
                     if (!setup_violations && std::getenv("CIRCUITSIM_SETUP_TRACE"))
                         std::cerr << "setup: " << getID() << " input " << timed_->inputs[input]->getName() << " changed "
-                                  << current_time + 1 - timed_->changed_at[input] << " ticks before the edge at " << current_time
+                                  << current_time - *timed_->changed_at[input] << " ticks before the edge at " << current_time
                                   << ", needs " << ticks << '\n';
                     ++setup_violations;
                 }
@@ -217,19 +227,20 @@ void BasicComponent::evaluateAt(size_t current_time, Simulator& simulator) {
         const int idle_clock = timed_->clock >= 0 && timed_->changed[timed_->clock] && started
             && timed_->last[timed_->clock] != std::vector<LogicValue>{LogicValue::HIGH} ? timed_->clock : -1;
         for (size_t out = 0; out < arcs.size(); ++out) {
-            size_t ticks = NO_ARC;
+            SimulationTime ticks = NO_ARC;
             // A new control value selects other delays for inputs that may
             // still be on their way; only the worst case covers them all.
             if (control_changed) ticks = timed_->worst[out];
             else for (size_t in = 0; in < timed_->changed.size(); ++in)
                 if (timed_->changed[in] && static_cast<int>(in) != idle_clock && arcs[out][in] != NO_ARC) ticks = ticks == NO_ARC ? arcs[out][in] : std::max(ticks, arcs[out][in]);
             timed_->explained[out] = ticks != NO_ARC;
-            if (ticks != NO_ARC) timed_->pending[out] = std::max(timed_->pending[out], current_time + ticks);
+            if (ticks != NO_ARC) timed_->pending[out] = std::max(timed_->pending[out], checkedTimeAdd(current_time, ticks));
         }
         // The gates, timed with the values the inputs have now. Each output
         // takes that time when it is published, if the gates end on the
         // value the part computed.
-        if (timed_->twin)
+        timed_->twin_answered = false;
+        if (timed_->twin && twin_time_fits)
             timed_->twin_answered = timed_->twin->settle(timed_->twin_state.get(), static_cast<long long>(current_time), timed_->last,
                                                          timed_->bit_changed, timed_->settled, timed_->twin_value);
         if (timed_->strict && timed_->twin_answered) {
@@ -237,13 +248,13 @@ void BasicComponent::evaluateAt(size_t current_time, Simulator& simulator) {
             for (size_t out = 0; out < timed_->pending.size(); ++out) {
                 timed_->disturbed[out] = timed_->published_now[out] = false;
                 if (timed_->settled[out] <= static_cast<long long>(current_time)) continue;
-                size_t start = NO_ARC;
+                SimulationTime start = NO_ARC;
                 for (size_t in = 0; in < timed_->changed.size(); ++in)
                     if (timed_->changed[in] && timed_->soonest[out][in] != NO_ARC) start = std::min(start, timed_->soonest[out][in]);
                 if (start == NO_ARC) continue;
                 // Final when the gates are, whatever the table says.
-                timed_->pending[out] = std::max(static_cast<size_t>(timed_->settled[out]), timed_->released[out]);
-                timed_->window_start[out] = current_time + start;
+                timed_->pending[out] = std::max(static_cast<SimulationTime>(timed_->settled[out]), timed_->released[out]);
+                timed_->window_start[out] = checkedTimeAdd(current_time, start);
                 timed_->disturbed[out] = timed_->window_start[out] < timed_->pending[out];
             }
         }
@@ -258,10 +269,10 @@ void BasicComponent::evaluateAt(size_t current_time, Simulator& simulator) {
         const auto wire = pin->getExternalWireBase();
         if (!wire) continue;
         const std::vector<LogicValue> unknown(pin->getWidth(), LogicValue::UNKNOWN);
-        const size_t final_at = timed_->pending[out];
+        const SimulationTime final_at = timed_->pending[out];
         if (auto event = makeWireUpdateEvent(timed_->window_start[out], wire, unknown)) simulator.scheduleEvent(std::move(event));
         // A result of an earlier change still due inside the window is covered again.
-        const size_t earlier = timed_->released_before[out];
+        const SimulationTime earlier = timed_->released_before[out];
         if (earlier > timed_->window_start[out] && earlier < final_at)
             if (auto event = makeWireUpdateEvent(earlier, wire, unknown)) simulator.scheduleEvent(std::move(event));
         // The part published nothing new: the value it has returns when the gates are final.
@@ -272,11 +283,11 @@ void BasicComponent::evaluateAt(size_t current_time, Simulator& simulator) {
     }
 }
 
-size_t BasicComponent::publishTime(const std::string& output_pin, size_t current_sim_time) {
-    if (!timed_) return current_sim_time + delay;
+SimulationTime BasicComponent::publishTime(const std::string& output_pin, SimulationTime current_sim_time) {
+    if (!timed_) return checkedTimeAdd(current_sim_time, delay);
     auto& t = *timed_;
     const auto found = t.output_index.find(output_pin);
-    if (found == t.output_index.end()) return current_sim_time + delay;
+    if (found == t.output_index.end()) return checkedTimeAdd(current_sim_time, delay);
     const size_t out = found->second;
     // The pin already holds the value being published. An output merely
     // restated at the value it has is no change.
@@ -287,7 +298,7 @@ size_t BasicComponent::publishTime(const std::string& output_pin, size_t current
     // Gates that settled before now cannot explain a change made now: the
     // gate list's state has drifted from the part's (after X or Z inputs);
     // the table times the change instead.
-    if (value_changes && t.settled[out] <= static_cast<long long>(current_sim_time) && !t.worst.empty() && t.worst[out] > 0) by_gates = false;
+    if (by_gates && value_changes && t.settled[out] <= static_cast<long long>(current_sim_time) && !t.worst.empty() && t.worst[out] > 0) by_gates = false;
     for (size_t bit = 0; by_gates && bit < value.size(); ++bit) {
         const uint8_t level = value[bit] == LogicValue::LOW ? 0 : value[bit] == LogicValue::HIGH ? 1 : 2;
         // 3: a bit the gate list times without knowing its value.
@@ -303,9 +314,9 @@ size_t BasicComponent::publishTime(const std::string& output_pin, size_t current
         std::cerr << '\n';
     }
     // Nothing listed explains a change of this output: stay with its worst case.
-    if (!t.fresh || (!t.explained[out] && value_changes)) t.pending[out] = std::max(current_sim_time + t.worst[out], t.pending[out]);
+    if (!t.fresh || (!t.explained[out] && value_changes)) t.pending[out] = std::max(checkedTimeAdd(current_sim_time, t.worst[out]), t.pending[out]);
     if (by_gates && !t.strict)
-        t.pending[out] = std::max({std::min(t.pending[out], static_cast<size_t>(t.settled[out])), current_sim_time, t.released[out]});
+        t.pending[out] = std::max({std::min(t.pending[out], static_cast<SimulationTime>(t.settled[out])), current_sim_time, t.released[out]});
     // A newer result never overtakes an older one that is still on its way.
     t.released[out] = t.pending[out];
     if (t.fresh) t.published_now[out] = true;
@@ -313,7 +324,7 @@ size_t BasicComponent::publishTime(const std::string& output_pin, size_t current
 }
 
 void BasicComponent::scheduleInitialEvents(Simulator& simulator,
-                                           size_t current_time) {
+                                           SimulationTime current_time) {
     // Most evaluated components are triggered by their input-wire updates.
     // Self-starting components such as ConstantValue override this hook, while
     // ClockGenerator is started explicitly so it cannot be scheduled twice.
@@ -334,11 +345,11 @@ bool transportDelayForced() {
 void BasicComponent::_updateOutputWire(Simulator& simulator,
                                        const std::string& pin_name,
     LogicValue new_value,
-    size_t current_sim_time) {
+    SimulationTime current_sim_time) {
     if (auto pin = getOutputPin(pin_name)) {
         pin->setBit(0, new_value);
         if (auto wire = pin->getExternalWire()) {
-            const size_t at = publishTime(pin_name, current_sim_time);
+            const SimulationTime at = publishTime(pin_name, current_sim_time);
             if (inertialDelay() && !transportDelayForced()) {
                 auto found = std::find_if(pending_changes_.begin(), pending_changes_.end(),
                     [&](const auto& entry) { return entry.first == pin_name; });
@@ -375,7 +386,7 @@ void BasicComponent::_updateOutputWire(Simulator& simulator,
 void BasicComponent::_updateOutputWireDynamic(Simulator& simulator,
                                               const std::string& pin_name,
     const std::vector<LogicValue>& new_value,
-    size_t current_sim_time) {
+    SimulationTime current_sim_time) {
     const auto pin = getOutputPinDynamic(pin_name);
     if (!pin || pin->getWidth() != new_value.size()) {
         return;

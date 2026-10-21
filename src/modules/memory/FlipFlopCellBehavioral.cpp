@@ -28,7 +28,7 @@ FlipFlopCellBehavioral::FlipFlopCellBehavioral(std::string name)
       stored_value(LogicValue::UNKNOWN),
       previous_clk(LogicValue::UNKNOWN) {}
 
-void FlipFlopCellBehavioral::evaluate(size_t current_time, Simulator& simulator) {
+void FlipFlopCellBehavioral::evaluate(SimulationTime current_time, Simulator& simulator) {
     const auto d = getInputValue("D");
     const auto we = getInputValue("WE");
     const auto clk = getInputValue("CLK");

@@ -119,6 +119,8 @@ COMPONENT_LAYOUT_DEFAULTS = {
         "pin_size_ratio": 0.01,
     },
 }
+COMPONENT_LAYOUT_DEFAULTS["RV32IMFiveStageCore"] = dict(COMPONENT_LAYOUT_DEFAULTS["RV32IFiveStageCore"])
+COMPONENT_LAYOUT_DEFAULTS["RV32IMPipelineCoordinator"] = dict(COMPONENT_LAYOUT_DEFAULTS["RV32IPipelineCoordinator"])
 SEQUENTIAL_TYPES = {"DFlipFlop"}
 CLOCK_PIN_NAMES = {"CLK", "CLOCK"}
 SEQUENTIAL_INPUT_PIN_NAMES = {"D", "RST", "RESET", "SET", "CLR", "CLEAR", "EN", "ENABLE", "LOAD"}
@@ -164,6 +166,11 @@ def _logic_vector_value(values: Any) -> str:
     if not bits:
         return ""
     return bits[0] if len(bits) == 1 else "".join(reversed(bits))
+
+
+def _json_time(ticks: int) -> int | str:
+    """Keep JavaScript timestamps exact without changing short recordings."""
+    return ticks if ticks <= (1 << 53) - 1 else str(ticks)
 
 
 def _binary_value_to_hex(value: str) -> str | None:
@@ -241,18 +248,26 @@ def _pin_width_by_name(component: Any, getter_name: str, pin_name: str) -> int |
 # memory devices their storage bank (geometry), policy variants the names of
 # their children. Keep in step with src/visualizer/VisualizerSession.cpp.
 def _named_variant_type(component_type: str) -> bool:
-    return (component_type.startswith(("Cache", "RV32IPredictionTable<", "MemoryTimer<"))
+    return (component_type.startswith(("Cache", "RV32IPredictionTable<", "MemoryTimer<", "ClockedCounter<"))
             or component_type in ("RV32IPredictionEntry", "RV32IBranchPredictor"))
 
 
 def _structure_keyed(component_type: str, layout_type: str) -> bool:
     """The key names one structure: placements of the bare type do not apply."""
     return layout_type != component_type and (
-        _named_variant_type(component_type) or component_type.startswith(("SRAM<", "FFMemory")))
+        layout_type.startswith(component_type+"[config-") or _named_variant_type(component_type) or component_type.startswith(("SRAM<", "FFMemory")))
 
 
 def _component_layout_type(component: Any) -> str:
     component_type = _component_type(component)
+    variant = ""
+    if observer := getattr(circuit_backend, "component_layout_variant", None):
+        try:
+            variant = observer(component)
+        except TypeError:
+            pass  # topology-only test doubles do not own a native component
+    if variant:
+        return f"{component_type}[config-{variant}]"
     if component_type.startswith(("SRAM<", "FFMemory")) and component.get_children():
         storage = next((child for child in component.get_children() if child.get_name() == "STORAGE"), None)
         if storage is not None:
@@ -633,8 +648,9 @@ def _five_stage_pipeline_layout(
     memory_names = {"FETCH_REQUEST", "DATA_REQUEST", "LOAD_STORE", "DATA_OPERATION", "MEMORY_ZERO"}
     optional_helpers = {"FETCH_WRITE_DATA", "FETCH_OPERATION", "FETCH_MASK", "PREDICTED_PC_SELECT"}
     names = set(child_by_name)
+    m_helpers = {name for name in names if name.startswith("M_CANCEL")}
     has_prediction = "PREDICTION" in names
-    has_memory = memory_names <= names and names <= required_names | memory_names | optional_helpers | {"PREDICTION"}
+    has_memory = memory_names <= names and names <= required_names | memory_names | optional_helpers | m_helpers | {"PREDICTION"}
     if set(child_by_name) != required_names and not has_memory:
         return None
 
@@ -752,7 +768,7 @@ def _five_stage_pipeline_layout(
             width = min(preferred, (0.16 if has_prediction else 0.23) * content_height * parent_aspect / max(aspect, .01))
             placements[name] = {"rel_pos": [center-width/2, service_y], "rel_width": width}
         helpers = [name for name in ("MEMORY_ZERO", "FETCH_WRITE_DATA", "FETCH_OPERATION", "FETCH_MASK", "DATA_OPERATION")
-                   if name in child_by_name]
+                   if name in child_by_name] + sorted(m_helpers)
         for i, name in enumerate(helpers):
             aspect = child_aspects[child_by_name[name].get_id()]
             width = min(.035, .04 * parent_aspect / max(aspect, .01))
@@ -1006,7 +1022,7 @@ def _custom_child_layout(
         return _baseline_pipeline_layout(children, parent_aspect, title_fraction, child_aspects,
                                          boundary_fraction, pin_size_fraction, child_stub_ratios)
 
-    if _component_type(parent) == "RV32IFiveStageCore":
+    if _component_type(parent) in ("RV32IFiveStageCore", "RV32IMFiveStageCore"):
         pipeline_layout = _five_stage_pipeline_layout(
             children,
             parent_aspect,
@@ -2362,8 +2378,8 @@ class CircuitSession:
             "pins": initial_topology["pins"],
             "wires": initial_topology["wires"],
             "loadedScopeIds": initial_topology["scopeIds"],
-            "timestamps": self.timestamps,
-            "checkpoints": self.checkpoints,
+            "timestamps": [_json_time(t) for t in self.timestamps],
+            "checkpoints": [{**c, "time": _json_time(c["time"])} for c in self.checkpoints],
             "performanceMetrics": self.performance_metrics,
             "layout": self.layout_manager.to_jsonable(),
             "state": self.state_at_index(0),
@@ -2392,7 +2408,7 @@ class CircuitSession:
             return {
                 "encoding": "indexed-v1",
                 "index": index,
-                "time": timestamp,
+                "time": _json_time(timestamp),
                 "pins": pins,
                 "wires": wires,
             }
@@ -2454,7 +2470,7 @@ class CircuitSession:
         )
         return {
             "index": index,
-            "time": timestamp,
+            "time": _json_time(timestamp),
             "componentId": component_id,
             "type": "RegisterFile32x32",
             "supported": True,
@@ -2473,6 +2489,8 @@ class CircuitSession:
             timestamp = int(self.timestamps[index])
             self.simulator.set_circuit_state_at_time(timestamp)
             component_type = _component_type(component)
+            if component_type in {"FramebufferDisplay32", "ButtonDevice32", "ConsoleDevice32", "TimerDevice32", "SynchronousFifo<8>", "SynchronousFifo<32>"}:
+                return json.loads(circuit_backend.device_state_json(component,self.simulator,index,timestamp))
             if component_type == "RegisterFile32x32":
                 return self._register_file_state(component, component_id, index, timestamp)
             if component_id not in self.memory_inspectors:

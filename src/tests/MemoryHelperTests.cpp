@@ -26,7 +26,7 @@ struct Probe {
             outputs[name] = b.addNewWireDynamic("OUT_" + name, pin->getWidth(), pin, {});
         SimulationTest::scheduleInitialEventsForTree(io, sim, 0);
     }
-    void drive(size_t time, const NamedValues& values) {
+    void drive(SimulationTime time, const NamedValues& values) {
         for (const auto& [name, value] : values)
             sim.scheduleEvent(makeTestWireUpdate(time, wires.at(name), value));
     }
@@ -50,7 +50,7 @@ void outputBuffers(size_t width) {
                   ? "SRAMOutputBuffer<" : "MemoryOutputBuffer<") + std::to_string(width) + ">",
               "Output buffer display identity changed");
         auto previous = LogicVector(width, X);
-        size_t time = 10;
+        SimulationTime time = 10;
         for (auto enable : {L, H, X, Z, H, L}) {
             for (size_t phase = 0; phase < 4; ++phase) {
                 LogicVector data(width);

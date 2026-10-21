@@ -27,7 +27,7 @@ bool describeSources(const IOComponent& root, const SettlingOptions& options, Gr
     }
     for (const auto& [name, tick] : options.input_arrival) {
         if (!input(name)) reject("input_arrival names no root input: " + name);
-        else if (options.sources != SettlingSources::StateOnly) request.arrival[input(name)] = static_cast<Tick>(tick);
+        else if (options.sources != SettlingSources::StateOnly) request.arrival[input(name)] = checkedTick(tick);
     }
     for (const auto& name : options.held_inputs) {
         if (!input(name) || options.fixed_inputs.contains(name)) reject("held_inputs must name a root input that is not fixed: " + name);
@@ -98,12 +98,12 @@ SettlingReport CircuitTimingAnalyzer::settling(const std::shared_ptr<Component>&
             SettlingEndpoint endpoint;
             endpoint.name = group.name;
             endpoint.changes = result.changes;
-            endpoint.structural = static_cast<size_t>(result.structural);
-            endpoint.bound = static_cast<size_t>(result.bound);
+            endpoint.structural = static_cast<SimulationTime>(result.structural);
+            endpoint.bound = static_cast<SimulationTime>(result.bound);
             endpoint.tight = result.tight;
             Tick first = OPEN;
             for (const auto& [n, extra] : group.endpoints) first = std::min(first, first_change[n]);
-            endpoint.earliest = first == OPEN ? 0 : static_cast<size_t>(first);
+            endpoint.earliest = first == OPEN ? 0 : static_cast<SimulationTime>(first);
             endpoint.evaluations = result.evaluations;
             for (const int n : result.path) endpoint.path.push_back(graph.label(n));
             for (size_t var = 0; var < result.witness.size(); ++var)
@@ -143,7 +143,7 @@ SettlingReport CircuitTimingAnalyzer::settling(const std::shared_ptr<Component>&
 PartTiming CircuitTimingAnalyzer::characterize(const std::shared_ptr<Component>& root,
                                                const SettlingOptions& options) {
     PartTiming timing;
-    const auto ask = [&](SettlingSources sources, std::vector<PartDelay>& outputs, size_t& capture) {
+    const auto ask = [&](SettlingSources sources, std::vector<PartDelay>& outputs, SimulationTime& capture) {
         auto asked = options;
         asked.sources = sources;
         const auto report = settling(root, asked);

@@ -117,9 +117,19 @@ circuit::PartDelays prove(const Candidate& candidate, size_t budget, std::string
     const auto& catalog = circuit::builtinComponentCatalog();
     std::shared_ptr<Component> gates;
     try {
-        gates = catalog.createRoot({candidate.contract, "DUT", parameters}, storage(candidate.contract)
+        auto profile = storage(candidate.contract)
             ? circuit::maximallyStructural()
-            : rv32i::withBehavioralMemoryParts(circuit::maximallyStructural(), "part-delay-reference-v1")).root;
+            : rv32i::withBehavioralMemoryParts(circuit::maximallyStructural(), "part-delay-reference-v1");
+        if (candidate.contract == "rv32im.core.educational-five-stage") {
+            // Its compact evaluator observes real register-word nodes. Match
+            // RV32IMCoreBehavioral's expanded register file with characterized
+            // storage leaves, rather than the older I core's opaque RF.
+            profile = circuit::withProfileOverrides(std::move(profile), {
+                circuit::preferFidelity(circuit::Fidelity::Structural,
+                    circuit::ProfileSelector::contract("rv32i.register-file"),
+                    "retain RV32IM register-word observation nodes")}, "rv32im-part-delay-reference-v1");
+        }
+        gates = catalog.createRoot({candidate.contract, "DUT", parameters}, profile).root;
     } catch (const std::exception& error) { reason = error.what(); return {}; }
     // Storage keeps its compact form in this profile; a part that is itself
     // storage then has no gates to prove anything on.
@@ -154,7 +164,7 @@ circuit::PartDelays prove(const Candidate& candidate, size_t budget, std::string
 // its own: the advanced core for every branch-prediction policy.
 std::vector<circuit::ParameterMap> variants(const std::string& contract) {
     std::vector<circuit::ParameterMap> result;
-    if (contract == "rv32i.core.educational-five-stage")
+    if (contract == "rv32i.core.educational-five-stage" || contract == "rv32im.core.educational-five-stage")
         for (const char* policy : {"not-taken", "taken", "backward-taken", "one-bit", "two-bit"})
             for (const char* entries : {"1", "2", "4", "8", "16", "32", "64", "128", "256"})
                 result.push_back({{"prediction", policy}, {"prediction_entries", entries}});

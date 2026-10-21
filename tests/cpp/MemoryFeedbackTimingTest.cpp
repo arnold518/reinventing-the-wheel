@@ -86,7 +86,7 @@ struct Fixture {
         for(auto n:{"FAULT","WE"})clock.outputs.push_back({std::string("ROOT.")+n,ClockEdge::Rising,0,0});
         sim.setHistoryRecordingEnabled(false);endpoint->setHistoryRecordingEnabled(false);
     }
-    void drive(const std::string& name,size_t t,const Bits& v) {
+    void drive(const std::string& name,SimulationTime t,const Bits& v) {
         const auto& wire=inputs.at(name);
         auto send=[&]<size_t W>(){sim.scheduleEvent(std::make_shared<WireUpdateEvent<W>>(t,std::dynamic_pointer_cast<Wire<W>>(wire),v));};
         switch(v.size()){case 1:send.template operator()<1>();break;case 2:send.template operator()<2>();break;
@@ -132,7 +132,7 @@ void feedback() {
     // Frozen clock, fixed address: observe persistent fault/permission toggles,
     // not a sequence of deliberately changing external requests.
     size_t transitions=0;auto prior=f.outputs.at("FAULT")->getValueVector();
-    for(size_t t=start+2;t<start+300;++t) {
+    for(SimulationTime t=start+2;t<start+300;++t) {
         f.sim.runAndRecord(t);auto value=f.outputs.at("FAULT")->getValueVector();
         transitions+=value!=prior;prior=value;
     }
@@ -170,10 +170,10 @@ void coreCounterexample(const std::string& family) {
         "Binary-startup mode must reject this actual uninitialized-memory counterexample");
     imem->setHistoryRecordingEnabled(false);dmem->setHistoryRecordingEnabled(false);
     Simulator sim;sim.setHistoryRecordingEnabled(false);
-    auto drive=[&](size_t t,const std::shared_ptr<Wire<1>>& w,LogicValue v){
+    auto drive=[&](SimulationTime t,const std::shared_ptr<Wire<1>>& w,LogicValue v){
         sim.scheduleEvent(std::make_shared<WireUpdateEvent<1>>(t,w,v));
     };
-    auto run=[&](size_t t){
+    auto run=[&](SimulationTime t){
         auto r=sim.drainUntilIdle(t,1000000);
         check(r.status!=DrainStatus::EventLimitReached,"Counterexample event budget exceeded");
     };
@@ -182,7 +182,7 @@ void coreCounterexample(const std::string& family) {
     drive(1001,rst,L);run(4000);
     size_t stopped=0;
     for(size_t i=0;i<30;++i) {
-        const size_t t=5000+i*2000;
+        const SimulationTime t=5000+i*2000;
         drive(t,clk,H);run(t+999);drive(t+1000,clk,L);run(t+1999);
         check(!sim.hasPendingEvents(),"Core memory path must settle with unknown byte lanes");
         const auto mask=dmem->getInputPin<4>("REQ_WRITE_MASK")->getValueAsVector();
@@ -198,7 +198,7 @@ void coreCounterexample(const std::string& family) {
     run(stopped+500);
     check(!sim.hasPendingEvents()&&wire->getValueVector()==bits(3,1),"Frozen clock must not oscillate");
     for(size_t i=0;i<12;++i) {
-        const size_t t=stopped+1000+i*2000;
+        const SimulationTime t=stopped+1000+i*2000;
         drive(t,clk,H);run(t+999);drive(t+1000,clk,L);run(t+1999);
     }
     check(core->getOutputPin("TRAPPED")->getValue()==H,"Invalid store must retire a precise trap");

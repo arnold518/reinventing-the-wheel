@@ -478,14 +478,14 @@ void FFMemoryContractTest::verifyResults() {
     sim.advanceAndRecord(7);
     require(wire->getValue() == 0x67452381, "Read missing after configured delay");
     rejects([&] { timed->loadMemoryBytes(0, {1}); });
-    rejects([&] { timed->evaluate(std::numeric_limits<size_t>::max(), sim); });
+    rejects([&] { timed->evaluate(MAX_SIMULATION_TIME, sim); });
 
     // FF-specific edge and ignored-input regressions retained from the old suite.
     auto ff = Component::create<FFMemoryBehavioral<16>>("FF", MemoryConfig{.initial_value = LogicValue::LOW});
     Simulator local;
     for (const auto& [name, pin] : ff->getAllInputPins()) pin->setValueFromUInt64(0);
     auto set = [&](const std::string& name, uint64_t value) { ff->getInputPinDynamic(name)->setValueFromUInt64(value); };
-    auto step = [&](size_t time) { ff->evaluate(time, local); local.advanceAndRecord(time + 1); };
+    auto step = [&](SimulationTime time) { ff->evaluate(time, local); local.advanceAndRecord(time + 1); };
     auto read = [&] { return ff->memoryStorage().readBytes(0, 2); };
     step(0);
     set("WRITE_DATA", 0xabcd); set("WRITE_MASK", 3); set("WE", 1); step(2);
@@ -519,7 +519,7 @@ void MemoryStorageTest::verifyResults() {
     require(storage.historicalByteCount() == 0, "History allocated for untouched bytes");
     std::vector<uint8_t> reference(34, 0);
     std::mt19937 rng(42);
-    for (size_t time = 1; time <= 200; ++time) {
+    for (SimulationTime time = 1; time <= 200; ++time) {
         const auto address = uint32_t(rng() % reference.size());
         reference[address] = uint8_t(rng());
         storage.writeLogic(time, address, circuit::test::logicBits(8, reference[address]), true);

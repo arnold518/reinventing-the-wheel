@@ -1,4 +1,6 @@
 #pragma once
+
+#include "simulator/SimulationTime.hpp"
 // Private factory implementation; callers use families::ALU32.
 
 #include "components/BasicComponent.hpp"
@@ -16,7 +18,7 @@ public:
     explicit ALU32Behavioral(std::string name,bool full_flags = true);
     static constexpr const char* TypeName = "ALU32";
     const char* getTypeName() const override { return full_flags_?TypeName:"ALU32Core"; }
-    void evaluate(size_t current_time, Simulator& simulator) override;
+    void evaluate(SimulationTime current_time, Simulator& simulator) override;
 private:
     bool full_flags_ = true;
 };

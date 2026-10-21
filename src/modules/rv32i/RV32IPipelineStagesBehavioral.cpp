@@ -72,7 +72,7 @@ public:
 
     // The gates are a register, an incrementer and two-input multiplexers;
     // each is evaluated by its own four-state rule.
-    void evaluate(size_t time, Simulator& simulator) override {
+    void evaluate(SimulationTime time, Simulator& simulator) override {
         using namespace circuit::logic_values;
         using Bits = std::vector<LogicValue>;
         const auto select = [](const Bits& a, const Bits& b, LogicValue sel) {
@@ -123,7 +123,7 @@ public:
     static constexpr const char* TypeName = "RV32IDecodeStage";
     const char* getTypeName() const override { return TypeName; }
 
-    void evaluate(size_t time, Simulator& simulator) override {
+    void evaluate(SimulationTime time, Simulator& simulator) override {
         const auto before = registers_;
         rv32i::register_file::step(
             registers_, previous_clk_, getInputValue("RST"), getInputValue("CLK"), getInputValue("WB_REGISTER_WRITE"),
@@ -206,13 +206,13 @@ public:
     }
 
     std::vector<std::vector<LogicValue>>
-    getRegisterStateAtTime(size_t target_time) const override {
+    getRegisterStateAtTime(SimulationTime target_time) const override {
         const RegisterSnapshot* snapshot = &registers_;
         const auto upper = std::upper_bound(
             history_.begin(),
             history_.end(),
             target_time,
-            [](size_t time, const auto& entry) {
+            [](SimulationTime time, const auto& entry) {
                 return time < entry.first;
             });
         if (!history_.empty()) {
@@ -232,10 +232,10 @@ private:
     using RegisterSnapshot =
         std::array<std::array<LogicValue, 32>, 32>;
     RegisterSnapshot registers_{};
-    std::vector<std::pair<size_t, RegisterSnapshot>> history_;
+    std::vector<std::pair<SimulationTime, RegisterSnapshot>> history_;
     LogicValue previous_clk_ = LogicValue::UNKNOWN;
 
-    void record(size_t time) {
+    void record(SimulationTime time) {
         if (!history_.empty() && history_.back().first == time) {
             history_.back().second = registers_;
         } else if (
@@ -257,7 +257,7 @@ public:
     static constexpr const char* TypeName = "RV32IExecuteStage";
     const char* getTypeName() const override { return TypeName; }
 
-    void evaluate(size_t time, Simulator& simulator) override {
+    void evaluate(SimulationTime time, Simulator& simulator) override {
         const auto control =
             rv32i::pipeline_encoding::unpackControl(
                 word(*this, "IN_CONTROL"));
@@ -327,7 +327,7 @@ public:
     static constexpr const char* TypeName = "RV32IMemoryStage";
     const char* getTypeName() const override { return TypeName; }
 
-    void evaluate(size_t time, Simulator& simulator) override {
+    void evaluate(SimulationTime time, Simulator& simulator) override {
         const auto control =
             rv32i::pipeline_encoding::unpackControl(
                 word(*this, "IN_CONTROL"));
@@ -458,7 +458,7 @@ public:
     static constexpr const char* TypeName = "RV32IWritebackStage";
     const char* getTypeName() const override { return TypeName; }
 
-    void evaluate(size_t time, Simulator& simulator) override {
+    void evaluate(SimulationTime time, Simulator& simulator) override {
         const auto control =
             rv32i::pipeline_encoding::unpackControl(
                 word(*this, "IN_CONTROL"));
@@ -530,7 +530,7 @@ public:
               circuit::families::RV32IPipelineExecutionStatus.pinInitializer()) {}
     const char* getTypeName() const override { return "RV32IPipelineExecutionStatus"; }
     // Three registers sharing a clock and reset, each by the register's rule.
-    void evaluate(size_t time, Simulator& sim) override {
+    void evaluate(SimulationTime time, Simulator& sim) override {
         const auto clk = getInputValue("CLK"), rst = getInputValue("RST");
         auto clock = previous_clk_;
         registerStep(halted_, clock, rst, clk, getInputValue("HALT_EVENT"), {LogicValue::HIGH});

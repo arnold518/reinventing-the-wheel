@@ -1,5 +1,7 @@
 #pragma once
 
+#include "simulator/SimulationTime.hpp"
+
 #include "basic/LogicValue.hpp"
 #include <cstddef>
 #include <vector>
@@ -20,5 +22,5 @@ public:
      * otherwise-hidden state from their own history.
      */
     virtual std::vector<std::vector<LogicValue>> getRegisterStateAtTime(
-        size_t target_time) const = 0;
+        SimulationTime target_time) const = 0;
 };

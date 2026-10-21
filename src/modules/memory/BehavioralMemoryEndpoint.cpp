@@ -4,7 +4,8 @@
 using namespace circuit::memory;
 using namespace circuit::memory_device;
 struct BehavioralMemoryEndpoint::State {
-    size_t width, scheduled = 0;
+    size_t width;
+    SimulationTime scheduled = 0;
     Technology technology;
     EndpointConfig config;
     // The handshake state is the gates' own, in four-state form.
@@ -48,7 +49,7 @@ void BehavioralMemoryEndpoint::loadWords(uint32_t address, const std::vector<uin
 void BehavioralMemoryEndpoint::setHistoryRecordingEnabled(bool enabled) {
     state_->device->storage.setHistoryRecordingEnabled(enabled);
 }
-void BehavioralMemoryEndpoint::evaluate(size_t t, Simulator& sim) {
+void BehavioralMemoryEndpoint::evaluate(SimulationTime t, Simulator& sim) {
     auto& s=*state_;
     s.started=true;
     if(s.scheduled<=t)s.scheduled=0;

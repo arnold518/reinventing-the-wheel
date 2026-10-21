@@ -1,4 +1,6 @@
 #pragma once
+
+#include "simulator/SimulationTime.hpp"
 #include <algorithm>
 #include <array>
 #include <cstddef>
@@ -10,24 +12,24 @@
 namespace circuit::analysis::detail {
 // A set of LOW/HIGH/X/Z values, guaranteed after `at`. `settled` bounds the
 // final transition, which need not reveal the value. These are different facts.
-inline constexpr size_t unbounded = std::numeric_limits<size_t>::max();
+inline constexpr SimulationTime unbounded = MAX_SIMULATION_TIME;
 struct TimedBit {
     unsigned values = 15;
-    size_t at = 0, settled = unbounded;
+    SimulationTime at = 0, settled = unbounded;
 };
-inline size_t after(size_t time, size_t delay) {
+inline SimulationTime after(SimulationTime time, SimulationTime delay) {
     if (time == unbounded || delay >= unbounded - time)
         throw std::overflow_error("Timing arithmetic overflow");
     return time + delay;
 }
-inline size_t settledAt(const std::vector<TimedBit>& bits) {
-    size_t time = 0;
+inline SimulationTime settledAt(const std::vector<TimedBit>& bits) {
+    SimulationTime time = 0;
     for (const auto& b : bits) time = std::max(time, b.settled);
     return time;
 }
 struct TimedChoices {
     unsigned values = 0;
-    size_t at = 0, settled = unbounded;
+    SimulationTime at = 0, settled = unbounded;
 };
 inline TimedChoices operationChoices(const std::vector<TimedBit>& bits) {
     TimedChoices c;
@@ -89,10 +91,10 @@ inline unsigned ffStatus(unsigned op, unsigned address, unsigned mask) {
 }
 inline std::array<TimedBit, 3> ffStatusBounds(
     const std::vector<TimedBit>& op, const std::vector<TimedBit>& addr,
-    const std::vector<TimedBit>& mask, size_t bytes, size_t capacity, size_t delay) {
+    const std::vector<TimedBit>& mask, size_t bytes, size_t capacity, SimulationTime delay) {
     const std::array choices{operationChoices(op), addressChoices(addr, bytes, capacity), maskChoices(mask)};
     std::array<TimedBit, 3> result;
-    size_t restrictions = 0;
+    SimulationTime restrictions = 0;
     for (const auto& c : choices) restrictions = std::max(restrictions, c.at);
     for (unsigned bit = 0; bit < 3; ++bit) {
         auto& r = result[bit]; r.values = 0; r.at = after(restrictions, delay);
@@ -109,7 +111,7 @@ inline std::array<TimedBit, 3> ffStatusBounds(
                     depends[input] = depends[input] || (((ffStatus(other[0], other[1], other[2]) >> bit) & 1) != value);
                 }
         }
-        size_t t = restrictions;
+        SimulationTime t = restrictions;
         for (unsigned i = 0; i < 3; ++i) if (depends[i]) t = std::max(t, choices[i].settled);
         if (t != unbounded) r.settled = after(t, delay);
     }

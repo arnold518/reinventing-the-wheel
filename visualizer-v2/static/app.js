@@ -116,6 +116,10 @@ const ui = {
   selectionInfo: document.getElementById("selection-info"),
   componentPinsSection: document.getElementById("component-pins-section"),
   componentPins: document.getElementById("component-pins"),
+  deviceViews: document.getElementById("toggle-device-views"),
+  deviceSection: document.getElementById("device-inspector-section"),
+  devicePreview: document.getElementById("device-preview"),
+  deviceSummary: document.getElementById("device-summary"),
   memorySection: document.getElementById("memory-inspector-section"),
   memoryDetails: document.getElementById("memory-details"),
   memoryAddress: document.getElementById("memory-address"),
@@ -396,8 +400,9 @@ function componentLayoutKey(component) {
 // with _structure_keyed in visualizer-v2/server.py.
 function structureKeyed(type, layoutKey) {
   if (layoutKey === type) return false;
+  if (layoutKey.startsWith(`${type}[config-`)) return true;
   return type.startsWith("Cache") || type.startsWith("SRAM<") || type.startsWith("FFMemory")
-    || type.startsWith("RV32IPredictionTable<") || type.startsWith("MemoryTimer<")
+    || type.startsWith("RV32IPredictionTable<") || type.startsWith("MemoryTimer<") || type.startsWith("ClockedCounter<")
     || type === "RV32IPredictionEntry" || type === "RV32IBranchPredictor";
 }
 
@@ -864,6 +869,15 @@ function buildWirePaths(wire) {
   }
 }
 
+function deviceAbstraction(component) {
+  return ui.deviceViews.getAttribute("aria-pressed") === "true" && CircuitDeviceView.supports(component.type);
+}
+
+ui.deviceViews.addEventListener("click", () => {
+  ui.deviceViews.setAttribute("aria-pressed", String(ui.deviceViews.getAttribute("aria-pressed") !== "true"));
+  app.geometryDirty = true; requestRender();
+});
+
 function componentCanDescend(component) {
   if (!component || !component.rect) return false;
   const projectedWidth = Math.abs(
@@ -888,7 +902,7 @@ function visibleGeometryComponents() {
       return;
     }
     visible.push(component);
-    if (!componentCanDescend(component)) return;
+    if (!componentCanDescend(component) || deviceAbstraction(component)) return;
     for (const childId of component.childIds) {
       walk(app.components.get(childId));
     }
@@ -902,14 +916,23 @@ function rebuildSpatialIndexes() {
   app.pinIndex = new SpatialHash(180);
   app.wireIndex = new SpatialHash(260);
 
-  visibleGeometryComponents().forEach((component, index) => {
+  const geometryComponents = visibleGeometryComponents();
+  const hiddenByDevice = ownerId => {
+    let component = app.components.get(ownerId);
+    while (component?.parentId) {
+      component = app.components.get(component.parentId);
+      if (component && deviceAbstraction(component)) return true;
+    }
+    return false;
+  };
+  geometryComponents.forEach((component, index) => {
     if (component.rect) app.componentIndex.insert({ id: component.id, z: index }, component.rect);
   });
   app.pinOrder.forEach((pin, index) => {
-    if (pin.rect) app.pinIndex.insert({ id: pin.id, z: index }, pin.rect);
+    if (pin.rect && !hiddenByDevice(pin.componentId)) app.pinIndex.insert({ id: pin.id, z: index }, pin.rect);
   });
   app.wireOrder.forEach((wire, index) => {
-    if (!wire.bbox) return;
+    if (!wire.bbox || hiddenByDevice(wire.ownerId)) return;
     const padded = { x: wire.bbox.x - 8, y: wire.bbox.y - 8, w: wire.bbox.w + 16, h: wire.bbox.h + 16 };
     app.wireIndex.insert({ id: wire.id, z: index }, padded);
   });
@@ -2848,6 +2871,10 @@ function drawComponentForeground(component, vr) {
   if (component.type === "BitSplitter") drawBitSplitterContents(component, parts);
   if (component.type === "BitJoiner") drawBitJoinerContents(component, parts);
   if (component.type === "Rewire") drawRewireContents(component, parts);
+  if (deviceAbstraction(component)) {
+    const rect = rectToScreenRect(parts.bodyRect);
+    CircuitDeviceView.draw(ctx,{x:rect.x+rect.w*.06,y:rect.y+rect.h*.12,w:rect.w*.88,h:rect.h*.8},app.componentStates.get(component.id));
+  }
   drawMemoryCellValue(component, parts);
   if (component.fidelity === "behavioral") {
     if (/^Register<\d+>$/.test(component.type)) {
@@ -2867,6 +2894,7 @@ function drawComponentForeground(component, vr) {
 function drawComponent(component, vr) {
   if (!drawComponentBackground(component, vr)) return;
   if (!componentCanDescend(component)) return;
+  if (deviceAbstraction(component)) { drawComponentForeground(component, vr); return; }
   drawComponentGrid(component, vr);
   drawOwnedWires(component.id, vr);
 
@@ -3328,6 +3356,7 @@ function showComponentInspector(component) {
   setSectionVisible(ui.layoutSection, true);
   renderComponentPins(component);
   renderMemoryInspector(component);
+  renderDeviceInspector(component);
 
   ui.componentAspect.min = String(minAspect);
   ui.componentAspect.max = String(Math.max(3, Math.ceil(aspect * 20) / 20));
@@ -3337,6 +3366,17 @@ function showComponentInspector(component) {
   ui.restorePlacement.disabled = !component.parentId;
   ui.restoreChildrenLayout.disabled = component.childIds.length === 0;
   ui.restoreTypeStyle.disabled = !app.savedLayout;
+}
+
+function renderDeviceInspector(component) {
+  const state = app.componentStates.get(component.id);
+  const supported = CircuitDeviceView.supports(component.type);
+  setSectionVisible(ui.deviceSection, supported);
+  if (!supported) return;
+  ui.deviceSummary.textContent = CircuitDeviceView.summary(state);
+  const context = ui.devicePreview.getContext('2d');
+  context.clearRect(0,0,ui.devicePreview.width,ui.devicePreview.height);
+  CircuitDeviceView.draw(context,{x:0,y:0,w:ui.devicePreview.width,h:ui.devicePreview.height},state);
 }
 
 function renderMemoryInspector(component) {
@@ -3408,6 +3448,7 @@ ui.memoryFollow.addEventListener("click", () => {
 });
 
 function showPinInspector(pin) {
+  setSectionVisible(ui.deviceSection, false);
   setSectionVisible(ui.memorySection, false);
   const component = app.components.get(pin.componentId);
   const sourceWires = pin.sourceWireIds || [];
@@ -3433,6 +3474,7 @@ function showPinInspector(pin) {
 }
 
 function showWireInspector(wire) {
+  setSectionVisible(ui.deviceSection, false);
   setSectionVisible(ui.memorySection, false);
   const endpoints = wireEndpointSummary(wire);
   const owner = app.components.get(wire.ownerId);
@@ -4047,6 +4089,8 @@ function syncSliderFill() {
 // Simulation time as the profile defines it: picoseconds (shown in ps, ns,
 // us or ms) when its tick has a length, otherwise abstract ticks.
 function formatSimulationTime(time) {
+  // Wide recordings arrive as decimal ticks. Do not round them through Number.
+  if (typeof time === "string") return `${BigInt(time).toLocaleString()} ticks`;
   const picoseconds = Number(app.timing?.tickPicoseconds || 0);
   if (!picoseconds) return `${Number(time).toLocaleString()} ticks`;
   const ps = Number(time) * picoseconds;
@@ -4073,11 +4117,11 @@ function isMemoryArrayType(type) {
 
 function statefulOverlayComponents() {
   return app.componentOrder.filter((component) => (
-    component.fidelity === "behavioral"
+    CircuitDeviceView.supports(component.type) || (component.fidelity === "behavioral"
     && (
       component.type === "RegisterFile32x32"
       || isMemoryArrayType(component.type)
-    )
+    ))
   ));
 }
 

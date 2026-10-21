@@ -25,7 +25,7 @@ public:
     explicit Adder32Behavioral(std::string name)
         : BasicComponent(std::move(name), 1, defineAdder32Pins) {}
     const char* getTypeName() const override { return Adder32::TypeName; }
-    void evaluate(size_t current_time, Simulator& simulator) override {
+    void evaluate(SimulationTime current_time, Simulator& simulator) override {
         using namespace circuit::logic_values;
         const auto a = getInputPin<32>("A")->getValueAsVector();
         const auto b = getInputPin<32>("B")->getValueAsVector();

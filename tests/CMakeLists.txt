@@ -1,4 +1,20 @@
+add_executable(MemoryProvisioningStartupTest cpp/MemoryProvisioningStartupTest.cpp)
+target_link_libraries(MemoryProvisioningStartupTest PRIVATE SimulatorLib)
+add_test(NAME MemoryProvisioningStartupTest COMMAND MemoryProvisioningStartupTest)
+set_tests_properties(MemoryProvisioningStartupTest PROPERTIES LABELS "memory;compatibility;phase6")
+add_executable(GateListObservationTest cpp/GateListObservationTest.cpp)
+target_link_libraries(GateListObservationTest PRIVATE SimulatorLib)
+add_test(NAME GateListObservationTest COMMAND GateListObservationTest)
+set_tests_properties(GateListObservationTest PROPERTIES LABELS "analysis;unit;rv32im;phase6")
 add_executable(SimulationTestRunner cpp/SimulationTestRunner.cpp)
+add_executable(RV32IMTimingTest cpp/RV32IMTimingTest.cpp)
+target_link_libraries(RV32IMTimingTest PRIVATE SimulatorLib)
+add_test(NAME RV32IMTimingTest COMMAND RV32IMTimingTest)
+set_tests_properties(RV32IMTimingTest PROPERTIES LABELS "rv32im;timing;analysis;phase3" TIMEOUT 600)
+add_executable(RV32IMDeviceSystemTimingTest cpp/RV32IMDeviceSystemTimingTest.cpp)
+target_link_libraries(RV32IMDeviceSystemTimingTest PRIVATE SimulatorLib)
+add_test(NAME RV32IMDeviceSystemTimingTest COMMAND RV32IMDeviceSystemTimingTest)
+set_tests_properties(RV32IMDeviceSystemTimingTest PROPERTIES LABELS "rv32im;timing;analysis;phase6" TIMEOUT 900)
 add_executable(MemoryArchitectureCleanupTest cpp/MemoryArchitectureCleanupTest.cpp)
 target_link_libraries(MemoryArchitectureCleanupTest PRIVATE SimulatorLib)
 add_test(NAME MemoryArchitectureCleanupTest COMMAND MemoryArchitectureCleanupTest)
@@ -35,6 +51,10 @@ set_tests_properties(SRAMSubarrayFormulaTest PROPERTIES LABELS "timing;memory")
 add_executable(DelayRuleTest cpp/DelayRuleTest.cpp)
 target_link_libraries(DelayRuleTest PRIVATE SimulatorLib)
 add_test(NAME DelayRuleTest COMMAND DelayRuleTest)
+add_test(NAME DelayRuleSelectionTest COMMAND ${CMAKE_COMMAND}
+    -DEXECUTABLE=$<TARGET_FILE:DelayRuleTest>
+    -P ${CMAKE_CURRENT_SOURCE_DIR}/checks/DelayRuleSelectionTest.cmake)
+set_tests_properties(DelayRuleSelectionTest PROPERTIES LABELS "timing;analysis;infrastructure" TIMEOUT 30)
 set_tests_properties(DelayRuleTest PROPERTIES LABELS "timing;analysis;slow" TIMEOUT 5400)
 # The same comparison with X shown while an output may still move (an option
 # of the engine, off by default): a compact output must not look settled
@@ -261,10 +281,6 @@ set(SIMULATION_TESTS
     MemoryControllerTest
     MemoryArbiterTest
     TwoPortMemoryArbiterTest
-    RV32ISharedMemoryProgramTest
-    RV32IMemoryArrangementBTest
-    RV32IMemoryArrangementD0Test
-    RV32IMemoryArrangementDIDTest
     FFAlwaysReadyControllerTest
     MemoryEndpointFFTest
     MemoryEndpointSRAMTest
@@ -603,10 +619,95 @@ foreach(policy not-taken taken backward-taken one-bit two-bit)
     endforeach()
 endforeach()
 
+# These arrangements are appended after the program families in TestRegistry.
+foreach(test_name RV32ISharedMemoryProgramTest RV32IMemoryArrangementBTest RV32IMemoryArrangementD0Test RV32IMemoryArrangementDIDTest)
+    add_test(NAME ${test_name} COMMAND SimulationTestRunner ${test_name})
+    set_tests_properties(${test_name} PROPERTIES LABELS "simulation;integration;program;rv32i;pipeline;cache;memory;slow")
+    list(APPEND SIMULATION_TESTS ${test_name})
+endforeach()
+
+# Additive phase 0-3 checks and recorded aliases, in the append hook's order.
+set(RV32IM_PHASE3_TESTS
+    MultiplyStepTest
+    DivideStepTest
+    Multiplier32Test
+    Divider32Test
+    MulDivUnit32Test
+    TableOnlyDelayPublicationTest
+    RV32IMSemanticsTest
+    RV32IMDecodeControlTest
+    RV32IMDecodeStageTest
+    RV32IMExecuteStageTest
+    RV32IMPipelineCoordinatorTest
+    RV32IMFiveStageCoreTest
+    RV32IMCompiledProgramTest
+    ClockedCounterTest
+    SynchronousFifoTest
+    DeviceRegisterPort32Test
+    BusErrorTarget32Test
+    AddressRouter32Test
+    InstructionAccessGuard32Test
+    ConsoleDevice32Test
+    TimerDevice32Test
+    ButtonDevice32Test
+    IndexedPixelSelector32Test
+    FramebufferDisplay32Test
+    DeviceInspectorTest
+    MultiplyStepScenarioTest
+    DivideStepScenarioTest
+    Multiplier32ScenarioTest
+    Divider32ScenarioTest
+    MulDivUnit32ScenarioTest
+    RV32IMDecodeControlScenarioTest
+    RV32IMDecodeStageScenarioTest
+    RV32IMExecuteStageScenarioTest
+    RV32IMPipelineCoordinatorScenarioTest
+    RV32IMFiveStageCoreScenarioTest
+    ClockedCounterScenarioTest
+    SynchronousFifoScenarioTest
+    DeviceRegisterPort32ScenarioTest
+    BusErrorTarget32ScenarioTest
+    AddressRouter32ScenarioTest
+    InstructionAccessGuard32ScenarioTest
+    ConsoleDevice32ScenarioTest
+    TimerDevice32ScenarioTest
+    ButtonDevice32ScenarioTest
+    IndexedPixelSelector32ScenarioTest
+    FramebufferDisplay32ScenarioTest
+)
+foreach(test_name ${RV32IM_PHASE3_TESTS})
+    add_test(NAME ${test_name} COMMAND SimulationTestRunner ${test_name})
+    set_tests_properties(${test_name} PROPERTIES LABELS "simulation;rv32im;phase3")
+    list(APPEND SIMULATION_TESTS ${test_name})
+endforeach()
+
+foreach(test_name SimulationTimeTest SimulationTimePlaybackTest)
+    add_test(NAME ${test_name} COMMAND SimulationTestRunner ${test_name})
+    set_tests_properties(${test_name} PROPERTIES LABELS "simulation;time;phase4")
+    list(APPEND SIMULATION_TESTS ${test_name})
+endforeach()
+
+foreach(test_name RV32IMDeviceSystemTest
+    RV32IMDeviceSystemCachedFFTest RV32IMDeviceSystemCachedDRAMTest
+    RV32IMDeviceSystemWideTimeTest RV32IMDeviceSystemUnsignedTimeTest RV32IMDeviceSystemLockstepTest
+    RV32IMLargerDisplayTest RV32IMRecordedInputValidationTest RV32IMRecordedEvidenceBudgetTest RV32IMDeviceSystemFaultTest RV32IMRecordedBringupTest
+    RV32IMRecordedGame_2048_Test RV32IMRecordedGame_sokoban_Test RV32IMRecordedGame_snake_Test
+    RV32IMRecordedGame_pong_Test RV32IMRecordedGame_tetris_Test RV32IMDeviceSystemScenarioTest)
+    add_test(NAME ${test_name} COMMAND SimulationTestRunner ${test_name})
+    set_tests_properties(${test_name} PROPERTIES LABELS "simulation;rv32im;device;phase4;games" TIMEOUT 3600)
+    list(APPEND SIMULATION_TESTS ${test_name})
+endforeach()
+
 add_test(
     NAME VisualizerModuleBindingsTest
     COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/checks/VisualizerModuleBindingsTest.py
 )
+
+add_test(NAME DeviceParametersBindingsTest
+    COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/checks/DeviceParametersBindingsTest.py)
+set_tests_properties(DeviceParametersBindingsTest PROPERTIES
+    ENVIRONMENT "PYTHONPATH=${PROJECT_BINARY_DIR}:${PROJECT_SOURCE_DIR}/visualizer-v2"
+    LABELS "visualizer;device;contract" TIMEOUT 120)
 
 add_test(NAME FFMemoryBindingsTest
     COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/checks/FFMemoryBindingsTest.py
@@ -676,6 +777,10 @@ if(CIRCUITSIM_NODE_EXECUTABLE)
     set_tests_properties(VisualizerAutomaticLayoutMigrationTest PROPERTIES LABELS "visualizer;layout;unit")
     add_test(NAME VisualizerTopologyIdentityTest COMMAND ${CIRCUITSIM_NODE_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/checks/VisualizerTopologyIdentityTest.js)
     set_tests_properties(VisualizerTopologyIdentityTest PROPERTIES LABELS "visualizer;unit")
+    add_test(NAME VisualizerDeviceViewTest COMMAND ${CIRCUITSIM_NODE_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/checks/VisualizerDeviceViewTest.js)
+    set_tests_properties(VisualizerDeviceViewTest PROPERTIES LABELS "visualizer;device;unit")
+    add_test(NAME ExampleRowsIsolationTest COMMAND ${CIRCUITSIM_NODE_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/checks/ExampleRowsIsolationTest.mjs)
+    set_tests_properties(ExampleRowsIsolationTest PROPERTIES LABELS "documentation;visualizer;unit" WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}")
     add_test(NAME VisualizerMemoryCellViewTest COMMAND ${CIRCUITSIM_NODE_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/checks/VisualizerMemoryCellViewTest.js)
     add_test(NAME VisualizerMemoryViewTest COMMAND ${CIRCUITSIM_NODE_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/checks/VisualizerMemoryViewTest.js)
     set_tests_properties(VisualizerMemoryViewTest PROPERTIES LABELS "memory;visualizer;unit")
@@ -768,3 +873,36 @@ set_tests_properties(
 get_property(circuitsim_directory_tests DIRECTORY PROPERTY TESTS)
 set_property(TEST ${circuitsim_directory_tests} APPEND PROPERTY ENVIRONMENT
     "PYTHONPATH=${PROJECT_BINARY_DIR}:${PROJECT_SOURCE_DIR}/visualizer-v2")
+
+# Native CLI for the recorded device/game runtime. The portable counterpart is
+# circuitsim_recorded_guest in the Emscripten build.
+add_executable(RecordedGuestProbe cpp/RecordedGuestProbe.cpp)
+target_link_libraries(RecordedGuestProbe PRIVATE SimulatorLib)
+
+# These C sources are valid C++ as well. Keep the project compiler languages
+# unchanged; the strict C11 cross-check is run by the reference check helper.
+set_source_files_properties(cpp/RV32IMGameRulesTest.c
+    ${PROJECT_SOURCE_DIR}/tools/rv32im/guest/games.c PROPERTIES LANGUAGE CXX)
+add_executable(RV32IMGameRulesTest cpp/RV32IMGameRulesTest.c
+    ${PROJECT_SOURCE_DIR}/tools/rv32im/guest/games.c)
+target_include_directories(RV32IMGameRulesTest PRIVATE ${PROJECT_SOURCE_DIR}/tools/rv32im/guest)
+add_test(NAME RV32IMGameRulesTest COMMAND RV32IMGameRulesTest)
+set_tests_properties(RV32IMGameRulesTest PROPERTIES LABELS "rv32im;games;phase5;unit")
+foreach(guest bringup 2048 sokoban snake pong tetris 2048-merge tetris-line-clear pong-rally snake-wall)
+    add_test(NAME RV32IMRecorded_${guest}_Test
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/checks/RV32IMGameReferenceTest.py
+            --runner $<TARGET_FILE:RecordedGuestProbe> --guest ${guest})
+    set_tests_properties(RV32IMRecorded_${guest}_Test PROPERTIES
+        LABELS "rv32im;device;games;phase4;phase5;integration;slow" TIMEOUT 3600)
+endforeach()
+
+add_test(NAME DelayTableChunksTest COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/checks/DelayTableChunksTest.py)
+set_tests_properties(DelayTableChunksTest PROPERTIES LABELS "build;timing;unit")
+add_executable(DelayTableSnapshot cpp/DelayTableSnapshot.cpp)
+target_link_libraries(DelayTableSnapshot PRIVATE SimulatorLib)
+
+add_test(NAME SimulationTimeBindingsTest COMMAND ${Python3_EXECUTABLE}
+    ${CMAKE_CURRENT_SOURCE_DIR}/checks/SimulationTimeBindingsTest.py $<TARGET_FILE:VisualizerSessionProbe>)
+set_tests_properties(SimulationTimeBindingsTest PROPERTIES
+    ENVIRONMENT "PYTHONPATH=${PROJECT_BINARY_DIR}:${PROJECT_SOURCE_DIR}/visualizer-v2"
+    LABELS "simulation;time;visualizer;contract;phase4" TIMEOUT 180)

@@ -7,7 +7,7 @@ class PyBasicComponent : public BasicComponent {
 public:
     using BasicComponent::BasicComponent;
 
-    void evaluate(size_t current_time, Simulator& simulator) override {
+    void evaluate(SimulationTime current_time, Simulator& simulator) override {
         PYBIND11_OVERRIDE_PURE(void, BasicComponent, evaluate, current_time, simulator);
     }
 };

@@ -28,7 +28,7 @@ struct Bench {
     std::array<std::shared_ptr<Wire<>>, 4> in;
     std::shared_ptr<Wire<>> q, q_bar;
     Simulator sim;
-    size_t now = 0;
+    SimulationTime now = 0;
     Bench() {
         ComponentBuilder b(root);
         cell = b.addNewComponent<SRAMCell>("CELL");

@@ -61,7 +61,7 @@ public:
     static constexpr const char* TypeName = "Logic32";
     const char* getTypeName() const override { return TypeName; }
 
-    void evaluate(size_t current_time, Simulator& simulator) override {
+    void evaluate(SimulationTime current_time, Simulator& simulator) override {
         const auto a = getInputPin<32>("A")->getValueAsVector();
         const auto b = getInputPin<32>("B")->getValueAsVector();
         std::vector<LogicValue> and_result(32, LogicValue::UNKNOWN);

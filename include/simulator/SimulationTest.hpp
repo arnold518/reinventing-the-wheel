@@ -1,4 +1,6 @@
 #pragma once
+
+#include "simulator/SimulationTime.hpp"
 #include <memory>
 #include <string>
 #include <vector>
@@ -29,7 +31,7 @@ public:
     Simulator* getSimulator() const { return sim.get(); }
 
     struct SimulationCheckpoint {
-        size_t time = 0;
+        SimulationTime time = 0;
         std::string label;
         std::string detail;
         size_t row_index = 0;
@@ -61,7 +63,7 @@ public:
     // Optional playback work after topology-only setupCircuit(). Layout tools
     // call setupCircuit() alone and must not advance the simulator.
     virtual void preparePrecomputedSimulation() {}
-    virtual size_t getRunDuration() const { return 100; }
+    virtual SimulationTime getRunDuration() const { return 100; }
     virtual bool supportsBuildProfile() const { return false; }
     virtual circuit::BuildProfile getBuildProfile() const {
         throw std::logic_error("This simulation scenario does not accept a build profile");
@@ -70,7 +72,7 @@ public:
         throw std::logic_error("This simulation scenario does not accept a build profile");
     }
 
-    static void scheduleInitialEventsForTree(const std::shared_ptr<Component>& component, Simulator& simulator, size_t time = 0) {
+    static void scheduleInitialEventsForTree(const std::shared_ptr<Component>& component, Simulator& simulator, SimulationTime time = 0) {
         if (!component) {
             return;
         }
@@ -82,7 +84,7 @@ public:
         }
     }
 
-    void scheduleInitialEvents(size_t time = 0) {
+    void scheduleInitialEvents(SimulationTime time = 0) {
         if (initial_events_scheduled_) {
             return;
         }

@@ -38,7 +38,7 @@ void require(bool condition, const std::string& message) {
     if (!condition) throw std::runtime_error(message);
 }
 
-void drive(Simulator& simulator, size_t time, const std::shared_ptr<Wire<>>& wire, bool value) {
+void drive(Simulator& simulator, SimulationTime time, const std::shared_ptr<Wire<>>& wire, bool value) {
     simulator.scheduleEvent(std::make_shared<WireUpdateEvent<>>(
         time, wire, value ? LogicValue::HIGH : LogicValue::LOW));
 }
@@ -210,7 +210,7 @@ void RV32ISystemProfileRun::setBuildProfile(
     enable_wire_.reset();
 }
 
-size_t RV32ISystemProfileRun::getRunDuration() const {
+SimulationTime RV32ISystemProfileRun::getRunDuration() const {
     return std::max(visual_run_duration_, RV32IInstructionLockstepTest::getRunDuration());
 }
 
@@ -296,7 +296,7 @@ void RV32ISystemProfileRun::initializeComponentForLockstep(
 
 void RV32ISystemProfileRun::clockComponentOneCycle(
     size_t cycle_index,
-    size_t cycle_start_time
+    SimulationTime cycle_start_time
 ) {
     (void)cycle_index;
     last_access_ = {};

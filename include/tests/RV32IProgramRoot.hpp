@@ -1,5 +1,7 @@
 #pragma once
 
+#include "simulator/SimulationTime.hpp"
+
 #include "components/IOComponent.hpp"
 #include "modules/rv32i/RV32IMemorySystem.hpp"
 #include "modules/memory/Cache.hpp"
@@ -22,7 +24,7 @@ class ClockGenerator;
 // profile they are all multiplied by this factor: the smallest whole number
 // that makes the fixture's cycle at least the clock the analysis certifies
 // for `core` ("single", "baseline", "advanced") in that profile. 1 in `unit`.
-size_t rv32iFixtureTimeScale(std::string_view core, size_t unit_cycle_ticks);
+size_t rv32iFixtureTimeScale(std::string_view core, SimulationTime unit_cycle_ticks);
 class Simulator;
 template<size_t WIDTH> class Wire;
 
@@ -55,11 +57,11 @@ RV32IArrangementCaches rv32iArrangementCaches(RV32IMemoryArrangement, const rv32
 class RV32IProgramRoot : public IOComponent {
 public:
     RV32IProgramRoot(std::string name, const circuit::ComponentFamily& core_family,
-        size_t clock_half_period, circuit::ParameterMap core_parameters = {});
+        SimulationTime clock_half_period, circuit::ParameterMap core_parameters = {});
     RV32IProgramRoot(
         std::string name,
         const circuit::ComponentFamily& core_family,
-        size_t clock_half_period,
+        SimulationTime clock_half_period,
         rv32i::MemoryConfiguration instructions,
         rv32i::MemoryConfiguration data = {}, circuit::ParameterMap core_parameters = {},
         std::optional<circuit::memory::CacheConfig> instruction_cache = std::nullopt,
@@ -75,11 +77,11 @@ public:
 
     void initializeFixedInputs(
         Simulator& simulator,
-        size_t time = 0) const;
-    void startClock(Simulator& simulator, size_t first_rising_time) const;
+        SimulationTime time = 0) const;
+    void startClock(Simulator& simulator, SimulationTime first_rising_time) const;
     // Host hook: sample settled pre-edge outputs once, before advancing across
     // the rising edge. observed PC is a testbench output, never a core input.
-    void observeRetirementBeforeEdge(Simulator& simulator, size_t edge_time);
+    void observeRetirementBeforeEdge(Simulator& simulator, SimulationTime edge_time);
 
     void clearInstructionMemory();
     void clearDataMemory();
@@ -97,8 +99,8 @@ public:
         size_t count) const;
     void setMemoryHistoryRecordingEnabled(bool enabled);
     std::map<uint32_t, uint8_t> dataMemoryWritesInTimeRange(
-        size_t start_time,
-        size_t end_time) const;
+        SimulationTime start_time,
+        SimulationTime end_time) const;
     rv32i::RV32IArchitecturalState snapshotArchitecturalState() const;
 
     std::shared_ptr<IOComponent> core() const { return core_; }
@@ -116,7 +118,7 @@ public:
 private:
     circuit::ComponentFamily core_family_;
     circuit::ParameterMap core_parameters_;
-    size_t clock_half_period_;
+    SimulationTime clock_half_period_;
     std::shared_ptr<ClockGenerator> clock_{};
     std::shared_ptr<IOComponent> core_{};
     std::shared_ptr<RV32IStateView> state_view_{};

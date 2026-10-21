@@ -46,7 +46,7 @@ uint64_t binaryTraceValue(const std::shared_ptr<PinBase>& pin,size_t cycle,uint6
     }
     return value;
 }
-void drive(Simulator& sim,size_t t,const std::shared_ptr<Wire<>>& wire,bool value) {
+void drive(Simulator& sim,SimulationTime t,const std::shared_ptr<Wire<>>& wire,bool value) {
     sim.scheduleEvent(std::make_shared<WireUpdateEvent<>>(t,wire,value?LogicValue::HIGH:LogicValue::LOW));
 }
 void compare(const rv32i::RV32IState& a,const rv32i::RV32IState& b,size_t attempt) {
@@ -121,8 +121,11 @@ RV32IExperimentResult runRV32IExperiment(const RV32IExperimentConfig& config) {
     if(memory_config.technology==circuit::memory::Technology::DRAM) {
         const auto& reference=circuit::timing::activeTimingProfile().memory;
         memory_config.device.words_per_row=reference.dram_row_words;
-        if(reference.dram_refresh_interval&&config.period&&!config.safe_clock_only)
-            memory_config.device.refresh_interval_cycles=std::max<size_t>(24,reference.dram_refresh_interval/config.period);
+        if(reference.dram_refresh_interval&&config.period&&!config.safe_clock_only) {
+            const auto cycles=std::max<SimulationTime>(24,reference.dram_refresh_interval/config.period);
+            if(cycles>std::numeric_limits<size_t>::max()) throw std::overflow_error("DRAM refresh cycle count exceeds host range");
+            memory_config.device.refresh_interval_cycles=static_cast<size_t>(cycles);
+        }
     }
     // SRAM/ROM wait states for this clock, from the proven access time (as a
     // real system sets its flash latency from the clock frequency).
@@ -279,7 +282,7 @@ RV32IExperimentResult runRV32IExperiment(const RV32IExperimentConfig& config) {
     };
     // Event guard includes reset; statistics below exclude it on every core.
     size_t consumed=0;
-    auto advance=[&](size_t target) {
+    auto advance=[&](SimulationTime target) {
         auto drained=sim.drainUntilIdle(target,config.max_events-consumed);
         consumed+=drained.processed_events;
         require(drained.status!=DrainStatus::EventLimitReached,"Experiment event budget exceeded");

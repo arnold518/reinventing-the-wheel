@@ -179,7 +179,7 @@ public:
     Simulator sim;
     ComponentBuilder builder;
     std::map<std::string,std::shared_ptr<WireBase>> inputs;
-    size_t cases=0, max_delay=0;
+    size_t cases=0; SimulationTime max_delay=0;
     std::unique_ptr<Harness> peer;
 };
 }

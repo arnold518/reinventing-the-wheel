@@ -107,9 +107,9 @@ class FlashControl : public IOComponent {
         using PinPtr = memory_detail::StructuralWiring::PinPtr;
         memory_detail::StructuralWiring w(b);
         const auto &memory = timing::activeTimingProfile().memory;
-        const size_t slowest = std::max({timing::leafDelay(timing::Leaf::Not), timing::leafDelay(timing::Leaf::Nand),
+        const SimulationTime slowest = std::max({timing::leafDelay(timing::Leaf::Not), timing::leafDelay(timing::Leaf::Nand),
                                          timing::leafDelay(timing::Leaf::And), timing::leafDelay(timing::Leaf::Or)});
-        const size_t gate = timing::leafDelay(timing::Leaf::And);
+        const SimulationTime gate = timing::leafDelay(timing::Leaf::And);
         auto por = b.addNewComponent<memory::PowerOnReset>("POWER_ON_RESET", 16 * slowest);
         const auto reset = por->getOutputPin("OUT");
         auto state = [&](const std::string &name) {
@@ -178,7 +178,7 @@ class FlashControl : public IOComponent {
             return w.reduce("RUN_" + name, {command->getOutputPin("Q"), B, restarting}, true);
         };
         auto r_read = run(c_read, "READ"), r_program = run(c_program, "PROGRAM"), r_erase = run(c_erase, "ERASE");
-        auto chain = [&](const std::string &name, PinPtr go, std::vector<std::pair<size_t, size_t>> steps) {
+        auto chain = [&](const std::string &name, PinPtr go, std::vector<std::pair<SimulationTime, size_t>> steps) {
             std::vector<PinPtr> stages;
             auto previous = go;
             for (size_t k = 0; k < steps.size(); ++k) {
@@ -292,7 +292,7 @@ class RowBehavioral : public Primitive {
         : Primitive(std::move(n), "NORFlashRow<" + std::to_string(cols) + ">",
                     [cols](IOComponent *s) { rowPins(s, cols); }),
           values_(cols, H), initialized_(cols, 0) {}
-    void evaluate(size_t t, Simulator &sim) override {
+    void evaluate(SimulationTime t, Simulator &sim) override {
         for (size_t c = 0; c < values_.size(); ++c) {
             auto n = std::to_string(c);
             values_[c] =
@@ -314,7 +314,7 @@ class BankBehavioral : public Primitive {
                         std::to_string(c.words_per_row) + ">",
                     [=](IOComponent *s) { bankPins(s, w, c); }),
           width_(w), config_(c), values_(w * c.depth_words, H), initialized_(w * c.depth_words, 0) {}
-    void evaluate(size_t t, Simulator &sim) override {
+    void evaluate(SimulationTime t, Simulator &sim) override {
         size_t count = 0, row = 0;
         bool valid = true;
         for (size_t r = 0; r < config_.rows(); ++r) {
@@ -359,7 +359,7 @@ class FlashBehavioral : public Primitive, public MemoryDeviceStorage {
     void loadMemoryBytes(uint32_t, const std::vector<uint8_t> &) override {
         throw std::logic_error("Initialize flash through WREN/PROGRAM commands");
     }
-    void evaluate(size_t t, Simulator &sim) override {
+    void evaluate(SimulationTime t, Simulator &sim) override {
         started_ = true;
         const auto clk = getInputValue("CLK");
         if (previous_clock_ == L && clk == H)
@@ -414,9 +414,9 @@ NORFlashConfig norFlashConfigFromParameters(const ParameterMap &p) {
     NORFlashConfig c;
     readGeometry(p, c);
     c.block_words = parameter(p, "block_words", 2);
-    c.phase_ticks = parameter(p, "phase_ticks", 32);
-    c.program_ticks = parameter(p, "program_ticks", 128);
-    c.erase_ticks = parameter(p, "erase_ticks", 256);
+    c.phase_ticks = timeParameter(p, "phase_ticks", 32);
+    c.program_ticks = timeParameter(p, "program_ticks", 128);
+    c.erase_ticks = timeParameter(p, "erase_ticks", 256);
     return c;
 }
 ParameterMap norFlashParameters(const NORFlashConfig &c) {
@@ -429,7 +429,7 @@ ParameterMap norFlashParameters(const NORFlashConfig &c) {
 }
 NORFlashCell::NORFlashCell(std::string n) : Primitive(std::move(n), "NORFlashCell", cellPins) {
 }
-void NORFlashCell::evaluate(size_t t, Simulator &sim) {
+void NORFlashCell::evaluate(SimulationTime t, Simulator &sim) {
     value_ = updateCell(initialized_, value_, getInputValue("WL"), getInputValue("PROGRAM"),
                         getInputValue("ERASE"), getInputValue("D"));
     publish(sim, t, "Q", value_);

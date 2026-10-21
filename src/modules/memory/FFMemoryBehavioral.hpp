@@ -1,5 +1,7 @@
 #pragma once
 
+#include "simulator/SimulationTime.hpp"
+
 #include "basic/LogicValueHelpers.hpp"
 #include "components/BasicComponent.hpp"
 #include "components/capabilities/MemoryStateView.hpp"
@@ -33,9 +35,8 @@ public:
         storage_.loadBytes(address, data);
     }
     const MemoryConfig& configuration() const noexcept { return config_; }
-    void evaluate(size_t time, Simulator& sim) override {
-        if (time > std::numeric_limits<size_t>::max() - delay)
-            throw std::overflow_error("Memory output timestamp overflow");
+    void evaluate(SimulationTime time, Simulator& sim) override {
+        (void)checkedTimeAdd(time, delay);
         started_ = true;
         const auto clk = getInputValue("CLK"), rst = getInputValue("RST");
         const auto we = getInputValue("WE"), re = getInputValue("READ_EN");

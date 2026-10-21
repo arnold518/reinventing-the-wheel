@@ -131,7 +131,7 @@ struct Result {
 
 class Runner {
 public:
-    Runner(std::shared_ptr<Path> root, size_t period) : root_(std::move(root)), period_(period) {
+    Runner(std::shared_ptr<Path> root, SimulationTime period) : root_(std::move(root)), period_(period) {
         ComponentBuilder b(root_);
         for (const auto& [n, q] : root_->getAllInputPins()) in_[n] = b.addNewWireDynamic("IN_" + n, q->getWidth(), nullptr, {q});
         for (const auto& [n, q] : root_->getAllOutputPins()) b.addNewWireDynamic("OUT_" + n, q->getWidth(), q, {});
@@ -198,7 +198,7 @@ size_t profilePeriod() {
 int main(int argc, char** argv) {
     try {
         // Optional: a period, then a trace and a path to run alone.
-        const size_t period = argc > 1 && std::string(argv[1]) != "-" ? std::stoul(argv[1]) : profilePeriod();
+        const SimulationTime period = argc > 1 && std::string(argv[1]) != "-" ? std::stoul(argv[1]) : profilePeriod();
         const std::string only_trace = argc > 2 ? argv[2] : "", only_path = argc > 3 ? argv[3] : "";
         const auto& reference = timing::activeTimingProfile().memory;
         EndpointConfig memory;

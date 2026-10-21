@@ -160,6 +160,7 @@ function mergeLayoutStores(defaults, saved) {
 function componentLayout(component, layout, layoutKey) {
   const types = layout.type_layouts || {};
   const base = { ...(types[component.type] || {}) };
+  if (component.layoutType?.startsWith(`${component.type}[config-`)) delete base.children;
   if (component.type === "Rewire" && component.layoutType && component.layoutType !== component.type) {
     delete base.aspect_ratio;
     delete base.min_aspect_ratio;

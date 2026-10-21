@@ -118,6 +118,6 @@ void Wire<WIDTH>::setSingleValue(LogicValue new_value) {
 }
 
 template<size_t WIDTH>
-void Wire<WIDTH>::propagateChange(Simulator& simulator, size_t propagation_time) {
+void Wire<WIDTH>::propagateChange(Simulator& simulator, SimulationTime propagation_time) {
     propagateWireChange(*this, simulator, propagation_time);
 }

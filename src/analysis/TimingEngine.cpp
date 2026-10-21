@@ -165,17 +165,17 @@ void Engine::refinePart(int n, const Node& x, bool values) {
             std::vector<TimedBit> result(count);
             for (unsigned i = 0; i < count; ++i) {
                 const Fact& f = fact_[first + int(i)];
-                result[i] = {f.values, f.at == NEVER ? size_t{0} : static_cast<size_t>(f.at),
-                             f.settled == OPEN ? unbounded : f.settled == NEVER ? size_t{0} : static_cast<size_t>(f.settled)};
+                result[i] = {f.values, f.at == NEVER ? SimulationTime{0} : static_cast<SimulationTime>(f.at),
+                             f.settled == OPEN ? unbounded : f.settled == NEVER ? SimulationTime{0} : static_cast<SimulationTime>(f.settled)};
             }
             return result;
         };
         const Tick slowest = std::max({part.status_from_op, part.status_from_address, part.status_from_mask, Tick{1}});
         const auto proof = ffStatusBounds(bits(part.op, 3), bits(part.address, part.address_bits),
-            bits(part.mask, part.mask_bits), part.bytes_per_word, part.capacity_bytes, static_cast<size_t>(slowest));
+            bits(part.mask, part.mask_bits), part.bytes_per_word, part.capacity_bytes, static_cast<SimulationTime>(slowest));
         const auto& p = proof[graph_.nodes[n].bit];
-        apply(n, static_cast<uint8_t>(p.values), std::max(launch, static_cast<Tick>(p.at)),
-              p.settled == unbounded ? OPEN : std::max(launch, static_cast<Tick>(p.settled)), -1);
+        apply(n, static_cast<uint8_t>(p.values), std::max(launch, checkedTick(p.at)),
+              p.settled == unbounded ? OPEN : std::max(launch, checkedTick(p.settled)), -1);
         break;
     }
     }

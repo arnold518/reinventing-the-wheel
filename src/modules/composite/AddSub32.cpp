@@ -76,7 +76,7 @@ public:
     static constexpr const char* TypeName = "AddSub32";
     const char* getTypeName() const override { return TypeName; }
 
-    void evaluate(size_t current_time, Simulator& simulator) override {
+    void evaluate(SimulationTime current_time, Simulator& simulator) override {
         const auto a_bits = getInputPin<32>("A")->getValueAsVector();
         const auto b_bits = getInputPin<32>("B")->getValueAsVector();
         const auto sub_value = getInputPin("SUB")->getValue();

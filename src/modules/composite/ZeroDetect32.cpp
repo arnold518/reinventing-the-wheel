@@ -26,7 +26,7 @@ public:
     static constexpr const char* TypeName = "ZeroDetect32";
     const char* getTypeName() const override { return TypeName; }
 
-    void evaluate(size_t current_time, Simulator& simulator) override {
+    void evaluate(SimulationTime current_time, Simulator& simulator) override {
         bool has_unknown = false;
         for (const auto value :
              getInputPin<32>("A")->getValueAsVector()) {

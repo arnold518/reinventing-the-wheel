@@ -5,14 +5,14 @@
 #include <utility>
 
 template<size_t WIDTH>
-WireUpdateEvent<WIDTH>::WireUpdateEvent(size_t event_time, std::shared_ptr<Wire<WIDTH>> wire, LogicValue value)
+WireUpdateEvent<WIDTH>::WireUpdateEvent(SimulationTime event_time, std::shared_ptr<Wire<WIDTH>> wire, LogicValue value)
     : Event(event_time), wire_to_update(std::move(wire)) {
     new_values.fill(LogicValue::LOW);
     new_values[0] = value;
 }
 
 template<size_t WIDTH>
-WireUpdateEvent<WIDTH>::WireUpdateEvent(size_t event_time, std::shared_ptr<Wire<WIDTH>> wire, uint64_t value)
+WireUpdateEvent<WIDTH>::WireUpdateEvent(SimulationTime event_time, std::shared_ptr<Wire<WIDTH>> wire, uint64_t value)
     : Event(event_time), wire_to_update(std::move(wire)) {
     for (size_t i = 0; i < WIDTH; ++i) {
         new_values[i] = ((value >> i) & 1U) ? LogicValue::HIGH : LogicValue::LOW;
@@ -20,7 +20,7 @@ WireUpdateEvent<WIDTH>::WireUpdateEvent(size_t event_time, std::shared_ptr<Wire<
 }
 
 template<size_t WIDTH>
-WireUpdateEvent<WIDTH>::WireUpdateEvent(size_t event_time, std::shared_ptr<Wire<WIDTH>> wire, const std::vector<LogicValue>& values)
+WireUpdateEvent<WIDTH>::WireUpdateEvent(SimulationTime event_time, std::shared_ptr<Wire<WIDTH>> wire, const std::vector<LogicValue>& values)
     : Event(event_time), wire_to_update(std::move(wire)) {
     for (size_t i = 0; i < WIDTH; ++i) {
         new_values[i] = (i < values.size()) ? values[i] : LogicValue::UNKNOWN;

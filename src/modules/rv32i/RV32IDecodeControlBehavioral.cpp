@@ -21,7 +21,7 @@ RV32IDecodeControlBehavioral::RV32IDecodeControlBehavioral(std::string name)
     : BasicComponent(std::move(name), 1,
                      circuit::families::RV32IDecodeControl.pinInitializer()) {}
 
-void RV32IDecodeControlBehavioral::evaluate(size_t current_time, Simulator& simulator) {
+void RV32IDecodeControlBehavioral::evaluate(SimulationTime current_time, Simulator& simulator) {
     const auto input = getInputPin<32>("INSTRUCTION")->getValueAsVector();
     if (!allKnown(input)) {
         const std::vector<LogicValue> unknown2(2, LogicValue::UNKNOWN);

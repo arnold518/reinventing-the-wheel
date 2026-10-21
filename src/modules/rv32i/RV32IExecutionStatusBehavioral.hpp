@@ -1,4 +1,6 @@
 #pragma once
+
+#include "simulator/SimulationTime.hpp"
 // Private factory implementation; callers use families::RV32IExecutionStatus.
 
 #include "components/BasicComponent.hpp"
@@ -9,7 +11,7 @@ public:
     explicit RV32IExecutionStatusBehavioral(std::string name);
     static constexpr const char* TypeName = "RV32IExecutionControlStatusUnit";
     const char* getTypeName() const override { return TypeName; }
-    void evaluate(size_t current_time, Simulator& simulator) override;
+    void evaluate(SimulationTime current_time, Simulator& simulator) override;
 
 private:
     LogicValue halted_ = LogicValue::UNKNOWN;
