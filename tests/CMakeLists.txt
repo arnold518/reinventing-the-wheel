@@ -496,6 +496,9 @@ set(INTEGRATION_TESTS
 
 set(SLOW_SIMULATION_TESTS
     RV32ISharedMemoryProgramTest
+    RV32IMemoryArrangementBTest
+    RV32IMemoryArrangementD0Test
+    RV32IMemoryArrangementDIDTest
     ALU32Test
     ALU32CoreTest
     FFMemoryContractTest
@@ -616,10 +619,12 @@ foreach(policy not-taken taken backward-taken one-bit two-bit)
     endforeach()
 endforeach()
 
-# This existing scenario is appended after the program families in TestRegistry.
-add_test(NAME RV32ISharedMemoryProgramTest COMMAND SimulationTestRunner RV32ISharedMemoryProgramTest)
-set_tests_properties(RV32ISharedMemoryProgramTest PROPERTIES LABELS "simulation;integration;program;rv32i;cache;memory;slow")
-list(APPEND SIMULATION_TESTS RV32ISharedMemoryProgramTest)
+# These arrangements are appended after the program families in TestRegistry.
+foreach(test_name RV32ISharedMemoryProgramTest RV32IMemoryArrangementBTest RV32IMemoryArrangementD0Test RV32IMemoryArrangementDIDTest)
+    add_test(NAME ${test_name} COMMAND SimulationTestRunner ${test_name})
+    set_tests_properties(${test_name} PROPERTIES LABELS "simulation;integration;program;rv32i;pipeline;cache;memory;slow")
+    list(APPEND SIMULATION_TESTS ${test_name})
+endforeach()
 
 # Additive phase 0-3 checks and recorded aliases, in the append hook's order.
 set(RV32IM_PHASE3_TESTS

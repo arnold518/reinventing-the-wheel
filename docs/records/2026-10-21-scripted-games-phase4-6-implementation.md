@@ -1,7 +1,7 @@
 # Scripted device platform and games implementation
 
 Started: 2026-10-21. Status: open.
-Code state: isolated `rv32im-phase3` worktree from `60acda2`, with uncommitted foundation, wide-time, system and game work.
+Code state: checkpoint `8c90c1f`, integrating `alpha` at `0d498c7` in the isolated `rv32im-phase3` checkout.
 
 ## Summary
 
@@ -14,8 +14,10 @@ insufficient host memory. General geometry/queue parameters, display and
 keyboard observers, Python declarations and shared JS helpers pass focused
 checks; all 363 scenario layouts pass with old values preserved. All three
 timing profiles verify 808 entries with 754 legacy entries unchanged each.
-Final revised-game repetitions/fidelity/quantum measurements and
-WASM/browser/site acceptance remain. Phase 6 is open; phase 7 is authorized
+The final portable foundation/system refresh, 22 native/WASM device
+comparisons and exact time transport pass. Strict focused site packaging
+passes with retained legacy exports. Revised-game repetitions/fidelity/quantum/
+performance, compiled-game WASM comparisons and full browser acceptance remain. Phase 6 is open; phase 7 is authorized
 after its gates and has not started.
 
 ## 2026-10-21 — Scope and execution plan
@@ -959,3 +961,11 @@ preserving all old values. The large SRAM retry stops safely at the host
 memory guard (exit 75); its normal CTest path contains no redundant preview.
 No shared scenario behavior or history contract was weakened to force it
 through the available memory. This regression still needs headroom.
+
+## 2026-10-22 — Owner-directed wrap
+
+The owner requested checkpointing this work and merging into `alpha`, which
+now includes the newer visualizer commits. Do not start the long revised-game
+campaign during this wrap or label phase 6 complete. Integration checks and
+primary-work preservation are recorded in the [wrap record](2026-10-22-rv32im-milestone-wrap-and-integration.md).
+Phase 7 remains unimplemented.

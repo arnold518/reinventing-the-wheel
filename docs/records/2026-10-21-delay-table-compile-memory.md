@@ -1,11 +1,18 @@
 # Bounded compiler memory for tables and Python bindings
 
 Started: 2026-10-21. Status: open.
-Code state: isolated `rv32im-phase3` worktree from `60acda2`, with uncommitted foundations and wide-time/game integration.
+Code state: checkpoint `8c90c1f`, integrating `alpha` at `0d498c7` in the isolated `rv32im-phase3` checkout.
 
 ## Summary
 
-The fresh wasm32 build hit its 1 GiB compiler address-space cap on the existing Unit delay-table translation unit (`LLVM ERROR: out of memory`). Keep canonical generated entries and public table functions unchanged; add an optional build partitioner that places whole contiguous entries in smaller compiler units. This is a build-memory prerequisite, not a timing-data regeneration or a new circuit behavior. Validation is in progress.
+Optional whole-entry table partitions and smaller Python registration units
+build within the local caps. Complete native/WASM table snapshots match for
+all 808 entries per profile; all 754 legacy entries per profile retain their
+values. All 175 old Python API entries are preserved, with five additions.
+Optional isolated example generation passes its identity/publication checks;
+full real legacy regeneration still reaches the host-headroom guard. Strict
+focused packaging passes with 22 current new groups and 135 retained legacy
+exports. Integrated build checks are in the [wrap record](2026-10-22-rv32im-milestone-wrap-and-integration.md).
 
 ## 2026-10-21 — Design and initial evidence
 
@@ -168,3 +175,10 @@ recorded_guest_names, run_recorded_guest_json). Two queued small guards were
 intended to be stopped to avoid simultaneous starts; both had finished before
 the verified stop command found their PIDs, so no signal was sent. Future
 checks use a single serial queue.
+
+## 2026-10-22 — Milestone checkpoint
+
+Checkpoint `8c90c1f` contains this work. The owner requested merging it into
+`alpha`; integration verification and remaining acceptance limits are recorded
+in the [wrap record](2026-10-22-rv32im-milestone-wrap-and-integration.md).
+Earlier dated evidence above is retained. Phase 6 is not declared complete.

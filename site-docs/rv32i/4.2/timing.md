@@ -91,7 +91,7 @@ separately.
 The [registered timing regressions](verification/timing.md#timed-memory-handshake-state-regression)
 check observed states for FF, SRAM and DRAM on program 20. Recompute after
 changing a circuit, endpoint or timing contract. Dated certificate values and
-their scope are recorded in [§ 4.7](../experiments.md).
+their scope are recorded in [§ 4.8](../experiments.md).
 
 ## Reproduction
 

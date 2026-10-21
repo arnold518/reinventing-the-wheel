@@ -12,7 +12,7 @@ proven on them.
 | [§ 1 Time and Delay](timing.md) | How long every part takes: timing profiles, gate delays, proven delay tables, clocked parts and certified clocks |
 | [§ 2 ALU8](alu8/2.1.md) | A teaching 8-bit ALU: adders, logic, shifts, comparison, flags and the complete unit |
 | [§ 3 Memories](memory/architecture.md) | Flip-flop storage, SRAM, DRAM, ROM and NOR flash from cell to device, a common transaction protocol, controllers, measured timing, and caches |
-| [§ 4 RV32I](rv32i/4.1/index.md) | The instruction set, building blocks, a single-cycle core, a baseline and an advanced five-stage pipeline, and experiments comparing them |
+| [§ 4 RV32I](rv32i/4.1/index.md) | The instruction set, building blocks, a single-cycle core, a baseline and an advanced five-stage pipeline, memory systems with caches, and experiments comparing them |
 
 Each component page gives its pins, behavior, structure, timing and a
 recorded example you can replay in the embedded simulator. The

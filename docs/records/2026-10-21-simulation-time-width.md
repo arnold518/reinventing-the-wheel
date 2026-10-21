@@ -5,7 +5,13 @@ Code state: isolated `rv32im-phase3` worktree from `60acda2`, with phase 0–3 a
 
 ## Summary
 
-Independent prerequisite for [scripted platform/games phases 4–6](2026-10-21-scripted-games-phase4-6-implementation.md). Explicit unsigned 64-bit ticks, checked scheduling, widened histories and exact large-tick JSON are implemented. Standalone wide-time/publication/history/overflow and recorded-rewind checks pass in native and intermediate WASM builds. Short device-system guests above 2^53 and 2^63 pass in WASM. Exact Python/native/WASM transport, final artifact refresh and old-behavior regressions remain pending. Existing identities, pin widths, event ordering and short numeric playback representations are preserved by design; full compatibility acceptance is still open.
+Explicit unsigned 64-bit ticks, checked scheduling, widened histories and
+exact large-tick JSON are implemented. Final native/Python/WASM transport,
+recorded rewind, overflow rejection and short CPU/device runs above 2^53
+and 2^63 pass. The portable refresh covers 54 foundation checks and 11 system
+checks; the exact wide-time web check passes. The full current-source suite
+is not claimed. Integration with the newer `alpha` commits is tracked in the
+[wrap record](2026-10-22-rv32im-milestone-wrap-and-integration.md).
 
 ## 2026-10-21 — Audit and proposed compatibility boundary
 
@@ -48,3 +54,10 @@ tick fields and checked arithmetic. Log
 `/tmp/circuitsim-native-foundation-refresh.log`; its independent optional
 expanded-system clock check failed, so the containing panel is 8/9 rather
 than an overall pass. Binding/old-playback verification remains pending.
+
+## 2026-10-22 — Milestone checkpoint
+
+Checkpoint `8c90c1f` contains this work. The owner requested merging it into
+`alpha`; integration verification and remaining acceptance limits are recorded
+in the [wrap record](2026-10-22-rv32im-milestone-wrap-and-integration.md).
+Earlier dated evidence above is retained. Phase 6 is not declared complete.

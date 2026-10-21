@@ -12,7 +12,8 @@ history remains in Git and the archived reports.
 - **Changed:** prepare the RV32IM/device/scripted-game work for `alpha`,
   retaining the newer visualizer work and original playability audit tools.
   Optional WASM link optimization and isolated example generation reduce
-  peak memory without changing their defaults. A generator check verifies
+  peak memory without changing their defaults. Inspector parity releases its
+  captured Python circuit before building the native comparison. A generator check verifies
   full/filtered output identity and failure-safe publication.
 - **Verified before integration:** 54 portable checks, 11 portable system
   checks, exact native/WASM comparison of all 22 device scenarios and wide-time
@@ -26,6 +27,40 @@ history remains in Git and the archived reports.
   compiled-game WASM comparisons remain follow-up work. Phase 6 acceptance
   is open; phase 7 has not started. Integration results are recorded in the
   [wrap record](records/2026-10-22-rv32im-milestone-wrap-and-integration.md).
+
+### Visualizer: modern look for toolbars, panels and controls (branch `realistic-timing`)
+
+- **Changed:**
+  - `visualizer-v2/static/styles.css` is rewritten around theme tokens:
+    one dark theme, rounded floating panels, system sans and mono fonts,
+    icon buttons (inline SVG masks), captioned Scenario and Timing
+    dropdowns, a styled timeline with a progress fill, and a bottom dock
+    centered over the visible canvas.
+  - `index.html`: transport reordered around Play; icon-only buttons carry
+    `aria-label` and `title`. All element IDs are kept.
+  - `app.js`: a `playing` class for the pause icon, the timeline fill, and
+    checkpoint marks drawn under the track (the styled slider hides the
+    datalist ticks); canvas background and background grid are darker.
+  - The desktop top bar no longer cuts off the Timing dropdown.
+  - Kept mergeable with the uncommitted device I/O work in
+    `.worktrees/rv32im-phase3`: the Fit button keeps its original line, the
+    toolbar divider comes from CSS, and its `Device views` toggle is styled
+    in advance. A three-way merge of the shared files has no conflicts.
+- **Why:** the owner found the buttons and windows old-fashioned.
+- **Verified:** screenshots at 1440, 1100 and 360 px, program view forced on
+  Full Adder, and the docs embed; every top-bar and dock control inside the
+  viewport and clickable at 960, 640, 360 and 320 px. Browser checks run
+  against a scratch mirror of today's `build-wasm/site` with the edited
+  files: `FFMemoryBrowserTest`, `MemoryInspectorBrowserTest`,
+  `VisualizerScenarioBrowserTest` and `VisualizerTimingProfileBrowserTest`
+  pass. `VisualizerWasmBrowserTest` passes its desktop and compact panel
+  checks, then times out at line 618 waiting for the `/visualizer/` embed.
+  The unmodified files fail at the same step in that mirror, so it is not
+  from this change, but the rest of that test was not reached.
+- **Limits:** the Pages build was not run, so the published simulator is
+  unchanged. The native server was not used: the deployed
+  `circuit_backend*.so` is older than the scenario catalog. Canvas drawing
+  (component shapes, wire colors, Arial labels) is unchanged.
 
 ## 2026-10-21
 
@@ -129,6 +164,60 @@ history remains in Git and the archived reports.
 - **Scope:** uncommitted `rv32im-phase3` worktree from `60acda2`; primary ongoing
   work and deployed viewer modules are untouched. The owner subsequently
   authorized [phases 4–6](records/2026-10-21-scripted-games-phase4-6-implementation.md).
+
+### Visualizer: two memory panels and one floorplan for every shared arrangement (branch `realistic-timing`)
+
+- **Changed:**
+  - Behind a shared cache (D-0, D-ID) the memory inspector tells the sides
+    apart by the arbiter's owner bit for the request in flight, so these
+    memories show two panels too.
+  - One floorplan for all four shared arrangements: core and memory in the
+    same place, middle parts spread evenly, constants by their caches, and
+    the memory wide enough for its panels. §4.7 is updated.
+- **Why:** the owner found D-0 and D-ID oddly laid out and without the
+  two-panel view.
+- **Verified:** inspector integration (two panels in B, D-0 and D-ID, sides
+  at the right addresses), static layouts with the content guard, four other
+  layout and catalog tests; Pages build; four browser and parity checks and
+  screenshots.
+
+### Visualizer: children kept inside their parent's content area (branch `realistic-timing`)
+
+- **Changed:**
+  - The shared-memory program-root floorplans place children inside the
+    content area (below the title bar, inside the pin margins), and the four
+    roots are recomputed. One `mux2to1-32bit` placement is moved below its
+    title bar.
+  - `VisualizerStaticLayoutTest` now fails on any placement outside a
+    content area.
+- **Why:** the owner saw parts over title bars in the new arrangement
+  scenarios. A check found 11 such placements in five layouts.
+- **Verified:** the static layout check over every scenario (0 problems, and
+  it reports the old placements); five layout tests; Pages build; browser
+  screenshots of the four scenarios.
+
+### RV32I memory systems section; cache experiments split (branch `realistic-timing`)
+
+- **Changed:**
+  - New §4.7 Memory Systems: the five memory arrangements of the advanced
+    core, each with an embedded scenario (new: `rv32i-memory-b`, `-d0`,
+    `-did`).
+  - The results page is now §4.8, with a memory-systems section that merges
+    the former §3.8 experiments 2 and 3 as final results. §3.8 keeps the
+    cache-alone experiment.
+  - `RV32IProgramRoot` builds every shared arrangement, including an L2, and
+    the inspector shows one panel behind a shared cache.
+  - New floorplan and saved layouts, and a figure rescaled.
+- **Why:** the owner pointed out that §3.8 read as history and that the
+  arrangement experiment belongs to the RV32I chapter. The owner also wanted
+  a scenario per arrangement to show how the arbiter is connected.
+- **Verified:**
+  - The four arrangement scenarios against the instruction-set reference.
+  - Inspector, layout, catalog, topology and clock checks; 18 documentation
+    checks; the plot validation (602 cells).
+  - Strict Pages build, and 11 browser/parity checks plus a browser load of
+    each new scenario.
+- **Not run:** the full native suite.
 
 ## 2026-10-20
 

@@ -1,18 +1,19 @@
 # Device parameters and visual abstractions
 
 Started: 2026-10-21. Status: open.
-Code state: isolated `rv32im-phase3` worktree from `60acda2`; uncommitted phases 0–6 implementation.
+Code state: checkpoint `8c90c1f`, integrating `alpha` at `0d498c7` in the isolated `rv32im-phase3` checkout.
 
 ## Summary
 
-General device parameters and display/keyboard abstractions are implemented
-in the isolated worktree. Native checks cover FIFO depths 1–7 in both
-fidelities, standalone displays through 320×200, CPU presentation at
-128×96/97×65, recorded-time observation/rewind and exact sampled-input logs.
-Python declarations, shared JS helpers and all 363 static scenario layouts
-pass; the layout merge adds 52 entries and changes no old value. Final
-WASM/browser/site and game-comparison acceptance remain pending. Phase 6 is
-open; the owner authorized phase 7 after those gates, and it has not started.
+General device parameters and recorded display/keyboard abstractions are
+implemented. Native checks cover FIFO depths 1–7 in both fidelities,
+standalone displays through 320×200, CPU presentation at 128×96/97×65,
+history/rewind and exact sampled-input logs. Final portable checks and all
+22 native/WASM device comparisons pass. Strict focused packaging passes
+with retained legacy rows. All 363 pre-integration static layouts pass with
+52 additions and no old value changed. Full browser and revised-game
+acceptance remain; phase 6 is open and phase 7 has not started. Branch
+integration is tracked in the [wrap record](2026-10-22-rv32im-milestone-wrap-and-integration.md).
 
 ## 2026-10-21 — Audit and scope
 
@@ -275,3 +276,10 @@ complete in-process example run safely stops for headroom; the verified
 fresh-process mode is rerunning every example under the current memory limit.
 Do not describe an implementation draft or passing component parity as
 completed interactive play.
+
+## 2026-10-22 — Milestone checkpoint
+
+Checkpoint `8c90c1f` contains this work. The owner requested merging it into
+`alpha`; integration verification and remaining acceptance limits are recorded
+in the [wrap record](2026-10-22-rv32im-milestone-wrap-and-integration.md).
+Earlier dated evidence above is retained. Phase 6 is not declared complete.

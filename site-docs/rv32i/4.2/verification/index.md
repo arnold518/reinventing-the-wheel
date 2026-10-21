@@ -22,7 +22,7 @@ The 46 differential **pairs** are not 46 programs, the 37-item native **catalogu
 CTest registrations cover bounded campaign and recovery checks; larger
 campaigns have separate artifacts and validation scopes. A test registration
 is not a benchmark case or an external program. Dated test and campaign
-outcomes are reported in [§ 4.7](../../experiments.md).
+outcomes are reported in [§ 4.8](../../experiments.md).
 
 ## Scope
 

@@ -13,7 +13,7 @@
 <div class="diagram-viewport" role="region" aria-label="Speed of four memory arrangements against shared uncached DRAM" tabindex="0">
 <svg viewBox="0 0 640 512" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="cache-speedup-title cache-speedup-desc">
 <title id="cache-speedup-title">Speed of four memory arrangements against shared uncached DRAM</title>
-<desc id="cache-speedup-desc">For four programs, bars give the speed of separate memories, two level-1 caches, a shared level-2 cache, and both levels, relative to one shared uncached DRAM, in the embedded profile.</desc>
+<desc id="cache-speedup-desc">For four programs, bars give the speed of separate memories, two level-1 caches, a shared level-2 cache, and both levels, the caches with a write buffer, relative to one shared uncached DRAM, in the embedded profile.</desc>
 <style>.circuit-figure {
   --dg-paper: var(--md-default-bg-color, #fff);
   --dg-ink: var(--md-default-fg-color, #202735);
@@ -74,61 +74,61 @@
 <text x="40" y="28" class="dg-tag" text-anchor="start">SPEED AGAINST B (B = 1)</text>
 <text x="40" y="58" class="dg-name" text-anchor="start">calls</text>
 <text x="176" y="80" class="dg-code" text-anchor="end">A</text>
-<rect x="192" y="68" width="144" height="14" rx="2" class="dg-store"/>
-<text x="344" y="80" class="dg-small" text-anchor="start">1.51×</text>
+<rect x="192" y="68" width="108" height="14" rx="2" class="dg-store"/>
+<text x="308" y="80" class="dg-small" text-anchor="start">1.51×</text>
 <text x="176" y="100" class="dg-code" text-anchor="end">C-ID</text>
-<rect x="192" y="88" width="344" height="14" rx="2" class="dg-focus"/>
-<text x="544" y="100" class="dg-small" text-anchor="start">3.58×</text>
+<rect x="192" y="88" width="308" height="14" rx="2" class="dg-focus"/>
+<text x="508" y="100" class="dg-small" text-anchor="start">4.28×</text>
 <text x="176" y="120" class="dg-code" text-anchor="end">D-0</text>
-<rect x="192" y="108" width="332" height="14" rx="2" class="dg-store"/>
-<text x="532" y="120" class="dg-small" text-anchor="start">3.46×</text>
+<rect x="192" y="108" width="296" height="14" rx="2" class="dg-store"/>
+<text x="496" y="120" class="dg-small" text-anchor="start">4.09×</text>
 <text x="176" y="140" class="dg-code" text-anchor="end">D-ID</text>
-<rect x="192" y="128" width="324" height="14" rx="2" class="dg-store"/>
-<text x="524" y="140" class="dg-small" text-anchor="start">3.39×</text>
+<rect x="192" y="128" width="308" height="14" rx="2" class="dg-focus"/>
+<text x="508" y="140" class="dg-small" text-anchor="start">4.28×</text>
 <text x="40" y="174" class="dg-name" text-anchor="start">sort</text>
 <text x="176" y="196" class="dg-code" text-anchor="end">A</text>
-<rect x="192" y="184" width="192" height="14" rx="2" class="dg-store"/>
-<text x="392" y="196" class="dg-small" text-anchor="start">1.99×</text>
+<rect x="192" y="184" width="144" height="14" rx="2" class="dg-store"/>
+<text x="344" y="196" class="dg-small" text-anchor="start">1.99×</text>
 <text x="176" y="216" class="dg-code" text-anchor="end">C-ID</text>
-<rect x="192" y="204" width="376" height="14" rx="2" class="dg-focus"/>
-<text x="576" y="216" class="dg-small" text-anchor="start">3.93×</text>
+<rect x="192" y="204" width="380" height="14" rx="2" class="dg-store"/>
+<text x="580" y="216" class="dg-small" text-anchor="start">5.28×</text>
 <text x="176" y="236" class="dg-code" text-anchor="end">D-0</text>
-<rect x="192" y="224" width="356" height="14" rx="2" class="dg-store"/>
-<text x="556" y="236" class="dg-small" text-anchor="start">3.71×</text>
+<rect x="192" y="224" width="352" height="14" rx="2" class="dg-store"/>
+<text x="552" y="236" class="dg-small" text-anchor="start">4.87×</text>
 <text x="176" y="256" class="dg-code" text-anchor="end">D-ID</text>
-<rect x="192" y="244" width="352" height="14" rx="2" class="dg-store"/>
-<text x="552" y="256" class="dg-small" text-anchor="start">3.65×</text>
+<rect x="192" y="244" width="384" height="14" rx="2" class="dg-focus"/>
+<text x="584" y="256" class="dg-small" text-anchor="start">5.35×</text>
 <text x="40" y="290" class="dg-name" text-anchor="start">stream</text>
 <text x="176" y="312" class="dg-code" text-anchor="end">A</text>
-<rect x="192" y="300" width="132" height="14" rx="2" class="dg-store"/>
-<text x="332" y="312" class="dg-small" text-anchor="start">1.38×</text>
+<rect x="192" y="300" width="100" height="14" rx="2" class="dg-store"/>
+<text x="300" y="312" class="dg-small" text-anchor="start">1.38×</text>
 <text x="176" y="332" class="dg-code" text-anchor="end">C-ID</text>
 <rect x="192" y="320" width="292" height="14" rx="2" class="dg-focus"/>
-<text x="492" y="332" class="dg-small" text-anchor="start">3.06×</text>
+<text x="492" y="332" class="dg-small" text-anchor="start">4.07×</text>
 <text x="176" y="352" class="dg-code" text-anchor="end">D-0</text>
-<rect x="192" y="340" width="280" height="14" rx="2" class="dg-store"/>
-<text x="480" y="352" class="dg-small" text-anchor="start">2.91×</text>
+<rect x="192" y="340" width="276" height="14" rx="2" class="dg-store"/>
+<text x="476" y="352" class="dg-small" text-anchor="start">3.84×</text>
 <text x="176" y="372" class="dg-code" text-anchor="end">D-ID</text>
-<rect x="192" y="360" width="272" height="14" rx="2" class="dg-store"/>
-<text x="472" y="372" class="dg-small" text-anchor="start">2.82×</text>
+<rect x="192" y="360" width="288" height="14" rx="2" class="dg-store"/>
+<text x="488" y="372" class="dg-small" text-anchor="start">3.98×</text>
 <text x="40" y="406" class="dg-name" text-anchor="start">pointer-chase</text>
 <text x="176" y="428" class="dg-code" text-anchor="end">A</text>
-<rect x="192" y="416" width="176" height="14" rx="2" class="dg-store"/>
-<text x="376" y="428" class="dg-small" text-anchor="start">1.85×</text>
+<rect x="192" y="416" width="132" height="14" rx="2" class="dg-store"/>
+<text x="332" y="428" class="dg-small" text-anchor="start">1.85×</text>
 <text x="176" y="448" class="dg-code" text-anchor="end">C-ID</text>
-<rect x="192" y="436" width="292" height="14" rx="2" class="dg-store"/>
-<text x="492" y="448" class="dg-small" text-anchor="start">3.02×</text>
+<rect x="192" y="436" width="216" height="14" rx="2" class="dg-store"/>
+<text x="416" y="448" class="dg-small" text-anchor="start">3.02×</text>
 <text x="176" y="468" class="dg-code" text-anchor="end">D-0</text>
-<rect x="192" y="456" width="316" height="14" rx="2" class="dg-focus"/>
-<text x="516" y="468" class="dg-small" text-anchor="start">3.27×</text>
+<rect x="192" y="456" width="236" height="14" rx="2" class="dg-focus"/>
+<text x="436" y="468" class="dg-small" text-anchor="start">3.27×</text>
 <text x="176" y="488" class="dg-code" text-anchor="end">D-ID</text>
-<rect x="192" y="476" width="300" height="14" rx="2" class="dg-store"/>
-<text x="500" y="488" class="dg-small" text-anchor="start">3.14×</text>
-<path class="dg-edge" d="M 288 52 L 288 496"/>
-<text x="294" y="48" class="dg-code" text-anchor="start">B</text>
+<rect x="192" y="476" width="224" height="14" rx="2" class="dg-store"/>
+<text x="424" y="488" class="dg-small" text-anchor="start">3.14×</text>
+<path class="dg-edge" d="M 264 52 L 264 496"/>
+<text x="270" y="48" class="dg-code" text-anchor="start">B</text>
 </svg>
 </div>
-<figcaption><strong>Speed against B, one shared DRAM with no cache, <code>embedded</code>.</strong> The line marks B; the fastest arrangement of each program is highlighted. Values from the cycle tables below.</figcaption>
+<figcaption><strong>Speed against B, one shared DRAM with no cache, <code>embedded</code>; caches with a two-entry write buffer.</strong> The line marks B; the fastest arrangement of each program is highlighted. Every behavior is in the table above.</figcaption>
 </figure>
 <!-- diagram:end -->
 </body>

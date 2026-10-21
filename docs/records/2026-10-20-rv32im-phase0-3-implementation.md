@@ -6,9 +6,16 @@ Worktree: `.worktrees/rv32im-phase3` under the primary checkout.
 
 ## Summary
 
-Implementing phases 0 through 3 of the [adopted roadmap](2026-10-19-device-io-games-plan.md#rv32im-scripted-roadmap): compatibility contracts, structural M arithmetic, new RV32IM core, and device foundations. Recorded game execution is now part of the separately authorized phase 4–6 work; live sessions remain later. Implementation has reached phase 3; final profile, compatibility and viewer/site/WASM validation is still in progress. Structural designs remain available. The separately authorized phase 4–6 work now adds compact gate-list forms derived from those structures; their current validation is recorded in the phase 4–6 topic.
-
-The primary checkout has ongoing memory-system/site/viewer work. All feature edits and builds use this isolated worktree. No merge or shared build/module deployment is performed.
+Phases 0–3 introduce structural M arithmetic, a separate RV32IM pipeline and
+device components, preserving existing RV32I contracts. The foundation
+checks and final portable/device comparisons pass; the subsequent
+[phase 4–6 topic](2026-10-21-scripted-games-phase4-6-implementation.md) adds
+compact forms, the integrated system and scripted games. Strict focused site
+packaging passes with retained legacy rows. Browser and whole-milestone
+acceptance remain open. The owner requested a merge to `alpha`; its newer
+visualizer work is being integrated in the isolated checkout as recorded in
+the [wrap record](2026-10-22-rv32im-milestone-wrap-and-integration.md).
+Primary dirty files and deployed modules remain untouched.
 
 ## 2026-10-20 — Isolation, memory budget and initial inventory
 
@@ -142,3 +149,10 @@ The freshly relinked foundation binary passed all 23 selected compatibility chec
 ### Native viewer baseline panel
 
 Seven of eight selected checks passed against the preceding foundation module/probe: scenario catalog, RV32I memory layout, cache layout, module bindings, portable session contract, pin identity and automatic layouts. MemoryInspectorIntegrationTest hit its configured 180-second timeout (CTest's command-line default did not override that per-test property). Total panel time was 900.73 seconds. This is a bounded validation gap; it is not a passing integration check or a demonstrated functional regression. Retry on the optimized build or directly with a larger explicit bound. Node/V8 cannot run under the small virtual-address cap, so this serial panel used its own-process-group memory guardian, 256 MiB Node heap limit and a 512 MiB host-availability stop threshold. No memory stop occurred. A separate selected-new-scenario static-layout check follows.
+
+## 2026-10-22 — Milestone checkpoint
+
+Checkpoint `8c90c1f` contains this work. The owner requested merging it into
+`alpha`; integration verification and remaining acceptance limits are recorded
+in the [wrap record](2026-10-22-rv32im-milestone-wrap-and-integration.md).
+Earlier dated evidence above is retained. Phase 6 is not declared complete.

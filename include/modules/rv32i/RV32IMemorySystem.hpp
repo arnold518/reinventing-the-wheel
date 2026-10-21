@@ -22,7 +22,11 @@ std::shared_ptr<IOComponent> buildMemory(ComponentBuilder&, IOComponent& parent,
     const std::string& name, const MemoryConfiguration&);
 void directMemoryPins(IOComponent*, const std::string& prefix, bool instruction = false);
 std::shared_ptr<MemoryStateView> memoryView(const std::shared_ptr<IOComponent>&);
+// The core's two transaction ports to two responders. A responder with
+// several ports (the two-port arbiter) is named with the prefix of the port
+// each side uses, for example "I_" and "D_".
 void wireMemorySystem(ComponentBuilder&, const std::shared_ptr<IOComponent>& core,
     const std::shared_ptr<IOComponent>& instructions, const std::shared_ptr<IOComponent>& data,
-    const std::shared_ptr<Pin<1>>& clock, const std::shared_ptr<Pin<1>>& reset);
+    const std::shared_ptr<Pin<1>>& clock, const std::shared_ptr<Pin<1>>& reset,
+    const std::string& instruction_prefix = "", const std::string& data_prefix = "");
 }

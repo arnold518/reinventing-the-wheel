@@ -5,6 +5,7 @@
 #include "components/selection/BuildProfile.hpp"
 #include "tests/RV32IInstructionLockstepTests.hpp"
 #include "rv32i/RV32IPrediction.hpp"
+#include "tests/RV32IProgramRoot.hpp"
 #include <optional>
 #include <cstddef>
 #include <map>
@@ -34,7 +35,7 @@ public:
     explicit RV32IFiveStageCoreProgramTest(
         size_t program_number = 9, bool baseline = false,
         std::optional<rv32i::PredictionConfig> prediction = std::nullopt,
-        bool shared_memory = false);
+        RV32IMemoryArrangement arrangement = RV32IMemoryArrangement::Separate);
 
     bool run() override;
     void setupCircuit() override;
@@ -68,9 +69,8 @@ protected:
 private:
     size_t program_number_;
     bool baseline_ = false;
-    // One memory behind the two-port arbiter, with an instruction and a data
-    // cache in front of it (the advanced core only).
-    bool shared_memory_ = false;
+    // How the ports reach memory (the advanced core only beyond Separate).
+    RV32IMemoryArrangement arrangement_ = RV32IMemoryArrangement::Separate;
     size_t timeScale() const;
     std::optional<rv32i::PredictionConfig> prediction_;
     circuit::BuildProfile profile_ =

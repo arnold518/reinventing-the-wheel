@@ -7,12 +7,12 @@ concurrently changing arbiter, test and visualizer work.
 ## Summary
 
 The owner selected caches → games → AI accelerators. The primary cache
-implementation and its general expansion now exist. Implementation through
-phase 3 is staged in the isolated `rv32im-phase3` worktree, based on `60acda2`,
-with an [implementation record](2026-10-20-rv32im-phase0-3-implementation.md).
-The new structural M core and device foundations have native evidence;
-remaining compatibility/packaging checks are recorded there. Integrated
-recorded games and live sessions remain later work.
+implementation and its general expansion now exist. The isolated `rv32im-phase3` worktree contains RV32IM, device components,
+the scripted system/game runtime and recorded display/keyboard views.
+[Phase 6 acceptance](2026-10-21-scripted-games-phase4-6-implementation.md)
+remains open; phase 7 interactive sessions have not started. The owner
+requested merging the checkpoint into `alpha`; current integration evidence
+and remaining checks are in the [wrap record](2026-10-22-rv32im-milestone-wrap-and-integration.md).
 
 The owner has selected **RV32IM** and **predetermined device input before
 interactive simulation**. The current sequence is contracts and compatibility
@@ -20,7 +20,8 @@ baseline → M arithmetic and core → device components → recorded game runs 
 integrated verification/performance → interactive sessions. The
 [full roadmap and component inventory](#rv32im-scripted-roadmap)
 below supersedes the earlier live-first order and provisional ISA choice.
-The owner subsequently authorized implementation through phase 3; the linked record tracks that work without editing the primary ongoing checkout.
+The owner authorized implementation through phase 6 and phase 7 after acceptance.
+The primary ongoing checkout remains untouched while the milestone is integrated.
 
 The owner explicitly requires retaining recorded playback and adding new
 live modes alongside it. The completed

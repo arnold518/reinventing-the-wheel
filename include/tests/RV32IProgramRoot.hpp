@@ -28,11 +28,29 @@ size_t rv32iFixtureTimeScale(std::string_view core, SimulationTime unit_cycle_ti
 class Simulator;
 template<size_t WIDTH> class Wire;
 
+// How the advanced core's instruction and data ports reach memory (§4.7):
+// A, two separate memories; B, one shared memory through the two-port
+// arbiter; C-ID, an instruction and a data cache above the arbiter; D-0, a
+// shared cache below it; D-ID, both.
+enum class RV32IMemoryArrangement { Separate, Shared, SharedL1, SharedL2, SharedL1L2 };
+const char* rv32iMemoryArrangementName(RV32IMemoryArrangement);
+// The registered scenario of a shared arrangement other than C-ID
+// (RV32ISharedMemoryProgramTest), for example "RV32IMemoryArrangementD0Test".
+std::string rv32iMemoryArrangementTestName(RV32IMemoryArrangement);
+// The caches an arrangement's scenario uses over `memory` (small, so the
+// visualizer can show them): two 4-set L1s, a 4-set two-way L2.
+struct RV32IArrangementCaches {
+    std::optional<circuit::memory::CacheConfig> instruction, data, shared;
+    bool unified = false;
+};
+RV32IArrangementCaches rv32iArrangementCaches(RV32IMemoryArrangement, const rv32i::MemoryConfiguration& memory);
+
 /**
  * Fixed testbench container shared by every visual RV32I program scenario.
  *
  * Single-cycle and baseline CORE connect directly to FF devices; advanced
- * pipeline CORE uses transaction endpoints. No external CPU adapter.
+ * pipeline CORE uses transaction endpoints, separately or through the
+ * two-port arbiter to one shared memory, with or without caches. No external CPU adapter.
  * Pipeline completed PC is explicitly host-observed, not a core register.
  * The root is a fixed testbench, not a fidelity choice.
  */
@@ -48,7 +66,8 @@ public:
         rv32i::MemoryConfiguration data = {}, circuit::ParameterMap core_parameters = {},
         std::optional<circuit::memory::CacheConfig> instruction_cache = std::nullopt,
         std::optional<circuit::memory::CacheConfig> data_cache = std::nullopt,
-        bool unified_memory = false);
+        bool unified_memory = false,
+        std::optional<circuit::memory::CacheConfig> shared_cache = std::nullopt);
 
     static constexpr const char* TypeName = "RV32IProgramRoot";
     static constexpr const char* RootName = "RV32I_PROGRAM_ROOT";
@@ -107,7 +126,7 @@ private:
     std::shared_ptr<Wire<32>> observed_pc_wire_{};
     std::shared_ptr<IOComponent> instruction_memory_{};
     std::shared_ptr<IOComponent> data_memory_{};
-    std::optional<circuit::memory::CacheConfig> instruction_cache_config_, data_cache_config_;
+    std::optional<circuit::memory::CacheConfig> instruction_cache_config_, data_cache_config_, shared_cache_config_;
     bool unified_memory_ = false;
     // Bytes placed in the one shared memory: instruction and data images must
     // not put different bytes at one address.

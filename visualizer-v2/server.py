@@ -776,6 +776,26 @@ def _five_stage_pipeline_layout(
     return placements if set(placements) == names else None
 
 
+def _content_placer(child_by_name, child_aspects, parent_aspect, title_fraction, boundary_fraction):
+    """Placement in a parent's content area: below the title bar and inside
+    the side margins where the pins are drawn. Positions and widths are given
+    on a 0..1 scale across the content width; a child keeps its aspect and
+    shrinks to its height budget; it stays inside the content box."""
+    left, span = boundary_fraction, max(0.1, 1.0 - 2 * boundary_fraction)
+    top = title_fraction
+    height = max(0.1, 1.0 - top)
+
+    def put(name: str, x: float, centre_y: float, width: float, height_budget: float) -> None:
+        aspect = child_aspects[child_by_name[name].get_id()]
+        width = min(width * span, height_budget * parent_aspect / max(aspect, 0.01))
+        box_height = width * aspect / max(parent_aspect, 0.01)
+        y = min(max(centre_y - box_height / 2, top), 1.0 - box_height)
+        put.placements[name] = {"rel_pos": [left + x * span, y], "rel_width": width}
+
+    put.placements = {}
+    return top, height, put
+
+
 def _rv32i_program_root_layout(
     children: list[Any],
     parent_aspect: float,
@@ -791,29 +811,51 @@ def _rv32i_program_root_layout(
     five-stage core share the same outside organization without distortion.
     """
     child_by_name = {child.get_name(): child for child in children}
-    unified = {"CLOCK", "CORE", "INSTRUCTION_CACHE", "DATA_CACHE", "INSTRUCTION_CACHE_NO_INVALIDATION",
-               "DATA_CACHE_NO_INVALIDATION", "MEMORY_ARBITER", "SHARED_MEMORY"}
-    if set(child_by_name) == unified:
-        # Core, then the two caches, the arbiter and one shared memory, left
-        # to right. The memory is large enough for its two-panel view.
-        top = title_fraction
-        height = max(0.1, 1.0 - top)
-        placements: dict[str, dict[str, Any]] = {}
+    # One memory shared through the arbiter (B, C-ID, D-0, D-ID): the core,
+    # then whichever of the L1 caches, the arbiter, the shared L2 and the
+    # memory are present, left to right.
+    l1 = {"INSTRUCTION_CACHE", "DATA_CACHE", "INSTRUCTION_CACHE_NO_INVALIDATION", "DATA_CACHE_NO_INVALIDATION"}
+    l2 = {"SHARED_CACHE", "SHARED_CACHE_NO_INVALIDATION"}
+    base = {"CLOCK", "CORE", "MEMORY_ARBITER", "SHARED_MEMORY"}
+    names = set(child_by_name)
+    if base <= names and names - base in (set(), l1, l2, l1 | l2):
+        top, height, put = _content_placer(child_by_name, child_aspects, parent_aspect, title_fraction, boundary_fraction)
+        placements = put.placements
+        centre = top + height * 0.45
 
-        def put(name: str, x: float, centre_y: float, width: float, height_budget: float) -> None:
-            aspect = child_aspects[child_by_name[name].get_id()]
-            width = min(width, height_budget * parent_aspect / max(aspect, 0.01))
-            box_height = width * aspect / max(parent_aspect, 0.01)
-            placements[name] = {"rel_pos": [x, centre_y - box_height / 2], "rel_width": width}
+        def above(constant: str, owner: str, below: bool = False) -> None:
+            # A cache's INV_VALID constant just above (or below) its cache.
+            x, y = placements[owner]["rel_pos"]
+            owner_height = placements[owner]["rel_width"] * child_aspects[child_by_name[owner].get_id()] / parent_aspect
+            aspect = child_aspects[child_by_name[constant].get_id()]
+            width = min(placements[owner]["rel_width"] * 0.5, height * 0.05 * parent_aspect / max(aspect, 0.01))
+            gap = height * 0.03
+            const_height = width * aspect / parent_aspect
+            y = y + owner_height + gap if below else y - gap - const_height
+            placements[constant] = {"rel_pos": [x, max(top, min(y, 1.0 - const_height))], "rel_width": width}
 
-        put("CORE", 0.05, top + height * 0.45, 0.36, height * 0.70)
-        put("INSTRUCTION_CACHE", 0.46, top + height * 0.27, 0.12, height * 0.30)
-        put("DATA_CACHE", 0.46, top + height * 0.63, 0.12, height * 0.30)
-        put("INSTRUCTION_CACHE_NO_INVALIDATION", 0.46, top + height * 0.07, 0.05, height * 0.06)
-        put("DATA_CACHE_NO_INVALIDATION", 0.46, top + height * 0.87, 0.05, height * 0.06)
-        put("MEMORY_ARBITER", 0.62, top + height * 0.45, 0.08, height * 0.50)
-        put("SHARED_MEMORY", 0.74, top + height * 0.45, 0.23, height * 0.80)
-        put("CLOCK", 0.05, top + height * 0.90, 0.10, height * 0.12)
+        put("CORE", 0.0, centre, 0.28, height * 0.70)
+        put("CLOCK", 0.0, top + height * 0.90, 0.10, height * 0.12)
+        # The columns present after the core, spread evenly over the rest.
+        columns = ([("L1", 0.11)] if l1 <= names else []) + [("MEMORY_ARBITER", 0.07)] + \
+                  ([("SHARED_CACHE", 0.11)] if l2 <= names else []) + [("SHARED_MEMORY", 0.34)]
+        # The memory is wide enough for its two panels at the root's zoom.
+        gap = (1.0 - 0.28 - sum(width for _, width in columns)) / len(columns)
+        x = 0.28 + gap
+        for name, width in columns:
+            if name == "L1":
+                put("INSTRUCTION_CACHE", x, top + height * 0.25, width, height * 0.32)
+                put("DATA_CACHE", x, top + height * 0.68, width, height * 0.32)
+                above("INSTRUCTION_CACHE_NO_INVALIDATION", "INSTRUCTION_CACHE")
+                above("DATA_CACHE_NO_INVALIDATION", "DATA_CACHE", below=True)
+            elif name == "MEMORY_ARBITER":
+                put(name, x, centre, width, height * 0.50)
+            elif name == "SHARED_CACHE":
+                put(name, x, centre, width, height * 0.32)
+                above("SHARED_CACHE_NO_INVALIDATION", "SHARED_CACHE")
+            else:
+                put(name, x, centre, width, height * 0.80)
+            x += width + gap
         return placements
     required = {
         "CLOCK",

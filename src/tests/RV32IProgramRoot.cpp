@@ -8,6 +8,7 @@
 #include "components/TimingProfile.hpp"
 #include <stdexcept>
 #include <limits>
+#include <tuple>
 #include <string>
 #include "modules/rv32i/RV32IMemorySystem.hpp"
 #include "modules/rv32i/RV32IFiveStageCore.hpp"
@@ -16,6 +17,7 @@
 #include "simulator/Event.hpp"
 #include "simulator/Simulator.hpp"
 #include <stdexcept>
+#include <tuple>
 #include <utility>
 
 namespace {
@@ -63,18 +65,22 @@ RV32IProgramRoot::RV32IProgramRoot(
     rv32i::MemoryConfiguration instructions,
     rv32i::MemoryConfiguration data, circuit::ParameterMap core_parameters,
     std::optional<circuit::memory::CacheConfig> instruction_cache,
-    std::optional<circuit::memory::CacheConfig> data_cache, bool unified_memory)
+    std::optional<circuit::memory::CacheConfig> data_cache, bool unified_memory,
+    std::optional<circuit::memory::CacheConfig> shared_cache)
     : IOComponent(std::move(name), initializePins),
       core_family_(core_family),
       core_parameters_(std::move(core_parameters)),
       clock_half_period_(clock_half_period),
       instruction_config_(std::move(instructions)), data_config_(std::move(data)),
       instruction_cache_config_(std::move(instruction_cache)),
-      data_cache_config_(std::move(data_cache)), unified_memory_(unified_memory) {
+      data_cache_config_(std::move(data_cache)), shared_cache_config_(std::move(shared_cache)),
+      unified_memory_(unified_memory) {
     if (clock_half_period_ == 0) {
         throw std::invalid_argument(
             "RV32I program clock half-period must be positive");
     }
+    if (shared_cache_config_ && (!unified_memory_ || !shared_cache_config_->read_write))
+        throw std::invalid_argument("A shared cache sits below the arbiter of a unified memory and accepts writes");
     if ((instruction_cache_config_ || data_cache_config_) &&
         core_family_.id() != circuit::families::RV32IFiveStageCore.id())
         throw std::invalid_argument("Caches currently require the advanced five-stage core");
@@ -84,12 +90,11 @@ RV32IProgramRoot::RV32IProgramRoot(
         throw std::invalid_argument("Data cache must accept writes");
     if (unified_memory_ &&
         (core_family_.id() != circuit::families::RV32IFiveStageCore.id() ||
-         !instruction_cache_config_ || !data_cache_config_ ||
          instruction_config_.technology != data_config_.technology ||
          instruction_config_.expanded_endpoint != data_config_.expanded_endpoint ||
          circuit::memory::endpointParameters(instruction_config_.device) !=
              circuit::memory::endpointParameters(data_config_.device)))
-        throw std::invalid_argument("Unified memory requires the advanced core, both caches and one matching backing configuration");
+        throw std::invalid_argument("Unified memory requires the advanced core and one matching backing configuration");
 }
 
 void RV32IProgramRoot::buildInternals(ComponentBuilder& builder) {
@@ -123,23 +128,35 @@ void RV32IProgramRoot::buildInternals(ComponentBuilder& builder) {
         for (const auto& [pin_name, pin] : backing->getAllOutputPins())
             cache_wiring.connect(pin, requester->getInputPinDynamic(requester_prefix + pin_name));
     };
+    std::string instruction_prefix, data_prefix;
     if (instruction_cache_config_)
         instruction_port = make_cache("INSTRUCTION_CACHE", *instruction_cache_config_);
     if (data_cache_config_)
         data_port = make_cache("DATA_CACHE", *data_cache_config_);
     if (unified_memory_) {
+        // Each side reaches the arbiter through its cache, or directly; below
+        // the arbiter the shared cache, if any, then the one memory.
         auto arbiter = builder.addNewComponent<circuit::memory::TwoPortMemoryArbiter<32>>("MEMORY_ARBITER");
-        for (const auto& [prefix, cache] :
-             {std::pair<std::string, std::shared_ptr<IOComponent>>{"I_", instruction_port},
-              {"D_", data_port}}) {
-            for (const auto& [name, pin] : arbiter->getAllInputPins())
-                if (name.starts_with(prefix))
-                    cache_wiring.connect(cache->getOutputPinDynamic("MEM_" + name.substr(prefix.size())), pin);
-            for (const auto& [name, pin] : arbiter->getAllOutputPins())
-                if (name.starts_with(prefix))
-                    cache_wiring.connect(pin, cache->getInputPinDynamic("MEM_" + name.substr(prefix.size())));
+        const auto link = [&](const std::shared_ptr<IOComponent>& upper, const std::string& up,
+                              const std::shared_ptr<IOComponent>& lower, const std::string& down) {
+            for (auto name : {"CLK", "RST", "REQ_VALID", "REQ_OP", "REQ_ADDR", "REQ_WRITE_DATA", "REQ_WRITE_MASK", "RSP_READY"})
+                cache_wiring.connect(upper->getOutputPinDynamic(up + name), lower->getInputPinDynamic(down + name));
+            for (auto name : {"REQ_READY", "RSP_VALID", "RSP_READ_DATA", "RSP_STATUS"})
+                cache_wiring.connect(lower->getOutputPinDynamic(down + name), upper->getInputPinDynamic(up + name));
+        };
+        for (auto [port, prefix, cached] : {std::tuple{&instruction_port, &instruction_prefix, bool(instruction_cache_config_)},
+                                            std::tuple{&data_port, &data_prefix, bool(data_cache_config_)}}) {
+            const std::string side = port == &instruction_port ? "I_" : "D_";
+            if (cached) link(*port, "MEM_", arbiter, side);
+            else { *port = arbiter; *prefix = side; }
         }
-        connect_backing(arbiter, data_memory_, "MEM_");
+        std::shared_ptr<IOComponent> above_memory = arbiter;
+        if (shared_cache_config_) {
+            auto shared = make_cache("SHARED_CACHE", *shared_cache_config_);
+            link(arbiter, "MEM_", shared, "");
+            above_memory = shared;
+        }
+        connect_backing(above_memory, data_memory_, "MEM_");
     } else {
         if (instruction_cache_config_) connect_backing(instruction_port, instruction_memory_, "MEM_");
         if (data_cache_config_) connect_backing(data_port, data_memory_, "MEM_");
@@ -159,7 +176,7 @@ void RV32IProgramRoot::buildInternals(ComponentBuilder& builder) {
         "memories");
 
     rv32i::wireMemorySystem(builder, core_, instruction_port, data_port,
-        clock_->getOutputPin("CLK_OUT"), getInputPin("RST"));
+        clock_->getOutputPin("CLK_OUT"), getInputPin("RST"), instruction_prefix, data_prefix);
     builder.addNewWire(
         "ENABLE",
         getInputPin("ENABLE"),
@@ -298,4 +315,44 @@ size_t rv32iFixtureTimeScale(std::string_view core, SimulationTime unit_cycle_ti
     const auto scale = std::max<SimulationTime>(1, *period / unit_cycle_ticks + (*period % unit_cycle_ticks != 0));
     if (scale > std::numeric_limits<size_t>::max()) throw std::overflow_error("Fixture scale exceeds host range");
     return static_cast<size_t>(scale);
+}
+
+const char* rv32iMemoryArrangementName(RV32IMemoryArrangement arrangement) {
+    switch (arrangement) {
+    case RV32IMemoryArrangement::Shared: return "B";
+    case RV32IMemoryArrangement::SharedL1: return "C-ID";
+    case RV32IMemoryArrangement::SharedL2: return "D-0";
+    case RV32IMemoryArrangement::SharedL1L2: return "D-ID";
+    default: return "A";
+    }
+}
+
+RV32IArrangementCaches rv32iArrangementCaches(RV32IMemoryArrangement arrangement, const rv32i::MemoryConfiguration& memory) {
+    RV32IArrangementCaches caches;
+    caches.unified = arrangement != RV32IMemoryArrangement::Separate;
+    const bool l1 = arrangement == RV32IMemoryArrangement::SharedL1 || arrangement == RV32IMemoryArrangement::SharedL1L2;
+    const bool l2 = arrangement == RV32IMemoryArrangement::SharedL2 || arrangement == RV32IMemoryArrangement::SharedL1L2;
+    if (l1) {
+        circuit::memory::CacheConfig instruction, data;
+        instruction.sets = data.sets = 4;
+        instruction.backing_depth_words = data.backing_depth_words = memory.device.depth_words;
+        data.read_write = true;
+        caches.instruction = instruction;
+        caches.data = data;
+    }
+    if (l2) {
+        circuit::memory::CacheConfig shared;
+        shared.sets = 4;
+        shared.ways = 2;
+        shared.backing_depth_words = memory.device.depth_words;
+        shared.read_write = true;
+        caches.shared = shared;
+    }
+    return caches;
+}
+
+std::string rv32iMemoryArrangementTestName(RV32IMemoryArrangement arrangement) {
+    std::string letters;
+    for (const char c : std::string(rv32iMemoryArrangementName(arrangement))) if (c != '-') letters += c;
+    return "RV32IMemoryArrangement" + letters + "Test";
 }

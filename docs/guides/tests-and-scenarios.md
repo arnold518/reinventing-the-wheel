@@ -139,7 +139,9 @@ neither check runs an integrated game or a live input session.
 For a bounded browser run, `CIRCUITSIM_BROWSER_SCENARIO_FILTER` selects
 recorded sessions by scenario-alias regular expression. All 22 public pages
 are still checked; report the selected session count separately. The default
-runs every session. `CIRCUITSIM_BROWSER_SCREENSHOTS` saves display/keyboard
+runs every session. `CIRCUITSIM_DEVICE_SCENARIO_FILTER` similarly bounds the
+Node device parity check, which still requires all 22 source example
+markers and reports the selected count. `CIRCUITSIM_BROWSER_SCREENSHOTS` saves display/keyboard
 previews (and the recording viewer's larger-screen views) to a chosen directory.
 
 The visualizer scenarios are an exception: they also run under the
@@ -153,6 +155,13 @@ delays (`FullCircuitTest` by the slowest gate, `CacheTwoLevelScenarioTest`
 by an inverter). To check them:
 `CIRCUITSIM_TIMING_PROFILE=embedded ctest --test-dir build-cleanup -R "/program-|FullCircuitTest|CacheTwoLevelScenarioTest|RV32IBaselinePipelineCoreTest"`
 (179 tests). A changed certified clock means updating the stored table.
+
+`MemoryInspectorIntegrationTest` uses compact CPU cores with structural
+arbiter/cache circuits for memory observation parity. It captures plain JSON
+expected states and releases the Python circuit before constructing the native
+comparison. The registered shared-memory program scenarios separately check
+their default structural cores. This keeps observation checks bounded without
+changing the product profiles.
 
 ## Connect a scenario to the visualizer and site
 

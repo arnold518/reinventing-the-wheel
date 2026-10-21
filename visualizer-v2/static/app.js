@@ -45,8 +45,8 @@ const FOCUS_ANIMATION_MAX_MS = 700;
 // Keep their parent shell visible and reveal the exact internals again on zoom.
 const COMPONENT_DESCEND_MIN_DEVICE_PX = 1;
 const GRID_TARGET_PIXELS = 100;
-const GRID_BACKGROUND_MINOR = "rgb(58, 64, 72)";
-const GRID_BACKGROUND_MAJOR = "rgb(86, 96, 108)";
+const GRID_BACKGROUND_MINOR = "rgb(36, 41, 50)";
+const GRID_BACKGROUND_MAJOR = "rgb(54, 62, 75)";
 const GRID_COMPONENT_MINOR = "rgba(255, 255, 255, 0.08)";
 const GRID_COMPONENT_MAJOR = "rgba(255, 255, 255, 0.16)";
 const GRID_COMPONENT_MIN_SCREEN_SIZE = 36;
@@ -71,6 +71,7 @@ const ui = {
   timing: document.getElementById('timing-select'),
   slider: document.getElementById("time-slider"),
   checkpointMarks: document.getElementById("checkpoint-marks"),
+  checkpointTicks: document.getElementById("checkpoint-ticks"),
   playPause: document.getElementById("play-pause"),
   checkpointBack: document.getElementById("checkpoint-back"),
   stepBack: document.getElementById("step-back"),
@@ -2973,7 +2974,8 @@ function render() {
   if (app.geometryDirty) computeGeometry();
   scheduleVisibleTopology();
 
-  ctx.fillStyle = "rgb(30, 30, 30)";
+  // Matches --canvas-bg in styles.css.
+  ctx.fillStyle = "rgb(20, 23, 29)";
   ctx.fillRect(0, 0, app.width, app.height);
   drawGrid();
 
@@ -4041,6 +4043,7 @@ function smoothlyFocusComponent(componentId) {
 function setPlaying(value) {
   app.playing = value;
   ui.playPause.textContent = value ? "Pause" : "Play";
+  ui.playPause.classList.toggle("playing", value);
   app.lastPlaybackTick = performance.now();
   requestRender();
 }
@@ -4056,16 +4059,31 @@ function updateCheckpointControls() {
   ui.checkpointForward.disabled = !next;
 }
 
+// The styled slider hides the browser's own datalist ticks, so checkpoints are
+// drawn as small marks under the track.
 function renderCheckpointMarks() {
   ui.checkpointMarks.innerHTML = "";
+  ui.checkpointTicks.innerHTML = "";
+  const max = Number(ui.slider.max) || 0;
   for (const checkpoint of app.checkpoints) {
     const option = document.createElement("option");
     option.value = String(checkpoint.index);
     option.label = checkpoint.label;
     option.title = checkpoint.detail || checkpoint.label;
     ui.checkpointMarks.appendChild(option);
+    if (max > 0) {
+      const tick = document.createElement("span");
+      tick.style.setProperty("--at", String(checkpoint.index / max));
+      ui.checkpointTicks.appendChild(tick);
+    }
   }
+  syncSliderFill();
   updateCheckpointControls();
+}
+
+function syncSliderFill() {
+  const max = Number(ui.slider.max) || 0;
+  ui.slider.style.setProperty("--frac", String(max > 0 ? Number(ui.slider.value) / max : 0));
 }
 
 // Simulation time as the profile defines it: picoseconds (shown in ps, ns,
@@ -4139,6 +4157,7 @@ async function setStateIndex(index) {
   index = Math.max(0, Math.min(index, app.timestamps.length - 1));
   app.requestedIndex = index;
   ui.slider.value = String(index);
+  syncSliderFill();
   updateCheckpointControls();
   const requestId = ++app.stateRequestId;
   app.stateRequestInFlight = true;
@@ -4153,6 +4172,7 @@ async function setStateIndex(index) {
     app.currentIndex = state.index;
     app.requestedIndex = state.index;
     ui.slider.value = String(state.index);
+    syncSliderFill();
     setTimeLabel(state);
     updateCheckpointControls();
     requestRender();
@@ -4747,6 +4767,7 @@ ui.slider.addEventListener("input", () => {
   if (app.playing) setPlaying(false);
   setStateIndex(Number(ui.slider.value)).catch(showError);
 });
+ui.resetView.title = "Fit circuit to view";
 ui.resetView.addEventListener("click", () => frameRoot({ animate: true }));
 ui.zoomOut.addEventListener("click", () => zoomAtPoint(0.8, viewportCenter(cameraSafeViewport())));
 ui.zoomIn.addEventListener("click", () => zoomAtPoint(1.25, viewportCenter(cameraSafeViewport())));

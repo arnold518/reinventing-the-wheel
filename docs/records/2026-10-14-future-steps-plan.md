@@ -11,8 +11,8 @@ goal is unscheduled. Within cache work, the adopted order is a standalone
 structural cache with a shared scalable-cache contract, measured timing and
 one unified scalable RAM image, then scalable cache components. Current RV32I
 execution, memory endpoints, fidelity selection, and the browser viewer
-provide useful parts, but there is no guest-visible device platform or live
-game loop yet. The research and earlier candidate sequences below are dated
+now underpin an RV32IM scripted device platform in the milestone worktree.
+Integrated acceptance remains open and live sessions are not implemented. The research and earlier candidate sequences below are dated
 proposals; the [cache system plan](2026-10-14-cache-system-plan.md) holds the
 current three-stage order and proposed acceptance gates. The
 owner selected RV32IM and predetermined device input first. The adopted
@@ -632,3 +632,10 @@ A first multicore experiment can instantiate two existing cores, separate archit
 A first persistent-storage milestone can add a structural block-command controller and a small transfer buffer over a separately named media/image abstraction. A large disk image must not become a dense simulated-RAM allocation. Explicit busy/completion/error and deterministic read/write/reset contracts precede scalable media backends. A full NVMe/PCIe or physical HDD/NAND implementation is a separate larger target; NVMe uses MMIO controller registers and submission/completion queues in system memory ([standards-owner overview](https://nvmexpress.org/base-nvm-express-part-one/)). Existing NOR flash is not an implemented SSD.
 
 Phase 4 initially loads guest ELF/assets before execution. Storage is needed if the simulated machine must boot/load games itself or persist saves; neither that requirement nor multicore was added to the adopted phase-6 scope.
+
+## 2026-10-22 — Scripted platform checkpoint
+
+RV32IM, device I/O, deterministic game fixtures and recorded display/keyboard
+views are implemented in the isolated milestone checkout. The owner requested
+merging that work into `alpha`; [integration and remaining phase-6 gates](2026-10-22-rv32im-milestone-wrap-and-integration.md)
+are tracked explicitly. Phase 7 interactive sessions have not started.

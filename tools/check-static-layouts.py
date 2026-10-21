@@ -1,5 +1,8 @@
 """List children the static (WebAssembly) visualizer cannot place, layout keys
-shared by parts of different internal structure, and squeezed SRAM floorplans.
+shared by parts of different internal structure, squeezed SRAM floorplans, and
+children placed outside their parent's content area: over the title bar
+(`title_bar_ratio` of the parent's width, as `contentRect` in app.js draws
+it), in the side margins where the pins are drawn, or past the bottom.
 
 The native server computes a missing child placement when it builds a
 session; the static site cannot, and stops with "Missing layout for …".
@@ -73,6 +76,37 @@ def scope_of(component) -> str:
     return f"profile_layouts.{fingerprint}.{key}" if fingerprint not in ("", "explicit") else f"type_layouts.{key}"
 
 
+MANAGER = server.LayoutManager(ROOT / "visualizer-v2/layout.json")
+ASPECTS: dict[tuple, float] = {}
+
+
+def aspect_of(component) -> float:
+    key = (server._component_layout_type(component), server._component_profile_fingerprint(component))
+    if key not in ASPECTS:
+        ASPECTS[key] = MANAGER.aspect_for_component(component)
+    return ASPECTS[key]
+
+
+def outside_content(component, entry: dict, children, root_key: str | None) -> list[str]:
+    """Children not inside the parent's content area (see the module text)."""
+    kwargs = dict(scenario_key=root_key, is_root=True) if root_key else {}
+    aspect = MANAGER.aspect_for_component(component, **kwargs) if root_key else aspect_of(component)
+    title = MANAGER.visual_ratio_for_component(component, "title_bar_ratio", **kwargs) / aspect
+    margin = MANAGER.visual_ratio_for_component(component, "boundary_area_ratio", **kwargs)
+    found = []
+    for child in children:
+        placement = entry.get("children", {}).get(child.get_name(), {})
+        if not placed(placement):
+            continue
+        x, y = (float(v) for v in placement["rel_pos"][:2])
+        width = float(placement["rel_width"])
+        height = width * aspect_of(child) / aspect
+        if y < title - 1e-6 or y + height > 1 + 1e-6 or x < margin - 1e-6 or x + width > 1 - margin + 1e-6:
+            found.append(f"{child.get_name()} (x {x:.3f}..{x + width:.3f}, y {y:.3f}..{y + height:.3f}; "
+                         f"content x {margin:.3f}..{1 - margin:.3f}, y {title:.3f}..1)")
+    return found
+
+
 def narrow(entry: dict, children) -> bool:
     """A matrix floorplan squeezed into a thin strip (placed before its
     children's proportions were known)."""
@@ -102,6 +136,9 @@ def missing_in(layout: dict, alias: str, class_name: str) -> list[str]:
             entry = type_layout(layout, component)
             if depth == 0:
                 entry = merge(entry, layout.get("root_layouts", {}).get(root_key, {}))
+            where = f"root_layouts.{root_key}" if depth == 0 else scope_of(component)
+            for child in outside_content(component, entry, children, root_key if depth == 0 else None):
+                problems.append(f"{alias}: OUTSIDE {where}: {child}")
             for child in children:
                 if not placed(entry.get("children", {}).get(child.get_name(), {})):
                     scope = (f"root_layouts.{root_key}" if depth == 0 else

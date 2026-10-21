@@ -17,7 +17,10 @@ for (const directory of ['rv32im', 'device-io']) {
   }
 }
 assert.equal(cases.length, 22);
-for (const {alias, test} of cases) {
+const pattern = process.env.CIRCUITSIM_DEVICE_SCENARIO_FILTER;
+const selected = cases.filter(({alias}) => !pattern || new RegExp(pattern).test(alias));
+assert(selected.length, 'No device scenarios match the selected filter');
+for (const {alias, test} of selected) {
   const native = (...args) => JSON.parse(execFileSync(probe, args, {
     encoding: 'utf8', maxBuffer: 64 * 1024 * 1024,
   }));
@@ -50,4 +53,4 @@ for (const {alias, test} of cases) {
     bridge.delete();
   }
 }
-console.log(`${cases.length} RV32IM/device recorded scenarios match native`);
+console.log(`${selected.length} of ${cases.length} RV32IM/device recorded scenarios match native`);

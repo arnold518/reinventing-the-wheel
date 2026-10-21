@@ -65,5 +65,6 @@ The core sections are:
 - [4.4. Single-Cycle Core](../4.4/index.md): Fetch, Decode, Execute, Memory, Writeback, and Next PC references; their complete wiring, memory endpoints, shared ALU, and completion rules.
 - [4.5. Baseline Pipeline](../4.5/index.md): five stages, interstage registers, dependency stalls, and conservative control-flow handling.
 - [4.6. Advanced Pipeline](../4.6/index.md): forwarding, load-use handling, switchable prediction, recovery, and memory waits.
+- [4.7. Memory Systems](../memory-systems.md): the advanced core's two ports over separate memories, one shared memory through the arbiter, and caches above and below it.
 
 Pipeline-only state and coordination stay with the pipeline documentation. They are not prerequisites for the single-cycle core's component references.

@@ -44,8 +44,8 @@ family colors. Saved layout color overrides take priority.
 One memory shared by a processor's instruction fetches and data accesses
 through the [two-port arbiter](memory/controllers.md) is shown in the memory
 inspector as two panels: instructions on the left (disassembled) and data on
-the right, each at the latest address its side used. The
-`rv32i-shared-memory` scenario shows it.
+the right, each at the latest address its side used. The memory
+arrangements of [§ 4.7](rv32i/memory-systems.md) show it.
 
 ## Recorded time and game frames
 

@@ -5,49 +5,58 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>CircuitSim Visualizer V2</title>
   <link rel="icon" href="data:,">
-  <link rel="stylesheet" href="styles.css?v=29">
+  <link rel="stylesheet" href="styles.css?v=30">
 </head>
 <body>
   <canvas id="circuit-canvas"></canvas>
 
   <div id="topbar" class="toolbar">
     <div class="scenario-control">
-      <label class="scenario-label" for="scenario-select">Scenario</label>
-      <select id="scenario-select"></select>
+      <label class="field field-scenario">
+        <span class="field-label scenario-label">Scenario</span>
+        <select id="scenario-select"></select>
+      </label>
       <div id="program-controls" class="hidden">
-        <label for="program-core">Core</label>
-        <select id="program-core">
-          <option value="single">Single-cycle</option>
-          <option value="baseline">Baseline pipeline</option>
-          <option value="advanced">Advanced pipeline</option>
-        </select>
-        <label for="program-policy">Prediction</label>
-        <select id="program-policy">
-          <option value="not-taken">Not taken</option>
-          <option value="taken">Taken</option>
-          <option value="backward-taken">Backward taken</option>
-          <option value="one-bit">One-bit</option>
-          <option value="two-bit">Two-bit</option>
-        </select>
+        <label class="field">
+          <span class="field-label">Core</span>
+          <select id="program-core">
+            <option value="single">Single-cycle</option>
+            <option value="baseline">Baseline pipeline</option>
+            <option value="advanced">Advanced pipeline</option>
+          </select>
+        </label>
+        <label class="field">
+          <span class="field-label">Prediction</span>
+          <select id="program-policy">
+            <option value="not-taken">Not taken</option>
+            <option value="taken">Taken</option>
+            <option value="backward-taken">Backward taken</option>
+            <option value="one-bit">One-bit</option>
+            <option value="two-bit">Two-bit</option>
+          </select>
+        </label>
       </div>
-      <label for="timing-select" title="Gate and memory delays the circuit is built and simulated with">Timing</label>
-      <select id="timing-select">
-        <option value="unit">unit (1 tick per gate)</option>
-        <option value="embedded">embedded (65 nm, ps)</option>
-        <option value="desktop">desktop (32 nm, ps)</option>
-      </select>
+      <label class="field field-timing" title="Gate and memory delays the circuit is built and simulated with">
+        <span class="field-label">Timing</span>
+        <select id="timing-select">
+          <option value="unit">unit (1 tick per gate)</option>
+          <option value="embedded">embedded (65 nm, ps)</option>
+          <option value="desktop">desktop (32 nm, ps)</option>
+        </select>
+      </label>
+    </div>
+    <div class="timeline-controls" aria-label="Simulation controls">
+      <button id="checkpoint-back" class="icon-button" title="Previous checkpoint" aria-label="Previous checkpoint"></button>
+      <button id="step-back" class="icon-button" title="Step backward" aria-label="Step backward"></button>
+      <button id="play-pause" class="primary">Play</button>
+      <button id="step-forward" class="icon-button" title="Step forward" aria-label="Step forward"></button>
+      <button id="checkpoint-forward" class="icon-button" title="Next checkpoint" aria-label="Next checkpoint"></button>
+      <button id="reset-sim" class="icon-button" title="Reset to time 0" aria-label="Reset"></button>
     </div>
     <div class="timeline-track">
       <input id="time-slider" type="range" min="0" max="0" value="0" list="checkpoint-marks" aria-label="Simulation timeline">
+      <div id="checkpoint-ticks" aria-hidden="true"></div>
       <datalist id="checkpoint-marks"></datalist>
-    </div>
-    <div class="timeline-controls" aria-label="Simulation controls">
-      <button id="play-pause">Play</button>
-      <button id="checkpoint-back" title="Previous checkpoint">&lt;&lt;</button>
-      <button id="step-back" title="Step backward">&lt;</button>
-      <button id="step-forward" title="Step forward">&gt;</button>
-      <button id="checkpoint-forward" title="Next checkpoint">&gt;&gt;</button>
-      <button id="reset-sim">Reset</button>
     </div>
     <div class="timeline-readouts" aria-live="polite">
       <span id="time-label">Time: 0</span>
@@ -57,18 +66,19 @@
 
   <div id="viewbar" class="toolbar">
     <div class="panel-toggles">
-      <button id="toggle-explorer" aria-pressed="true" aria-expanded="true" aria-controls="component-explorer">Explorer</button>
-      <button id="toggle-inspector" aria-pressed="false" aria-expanded="false" aria-controls="inspector">Info</button>
+      <button id="toggle-explorer" aria-pressed="true" aria-expanded="true" aria-controls="component-explorer" title="Component explorer">Explorer</button>
+      <button id="toggle-inspector" aria-pressed="false" aria-expanded="false" aria-controls="inspector" title="Selection inspector">Info</button>
     </div>
     <div class="view-actions">
       <button id="toggle-device-views" aria-pressed="true" title="Show device pixels and input state; toggle to inspect their circuits">Device views</button>
       <button id="reset-view">Reset View</button>
-      <button id="zoom-out">-</button>
-      <button id="zoom-in">+</button>
-      <button id="undo-layout" title="Undo layout change" disabled>Undo</button>
-      <button id="redo-layout" title="Redo layout change" disabled>Redo</button>
-      <button id="reset-layout">Reset Layout</button>
-      <button id="save-layout">Save Layout</button>
+      <button id="zoom-out" class="icon-button" title="Zoom out" aria-label="Zoom out"></button>
+      <button id="zoom-in" class="icon-button" title="Zoom in" aria-label="Zoom in"></button>
+      <span class="toolbar-divider" aria-hidden="true"></span>
+      <button id="undo-layout" class="icon-button" title="Undo layout change" aria-label="Undo layout change" disabled></button>
+      <button id="redo-layout" class="icon-button" title="Redo layout change" aria-label="Redo layout change" disabled></button>
+      <button id="reset-layout" title="Reset layout">Reset Layout</button>
+      <button id="save-layout" title="Save layout">Save Layout</button>
       <span id="save-status"></span>
     </div>
   </div>
@@ -180,6 +190,6 @@
   <script src="device_view.js?v=1"></script>
   <script src="memory_cell_view.js?v=1"></script>
   <script src="memory_view.js?v=1"></script>
-  <script src="app.js?v=70"></script>
+  <script src="app.js?v=71"></script>
 </body>
 </html>

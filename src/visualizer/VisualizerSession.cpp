@@ -405,10 +405,27 @@ MemoryInspector::MemoryInspector(std::shared_ptr<Component> component, const Sim
     }
     for (auto current = component; current; current = current->getParent()) {
         if (current->getName() != "SHARED_MEMORY") continue;
-        if (auto parent = current->getParent())
-            for (const auto& sibling : parent->getChildren())
+        // A request is told apart by the arbiter: when the arbiter drives the
+        // memory, by its grant at the accepting edge; with a shared cache
+        // between them, by the side whose request the arbiter has in flight
+        // (the cache serves one request at a time, so each memory access it
+        // makes belongs to that request). Without the arbiter's gates (a
+        // compact arbiter) the memory is shown as one.
+        if (auto parent = current->getParent()) {
+            bool shared_cache = false;
+            for (const auto& sibling : parent->getChildren()) {
                 if (std::string(sibling->getTypeName()).starts_with("TwoPortMemoryArbiter<"))
                     arbiter_ = std::dynamic_pointer_cast<IOComponent>(sibling);
+                shared_cache = shared_cache || sibling->getName() == "SHARED_CACHE";
+            }
+            if (shared_cache && arbiter_) {
+                // Then arbiter_ is the arbiter's STATE part (see below).
+                std::shared_ptr<IOComponent> state;
+                for (const auto& child : arbiter_->getChildren())
+                    if (child->getName() == "STATE") state = std::dynamic_pointer_cast<IOComponent>(child);
+                arbiter_ = state;
+            }
+        }
         break;
     }
 }
@@ -462,7 +479,8 @@ void MemoryInspector::rebuildTransactions() {
                 else pending = time;                    // held/delayed response
                 uint64_t address = 0;
                 if (arbiter_ && binaryValue(value(endpoint_, "REQ_ADDR", time - 1), address))
-                    accesses_.push_back({time, value(arbiter_, "D_REQ_READY", time - 1) == "1", address});
+                    accesses_.push_back({time, arbiter_->getName() == "STATE" ? value(arbiter_, "OWNER_D", time - 1) == "1"
+                                                                           : value(arbiter_, "D_REQ_READY", time - 1) == "1", address});
             }
         } else continue;
         if (edges_.empty() || edges_.back().pending != pending || edges_.back().completed != completed)

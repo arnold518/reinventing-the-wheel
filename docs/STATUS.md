@@ -17,6 +17,9 @@ work state changes. Keep dated decisions and validation results in
   combined documentation and simulator site before deployment. Its trigger
   commit was pushed; the final live URL was not checked. See the closed
   [Pages readiness record](records/2026-10-16-github-pages-readiness.md).
+  Its toolbars and panels use one dark theme with icon buttons since the
+  closed [visual refresh record](records/2026-10-21-visualizer-visual-refresh.md);
+  the published site still has the old look until the next Pages build.
 - Scalable memory endpoints use a visible controller with each technology's
   behavioral native device. The redundant memory container contract is
   retired with saved-ID aliases. The [retirement record](records/2026-10-16-native-memory-device-retirement.md)
@@ -63,7 +66,7 @@ work state changes. Keep dated decisions and validation results in
   write-allocate, a line-state store (up to 4,096 sets), and 1/2/4/8 ways
   with lru, plru, fifo or random replacement. `controller=behavioral` runs
   the controller's own gate list as one compact part, cycle-identical and
-  4–7× faster. A 96-run behavior campaign is published as §3.8 experiment 3:
+  4–7× faster. A 96-run behavior campaign is published in the §4.8 memory-systems results:
   a two-entry write buffer gives 1.18–1.57× and removes most of the L2
   penalty. Prefetch is deferred (one request at a time).
 - The closed [memory chapter rewrite](records/2026-10-18-memory-docs-rewrite.md)
@@ -74,12 +77,20 @@ work state changes. Keep dated decisions and validation results in
   gave each internal structure its own saved floorplan; cache controller
   placements were regenerated.
 
+- The closed [memory systems record](records/2026-10-20-memory-systems-section.md)
+  added §4.7 Memory Systems: the advanced core's five memory arrangements
+  (separate, shared through the arbiter, L1s, L2, both), each with a
+  visualizer scenario. The results page is now §4.8, with one memory-systems
+  section (arrangements × cache behaviors). §3.8 keeps the cache-alone
+  access-pattern experiment.
+
 ## In progress
 
 - [RV32IM milestone wrap and integration](records/2026-10-22-rv32im-milestone-wrap-and-integration.md):
   the owner requested merging the current worktree. Preserve the primary
   checkout's newer visualizer changes and pending planning work. The target
-  is `alpha` at `0d498c7`; its integration checks are pending. Phase 6 acceptance is still open and phase 7
+  is `alpha` at `0d498c7`; its integration checks are pending. Phase 6
+  acceptance is still open and phase 7
   has not started; remaining long campaigns are follow-up work.
 
 - [Device parameters and visual abstractions](records/2026-10-21-device-parameters-and-visuals.md):
@@ -88,15 +99,16 @@ work state changes. Keep dated decisions and validation results in
   keyboard abstractions share a recorded observer; native history/rewind passes.
   Python declarations and JS helpers pass; all 363 static scenario layouts
   pass with 52 new entries and every old entry preserved. Consecutive sampled
-  input logs and halt-boundary rejection pass. Browser/WASM/site acceptance
-  remains. Phase 7 interactive sessions
+  input logs and halt-boundary rejection pass. The final portable refresh and
+  22 native/WASM device comparisons pass; strict focused site packaging passes
+  with retained legacy rows. Browser acceptance remains. Phase 7 interactive sessions
   are authorized after phase 6 passes its acceptance gates. Work stays isolated.
 
 - [FF controller startup](records/2026-10-21-memory-controller-startup.md):
   a scoped initialization fix preserves provisioned images in structural, fused
   and mixed profiles in native and WASM. Old memory/cache regressions pass
-  apart from the large SRAM scenario's resource-limited retry; final portable
-  refresh remains.
+  apart from the large SRAM scenario's resource-limited retry. The final
+  portable startup/provisioning refresh passes.
 
 - [Compiler memory prerequisites](records/2026-10-21-delay-table-compile-memory.md):
   optional build partitions preserve all canonical entries after the fresh
@@ -104,17 +116,18 @@ work state changes. Keep dated decisions and validation results in
   value identity pass in both native and WASM. All three final native profiles
   verify all 808 regenerated entries; the 754 legacy entries per profile are
   unchanged. Final library compilation peaks at about 458 MiB RSS under a
-  768 MiB address-space cap. Final WASM table verification remains. The native Python binding hit its
+  768 MiB address-space cap. Final native/WASM table snapshots and verification
+  pass. The native Python binding hit its
   768 MiB compile cap; a guarded 1 GiB retry stopped at low host headroom.
   Its split registration source now builds at 768 MiB (~526 MiB peak RSS),
-  preserving the 175-name old Python API. Final runtime regressions remain.
+  preserving all 175 old Python API entries. The complete portable refresh
+  passes; integration with the newer `alpha` work is being checked.
 
 - [64-bit simulation time prerequisite](records/2026-10-21-simulation-time-width.md):
-  explicit tick/history/publication types and exact JS transport are being
-  rebuilt. Native/WASM standalone wide-time/history checks and actual short CPU/device
+  explicit tick/history/publication types and exact JS transport are implemented. Native/WASM standalone wide-time/history checks and actual short CPU/device
   runs above 2^53 and 2^63 pass in WASM. Exact Python/native transport and
-  rewind pass. Final native/WASM transport parity and current-source old
-  playback regressions remain pending.
+  rewind pass. Final native/WASM transport parity and focused old playback
+  checks pass. The full current-source suite is not claimed.
 
 - [Scripted device platform and games, phases 4–6](records/2026-10-21-scripted-games-phase4-6-implementation.md):
   the integrated CPU/devices, bounded runtime, ten guest fixtures and additive
@@ -128,8 +141,9 @@ work state changes. Keep dated decisions and validation results in
   and remains unresolved. A new device JS check and old viewer checks pass;
   two sandbox/harness follow-ups also pass after rerun. Strict settling,
   old core/memory/viewer integration and the new foundation checks pass.
-  Final game repetition/fidelity/quantum, WASM/parity/site/browser and
-  resource-aware reruns remain. Compact FF/cached-FF/cached-DRAM clocks certify
+  Final revised-game repetition/fidelity/quantum/performance, compiled-game
+  WASM parity, full browser and resource-aware reruns remain. Final portable
+  foundation/system checks and strict focused site packaging pass. Compact FF/cached-FF/cached-DRAM clocks certify
   at 520 unit ticks against the 1,000-tick period. Work stays in the isolated
   `rv32im-phase3` worktree. Live sessions follow in phase 7; disks and multicore remain unscheduled.
 
@@ -141,9 +155,11 @@ work state changes. Keep dated decisions and validation results in
   revisions, including structural/compact-child core timing agreement;
   old native core/memory/cache checks pass in the later broad scope. The
   memory inspector's earlier timeout is resolved by its passing rerun.
-  Final portable/site checks continue.
-  Compilers are serial and memory-capped. No merge or viewer module deployment
-  has occurred. Recorded-game integration is now in progress through phase 6;
+  Final portable foundation/device checks and strict focused site packaging
+  pass; broader acceptance is tracked above.
+  Compilers are serial and memory-capped. Merge to `alpha` is in progress;
+  no deployed viewer module has been overwritten. Recorded-game integration
+  remains in acceptance through phase 6;
   live modes remain later. Existing recorded playback is retained. See the maintained
   [foundation contract](reference/rv32im-device-foundation.md).
 

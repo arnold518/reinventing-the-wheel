@@ -88,10 +88,10 @@ std::string rv32iFiveStageProgramScenarioName(
 
 RV32IFiveStageCoreProgramTest::
 RV32IFiveStageCoreProgramTest(size_t program_number, bool baseline, std::optional<rv32i::PredictionConfig> prediction,
-                              bool shared_memory)
+                              RV32IMemoryArrangement arrangement)
     : program_number_(program_number),
       baseline_(baseline),
-      shared_memory_(shared_memory),
+      arrangement_(arrangement),
       prediction_(prediction),
       profile_(fiveStageStructuralCoreProfile()) {
     (void)rv32iFiveStageProgramScenarioName(program_number_);
@@ -144,20 +144,15 @@ void RV32IFiveStageCoreProgramTest::setupCircuit() {
         manifest);
     auto root_context = scope->child(
         RV32IProgramRoot::RootName, std::nullopt);
-    if (shared_memory_) {
+    if (arrangement_ != RV32IMemoryArrangement::Separate) {
         require(!baseline_, "a shared memory needs the advanced core");
         const rv32i::MemoryConfiguration memory;
-        circuit::memory::CacheConfig instruction_cache, data_cache;
-        instruction_cache.sets = 4;
-        instruction_cache.backing_depth_words = memory.device.depth_words;
-        data_cache.sets = 4;
-        data_cache.backing_depth_words = memory.device.depth_words;
-        data_cache.read_write = true;
+        const auto caches = rv32iArrangementCaches(arrangement_, memory);
         program_root_ = Component::createWithContext<RV32IProgramRoot>(
             root_context, RV32IProgramRoot::RootName, circuit::families::RV32IFiveStageCore,
             50 * timeScale(), memory, memory,
             prediction_ ? prediction_->parameters() : circuit::ParameterMap{},
-            instruction_cache, data_cache, true);
+            caches.instruction, caches.data, true, caches.shared);
     } else program_root_ = Component::createWithContext<RV32IProgramRoot>(
         root_context,
         RV32IProgramRoot::RootName,
@@ -418,7 +413,7 @@ void RV32IFiveStageCoreProgramTest::verifyResults() {
     const auto& expected = getCase().expected_five_stage;
     // The recorded counts are those of separate zero-wait memories; a shared
     // memory behind caches takes its own cycles (checked against the oracle).
-    if (expected.defined && !baseline_ && !shared_memory_) {
+    if (expected.defined && !baseline_ && arrangement_ == RV32IMemoryArrangement::Separate) {
         require(totalCycles() == expected.cycles,
                 getTestName() + ": five-stage cycle count changed");
         require(load_use_stall_cycles_

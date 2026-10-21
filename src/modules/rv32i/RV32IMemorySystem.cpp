@@ -1,6 +1,7 @@
 #include "modules/rv32i/RV32IMemorySystem.hpp"
 #include "components/StructuralNetBuilder.hpp"
 #include "modules/memory/MemoryController.hpp"
+#include <tuple>
 
 namespace rv32i {
 void directMemoryPins(IOComponent* s, const std::string& p, bool instruction) {
@@ -27,19 +28,21 @@ std::shared_ptr<MemoryStateView> memoryView(const std::shared_ptr<IOComponent>& 
 }
 void wireMemorySystem(ComponentBuilder& b, const std::shared_ptr<IOComponent>& core,
     const std::shared_ptr<IOComponent>& instructions, const std::shared_ptr<IOComponent>& data,
-    const std::shared_ptr<Pin<1>>& clock, const std::shared_ptr<Pin<1>>& reset) {
+    const std::shared_ptr<Pin<1>>& clock, const std::shared_ptr<Pin<1>>& reset,
+    const std::string& instruction_prefix, const std::string& data_prefix) {
     circuit::detail::StructuralWiring w(b);
     w.connect(clock, core->getInputPin("CLK"));
     w.connect(reset, core->getInputPin("RST"));
-    for (auto [prefix, memory] : std::vector<std::pair<std::string,std::shared_ptr<IOComponent>>>{{"IMEM_",instructions},{"DMEM_",data}}) {
-        w.connect(clock,memory->getInputPin("CLK"));
+    for (auto [prefix, memory, port] : std::vector<std::tuple<std::string,std::shared_ptr<IOComponent>,std::string>>{
+             {"IMEM_",instructions,instruction_prefix},{"DMEM_",data,data_prefix}}) {
+        w.connect(clock,memory->getInputPinDynamic(port + "CLK"));
         // CPU reset must not erase the loaded program or data image.
-        w.connect(reset,memory->getInputPin("RST"));
+        w.connect(reset,memory->getInputPinDynamic(port + "RST"));
         for (auto name : {"REQ_VALID", "REQ_OP", "REQ_ADDR", "REQ_WRITE_DATA",
                           "REQ_WRITE_MASK", "RSP_READY"})
-            w.connect(core->getOutputPinDynamic(prefix + name), memory->getInputPinDynamic(name));
+            w.connect(core->getOutputPinDynamic(prefix + name), memory->getInputPinDynamic(port + name));
         for (auto name : {"REQ_READY", "RSP_VALID", "RSP_READ_DATA", "RSP_STATUS"})
-            w.connect(memory->getOutputPinDynamic(name), core->getInputPinDynamic(prefix + name));
+            w.connect(memory->getOutputPinDynamic(port + name), core->getInputPinDynamic(prefix + name));
     }
     w.finish();
 }

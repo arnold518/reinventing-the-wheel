@@ -5,13 +5,12 @@ Code state: isolated `rv32im-phase3` worktree from `60acda2`, with staged time/g
 
 ## Summary
 
-Investigate a pre-existing mixed-profile startup hazard: an expanded FF endpoint
-with a compact controller can expose unknown MEM_RST before its constant zero
-settles, destroying provisioned bytes in the native FF device. New default game
-profiles avoid that mixture, but arbitrary fidelity choices should retain the
-same endpoint image contract. Add a focused structural/fused/mixed provisioning
-check before changing the constant's startup scheduling. Primary ongoing work
-is untouched.
+The compact FF controller now publishes its constant native reset at
+initialization, retaining provisioned bytes in structural, fused and mixed
+profiles. Focused native/WASM provisioning and old memory/cache checks pass.
+The native device's unknown-reset behavior is unchanged. The large SRAM
+regression remains resource limited and is tracked with phase 6 acceptance;
+branch integration is tracked in the [wrap record](2026-10-22-rv32im-milestone-wrap-and-integration.md).
 
 ## 2026-10-21 — Evidence and check
 
@@ -51,3 +50,10 @@ fix in WASM; fresh native, old-memory and timing regressions remain pending.
 The fresh native provisioning check also passes (0.09 s), with all three
 profiles retaining bytes through startup and interface reset. The full old
 memory regression panel remains pending.
+
+## 2026-10-22 — Milestone checkpoint
+
+Checkpoint `8c90c1f` contains this work. The owner requested merging it into
+`alpha`; integration verification and remaining acceptance limits are recorded
+in the [wrap record](2026-10-22-rv32im-milestone-wrap-and-integration.md).
+Earlier dated evidence above is retained. Phase 6 is not declared complete.

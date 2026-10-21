@@ -1,4 +1,4 @@
-# § 4.7. RV32I Experiment Results
+# § 4.8. RV32I Experiment Results
 
 [Experiment setup](4.2/index.md) · [Fixed programs](4.2/programs/index.md) · [Generated workloads](4.2/workloads/index.md) · [Compiled workloads](4.2/compiled/index.md)
 
@@ -8,9 +8,11 @@ the [advanced pipeline](4.6/index.md)? This page runs all three on the
 workloads of [§ 4.2](4.2/index.md). The advanced pipeline is run with each of
 its five branch predictors, so every comparison has **seven targets**.
 
-All runs use flip-flop memory, which answers in the same clock cycle, so the
-results compare the cores and not the memory. How the cores fare with caches
-and DRAM is the subject of [§ 3.8 Cache Experiments](../memory/cache-experiments.md).
+These runs use flip-flop memory, which answers in the same clock cycle, so
+they compare the cores and not the memory. The last section,
+[memory systems](#memory-systems), keeps the advanced core fixed and
+compares the memory arrangements of [§ 4.7](memory-systems.md) over DRAM,
+with four cache behaviors.
 
 ## The answer in short
 
@@ -28,7 +30,7 @@ and DRAM is the subject of [§ 3.8 Cache Experiments](../memory/cache-experiment
   one-bit each win some patterns; two-bit is never far behind and is the
   steadiest choice.
 
-![Five measured FF workload groups, each displaying single-cycle, baseline, and all five advanced policies as modeled-time ratios to the visible single-cycle reference at the embedded clocks](4.7/measured-ff-overview.svg)
+![Five measured FF workload groups, each displaying single-cycle, baseline, and all five advanced policies as modeled-time ratios to the visible single-cycle reference at the embedded clocks](results/measured-ff-overview.svg)
 
 *Time of every target against the single-cycle core, per workload group*
 (`embedded` clocks; lower is faster). Each point is the geometric mean over
@@ -241,7 +243,7 @@ or more it is back to 625 cycles and, with its shorter clock, faster than
 advanced. The load-use pair is the same work with and without scheduling:
 292 cycles and 64 load-use stalls against 228 and none.
 
-![Two measured FF contrasts, dependency against independent work and load-use against scheduled loads, with all seven targets visible in each](4.7/measured-core-gap-contrasts.svg)
+![Two measured FF contrasts, dependency against independent work and load-use against scheduled loads, with all seven targets visible in each](results/measured-core-gap-contrasts.svg)
 
 *Cost of a dependency and of an unscheduled load.* Each bar is the stressed
 case's cycles divided by its control's (above one: the pressure costs
@@ -302,7 +304,7 @@ predictors have time to learn.
 | Adv 1b | 532 | 594 | 688 | 576 | 626 |
 | Adv 2b | 536 | 596 | 628 | 592 | 626 |
 
-![Measured modeled time for five longer branch patterns across all seven targets, with each row's fastest value outlined](4.7/measured-long-branches.svg)
+![Measured modeled time for five longer branch patterns across all seven targets, with each row's fastest value outlined](results/measured-long-branches.svg)
 
 *Time of each target per pattern* (`embedded` clocks). Color shows each value
 against the pattern's fastest target; outlines mark the fastest. Compare
@@ -386,7 +388,7 @@ current clocks.
 | [ud](4.2/compiled/ud.md) | 6,771,211 | 14,687,130 | 8,966,161 | 9,051,945 | 8,658,491 | 8,868,513 | 8,531,311 |
 | [wikisort](4.2/compiled/wikisort.md) | 6,310,064 | 14,142,504 | 8,959,126 | 8,149,074 | 7,926,686 | 7,644,544 | 7,552,916 |
 
-![Conditional full Embench projection for 19 workloads and all seven targets, using older cycles multiplied by current FF periods rather than a current-source rerun](4.7/conditional-embench-projection.svg)
+![Conditional full Embench projection for 19 workloads and all seven targets, using older cycles multiplied by current FF periods rather than a current-source rerun](results/conditional-embench-projection.svg)
 
 *Projected time against the single-cycle core* (`embedded` clocks), from
 the historical cycles above; valid only if those counts still hold.
@@ -398,14 +400,200 @@ core on all 19 workloads in `unit` and on 18 of 19 in `embedded` and
 and baseline 1.58× and 1.52× (geometric means). This is arithmetic on old
 counts, not a validated comparison or an official Embench score.
 
+## Memory systems
+
+The results above use separate zero-wait memories. This section keeps the
+core fixed and varies the memory system: the five
+[arrangements of § 4.7](memory-systems.md) over one DRAM, and four
+behaviors of their caches. The advanced core only serves as a realistic
+source of requests.
+
+**Setup.**
+
+| Part | Configuration |
+| --- | --- |
+| Core | Advanced pipeline (§ 4.6), behavioral |
+| L1 caches (C-ID, D-ID) | One for instructions, one for data: 256 B each |
+| L2 cache (D-0, D-ID) | Shared, 2 KiB |
+| Cache geometry | Two ways (8 sets per L1, 64 sets in the L2), or four ways at the same capacity (4 and 32 sets); 16-byte lines; SRAM tag and data stores; a miss fills its line with one burst; one request at a time |
+| Cache behaviors | Write-through without write-allocate; the same with a two-entry write buffer; write-back with write-allocate; write-back with four ways (pseudo-LRU). The behavior applies to the data L1 and the L2; the instruction L1 is read-only |
+| Main memory | One DRAM of 65,536 words with the datasheet's row size (512 words in `embedded`, 1,024 in `desktop`) and refresh; A has one per port |
+| Clock | 4,104 ps in `embedded`, 2,858 ps in `desktop`; the clock analysis certifies every arrangement and behavior at that clock |
+| Checks | Every run produced the expected results and final memory, with zero setup violations |
+
+The four programs differ in how they use memory:
+
+| Program | What it does with memory |
+| --- | --- |
+| `calls` | Nested function calls: small code, return addresses saved on and restored from the stack (size 16, 256 measured iterations) |
+| `sort` | Sorts 64 words: a 512-byte working set, larger than an L1 and smaller than the L2 (4 iterations) |
+| `stream` | Walks 1,024 words once per iteration: larger than the L2 (4 iterations) |
+| `pointer-chase` | Follows 512 nodes (4 KiB) in random order: each load depends on the previous one (4 iterations) |
+
+Each measurement starts after one warm-up iteration. Code and data sit as in
+[§ 4.7](memory-systems.md#where-code-and-data-sit). The arrangements and
+behaviors were fixed before any run, and no memory timing or cache setting
+was changed after seeing results. The runs with caches used the compact
+cache controller, which gives the same cycles as the gate-level one; the
+write-through runs were also measured with gate-level controllers, with the
+same results.
+
+**Speed against B, the shared memory without caches** (higher is faster;
+`embedded`, with `desktop` in brackets). Without caches, separate memories
+(A) give:
+
+| Program | A |
+| --- | ---: |
+| `calls` | 1.51× (1.57×) |
+| `sort` | 1.99× (2.08×) |
+| `stream` | 1.38× (1.40×) |
+| `pointer-chase` | 1.85× (2.19×) |
+
+With caches:
+
+| Program | Arrangement | Write-through | Write buffer | Write-back | Write-back, 4 ways |
+| --- | --- | ---: | ---: | ---: | ---: |
+| `calls` | C-ID | 3.58× (3.63×) | 4.28× (4.58×) | 4.28× (4.69×) | 4.28× (4.69×) |
+| `calls` | D-0 | 3.46× (3.55×) | 4.09× (4.37×) | 4.09× (4.49×) | 4.09× (4.49×) |
+| `calls` | D-ID | 3.39× (3.48×) | 4.28× (4.69×) | 4.28× (4.69×) | 4.28× (4.69×) |
+| `sort` | C-ID | 3.93× (4.00×) | 5.28× (5.72×) | 5.05× (5.59×) | 5.01× (5.55×) |
+| `sort` | D-0 | 3.71× (3.79×) | 4.87× (5.25×) | 4.73× (5.26×) | 4.96× (5.57×) |
+| `sort` | D-ID | 3.65× (3.74×) | 5.35× (5.87×) | 5.26× (5.91×) | 5.25× (5.89×) |
+| `stream` | C-ID | 3.06× (3.07×) | 4.07× (4.29×) | 2.78× (2.82×) | 2.78× (2.82×) |
+| `stream` | D-0 | 2.91× (2.94×) | 3.84× (4.05×) | 2.41× (2.52×) | 2.61× (2.71×) |
+| `stream` | D-ID | 2.82× (2.85×) | 3.98× (4.24×) | 2.45× (2.56×) | 2.45× (2.56×) |
+| `pointer-chase` | C-ID | 3.02× (3.79×) | 3.02× (3.79×) | 3.02× (3.79×) | 3.03× (3.81×) |
+| `pointer-chase` | D-0 | 3.27× (3.95×) | 3.27× (3.95×) | 3.27× (3.95×) | 3.25× (3.93×) |
+| `pointer-chase` | D-ID | 3.14× (3.77×) | 3.14× (3.77×) | 3.14× (3.77×) | 3.13× (3.76×) |
+
+<!-- diagram: cache-speedup -->
+
+What it shows:
+
+1. **The fastest systems put first-level caches with a write buffer in front
+   of the shared memory.** `calls`, `sort` and `stream` run 4.0–5.4× faster
+   than B (`embedded`), with the L1s alone (C-ID) or with both levels
+   (D-ID) within 2.4 % of each other. A store is answered at once and
+   reaches DRAM while the program goes on.
+2. **Sharing one DRAM costs 1.4–2.2× (A against B).** The two ports rarely
+   ask in the same cycle; the cost is DRAM rows. In `sort` (`embedded`), A's
+   two memories open 796 rows and B's shared DRAM 18,377, because
+   instruction fetches and data accesses interleave on one device. At about
+   twelve cycles per row change, that accounts for most of B's extra cycles.
+3. **The L1 pair gives most of the gain; an L2 alone comes close.** With
+   write-through or a write buffer, C-ID and D-0 are within 3–9 % of each
+   other: at this clock a hit in the larger L2 costs about as much as a hit
+   in an L1.
+4. **Waiting for stores is what makes two levels slow.** With write-through
+   and no buffer, D-ID is 4–8 % slower than C-ID in `calls`, `sort` and
+   `stream`: every store goes through both levels to DRAM while the program
+   waits. A write buffer removes the wait: then D-ID is the fastest for
+   `sort`, and equal to or faster than C-ID for `calls`.
+5. **Write-back is not better here, and can be worse.** It matches the
+   write buffer in `calls` and comes within 5 % in `sort`. In `stream` it
+   takes 9–21 % more cycles than write-through: `stream` writes its output
+   once, so fetching each output line on a write miss (write-allocate) only
+   brings in data that is overwritten, and every changed line is written
+   back later.
+6. **Random access favors the bigger cache.** In `pointer-chase`, whose
+   cycles a write buffer does not change, the 256-byte L1 rarely holds a node and every
+   miss fetches a whole line, so the L2 alone (D-0) is fastest with any
+   behavior. In `desktop` the whole 4 KiB array fits in one DRAM row, which
+   helps every arrangement with a DRAM behind it.
+7. **Four ways at the same capacity change little.** Only the L2 alone gains:
+   about 5 % fewer cycles in `sort` and 7 % in `stream`. The small L1s are
+   limited by their size, not by conflicts within a set.
+
+??? info "Cycles and cycles per instruction of every run"
+
+    Cycles in the measured window and cycles per instruction (CPI).
+
+    **calls**
+
+    | Arrangement | Caches | `embedded` cycles | CPI | `desktop` cycles | CPI |
+    | --- | --- | ---: | ---: | ---: | ---: |
+    | A | none | 62,529 | 12.21 | 65,944 | 12.88 |
+    | B | none | 94,309 | 18.42 | 103,331 | 20.18 |
+    | C-ID | Write-through | 26,321 | 5.14 | 28,499 | 5.57 |
+    | C-ID | Write buffer | 22,013 | 4.30 | 22,547 | 4.40 |
+    | C-ID | Write-back | 22,013 | 4.30 | 22,013 | 4.30 |
+    | C-ID | Write-back, 4 ways | 22,013 | 4.30 | 22,013 | 4.30 |
+    | D-0 | Write-through | 27,296 | 5.33 | 29,144 | 5.69 |
+    | D-0 | Write buffer | 23,037 | 4.50 | 23,671 | 4.62 |
+    | D-0 | Write-back | 23,037 | 4.50 | 23,037 | 4.50 |
+    | D-0 | Write-back, 4 ways | 23,037 | 4.50 | 23,037 | 4.50 |
+    | D-ID | Write-through | 27,820 | 5.43 | 29,665 | 5.79 |
+    | D-ID | Write buffer | 22,013 | 4.30 | 22,031 | 4.30 |
+    | D-ID | Write-back | 22,013 | 4.30 | 22,013 | 4.30 |
+    | D-ID | Write-back, 4 ways | 22,013 | 4.30 | 22,013 | 4.30 |
+
+    **sort**
+
+    | Arrangement | Caches | `embedded` cycles | CPI | `desktop` cycles | CPI |
+    | --- | --- | ---: | ---: | ---: | ---: |
+    | A | none | 281,202 | 10.14 | 302,048 | 10.89 |
+    | B | none | 559,942 | 20.19 | 628,588 | 22.67 |
+    | C-ID | Write-through | 142,446 | 5.14 | 157,293 | 5.67 |
+    | C-ID | Write buffer | 106,133 | 3.83 | 109,953 | 3.96 |
+    | C-ID | Write-back | 110,966 | 4.00 | 112,528 | 4.06 |
+    | C-ID | Write-back, 4 ways | 111,805 | 4.03 | 113,327 | 4.09 |
+    | D-0 | Write-through | 150,892 | 5.44 | 165,890 | 5.98 |
+    | D-0 | Write buffer | 114,917 | 4.14 | 119,720 | 4.32 |
+    | D-0 | Write-back | 118,369 | 4.27 | 119,422 | 4.31 |
+    | D-0 | Write-back, 4 ways | 112,905 | 4.07 | 112,905 | 4.07 |
+    | D-ID | Write-through | 153,511 | 5.54 | 168,220 | 6.07 |
+    | D-ID | Write buffer | 104,677 | 3.77 | 107,166 | 3.86 |
+    | D-ID | Write-back | 106,455 | 3.84 | 106,450 | 3.84 |
+    | D-ID | Write-back, 4 ways | 106,733 | 3.85 | 106,733 | 3.85 |
+
+    **stream**
+
+    | Arrangement | Caches | `embedded` cycles | CPI | `desktop` cycles | CPI |
+    | --- | --- | ---: | ---: | ---: | ---: |
+    | A | none | 410,643 | 14.31 | 451,632 | 15.73 |
+    | B | none | 567,601 | 19.77 | 632,355 | 22.03 |
+    | C-ID | Write-through | 185,577 | 6.47 | 205,977 | 7.18 |
+    | C-ID | Write buffer | 139,373 | 4.86 | 147,303 | 5.13 |
+    | C-ID | Write-back | 204,311 | 7.12 | 223,893 | 7.80 |
+    | C-ID | Write-back, 4 ways | 204,283 | 7.12 | 223,893 | 7.80 |
+    | D-0 | Write-through | 194,892 | 6.79 | 215,278 | 7.50 |
+    | D-0 | Write buffer | 147,831 | 5.15 | 156,029 | 5.44 |
+    | D-0 | Write-back | 235,072 | 8.19 | 251,407 | 8.76 |
+    | D-0 | Write-back, 4 ways | 217,533 | 7.58 | 233,148 | 8.12 |
+    | D-ID | Write-through | 201,013 | 7.00 | 222,082 | 7.74 |
+    | D-ID | Write buffer | 142,679 | 4.97 | 149,043 | 5.19 |
+    | D-ID | Write-back | 232,090 | 8.09 | 246,895 | 8.60 |
+    | D-ID | Write-back, 4 ways | 231,943 | 8.08 | 246,895 | 8.60 |
+
+    **pointer-chase**
+
+    | Arrangement | Caches | `embedded` cycles | CPI | `desktop` cycles | CPI |
+    | --- | --- | ---: | ---: | ---: | ---: |
+    | A | none | 134,203 | 13.06 | 125,641 | 12.23 |
+    | B | none | 248,769 | 24.22 | 275,375 | 26.81 |
+    | C-ID | Write-through | 82,295 | 8.01 | 72,584 | 7.07 |
+    | C-ID | Write buffer | 82,295 | 8.01 | 72,584 | 7.07 |
+    | C-ID | Write-back | 82,295 | 8.01 | 72,584 | 7.07 |
+    | C-ID | Write-back, 4 ways | 81,986 | 7.98 | 72,334 | 7.04 |
+    | D-0 | Write-through | 75,971 | 7.40 | 69,702 | 6.79 |
+    | D-0 | Write buffer | 75,971 | 7.40 | 69,702 | 6.79 |
+    | D-0 | Write-back | 75,971 | 7.40 | 69,702 | 6.79 |
+    | D-0 | Write-back, 4 ways | 76,561 | 7.45 | 70,069 | 6.82 |
+    | D-ID | Write-through | 79,289 | 7.72 | 73,041 | 7.11 |
+    | D-ID | Write buffer | 79,289 | 7.72 | 73,041 | 7.11 |
+    | D-ID | Write-back | 79,289 | 7.72 | 73,041 | 7.11 |
+    | D-ID | Write-back, 4 ways | 79,579 | 7.75 | 73,208 | 7.13 |
+
 <a id="memory-topologies-and-caches"></a>
 <a id="interpretation-and-evidence-limits"></a>
 
 ## What these results do not show
 
-- **Memory.** All results use flip-flop memory. The latency of every memory
-  technology is in [3.6 Memory Timing](../memory/timing.md#measured-latency),
-  and what caches do over DRAM in [3.8 Cache Experiments](../memory/cache-experiments.md).
+- **Memory.** The core comparisons use flip-flop memory. The latency of every
+  memory technology is in [3.6 Memory Timing](../memory/timing.md#measured-latency);
+  memory systems over DRAM are measured above. The memory-system results
+  cover one capacity per cache level, one request at a time, no prefetch and
+  a DRAM with one open row; other designs need their own runs.
   An older campaign with timed memories used the controllers from before the
   gate-level memory timing work; it was not rerun and remains in the
   repository history at tag `timing-legacy`.

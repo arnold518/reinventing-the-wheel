@@ -65,6 +65,7 @@ class MemoryInspectorIntegrationTest(unittest.TestCase):
             with tempfile.TemporaryDirectory() as tmp:
                 overrides = {"RV32I_PROGRAM_ROOT.CORE": "behavioral"}
                 session = server.CircuitSession(alias, server.LayoutManager(Path(tmp) / "layout.json"), profile_overrides=overrides)
+                comparisons = []
                 for name, role in (("INSTRUCTION_MEMORY", "instruction"), ("DATA_MEMORY", "data")):
                     cid = "RV32I_PROGRAM_ROOT." + name
                     found = {}
@@ -77,9 +78,7 @@ class MemoryInspectorIntegrationTest(unittest.TestCase):
                     self.assertIn("READ", found, (alias, name))
                     if role == "data": self.assertIn("WRITE", found)
                     for index, state in found.values():
-                        native = json.loads(subprocess.check_output([PROBE, "component", test, alias, str(index), cid,
-                            "--override", "RV32I_PROGRAM_ROOT.CORE", "behavioral"], text=True))
-                        self.assertEqual(state, native)
+                        comparisons.append((index, cid, state))
                         self.assertEqual(state["memoryRole"], role)
                         self.assertIn(state["activeBaseAddress"], [row["address"] for row in state["windowWords"]])
                         if role == "instruction": self.assertTrue(any(row.get("instructionText") for row in state["touchedWords"]))
@@ -91,6 +90,12 @@ class MemoryInspectorIntegrationTest(unittest.TestCase):
                     backend.initialize_memory_bytes(session.component_handles[cid], 0, [1])
                 del session
             gc.collect()
+            # Expected states contain plain JSON values. Release the Python
+            # circuit before constructing its native counterpart.
+            for index, cid, state in comparisons:
+                native = json.loads(subprocess.check_output([PROBE, "component", test, alias, str(index), cid,
+                    "--override", "RV32I_PROGRAM_ROOT.CORE", "behavioral"], text=True))
+                self.assertEqual(state, native)
 
     def test_compact_storage_in_expanded_cpu_endpoints(self):
         # Exercise the real program loader through a visible controller, and
@@ -136,12 +141,18 @@ class MemoryInspectorIntegrationTest(unittest.TestCase):
         # from data accesses and gives a page around the latest of each.
         scenario, test = "rv32i-shared-memory", "RV32ISharedMemoryProgramTest"
         with tempfile.TemporaryDirectory() as tmp:
-            session = server.CircuitSession(scenario, server.LayoutManager(Path(tmp) / "layout.json"))
+            # Observe the gate-built arbiter/caches with a compact CPU. The
+            # registered program scenarios separately check structural cores.
+            overrides = {"RV32I_PROGRAM_ROOT.CORE": "behavioral"}
+            session = server.CircuitSession(scenario, server.LayoutManager(Path(tmp) / "layout.json"), profile_overrides=overrides)
             component = next(c["id"] for c in session.components if c["name"] == "SHARED_MEMORY")
             index = len(session.timestamps) - 1
             state = session.component_state_at_index(index, component)
+            del session
+            gc.collect()
             native = json.loads(subprocess.check_output(
-                [PROBE, "component", test, scenario, str(index), component], text=True))
+                [PROBE, "component", test, scenario, str(index), component,
+                 "--override", "RV32I_PROGRAM_ROOT.CORE", "behavioral"], text=True))
             self.assertEqual(state, native)
             self.assertEqual(state["memoryRole"], "unified")
             code, data = state["instructionSide"], state["dataSide"]
@@ -149,8 +160,31 @@ class MemoryInspectorIntegrationTest(unittest.TestCase):
             self.assertGreaterEqual(data["address"], 0x100)  # data from 0x100
             self.assertEqual(code["words"][0]["instructionText"], "addi x1, x0, 256")
             self.assertEqual([w["hex"] for w in data["words"][:3]], ["0x00000001", "0x00000002", "0x00000003"])
-            del session
-            gc.collect()
+
+    def test_shared_memory_roles_of_the_arrangements(self):
+        # Two panels in every shared arrangement: told apart by the arbiter's
+        # grant (B), or by the side whose request the arbiter has in flight
+        # when a shared cache sits in between (D-0, D-ID).
+        for test, scenario, role in (("RV32IMemoryArrangementBTest", "rv32i-memory-b", "unified"),
+                                     ("RV32IMemoryArrangementD0Test", "rv32i-memory-d0", "unified"),
+                                     ("RV32IMemoryArrangementDIDTest", "rv32i-memory-did", "unified")):
+            with self.subTest(scenario=scenario), tempfile.TemporaryDirectory() as tmp:
+                overrides = {"RV32I_PROGRAM_ROOT.CORE": "behavioral"}
+                session = server.CircuitSession(scenario, server.LayoutManager(Path(tmp) / "layout.json"), profile_overrides=overrides)
+                component = next(c["id"] for c in session.components if c["name"] == "SHARED_MEMORY")
+                index = len(session.timestamps) - 1
+                state = session.component_state_at_index(index, component)
+                del session
+                gc.collect()
+                native = json.loads(subprocess.check_output(
+                    [PROBE, "component", test, scenario, str(index), component,
+                     "--override", "RV32I_PROGRAM_ROOT.CORE", "behavioral"], text=True))
+                self.assertEqual(state, native)
+                self.assertEqual(state["memoryRole"], role)
+                code, data = state["instructionSide"], state["dataSide"]
+                self.assertLess(code["address"], 0x100)          # program 21: code from 0
+                self.assertGreaterEqual(data["address"], 0x100)  # data from 0x100
+                self.assertTrue(code["words"][0]["instructionText"])
 
 
 if __name__ == "__main__": unittest.main()
