@@ -139,11 +139,25 @@ The blocking overlay reports three distinct phases:
 After the overview appears, any visible-detail fetch is non-blocking and is
 reported beside the component/pin/wire counts.
 
+## Appearance
+
+The page chrome is styled from tokens on `:root` in `styles.css` (surfaces,
+borders, text, accent, radii, shadows and fonts). The canvas clear color in
+`app.js` matches `--canvas-bg`. Button icons are inline SVG masks chosen by
+element ID, so they follow the button's text color. The top bar is a grid of
+captioned fields, the transport, the timeline and the readout; the bottom
+toolbar is a dock centered over the visible canvas, and the camera still
+treats its top edge as the lower limit of the unobstructed area. Checkpoints
+are drawn as marks under the timeline by `renderCheckpointMarks`, because the
+styled slider hides the browser's datalist ticks. In compact view, captions
+and some button labels are hidden; every icon-only button keeps an
+`aria-label` and a `title`.
+
 ## Main files
 
 - `visualizer-v2/static/explorer.js`: profile draft and virtual tree
 - `visualizer-v2/static/app.js`: circuit model, sessions, and smooth camera
-- `visualizer-v2/static/styles.css`: docked explorer and responsive layout
+- `visualizer-v2/static/styles.css`: theme tokens, docked explorer and responsive layout
 - `visualizer-v2/server.py`: profile-aware session lifecycle and HTTP API
 - `visualizer-v2/profile_store.py`: validated atomic persistence
 - `visualizer-v2/profiles.json`: saved sparse exact-path choices

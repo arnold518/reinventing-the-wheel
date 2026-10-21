@@ -17,6 +17,9 @@ work state changes. Keep dated decisions and validation results in
   combined documentation and simulator site before deployment. Its trigger
   commit was pushed; the final live URL was not checked. See the closed
   [Pages readiness record](records/2026-10-16-github-pages-readiness.md).
+  Its toolbars and panels use one dark theme with icon buttons since the
+  closed [visual refresh record](records/2026-10-21-visualizer-visual-refresh.md);
+  the published site still has the old look until the next Pages build.
 - Scalable memory endpoints use a visible controller with each technology's
   behavioral native device. The redundant memory container contract is
   retired with saved-ID aliases. The [retirement record](records/2026-10-16-native-memory-device-retirement.md)

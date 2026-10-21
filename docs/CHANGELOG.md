@@ -5,6 +5,42 @@ what changed and why, what was verified, and any limits or deliberate
 omissions. Entries begin with adoption of this recording workflow; older
 history remains in Git and the archived reports.
 
+## 2026-10-22
+
+### Visualizer: modern look for toolbars, panels and controls (branch `realistic-timing`)
+
+- **Changed:**
+  - `visualizer-v2/static/styles.css` is rewritten around theme tokens:
+    one dark theme, rounded floating panels, system sans and mono fonts,
+    icon buttons (inline SVG masks), captioned Scenario and Timing
+    dropdowns, a styled timeline with a progress fill, and a bottom dock
+    centered over the visible canvas.
+  - `index.html`: transport reordered around Play; icon-only buttons carry
+    `aria-label` and `title`. All element IDs are kept.
+  - `app.js`: a `playing` class for the pause icon, the timeline fill, and
+    checkpoint marks drawn under the track (the styled slider hides the
+    datalist ticks); canvas background and background grid are darker.
+  - The desktop top bar no longer cuts off the Timing dropdown.
+  - Kept mergeable with the uncommitted device I/O work in
+    `.worktrees/rv32im-phase3`: the Fit button keeps its original line, the
+    toolbar divider comes from CSS, and its `Device views` toggle is styled
+    in advance. A three-way merge of the shared files has no conflicts.
+- **Why:** the owner found the buttons and windows old-fashioned.
+- **Verified:** screenshots at 1440, 1100 and 360 px, program view forced on
+  Full Adder, and the docs embed; every top-bar and dock control inside the
+  viewport and clickable at 960, 640, 360 and 320 px. Browser checks run
+  against a scratch mirror of today's `build-wasm/site` with the edited
+  files: `FFMemoryBrowserTest`, `MemoryInspectorBrowserTest`,
+  `VisualizerScenarioBrowserTest` and `VisualizerTimingProfileBrowserTest`
+  pass. `VisualizerWasmBrowserTest` passes its desktop and compact panel
+  checks, then times out at line 618 waiting for the `/visualizer/` embed.
+  The unmodified files fail at the same step in that mirror, so it is not
+  from this change, but the rest of that test was not reached.
+- **Limits:** the Pages build was not run, so the published simulator is
+  unchanged. The native server was not used: the deployed
+  `circuit_backend*.so` is older than the scenario catalog. Canvas drawing
+  (component shapes, wire colors, Arial labels) is unchanged.
+
 ## 2026-10-21
 
 ### Visualizer: two memory panels and one floorplan for every shared arrangement (branch `realistic-timing`)
