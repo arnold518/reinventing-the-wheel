@@ -1,4 +1,6 @@
 #pragma once
+
+#include "simulator/SimulationTime.hpp"
 #include "basic/LogicValue.hpp"
 #include <algorithm>
 #include <map>
@@ -17,23 +19,23 @@ struct MemoryActivity {
 class MemoryActivityView {
 public:
     virtual ~MemoryActivityView() = default;
-    void appendMemoryActivityTimes(std::vector<size_t>& times) const {
+    void appendMemoryActivityTimes(std::vector<SimulationTime>& times) const {
         for (const auto& [time, activity] : history_) {
             (void)activity;
             times.push_back(time);
         }
     }
-    MemoryActivity memoryActivityAtTime(size_t time) const {
+    MemoryActivity memoryActivityAtTime(SimulationTime time) const {
         auto it = std::upper_bound(history_.begin(), history_.end(), time,
-            [](size_t t, const auto& entry) { return t < entry.first; });
+            [](SimulationTime t, const auto& entry) { return t < entry.first; });
         return it == history_.begin() ? MemoryActivity{} : std::prev(it)->second;
     }
 protected:
-    void recordMemoryActivity(size_t time, MemoryActivity activity) {
+    void recordMemoryActivity(SimulationTime time, MemoryActivity activity) {
         if (!history_.empty() && history_.back().second == activity) return;
         if (!history_.empty() && history_.back().first == time) history_.back().second = std::move(activity);
         else history_.emplace_back(time, std::move(activity));
     }
 private:
-    std::vector<std::pair<size_t, MemoryActivity>> history_;
+    std::vector<std::pair<SimulationTime, MemoryActivity>> history_;
 };

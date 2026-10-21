@@ -123,7 +123,7 @@ std::string branchSummary(const rv32i::RV32IInstructionTrace& trace) {
 }
 
 SimulationTest::SimulationCheckpoint instructionCheckpoint(const rv32i::RV32IInstructionTrace& trace,
-                                                           size_t time) {
+                                                           SimulationTime time) {
     std::ostringstream label;
     label << "I" << trace.instruction_index << " "
           << rv32i::toString(trace.decoded.instruction)
@@ -188,7 +188,7 @@ std::vector<SimulationTest::SimulationCheckpoint> singleCycleOracleCheckpoints(
 
     while (!state.halted && !state.trapped && checkpoints.size() < test_case.max_instructions) {
         const auto trace = rv32i::RV32IInstructionOracle::step(state, instruction_memory, data_memory);
-        const size_t checkpoint_time = (checkpoints.size() + 1) * test_case.cycle_time_step;
+        const SimulationTime checkpoint_time = (checkpoints.size() + 1) * test_case.cycle_time_step;
         checkpoints.push_back(instructionCheckpoint(trace, checkpoint_time));
     }
 
@@ -244,7 +244,7 @@ protected:
         last_writes_.clear();
     }
 
-    void clockComponentOneCycle(size_t cycle_index, size_t cycle_start_time) override {
+    void clockComponentOneCycle(size_t cycle_index, SimulationTime cycle_start_time) override {
         (void)cycle_index;
         (void)cycle_start_time;
         const auto trace = rv32i::RV32IInstructionOracle::step(state_, instruction_memory_, data_memory_);
@@ -271,7 +271,7 @@ std::string RV32IInstructionLockstepTest::getTestName() const {
     return getCase().name;
 }
 
-size_t RV32IInstructionLockstepTest::getRunDuration() const {
+SimulationTime RV32IInstructionLockstepTest::getRunDuration() const {
     return time_origin_ + total_cycles_ * test_case_.cycle_time_step;
 }
 
@@ -366,7 +366,7 @@ void RV32IInstructionLockstepTest::runSimulation() {
         bool committed = false;
 
         for (size_t cycle = 0; cycle < test_case_.max_cycles_per_instruction; ++cycle) {
-            const size_t cycle_start_time = time_origin_ + total_cycles_ * test_case_.cycle_time_step;
+            const SimulationTime cycle_start_time = time_origin_ + total_cycles_ * test_case_.cycle_time_step;
             observePerformanceCycle();
             clockComponentOneCycle(total_cycles_, cycle_start_time);
             ++total_cycles_;
@@ -390,7 +390,7 @@ void RV32IInstructionLockstepTest::runSimulation() {
 
         const auto expected_trace = rv32i::RV32IInstructionOracle::step(
             oracle_state_, oracle_instruction_memory_, oracle_data_memory_);
-        const size_t commit_time = time_origin_ + total_cycles_ * test_case_.cycle_time_step;
+        const SimulationTime commit_time = time_origin_ + total_cycles_ * test_case_.cycle_time_step;
         compareState(committed_state, "instruction " + std::to_string(expected_trace.instruction_index));
         compareMemoryEffects(expected_trace.memory, "instruction " + std::to_string(expected_trace.instruction_index));
         checkpoints_.push_back(instructionCheckpoint(expected_trace, commit_time));
@@ -520,7 +520,7 @@ void RV32IInstructionLockstepHarnessTest::initializeComponentForLockstep(const R
     last_data_memory_writes_.clear();
 }
 
-void RV32IInstructionLockstepHarnessTest::clockComponentOneCycle(size_t cycle_index, size_t cycle_start_time) {
+void RV32IInstructionLockstepHarnessTest::clockComponentOneCycle(size_t cycle_index, SimulationTime cycle_start_time) {
     (void)cycle_index;
     (void)cycle_start_time;
     if (component_state_.halted || component_state_.trapped) {

@@ -28,4 +28,5 @@ PYBIND11_MODULE(circuit_backend, m) {
     bindSimulationTest(m);
 
     bindTests(m);
+    bindRecordedGuest(m);
 }

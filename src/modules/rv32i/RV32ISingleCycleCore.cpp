@@ -99,7 +99,7 @@ rv32i::RV32IArchitecturalState RV32ISingleCycleCore::snapshotArchitecturalState(
     state.pc=fetch_->getOutputPin<32>("PC")->getValueAsVector();
     auto view=std::dynamic_pointer_cast<RegisterStateView>(decode_);
     if(!view) throw std::logic_error("Decode stage lacks register-state-view");
-    const auto registers=view->getRegisterStateAtTime(std::numeric_limits<size_t>::max());
+    const auto registers=view->getRegisterStateAtTime(MAX_SIMULATION_TIME);
     for(size_t i=0;i<state.x.size()&&i<registers.size();++i) state.x[i]=registers[i];
     state.halted=execution_status_->getOutputPin("HALTED")->getValue();
     state.trapped=execution_status_->getOutputPin("TRAPPED")->getValue();

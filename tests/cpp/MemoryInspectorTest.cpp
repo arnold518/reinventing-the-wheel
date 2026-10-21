@@ -29,7 +29,7 @@ int main() {
     try {
         auto memory = Component::create<TraceMemory>("INSTRUCTION_MEMORY");
         Simulator sim;
-        auto put = [&](size_t time, const std::string& name, uint64_t value) {
+        auto put = [&](SimulationTime time, const std::string& name, uint64_t value) {
             auto p = memory->getAllInputPins().contains(name) ? memory->getInputPinDynamic(name) : memory->getOutputPinDynamic(name);
             std::vector<LogicValue> bits(p->getWidth());
             for (size_t bit=0; bit<bits.size(); ++bit) bits[bit] = (value >> bit & 1) ? LogicValue::HIGH : LogicValue::LOW;

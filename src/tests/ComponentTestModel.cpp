@@ -23,7 +23,7 @@ namespace {
 void scheduleInitialEventsForTree(
     const std::shared_ptr<Component>& component,
     Simulator& simulator,
-    size_t time) {
+    SimulationTime time) {
     if (!component) {
         return;
     }
@@ -36,7 +36,7 @@ void scheduleInitialEventsForTree(
 }
 
 std::shared_ptr<Event> makeWireUpdate(
-    size_t time,
+    SimulationTime time,
     const std::shared_ptr<WireBase>& wire,
     const LogicVector& values) {
     if (!wire || values.size() != wire->getWidth()) {
@@ -92,8 +92,8 @@ void requireExpected(
     }
 }
 
-size_t checkedDeadline(size_t start, size_t delta) {
-    if (delta > std::numeric_limits<size_t>::max() - start) {
+SimulationTime checkedDeadline(SimulationTime start, SimulationTime delta) {
+    if (delta > MAX_SIMULATION_TIME - start) {
         throw std::overflow_error("Component test action deadline overflow");
     }
     return start + delta;
@@ -346,7 +346,7 @@ RunArtifact ComponentTestRunner::run(
     };
 
     scheduleInitialEventsForTree(build.root, *simulator, 0);
-    size_t next_action_time = 0;
+    SimulationTime next_action_time = 0;
     for (const auto& action : scenario.actions) {
         if (action.inputs.empty() && !input_wires.empty()) {
             throw std::invalid_argument(
@@ -407,10 +407,10 @@ RunArtifact ComponentTestRunner::run(
             artifact.checkpoints.push_back(std::move(checkpoint));
         }
 
-        if (drain.final_time == std::numeric_limits<size_t>::max()) {
+        if (drain.final_time == MAX_SIMULATION_TIME) {
             throw std::overflow_error("Component test action time overflow");
         }
-        next_action_time = drain.final_time + 1;
+        next_action_time = checkedTimeAdd(drain.final_time, 1);
     }
 
     artifact.completed = true;
@@ -626,7 +626,7 @@ bool ComponentScenarioTest::run() {
     }
 }
 
-size_t ComponentScenarioTest::getRunDuration() const {
+SimulationTime ComponentScenarioTest::getRunDuration() const {
     if (artifacts_.empty() || artifacts_.front().checkpoints.empty()) {
         return 0;
     }

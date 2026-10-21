@@ -1,5 +1,7 @@
 #pragma once
 
+#include "simulator/SimulationTime.hpp"
+
 #include "components/selection/BuildProfile.hpp"
 #include "tests/RV32IInstructionLockstepTests.hpp"
 #include "rv32i/RV32IPrediction.hpp"
@@ -54,7 +56,7 @@ protected:
         const RV32ISystemProgramCase& test_case) override;
     void clockComponentOneCycle(
         size_t cycle_index,
-        size_t cycle_start_time) override;
+        SimulationTime cycle_start_time) override;
     void observePerformanceCycle() override;
     rv32i::RV32IState snapshotComponentState() const override;
     rv32i::RV32IMemoryTrace

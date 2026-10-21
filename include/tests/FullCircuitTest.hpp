@@ -1,4 +1,6 @@
 #pragma once
+
+#include "simulator/SimulationTime.hpp"
 #include "simulator/SimulationTest.hpp"
 
 class FullCircuitTest : public SimulationTest {
@@ -9,5 +11,5 @@ public:
     void buildCircuit() override;
     void setInitialState() override;
     void verifyResults() override;
-    size_t getRunDuration() const override;
+    SimulationTime getRunDuration() const override;
 };

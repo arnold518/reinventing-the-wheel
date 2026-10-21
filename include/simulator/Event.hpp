@@ -1,5 +1,7 @@
 #pragma once
 
+#include "simulator/SimulationTime.hpp"
+
 #include "ForwardDeclarations.hpp"
 #include "basic/LogicValue.hpp"
 #include <array>
@@ -15,13 +17,13 @@ enum class EventPriority {
 
 class Event {
 public:
-    const size_t time;
+    const SimulationTime time;
     uint64_t scheduling_order = 0;
     // Set when an inertial-delay gate withdraws an output change it had
     // scheduled (a pulse shorter than its delay). The simulator drops it.
     bool cancelled = false;
 
-    explicit Event(size_t event_time);
+    explicit Event(SimulationTime event_time);
     virtual ~Event() = default;
     virtual void process(Simulator& sim) = 0;
     virtual EventPriority getPriority() const = 0;
@@ -39,19 +41,19 @@ public:
     };
 };
 
-void processWireUpdateEvent(size_t time, const std::shared_ptr<WireBase>& wire,
+void processWireUpdateEvent(SimulationTime time, const std::shared_ptr<WireBase>& wire,
                             const std::vector<LogicValue>& values, Simulator& sim);
 
 // Width-erased WireUpdateEvent factory. Returns nullptr for a missing wire or
 // a width without a Wire<WIDTH> instantiation.
-std::shared_ptr<Event> makeWireUpdateEvent(size_t time, const std::shared_ptr<WireBase>& wire,
+std::shared_ptr<Event> makeWireUpdateEvent(SimulationTime time, const std::shared_ptr<WireBase>& wire,
                                            const std::vector<LogicValue>& values);
 
 class ComponentEvalEvent : public Event {
 public:
     std::shared_ptr<Component> component_to_evaluate;
 
-    ComponentEvalEvent(size_t event_time, std::shared_ptr<Component> component);
+    ComponentEvalEvent(SimulationTime event_time, std::shared_ptr<Component> component);
     void process(Simulator& sim) override;
     EventPriority getPriority() const override {
         return EventPriority::COMPONENT_EVAL;
@@ -64,9 +66,9 @@ public:
     std::shared_ptr<Wire<WIDTH>> wire_to_update;
     std::array<LogicValue, WIDTH> new_values;
 
-    WireUpdateEvent(size_t event_time, std::shared_ptr<Wire<WIDTH>> wire, LogicValue value);
-    WireUpdateEvent(size_t event_time, std::shared_ptr<Wire<WIDTH>> wire, uint64_t value);
-    WireUpdateEvent(size_t event_time, std::shared_ptr<Wire<WIDTH>> wire, const std::vector<LogicValue>& values);
+    WireUpdateEvent(SimulationTime event_time, std::shared_ptr<Wire<WIDTH>> wire, LogicValue value);
+    WireUpdateEvent(SimulationTime event_time, std::shared_ptr<Wire<WIDTH>> wire, uint64_t value);
+    WireUpdateEvent(SimulationTime event_time, std::shared_ptr<Wire<WIDTH>> wire, const std::vector<LogicValue>& values);
 
     void process(Simulator& sim) override;
     EventPriority getPriority() const override {

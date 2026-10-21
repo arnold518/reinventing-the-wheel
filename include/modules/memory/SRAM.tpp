@@ -31,9 +31,9 @@ inline size_t senseReplicaGates(size_t words_per_row) {
     using circuit::timing::Leaf;
     using circuit::timing::leafDelay;
     size_t levels = 0; while ((size_t{1} << levels) < words_per_row) ++levels;
-    const size_t gate = std::max<size_t>(1, leafDelay(Leaf::And));
-    const size_t column = levels ? levels * (leafDelay(Leaf::And) + leafDelay(Leaf::Or)) : leafDelay(Leaf::And);
-    return 1 + (column + gate - 1) / gate;
+    const SimulationTime gate = std::max<SimulationTime>(1, leafDelay(Leaf::And));
+    const SimulationTime column = levels ? levels * (leafDelay(Leaf::And) + leafDelay(Leaf::Or)) : leafDelay(Leaf::And);
+    return static_cast<size_t>(1 + (column + gate - 1) / gate);
 }
 // The clocked macro's settle line: how long its registered address and data
 // are held back after an access starts. A finished write leaves its row's
@@ -43,13 +43,13 @@ inline size_t senseReplicaGates(size_t words_per_row) {
 // stage gate, the row decoder's enable path (its enable AND and balanced
 // tree, `decode_depth` gates) and the write driver's turn-off (the write
 // phase AND and the driver), each at the slowest gate delay.
-inline size_t clockedSettle(size_t rows) {
+inline SimulationTime clockedSettle(size_t rows) {
     using circuit::timing::Leaf;
     using circuit::timing::leafDelay;
     const size_t control_rows = std::min(rows, SRAM_SUBARRAY_ROWS);
     size_t row_bits = 0; while ((size_t{1} << row_bits) < control_rows) ++row_bits;
     size_t decode_depth = 1; while ((size_t{1} << (decode_depth - 1)) < row_bits + 1) ++decode_depth;
-    const size_t slowest = std::max({leafDelay(Leaf::Not), leafDelay(Leaf::Nand), leafDelay(Leaf::And), leafDelay(Leaf::Or)});
+    const SimulationTime slowest = std::max({leafDelay(Leaf::Not), leafDelay(Leaf::Nand), leafDelay(Leaf::And), leafDelay(Leaf::Or)});
     return circuit::memory::memoryTimerSettle(1, 1, false) + (decode_depth + 3) * slowest;
 }
 }
@@ -129,7 +129,7 @@ template<size_t W> void SRAMAccessControl<W>::buildClocked(ComponentBuilder& b) 
     size_t row_bits = 0; while ((size_t{1} << row_bits) < config_.rows()) ++row_bits;
     size_t decode_depth = 1; while ((size_t{1} << (decode_depth - 1)) < row_bits + 1) ++decode_depth;
     // The macro has no reset pin: its registers clear at power-on.
-    const size_t slowest = std::max({leafDelay(Leaf::Not), leafDelay(Leaf::Nand), leafDelay(Leaf::And), leafDelay(Leaf::Or)});
+    const SimulationTime slowest = std::max({leafDelay(Leaf::Not), leafDelay(Leaf::Nand), leafDelay(Leaf::And), leafDelay(Leaf::Or)});
     auto por = b.addNewComponent<circuit::memory::PowerOnReset>("POWER_ON_RESET", 16 * slowest);
     const auto reset = por->getOutputPin("OUT");
     const auto clock = this->getInputPin("CLK");
@@ -180,7 +180,7 @@ template<size_t W> void SRAMAccessControl<W>::buildClocked(ComponentBuilder& b) 
     // in front, the precharge itself must cover a bitline the last access
     // swung fully (a write): restoring it takes the bitline's swing time,
     // and until then the write drive still reaches the cells.
-    const size_t bitline = timing.sramBitline(config_.rows());
+    const SimulationTime bitline = timing.sramBitline(config_.rows());
     auto timer = b.addNewComponent<circuit::memory::MemoryTimer>("ACCESS_TIMER", inputs, circuit::sram::clockedSettle(config_.rows()),
         std::vector<circuit::memory::MemoryTimerStage>{
             {std::max(timing.sram_precharge, bitline), 1}, {0, std::max<size_t>(decode_depth, 3) + 1},
@@ -347,7 +347,7 @@ template<size_t W> void SRAM<W>::buildSubarrays(ComponentBuilder& b) {
     size_t low_bits = 0; while ((size_t{1} << low_bits) < sub_words) ++low_bits;
     size_t select_bits = 0; while ((size_t{1} << select_bits) < count) ++select_bits;
     size_t side = 1; while (side * side < count) ++side;
-    const size_t wire = timing.sram_wire_per_side * side;
+    const SimulationTime wire = timing.sram_wire_per_side * side;
     const auto global = [&](const std::string& name, PinPtr source) {
         auto line = b.addNewComponent<circuit::memory::MemoryWire>(name, source->getWidth(), wire);
         w.connect(source, line->getInputPinDynamic("IN"));
@@ -394,7 +394,7 @@ template<size_t W> void SRAM<W>::buildSubarrays(ComponentBuilder& b) {
         // (CE_N low at the edge), decoded after the edge into the enables.
         using circuit::timing::Leaf;
         using circuit::timing::leafDelay;
-        const size_t slowest = std::max({leafDelay(Leaf::Not), leafDelay(Leaf::Nand), leafDelay(Leaf::And), leafDelay(Leaf::Or)});
+        const SimulationTime slowest = std::max({leafDelay(Leaf::Not), leafDelay(Leaf::Nand), leafDelay(Leaf::And), leafDelay(Leaf::Or)});
         auto por = b.addNewComponent<circuit::memory::PowerOnReset>("POWER_ON_RESET", 16 * slowest);
         auto held = b.add(circuit::families::registerWord(32), "PERIPHERY_ADDRESS");
         w.connect(this->getInputPin("CLK"), held->getInputPin("CLK"));

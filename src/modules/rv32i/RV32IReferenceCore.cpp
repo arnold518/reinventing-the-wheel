@@ -192,7 +192,7 @@ std::map<uint32_t, uint8_t> RV32IReferenceCore::lastDataMemoryWrites() const {
     return last_data_memory_writes_;
 }
 
-void RV32IReferenceCore::evaluate(size_t current_time, Simulator& simulator) {
+void RV32IReferenceCore::evaluate(SimulationTime current_time, Simulator& simulator) {
     const auto clk = sanitizeBit(getInputValue("CLK"));
     const auto rst = sanitizeBit(getInputValue("RST"));
     const auto enable = sanitizeBit(getInputValue("ENABLE"));
@@ -277,7 +277,7 @@ void RV32IReferenceCore::evaluate(size_t current_time, Simulator& simulator) {
 
 void RV32IReferenceCore::publishOutputs(
     Simulator& simulator,
-    size_t current_time) {
+    SimulationTime current_time) {
     const auto rst = sanitizeBit(getInputValue("RST"));
     const auto enable = sanitizeBit(getInputValue("ENABLE"));
     const auto imem_ready =

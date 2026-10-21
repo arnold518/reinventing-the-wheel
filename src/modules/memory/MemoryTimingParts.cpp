@@ -11,7 +11,7 @@ using PinPtr = circuit::detail::StructuralWiring::PinPtr;
 
 namespace circuit::memory {
 
-MemoryDelayLine::MemoryDelayLine(std::string name, size_t delay, size_t fall_delay)
+MemoryDelayLine::MemoryDelayLine(std::string name, SimulationTime delay, SimulationTime fall_delay)
     : BasicComponent(std::move(name), delay, [](IOComponent* self) {
           self->addPin("IN", PinType::INPUT);
           self->addPin("OUT", PinType::OUTPUT);
@@ -19,7 +19,7 @@ MemoryDelayLine::MemoryDelayLine(std::string name, size_t delay, size_t fall_del
 
 // Inertial: a new input withdraws every change still pending, so a pulse
 // shorter than the delay does not pass and an edge never arrives out of order.
-void MemoryDelayLine::evaluate(size_t time, Simulator& simulator) {
+void MemoryDelayLine::evaluate(SimulationTime time, Simulator& simulator) {
     auto in = getInputValue("IN");
     if (in == LogicValue::HIGH_Z) in = LogicValue::UNKNOWN;
     for (auto& event : pending_) if (auto e = event.lock()) e->cancelled = true;
@@ -29,7 +29,7 @@ void MemoryDelayLine::evaluate(size_t time, Simulator& simulator) {
     const auto wire = pin->getExternalWire();
     if (!wire) return;
     if (wire->getValueVector()[0] == in) return;
-    const size_t at = time + (in == LogicValue::HIGH ? delay : fall_delay_);
+    const SimulationTime at = checkedTimeAdd(time, in == LogicValue::HIGH ? delay : fall_delay_);
     std::shared_ptr<Event> event = std::make_shared<WireUpdateEvent<>>(at, wire, in);
     pending_.push_back(event);
     simulator.scheduleEvent(std::move(event));
@@ -42,7 +42,7 @@ SymbolicDiffer::SymbolicDiffer(std::string name)
           self->addPin("OUT", PinType::OUTPUT);
       }) {}
 
-void SymbolicDiffer::evaluate(size_t time, Simulator& simulator) {
+void SymbolicDiffer::evaluate(SimulationTime time, Simulator& simulator) {
     _updateOutputWire(simulator, "OUT", getInputValue("A") == getInputValue("B") ? LogicValue::LOW : LogicValue::HIGH, time);
 }
 
@@ -52,7 +52,7 @@ ProtocolStableData::ProtocolStableData(std::string name, size_t width)
           self->addPinDynamic("OUT", PinType::OUTPUT, width);
       }) {}
 
-void ProtocolStableData::evaluate(size_t time, Simulator& simulator) {
+void ProtocolStableData::evaluate(SimulationTime time, Simulator& simulator) {
     _updateOutputWireDynamic(simulator, "OUT", getInputPinDynamic("IN")->getValueAsVector(), time);
 }
 
@@ -62,26 +62,26 @@ KnownBits::KnownBits(std::string name, size_t width)
           self->addPin("KNOWN", PinType::OUTPUT);
       }) {}
 
-void KnownBits::evaluate(size_t time, Simulator& simulator) {
+void KnownBits::evaluate(SimulationTime time, Simulator& simulator) {
     bool known = true;
     for (auto bit : getInputPinDynamic("IN")->getValueAsVector()) known = known && (bit == LogicValue::LOW || bit == LogicValue::HIGH);
     _updateOutputWire(simulator, "KNOWN", known ? LogicValue::HIGH : LogicValue::LOW, time);
 }
 
-PowerOnReset::PowerOnReset(std::string name, size_t width)
+PowerOnReset::PowerOnReset(std::string name, SimulationTime width)
     : BasicComponent(std::move(name), 0, [](IOComponent* self) { self->addPin("OUT", PinType::OUTPUT); }), width_(width) {}
 
-void PowerOnReset::scheduleInitialEvents(Simulator& simulator, size_t time) {
+void PowerOnReset::scheduleInitialEvents(Simulator& simulator, SimulationTime time) {
     auto pin = getOutputPin("OUT");
     pin->setBit(0, LogicValue::HIGH);
     if (auto wire = pin->getExternalWire()) {
         simulator.scheduleEvent(std::make_shared<WireUpdateEvent<>>(time, wire, LogicValue::HIGH));
-        simulator.scheduleEvent(std::make_shared<WireUpdateEvent<>>(time + width_, wire, LogicValue::LOW));
+        simulator.scheduleEvent(std::make_shared<WireUpdateEvent<>>(checkedTimeAdd(time, width_), wire, LogicValue::LOW));
     }
     pin->setBit(0, LogicValue::LOW);
 }
 
-void PowerOnReset::evaluate(size_t, Simulator&) {}
+void PowerOnReset::evaluate(SimulationTime, Simulator&) {}
 
 Synchronizer::Synchronizer(std::string name, size_t stages)
     : BasicComponent(std::move(name), circuit::dflipflop_timing::clockToOutputMaximum(), [](IOComponent* self) {
@@ -91,7 +91,7 @@ Synchronizer::Synchronizer(std::string name, size_t stages)
     if (stages != 1 && stages != 2) throw std::invalid_argument("A synchronizer has one or two stages");
 }
 
-void Synchronizer::evaluate(size_t time, Simulator& simulator) {
+void Synchronizer::evaluate(SimulationTime time, Simulator& simulator) {
     const auto clock = getInputValue("CLK");
     const auto reset = getInputValue("RST");
     if (reset == LogicValue::HIGH) {
@@ -108,7 +108,7 @@ void Synchronizer::evaluate(size_t time, Simulator& simulator) {
     _updateOutputWire(simulator, "Q", second_, time);
 }
 
-MemoryWire::MemoryWire(std::string name, size_t width, size_t delay)
+MemoryWire::MemoryWire(std::string name, size_t width, SimulationTime delay)
     : BasicComponent(std::move(name), delay, [width](IOComponent* self) {
           if (!width || width > 32) throw std::invalid_argument("A memory wire carries 1 to 32 bits");
           self->addPinDynamic("IN", PinType::INPUT, width);
@@ -118,11 +118,11 @@ MemoryWire::MemoryWire(std::string name, size_t width, size_t delay)
     if (!delay) throw std::invalid_argument("A memory wire needs a positive delay");
 }
 
-void MemoryWire::evaluate(size_t time, Simulator& simulator) {
+void MemoryWire::evaluate(SimulationTime time, Simulator& simulator) {
     _updateOutputWireDynamic(simulator, "OUT", getInputPinDynamic("IN")->getValueAsVector(), time);
 }
 
-MemoryBus::MemoryBus(std::string name, size_t drivers, size_t width, size_t delay, bool pulled_low)
+MemoryBus::MemoryBus(std::string name, size_t drivers, size_t width, SimulationTime delay, bool pulled_low)
     : BasicComponent(std::move(name), delay, [drivers, width](IOComponent* self) {
           if (!drivers || !width || width > 32) throw std::invalid_argument("A memory bus needs drivers and 1 to 32 bits");
           for (size_t i = 0; i < drivers; ++i) self->addPinDynamic("IN_" + std::to_string(i), PinType::INPUT, width);
@@ -133,7 +133,7 @@ MemoryBus::MemoryBus(std::string name, size_t drivers, size_t width, size_t dela
     if (!delay) throw std::invalid_argument("A memory bus needs a positive delay");
 }
 
-void MemoryBus::evaluate(size_t time, Simulator& simulator) {
+void MemoryBus::evaluate(SimulationTime time, Simulator& simulator) {
     std::vector<LogicValue> out(width_, LogicValue::HIGH_Z);
     for (size_t i = 0; i < drivers_; ++i) {
         const auto value = getInputPinDynamic("IN_" + std::to_string(i))->getValueAsVector();
@@ -146,16 +146,16 @@ void MemoryBus::evaluate(size_t time, Simulator& simulator) {
     _updateOutputWireDynamic(simulator, "OUT", out, time);
 }
 
-size_t memoryTimerSettle(size_t configured, size_t inputs, bool conditional) {
+SimulationTime memoryTimerSettle(SimulationTime configured, size_t inputs, bool conditional) {
     using circuit::timing::Leaf;
     using circuit::timing::leafDelay;
     size_t levels = 0; while ((size_t{1} << levels) < inputs) ++levels;
-    const size_t detection = leafDelay(Leaf::Xor) + (conditional ? leafDelay(Leaf::And) : 0) + levels * leafDelay(Leaf::Or)
+    const SimulationTime detection = leafDelay(Leaf::Xor) + (conditional ? leafDelay(Leaf::And) : 0) + levels * leafDelay(Leaf::Or)
         + leafDelay(Leaf::Not) + 3 * leafDelay(Leaf::And);
     return std::max(configured, detection);
 }
 
-MemoryTimer::MemoryTimer(std::string name, size_t inputs, size_t settle_ticks, std::vector<MemoryTimerStage> stages,
+MemoryTimer::MemoryTimer(std::string name, size_t inputs, SimulationTime settle_ticks, std::vector<MemoryTimerStage> stages,
                          size_t conditional_from, size_t detected)
     : IOComponent(std::move(name), [inputs, count = stages.size(), conditional_from](IOComponent* self) {
           if (!inputs || !count) throw std::invalid_argument("A memory timer needs inputs and stages");

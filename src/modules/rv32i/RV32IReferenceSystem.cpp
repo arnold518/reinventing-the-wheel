@@ -99,8 +99,8 @@ void RV32IReferenceSystem::loadDataWords(
 
 std::map<uint32_t, uint8_t>
 RV32IReferenceSystem::dataMemoryWritesInTimeRange(
-    size_t start_time,
-    size_t end_time) const {
+    SimulationTime start_time,
+    SimulationTime end_time) const {
     if (!data_memory_->isHistoryRecordingEnabled()) {
         throw std::logic_error(
             "RV32I behavioral-system memory history is disabled");
@@ -120,7 +120,7 @@ RV32IReferenceSystem::dataMemoryWritesInTimeRange(
 }
 
 void RV32IReferenceSystem::applyDataMemoryWrite(
-    size_t current_time) {
+    SimulationTime current_time) {
     last_data_memory_writes_.clear();
     const auto& memory = last_data_memory_access_;
     if (memory.kind != rv32i::RV32IMemoryAccessKind::Write
@@ -149,7 +149,7 @@ void RV32IReferenceSystem::applyDataMemoryWrite(
 }
 
 void RV32IReferenceSystem::evaluate(
-    size_t current_time,
+    SimulationTime current_time,
     Simulator& simulator) {
     const auto clk = sanitizeBit(getInputValue("CLK"));
     const auto rst = sanitizeBit(getInputValue("RST"));
@@ -177,7 +177,7 @@ void RV32IReferenceSystem::evaluate(
 
 void RV32IReferenceSystem::publishOutputs(
     Simulator& simulator,
-    size_t current_time) {
+    SimulationTime current_time) {
     _updateOutputWire<32>(
         simulator,
         "PC",

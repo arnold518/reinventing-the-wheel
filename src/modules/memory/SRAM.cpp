@@ -26,7 +26,7 @@ public:
     }) {}
     const char* getTypeName() const override { return "SRAMCellAccess"; }
     PrimitiveTiming primitiveTiming() const override { return PrimitiveTiming::InputsOnly; }
-    void evaluate(size_t t, Simulator& sim) override {
+    void evaluate(SimulationTime t, Simulator& sim) override {
         const auto wl = getInputValue("WL"), drive = getInputValue("DRIVE");
         auto set = H, reset = H;
         if (wl != L && drive != L) {
@@ -173,7 +173,7 @@ SRAMBitlinePair::SRAMBitlinePair(std::string name, size_t rows)
         }
         for (const auto* p : {"BL", "BL_BAR", "VALID", "CELL_DRIVE", "CELL_BL", "CELL_BL_BAR"}) s->addPin(p, PinType::OUTPUT);
     }), rows_(rows), type_("SRAMBitlinePair<" + std::to_string(rows) + ">") { countValid(rows, 512); }
-void SRAMBitlinePair::evaluate(size_t t, Simulator& sim) {
+void SRAMBitlinePair::evaluate(SimulationTime t, Simulator& sim) {
     circuit::sram::Bits wl, cells;
     for (size_t r = 0; r < rows_; ++r) {
         wl.push_back(getInputValue("WL_" + std::to_string(r)));
@@ -232,7 +232,7 @@ SRAMSenseAmplifier::SRAMSenseAmplifier(std::string name) : BasicComponent(std::m
     for (const auto* p : {"BL", "BL_BAR", "VALID", "ENABLE"}) s->addPin(p, PinType::INPUT);
     s->addPin("Q", PinType::OUTPUT);
 }) {}
-void SRAMSenseAmplifier::evaluate(size_t t, Simulator& sim) {
+void SRAMSenseAmplifier::evaluate(SimulationTime t, Simulator& sim) {
     const auto bl = getInputValue("BL");
     const auto q = getInputValue("ENABLE") == H && getInputValue("VALID") == H &&
         circuit::sram::binary(bl) && getInputValue("BL_BAR") == circuit::sram::invert(bl) ? bl : X;

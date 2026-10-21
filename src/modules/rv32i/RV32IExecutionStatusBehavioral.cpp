@@ -160,7 +160,7 @@ RV32IExecutionStatusBehavioral::RV32IExecutionStatusBehavioral(
           std::move(name), 1,
           circuit::families::RV32IExecutionStatus.pinInitializer()) {}
 
-void RV32IExecutionStatusBehavioral::evaluate(size_t current_time,
+void RV32IExecutionStatusBehavioral::evaluate(SimulationTime current_time,
                                                           Simulator& simulator) {
     const Inputs input{
         getInputValue("RST"), getInputValue("ENABLE"), getInputValue("LEGAL"),

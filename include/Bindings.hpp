@@ -36,3 +36,4 @@ void bindSimulator(py::module_ &m);
 void bindSimulationTest(py::module_ &m);
 
 void bindTests(py::module_ &m);
+void bindRecordedGuest(py::module_ &m);

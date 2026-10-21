@@ -16,7 +16,7 @@
 using namespace circuit;
 using namespace circuit::memory_device;
 namespace {
-void retentionValid(size_t t) {
+void retentionValid(SimulationTime t) {
     // Up to 1 s at 1 tick = 1 ps (realistic retention is 64 ms).
     if (t < 1024 || t > 1'000'000'000'000ull)
         throw std::invalid_argument("retention_ticks must be 1024..10^12");
@@ -27,7 +27,7 @@ void cellPins(IOComponent *s) {
     for (const auto *n : {"Q", "SAMPLE"})
         s->addPin(n, PinType::OUTPUT);
 }
-void rowPins(IOComponent *s, size_t cols, size_t retention) {
+void rowPins(IOComponent *s, size_t cols, SimulationTime retention) {
     retentionValid(retention);
     if (!cols || cols > 512)
         throw std::invalid_argument("DRAM row columns must be 1..512");
@@ -222,7 +222,7 @@ void DRAMCommandControl::buildInternals(ComponentBuilder &b) {
     auto r_act = run(c_act, "ACTIVATE"), r_rd = run(c_rd, "READ"), r_wr = run(c_wr, "WRITE"),
          r_pre = run(c_pre, "PRECHARGE"), r_ref = run(c_ref, "REFRESH");
     // A step: its interval, then gates that copy a path it must outlast.
-    struct Step { size_t interval, replica = 0; };
+    struct Step { SimulationTime interval; size_t replica = 0; };
     auto chain = [&](const std::string &name, PinPtr go, std::vector<Step> steps) {
         std::vector<PinPtr> stages;
         auto previous = go;
@@ -407,9 +407,9 @@ void DRAMCommandControl::buildInternals(ComponentBuilder &b) {
 // Compact row state: deliberately no flip-flop or SRAM model underneath.
 struct Charge {
     LogicValue q = X, sample = X, last = L;
-    size_t closed = 0;
+    SimulationTime closed = 0;
     bool restored = false;
-    void update(size_t t, size_t retention, LogicValue wl, LogicValue restore, LogicValue d) {
+    void update(SimulationTime t, SimulationTime retention, LogicValue wl, LogicValue restore, LogicValue d) {
         if (!binary(wl)) {
             q = sample = X;
             restored = false;
@@ -437,11 +437,11 @@ struct Charge {
 };
 class DRAMRowBehavioral : public Primitive {
   public:
-    DRAMRowBehavioral(std::string n, size_t columns, size_t retention)
+    DRAMRowBehavioral(std::string n, size_t columns, SimulationTime retention)
         : Primitive(std::move(n), "DRAMRow<" + std::to_string(columns) + ">",
                     [=](IOComponent *s) { rowPins(s, columns, retention); }),
           retention_(retention), cells_(columns) {}
-    void evaluate(size_t t, Simulator &sim) override {
+    void evaluate(SimulationTime t, Simulator &sim) override {
         for (size_t c = 0; c < cells_.size(); ++c) {
             auto n = std::to_string(c);
             auto &cell = cells_[c];
@@ -453,7 +453,7 @@ class DRAMRowBehavioral : public Primitive {
     }
 
   private:
-    size_t retention_;
+    SimulationTime retention_;
     std::vector<Charge> cells_;
 };
 class DRAMBankBehavioral : public Primitive {
@@ -464,7 +464,7 @@ class DRAMBankBehavioral : public Primitive {
                         std::to_string(c.words_per_row) + ">",
                     [=](IOComponent *s) { bankPins(s, width, c); }),
           width_(width), config_(c), cells_(c.depth_words * width), buffer_(c.columns(width), X) {}
-    void evaluate(size_t t, Simulator &sim) override {
+    void evaluate(SimulationTime t, Simulator &sim) override {
         size_t count = 0, row = 0;
         bool valid = true;
         Bits wl;
@@ -543,7 +543,7 @@ class DRAMBehavioral : public Primitive, public MemoryDeviceStorage {
     void loadMemoryBytes(uint32_t, const std::vector<uint8_t> &) override {
         throw std::logic_error("Initialize DRAM through ACT/WRITE commands");
     }
-    void evaluate(size_t t, Simulator &sim) override {
+    void evaluate(SimulationTime t, Simulator &sim) override {
         started_ = true;
         const auto clk = getInputValue("CLK");
         if (previous_clock_ == L && clk == H)
@@ -554,7 +554,7 @@ class DRAMBehavioral : public Primitive, public MemoryDeviceStorage {
         auto start = control_.row * config_.words_per_row * (width_ / 8);
         if (!wl_ && wl) {
             const auto it = closed_.find(control_.row);
-            const size_t closed = it == closed_.end() ? 0 : it->second;
+            const SimulationTime closed = it == closed_.end() ? 0 : it->second;
             buffer_ = t - closed >= config_.retention_ticks
                           ? Bits(buffer_.size(), X)
                           : storage_.readLogic(start, buffer_.size() / 8);
@@ -604,7 +604,7 @@ class DRAMBehavioral : public Primitive, public MemoryDeviceStorage {
     size_t width_;
     DRAMDeviceConfig config_;
     memory_detail::DRAMSyncControl control_;
-    std::map<size_t, size_t> closed_;
+    std::map<size_t, SimulationTime> closed_;
     Bits buffer_;
     LogicValue previous_clock_ = X;
     bool wl_ = false, sense_ = false, write_ = false;
@@ -623,9 +623,9 @@ DRAMDeviceConfig dramConfigFromParameters(const ParameterMap &p) {
              "paged", "max_resident_bytes", "max_history_bytes", "block_words"});
     DRAMDeviceConfig c;
     readGeometry(p, c);
-    c.phase_ticks = parameter(p, "phase_ticks", 32);
+    c.phase_ticks = timeParameter(p, "phase_ticks", 32);
     c.burst_words = parameter(p, "block_words", 2);
-    c.retention_ticks = parameter(p, "retention_ticks", timing::activeTimingProfile().memory.dram_device_retention);
+    c.retention_ticks = timeParameter(p, "retention_ticks", timing::activeTimingProfile().memory.dram_device_retention);
     return c;
 }
 ParameterMap dramParameters(const DRAMDeviceConfig &c) {
@@ -635,11 +635,11 @@ ParameterMap dramParameters(const DRAMDeviceConfig &c) {
     if (c.burst_words != 2) p["block_words"] = std::to_string(c.burst_words);
     return p;
 }
-DRAMCell::DRAMCell(std::string n, size_t retention)
+DRAMCell::DRAMCell(std::string n, SimulationTime retention)
     : Primitive(std::move(n), "DRAMCell", cellPins), retention_(retention) {
     retentionValid(retention);
 }
-void DRAMCell::evaluate(size_t t, Simulator &sim) {
+void DRAMCell::evaluate(SimulationTime t, Simulator &sim) {
     auto wl = getInputValue("WL"), restore = getInputValue("RESTORE");
     if (!binary(wl)) {
         charge_ = sample_ = X;
@@ -668,7 +668,7 @@ void DRAMCell::evaluate(size_t t, Simulator &sim) {
     publish(sim, t, "Q", charge_);
     publish(sim, t, "SAMPLE", sample_);
 }
-DRAMRow::DRAMRow(std::string n, size_t columns, size_t retention)
+DRAMRow::DRAMRow(std::string n, size_t columns, SimulationTime retention)
     : IOComponent(std::move(n), [=](IOComponent *s) { rowPins(s, columns, retention); }), columns_(columns),
       retention_(retention), type_("DRAMRow<" + std::to_string(columns) + ">") {
 }
@@ -692,7 +692,7 @@ DRAMSenseColumn::DRAMSenseColumn(std::string n, size_t rows)
                 [rows](IOComponent *s) { sensePins(s, rows); }, timing::activeTimingProfile().memory.dramSense(rows)),
       rows_(rows) {
 }
-void DRAMSenseColumn::evaluate(size_t t, Simulator &sim) {
+void DRAMSenseColumn::evaluate(SimulationTime t, Simulator &sim) {
     size_t count = 0, row = 0;
     bool valid = true;
     for (size_t r = 0; r < rows_; ++r) {
@@ -817,7 +817,7 @@ void DRAMDevice::buildInternals(ComponentBuilder &b) {
 void registerDRAMComponents(ComponentCatalog &c) {
     auto retention = [](const ParameterMap &p) {
         keys(p, {"retention_ticks"});
-        auto t = parameter(p, "retention_ticks", timing::activeTimingProfile().memory.dram_device_retention);
+        auto t = timeParameter(p, "retention_ticks", timing::activeTimingProfile().memory.dram_device_retention);
         retentionValid(t);
         return t;
     };
@@ -833,7 +833,7 @@ void registerDRAMComponents(ComponentCatalog &c) {
         {}, "DRAMCellTest", true);
     auto row = [](const ParameterMap &p) {
         keys(p, {"columns", "retention_ticks"});
-        return std::pair{parameter(p, "columns", 4), parameter(p, "retention_ticks", timing::activeTimingProfile().memory.dram_device_retention)};
+        return std::pair{parameter(p, "columns", 4), timeParameter(p, "retention_ticks", timing::activeTimingProfile().memory.dram_device_retention)};
     };
     registerBlock(
         c, "memory.dram.row", "DRAMRow",

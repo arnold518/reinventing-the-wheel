@@ -10,7 +10,7 @@ BEGIN_BASIC_PINS(NOTGate, circuit::timing::leafDelay(circuit::timing::Leaf::Not)
     OUTPUT_PIN("OUT")
 END_BASIC_PINS()
 
-void NOTGate::evaluate(size_t current_time, Simulator& simulator) {
+void NOTGate::evaluate(SimulationTime current_time, Simulator& simulator) {
     LogicValue input = getInputValue("IN");
     LogicValue new_output_value = (input == LogicValue::HIGH) ? LogicValue::LOW :
                                   (input == LogicValue::LOW)  ? LogicValue::HIGH : LogicValue::UNKNOWN;
@@ -25,7 +25,7 @@ BEGIN_BASIC_PINS(ANDGate, circuit::timing::leafDelay(circuit::timing::Leaf::And)
     OUTPUT_PIN("OUT")
 END_BASIC_PINS()
 
-void ANDGate::evaluate(size_t current_time, Simulator& simulator) {
+void ANDGate::evaluate(SimulationTime current_time, Simulator& simulator) {
     LogicValue input_A = getInputValue("A");
     LogicValue input_B = getInputValue("B");
     LogicValue new_output_value = LogicValue::UNKNOWN;
@@ -46,7 +46,7 @@ BEGIN_BASIC_PINS(NANDGate, circuit::timing::leafDelay(circuit::timing::Leaf::Nan
     OUTPUT_PIN("OUT")
 END_BASIC_PINS()
 
-void NANDGate::evaluate(size_t current_time, Simulator& simulator) {
+void NANDGate::evaluate(SimulationTime current_time, Simulator& simulator) {
     LogicValue input_A = getInputValue("A");
     LogicValue input_B = getInputValue("B");
     LogicValue new_output_value = LogicValue::UNKNOWN;
@@ -67,7 +67,7 @@ BEGIN_BASIC_PINS(ORGate, circuit::timing::leafDelay(circuit::timing::Leaf::Or))
     OUTPUT_PIN("OUT")
 END_BASIC_PINS()
 
-void ORGate::evaluate(size_t current_time, Simulator& simulator) {
+void ORGate::evaluate(SimulationTime current_time, Simulator& simulator) {
     LogicValue input_A = getInputValue("A");
     LogicValue input_B = getInputValue("B");
     LogicValue new_output_value = LogicValue::UNKNOWN;
@@ -88,7 +88,7 @@ BEGIN_BASIC_PINS(NORGate, circuit::timing::leafDelay(circuit::timing::Leaf::Nor)
     OUTPUT_PIN("OUT")
 END_BASIC_PINS()
 
-void NORGate::evaluate(size_t current_time, Simulator& simulator) {
+void NORGate::evaluate(SimulationTime current_time, Simulator& simulator) {
     LogicValue input_A = getInputValue("A");
     LogicValue input_B = getInputValue("B");
     LogicValue new_output_value = LogicValue::UNKNOWN;
@@ -109,7 +109,7 @@ BEGIN_BASIC_PINS(XORGate, circuit::timing::leafDelay(circuit::timing::Leaf::Xor)
     OUTPUT_PIN("OUT")
 END_BASIC_PINS()
 
-void XORGate::evaluate(size_t current_time, Simulator& simulator) {
+void XORGate::evaluate(SimulationTime current_time, Simulator& simulator) {
     LogicValue input_A = getInputValue("A");
     LogicValue input_B = getInputValue("B");
     LogicValue new_output_value = LogicValue::UNKNOWN;

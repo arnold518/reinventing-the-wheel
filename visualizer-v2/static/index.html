@@ -61,6 +61,7 @@
       <button id="toggle-inspector" aria-pressed="false" aria-expanded="false" aria-controls="inspector">Info</button>
     </div>
     <div class="view-actions">
+      <button id="toggle-device-views" aria-pressed="true" title="Show device pixels and input state; toggle to inspect their circuits">Device views</button>
       <button id="reset-view">Reset View</button>
       <button id="zoom-out">-</button>
       <button id="zoom-in">+</button>
@@ -121,6 +122,11 @@
         <div class="inspector-section-title">Details</div>
         <div id="selection-info" class="inspector-table"></div>
       </div>
+      <div id="device-inspector-section" class="inspector-section hidden">
+        <div class="inspector-section-title">Device at selected time</div>
+        <canvas id="device-preview" width="480" height="300" style="width:100%;height:auto;image-rendering:pixelated" aria-label="Recorded device visualization"></canvas>
+        <p id="device-summary" role="status"></p>
+      </div>
       <div id="memory-inspector-section" class="inspector-section hidden">
         <div class="inspector-section-title">Memory</div>
         <div id="memory-details" class="inspector-table"></div>
@@ -171,6 +177,7 @@
   <script src="explorer.js?v=3"></script>
   <script src="wire_geometry.js?v=1"></script>
   <script src="rewire_geometry.js?v=4"></script>
+  <script src="device_view.js?v=1"></script>
   <script src="memory_cell_view.js?v=1"></script>
   <script src="memory_view.js?v=1"></script>
   <script src="app.js?v=70"></script>

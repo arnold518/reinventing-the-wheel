@@ -16,11 +16,11 @@
 namespace circuit::dflipflop_timing {
 
 inline const timing::TimingProfile::FlipFlop& contract() { return timing::activeTimingProfile().flip_flop; }
-inline size_t setup() { return contract().setup; }                                     // data quiet this long before the rising edge
-inline size_t hold() { return contract().hold; }                                       // and this long after it
-inline size_t clockToOutputMinimum() { return contract().clock_to_output_minimum; }    // first change of Q or Q_BAR after the edge
-inline size_t clockToOutputMaximum() { return contract().clock_to_output_maximum; }    // last change
-inline size_t minimumHigh() { return contract().minimum_high; }                        // shortest clock phases that still work
-inline size_t minimumLow() { return contract().minimum_low; }
+inline SimulationTime setup() { return contract().setup; }                                     // data quiet this long before the rising edge
+inline SimulationTime hold() { return contract().hold; }                                       // and this long after it
+inline SimulationTime clockToOutputMinimum() { return contract().clock_to_output_minimum; }    // first change of Q or Q_BAR after the edge
+inline SimulationTime clockToOutputMaximum() { return contract().clock_to_output_maximum; }    // last change
+inline SimulationTime minimumHigh() { return contract().minimum_high; }                        // shortest clock phases that still work
+inline SimulationTime minimumLow() { return contract().minimum_low; }
 
 } // namespace circuit::dflipflop_timing

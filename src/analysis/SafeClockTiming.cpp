@@ -30,11 +30,9 @@
 namespace circuit::analysis {
 namespace {
 constexpr size_t none = std::numeric_limits<size_t>::max();
-size_t add(size_t a, size_t b) {
-    if (b > none - a) throw std::overflow_error("Timing arithmetic overflow");
-    return a + b;
-}
-size_t twice(size_t n) { return add(n, n); }
+constexpr SimulationTime no_time = MAX_SIMULATION_TIME;
+SimulationTime add(SimulationTime a, SimulationTime b) { return checkedTimeAdd(a,b); }
+SimulationTime twice(SimulationTime n) { return add(n, n); }
 size_t phase(ClockEdge edge) {
     if (edge != ClockEdge::Rising && edge != ClockEdge::Falling)
         throw std::invalid_argument("Invalid clock edge");
@@ -46,7 +44,7 @@ void validate(DelayBounds d) {
 
 struct Arrival {
     bool valid = false;
-    size_t early = 0, late = 0, previous = none;
+    SimulationTime early = 0, late = 0; size_t previous = none;
     size_t early_previous = none;
 };
 struct Node {
@@ -79,12 +77,13 @@ class Analysis {
     std::vector<std::pair<size_t, ClockCapture>> captures;
     std::vector<std::pair<size_t, uint64_t>> fixed;
     std::set<size_t> clock_nodes, unused;
-    size_t period = 2, clock_node = none;
+    SimulationTime period = 2; size_t clock_node = none;
     bool unknown = false, violation = false;
     bool state_timing_checked = false;
     // Per launch edge: earliest transitions, and the shared engine.
     std::vector<Node> initial;
-    std::array<std::vector<size_t>, 2> early, early_previous;
+    std::array<std::vector<SimulationTime>, 2> early;
+    std::array<std::vector<size_t>, 2> early_previous;
     std::array<std::unique_ptr<detail::timing::Graph>, 2> graph;
     std::array<std::unique_ptr<detail::timing::Engine>, 2> engine;
     std::vector<bool> changes;
@@ -201,7 +200,7 @@ class Analysis {
                 if (cap.pin == m.clock_pin || std::find(m.unused_inputs.begin(), m.unused_inputs.end(), cap.pin) != m.unused_inputs.end())
                     diagnostic(c->getID() + ": clock/unused pin cannot also be captured");
             }
-            const size_t pulse = twice(std::max(m.minimum_high_ticks, m.minimum_low_ticks));
+            const SimulationTime pulse = twice(std::max(m.minimum_high_ticks, m.minimum_low_ticks));
             if (pulse > period) { period = pulse; report.limiting_constraint = c->getID() + ": clock pulse width"; }
         }
     }
@@ -377,9 +376,9 @@ class Analysis {
     void earliestArrivals() {
         initial = nodes;
         for (size_t k = 0; k < 2; ++k) {
-            early[k].assign(nodes.size(), none);
+            early[k].assign(nodes.size(), no_time);
             early_previous[k].assign(nodes.size(), none);
-            using Entry = std::pair<size_t, size_t>;
+            using Entry = std::pair<SimulationTime, size_t>;
             std::priority_queue<Entry, std::vector<Entry>, std::greater<Entry>> heap;
             for (size_t n = 0; n < nodes.size(); ++n) if (nodes[n].arrival[k].valid) {
                 early[k][n] = nodes[n].arrival[k].early;
@@ -414,7 +413,7 @@ class Analysis {
         for (const auto& input : clock.inputs) {
             const auto pin = lookup(input.pin, PinType::INPUT).get();
             if (!input.edge) request.fixed[pin] = input.fixed_value;
-            else request.arrival[pin] = phase(*input.edge) == k ? static_cast<Tick>(input.delay.maximum) : NEVER;
+            else request.arrival[pin] = phase(*input.edge) == k ? checkedTick(input.delay.maximum) : NEVER;
         }
         graph[k] = std::make_unique<Graph>();
         std::vector<std::string> problems;
@@ -469,12 +468,12 @@ class Analysis {
                 else if (f.values != LOW) decided = false;
             }
             auto& arrival = nodes[n].arrival[k];
-            const size_t earliest = early[k][n];
+            const SimulationTime earliest = early[k][n];
             // Proven never to change here, yet reachable in some other mode:
             // keep the earliest transition so that hold is still checked.
-            if (late == NEVER && earliest == none) arrival.valid = false;
-            else arrival = {true, earliest == none ? 0 : earliest,
-                            open ? none : late == NEVER ? earliest : static_cast<size_t>(late), none, early_previous[k][n]};
+            if (late == NEVER && earliest == no_time) arrival.valid = false;
+            else arrival = {true, earliest == no_time ? 0 : earliest,
+                            open ? no_time : late == NEVER ? earliest : static_cast<SimulationTime>(late), none, early_previous[k][n]};
             if (late != NEVER) changes[n] = true;
             else if (decided && !changes[n]) nodes[n].value = value;
         }
@@ -490,7 +489,7 @@ class Analysis {
                 // Domain restrictions must arrive before capture too, not just
                 // the possibly earlier value-settling deadline.
                 auto& arrival = nodes[n].arrival[k];
-                if (arrival.valid && f.at != NEVER) arrival.late = std::max(arrival.late, static_cast<size_t>(f.at));
+                if (arrival.valid && f.at != NEVER) arrival.late = std::max(arrival.late, static_cast<SimulationTime>(f.at));
                 ++report.binary_capture_bits;
             }
         }

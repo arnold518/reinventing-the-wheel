@@ -68,7 +68,10 @@ alignment and capacity is accepted.
 VALID and READY low and discards pending response delivery. An operation
 already sent to the device finishes before the device is reused; its writes,
 programs or erases are not rolled back. Native flip-flop storage reset is
-deliberately not tied to this interface reset.
+deliberately not tied to this interface reset. In an expanded FF endpoint,
+its controller drives native `MEM_RST=0` from simulation initialization,
+including when that controller uses its compact form. A preloaded image
+therefore survives startup and interface reset across these fidelity choices.
 
 ## 3.4.1. `MemoryTransactionPort<W>`
 

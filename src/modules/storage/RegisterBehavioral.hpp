@@ -1,5 +1,7 @@
 #pragma once
 
+#include "simulator/SimulationTime.hpp"
+
 #include "components/BasicComponent.hpp"
 
 // The register's rule for one evaluation, shared by every compact part that
@@ -13,7 +15,7 @@ class RegisterBehavioral : public BasicComponent {
 public:
     RegisterBehavioral(std::string name, size_t width);
     const char* getTypeName() const override { return type_.c_str(); }
-    void evaluate(size_t current_time, Simulator& simulator) override;
+    void evaluate(SimulationTime current_time, Simulator& simulator) override;
 
 private:
     size_t width_;

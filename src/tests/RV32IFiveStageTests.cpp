@@ -29,7 +29,7 @@ void require(bool condition, const std::string& message) {
 
 void drive(
     Simulator& simulator,
-    size_t time,
+    SimulationTime time,
     const std::shared_ptr<Wire<>>& wire,
     bool value) {
     simulator.scheduleEvent(
@@ -351,7 +351,7 @@ void RV32IFiveStageCoreProgramTest::observePerformanceCycle() {
 
 void RV32IFiveStageCoreProgramTest::clockComponentOneCycle(
     size_t cycle_index,
-    size_t cycle_start_time) {
+    SimulationTime cycle_start_time) {
     (void)cycle_index;
     // Sample the settled packet before its rising edge replaces MEM/WB.
     // Observation state belongs to this harness, never to the circuit.

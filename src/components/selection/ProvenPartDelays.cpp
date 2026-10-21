@@ -2,6 +2,7 @@
 #include "components/TimingProfile.hpp"
 #include <algorithm>
 #include <map>
+#include <limits>
 #include <set>
 
 namespace circuit {
@@ -47,8 +48,8 @@ PartDelays scaled(const PartDelays& at64, const PartDelays& at128, size_t depth)
     size_t doublings = 0;
     for (size_t words = 128; words < depth; words *= 2) ++doublings;
     PartDelays table = at128;
-    const auto grow = [&](size_t large, size_t small) {
-        return large + (large > small ? large - small : 0) * doublings;
+    const auto grow = [&](SimulationTime large, SimulationTime small) {
+        return checkedTimeAdd(large, checkedTimeMultiply(large > small ? large - small : 0, doublings));
     };
     for (auto& arc : table.arcs)
         for (const auto& before : at64.arcs) if (before.input == arc.input && before.output == arc.output) {
@@ -76,7 +77,7 @@ PartDelays scaled(const PartDelays& at64, const PartDelays& at128, size_t depth)
 // the gate-level limit.
 PartDelays widerArray(const PartDelays& two, const PartDelays& narrow_two, const PartDelays& grown, size_t subarrays) {
     PartDelays table = two;
-    const auto growth = [](size_t from, size_t to) { return to > from ? to - from : size_t{0}; };
+    const auto growth = [](SimulationTime from, SimulationTime to) { return to > from ? to - from : SimulationTime{0}; };
     const auto find_arc = [](const PartDelays& t, const PartDelays::Arc& arc) -> const PartDelays::Arc* {
         for (const auto& candidate : t.arcs) if (candidate.input == arc.input && candidate.output == arc.output) return &candidate;
         return nullptr;
@@ -105,15 +106,16 @@ size_t log2Ceil(size_t n) { size_t bits = 0; while ((size_t{1} << bits) < n) ++b
 } // namespace
 
 PartDelays sramSubarrayEstimate(const PartDelays& one, const PartDelays& two, const PartDelays& four, size_t subarrays,
-                                size_t wire_per_side) {
+                                SimulationTime wire_per_side) {
     PartDelays table = four;
     const long long levels = static_cast<long long>(log2Ceil(subarrays)) - 2;
     const long long sides = static_cast<long long>(gridSide(subarrays)) - static_cast<long long>(gridSide(4));
-    const auto grow = [&](size_t d4, size_t d2, size_t d1) {
+    const auto grow = [&](SimulationTime d4, SimulationTime d2, SimulationTime d1) {
         if (d4 == d2 && d2 == d1) return d4;
-        const long long a = std::max<long long>(0, static_cast<long long>(d4) - static_cast<long long>(d2));
-        const long long wire = 2 * static_cast<long long>(wire_per_side);
-        return static_cast<size_t>(std::max<long long>(static_cast<long long>(d4), static_cast<long long>(d4) + a * levels + wire * sides));
+        const auto slope = d4 > d2 ? d4-d2 : 0;
+        const auto level_growth = levels > 0 ? checkedTimeMultiply(slope, static_cast<SimulationTime>(levels)) : 0;
+        const auto wire_growth = sides > 0 ? checkedTimeMultiply(checkedTimeMultiply(wire_per_side, 2), static_cast<SimulationTime>(sides)) : 0;
+        return checkedTimeAdd(d4, checkedTimeAdd(level_growth, wire_growth));
     };
     const auto find_arc = [](const PartDelays& t, const PartDelays::Arc& arc) -> const PartDelays::Arc* {
         for (const auto& candidate : t.arcs) if (candidate.input == arc.input && candidate.output == arc.output) return &candidate;
@@ -127,13 +129,13 @@ PartDelays sramSubarrayEstimate(const PartDelays& one, const PartDelays& two, co
     }
     for (auto& [output, range] : table.launches) {
         const auto at2 = two.launches.find(output), at1 = one.launches.find(output);
-        const size_t d2 = at2 != two.launches.end() ? at2->second.maximum : range.maximum;
+        const SimulationTime d2 = at2 != two.launches.end() ? at2->second.maximum : range.maximum;
         range.maximum = grow(range.maximum, d2, at1 != one.launches.end() ? at1->second.maximum : d2);
         if (at1 != one.launches.end()) range.minimum = std::min(range.minimum, at1->second.minimum);
     }
     for (auto& [input, setup] : table.setup) {
         const auto at2 = two.setup.find(input), at1 = one.setup.find(input);
-        const size_t d2 = at2 != two.setup.end() ? at2->second : setup;
+        const SimulationTime d2 = at2 != two.setup.end() ? at2->second : setup;
         setup = grow(setup, d2, at1 != one.setup.end() ? at1->second : d2);
     }
     table.internal_period = grow(four.internal_period, two.internal_period, one.internal_period);
@@ -189,7 +191,11 @@ const PartDelays* provenPartDelays(const std::string& implementation_id, const P
     const auto* at128 = exact(implementation_id + "@depth=128" + variant);
     if (!at64 || !at128) return nullptr;
     size_t depth = 0;
-    try { depth = std::stoull(parameters.at("depth_words")); } catch (const std::exception&) { return nullptr; }
+    try {
+        const auto parsed = std::stoull(parameters.at("depth_words"));
+        if(parsed > std::numeric_limits<size_t>::max()) return nullptr;
+        depth = static_cast<size_t>(parsed);
+    } catch (const std::exception&) { return nullptr; }
     // 64 words or fewer: the table proven at 64 words, not the looser one
     // for 128.
     if (depth <= 64) return at64;
@@ -204,7 +210,7 @@ const PartDelays* provenPartDelays(const std::string& implementation_id, const P
         const auto* at256 = exact(implementation_id + "@depth=256" + variant);
         const bool sram = implementation_id.rfind("memory.sram.", 0) == 0 && rows.empty();
         const size_t subarrays = (depth / 2 + 31) / 32;
-        const size_t wire = timing::activeTimingProfile().memory.sram_wire_per_side;
+        const SimulationTime wire = timing::activeTimingProfile().memory.sram_wire_per_side;
         // The same part 8 bits wide, for a wider array's growth.
         std::string narrow = implementation_id;
         for (const char* width : {".16.", ".32."})

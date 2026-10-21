@@ -1,6 +1,6 @@
 # Status
 
-Updated: 2026-10-20.
+Updated: 2026-10-22.
 
 This is the living project-wide view. Rewrite it when the implementation or
 work state changes. Keep dated decisions and validation results in
@@ -76,6 +76,78 @@ work state changes. Keep dated decisions and validation results in
 
 ## In progress
 
+- [RV32IM milestone wrap and integration](records/2026-10-22-rv32im-milestone-wrap-and-integration.md):
+  the owner requested merging the current worktree. Preserve the primary
+  checkout's newer visualizer changes and pending planning work. The target
+  is `alpha` at `0d498c7`; its integration checks are pending. Phase 6 acceptance is still open and phase 7
+  has not started; remaining long campaigns are follow-up work.
+
+- [Device parameters and visual abstractions](records/2026-10-21-device-parameters-and-visuals.md):
+  general geometry/capacity and queue parameters pass focused native checks,
+  including 320×200 storage and CPU presentation at 128×96/97×65. Display and
+  keyboard abstractions share a recorded observer; native history/rewind passes.
+  Python declarations and JS helpers pass; all 363 static scenario layouts
+  pass with 52 new entries and every old entry preserved. Consecutive sampled
+  input logs and halt-boundary rejection pass. Browser/WASM/site acceptance
+  remains. Phase 7 interactive sessions
+  are authorized after phase 6 passes its acceptance gates. Work stays isolated.
+
+- [FF controller startup](records/2026-10-21-memory-controller-startup.md):
+  a scoped initialization fix preserves provisioned images in structural, fused
+  and mixed profiles in native and WASM. Old memory/cache regressions pass
+  apart from the large SRAM scenario's resource-limited retry; final portable
+  refresh remains.
+
+- [Compiler memory prerequisites](records/2026-10-21-delay-table-compile-memory.md):
+  optional build partitions preserve all canonical entries after the fresh
+  wasm32 table compile hit its cap. Lossless generation and compiled WASM-to-preceding-native
+  value identity pass in both native and WASM. All three final native profiles
+  verify all 808 regenerated entries; the 754 legacy entries per profile are
+  unchanged. Final library compilation peaks at about 458 MiB RSS under a
+  768 MiB address-space cap. Final WASM table verification remains. The native Python binding hit its
+  768 MiB compile cap; a guarded 1 GiB retry stopped at low host headroom.
+  Its split registration source now builds at 768 MiB (~526 MiB peak RSS),
+  preserving the 175-name old Python API. Final runtime regressions remain.
+
+- [64-bit simulation time prerequisite](records/2026-10-21-simulation-time-width.md):
+  explicit tick/history/publication types and exact JS transport are being
+  rebuilt. Native/WASM standalone wide-time/history checks and actual short CPU/device
+  runs above 2^53 and 2^63 pass in WASM. Exact Python/native transport and
+  rewind pass. Final native/WASM transport parity and current-source old
+  playback regressions remain pending.
+
+- [Scripted device platform and games, phases 4–6](records/2026-10-21-scripted-games-phase4-6-implementation.md):
+  the integrated CPU/devices, bounded runtime, ten guest fixtures and additive
+  recording viewer are staged. All five main native game checks and all ten exact host C frame/report
+  comparisons pass on the preceding binary. The capped subset finished
+  535/543. Parameter/visual changes now build and pass focused checks.
+  The old-software compact 2048 batch measured about 0.015 changed updates/s;
+  revised fixture and fidelity measurements remain pending. Inventory,
+  fixture, palette, profile/topology, complete layout and focused delay-floor
+  follow-ups pass. The large SRAM retry safely stops at the host-memory guard
+  and remains unresolved. A new device JS check and old viewer checks pass;
+  two sandbox/harness follow-ups also pass after rerun. Strict settling,
+  old core/memory/viewer integration and the new foundation checks pass.
+  Final game repetition/fidelity/quantum, WASM/parity/site/browser and
+  resource-aware reruns remain. Compact FF/cached-FF/cached-DRAM clocks certify
+  at 520 unit ticks against the 1,000-tick period. Work stays in the isolated
+  `rv32im-phase3` worktree. Live sessions follow in phase 7; disks and multicore remain unscheduled.
+
+- [RV32IM and device foundation implementation](records/2026-10-20-rv32im-phase0-3-implementation.md)
+  through phase 3 of the [adopted roadmap](records/2026-10-19-device-io-games-plan.md#rv32im-scripted-roadmap),
+  isolated on `rv32im-phase3` at `.worktrees/rv32im-phase3` from `60acda2`.
+  Structural M arithmetic/core, routing, console/timer/buttons and drawing
+  storage are staged. All 46 new native checks pass after the construction and operand-wait
+  revisions, including structural/compact-child core timing agreement;
+  old native core/memory/cache checks pass in the later broad scope. The
+  memory inspector's earlier timeout is resolved by its passing rerun.
+  Final portable/site checks continue.
+  Compilers are serial and memory-capped. No merge or viewer module deployment
+  has occurred. Recorded-game integration is now in progress through phase 6;
+  live modes remain later. Existing recorded playback is retained. See the maintained
+  [foundation contract](reference/rv32im-device-foundation.md).
+
+
 - [Realistic leaf delays and gate-level memory control](records/2026-10-16-realistic-timing-plan.md),
   executed on branch `realistic-timing` with a [progress log](records/2026-10-16-realistic-timing-progress.md):
   phases 1–6 are done. Leaf delays come from a timing profile (`unit`, the
@@ -132,10 +204,10 @@ work state changes. Keep dated decisions and validation results in
   then games, then AI accelerators; the GPU goal is
   unscheduled. Scalable FF timing is address-independent within one
   configuration; DRAM latency depends on row state and refresh.
-  RV32IM versus Zmmul is now an open pre-game ISA choice, with a pinned
-  compiler check favoring RV32IM for C code generation. Open-source C
-  references for 2048, Snake, Pong and Tetris have been shortlisted; the
-  first game is not selected.
+  The owner selected RV32IM and predetermined device input first. The
+  adopted roadmap starts scripted games with 2048, then Sokoban, Snake,
+  Pong and Tetris, after the integrated machine and capture adapters. See
+  the [device/game roadmap](records/2026-10-19-device-io-games-plan.md#rv32im-scripted-roadmap).
 
 - [Cache system plan](records/2026-10-14-cache-system-plan.md): the
   standalone `Cache<W>` for W=8/16/32 and the five-topology cache campaign,

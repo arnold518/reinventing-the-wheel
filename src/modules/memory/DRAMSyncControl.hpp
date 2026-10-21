@@ -1,4 +1,6 @@
 #pragma once
+
+#include "simulator/SimulationTime.hpp"
 #include <array>
 #include "modules/memory/DigitalMemory.hpp"
 #include "components/TimingProfile.hpp"
@@ -40,32 +42,32 @@ public:
         : width_(width), rows_(rows), words_per_row_(words_per_row), burst_words_(burst_words), data(width, LogicValue::LOW),
           mask(width / 8, LogicValue::LOW) {
         const auto& m = timing::activeTimingProfile().memory;
-        const size_t gate = timing::leafDelay(timing::Leaf::And);
+        const SimulationTime gate = timing::leafDelay(timing::Leaf::And);
         // The run signal is a three-input AND (command, busy, not repeat): two levels.
-        launch_ = dflipflop_timing::clockToOutputMaximum() + 2 * gate;
-        or_tree_ = 3 * timing::leafDelay(timing::Leaf::Or);
-        const auto steps = [&](std::vector<size_t> intervals) {
-            std::vector<size_t> at; size_t sum = 0;
-            for (auto i : intervals) { sum += i + gate; at.push_back(sum); }
+        launch_ = checkedTimeAdd(dflipflop_timing::clockToOutputMaximum(), checkedTimeMultiply(gate, 2));
+        or_tree_ = checkedTimeMultiply(timing::leafDelay(timing::Leaf::Or), 3);
+        const auto steps = [&](std::vector<SimulationTime> intervals) {
+            std::vector<SimulationTime> at; SimulationTime sum = 0;
+            for (auto i : intervals) { sum = checkedTimeAdd(sum, checkedTimeAdd(i, gate)); at.push_back(sum); }
             return at;
         };
         // The sense and precharge steps carry the decoder replica (DRAM.cpp).
-        const size_t replica = dramDecodeReplica(rows) * gate;
-        const size_t sense = m.dramSense(rows) + timing::leafDelay(timing::Leaf::MemoryPrimitive) + replica;
-        const size_t precharge = m.dram_precharge + replica;
+        const SimulationTime replica = checkedTimeMultiply(gate, dramDecodeReplica(rows));
+        const SimulationTime sense = checkedTimeAdd(checkedTimeAdd(m.dramSense(rows), timing::leafDelay(timing::Leaf::MemoryPrimitive)), replica);
+        const SimulationTime precharge = checkedTimeAdd(m.dram_precharge, replica);
         stages_[Activate] = steps({m.dram_wordline, sense, m.dram_restore});
         stages_[Read] = steps({m.dram_read});
         stages_[Write] = steps({m.dram_write_on, m.dram_write_off, m.dram_write_recovery});
         stages_[Precharge] = steps({m.dram_close, precharge, m.dram_equalize});
-        std::vector<size_t> refresh{m.dram_wordline, sense};
-        if (m.dram_refresh_restore + m.dram_refresh_extra) refresh.push_back(m.dram_refresh_restore + m.dram_refresh_extra);
+        std::vector<SimulationTime> refresh{m.dram_wordline, sense};
+        if (checkedTimeAdd(m.dram_refresh_restore, m.dram_refresh_extra)) refresh.push_back(checkedTimeAdd(m.dram_refresh_restore, m.dram_refresh_extra));
         for (auto step : {m.dram_close, precharge, m.dram_equalize}) refresh.push_back(step);
         refresh_close_ = refresh.size() - 3;
         stages_[Refresh] = steps(refresh);
     }
 
     // A rising edge at time `t` with the inputs as sampled there.
-    void edge(size_t t, const Bits& cmd, const Bits& addr, const Bits& write_data, const Bits& write_mask) {
+    void edge(SimulationTime t, const Bits& cmd, const Bits& addr, const Bits& write_data, const Bits& write_mask) {
         using memory_device::known;
         using memory_device::number;
         // A repeated command's chain starts one edge after it was taken.
@@ -94,7 +96,7 @@ public:
         const bool unknown = !cmd_known;
         const bool error_event = unknown || (issued && (!available || !legal));
         const bool clear_valid = accept || (unknown && available) || (issued && available && !legal);
-        const bool sampled = busy && command != None && t >= chainDone();
+        const bool sampled = busy && command != None && started_ != NOT_STARTED && t >= chainDone();
         const unsigned finished = command;
         error = error_event || (error && !accept);
         valid = !clear_valid && (valid || (complete && finished == Read));
@@ -141,26 +143,26 @@ public:
         return (open && !(completing() && command == Precharge)) || (completing() && command == Activate);
     }
     // Earliest future time at which an analog control may change.
-    size_t nextStep(size_t t) const {
+    SimulationTime nextStep(SimulationTime t) const {
         if (!busy || command == None || started_ == NOT_STARTED) return 0;
-        for (auto at : stages_.at(command)) if (started_ + launch_ + at > t) return started_ + launch_ + at;
+        for (auto at : stages_.at(command)) if (stageAt(at) > t) return stageAt(at);
         // The chain's end reaching the sampler (the gates' OR tree).
-        if (const size_t end = chainDone(); end > t) return end;
+        if (const SimulationTime end = chainDone(); end > t) return end;
         return 0;
     }
     // The analog controls at time `t` (the gates' formulas).
-    bool wordline(size_t t) const {
+    bool wordline(SimulationTime t) const {
         return (open && !(running(Precharge) && reached(0, t))) || (running(Activate) && reached(0, t)) ||
                (running(Refresh) && reached(0, t) && !reached(refresh_close_, t));
     }
-    bool sensing(size_t t) const {
+    bool sensing(SimulationTime t) const {
         return (open && !(running(Precharge) && reached(0, t))) || (running(Activate) && reached(1, t)) ||
                (running(Refresh) && reached(1, t) && !reached(refresh_close_, t));
     }
-    bool precharging(size_t t) const {
+    bool precharging(SimulationTime t) const {
         return (!open && !running(Activate) && !(running(Refresh) && !reached(refresh_close_ + 1, t))) || (running(Precharge) && reached(1, t));
     }
-    bool writing(size_t t) const { return running(Write) && reached(0, t) && !reached(1, t); }
+    bool writing(SimulationTime t) const { return running(Write) && reached(0, t) && !reached(1, t); }
 
     bool busy = false, error = false, valid = false, open = false, releasing = false;
     unsigned command = None;
@@ -172,11 +174,18 @@ public:
 
 private:
     bool running(unsigned c) const { return busy && command == c; }
-    bool reached(size_t stage, size_t t) const {
+    bool reached(size_t stage, SimulationTime t) const {
         const auto& at = stages_.at(command);
-        return stage < at.size() && t >= started_ + launch_ + at[stage];
+        return started_ != NOT_STARTED && stage < at.size() && t >= stageAt(at[stage]);
     }
-    size_t chainDone() const { return started_ + launch_ + stages_.at(command).back() + or_tree_; }
+    SimulationTime stageAt(SimulationTime offset) const {
+        return started_ == NOT_STARTED ? MAX_SIMULATION_TIME
+            : checkedTimeAdd(checkedTimeAdd(started_, launch_), offset);
+    }
+    SimulationTime chainDone() const {
+        return started_ == NOT_STARTED ? MAX_SIMULATION_TIME
+            : checkedTimeAdd(stageAt(stages_.at(command).back()), or_tree_);
+    }
     // A refresh accepted on the edge that completes the previous refresh
     // uses the counter as it was before that edge (registers update together).
     size_t refresh_row_before(bool advanced) const {
@@ -184,14 +193,14 @@ private:
         return refresh_row == 0 ? rows_ - 1 : refresh_row - 1;
     }
     size_t width_, rows_, words_per_row_;
-    size_t launch_ = 0, or_tree_ = 0, started_ = 0;
-    static constexpr size_t NOT_STARTED = static_cast<size_t>(-1) / 2;
+    SimulationTime launch_ = 0, or_tree_ = 0, started_ = 0;
+    static constexpr SimulationTime NOT_STARTED = MAX_SIMULATION_TIME;
     size_t refresh_close_ = 2;
     bool done_q_ = false, fresh_ = false, delayed_start_ = false;
     size_t burst_words_;
     bool burst_ = false;
     size_t burst_left_ = 0;
-    std::map<unsigned, std::vector<size_t>> stages_;
+    std::map<unsigned, std::vector<SimulationTime>> stages_;
 };
 
 } // namespace circuit::memory_detail

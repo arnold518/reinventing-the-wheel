@@ -35,7 +35,7 @@ ClockSpecification specification(const IOComponent& c) {
     for (const auto& o : outputs) s.outputs.push_back({c.getID()+"."+o,ClockEdge::Rising,0,0});
     return s;
 }
-void safe(const ClockTimingReport& r, size_t period) {
+void safe(const ClockTimingReport& r, SimulationTime period) {
     for (const auto& d : r.diagnostics) std::cerr << d << '\n';
     check(r.status == ClockTimingStatus::SafeUnderContracts && r.safe_period_ticks == period,
           "Expected safe endpoint period " + std::to_string(period) + ", got " + std::to_string(r.safe_period_ticks.value_or(0))
@@ -47,7 +47,7 @@ void unknown(const ClockTimingReport& r) {
 class ModifiedEndpoint : public BehavioralMemoryEndpoint {
 public:
     using BehavioralMemoryEndpoint::BehavioralMemoryEndpoint;
-    void evaluate(size_t, Simulator&) override {}
+    void evaluate(SimulationTime, Simulator&) override {}
 };
 void staticCoverage() {
     for (size_t width : {8,16,32}) {
@@ -142,7 +142,7 @@ struct Fixture {
     std::map<std::string,std::shared_ptr<WireBase>> wires;
     std::map<std::string,Bits> pins;
     Oracle oracle;
-    size_t time=0,steps=0;
+    SimulationTime time=0; size_t steps=0;
     std::set<std::pair<std::string,std::string>> witnessed;
     explicit Fixture(size_t width):c(Component::create<BehavioralMemoryEndpoint>("MEM",width,Technology::FF)),oracle(width) {
         c->setHistoryRecordingEnabled(false); sim.setHistoryRecordingEnabled(false);

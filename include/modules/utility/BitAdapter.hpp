@@ -1,5 +1,7 @@
 #pragma once
 
+#include "simulator/SimulationTime.hpp"
+
 #include "components/BasicComponent.hpp"
 #include <cstddef>
 #include <string>
@@ -10,7 +12,7 @@ public:
     explicit BitSplitter(std::string name);
     static constexpr const char* TypeName = "BitSplitter";
     const char* getTypeName() const override { return TypeName; }
-    void evaluate(size_t current_time, Simulator& simulator) override;
+    void evaluate(SimulationTime current_time, Simulator& simulator) override;
 };
 
 template<size_t WIDTH>
@@ -19,7 +21,7 @@ public:
     explicit BitJoiner(std::string name);
     static constexpr const char* TypeName = "BitJoiner";
     const char* getTypeName() const override { return TypeName; }
-    void evaluate(size_t current_time, Simulator& simulator) override;
+    void evaluate(SimulationTime current_time, Simulator& simulator) override;
 };
 
 #include "modules/utility/BitAdapter.tpp"

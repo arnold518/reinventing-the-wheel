@@ -34,7 +34,7 @@ const PartDelays* provenPartDelays(const std::string& implementation_id, const P
 // (side(N) - side(4)), with a = d(4) - d(2). A delay that does not change
 // from 1 to 4 subarrays does not depend on the array and stays.
 PartDelays sramSubarrayEstimate(const PartDelays& one, const PartDelays& two, const PartDelays& four, size_t subarrays,
-                                size_t wire_per_side);
+                                SimulationTime wire_per_side);
 
 // Contracts whose gate-level form gives no gate list: too large, a loop, or
 // a stored state that is not a flip-flop (see

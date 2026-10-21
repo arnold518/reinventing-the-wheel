@@ -7,6 +7,7 @@
 #include <vector>
 
 class Component;
+class PinBase;
 
 namespace circuit::analysis {
 
@@ -32,7 +33,8 @@ public:
     // Null when the part holds something this cannot run (a loop, a memory
     // endpoint, another kind of state, several clocks); `why` says what.
     static std::shared_ptr<const GateListProgram> compile(const std::shared_ptr<Component>& gates,
-                                                          std::string* why = nullptr);
+        std::string* why = nullptr,
+        const std::vector<std::shared_ptr<PinBase>>& observations = {});
     explicit GateListModel(std::shared_ptr<const GateListProgram> program);
 
     // Root pins, in the order step() takes and output() gives them.
@@ -44,6 +46,9 @@ public:
     // The values now on every input pin.
     void step(const std::vector<std::vector<LogicValue>>& inputs);
     std::vector<LogicValue> output(size_t pin) const;
+    // Read-only circuit signals selected during compilation. Only node indexes
+    // are retained; observing adds no state, pins, or simulated work.
+    std::vector<LogicValue> observation(size_t pin) const;
     size_t nodeCount() const;
 
 private:

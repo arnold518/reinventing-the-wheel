@@ -109,7 +109,7 @@ void RV32IBaselinePipelineCore::buildInternals(ComponentBuilder& b) {
 rv32i::RV32IArchitecturalState RV32IBaselinePipelineCore::snapshotPipelineState(uint32_t observed_pc) const {
     rv32i::RV32IArchitecturalState state;
     state.pc=rv32i::RV32IArchitecturalState::fromKnown(rv32i::RV32IState{.pc=observed_pc}).pc;
-    const auto regs=std::dynamic_pointer_cast<RegisterStateView>(decode_)->getRegisterStateAtTime(std::numeric_limits<size_t>::max());
+    const auto regs=std::dynamic_pointer_cast<RegisterStateView>(decode_)->getRegisterStateAtTime(MAX_SIMULATION_TIME);
     for(size_t i=0;i<32;++i) state.x[i]=regs[i];
     state.halted=execution_status_->getOutputPin("HALTED")->getValue();state.trapped=execution_status_->getOutputPin("TRAPPED")->getValue();
     state.trap_cause=execution_status_->getOutputPin<4>("TRAP_CAUSE")->getValueAsVector();return state;

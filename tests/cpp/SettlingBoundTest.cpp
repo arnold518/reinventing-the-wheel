@@ -50,7 +50,7 @@ struct Bench {
     std::shared_ptr<IOComponent> root = Component::create<IOComponent>("BENCH");
     std::map<std::string, std::shared_ptr<WireBase>> inputs, outputs;
     Simulator sim;
-    size_t now = 0;
+    SimulationTime now = 0;
 
     explicit Bench(std::shared_ptr<IOComponent> part) : dut(std::move(part)) {
         root->addChild(dut);
@@ -62,7 +62,7 @@ struct Bench {
         sim.setHistoryRecordingEnabled(false);
         SimulationTest::scheduleInitialEventsForTree(root, sim, 0);
     }
-    void drive(const std::map<std::string, Bits>& vector, size_t time) {
+    void drive(const std::map<std::string, Bits>& vector, SimulationTime time) {
         for (const auto& [name, bits] : vector)
             sim.scheduleEvent(makeWireUpdateEvent(time, inputs.at(name), bits));
     }
@@ -282,7 +282,7 @@ public:
     explicit TestRegister(std::string name) : BasicComponent(std::move(name), 2, [](IOComponent* c) {
         c->addPin("CLK", PinType::INPUT); c->addPin("D", PinType::INPUT); c->addPin("Q", PinType::OUTPUT);
     }) {}
-    void evaluate(size_t, Simulator&) override {}
+    void evaluate(SimulationTime, Simulator&) override {}
 };
 TimingContracts registerContract() {
     return {[](const IOComponent& c) -> std::optional<ClockComponentContract> {

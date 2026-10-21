@@ -221,7 +221,7 @@ void RV32IBaselineDecodeStage::buildInternals(ComponentBuilder& b) {
     for(auto p:{"TERMINAL","CONTROL_FLOW"}) output(w,*this,status,p);
     w.finish();
 }
-std::vector<std::vector<LogicValue>> RV32IBaselineDecodeStage::getRegisterStateAtTime(size_t t) const {
+std::vector<std::vector<LogicValue>> RV32IBaselineDecodeStage::getRegisterStateAtTime(SimulationTime t) const {
     return std::dynamic_pointer_cast<RegisterStateView>(registers_)->getRegisterStateAtTime(t);
 }
 

@@ -120,13 +120,13 @@ void controllingFeedback(bool dual) {
     bool evidence=false;for(const auto& s:proof.state_evidence)evidence|=s.find("controlling-value")!=std::string::npos;
     check(evidence,"Feedback proof must record its controlling-value rule");
     Simulator sim;sim.setHistoryRecordingEnabled(false);
-    auto drive=[&](const std::string& n,size_t t,LogicValue value){sim.scheduleEvent(std::make_shared<WireUpdateEvent<1>>(t,inputs[n],value));};
+    auto drive=[&](const std::string& n,SimulationTime t,LogicValue value){sim.scheduleEvent(std::make_shared<WireUpdateEvent<1>>(t,inputs[n],value));};
     for(const auto& [n,p]:inputs)drive(n,0,n=="RST"?H:L);
     SimulationTest::scheduleInitialEventsForTree(root,sim,0);sim.runAndRecord(100);
     drive("RST",101,L);sim.runAndRecord(200);
     const auto period=*proof.safe_period_ticks;LogicValue previous=L;
     for(size_t i=0;i<64;++i) {
-        const size_t t=1000+i*period;const auto value=(i^(i/3))&1?H:L;
+        const SimulationTime t=1000+i*period;const auto value=(i^(i/3))&1?H:L;
         drive("CLK",t,H);drive("CLK",t+period/2,L);drive("A",t+5,value);
         sim.runAndRecord(t+period-1);
         // Gates may still have same-value publications queued on internal

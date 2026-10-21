@@ -1,9 +1,11 @@
 #pragma once
+
+#include "simulator/SimulationTime.hpp"
 #include "modules/memory/DigitalMemory.hpp"
 
 struct DRAMDeviceConfig : circuit::memory_device::Geometry {
-    size_t phase_ticks = 32;
-    size_t retention_ticks = circuit::timing::activeTimingProfile().memory.dram_device_retention;
+    SimulationTime phase_ticks = 32;
+    SimulationTime retention_ticks = circuit::timing::activeTimingProfile().memory.dram_device_retention;
     // READ_BURST: this many columns (a power of two within a row), parameter block_words.
     size_t burst_words = 2;
     void validate(size_t width, bool expanded = false) const;
@@ -15,29 +17,30 @@ void registerDRAMComponents(circuit::ComponentCatalog &);
 // Digital charge storage is a primitive, not a flip-flop made to look like DRAM.
 class DRAMCell : public circuit::memory_device::Primitive {
   public:
-    DRAMCell(std::string name, size_t retention_ticks = circuit::timing::activeTimingProfile().memory.dram_device_retention);
-    void evaluate(size_t, Simulator &) override;
+    DRAMCell(std::string name, SimulationTime retention_ticks = circuit::timing::activeTimingProfile().memory.dram_device_retention);
+    void evaluate(SimulationTime, Simulator &) override;
     PrimitiveTiming primitiveTiming() const override { return PrimitiveTiming::SelfTimed; }
 
   private:
-    size_t retention_, closed_ = 0;
+    SimulationTime retention_, closed_ = 0;
     LogicValue charge_ = LogicValue::UNKNOWN, sample_ = LogicValue::UNKNOWN, last_wl_ = LogicValue::LOW;
     bool restored_ = false;
 };
 class DRAMRow : public IOComponent {
   public:
-    DRAMRow(std::string name, size_t columns = 4, size_t retention_ticks = circuit::timing::activeTimingProfile().memory.dram_device_retention);
+    DRAMRow(std::string name, size_t columns = 4, SimulationTime retention_ticks = circuit::timing::activeTimingProfile().memory.dram_device_retention);
     const char *getTypeName() const override { return type_.c_str(); }
     void buildInternals(ComponentBuilder &) override;
 
   private:
-    size_t columns_, retention_;
+    size_t columns_;
+    SimulationTime retention_;
     std::string type_;
 };
 class DRAMSenseColumn : public circuit::memory_device::Primitive {
   public:
     DRAMSenseColumn(std::string name, size_t rows = 2);
-    void evaluate(size_t, Simulator &) override;
+    void evaluate(SimulationTime, Simulator &) override;
     PrimitiveTiming primitiveTiming() const override { return PrimitiveTiming::SelfTimed; }
 
   private:

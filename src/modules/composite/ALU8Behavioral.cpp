@@ -144,7 +144,7 @@ public:
     static constexpr const char* TypeName = Structural::TypeName;
     const char* getTypeName() const override { return TypeName; }
 
-    void evaluate(size_t time, Simulator& sim) override {
+    void evaluate(SimulationTime time, Simulator& sim) override {
         if constexpr (std::is_same_v<Structural, Adder8>) {
             const auto r = value::add(read<8>("A"), read<8>("B"), bit("Cin"));
             write(sim, time, "Sum", r.out); write(sim, time, "Cout", r.carry);
@@ -201,13 +201,13 @@ private:
     }
     LogicValue bit(const char* name) { return getInputPin(name)->getValue(); }
     template<size_t Width>
-    void write(Simulator& sim, size_t time, const char* name, const value::Bits<Width>& values) {
+    void write(Simulator& sim, SimulationTime time, const char* name, const value::Bits<Width>& values) {
         _updateOutputWire<Width>(sim, name, std::vector<LogicValue>(values.begin(), values.end()), time);
     }
-    void write(Simulator& sim, size_t time, const char* name, LogicValue value) {
+    void write(Simulator& sim, SimulationTime time, const char* name, LogicValue value) {
         _updateOutputWire(sim, name, value, time);
     }
-    void writeFlags(Simulator& sim, size_t time, const value::Flags& flags) {
+    void writeFlags(Simulator& sim, SimulationTime time, const value::Flags& flags) {
         write(sim, time, "ZERO", flags.zero); write(sim, time, "NEGATIVE", flags.negative);
         write(sim, time, "CARRY", flags.carry); write(sim, time, "OVERFLOW", flags.overflow);
     }

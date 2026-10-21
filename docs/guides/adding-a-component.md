@@ -195,8 +195,10 @@ prove a system clock or an untested memory parameter set.
 
 The Python binding and WebAssembly visualizer construct scenarios through
 `TestRegistry`; test classes do not need individual Python bindings. Add a
-direct `bindCompositeModule<T>` in `src/bindings/ModulesBinding.cpp` only if
-callers need to instantiate that C++ class directly from Python.
+direct `bindCompositeModule<T>` in the relevant `src/bindings/*ModulesBinding.cpp`
+group only if callers need to instantiate that C++ class directly from Python.
+The private templates are in `ModuleBindingHelpers.hpp`; `ModulesBinding.cpp`
+calls the bounded compilation groups in registration order.
 
 For a visible scenario, add a stable alias, title and group in
 `visualizer-v2/static/scenarios.json`. Check
@@ -303,3 +305,14 @@ works. Run `tools/run-web-tests.py` for browser or WASM changes. Check the
 rendered page, its simulator link, pin table, generated rows and relevant
 chapter documentation tests. Record which checks ran and their limits in the
 topic record and changelog, as required by `AGENTS.md`.
+
+### Parameter-dependent visual floorplans
+
+A new component whose parameters change its internal layout can implement the
+optional `ComponentLayoutView` capability. Return an empty variant to preserve
+the default key, or a canonical configuration string for another layout.
+Native/Python/WASM topology then uses `Type[config-variant]`. Those placements
+are stored separately; the type's colors still apply. No pins or simulation
+state belong in this observer. Preserve existing default keys and provide a
+migration before renaming a persisted variant. Device queue/router/display
+checks exercise this path in both viewer adapters.

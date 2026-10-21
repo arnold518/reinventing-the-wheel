@@ -38,7 +38,7 @@ struct Bench {
     std::shared_ptr<IOComponent> root = Component::create<IOComponent>("BENCH");
     std::map<std::string, std::shared_ptr<WireBase>> inputs, outputs;
     Simulator sim;
-    size_t now = 0;
+    SimulationTime now = 0;
 
     explicit Bench(std::shared_ptr<IOComponent> part) : dut(std::move(part)) {
         root->addChild(dut);

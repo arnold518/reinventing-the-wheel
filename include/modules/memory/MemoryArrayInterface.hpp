@@ -1,5 +1,7 @@
 #pragma once
 
+#include "simulator/SimulationTime.hpp"
+
 #include "components/IOComponent.hpp"
 #include "modules/memory/MemoryStorage.hpp"
 
@@ -7,7 +9,7 @@
 // behavioral model. Width fixes the pins; depth is a construction parameter.
 struct MemoryConfig {
     size_t depth_words = 4;
-    size_t read_delay_ticks = 1;
+    SimulationTime read_delay_ticks = 1;
     LogicValue initial_value = LogicValue::UNKNOWN;
     bool record_history = true;
     MemoryStorage::Limits storage_limits{true, 64 * 1024 * 1024, 16 * 1024 * 1024};

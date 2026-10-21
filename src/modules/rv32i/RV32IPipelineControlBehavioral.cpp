@@ -20,7 +20,7 @@ public:
     static constexpr const char* TypeName = "RV32IForwardingUnit";
     const char* getTypeName() const override { return TypeName; }
 
-    void evaluate(size_t current_time, Simulator& simulator) override {
+    void evaluate(SimulationTime current_time, Simulator& simulator) override {
         const auto rs1 =
             getInputPin<5>("ID_EX_RS1")->getValueAsUInt64();
         const auto rs2 =
@@ -70,7 +70,7 @@ public:
     static constexpr const char* TypeName = "RV32IHazardDetectionUnit";
     const char* getTypeName() const override { return TypeName; }
 
-    void evaluate(size_t current_time, Simulator& simulator) override {
+    void evaluate(SimulationTime current_time, Simulator& simulator) override {
         const auto ex_rd =
             getInputPin<5>("EX_RD")->getValueAsUInt64();
         const auto id_rs1 =
@@ -112,7 +112,7 @@ public:
         "RV32IMemoryAlignmentUnit";
     const char* getTypeName() const override { return TypeName; }
 
-    void evaluate(size_t current_time, Simulator& simulator) override {
+    void evaluate(SimulationTime current_time, Simulator& simulator) override {
         const auto address = getInputPin<32>("ADDRESS")->getValueAsVector();
         const auto size = getInputPin<2>("SIZE")->getValueAsVector();
         // Mirror the structural gates, including reserved SIZE=3 and X/Z.
@@ -149,7 +149,7 @@ public:
         "RV32IPipelineRetirementUnit";
     const char* getTypeName() const override { return TypeName; }
 
-    void evaluate(size_t current_time, Simulator& simulator) override {
+    void evaluate(SimulationTime current_time, Simulator& simulator) override {
         const bool commit =
             high(getInputValue("ENABLE"))
             && high(getInputValue("MEM_WB_VALID"));
@@ -210,7 +210,7 @@ public:
         "RV32IPipelineCoordinator";
     const char* getTypeName() const override { return TypeName; }
 
-    void evaluate(size_t current_time, Simulator& simulator) override {
+    void evaluate(SimulationTime current_time, Simulator& simulator) override {
         const bool active =
             high(getInputValue("ENABLE"))
             && !high(getInputValue("HALTED"))

@@ -20,7 +20,9 @@ fi
 emcmake cmake \
     -S "$REPOSITORY_DIR" \
     -B "$BUILD_DIR" \
-    -DCMAKE_BUILD_TYPE=Release
+    -DCMAKE_BUILD_TYPE=Release \
+    -DCIRCUITSIM_WASM_LINK_OPTIMIZATION="${CIRCUITSIM_WASM_LINK_OPTIMIZATION:-3}" \
+    -DCIRCUITSIM_SPLIT_DELAY_TABLES=ON
 cmake --build "$BUILD_DIR" --target circuitsim_wasm --parallel "${CIRCUITSIM_BUILD_JOBS:-1}"
 
 # Refresh the full package even after an interrupted post-link packaging step,

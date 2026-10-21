@@ -27,7 +27,7 @@ void ClockedStateBit::buildInternals(ComponentBuilder& builder) {
 }
 ClockedStateBitBehavioral::ClockedStateBitBehavioral(std::string name)
     : BasicComponent(std::move(name), 1, circuit::families::ClockedStateBit.pinInitializer()) {}
-void ClockedStateBitBehavioral::evaluate(size_t time, Simulator& simulator) {
+void ClockedStateBitBehavioral::evaluate(SimulationTime time, Simulator& simulator) {
     const auto reset = getInputValue("RST");
     const auto clock = getInputValue("CLK");
     if (reset == LogicValue::HIGH) stored_ = LogicValue::LOW;

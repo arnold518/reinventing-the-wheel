@@ -1,5 +1,7 @@
 #pragma once
 
+#include "simulator/SimulationTime.hpp"
+
 #include "components/IOComponent.hpp"
 #include "components/capabilities/RegisterStateView.hpp"
 #include "components/selection/ComponentFamily.hpp"
@@ -15,5 +17,5 @@ public:
     const char* getTypeName() const override { return TypeName; }
     void buildInternals(ComponentBuilder& builder) override;
     std::vector<std::vector<LogicValue>> getRegisterStateAtTime(
-        size_t target_time) const override;
+        SimulationTime target_time) const override;
 };

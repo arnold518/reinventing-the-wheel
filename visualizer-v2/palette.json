@@ -8,6 +8,13 @@
     "MemoryPayloadMux<": [190, 105, 45, 190],
     "MemoryFFRequestCheck<": [20, 130, 115, 190],
     "MemoryTransactionPort<": [55, 125, 135, 190],
+    "TwoPortMemoryArbiter<": [55, 125, 135, 190],
+    "MultiplyStep<": [145, 95, 180, 190],
+    "DivideStep<": [135, 75, 150, 190],
+    "ClockedCounter<": [34, 150, 170, 190],
+    "SynchronousFifo<": [75, 115, 145, 190],
+    "RV32IBranchPredictor[": [95, 85, 160, 190],
+    "RV32IPredictionEntry[": [115, 65, 135, 190],
     "Register<": [105, 70, 145, 190],
     "StaticMemorySequencer<": [150, 100, 55, 190],
     "CommandMemorySequencer<": [150, 100, 55, 190],
@@ -71,7 +78,9 @@
     "MemoryStorageBank<": [105, 70, 145, 190],
     "MemoryWord<": [150, 55, 100, 190],
     "MemoryReadSelector<": [190, 105, 45, 190],
-    "IdealRAMReference": [70, 85, 125, 190]
+    "IdealRAMReference": [70, 85, 125, 190],
+    "AddressRouter32[": [20, 184, 166, 190],
+    "FramebufferDisplay32[": [35, 110, 130, 190]
   },
   "type_colors": {
     "ANDGate": [54, 162, 235, 190],
@@ -214,6 +223,27 @@
     "RV32IPipelineControlFlowUnit": [14, 116, 144, 190],
     "RV32IMemoryAlignmentUnit": [245, 158, 11, 190],
     "RV32IPipelineRetirementUnit": [225, 29, 72, 190],
-    "RV32IPipelineCoordinator": [100, 116, 139, 190]
+    "RV32IPipelineCoordinator": [100, 116, 139, 190],
+    "MemoryArbiterState": [105, 70, 145, 190],
+    "MemoryArbiterGrant": [150, 100, 55, 190],
+    "MemoryArbiterResponseRoute": [75, 115, 145, 190],
+    "Multiplier32": [100, 70, 140, 190],
+    "Divider32": [125, 65, 145, 190],
+    "MulDivUnit32": [80, 60, 120, 190],
+    "RV32IMDecodeControlUnit": [13, 148, 136, 190],
+    "RV32IMDecodeStage": [35, 115, 105, 190],
+    "RV32IMExecuteStage": [125, 55, 150, 190],
+    "RV32IMPipelineCoordinator": [100, 116, 139, 190],
+    "RV32IMFiveStageCore": [75, 65, 145, 190],
+    "RV32IMDeviceSystem": [44, 78, 145, 190],
+    "DeviceRegisterPort32": [55, 125, 135, 190],
+    "BusErrorTarget32": [190, 75, 100, 190],
+    "AddressRouter32": [20, 184, 166, 190],
+    "InstructionAccessGuard32": [20, 130, 115, 190],
+    "ConsoleDevice32": [45, 130, 140, 190],
+    "TimerDevice32": [180, 120, 40, 190],
+    "ButtonDevice32": [120, 110, 165, 190],
+    "IndexedPixelSelector32": [190, 105, 45, 190],
+    "FramebufferDisplay32": [35, 110, 130, 190]
   }
 }

@@ -1,5 +1,7 @@
 #pragma once
 
+#include "simulator/SimulationTime.hpp"
+
 #include "modules/basic/Gate.hpp"
 #include "tests/TruthTableComponentTest.hpp"
 #include "simulator/SimulationTest.hpp"
@@ -95,7 +97,7 @@ class ClockGeneratorTest : public SimulationTest {
 public:
     void setupCircuit() override;
     std::string getTestName() const override;
-    size_t getRunDuration() const override;
+    SimulationTime getRunDuration() const override;
     std::vector<SimulationCheckpoint> getCheckpoints() const override;
 
 protected:

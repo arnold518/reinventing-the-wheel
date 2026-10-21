@@ -153,7 +153,7 @@ public:
         return type_name_.c_str();
     }
 
-    void evaluate(size_t current_time, Simulator& simulator) override {
+    void evaluate(SimulationTime current_time, Simulator& simulator) override {
         const auto clk = getInputValue("CLK");
         const auto rst = getInputValue("RST");
         const auto write_enable = getInputValue("WRITE_ENABLE");

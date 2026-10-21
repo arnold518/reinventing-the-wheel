@@ -1,5 +1,7 @@
 #pragma once
 
+#include "simulator/SimulationTime.hpp"
+
 #include "components/IOComponent.hpp"
 #include "components/capabilities/RegisterStateView.hpp"
 #include "components/selection/ComponentFamily.hpp"
@@ -34,7 +36,7 @@ public:
     void buildInternals(ComponentBuilder& builder) override;
 
     std::vector<std::vector<LogicValue>>
-    getRegisterStateAtTime(size_t time) const override;
+    getRegisterStateAtTime(SimulationTime time) const override;
 
 private:
     std::shared_ptr<IOComponent> register_file_{};

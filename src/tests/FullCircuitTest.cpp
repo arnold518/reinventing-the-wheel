@@ -17,15 +17,15 @@ namespace {
 // The scenario's times are written for `unit` (every gate one tick). Under
 // another profile they are multiplied by its slowest gate, so every path
 // settles no later, relative to the stimuli, than it does in `unit`.
-size_t timeScale() {
+SimulationTime timeScale() {
     using circuit::timing::Leaf;
     using circuit::timing::leafDelay;
     return std::max({leafDelay(Leaf::Not), leafDelay(Leaf::And), leafDelay(Leaf::Nand),
-                     leafDelay(Leaf::Or), leafDelay(Leaf::Nor), leafDelay(Leaf::Xor), size_t{1}});
+                     leafDelay(Leaf::Or), leafDelay(Leaf::Nor), leafDelay(Leaf::Xor), SimulationTime{1}});
 }
 void expectWireAt(Simulator& sim,
                   const std::shared_ptr<Wire<>>& wire,
-                  size_t time,
+                  SimulationTime time,
                   LogicValue expected,
                   const char* wire_name) {
     assert(wire && "Missing wire for timestamp verification");
@@ -151,6 +151,6 @@ void FullCircuitTest::verifyResults() {
     expectWireAt(*sim, z_wire, 245 * timeScale(), LogicValue::LOW, "WireAND2_OUT after second capture");
 }
 
-size_t FullCircuitTest::getRunDuration() const {
+SimulationTime FullCircuitTest::getRunDuration() const {
     return 260 * timeScale();
 }

@@ -131,8 +131,8 @@ RV32ISingleCycleSystem::lastCommittedDataMemoryAccess() const {
 
 std::map<uint32_t, uint8_t>
 RV32ISingleCycleSystem::dataMemoryWritesInTimeRange(
-    size_t start_time,
-    size_t end_time) const {
+    SimulationTime start_time,
+    SimulationTime end_time) const {
     if (!data_memory_) {
         throw std::logic_error(
             "RV32ISingleCycleSystem is not built");

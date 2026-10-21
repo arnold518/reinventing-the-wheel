@@ -17,7 +17,7 @@ struct Comparison {
     std::map<std::string,std::shared_ptr<WireBase>> inputs;
     std::map<std::string,std::pair<std::shared_ptr<WireBase>,std::shared_ptr<WireBase>>> outputs;
     Simulator sim;
-    size_t time=0,rows=0;
+    SimulationTime time=0; size_t rows=0;
     Comparison(bool subtract) {
         fast=subtract?std::static_pointer_cast<IOComponent>(Component::create<AddSub32>("FAST"))
                      :std::static_pointer_cast<IOComponent>(Component::create<Adder32>("FAST"));
@@ -83,7 +83,7 @@ void incrementByFour() {
     simulator.scheduleEvent(std::make_shared<WireUpdateEvent<32>>(0,four,bits(4)));
     simulator.scheduleEvent(std::make_shared<WireUpdateEvent<1>>(0,zero,Bits{LogicValue::LOW}));
     std::mt19937 random(0x20260930);
-    size_t time=0;
+    SimulationTime time=0;
     for (size_t row=0;row<256;++row) {
         uint32_t value=row<32?((uint32_t{1}<<row)-4):random();
         simulator.scheduleEvent(std::make_shared<WireUpdateEvent<32>>(time,input,bits(value)));

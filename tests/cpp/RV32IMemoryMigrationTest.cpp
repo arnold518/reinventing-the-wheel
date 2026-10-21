@@ -19,7 +19,7 @@ using namespace circuit;
 using namespace circuit::memory;
 namespace {
 void require(bool ok, const std::string& why) { if (!ok) throw std::runtime_error(why); }
-template<size_t W> void drive(Simulator& sim, size_t t, const std::shared_ptr<Wire<W>>& wire, uint64_t value) {
+template<size_t W> void drive(Simulator& sim, SimulationTime t, const std::shared_ptr<Wire<W>>& wire, uint64_t value) {
     sim.scheduleEvent(std::make_shared<WireUpdateEvent<W>>(t, wire, value));
 }
 class RequesterRig {
@@ -27,7 +27,7 @@ public:
     Simulator sim;
     std::shared_ptr<IOComponent> root, requester, lanes, memory;
     std::map<std::string,std::shared_ptr<WireBase>> inputs;
-    size_t time = 0, requests = 0, writes = 0;
+    SimulationTime time = 0; size_t requests = 0, writes = 0;
     bool read_enabled=false, write_enabled=false;
     RequesterRig(Technology technology, bool expanded, bool mock=false) {
         root = Component::create<IOComponent>("TEST");
@@ -270,7 +270,7 @@ void checkProgram(bool pipeline, bool expanded, bool behavioral,
     drive(sim,0,rst,1);drive(sim,0,enable,1);root->startClock(sim,1000);
     root->initializeFixedInputs(sim);
     sim.advanceAndRecord(3000);drive(sim,3000,rst,0);
-    size_t t=4000, cycles=0;
+    SimulationTime t=4000; size_t cycles=0;
     for(;cycles<500;++cycles) {
         const bool paused=cycles%7<2;
         const auto before=root->snapshotArchitecturalState().toKnownState();

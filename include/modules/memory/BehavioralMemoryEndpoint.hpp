@@ -1,4 +1,6 @@
 #pragma once
+
+#include "simulator/SimulationTime.hpp"
 #include "modules/memory/NativeMemoryDevice.hpp"
 #include "components/capabilities/MemoryStateView.hpp"
 #include "components/capabilities/MemoryActivityView.hpp"
@@ -14,7 +16,7 @@ public:
     // The device's accepted commands (DRAM: activate, precharge, refresh,
     // read, write, read_burst); instrumentation for experiments.
     std::map<std::string, uint64_t> commandCounts() const;
-    void evaluate(size_t, Simulator&) override;
+    void evaluate(SimulationTime, Simulator&) override;
     const MemoryStorage& memoryStorage() const override;
     void loadMemoryBytes(uint32_t, const std::vector<uint8_t>&) override;
     // Image provisioning only, before the first simulator evaluation. This is
@@ -32,8 +34,8 @@ public:
     std::map<uint32_t, uint8_t> getByteWritesInTimeRange(size_t a, size_t b) const {
         return memoryStorage().getByteWritesInTimeRange(a, b);
     }
-    auto getTouchedWordsAtTime(size_t t, size_t n) const { return memoryStorage().getTouchedWordsAtTime(t, n); }
-    size_t getTouchedWordCountAtTime(size_t t) const { return memoryStorage().getTouchedWordCountAtTime(t); }
+    auto getTouchedWordsAtTime(SimulationTime t, size_t n) const { return memoryStorage().getTouchedWordsAtTime(t, n); }
+    size_t getTouchedWordCountAtTime(SimulationTime t) const { return memoryStorage().getTouchedWordCountAtTime(t); }
 private:
     struct State;
     std::unique_ptr<State> state_;

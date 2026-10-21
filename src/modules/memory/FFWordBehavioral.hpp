@@ -1,5 +1,7 @@
 #pragma once
 
+#include "simulator/SimulationTime.hpp"
+
 #include "components/BasicComponent.hpp"
 #include "modules/memory/FFWord.hpp"
 #include <array>
@@ -14,7 +16,7 @@ public:
         bits_.fill(LogicValue::UNKNOWN);
     }
     const char* getTypeName() const override { return FFWord<Width>::TypeName.c_str(); }
-    void evaluate(size_t time, Simulator& sim) override {
+    void evaluate(SimulationTime time, Simulator& sim) override {
         const auto reset = getInputValue("RST");
         const auto clock = getInputValue("CLK");
         if (reset == LogicValue::HIGH) bits_.fill(LogicValue::LOW);

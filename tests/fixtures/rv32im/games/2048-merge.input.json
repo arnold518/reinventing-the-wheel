@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "clockPeriod": "1000",
+  "resetRelease": "2000",
+  "origin": "3000",
+  "events": [
+    {
+      "tick": "4501",
+      "sequence": 1,
+      "device": "buttons",
+      "button": 3,
+      "down": true
+    }
+  ]
+}

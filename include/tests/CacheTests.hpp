@@ -1,5 +1,7 @@
 #pragma once
 
+#include "simulator/SimulationTime.hpp"
+
 #include "tests/ComponentTestModel.hpp"
 #include <map>
 
@@ -43,7 +45,7 @@ public:
     void preparePrecomputedSimulation() override;
     bool run() override;
     bool isSimulationPrecomputed() const override { return true; }
-    size_t getRunDuration() const override;
+    SimulationTime getRunDuration() const override;
     std::vector<SimulationCheckpoint> getCheckpoints() const override;
 
 protected:

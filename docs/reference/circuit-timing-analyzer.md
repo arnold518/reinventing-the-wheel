@@ -16,6 +16,13 @@ values found by trying inputs. A part-delay table also records earliest
 delays for hold analysis; an optional delay twin can use current input values
 to time a particular runtime transition.
 
+The wide-time migration represents simulator/public timing bounds as unsigned
+64-bit `SimulationTime`, independently of wasm32 pointer width. The private
+relative analysis engine reserves signed sentinels and rejects a contract
+outside its representable range. Runtime delay twins use conservative table
+publication when an absolute tick cannot fit their signed domain. These
+migration paths are undergoing native/WASM execution and regression checks.
+
 It replaces three earlier tools: the longest-path estimate with its candidate
 clock, the safe-clock analysis with its own value engine, and the separate
 settling analysis.

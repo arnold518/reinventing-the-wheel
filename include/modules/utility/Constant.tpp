@@ -11,12 +11,12 @@ ConstantValue<OUT_WIDTH>::ConstantValue(std::string name, uint64_t constant_valu
       value(constant_value) {}
 
 template<size_t OUT_WIDTH>
-void ConstantValue<OUT_WIDTH>::scheduleInitialEvents(Simulator& simulator, size_t current_time) {
+void ConstantValue<OUT_WIDTH>::scheduleInitialEvents(Simulator& simulator, SimulationTime current_time) {
     evaluate(current_time, simulator);
 }
 
 template<size_t OUT_WIDTH>
-void ConstantValue<OUT_WIDTH>::evaluate(size_t current_time, Simulator& simulator) {
+void ConstantValue<OUT_WIDTH>::evaluate(SimulationTime current_time, Simulator& simulator) {
     if constexpr (OUT_WIDTH == 1) {
         _updateOutputWire(simulator, "OUT", (value & 1U) ? LogicValue::HIGH : LogicValue::LOW, current_time);
     } else {

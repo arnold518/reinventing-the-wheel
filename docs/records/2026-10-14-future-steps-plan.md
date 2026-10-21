@@ -15,9 +15,10 @@ provide useful parts, but there is no guest-visible device platform or live
 game loop yet. The research and earlier candidate sequences below are dated
 proposals; the [cache system plan](2026-10-14-cache-system-plan.md) holds the
 current three-stage order and proposed acceptance gates. The
-owner also opened an ISA-expansion decision for the pre-game platform; no
-extension has been selected. A researched program shortlist below identifies
-source candidates, but the owner has not selected the first game.
+owner selected RV32IM and predetermined device input first. The adopted
+[device/game roadmap](2026-10-19-device-io-games-plan.md#rv32im-scripted-roadmap)
+and [phase 4–6 implementation](2026-10-21-scripted-games-phase4-6-implementation.md)
+now govern that work; dated alternatives below remain historical research.
 
 ## 2026-10-14 — Research
 
@@ -588,3 +589,46 @@ equivalence at shared small geometries and compares integrated programs.
 The current [cache system plan](2026-10-14-cache-system-plan.md) has the
 details and open design choices. No implementation or timing measurement was
 performed for this revision.
+
+## 2026-10-19 — Device I/O and games planning resumed
+
+The owner considers the primary cache implementation ready and wants to
+discuss device I/O and games next. The current source has shared backing RAM,
+an I/D arbiter and the five integrated memory/cache topologies; the earlier
+absence claims above describe the 2026-10-14 inspection. The separate
+general-cache policy expansion remains deferred.
+
+The [device I/O and games record](2026-10-19-device-io-games-plan.md) captures
+the refreshed source inventory, proposed uncached device routing, display and
+live-session boundaries, and candidate completion gates. First game,
+framebuffer versus tile display, simulated time versus presentation time and
+the pre-game ISA choice remain open. No device or game implementation was
+started, and no new throughput or playability measurement was made.
+
+## 2026-10-19 — RV32IM selected; scripted game runs first
+
+The owner selected RV32IM and instructed that components, ISA and games with
+predetermined device I/O precede interactive simulation. This supersedes the
+earlier open ISA choice and proposed live-first order. The
+[focused roadmap](2026-10-19-device-io-games-plan.md#rv32im-scripted-roadmap)
+now specifies 22 logical component designs, reused structures, compatibility
+requirements and phase completion gates. Existing RV32I families and recorded
+playback remain supported; new M contracts are explicit additions. Long WASM
+recordings still need a separately checked time-width migration before game
+capture, without requiring the live runtime at that stage.
+
+The proposed scripted game sequence is 2048, Sokoban, Snake, Pong and Tetris,
+followed by integrated acceptance and then live input/pacing. Concrete device
+ABI and component names will be frozen at implementation start. This update
+changed planning documents only; no product code, tests or performance runs
+were changed or executed.
+
+## 2026-10-21 — Multicore and persistent storage discussion
+
+The owner asked whether realistic multicore CPUs and hard disks/SSDs are possible and needed for the games milestone. They are feasible future extensions, not implemented features or prerequisites for the five preloaded scripted games. The owner authorized continuing the existing roadmap through phase 6.
+
+A first multicore experiment can instantiate two existing cores, separate architectural state/stacks and an appropriately arbitrated uncached shared RAM, on the common simulation clock. The existing two-requester arbiter is reusable equipment, not a complete verified four-requester (two I/two D) system. Private cached shared memory needs a coherence/maintenance design; current caches explicitly provide no coherence. Ordinary shared-memory locks motivate RISC-V A, but two cores with partitioned work/message passing can retain RV32IM. See the [A specification](https://docs.riscv.org/reference/isa/unpriv/a-st-ext.html). Simulating more cores increases work in the event engine; it is not a host-parallel speedup claim.
+
+A first persistent-storage milestone can add a structural block-command controller and a small transfer buffer over a separately named media/image abstraction. A large disk image must not become a dense simulated-RAM allocation. Explicit busy/completion/error and deterministic read/write/reset contracts precede scalable media backends. A full NVMe/PCIe or physical HDD/NAND implementation is a separate larger target; NVMe uses MMIO controller registers and submission/completion queues in system memory ([standards-owner overview](https://nvmexpress.org/base-nvm-express-part-one/)). Existing NOR flash is not an implemented SSD.
+
+Phase 4 initially loads guest ELF/assets before execution. Storage is needed if the simulated machine must boot/load games itself or persist saves; neither that requirement nor multicore was added to the adopted phase-6 scope.

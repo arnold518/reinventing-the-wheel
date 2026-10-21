@@ -58,7 +58,7 @@ protected:
         }return v;
     }
     bool rising() {auto c=getInputPin("CLK")->getValue();bool e=previous_==LogicValue::LOW&&c==LogicValue::HIGH;previous_=c;return e;}
-    void emit(const Values& values,size_t t,Simulator& s,const std::set<std::string>& skip={}) {
+    void emit(const Values& values,SimulationTime t,Simulator& s,const std::set<std::string>& skip={}) {
         for(auto& [n,p]:getAllOutputPins()) {
             if(skip.contains(n)) continue;
             auto v=get(values,n);
@@ -148,10 +148,10 @@ class BehavioralStage : public BinaryBlock {
 public:
     BehavioralStage(std::string n,Block b):BinaryBlock(std::move(n),family(b).pinInitializer()),block_(b) {record(0);}
     const char* getTypeName() const override {return family(block_).typeName().data();}
-    std::vector<std::vector<LogicValue>> registerStateAtTime(size_t time) const {
+    std::vector<std::vector<LogicValue>> registerStateAtTime(SimulationTime time) const {
         auto i=history_.upper_bound(time);return i==history_.begin()?i->second:std::prev(i)->second;
     }
-    void evaluate(size_t t,Simulator& s) override {
+    void evaluate(SimulationTime t,Simulator& s) override {
         if(block_==Block::FetchStage) {fetch(t,s);return;}
         auto in=inputs();Values out;
         if(block_==Block::DecodeStage) {
@@ -162,7 +162,7 @@ public:
             rv32i::register_file::step(words_,previous_clock_,getInputValue("RST"),getInputValue("CLK"),
                 getInputValue("REGISTER_WRITE"),getInputPin<5>("WB_RD")->getValueAsVector(),
                 getInputPin<32>("WB_VALUE")->getValueAsVector());
-            if(words_!=before) record(t+delay);
+            if(words_!=before) record(checkedTimeAdd(t,delay));
         }
         switch(block_) {
             case Block::FetchStage:break;
@@ -191,7 +191,7 @@ private:
         w[0].assign(32,LogicValue::LOW);return w;}();
     // A register, an incrementer, a multiplexer and wires, each by its own
     // four-state rule.
-    void fetch(size_t t,Simulator& s) {
+    void fetch(SimulationTime t,Simulator& s) {
         using namespace circuit::logic_values;
         const auto redirect=getInputPin<32>("REDIRECT_PC")->getValueAsVector();
         const auto select=getInputValue("PC_REDIRECT");
@@ -207,8 +207,8 @@ private:
         _updateOutputWire(s,"IMEM_READ_EN",getInputValue("FETCH_VALID"),t);
         _updateOutputWire<32>(s,"OUT_FETCH_STATUS",status,t);_updateOutputWire<32>(s,"IMEM_WORD_ADDR",word_address,t);
     }
-    std::map<size_t,std::vector<std::vector<LogicValue>>> history_;
-    void record(size_t t) {std::vector<std::vector<LogicValue>> v(words_.begin(),words_.end());if(history_.empty()||history_.rbegin()->second!=v) history_[t]=std::move(v);}
+    std::map<SimulationTime,std::vector<std::vector<LogicValue>>> history_;
+    void record(SimulationTime t) {std::vector<std::vector<LogicValue>> v(words_.begin(),words_.end());if(history_.empty()||history_.rbegin()->second!=v) history_[t]=std::move(v);}
 };
 
 // Only Decode owns architectural registers. Do not advertise a register-file
@@ -216,7 +216,7 @@ private:
 class BehavioralDecode : public BehavioralStage, public RegisterStateView {
 public:
     explicit BehavioralDecode(std::string n):BehavioralStage(std::move(n),Block::DecodeStage) {}
-    std::vector<std::vector<LogicValue>> getRegisterStateAtTime(size_t t) const override {
+    std::vector<std::vector<LogicValue>> getRegisterStateAtTime(SimulationTime t) const override {
         return registerStateAtTime(t);
     }
 };
@@ -235,7 +235,7 @@ public:
             get(w_,"IN_STORE_DATA"), get(w_,"IN_MEMORY_DATA"), (get(w_,"IN_MEMORY_STATUS")&3U)!=0), get(w_,"IN_NEXT_PC"),
             bool(trapCause(w_) || bits(get(w_,"IN_CONTROL"),5,1))};
     }
-    void evaluate(size_t t,Simulator& s) override {
+    void evaluate(SimulationTime t,Simulator& s) override {
         const auto in=inputs();const bool edge=rising();
         if(get(in,"RST")) {regs_.fill(0);fetch_pc_=cause_=0;halted_=trapped_=false;d_.clear();e_.clear();m_.clear();w_.clear();}
         else if(edge) advance(in);

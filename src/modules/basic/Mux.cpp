@@ -178,7 +178,7 @@ public:
         : BasicComponent(std::move(name), 1, defineBusMuxPins<INPUT_COUNT, SEL_WIDTH, BUS_WIDTH>),
           type_name_(type_name) {}
     const char* getTypeName() const override { return type_name_; }
-    void evaluate(size_t current_time, Simulator& simulator) override {
+    void evaluate(SimulationTime current_time, Simulator& simulator) override {
         const auto select = getInputPin<SEL_WIDTH>("SEL")->getValueAsVector();
         std::vector<std::vector<LogicValue>> inputs;
         inputs.reserve(INPUT_COUNT);

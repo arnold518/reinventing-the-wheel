@@ -120,7 +120,7 @@ void updateOutputWord(
     Simulator& simulator,
     const std::string& pin_name,
     const std::vector<LogicValue>& values,
-    size_t event_time
+    SimulationTime event_time
 ) {
     auto pin = component.getOutputPin<WordWidth>(pin_name);
     if (!pin) {
@@ -146,7 +146,7 @@ RegisterFile32x32Behavioral::RegisterFile32x32Behavioral(std::string name)
     recordRegisterHistory(0);
 }
 
-void RegisterFile32x32Behavioral::evaluate(size_t current_time, Simulator& simulator) {
+void RegisterFile32x32Behavioral::evaluate(SimulationTime current_time, Simulator& simulator) {
     const auto rs1_addr = inputAddress(getInputPin<AddressWidth>("RS1_ADDR"));
     const auto rs2_addr = inputAddress(getInputPin<AddressWidth>("RS2_ADDR"));
     const auto rd_addr = inputAddress(getInputPin<AddressWidth>("RD_ADDR"));
@@ -166,14 +166,14 @@ void RegisterFile32x32Behavioral::evaluate(size_t current_time, Simulator& simul
     updateOutputWord(*this, simulator, "RS2_DATA", readSelectedWord(registers, rs2_addr), publishTime("RS2_DATA", current_time));
 }
 
-std::vector<std::vector<LogicValue>> RegisterFile32x32Behavioral::getRegisterStateAtTime(size_t target_time) const {
+std::vector<std::vector<LogicValue>> RegisterFile32x32Behavioral::getRegisterStateAtTime(SimulationTime target_time) const {
     const RegisterSnapshot* snapshot = &registers;
     if (!register_history.empty()) {
         auto upper = std::upper_bound(
             register_history.begin(),
             register_history.end(),
             target_time,
-            [](size_t time, const auto& entry) {
+            [](SimulationTime time, const auto& entry) {
                 return time < entry.first;
             });
         if (upper == register_history.begin()) {
@@ -191,7 +191,7 @@ std::vector<std::vector<LogicValue>> RegisterFile32x32Behavioral::getRegisterSta
     return result;
 }
 
-void RegisterFile32x32Behavioral::recordRegisterHistory(size_t time) {
+void RegisterFile32x32Behavioral::recordRegisterHistory(SimulationTime time) {
     if (!register_history.empty() && time < register_history.back().first) {
         register_history.clear();
     }

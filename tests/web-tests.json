@@ -444,6 +444,64 @@
         "browser"
       ],
       "timeout": 600
+    },
+    {
+      "name": "RV32IMDeviceWasmParityTest",
+      "file": "RV32IMDeviceWasmParityTest.mjs",
+      "kind": "parity",
+      "args": [
+        "{js}",
+        "{wasm}",
+        "{probe}"
+      ],
+      "suites": [],
+      "timeout": 1800
+    },
+    {
+      "name": "RV32IMDeviceBrowserTest",
+      "file": "RV32IMDeviceBrowserTest.py",
+      "kind": "browser",
+      "args": [
+        "{base}"
+      ],
+      "suites": [],
+      "timeout": 1800
+    },
+    {
+      "name": "SimulationTimeWasmTest",
+      "file": "SimulationTimeWasmTest.mjs",
+      "kind": "parity",
+      "args": [
+        "{js}",
+        "{wasm}",
+        "{probe}",
+        "{verifier}"
+      ],
+      "suites": [],
+      "timeout": 600
+    },
+    {
+      "name": "RecordedGuestWasmParityTest",
+      "file": "RecordedGuestWasmParityTest.mjs",
+      "kind": "parity",
+      "args": [
+        "{js}",
+        "{wasm}",
+        "{guest_probe}"
+      ],
+      "suites": [],
+      "timeout": 14400
+    },
+    {
+      "name": "RecordedGameViewerBrowserTest",
+      "file": "RecordedGameViewerBrowserTest.py",
+      "kind": "browser",
+      "args": [
+        "{base}",
+        "{guest_probe}"
+      ],
+      "suites": [],
+      "timeout": 7200
     }
   ]
 }

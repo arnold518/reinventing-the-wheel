@@ -105,11 +105,11 @@ uint32_t encodeShiftI(uint8_t funct7, uint8_t shamt, uint8_t rs1, uint8_t funct3
     return encodeI((static_cast<int32_t>(funct7) << 5) | (shamt & 0x1FU), rs1, funct3, rd);
 }
 
-void drive(Simulator& sim, size_t time, const std::shared_ptr<Wire<>>& wire, bool value) {
+void drive(Simulator& sim, SimulationTime time, const std::shared_ptr<Wire<>>& wire, bool value) {
     sim.scheduleEvent(std::make_shared<WireUpdateEvent<>>(time, wire, value ? LogicValue::HIGH : LogicValue::LOW));
 }
 
-void scheduleClockCycle(Simulator& sim, size_t cycle_start_time, const std::shared_ptr<Wire<>>& clk_wire) {
+void scheduleClockCycle(Simulator& sim, SimulationTime cycle_start_time, const std::shared_ptr<Wire<>>& clk_wire) {
     drive(sim, cycle_start_time, clk_wire, false);
     drive(sim, cycle_start_time + 1, clk_wire, true);
     drive(sim, cycle_start_time + 5, clk_wire, false);
@@ -232,7 +232,7 @@ void RV32ISystemAnswerSheetRun::setupCircuit() {
     setInitialState();
 }
 
-size_t RV32ISystemAnswerSheetRun::getRunDuration() const {
+SimulationTime RV32ISystemAnswerSheetRun::getRunDuration() const {
     return visual_run_duration_;
 }
 
@@ -1455,7 +1455,7 @@ void RV32ISystemAnswerSheetRun::initializeComponentForLockstep(const RV32ISystem
     }
 }
 
-void RV32ISystemAnswerSheetRun::clockComponentOneCycle(size_t cycle_index, size_t cycle_start_time) {
+void RV32ISystemAnswerSheetRun::clockComponentOneCycle(size_t cycle_index, SimulationTime cycle_start_time) {
     (void)cycle_index;
     (void)cycle_start_time;
     ++committed_instruction_count_;

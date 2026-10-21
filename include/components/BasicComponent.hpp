@@ -1,5 +1,7 @@
 #pragma once
 
+#include "simulator/SimulationTime.hpp"
+
 #include "components/IOComponent.hpp"
 #include "components/PartDelays.hpp"
 #include "basic/Wire.hpp"
@@ -21,7 +23,7 @@
 class BasicComponent : public IOComponent
 {
 protected:
-    size_t delay;
+    SimulationTime delay;
     // Inertial delay: an output change still waiting to be published is
     // withdrawn when a later evaluation would replace it before it settles,
     // so a pulse shorter than the delay never appears. Logic gates use it;
@@ -29,13 +31,13 @@ protected:
     // changes nothing there. CIRCUITSIM_TRANSPORT_DELAY=1 turns it off.
     virtual bool inertialDelay() const { return false; }
     // The tick at which an output computed now is published.
-    size_t publishTime(const std::string& output_pin, size_t current_sim_time);
+    SimulationTime publishTime(const std::string& output_pin, SimulationTime current_sim_time);
     void _updateOutputWire(Simulator& simulator, const std::string& pin_name,
-                           LogicValue new_value, size_t current_sim_time);
+                           LogicValue new_value, SimulationTime current_sim_time);
 
     template<size_t WIDTH>
     void _updateOutputWire(Simulator& simulator, const std::string& pin_name,
-                           uint64_t new_value, size_t current_sim_time) {
+                           uint64_t new_value, SimulationTime current_sim_time) {
         if (auto pin = getOutputPin<WIDTH>(pin_name)) {
             pin->setValueFromUInt64(new_value);
             if (auto wire = pin->getExternalWire()) {
@@ -51,7 +53,7 @@ protected:
     template<size_t WIDTH>
     void _updateOutputWire(Simulator& simulator, const std::string& pin_name,
                            const std::vector<LogicValue>& new_value,
-                           size_t current_sim_time) {
+                           SimulationTime current_sim_time) {
         if (auto pin = getOutputPin<WIDTH>(pin_name)) {
             pin->setValueFromVector(new_value);
             if (auto wire = pin->getExternalWire()) {
@@ -69,14 +71,14 @@ protected:
     // typed overloads do; a width without a Wire instantiation is an error.
     void _updateOutputWireDynamic(Simulator& simulator, const std::string& pin_name,
                                   const std::vector<LogicValue>& new_value,
-                                  size_t current_sim_time);
+                                  SimulationTime current_sim_time);
 
 public:
-    BasicComponent(std::string name, size_t delay_val, PinInitFunction initializer = nullptr);
+    BasicComponent(std::string name, SimulationTime delay_val, PinInitFunction initializer = nullptr);
     static constexpr const char* TypeName = "BasicComponent";
     const char* getTypeName() const override { return TypeName; }
 
-    size_t getDelay() const;
+    SimulationTime getDelay() const;
     // How a structural-terminal primitive that is not made of gates times its
     // outputs, for the timing analysis. Both kinds publish only while being
     // evaluated, one delay later.
@@ -89,7 +91,7 @@ public:
     void setDelays(circuit::PartDelays delays);
     const circuit::PartDelays* getDelays() const;
     // Entry point of the simulator: notes which inputs changed, then evaluates.
-    void evaluateAt(size_t current_time, Simulator& simulator);
+    void evaluateAt(SimulationTime current_time, Simulator& simulator);
     // A part with a delay table watches its own setup times: an input listed
     // in the table's `setup` that changed too shortly before a rising clock
     // edge is counted. The gates would capture such data late or wrongly; the
@@ -97,14 +99,14 @@ public:
     // the gates while this count stays zero.
     static size_t setupViolations();
     static void resetSetupViolations();
-    virtual void scheduleInitialEvents(Simulator& simulator, size_t current_time);
-    virtual void evaluate(size_t current_time, Simulator& simulator) = 0;
+    virtual void scheduleInitialEvents(Simulator& simulator, SimulationTime current_time);
+    virtual void evaluate(SimulationTime current_time, Simulator& simulator) = 0;
     ~BasicComponent() override;
 
 private:
     struct TimedOutputs;
     std::unique_ptr<TimedOutputs> timed_;
     // Weak: the simulator owns the event; a part must not keep wires alive.
-    struct PendingChange { size_t time; LogicValue value; std::weak_ptr<Event> event; };
+    struct PendingChange { SimulationTime time; LogicValue value; std::weak_ptr<Event> event; };
     std::vector<std::pair<std::string, std::vector<PendingChange>>> pending_changes_;
 };

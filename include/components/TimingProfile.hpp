@@ -1,6 +1,9 @@
 #pragma once
 
+#include "simulator/SimulationTime.hpp"
+
 #include <cstddef>
+#include "simulator/SimulationTime.hpp"
 #include <string>
 #include <string_view>
 #include <vector>
@@ -32,62 +35,63 @@ struct TimingProfile {
     std::string name;
     std::string description;
     // Picoseconds per tick, or 0 for an abstract tick.
-    size_t tick_picoseconds = 0;
-    size_t not_gate = 1, and_gate = 1, nand_gate = 1, or_gate = 1, nor_gate = 1, xor_gate = 1;
-    size_t splitter = 1;
-    size_t memory_primitive = 1;
+    SimulationTime tick_picoseconds = 0;
+    SimulationTime not_gate = 1, and_gate = 1, nand_gate = 1, or_gate = 1, nor_gate = 1, xor_gate = 1;
+    SimulationTime splitter = 1;
+    SimulationTime memory_primitive = 1;
     // Measured, not chosen: the contracts of the two gate-level loops that
     // path analysis cannot bound, found by trying every case under this
     // profile's gate delays (DFlipFlopTimingTest, SRAMCellTimingTest check
     // them). Values in ticks.
     struct FlipFlop {
-        size_t setup = 6, hold = 1, clock_to_output_minimum = 3, clock_to_output_maximum = 4,
+        SimulationTime setup = 6, hold = 1, clock_to_output_minimum = 3, clock_to_output_maximum = 4,
                minimum_high = 2, minimum_low = 6;
     } flip_flop;
     struct SRAMCell {
-        size_t earliest = 2, latest = 3, minimum_spacing = 2;
+        SimulationTime earliest = 2, latest = 3, minimum_spacing = 2;
     } sram_cell;
     // Analog intervals of the memory devices, as delay lines and as the delays
     // of the electrical stand-in primitives that share them (ticks). A
     // replica path uses the same value as the path it copies.
     struct Memory {
-        size_t sram_settle = 32, sram_precharge = 32, sram_bitline_base = 64, sram_bitline_per_row = 0;
-        size_t rom_settle = 32, rom_column_base = 96, rom_column_per_row = 0;
+        SimulationTime sram_settle = 32, sram_precharge = 32, sram_bitline_base = 64, sram_bitline_per_row = 0;
+        SimulationTime rom_settle = 32, rom_column_base = 96, rom_column_per_row = 0;
         // Global wire of a multi-subarray on-chip SRAM, per subarray of grid
         // side it crosses (each way).
-        size_t sram_wire_per_side = 2;
+        SimulationTime sram_wire_per_side = 2;
         // DRAM command intervals: ACTIVATE (wordline, sense, restore),
         // READ (column), WRITE (drive on, drive off, recovery), PRECHARGE
         // (close, precharge, equalize). REFRESH is ACTIVATE then PRECHARGE.
-        size_t dram_wordline = 32, dram_sense_base = 32, dram_sense_per_row = 0, dram_restore = 32;
-        size_t dram_read = 32, dram_write_on = 32, dram_write_off = 32, dram_write_recovery = 32;
-        size_t dram_close = 32, dram_precharge = 32, dram_equalize = 32;
+        SimulationTime dram_wordline = 32, dram_sense_base = 32, dram_sense_per_row = 0, dram_restore = 32;
+        SimulationTime dram_read = 32, dram_write_on = 32, dram_write_off = 32, dram_write_recovery = 32;
+        SimulationTime dram_close = 32, dram_precharge = 32, dram_equalize = 32;
         // NOR flash: the read column's sensing time (base and per row) and the
         // two steps after a program/erase pulse.
-        size_t nor_read = 96, nor_read_per_row = 0, nor_pulse_end = 32, nor_recovery = 32;
+        SimulationTime nor_read = 96, nor_read_per_row = 0, nor_pulse_end = 32, nor_recovery = 32;
         // DRAM cell retention defaults: the device's (ticks a row keeps its
         // charge unrefreshed) and the scalable endpoint's.
-        size_t dram_device_retention = 100000, dram_endpoint_retention = 1000000000;
+        SimulationTime dram_device_retention = 100000, dram_endpoint_retention = 1000000000;
         // REFRESH: the full restore after sensing (to tRAS) and the rest of
         // the part's tRFC (a real REFRESH covers several rows); 0 leaves the
         // step out.
-        size_t dram_refresh_restore = 0, dram_refresh_extra = 0;
+        SimulationTime dram_refresh_restore = 0, dram_refresh_extra = 0;
         // The reference system's DRAM: refresh period per REFRESH command
         // (tREFI, ticks; 0 keeps the endpoint's own cycle count) and words
         // per row of a 32-bit channel. Experiments take their geometry and
         // refresh rate from these.
-        size_t dram_refresh_interval = 0, dram_row_words = 2;
+        SimulationTime dram_refresh_interval = 0;
+        size_t dram_row_words = 2;
         // NOR flash program and erase pulses (EndpointConfig defaults).
-        size_t nor_program = 128, nor_erase = 256;
-        size_t norRead(size_t rows) const { return nor_read + nor_read_per_row * rows; }
-        size_t dramSense(size_t rows) const { return dram_sense_base + dram_sense_per_row * rows; }
-        size_t sramBitline(size_t rows) const { return sram_bitline_base + sram_bitline_per_row * rows; }
-        size_t romColumn(size_t rows) const { return rom_column_base + rom_column_per_row * rows; }
+        SimulationTime nor_program = 128, nor_erase = 256;
+        SimulationTime norRead(size_t rows) const { return checkedTimeAdd(nor_read, checkedTimeMultiply(nor_read_per_row, rows)); }
+        SimulationTime dramSense(size_t rows) const { return checkedTimeAdd(dram_sense_base, checkedTimeMultiply(dram_sense_per_row, rows)); }
+        SimulationTime sramBitline(size_t rows) const { return checkedTimeAdd(sram_bitline_base, checkedTimeMultiply(sram_bitline_per_row, rows)); }
+        SimulationTime romColumn(size_t rows) const { return checkedTimeAdd(rom_column_base, checkedTimeMultiply(rom_column_per_row, rows)); }
     } memory;
     // Where the numbers come from.
     std::string sources;
 
-    size_t delay(Leaf leaf) const;
+    SimulationTime delay(Leaf leaf) const;
 };
 
 const TimingProfile& activeTimingProfile();
@@ -96,7 +100,7 @@ void setActiveTimingProfile(std::string_view name);
 const TimingProfile& timingProfile(std::string_view name);
 std::vector<std::string> timingProfileNames();
 
-inline size_t leafDelay(Leaf leaf) { return activeTimingProfile().delay(leaf); }
+inline SimulationTime leafDelay(Leaf leaf) { return activeTimingProfile().delay(leaf); }
 inline bool unitTiming() { return activeTimingProfile().name == "unit"; }
 
 } // namespace circuit::timing

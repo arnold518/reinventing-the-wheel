@@ -1,5 +1,7 @@
 #pragma once
 
+#include "simulator/SimulationTime.hpp"
+
 #include "ForwardDeclarations.hpp"
 #include "basic/LogicValue.hpp"
 #include <cstddef>
@@ -38,9 +40,9 @@ public:
     virtual void setValueVector(const std::vector<LogicValue>& values) = 0;
     virtual LogicValue getSingleValue() const = 0;
     virtual void setSingleValue(LogicValue value) = 0;
-    virtual void propagateChange(Simulator& simulator, size_t propagation_time) = 0;
+    virtual void propagateChange(Simulator& simulator, SimulationTime propagation_time) = 0;
 
     std::string getID() const;
 };
 
-void propagateWireChange(WireBase& wire, Simulator& simulator, size_t propagation_time);
+void propagateWireChange(WireBase& wire, Simulator& simulator, SimulationTime propagation_time);

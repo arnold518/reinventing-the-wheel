@@ -70,6 +70,14 @@ const char* const SAMPLE = "this sample of changes did not reach its slowest cas
 // passes while it stays at or above these; it fails if it drops lower.
 struct Floor { int typical, worst; const char* why; };
 const std::map<std::string, Floor> FLOORS = {
+    // Measured with the unchanged cache circuits/tables: this sample misses
+    // the slowest per-output cases. Keep the safety rule and global targets.
+    {"memory.cache.controller.16", {83, 64, SAMPLE}},
+    {"memory.cache.controller.32", {85, 75, SAMPLE}},
+    {"memory.cache.controller.8", {84, 61, SAMPLE}},
+    // Like the existing whole-core exceptions, this core exceeds the delay
+    // twin's node budget and publishes on its conservative structural table.
+    {"rv32im.core.educational-five-stage", {29, 25, DATA}},
     {"memory.dram.bank.16", {65, -1, CELLS}},
     {"memory.dram.bank.32", {56, -1, CELLS}},
     {"memory.dram.bank.8", {69, -1, CELLS}},
@@ -119,7 +127,7 @@ struct Bench {
     std::shared_ptr<IOComponent> root = Component::create<IOComponent>("BENCH");
     std::map<std::string, std::shared_ptr<WireBase>> inputs, outputs;
     Simulator sim;
-    size_t now = 0;
+    SimulationTime now = 0;
     bool restless = false;
 
     explicit Bench(std::shared_ptr<IOComponent> part) : dut(std::move(part)) {
@@ -247,7 +255,7 @@ struct Inner {
         for (const auto& [name, wire] : inputs) now[name] = wire->getValueVector();
         for (const auto& [name, wire] : outputs) { shown[name] = wire->getValueVector(); allowed[name] = 0; }
     }
-    void tick(size_t time, Tally& tally) {
+    void tick(SimulationTime time, Tally& tally) {
         std::vector<std::string> changed;
         for (const auto& [name, wire] : inputs) {
             auto value = wire->getValueVector();
@@ -414,7 +422,7 @@ std::optional<Tally> part(const std::string& contract, size_t rounds, bool four_
     const auto apply = [&](const Vector& next, const Vector& late = {}, size_t offset = 0) {
         if (watching) for (auto& part : inner) part.rest();
         auto real = gates.change(next, watch, !watching || inner.empty() ? std::function<void(size_t)>{}
-            : [&](size_t time) { for (auto& part : inner) part.tick(time, tally); }, late, offset);
+            : [&](SimulationTime time) { for (auto& part : inner) part.tick(time, tally); }, late, offset);
         auto shown = compact.change(next, watch, {}, late, offset);
         std::map<std::string, size_t> blend;
         if (mixed) blend = mixed->change(next, watch, {}, late, offset);
@@ -632,7 +640,7 @@ std::optional<Tally> part(const std::string& contract, size_t rounds, bool four_
         for (const auto& [output, largest] : worst) {
             if (tally.closest.contains(output) && tally.closest.at(output) >= 0.9) continue;
             std::string slowest;
-            size_t delay = 0;
+            SimulationTime delay = 0;
             for (const auto& arc : table.arcs) if (arc.output == output && arc.delay.maximum > delay
                 && std::find(pins.begin(), pins.end(), arc.input) != pins.end()) { delay = arc.delay.maximum; slowest = arc.input; }
             if (slowest.empty()) continue;
@@ -673,7 +681,7 @@ void cores(double margin) {
     };
     struct Outcome { bool verified = false; size_t violations = 0, cycles = 0; };
     using Setup = std::function<void(RV32IExperimentConfig&)>;
-    const auto run = [](const char* core, const char* fidelity, size_t period, const Setup& setup = {}) {
+    const auto run = [](const char* core, const char* fidelity, SimulationTime period, const Setup& setup = {}) {
         RV32IExperimentConfig config;
         config.core = core;
         config.fidelity = fidelity;
@@ -687,7 +695,7 @@ void cores(double margin) {
         outcome.violations = BasicComponent::setupViolations();
         return outcome;
     };
-    const auto line = [](const char* core, const std::string& what, size_t period, const Outcome& outcome) {
+    const auto line = [](const char* core, const std::string& what, SimulationTime period, const Outcome& outcome) {
         std::cout << "  " << std::left << std::setw(9) << core << std::setw(34) << what << "period " << std::setw(4) << period
                   << (outcome.verified ? " verified" : " NOT verified") << ", setup violations " << outcome.violations << '\n';
     };
@@ -849,6 +857,7 @@ int main(int argc, char** argv) {
             for (size_t i = 1; i < tally->failures.size(); ++i) std::cout << std::string(40, ' ') << "  also: " << tally->failures[i] << '\n';
         }
         build_parameters.clear();
+        if (!only.empty() && !parts) throw std::runtime_error("No selected parts were compared");
         std::cout << std::left << std::setw(38) << "all parts" << std::right << std::setw(6) << situations << std::setw(8) << compared;
         Tally::Set everything;
         for (int kind = 0; kind < KINDS; ++kind) {

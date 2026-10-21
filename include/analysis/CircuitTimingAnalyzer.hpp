@@ -1,5 +1,7 @@
 #pragma once
 
+#include "simulator/SimulationTime.hpp"
+
 #include "components/PartDelays.hpp"
 #include <cstddef>
 #include <cstdint>
@@ -28,8 +30,8 @@ enum class ClockTimingStatus { SafeUnderContracts, TimingViolation, Unknown };
 const char* clockTimingStatusName(ClockTimingStatus status);
 
 struct DelayBounds {
-    size_t minimum = 0;
-    size_t maximum = 0;
+    SimulationTime minimum = 0;
+    SimulationTime maximum = 0;
 };
 struct TimingArc {
     std::string input, output;
@@ -38,7 +40,7 @@ struct TimingArc {
 struct ClockCapture {
     std::string pin;
     ClockEdge edge = ClockEdge::Rising;
-    size_t setup = 0, hold = 0;
+    SimulationTime setup = 0, hold = 0;
 };
 struct ClockLaunch {
     std::string pin;
@@ -70,7 +72,7 @@ struct ClockComponentContract {
     // an edge). Every other pin of the part is on its own time. Empty: all are.
     std::vector<std::string> clocked_pins;
     std::vector<std::string> unused_inputs;
-    size_t minimum_high_ticks = 0, minimum_low_ticks = 0;
+    SimulationTime minimum_high_ticks = 0, minimum_low_ticks = 0;
 };
 struct ClockInputConstraint {
     std::string pin; // Fully qualified external input pin ID.
@@ -91,7 +93,7 @@ struct ClockSpecification {
     std::vector<ClockCapture> also_captured;
     // One ideal, directly distributed, 50% duty-cycle clock. Strict separation
     // avoids relying on simulator ordering for coincident data/clock events.
-    size_t event_separation_ticks = 1;
+    SimulationTime event_separation_ticks = 1;
     size_t maximum_nodes = 500000, maximum_edges = 2000000;
     size_t maximum_hierarchy_depth = 256;
     size_t maximum_state_cases = 64;
@@ -106,7 +108,7 @@ struct TimingContracts {
 };
 struct ClockTimingReport {
     ClockTimingStatus status = ClockTimingStatus::Unknown;
-    std::optional<size_t> safe_period_ticks;
+    std::optional<SimulationTime> safe_period_ticks;
     size_t node_count = 0, edge_count = 0, capture_count = 0;
     size_t checked_setup_relationships = 0, checked_hold_relationships = 0;
     std::string limiting_constraint;
@@ -158,7 +160,7 @@ struct SettlingOptions {
     // known, but they do not move. Used to time one input at a time.
     std::vector<std::string> held_inputs;
     // Root input pin name -> tick of its last transition (default 0).
-    std::map<std::string, size_t> input_arrival;
+    std::map<std::string, SimulationTime> input_arrival;
     // Timed evaluations allowed per endpoint. Running out never weakens the
     // result: the bound reported is then the largest one not yet excluded.
     size_t search_budget = 20000;
@@ -170,9 +172,9 @@ struct SettlingOptions {
 struct SettlingEndpoint {
     std::string name;       // a root output pin, or "(captures)"
     bool changes = false;   // false: provably never changes in operation
-    size_t structural = 0;  // longest per-bit path, values ignored
-    size_t bound = 0;       // proven latest change (captures: plus setup)
-    size_t earliest = 0;    // earliest possible change along any wiring path
+    SimulationTime structural = 0;  // longest per-bit path, values ignored
+    SimulationTime bound = 0;       // proven latest change (captures: plus setup)
+    SimulationTime earliest = 0;    // earliest possible change along any wiring path
     // A final source vector reaches `bound` in the timed-value model, so no
     // further case split can lower it. It does not claim that the simulator
     // shows a change that late for some previous state.
@@ -184,7 +186,7 @@ struct SettlingEndpoint {
 
 struct SettlingReport {
     bool valid = false;
-    size_t structural = 0, bound = 0;
+    SimulationTime structural = 0, bound = 0;
     size_t bit_count = 0, variable_count = 0;
     std::vector<SettlingEndpoint> endpoints;
     std::vector<std::string> clock_inputs;  // root inputs used as a clock
@@ -201,7 +203,7 @@ struct SettlingReport {
 struct PartDelay {
     std::string output;   // output pin
     bool changes = false; // false: this cause never changes the output
-    size_t delay = 0;     // proven latest change, in ticks
+    SimulationTime delay = 0;     // proven latest change, in ticks
     bool tight = false;
 };
 // The delays of one part as seen from outside: what a compact form of the
@@ -211,11 +213,11 @@ struct PartTiming {
     bool clocked = false;                    // the part captures or launches on a clock
     std::vector<PartDelay> input_to_output;  // inputs change while state holds
     std::vector<PartDelay> clock_to_output;  // state launches while inputs hold
-    size_t input_to_capture = 0;             // latest arrival at a clocked capture, setup included
-    size_t state_to_capture = 0;
+    SimulationTime input_to_capture = 0;             // latest arrival at a clocked capture, setup included
+    SimulationTime state_to_capture = 0;
     // One number for a part that has a single delay: the latest change of any
     // output from any cause.
-    size_t delay = 0;
+    SimulationTime delay = 0;
     std::vector<std::string> premises, diagnostics;
 };
 

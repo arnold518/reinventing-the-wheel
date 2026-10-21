@@ -206,7 +206,7 @@ public:
     const char* getTypeName() const override {
         return with_word_address_ ? RV32IMemoryLanes::TypeName : "RV32IMemoryLanesDataOnly";
     }
-    void evaluate(size_t time, Simulator& simulator) override {
+    void evaluate(SimulationTime time, Simulator& simulator) override {
         bool known = true;
         for (const auto& [name, pin] : getAllInputPins())
             known = known && circuit::logic_values::allKnown(pin->getValueAsVector());

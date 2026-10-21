@@ -1,5 +1,7 @@
 #pragma once
 
+#include "simulator/SimulationTime.hpp"
+
 #include "components/BasicComponent.hpp"
 #include <iostream>
 
@@ -9,7 +11,7 @@ public:
     NOTGate(std::string name);
     static constexpr const char* TypeName = "NOTGate";
     const char* getTypeName() const override { return TypeName; }
-    void evaluate(size_t current_time, Simulator& simulator) override;
+    void evaluate(SimulationTime current_time, Simulator& simulator) override;
 protected:
     bool inertialDelay() const override { return true; }
 };
@@ -20,7 +22,7 @@ public:
     ANDGate(std::string name);
     static constexpr const char* TypeName = "ANDGate";
     const char* getTypeName() const override { return TypeName; }
-    void evaluate(size_t current_time, Simulator& simulator) override;
+    void evaluate(SimulationTime current_time, Simulator& simulator) override;
 protected:
     bool inertialDelay() const override { return true; }
 };
@@ -31,7 +33,7 @@ public:
     NANDGate(std::string name);
     static constexpr const char* TypeName = "NANDGate";
     const char* getTypeName() const override { return TypeName; }
-    void evaluate(size_t current_time, Simulator& simulator) override;
+    void evaluate(SimulationTime current_time, Simulator& simulator) override;
 protected:
     bool inertialDelay() const override { return true; }
 };
@@ -42,7 +44,7 @@ public:
     ORGate(std::string name);
     static constexpr const char* TypeName = "ORGate";
     const char* getTypeName() const override { return TypeName; }
-    void evaluate(size_t current_time, Simulator& simulator) override;
+    void evaluate(SimulationTime current_time, Simulator& simulator) override;
 protected:
     bool inertialDelay() const override { return true; }
 };
@@ -53,7 +55,7 @@ public:
     NORGate(std::string name);
     static constexpr const char* TypeName = "NORGate";
     const char* getTypeName() const override { return TypeName; }
-    void evaluate(size_t current_time, Simulator& simulator) override;
+    void evaluate(SimulationTime current_time, Simulator& simulator) override;
 protected:
     bool inertialDelay() const override { return true; }
 };
@@ -64,7 +66,7 @@ public:
     XORGate(std::string name);
     static constexpr const char* TypeName = "XORGate";
     const char* getTypeName() const override { return TypeName; }
-    void evaluate(size_t current_time, Simulator& simulator) override;
+    void evaluate(SimulationTime current_time, Simulator& simulator) override;
 protected:
     bool inertialDelay() const override { return true; }
 };

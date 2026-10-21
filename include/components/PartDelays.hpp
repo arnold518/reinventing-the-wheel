@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstddef>
+#include "simulator/SimulationTime.hpp"
 #include "basic/LogicValue.hpp"
 #include <cstdint>
 #include <map>
@@ -11,7 +12,7 @@
 namespace circuit {
 
 struct DelayRange {
-    size_t minimum = 0, maximum = 0;
+    SimulationTime minimum = 0, maximum = 0;
 };
 
 // The gates a compact part stands for, kept only to time it. Given the value
@@ -71,7 +72,7 @@ struct PartDelays {
     // Outputs that pass the clock on unchanged to parts further on.
     std::vector<std::string> clock_outputs;
     std::map<std::string, DelayRange> launches;
-    std::map<std::string, size_t> setup;
+    std::map<std::string, SimulationTime> setup;
     // The part also changes outputs at times of its own, between clock edges.
     // `launches` then count from whatever caused the change, and no clock
     // period can be certified around the part.
@@ -81,7 +82,7 @@ struct PartDelays {
     // move only after a clock edge, and a clock can be certified around it.
     bool clocked_interface = false;
     // Longest register-to-register path inside the part, setup included.
-    size_t internal_period = 0;
+    SimulationTime internal_period = 0;
     // Inputs the table assumes are held, for example RST = 0.
     std::map<std::string, uint64_t> fixed_inputs;
 

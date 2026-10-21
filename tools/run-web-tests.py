@@ -48,7 +48,9 @@ def command_for(row, args, base):
     values = dict(js=str(args.wasm_dir / 'pages/simulator/circuitsim_wasm.js'),
                   wasm=str(args.wasm_dir / 'pages/simulator/circuitsim_wasm.wasm'),
                   probe=str(args.build_dir / 'tests/VisualizerSessionProbe'), base=base,
-                  simulator=base + 'simulator/')
+                  simulator=base + 'simulator/',
+                  guest_probe=str(args.build_dir / 'tests/RecordedGuestProbe'),
+                  verifier=str(args.wasm_dir / 'circuitsim_verification.js'))
     executable = args.browser_python if row['kind'] == 'browser' else args.node
     return [executable, str(ROOT / 'tests/web' / row['file']),
             *[argument.format(**values) for argument in row['args']]]
@@ -99,6 +101,10 @@ def main(argv=None):
         required += [args.wasm_dir / 'pages/simulator' / ('circuitsim_wasm.' + suffix) for suffix in ('js', 'wasm')]
     if any('{probe}' in r['args'] for r in selected):
         required.append(args.build_dir / 'tests/VisualizerSessionProbe')
+    if any('{guest_probe}' in r['args'] for r in selected):
+        required.append(args.build_dir / 'tests/RecordedGuestProbe')
+    if any('{verifier}' in r['args'] for r in selected):
+        required += [args.wasm_dir / ('circuitsim_verification.' + suffix) for suffix in ('js','wasm')]
     if any(r['kind'] == 'browser' for r in selected):
         required.append(args.wasm_dir / 'pages/simulator/example-rows.json')
         if not args.base_url:

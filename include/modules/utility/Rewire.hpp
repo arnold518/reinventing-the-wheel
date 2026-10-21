@@ -1,5 +1,7 @@
 #pragma once
 
+#include "simulator/SimulationTime.hpp"
+
 #include "components/BasicComponent.hpp"
 #include <cstddef>
 #include <string>
@@ -46,7 +48,7 @@ public:
     const std::vector<WireSpec>& getOutputSpecs() const { return outputs; }
     const std::vector<BitMap>& getBitMappings() const { return bit_mappings; }
     UnmappedBitValue getUnmappedDefault() const { return unmapped_default; }
-    void evaluate(size_t current_time, Simulator& simulator) override;
+    void evaluate(SimulationTime current_time, Simulator& simulator) override;
 
 private:
     std::vector<WireSpec> inputs;

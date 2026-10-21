@@ -7,6 +7,7 @@
 #include "analysis/ExperimentClock.hpp"
 #include "components/TimingProfile.hpp"
 #include <stdexcept>
+#include <limits>
 #include <string>
 #include "modules/rv32i/RV32IMemorySystem.hpp"
 #include "modules/rv32i/RV32IFiveStageCore.hpp"
@@ -34,7 +35,7 @@ void initializePins(IOComponent* self) {
 template<size_t Width>
 void drive(
     Simulator& simulator,
-    size_t time,
+    SimulationTime time,
     const std::shared_ptr<Wire<Width>>& wire,
     uint64_t value) {
     simulator.scheduleEvent(
@@ -51,14 +52,14 @@ void requireBuilt(bool condition, const char* operation) {
 } // namespace
 
 RV32IProgramRoot::RV32IProgramRoot(std::string name,
-    const circuit::ComponentFamily& core_family, size_t clock_half_period, circuit::ParameterMap core_parameters)
+    const circuit::ComponentFamily& core_family, SimulationTime clock_half_period, circuit::ParameterMap core_parameters)
     : RV32IProgramRoot(std::move(name), core_family, clock_half_period,
                       defaultMemory(core_family), defaultMemory(core_family), std::move(core_parameters)) {}
 
 RV32IProgramRoot::RV32IProgramRoot(
     std::string name,
     const circuit::ComponentFamily& core_family,
-    size_t clock_half_period,
+    SimulationTime clock_half_period,
     rv32i::MemoryConfiguration instructions,
     rv32i::MemoryConfiguration data, circuit::ParameterMap core_parameters,
     std::optional<circuit::memory::CacheConfig> instruction_cache,
@@ -184,14 +185,14 @@ void RV32IProgramRoot::buildInternals(ComponentBuilder& builder) {
 
 }
 
-void RV32IProgramRoot::initializeFixedInputs(Simulator& simulator, size_t time) const {
+void RV32IProgramRoot::initializeFixedInputs(Simulator& simulator, SimulationTime time) const {
     if (pipeline_observer_) {
         pipeline_observer_->reset();
         drive(simulator, time, observed_pc_wire_, 0);
     }
 }
 
-void RV32IProgramRoot::observeRetirementBeforeEdge(Simulator& simulator, size_t edge_time) {
+void RV32IProgramRoot::observeRetirementBeforeEdge(Simulator& simulator, SimulationTime edge_time) {
     if (!pipeline_observer_) return;
     if (getInputPin("RST")->getValue() == LogicValue::HIGH) {
         pipeline_observer_->reset();
@@ -205,7 +206,7 @@ void RV32IProgramRoot::observeRetirementBeforeEdge(Simulator& simulator, size_t 
 
 void RV32IProgramRoot::startClock(
     Simulator& simulator,
-    size_t first_rising_time) const {
+    SimulationTime first_rising_time) const {
     requireBuilt(clock_ != nullptr, "clock start");
     clock_->startClock(simulator, first_rising_time);
 }
@@ -274,8 +275,8 @@ void RV32IProgramRoot::setMemoryHistoryRecordingEnabled(bool enabled) {
 
 std::map<uint32_t, uint8_t>
 RV32IProgramRoot::dataMemoryWritesInTimeRange(
-    size_t start_time,
-    size_t end_time) const {
+    SimulationTime start_time,
+    SimulationTime end_time) const {
     requireBuilt(data_memory_ != nullptr, "data-memory history");
     return rv32i::memoryView(data_memory_)->memoryStorage().getByteWritesInTimeRange(
         start_time, end_time);
@@ -287,12 +288,14 @@ RV32IProgramRoot::snapshotArchitecturalState() const {
     return state_view_->snapshotArchitecturalState();
 }
 
-size_t rv32iFixtureTimeScale(std::string_view core, size_t unit_cycle_ticks) {
+size_t rv32iFixtureTimeScale(std::string_view core, SimulationTime unit_cycle_ticks) {
     const auto& profile = circuit::timing::activeTimingProfile();
     if (profile.name == "unit") return 1;
     const auto period = circuit::analysis::certifiedCorePeriod(profile.name, core);
     if (!period || unit_cycle_ticks == 0)
         throw std::runtime_error("No certified clock for the " + std::string(core)
             + " core under timing profile " + profile.name);
-    return std::max<size_t>(1, (*period + unit_cycle_ticks - 1) / unit_cycle_ticks);
+    const auto scale = std::max<SimulationTime>(1, *period / unit_cycle_ticks + (*period % unit_cycle_ticks != 0));
+    if (scale > std::numeric_limits<size_t>::max()) throw std::overflow_error("Fixture scale exceeds host range");
+    return static_cast<size_t>(scale);
 }

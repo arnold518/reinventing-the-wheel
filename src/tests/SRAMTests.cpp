@@ -360,7 +360,7 @@ void SRAMTimingTest::verifyResults() {
         SimulationTest::scheduleInitialEventsForTree(io, sim, 0);
         std::map<std::string, std::shared_ptr<WireBase>> inputs;
         for (const auto& [name, pin] : io->getAllInputPins()) inputs[name] = builder.addNewWireDynamic("IN_" + name, pin->getWidth(), nullptr, {pin});
-        auto set = [&](size_t t, const std::string& pin, TestValue value) { sim.scheduleEvent(makeTestWireUpdate(t, inputs.at(pin), value)); };
+        auto set = [&](SimulationTime t, const std::string& pin, TestValue value) { sim.scheduleEvent(makeTestWireUpdate(t, inputs.at(pin), value)); };
         set(0, "CE_N", H); set(0, "WE_N", H); set(0, "OE_N", L); set(0, "WORD_ADDR", uint64_t{0}); set(0, "WRITE_DATA", uint64_t{0xa5}); set(0, "WRITE_MASK", H);
         // Cancel a write before row activation; a stale event must never write it.
         set(10, "CE_N", L); set(10, "WE_N", L); set(20, "CE_N", H);

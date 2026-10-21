@@ -1,5 +1,7 @@
 #pragma once
 
+#include "simulator/SimulationTime.hpp"
+
 #include "components/BasicComponent.hpp"
 #include <cstddef>
 #include <cstdint>
@@ -12,8 +14,8 @@ public:
     static constexpr const char* TypeName = "ConstantValue";
     const char* getTypeName() const override { return TypeName; }
     uint64_t getConstantValue() const { return value; }
-    void scheduleInitialEvents(Simulator& simulator, size_t current_time) override;
-    void evaluate(size_t current_time, Simulator& simulator) override;
+    void scheduleInitialEvents(Simulator& simulator, SimulationTime current_time) override;
+    void evaluate(SimulationTime current_time, Simulator& simulator) override;
 
 private:
     uint64_t value;

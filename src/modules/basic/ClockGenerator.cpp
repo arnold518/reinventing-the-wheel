@@ -3,7 +3,7 @@
 #include "simulator/Event.hpp"
 #include "basic/Pin.hpp"
 
-ClockGenerator::ClockGenerator(std::string name, size_t half_period) 
+ClockGenerator::ClockGenerator(std::string name, SimulationTime half_period)
     : BasicComponent(std::move(name), 0, // A clock's logic has 0 delay; its period is separate
       [](IOComponent* self) {
           self->addPin("CLK_OUT", PinType::OUTPUT);
@@ -12,13 +12,13 @@ ClockGenerator::ClockGenerator(std::string name, size_t half_period)
       period_half(half_period)
 {}
 
-void ClockGenerator::evaluate(size_t current_time, Simulator& simulator) {
+void ClockGenerator::evaluate(SimulationTime current_time, Simulator& simulator) {
     current_state = (current_state == LogicValue::HIGH) ? LogicValue::LOW : LogicValue::HIGH;
     _updateOutputWire(simulator, "CLK_OUT", current_state, current_time);
 
-    simulator.scheduleEvent(std::make_shared<ComponentEvalEvent>(current_time + period_half, shared_from_this()));
+    simulator.scheduleEvent(std::make_shared<ComponentEvalEvent>(checkedTimeAdd(current_time, period_half), shared_from_this()));
 }
 
-void ClockGenerator::startClock(Simulator& simulator, size_t start_time) {
+void ClockGenerator::startClock(Simulator& simulator, SimulationTime start_time) {
     simulator.scheduleEvent(std::make_shared<ComponentEvalEvent>(start_time, shared_from_this()));
 }

@@ -94,7 +94,7 @@ std::vector<uint8_t> MemoryStorage::readBytes(uint32_t address, size_t count) co
     for (size_t i = 0; i < count; ++i) result.push_back(binary(currentByte(address + i)));
     return result;
 }
-void MemoryStorage::record(size_t time, uint32_t address) {
+void MemoryStorage::record(SimulationTime time, uint32_t address) {
     if (!history_enabled_) return;
     reserveHistory(sizeof(Entry) * 2 + 160);
     auto& entries = history_[address];
@@ -105,7 +105,7 @@ void MemoryStorage::record(size_t time, uint32_t address) {
     if (!entries.empty() && entries.back().time == time) entries.back() = entry;
     else entries.push_back(entry);
 }
-void MemoryStorage::writeLogic(size_t time, uint32_t address,
+void MemoryStorage::writeLogic(SimulationTime time, uint32_t address,
                                const std::vector<LogicValue>& bits, bool bus_write) {
     if (bits.size() % 8) throw std::invalid_argument("Memory write must contain whole bytes");
     requireRange(address, bits.size() / 8);
@@ -130,7 +130,7 @@ void MemoryStorage::loadBytes(uint32_t address, const std::vector<uint8_t>& data
         record(0, at);
     }
 }
-void MemoryStorage::fill(size_t time, LogicValue value) {
+void MemoryStorage::fill(SimulationTime time, LogicValue value) {
     const auto byte = uniform(value);
     live_fill_ = byte;
     pages_.clear();
@@ -162,27 +162,27 @@ void MemoryStorage::setHistoryRecordingEnabled(bool enabled) {
 void MemoryStorage::requireHistory() const {
     if (!history_enabled_) throw std::logic_error("Memory time history is disabled");
 }
-MemoryStorage::Entry MemoryStorage::resetAt(size_t time) const {
+MemoryStorage::Entry MemoryStorage::resetAt(SimulationTime time) const {
     requireHistory();
     auto upper = std::upper_bound(resets_.begin(), resets_.end(), time,
-        [](size_t t, const Entry& e) { return t < e.time; });
+        [](SimulationTime t, const Entry& e) { return t < e.time; });
     return upper == resets_.begin() ? Entry{0, 0, initial_} : *--upper;
 }
-const MemoryStorage::Entry* MemoryStorage::byteEntryAt(size_t time, uint32_t address) const {
+const MemoryStorage::Entry* MemoryStorage::byteEntryAt(SimulationTime time, uint32_t address) const {
     const auto it = history_.find(address);
     if (it == history_.end()) return nullptr;
     auto upper = std::upper_bound(it->second.begin(), it->second.end(), time,
-        [](size_t t, const Entry& e) { return t < e.time; });
+        [](SimulationTime t, const Entry& e) { return t < e.time; });
     return upper == it->second.begin() ? nullptr : &*--upper;
 }
-MemoryStorage::PackedByte MemoryStorage::byteAt(size_t time, uint32_t address) const {
+MemoryStorage::PackedByte MemoryStorage::byteAt(SimulationTime time, uint32_t address) const {
     const auto reset = resetAt(time);
     const auto entry = byteEntryAt(time, address);
     return entry && (entry->time > reset.time ||
            (entry->time == reset.time && entry->order > reset.order)) ? entry->byte :
            (reset.order == 0 && !epoch_baseline_.empty() ? epoch_baseline_[address] : reset.byte);
 }
-bool MemoryStorage::touchedAt(size_t time, uint32_t word) const {
+bool MemoryStorage::touchedAt(SimulationTime time, uint32_t word) const {
     const auto reset = resetAt(time);
     for (size_t i = 0; i < word_bytes_; ++i) {
         const auto entry = byteEntryAt(time, static_cast<uint32_t>(word * word_bytes_ + i));
@@ -192,7 +192,7 @@ bool MemoryStorage::touchedAt(size_t time, uint32_t word) const {
     return false;
 }
 std::vector<MemoryStorage::WordState> MemoryStorage::getWordsAtTime(
-    size_t time, uint32_t address, size_t count) const {
+    SimulationTime time, uint32_t address, size_t count) const {
     requireHistory();
     std::vector<WordState> result;
     if (address >= capacity_) return result;
@@ -208,7 +208,7 @@ std::vector<MemoryStorage::WordState> MemoryStorage::getWordsAtTime(
     }
     return result;
 }
-std::vector<MemoryStorage::WordState> MemoryStorage::getTouchedWordsAtTime(size_t time, size_t limit) const {
+std::vector<MemoryStorage::WordState> MemoryStorage::getTouchedWordsAtTime(SimulationTime time, size_t limit) const {
     requireHistory();
     std::vector<WordState> result;
     for (auto word : touched_words_) {
@@ -220,13 +220,13 @@ std::vector<MemoryStorage::WordState> MemoryStorage::getTouchedWordsAtTime(size_
     }
     return result;
 }
-size_t MemoryStorage::getTouchedWordCountAtTime(size_t time) const {
+size_t MemoryStorage::getTouchedWordCountAtTime(SimulationTime time) const {
     requireHistory();
     size_t count = 0;
     for (auto word : touched_words_) if (touchedAt(time, word)) ++count;
     return count;
 }
-std::map<uint32_t, uint8_t> MemoryStorage::getByteWritesInTimeRange(size_t start, size_t end) const {
+std::map<uint32_t, uint8_t> MemoryStorage::getByteWritesInTimeRange(SimulationTime start, SimulationTime end) const {
     requireHistory();
     if (end < start) throw std::invalid_argument("Memory write-history range runs backward");
     std::map<uint32_t, uint8_t> result;

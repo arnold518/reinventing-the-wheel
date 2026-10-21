@@ -20,7 +20,7 @@ public:
     Unmodeled(std::string name):BasicComponent(std::move(name),1,[](IOComponent* s){
         s->addPin("CLK",PinType::INPUT);s->addPin("D",PinType::INPUT);s->addPin("Q",PinType::OUTPUT);
     }) {}
-    void evaluate(size_t,Simulator&) override {}
+    void evaluate(SimulationTime,Simulator&) override {}
 };
 int main() {
     try {

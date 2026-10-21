@@ -127,7 +127,7 @@ void expectOutOfRange(Fn&& fn, const char* test_name) {
 
 void expectWireAt(Simulator& sim,
                   const std::shared_ptr<Wire<>>& wire,
-                  size_t time,
+                  SimulationTime time,
                   LogicValue expected,
                   const char* wire_name) {
     assert(wire && "Missing wire for timestamp verification");
@@ -142,11 +142,11 @@ void expectWireAt(Simulator& sim,
     }
 }
 
-void drive(Simulator& sim, size_t time, const std::shared_ptr<Wire<>>& wire, LogicValue value) {
+void drive(Simulator& sim, SimulationTime time, const std::shared_ptr<Wire<>>& wire, LogicValue value) {
     sim.scheduleEvent(std::make_shared<WireUpdateEvent<>>(time, wire, value));
 }
 
-void drive(Simulator& sim, size_t time, const std::shared_ptr<Wire<>>& wire, bool value) {
+void drive(Simulator& sim, SimulationTime time, const std::shared_ptr<Wire<>>& wire, bool value) {
     drive(sim, time, wire, value ? LogicValue::HIGH : LogicValue::LOW);
 }
 
@@ -363,7 +363,7 @@ void SimulatorDrainUntilIdleTest::verifyResults() {
            "SimulatorDrainUntilIdleTest headless final state");
     expect(headless_sim.getPerformanceCounters().effective_wire_changes == 2,
            "SimulatorDrainUntilIdleTest headless counters");
-    expect(headless_sim.getUniqueTimestamps() == std::vector<size_t>{0},
+    expect(headless_sim.getUniqueTimestamps() == std::vector<SimulationTime>{0},
            "SimulatorDrainUntilIdleTest headless timeline omitted");
     bool rejected_time_travel = false;
     try {
@@ -749,7 +749,7 @@ void ClockGeneratorTest::verifyResults() {
     expectWireAt(*sim, clock_wire, 20, LogicValue::HIGH, "CLK_OUT");
 }
 
-size_t ClockGeneratorTest::getRunDuration() const {
+SimulationTime ClockGeneratorTest::getRunDuration() const {
     return 20;
 }
 

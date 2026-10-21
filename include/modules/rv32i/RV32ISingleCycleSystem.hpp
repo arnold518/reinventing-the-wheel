@@ -1,5 +1,7 @@
 #pragma once
 
+#include "simulator/SimulationTime.hpp"
+
 #include "components/IOComponent.hpp"
 #include "modules/rv32i/RV32IMemorySystem.hpp"
 #include "components/capabilities/RV32ISystemProgramAccess.hpp"
@@ -55,8 +57,8 @@ public:
     lastCommittedDataMemoryAccess() const override;
     std::map<uint32_t, uint8_t>
     dataMemoryWritesInTimeRange(
-        size_t start_time,
-        size_t end_time) const override;
+        SimulationTime start_time,
+        SimulationTime end_time) const override;
 
 private:
     rv32i::MemoryConfiguration instruction_config_, data_config_;

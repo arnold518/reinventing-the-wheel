@@ -5,6 +5,131 @@ what changed and why, what was verified, and any limits or deliberate
 omissions. Entries begin with adoption of this recording workflow; older
 history remains in Git and the archived reports.
 
+## 2026-10-22
+
+### RV32IM milestone checkpoint and bounded build tooling
+
+- **Changed:** prepare the RV32IM/device/scripted-game work for `alpha`,
+  retaining the newer visualizer work and original playability audit tools.
+  Optional WASM link optimization and isolated example generation reduce
+  peak memory without changing their defaults. A generator check verifies
+  full/filtered output identity and failure-safe publication.
+- **Verified before integration:** 54 portable checks, 11 portable system
+  checks, exact native/WASM comparison of all 22 device scenarios and wide-time
+  transport pass. All 175 old Python API entries are preserved, with five
+  additions. Strict site packaging passes with 22 current new example groups
+  and 135 retained legacy exports. Complete timing snapshots match in native
+  and WASM; all 808 entries per profile verify.
+- **Limits:** full legacy example regeneration and a large SRAM retry stop
+  safely at the host-memory guard. The full browser run also stops there
+  after four M sessions. Revised full-game/fidelity/quantum/performance and
+  compiled-game WASM comparisons remain follow-up work. Phase 6 acceptance
+  is open; phase 7 has not started. Integration results are recorded in the
+  [wrap record](records/2026-10-22-rv32im-milestone-wrap-and-integration.md).
+
+## 2026-10-21
+
+### General device parameters and recorded visual abstractions
+
+- **Changed:** framebuffer dimensions and backing capacity are validated
+  independently, with surfaces up to 256 KiB. The system propagates capacity
+  into video routing and reference checks. Queue depths 1–7 are parameters;
+  default geometry, mappings, pins and child configurations are preserved.
+  Non-default device configurations have separate visual floorplan keys;
+  default keys and existing colors are retained.
+- **Visuals:** shared native/Python/WASM observation adapters and browser
+  display/keyboard/console/timer/FIFO previews are staged. Recorded-game
+  frames carry checked input state; old recordings still open. Captured
+  pixels have an aggregate budget. Browser acceptance remains pending.
+- **Verified:** serial native build (369268 KiB peak RSS), 28 focused native
+  checks (149812 KiB peak), FIFO structural/compact agreement at every depth,
+  standalone 320×200 storage, actual CPU presentation at 128×96 and 97×65,
+  and read-only pixel/keyboard history with rewind. An initial observer type
+  match and test-order error were corrected and the full focused set passes.
+  Subsequent parameter/observer/clock checks, Python declarations and JS
+  helpers pass. All 363 static scenario layouts pass with 52 new entries and
+  no old value changed. Consecutive sampled input logs and halt-boundary
+  rejection pass; fresh bring-up has two exact frames, checked reports and
+  zero setup violations. CLI timeout/cycle/memory failures and stale-output
+  rejection pass, with native build/source/binary/fixture evidence retained.
+- **Limits:** the larger CPU checks execute short sequences and write a word
+  near the visible surface's end; they establish routing/capture, not full
+  screen drawing FPS. Final site/browser/WASM and broader phase-6
+  acceptance remain open. Phase 7 is authorized after acceptance. Primary
+  checkout work and deployed modules are untouched. See the
+  [parameter/visual record](records/2026-10-21-device-parameters-and-visuals.md).
+
+
+### Scripted platform bring-up and wide-time execution
+
+- **Changed:** isolated RV32IM CPU/RAM/device assembly, batch input and frame
+  capture, independent ISA/device checking, audited guest sources and an
+  additive recording viewer. Explicit 64-bit simulation time and exact wide
+  JSON ticks are a separate prerequisite.
+- **Verified so far:** WASM standalone time/history/overflow checks; actual
+  short guests with FF, structural logic, cached FF/DRAM and epochs above
+  2^53/2^63. Compiled bring-up completed 23,922 cycles / 6,445 instructions,
+  two checked frames and zero setup violations in 466.13 s, ~203 MiB peak RSS.
+  Revised ten RV32IM fixtures, strict C rule checks and host reference builds
+  pass. A guarded multi-configuration run stopped at low host memory; each
+  configuration is now a separate check/process.
+- **Limits:** bring-up used the preceding structural-M build. New compact M
+  source, full game execution, exact binding parity, current native regressions,
+  integrated timing and packaged browser/site acceptance remain pending. No
+  live-session support, deployment or primary-worktree edits. See the
+  [open milestone record](records/2026-10-21-scripted-games-phase4-6-implementation.md).
+
+
+### Smaller Python binding compilation groups
+
+- **Changed:** moved the module registration statements into six compilation
+  groups with private shared templates, called in their original order.
+- **Why:** the single binding source exhausted a 768 MiB compiler cap; a
+  guarded 1 GiB retry stopped at low host headroom.
+- **Verified:** the original registration body reconstructs byte for byte;
+  the split builds at 768 MiB with 538,172 KiB peak RSS. Separate-process API
+  snapshots preserve all 175 old public names/signatures/docs and add only
+  the two recorded-guest functions. Full runtime regressions remain pending.
+
+### Optional bounded compilation of generated timing tables
+
+- **Changed:** a build-only partitioner copies canonical entries into eight
+  compiler units per profile; native builds opt in, and the Pages build enables
+  it. Public table functions and tracked timing data remain unchanged.
+- **Why:** the fresh wasm32 Unit table compile exhausted its 1 GiB compiler
+  cap. Keeping smaller units avoids raising memory pressure on this host.
+- **Verified:** deterministic verbatim round-trip for all 754 entries in each
+  profile and malformed/duplicate input rejection. Saved the preceding native
+  value snapshot; fresh native/WASM complete snapshots match it byte for byte
+  in all three profiles.
+- **Pending:** isolated compiler-memory
+  evidence and existing timing checks. See the [open record](records/2026-10-21-delay-table-compile-memory.md).
+
+### RV32IM and device foundations staged in an isolated worktree
+
+- **Changed:** additive structural M arithmetic and five-stage core, independent
+  reference semantics and pinned C fixture; device routing, register frontend,
+  counter/FIFO, console/timer/buttons and framebuffer storage/control. Added
+  component references, recorded examples and viewer metadata/layouts.
+- **Compatibility:** old I families retain their identities and private assembly
+  paths. Shared assembly is extracted without changing their pins or packets.
+  A prerequisite table-only delay-publication guard fixes an existing empty
+  vector access; a focused regression covers it. Corrected an existing CTest
+  registration-order mismatch for the shared-memory program scenario.
+- **Verified:** all 46 exact-label phase-3 native checks pass in 716.91 seconds,
+  serial and memory capped, including independent oracle/C execution,
+  structural/compact-child core agreement and three-profile timing analysis.
+  All existing layout values are preserved; 48 new entries are added.
+- **Additional preceding-binary checks:** 23 selected native compatibility
+  checks and seven viewer checks pass; memory inspection reached its configured
+  180-second limit. All 21 added scenarios have complete saved layouts.
+- **Pending:** refresh these checks after the wide-time migration, finish the
+  memory-inspector check, and validate the packaged site/WASM. These preceding
+  checks do not validate the new integrated machine or games.
+- **Scope:** uncommitted `rv32im-phase3` worktree from `60acda2`; primary ongoing
+  work and deployed viewer modules are untouched. The owner subsequently
+  authorized [phases 4–6](records/2026-10-21-scripted-games-phase4-6-implementation.md).
+
 ## 2026-10-20
 
 ### Site checks: deterministic gate order, figure fixes, records closed (branch `realistic-timing`)

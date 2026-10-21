@@ -59,7 +59,7 @@ std::string WireBase::getID() const {
     return "OrphanWire:" + name;
 }
 
-void propagateWireChange(WireBase& wire, Simulator& simulator, size_t propagation_time) {
+void propagateWireChange(WireBase& wire, Simulator& simulator, SimulationTime propagation_time) {
     auto& sinks = const_cast<std::vector<std::weak_ptr<PinBase>>&>(wire.getSinkPinsBase());
     sinks.erase(std::remove_if(sinks.begin(), sinks.end(),
                                [](const std::weak_ptr<PinBase>& pin) { return pin.expired(); }),

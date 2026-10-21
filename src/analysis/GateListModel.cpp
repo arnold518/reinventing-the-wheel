@@ -1,15 +1,19 @@
 #include "GateListModel.hpp"
 #include "TimingGraph.hpp"
+#include "TimingCircuit.hpp"
 #include "components/IOComponent.hpp"
 #include "basic/PinBase.hpp"
 #include "modules/memory/DigitalMemory.hpp"
 #include "modules/storage/ClockedStateBitBehavioral.hpp"
 #include "modules/storage/RegisterBehavioral.hpp"
+#include "modules/memory/FlipFlopCellBehavioral.hpp"
+#include "modules/memory/MemoryFFController.hpp"
 #include <algorithm>
 #include <functional>
 #include <map>
 #include <typeinfo>
 #include <unordered_map>
+#include <unordered_set>
 
 namespace circuit::analysis {
 using namespace detail::timing;
@@ -17,6 +21,16 @@ namespace {
 constexpr auto L = LogicValue::LOW, H = LogicValue::HIGH, UNK = LogicValue::UNKNOWN;
 bool binary(LogicValue v) { return v == L || v == H; }
 LogicValue invert(LogicValue v) { return v == H ? L : v == L ? H : UNK; }
+bool leafValues(const std::shared_ptr<const memory_device::Primitive>& part,
+    const memory_device::Primitive::Values& in,memory_device::Primitive::Values& out){
+    memory_device::Primitive::Deciders deciders;
+    if(part->settled(in,out,deciders))return true;
+    // The existing X/Z metadata checker owns its rule. Calling its functional
+    // adapter here leaves the old, conservative timing contract unchanged.
+    if(const auto known=std::dynamic_pointer_cast<const memory_detail::RequestKnownBits>(part))
+        return known->functionalValues(in,out);
+    return false;
+}
 } // namespace
 
 struct GateListProgram {
@@ -36,6 +50,7 @@ struct GateListProgram {
     std::vector<std::vector<int>> readers;
     std::vector<std::pair<std::string, size_t>> inputs, outputs;
     std::vector<std::vector<int>> input_nodes, output_nodes;
+    std::vector<std::vector<int>> observation_nodes;
     std::vector<uint8_t> clock_output;
     int clock_input = -1;
     std::vector<Store> stores;
@@ -45,7 +60,8 @@ struct GateListProgram {
     std::unordered_map<int, LeafBit> leaf_bits;
 };
 
-std::shared_ptr<const GateListProgram> GateListModel::compile(const std::shared_ptr<Component>& root, std::string* why) {
+std::shared_ptr<const GateListProgram> GateListModel::compile(const std::shared_ptr<Component>& root, std::string* why,
+    const std::vector<std::shared_ptr<PinBase>>& observations) {
     using Program = GateListProgram;
     using Op = Program::Op;
     const auto no = [&](const std::string& reason) -> std::shared_ptr<const GateListProgram> {
@@ -100,14 +116,15 @@ std::shared_ptr<const GateListProgram> GateListModel::compile(const std::shared_
             const auto io = std::dynamic_pointer_cast<IOComponent>(owner);
             const bool state_bit = owner && typeid(*owner) == typeid(ClockedStateBitBehavioral);
             const bool word = owner && typeid(*owner) == typeid(RegisterBehavioral);
-            if (!io || (!state_bit && !word)) return no("a source that is neither an input nor compact state: " + (node.pin ? node.pin->getID() : std::string("?")));
+            const bool cell = owner && typeid(*owner) == typeid(FlipFlopCellBehavioral);
+            if (!io || (!state_bit && !word && !cell)) return no("a source that is neither an input nor compact state: " + (node.pin ? node.pin->getID() : std::string("?")));
             out.op = Op::Stored;
             if (store_of.emplace(owner.get(), program->stores.size()).second) {
                 Program::Store store;
                 store.d = bits(io->getInputPinDynamic("D"));
                 store.q = bits(io->getOutputPinDynamic("Q"));
                 if (const auto reset = bits(io->getInputPinDynamic("RST")); !reset.empty()) store.reset = reset[0];
-                if (word) if (const auto enable = bits(io->getInputPinDynamic("WE")); !enable.empty()) store.enable = enable[0];
+                if (word || cell) if (const auto enable = bits(io->getInputPinDynamic("WE")); !enable.empty()) store.enable = enable[0];
                 for (const int q : store.q) if (q < 0) return no("a state output outside the graph: " + io->getID());
                 program->stores.push_back(std::move(store));
             }
@@ -127,8 +144,7 @@ std::shared_ptr<const GateListProgram> GateListModel::compile(const std::shared_
                     values[name] = memory_device::Bits(pin->getWidth(), L);
                 }
                 memory_device::Primitive::Values result;
-                memory_device::Primitive::Deciders deciders;
-                if (!owner->settled(values, result, deciders)) return no("a primitive that does not describe itself: " + owner->getID());
+                if (!leafValues(owner, values, result)) return no("a primitive that does not describe itself: " + owner->getID());
                 program->leaves.push_back(std::move(leaf));
             }
             program->leaf_bits[int(index)] = {int(entry->second), node.pin->getName(), node.bit};
@@ -153,6 +169,21 @@ std::shared_ptr<const GateListProgram> GateListModel::compile(const std::shared_
         program->clock_output.push_back(clock);
         program->output_nodes.push_back(bits(pin));
         if (!clock) for (const int node : program->output_nodes.back()) if (node < 0) return no("an output outside the graph: " + name);
+    }
+    // Composite boundary pins are aliases rather than graph nodes. Resolve
+    // them with the timing engine's existing driver walk while the tree lives;
+    // the immutable program retains only indexes.
+    std::unordered_set<const PinBase*> graph_pins;
+    if (!observations.empty())
+        for (const auto& [pin, index] : graph.first_bit) graph_pins.insert(pin);
+    for (const auto& pin : observations) {
+        auto source = pin ? detail::drivingPin(pin, graph_pins) : nullptr;
+        auto nodes = bits(source);
+        if (pin && source && pin->getWidth() != source->getWidth())
+            return no("an observation with a different driver width: " + pin->getID());
+        if (nodes.empty() || std::find(nodes.begin(), nodes.end(), -1) != nodes.end())
+            return no("an observation outside the graph: " + (pin ? pin->getID() : std::string("null")));
+        program->observation_nodes.push_back(std::move(nodes));
     }
     if (!program->stores.empty() && program->clock_input < 0) return no("state without a clock");
     program->order = graph.order;
@@ -189,6 +220,13 @@ std::vector<LogicValue> GateListModel::output(size_t pin) const {
     return out;
 }
 
+std::vector<LogicValue> GateListModel::observation(size_t pin) const {
+    const auto& nodes = program_->observation_nodes.at(pin);
+    std::vector<LogicValue> out;out.reserve(nodes.size());
+    for (const int node : nodes) out.push_back(value_.at(node));
+    return out;
+}
+
 LogicValue GateListModel::compute(int node) {
     using Op = GateListProgram::Op;
     const auto& n = program_->nodes[node];
@@ -215,13 +253,12 @@ LogicValue GateListModel::compute(int node) {
             // graph's order, so they are final when the first output is.
             const auto& leaf = program_->leaves[where.leaf];
             memory_device::Primitive::Values in, out;
-            memory_device::Primitive::Deciders deciders;
             for (const auto& [name, nodes] : leaf.inputs) {
                 auto& bits = in[name];
                 bits.resize(nodes.size(), UNK);
                 for (size_t bit = 0; bit < nodes.size(); ++bit) if (nodes[bit] >= 0) bits[bit] = value_[nodes[bit]];
             }
-            leaf.part->settled(in, out, deciders);
+            leafValues(leaf.part,in,out);
             results.assign(out.begin(), out.end());
             leaf_pass_[where.leaf] = pass_;
         }

@@ -167,7 +167,7 @@ public:
     PredictionBehavioral(std::string name, Kind kind, const circuit::ComponentFamily& family, rv32i::PredictionConfig config = {})
         : BasicComponent(std::move(name),1,family.pinInitializer()), kind_(kind), type_(family.typeName()), state_(config) {}
     const char* getTypeName() const override { return type_.c_str(); }
-    void evaluate(size_t time, Simulator& sim) override {
+    void evaluate(SimulationTime time, Simulator& sim) override {
         auto n=[&](const char* p){return uint32_t(getInputPinDynamic(p)->getValueAsUInt64());};
         auto h=[&](const char* p){return getInputValue(p)==LogicValue::HIGH;};
         auto bit=[&](const char* p,bool value){_updateOutputWire(sim,p,value?LogicValue::HIGH:LogicValue::LOW,time);};

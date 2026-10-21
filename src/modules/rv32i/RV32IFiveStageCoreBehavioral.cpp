@@ -380,7 +380,7 @@ void RV32IFiveStageCoreBehavioral::advanceOneCycle() {
 }
 
 void RV32IFiveStageCoreBehavioral::driveOutputs(
-    size_t current_time,
+    SimulationTime current_time,
     Simulator& simulator) {
     const bool enabled =
         high(getInputValue("ENABLE")) && !halted_ && !trapped_;
@@ -525,7 +525,7 @@ void RV32IFiveStageCoreBehavioral::driveOutputs(
 }
 
 void RV32IFiveStageCoreBehavioral::evaluate(
-    size_t current_time,
+    SimulationTime current_time,
     Simulator& simulator) {
     const bool enabled=high(getInputValue("ENABLE")) && !halted_ && !trapped_;
     const auto old_fetch_pc=fetch_pc_, old_data_address=ex_mem_.alu_result;

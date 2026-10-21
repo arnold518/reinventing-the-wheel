@@ -1,5 +1,7 @@
 #pragma once
 
+#include "simulator/SimulationTime.hpp"
+
 #include "rv32i/RV32IInstructionTrace.hpp"
 #include "modules/rv32i/RV32IBuildProfiles.hpp"
 #include "tests/RV32IInstructionLockstepTests.hpp"
@@ -24,7 +26,7 @@ class RV32ISystemProfileRun : public RV32IInstructionLockstepTest {
 public:
     void setupCircuit() override;
     bool isSimulationPrecomputed() const override { return totalCycles() != 0; }
-    size_t getRunDuration() const override;
+    SimulationTime getRunDuration() const override;
     std::vector<SimulationCheckpoint> getCheckpoints() const override;
     std::vector<PerformanceMetric> getPerformanceMetrics() const override;
     bool supportsBuildProfile() const override { return true; }
@@ -36,7 +38,7 @@ public:
 protected:
     void buildCircuit() override;
     void initializeComponentForLockstep(const RV32ISystemProgramCase& test_case) override;
-    void clockComponentOneCycle(size_t cycle_index, size_t cycle_start_time) override;
+    void clockComponentOneCycle(size_t cycle_index, SimulationTime cycle_start_time) override;
     rv32i::RV32IState snapshotComponentState() const override;
     rv32i::RV32IMemoryTrace lastDataMemoryAccess() const override;
     std::map<uint32_t, uint8_t> lastDataMemoryWrites() const override;
@@ -52,9 +54,9 @@ private:
     std::shared_ptr<Wire<1>> enable_wire_{};
     rv32i::RV32IMemoryTrace last_access_{};
     uint64_t committed_instruction_count_ = 0;
-    size_t visual_run_duration_ = 0;
-    size_t visual_time_origin_ = 0;
-    mutable size_t last_observed_memory_time_ = 0;
+    SimulationTime visual_run_duration_ = 0;
+    SimulationTime visual_time_origin_ = 0;
+    mutable SimulationTime last_observed_memory_time_ = 0;
     circuit::BuildProfile profile_ =
         rv32i::withBehavioralMemoryParts(
             circuit::canonicalDefaultProfile(),

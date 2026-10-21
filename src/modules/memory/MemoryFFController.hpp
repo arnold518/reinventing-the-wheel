@@ -1,4 +1,6 @@
 #pragma once
+
+#include "simulator/SimulationTime.hpp"
 #include <bit>
 #include "MemoryHandshakeWiring.hpp"
 
@@ -13,9 +15,21 @@ public:
             s->addPin("FIELDS_KNOWN",PinType::OUTPUT);s->addPin("MASK_KNOWN",PinType::OUTPUT);
         }) {}
     bool respondsOnlyToInputs() const override {return true;}
-    void evaluate(size_t t,Simulator& sim) override {
-        publish(sim,t,"FIELDS_KNOWN",memory_device::known(read("OP"))&&memory_device::known(read("ADDR"))?memory_device::H:memory_device::L);
-        publish(sim,t,"MASK_KNOWN",memory_device::known(read("MASK"))?memory_device::H:memory_device::L);
+    // Functional values for compact gate execution. Keep the existing timing
+    // contract conservative; this does not declare reduced timing deciders.
+    bool functionalValues(const Values& in,Values& out) const {
+        const auto values=check(in.at("OP"),in.at("ADDR"),in.at("MASK"));
+        out["FIELDS_KNOWN"]={values.first};out["MASK_KNOWN"]={values.second};return true;
+    }
+    void evaluate(SimulationTime t,Simulator& sim) override {
+        const auto values=check(read("OP"),read("ADDR"),read("MASK"));
+        publish(sim,t,"FIELDS_KNOWN",values.first);publish(sim,t,"MASK_KNOWN",values.second);
+    }
+private:
+    static std::pair<LogicValue,LogicValue> check(const memory_device::Bits& op,
+        const memory_device::Bits& address,const memory_device::Bits& mask){
+        return {memory_device::known(op)&&memory_device::known(address)?memory_device::H:memory_device::L,
+                memory_device::known(mask)?memory_device::H:memory_device::L};
     }
 };
 class FFRequestCheck : public IOComponent {

@@ -1,11 +1,13 @@
 #pragma once
+
+#include "simulator/SimulationTime.hpp"
 #include "modules/memory/DigitalMemory.hpp"
 
 struct NORFlashConfig : circuit::memory_device::Geometry {
     size_t block_words = 2;
-    size_t phase_ticks = 32;
-    size_t program_ticks = circuit::timing::activeTimingProfile().memory.nor_program;
-    size_t erase_ticks = circuit::timing::activeTimingProfile().memory.nor_erase;
+    SimulationTime phase_ticks = 32;
+    SimulationTime program_ticks = circuit::timing::activeTimingProfile().memory.nor_program;
+    SimulationTime erase_ticks = circuit::timing::activeTimingProfile().memory.nor_erase;
     void validate(size_t width, bool expanded = false) const;
 };
 NORFlashConfig norFlashConfigFromParameters(const circuit::ParameterMap &);
@@ -16,7 +18,7 @@ void registerNORFlashComponents(circuit::ComponentCatalog &);
 class NORFlashCell : public circuit::memory_device::Primitive {
   public:
     explicit NORFlashCell(std::string name);
-    void evaluate(size_t, Simulator &) override;
+    void evaluate(SimulationTime, Simulator &) override;
     PrimitiveTiming primitiveTiming() const override { return PrimitiveTiming::SelfTimed; }
 
   private:

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstddef>
+#include "simulator/SimulationTime.hpp"
 
 class Simulator;
 class Component;

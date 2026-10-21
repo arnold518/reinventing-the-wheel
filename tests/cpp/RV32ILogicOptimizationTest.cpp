@@ -69,7 +69,7 @@ struct Comparison {
     std::map<std::string,std::shared_ptr<WireBase>> inputs;
     std::map<std::string,std::pair<std::shared_ptr<WireBase>,std::shared_ptr<WireBase>>> outputs;
     Simulator sim;
-    size_t time=0,rows=0;
+    SimulationTime time=0; size_t rows=0;
     Comparison(std::shared_ptr<IOComponent> f,std::shared_ptr<IOComponent> r):fast(f),reference(r) {
         root->addChild(fast);root->addChild(reference);ComponentBuilder b(root);
         for(const auto& [name,p]:fast->getAllInputPins())

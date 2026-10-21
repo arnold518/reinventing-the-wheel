@@ -38,7 +38,7 @@ void require(bool condition, const std::string& message) {
 
 void drive(
     Simulator& simulator,
-    size_t time,
+    SimulationTime time,
     const std::shared_ptr<Wire<>>& wire,
     bool value) {
     simulator.scheduleEvent(
@@ -115,7 +115,7 @@ public:
              + "/" + circuit::toString(fidelity_);
     }
 
-    size_t getRunDuration() const override {
+    SimulationTime getRunDuration() const override {
         return run_duration_;
     }
 
@@ -212,7 +212,7 @@ protected:
         sim->advanceAndRecord(5000);
         sim->resetPerformanceCounters();
 
-        size_t last_observation_time =
+        SimulationTime last_observation_time =
             sim->getCurrentTime();
         std::map<uint32_t, uint8_t> observed_writes;
         const auto system = std::dynamic_pointer_cast<RV32ISingleCycleSystem>(system_);
@@ -221,7 +221,7 @@ protected:
              cycle / 64 < maximum_instructions_ && result_.instruction_count < maximum_instructions_;
              ++cycle) {
             const bool attempt = system->core()->getOutputPin("INSTRUCTION_ATTEMPT")->getValue() == LogicValue::HIGH;
-            const size_t start_time = 5000 + cycle * CycleTimeStep;
+            const SimulationTime start_time = 5000 + cycle * CycleTimeStep;
             drive(
                 *sim,
                 start_time + 1000,
@@ -322,7 +322,7 @@ private:
     std::shared_ptr<Wire<>> rst_wire_{};
     std::shared_ptr<Wire<>> enable_wire_{};
     rv32i::test::ExternalFixtureRunResult result_{};
-    size_t run_duration_ = 0;
+    SimulationTime run_duration_ = 0;
     std::vector<SimulationCheckpoint> checkpoints_{};
 };
 

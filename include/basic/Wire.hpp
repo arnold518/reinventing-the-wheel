@@ -1,4 +1,6 @@
 #pragma once
+
+#include "simulator/SimulationTime.hpp"
 #include "basic/WireBase.hpp"
 #include "basic/PinBase.hpp"
 #include "ForwardDeclarations.hpp"
@@ -32,7 +34,7 @@ public:
     LogicValue getSingleValue() const override;
     void setSingleValue(LogicValue new_value) override;
 
-    void propagateChange(Simulator& simulator, size_t propagation_time) override;
+    void propagateChange(Simulator& simulator, SimulationTime propagation_time) override;
 };
 
 #include "basic/Wire.tpp"

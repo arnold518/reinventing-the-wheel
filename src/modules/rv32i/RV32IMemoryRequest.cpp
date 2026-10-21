@@ -85,7 +85,7 @@ public:
     const char* getTypeName() const override {
         return read_only_ && address_is_tag_ ? "RV32IFetchRequest" : RV32IMemoryRequest::TypeName;
     }
-    void evaluate(size_t time, Simulator& simulator) override {
+    void evaluate(SimulationTime time, Simulator& simulator) override {
         using namespace circuit::logic_values;
         const auto reset = getInputValue("RST"), clock = getInputValue("CLK");
         const auto running = notGate(reset);

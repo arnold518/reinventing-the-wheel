@@ -1,5 +1,7 @@
 #pragma once
 
+#include "simulator/SimulationTime.hpp"
+
 #include "basic/LogicValue.hpp"
 #include <cstddef>
 #include <cstdint>
@@ -34,33 +36,33 @@ public:
     bool canAccess(uint32_t address, size_t count) const noexcept;
     std::vector<LogicValue> readLogic(uint32_t address, size_t count) const;
     std::vector<uint8_t> readBytes(uint32_t address, size_t count) const;
-    void writeLogic(size_t time, uint32_t address, const std::vector<LogicValue>& bits,
+    void writeLogic(SimulationTime time, uint32_t address, const std::vector<LogicValue>& bits,
                     bool bus_write = false);
     void loadBytes(uint32_t address, const std::vector<uint8_t>& data);
-    void fill(size_t time, LogicValue value);
+    void fill(SimulationTime time, LogicValue value);
     void clearContents();
     void setHistoryRecordingEnabled(bool enabled);
     bool isHistoryRecordingEnabled() const noexcept { return history_enabled_; }
-    std::vector<WordState> getWordsAtTime(size_t time, uint32_t address, size_t count) const;
-    std::vector<WordState> getTouchedWordsAtTime(size_t time, size_t limit) const;
-    size_t getTouchedWordCountAtTime(size_t time) const;
-    std::map<uint32_t, uint8_t> getByteWritesInTimeRange(size_t start, size_t end) const;
+    std::vector<WordState> getWordsAtTime(SimulationTime time, uint32_t address, size_t count) const;
+    std::vector<WordState> getTouchedWordsAtTime(SimulationTime time, size_t limit) const;
+    size_t getTouchedWordCountAtTime(SimulationTime time) const;
+    std::map<uint32_t, uint8_t> getByteWritesInTimeRange(SimulationTime start, SimulationTime end) const;
     size_t allocatedDataBytes() const noexcept;
     size_t historicalByteCount() const noexcept { return history_.size(); }
 
 private:
-    struct Entry { size_t time; size_t order; PackedByte byte; };
-    struct BusWrite { size_t time; uint32_t address; PackedByte byte; };
+    struct Entry { SimulationTime time; size_t order; PackedByte byte; };
+    struct BusWrite { SimulationTime time; uint32_t address; PackedByte byte; };
     static PackedByte uniform(LogicValue value);
     static void appendBits(std::vector<LogicValue>& out, PackedByte byte);
     static uint8_t binary(PackedByte byte);
     void requireRange(uint32_t address, size_t count) const;
     void requireHistory() const;
-    void record(size_t time, uint32_t address);
-    Entry resetAt(size_t time) const;
-    const Entry* byteEntryAt(size_t time, uint32_t address) const;
-    PackedByte byteAt(size_t time, uint32_t address) const;
-    bool touchedAt(size_t time, uint32_t word) const;
+    void record(SimulationTime time, uint32_t address);
+    Entry resetAt(SimulationTime time) const;
+    const Entry* byteEntryAt(SimulationTime time, uint32_t address) const;
+    PackedByte byteAt(SimulationTime time, uint32_t address) const;
+    bool touchedAt(SimulationTime time, uint32_t word) const;
     size_t word_bytes_;
     size_t capacity_ = 0;
     Limits limits_;

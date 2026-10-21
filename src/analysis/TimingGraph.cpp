@@ -159,17 +159,17 @@ class Builder {
             const auto path = [&](const char* input, const char* output) {
                 Tick latest = NEVER;
                 for (const auto& arc : table->arcs) if (arc.input == input && arc.output == output)
-                    latest = std::max(latest, static_cast<Tick>(arc.delay.maximum));
+                    latest = std::max(latest, checkedTick(arc.delay.maximum));
                 return latest;
             };
             const char* names[4] = {"REQ_READY", "RSP_VALID", "RSP_READ_DATA", "RSP_STATUS"};
             Tick earliest = OPEN;
             for (int output = 0; output < 4; ++output)
                 if (const auto found = table->launches.find(names[output]); found != table->launches.end()) {
-                    part.launch[output] = static_cast<Tick>(found->second.maximum);
-                    earliest = std::min(earliest, static_cast<Tick>(found->second.minimum));
+                    part.launch[output] = checkedTick(found->second.maximum);
+                    earliest = std::min(earliest, checkedTick(found->second.minimum));
                 }
-            for (const auto& arc : table->arcs) earliest = std::min(earliest, static_cast<Tick>(arc.delay.minimum));
+            for (const auto& arc : table->arcs) earliest = std::min(earliest, checkedTick(arc.delay.minimum));
             if (earliest != OPEN) part.delay = earliest;
             part.ready_from_ready = path("RSP_READY", "REQ_READY");
             part.valid_from_valid = path("REQ_VALID", "RSP_VALID");
@@ -253,7 +253,7 @@ class Builder {
             if (otherEdge(capture.edge, "capture")) continue;
             const auto pin = own(capture.pin, PinType::INPUT);
             for (unsigned bit = 0; bit < pin->getWidth(); ++bit) {
-                graph_.groups.front().endpoints.emplace_back(index(pin, bit), static_cast<Tick>(capture.setup));
+                graph_.groups.front().endpoints.emplace_back(index(pin, bit), checkedTick(capture.setup));
                 if (!ownTime(capture.pin)) clocked_.push_back(index(pin, bit));
             }
         }
@@ -326,14 +326,14 @@ class Builder {
             for (const auto& launch : m.launches) if (launch.pin == name) {
                 launched = true;
                 if (otherEdge(launch.edge, "launch") || !request_.launches) continue;
-                hub.launch = std::max(hub.launch, static_cast<Tick>(launch.delay.maximum));
-                hub.launch_minimum = std::min(hub.launch_minimum, static_cast<Tick>(launch.delay.minimum));
+                hub.launch = std::max(hub.launch, checkedTick(launch.delay.maximum));
+                hub.launch_minimum = std::min(hub.launch_minimum, checkedTick(launch.delay.minimum));
             }
             for (const auto& arc : m.arcs) if (arc.output == name) {
                 const auto in = own(arc.input, PinType::INPUT);
                 for (unsigned bit = 0; bit < in->getWidth(); ++bit) {
-                    hub.inputs.emplace_back(index(in, bit), static_cast<Tick>(arc.delay.maximum));
-                    hub.minimum.push_back(static_cast<Tick>(arc.delay.minimum));
+                    hub.inputs.emplace_back(index(in, bit), checkedTick(arc.delay.maximum));
+                    hub.minimum.push_back(checkedTick(arc.delay.minimum));
                 }
             }
             if (!launched && hub.inputs.empty()) {

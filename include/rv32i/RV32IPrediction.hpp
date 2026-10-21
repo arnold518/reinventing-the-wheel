@@ -46,7 +46,9 @@ inline PredictionConfig predictionConfig(const circuit::ParameterMap& parameters
             if (value.empty() || value.find_first_not_of("0123456789") != std::string::npos)
                 throw std::invalid_argument("Invalid prediction_entries");
             size_t used = 0;
-            config.entries = std::stoull(value, &used);
+            const auto parsed = std::stoull(value, &used);
+            if(parsed > 256) throw std::invalid_argument("Invalid prediction_entries");
+            config.entries = static_cast<size_t>(parsed);
             if (used != value.size()) throw std::invalid_argument("Invalid prediction_entries");
         } else throw std::invalid_argument("Unknown prediction parameter: " + key);
     }

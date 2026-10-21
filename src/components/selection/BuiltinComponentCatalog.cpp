@@ -60,6 +60,10 @@
 #include "modules/utility/Constant.hpp"
 #include "modules/utility/Rewire.hpp"
 #include "rv32i/RV32IValidationConfig.hpp"
+#include "modules/rv32im/MulDiv.hpp"
+#include "modules/rv32im/RV32IMCore.hpp"
+#include "modules/rv32im/RV32IMDeviceSystem.hpp"
+#include "modules/device/DeviceComponents.hpp"
 #include <algorithm>
 #include <charconv>
 #include <stdexcept>
@@ -954,6 +958,10 @@ std::shared_ptr<ComponentCatalog> createBuiltinComponentCatalog() {
     memory::registerMemoryEndpoints(*catalog);
     memory::registerCaches(*catalog);
     memory::registerArbiters(*catalog);
+    rv32im::registerArithmetic(*catalog);
+    rv32im::registerCore(*catalog);
+    device::registerComponents(*catalog);
+    rv32im::registerDeviceSystem(*catalog);
     catalog->freeze();
     return catalog;
 }
