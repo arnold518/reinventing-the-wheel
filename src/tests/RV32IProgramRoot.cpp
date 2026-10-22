@@ -16,8 +16,6 @@
 #include "components/StructuralNetBuilder.hpp"
 #include "simulator/Event.hpp"
 #include "simulator/Simulator.hpp"
-#include <stdexcept>
-#include <tuple>
 #include <utility>
 
 namespace {

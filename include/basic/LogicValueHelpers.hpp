@@ -40,7 +40,7 @@ inline LogicValue xorGate(LogicValue a, LogicValue b) {
                     && (b == LogicValue::LOW || b == LogicValue::HIGH);
     return !known ? LogicValue::UNKNOWN : a == b ? LogicValue::LOW : LogicValue::HIGH;
 }
-// Mux2to1 as built: (A AND NOT SEL) OR (B AND SEL).
+// Mux<2,1> as built: (A AND NOT SEL) OR (B AND SEL).
 inline LogicValue mux2(LogicValue a, LogicValue b, LogicValue select) {
     return orGate(andGate(a, notGate(select)), andGate(b, select));
 }

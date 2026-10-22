@@ -1,10 +1,15 @@
+#include "modules/composite/WordDatapath.hpp"
+#include "modules/basic/WordMux.hpp"
+#include "modules/basic/Decoder.hpp"
+#include "modules/storage/RegisterFile.hpp"
+#include "modules/device/DeviceBus.hpp"
+#include "basic/LogicValueHelpers.hpp"
 #include "components/ComponentBuilder.tpp"
 #include "tests/RV32IMPhase3Tests.hpp"
 #include "tests/ComponentTestModel.hpp"
 #include "tests/TestRegistry.hpp"
 #include "modules/rv32im/MulDiv.hpp"
 #include "modules/rv32im/RV32IMCore.hpp"
-#include "modules/device/DeviceComponents.hpp"
 #include "rv32im/RV32IMInstruction.hpp"
 #include "rv32i/RV32IElfImage.hpp"
 #include "components/BasicComponent.hpp"
@@ -75,12 +80,12 @@ public:
     }
 };
 void steps(bool divide){
-    for(bool compact:{false,true})for(size_t w:{4u,32u}) {
+    for(bool compact:{false,true})for(size_t w:{4u,8u,16u,32u}) {
         Rig r(divide?circuit::families::divideStep(w):circuit::families::multiplyStep(w),compact);
         unsigned limit=w==4?16:8;
         for(unsigned a=0;a<limit;++a)for(unsigned b=0;b<limit;++b)for(unsigned bit=0;bit<2;++bit) {
             const uint64_t mask=(uint64_t(1)<<w)-1;
-            uint64_t aa=w==4?a:uint32_t(a*0x2468ace1u),bb=w==4?b:uint32_t(b*0x7654321u);
+            uint64_t aa=(w==4?a:uint32_t(a*0x2468ace1u))&mask,bb=(w==4?b:uint32_t(b*0x7654321u))&mask;
             if(divide){
                 r.drive({{"REMAINDER",aa},{"DIVISOR",bb},{"BIT",bit}});
                 uint64_t shifted=(aa<<1)|bit;bool ge=shifted>=bb;
@@ -185,7 +190,7 @@ void fifo(){
         require(!r.out("COUNT")&&!r.out("VALID")&&!r.out("OVERFLOW"),"FIFO reset retained queue/overflow");
     }
 }
-void counter(){for(bool compact:{false,true})for(size_t w:{4u,32u}){Rig r(circuit::families::clockedCounter(w),compact);for(unsigned i=1;i<=20;++i){r.cycle();require(r.out("COUNT")==(i&((uint64_t(1)<<w)-1)),"Counter increment/wrap");}
+void counter(){for(bool compact:{false,true})for(size_t w:{4u,8u,16u,32u}){Rig r(circuit::families::clockedCounter(w),compact);for(unsigned i=1;i<=20;++i){r.cycle();require(r.out("COUNT")==(i&((uint64_t(1)<<w)-1)),"Counter increment/wrap");}
     r.drive({{"ENABLE",0}});auto saved=r.out("COUNT");r.cycle();require(r.out("COUNT")==saved,"Counter disable");}
     for(bool compact:{false,true}){
         Rig divided(circuit::families::clockedCounter(4),compact,{{"divisor","3"}});
@@ -195,7 +200,7 @@ void counter(){for(bool compact:{false,true})for(size_t w:{4u,32u}){Rig r(circui
 void port(){
     for(bool compact:{false,true}){
 
-    Rig r(circuit::families::DeviceRegisterPort32,compact);
+    Rig r(circuit::device::busFamily(circuit::device::BusUnit::RegisterPort,32),compact);
     r.drive({{"BACK_READ_DATA",0x12345678},{"BACK_STATUS",0},{"REQ_VALID",1},{"REQ_OP",0},{"REQ_ADDR",0},{"RSP_READY",0}});
     require(r.out("REQ_READY")&&!r.out("RSP_VALID"),"Register port request admission");
     r.cycle();require(r.out("RSP_VALID")&&r.out("READ_STROBE"),"Register port completion offer");
@@ -220,7 +225,7 @@ void port(){
 }
 void console(){
     for(size_t depth:{1u,3u,7u}) {
-        Rig queue(circuit::families::ConsoleDevice32,true,{{"fifo_depth",std::to_string(depth)}});
+        Rig queue(circuit::families::ConsoleDevice,true,{{"fifo_depth",std::to_string(depth)}});
         for(unsigned i=0;i<depth;++i)require(queue.access(true,0,'A'+i).first==0,"Configured console write");
         require(queue.access(false,8).second==depth&&queue.access(false,4).second==0,"Configured console full/count");
         queue.drive({{"TX_READY",1}});
@@ -228,7 +233,7 @@ void console(){
         queue.drive({{"TX_READY",0}});require(!queue.out("TX_VALID")&&queue.access(false,8).second==0,"Configured console drain");
     }
 
-    Rig r(circuit::families::ConsoleDevice32);
+    Rig r(circuit::families::ConsoleDevice);
     for(unsigned i=0;i<4;++i)require(r.access(true,0,'A'+i).first==0,"Console write");
     require(r.out("TX_VALID")&&r.out("TX_DATA")=='A'&&r.access(false,4).second==0,"Console queue/full status");
     r.drive({{"REQ_VALID",1},{"REQ_OP",1},{"REQ_ADDR",0},{"REQ_WRITE_DATA",'Z'},{"REQ_WRITE_MASK",15},{"RSP_READY",1}});r.cycle();r.drive({{"REQ_VALID",0}});
@@ -240,7 +245,7 @@ void console(){
 }
 void timer(){
 
-    Rig r(circuit::families::TimerDevice32);
+    Rig r(circuit::families::TimerDevice);
     r.drive({{"REQ_VALID",1},{"REQ_OP",0},{"REQ_ADDR",0},{"RSP_READY",0}});r.cycle();r.drive({{"REQ_VALID",0}});
     auto before=r.out("RSP_READ_DATA");r.cycle();for(int i=0;i<4;++i)r.cycle();
     require(r.out("RSP_VALID")&&r.out("RSP_READ_DATA")==before,"Timer read changed under response backpressure");
@@ -250,7 +255,7 @@ void timer(){
 }
 void buttons(){
     for(size_t depth:{1u,3u,7u}) {
-        Rig queue(circuit::families::ButtonDevice32,true,{{"fifo_depth",std::to_string(depth)}});
+        Rig queue(circuit::families::ButtonDevice,true,{{"fifo_depth",std::to_string(depth)}});
         const auto input=[&](unsigned id){queue.drive({{"INPUT_VALID",1},{"INPUT_BUTTON",id},{"INPUT_DOWN",1}});queue.cycle();queue.drive({{"INPUT_VALID",0}});};
         for(unsigned id=0;id<=depth;++id)input(id);
         require(queue.access(false,8).second==depth&&queue.access(false,4).second==256,"Configured button occupancy/head");
@@ -259,7 +264,7 @@ void buttons(){
         require(queue.access(false,8).second==depth&&queue.access(false,4).second==(depth==1?287u:257u),"Configured button queue wrap");
         require(queue.access(true,20,1).first==0&&!(queue.access(false,12).second&2),"Configured button overflow clear");
     }
-    Rig r(circuit::families::ButtonDevice32);
+    Rig r(circuit::families::ButtonDevice);
     auto event=[&](unsigned button,bool down){r.drive({{"INPUT_VALID",1},{"INPUT_BUTTON",button},{"INPUT_DOWN",down}});r.cycle();r.drive({{"INPUT_VALID",0}});};
     event(2,true);event(2,false);
     require(r.access(false,0).second==0&&r.access(false,8).second==2,"Button tap missing");
@@ -270,7 +275,7 @@ void buttons(){
     require(r.access(true,20,1).first==0&&!(r.access(false,12).second&2),"Button overflow clear");
 }
 void pixels(){
-    Rig r(circuit::families::IndexedPixelSelector32,false);
+    Rig r(circuit::device::indexedPixelSelector(32),false);
     uint32_t word=0xff031ce0;const std::array<uint32_t,4> expected{0xffff0000,0xff00ff00,0xff0000ff,0xffffffff};
     for(unsigned i=0;i<4;++i){r.drive({{"WORD",word},{"OFFSET",i}});require(r.out("ARGB")==expected[i]&&r.out("INDEX")==((word>>(8*i))&255),"Pixel order/palette");}
     for(uint32_t index=0;index<256;++index)for(unsigned lane=0;lane<4;++lane) {
@@ -281,30 +286,30 @@ void pixels(){
     }
 }
 void display(){
-    Rig large(circuit::families::FramebufferDisplay32,true,{{"width","64"},{"height","48"}});
+    Rig large(circuit::families::FramebufferDisplay,true,{{"width","64"},{"height","48"}});
     require(large.access(false,0).second==64&&large.access(false,4).second==48,"Catalog display geometry parameters");
-    auto storage=std::dynamic_pointer_cast<FramebufferDisplay32>(large.root);
+    auto storage=std::dynamic_pointer_cast<FramebufferDisplay>(large.root);
     require(storage->memoryStorage().capacityBytes()==4096,"Display padded native storage");
     require(storage->memoryStorage().isHistoryRecordingEnabled(),"Recorded display must retain memory history by default");
     for(const auto& bad:std::vector<circuit::ParameterMap>{{{"width","0"}},{{"height","0"}},{{"width","4096"},{"height","65"}},{{"width","4294967296"}},{{"unknown","1"}}}) {
         bool rejected=false;
-        try{(void)circuit::builtinComponentCatalog().createRoot(circuit::families::FramebufferDisplay32.request("INVALID",bad),compactProfile());}
+        try{(void)circuit::builtinComponentCatalog().createRoot(circuit::families::FramebufferDisplay.request("INVALID",bad),compactProfile());}
         catch(const std::exception&){rejected=true;}
         require(rejected,"Invalid display parameters accepted");
     }
-    Rig padded(circuit::families::FramebufferDisplay32,true,{{"width","4"},{"height","4"},{"storage_bytes","4096"}});
-    require(std::dynamic_pointer_cast<FramebufferDisplay32>(padded.root)->memoryStorage().capacityBytes()==4096,"Explicit video storage capacity");
+    Rig padded(circuit::families::FramebufferDisplay,true,{{"width","4"},{"height","4"},{"storage_bytes","4096"}});
+    require(std::dynamic_pointer_cast<FramebufferDisplay>(padded.root)->memoryStorage().capacityBytes()==4096,"Explicit video storage capacity");
     require(padded.access(true,4092,0x12345678,15,"FB_").first==0 && padded.access(false,4092,0,15,"FB_").second==0x12345678,"Unshown video padding access");
     for(const auto& bad:std::vector<circuit::ParameterMap>{{{"storage_bytes","3"}},{{"storage_bytes","8"}},{{"storage_bytes","524288"}}}) {
         bool rejected=false;
-        try{(void)circuit::builtinComponentCatalog().createRoot(circuit::families::FramebufferDisplay32.request("INVALID",bad),compactProfile());}
+        try{(void)circuit::builtinComponentCatalog().createRoot(circuit::families::FramebufferDisplay.request("INVALID",bad),compactProfile());}
         catch(const std::exception&){rejected=true;}
         require(rejected,"Invalid framebuffer storage size accepted");
     }
     for(const auto& shape:std::vector<std::pair<size_t,size_t>>{{128,96},{320,200},{97,65}}) {
         const auto [width,height]=shape;
-        Rig larger(circuit::families::FramebufferDisplay32,true,{{"width",std::to_string(width)},{"height",std::to_string(height)}});
-        auto display=std::dynamic_pointer_cast<FramebufferDisplay32>(larger.root);
+        Rig larger(circuit::families::FramebufferDisplay,true,{{"width",std::to_string(width)},{"height",std::to_string(height)}});
+        auto display=std::dynamic_pointer_cast<FramebufferDisplay>(larger.root);
         const auto capacity=display->configuration().capacityBytes();
         require(circuit::visualizer::componentLayoutVariant(display).find("width="+std::to_string(width)+",height="+std::to_string(height))==0,"Display geometry layout key");
         require(larger.access(false,0).second==width&&larger.access(false,4).second==height&&larger.access(false,8).second==width,"Larger framebuffer geometry/stride");
@@ -314,7 +319,7 @@ void display(){
         require(larger.access(true,capacity-4,0x12345678,15,"FB_").first==0&&larger.access(false,capacity-4,0,15,"FB_").second==0x12345678,"Larger framebuffer backing boundary");
         require(larger.access(false,capacity,0,15,"FB_").first!=0,"Framebuffer accepted beyond capacity");
     }
-    Rig r(circuit::families::FramebufferDisplay32);
+    Rig r(circuit::families::FramebufferDisplay);
     require(circuit::visualizer::componentLayoutVariant(r.root).empty(),"Default framebuffer layout key changed");
     require(r.access(false,0).second==4&&r.access(false,4).second==4&&r.access(false,8).second==4,"Framebuffer geometry");
     require(r.access(true,0,1).first==3&&r.access(true,20,3).first==6,"Framebuffer register validation");
@@ -328,12 +333,12 @@ void display(){
 }
 void deviceViews(){
     {
-        Rig router(circuit::families::AddressRouter32,false,{{"video_bytes","16384"}});
+        Rig router(circuit::device::busFamily(circuit::device::BusUnit::Router,32),false,{{"video_bytes","16384"}});
         require(circuit::visualizer::componentLayoutVariant(router.root)=="video_bytes=16384","Router aperture layout variant");
     }
     using circuit::visualizer::deviceStateJson;
     for(bool compact:{false,true}) {
-        Rig r(circuit::families::FramebufferDisplay32,compact,{},true);
+        Rig r(circuit::families::FramebufferDisplay,compact,{},true);
         r.access(true,0,0xff031ce0,15,"FB_");const auto first=r.now;
         const auto before=deviceStateJson(r.root,r.sim,1,first);
         require(before.find("\"pixels\":\"e01c03ff")!=std::string::npos,"Device display preview pixel order");
@@ -345,7 +350,7 @@ void deviceViews(){
         r.sim.setHistoryRecordingEnabled(false);
         require(deviceStateJson(r.root,r.sim,0,r.now).find("\"supported\":false")!=std::string::npos,"Device observer fabricated disabled history");
     }
-    Rig keyboard(circuit::families::ButtonDevice32,true,{},true);
+    Rig keyboard(circuit::families::ButtonDevice,true,{},true);
     keyboard.drive({{"INPUT_VALID",1},{"INPUT_BUTTON",31},{"INPUT_DOWN",1}});keyboard.cycle();
     const auto pressed=keyboard.now;
     keyboard.drive({{"INPUT_DOWN",0}});keyboard.cycle();keyboard.drive({{"INPUT_VALID",0}});
@@ -353,14 +358,15 @@ void deviceViews(){
     const auto released=deviceStateJson(keyboard.root,keyboard.sim,1,keyboard.now);
     require(released.find("\"levels\":\"00000000000000000000000000000000\"")!=std::string::npos&&released.find("\"count\":\"010\"")!=std::string::npos,"Keyboard preview lost released level or tap queue");
 }
-void routing(const circuit::ComponentFamily&f,bool guard){
-    Rig r(f);const std::string target=guard?"MEM_":"CONSOLE_";
-    uint32_t address=guard?4:0x10000004;
+void routing(const circuit::ComponentFamily&f,bool guard,size_t width=32,circuit::ParameterMap parameters={}){
+    Rig r(f,true,parameters);const std::string target=guard?"MEM_":"CONSOLE_";
+    uint32_t address=guard?4:(parameters.contains("console_base")?uint32_t(std::stoul(parameters.at("console_base"))):0x10000000u)+4;
+    uint32_t response=0x1234&uint32_t((uint64_t{1}<<width)-1);
     r.drive({{"REQ_VALID",1},{"REQ_OP",0},{"REQ_ADDR",address},{"RSP_READY",0}});
     r.cycle();r.drive({{"REQ_VALID",0}});
     require(r.out(target+"REQ_VALID")&&r.out(target+"REQ_ADDR")==4,"Router decode/translation");
-    r.drive({{target+"REQ_READY",1}});r.cycle();r.drive({{target+"REQ_READY",0},{target+"RSP_VALID",1},{target+"RSP_STATUS",0},{target+"RSP_READ_DATA",0x1234}});
-    require(r.out("RSP_VALID")&&r.out("RSP_READ_DATA")==0x1234&&!r.out(target+"RSP_READY"),"Router held response ownership");
+    r.drive({{target+"REQ_READY",1}});r.cycle();r.drive({{target+"REQ_READY",0},{target+"RSP_VALID",1},{target+"RSP_STATUS",0},{target+"RSP_READ_DATA",response}});
+    require(r.out("RSP_VALID")&&r.out("RSP_READ_DATA")==response&&!r.out(target+"RSP_READY"),"Router held response ownership");
     r.drive({{"RSP_READY",1}});r.cycle();r.drive({{target+"RSP_VALID",0},{"RSP_READY",0}});
     require(r.out("REQ_READY"),"Router did not release transaction");
     r.drive({{"REQ_VALID",1},{"REQ_ADDR",guard?0x10000000u:0x30000000u},{"REQ_OP",0}});
@@ -424,7 +430,7 @@ void mexecute(){
     require(!r.out("EXECUTION_WAIT")&&r.out("OUT_ALU_RESULT")==221&&!r.out("PRETERMINAL"),"M execute result");
     r.drive({{"TAKE",1}});r.cycle();r.drive({{"TAKE",0},{"IN_VALID",0}});require(!r.out("EXECUTION_WAIT"),"Invalid M packet held execution");
     std::shared_ptr<IOComponent> slot;
-    for(const auto& child:r.root->getChildren())if(child->getTypeName()==std::string("MulDivUnit32"))slot=std::dynamic_pointer_cast<IOComponent>(child);
+    for(const auto& child:r.root->getChildren())if(child->getTypeName()==std::string("MulDivUnit<32>"))slot=std::dynamic_pointer_cast<IOComponent>(child);
     require(bool(slot),"Execute fixture lacks arithmetic slot");
     r.drive({{"IN_VALID",1},{"IN_RS1_VALUE",99},{"EX_MEM_VALID",1},{"EX_MEM_REG_WRITE",1},{"EX_MEM_RD",1},{"EX_MEM_RESULT_READY",0},{"EX_MEM_VALUE",13}});
     for(int i=0;i<5;++i)r.cycle();
@@ -528,6 +534,158 @@ std::vector<uint64_t> coreProgram(bool fault, bool compiled=false, bool reset_in
     }throw std::runtime_error("M core program timed out");
 }
 
+
+int64_t signedWord(uint64_t value,size_t w){return value&(uint64_t{1}<<(w-1))?int64_t(value)-int64_t(uint64_t{1}<<w):int64_t(value);}
+void widthComponents(){
+    using namespace circuit::word;
+    for(size_t w:{8u,16u,32u})for(auto topology:{AdderTopology::Ripple,AdderTopology::ParallelPrefix}){
+        const uint64_t mask=(uint64_t{1}<<w)-1;
+        Rig ad(family(Unit::Adder,w,{Operations::Extended,topology}));
+        for(auto unknown:{LogicValue::UNKNOWN,LogicValue::HIGH_Z}){
+            ad.drive({{"A",mask},{"B",1},{"Cin",0}});ad.unknown("Cin",unknown);
+            auto a=circuit::test::logicBits(w,mask),b=circuit::test::logicBits(w,1);auto carry=unknown;
+            std::vector<LogicValue> expected;
+            using namespace circuit::logic_values;
+            for(size_t i=0;i<w;++i){auto h=xorGate(a[i],b[i]);expected.push_back(xorGate(h,carry));carry=orGate(andGate(a[i],b[i]),andGate(h,carry));}
+            require(ad.root->getOutputPinDynamic("Sum")->getValueAsVector()==expected,"Generic adder four-state sum");
+            require(ad.root->getOutputPin("Cout")->getValue()==carry,"Generic adder four-state carry");
+        }
+        for(auto operations:{Operations::Extended,Operations::IntegerDatapath}){
+            Rig alu(family(Unit::ALU,w,{operations,topology,true}));
+            for(auto pair:std::vector<std::pair<uint64_t,uint64_t>>{{0,0},{mask,1},{uint64_t{1}<<(w-1),w-1},{mask>>1,mask}})
+                for(unsigned op=0;op<32;++op)for(unsigned cin=0;cin<(operations==Operations::Extended?2u:1u);++cin){
+                    auto [a,b]=pair;uint64_t out=0,carry=0,overflow=0;unsigned amount=b&(w-1);
+                    std::map<std::string,uint64_t> inputs{{"A",a},{"B",b},{"OP",op}};
+                    auto add=[&](uint64_t x,uint64_t y,unsigned c){uint64_t sum=x+y+c;out=sum&mask;carry=sum>>w;overflow=((~(x^y)&(x^out))>>(w-1))&1;};
+                    if(operations==Operations::Extended){inputs["C_IN"]=cin;
+                        switch(op){case 0:add(a,b,0);break;case 1:add(a,b,cin);break;case 2:add(a,(~b)&mask,1);break;case 3:add(a,(~b)&mask,cin);break;
+                        case 4:add(a,0,1);break;case 5:add(a,(~uint64_t{1})&mask,1);break;case 6:add(0,(~a)&mask,1);break;
+                        case 8:out=a&b;break;case 9:out=a|b;break;case 10:out=a^b;break;case 11:out=(~a)&mask;break;
+                        case 12:out=~(a&b)&mask;break;case 13:out=~(a|b)&mask;break;case 14:out=~(a^b)&mask;break;
+                        case 16:out=(a<<amount)&mask;carry=amount?(a>>(w-amount))&1:cin;break;
+                        case 17:out=a>>amount;carry=amount?(a>>(amount-1))&1:cin;break;
+                        case 18:out=uint64_t(signedWord(a,w)>>amount)&mask;carry=amount?(a>>(amount-1))&1:cin;break;
+                        case 19:out=((a<<amount)|(a>>(w-amount)))&mask;carry=amount?(a>>(w-amount))&1:cin;break;
+                        case 20:out=((a>>amount)|(a<<(w-amount)))&mask;carry=amount?(a>>(amount-1))&1:cin;break;
+                        case 21:out=a==b;break;case 22:out=a<b;break;case 23:out=signedWord(a,w)<signedWord(b,w);break;
+                        case 24:out=std::min(a,b);break;case 25:out=std::max(a,b);break;
+                        case 26:out=signedWord(a,w)<signedWord(b,w)?a:b;break;case 27:out=signedWord(a,w)<signedWord(b,w)?b:a;break;
+                        case 28:out=a;break;case 29:out=b;break;default:break;}
+                    }else{
+                        switch(op){case 0:add(a,b,0);break;case 1:case 8:case 9:add(a,(~b)&mask,1);
+                            if(op==8)out=signedWord(a,w)<signedWord(b,w);if(op==9)out=a<b;break;
+                        case 2:out=a&b;break;case 3:out=a|b;break;case 4:out=a^b;break;case 5:out=(a<<amount)&mask;break;
+                        case 6:out=a>>amount;break;case 7:out=uint64_t(signedWord(a,w)>>amount)&mask;break;case 10:out=a;break;case 11:out=b;break;default:break;}
+                    }
+                    alu.drive(inputs);const std::string context=std::to_string(w)+" op "+std::to_string(op);
+                    require(alu.out("OUT")==out,"Generic ALU result "+context);
+                    require(alu.out("ZERO")==!out && alu.out("NEGATIVE")==((out>>(w-1))&1),"Generic ALU result flags "+context);
+                    require(alu.out(operations==Operations::Extended?"CARRY":"CARRY_OUT")==carry && alu.out("OVERFLOW")==overflow,"Generic ALU arithmetic flags "+context);
+                    if(operations==Operations::Extended)require(alu.out("INVALID_OP")== (op==7||op==15||op==31),"Generic ALU reserved opcode");
+                    else{const bool compare=op==1||op==8||op==9;
+                        require(alu.out("EQ")== (compare&&a==b) && alu.out("LT_UNSIGNED")== (compare&&a<b) && alu.out("LT_SIGNED")== (compare&&signedWord(a,w)<signedWord(b,w)),"Generic integer compare flags");}
+                }
+        }
+        std::cout<<"width "<<w<<" topology "<<int(topology)<<": all 32 ALU codes, flags, carries and four-state addition passed\n";
+    }
+    for(size_t w:{8u,16u,32u})for(auto operations:{Operations::Extended,Operations::IntegerDatapath}){
+        Rig flags(family(Unit::Flags,w,{operations}));flags.unknown("RESULT",LogicValue::HIGH_Z);
+        require(flags.root->getOutputPin("NEGATIVE")->getValue()==(operations==Operations::Extended?LogicValue::UNKNOWN:LogicValue::HIGH_Z),"Width-independent flag four-state contract");
+    }
+    for(size_t w:{1u,4u,8u,16u,32u})for(size_t inputs:{2u,4u,8u,16u,32u}){
+        const auto& family=circuit::word::mux(inputs,w);
+        Rig mux(family,false);std::unique_ptr<Rig> compact;
+        if(family.supports(circuit::Fidelity::Behavioral))compact=std::make_unique<Rig>(family);
+        std::map<std::string,uint64_t> data;
+        const uint64_t mask=(uint64_t{1}<<w)-1;
+        for(size_t i=0;i<inputs;++i)data[inputs==2?(i?"B":"A"):"IN"+std::to_string(i)]=(0xa55aa55aULL^(i*0x01010101ULL))&mask;
+        for(size_t i=0;i<inputs;++i){
+            data["SEL"]=i;mux.drive(data);
+            require(mux.out("OUT")==((0xa55aa55aULL^(i*0x01010101ULL))&mask),"Generic structural mux selection");
+            if(compact){compact->drive(data);require(compact->out("OUT")==mux.out("OUT"),"Generic compact mux selection");}
+        }
+        if(compact)for(auto unknown:{LogicValue::UNKNOWN,LogicValue::HIGH_Z}){
+            mux.unknown("SEL",unknown);compact->unknown("SEL",unknown);
+            require(mux.root->getOutputPinDynamic("OUT")->getValueAsVector()==compact->root->getOutputPinDynamic("OUT")->getValueAsVector(),"Generic mux four-state select equivalence");
+            for(size_t i=0;i<inputs;++i){
+                const auto pin=inputs==2?(i?"B":"A"):"IN"+std::to_string(i);
+                mux.unknown(pin,unknown);compact->unknown(pin,unknown);
+            }
+            require(mux.root->getOutputPinDynamic("OUT")->getValueAsVector()==compact->root->getOutputPinDynamic("OUT")->getValueAsVector(),"Generic mux four-state data equivalence");
+        }
+    }
+    for(size_t bits=1;bits<=5;++bits)for(bool suppress:{false,true}) {
+        Rig decoder(circuit::families::decoder(bits,suppress));
+        for(size_t address=0;address<(size_t{1}<<bits);++address)for(bool enable:{false,true}) {
+            decoder.drive({{"ADDR",address},{"ENABLE",enable}});
+            for(size_t output=0;output<(size_t{1}<<bits);++output)
+                require(decoder.out("OUT"+std::to_string(output))==(enable&&output==address&&(!suppress||output!=0)),"Generic decoder address/zero policy");
+        }
+    }
+    for(size_t w:{4u,8u,16u}){
+        Rig unit(circuit::families::mulDivUnit(w));uint64_t mask=(uint64_t{1}<<w)-1;
+        for(unsigned op=0;op<8;++op)for(auto pair:std::vector<std::pair<uint64_t,uint64_t>>{{mask,3},{uint64_t{1}<<(w-1),mask},{7,0}}){
+            auto[a,b]=pair;uint64_t expected;auto sa=signedWord(a,w),sb=signedWord(b,w);
+            if(op<4){uint64_t product=op==1?uint64_t(sa*sb):op==2?uint64_t(sa*int64_t(b)):a*b;expected=(op?product>>w:product)&mask;}
+            else if(!b)expected=op<6?mask:a;
+            else if(op==4)expected=uint64_t(sa/sb)&mask;else if(op==5)expected=a/b;
+            else if(op==6)expected=uint64_t(sa%sb)&mask;else expected=a%b;
+            unit.drive({{"A",a},{"B",b},{"OP",op},{"START",1}});unit.cycle();unit.drive({{"START",0}});
+            require(unit.out("BUSY")&&!unit.out("DONE"),"Generic M launch");
+            unit.drive({{"ENABLE",0}});unit.cycle();require(unit.out("BUSY")&&!unit.out("DONE"),"Generic M pause");unit.drive({{"ENABLE",1}});
+            for(size_t i=0;i<w;++i){unit.cycle();require(unit.out("DONE")== (i==w-1),"Generic M width-dependent latency");}
+            require(unit.out("RESULT")==expected,"Generic M signed/unsigned result");unit.cycle();require(unit.out("DONE"),"Generic M completion retention");
+            unit.drive({{"TAKE",1}});unit.cycle();unit.drive({{"TAKE",0}});require(unit.out("READY"),"Generic M result take");
+        }
+    }
+    for(size_t w:{8u,16u}){
+        auto port=circuit::device::BusUnit::RegisterPort;Rig r(circuit::device::busFamily(port,w));const uint32_t mask=(1u<<(w/8))-1;
+        r.drive({{"BACK_READY",1},{"BACK_READ_DATA",0xa5},{"BACK_STATUS",0}});
+        require(r.access(false,w/8,0,mask)==std::pair<uint32_t,uint32_t>{0,0xa5},"Generic port read/alignment");
+        require(r.access(true,0,0x55,mask).first==0,"Generic port write");
+        require(r.access(true,0,0x55,0).first==0,"Generic port zero-mask no-op");
+        if(w==16){require(r.access(true,0,0x55,1).first==6,"Generic port partial-mask rejection");require(r.access(false,1).first==1,"Generic port misalignment");}
+        Rig error(circuit::device::busFamily(circuit::device::BusUnit::ErrorTarget,w));require(error.access(false,0).first==2,"Generic bus error");
+        Rig pixel(circuit::device::indexedPixelSelector(w));pixel.drive({{"WORD",0x1ce0},{"OFFSET",0}});require(pixel.out("INDEX")==224&&pixel.out("ARGB")==0xffff0000,"Generic RGB332 byte selection");
+        pixel.drive({{"OFFSET",1}});require(pixel.out("INDEX")== (w==16?28:0),"Generic RGB332 offset/unused selector");
+        Rig queue(circuit::families::synchronousFifo(16),true,{{"depth","3"}});queue.drive({{"PUSH",1},{"PUSH_DATA",0xabcd}});queue.cycle();queue.drive({{"PUSH",0}});
+        require(queue.out("DATA")==0xabcd&&queue.out("COUNT")==1,"Generic 16-bit queue");
+        Rig counter(circuit::families::clockedCounter(w));counter.drive({{"RST",1}});counter.cycle();counter.drive({{"RST",0}});counter.cycle();require(counter.out("COUNT")==1,"Generic counter width");
+    }
+    for(size_t w:{8u,16u,32u})for(size_t count:{2u,4u,8u,16u,32u})for(bool zero:{false,true}){
+        // Exercise every bit at both levels as well as all addresses/ports.
+        Rig regs(circuit::storage::registerFile(w,count,{zero}));
+        const uint64_t mask=(uint64_t{1}<<w)-1;
+        for(unsigned pass=0;pass<2;++pass){
+            auto value=[&](size_t i){return (0xa5a5a5a5ULL^(i*0x01010101ULL)^(pass?mask:0))&mask;};
+            for(size_t i=0;i<count;++i){regs.drive({{"REG_WRITE",1},{"RD_ADDR",i},{"WRITE_DATA",value(i)}});regs.cycle();}
+            regs.drive({{"REG_WRITE",0}});
+            for(size_t i=0;i<count;++i){regs.drive({{"RS1_ADDR",i},{"RS2_ADDR",count-1-i}});
+                require(regs.out("RS1_DATA")==(!i&&zero?0:value(i)),"Generic register-file first read/zero policy");
+                size_t j=count-1-i;require(regs.out("RS2_DATA")==(!j&&zero?0:value(j)),"Generic register-file second read");}
+            auto view=std::dynamic_pointer_cast<RegisterStateView>(regs.root);require(bool(view),"Generic register-state capability missing");
+            const auto state=view->getRegisterStateAtTime(regs.now);require(state.size()==count,"Generic register-state count");
+            for(size_t i=0;i<count;++i)require(state[i]==circuit::test::logicBits(w,!i&&zero?0:value(i)),"Generic register-state width/value");
+        }
+
+    }
+    for(size_t width:{8u,16u,32u}){
+        routing(circuit::device::busFamily(circuit::device::BusUnit::Router,width),false,width);
+        routing(circuit::device::busFamily(circuit::device::BusUnit::InstructionGuard,width),true,width);
+        routing(circuit::device::busFamily(circuit::device::BusUnit::Router,width),false,width,{{"console_base",std::to_string(0x18000000)}});
+        for(auto topology:{AdderTopology::Ripple,AdderTopology::ParallelPrefix}){
+            Rig core(family(Unit::ALU,width,{Operations::IntegerDatapath,topology,false}));
+            require(!core.root->getOutputPinDynamic("ZERO")&&!core.root->getOutputPinDynamic("CARRY_OUT"),"Generic integer core flag omission");
+            core.drive({{"A",7},{"B",9},{"OP",0}});require(core.out("OUT")==16,"Generic integer core result");
+        }
+    }
+    bool bad_config=false;try{(void)family(Unit::ALU,16,{Operations::Extended,AdderTopology::Ripple,false});}catch(const std::invalid_argument&){bad_config=true;}
+    require(bad_config,"Extended flag contract silently disabled");
+    circuit::device::AddressMap map;map.validate();map.regions[1].base=0;
+    bool rejected=false;try{map.validate();}catch(const std::invalid_argument&){rejected=true;}require(rejected,"Overlapping map accepted");
+    std::cout<<"PASS generic ALU, adder, iterative M, ports, pixel words, counters, queues and register files\n";
+}
+
 class CheckCase : public StandaloneVerificationTest {
     std::string name_;std::function<void()> check_;
 public:CheckCase(std::string n,std::function<void()>f):name_(std::move(n)),check_(std::move(f)){}
@@ -540,10 +698,11 @@ void appendRV32IMPhase3Tests(std::vector<TestRegistryEntry>&entries) {
         entries.push_back({name,name,RegisteredTestKind::Integration,{}, {},{"simulation","rv32im","phase3"},
           [name,check]{return std::make_unique<CheckCase>(name,check);},false});
     };
+    add("WidthComponentsTest",widthComponents);
     add("MultiplyStepTest",[]{steps(false);});add("DivideStepTest",[]{steps(true);});
-    add("Multiplier32Test",[]{arithmetic(circuit::families::Multiplier32,false,false);});
-    add("Divider32Test",[]{arithmetic(circuit::families::Divider32,false,true);});
-    add("MulDivUnit32Test",[]{arithmetic(circuit::families::MulDivUnit32,true,false);});
+    add("MultiplierWidth32Test",[]{arithmetic(circuit::families::multiplier(32),false,false);});
+    add("DividerWidth32Test",[]{arithmetic(circuit::families::divider(32),false,true);});
+    add("MulDivUnitWidth32Test",[]{arithmetic(circuit::families::mulDivUnit(32),true,false);});
     add("TableOnlyDelayPublicationTest",tableOnlyTiming);
     add("RV32IMSemanticsTest",semantics);
     add("RV32IMDecodeControlTest",mdecode);add("RV32IMDecodeStageTest",mdecodeStage);
@@ -558,11 +717,11 @@ void appendRV32IMPhase3Tests(std::vector<TestRegistryEntry>&entries) {
     });
     add("RV32IMCompiledProgramTest",[]{coreProgram(false,true);});
     add("ClockedCounterTest",counter);add("SynchronousFifoTest",fifo);
-    add("DeviceRegisterPort32Test",port);add("BusErrorTarget32Test",[]{Rig r(circuit::families::BusErrorTarget32);require(r.access(false,0).first==2,"Bus error target");});
-    add("AddressRouter32Test",[]{routing(circuit::families::AddressRouter32,false);});
-    add("InstructionAccessGuard32Test",[]{routing(circuit::families::InstructionAccessGuard32,true);});
-    add("ConsoleDevice32Test",console);add("TimerDevice32Test",timer);add("ButtonDevice32Test",buttons);
-    add("IndexedPixelSelector32Test",pixels);add("FramebufferDisplay32Test",display);
+    add("DeviceRegisterPortWidth32Test",port);add("BusErrorTargetWidth32Test",[]{Rig r(circuit::device::busFamily(circuit::device::BusUnit::ErrorTarget,32));require(r.access(false,0).first==2,"Bus error target");});
+    add("AddressRouterWidth32Test",[]{routing(circuit::device::busFamily(circuit::device::BusUnit::Router,32),false);});
+    add("InstructionAccessGuardWidth32Test",[]{routing(circuit::device::busFamily(circuit::device::BusUnit::InstructionGuard,32),true);});
+    add("ConsoleDeviceTest",console);add("TimerDeviceTest",timer);add("ButtonDeviceTest",buttons);
+    add("IndexedPixelSelectorWidth32Test",pixels);add("FramebufferDisplayTest",display);
     add("DeviceInspectorTest",deviceViews);
     appendRV32IMPhase3Scenarios(entries);
 }

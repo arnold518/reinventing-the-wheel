@@ -25,13 +25,42 @@ work state changes. Keep dated decisions and validation results in
   Its toolbars and panels use one dark theme with icon buttons since the
   closed [visual refresh record](records/2026-10-21-visualizer-visual-refresh.md);
   the published site still has the old look until the next Pages build.
+- Development uses `alpha` directly in the main repository; no linked Git
+  worktrees remain. Older pending changes are saved in a verified stash and
+  backup, and former build/evidence directories are ordinary ignored archives.
+  Port 8893 serves the main documentation directory and current word/device
+  simulator package. The replacement ALU references now use `/alu/`; the
+  original canvas has a fresh native 18-checkpoint Pong capture with exact
+  host-reference frames and identical retained pin/wire states to its prior
+  capture. Live HTTP checks cover 30 exact asset hashes and two HTML entry
+  points with verified preview-script injection. The matching local package
+  passes the focused ALU/device/Pong browser checks. Bring-up/2048 frame-only exports retain their source snapshots.
+  Full phase-6
+  acceptance remains open in the [game record](records/2026-10-21-scripted-games-phase4-6-implementation.md).
+  The preview service is capped at 768 MiB with no swap. See the closed
+  [main checkout consolidation](records/2026-10-22-main-alpha-checkout.md) and
+  earlier [local preview record](records/2026-10-22-alpha-local-preview.md).
 - Scalable memory endpoints use a visible controller with each technology's
   behavioral native device. The redundant memory container contract is
-  retired with saved-ID aliases. The [retirement record](records/2026-10-16-native-memory-device-retirement.md)
+  retired; current profiles use native-device IDs and retired IDs are rejected. The [retirement record](records/2026-10-16-native-memory-device-retirement.md)
   reports 28 focused native and seven local web checks plus the Pages build.
 - The [test and scenario guide](guides/tests-and-scenarios.md) documents the
   registry, focused checks, visualizer aliases and generated examples; its
   [record](records/2026-10-16-tests-and-scenarios-guide.md) is closed.
+- The completed [component replacement](records/2026-10-22-general-component-retirement.md)
+  implements shared word/mux/decoder/register-file/M-unit/bus/pixel recipes,
+  removes fixed components and retired-ID aliases, and updates public ALU/RV32I
+  references, scenarios and saved layouts. `RegisterFile32x32` remains the
+  architectural exception. Focused native/API/reference/portable/browser
+  acceptance passes; all 158 example groups and complete unit timing-file
+  verification pass. The three regenerated timing profiles have 809 entries
+  each. The [width record](records/2026-10-22-width-component-audit.md) is closed;
+  full game acceptance remains below.
+- The completed [device parameter/view work](records/2026-10-21-device-parameters-and-visuals.md)
+  covers configurable geometry/queues, declarative maps and observational
+  display/keyboard views. Current native/API checks cover direct 320x200 and
+  CPU high-address presentation at 128x96/97x65. Broader game/performance and
+  interactive acceptance remain in the game milestone.
 - Current internal guidance is indexed in [docs/README.md](README.md).
   Historical plans, retired guides and completed reports are listed in the
   [archive index](archive/README.md).
@@ -91,23 +120,25 @@ work state changes. Keep dated decisions and validation results in
 
 ## In progress
 
-- [Device parameters and visual abstractions](records/2026-10-21-device-parameters-and-visuals.md):
-  queue depths 1–7 and configurable displays pass native checks through
-  320×200 storage and CPU presentation at 128×96/97×65. Recorded display,
-  keyboard and history/rewind adapters pass native and bounded WASM checks.
-  All 366 layouts pass; old `alpha` placements are preserved. Browser
-  acceptance remains resource limited. Phase 7 has not started.
+- [ALU interface and documentation review](records/2026-10-22-alu-exposure-review.md):
+  the operation contract still gives eight ALU unit names two different pin
+  sets; the Chapter 2 pages repeat them and contain factual errors. The
+  owner chose two ALUs: the extended `ALU<W>` in Chapter 2 and `RV32IALU`
+  in 4.3. Interface details are being settled; nothing is implemented.
 
 - [FF controller startup](records/2026-10-21-memory-controller-startup.md):
   initialization preserves provisioned images in structural, fused and mixed
-  profiles; focused native/WASM checks pass. The large SRAM regression's
-  resource-limited retry remains part of phase-6 acceptance.
+  profiles. Current native startup and all three large SRAM subarray/clocked/
+  contract checks pass; the latter peak at 764,540 KiB RSS. Current WASM
+  acceptance is in progress.
 
 - [Compiler memory prerequisites](records/2026-10-21-delay-table-compile-memory.md):
   optional table partitions and split binding registrations build within the
   local caps. All 808 timing entries per profile match exactly in native and
-  WASM; all 175 old Python API entries remain, with five additions. Full
-  current-source legacy example regeneration is still resource limited.
+  WASM in the prior checkpoint. The current API audit preserves the 175-name
+  legacy snapshot and retains all five later additions, with three new
+  exports. Current full example regeneration uses isolated processes and is
+  in progress.
 
 - [64-bit simulation time prerequisite](records/2026-10-21-simulation-time-width.md):
   explicit ticks, checked scheduling, wide histories and exact JS transport
@@ -115,22 +146,23 @@ work state changes. Keep dated decisions and validation results in
   and 2^63. The full current-source suite is not claimed.
 
 - [Scripted device platform and games, phases 4–6](records/2026-10-21-scripted-games-phase4-6-implementation.md):
-  merged into `alpha`, with five games and boundary fixtures. Current selected
-  integration checks account for 80 native/Python passes and one resource-
-  limited cache-layout check; all 13 Node and four focused portable checks
-  pass. Five device parity cases, exact-time transport and old memory parity
-  pass. Strict packaging refreshes five groups and retains 152 earlier exports.
-  The full topology/browser scopes stop safely at the memory guard. Revised
-  game repetition/fidelity/quantum/performance, compiled-game WASM parity,
-  remaining cache/SRAM checks and full current example/browser validation
-  remain. Phase 6 is open; phase 7 is unimplemented.
+  five games and ten audited fixtures are integrated. The preceding width
+  snapshot passes 555 selected native registrations, 72 new timing cases,
+  15 portable checks and 367 static layouts. Its frozen game campaign stopped
+  after seven passes at expanded 2048's event limit. The new native Pong
+  circuit capture passes its exact reference, six focused native checks,
+  three JS checks and original-canvas browser acceptance. Remaining game,
+  WASM-capture and full package/performance work keep phase 6 open; phase 7
+  is unimplemented.
 
 - [RV32IM and device foundation implementation](records/2026-10-20-rv32im-phase0-3-implementation.md)
   implements phases 0–3 of the [adopted roadmap](records/2026-10-19-device-io-games-plan.md#rv32im-scripted-roadmap).
   The separate M pipeline and structural device contracts retain the existing
   RV32I families and recorded playback. Current scoped core/device/transport
   checks pass; full milestone acceptance is tracked above. Builds and evidence
-  remain in `.worktrees/rv32im-phase3`; no live viewer module was overwritten.
+  now use main `build-milestone` / `build-wasm-milestone`; older archives remain
+  ordinary ignored directories. There is
+  no longer a Git worktree. No live viewer module was overwritten.
   See the [foundation contract](reference/rv32im-device-foundation.md).
 
 - [Realistic leaf delays and gate-level memory control](records/2026-10-16-realistic-timing-plan.md),

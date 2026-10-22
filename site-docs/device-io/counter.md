@@ -1,12 +1,14 @@
 # ClockedCounter
 
-Enabled virtual-clock counter, widths 4 and 32.
+Enabled virtual-clock counter, widths 4, 8, 16 and 32.
 
 Catalog: `device.counter.4`. Structural and compact implementations are selectable. The compact form runs
 this component's own four-state gate list with characterized storage and
 same-circuit delay bounds. Fidelity and protocol validation is in progress.
 
-Width variants use the corresponding catalog suffix; bus widths below show the recorded small form.
+Width variants use the corresponding catalog suffix; pins below show the recorded
+four-bit form. Eight- and 16-bit variants initially provide structural circuits.
+The existing four-/32-bit compact forms keep their own timing contracts.
 
 ## Pins
 

@@ -2,7 +2,7 @@
 
 A page writes ``<!-- timing-table: KEY -->`` where KEY is a stored table name
 from ``part_delay_tables`` (for example
-``arithmetic.adder.width8.behavioral.direct``). The hook replaces the marker
+``word.adder.8.ripple.behavioral``). The hook replaces the marker
 with one table: every path of the compact part, with its proven minimum and
 maximum delay in each timing profile. The numbers are read from the generated
 table files, so a page cannot drift from the code.

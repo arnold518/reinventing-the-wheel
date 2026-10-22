@@ -28,7 +28,7 @@ class TimingTables(unittest.TestCase):
 
     def test_known_values(self):
         # The 8-bit adder: A -> Cout, as stored for each profile.
-        html = mkdocs_timing.render("arithmetic.adder.width8.behavioral.direct")
+        html = mkdocs_timing.render("word.adder.8.ripple.behavioral")
         row = re.search(r"A → Cout</th>(.*?)</tr>", html).group(1)
         self.assertEqual(re.findall(r"<td>(.*?)</td>", row), ["3–18", "102–936", "71–652"])
         # A clocked part shows clock-to-output, setup and its internal period.
@@ -48,10 +48,10 @@ class TimingTables(unittest.TestCase):
 
     def test_selected_rows(self):
         # One chosen path: its latest change in each profile.
-        html = mkdocs_timing.render_rows("Carry | arithmetic.adder.width8.behavioral.direct | A → Cout")
+        html = mkdocs_timing.render_rows("Carry | word.adder.8.ripple.behavioral | A → Cout")
         self.assertEqual(re.findall(r"<td>(.*?)</td>", html), ["18", "936", "652"])
         with self.assertRaises(ValueError):
-            mkdocs_timing.render_rows("Carry | arithmetic.adder.width8.behavioral.direct | A → Nothing")
+            mkdocs_timing.render_rows("Carry | word.adder.8.ripple.behavioral | A → Nothing")
         with self.assertRaises(ValueError):
             mkdocs_timing.render_rows("missing separators")
         for page in sorted((ROOT / "site-docs").rglob("*.md")):

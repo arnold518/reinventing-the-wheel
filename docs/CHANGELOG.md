@@ -7,6 +7,241 @@ history remains in Git and the archived reports.
 
 ## 2026-10-22
 
+### Complete replacement of fixed components with parameterized recipes
+
+- **Components:** `ALU<W>` and arithmetic/logic/shift/compare/flag/select units
+  use shared width-driven structural recipes and value rules. Ripple and
+  parallel-prefix addition work at 8/16/32 bits; prefix is the ALU default.
+  `Mux<Inputs,W>`, `Decoder<AddressBits>`, `RegisterFile<W,Count>`,
+  `Incrementer<W,Step>`, iterative M units and bus/pixel helpers replace their
+  fixed wrappers. Configured peripherals keep the declared 32-bit MMIO ABI.
+  `RegisterFile32x32` is the approved architecture exception and shares the
+  generic register-file recipe.
+- **Contracts and views:** retired classes/factories/IDs and runtime aliases
+  are removed. Callers, exact profile rules, scenario names, saved layouts,
+  Python/WASM bindings and current references migrate completely. The ALU
+  chapter uses a shared 64-row generator (16-bit prefix as its primary view),
+  documents both adders, and owns the integer component references; RV32I
+  specifies its configured ALU. Old document routes/anchor aliases are removed.
+  Parameter-aware layouts, pin-footprint clearance and family colors support
+  the generic parts. The 8893 package includes fresh Pong circuit/evidence
+  assets and the current references.
+- **Checked:** 23 focused native registrations, two API registrations, seven
+  reference/metadata registrations, four catalog methods and six portable/
+  browser registrations pass. Portable checks cover 21 extended-ALU scenarios,
+  nine integer/Execute scenarios and all 22 M/device recordings. Browser checks
+  cover the adder article/embeds, 23 component pages, selected ALU/display/button
+  sessions and every retained Pong pin/wire/device state with original playback.
+  All 158 example groups and strict package builds pass. Three timing profiles
+  are regenerated with 809 entries each; all 780 retained-ID entries are
+  unchanged in every profile. Complete unit-file verification passes. Selected
+  layout checks and live 8893 routes/assets/retired-anchor checks pass.
+- **Game/geometry evidence:** fresh Pong has 18 exact-reference frames and
+  identical retained signal vectors, simulated times and event counters to
+  the prior capture, with zero setup violations. Current APIs cover 320x200;
+  actual CPU high-address stores/geometry reads/PRESENT pass at 128x96/97x65.
+- **Limits:** serial guarded local builds/checks, not full native/web suites,
+  a controlled throughput benchmark, the remaining phase-6 game campaign or
+  phase 7/live input. Embedded/desktop timing files are regenerated, with only
+  unit rerun through complete-file verification. Failed migration checks and
+  environment attempts are preserved with their successful corrections in the
+  [closed replacement record](records/2026-10-22-general-component-retirement.md).
+  Unrelated dirty work and deployed native extensions remain preserved; no
+  commit, push or published-site verification is claimed.
+
+
+### Parameterized ALU references through RV32I
+
+- **Changed:** Chapter 2 specifies width-parametric arithmetic/logic, shifts,
+  comparison, flags and complete ALUs. Width, operation contract, topology and
+  behavioral availability are explicit. The integer component references are
+  in §2.7; RV32I §4.3.3 specifies the CPU configuration and Execute wiring.
+  Home/navigation, generic API, register-file and core references agree with
+  that organization. Concrete example aliases, C++ references and component
+  fragments are preserved. The 8893 preview includes the timing-table hook.
+- **Checked:** six focused documentation checks pass, including compiled
+  reference replay and live pin/fidelity schemas; final integer/timing repeat
+  passes; strict MkDocs builds pass. All 22 relevant C++ examples and recorded
+  marker identities are unchanged. All 18 affected live articles match the
+  strict build, and 989 local article links/anchors pass. Checks/builds ran
+  serially under the 768 MiB cap. Missing storage/flag links and the omitted
+  timing paragraph found during review are corrected.
+- **Limits:** documentation and check-path/expectation changes; existing
+  simulator package reused. No full browser/WASM suite, game campaign,
+  runtime component change or remote deployment. See the open
+  [width record](records/2026-10-22-width-component-audit.md).
+
+### Pong replay through the original circuit visualizer
+
+- **Implemented:** bounded captures from the actual checked game circuit,
+  a native `RecordedCircuitProbe`, layout packaging and a captured-state
+  transport for the existing canvas/explorer/inspector/timeline. Device views
+  show the game screen and input state on their actual components. Progressive
+  wiring, a small layout sidecar and a capture-specific detail threshold keep
+  replay within the host's limits; existing scenario/layout defaults remain.
+- **Verified:** actual Pong rally, 115,686 cycles / 29,005 retirements / 18
+  changing frames / zero setup violations; all exact host-reference screens
+  and reports; six focused native and three JS checks; strict preview build;
+  all 18 retained pin/wire vectors and display/input states in the live
+  original canvas, with inspector, rewind, Play and Device views. All 32
+  served simulator/circuit artifact hashes match. The first browser attempt
+  exposed missing layouts; three guarded memory stops led to the bounded
+  implementation before the final browser pass.
+- **Limits:** native-produced presentation checkpoints only; no intermediate
+  gate transitions, historical RAM pages or live input. Full game/WASM capture
+  acceptance is still open in the [phase-6 record](records/2026-10-21-scripted-games-phase4-6-implementation.md).
+  No native live-module deployment, linked worktree, commit or remote push.
+  Contract: [recorded circuit checkpoints](reference/recorded-circuit-checkpoints.md).
+
+### Clarified game visualization acceptance
+
+- **Recorded:** the owner requires scripted games in the original circuit
+  visualizer, with abstract device visuals on the actual CPU/device assembly.
+  Existing component views are present, but game/session integration remains
+  missing. Added that requirement to the open phase-6 records and status;
+  separate recording/GIF checks cannot certify it. Live input remains phase 7.
+- **Reviewed:** original canvas/inspector rendering, device metadata, the
+  device-system scenario and batch/session boundaries. Documentation only;
+  no runtime/UI edits, new tests, builds or interruption of the serial campaign.
+
+### Visible native bring-up and 2048 recordings
+
+- **Changed:** added actual bring-up/2048 JSON captures, animated previews
+  and a hash manifest to the public recorded-games page. Restored the main
+  8893 preview with the already-built current simulator/example package;
+  the previous package is preserved. Its old example bundle had blocked
+  strict rebuilds after ALU16 was added.
+- **Checked:** bring-up's four native configurations pass; 2048 baseline
+  passes four exact host-reference frames. Strict preview build passes
+  (55.94 seconds, 178,652 KiB peak RSS), five live routes and all 27 simulator
+  plus five export hashes match, and all six saved frames pass live browser
+  RGBA/keyboard replay checks. The serial campaign resumes after these checks.
+- **Limits:** these are short predetermined recordings. The GIFs replay at
+  one frame per second, independently of simulation throughput. Other game
+  configurations, game WASM and full browser acceptance remain pending;
+  phase 6 is open and phase 7 is unimplemented. No native live module,
+  circuit source, commit or remote deployment changes. See the
+  [phase-6 record](records/2026-10-21-scripted-games-phase4-6-implementation.md).
+
+### Shared word components and configurable device helpers
+
+- **Implemented:** shared structural builders behind `ALU<W>`, word units,
+  adders, muxes, register files and iterative multiply/divide components.
+  Operation contracts, adder topology and flag outputs are explicit choices;
+  legacy factories, pins, operation maps and profile IDs are retained.
+  RV32IM continues to use the shared five-stage assembly.
+- **Implemented:** 8/16/32-bit device transport and pixel selectors, validated
+  router maps and device-view capabilities. The game peripheral register ABI
+  remains 32-bit. Guest drawing now reads physical display geometry and
+  aligns stores using the actual row address. Rebuilt all ten audited RV32IM
+  fixtures. Public contracts are in the new
+  [word component reference](../site-docs/components/word-components.md).
+- **Checked so far:** serial isolated native build; 555 distinct selected
+  native registrations, including three large SRAM checks; 72 new width/timing
+  cases; all 808 stored delay entries across each of three profiles; WASM width
+  execution and 15 portable compatibility checks; strict packaging of 158
+  example groups; 367 static layouts. Added 23 layout entries without
+  changing old entries. The 175-name full Python API snapshot is preserved,
+  and all five later additions remain present. Node required an unchanged
+  retry without a virtual-address cap. No task command was observed OOM-killed.
+- **Open:** current-source compiled-game, game WASM, browser, performance
+  and final package acceptance continue in the
+  [phase-6 record](records/2026-10-21-scripted-games-phase4-6-implementation.md)
+  and [width record](records/2026-10-22-width-component-audit.md). New width
+  variants are structural; phase 6 is not yet accepted and live phase 7 is
+  unimplemented. The isolated build does not replace the native live module.
+
+### ALU width configuration design
+
+- **Documented:** continued the ALU8/ALU32 comparison in the consolidated
+  [width record](records/2026-10-22-width-component-audit.md), reopened for
+  design discussion. Proposed one ALU<W> implementation with named semantic
+  contracts, explicit adder topology and compatible old catalog factories.
+  Word width alone must not change operation maps or flag conventions.
+- **Scope:** reviewed current ALU source/public pins and RV32IM composition.
+  Confirmed shared pipeline assembly and unchanged fetch/memory/writeback;
+  M extends decode, EX and coordination. Recorded duplicated physical operand
+  forwarding as a future sharing opportunity. Added an implementation sequence
+  and compatibility/validation criteria; no component, test, public page,
+  build, simulation or service changed.
+
+### Consolidated component width record
+
+- **Changed:** merged the game-roadmap width analysis into the earlier
+  [component width record](records/2026-10-22-width-component-audit.md) at the
+  owner's request, retained both sets of dated evidence, updated links and
+  removed the duplicate record. The summary now states the protocol/data-
+  width refinement and the relationship between the 40-class and 22-component
+  inventories.
+- **Checked:** dated-body preservation, local reference targets and whitespace.
+  Documentation only; no component changes, build, simulation, test suite or
+  service restart.
+
+### Game-roadmap width and parameter review
+
+- **Changed:** classified the adopted 22 components into 12 fixed-width
+  suffixes, six ISA identities and four parameterized blocks. Proposed reuse
+  of the existing data-width protocol, with separate arithmetic, register,
+  device-state and display parameters. Updated the roadmap summary for the
+  main alpha checkout and current implemented contracts, preserving dated
+  sections. See the [review](records/2026-10-22-width-component-audit.md).
+- **Reviewed:** current hardware/protocol source, register ABI, public device
+  references, observation adapters and guest drivers. Fixed sizes extend to
+  operation counters, register transfers, 32 keyboard levels and 64×48 guest
+  drawing. The prior geometry work does not establish generic game rendering.
+- **Limits:** analysis/internal documentation only; no component/guest change,
+  tests, compile, simulation, browser or service restart. Width refactoring
+  remains proposed; phase-6/phase-7 acceptance status is unchanged.
+
+### Main alpha checkout and retirement of linked worktrees
+
+- **Changed:** switched the main repository to `alpha`, restored the recent
+  preview/audit documentation there and moved port 8893 to the main directory.
+  Saved older pending work in a named stash and external backup. Removed both
+  linked Git worktree registrations while retaining their source/build/evidence
+  directories as ordinary ignored archives with unchanged entry metadata.
+- **Verified:** both sets of pending-file hashes in stashes/backups; only the
+  main alpha checkout in `git worktree list`; guarded strict preview build
+  (43.76 seconds, 179,736 KiB peak RSS); eight local documentation routes and
+  all 27 served simulator hashes. Preview peak was 287.72 MiB, with zero OOM
+  events or automatic restarts. Existing branch references and prior build
+  artifacts are preserved. See the
+  [consolidation record](records/2026-10-22-main-alpha-checkout.md).
+- **Limits:** no commit/push, native/WASM compile, native regression or
+  browser gameplay check. Documentation remains uncommitted on main alpha;
+  phase-6 acceptance and phase-7 status are unchanged.
+
+### Fixed-width component inventory and ALU comparison
+
+- **Changed:** recorded 40 public classes named for fixed 8/32-bit widths,
+  the additional ALU32Core family, existing parameterized precedents and
+  proposed generic implementations. Distinguished data width from opcode
+  contracts, mux input count, bus format and framebuffer geometry.
+- **Reviewed:** current headers/circuit implementations, public ALU pages,
+  catalog/profile contracts, visualizer type matching and test definitions.
+  The audit identifies compatibility and four-state/timing differences that
+  a future refactor must preserve. See the
+  [audit record](records/2026-10-22-width-component-audit.md).
+- **Limits:** internal documentation only; no component refactor, test run,
+  build, simulation or service change. Existing work remains untouched.
+
+### Local documentation preview follows the alpha checkout
+
+- **Changed:** moved port 8893 to the dedicated `alpha` worktree using a
+  local user-service drop-in, including both absolute startup checks.
+  Staged its matching simulator package without a compile; retained the
+  preview hook and durable runtime directory. The service now has a 768 MiB
+  memory limit with no swap.
+- **Verified:** guarded strict preview build (46.15 seconds, 180,176 KiB peak
+  RSS), eight HTTP documentation routes and all 27 served simulator file
+  hashes. Service peak after the HTTP checks was 279.72 MiB, with no OOM
+  events or automatic restarts. Primary pending files and the feature
+  checkout are unchanged. See the
+  [preview record](records/2026-10-22-alpha-local-preview.md).
+- **Limits:** reused the milestone's example bundle; no full regeneration,
+  browser/runtime validation, native suite, GitHub push or remote deployment
+  ran. Phase-6 acceptance remains open; phase 7 has not started.
+
 ### RV32IM milestone checkpoint and bounded build tooling
 
 - **Changed:** merged the RV32IM/device/scripted-game checkpoint into `alpha`,

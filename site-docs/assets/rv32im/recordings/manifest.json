@@ -1,0 +1,88 @@
+{
+  "version": 1,
+  "description": "Actual native circuit captures. One-second replay spacing does not represent simulation speed. Game acceptance remains in progress.",
+  "recordings": [
+    {
+      "guest": "bringup",
+      "baseCommit": "88c0a95013e781afafa981ea8af856ea5c073fc2",
+      "runnerSha256": "73964cf413031a0bcef749be0baa881b6f5144d409d152b5cdd65598a4043557",
+      "fixtureManifestSha256": "76d5311c74185f485137b868837acd2d1e1326917395214cf648c4707cb99e8b",
+      "recordingSha256": "1ed02fa4ff6d06127bfebf8b97c17839d1f28e2c80b897a16f87370d7deba3ef",
+      "frameSha256": [
+        "36158d72f3708a3f74497a71bbd5a2340388dc2f54427eaa01e63ab3045f5fa2",
+        "8eb3cdbda054f3700c18a3e04627b359a14d6300a98eb5f795944c939851c48f"
+      ],
+      "cycles": 38811,
+      "instructions": 11533,
+      "executionSeconds": 137.3636594,
+      "setupViolations": 0,
+      "sourceRecording": "build-milestone/phase6-native-games-current/bringup/baseline/recording.json",
+      "sourceManifestSha256": "f988d6e3fae05ea9c9861b4cc96357fc03b000cd7a727ba27a31f0135f2d4ee7",
+      "frames": [
+        {
+          "cycle": 36437,
+          "width": 64,
+          "height": 48,
+          "sequence": 1
+        },
+        {
+          "cycle": 38741,
+          "width": 64,
+          "height": 48,
+          "sequence": 2
+        }
+      ],
+      "replayMillisecondsPerFrame": 1000,
+      "pixelScale": 8,
+      "gifSha256": "79086f9bf264cbeb593ae27af0403f51b3f2953cbb54dad8abc8d8354f2b284e"
+    },
+    {
+      "guest": "2048",
+      "baseCommit": "88c0a95013e781afafa981ea8af856ea5c073fc2",
+      "runnerSha256": "73964cf413031a0bcef749be0baa881b6f5144d409d152b5cdd65598a4043557",
+      "fixtureManifestSha256": "76d5311c74185f485137b868837acd2d1e1326917395214cf648c4707cb99e8b",
+      "recordingSha256": "fd0b7e4b42043361591722836f612d266f6c220f3b1cc0f9850cafa1efb37d51",
+      "frameSha256": [
+        "d191fc96f79e00415188a38bbd74d197c78e07a291bede296e2dae63ba0ad1c7",
+        "250885c2ec3984c30e0bc1662ce761cbac6c5b48a2c2bfa1b5f533499636fd0b",
+        "c36c259370b77f0922e7de8f368a09b96f8b1326739de295a6ebb76f806722ba",
+        "d191fc96f79e00415188a38bbd74d197c78e07a291bede296e2dae63ba0ad1c7"
+      ],
+      "cycles": 169601,
+      "instructions": 42973,
+      "executionSeconds": 619.7862839,
+      "setupViolations": 0,
+      "sourceRecording": "build-milestone/phase6-native-games-current/2048/baseline/recording.json",
+      "sourceManifestSha256": "f988d6e3fae05ea9c9861b4cc96357fc03b000cd7a727ba27a31f0135f2d4ee7",
+      "frames": [
+        {
+          "cycle": 63180,
+          "width": 64,
+          "height": 48,
+          "sequence": 1
+        },
+        {
+          "cycle": 89128,
+          "width": 64,
+          "height": 48,
+          "sequence": 2
+        },
+        {
+          "cycle": 114473,
+          "width": 64,
+          "height": 48,
+          "sequence": 3
+        },
+        {
+          "cycle": 151628,
+          "width": 64,
+          "height": 48,
+          "sequence": 4
+        }
+      ],
+      "replayMillisecondsPerFrame": 1000,
+      "pixelScale": 8,
+      "gifSha256": "c0c138747e21fe910d75975ecf59909ec9cc40c3bef7c49120ec2e2defa818ac"
+    }
+  ]
+}

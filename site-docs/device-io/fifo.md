@@ -1,12 +1,14 @@
 # SynchronousFifo
 
-Parameterized synchronous FIFO, widths 8 and 32.
+Parameterized synchronous FIFO, widths 8, 16 and 32.
 
 Catalog: `device.fifo.8`. Structural and compact implementations are selectable. The compact form runs
 this component's own four-state gate list with characterized storage and
 same-circuit delay bounds. Fidelity and protocol validation is in progress.
 
-Width variants use the corresponding catalog suffix; bus widths below show the recorded small form.
+Width variants use the corresponding catalog suffix; pins below show the recorded
+eight-bit form. The 16-bit variant is structural; existing eight-/32-bit
+compact forms keep their configured timing contracts.
 
 ## Pins
 

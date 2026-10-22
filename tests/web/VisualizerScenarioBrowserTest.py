@@ -39,8 +39,8 @@ with sync_playwright() as p:
         page.set_viewport_size({'width': width, 'height': 1000})
         for selector in ('#scenario-select', '#program-core', '#program-policy', '#toggle-explorer'):
             assert page.locator(selector).evaluate('e => { const r=e.getBoundingClientRect(); return r.width > 0 && r.x >= 0 && r.right <= innerWidth; }'), selector
-    page.locator('#scenario-select').select_option('alu8')
-    page.wait_for_function('app.scenario === "alu8" && document.body.dataset.circuitsimStatus === "ready"')
+    page.locator('#scenario-select').select_option('alu-extended-ripple-w8')
+    page.wait_for_function('app.scenario === "alu-extended-ripple-w8" && document.body.dataset.circuitsimStatus === "ready"')
     assert page.locator('#program-controls').is_hidden()
     assert not errors, errors
     browser.close()

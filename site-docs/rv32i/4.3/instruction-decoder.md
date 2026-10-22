@@ -72,7 +72,7 @@ Unmasked bits cannot affect `MATCH`. A known mismatch can mask an unknown select
 | `INSTRUCTION` | Input | 32 | Complete instruction word |
 | `RS1_ADDR`, `RS2_ADDR`, `RD_ADDR` | Output | 5 each | Raw bits 19:15, 24:20, 11:7 |
 | `IMM` | Output | 32 | Constructed immediate; zero if unused or illegal |
-| `ALU_OP` | Output | 5 | [ALU32](alu32.md) operation |
+| `ALU_OP` | Output | 5 | [ALU<32,integer,prefix>](alu.md) operation |
 | `ALU_A_SEL` | Output | 2 | 0: RS1; 1: PC; 2: zero |
 | `ALU_B_SEL` | Output | 2 | 0: RS2; 1: immediate; 2: zero |
 | `LEGAL` | Output | 1 | Recognized supported instruction |

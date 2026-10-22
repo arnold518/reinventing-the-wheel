@@ -9,16 +9,20 @@ record implementation and validation separately from the maintained interfaces.
 The [scripted milestone record](../records/2026-10-21-scripted-games-phase4-6-implementation.md)
 tracks system/game acceptance through phase 6.
 
-## Compatibility and fidelity
+## ISA integration and fidelity
 
-- Old RV32I IDs, pins, ALU operation encodings, packet fields and enum values
-  retain their meaning. RV32I still rejects M. New selection starts from
-  `rv32im.core.educational-five-stage` only.
+- RV32I instruction behavior, ISA-family pins, ALU opcode encodings, packets
+  and enum values retain their meaning; an I core rejects M instructions.
+  The IM CPU contract is `rv32im.core.educational-five-stage`. Datapath
+  components use the exact configured word-family IDs; retired fixed-component
+  IDs have no aliases. `RegisterFile32x32` is the architectural exception.
 - The I and IM cores share private assembly blueprints. Decoder, executor
-  and coordinator families are supplied explicitly. Original I child paths
-  stay the same; saved profile/layout identities are not renamed.
-- New families expose structural forms. MulDivUnit32, the core, counter/FIFO,
-  register frontend and routers also have compact gate-list forms under validation. Width variants are
+  and coordinator families are supplied explicitly. The ISA stage paths
+  stay the same. Profile fingerprints and saved component/root keys reflect
+  the actual configured contracts.
+- Families expose structural forms. `MulDivUnit<W>` at W=32, the core,
+  counter/FIFO, register frontend and routers also provide compact gate-list
+  forms for their characterized configurations. Width variants are
   separate IDs. Compact lower-level adders, registers, existing pipeline
   parts and native memory remain selectable by BuildProfile. An explicit
   all-behavioral rule requires the existing unavailable-fidelity fallback;
@@ -27,6 +31,29 @@ tracks system/game acceptance through phase 6.
 - The independent M decoder/oracle delegates only I semantics to the
   existing oracle. Product arithmetic never calls it. Test host memory
   responders are verification equipment, not a product machine or device.
+
+## Parameterized execution and transport
+
+The [word-component reference](../../site-docs/components/word-components.md)
+defines the new public C++ APIs. `ALU<W>` chooses extended or integer semantics
+and ripple/prefix addition at construction; widths 8/16/32 use the same
+operation/flag contract. Legacy ALU<8,extended,ripple>/ALU<32,integer,prefix> wrappers keep their own operation
+maps, IDs and defaults. Shared recipes also back muxes, register files,
+comparison, shifts, flags, result selection and operation decoding.
+
+`Multiplier<W>`, `Divider<W>` and `MulDivUnit<W>` support 4/8/16/32 with W
+enabled iterations after launch. The M core remains W=32 and retains its
+shared pipeline blueprint. `RegisterFile<W,Count>` declares word width,
+power-of-two count and the zero-register policy while retaining two read
+ports and one write port.
+
+Bus helpers expose 8/16/32-bit data and W/8 masks with 32-bit byte addresses.
+Six named router regions accept validated base/size parameters; the default
+map and old `video_bytes` variant key are retained. The current game
+peripheral ABI remains 32-bit; narrower helpers do not imply an implemented
+bridge or atomic fragmented access to its registers. Framebuffer dimensions,
+capacity and queue depths are independent parameters. New width variants are
+structural until their own behavioral equivalence/timing is established.
 
 ## M ownership and pipeline
 
@@ -61,7 +88,7 @@ console FIFO, timer counter and button state are separate instances/structures.
 The router removes each target's base address; high device bases and unmapped
 gaps do not require a dense backing array spanning those addresses.
 
-DeviceRegisterPort32 has a registered accepted-request slot and the existing
+DeviceRegisterPort<32> has a registered accepted-request slot and the existing
 MemoryResponseBuffer. REQ_READY depends only on reset and registered
 occupancy. Request fields are captured once. Reads sample on the backend
 execution edge, complete without BACK_READY, and retain the sampled result.
@@ -88,7 +115,7 @@ checks.
 
 ## Display and reset
 
-FramebufferDisplay32 defaults to 4x4 for structural inspection. Its catalog
+FramebufferDisplay defaults to 4x4 for structural inspection. Its catalog
 parameters select positive width/height up to 4096 each, bounded to 256 KiB
 of visible RGB332 bytes. Stride equals width, with no power-of-two constraint.
 For example 64×48 uses 3072 visible bytes in 4096 storage bytes; 128×96 uses
@@ -130,7 +157,7 @@ ownership. The integrated device system instead uses simulated RAM/devices.
 cases; `RV32IMPhase3Scenarios.cpp` holds the smaller recorded component
 examples. A recorded alias shares its sweep's logical owner. TestRegistry,
 CTest and frontend metadata include the aliases. Scenarios run all available
-root fidelities; MulDivUnit32 now also requests its compact gate-list form. Exhaustive
+root fidelities; MulDivUnit<32> now also requests its compact gate-list form. Exhaustive
 small arithmetic also runs with fully structural and compact child choices.
 
 ## Recorded platform boundary

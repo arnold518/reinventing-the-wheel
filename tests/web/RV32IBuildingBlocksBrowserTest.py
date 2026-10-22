@@ -17,7 +17,7 @@ shipped=json.loads((ROOT/"visualizer-v2/layout.json").read_text())
 scenarios={}
 DETAILS = {
     "register32": ("BIT_0",),
-    "alu32": ("CONTROL","ARITHMETIC","LOGIC","SHIFT","COMPARE","COMPARE.ARITHMETIC_ZERO","RESULT_SELECT","FLAGS","FLAGS.RESULT_ZERO"),
+    "alu-integer-prefix-w32": ("CONTROL","ARITHMETIC","LOGIC","SHIFT","COMPARE","COMPARE.ARITHMETIC_ZERO","RESULT_SELECT","FLAGS","FLAGS.RESULT_ZERO"),
     "rv32i-decode-control": ("RECOGNITION","CONTROL_SIGNALS","CONTROL_SIGNALS.ALU_OP","CONTROL_SIGNALS.LEGAL"),
     "rv32i-memory-lanes": ("ADDRESS","LOAD_EXTEND","LOAD_EXTEND.BYTE_0","LOAD_EXTEND.BYTE_3","WRITE_MASK"),
     "rv32i-memory-request": ("TAG_MATCH",),
@@ -31,7 +31,7 @@ with sync_playwright() as p:
     page=context.new_page()
     assert page.goto(urljoin(base,"rv32i/4.3/"),wait_until="domcontentloaded").ok
     assert "Planned" not in page.locator("article").inner_text()
-    for number,slug in enumerate(("register","register-file","alu32","instruction-decoder","memory-access","execution-status"),1):
+    for number,slug in enumerate(("register","register-file","alu-integer-prefix-w32","instruction-decoder","memory-access","execution-status"),1):
         assert page.goto(urljoin(base,f"rv32i/4.3/{slug}/"),wait_until="domcontentloaded").ok
         assert f"4.3.{number}." in page.locator("h1").inner_text()
         if slug == "register":
@@ -127,7 +127,7 @@ with sync_playwright() as p:
             return failures;
         }""",exports[alias]["rows"])
         assert not failures,(alias,failures)
-        if alias == "alu32-flags":
+        if alias == "flags-integer-w32":
             page.evaluate("smoothlyFocusComponent(app.rootId+'.SIGN_BIT')")
             page.wait_for_function("!app.cameraAnimation && !app.geometryDirty && !app.topologyRequestInFlight && !app.pendingScopeIds.size")
             shape=page.evaluate("""()=>{const c=app.components.get(app.rootId+'.SIGN_BIT');return {
@@ -138,7 +138,7 @@ with sync_playwright() as p:
             page.evaluate("smoothlyFocusComponent(app.rootId)")
             page.wait_for_function("!app.cameraAnimation && !app.geometryDirty && !app.topologyRequestInFlight && !app.pendingScopeIds.size")
         if screens: page.screenshot(path=str(screens/f"{alias}-simulator.png"))
-        # Inspect the new hierarchy and every named ALU32 subunit, not just
+        # Inspect the new hierarchy and every named ALU<32> subunit, not just
         # the parent rectangle. Run sequentially to avoid extra WASM instances.
         for suffix in DETAILS.get(alias,()):
             page.evaluate("suffix=>smoothlyFocusComponent(app.rootId+'.'+suffix)",suffix)

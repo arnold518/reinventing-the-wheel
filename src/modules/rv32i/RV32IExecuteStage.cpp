@@ -3,7 +3,7 @@
 #include "components/ComponentBuilder.hpp"
 #include "components/ComponentBuilder.tpp"
 #include "modules/basic/Mux.hpp"
-#include "modules/composite/IncrementBy4.hpp"
+#include "modules/composite/Incrementer.hpp"
 #include "components/StructuralNetBuilder.hpp"
 #include "modules/rv32i/RV32IPipelineControl.hpp"
 #include "modules/rv32i/RV32ISingleCycleStages.hpp"
@@ -36,7 +36,7 @@ public:
         auto zero=b.addNewComponent<ConstantValue<32>>("ZERO",0);
         for(auto& [name,pin]:select->getAllInputPins()) w.connect(getInputPinDynamic(name),pin);
         for(const std::string side:{"A","B"}) {
-            auto mux=b.addNewComponent<Mux4to1_32bit>("OPERAND_"+side);
+            auto mux=b.addNewComponent<Mux<4,32>>("OPERAND_"+side);
             w.connect(getInputPin<32>(side=="A"?"RS1_VALUE":"RS2_VALUE"),mux->getInputPin<32>("IN0"));
             w.connect(getInputPin<32>("EX_MEM_VALUE"),mux->getInputPin<32>("IN1"));
             w.connect(getInputPin<32>("MEM_WB_VALUE"),mux->getInputPin<32>("IN2"));
@@ -88,7 +88,7 @@ void RV32IExecuteStage::buildInternals(ComponentBuilder& b) {
     auto forward=rv32i::detail::addForwardedOperands(b,"FORWARDED_OPERANDS");
     auto datapath=b.add(circuit::families::RV32ISingleCycleExecuteStage,"DATAPATH");
     auto next=b.add(circuit::families::RV32ISingleCycleNextPCStage,"NEXT_PC");
-    auto pc4=b.addNewComponent<IncrementBy4>("PC_PLUS_4");
+    auto pc4=b.addNewComponent<Incrementer<32,4>>("PC_PLUS_4");
     auto status=b.addNewComponent<ExecutePacketStatus>("PACKET_STATUS");
     addControlUnpack(b,"CONTROL_FIELDS");addAddressUnpack(b,"REGISTER_FIELDS");
     addStatusPack(b,"EXECUTION_STATUS",{"TARGET_MISALIGNED"});

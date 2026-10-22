@@ -104,31 +104,31 @@ void RV32IPipelineRetirementUnit::buildInternals(
         "CAUSE_STORE_MISALIGNED", 7);
     builder.addNewComponent<ConstantValue<4>>(
         "CAUSE_STORE_FAULT", 8);
-    builder.addNewComponent<Mux2to1_4bit>(
+    builder.addNewComponent<Mux<2,4>>(
         "DATA_MISALIGNED_CAUSE");
-    builder.addNewComponent<Mux2to1_4bit>(
+    builder.addNewComponent<Mux<2,4>>(
         "DATA_FAULT_CAUSE");
 
     w.connect(getInputPin("MEM_WRITE"),
-        {builder.getInputPin<Mux2to1_4bit>(
+        {builder.getInputPin<Mux<2,4>>(
              "DATA_MISALIGNED_CAUSE", "SEL"),
-         builder.getInputPin<Mux2to1_4bit>(
+         builder.getInputPin<Mux<2,4>>(
              "DATA_FAULT_CAUSE", "SEL")});
     w.connect(builder.getOutputPin<ConstantValue<4>, 4>(
             "CAUSE_LOAD_MISALIGNED", "OUT"),
-        {builder.getInputPin<Mux2to1_4bit, 4>(
+        {builder.getInputPin<Mux<2,4>, 4>(
             "DATA_MISALIGNED_CAUSE", "A")});
     w.connect(builder.getOutputPin<ConstantValue<4>, 4>(
             "CAUSE_STORE_MISALIGNED", "OUT"),
-        {builder.getInputPin<Mux2to1_4bit, 4>(
+        {builder.getInputPin<Mux<2,4>, 4>(
             "DATA_MISALIGNED_CAUSE", "B")});
     w.connect(builder.getOutputPin<ConstantValue<4>, 4>(
             "CAUSE_LOAD_FAULT", "OUT"),
-        {builder.getInputPin<Mux2to1_4bit, 4>(
+        {builder.getInputPin<Mux<2,4>, 4>(
             "DATA_FAULT_CAUSE", "A")});
     w.connect(builder.getOutputPin<ConstantValue<4>, 4>(
             "CAUSE_STORE_FAULT", "OUT"),
-        {builder.getInputPin<Mux2to1_4bit, 4>(
+        {builder.getInputPin<Mux<2,4>, 4>(
             "DATA_FAULT_CAUSE", "B")});
 
     struct CauseStage {
@@ -141,10 +141,10 @@ void RV32IPipelineRetirementUnit::buildInternals(
          builder.getOutputPin<ConstantValue<4>, 4>(
              "CAUSE_TARGET_MISALIGNED", "OUT")},
         {"DATA_FAULT_SELECT", data_fault,
-         builder.getOutputPin<Mux2to1_4bit, 4>(
+         builder.getOutputPin<Mux<2,4>, 4>(
              "DATA_FAULT_CAUSE", "OUT")},
         {"DATA_MISALIGNED_SELECT", data_misaligned,
-         builder.getOutputPin<Mux2to1_4bit, 4>(
+         builder.getOutputPin<Mux<2,4>, 4>(
              "DATA_MISALIGNED_CAUSE", "OUT")},
         {"DECODE_TRAP_SELECT", trap_request,
          getInputPin<4>("DECODE_TRAP_CAUSE")},
@@ -165,19 +165,19 @@ void RV32IPipelineRetirementUnit::buildInternals(
     for (const auto& stage : stages) {
         const auto mux_name =
             std::string(stage.name) + "_MUX";
-        builder.addNewComponent<Mux2to1_4bit>(mux_name);
+        builder.addNewComponent<Mux<2,4>>(mux_name);
         w.connect(previous,
-            {builder.getInputPin<Mux2to1_4bit, 4>(
+            {builder.getInputPin<Mux<2,4>, 4>(
                 mux_name, "A")});
         w.connect(stage.cause,
-            {builder.getInputPin<Mux2to1_4bit, 4>(
+            {builder.getInputPin<Mux<2,4>, 4>(
                 mux_name, "B")});
         logic.sink(
             stage.select,
-            builder.getInputPin<Mux2to1_4bit>(
+            builder.getInputPin<Mux<2,4>>(
                 mux_name, "SEL"));
         previous =
-            builder.getOutputPin<Mux2to1_4bit, 4>(
+            builder.getOutputPin<Mux<2,4>, 4>(
                 mux_name, "OUT");
     }
     w.connect(previous,

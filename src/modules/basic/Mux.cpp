@@ -1,3 +1,6 @@
+#include "components/selection/FamilyRegistration.hpp"
+#include <map>
+#include "modules/basic/WordMux.hpp"
 #include "components/StructuralNetBuilder.hpp"
 #include "modules/basic/Mux.hpp"
 #include "components/ComponentBuilder.hpp"
@@ -55,20 +58,20 @@ void buildOneBitMuxTree(IOComponent& component, ComponentBuilder& builder, size_
 
         for (size_t i = 0; i < mux_count; ++i) {
             const auto mux_name = "MUX_L" + std::to_string(level) + "_" + std::to_string(i);
-            builder.addNewComponent<Mux2to1>(mux_name);
+            builder.addNewComponent<Mux<2,1>>(mux_name);
             current_level.push_back(mux_name);
-            select_sinks.push_back(builder.getInputPin<Mux2to1>(mux_name, "SEL"));
+            select_sinks.push_back(builder.getInputPin<Mux<2,1>>(mux_name, "SEL"));
 
             if (level == 0) {
                 w.connect(component.getInputPin(muxInputName(input_count, 2 * i)),
-                    {builder.getInputPin<Mux2to1>(mux_name, "A")});
+                    {builder.getInputPin<Mux<2,1>>(mux_name, "A")});
                 w.connect(component.getInputPin(muxInputName(input_count, 2 * i + 1)),
-                    {builder.getInputPin<Mux2to1>(mux_name, "B")});
+                    {builder.getInputPin<Mux<2,1>>(mux_name, "B")});
             } else {
-                w.connect(builder.getOutputPin<Mux2to1>(previous_level[2 * i], "OUT"),
-                    {builder.getInputPin<Mux2to1>(mux_name, "A")});
-                w.connect(builder.getOutputPin<Mux2to1>(previous_level[2 * i + 1], "OUT"),
-                    {builder.getInputPin<Mux2to1>(mux_name, "B")});
+                w.connect(builder.getOutputPin<Mux<2,1>>(previous_level[2 * i], "OUT"),
+                    {builder.getInputPin<Mux<2,1>>(mux_name, "A")});
+                w.connect(builder.getOutputPin<Mux<2,1>>(previous_level[2 * i + 1], "OUT"),
+                    {builder.getInputPin<Mux<2,1>>(mux_name, "B")});
             }
         }
 
@@ -80,7 +83,7 @@ void buildOneBitMuxTree(IOComponent& component, ComponentBuilder& builder, size_
         ++level;
     }
 
-    w.connect(builder.getOutputPin<Mux2to1>(previous_level.front(), "OUT"),
+    w.connect(builder.getOutputPin<Mux<2,1>>(previous_level.front(), "OUT"),
         {component.getOutputPin("OUT")});
     w.finish();
 }
@@ -169,15 +172,15 @@ void defineBusMuxPins(IOComponent* self) {
     self->addPin<BUS_WIDTH>("OUT", PinType::OUTPUT);
 }
 
-// Each output bit is the same tree of Mux2to1 the structural form builds:
+// Each output bit is the same tree of Mux<2,1> the structural form builds:
 // level 0 pairs neighbouring inputs on SEL bit 0, level 1 on SEL bit 1, ...
 template<size_t INPUT_COUNT, size_t SEL_WIDTH, size_t BUS_WIDTH>
 class BusMuxBehavioral final : public BasicComponent {
 public:
-    BusMuxBehavioral(std::string name, const char* type_name)
+    BusMuxBehavioral(std::string name, std::string type_name)
         : BasicComponent(std::move(name), 1, defineBusMuxPins<INPUT_COUNT, SEL_WIDTH, BUS_WIDTH>),
           type_name_(type_name) {}
-    const char* getTypeName() const override { return type_name_; }
+    const char* getTypeName() const override { return type_name_.c_str(); }
     void evaluate(SimulationTime current_time, Simulator& simulator) override {
         const auto select = getInputPin<SEL_WIDTH>("SEL")->getValueAsVector();
         std::vector<std::vector<LogicValue>> inputs;
@@ -199,121 +202,85 @@ public:
         _updateOutputWire<BUS_WIDTH>(simulator, "OUT", out, current_time);
     }
 private:
-    const char* type_name_;
+    std::string type_name_;
 };
 }
 
-namespace circuit::families {
+namespace circuit::word {
 namespace {
-template<class Structural, size_t INPUT_COUNT, size_t SEL_WIDTH>
-ComponentFamily busMuxFamily(std::string_view contract_id) {
-    return ComponentFamily{
-        contract_id, Structural::TypeName, defineBusMuxPins<INPUT_COUNT, SEL_WIDTH, 32>,
-        structuralFactory<Structural>(),
-        [](const std::string& name, const std::shared_ptr<BuildContext>& context) {
-            return Component::createWithContext<BusMuxBehavioral<INPUT_COUNT, SEL_WIDTH, 32>>(
-                context, name, Structural::TypeName);
-        }};
+template<size_t W> void buildWordMux(IOComponent& self, ComponentBuilder& builder, size_t inputs) {
+    switch(inputs) {
+    case 2: buildBusMux<Mux<2,1>,2,1,W>(self,builder); break;
+    case 4: buildBusMux<Mux<4,1>,4,2,W>(self,builder); break;
+    case 8: buildBusMux<Mux<8,1>,8,3,W>(self,builder); break;
+    case 16: buildBusMux<Mux<16,1>,16,4,W>(self,builder); break;
+    case 32: buildBusMux<Mux<32,1>,32,5,W>(self,builder); break;
+    }
 }
 }
-const ComponentFamily Mux2to1_32bit = busMuxFamily<::Mux2to1_32bit, 2, 1>("mux.2x1.width32");
-const ComponentFamily Mux4to1_32bit = busMuxFamily<::Mux4to1_32bit, 4, 2>("mux.4x1.width32");
-const ComponentFamily Mux8to1_32bit = busMuxFamily<::Mux8to1_32bit, 8, 3>("mux.8x1.width32");
-const ComponentFamily Mux32to1_32bit = busMuxFamily<::Mux32to1_32bit, 32, 5>("mux.32x1.width32");
+WordMux::WordMux(std::string name,size_t inputs,size_t width)
+    : IOComponent(std::move(name),[inputs,width](IOComponent* p){
+        if(inputs!=2 && inputs!=4 && inputs!=8 && inputs!=16 && inputs!=32) throw std::invalid_argument("Invalid mux input count");
+        if(width!=1 && width!=4 && width!=8 && width!=16 && width!=32) throw std::invalid_argument("Invalid mux width");
+        for(size_t i=0;i<inputs;++i)p->addPinDynamic(muxInputName(inputs,i),PinType::INPUT,width);
+        p->addPinDynamic("SEL",PinType::INPUT,std::countr_zero(inputs));
+        p->addPinDynamic("OUT",PinType::OUTPUT,width);
+    }),inputs_(inputs),width_(width),type_("Mux<"+std::to_string(inputs)+","+std::to_string(width)+">") {}
+void WordMux::buildInternals(ComponentBuilder& b) {
+    switch(width_) {
+    case 1:
+        if(inputs_==2)buildMux2FromGates(*this,b);
+        else if(inputs_==4)buildOneBitMuxTree<2>(*this,b,inputs_);
+        else if(inputs_==8)buildOneBitMuxTree<3>(*this,b,inputs_);
+        else if(inputs_==16)buildOneBitMuxTree<4>(*this,b,inputs_);
+        else buildOneBitMuxTree<5>(*this,b,inputs_);
+        break;
+    case 4: buildWordMux<4>(*this,b,inputs_); break;
+    case 8: buildWordMux<8>(*this,b,inputs_); break;
+    case 16: buildWordMux<16>(*this,b,inputs_); break;
+    case 32: buildWordMux<32>(*this,b,inputs_); break;
+    }
+}
 }
 
-Mux2to1::Mux2to1(std::string name)
-    : IOComponent(std::move(name), [](IOComponent* self) {
-        self->addPin("A", PinType::INPUT);
-        self->addPin("B", PinType::INPUT);
-        self->addPin("SEL", PinType::INPUT);
-        self->addPin("OUT", PinType::OUTPUT);
-    }) {}
-
-void Mux2to1::buildInternals(ComponentBuilder& builder) {
-    buildMux2FromGates(*this, builder);
+namespace circuit::word {
+const ComponentFamily& mux(size_t inputs,size_t width){
+    if((inputs!=2 && inputs!=4 && inputs!=8 && inputs!=16 && inputs!=32)||(width!=1 && width!=4 && width!=8 && width!=16 && width!=32))
+        throw std::invalid_argument("Invalid mux geometry");
+    struct Entry {
+        std::string id,type;
+        ComponentFamily family;
+        Entry(size_t n,size_t w):id("logic.mux."+std::to_string(n)+"."+std::to_string(w)),
+            type("Mux<"+std::to_string(n)+","+std::to_string(w)+">"),
+            family(id,type,[n,w](IOComponent*p){
+                for(size_t i=0;i<n;++i)p->addPinDynamic(muxInputName(n,i),PinType::INPUT,w);
+                p->addPinDynamic("SEL",PinType::INPUT,std::countr_zero(n));
+                p->addPinDynamic("OUT",PinType::OUTPUT,w);
+            },[n,w](const std::string& name,const std::shared_ptr<BuildContext>& c){
+                return Component::createWithContext<WordMux>(c,name,n,w);
+            },w==32?FamilyFactory([n](const std::string& name,const std::shared_ptr<BuildContext>& c)->std::shared_ptr<Component>{
+                const auto type=std::string(mux(n,32).typeName());
+                switch(n){
+                case 2:return Component::createWithContext<BusMuxBehavioral<2,1,32>>(c,name,type);
+                case 4:return Component::createWithContext<BusMuxBehavioral<4,2,32>>(c,name,type);
+                case 8:return Component::createWithContext<BusMuxBehavioral<8,3,32>>(c,name,type);
+                case 16:return Component::createWithContext<BusMuxBehavioral<16,4,32>>(c,name,type);
+                default:return Component::createWithContext<BusMuxBehavioral<32,5,32>>(c,name,type);
+                }
+            }):FamilyFactory{}) {}
+    };
+    static std::map<std::pair<size_t,size_t>,std::unique_ptr<Entry>> entries;
+    auto& e=entries[{inputs,width}];if(!e)e=std::make_unique<Entry>(inputs,width);return e->family;
 }
-
-Mux4to1::Mux4to1(std::string name)
-    : IOComponent(std::move(name), [](IOComponent* self) {
-        for (int i = 0; i < 4; ++i) self->addPin("IN" + std::to_string(i), PinType::INPUT);
-        self->addPin<2>("SEL", PinType::INPUT);
-        self->addPin("OUT", PinType::OUTPUT);
-    }) {}
-
-void Mux4to1::buildInternals(ComponentBuilder& builder) {
-    buildOneBitMuxTree<2>(*this, builder, 4);
+void registerMuxes(ComponentCatalog& c) {
+    for(size_t w:{1u,4u,8u,16u,32u})for(size_t n:{2u,4u,8u,16u,32u}) {
+        const auto& f=mux(n,w);
+        const bool recorded=n!=16 && (w==1 || w==32 || (w==4&&n==2) || (w==8&&n==8));
+        const auto test=recorded?"Mux"+std::to_string(n)+"Width"+std::to_string(w)+"Test":"WidthComponentsTest";
+        circuit::registration::registerStructural(c,f,test);
+        if(f.supports(Fidelity::Behavioral)) {
+            circuit::registration::registerBehavioral(c,f,test,test,{},"stable-after-settle");
+        }
+    }
 }
-
-Mux8to1::Mux8to1(std::string name)
-    : IOComponent(std::move(name), [](IOComponent* self) {
-        for (int i = 0; i < 8; ++i) self->addPin("IN" + std::to_string(i), PinType::INPUT);
-        self->addPin<3>("SEL", PinType::INPUT);
-        self->addPin("OUT", PinType::OUTPUT);
-    }) {}
-
-void Mux8to1::buildInternals(ComponentBuilder& builder) {
-    buildOneBitMuxTree<3>(*this, builder, 8);
-}
-
-Mux32to1::Mux32to1(std::string name)
-    : IOComponent(std::move(name), [](IOComponent* self) {
-        for (int i = 0; i < 32; ++i) self->addPin("IN" + std::to_string(i), PinType::INPUT);
-        self->addPin<5>("SEL", PinType::INPUT);
-        self->addPin("OUT", PinType::OUTPUT);
-    }) {}
-
-void Mux32to1::buildInternals(ComponentBuilder& builder) {
-    buildOneBitMuxTree<5>(*this, builder, 32);
-}
-
-Mux2to1_4bit::Mux2to1_4bit(std::string name)
-    : IOComponent(std::move(name), [](IOComponent* self) {
-        self->addPin<4>("A", PinType::INPUT);
-        self->addPin<4>("B", PinType::INPUT);
-        self->addPin("SEL", PinType::INPUT);
-        self->addPin<4>("OUT", PinType::OUTPUT);
-    }) {}
-
-void Mux2to1_4bit::buildInternals(ComponentBuilder& builder) {
-    buildBusMux<Mux2to1, 2, 1, 4>(*this, builder);
-}
-
-Mux2to1_32bit::Mux2to1_32bit(std::string name)
-    : IOComponent(std::move(name), defineBusMuxPins<2, 1, 32>) {}
-
-void Mux2to1_32bit::buildInternals(ComponentBuilder& builder) {
-    buildBusMux<Mux2to1, 2, 1, 32>(*this, builder);
-}
-
-Mux4to1_32bit::Mux4to1_32bit(std::string name)
-    : IOComponent(std::move(name), defineBusMuxPins<4, 2, 32>) {}
-
-void Mux4to1_32bit::buildInternals(ComponentBuilder& builder) {
-    buildBusMux<Mux4to1, 4, 2, 32>(*this, builder);
-}
-
-Mux8to1_8bit::Mux8to1_8bit(std::string name)
-    : IOComponent(std::move(name), [](IOComponent* self) {
-        for (int i = 0; i < 8; ++i) self->addPin<8>("IN" + std::to_string(i), PinType::INPUT);
-        self->addPin<3>("SEL", PinType::INPUT);
-        self->addPin<8>("OUT", PinType::OUTPUT);
-    }) {}
-
-void Mux8to1_8bit::buildInternals(ComponentBuilder& builder) {
-    buildBusMux<Mux8to1, 8, 3, 8>(*this, builder);
-}
-
-Mux8to1_32bit::Mux8to1_32bit(std::string name)
-    : IOComponent(std::move(name), defineBusMuxPins<8, 3, 32>) {}
-
-void Mux8to1_32bit::buildInternals(ComponentBuilder& builder) {
-    buildBusMux<Mux8to1, 8, 3, 32>(*this, builder);
-}
-
-Mux32to1_32bit::Mux32to1_32bit(std::string name)
-    : IOComponent(std::move(name), defineBusMuxPins<32, 5, 32>) {}
-
-void Mux32to1_32bit::buildInternals(ComponentBuilder& builder) {
-    buildBusMux<Mux32to1, 32, 5, 32>(*this, builder);
 }

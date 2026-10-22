@@ -1,18 +1,20 @@
 # RV32IM components
 
-The RV32IM family adds the eight integer multiply/divide instructions to the
-existing five-stage pipeline. RV32I families, ALU encodings, packets and memory
-ports retain their contracts. All new components currently have structural
-forms; their lower-level children remain selectable by profile. MulDivUnit32
-and the five-stage core also have compact gate-list forms under validation.
+The RV32IM core implements the eight integer multiply/divide instructions in
+the five-stage pipeline. Its instruction formats, packets, memory ports and
+retirement/state views follow the CPU contracts. Arithmetic hardware is
+parameterized independently: the core selects W=32. Build profiles select
+structural or available compact implementations.
 
 ## Arithmetic
 
-- [MultiplyStep](multiply-step.md) and [DivideStep](divide-step.md): 4-bit
-  representative slices and 32-bit datapath steps.
-- [Multiplier32](multiplier.md), [Divider32](divider.md) and
-  [MulDivUnit32](muldiv.md): launch, 32 enabled iteration edges and retained
-  completion, with synchronous cancellation.
+- [MultiplyStep](multiply-step.md) and [DivideStep](divide-step.md) support
+  W=4/8/16/32; the four-bit recordings expose representative lower-level slices.
+- [`Multiplier<W>`](multiplier.md), [`Divider<W>`](divider.md) and
+  [`MulDivUnit<W>`](muldiv.md) use one launch edge, W enabled iteration edges
+  and retained completion, with synchronous cancellation.
+- The combined 32-bit arithmetic unit and the CPU also provide compact forms
+  that execute their own structural gate lists with characterized register state.
 
 ## Pipeline
 

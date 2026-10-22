@@ -19,7 +19,7 @@
 | `RS1_VALUE`, `RS2_VALUE` | Output | 32 each | Values selected from the architectural register file |
 | `RS1_ADDR`, `RS2_ADDR`, `RD_ADDR` | Output | 5 each | Raw instruction fields |
 | `IMM` | Output | 32 | Constructed immediate |
-| `ALU_OP` | Output | 5 | ALU32 operation, 0–12 for supported operations |
+| `ALU_OP` | Output | 5 | Integer ALU operation, 0–12 for supported operations |
 | `ALU_A_SEL`, `ALU_B_SEL` | Output | 2 each | A: 0 RS1, 1 PC, 2 zero; B: 0 RS2, 1 immediate, 2 zero |
 | `LEGAL`, `REG_WRITE`, `MEM_READ`, `MEM_WRITE` | Output | 1 each | Legality and decoded update/access intent |
 | `WRITEBACK_SEL` | Output | 2 | 0 none/zero, 1 ALU, 2 load, 3 PC+4 |
@@ -88,7 +88,7 @@ Real simulator x1–x31 start unknown until reset; the simplified array is only 
 
 #### Structural implementation
 
-`CONTROL` is `RV32IDecodeControlUnit`; `REGISTER_FILE` is `RegisterFile32x32`. Raw addresses connect to the register file, `WB_VALUE` to its write-data input, and `REGISTER_WRITE` to its write enable. The register file reuses the FF bank/word/cell hierarchy from chapter 3. No second copy of its storage is kept in the stage.
+`CONTROL` is `RV32IDecodeControlUnit`; `REGISTER_FILE` is the W=32, Count=32, hardwired-zero configuration of [RegisterFile&lt;W,Count&gt;](../../components/word-components.md#registerfilewcount), exposed as `RegisterFile32x32`. Raw addresses connect to the register file, `WB_VALUE` to its write-data input, and `REGISTER_WRITE` to its write enable. The register file reuses the FF bank/word/cell hierarchy from chapter 3. No second copy of its storage is kept in the stage.
 
 #### Behavioral implementation
 

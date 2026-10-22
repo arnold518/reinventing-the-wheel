@@ -31,6 +31,13 @@ public:
         size_t profile_revision = 0);
     ~VisualizerSession();
 
+    // Borrow an executing circuit for read-only checkpoint export. The
+    // simulator must outlive this facade; this constructor never runs/seeks it.
+    VisualizerSession(std::shared_ptr<Component> root, const Simulator& simulator,
+                      std::string scenario_key);
+    std::string currentCheckpointJson(SimulationTime time);
+    std::string topologySlicesJson() const;
+
     VisualizerSession(const VisualizerSession&) = delete;
     VisualizerSession& operator=(const VisualizerSession&) = delete;
 
@@ -74,6 +81,7 @@ private:
     std::unique_ptr<SimulationTest> test_;
     std::shared_ptr<Component> root_;
     Simulator* simulator_ = nullptr;
+    const Simulator* checkpoint_simulator_ = nullptr;
     std::vector<SimulationTime> timestamps_;
 
     std::vector<ComponentRecord> components_;

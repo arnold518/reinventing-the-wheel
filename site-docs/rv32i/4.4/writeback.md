@@ -54,7 +54,7 @@ For a known selector, the behavioral model copies the selected bit vector (or em
 
 #### Structural implementation
 
-`RESULT_SELECT` is `Mux4to1_32bit`. `ZERO32` drives its input 0; the three result pins drive inputs 1–3. The selector is the decoder's two-bit writeback control.
+`RESULT_SELECT` is `Mux<4,32>`. `ZERO32` drives its input 0; the three result pins drive inputs 1–3. The selector is the decoder's two-bit writeback control.
 
 #### Behavioral implementation
 

@@ -388,7 +388,7 @@ These are tested sequences, not a claim of exhaustive equivalence for arbitrary 
 
 | Internal component | Count | Connection |
 | --- | ---: | --- |
-| `Mux2to1` | 1 | `WRITE_MUX.A = STATE.Q`, `WRITE_MUX.B = D`, `WRITE_MUX.SEL = WE` |
+| `Mux<2,1>` | 1 | `WRITE_MUX.A = STATE.Q`, `WRITE_MUX.B = D`, `WRITE_MUX.SEL = WE` |
 | `DFlipFlop` | 1 | `STATE.D = WRITE_MUX.OUT`; receives `CLK` and `RST`; drives `Q` |
 
 For binary inputs, the data presented to the internal flip-flop is

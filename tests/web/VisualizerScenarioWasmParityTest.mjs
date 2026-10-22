@@ -24,4 +24,20 @@ try {
   for (const field of ['rootId', 'rootType', 'timestamps', 'checkpoints', 'performanceMetrics', 'state', 'stats'])
     assert.deepEqual(actual[field], expected[field], field);
   console.log(`${descriptors.length} descriptors match; all 22 programs configurable; new prediction scenario matches`);
+  bridge.clearProfileOverrides();
+  const wordTest = 'ALUWidth16RippleScenarioTest', wordAlias = 'alu-extended-ripple-w16';
+  const word = JSON.parse(bridge.loadScenario(wordTest, wordAlias, 0));
+  const wordExpected = JSON.parse(execFileSync(probe, ['topology', wordTest, wordAlias],
+    {encoding: 'utf8', maxBuffer: 32 * 1024 * 1024}));
+  for (const field of ['rootId', 'rootType', 'layoutKey', 'timestamps', 'checkpoints',
+    'components', 'pins', 'wires', 'state', 'stats'])
+    assert.deepEqual(word[field], wordExpected[field], `ALU16: ${field}`);
+  assert.deepEqual(JSON.parse(bridge.exampleRowsJson()),
+    JSON.parse(execFileSync(probe, ['examples', wordTest, wordAlias], {encoding: 'utf8'})));
+  for (const index of [word.timestamps.length - 1, 0]) {
+    const state = JSON.parse(execFileSync(probe, ['state', wordTest, wordAlias, String(index)],
+      {encoding: 'utf8', maxBuffer: 32 * 1024 * 1024}));
+    assert.deepEqual(JSON.parse(bridge.stateJson(index)), state, `ALU16: rewind ${index}`);
+  }
+  console.log('ALU16: complete topology, examples, state and rewind match native');
 } finally { bridge.delete(); }

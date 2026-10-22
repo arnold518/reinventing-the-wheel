@@ -127,7 +127,7 @@ class MemoryDeviceLayoutTest(unittest.TestCase):
                 if key.split("@")[0] == scenario:
                     for child in entry.get("children", {}).values():
                         self.assertLess(child["rel_pos"][1], 1, (key, child))
-        for kind in ("FFWord<8>", "SRAMRow<16>", "ALU8", "Rewire"):
+        for kind in ("FFWord<8>", "SRAMRow<16>", "ALU<8,extended,ripple>", "Rewire"):
             self.assertEqual(geometry.defaults(kind), {})
 
     def test_first_encounter_bank_layout(self):
@@ -144,7 +144,7 @@ class MemoryDeviceLayoutTest(unittest.TestCase):
             for slots in (1, 2, 4, 16):
                 for kind in ("column-mux", "write-distributor"):
                     component = backend.create_memory_device_component(
-                        "matrix", f"{kind}.{width}", "M", {"words_per_row": str(slots)})
+                        "shared", f"{kind}.{width}", "M", {"words_per_row": str(slots)})
                     with tempfile.TemporaryDirectory() as tmp:
                         manager = server.LayoutManager(Path(tmp) / "layout.json")
                         manager.ensure_component_layout_defaults(component)

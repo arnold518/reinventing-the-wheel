@@ -19,8 +19,9 @@ def main():
     with sync_playwright() as playwright:
         browser = playwright.chromium.launch(
             executable_path=shutil.which('google-chrome') or shutil.which('chromium'),
-            headless=True, args=['--no-sandbox'])
-        for directory in ('rv32im', 'device-io'):
+            headless=True, args=['--no-sandbox', '--disable-dev-shm-usage',
+                                 '--renderer-process-limit=2', '--js-flags=--max-old-space-size=256'])
+        for directory in ('rv32im', 'device-io', 'components'):
             for source in sorted((root / 'site-docs' / directory).glob('*.md')):
                 matches = re.findall(r'<!-- simulator-examples: (\S+) (\S+) -->', source.read_text())
                 if not matches:
@@ -31,6 +32,9 @@ def main():
                 page = context.new_page()
                 response = page.goto(urljoin(base, f'{directory}/{source.stem}/'))
                 assert response.ok, source
+                if directory == 'components':
+                    assert page.locator('article h2 code').all_text_contents() == [
+                        'ALU<W>', 'RegisterFile<W,Count>']
                 block = page.locator(f'.example-table-block[data-scenario="{alias}"]')
                 rows = block.locator('tbody tr').evaluate_all('''rows => rows.map(row => ({
                     label:row.dataset.checkpoint,time:Number(row.dataset.time),index:Number(row.dataset.timelineIndex),
@@ -43,7 +47,7 @@ def main():
                     assert page.evaluate('document.documentElement.scrollWidth <= innerWidth+1'), source
                 cases.append((alias, block.get_attribute('data-profile'), rows))
                 context.close()
-        assert len(cases) == 22
+        assert len(cases) == 23
         pattern = os.environ.get('CIRCUITSIM_BROWSER_SCENARIO_FILTER')
         selected = [case for case in cases if not pattern or re.search(pattern, case[0])]
         assert selected, 'No browser scenarios match the selected filter'
@@ -63,6 +67,9 @@ def main():
                 pins = page.evaluate('''async index => {await setStateIndex(index);return Object.fromEntries(
                     [...app.pins.values()].filter(p=>p.componentId===app.rootId).map(p=>[p.name,app.state.pins[p.stateIndex]]));}''', row['index'])
                 assert all(pins[name] == bits for name, bits in row['pins'].items()), (alias, row['label'])
+            if screens and alias == 'alu':
+                page.wait_for_function('!app.geometryDirty && !app.cameraAnimation && !app.topologyRequestInFlight && !app.pendingScopeIds.size')
+                page.screenshot(path=str(screens / 'alu-default-prefix.png'), full_page=True)
             device = page.evaluate('''async () => {
                 const component=app.components.get(app.rootId);
                 if(!CircuitDeviceView.supports(component.type))return null;

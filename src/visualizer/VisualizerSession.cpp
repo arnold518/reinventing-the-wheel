@@ -270,8 +270,6 @@ std::string componentLayoutType(const std::shared_ptr<Component>& component) {
     if (type.starts_with("MemoryController<ff,") && !children.empty() &&
         !has_child([](const std::string& name) { return name == "RESPONSE"; }))
         return type.substr(0, type.size() - 1) + ",always-ready>";
-    if (type == "Decoder5to32" && has_child([](const std::string& name) { return name == "OUT0_ZERO"; }))
-        return "Decoder5to32<x0-unused>";
     if (type.ends_with("PipelineRegister") &&
         has_child([](const std::string& name) { return name.ends_with("_SPLIT"); }))
         return type + "<compact>";
@@ -777,6 +775,44 @@ VisualizerSession::VisualizerSession(
 
 VisualizerSession::~VisualizerSession() = default;
 
+VisualizerSession::VisualizerSession(std::shared_ptr<Component> root,
+    const Simulator& simulator, std::string scenario_key)
+    : scenario_key_(std::move(scenario_key)), root_(std::move(root)),
+      checkpoint_simulator_(&simulator) {
+    if(!root_)throw std::invalid_argument("Checkpoint export requires a circuit");
+    timestamps_.push_back(simulator.getCurrentTime());
+    session_id_="recorded-"+std::to_string(next_session_id.fetch_add(1));
+    layout_key_=scenario_key_+"@"+normalizedProfileFingerprint(root_);
+    buildTopology();
+}
+
+std::string VisualizerSession::topologySlicesJson() const {
+    std::vector<std::string> slices,ids;
+    for(const auto& component:components_) {
+        ids.push_back(component.id);
+        if(ids.size()==512){slices.push_back(topologySliceJson(ids));ids.clear();}
+    }
+    if(!ids.empty())slices.push_back(topologySliceJson(ids));
+    return arrayJson(slices,[](const auto& item){return item;});
+}
+
+std::string VisualizerSession::currentCheckpointJson(SimulationTime time) {
+    if(!checkpoint_simulator_)throw std::logic_error("Current capture requires a borrowed circuit");
+    const auto next=checkpoint_simulator_->nextEventTime();
+    if(time<checkpoint_simulator_->getCurrentTime() || (next && *next<=time))
+        throw std::invalid_argument("Checkpoint requires a settled observation boundary");
+    timestamps_[0]=time;
+    std::string result;JsonObject checkpoint(result);
+    checkpoint.raw("state",stateJson(0));checkpoint.key("componentStates");
+    JsonObject states(result);
+    for(const auto& component:components_) {
+        if(supportsDeviceView(component.handle)
+            || std::dynamic_pointer_cast<RegisterStateView>(component.handle))
+            states.raw(component.id,componentStateJson(0,component.id));
+    }
+    states.end();checkpoint.end();return result;
+}
+
 std::string VisualizerSession::exampleRowsJson() const {
     const auto* test = dynamic_cast<const circuit::test::ComponentScenarioTest*>(test_.get());
     if (!test || test->getRunArtifacts().size() != 1)
@@ -1083,7 +1119,7 @@ std::string VisualizerSession::topologySliceJson(
 std::string VisualizerSession::stateJson(size_t index) {
     index = clampedIndex(index);
     const auto timestamp = timestamps_[index];
-    simulator_->setCircuitStateAtTime(timestamp);
+    if(!checkpoint_simulator_)simulator_->setCircuitStateAtTime(timestamp);
     std::vector<std::string> pin_values;
     std::vector<std::string> wire_values;
     pin_values.reserve(pins_.size());
@@ -1146,7 +1182,7 @@ std::string VisualizerSession::componentStateJson(
     }
     index = clampedIndex(index);
     const auto timestamp = timestamps_[index];
-    simulator_->setCircuitStateAtTime(timestamp);
+    if(!checkpoint_simulator_)simulator_->setCircuitStateAtTime(timestamp);
     const auto& component = components_[found->second];
 
     std::string out;
@@ -1157,14 +1193,9 @@ std::string VisualizerSession::componentStateJson(
     object.string("type", component.type);
 
     if (supportsDeviceView(component.handle))
-        return deviceStateJson(component.handle,*simulator_,index,timestamp);
+        return deviceStateJson(component.handle,checkpoint_simulator_?*checkpoint_simulator_:*simulator_,index,timestamp,checkpoint_simulator_!=nullptr);
 
-    if (component.type == "RegisterFile32x32") {
-        const auto registers = std::dynamic_pointer_cast<RegisterStateView>(component.handle);
-        if (!registers) {
-            throw std::runtime_error(
-                "RegisterFile32x32 does not expose the register state contract");
-        }
+    if (const auto registers=std::dynamic_pointer_cast<RegisterStateView>(component.handle)) {
         object.boolean("supported", true);
         const auto words = registers->getRegisterStateAtTime(timestamp);
         object.key("registers");
@@ -1190,6 +1221,11 @@ std::string VisualizerSession::componentStateJson(
     }
 
     if (std::dynamic_pointer_cast<MemoryStateView>(component.handle)) {
+        if(checkpoint_simulator_) {
+            object.boolean("supported",false);
+            object.string("reason","Memory pages were not captured at this checkpoint");
+            object.end();return out;
+        }
         auto& inspector = memory_inspectors_[component_id];
         if (!inspector) inspector = std::make_unique<MemoryInspector>(component.handle, *simulator_);
         return inspector->stateJson(index, timestamp, scenario_key_, address, count);
@@ -1226,6 +1262,9 @@ std::string VisualizerSession::topologyResponseJson() {
         item.string("id", record.id);
         item.string("name", record.name);
         item.string("type", record.type);
+        const auto device_kind=deviceViewKind(component);
+        if(!device_kind.empty())item.string("deviceViewKind",device_kind);
+        if(std::dynamic_pointer_cast<RegisterStateView>(component))item.boolean("registerView",true);
         if (record.has_parent) item.number("parentIndex", record.parent_index); else item.null("parentIndex");
         item.number("depth", record.depth);
         item.decimal("aspectRatio", 0.5);
@@ -1249,7 +1288,7 @@ std::string VisualizerSession::topologyResponseJson() {
     }
     components_json += ']';
 
-    std::vector<SimulationTest::SimulationCheckpoint> checkpoints = test_->getCheckpoints();
+    std::vector<SimulationTest::SimulationCheckpoint> checkpoints = test_?test_->getCheckpoints():std::vector<SimulationTest::SimulationCheckpoint>{};
     std::sort(checkpoints.begin(), checkpoints.end(), [](const auto& left, const auto& right) {
         if (left.time != right.time) return left.time < right.time;
         if (left.row_index != right.row_index) return left.row_index < right.row_index;
@@ -1267,7 +1306,7 @@ std::string VisualizerSession::topologyResponseJson() {
         item.end();
         return out;
     });
-    const auto metrics = test_->getPerformanceMetrics();
+    const auto metrics = test_?test_->getPerformanceMetrics():std::vector<SimulationTest::PerformanceMetric>{};
     const auto metrics_json = arrayJson(metrics, [](const auto& metric) {
         std::string out;
         JsonObject item(out);

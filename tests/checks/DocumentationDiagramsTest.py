@@ -19,7 +19,7 @@ PAGES = {
     "memory/cache-experiments.md": ["cache-access-patterns"],
     "rv32i/memory-systems.md": ["cache-topologies"],
     "rv32i/experiments.md": ["cache-speedup"],
-    "alu8/2.6.md": ["alu8-datapath"],
+    "alu/2.6.md": ["alu-datapath"],
     "memory/architecture.md": ["memory-storage", "memory-endpoints"],
     "memory/technologies/flip-flop.md": ["ff-memory"],
     "memory/technologies/sram.md": ["sram-device"],

@@ -1,6 +1,6 @@
 #include "rv32i/RV32IControl.hpp"
 
-#include "modules/composite/ALU32.hpp"
+#include "modules/composite/WordDatapath.hpp"
 
 namespace rv32i {
 namespace {
@@ -17,7 +17,7 @@ RV32IControlSignals baseLegal(uint8_t alu_op,
 
 RV32IControlSignals trapControl(RV32ITrapCause cause) {
     RV32IControlSignals control;
-    control.alu_op = ALU32Op::ZERO;
+    control.alu_op = circuit::word::IntegerOp::ZERO;
     control.trap = true;
     control.trap_cause = cause;
     return control;
@@ -40,7 +40,7 @@ RV32IControlSignals regAlu(uint8_t alu_op,
 }
 
 RV32IControlSignals loadControl(RV32IMemorySize size, bool sign_extend) {
-    auto control = baseLegal(ALU32Op::ADD, RV32IALUSourceA::RS1, RV32IALUSourceB::Immediate);
+    auto control = baseLegal(circuit::word::IntegerOp::ADD, RV32IALUSourceA::RS1, RV32IALUSourceB::Immediate);
     control.reg_write = true;
     control.writeback = RV32IWritebackSource::Memory;
     control.mem_read = true;
@@ -53,7 +53,7 @@ RV32IControlSignals loadControl(RV32IMemorySize size, bool sign_extend) {
 }
 
 RV32IControlSignals storeControl(RV32IMemorySize size) {
-    auto control = baseLegal(ALU32Op::ADD, RV32IALUSourceA::RS1, RV32IALUSourceB::Immediate);
+    auto control = baseLegal(circuit::word::IntegerOp::ADD, RV32IALUSourceA::RS1, RV32IALUSourceB::Immediate);
     control.mem_write = true;
     control.mem_size = size;
     control.uses_rs1 = true;
@@ -63,7 +63,7 @@ RV32IControlSignals storeControl(RV32IMemorySize size) {
 }
 
 RV32IControlSignals branchControl(RV32IBranchType branch) {
-    auto control = baseLegal(ALU32Op::SUB, RV32IALUSourceA::RS1, RV32IALUSourceB::RS2);
+    auto control = baseLegal(circuit::word::IntegerOp::SUB, RV32IALUSourceA::RS1, RV32IALUSourceB::RS2);
     control.branch = branch;
     control.uses_rs1 = true;
     control.uses_rs2 = true;
@@ -75,7 +75,7 @@ RV32IControlSignals jumpControl(RV32IJumpType jump,
                                 RV32IALUSourceA alu_a,
                                 RV32IALUSourceB alu_b,
                                 bool uses_rs1) {
-    auto control = baseLegal(ALU32Op::ADD, alu_a, alu_b);
+    auto control = baseLegal(circuit::word::IntegerOp::ADD, alu_a, alu_b);
     control.reg_write = true;
     control.writeback = RV32IWritebackSource::PCPlus4;
     control.jump = jump;
@@ -92,26 +92,26 @@ RV32IControlSignals RV32IControl::fromDecoded(const RV32IDecodedInstruction& dec
     }
 
     switch (decoded.instruction) {
-        case RV32IInstruction::ADD: return regAlu(ALU32Op::ADD, RV32IALUSourceA::RS1, RV32IALUSourceB::RS2, true, true, false);
-        case RV32IInstruction::SUB: return regAlu(ALU32Op::SUB, RV32IALUSourceA::RS1, RV32IALUSourceB::RS2, true, true, false);
-        case RV32IInstruction::SLL: return regAlu(ALU32Op::SLL, RV32IALUSourceA::RS1, RV32IALUSourceB::RS2, true, true, false);
-        case RV32IInstruction::SLT: return regAlu(ALU32Op::SLT, RV32IALUSourceA::RS1, RV32IALUSourceB::RS2, true, true, false);
-        case RV32IInstruction::SLTU: return regAlu(ALU32Op::SLTU, RV32IALUSourceA::RS1, RV32IALUSourceB::RS2, true, true, false);
-        case RV32IInstruction::XOR: return regAlu(ALU32Op::XOR, RV32IALUSourceA::RS1, RV32IALUSourceB::RS2, true, true, false);
-        case RV32IInstruction::SRL: return regAlu(ALU32Op::SRL, RV32IALUSourceA::RS1, RV32IALUSourceB::RS2, true, true, false);
-        case RV32IInstruction::SRA: return regAlu(ALU32Op::SRA, RV32IALUSourceA::RS1, RV32IALUSourceB::RS2, true, true, false);
-        case RV32IInstruction::OR: return regAlu(ALU32Op::OR, RV32IALUSourceA::RS1, RV32IALUSourceB::RS2, true, true, false);
-        case RV32IInstruction::AND: return regAlu(ALU32Op::AND, RV32IALUSourceA::RS1, RV32IALUSourceB::RS2, true, true, false);
+        case RV32IInstruction::ADD: return regAlu(circuit::word::IntegerOp::ADD, RV32IALUSourceA::RS1, RV32IALUSourceB::RS2, true, true, false);
+        case RV32IInstruction::SUB: return regAlu(circuit::word::IntegerOp::SUB, RV32IALUSourceA::RS1, RV32IALUSourceB::RS2, true, true, false);
+        case RV32IInstruction::SLL: return regAlu(circuit::word::IntegerOp::SLL, RV32IALUSourceA::RS1, RV32IALUSourceB::RS2, true, true, false);
+        case RV32IInstruction::SLT: return regAlu(circuit::word::IntegerOp::SLT, RV32IALUSourceA::RS1, RV32IALUSourceB::RS2, true, true, false);
+        case RV32IInstruction::SLTU: return regAlu(circuit::word::IntegerOp::SLTU, RV32IALUSourceA::RS1, RV32IALUSourceB::RS2, true, true, false);
+        case RV32IInstruction::XOR: return regAlu(circuit::word::IntegerOp::XOR, RV32IALUSourceA::RS1, RV32IALUSourceB::RS2, true, true, false);
+        case RV32IInstruction::SRL: return regAlu(circuit::word::IntegerOp::SRL, RV32IALUSourceA::RS1, RV32IALUSourceB::RS2, true, true, false);
+        case RV32IInstruction::SRA: return regAlu(circuit::word::IntegerOp::SRA, RV32IALUSourceA::RS1, RV32IALUSourceB::RS2, true, true, false);
+        case RV32IInstruction::OR: return regAlu(circuit::word::IntegerOp::OR, RV32IALUSourceA::RS1, RV32IALUSourceB::RS2, true, true, false);
+        case RV32IInstruction::AND: return regAlu(circuit::word::IntegerOp::AND, RV32IALUSourceA::RS1, RV32IALUSourceB::RS2, true, true, false);
 
-        case RV32IInstruction::ADDI: return regAlu(ALU32Op::ADD, RV32IALUSourceA::RS1, RV32IALUSourceB::Immediate, true, false, true);
-        case RV32IInstruction::SLTI: return regAlu(ALU32Op::SLT, RV32IALUSourceA::RS1, RV32IALUSourceB::Immediate, true, false, true);
-        case RV32IInstruction::SLTIU: return regAlu(ALU32Op::SLTU, RV32IALUSourceA::RS1, RV32IALUSourceB::Immediate, true, false, true);
-        case RV32IInstruction::XORI: return regAlu(ALU32Op::XOR, RV32IALUSourceA::RS1, RV32IALUSourceB::Immediate, true, false, true);
-        case RV32IInstruction::ORI: return regAlu(ALU32Op::OR, RV32IALUSourceA::RS1, RV32IALUSourceB::Immediate, true, false, true);
-        case RV32IInstruction::ANDI: return regAlu(ALU32Op::AND, RV32IALUSourceA::RS1, RV32IALUSourceB::Immediate, true, false, true);
-        case RV32IInstruction::SLLI: return regAlu(ALU32Op::SLL, RV32IALUSourceA::RS1, RV32IALUSourceB::Immediate, true, false, true);
-        case RV32IInstruction::SRLI: return regAlu(ALU32Op::SRL, RV32IALUSourceA::RS1, RV32IALUSourceB::Immediate, true, false, true);
-        case RV32IInstruction::SRAI: return regAlu(ALU32Op::SRA, RV32IALUSourceA::RS1, RV32IALUSourceB::Immediate, true, false, true);
+        case RV32IInstruction::ADDI: return regAlu(circuit::word::IntegerOp::ADD, RV32IALUSourceA::RS1, RV32IALUSourceB::Immediate, true, false, true);
+        case RV32IInstruction::SLTI: return regAlu(circuit::word::IntegerOp::SLT, RV32IALUSourceA::RS1, RV32IALUSourceB::Immediate, true, false, true);
+        case RV32IInstruction::SLTIU: return regAlu(circuit::word::IntegerOp::SLTU, RV32IALUSourceA::RS1, RV32IALUSourceB::Immediate, true, false, true);
+        case RV32IInstruction::XORI: return regAlu(circuit::word::IntegerOp::XOR, RV32IALUSourceA::RS1, RV32IALUSourceB::Immediate, true, false, true);
+        case RV32IInstruction::ORI: return regAlu(circuit::word::IntegerOp::OR, RV32IALUSourceA::RS1, RV32IALUSourceB::Immediate, true, false, true);
+        case RV32IInstruction::ANDI: return regAlu(circuit::word::IntegerOp::AND, RV32IALUSourceA::RS1, RV32IALUSourceB::Immediate, true, false, true);
+        case RV32IInstruction::SLLI: return regAlu(circuit::word::IntegerOp::SLL, RV32IALUSourceA::RS1, RV32IALUSourceB::Immediate, true, false, true);
+        case RV32IInstruction::SRLI: return regAlu(circuit::word::IntegerOp::SRL, RV32IALUSourceA::RS1, RV32IALUSourceB::Immediate, true, false, true);
+        case RV32IInstruction::SRAI: return regAlu(circuit::word::IntegerOp::SRA, RV32IALUSourceA::RS1, RV32IALUSourceB::Immediate, true, false, true);
 
         case RV32IInstruction::LB: return loadControl(RV32IMemorySize::Byte, true);
         case RV32IInstruction::LH: return loadControl(RV32IMemorySize::Halfword, true);
@@ -132,11 +132,11 @@ RV32IControlSignals RV32IControl::fromDecoded(const RV32IDecodedInstruction& dec
 
         case RV32IInstruction::JAL: return jumpControl(RV32IJumpType::JAL, RV32IALUSourceA::PC, RV32IALUSourceB::Immediate, false);
         case RV32IInstruction::JALR: return jumpControl(RV32IJumpType::JALR, RV32IALUSourceA::RS1, RV32IALUSourceB::Immediate, true);
-        case RV32IInstruction::LUI: return regAlu(ALU32Op::PASS_B, RV32IALUSourceA::Zero, RV32IALUSourceB::Immediate, false, false, true);
-        case RV32IInstruction::AUIPC: return regAlu(ALU32Op::ADD, RV32IALUSourceA::PC, RV32IALUSourceB::Immediate, false, false, true);
+        case RV32IInstruction::LUI: return regAlu(circuit::word::IntegerOp::PASS_B, RV32IALUSourceA::Zero, RV32IALUSourceB::Immediate, false, false, true);
+        case RV32IInstruction::AUIPC: return regAlu(circuit::word::IntegerOp::ADD, RV32IALUSourceA::PC, RV32IALUSourceB::Immediate, false, false, true);
 
         case RV32IInstruction::FENCE:
-            return baseLegal(ALU32Op::ZERO, RV32IALUSourceA::Zero, RV32IALUSourceB::Zero);
+            return baseLegal(circuit::word::IntegerOp::ZERO, RV32IALUSourceA::Zero, RV32IALUSourceB::Zero);
 
         case RV32IInstruction::ECALL: {
             auto control = trapControl(RV32ITrapCause::EnvironmentCall);
@@ -145,7 +145,7 @@ RV32IControlSignals RV32IControl::fromDecoded(const RV32IDecodedInstruction& dec
         }
 
         case RV32IInstruction::EBREAK: {
-            auto control = baseLegal(ALU32Op::ZERO, RV32IALUSourceA::Zero, RV32IALUSourceB::Zero);
+            auto control = baseLegal(circuit::word::IntegerOp::ZERO, RV32IALUSourceA::Zero, RV32IALUSourceB::Zero);
             control.halt = true;
             return control;
         }

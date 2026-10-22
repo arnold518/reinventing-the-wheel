@@ -13,7 +13,7 @@ public:
     RegisterTest();
 };
 
-class RegisterFile32x32Test : public circuit::test::ComponentScenarioTest {
+class RegisterFileWidth32Count32Test : public circuit::test::ComponentScenarioTest {
 public:
-    RegisterFile32x32Test();
+    RegisterFileWidth32Count32Test();
 };

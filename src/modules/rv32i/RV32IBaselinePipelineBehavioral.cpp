@@ -1,14 +1,14 @@
 #include "modules/rv32i/RV32IPipelineObservation.hpp"
-#include "modules/composite/ALU32Behavioral.hpp"
+#include "modules/composite/IntegerALUValue.hpp"
 #include "RV32IBaselinePipelineInternal.hpp"
 #include "components/BasicComponent.hpp"
 #include "components/Component.tpp"
-#include "modules/composite/ALU32.hpp"
-#include "modules/composite/IncrementBy4.hpp"
+#include "modules/composite/WordDatapath.hpp"
+#include "modules/composite/Incrementer.hpp"
 #include "modules/storage/RegisterBehavioral.hpp"
 #include "basic/LogicValueHelpers.hpp"
 #include "rv32i/RV32IDecoder.hpp"
-#include "modules/rv32i/RegisterFile32x32Behavioral.hpp"
+#include "modules/storage/RegisterFileBehavioral.hpp"
 #include <limits>
 #include <set>
 
@@ -90,8 +90,8 @@ Values executePacket(const Values& in) {
     const auto word=get(in,"IN_CONTROL"),as=bits(word,27,3),bs=bits(word,29,3),op=bits(word,22,31);
     const auto a=as==0?get(in,"IN_RS1_VALUE"):as==1?get(in,"IN_PC"):0;
     const auto b=bs==0?get(in,"IN_RS2_VALUE"):bs==1?get(in,"IN_IMMEDIATE"):0;
-    const auto result=alu32Result(op,a,b),jump=bits(word,16,3),branch=bits(word,13,7);
-    const bool cmp=op==ALU32Op::SUB||op==ALU32Op::SLT||op==ALU32Op::SLTU;
+    const auto result=circuit::word::integer_value::result<32>(op,a,b),jump=bits(word,16,3),branch=bits(word,13,7);
+    const bool cmp=op==circuit::word::IntegerOp::SUB||op==circuit::word::IntegerOp::SLT||op==circuit::word::IntegerOp::SLTU;
     const bool eq=cmp&&a==b,lt=cmp&&int32_t(a)<int32_t(b),ltu=cmp&&a<b;
     const bool conditions[]{false,eq,!eq,lt,!lt,ltu,!ltu,false};
     const bool taken=jump||conditions[branch];
@@ -159,7 +159,7 @@ public:
                 auto latest=*history_.rbegin();history_.clear();history_.insert(std::move(latest));
             }
             const auto before=words_;
-            rv32i::register_file::step(words_,previous_clock_,getInputValue("RST"),getInputValue("CLK"),
+            circuit::storage::register_values::step(words_,previous_clock_,getInputValue("RST"),getInputValue("CLK"),
                 getInputValue("REGISTER_WRITE"),getInputPin<5>("WB_RD")->getValueAsVector(),
                 getInputPin<32>("WB_VALUE")->getValueAsVector());
             if(words_!=before) record(checkedTimeAdd(t,delay));
@@ -195,7 +195,7 @@ private:
         using namespace circuit::logic_values;
         const auto redirect=getInputPin<32>("REDIRECT_PC")->getValueAsVector();
         const auto select=getInputValue("PC_REDIRECT");
-        auto next=incrementBy4(pc_);
+        auto next=circuit::word::incrementWord(pc_,4);
         for(size_t i=0;i<32;++i) next[i]=mux2(next[i],sanitizeBit(redirect[i]),select);
         registerStep(pc_,fetch_clock_,getInputValue("RST"),getInputValue("CLK"),getInputValue("PC_WRITE"),next);
         std::vector<LogicValue> word_address(32,LogicValue::LOW),status(32,LogicValue::LOW);

@@ -1,17 +1,20 @@
 "use strict";
 (function(root,factory){const api=factory();if(typeof module==="object"&&module.exports)module.exports=api;else root.CircuitDeviceView=api;}(globalThis,()=>{
-  const types=new Set(['FramebufferDisplay32','ButtonDevice32','ConsoleDevice32','TimerDevice32','SynchronousFifo<8>','SynchronousFifo<32>']);
+  const types=new Set(['FramebufferDisplay','ButtonDevice','ConsoleDevice','TimerDevice','SynchronousFifo<8>','SynchronousFifo<16>','SynchronousFifo<32>']);
   const images=new WeakMap();
-  function supports(type){return types.has(type);}
+  function supports(component){return typeof component==='object'&&component!==null
+    ?['display','keyboard','console','timer','queue'].includes(component.deviceViewKind)||types.has(component.type):types.has(component);}
   function number(bits){return typeof bits==='string'&&/^[01]+$/.test(bits)?parseInt(bits,2):null;}
   function validKeyboardState(state){
     const bits=(value,width)=>typeof value==='string'&&value.length===width&&/^[01XZ]+$/.test(value);
-    return state?.supported===true&&state.kind==='keyboard'&&bits(state.levels,32)
+    const count=state?.buttonCount??32;
+    return Number.isInteger(count)&&count>=1&&count<=32&&state?.supported===true&&state.kind==='keyboard'&&bits(state.levels,count)
       &&bits(state.count,3)&&bits(state.head,32)&&bits(state.overflow,1);
   }
   function keyboard(state){
-    const bits=typeof state?.levels==='string'?state.levels.padStart(32,'X'):'X'.repeat(32);
-    return Array.from({length:32},(_,id)=>({id,value:bits[31-id],label:String(id)}));
+    const count=state?.buttonCount??32;
+    const bits=typeof state?.levels==='string'?state.levels.padStart(count,'X'):'X'.repeat(count);
+    return Array.from({length:count},(_,id)=>({id,value:bits[count-1-id],label:String(id)}));
   }
   function rgba(frame){
     if(!Number.isInteger(frame.width)||!Number.isInteger(frame.height)||!Number.isInteger(frame.stride)
@@ -48,8 +51,9 @@
       ctx.imageSmoothingEnabled=false;ctx.drawImage(image,rect.x+(rect.w-w)/2,rect.y+(rect.h-label*2-h)/2,w,h);
       ctx.fillText(summary(state),rect.x+rect.w/2,rect.y+rect.h-label,rect.w-8);
     }else if(state?.supported&&state.kind==='keyboard'&&rect.h>=100){
-      const gap=3,w=(rect.w-9*gap)/8,h=(rect.h-label*3-5*gap)/4;
-      for(const key of keyboard(state)){const x=rect.x+gap+(key.id%8)*(w+gap),y=rect.y+gap+Math.floor(key.id/8)*(h+gap);
+      const keys=keyboard(state),cols=Math.min(8,keys.length),rows=Math.ceil(keys.length/cols);
+      const gap=3,w=(rect.w-(cols+1)*gap)/cols,h=(rect.h-label*3-(rows+1)*gap)/rows;
+      for(const key of keys){const x=rect.x+gap+(key.id%cols)*(w+gap),y=rect.y+gap+Math.floor(key.id/cols)*(h+gap);
         ctx.fillStyle=key.value==='1'?'#37b88a':key.value==='0'?'#26374c':'#a83b91';ctx.fillRect(x,y,w,h);ctx.fillStyle='#fff';ctx.fillText(key.label,x+w/2,y+h/2,w);}
       ctx.fillText(`Queue ${number(state.count)??'X'} · overflow ${state.overflow}`,rect.x+rect.w/2,rect.y+rect.h-label,rect.w-8);
     }else ctx.fillText(summary(state),rect.x+rect.w/2,rect.y+rect.h/2,rect.w-8);

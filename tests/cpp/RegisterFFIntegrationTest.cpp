@@ -58,7 +58,7 @@ int main() {
                                                              : "RV32ISingleCycleSystemTest/program-") + number);
             test->setBuildProfile(withProfileOverrides(test->getBuildProfile(), {
                 preferFidelity(mode == "behavioral" ? Fidelity::Behavioral : Fidelity::Structural,
-                    ProfileSelector::contract("memory.register.32")),
+                    ProfileSelector::contract("storage.register.32")),
                 preferFidelity(Fidelity::Behavioral, ProfileSelector::contract("memory.ff.cell")),
             }));
             require(test->run(), "RV32I program failed with new Register<32>");

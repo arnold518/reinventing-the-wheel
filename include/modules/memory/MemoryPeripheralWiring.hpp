@@ -48,7 +48,7 @@ std::vector<StructuralWiring::PinPtr> rowDecodeLines(
     return lines;
 }
 
-// Binary mux tree: preserve four-state Mux2to1 behavior and per-level delay.
+// Binary mux tree: preserve four-state Mux<2,1> behavior and per-level delay.
 // FF banks supply a zero leaf for non-power-of-two depths; SRAM slots are a
 // power of two. A singleton passes through with no invented mux stage.
 inline StructuralWiring::PinPtr selectMuxTree(
@@ -63,7 +63,7 @@ inline StructuralWiring::PinPtr selectMuxTree(
         for (size_t i = 0; i < inputs.size(); i += 2) {
             auto right = i + 1 < inputs.size() ? inputs[i + 1] : missing;
             if (!right) throw std::invalid_argument("Missing memory selector padding");
-            auto mux = builder.addNewComponent<Mux2to1>(
+            auto mux = builder.addNewComponent<Mux<2,1>>(
                 name + "_" + std::to_string(level) + "_" + std::to_string(i / 2));
             wiring.connect(inputs[i], mux->getInputPin("A"));
             wiring.connect(right, mux->getInputPin("B"));

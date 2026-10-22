@@ -5,7 +5,7 @@
 Its whole implementation is structural. Existing native memory devices
 provide scalable storage; existing smaller children remain selectable.
 
-System/game acceptance is in progress in the isolated milestone worktree.
+System/game acceptance is in progress on main `alpha`.
 Short guest execution and a dedicated assembled-clock check have passed;
 the milestone record tracks final native/WASM, game and compatibility results.
 
@@ -107,9 +107,13 @@ The batch runner samples PRESENT before the edge, finishes same-edge
 propagation, captures the surface, then advances to later writes. The screen
 observer implements neither VGA/HDMI timing nor a simulated DMA copy.
 
-The [recorded game mode](recorded-games.md) stores these frames separately
-from the existing full-circuit waveform history. Headless runs turn off wire,
-register and native-memory histories, including optional cache banks.
+The [recorded game mode](recorded-games.md) can capture bounded presentation
+checkpoints for the original circuit visualizer. The topology and indexed
+pin/wire values come from this actual assembly; device observations are saved
+at the same settled boundaries. These captures retain no intermediate gate
+transitions or memory-page history. The original component scenarios retain
+their existing waveform playback. Headless runs turn off wire, register and
+native-memory histories, including optional cache banks.
 
 ## Examples and checks
 

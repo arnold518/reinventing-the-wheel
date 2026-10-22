@@ -1,48 +1,32 @@
 #include "ModuleBindingHelpers.hpp"
-#include "modules/composite/Adder8.hpp"
-#include "modules/composite/ZeroDetect8.hpp"
-#include "modules/composite/ALU8.hpp"
-#include "modules/composite/ALU8ControlDecoder.hpp"
-#include "modules/composite/ALU8ResultSelector.hpp"
-#include "modules/composite/ALU32ControlDecoder.hpp"
-#include "modules/composite/ALU32CompareUnit.hpp"
-#include "modules/composite/ALU32ResultSelector.hpp"
-#include "modules/composite/ALU32FlagUnit.hpp"
-#include "modules/composite/AddSub8.hpp"
-#include "modules/composite/ArithmeticUnit8.hpp"
-#include "modules/composite/LogicUnit8.hpp"
-#include "modules/composite/BarrelShifter8.hpp"
-#include "modules/composite/CompareSelect8.hpp"
-#include "modules/composite/ALU8FlagUnit.hpp"
-#include "modules/composite/Adder32.hpp"
-#include "modules/composite/AddSub32.hpp"
-#include "modules/composite/Logic32.hpp"
-#include "modules/composite/ZeroDetect32.hpp"
-#include "modules/composite/Shifter32.hpp"
-#include "modules/composite/ALU32.hpp"
+#include "modules/composite/WordDatapath.hpp"
+#include "components/selection/BuiltinComponentCatalog.hpp"
+#include "components/selection/StandardProfiles.hpp"
+#include <map>
 
 void bindArithmeticModules(py::module_& m) {
-    bindCompositeModule<Adder8>(m, "Adder8", "8-bit adder.");
-    bindCompositeModule<ZeroDetect8>(m, "ZeroDetect8", "8-bit zero detector.");
-    bindCompositeModule<ALU8>(m, "ALU8", "8-bit arithmetic logic unit.");
-    bindCompositeModule<ALU8ControlDecoder>(m, "ALU8ControlDecoder", "Structural ALU integration block.");
-    bindCompositeModule<ALU8ResultSelector>(m, "ALU8ResultSelector", "Structural ALU integration block.");
-    bindCompositeModule<ALU32ControlDecoder>(m, "ALU32ControlDecoder", "Structural ALU integration block.");
-    bindCompositeModule<ALU32CompareUnit>(m, "ALU32CompareUnit", "Structural ALU integration block.");
-    bindCompositeModule<ALU32ResultSelector>(m, "ALU32ResultSelector", "Structural ALU integration block.");
-    bindCompositeModule<ALU32FlagUnit>(m, "ALU32FlagUnit", "Structural ALU integration block.");
-    bindCompositeModule<AddSub8>(m, "AddSub8", "8-bit structural add/sub with independent carry input.");
-    bindCompositeModule<ArithmeticUnit8>(m, "ArithmeticUnit8", "Shared 8-bit arithmetic unit.");
-    bindCompositeModule<LogicUnit8>(m, "LogicUnit8", "8-bit structural logic unit.");
-    bindCompositeModule<BarrelShifter8>(m, "BarrelShifter8", "8-bit variable shifts and rotations.");
-    bindCompositeModule<CompareSelect8>(m, "CompareSelect8", "Predicates and min/max from shared subtraction.");
-    bindCompositeModule<ALU8FlagUnit>(m, "ALU8FlagUnit", "8-bit ALU result and arithmetic flags.");
-    bindCompositeModule<Adder32>(m, "Adder32", "Structural 32-bit adder.");
-    bindCompositeModule<AddSub32>(m, "AddSub32", "Structural 32-bit add/subtract unit.");
-    bindCompositeModule<Logic32>(m, "Logic32", "Structural 32-bit bitwise logic unit.");
-    bindCompositeModule<ZeroDetect32>(m, "ZeroDetect32", "Structural 32-bit zero detector.");
-    bindCompositeModule<Shifter32>(m, "Shifter32", "Structural 32-bit barrel shifter.");
-    bindCompositeModule<ALU32>(m, "ALU32", "Structural RV32I-oriented 32-bit ALU.");
-
-
+    m.def("create_word_component", [](const std::string& unit,const std::string& name,size_t width,
+            const std::string& operations,const std::string& adder,bool full_flags,const std::string& fidelity) {
+        using namespace circuit::word;
+        static const std::map<std::string,Unit> units{{"alu",Unit::ALU},{"adder",Unit::Adder},{"add-sub",Unit::AddSub},
+            {"arithmetic",Unit::Arithmetic},{"logic",Unit::Logic},{"shift",Unit::Shift},{"compare",Unit::Compare},
+            {"flags",Unit::Flags},{"result",Unit::Result},{"zero",Unit::Zero}};
+        if(!units.contains(unit))throw std::invalid_argument("Invalid word component");
+        if(operations!="extended"&&operations!="integer")throw std::invalid_argument("Invalid operation contract");
+        if(adder!="ripple"&&adder!="prefix")throw std::invalid_argument("Invalid addition topology");
+        if(fidelity!="structural"&&fidelity!="behavioral")throw std::invalid_argument("Invalid fidelity");
+        const auto& f=family(units.at(unit),width,{operations=="extended"?Operations::Extended:Operations::IntegerDatapath,
+            adder=="prefix"?AdderTopology::ParallelPrefix:AdderTopology::Ripple,full_flags});
+        const auto selected=fidelity=="structural"?circuit::Fidelity::Structural:circuit::Fidelity::Behavioral;
+        if(!f.supports(selected))throw std::invalid_argument("No requested fidelity for this configuration");
+        return std::dynamic_pointer_cast<IOComponent>(circuit::builtinComponentCatalog().createRoot(f.request(name),
+            circuit::withExactFidelity(circuit::canonicalDefaultProfile(),name,selected)).root);
+    },py::arg("unit"),py::arg("name"),py::arg("width"),py::arg("operations")="extended",py::arg("adder")="prefix",
+       py::arg("full_flags")=true,py::arg("fidelity")="structural");
+    m.def("create_alu_control", [](const std::string& name,const std::string& operations) {
+        using namespace circuit::word;
+        if(operations!="extended"&&operations!="integer")throw std::invalid_argument("Invalid operation contract");
+        return std::dynamic_pointer_cast<IOComponent>(controlFamily(operations=="extended"?Operations::Extended:Operations::IntegerDatapath)
+            .create(circuit::Fidelity::Structural,name,nullptr));
+    },py::arg("name"),py::arg("operations")="extended");
 }

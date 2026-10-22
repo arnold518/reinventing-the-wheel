@@ -46,7 +46,7 @@ def register_placements(manager, width):
 
 
 def register_file_children():
-    test = server.circuit_backend.create_test_by_name("RegisterFile32x32Test")
+    test = server.circuit_backend.create_test_by_name("RegisterFileWidth32Count32Test")
     test.setup_circuit()
     return {child.get_name() for child in test.get_root().get_children()}
 

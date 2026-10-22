@@ -4,7 +4,7 @@
 #include "components/selection/BuildContext.hpp"
 #include "components/selection/BuildManifest.hpp"
 #include "components/selection/BuiltinComponentCatalog.hpp"
-#include "modules/composite/Adder32.hpp"
+#include "modules/composite/WordDatapath.hpp"
 #include "components/selection/ComponentCatalog.hpp"
 #include "components/selection/StandardProfiles.hpp"
 #include "modules/basic/Gate.hpp"
@@ -510,7 +510,7 @@ void aluEquality() {
     const auto& catalog = circuit::builtinComponentCatalog();
     const auto build = [&] {
         return std::dynamic_pointer_cast<IOComponent>(
-            catalog.createRoot({"rv32i.alu32", "DUT", {}}, circuit::maximallyStructural()).root);
+            catalog.createRoot({"word.alu.32.integer.prefix", "DUT", {}}, circuit::maximallyStructural()).root);
     };
     SettlingOptions options;
     options.binary_sources = true;
@@ -518,7 +518,7 @@ void aluEquality() {
     Bench bench(build());
     const auto report = valid(CircuitTimingAnalyzer::settling(bench.dut, options));
     const auto& eq = endpoint(report, "EQ");
-    std::cout << "rv32i.alu32 EQ: paths " << eq.structural << ", proven " << eq.bound
+    std::cout << "word.alu.32.integer.prefix EQ: paths " << eq.structural << ", proven " << eq.bound
               << (eq.tight ? " (attained)" : "") << " after " << eq.evaluations << " evaluations\n";
     check(eq.structural == 33 && eq.bound == 30 && eq.tight, "The ALU EQ false path must be removed: 33 -> 30");
 
@@ -542,12 +542,12 @@ void aluEquality() {
         const auto before = round % 2 ? vector(static_cast<uint32_t>(random()), static_cast<uint32_t>(random()), random() % 32)
                                       : vector(~a, a, random() % 32);
         for (const auto& [name, tick] : bench.change(before, vector(a, near, random() % 32), 60, 50)) {
-            check(tick <= endpoint(report, name).bound, "rv32i.alu32." + name + ": changed at tick "
+            check(tick <= endpoint(report, name).bound, "word.alu.32.integer.prefix." + name + ": changed at tick "
                 + std::to_string(tick) + ", after the proven bound " + std::to_string(endpoint(report, name).bound));
             if (name == "EQ") worst = std::max(worst, tick);
         }
     }
-    std::cout << "rv32i.alu32 EQ: latest change seen on equal and near-equal operands: tick " << worst << '\n';
+    std::cout << "word.alu.32.integer.prefix EQ: latest change seen on equal and near-equal operands: tick " << worst << '\n';
     confirm(bench, report, false, 60, random);
 }
 // A compact part that carries the delay table proven on its gate-level form.
@@ -564,7 +564,7 @@ std::shared_ptr<IOComponent> twoAdders(bool compact, const circuit::PartDelays* 
         c->addPin<32>("OUT", PinType::OUTPUT);
     });
     ComponentBuilder b(root, context);
-    auto first = b.add(circuit::families::Adder32, "FIRST"), second = b.add(circuit::families::Adder32, "SECOND");
+    auto first = b.add(circuit::word::family(circuit::word::Unit::Adder,32,{circuit::word::Operations::Extended,circuit::word::AdderTopology::ParallelPrefix,true}), "FIRST"), second = b.add(circuit::word::family(circuit::word::Unit::Adder,32,{circuit::word::Operations::Extended,circuit::word::AdderTopology::ParallelPrefix,true}), "SECOND");
     b.addNewWire<32>("a", root->getInputPin<32>("A"), {first->getInputPin<32>("A")});
     b.addNewWire<32>("b", root->getInputPin<32>("B"), {first->getInputPin<32>("B")});
     b.addNewWire<32>("c", root->getInputPin<32>("C"), {second->getInputPin<32>("B")});
@@ -583,7 +583,7 @@ std::shared_ptr<IOComponent> twoAdders(bool compact, const circuit::PartDelays* 
 void compactAdder() {
     const auto& catalog = circuit::builtinComponentCatalog();
     const auto build = [&](const circuit::BuildProfile& profile) {
-        return std::dynamic_pointer_cast<IOComponent>(catalog.createRoot({"arithmetic.adder.width32", "DUT", {}}, profile).root);
+        return std::dynamic_pointer_cast<IOComponent>(catalog.createRoot({"word.adder.32.prefix", "DUT", {}}, profile).root);
     };
     SettlingOptions options;
     options.binary_sources = true;
@@ -597,7 +597,7 @@ void compactAdder() {
     check(arcs[{"A", "Sum"}].maximum == 19 && arcs[{"Cin", "Sum"}].maximum == 3 && arcs[{"Cin", "Cout"}].maximum == 2,
           "Proven adder pairs");
     for (const auto& [pair, delay] : arcs) check(delay.minimum >= 1 && delay.minimum <= delay.maximum, "Earliest before latest");
-    std::cout << "Adder32 pairs (earliest..latest):";
+    std::cout << "Adder<32> pairs (earliest..latest):";
     for (const auto& [pair, delay] : arcs) std::cout << ' ' << pair.first << "->" << pair.second << ' ' << delay.minimum << ".." << delay.maximum;
     std::cout << '\n';
 
@@ -646,7 +646,7 @@ void compactAdder() {
         }
     }
     check(carry_only > 50, "Carry-in changes were not exercised");
-    std::cout << "Compact Adder32 on its proven table: 600 input changes matched; the gates glitched without a final change "
+    std::cout << "Compact Adder<32> on its proven table: 600 input changes matched; the gates glitched without a final change "
               << glitches << " times\n";
 
     // Parents: built from compact adders, a circuit is never faster than the

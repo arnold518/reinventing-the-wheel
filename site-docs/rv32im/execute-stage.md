@@ -53,7 +53,7 @@ Catalog: `rv32im.pipeline.stage.execute`. The implemented form is structural; se
 
 ## Behavior
 
-For an eligible valid M packet, forwarded operands launch MulDivUnit32 once both sources are available. A matching older EX/MEM producer with RESULT_READY=0 keeps the slot idle until the load value is ready; stale register-file values cannot be captured. Faulted/illegal terminal packets do not launch arithmetic. EXECUTION_WAIT holds until DONE; OUT_ALU_RESULT then carries the selected M result. TAKE accepts it, CANCEL discards it and ENABLE pauses arithmetic. The additional CLK/RST pins clock/reset the M state.
+For an eligible valid M packet, forwarded operands launch MulDivUnit<32> once both sources are available. A matching older EX/MEM producer with RESULT_READY=0 keeps the slot idle until the load value is ready; stale register-file values cannot be captured. Faulted/illegal terminal packets do not launch arithmetic. EXECUTION_WAIT holds until DONE; OUT_ALU_RESULT then carries the selected M result. TAKE accepts it, CANCEL discards it and ENABLE pauses arithmetic. The additional CLK/RST pins clock/reset the M state.
 
 ## Internal structure
 

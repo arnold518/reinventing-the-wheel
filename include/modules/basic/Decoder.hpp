@@ -1,21 +1,21 @@
 #pragma once
-
 #include "components/IOComponent.hpp"
 #include "components/selection/ComponentFamily.hpp"
-
-namespace circuit::families {
-extern const ComponentFamily Decoder5to32;
-// The register file's write decoder: output 0 is tied low, because x0 has
-// no storage to write.
-extern const ComponentFamily Decoder5to32X0Unused;
-}
-
-class Decoder5to32 : public IOComponent {
+namespace circuit {class ComponentCatalog;}
+namespace circuit::families {const ComponentFamily& decoder(size_t address_bits,bool suppress_zero=false);}
+namespace circuit::logic {
+class WordDecoder : public IOComponent {
+    size_t address_bits_;bool suppress_zero_;std::string type_;
 public:
-    Decoder5to32(std::string name,bool zero_output_unused = false);
-    static constexpr const char* TypeName = "Decoder5to32";
-    const char* getTypeName() const override { return TypeName; }
-    void buildInternals(ComponentBuilder& builder) override;
-private:
-    bool zero_output_unused_ = false;
+    WordDecoder(std::string,size_t address_bits,bool suppress_zero=false);
+    const char* getTypeName()const override{return type_.c_str();}
+    void buildInternals(ComponentBuilder&)override;
+};
+void registerDecoders(ComponentCatalog&);
+}
+template<size_t AddressBits>class Decoder : public circuit::logic::WordDecoder {
+    static_assert(AddressBits>=1&&AddressBits<=5);
+public:
+    explicit Decoder(std::string name,bool suppress_zero=false):WordDecoder(std::move(name),AddressBits,suppress_zero){}
+    static const circuit::ComponentFamily& family(){return circuit::families::decoder(AddressBits);}
 };

@@ -1,8 +1,8 @@
-# FramebufferDisplay32
+# FramebufferDisplay
 
 Persistent drawing storage plus geometry and PRESENT control.
 
-Catalog: `device.framebuffer.32`. The implemented form is structural; selectable lower-level children may be compact. No new whole-component behavioral form is registered.
+Catalog: `device.framebuffer`. The implemented form is structural; selectable lower-level children may be compact. No whole-component behavioral form is registered.
 
 ## Pins
 
@@ -41,7 +41,7 @@ The unprefixed protocol is the control bank; FB_ is the separate byte-mask-capab
 
 ## Internal structure
 
-DeviceRegisterPort32, sequence counter and existing FF MemoryEndpoint storage.
+DeviceRegisterPort<32>, sequence counter and existing FF MemoryEndpoint storage.
 The same component accepts these catalog parameters:
 
 | Parameter | Default | Supported values |
@@ -78,13 +78,13 @@ Reset clears control/sequence and pending responses, and retains drawing storage
 
 ## Recorded example and checks
 
-`FramebufferDisplay32Test` owns the independent functional checks; `FramebufferDisplay32ScenarioTest` retains this smaller recorded example. Both use the same logical component owner.
+`FramebufferDisplayTest` owns the independent functional checks; `FramebufferDisplayScenarioTest` retains this smaller recorded example. Both use the same logical component owner.
 
-<!-- simulator-examples: framebuffer-display32 FramebufferDisplay32ScenarioTest -->
+<!-- simulator-examples: framebuffer-display FramebufferDisplayScenarioTest -->
 
-<div class="simulator-embed"><iframe src="../../simulator/?scenario=framebuffer-display32&amp;embed=1" title="FramebufferDisplay32" loading="lazy" allowfullscreen></iframe></div>
+<div class="simulator-embed"><iframe src="../../simulator/?scenario=framebuffer-display&amp;embed=1" title="FramebufferDisplay" loading="lazy" allowfullscreen></iframe></div>
 
-<a href="../../simulator/?scenario=framebuffer-display32" class="md-button">Open the recorded circuit</a>
+<a href="../../simulator/?scenario=framebuffer-display" class="md-button">Open the recorded circuit</a>
 
 Geometry and backing capacity also select a configuration-specific visual
 floorplan. The default standalone 4×4 key stays unchanged. Variant floorplans

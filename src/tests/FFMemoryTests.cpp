@@ -422,7 +422,7 @@ void FFMemoryContractTest::verifyResults() {
                     for (const auto& child : blocks.at("READ_SELECT")->getChildren()) {
                         require(child->getTypeName() != std::string("BitSplitter"), "Read grouping added a splitter delay");
                         if (auto rewire = std::dynamic_pointer_cast<Rewire>(child)) require(rewire->getDelay() == 0, "Word unpacking adds delay");
-                        if (depth == 1) require(child->getTypeName() != std::string("Mux2to1"), "One-word array has a read mux");
+                        if (depth == 1) require(child->getTypeName() != std::string("Mux<2,1>"), "One-word array has a read mux");
                     }
                     if (depth == 1) for (const auto& child : blocks.at("ADDRESS_DECODE")->getChildren())
                         require(child->getName().find("_SELECT") == std::string::npos, "One-word array has a word decoder");

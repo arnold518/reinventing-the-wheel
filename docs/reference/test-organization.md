@@ -17,17 +17,18 @@ same file. Display names are independent of C++ test IDs, scenario URLs and
 saved layout/profile keys. An unclassified visible component fails the catalog
 test instead of silently appearing in an arbitrary group.
 
-The menu groups logic, wiring, ALU8, memory technologies and interfaces,
-registers, ALU32, RV32I building blocks/stages, and developer circuits. Programs
+The menu groups logic, wiring, configurable ALUs by operation contract, memory
+technologies and interfaces, registers, RV32I building blocks/stages, and
+developer circuits. Programs
 are shown once in functional (01–08), fault (09–16) and performance (17–22)
 groups. Separate selectors choose single-cycle, baseline or advanced execution
 and the advanced core's five prediction policies. Every policy/program pair is
-registered; existing URLs keep resolving to their original scenario identities.
+registered; program URLs select their declared program/core configuration.
 
-Simulator-history checks and the ALU32 representative-slice verification stay
-in CTest but are excluded from the menu: they do not build a visible root during
-setup. Component examples retain their existing structural and behavioral
-implementations, checkpoint rows and explorer fidelity controls.
+Simulator-history checks, representative-slice verification and standalone
+width sweeps stay in CTest but are excluded from the menu: they do not build
+a visible root during setup. Recorded width scenarios expose their declared
+configuration, checkpoint rows and explorer fidelity controls.
 
 Visible multi-component fixtures may extend `SimulationTest` instead of
 `ComponentScenarioTest`. Their `setupCircuit()` must only construct and wire

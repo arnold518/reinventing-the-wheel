@@ -6,12 +6,6 @@
       },
       "revision": 6
     },
-    "register-file4x32": {
-      "exact_overrides": {
-        "REGISTER_FILE4X32_ROOT.X1": "structural"
-      },
-      "revision": 2
-    },
     "rv32i-core": {
       "exact_overrides": {
         "RV32I_SINGLE_CYCLE_CORE_ROOT.DECODE_CONTROL": "structural"
@@ -35,7 +29,7 @@
     },
     "rv32i-register-file": {
       "exact_overrides": {
-        "REGISTER_FILE32X32_ROOT.STORAGE.WORD_0": "structural"
+        "REGISTER_FILE_W32_N32_ROOT.STORAGE.WORD_0": "structural"
       },
       "revision": 2
     }

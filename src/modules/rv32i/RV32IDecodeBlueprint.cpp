@@ -7,7 +7,7 @@
 #include "components/ComponentBuilder.tpp"
 #include "modules/basic/Mux.hpp"
 #include "components/StructuralNetBuilder.hpp"
-#include "modules/rv32i/RegisterFile32x32.hpp"
+#include "modules/storage/RegisterFile.hpp"
 #include "modules/rv32i/RV32IDecodeControlUnit.hpp"
 #include "modules/rv32i/RV32IPipelineControl.hpp"
 #include "RV32IPipelineStagesInternal.hpp"
@@ -23,12 +23,12 @@ std::shared_ptr<IOComponent> buildDecodeBlueprint(IOComponent& root,ComponentBui
     const auto decode = builder.add(
         control, "CONTROL");
     register_file = builder.add(
-        circuit::families::RegisterFile32x32, "REGISTER_FILE");
+        circuit::storage::registerFile(32,32), "REGISTER_FILE");
     const auto hazard = builder.add(
         circuit::families::RV32IHazardDetectionUnit, "HAZARD");
     const auto bypass = builder.addNewComponent<RV32IWritebackBypass>("WB_BYPASS");
-    builder.addNewComponent<Mux2to1_32bit>("RS1_MUX");
-    builder.addNewComponent<Mux2to1_32bit>("RS2_MUX");
+    builder.addNewComponent<Mux<2,32>>("RS1_MUX");
+    builder.addNewComponent<Mux<2,32>>("RS2_MUX");
     addControlPack(builder, "CONTROL_PACK");
     addControlUnpack(builder, "EX_CONTROL_UNPACK");
     addAddressPack(builder, "ADDRESSES_PACK");
@@ -66,8 +66,8 @@ std::shared_ptr<IOComponent> buildDecodeBlueprint(IOComponent& root,ComponentBui
     w.connect(root.getInputPin<5>("WB_RD"),
         {bypass->getInputPin<5>("WB_RD"), register_file->getInputPin<5>("RD_ADDR")});
     w.connect(root.getInputPin<32>("WB_VALUE"),
-        {builder.getInputPin<Mux2to1_32bit, 32>("RS1_MUX", "B"),
-         builder.getInputPin<Mux2to1_32bit, 32>("RS2_MUX", "B"),
+        {builder.getInputPin<Mux<2,32>, 32>("RS1_MUX", "B"),
+         builder.getInputPin<Mux<2,32>, 32>("RS2_MUX", "B"),
          register_file->getInputPin<32>("WRITE_DATA")});
 
     w.connect(decode->getOutputPin<5>("RS1_ADDR"),
@@ -122,16 +122,16 @@ std::shared_ptr<IOComponent> buildDecodeBlueprint(IOComponent& root,ComponentBui
     w.connect(builder.getOutputPin<Rewire, 32>("ADDRESSES_PACK", "ADDRESSES"),
         {root.getOutputPin<32>("OUT_REGISTER_ADDRESSES")});
     w.connect(register_file->getOutputPin<32>("RS1_DATA"),
-        {builder.getInputPin<Mux2to1_32bit, 32>("RS1_MUX", "A")});
+        {builder.getInputPin<Mux<2,32>, 32>("RS1_MUX", "A")});
     w.connect(register_file->getOutputPin<32>("RS2_DATA"),
-        {builder.getInputPin<Mux2to1_32bit, 32>("RS2_MUX", "A")});
+        {builder.getInputPin<Mux<2,32>, 32>("RS2_MUX", "A")});
     w.connect(bypass->getOutputPin("SELECT_A"),
-        {builder.getInputPin<Mux2to1_32bit>("RS1_MUX", "SEL")});
+        {builder.getInputPin<Mux<2,32>>("RS1_MUX", "SEL")});
     w.connect(bypass->getOutputPin("SELECT_B"),
-        {builder.getInputPin<Mux2to1_32bit>("RS2_MUX", "SEL")});
-    w.connect(builder.getOutputPin<Mux2to1_32bit, 32>("RS1_MUX", "OUT"),
+        {builder.getInputPin<Mux<2,32>>("RS2_MUX", "SEL")});
+    w.connect(builder.getOutputPin<Mux<2,32>, 32>("RS1_MUX", "OUT"),
         {root.getOutputPin<32>("OUT_RS1_VALUE")});
-    w.connect(builder.getOutputPin<Mux2to1_32bit, 32>("RS2_MUX", "OUT"),
+    w.connect(builder.getOutputPin<Mux<2,32>, 32>("RS2_MUX", "OUT"),
         {root.getOutputPin<32>("OUT_RS2_VALUE")});
     w.connect(hazard->getOutputPin("LOAD_USE_HAZARD"), {root.getOutputPin("LOAD_USE_HAZARD")});
 

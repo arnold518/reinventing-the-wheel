@@ -29,6 +29,10 @@ static inline uint32_t event_count(void) { return io_read(0x10002008u); }
 static inline uint32_t event_peek(void) { return io_read(0x10002004u); }
 static inline void event_pop(void) { io_write(0x10002010u,1); }
 static inline void present(void) { io_order(); io_write(0x10003014u,1); io_order(); }
+// Logical game boards remain 64 x 48; physical drawing uses device metadata.
+uint32_t display_width(void);
+uint32_t display_height(void);
+uint32_t display_stride(void);
 void console_write(const char *s);
 void pixel(int x, int y, uint8_t color);
 void rect(int x, int y, int width, int height, uint8_t color);

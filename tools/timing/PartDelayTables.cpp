@@ -147,7 +147,7 @@ circuit::PartDelays prove(const Candidate& candidate, size_t budget, std::string
     // delays per code, so that a quick operation need not wait for a slow one.
     const auto operation = pins->getInputPinDynamic("OP");
     const bool per_operation = operation && operation->getWidth() <= 5
-        && (candidate.contract == "rv32i.alu32" || candidate.contract == "rv32i.alu32-core" || candidate.contract == "alu.width8");
+        && (candidate.contract == "word.alu.32.integer.prefix" || candidate.contract == "word.alu.32.integer.prefix.core" || candidate.contract == "word.alu.8.extended.ripple");
     // An SRAM device reads with WE_N=1 and writes with WE_N=0; proven apart,
     // a read is not charged for a path that runs through a write and back
     // through a cell.

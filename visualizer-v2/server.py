@@ -216,6 +216,21 @@ def _component_owner_id(pin: Any) -> str | None:
         return None
 
 
+def _supports_register_view(component: Any) -> bool:
+    current = getattr(circuit_backend, "supports_register_view", None)
+    return bool(current(component)) if current is not None else _component_type(component) == "RegisterFile32x32"
+
+
+def _device_view_kind(component: Any) -> str:
+    current = getattr(circuit_backend, "device_view_kind", None)
+    if current is not None:
+        return current(component)
+    return {"FramebufferDisplay": "display", "ButtonDevice": "keyboard",
+            "ConsoleDevice": "console", "TimerDevice": "timer",
+            "SynchronousFifo<8>": "queue", "SynchronousFifo<32>": "queue"}.get(
+                _component_type(component), "")
+
+
 def _component_type(component: Any) -> str:
     try:
         return component.get_type_name()
@@ -287,9 +302,6 @@ def _component_layout_type(component: Any) -> str:
     if component_type.startswith("MemoryController<ff,") and component.get_children():
         if not any(child.get_name() == "RESPONSE" for child in component.get_children()):
             return component_type[:-1] + ",always-ready>"
-    if component_type == "Decoder5to32" and component.get_children():
-        if any(child.get_name() == "OUT0_ZERO" for child in component.get_children()):
-            return "Decoder5to32<x0-unused>"
     if component_type.endswith("PipelineRegister") and component.get_children():
         if any(child.get_name().endswith("_SPLIT") for child in component.get_children()):
             return component_type + "<compact>"
@@ -973,6 +985,9 @@ def _custom_child_layout(
         _component_type(parent),
         {child.get_name(): child_aspects[child.get_id()] for child in children},
         parent_aspect,
+        child_stubs={child.get_name(): (child_stub_ratios or {}).get(
+            child.get_id(), _stub_margin_ratio(boundary_fraction, pin_size_fraction))
+            for child in children},
     )
     if cpu_layout is not None:
         return cpu_layout
@@ -1810,7 +1825,7 @@ def _scenario_aliases_to_canonical() -> dict[str, str]:
 SCENARIOS = _scenario_classes()
 SCENARIO_OPTIONS = _scenario_options()
 SCENARIO_ALIASES_TO_CANONICAL = _scenario_aliases_to_canonical()
-DEFAULT_SCENARIO = "adder8" if "adder8" in SCENARIOS else SCENARIO_OPTIONS[0]["key"]
+DEFAULT_SCENARIO = "adder-ripple-w8" if "adder-ripple-w8" in SCENARIOS else SCENARIO_OPTIONS[0]["key"]
 
 
 # The timing profile is one setting of the whole C++ library. A session sets
@@ -2034,6 +2049,11 @@ class CircuitSession:
             if component_layout_type != component_type:
                 component_data["layoutType"] = component_layout_type
             available_fidelities = component.get_available_fidelities()
+            device_kind = _device_view_kind(component)
+            if device_kind:
+                component_data["deviceViewKind"] = device_kind
+            if _supports_register_view(component):
+                component_data["registerView"] = True
             if available_fidelities:
                 component_data["availableFidelities"] = (
                     available_fidelities
@@ -2472,7 +2492,7 @@ class CircuitSession:
             "index": index,
             "time": _json_time(timestamp),
             "componentId": component_id,
-            "type": "RegisterFile32x32",
+            "type": _component_type(component),
             "supported": True,
             "registers": registers,
             "ports": ports,
@@ -2489,9 +2509,9 @@ class CircuitSession:
             timestamp = int(self.timestamps[index])
             self.simulator.set_circuit_state_at_time(timestamp)
             component_type = _component_type(component)
-            if component_type in {"FramebufferDisplay32", "ButtonDevice32", "ConsoleDevice32", "TimerDevice32", "SynchronousFifo<8>", "SynchronousFifo<32>"}:
+            if _device_view_kind(component):
                 return json.loads(circuit_backend.device_state_json(component,self.simulator,index,timestamp))
-            if component_type == "RegisterFile32x32":
+            if _supports_register_view(component):
                 return self._register_file_state(component, component_id, index, timestamp)
             if component_id not in self.memory_inspectors:
                 self.memory_inspectors[component_id] = circuit_backend.MemoryInspector(component, self.simulator)

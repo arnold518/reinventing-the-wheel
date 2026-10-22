@@ -44,45 +44,4 @@ std::string canonicalizeParameters(const ParameterMap& parameters) {
     return out.str();
 }
 
-std::string canonicalContractId(std::string_view id) {
-    if (!id.starts_with("memory.")) return std::string(id);
-    // October 2026: general storage parts are not memories.
-    if (id == "memory.clocked-state-bit") return "storage.state-bit";
-    if (id.starts_with("memory.register.")) return "storage." + std::string(id.substr(7));
-    // October 2026: memory contracts follow memory.<technology>.<what>.<width>.
-    static constexpr std::pair<std::string_view, std::string_view> prefixes[] = {
-        {"memory.ff-word.", "memory.ff.word."},
-        {"memory.ff-storage-bank.", "memory.ff.bank."},
-        {"memory.container.ff.", "memory.ff.device."},
-        {"memory.matrix.", "memory.shared."},
-        {"memory.transaction-port.", "memory.shared.transaction-port."},
-        {"memory.response-buffer.", "memory.shared.response-buffer."},
-    };
-    // Old order memory.<what>.<technology>.<width>.
-    static constexpr std::pair<std::string_view, std::string_view> layers[] = {
-        {"memory.device.", "device"},
-        {"memory.controller.", "controller"},
-        {"memory.endpoint.", "endpoint"},
-        {"memory.scalable.", "scalable-endpoint"},
-    };
-    if (id == "memory.write-enabled-bit") return "memory.ff.cell";
-    for (const auto& [old_prefix, new_prefix] : prefixes) {
-        if (id.starts_with(old_prefix)) return std::string(new_prefix) + std::string(id.substr(old_prefix.size()));
-    }
-    for (const auto& [old_prefix, what] : layers) {
-        if (!id.starts_with(old_prefix)) continue;
-        const auto rest = id.substr(old_prefix.size());
-        const auto dot = rest.rfind('.');
-        if (dot == std::string_view::npos) break;
-        return "memory." + std::string(rest.substr(0, dot)) + "." + std::string(what) + std::string(rest.substr(dot));
-    }
-    // A saved scalable-device selection now uses the native device contract.
-    const auto legacy = std::string(id);
-    constexpr std::string_view retired_layer = ".scalable-device.";
-    const auto layer = legacy.find(retired_layer);
-    if (layer != std::string::npos)
-        return legacy.substr(0, layer) + ".device." + legacy.substr(layer + retired_layer.size());
-    return legacy;
-}
-
 } // namespace circuit

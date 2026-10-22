@@ -2,11 +2,9 @@
 
 #include "modules/basic/Decoder.hpp"
 #include "modules/basic/Mux.hpp"
-#include "modules/composite/ALU8.hpp"
-#include "modules/composite/Adder8.hpp"
+#include "modules/composite/WordDatapath.hpp"
 #include "modules/composite/FullAdder.hpp"
 #include "modules/composite/HalfAdder.hpp"
-#include "modules/composite/ZeroDetect8.hpp"
 #include "tests/TruthTableComponentTest.hpp"
 #include <string>
 #include <vector>
@@ -21,77 +19,77 @@ public:
     FullAdderTest();
 };
 
-class Mux2to1Test : public TruthTableComponentTest<Mux2to1> {
+class Mux2Width1Test : public TruthTableComponentTest<Mux<2,1>> {
 public:
-    Mux2to1Test();
+    Mux2Width1Test();
 };
 
-class Mux4to1Test : public TruthTableComponentTest<Mux4to1> {
+class Mux4Width1Test : public TruthTableComponentTest<Mux<4,1>> {
 public:
-    Mux4to1Test();
+    Mux4Width1Test();
 };
 
-class Mux8to1Test : public TruthTableComponentTest<Mux8to1> {
+class Mux8Width1Test : public TruthTableComponentTest<Mux<8,1>> {
 public:
-    Mux8to1Test();
+    Mux8Width1Test();
 };
 
-class Mux32to1Test : public TruthTableComponentTest<Mux32to1> {
+class Mux32Width1Test : public TruthTableComponentTest<Mux<32,1>> {
 public:
-    Mux32to1Test();
+    Mux32Width1Test();
 };
 
-class Mux2to1_4bitTest : public TruthTableComponentTest<Mux2to1_4bit> {
+class Mux2Width4Test : public TruthTableComponentTest<Mux<2,4>> {
 public:
-    Mux2to1_4bitTest();
+    Mux2Width4Test();
 };
 
-class Mux2to1_32bitTest : public TruthTableComponentTest<Mux2to1_32bit> {
+class Mux2Width32Test : public TruthTableComponentTest<Mux<2,32>> {
 public:
-    Mux2to1_32bitTest();
+    Mux2Width32Test();
 };
 
-class Mux4to1_32bitTest : public TruthTableComponentTest<Mux4to1_32bit> {
+class Mux4Width32Test : public TruthTableComponentTest<Mux<4,32>> {
 public:
-    Mux4to1_32bitTest();
+    Mux4Width32Test();
 };
 
-class Mux8to1_8bitTest : public TruthTableComponentTest<Mux8to1_8bit> {
+class Mux8Width8Test : public TruthTableComponentTest<Mux<8,8>> {
 public:
-    Mux8to1_8bitTest();
+    Mux8Width8Test();
 };
 
-class Mux8to1_32bitTest : public TruthTableComponentTest<Mux8to1_32bit> {
+class Mux8Width32Test : public TruthTableComponentTest<Mux<8,32>> {
 public:
-    Mux8to1_32bitTest();
+    Mux8Width32Test();
 };
 
-class Mux32to1_32bitTest : public TruthTableComponentTest<Mux32to1_32bit> {
+class Mux32Width32Test : public TruthTableComponentTest<Mux<32,32>> {
 public:
-    Mux32to1_32bitTest();
+    Mux32Width32Test();
 };
 
-class Decoder5to32Test : public TruthTableComponentTest<Decoder5to32> {
+class DecoderWidth5Test : public TruthTableComponentTest<Decoder<5>> {
 public:
-    Decoder5to32Test();
+    DecoderWidth5Test();
 };
 
-class Decoder5to32X0UnusedTest : public TruthTableComponentTest<Decoder5to32> {
+class DecoderWidth5ZeroDisabledTest : public TruthTableComponentTest<Decoder<5>> {
 public:
-    Decoder5to32X0UnusedTest();
+    DecoderWidth5ZeroDisabledTest();
 };
 
-class Adder8Test : public TruthTableComponentTest<Adder8> {
+class AdderRippleWidth8Test : public TruthTableComponentTest<WordTestTarget<circuit::word::Unit::Adder,8,circuit::word::Operations::Extended,circuit::word::AdderTopology::Ripple>> {
 public:
-    Adder8Test();
+    AdderRippleWidth8Test();
 };
 
-class ZeroDetect8Test : public TruthTableComponentTest<ZeroDetect8> {
+class ZeroDetectWidth8Test : public TruthTableComponentTest<WordTestTarget<circuit::word::Unit::Zero,8,circuit::word::Operations::Extended,circuit::word::AdderTopology::Ripple>> {
 public:
-    ZeroDetect8Test();
+    ZeroDetectWidth8Test();
 };
 
-class ALU8Test : public TruthTableComponentTest<ALU8> {
+class ALUExtendedWidth8Test : public TruthTableComponentTest<WordTestTarget<circuit::word::Unit::ALU,8,circuit::word::Operations::Extended,circuit::word::AdderTopology::Ripple>> {
 public:
-    ALU8Test();
+    ALUExtendedWidth8Test();
 };

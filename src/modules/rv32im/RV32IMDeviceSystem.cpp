@@ -1,6 +1,6 @@
 #include "modules/rv32im/RV32IMDeviceSystem.hpp"
 #include "modules/rv32im/RV32IMCore.hpp"
-#include "modules/device/DeviceComponents.hpp"
+#include "modules/device/DeviceBus.hpp"
 #include "modules/rv32i/RV32IMemorySystem.hpp"
 #include "modules/memory/Cache.hpp"
 #include "modules/memory/TwoPortMemoryArbiter.hpp"
@@ -56,19 +56,19 @@ RV32IMDeviceSystem::RV32IMDeviceSystem(std::string n, rv32im::DeviceSystemConfig
 void RV32IMDeviceSystem::buildInternals(ComponentBuilder& b) {
     circuit::detail::StructuralWiring w(b);
     core_ = b.add(circuit::families::RV32IMFiveStageCore, "CORE");
-    router_ = b.add(circuit::families::AddressRouter32, "DATA_ROUTER",(config_.videoCapacityBytes()==4096?circuit::ParameterMap{}:circuit::ParameterMap{{"video_bytes",std::to_string(config_.videoCapacityBytes())}}));
-    auto guard = b.add(circuit::families::InstructionAccessGuard32, "FETCH_GUARD");
+    router_ = b.add(circuit::device::busFamily(circuit::device::BusUnit::Router,32), "DATA_ROUTER",(config_.videoCapacityBytes()==4096?circuit::ParameterMap{}:circuit::ParameterMap{{"video_bytes",std::to_string(config_.videoCapacityBytes())}}));
+    auto guard = b.add(circuit::device::busFamily(circuit::device::BusUnit::InstructionGuard,32), "FETCH_GUARD");
     std::shared_ptr<IOComponent> arbiter = b.addNewComponent<circuit::memory::TwoPortMemoryArbiter<32>>("RAM_ARBITER");
     rv32i::MemoryConfiguration mc;
     mc.technology = config_.dram ? circuit::memory::Technology::DRAM : circuit::memory::Technology::FF;
     mc.device.depth_words = 65536;
     ram_ = rv32i::buildMemory(b, *this, "RAM", mc);
     ram_view_ = rv32i::memoryView(ram_);
-    peripherals_["console"] = b.add(circuit::families::ConsoleDevice32, "CONSOLE",(config_.console_depth==4?circuit::ParameterMap{}:circuit::ParameterMap{{"fifo_depth",std::to_string(config_.console_depth)}}));
-    peripherals_["timer"] = b.add(circuit::families::TimerDevice32, "TIMER",
+    peripherals_["console"] = b.add(circuit::families::ConsoleDevice, "CONSOLE",(config_.console_depth==4?circuit::ParameterMap{}:circuit::ParameterMap{{"fifo_depth",std::to_string(config_.console_depth)}}));
+    peripherals_["timer"] = b.add(circuit::families::TimerDevice, "TIMER",
         {{"divisor", std::to_string(config_.timer_divisor)}, {"frequency_hz", std::to_string(config_.timer_frequency_hz)}});
-    peripherals_["buttons"] = b.add(circuit::families::ButtonDevice32, "BUTTONS",(config_.button_depth==4?circuit::ParameterMap{}:circuit::ParameterMap{{"fifo_depth",std::to_string(config_.button_depth)}}));
-    auto display = b.add(circuit::families::FramebufferDisplay32, "DISPLAY",
+    peripherals_["buttons"] = b.add(circuit::families::ButtonDevice, "BUTTONS",(config_.button_depth==4?circuit::ParameterMap{}:circuit::ParameterMap{{"fifo_depth",std::to_string(config_.button_depth)}}));
+    auto display = b.add(circuit::families::FramebufferDisplay, "DISPLAY",
         {{"width", std::to_string(config_.width)}, {"height", std::to_string(config_.height)}, {"storage_bytes",std::to_string(config_.videoCapacityBytes())}});
     peripherals_["display"] = display;
     // Contract capability belongs to PIXELS, separate from the register bank.

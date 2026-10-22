@@ -18,8 +18,9 @@ from mkdocs_examples import render_table
 
 STAGES = (("fetch", "Fetch"), ("decode", "Decode"), ("execute", "Execute"),
           ("memory", "Memory"), ("writeback", "Writeback"), ("next-pc", "NextPC"))
-snippets, fields, inputs = [], {}, {}
-for page in ("alu32", "instruction-decoder", "memory-access", "execution-status"):
+snippets = re.findall(r"```cpp\n(.*?)\n```", (ROOT / "site-docs/alu/2.7.md").read_text(), re.S)
+fields, inputs = {}, {}
+for page in ("alu", "instruction-decoder", "memory-access", "execution-status"):
     document = (ROOT / f"site-docs/rv32i/4.3/{page}.md").read_text()
     snippets += re.findall(r"```cpp\n(.*?)\n```", document, re.S)
 

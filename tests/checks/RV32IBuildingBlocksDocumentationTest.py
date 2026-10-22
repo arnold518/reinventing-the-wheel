@@ -1,4 +1,4 @@
-"""Compile/replay exact 4.3 C++ examples and check live pin/fidelity schemas.
+"""Compile/replay exact integer ALU and 4.3 C++ component references.
 
 Serial probes and one compiler; no full cores or full test suite.
 """
@@ -17,14 +17,20 @@ sys.path.insert(0,str(ROOT/"tools"))
 from mkdocs_examples import render_table
 
 snippets, outputs = [], {}
-for number,page in enumerate(("alu32","instruction-decoder","memory-access","execution-status"),3):
-    document=(ROOT/f"site-docs/rv32i/4.3/{page}.md").read_text()
-    assert document.startswith(f"# § 4.3.{number}.")
-    assert f"rv32i/4.3/{page}.md" in (ROOT/"mkdocs.yml").read_text()
-    assert f"({page}.md)" in (ROOT/"site-docs/rv32i/4.3/index.md").read_text()
+pages=[("alu/2.7.md","2.7")]+[(f"rv32i/4.3/{page}.md",f"4.3.{number}")
+    for number,page in enumerate(("alu","instruction-decoder","memory-access","execution-status"),3)]
+integer_types={"AddSub<W>":"AddSub<32,integer,prefix>","LogicUnit<W>":"LogicUnit<32,integer>","BarrelShifter<W>":"BarrelShifter<32,integer>",
+    "ALUControlDecoder":"ALUControlDecoder<integer>","CompareSelect<W>":"CompareSelect<32,integer>",
+    "ALUResultSelector<W>":"ALUResultSelector<32,integer>","ALUFlagUnit<W>":"ALUFlagUnit<32,integer>","ALU<W>":"ALU<32,integer,prefix>"}
+for relative,number in pages:
+    document=(ROOT/"site-docs"/relative).read_text()
+    assert document.startswith(f"# § {number}.")
+    assert relative in (ROOT/"mkdocs.yml").read_text()
+    if relative.startswith("rv32i/"):
+        assert f"({Path(relative).name})" in (ROOT/"site-docs/rv32i/4.3/index.md").read_text()
     assert "| Component | Description | Structural | Behavioral |" in document
     components=re.findall(r"(?m)^\| `([^`]+)` \| [^|\n]+ \| (Yes|No) \| (Yes|No) \|$",document)
-    parts=re.split(r"(?m)^## 4\.3\.\d+\.\d+\. ",document)[1:]
+    parts=re.split(r"(?m)^## "+re.escape(number)+r"\.\d+\. ",document)[1:]
     assert len(components)==len(parts)==document.count('class="simulator-embed"')
     snippets+=re.findall(r"```cpp\n(.*?)\n```",document,re.S)
     for (name,structural,behavioral),part in zip(components,parts):
@@ -32,18 +38,19 @@ for number,page in enumerate(("alu32","instruction-decoder","memory-access","exe
             assert f"### {heading}\n" in part,(name,heading)
         assert "#### C++ example\n" in part and "#### Unknown inputs\n" in part
         alias,test=re.findall(r"<!-- simulator-examples: (\S+) (\S+) -->",part)[0]
-        assert f'src="../../../simulator/?scenario={alias}&amp;embed=1"' in part
+        simulator="../../" if relative.startswith("alu/") else "../../../"
+        assert f'src="{simulator}simulator/?scenario={alias}&amp;embed=1"' in part
         topology=json.loads(subprocess.check_output([PROBE,"topology",test,alias],text=True,timeout=120))
         examples=json.loads(subprocess.check_output([PROBE,"examples",test,alias],text=True,timeout=120))
         root=next(c for c in topology["components"] if c["id"]==topology["rootId"])
-        assert root["type"]==name,(name,root["type"])
+        assert root["type"]==integer_types.get(name,name),(name,root["type"])
         assert set(root["availableFidelities"])=={f for f,v in (("structural",structural),("behavioral",behavioral)) if v=="Yes"}
         documented={}
         pin_table=part.split("### IO pins\n",1)[1].split("### Behavior\n",1)[0]
-        for names,direction,width in re.findall(r"(?m)^\| ([^|]+) \| (Input|Output) \| (\d+)(?: each)? \|",pin_table):
+        for names,direction,width in re.findall(r"(?m)^\| ([^|]+) \| (Input|Output) \| (\d+|W)(?: each)? \|",pin_table):
             for pin in re.findall(r"`([^`]+)`",names):
                 assert pin not in documented
-                documented[pin]=(direction.lower(),int(width))
+                documented[pin]=(direction.lower(),32 if width=="W" else int(width))
         actual={p["name"]:(direction,p["width"]) for key,direction in (("inputs","input"),("outputs","output")) for p in examples[key]}
         assert documented==actual,(name,documented,actual)
         assert len(examples["rows"])==len(topology["checkpoints"])
@@ -111,15 +118,15 @@ def args(names):
     return ",".join(f'v.at("{p}")' for p in names.split())
 
 models={
-    "AddSub32Test":("alu32_example::addsub","A B SUB"),
-    "Logic32Test":("alu32_example::logic","A B"),
-    "Shifter32Test":("alu32_example::shift","A B LEFT ARITHMETIC"),
-    "ALU32ControlDecoderTest":("alu32_example::control","OP"),
-    "ALU32CompareUnitTest":("alu32_example::compare","DIFF CARRY_IN OVERFLOW_IN ENABLE"),
-    "ALU32ResultSelectorTest":("alu32_example::select","ARITHMETIC_RESULT AND_RESULT OR_RESULT XOR_RESULT SHIFT_RESULT SLT_RESULT SLTU_RESULT A B LOCAL_OP HIGH_HALF OUT_OF_RANGE"),
-    "ALU32FlagUnitTest":("alu32_example::flags","RESULT ARITHMETIC_ENABLE ARITH_CARRY ARITH_OVERFLOW"),
-    "ALU32Test":("alu32_example::alu","A B OP"),
-    "ALU32CoreTest":("alu32_example::core","A B OP"),
+    "AddSubIntegerWidth32Test":("integer_alu_example::addsub<32>","A B SUB"),
+    "LogicIntegerWidth32Test":("integer_alu_example::logic<32>","A B"),
+    "ShiftIntegerWidth32Test":("integer_alu_example::shift<32>","A B LEFT ARITHMETIC"),
+    "ALUControlIntegerTest":("integer_alu_example::control","OP"),
+    "CompareIntegerWidth32Test":("integer_alu_example::compare<32>","DIFF CARRY_IN OVERFLOW_IN ENABLE"),
+    "ResultSelectorIntegerWidth32Test":("integer_alu_example::select<32>","ARITHMETIC_RESULT AND_RESULT OR_RESULT XOR_RESULT SHIFT_RESULT SLT_RESULT SLTU_RESULT A B LOCAL_OP HIGH_HALF OUT_OF_RANGE"),
+    "FlagsIntegerWidth32Test":("integer_alu_example::flags<32>","RESULT ARITHMETIC_ENABLE ARITH_CARRY ARITH_OVERFLOW"),
+    "ALUIntegerWidth32Test":("integer_alu_example::alu<32>","A B OP"),
+    "ALUIntegerCoreWidth32Test":("integer_alu_example::core","A B OP"),
     "RV32IDecodeControlUnitTest":("decode_example::decode","INSTRUCTION"),
     "RV32IMemoryLanesTest":("memory_access_example::lanes","ADDR WRITE_DATA WORD_DATA SIZE SIGN_EXTEND"),
     "RV32IMemoryAlignmentUnitTest":("memory_access_example::misaligned","ADDRESS SIZE"),
@@ -134,7 +141,7 @@ for(const auto* contract : {"rv32i.memory-lanes", "rv32i.memory-request"}) {
 }
 '''
 for test,(function,inputs) in models.items():
-    scalar=test in ("Shifter32Test","ALU32ResultSelectorTest","RV32IMemoryAlignmentUnitTest")
+    scalar=test in ("ShiftIntegerWidth32Test","ResultSelectorIntegerWidth32Test","RV32IMemoryAlignmentUnitTest")
     result='U{{"'+outputs[test][0]+'",r}}' if scalar else output_map(test)
     harness+=f'replay("{test}",[](const auto&) {{ return [](const U& v) {{ const auto r={function}({args(inputs)}); return {result}; }}; }});\n'
 harness+=r'''

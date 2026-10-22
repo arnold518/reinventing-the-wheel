@@ -17,7 +17,7 @@ class VisualizerScenarioCatalogTest(unittest.TestCase):
         descriptors = backend.get_registered_test_descriptors()
         visible = set(server.visualizable_test_names())
         for name in ('SimulatorAdvanceAndRecordTest', 'SimulatorUnwiredOutputPinHistoryTest',
-                     'ALU32RepresentativeSliceTest'):
+                     'IntegerALUSliceTest', 'ALUWidthContractTest', 'WidthComponentsTest'):
             self.assertIn(name, backend.get_registered_test_names())
             self.assertNotIn(name, visible)
         for name in ('Memory64Kx32Test', 'MemoryBusAdapter32Test', 'Memory4x32Test',
@@ -99,7 +99,7 @@ process.stdout.write(JSON.stringify(options));
         self.assertTrue(probe.exists(), probe)
         for name, suffix in (
             ('FFAlwaysReadyControllerTest', ',always-ready>'),
-            ('RegisterFile32x32Test', '<x0-unused>'),
+            ('RegisterFileWidth32Count32Test', '<5,zero-disabled>'),
             ('RV32IBaselinePipelineCoreTest', '<compact>'),
             # Structure-keyed floorplans: memory geometry and policy variants.
             ('CacheScalableScenarioTest', '[SRAMStorageBank<32,8,2>]'),
@@ -132,7 +132,7 @@ process.stdout.write(JSON.stringify(options));
             for alias in (option['key'], option['className']):
                 self.assertEqual(catalog.registered_scenario(descriptors, alias), option['className'])
                 self.assertEqual(server.normalize_scenario(alias), option['key'])
-        for name in ('Memory64Kx32Test', 'ALU32RepresentativeSliceTest', 'unknown'):
+        for name in ('Memory64Kx32Test', 'IntegerALUSliceTest', 'unknown'):
             with self.assertRaises(ValueError):
                 catalog.registered_scenario(descriptors, name)
 

@@ -1,6 +1,6 @@
 #include "tests/MemoryComponentTests.hpp"
 #include "components/capabilities/RegisterStateView.hpp"
-#include "modules/rv32i/RegisterFile32x32.hpp"
+#include "modules/storage/RegisterFile.hpp"
 #include "components/Component.tpp"
 #include "tests/TestRegistry.hpp"
 #include <iostream>
@@ -18,7 +18,7 @@ std::shared_ptr<Component> child(const std::shared_ptr<Component>& parent, const
 void checkHierarchy(const std::shared_ptr<Component>& root) {
     require(root->getChildren().size() == 5, "register file must group its storage");
     auto bank = child(root, "STORAGE");
-    require(std::string(bank->getTypeName()) == "RegisterFileStorageBank", "wrong bank geometry");
+    require(std::string(bank->getTypeName()) == "RegisterFileStorageBank<32,31>", "wrong bank geometry");
     require(bank->getChildren().size() == 31, "x0 must not allocate storage");
     auto word = child(bank, "WORD_0");
     require(std::string(word->getTypeName()) == "Register<32>", "bank must use whole-word registers");
@@ -28,8 +28,8 @@ void checkHierarchy(const std::shared_ptr<Component>& root) {
 int main() {
     try {
         // Parameterized construction must also work without a catalog context.
-        checkHierarchy(Component::create<RegisterFile32x32>("CONTEXT_FREE"));
-        RegisterFile32x32Test definition;
+        checkHierarchy(Component::create<RegisterFile<32,32>>("CONTEXT_FREE"));
+        RegisterFileWidth32Count32Test definition;
         auto spec = definition.getSpec();
         auto scenario = spec.scenarios.front();
         // Regression: an uncertain enable with old=1 and new=1 follows the
@@ -56,7 +56,7 @@ int main() {
             std::vector<ProfileRule> rules{preferFidelity(Fidelity::Structural,
                 ProfileSelector::exactPath(spec.instance_name))};
             if (std::string(mode) == "words") rules.push_back(preferFidelity(Fidelity::Behavioral,
-                ProfileSelector::contract("memory.register.32")));
+                ProfileSelector::contract("storage.register.32")));
             if (std::string(mode) == "cells") rules.push_back(preferFidelity(Fidelity::Behavioral,
                 ProfileSelector::contract("memory.ff.cell")));
             auto run = runner.run(spec, scenario, withProfileOverrides(canonicalDefaultProfile(), rules));
@@ -83,7 +83,7 @@ int main() {
                 + "DECODE.REGISTER_FILE";
             program->setBuildProfile(withProfileOverrides(program->getBuildProfile(), {
                 preferFidelity(Fidelity::Structural, ProfileSelector::exactPath(path)),
-                preferFidelity(Fidelity::Behavioral, ProfileSelector::contract("memory.register.32")),
+                preferFidelity(Fidelity::Behavioral, ProfileSelector::contract("storage.register.32")),
             }));
             require(program->run(), "RV32I program failed with whole-word register file");
             auto core = child(program->getRoot(), "CORE");

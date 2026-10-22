@@ -10,8 +10,12 @@
       "title": "Wiring, multiplexers and decoders"
     },
     {
-      "id": "alu8",
-      "title": "8-bit arithmetic and ALU"
+      "id": "word-alu",
+      "title": "Arithmetic and ALU / configurable word widths"
+    },
+    {
+      "id": "extended-alu",
+      "title": "ALU / Extended operation contract"
     },
     {
       "id": "ff",
@@ -50,8 +54,8 @@
       "title": "RV32I / Registers"
     },
     {
-      "id": "alu32",
-      "title": "RV32I / 32-bit arithmetic and ALU"
+      "id": "integer-alu",
+      "title": "ALU / Integer datapath contract"
     },
     {
       "id": "rv32i-blocks",
@@ -100,6 +104,10 @@
     {
       "id": "device-io",
       "title": "Device I/O / Recorded components"
+    },
+    {
+      "id": "word",
+      "title": "Parameterized word components"
     }
   ],
   "aliases": {
@@ -169,7 +177,7 @@
       "register32",
       "register-32"
     ],
-    "RegisterFile32x32Test": [
+    "RegisterFileWidth32Count32Test": [
       "rv32i-register-file",
       "register-file32x32",
       "register-file-32x32",
@@ -188,42 +196,41 @@
     "ConstantValue32Test": [
       "constant32"
     ],
-    "Adder8Test": [
-      "adder8",
-      "8-bit-adder"
+    "AdderRippleWidth8Test": [
+      "adder-ripple-w8"
     ],
-    "ZeroDetect8Test": [
-      "zero-detect8"
+    "ZeroDetectWidth8Test": [
+      "zero-detect-w8"
     ],
-    "ALU8Test": [
-      "alu8"
+    "ALUExtendedWidth8Test": [
+      "alu-extended-ripple-w8"
     ],
-    "AddSub8Test": [
-      "addsub8"
+    "AddSubExtendedWidth8Test": [
+      "addsub-extended-ripple-w8"
     ],
-    "ArithmeticUnit8Test": [
-      "arithmetic8"
+    "ArithmeticExtendedWidth8Test": [
+      "arithmetic-extended-ripple-w8"
     ],
-    "LogicUnit8Test": [
-      "logic8"
+    "LogicExtendedWidth8Test": [
+      "logic-extended-w8"
     ],
-    "BarrelShifter8Test": [
-      "barrel-shifter8"
+    "ShiftExtendedWidth8Test": [
+      "shift-extended-w8"
     ],
-    "CompareSelect8Test": [
-      "compare-select8"
+    "CompareExtendedWidth8Test": [
+      "compare-extended-w8"
     ],
-    "ALU8FlagUnitTest": [
-      "alu8-flags"
+    "FlagsExtendedWidth8Test": [
+      "flags-extended-w8"
     ],
-    "ALU8ControlDecoderTest": [
-      "alu8-control"
+    "ALUControlExtendedTest": [
+      "alu-control-extended"
     ],
-    "ALU8ResultSelectorTest": [
-      "alu8-result-selector"
+    "ResultSelectorExtendedWidth8Test": [
+      "result-selector-extended-w8"
     ],
-    "ALU32ControlDecoderTest": [
-      "alu32-control"
+    "ALUControlIntegerTest": [
+      "alu-control-integer"
     ],
     "RV32IMemoryLanesTest": [
       "rv32i-memory-lanes"
@@ -237,54 +244,50 @@
     "RV32IBitPatternMatcherTest": [
       "rv32i-pattern-matcher"
     ],
-    "ALU32CompareUnitTest": [
-      "alu32-compare"
+    "CompareIntegerWidth32Test": [
+      "compare-integer-w32"
     ],
-    "ALU32ResultSelectorTest": [
-      "alu32-result-selector"
+    "ResultSelectorIntegerWidth32Test": [
+      "result-selector-integer-w32"
     ],
-    "ALU32FlagUnitTest": [
-      "alu32-flags"
+    "FlagsIntegerWidth32Test": [
+      "flags-integer-w32"
     ],
-    "Mux32to1Test": [
-      "mux32to1"
+    "Mux32Width1Test": [
+      "mux-32-w1"
     ],
-    "Mux4to1_32bitTest": [
-      "mux4to1-32bit"
+    "Mux4Width32Test": [
+      "mux-4-w32"
     ],
-    "Mux32to1_32bitTest": [
-      "mux32to1-32bit"
+    "Mux32Width32Test": [
+      "mux-32-w32"
     ],
-    "Decoder5to32Test": [
-      "decoder5to32",
-      "decoder-5to32",
-      "decoder-5-32"
+    "DecoderWidth5Test": [
+      "decoder-address5"
     ],
     "RewireTest": [
       "rewire"
     ],
-    "Adder32Test": [
-      "adder32"
+    "AdderPrefixWidth32Test": [
+      "adder-prefix-w32"
     ],
-    "AddSub32Test": [
-      "addsub32",
-      "add-sub32"
+    "AddSubIntegerWidth32Test": [
+      "addsub-integer-prefix-w32"
     ],
-    "Logic32Test": [
-      "logic32"
+    "LogicIntegerWidth32Test": [
+      "logic-integer-w32"
     ],
-    "ZeroDetect32Test": [
-      "zero-detect32"
+    "ZeroDetectWidth32Test": [
+      "zero-detect-w32"
     ],
-    "Shifter32Test": [
-      "shifter32"
+    "ShiftIntegerWidth32Test": [
+      "shift-integer-w32"
     ],
-    "ALU32Test": [
-      "alu32",
-      "rv32i-alu32"
+    "ALUIntegerWidth32Test": [
+      "alu-integer-prefix-w32"
     ],
-    "ALU32CoreTest": [
-      "alu32-core"
+    "ALUIntegerCoreWidth32Test": [
+      "alu-integer-prefix-core-w32"
     ],
     "RV32ISingleCycleCoreTest": [
       "rv32i-core"
@@ -405,14 +408,14 @@
     "DivideStepScenarioTest": [
       "divide-step"
     ],
-    "Multiplier32ScenarioTest": [
-      "multiplier32"
+    "MultiplierWidth32ScenarioTest": [
+      "multiplier-w32"
     ],
-    "Divider32ScenarioTest": [
-      "divider32"
+    "DividerWidth32ScenarioTest": [
+      "divider-w32"
     ],
-    "MulDivUnit32ScenarioTest": [
-      "mul-div-unit32"
+    "MulDivUnitWidth32ScenarioTest": [
+      "muldiv-w32"
     ],
     "RV32IMDecodeControlScenarioTest": [
       "rv32im-decode-control"
@@ -435,35 +438,74 @@
     "SynchronousFifoScenarioTest": [
       "synchronous-fifo"
     ],
-    "DeviceRegisterPort32ScenarioTest": [
-      "device-register-port32"
+    "DeviceRegisterPortWidth32ScenarioTest": [
+      "device-register-port-w32"
     ],
-    "BusErrorTarget32ScenarioTest": [
-      "bus-error-target32"
+    "BusErrorTargetWidth32ScenarioTest": [
+      "bus-error-target-w32"
     ],
-    "AddressRouter32ScenarioTest": [
-      "address-router32"
+    "AddressRouterWidth32ScenarioTest": [
+      "address-router-w32"
     ],
-    "InstructionAccessGuard32ScenarioTest": [
-      "instruction-access-guard32"
+    "InstructionAccessGuardWidth32ScenarioTest": [
+      "instruction-access-guard-w32"
     ],
-    "ConsoleDevice32ScenarioTest": [
-      "console-device32"
+    "ConsoleDeviceScenarioTest": [
+      "console-device"
     ],
-    "TimerDevice32ScenarioTest": [
-      "timer-device32"
+    "TimerDeviceScenarioTest": [
+      "timer-device"
     ],
-    "ButtonDevice32ScenarioTest": [
-      "button-device32"
+    "ButtonDeviceScenarioTest": [
+      "button-device"
     ],
-    "IndexedPixelSelector32ScenarioTest": [
-      "indexed-pixel-selector32"
+    "IndexedPixelSelectorWidth32ScenarioTest": [
+      "indexed-pixel-selector-w32"
     ],
-    "FramebufferDisplay32ScenarioTest": [
-      "framebuffer-display32"
+    "FramebufferDisplayScenarioTest": [
+      "framebuffer-display"
     ],
     "RV32IMDeviceSystemScenarioTest": [
       "rv32im-device-system"
+    ],
+    "ALUWidth16RippleScenarioTest": [
+      "alu-extended-ripple-w16"
+    ],
+    "ALUScenarioTest": [
+      "alu"
+    ],
+    "ALUWidth8ScenarioTest": [
+      "alu-width8"
+    ],
+    "ALUWidth32ScenarioTest": [
+      "alu-width32"
+    ],
+    "AdderRippleScenarioTest": [
+      "adder-ripple"
+    ],
+    "AdderPrefixScenarioTest": [
+      "adder-prefix"
+    ],
+    "Mux2Width1Test": [
+      "mux-2-w1"
+    ],
+    "Mux4Width1Test": [
+      "mux-4-w1"
+    ],
+    "Mux8Width1Test": [
+      "mux-8-w1"
+    ],
+    "Mux2Width4Test": [
+      "mux-2-w4"
+    ],
+    "Mux2Width32Test": [
+      "mux-2-w32"
+    ],
+    "Mux8Width8Test": [
+      "mux-8-w8"
+    ],
+    "Mux8Width32Test": [
+      "mux-8-w32"
     ]
   },
   "components": {
@@ -536,7 +578,7 @@
       "group": "memory-interface"
     },
     "RV32ISharedMemoryProgramTest": {
-      "title": "C-ID \u00b7 L1 caches over one shared memory (program 21)",
+      "title": "C-ID · L1 caches over one shared memory (program 21)",
       "group": "memory-systems"
     },
     "MemoryEndpointFFTest": {
@@ -731,7 +773,7 @@
       "title": "Register<32>",
       "group": "registers"
     },
-    "RegisterFile32x32Test": {
+    "RegisterFileWidth32Count32Test": {
       "title": "Register File32x32",
       "group": "registers"
     },
@@ -825,123 +867,123 @@
     },
     "HalfAdderTest": {
       "title": "Half Adder",
-      "group": "alu8"
+      "group": "extended-alu"
     },
     "FullAdderTest": {
       "title": "Full Adder",
-      "group": "alu8"
+      "group": "extended-alu"
     },
-    "Mux2to1Test": {
-      "title": "Mux2to1",
+    "Mux2Width1Test": {
+      "title": "Mux<2,1>",
       "group": "wiring"
     },
-    "Mux4to1Test": {
-      "title": "Mux4to1",
+    "Mux4Width1Test": {
+      "title": "Mux<4,1>",
       "group": "wiring"
     },
-    "Mux8to1Test": {
-      "title": "Mux8to1",
+    "Mux8Width1Test": {
+      "title": "Mux<8,1>",
       "group": "wiring"
     },
-    "Mux32to1Test": {
-      "title": "Mux32to1",
+    "Mux32Width1Test": {
+      "title": "Mux<32,1>",
       "group": "wiring"
     },
-    "Mux2to1_4bitTest": {
-      "title": "Mux2to1 4bit",
+    "Mux2Width4Test": {
+      "title": "Mux<2,1> 4bit",
       "group": "wiring"
     },
-    "Mux2to1_32bitTest": {
-      "title": "Mux2to1 32bit",
+    "Mux2Width32Test": {
+      "title": "Mux<2,1> 32bit",
       "group": "wiring"
     },
-    "Mux4to1_32bitTest": {
-      "title": "Mux4to1 32bit",
+    "Mux4Width32Test": {
+      "title": "Mux<4,1> 32bit",
       "group": "wiring"
     },
-    "Mux8to1_8bitTest": {
-      "title": "Mux8to1 8bit",
+    "Mux8Width8Test": {
+      "title": "Mux<8,1> 8bit",
       "group": "wiring"
     },
-    "Mux8to1_32bitTest": {
-      "title": "Mux8to1 32bit",
+    "Mux8Width32Test": {
+      "title": "Mux<8,1> 32bit",
       "group": "wiring"
     },
-    "Mux32to1_32bitTest": {
-      "title": "Mux32to1 32bit",
+    "Mux32Width32Test": {
+      "title": "Mux<32,1> 32bit",
       "group": "wiring"
     },
-    "Decoder5to32Test": {
-      "title": "Decoder5to32",
+    "DecoderWidth5Test": {
+      "title": "Decoder<5>",
       "group": "wiring"
     },
-    "Adder8Test": {
-      "title": "Adder8",
-      "group": "alu8"
+    "AdderRippleWidth8Test": {
+      "title": "Adder<8,ripple>",
+      "group": "extended-alu"
     },
-    "ZeroDetect8Test": {
+    "ZeroDetectWidth8Test": {
       "title": "Zero Detect8",
-      "group": "alu8"
+      "group": "extended-alu"
     },
-    "ALU8Test": {
-      "title": "ALU8",
-      "group": "alu8"
+    "ALUExtendedWidth8Test": {
+      "title": "ALU<8,extended,ripple>",
+      "group": "extended-alu"
     },
-    "AddSub8Test": {
+    "AddSubExtendedWidth8Test": {
       "title": "Add Sub8",
-      "group": "alu8"
+      "group": "extended-alu"
     },
-    "ArithmeticUnit8Test": {
+    "ArithmeticExtendedWidth8Test": {
       "title": "Arithmetic Unit8",
-      "group": "alu8"
+      "group": "extended-alu"
     },
-    "LogicUnit8Test": {
+    "LogicExtendedWidth8Test": {
       "title": "Logic Unit8",
-      "group": "alu8"
+      "group": "extended-alu"
     },
-    "BarrelShifter8Test": {
+    "ShiftExtendedWidth8Test": {
       "title": "Barrel Shifter8",
-      "group": "alu8"
+      "group": "extended-alu"
     },
-    "CompareSelect8Test": {
+    "CompareExtendedWidth8Test": {
       "title": "Compare Select8",
-      "group": "alu8"
+      "group": "extended-alu"
     },
-    "ALU8FlagUnitTest": {
-      "title": "ALU8Flag Unit",
-      "group": "alu8"
+    "FlagsExtendedWidth8Test": {
+      "title": "ALU<8,extended,ripple>Flag Unit",
+      "group": "extended-alu"
     },
-    "ALU8ControlDecoderTest": {
-      "title": "ALU8Control Decoder",
-      "group": "alu8"
+    "ALUControlExtendedTest": {
+      "title": "ALU<8,extended,ripple>Control Decoder",
+      "group": "extended-alu"
     },
-    "ALU8ResultSelectorTest": {
-      "title": "ALU8Result Selector",
-      "group": "alu8"
+    "ResultSelectorExtendedWidth8Test": {
+      "title": "ALU<8,extended,ripple>Result Selector",
+      "group": "extended-alu"
     },
-    "ALU32ControlDecoderTest": {
-      "title": "ALU32Control Decoder",
-      "group": "alu32"
+    "ALUControlIntegerTest": {
+      "title": "ALU<32,integer,prefix>Control Decoder",
+      "group": "integer-alu"
     },
-    "ALU32CompareUnitTest": {
-      "title": "ALU32Compare Unit",
-      "group": "alu32"
+    "CompareIntegerWidth32Test": {
+      "title": "ALU<32,integer,prefix>Compare Unit",
+      "group": "integer-alu"
     },
-    "ALU32ResultSelectorTest": {
-      "title": "ALU32Result Selector",
-      "group": "alu32"
+    "ResultSelectorIntegerWidth32Test": {
+      "title": "ALU<32,integer,prefix>Result Selector",
+      "group": "integer-alu"
     },
-    "ALU32FlagUnitTest": {
-      "title": "ALU32Flag Unit",
-      "group": "alu32"
+    "FlagsIntegerWidth32Test": {
+      "title": "ALU<32,integer,prefix>Flag Unit",
+      "group": "integer-alu"
     },
-    "Adder32Test": {
-      "title": "Adder32",
-      "group": "alu32"
+    "AdderPrefixWidth32Test": {
+      "title": "Adder<32,prefix>",
+      "group": "integer-alu"
     },
-    "AddSub32Test": {
+    "AddSubIntegerWidth32Test": {
       "title": "Add Sub32",
-      "group": "alu32"
+      "group": "integer-alu"
     },
     "RV32IMemoryLanesTest": {
       "title": "Memory Lanes",
@@ -951,25 +993,25 @@
       "title": "Memory Request",
       "group": "rv32i-blocks"
     },
-    "Logic32Test": {
-      "title": "Logic32",
-      "group": "alu32"
+    "LogicIntegerWidth32Test": {
+      "title": "LogicUnit<32,integer>",
+      "group": "integer-alu"
     },
-    "ZeroDetect32Test": {
+    "ZeroDetectWidth32Test": {
       "title": "Zero Detect32",
-      "group": "alu32"
+      "group": "integer-alu"
     },
-    "Shifter32Test": {
-      "title": "Shifter32",
-      "group": "alu32"
+    "ShiftIntegerWidth32Test": {
+      "title": "BarrelShifter<32,integer>",
+      "group": "integer-alu"
     },
-    "ALU32Test": {
-      "title": "ALU32",
-      "group": "alu32"
+    "ALUIntegerWidth32Test": {
+      "title": "ALU<32,integer,prefix>",
+      "group": "integer-alu"
     },
-    "ALU32CoreTest": {
-      "title": "ALU32 Core Datapath",
-      "group": "alu32"
+    "ALUIntegerCoreWidth32Test": {
+      "title": "ALU<32> Core Datapath",
+      "group": "integer-alu"
     },
     "RV32IDecodeControlUnitTest": {
       "title": "Decode Control Unit",
@@ -1128,15 +1170,15 @@
       "group": "baseline"
     },
     "RV32IMemoryArrangementBTest": {
-      "title": "B \u00b7 One shared memory, no caches (program 21)",
+      "title": "B · One shared memory, no caches (program 21)",
       "group": "memory-systems"
     },
     "RV32IMemoryArrangementD0Test": {
-      "title": "D-0 \u00b7 Shared L2 cache below the arbiter (program 21)",
+      "title": "D-0 · Shared L2 cache below the arbiter (program 21)",
       "group": "memory-systems"
     },
     "RV32IMemoryArrangementDIDTest": {
-      "title": "D-ID \u00b7 L1 caches and a shared L2 (program 21)",
+      "title": "D-ID · L1 caches and a shared L2 (program 21)",
       "group": "memory-systems"
     },
     "MultiplyStepScenarioTest": {
@@ -1147,16 +1189,16 @@
       "title": "DivideStep",
       "group": "rv32im"
     },
-    "Multiplier32ScenarioTest": {
-      "title": "Multiplier32",
+    "MultiplierWidth32ScenarioTest": {
+      "title": "Multiplier<32>",
       "group": "rv32im"
     },
-    "Divider32ScenarioTest": {
-      "title": "Divider32",
+    "DividerWidth32ScenarioTest": {
+      "title": "Divider<32>",
       "group": "rv32im"
     },
-    "MulDivUnit32ScenarioTest": {
-      "title": "MulDivUnit32",
+    "MulDivUnitWidth32ScenarioTest": {
+      "title": "MulDivUnit<32>",
       "group": "rv32im"
     },
     "RV32IMDecodeControlScenarioTest": {
@@ -1187,45 +1229,69 @@
       "title": "SynchronousFifo",
       "group": "device-io"
     },
-    "DeviceRegisterPort32ScenarioTest": {
-      "title": "DeviceRegisterPort32",
+    "DeviceRegisterPortWidth32ScenarioTest": {
+      "title": "DeviceRegisterPort<32>",
       "group": "device-io"
     },
-    "BusErrorTarget32ScenarioTest": {
-      "title": "BusErrorTarget32",
+    "BusErrorTargetWidth32ScenarioTest": {
+      "title": "BusErrorTarget<32>",
       "group": "device-io"
     },
-    "AddressRouter32ScenarioTest": {
-      "title": "AddressRouter32",
+    "AddressRouterWidth32ScenarioTest": {
+      "title": "AddressRouter<32>",
       "group": "device-io"
     },
-    "InstructionAccessGuard32ScenarioTest": {
-      "title": "InstructionAccessGuard32",
+    "InstructionAccessGuardWidth32ScenarioTest": {
+      "title": "InstructionAccessGuard<32>",
       "group": "device-io"
     },
-    "ConsoleDevice32ScenarioTest": {
-      "title": "ConsoleDevice32",
+    "ConsoleDeviceScenarioTest": {
+      "title": "ConsoleDevice",
       "group": "device-io"
     },
-    "TimerDevice32ScenarioTest": {
-      "title": "TimerDevice32",
+    "TimerDeviceScenarioTest": {
+      "title": "TimerDevice",
       "group": "device-io"
     },
-    "ButtonDevice32ScenarioTest": {
-      "title": "ButtonDevice32",
+    "ButtonDeviceScenarioTest": {
+      "title": "ButtonDevice",
       "group": "device-io"
     },
-    "IndexedPixelSelector32ScenarioTest": {
-      "title": "IndexedPixelSelector32",
+    "IndexedPixelSelectorWidth32ScenarioTest": {
+      "title": "IndexedPixelSelector<32>",
       "group": "device-io"
     },
-    "FramebufferDisplay32ScenarioTest": {
-      "title": "FramebufferDisplay32",
+    "FramebufferDisplayScenarioTest": {
+      "title": "FramebufferDisplay",
       "group": "device-io"
     },
     "RV32IMDeviceSystemScenarioTest": {
       "title": "RV32IMDeviceSystem",
       "group": "device-io"
+    },
+    "ALUWidth16RippleScenarioTest": {
+      "title": "ALU<16> · extended operations",
+      "group": "word"
+    },
+    "ALUScenarioTest": {
+      "title": "ALU<W>: W=16, parallel prefix",
+      "group": "word-alu"
+    },
+    "ALUWidth8ScenarioTest": {
+      "title": "ALU<W>: W=8, parallel prefix",
+      "group": "word-alu"
+    },
+    "ALUWidth32ScenarioTest": {
+      "title": "ALU<W>: W=32, parallel prefix",
+      "group": "word-alu"
+    },
+    "AdderRippleScenarioTest": {
+      "title": "Adder<W>: W=16, ripple carry",
+      "group": "word-alu"
+    },
+    "AdderPrefixScenarioTest": {
+      "title": "Adder<W>: W=16, parallel prefix",
+      "group": "word-alu"
     }
   },
   "programs": [

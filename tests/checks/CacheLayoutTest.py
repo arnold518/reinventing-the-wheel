@@ -2,6 +2,7 @@
 
 from pathlib import Path
 import json
+import gc
 import subprocess
 import sys
 import tempfile
@@ -113,13 +114,15 @@ class CacheLayoutTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             native = server.CircuitSession(
                 "cache-read-hit", server.LayoutManager(Path(directory) / "layout.json"))
-            portable = json.loads(subprocess.check_output(
-                [str(PROBE), "topology", "CacheComponentScenarioTest", "cache-read-hit"], text=True))
             native_keys = {
                 item["id"]: item.get("layoutType", item["type"])
                 for item in native.topology_response()["components"]
                 if item["type"].startswith("Cache")
             }
+            del native
+            gc.collect()
+            portable = json.loads(subprocess.check_output(
+                [str(PROBE), "topology", "CacheComponentScenarioTest", "cache-read-hit"], text=True))
             portable_keys = {
                 item["id"]: item.get("layoutType", item["type"])
                 for item in portable["components"]

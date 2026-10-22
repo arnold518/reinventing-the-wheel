@@ -1,249 +1,1429 @@
 {
   "schema_version": 1,
-  "default_color": [61, 90, 128, 190],
+  "default_color": [
+    61,
+    90,
+    128,
+    190
+  ],
   "prefix_colors": {
-    "MemoryEndpoint<": [65, 95, 130, 190],
-    "MemoryController<": [110, 100, 150, 190],
-    "MemoryResponseBuffer<": [75, 115, 145, 190],
-    "MemoryPayloadMux<": [190, 105, 45, 190],
-    "MemoryFFRequestCheck<": [20, 130, 115, 190],
-    "MemoryTransactionPort<": [55, 125, 135, 190],
-    "TwoPortMemoryArbiter<": [55, 125, 135, 190],
-    "MultiplyStep<": [145, 95, 180, 190],
-    "DivideStep<": [135, 75, 150, 190],
-    "ClockedCounter<": [34, 150, 170, 190],
-    "SynchronousFifo<": [75, 115, 145, 190],
-    "RV32IBranchPredictor[": [95, 85, 160, 190],
-    "RV32IPredictionEntry[": [115, 65, 135, 190],
-    "Register<": [105, 70, 145, 190],
-    "StaticMemorySequencer<": [150, 100, 55, 190],
-    "CommandMemorySequencer<": [150, 100, 55, 190],
-    "MemoryRequestCheck<": [20, 130, 115, 190],
-    "MemoryTimer<": [180, 120, 40, 190],
-    "MemoryDelayLine": [200, 140, 60, 190],
-    "SymbolicDiffer": [130, 90, 170, 190],
-    "ProtocolStableData": [75, 115, 145, 190],
-    "KnownBits": [20, 130, 115, 190],
-    "PowerOnReset": [185, 75, 75, 190],
-    "Synchronizer": [105, 70, 145, 190],
-    "Cache<": [35, 110, 130, 190],
-    "CacheBankController<": [110, 100, 150, 190],
-    "CacheLookupPhases": [150, 100, 55, 190],
-    "CacheRequestCheck<": [20, 130, 115, 190],
-    "CacheRequestKnownBits": [20, 130, 115, 190],
-    "CacheAddressPath<": [20, 184, 166, 190],
-    "CacheTagMatch": [16, 150, 140, 190],
-    "CacheLineState<": [105, 70, 145, 190],
-    "CacheReplacementState": [125, 80, 160, 190],
-    "CacheFixture": [70, 90, 120, 190],
-    "Rewire<": [100, 116, 139, 190],
-    "BitSplitter<": [124, 58, 237, 190],
-    "BitJoiner<": [147, 51, 234, 190],
-    "ConstantValue<": [100, 116, 139, 190],
-    "RV32IBitPatternMatcher<": [20, 184, 166, 190],
-    "RV32IDecodeControlField<": [45, 145, 125, 190],
-    "RV32ILoadByte<": [190, 105, 45, 190],
-    "Decoder5to32<": [20, 184, 166, 190],
-    "RV32IIFIDPipelineRegister<": [59, 130, 246, 190],
-    "RV32IIDEXPipelineRegister<": [99, 102, 241, 190],
-    "RV32IEXMEMPipelineRegister<": [139, 92, 246, 190],
-    "RV32IMEMWBPipelineRegister<": [168, 85, 247, 190],
-    "RV32IPredictionTable<": [80, 90, 145, 190],
-    "CarryPrefixLevel<": [125, 75, 165, 190],
-    "FFArray": [105, 70, 145, 190],
-    "FFMemory": [105, 70, 145, 190],
-    "FFStorageBank<": [105, 70, 145, 190],
-    "FFWord<": [150, 55, 100, 190],
-    "SRAM": [40, 65, 110, 190],
-    "ROMCell": [75, 130, 155, 190],
-    "ROMRow<": [65, 112, 140, 190],
-    "ROMAddressControl": [110, 100, 150, 190],
-    "ROM": [55, 90, 120, 190],
-    "DRAMCommandControl<": [110, 100, 150, 190],
-    "DRAMSenseColumn<": [40, 140, 145, 190],
-    "DRAMCell": [55, 145, 160, 190],
-    "DRAMRow<": [40, 115, 135, 190],
-    "DRAM": [30, 85, 110, 190],
-    "NORFlashCommandControl<": [110, 100, 150, 190],
-    "NORFlashCell": [180, 125, 55, 190],
-    "NORFlashRow<": [150, 105, 45, 190],
-    "NORFlash": [115, 80, 40, 190],
-    "MatrixRowDecoder<": [20, 184, 166, 190],
-    "MatrixColumnMux<": [190, 105, 45, 190],
-    "MatrixWriteDistributor<": [160, 90, 65, 190],
-    "StaticReadColumn<": [40, 140, 145, 190],
-    "MemoryOutputBuffer<": [75, 115, 145, 190],
-    "MemoryAddressDecoder<": [20, 184, 166, 190],
-    "MemoryAccessControl<": [110, 100, 150, 190],
-    "MemoryStorageBank<": [105, 70, 145, 190],
-    "MemoryWord<": [150, 55, 100, 190],
-    "MemoryReadSelector<": [190, 105, 45, 190],
-    "IdealRAMReference": [70, 85, 125, 190],
-    "AddressRouter32[": [20, 184, 166, 190],
-    "FramebufferDisplay32[": [35, 110, 130, 190]
+    "MemoryEndpoint<": [
+      65,
+      95,
+      130,
+      190
+    ],
+    "MemoryController<": [
+      110,
+      100,
+      150,
+      190
+    ],
+    "MemoryResponseBuffer<": [
+      75,
+      115,
+      145,
+      190
+    ],
+    "MemoryPayloadMux<": [
+      190,
+      105,
+      45,
+      190
+    ],
+    "MemoryFFRequestCheck<": [
+      20,
+      130,
+      115,
+      190
+    ],
+    "MemoryTransactionPort<": [
+      55,
+      125,
+      135,
+      190
+    ],
+    "TwoPortMemoryArbiter<": [
+      55,
+      125,
+      135,
+      190
+    ],
+    "MultiplyStep<": [
+      145,
+      95,
+      180,
+      190
+    ],
+    "DivideStep<": [
+      135,
+      75,
+      150,
+      190
+    ],
+    "ClockedCounter<": [
+      34,
+      150,
+      170,
+      190
+    ],
+    "SynchronousFifo<": [
+      75,
+      115,
+      145,
+      190
+    ],
+    "RV32IBranchPredictor[": [
+      95,
+      85,
+      160,
+      190
+    ],
+    "RV32IPredictionEntry[": [
+      115,
+      65,
+      135,
+      190
+    ],
+    "Register<": [
+      105,
+      70,
+      145,
+      190
+    ],
+    "StaticMemorySequencer<": [
+      150,
+      100,
+      55,
+      190
+    ],
+    "CommandMemorySequencer<": [
+      150,
+      100,
+      55,
+      190
+    ],
+    "MemoryRequestCheck<": [
+      20,
+      130,
+      115,
+      190
+    ],
+    "MemoryTimer<": [
+      180,
+      120,
+      40,
+      190
+    ],
+    "MemoryDelayLine": [
+      200,
+      140,
+      60,
+      190
+    ],
+    "SymbolicDiffer": [
+      130,
+      90,
+      170,
+      190
+    ],
+    "ProtocolStableData": [
+      75,
+      115,
+      145,
+      190
+    ],
+    "KnownBits": [
+      20,
+      130,
+      115,
+      190
+    ],
+    "PowerOnReset": [
+      185,
+      75,
+      75,
+      190
+    ],
+    "Synchronizer": [
+      105,
+      70,
+      145,
+      190
+    ],
+    "Cache<": [
+      35,
+      110,
+      130,
+      190
+    ],
+    "CacheBankController<": [
+      110,
+      100,
+      150,
+      190
+    ],
+    "CacheLookupPhases": [
+      150,
+      100,
+      55,
+      190
+    ],
+    "CacheRequestCheck<": [
+      20,
+      130,
+      115,
+      190
+    ],
+    "CacheRequestKnownBits": [
+      20,
+      130,
+      115,
+      190
+    ],
+    "CacheAddressPath<": [
+      20,
+      184,
+      166,
+      190
+    ],
+    "CacheTagMatch": [
+      16,
+      150,
+      140,
+      190
+    ],
+    "CacheLineState<": [
+      105,
+      70,
+      145,
+      190
+    ],
+    "CacheReplacementState": [
+      125,
+      80,
+      160,
+      190
+    ],
+    "CacheFixture": [
+      70,
+      90,
+      120,
+      190
+    ],
+    "Rewire<": [
+      100,
+      116,
+      139,
+      190
+    ],
+    "BitSplitter<": [
+      124,
+      58,
+      237,
+      190
+    ],
+    "BitJoiner<": [
+      147,
+      51,
+      234,
+      190
+    ],
+    "ConstantValue<": [
+      100,
+      116,
+      139,
+      190
+    ],
+    "RV32IBitPatternMatcher<": [
+      20,
+      184,
+      166,
+      190
+    ],
+    "RV32IDecodeControlField<": [
+      45,
+      145,
+      125,
+      190
+    ],
+    "RV32ILoadByte<": [
+      190,
+      105,
+      45,
+      190
+    ],
+    "RV32IIFIDPipelineRegister<": [
+      59,
+      130,
+      246,
+      190
+    ],
+    "RV32IIDEXPipelineRegister<": [
+      99,
+      102,
+      241,
+      190
+    ],
+    "RV32IEXMEMPipelineRegister<": [
+      139,
+      92,
+      246,
+      190
+    ],
+    "RV32IMEMWBPipelineRegister<": [
+      168,
+      85,
+      247,
+      190
+    ],
+    "RV32IPredictionTable<": [
+      80,
+      90,
+      145,
+      190
+    ],
+    "CarryPrefixLevel<": [
+      125,
+      75,
+      165,
+      190
+    ],
+    "FFArray": [
+      105,
+      70,
+      145,
+      190
+    ],
+    "FFMemory": [
+      105,
+      70,
+      145,
+      190
+    ],
+    "FFStorageBank<": [
+      105,
+      70,
+      145,
+      190
+    ],
+    "FFWord<": [
+      150,
+      55,
+      100,
+      190
+    ],
+    "SRAM": [
+      40,
+      65,
+      110,
+      190
+    ],
+    "ROMCell": [
+      75,
+      130,
+      155,
+      190
+    ],
+    "ROMRow<": [
+      65,
+      112,
+      140,
+      190
+    ],
+    "ROMAddressControl": [
+      110,
+      100,
+      150,
+      190
+    ],
+    "ROM": [
+      55,
+      90,
+      120,
+      190
+    ],
+    "DRAMCommandControl<": [
+      110,
+      100,
+      150,
+      190
+    ],
+    "DRAMSenseColumn<": [
+      40,
+      140,
+      145,
+      190
+    ],
+    "DRAMCell": [
+      55,
+      145,
+      160,
+      190
+    ],
+    "DRAMRow<": [
+      40,
+      115,
+      135,
+      190
+    ],
+    "DRAM": [
+      30,
+      85,
+      110,
+      190
+    ],
+    "NORFlashCommandControl<": [
+      110,
+      100,
+      150,
+      190
+    ],
+    "NORFlashCell": [
+      180,
+      125,
+      55,
+      190
+    ],
+    "NORFlashRow<": [
+      150,
+      105,
+      45,
+      190
+    ],
+    "NORFlash": [
+      115,
+      80,
+      40,
+      190
+    ],
+    "MatrixRowDecoder<": [
+      20,
+      184,
+      166,
+      190
+    ],
+    "MatrixColumnMux<": [
+      190,
+      105,
+      45,
+      190
+    ],
+    "MatrixWriteDistributor<": [
+      160,
+      90,
+      65,
+      190
+    ],
+    "StaticReadColumn<": [
+      40,
+      140,
+      145,
+      190
+    ],
+    "MemoryOutputBuffer<": [
+      75,
+      115,
+      145,
+      190
+    ],
+    "MemoryAddressDecoder<": [
+      20,
+      184,
+      166,
+      190
+    ],
+    "MemoryAccessControl<": [
+      110,
+      100,
+      150,
+      190
+    ],
+    "MemoryStorageBank<": [
+      105,
+      70,
+      145,
+      190
+    ],
+    "MemoryWord<": [
+      150,
+      55,
+      100,
+      190
+    ],
+    "MemoryReadSelector<": [
+      190,
+      105,
+      45,
+      190
+    ],
+    "IdealRAMReference": [
+      70,
+      85,
+      125,
+      190
+    ],
+    "AddressRouter<32>[": [
+      20,
+      184,
+      166,
+      190
+    ],
+    "FramebufferDisplay[": [
+      35,
+      110,
+      130,
+      190
+    ],
+    "ALU<": [
+      55,
+      65,
+      115,
+      190
+    ],
+    "ALUFlagUnit<": [
+      40,
+      105,
+      95,
+      190
+    ],
+    "ALUResultSelector<": [
+      190,
+      105,
+      45,
+      190
+    ],
+    "ALUControlDecoder<": [
+      45,
+      145,
+      125,
+      190
+    ],
+    "ArithmeticUnit<": [
+      190,
+      105,
+      45,
+      190
+    ],
+    "Adder<": [
+      80,
+      60,
+      120,
+      190
+    ],
+    "AddSub<": [
+      190,
+      105,
+      45,
+      190
+    ],
+    "LogicUnit<": [
+      45,
+      110,
+      75,
+      190
+    ],
+    "BarrelShifter<": [
+      38,
+      105,
+      135,
+      190
+    ],
+    "CompareSelect<": [
+      40,
+      105,
+      95,
+      190
+    ],
+    "ZeroDetect<": [
+      20,
+      184,
+      166,
+      190
+    ],
+    "Mux<": [
+      45,
+      165,
+      155,
+      190
+    ],
+    "RegisterFile<": [
+      76,
+      58,
+      125,
+      190
+    ],
+    "Multiplier<": [
+      145,
+      95,
+      180,
+      190
+    ],
+    "Divider<": [
+      135,
+      75,
+      150,
+      190
+    ],
+    "MulDivUnit<": [
+      125,
+      80,
+      160,
+      190
+    ],
+    "AddressRouter<": [
+      20,
+      184,
+      166,
+      190
+    ],
+    "BusErrorTarget<": [
+      190,
+      75,
+      100,
+      190
+    ],
+    "InstructionAccessGuard<": [
+      20,
+      130,
+      115,
+      190
+    ],
+    "DeviceRegisterPort<": [
+      55,
+      125,
+      135,
+      190
+    ],
+    "IndexedPixelSelector<": [
+      190,
+      105,
+      45,
+      190
+    ],
+    "ParallelPrefixAdder<": [
+      85,
+      50,
+      125,
+      190
+    ],
+    "Decoder<": [
+      20,
+      184,
+      166,
+      190
+    ],
+    "Incrementer<": [
+      100,
+      65,
+      140,
+      190
+    ],
+    "RegisterFileStorageBank<": [
+      90,
+      75,
+      140,
+      190
+    ]
   },
   "type_colors": {
-    "ANDGate": [54, 162, 235, 190],
-    "AND8": [37, 99, 235, 190],
-    "NANDGate": [68, 132, 190, 190],
-    "NAND8": [49, 105, 160, 190],
-    "ORGate": [72, 187, 120, 190],
-    "OR8": [47, 145, 91, 190],
-    "NORGate": [55, 150, 105, 190],
-    "NOR8": [39, 114, 78, 190],
-    "XORGate": [245, 158, 11, 190],
-    "XOR8": [217, 119, 6, 190],
-    "NOTGate": [239, 83, 80, 190],
-    "NOT8": [190, 52, 50, 190],
-    "Mux2to1": [190, 105, 45, 190],
-    "Mux4to1": [165, 80, 35, 190],
-    "Mux8to1": [140, 65, 30, 190],
-    "Mux16to1": [115, 55, 30, 190],
-    "Mux32to1": [95, 48, 28, 190],
-    "Mux2to1_4bit": [175, 90, 35, 190],
-    "Mux2to1_8bit": [175, 90, 35, 190],
-    "Mux2to1_32bit": [175, 90, 35, 190],
-    "Mux4to1_8bit": [145, 65, 30, 190],
-    "Mux4to1_32bit": [145, 65, 30, 190],
-    "Mux8to1_8bit": [120, 55, 28, 190],
-    "Mux8to1_32bit": [120, 55, 28, 190],
-    "Mux16to1_8bit": [95, 45, 25, 190],
-    "Mux32to1_32bit": [80, 42, 22, 190],
-    "Rewire": [100, 116, 139, 190],
-    "HalfAdder": [145, 95, 180, 190],
-    "FullAdder": [100, 70, 140, 190],
-    "Adder8": [80, 60, 120, 190],
-    "Adder32": [90, 60, 140, 190],
-    "ParallelPrefixAdder32": [85, 50, 125, 190],
-    "CarryCombine": [145, 95, 180, 190],
-    "ALU32ResultBit": [190, 105, 45, 190],
-    "Incrementer8": [100, 65, 140, 190],
-    "IncrementBy4": [100, 65, 140, 190],
-    "TwosComplement8": [135, 75, 150, 190],
-    "Subtractor8": [125, 55, 145, 190],
-    "SubtractorWithBorrow8": [110, 45, 130, 190],
-    "Decrementer8": [95, 40, 115, 190],
-    "AddSub32": [125, 58, 135, 190],
-    "AddSub8": [125, 58, 135, 190],
-    "ArithmeticUnit8": [105, 50, 125, 190],
-    "LogicUnit8": [45, 110, 75, 190],
-    "BarrelShifter8": [38, 105, 135, 190],
-    "CompareSelect8": [13, 148, 136, 190],
-    "ALU8FlagUnit": [20, 130, 115, 190],
-    "ALU8ControlDecoder": [110, 100, 150, 190],
-    "ALU8ResultSelector": [220, 140, 50, 190],
-    "ALU32ControlDecoder": [110, 100, 150, 190],
-    "ALU32CompareUnit": [20, 130, 115, 190],
-    "ALU32ResultSelector": [220, 140, 50, 190],
-    "ALU32FlagUnit": [20, 130, 115, 190],
-    "Decoder2to4": [20, 184, 166, 190],
-    "Decoder5to32": [20, 184, 166, 190],
-    "EqualityChecker8": [20, 184, 166, 190],
-    "Comparator8": [13, 148, 136, 190],
-    "SignedComparator8": [15, 118, 110, 190],
-    "Comparator32": [42, 95, 90, 190],
-    "ZeroDetect8": [20, 184, 166, 190],
-    "ZeroDetect32": [40, 105, 95, 190],
-    "ShiftLeftLogical8": [56, 189, 248, 190],
-    "ShiftRightLogical8": [56, 189, 248, 190],
-    "ShiftRightArithmetic8": [56, 189, 248, 190],
-    "Shifter32": [38, 105, 135, 190],
-    "Logic32": [45, 110, 75, 190],
-    "ALU8": [55, 65, 115, 190],
-    "ALU32": [68, 70, 125, 190],
-    "ALU32Core": [68, 70, 125, 190],
-    "SRLatch": [145, 45, 75, 190],
-    "GatedDLatch": [165, 50, 90, 190],
-    "DFlipFlop": [236, 72, 153, 190],
-    "FlipFlopCell": [180, 55, 85, 190],
-    "ClockedStateBit": [165, 50, 90, 190],
-    "RegisterFile4x32": [82, 58, 120, 190],
-    "RegisterFile32x32": [76, 58, 125, 190],
-    "RegisterFileStorageBank": [90, 75, 140, 190],
-    "Memory64Kx32": [50, 100, 135, 190],
-    "Memory4x32": [90, 70, 135, 190],
-    "Memory32x32": [75, 60, 120, 190],
-    "MemoryBusAdapter32": [55, 125, 135, 190],
-    "MemoryRequestKnownBits": [20, 130, 115, 190],
-    "ClockGenerator": [34, 211, 238, 190],
-    "RV32IProgramRoot": [51, 65, 85, 190],
-    "RV32ISingleCycleCore": [44, 78, 145, 190],
-    "RV32IFiveStageCore": [64, 58, 125, 190],
-    "RV32ISingleCycleFetchStage": [35, 120, 155, 190],
-    "RV32ISingleCycleDecodeStage": [35, 115, 105, 190],
-    "RV32ISingleCycleExecuteStage": [105, 55, 140, 190],
-    "RV32ISingleCycleMemoryStage": [150, 90, 25, 190],
-    "RV32ISingleCycleWritebackStage": [145, 50, 85, 190],
-    "RV32ISingleCycleNextPCStage": [14, 116, 144, 190],
-    "RV32IBaselinePipelineCore": [64, 58, 125, 190],
-    "RV32IBaselineFetchStage": [35, 120, 155, 190],
-    "RV32IBaselineDecodeStage": [35, 115, 105, 190],
-    "RV32IBaselineExecuteStage": [105, 55, 140, 190],
-    "RV32IBaselineMemoryStage": [150, 90, 25, 190],
-    "RV32IBaselineDependencyUnit": [234, 179, 8, 190],
-    "RV32IBaselineControl": [110, 100, 150, 190],
-    "RV32IBaselinePacketStatus": [225, 85, 80, 190],
-    "RV32IPipelineExecutionStatus": [225, 29, 72, 190],
-    "RV32IStatusPriority": [190, 75, 100, 190],
-    "RV32IRequestTagMatch": [13, 148, 136, 190],
-    "RV32IInstructionRecognition": [35, 145, 135, 190],
-    "RV32IDecodeControlSignals": [65, 100, 150, 190],
-    "RV32IMemoryLanes": [150, 90, 25, 190],
-    "RV32IMemoryLanesDataOnly": [150, 90, 25, 190],
-    "RV32IMemoryRequest": [55, 125, 135, 190],
-    "RV32IFetchRequest": [55, 125, 135, 190],
-    "RV32IZeroWaitMemoryPort": [45, 110, 120, 190],
-    "RV32IMemoryAddress": [110, 100, 150, 190],
-    "RV32IMemoryAddressDataOnly": [110, 100, 150, 190],
-    "RV32ILoadExtender": [175, 105, 50, 190],
-    "RV32IByteWriteMask": [155, 115, 40, 190],
-    "RV32IPredictionPath": [60, 75, 125, 190],
-    "RV32IBranchPredecode": [35, 145, 135, 190],
-    "RV32IBranchPredictor": [95, 85, 160, 190],
-    "RV32IPredictionCounter": [145, 65, 115, 190],
-    "RV32IPredictionEntry": [115, 65, 135, 190],
-    "RV32IBranchRecovery": [190, 85, 110, 190],
-    "RV32IForwardedOperands": [210, 150, 45, 190],
-    "RV32IWritebackBypass": [190, 105, 45, 190],
-    "RV32IExecutePacketStatus": [225, 85, 80, 190],
-    "RV32IFetchStage": [35, 120, 155, 190],
-    "RV32IDecodeStage": [35, 115, 105, 190],
-    "RV32IExecuteStage": [105, 55, 140, 190],
-    "RV32IMemoryStage": [150, 90, 25, 190],
-    "RV32IWritebackStage": [145, 50, 85, 190],
-    "RV32IIFIDPipelineRegister": [59, 130, 246, 190],
-    "RV32IIDEXPipelineRegister": [99, 102, 241, 190],
-    "RV32IEXMEMPipelineRegister": [139, 92, 246, 190],
-    "RV32IMEMWBPipelineRegister": [168, 85, 247, 190],
-    "RV32IControlFlowUnit": [2, 132, 199, 190],
-    "RV32IDecodeControlUnit": [13, 148, 136, 190],
-    "RV32IExecutionControlStatusUnit": [202, 138, 4, 190],
-    "RV32IForwardingUnit": [6, 182, 212, 190],
-    "RV32IHazardDetectionUnit": [234, 179, 8, 190],
-    "RV32IPipelineControlFlowUnit": [14, 116, 144, 190],
-    "RV32IMemoryAlignmentUnit": [245, 158, 11, 190],
-    "RV32IPipelineRetirementUnit": [225, 29, 72, 190],
-    "RV32IPipelineCoordinator": [100, 116, 139, 190],
-    "MemoryArbiterState": [105, 70, 145, 190],
-    "MemoryArbiterGrant": [150, 100, 55, 190],
-    "MemoryArbiterResponseRoute": [75, 115, 145, 190],
-    "Multiplier32": [100, 70, 140, 190],
-    "Divider32": [125, 65, 145, 190],
-    "MulDivUnit32": [80, 60, 120, 190],
-    "RV32IMDecodeControlUnit": [13, 148, 136, 190],
-    "RV32IMDecodeStage": [35, 115, 105, 190],
-    "RV32IMExecuteStage": [125, 55, 150, 190],
-    "RV32IMPipelineCoordinator": [100, 116, 139, 190],
-    "RV32IMFiveStageCore": [75, 65, 145, 190],
-    "RV32IMDeviceSystem": [44, 78, 145, 190],
-    "DeviceRegisterPort32": [55, 125, 135, 190],
-    "BusErrorTarget32": [190, 75, 100, 190],
-    "AddressRouter32": [20, 184, 166, 190],
-    "InstructionAccessGuard32": [20, 130, 115, 190],
-    "ConsoleDevice32": [45, 130, 140, 190],
-    "TimerDevice32": [180, 120, 40, 190],
-    "ButtonDevice32": [120, 110, 165, 190],
-    "IndexedPixelSelector32": [190, 105, 45, 190],
-    "FramebufferDisplay32": [35, 110, 130, 190]
+    "ANDGate": [
+      54,
+      162,
+      235,
+      190
+    ],
+    "NANDGate": [
+      68,
+      132,
+      190,
+      190
+    ],
+    "ORGate": [
+      72,
+      187,
+      120,
+      190
+    ],
+    "NORGate": [
+      55,
+      150,
+      105,
+      190
+    ],
+    "XORGate": [
+      245,
+      158,
+      11,
+      190
+    ],
+    "NOTGate": [
+      239,
+      83,
+      80,
+      190
+    ],
+    "Mux<2,1>": [
+      190,
+      105,
+      45,
+      190
+    ],
+    "Mux<4,1>": [
+      165,
+      80,
+      35,
+      190
+    ],
+    "Mux<8,1>": [
+      140,
+      65,
+      30,
+      190
+    ],
+    "Mux<32,1>": [
+      95,
+      48,
+      28,
+      190
+    ],
+    "Mux<2,4>": [
+      175,
+      90,
+      35,
+      190
+    ],
+    "Mux<2,32>": [
+      175,
+      90,
+      35,
+      190
+    ],
+    "Mux<4,32>": [
+      145,
+      65,
+      30,
+      190
+    ],
+    "Mux<8,8>": [
+      120,
+      55,
+      28,
+      190
+    ],
+    "Mux<8,32>": [
+      120,
+      55,
+      28,
+      190
+    ],
+    "Mux<32,32>": [
+      80,
+      42,
+      22,
+      190
+    ],
+    "Rewire": [
+      100,
+      116,
+      139,
+      190
+    ],
+    "HalfAdder": [
+      145,
+      95,
+      180,
+      190
+    ],
+    "FullAdder": [
+      100,
+      70,
+      140,
+      190
+    ],
+    "Adder<8,ripple>": [
+      80,
+      60,
+      120,
+      190
+    ],
+    "Adder<32,prefix>": [
+      90,
+      60,
+      140,
+      190
+    ],
+    "ParallelPrefixAdder<32>": [
+      85,
+      50,
+      125,
+      190
+    ],
+    "CarryCombine": [
+      145,
+      95,
+      180,
+      190
+    ],
+    "ALUResultBit": [
+      190,
+      105,
+      45,
+      190
+    ],
+    "Incrementer<32,4>": [
+      100,
+      65,
+      140,
+      190
+    ],
+    "AddSub<32,integer,prefix>": [
+      125,
+      58,
+      135,
+      190
+    ],
+    "AddSub<8,ripple>": [
+      125,
+      58,
+      135,
+      190
+    ],
+    "ArithmeticUnit<8,ripple>": [
+      105,
+      50,
+      125,
+      190
+    ],
+    "LogicUnit<8>": [
+      45,
+      110,
+      75,
+      190
+    ],
+    "BarrelShifter<8>": [
+      38,
+      105,
+      135,
+      190
+    ],
+    "CompareSelect<8>": [
+      13,
+      148,
+      136,
+      190
+    ],
+    "ALUFlagUnit<8>": [
+      20,
+      130,
+      115,
+      190
+    ],
+    "ALUControlDecoder<extended>": [
+      110,
+      100,
+      150,
+      190
+    ],
+    "ALUResultSelector<8>": [
+      220,
+      140,
+      50,
+      190
+    ],
+    "ALUControlDecoder<integer>": [
+      110,
+      100,
+      150,
+      190
+    ],
+    "CompareSelect<32,integer>": [
+      20,
+      130,
+      115,
+      190
+    ],
+    "ALUResultSelector<32,integer>": [
+      220,
+      140,
+      50,
+      190
+    ],
+    "ALUFlagUnit<32,integer>": [
+      20,
+      130,
+      115,
+      190
+    ],
+    "Decoder<5>": [
+      20,
+      184,
+      166,
+      190
+    ],
+    "ZeroDetect<8>": [
+      20,
+      184,
+      166,
+      190
+    ],
+    "ZeroDetect<32>": [
+      40,
+      105,
+      95,
+      190
+    ],
+    "BarrelShifter<32,integer>": [
+      38,
+      105,
+      135,
+      190
+    ],
+    "LogicUnit<32,integer>": [
+      45,
+      110,
+      75,
+      190
+    ],
+    "ALU<8,extended,ripple>": [
+      55,
+      65,
+      115,
+      190
+    ],
+    "ALU<32,integer,prefix>": [
+      68,
+      70,
+      125,
+      190
+    ],
+    "ALU<32,integer,prefix,core>": [
+      68,
+      70,
+      125,
+      190
+    ],
+    "SRLatch": [
+      145,
+      45,
+      75,
+      190
+    ],
+    "GatedDLatch": [
+      165,
+      50,
+      90,
+      190
+    ],
+    "DFlipFlop": [
+      236,
+      72,
+      153,
+      190
+    ],
+    "FlipFlopCell": [
+      180,
+      55,
+      85,
+      190
+    ],
+    "ClockedStateBit": [
+      165,
+      50,
+      90,
+      190
+    ],
+    "RegisterFile32x32": [
+      76,
+      58,
+      125,
+      190
+    ],
+    "MemoryRequestKnownBits": [
+      20,
+      130,
+      115,
+      190
+    ],
+    "ClockGenerator": [
+      34,
+      211,
+      238,
+      190
+    ],
+    "RV32IProgramRoot": [
+      51,
+      65,
+      85,
+      190
+    ],
+    "RV32ISingleCycleCore": [
+      44,
+      78,
+      145,
+      190
+    ],
+    "RV32IFiveStageCore": [
+      64,
+      58,
+      125,
+      190
+    ],
+    "RV32ISingleCycleFetchStage": [
+      35,
+      120,
+      155,
+      190
+    ],
+    "RV32ISingleCycleDecodeStage": [
+      35,
+      115,
+      105,
+      190
+    ],
+    "RV32ISingleCycleExecuteStage": [
+      105,
+      55,
+      140,
+      190
+    ],
+    "RV32ISingleCycleMemoryStage": [
+      150,
+      90,
+      25,
+      190
+    ],
+    "RV32ISingleCycleWritebackStage": [
+      145,
+      50,
+      85,
+      190
+    ],
+    "RV32ISingleCycleNextPCStage": [
+      14,
+      116,
+      144,
+      190
+    ],
+    "RV32IBaselinePipelineCore": [
+      64,
+      58,
+      125,
+      190
+    ],
+    "RV32IBaselineFetchStage": [
+      35,
+      120,
+      155,
+      190
+    ],
+    "RV32IBaselineDecodeStage": [
+      35,
+      115,
+      105,
+      190
+    ],
+    "RV32IBaselineExecuteStage": [
+      105,
+      55,
+      140,
+      190
+    ],
+    "RV32IBaselineMemoryStage": [
+      150,
+      90,
+      25,
+      190
+    ],
+    "RV32IBaselineDependencyUnit": [
+      234,
+      179,
+      8,
+      190
+    ],
+    "RV32IBaselineControl": [
+      110,
+      100,
+      150,
+      190
+    ],
+    "RV32IBaselinePacketStatus": [
+      225,
+      85,
+      80,
+      190
+    ],
+    "RV32IPipelineExecutionStatus": [
+      225,
+      29,
+      72,
+      190
+    ],
+    "RV32IStatusPriority": [
+      190,
+      75,
+      100,
+      190
+    ],
+    "RV32IRequestTagMatch": [
+      13,
+      148,
+      136,
+      190
+    ],
+    "RV32IInstructionRecognition": [
+      35,
+      145,
+      135,
+      190
+    ],
+    "RV32IDecodeControlSignals": [
+      65,
+      100,
+      150,
+      190
+    ],
+    "RV32IMemoryLanes": [
+      150,
+      90,
+      25,
+      190
+    ],
+    "RV32IMemoryLanesDataOnly": [
+      150,
+      90,
+      25,
+      190
+    ],
+    "RV32IMemoryRequest": [
+      55,
+      125,
+      135,
+      190
+    ],
+    "RV32IFetchRequest": [
+      55,
+      125,
+      135,
+      190
+    ],
+    "RV32IZeroWaitMemoryPort": [
+      45,
+      110,
+      120,
+      190
+    ],
+    "RV32IMemoryAddress": [
+      110,
+      100,
+      150,
+      190
+    ],
+    "RV32IMemoryAddressDataOnly": [
+      110,
+      100,
+      150,
+      190
+    ],
+    "RV32ILoadExtender": [
+      175,
+      105,
+      50,
+      190
+    ],
+    "RV32IByteWriteMask": [
+      155,
+      115,
+      40,
+      190
+    ],
+    "RV32IPredictionPath": [
+      60,
+      75,
+      125,
+      190
+    ],
+    "RV32IBranchPredecode": [
+      35,
+      145,
+      135,
+      190
+    ],
+    "RV32IBranchPredictor": [
+      95,
+      85,
+      160,
+      190
+    ],
+    "RV32IPredictionCounter": [
+      145,
+      65,
+      115,
+      190
+    ],
+    "RV32IPredictionEntry": [
+      115,
+      65,
+      135,
+      190
+    ],
+    "RV32IBranchRecovery": [
+      190,
+      85,
+      110,
+      190
+    ],
+    "RV32IForwardedOperands": [
+      210,
+      150,
+      45,
+      190
+    ],
+    "RV32IWritebackBypass": [
+      190,
+      105,
+      45,
+      190
+    ],
+    "RV32IExecutePacketStatus": [
+      225,
+      85,
+      80,
+      190
+    ],
+    "RV32IFetchStage": [
+      35,
+      120,
+      155,
+      190
+    ],
+    "RV32IDecodeStage": [
+      35,
+      115,
+      105,
+      190
+    ],
+    "RV32IExecuteStage": [
+      105,
+      55,
+      140,
+      190
+    ],
+    "RV32IMemoryStage": [
+      150,
+      90,
+      25,
+      190
+    ],
+    "RV32IWritebackStage": [
+      145,
+      50,
+      85,
+      190
+    ],
+    "RV32IIFIDPipelineRegister": [
+      59,
+      130,
+      246,
+      190
+    ],
+    "RV32IIDEXPipelineRegister": [
+      99,
+      102,
+      241,
+      190
+    ],
+    "RV32IEXMEMPipelineRegister": [
+      139,
+      92,
+      246,
+      190
+    ],
+    "RV32IMEMWBPipelineRegister": [
+      168,
+      85,
+      247,
+      190
+    ],
+    "RV32IControlFlowUnit": [
+      2,
+      132,
+      199,
+      190
+    ],
+    "RV32IDecodeControlUnit": [
+      13,
+      148,
+      136,
+      190
+    ],
+    "RV32IExecutionControlStatusUnit": [
+      202,
+      138,
+      4,
+      190
+    ],
+    "RV32IForwardingUnit": [
+      6,
+      182,
+      212,
+      190
+    ],
+    "RV32IHazardDetectionUnit": [
+      234,
+      179,
+      8,
+      190
+    ],
+    "RV32IPipelineControlFlowUnit": [
+      14,
+      116,
+      144,
+      190
+    ],
+    "RV32IMemoryAlignmentUnit": [
+      245,
+      158,
+      11,
+      190
+    ],
+    "RV32IPipelineRetirementUnit": [
+      225,
+      29,
+      72,
+      190
+    ],
+    "RV32IPipelineCoordinator": [
+      100,
+      116,
+      139,
+      190
+    ],
+    "MemoryArbiterState": [
+      105,
+      70,
+      145,
+      190
+    ],
+    "MemoryArbiterGrant": [
+      150,
+      100,
+      55,
+      190
+    ],
+    "MemoryArbiterResponseRoute": [
+      75,
+      115,
+      145,
+      190
+    ],
+    "Multiplier<32>": [
+      100,
+      70,
+      140,
+      190
+    ],
+    "Divider<32>": [
+      125,
+      65,
+      145,
+      190
+    ],
+    "MulDivUnit<32>": [
+      80,
+      60,
+      120,
+      190
+    ],
+    "RV32IMDecodeControlUnit": [
+      13,
+      148,
+      136,
+      190
+    ],
+    "RV32IMDecodeStage": [
+      35,
+      115,
+      105,
+      190
+    ],
+    "RV32IMExecuteStage": [
+      125,
+      55,
+      150,
+      190
+    ],
+    "RV32IMPipelineCoordinator": [
+      100,
+      116,
+      139,
+      190
+    ],
+    "RV32IMFiveStageCore": [
+      75,
+      65,
+      145,
+      190
+    ],
+    "RV32IMDeviceSystem": [
+      44,
+      78,
+      145,
+      190
+    ],
+    "DeviceRegisterPort<32>": [
+      55,
+      125,
+      135,
+      190
+    ],
+    "BusErrorTarget<32>": [
+      190,
+      75,
+      100,
+      190
+    ],
+    "AddressRouter<32>": [
+      20,
+      184,
+      166,
+      190
+    ],
+    "InstructionAccessGuard<32>": [
+      20,
+      130,
+      115,
+      190
+    ],
+    "ConsoleDevice": [
+      45,
+      130,
+      140,
+      190
+    ],
+    "TimerDevice": [
+      180,
+      120,
+      40,
+      190
+    ],
+    "ButtonDevice": [
+      120,
+      110,
+      165,
+      190
+    ],
+    "IndexedPixelSelector<32>": [
+      190,
+      105,
+      45,
+      190
+    ],
+    "FramebufferDisplay": [
+      35,
+      110,
+      130,
+      190
+    ]
   }
 }

@@ -289,7 +289,7 @@ size listed below; an unsupported combination retains its constructor delay.
 - A memory built with another row layout has its own table (`@rows=K`).
 - The advanced core has a table for each prediction policy and each
   predictor table size from 1 to 256 entries.
-- `rv32i.alu32`, `rv32i.alu32-core` and `alu.width8` carry one set of delays
+- `word.alu.32.integer.prefix`, `word.alu.32.integer.prefix.core` and `word.alu.8.extended.ripple` carry one set of delays
   per operation code (`control = "OP"`, `arcs_by_control`). While the
   operation is steady, a data input uses the delays of that operation. A
   change of the operation itself costs the output's largest delay.
@@ -600,8 +600,8 @@ Every report lists its premises.
   measured shares of the parts below them.
 
 ```bash
-build-cleanup/tests/DelayRuleTest --report rv32i.alu32
-build-cleanup/tests/SettlingBoundTest --verbose --budget=500000 rv32i.alu32
+build-cleanup/tests/DelayRuleTest --report word.alu.32.integer.prefix
+build-cleanup/tests/SettlingBoundTest --verbose --budget=500000 word.alu.32.integer.prefix
 build-cleanup/rv32i_experiment --core advanced --safe-clock
 ```
 
@@ -612,11 +612,11 @@ at the test's small budget, and the simulator reaches the bound.
 
 | Part and output | Longest path | Proven | Seen in the simulator |
 | --- | ---: | ---: | ---: |
-| `rv32i.alu32` `EQ` | 33 | 30 (tight) | 30 |
+| `word.alu.32.integer.prefix` `EQ` | 33 | 30 (tight) | 30 |
 | `rv32i.baseline.execute` `TERMINAL` | 47 | 46 (tight) | not targeted |
 | `rv32i.baseline.execute` `OUT_EXECUTION_STATUS` | 44 | 43 (tight) | not targeted |
-| `alu.width8` | 66 | 65 (tight) | 65 |
-| `shift.barrel.width8` | 22 | 21 (tight) | 21 |
+| `word.alu.8.extended.ripple` | 66 | 65 (tight) | 65 |
+| `word.barrelshifter.8` | 22 | 21 (tight) | 21 |
 | `rv32i.prediction.predecode` | 31 | 30 (tight) | 28 |
 | `rv32i.prediction.predictor` | 5 | 4 (tight) | 4 |
 

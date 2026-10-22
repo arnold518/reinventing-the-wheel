@@ -61,6 +61,12 @@ one whose carry runs the full width.
 
 ## Compact parts
 
+Fidelity and timing are properties of a concrete component configuration.
+For [word components](components/word-components.md), width, operation contract
+and adder topology identify that configuration. A structural family without
+a matching behavioral factory cannot select the compact form; a delay table
+for one width or topology does not describe another.
+
 Most parts exist in two forms with the same pins and the same values: the
 **structural** form built from smaller parts down to gates, and a
 **behavioral** (compact) form that computes the result directly and is much
@@ -76,7 +82,7 @@ take internally. The tables are generated for every profile by
 `part_delay_tables` and checked against the gates. The full table of the
 8-bit adder, for example:
 
-<!-- timing-table: arithmetic.adder.width8.behavioral.direct -->
+<!-- timing-table: word.adder.8.ripple.behavioral -->
 
 **Delay twin.** Most compact parts also carry a flat list of their own
 gates. When their inputs change they walk that list once with the current

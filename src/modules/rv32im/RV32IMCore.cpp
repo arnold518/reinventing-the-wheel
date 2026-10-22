@@ -8,12 +8,12 @@
 #include "modules/rv32i/RV32IExtensionAssembly.hpp"
 #include "components/selection/FamilyFactories.hpp"
 #include "components/selection/BuildContext.hpp"
-#include "StructuralLogic.hpp"
+#include "components/StructuralLogic.hpp"
 #include "RegisterComponent.hpp"
 #include "RV32IMCoreBehavioral.hpp"
 #include <map>
 #include <set>
-using rv32im::detail::Logic;using rv32im::detail::V;using rv32im::detail::P;
+using circuit::structural::Logic;using circuit::structural::V;using circuit::structural::P;
 namespace {
 P isM(Logic& l,const V& bits) {
     V matches;constexpr uint32_t mask=0xfe00007f,pattern=0x02000033;
@@ -77,7 +77,7 @@ void RV32IMExecuteStage::buildInternals(ComponentBuilder& b) {
     l.drive(V(addresses.begin(),addresses.begin()+5),forward->getInputPin<5>("ID_EX_RS1"));
     l.drive(V(addresses.begin()+5,addresses.begin()+10),forward->getInputPin<5>("ID_EX_RS2"));
     auto word=l.split(getInputPin<32>("IN_INSTRUCTION"));auto m=isM(l,word);
-    auto unit=b.add(circuit::families::MulDivUnit32,"MULDIV");
+    auto unit=b.add(circuit::families::mulDivUnit(32),"MULDIV");
     for(auto n:{"CLK","RST","ENABLE","CANCEL","TAKE"})l.wire(getInputPin(n),unit->getInputPin(n));
     l.wire(forward->getOutputPin<32>("VALUE_A"),unit->getInputPin<32>("A"));
     l.wire(forward->getOutputPin<32>("VALUE_B"),unit->getInputPin<32>("B"));

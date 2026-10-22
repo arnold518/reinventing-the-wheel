@@ -36,7 +36,7 @@ Inputs: CLK, RST, ISSUE, PC_WRITE, NEXT_PC, IMEM_READ_DATA, IMEM_FAULT.
 Outputs: PC, PC_PLUS_4, INSTRUCTION, DONE, FAULT, PC_MISALIGNED,
 IMEM_WORD_ADDR, IMEM_READ_EN. See the published page for widths.
 
-`Register<32>` owns PC; `IncrementBy4` computes PC+4. Direct wiring exposes
+`Register<32>` owns PC; `Incrementer<32,4>` computes PC+4. Direct wiring exposes
 PC/4 as the word index and forwards the memory word/fault. DONE is one; ISSUE enables the
 read. There is no TAKE input, request capture, or handshake.
 
@@ -65,7 +65,7 @@ For branches it compares operands while a separate adder calculates PC+IMM.
 For JAL the target is the ALU result; for JALR it is that result with bit zero
 cleared. There is no duplicated RS1+IMM adder. Jump selection 3 produces target
 zero; branch selections 0 and 7 produce false. Comparison flags are meaningful
-for SUB/SLT/SLTU, exactly as in ALU32; the decoder selects SUB for branches.
+for SUB/SLT/SLTU, exactly as in ALU<32,integer,prefix>; the decoder selects SUB for branches.
 
 ### Memory
 

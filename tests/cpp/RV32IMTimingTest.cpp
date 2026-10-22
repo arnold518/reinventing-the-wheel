@@ -13,7 +13,7 @@ int main() {
     try {
         for (const auto& profile : {"unit", "embedded", "desktop"}) {
             circuit::timing::setActiveTimingProfile(profile);
-            for (const auto& contract : {"rv32im.mul-div.32", "rv32im.core.educational-five-stage"}) {
+            for (const auto& contract : {"arithmetic.iterative.mul-div.32", "rv32im.core.educational-five-stage"}) {
                 auto root = std::dynamic_pointer_cast<IOComponent>(circuit::builtinComponentCatalog().createRoot(
                     {contract,"DUT",{},{},{},{}},circuit::strictAllStructural()).root);
                 ClockSpecification clock;

@@ -22,7 +22,7 @@ void RV32IMemoryStage::buildInternals(ComponentBuilder& builder) {
     circuit::detail::StructuralWiring w(builder);
     const auto alignment = builder.add(
         circuit::families::RV32IMemoryAlignmentUnit, "ALIGNMENT");
-    builder.addNewComponent<Mux4to1_32bit>("FORWARD_VALUE_MUX");
+    builder.addNewComponent<Mux<4,32>>("FORWARD_VALUE_MUX");
     builder.addNewComponent<BitSplitter<2>>("DMEM_SIZE_SPLIT");
     builder.addNewComponent<BitJoiner<2>>("DMEM_SIZE_JOIN");
     builder.addNewComponent<ConstantValue<32>>("ZERO32", 0);
@@ -90,7 +90,7 @@ void RV32IMemoryStage::buildInternals(ComponentBuilder& builder) {
     connect_input(
         "ALU_RESULT",
         {alignment->getInputPin<32>("ADDRESS"),
-         builder.getInputPin<Mux4to1_32bit, 32>(
+         builder.getInputPin<Mux<4,32>, 32>(
              "FORWARD_VALUE_MUX", "IN1"),
          getOutputPin<32>("DMEM_ADDR")});
     w.connect(getInputPin<32>("DMEM_READ_DATA"),
@@ -100,7 +100,7 @@ void RV32IMemoryStage::buildInternals(ComponentBuilder& builder) {
         {getOutputPin<32>("DMEM_WRITE_DATA")});
     connect_input(
         "PC_PLUS_4",
-        {builder.getInputPin<Mux4to1_32bit, 32>(
+        {builder.getInputPin<Mux<4,32>, 32>(
             "FORWARD_VALUE_MUX", "IN3")});
     connect_input("NEXT_PC");
     connect_input(
@@ -126,10 +126,10 @@ void RV32IMemoryStage::buildInternals(ComponentBuilder& builder) {
     w.connect(getInputPin("DMEM_WRITE_ENABLE"),
         {builder.getInputPin<ORGate>("DMEM_ACTIVE", "B")});
     w.connect(builder.getOutputPin<ConstantValue<32>, 32>("ZERO32", "OUT"),
-        {builder.getInputPin<Mux4to1_32bit, 32>("FORWARD_VALUE_MUX", "IN0"),
-         builder.getInputPin<Mux4to1_32bit, 32>("FORWARD_VALUE_MUX", "IN2")});
+        {builder.getInputPin<Mux<4,32>, 32>("FORWARD_VALUE_MUX", "IN0"),
+         builder.getInputPin<Mux<4,32>, 32>("FORWARD_VALUE_MUX", "IN2")});
     w.connect(builder.getOutputPin<Rewire, 2>("CONTROL_UNPACK", "WRITEBACK_SEL"),
-        {builder.getInputPin<Mux4to1_32bit, 2>("FORWARD_VALUE_MUX", "SEL")});
+        {builder.getInputPin<Mux<4,32>, 2>("FORWARD_VALUE_MUX", "SEL")});
     w.connect(builder.getOutputPin<Rewire, 2>("CONTROL_UNPACK", "MEM_SIZE"),
         {alignment->getInputPin<2>("SIZE"), builder.getInputPin<BitSplitter<2>, 2>("DMEM_SIZE_SPLIT", "IN")});
     w.connect(builder.getOutputPin<Rewire, 5>("ADDRESSES_UNPACK", "RD"),
@@ -144,7 +144,7 @@ void RV32IMemoryStage::buildInternals(ComponentBuilder& builder) {
         {builder.getInputPin<ANDGate>("STORE_REQUEST_1", "B"), builder.getInputPin<ORGate>("MEMORY_OPERATION", "B")});
     w.connect(builder.getOutputPin<NOTGate>("NOT_MEM_READ", "OUT"),
         {getOutputPin("FORWARD_RESULT_READY")});
-    w.connect(builder.getOutputPin<Mux4to1_32bit, 32>("FORWARD_VALUE_MUX", "OUT"),
+    w.connect(builder.getOutputPin<Mux<4,32>, 32>("FORWARD_VALUE_MUX", "OUT"),
         {getOutputPin<32>("FORWARD_VALUE")});
 
     w.connect(builder.getOutputPin<Rewire>("FETCH_STATUS_UNPACK", "PC_MISALIGNED"),

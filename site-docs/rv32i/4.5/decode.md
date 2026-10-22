@@ -40,7 +40,7 @@ The instruction decoder and control encoder below are the same reusable, non-sim
 
 ### Structural implementation
 
-`CONTROL` is RV32IDecodeControlUnit and `REGISTER_FILE` is the FF-backed RegisterFile32x32. Rewire components form CONTROL, REGISTER_ADDRESSES, and forwarded packet fields. `PACKET_STATUS` groups the shared terminal/control-flow gates; Decode supplies zero execution status because target calculation has not occurred yet. No forwarding selector or WB_BYPASS component is instantiated.
+`CONTROL` is RV32IDecodeControlUnit and `REGISTER_FILE` is the FF-backed [32×32 register-file configuration](../4.3/register-file.md) with hardwired x0 (`RegisterFile32x32`). Rewire components form CONTROL, REGISTER_ADDRESSES, and forwarded packet fields. `PACKET_STATUS` groups the shared terminal/control-flow gates; Decode supplies zero execution status because target calculation has not occurred yet. No forwarding selector or WB_BYPASS component is instantiated.
 
 ### Behavioral implementation
 

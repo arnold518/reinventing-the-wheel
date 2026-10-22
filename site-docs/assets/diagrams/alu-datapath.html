@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en" class="diagram-standalone">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Inside ALU&lt;W&gt;</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;600&amp;family=Ubuntu+Mono&amp;display=swap" rel="stylesheet"/>
+<style>body { margin: 24px auto; max-width: 688px; padding: 0 16px; } * { box-sizing: border-box; }</style>
+</head>
+<body>
+<!-- diagram:start -->
+<figure class="circuit-figure" data-diagram="alu-datapath">
+<div class="diagram-viewport" role="region" aria-label="Inside ALU&lt;W&gt;" tabindex="0">
+<svg viewBox="0 0 640 400" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="alu-datapath-title alu-datapath-desc">
+<title id="alu-datapath-title">Inside ALU&lt;W&gt;</title>
+<desc id="alu-datapath-desc">ALU&lt;W&gt;: the control decoder turns the opcode into local selectors; the arithmetic, logic, shifter and compare-select units compute in parallel; the result selector picks one word and the flag unit derives the flags.</desc>
+<style>.circuit-figure {
+  --dg-paper: var(--md-default-bg-color, #fff);
+  --dg-ink: var(--md-default-fg-color, #202735);
+  --dg-muted: #566174;
+  --dg-rule: #c8ced8;
+  --dg-surface: #f5f6f9;
+  --dg-accent: #4051b5;
+  --dg-tint: #eef0fc;
+  margin: 1.5rem 0; max-width: 100%; text-align: left;
+  font-family: var(--md-text-font-family, 'Noto Sans', sans-serif);
+}
+[data-md-color-scheme="slate"] .circuit-figure {
+  --dg-muted: #b4bdd0; --dg-rule: #4b5569; --dg-surface: #262c38;
+  --dg-accent: #acb7ff; --dg-tint: #303853;
+}
+@media (prefers-color-scheme: dark) {
+  .diagram-standalone .circuit-figure {
+    --dg-paper: #1e2129; --dg-ink: #e4e7ef; --dg-muted: #b4bdd0;
+    --dg-rule: #4b5569; --dg-surface: #262c38;
+    --dg-accent: #acb7ff; --dg-tint: #303853;
+  }
+  .diagram-standalone body { background: #1e2129; color: #e4e7ef; }
+}
+.circuit-figure .diagram-viewport {
+  max-width: 100%; overflow: auto; overscroll-behavior-x: contain;
+}
+.circuit-figure .diagram-viewport:focus-visible {
+  outline: 2px solid var(--dg-accent); outline-offset: 3px;
+}
+.circuit-figure svg { display: block; width: 640px; min-width: 640px; max-width: none; margin: 0 auto; }
+.circuit-figure figcaption {
+  display: block; margin: .6rem 0 0; max-width: none; text-align: left;
+  color: var(--dg-muted); font-style: normal; font-size: 14px; line-height: 1.6;
+}
+.circuit-figure figcaption strong { color: var(--dg-ink); font-weight: 600; }
+.circuit-figure .dg-zone { fill: var(--dg-paper); stroke: var(--dg-rule); stroke-width: 1.2; }
+.circuit-figure .dg-box { fill: var(--dg-paper); stroke: var(--dg-rule); stroke-width: 1.2; }
+.circuit-figure .dg-store { fill: var(--dg-surface); stroke: var(--dg-rule); stroke-width: 1.2; }
+.circuit-figure .dg-focus { fill: var(--dg-tint); stroke: var(--dg-accent); stroke-width: 1.4; }
+.circuit-figure .dg-label { fill: var(--dg-paper); stroke: none; }
+.circuit-figure text { fill: var(--dg-ink); font-family: var(--md-text-font-family, 'Noto Sans', sans-serif); font-size: 16px; }
+.circuit-figure .dg-name { font-weight: 600; }
+.circuit-figure .dg-small { font-size: 14px; fill: var(--dg-muted); }
+.circuit-figure .dg-code { font-family: var(--md-code-font-family, 'Ubuntu Mono', monospace); font-size: 14px; fill: var(--dg-muted); }
+.circuit-figure .dg-tag { font-size: 12px; font-weight: 600; letter-spacing: .06em; fill: var(--dg-muted); }
+.circuit-figure .dg-edge { fill: none; stroke: var(--dg-muted); stroke-width: 1.5; }
+.circuit-figure .dg-marker { fill: var(--dg-muted); }
+.circuit-figure .dg-marker-accent { fill: var(--dg-accent); }
+.circuit-figure .dg-rule { stroke: var(--dg-rule); stroke-width: 1; }
+.circuit-figure .dg-wave { fill: none; stroke: var(--dg-ink); stroke-width: 1.5; }
+.circuit-figure .dg-wave-focus { fill: none; stroke: var(--dg-accent); stroke-width: 2; }</style>
+<defs>
+<marker id="alu-datapath-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><path d="M 0 0 L 8 3 L 0 6 Z" class="dg-marker"/></marker>
+<marker id="alu-datapath-arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><path d="M 0 0 L 8 3 L 0 6 Z" class="dg-marker-accent"/></marker>
+<marker id="alu-datapath-arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><path d="M 0 0 L 8 3 L 0 6 Z" class="dg-marker"/></marker>
+</defs>
+<rect width="640" height="400" fill="var(--dg-paper)"/>
+<rect data-node="CONTROL" x="40" y="40" width="144" height="64" rx="6" class="dg-store"/>
+<text x="112.0" y="69.0" class="dg-name" text-anchor="middle">CONTROL</text>
+<text x="112.0" y="91.0" class="dg-small" text-anchor="middle">OP → selectors</text>
+<path class="dg-edge" d="M 184 72 L 216 72 L 216 300"/>
+<path class="dg-edge" d="M 216 70 L 248 70" marker-end="url(#alu-datapath-arrow)"/>
+<path class="dg-edge" d="M 216 146 L 248 146" marker-end="url(#alu-datapath-arrow)"/>
+<path class="dg-edge" d="M 216 222 L 248 222" marker-end="url(#alu-datapath-arrow)"/>
+<path class="dg-edge" d="M 216 298 L 248 298" marker-end="url(#alu-datapath-arrow)"/>
+<rect data-node="ARITHMETIC" x="248" y="40" width="184" height="60" rx="6" class="dg-box"/>
+<text x="340.0" y="67.0" class="dg-name" text-anchor="middle">ARITHMETIC</text>
+<text x="340.0" y="89.0" class="dg-small" text-anchor="middle">add · sub · neg</text>
+<rect data-node="LOGIC" x="248" y="116" width="184" height="60" rx="6" class="dg-box"/>
+<text x="340.0" y="143.0" class="dg-name" text-anchor="middle">LOGIC</text>
+<text x="340.0" y="165.0" class="dg-small" text-anchor="middle">and · or · xor</text>
+<rect data-node="SHIFTER" x="248" y="192" width="184" height="60" rx="6" class="dg-box"/>
+<text x="340.0" y="219.0" class="dg-name" text-anchor="middle">SHIFTER</text>
+<text x="340.0" y="241.0" class="dg-small" text-anchor="middle">shift · rotate</text>
+<rect data-node="COMPARE_SELECT" x="248" y="268" width="184" height="60" rx="6" class="dg-box"/>
+<text x="340.0" y="295.0" class="dg-name" text-anchor="middle">COMPARE_SELECT</text>
+<text x="340.0" y="317.0" class="dg-small" text-anchor="middle">slt · min · max</text>
+<path class="dg-edge" d="M 432 70 L 456 70 L 456 300 L 432 300"/>
+<path class="dg-edge" d="M 432 146 L 456 146"/>
+<path class="dg-edge" d="M 432 222 L 456 222"/>
+<path class="dg-edge" d="M 456 168 L 480 168" marker-end="url(#alu-datapath-arrow)"/>
+<rect data-node="RESULT_SELECT" x="480" y="132" width="120" height="72" rx="6" class="dg-focus"/>
+<text x="540.0" y="165.0" class="dg-name" text-anchor="middle">RESULT</text>
+<text x="540.0" y="187.0" class="dg-small" text-anchor="middle">select</text>
+<rect data-node="FLAGS" x="480" y="252" width="120" height="64" rx="6" class="dg-box"/>
+<text x="540.0" y="281.0" class="dg-name" text-anchor="middle">FLAGS</text>
+<text x="540.0" y="303.0" class="dg-small" text-anchor="middle">Z · N · C · V</text>
+<path class="dg-edge" d="M 540 204 L 540 252" marker-end="url(#alu-datapath-arrow)"/>
+<text x="40" y="360" class="dg-small" text-anchor="start">A, B and OP reach every unit; the decoder enables one result source.</text>
+</svg>
+</div>
+<figcaption><strong>Every unit computes; one result is selected.</strong> For comparisons the arithmetic unit's subtraction feeds <code>COMPARE_SELECT</code>, so there is no second subtractor. <code>A</code> and <code>B</code> can also pass straight to the result.</figcaption>
+</figure>
+<!-- diagram:end -->
+</body>
+</html>

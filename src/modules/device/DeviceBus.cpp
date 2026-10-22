@@ -1,33 +1,34 @@
+#include "modules/device/DeviceBus.hpp"
 #include "components/ComponentBuilder.tpp"
 #include "DeviceLogic.hpp"
 #include "components/GateListPartBehavioral.hpp"
 #include "modules/memory/MemoryController.hpp"
 #include "modules/memory/MemoryFFController.hpp"
-#include "modules/rv32im/RegisterComponent.hpp"
+#include "components/selection/FamilyRegistration.hpp"
 #include "components/selection/FamilyFactories.hpp"
 #include <bit>
 using namespace circuit::device::detail;
 namespace {
-void portPins(IOComponent*p) {
-    circuit::memory::protocolPins(p,32);
-    p->addPin("BACK_READY",PinType::INPUT);p->addPin<3>("BACK_STATUS",PinType::INPUT);p->addPin<32>("BACK_READ_DATA",PinType::INPUT);
+void portPins(IOComponent*p,size_t width=32) {
+    circuit::memory::protocolPins(p,width);
+    p->addPin("BACK_READY",PinType::INPUT);p->addPin<3>("BACK_STATUS",PinType::INPUT);p->addPinDynamic("BACK_READ_DATA",PinType::INPUT,width);
     for(auto n:{"READ_STROBE","WRITE_STROBE","IS_READ","IS_WRITE"})p->addPin(n,PinType::OUTPUT);
-    for(auto n:{"ADDRESS","WRITE_DATA"})p->addPin<32>(n,PinType::OUTPUT);p->addPin<4>("WRITE_MASK",PinType::OUTPUT);
+    p->addPin<32>("ADDRESS",PinType::OUTPUT);p->addPinDynamic("WRITE_DATA",PinType::OUTPUT,width);p->addPinDynamic("WRITE_MASK",PinType::OUTPUT,width/8);
 }
-struct Region {std::string prefix;uint32_t base;uint64_t bytes;};
+using Region=circuit::device::AddressRegion;
 const std::vector<Region> regions{{"RAM_",0,0x40000},{"CONSOLE_",0x10000000,0x100},
     {"TIMER_",0x10001000,0x100},{"BUTTONS_",0x10002000,0x100},{"DISPLAY_",0x10003000,0x100},{"VIDEO_",0x20000000,0x1000}};
-void routerPins(IOComponent*p,const std::vector<Region>&r) {
-    circuit::memory::protocolPins(p,32);
-    for(const auto&region:r)circuit::memory::protocolPins(p,32,region.prefix,true);
+void routerPins(IOComponent*p,const std::vector<Region>&r,size_t width=32) {
+    circuit::memory::protocolPins(p,width);
+    for(const auto&region:r)circuit::memory::protocolPins(p,width,region.prefix,true);
 }
-void buildRouter(IOComponent&root,ComponentBuilder&b,const std::vector<Region>&r,bool fetch) {
+void buildRouter(IOComponent&root,ComponentBuilder&b,const std::vector<Region>&r,bool fetch,size_t width=32) {
     Logic l(b);auto in=[&](const std::string&s){return root.getInputPinDynamic(s);};
     auto running=l.inv(in("RST"));auto busy=l.reg("BUSY",1,in("CLK"),in("RST"),l.bit(true));
     auto sent=l.reg("SENT",1,in("CLK"),in("RST"),l.bit(true));
     auto active=busy->getOutputPin("Q"),issued=sent->getOutputPin("Q");
     auto ready=l.land({running,l.inv(active)}),accept=l.land({ready,in("REQ_VALID")});
-    auto known=b.addNewComponent<circuit::memory_detail::RequestKnownBits>("KNOWN_FIELDS",32);
+    auto known=b.addNewComponent<circuit::memory_detail::RequestKnownBits>("KNOWN_FIELDS",width);
     for(auto pair:{std::pair{"REQ_OP","OP"},{"REQ_ADDR","ADDR"},{"REQ_WRITE_MASK","MASK"}})l.wire(in(pair.first),known->getInputPinDynamic(pair.second));
     auto op=l.split(in("REQ_OP"));auto address=l.split(in("REQ_ADDR"));
     auto read=l.equal({op,l.constant(3)}),write=l.equal({op,l.constant(3,1)});
@@ -38,20 +39,20 @@ void buildRouter(IOComponent&root,ComponentBuilder&b,const std::vector<Region>&r
         selected.push_back(l.equal({V(address.begin()+low,address.end()),V(base.begin()+low,base.end())}));
     }
     auto status=l.mux({l.any(selected),l.constant(3,2),l.constant(3)});
-    status=l.mux({l.any(V(address.begin(),address.begin()+2)),status,l.constant(3,1)});
+    status=l.mux({l.any(V(address.begin(),address.begin()+std::countr_zero(width/8))),status,l.constant(3,1)});
     status=l.mux({l.land({write,l.inv(known->getOutputPin("MASK_KNOWN"))}),status,l.constant(3,6)});
     status=l.mux({l.inv(supported),status,l.constant(3,4)});
     status=l.mux({l.inv(known->getOutputPin("FIELDS_KNOWN")),status,l.constant(3,6)});
     auto error=l.any(status);
     auto st=l.reg("STATUS",3,in("CLK"),in("RST"),accept);l.drive(status,st->getInputPin<3>("D"));
     std::map<std::string,std::shared_ptr<IOComponent>> held;
-    for(auto pair:{std::pair{"OP",3u},{"ADDR",32u},{"WRITE_DATA",32u},{"WRITE_MASK",4u}}) {
+    for(auto pair:{std::pair{"OP",3u},{"ADDR",32u},{"WRITE_DATA",unsigned(width)},{"WRITE_MASK",unsigned(width/8)}}) {
         auto reg=l.reg("HELD_"+std::string(pair.first),pair.second,in("CLK"),in("RST"),accept);
         l.wire(in("REQ_"+std::string(pair.first)),reg->getInputPinDynamic("D"));held[pair.first]=reg;
     }
     auto held_error=l.any(l.split(st->getOutputPin<3>("Q")));
     auto hv=l.split(held["ADDR"]->getOutputPin<32>("Q"));
-    V responses,requests;V data=l.constant(32),response_status=l.split(st->getOutputPin<3>("Q"));
+    V responses,requests;V data=l.constant(width),response_status=l.split(st->getOutputPin<3>("Q"));
     for(size_t i=0;i<r.size();++i) {
         auto owner=l.reg("OWNER_"+std::to_string(i),1,in("CLK"),in("RST"),accept);
         l.wire(l.land({selected[i],l.inv(error)}),owner->getInputPin("D"));
@@ -63,7 +64,7 @@ void buildRouter(IOComponent&root,ComponentBuilder&b,const std::vector<Region>&r
         l.out(request,root.getOutputPin(prefix+"REQ_VALID"));
         l.out(l.land({running,l.land({pending,in("RSP_READY")})}),root.getOutputPin(prefix+"RSP_READY"));
         l.out(in("CLK"),root.getOutputPin(prefix+"CLK"));l.out(in("RST"),root.getOutputPin(prefix+"RST"));
-        for(auto pair:{std::pair{"OP",3u},{"WRITE_DATA",32u},{"WRITE_MASK",4u}})
+        for(auto pair:{std::pair{"OP",3u},{"WRITE_DATA",unsigned(width)},{"WRITE_MASK",unsigned(width/8)}})
             l.out(held[pair.first]->getOutputPinDynamic("Q"),root.getOutputPinDynamic(prefix+"REQ_"+pair.first));
         auto offset=l.constant(32);for(size_t j=0;j<std::countr_zero(r[i].bytes);++j)offset[j]=hv[j];
         l.drive(offset,root.getOutputPin<32>(prefix+"REQ_ADDR"));
@@ -75,7 +76,7 @@ void buildRouter(IOComponent&root,ComponentBuilder&b,const std::vector<Region>&r
     l.wire(l.lor({accept,l.land({active,l.inv(done)})}),busy->getInputPin("D"));
     l.wire(l.land({active,l.land({l.inv(done),l.lor({issued,l.any(requests)})})}),sent->getInputPin("D"));
     l.out(ready,root.getOutputPin("REQ_READY"));l.out(valid,root.getOutputPin("RSP_VALID"));
-    l.drive(data,root.getOutputPin<32>("RSP_READ_DATA"));l.drive(response_status,root.getOutputPin<3>("RSP_STATUS"));l.finish();
+    l.drive(data,root.getOutputPinDynamic("RSP_READ_DATA"));l.drive(response_status,root.getOutputPin<3>("RSP_STATUS"));l.finish();
 }
 }
 namespace circuit::device::detail {
@@ -85,64 +86,90 @@ P knownWord(Logic&l,ComponentBuilder&b,P data) {
     l.wire(data,p->getInputPin<32>("ADDR"));return p->getOutputPin("FIELDS_KNOWN");
 }
 }
-namespace circuit::families {
-const ComponentFamily DeviceRegisterPort32{"device.register-port.32","DeviceRegisterPort32",portPins,structuralFactory<::DeviceRegisterPort32>(),
-    [](const std::string& n,const std::shared_ptr<BuildContext>& c){return circuit::detail::createGateListPart(DeviceRegisterPort32,n,c);}};
-const ComponentFamily BusErrorTarget32{"bus.error-target.32","BusErrorTarget32",[](IOComponent*p){memory::protocolPins(p,32);},structuralFactory<::BusErrorTarget32>()};
-const ComponentFamily AddressRouter32{"bus.address-router.32","AddressRouter32",[](IOComponent*p){routerPins(p,regions);},[](const std::string& n,const std::shared_ptr<BuildContext>& c){
-        return Component::createWithContext<::AddressRouter32>(c,n,parameter(c,"video_bytes",4096));},
-    [](const std::string& n,const std::shared_ptr<BuildContext>& c){return circuit::detail::createGateListPart(AddressRouter32,n,c);}};
-const ComponentFamily InstructionAccessGuard32{"bus.instruction-guard.32","InstructionAccessGuard32",[](IOComponent*p){routerPins(p,{{"MEM_",0,0x40000}});},structuralFactory<::InstructionAccessGuard32>(),
-    [](const std::string& n,const std::shared_ptr<BuildContext>& c){return circuit::detail::createGateListPart(InstructionAccessGuard32,n,c);}};
-}
-DeviceRegisterPort32::DeviceRegisterPort32(std::string n):IOComponent(std::move(n),portPins){}
-void DeviceRegisterPort32::buildInternals(ComponentBuilder& b) {
-    Logic l(b);auto clk=getInputPin("CLK"),rst=getInputPin("RST");auto running=l.inv(rst);
+namespace {
+void buildPort(IOComponent& root,ComponentBuilder& b,size_t width) {
+    Logic l(b);auto clk=root.getInputPin("CLK"),rst=root.getInputPin("RST");auto running=l.inv(rst);
     auto pending=l.reg("PENDING",1,clk,rst,l.bit(true)),executed=l.reg("EXECUTED",1,clk,rst,l.bit(true));
-    auto response=b.addByContract({"memory.shared.response-buffer.32","RESPONSE",{},{},{},{},circuit::Fidelity::Structural});
-    for(auto pair:{std::pair{"CLK","CLK"},{"RST","RST"},{"RSP_READY","OUT_READY"}})l.wire(getInputPin(pair.first),response->getInputPin(pair.second));
+    auto response=b.addByContract({"memory.shared.response-buffer."+std::to_string(width),"RESPONSE",{},{},{},{},circuit::Fidelity::Structural});
+    for(auto pair:{std::pair{"CLK","CLK"},{"RST","RST"},{"RSP_READY","OUT_READY"}})l.wire(root.getInputPin(pair.first),response->getInputPin(pair.second));
     auto ready=l.land({running,l.land({l.inv(pending->getOutputPin("Q")),l.inv(response->getOutputPin("FULL"))})});
-    auto accept=l.land({ready,getInputPin("REQ_VALID")});
-    auto known=b.addNewComponent<circuit::memory_detail::RequestKnownBits>("KNOWN_FIELDS",32);
-    for(auto pair:{std::pair{"REQ_OP","OP"},{"REQ_ADDR","ADDR"},{"REQ_WRITE_MASK","MASK"}})l.wire(getInputPinDynamic(pair.first),known->getInputPinDynamic(pair.second));
-    auto op=l.split(getInputPin<3>("REQ_OP")),mask=l.split(getInputPin<4>("REQ_WRITE_MASK")),address=l.split(getInputPin<32>("REQ_ADDR"));
+    auto accept=l.land({ready,root.getInputPin("REQ_VALID")});
+    auto known=b.addNewComponent<circuit::memory_detail::RequestKnownBits>("KNOWN_FIELDS",width);
+    for(auto pair:{std::pair{"REQ_OP","OP"},{"REQ_ADDR","ADDR"},{"REQ_WRITE_MASK","MASK"}})l.wire(root.getInputPinDynamic(pair.first),known->getInputPinDynamic(pair.second));
+    auto op=l.split(root.getInputPin<3>("REQ_OP")),mask=l.split(root.getInputPinDynamic("REQ_WRITE_MASK")),address=l.split(root.getInputPin<32>("REQ_ADDR"));
     auto read=l.equal({op,l.constant(3)}),write=l.equal({op,l.constant(3,1)});
     auto status=l.constant(3);
-    status=l.mux({l.any(V(address.begin(),address.begin()+2)),status,l.constant(3,1)});
+    status=l.mux({l.any(V(address.begin(),address.begin()+std::countr_zero(width/8))),status,l.constant(3,1)});
     auto badmask=l.land({write,l.lor({l.inv(known->getOutputPin("MASK_KNOWN")),l.land({l.any(mask),l.inv(l.all(mask))})})});
     status=l.mux({badmask,status,l.constant(3,6)});status=l.mux({l.inv(l.lor({read,write})),status,l.constant(3,4)});
     status=l.mux({l.inv(known->getOutputPin("FIELDS_KNOWN")),status,l.constant(3,6)});
     auto checked=l.reg("CHECKED_STATUS",3,clk,rst,accept);l.drive(status,checked->getInputPin<3>("D"));
-    auto heldop=l.reg("OP",3,clk,rst,accept);l.wire(getInputPin<3>("REQ_OP"),heldop->getInputPin<3>("D"));
-    auto heldaddr=l.reg("ADDRESS",32,clk,rst,accept);l.wire(getInputPin<32>("REQ_ADDR"),heldaddr->getInputPin<32>("D"));
-    auto helddata=l.reg("DATA",32,clk,rst,accept);l.wire(getInputPin<32>("REQ_WRITE_DATA"),helddata->getInputPin<32>("D"));
-    auto heldmask=l.reg("MASK",4,clk,rst,accept);l.wire(getInputPin<4>("REQ_WRITE_MASK"),heldmask->getInputPin<4>("D"));
-    op=l.split(heldop->getOutputPin<3>("Q"));mask=l.split(heldmask->getOutputPin<4>("Q"));
+    auto heldop=l.reg("OP",3,clk,rst,accept);l.wire(root.getInputPin<3>("REQ_OP"),heldop->getInputPin<3>("D"));
+    auto heldaddr=l.reg("ADDRESS",32,clk,rst,accept);l.wire(root.getInputPin<32>("REQ_ADDR"),heldaddr->getInputPin<32>("D"));
+    auto helddata=l.reg("DATA",width,clk,rst,accept);l.wire(root.getInputPinDynamic("REQ_WRITE_DATA"),helddata->getInputPinDynamic("D"));
+    auto heldmask=l.reg("MASK",width/8,clk,rst,accept);l.wire(root.getInputPinDynamic("REQ_WRITE_MASK"),heldmask->getInputPinDynamic("D"));
+    op=l.split(heldop->getOutputPin<3>("Q"));mask=l.split(heldmask->getOutputPinDynamic("Q"));
     read=l.equal({op,l.constant(3)});write=l.equal({op,l.constant(3,1)});
     auto checkedstatus=l.split(checked->getOutputPin<3>("Q"));
-    status=l.mux({l.any(checkedstatus),l.split(getInputPin<3>("BACK_STATUS")),checkedstatus});
+    status=l.mux({l.any(checkedstatus),l.split(root.getInputPin<3>("BACK_STATUS")),checkedstatus});
     auto ok=l.inv(l.any(status)),action=l.land({write,l.land({l.any(mask),ok})});
-    auto fire=l.land({running,l.land({pending->getOutputPin("Q"),l.land({l.inv(executed->getOutputPin("Q")),l.lor({l.inv(action),getInputPin("BACK_READY")})})})});
+    auto fire=l.land({running,l.land({pending->getOutputPin("Q"),l.land({l.inv(executed->getOutputPin("Q")),l.lor({l.inv(action),root.getInputPin("BACK_READY")})})})});
     l.wire(fire,response->getInputPin("IN_VALID"));l.drive(status,response->getInputPin<3>("IN_STATUS"));
-    l.drive(l.mux({l.land({read,ok}),l.constant(32),l.split(getInputPin<32>("BACK_READ_DATA"))}),response->getInputPin<32>("IN_DATA"));
-    auto take=l.land({response->getOutputPin("OUT_VALID"),getInputPin("RSP_READY")});
+    l.drive(l.mux({l.land({read,ok}),l.constant(width),l.split(root.getInputPinDynamic("BACK_READ_DATA"))}),response->getInputPinDynamic("IN_DATA"));
+    auto take=l.land({response->getOutputPin("OUT_VALID"),root.getInputPin("RSP_READY")});
     l.wire(l.lor({accept,l.land({pending->getOutputPin("Q"),l.inv(take)})}),pending->getInputPin("D"));
     l.wire(l.land({l.inv(accept),l.land({l.inv(take),l.lor({fire,executed->getOutputPin("Q")})})}),executed->getInputPin("D"));
-    l.out(ready,getOutputPin("REQ_READY"));
-    for(auto pair:{std::pair{"OUT_VALID","RSP_VALID"},{"OUT_DATA","RSP_READ_DATA"},{"OUT_STATUS","RSP_STATUS"}})l.out(response->getOutputPinDynamic(pair.first),getOutputPinDynamic(pair.second));
-    l.out(l.land({fire,l.land({read,ok})}),getOutputPin("READ_STROBE"));l.out(l.land({fire,action}),getOutputPin("WRITE_STROBE"));
-    l.out(read,getOutputPin("IS_READ"));l.out(write,getOutputPin("IS_WRITE"));
-    l.out(heldaddr->getOutputPin<32>("Q"),getOutputPin<32>("ADDRESS"));l.out(helddata->getOutputPin<32>("Q"),getOutputPin<32>("WRITE_DATA"));
-    l.out(heldmask->getOutputPin<4>("Q"),getOutputPin<4>("WRITE_MASK"));l.finish();
+    l.out(ready,root.getOutputPin("REQ_READY"));
+    for(auto pair:{std::pair{"OUT_VALID","RSP_VALID"},{"OUT_DATA","RSP_READ_DATA"},{"OUT_STATUS","RSP_STATUS"}})l.out(response->getOutputPinDynamic(pair.first),root.getOutputPinDynamic(pair.second));
+    l.out(l.land({fire,l.land({read,ok})}),root.getOutputPin("READ_STROBE"));l.out(l.land({fire,action}),root.getOutputPin("WRITE_STROBE"));
+    l.out(read,root.getOutputPin("IS_READ"));l.out(write,root.getOutputPin("IS_WRITE"));
+    l.out(heldaddr->getOutputPin<32>("Q"),root.getOutputPin<32>("ADDRESS"));l.out(helddata->getOutputPinDynamic("Q"),root.getOutputPinDynamic("WRITE_DATA"));
+    l.out(heldmask->getOutputPinDynamic("Q"),root.getOutputPinDynamic("WRITE_MASK"));l.finish();
 }
-BusErrorTarget32::BusErrorTarget32(std::string n):IOComponent(std::move(n),circuit::families::BusErrorTarget32.pinInitializer()){}
-void BusErrorTarget32::buildInternals(ComponentBuilder&b) {
-    Logic l(b);auto p=devicePort(*this,b,l);l.wire(l.bit(true),p->getInputPin("BACK_READY"));
-    l.drive(l.constant(3,2),p->getInputPin<3>("BACK_STATUS"));l.drive(l.constant(32),p->getInputPin<32>("BACK_READ_DATA"));l.finish();
 }
-AddressRouter32::AddressRouter32(std::string n,size_t video_bytes):IOComponent(std::move(n),circuit::families::AddressRouter32.pinInitializer()),video_bytes_(video_bytes){
-    if(!circuit::device::validVideoAperture(video_bytes))throw std::invalid_argument("Invalid video aperture");
+namespace circuit::device {
+namespace {
+std::vector<Region> configuredRegions(const AddressMap& map){return {map.regions.begin(),map.regions.end()};}
+void wordBusPins(IOComponent* p,BusUnit u,size_t w){
+    if(w!=8 && w!=16 && w!=32)throw std::invalid_argument("Bus data width must be 8, 16 or 32");
+    if(u==BusUnit::RegisterPort)portPins(p,w);
+    else if(u==BusUnit::Router)routerPins(p,regions,w);
+    else if(u==BusUnit::InstructionGuard)routerPins(p,{{"MEM_",0,0x40000}},w);
+    else memory::protocolPins(p,w);
 }
-void AddressRouter32::buildInternals(ComponentBuilder&b){auto configured=regions;configured.back().bytes=video_bytes_;buildRouter(*this,b,configured,false);}
-InstructionAccessGuard32::InstructionAccessGuard32(std::string n):IOComponent(std::move(n),circuit::families::InstructionAccessGuard32.pinInitializer()){}
-void InstructionAccessGuard32::buildInternals(ComponentBuilder&b){buildRouter(*this,b,{{"MEM_",0,0x40000}},true);}
+std::string busName(BusUnit u){switch(u){case BusUnit::RegisterPort:return "DeviceRegisterPort";case BusUnit::ErrorTarget:return "BusErrorTarget";
+    case BusUnit::Router:return "AddressRouter";case BusUnit::InstructionGuard:return "InstructionAccessGuard";}throw std::invalid_argument("Invalid bus unit");}
+}
+std::string busId(BusUnit u,size_t w){const char* name=u==BusUnit::RegisterPort?"device.word.register-port.":u==BusUnit::Router?"bus.word.address-router.":u==BusUnit::ErrorTarget?"bus.word.error-target.":"bus.word.instruction-guard.";return name+std::to_string(w);}
+
+WordBusComponent::WordBusComponent(std::string n,BusUnit u,size_t width,AddressMap map)
+    :IOComponent(std::move(n),[u,width](IOComponent* p){wordBusPins(p,u,width);}),unit_(u),width_(width),map_(std::move(map)),type_(busName(u)+"<"+std::to_string(width)+">"){map_.validate();}
+void WordBusComponent::buildInternals(ComponentBuilder& b){
+    if(unit_==BusUnit::RegisterPort){buildPort(*this,b,width_);return;}
+    if(unit_==BusUnit::Router){buildRouter(*this,b,configuredRegions(map_),false,width_);return;}
+    if(unit_==BusUnit::InstructionGuard){buildRouter(*this,b,{{"MEM_",map_.regions[0].base,map_.regions[0].bytes}},true,width_);return;}
+    detail::Logic l(b);auto p=b.add(busFamily(BusUnit::RegisterPort,width_),"PORT");
+    for(auto n:{"CLK","RST","REQ_VALID","REQ_OP","REQ_ADDR","REQ_WRITE_DATA","REQ_WRITE_MASK","RSP_READY"})l.wire(getInputPinDynamic(n),p->getInputPinDynamic(n));
+    for(auto n:{"REQ_READY","RSP_VALID","RSP_READ_DATA","RSP_STATUS"})l.out(p->getOutputPinDynamic(n),getOutputPinDynamic(n));
+    l.wire(l.bit(true),p->getInputPin("BACK_READY"));l.drive(l.constant(3,2),p->getInputPin<3>("BACK_STATUS"));l.drive(l.constant(width_),p->getInputPinDynamic("BACK_READ_DATA"));l.finish();
+}
+std::string WordBusComponent::componentLayoutVariant()const {return detail::mapLayoutVariant(map_);}
+
+const ComponentFamily& busFamily(BusUnit u,size_t width){
+    if(width!=8 && width!=16 && width!=32)throw std::invalid_argument("Invalid bus width");
+    struct Entry{std::string id,type;ComponentFamily f;
+        Entry(BusUnit u,size_t w):id(busId(u,w)),type(busName(u)+"<"+std::to_string(w)+">"),
+            f(id,type,[u,w](IOComponent*p){wordBusPins(p,u,w);},[u,w](const std::string& n,const std::shared_ptr<BuildContext>& c){return Component::createWithContext<WordBusComponent>(c,n,u,w,u==BusUnit::Router&&c?detail::addressMap(c->parameters()):AddressMap{});},
+                w==32&&u!=BusUnit::ErrorTarget?FamilyFactory([u,w](const std::string& n,const std::shared_ptr<BuildContext>& c){return circuit::detail::createGateListPart(busFamily(u,w),n,c);}):FamilyFactory{}){}};
+    static std::map<std::pair<BusUnit,size_t>,std::unique_ptr<Entry>> entries;auto& e=entries[{u,width}];if(!e)e=std::make_unique<Entry>(u,width);return e->f;
+}
+void registerWordBusComponents(ComponentCatalog& catalog) {
+    for(size_t width:{8u,16u,32u})for(auto unit:{BusUnit::RegisterPort,BusUnit::ErrorTarget,BusUnit::Router,BusUnit::InstructionGuard}) {
+        const auto& f=busFamily(unit,width);
+        const std::string owner=width==32?busName(unit)+"Width32Test":"WidthComponentsTest";
+        const ParameterPredicate supports=[unit](const ParameterMap& p){if(unit!=BusUnit::Router)return p.empty();try{(void)detail::addressMap(p);return true;}catch(const std::exception&){return false;}};
+        registration::registerStructural(catalog,f,owner,"clock-boundary",supports);
+        if(f.supports(Fidelity::Behavioral))registration::registerBehavioral(catalog,f,owner,busName(unit)+"Width32ScenarioTest",supports);
+    }
+}
+}

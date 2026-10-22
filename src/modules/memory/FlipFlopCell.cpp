@@ -37,21 +37,21 @@ FlipFlopCell::FlipFlopCell(std::string name)
 
 void FlipFlopCell::buildInternals(ComponentBuilder& builder) {
     circuit::detail::StructuralWiring w(builder);
-    builder.addNewComponent<Mux2to1>("WRITE_MUX");
+    builder.addNewComponent<Mux<2,1>>("WRITE_MUX");
     builder.addNewComponent<DFlipFlop>("STATE");
 
-    w.connect(getInputPin("D"), builder.getInputPin<Mux2to1>("WRITE_MUX", "B"));
+    w.connect(getInputPin("D"), builder.getInputPin<Mux<2,1>>("WRITE_MUX", "B"));
 
-    w.connect(getInputPin("WE"), builder.getInputPin<Mux2to1>("WRITE_MUX", "SEL"));
+    w.connect(getInputPin("WE"), builder.getInputPin<Mux<2,1>>("WRITE_MUX", "SEL"));
 
     w.connect(getInputPin("CLK"), builder.getInputPin<DFlipFlop>("STATE", "CLK"));
 
     w.connect(getInputPin("RST"), builder.getInputPin<DFlipFlop>("STATE", "RST"));
 
-    w.connect(builder.getOutputPin<Mux2to1>("WRITE_MUX", "OUT"), builder.getInputPin<DFlipFlop>("STATE", "D"));
+    w.connect(builder.getOutputPin<Mux<2,1>>("WRITE_MUX", "OUT"), builder.getInputPin<DFlipFlop>("STATE", "D"));
 
     w.connect(builder.getOutputPin<DFlipFlop>("STATE", "Q"),
-        {builder.getInputPin<Mux2to1>("WRITE_MUX", "A"),
+        {builder.getInputPin<Mux<2,1>>("WRITE_MUX", "A"),
         getOutputPin("Q")});
     w.finish();
 }

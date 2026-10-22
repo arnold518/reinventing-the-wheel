@@ -1,8 +1,8 @@
-# ConsoleDevice32
+# ConsoleDevice
 
 Buffered byte output device.
 
-Catalog: `device.console.32`. The implemented form is structural; selectable lower-level children may be compact. No new whole-component behavioral form is registered.
+Catalog: `device.console`. The implemented form is structural; selectable lower-level children may be compact. No whole-component behavioral form is registered.
 
 ## Parameters
 
@@ -36,7 +36,7 @@ Local registers: 0 TX (write-only byte in bits 7:0), 4 STATUS (read-only bit0=ro
 
 ## Internal structure
 
-DeviceRegisterPort32 plus SynchronousFifo<8>. The sink acceptance policy is supplied externally and can be predetermined.
+DeviceRegisterPort<32> plus SynchronousFifo<8>. The sink acceptance policy is supplied externally and can be predetermined.
 
 ## Edge cases and integration
 
@@ -44,10 +44,10 @@ Nonzero bits above 7 or X/Z command data are invalid. Command writes require ful
 
 ## Recorded example and checks
 
-`ConsoleDevice32Test` owns the independent functional checks; `ConsoleDevice32ScenarioTest` retains this smaller recorded example. Both use the same logical component owner.
+`ConsoleDeviceTest` owns the independent functional checks; `ConsoleDeviceScenarioTest` retains this smaller recorded example. Both use the same logical component owner.
 
-<!-- simulator-examples: console-device32 ConsoleDevice32ScenarioTest -->
+<!-- simulator-examples: console-device ConsoleDeviceScenarioTest -->
 
-<div class="simulator-embed"><iframe src="../../simulator/?scenario=console-device32&amp;embed=1" title="ConsoleDevice32" loading="lazy" allowfullscreen></iframe></div>
+<div class="simulator-embed"><iframe src="../../simulator/?scenario=console-device&amp;embed=1" title="ConsoleDevice" loading="lazy" allowfullscreen></iframe></div>
 
-<a href="../../simulator/?scenario=console-device32" class="md-button">Open the recorded circuit</a>
+<a href="../../simulator/?scenario=console-device" class="md-button">Open the recorded circuit</a>

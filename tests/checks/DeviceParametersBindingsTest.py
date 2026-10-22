@@ -12,12 +12,12 @@ def rejects(call):
 
 
 for width, height in ((4, 4), (128, 96), (320, 200), (97, 65)):
-    display = backend.create_device_component('device.framebuffer.32', 'DISPLAY',
+    display = backend.create_device_component('device.framebuffer', 'DISPLAY',
         {'width': str(width), 'height': str(height)})
-    assert display.get_type_name() == 'FramebufferDisplay32'
+    assert display.get_type_name() == 'FramebufferDisplay'
     key = server._component_layout_type(display)
-    assert key == 'FramebufferDisplay32' if (width, height) == (4, 4) else key.startswith(
-        f'FramebufferDisplay32[config-width={width},height={height},storage=')
+    assert key == 'FramebufferDisplay' if (width, height) == (4, 4) else key.startswith(
+        f'FramebufferDisplay[config-width={width},height={height},storage=')
 
 for width in (8, 32):
     for depth in (1, 3, 4, 7):
@@ -32,24 +32,40 @@ for width in (8, 32):
             assert key == expected, (key, expected)
 
 for size in (4096, 16384, 262144):
-    router = backend.create_device_component('bus.address-router.32', 'ROUTER',
+    router = backend.create_device_component('bus.word.address-router.32', 'ROUTER',
         {'video_bytes': str(size)})
-    expected = 'AddressRouter32' + (f'[config-video_bytes={size}]' if size != 4096 else '')
+    expected = 'AddressRouter<32>' + (f'[config-video_bytes={size}]' if size != 4096 else '')
     assert server._component_layout_type(router) == expected
 
 for contract, params in (
-    ('device.framebuffer.32', {'width': '0'}),
-    ('device.framebuffer.32', {'width': '4096', 'height': '65'}),
-    ('device.framebuffer.32', {'storage_bytes': '8'}),
+    ('device.framebuffer', {'width': '0'}),
+    ('device.framebuffer', {'width': '4096', 'height': '65'}),
+    ('device.framebuffer', {'storage_bytes': '8'}),
     ('device.fifo.8', {'depth': '8'}),
-    ('device.console.32', {'fifo_depth': '0'}),
-    ('device.buttons.32', {'fifo_depth': '8'}),
-    ('bus.address-router.32', {'video_bytes': '12345'}),
-    ('device.timer.32', {'divisor': '0'}),
-    ('device.framebuffer.32', {'unknown': '1'}),
+    ('device.console', {'fifo_depth': '0'}),
+    ('device.buttons', {'fifo_depth': '8'}),
+    ('bus.word.address-router.32', {'video_bytes': '12345'}),
+    ('device.timer', {'divisor': '0'}),
+    ('device.framebuffer', {'unknown': '1'}),
     ('memory.ff.endpoint.32', {}),
 ):
     rejects(lambda: backend.create_device_component(contract, 'BAD', params))
-rejects(lambda: backend.create_device_component('device.framebuffer.32', 'BAD', {}, 'behavioral'))
+rejects(lambda: backend.create_device_component('device.framebuffer', 'BAD', {}, 'behavioral'))
 rejects(lambda: backend.create_device_component('device.fifo.8', 'BAD', {}, 'unknown'))
 print('PASS: Python catalog parameters, larger displays, queue fidelities, stable/default layout keys and invalid declarations')
+
+for width in (8,16,32):
+    for operations in ('extended','integer'):
+        for topology in ('ripple','prefix'):
+            alu=backend.create_alu('ALU',width,operations,topology)
+            assert alu.get_input_pins()['A'].get_width()==width
+            assert ('C_IN' in alu.get_input_pins()) == (operations=='extended')
+rejects(lambda:backend.create_alu('BAD',12))
+rejects(lambda:backend.create_alu('BAD',16,'integer','prefix',True,'behavioral'))
+rejects(lambda:backend.create_alu('BAD',16,'extended','prefix',False))
+for width in (8,16,32):
+    router=backend.create_device_component(f'bus.word.address-router.{width}','MAP',{'video_base':str(0x30000000),'video_bytes':'8192'})
+    assert 'VIDEO_805306368:8192' in backend.component_layout_variant(router)
+    rejects(lambda:backend.create_device_component(f'bus.word.address-router.{width}','BAD',{'video_base':'0'}))
+assert backend.device_view_kind(backend.create_device_component('device.fifo.16','QUEUE')) == 'queue'
+print('PASS: ALU contracts/topologies, router maps and device capability metadata')

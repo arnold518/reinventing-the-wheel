@@ -20,7 +20,7 @@ void RV32IWritebackStage::buildInternals(ComponentBuilder& builder) {
     using circuit::detail::StructuralWiring;
     StructuralWiring w(builder);
     auto retirement = builder.add(circuit::families::RV32IPipelineRetirementUnit, "RETIREMENT");
-    auto select = builder.addNewComponent<Mux4to1_32bit>("WRITEBACK_MUX");
+    auto select = builder.addNewComponent<Mux<4,32>>("WRITEBACK_MUX");
     auto zero = builder.addNewComponent<ConstantValue<32>>("ZERO32", 0);
 
     addControlUnpack(builder, "CONTROL_UNPACK");

@@ -1,12 +1,12 @@
 #include "RV32ISingleCycleStagesBehavioral.hpp"
-#include "modules/composite/ALU32Behavioral.hpp"
+#include "modules/composite/IntegerALUValue.hpp"
 #include "RV32IMemoryRequestModel.hpp"
 #include "components/BasicComponent.hpp"
 #include "components/Component.tpp"
-#include "modules/composite/ALU32.hpp"
-#include "modules/composite/IncrementBy4.hpp"
+#include "modules/composite/WordDatapath.hpp"
+#include "modules/composite/Incrementer.hpp"
 #include "modules/storage/RegisterBehavioral.hpp"
-#include "modules/rv32i/RegisterFile32x32Behavioral.hpp"
+#include "modules/storage/RegisterFileBehavioral.hpp"
 #include "basic/LogicValueHelpers.hpp"
 #include "modules/rv32i/RV32IComponentEncoding.hpp"
 #include "rv32i/RV32IControl.hpp"
@@ -109,7 +109,7 @@ private:
             getInputPin<32>("NEXT_PC")->getValueAsVector());
         Bits word_address(32,LogicValue::LOW);
         for(size_t i=2;i<32;++i) word_address[i-2]=pc_[i];
-        emit("PC",pc_,t,s);emit("PC_PLUS_4",incrementBy4(pc_),t,s);
+        emit("PC",pc_,t,s);emit("PC_PLUS_4",circuit::word::incrementWord(pc_,4),t,s);
         emit("PC_MISALIGNED",Bits{orGate(pc_[0],pc_[1])},t,s);
         emit("INSTRUCTION",getInputPin<32>("IMEM_READ_DATA")->getValueAsVector(),t,s);
         emit("IMEM_WORD_ADDR",word_address,t,s);emit("IMEM_READ_EN",getInputPin("ISSUE")->getValueAsVector(),t,s);
@@ -120,7 +120,7 @@ private:
         const auto d=RV32IDecoder::decode(raw.value_or(0));
         auto old=registers_;
         const auto instruction=getInputPin<32>("INSTRUCTION")->getValueAsVector();
-        rv32i::register_file::step(registers_,previous_clock_,getInputValue("RST"),getInputValue("CLK"),
+        circuit::storage::register_values::step(registers_,previous_clock_,getInputValue("RST"),getInputValue("CLK"),
             getInputValue("REGISTER_WRITE"),Bits(instruction.begin()+7,instruction.begin()+12),
             getInputPin<32>("WB_VALUE")->getValueAsVector());
         if(old!=registers_) history_[checkedTimeAdd(t,delay)]=registers_;
@@ -143,8 +143,8 @@ private:
         const auto as=value("ALU_A_SEL"),bs=value("ALU_B_SEL");
         const auto a=as==0?value("RS1_VALUE"):as==1?value("PC"):0;
         const auto b=bs==0?value("RS2_VALUE"):bs==1?value("IMM"):0;
-        const auto op=value("ALU_OP"),result=alu32Result(op,a,b),jump=value("JUMP_TYPE");
-        const bool cmp=op==ALU32Op::SUB||op==ALU32Op::SLT||op==ALU32Op::SLTU;
+        const auto op=value("ALU_OP"),result=circuit::word::integer_value::result<32>(op,a,b),jump=value("JUMP_TYPE");
+        const bool cmp=op==circuit::word::IntegerOp::SUB||op==circuit::word::IntegerOp::SLT||op==circuit::word::IntegerOp::SLTU;
         const bool eq=cmp&&a==b,lt=cmp&&int32_t(a)<int32_t(b),ltu=cmp&&a<b;
         const bool conditions[]{false,eq,!eq,lt,!lt,ltu,!ltu,false};
         emit("ALU_RESULT",result,t,s);emit("BRANCH_TAKEN",conditions[value("BRANCH_TYPE")],t,s);

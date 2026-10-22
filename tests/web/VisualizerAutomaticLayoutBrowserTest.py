@@ -18,8 +18,8 @@ screens = Path(sys.argv[2]) if len(sys.argv) > 2 else None
 if screens:
     screens.mkdir(parents=True, exist_ok=True)
 saved = deepcopy(old)
-saved["type_layouts"]["ALU8"]["color"] = [17, 34, 51, 190]
-saved["type_layouts"]["ALU8"]["children"]["CONTROL"]["rel_pos"] = [.123456, .234567]
+saved["type_layouts"]["ALU<8,extended,ripple>"]["color"] = [17, 34, 51, 190]
+saved["type_layouts"]["ALU<8,extended,ripple>"]["children"]["CONTROL"]["rel_pos"] = [.123456, .234567]
 saved["type_layouts"]["SRAMRow<16>"]["children"]["CELL_0"]["rel_pos"] = [.0314159, .271828]
 # Real pre-refresh geometry, including a two-input rewire's old proportions.
 # Exercise both shared and profile-scoped defaults; an already-current fixture
@@ -84,7 +84,7 @@ with sync_playwright() as p:
                 continue
             actual = migrated[section][name]
             for child, geometry in entry["children"].items():
-                if section == "type_layouts" and name == "ALU8" and child == "CONTROL":
+                if section == "type_layouts" and name == "ALU<8,extended,ripple>" and child == "CONTROL":
                     assert actual["children"][child]["rel_pos"] == [.123456, .234567]
                 elif child in saved[section].get(name, {}).get("children", {}):
                     assert actual["children"][child]["rel_pos"] == geometry["rel_pos"], (section,name,child)
@@ -93,7 +93,7 @@ with sync_playwright() as p:
     assert count > 100
     assert migrated["type_layouts"]["Register<32>"]["children"] == shipped["type_layouts"]["Register<32>"]["children"]
     assert migrated["root_layouts"]["rv32i-memory-lanes"]["children"] == shipped["root_layouts"]["rv32i-memory-lanes"]["children"]
-    assert migrated["type_layouts"]["ALU8"]["color"] == [17,34,51,190]
+    assert migrated["type_layouts"]["ALU<8,extended,ripple>"]["color"] == [17,34,51,190]
     assert migrated["type_layouts"]["SRAMRow<16>"] == saved["type_layouts"]["SRAMRow<16>"]
 
     def check_routing_migration():
@@ -148,7 +148,7 @@ with sync_playwright() as p:
     page.evaluate("smoothlyFocusComponent(app.rootId)")
     idle(page)
     check_routes()
-    assert page.evaluate("app.layout.type_layouts.ALU8.children.CONTROL.rel_pos") == [.123456,.234567]
+    assert page.evaluate("app.layout.type_layouts['ALU<8,extended,ripple>'].children.CONTROL.rel_pos") == [.123456,.234567]
     check_routing_migration()
     assert not errors, errors
     print(f"{count} saved type/root defaults migrated; manual edits preserved; all eight lane inputs route forward before/after reload")

@@ -75,7 +75,7 @@ Reference-only host setters can preload a register or change reset PC. They are 
 
 ## Decoded controls are not instruction opcodes
 
-`RV32IControl` produces project-local ALU selectors, operand selectors, writeback/memory controls, branch/jump kinds, and operand-use flags. It does not send `opcode=0x33` directly to `ALU32.OP`.
+`RV32IControl` produces project-local ALU selectors, operand selectors, writeback/memory controls, branch/jump kinds, and operand-use flags. It does not send `opcode=0x33` directly to `ALU<32,integer,prefix>.OP`.
 
 | Instruction class | ALU operands / operation | Register writeback | Other controls |
 | --- | --- | --- | --- |

@@ -48,11 +48,11 @@ void bindModules(py::module_& m) {
        "Provision an image before simulation; never a runtime memory write.");
     m.def("create_memory_device_component", [](const std::string& family, const std::string& kind,
             const std::string& name, const circuit::ParameterMap& parameters, const std::string& fidelity) {
-        if (family != "dram" && family != "rom" && family != "nor-flash" && family != "matrix")
-            throw std::invalid_argument("Expected dram, rom, nor-flash or matrix family");
+        if (family != "dram" && family != "rom" && family != "nor-flash" && family != "shared")
+            throw std::invalid_argument("Expected dram, rom, nor-flash or shared family");
         if (fidelity != "structural" && fidelity != "behavioral") throw std::invalid_argument("Invalid fidelity");
         const auto selected = fidelity == "structural" ? circuit::Fidelity::Structural : circuit::Fidelity::Behavioral;
-        const auto id = circuit::canonicalContractId("memory." + family + "." + kind);
+        const auto id = ("memory." + family + "." + kind);
         const auto& catalog = circuit::builtinComponentCatalog();
         const auto implementations = catalog.implementationsFor(id);
         if (std::none_of(implementations.begin(), implementations.end(), [&](const auto& impl) {
@@ -99,7 +99,7 @@ void bindModules(py::module_& m) {
         parameters["depth_words"] = std::to_string(depth);
         auto choice = fidelity == "structural" ? circuit::Fidelity::Structural : circuit::Fidelity::Behavioral;
         // Python callers pass the layer first ("endpoint", "scalable", "controller", "device").
-        circuit::ComponentBuildRequest request{circuit::canonicalContractId("memory." + kind + "." + model + "." + std::to_string(width)),name,parameters,{},{},{}};
+        circuit::ComponentBuildRequest request{("memory." + model + "." + (kind=="scalable"?"scalable-endpoint":kind) + "." + std::to_string(width)),name,parameters,{},{},{}};
         const auto& catalog = circuit::builtinComponentCatalog();
         const auto implementations = catalog.implementationsFor(request.contract_id);
         if (std::none_of(implementations.begin(), implementations.end(), [&](const auto& i) { return i.fidelity == choice && i.supports(parameters); }))

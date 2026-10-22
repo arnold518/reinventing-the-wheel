@@ -8,11 +8,11 @@
 #include "components/selection/BuiltinComponentCatalog.hpp"
 #include "components/selection/ComponentCatalog.hpp"
 #include "components/selection/StandardProfiles.hpp"
-#include "modules/composite/ALU32.hpp"
+#include "modules/composite/WordDatapath.hpp"
 #include "modules/composite/HalfAdder.hpp"
 #include "modules/memory/FlipFlopCell.hpp"
 #include "modules/storage/Register.hpp"
-#include "modules/rv32i/RegisterFile32x32.hpp"
+#include "modules/storage/RegisterFile.hpp"
 #include "modules/rv32i/RV32IBuildProfiles.hpp"
 #include "modules/rv32i/RV32ISingleCycleSystem.hpp"
 #include "basic/Wire.hpp"
@@ -414,20 +414,20 @@ void BuiltinComponentCatalogInventoryTest::verifyResults() {
         "NORFlashStorageBank<8>", "NORFlashStorageBank<16>", "NORFlashStorageBank<32>",
         "NORFlashCommandControl<8>", "NORFlashCommandControl<16>", "NORFlashCommandControl<32>",
         "NORFlash<8>", "NORFlash<16>", "NORFlash<32>",
-        "ALU32", "ALU32Core", "ALU8", "ANDGate", "AddSub32", "Adder32",
-        "Adder8", "AddSub8", "ArithmeticUnit8", "LogicUnit8",
-        "BarrelShifter8", "CompareSelect8", "ALU8FlagUnit",
+        "ALU<32,integer,prefix>", "ALU<32,integer,prefix,core>", "ALU<8,extended,ripple>", "ANDGate", "AddSub<32,integer,prefix>", "Adder<32,prefix>",
+        "Adder<8,ripple>", "AddSub<8,ripple>", "ArithmeticUnit<8,ripple>", "LogicUnit<8>",
+        "BarrelShifter<8>", "CompareSelect<8>", "ALUFlagUnit<8>",
         "Register<32>", "RegisterFile32x32",
         "BitJoiner", "BitSplitter",
         "ClockGenerator", "ClockedStateBit", "ConstantValue",
-        "DFlipFlop", "Decoder5to32",
+        "DFlipFlop", "Decoder<5>",
         "FullAdder",
-        "GatedDLatch", "HalfAdder", "Logic32",
+        "GatedDLatch", "HalfAdder", "LogicUnit<32,integer>",
         "FlipFlopCell",
-        "Mux2to1", "Mux2to1_32bit", "Mux2to1_4bit",
-        "Mux32to1", "Mux32to1_32bit", "Mux4to1",
-        "Mux4to1_32bit", "Mux8to1", "Mux8to1_32bit",
-        "Mux8to1_8bit", "NANDGate", "NORGate",
+        "Mux<2,1>", "Mux<2,32>", "Mux<2,4>",
+        "Mux<32,1>", "Mux<32,32>", "Mux<4,1>",
+        "Mux<4,32>", "Mux<8,1>", "Mux<8,32>",
+        "Mux<8,8>", "NANDGate", "NORGate",
         "NOTGate", "ORGate", "RV32IBitPatternMatcher",
         "RV32IDecodeControlUnit",
         "RV32IExecutionControlStatusUnit", "RV32ISingleCycleCore",
@@ -449,11 +449,11 @@ void BuiltinComponentCatalogInventoryTest::verifyResults() {
         "RV32IFetchStage", "RV32IDecodeStage", "RV32IExecuteStage",
         "RV32IMemoryStage", "RV32IWritebackStage",
         "Rewire", "SRLatch",
-        "Shifter32",
+        "BarrelShifter<32,integer>",
         "XORGate",
-        "ZeroDetect32", "ZeroDetect8",
-        "ALU8ControlDecoder", "ALU8ResultSelector", "ALU32ControlDecoder",
-        "ALU32CompareUnit", "ALU32ResultSelector", "ALU32FlagUnit"
+        "ZeroDetect<32>", "ZeroDetect<8>",
+        "ALUControlDecoder<extended>", "ALUResultSelector<8>", "ALUControlDecoder<integer>",
+        "CompareSelect<32,integer>", "ALUResultSelector<32,integer>", "ALUFlagUnit<32,integer>"
     };
 
     for (const auto width : {"8", "16", "32"}) {
@@ -471,10 +471,39 @@ void BuiltinComponentCatalogInventoryTest::verifyResults() {
     for (const auto width : {"1", "2", "3", "4", "5", "8", "16", "32"})
         expected_types.insert(std::string("Register<") + width + ">");
     for(const auto* type:{"MultiplyStep<4>","MultiplyStep<32>","DivideStep<4>","DivideStep<32>",
-        "Multiplier32","Divider32","MulDivUnit32","RV32IMDecodeControlUnit","RV32IMDecodeStage","RV32IMExecuteStage",
-        "RV32IMPipelineCoordinator","RV32IMFiveStageCore","DeviceRegisterPort32","BusErrorTarget32","AddressRouter32",
-        "InstructionAccessGuard32","ClockedCounter<4>","ClockedCounter<32>","SynchronousFifo<8>","SynchronousFifo<32>",
-        "ConsoleDevice32","TimerDevice32","ButtonDevice32","IndexedPixelSelector32","FramebufferDisplay32","RV32IMDeviceSystem"})expected_types.insert(type);
+        "Multiplier<32>","Divider<32>","MulDivUnit<32>","RV32IMDecodeControlUnit","RV32IMDecodeStage","RV32IMExecuteStage",
+        "RV32IMPipelineCoordinator","RV32IMFiveStageCore","DeviceRegisterPort<32>","BusErrorTarget<32>","AddressRouter<32>",
+        "InstructionAccessGuard<32>","ClockedCounter<4>","ClockedCounter<32>","SynchronousFifo<8>","SynchronousFifo<32>",
+        "ConsoleDevice","TimerDevice","ButtonDevice","IndexedPixelSelector<32>","FramebufferDisplay","RV32IMDeviceSystem"})expected_types.insert(type);
+    // Public parameterized contracts, independently enumerated by their schema.
+    for(const std::string w:{"8","16","32"}){
+        for(const std::string t:{"ripple","prefix"}){
+            if(!(w=="8"&&t=="ripple"))expected_types.insert("ALU<"+w+",extended,"+t+">");
+            if(!(w=="32"&&t=="prefix"))for(const std::string flags:{"",",core"})expected_types.insert("ALU<"+w+",integer,"+t+flags+">");
+            for(const std::string unit:{"ArithmeticUnit","AddSub","Adder"}){
+                if((w=="8"&&t=="ripple")||(unit=="Adder"&&w=="32"&&t=="prefix"))continue;
+                expected_types.insert(unit+"<"+w+","+t+">");
+            }
+            if(!(w=="32"&&t=="prefix"))expected_types.insert("AddSub<"+w+",integer,"+t+">");
+        }
+        for(const std::string unit:{"LogicUnit","BarrelShifter","CompareSelect","ALUFlagUnit","ALUResultSelector"}){
+            if(w!="8")expected_types.insert(unit+"<"+w+">");
+            if(w!="32")expected_types.insert(unit+"<"+w+",integer>");
+        }
+        for(const std::string count:{"2","4","8","16","32"})for(bool zero:{false,true}){
+            if(w=="32"&&count=="32"&&zero)continue;
+            expected_types.insert("RegisterFile<"+w+","+count+(zero?",zero>":",writable-zero>"));
+        }
+        if(w=="32")continue;
+        for(const std::string unit:{"DeviceRegisterPort","BusErrorTarget","AddressRouter","InstructionAccessGuard","IndexedPixelSelector"})expected_types.insert(unit+"<"+w+">");
+        expected_types.insert("MultiplyStep<"+w+">");expected_types.insert("DivideStep<"+w+">");expected_types.insert("ClockedCounter<"+w+">");
+    }
+    expected_types.insert("ZeroDetect<16>");expected_types.insert("SynchronousFifo<16>");
+    for(const std::string w:{"4","8","16"})for(const std::string unit:{"Multiplier","Divider","MulDivUnit"})expected_types.insert(unit+"<"+w+">");
+    for(const std::string w:{"1","4","8","16","32"})for(const std::string n:{"2","4","8","16","32"})
+        expected_types.insert("Mux<"+n+","+w+">");
+    for(size_t bits=1;bits<=5;++bits)for(bool suppress:{false,true})
+        expected_types.insert("Decoder<"+std::to_string(bits)+(suppress?",zero-disabled>":">"));
     for (const auto& type : expected_types)
         require(registered_types.count(type) != 0,
                 "Built-in catalog is missing production module TypeName: " + type);
@@ -495,7 +524,7 @@ void RecursiveBuildProfileTest::verifyResults() {
         rv32i::architectureStructuralProfile(
             *catalog, "rv32i-architecture-profile-test");
     const std::set<std::string> behavioral_memory_contracts{
-        std::string(circuit::families::RegisterFile32x32.id()),
+        std::string(circuit::storage::registerFile(32,32).id()),
         std::string(circuit::families::registerWord(32).id()),
         std::string(circuit::families::FlipFlopCell.id()),
     };
@@ -514,7 +543,9 @@ void RecursiveBuildProfileTest::verifyResults() {
                     == circuit::Fidelity::Behavioral,
                 "RV32I architecture profile did not compact memory "
                 "contract " + contract.id);
-        } else if (contract.id.starts_with("rv32i.")) {
+        } else if (contract.id.starts_with("rv32i.") ||
+                   (contract.id.starts_with("word.") && contract.id.find(".32.integer")!=std::string::npos) ||
+                   contract.id=="word.control.integer") {
             ++rv32i_contracts;
             require(
                 *decision.fidelity
@@ -607,7 +638,7 @@ void RecursiveBuildProfileTest::verifyResults() {
                     UseOnlyAvailableAndRecordException)
             .build();
     const auto mixed_alu = catalog->createRoot(
-        circuit::families::ALU32.request("alu"),
+        circuit::word::family(circuit::word::Unit::ALU,32,{circuit::word::Operations::IntegerDatapath,circuit::word::AdderTopology::ParallelPrefix,true}).request("alu"),
         std::move(mixed_profile));
     require(
         mixed_alu.root->getSelectedFidelity() == "structural",

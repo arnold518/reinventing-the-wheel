@@ -7,14 +7,10 @@
 #include "components/selection/BuildManifest.hpp"
 #include "components/selection/BuiltinComponentCatalog.hpp"
 #include "components/selection/StandardProfiles.hpp"
-#include "modules/composite/ALU32.hpp"
-#include "modules/composite/AddSub32.hpp"
-#include "modules/composite/Logic32.hpp"
-#include "modules/composite/Shifter32.hpp"
-#include "modules/composite/ZeroDetect32.hpp"
+#include "modules/composite/WordDatapath.hpp"
 #include "modules/memory/FlipFlopCell.hpp"
 #include "modules/storage/Register.hpp"
-#include "modules/rv32i/RegisterFile32x32.hpp"
+#include "modules/storage/RegisterFile.hpp"
 #include "modules/rv32i/RV32IBuildProfiles.hpp"
 #include "modules/rv32i/RV32IDecodeControlUnit.hpp"
 #include "modules/rv32i/RV32IExecutionControlStatusUnit.hpp"
@@ -460,7 +456,7 @@ profileToggleAuditCases() {
          "R-type and I-type decode"},
         {&circuit::families::RV32IExecutionStatus, 9,
          "illegal-instruction trap state"},
-        {&circuit::families::RegisterFile32x32, 7,
+        {&circuit::storage::registerFile(32,32), 7,
          "Fibonacci register dependencies"},
         {&circuit::families::RV32IMemoryAlignmentUnit, 3,
          "instruction and data address alignment"},
@@ -472,7 +468,7 @@ profileToggleAuditCases() {
          "register and program-counter bit cells"},
         {&circuit::families::FlipFlopCell, 9,
          "halt and trap-status bit cells"},
-        {&circuit::families::ALU32Core, 2,
+        {&circuit::word::family(circuit::word::Unit::ALU,32,{circuit::word::Operations::IntegerDatapath,circuit::word::AdderTopology::ParallelPrefix,false}), 2,
          "complete ALU operation coverage"},
     };
     return cases;

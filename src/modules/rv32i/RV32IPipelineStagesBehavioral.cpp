@@ -1,13 +1,13 @@
 #include "modules/rv32i/RV32IPipelineStages.hpp"
-#include "modules/composite/ALU32Behavioral.hpp"
+#include "modules/composite/IntegerALUValue.hpp"
 #include "basic/LogicValueHelpers.hpp"
 
 #include "components/ComponentBuilder.hpp"
 #include "components/ComponentBuilder.tpp"
-#include "modules/composite/ALU32.hpp"
-#include "modules/composite/IncrementBy4.hpp"
+#include "modules/composite/WordDatapath.hpp"
+#include "modules/composite/Incrementer.hpp"
 #include "modules/storage/RegisterBehavioral.hpp"
-#include "modules/rv32i/RegisterFile32x32Behavioral.hpp"
+#include "modules/storage/RegisterFileBehavioral.hpp"
 #include "modules/rv32i/RV32IPipelineEncoding.hpp"
 #include "RV32IPipelineStagesInternal.hpp"
 #include "RV32IPipelineRules.hpp"
@@ -83,7 +83,7 @@ public:
         const Bits zero(32, LogicValue::LOW);
         const Bits redirect = getInputPin<32>("REDIRECT_PC")->getValueAsVector();
         registerStep(pc_, previous_clk_, getInputValue("RST"), getInputValue("CLK"), getInputValue("PC_WRITE"),
-                     external_next_pc_ ? redirect : select(incrementBy4(pc_), redirect, getInputValue("PC_REDIRECT")));
+                     external_next_pc_ ? redirect : select(circuit::word::incrementWord(pc_,4), redirect, getInputValue("PC_REDIRECT")));
 
         const auto valid = getInputValue("FETCH_VALID");
         Bits status(32, LogicValue::LOW);
@@ -125,7 +125,7 @@ public:
 
     void evaluate(SimulationTime time, Simulator& simulator) override {
         const auto before = registers_;
-        rv32i::register_file::step(
+        circuit::storage::register_values::step(
             registers_, previous_clk_, getInputValue("RST"), getInputValue("CLK"), getInputValue("WB_REGISTER_WRITE"),
             getInputPin<5>("WB_RD")->getValueAsVector(), getInputPin<32>("WB_VALUE")->getValueAsVector());
         if (registers_ != before) record(time);

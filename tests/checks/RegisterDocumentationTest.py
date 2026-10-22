@@ -42,7 +42,7 @@ retired = re.compile(r"\b(?:MemoryBit|Register32|Register32Behavioral|MemoryPayl
                      r"LegacyMemoryContainer|MemoryArraySlice|MemoryArray|MemoryWord|"
                      r"MemoryStorageBank|Memory64Kx32|Memory32x32|Memory4x32|"
                      r"MemoryBusAdapter32|FlipFlopArrayModel|SRAMArrayModel|"
-                     r"ALU8V2|RV32ICore|RV32ISystem|BehavioralRV32ICore)\b")
+                     r"ALU<8,extended,ripple>V2|RV32ICore|RV32ISystem|BehavioralRV32ICore)\b")
 pages = [p for p in (ROOT / "site-docs").rglob("*") if p.suffix in {".md", ".html", ".svg"}]
 pages += [ROOT / "README.md", ROOT / "mkdocs.yml"]
 for page in pages:

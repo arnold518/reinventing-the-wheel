@@ -7,7 +7,7 @@
 #include "components/selection/StandardProfiles.hpp"
 #include "modules/basic/Gate.hpp"
 #include "modules/basic/DFlipFlop.hpp"
-#include "modules/rv32i/RegisterFile32x32.hpp"
+#include "modules/storage/RegisterFile.hpp"
 #include "modules/utility/Rewire.hpp"
 #include <iostream>
 #include <limits>
@@ -41,7 +41,7 @@ int main() {
         mb.addNewWire("chain",rw->getOutputPin("X"),{rw->getInputPin("B")});
         check(CircuitTimingAnalyzer::settling(mapped).valid,"Independent Rewire arcs must not create a loop");
         auto rf=circuit::builtinComponentCatalog().createRoot(
-            circuit::families::RegisterFile32x32.request("RF"),circuit::strictAllBehavioral()).root;
+            circuit::storage::registerFile(32,32).request("RF"),circuit::strictAllBehavioral()).root;
         SettlingOptions reads;reads.sources=SettlingSources::InputsOnly;reads.fixed_inputs["RST"]=0;
         const auto r=CircuitTimingAnalyzer::settling(rf,reads);
         size_t read_arcs=0;

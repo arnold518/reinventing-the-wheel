@@ -1,6 +1,8 @@
 # Device I/O components
 
-These components use the existing 32-bit memory request/response protocol.
+Transport components support 8-, 16- and 32-bit data through the common
+memory request/response protocol. The game platform and peripheral register
+banks use its 32-bit MMIO ABI.
 They support predetermined external pin events and retain responses under
 backpressure. The [RV32IM device system](../rv32im/device-system.md) connects
 them to a CPU and separate memories; the [recorded runner](../rv32im/recorded-games.md)
@@ -9,8 +11,9 @@ a later mode.
 
 ## Address map
 
-The [data router](address-router.md) has these fixed windows. All child
-addresses are local offsets. RAM is the only destination intended to lead to
+The [data router](address-router.md) has these default windows. Each region is an aligned, non-overlapping power-of-two range. Standalone
+router parameters declare the base and size; the platform/guest ABI uses the
+map below. Child addresses are local offsets. RAM is the only destination intended to lead to
 caches; device/video traffic uses its separate destination ports. Place the
 [instruction guard](instruction-guard.md) before instruction-side memory so
 speculative fetches cannot reach a device.
@@ -32,14 +35,14 @@ such as `0x20000000` into local offset `0`; the high base does not allocate
 
 ## Components
 
-- Bus: [AddressRouter32](address-router.md), [BusErrorTarget32](error-target.md),
-  [InstructionAccessGuard32](instruction-guard.md),
-  [DeviceRegisterPort32](register-port.md).
+- Bus: [`AddressRouter<W>`](address-router.md), [`BusErrorTarget<W>`](error-target.md),
+  [`InstructionAccessGuard<W>`](instruction-guard.md),
+  [`DeviceRegisterPort<W>`](register-port.md).
 - State: [ClockedCounter](counter.md), [SynchronousFifo](fifo.md).
-- Devices: [ConsoleDevice32](console.md), [TimerDevice32](timer.md),
-  [ButtonDevice32](buttons.md).
-- Display: [IndexedPixelSelector32](pixel-selector.md),
-  [FramebufferDisplay32](framebuffer.md).
+- Devices: [ConsoleDevice](console.md), [TimerDevice](timer.md),
+  [ButtonDevice](buttons.md).
+- Display: [`IndexedPixelSelector<W>`](pixel-selector.md),
+  [FramebufferDisplay](framebuffer.md).
 
 ## Shared protocol
 
@@ -78,9 +81,9 @@ The native binding uses the same catalog and parameter validation as C++:
 
 ```python
 screen = circuit_backend.create_device_component(
-    "device.framebuffer.32", "DISPLAY", {"width": "128", "height": "96"})
+    "device.framebuffer", "DISPLAY", {"width": "128", "height": "96"})
 keys = circuit_backend.create_device_component(
-    "device.buttons.32", "KEYBOARD", {"fifo_depth": "7"})
+    "device.buttons", "KEYBOARD", {"fifo_depth": "7"})
 ```
 
 Parameter values are decimal strings, as in cache declarations. `fidelity`

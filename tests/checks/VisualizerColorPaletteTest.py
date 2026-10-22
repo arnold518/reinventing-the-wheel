@@ -34,13 +34,15 @@ def main() -> None:
 
     # Related components keep a nearby hue.
     assert circular_hue_distance(
-        color_for_layout_type("Mux2to1"),
-        color_for_layout_type("Mux8to1"),
+        color_for_layout_type("Mux<2,1>"),
+        color_for_layout_type("Mux<8,1>"),
     ) < 0.08
-    assert circular_hue_distance(
-        color_for_layout_type("HalfAdder"),
-        color_for_layout_type("Adder32"),
-    ) < 0.08
+    for width in (8, 16, 32):
+        for topology in ("ripple", "prefix"):
+            assert circular_hue_distance(
+                color_for_layout_type("HalfAdder"),
+                color_for_layout_type(f"Adder<{width},{topology}>"),
+            ) < 0.08
     assert circular_hue_distance(
         color_for_layout_type("SRLatch"),
         color_for_layout_type("DFlipFlop"),
@@ -49,21 +51,21 @@ def main() -> None:
     # Structural parent-child pairs must not collapse to the same fill.
     for parent, child in (
         ("FullAdder", "HalfAdder"),
-        ("Mux8to1", "Mux2to1"),
+        ("Mux<8,1>", "Mux<2,1>"),
         ("Register<32>", "FlipFlopCell"),
-        ("RegisterFile32x32", "RegisterFileStorageBank"),
-        ("RegisterFileStorageBank", "Register<32>"),
+        ("RegisterFile32x32", "RegisterFileStorageBank<32,31>"),
+        ("RegisterFileStorageBank<32,31>", "Register<32>"),
         ("FFMemory8", "FlipFlopCell"),
         ("FFStorageBank<8,4>", "FFWord<8>"),
         ("SRAM8", "GatedDLatch"),
         ("RV32IFiveStageCore", "RV32IExecuteStage"),
         ("RV32IMFiveStageCore", "RV32IMExecuteStage"),
-        ("RV32IMExecuteStage", "MulDivUnit32"),
-        ("MulDivUnit32", "Multiplier32"),
-        ("MulDivUnit32", "Divider32"),
+        ("RV32IMExecuteStage", "MulDivUnit<32>"),
+        ("MulDivUnit<32>", "Multiplier<32>"),
+        ("MulDivUnit<32>", "Divider<32>"),
         ("RV32IMDeviceSystem", "RV32IMFiveStageCore"),
-        ("TimerDevice32", "ClockedCounter<32>"),
-        ("FramebufferDisplay32", "IndexedPixelSelector32"),
+        ("TimerDevice", "ClockedCounter<32>"),
+        ("FramebufferDisplay", "IndexedPixelSelector<32>"),
     ):
         assert effective_color(parent) != effective_color(child)
 
@@ -96,7 +98,7 @@ def main() -> None:
             assert color_for_layout_type(f"{family}{width}") == color_for_layout_type(f"{family}8")
             assert color_for_layout_type(f"{family}{width}") != list(DEFAULT_COMPONENT_COLOR)
     # Layout-only specializations retain their hardware family's color.
-    for family, suffix in (("Decoder5to32", "<x0-unused>"),
+    for family, suffix in (("Decoder<5>", ""), ("Decoder<5,zero-disabled>", ""),
                            *((f"RV32I{stage}PipelineRegister", "<compact>")
                              for stage in ("IFID", "IDEX", "EXMEM", "MEMWB")),
                            ("RV32IMemoryLanes", "DataOnly"),
@@ -115,5 +117,5 @@ def main() -> None:
 if __name__ == "__main__":
     main()
 
-for kind in ("AddressRouter32", "FramebufferDisplay32"):
+for kind in ("AddressRouter<32>", "FramebufferDisplay"):
     assert color_for_layout_type(kind+"[config-test]") == color_for_layout_type(kind)

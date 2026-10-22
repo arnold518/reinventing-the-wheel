@@ -19,9 +19,10 @@ RecordedGuestFixture recordedGuestFixture(std::string_view name){
     }
     throw std::invalid_argument("Unknown recorded guest: "+std::string(name));
 }
-std::string runRecordedGuestFixtureJson(const std::string& name,bool caches,bool dram,size_t max_cycles,std::function<void(uint64_t,uint64_t,uint64_t)> progress,size_t quantum_events,bool expanded_core,bool compact_children){
+std::string runRecordedGuestFixtureJson(const std::string& name,bool caches,bool dram,size_t max_cycles,std::function<void(uint64_t,uint64_t,uint64_t)> progress,size_t quantum_events,bool expanded_core,bool compact_children,size_t width,size_t height){
     if (!circuit::timing::unitTiming()) throw std::invalid_argument("Recorded fixtures use the unit timing profile");
     auto f=recordedGuestFixture(name);f.options.machine.caches=caches;f.options.machine.dram=dram;f.options.max_cycles=max_cycles;f.options.progress=std::move(progress);
+    f.options.machine.width=width;f.options.machine.height=height;
     f.options.quantum_events=quantum_events;f.options.expanded_core=expanded_core;f.options.compact_children=compact_children;
     const auto result=runRecordedGuest(f.elf,f.input,f.options);auto json=recordedGuestJson(result);
     json.insert(1,"\"guest\":\""+f.name+"\",\"elfSha256\":\""+f.elf_sha256+"\",\"scriptSha256\":\""+f.script_sha256+"\",");return json;

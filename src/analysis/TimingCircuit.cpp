@@ -18,7 +18,7 @@
 #include "modules/memory/SRAM.hpp"
 #include "modules/memory/SRAMCellTiming.hpp"
 #include "modules/memory/MemoryTimingParts.hpp"
-#include "../modules/rv32i/RegisterFile32x32Behavioral.hpp"
+#include "../modules/storage/RegisterFileBehavioral.hpp"
 #include <algorithm>
 #include <set>
 #include <stdexcept>
@@ -289,7 +289,7 @@ std::optional<ClockComponentContract> builtinClockContract(const IOComponent& c)
     // master/slave DFF is NOT given an invented one-tick register contract.
     const bool reg = typeid(c) == typeid(RegisterBehavioral) || typeid(c) == typeid(FlipFlopCellBehavioral)
         || typeid(c) == typeid(ClockedStateBitBehavioral);
-    const bool rf = typeid(c) == typeid(RegisterFile32x32Behavioral);
+    const bool rf = typeid(c) == typeid(circuit::storage::RegisterFileBehavioral);
     if (reg || rf) {
         m.evidence = "simulator-direct-FF-storage-v1; reset held LOW after initialization";
         m.clock_pin = "CLK"; m.fixed_inputs["RST"] = 0;

@@ -2,8 +2,8 @@
   "schema": 1,
   "tests": [
     {
-      "name": "ALU32WasmParityTest",
-      "file": "ALU32WasmParityTest.mjs",
+      "name": "IntegerALUWasmParityTest",
+      "file": "IntegerALUWasmParityTest.mjs",
       "kind": "parity",
       "args": [
         "{js}",
@@ -14,8 +14,8 @@
       "timeout": 1800
     },
     {
-      "name": "ALU8WasmParityTest",
-      "file": "ALU8WasmParityTest.mjs",
+      "name": "ExtendedALUWasmParityTest",
+      "file": "ExtendedALUWasmParityTest.mjs",
       "kind": "parity",
       "args": [
         "{js}",
@@ -419,14 +419,14 @@
       "timeout": 120
     },
     {
-      "name": "ALU8WasmRuntimeSmoke",
+      "name": "ALU<8,extended,ripple>WasmRuntimeSmoke",
       "file": "VisualizerWasmRuntimeTest.mjs",
       "kind": "runtime",
       "args": [
         "{js}",
         "{wasm}",
-        "ALU8Test",
-        "alu8"
+        "ALUExtendedWidth8Test",
+        "alu-extended-ripple-w8"
       ],
       "suites": [
         "smoke"
@@ -491,6 +491,16 @@
       ],
       "suites": [],
       "timeout": 14400
+    },
+    {
+      "name": "RecordedCircuitBrowserTest",
+      "file": "RecordedCircuitBrowserTest.py",
+      "kind": "browser",
+      "args": [
+        "{simulator}"
+      ],
+      "suites": [],
+      "timeout": 180
     },
     {
       "name": "RecordedGameViewerBrowserTest",

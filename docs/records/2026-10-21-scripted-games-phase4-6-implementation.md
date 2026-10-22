@@ -1,24 +1,36 @@
 # Scripted device platform and games implementation
 
 Started: 2026-10-21. Status: open.
-Code state: checkpoint `8c90c1f`, integrating `alpha` at `0d498c7` in the isolated `rv32im-phase3` checkout.
+Code state: main alpha at `88c0a95`, with accepted component replacement in the
+working tree; game acceptance remains open.
 
 ## Summary
 
-The CPU/device system, bounded batch runtime, ten reproducible fixtures and
-recording viewer are staged in the isolated worktree. The preceding binary
-completed 535/543 capped checks; all ten exact host C game comparisons pass.
-Subsequent inventory/fixture/palette/profile/topology/layout follow-ups and
-the focused delay-floor rerun pass. The large SRAM retry stops safely for
-insufficient host memory. General geometry/queue parameters, display and
-keyboard observers, Python declarations and shared JS helpers pass focused
-checks; all 363 scenario layouts pass with old values preserved. All three
-timing profiles verify 808 entries with 754 legacy entries unchanged each.
-The final portable foundation/system refresh, 22 native/WASM device
-comparisons and exact time transport pass. Strict focused site packaging
-passes with retained legacy exports. Revised-game repetitions/fidelity/quantum/
-performance, compiled-game WASM comparisons and full browser acceptance remain. Phase 6 is open; phase 7 is authorized
-after its gates and has not started.
+The integrated CPU/device system, bounded batch runtime, five games, ten
+fixtures and recording viewer are present on main alpha. Phase 6 is open.
+The owner now authorized width generalization and completion of the remaining
+acceptance work, using only necessary checks and bounded serial resources.
+The [complete component replacement](2026-10-22-general-component-retirement.md)
+now accepts the current generic builders, references and focused component
+checks. Earlier campaign receipts still describe their own source/binary
+snapshots; they do not complete the remaining game campaign.
+
+The preceding width snapshot passed 555 selected native registrations and
+72 new width/timing cases, WASM width execution, 15 portable checks and strict
+packaging of all 158 example groups. Its native/WASM timing snapshots match.
+The preceding frozen-model campaign stopped after seven passing runs: four
+bring-up and three 2048 configurations. Expanded-core 2048 exhausted its
+event budget. Those receipts are preserved. Remaining game comparisons,
+game WASM parity, full browser acceptance and final performance evidence
+remain required before closing phase 6. Phase 7 remains unimplemented.
+
+The owner has confirmed that the required game experience is in the original
+circuit visualizer, with display/keyboard and other device abstractions on
+the actual system components. That integration now works for a native Pong
+rally: 18 checkpoints replay in the original canvas with device state and
+retained pin/wire values. This path passes its exact host reference, six
+focused native checks, three JS checks and the live 8893 browser check.
+Full phase-6 acceptance remains open; implementation evidence is below.
 
 ## 2026-10-21 — Scope and execution plan
 
@@ -969,3 +981,467 @@ now includes the newer visualizer commits. Do not start the long revised-game
 campaign during this wrap or label phase 6 complete. Integration checks and
 primary-work preservation are recorded in the [wrap record](2026-10-22-rv32im-milestone-wrap-and-integration.md).
 Phase 7 remains unimplemented.
+
+## 2026-10-22 — Generalization and acceptance resumed on main alpha
+
+Work is in the sole main alpha checkout. Preserved native and WASM build
+outputs were moved from the ordinary archive into `build-milestone` and
+`build-wasm-milestone` without copying or deleting evidence. Their CMake source
+and binary paths are retargeted to main alpha; the native build keeps Python
+deployment off. Earlier paths remain historical evidence only.
+
+The shared word work is recorded in
+[component width generalization](2026-10-22-width-component-audit.md). Guest
+drawing now queries display metadata and aligns word stores to the actual row
+address. All ten fixtures rebuilt with pinned GCC 12.4 and passed the final
+RV32IM-only instruction audit. Host rendering checks and circuit runs remain
+pending. The CLI and WASM gain an additive custom-surface path for compiled
+97x65 bring-up parity; default game geometry is unchanged.
+
+Native builds are serial under the existing 768 MiB address-space/headroom
+guard. Mechanical extraction errors were corrected during compilation; no
+successful final build or test result is inferred yet. Cache-layout comparison
+now releases its native session before spawning the portable comparison,
+retaining the same assertions while reducing overlap.
+
+### Current-source native checkpoint
+
+The word/geometry panel passes 10 checks; the related regression panel has
+104 initial passes plus a successful bounded-heap retry of its one Node
+address-space failure. Integrated M/system clock checks, old register/ALU
+fidelity, all device scenarios, cached FF/DRAM, wide/unsigned virtual time,
+large display and the legacy cache-layout check pass. See the linked width
+record for exact resource/check evidence. SRAM retries and remaining
+current-source game/WASM/browser/package scopes are still in progress; phase
+6 is not yet accepted.
+
+### Remaining native resource gates resolved
+
+The large SRAM subarray, clocked subarray and contract checks now pass in
+89.04 s at 764,540 KiB peak RSS, under a 1,536 MiB address-space cap and the
+unchanged 512 MiB host-headroom stop. The final stronger width panel passes
+all ten checks in 11.07 s at 50,036 KiB. All 18 affected legacy timing tables
+are recomputed under each of Unit, Embedded and Desktop: 54 comparisons,
+zero differences. No timing-table file needs a numeric change.
+
+The API audit preserves all 175 names/signatures/docs in the pre-milestone
+snapshot and retains all five later additions; current total 183 includes
+`create_alu`, `device_view_kind` and `supports_register_view`. The earlier
+180-name checkpoint is a preservation report rather than a full signature
+snapshot, so the five later signatures are not claimed independently compared.
+
+The new ALU16 layout contributes 23 entries through an insertion-only merge;
+old entry values and original formatting are retained. Full static validation
+passes with zero problems in 367 scenarios at 288,088 KiB peak RSS. Current
+WASM/site regeneration is underway, using one fresh process per requested
+example group to avoid retaining earlier WASM heaps. Game/WASM/browser
+acceptance remains pending; phase 6 is still open.
+
+### Final acceptance selection and resource policy
+
+The current native inventory has 570 registered checks. The completed width,
+dependency and SRAM panels account for 118 distinct checks. The remaining
+selection contains 437 checks, plus 15 compiled-game registrations whose
+execution/reference assertions are covered by the stronger ten-guest campaign
+(repeat, quantum and expanded-core comparisons as well as the baseline).
+These counts describe the selection, not completed results.
+
+Keep the existing native regression gate. Reuse each accepted native baseline
+for WASM and browser comparison only after checking source, binary, fixture,
+recording and frame hashes. This avoids repeating native game execution in
+three different harnesses. Native simulations, compilation and browsers run
+serially. Node uses a bounded heap without a virtual-address cap; native
+checks retain bounded address space except tests that already install their
+own larger bound. The host guard stops only this task's descendants if
+available memory drops below 512 MiB. Current-source success evidence and
+unrun/failure lists will replace these pending counts when complete.
+
+### Current WASM package and width execution pass
+
+The guarded serial `tools/build-pages.sh build-wasm-milestone` run completes
+in 24:36.66 with 596,608 KiB peak RSS and exit zero. It regenerates all 158
+example groups in separate processes, including `alu-word16`, then builds
+the documentation strictly in 40.07 seconds. The auxiliary verification,
+recorded-guest and delay-snapshot targets build serially in 14.38 seconds,
+314,992 KiB peak RSS. No host OOM occurs.
+
+`WidthComponentsTest` also passes in WASM. Complete deterministic snapshots
+contain 808 stored tables per timing profile, across unit/embedded/desktop;
+native and WASM bytes are identical (2,171,241 bytes), retaining SHA-256
+`b0c61d9e7aa62175cfa56f8654b5a95d89e1ac551e88a358dc767a7825ead98f`.
+This snapshot comparison does not recompute all tables from gates; the 54
+affected-table recomputations are recorded separately above.
+
+The new packaged WASM SHA-256 is
+`5d60d97e8860d28de72cea4f1ffd7dccf5a0e7b75780ca968677fec83292d15b`;
+the native guest runner is
+`73964cf413031a0bcef749be0baa881b6f5144d409d152b5cdd65598a4043557`.
+Logs and comparison receipts are under `build-milestone/acceptance-width/`.
+Cross-platform component checks are running next. Game/browser/live-preview
+acceptance and the remaining native regression selection are still pending.
+
+### Fifteen portable component and compatibility checks pass
+
+The selected web runner completes 15/15 checks in 455.07 seconds, with
+528,788 KiB peak RSS for the guarded invocation. Coverage includes old
+ALU8/ALU32 topologies/states/fidelity paths; FF/native-device and all 20
+transaction-endpoint comparisons; memory inspection, registers and SRAM;
+baseline/advanced/memory RV32I scenarios; all 367 scenario descriptors;
+the 22 RV32IM/device scenarios; and exact wide-time execution/rewind.
+`VisualizerScenarioWasmParityTest` now also compares ALU16's complete
+topology, examples, states and backward scrubbing. The separate full width
+semantic test passes in WASM in 21.30 seconds, 258,572 KiB peak RSS.
+
+Receipts are `acceptance-width/web-components/results.json`, its individual
+logs, and `wasm-width-semantics.log` under the isolated native build. No game
+WASM comparison or browser result is inferred from these component checks.
+The remaining 437 native registrations are next, before source freezing for
+the expensive ten-guest repeat/quantum/fidelity campaign.
+
+### Complete Unit timing verification passes
+
+The first full timing-profile verification passes in 621.74 seconds under
+the 768 MiB address-space cap. All 808 Unit entries are recomputed from the
+circuits and match the stored file, including the no-gate-list inventory.
+Embedded and Desktop verification are still running/pending in the same
+serial native regression selection. This is a circuit recomputation, beyond
+the earlier stored native/WASM snapshot comparison.
+
+The component guide now documents `RegisterStateView` and `DeviceView`,
+including geometry metadata, existing observer pin/state contracts, legacy
+fallbacks and the read-only recorded-time boundary. Browser acceptance also
+includes the new word-component page/ALU16 recording, bringing that page
+panel to 23 cases; its execution remains pending.
+
+### Complete three-profile timing verification passes
+
+Embedded passes in 614.10 seconds and Desktop in 616.44 seconds. Together
+with Unit, all 808 stored entries per profile (2,424 entries total) are
+recomputed from the circuits and unchanged, and the no-gate-list inventory
+matches. These runs preserve the source tables; no regeneration edit or
+extra rebuild is needed. The serial native selection continues with the
+old memory/simulator/core/documentation/playback checks.
+
+The game WASM parity driver can now optionally retain each successfully
+compared recording and a hash receipt through
+`CIRCUITSIM_WASM_GUEST_RECORDINGS`. The acceptance run will use this to
+publish measured WASM update/capture costs alongside native costs, without
+running the same game again for benchmarking. The option is unused by
+default. Its syntax check passes; actual export/parity execution is pending.
+
+### Full delay-rule gate passes
+
+The normal registered `DelayRuleTest` passes in 1,253.04 seconds, followed
+by `DelayRuleSelectionTest` (0.08 seconds). The strict-settling variant is
+running next. Current host headroom has improved, but the same serial
+execution, address-space caps and host guard remain in use.
+
+An additional check is staged in the existing standalone
+`ArithmeticTimingOptimizationTest`: 72 adder/ALU cases across widths,
+operation contracts, flag configurations, topologies and three profiles.
+It requires valid conservative four-state settling graphs and checks that
+the requested topology changes the actual prefix-level structure. Build and
+execution wait for the active regression pass; no product/library source is
+changed by this test addition. Do not infer its pass from the older binary.
+
+### Resource evidence scope
+
+The recorded success/limit outcomes and peak RSS describe this task's
+guarded commands. No OOM kill has been observed for those commands. The
+unprivileged account cannot read the system kernel journal, so whole-host
+OOM events across unrelated work have not been independently audited. This
+qualifies the earlier "no host OOM" wording; it is not a system-wide kernel
+audit. The host guard retains a 512 MiB available-memory floor and only
+terminates this task's identified descendants.
+
+### Legacy comparison identity and strict diagnostic limits
+
+`DelayRuleStrictSettlingTest` completes in 1,231.72 seconds. Its CLI option
+sets report-only mode, so its successful exit is diagnostic coverage rather
+than a zero-difference assertion. It reports 1,836 gate-only output moves,
+507 outputs settling sooner in a parent of compact parts, and (after an
+earlier X/Z) 836 opposite-value observations and 120,719 cases where only the
+compact form shows 0/1. Preserve these observations as fidelity limits.
+
+The normal comparison covers 160 parts and 175,031 situations. All 160
+numeric per-part rows are identical to the saved pre-generalization
+`native-full-capped.xml` baseline, including the 127,339 internal changes
+within each part's table, 466/169,277 earlier parent settlements, seven
+opposite-value observations and 120,598 compact-known observations after X/Z.
+The earlier normal invocation failed only its subsequently corrected floor
+metadata; no old normal pass is reconstructed. The archived strict stdout
+was truncated, so identical strict counts are not claimed.
+
+The baseline XML SHA-256 is
+`5acd46557107fdbdfe27f3b307e673adfe3529453fe53b8924f5c4c8c5d630bd`.
+Full current outputs and `delay-rule-baseline-comparison.json` are retained
+under `build-milestone/acceptance-width/`. Functional/protocol equivalence and
+zero setup violations at supported game clocks remain separate acceptance
+checks. These diagnostics do not establish arbitrary-transient waveform
+identity or physical hold-time certification.
+
+### Old cache, memory, core and compiled bring-up checks advance
+
+The current serial native pass clears `CacheReadTest` (377.66 seconds),
+`CacheControllerLockstepTest` (274.35 seconds), old memory-device/endpoint
+contracts, primitive/storage checks, all three original core building-block
+paths and their program/prediction sweeps. The integrated evidence-budget
+test passes in 44.46 seconds; the newly rebuilt compiled bring-up passes its
+console/frame assertions in 117.97 seconds. This direct test does not export
+the immutable baseline required by the later game comparison campaign.
+
+At this checkpoint 418/421 checks in the capped batch pass; its final static
+layout/timing-profile/partition checks and the 16 separately bounded Node or
+self-capped checks remain. Current model/source freshness is recorded in
+`pre-campaign-source-manifest.json`, with no include/src file newer than the
+guest runner. Its canonical model-manifest SHA-256 is
+`f988d6e3fae05ea9c9861b4cc96357fc03b000cd7a727ba27a31f0135f2d4ee7`.
+The queued game pipeline checks that map and the unchanged guest binary
+before beginning its expensive captures.
+
+### Capped native batch completes
+
+All 421 selected registrations pass in 6,906.27 seconds (1:55:06 wall time),
+605,760 KiB peak RSS. Full details are preserved as
+`acceptance-width/native-capped-details.log` before the next CTest batch
+reuses its temporary logs. Together with the earlier 118 distinct checks,
+539 registrations have current passing results. The remaining 16 Node or
+self-capped CLI checks run next without the outer address-space limit and
+with a 256 MiB Node heap. This checkpoint still excludes the queued new
+72-case timing addition, game campaign and browser acceptance.
+
+### All 555 direct native registrations and new width timing pass
+
+The final 16 checks pass in 528.49 seconds, 553,192 KiB peak RSS. The union
+with the earlier 118 and capped 421 contains 555 distinct passing native
+registrations; `native-555-passed.json` retains their names. The other 15
+game registrations remain covered by the pending stronger recording campaign.
+
+The focused rebuild of `ArithmeticTimingOptimizationTest` succeeds. Its
+updated invocation passes in 25.65 seconds, 41,476 KiB peak RSS, including
+all 72 new timing cases. Unit-profile adder settling bounds are:
+
+| Width | Ripple ticks | Prefix ticks | Prefix levels |
+| --- | ---: | ---: | ---: |
+| 8 | 18 | 13 | 3 |
+| 16 | 34 | 16 | 4 |
+| 32 | 66 | 19 | 5 |
+
+These are conservative four-state settling bounds, not exact minimum delays,
+physical clock rates or hold proofs. All three profiles, ALU semantics,
+full/core flag configurations and topology structure checks are retained in
+`word-timing-results.json` and the verbose log. The rebuild changes only the
+standalone test binary. The model source map and guest runner still match
+the regression freshness receipt. The first native recording baseline has
+now started; no game campaign acceptance or performance result is claimed yet.
+
+### Bring-up recording comparisons and progress report
+
+The current-source bring-up baseline, repeat and event-quantum-97 runs pass
+their exact host references and deterministic comparison: each completes
+38,811 cycles and 11,533 retired instructions, with two presentations and
+two changed frames, zero setup violations and 16,630,416 processed events.
+Execution times are 137.36, 135.04 and 137.59 seconds respectively. These are
+three of the planned 40 native recording runs, not three accepted games.
+The expanded-core bring-up is running; the remaining native games, larger
+compiled surface, game WASM comparisons and browser checks are queued
+serially. The campaign retains its 768 MiB native address-space cap and
+512 MiB host-availability stop. Phase 6 remains open, and phase 7 has not
+started. Status and the width record now reflect the completed 555-check
+native regression scope without presenting the pending acceptance as done.
+
+### Native 2048 output and restored visual preview
+
+The owner asked which game runs had completed and to see their output.
+Bring-up now passes baseline/repeat/quantum-97/expanded-core: the expanded
+case completes the same 38,811 cycles in 396.1382 seconds. The first current
+2048 baseline completes 169,601 cycles / 42,973 retirements in 619.7863 seconds,
+with four presentations, four changed frames, zero setup violations and
+85,821,195 processed events. An explicit saved-recording invocation of
+`RV32IMGameReferenceTest.py` passes all four exact frames, stable reports and
+no-lost-input checks. Its repeat/quantum/expanded comparisons remain pending.
+
+Exported the accepted baseline bytes and one-second-per-frame GIF previews
+under `site-docs/assets/rv32im/recordings/`, linked from the public recorded-
+games reference. The five exported files include both JSON recordings and
+a manifest with binary, fixture, source-manifest, recording and frame hashes.
+Both source maps retain digest
+`f988d6e3fae05ea9c9861b4cc96357fc03b000cd7a727ba27a31f0135f2d4ee7`.
+The 2048 recording SHA-256 is
+`fd0b7e4b42043361591722836f612d266f6c220f3b1cc0f9850cafa1efb37d51`.
+The GIFs decode the actual RGB332 pixels using the viewer's bit expansion;
+their replay spacing is independent of measured simulation time.
+
+The live 8893 service was active but HTTP requests timed out: its strict
+rebuild had failed against the old generated example bundle after ALU16 was
+added. This corrects the earlier assumption that the last successful preview
+remained responsive. Stopped only that preview service and held this task's
+campaign scheduler while its timed 2048 guest continued to completion. No
+other job was interrupted. Staged and hash-verified all 27 files from the
+already-built current package, preserving the earlier package under
+`build-wasm/preview-width-current/simulator-before`.
+
+The strict preview preflight passes in 55.94 seconds / 178,652 KiB peak RSS.
+After restarting the existing capped service, five documentation routes return
+200; all 27 simulator files and five export files match their expected hashes
+(removing only the known live-reload injection from the two HTML files).
+The live viewer loads the actual bring-up/2048 files, compares every RGBA pixel
+of all six frames, displays keyboard summaries and reports no page errors.
+Screenshots were inspected. Receipts are under
+`build-wasm/preview-width-current/` and
+`build-milestone/acceptance-width/progress-visuals/`. This is saved-file replay
+coverage; no additional WASM guest or live input run is inferred. The existing
+serial campaign scheduler is resumed, the native live module is untouched,
+and the full phase-6/game/browser gates remain open.
+
+### Original circuit visualizer acceptance correction
+
+The owner clarified that watching a game means using the original circuit
+visualizer with abstracted display/input/device components. The separate
+`games.html` recording page and GIF exports are useful evidence, but the prior
+visual acceptance scope was incomplete. This correction adds the missing
+original-viewer integration to phase 6; it must not be deferred to phase 7.
+
+The original canvas already draws device abstractions and inspector previews.
+Its device-system scenario does not load/run a game ELF. Conversely, the batch
+game runner disables full histories and exports frames independently of
+`VisualizerSession`. Required acceptance is scripted game selection/playback
+in the original viewer, with the CPU/router/memory/device topology from the
+same execution and synchronized display, keyboard and other device state.
+Retain normal component selection, available hierarchy/detail and old playback.
+Bound captures and retained circuit detail to avoid OOM; unrecorded intermediate
+states must remain explicitly unavailable. Native/WASM/browser checks must
+cover this integrated path. Phase 7 subsequently connects live host input to
+the same original-viewer device components.
+
+This clarification changes records and acceptance criteria only. The frozen
+model/binaries and ongoing serial native game campaign remain unchanged;
+completed CPU/device/reference comparisons remain useful. The existing
+standalone-viewer tests cannot certify the missing original-viewer integration.
+
+### Original visualizer integration implementation underway
+
+The owner requested showing a game through the original visualizer now.
+The old frozen-model campaign had already stopped: seven native recording
+runs passed (four bring-up, three 2048); expanded-core 2048 exhausted the
+500,000,000-event budget after 159,744 cycles and four presentations.
+This was a failed run, not acceptance or an OOM. No owned game process was
+running at the new implementation start. Preserve those receipts; they
+concern the preceding binary, and no later game/WASM/browser pipeline step ran.
+
+Added an optional read-only presentation observer to the existing checked
+guest runtime and a borrowed-circuit export path in `VisualizerSession`.
+It serializes the real topology, current indexed pin/wire values and current
+device/register observations at settled PRESENT boundaries. Device observation
+can explicitly read current state without enabling history. Old history-based
+queries retain their existing behavior. The exporter bounds retained JSON to
+24 MiB/64 checkpoints and asserts that observation changes neither event
+counts, pending event time nor current simulated time. Uncaptured memory-page
+inspection remains explicitly unavailable.
+
+The original page has an additive captured-circuit transport and presentation-
+checkpoint status. Its existing canvas, device abstraction renderer, inspector,
+explorer and timeline remain the UI. No second CPU is constructed for replay.
+The new native target builds serially in 54.83 seconds, 267,136 KiB peak RSS,
+with deployment off. A real scripted Pong rally capture is now running under
+the same 768 MiB address-space/512 MiB headroom guard. Frontend, capture,
+reference and browser checks are not yet claimed; the original-viewer link
+will be published only after its actual recording has passed them.
+
+### Original-canvas Pong delivered and checked
+
+The current native capture completes 115,686 cycles / 29,005 retirements,
+18 presentations and 18 changed frames, with zero setup violations.
+Execution is 341.4513 seconds; the guarded process takes 347.85 seconds and
+149,704 KiB peak RSS. The actual topology contains 6,426 components, 17,688
+pins and 8,070 wires. Retained topology/checkpoint JSON is 10,835,282 bytes,
+with history disabled. All 18 observer non-mutation assertions and post-run
+source/binary hashes match. The independent host reference passes every
+exact screen, stable report and no-lost-input/ISA/device assertion.
+
+The probe SHA-256 is
+`322d20e6436b060ab17789f5000ddb67273d87f54a8bd6db04ee67912eff68e3`;
+the scoped source-manifest digest is
+`f5a405782b22744fe534a0a8e6f589fa1a17aa0b4a83b9e846aed105f82500d1`.
+Raw native circuit JSON SHA-256:
+`4c97459b840c02feacd27846f3533605f03f12416d50d9a22c9681f2b4516b42`.
+Packaging adds a layout reference without changing the captured values. The
+served packet is 10,970,249 bytes, SHA-256
+`f9caba3cca752c72ee01b043d39e7f6a59ad06493ef0f3d6fa04699fce45777f`.
+Its 780,816-byte layout has SHA-256
+`5429bbccb028df6ca891101a3b084a00dd3949188f53ebe149bee1f9113153bc`.
+The tracked export includes binary/source/ELF/script/frame/package receipts.
+
+The first browser attempt failed on missing root/configured-display layouts.
+Compatible inheritance and editable fallbacks fix this without changing the
+global layout. Three later attempts stopped safely through the guard below
+512 MiB host availability; they are failed/resource-stopped checks, not passes.
+Full wiring, the global layout store and duplicate test transfers were costly.
+The final mode uses original progressive scopes, the small layout sidecar,
+a layout-declared 12-pixel detail threshold and test-vector hashes. Normal
+scenarios retain their 1-pixel default; deeper detail loads on zoom/selection.
+The successful browser test bounds the driver heap to 128 MiB and renderer JS
+heap to 256 MiB. No other process was interrupted or memory limit relaxed.
+
+The final live 8893 browser test passes in 20.00 seconds (time-reported maximum
+RSS 182,572 KiB, not aggregate subtree RSS). It compares all 18 actual pin/wire
+vectors by SHA-256 and exact display/input state, then checks the original
+inspector, backward seek, Play and Device views off/on. No page errors or
+WASM simulation-module request occur. Screenshots were inspected. The page
+opens its real display inspector initially. URL:
+`/simulator/?recording=../assets/rv32im/circuits/pong-rally.json`.
+
+Six native checks pass in 84.28 seconds, 244,488 KiB peak RSS: DeviceInspector,
+SimulationTime, integrated device system, input validation, evidence budgets
+and VisualizerSession contract. The final three-check JS panel passes in
+0.80 seconds, including topology, device views and captured-transport
+contracts/layout/scopes/wide-time/normal-HTTP checks. Registry coverage passes;
+web inventory discovers the new browser test. Strict preview preflight passes
+in 43.55 seconds, 180,300 KiB. Later strict service rebuilds cover the final
+frontend/package. All 28 simulator and four circuit-export files match live
+hashes; the original page and documentation routes return 200.
+
+Evidence: `acceptance-width/original-viewer-capture/`, native/JS/browser logs,
+`original-viewer-browser/`, and `build-wasm/preview-original-game/`.
+Contract: [recorded circuit checkpoints](../reference/recorded-circuit-checkpoints.md).
+This supersedes the missing-integration assessment for Pong. The old campaign
+remains stopped at its expanded-game budget failure; full game coverage,
+WASM capture production/parity and final phase-6 acceptance remain open.
+Phase 7/live input is unimplemented. The native live extension is untouched;
+main alpha/single Git checkout remain, without commit or push.
+
+
+## 2026-10-22 — Component replacement acceptance and fresh Pong
+
+The complete component-retirement record accepts the generic ALU/word,
+mux/decoder/register-file, M-unit and bus/pixel implementations, exact IDs,
+profiles/layouts, Python/WASM APIs, timing artifacts and public references.
+It records current focused native/API/reference/catalog checks, all 158
+WASM example groups, three regenerated 809-entry timing profiles, complete
+unit-file verification and six portable/browser registrations.
+
+Fresh native Pong completes 115,686 cycles, 29,005 instructions and 18 exact
+reference screens, with zero setup violations. Every retained pin/wire vector
+and simulated checkpoint time matches the previous actual capture. Execution
+is 613.0546424 seconds at this build/host state, versus 341.4513218 previously;
+event counters are identical. This is not a controlled throughput comparison.
+Current source/binary/frame/package receipts replace the old public capture.
+
+The matching local browser package passes all 18 Pong snapshots, display and
+keyboard observations, original inspector, rewind, Play and Device views.
+It also passes all 22 device/M recorded portable scenarios, all 23 component
+pages and the selected generic ALU/display/button browser sessions. Local
+8893 serves the matching assets and current ALU references; remote deployment
+is not checked. Screenshot review confirms readable ALU functional groups and
+Pong in its display/inspector. The machine overview remains crowded by its
+many wiring helpers; broader game visual acceptance should review that framing.
+
+The old seven-pass campaign and expanded-2048 budget failure remain historical
+evidence. Other compiled-game/native-WASM/expanded comparisons and final
+performance acceptance remain required for full phase 6. No interactive
+session/frontier or live input is implemented by component retirement.
+
+The same final binary additionally passes the short 128x96/97x65 CPU geometry/
+high-video-address/PRESENT check in 23.55 seconds. Direct current API checks
+include 320x200. Compiled larger game workloads remain a separate acceptance
+item; this does not mark full phase 6 complete.

@@ -88,10 +88,21 @@ core and fully structural logic around scalable native memory.
 use the same embedded ELF/input bytes as the portable batch probe. They turn
 off circuit/memory histories and keep immutable frames separately. The small
 `RV32IMDeviceSystemScenarioTest` is the recorded circuit example; its alias is
-`rv32im-device-system`. Game recordings use the additive `games.html` viewer.
+`rv32im-device-system`. `RecordedCircuitProbe <guest> <new-output.json>`
+exports the actual game topology and bounded PRESENT checkpoints for the
+original circuit viewer's `?recording=URL` mode. `games.html` remains available
+for frame-only JSON files. The circuit capture observes current device state
+without enabling histories; only retained checkpoints have pin/wire and device
+observations. It does not offer intermediate gate transitions or RAM pages.
+
+`RecordedCircuitTransportTest` covers the captured topology/state contract,
+wide times, limits, mismatched frames and unsupported actions.
+`RecordedCircuitBrowserTest` uses the real packaged Pong circuit capture in
+the original canvas and checks every retained pin/wire, display/input state,
+inspector, abstraction toggle and timeline playback without a simulation worker.
 
 `RecordedGuestProbe <guest> [ff|cached-ff|cached-dram] [max-cycles]
-[quantum-events] [compact|expanded-core|structural]` exports JSON;
+[quantum-events] [compact|expanded-core|structural] [width] [height]` exports JSON;
 `tools/rv32im/run-recorded.py` saves it in a fresh directory with provenance
 and resource evidence.
 `RV32IMGameReferenceTest.py` compares compiled guest reports/pixels with strict
@@ -105,6 +116,13 @@ run. They preserve JSON, RSS, progress and provenance under
 publishes `<build>/recorded-guest-native/<guest>.json` pointing to that artifact.
 Existing artifacts are retained. Reference-only and `--recording` comparisons
 do not execute another native guest.
+
+`tools/rv32im/accept-recorded.py --runner PATH --output DIR` runs each of
+the ten fixtures in compact baseline/repeat, compact quantum-97 and expanded
+core configurations. It compares exact host references and deterministic
+results, then saves performance/provenance summaries. Resuming requires the
+same source, binary and fixtures. Use `--guest NAME` for a focused selection;
+report that selection rather than claiming the full campaign.
 
 ### Timing profiles
 
@@ -132,12 +150,13 @@ The phase 3 sweep checks are headless; `*ScenarioTest` aliases in
 `src/tests/RV32IMPhase3Scenarios.cpp` retain smaller viewer examples and share
 the same logical owners. See the [foundation reference](../reference/rv32im-device-foundation.md).
 `RV32IMDeviceWasmParityTest` compares all 22 recorded component examples with
-the native probe. `RV32IMDeviceBrowserTest` checks their public pages, mobile
-bounds and the corresponding WASM checkpoint values. Run them through
+the native probe. `RV32IMDeviceBrowserTest` checks those public pages plus the
+word-component page/ALU16 recording: 23 pages, mobile bounds and corresponding
+WASM checkpoint values. Run them through
 `tools/run-web-tests.py --test NAME` against the chosen isolated artifacts;
 neither check runs an integrated game or a live input session.
 For a bounded browser run, `CIRCUITSIM_BROWSER_SCENARIO_FILTER` selects
-recorded sessions by scenario-alias regular expression. All 22 public pages
+recorded sessions by scenario-alias regular expression. All 23 public pages
 are still checked; report the selected session count separately. The default
 runs every session. `CIRCUITSIM_DEVICE_SCENARIO_FILTER` similarly bounds the
 Node device parity check, which still requires all 22 source example
@@ -226,16 +245,49 @@ native binary, fixture manifest, recording bytes, frame hashes and baseline
 configuration before reusing each native result. A mismatch fails the check.
 Without this variable the check executes all native guests before loading WASM.
 
+`CIRCUITSIM_LARGE_NATIVE_RECORDING` may point to a `run-recorded.py` bring-up
+directory created with `--width 97 --height 65`. The parity driver compares
+that odd-width compiled run too; without the variable it captures the native
+case before loading WASM. `CIRCUITSIM_WASM_GUEST_RECORDINGS` optionally saves
+each successfully compared WASM record and hash receipt to a fresh directory.
+Existing exports are never overwritten. This retains timing/capture data for
+the acceptance report without another simulated game run.
+
+### Width components
+
+The component references in `site-docs/alu/2.1.md` through `2.6.md` specify
+the extended contract with recorded configurations at several widths. The
+primary ALU recording is 16-bit with parallel-prefix addition. `2.7.md` owns the
+reusable integer components and their 32-bit examples;
+`site-docs/rv32i/4.3/alu.md` specifies the CPU's core-interface configuration.
+`DocumentationExamplesTest` checks the extended examples and their preserved
+anchors. `RV32IBuildingBlocksDocumentationTest` checks the integer and CPU
+references together, including pin schemas and exact C++ reference replay.
+`RV32ISingleCycleDocumentationTest` reads the integer references before the
+stage examples that call them. These checks use the existing native probe and
+do not require a core or game campaign.
+
+`WidthComponentsTest` covers both ALU operation contracts and adder topologies
+at 8/16/32 bits, mux/register-file geometries, narrow transport/pixel helpers
+and iterative M units at 4/8/16 bits. Recorded 32-bit M checks remain separate.
+The same registered semantic test can run through `circuitsim_verification.js`.
+`ALUWidth16RippleScenarioTest` supplies the public `alu-extended-ripple-w16` recording;
+`VisualizerScenarioWasmParityTest` compares its complete topology, examples,
+states and rewind with native. `GuestDisplayGeometryTest` compiles the actual
+guest drawing library for host reference IO at 64x48, 320x200 and odd/padded
+row strides. This host test is distinct from compiled CPU execution.
+
 ### Parameterized devices and visual observations
 
-`SynchronousFifoTest` checks depths 1–7 at both supported widths and compares
-structural/compact results. `FramebufferDisplay32Test` exercises larger and
+`SynchronousFifoTest` checks depths 1–7 at widths 8/32 and compares
+structural/compact results. `FramebufferDisplayTest` exercises larger and
 non-power-of-two geometry, byte addressing, capacity and padding boundaries.
 `RV32IMLargerDisplayTest` executes CPU stores and PRESENT beyond the original
 4 KiB video range at 128×96 and 97×65, with independent frame checks.
 `DeviceInspectorTest` verifies recorded pixel/input history, rewind and
 read-only observation. `VisualizerDeviceViewTest` checks four-state keys and
 RGB332 conversion, including 320×200 and padded-stride frames.
+The structural 16-bit FIFO is covered by `WidthComponentsTest`.
 
 The existing device browser/parity checks also compare observer JSON and
 exercise device-view toggling and inspector previews. Run native and WASM

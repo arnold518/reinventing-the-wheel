@@ -4,10 +4,9 @@
 #include "RV32IMemoryRequestWiring.hpp"
 #include "modules/rv32i/RV32IMemorySystem.hpp"
 #include "modules/storage/Register.hpp"
-#include "modules/rv32i/RegisterFile32x32.hpp"
-#include "modules/composite/ALU32.hpp"
-#include "modules/composite/Adder32.hpp"
-#include "modules/composite/IncrementBy4.hpp"
+#include "modules/storage/RegisterFile.hpp"
+#include "modules/composite/WordDatapath.hpp"
+#include "modules/composite/Incrementer.hpp"
 #include "modules/basic/Mux.hpp"
 #include "modules/rv32i/RV32IDecodeControlUnit.hpp"
 #include "modules/rv32i/RV32IPipelineControl.hpp"
@@ -126,7 +125,7 @@ const circuit::ComponentFamily& family(Stage s) {
 void RV32ISingleCycleFetchStage::buildInternals(ComponentBuilder& b) {
     StructuralWiring w(b);
     auto pc=b.add(circuit::families::registerWord(32),"PC_STATE");
-    auto add=b.addNewComponent<IncrementBy4>("PC_PLUS_4_ADD");
+    auto add=b.addNewComponent<Incrementer<32,4>>("PC_PLUS_4_ADD");
     auto align=b.add(circuit::families::RV32IMemoryAlignmentUnit,"ALIGNMENT");
     auto word=b.addNewComponent<ConstantValue<2>>("WORD_SIZE",2);
     auto one=w.constant("ONE",true);
@@ -164,7 +163,7 @@ void RV32ISingleCycleFetchStage::buildInternals(ComponentBuilder& b) {
 void RV32ISingleCycleDecodeStage::buildInternals(ComponentBuilder& b) {
     StructuralWiring w(b);
     auto decode=b.add(circuit::families::RV32IDecodeControl,"CONTROL");
-    registers_=b.add(circuit::families::RegisterFile32x32,"REGISTER_FILE",{}, {"register-state-view"});
+    registers_=b.add(circuit::storage::registerFile(32,32),"REGISTER_FILE",{}, {"register-state-view"});
     in(w,*this,decode,"INSTRUCTION");
     for(auto& [name,pin]:decode->getAllOutputPins()) w.connect(pin,getOutputPinDynamic(name));
     for(auto p:{"RS1_ADDR","RS2_ADDR","RD_ADDR"})
@@ -184,11 +183,10 @@ std::vector<std::vector<LogicValue>> RV32ISingleCycleDecodeStage::getRegisterSta
 
 void RV32ISingleCycleExecuteStage::buildInternals(ComponentBuilder& b) {
     StructuralWiring w(b);
-    auto alu=b.getBuildContext()
-        ? b.add(circuit::families::ALU32Core,"ALU")
-        : b.addNewComponent<ALU32>("ALU",false);
-    auto a=b.addNewComponent<Mux4to1_32bit>("OPERAND_A");
-    auto c=b.addNewComponent<Mux4to1_32bit>("OPERAND_B");
+    auto alu=b.add(circuit::families::alu(32,
+        {circuit::word::Operations::IntegerDatapath,circuit::word::AdderTopology::ParallelPrefix,false}),"ALU");
+    auto a=b.addNewComponent<Mux<4,32>>("OPERAND_A");
+    auto c=b.addNewComponent<Mux<4,32>>("OPERAND_B");
     auto zero=b.addNewComponent<ConstantValue<32>>("ZERO32",0);
     auto low=w.constant("LOW",false);
     in(w,*this,a,"RS1_VALUE","IN0");in(w,*this,a,"PC","IN1");
@@ -198,7 +196,7 @@ void RV32ISingleCycleExecuteStage::buildInternals(ComponentBuilder& b) {
     w.connect(a->getOutputPin<32>("OUT"),alu->getInputPin<32>("A"));
     w.connect(c->getOutputPin<32>("OUT"),alu->getInputPin<32>("B"));
     in(w,*this,alu,"ALU_OP","OP");out(w,*this,alu,"OUT","ALU_RESULT");
-    auto branch=b.addNewComponent<Mux8to1>("BRANCH_CONDITION");
+    auto branch=b.addNewComponent<Mux<8,1>>("BRANCH_CONDITION");
     auto eq=alu->getOutputPin("EQ"),lt=alu->getOutputPin("LT_SIGNED"),ltu=alu->getOutputPin("LT_UNSIGNED");
     auto neq=w.invert("NOT_EQ",eq),ge=w.invert("NOT_LT",lt),geu=w.invert("NOT_LTU",ltu);
     std::vector<StructuralWiring::PinPtr> conditions{low,eq,neq,lt,ge,ltu,geu,low};
@@ -206,13 +204,13 @@ void RV32ISingleCycleExecuteStage::buildInternals(ComponentBuilder& b) {
     in(w,*this,branch,"BRANCH_TYPE","SEL");out(w,*this,branch,"OUT","BRANCH_TAKEN");
     // A branch needs this addition concurrently with the ALU comparison.
     // JAL/JALR instead reuse the main ALU; no RS1+IMM adder is duplicated.
-    auto target_add=b.addNewComponent<Adder32>("BRANCH_TARGET_ADD");
+    auto target_add=b.addNewComponent<Adder<32>>("BRANCH_TARGET_ADD");
     in(w,*this,target_add,"PC","A");in(w,*this,target_add,"IMM","B");
     w.connect(low,target_add->getInputPin("Cin"));
     auto mask=b.addNewComponent<Rewire>("JALR_MASK",std::vector<Rewire::WireSpec>{{"IN",32}},
         std::vector<Rewire::WireSpec>{{"OUT",32}},identity_mapping("IN",1,31,"OUT",1),Rewire::UnmappedBitValue::LOW);
     w.connect(alu->getOutputPin<32>("OUT"),mask->getInputPin<32>("IN"));
-    auto target=b.addNewComponent<Mux4to1_32bit>("TARGET_SELECT");
+    auto target=b.addNewComponent<Mux<4,32>>("TARGET_SELECT");
     w.connect(target_add->getOutputPin<32>("Sum"),target->getInputPin<32>("IN0"));
     w.connect(alu->getOutputPin<32>("OUT"),target->getInputPin<32>("IN1"));
     w.connect(mask->getOutputPin<32>("OUT"),target->getInputPin<32>("IN2"));
@@ -260,7 +258,7 @@ void RV32ISingleCycleMemoryStage::buildInternals(ComponentBuilder& b) {
 
 void RV32ISingleCycleWritebackStage::buildInternals(ComponentBuilder& b) {
     StructuralWiring w(b);
-    auto select=b.addNewComponent<Mux4to1_32bit>("RESULT_SELECT");
+    auto select=b.addNewComponent<Mux<4,32>>("RESULT_SELECT");
     auto zero=b.addNewComponent<ConstantValue<32>>("ZERO32",0);
     w.connect(zero->getOutputPin<32>("OUT"),select->getInputPin<32>("IN0"));
     in(w,*this,select,"ALU_RESULT","IN1");in(w,*this,select,"READ_DATA","IN2");
@@ -274,7 +272,7 @@ void RV32ISingleCycleNextPCStage::buildInternals(ComponentBuilder& b) {
     in(w,*this,jump,"JUMP_TYPE","IN");
     auto jumping=w.either("JUMPING",jump->getOutputPin("OUT_0"),jump->getOutputPin("OUT_1"));
     auto taken=w.either("TAKEN",jumping,getInputPin("BRANCH_TAKEN"));
-    auto select=b.addNewComponent<Mux2to1_32bit>("NEXT_PC_SELECT");
+    auto select=b.addNewComponent<Mux<2,32>>("NEXT_PC_SELECT");
     in(w,*this,select,"PC_PLUS_4","A");in(w,*this,select,"CONTROL_TARGET","B");
     w.connect(taken,select->getInputPin("SEL"));out(w,*this,select,"OUT","NEXT_PC");
     // RV32I instruction alignment is always four bytes, unlike data accesses.

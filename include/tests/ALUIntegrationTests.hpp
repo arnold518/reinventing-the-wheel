@@ -1,18 +1,13 @@
 #pragma once
 #include "tests/TruthTableComponentTest.hpp"
-#include "modules/composite/ALU8ControlDecoder.hpp"
-#include "modules/composite/ALU8ResultSelector.hpp"
-#include "modules/composite/ALU32ControlDecoder.hpp"
-#include "modules/composite/ALU32CompareUnit.hpp"
-#include "modules/composite/ALU32ResultSelector.hpp"
-#include "modules/composite/ALU32FlagUnit.hpp"
+#include "modules/composite/WordDatapath.hpp"
 
-class ALU8ControlDecoderTest : public TruthTableComponentTest<ALU8ControlDecoder> { public: ALU8ControlDecoderTest(); };
-class ALU8ResultSelectorTest : public TruthTableComponentTest<ALU8ResultSelector> { public: ALU8ResultSelectorTest(); };
-class ALU32ControlDecoderTest : public TruthTableComponentTest<ALU32ControlDecoder> { public: ALU32ControlDecoderTest(); };
-class ALU32CompareUnitTest : public TruthTableComponentTest<ALU32CompareUnit> { public: ALU32CompareUnitTest(); };
-class ALU32ResultSelectorTest : public TruthTableComponentTest<ALU32ResultSelector> { public: ALU32ResultSelectorTest(); };
-class ALU32FlagUnitTest : public TruthTableComponentTest<ALU32FlagUnit> { public: ALU32FlagUnitTest(); };
+class ALUControlExtendedTest : public TruthTableComponentTest<ControlTestTarget<circuit::word::Operations::Extended>> { public: ALUControlExtendedTest(); };
+class ResultSelectorExtendedWidth8Test : public TruthTableComponentTest<WordTestTarget<circuit::word::Unit::Result,8,circuit::word::Operations::Extended,circuit::word::AdderTopology::Ripple>> { public: ResultSelectorExtendedWidth8Test(); };
+class ALUControlIntegerTest : public TruthTableComponentTest<ControlTestTarget<circuit::word::Operations::IntegerDatapath>> { public: ALUControlIntegerTest(); };
+class CompareIntegerWidth32Test : public TruthTableComponentTest<WordTestTarget<circuit::word::Unit::Compare,32,circuit::word::Operations::IntegerDatapath,circuit::word::AdderTopology::Ripple>> { public: CompareIntegerWidth32Test(); };
+class ResultSelectorIntegerWidth32Test : public TruthTableComponentTest<WordTestTarget<circuit::word::Unit::Result,32,circuit::word::Operations::IntegerDatapath,circuit::word::AdderTopology::Ripple>> { public: ResultSelectorIntegerWidth32Test(); };
+class FlagsIntegerWidth32Test : public TruthTableComponentTest<WordTestTarget<circuit::word::Unit::Flags,32,circuit::word::Operations::IntegerDatapath,circuit::word::AdderTopology::Ripple>> { public: FlagsIntegerWidth32Test(); };
 class ALUHierarchyTest : public StandaloneVerificationTest {
 public:
     std::string getTestName() const override { return "ALUHierarchyTest"; }

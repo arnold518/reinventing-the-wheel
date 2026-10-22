@@ -1,10 +1,11 @@
 #include "tests/TestRegistry.hpp"
 #include "tests/RV32IMPhase3Tests.hpp"
+#include "tests/WordALUTests.hpp"
 #include "tests/SimulationTimeTests.hpp"
 #include "tests/RV32IMRecordedTests.hpp"
 
 #include "tests/ArithmeticLogicTests.hpp"
-#include "tests/ALU8Tests.hpp"
+#include "tests/ExtendedALUTests.hpp"
 #include "tests/ALUIntegrationTests.hpp"
 #include "tests/CorePrimitiveTests.hpp"
 #include "tests/ComponentSelectionTests.hpp"
@@ -15,7 +16,7 @@
 #include "tests/MemoryDeviceTests.hpp"
 #include "tests/MemoryEndpointTests.hpp"
 #include "tests/CacheTests.hpp"
-#include "tests/ALU32LowerLevelSliceTests.hpp"
+#include "tests/IntegerALUTests.hpp"
 #include "tests/RV32IBlockStandaloneTests.hpp"
 #include "tests/RV32IMemoryAccessTests.hpp"
 #include "tests/RV32IControlTests.hpp"
@@ -90,8 +91,8 @@ RegisteredTestKind componentKind(
     };
     if (sequential.count(contract_id) != 0 || contract_id.starts_with("memory.ff.word.") ||
         contract_id.starts_with("storage.register.") || contract_id.starts_with("device.") ||
-        contract_id.starts_with("bus.") || contract_id == "arithmetic.multiplier.32" ||
-        contract_id == "arithmetic.divider.32" || contract_id == "rv32im.mul-div.32" ||
+        contract_id.starts_with("bus.") || contract_id == "arithmetic.iterative.multiplier.32" ||
+        contract_id == "arithmetic.iterative.divider.32" || contract_id == "arithmetic.iterative.mul-div.32" ||
         contract_id == "rv32im.pipeline.stage.decode" || contract_id == "rv32im.pipeline.stage.execute") {
         return RegisteredTestKind::Sequential;
     }
@@ -174,7 +175,7 @@ void attachNonComponentMetadata(
     classify(
         entries,
         {
-            "ALU32RepresentativeSliceTest",
+            "IntegerALUSliceTest",
             "RewireValidationTest",
             "RV32IDecoderTest",
             "RV32IControlTest",
@@ -211,7 +212,8 @@ void markVisualizable(
         "CacheTwoLevelScenarioTest",
     };
     static const std::set<std::string> headless{
-        "RegisterWidthsTest", "ClockedStateBitTest", "Decoder5to32X0UnusedTest",
+        "RegisterWidthsTest", "ClockedStateBitTest", "DecoderWidth5ZeroDisabledTest",
+        "ALUWidthContractTest", "WidthComponentsTest",
         "CacheReadTest", "CacheControllerLockstepTest", "TwoPortMemoryArbiterTest",
     };
     for (auto& entry : entries) {
@@ -346,7 +348,7 @@ const std::vector<TestRegistryEntry>& getTestRegistry() {
         entry<MemoryDeviceTimingTest>("MemoryDeviceTimingTest"),
         entry<FFMemoryContractTest>("FFMemoryContractTest"),
         entry<RegisterTest>("RegisterTest"),
-        entry<RegisterFile32x32Test>("RegisterFile32x32Test"),
+        entry<RegisterFileWidth32Count32Test>("RegisterFileWidth32Count32Test"),
         entry<RewireTest>("RewireTest"),
         entry<RewireValidationTest>("RewireValidationTest"),
         entry<BitSplitter1Test>("BitSplitter1Test"),
@@ -372,46 +374,46 @@ const std::vector<TestRegistryEntry>& getTestRegistry() {
         entry<ConstantValue32Test>("ConstantValue32Test"),
         entry<HalfAdderTest>("HalfAdderTest"),
         entry<FullAdderTest>("FullAdderTest"),
-        entry<Mux2to1Test>("Mux2to1Test"),
-        entry<Mux4to1Test>("Mux4to1Test"),
-        entry<Mux8to1Test>("Mux8to1Test"),
-        entry<Mux32to1Test>("Mux32to1Test"),
-        entry<Mux2to1_4bitTest>("Mux2to1_4bitTest"),
-        entry<Mux2to1_32bitTest>("Mux2to1_32bitTest"),
-        entry<Mux4to1_32bitTest>("Mux4to1_32bitTest"),
-        entry<Mux8to1_8bitTest>("Mux8to1_8bitTest"),
-        entry<Mux8to1_32bitTest>("Mux8to1_32bitTest"),
-        entry<Mux32to1_32bitTest>("Mux32to1_32bitTest"),
-        entry<Decoder5to32Test>("Decoder5to32Test"),
-        entry<Decoder5to32X0UnusedTest>("Decoder5to32X0UnusedTest"),
-        entry<Adder8Test>("Adder8Test"),
-        entry<ZeroDetect8Test>("ZeroDetect8Test"),
-        entry<ALU8Test>("ALU8Test"),
-        entry<AddSub8Test>("AddSub8Test"),
-        entry<ArithmeticUnit8Test>("ArithmeticUnit8Test"),
-        entry<LogicUnit8Test>("LogicUnit8Test"),
-        entry<BarrelShifter8Test>("BarrelShifter8Test"),
-        entry<CompareSelect8Test>("CompareSelect8Test"),
-        entry<ALU8FlagUnitTest>("ALU8FlagUnitTest"),
-        entry<ALU8ContractTest>("ALU8ContractTest"),
-        entry<ALU8FidelityContractTest>("ALU8FidelityContractTest"),
-        entry<ALU8ControlDecoderTest>("ALU8ControlDecoderTest"),
-        entry<ALU8ResultSelectorTest>("ALU8ResultSelectorTest"),
-        entry<ALU32ControlDecoderTest>("ALU32ControlDecoderTest"),
-        entry<ALU32CompareUnitTest>("ALU32CompareUnitTest"),
-        entry<ALU32ResultSelectorTest>("ALU32ResultSelectorTest"),
-        entry<ALU32FlagUnitTest>("ALU32FlagUnitTest"),
+        entry<Mux2Width1Test>("Mux2Width1Test"),
+        entry<Mux4Width1Test>("Mux4Width1Test"),
+        entry<Mux8Width1Test>("Mux8Width1Test"),
+        entry<Mux32Width1Test>("Mux32Width1Test"),
+        entry<Mux2Width4Test>("Mux2Width4Test"),
+        entry<Mux2Width32Test>("Mux2Width32Test"),
+        entry<Mux4Width32Test>("Mux4Width32Test"),
+        entry<Mux8Width8Test>("Mux8Width8Test"),
+        entry<Mux8Width32Test>("Mux8Width32Test"),
+        entry<Mux32Width32Test>("Mux32Width32Test"),
+        entry<DecoderWidth5Test>("DecoderWidth5Test"),
+        entry<DecoderWidth5ZeroDisabledTest>("DecoderWidth5ZeroDisabledTest"),
+        entry<AdderRippleWidth8Test>("AdderRippleWidth8Test"),
+        entry<ZeroDetectWidth8Test>("ZeroDetectWidth8Test"),
+        entry<ALUExtendedWidth8Test>("ALUExtendedWidth8Test"),
+        entry<AddSubExtendedWidth8Test>("AddSubExtendedWidth8Test"),
+        entry<ArithmeticExtendedWidth8Test>("ArithmeticExtendedWidth8Test"),
+        entry<LogicExtendedWidth8Test>("LogicExtendedWidth8Test"),
+        entry<ShiftExtendedWidth8Test>("ShiftExtendedWidth8Test"),
+        entry<CompareExtendedWidth8Test>("CompareExtendedWidth8Test"),
+        entry<FlagsExtendedWidth8Test>("FlagsExtendedWidth8Test"),
+        entry<ExtendedALUContractTest>("ExtendedALUContractTest"),
+        entry<ExtendedALUFidelityContractTest>("ExtendedALUFidelityContractTest"),
+        entry<ALUControlExtendedTest>("ALUControlExtendedTest"),
+        entry<ResultSelectorExtendedWidth8Test>("ResultSelectorExtendedWidth8Test"),
+        entry<ALUControlIntegerTest>("ALUControlIntegerTest"),
+        entry<CompareIntegerWidth32Test>("CompareIntegerWidth32Test"),
+        entry<ResultSelectorIntegerWidth32Test>("ResultSelectorIntegerWidth32Test"),
+        entry<FlagsIntegerWidth32Test>("FlagsIntegerWidth32Test"),
         entry<ALUHierarchyTest>("ALUHierarchyTest"),
-        entry<Adder32Test>("Adder32Test"),
-        entry<AddSub32Test>("AddSub32Test"),
+        entry<AdderPrefixWidth32Test>("AdderPrefixWidth32Test"),
+        entry<AddSubIntegerWidth32Test>("AddSubIntegerWidth32Test"),
         entry<RV32IMemoryLanesTest>("RV32IMemoryLanesTest"),
         entry<RV32IMemoryRequestTest>("RV32IMemoryRequestTest"),
-        entry<Logic32Test>("Logic32Test"),
-        entry<ZeroDetect32Test>("ZeroDetect32Test"),
-        entry<Shifter32Test>("Shifter32Test"),
-        entry<ALU32Test>("ALU32Test"),
-        entry<ALU32CoreTest>("ALU32CoreTest"),
-        entry<ALU32RepresentativeSliceTest>("ALU32RepresentativeSliceTest"),
+        entry<LogicIntegerWidth32Test>("LogicIntegerWidth32Test"),
+        entry<ZeroDetectWidth32Test>("ZeroDetectWidth32Test"),
+        entry<ShiftIntegerWidth32Test>("ShiftIntegerWidth32Test"),
+        entry<ALUIntegerWidth32Test>("ALUIntegerWidth32Test"),
+        entry<ALUIntegerCoreWidth32Test>("ALUIntegerCoreWidth32Test"),
+        entry<IntegerALUSliceTest>("IntegerALUSliceTest"),
         entry<RV32IDecodeControlUnitTest>("RV32IDecodeControlUnitTest"),
         entry<RV32IExecutionControlStatusUnitTest>(
             "RV32IExecutionControlStatusUnitTest"),
@@ -569,6 +571,7 @@ const std::vector<TestRegistryEntry>& getTestRegistry() {
                 {"simulation","integration","program","rv32i","pipeline","cache","memory","slow"},
                 [arrangement]{return std::make_unique<RV32IFiveStageCoreProgramTest>(21,false,std::nullopt,arrangement);},true});
         }
+        appendWordALUTests(entries);
         appendRV32IMPhase3Tests(entries);
         appendSimulationTimeTests(entries);
         appendRV32IMRecordedTests(entries);

@@ -7,7 +7,7 @@ for(const file of ['app.js','device_view.js','games.mjs','games_worker.mjs']){
   const check=spawnSync(process.execPath,['--check',resolve(__dirname,'../../visualizer-v2/static',file)],{encoding:'utf8'});
   assert.equal(check.status,0,`${file}: ${check.stderr}`);
 }
-for(const type of ['FramebufferDisplay32','ButtonDevice32','ConsoleDevice32','TimerDevice32','SynchronousFifo<8>','SynchronousFifo<32>'])assert(view.supports(type));
+for(const type of ['FramebufferDisplay','ButtonDevice','ConsoleDevice','TimerDevice','SynchronousFifo<8>','SynchronousFifo<32>'])assert(view.supports(type));
 assert(!view.supports('Register<32>'));
 assert.equal(view.number('1X01'),null);assert.equal(view.number('111'),7);
 for(const value of ['0','1','X','Z']){
@@ -54,3 +54,12 @@ for(const worker of [false,true]){
   assert(Object.hasOwn(layout.type_layouts[type].children,'SLOT_0'));
 }
 console.log('PASS: configured floorplans retain styles and avoid default child placements');
+
+assert(view.supports({type:'FutureDisplay<16>',deviceViewKind:'display'}));
+assert(view.supports('SynchronousFifo<16>'));
+assert(!view.supports({type:'FutureDisplay<16>',deviceViewKind:'unknown'}));
+const smallKeys={supported:true,kind:'keyboard',buttonCount:4,levels:'1001',count:'001',head:'0'.repeat(32),overflow:'0'};
+assert(view.validKeyboardState(smallKeys));
+assert.deepEqual(view.keyboard(smallKeys).filter(k=>k.value==='1').map(k=>k.id),[0,3]);
+assert(!view.validKeyboardState({...smallKeys,buttonCount:33}));
+console.log('PASS: device capability metadata and variable keyboard dimensions');

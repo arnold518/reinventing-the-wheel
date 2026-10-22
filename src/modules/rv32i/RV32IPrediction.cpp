@@ -9,8 +9,8 @@
 #include "modules/storage/RegisterBehavioral.hpp"
 #include "basic/LogicValueHelpers.hpp"
 #include "modules/basic/Mux.hpp"
-#include "modules/composite/Adder32.hpp"
-#include "modules/composite/IncrementBy4.hpp"
+#include "modules/composite/WordDatapath.hpp"
+#include "modules/composite/Incrementer.hpp"
 #include "modules/rv32i/RV32IBitPatternMatcher.hpp"
 #include "modules/utility/BitAdapter.hpp"
 #include "modules/utility/Rewire.hpp"
@@ -28,8 +28,8 @@ void output(StructuralWiring& w, IOComponent& s, Ptr c, const std::string& p, co
     w.connect(c->getOutputPinDynamic(p), s.getOutputPinDynamic(q.empty() ? p : q));
 }
 Signal mux(ComponentBuilder& b, StructuralWiring& w, const std::string& name, Signal a, Signal d, Signal select) {
-    Ptr c = a->getWidth() == 1 ? std::static_pointer_cast<IOComponent>(b.addNewComponent<Mux2to1>(name))
-                             : std::static_pointer_cast<IOComponent>(b.addNewComponent<Mux2to1_32bit>(name));
+    Ptr c = a->getWidth() == 1 ? std::static_pointer_cast<IOComponent>(b.addNewComponent<Mux<2,1>>(name))
+                             : std::static_pointer_cast<IOComponent>(b.addNewComponent<Mux<2,32>>(name));
     w.connect(a,c->getInputPinDynamic("A")); w.connect(d,c->getInputPinDynamic("B"));
     w.connect(select,c->getInputPin("SEL")); return c->getOutputPinDynamic("OUT");
 }
@@ -310,8 +310,8 @@ void RV32IBranchPredecode::buildInternals(ComponentBuilder& b) {
     auto zero=b.addNewComponent<ConstantValue<32>>("ZERO",0);
     auto immediate=mux(b,w,"BRANCH_IMMEDIATE",zero->getOutputPin<32>("OUT"),fields->getOutputPin<32>("B"),branch);
     immediate=mux(b,w,"JUMP_IMMEDIATE",immediate,fields->getOutputPin<32>("J"),jump);
-    auto target=b.addNewComponent<Adder32>("TARGET_ADD");
-    auto sequential=b.addNewComponent<IncrementBy4>("SEQUENTIAL_ADD");
+    auto target=b.addNewComponent<Adder<32>>("TARGET_ADD");
+    auto sequential=b.addNewComponent<Incrementer<32,4>>("SEQUENTIAL_ADD");
     input(w,*this,target,"PC","A");
     w.connect(w.constant("TARGET_CARRY",false),target->getInputPin("Cin"));
     input(w,*this,sequential,"PC","A");

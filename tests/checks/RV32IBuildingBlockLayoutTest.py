@@ -29,7 +29,7 @@ def check_stub_regressions():
         def get_type_name(self): return "UnwiredTestParent"
         def get_wires(self): return []
 
-    test = server.circuit_backend.create_test_by_name("ALU32CompareUnitTest")
+    test = server.circuit_backend.create_test_by_name("CompareIntegerWidth32Test")
     test.setup_circuit()
     zero = next(c for c in test.get_root().get_children() if c.get_name() == "ARITHMETIC_ZERO")
     children = list(zero.get_children())

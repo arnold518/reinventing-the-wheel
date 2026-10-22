@@ -146,10 +146,10 @@ simulator reaches exactly 30. The proof takes about 250,000 evaluations.
 
 | Part and output | Longest path | Proven | Seen in the simulator |
 | --- | ---: | ---: | ---: |
-| `rv32i.alu32` `EQ` | 33 | 30 | 30 |
+| `word.alu.32.integer.prefix` `EQ` | 33 | 30 | 30 |
 | `rv32i.baseline.execute` `TERMINAL` | 47 | 46 | not targeted |
-| `alu.width8` | 66 | 65 | 65 |
-| `shift.barrel.width8` | 22 | 21 | 21 |
+| `word.alu.8.extended.ripple` | 66 | 65 | 65 |
+| `word.barrelshifter.8` | 22 | 21 | 21 |
 | `rv32i.prediction.predecode` | 31 | 30 | 28 |
 | `rv32i.prediction.predictor` | 5 | 4 | 4 |
 
@@ -192,7 +192,7 @@ A `PartDelays` table is the timing of one part as seen from outside:
 The table of the 32-bit adder, as generated:
 
 ```cpp
-t.evidence = "proven on arithmetic.adder.width32.structural";
+t.evidence = "proven on word.adder.32.prefix.structural";
 t.arcs = {
     Arc{"A", "Cout", {14, 19}},   // earliest 14, latest 19
     Arc{"A", "Sum", {3, 19}},
@@ -257,7 +257,7 @@ parts are proven on top of the storage tables.
   part must not be faster than its gates then. So tables are proven for all
   four values, and are a little more careful than strictly needed for clean
   inputs.
-- **Per operation.** `rv32i.alu32`, `rv32i.alu32-core` and `alu.width8` carry
+- **Per operation.** `word.alu.32.integer.prefix`, `word.alu.32.integer.prefix.core` and `word.alu.8.extended.ripple` carry
   one set of delays per operation code. While the operation is steady, a data
   input uses that operation's delays; a change of the operation itself costs
   the output's largest delay.
@@ -810,10 +810,10 @@ build-cleanup/part_delay_tables --coverage     # which compact parts have no tab
 build-cleanup/part_delay_tables --gate-lists src/components/selection/NoGateList.generated.inc   # parts without a gate list
 
 # Measure
-build-cleanup/delay_estimate_experiment rv32i.alu32
+build-cleanup/delay_estimate_experiment word.alu.32.integer.prefix
 build-cleanup/delay_estimate_experiment --compare --four-state
-build-cleanup/tests/DelayRuleTest --report rv32i.alu32
-build-cleanup/tests/SettlingBoundTest --verbose --budget=500000 rv32i.alu32
+build-cleanup/tests/DelayRuleTest --report word.alu.32.integer.prefix
+build-cleanup/tests/SettlingBoundTest --verbose --budget=500000 word.alu.32.integer.prefix
 
 # Clocks
 build-cleanup/rv32i_experiment --core advanced --safe-clock

@@ -27,7 +27,7 @@ circuit, scrub through time, and open any part to see what it is built from.
   `desktop` use the gate delays of 65 nm and 32 nm logic and real memory
   timing, and show times in ps, ns, µs or ms. Changing it rebuilds the
   circuit. The choice is kept in the page address, so a link such as
-  `simulator/?scenario=alu8&timing=embedded` opens that scenario in that
+  `simulator/?scenario=alu-extended-ripple-w8&timing=embedded` opens that scenario in that
   profile.
 - **Explorer**: the component tree; switching a part between its structural
   and behavioral form rebuilds the circuit with that choice.

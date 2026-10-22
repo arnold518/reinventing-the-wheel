@@ -3,7 +3,6 @@
 #include "components/TimingProfile.hpp"
 #include "components/selection/ComponentCatalog.hpp"
 #include "components/selection/BuildContext.hpp"
-#include "components/BasicComponent.hpp"
 #include "components/Component.hpp"
 #include "components/IOComponent.hpp"
 #include "analysis/DelayTwin.hpp"
@@ -143,11 +142,11 @@ void ComponentCatalog::freeze() {
 bool ComponentCatalog::frozen() const { return frozen_; }
 
 bool ComponentCatalog::hasContract(const std::string& id) const {
-    return contracts_.count(canonicalContractId(id)) != 0;
+    return contracts_.count(id) != 0;
 }
 
 const ContractDescriptor& ComponentCatalog::contract(const std::string& id) const {
-    auto found = contracts_.find(canonicalContractId(id));
+    auto found = contracts_.find(id);
     if (found == contracts_.end()) {
         throw std::out_of_range("Unknown contract '" + id + "'");
     }
@@ -176,7 +175,7 @@ std::vector<ContractDescriptor> ComponentCatalog::contracts() const {
 std::vector<ImplementationDescriptor> ComponentCatalog::implementationsFor(
     const std::string& contract_id) const {
     std::vector<ImplementationDescriptor> result;
-    const auto canonical = canonicalContractId(contract_id);
+    const auto& canonical = contract_id;
     for (const auto& [id, descriptor] : implementations_) {
         (void)id;
         if (descriptor.contract_id == canonical) {
@@ -210,11 +209,6 @@ ResolvedSelection ComponentCatalog::resolve(
     const BuildProfile& profile) const {
     if (!frozen_) {
         throw std::logic_error("Component catalog must be frozen before resolution");
-    }
-    if (auto current = canonicalContractId(request.contract_id); current != request.contract_id) {
-        auto renamed = request;
-        renamed.contract_id = std::move(current);
-        return resolve(renamed, path, depth, profile);
     }
     const auto& requested_contract = contract(request.contract_id);
     const auto decision = profile.decide(path, depth, request.contract_id,
@@ -306,11 +300,6 @@ std::shared_ptr<Component> ComponentCatalog::createChild(
     const std::shared_ptr<BuildContext>& parent_context) const {
     if (!parent_context) {
         throw std::invalid_argument("Child creation requires parent BuildContext");
-    }
-    if (auto current = canonicalContractId(request.contract_id); current != request.contract_id) {
-        auto renamed = request;
-        renamed.contract_id = std::move(current);
-        return createChild(renamed, parent_context);
     }
     const auto path = parent_context->childPath(request.instance_name);
     const auto depth = parent_context->childDepth();

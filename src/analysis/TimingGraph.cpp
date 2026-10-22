@@ -6,7 +6,7 @@
 #include "modules/basic/Gate.hpp"
 #include "modules/memory/BehavioralMemoryEndpoint.hpp"
 #include "modules/utility/Rewire.hpp"
-#include "../modules/rv32i/RegisterFile32x32Behavioral.hpp"
+#include "../modules/storage/RegisterFileBehavioral.hpp"
 #include <algorithm>
 #include <optional>
 #include <set>
@@ -321,7 +321,7 @@ class Builder {
             if (std::find(m.clock_outputs.begin(), m.clock_outputs.end(), name) != m.clock_outputs.end())
                 continue;
             Hub hub;
-            hub.binary_with_inputs = leaf.builtin_rules && typeid(c) == typeid(RegisterFile32x32Behavioral);
+            hub.binary_with_inputs = leaf.builtin_rules && typeid(c) == typeid(circuit::storage::RegisterFileBehavioral);
             bool launched = false;
             for (const auto& launch : m.launches) if (launch.pin == name) {
                 launched = true;

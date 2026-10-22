@@ -19,6 +19,9 @@ struct RecordedGuestOptions {
     bool expanded_core = false;
     // Observation only, called every 4096 cycles after settled propagation.
     std::function<void(uint64_t cycles,uint64_t instructions,uint64_t presentations)> progress;
+    // Read-only observation after a checked PRESENT has settled. No history is
+    // enabled, and the observer must neither drive inputs nor advance time.
+    std::function<void(const std::shared_ptr<Component>&, const Simulator&, SimulationTime)> presentation_observer;
 };
 struct DeviceInputSnapshot { uint32_t levels=0,count=0,head=0; bool overflow=false; };
 struct DeviceReadSample { SimulationTime tick; uint32_t address, value; };

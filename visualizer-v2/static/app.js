@@ -870,7 +870,7 @@ function buildWirePaths(wire) {
 }
 
 function deviceAbstraction(component) {
-  return ui.deviceViews.getAttribute("aria-pressed") === "true" && CircuitDeviceView.supports(component.type);
+  return ui.deviceViews.getAttribute("aria-pressed") === "true" && CircuitDeviceView.supports(component);
 }
 
 ui.deviceViews.addEventListener("click", () => {
@@ -883,7 +883,9 @@ function componentCanDescend(component) {
   const projectedWidth = Math.abs(
     component.rect.w * app.camera.zoom * app.dpr,
   );
-  return projectedWidth >= COMPONENT_DESCEND_MIN_DEVICE_PX
+  const configured=Number(app.settings.topology_detail_min_pixels??COMPONENT_DESCEND_MIN_DEVICE_PX);
+  const minimum=Number.isFinite(configured)?Math.max(1,Math.min(64,configured)):COMPONENT_DESCEND_MIN_DEVICE_PX;
+  return projectedWidth >= minimum
     || app.selectionPath.has(component.id);
 }
 
@@ -2447,7 +2449,7 @@ function drawClockGeneratorContents(component, parts) {
 
 function drawRegisterFileContents(component, parts) {
   const state = app.componentStates.get(component.id);
-  if (!state || !Array.isArray(state.registers)) return;
+  if (!state || !Array.isArray(state.registers) || !state.registers.length) return;
 
   const screenRect = rectToScreenRect(parts.bodyRect);
   const clipped = clipScreenRect(screenRect, 0);
@@ -2467,8 +2469,10 @@ function drawRegisterFileContents(component, parts) {
   if (gridRect.w < 72 || gridRect.h < 54) return;
 
   const gap = Math.min(gridRect.w, gridRect.h) * 0.008;
-  const cellW = (gridRect.w - gap * (REGISTER_GRID_COLS - 1)) / REGISTER_GRID_COLS;
-  const cellH = (gridRect.h - gap * (REGISTER_GRID_ROWS - 1)) / REGISTER_GRID_ROWS;
+  const cols = Math.min(REGISTER_GRID_COLS, state.registers.length);
+  const rows = Math.ceil(state.registers.length / cols);
+  const cellW = (gridRect.w - gap * (cols - 1)) / cols;
+  const cellH = (gridRect.h - gap * (rows - 1)) / rows;
   if (cellW < 16 || cellH < 9) return;
 
   const ports = state.ports || {};
@@ -2490,9 +2494,9 @@ function drawRegisterFileContents(component, parts) {
   const valueFont = clamp(Math.min(cellW * 0.18, cellH * 0.38), 5, 13);
   const radius = Math.min(4, cellW * 0.12, cellH * 0.25);
 
-  for (let index = 0; index < 32; index += 1) {
-    const col = index % REGISTER_GRID_COLS;
-    const row = Math.floor(index / REGISTER_GRID_COLS);
+  for (let index = 0; index < state.registers.length; index += 1) {
+    const col = index % cols;
+    const row = Math.floor(index / cols);
     const cell = {
       x: gridRect.x + col * (cellW + gap),
       y: gridRect.y + row * (cellH + gap),
@@ -2880,7 +2884,7 @@ function drawComponentForeground(component, vr) {
     if (/^Register<\d+>$/.test(component.type)) {
       drawRegisterValue(component, parts);
     }
-    if (component.type === "RegisterFile32x32") {
+    if ((component.registerView || component.type === "RegisterFile32x32")) {
       drawRegisterFileContents(component, parts);
     }
     if (isMemoryArrayType(component.type)) {
@@ -3370,7 +3374,7 @@ function showComponentInspector(component) {
 
 function renderDeviceInspector(component) {
   const state = app.componentStates.get(component.id);
-  const supported = CircuitDeviceView.supports(component.type);
+  const supported = CircuitDeviceView.supports(component);
   setSectionVisible(ui.deviceSection, supported);
   if (!supported) return;
   ui.deviceSummary.textContent = CircuitDeviceView.summary(state);
@@ -4117,9 +4121,9 @@ function isMemoryArrayType(type) {
 
 function statefulOverlayComponents() {
   return app.componentOrder.filter((component) => (
-    CircuitDeviceView.supports(component.type) || (component.fidelity === "behavioral"
+    CircuitDeviceView.supports(component) || (component.fidelity === "behavioral"
     && (
-      component.type === "RegisterFile32x32"
+      (component.registerView || component.type === "RegisterFile32x32")
       || isMemoryArrayType(component.type)
     ))
   ));
@@ -4446,6 +4450,14 @@ function scheduleVisibleTopology() {
 
 function buildLocalModel(payload) {
   app.scenario = payload.scenario;
+  const recordingStatus=document.getElementById('recording-status');
+  if(recordingStatus){
+    recordingStatus.classList.toggle('hidden',!payload.recording);
+    recordingStatus.textContent=payload.recording
+      ? `${payload.recording.guest} · ${payload.recording.checkpoints} presentation checkpoints` : '';
+    recordingStatus.title='Saved circuit states at PRESENT; intermediate gate transitions are not retained.';
+  }
+  if(ui.timing)ui.timing.disabled=Boolean(payload.recording);
   app.timing = payload.timing || { name: "unit", tickPicoseconds: 0, available: ["unit"] };
   if (ui.timing) {
     ui.timing.value = app.timing.name;
@@ -4618,6 +4630,10 @@ async function loadCircuit(scenario) {
   buildLocalModel(payload);
   await nextPaint();
   await refreshComponentStates(app.currentIndex, app.stateRequestId);
+  if(payload.recording){
+    const display=app.componentOrder.find(component=>component.deviceViewKind==='display');
+    if(display){setSelection('component',display.id);frameRoot();}
+  }
   loading.classList.add("hidden");
   ui.saveStatus.textContent = "";
   document.body.dataset.circuitsimStatus = 'ready';

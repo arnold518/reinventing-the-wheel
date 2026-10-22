@@ -75,7 +75,7 @@ def migrate_component_paths(overrides: dict[str, str]) -> dict[str, str]:
         ):
             migrated[path] = fidelity
     def ff_path(path):
-        match = re.search(r"(^|\.)(REGISTER_FILE|REGISTER_FILE32X32_ROOT)\.X([1-9]|[12][0-9]|3[01])(?=\.|$)", path)
+        match = re.search(r"(^|\.)(REGISTER_FILE|REGISTER_FILE_W32_N32_ROOT)\.X([1-9]|[12][0-9]|3[01])(?=\.|$)", path)
         if not match:
             return path
         tail = path[match.end():]
@@ -120,7 +120,7 @@ def migrate_component_paths(overrides: dict[str, str]) -> dict[str, str]:
         def file_word_child(match):
             child = "BIT_" + match[5] if match[5] is not None else {"DATA": "INPUT_BITS", "OUTPUT": "OUTPUT_BITS"}[match[4]]
             return match[1] + match[2] + ".STORAGE.WORD_" + match[3] + "." + child
-        return re.sub(r"(^|\.)(REGISTER_FILE|REGISTER_FILE32X32_ROOT)\.STORAGE\.WORD_(\d+)\."
+        return re.sub(r"(^|\.)(REGISTER_FILE|REGISTER_FILE_W32_N32_ROOT)\.STORAGE\.WORD_(\d+)\."
                       r"(CELL_(\d+)|DATA|OUTPUT)(?=\.|$)", file_word_child, path)
 
     result = {current_path(path): fidelity for path, fidelity in migrated.items()}

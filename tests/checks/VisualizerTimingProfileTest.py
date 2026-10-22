@@ -29,8 +29,8 @@ def main():
 
     with tempfile.TemporaryDirectory() as directory:
         layouts = server.LayoutManager(Path(directory) / "layout.json")
-        unit = server.CircuitSession("adder8", layouts)
-        embedded = server.CircuitSession("adder8", layouts, timing="embedded")
+        unit = server.CircuitSession("adder-ripple-w8", layouts)
+        embedded = server.CircuitSession("adder-ripple-w8", layouts, timing="embedded")
         # The profile is restored after each build.
         assert circuit_backend.timing_profile() == "unit"
         assert unit.topology_response()["timing"]["name"] == "unit"
@@ -46,10 +46,10 @@ def main():
         assert circuit_backend.timing_profile() == "unit"
 
     store = server.SessionStore()
-    a = store.get("adder8", timing="unit")
-    b = store.get("adder8", timing="embedded")
+    a = store.get("adder-ripple-w8", timing="unit")
+    b = store.get("adder-ripple-w8", timing="embedded")
     assert a.session_id != b.session_id and b.timing == "embedded"
-    assert store.get("adder8", timing="embedded").session_id == b.session_id
+    assert store.get("adder-ripple-w8", timing="embedded").session_id == b.session_id
     print("visualizer timing profiles: ok")
 
 

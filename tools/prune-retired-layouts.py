@@ -4,13 +4,14 @@ when it names the retired "container" relay technology, or (for root layouts)
 when its scenario alias no longer belongs to any registered test."""
 import json, re, sys, pathlib
 root = pathlib.Path(sys.argv[1]); apply = '--apply' in sys.argv
-sys.path.insert(0, str(root / 'visualizer-v2'))
+if str(root / 'visualizer-v2') not in sys.path:
+    sys.path.append(str(root / 'visualizer-v2'))
 import circuit_backend
 from scenario_catalog import aliases_for, default_alias
 source = '\n'.join(p.read_text(errors='ignore') for d in ('src', 'include') for p in (root / d).rglob('*') if p.suffix in ('.cpp', '.hpp', '.tpp'))
 tokens = set(re.findall(r'[A-Za-z_][A-Za-z0-9_]*', source))
-registry = (root / 'src/tests/TestRegistry.cpp').read_text()
-names = [n for n in circuit_backend.get_registered_test_names() if f'"{n.split("/")[0]}"' in registry or '/' in n]
+names = [entry['name'] for entry in circuit_backend.get_registered_test_descriptors()
+         if entry['visualizable']]
 aliases = set()
 for n in names:
     aliases |= {n, n.lower(), default_alias(n), *aliases_for(n)}
@@ -19,7 +20,7 @@ for n in names:
 DERIVED_KEY_PREFIXES = ('FFArray',)
 def retired_type(t):
     if t.startswith(DERIVED_KEY_PREFIXES): return False
-    base = re.split(r'[<(]', t)[0]
+    base = re.split(r'[<(\[]', t)[0]
     return base not in tokens or '<container,' in t
 path = root / 'visualizer-v2/layout.json'
 text = path.read_text(); d = json.loads(text)

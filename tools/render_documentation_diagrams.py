@@ -535,9 +535,9 @@ def sram_device():
     return f
 
 
-def alu8_datapath():
-    f = Figure("alu8-datapath", "Inside ALU8",
-               "ALU8: the control decoder turns the opcode into local selectors; the arithmetic, logic, shifter and compare-select units compute in parallel; the result selector picks one word and the flag unit derives the flags.", 400,
+def alu_datapath():
+    f = Figure("alu-datapath", "Inside ALU<W>",
+               "ALU<W>: the control decoder turns the opcode into local selectors; the arithmetic, logic, shifter and compare-select units compute in parallel; the result selector picks one word and the flag unit derives the flags.", 400,
                "<strong>Every unit computes; one result is selected.</strong> For comparisons the arithmetic unit's subtraction feeds "
                "<code>COMPARE_SELECT</code>, so there is no second subtractor. <code>A</code> and <code>B</code> can also pass straight to the result.")
     f.box("CONTROL", 40, 40, 144, 64, "CONTROL", "OP → selectors", "store")
@@ -736,7 +736,7 @@ def figures():
                             register_file, memory_access, core_stages, core_writeback,
                             core_next_pc, core_completion, baseline_pipeline, advanced_prediction,
                             timing_profile_gates, sram_access_chain, dram_commands, transaction_handshake,
-                            sram_device, alu8_datapath, memory_latency, cache_topologies,
+                            sram_device, alu_datapath, memory_latency, cache_topologies,
                             cache_access_patterns, cache_speedup, memory_arbiter)]
 
 

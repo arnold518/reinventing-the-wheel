@@ -53,7 +53,7 @@ function migrateProfileOverrides(overrides) {
     }
   }
   const ffPath = path => path.replace(
-    /(^|\.)(REGISTER_FILE|REGISTER_FILE32X32_ROOT)\.X([1-9]|[12][0-9]|3[01])(?=\.|$)(.*)$/,
+    /(^|\.)(REGISTER_FILE|REGISTER_FILE_W32_N32_ROOT)\.X([1-9]|[12][0-9]|3[01])(?=\.|$)(.*)$/,
     (_match, dot, parent, index, tail) => `${dot}${parent}.STORAGE.WORD_${Number(index)-1}${tail
       .replace(/^\.BIT_(\d+)(?=\.|$)/, '.CELL_$1')
       .replace(/^\.D_SPLIT(?=\.|$)/, '.DATA')
@@ -83,7 +83,7 @@ function migrateProfileOverrides(overrides) {
       (_match, parent, old, bit) => `${parent}.${bit !== undefined ? 'BIT_' + bit : {DATA:'INPUT_BITS',OUTPUT:'OUTPUT_BITS',D_SPLIT:'INPUT_BITS',Q_JOIN:'OUTPUT_BITS'}[old]}`,
     )
     .replace(
-      /(^|\.)(REGISTER_FILE|REGISTER_FILE32X32_ROOT)\.STORAGE\.WORD_(\d+)\.(CELL_(\d+)|DATA|OUTPUT)(?=\.|$)/,
+      /(^|\.)(REGISTER_FILE|REGISTER_FILE_W32_N32_ROOT)\.STORAGE\.WORD_(\d+)\.(CELL_(\d+)|DATA|OUTPUT)(?=\.|$)/,
       (_match, dot, parent, word, old, bit) => `${dot}${parent}.STORAGE.WORD_${word}.${bit !== undefined ? 'BIT_' + bit : {DATA:'INPUT_BITS',OUTPUT:'OUTPUT_BITS'}[old]}`,
     );
   const result = Object.fromEntries(Object.entries(migrated).map(([path, fidelity]) => [currentPath(path), fidelity]));
@@ -292,7 +292,7 @@ async function initialize() {
 }
 
 function normalizeScenario(value) {
-  const key = String(value || "adder8").trim().toLowerCase().replaceAll("_", "-");
+  const key = String(value || "adder-ripple-w8").trim().toLowerCase().replaceAll("_", "-");
   const descriptor = scenariosByAlias.get(key);
   if (!descriptor) throw new Error(`Unknown scenario '${value}'`);
   return descriptor;
@@ -401,7 +401,7 @@ async function handleRequest(message) {
   if (message.method === "GET" && path === "/api/scenarios") {
     const fallback = scenarioOptions[0] ? scenarioOptions[0].key : "";
     return JSON.stringify({
-      default: scenariosByAlias.has("adder8") ? "adder8" : fallback,
+      default: scenariosByAlias.has("adder-ripple-w8") ? "adder-ripple-w8" : fallback,
       scenarios: scenarioOptions,
       groups: scenarioCatalog.groups,
       catalog: scenarioCatalog,
@@ -409,7 +409,7 @@ async function handleRequest(message) {
     });
   }
   if (message.method === "GET" && path === "/api/circuit") {
-    return JSON.stringify(await loadScenario(query.get("scenario") || "adder8", null, null, query.get("core_fidelity"), query.get("timing")));
+    return JSON.stringify(await loadScenario(query.get("scenario") || "adder-ripple-w8", null, null, query.get("core_fidelity"), query.get("timing")));
   }
   if (message.method === "GET" && path === "/api/state") {
     if (query.get("session") && query.get("session") !== currentPayload?.sessionId) {

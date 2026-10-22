@@ -1,8 +1,8 @@
-# ButtonDevice32
+# ButtonDevice
 
 Button levels and an explicit-pop event queue.
 
-Catalog: `device.buttons.32`. The implemented form is structural; selectable lower-level children may be compact. No new whole-component behavioral form is registered.
+Catalog: `device.buttons`. The implemented form is structural; selectable lower-level children may be compact. No whole-component behavioral form is registered.
 
 ## Parameters
 
@@ -36,7 +36,7 @@ At each rising edge with INPUT_VALID, update one of 32 button levels from INPUT_
 
 ## Internal structure
 
-DeviceRegisterPort32, a 32-bit level register and SynchronousFifo<32>. Predetermined pin transitions use the same boundary intended for later live input.
+DeviceRegisterPort<32>, a 32-bit level register and SynchronousFifo<32>. Predetermined pin transitions use the same boundary intended for later live input.
 
 ## Edge cases and integration
 
@@ -44,13 +44,13 @@ HEAD reads never pop. A press and release between guest polls remain queued. Ove
 
 ## Recorded example and checks
 
-`ButtonDevice32Test` owns the independent functional checks; `ButtonDevice32ScenarioTest` retains this smaller recorded example. Both use the same logical component owner.
+`ButtonDeviceTest` owns the independent functional checks; `ButtonDeviceScenarioTest` retains this smaller recorded example. Both use the same logical component owner.
 
-<!-- simulator-examples: button-device32 ButtonDevice32ScenarioTest -->
+<!-- simulator-examples: button-device ButtonDeviceScenarioTest -->
 
-<div class="simulator-embed"><iframe src="../../simulator/?scenario=button-device32&amp;embed=1" title="ButtonDevice32" loading="lazy" allowfullscreen></iframe></div>
+<div class="simulator-embed"><iframe src="../../simulator/?scenario=button-device&amp;embed=1" title="ButtonDevice" loading="lazy" allowfullscreen></iframe></div>
 
-<a href="../../simulator/?scenario=button-device32" class="md-button">Open the recorded circuit</a>
+<a href="../../simulator/?scenario=button-device" class="md-button">Open the recorded circuit</a>
 
 ## Visual abstraction
 

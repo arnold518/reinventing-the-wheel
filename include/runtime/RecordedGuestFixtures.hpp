@@ -14,5 +14,5 @@ std::string runRecordedGuestFixtureJson(const std::string& name, bool caches=fal
                                       bool dram=false, size_t max_cycles=500000,
                                       std::function<void(uint64_t,uint64_t,uint64_t)> progress = {},
                                       size_t quantum_events=100000, bool expanded_core=false,
-                                      bool compact_children=true);
+                                      bool compact_children=true, size_t width=64, size_t height=48);
 }

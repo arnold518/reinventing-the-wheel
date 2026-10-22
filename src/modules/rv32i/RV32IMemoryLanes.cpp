@@ -245,8 +245,8 @@ RV32IMemoryLanes::RV32IMemoryLanes(std::string name,bool with_word_address)
 void RV32IMemoryLanes::buildInternals(ComponentBuilder& b) {
     StructuralWiring w(b);
     auto address = b.addNewComponent<RV32IMemoryAddress>("ADDRESS",with_word_address_);
-    auto store = b.addNewComponent<Mux4to1_32bit>("STORE_LANES");
-    auto load = b.addNewComponent<Mux4to1_32bit>("LOAD_LANES");
+    auto store = b.addNewComponent<Mux<4,32>>("STORE_LANES");
+    auto load = b.addNewComponent<Mux<4,32>>("LOAD_LANES");
     auto extend = b.addNewComponent<RV32ILoadExtender>("LOAD_EXTEND");
     auto mask = b.addNewComponent<RV32IByteWriteMask>("WRITE_MASK");
     w.connect(getInputPin<32>("ADDR"), address->getInputPin<32>("ADDR"));

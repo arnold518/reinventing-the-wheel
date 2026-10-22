@@ -20,6 +20,10 @@ public:
         return circuit::runtime::runRecordedGuestFixtureJson(name,caches,dram,max_cycles);
     }
 
+    std::string runRecordedGuestSurfaceJson(const std::string& name,unsigned width,unsigned height,unsigned max_cycles) {
+        return circuit::runtime::runRecordedGuestFixtureJson(name,false,false,max_cycles,{},100000,false,true,width,height);
+    }
+
     std::string visualizableTestsJson() const {
         return circuit::visualizer::VisualizerSession::visualizableTestsJson();
     }
@@ -119,6 +123,7 @@ EMSCRIPTEN_BINDINGS(circuitsim_visualizer) {
     emscripten::class_<WasmVisualizer>("WasmVisualizer")
         .constructor<>()
         .function("runRecordedGuestJson", &WasmVisualizer::runRecordedGuestJson)
+        .function("runRecordedGuestSurfaceJson", &WasmVisualizer::runRecordedGuestSurfaceJson)
         .function("visualizableTestsJson", &WasmVisualizer::visualizableTestsJson)
         .function("clearProfileOverrides", &WasmVisualizer::clearProfileOverrides)
         .function("setProfileOverride", &WasmVisualizer::setProfileOverride)

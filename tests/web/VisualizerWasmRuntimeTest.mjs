@@ -8,8 +8,8 @@ if (process.argv.length < 4) {
 }
 
 const [modulePath, wasmPath] = process.argv.slice(2, 4);
-const registeredTest = process.argv[4] || "Adder8Test";
-const scenario = process.argv[5] || "adder8";
+const registeredTest = process.argv[4] || "AdderRippleWidth8Test";
+const scenario = process.argv[5] || "adder-ripple-w8";
 const wasmBinary = await readFile(wasmPath);
 const imported = await import(pathToFileURL(modulePath));
 
@@ -20,7 +20,7 @@ const bridge = new module.WasmVisualizer();
 
 try {
   const descriptors = JSON.parse(bridge.visualizableTestsJson());
-  assert(descriptors.some((item) => item.name === "Adder8Test" && item.visualizable));
+  assert(descriptors.some((item) => item.name === "AdderRippleWidth8Test" && item.visualizable));
 
   const buildStarted = performance.now();
   const payload = JSON.parse(bridge.loadScenario(registeredTest, scenario, 0));

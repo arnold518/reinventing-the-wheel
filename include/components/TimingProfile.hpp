@@ -3,7 +3,6 @@
 #include "simulator/SimulationTime.hpp"
 
 #include <cstddef>
-#include "simulator/SimulationTime.hpp"
 #include <string>
 #include <string_view>
 #include <vector>

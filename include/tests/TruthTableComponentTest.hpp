@@ -3,11 +3,24 @@
 #include "components/selection/BuiltinComponentCatalog.hpp"
 #include "tests/ComponentTestModel.hpp"
 #include "tests/TestHelpers.hpp"
+#include "modules/composite/WordDatapath.hpp"
 #include <set>
 #include <stdexcept>
 #include <string>
 #include <utility>
 #include <vector>
+
+template<circuit::word::Unit U,size_t W,circuit::word::Operations Operations,
+         circuit::word::AdderTopology Topology,bool FullFlags=true>
+struct WordTestTarget {
+    static const circuit::ComponentFamily& family() {
+        return circuit::word::family(U,W,{Operations,Topology,FullFlags});
+    }
+};
+template<circuit::word::Operations Operations>
+struct ControlTestTarget {
+    static const circuit::ComponentFamily& family() {return circuit::word::controlFamily(Operations);}
+};
 
 template<typename ComponentT>
 class TruthTableComponentTest : public circuit::test::ComponentScenarioTest {
@@ -30,6 +43,9 @@ public:
 private:
     static std::string contractFor(
         const circuit::ParameterMap& parameters) {
+        if constexpr (requires { ComponentT::family(); }) {
+            return std::string(ComponentT::family().id());
+        } else {
         const auto& catalog = circuit::builtinComponentCatalog();
         std::set<std::string> matches;
         for (const auto& contract : catalog.contracts()) {
@@ -50,6 +66,7 @@ private:
                 + "', found " + std::to_string(matches.size()));
         }
         return *matches.begin();
+        }
     }
 
     static circuit::test::ComponentTestSpec makeSpec(

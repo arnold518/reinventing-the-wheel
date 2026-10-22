@@ -14,6 +14,25 @@ import rv32i_layout
 
 
 class AutomaticLayoutTest(unittest.TestCase):
+    def test_cpu_floorplan_respects_child_pin_footprints(self):
+        root = server.circuit_backend.create_layout_topology("RV32IFiveStageCoreProgramTest/program-01")
+        manager = server.LayoutManager(ROOT / "visualizer-v2/layout.json")
+        checked = 0
+        for component, _ in refresh._walk(root):
+            if component.get_type_name() != "RV32IMemoryStage":
+                continue
+            children = list(component.get_children())
+            view = refresh.ProfileLayoutView(manager, "explicit")
+            for size in (.02, .35, .70):
+                for kind in ("ANDGate", "ORGate", "NOTGate"):
+                    manager.type_layouts.setdefault(kind, {})["pin_size_ratio"] = size
+                generated = server._custom_child_layout(*refresh.layout_arguments(view, component, children))
+                self.assertEqual(set(generated), {c.get_name() for c in children})
+                refresh._assert_child_bounds(view, component, children, generated)
+                refresh._assert_no_child_overlap(view, component, children, generated, 1, "")
+                checked += 1
+        self.assertEqual(checked, 3)
+
     def test_routing_floorplans(self):
         manager = server.LayoutManager(ROOT / "visualizer-v2/layout.json")
         root = server.circuit_backend.create_layout_topology("RV32IFiveStageCoreProgramTest/program-01")
@@ -127,7 +146,7 @@ class AutomaticLayoutTest(unittest.TestCase):
         # Simulate stale defaults, a deliberate handmade entry and an obsolete
         # profile shape. None may cause the entire store to be reset.
         original["type_layouts"]["RV32IMemoryLanes"]["children"]["LANE_0"]["rel_pos"][0] = .001
-        # The selected pipeline topology no longer contains ALU32FlagUnit;
+        # The selected pipeline topology no longer contains ALUFlagUnit<32>;
         # mark a component that is actually visited by this refresh.
         original["type_layouts"]["RV32IFiveStageCore"]["layout_mode"] = "manual"
         original["profile_layouts"].setdefault("unrecognized-test", {})["RV32IMemoryLanes"] = {
@@ -144,7 +163,7 @@ class AutomaticLayoutTest(unittest.TestCase):
             self.assertIn("type/RV32IMemoryLanes", result["changed"])
             self.assertIn("type/RV32IFiveStageCore", result["preserved_manual"])
             self.assertIn("profile/unrecognized-test/RV32IMemoryLanes", result["unmatched"])
-            for kind in ["SRAM<8>", "SRAMRow<16>", "SRAMStorageBank<8,4,2>", "RV32IFiveStageCore", "RegisterFile32x32", "ALU32FlagUnit"]:
+            for kind in ["SRAM<8>", "SRAMRow<16>", "SRAMStorageBank<8,4,2>", "RV32IFiveStageCore", "RegisterFile32x32", "ALUFlagUnit<32,integer>"]:
                 self.assertEqual(updated["type_layouts"][kind], original["type_layouts"][kind], kind)
             for store in ["type_layouts", "root_layouts"]:
                 self.assertEqual(set(updated[store]), set(original[store]))
@@ -153,7 +172,7 @@ class AutomaticLayoutTest(unittest.TestCase):
                         if field not in {"children", "automatic_layout_history", "automatic_layout_revision", "layout_mode"}:
                             self.assertEqual(updated[store][key][field], value, (store,key,field))
             # Refresh descendants, even inside a preserved pipeline floorplan.
-            self.assertIn("type/ALU32Core", result["automatic"])
+            self.assertIn("type/ALU<32,integer,prefix,core>", result["automatic"])
             snapshot = path.read_bytes()
             second = refresh.refresh_automatic(path, scenarios)
             self.assertFalse(second["changed"])
@@ -179,11 +198,11 @@ class AutomaticLayoutTest(unittest.TestCase):
             self.assertEqual(shape(topology), shape(test.get_root()), name)
 
     def test_wide_child_pins_in_shallow_parent(self):
-        root = server.circuit_backend.create_layout_topology("ALU32FlagUnitTest")
+        root = server.circuit_backend.create_layout_topology("FlagsIntegerWidth32Test")
         children = list(root.get_children())
         manager = server.LayoutManager(ROOT / "visualizer-v2/layout.json")
         for aspect in [.45, .725, 2.0]:
-            manager.type_layouts["ALU32FlagUnit"]["aspect_ratio"] = aspect
+            manager.type_layouts["ALUFlagUnit<32,integer>"]["aspect_ratio"] = aspect
             arguments = refresh.layout_arguments(manager, root, children)
             generated = server._layered_graph_layout(*arguments)
             refresh._assert_no_child_overlap(manager,root,children,generated,1,"")

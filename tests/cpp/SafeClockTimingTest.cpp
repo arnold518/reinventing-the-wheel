@@ -8,7 +8,7 @@
 #include "modules/composite/FullAdder.hpp"
 #include "modules/storage/Register.hpp"
 #include "modules/memory/FlipFlopCell.hpp"
-#include "modules/rv32i/RegisterFile32x32.hpp"
+#include "modules/storage/RegisterFile.hpp"
 #include "modules/utility/Constant.hpp"
 #include "modules/utility/Rewire.hpp"
 #include "simulator/Event.hpp"
@@ -241,7 +241,7 @@ void builtinStorage() {
     clock.inputs[0].fixed_value = 1;
     unknown(CircuitTimingAnalyzer::safeClock(reg, clock), "requires fixed value 0");
 
-    auto rf = catalog.createRoot(circuit::families::RegisterFile32x32.request("RF"), circuit::strictAllBehavioral()).root;
+    auto rf = catalog.createRoot(circuit::storage::registerFile(32,32).request("RF"), circuit::strictAllBehavioral()).root;
     clock = {}; clock.clock_pin = "RF.CLK";
     clock.inputs = {{"RF.RST",std::nullopt,{},0}, {"RF.REG_WRITE",std::nullopt,{},1},
         {"RF.RD_ADDR",ClockEdge::Rising,{1,1},0}, {"RF.WRITE_DATA",ClockEdge::Rising,{1,1},0},

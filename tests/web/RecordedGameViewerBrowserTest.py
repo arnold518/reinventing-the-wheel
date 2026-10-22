@@ -1,13 +1,27 @@
 """Recorded screen playback plus a real scripted WASM bring-up run."""
-import json,os,pathlib,shutil,subprocess,sys
+import hashlib,json,os,pathlib,shutil,subprocess,sys
 from urllib.parse import urljoin
 from playwright.sync_api import sync_playwright
 base=sys.argv[1].rstrip('/')+'/'
 probe=pathlib.Path(sys.argv[2]).resolve()
 screens=pathlib.Path(os.environ['CIRCUITSIM_BROWSER_SCREENSHOTS']) if os.environ.get('CIRCUITSIM_BROWSER_SCREENSHOTS') else None
 if screens:screens.mkdir(parents=True,exist_ok=True)
-# Execute native simulation before launching Chromium to bound peak memory.
-record=json.loads(subprocess.check_output([str(probe),'bringup'],text=True,timeout=3600))
+# Capture/reuse native evidence before Chromium owns a WASM heap.
+root=pathlib.Path(__file__).resolve().parents[2]
+cache=os.environ.get('CIRCUITSIM_NATIVE_GUEST_RECORDINGS')
+def native_record(guest):
+    if not cache:return json.loads(subprocess.check_output([str(probe),guest],text=True,timeout=3600))
+    directory=pathlib.Path(cache)/guest/'baseline';raw=(directory/'recording.json').read_bytes()
+    evidence=json.loads((directory/'evidence.json').read_text())
+    digest=lambda data:hashlib.sha256(data).hexdigest()
+    assert evidence['runnerSha256']==digest(probe.read_bytes())
+    assert evidence['recordingSha256']==digest(raw)
+    assert evidence['fixtureManifestSha256']==digest((root/'tests/fixtures/rv32im/games/manifest.json').read_bytes())
+    for name,expected in evidence['sourceSha256'].items():assert digest((root/name).read_bytes())==expected,name
+    return json.loads(raw)
+record=native_record('bringup')
+game_records={name:native_record(name) for name in ('pong-rally','tetris-line-clear')}
+
 def rgba(frame):
     result=[]
     for value,known in zip(bytes.fromhex(frame['pixels']),bytes.fromhex(frame['known'])):
@@ -35,6 +49,21 @@ with sync_playwright() as p:
         actual=page.evaluate('Array.from(document.getElementById("screen").getContext("2d").getImageData(0,0,64,48).data)')
         assert actual==rgba(frame),index
     assert page.locator('#keys-summary').inner_text() != 'No input state captured.'
+    for guest,game in game_records.items():
+        load(game)
+        for index in (0,len(game['frames'])//2,len(game['frames'])-1):
+            page.locator('#scrub').evaluate('(element,value)=>{element.value=value;element.dispatchEvent(new Event("input"));}',str(index))
+            assert page.evaluate('Array.from(document.getElementById("screen").getContext("2d").getImageData(0,0,64,48).data)')==rgba(game['frames'][index]),(guest,index)
+        assert page.locator('#keys-summary').inner_text() != 'No input state captured.'
+        if screens:page.screenshot(path=str(screens/(guest+'-compiled-frame.png')),full_page=True)
+    if os.environ.get('CIRCUITSIM_LARGE_NATIVE_RECORDING'):
+        directory=pathlib.Path(os.environ['CIRCUITSIM_LARGE_NATIVE_RECORDING'])
+        large_actual=json.loads((directory/'recording.json').read_text())
+        load(large_actual)
+        assert page.evaluate('document.getElementById("screen").width')==97
+        assert page.evaluate('document.getElementById("screen").height')==65
+        assert page.evaluate('Array.from(document.getElementById("screen").getContext("2d").getImageData(0,0,97,65).data)')==rgba(large_actual['frames'][0])
+        if screens:page.screenshot(path=str(screens/'compiled-97x65-frame.png'),full_page=True)
     # A larger exported surface shares the component preview's conversion.
     large={**record,'frames':[{'time':0,'sequence':1,'width':128,'height':96,'stride':128,
         'format':'rgb332','pixels':'e0'*(128*96),'known':'ff'*(128*96),

@@ -255,24 +255,24 @@ private:
     std::string type_;
 };
 
-class CacheTagMatch32 : public IOComponent {
+template<size_t W> class CacheTagMatch : public IOComponent {
 public:
-    explicit CacheTagMatch32(std::string name)
+    explicit CacheTagMatch(std::string name)
         : IOComponent(std::move(name), [](IOComponent* self) {
-              self->addPin<32>("EXPECTED", PinType::INPUT);
-              self->addPin<32>("STORED", PinType::INPUT);
+              self->addPin<W>("EXPECTED", PinType::INPUT);
+              self->addPin<W>("STORED", PinType::INPUT);
               self->addPin("VALID", PinType::INPUT);
               self->addPin("HIT", PinType::OUTPUT);
-          }) {}
-    const char* getTypeName() const override { return "CacheTagMatch32"; }
+          }),type_("CacheTagMatch<"+std::to_string(W)+">") {}
+    const char* getTypeName() const override { return type_.c_str(); }
     void buildInternals(ComponentBuilder& builder) override {
         StructuralWiring w(builder);
-        auto expected = builder.addNewComponent<BitSplitter<32>>("EXPECTED_BITS");
-        auto stored = builder.addNewComponent<BitSplitter<32>>("STORED_BITS");
-        w.connect(getInputPin<32>("EXPECTED"), expected->getInputPin<32>("IN"));
-        w.connect(getInputPin<32>("STORED"), stored->getInputPin<32>("IN"));
+        auto expected = builder.addNewComponent<BitSplitter<W>>("EXPECTED_BITS");
+        auto stored = builder.addNewComponent<BitSplitter<W>>("STORED_BITS");
+        w.connect(getInputPin<W>("EXPECTED"), expected->template getInputPin<W>("IN"));
+        w.connect(getInputPin<W>("STORED"), stored->template getInputPin<W>("IN"));
         std::vector<PinPtr> unequal;
-        for (size_t i = 0; i < 32; ++i)
+        for (size_t i = 0; i < W; ++i)
             unequal.push_back(w.binary<XORGate>("DIFFER_" + std::to_string(i),
                 expected->getOutputPin("OUT_" + std::to_string(i)),
                 stored->getOutputPin("OUT_" + std::to_string(i))));
@@ -280,6 +280,8 @@ public:
         w.connect(w.both("HIT", equal, getInputPin("VALID")), getOutputPin("HIT"));
         w.finish();
     }
+private:
+    std::string type_;
 };
 
 // The valid bit of every line of one way, and with `dirty` its dirty bit (a
@@ -933,7 +935,7 @@ void CacheBankController<Width>::buildInternals(ComponentBuilder& builder) {
         for (size_t i = 0; i < 16; ++i) random_bits.push_back(state_bit("RANDOM_" + std::to_string(i)));
     std::vector<PinPtr> matches;
     for (size_t way = 0; way < config_.ways; ++way) {
-        auto match = builder.addNewComponent<CacheTagMatch32>("TAG_MATCH_" + std::to_string(way));
+        auto match = builder.addNewComponent<CacheTagMatch<32>>("TAG_MATCH_" + std::to_string(way));
         w.connect(tag_value, match->getInputPin<32>("EXPECTED"));
         w.connect(getInputPinDynamic("TAG" + std::to_string(way) + "_READ_DATA"), match->getInputPin<32>("STORED"));
         w.connect(way_valid[way], match->getInputPin("VALID"));

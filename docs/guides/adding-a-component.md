@@ -11,12 +11,13 @@ model. The [older complete workflow](../archive/complete-circuit-workflow.md)
 describes a retired API.
 For finding and running existing coverage, read [running tests and scenarios](tests-and-scenarios.md).
 
-For a small example of the current path, trace `Adder32` from
-`include/modules/composite/Adder32.hpp` and
-`src/modules/composite/Adder32.cpp` through
-`BuiltinComponentCatalog.cpp`, `Adder32Test` in
-`src/tests/ALU32LowerLevelSliceTests.cpp`, and
-[`site-docs/rv32i/4.3/alu32.md`](../../site-docs/rv32i/4.3/alu32.md).
+For a small example, trace `Adder<W>` from
+`include/modules/composite/WordDatapath.hpp`, its family/registration in
+`src/modules/composite/WordDatapath.cpp` and its structural construction in
+`src/modules/composite/WordIntegerAdder.cpp`. `WordALUTests.cpp` supplies
+width-driven recorded scenarios; `IntegerALUTests.cpp` covers the characterized
+32-bit prefix configuration. Its public reference is
+[`site-docs/alu/2.1.md`](../../site-docs/alu/2.1.md).
 
 ## 1. Decide the contract and lower-level design
 
@@ -24,7 +25,8 @@ Write down the component's stable contract before implementing it:
 
 - Its catalog ID, public `TypeName`, purpose, pin names, directions and
   supported widths. Check neighboring families before choosing an ID. IDs are
-  saved in profiles and layouts; a later rename needs a compatibility plan.
+  saved in profiles and layouts; replacing one requires migrating current
+  callers, profiles and layouts. Retired IDs have no aliases.
   Memory contracts use `memory.<technology>.<what>.<width>`; state without an
   address uses `storage.*`.
 - Settled outputs for normal and boundary inputs, including `X` and `Z` where
@@ -316,3 +318,25 @@ are stored separately; the type's colors still apply. No pins or simulation
 state belong in this observer. Preserve existing default keys and provide a
 migration before renaming a persisted variant. Device queue/router/display
 checks exercise this path in both viewer adapters.
+
+### Optional register and device views
+
+Register files implement `RegisterStateView` to expose their register image at
+the selected recorded time. Topology carries `registerView`; the inspector
+derives row count and word width from the returned image. A new width or
+register count should not require another type-name check in the frontend.
+
+Devices can implement `DeviceView` to advertise `deviceViewKind()` and, for
+a display, `deviceSurfaceShape()` (width, height, byte stride and storage-word
+bytes). Current kinds are `display`, `keyboard`, `queue`, `console` and
+`timer`. This selects an existing observer; the implementation must also
+retain that observer's pin/state contract in `DeviceInspector.cpp`. A new
+kind needs a matching inspector and shared `device_view.js` renderer, with
+native/WASM and recorded-rewind checks. Preserve four-state/known-bit data
+and validate geometry before allocating a frame. Type-name fallbacks support
+older modules and recordings; new implementations use the capability.
+
+These views observe state. They do not advance the simulator or inject input.
+See the public [word component reference](../../site-docs/components/word-components.md)
+and [device foundation](../reference/rv32im-device-foundation.md) for supported
+widths, parameters and the fixed game-register ABI.

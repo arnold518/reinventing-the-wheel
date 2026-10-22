@@ -109,17 +109,14 @@ void bindBasicModules(py::module_& m) {
         .def("get_children", &FullAdder::getChildren, py::return_value_policy::reference_internal);
 
 
-    bindCompositeModule<Mux2to1>(m, "Mux2to1", "2:1 one-bit multiplexer.");
-    bindCompositeModule<Mux4to1>(m, "Mux4to1", "4:1 one-bit multiplexer.");
-    bindCompositeModule<Mux8to1>(m, "Mux8to1", "8:1 one-bit multiplexer.");
-    bindCompositeModule<Mux32to1>(m, "Mux32to1", "32:1 one-bit multiplexer.");
-    bindCompositeModule<Mux2to1_4bit>(m, "Mux2to1_4bit", "2:1 4-bit multiplexer.");
-    bindCompositeModule<Mux2to1_32bit>(m, "Mux2to1_32bit", "2:1 32-bit multiplexer.");
-    bindCompositeModule<Mux4to1_32bit>(m, "Mux4to1_32bit", "4:1 32-bit multiplexer.");
-    bindCompositeModule<Mux8to1_8bit>(m, "Mux8to1_8bit", "8:1 8-bit multiplexer.");
-    bindCompositeModule<Mux8to1_32bit>(m, "Mux8to1_32bit", "8:1 32-bit multiplexer.");
-    bindCompositeModule<Mux32to1_32bit>(m, "Mux32to1_32bit", "32:1 32-bit multiplexer.");
-    bindCompositeModule<Decoder5to32>(m, "Decoder5to32", "5-bit enabled one-hot decoder.");
+    m.def("create_mux", [](const std::string& name,size_t inputs,size_t width) {
+        return std::dynamic_pointer_cast<IOComponent>(
+            circuit::word::mux(inputs,width).create(circuit::Fidelity::Structural,name,nullptr));
+    },py::arg("name"),py::arg("inputs"),py::arg("width"));
+    m.def("create_decoder",[](const std::string& name,size_t bits,bool suppress_zero) {
+        return std::dynamic_pointer_cast<IOComponent>(circuit::families::decoder(bits,suppress_zero)
+            .create(circuit::Fidelity::Structural,name,nullptr));
+    },py::arg("name"),py::arg("address_bits"),py::arg("suppress_zero")=false);
 
 
 }

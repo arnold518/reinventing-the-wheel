@@ -7,7 +7,7 @@
 #include "components/ComponentBuilder.tpp"
 #include "modules/basic/Mux.hpp"
 #include "components/StructuralNetBuilder.hpp"
-#include "modules/rv32i/RegisterFile32x32.hpp"
+#include "modules/storage/RegisterFile.hpp"
 #include "modules/rv32i/RV32IDecodeControlUnit.hpp"
 #include "modules/rv32i/RV32IPipelineControl.hpp"
 #include "RV32IPipelineStagesInternal.hpp"

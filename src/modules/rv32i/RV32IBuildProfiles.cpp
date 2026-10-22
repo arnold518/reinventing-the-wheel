@@ -5,7 +5,7 @@
 #include "modules/memory/FlipFlopCell.hpp"
 #include "modules/memory/MemoryController.hpp"
 #include "modules/storage/Register.hpp"
-#include "modules/rv32i/RegisterFile32x32.hpp"
+#include "modules/storage/RegisterFile.hpp"
 #include "modules/rv32i/RV32ISingleCycleSystem.hpp"
 #include <set>
 #include <string>
@@ -70,13 +70,11 @@ circuit::BuildProfile architectureStructuralProfile(
         circuit::ProfileSelector::any(),
         "keep non-RV32I implementation details compact"));
 
-    // Saved layouts and profile overrides are keyed by this profile's
-    // fingerprint, which covers its rule list. Retired RV32I contracts keep
-    // their (now inert) rule, in the catalog's sorted order, so that removing
-    // a component does not orphan every saved RV32I layout.
-    std::set<std::string> contract_ids{"rv32i.pipeline.control-flow", "rv32i.control-flow"};
+    std::set<std::string> contract_ids;
     for (const auto& contract : catalog.contracts()) {
-        if (contract.id.starts_with("rv32i.")) {
+        if (contract.id.starts_with("rv32i.") ||
+            (contract.id.starts_with("word.") && contract.id.find(".32.integer")!=std::string::npos) ||
+            contract.id=="word.control.integer") {
             contract_ids.insert(contract.id);
         }
     }
@@ -102,13 +100,11 @@ circuit::BuildProfile withBehavioralMemoryParts(
         profile_name = base.name();
     }
     std::vector<circuit::ProfileRule> overrides;
-    // Saved layouts are keyed by this profile's fingerprint, which covers the
-    // rule text. The storage parts are therefore named by their retired IDs;
-    // canonicalContractId() makes the rules match the current contracts.
+    // Storage selectors use the current, exact contract IDs.
     for (const std::string id : {
-             std::string(circuit::families::RegisterFile32x32.id()),
-             std::string("memory.write-enabled-bit"),
-             std::string("memory.clocked-state-bit"),
+             std::string(circuit::storage::registerFile(32,32).id()),
+             std::string("memory.ff.cell"),
+             std::string("storage.state-bit"),
          }) {
         overrides.push_back(circuit::preferFidelity(
             circuit::Fidelity::Behavioral,
@@ -118,7 +114,7 @@ circuit::BuildProfile withBehavioralMemoryParts(
     for (size_t width : {1,2,3,4,5,8,16,32})
         overrides.push_back(circuit::preferFidelity(
             circuit::Fidelity::Behavioral,
-            circuit::ProfileSelector::contract("memory.register." + std::to_string(width)),
+            circuit::ProfileSelector::contract("storage.register." + std::to_string(width)),
             "use a compact request or response payload word"));
     return circuit::withProfileOverrides(
         std::move(base),

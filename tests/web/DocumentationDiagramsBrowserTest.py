@@ -19,7 +19,7 @@ PAGES = {
     "memory/cache-experiments/": 1,
     "rv32i/memory-systems/": 1,
     "rv32i/experiments/": 1,
-    "alu8/2.6/": 1,
+    "alu/2.6/": 1,
     "memory/architecture/": 2,
     "memory/technologies/flip-flop/": 1,
     "memory/technologies/sram/": 1,

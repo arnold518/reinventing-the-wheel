@@ -48,7 +48,7 @@ Each subprocess has at most 1024 cycles, an event budget, a 90-second timeout, a
 
 This audit derives the selectable contract inventory from the canonical RV32I tree and checks that the declared cases cover exactly that inventory before executing any program. Each case builds a mixed-fidelity profile, executes an appropriate program, and checks that every canonical instance of the target contract selected the requested fidelity without a fallback.
 
-The inventory includes scalable FF memory selection, with behavioral and structural-controller choices where registered, `Register<32>` for register words and PC state, `Register<4>` for the trap cause, and `ALU32Core` for execution. Register-file dependencies run with Fibonacci; trap-state storage runs with an illegal instruction. Missing or retired selectable contracts fail the audit instead of silently escaping coverage.
+The inventory includes scalable FF memory selection, with behavioral and structural-controller choices where registered, `Register<32>` for register words and PC state, `Register<4>` for the trap cause, and `ALU<32,integer,prefix,core>` for execution. Register-file dependencies run with Fibonacci; trap-state storage runs with an illegal instruction. Missing or retired selectable contracts fail the audit instead of silently escaping coverage.
 
 **Boundary:** this is contract/profile integration coverage. It is not every possible combination of choices or every workload on every instance. Low-level component tests still establish each implementation's public contract.
 

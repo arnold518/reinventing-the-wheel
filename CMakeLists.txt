@@ -92,11 +92,11 @@ set(CORE_LOGIC_SOURCES
     src/tests/CacheTests.cpp
     src/tests/FFMemoryTests.cpp
     src/modules/storage/RegisterBehavioral.cpp
-    src/modules/rv32i/RegisterFile32x32Behavioral.cpp
     src/modules/memory/FlipFlopCell.cpp
     src/modules/storage/ClockedStateBit.cpp
+    src/modules/storage/RegisterFile.cpp
+    src/modules/storage/RegisterFileBehavioral.cpp
     src/modules/storage/Register.cpp
-    src/modules/rv32i/RegisterFile32x32.cpp
     src/modules/rv32i/RV32IReferenceCore.cpp
     src/modules/rv32i/RV32IDecodeControlBehavioral.cpp
     src/modules/rv32i/RV32IExecutionStatusBehavioral.cpp
@@ -135,31 +135,21 @@ set(CORE_LOGIC_SOURCES
     src/modules/rv32i/RV32IReferenceSystem.cpp
     src/modules/composite/HalfAdder.cpp
     src/modules/composite/FullAdder.cpp
-    src/modules/composite/Adder8.cpp
-    src/modules/composite/Adder32.cpp
-    src/modules/composite/ParallelPrefixAdder32.cpp
-    src/modules/composite/IncrementBy4.cpp
-    src/modules/composite/AddSub32.cpp
-    src/modules/composite/Logic32.cpp
-    src/modules/composite/ZeroDetect32.cpp
-    src/modules/composite/Shifter32.cpp
-    src/modules/composite/ALU32.cpp
-    src/modules/composite/ALU32Behavioral.cpp
-    src/modules/composite/ZeroDetect8.cpp
-    src/modules/composite/ALU8.cpp
-    src/modules/composite/ALU8Behavioral.cpp
-    src/modules/composite/ALU8ControlDecoder.cpp
-    src/modules/composite/ALU8ResultSelector.cpp
-    src/modules/composite/ALU32ControlDecoder.cpp
-    src/modules/composite/ALU32CompareUnit.cpp
-    src/modules/composite/ALU32ResultSelector.cpp
-    src/modules/composite/ALU32FlagUnit.cpp
-    src/modules/composite/AddSub8.cpp
-    src/modules/composite/ArithmeticUnit8.cpp
-    src/modules/composite/LogicUnit8.cpp
-    src/modules/composite/BarrelShifter8.cpp
-    src/modules/composite/CompareSelect8.cpp
-    src/modules/composite/ALU8FlagUnit.cpp
+    src/modules/composite/ParallelPrefixAdder.cpp
+    src/modules/composite/Incrementer.cpp
+    src/modules/composite/WordControl.cpp
+    src/modules/composite/WordZero.cpp
+    src/modules/composite/WordBehavioral.cpp
+    src/modules/composite/WordDatapath.cpp
+    src/modules/composite/WordExtended.cpp
+    src/modules/composite/WordIntegerALU.cpp
+    src/modules/composite/WordIntegerAdder.cpp
+    src/modules/composite/WordIntegerAddSub.cpp
+    src/modules/composite/WordIntegerLogic.cpp
+    src/modules/composite/WordIntegerShift.cpp
+    src/modules/composite/WordIntegerCompare.cpp
+    src/modules/composite/WordIntegerFlags.cpp
+    src/modules/composite/WordIntegerResult.cpp
     src/modules/utility/Rewire.cpp
     src/modules/utility/BitAdapter.cpp
     src/modules/utility/Constant.cpp
@@ -174,6 +164,7 @@ set(CORE_LOGIC_SOURCES
     src/modules/device/DeviceBus.cpp
     src/modules/device/DeviceState.cpp
     src/modules/device/DeviceDisplay.cpp
+    src/tests/WordALUTests.cpp
     src/tests/RV32IMPhase3Tests.cpp
     src/tests/RV32IMPhase3Scenarios.cpp
     src/tests/SimulationTimeTests.cpp
@@ -196,10 +187,10 @@ set(CORE_LOGIC_SOURCES
     src/tests/ComponentSelectionTests.cpp
     src/tests/UtilityComponentTests.cpp
     src/tests/ArithmeticLogicTests.cpp
-    src/tests/ALU8Tests.cpp
-    src/tests/ALU8BehavioralTests.cpp
+    src/tests/ExtendedALUTests.cpp
+    src/tests/WordFidelityTests.cpp
     src/tests/ALUIntegrationTests.cpp
-    src/tests/ALU32LowerLevelSliceTests.cpp
+    src/tests/IntegerALUTests.cpp
     src/tests/RV32IBlockStandaloneTests.cpp
     src/tests/RV32IMemoryAccessTests.cpp
     src/tests/RV32IDecoderTests.cpp

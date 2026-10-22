@@ -140,14 +140,14 @@ void RV32IExecutionControlStatusUnit::buildInternals(ComponentBuilder& builder) 
     builder.addNewComponent<ConstantValue<4>>("CAUSE_STORE_MISALIGNED", cause(rv32i::RV32IExecutionTrapCause::StoreAddressMisaligned));
     builder.addNewComponent<ConstantValue<4>>("CAUSE_STORE_ACCESS", cause(rv32i::RV32IExecutionTrapCause::StoreAccessFault));
 
-    builder.addNewComponent<Mux2to1_4bit>("DECODE_CAUSE_MUX");
-    builder.addNewComponent<Mux2to1_4bit>("DATA_MISALIGNED_CAUSE_MUX");
-    builder.addNewComponent<Mux2to1_4bit>("DATA_ACCESS_CAUSE_MUX");
-    builder.addNewComponent<Mux2to1_4bit>("CAUSE_CONTROL_MUX");
-    builder.addNewComponent<Mux2to1_4bit>("CAUSE_IMEM_MUX");
-    builder.addNewComponent<Mux2to1_4bit>("CAUSE_DECODE_MUX");
-    builder.addNewComponent<Mux2to1_4bit>("CAUSE_DATA_MISALIGNED_MUX");
-    builder.addNewComponent<Mux2to1_4bit>("CAUSE_DATA_ACCESS_MUX");
+    builder.addNewComponent<Mux<2,4>>("DECODE_CAUSE_MUX");
+    builder.addNewComponent<Mux<2,4>>("DATA_MISALIGNED_CAUSE_MUX");
+    builder.addNewComponent<Mux<2,4>>("DATA_ACCESS_CAUSE_MUX");
+    builder.addNewComponent<Mux<2,4>>("CAUSE_CONTROL_MUX");
+    builder.addNewComponent<Mux<2,4>>("CAUSE_IMEM_MUX");
+    builder.addNewComponent<Mux<2,4>>("CAUSE_DECODE_MUX");
+    builder.addNewComponent<Mux<2,4>>("CAUSE_DATA_MISALIGNED_MUX");
+    builder.addNewComponent<Mux<2,4>>("CAUSE_DATA_ACCESS_MUX");
 
     w.connect(getInputPin<32>("ALU_ADDRESS"),
         {builder.getInputPin<BitSplitter<32>, 32>("ADDRESS_SPLIT", "IN")});
@@ -277,49 +277,49 @@ void RV32IExecutionControlStatusUnit::buildInternals(ComponentBuilder& builder) 
 
     const auto control_alignment_event = logic.logicalOr(
         "CONTROL_ALIGNMENT_EVENT", pc_event, target_event);
-    logic.sink(legal, builder.getInputPin<Mux2to1_4bit>("DECODE_CAUSE_MUX", "SEL"));
-    logic.sink(mem_write, builder.getInputPin<Mux2to1_4bit>("DATA_MISALIGNED_CAUSE_MUX", "SEL"));
-    logic.sink(mem_write, builder.getInputPin<Mux2to1_4bit>("DATA_ACCESS_CAUSE_MUX", "SEL"));
-    logic.sink(control_alignment_event, builder.getInputPin<Mux2to1_4bit>("CAUSE_CONTROL_MUX", "SEL"));
-    logic.sink(imem_event, builder.getInputPin<Mux2to1_4bit>("CAUSE_IMEM_MUX", "SEL"));
-    logic.sink(decode_event, builder.getInputPin<Mux2to1_4bit>("CAUSE_DECODE_MUX", "SEL"));
-    logic.sink(data_misaligned_event, builder.getInputPin<Mux2to1_4bit>("CAUSE_DATA_MISALIGNED_MUX", "SEL"));
-    logic.sink(data_fault_event, builder.getInputPin<Mux2to1_4bit>("CAUSE_DATA_ACCESS_MUX", "SEL"));
+    logic.sink(legal, builder.getInputPin<Mux<2,4>>("DECODE_CAUSE_MUX", "SEL"));
+    logic.sink(mem_write, builder.getInputPin<Mux<2,4>>("DATA_MISALIGNED_CAUSE_MUX", "SEL"));
+    logic.sink(mem_write, builder.getInputPin<Mux<2,4>>("DATA_ACCESS_CAUSE_MUX", "SEL"));
+    logic.sink(control_alignment_event, builder.getInputPin<Mux<2,4>>("CAUSE_CONTROL_MUX", "SEL"));
+    logic.sink(imem_event, builder.getInputPin<Mux<2,4>>("CAUSE_IMEM_MUX", "SEL"));
+    logic.sink(decode_event, builder.getInputPin<Mux<2,4>>("CAUSE_DECODE_MUX", "SEL"));
+    logic.sink(data_misaligned_event, builder.getInputPin<Mux<2,4>>("CAUSE_DATA_MISALIGNED_MUX", "SEL"));
+    logic.sink(data_fault_event, builder.getInputPin<Mux<2,4>>("CAUSE_DATA_ACCESS_MUX", "SEL"));
 
     w.connect(builder.getOutputPin<ConstantValue<4>, 4>("CAUSE_ILLEGAL", "OUT"),
-        {builder.getInputPin<Mux2to1_4bit, 4>("DECODE_CAUSE_MUX", "A")});
+        {builder.getInputPin<Mux<2,4>, 4>("DECODE_CAUSE_MUX", "A")});
     w.connect(getInputPin<4>("DECODE_TRAP_CAUSE"),
-        {builder.getInputPin<Mux2to1_4bit, 4>("DECODE_CAUSE_MUX", "B")});
+        {builder.getInputPin<Mux<2,4>, 4>("DECODE_CAUSE_MUX", "B")});
     w.connect(builder.getOutputPin<ConstantValue<4>, 4>("CAUSE_LOAD_MISALIGNED", "OUT"),
-        {builder.getInputPin<Mux2to1_4bit, 4>("DATA_MISALIGNED_CAUSE_MUX", "A")});
+        {builder.getInputPin<Mux<2,4>, 4>("DATA_MISALIGNED_CAUSE_MUX", "A")});
     w.connect(builder.getOutputPin<ConstantValue<4>, 4>("CAUSE_STORE_MISALIGNED", "OUT"),
-        {builder.getInputPin<Mux2to1_4bit, 4>("DATA_MISALIGNED_CAUSE_MUX", "B")});
+        {builder.getInputPin<Mux<2,4>, 4>("DATA_MISALIGNED_CAUSE_MUX", "B")});
     w.connect(builder.getOutputPin<ConstantValue<4>, 4>("CAUSE_LOAD_ACCESS", "OUT"),
-        {builder.getInputPin<Mux2to1_4bit, 4>("DATA_ACCESS_CAUSE_MUX", "A")});
+        {builder.getInputPin<Mux<2,4>, 4>("DATA_ACCESS_CAUSE_MUX", "A")});
     w.connect(builder.getOutputPin<ConstantValue<4>, 4>("CAUSE_STORE_ACCESS", "OUT"),
-        {builder.getInputPin<Mux2to1_4bit, 4>("DATA_ACCESS_CAUSE_MUX", "B")});
+        {builder.getInputPin<Mux<2,4>, 4>("DATA_ACCESS_CAUSE_MUX", "B")});
 
     w.connect(builder.getOutputPin<ConstantValue<4>, 4>("CAUSE_NONE", "OUT"),
-        {builder.getInputPin<Mux2to1_4bit, 4>("CAUSE_CONTROL_MUX", "A")});
+        {builder.getInputPin<Mux<2,4>, 4>("CAUSE_CONTROL_MUX", "A")});
     w.connect(builder.getOutputPin<ConstantValue<4>, 4>("CAUSE_INSTRUCTION_MISALIGNED", "OUT"),
-        {builder.getInputPin<Mux2to1_4bit, 4>("CAUSE_CONTROL_MUX", "B")});
-    w.connect(builder.getOutputPin<Mux2to1_4bit, 4>("CAUSE_CONTROL_MUX", "OUT"),
-        {builder.getInputPin<Mux2to1_4bit, 4>("CAUSE_IMEM_MUX", "A")});
+        {builder.getInputPin<Mux<2,4>, 4>("CAUSE_CONTROL_MUX", "B")});
+    w.connect(builder.getOutputPin<Mux<2,4>, 4>("CAUSE_CONTROL_MUX", "OUT"),
+        {builder.getInputPin<Mux<2,4>, 4>("CAUSE_IMEM_MUX", "A")});
     w.connect(builder.getOutputPin<ConstantValue<4>, 4>("CAUSE_INSTRUCTION_ACCESS", "OUT"),
-        {builder.getInputPin<Mux2to1_4bit, 4>("CAUSE_IMEM_MUX", "B")});
-    w.connect(builder.getOutputPin<Mux2to1_4bit, 4>("CAUSE_IMEM_MUX", "OUT"),
-        {builder.getInputPin<Mux2to1_4bit, 4>("CAUSE_DECODE_MUX", "A")});
-    w.connect(builder.getOutputPin<Mux2to1_4bit, 4>("DECODE_CAUSE_MUX", "OUT"),
-        {builder.getInputPin<Mux2to1_4bit, 4>("CAUSE_DECODE_MUX", "B")});
-    w.connect(builder.getOutputPin<Mux2to1_4bit, 4>("CAUSE_DECODE_MUX", "OUT"),
-        {builder.getInputPin<Mux2to1_4bit, 4>("CAUSE_DATA_MISALIGNED_MUX", "A")});
-    w.connect(builder.getOutputPin<Mux2to1_4bit, 4>("DATA_MISALIGNED_CAUSE_MUX", "OUT"),
-        {builder.getInputPin<Mux2to1_4bit, 4>("CAUSE_DATA_MISALIGNED_MUX", "B")});
-    w.connect(builder.getOutputPin<Mux2to1_4bit, 4>("CAUSE_DATA_MISALIGNED_MUX", "OUT"),
-        {builder.getInputPin<Mux2to1_4bit, 4>("CAUSE_DATA_ACCESS_MUX", "A")});
-    w.connect(builder.getOutputPin<Mux2to1_4bit, 4>("DATA_ACCESS_CAUSE_MUX", "OUT"),
-        {builder.getInputPin<Mux2to1_4bit, 4>("CAUSE_DATA_ACCESS_MUX", "B")});
-    w.connect(builder.getOutputPin<Mux2to1_4bit, 4>("CAUSE_DATA_ACCESS_MUX", "OUT"),
+        {builder.getInputPin<Mux<2,4>, 4>("CAUSE_IMEM_MUX", "B")});
+    w.connect(builder.getOutputPin<Mux<2,4>, 4>("CAUSE_IMEM_MUX", "OUT"),
+        {builder.getInputPin<Mux<2,4>, 4>("CAUSE_DECODE_MUX", "A")});
+    w.connect(builder.getOutputPin<Mux<2,4>, 4>("DECODE_CAUSE_MUX", "OUT"),
+        {builder.getInputPin<Mux<2,4>, 4>("CAUSE_DECODE_MUX", "B")});
+    w.connect(builder.getOutputPin<Mux<2,4>, 4>("CAUSE_DECODE_MUX", "OUT"),
+        {builder.getInputPin<Mux<2,4>, 4>("CAUSE_DATA_MISALIGNED_MUX", "A")});
+    w.connect(builder.getOutputPin<Mux<2,4>, 4>("DATA_MISALIGNED_CAUSE_MUX", "OUT"),
+        {builder.getInputPin<Mux<2,4>, 4>("CAUSE_DATA_MISALIGNED_MUX", "B")});
+    w.connect(builder.getOutputPin<Mux<2,4>, 4>("CAUSE_DATA_MISALIGNED_MUX", "OUT"),
+        {builder.getInputPin<Mux<2,4>, 4>("CAUSE_DATA_ACCESS_MUX", "A")});
+    w.connect(builder.getOutputPin<Mux<2,4>, 4>("DATA_ACCESS_CAUSE_MUX", "OUT"),
+        {builder.getInputPin<Mux<2,4>, 4>("CAUSE_DATA_ACCESS_MUX", "B")});
+    w.connect(builder.getOutputPin<Mux<2,4>, 4>("CAUSE_DATA_ACCESS_MUX", "OUT"),
         {builder.getInputPin<IOComponent, 4>("TRAP_CAUSE_WORD", "D")});
 
     logic.materialize();

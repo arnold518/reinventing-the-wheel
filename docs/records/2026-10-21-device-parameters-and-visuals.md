@@ -1,19 +1,55 @@
 # Device parameters and visual abstractions
 
-Started: 2026-10-21. Status: open.
-Code state: checkpoint `8c90c1f`, integrating `alpha` at `0d498c7` in the isolated `rv32im-phase3` checkout.
+Started: 2026-10-21. Status: closed (component implementation and focused acceptance).
+Code state: main alpha at `88c0a95`, with accepted replacement changes in the working tree.
 
 ## Summary
 
-General device parameters and recorded display/keyboard abstractions are
-implemented. Native checks cover FIFO depths 1–7 in both fidelities,
-standalone displays through 320×200, CPU presentation at 128×96/97×65,
-history/rewind and exact sampled-input logs. Final portable checks and all
-22 native/WASM device comparisons pass. Strict focused packaging passes
-with retained legacy rows. All 363 pre-integration static layouts pass with
-52 additions and no old value changed. Full browser and revised-game
-acceptance remain; phase 6 is open and phase 7 has not started. Branch
-integration is tracked in the [wrap record](2026-10-22-rv32im-milestone-wrap-and-integration.md).
+Device geometry/queues, generic transport/pixel helpers, declarative router
+maps and display/keyboard/console/timer/FIFO observations are implemented.
+Configured game registers keep the 32-bit MMIO ABI. Current component/API
+checks cover larger surfaces including direct 320x200; actual CPU 128x96 and
+97x65 geometry reads/high-address writes/PRESENT also pass.
+
+The closed [component replacement record](2026-10-22-general-component-retirement.md)
+owns current native/API/timing/reference and portable/browser acceptance:
+22 recorded M/device scenarios, 23 component pages, selected actual ALU/display/
+button sessions, and all 18 fresh Pong checkpoints in the original canvas.
+Local 8893 serves the matching package. The [checkpoint interface](../reference/recorded-circuit-checkpoints.md)
+remains observational. Full game/performance/native-WASM capture acceptance
+and interactive phase 7 remain open in the separate game milestone record.
+
+## 2026-10-22 — Original visualizer is the required game experience
+
+The owner clarified that games must be watched through the original circuit
+visualizer, with abstract device visuals attached to their actual components.
+The standalone recording page and GIF exports do not complete that requirement.
+This corrects the earlier emphasis on the separate viewer as visual acceptance.
+
+Source inspection confirms the existing original-canvas foundation:
+`deviceAbstraction`, `drawComponentForeground` and the inspector in `app.js`
+share `CircuitDeviceView` for display pixels, keyboard levels/queue/overflow,
+console, timer and FIFO. The Device views toggle changes component drawing;
+it retains the existing hierarchy and circuit inspection. However, the
+registered device-system scenario only exercises reset/disabled CPU/queued
+input. The compiled game batch turns off circuit histories and returns
+immutable frame records; it is not connected to the original visualizer's
+scenario/session playback.
+
+Required phase-6 completion therefore includes selecting a scripted game in
+the original visualizer, observing the CPU/router/memory/device assembly from
+that same execution, and watching its display and input component abstractions
+advance together on the recorded timeline. Device inspection and available
+structural detail must remain accessible. Retain bounded capture/observation
+on this host; do not enable unlimited full-circuit history for a long game or
+invent intermediate signal values that were not recorded. Existing scenarios,
+layouts, profiles and playback continue to work.
+
+Phase 7 adds live host interaction to these same component views and system.
+Its new session/input machinery remains separate from the phase-6 scripted
+viewing requirement. No engine/runtime/UI code, build, test or running campaign
+was changed for this clarification. Original-viewer game integration and its
+native/WASM/browser acceptance are still unimplemented.
 
 ## 2026-10-21 — Audit and scope
 
@@ -283,3 +319,55 @@ Checkpoint `8c90c1f` contains this work. The owner requested merging it into
 `alpha`; integration verification and remaining acceptance limits are recorded
 in the [wrap record](2026-10-22-rv32im-milestone-wrap-and-integration.md).
 Earlier dated evidence above is retained. Phase 6 is not declared complete.
+
+## 2026-10-22 — Shared widths and device metadata
+
+New bus builders keep 32-bit byte addresses while parameterizing data and
+byte masks at 8/16/32 bits. Router regions use a validated, declarative address
+map; the old defaults and `video_bytes` layout key remain. The current game
+peripheral register ABI remains 32-bit; no narrow-register bridge is implied.
+Counter, FIFO and RGB332 word selection widths are extended structurally.
+
+Device view classification now uses an optional `DeviceView` capability and
+exported `deviceViewKind`, with old-name fallbacks for retained modules and
+recordings. Display observation uses declared geometry/storage word size;
+keyboard snapshots may declare button count. Current games still expose 32
+logical buttons. Native/Python/WASM and browser acceptance remain pending.
+
+## 2026-10-22 — Actual Pong in the original circuit canvas
+
+The requested path now works on 8893: the original page consumes real circuit
+checkpoints from a native Pong rally, with the same component identities,
+device abstractions, inspector and timeline. All 18 changed frames, retained
+pin/wire vectors and input levels pass exact reference/browser checks.
+The successful final test covers rewind, Play and Device views off/on without
+starting another simulated CPU. This replaces the earlier missing-integration
+assessment for Pong only; other games and portable capture acceptance remain.
+
+The native capture peaks at 149,704 KiB RSS. An initial layout failure and
+three browser guard stops were corrected through compatible/pruned layout
+packaging, progressive wiring, a capture-layout detail threshold and bounded
+test heaps/transfers. The 512 MiB host reserve remains. Normal layouts and
+the global saved layout are unchanged. Interface and full dated evidence:
+[checkpoint contract](../reference/recorded-circuit-checkpoints.md),
+[phase-6 implementation](2026-10-21-scripted-games-phase4-6-implementation.md).
+Phase 6 stays open; no interactive input or phase-7 session is claimed.
+
+
+## 2026-10-22 — Component scope closed with current replacement acceptance
+
+Current replacement acceptance passes generic 8/16/32 transport/pixel rules,
+router geometry, configurable queues and display/observer behavior in the
+focused native/API checks, all 22 device/M portable scenarios and three
+selected browser sessions. All 23 component pages pass desktop/mobile checks;
+ALU, framebuffer and button rows are replayed in actual WASM sessions. The
+fresh 18-checkpoint Pong capture passes exact host reference and original-canvas
+pin/wire/display/keyboard/inspector/rewind/playback/toggle checks.
+
+The final native larger-display check passes in 23.55 seconds at 128x96 and
+97x65, including high video writes, geometry reads, PRESENT, known pixels and
+zero setup violations. The current API geometry panel covers 320x200 too.
+Native deployed extensions and unrelated work are preserved. Full suites,
+compiled larger game workloads, the multi-game campaign and live input are
+not inferred from this component acceptance; they belong to the open
+[phase-6/7 record](2026-10-21-scripted-games-phase4-6-implementation.md).

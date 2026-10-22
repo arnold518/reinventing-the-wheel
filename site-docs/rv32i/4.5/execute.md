@@ -23,7 +23,7 @@
 
 ## Behavior
 
-Operand selectors and ALU_OP follow [the single-cycle Execute datapath](../4.4/execute.md). Arithmetic, logic, shifts, comparisons, and address calculations use the same ALU32. Branch comparisons use its comparison outputs. A separate PC+immediate adder works concurrently with branch comparison; JAL and JALR instead reuse the main ALU for their target addition. JALR clears target bit 0.
+Operand selectors and ALU_OP follow [the single-cycle Execute datapath](../4.4/execute.md). Arithmetic, logic, shifts, comparisons, and address calculations use the same [integer ALU core configuration](../4.3/alu.md). Branch comparisons use its comparison outputs. A separate PC+immediate adder works concurrently with branch comparison; JAL and JALR instead reuse the main ALU for their target addition. JALR clears target bit 0.
 
 NEXT_PC is the selected target for a jump or taken branch, otherwise PC+4. Only a selected misaligned target sets EXECUTION_STATUS. An untaken branch with a numerically misaligned candidate target does not trap.
 
@@ -33,7 +33,7 @@ TERMINAL combines incoming terminal reasons with selected-target misalignment, q
 
 ### C++ example
 
-The [shared Packet type](core.md#binary-example-types) carries instruction fields. `early_terminal` checks validity, the defined fetch/execution status bits, legality, halt, and trap. The arithmetic helper includes ALU32's reserved-opcode zero result.
+The [shared Packet type](core.md#binary-example-types) carries instruction fields. `early_terminal` checks validity, the defined fetch/execution status bits, legality, halt, and trap. The arithmetic helper includes the integer ALU contract's reserved-opcode zero result.
 
 ```cpp
 --8<-- "site-docs/rv32i/4.5/examples.hpp:alu"
@@ -44,7 +44,7 @@ The [shared Packet type](core.md#binary-example-types) carries instruction field
 
 ### Structural implementation
 
-`DATAPATH` reuses RV32ISingleCycleExecuteStage; `NEXT_PC` reuses RV32ISingleCycleNextPCStage. A structural `IncrementBy4`, field/status rewiring, and the shared `PACKET_STATUS` group complete the stage. There is exactly one CPU-specific ALU32 datapath and no separate RS1+immediate target adder.
+`DATAPATH` reuses RV32ISingleCycleExecuteStage; `NEXT_PC` reuses RV32ISingleCycleNextPCStage. A structural `Incrementer<32,4>`, field/status rewiring, and the shared `PACKET_STATUS` group complete the stage. There is exactly one shared integer ALU datapath and no separate RS1+immediate target adder.
 
 ### Behavioral implementation
 

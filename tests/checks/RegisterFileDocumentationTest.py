@@ -24,7 +24,7 @@ snippet, = re.findall(r"```cpp\n(.*?)\n```", source, re.S)
 for heading in ("IO pins", "Behavior", "Implementation", "Examples", "Tests"):
     assert f"### {heading}\n" in source
 assert "| Component | Description | Structural | Behavioral |" in source
-assert "<!-- simulator-examples: rv32i-register-file RegisterFile32x32Test -->" in source
+assert "<!-- simulator-examples: rv32i-register-file RegisterFileWidth32Count32Test -->" in source
 assert source.count('class="simulator-embed"') == 1
 harness = r'''
 #include "tests/MemoryComponentTests.hpp"
@@ -35,7 +35,7 @@ Bit convert(LogicValue b) {
     return b == LogicValue::LOW ? Bit::L : b == LogicValue::HIGH ? Bit::H : b == LogicValue::HIGH_Z ? Bit::Z : Bit::X;
 }
 int main() {
-    RegisterFile32x32Test test;
+    RegisterFileWidth32Count32Test test;
     const auto& scenario = test.getSpec().scenarios.front();
     RegisterFile reference;
     Address rs1, rs2, rd; Word data;

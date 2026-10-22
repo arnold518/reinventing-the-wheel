@@ -30,7 +30,7 @@ def main() -> None:
         errors: list[str] = []
         page.on("pageerror", lambda error: errors.append(str(error)))
 
-        page.goto(f"{sys.argv[1]}?scenario=adder8&timing=embedded", wait_until="domcontentloaded", timeout=30_000)
+        page.goto(f"{sys.argv[1]}?scenario=adder-ripple-w8&timing=embedded", wait_until="domcontentloaded", timeout=30_000)
         ready(page)
         embedded = page.evaluate("""() => ({
           selected: document.querySelector('#timing-select').value,

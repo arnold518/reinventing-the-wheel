@@ -7,12 +7,19 @@ concurrently changing arbiter, test and visualizer work.
 ## Summary
 
 The owner selected caches → games → AI accelerators. The primary cache
-implementation and its general expansion now exist. The isolated `rv32im-phase3` worktree contains RV32IM, device components,
-the scripted system/game runtime and recorded display/keyboard views.
+implementation and its general expansion now exist. The main `alpha`
+checkout contains RV32IM, device components, the scripted system/game runtime
+and recorded display/keyboard views. No linked Git worktrees remain; former
+build/evidence directories are ordinary ignored archives under the
+[checkout consolidation](2026-10-22-main-alpha-checkout.md).
 [Phase 6 acceptance](2026-10-21-scripted-games-phase4-6-implementation.md)
 remains open; phase 7 interactive sessions have not started. The owner
 requested merging the checkpoint into `alpha`; current integration evidence
 and remaining checks are in the [wrap record](2026-10-22-rv32im-milestone-wrap-and-integration.md).
+Games must be watched in the original circuit visualizer with the device
+abstractions attached to the actual system components. A real 18-checkpoint
+Pong rally now works in that original canvas; the broader phase-6 game and
+portable acceptance remains open.
 
 The owner has selected **RV32IM** and **predetermined device input before
 interactive simulation**. The current sequence is contracts and compatibility
@@ -21,7 +28,8 @@ integrated verification/performance → interactive sessions. The
 [full roadmap and component inventory](#rv32im-scripted-roadmap)
 below supersedes the earlier live-first order and provisional ISA choice.
 The owner authorized implementation through phase 6 and phase 7 after acceptance.
-The primary ongoing checkout remains untouched while the milestone is integrated.
+The checkpoint is merged into `alpha`; older pending work is preserved in a
+verified stash and external backup as recorded in the consolidation above.
 
 The owner explicitly requires retaining recorded playback and adding new
 live modes alongside it. The completed
@@ -38,8 +46,13 @@ pipeline structures. New devices retain the memory protocol and the
 structural-first component path. The planned first batch uses deterministic
 input scripts and frame/output assertions; live input will later use those
 same device boundaries. Pointer input, glyph/tile rendering, scanout and sound
-are later options. Register ABI, concrete names and game acceptance cases are
-implementation design details still to freeze.
+are later options. Implemented device/register contracts and acceptance
+limits are documented in the
+[foundation reference](../reference/rv32im-device-foundation.md). The
+[width record](2026-10-22-width-component-audit.md) now tracks implemented
+generic structural components beneath the existing 32-bit machine and ABI,
+with current validation and compatibility evidence. Remaining game and
+original-visualizer acceptance are open.
 
 ## 2026-10-19 — Earlier thoughts and current source
 
@@ -1117,3 +1130,57 @@ loops; the finite scripted ELFs remain regressions. Compare the refactored
 batch output and live-script replay against phase-6 exact frames/reports;
 measure real games as well as a short synthetic interaction. Do not infer
 live FPS from replay controls or a sparse larger-screen routing test.
+
+## 2026-10-22 — Width generalization analysis
+
+The owner requested review of the many `32` names in the adopted component
+inventory. The completed [width review](2026-10-22-width-component-audit.md)
+classifies the 22 entries as 12 fixed-width reusable components, six RV32IM
+ISA identities and four parameterized building blocks with limited supported
+widths. This refines the earlier concrete planning names; the dated inventory
+rows remain evidence of the original design.
+
+Use the existing memory protocol's data-width W parameter, with its current
+32-bit addresses, as the proposed starting point for generic devices.
+Separate arithmetic width, transport width, timer/button state, pixel format,
+screen geometry and address-map configuration. Keep the RV32IM CPU/system
+identity and current W=32 device ABI, with explicit compatibility for catalog
+IDs, observations, saved layouts and recordings.
+
+Current width dependencies extend to iterative arithmetic counters, device
+register spacing/command masks, helpers, UI observation and guest drawing.
+Display hardware accepts geometry parameters while the guest library still
+assumes 64×48. General support needs those boundaries addressed together.
+This was analysis only; no component, guest fixture, simulation or acceptance
+result changed. Phase 6 remains open; phase 7 has not started. Development
+uses main alpha with no linked worktrees, as recorded in the consolidation
+linked in the summary.
+
+## 2026-10-22 — Original visualizer requirement confirmed
+
+The owner confirmed the intended experience: scripted games displayed through
+the original circuit visualizer, with abstract display/input and other device
+visuals on their own components. The current original-canvas abstractions
+cover standalone device scenarios, while full games are still exported to
+the separate recording viewer. Connecting those games to the original
+viewer/session and synchronized device timeline is required before phase 6
+is complete. Separate GIF or recording-page output alone does not meet it.
+Phase 7 adds live interaction through those same components and views.
+
+The [visuals record](2026-10-21-device-parameters-and-visuals.md) and
+[phase-6 record](2026-10-21-scripted-games-phase4-6-implementation.md)
+state the missing integration, bounded observation requirement and required
+native/WASM/browser checks. This corrects the earlier acceptance emphasis;
+it does not alter the running frozen-model validation campaign. The summary
+also now reflects the implemented width generalization rather than the
+preceding analysis-only checkpoint; its dated evidence above is preserved.
+
+## 2026-10-22 — Original-canvas Pong checkpoint reached
+
+An actual native Pong rally now replays all 18 retained PRESENT checkpoints
+in the original circuit visualizer, with device abstractions, inspector and
+real pin/wire values. The live 8893 browser path passes after bounded layout/
+wiring/capture work. This resolves the original-viewer gap for Pong; remaining
+game coverage, WASM capture parity and broader milestone acceptance keep phase
+6 open. The phase-6 record contains the reference, browser, resource and source
+evidence. Phase 7/live host input remains unimplemented.

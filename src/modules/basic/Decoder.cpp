@@ -1,4 +1,7 @@
 #include "components/StructuralNetBuilder.hpp"
+#include "components/StructuralLogic.hpp"
+#include "components/selection/FamilyRegistration.hpp"
+#include <map>
 #include "modules/basic/Decoder.hpp"
 
 #include "components/ComponentBuilder.hpp"
@@ -186,53 +189,75 @@ void buildDecoder(IOComponent& component, ComponentBuilder& builder,bool zero_ou
     w.finish();
 }
 
-// OUT<n> is high when ENABLE is high and ADDR equals n. With unknown
-// inputs each output follows the AND of its address literals and ENABLE,
-// exactly as the gate network does.
-class Decoder5to32Behavioral final : public BasicComponent {
+std::string decoderType(size_t bits,bool suppress) {
+    return "Decoder<"+std::to_string(bits)+(suppress?",zero-disabled>":">");
+}
+void decoderPins(IOComponent* p,size_t bits) {
+    if(bits<1||bits>5)throw std::invalid_argument("Decoder supports one through five address bits");
+    p->addPinDynamic("ADDR",PinType::INPUT,bits);p->addPin("ENABLE",PinType::INPUT);
+    for(size_t i=0;i<(size_t{1}<<bits);++i)p->addPin(outputPinName(i),PinType::OUTPUT);
+}
+class DecoderBehavioral final : public BasicComponent {
+    size_t address_bits_;bool suppress_zero_;std::string type_;
 public:
-    Decoder5to32Behavioral(std::string name, bool zero_output_unused)
-        : BasicComponent(std::move(name), 1, addDecoderPins<5>), zero_output_unused_(zero_output_unused) {}
-    const char* getTypeName() const override { return Decoder5to32::TypeName; }
-    void evaluate(SimulationTime current_time, Simulator& simulator) override {
+    DecoderBehavioral(std::string name,size_t bits,bool suppress)
+        :BasicComponent(std::move(name),1,[bits](IOComponent* p){decoderPins(p,bits);}),
+         address_bits_(bits),suppress_zero_(suppress),type_(decoderType(bits,suppress)){}
+    const char* getTypeName()const override{return type_.c_str();}
+    void evaluate(SimulationTime t,Simulator& s)override {
         using namespace circuit::logic_values;
-        const auto address = getInputPin<5>("ADDR")->getValueAsVector();
-        const auto enable = getInputPin("ENABLE")->getValue();
-        for (size_t output = 0; output < 32; ++output) {
-            auto value = enable;
-            for (size_t bit = 0; bit < 5; ++bit)
-                value = andGate(value, (output >> bit) & 1U ? address[bit] : notGate(address[bit]));
-            if (output == 0 && zero_output_unused_) value = LogicValue::LOW;
-            _updateOutputWire(simulator, outputPinName(output), value, current_time);
+        const auto address=getInputPinDynamic("ADDR")->getValueAsVector();
+        for(size_t output=0;output<(size_t{1}<<address_bits_);++output) {
+            auto value=getInputPin("ENABLE")->getValue();
+            for(size_t bit=0;bit<address_bits_;++bit)
+                value=andGate(value,(output>>bit)&1?address[bit]:notGate(address[bit]));
+            if(suppress_zero_&&output==0)value=LogicValue::LOW;
+            _updateOutputWire(s,outputPinName(output),value,t);
         }
     }
-private:
-    bool zero_output_unused_;
 };
 }
-
+namespace circuit::logic {
+WordDecoder::WordDecoder(std::string name,size_t bits,bool suppress)
+    :IOComponent(std::move(name),[bits](IOComponent* p){decoderPins(p,bits);}),
+     address_bits_(bits),suppress_zero_(suppress),type_(decoderType(bits,suppress)){}
+void WordDecoder::buildInternals(ComponentBuilder& builder) {
+    if(address_bits_==5){buildDecoder<5>(*this,builder,suppress_zero_);return;}
+    circuit::structural::Logic net(builder);
+    const auto address=net.split(getInputPinDynamic("ADDR"));
+    structural::V inverse;
+    for(const auto& bit:address)inverse.push_back(net.inv(bit));
+    for(size_t output=0;output<(size_t{1}<<address_bits_);++output) {
+        auto value=net.constant(1)[0];
+        if(!suppress_zero_||output) {
+            structural::V literals{getInputPin("ENABLE")};
+            for(size_t bit=0;bit<address_bits_;++bit)literals.push_back((output>>bit)&1?address[bit]:inverse[bit]);
+            value=net.all(literals);
+        }
+        net.wire(value,getOutputPin(outputPinName(output)));
+    }
+    net.finish();
+}
+void registerDecoders(ComponentCatalog& c) {
+    for(size_t bits=1;bits<=5;++bits)for(bool suppress:{false,true}) {
+        const auto& f=families::decoder(bits,suppress);
+        const std::string test=bits==5?(suppress?"DecoderWidth5ZeroDisabledTest":"DecoderWidth5Test"):"WidthComponentsTest";
+        registration::registerStructural(c,f,test);
+        if(f.supports(Fidelity::Behavioral))registration::registerBehavioral(c,f,test,test,{},"stable-after-settle");
+    }
+}
+}
 namespace circuit::families {
-namespace {
-ComponentFamily decoder5to32Family(std::string_view contract_id, bool zero_output_unused) {
-    return ComponentFamily{
-        contract_id, ::Decoder5to32::TypeName, addDecoderPins<5>,
-        [zero_output_unused](const std::string& name, const std::shared_ptr<BuildContext>& context)
-                -> std::shared_ptr<Component> {
-            return Component::createWithContext<::Decoder5to32>(context, name, zero_output_unused);
-        },
-        [zero_output_unused](const std::string& name, const std::shared_ptr<BuildContext>& context)
-                -> std::shared_ptr<Component> {
-            return Component::createWithContext<Decoder5to32Behavioral>(context, name, zero_output_unused);
-        }};
+const ComponentFamily& decoder(size_t bits,bool suppress) {
+    if(bits<1||bits>5)throw std::invalid_argument("Invalid decoder address width");
+    struct Entry {
+        std::string id,type;ComponentFamily family;
+        Entry(size_t bits,bool suppress):id("logic.decoder."+std::to_string(bits)+(suppress?".zero-disabled":".full")),
+            type(decoderType(bits,suppress)),family(id,type,[bits](IOComponent* p){decoderPins(p,bits);},
+            [bits,suppress](const std::string& n,const std::shared_ptr<BuildContext>& c){return Component::createWithContext<logic::WordDecoder>(c,n,bits,suppress);},
+            bits==5?FamilyFactory([bits,suppress](const std::string& n,const std::shared_ptr<BuildContext>& c){return Component::createWithContext<DecoderBehavioral>(c,n,bits,suppress);}):FamilyFactory{}){}
+    };
+    static std::map<std::pair<size_t,bool>,std::unique_ptr<Entry>> entries;
+    auto& e=entries[{bits,suppress}];if(!e)e=std::make_unique<Entry>(bits,suppress);return e->family;
 }
-}
-const ComponentFamily Decoder5to32 = decoder5to32Family("decode.5-to-32", false);
-const ComponentFamily Decoder5to32X0Unused = decoder5to32Family("decode.5-to-32.x0-unused", true);
-}
-
-Decoder5to32::Decoder5to32(std::string name,bool zero_output_unused)
-    : IOComponent(std::move(name), addDecoderPins<5>),zero_output_unused_(zero_output_unused) {}
-
-void Decoder5to32::buildInternals(ComponentBuilder& builder) {
-    buildDecoder<5>(*this, builder,zero_output_unused_);
 }

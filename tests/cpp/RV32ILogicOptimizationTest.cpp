@@ -1,5 +1,5 @@
-#include "modules/composite/ALU32ResultSelector.hpp"
-#include "../../src/modules/composite/Structural8Builder.hpp"
+#include "modules/composite/WordDatapath.hpp"
+#include "../../src/modules/composite/WordSliceBuilder.hpp"
 #include "modules/rv32i/RV32ISingleCycleStages.hpp"
 #include "modules/rv32i/RV32IPipelineControl.hpp"
 #include "components/StructuralNetBuilder.hpp"
@@ -18,13 +18,13 @@ Bits bits(uint32_t value,unsigned width=32) {
 
 // Retain the former circuit, rather than deriving expectations from the new
 // minterms. In particular, a gate mux does NOT resolve mux(1,1,X) to 1.
-class SelectorReference : public ALU32ResultSelector {
+class SelectorReference : public ALUResultSelector<32> {
 public:
-    using ALU32ResultSelector::ALU32ResultSelector;
+    using ALUResultSelector<32>::ALUResultSelector<32>;
     void buildInternals(ComponentBuilder& b) override {
         circuit::detail::StructuralBuilder n(*this,b);
-        auto low=n.add<Mux8to1_32bit>("LOW"),high=n.add<Mux8to1_32bit>("HIGH");
-        auto half=n.add<Mux2to1_32bit>("HALF"),range=n.add<Mux2to1_32bit>("RANGE");
+        auto low=n.add<Mux<8,32>>("LOW"),high=n.add<Mux<8,32>>("HIGH");
+        auto half=n.add<Mux<2,32>>("HALF"),range=n.add<Mux<2,32>>("RANGE");
         auto zero=n.constant<32>("ZERO",0);
         std::array<decltype(n)::Signal,8> lo{n.input("ARITHMETIC_RESULT"),n.input("ARITHMETIC_RESULT"),
             n.input("AND_RESULT"),n.input("OR_RESULT"),n.input("XOR_RESULT"),
@@ -53,7 +53,7 @@ public:
         w.connect(getInputPin<2>("JUMP_TYPE"),jump->getInputPin<2>("IN"));
         auto jumping=w.either("JUMPING",jump->getOutputPin("OUT_0"),jump->getOutputPin("OUT_1"));
         auto taken=w.either("TAKEN",jumping,getInputPin("BRANCH_TAKEN"));
-        auto select=b.addNewComponent<Mux2to1_32bit>("SELECT");
+        auto select=b.addNewComponent<Mux<2,32>>("SELECT");
         w.connect(getInputPin<32>("PC_PLUS_4"),select->getInputPin<32>("A"));
         w.connect(getInputPin<32>("CONTROL_TARGET"),select->getInputPin<32>("B"));
         w.connect(taken,select->getInputPin("SEL"));w.connect(select->getOutputPin<32>("OUT"),getOutputPin<32>("NEXT_PC"));
@@ -102,7 +102,7 @@ struct Comparison {
     }
 };
 void selector() {
-    Comparison c(Component::create<ALU32ResultSelector>("FAST"),Component::create<SelectorReference>("REFERENCE"));
+    Comparison c(Component::create<ALUResultSelector<32>>("FAST",circuit::word::ALUConfig{circuit::word::Operations::IntegerDatapath,circuit::word::AdderTopology::Ripple,true}),Component::create<SelectorReference>("REFERENCE"));
     std::mt19937 random(0x20260924);
     for(unsigned controls=0;controls<1024;++controls) for(unsigned pattern=0;pattern<4;++pattern) {
         Values in;

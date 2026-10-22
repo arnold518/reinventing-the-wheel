@@ -551,39 +551,39 @@ std::vector<TestRow> fullAdderRows() {
     return rows;
 }
 
-Mux2to1Test::Mux2to1Test()
-    : TruthTableComponentTest<Mux2to1>("Mux2to1Test", "MUX2TO1_ROOT", oneBitMuxRows(2)) {}
+Mux2Width1Test::Mux2Width1Test()
+    : TruthTableComponentTest<Mux<2,1>>("Mux2Width1Test", "MUX_N2_W1_ROOT", oneBitMuxRows(2)) {}
 
-Mux4to1Test::Mux4to1Test()
-    : TruthTableComponentTest<Mux4to1>("Mux4to1Test", "MUX4TO1_ROOT", oneBitMuxRows(4)) {}
+Mux4Width1Test::Mux4Width1Test()
+    : TruthTableComponentTest<Mux<4,1>>("Mux4Width1Test", "MUX_N4_W1_ROOT", oneBitMuxRows(4)) {}
 
-Mux8to1Test::Mux8to1Test()
-    : TruthTableComponentTest<Mux8to1>("Mux8to1Test", "MUX8TO1_ROOT", oneBitMuxRows(8)) {}
+Mux8Width1Test::Mux8Width1Test()
+    : TruthTableComponentTest<Mux<8,1>>("Mux8Width1Test", "MUX_N8_W1_ROOT", oneBitMuxRows(8)) {}
 
-Mux32to1Test::Mux32to1Test()
-    : TruthTableComponentTest<Mux32to1>("Mux32to1Test", "MUX32TO1_ROOT", oneBitMuxRows(32)) {}
+Mux32Width1Test::Mux32Width1Test()
+    : TruthTableComponentTest<Mux<32,1>>("Mux32Width1Test", "MUX_N32_W1_ROOT", oneBitMuxRows(32)) {}
 
-Mux2to1_4bitTest::Mux2to1_4bitTest()
-    : TruthTableComponentTest<Mux2to1_4bit>("Mux2to1_4bitTest", "MUX2TO1_4BIT_ROOT", busMux4Rows(2)) {}
+Mux2Width4Test::Mux2Width4Test()
+    : TruthTableComponentTest<Mux<2,4>>("Mux2Width4Test", "MUX_N2_W4_ROOT", busMux4Rows(2)) {}
 
-Mux2to1_32bitTest::Mux2to1_32bitTest()
-    : TruthTableComponentTest<Mux2to1_32bit>("Mux2to1_32bitTest", "MUX2TO1_32BIT_ROOT", busMux32Rows(2)) {}
+Mux2Width32Test::Mux2Width32Test()
+    : TruthTableComponentTest<Mux<2,32>>("Mux2Width32Test", "MUX_N2_W32_ROOT", busMux32Rows(2)) {}
 
-Mux4to1_32bitTest::Mux4to1_32bitTest()
-    : TruthTableComponentTest<Mux4to1_32bit>("Mux4to1_32bitTest", "MUX4TO1_32BIT_ROOT", busMux32Rows(4)) {}
+Mux4Width32Test::Mux4Width32Test()
+    : TruthTableComponentTest<Mux<4,32>>("Mux4Width32Test", "MUX_N4_W32_ROOT", busMux32Rows(4)) {}
 
-Mux8to1_8bitTest::Mux8to1_8bitTest()
-    : TruthTableComponentTest<Mux8to1_8bit>("Mux8to1_8bitTest", "MUX8TO1_8BIT_ROOT", busMuxRows(8)) {}
+Mux8Width8Test::Mux8Width8Test()
+    : TruthTableComponentTest<Mux<8,8>>("Mux8Width8Test", "MUX_N8_W8_ROOT", busMuxRows(8)) {}
 
-Mux8to1_32bitTest::Mux8to1_32bitTest()
-    : TruthTableComponentTest<Mux8to1_32bit>("Mux8to1_32bitTest", "MUX8TO1_32BIT_ROOT", busMux32Rows(8)) {}
+Mux8Width32Test::Mux8Width32Test()
+    : TruthTableComponentTest<Mux<8,32>>("Mux8Width32Test", "MUX_N8_W32_ROOT", busMux32Rows(8)) {}
 
-Mux32to1_32bitTest::Mux32to1_32bitTest()
-    : TruthTableComponentTest<Mux32to1_32bit>("Mux32to1_32bitTest", "MUX32TO1_32BIT_ROOT", busMux32Rows(32)) {}
+Mux32Width32Test::Mux32Width32Test()
+    : TruthTableComponentTest<Mux<32,32>>("Mux32Width32Test", "MUX_N32_W32_ROOT", busMux32Rows(32)) {}
 
-Decoder5to32Test::Decoder5to32Test()
-    : TruthTableComponentTest<Decoder5to32>("Decoder5to32Test", "DECODER5TO32_ROOT", decoderRows(32),
-                                            {}, "decode.5-to-32") {}
+DecoderWidth5Test::DecoderWidth5Test()
+    : TruthTableComponentTest<Decoder<5>>("DecoderWidth5Test", "DECODER_ADDR5_ROOT", decoderRows(32),
+                                            {}, "logic.decoder.5.full") {}
 
 namespace {
 // The register file's decoder never drives output 0: x0 has no storage.
@@ -594,13 +594,13 @@ std::vector<TestRow> decoderX0UnusedRows() {
 }
 }
 
-Decoder5to32X0UnusedTest::Decoder5to32X0UnusedTest()
-    : TruthTableComponentTest<Decoder5to32>("Decoder5to32X0UnusedTest", "DECODER5TO32_X0_UNUSED_ROOT",
-                                            decoderX0UnusedRows(), {}, "decode.5-to-32.x0-unused") {}
+DecoderWidth5ZeroDisabledTest::DecoderWidth5ZeroDisabledTest()
+    : TruthTableComponentTest<Decoder<5>>("DecoderWidth5ZeroDisabledTest", "DECODER_ADDR5_ZERO_DISABLED_ROOT",
+                                            decoderX0UnusedRows(), {}, "logic.decoder.5.zero-disabled") {}
 
-Adder8Test::Adder8Test()
-    : TruthTableComponentTest<Adder8>(
-          "Adder8Test", "ADDER8_ROOT", adder8Rows()) {}
+AdderRippleWidth8Test::AdderRippleWidth8Test()
+    : TruthTableComponentTest<WordTestTarget<circuit::word::Unit::Adder,8,circuit::word::Operations::Extended,circuit::word::AdderTopology::Ripple>>(
+          "AdderRippleWidth8Test", "ADDER_W8_RIPPLE_ROOT", adder8Rows()) {}
 
 std::vector<TestRow> adder8Rows() {
     std::vector<TestRow> rows{
@@ -637,9 +637,9 @@ std::vector<TestRow> adder8Rows() {
     return rows;
 }
 
-ZeroDetect8Test::ZeroDetect8Test()
-    : TruthTableComponentTest<ZeroDetect8>(
-          "ZeroDetect8Test", "ZERO_DETECT8_ROOT", zeroDetect8Rows()) {}
+ZeroDetectWidth8Test::ZeroDetectWidth8Test()
+    : TruthTableComponentTest<WordTestTarget<circuit::word::Unit::Zero,8,circuit::word::Operations::Extended,circuit::word::AdderTopology::Ripple>>(
+          "ZeroDetectWidth8Test", "ZERO_DETECT_W8_ROOT", zeroDetect8Rows()) {}
 
 std::vector<TestRow> zeroDetect8Rows() {
     std::vector<TestRow> rows{

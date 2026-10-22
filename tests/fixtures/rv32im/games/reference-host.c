@@ -24,6 +24,7 @@ volatile uint32_t *reference_report(void){return reports;}
 uint32_t reference_read(uint32_t address){
  switch(address){
  case 0x10000004:return 1;case 0x10001000:return 123;case 0x10001004:return 1;case 0x10001008:return 0;
+ case 0x10003000:return 64;case 0x10003004:return 48;case 0x10003008:return 64;case 0x1000300c:return 1;
  case 0x10002000:return levels;case 0x10002004:if(!count){fputs("empty event read\n",stderr);exit(1);}return events[head];
  case 0x10002008:return count;case 0x1000200c:return count!=0;case 0x10003010:return sequence;
  default:fprintf(stderr,"unexpected reference read %x\n",address);exit(1);

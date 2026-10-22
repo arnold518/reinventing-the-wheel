@@ -1,3 +1,4 @@
+#include "modules/composite/WordDatapath.hpp"
 #include "tests/ComponentTestModel.hpp"
 #include "tests/TestRegistry.hpp"
 #include "components/selection/StandardProfiles.hpp"
@@ -72,8 +73,8 @@ ComponentTestSpec recordedSpec(const std::string& name, const std::string& contr
     } else if (contract == "arithmetic.divide-step.4") {
         s.step("subtract", {{"REMAINDER",3},{"DIVISOR",5},{"BIT",1}}, {{"NEXT_REMAINDER",2},{"QUOTIENT_BIT",1}});
         s.step("retain", {{"REMAINDER",1},{"BIT",0}}, {{"NEXT_REMAINDER",2},{"QUOTIENT_BIT",0}});
-    } else if (contract == "arithmetic.multiplier.32" || contract == "arithmetic.divider.32" || contract == "rv32im.mul-div.32") {
-        bool div = contract == "arithmetic.divider.32", combined = contract == "rv32im.mul-div.32";
+    } else if (contract == "arithmetic.iterative.multiplier.32" || contract == "arithmetic.iterative.divider.32" || contract == "arithmetic.iterative.mul-div.32") {
+        bool div = contract == "arithmetic.iterative.divider.32", combined = contract == "arithmetic.iterative.mul-div.32";
         Values launch{{"A",13},{"B",17},{"START",1}};
         if (combined) launch["OP"] = 0;
         s.cycle("launch", launch, {{"BUSY",1},{"DONE",0},{"READY",0}});
@@ -111,27 +112,27 @@ ComponentTestSpec recordedSpec(const std::string& name, const std::string& contr
         s.cycle("push-b", {{"PUSH_DATA",66}}, {{"COUNT",2},{"DATA",65}});
         s.cycle("pop-a", {{"PUSH",0},{"POP",1}}, {{"COUNT",1},{"DATA",66}});
         s.cycle("empty", {}, {{"COUNT",0},{"VALID",0},{"DATA",0}});
-    } else if (contract == "video.indexed-pixel.32") {
+    } else if (contract == "video.pixel-selector.32") {
         for (unsigned i=0;i<4;++i) {
             const uint32_t index[]{0xe0,0x1c,3,255}, color[]{0xffff0000,0xff00ff00,0xff0000ff,0xffffffff};
             s.step("pixel-"+std::to_string(i), {{"WORD",0xff031ce0},{"OFFSET",i}}, {{"INDEX",index[i]},{"ARGB",color[i]}});
         }
-    } else if (contract == "device.register-port.32") {
+    } else if (contract == "device.word.register-port.32") {
         s.step("backend", {{"BACK_READ_DATA",0x12345678}}, {});
         s.access("sampled-read", false, 0, 0, 0, 0x12345678);
         s.access("unaligned", false, 1, 0, 1);
-    } else if (contract == "bus.error-target.32") {
+    } else if (contract == "bus.word.error-target.32") {
         s.access("unmapped", false, 0, 0, 2);
-    } else if (contract == "bus.address-router.32" || contract == "bus.instruction-guard.32") {
-        s.access("device-fetch-or-unmapped", false, contract == "bus.instruction-guard.32" ? 0x10000000 : 0xffff0000, 0, 2);
-    } else if (contract == "device.console.32") {
+    } else if (contract == "bus.word.address-router.32" || contract == "bus.word.instruction-guard.32") {
+        s.access("device-fetch-or-unmapped", false, contract == "bus.word.instruction-guard.32" ? 0x10000000 : 0xffff0000, 0, 2);
+    } else if (contract == "device.console") {
         s.access("queue-a", true, 0, 65, 0);
         s.step("byte-offered", {}, {{"TX_VALID",1},{"TX_DATA",65}});
         s.cycle("byte-accepted", {{"TX_READY",1}}, {{"TX_VALID",0}});
-    } else if (contract == "device.timer.32") {
+    } else if (contract == "device.timer") {
         s.access("divisor", false, 4, 0, 0, 1);
         s.access("read-only", true, 0, 0, 3);
-    } else if (contract == "device.buttons.32") {
+    } else if (contract == "device.buttons") {
         s.cycle("press", {{"INPUT_VALID",1},{"INPUT_BUTTON",2},{"INPUT_DOWN",1}}, {});
         s.cycle("release", {{"INPUT_DOWN",0}}, {});
         s.step("input-idle", {{"INPUT_VALID",0}}, {});
@@ -139,7 +140,7 @@ ComponentTestSpec recordedSpec(const std::string& name, const std::string& contr
         s.access("tap-retained", false, 4, 0, 0, 0x102);
         s.access("pop-press", true, 16, 1, 0);
         s.access("release-retained", false, 4, 0, 0, 2);
-    } else if (contract == "device.framebuffer.32") {
+    } else if (contract == "device.framebuffer") {
         s.access("width", false, 0, 0, 0, 4);
         s.access("write-pixels", true, 0, 0xff031ce0, 0, 0, "FB_");
         s.access("read-pixels", false, 0, 0, 0, 0xff031ce0, "FB_");
@@ -150,21 +151,30 @@ ComponentTestSpec recordedSpec(const std::string& name, const std::string& contr
 }
 }
 void appendRV32IMPhase3Scenarios(std::vector<TestRegistryEntry>& entries) {
+    const std::string word_alu(circuit::word::family(circuit::word::Unit::ALU,16,{circuit::word::Operations::Extended,circuit::word::AdderTopology::Ripple,true}).id());
+    entries.push_back({"ALUWidth16RippleScenarioTest","ALUWidthContractTest",RegisteredTestKind::TruthTable,{word_alu},"contract",{"simulation","width"},
+        [word_alu]{Sequence s("ALUWidth16RippleScenarioTest",word_alu);
+            s.step("wide-add",{{"A",0x1234},{"B",0x100},{"OP",0},{"C_IN",0}},{{"OUT",0x1334},{"ZERO",0},{"CARRY",0}});
+            s.step("wide-carry",{{"A",0xffff},{"B",1}},{{"OUT",0},{"ZERO",1},{"CARRY",1}});
+            s.step("wide-shift",{{"A",1},{"B",12},{"OP",16}},{{"OUT",0x1000},{"CARRY",0}});
+            s.step("signed-minimum",{{"A",0x8000},{"B",1},{"OP",26}},{{"OUT",0x8000},{"NEGATIVE",1}});
+            return std::make_unique<ComponentScenarioTest>(std::move(s.spec),"contract",scenarioProfile());},true});
+
     const std::vector<std::pair<std::string,std::string>> cases{
         {"MultiplyStep","arithmetic.multiply-step.4"},{"DivideStep","arithmetic.divide-step.4"},
-        {"Multiplier32","arithmetic.multiplier.32"},{"Divider32","arithmetic.divider.32"},{"MulDivUnit32","rv32im.mul-div.32"},
+        {"MultiplierWidth32","arithmetic.iterative.multiplier.32"},{"DividerWidth32","arithmetic.iterative.divider.32"},{"MulDivUnitWidth32","arithmetic.iterative.mul-div.32"},
         {"RV32IMDecodeControl","rv32im.decode-control"},{"RV32IMDecodeStage","rv32im.pipeline.stage.decode"},
         {"RV32IMExecuteStage","rv32im.pipeline.stage.execute"},{"RV32IMPipelineCoordinator","rv32im.pipeline.coordinator"},
         {"RV32IMFiveStageCore","rv32im.core.educational-five-stage"},
         {"ClockedCounter","device.counter.4"},{"SynchronousFifo","device.fifo.8"},
-        {"DeviceRegisterPort32","device.register-port.32"},{"BusErrorTarget32","bus.error-target.32"},
-        {"AddressRouter32","bus.address-router.32"},{"InstructionAccessGuard32","bus.instruction-guard.32"},
-        {"ConsoleDevice32","device.console.32"},{"TimerDevice32","device.timer.32"},{"ButtonDevice32","device.buttons.32"},
-        {"IndexedPixelSelector32","video.indexed-pixel.32"},{"FramebufferDisplay32","device.framebuffer.32"}};
+        {"DeviceRegisterPortWidth32","device.word.register-port.32"},{"BusErrorTargetWidth32","bus.word.error-target.32"},
+        {"AddressRouterWidth32","bus.word.address-router.32"},{"InstructionAccessGuardWidth32","bus.word.instruction-guard.32"},
+        {"ConsoleDevice","device.console"},{"TimerDevice","device.timer"},{"ButtonDevice","device.buttons"},
+        {"IndexedPixelSelectorWidth32","video.pixel-selector.32"},{"FramebufferDisplay","device.framebuffer"}};
     for (const auto& [base,contract] : cases) {
         auto name=base+"ScenarioTest";
         const bool combinational=contract.starts_with("arithmetic.multiply-step.")||contract.starts_with("arithmetic.divide-step.")||
-            contract=="rv32im.decode-control"||contract=="rv32im.pipeline.coordinator"||contract=="video.indexed-pixel.32";
+            contract=="rv32im.decode-control"||contract=="rv32im.pipeline.coordinator"||contract=="video.pixel-selector.32";
         const auto kind=contract=="rv32im.core.educational-five-stage"?RegisteredTestKind::Program:
             combinational?RegisteredTestKind::TruthTable:RegisteredTestKind::Sequential;
         entries.push_back({name,base+"Test",kind,{contract},"contract",{"simulation","phase3-scenario"},

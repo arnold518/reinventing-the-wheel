@@ -4,7 +4,7 @@
 #include "components/selection/ComponentFamily.hpp"
 #include "modules/memory/FlipFlopCell.hpp"
 #include "modules/storage/Register.hpp"
-#include "modules/rv32i/RegisterFile32x32.hpp"
+#include "modules/storage/RegisterFile.hpp"
 #include <cassert>
 #include <cstdint>
 #include <iostream>
@@ -675,9 +675,9 @@ circuit::test::ComponentTestSpec registerFile32x32Spec() {
         }));
 
     return {
-        "RegisterFile32x32Test",
-        std::string(circuit::families::RegisterFile32x32.id()),
-        "REGISTER_FILE32X32_ROOT",
+        "RegisterFileWidth32Count32Test",
+        std::string(circuit::storage::registerFile(32,32).id()),
+        "REGISTER_FILE_W32_N32_ROOT",
         {},
         {std::move(scenario)},
     };
@@ -693,6 +693,6 @@ RegisterTest::RegisterTest()
     : circuit::test::ComponentScenarioTest(
           register32Spec(), "contract") {}
 
-RegisterFile32x32Test::RegisterFile32x32Test()
+RegisterFileWidth32Count32Test::RegisterFileWidth32Count32Test()
     : circuit::test::ComponentScenarioTest(
           registerFile32x32Spec(), "contract") {}

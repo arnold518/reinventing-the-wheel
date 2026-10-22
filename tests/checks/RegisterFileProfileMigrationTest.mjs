@@ -10,9 +10,9 @@ vm.runInContext(source.slice(source.indexOf('function migrateProfileOverrides(')
 const legacy = {
   'RV32I_SINGLE_CYCLE_SYSTEM_ROOT.CORE.REGISTER_FILE.X7': 'behavioral',
   'RV32I_PROGRAM_ROOT.CORE.REGISTER_FILE.X7.BIT_31.STATE': 'behavioral',
-  'REGISTER_FILE32X32_ROOT.X1': 'behavioral',
-  'REGISTER_FILE32X32_ROOT.X1.BIT_0': 'behavioral',
-  'REGISTER_FILE32X32_ROOT.STORAGE.WORD_0': 'structural',
+  'REGISTER_FILE_W32_N32_ROOT.X1': 'behavioral',
+  'REGISTER_FILE_W32_N32_ROOT.X1.BIT_0': 'behavioral',
+  'REGISTER_FILE_W32_N32_ROOT.STORAGE.WORD_0': 'structural',
   'UNRELATED.X7': 'behavioral',
   'REGISTER32_ROOT.BIT_31.STATE': 'behavioral',
   'REGISTER32_ROOT.BIT_0': 'behavioral',
@@ -29,8 +29,8 @@ const legacy = {
 const expected = {
   'RV32I_PROGRAM_ROOT.CORE.DECODE.REGISTER_FILE.STORAGE.WORD_6': 'behavioral',
   'RV32I_PROGRAM_ROOT.CORE.DECODE.REGISTER_FILE.STORAGE.WORD_6.BIT_31.STATE': 'behavioral',
-  'REGISTER_FILE32X32_ROOT.STORAGE.WORD_0': 'structural',
-  'REGISTER_FILE32X32_ROOT.STORAGE.WORD_0.BIT_0': 'behavioral',
+  'REGISTER_FILE_W32_N32_ROOT.STORAGE.WORD_0': 'structural',
+  'REGISTER_FILE_W32_N32_ROOT.STORAGE.WORD_0.BIT_0': 'behavioral',
   'UNRELATED.X7': 'behavioral',
   'REGISTER32_ROOT.BIT_31.STATE': 'behavioral',
   'REGISTER32_ROOT': 'behavioral',

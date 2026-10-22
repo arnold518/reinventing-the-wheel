@@ -10,23 +10,23 @@ import re
 REVISION = "rv32i-stages-v2"
 AUTOMATIC_REVISION = "rv32i-single-cycle-auto-v3"
 BLOCKS_REVISION = "rv32i-blocks-v4"
-ALU_AUTOMATIC_REVISION = "rv32i-alu-auto-v6"
+ALU_AUTOMATIC_REVISION = "word-alu-auto-v1"
 SINGLE_CYCLE_REVISION = "rv32i-single-cycle-stage-order-v3-store-intent"
 ADVANCED_REVISION = "rv32i-advanced-grouping-v2"
 ALU_AUTOMATIC_TYPES = {
-    "ALU32", "ALU32Core", "AddSub32", "Logic32", "Shifter32", "ALU32ControlDecoder",
-    "ALU32CompareUnit", "ALU32ResultSelector", "ALU32FlagUnit", "ZeroDetect32",
+    "ALU<32,integer,prefix>", "ALU<32,integer,prefix,core>", "AddSub<32,integer,prefix>", "LogicUnit<32,integer>", "BarrelShifter<32,integer>", "ALUControlDecoder<integer>",
+    "CompareSelect<32,integer>", "ALUResultSelector<32,integer>", "ALUFlagUnit<32,integer>", "ZeroDetect<32>",
 }
 BLOCK_TYPES = {
-    "Decoder5to32",
-    "Mux2to1_4bit", "Mux2to1_32bit",
+    "Decoder<5>",
+    "Mux<2,4>", "Mux<2,32>",
     "RV32IDecodeControlField",
-    "AddSub32", "ZeroDetect32", "ALU32CompareUnit", "ALU32FlagUnit",
+    "AddSub<32,integer,prefix>", "ZeroDetect<32>", "CompareSelect<32,integer>", "ALUFlagUnit<32,integer>",
     "RV32IDecodeControlUnit", "RV32IInstructionRecognition", "RV32IDecodeControlSignals",
     "RV32IDecodeControlField", "RV32IMemoryAlignmentUnit",
     "RV32IMemoryLanes", "RV32IMemoryAddress", "RV32ILoadExtender", "RV32ILoadByte",
     "RV32IMemoryLanesDataOnly", "RV32IMemoryAddressDataOnly", "RV32IFetchRequest",
-    "IncrementBy4", "RV32IWritebackBypass",
+    "Incrementer<32,4>", "RV32IWritebackBypass",
     "RV32IByteWriteMask", "RV32IMemoryRequest", "RV32IRequestTagMatch",
     "RV32IExecutionControlStatusUnit", "RV32IStatusPriority",
     # Ancestors must refit their changed child proportions too.
@@ -42,12 +42,12 @@ AUTOMATIC_TYPES = {
     "RV32IMemoryAlignmentUnit",
     "RV32IMemoryLanes", "RV32IMemoryAddress", "RV32IMemoryLanesDataOnly",
     "RV32IMemoryAddressDataOnly", "RV32ILoadExtender", "RV32IStatusPriority",
-    "IncrementBy4", "RV32IWritebackBypass",
+    "Incrementer<32,4>", "RV32IWritebackBypass",
     "RV32IExecutePacketStatus",
 }
 ASPECTS = {
-    "Decoder5to32": 2.1,
-    "Mux2to1_4bit": .8, "Mux2to1_32bit": 2.1,
+    "Decoder<5>": 2.1,
+    "Mux<2,4>": .8, "Mux<2,32>": 2.1,
     "RV32IPredictionPath": .60, "RV32IBranchPredictor": .80,
     "RV32IPredictionTable": 1.6, "RV32IPredictionEntry": .8,
     "RV32IForwardedOperands": .75, "RV32IExecutePacketStatus": .75,
@@ -56,8 +56,8 @@ ASPECTS = {
     "RV32IBaselineExecuteStage": .95, "RV32IBaselineMemoryStage": 1.0,
     "RV32IBaselineDependencyUnit": .65, "RV32IBaselineControl": .6,
     "RV32IBaselinePacketStatus": .65,
-    "AddSub32": .61,
-    "ZeroDetect32": .38, "ALU32CompareUnit": .84, "ALU32FlagUnit": .725,
+    "AddSub<32,integer,prefix>": .61,
+    "ZeroDetect<32>": .38, "CompareSelect<32,integer>": .84, "ALUFlagUnit<32,integer>": .725,
     "RV32ISingleCycleCore": .52, "RV32IFiveStageCore": .52,
     "RV32IFetchStage": .8, "RV32IDecodeStage": 1.0,
     "RV32IExecuteStage": .95, "RV32IMemoryStage": .95,
@@ -73,7 +73,7 @@ ASPECTS = {
     "RV32IMemoryLanesDataOnly": .80,
     "RV32IMemoryRequest": 1.5,
     "RV32IFetchRequest": 1.15,
-    "IncrementBy4": .72, "RV32IWritebackBypass": .65,
+    "Incrementer<32,4>": .72, "RV32IWritebackBypass": .65,
     "RV32IInstructionRecognition": 1.0, "RV32IDecodeControlSignals": 1.1,
     "RV32IDecodeControlField": .9, "RV32IMemoryAddress": .8,
     "RV32ILoadExtender": .8, "RV32ILoadByte": 1.0, "RV32IByteWriteMask": .8,
@@ -83,6 +83,31 @@ ASPECTS = {
     "RV32ISingleCycleWritebackStage": .7, "RV32ISingleCycleNextPCStage": .9,
 }
 
+# Width-aware parts use the same layout policy for every declared geometry.
+for width in (8,16,32):
+    for operations in ("extended","integer"):
+        for topology in ("ripple","prefix"):
+            ALU_AUTOMATIC_TYPES.add(f"ALU<{width},{operations},{topology}>")
+            if operations=="integer":ALU_AUTOMATIC_TYPES.add(f"ALU<{width},{operations},{topology},core>")
+        for unit in ("AddSub","LogicUnit","BarrelShifter","CompareSelect","ALUResultSelector","ALUFlagUnit"):
+            suffix=",integer" if operations=="integer" else ""
+            if unit=="AddSub":
+                for topology in ("ripple","prefix"):ALU_AUTOMATIC_TYPES.add(f"{unit}<{width}{suffix},{topology}>")
+            else:ALU_AUTOMATIC_TYPES.add(f"{unit}<{width}{suffix}>")
+    ALU_AUTOMATIC_TYPES.add(f"ZeroDetect<{width}>")
+for width in (4,8,16,32):
+    kind=f"Mux<2,{width}>"
+    BLOCK_TYPES.add(kind);ASPECTS[kind]=max(.8,2.1*width/32)
+ASPECTS["Decoder<5,zero-disabled>"]=ASPECTS["Decoder<5>"]
+BLOCK_TYPES.add("Decoder<5,zero-disabled>")
+AUTOMATIC_TYPES.update(ALU_AUTOMATIC_TYPES)
+
+def layout_kind(kind):
+    # Config and packed-payload markers do not erase true width parameters.
+    kind=kind.split("[",1)[0]
+    if kind in ASPECTS or kind in AUTOMATIC_TYPES:return kind
+    return kind.split("<",1)[0]
+
 
 def revision(kind):
     if kind in {"RV32IFiveStageCore", "RV32IPipelineCoordinator", "RV32IBaselinePipelineCore"} or kind.endswith("PipelineRegister"):
@@ -91,17 +116,17 @@ def revision(kind):
         return SINGLE_CYCLE_REVISION
     if kind in ALU_AUTOMATIC_TYPES:
         return ALU_AUTOMATIC_REVISION
-    if kind.split("<")[0] in BLOCK_TYPES:
+    if layout_kind(kind) in BLOCK_TYPES:
         return BLOCKS_REVISION
     return AUTOMATIC_REVISION if kind in AUTOMATIC_TYPES else REVISION
 
 
 def defaults(kind):
-    kind = kind.split("<")[0]
+    kind = layout_kind(kind)
     if kind not in ASPECTS:
         return {}
     aspect = ASPECTS[kind]
-    title = (.06 if kind == "ZeroDetect32" else .045 if kind.endswith("Core") else .065 if kind == "RV32IPipelineCoordinator" else
+    title = (.06 if kind == "ZeroDetect<32>" else .045 if kind.endswith("Core") else .065 if kind == "RV32IPipelineCoordinator" else
              .24 if kind.endswith("PipelineRegister") else
              .14 if kind.endswith("Stage") or kind == "RV32IMemoryRequest" else .12)
     # Even the most pin-heavy stage fits its pins without stretching the box.
@@ -118,10 +143,11 @@ def natural(name):
 
 
 class Floorplan:
-    def __init__(self, aspects, aspect, title, vertical_fill=.86):
+    def __init__(self, aspects, aspect, title, vertical_fill=.86, child_stubs=None):
         self.aspects, self.aspect, self.result = aspects, aspect, {}
         self.top = max(.05, title/aspect+.025)
         self.vertical_fill = vertical_fill
+        self.child_stubs = child_stubs or {}
 
     def slot(self, name, x, y, width, height):
         if name not in self.aspects:
@@ -130,8 +156,14 @@ class Floorplan:
         # Reserve the real title before fitting, including in wide control rails.
         scale = (1-self.top)/.95
         y, height = self.top+(y-.05)*scale, height*scale
-        # 30% horizontal clearance accommodates the widest legacy pin stubs.
+        # Baseline slot spacing reserves 30%; larger pin footprints are bounded below.
         size = min(width / 1.30, height * self.aspect / self.aspects[name] * self.vertical_fill)
+        if name in self.child_stubs:
+            # A stub bounds half the pin height as well as horizontal reach.
+            # Keep valid placements; shrink only footprints that exceed a slot.
+            stub = self.child_stubs[name]
+            size = min(size, width / (1 + 2 * stub),
+                       height * self.aspect / (self.aspects[name] + 2 * stub))
         h = size * self.aspects[name] / self.aspect
         self.result[name] = {"rel_pos": [x + (width-size)/2, y + (height-h)/2],
                              "rel_width": size}
@@ -150,8 +182,8 @@ class Floorplan:
         self.grid(sorted(set(self.aspects)-set(self.result), key=natural), rect, columns)
 
 
-def placements(kind, aspects, parent_aspect):
-    kind = kind.split("<")[0]
+def placements(kind, aspects, parent_aspect, child_stubs=None):
+    kind = layout_kind(kind)
     if kind not in ASPECTS or not aspects or kind in AUTOMATIC_TYPES | {"RV32IFiveStageCore", "RV32ISingleCycleCore"}:
         # Stage internals and ALU components use normal connectivity layout.
         # Complete cores and request payloads have separate dedicated layouts.
@@ -159,7 +191,8 @@ def placements(kind, aspects, parent_aspect):
     # Dense matcher columns also reserve the legacy gates' tall pin markers.
     p = Floorplan(aspects, parent_aspect, defaults(kind)["title_bar_ratio"],
                   vertical_fill=.60 if kind == "RV32IDecodeControlField" else
-                                .70 if kind == "RV32IBitPatternMatcher" else .86)
+                                .70 if kind == "RV32IBitPatternMatcher" else .86,
+                  child_stubs=child_stubs)
     names = list(aspects)
     if kind.endswith("PipelineRegister"):
         # Identical field ordering in all four pipeline latches. Compact
@@ -179,7 +212,7 @@ def placements(kind, aspects, parent_aspect):
             p.grid(parts,(.29,row_y,.42,row_height),max(1,len(parts)))
             p.slot(field+"_JOIN",.78,row_y,.17,row_height)
         if set(p.result) != set(names): return None
-    elif kind == "Decoder5to32":
+    elif kind in {"Decoder<5>","Decoder<5,zero-disabled>"}:
         # Literal preparation -> low/high predecode -> 32 product terms ->
         # output enables. Row n represents decoded register address n.
         p.slot("ADDR_SPLIT", .02,.13,.12,.77)
@@ -194,10 +227,10 @@ def placements(kind, aspects, parent_aspect):
             p.slot(f"OUT{i}_ENABLE_AND", .79 + col*.08, y, .075,.050)
         p.slot("OUT0_ZERO", .785,.08,.08,.05)
         if set(p.result) != set(names): return None
-    elif kind in {"Mux2to1_4bit", "Mux2to1_32bit"}:
+    elif re.fullmatch(r"Mux<2,(4|8|16|32)>",kind):
         # Two data buses and a shared inverted select feed parallel per-bit
         # AND/OR lanes. No phantom one-bit MUX_BIT children remain.
-        width = int(kind.split("_")[1][:-3])
+        width = int(kind.split(",")[1][:-1])
         columns = 2 if width == 32 else 1
         p.slot("A_SPLIT", .02,.14,.10,.73)
         p.slot("B_SPLIT", .14,.14,.10,.73)

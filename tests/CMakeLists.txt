@@ -23,9 +23,9 @@ add_executable(SafeClockTimingTest cpp/SafeClockTimingTest.cpp)
 # A sample of the stored delay tables, recomputed from the gates. The full
 # check is `part_delay_tables --check` (about ten minutes).
 add_test(NAME PartDelayTablesTest COMMAND part_delay_tables --check
-    arithmetic.adder.width32 arithmetic.add-sub.width32 mux.32x1.width32 decode.5-to-32
-    shift.barrel.width32 compare.zero.width32 rv32i.decode-control rv32i.pipeline.forwarding
-    rv32i.pipeline.hazard-detection alu.width8 rv32i.prediction.predictor rv32i.memory-lanes)
+    word.adder.32.prefix word.addsub.32.integer.prefix logic.mux.32.32 logic.decoder.5.full
+    word.barrelshifter.32.integer word.zerodetect.32 rv32i.decode-control rv32i.pipeline.forwarding
+    rv32i.pipeline.hazard-detection word.alu.8.extended.ripple rv32i.prediction.predictor rv32i.memory-lanes)
 set_tests_properties(PartDelayTablesTest PROPERTIES LABELS "timing;analysis" TIMEOUT 600)
 add_test(NAME PartDelayTablesCompleteTest COMMAND part_delay_tables --verify
     ${CMAKE_SOURCE_DIR}/src/components/selection/ProvenPartDelays.generated.inc)
@@ -347,7 +347,7 @@ set(SIMULATION_TESTS
     MemoryDeviceTimingTest
     FFMemoryContractTest
     RegisterTest
-    RegisterFile32x32Test
+    RegisterFileWidth32Count32Test
     RewireTest
     RewireValidationTest
     BitSplitter1Test
@@ -373,46 +373,46 @@ set(SIMULATION_TESTS
     ConstantValue32Test
     HalfAdderTest
     FullAdderTest
-    Mux2to1Test
-    Mux4to1Test
-    Mux8to1Test
-    Mux32to1Test
-    Mux2to1_4bitTest
-    Mux2to1_32bitTest
-    Mux4to1_32bitTest
-    Mux8to1_8bitTest
-    Mux8to1_32bitTest
-    Mux32to1_32bitTest
-    Decoder5to32Test
-    Decoder5to32X0UnusedTest
-    Adder8Test
-    ZeroDetect8Test
-    ALU8Test
-    AddSub8Test
-    ArithmeticUnit8Test
-    LogicUnit8Test
-    BarrelShifter8Test
-    CompareSelect8Test
-    ALU8FlagUnitTest
-    ALU8ContractTest
-    ALU8FidelityContractTest
-    ALU8ControlDecoderTest
-    ALU8ResultSelectorTest
-    ALU32ControlDecoderTest
-    ALU32CompareUnitTest
-    ALU32ResultSelectorTest
-    ALU32FlagUnitTest
+    Mux2Width1Test
+    Mux4Width1Test
+    Mux8Width1Test
+    Mux32Width1Test
+    Mux2Width4Test
+    Mux2Width32Test
+    Mux4Width32Test
+    Mux8Width8Test
+    Mux8Width32Test
+    Mux32Width32Test
+    DecoderWidth5Test
+    DecoderWidth5ZeroDisabledTest
+    AdderRippleWidth8Test
+    ZeroDetectWidth8Test
+    ALUExtendedWidth8Test
+    AddSubExtendedWidth8Test
+    ArithmeticExtendedWidth8Test
+    LogicExtendedWidth8Test
+    ShiftExtendedWidth8Test
+    CompareExtendedWidth8Test
+    FlagsExtendedWidth8Test
+    ExtendedALUContractTest
+    ExtendedALUFidelityContractTest
+    ALUControlExtendedTest
+    ResultSelectorExtendedWidth8Test
+    ALUControlIntegerTest
+    CompareIntegerWidth32Test
+    ResultSelectorIntegerWidth32Test
+    FlagsIntegerWidth32Test
     ALUHierarchyTest
-    Adder32Test
-    AddSub32Test
+    AdderPrefixWidth32Test
+    AddSubIntegerWidth32Test
     RV32IMemoryLanesTest
     RV32IMemoryRequestTest
-    Logic32Test
-    ZeroDetect32Test
-    Shifter32Test
-    ALU32Test
-    ALU32CoreTest
-    ALU32RepresentativeSliceTest
+    LogicIntegerWidth32Test
+    ZeroDetectWidth32Test
+    ShiftIntegerWidth32Test
+    ALUIntegerWidth32Test
+    ALUIntegerCoreWidth32Test
+    IntegerALUSliceTest
     RV32IDecodeControlUnitTest
     RV32IExecutionControlStatusUnitTest
     RV32IIFIDPipelineRegisterTest
@@ -477,7 +477,7 @@ set(INFRASTRUCTURE_TESTS
 )
 
 set(SEMANTIC_TESTS
-    ALU32RepresentativeSliceTest
+    IntegerALUSliceTest
     RewireValidationTest
     RV32IDecoderTest
     RV32IControlTest
@@ -499,10 +499,10 @@ set(SLOW_SIMULATION_TESTS
     RV32IMemoryArrangementBTest
     RV32IMemoryArrangementD0Test
     RV32IMemoryArrangementDIDTest
-    ALU32Test
-    ALU32CoreTest
+    ALUIntegerWidth32Test
+    ALUIntegerCoreWidth32Test
     FFMemoryContractTest
-    RegisterFile32x32Test
+    RegisterFileWidth32Count32Test
     RV32ISingleCycleCoreTest
     RV32IExternalValidationSmokeTest
     RV32IProfileToggleSweepTest
@@ -521,7 +521,7 @@ foreach(test_name ${SIMULATION_TESTS})
     else()
         list(APPEND test_labels contract)
     endif()
-    if(test_name MATCHES "RV32I|ALU32")
+    if(test_name MATCHES "RV32I|ALU<32>")
         list(APPEND test_labels rv32i)
     endif()
     if(test_name MATCHES "System")
@@ -626,13 +626,21 @@ foreach(test_name RV32ISharedMemoryProgramTest RV32IMemoryArrangementBTest RV32I
     list(APPEND SIMULATION_TESTS ${test_name})
 endforeach()
 
+# Generic arithmetic ownership precedes the game/device append hook.
+foreach(test_name ALUWidthContractTest ALUScenarioTest ALUWidth8ScenarioTest ALUWidth32ScenarioTest AdderRippleScenarioTest AdderPrefixScenarioTest)
+    add_test(NAME ${test_name} COMMAND SimulationTestRunner ${test_name})
+    set_tests_properties(${test_name} PROPERTIES LABELS "simulation;alu;width")
+    list(APPEND SIMULATION_TESTS ${test_name})
+endforeach()
+
 # Additive phase 0-3 checks and recorded aliases, in the append hook's order.
 set(RV32IM_PHASE3_TESTS
+    WidthComponentsTest
     MultiplyStepTest
     DivideStepTest
-    Multiplier32Test
-    Divider32Test
-    MulDivUnit32Test
+    MultiplierWidth32Test
+    DividerWidth32Test
+    MulDivUnitWidth32Test
     TableOnlyDelayPublicationTest
     RV32IMSemanticsTest
     RV32IMDecodeControlTest
@@ -643,21 +651,22 @@ set(RV32IM_PHASE3_TESTS
     RV32IMCompiledProgramTest
     ClockedCounterTest
     SynchronousFifoTest
-    DeviceRegisterPort32Test
-    BusErrorTarget32Test
-    AddressRouter32Test
-    InstructionAccessGuard32Test
-    ConsoleDevice32Test
-    TimerDevice32Test
-    ButtonDevice32Test
-    IndexedPixelSelector32Test
-    FramebufferDisplay32Test
+    DeviceRegisterPortWidth32Test
+    BusErrorTargetWidth32Test
+    AddressRouterWidth32Test
+    InstructionAccessGuardWidth32Test
+    ConsoleDeviceTest
+    TimerDeviceTest
+    ButtonDeviceTest
+    IndexedPixelSelectorWidth32Test
+    FramebufferDisplayTest
     DeviceInspectorTest
+    ALUWidth16RippleScenarioTest
     MultiplyStepScenarioTest
     DivideStepScenarioTest
-    Multiplier32ScenarioTest
-    Divider32ScenarioTest
-    MulDivUnit32ScenarioTest
+    MultiplierWidth32ScenarioTest
+    DividerWidth32ScenarioTest
+    MulDivUnitWidth32ScenarioTest
     RV32IMDecodeControlScenarioTest
     RV32IMDecodeStageScenarioTest
     RV32IMExecuteStageScenarioTest
@@ -665,15 +674,15 @@ set(RV32IM_PHASE3_TESTS
     RV32IMFiveStageCoreScenarioTest
     ClockedCounterScenarioTest
     SynchronousFifoScenarioTest
-    DeviceRegisterPort32ScenarioTest
-    BusErrorTarget32ScenarioTest
-    AddressRouter32ScenarioTest
-    InstructionAccessGuard32ScenarioTest
-    ConsoleDevice32ScenarioTest
-    TimerDevice32ScenarioTest
-    ButtonDevice32ScenarioTest
-    IndexedPixelSelector32ScenarioTest
-    FramebufferDisplay32ScenarioTest
+    DeviceRegisterPortWidth32ScenarioTest
+    BusErrorTargetWidth32ScenarioTest
+    AddressRouterWidth32ScenarioTest
+    InstructionAccessGuardWidth32ScenarioTest
+    ConsoleDeviceScenarioTest
+    TimerDeviceScenarioTest
+    ButtonDeviceScenarioTest
+    IndexedPixelSelectorWidth32ScenarioTest
+    FramebufferDisplayScenarioTest
 )
 foreach(test_name ${RV32IM_PHASE3_TESTS})
     add_test(NAME ${test_name} COMMAND SimulationTestRunner ${test_name})
@@ -878,6 +887,12 @@ set_property(TEST ${circuitsim_directory_tests} APPEND PROPERTY ENVIRONMENT
 # circuitsim_recorded_guest in the Emscripten build.
 add_executable(RecordedGuestProbe cpp/RecordedGuestProbe.cpp)
 target_link_libraries(RecordedGuestProbe PRIVATE SimulatorLib)
+add_executable(RecordedCircuitProbe cpp/RecordedCircuitProbe.cpp)
+target_link_libraries(RecordedCircuitProbe PRIVATE SimulatorLib)
+if(CIRCUITSIM_NODE_EXECUTABLE)
+    add_test(NAME RecordedCircuitTransportTest COMMAND ${CIRCUITSIM_NODE_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/checks/RecordedCircuitTransportTest.mjs)
+    set_tests_properties(RecordedCircuitTransportTest PROPERTIES LABELS "visualizer;device;recorded-games")
+endif()
 
 # These C sources are valid C++ as well. Keep the project compiler languages
 # unchanged; the strict C11 cross-check is run by the reference check helper.
@@ -906,3 +921,17 @@ add_test(NAME SimulationTimeBindingsTest COMMAND ${Python3_EXECUTABLE}
 set_tests_properties(SimulationTimeBindingsTest PROPERTIES
     ENVIRONMENT "PYTHONPATH=${PROJECT_BINARY_DIR}:${PROJECT_SOURCE_DIR}/visualizer-v2"
     LABELS "simulation;time;visualizer;contract;phase4" TIMEOUT 180)
+
+# Compile the freestanding library with its actual language for geometry checks.
+enable_language(C)
+add_executable(GuestDisplayGeometryTest cpp/GuestDisplayGeometryTest.c
+    ${CMAKE_SOURCE_DIR}/tools/rv32im/guest/platform.c)
+target_include_directories(GuestDisplayGeometryTest PRIVATE ${CMAKE_SOURCE_DIR}/tools/rv32im/guest)
+set_target_properties(GuestDisplayGeometryTest PROPERTIES C_STANDARD 11 C_STANDARD_REQUIRED YES)
+target_compile_definitions(GuestDisplayGeometryTest PRIVATE CIRCUITSIM_GUEST_REFERENCE)
+target_compile_options(GuestDisplayGeometryTest PRIVATE -fno-builtin -Wall -Wextra -Werror)
+foreach(geometry IN ITEMS "64;48;64" "320;200;320" "97;65;97" "97;65;101")
+    string(REPLACE ";" "x" key "${geometry}")
+    add_test(NAME GuestDisplayGeometryTest/${key} COMMAND GuestDisplayGeometryTest ${geometry})
+    set_tests_properties(GuestDisplayGeometryTest/${key} PROPERTIES LABELS "rv32im;device;phase6")
+endforeach()

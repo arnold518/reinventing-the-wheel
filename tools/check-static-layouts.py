@@ -159,6 +159,9 @@ def missing_in(layout: dict, alias: str, class_name: str) -> list[str]:
 def main() -> int:
     layout = json.loads((ROOT / "visualizer-v2/layout.json").read_text(encoding="utf-8"))
     wanted = set(sys.argv[1:])
+    unknown = wanted - {option["key"] for option in server.SCENARIO_OPTIONS}
+    if unknown:
+        raise ValueError("Unknown scenario aliases: " + ", ".join(sorted(unknown)))
     options = [o for o in server.SCENARIO_OPTIONS if not wanted or o["key"] in wanted]
     problems = []
     for index, option in enumerate(options, 1):

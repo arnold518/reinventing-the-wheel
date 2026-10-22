@@ -2,16 +2,16 @@
 #include "DeviceLogic.hpp"
 #include "components/GateListPartBehavioral.hpp"
 #include "components/selection/FamilyFactories.hpp"
-#include "modules/rv32im/RegisterComponent.hpp"
+#include "components/selection/FamilyRegistration.hpp"
 using namespace circuit::device::detail;
 namespace {
 void counterPins(IOComponent*p,size_t width) {
-    if(width!=4&&width!=32)throw std::invalid_argument("Counter supports 4 or 32 bits");
+    if(width!=4&&width!=8&&width!=16&&width!=32)throw std::invalid_argument("Counter supports 4, 8, 16 and 32 bits");
     for(auto s:{"CLK","RST","ENABLE"})p->addPin(s,PinType::INPUT);
     p->addPinDynamic("COUNT",PinType::OUTPUT,width);p->addPin("TICK",PinType::OUTPUT);
 }
 void fifoPins(IOComponent*p,size_t width) {
-    if(width!=8&&width!=32)throw std::invalid_argument("FIFO supports 8 or 32 bits");
+    if(width!=8&&width!=16&&width!=32)throw std::invalid_argument("FIFO supports 8, 16 and 32 bits");
     for(auto s:{"CLK","RST","PUSH","POP","CLEAR_OVERFLOW"})p->addPin(s,PinType::INPUT);
     p->addPinDynamic("PUSH_DATA",PinType::INPUT,width);p->addPinDynamic("DATA",PinType::OUTPUT,width);
     for(auto s:{"PUSH_READY","VALID","FULL","OVERFLOW"})p->addPin(s,PinType::OUTPUT);
@@ -35,6 +35,11 @@ const ComponentFamily& clockedCounter(size_t w) {
     static const ComponentFamily word{"device.counter.32","ClockedCounter<32>",[](IOComponent*p){counterPins(p,32);},
       [](const std::string&n,const std::shared_ptr<BuildContext>&c){return Component::createWithContext<::ClockedCounter>(c,n,32,circuit::device::detail::parameter(c,"divisor",1));},
       [](const std::string&n,const std::shared_ptr<BuildContext>&c){return circuit::detail::createGateListPart(clockedCounter(32),n,c);}};
+    static const ComponentFamily byte{"device.counter.8","ClockedCounter<8>",[](IOComponent*p){counterPins(p,8);},
+      [](const std::string&n,const std::shared_ptr<BuildContext>&c){return Component::createWithContext<::ClockedCounter>(c,n,8,parameter(c,"divisor",1));}};
+    static const ComponentFamily half{"device.counter.16","ClockedCounter<16>",[](IOComponent*p){counterPins(p,16);},
+      [](const std::string&n,const std::shared_ptr<BuildContext>&c){return Component::createWithContext<::ClockedCounter>(c,n,16,parameter(c,"divisor",1));}};
+    if(w==8)return byte;if(w==16)return half;
     if(w==4)return small;if(w==32)return word;throw std::invalid_argument("Invalid counter width");
 }
 const ComponentFamily& synchronousFifo(size_t w) {
@@ -44,13 +49,16 @@ const ComponentFamily& synchronousFifo(size_t w) {
     static const ComponentFamily word{"device.fifo.32","SynchronousFifo<32>",[](IOComponent*p){fifoPins(p,32);},
       [](const std::string&n,const std::shared_ptr<BuildContext>&c){return Component::createWithContext<::SynchronousFifo>(c,n,32,parameter(c,"depth",4));},
       [](const std::string&n,const std::shared_ptr<BuildContext>&c){return circuit::detail::createGateListPart(synchronousFifo(32),n,c);}};
+    static const ComponentFamily half{"device.fifo.16","SynchronousFifo<16>",[](IOComponent*p){fifoPins(p,16);},
+      [](const std::string&n,const std::shared_ptr<BuildContext>&c){return Component::createWithContext<::SynchronousFifo>(c,n,16,parameter(c,"depth",4));}};
+    if(w==16)return half;
     if(w==8)return byte;if(w==32)return word;throw std::invalid_argument("Invalid FIFO width");
 }
-const ComponentFamily ConsoleDevice32{"device.console.32","ConsoleDevice32",consolePins,[](const std::string& n,const std::shared_ptr<BuildContext>& c){return Component::createWithContext<::ConsoleDevice32>(c,n,parameter(c,"fifo_depth",4));}};
-const ComponentFamily TimerDevice32{"device.timer.32","TimerDevice32",[](IOComponent*p){memory::protocolPins(p,32);},
-    [](const std::string&n,const std::shared_ptr<BuildContext>&c){return Component::createWithContext<::TimerDevice32>(c,n,
+const ComponentFamily ConsoleDevice{"device.console","ConsoleDevice",consolePins,[](const std::string& n,const std::shared_ptr<BuildContext>& c){return Component::createWithContext<::ConsoleDevice>(c,n,parameter(c,"fifo_depth",4));}};
+const ComponentFamily TimerDevice{"device.timer","TimerDevice",[](IOComponent*p){memory::protocolPins(p,32);},
+    [](const std::string&n,const std::shared_ptr<BuildContext>&c){return Component::createWithContext<::TimerDevice>(c,n,
         circuit::device::detail::parameter(c,"divisor",1),circuit::device::detail::parameter(c,"frequency_hz",0));}};
-const ComponentFamily ButtonDevice32{"device.buttons.32","ButtonDevice32",buttonPins,[](const std::string& n,const std::shared_ptr<BuildContext>& c){return Component::createWithContext<::ButtonDevice32>(c,n,parameter(c,"fifo_depth",4));}};
+const ComponentFamily ButtonDevice{"device.buttons","ButtonDevice",buttonPins,[](const std::string& n,const std::shared_ptr<BuildContext>& c){return Component::createWithContext<::ButtonDevice>(c,n,parameter(c,"fifo_depth",4));}};
 }
 ClockedCounter::ClockedCounter(std::string n,size_t w,uint32_t divisor):IOComponent(std::move(n),[w](IOComponent*p){counterPins(p,w);}),
     width_(w),divisor_(divisor),type_("ClockedCounter<"+std::to_string(w)+">"){if(!divisor)throw std::invalid_argument("Counter divisor must be positive");}
@@ -99,10 +107,10 @@ void SynchronousFifo::buildInternals(ComponentBuilder&b){
     l.out(valid,getOutputPin("VALID"));l.out(full,getOutputPin("FULL"));l.out(count->getOutputPin<3>("Q"),getOutputPin<3>("COUNT"));
     l.drive(l.mux({valid,l.constant(width_),data}),getOutputPinDynamic("DATA"));l.finish();
 }
-ConsoleDevice32::ConsoleDevice32(std::string n,size_t fifo_depth):IOComponent(std::move(n),consolePins),fifo_depth_(fifo_depth){
+ConsoleDevice::ConsoleDevice(std::string n,size_t fifo_depth):IOComponent(std::move(n),consolePins),fifo_depth_(fifo_depth){
     if(!circuit::device::validFifoDepth(fifo_depth))throw std::invalid_argument("Invalid console FIFO depth");
 }
-void ConsoleDevice32::buildInternals(ComponentBuilder&b){
+void ConsoleDevice::buildInternals(ComponentBuilder&b){
     Logic l(b);auto port=devicePort(*this,b,l);auto fifo=b.add(circuit::families::synchronousFifo(8),"TX_FIFO",(fifo_depth_==4?circuit::ParameterMap{}:circuit::ParameterMap{{"depth",std::to_string(fifo_depth_)}}));
     for(auto p:{"CLK","RST"})l.wire(getInputPin(p),fifo->getInputPin(p));
     auto tx=at(l,port,0),status=at(l,port,4),count=at(l,port,8);
@@ -122,10 +130,10 @@ void ConsoleDevice32::buildInternals(ComponentBuilder&b){
     l.wire(getInputPin("TX_READY"),fifo->getInputPin("POP"));l.wire(l.bit(false),fifo->getInputPin("CLEAR_OVERFLOW"));
     l.out(fifo->getOutputPin("VALID"),getOutputPin("TX_VALID"));l.out(fifo->getOutputPin<8>("DATA"),getOutputPin<8>("TX_DATA"));l.finish();
 }
-TimerDevice32::TimerDevice32(std::string n,uint32_t divisor,uint32_t frequency):IOComponent(std::move(n),circuit::families::TimerDevice32.pinInitializer()),divisor_(divisor),frequency_(frequency){
+TimerDevice::TimerDevice(std::string n,uint32_t divisor,uint32_t frequency):IOComponent(std::move(n),circuit::families::TimerDevice.pinInitializer()),divisor_(divisor),frequency_(frequency){
     if(!divisor)throw std::invalid_argument("Timer divisor must be positive");
 }
-void TimerDevice32::buildInternals(ComponentBuilder&b){
+void TimerDevice::buildInternals(ComponentBuilder&b){
     Logic l(b);auto port=devicePort(*this,b,l);auto counter=b.add(circuit::families::clockedCounter(32),"COUNTER",{{"divisor",std::to_string(divisor_)}});
     for(auto p:{"CLK","RST"})l.wire(getInputPin(p),counter->getInputPin(p));l.wire(l.bit(true),counter->getInputPin("ENABLE"));
     auto ticks=at(l,port,0),div=at(l,port,4),hz=at(l,port,8);
@@ -136,10 +144,10 @@ void TimerDevice32::buildInternals(ComponentBuilder&b){
     data=l.mux({div,data,l.constant(32,divisor_)});data=l.mux({hz,data,l.constant(32,frequency_)});
     l.drive(data,port->getInputPin<32>("BACK_READ_DATA"));l.finish();
 }
-ButtonDevice32::ButtonDevice32(std::string n,size_t fifo_depth):IOComponent(std::move(n),buttonPins),fifo_depth_(fifo_depth){
+ButtonDevice::ButtonDevice(std::string n,size_t fifo_depth):IOComponent(std::move(n),buttonPins),fifo_depth_(fifo_depth){
     if(!circuit::device::validFifoDepth(fifo_depth))throw std::invalid_argument("Invalid button FIFO depth");
 }
-void ButtonDevice32::buildInternals(ComponentBuilder&b){
+void ButtonDevice::buildInternals(ComponentBuilder&b){
     Logic l(b);auto port=devicePort(*this,b,l);auto fifo=b.add(circuit::families::synchronousFifo(32),"EVENTS",(fifo_depth_==4?circuit::ParameterMap{}:circuit::ParameterMap{{"depth",std::to_string(fifo_depth_)}}));
     for(auto p:{"CLK","RST"})l.wire(getInputPin(p),fifo->getInputPin(p));
     auto id=l.split(getInputPin<5>("INPUT_BUTTON"));auto input=getInputPin("INPUT_VALID");
@@ -163,18 +171,11 @@ void ButtonDevice32::buildInternals(ComponentBuilder&b){
 }
 namespace circuit::device {
 void registerComponents(ComponentCatalog&c) {
-    auto add=[&](const ComponentFamily&f,const char*test){rv32im::detail::registerStructural(c,f,test,"clock-boundary");};
-    add(families::DeviceRegisterPort32,"DeviceRegisterPort32Test");add(families::BusErrorTarget32,"BusErrorTarget32Test");
-    rv32im::detail::registerStructural(c,families::AddressRouter32,"AddressRouter32Test","clock-boundary",detail::supportsRouter);add(families::InstructionAccessGuard32,"InstructionAccessGuard32Test");
-    for(size_t w:{4u,32u})rv32im::detail::registerStructural(c,families::clockedCounter(w),"ClockedCounterTest","clock-boundary",detail::supportsCounter);
-    for(size_t w:{8u,32u})rv32im::detail::registerStructural(c,families::synchronousFifo(w),"SynchronousFifoTest","clock-boundary",detail::supportsFifo);
-    for(const auto& pair:std::vector<std::pair<const ComponentFamily*,std::string>>{
-        {&families::DeviceRegisterPort32,"DeviceRegisterPort32"},{&families::AddressRouter32,"AddressRouter32"},
-        {&families::InstructionAccessGuard32,"InstructionAccessGuard32"}})
-        rv32im::detail::registerBehavioral(c,*pair.first,pair.second+"Test",pair.second+"ScenarioTest",pair.first==&families::AddressRouter32?circuit::ParameterPredicate(detail::supportsRouter):circuit::ParameterPredicate{});
-    for(size_t w:{4u,32u})rv32im::detail::registerBehavioral(c,families::clockedCounter(w),"ClockedCounterTest","ClockedCounterScenarioTest",detail::supportsCounter);
-    for(size_t w:{8u,32u})rv32im::detail::registerBehavioral(c,families::synchronousFifo(w),"SynchronousFifoTest","SynchronousFifoScenarioTest",detail::supportsFifo);
-    rv32im::detail::registerStructural(c,families::ConsoleDevice32,"ConsoleDevice32Test","clock-boundary",detail::supportsQueuedDevice);rv32im::detail::registerStructural(c,families::TimerDevice32,"TimerDevice32Test","clock-boundary",detail::supportsTimer);rv32im::detail::registerStructural(c,families::ButtonDevice32,"ButtonDevice32Test","clock-boundary",detail::supportsQueuedDevice);
-    rv32im::detail::registerStructural(c,families::IndexedPixelSelector32,"IndexedPixelSelector32Test");rv32im::detail::registerStructural(c,families::FramebufferDisplay32,"FramebufferDisplay32Test","clock-boundary",detail::supportsDisplay);
+    for(size_t w:{4u,8u,16u,32u})circuit::registration::registerStructural(c,families::clockedCounter(w),"ClockedCounterTest","clock-boundary",detail::supportsCounter);
+    for(size_t w:{8u,16u,32u})circuit::registration::registerStructural(c,families::synchronousFifo(w),"SynchronousFifoTest","clock-boundary",detail::supportsFifo);
+    for(size_t w:{4u,32u})circuit::registration::registerBehavioral(c,families::clockedCounter(w),"ClockedCounterTest","ClockedCounterScenarioTest",detail::supportsCounter);
+    for(size_t w:{8u,32u})circuit::registration::registerBehavioral(c,families::synchronousFifo(w),"SynchronousFifoTest","SynchronousFifoScenarioTest",detail::supportsFifo);
+    circuit::registration::registerStructural(c,families::ConsoleDevice,"ConsoleDeviceTest","clock-boundary",detail::supportsQueuedDevice);circuit::registration::registerStructural(c,families::TimerDevice,"TimerDeviceTest","clock-boundary",detail::supportsTimer);circuit::registration::registerStructural(c,families::ButtonDevice,"ButtonDeviceTest","clock-boundary",detail::supportsQueuedDevice);
+    circuit::registration::registerStructural(c,families::FramebufferDisplay,"FramebufferDisplayTest","clock-boundary",detail::supportsDisplay);
 }
 }

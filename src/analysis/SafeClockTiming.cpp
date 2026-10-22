@@ -14,7 +14,7 @@
 #include "../modules/memory/FlipFlopCellBehavioral.hpp"
 #include "modules/storage/RegisterBehavioral.hpp"
 #include "modules/storage/ClockedStateBitBehavioral.hpp"
-#include "../modules/rv32i/RegisterFile32x32Behavioral.hpp"
+#include "../modules/storage/RegisterFileBehavioral.hpp"
 #include <algorithm>
 #include <array>
 #include <deque>
@@ -303,7 +303,7 @@ class Analysis {
                 else if(!ep->memoryStorage().isFullyBinary())diagnostic(c->getID()+": initial memory image contains X/Z; binary startup rejected");
                 else report.binary_evidence.push_back(c->getID()+": checked all "+std::to_string(ep->memoryStorage().capacityBytes())+" bytes known binary, including sparse default fill");
             } else if(!leaf.contract.launches.empty()) {
-                if(typeid(*c)!=typeid(FlipFlopCellBehavioral)&&typeid(*c)!=typeid(RegisterBehavioral)&&typeid(*c)!=typeid(RegisterFile32x32Behavioral)
+                if(typeid(*c)!=typeid(FlipFlopCellBehavioral)&&typeid(*c)!=typeid(RegisterBehavioral)&&typeid(*c)!=typeid(circuit::storage::RegisterFileBehavioral)
                     &&typeid(*c)!=typeid(ClockedStateBitBehavioral))
                     diagnostic(c->getID()+": no reset/binary preservation model");
             }

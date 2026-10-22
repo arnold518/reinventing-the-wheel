@@ -26,22 +26,23 @@ SCENARIOS = {"half-adder": ("HalfAdder", 16), "full-adder": ("FullAdder", 64)}
 with sync_playwright() as p:
     browser = p.chromium.launch(
         executable_path=shutil.which("google-chrome") or shutil.which("chromium"),
-        headless=True, args=["--no-sandbox"],
+        headless=True, args=["--no-sandbox", "--disable-dev-shm-usage",
+                             "--renderer-process-limit=2", "--js-flags=--max-old-space-size=256"],
     )
     context = browser.new_context(viewport={"width": 1440, "height": 1000})
     context.route("**/simulator/**", lambda route: route.abort())
     page = context.new_page()
     page.set_default_timeout(30000)
-    assert page.goto(urljoin(BASE, "alu8/2.1/"), wait_until="domcontentloaded").ok
+    assert page.goto(urljoin(BASE, "alu/2.1/"), wait_until="domcontentloaded").ok
     page.wait_for_function("document.querySelectorAll('mjx-container').length > 0")
     page.evaluate("MathJax.startup.promise")
     headings = page.locator("article h2").all_text_contents()
-    for index, name in enumerate(("HalfAdder", "FullAdder", "Adder8", "AddSub8", "ArithmeticUnit8"), 1):
+    for index, name in enumerate(("HalfAdder", "FullAdder", "Adder<W>", "AddSub<W>", "ArithmeticUnit<W>", "ParallelPrefixAdder<W>"), 1):
         assert any(f"2.1.{index}. {name}" in heading for heading in headings), (name, headings)
-    for anchor in ("211-adder8", "212-addsub8", "213-arithmeticunit8"):
+    for anchor in ("213-adderw", "214-addsubw", "215-arithmeticunitw"):
         assert page.locator(f'[id="{anchor}"]').count() == 1, anchor
-    assert page.locator(".simulator-embed iframe").count() == 5
-    source = (ROOT / "site-docs/alu8/2.1.md").read_text()
+    assert page.locator(".simulator-embed iframe").count() == 6
+    source = (ROOT / "site-docs/alu/2.1.md").read_text()
     expected_code = re.findall(r"```cpp\n(.*?)\n```", source, re.S)
     rendered_code = page.locator("article .language-cpp").all_text_contents()
     assert [code.strip() for code in rendered_code] == [code.strip() for code in expected_code]
@@ -73,7 +74,7 @@ with sync_playwright() as p:
                 page.locator('[id="211-halfadder"]').scroll_into_view_if_needed()
                 page.screenshot(path=str(SCREENSHOTS / f"half-adder-{scheme}-{width}.png"))
     context.close()
-    print("PASS: section order, preserved anchors, five C++ snippets, 80 exact table rows, theme and mobile layout", flush=True)
+    print("PASS: section order, preserved anchors, six C++ snippets, 80 exact table rows, theme and mobile layout", flush=True)
 
     # One WASM runtime at a time; use the exact URL published in each iframe.
     for alias, (component, count) in SCENARIOS.items():

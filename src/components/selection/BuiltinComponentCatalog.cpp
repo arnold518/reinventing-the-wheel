@@ -1,3 +1,6 @@
+#include "modules/storage/RegisterFile.hpp"
+#include "modules/device/DeviceBus.hpp"
+#include "modules/composite/WordDatapath.hpp"
 #include "components/selection/BuiltinComponentCatalog.hpp"
 
 #include "components/BasicComponent.hpp"
@@ -9,29 +12,8 @@
 #include "modules/basic/Gate.hpp"
 #include "modules/basic/Latch.hpp"
 #include "modules/basic/Mux.hpp"
-#include "modules/composite/ALU32.hpp"
-#include "modules/composite/ALU8.hpp"
-#include "modules/composite/ALU8ControlDecoder.hpp"
-#include "modules/composite/ALU8ResultSelector.hpp"
-#include "modules/composite/ALU32ControlDecoder.hpp"
-#include "modules/composite/ALU32CompareUnit.hpp"
-#include "modules/composite/ALU32ResultSelector.hpp"
-#include "modules/composite/ALU32FlagUnit.hpp"
-#include "modules/composite/AddSub8.hpp"
-#include "modules/composite/ArithmeticUnit8.hpp"
-#include "modules/composite/LogicUnit8.hpp"
-#include "modules/composite/BarrelShifter8.hpp"
-#include "modules/composite/CompareSelect8.hpp"
-#include "modules/composite/ALU8FlagUnit.hpp"
-#include "modules/composite/AddSub32.hpp"
-#include "modules/composite/Adder32.hpp"
-#include "modules/composite/Adder8.hpp"
 #include "modules/composite/FullAdder.hpp"
 #include "modules/composite/HalfAdder.hpp"
-#include "modules/composite/Logic32.hpp"
-#include "modules/composite/Shifter32.hpp"
-#include "modules/composite/ZeroDetect32.hpp"
-#include "modules/composite/ZeroDetect8.hpp"
 #include "modules/memory/FFMemoryCatalog.hpp"
 #include "modules/memory/SRAM.hpp"
 #include "modules/memory/DRAM.hpp"
@@ -42,7 +24,7 @@
 #include "modules/memory/TwoPortMemoryArbiter.hpp"
 #include "modules/memory/FlipFlopCell.hpp"
 #include "modules/storage/Register.hpp"
-#include "modules/rv32i/RegisterFile32x32.hpp"
+#include "modules/storage/RegisterFile.hpp"
 #include "modules/rv32i/RV32IBitPatternMatcher.hpp"
 #include "modules/rv32i/RV32IMemoryRequest.hpp"
 #include "modules/rv32i/RV32IDecodeControlUnit.hpp"
@@ -202,7 +184,7 @@ void addSingle(ComponentCatalog& catalog,
                Args... args) {
     catalog.registerContract({
         contract_id,
-        std::is_same_v<T, ALU8> ? 2u : 1u,
+        1u,
         std::move(display_name),
         schemaFor<T>(args...),
         {},
@@ -513,67 +495,11 @@ void registerStructuralFamilies(ComponentCatalog& catalog) {
     addStructural<SRLatch>(catalog, "sequential.sr-latch", "sequential.sr-latch.structural", "SR latch", "SRLatchTest");
     addStructural<GatedDLatch>(catalog, "sequential.gated-d-latch", "sequential.gated-d-latch.structural", "Gated D latch", "GatedDLatchTest");
     addStructural<DFlipFlop>(catalog, "sequential.d-flip-flop", "sequential.d-flip-flop.structural", "D flip-flop", "DFlipFlopTest");
-    addSelectableFamily(catalog, families::Decoder5to32, "decode.5-to-32", "5-to-32 decoder", "Decoder5to32Test", "Decoder5to32 structural gate network");
-    addSelectableFamily(catalog, families::Decoder5to32X0Unused, "decode.5-to-32.x0-unused", "5-to-32 decoder, output 0 unused", "Decoder5to32X0UnusedTest", "Decoder5to32 structural gate network with output 0 tied low");
 
 
-    addStructural<Mux2to1>(catalog, "mux.2x1.width1", "mux.2x1.width1.structural", "2:1 bit mux", "Mux2to1Test");
-    addStructural<Mux4to1>(catalog, "mux.4x1.width1", "mux.4x1.width1.structural", "4:1 bit mux", "Mux4to1Test");
-    addStructural<Mux8to1>(catalog, "mux.8x1.width1", "mux.8x1.width1.structural", "8:1 bit mux", "Mux8to1Test");
-    addStructural<Mux32to1>(catalog, "mux.32x1.width1", "mux.32x1.width1.structural", "32:1 bit mux", "Mux32to1Test");
-    addStructural<Mux2to1_4bit>(catalog, "mux.2x1.width4", "mux.2x1.width4.structural", "2:1 4-bit mux", "Mux2to1_4bitTest");
-    addSelectableFamily(catalog, families::Mux2to1_32bit, "mux.2x1.width32", "2:1 32-bit mux", "Mux2to1_32bitTest", "Mux2to1_32bit structural AND/OR selection per bit");
-    addSelectableFamily(catalog, families::Mux4to1_32bit, "mux.4x1.width32", "4:1 32-bit mux", "Mux4to1_32bitTest", "Mux4to1_32bit structural Mux2to1 tree per bit");
-    addStructural<Mux8to1_8bit>(catalog, "mux.8x1.width8", "mux.8x1.width8.structural", "8:1 8-bit mux", "Mux8to1_8bitTest");
-    addSelectableFamily(catalog, families::Mux8to1_32bit, "mux.8x1.width32", "8:1 32-bit mux", "Mux8to1_32bitTest", "Mux8to1_32bit structural Mux2to1 tree per bit");
-    addSelectableFamily(catalog, families::Mux32to1_32bit, "mux.32x1.width32", "32:1 32-bit mux", "Mux32to1_32bitTest", "Mux32to1_32bit structural Mux2to1 tree per bit");
 
     addStructural<HalfAdder>(catalog, "arithmetic.half-adder", "arithmetic.half-adder.structural", "Half adder", "HalfAdderTest");
     addStructural<FullAdder>(catalog, "arithmetic.full-adder", "arithmetic.full-adder.structural", "Full adder", "FullAdderTest");
-    addSelectableFamily(catalog, families::Adder8, "arithmetic.adder.width8", "8-bit adder", "Adder8Test", "Adder8 structural circuit", 1, "ALU8FidelityContractTest");
-    addSelectableFamily(catalog, families::Adder32, "arithmetic.adder.width32", "32-bit adder", "Adder32Test", "Adder32 structural parallel-prefix adder");
-    addSelectableFamily(
-        catalog,
-        families::AddSub32,
-        "arithmetic.add-sub.width32",
-        "32-bit add/sub",
-        "AddSub32Test",
-        "AddSub32 structural full-adder chain");
-    addSelectableFamily(catalog, families::ZeroDetect8, "compare.zero.width8", "8-bit zero detect", "ZeroDetect8Test", "ZeroDetect8 structural circuit", 1, "ALU8FidelityContractTest");
-    addSelectableFamily(
-        catalog,
-        families::ZeroDetect32,
-        "compare.zero.width32",
-        "32-bit zero detect",
-        "ZeroDetect32Test",
-        "ZeroDetect32 structural OR-reduction tree");
-    addSelectableFamily(
-        catalog,
-        families::Logic32,
-        "logic.combined.width32",
-        "32-bit logic",
-        "Logic32Test",
-        "Logic32 structural per-bit gate array");
-    addSelectableFamily(
-        catalog,
-        families::Shifter32,
-        "shift.barrel.width32",
-        "32-bit shifter",
-        "Shifter32Test",
-        "Shifter32 structural mux network");
-    addSelectableFamily(catalog, families::ALU8, "alu.width8", "8-bit ALU", "ALU8Test", "ALU8 structural circuit", 2, "ALU8FidelityContractTest");
-    addSelectableFamily(catalog, families::AddSub8, "arithmetic.add-sub.width8", "8-bit add/sub with carry", "AddSub8Test", "AddSub8 structural circuit", 1, "ALU8FidelityContractTest");
-    addSelectableFamily(catalog, families::ArithmeticUnit8, "arithmetic.unit.width8", "8-bit arithmetic unit", "ArithmeticUnit8Test", "ArithmeticUnit8 structural circuit", 1, "ALU8FidelityContractTest");
-    addSelectableFamily(catalog, families::LogicUnit8, "logic.unit.width8", "8-bit logic unit", "LogicUnit8Test", "LogicUnit8 structural circuit", 1, "ALU8FidelityContractTest");
-    addSelectableFamily(catalog, families::BarrelShifter8, "shift.barrel.width8", "8-bit barrel shifter", "BarrelShifter8Test", "BarrelShifter8 structural circuit", 1, "ALU8FidelityContractTest");
-    addSelectableFamily(catalog, families::CompareSelect8, "compare.select.width8", "8-bit comparison result selector", "CompareSelect8Test", "CompareSelect8 structural circuit", 1, "ALU8FidelityContractTest");
-    addSelectableFamily(catalog, families::ALU8FlagUnit, "alu.flags.width8", "8-bit ALU flags", "ALU8FlagUnitTest", "ALU8FlagUnit structural circuit", 1, "ALU8FidelityContractTest");
-    addSelectableFamily(catalog, families::ALU8ControlDecoder, "alu.control.width8", "ALU8ControlDecoder", "ALU8ControlDecoderTest", "ALU8ControlDecoder structural circuit", 1, "ALU8FidelityContractTest");
-    addSelectableFamily(catalog, families::ALU8ResultSelector, "alu.result-selector.width8", "ALU8ResultSelector", "ALU8ResultSelectorTest", "ALU8ResultSelector structural circuit", 1, "ALU8FidelityContractTest");
-    addStructural<ALU32ControlDecoder>(catalog, "alu.control.width32", "alu.control.width32.structural", "ALU32ControlDecoder", "ALU32ControlDecoderTest");
-    addStructural<ALU32CompareUnit>(catalog, "alu.compare.width32", "alu.compare.width32.structural", "ALU32CompareUnit", "ALU32CompareUnitTest");
-    addStructural<ALU32ResultSelector>(catalog, "alu.result-selector.width32", "alu.result-selector.width32.structural", "ALU32ResultSelector", "ALU32ResultSelectorTest");
-    addStructural<ALU32FlagUnit>(catalog, "alu.flags.width32", "alu.flags.width32.structural", "ALU32FlagUnit", "ALU32FlagUnitTest");
 }
 
 void registerStorage(ComponentCatalog& catalog) {
@@ -593,27 +519,6 @@ void registerStorage(ComponentCatalog& catalog) {
                            "FlipFlopCellTest", "four-state", "clock-boundary")));
 
 
-    const auto register_file =
-        std::string(families::RegisterFile32x32.id());
-    catalog.registerContract({
-        register_file, 1, "RV32I 32x32 register file",
-        schemaFor(families::RegisterFile32x32), {"register-state-view"},
-        "four-state", "clock-boundary"});
-    auto structural = implementationFor(
-        families::RegisterFile32x32,
-        "rv32i.register-file.structural.decoder-mux",
-        Fidelity::Structural, verifiedStructural("RegisterFile32x32Test"));
-    structural.capabilities = {"register-state-view"};
-    catalog.registerImplementation(std::move(structural));
-    auto behavioral = implementationFor(
-        families::RegisterFile32x32,
-        "rv32i.register-file.behavioral.direct",
-        Fidelity::Behavioral,
-        verifiedBehavioral("RegisterFile32x32 structural organization",
-                           "RegisterFile32x32Test",
-                           "RegisterFile32x32Test", "four-state", "clock-boundary"));
-    behavioral.capabilities = {"register-state-view"};
-    catalog.registerImplementation(std::move(behavioral));
 
 
 }
@@ -652,12 +557,6 @@ void addFamilyPair(ComponentCatalog& catalog, const FamilyPair& entry) {
 }
 
 void registerRV32I(ComponentCatalog& catalog) {
-    addFamilyPair(catalog, {families::ALU32, "RV32I ALU32", "ALU32Test",
-        "ALU32 structural implementation",
-        "rv32i.alu32.structural", "rv32i.alu32.behavioral.direct"});
-    addFamilyPair(catalog, {families::ALU32Core, "RV32I core ALU datapath", "ALU32CoreTest",
-        "ALU32 shared arithmetic and compare network",
-        "rv32i.alu32-core.structural", "rv32i.alu32-core.behavioral.direct"});
     addFamilyPair(catalog, {families::RV32IMemoryLanes, "RV32IMemoryLanes",
         "RV32IMemoryLanesTest", "RV32IMemoryLanes structural lane selectors, extender and mask logic",
         "rv32i.memory-lanes.structural", "rv32i.memory-lanes.behavioral"});
@@ -962,6 +861,12 @@ std::shared_ptr<ComponentCatalog> createBuiltinComponentCatalog() {
     rv32im::registerCore(*catalog);
     device::registerComponents(*catalog);
     rv32im::registerDeviceSystem(*catalog);
+    storage::registerRegisterFiles(*catalog);
+    logic::registerDecoders(*catalog);
+    word::registerMuxes(*catalog);
+    word::registerComponents(*catalog);
+    device::registerWordBusComponents(*catalog);
+    device::registerWordPixelSelectors(*catalog);
     catalog->freeze();
     return catalog;
 }

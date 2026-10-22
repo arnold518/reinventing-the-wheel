@@ -6,7 +6,7 @@
 #include "modules/basic/Gate.hpp"
 #include "components/StructuralNetBuilder.hpp"
 #include "modules/basic/Mux.hpp"
-#include "modules/composite/ALU32.hpp"
+#include "modules/composite/WordDatapath.hpp"
 #include "modules/rv32i/RV32IBitPatternMatcher.hpp"
 #include "modules/utility/BitAdapter.hpp"
 #include "modules/utility/Constant.hpp"
@@ -50,7 +50,7 @@ constexpr uint8_t TRAP_ILLEGAL = 1;
 constexpr uint8_t TRAP_ENVIRONMENT = 2;
 
 struct ControlWord {
-    uint8_t alu_op = ALU32Op::ZERO;
+    uint8_t alu_op = circuit::word::IntegerOp::ZERO;
     uint8_t alu_a = ALU_A_ZERO;
     uint8_t alu_b = ALU_B_ZERO;
     bool reg_write = false;
@@ -111,7 +111,7 @@ InstructionPattern iShift(const char* name, uint8_t funct3, uint8_t funct7, uint
 }
 
 InstructionPattern load(const char* name, uint8_t funct3, uint8_t size, bool sign_extend) {
-    ControlWord control = regAlu(ALU32Op::ADD, ALU_A_RS1, ALU_B_IMMEDIATE, IMM_I);
+    ControlWord control = regAlu(circuit::word::IntegerOp::ADD, ALU_A_RS1, ALU_B_IMMEDIATE, IMM_I);
     control.mem_read = true;
     control.writeback = WB_MEMORY;
     control.mem_size = size;
@@ -121,7 +121,7 @@ InstructionPattern load(const char* name, uint8_t funct3, uint8_t size, bool sig
 
 InstructionPattern store(const char* name, uint8_t funct3, uint8_t size) {
     ControlWord control;
-    control.alu_op = ALU32Op::ADD;
+    control.alu_op = circuit::word::IntegerOp::ADD;
     control.alu_a = ALU_A_RS1;
     control.alu_b = ALU_B_IMMEDIATE;
     control.mem_write = true;
@@ -134,7 +134,7 @@ InstructionPattern store(const char* name, uint8_t funct3, uint8_t size) {
 
 InstructionPattern branch(const char* name, uint8_t funct3, uint8_t branch_type) {
     ControlWord control;
-    control.alu_op = ALU32Op::SUB;
+    control.alu_op = circuit::word::IntegerOp::SUB;
     control.alu_a = ALU_A_RS1;
     control.alu_b = ALU_B_RS2;
     control.branch = branch_type;
@@ -147,26 +147,26 @@ InstructionPattern branch(const char* name, uint8_t funct3, uint8_t branch_type)
 const std::vector<InstructionPattern>& patterns() {
     static const std::vector<InstructionPattern> result = [] {
         std::vector<InstructionPattern> values{
-            rType("ADD", 0x0, 0x00, ALU32Op::ADD),
-            rType("SUB", 0x0, 0x20, ALU32Op::SUB),
-            rType("SLL", 0x1, 0x00, ALU32Op::SLL),
-            rType("SLT", 0x2, 0x00, ALU32Op::SLT),
-            rType("SLTU", 0x3, 0x00, ALU32Op::SLTU),
-            rType("XOR", 0x4, 0x00, ALU32Op::XOR),
-            rType("SRL", 0x5, 0x00, ALU32Op::SRL),
-            rType("SRA", 0x5, 0x20, ALU32Op::SRA),
-            rType("OR", 0x6, 0x00, ALU32Op::OR),
-            rType("AND", 0x7, 0x00, ALU32Op::AND),
+            rType("ADD", 0x0, 0x00, circuit::word::IntegerOp::ADD),
+            rType("SUB", 0x0, 0x20, circuit::word::IntegerOp::SUB),
+            rType("SLL", 0x1, 0x00, circuit::word::IntegerOp::SLL),
+            rType("SLT", 0x2, 0x00, circuit::word::IntegerOp::SLT),
+            rType("SLTU", 0x3, 0x00, circuit::word::IntegerOp::SLTU),
+            rType("XOR", 0x4, 0x00, circuit::word::IntegerOp::XOR),
+            rType("SRL", 0x5, 0x00, circuit::word::IntegerOp::SRL),
+            rType("SRA", 0x5, 0x20, circuit::word::IntegerOp::SRA),
+            rType("OR", 0x6, 0x00, circuit::word::IntegerOp::OR),
+            rType("AND", 0x7, 0x00, circuit::word::IntegerOp::AND),
 
-            iAlu("ADDI", 0x0, ALU32Op::ADD),
-            iAlu("SLTI", 0x2, ALU32Op::SLT),
-            iAlu("SLTIU", 0x3, ALU32Op::SLTU),
-            iAlu("XORI", 0x4, ALU32Op::XOR),
-            iAlu("ORI", 0x6, ALU32Op::OR),
-            iAlu("ANDI", 0x7, ALU32Op::AND),
-            iShift("SLLI", 0x1, 0x00, ALU32Op::SLL),
-            iShift("SRLI", 0x5, 0x00, ALU32Op::SRL),
-            iShift("SRAI", 0x5, 0x20, ALU32Op::SRA),
+            iAlu("ADDI", 0x0, circuit::word::IntegerOp::ADD),
+            iAlu("SLTI", 0x2, circuit::word::IntegerOp::SLT),
+            iAlu("SLTIU", 0x3, circuit::word::IntegerOp::SLTU),
+            iAlu("XORI", 0x4, circuit::word::IntegerOp::XOR),
+            iAlu("ORI", 0x6, circuit::word::IntegerOp::OR),
+            iAlu("ANDI", 0x7, circuit::word::IntegerOp::AND),
+            iShift("SLLI", 0x1, 0x00, circuit::word::IntegerOp::SLL),
+            iShift("SRLI", 0x5, 0x00, circuit::word::IntegerOp::SRL),
+            iShift("SRAI", 0x5, 0x20, circuit::word::IntegerOp::SRA),
 
             load("LB", 0x0, MEM_BYTE, true),
             load("LH", 0x1, MEM_HALF, true),
@@ -185,20 +185,20 @@ const std::vector<InstructionPattern>& patterns() {
             branch("BGEU", 0x7, 6),
         };
 
-        ControlWord jal = regAlu(ALU32Op::ADD, ALU_A_PC, ALU_B_IMMEDIATE, IMM_J);
+        ControlWord jal = regAlu(circuit::word::IntegerOp::ADD, ALU_A_PC, ALU_B_IMMEDIATE, IMM_J);
         jal.writeback = WB_PC_PLUS_4;
         jal.jump = 1;
         values.push_back({"JAL", 0x0000007FU, 0x6FU, jal});
 
-        ControlWord jalr = regAlu(ALU32Op::ADD, ALU_A_RS1, ALU_B_IMMEDIATE, IMM_I);
+        ControlWord jalr = regAlu(circuit::word::IntegerOp::ADD, ALU_A_RS1, ALU_B_IMMEDIATE, IMM_I);
         jalr.writeback = WB_PC_PLUS_4;
         jalr.jump = 2;
         values.push_back({"JALR", 0x0000707FU, 0x67U, jalr});
 
         values.push_back({"LUI", 0x0000007FU, 0x37U,
-                          regAlu(ALU32Op::PASS_B, ALU_A_ZERO, ALU_B_IMMEDIATE, IMM_U)});
+                          regAlu(circuit::word::IntegerOp::PASS_B, ALU_A_ZERO, ALU_B_IMMEDIATE, IMM_U)});
         values.push_back({"AUIPC", 0x0000007FU, 0x17U,
-                          regAlu(ALU32Op::ADD, ALU_A_PC, ALU_B_IMMEDIATE, IMM_U)});
+                          regAlu(circuit::word::IntegerOp::ADD, ALU_A_PC, ALU_B_IMMEDIATE, IMM_U)});
 
         ControlWord fence;
         fence.immediate = IMM_I;
@@ -550,7 +550,7 @@ public:
         field("USES_RS2", 1, 0, [](const ControlWord& c) { return c.uses_rs2; });
         field("HALT_REQUEST", 1, 0, [](const ControlWord& c) { return c.halt; });
         field("TRAP_REQUEST", 1, 1, [](const ControlWord& c) { return c.trap; });
-        field("ALU_OP", 5, ALU32Op::ZERO, [](const ControlWord& c) { return c.alu_op; });
+        field("ALU_OP", 5, circuit::word::IntegerOp::ZERO, [](const ControlWord& c) { return c.alu_op; });
         field("ALU_A_SEL", 2, ALU_A_ZERO, [](const ControlWord& c) { return c.alu_a; });
         field("ALU_B_SEL", 2, ALU_B_ZERO, [](const ControlWord& c) { return c.alu_b; });
         field("WRITEBACK_SEL", 2, WB_NONE, [](const ControlWord& c) { return c.writeback; });
@@ -612,7 +612,7 @@ void RV32IDecodeControlUnit::buildInternals(ComponentBuilder& b) {
         decodeMappings(), Rewire::UnmappedBitValue::LOW);
     auto recognition = b.addNewComponent<RV32IInstructionRecognition>("RECOGNITION");
     auto controls = b.addNewComponent<RV32IDecodeControlSignals>("CONTROL_SIGNALS");
-    auto immediate = b.addNewComponent<Mux8to1_32bit>("IMMEDIATE_MUX");
+    auto immediate = b.addNewComponent<Mux<8,32>>("IMMEDIATE_MUX");
     auto zero = b.addNewComponent<ConstantValue<32>>("CONST_ZERO32", 0);
     w.connect(getInputPin<32>("INSTRUCTION"), fields->getInputPin<32>("INSTRUCTION"));
     w.connect(getInputPin<32>("INSTRUCTION"), recognition->getInputPin<32>("INSTRUCTION"));

@@ -3,7 +3,7 @@
 ## The simple model
 
 A component family is one public kind of hardware. For example, the public
-family is `ALU32`, whether its selected implementation is:
+family is the configured `ALU<W>`, whether its selected implementation is:
 
 - structural: visible children and wires; or
 - behavioral: one compact evaluated black box.
@@ -11,7 +11,7 @@ family is `ALU32`, whether its selected implementation is:
 A parent asks for the family, not for an implementation class:
 
 ```cpp
-builder.add(circuit::families::ALU32, "ALU");
+builder.add(circuit::families::alu(32,{circuit::word::Operations::IntegerDatapath,circuit::word::AdderTopology::ParallelPrefix,true}), "ALU");
 ```
 
 One immutable `BuildProfile` is handed to the root. The same profile travels

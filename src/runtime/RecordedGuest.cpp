@@ -261,6 +261,7 @@ RecordedGuestResult runRecordedGuest(const std::vector<uint8_t>& elf_bytes,const
             result.frame_inputs.push_back({levels,count,head,bool(overflow)});
             result.frame_cycles.push_back(cycle+1);result.frame_instructions.push_back(state.instruction_count);
             result.frame_seconds.push_back(std::chrono::duration<double>(Clock::now()-start).count());
+            if(o.presentation_observer)o.presentation_observer(machine,sim,fall-1);
             if(o.capture_frames){demand(result.frames.size()<o.max_frames,"Frame capture budget exhausted");
                 demand(frame.pixels.size()<=circuit::device::MaxCapturedPixelBytes/(result.frames.size()+1),"Captured pixel byte budget exhausted");result.frames.push_back(std::move(frame));}
             result.capture_seconds+=std::chrono::duration<double>(Clock::now()-capture_start).count();

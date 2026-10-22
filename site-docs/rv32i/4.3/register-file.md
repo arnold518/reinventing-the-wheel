@@ -2,7 +2,11 @@
 
 `RegisterFile32x32` provides the RV32I core's two source-register reads and one destination-register write. It uses the [whole-word FF register](register.md), with register-address decoding and two read selectors around a shared bank. Its words are registers, not byte-masked memory words, because a register is only ever written whole ([storage and memory](register.md#storage-and-memory)). It is not a transaction memory endpoint: register operands are read directly, without requests, responses, or a memory controller.
 
-Its fixed register count, two-read/one-write interface, and hardwired x0 make it an RV32I-oriented building block. The FF cells are described in [3.3.1](../../memory/technologies/flip-flop.md), and the whole-word register family in [4.3.1](register.md); this page defines the CPU-facing organization built around them.
+`RegisterFile<W,Count>` declares word width, register count and a hardwired-zero policy. W is 8/16/32; Count is 2/4/8/16/32. It has two asynchronous reads and one clocked write. RV32I selects W=32, Count=32 and `hardwire_zero=true`, which resolves to the `rv32i.register-file` family and concrete type `RegisterFile32x32`. Other geometries are reusable hardware configurations, not changes to the RV32I ISA. The [generic API](../../components/word-components.md#registerfilewcount) specifies construction; this page defines the CPU configuration.
+
+The storage path composes [flip-flop cells](../../memory/technologies/flip-flop.md)
+inside [whole-word registers](register.md), then adds destination decoding and
+two independent source selectors.
 
 The [single-cycle Decode stage](../4.4/decode.md) owns this component at `CORE.DECODE.REGISTER_FILE`. Writeback only selects its input value; it does not own a second register file. Execution status qualifies the actual write enable.
 
@@ -13,7 +17,7 @@ The [single-cycle Decode stage](../4.4/decode.md) owns this component at `CORE.D
 | `Register<32>` | One resettable, whole-word register per writable architectural register | Yes | Yes |
 | `FlipFlopCell` | Reused write-enabled, resettable storage bit | Yes | Yes |
 
-The bank fixes its depth at 31 because x0 is a constant. `Register<32>` is reusable independently of this RV32I-specific decoder and read-port arrangement.
+This configuration has 31 stored words because x0 is a constant. A generic file stores Count−1 words with hardwired zero, or Count words when register zero is writable. `Register<32>` is reusable independently of this RV32I-specific decoder and read-port arrangement.
 
 ## 4.3.2.1. `RegisterFile32x32`
 
@@ -139,22 +143,24 @@ The behavioral implementation detects only known `CLK = 0 → 1` transitions. Am
 
 #### Structural implementation
 
+The 32×32 hardwired-zero configuration uses the bank/decoder/read-mux recipe below. Other supported geometries compose `Register<W>` cells with address decoding and read-selection gates; inspection uses `RegisterStateView`. Address pins have log₂(Count) bits and data pins have W bits.
+
 <!-- diagram: register-file -->
 
 | Part | Connection / responsibility |
 | --- | --- |
-| `RD_DECODER` | `Decoder5to32`: ADDR receives RD_ADDR; ENABLE receives REG_WRITE |
+| `RD_DECODER` | `Decoder<AddressBits>`: ADDR receives RD_ADDR; ENABLE receives REG_WRITE |
 | `STORAGE.WRITE_n` | Connected to decoder OUT(n+1); OUT0 is intentionally unused |
 | `STORAGE.WORD_n` | Holds x(n+1); fans out to input (n+1) of both read muxes |
 | Shared storage pins | WRITE_DATA, CLK, RST fan out to the 31 whole-word registers |
 | `X0_ZERO` | Drives input 0 of both read muxes |
-| `RS1_MUX`, `RS2_MUX` | `Mux32to1_32bit`: independent selectors drive the two data outputs |
+| `RS1_MUX`, `RS2_MUX` | `Mux<32,32>`: independent selectors drive the two data outputs |
 
 The bank contains **992 writable bits**, not 1,024: x0 does not need flip-flops. The bank supplies parallel word outputs, so two read selectors share the stored values. Each physical word is one [whole-word `Register<32>`](register.md), whose write enable comes directly from the decoder rather than a byte mask.
 
 #### Behavioral implementation
 
-[`RegisterFile32x32Behavioral`](https://github.com/arnold518/reinventing-the-wheel/blob/github-pages/src/modules/rv32i/RegisterFile32x32Behavioral.cpp) stores 32 logic-vector words, keeps x0 zero, and implements the same decoder/write/read rules without child gates. Catalog-selected read outputs use the register file’s gate-derived per-path delay table. The register file uses that table without a delay twin because its large gate list added simulation cost without improving its measured timing shares. Register snapshots support the visualizer's register table and timeline scrubbing.
+[`RegisterFile32x32Behavioral`](https://github.com/arnold518/reinventing-the-wheel/blob/alpha/src/modules/storage/RegisterFileBehavioral.cpp) stores 32 logic-vector words, keeps x0 zero, and implements the same decoder/write/read rules without child gates. Catalog-selected read outputs use the register file’s gate-derived per-path delay table. The register file uses that table without a delay twin because its large gate list added simulation cost without improving its measured timing shares. Register snapshots support the visualizer's register table and timeline scrubbing.
 
 The structural register file can select behavioral `Register<32>` words or their `FlipFlopCell` children. The external pins and register numbering do not change. Its register-state inspector reads the bank's WORD outputs after the simulator restores the requested time.
 
@@ -173,9 +179,9 @@ Write data, setup | rv32i.register-file.behavioral.direct | WRITE_DATA before CL
 
 ### Examples
 
-The table contains every checkpoint of `RegisterFile32x32Test`, including its actual simulation time and checkpoint number. Preparatory clock/control changes occur between checkpoints; the table is not a list of independent combinational inputs. Scroll horizontally to inspect all pins. Times describe the embedded simulation's default profile, not universal register-file latency.
+The table contains every checkpoint of `RegisterFileWidth32Count32Test`, including its actual simulation time and checkpoint number. Preparatory clock/control changes occur between checkpoints; the table is not a list of independent combinational inputs. Scroll horizontally to inspect all pins. Times describe the embedded simulation's default profile, not universal register-file latency.
 
-<!-- simulator-examples: rv32i-register-file RegisterFile32x32Test -->
+<!-- simulator-examples: rv32i-register-file RegisterFileWidth32Count32Test -->
 
 #### Embedded simulation
 
@@ -191,9 +197,9 @@ The sequence resets the file, attempts writes to x0, writes and reads every writ
 
 | Test | Coverage |
 | --- | --- |
-| [`RegisterFile32x32Test`](https://github.com/arnold518/reinventing-the-wheel/blob/github-pages/src/tests/MemoryComponentTests.cpp) | Registered structural/behavioral scenario; all 31 writable registers, both reads, x0 protection, reset, write disable, selected X/Z cases |
-| [`RegisterFileFFIntegrationTest`](https://github.com/arnold518/reinventing-the-wheel/blob/github-pages/tests/RegisterFileFFIntegrationTest.cpp) | Bank/register/cell hierarchy, context-free construction, cross-fidelity scenario, uncertain-enable regression, reverse history, and program-03 in both CPU cores with the structural register file |
-| [`RegisterFileDocumentationTest`](https://github.com/arnold518/reinventing-the-wheel/blob/github-pages/tests/RegisterFileDocumentationTest.py) | Compiles this exact C++ example and runs every declared scenario action against its expected outputs; checks numeric bank layout order |
+| [`RegisterFileWidth32Count32Test`](https://github.com/arnold518/reinventing-the-wheel/blob/alpha/src/tests/MemoryComponentTests.cpp) | Registered structural/behavioral scenario; all 31 writable registers, both reads, x0 protection, reset, write disable, selected X/Z cases |
+| [`RegisterFileFFIntegrationTest`](https://github.com/arnold518/reinventing-the-wheel/blob/alpha/tests/cpp/RegisterFileFFIntegrationTest.cpp) | Bank/register/cell hierarchy, context-free construction, cross-fidelity scenario, uncertain-enable regression, reverse history, and program-03 in both CPU cores with the structural register file |
+| [`RegisterFileDocumentationTest`](https://github.com/arnold518/reinventing-the-wheel/blob/alpha/tests/checks/RegisterFileDocumentationTest.py) | Compiles this exact C++ example and runs every declared scenario action against its expected outputs; checks numeric bank layout order |
 | `RegisterTest`, `RegisterWidthsTest`, `FlipFlopCellTest` | Reused lower-level storage contracts |
 
-The register file retains the existing `rv32i.register-file` family, public pins, and register-state capability. No memory-bus adapter or CPU instruction-interface change is needed.
+The CPU configuration uses the `rv32i.register-file` family and its register-state capability. `WidthComponentsTest` checks the supported generic geometries, both zero-register policies and every data bit. Behavioral selection is available for the characterized 32×32 hardwired-zero family; other geometries are structural.

@@ -41,6 +41,21 @@ program family. Legacy fixture setup is accepted only if it processes no
 simulator events. Only one topology is retained at a time, with no visualizer
 session, waveform export, or history playback.
 
+The building-block helper uses this same construction-only API. Select the
+isolated native backend before the visualizer directory when refreshing its
+integer ALU configurations:
+
+```sh
+PYTHONPATH=build-cleanup:visualizer-v2 python3 \
+  tools/generate-rv32i-building-block-layouts.py --integer-alu-only
+```
+
+`tools/prune-retired-layouts.py .` lists obsolete saved types and roots from
+the actual registry's visualizable descriptors, including scenarios supplied
+by parameterized registry generators. Review its output before `--apply`.
+`tools/check-static-layouts.py ALIAS...` checks saved geometry against the
+selected topologies and rejects an unknown alias instead of skipping it.
+
 Every refreshed arrangement is checked for child bounds, parent-input/output
 stub clearance and non-overlapping child pin footprints. Vertical clearance is
 converted from child width units into parent height units; the parent's compact

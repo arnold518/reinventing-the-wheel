@@ -1,12 +1,12 @@
 #include "RV32IBaselinePipelineInternal.hpp"
 #include "components/selection/FamilyFactories.hpp"
 #include "components/StructuralNetBuilder.hpp"
-#include "modules/rv32i/RegisterFile32x32.hpp"
+#include "modules/storage/RegisterFile.hpp"
 #include "modules/rv32i/RV32IDecodeControlUnit.hpp"
 #include "modules/rv32i/RV32ISingleCycleStages.hpp"
 #include "modules/rv32i/RV32IPipelineControl.hpp"
 #include "modules/rv32i/RV32IMemorySystem.hpp"
-#include "modules/composite/Adder32.hpp"
+#include "modules/composite/WordDatapath.hpp"
 #include "modules/basic/Mux.hpp"
 #include "modules/utility/Rewire.hpp"
 #include <limits>
@@ -184,7 +184,7 @@ const circuit::ComponentFamily& family(Block block) {
 void RV32IBaselineFetchStage::buildInternals(ComponentBuilder& b) {
     StructuralWiring w(b);
     auto fetch=b.add(circuit::families::RV32ISingleCycleFetchStage,"FETCH_DATAPATH");
-    auto next=b.addNewComponent<Mux2to1_32bit>("NEXT_PC_SELECT");
+    auto next=b.addNewComponent<Mux<2,32>>("NEXT_PC_SELECT");
     auto pack=codec(b,"FETCH_STATUS_PACK","STATUS",{{"PC_BAD",1,0},{"FETCH_BAD",1,1}},true);
     for(auto p:{"CLK","RST","PC_WRITE","IMEM_READ_DATA","IMEM_FAULT"}) input(w,*this,fetch,p);
     input(w,*this,fetch,"FETCH_VALID","ISSUE");input(w,*this,next,"PC_REDIRECT","SEL");
@@ -203,7 +203,7 @@ void RV32IBaselineFetchStage::buildInternals(ComponentBuilder& b) {
 void RV32IBaselineDecodeStage::buildInternals(ComponentBuilder& b) {
     StructuralWiring w(b);
     auto ctrl=b.add(circuit::families::RV32IDecodeControl,"CONTROL");
-    registers_=b.add(circuit::families::RegisterFile32x32,"REGISTER_FILE",{}, {"register-state-view"});
+    registers_=b.add(circuit::storage::registerFile(32,32),"REGISTER_FILE",{}, {"register-state-view"});
     auto pack=codec(b,"CONTROL_PACK","CONTROL",controls,true);
     auto addr=codec(b,"REGISTER_ADDRESSES","ADDRESSES",{{"RS1",5,0},{"RS2",5,5},{"RD",5,10}},true);
     pass(w,*this,{"VALID","PC","INSTRUCTION","FETCH_STATUS"});
@@ -230,7 +230,7 @@ void RV32IBaselineExecuteStage::buildInternals(ComponentBuilder& b) {
     auto fields=codec(b,"CONTROL_FIELDS","CONTROL",controls,false);
     auto alu=b.add(circuit::families::RV32ISingleCycleExecuteStage,"DATAPATH");
     auto next=b.add(circuit::families::RV32ISingleCycleNextPCStage,"NEXT_PC");
-    auto pc4=b.addNewComponent<Adder32>("PC_PLUS_4_ADD");
+    auto pc4=b.addNewComponent<Adder<32>>("PC_PLUS_4_ADD");
     auto four=b.addNewComponent<ConstantValue<32>>("FOUR",4);
     auto status=codec(b,"EXECUTION_STATUS_PACK","STATUS",{{"TARGET_BAD",1,0}},true);
     pass(w,*this,{"VALID","PC","INSTRUCTION","CONTROL","REGISTER_ADDRESSES","FETCH_STATUS"});

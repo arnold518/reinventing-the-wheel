@@ -21,8 +21,11 @@ template<class F> void rejects(F f) {
 int main() {
     try {
         const auto& catalog = circuit::builtinComponentCatalog();
-        for (const auto* id : {"rv32i.memory.64k-x32", "memory.word-array.4x32",
-                "memory.word-array.32x32", "memory.bus-adapter.width32"})
+        for (const auto* id : {"rv32i.memory.64k-x32", "memory.word-array.4x32", "memory.word-array.32x32",
+                "memory.bus-adapter.width32", "alu.width8", "rv32i.alu32", "rv32i.alu32-core",
+                "arithmetic.adder.width8", "arithmetic.adder.width32", "mux.8to1.width8",
+                "arithmetic.multiplier.32", "arithmetic.divider.32", "rv32im.mul-div.32", "device.register-port.32",
+                "bus.address-router.32", "bus.instruction-guard.32", "video.indexed-pixel.32", "device.framebuffer.32"})
             rejects([&] { catalog.contract(id); });
         for (const auto* model : {"sram", "rom", "ideal-reference"})
             for (const auto* width : {"8", "16", "32"})
@@ -31,7 +34,7 @@ int main() {
         for (const auto* id : {"memory.endpoint.container.8", "memory.container.endpoint.8",
                 "memory.controller.container.8", "memory.container.controller.8"})
             rejects([&] { catalog.contract(id); });
-        // Names used before the memory.<technology>.<what>.<width> rule still resolve.
+        // Retired contract spellings are rejected rather than redirected.
         for (const auto& [retired, current] : std::initializer_list<std::pair<const char*, const char*>>{
                 {"memory.write-enabled-bit", "memory.ff.cell"}, {"memory.ff-word.8", "memory.ff.word.8"},
                 {"memory.register.32", "storage.register.32"}, {"memory.register.1", "storage.register.1"},
@@ -45,10 +48,9 @@ int main() {
                 {"memory.matrix.row-decoder", "memory.shared.row-decoder"},
                 {"memory.transaction-port.8", "memory.shared.transaction-port.8"},
                 {"memory.response-buffer.32", "memory.shared.response-buffer.32"}}) {
-            check(circuit::canonicalContractId(retired) == current, std::string("Wrong current name for ") + retired);
-            check(circuit::canonicalContractId(current) == current, std::string("Current name was remapped: ") + current);
-            check(catalog.contract(retired).id == current, std::string("Retired name does not resolve: ") + retired);
-            check(!catalog.implementationsFor(retired).empty(), std::string("Retired name has no implementations: ") + retired);
+            rejects([&]{catalog.contract(retired);});
+            check(catalog.contract(current).id==current,"Current contract missing");
+            check(catalog.implementationsFor(retired).empty(),"Retired contract has implementations");
         }
         for (size_t width : {8, 16, 32}) {
             const auto id = "memory.ff.device." + std::to_string(width);
@@ -58,7 +60,8 @@ int main() {
             for (const auto* technology : {"ff", "sram", "dram", "rom", "nor-flash"}) {
                 const auto legacy = "memory." + std::string(technology) + ".scalable-device." + std::to_string(width);
                 const auto native = "memory." + std::string(technology) + ".device." + std::to_string(width);
-                check(catalog.contract(legacy).id == native, "Retired device ID did not resolve to native device");
+                rejects([&]{catalog.contract(legacy);});
+                check(catalog.contract(native).id==native,"Native device contract missing");
             }
         }
         for (const auto& contract : catalog.contracts()) {

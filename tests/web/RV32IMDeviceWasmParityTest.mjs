@@ -37,7 +37,7 @@ for (const {alias, test} of selected) {
       assert.deepEqual(JSON.parse(bridge.stateJson(index)),
         native('state', test, alias, String(index)), `${alias}: state ${index}`);
     }
-    if (['FramebufferDisplay32','ButtonDevice32','ConsoleDevice32','TimerDevice32','SynchronousFifo<8>'].includes(actual.rootType)) {
+    if (['FramebufferDisplay','ButtonDevice','ConsoleDevice','TimerDevice','SynchronousFifo<8>'].includes(actual.rootType)) {
       for (const index of [0, actual.timestamps.length-1, 0]) {
         const view=JSON.parse(bridge.componentStateJson(index,actual.rootId));
         assert.deepEqual(view,native('component',test,alias,String(index),actual.rootId),`${alias}: device observer ${index}`);

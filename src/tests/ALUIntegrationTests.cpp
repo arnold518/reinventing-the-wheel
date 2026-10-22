@@ -1,8 +1,6 @@
 #include "tests/ALUIntegrationTests.hpp"
 #include "components/ComponentBuilder.tpp"
-#include "modules/composite/ALU8.hpp"
-#include "modules/composite/ALU32.hpp"
-#include "modules/composite/ALU32FlagUnit.hpp"
+#include "modules/composite/WordDatapath.hpp"
 #include "modules/utility/Rewire.hpp"
 #include <array>
 #include <functional>
@@ -142,8 +140,8 @@ void checkHierarchy(const std::shared_ptr<Component>& root,
     std::function<void(const std::shared_ptr<Component>&)> visit = [&](const auto& component) {
         if (std::string(component->getTypeName()) == "FullAdder") ++count;
         if (std::string(component->getTypeName()) == "HalfAdder") ++half_adders;
-        if (std::string(component->getTypeName()) == "ParallelPrefixAdder32") ++prefixes;
-        if (std::string(component->getTypeName()) == "AddSub32") ++add_sub_units;
+        if (std::string(component->getTypeName()) == "ParallelPrefixAdder<32>") ++prefixes;
+        if (std::string(component->getTypeName()) == "AddSub<32,integer,prefix>") ++add_sub_units;
         for (const auto& child : component->getChildren()) visit(child);
     };
     visit(root);
@@ -153,32 +151,32 @@ void checkHierarchy(const std::shared_ptr<Component>& root,
 }
 } // namespace
 
-ALU8ControlDecoderTest::ALU8ControlDecoderTest() : TruthTableComponentTest("ALU8ControlDecoderTest", "ALU8_CONTROL_ROOT", control8Rows()) {}
-ALU8ResultSelectorTest::ALU8ResultSelectorTest() : TruthTableComponentTest("ALU8ResultSelectorTest", "ALU8_RESULT_SELECTOR_ROOT", selector8Rows()) {}
-ALU32ControlDecoderTest::ALU32ControlDecoderTest() : TruthTableComponentTest("ALU32ControlDecoderTest", "ALU32_CONTROL_ROOT", control32Rows()) {}
-ALU32CompareUnitTest::ALU32CompareUnitTest() : TruthTableComponentTest("ALU32CompareUnitTest", "ALU32_COMPARE_ROOT", compare32Rows()) {}
-ALU32ResultSelectorTest::ALU32ResultSelectorTest() : TruthTableComponentTest("ALU32ResultSelectorTest", "ALU32_RESULT_SELECTOR_ROOT", selector32Rows()) {}
-ALU32FlagUnitTest::ALU32FlagUnitTest() : TruthTableComponentTest("ALU32FlagUnitTest", "ALU32_FLAGS_ROOT", flags32Rows()) {}
+ALUControlExtendedTest::ALUControlExtendedTest() : TruthTableComponentTest("ALUControlExtendedTest", "ALU_EXTENDED_W8_CONTROL_ROOT", control8Rows()) {}
+ResultSelectorExtendedWidth8Test::ResultSelectorExtendedWidth8Test() : TruthTableComponentTest("ResultSelectorExtendedWidth8Test", "ALU_EXTENDED_W8_RESULT_SELECTOR_ROOT", selector8Rows()) {}
+ALUControlIntegerTest::ALUControlIntegerTest() : TruthTableComponentTest("ALUControlIntegerTest", "ALU_INTEGER_W32_CONTROL_ROOT", control32Rows()) {}
+CompareIntegerWidth32Test::CompareIntegerWidth32Test() : TruthTableComponentTest("CompareIntegerWidth32Test", "ALU_INTEGER_W32_COMPARE_ROOT", compare32Rows()) {}
+ResultSelectorIntegerWidth32Test::ResultSelectorIntegerWidth32Test() : TruthTableComponentTest("ResultSelectorIntegerWidth32Test", "ALU_INTEGER_W32_RESULT_SELECTOR_ROOT", selector32Rows()) {}
+FlagsIntegerWidth32Test::FlagsIntegerWidth32Test() : TruthTableComponentTest("FlagsIntegerWidth32Test", "ALU_INTEGER_W32_FLAGS_ROOT", flags32Rows()) {}
 void ALUHierarchyTest::verifyResults() {
-    checkHierarchy(Component::create<ALU8>("ALU8"), {{"CONTROL", "ALU8ControlDecoder"}, {"ARITHMETIC", "ArithmeticUnit8"},
-        {"LOGIC", "LogicUnit8"}, {"SHIFTER", "BarrelShifter8"}, {"COMPARE_SELECT", "CompareSelect8"},
-        {"RESULT_SELECT", "ALU8ResultSelector"}, {"FLAGS", "ALU8FlagUnit"}}, 8);
-    checkHierarchy(Component::create<ALU32>("ALU32"), {{"CONTROL", "ALU32ControlDecoder"}, {"ARITHMETIC", "AddSub32"},
-        {"LOGIC", "Logic32"}, {"SHIFT", "Shifter32"}, {"COMPARE", "ALU32CompareUnit"},
-        {"RESULT_SELECT", "ALU32ResultSelector"}, {"FLAGS", "ALU32FlagUnit"}}, 0, true);
-    auto flags = Component::create<ALU32FlagUnit>("FLAGS");
+    checkHierarchy(Component::create<ALU<8>>("ALU",circuit::word::ALUConfig{circuit::word::Operations::Extended,circuit::word::AdderTopology::Ripple,true}), {{"CONTROL", "ALUControlDecoder<extended>"}, {"ARITHMETIC", "ArithmeticUnit<8,ripple>"},
+        {"LOGIC", "LogicUnit<8>"}, {"SHIFTER", "BarrelShifter<8>"}, {"COMPARE_SELECT", "CompareSelect<8>"},
+        {"RESULT_SELECT", "ALUResultSelector<8>"}, {"FLAGS", "ALUFlagUnit<8>"}}, 8);
+    checkHierarchy(Component::create<ALU<32>>("ALU",circuit::word::ALUConfig{circuit::word::Operations::IntegerDatapath,circuit::word::AdderTopology::ParallelPrefix,true}), {{"CONTROL", "ALUControlDecoder<integer>"}, {"ARITHMETIC", "AddSub<32,integer,prefix>"},
+        {"LOGIC", "LogicUnit<32,integer>"}, {"SHIFT", "BarrelShifter<32,integer>"}, {"COMPARE", "CompareSelect<32,integer>"},
+        {"RESULT_SELECT", "ALUResultSelector<32,integer>"}, {"FLAGS", "ALUFlagUnit<32,integer>"}}, 0, true);
+    auto flags = Component::create<ALUFlagUnit<32>>("FLAGS",circuit::word::ALUConfig{circuit::word::Operations::IntegerDatapath,circuit::word::AdderTopology::Ripple,true});
     std::shared_ptr<Rewire> sign;
     for (const auto& child : flags->getChildren()) {
         if (child->getName() == "RESULT_SPLIT")
-            throw std::runtime_error("ALU32 flags must not split all result bits for the sign flag");
+            throw std::runtime_error("ALU<32> flags must not split all result bits for the sign flag");
         if (child->getName() == "SIGN_BIT") sign = std::dynamic_pointer_cast<Rewire>(child);
     }
     if (!sign || sign->getInputSpecs().size() != 1 || sign->getOutputSpecs().size() != 1
         || sign->getTotalInputBits() != 32 || sign->getTotalOutputBits() != 1
         || sign->getBitMappings().size() != 1)
-        throw std::runtime_error("ALU32 SIGN_BIT must be a 32-to-1 bit-selection rewire");
+        throw std::runtime_error("ALU<32> SIGN_BIT must be a 32-to-1 bit-selection rewire");
     const auto& mapping = sign->getBitMappings().front();
     if (mapping.src_wire != "RESULT" || mapping.src_bit != 31
         || mapping.dst_wire != "SIGN" || mapping.dst_bit != 0)
-        throw std::runtime_error("ALU32 SIGN_BIT must expose only RESULT[31]");
+        throw std::runtime_error("ALU<32> SIGN_BIT must expose only RESULT[31]");
 }

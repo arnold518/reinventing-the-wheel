@@ -5,7 +5,7 @@
 #include "components/ComponentBuilder.tpp"
 #include "modules/memory/MemoryStorage.hpp"
 #include "modules/memory/MemoryTimingParts.hpp"
-#include "modules/rv32i/RegisterFile32x32.hpp"
+#include "modules/storage/RegisterFile.hpp"
 #include "components/selection/BuiltinComponentCatalog.hpp"
 #include "components/selection/StandardProfiles.hpp"
 #include <algorithm>
@@ -123,7 +123,7 @@ public:
         for (const SimulationTime base : {(SimulationTime{1}<<54)+11,(SimulationTime{1}<<63)+11}) {
             const auto profile=circuit::BuildProfileBuilder("wide-register-history")
                 .addRule(circuit::preferFidelity(circuit::Fidelity::Behavioral,circuit::ProfileSelector::any())).build();
-            auto built=circuit::builtinComponentCatalog().createRoot(circuit::families::RegisterFile32x32.request("WIDE_RF"),profile);
+            auto built=circuit::builtinComponentCatalog().createRoot(circuit::storage::registerFile(32,32).request("WIDE_RF"),profile);
             auto root=std::dynamic_pointer_cast<IOComponent>(built.root);
             auto view=std::dynamic_pointer_cast<RegisterStateView>(built.root);
             ComponentBuilder builder(root);Simulator sim;

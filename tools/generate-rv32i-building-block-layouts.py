@@ -13,22 +13,23 @@ import runpy
 import sys
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / "visualizer-v2"))
+if str(ROOT / "visualizer-v2") not in sys.path:
+    sys.path.append(str(ROOT / "visualizer-v2"))
 import server
 import rv32i_layout
 
 helpers = runpy.run_path(str(ROOT / "tools/generate-rv32i-memory-layouts.py"))
 walk, placements, reflow = (helpers[key] for key in ("walk", "placements", "reflow"))
 ALU_SCENARIOS = {
-    "addsub32": "AddSub32Test",
-    "logic32": "Logic32Test", "shifter32": "Shifter32Test",
-    "alu32-control": "ALU32ControlDecoderTest", "alu32-compare": "ALU32CompareUnitTest",
-    "alu32-result-selector": "ALU32ResultSelectorTest", "alu32-flags": "ALU32FlagUnitTest",
-    "alu32": "ALU32Test",
+    "addsub-integer-prefix-w32": "AddSubIntegerWidth32Test",
+    "logic-integer-w32": "LogicIntegerWidth32Test", "shift-integer-w32": "ShiftIntegerWidth32Test",
+    "alu-control-integer": "ALUControlIntegerTest", "compare-integer-w32": "CompareIntegerWidth32Test",
+    "result-selector-integer-w32": "ResultSelectorIntegerWidth32Test", "flags-integer-w32": "FlagsIntegerWidth32Test",
+    "alu-integer-prefix-w32": "ALUIntegerWidth32Test",
 }
 SCENARIOS = {
     "register32": "RegisterTest",
-    "rv32i-register-file": "RegisterFile32x32Test", **ALU_SCENARIOS,
+    "rv32i-register-file": "RegisterFileWidth32Count32Test", **ALU_SCENARIOS,
     "rv32i-decode-control": "RV32IDecodeControlUnitTest",
     "rv32i-pattern-matcher": "RV32IBitPatternMatcherTest",
     "rv32i-memory-lanes": "RV32IMemoryLanesTest",
@@ -40,7 +41,7 @@ SCENARIOS = {
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--alu32-only", action="store_true", help="Refresh all eight 4.3.3 scenarios and their descendants")
+    parser.add_argument("--integer-alu-only", action="store_true", help="Refresh all eight 4.3.3 scenarios and their descendants")
     parser.add_argument("--memory-request-only", action="store_true", help="Refresh only the revised zero-wait requester")
     parser.add_argument("--scenario", choices=SCENARIOS, action="append",
                         help="Refresh only a named 4.3 scenario (repeatable)")
@@ -48,13 +49,11 @@ def main():
     manager = server.LayoutManager(ROOT / "visualizer-v2/layout.json")
     selected = ({alias: SCENARIOS[alias] for alias in args.scenario} if args.scenario else
                 {"rv32i-memory-request": SCENARIOS["rv32i-memory-request"]}
-                if args.memory_request_only else ALU_SCENARIOS if args.alu32_only else SCENARIOS)
+                if args.memory_request_only else ALU_SCENARIOS if args.integer_alu_only else SCENARIOS)
     for alias, scenario in selected.items():
         automatic = alias in ALU_SCENARIOS
         revision = rv32i_layout.ALU_AUTOMATIC_REVISION if automatic else None
-        test = server.circuit_backend.create_test_by_name(scenario)
-        test.setup_circuit()
-        root = test.get_root()
+        root = server.circuit_backend.create_layout_topology(scenario)
         old_root = deepcopy(manager.get_root_layout_for_component(alias, root))
         for component in walk(root):
             kind = server._component_layout_type(component)
@@ -93,7 +92,7 @@ def main():
         manager.is_dirty = True
         manager.save_if_dirty()
         print(f"{alias}: {len(root.get_children())} root children; defaults ready", flush=True)
-        del test, root, component, children
+        del root, component, children
         gc.collect()
 
 
