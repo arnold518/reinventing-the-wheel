@@ -70,6 +70,29 @@ const native = JSON.parse(execFileSync('/usr/bin/python3', ['-c',
   'import sys,json;sys.path.insert(0,"visualizer-v2");from profile_store import migrate_component_paths;print(json.dumps(migrate_component_paths(json.loads(sys.argv[1]))))', JSON.stringify(legacy)],
   {cwd:new URL('../..',import.meta.url),timeout:10000}));
 assert.deepEqual(native, expected);
+const oldArithmetic = {
+  'MULTIPLIER_W32_ROOT.BUSY_STATE': 'structural',
+  'MULTIPLIER_W32_ROOT.MULTIPLICAND.BIT_2': 'structural',
+  'MULTIPLIER_W32_ROOT.STEP': 'structural',
+  'RV32IM_FIVE_STAGE_CORE_ROOT.EXECUTE.MULDIV.DIVIDE.DIVISOR': 'structural',
+  'RV32IM_PROGRAM_ROOT.CORE.EXECUTE.MULDIV.MULTIPLY.LOW_OR_QUOTIENT': 'structural',
+  'DIVIDER_W32_ROOT.DONE_STATE': 'structural',
+  'DIVIDER_W32_ROOT.CONTROL.DONE_STATE': 'behavioral',
+  'UNRELATED.DIVISOR': 'structural',
+};
+const groupedArithmetic = {
+  'MULTIPLIER_W32_ROOT.CONTROL.BUSY_STATE': 'structural',
+  'MULTIPLIER_W32_ROOT.OPERANDS.MULTIPLICAND.BIT_2': 'structural',
+  'MULTIPLIER_W32_ROOT.DATAPATH.STEP': 'structural',
+  'RV32IM_FIVE_STAGE_CORE_ROOT.EXECUTE.MULDIV.DIVIDE.OPERANDS.DIVISOR': 'structural',
+  'RV32IM_PROGRAM_ROOT.CORE.EXECUTE.MULDIV.MULTIPLY.DATAPATH.LOW_OR_QUOTIENT': 'structural',
+  'DIVIDER_W32_ROOT.CONTROL.DONE_STATE': 'behavioral',
+  'UNRELATED.DIVISOR': 'structural',
+};
+assert.deepEqual(JSON.parse(JSON.stringify(context.migrateProfileOverrides(oldArithmetic))), groupedArithmetic);
+assert.deepEqual(JSON.parse(execFileSync('/usr/bin/python3', ['-c',
+  'import sys,json;sys.path.insert(0,"visualizer-v2");from profile_store import migrate_component_paths;print(json.dumps(migrate_component_paths(json.loads(sys.argv[1]))))', JSON.stringify(oldArithmetic)],
+  {cwd:new URL('../..',import.meta.url),timeout:10000})), groupedArithmetic);
 // Renamed component scenarios retain saved root and descendant choices.
 const catalog = JSON.parse(readFileSync(new URL('../../visualizer-v2/static/scenarios.json',import.meta.url)));
 for (const [test, entry] of Object.entries(catalog.components)) {
@@ -87,7 +110,7 @@ for (const [test, entry] of Object.entries(catalog.components)) {
 }
 const layout = JSON.parse(readFileSync(new URL('../../visualizer-v2/layout.json',import.meta.url)));
 const muldiv = layout.type_layouts['MulDivUnit<32>'];
-assert.equal(muldiv.layout_revision, 'rv32im-muldiv-v1');
+assert.equal(muldiv.layout_revision, 'rv32im-groups-v1');
 const formerMuldiv = structuredClone(muldiv.previous_default);
 const upgradedMuldiv = upgradeDefaultLayout(muldiv, formerMuldiv);
 assert.equal(upgradedMuldiv.aspect_ratio, muldiv.aspect_ratio);
@@ -99,6 +122,14 @@ assert.equal(customMuldiv.aspect_ratio, 3.1415);
 assert.deepEqual(customMuldiv.children.MULTIPLY, formerMuldiv.children.MULTIPLY);
 formerMuldiv.layout_mode = 'manual';
 assert.deepEqual(upgradeDefaultLayout(muldiv, formerMuldiv), formerMuldiv);
+const executeStage = layout.type_layouts.RV32IMExecuteStage;
+const formerExecute = structuredClone(executeStage.previous_default);
+const upgradedExecute = upgradeDefaultLayout(executeStage, formerExecute);
+assert.equal(upgradedExecute.aspect_ratio, .95);
+assert.equal(upgradedExecute.pin_size_ratio, .018);
+assert.deepEqual(upgradedExecute.children.MULDIV, executeStage.children.MULDIV);
+formerExecute.children.MULDIV = {rel_pos:[.1,.2],rel_width:.1};
+assert.deepEqual(upgradeDefaultLayout(executeStage, formerExecute).children.MULDIV, formerExecute.children.MULDIV);
 for(const store of [layout.type_layouts,layout.root_layouts,...Object.values(layout.profile_layouts)]) {
   for(const base of Object.values(store)) {
     if(base.layout_revision !== 'register-file-ff-v1') continue;

@@ -7,6 +7,7 @@
 #include "basic/LogicValueHelpers.hpp"
 #include "components/ComponentBuilder.tpp"
 #include "tests/RV32IMPhase3Tests.hpp"
+#include "tests/RV32IMProgramTests.hpp"
 #include "tests/ComponentTestModel.hpp"
 #include "tests/TestRegistry.hpp"
 #include "modules/rv32im/MulDiv.hpp"
@@ -716,4 +717,5 @@ void appendRV32IMPhase3Tests(std::vector<TestRegistryEntry>&entries) {
     add("IndexedPixelSelectorWidth32Test",pixels);add("FramebufferDisplayTest",display);
     add("DeviceInspectorTest",deviceViews);
     appendRV32IMPhase3Scenarios(entries);
+    appendRV32IMProgramTests(entries);
 }

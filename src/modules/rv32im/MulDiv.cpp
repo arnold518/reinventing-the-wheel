@@ -8,6 +8,7 @@
 #include "components/StructuralLogic.hpp"
 #include <stdexcept>
 #include <bit>
+#include "ArithmeticGroups.hpp"
 using circuit::structural::Logic;
 using circuit::structural::P;
 using circuit::structural::V;
@@ -30,70 +31,28 @@ void unitPins(IOComponent* p,bool divide,bool combined=false,size_t width=32) {
     else {for(auto s:{"SIGNED_A","SIGNED_B"})p->addPin(s,PinType::INPUT);for(auto s:{"LO","HI"})p->addPinDynamic(s,PinType::OUTPUT,width);}
 }
 void buildUnit(IOComponent& p,ComponentBuilder& b,bool divide,size_t width=32) {
-    const size_t count_width=std::countr_zero(width);
-    Logic l(b);auto in=[&](const char* s){return p.getInputPinDynamic(s);};
-    auto clk=in("CLK"),enable=in("ENABLE");
-    auto reset=in("RST"),cancel=in("CANCEL");
-    // Cancellation is a synchronous ownership transition, including while
-    // paused. Only external reset drives the asynchronous reset network.
-    auto state_enable=l.lor({enable,cancel});
-    auto busy=l.reg("BUSY_STATE",1,clk,reset,state_enable);
-    auto done=l.reg("DONE_STATE",1,clk,reset,state_enable);
-    auto count=l.reg("ITERATION",count_width,clk,reset,enable);
-    auto active=busy->getOutputPin("Q"),valid=done->getOutputPin("Q");
-    auto ready=l.land({l.inv(l.lor({reset,cancel})),l.inv(l.lor({active,valid}))});
-    auto launch=l.land({enable,l.land({in("START"),ready})});
-    auto last=l.land({active,l.all(l.split(count->getOutputPinDynamic("Q")))});
-    l.wire(l.land({l.inv(cancel),l.lor({launch,l.land({active,l.inv(last)})})}),busy->getInputPin("D"));
-    l.wire(l.land({l.inv(cancel),l.lor({last,l.land({valid,l.inv(in("TAKE"))})})}),done->getInputPin("D"));
-    auto cv=l.split(count->getOutputPinDynamic("Q"));
-    auto inc=l.add({cv,l.constant(count_width,1),l.bit(false)}).first;
-    l.drive(l.mux({launch,l.mux({active,cv,inc}),l.constant(count_width)}),count->getInputPinDynamic("D"));
-    auto data_we=l.land({enable,l.lor({launch,active})});
-    auto input_we=launch;
-    auto a=l.split(in("A")),bv=l.split(in("B"));
-    auto q=l.reg("LOW_OR_QUOTIENT",width,clk,reset,data_we);
-    auto r=l.reg("HIGH_OR_REMAINDER",width,clk,reset,data_we);
-    auto qv=l.split(q->getOutputPinDynamic("Q")),rv=l.split(r->getOutputPinDynamic("Q"));
-    V nextq,nextr;
-    if(!divide) {
-        auto ar=l.reg("MULTIPLICAND",width,clk,reset,input_we);
-        auto br=l.reg("ORIGINAL_MULTIPLIER",width,clk,reset,input_we);
-        auto sa=l.reg("NEGATIVE_A",1,clk,reset,input_we);
-        auto sb=l.reg("NEGATIVE_B",1,clk,reset,input_we);
-        l.drive(a,ar->getInputPinDynamic("D"));l.drive(bv,br->getInputPinDynamic("D"));
-        l.wire(l.land({in("SIGNED_A"),a[width-1]}),sa->getInputPin("D"));
-        l.wire(l.land({in("SIGNED_B"),bv[width-1]}),sb->getInputPin("D"));
-        auto step=b.add(circuit::families::multiplyStep(width),"STEP");
-        l.wire(r->getOutputPinDynamic("Q"),step->getInputPinDynamic("HI"));
-        l.wire(ar->getOutputPinDynamic("Q"),step->getInputPinDynamic("A"));
-        l.wire(qv[0],step->getInputPin("BIT"));
-        auto sum=l.split(step->getOutputPinDynamic("SUM"));
-        nextq=l.shiftRight(qv,sum[0]);nextr=l.shiftRight(sum,step->getOutputPin("CARRY"));
-        auto hi=l.sub({rv,l.mux({sa->getOutputPin("Q"),l.constant(width),l.split(br->getOutputPinDynamic("Q"))})}).first;
-        hi=l.sub({hi,l.mux({sb->getOutputPin("Q"),l.constant(width),l.split(ar->getOutputPinDynamic("Q"))})}).first;
-        l.drive(hi,p.getOutputPinDynamic("HI"));l.drive(qv,p.getOutputPinDynamic("LO"));
-        l.drive(l.mux({launch,nextq,bv}),q->getInputPinDynamic("D"));
-    } else {
-        auto dr=l.reg("DIVISOR",width,clk,reset,input_we);
-        auto ns=l.reg("QUOTIENT_NEGATIVE",1,clk,reset,input_we);
-        auto nr=l.reg("REMAINDER_NEGATIVE",1,clk,reset,input_we);
-        auto na=l.land({in("SIGNED"),a[width-1]}),nb=l.land({in("SIGNED"),bv[width-1]});
-        l.drive(l.mux({nb,bv,l.negate(bv)}),dr->getInputPinDynamic("D"));
-        l.wire(l.lx({na,nb}),ns->getInputPin("D"));l.wire(na,nr->getInputPin("D"));
-        auto step=b.add(circuit::families::divideStep(width),"STEP");
-        l.wire(r->getOutputPinDynamic("Q"),step->getInputPinDynamic("REMAINDER"));
-        l.wire(dr->getOutputPinDynamic("Q"),step->getInputPinDynamic("DIVISOR"));
-        l.wire(qv[width-1],step->getInputPin("BIT"));
-        nextq=l.shiftLeft(qv,step->getOutputPin("QUOTIENT_BIT"));
-        nextr=l.split(step->getOutputPinDynamic("NEXT_REMAINDER"));
-        auto signedq=l.land({ns->getOutputPin("Q"),l.any(l.split(dr->getOutputPinDynamic("Q")))});
-        l.drive(l.mux({signedq,qv,l.negate(qv)}),p.getOutputPinDynamic("QUOTIENT"));
-        l.drive(l.mux({nr->getOutputPin("Q"),rv,l.negate(rv)}),p.getOutputPinDynamic("REMAINDER"));
-        l.drive(l.mux({launch,nextq,l.mux({na,a,l.negate(a)})}),q->getInputPinDynamic("D"));
-    }
-    l.drive(l.mux({launch,nextr,l.constant(width)}),r->getInputPinDynamic("D"));
-    l.out(ready,p.getOutputPin("READY"));l.out(active,p.getOutputPin("BUSY"));l.out(valid,p.getOutputPin("DONE"));
+    using namespace rv32im::detail;
+    Logic l(b);
+    auto control=b.addNewComponent<IterationControl>("CONTROL",width);
+    auto operands=b.addNewComponent<ArithmeticOperands>("OPERANDS",width,divide);
+    auto datapath=b.addNewComponent<IterativeDatapath>("DATAPATH",width,divide);
+    auto result=b.addNewComponent<ArithmeticResult>("RESULT",width,divide);
+    for(auto n:{"CLK","RST","ENABLE","CANCEL","START","TAKE"})
+        l.wire(p.getInputPin(n),control->getInputPin(n));
+    for(auto child:std::array<std::shared_ptr<IOComponent>,2>{operands,datapath})for(auto n:{"CLK","RST"})
+        l.wire(p.getInputPin(n),child->getInputPin(n));
+    for(auto n:{"A","B"})l.wire(p.getInputPinDynamic(n),operands->getInputPinDynamic(n));
+    for(auto n:{"SIGNED_A","SIGNED_B"})l.wire(p.getInputPin(divide?"SIGNED":n),operands->getInputPin(n));
+    for(auto child:std::array<std::shared_ptr<IOComponent>,2>{operands,datapath})l.wire(control->getOutputPin("LAUNCH"),child->getInputPin("LAUNCH"));
+    l.wire(control->getOutputPin("DATA_WRITE"),datapath->getInputPin("WRITE"));
+    l.wire(operands->getOutputPinDynamic("OPERAND_A"),datapath->getInputPinDynamic("OPERAND"));
+    l.wire(operands->getOutputPinDynamic("INITIAL_LOW"),datapath->getInputPinDynamic("INITIAL_LOW"));
+    for(auto n:{"OPERAND_A","OPERAND_B","NEGATIVE_A","NEGATIVE_B"})
+        l.wire(operands->getOutputPinDynamic(n),result->getInputPinDynamic(n));
+    for(auto n:{"LOW","HIGH"})l.wire(datapath->getOutputPinDynamic(n),result->getInputPinDynamic(n));
+    l.wire(result->getOutputPinDynamic("RESULT_LOW"),p.getOutputPinDynamic(divide?"QUOTIENT":"LO"));
+    l.wire(result->getOutputPinDynamic("RESULT_HIGH"),p.getOutputPinDynamic(divide?"REMAINDER":"HI"));
+    for(auto n:{"READY","BUSY","DONE"})l.wire(control->getOutputPin(n),p.getOutputPin(n));
     l.finish();
 }
 }
@@ -148,10 +107,11 @@ void buildCombined(IOComponent& self,ComponentBuilder& b,size_t width) {
     l.wire(l.land({start,l.inv(op[2])}),mul->getInputPin("START"));l.wire(l.land({start,op[2]}),div->getInputPin("START"));
     l.wire(l.lx({op[0],op[1]}),mul->getInputPin("SIGNED_A"));l.wire(l.land({op[0],l.inv(op[1])}),mul->getInputPin("SIGNED_B"));
     l.wire(l.inv(op[0]),div->getInputPin("SIGNED"));
-    auto held=l.split(saved->getOutputPin<3>("Q"));
-    auto m=l.mux({l.lor({held[0],held[1]}),l.split(mul->getOutputPinDynamic("LO")),l.split(mul->getOutputPinDynamic("HI"))});
-    auto d=l.mux({held[1],l.split(div->getOutputPinDynamic("QUOTIENT")),l.split(div->getOutputPinDynamic("REMAINDER"))});
-    l.drive(l.mux({held[2],m,d}),self.getOutputPinDynamic("RESULT"));
+    auto select=b.addNewComponent<rv32im::detail::MulDivResultSelection>("RESULT_SELECTION",width);
+    l.wire(saved->getOutputPin<3>("Q"),select->getInputPin<3>("OP"));
+    for(auto n:{"LO","HI"})l.wire(mul->getOutputPinDynamic(n),select->getInputPinDynamic(n));
+    for(auto n:{"QUOTIENT","REMAINDER"})l.wire(div->getOutputPinDynamic(n),select->getInputPinDynamic(n));
+    l.wire(select->getOutputPinDynamic("RESULT"),self.getOutputPinDynamic("RESULT"));
     l.out(ready,self.getOutputPin("READY"));
     l.out(l.lor({mul->getOutputPin("BUSY"),div->getOutputPin("BUSY")}),self.getOutputPin("BUSY"));
     l.out(l.lor({mul->getOutputPin("DONE"),div->getOutputPin("DONE")}),self.getOutputPin("DONE"));l.finish();

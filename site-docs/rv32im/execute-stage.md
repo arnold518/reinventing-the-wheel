@@ -57,7 +57,12 @@ For an eligible valid M packet, forwarded operands launch MulDivUnit<32> once bo
 
 ## Internal structure
 
-The original I execute family retains ordinary execution. A shared forwarded-operands assembly supplies M inputs, and result selection overrides only the M ALU result.
+`INTEGER` retains the original I execute stage. `M_OPERANDS` reuses the
+shared forwarding assembly; `M_CONTROL` groups instruction recognition,
+packet eligibility, pending-operand checks and launch/wait control. `MULDIV`
+owns the iterative arithmetic. The named word mux `RESULT_SELECTION`
+overrides only the M ALU result. These are structural subcomponents rather
+than a flat collection of per-bit selection gates.
 
 ## Edge cases and integration
 
@@ -66,6 +71,9 @@ The coordinator must inhibit packet movement and commit while EXECUTION_WAIT is 
 ## Recorded example and checks
 
 `RV32IMExecuteStageTest` owns the independent functional checks; `RV32IMExecuteStageScenarioTest` retains this smaller recorded example. Both use the same logical component owner.
+The recording covers multiply, signed divide, held completion, an unavailable
+older load followed by forwarding, fault suppression and cancellation. The
+[dedicated programs](programs.md) show the stage operating in a complete pipeline.
 
 <!-- simulator-examples: rv32im-execute-stage RV32IMExecuteStageScenarioTest -->
 

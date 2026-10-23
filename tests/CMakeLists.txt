@@ -397,17 +397,17 @@ set(SIMULATION_TESTS
     ALUFidelityContractTest
     ALUControlDecoderTest
     ALUResultSelectorWidth8Test
-    RV32IALUControlTest
-    RV32IALUCompareTest
-    RV32IALUResultSelectTest
     ALUHierarchyTest
     ParallelPrefixAdderWidth32Test
-    RV32IALUAddSubTest
+    ZeroDetectWidth32Test
     RV32IMemoryLanesTest
     RV32IMemoryRequestTest
+    RV32IALUControlTest
+    RV32IALUAddSubTest
     RV32IALULogicTest
-    ZeroDetectWidth32Test
     RV32IALUShifterTest
+    RV32IALUCompareTest
+    RV32IALUResultSelectTest
     RV32IALUTest
     RV32IALUSliceTest
     RV32IDecodeControlUnitTest
@@ -682,6 +682,12 @@ set(RV32IM_PHASE3_TESTS
 foreach(test_name ${RV32IM_PHASE3_TESTS})
     add_test(NAME ${test_name} COMMAND SimulationTestRunner ${test_name})
     set_tests_properties(${test_name} PROPERTIES LABELS "simulation;rv32im;phase3")
+    list(APPEND SIMULATION_TESTS ${test_name})
+endforeach()
+
+foreach(test_name RV32IMArithmeticProgramTest RV32IMDependenciesProgramTest RV32IMDivideEdgesProgramTest)
+    add_test(NAME ${test_name} COMMAND SimulationTestRunner ${test_name})
+    set_tests_properties(${test_name} PROPERTIES LABELS "simulation;rv32im;program;recorded-program")
     list(APPEND SIMULATION_TESTS ${test_name})
 endforeach()
 

@@ -32,10 +32,11 @@ work state changes. Keep dated decisions and validation results in
   simulator package. The replacement ALU references now use `/alu/`; the
   original canvas has a fresh native 18-checkpoint Pong capture with exact
   host-reference frames and identical retained pin/wire states to its prior
-  capture. The current scenario-view package passes seven live
-  reference/simulator routes and 26 exact non-HTML asset hashes. Fresh MulDiv,
-  RV32IM and RV32I browser views show descriptive structural roots without
-  layout errors. Its strict preview build passes with the per-build
+  capture. The current scenario-view package passes eight live
+  reference/simulator routes and 26 exact non-HTML asset hashes. The grouped
+  M-unit/execute views and dedicated program playback pass focused browser
+  checks; the live dependency program also passes halt and rewind. Its strict
+  preview build passes with the per-build
   timing-cache fix loaded; scoped acceptance is in the completed records below.
   Bring-up/2048 frame-only exports retain their source snapshots.
   Full phase-6
@@ -82,6 +83,15 @@ work state changes. Keep dated decisions and validation results in
   focused registrations, 25 static layouts, 22 native/WASM comparisons,
   strict site with all 156 example groups and 22-page/23-session browser
   selection pass. The final MulDiv/I-core recheck and live 8893 checks pass.
+- The completed [RV32IM grouping and program scenarios](records/2026-10-23-rv32im-grouping-and-program-scenarios.md)
+  replace flat arithmetic/extension views with structural groups and expand
+  the ten M component recordings to 7–49 rows each. Three dedicated programs
+  cover all M operations, memory/branch dependencies and divide/sign edges,
+  with oracle-checked commits and retained timelines. The focused native,
+  timing, migration/layout, 14 WASM example groups and four browser sessions
+  pass, followed by a two-session floorplan recheck and current 8893 acceptance.
+  The standalone MulDiv unit period is now 68 ticks; the core remains 94.
+  The complete suites and game campaign were not run.
 - Current internal guidance is indexed in [docs/README.md](README.md).
   Historical plans, retired guides and completed reports are listed in the
   [archive index](archive/README.md).
@@ -267,10 +277,6 @@ work state changes. Keep dated decisions and validation results in
 
 ## Open items
 
-- A running-program RV32IM core scenario remains to be added. The component
-  demo still records reset/fetch backpressure; the
-  [viewer audit](records/2026-10-23-rv32im-scenario-visualization-audit.md)
-  separates that missing example from the naming/fidelity/layout fixes above.
 - The 18-case timed-memory panel gives current results only for its selected
   compatible workloads and advanced/two-bit setting; other memory/core/policy
   combinations need separate checks before claiming their performance.

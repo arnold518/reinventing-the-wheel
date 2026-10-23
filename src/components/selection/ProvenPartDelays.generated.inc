@@ -9,15 +9,15 @@
     t.launches["BUSY"] = {4, 5};
     t.launches["DONE"] = {4, 5};
     t.launches["READY"] = {7, 8};
-    t.launches["RESULT"] = {5, 48};
-    t.setup["A"] = 30;
-    t.setup["B"] = 28;
+    t.launches["RESULT"] = {5, 51};
+    t.setup["A"] = 32;
+    t.setup["B"] = 29;
     t.setup["CANCEL"] = 21;
     t.setup["ENABLE"] = 16;
-    t.setup["OP"] = 16;
+    t.setup["OP"] = 17;
     t.setup["START"] = 17;
     t.setup["TAKE"] = 12;
-    t.internal_period = 39;
+    t.internal_period = 40;
     t.fixed_inputs["RST"] = 0;
     return t;
 }()},

@@ -32,7 +32,15 @@ On a rising edge with ENABLE, START and READY high, latch A, B and signedness. T
 
 ## Internal structure
 
-`MultiplyStep<W>`, low/high product registers, operand/sign registers, a log2(W)-bit iteration counter and ownership gates. Signed high correction subtracts original operands from the unsigned high half.
+Four structural groups expose the data flow:
+
+- `CONTROL`: busy/done ownership, a log2(W)-bit iteration counter and enables.
+- `OPERANDS`: original operands and captured signedness.
+- `DATAPATH`: low/high product registers, `MultiplyStep<W>` and next-value selectors.
+- `RESULT`: signed high correction, subtracting original operands from the unsigned high half.
+
+The groups contain the gates and selectable lower-level components; they
+are wiring hierarchy with no separate behavioral implementation.
 
 ## Edge cases and integration
 
@@ -41,6 +49,9 @@ ENABLE pauses iteration and completion consumption. CANCEL synchronously discard
 ## Recorded example and checks
 
 `MultiplierWidth32Test` owns the independent functional checks; `MultiplierWidth32ScenarioTest` retains this smaller recorded example. Both use the same logical component owner.
+The recording covers unsigned, signed and mixed-sign products, high-word
+boundaries, paused execution, held completion, consumption, cancellation
+while paused and reset during an operation.
 
 <!-- simulator-examples: multiplier-w32 MultiplierWidth32ScenarioTest -->
 

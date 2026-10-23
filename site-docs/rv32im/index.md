@@ -13,6 +13,10 @@ explorer, the triangle selects structural or behavioral fidelity where both
 are available; press **Apply & Run** to rebuild the view. Expanding a component
 changes that component only, so its children retain their own selections.
 
+[Recorded RV32IM programs](programs.md) add complete instruction execution:
+all eight M instructions, dependencies with memory and branches, and divide
+boundaries. They have their own menu group in the scenario visualizer.
+
 ## Arithmetic
 
 - [MultiplyStep](multiply-step.md) and [DivideStep](divide-step.md) support

@@ -92,6 +92,9 @@ not host simulation throughput or physical silicon frequency estimates.
 ## Recorded example and checks
 
 `RV32IMFiveStageCoreTest` owns the independent functional checks; `RV32IMFiveStageCoreScenarioTest` retains this smaller recorded example. Both use the same logical component owner.
+This component example isolates fetch backpressure, request retention,
+disable and reset. Use the [dedicated recorded programs](programs.md) for
+complete arithmetic, dependency, branch and memory execution with commit checks.
 
 <!-- simulator-examples: rv32im-core RV32IMFiveStageCoreScenarioTest -->
 

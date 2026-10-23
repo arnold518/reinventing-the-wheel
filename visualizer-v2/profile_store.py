@@ -117,6 +117,14 @@ def migrate_component_paths(overrides: dict[str, str], scenario: str | None = No
     def current_path(path):
         if root_name and (path == "DUT" or path.startswith("DUT.")):
             path = root_name + path[3:]
+        match = re.match(r"^((?:MULTIPLIER_W\d+_ROOT|DIVIDER_W\d+_ROOT|.*\.(?:MULTIPLY|DIVIDE)))\."
+                         r"(BUSY_STATE|DONE_STATE|ITERATION|MULTIPLICAND|ORIGINAL_MULTIPLIER|NEGATIVE_A|NEGATIVE_B|"
+                         r"DIVISOR|QUOTIENT_NEGATIVE|REMAINDER_NEGATIVE|LOW_OR_QUOTIENT|HIGH_OR_REMAINDER|STEP)(?=\.|$)", path)
+        if match:
+            child = match[2]
+            group = ("CONTROL" if child in {"BUSY_STATE", "DONE_STATE", "ITERATION"} else
+                     "DATAPATH" if child in {"LOW_OR_QUOTIENT", "HIGH_OR_REMAINDER", "STEP"} else "OPERANDS")
+            path = match[1] + "." + group + "." + path[len(match[1]) + 1:]
         path = stage_path(ff_path(path))
         # The former Register32/MemoryPayloadRegister wrapper is now a direct
         # Register<32>. Limit migration to known register roots; other STORAGE

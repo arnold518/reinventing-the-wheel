@@ -159,6 +159,29 @@ profile. The browser check also verifies root/nested fidelity round trips,
 saved `DUT` profile migration, caught explorer layout errors and visible
 child bounds/overlaps. It always checks the existing `rv32i-core` as one
 additional session; a scenario filter does not skip that core check.
+
+Dedicated RV32IM programs appear in the **RV32IM programs / Recorded
+execution** group: `rv32im-program-arithmetic`, `rv32im-program-dependencies`
+and `rv32im-program-divide-edges`. Their registered tests are
+`RV32IMArithmeticProgramTest`, `RV32IMDependenciesProgramTest` and
+`RV32IMDivideEdgesProgramTest`. They use the shared program fixture with the
+IM core, real memory endpoints and oracle-checked commits, retaining a
+timeline for inspection. `setupCircuit()` builds topology only; recording
+runs through `preparePrecomputedSimulation()` in both native and WASM.
+Run only those three for a small program check:
+
+```sh
+ctest --test-dir build-cleanup -j1 --output-on-failure -L '^recorded-program$'
+```
+
+The RV32IM component recordings separately cover the eight M encodings,
+signed/unsigned arithmetic boundaries and pause/hold/take/cancel/reset
+transitions. Their concise timelines complement the larger headless sweeps.
+`RV32IMInspectionBrowserTest` is a bounded check of multiplier/divider group
+scopes, execute groups and the dependency program's structural view and
+rewind. `CIRCUITSIM_INSPECTION_FILTER` optionally selects those browser
+sessions by alias regex; report a filtered run's session count separately.
+
 For a bounded browser run, `CIRCUITSIM_BROWSER_SCENARIO_FILTER` selects
 recorded sessions by scenario-alias regular expression. All 22 public pages
 are still checked; report the selected session count separately. The default

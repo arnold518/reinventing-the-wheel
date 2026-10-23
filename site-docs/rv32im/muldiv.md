@@ -39,6 +39,9 @@ Multiplier<32> and Divider<32>, an operation register and result-selection gates
 The structural viewer places the two engines side by side, with the operation
 register and control/result-selection gates below them. Zoom into either
 engine to inspect its iterative datapath.
+`RESULT_SELECTION` contains named product-half, quotient/remainder and final
+word selectors. The recording exercises all eight operations, division by
+zero, signed overflow and the ownership/pause/cancel/reset transitions.
 
 ## Edge cases and integration
 
@@ -47,7 +50,7 @@ Changing OP/A/B after launch does not change the owned result. Cancellation is s
 ## Standalone timing boundary
 
 Under the same synchronous binary input boundary as the core, the structural
-unit certifies at 64 unit ticks, 2322 ps (embedded) and 1620 ps (desktop).
+unit certifies at 68 unit ticks, 2322 ps (embedded) and 1620 ps (desktop).
 `RV32IMTimingTest` derives these periods independently for each profile.
 Launch latency remains one launch edge plus 32 enabled iteration edges.
 

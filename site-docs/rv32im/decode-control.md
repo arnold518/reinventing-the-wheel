@@ -37,7 +37,11 @@ M instructions use opcode 0x33 and funct7 0x01, with funct3 selecting the operat
 
 ## Internal structure
 
-The original RV32I decode family supplies I behavior and register fields. Gates recognize M and select its control fields. Existing ALU operation numbers and packet fields are unchanged.
+`INTEGER` retains the original RV32I decode family. `EXTENSION` groups M
+recognition and control-field overrides, keeping register-field passthrough
+inside the same boundary. Existing ALU operation numbers and packet fields
+are unchanged. The recording covers all eight M encodings, integer fallback,
+x0 destination and illegal/reserved encodings.
 
 ## Edge cases and integration
 

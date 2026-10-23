@@ -121,6 +121,33 @@ COMPONENT_LAYOUT_DEFAULTS = {
 }
 COMPONENT_LAYOUT_DEFAULTS["RV32IMFiveStageCore"] = dict(COMPONENT_LAYOUT_DEFAULTS["RV32IFiveStageCore"])
 COMPONENT_LAYOUT_DEFAULTS["RV32IMPipelineCoordinator"] = dict(COMPONENT_LAYOUT_DEFAULTS["RV32IPipelineCoordinator"])
+COMPONENT_LAYOUT_DEFAULTS["RV32IMProgramRoot"] = dict(COMPONENT_LAYOUT_DEFAULTS["RV32IProgramRoot"])
+COMPONENT_LAYOUT_DEFAULTS["RV32IMExecutionControl"] = {
+    "aspect_ratio": .8, "min_aspect_ratio": .5,
+    "title_bar_ratio": .055, "pin_size_ratio": .025, "boundary_area_ratio": .03,
+}
+COMPONENT_LAYOUT_DEFAULTS["RV32IMExecuteStage"] = {
+    "aspect_ratio": .95, "min_aspect_ratio": .55, "aspect_ratio_floor": .08,
+    "title_bar_ratio": .05, "pin_size_ratio": .018, "boundary_area_ratio": .025,
+}
+for extension_type in ("RV32IMDecodeOverrides", "RV32IMPipelineHoldControl"):
+    COMPONENT_LAYOUT_DEFAULTS[extension_type] = {
+        "aspect_ratio": .85, "min_aspect_ratio": .5,
+        "title_bar_ratio": .055, "pin_size_ratio": .012, "boundary_area_ratio": .025,
+    }
+for arithmetic_width in (4, 8, 16, 32):
+    for arithmetic_type in ("Multiplier", "Divider"):
+        COMPONENT_LAYOUT_DEFAULTS[f"{arithmetic_type}<{arithmetic_width}>"] = {
+            "aspect_ratio": 1.15, "min_aspect_ratio": .8,
+            "title_bar_ratio": .045, "pin_size_ratio": .025, "boundary_area_ratio": .03,
+        }
+    for arithmetic_type in ("ArithmeticIterationControl", "MultiplyOperands", "DivideOperands",
+                            "MultiplyDatapath", "DivideDatapath", "MultiplyResultCorrection",
+                            "DivideResultCorrection", "MulDivResultSelection"):
+        COMPONENT_LAYOUT_DEFAULTS[f"{arithmetic_type}<{arithmetic_width}>"] = {
+            "aspect_ratio": .85, "min_aspect_ratio": .5,
+            "title_bar_ratio": .055, "pin_size_ratio": .025, "boundary_area_ratio": .03,
+        }
 COMPONENT_LAYOUT_DEFAULTS["MulDivUnit<32>"] = {
     "aspect_ratio": 1.15, "min_aspect_ratio": .8,
     "title_bar_ratio": .045, "pin_size_ratio": .025, "boundary_area_ratio": .03,
@@ -1008,6 +1035,34 @@ def _custom_child_layout(
     if not children:
         return {}
 
+    if _component_type(parent) == "RV32IMExecuteStage":
+        named = {child.get_name(): child for child in children}
+        main = {"INTEGER", "M_OPERANDS", "M_CONTROL", "MULDIV", "RESULT_SELECTION"}
+        if main <= named.keys():
+            placements = {}
+            def put(name, x, y, width, height):
+                width = min(width, height * parent_aspect / child_aspects[named[name].get_id()])
+                placements[name] = {"rel_pos": [x, y], "rel_width": width}
+            put("INTEGER", .06, .12, .42, .60)
+            put("M_OPERANDS", .58, .12, .20, .20)
+            put("M_CONTROL", .82, .12, .13, .20)
+            put("MULDIV", .58, .38, .36, .42)
+            put("RESULT_SELECTION", .46, .85, .10, .09)
+            for index, name in enumerate(sorted(named.keys() - main)):
+                put(name, .07 + .08 * index, .86, .035, .06)
+            return placements
+
+    if _component_type(parent).startswith(("Multiplier<", "Divider<")):
+        named = {child.get_name(): child for child in children}
+        if set(named) == {"CONTROL", "OPERANDS", "DATAPATH", "RESULT"}:
+            placements = {}
+            top = max(.11, title_fraction + .035)
+            for name, center, row in (("CONTROL", .26, top), ("OPERANDS", .74, top),
+                                      ("DATAPATH", .26, .55), ("RESULT", .74, .55)):
+                width = min(.36, .34 * parent_aspect / child_aspects[named[name].get_id()])
+                placements[name] = {"rel_pos": [center - width / 2, row], "rel_width": width}
+            return placements
+
     arithmetic_layout = _mul_div_layout(parent, children, parent_aspect,
         title_fraction, child_aspects, boundary_fraction, pin_size_fraction, child_stub_ratios)
     if arithmetic_layout is not None:
@@ -1060,7 +1115,7 @@ def _custom_child_layout(
     if cache_floorplan is not None:
         return cache_floorplan
 
-    if _component_type(parent) == "RV32IProgramRoot":
+    if _component_type(parent) in {"RV32IProgramRoot", "RV32IMProgramRoot"}:
         program_layout = _rv32i_program_root_layout(
             children,
             parent_aspect,

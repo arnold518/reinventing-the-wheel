@@ -1,9 +1,11 @@
 #include "modules/rv32i/RV32IALU.hpp"
+#include "rv32im/RV32IMInstruction.hpp"
 #include "RV32IMScenarioProfile.hpp"
 #include "tests/ComponentTestModel.hpp"
 #include "tests/TestRegistry.hpp"
 #include "components/selection/StandardProfiles.hpp"
 #include <map>
+#include <bit>
 #include <string>
 #include <tuple>
 
@@ -66,39 +68,121 @@ ComponentTestSpec recordedSpec(const std::string& name, const std::string& contr
     if (contract == "arithmetic.multiply-step.4") {
         s.step("add-selected", {{"HI",13},{"A",11},{"BIT",1}}, {{"SUM",8},{"CARRY",1}});
         s.step("skip", {{"BIT",0}}, {{"SUM",13},{"CARRY",0}});
+        s.step("zero",{{"HI",0},{"A",0},{"BIT",1}},{{"SUM",0},{"CARRY",0}});
+        s.step("maximum-carry",{{"HI",15},{"A",15}},{{"SUM",14},{"CARRY",1}});
+        s.step("carry-boundary",{{"HI",15},{"A",1}},{{"SUM",0},{"CARRY",1}});
+        s.step("maximum-skip",{{"BIT",0}},{{"SUM",15},{"CARRY",0}});
     } else if (contract == "arithmetic.divide-step.4") {
         s.step("subtract", {{"REMAINDER",3},{"DIVISOR",5},{"BIT",1}}, {{"NEXT_REMAINDER",2},{"QUOTIENT_BIT",1}});
         s.step("retain", {{"REMAINDER",1},{"BIT",0}}, {{"NEXT_REMAINDER",2},{"QUOTIENT_BIT",0}});
+        s.step("equal",{{"REMAINDER",2},{"DIVISOR",5},{"BIT",1}},{{"NEXT_REMAINDER",0},{"QUOTIENT_BIT",1}});
+        s.step("high-remainder",{{"REMAINDER",15},{"DIVISOR",15}},{{"NEXT_REMAINDER",0},{"QUOTIENT_BIT",1}});
+        s.step("zero-divisor",{{"REMAINDER",0},{"DIVISOR",0},{"BIT",0}},{{"NEXT_REMAINDER",0},{"QUOTIENT_BIT",1}});
+        s.step("below-divisor",{{"DIVISOR",15},{"BIT",1}},{{"NEXT_REMAINDER",1},{"QUOTIENT_BIT",0}});
     } else if (contract == "arithmetic.iterative.multiplier.32" || contract == "arithmetic.iterative.divider.32" || contract == "arithmetic.iterative.mul-div.32") {
-        bool div = contract == "arithmetic.iterative.divider.32", combined = contract == "arithmetic.iterative.mul-div.32";
-        Values launch{{"A",13},{"B",17},{"START",1}};
-        if (combined) launch["OP"] = 0;
-        s.cycle("launch", launch, {{"BUSY",1},{"DONE",0},{"READY",0}});
-        for (int i = 0; i < 32; ++i) s.cycle("", {{"START",0}}, {}, false);
-        Values result{{"DONE",1},{"BUSY",0},{"READY",0}};
-        if (combined) result["RESULT"] = 221;
-        else if (div) {result["QUOTIENT"] = 0; result["REMAINDER"] = 13;}
-        else {result["LO"] = 221; result["HI"] = 0;}
-        s.step("complete", {}, result);
-        s.cycle("held", {{"A",99},{"B",0}}, result);
-        s.cycle("take", {{"TAKE",1}}, {{"READY",1},{"DONE",0},{"BUSY",0}});
+        const bool div=contract=="arithmetic.iterative.divider.32", combined=contract=="arithmetic.iterative.mul-div.32";
+        const auto transaction=[&](const std::string& id,uint32_t a,uint32_t b,unsigned op,bool pause=false) {
+            Values launch{{"A",a},{"B",b},{"START",1},{"TAKE",0},{"ENABLE",1},{"CANCEL",0}};
+            if(combined)launch["OP"]=op;
+            else if(div)launch["SIGNED"]=op;
+            else {launch["SIGNED_A"]=op&1;launch["SIGNED_B"]=(op>>1)&1;}
+            s.cycle(id+"-launch",launch,{{"BUSY",1},{"DONE",0},{"READY",0}});
+            if(pause)for(unsigned i=0;i<3;++i)s.cycle(id+"-paused",{{"START",0},{"ENABLE",0}},{{"BUSY",1},{"DONE",0},{"READY",0}},i==2);
+            for(unsigned i=0;i<32;++i)s.cycle("",{{"START",0},{"ENABLE",1}}, {},false);
+            Values result{{"DONE",1},{"BUSY",0},{"READY",0}};
+            using rv32im::MOperation;
+            if(combined)result["RESULT"]=rv32im::referenceResult(static_cast<MOperation>(op),a,b);
+            else if(div){
+                result["QUOTIENT"]=rv32im::referenceResult(op?MOperation::DIV:MOperation::DIVU,a,b);
+                result["REMAINDER"]=rv32im::referenceResult(op?MOperation::REM:MOperation::REMU,a,b);
+            }else{
+                result["LO"]=static_cast<uint32_t>(uint64_t(a)*b);
+                const int64_t aa=(op&1)?int64_t(std::bit_cast<int32_t>(a)):int64_t(a);
+                const int64_t bb=(op&2)?int64_t(std::bit_cast<int32_t>(b)):int64_t(b);
+                const uint64_t product=op?static_cast<uint64_t>(aa*bb):uint64_t(a)*b;
+                result["HI"]=product>>32;
+            }
+            s.step(id+"-complete",{},result);
+            // A second launch cannot replace an unconsumed completion.
+            s.cycle(id+"-held",{{"A",99},{"B",0},{"START",1},{"ENABLE",0}},result);
+            s.cycle(id+"-take",{{"START",0},{"ENABLE",1},{"TAKE",1}},{{"READY",1},{"DONE",0},{"BUSY",0}});
+        };
+        if(combined){
+            for(unsigned op=0;op<8;++op)transaction(rv32im::name(static_cast<rv32im::MOperation>(op)),0xfffffff9,3,op,op==0);
+            transaction("divide-zero",13,0,4);
+            transaction("signed-overflow",0x80000000,0xffffffff,4);
+        }else if(div){
+            transaction("unsigned",100,7,0,true);
+            transaction("negative-dividend",0xfffffff9,3,1);
+            transaction("negative-divisor",7,0xfffffffd,1);
+            transaction("divide-zero",13,0,1);
+            transaction("signed-overflow",0x80000000,0xffffffff,1);
+        }else{
+            transaction("unsigned",13,17,0,true);
+            transaction("signed",0xfffffff9,3,3);
+            transaction("mixed-sign",0x80000000,0xffffffff,1);
+            transaction("signed-minimum",0x80000000,0xffffffff,3);
+            transaction("unsigned-high",0xffffffff,0xffffffff,0);
+        }
+        s.cycle("cancel-launch",{{"A",13},{"B",17},{"TAKE",0},{"START",1}},{{"BUSY",1},{"DONE",0}});
+        s.cycle("cancel-while-paused",{{"START",0},{"CANCEL",1},{"ENABLE",0}},{{"BUSY",0},{"DONE",0},{"READY",0}});
+        s.step("canceled-ready",{{"CANCEL",0},{"ENABLE",1}},{{"BUSY",0},{"DONE",0},{"READY",1}});
+        s.cycle("reset-launch",{{"START",1}},{{"BUSY",1}});
+        s.step("reset-in-flight",{{"RST",1},{"START",0}},{{"BUSY",0},{"DONE",0},{"READY",0}});
+        s.step("reset-released",{{"RST",0}},{{"BUSY",0},{"DONE",0},{"READY",1}});
     } else if (contract == "rv32im.decode-control") {
-        s.step("multiply", {{"INSTRUCTION",0x022081b3}}, {{"LEGAL",1},{"REG_WRITE",1},{"USES_RS1",1},{"USES_RS2",1},{"RS1_ADDR",1},{"RS2_ADDR",2},{"RD_ADDR",3},{"MEM_READ",0},{"MEM_WRITE",0},{"TRAP_REQUEST",0}});
+        for(unsigned op=0;op<8;++op)s.step(rv32im::name(static_cast<rv32im::MOperation>(op)),{{"INSTRUCTION",0x022081b3|(op<<12)}},
+            {{"LEGAL",1},{"REG_WRITE",1},{"USES_RS1",1},{"USES_RS2",1},{"RS1_ADDR",1},{"RS2_ADDR",2},{"RD_ADDR",3},{"MEM_READ",0},{"MEM_WRITE",0},{"TRAP_REQUEST",0}});
+        s.step("integer-add",{{"INSTRUCTION",0x002081b3}},{{"LEGAL",1},{"REG_WRITE",1},{"RD_ADDR",3}});
+        s.step("x0-destination",{{"INSTRUCTION",0x02208033}},{{"LEGAL",1},{"RD_ADDR",0}});
         s.step("reserved", {{"INSTRUCTION",0x04000033}}, {{"LEGAL",0}});
+        s.step("illegal",{{"INSTRUCTION",0xffffffff}},{{"LEGAL",0}});
     } else if (contract == "rv32im.pipeline.stage.decode") {
-        s.cycle("writeback", {{"WB_VALID",1},{"WB_REG_WRITE",1},{"WB_REGISTER_WRITE",1},{"WB_RD",1},{"WB_VALUE",13}}, {});
-        s.step("multiply-decode", {{"WB_VALID",0},{"WB_REG_WRITE",0},{"WB_REGISTER_WRITE",0},{"IN_VALID",1},{"IN_INSTRUCTION",0x022081b3}}, {{"OUT_RS1_VALUE",13},{"OUT_RS2_VALUE",0},{"OUT_CONTROL",0x1383},{"TERMINAL",0}});
+        s.cycle("writeback-rs1",{{"WB_VALID",1},{"WB_REG_WRITE",1},{"WB_REGISTER_WRITE",1},{"WB_RD",1},{"WB_VALUE",13}},{});
+        s.cycle("writeback-rs2",{{"WB_RD",2},{"WB_VALUE",17}},{});
+        for(unsigned op=0;op<8;++op)s.step(rv32im::name(static_cast<rv32im::MOperation>(op)),
+            {{"WB_VALID",0},{"WB_REG_WRITE",0},{"WB_REGISTER_WRITE",0},{"IN_VALID",1},{"IN_PC",64},{"IN_INSTRUCTION",0x022081b3|(op<<12)}},
+            {{"OUT_RS1_VALUE",13},{"OUT_RS2_VALUE",17},{"OUT_CONTROL",0x1383},{"OUT_REGISTER_ADDRESSES",1|(2<<5)|(3<<10)},{"OUT_PC",64},{"OUT_VALID",1},{"TERMINAL",0}});
+        s.step("writeback-bypass",{{"WB_VALID",1},{"WB_REG_WRITE",1},{"WB_REGISTER_WRITE",1},{"WB_RD",1},{"WB_VALUE",42}},{{"OUT_RS1_VALUE",42}});
+        s.step("x0-source",{{"IN_INSTRUCTION",0x022001b3},{"WB_RD",0},{"WB_VALUE",99}},{{"OUT_RS1_VALUE",0},{"OUT_RS2_VALUE",17}});
+        s.step("invalid-packet",{{"IN_VALID",0}},{{"OUT_VALID",0},{"LOAD_USE_HAZARD",0},{"TERMINAL",0}});
     } else if (contract == "rv32im.pipeline.stage.execute") {
-        s.step("wait", {{"IN_VALID",1},{"IN_CONTROL",0x1383},{"IN_INSTRUCTION",0x022081b3},{"IN_REGISTER_ADDRESSES",1|(2<<5)|(3<<10)},{"IN_RS1_VALUE",13},{"IN_RS2_VALUE",17}}, {{"EXECUTION_WAIT",1}});
-        for (int i = 0; i < 33; ++i) s.cycle("", {}, {}, false);
-        s.step("multiply-result", {}, {{"EXECUTION_WAIT",0},{"OUT_ALU_RESULT",221},{"PRETERMINAL",0}});
+        Values packet{{"IN_VALID",1},{"IN_CONTROL",0x1383},{"IN_INSTRUCTION",0x022081b3},{"IN_REGISTER_ADDRESSES",1|(2<<5)|(3<<10)},{"IN_RS1_VALUE",13},{"IN_RS2_VALUE",17}};
+        s.step("multiply-wait",packet,{{"EXECUTION_WAIT",1}});
+        for(unsigned i=0;i<33;++i)s.cycle("",{}, {},false);
+        s.step("multiply-result",{},{{"EXECUTION_WAIT",0},{"OUT_ALU_RESULT",221},{"PRETERMINAL",0}});
+        s.cycle("completion-held",{{"ENABLE",0}},{{"EXECUTION_WAIT",0},{"OUT_ALU_RESULT",221}});
+        s.cycle("take-multiply",{{"ENABLE",1},{"TAKE",1}},{});
+        s.step("invalid-packet",{{"TAKE",0},{"IN_VALID",0}},{{"EXECUTION_WAIT",0}});
+        s.step("older-load-pending",{{"IN_VALID",1},{"IN_RS1_VALUE",99},{"EX_MEM_VALID",1},{"EX_MEM_REG_WRITE",1},{"EX_MEM_RD",1},{"EX_MEM_RESULT_READY",0},{"EX_MEM_VALUE",13}},{{"EXECUTION_WAIT",1}});
+        for(unsigned i=0;i<5;++i)s.cycle("",{}, {},false);
+        s.step("pending-still-waits",{},{{"EXECUTION_WAIT",1}});
+        s.step("older-load-forwarded",{{"EX_MEM_RESULT_READY",1}},{{"EXECUTION_WAIT",1}});
+        for(unsigned i=0;i<33;++i)s.cycle("",{}, {},false);
+        s.step("forwarded-result",{},{{"EXECUTION_WAIT",0},{"OUT_ALU_RESULT",221}});
+        s.cycle("take-forwarded",{{"TAKE",1}},{});
+        s.step("faulted-packet",{{"TAKE",0},{"IN_FETCH_STATUS",2}},{{"PRETERMINAL",1},{"EXECUTION_WAIT",0}});
+        s.step("signed-divide",{{"IN_FETCH_STATUS",0},{"EX_MEM_VALID",0},{"IN_INSTRUCTION",0x0220c1b3},{"IN_RS1_VALUE",0xfffffff9},{"IN_RS2_VALUE",3}},{{"EXECUTION_WAIT",1}});
+        for(unsigned i=0;i<33;++i)s.cycle("",{}, {},false);
+        s.step("divide-result",{},{{"EXECUTION_WAIT",0},{"OUT_ALU_RESULT",0xfffffffe}});
+        s.cycle("cancel-completion",{{"CANCEL",1},{"ENABLE",0}},{{"EXECUTION_WAIT",0}});
+        s.step("canceled-invalid",{{"CANCEL",0},{"IN_VALID",0},{"ENABLE",1}},{{"EXECUTION_WAIT",0}});
     } else if (contract == "rv32im.pipeline.coordinator") {
         s.step("move", {{"IMEM_READY",1},{"DMEM_READY",1}}, {{"COMMIT_ENABLE",1},{"EX_MEM_WRITE",1}});
-        s.step("arithmetic-hold", {{"EXECUTION_WAIT",1}}, {{"EXECUTION_STALL",1},{"COMMIT_ENABLE",0},{"EX_MEM_WRITE",0},{"MEM_WB_WRITE",0}});
+        s.step("arithmetic-hold", {{"EXECUTION_WAIT",1}}, {{"EXECUTION_STALL",1},{"COMMIT_ENABLE",0},{"EX_MEM_WRITE",0},{"MEM_WB_WRITE",0},{"FETCH_PC_WRITE",0},{"FETCH_RESPONSE_TAKE",0}});
         s.step("older-fault", {{"MEMORY_FAULT",1}}, {{"EXECUTION_STALL",0},{"EX_MEM_FLUSH",1}});
+        s.step("older-terminal",{{"MEMORY_FAULT",0},{"WB_TERMINAL",1}},{{"EXECUTION_STALL",0}});
+        s.step("resume",{{"WB_TERMINAL",0},{"EXECUTION_WAIT",0}},{{"COMMIT_ENABLE",1},{"EX_MEM_WRITE",1},{"EXECUTION_STALL",0}});
+        s.step("disabled",{{"ENABLE",0}},{{"COMMIT_ENABLE",0},{"EX_MEM_WRITE",0}});
+        s.step("halted",{{"ENABLE",1},{"HALTED",1},{"EXECUTION_WAIT",1}},{{"COMMIT_ENABLE",0},{"EXECUTION_STALL",0}});
     } else if (contract == "rv32im.core.educational-five-stage") {
-        for (int i=0;i<4;++i) s.cycle("", {}, {}, false);
-        s.step("fetch-backpressure", {}, {{"IMEM_REQ_VALID",1},{"IMEM_REQ_ADDR",0},{"COMMIT_VALID",0},{"HALTED",0},{"TRAPPED",0}});
+        for(int i=0;i<4;++i)s.cycle("",{}, {},false);
+        s.step("fetch-backpressure",{},{{"IMEM_REQ_VALID",1},{"IMEM_REQ_ADDR",0},{"COMMIT_VALID",0},{"HALTED",0},{"TRAPPED",0}});
+        for(int i=0;i<4;++i)s.cycle("",{}, {},false);
+        s.step("request-retained",{},{{"IMEM_REQ_VALID",1},{"IMEM_REQ_ADDR",0},{"COMMIT_VALID",0},{"HALTED",0},{"TRAPPED",0}});
+        s.step("disabled",{{"ENABLE",0}},{{"COMMIT_VALID",0},{"HALTED",0},{"TRAPPED",0}});
+        s.step("reset-request",{{"RST",1}},{{"COMMIT_VALID",0},{"HALTED",0},{"TRAPPED",0}});
+        s.step("restart",{{"RST",0},{"ENABLE",1}},{{"HALTED",0},{"TRAPPED",0}});
     } else if (contract == "device.counter.4") {
         s.cycle("one", {}, {{"COUNT",1},{"TICK",1}});
         s.cycle("two", {}, {{"COUNT",2},{"TICK",1}});

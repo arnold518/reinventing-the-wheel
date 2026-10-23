@@ -55,7 +55,10 @@ EXECUTION_WAIT adds EXECUTION_STALL. During that hold, packet writes/flushes, fe
 
 ## Internal structure
 
-The original pipeline coordinator plus structural hold/override gates. The initial implementation conservatively holds older packets too; an already accepted memory operation can complete into its retained response.
+`INTEGER` retains the original pipeline coordinator; `ARITHMETIC_HOLD`
+groups the structural hold, older-terminal override and movement gates.
+The implementation conservatively holds older packets too; an already
+accepted memory operation can complete into its retained response.
 
 ## Edge cases and integration
 

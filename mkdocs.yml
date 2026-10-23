@@ -282,6 +282,7 @@ nav:
       - RV32IMExecuteStage: rv32im/execute-stage.md
       - RV32IMPipelineCoordinator: rv32im/coordinator.md
       - RV32IMFiveStageCore: rv32im/core.md
+      - Recorded programs: rv32im/programs.md
       - RV32IMDeviceSystem: rv32im/device-system.md
       - Recorded games: rv32im/recorded-games.md
   - Device I/O:

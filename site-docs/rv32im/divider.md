@@ -31,7 +31,16 @@ Launch and completion use the same handshake as Multiplier<32>: one launch edge,
 
 ## Internal structure
 
-`DivideStep<W>`, quotient/remainder and divisor registers, sign correction, iteration and ownership gates. The extra remainder comparison bit stays separate from supported-width buses.
+Four structural groups expose the data flow:
+
+- `CONTROL`: busy/done ownership, iteration count and enables.
+- `OPERANDS`: divisor magnitude, initial dividend magnitude and captured signs.
+- `DATAPATH`: quotient/remainder registers, `DivideStep<W>` and next-value selectors.
+- `RESULT`: quotient/remainder sign correction and the divide-by-zero sign rule.
+
+The extra remainder comparison bit stays separate from supported-width
+buses. These are structural wiring groups; lower-level components retain
+their own fidelity selections.
 
 ## Edge cases and integration
 
@@ -40,6 +49,9 @@ Division by zero returns quotient 2^W−1 and the original dividend as remainder
 ## Recorded example and checks
 
 `DividerWidth32Test` owns the independent functional checks; `DividerWidth32ScenarioTest` retains this smaller recorded example. Both use the same logical component owner.
+The recording covers nonzero remainders, either negative operand, division
+by zero, signed overflow, pause/hold/consume, cancellation while paused and
+reset during an operation.
 
 <!-- simulator-examples: divider-w32 DividerWidth32ScenarioTest -->
 

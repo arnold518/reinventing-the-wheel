@@ -166,6 +166,7 @@ set(CORE_LOGIC_SOURCES
     src/tests/WordALUTests.cpp
     src/tests/RV32IMPhase3Tests.cpp
     src/tests/RV32IMPhase3Scenarios.cpp
+    src/tests/RV32IMProgramTests.cpp
     src/tests/SimulationTimeTests.cpp
     src/tests/RV32IMRecordedTests.cpp
     src/runtime/RecordedGuest.cpp

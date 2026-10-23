@@ -100,6 +100,10 @@
     {
       "id": "device-io",
       "title": "Device I/O / Recorded components"
+    },
+    {
+      "id": "rv32im-programs",
+      "title": "RV32IM programs / Recorded execution"
     }
   ],
   "aliases": {
@@ -486,6 +490,15 @@
     ],
     "Mux8Width32Test": [
       "mux-8-w32"
+    ],
+    "RV32IMArithmeticProgramTest": [
+      "rv32im-program-arithmetic"
+    ],
+    "RV32IMDependenciesProgramTest": [
+      "rv32im-program-dependencies"
+    ],
+    "RV32IMDivideEdgesProgramTest": [
+      "rv32im-program-divide-edges"
     ]
   },
   "components": {
@@ -1278,6 +1291,18 @@
       "title": "RV32IMDeviceSystem",
       "group": "device-io",
       "root": "RV32IM_DEVICE_SYSTEM_ROOT"
+    },
+    "RV32IMArithmeticProgramTest": {
+      "title": "All eight M instructions and x0",
+      "group": "rv32im-programs"
+    },
+    "RV32IMDependenciesProgramTest": {
+      "title": "M dependencies, loads, stores and branch flush",
+      "group": "rv32im-programs"
+    },
+    "RV32IMDivideEdgesProgramTest": {
+      "title": "Division edges and signed high products",
+      "group": "rv32im-programs"
     }
   },
   "programs": [

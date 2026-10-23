@@ -31,9 +31,11 @@ def render_program(data, scenario, test):
         raise ValueError("Program metadata mismatch")
     if data["coreFidelity"] != "behavioral" or not data["checkpoints"]:
         raise ValueError("Expected behavioral program checkpoints")
+    recorded_m = scenario.startswith("rv32im-program-")
+    kind = "recorded execution" if recorded_m else "instruction-attempt"
     html = [
         f'<div class="example-table-block" data-scenario="{escape(scenario)}">',
-        f'<p>All {len(data["checkpoints"])} instruction-attempt checkpoints of '
+        f'<p>All {len(data["checkpoints"])} {kind} checkpoints of '
         f'<code>{escape(test)}</code>, with a behavioral core. '
         'Times are absolute simulator units, not milliseconds or an ISA latency.</p>',
         '<div class="example-table-scroll" role="region" tabindex="0" '
@@ -47,14 +49,16 @@ def render_program(data, scenario, test):
     for index, checkpoint in enumerate(data["checkpoints"]):
         if checkpoint["rowIndex"] != index or checkpoint["time"] <= previous_time:
             raise ValueError("Unordered program checkpoints")
-        if not checkpoint["label"].startswith(f"I{index} "):
+        if not recorded_m and not checkpoint["label"].startswith(f"I{index} "):
             raise ValueError("Incorrect program checkpoint label")
+        label = checkpoint["label"] if recorded_m else f"I{index}"
+        instruction = checkpoint["label"] if recorded_m else checkpoint["label"].split(" ", 1)[1]
         previous_time = checkpoint["time"]
         html.append(
-            f'<tr data-checkpoint="I{index}" data-time="{checkpoint["time"]}" '
+            f'<tr data-checkpoint="{escape(label)}" data-time="{checkpoint["time"]}" '
             f'data-timeline-index="{checkpoint["index"]}">'
-            f'<th scope="row">I{index}</th><td>{checkpoint["time"]}</td>'
-            f'<td><code>{escape(checkpoint["label"].split(" ", 1)[1])}</code></td>'
+            f'<th scope="row">{escape(label)}</th><td>{checkpoint["time"]}</td>'
+            f'<td><code>{escape(instruction)}</code></td>'
             f'<td><code>{escape(checkpoint["detail"])}</code></td></tr>')
     html.append('</tbody></table></div></div>')
     return "\n".join(html)

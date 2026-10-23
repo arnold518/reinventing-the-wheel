@@ -512,6 +512,18 @@
       ],
       "suites": [],
       "timeout": 7200
+    },
+    {
+      "name": "RV32IMInspectionBrowserTest",
+      "file": "RV32IMInspectionBrowserTest.py",
+      "kind": "browser",
+      "args": [
+        "{base}"
+      ],
+      "suites": [
+        "cleanup"
+      ],
+      "timeout": 600
     }
   ]
 }

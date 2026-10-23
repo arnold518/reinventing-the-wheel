@@ -1,6 +1,6 @@
 # Test organization
 
-The shared C++ registry owns executable component and RV32I scenarios. CTest,
+The shared C++ registry owns executable component, RV32I and RV32IM scenarios. CTest,
 the native visualizer and WebAssembly use the same scenario factories. Tests
 that check loading, timing analysis, campaigns or frontend geometry remain
 separate suites because they exercise software infrastructure rather than one
@@ -12,7 +12,8 @@ the [tests and scenarios guide](../guides/tests-and-scenarios.md).
 ## Visualizer catalog
 
 `visualizer-v2/static/scenarios.json` supplies group names, component titles,
-stable aliases and all 22 fixed-program titles. Python and JavaScript read this
+stable aliases, all 22 RV32I fixed-program titles and the dedicated RV32IM
+program titles. Python and JavaScript read this
 same file. Display names are independent of C++ test IDs, scenario URLs and
 saved layout/profile keys. An unclassified visible component fails the catalog
 test instead of silently appearing in an arbitrary group.
@@ -24,6 +25,14 @@ are shown once in functional (01–08), fault (09–16) and performance (17–22
 groups. Separate selectors choose single-cycle, baseline or advanced execution
 and the advanced core's five prediction policies. Every policy/program pair is
 registered; program URLs select their declared program/core configuration.
+
+The **RV32IM programs / Recorded execution** group has three separate
+scenarios for all-eight-M arithmetic, dependencies with memory/branch recovery,
+and division/sign boundaries. Their `recorded-program` CTest label selects
+only these short programs. They share the I program fixture's memory wiring
+with an IM core and compare commits with the independent RV32IM instruction oracle.
+They retain reset, arithmetic-wait, commit and halt history for the visualizer;
+the core and its children remain selectable by build profile.
 
 Simulator-history checks, representative-slice verification and standalone
 width sweeps stay in CTest but are excluded from the menu: they do not build
@@ -97,8 +106,11 @@ handling. `VisualizerScenarioCatalogTest` checks visible topology, all program
 configurations, names, aliases, classification and Python/JS parity. The matching
 WASM and browser tests check the compiled registry and actual selection flow.
 The Pages packaging preflight also requires a complete root layout for every
-registered fixed-program configuration (currently 176: three cores plus five
+RV32I fixed-program configuration (176: three cores plus five
 prediction policies, each with 22 programs). After adding program scenarios,
 publish their reviewed layouts with
 `tools/generate-advanced-pipeline-layout.py --program-roots-only` when only
 policy root aliases are missing.
+The three dedicated IM fixtures have their own reviewed roots; static layout
+checks and `RV32IMInspectionBrowserTest` cover their shared hierarchy and the
+dependency program's recorded playback.

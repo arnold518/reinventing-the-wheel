@@ -7,6 +7,37 @@ history remains in Git and the archived reports.
 
 ## 2026-10-23
 
+### Grouped RV32IM hardware and dedicated recorded programs
+
+- **Structure:** multiplier/divider now expose CONTROL, OPERANDS, DATAPATH
+  and RESULT groups. MulDiv has named result selectors; execute groups its
+  M control and selection alongside the I stage and forwarding. Decoder
+  overrides and coordinator holds also have separate structural boundaries.
+  Existing lower-level component fidelity remains selectable.
+- **Examples:** strengthened all ten M component recordings to 7–49 rows,
+  adding all M encodings, signed/unsigned boundaries, forwarding and
+  pause/hold/take/cancel/reset cases. Added three dedicated visualizer
+  programs: arithmetic/x0, dependencies with stores/loads and branch flush,
+  and divide/sign edges. They use real memory endpoints, check commits and
+  architectural state against the oracle, compare final memory and retain
+  inspectable timelines. `recorded-program` selects only those three CTests.
+- **Views and timing:** complete shared group layouts and an explicit execute
+  floorplan. Migrate moved named register/step fidelity choices and retain
+  custom layout settings for children still present. Regenerated the changed MulDiv delay entry;
+  its unit certificate is 68 ticks, while the core remains 94. Embedded and
+  desktop certificates are unchanged.
+- **Checked:** focused native scenarios/programs, registry and migration;
+  selected delay recomputation and standalone timing certificates; 14 static
+  scenario layouts and 14 regenerated WASM example groups; strict combined
+  site; four browser sessions and a two-session final floorplan recheck.
+  Port 8893 passes eight routes, 26 exact asset hashes and live program
+  inspection/rewind after its strict rebuild. Retries and the later standalone
+  MkDocs shell's SIGTERM are recorded in the
+  [topic record](records/2026-10-23-rv32im-grouping-and-program-scenarios.md).
+- **Limits:** focused acceptance only; no full suite, benchmark/game campaign,
+  push or published-site deployment. Unrelated verified example exports and
+  I-core type/profile layouts are retained.
+
 ### Structural RV32IM/device scenario views and descriptive roots
 
 - **Changed:** renamed 22 M/device/system scenario roots to component-specific

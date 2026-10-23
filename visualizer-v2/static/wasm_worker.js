@@ -78,7 +78,12 @@ function migrateProfileOverrides(overrides, rootName = null) {
   };
   const rootPath = path => rootName && (path === "DUT" || path.startsWith("DUT."))
     ? rootName + path.slice(3) : path;
-  const currentPath = path => stagePath(ffPath(rootPath(path)))
+  const arithmeticPath = path => path.replace(
+    /^((?:MULTIPLIER_W\d+_ROOT|DIVIDER_W\d+_ROOT|.*\.(?:MULTIPLY|DIVIDE)))\.(BUSY_STATE|DONE_STATE|ITERATION|MULTIPLICAND|ORIGINAL_MULTIPLIER|NEGATIVE_A|NEGATIVE_B|DIVISOR|QUOTIENT_NEGATIVE|REMAINDER_NEGATIVE|LOW_OR_QUOTIENT|HIGH_OR_REMAINDER|STEP)(?=\.|$)/,
+    (_, prefix, child) => prefix + '.' + (
+      ['BUSY_STATE','DONE_STATE','ITERATION'].includes(child) ? 'CONTROL' :
+      ['LOW_OR_QUOTIENT','HIGH_OR_REMAINDER','STEP'].includes(child) ? 'DATAPATH' : 'OPERANDS') + '.' + child);
+  const currentPath = path => stagePath(ffPath(arithmeticPath(rootPath(path))))
     .replace(/^(REGISTER32_ROOT|RV32I[^.]*\.(?:[A-Za-z0-9_]+\.)*[A-Za-z0-9_]+_STATE)\.STORAGE$/, '$1')
     .replace(
       /^(REGISTER32_ROOT|RV32I[^.]*\.(?:[A-Za-z0-9_]+\.)*[A-Za-z0-9_]+_STATE)\.(?:STORAGE\.)?(CELL_([0-9]|[12][0-9]|3[01])|DATA|OUTPUT|D_SPLIT|Q_JOIN)(?=\.|$)/,

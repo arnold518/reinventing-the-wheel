@@ -112,15 +112,19 @@ for (const [scenario, test] of requestedPrograms) {
   if (filter && !filter.test(test)) continue;
   const bridge = new module.WasmVisualizer();
   try {
-    bridge.setProfileOverride('RV32I_PROGRAM_ROOT.CORE', 'behavioral');
+    const recordedM = scenario.startsWith('rv32im-program-');
+    const rootName = recordedM ? 'RV32IM_PROGRAM_ROOT' : 'RV32I_PROGRAM_ROOT';
+    bridge.setProfileOverride(`${rootName}.CORE`, 'behavioral');
     const topology = JSON.parse(bridge.loadScenario(test, scenario, 0));
-    const core = topology.components.find(c => c.id === 'RV32I_PROGRAM_ROOT.CORE');
+    const core = topology.components.find(c => c.id === `${rootName}.CORE`);
     assert.equal(core?.fidelity, 'behavioral');
     assert(topology.checkpoints.length > 0);
     const pins = new Map(topology.pins.filter(p => p.componentId === topology.rootId).map(p => [p.name, p]));
     for (const [index, checkpoint] of topology.checkpoints.entries()) {
       assert.equal(checkpoint.rowIndex, index);
-      assert(checkpoint.label.startsWith(`I${index} `));
+      if (!recordedM) assert(checkpoint.label.startsWith(`I${index} `));
+      else assert(checkpoint.label === 'reset' || checkpoint.label === 'arithmetic-wait' ||
+        checkpoint.label === 'halted' || checkpoint.label.startsWith('commit-'));
       const state = JSON.parse(bridge.stateJson(checkpoint.index));
       assert.equal(state.time, checkpoint.time);
       const pc = checkpoint.detail.match(/pc_after=0x([0-9a-f]{8})/i);
@@ -134,7 +138,7 @@ for (const [scenario, test] of requestedPrograms) {
     }
     programs[scenario] = { scenario, registeredTest: test, coreFidelity: core.fidelity,
       checkpoints: topology.checkpoints };
-    console.log(`${scenario}: ${topology.checkpoints.length} reference checkpoints (PC/status verified)`);
+    console.log(`${scenario}: ${topology.checkpoints.length} program checkpoints (PC/status verified)`);
   } finally { bridge.delete(); }
 }
 // An unsuccessful generation must not replace the last working preview data.
