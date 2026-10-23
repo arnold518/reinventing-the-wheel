@@ -150,13 +150,17 @@ The phase 3 sweep checks are headless; `*ScenarioTest` aliases in
 `src/tests/RV32IMPhase3Scenarios.cpp` retain smaller viewer examples and share
 the same logical owners. See the [foundation reference](../reference/rv32im-device-foundation.md).
 `RV32IMDeviceWasmParityTest` compares all 22 recorded component examples with
-the native probe. `RV32IMDeviceBrowserTest` checks those public pages plus the
-word-component page/ALU16 recording: 23 pages, mobile bounds and corresponding
-WASM checkpoint values. Run them through
+the native probe. `RV32IMDeviceBrowserTest` checks the 22 public M/device/system component
+pages, mobile bounds and corresponding WASM checkpoint values. Run them through
 `tools/run-web-tests.py --test NAME` against the chosen isolated artifacts;
 neither check runs an integrated game or a live input session.
+The component demos use descriptive roots and a shared structural inspection
+profile. The browser check also verifies root/nested fidelity round trips,
+saved `DUT` profile migration, caught explorer layout errors and visible
+child bounds/overlaps. It always checks the existing `rv32i-core` as one
+additional session; a scenario filter does not skip that core check.
 For a bounded browser run, `CIRCUITSIM_BROWSER_SCENARIO_FILTER` selects
-recorded sessions by scenario-alias regular expression. All 23 public pages
+recorded sessions by scenario-alias regular expression. All 22 public pages
 are still checked; report the selected session count separately. The default
 runs every session. `CIRCUITSIM_DEVICE_SCENARIO_FILTER` similarly bounds the
 Node device parity check, which still requires all 22 source example

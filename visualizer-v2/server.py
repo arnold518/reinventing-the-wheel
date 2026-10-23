@@ -121,6 +121,10 @@ COMPONENT_LAYOUT_DEFAULTS = {
 }
 COMPONENT_LAYOUT_DEFAULTS["RV32IMFiveStageCore"] = dict(COMPONENT_LAYOUT_DEFAULTS["RV32IFiveStageCore"])
 COMPONENT_LAYOUT_DEFAULTS["RV32IMPipelineCoordinator"] = dict(COMPONENT_LAYOUT_DEFAULTS["RV32IPipelineCoordinator"])
+COMPONENT_LAYOUT_DEFAULTS["MulDivUnit<32>"] = {
+    "aspect_ratio": 1.15, "min_aspect_ratio": .8,
+    "title_bar_ratio": .045, "pin_size_ratio": .025, "boundary_area_ratio": .03,
+}
 SEQUENTIAL_TYPES = {"DFlipFlop"}
 CLOCK_PIN_NAMES = {"CLK", "CLOCK"}
 SEQUENTIAL_INPUT_PIN_NAMES = {"D", "RST", "RESET", "SET", "CLR", "CLEAR", "EN", "ENABLE", "LOAD"}
@@ -956,6 +960,36 @@ def _rv32i_program_root_layout(
     return placements
 
 
+def _mul_div_layout(parent, children, parent_aspect, title_fraction,
+                    child_aspects, boundary_fraction, pin_size_fraction,
+                    child_stub_ratios):
+    if not _component_type(parent).startswith("MulDivUnit<"):
+        return None
+    named = {child.get_name(): child for child in children}
+    if not {"MULTIPLY", "DIVIDE", "OPERATION"} <= named.keys():
+        return None
+    top = max(.10, title_fraction + .03)
+    result = {}
+    for name, center in (("MULTIPLY", .26), ("DIVIDE", .74)):
+        width = min(.32, (.49 - top) * parent_aspect / child_aspects[named[name].get_id()])
+        result[name] = {"rel_pos": [center - width / 2, top], "rel_width": width}
+    operation_width = min(.16, .10 * parent_aspect / child_aspects[named["OPERATION"].get_id()])
+    result["OPERATION"] = {"rel_pos": [.5 - operation_width / 2, .54], "rel_width": operation_width}
+
+    # Keep the arithmetic engines visible; put the existing control/result
+    # gates in a separate region using the shared graph floorplanner.
+    controls = [child for child in children if child.get_name() not in result]
+    x, y, width, height = .06, .68, .88, .26
+    local = _layered_graph_layout(parent, controls, parent_aspect * height / width,
+                                 0, child_aspects, boundary_fraction,
+                                 pin_size_fraction, child_stub_ratios)
+    for name, placement in local.items():
+        result[name] = {"rel_pos": [x + width * placement["rel_pos"][0],
+                                    y + height * placement["rel_pos"][1]],
+                        "rel_width": width * placement["rel_width"]}
+    return result
+
+
 def _custom_child_layout(
     parent: Any,
     children: list[Any],
@@ -973,6 +1007,11 @@ def _custom_child_layout(
     """
     if not children:
         return {}
+
+    arithmetic_layout = _mul_div_layout(parent, children, parent_aspect,
+        title_fraction, child_aspects, boundary_fraction, pin_size_fraction, child_stub_ratios)
+    if arithmetic_layout is not None:
+        return arithmetic_layout
 
     register_layout = register_file_layout.placements(
         _component_type(parent),

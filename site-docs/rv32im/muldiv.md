@@ -36,6 +36,9 @@ OP uses instruction funct3: 0 MUL, 1 MULH, 2 MULHSU, 3 MULHU, 4 DIV, 5 DIVU, 6 R
 ## Internal structure
 
 Multiplier<32> and Divider<32>, an operation register and result-selection gates. Exactly one arithmetic engine accepts each launch.
+The structural viewer places the two engines side by side, with the operation
+register and control/result-selection gates below them. Zoom into either
+engine to inspect its iterative datapath.
 
 ## Edge cases and integration
 

@@ -7,6 +7,32 @@ history remains in Git and the archived reports.
 
 ## 2026-10-23
 
+### Structural RV32IM/device scenario views and descriptive roots
+
+- **Changed:** renamed 22 M/device/system scenario roots to component-specific
+  names, matching existing core views. A shared inspection profile shows
+  structural architecture/functional blocks, including MulDiv and the IM core,
+  while retaining compact storage and lower-level word choices. The existing
+  RV32I core defaults remain structural.
+- **Fixed:** root expansion previously built a structural circuit but then
+  failed with missing static layout placements. Filled shared structural type
+  layouts and current/canonical root overlays from matching saved structures.
+  Native/WASM profile migration preserves old `DUT` root/descendant choices.
+  MulDiv now places its multiplier and divider prominently above control
+  logic; saved unchanged defaults upgrade while custom/manual layouts survive.
+- **Checks:** the native build, 28 focused native registrations and static
+  layout checks across 25 scenarios pass. Serial WASM/site builds, all 156
+  example groups, 22 native/WASM comparisons, frozen Pong playback and the
+  22-page/23-session device browser selection pass. A final MulDiv/I-core
+  browser check verifies the new floorplan. Port 8893 serves the package:
+  seven routes, 26 exact asset hashes and three structural views pass. Failed
+  fixture attempts and successful retries are recorded in the
+  [implementation record](records/2026-10-23-rv32im-scenario-visualization-fixes.md).
+- **Scope:** scenario presentation and saved views; individual component
+  circuits, timing tables and frozen gameplay captures retain their contracts.
+  Full native/web suites, the remaining game campaign and published-site
+  deployment were not run.
+
 ### ALU interface: `ALU<W>` in Chapter 2, `RV32IALU` for the cores
 
 - **Why:** the operation-contract switch gave eight ALU unit names two

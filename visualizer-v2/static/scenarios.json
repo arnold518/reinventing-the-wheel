@@ -1171,91 +1171,113 @@
     },
     "MultiplyStepScenarioTest": {
       "title": "MultiplyStep",
-      "group": "rv32im"
+      "group": "rv32im",
+      "root": "MULTIPLY_STEP_ROOT"
     },
     "DivideStepScenarioTest": {
       "title": "DivideStep",
-      "group": "rv32im"
+      "group": "rv32im",
+      "root": "DIVIDE_STEP_ROOT"
     },
     "MultiplierWidth32ScenarioTest": {
       "title": "Multiplier<32>",
-      "group": "rv32im"
+      "group": "rv32im",
+      "root": "MULTIPLIER_W32_ROOT"
     },
     "DividerWidth32ScenarioTest": {
       "title": "Divider<32>",
-      "group": "rv32im"
+      "group": "rv32im",
+      "root": "DIVIDER_W32_ROOT"
     },
     "MulDivUnitWidth32ScenarioTest": {
       "title": "MulDivUnit<32>",
-      "group": "rv32im"
+      "group": "rv32im",
+      "root": "MULDIV_W32_ROOT"
     },
     "RV32IMDecodeControlScenarioTest": {
       "title": "RV32IMDecodeControl",
-      "group": "rv32im"
+      "group": "rv32im",
+      "root": "RV32IM_DECODE_CONTROL_ROOT"
     },
     "RV32IMDecodeStageScenarioTest": {
       "title": "RV32IMDecodeStage",
-      "group": "rv32im"
+      "group": "rv32im",
+      "root": "RV32IM_DECODE_STAGE_ROOT"
     },
     "RV32IMExecuteStageScenarioTest": {
       "title": "RV32IMExecuteStage",
-      "group": "rv32im"
+      "group": "rv32im",
+      "root": "RV32IM_EXECUTE_STAGE_ROOT"
     },
     "RV32IMPipelineCoordinatorScenarioTest": {
       "title": "RV32IMPipelineCoordinator",
-      "group": "rv32im"
+      "group": "rv32im",
+      "root": "RV32IM_PIPELINE_COORDINATOR_ROOT"
     },
     "RV32IMFiveStageCoreScenarioTest": {
       "title": "RV32IMFiveStageCore",
-      "group": "rv32im"
+      "group": "rv32im",
+      "root": "RV32IM_FIVE_STAGE_CORE_ROOT"
     },
     "ClockedCounterScenarioTest": {
       "title": "ClockedCounter",
-      "group": "device-io"
+      "group": "device-io",
+      "root": "CLOCKED_COUNTER_ROOT"
     },
     "SynchronousFifoScenarioTest": {
       "title": "SynchronousFifo",
-      "group": "device-io"
+      "group": "device-io",
+      "root": "SYNCHRONOUS_FIFO_ROOT"
     },
     "DeviceRegisterPortWidth32ScenarioTest": {
       "title": "DeviceRegisterPort<32>",
-      "group": "device-io"
+      "group": "device-io",
+      "root": "DEVICE_REGISTER_PORT_W32_ROOT"
     },
     "BusErrorTargetWidth32ScenarioTest": {
       "title": "BusErrorTarget<32>",
-      "group": "device-io"
+      "group": "device-io",
+      "root": "BUS_ERROR_TARGET_W32_ROOT"
     },
     "AddressRouterWidth32ScenarioTest": {
       "title": "AddressRouter<32>",
-      "group": "device-io"
+      "group": "device-io",
+      "root": "ADDRESS_ROUTER_W32_ROOT"
     },
     "InstructionAccessGuardWidth32ScenarioTest": {
       "title": "InstructionAccessGuard<32>",
-      "group": "device-io"
+      "group": "device-io",
+      "root": "INSTRUCTION_ACCESS_GUARD_W32_ROOT"
     },
     "ConsoleDeviceScenarioTest": {
       "title": "ConsoleDevice",
-      "group": "device-io"
+      "group": "device-io",
+      "root": "CONSOLE_DEVICE_ROOT"
     },
     "TimerDeviceScenarioTest": {
       "title": "TimerDevice",
-      "group": "device-io"
+      "group": "device-io",
+      "root": "TIMER_DEVICE_ROOT"
     },
     "ButtonDeviceScenarioTest": {
       "title": "ButtonDevice",
-      "group": "device-io"
+      "group": "device-io",
+      "root": "BUTTON_DEVICE_ROOT"
     },
     "IndexedPixelSelectorWidth32ScenarioTest": {
       "title": "IndexedPixelSelector<32>",
-      "group": "device-io"
+      "group": "device-io",
+      "root": "INDEXED_PIXEL_SELECTOR_W32_ROOT"
     },
     "FramebufferDisplayScenarioTest": {
       "title": "FramebufferDisplay",
-      "group": "device-io"
+      "group": "device-io",
+      "root": "FRAMEBUFFER_DISPLAY_ROOT"
     },
     "RV32IMDeviceSystemScenarioTest": {
       "title": "RV32IMDeviceSystem",
-      "group": "device-io"
+      "group": "device-io",
+      "root": "RV32IM_DEVICE_SYSTEM_ROOT"
     }
   },
   "programs": [

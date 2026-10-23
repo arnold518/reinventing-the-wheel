@@ -1,3 +1,4 @@
+#include "RV32IMScenarioProfile.hpp"
 #include "tests/RV32IMRecordedTests.hpp"
 #include "tests/TestRegistry.hpp"
 #include "tests/ComponentTestModel.hpp"
@@ -166,7 +167,7 @@ void faults(){
 }
 circuit::test::ComponentTestSpec recordedSpec(){
     using namespace circuit::test;
-    ComponentTestSpec spec{"RV32IMDeviceSystemScenarioTest","rv32im.system.devices","DUT",{{"width","4"},{"height","4"}},{{"contract",{},{},{}}}};
+    ComponentTestSpec spec{"RV32IMDeviceSystemScenarioTest","rv32im.system.devices","RV32IM_DEVICE_SYSTEM_ROOT",{{"width","4"},{"height","4"}},{{"contract",{},{},{}}}};
     NamedValues inputs,expected;
     for(const auto&p:circuit::builtinComponentCatalog().contract(spec.contract_id).pins)
         if(p.direction==PinType::INPUT)inputs[p.name]=logicBits(p.width,0);
@@ -206,9 +207,7 @@ void appendRV32IMRecordedTests(std::vector<TestRegistryEntry>& entries){
             require(word(r.report,0)==0x4353474d&&word(r.report,1)==1&&word(r.report,3)==3&&word(r.report,8)==0,"Game report or input loss mismatch");});
         entries.back().kind=RegisteredTestKind::Program;entries.back().labels.push_back("games");entries.back().labels.push_back("phase5");
     }
-    const auto profile=circuit::BuildProfileBuilder("recorded-device-system")
-        .addRule(circuit::preferFidelity(circuit::Fidelity::Behavioral,circuit::ProfileSelector::any()))
-        .unavailablePolicy(circuit::UnavailableFidelityPolicy::UseOnlyAvailableAndRecordException).build();
+    const auto profile=circuit::test::rv32imInspectionProfile();
     entries.push_back({"RV32IMDeviceSystemScenarioTest","RV32IMDeviceSystemTest",RegisteredTestKind::Sequential,{"rv32im.system.devices"},"contract",{"simulation","rv32im","phase4-scenario"},
         [profile]{return std::make_unique<circuit::test::ComponentScenarioTest>(recordedSpec(),"contract",profile);},true});
 }

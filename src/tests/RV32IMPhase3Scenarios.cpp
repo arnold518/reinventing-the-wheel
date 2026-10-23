@@ -1,19 +1,15 @@
 #include "modules/rv32i/RV32IALU.hpp"
+#include "RV32IMScenarioProfile.hpp"
 #include "tests/ComponentTestModel.hpp"
 #include "tests/TestRegistry.hpp"
 #include "components/selection/StandardProfiles.hpp"
 #include <map>
 #include <string>
+#include <tuple>
 
 namespace {
 using namespace circuit::test;
 using Values = std::map<std::string, uint64_t>;
-
-circuit::BuildProfile scenarioProfile() {
-    return circuit::BuildProfileBuilder("phase3-recorded")
-        .addRule(circuit::preferFidelity(circuit::Fidelity::Behavioral, circuit::ProfileSelector::any()))
-        .unavailablePolicy(circuit::UnavailableFidelityPolicy::UseOnlyAvailableAndRecordException).build();
-}
 
 // Scenarios retain wire history for the viewer. Large independent sweeps live
 // in RV32IMPhase3Tests and do not run when a viewer opens one of these records.
@@ -22,8 +18,8 @@ class Sequence {
     NamedValues state_;
 public:
     ComponentTestSpec spec;
-    Sequence(const std::string& name, const std::string& contract)
-        : spec{name, contract, "DUT", {}, {{"contract", {}, {}, {}}}} {
+    Sequence(const std::string& name, const std::string& contract, const std::string& instance)
+        : spec{name, contract, instance, {}, {{"contract", {}, {}, {}}}} {
         for (const auto& p : circuit::builtinComponentCatalog().contract(contract).pins) {
             widths_[p.name] = p.width;
             if (p.direction == PinType::INPUT) state_[p.name] = logicBits(p.width, 0);
@@ -65,8 +61,8 @@ public:
     }
 };
 
-ComponentTestSpec recordedSpec(const std::string& name, const std::string& contract) {
-    Sequence s(name, contract);
+ComponentTestSpec recordedSpec(const std::string& name, const std::string& contract, const std::string& instance) {
+    Sequence s(name, contract, instance);
     if (contract == "arithmetic.multiply-step.4") {
         s.step("add-selected", {{"HI",13},{"A",11},{"BIT",1}}, {{"SUM",8},{"CARRY",1}});
         s.step("skip", {{"BIT",0}}, {{"SUM",13},{"CARRY",0}});
@@ -151,24 +147,24 @@ ComponentTestSpec recordedSpec(const std::string& name, const std::string& contr
 }
 }
 void appendRV32IMPhase3Scenarios(std::vector<TestRegistryEntry>& entries) {
-    const std::vector<std::pair<std::string,std::string>> cases{
-        {"MultiplyStep","arithmetic.multiply-step.4"},{"DivideStep","arithmetic.divide-step.4"},
-        {"MultiplierWidth32","arithmetic.iterative.multiplier.32"},{"DividerWidth32","arithmetic.iterative.divider.32"},{"MulDivUnitWidth32","arithmetic.iterative.mul-div.32"},
-        {"RV32IMDecodeControl","rv32im.decode-control"},{"RV32IMDecodeStage","rv32im.pipeline.stage.decode"},
-        {"RV32IMExecuteStage","rv32im.pipeline.stage.execute"},{"RV32IMPipelineCoordinator","rv32im.pipeline.coordinator"},
-        {"RV32IMFiveStageCore","rv32im.core.educational-five-stage"},
-        {"ClockedCounter","device.counter.4"},{"SynchronousFifo","device.fifo.8"},
-        {"DeviceRegisterPortWidth32","device.word.register-port.32"},{"BusErrorTargetWidth32","bus.word.error-target.32"},
-        {"AddressRouterWidth32","bus.word.address-router.32"},{"InstructionAccessGuardWidth32","bus.word.instruction-guard.32"},
-        {"ConsoleDevice","device.console"},{"TimerDevice","device.timer"},{"ButtonDevice","device.buttons"},
-        {"IndexedPixelSelectorWidth32","video.pixel-selector.32"},{"FramebufferDisplay","device.framebuffer"}};
-    for (const auto& [base,contract] : cases) {
+    const std::vector<std::tuple<std::string,std::string,std::string>> cases{
+        {"MultiplyStep","arithmetic.multiply-step.4","MULTIPLY_STEP_ROOT"},{"DivideStep","arithmetic.divide-step.4","DIVIDE_STEP_ROOT"},
+        {"MultiplierWidth32","arithmetic.iterative.multiplier.32","MULTIPLIER_W32_ROOT"},{"DividerWidth32","arithmetic.iterative.divider.32","DIVIDER_W32_ROOT"},{"MulDivUnitWidth32","arithmetic.iterative.mul-div.32","MULDIV_W32_ROOT"},
+        {"RV32IMDecodeControl","rv32im.decode-control","RV32IM_DECODE_CONTROL_ROOT"},{"RV32IMDecodeStage","rv32im.pipeline.stage.decode","RV32IM_DECODE_STAGE_ROOT"},
+        {"RV32IMExecuteStage","rv32im.pipeline.stage.execute","RV32IM_EXECUTE_STAGE_ROOT"},{"RV32IMPipelineCoordinator","rv32im.pipeline.coordinator","RV32IM_PIPELINE_COORDINATOR_ROOT"},
+        {"RV32IMFiveStageCore","rv32im.core.educational-five-stage","RV32IM_FIVE_STAGE_CORE_ROOT"},
+        {"ClockedCounter","device.counter.4","CLOCKED_COUNTER_ROOT"},{"SynchronousFifo","device.fifo.8","SYNCHRONOUS_FIFO_ROOT"},
+        {"DeviceRegisterPortWidth32","device.word.register-port.32","DEVICE_REGISTER_PORT_W32_ROOT"},{"BusErrorTargetWidth32","bus.word.error-target.32","BUS_ERROR_TARGET_W32_ROOT"},
+        {"AddressRouterWidth32","bus.word.address-router.32","ADDRESS_ROUTER_W32_ROOT"},{"InstructionAccessGuardWidth32","bus.word.instruction-guard.32","INSTRUCTION_ACCESS_GUARD_W32_ROOT"},
+        {"ConsoleDevice","device.console","CONSOLE_DEVICE_ROOT"},{"TimerDevice","device.timer","TIMER_DEVICE_ROOT"},{"ButtonDevice","device.buttons","BUTTON_DEVICE_ROOT"},
+        {"IndexedPixelSelectorWidth32","video.pixel-selector.32","INDEXED_PIXEL_SELECTOR_W32_ROOT"},{"FramebufferDisplay","device.framebuffer","FRAMEBUFFER_DISPLAY_ROOT"}};
+    for (const auto& [base,contract,instance] : cases) {
         auto name=base+"ScenarioTest";
         const bool combinational=contract.starts_with("arithmetic.multiply-step.")||contract.starts_with("arithmetic.divide-step.")||
             contract=="rv32im.decode-control"||contract=="rv32im.pipeline.coordinator"||contract=="video.pixel-selector.32";
         const auto kind=contract=="rv32im.core.educational-five-stage"?RegisteredTestKind::Program:
             combinational?RegisteredTestKind::TruthTable:RegisteredTestKind::Sequential;
         entries.push_back({name,base+"Test",kind,{contract},"contract",{"simulation","phase3-scenario"},
-            [name,contract]{return std::make_unique<ComponentScenarioTest>(recordedSpec(name,contract),"contract",scenarioProfile());},true});
+            [name,contract,instance]{return std::make_unique<ComponentScenarioTest>(recordedSpec(name,contract,instance),"contract",rv32imInspectionProfile());},true});
     }
 }

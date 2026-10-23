@@ -27,7 +27,7 @@ function clone(value) {
   return JSON.parse(JSON.stringify(value));
 }
 
-function migrateProfileOverrides(overrides) {
+function migrateProfileOverrides(overrides, rootName = null) {
   const migrations = [
     ["RV32I_SINGLE_CYCLE_SYSTEM_ROOT", "RV32I_PROGRAM_ROOT"],
     ["RV32I_FIVE_STAGE_PROGRAM_ROOT", "RV32I_PROGRAM_ROOT"],
@@ -76,7 +76,9 @@ function migrateProfileOverrides(overrides) {
     }
     return path;
   };
-  const currentPath = path => stagePath(ffPath(path))
+  const rootPath = path => rootName && (path === "DUT" || path.startsWith("DUT."))
+    ? rootName + path.slice(3) : path;
+  const currentPath = path => stagePath(ffPath(rootPath(path)))
     .replace(/^(REGISTER32_ROOT|RV32I[^.]*\.(?:[A-Za-z0-9_]+\.)*[A-Za-z0-9_]+_STATE)\.STORAGE$/, '$1')
     .replace(
       /^(REGISTER32_ROOT|RV32I[^.]*\.(?:[A-Za-z0-9_]+\.)*[A-Za-z0-9_]+_STATE)\.(?:STORAGE\.)?(CELL_([0-9]|[12][0-9]|3[01])|DATA|OUTPUT|D_SPLIT|Q_JOIN)(?=\.|$)/,
@@ -98,9 +100,12 @@ function normalizeProfileStore(value) {
   }
   for (const [scenario, entry] of Object.entries(value.scenarios)) {
     if (!entry || typeof entry !== "object") continue;
+    const rootName = Object.entries(scenarioCatalog?.components || {}).find(
+      ([test]) => test === scenario || (scenarioCatalog.aliases?.[test] || []).includes(scenario),
+    )?.[1]?.root;
     normalized.scenarios[scenario] = {
       revision: Math.max(0, Number.isInteger(entry.revision) ? entry.revision : 0),
-      exact_overrides: migrateProfileOverrides(entry.exact_overrides || {}),
+      exact_overrides: migrateProfileOverrides(entry.exact_overrides || {}, rootName),
     };
   }
   return normalized;

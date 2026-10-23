@@ -70,7 +70,35 @@ const native = JSON.parse(execFileSync('/usr/bin/python3', ['-c',
   'import sys,json;sys.path.insert(0,"visualizer-v2");from profile_store import migrate_component_paths;print(json.dumps(migrate_component_paths(json.loads(sys.argv[1]))))', JSON.stringify(legacy)],
   {cwd:new URL('../..',import.meta.url),timeout:10000}));
 assert.deepEqual(native, expected);
+// Renamed component scenarios retain saved root and descendant choices.
+const catalog = JSON.parse(readFileSync(new URL('../../visualizer-v2/static/scenarios.json',import.meta.url)));
+for (const [test, entry] of Object.entries(catalog.components)) {
+  if (!entry.root) continue;
+  const alias = catalog.aliases[test][0];
+  const saved = {DUT: 'behavioral', 'DUT.CHILD': 'structural', [entry.root]: 'structural',
+    'UNRELATED.CHILD': 'behavioral'};
+  const expectedRoot = {[entry.root]: 'structural', [entry.root + '.CHILD']: 'structural',
+    'UNRELATED.CHILD': 'behavioral'};
+  assert.deepEqual(JSON.parse(JSON.stringify(context.migrateProfileOverrides(saved, entry.root))), expectedRoot);
+  const migrated = JSON.parse(execFileSync('/usr/bin/python3', ['-c',
+    'import sys,json;sys.path.insert(0,"visualizer-v2");from profile_store import migrate_component_paths;print(json.dumps(migrate_component_paths(json.loads(sys.argv[1]),sys.argv[2])))', JSON.stringify(saved), alias],
+    {cwd:new URL('../..',import.meta.url),timeout:10000}));
+  assert.deepEqual(migrated, expectedRoot, alias);
+}
 const layout = JSON.parse(readFileSync(new URL('../../visualizer-v2/layout.json',import.meta.url)));
+const muldiv = layout.type_layouts['MulDivUnit<32>'];
+assert.equal(muldiv.layout_revision, 'rv32im-muldiv-v1');
+const formerMuldiv = structuredClone(muldiv.previous_default);
+const upgradedMuldiv = upgradeDefaultLayout(muldiv, formerMuldiv);
+assert.equal(upgradedMuldiv.aspect_ratio, muldiv.aspect_ratio);
+assert.deepEqual(upgradedMuldiv.children.MULTIPLY, muldiv.children.MULTIPLY);
+formerMuldiv.aspect_ratio = 3.1415;
+formerMuldiv.children.MULTIPLY = {rel_pos:[.12,.34],rel_width:.2};
+const customMuldiv = upgradeDefaultLayout(muldiv, formerMuldiv);
+assert.equal(customMuldiv.aspect_ratio, 3.1415);
+assert.deepEqual(customMuldiv.children.MULTIPLY, formerMuldiv.children.MULTIPLY);
+formerMuldiv.layout_mode = 'manual';
+assert.deepEqual(upgradeDefaultLayout(muldiv, formerMuldiv), formerMuldiv);
 for(const store of [layout.type_layouts,layout.root_layouts,...Object.values(layout.profile_layouts)]) {
   for(const base of Object.values(store)) {
     if(base.layout_revision !== 'register-file-ff-v1') continue;

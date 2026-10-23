@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 import os
+from functools import lru_cache
 from pathlib import Path
 import re
 import tempfile
@@ -44,7 +45,17 @@ def validate_overrides(value: Any) -> dict[str, str]:
     return dict(sorted(result.items()))
 
 
-def migrate_component_paths(overrides: dict[str, str]) -> dict[str, str]:
+@lru_cache(maxsize=1)
+def _scenario_roots() -> dict[str, str]:
+    catalog = json.loads((Path(__file__).parent / "static/scenarios.json").read_text())
+    return {
+        alias: entry["root"]
+        for test, entry in catalog["components"].items() if "root" in entry
+        for alias in [test, *catalog["aliases"].get(test, [])]
+    }
+
+
+def migrate_component_paths(overrides: dict[str, str], scenario: str | None = None) -> dict[str, str]:
     """Translate saved paths from superseded visual testbench roots.
 
     Profiles describe selectable implementation nodes, not the testbench
@@ -52,6 +63,7 @@ def migrate_component_paths(overrides: dict[str, str]) -> dict[str, str]:
     so old CORE subtree choices remain meaningful after a prefix rewrite.
     Canonical paths win if a file happens to contain both forms.
     """
+    root_name = _scenario_roots().get(scenario) if scenario else None
     migrated: dict[str, str] = {}
     for path, fidelity in overrides.items():
         if path in _ROOT_FIDELITY_MIGRATIONS:
@@ -103,6 +115,8 @@ def migrate_component_paths(overrides: dict[str, str]) -> dict[str, str]:
         return path
 
     def current_path(path):
+        if root_name and (path == "DUT" or path.startswith("DUT.")):
+            path = root_name + path[3:]
         path = stage_path(ff_path(path))
         # The former Register32/MemoryPayloadRegister wrapper is now a direct
         # Register<32>. Limit migration to known register roots; other STORAGE
@@ -167,7 +181,7 @@ class ProfileStore:
             normalized["scenarios"][scenario] = {
                 "revision": revision,
                 "exact_overrides": migrate_component_paths(
-                    validate_overrides(entry.get("exact_overrides", {}))
+                    validate_overrides(entry.get("exact_overrides", {})), scenario
                 ),
             }
         return normalized

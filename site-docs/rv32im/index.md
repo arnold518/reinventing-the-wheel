@@ -6,6 +6,13 @@ retirement/state views follow the CPU contracts. Arithmetic hardware is
 parameterized independently: the core selects W=32. Build profiles select
 structural or available compact implementations.
 
+The component scenarios open with structural architecture and functional
+blocks, using descriptive root names consistent with the RV32I scenarios.
+Storage and lower-level parts may use their compact implementations. In the
+explorer, the triangle selects structural or behavioral fidelity where both
+are available; press **Apply & Run** to rebuild the view. Expanding a component
+changes that component only, so its children retain their own selections.
+
 ## Arithmetic
 
 - [MultiplyStep](multiply-step.md) and [DivideStep](divide-step.md) support

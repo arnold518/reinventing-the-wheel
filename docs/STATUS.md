@@ -32,11 +32,11 @@ work state changes. Keep dated decisions and validation results in
   simulator package. The replacement ALU references now use `/alu/`; the
   original canvas has a fresh native 18-checkpoint Pong capture with exact
   host-reference frames and identical retained pin/wire states to its prior
-  capture. After the ALU interface refactor, the refreshed preview passes six
-  live reference/simulator routes and 26 exact non-HTML asset hashes; its
-  strict build passes with the per-build timing-cache fix loaded. The prior
-  checkpoint passed focused ALU/device/Pong browser checks; current interface
-  acceptance is in the completed ALU record below.
+  capture. The current scenario-view package passes seven live
+  reference/simulator routes and 26 exact non-HTML asset hashes. Fresh MulDiv,
+  RV32IM and RV32I browser views show descriptive structural roots without
+  layout errors. Its strict preview build passes with the per-build
+  timing-cache fix loaded; scoped acceptance is in the completed records below.
   Bring-up/2048 frame-only exports retain their source snapshots.
   Full phase-6
   acceptance remains open in the [game record](records/2026-10-21-scripted-games-phase4-6-implementation.md).
@@ -75,6 +75,13 @@ work state changes. Keep dated decisions and validation results in
   display/keyboard views. Current native/API checks cover direct 320x200 and
   CPU high-address presentation at 128x96/97x65. Broader game/performance and
   interactive acceptance remain in the game milestone.
+- The completed [RV32IM scenario visualization fixes](records/2026-10-23-rv32im-scenario-visualization-fixes.md)
+  give 22 component demos descriptive roots and structural architecture
+  defaults, repair missing expansion layouts, preserve saved `DUT` profile
+  paths and give MulDiv a readable engine floorplan. The native build, 28
+  focused registrations, 25 static layouts, 22 native/WASM comparisons,
+  strict site with all 156 example groups and 22-page/23-session browser
+  selection pass. The final MulDiv/I-core recheck and live 8893 checks pass.
 - Current internal guidance is indexed in [docs/README.md](README.md).
   Historical plans, retired guides and completed reports are listed in the
   [archive index](archive/README.md).
@@ -260,6 +267,10 @@ work state changes. Keep dated decisions and validation results in
 
 ## Open items
 
+- A running-program RV32IM core scenario remains to be added. The component
+  demo still records reset/fetch backpressure; the
+  [viewer audit](records/2026-10-23-rv32im-scenario-visualization-audit.md)
+  separates that missing example from the naming/fidelity/layout fixes above.
 - The 18-case timed-memory panel gives current results only for its selected
   compatible workloads and advanced/two-bit setting; other memory/core/policy
   combinations need separate checks before claiming their performance.

@@ -9,6 +9,12 @@ them to a CPU and separate memories; the [recorded runner](../rv32im/recorded-ga
 supplies scripted input and captures presentations. Live input transport is
 a later mode.
 
+Recorded component scenarios use descriptive roots and show the structural
+assembly by default. The explorer triangle selects another available
+implementation; **Apply & Run** rebuilds the circuit and its recorded timeline.
+Use **Device views** to switch between the display/input previews and circuit
+inspection.
+
 ## Address map
 
 The [data router](address-router.md) has these default windows. Each region is an aligned, non-overlapping power-of-two range. Standalone
